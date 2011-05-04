@@ -74,7 +74,7 @@ int nfs4_Set_Fh_Referral(nfs_fh4 * pfh)
   return 1;
 }
 
-int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * plen)
+int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int *plen)
 {
   char str[MAXPATHLEN];
   char local_part[MAXPATHLEN];
@@ -92,7 +92,7 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
 
   char *ptr = NULL;
 
-  if(!str || !buff || !input_str)
+  if(!plen || !buff || !input_str)
     return 0;
 
   strncpy(str, input_str, MAXPATHLEN);

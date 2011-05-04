@@ -403,7 +403,7 @@ int nodelist_rangelist_add_list(nodelist_rangelist_t * array, char *list)
   char *begin;
   char *end;
 
-  long int start_val;
+  long int start_val = 0;
   long int value;
   long int work_val;
   int start_flag = 0;

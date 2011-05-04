@@ -97,7 +97,7 @@ int nfs_Link(nfs_arg_t * parg,
   fsal_name_t link_name;
   cache_entry_t *target_pentry;
   cache_entry_t *parent_pentry;
-  cache_inode_status_t cache_status;
+  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   int rc;
   fsal_attrib_list_t *ppre_attr;
   fsal_attrib_list_t parent_attr;
@@ -106,8 +106,8 @@ int nfs_Link(nfs_arg_t * parg,
   fsal_attrib_list_t attr_parent_after;
   cache_inode_file_type_t parent_filetype;
   cache_inode_file_type_t target_filetype;
-  short to_exportid;
-  short from_exportid;
+  short to_exportid = 0;
+  short from_exportid = 0;
 
   if(isDebug(COMPONENT_NFSPROTO))
     {

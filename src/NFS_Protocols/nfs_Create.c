@@ -95,7 +95,7 @@ int nfs_Create(nfs_arg_t * parg,
 
   char *str_file_name = NULL;
   fsal_name_t file_name;
-  fsal_accessmode_t mode;
+  fsal_accessmode_t mode = 0;
   cache_entry_t *file_pentry = NULL;
   cache_entry_t *parent_pentry = NULL;
   int rc;
@@ -105,7 +105,7 @@ int nfs_Create(nfs_arg_t * parg,
   fsal_attrib_list_t attr_parent_after;
   fsal_attrib_list_t attributes_create;
   fsal_attrib_list_t *ppre_attr;
-  cache_inode_status_t cache_status;
+  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   cache_inode_status_t cache_status_lookup;
   cache_inode_file_type_t parent_filetype;
   fsal_handle_t *pfsal_handle;

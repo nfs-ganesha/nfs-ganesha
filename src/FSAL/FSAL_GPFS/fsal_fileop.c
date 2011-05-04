@@ -253,7 +253,7 @@ fsal_status_t GPFSFSAL_read(gpfsfsal_file_t * p_file_descriptor,        /* IN */
 
   size_t i_size;
   ssize_t nb_read;
-  int rc, errsv;
+  int rc = 0, errsv = 0;
   int pcall = FALSE;
 
   /* sanity checks. */
@@ -368,7 +368,7 @@ fsal_status_t GPFSFSAL_write(gpfsfsal_file_t * p_file_descriptor,       /* IN */
 
   ssize_t nb_written;
   size_t i_size;
-  int rc, errsv;
+  int rc = 0, errsv = 0;
   int pcall = FALSE;
 
   /* sanity checks. */

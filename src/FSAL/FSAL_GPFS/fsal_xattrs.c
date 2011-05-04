@@ -257,10 +257,12 @@ fsal_status_t GPFSFSAL_GetXAttrAttrs(gpfsfsal_handle_t * p_objecthandle,        
                                           /**< IN/OUT xattr attributes (if supported) */
     )
 {
+#if 0
   int rc;
   char buff[MAXNAMLEN];
   fsal_status_t st;
   fsal_attrib_list_t file_attrs;
+#endif
 
   /* sanity checks */
   if(!p_objecthandle || !p_context || !p_attrs)
@@ -322,12 +324,14 @@ fsal_status_t GPFSFSAL_ListXAttrs(gpfsfsal_handle_t * p_objecthandle,   /* IN */
                               int *end_of_list  /* OUT */
     )
 {
+#if 0
   int rc;
   unsigned int index;
   unsigned int out_index;
   char object_path[FSAL_MAX_PATH_LEN];
   fsal_status_t st;
   fsal_attrib_list_t file_attrs;
+#endif
 
   /* sanity checks */
   if(!p_objecthandle || !p_context || !xattrs_tab || !p_nb_returned || !end_of_list)
@@ -405,8 +409,8 @@ fsal_status_t GPFSFSAL_GetXAttrValueById(gpfsfsal_handle_t * p_objecthandle,    
                                      size_t * p_output_size     /* OUT */
     )
 {
-  int rc;
 #if 0
+  int rc;
   /* sanity checks */
   if(!p_objecthandle || !p_context || !p_output_size || !buffer_addr)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetXAttrValue);
@@ -421,9 +425,9 @@ fsal_status_t GPFSFSAL_GetXAttrValueById(gpfsfsal_handle_t * p_objecthandle,    
   /* get the value */
   rc = xattr_list[xattr_id].get_func(p_objecthandle,
                                      p_context, buffer_addr, buffer_size, p_output_size);
-#endif
   Return(rc, 0, INDEX_FSAL_GetXAttrValue);
-
+#endif
+  Return(0, 0, INDEX_FSAL_GetXAttrValue);
 }
 
 /**
@@ -441,10 +445,10 @@ fsal_status_t GPFSFSAL_GetXAttrIdByName(gpfsfsal_handle_t * p_objecthandle,     
                                     unsigned int *pxattr_id     /* OUT */
     )
 {
+#if 0
   unsigned int index;
   int found = FALSE;
 
-#if 0
   /* sanity checks */
   if(!p_objecthandle || !xattr_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetXAttrValue);
@@ -489,7 +493,9 @@ fsal_status_t GPFSFSAL_GetXAttrValueByName(gpfsfsal_handle_t * p_objecthandle,  
                                        size_t * p_output_size   /* OUT */
     )
 {
+#if 0
   unsigned int index;
+#endif
 
   /* sanity checks */
   if(!p_objecthandle || !p_context || !p_output_size || !buffer_addr || !xattr_name)

@@ -56,7 +56,7 @@ static int check_2power(unsigned long long tested_size)
       /* if the first detected bit equals tested_size,
        * it's OK.
        */
-      if((tested_size & (1 << i)) == tested_size)
+      if((tested_size & ((unsigned long long)1 << i)) == tested_size)
         return TRUE;
     }
   return FALSE;

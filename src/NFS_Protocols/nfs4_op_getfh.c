@@ -71,7 +71,6 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 {
   int error;
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getfh";
-  int i;
   char fhstr[LEN_FH_STR];
 
   resp->resop = NFS4_OP_GETFH;

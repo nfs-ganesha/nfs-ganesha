@@ -316,7 +316,9 @@ nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs * arg,
     struct nlm4_lock *nlm_lock;
     nlm_lock_entry_t *nlm_entry;
     uint64_t nlm_entry_end, nlm_lock_end;
+#ifdef PIN_CACHE_ENTRIES
     cache_inode_status_t pstatus;
+#endif
 
     nlm_lock = &arg->alock;
     exclusive = arg->exclusive;
@@ -385,7 +387,7 @@ nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs * arg,
     if(!nlm_entry)
         goto error_out;
 
-#if 0
+#ifdef PIN_CACHE_ENTRIES
     /* Pin the cache entry */
     pstatus = cache_inode_pin_pentry(pentry, pclient, pcontext);
     if(pstatus != CACHE_INODE_SUCCESS)
@@ -429,6 +431,7 @@ error_out:
     pthread_mutex_unlock(&nlm_lock_list_mutex);
     return nlm_entry;
 
+#ifdef PIN_CACHE_ENTRIES
 free_nlm_entry:
     Mem_Free(nlm_entry->caller_name);
     netobj_free(&nlm_entry->fh);
@@ -437,6 +440,7 @@ free_nlm_entry:
     Mem_Free(nlm_entry);
     nlm_entry = NULL;
     goto error_out;
+#endif
 }
 
 static void do_nlm_remove_from_locklist(nlm_lock_entry_t * nlm_entry)

@@ -141,9 +141,7 @@ int file_content_gc_manage_entry(LRU_entry_t * plru_entry, void *addparam)
 
 void *file_content_gc_thread(void *IndexArg)
 {
-  long index = (long)IndexArg;
   char command[2 * MAXPATHLEN];
-  unsigned int i;
   exportlist_t *pexport = NULL;
   int is_hw_reached = FALSE;
   int some_flush_to_do = FALSE;

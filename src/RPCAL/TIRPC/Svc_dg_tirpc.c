@@ -131,12 +131,14 @@ u_int recvsize;
   if(xprt == NULL)
     goto freedata;
   memset(xprt, 0, sizeof(SVCXPRT));
+  rpc_buffer(xprt) = NULL;
 
   su = (struct svc_dg_data *)Mem_Alloc(sizeof(*su));
   if(su == NULL)
     goto freedata;
   su->su_iosz = ((MAX(sendsize, recvsize) + 3) / 4) * 4;
-  if((rpc_buffer(xprt) = Mem_Alloc(su->su_iosz)) == NULL)
+  rpc_buffer(xprt) = Mem_Alloc(su->su_iosz);
+  if(rpc_buffer(xprt) == NULL)
     goto freedata;
   xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), su->su_iosz, XDR_DECODE);
   su->su_cache = NULL;
@@ -160,12 +162,12 @@ u_int recvsize;
   return (xprt);
  freedata:
   (void)warnx(svc_dg_str, __no_mem_str);
+  if(xprt && rpc_buffer(xprt))
+    (void)Mem_Free(rpc_buffer(xprt));
   if(xprt)
     (void)Mem_Free(xprt);
   if(su)
     (void)Mem_Free(su);
-  if(rpc_buffer(xprt))
-    (void)Mem_Free(rpc_buffer(xprt));
   return (NULL);
 }
 

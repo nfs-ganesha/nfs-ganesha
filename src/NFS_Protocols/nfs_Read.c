@@ -348,7 +348,7 @@ int nfs_Read(nfs_arg_t * parg,
         }
 
       if(cache_inode_rdwr(pentry,
-                          CACHE_CONTENT_READ,
+                          CACHE_INODE_READ,
                           &seek_descriptor,
                           size,
                           &read_size,

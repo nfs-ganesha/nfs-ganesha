@@ -665,7 +665,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   unsigned int rpcxid = 0;
   unsigned int export_check_result;
 
-  exportlist_t *pexport = NULL;
+  exportlist_t *pexport;
   nfs_arg_t arg_nfs;
   nfs_arg_t *parg_nfs = &preqnfs->arg_nfs;
   nfs_res_t res_nfs;
@@ -831,27 +831,46 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
             {
               exportid = nfs2_FhandleToExportId((fhandle2 *) parg_nfs);
 
-              if(exportid < 0)
-                {
-                  /* Bad argument */
-                  svcerr_auth(ptr_svc, AUTH_FAILED);
-                }
-
-              if((pexport =
-                  nfs_Get_export_by_id(nfs_param.pexportlist, exportid)) == NULL)
+              if(exportid < 0 ||
+                 (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
+                                                 exportid)) == NULL ||
+                 (pexport->options & EXPORT_OPTION_NFSV2) == 0)
                 {
                   /* Reject the request for authentication reason (incompatible file handle) */
+                  if(isInfo(COMPONENT_DISPATCH))
+                    {
+                      char dumpfh[1024];
+                      char *reason;
+                      if(exportid < 0)
+                        reason = "has badly formed handle";
+                      else if(pexport == NULL)
+                        reason = "has invalid export";
+                      else
+                        reason = "V2 not allowed on this export";
+                      sprint_fhandle2(dumpfh, (nfs_fh3 *) parg_nfs);
+                      LogMajor(COMPONENT_DISPATCH,
+                               "NFS2 Request from host %s %s, proc=%d, FH=%s",
+                               addrbuf, reason,
+                               (int)ptr_req->rq_proc, dumpfh);
+                    }
+                  /* Bad argument */
                   svcerr_auth(ptr_svc, AUTH_FAILED);
+                  if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                                        &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+                    {
+                      LogCrit(COMPONENT_DISPATCH,
+                              "Attempt to delete duplicate request failed on line %d",
+                              __LINE__);
+                    }
+                  return;
                 }
-              if((pexport->options & EXPORT_OPTION_NFSV2) == 0)
-                {
-                  /* Reject the request for authentication reason (NFS v2 not allowed for this export) */
-                  svcerr_auth(ptr_svc, AUTH_FAILED);
-                }
+
               LogFullDebug(COMPONENT_DISPATCH,
                            "Found export entry for dirname=%s as exportid=%d",
                            pexport->dirname, pexport->id);
             }
+          else
+            pexport = nfs_param.pexportlist;
 
           break;
 
@@ -859,14 +878,30 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
           if(ptr_req->rq_proc != NFSPROC_NULL)
             {
               exportid = nfs3_FhandleToExportId((nfs_fh3 *) parg_nfs);
-              if(exportid < 0)
+
+              if(exportid < 0 ||
+                 (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
+                                                 exportid)) == NULL ||
+                 (pexport->options & EXPORT_OPTION_NFSV3) == 0)
                 {
-                  char dumpfh[1024];
                   /* Reject the request for authentication reason (incompatible file handle) */
-                  LogMajor(COMPONENT_DISPATCH,
-                           "Host %s has badly formed file handle, vers=%d, proc=%d FH=%s",
-                           addrbuf,
-                           (int)ptr_req->rq_vers, (int)ptr_req->rq_proc, dumpfh);
+                  if(isInfo(COMPONENT_DISPATCH))
+                    {
+                      char dumpfh[1024];
+                      char *reason;
+                      if(exportid < 0)
+                        reason = "has badly formed handle";
+                      else if(pexport == NULL)
+                        reason = "has invalid export";
+                      else
+                        reason = "V3 not allowed on this export";
+                      sprint_fhandle3(dumpfh, (nfs_fh3 *) parg_nfs);
+                      LogMajor(COMPONENT_DISPATCH,
+                               "NFS3 Request from host %s %s, proc=%d, FH=%s",
+                               addrbuf, reason,
+                               (int)ptr_req->rq_proc, dumpfh);
+                    }
+                  /* Bad argument */
                   svcerr_auth(ptr_svc, AUTH_FAILED);
                   if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
                                         &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
@@ -878,47 +913,21 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                   return;
                 }
 
-              if((pexport =
-                  nfs_Get_export_by_id(nfs_param.pexportlist, exportid)) == NULL)
-                {
-                  char dumpfh[1024];
-                  /* Reject the request for authentication reason (incompatible file handle) */
-                  LogMajor(COMPONENT_DISPATCH,
-                           "Host %s has badly formed file handle, vers=%d, proc=%d FH=%s",
-                           addrbuf,
-                           (int)ptr_req->rq_vers, (int)ptr_req->rq_proc, dumpfh);
-                  svcerr_auth(ptr_svc, AUTH_FAILED);
-
-                  if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
-                                        &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
-                    {
-                      LogCrit(COMPONENT_DISPATCH,
-                              "Attempt to delete duplicate request failed on line %d",
-                              __LINE__);
-                    }
-                  return;
-                }
-              if((pexport->options & EXPORT_OPTION_NFSV3) == 0)
-                {
-                  /* Reject the request for authentication reason (NFS v3 not allowed for this export) */
-                  svcerr_auth(ptr_svc, AUTH_FAILED);
-                }
               LogFullDebug(COMPONENT_DISPATCH,
                            "Found export entry for dirname=%s as exportid=%d",
                            pexport->dirname, pexport->id);
             }
+          else
+            pexport = nfs_param.pexportlist;
+
           break;
 
-        case NFS_V4:
+        default:
+          /* NFSv4 or invalid version (which should never get here) */
           pexport = nfs_param.pexportlist;
           break;
         }                       /* switch( ptr_req->rq_vers ) */
     }
-  else if(ptr_req->rq_prog == nfs_param.core_param.mnt_program)
-    {
-      /* Always use the whole export list for mount protocol */
-      pexport = nfs_param.pexportlist;
-    }                           /* switch( ptr_req->rq_prog ) */
 #ifdef _USE_NLM
   else if(ptr_req->rq_prog == nfs_param.core_param.nlm_program)
     {
@@ -926,13 +935,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       pexport = nfs_param.pexportlist;
     }
 #endif                          /* _USE_NLM */
-#ifdef _USE_QUOTA
-  else if(ptr_req->rq_prog == nfs_param.core_param.rquota_program)
+  else
     {
-      /* Always use the whole export list for NLM protocol (FIXME !! Verify) */
+      /* All other protocols use the whole export list */
       pexport = nfs_param.pexportlist;
     }
-#endif                          /* _USE_QUOTA */
 
   /* Zero out timers prior to starting processing */
   memset(timer_start, 0, sizeof(struct timeval));
@@ -1284,7 +1291,7 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
     return -1;
 
   sprintf(name, "Worker %d Pending Request", pdata->index);
-  nfs_param.worker_param.lru_param.name = name;
+  nfs_param.worker_param.lru_param.name = Str_Dup(name);
 
   if((pdata->pending_request =
       LRU_Init(nfs_param.worker_param.lru_param, &status)) == NULL)
@@ -1294,7 +1301,7 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
     }
 
   sprintf(name, "Worker %d Duplicate Request", pdata->index);
-  nfs_param.worker_param.lru_dupreq.name = name;
+  nfs_param.worker_param.lru_dupreq.name = Str_Dup(name);
 
   if((pdata->duplicate_request =
       LRU_Init(nfs_param.worker_param.lru_dupreq, &status)) == NULL)

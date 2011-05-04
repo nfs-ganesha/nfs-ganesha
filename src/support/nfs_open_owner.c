@@ -109,8 +109,6 @@ int display_open_owner_val(hash_buffer_t * pbuff, char *str)
 
 int compare_open_owner(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  unsigned int rc;
-
   if(isFullDebug(COMPONENT_OPEN_OWNER_HASH))
     {
       char str1[MAXPATHLEN];

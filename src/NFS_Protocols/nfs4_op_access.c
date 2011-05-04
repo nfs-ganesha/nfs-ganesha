@@ -82,7 +82,6 @@
 int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   fsal_attrib_list_t attr;
-  fsal_cred_t credentials;
   fsal_status_t st;
 
   /* do we need to test read/write/exec ? */

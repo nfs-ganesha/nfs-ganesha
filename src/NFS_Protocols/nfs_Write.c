@@ -113,7 +113,7 @@ int nfs_Write(nfs_arg_t * parg,
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
-      char str[LEN_FH_STR], *stables;
+      char str[LEN_FH_STR], *stables = "";
 
       switch (preq->rq_vers)
         {
@@ -405,7 +405,7 @@ int nfs_Write(nfs_arg_t * parg,
       seek_descriptor.offset = offset;
 
       if(cache_inode_rdwr(pentry,
-                          CACHE_CONTENT_WRITE,
+                          CACHE_INODE_WRITE,
                           &seek_descriptor,
                           size,
                           &written_size,

@@ -1562,6 +1562,7 @@ int DisplayLogComponentLevel(log_components_t component,
       break;
     case BUFFLOG:
       rc = DisplayBuffer_valist(LogComponents[component].comp_buffer, component, format, arguments);
+      break;
     default:
       rc = ERR_FAILURE;
     }

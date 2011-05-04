@@ -519,7 +519,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   fattr4_homogeneous homogeneous;
   fattr4_aclsupport aclsupport;
   fattr4_acl acl;
-  fattr4_mimetype mimetype;
   fattr4_rdattr_error rdattr_error;
   fattr4_quota_avail_hard quota_avail_hard;
   fattr4_quota_avail_soft quota_avail_soft;
@@ -835,7 +834,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_ACL:
-          acl.fattr4_acl_len = htonl(0);        /* NOT IMPLEMENTED YET, BUT WILL BE, no ACL for the moment */
+          memset(&acl, 0, sizeof(acl));
+          /* NOT IMPLEMENTED YET, BUT WILL BE, no ACL for the moment */
           memcpy((char *)(attrvalsBuffer + LastOffset), &acl, sizeof(fattr4_acl));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
@@ -1175,8 +1175,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_MIMETYPE:
-          mimetype.utf8string_len = htonl(0);
-          memcpy((char *)(attrvalsBuffer + LastOffset), &mimetype,
+          memset((char *)(attrvalsBuffer + LastOffset), 0,
                  sizeof(fattr4_mimetype));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;  /* No supported for the moment */
@@ -1765,6 +1764,7 @@ int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
     case FSAL_TYPE_SOCK:
       pFattr->type = NFSOCK;
       /** @todo mode mask ? */
+      break;
 
     default:
       pFattr->type = NFBAD;

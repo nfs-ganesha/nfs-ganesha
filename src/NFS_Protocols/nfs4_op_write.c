@@ -269,7 +269,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* The size to be written should not be greater than FATTR4_MAXWRITESIZE because this value is asked 
    * by the client at mount time, but we check this by security */
-  if((data->pexport->options & EXPORT_OPTION_MAXWRITE == EXPORT_OPTION_MAXWRITE) &&
+  if((data->pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE &&
      size > data->pexport->MaxWrite)
     {
       /*

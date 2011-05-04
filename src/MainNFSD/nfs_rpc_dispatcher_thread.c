@@ -1784,7 +1784,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
 
   for(sock = 0; sock < FD_SETSIZE; sock += NFDBITS)
     {
-      for(mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1)))
+      for(mask = *maskp++; (bit = ffs(mask)); mask ^= (1 << (bit - 1)))
         {
           /* sock has input waiting */
           xprt = Xports[sock + bit - 1];

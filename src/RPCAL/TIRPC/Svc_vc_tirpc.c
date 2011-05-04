@@ -211,7 +211,7 @@ u_int sendsize;
 u_int recvsize;
 {
   SVCXPRT *xprt;
-  struct cf_conn *cd;
+  struct cf_conn *cd = NULL;
   const char *netid;
   struct __rpc_sockinfo si;
 
@@ -328,7 +328,7 @@ struct rpc_msg *msg;
 
   if(cd->maxrec != 0)
     {
-      flags = fcntl(sock, F_GETFL, 0);
+      flags = fcntl(sock, F_GETFL);
       if(flags == -1)
         return (FALSE);
       /*if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1)

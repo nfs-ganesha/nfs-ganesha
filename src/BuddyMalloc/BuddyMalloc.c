@@ -530,9 +530,9 @@ static BuddyBlock_t *find_previous_allocated(BuddyThreadContext_t * context,
 
 #endif
 
+#ifdef _DEBUG_MEMLEAKS
 void log_bad_block(const char *label, BuddyThreadContext_t *context, BuddyBlock_t *block, int do_label, int do_guilt)
 {
-  #ifdef _DEBUG_MEMLEAKS
   LogDebug(COMPONENT_MEMALLOC,
            "%s block %p invoked by %s:%u:%s:%s",
            label, block,
@@ -569,10 +569,11 @@ void log_bad_block(const char *label, BuddyThreadContext_t *context, BuddyBlock_
                    "%s block %p, previous Block none???",
                    label, block);
   }
-  #else
-  return;
-  #endif
 }
+#else
+#define log_bad_block(label, context, block, do_label, do_guilt)
+#endif
+
 
 /*
  * check current magic number
