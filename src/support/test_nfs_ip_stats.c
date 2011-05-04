@@ -6,7 +6,11 @@
 #include "stuff_alloc.h"
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
 #include "../MainNFSD/nfs_init.h"
+#include "nfs23.h"
+
+#define MOUNT_PROGRAM 100005
 
 hash_table_t * ipstats;
 nfs_parameter_t nfs_param;
@@ -49,6 +53,14 @@ void create_ipv6(char * ip, int port, struct sockaddr_in6 * addr)
     inet_pton(AF_INET6, ip, &(addr->sin6_addr.s6_addr));
 }
 
+void create_svc_req(struct svc_req *req, rpcvers_t ver, rpcprog_t prog, rpcproc_t proc)
+{
+    memset(req, 0, sizeof(struct svc_req));
+    req->rq_prog = prog;
+    req->rq_vers = ver;
+    req->rq_proc = proc;
+}
+
 void nfs_set_ip_stats_param_default()
 {
 
@@ -79,12 +91,12 @@ void init()
     NamePool(ip_stats_pool, "IP Stats Cache Pool");
 
     create_ipv4("10.10.5.1", 2048, (struct sockaddr_in * ) &ipv4a);
-    create_ipv4("10.10.5.1", 2049, (struct sockaddr_in * ) &ipv4b);
+    //    create_ipv4("10.10.5.1", 2049, (struct sockaddr_in * ) &ipv4b);
     create_ipv4("10.10.5.2", 2048, (struct sockaddr_in * ) &ipv4c);
 
 #ifdef _USE_TIRPC
     create_ipv6("2001::1", 2048, (struct sockaddr_in6 *) &ipv6a);
-    create_ipv6("2001::1", 2049, (struct sockaddr_in6 *) &ipv6b);
+    // create_ipv6("2001::1", 2049, (struct sockaddr_in6 *) &ipv6b);
     create_ipv6("2001::f:1", 2048, (struct sockaddr_in6 *) &ipv6c);
 #endif    
 
@@ -94,7 +106,7 @@ void test_not_found()
 {
     nfs_ip_stats_t * out;
     EQUALS(nfs_ip_stats_get(ipstats, &ipv4a, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv4a yet");
-    EQUALS(nfs_ip_stats_get(ipstats, &ipv4b, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv4b yet");
+    // EQUALS(nfs_ip_stats_get(ipstats, &ipv4b, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv4b yet");
     EQUALS(nfs_ip_stats_get(ipstats, &ipv4c, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv4c yet");
 }
 
@@ -102,7 +114,7 @@ void test_not_found_bc()
 {
     nfs_ip_stats_t * out;
     EQUALS(nfs_ip_stats_get(ipstats, &ipv4a, &out), IP_STATS_SUCCESS, "There should be an ipv4a");
-    EQUALS(nfs_ip_stats_get(ipstats, &ipv4b, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv4b yet");
+    // EQUALS(nfs_ip_stats_get(ipstats, &ipv4b, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv4b yet");
     EQUALS(nfs_ip_stats_get(ipstats, &ipv4c, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv4c yet");
 }
 
@@ -110,7 +122,7 @@ void test_not_found_c()
 {
     nfs_ip_stats_t * out;
     EQUALS(nfs_ip_stats_get(ipstats, &ipv4a, &out), IP_STATS_SUCCESS, "There should be an ipv4a");
-    EQUALS(nfs_ip_stats_get(ipstats, &ipv4b, &out), IP_STATS_SUCCESS, "There should be an ipv4b");
+    // EQUALS(nfs_ip_stats_get(ipstats, &ipv4b, &out), IP_STATS_SUCCESS, "There should be an ipv4b");
     EQUALS(nfs_ip_stats_get(ipstats, &ipv4c, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv4c yet");
 }
 
@@ -118,24 +130,47 @@ void test_not_found_none()
 {
     nfs_ip_stats_t * out;
     EQUALS(nfs_ip_stats_get(ipstats, &ipv4a, &out), IP_STATS_SUCCESS, "There should be an ipv4a");
-    EQUALS(nfs_ip_stats_get(ipstats, &ipv4b, &out), IP_STATS_SUCCESS, "There should be an ipv4b");
+    // EQUALS(nfs_ip_stats_get(ipstats, &ipv4b, &out), IP_STATS_SUCCESS, "There should be an ipv4b");
     EQUALS(nfs_ip_stats_get(ipstats, &ipv4c, &out), IP_STATS_SUCCESS, "There should be an ipv4c");
 }
 
 
 void test_add() 
 {
-    int rc = nfs_ip_stats_add(ipstats, &ipv4a, &ip_stats_pool);
+    int rc = nfs_ip_stats_add(ipstats, &ipv4a, ip_stats_pool);
     EQUALS(rc, IP_STATS_SUCCESS, "Can't add ipv4a, rc = %d", rc);
     test_not_found_bc();
 
-    rc = nfs_ip_stats_add(ipstats, &ipv4b, &ip_stats_pool);
-    EQUALS(rc, IP_STATS_SUCCESS, "Can't add ipv4b");
-    test_not_found_c();
+    /* rc = nfs_ip_stats_add(ipstats, &ipv4b, &ip_stats_pool); */
+    /* EQUALS(rc, IP_STATS_SUCCESS, "Can't add ipv4b"); */
+    /* test_not_found_c(); */
 
-    rc = nfs_ip_stats_add(ipstats, &ipv4c, &ip_stats_pool);
+    rc = nfs_ip_stats_add(ipstats, &ipv4c, ip_stats_pool);
     EQUALS(rc, IP_STATS_SUCCESS, "Can't add ipv4c");
     test_not_found_none();
+}
+
+void test_incr()
+{
+    struct svc_req req;
+    int i = 0;
+
+    create_svc_req(&req, NFS_V3, NFS_PROGRAM, NFSPROC3_GETATTR);
+    
+    for (i = 0; i < 10; i++) 
+    {
+        nfs_ip_stats_incr(ipstats, &ipv4a, NFS_PROGRAM, MOUNT_PROGRAM, &req);
+    }
+
+    create_svc_req(&req, NFS_V3, NFS_PROGRAM, NFSPROC3_READ);
+    for (i = 0; i < 5; i++) {
+        nfs_ip_stats_incr(ipstats, &ipv4a, NFS_PROGRAM, MOUNT_PROGRAM, &req);
+    }
+
+    create_svc_req(&req, NFS_V3, NFS_PROGRAM, NFSPROC3_READDIRPLUS);
+    for (i = 0; i < 7; i++) {
+        nfs_ip_stats_incr(ipstats, &ipv4a, NFS_PROGRAM, MOUNT_PROGRAM, &req);
+    }
 }
 
 int main()
@@ -143,6 +178,7 @@ int main()
     init();
     test_not_found();
     test_add();
+    test_incr();
 
 
     return 0;
