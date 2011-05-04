@@ -675,7 +675,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   SVCXPRT *ptr_svc = preqnfs->xprt;
   nfs_stat_type_t stat_type;
   sockaddr_t hostaddr;
-  char addrbuf[512];
+  char addrbuf[SOCK_NAME_MAX];
   int port;
   int rc;
   int do_dupreq_cache;

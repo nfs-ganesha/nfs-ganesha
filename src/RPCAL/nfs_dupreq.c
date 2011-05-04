@@ -89,7 +89,7 @@ hash_table_t *ht_dupreq;
 
 void LogDupReq(const char *label, sockaddr_t *addr, long xid, u_long rq_prog)
 {
-  char namebuf[512];
+  char namebuf[SOCK_NAME_MAX];
 
   sprint_sockaddr(addr, namebuf, sizeof(namebuf));
 
@@ -367,7 +367,7 @@ unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
                                      hash_buffer_t * buffclef)
 {
   dupreq_key_t *pdupkey = (dupreq_key_t *)(buffclef->pdata);
-  unsigned long addr_hash = hash_sockaddr((sockaddr_t *) &pdupkey->addr);
+  unsigned long addr_hash = hash_sockaddr((sockaddr_t *) &pdupkey->addr, CHECK_PORT);
 
   return (((unsigned long)pdupkey->xid + addr_hash)^(pdupkey->checksum)) % p_hparam->index_size;
 }                               /*  dupreq_value_hash_func */
@@ -392,7 +392,7 @@ unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * 
 {
   dupreq_key_t *pdupkey = (dupreq_key_t *)(buffclef->pdata);
 
-  unsigned long addr_hash = hash_sockaddr((sockaddr_t *) &pdupkey->addr);
+  unsigned long addr_hash = hash_sockaddr((sockaddr_t *) &pdupkey->addr, CHECK_PORT);
 
   return (((unsigned long)pdupkey->xid + addr_hash)^(pdupkey->checksum)) % p_hparam->index_size;
 }                               /* dupreq_rbt_hash_func */
@@ -443,60 +443,14 @@ int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2)
 int display_req_key(hash_buffer_t * pbuff, char *str)
 {
   dupreq_key_t *pdupkey = (dupreq_key_t *)(pbuff->pdata);
+  char namebuf[SOCK_NAME_MAX];
 
-#ifdef _USE_TIRPC
-  char namebuf[INET6_ADDRSTRLEN];
-  const char *name = NULL;
-  char portbuf[16];
+  sprint_sockaddr(&pdupkey->addr, namebuf, sizeof(namebuf));
 
-  switch(pdupkey->addr.ss_family)
-    {
-      case AF_INET:
-        {
-          struct sockaddr_in *paddr = (struct sockaddr_in *)&pdupkey->addr;
+  return sprintf("addr=%s xid=%ld checksum=%d",
+                 namebuf, pdupkey->xid, pdupkey->checksum);
 
-          name = inet_ntop(pdupkey->addr.ss_family, &paddr->sin_addr, namebuf, sizeof(namebuf));
-          sprintf(portbuf, "%u", paddr->sin_port);
-          break;
-        }
-      case AF_INET6:
-        {
-          struct sockaddr_in6 *paddr = (struct sockaddr_in6 *)&pdupkey->addr;
-
-          name = inet_ntop(pdupkey->addr.ss_family, &paddr->sin6_addr, namebuf, sizeof(namebuf));
-          sprintf(portbuf, "%u", paddr->sin6_port);
-          break;
-        }
-      case AF_LOCAL:
-        {
-          struct sockaddr_un *paddr = (struct sockaddr_un *)&pdupkey->addr;
-
-          name = paddr->sun_path;
-          sprintf(portbuf, "n/a");
-          break;
-        }
-      default:
-        sprintf(portbuf, "n/a");
-    }
-  if(name == NULL)
-    {
-      sprintf(namebuf, "<unknown>");
-      name = namebuf;
-    }
-  return sprintf("ip=%s port=%s xid=%ld checksum=%d",
-                 name, portbuf, pdupkey->xid, pdupkey->checksum);
 }
-#else
-  return sprintf("ip=%d.%d.%d.%d port=%d xid=%ld rq_prog=%ld checksum=%d",
-                 (ntohl(pdupkey->addr.sin_addr.s_addr) & 0xFF000000) >> 24,
-                 (ntohl(pdupkey->addr.sin_addr.s_addr) & 0x00FF0000) >> 16,
-                 (ntohl(pdupkey->addr.sin_addr.s_addr) & 0x0000FF00) >> 8,
-                 (ntohl(pdupkey->addr.sin_addr.s_addr) & 0x000000FF),
-                 pdupkey->addr.sin_port,
-                 pdupkey->xid,
-                 pdupkey->checksum);
-}
-#endif
 
 /**
  *
@@ -514,60 +468,14 @@ int display_req_key(hash_buffer_t * pbuff, char *str)
 int display_req_val(hash_buffer_t * pbuff, char *str)
 {
   dupreq_entry_t *pdupreq = (dupreq_entry_t *)(pbuff->pdata);
+  char namebuf[SOCK_NAME_MAX];
 
-#ifdef _USE_TIRPC
-  char namebuf[INET6_ADDRSTRLEN];
-  const char *name = NULL;
-  char portbuf[16];
+  sprint_sockaddr(&pdupreq->addr, namebuf, sizeof(namebuf));
 
-  switch(pdupreq->addr.ss_family)
-    {
-      case AF_INET:
-        {
-          struct sockaddr_in *paddr = (struct sockaddr_in *)&pdupreq->addr;
-
-          name = inet_ntop(pdupreq->addr.ss_family, &paddr->sin_addr, namebuf, sizeof(namebuf));
-          sprintf(portbuf, "%u", paddr->sin_port);
-          break;
-        }
-      case AF_INET6:
-        {
-          struct sockaddr_in6 *paddr = (struct sockaddr_in6 *)&pdupreq->addr;
-
-          name = inet_ntop(pdupreq->addr.ss_family, &paddr->sin6_addr, namebuf, sizeof(namebuf));
-          sprintf(portbuf, "%u", paddr->sin6_port);
-          break;
-        }
-      case AF_LOCAL:
-        {
-          struct sockaddr_un *paddr = (struct sockaddr_un *)&pdupreq->addr;
-
-          name = paddr->sun_path;
-          sprintf(portbuf, "n/a");
-          break;
-        }
-      default:
-        sprintf(portbuf, "n/a");
-    }
-  if(name == NULL)
-    {
-      sprintf(namebuf, "<unknown>");
-      name = namebuf;
-    }
-  return sprintf("ip=%s port=%s xid=%ld checksum=%d",
-                 name, portbuf, pdupreq->xid, pdupreq->checksum);
+  return sprintf("addr=%s xid=%ld checksum=%d rq_prog=%lu rq_vers=%lu rq_proc=%lu",
+                 namebuf, pdupreq->xid, pdupreq->checksum,
+                 pdupreq->rq_prog, pdupreq->rq_vers, pdupreq->rq_proc);
 }
-#else
-  return sprintf("ip=%d.%d.%d.%d port=%d xid=%ld rq_prog=%ld checksum=%d",
-                 (ntohl(pdupreq->addr.sin_addr.s_addr) & 0xFF000000) >> 24,
-                 (ntohl(pdupreq->addr.sin_addr.s_addr) & 0x00FF0000) >> 16,
-                 (ntohl(pdupreq->addr.sin_addr.s_addr) & 0x0000FF00) >> 8,
-                 (ntohl(pdupreq->addr.sin_addr.s_addr) & 0x000000FF),
-                 pdupreq->addr.sin_port,
-                 pdupreq->xid,
-                 pdupreq->checksum);
-}
-#endif
 
 /**
  *

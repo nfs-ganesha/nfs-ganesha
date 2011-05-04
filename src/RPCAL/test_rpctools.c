@@ -78,7 +78,7 @@ void ipv6check() {
 }
 
 void ipv4print() {
-    char buf[256];
+    char buf[INET4_ADDRSTRLEN];
     sprint_sockip(&ipv4a, buf, sizeof(buf));
     // printf("Value = %s\n", buf);
     CMP("10.10.5.1", buf, strlen("10.10.5.1"), "ipv4a has the wrong ip value");

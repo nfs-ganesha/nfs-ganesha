@@ -80,6 +80,44 @@
 #include "nfs_file_handle.h"
 #include "nfs_dupreq.h"
 
+const char *str_sock_type(int st)
+{
+  static char buf[16];
+  switch (st)
+    {
+      case SOCK_STREAM: return "SOCK_STREAM";
+      case SOCK_DGRAM:  return "SOCK_DGRAM ";
+      case SOCK_RAW:    return "SOCK_RAW   ";
+    }
+  sprintf(buf, "%d", st);
+  return buf;
+}
+
+const char *str_ip_proto(int p)
+{
+  static char buf[16];
+  switch (p)
+    {
+      case IPPROTO_IP:  return "IPPROTO_IP ";
+      case IPPROTO_TCP: return "IPPROTO_TCP";
+      case IPPROTO_UDP: return "IPPROTO_UDP";
+    }
+  sprintf(buf, "%d", p);
+  return buf;
+}
+
+const char *str_af(int af)
+{
+  static char buf[16];
+  switch (af)
+    {
+      case AF_INET:  return "AF_INET ";
+      case AF_INET6: return "AF_INET6";
+    }
+  sprintf(buf, "%d", af);
+  return buf;
+}
+
 /**
  *
  * copy_xprt_addr: copies and transport address into an address field.
@@ -125,7 +163,7 @@ int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)
  * @return hash value
  *
  */
-unsigned long hash_sockaddr(sockaddr_t *addr)
+unsigned long hash_sockaddr(sockaddr_t *addr, ignore_port_t ignore_port)
 {
   unsigned long addr_hash = 0;
   int port;
@@ -136,8 +174,11 @@ unsigned long hash_sockaddr(sockaddr_t *addr)
         {
           struct sockaddr_in *paddr = (struct sockaddr_in *)addr;
           addr_hash = paddr->sin_addr.s_addr;
-          port = paddr->sin_port;
-          addr_hash ^= (port<<16);
+          if(ignore_port == CHECK_PORT)
+            {
+              port = paddr->sin_port;
+              addr_hash ^= (port<<16);
+            }
           break;
         }
       case AF_INET6:
@@ -148,8 +189,11 @@ unsigned long hash_sockaddr(sockaddr_t *addr)
                       paddr->sin6_addr.s6_addr32[1] ^
                       paddr->sin6_addr.s6_addr32[2] ^
                       paddr->sin6_addr.s6_addr32[3];
-          port = paddr->sin6_port;
-          addr_hash ^= (port<<16);
+          if(ignore_port == CHECK_PORT)
+            {
+              port = paddr->sin6_port;
+              addr_hash ^= (port<<16);
+            }
           break;
         }
       default:
@@ -157,8 +201,11 @@ unsigned long hash_sockaddr(sockaddr_t *addr)
     }
 #else
   addr_hash = addr->sin_addr.s_addr;
-  port = addr->sin_port;
-  addr_hash ^= (port<<16);
+  if(ignore_port == CHECK_PORT)
+    {
+      port = addr->sin_port;
+      addr_hash ^= (port<<16);
+    }
 #endif
   
   return addr_hash;
@@ -253,7 +300,7 @@ int sprint_sockip(sockaddr_t *addr, char *buf, int len)
  */
 int cmp_sockaddr(sockaddr_t *addr_1,
                  sockaddr_t *addr_2,
-                 int ignore_port)
+                 ignore_port_t ignore_port)
 {
 #ifdef _USE_TIRPC
   if(addr_1->ss_family != addr_2->ss_family)
@@ -275,7 +322,7 @@ int cmp_sockaddr(sockaddr_t *addr_1,
           struct sockaddr_in *paddr2 = (struct sockaddr_in *)addr_2;
 
           return (paddr1->sin_addr.s_addr == paddr2->sin_addr.s_addr
-                  && (ignore_port || paddr1->sin_port == paddr2->sin_port));
+                  && (ignore_port == IGNORE_PORT || paddr1->sin_port == paddr2->sin_port));
         }
 #ifdef _USE_TIRPC
       case AF_INET6:
@@ -287,7 +334,7 @@ int cmp_sockaddr(sockaddr_t *addr_1,
                          paddr1->sin6_addr.s6_addr, 
                          paddr2->sin6_addr.s6_addr,
                          sizeof(paddr2->sin6_addr.s6_addr)) == 0)
-                  && (ignore_port || paddr1->sin6_port == paddr2->sin6_port);
+                  && (ignore_port == IGNORE_PORT || paddr1->sin6_port == paddr2->sin6_port);
         }
 #endif
       default:
@@ -343,3 +390,62 @@ void socket_setoptions(int socketFd)
 
   return;
 }                               /* socket_setoptions_ctrl */
+
+#ifdef _USE_TIRPC
+#define SIZE_AI_ADDR sizeof(struct sockaddr)
+#else
+#define SIZE_AI_ADDR sizeof(struct sockaddr_in)
+#endif
+
+int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
+{
+  struct addrinfo *info, hints, *p;
+  int rc;
+  char ipname[SOCK_NAME_MAX];
+
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_flags = AI_V4MAPPED | AI_ADDRCONFIG | AI_NUMERICHOST;
+#ifdef _USE_TIRPC
+  hints.ai_family = AF_UNSPEC;
+#else
+  hints.ai_family = AF_INET;
+#endif
+  hints.ai_socktype = SOCK_RAW;
+  hints.ai_protocol = 0;
+  rc = getaddrinfo(str, NULL, &hints, &info);
+  if (rc == 0 && info != NULL)
+    {
+      p = info;
+      if(isFullDebug(COMPONENT_RPC))
+        {
+          while (p != NULL)
+            {
+              sprint_sockaddr((sockaddr_t *)p->ai_addr, ipname, sizeof(ipname));
+              LogFullDebug(COMPONENT_RPC,
+                           "getaddrinfo %s returned %s family=%s socktype=%s protocol=%s",
+                           str, ipname,
+                           str_af(p->ai_family),
+                           str_sock_type(p->ai_socktype),
+                           str_ip_proto(p->ai_protocol));
+              p = p->ai_next;
+            }
+        }
+      memcpy(addr, info->ai_addr, SIZE_AI_ADDR);
+      freeaddrinfo(info);
+    }
+  else
+    {
+      switch (rc)
+        {
+          case EAI_SYSTEM:
+            LogFullDebug(COMPONENT_RPC,
+                         "getaddrinfo %s returned %d(%s)",
+                         str, errno, strerror(errno));
+          default:
+            LogFullDebug(COMPONENT_RPC,
+                         "getaddrinfo %s returned %d(%s)",
+                         str, rc, gai_strerror(rc));
+        }
+    }
+  return rc;
+}

@@ -73,7 +73,7 @@ extern nfs_parameter_t nfs_param;
  *
  *  ip_stats_rbt_hash_func: computes the hash value for the entry in IP stats cache.
  * 
- * Computes the hash value for the entry in IP stats cache. In fact, it just use addresse as value (identity function) modulo the size of the hash.
+ * Computes the hash value for the entry in IP stats cache. 
  * This function is called internal in the HasTable_* function
  *
  * @param hparam [IN] hash table parameter.
@@ -87,15 +87,14 @@ extern nfs_parameter_t nfs_param;
 unsigned long int ip_stats_value_hash_func(hash_parameter_t * p_hparam,
                                            hash_buffer_t * buffclef)
 {
-  return hash_sockaddr((sockaddr_t *)buffclef->pdata) % p_hparam->index_size;
-}                               /*  ip_stats_value_hash_func */
+  return hash_sockaddr((sockaddr_t *)buffclef->pdata, IGNORE_PORT) % p_hparam->index_size;
+}
 
 /**
  *
  *  ip_stats_rbt_hash_func: computes the rbt value for the entry in IP stats cache.
  * 
- * Computes the rbt value for the entry in IP stats cache. In fact, it just use the address value
- * itself (which is an unsigned integer) as the rbt value.
+ * Computes the rbt value for the entry in IP stats cache.
  * This function is called internal in the HasTable_* function
  *
  * @param hparam [IN] hash table parameter.
@@ -109,7 +108,7 @@ unsigned long int ip_stats_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long int ip_stats_rbt_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t * buffclef)
 {
-  return hash_sockaddr((sockaddr_t *)buffclef->pdata);
+  return hash_sockaddr((sockaddr_t *)buffclef->pdata, IGNORE_PORT);
 }
 
 /**
@@ -127,15 +126,14 @@ unsigned long int ip_stats_rbt_hash_func(hash_parameter_t * p_hparam,
  */
 int compare_ip_stats(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  return (cmp_sockaddr((sockaddr_t *)(buff1->pdata), (sockaddr_t *)(buff2->pdata), 1) != 0) ? 0 : 1;
-}                               /* compare_xid */
+  return (cmp_sockaddr((sockaddr_t *)(buff1->pdata), (sockaddr_t *)(buff2->pdata), IGNORE_PORT) != 0) ? 0 : 1;
+}
 
 /**
  *
- * display_ip_stats: displays the ip_stats stored in the buffer.
+ * display_ip_stats_key: displays the ip_stats stored in the buffer.
  *
- * displays the ip_stats stored in the buffer. This function is to be used as 'key_to_str' field in 
- * the hashtable storing the nfs duplicated requests. 
+ * displays the ip_stats key stored in the buffer. This function is to be used as 'key_to_str' field. 
  *
  * @param buff1 [IN]  buffer to display
  * @param buff2 [OUT] output string
@@ -143,17 +141,39 @@ int compare_ip_stats(hash_buffer_t * buff1, hash_buffer_t * buff2)
  * @return number of character written.
  *
  */
-int display_ip_stats(hash_buffer_t * pbuff, char *str)
+int display_ip_stats_key(hash_buffer_t * pbuff, char *str)
 {
-  unsigned long int ip_stats = (unsigned long int)(pbuff->pdata);
+  sockaddr_t *addr = (sockaddr_t *)(pbuff->pdata);
 
-  return sprintf(str, "%x : %u.%u.%u.%u",
-                 (unsigned int)ip_stats,
-                 ((unsigned int)ip_stats & 0xFF000000) >> 24,
-                 ((unsigned int)ip_stats & 0x00FF0000) >> 16,
-                 ((unsigned int)ip_stats & 0x0000FF00) >> 8,
-                 ((unsigned int)ip_stats & 0x000000FF));
-}                               /* display_ip_stats */
+  sprint_sockaddr(addr, str, HASHTABLE_DISPLAY_STRLEN);
+  return strlen(str);
+}
+
+/**
+ *
+ * display_ip_stats_val: displays the ip_stats stored in the buffer.
+ *
+ * displays the ip_stats stored in the buffer. This function is to be used as 'val_to_str' field. 
+ *
+ * @param buff1 [IN]  buffer to display
+ * @param buff2 [OUT] output string
+ *
+ * @return number of character written.
+ *
+ */
+int display_ip_stats_val(hash_buffer_t * pbuff, char *str)
+{
+  nfs_ip_stats_t *ip_stats = (nfs_ip_stats_t *)(pbuff->pdata);
+
+  return snprintf(str, HASHTABLE_DISPLAY_STRLEN,
+                  "calls %u nfs2 %u nfs3 %u nfs4 %u mnt1 %u mnt3 %u",
+                  ip_stats->nb_call,
+                  ip_stats->nb_req_nfs2,
+                  ip_stats->nb_req_nfs3,
+                  ip_stats->nb_req_nfs4,
+                  ip_stats->nb_req_mnt1,
+                  ip_stats->nb_req_mnt3);
+}
 
 /**
  *

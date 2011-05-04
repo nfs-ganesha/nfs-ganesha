@@ -529,7 +529,7 @@ size_t replylen;
   /*
    * Store it away
    */
-  if(isFullDebug(COMPONENT_FSAL))
+  if(isFullDebug(COMPONENT_RPC_CACHE))
     {
       struct netconfig *nconf;
       char *uaddr;
@@ -592,7 +592,7 @@ size_t *replylenp;
          ent->cache_addr.len == xprt->xp_rtaddr.len &&
          (memcmp(ent->cache_addr.buf, xprt->xp_rtaddr.buf, xprt->xp_rtaddr.len) == 0))
         {
-          if(isFullDebug(COMPONENT_FSAL))
+          if(isFullDebug(COMPONENT_RPC_CACHE))
             {
               struct netconfig *nconf;
               char *uaddr;

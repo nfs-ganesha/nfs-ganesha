@@ -85,19 +85,30 @@ extern SVCXPRT         **Xports;
 extern pthread_mutex_t  *mutex_cond_xprt;
 extern pthread_cond_t   *condvar_xprt;
 
+#ifdef _USE_TIRPC
+#define SOCK_NAME_MAX 128
+#else
+#define SOCK_NAME_MAX 32
+#endif
 extern int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt);
 extern int sprint_sockaddr(sockaddr_t *addr, char *buf, int len);
-extern unsigned long hash_sockaddr(sockaddr_t *addr);
 extern int sprint_sockip(sockaddr_t *addr, char *buf, int len);
 
-#define IGNORE_PORT 1
-#define CHECK_PORT 0
+typedef enum _ignore_port {
+	IGNORE_PORT,
+	CHECK_PORT
+} ignore_port_t;
+
 extern int cmp_sockaddr(sockaddr_t *addr_1,
                         sockaddr_t *addr_2,
-                        int ignore_port);
-
+                        ignore_port_t ignore_port);
+extern unsigned long hash_sockaddr(sockaddr_t *addr,
+                                   ignore_port_t ignore_port);
 
 extern in_addr_t get_in_addr(sockaddr_t *addr);
 extern int get_port(sockaddr_t *addr);
+
+/* Returns an EAI value, accepts only numeric strings */
+extern int ipstring_to_sockaddr(const char *str, sockaddr_t *addr);
 
 #endif

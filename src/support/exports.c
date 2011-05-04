@@ -2437,7 +2437,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
                             bool_t proc_makes_write)
 {
   int rc;
-  char ipstring[512];
+  char ipstring[SOCK_NAME_MAX];
   int ipvalid;
 
   if (pexport != NULL)

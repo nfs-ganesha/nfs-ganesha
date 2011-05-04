@@ -70,8 +70,10 @@
 
 typedef struct pnfs_ds_parameter__
 {
+#ifndef _USE_TIRPC
   unsigned int ipaddr;
   unsigned short ipport;
+#endif
   unsigned int prognum;
   char rootpath[MAXPATHLEN];
   char ipaddr_ascii[MAXNAMLEN];

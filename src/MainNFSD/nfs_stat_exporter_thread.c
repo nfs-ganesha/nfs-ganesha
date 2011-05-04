@@ -89,7 +89,7 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
 #endif
   static char ten_bytes_all_0[10];
   static unsigned two_bytes_all_1 = 0xFFFF;
-  char ipstring[MAXHOSTNAMELEN];
+  char ipstring[SOCK_NAME_MAX];
   char ip6string[MAXHOSTNAMELEN];
 
   memset(ten_bytes_all_0, 0, 10);

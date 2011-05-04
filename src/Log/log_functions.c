@@ -1532,6 +1532,11 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
+  { COMPONENT_RPC,               "COMPONENT_RPC", "RPC",
+    NIV_EVENT,
+    SYSLOG,
+    "SYSLOG"
+  },
 };
 
 int DisplayLogComponentLevel(log_components_t component,

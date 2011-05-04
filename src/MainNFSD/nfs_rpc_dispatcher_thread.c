@@ -1963,7 +1963,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               if(stat == XPRT_DIED)
                 {
                   sockaddr_t addr;
-                  char addrbuf[512];
+                  char addrbuf[SOCK_NAME_MAX];
                   if(copy_xprt_addr(&addr, pnfsreq->xprt) == 1)
                     sprint_sockaddr(&addr, addrbuf, sizeof(addrbuf));
                   else

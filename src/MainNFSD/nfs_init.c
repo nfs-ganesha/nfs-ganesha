@@ -388,8 +388,8 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->ip_name_param.hash_param.hash_func_key = ip_name_value_hash_func;
   p_nfs_param->ip_name_param.hash_param.hash_func_rbt = ip_name_rbt_hash_func;
   p_nfs_param->ip_name_param.hash_param.compare_key = compare_ip_name;
-  p_nfs_param->ip_name_param.hash_param.key_to_str = display_ip_name;
-  p_nfs_param->ip_name_param.hash_param.val_to_str = display_ip_value;
+  p_nfs_param->ip_name_param.hash_param.key_to_str = display_ip_name_key;
+  p_nfs_param->ip_name_param.hash_param.val_to_str = display_ip_name_val;
   p_nfs_param->ip_name_param.hash_param.name = "IP Name";
   p_nfs_param->ip_name_param.expiration_time = IP_NAME_EXPIRATION;
   strncpy(p_nfs_param->ip_name_param.mapfile, "", MAXPATHLEN);
@@ -461,8 +461,8 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->ip_stats_param.hash_param.hash_func_key = ip_stats_value_hash_func;
   p_nfs_param->ip_stats_param.hash_param.hash_func_rbt = ip_stats_rbt_hash_func;
   p_nfs_param->ip_stats_param.hash_param.compare_key = compare_ip_stats;
-  p_nfs_param->ip_stats_param.hash_param.key_to_str = display_ip_stats;
-  p_nfs_param->ip_stats_param.hash_param.val_to_str = display_ip_stats;
+  p_nfs_param->ip_stats_param.hash_param.key_to_str = display_ip_stats_key;
+  p_nfs_param->ip_stats_param.hash_param.val_to_str = display_ip_stats_val;
   p_nfs_param->ip_stats_param.hash_param.name = "IP Stats";
 
   /*  Worker parameters : NFSv4 Client id table */
