@@ -794,7 +794,6 @@ AC_CONFIG_FILES([include/Makefile
                  support/Makefile
                  Log/Makefile
                  NodeList/Makefile
-                 test/Makefile
                  ConfigParsing/Makefile
                  IdMapper/Makefile
                  RW_Lock/Makefile
