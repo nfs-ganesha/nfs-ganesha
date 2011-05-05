@@ -324,8 +324,8 @@ int _BuddyCheck_Autolabel(BUDDY_ADDR_T ptr,
                           const unsigned int line,
                           const char *str);
 
-#define BuddyCheck(ptr)           _BuddyCheck_Autolabel(ptr, __FILE__, __FUNCTION__, __LINE__, "BuddyCheck")
-#define BuddyCheckLabel(ptr, lbl) _BuddyCheck_Autolabel(ptr, __FILE__, __FUNCTION__, __LINE__, lbl)
+#define BuddyCheck(ptr)           _BuddyCheck_Autolabel((BUDDY_ADDR_T) ptr, __FILE__, __FUNCTION__, __LINE__, "BuddyCheck")
+#define BuddyCheckLabel(ptr, lbl) _BuddyCheck_Autolabel((BUDDY_ADDR_T) ptr, __FILE__, __FUNCTION__, __LINE__, lbl)
 #else
 /**
  *  test memory corruption for a block.
@@ -333,8 +333,8 @@ int _BuddyCheck_Autolabel(BUDDY_ADDR_T ptr,
  *  false else.
  */
 
-#define BuddyCheck(ptr)           _BuddyCheck(ptr)
-#define BuddyCheckLabel(ptr, lbl) _BuddyCheck(ptr)
+#define BuddyCheck(ptr)           _BuddyCheck((BUDDY_ADDR_T) ptr)
+#define BuddyCheckLabel(ptr, lbl) _BuddyCheck((BUDDY_ADDR_T) ptr)
 #endif
 
 /**

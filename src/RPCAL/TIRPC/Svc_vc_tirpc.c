@@ -235,7 +235,7 @@ u_int recvsize;
   xprt->xp_port = 0;            /* this is a connection, not a rendezvouser */
   xprt->xp_fd = fd;
   if(__rpc_fd2sockinfo(fd, &si) && __rpc_sockinfo2netid(&si, &netid))
-    xprt->xp_netid = strdup(netid);
+    xprt->xp_netid = Str_Dup(netid);
 
   if(Xprt_register(xprt) == FALSE)
     goto fail;

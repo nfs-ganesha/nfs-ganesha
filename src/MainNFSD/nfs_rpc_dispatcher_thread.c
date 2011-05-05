@@ -935,9 +935,9 @@ int nfs_Init_svc()
 
 #ifdef _USE_TIRPC_IPV6
   nfs_param.worker_param.nfs_svc_data.xprt_nfs_udp->xp_netid =
-      strdup(netconfig_udpv6->nc_netid);
+      Str_Dup(netconfig_udpv6->nc_netid);
   nfs_param.worker_param.nfs_svc_data.xprt_nfs_udp->xp_tp =
-      strdup(netconfig_udpv6->nc_device);
+      Str_Dup(netconfig_udpv6->nc_device);
 #endif                          /* _USE_TIRPC_IPV6 */
 
   if((nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp =
@@ -965,9 +965,9 @@ int nfs_Init_svc()
     }
 
   nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp->xp_netid =
-      strdup(netconfig_tcpv6->nc_netid);
+      Str_Dup(netconfig_tcpv6->nc_netid);
   nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp->xp_tp =
-      strdup(netconfig_tcpv6->nc_device);
+      Str_Dup(netconfig_tcpv6->nc_device);
 #endif                          /* _USE_TIRPC_IPV6 */
 
   if((nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0)
@@ -988,9 +988,9 @@ int nfs_Init_svc()
 
 #ifdef _USE_TIRPC_IPV6
       nfs_param.worker_param.nfs_svc_data.xprt_mnt_udp->xp_netid =
-          strdup(netconfig_udpv6->nc_netid);
+          Str_Dup(netconfig_udpv6->nc_netid);
       nfs_param.worker_param.nfs_svc_data.xprt_mnt_udp->xp_tp =
-          strdup(netconfig_udpv6->nc_device);
+          Str_Dup(netconfig_udpv6->nc_device);
 #endif                          /* _USE_TIRPC_IPV6 */
 
       if((nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp =
@@ -1082,9 +1082,9 @@ int nfs_Init_svc()
         }
 
       nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp->xp_netid =
-          strdup(netconfig_tcpv6->nc_netid);
+          Str_Dup(netconfig_tcpv6->nc_netid);
       nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp->xp_tp =
-          strdup(netconfig_tcpv6->nc_device);
+          Str_Dup(netconfig_tcpv6->nc_device);
 #endif                          /* _USE_TIRPC_IPV6 */
     }
 

@@ -847,7 +847,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                         reason = "has invalid export";
                       else
                         reason = "V2 not allowed on this export";
-                      sprint_fhandle2(dumpfh, (nfs_fh3 *) parg_nfs);
+                      sprint_fhandle2(dumpfh, (fhandle2 *) parg_nfs);
                       LogMajor(COMPONENT_DISPATCH,
                                "NFS2 Request from host %s %s, proc=%d, FH=%s",
                                addrbuf, reason,
