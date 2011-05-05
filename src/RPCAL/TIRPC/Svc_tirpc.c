@@ -48,19 +48,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "rpc.h"
-#ifdef PORTMAP
-#include <rpc/pmap_clnt.h>
-#endif                          /* PORTMAP */
-
-#include <Rpc_com_tirpc.h>
+#include "tirpc.h"
 #include "stuff_alloc.h"
-#include "RW_Lock.h"
 
 #define	RQCRED_SIZE	400     /* this size is excessive */
-
-#define SVC_VERSQUIET 0x0001    /* keep quiet about vers mismatch */
-#define version_keepquiet(xp) ((u_long)(xp)->xp_p3 & SVC_VERSQUIET)
 
 #define max(a, b) (a > b ? a : b)
 
@@ -70,6 +61,7 @@ SVCXPRT **Xports;
 
 rw_lock_t Svc_lock;
 rw_lock_t Svc_fd_lock;
+int Svc_maxfd;
 
 /* ***************  SVCXPRT related stuff **************** */
 
@@ -101,6 +93,7 @@ SVCXPRT *xprt;
       FD_SET(sock, &Svc_fdset);
       svc_maxfd = max(svc_maxfd, sock);
     }
+  Svc_maxfd = max(svc_maxfd, sock);
 
   V_w(&Svc_fd_lock);
 
@@ -139,6 +132,14 @@ bool_t dolock;
                   break;
             }
         }
+
+      if(sock >= Svc_maxfd)
+        {
+          for(Svc_maxfd--; Svc_maxfd >= 0; Svc_maxfd--)
+            if(Xports[Svc_maxfd])
+              break;
+        }
+
       pthread_cond_destroy(&condvar_xprt[xprt->xp_fd]);
       pthread_mutex_destroy(&mutex_cond_xprt[xprt->xp_fd]);
     }
@@ -156,6 +157,254 @@ void __Xprt_unregister_unlocked(SVCXPRT * xprt)
 {
   __Xprt_do_unregister(xprt, FALSE);
 }
+
+#define xp_free(x) if(x) Mem_Free(x)
+
+void FreeXprt(SVCXPRT *xprt)
+{
+  if(!xprt)
+    {
+      LogFullDebug(COMPONENT_RPC,
+                   "Attempt to free NULL xprt");
+      return;
+      
+    }
+
+  if(xprt->xp_ops == &dg_ops)
+    {
+      if(su_data(xprt))
+        {
+          struct svc_dg_data *su = su_data(xprt);
+          if(su->su_cache)
+            {
+              struct cl_cache *uc = su->su_cache;
+              xp_free(uc->uc_entries);
+              xp_free(uc->uc_fifo);
+              xp_free(su_data(xprt)->su_cache);
+            }
+        }
+      xp_free(su_data(xprt));
+      xp_free(rpc_buffer(xprt));
+    }
+  else if (xprt->xp_ops == &vc_ops)
+    {
+      struct cf_conn *cd = (struct cf_conn *)xprt->xp_p1;
+      XDR_DESTROY(&(cd->xdrs));
+      xp_free(xprt->xp_p1); /* cd */
+    }
+  else if (xprt->xp_ops == &rendezvous_ops)
+    {
+      xp_free(xprt->xp_p1); /* r */
+    }
+  else
+    {
+      LogCrit(COMPONENT_RPC,
+              "Attempt to free unknown xprt %p",
+              xprt);
+      return;
+    }
+  xp_free(xprt->xp_tp);
+  xp_free(xprt->xp_netid);
+  xp_free(xprt->xp_rtaddr.buf);
+  xp_free(xprt->xp_ltaddr.buf);
+  xp_free(xprt->xp_auth);
+  Mem_Free(xprt);
+}
+
+/*
+ * Create a copy of xprt. No-op for TIRPC.
+ */
+SVCXPRT *Svcxprt_copycreate()
+{
+  return NULL;
+ }
+
+/*
+ * Duplicate xprt from original to copy.
+ */
+SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
+{
+  if(xprt_copy)
+    FreeXprt(xprt_copy);
+
+  xprt_copy = (SVCXPRT *) Mem_Alloc(sizeof(SVCXPRT));
+  if(xprt_copy == NULL)
+    return NULL;
+  memset(xprt_copy, 0, sizeof(SVCXPRT));
+  xprt_copy->xp_ops  = xprt_orig->xp_ops;
+  xprt_copy->xp_ops2 = xprt_orig->xp_ops2;
+  xprt_copy->xp_fd   = xprt_orig->xp_fd;
+
+  if(xprt_orig->xp_ops == &dg_ops)
+    {
+      if(su_data(xprt_orig))
+        {
+          struct svc_dg_data *su_o = su_data(xprt_orig), *su_c;
+          su_c = (struct svc_dg_data *) Mem_Alloc(sizeof(struct svc_dg_data));
+          if(!su_c)
+            goto fail;
+          su_data_set(xprt_copy) = su_c;
+          memset(su_c, 0, sizeof(struct svc_dg_data));
+          su_c->su_iosz = su_o->su_iosz;
+          su_c->su_cache = NULL;
+
+          if(su_o->su_cache)
+            {
+              struct cl_cache *uc = su_o->su_cache;
+              if(!Svc_dg_enablecache(xprt_copy, uc->uc_size))
+                goto fail;
+            }
+      
+          rpc_buffer(xprt_copy) = Mem_Alloc(su_c->su_iosz);
+          if(!rpc_buffer(xprt_copy))
+            goto fail;
+          xdrmem_create(&(su_c->su_xdrs), rpc_buffer(xprt_copy), su_c->su_iosz, XDR_DECODE);
+        }
+      else
+        goto fail;
+    }
+  else if (xprt_orig->xp_ops == &vc_ops)
+    {
+      struct cf_conn *cd_o = (struct cf_conn *)xprt_orig->xp_p1, *cd_c;
+      cd_c = (struct cf_conn *) Mem_Alloc(sizeof(*cd_c));
+      if(!cd_c)
+        goto fail;
+      cd_c->strm_stat = cd_o->strm_stat;
+      cd_c->x_id = cd_o->x_id;
+      memcpy(cd_c->verf_body, cd_o->verf_body, MAX_AUTH_BYTES);
+      xprt_copy->xp_verf.oa_base = cd_c->verf_body;
+    }
+  else if (xprt_orig->xp_ops == &rendezvous_ops)
+    {
+      goto fail;
+    }
+  else
+    {
+      LogCrit(COMPONENT_RPC,
+              "Attempt to copy unknown xprt %p",
+              xprt_orig);
+      Mem_Free(xprt_copy);
+      return NULL;
+    }
+
+  if(xprt_orig->xp_tp)
+    {
+      xprt_copy->xp_tp = Str_Dup(xprt_orig->xp_tp);
+      if(!xprt_copy->xp_tp)
+        goto fail;
+    }
+
+  if(xprt_orig->xp_netid)
+    {
+      xprt_copy->xp_netid = Str_Dup(xprt_orig->xp_netid);
+      if(!xprt_copy->xp_netid)
+        goto fail;
+    }
+
+  if(xprt_orig->xp_rtaddr.buf)
+    {
+      xprt_copy->xp_rtaddr.buf = Mem_Alloc(sizeof(struct sockaddr_storage));
+      if(!xprt_copy->xp_rtaddr.buf)
+        goto fail;
+      xprt_copy->xp_rtaddr.maxlen = xprt_orig->xp_rtaddr.maxlen;
+      xprt_copy->xp_rtaddr.len    = xprt_orig->xp_rtaddr.len;
+      memcpy(xprt_copy->xp_rtaddr.buf, xprt_orig->xp_rtaddr.buf, sizeof(struct sockaddr_storage));
+    }
+
+  if(xprt_orig->xp_ltaddr.buf)
+    {
+      xprt_copy->xp_ltaddr.buf = Mem_Alloc(sizeof(struct sockaddr_storage));
+      if(!xprt_copy->xp_ltaddr.buf)
+        goto fail;
+      xprt_copy->xp_ltaddr.maxlen = xprt_orig->xp_ltaddr.maxlen;
+      xprt_copy->xp_ltaddr.len    = xprt_orig->xp_ltaddr.len;
+      memcpy(xprt_copy->xp_ltaddr.buf, xprt_orig->xp_ltaddr.buf, sizeof(struct sockaddr_storage));
+    }
+
+  if(xprt_orig->xp_auth);
+
+  return xprt_copy;
+
+ fail:
+  FreeXprt(xprt_copy);
+  return NULL;
+}
+
+#ifdef _DEBUG_MEMLEAKS
+
+#define checkif(x, s)                \
+  if(x)                              \
+    {                                \
+      rc = BuddyCheckLabel(x, 1, s); \
+      if(!rc)                        \
+        return 0;                    \
+    }
+
+#define check(x, s)                  \
+  if(x)                              \
+    {                                \
+      rc = BuddyCheckLabel(x, 1, s); \
+      if(!rc)                        \
+        return 0;                    \
+    }
+
+int CheckXprt(SVCXPRT *xprt)
+{
+  int rc;
+  if(!xprt)
+    {
+      LogWarn(COMPONENT_MEMALLOC,
+              "CheckXprt xprt=NULL");
+      return 0;
+    }
+
+  LogFullDebug(COMPONENT_MEMALLOC,
+               "Checking Xprt %p",
+               xprt);
+
+  rc = BuddyCheckLabel(xprt, 1, "xprt");
+  if(!rc)
+    return 0;
+
+  if(xprt->xp_ops == &dg_ops)
+    {
+      if(su_data(xprt))
+        {
+          struct svc_dg_data *su = su_data(xprt);
+          if(su->su_cache)
+            {
+              struct cl_cache *uc = su->su_cache;
+              check(uc->uc_entries, "uc_entries");
+              check(uc->uc_fifo, "uc_fifo");
+              check(su_data(xprt)->su_cache, "su_cache");
+            }
+        }
+      check(su_data(xprt), "su_data");
+      check(rpc_buffer(xprt), "rpc_buffer");
+    }
+  else if (xprt->xp_ops == &vc_ops)
+    {
+      check(xprt->xp_p1, "cd"); /* cd */
+    }
+  else if (xprt->xp_ops == &rendezvous_ops)
+    {
+      check(xprt->xp_p1, "r"); /* r */
+    }
+  else
+    {
+      LogCrit(COMPONENT_MEMALLOC,
+              "Attempt to check unknown xprt %p",
+              xprt);
+      return 0;
+    }
+  check(xprt->xp_tp, "xp_tp");
+  check(xprt->xp_netid, "xp_netid");
+  check(xprt->xp_rtaddr.buf, "xp_rtaddr.buf");
+  check(xprt->xp_ltaddr.buf, "xp_ltaddr.buf");
+  check(xprt->xp_auth, "xp_auth");
+  return 1;
+}
+#endif
 
 /* ********************** CALLOUT list related stuff ************* */
 
@@ -223,7 +472,7 @@ int protocol;
   if((s = Svc_find((rpcprog_t) prog, (rpcvers_t) vers, &prev, NULL)) != NULL)
     {
       if(s->sc_dispatch == dispatch)
-        goto pmap_it;           /* he is registering another xptr */
+        goto pmap_it;           /* he is registering another xprt */
       return (FALSE);
     }
   s = Mem_Alloc(sizeof(struct svc_callout));

@@ -17,6 +17,7 @@
 #include <tirpc/rpc/svc.h>
 #include <tirpc/rpc/types.h>
 #include <tirpc/rpc/pmap_clnt.h>
+#include <tirpc/rpc/svc_dg.h>
 #include "RW_Lock.h"
 #else
 #include <rpc/rpc.h>
@@ -58,12 +59,24 @@ extern SVCXPRT *Svc_vc_create(int, u_int, u_int);
 extern SVCXPRT *Svc_dg_create(int, u_int, u_int);
 extern int Xprt_register(SVCXPRT * xprt);
 extern void Xprt_unregister(SVCXPRT * xprt);
+
+extern void FreeXprt(SVCXPRT *xprt);
+
+#ifdef _DEBUG_MEMLEAKS
+extern int CheckXprt(SVCXPRT *xprt);
 #else
+#define CheckXprt(ptr)
+#endif
+
+#else                       /* not _USE_TIRPC */
+
 extern void Svcudp_soft_destroy(SVCXPRT * xprt);
 extern SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize);
 extern SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz);
 extern bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*dispatch) (),
                     int protocol);
+#define CheckXprt(ptr)
+
 #endif                          /* _USE_TIRPC */
 
 
@@ -93,6 +106,8 @@ extern pthread_cond_t   *condvar_xprt;
 extern int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt);
 extern int sprint_sockaddr(sockaddr_t *addr, char *buf, int len);
 extern int sprint_sockip(sockaddr_t *addr, char *buf, int len);
+extern SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig);
+extern SVCXPRT *Svcxprt_copycreate();
 
 typedef enum _ignore_port {
 	IGNORE_PORT,

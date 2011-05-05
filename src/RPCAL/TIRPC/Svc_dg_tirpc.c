@@ -48,7 +48,6 @@
 #endif
 
 #include <pthread.h>
-/* #include <reentrant.h> */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <errno.h>
@@ -57,17 +56,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <netconfig.h>
-//#include <netdir.h>
 #include <err.h>
 
-#include "rpc.h"
-#include <rpc/svc_dg.h>
-#include <Rpc_com_tirpc.h>
+#include "tirpc.h"
 #include "RW_Lock.h"
 #include "stuff_alloc.h"
-
-#define	su_data(xprt)	((struct svc_dg_data *)(xprt->xp_p2))
-#define	rpc_buffer(xprt) ((xprt)->xp_p1)
 
 #ifndef MAX
 #define	MAX(a, b)	(((a) > (b)) ? (a) : (b))
@@ -83,7 +76,6 @@ static void Svc_dg_destroy(SVCXPRT *);
 static bool_t Svc_dg_control(SVCXPRT *, const u_int, void *);
 static int cache_get(SVCXPRT *, struct rpc_msg *, char **, size_t *);
 static void cache_set(SVCXPRT *, size_t);
-int Svc_dg_enablecache(SVCXPRT *, u_int);
 
 /*
  * Usage:
@@ -131,27 +123,30 @@ u_int recvsize;
   if(xprt == NULL)
     goto freedata;
   memset(xprt, 0, sizeof(SVCXPRT));
-  rpc_buffer(xprt) = NULL;
+  Svc_dg_ops(xprt);
 
-  su = (struct svc_dg_data *)Mem_Alloc(sizeof(*su));
+  su = (struct svc_dg_data *)Mem_Alloc(sizeof(struct svc_dg_data));
   if(su == NULL)
     goto freedata;
   su->su_iosz = ((MAX(sendsize, recvsize) + 3) / 4) * 4;
+  su->su_cache = NULL;
+  su_data_set(xprt) = su;
+
   rpc_buffer(xprt) = Mem_Alloc(su->su_iosz);
   if(rpc_buffer(xprt) == NULL)
     goto freedata;
   xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), su->su_iosz, XDR_DECODE);
-  su->su_cache = NULL;
   xprt->xp_fd = fd;
-  xprt->xp_p2 = su;
   xprt->xp_verf.oa_base = su->su_verfbody;
-  Svc_dg_ops(xprt);
   xprt->xp_rtaddr.maxlen = sizeof(struct sockaddr_storage);
 
   slen = sizeof ss;
   if(getsockname(fd, (struct sockaddr *)(void *)&ss, &slen) < 0)
     goto freedata;
+
   xprt->xp_ltaddr.buf = Mem_Alloc(sizeof(struct sockaddr_storage));
+  if(!xprt->xp_ltaddr.buf)
+    goto freedata;
   xprt->xp_ltaddr.maxlen = sizeof(struct sockaddr_storage);
   xprt->xp_ltaddr.len = slen;
   memcpy(xprt->xp_ltaddr.buf, &ss, slen);
@@ -162,12 +157,7 @@ u_int recvsize;
   return (xprt);
  freedata:
   (void)warnx(svc_dg_str, __no_mem_str);
-  if(xprt && rpc_buffer(xprt))
-    (void)Mem_Free(rpc_buffer(xprt));
-  if(xprt)
-    (void)Mem_Free(xprt);
-  if(su)
-    (void)Mem_Free(su);
+  FreeXprt(xprt);
   return (NULL);
 }
 
@@ -280,17 +270,7 @@ void *args_ptr;
 void Svc_dg_soft_destroy(xprt)
 SVCXPRT *xprt;
 {
-  struct svc_dg_data *su = su_data(xprt);
-
-  (void)Mem_Free(rpc_buffer(xprt));
-  (void)Mem_Free(su);
-  if(xprt->xp_rtaddr.buf)
-    (void)Mem_Free(xprt->xp_rtaddr.buf);
-  if(xprt->xp_ltaddr.buf)
-    (void)Mem_Free(xprt->xp_ltaddr.buf);
-  if(xprt->xp_tp)
-    (void)Mem_Free(xprt->xp_tp);
-  (void)Mem_Free(xprt);
+  FreeXprt(xprt);
 }
 
 static void Svc_dg_destroy(xprt)
@@ -302,15 +282,8 @@ SVCXPRT *xprt;
   if(xprt->xp_fd != -1)
     (void)close(xprt->xp_fd);
   XDR_DESTROY(&(su->su_xdrs));
-  (void)Mem_Free(rpc_buffer(xprt));
-  (void)Mem_Free(su);
-  if(xprt->xp_rtaddr.buf)
-    (void)Mem_Free(xprt->xp_rtaddr.buf);
-  if(xprt->xp_ltaddr.buf)
-    (void)Mem_Free(xprt->xp_ltaddr.buf);
-  if(xprt->xp_tp)
-    (void)Mem_Free(xprt->xp_tp);
-  (void)Mem_Free(xprt);
+
+  FreeXprt(xprt);
 }
 
 static bool_t /*ARGSUSED*/ Svc_dg_control(xprt, rq, in)
@@ -321,29 +294,27 @@ void *in;
   return (FALSE);
 }
 
+struct xp_ops  dg_ops =
+  {
+    .xp_recv = Svc_dg_recv,
+    .xp_stat = Svc_dg_stat,
+    .xp_getargs = Svc_dg_getargs,
+    .xp_reply = Svc_dg_reply,
+    .xp_freeargs = Svc_dg_freeargs,
+    .xp_destroy = Svc_dg_destroy,
+  };
+
+
+struct xp_ops2 dg_ops2 =
+  {
+    .xp_control = Svc_dg_control,
+  };
+
 static void Svc_dg_ops(xprt)
 SVCXPRT *xprt;
 {
-  static struct xp_ops ops;
-  static struct xp_ops2 ops2;
-  extern pthread_mutex_t ops_lock;
-
-/* VARIABLES PROTECTED BY ops_lock: ops */
-
-  P(ops_lock);
-  if(ops.xp_recv == NULL)
-    {
-      ops.xp_recv = Svc_dg_recv;
-      ops.xp_stat = Svc_dg_stat;
-      ops.xp_getargs = Svc_dg_getargs;
-      ops.xp_reply = Svc_dg_reply;
-      ops.xp_freeargs = Svc_dg_freeargs;
-      ops.xp_destroy = Svc_dg_destroy;
-      ops2.xp_control = Svc_dg_control;
-    }
-  xprt->xp_ops = &ops;
-  xprt->xp_ops2 = &ops2;
-  V(ops_lock);
+  xprt->xp_ops = &dg_ops;
+  xprt->xp_ops2 = &dg_ops2;
 }
 
 /*  The CACHING COMPONENT */
@@ -357,55 +328,6 @@ SVCXPRT *xprt;
  * Buffers are sent again if retransmissions are detected.
  */
 
-#define	SPARSENESS 4            /* 75% sparse */
-
-/*
- * An entry in the cache
- */
-typedef struct cache_node *cache_ptr;
-struct cache_node
-{
-  /*
-   * Index into cache is xid, proc, vers, prog and address
-   */
-  u_int32_t cache_xid;
-  rpcproc_t cache_proc;
-  rpcvers_t cache_vers;
-  rpcprog_t cache_prog;
-  struct netbuf cache_addr;
-  /*
-   * The cached reply and length
-   */
-  char *cache_reply;
-  size_t cache_replylen;
-  /*
-   * Next node on the list, if there is a collision
-   */
-  cache_ptr cache_next;
-};
-
-/*
- * The entire cache
- */
-struct cl_cache
-{
-  u_int uc_size;                /* size of cache */
-  cache_ptr *uc_entries;        /* hash table of entries in cache */
-  cache_ptr *uc_fifo;           /* fifo list of entries in cache */
-  u_int uc_nextvictim;          /* points to next victim in fifo list */
-  rpcprog_t uc_prog;            /* saved program number */
-  rpcvers_t uc_vers;            /* saved version number */
-  rpcproc_t uc_proc;            /* saved procedure number */
-};
-
-/*
- * the hashing function
- */
-#define	CACHE_LOC(transp, xid)	\
-	(xid % (SPARSENESS * ((struct cl_cache *) \
-		su_data(transp)->su_cache)->uc_size))
-
-extern pthread_mutex_t dupreq_lock;
 
 /*
  * Enable use of the cache. Returns 1 on success, 0 on failure.
@@ -436,13 +358,14 @@ u_int size;
       V(dupreq_lock);
       return (0);
     }
+  su->su_cache = (char *)(void *)uc;
   uc->uc_size = size;
   uc->uc_nextvictim = 0;
   uc->uc_entries = (cache_ptr *) Mem_Alloc(sizeof(cache_ptr) * size * SPARSENESS);
   if(uc->uc_entries == NULL)
     {
       warnx(cache_enable_str, alloc_err, "data");
-      Mem_Free(uc);
+      xp_free(su->su_cache);
       V(dupreq_lock);
       return (0);
     }
@@ -451,13 +374,12 @@ u_int size;
   if(uc->uc_fifo == NULL)
     {
       warnx(cache_enable_str, alloc_err, "fifo");
-      Mem_Free(uc->uc_entries);
-      Mem_Free(uc);
+      xp_free(uc->uc_entries);
+      xp_free(su->su_cache);
       V(dupreq_lock);
       return (0);
     }
   memset(uc->uc_fifo, 0, sizeof(cache_ptr) * size);
-  su->su_cache = (char *)(void *)uc;
   V(dupreq_lock);
   return (1);
 }

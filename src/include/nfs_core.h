@@ -810,10 +810,6 @@ int display_gss_svc_data(hash_buffer_t * pbuff, char *str);
 
 #endif                          /* _USE_GSSRPC */
 
-void Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig);
-void Svcxprt_copydestroy(register SVCXPRT * xprt);
-SVCXPRT *Svcxprt_copycreate();
-
 extern const nfs_function_desc_t *INVALID_FUNCDESC;
 const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs);
 int nfs_rpc_get_args(nfs_request_data_t * preqnfs, const nfs_function_desc_t *pfuncdesc);

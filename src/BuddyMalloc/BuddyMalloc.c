@@ -1633,7 +1633,7 @@ BUDDY_ADDR_T BuddyMallocExit(size_t Size)
  * The  BuddyStr_Dup() function returns a pointer to a block of at least
  * Size bytes suitably aligned (32 or 64bits depending on architectures).
  */
-char *BuddyStr_Dup(char * Str)
+char *BuddyStr_Dup(const char * Str)
 {
   char *NewStr = (char *) BuddyMalloc(strlen(Str)+1);
   if(NewStr != NULL)
@@ -1648,7 +1648,7 @@ char *BuddyStr_Dup(char * Str)
  * Size bytes suitably aligned (32 or 64bits depending on architectures).
  * If no memory is available, it stops current process.
  */
-char *BuddyStr_Dup_Exit(char * Str)
+char *BuddyStr_Dup_Exit(const char * Str)
 {
   char *NewStr = (char *) BuddyMallocExit(strlen(Str)+1);
   if(NewStr != NULL)
@@ -2351,7 +2351,7 @@ BUDDY_ADDR_T BuddyMalloc_Autolabel(size_t sz,
  * The  BuddyStr_Dup() function returns a pointer to a block of at least
  * Size bytes suitably aligned (32 or 64bits depending on architectures).
  */
-char *BuddyStr_Dup_Autolabel(char * OldStr,
+char *BuddyStr_Dup_Autolabel(const char * OldStr,
                              const char *file,
                              const char *function,
                              const unsigned int line,
@@ -2396,13 +2396,17 @@ void BuddyFree_Autolabel(BUDDY_ADDR_T ptr,
 }
 
 int _BuddyCheck_Autolabel(BUDDY_ADDR_T ptr,
+                          int other_thread_ok,
                           const char *file,
                           const char *function,
                           const unsigned int line,
                           const char *str)
 {
+  LogFullDebug(COMPONENT_MEMALLOC,
+               "BuddyCheck %p for %s at %s:%s:%u",
+               ptr, str, file, function, line);
   BuddySetDebugLabel(file, function, line, str);
-  return _BuddyCheck(ptr);
+  return _BuddyCheck(ptr, other_thread_ok, str);
 }
 
 /** Retrieves the label for a given block.  */
@@ -2904,21 +2908,31 @@ void DisplayMemoryMap(FILE *output)
 /**
  *  test memory corruption for a block.
  */
-int _BuddyCheck(BUDDY_ADDR_T ptr)
+int _BuddyCheck(BUDDY_ADDR_T ptr, int other_thread_ok, const char *label)
 {
   BuddyBlock_t *p_block;
   BuddyThreadContext_t *context;
 
   /* return 0 if ptr is NULL. */
   if(!ptr)
-    return 0;
+    {
+      LogWarn(COMPONENT_MEMALLOC,
+              "BuddyCheck %s is NULL",
+              label);
+      return 0;
+    }
 
   /* Ensure thread safety. */
   context = GetThreadContext();
 
   /* Something very wrong occured !! */
   if(!context)
-    return 0;
+    {
+      LogWarn(COMPONENT_MEMALLOC,
+              "BuddyCheck %s %p invalid context",
+              label, ptr);
+      return 0;
+    }
 
   /* Not initialized */
   if(!context->initialized)
@@ -2970,7 +2984,20 @@ int _BuddyCheck(BUDDY_ADDR_T ptr)
       return 0;
     }
 
-  if(p_block->Header.OwnerThread != pthread_self())
+  /* Std blocks sanity checks */
+  if(!IS_EXTRA_BLOCK(p_block) &&
+     (((BUDDY_ADDR_T) p_block < p_block->Header.Base_ptr) ||
+     ((BUDDY_ADDR_T) p_block > p_block->Header.Base_ptr +
+      (1 << p_block->Header.StdInfo.Base_kSize))))
+    {
+      context->Errno = BUDDY_ERR_EINVAL;
+      LogWarn(COMPONENT_MEMALLOC,
+              "BuddyCheck: Block %p may be corrupted)",
+              p_block);
+      return 0;
+    }
+
+  if(!other_thread_ok && p_block->Header.OwnerThread != pthread_self())
     {
       LogWarn(COMPONENT_MEMALLOC,
               "BuddyCheck: Block %p has been allocated by another thread !!!! (%p<>%p)",
@@ -2980,19 +3007,9 @@ int _BuddyCheck(BUDDY_ADDR_T ptr)
       return 0;
     }
 
-  /* If it is an ExtraBlock, its OK */
-  if(IS_EXTRA_BLOCK(p_block))
-    return 1;
-
-  /* Std blocks sanity checks */
-  if(((BUDDY_ADDR_T) p_block < p_block->Header.Base_ptr) ||
-     ((BUDDY_ADDR_T) p_block > p_block->Header.Base_ptr +
-      (1 << p_block->Header.StdInfo.Base_kSize)))
-    {
-      context->Errno = BUDDY_ERR_EINVAL;
-      return 0;
-    }
+  LogInfo(COMPONENT_MEMALLOC,
+          "BuddyCheck %s %p check out ok",
+          label, ptr);
 
   return 1;
-
 }                               /* BuddyCheck */
