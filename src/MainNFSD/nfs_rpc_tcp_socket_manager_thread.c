@@ -344,7 +344,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
               //TODO: handle error - barf for now...
               LogCrit(COMPONENT_DISPATCH,
                       "Svcxprt_copy failed.... oops...");
-              xprt_copy->xp_fd = 0;
+              xprt_copy->XP_SOCK = 0;
             }
 
           pentry->buffdata.pdata = (caddr_t) pnfsreq;
