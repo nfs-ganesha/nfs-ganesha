@@ -27,12 +27,6 @@
 #endif
 #endif
 
-#ifdef _USE_TIRPC
-#define xdr_uint16_t xdr_u_int16_t
-#define xdr_uint32_t xdr_u_int32_t
-#define xdr_uint64_t xdr_u_int64_t
-#endif
-
 void socket_setoptions(int socketFd);
 
 #ifdef _APPLE
