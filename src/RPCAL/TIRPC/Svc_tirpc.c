@@ -269,9 +269,9 @@ SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
       cd_c = (struct cf_conn *) Mem_Alloc(sizeof(*cd_c));
       if(!cd_c)
         goto fail;
-      cd_c->strm_stat = cd_o->strm_stat;
-      cd_c->x_id = cd_o->x_id;
-      memcpy(cd_c->verf_body, cd_o->verf_body, MAX_AUTH_BYTES);
+      memcpy(cd_c, cd_o, sizeof(*cd_c));
+      xprt_copy->xp_p1 = cd_c;
+      xdrrec_create(&(cd_c->xdrs), cd_c->sendsize, cd_c->recvsize, xprt_copy, Read_vc, Write_vc);
       xprt_copy->xp_verf.oa_base = cd_c->verf_body;
     }
   else if (xprt_orig->xp_ops == &rendezvous_ops)

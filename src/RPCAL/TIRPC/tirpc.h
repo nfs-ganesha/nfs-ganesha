@@ -95,5 +95,7 @@ struct cl_cache
 extern pthread_mutex_t dupreq_lock;
 
 extern int Svc_dg_enablecache(SVCXPRT *, u_int);
+extern int Read_vc(void *, void *, int);
+extern int Write_vc(void *, void *, int);
 
 #endif

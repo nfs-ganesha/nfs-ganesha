@@ -84,8 +84,6 @@ static bool_t Rendezvous_request(SVCXPRT *, struct rpc_msg *);
 static enum xprt_stat Rendezvous_stat(SVCXPRT *);
 static void Svc_vc_destroy(SVCXPRT *);
 static void __Svc_vc_dodestroy(SVCXPRT *);
-static int Read_vc(void *, void *, int);
-static int Write_vc(void *, void *, int);
 static enum xprt_stat Svc_vc_stat(SVCXPRT *);
 static bool_t Svc_vc_recv(SVCXPRT *, struct rpc_msg *);
 static bool_t Svc_vc_getargs(SVCXPRT *, xdrproc_t, void *);
