@@ -43,13 +43,6 @@
 #include <time.h>
 #include <pthread.h>
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#endif
 
 #include "RW_Lock.h"
 #include "LRU_List.h"

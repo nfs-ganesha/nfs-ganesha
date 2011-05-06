@@ -96,8 +96,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
   cache_entry_t *pentry_lookup = NULL;
   fsal_attrib_list_t lookup_attributes;
 
-  fsal_size_t save_size;
-  fsal_size_t save_spaceused;
+  fsal_size_t save_size = 0;
+  fsal_size_t save_spaceused = 0;
   fsal_time_t save_mtime;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
@@ -176,6 +176,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       handle_src = pentry_src->object.symlink.handle;
       break;
 
+    case FS_JUNCTION:
     case DIR_BEGINNING:
       handle_src = pentry_src->object.dir_begin.handle;
       break;
@@ -195,7 +196,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       handle_src = pentry_src->object.special_obj.handle;
       break;
 
-    default:
+    case UNASSIGNED:
+    case RECYCLED:
       LogCrit(COMPONENT_CACHE_INODE,
               "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
               pentry_src->internal_md.type, __LINE__, __FILE__);
@@ -206,6 +208,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
 
   switch (pentry_dir_dest->internal_md.type)
     {
+    case FS_JUNCTION:
     case DIR_BEGINNING:
       handle_dest = pentry_dir_dest->object.dir_begin.handle;
       break;
@@ -217,6 +220,14 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       handle_dest = pentry_src->object.dir_cont.pdir_begin->object.dir_begin.handle;
       V_r(&pentry_dir_dest->object.dir_cont.pdir_begin->lock);
       break;
+
+    default:
+      LogCrit(COMPONENT_CACHE_INODE,
+              "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
+              pentry_src->internal_md.type, __LINE__, __FILE__);
+      *pstatus = CACHE_INODE_BAD_TYPE;
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK] += 1;
+      return *pstatus;
     }
 
   /* If object is a data cached regular file, keeps it mtime and size, STEP 1 */
@@ -317,7 +328,11 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       pentry_src->object.special_obj.attributes = link_attributes;
       break;
 
-    default:
+    case UNASSIGNED:
+    case RECYCLED:
+    case FS_JUNCTION:
+    case DIR_BEGINNING:
+    case DIR_CONTINUE:
       LogCrit(COMPONENT_CACHE_INODE,
               "WARNING: Major type incoherency line %d in file %s",
               __LINE__, __FILE__);

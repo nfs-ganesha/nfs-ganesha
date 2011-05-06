@@ -42,25 +42,8 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
                                       char *fs_specific_options /* IN */
     )
 {
-  /* Get the mount point for this lustre FS,
-   * so it can be used for building .lustre/fid paths.
-   */
-
-  FILE *fp;
-  struct mntent *p_mnt;
-  struct stat pathstat;
-
-  char rpath[MAXPATHLEN];
-  char mntdir[MAXPATHLEN];
-  char fs_spec[MAXPATHLEN];
-
-  char type[256];
-
-  size_t pathlen, outlen;
   int rc, fd;
 
-  char *handle;
-  size_t handle_len = 0;
   struct statfs stat_buf;
 
   fsal_status_t status;

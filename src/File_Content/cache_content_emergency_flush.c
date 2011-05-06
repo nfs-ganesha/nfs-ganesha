@@ -114,6 +114,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                                                      fsal_op_context_t * pcontext,
                                                      cache_content_status_t * pstatus)
 {
+  int rc;
   fsal_handle_t fsal_handle;
   fsal_status_t fsal_status;
   cache_content_dirinfo_t directory;
@@ -216,12 +217,13 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
           if((stream = fopen(indexpath, "r")) == NULL)
             return CACHE_CONTENT_LOCAL_CACHE_ERROR;
 
+          /* BUG: what happens if any of these fail? */
           #define XSTR(s) STR(s)
           #define STR(s) #s
-          fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
-          fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
-          fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
-          fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
+          rc = fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          rc = fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          rc = fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          rc = fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
           #undef STR
           #undef XSTR
 

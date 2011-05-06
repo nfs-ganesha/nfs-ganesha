@@ -7,23 +7,16 @@ endif
 AM_CFLAGS                     = -Wimplicit $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS)
 
 
-SVC_FILES_ONCRPC = Svc_oncrpc.c Svc_tcp_oncrpc.c Svc_udp_oncrpc.c 
-SVC_FILES_GSSRPC = Svc_gssrpc.c Svc_tcp_gssrpc.c Svc_udp_gssrpc.c Svc_auth.c Svc_auth_gss.c Svc_auth_none.c Svc_auth_unix.c AuthGss_HashTable.c 
-SVC_FILES_TIRPC = Svc_tirpc.c Svc_vc_tirpc.c Svc_dg_tirpc.c 
-
 if USE_GSSRPC
-SVC_FILES = $(SVC_FILES_GSSRPC)
 SEC_LIB_FLAGS = $(SEC_LFLAGS) -lgssrpc -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -ldl
 SVC_FLAGS =
 SVC_LIB_FLAGS = 
 else 
 if USE_TIRPC
-SVC_FILES = $(SVC_FILES_TIRPC)
 SEC_LIB_FLAGS = 
 SVC_FLAGS = -I/usr/include/tirpc
 SVC_LIB_FLAGS = -ltirpc
 else
-SVC_FILES = $(SVC_FILES_ONCRPC) 
 SEC_LIB_FLAGS = 
 SVC_FLAGS =
 SVC_LIB_FLAGS = 
@@ -82,7 +75,6 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              nfs_rpc_tcp_socket_manager_thread.c  \
                              nfs_init.c                           \
                              nfs_tools.c                          \
-                             nfs_dupreq.c                         \
                              nfs_init.h                           \
                              ../include/LRU_List.h                \
                              ../include/HashTable.h               \
@@ -112,7 +104,7 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/SemN.h                    \
                              ../include/external_tools.h          \
                              ../include/err_inject.h              \
-                             $(SVC_FILES) $(STAT_SNMP_FILES)  
+                             $(STAT_SNMP_FILES)  
 
 
 libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la                   \
@@ -123,7 +115,7 @@ libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la           
                                       $(STAT_SNMP_LIB_FLAGS)                            \
                                       ../IdMapper/libidmap.la                           \
                                       ../support/libsupport.la                          \
-					../NodeList/libNodeList.la			\
+				      ../NodeList/libNodeList.la			\
                                       ../$(CACHE_INODE_DIR)/libcache_inode.la           \
                                       ../File_Content/libcache_content.la               \
                                       ../File_Content_Policy/libcache_content_policy.la \
@@ -135,6 +127,7 @@ libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la           
                                       $(FSAL_LIB)                                       \
                                       ../Log/liblog.la                                  \
                                       ../ConfigParsing/libConfigParsing.la              \
+			              ../RPCAL/librpcal.la                              \
                                       ../XDR/libnfs_mnt_xdr.la                          \
                                       ../SemN/libSemN.la                                \
                                       ../RW_Lock/librwlock.la                           \

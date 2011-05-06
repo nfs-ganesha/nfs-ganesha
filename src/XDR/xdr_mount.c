@@ -10,14 +10,7 @@
 #include "solaris_port.h"
 #endif
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#endif
-
+#include "rpc.h"
 #include "mount.h"
 #include "nfs23.h"
 

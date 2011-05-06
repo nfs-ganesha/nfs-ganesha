@@ -340,7 +340,7 @@ int display_gss_svc_data(hash_buffer_t * pbuff, char *str)
   gd = (struct svc_rpc_gss_data_stored *)pbuff->pdata;
 
   return sprintf(str,
-                 "established=%u ctx=(%u) sec=(mech=%p,qop=%u,svc=%u,cred=%p,flags=%u) cname=(%u|%s) seq=%u win=%u seqlast=%u seqmask=%u",
+                 "established=%u ctx=(%lu) sec=(mech=%p,qop=%u,svc=%u,cred=%p,flags=%u) cname=(%lu|%s) seq=%u win=%u seqlast=%u seqmask=%u",
                  gd->established, gd->ctx_exported.length, gd->sec.mech, gd->sec.qop,
                  gd->sec.svc, gd->sec.cred, gd->sec.req_flags, gd->cname_len,
                  gd->cname_val, gd->seq, gd->win, gd->seqlast, gd->seqmask);

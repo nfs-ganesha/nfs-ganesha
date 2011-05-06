@@ -52,17 +52,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <pthread.h>
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "HashData.h"
@@ -495,7 +485,6 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
                        clientid4 clientid)
 {
   u_int16_t time_digest = 0;
-  u_int16_t counter_digest = 0;
   cache_inode_state_t state;
   nfs_client_id_t nfs_clientid;
 

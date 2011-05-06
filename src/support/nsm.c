@@ -22,8 +22,8 @@
  *
  */
 
-#include <rpc/rpc.h>
-
+#include "config.h"
+#include "rpc.h"
 #include "nsm.h"
 #include "nlm4.h"
 #include "log_macros.h"

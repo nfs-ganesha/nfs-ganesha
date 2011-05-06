@@ -79,9 +79,9 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
                                          fsal_op_context_t * pcontext,
                                          cache_inode_status_t * pstatus)
 {
-  fsal_handle_t *pfsal_handle;
+  fsal_handle_t *pfsal_handle = NULL;
   fsal_status_t fsal_status;
-  fsal_attrib_list_t *p_object_attributes;
+  fsal_attrib_list_t *p_object_attributes = NULL;
   fsal_attrib_list_t result_attributes;
   fsal_attrib_list_t truncate_attributes;
 
@@ -105,6 +105,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
       pfsal_handle = &pentry->object.symlink.handle;
       break;
 
+    case FS_JUNCTION:
     case DIR_BEGINNING:
       pfsal_handle = &pentry->object.dir_begin.handle;
       break;
@@ -123,6 +124,14 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
     case FIFO_FILE:
       pfsal_handle = &pentry->object.special_obj.handle;
       break;
+
+    case UNASSIGNED:
+    case RECYCLED:
+      LogCrit(COMPONENT_CACHE_INODE,
+              "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
+              pentry->internal_md.type, __LINE__, __FILE__);
+      *pstatus = CACHE_INODE_BAD_TYPE;
+      return *pstatus;
     }
 
   /* Call FSAL to set the attributes */
@@ -219,6 +228,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
       p_object_attributes = &(pentry->object.symlink.attributes);
       break;
 
+    case FS_JUNCTION:
     case DIR_BEGINNING:
       p_object_attributes = &(pentry->object.dir_begin.attributes);
       break;
@@ -239,6 +249,13 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
       p_object_attributes = &(pentry->object.special_obj.attributes);
       break;
 
+    case UNASSIGNED:
+    case RECYCLED:
+      LogCrit(COMPONENT_CACHE_INODE,
+              "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
+              pentry->internal_md.type, __LINE__, __FILE__);
+      *pstatus = CACHE_INODE_BAD_TYPE;
+      return *pstatus;
     }
 
   /* Update the cached attributes */

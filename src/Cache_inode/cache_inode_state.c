@@ -139,14 +139,12 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
                                            cache_inode_state_t * *ppstate,
                                            cache_inode_status_t * pstatus)
 {
-  cache_inode_state_t *phead_state = NULL;
   cache_inode_state_t *pnew_state = NULL;
   cache_inode_state_t *piter_state = NULL;
   cache_inode_state_t *piter_saved = NULL;
   cache_inode_open_owner_t *powner = powner_input;
   char debug_str[25];
   bool_t conflict_found = FALSE;
-  unsigned int i = 0;
 
   /* Sanity Check */
   if(pstatus == NULL)
@@ -529,8 +527,6 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
       return *pstatus;
     }
 
-  unsigned int i = 0;
-
   if (isFullDebug(COMPONENT_STATES)) {
     sprint_mem(str, (char *)pstate->stateid_other, 12);
     LogDebug(COMPONENT_STATES, "cache_inode_del_state : %s", str);
@@ -628,7 +624,6 @@ cache_inode_status_t cache_inode_state_iterate(cache_entry_t * pentry,
                                                cache_inode_status_t * pstatus)
 {
   cache_inode_state_t *piter_state = NULL;
-  cache_inode_state_t *phead_state = NULL;
   uint64_t fileid_digest = 0;
 
   if(pstatus == NULL)

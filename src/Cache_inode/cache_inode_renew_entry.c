@@ -465,11 +465,26 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
         case BLOCK_FILE:
           pfsal_handle = &pentry->object.special_obj.handle;
           break;
+
+        case DIR_BEGINNING:
+        case DIR_CONTINUE:
+        case FS_JUNCTION:
+        case UNASSIGNED:
+        case RECYCLED:
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
+                  pentry->internal_md.type, __LINE__, __FILE__);
+          *pstatus = CACHE_INODE_BAD_TYPE;
+          return *pstatus;
         }
 
       /* Call FSAL to get the attributes */
       object_attributes.asked_attributes = pclient->attrmask;
+#ifdef _USE_MFSL
+      fsal_status = FSAL_getattrs_descriptor(&(cache_inode_fd(pentry)->fsal_file), pfsal_handle, pcontext, &object_attributes);
+#else
       fsal_status = FSAL_getattrs_descriptor(cache_inode_fd(pentry), pfsal_handle, pcontext, &object_attributes);
+#endif
       if(FSAL_IS_ERROR(fsal_status) && fsal_status.major == ERR_FSAL_NOT_OPENED)
         {
           //TODO: LOOKATME !!!!!
@@ -522,6 +537,17 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
         case BLOCK_FILE:
           pentry->object.special_obj.attributes = object_attributes;
           break;
+
+        case DIR_BEGINNING:
+        case DIR_CONTINUE:
+        case FS_JUNCTION:
+        case UNASSIGNED:
+        case RECYCLED:
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
+                  pentry->internal_md.type, __LINE__, __FILE__);
+          *pstatus = CACHE_INODE_BAD_TYPE;
+          return *pstatus;
         }
 
       /* Return the attributes as set */

@@ -36,17 +36,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -179,7 +169,6 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
 
 static void nlm4_lock_message_resp(void *arg)
 {
-  int proc;
   nlm_async_res_t *pres = arg;
 
   if(isFullDebug(COMPONENT_NLM))

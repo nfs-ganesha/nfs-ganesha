@@ -50,20 +50,7 @@
 #include <sys/select.h>
 #include "HashData.h"
 #include "HashTable.h"
-
-#if defined( _USE_TIRPC )
-#include <rpc/rpc.h>
-#elif defined( _USE_GSSRPC )
-#include <gssapi/gssapi.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -83,39 +70,8 @@
 #include "nfs_stat.h"
 #include "SemN.h"
 
-#ifdef _APPLE
-#define __FDS_BITS(set) ((set)->fds_bits)
-#endif
-
-#ifdef _USE_TIRPC
-struct netconfig *getnetconfigent(const char *netid);
-void freenetconfigent(struct netconfig *);
-SVCXPRT *Svc_vc_create(int, u_int, u_int);
-SVCXPRT *Svc_dg_create(int, u_int, u_int);
-#else
-SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize);
-SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz);
-bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*dispatch) (),
-                    int protocol);
-#endif
-
-void socket_setoptions(int socketFd);
-
-#define NULL_SVC ((struct svc_callout *)0)
-
-extern fd_set Svc_fdset;
 extern nfs_worker_data_t *workers_data;
 extern nfs_parameter_t nfs_param;
-#ifdef _RPCSEC_GS_64_INSTALLED
-struct svc_rpc_gss_data **TabGssData;
-#endif
-extern hash_table_t *ht_dupreq; /* duplicate request hash */
-
-#if _USE_TIRPC
-/* public data : */
-rw_lock_t Svc_lock;
-rw_lock_t Svc_fd_lock;
-#endif
 
 /* These two variables keep state of the thread that gc at this time */
 unsigned int nb_current_gc_workers;
@@ -204,8 +160,6 @@ int nfs_Init_svc()
 #endif
   struct sockaddr_in sinaddr_nfs;
   struct sockaddr_in sinaddr_mnt;
-  struct sockaddr_in sinaddr_nlm;
-  struct sockaddr_in sinaddr_rquota;
 #ifdef _USE_TIRPC_IPV6
   struct sockaddr_in6 sinaddr_nfs_udp6;
   struct sockaddr_in6 sinaddr_mnt_udp6;
@@ -230,13 +184,22 @@ int nfs_Init_svc()
   int nb_svc_mnt_ok = 0;
   int nb_svc_nlm_ok = 0;
   int nb_svc_rquota_ok = 0;
+
+#ifdef _USE_NLM
+  struct sockaddr_in sinaddr_nlm;
+#endif /* _USE_NLM */
+
+#ifdef _USE_QUOTA
+  struct sockaddr_in sinaddr_rquota;
+#endif /* _USE_QUOTA */
+
 #ifdef _USE_GSSRPC
   OM_uint32 maj_stat;
   OM_uint32 min_stat;
   char GssError[1024];
   gss_cred_id_t test_gss_cred = NULL;
   gss_name_t imported_name = NULL;
-#endif
+#endif /* _USE_GSSRPC */
   int num_sock = nfs_param.core_param.nb_max_fd;
 
   /* Initialize all the sockets to -1 because it makes some code later easier */
@@ -254,9 +217,11 @@ int nfs_Init_svc()
 
   /* Allocate resources that are based on the maximum number of open file descriptors */
   Xports = (SVCXPRT **) Mem_Alloc_Label(num_sock * sizeof(SVCXPRT *), "Xports array");
+  memset(Xports, 0, num_sock * sizeof(SVCXPRT *));
   mutex_cond_xprt = (pthread_mutex_t *) Mem_Alloc_Label(num_sock * sizeof(pthread_mutex_t ), "mutex_cond_xprt array");
+  memset(mutex_cond_xprt, 0, num_sock * sizeof(pthread_mutex_t ));
   condvar_xprt = (pthread_cond_t *) Mem_Alloc_Label(num_sock * sizeof(pthread_cond_t ), "condvar_xprt array");
-  etat_xprt = (int *) Mem_Alloc_Label(num_sock * sizeof(int), "etat_xprt array");
+  memset(condvar_xprt, 0, num_sock * sizeof(pthread_cond_t ));
   FD_ZERO(&Svc_fdset);
 
 #ifdef _USE_TIRPC
@@ -882,6 +847,7 @@ int nfs_Init_svc()
   rpcb_unset(nfs_param.core_param.mnt_program, MOUNT_V3, netconfig_tcpv4);
 
   rpcb_unset(nfs_param.core_param.nlm_program, NLM4_VERS, netconfig_tcpv4);
+  rpcb_unset(nfs_param.core_param.nlm_program, NLM4_VERS, netconfig_udpv4);
 
 #ifdef _USE_QUOTA
   rpcb_unset(nfs_param.core_param.rquota_program, RQUOTAVERS, netconfig_tcpv4);
@@ -970,9 +936,9 @@ int nfs_Init_svc()
 
 #ifdef _USE_TIRPC_IPV6
   nfs_param.worker_param.nfs_svc_data.xprt_nfs_udp->xp_netid =
-      strdup(netconfig_udpv6->nc_netid);
+      Str_Dup(netconfig_udpv6->nc_netid);
   nfs_param.worker_param.nfs_svc_data.xprt_nfs_udp->xp_tp =
-      strdup(netconfig_udpv6->nc_device);
+      Str_Dup(netconfig_udpv6->nc_device);
 #endif                          /* _USE_TIRPC_IPV6 */
 
   if((nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp =
@@ -1000,9 +966,9 @@ int nfs_Init_svc()
     }
 
   nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp->xp_netid =
-      strdup(netconfig_tcpv6->nc_netid);
+      Str_Dup(netconfig_tcpv6->nc_netid);
   nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp->xp_tp =
-      strdup(netconfig_tcpv6->nc_device);
+      Str_Dup(netconfig_tcpv6->nc_device);
 #endif                          /* _USE_TIRPC_IPV6 */
 
   if((nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0)
@@ -1023,9 +989,9 @@ int nfs_Init_svc()
 
 #ifdef _USE_TIRPC_IPV6
       nfs_param.worker_param.nfs_svc_data.xprt_mnt_udp->xp_netid =
-          strdup(netconfig_udpv6->nc_netid);
+          Str_Dup(netconfig_udpv6->nc_netid);
       nfs_param.worker_param.nfs_svc_data.xprt_mnt_udp->xp_tp =
-          strdup(netconfig_udpv6->nc_device);
+          Str_Dup(netconfig_udpv6->nc_device);
 #endif                          /* _USE_TIRPC_IPV6 */
 
       if((nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp =
@@ -1117,9 +1083,9 @@ int nfs_Init_svc()
         }
 
       nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp->xp_netid =
-          strdup(netconfig_tcpv6->nc_netid);
+          Str_Dup(netconfig_tcpv6->nc_netid);
       nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp->xp_tp =
-          strdup(netconfig_tcpv6->nc_device);
+          Str_Dup(netconfig_tcpv6->nc_device);
 #endif                          /* _USE_TIRPC_IPV6 */
     }
 
@@ -1142,7 +1108,7 @@ int nfs_Init_svc()
 
           /* Trying to acquire a credentials for checking name's validity */
           if(!Svcauth_gss_acquire_cred())
-            {`
+            {
           LogCrit(COMPONENT_DISPATCH,
                   "NFS EXIT: Cannot acquire credentials for principal %s",
                   nfs_param.krb5_param.principal);
@@ -1703,7 +1669,6 @@ static unsigned int select_worker_queue()
 {
   #define NO_VALUE_CHOOSEN  1000000
   unsigned int worker_index = NO_VALUE_CHOOSEN;
-  unsigned int min_number_pending = NO_VALUE_CHOOSEN;
   unsigned int avg_number_pending = NO_VALUE_CHOOSEN;
   unsigned int total_number_pending = 0;
 
@@ -1809,9 +1774,6 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
   register long mask, *maskp;
   register int sock;
   char *cred_area;
-  struct sockaddr_in *pdead_caller = NULL;
-  char dead_caller[MAXNAMLEN];
-
   LRU_entry_t *pentry = NULL;
   LRU_status_t status;
   nfs_request_data_t *pnfsreq = NULL;
@@ -1823,7 +1785,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
 
   for(sock = 0; sock < FD_SETSIZE; sock += NFDBITS)
     {
-      for(mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1)))
+      for(mask = *maskp++; (bit = ffs(mask)); mask ^= (1 << (bit - 1)))
         {
           /* sock has input waiting */
           xprt = Xports[sock + bit - 1];
@@ -1849,15 +1811,9 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                        "CRITICAL ERROR: Couldn't choose a worker ! Exiting...");
               exit(1);
             }
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
           LogFullDebug(COMPONENT_DISPATCH,
                        "Use request from spool #%d, xprt->xp_sock=%d",
-                       worker_index, xprt->xp_fd);
-#else
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Use request from spool #%d, xprt->xp_sock=%d",
-                       worker_index, xprt->xp_sock);
-#endif
+                       worker_index, xprt->XP_SOCK);
 
           /* Get a pnfsreq from the worker's pool */
           P(workers_data[worker_index].request_pool_mutex);
@@ -2007,33 +1963,18 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               stat = SVC_STAT(pnfsreq->xprt);
               if(stat == XPRT_DIED)
                 {
-#ifndef _USE_TIRPC
-                  if((pdead_caller = svc_getcaller(pnfsreq->xprt)) != NULL)
-                    {
-                      snprintf(dead_caller, MAXNAMLEN, "0x%x=%d.%d.%d.%d",
-                               ntohl(pdead_caller->sin_addr.s_addr),
-                               (ntohl(pdead_caller->sin_addr.s_addr) & 0xFF000000) >> 24,
-                               (ntohl(pdead_caller->sin_addr.s_addr) & 0x00FF0000) >> 16,
-                               (ntohl(pdead_caller->sin_addr.s_addr) & 0x0000FF00) >> 8,
-                               (ntohl(pdead_caller->sin_addr.s_addr) & 0x000000FF));
-                    }
+                  sockaddr_t addr;
+                  char addrbuf[SOCK_NAME_MAX];
+                  if(copy_xprt_addr(&addr, pnfsreq->xprt) == 1)
+                    sprint_sockaddr(&addr, addrbuf, sizeof(addrbuf));
                   else
-#endif                          /* _USE_TIRPC */
-                    strncpy(dead_caller, "unresolved", MAXNAMLEN);
+                    sprintf(addrbuf, "<unresolved>");
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
                   LogDebug(COMPONENT_DISPATCH,
                            "A client disappeared... socket=%d, addr=%s",
-                           pnfsreq->xprt->xp_fd, dead_caller);
-                  if(Xports[pnfsreq->xprt->xp_fd] != NULL)
-                    SVC_DESTROY(Xports[pnfsreq->xprt->xp_fd]);
-#else
-                  LogDebug(COMPONENT_DISPATCH,
-                           "A client disappeared... socket=%d, addr=%s",
-                           pnfsreq->xprt->xp_sock, dead_caller);
-                  if(Xports[pnfsreq->xprt->xp_sock] != NULL)
-                    SVC_DESTROY(Xports[pnfsreq->xprt->xp_sock]);
-#endif
+                           pnfsreq->xprt->XP_SOCK, addrbuf);
+                  if(Xports[pnfsreq->xprt->XP_SOCK] != NULL)
+                    SVC_DESTROY(Xports[pnfsreq->xprt->XP_SOCK]);
 
                   P(workers_data[worker_index].request_pool_mutex);
                   ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
@@ -2044,11 +1985,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                 {
                   LogDebug(COMPONENT_DISPATCH,
                            "Client on socket %d has status XPRT_MOREREQS",
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-                           pnfsreq->xprt->xp_fd);
-#else
-                           pnfsreq->xprt->xp_sock);
-#endif
+                           pnfsreq->xprt->XP_SOCK);
                 }
 
               /* Release the entry */

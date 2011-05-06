@@ -136,7 +136,7 @@ fsal_status_t XFSFSAL_rename(xfsfsal_handle_t * p_old_parentdir_handle, /* IN */
       TakeTokenFSCall();
       status =
           fsal_internal_handle2fd(p_context, p_new_parentdir_handle, &new_parent_fd,
-                                  O_RDWR);
+                                  O_DIRECTORY);
       ReleaseTokenFSCall();
 
       if(FSAL_IS_ERROR(status))

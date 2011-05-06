@@ -2,14 +2,14 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [1.0.5], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [1.0.6], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
 AC_SUBST(RELEASE, [0])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE/XFS/GPFS/ZFS .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod),  Early pNFS (alpha) ])
+AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE/XFS/GPFS/ZFS/VFS .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod),  Early pNFS (alpha) ])
 
 # Init Automake
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
@@ -26,6 +26,7 @@ AC_PROG_LIBTOOL
 # Checks for programs.
 AC_PROG_YACC
 AC_PROG_LEX
+PKG_PROG_PKG_CONFIG
 
 if test "${ac_cv_prog_YACC+set}" != "set"; then
 	AC_MSG_ERROR([Yacc, Bison or an equivalent tool is needed: check you have installed it on your system])
@@ -49,7 +50,7 @@ GA_PROG_DOXYGEN
 # define everything necessary for accessing large files (64bits offset)
 AC_SYS_LARGEFILE
 
-CFLAGS="$CFLAGS -D_REENTRANT"
+CFLAGS="$CFLAGS -D_REENTRANT -Wall -Wimplicit -Wformat -Wmissing-braces -Wno-pointer-sign"
 
 # Version number for shared object
 LIBVERSION=`echo $VERSION | sed -e 's/\./:/g'`
@@ -183,15 +184,6 @@ GA_PROG_NETSNMP_CONFIG
 
 # Features options
 
-# RPSEC_GSS from krb5 distribution
-GA_ENABLE_AM_CONDITION([gssrpc],[enable GSSRPC security management (from MIT kerberos implementation)],[USE_GSSRPC])
-
-if test "$enable_gssrpc" == "yes"; then
-        AC_DEFINE(_USE_GSSRPC,1,[enable security management with GSSRPC])
-	# ==> Add here libraries needed for GSSRPC
-        AC_CHECK_LIB([gssapi_krb5], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ], [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )
-        AC_CHECK_LIB([gssrpc], [gssrpc_authunix_create_default], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ], [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
-fi
 
 # Build FSAL's dynamic lib
 GA_ENABLE_AM_CONDITION([buildsharedfsal],[when enable, build the FSAL as both static and dynamic library],[BUILD_SHARED_FSAL])
@@ -335,6 +327,9 @@ GA_ENABLE_FLAG(  [debug-symbols],	 [include debug symbols to binaries (-g option
 # enable code profiling
 GA_ENABLE_FLAG( [profiling], [turn on code profiling (-g and -pg)], [-g -pg] )
 
+# enable code profiling
+GA_ENABLE_FLAG( [strict-compile], [turn on strict compiler flags], [-Werror -Wimplicit -Wformat -Wmissing-braces] )
+
 # makes it possible to add some extra include dir
 
 AC_ARG_WITH( [extra-includedir], AS_HELP_STRING([--with-extra-includedir=<path>], [Alternative path to include files] ),
@@ -345,7 +340,7 @@ if test "${with_extra_includedir+set}" == "set"; then
 fi
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|DYNFSAL (default=PROXY)],[specify the type of filesystem to be exported] ),
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|DYNFSAL (default=PROXY)],[specify the type of filesystem to be exported] ),
 	     FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
@@ -361,6 +356,7 @@ AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
 AM_CONDITIONAL(SHARED_FSAL,       test "$FSAL" = "DYNFSAL")
 AM_CONDITIONAL(USE_FSAL_ZFS,      test "$FSAL" = "ZFS")
+AM_CONDITIONAL(USE_FSAL_VFS,      test "$FSAL" = "VFS")
 
 # NFSv4.0 NFSv4.1 switch
 AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  (default=0)], [specify if server support NFSv4 or NFSv4.1] ),
@@ -368,6 +364,23 @@ AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  
 
 AM_CONDITIONAL(USE_NFS4_1, test "$NFS4_MINOR" = "1")
 AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")
+
+# RPCAL switch argument (default is ONCRPC)
+AC_ARG_WITH( [rpcal], AS_HELP_STRING([--with-rpcal=ONCRPC|GSSRPC|TIRPC (default=ONCRPC)], [specify the type of RPCAL to be used] ),
+              RPCAL="$withval", RPCAL="ONCRPC")
+AM_CONDITIONAL(USE_GSSRPC, test "$RPCAL" = "GSSRPC" )
+AM_CONDITIONAL(USE_TIRPC,  test "$RPCAL" = "TIRPC" )
+AM_CONDITIONAL(USE_ONCRPC, test "$RPCAL" = "ONCRPC" )
+
+# IPv6
+GA_ENABLE_AM_CONDITION([ipv6],[enable IPv6 support (via IPv6)], [USE_TIRPC_IPV6])
+
+if test "$enable_ipv6" == "yes"; then
+	AC_DEFINE(_USE_TIRPC_IPV6,1,[enable IPv6 support via TIRPC])
+	if test "$RPCAL" != "TIRPC" ; then
+		AC_MSG_ERROR([IPv6 support is available only when --with-rpcal=TIRPC is used])
+	fi
+fi
 
 # PNFS switch argument (default is nothing)
 AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|SPNFS_LIKE|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
@@ -549,6 +562,23 @@ case $FSAL in
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_GPFS/libfsalgpfs.la"
 		FS_NAME="gpfs"
 		;;
+	VFS)
+		AC_DEFINE([_USE_VFS], 1, [GANESHA exports VFS Filesystem (kernel is >= 2.6.39])
+		FSAL_CFLAGS=
+                FSAL_LDFLAGS=""
+		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_VFS/libfsalvfs.la"
+		FS_NAME="vfs"
+		# Check for kernel version (should be at least 2.6.39)
+		if test `uname -r |cut -d. -f1` -lt 2 ; then
+		 AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
+                fi
+		if test `uname -r |cut -d. -f2` -lt 6 ; then 
+		 AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
+		fi
+		if test `uname -r |cut -d. -f3 | cut -d- -f1` -lt 39 ; then
+		 AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
+		fi
+		;;
         ZFS)
                 AC_DEFINE([_USE_ZFS], 1, [GANESHA exports ZFS Filesystem])
                 PKG_CHECK_MODULES(ZFSWRAP, libzfswrap,
@@ -671,6 +701,35 @@ case $MFSL in
 
 esac
 
+case $RPCAL in
+	"ONCRPC")
+		;;
+	"GSSRPC")
+                AC_DEFINE(_USE_GSSRPC,1,[enable security management with GSSRPC])
+	        # ==> Add here libraries needed for GSSRPC
+                AC_CHECK_LIB([gssapi_krb5], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ],
+			     [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )
+                AC_CHECK_LIB([gssrpc], [gssrpc_authunix_create_default], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ],
+			      [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
+		;;
+	"TIRPC")
+                PKG_CHECK_MODULES(TIRPC, libtirpc,
+                  [
+                        AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
+                        AC_DEFINE( _HAVE_TIRPC,1,[enable TIRPC support])
+                        CFLAGS="$CFLAGS $TIRPC_CFLAGS"
+                        LIBS="$TIRPC_LIBS $LIBS"
+                  ],
+                  [
+                        AC_MSG_ERROR( [TI-RPC could not be found...] )
+                  ]
+                )
+		;;
+	*)
+		AC_MSG_ERROR([This RPCAL is not supported])
+
+esac
+
 case $PNFS in
 	"NONE")
 		;;
@@ -721,6 +780,7 @@ if [[ $FSAL == "HPSS" ]] ; then
   fi
 fi
 
+AC_SUBST(CFLAGS)
 AC_SUBST(FSAL_CFLAGS)
 AC_SUBST(FSAL_LDFLAGS)
 AC_SUBST(FSAL_LIB)
@@ -751,6 +811,7 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_XFS/Makefile
                  include/FSAL/FSAL_GPFS/Makefile
                  include/FSAL/FSAL_ZFS/Makefile
+                 include/FSAL/FSAL_VFS/Makefile
                  include/FSAL/FSAL_TEMPLATE/Makefile
                  include/FSAL/FSAL_GHOST_FS/Makefile
                  include/MFSL/Makefile
@@ -767,7 +828,6 @@ AC_CONFIG_FILES([include/Makefile
                  support/Makefile
                  Log/Makefile
                  NodeList/Makefile
-                 test/Makefile
                  ConfigParsing/Makefile
                  IdMapper/Makefile
                  RW_Lock/Makefile
@@ -799,6 +859,7 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_XFS/Makefile
 		 FSAL/FSAL_GPFS/Makefile
                  FSAL/FSAL_ZFS/Makefile
+                 FSAL/FSAL_VFS/Makefile
 		 FSAL/FSAL_TEMPLATE/Makefile
 		 MFSL/Makefile
 		 MFSL/MFSL_NULL/Makefile
@@ -806,6 +867,10 @@ AC_CONFIG_FILES([include/Makefile
 		 MFSL/MFSL_AIO/Makefile
 		 MFSL/MFSL_PNFS_FILE/Makefile
 		 MFSL/MFSL_PROXY_RPCSECGSS/Makefile
+                 RPCAL/Makefile
+                 RPCAL/ONCRPC/Makefile
+                 RPCAL/GSSRPC/Makefile
+                 RPCAL/TIRPC/Makefile
                  MainNFSD/Makefile
                  cmdline_tools/Makefile
                  shell/Makefile

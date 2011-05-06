@@ -7,7 +7,6 @@ SUBDIRS = include             \
           ConfigParsing       \
           RW_Lock             \
           SemN                \
-          test                \
           LRU                 \
           HashTable           \
 	  NodeList	      \
@@ -17,8 +16,10 @@ SUBDIRS = include             \
           File_Content        \
           File_Content_Policy \
           XDR                 \
+          RPCAL               \
           NFS_Protocols       \
           PNFS                \
+          RPCAL               \
           support             \
           IdMapper            \
           snmp_adm            \
@@ -168,6 +169,7 @@ EXTRA_DIST=nfs-ganesha.spec           \
            nfs-ganesha.lustre.init    \
            nfs-ganesha.xfs.init       \
            nfs-ganesha.gpfs.init      \
+           nfs-ganesha.vfs.init       \
            nfs-ganesha.hpss.init      \
            nfs-ganesha.proxy.init     \
            nfs-ganesha.snmp.init      \

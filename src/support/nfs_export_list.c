@@ -98,21 +98,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
-#ifdef _USE_GSSRPC
-#include <gssapi/gssapi.h>
-#ifdef HAVE_KRB5
-#include <gssapi/gssapi_krb5.h>
-#endif
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
@@ -255,17 +241,15 @@ int get_req_uid_gid(struct svc_req *ptr_req,
                     exportlist_t * pexport, struct user_cred *user_credentials)
 {
   struct authunix_parms *punix_creds = NULL;
+  unsigned int rpcxid = 0;
 #ifdef _USE_GSSRPC
   struct svc_rpc_gss_data *gd = NULL;
   OM_uint32 maj_stat = 0;
   OM_uint32 min_stat = 0;
   char username[MAXNAMLEN];
   char domainname[MAXNAMLEN];
-#endif
-  fsal_status_t fsal_status;
-  unsigned int rpcxid = 0;
-
   char *ptr;
+#endif
 
   if (user_credentials == NULL)
     return FALSE;
@@ -315,7 +299,7 @@ int get_req_uid_gid(struct svc_req *ptr_req,
 
           memcpy(&ptr, (void *)gd->ctx + 4, 4);
           LogFullDebug(COMPONENT_RPCSEC_GSS,
-                       "----> Client=%s length=%u  Qop=%u established=%u gss_ctx_id=%p|%p",
+                       "----> Client=%s length=%lu  Qop=%u established=%u gss_ctx_id=%p|%p",
                        (char *)gd->cname.value, gd->cname.length, gd->established, gd->sec.qop,
                        gd->ctx, ptr);
 
@@ -326,7 +310,7 @@ int get_req_uid_gid(struct svc_req *ptr_req,
             }
           else
             {
-              LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Client mech=%s len=%u",
+              LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Client mech=%s len=%lu",
                            (char *)oidbuff.value, oidbuff.length);
 
               /* Release the string */
@@ -370,6 +354,30 @@ int get_req_uid_gid(struct svc_req *ptr_req,
   return TRUE;
 }
 
+int nfs_check_anon(exportlist_client_entry_t * pexport_client,
+		   exportlist_t * pexport,
+		   struct user_cred *user_credentials)
+{
+  if (user_credentials == NULL)
+    return FALSE;
+
+  /* Do we have root access ? */
+  /* Are we squashing _all_ users to the anonymous uid/gid ? */
+  if( ((user_credentials->caller_uid == 0)
+       && !(pexport_client->options & EXPORT_OPTION_ROOT))
+      || pexport->all_anonymous == TRUE)
+    {
+      user_credentials->caller_uid = pexport->anonymous_uid;
+      user_credentials->caller_gid = pexport->anonymous_gid;
+      
+      /* No alternate groups for "nobody" */
+      user_credentials->caller_glen = 0 ;
+      user_credentials->caller_garray = NULL ;
+    }
+
+  return TRUE;
+}
+
 /**
  *
  * nfs_build_fsal_context: Builds the FSAL context according to the request and the export entry.
@@ -380,7 +388,8 @@ int get_req_uid_gid(struct svc_req *ptr_req,
  * @param pexport_client [IN] related export client
  * @param pexport [IN]  related export entry
  * @param pcred   [IN/OUT] initialized credential of caller thread.
- * @param user_credentials [OUT] Filled in structure with uid and gids                                                                                                            * 
+ * @param user_credentials [OUT] Filled in structure with uid and gids
+ * 
  * @return TRUE if successful, FALSE otherwise 
  *
  */
@@ -393,20 +402,6 @@ int nfs_build_fsal_context(struct svc_req *ptr_req,
 
   if (user_credentials == NULL)
     return FALSE;
-
-  /* Do we have root access ? */
-  /* Are we squashing _all_ users to the anonymous uid/gid ? */
-  if( ((user_credentials->caller_uid == 0)
-       && !(pexport_client->options & EXPORT_OPTION_ROOT))
-      || pexport->all_anonymous == TRUE)
-    {
-      user_credentials->caller_uid = pexport->anonymous_uid;
-      user_credentials->caller_gid = pexport->anonymous_gid;
-
-      /* No alternate groups for "nobody" */
-      user_credentials->caller_glen = 0 ;
-      user_credentials->caller_garray = NULL ;
-    }
 
   /* Build the credentials */
   fsal_status = FSAL_GetClientContext(pcontext,

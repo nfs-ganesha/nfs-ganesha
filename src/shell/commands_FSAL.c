@@ -346,6 +346,7 @@ int Init_Thread_Context(FILE * output, cmdfsal_thr_info_t * context, int flag_v)
 {
 
   uid_t uid;
+  char fsal_status_buf[256];
   fsal_status_t st;
   fsal_handle_t hdl_dir;
   char buff[2 * sizeof(fsal_handle_t) + 1];
@@ -362,9 +363,8 @@ int Init_Thread_Context(FILE * output, cmdfsal_thr_info_t * context, int flag_v)
 
   if(FSAL_IS_ERROR(st))
     {
-      fprintf(output, "Error executing FSAL_BuildExportContext:");
-      print_fsal_status(output, st);
-      fprintf(output, "\n");
+      fsal_status_to_string(fsal_status_buf, st);
+      fprintf(output, "Error executing FSAL_BuildExportContext: %s\n", fsal_status_buf);
       return st.major;
     }
 
@@ -374,9 +374,8 @@ int Init_Thread_Context(FILE * output, cmdfsal_thr_info_t * context, int flag_v)
 
   if(FSAL_IS_ERROR(st))
     {
-      fprintf(output, "Error executing FSAL_InitClientContext:");
-      print_fsal_status(output, st);
-      fprintf(output, "\n");
+      fsal_status_to_string(fsal_status_buf, st);
+      fprintf(output, "Error executing FSAL_InitClientContext: %s\n", fsal_status_buf);
       return st.major;
     }
 
@@ -394,9 +393,8 @@ int Init_Thread_Context(FILE * output, cmdfsal_thr_info_t * context, int flag_v)
 
   if(FSAL_IS_ERROR(st))
     {
-      fprintf(output, "Error executing FSAL_GetUserCred:");
-      print_fsal_status(output, st);
-      fprintf(output, "\n");
+      fsal_status_to_string(fsal_status_buf, st);
+      fprintf(output, "Error executing FSAL_GetUserCred: %s\n", fsal_status_buf);
       return st.major;
     }
 
@@ -408,12 +406,9 @@ int Init_Thread_Context(FILE * output, cmdfsal_thr_info_t * context, int flag_v)
 
   if(FSAL_IS_ERROR(st))
     {
-
-      fprintf(output, "Error executing FSAL_lookup:");
-      print_fsal_status(output, st);
-      fprintf(output, "\n");
+      fsal_status_to_string(fsal_status_buf, st);
+      fprintf(output, "Error executing FSAL_lookup: %s\n", fsal_status_buf);
       return st.major;
-
     }
 
   /* save root handle */
@@ -627,10 +622,10 @@ int fn_fsal_init_fs(int argc,   /* IN : number of args in argv */
                     FILE * output)      /* IN : output stream          */
 {
   int rc;
+ 
+  char format[] = "hv";
 
-  static char format[] = "hv";
-
-  static char help_init[] =
+  const char help_init[] =
       "usage: init_fs [options] <ganesha_config_file>\n"
       "options :\n" "\t-h print this help\n" "\t-v verbose mode\n";
 
@@ -874,7 +869,7 @@ int solvepath(char *io_global_path, int size_global_path,       /* [IN-OUT] glob
 
               /* adds /name at the end of the path */
               strncat(tmp_path, "/", FSAL_MAX_PATH_LEN);
-              strncat(tmp_path, next_name, FSAL_MAX_PATH_LEN);
+              strncat(tmp_path, next_name, FSAL_MAX_PATH_LEN - strlen(tmp_path));
             }
 
           /* updates cursors */
@@ -947,7 +942,7 @@ int fn_fsal_cd(int argc,        /* IN : number of args in argv */
   /* Exactly one arg expected */
   if(argc != 2)
     {
-      fprintf(output, help_cd);
+      fprintf(output, help_cd, NULL);
       return -1;
     }
 
@@ -1011,9 +1006,9 @@ int fn_fsal_stat(int argc,      /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_stat[] = "usage: stat [-h][-v] <file>\n";
+  const char help_stat[] = "usage: stat [-h][-v] <file>\n";
 
   char glob_path[FSAL_MAX_PATH_LEN];
   fsal_handle_t new_hdl;
@@ -1148,9 +1143,11 @@ int fn_fsal_lsxattrs(int argc,  /* IN : number of args in argv */
                      FILE * output      /* IN : output stream          */
     )
 {
-  static char format[] = "hv";
+  char fsal_status_buf[256];
 
-  static char help_lsxattr[] = "usage: lsxattrs [-h][-v] <path>\n";
+  char format[] = "hv";
+
+  const char help_lsxattr[] = "usage: lsxattrs [-h][-v] <path>\n";
 
   char glob_path[FSAL_MAX_PATH_LEN];
   fsal_handle_t new_hdl;
@@ -1259,9 +1256,8 @@ int fn_fsal_lsxattrs(int argc,  /* IN : number of args in argv */
 
       if(FSAL_IS_ERROR(st))
         {
-          fprintf(output, "Error executing FSAL_ListXAttrs:");
-          print_fsal_status(output, st);
-          fprintf(output, "\n");
+          fsal_status_to_string(fsal_status_buf, st);
+          fprintf(output, "Error executing FSAL_ListXAttrs: %s\n", fsal_status_buf);
           return st.major;
         }
 
@@ -1292,9 +1288,9 @@ int fn_fsal_getxattr(int argc,  /* IN : number of args in argv */
                      FILE * output      /* IN : output stream          */
     )
 {
-  static char format[] = "hvaxn";
+  char format[] = "hvaxn";
 
-  static char help_getxattr[] =
+  const char help_getxattr[] =
       "usage: getxattr [-hv] [-a|-n|-x] <path> <attr_name>\n"
       "options :\n"
       "\t-h print this help\n"
@@ -1542,9 +1538,9 @@ int fn_fsal_ls(int argc,        /* IN : number of args in argv */
                FILE * output)   /* IN : output stream          */
 {
 
-  static char format[] = "hvdlS";
+  char format[] = "hvdlS";
 
-  static char help_ls[] =
+  const char help_ls[] =
       "usage: ls [options] [name|path]\n"
       "options :\n"
       "\t-h print this help\n"
@@ -1864,7 +1860,7 @@ int fn_fsal_callstat(int argc,  /* IN : number of args in argv */
   fsal_statistics_t call_stat;
   int i;
 
-  static char help_stats[] = "usage: stats\n";
+  const char help_stats[] = "usage: stats\n";
 
   /* is the fs initialized ? */
   if(!is_loaded)
@@ -1916,7 +1912,7 @@ int fn_fsal_su(int argc,        /* IN : number of args in argv */
   gid_t groups_tab[MAX_GRPS];
   int nb_grp;
 
-  static char help_stats[] = "usage: su <uid>\n";
+  const char help_stats[] = "usage: su <uid>\n";
 
   cmdfsal_thr_info_t *context;
 
@@ -2012,9 +2008,9 @@ int fn_fsal_unlink(int argc,    /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_unlink[] = "usage: unlink [-h][-v] <path>\n";
+  const char help_unlink[] = "usage: unlink [-h][-v] <path>\n";
 
   char glob_path[FSAL_MAX_PATH_LEN];
   fsal_handle_t new_hdl;
@@ -2142,9 +2138,9 @@ int fn_fsal_mkdir(int argc,     /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_mkdir[] =
+  const char help_mkdir[] =
       "usage: mkdir [-h][-v] <path> <mode>\n"
       "       path: path of the directory to be created\n"
       "       mode: octal mode for the directory is to be created (ex: 755)\n";
@@ -2326,9 +2322,9 @@ int fn_fsal_rename(int argc,    /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_rename[] = "usage: rename [-h][-v] <src> <dest>\n";
+  const char help_rename[] = "usage: rename [-h][-v] <src> <dest>\n";
 
   char src_glob_path[FSAL_MAX_PATH_LEN];
   char tgt_glob_path[FSAL_MAX_PATH_LEN];
@@ -2504,9 +2500,9 @@ int fn_fsal_ln(int argc,        /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_ln[] =
+  const char help_ln[] =
       "ln: create a symbolic link.\n"
       "usage: ln [-h][-v] <link_content> <link_path>\n"
       "       link_content: content of the symbolic link to be created\n"
@@ -2672,9 +2668,9 @@ int fn_fsal_hardlink(int argc,  /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_hardlink[] =
+  const char help_hardlink[] =
       "hardlink: create a hard link.\n"
       "usage: hardlink [-h][-v] <target> <new_path>\n"
       "       target: path of an existing file.\n"
@@ -2833,9 +2829,9 @@ int fn_fsal_create(int argc,    /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_create[] =
+  const char help_create[] =
       "usage: create [-h][-v] <path> <mode>\n"
       "       path: path of the file to be created\n"
       "       mode: octal access mode for the file to be created (ex: 644)\n";
@@ -3031,9 +3027,9 @@ int fn_fsal_setattr(int argc,   /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_setattr[] =
+  const char help_setattr[] =
       "usage: setattr [-h][-v] <path> <attr>=<value>,<attr>=<value>,...\n";
 
   char glob_path[FSAL_MAX_PATH_LEN];    /* absolute path of the object */
@@ -3226,9 +3222,9 @@ int fn_fsal_access(int argc,    /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hvA";
+  char format[] = "hvA";
 
-  static char help_access[] =
+  const char help_access[] =
       "usage: access [-h][-v][-A] <rights> <path>\n"
       "\n"
       "   -h : print this help\n"
@@ -3487,9 +3483,9 @@ int fn_fsal_truncate(int argc,  /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_truncate[] = "usage: truncate [-h][-v] <file> <size>\n";
+  const char help_truncate[] = "usage: truncate [-h][-v] <file> <size>\n";
 
   char glob_path[FSAL_MAX_PATH_LEN];
   fsal_handle_t filehdl;
@@ -3624,9 +3620,9 @@ int fn_fsal_open_byname(int argc,       /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_open[] =
+  const char help_open[] =
       "usage: open_byname [-h][-v] <path> [<oflags>]\n"
       "   where <oflags> is a set of the following values:\n"
       "   'r': read, 'w': write, 'a': append, 't': truncate.\n";
@@ -3830,9 +3826,9 @@ int fn_fsal_open(int argc,      /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_open[] =
+  const char help_open[] =
       "usage: open [-h][-v] <path> [<oflags>]\n"
       "   where <oflags> is a set of the following values:\n"
       "   'r': read, 'w': write, 'a': append, 't': truncate.\n";
@@ -4035,9 +4031,9 @@ int fn_fsal_open_byfileid(int argc,     /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hv";
+  char format[] = "hv";
 
-  static char help_open_byfileid[] =
+  const char help_open_byfileid[] =
       "usage: open_byfileid [-h][-v] <path> <fileid> [<oflags>]\n"
       "   where <oflags> is a set of the following values:\n"
       "   'r': read, 'w': write, 'a': append, 't': truncate.\n";
@@ -4244,9 +4240,9 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hvAXB:s:";
+  char format[] = "hvAXB:s:";
 
-  static char help_read[] =
+  const char help_read[] =
       "Usage:\n"
       "  read [-h][-v][-A][-X] [-B <block_size> ] [ -s <seek_type>,<offset> ]  { <total_bytes> | all }\n"
       "Options:\n"
@@ -4692,9 +4688,9 @@ int fn_fsal_write(int argc,     /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hvs:N:A:X:";
+  char format[] = "hvs:N:A:X:";
 
-  static char help_write[] =
+  const char help_write[] =
       "Usage:\n"
       "  write [-h][-v] [ -s <seek_type>,<offset> ]  [-N <nb_times>] -A <ascii_string>\n"
       "  write [-h][-v] [ -s <seek_type>,<offset> ]  [-N <nb_times>] -X <hexa_data>\n"
@@ -5139,7 +5135,7 @@ int fn_fsal_close(int argc,     /* IN : number of args in argv */
     )
 {
 
-  static char help_close[] = "usage: close\n";
+  const char help_close[] = "usage: close\n";
 
   fsal_status_t st;
 
@@ -5204,7 +5200,7 @@ int fn_fsal_close_byfileid(int argc,    /* IN : number of args in argv */
     )
 {
 
-  static char help_close[] = "usage: close_byfileid <fileid>\n";
+  const char help_close[] = "usage: close_byfileid <fileid>\n";
 
   fsal_status_t st;
 
@@ -5269,9 +5265,9 @@ int fn_fsal_cat(int argc,       /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hf";
+  char format[] = "hf";
 
-  static char help_cat[] =
+  const char help_cat[] =
       "usage: cat [-h][-f] <path>\n"
       "   -h: print this help\n"
       "   -f: by default, cat doesn't print more that 1MB.\n"
@@ -5442,9 +5438,9 @@ int fn_fsal_rcp(int argc,       /* IN : number of args in argv */
     )
 {
 
-  static char format[] = "hvrw";
+  char format[] = "hvrw";
 
-  static char help_rcp[] =
+  const char help_rcp[] =
       "usage: rcp [-h][-v] -r|-w <fsal_path> <local_path>\n"
       "  -h : print this help\n"
       "  -v : verbose mode\n"
@@ -5647,7 +5643,7 @@ int fn_fsal_cross(int argc,     /* IN : number of args in argv */
     )
 {
 
-  static char help_cross[] = "usage: cross <junction_path>\n";
+  const char help_cross[] = "usage: cross <junction_path>\n";
 
   char glob_path[FSAL_MAX_PATH_LEN];
   fsal_handle_t junction_hdl, root_hdl;
@@ -5732,7 +5728,7 @@ int fn_fsal_handle(int argc,     /* IN : number of args in argv */
     )
 {
 
-  static char help_handle[] = "usage: handle digest {2|3|4} <handle|path>\n"
+  const char help_handle[] = "usage: handle digest {2|3|4} <handle|path>\n"
                               "       handle expand {2|3|4} <handle>\n";
   cmdfsal_thr_info_t *context;
   char glob_path[FSAL_MAX_PATH_LEN];
@@ -5874,7 +5870,7 @@ int fn_fsal_handlecmp(int argc, /* IN : number of args in argv */
                       FILE * output     /* IN : output stream */
     )
 {
-  static char help_handlecmp[] = "usage: handlecmp <obj1> <obj2>\n";
+  const char help_handlecmp[] = "usage: handlecmp <obj1> <obj2>\n";
 
   char glob_path1[FSAL_MAX_PATH_LEN];
   char glob_path2[FSAL_MAX_PATH_LEN];

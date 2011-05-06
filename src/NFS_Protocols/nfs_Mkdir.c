@@ -48,18 +48,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -115,7 +104,7 @@ int nfs_Mkdir(nfs_arg_t * parg,
   cache_inode_file_type_t parent_filetype;
   fsal_handle_t *pfsal_handle;
   fsal_name_t dir_name;
-  cache_inode_status_t cache_status;
+  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   cache_inode_status_t cache_status_lookup;
 
   if(isDebug(COMPONENT_NFSPROTO))

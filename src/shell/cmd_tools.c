@@ -683,6 +683,32 @@ void print_fsal_status(FILE * output, fsal_status_t status)
 }
 
 /**
+ * fsal_status_to_string:
+ * this function converts an fsal_status_t to a a string buffer
+ *
+ * \param output (in char *) The output where the status is to be printed.
+ * \param status (in status) The status to be printed.
+ *
+ * \return Nothing.
+ */
+void fsal_status_to_string(char * output, fsal_status_t status)
+{
+
+#ifdef _USE_GHOSTFS
+
+  log_snprintf(output, sizeof(output), "%J%r,%J%r",
+               ERR_FSAL, status.major, ERR_GHOSTFS, status.minor);
+
+#else
+
+  log_snprintf(output, sizeof(output), "%J%r, filesystem status: %d",
+               ERR_FSAL, status.major, status.minor);
+
+#endif
+}
+
+
+/**
  * print_fsal_attrib_mask:
  * Print an fsal_attrib_mask_t to a given output file.
  *
