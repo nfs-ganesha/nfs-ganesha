@@ -122,6 +122,29 @@ unsigned int get_rpc_xid(struct svc_req *reqp)
    * ONC RPC protocol definitions, and used internally by the ONC layers. Since I need to know the xid
    * the structures are defined here */
 
+  unsigned int Xid = 0;
+  
+#ifdef _USE_TIRPC
+  /* definition from tirpc/rpc/svc_vc.h */
+
+  struct cf_conn {  /* kept in xprt->xp_p1 for actual connection */
+    enum xprt_stat strm_stat;
+    u_int32_t x_id;
+    XDR xdrs;
+    char verf_body[MAX_AUTH_BYTES];
+    u_int sendsize;
+    u_int recvsize;
+    int maxrec;
+    bool_t nonblock;
+    struct timeval last_recv_time;
+  };
+  
+  if (reqp->rq_xprt->xp_p2 != NULL) {
+    Xid = ((struct svc_dg_data *)(reqp->rq_xprt->xp_p2))->su_xid;
+  } else if (reqp->rq_xprt->xp_p1 != NULL) {
+    Xid = ((struct cf_conn *)(reqp->rq_xprt->xp_p1))->x_id;
+  }
+#else 
   struct udp_private2__
   {                             /* kept in xprt->xp_p2 */
     int up_unused;
@@ -136,8 +159,6 @@ unsigned int get_rpc_xid(struct svc_req *reqp)
     char verf_body[MAX_AUTH_BYTES];
   };
 
-  unsigned int Xid;
-
   /* Map the xp1 and xp2 field to the udp and tcp private structures */
   struct tcp_conn2__ *ptcpxp = (struct tcp_conn2__ *)(reqp->rq_xprt->xp_p1);
   struct udp_private2__ *pudpxp = (struct udp_private2__ *)(reqp->rq_xprt->xp_p2);
@@ -145,8 +166,9 @@ unsigned int get_rpc_xid(struct svc_req *reqp)
   /* The request is either UDP or TCP. If UDP Xid is null, then look for TCP xid */
   if(reqp->rq_xprt->xp_p2 != NULL)
     Xid = pudpxp->up_xid;       /* UDP XID */
-  else
+  else if (reqp->rq_xprt->xp_p1 != NULL)
     Xid = ptcpxp->x_id;         /* TCP XID */
+#endif
 
   return Xid;
 }                               /* get_rpc_xid */

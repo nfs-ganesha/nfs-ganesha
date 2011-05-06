@@ -10,6 +10,13 @@
 #include <arpa/inet.h>
 #include "rpc.h"
 
+int DisplayLogComponentLevel(log_components_t component,
+                             int level,
+                             char *format, ...)
+{
+    return 0;
+}
+
 #define EQUALS(a, b, msg) do {                    \
   if (a != b) {                             \
       printf(msg "\n");                           \
@@ -60,25 +67,28 @@ void init() {
 }
 
 void ipv4check() {
-    // printf("Value = %lu\n", hash_sockaddr(&ipv4a));
-    // printf("Value = %lu\n", hash_sockaddr(&ipv4b));
-    // printf("Value = %lu\n", hash_sockaddr(&ipv4c));
-    EQUALS(hash_sockaddr(&ipv4a, 0), 151325194, "ipv4a doesn't hash as expected");
-    EQUALS(hash_sockaddr(&ipv4b, 0), 151259658, "ipv4b doesn't hash as expected");
-    EQUALS(hash_sockaddr(&ipv4c, 0), 168102410, "ipv4c doesn't hash as expected");
+    printf("Value = %lu\n", hash_sockaddr(&ipv4a, 0));
+    printf("Value = %lu\n", hash_sockaddr(&ipv4b, 0));
+    printf("Value = %lu\n", hash_sockaddr(&ipv4c, 0));
+    EQUALS(hash_sockaddr(&ipv4a, IGNORE_PORT), 17107466, "ipv4a doesn't hash as expected");
+    EQUALS(hash_sockaddr(&ipv4b, IGNORE_PORT), 17107466, "ipv4b doesn't hash as expected");
+    EQUALS(hash_sockaddr(&ipv4c, IGNORE_PORT), 33884682, "ipv4c doesn't hash as expected");
+    EQUALS(hash_sockaddr(&ipv4a, CHECK_PORT), 151325194, "ipv4a doesn't hash as expected");
+    EQUALS(hash_sockaddr(&ipv4b, CHECK_PORT), 151259658, "ipv4b doesn't hash as expected");
+    EQUALS(hash_sockaddr(&ipv4c, CHECK_PORT), 168102410, "ipv4c doesn't hash as expected");
 }
 
 void ipv6check() {
-    /* printf("Value = %lu\n", hash_sockaddr(&ipv6a)); */
-    /* printf("Value = %lu\n", hash_sockaddr(&ipv6b)); */
-    /* printf("Value = %lu\n", hash_sockaddr(&ipv6c)); */
-    EQUALS(hash_sockaddr(&ipv6a, 0), 150995232, "ipv6a doesn't hash as expected");
-    EQUALS(hash_sockaddr(&ipv6b, 0), 151060768, "ipv6b doesn't hash as expected");
-    EQUALS(hash_sockaddr(&ipv6c, 0), 150998560, "ipv6c doesn't hash as expected");
+    printf("Value = %lu\n", hash_sockaddr(&ipv6a, 0));
+    printf("Value = %lu\n", hash_sockaddr(&ipv6b, 0));
+    printf("Value = %lu\n", hash_sockaddr(&ipv6c, 0));
+    EQUALS(hash_sockaddr(&ipv6a, CHECK_PORT), 150995232, "ipv6a doesn't hash as expected");
+    EQUALS(hash_sockaddr(&ipv6b, CHECK_PORT), 151060768, "ipv6b doesn't hash as expected");
+    EQUALS(hash_sockaddr(&ipv6c, CHECK_PORT), 150998560, "ipv6c doesn't hash as expected");
 }
 
 void ipv4print() {
-    char buf[INET4_ADDRSTRLEN];
+    char buf[SOCK_NAME_MAX];
     sprint_sockip(&ipv4a, buf, sizeof(buf));
     // printf("Value = %s\n", buf);
     CMP("10.10.5.1", buf, strlen("10.10.5.1"), "ipv4a has the wrong ip value");
@@ -93,7 +103,7 @@ void ipv4print() {
 }
 
 void ipv6print() {
-    char buf[INET6_ADDRSTRLEN];
+    char buf[SOCK_NAME_MAX];
     sprint_sockip(&ipv6a, buf, sizeof(buf));
     // printf("Value = %s\n", buf);
     CMP("2001::1", buf, strlen("2001::1"), "ipv6a has the wrong ip value");
@@ -108,17 +118,17 @@ void ipv6print() {
 }
 
 void ipv4cmp() {
-    EQUALS(cmp_sockaddr(&ipv4a, &ipv4b, 1), 1, "ipv4a comapred to ipv4b no port");
-    EQUALS(cmp_sockaddr(&ipv4a, &ipv4b, 0), 0, "ipv4a comapred to ipv4b with port");
-    EQUALS(cmp_sockaddr(&ipv4a, &ipv4c, 1), 0, "ipv4a comapred to ipv4c no port");
-    EQUALS(cmp_sockaddr(&ipv4a, &ipv4c, 0), 0, "ipv4a comapred to ipv4c with port");
+    EQUALS(cmp_sockaddr(&ipv4a, &ipv4b, IGNORE_PORT), 1, "ipv4a comapred to ipv4b no port");
+    EQUALS(cmp_sockaddr(&ipv4a, &ipv4b, CHECK_PORT), 0, "ipv4a comapred to ipv4b with port");
+    EQUALS(cmp_sockaddr(&ipv4a, &ipv4c, IGNORE_PORT), 0, "ipv4a comapred to ipv4c no port");
+    EQUALS(cmp_sockaddr(&ipv4a, &ipv4c, CHECK_PORT), 0, "ipv4a comapred to ipv4c with port");
 }
 
 void ipv6cmp() {
-    EQUALS(cmp_sockaddr(&ipv6a, &ipv6b, 1), 1, "ipv6a comapred to ipv6b no port");
-    EQUALS(cmp_sockaddr(&ipv6a, &ipv6b, 0), 0, "ipv6a comapred to ipv6b with port");
-    EQUALS(cmp_sockaddr(&ipv6a, &ipv6c, 1), 0, "ipv6a comapred to ipv6c no port");
-    EQUALS(cmp_sockaddr(&ipv6a, &ipv6c, 0), 0, "ipv6a comapred to ipv6c with port");
+    EQUALS(cmp_sockaddr(&ipv6a, &ipv6b, IGNORE_PORT), 1, "ipv6a comapred to ipv6b no port");
+    EQUALS(cmp_sockaddr(&ipv6a, &ipv6b, CHECK_PORT), 0, "ipv6a comapred to ipv6b with port");
+    EQUALS(cmp_sockaddr(&ipv6a, &ipv6c, IGNORE_PORT), 0, "ipv6a comapred to ipv6c no port");
+    EQUALS(cmp_sockaddr(&ipv6a, &ipv6c, CHECK_PORT), 0, "ipv6a comapred to ipv6c with port");
 }
 
 int main()
