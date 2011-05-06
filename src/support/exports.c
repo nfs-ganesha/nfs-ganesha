@@ -2262,12 +2262,12 @@ int export_client_match(sockaddr_t *hostaddr,
 
         case NETGROUP_CLIENT:
           /* Try to get the entry from th IP/name cache */
-          if((rc = nfs_ip_name_get(addr, hostname)) != IP_NAME_SUCCESS)
+          if((rc = nfs_ip_name_get(hostaddr, hostname)) != IP_NAME_SUCCESS)
             {
               if(rc == IP_NAME_NOT_FOUND)
                 {
                   /* IPaddr was not cached, add it to the cache */
-                  if(nfs_ip_name_add(addr, hostname) != IP_NAME_SUCCESS)
+                  if(nfs_ip_name_add(hostaddr, hostname) != IP_NAME_SUCCESS)
                     {
                       /* Major failure, name could not be resolved */
                       break;
@@ -2299,12 +2299,12 @@ int export_client_match(sockaddr_t *hostaddr,
                        "Did not match the ip address with a wildcard.");
           
           /* Try to get the entry from th IP/name cache */
-          if((rc = nfs_ip_name_get(addr, hostname)) != IP_NAME_SUCCESS)
+          if((rc = nfs_ip_name_get(hostaddr, hostname)) != IP_NAME_SUCCESS)
             {
               if(rc == IP_NAME_NOT_FOUND)
                 {
                   /* IPaddr was not cached, add it to the cache */
-                  if(nfs_ip_name_add(addr, hostname) != IP_NAME_SUCCESS)
+                  if(nfs_ip_name_add(hostaddr, hostname) != IP_NAME_SUCCESS)
                     {
                       /* Major failure, name could not be resolved */
                       LogFullDebug(COMPONENT_DISPATCH,

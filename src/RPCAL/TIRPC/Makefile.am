@@ -5,7 +5,8 @@ AM_CFLAGS = -Wimplicit $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS
 
 noinst_LTLIBRARIES = librpcalcore.la
 
-librpcalcore_la_SOURCES = Svc_tirpc.c    \
+librpcalcore_la_SOURCES = tirpc.h \
+                          Svc_tirpc.c    \
                           Svc_vc_tirpc.c \
                           Svc_dg_tirpc.c 
 

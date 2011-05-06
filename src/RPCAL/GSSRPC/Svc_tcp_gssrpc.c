@@ -552,7 +552,7 @@ SVCXPRT *Svcxprt_copycreate()
 /*
  * Duplicate xprt from original to copy.
  */
-void Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
+SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
 {
   register struct tcp_conn *cd_copy = (struct tcp_conn *)(xprt_copy->xp_p1);
   register struct tcp_conn *cd_orig = (struct tcp_conn *)(xprt_orig->xp_p1);
@@ -564,6 +564,8 @@ void Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
   cd_copy->strm_stat = cd_orig->strm_stat;
   cd_copy->x_id = cd_orig->x_id;
   memcpy(cd_copy->verf_body, cd_orig->verf_body, MAX_AUTH_BYTES);
+
+  return xprt_copy;
 }
 
 

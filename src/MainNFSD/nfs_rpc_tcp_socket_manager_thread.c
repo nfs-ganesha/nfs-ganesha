@@ -337,8 +337,15 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
           /* Update a copy of SVCXPRT and pass it to the worker thread to use it. */
           xprt_copy = pnfsreq->xprt_copy;
-          Svcxprt_copy(xprt_copy, xprt);
+          xprt_copy = Svcxprt_copy(xprt_copy, xprt);
           pnfsreq->xprt = xprt_copy;
+          if(!xprt_copy)
+            {
+              //TODO: handle error - barf for now...
+              LogCrit(COMPONENT_DISPATCH,
+                      "Svcxprt_copy failed.... oops...");
+              xprt_copy->xp_fd = 0;
+            }
 
           pentry->buffdata.pdata = (caddr_t) pnfsreq;
           pentry->buffdata.len = sizeof(*pnfsreq);
@@ -353,8 +360,6 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
             }
           V(workers_data[worker_index].mutex_req_condvar);
           V(workers_data[worker_index].request_pool_mutex);
-          LogFullDebug(COMPONENT_DISPATCH, "Waiting for commit from thread #%d",
-                       worker_index);
 
           if(pfuncdesc != INVALID_FUNCDESC)
             {
