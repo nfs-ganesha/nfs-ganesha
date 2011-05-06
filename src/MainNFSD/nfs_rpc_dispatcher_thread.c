@@ -847,6 +847,7 @@ int nfs_Init_svc()
   rpcb_unset(nfs_param.core_param.mnt_program, MOUNT_V3, netconfig_tcpv4);
 
   rpcb_unset(nfs_param.core_param.nlm_program, NLM4_VERS, netconfig_tcpv4);
+  rpcb_unset(nfs_param.core_param.nlm_program, NLM4_VERS, netconfig_udpv4);
 
 #ifdef _USE_QUOTA
   rpcb_unset(nfs_param.core_param.rquota_program, RQUOTAVERS, netconfig_tcpv4);
