@@ -125,8 +125,25 @@ unsigned int get_rpc_xid(struct svc_req *reqp)
   unsigned int Xid = 0;
   
 #ifdef _USE_TIRPC
-  /* definition from tirpc/rpc/svc_dg.h */
-  Xid =  ((struct svc_dg_data *)(reqp->rq_xprt->xp_p2))->su_xid;
+  /* definition from tirpc/rpc/svc_vc.h */
+
+  struct cf_conn {  /* kept in xprt->xp_p1 for actual connection */
+    enum xprt_stat strm_stat;
+    u_int32_t x_id;
+    XDR xdrs;
+    char verf_body[MAX_AUTH_BYTES];
+    u_int sendsize;
+    u_int recvsize;
+    int maxrec;
+    bool_t nonblock;
+    struct timeval last_recv_time;
+  };
+  
+  if (reqp->rq_xprt->xp_p2 != NULL) {
+    Xid = ((struct svc_dg_data *)(reqp->rq_xprt->xp_p2))->su_xid;
+  } else if (reqp->rq_xprt->xp_p1 != NULL) {
+    Xid = ((struct cf_conn *)(reqp->rq_xprt->xp_p1))->x_id;
+  }
 #else 
   struct udp_private2__
   {                             /* kept in xprt->xp_p2 */
