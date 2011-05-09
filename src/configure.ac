@@ -355,6 +355,7 @@ AC_ARG_WITH( [rpcal], AS_HELP_STRING([--with-rpcal=ONCRPC|GSSRPC|TIRPC (default=
               RPCAL="$withval", RPCAL="ONCRPC")
 AM_CONDITIONAL(USE_GSSRPC, test "$RPCAL" = "GSSRPC" )
 AM_CONDITIONAL(USE_TIRPC,  test "$RPCAL" = "TIRPC" )
+AM_CONDITIONAL(USE_GSSRPC,  test "$RPCAL" = "TIRPC" )
 AM_CONDITIONAL(USE_ONCRPC, test "$RPCAL" = "ONCRPC" )
 
 # IPv6
@@ -690,6 +691,12 @@ case $RPCAL in
                         AC_MSG_ERROR( [TI-RPC could not be found...] )
                   ]
                 )
+                AC_DEFINE(_USE_GSSRPC,1,[enable security management with GSSRPC])
+	        # ==> Add here libraries needed for GSSRPC
+                AC_CHECK_LIB([gssapi_krb5], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ],
+			     [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )
+                AC_CHECK_LIB([tirpc], [svcauth_gss_get_principal], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ],
+			      [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
 		;;
 	*)
 		AC_MSG_ERROR([This RPCAL is not supported])

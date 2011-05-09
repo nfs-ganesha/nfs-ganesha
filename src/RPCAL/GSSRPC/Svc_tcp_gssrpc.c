@@ -53,11 +53,7 @@ int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) 
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/svc_auth.h>
+#include "rpc.h"
 #include <sys/socket.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -214,7 +210,7 @@ SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize)
   /*xprt->xp_verf = null_auth ; */
   xprt->xp_ops = &Svctcp_rendezvous_op;
   xprt->xp_port = ntohs(addr.sin_port);
-  xprt->xp_sock = sock;
+  xprt->XP_SOCK = sock;
   xprt->xp_laddrlen = 0;
   Xprt_register(xprt);
   return (xprt);
@@ -254,7 +250,7 @@ static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
   xprt->xp_laddrlen = 0;
   xprt->xp_ops = &Svctcp_op;    /* truely deals with calls */
   xprt->xp_port = 0;            /* this is a connection, not a rendezvouser */
-  xprt->xp_sock = fd;
+  xprt->XP_SOCK = fd;
   Xports[fd] = xprt;
  done:
   return (xprt);
@@ -275,7 +271,7 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
   r = (struct tcp_rendezvous *)xprt->xp_p1;
  again:
   len = llen = sizeof(struct sockaddr_in);
-  if((sock = accept(xprt->xp_sock, (struct sockaddr *)&addr, &len)) < 0)
+  if((sock = accept(xprt->XP_SOCK, (struct sockaddr *)&addr, &len)) < 0)
     {
       if(errno == EINTR)
         goto again;
@@ -293,17 +289,17 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
   xprt->xp_laddr = laddr;
   xprt->xp_laddrlen = llen;
 
-  FD_CLR(xprt->xp_sock, &Svc_fdset);
+  FD_CLR(xprt->XP_SOCK, &Svc_fdset);
 
-  if(pthread_cond_init(&condvar_xprt[xprt->xp_sock], NULL) != 0)
+  if(pthread_cond_init(&condvar_xprt[xprt->XP_SOCK], NULL) != 0)
     return FALSE;
 
-  if(pthread_mutex_init(&mutex_cond_xprt[xprt->xp_sock], NULL) != 0)
+  if(pthread_mutex_init(&mutex_cond_xprt[xprt->XP_SOCK], NULL) != 0)
     return FALSE;
 
   if((rc =
       fridgethr_get(&sockmgr_thrid, rpc_tcp_socket_manager_thread,
-                     (void *)((unsigned long)xprt->xp_sock))) != 0)
+                     (void *)((unsigned long)xprt->XP_SOCK))) != 0)
     {
       return FALSE;
     }
@@ -322,7 +318,7 @@ static void Svctcp_destroy(register SVCXPRT * xprt)
   register struct tcp_conn *cd = (struct tcp_conn *)xprt->xp_p1;
 
   Xprt_unregister(xprt);
-  (void)close(xprt->xp_sock);
+  (void)close(xprt->XP_SOCK);
   if(xprt->xp_port != 0)
     {
       /* a rendezvouser socket */
@@ -356,7 +352,7 @@ static struct timeval wait_per_try = { 35, 0 };
 static int Readtcp(char *xprtptr, caddr_t buf, register int len)
 {
   register SVCXPRT *xprt = (SVCXPRT *) (void *)xprtptr;
-  register int sock = xprt->xp_sock;
+  register int sock = xprt->XP_SOCK;
   struct timeval tout;
 #ifdef FD_SETSIZE
   fd_set mask;
@@ -407,7 +403,7 @@ static int Writetcp(char *xprtptr, caddr_t buf, int len)
 
   for(cnt = len; cnt > 0; cnt -= i, buf += i)
     {
-      if((i = write(xprt->xp_sock, buf, (size_t) cnt)) < 0)
+      if((i = write(xprt->XP_SOCK, buf, (size_t) cnt)) < 0)
         {
           ((struct tcp_conn *)(xprt->xp_p1))->strm_stat = XPRT_DIED;
           return (-1);

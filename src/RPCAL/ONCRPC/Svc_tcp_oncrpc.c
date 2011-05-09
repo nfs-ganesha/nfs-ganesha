@@ -19,17 +19,7 @@ typedef unsigned int u_int32_t;
 #include   <string.h>
 #include   <unistd.h>
 #include   "stuff_alloc.h"
-
-#ifdef _USE_GSSRPC
-#include   <gssrpc/rpc.h>
-#include   <gssrpc/auth.h>
-#include   <gssrpc/svc.h>
-#else
-#include   <rpc/rpc.h>
-#include   <rpc/auth.h>
-#include   <rpc/svc.h>
-#endif
-
+#include   "rpc.h"
 #include   <sys/socket.h>
 #include   <sys/poll.h>
 #include   <errno.h>
@@ -172,11 +162,7 @@ SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize)
   xprt->xp_verf = _null_auth;
   xprt->xp_ops = &Svctcp_rendezvous_op;
   xprt->xp_port = ntohs(addr.sin_port);
-#ifdef _FREEBSD
-  xprt->xp_fd = sock;
-#else
-  xprt->xp_sock = sock;
-#endif
+  xprt->XP_SOCK = sock;
   Xprt_register(xprt);
   return (xprt);
 }
@@ -211,11 +197,7 @@ static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
   xprt->xp_addrlen = 0;
   xprt->xp_ops = &Svctcp_op;    /* truely deals with calls */
   xprt->xp_port = 0;            /* this is a connection, not a rendezvouser */
-#ifdef _FREEBSD
-  xprt->xp_fd = fd;
-#else
-  xprt->xp_sock = fd;
-#endif
+  xprt->XP_SOCK = fd;
   Xports[fd] = xprt;
  done:
   return (xprt);
@@ -327,11 +309,7 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt)
   r = (struct tcp_rendezvous *)xprt->xp_p1;
  again:
   len = sizeof(struct sockaddr_in);
-#ifdef _FREEBSD
-  if((sock = accept(xprt->xp_fd, (struct sockaddr *)&addr,
-#else
-  if((sock = accept(xprt->xp_sock, (struct sockaddr *)&addr,
-#endif
+  if((sock = accept(xprt->XP_SOCK, (struct sockaddr *)&addr,
                     (socklen_t *) & len)) < 0)
     {
       if(errno == EINTR)
@@ -372,11 +350,7 @@ static void Svctcp_destroy(register SVCXPRT * xprt)
   register struct tcp_conn *cd = (struct tcp_conn *)xprt->xp_p1;
 
   Xprt_unregister(xprt);
-#ifdef _FREEBSD
-  (void)close(xprt->xp_fd);
-#else
-  (void)close(xprt->xp_sock);
-#endif
+  (void)close(xprt->XP_SOCK);
 
   if(xprt->xp_port != 0)
     {
@@ -406,11 +380,7 @@ int Readtcp(register SVCXPRT * xprt, caddr_t buf, register int len)
                   "Readtcp: xprt=%p len=%d", xprt, len ) ; */
   /* print_xdrrec_fbtbc( "Readtcp",  xprt ) ;           */
 
-#ifdef _FREEBSD
-  register int sock = xprt->xp_fd;
-#else
-  register int sock = xprt->xp_sock;
-#endif
+  register int sock = xprt->XP_SOCK;
   int milliseconds = 35 * 1000;
   struct pollfd pollfd;
 
@@ -476,11 +446,7 @@ int Writetcp(register SVCXPRT * xprt, caddr_t buf, int len)
 
   for(cnt = len; cnt > 0; cnt -= i, buf += i)
     {
-#ifdef _FREEBSD
-      i = write(xprt->xp_fd, buf, cnt);
-#else
-      i = write(xprt->xp_sock, buf, cnt);
-#endif
+      i = write(xprt->XP_SOCK, buf, cnt);
       if(i < 0)
         {
           ((struct tcp_conn *)(xprt->xp_p1))->strm_stat = XPRT_DIED;

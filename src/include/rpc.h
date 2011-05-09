@@ -6,26 +6,32 @@
 
 #include "config.h"
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/types.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
 #ifdef _USE_TIRPC
 #include <tirpc/rpc/rpc.h>
 #include <tirpc/rpc/svc.h>
 #include <tirpc/rpc/types.h>
 #include <tirpc/rpc/pmap_clnt.h>
 #include <tirpc/rpc/svc_dg.h>
+#ifdef _USE_GSSRPC
+#include <tirpc/rpc/auth_gss.h>
+#include <tirpc/rpc/svc_auth.h>
+#endif
 #include "RW_Lock.h"
-#else
+#else                           /* _USE_TIRPC */
+#ifdef _USE_GSSRPC
+#include <gssrpc/rpc.h>
+#include <gssrpc/types.h>
+#include <gssrpc/svc.h>
+#include <gssrpc/svc_auth.h>
+#include <gssrpc/pmap_clnt.h>
+#else                          /* _USE_GSSRPC */
 #include <rpc/rpc.h>
 #include <rpc/types.h>
 #include <rpc/svc.h>
 #include <rpc/pmap_clnt.h>
 #endif
 #endif
+#include "HashTable.h"
 
 void socket_setoptions(int socketFd);
 
@@ -91,6 +97,16 @@ extern fd_set Svc_fdset;
 extern SVCXPRT         **Xports;
 extern pthread_mutex_t  *mutex_cond_xprt;
 extern pthread_cond_t   *condvar_xprt;
+
+#ifdef _USE_GSSRPC
+int log_sperror_gss(char *outmsg, char *tag, OM_uint32 maj_stat, OM_uint32 min_stat);
+unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
+unsigned long gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam,
+                                    hash_buffer_t * buffclef);
+int compare_gss_ctx(hash_buffer_t * buff1, hash_buffer_t * buff2);
+int display_gss_ctx(hash_buffer_t * pbuff, char *str);
+int display_gss_svc_data(hash_buffer_t * pbuff, char *str);
+#endif                          /* _USE_GSSRPC */
 
 #ifdef _USE_TIRPC
 #define SOCK_NAME_MAX 128

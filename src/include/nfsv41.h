@@ -6,18 +6,6 @@
 #ifndef _NFSV41_H_RPCGEN
 #define _NFSV41_H_RPCGEN
 
-#ifndef _USE_SWIG
-
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/types.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/types.h>
-#endif                          /* _USE_GSSRPC */
-
-#endif                          /* _USE_SWIG */
-
 #ifdef _SOLARIS
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
@@ -30,14 +18,7 @@ extern "C"
 #ifndef _AUTH_SYS_DEFINE_FOR_NFSv41
 #define _AUTH_SYS_DEFINE_FOR_NFSv41
 
-#ifdef _USE_GSSRPC
-/* #include <gssrpc/auth_sys.h> */
-/* #include <gssrpc/unix.h> */
-#include <gssrpc/auth_unix.h>
-#else
-/* #include <rpc/auth_sys.h> */
-#include <rpc/auth_unix.h>
-#endif                          /* _USE_GSSRPC */
+#include "rpc.h"
 
   typedef struct authsys_parms authsys_parms;
 #endif                          /* _AUTH_SYS_DEFINE_FOR_NFSv41 */

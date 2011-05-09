@@ -18,10 +18,7 @@
 #include "nfs_core.h"
 #include "log_macros.h"
 
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/svc_auth.h>
-#include <gssrpc/auth_gssapi.h>
+#include "rpc.h"
 #ifdef HAVE_HEIMDAL
 #include <gssapi.h>
 #define gss_nt_service_name GSS_C_NT_HOSTBASED_SERVICE

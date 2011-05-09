@@ -19,12 +19,7 @@
 #include <string.h>
 #include <signal.h>
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#else
-#include <rpc/rpc.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 
 //#include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"

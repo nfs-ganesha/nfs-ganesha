@@ -15,11 +15,7 @@ typedef unsigned long u_long;
 #include   <sys/errno.h>
 #include   "stuff_alloc.h"
 #include   "nfs_core.h"
-
-#include   <rpc/rpc.h>
-#include   <rpc/auth.h>
-#include   <rpc/svc.h>
-#include   <rpc/pmap_clnt.h>
+#include   "rpc.h"
 
 #ifdef _APPLE
 #define __FDS_BITS(set) ((set)->fds_bits)
@@ -68,11 +64,7 @@ fd_set Svc_fdset;
 /*  */
 void Xprt_register(SVCXPRT * xprt)
 {
-#ifdef _FREEBSD
-  register int sock = xprt->xp_fd;
-#else
-  register int sock = xprt->xp_sock;
-#endif
+  register int sock = xprt->XP_SOCK;
 
   Xports[sock] = xprt;
 
@@ -89,11 +81,7 @@ void Xprt_register(SVCXPRT * xprt)
 /*  */
 void Xprt_unregister(SVCXPRT * xprt)
 {
-#ifdef _FREEBSD
-  register int sock = xprt->xp_fd;
-#else
-  register int sock = xprt->xp_sock;
-#endif
+  register int sock = xprt->XP_SOCK;
 
   if(Xports[sock] == xprt)
     {

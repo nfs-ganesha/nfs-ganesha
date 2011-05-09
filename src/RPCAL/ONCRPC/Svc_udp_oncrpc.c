@@ -16,17 +16,7 @@ typedef unsigned int u_int32_t;
 #include   <stdlib.h>
 #include   <string.h>
 #include   "stuff_alloc.h"
-
-#ifdef _USE_GSSRPC
-#include   <gssrpc/rpc.h>
-#include   <gssrpc/auth.h>
-#include   <gssrpc/svc.h>
-#else
-#include   <rpc/rpc.h>
-#include   <rpc/auth.h>
-#include   <rpc/svc.h>
-#endif
-
+#include   "rpc.h"
 #include   <sys/poll.h>
 #include   <sys/socket.h>
 #include   <errno.h>
@@ -155,11 +145,7 @@ SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz)
   xprt->xp_verf.oa_base = su->su_verfbody;
   xprt->xp_ops = &Svcudp_op;
   xprt->xp_port = ntohs(addr.sin_port);
-#ifdef _FREEBSD
-  xprt->xp_fd = sock;
-#else
-  xprt->xp_sock = sock;
-#endif
+  xprt->XP_SOCK = sock;
 
   Xprt_register(xprt);
 
@@ -188,11 +174,7 @@ static void Svcudp_destroy(register SVCXPRT * xprt)
   register struct Svcudp_data *su = Su_data(xprt);
 
   Xprt_unregister(xprt);
-#ifdef _FREEBSD
-  (void)close(xprt->xp_fd);
-#else
-  (void)close(xprt->xp_sock);
-#endif
+  (void)close(xprt->XP_SOCK);
   XDR_DESTROY(&(su->su_xdrs));
   Mem_Free(rpc_buffer(xprt));
   Mem_Free((caddr_t) su);
@@ -214,13 +196,8 @@ static bool_t Svcudp_recv(register SVCXPRT * xprt, struct rpc_msg *msg)
 
  again:
   xprt->xp_addrlen = sizeof(struct sockaddr_in);
-#ifdef _FREEBSD
-  rlen = recvfrom(xprt->xp_fd, rpc_buffer(xprt), (int)su->su_iosz,
+  rlen = recvfrom(xprt->XP_SOCK, rpc_buffer(xprt), (int)su->su_iosz,
                   0, (struct sockaddr *)&(xprt->xp_raddr), &(xprt->xp_addrlen));
-#else
-  rlen = recvfrom(xprt->xp_sock, rpc_buffer(xprt), (int)su->su_iosz,
-                  0, (struct sockaddr *)&(xprt->xp_raddr), &(xprt->xp_addrlen));
-#endif
 
   if(rlen == -1 && errno == EINTR)
     goto again;
@@ -269,11 +246,7 @@ static bool_t Svcudp_reply(register SVCXPRT * xprt, struct rpc_msg *msg)
     }
   slen = (int)XDR_GETPOS(xdrs);
 
-#ifdef _FREEBSD
-  if(sendto(xprt->xp_fd,
-#else
-  if(sendto(xprt->xp_sock,
-#endif
+  if(sendto(xprt->XP_SOCK,
             rpc_buffer(xprt),
             slen, 0, (struct sockaddr *)&(xprt->xp_raddr), xprt->xp_addrlen) != slen)
     {

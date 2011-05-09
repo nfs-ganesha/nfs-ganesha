@@ -132,7 +132,6 @@ libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la           
                                       ../SemN/libSemN.la                                \
                                       ../RW_Lock/librwlock.la                           \
                                       ../Common/libcommon_utils.la
-                             
 
 libMainServices_la_DEPENDENCIES = $(libMainServices_la_SOURCES) $(libMainServices_la_LIBADD)
 

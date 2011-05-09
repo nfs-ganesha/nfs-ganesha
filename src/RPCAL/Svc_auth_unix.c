@@ -50,7 +50,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <gssrpc/rpc.h>
+#include "rpc.h"
 
 extern SVCAUTH Svc_auth_none;
 

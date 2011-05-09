@@ -39,15 +39,7 @@
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
-
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#endif
-
+#include "rpc.h"
 #include "RW_Lock.h"
 #include "LRU_List.h"
 #include "HashData.h"

@@ -618,10 +618,6 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam);
 int clean_pending_request(LRU_entry_t * pentry, void *addparam);
 int print_pending_request(LRU_data_t data, char *str);
 
-#ifdef _USE_GSSRPC
-int log_sperror_gss(char *outmsg, char *tag, OM_uint32 maj_stat, OM_uint32 min_stat);
-#endif
-
 void auth_stat2str(enum auth_stat, char *str);
 
 int nfs_Init_client_id(nfs_client_id_parameter_t param);
@@ -799,16 +795,6 @@ void nfs41_Session_PrintAll(void);
 int nfs_Init_ip_name(nfs_ip_name_parameter_t param);
 hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param);
 int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param);
-
-#ifdef _USE_GSSRPC
-unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
-unsigned long gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam,
-                                    hash_buffer_t * buffclef);
-int compare_gss_ctx(hash_buffer_t * buff1, hash_buffer_t * buff2);
-int display_gss_ctx(hash_buffer_t * pbuff, char *str);
-int display_gss_svc_data(hash_buffer_t * pbuff, char *str);
-
-#endif                          /* _USE_GSSRPC */
 
 extern const nfs_function_desc_t *INVALID_FUNCDESC;
 const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs);
