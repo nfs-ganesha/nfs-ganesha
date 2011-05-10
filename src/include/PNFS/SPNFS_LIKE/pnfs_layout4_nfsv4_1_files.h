@@ -68,7 +68,7 @@ typedef struct pnfs_ds_parameter__
 #endif
   unsigned int prognum;
   char rootpath[MAXPATHLEN];
-  char ipaddr_ascii[MAXNAMLEN];
+  char ipaddr_ascii[SOCK_NAME_MAX];
   unsigned int id;
   bool_t is_ganesha;
 } pnfs_ds_parameter_t;
