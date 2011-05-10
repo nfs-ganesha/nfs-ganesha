@@ -209,6 +209,114 @@ void test_remove()
     test_not_found_none();
 }
 
+// The IPv6 versions of all of the tests
+
+void test_not_found_6() 
+{
+    nfs_ip_stats_t * out;
+    EQUALS(nfs_ip_stats_get(ipstats, &ipv6a, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv6a yet");
+    // EQUALS(nfs_ip_stats_get(ipstats, &ipv6b, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv6b yet");
+    EQUALS(nfs_ip_stats_get(ipstats, &ipv6c, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv6c yet");
+}
+
+void test_not_found_bc_6() 
+{
+    nfs_ip_stats_t * out;
+    EQUALS(nfs_ip_stats_get(ipstats, &ipv6a, &out), IP_STATS_SUCCESS, "There should be an ipv6a");
+    // EQUALS(nfs_ip_stats_get(ipstats, &ipv6b, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv6b yet");
+    EQUALS(nfs_ip_stats_get(ipstats, &ipv6c, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv6c yet");
+}
+
+void test_not_found_c_6() 
+{
+    nfs_ip_stats_t * out;
+    EQUALS(nfs_ip_stats_get(ipstats, &ipv6a, &out), IP_STATS_SUCCESS, "There should be an ipv6a");
+    // EQUALS(nfs_ip_stats_get(ipstats, &ipv6b, &out), IP_STATS_SUCCESS, "There should be an ipv6b");
+    EQUALS(nfs_ip_stats_get(ipstats, &ipv6c, &out), IP_STATS_NOT_FOUND, "There shouldn't be an ipv6c yet");
+}
+
+void test_not_found_none_6() 
+{
+    nfs_ip_stats_t * out;
+    EQUALS(nfs_ip_stats_get(ipstats, &ipv6a, &out), IP_STATS_SUCCESS, "There should be an ipv6a");
+    // EQUALS(nfs_ip_stats_get(ipstats, &ipv6b, &out), IP_STATS_SUCCESS, "There should be an ipv6b");
+    EQUALS(nfs_ip_stats_get(ipstats, &ipv6c, &out), IP_STATS_SUCCESS, "There should be an ipv6c");
+}
+
+
+void test_add_6() 
+{
+    int rc = nfs_ip_stats_add(ipstats, &ipv6a, ip_stats_pool);
+    EQUALS(rc, IP_STATS_SUCCESS, "Can't add ipv6a, rc = %d", rc);
+    test_not_found_bc_6();
+
+    /* rc = nfs_ip_stats_add(ipstats, &ipv6b, &ip_stats_pool); */
+    /* EQUALS(rc, IP_STATS_SUCCESS, "Can't add ipv6b"); */
+    /* test_not_found_c_6(); */
+
+    rc = nfs_ip_stats_add(ipstats, &ipv6c, ip_stats_pool);
+    EQUALS(rc, IP_STATS_SUCCESS, "Can't add ipv6c");
+    test_not_found_none_6();
+}
+
+void test_incr_6()
+{
+    struct svc_req req;
+    int i = 0;
+
+    create_svc_req(&req, NFS_V3, NFS_PROGRAM, NFSPROC3_GETATTR);
+    
+    for (i = 0; i < 10; i++) 
+    {
+        nfs_ip_stats_incr(ipstats, &ipv6a, NFS_PROGRAM, MOUNT_PROGRAM, &req);
+    }
+
+    create_svc_req(&req, NFS_V3, NFS_PROGRAM, NFSPROC3_READ);
+    for (i = 0; i < 5; i++) {
+        nfs_ip_stats_incr(ipstats, &ipv6a, NFS_PROGRAM, MOUNT_PROGRAM, &req);
+    }
+
+    create_svc_req(&req, NFS_V3, NFS_PROGRAM, NFSPROC3_READDIRPLUS);
+    for (i = 0; i < 7; i++) {
+        nfs_ip_stats_incr(ipstats, &ipv6a, NFS_PROGRAM, MOUNT_PROGRAM, &req);
+    }
+            
+}
+
+// check that counts look right, including a check on something we didn't set so that it's actually removed correctly
+void test_get_6() 
+{
+    nfs_ip_stats_t * pnfs_ip_stats;
+    
+    nfs_ip_stats_get(ipstats, &ipv6a, &pnfs_ip_stats);
+    EQUALS(pnfs_ip_stats->nb_call, 22, "Number of total calls should be 22");
+
+    EQUALS(pnfs_ip_stats->req_nfs3[NFSPROC3_GETATTR], 10, "Number of total calls should be 10");
+    EQUALS(pnfs_ip_stats->req_nfs3[NFSPROC3_READ], 5, "Number of total calls should be 5");
+    EQUALS(pnfs_ip_stats->req_nfs3[NFSPROC3_READDIRPLUS], 7, "Number of total calls should be 7");
+    EQUALS(pnfs_ip_stats->req_nfs3[NFSPROC3_WRITE], 0, "Number of total calls should be 0");
+    
+}
+
+// remove then re-add ipv6c to test the removal path
+void test_remove_6() 
+{
+    int rc;
+    rc = nfs_ip_stats_remove(ipstats, &ipv6c, ip_stats_pool);
+    test_not_found_c_6();
+    EQUALS(rc, IP_STATS_SUCCESS, "Can't remove ipv6c");
+
+    rc = nfs_ip_stats_remove(ipstats, &ipv6c, ip_stats_pool);
+    test_not_found_c_6();
+    EQUALS(rc, IP_STATS_NOT_FOUND, "Can't remove ipv6c");
+
+    rc = nfs_ip_stats_add(ipstats, &ipv6c, ip_stats_pool);
+    EQUALS(rc, IP_STATS_SUCCESS, "Can't add ipv6c");
+    test_not_found_none_6();
+}
+
+//
+
 int main()
 {
     int i;
@@ -221,6 +329,16 @@ int main()
     for (i = 0; i < 5; i++) {
         test_remove();
     }
+
+#ifdef _USE_TIRPC
+    test_not_found_6();
+    test_add_6();
+    test_incr_6();
+    test_get_6();
+    for (i = 0; i < 5; i++) {
+        test_remove_6();
+    }
+#endif
 
     return 0;
 }
