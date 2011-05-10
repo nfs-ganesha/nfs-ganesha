@@ -6,18 +6,6 @@
 
 #include "config.h"
 
-#ifdef _USE_TIRPC
-#include <tirpc/rpc/rpc.h>
-#include <tirpc/rpc/svc.h>
-#include <tirpc/rpc/types.h>
-#include <tirpc/rpc/pmap_clnt.h>
-#include <tirpc/rpc/svc_dg.h>
-#ifdef _USE_GSSRPC
-#include <tirpc/rpc/auth_gss.h>
-#include <tirpc/rpc/svc_auth.h>
-#endif
-#include "RW_Lock.h"
-#else                           /* _USE_TIRPC */
 #ifdef _USE_GSSRPC
 #include <gssrpc/rpc.h>
 #include <gssrpc/types.h>
@@ -30,7 +18,16 @@
 #include <rpc/svc.h>
 #include <rpc/pmap_clnt.h>
 #endif
+
+#ifdef _USE_TIRPC
+#include <rpc/svc_dg.h>
+#include "RW_Lock.h"
+#ifdef _HAVE_GSSAPI
+#include <rpc/auth_gss.h>
+#include <rpc/svc_auth.h>
 #endif
+#endif
+
 #include "HashTable.h"
 
 void socket_setoptions(int socketFd);
@@ -49,6 +46,10 @@ typedef struct sockaddr_in sockaddr_t;
 #define XP_SOCK xp_fd
 #else
 #define XP_SOCK xp_sock
+#endif
+
+#ifndef AUTH_SYS
+#define AUTH_SYS 1
 #endif
 
 #ifdef _USE_TIRPC
@@ -79,10 +80,69 @@ extern bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*disp
 
 #endif                          /* _USE_TIRPC */
 
+#ifndef _HAVE_GSSAPI  // This enum is already defined in auth_gss.h
+  enum rpc_gss_svc_t
+  {
+    RPC_GSS_SVC_NONE = 1,
+    RPC_GSS_SVC_INTEGRITY = 2,
+    RPC_GSS_SVC_PRIVACY = 3,
+  };
+  typedef enum rpc_gss_svc_t rpc_gss_svc_t;
+#endif 
+
+#ifdef _SOLARIS
+#define _authenticate __authenticate
+#endif
+
+#if defined(_USE_GSSRPC) || defined(_USE_TIRPC)
+/* These prototypes are missing in gssrpc/xdr.h and tirpc/rpc/xdr.h */
+bool_t xdr_longlong_t(XDR * __xdrs, quad_t * __llp);
+bool_t xdr_u_longlong_t(XDR * __xdrs, u_quad_t * __ullp);
+bool_t xdr_uint64_t(XDR * __xdrs, uint64_t * __up);
+#endif
+
+#ifdef _USE_TIRPC
+#define xdr_uint32_t  xdr_u_int32_t
+#endif
 
 #ifdef _USE_GSSRPC
+#define xdr_uint32_t  xdr_u_int32
+bool_t xdr_int64_t(XDR * __xdrs, uint64_t * __up);
+#endif
+
+#ifdef _HAVE_GSSAPI
+struct svc_rpc_gss_data
+{
+  bool_t established;           /* context established */
+  gss_ctx_id_t ctx;             /* context id */
+  struct rpc_gss_sec sec;       /* security triple */
+  gss_buffer_desc cname;        /* GSS client name */
+  u_int seq;                    /* sequence number */
+  u_int win;                    /* sequence window */
+  u_int seqlast;                /* last sequence number */
+  uint32_t seqmask;             /* bitmask of seqnums */
+  gss_name_t client_name;       /* unparsed name string */
+  gss_buffer_desc checksum;     /* so we can free it */
+};
+
+typedef struct nfs_krb5_param__
+{
+  char principal[MAXPATHLEN];
+  char keytab[MAXPATHLEN];
+  bool_t active_krb5;
+  hash_parameter_t hash_param;
+} nfs_krb5_parameter_t;
+
+#define SVCAUTH_PRIVATE(auth) \
+        (*(struct svc_rpc_gss_data **)&(auth)->svc_ah_private)
+
 bool_t Svcauth_gss_import_name(char *service);
 bool_t Svcauth_gss_acquire_cred(void);
+bool_t Svcauth_gss_set_svc_name(gss_name_t name);
+int Gss_ctx_Hash_Init(nfs_krb5_parameter_t param);
+enum auth_stat Rpcsecgss__authenticate(register struct svc_req *rqst,
+                                       struct rpc_msg *msg,
+                                       bool_t * no_dispatch);
 #endif
 
 #ifdef _USE_TIRPC
@@ -98,7 +158,7 @@ extern SVCXPRT         **Xports;
 extern pthread_mutex_t  *mutex_cond_xprt;
 extern pthread_cond_t   *condvar_xprt;
 
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
 int log_sperror_gss(char *outmsg, char *tag, OM_uint32 maj_stat, OM_uint32 min_stat);
 unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
 unsigned long gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam,
@@ -106,7 +166,7 @@ unsigned long gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam,
 int compare_gss_ctx(hash_buffer_t * buff1, hash_buffer_t * buff2);
 int display_gss_ctx(hash_buffer_t * pbuff, char *str);
 int display_gss_svc_data(hash_buffer_t * pbuff, char *str);
-#endif                          /* _USE_GSSRPC */
+#endif                          /* _HAVE_GSSAPI */
 
 #ifdef _USE_TIRPC
 #define SOCK_NAME_MAX 128

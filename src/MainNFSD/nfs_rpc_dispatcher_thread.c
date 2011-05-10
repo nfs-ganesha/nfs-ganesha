@@ -193,13 +193,6 @@ int nfs_Init_svc()
   struct sockaddr_in sinaddr_rquota;
 #endif /* _USE_QUOTA */
 
-#ifdef _USE_GSSRPC
-  OM_uint32 maj_stat;
-  OM_uint32 min_stat;
-  char GssError[1024];
-  gss_cred_id_t test_gss_cred = NULL;
-  gss_name_t imported_name = NULL;
-#endif /* _USE_GSSRPC */
   int num_sock = nfs_param.core_param.nb_max_fd;
 
   /* Initialize all the sockets to -1 because it makes some code later easier */
@@ -1089,7 +1082,7 @@ int nfs_Init_svc()
 #endif                          /* _USE_TIRPC_IPV6 */
     }
 
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
   /* Acquire RPCSEC_GSS basis if needed */
   if(nfs_param.krb5_param.active_krb5 == TRUE)
     {
@@ -1123,7 +1116,7 @@ int nfs_Init_svc()
         }
     }
   /* if( nfs_param.krb5_param.active_krb5 == TRUE ) */
-#endif                          /* _USE_GSSRPC */
+#endif                          /* _HAVE_GSSAPI */
 
 #ifndef _NO_PORTMAPPER
 

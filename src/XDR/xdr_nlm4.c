@@ -14,12 +14,6 @@
 #include "rpc.h"
 #include "nlm4.h"
 
-#ifdef _USE_GSSRPC
-/* These prototypes are missing in gssrpc/xdr.h */
-bool_t xdr_longlong_t(XDR * __xdrs, quad_t * __llp);
-bool_t xdr_u_longlong_t(XDR * __xdrs, u_quad_t * __ullp);
-#endif
-
 bool_t xdr_nlm4_stats(XDR * xdrs, nlm4_stats * objp)
 {
   register int32_t *buf;

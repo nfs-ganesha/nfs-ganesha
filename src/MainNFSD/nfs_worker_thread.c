@@ -69,16 +69,6 @@
 #include "nfs_stat.h"
 #include "SemN.h"
 
-enum auth_stat _authenticate(register struct svc_req *rqst, struct rpc_msg *msg);
-#ifdef _USE_GSSRPC
-enum auth_stat Rpcsecgss__authenticate(register struct svc_req *rqst, struct rpc_msg *msg,
-                                       bool_t * no_dispatch);
-#endif
-
-#ifdef _SOLARIS
-#define _authenticate __authenticate
-#endif
-
 #ifdef _DEBUG_MEMLEAKS
 void nfs_debug_debug_label_info();
 #endif
@@ -1351,9 +1341,6 @@ void *worker_thread(void *IndexArg)
   char thr_name[128];
   char auth_str[AUTH_STR_LEN];
   bool_t no_dispatch = FALSE;
-#ifdef _USE_GSSRPC
-  struct rpc_gss_cred *gc;
-#endif
 
   index = (long)IndexArg;
   pmydata = &(workers_data[index]);
@@ -1569,7 +1556,7 @@ void *worker_thread(void *IndexArg)
                              (int)pmsg->rm_call.cb_prog, (int)pmsg->rm_call.cb_vers,
                              (int)pmsg->rm_call.cb_proc, preq->rq_xprt);
                 /* Restore previously save GssData */
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
                 no_dispatch = FALSE;
                 if((why = Rpcsecgss__authenticate(preq, pmsg, &no_dispatch)) != AUTH_OK)
 #else
@@ -1584,7 +1571,9 @@ void *worker_thread(void *IndexArg)
                   }
                 else
                   {
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
+                    struct rpc_gss_cred *gc;
+
                     if(preq->rq_xprt->xp_verf.oa_flavor == RPCSEC_GSS)
                       {
                         gc = (struct rpc_gss_cred *)preq->rq_clntcred;

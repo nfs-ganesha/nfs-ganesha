@@ -75,6 +75,10 @@
 #include "err_inject.h"
 #endif
 
+#ifndef NFS4_MAX_DOMAIN_LEN
+#define NFS4_MAX_DOMAIN_LEN 512
+#endif
+
 /* Maximum thread count */
 #define NB_MAX_WORKER_THREAD 4096
 #define NB_MAX_FLUSHER_THREAD 100
@@ -327,14 +331,6 @@ typedef struct nfs_open_owner_param__
   hash_parameter_t hash_param;
 } nfs_open_owner_parameter_t;
 
-typedef struct nfs_krb5_param__
-{
-  char principal[MAXNAMLEN];
-  char keytab[MAXPATHLEN];
-  bool_t active_krb5;
-  hash_parameter_t hash_param;
-} nfs_krb5_parameter_t;
-
 typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
 
 typedef struct nfs_version4_parameter__
@@ -344,7 +340,7 @@ typedef struct nfs_version4_parameter__
   unsigned int returns_err_fh_expired;
   unsigned int use_open_confirm;
   unsigned int return_bad_stateid;
-  char domainname[MAXNAMLEN];
+  char domainname[NFS4_MAX_DOMAIN_LEN];
   char idmapconf[MAXPATHLEN];
 } nfs_version4_parameter_t;
 
@@ -432,10 +428,10 @@ typedef struct nfs_request_data__
 
 typedef struct nfs_client_id__
 {
-  char client_name[MAXNAMLEN];
+  char client_name[NFS4_MAX_DOMAIN_LEN];
   clientid4 clientid;
   uint32_t cb_program;
-  char client_r_addr[MAXNAMLEN];
+  char client_r_addr[SOCK_NAME_MAX];
   char client_r_netid[MAXNAMLEN];
   verifier4 verifier;
   verifier4 incoming_verifier;

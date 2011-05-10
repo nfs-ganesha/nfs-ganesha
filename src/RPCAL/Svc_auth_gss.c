@@ -105,23 +105,6 @@ struct svc_auth_ops Svc_auth_gss_ops = {
   Svcauth_gss_destroy
 };
 
-struct svc_rpc_gss_data
-{
-  bool_t established;           /* context established */
-  gss_ctx_id_t ctx;             /* context id */
-  struct rpc_gss_sec sec;       /* security triple */
-  gss_buffer_desc cname;        /* GSS client name */
-  u_int seq;                    /* sequence number */
-  u_int win;                    /* sequence window */
-  u_int seqlast;                /* last sequence number */
-  uint32_t seqmask;             /* bitmask of seqnums */
-  gss_name_t client_name;       /* unparsed name string */
-  gss_buffer_desc checksum;     /* so we can free it */
-};
-
-#define SVCAUTH_PRIVATE(auth) \
-	(*(struct svc_rpc_gss_data **)&(auth)->svc_ah_private)
-
 /** @todo: BUGAZOMEU: To be put in a cleaner header file later */
 int Gss_ctx_Hash_Set(gss_union_ctx_id_desc * pgss_ctx, struct svc_rpc_gss_data *gd);
 int Gss_ctx_Hash_Get(gss_union_ctx_id_desc * pgss_ctx, struct svc_rpc_gss_data *gd);

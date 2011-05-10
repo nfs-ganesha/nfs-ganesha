@@ -28,10 +28,6 @@ SVCXPRT **Xports;
 
 #define max(a, b) (a > b ? a : b)
 
-#ifdef _SOLARIS
-#define _authenticate __authenticate
-#endif
-
 #ifdef xp_stat
 #undef xp_statv
 #endif

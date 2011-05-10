@@ -13,13 +13,6 @@
 
 #include "rpc.h"
 
-#ifdef _USE_GSSRPC
-#define xdr_uint32_t  xdr_u_int32
-#define AUTH_SYS        1
-bool_t xdr_uint64_t(XDR * __xdrs, uint64_t * __up);
-bool_t xdr_int64_t(XDR * __xdrs, uint64_t * __up);
-#endif
-
 #include "nfsv41.h"
 
 #ifndef RPCSEC_GSS

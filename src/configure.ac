@@ -691,7 +691,6 @@ case $RPCAL in
                         AC_MSG_ERROR( [TI-RPC could not be found...] )
                   ]
                 )
-                AC_DEFINE(_USE_GSSRPC,1,[enable security management with GSSRPC])
 	        # ==> Add here libraries needed for GSSRPC
                 AC_CHECK_LIB([gssapi_krb5], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ],
 			     [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )

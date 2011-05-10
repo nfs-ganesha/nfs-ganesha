@@ -292,7 +292,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
         auth_flavor[index_auth++] = AUTH_NONE;
       if(p_current_item->options & EXPORT_OPTION_AUTH_UNIX)
         auth_flavor[index_auth++] = AUTH_UNIX;
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
       if(nfs_param.krb5_param.active_krb5 == TRUE)
         {
           auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;

@@ -67,7 +67,7 @@ typedef struct CredUnix__
 
 typedef struct CredGss__
 {
-#if(  defined( HAVE_KRB5 ) && defined ( _USE_GSSRPC ) )
+#if(  defined( HAVE_KRB5 ) && defined ( _HAVE_GSSAPI ) )
   gss_qop_t qop;
   gss_OID mech;
   rpc_gss_svc_t svc;
