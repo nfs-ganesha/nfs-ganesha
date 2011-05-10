@@ -12,7 +12,9 @@
 
 #define MOUNT_PROGRAM 100005
 
+hash_table_t * stats[1];
 hash_table_t * ipstats;
+nfs_ip_stats_t * nfs_ip_stats;
 nfs_parameter_t nfs_param;
 struct prealloc_pool *ip_stats_pool;
 
@@ -84,6 +86,7 @@ void init()
     nfs_set_ip_stats_param_default();
     ipstats = nfs_Init_ip_stats(nfs_param.ip_stats_param);
     ip_stats_pool = calloc(1, sizeof(struct prealloc_pool));
+    stats[0] = ipstats;
 
     MakePool(ip_stats_pool,
              100,//           nfs_param.worker_param.nb_ip_stats_prealloc,
@@ -171,15 +174,53 @@ void test_incr()
     for (i = 0; i < 7; i++) {
         nfs_ip_stats_incr(ipstats, &ipv4a, NFS_PROGRAM, MOUNT_PROGRAM, &req);
     }
+            
+}
+
+// check that counts look right, including a check on something we didn't set so that it's actually removed correctly
+void test_get() 
+{
+    nfs_ip_stats_t * pnfs_ip_stats;
+    
+    nfs_ip_stats_get(ipstats, &ipv4a, &pnfs_ip_stats);
+    EQUALS(pnfs_ip_stats->nb_call, 22, "Number of total calls should be 22");
+
+    EQUALS(pnfs_ip_stats->req_nfs3[NFSPROC3_GETATTR], 10, "Number of total calls should be 10");
+    EQUALS(pnfs_ip_stats->req_nfs3[NFSPROC3_READ], 5, "Number of total calls should be 5");
+    EQUALS(pnfs_ip_stats->req_nfs3[NFSPROC3_READDIRPLUS], 7, "Number of total calls should be 7");
+    EQUALS(pnfs_ip_stats->req_nfs3[NFSPROC3_WRITE], 0, "Number of total calls should be 0");
+    
+}
+
+// remove then re-add ipv4c to test the removal path
+void test_remove() 
+{
+    int rc;
+    rc = nfs_ip_stats_remove(ipstats, &ipv4c, ip_stats_pool);
+    test_not_found_c();
+    EQUALS(rc, IP_STATS_SUCCESS, "Can't remove ipv4c");
+
+    rc = nfs_ip_stats_remove(ipstats, &ipv4c, ip_stats_pool);
+    test_not_found_c();
+    EQUALS(rc, IP_STATS_NOT_FOUND, "Can't remove ipv4c");
+
+    rc = nfs_ip_stats_add(ipstats, &ipv4c, ip_stats_pool);
+    EQUALS(rc, IP_STATS_SUCCESS, "Can't add ipv4c");
+    test_not_found_none();
 }
 
 int main()
 {
+    int i;
+
     init();
     test_not_found();
     test_add();
     test_incr();
-
+    test_get();
+    for (i = 0; i < 5; i++) {
+        test_remove();
+    }
 
     return 0;
 }
