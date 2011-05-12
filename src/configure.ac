@@ -692,11 +692,14 @@ case $RPCAL in
                         AC_MSG_ERROR( [TI-RPC could not be found...] )
                   ]
                 )
-	        # ==> Add here libraries needed for GSSRPC
-                AC_CHECK_LIB([gssapi_krb5], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ],
-			     [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )
-                AC_CHECK_LIB([tirpc], [svcauth_gss_get_principal], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ],
-			      [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
+
+                KRBLIBS=`krb5-config --libs gssapi`
+                if test "$KRBLIBS" == ""; then
+                   AC_MSG_ERROR( [krb5 libs not found, is krb5-config available...?] )
+                else
+                   AC_DEFINE(_HAVE_GSSAPI,1,[enable gss in tirpc])
+                   LIBS="$KRBLIBS $LIBS"
+                fi
 		;;
 	*)
 		AC_MSG_ERROR([This RPCAL is not supported])
