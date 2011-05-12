@@ -35,17 +35,7 @@ typedef unsigned short u_short;
 #endif
 #endif
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/clnt.h>
-#endif
+#include "rpc.h"
 #include <string.h>
 #include "fsal.h"
 #include "cache_inode.h"

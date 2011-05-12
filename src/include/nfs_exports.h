@@ -41,7 +41,7 @@
 #include <sys/param.h>
 
 #include "rpc.h"
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
 #include <gssapi/gssapi.h>
 #include <gssapi/gssapi_krb5.h>
 #endif

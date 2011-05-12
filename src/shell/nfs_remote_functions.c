@@ -40,19 +40,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/clnt.h>
-#include <gssrpc/auth.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#include <rpc/clnt.h>
-#include <rpc/auth.h>
-#endif
+#include "rpc.h"
 #include "log_functions.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"

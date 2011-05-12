@@ -16,17 +16,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <ctype.h>
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
+#include "rpc.h"
 #include "log_functions.h"
 #include "stuff_alloc.h"
 #include "fsal.h"

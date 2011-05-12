@@ -109,32 +109,12 @@
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 
-#ifdef _USE_GSSRPC
-#define SVCAUTH_PRIVATE(auth) \
-        (*(struct svc_rpc_gss_data **)&(auth)->svc_ah_private)
-
-struct svc_rpc_gss_data
-{
-  bool_t established;           /* context established */
-  gss_ctx_id_t ctx;             /* context id */
-  struct rpc_gss_sec sec;       /* security triple */
-  gss_buffer_desc cname;        /* GSS client name */
-  u_int seq;                    /* sequence number */
-  u_int win;                    /* sequence window */
-  u_int seqlast;                /* last sequence number */
-  uint32_t seqmask;             /* bitmask of seqnums */
-  gss_name_t client_name;       /* unparsed name string */
-  gss_buffer_desc checksum;     /* so we can free it */
-};
-
-#endif
-
 const char *Rpc_gss_svc_name[] =
     { "no name", "RPCSEC_GSS_SVC_NONE", "RPCSEC_GSS_SVC_INTEGRITY",
   "RPCSEC_GSS_SVC_PRIVACY"
 };
 
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
 /* Cred Name is "name@DOMAIN" */
 static void split_credname(gss_buffer_desc credname, char *username, char *domainname)
 {
@@ -156,9 +136,7 @@ static void split_credname(gss_buffer_desc credname, char *username, char *domai
         }
     }
 }
-#endif
 
-#ifdef _HAVE_GSSAPI
 /**
  *
  * convert_gss_status2str: Converts GSSAPI error into human-readable string.
@@ -242,7 +220,7 @@ int get_req_uid_gid(struct svc_req *ptr_req,
 {
   struct authunix_parms *punix_creds = NULL;
   unsigned int rpcxid = 0;
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
   struct svc_rpc_gss_data *gd = NULL;
   OM_uint32 maj_stat = 0;
   OM_uint32 min_stat = 0;
@@ -280,7 +258,7 @@ int get_req_uid_gid(struct svc_req *ptr_req,
 
       break;
 
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
     case RPCSEC_GSS:
       LogFullDebug(COMPONENT_DISPATCH,
                    "NFS DISPATCH: Request xid=%u has authentication RPCSEC_GSS",
@@ -480,9 +458,7 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
   gss_buffer_desc clientname;
   OM_uint32 maj_stat = 0;
   OM_uint32 min_stat = 0;
-#ifdef _USE_GSSRPC
   struct svc_rpc_gss_data *gd = NULL;
-#endif
   gss_buffer_desc oidbuff;
   char errbuff[1024];
 #endif
@@ -508,7 +484,7 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
 
       break;
 
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
     case RPCSEC_GSS:
       /* Extract the information from the RPCSEC_GSS opaque structure */
       gd = SVCAUTH_PRIVATE(reqp->rq_xprt->xp_auth);

@@ -7,13 +7,7 @@ noinst_LTLIBRARIES = librpcalcore.la
 
 librpcalcore_la_SOURCES = Svc_gssrpc.c     \
                           Svc_tcp_gssrpc.c \
-                          Svc_udp_gssrpc.c \
-                          Svc_auth.c       \
-                          Svc_auth_gss.c   \
-                          Svc_auth_none.c  \
-                          Svc_auth_unix.c  \
-                          AuthGss_HashTable.c
-
+                          Svc_udp_gssrpc.c
 
 new: clean all
 

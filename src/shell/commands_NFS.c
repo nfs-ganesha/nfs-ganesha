@@ -141,17 +141,7 @@
 #include "solaris_port.h"
 #endif
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/auth.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#include <rpc/auth.h>
-#endif
+#include "rpc.h"
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_content.h"

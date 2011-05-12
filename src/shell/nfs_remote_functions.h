@@ -30,12 +30,12 @@
 #ifndef _NFS_REMOTE_FUNCTIONS_H
 #define _NFS_REMOTE_FUNCTIONS_H
 
-#include "nfs_proto_functions.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/clnt.h>
-#else
-#include <rpc/clnt.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
+
+#include "nfs_proto_functions.h"
+#include "rpc.h"
 
 /**
  * @defgroup MNTprocs    Mount protocol functions.

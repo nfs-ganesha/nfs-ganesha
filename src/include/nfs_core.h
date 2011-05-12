@@ -75,6 +75,10 @@
 #include "err_inject.h"
 #endif
 
+#ifndef NFS4_MAX_DOMAIN_LEN
+#define NFS4_MAX_DOMAIN_LEN 512
+#endif
+
 /* Maximum thread count */
 #define NB_MAX_WORKER_THREAD 4096
 #define NB_MAX_FLUSHER_THREAD 100
@@ -327,14 +331,6 @@ typedef struct nfs_open_owner_param__
   hash_parameter_t hash_param;
 } nfs_open_owner_parameter_t;
 
-typedef struct nfs_krb5_param__
-{
-  char principal[MAXNAMLEN];
-  char keytab[MAXPATHLEN];
-  bool_t active_krb5;
-  hash_parameter_t hash_param;
-} nfs_krb5_parameter_t;
-
 typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
 
 typedef struct nfs_version4_parameter__
@@ -344,7 +340,7 @@ typedef struct nfs_version4_parameter__
   unsigned int returns_err_fh_expired;
   unsigned int use_open_confirm;
   unsigned int return_bad_stateid;
-  char domainname[MAXNAMLEN];
+  char domainname[NFS4_MAX_DOMAIN_LEN];
   char idmapconf[MAXPATHLEN];
 } nfs_version4_parameter_t;
 
@@ -432,10 +428,10 @@ typedef struct nfs_request_data__
 
 typedef struct nfs_client_id__
 {
-  char client_name[MAXNAMLEN];
+  char client_name[NFS4_MAX_DOMAIN_LEN];
   clientid4 clientid;
   uint32_t cb_program;
-  char client_r_addr[MAXNAMLEN];
+  char client_r_addr[SOCK_NAME_MAX];
   char client_r_netid[MAXNAMLEN];
   verifier4 verifier;
   verifier4 incoming_verifier;
@@ -618,10 +614,6 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam);
 int clean_pending_request(LRU_entry_t * pentry, void *addparam);
 int print_pending_request(LRU_data_t data, char *str);
 
-#ifdef _USE_GSSRPC
-int log_sperror_gss(char *outmsg, char *tag, OM_uint32 maj_stat, OM_uint32 min_stat);
-#endif
-
 void auth_stat2str(enum auth_stat, char *str);
 
 int nfs_Init_client_id(nfs_client_id_parameter_t param);
@@ -799,16 +791,6 @@ void nfs41_Session_PrintAll(void);
 int nfs_Init_ip_name(nfs_ip_name_parameter_t param);
 hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param);
 int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param);
-
-#ifdef _USE_GSSRPC
-unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
-unsigned long gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam,
-                                    hash_buffer_t * buffclef);
-int compare_gss_ctx(hash_buffer_t * buff1, hash_buffer_t * buff2);
-int display_gss_ctx(hash_buffer_t * pbuff, char *str);
-int display_gss_svc_data(hash_buffer_t * pbuff, char *str);
-
-#endif                          /* _USE_GSSRPC */
 
 extern const nfs_function_desc_t *INVALID_FUNCDESC;
 const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs);

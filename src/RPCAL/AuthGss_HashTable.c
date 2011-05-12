@@ -18,10 +18,7 @@
 #include "nfs_core.h"
 #include "log_macros.h"
 
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/svc_auth.h>
-#include <gssrpc/auth_gssapi.h>
+#include "rpc.h"
 #ifdef HAVE_HEIMDAL
 #include <gssapi.h>
 #define gss_nt_service_name GSS_C_NT_HOSTBASED_SERVICE
@@ -32,7 +29,7 @@
 
 #ifdef SPKM
 
-#ifndef OID_EQ
+#ifndef OID_EQls RPC	
 #define g_OID_equal(o1,o2) \
    (((o1)->length == (o2)->length) && \
     ((o1)->elements != 0) && ((o2)->elements != 0) && \
@@ -59,19 +56,6 @@ typedef struct gss_union_ctx_id_t
   gss_ctx_id_t internal_ctx_id;
 } gss_union_ctx_id_desc, *gss_union_ctx_id_t;
 
-struct svc_rpc_gss_data
-{
-  bool_t established;           /* context established */
-  gss_ctx_id_t ctx;             /* context id */
-  struct rpc_gss_sec sec;       /* security triple */
-  gss_buffer_desc cname;        /* GSS client name */
-  u_int seq;                    /* sequence number */
-  u_int win;                    /* sequence window */
-  u_int seqlast;                /* last sequence number */
-  uint32_t seqmask;             /* bitmask of seqnums */
-  gss_name_t client_name;       /* unparsed name string */
-  gss_buffer_desc checksum;     /* so we can free it */
-};
 #define GSS_CNAMELEN  1024
 #define GSS_CKSUM_LEN 1024
 
@@ -194,9 +178,6 @@ static int gss_stored2data(struct svc_rpc_gss_data *gd,
 
   return TRUE;
 }                               /* gss_stored2data */
-
-#define SVCAUTH_PRIVATE(auth) \
-	(*(struct svc_rpc_gss_data **)&(auth)->svc_ah_private)
 
 hash_table_t *ht_gss_ctx;
 

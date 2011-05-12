@@ -58,7 +58,6 @@ extern nfs_parameter_t nfs_param;
 #ifdef _USE_NFSIDMAP
 
 #define _PATH_IDMAPDCONF     "/etc/idmapd.conf"
-#define NFS4_MAX_DOMAIN_LEN 512
 
 typedef void (*nfs4_idmap_log_function_t) (const char *, ...);
 
@@ -105,7 +104,7 @@ int nfsidmap_set_conf()
  */
 int uid2name(char *name, uid_t * puid)
 {
-  char fqname[MAXNAMLEN];
+  char fqname[NFS4_MAX_DOMAIN_LEN];
 
 #ifdef _USE_NFSIDMAP
 
@@ -127,7 +126,7 @@ int uid2name(char *name, uid_t * puid)
     }
   else
     {
-      rc = nfs4_uid_to_name(*puid, idmap_domain, name, MAXNAMLEN);
+      rc = nfs4_uid_to_name(*puid, idmap_domain, name, NFS4_MAX_DOMAIN_LEN);
       if(rc != 0)
         {
           LogDebug(COMPONENT_IDMAPPER,
@@ -136,14 +135,14 @@ int uid2name(char *name, uid_t * puid)
           return 0;
         }
 
-      strncpy(fqname, name, MAXNAMLEN);
+      strncpy(fqname, name, NFS4_MAX_DOMAIN_LEN);
       if(strchr(name, '@') == NULL)
         {
           LogFullDebug(COMPONENT_IDMAPPER,
                        "uid2name: adding domain %s",
                        idmap_domain);
           sprintf(fqname, "%s@%s", name, idmap_domain);
-          strncpy(name, fqname, MAXNAMLEN);
+          strncpy(name, fqname, NFS4_MAX_DOMAIN_LEN);
         }
 
       LogFullDebug(COMPONENT_IDMAPPER,
@@ -163,7 +162,7 @@ int uid2name(char *name, uid_t * puid)
 #else
   struct passwd p;
   struct passwd *pp;
-  char buff[MAXPATHLEN];
+  char buff[NFS4_MAX_DOMAIN_LEN];
 
   if(unamemap_get(*puid, name) == ID_MAPPER_SUCCESS)
     {
@@ -187,7 +186,7 @@ int uid2name(char *name, uid_t * puid)
           return 0;
         }
 
-      strncpy(name, p.pw_name, MAXNAMLEN);
+      strncpy(name, p.pw_name, NFS4_MAX_DOMAIN_LEN);
 
       LogFullDebug(COMPONENT_IDMAPPER,
                    "uid2name: getpwuid_r uid %d returned %s",
@@ -223,14 +222,14 @@ int name2uid(char *name, uid_t * puid)
 #ifndef _USE_NFSIDMAP
   struct passwd passwd;
   struct passwd *ppasswd;
-  char buff[MAXPATHLEN];
+  char buff[NFS4_MAX_DOMAIN_LEN];
 #endif
   uid_t uid;
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
   gid_t gss_gid;
   uid_t gss_uid;
 #endif
-  char fqname[MAXNAMLEN];
+  char fqname[NFS4_MAX_DOMAIN_LEN];
   int rc;
 
   /* NFsv4 specific features: RPCSEC_GSS will provide user like nfs/<host>
@@ -267,7 +266,7 @@ int name2uid(char *name, uid_t * puid)
       if(strchr(name, '@') == NULL)
         sprintf(fqname, "%s@%s", name, idmap_domain);
       else
-        strncpy(fqname, name, MAXNAMLEN - 1);
+        strncpy(fqname, name, NFS4_MAX_DOMAIN_LEN - 1);
 
       rc = nfs4_name_to_uid(fqname, puid);
       if(rc)
@@ -290,7 +289,7 @@ int name2uid(char *name, uid_t * puid)
           return 0;
         }
 
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
       /* nfs4_gss_princ_to_ids required to extract uid/gid from gss creds
        * XXX: currently uses unqualified name as per libnfsidmap comments */
       rc = nfs4_gss_princ_to_ids("krb5", name, &gss_uid, &gss_gid);
@@ -309,14 +308,14 @@ int name2uid(char *name, uid_t * puid)
                   gss_uid, gss_gid);
           return 0;
         }
-#endif                          /* _USE_GSSRPC */
+#endif                          /* _HAVE_GSSAPI */
 
 #else                           /* _USE_NFSIDMAP */
 
 #ifdef _SOLARIS
-      if(getpwnam_r(name, &passwd, buff, MAXPATHLEN) != 0)
+      if(getpwnam_r(name, &passwd, buff, NFS4_MAX_DOMAIN_LEN) != 0)
 #else
-      if(getpwnam_r(name, &passwd, buff, MAXPATHLEN, &ppasswd) != 0)
+      if(getpwnam_r(name, &passwd, buff, NFS4_MAX_DOMAIN_LEN, &ppasswd) != 0)
 #endif                          /* _SOLARIS */
         {
           LogFullDebug(COMPONENT_IDMAPPER,
@@ -328,7 +327,7 @@ int name2uid(char *name, uid_t * puid)
       else
         {
           *puid = passwd.pw_uid;
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
           if(uidgidmap_add(passwd.pw_uid, passwd.pw_gid) != ID_MAPPER_SUCCESS)
             {
               LogCrit(COMPONENT_IDMAPPER,
@@ -336,7 +335,7 @@ int name2uid(char *name, uid_t * puid)
                       gss_uid, gss_gid);
               return 0;
             }
-#endif                          /* _USE_GSSRPC */
+#endif                          /* _HAVE_GSSAPI */
           if(uidmap_add(name, passwd.pw_uid) != ID_MAPPER_SUCCESS)
             {
               LogCrit(COMPONENT_IDMAPPER,
@@ -371,7 +370,7 @@ int gid2name(char *name, gid_t * pgid)
 #ifndef _SOLARIS
   struct group *pg = NULL;
 #endif
-  static char buff[MAXPATHLEN]; /* Working area for getgrnam_r */
+  static char buff[NFS4_MAX_DOMAIN_LEN]; /* Working area for getgrnam_r */
 #endif
 
 #ifdef _USE_NFSIDMAP
@@ -393,7 +392,7 @@ int gid2name(char *name, gid_t * pgid)
           return 0;
         }
 
-      rc = nfs4_gid_to_name(*pgid, idmap_domain, name, MAXNAMLEN);
+      rc = nfs4_gid_to_name(*pgid, idmap_domain, name, NFS4_MAX_DOMAIN_LEN);
       if(rc != 0)
         {
           LogDebug(COMPONENT_IDMAPPER,
@@ -428,9 +427,9 @@ int gid2name(char *name, gid_t * pgid)
   else
     {
 #ifdef _SOLARIS
-      if(getgrgid_r(*pgid, &g, buff, MAXPATHLEN) != 0)
+      if(getgrgid_r(*pgid, &g, buff, NFS4_MAX_DOMAIN_LEN) != 0)
 #else
-      if((getgrgid_r(*pgid, &g, buff, MAXPATHLEN, &pg) != 0) ||
+      if((getgrgid_r(*pgid, &g, buff, NFS4_MAX_DOMAIN_LEN, &pg) != 0) ||
 	 (pg == NULL))
 #endif                          /* _SOLARIS */
         {
@@ -440,7 +439,7 @@ int gid2name(char *name, gid_t * pgid)
           return 0;
         }
 
-      strncpy(name, g.gr_name, MAXNAMLEN);
+      strncpy(name, g.gr_name, NFS4_MAX_DOMAIN_LEN);
 
       LogFullDebug(COMPONENT_IDMAPPER,
                    "gid2name: getgrgid_r gid %d returned %s",
@@ -478,7 +477,7 @@ int name2gid(char *name, gid_t * pgid)
 #ifndef _SOLARIS
   struct group *pg = NULL;
 #endif
-  static char buff[MAXPATHLEN]; /* Working area for getgrnam_r */
+  static char buff[NFS4_MAX_DOMAIN_LEN]; /* Working area for getgrnam_r */
 #endif
   gid_t gid;
   int rc;
@@ -524,9 +523,9 @@ int name2gid(char *name, gid_t * pgid)
 #else
 
 #ifdef _SOLARIS
-      if(getgrnam_r(name, &g, buff, MAXPATHLEN) != 0)
+      if(getgrnam_r(name, &g, buff, NFS4_MAX_DOMAIN_LEN) != 0)
 #else
-      if(getgrnam_r(name, &g, buff, MAXPATHLEN, &pg) != 0)
+      if(getgrnam_r(name, &g, buff, NFS4_MAX_DOMAIN_LEN, &pg) != 0)
 #endif
         {
           LogFullDebug(COMPONENT_IDMAPPER,
@@ -567,7 +566,7 @@ int name2gid(char *name, gid_t * pgid)
  */
 int uid2str(uid_t uid, char *str)
 {
-  char buffer[MAXNAMLEN];
+  char buffer[NFS4_MAX_DOMAIN_LEN];
   uid_t local_uid = uid;
   int rc;
 
@@ -601,7 +600,7 @@ int uid2str(uid_t uid, char *str)
  */
 int gid2str(gid_t gid, char *str)
 {
-  char buffer[MAXNAMLEN];
+  char buffer[NFS4_MAX_DOMAIN_LEN];
   gid_t local_gid = gid;
   int rc;
 
@@ -635,7 +634,7 @@ int gid2str(gid_t gid, char *str)
  */
 int uid2utf8(uid_t uid, utf8string * utf8str)
 {
-  char buff[MAXNAMLEN];
+  char buff[NFS4_MAX_DOMAIN_LEN];
   unsigned int len = 0;
 
   if(uid2str(uid, buff) == -1)
@@ -667,7 +666,7 @@ int uid2utf8(uid_t uid, utf8string * utf8str)
  */
 int gid2utf8(gid_t gid, utf8string * utf8str)
 {
-  char buff[MAXNAMLEN];
+  char buff[NFS4_MAX_DOMAIN_LEN];
   unsigned int len = 0;
 
   if(gid2str(gid, buff) == -1)
@@ -698,10 +697,10 @@ int gid2utf8(gid_t gid, utf8string * utf8str)
  */
 int utf82uid(utf8string * utf8str, uid_t * Uid)
 {
-  char buff[2 * MAXNAMLEN];
-  char uidname[MAXNAMLEN];
+  char buff[2 * NFS4_MAX_DOMAIN_LEN];
+  char uidname[NFS4_MAX_DOMAIN_LEN];
 #ifndef _USE_NFSIDMAP
-  char domainname[MAXNAMLEN];
+  char domainname[NFS4_MAX_DOMAIN_LEN];
 #endif
   int  rc;
 
@@ -719,7 +718,7 @@ int utf82uid(utf8string * utf8str, uid_t * Uid)
   /* User is shown as a string 'user@domain', remove it if libnfsidmap is not used */
   nfs4_stringid_split(buff, uidname, domainname);
 #else
-  strncpy(uidname, buff, MAXNAMLEN);
+  strncpy(uidname, buff, NFS4_MAX_DOMAIN_LEN);
 #endif
 
   rc = name2uid(uidname, Uid);
@@ -750,10 +749,10 @@ int utf82uid(utf8string * utf8str, uid_t * Uid)
  */
 int utf82gid(utf8string * utf8str, gid_t * Gid)
 {
-  char buff[2 * MAXNAMLEN];
-  char gidname[MAXNAMLEN];
+  char buff[2 * NFS4_MAX_DOMAIN_LEN];
+  char gidname[NFS4_MAX_DOMAIN_LEN];
 #ifndef _USE_NFSIDMAP
-  char domainname[MAXNAMLEN];
+  char domainname[NFS4_MAX_DOMAIN_LEN];
 #endif
   int  rc;
 
@@ -771,7 +770,7 @@ int utf82gid(utf8string * utf8str, gid_t * Gid)
   /* Group is shown as a string 'group@domain' , remove it if libnfsidmap is not used */
   nfs4_stringid_split(buff, gidname, domainname);
 #else
-  strncpy(gidname, buff, MAXNAMLEN);
+  strncpy(gidname, buff, NFS4_MAX_DOMAIN_LEN);
 #endif
 
   rc = name2gid(gidname, Gid);

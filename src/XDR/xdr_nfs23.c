@@ -13,12 +13,6 @@
 #include "rpc.h"
 #include "nfs23.h"
 
-#if defined(_USE_GSSRPC) || defined(_USE_TIRPC)
-/* These prototypes are missing in gssrpc/xdr.h */
-bool_t xdr_longlong_t(XDR * __xdrs, quad_t * __llp);
-bool_t xdr_u_longlong_t(XDR * __xdrs, u_quad_t * __ullp);
-#endif
-
 bool_t xdr_nfspath2(xdrs, objp)
 register XDR *xdrs;
 nfspath2 *objp;

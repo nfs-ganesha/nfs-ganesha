@@ -43,10 +43,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/svc_auth.h>
-#include <gssrpc/auth_gssapi.h>
+#include "rpc.h"
 #ifdef HAVE_HEIMDAL
 #include <gssapi.h>
 #define gss_nt_service_name GSS_C_NT_HOSTBASED_SERVICE
@@ -90,19 +87,15 @@ typedef struct gss_union_ctx_id_t
   gss_ctx_id_t internal_ctx_id;
 } gss_union_ctx_id_desc, *gss_union_ctx_id_t;
 
-static auth_gssapi_log_badauth_func log_badauth = NULL;
-static caddr_t log_badauth_data = NULL;
-static auth_gssapi_log_badverf_func log_badverf = NULL;
-static caddr_t log_badverf_data = NULL;
-static auth_gssapi_log_miscerr_func log_miscerr = NULL;
-static caddr_t log_miscerr_data = NULL;
-
-#define LOG_MISCERR(arg) if (log_miscerr) \
-        (*log_miscerr)(rqst, msg, arg, log_miscerr_data)
-
+#ifdef _USE_TIRPC
+static bool_t Svcauth_gss_destroy();
+static bool_t Svcauth_gss_wrap();
+static bool_t Svcauth_gss_unwrap();
+#else
 static bool_t Svcauth_gss_destroy(SVCAUTH *);
 static bool_t Svcauth_gss_wrap(SVCAUTH *, XDR *, xdrproc_t, caddr_t);
 static bool_t Svcauth_gss_unwrap(SVCAUTH *, XDR *, xdrproc_t, caddr_t);
+#endif
 
 static bool_t Svcauth_gss_nextverf(struct svc_req *, u_int);
 
@@ -111,23 +104,6 @@ struct svc_auth_ops Svc_auth_gss_ops = {
   Svcauth_gss_unwrap,
   Svcauth_gss_destroy
 };
-
-struct svc_rpc_gss_data
-{
-  bool_t established;           /* context established */
-  gss_ctx_id_t ctx;             /* context id */
-  struct rpc_gss_sec sec;       /* security triple */
-  gss_buffer_desc cname;        /* GSS client name */
-  u_int seq;                    /* sequence number */
-  u_int win;                    /* sequence window */
-  u_int seqlast;                /* last sequence number */
-  uint32_t seqmask;             /* bitmask of seqnums */
-  gss_name_t client_name;       /* unparsed name string */
-  gss_buffer_desc checksum;     /* so we can free it */
-};
-
-#define SVCAUTH_PRIVATE(auth) \
-	(*(struct svc_rpc_gss_data **)&(auth)->svc_ah_private)
 
 /** @todo: BUGAZOMEU: To be put in a cleaner header file later */
 int Gss_ctx_Hash_Set(gss_union_ctx_id_desc * pgss_ctx, struct svc_rpc_gss_data *gd);
@@ -254,11 +230,14 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
 
   if(gr->gr_major != GSS_S_COMPLETE && gr->gr_major != GSS_S_CONTINUE_NEEDED)
     {
-      if(log_badauth != NULL)
-        {
-          (*log_badauth) (gr->gr_major,
-                          gr->gr_minor, &rqst->rq_xprt->xp_raddr, log_badauth_data);
-        }
+      sockaddr_t addr;
+      char ipstring[SOCK_NAME_MAX];
+      copy_xprt_addr(&addr, rqst->rq_xprt);
+      sprint_sockaddr(&addr, ipstring, sizeof(ipstring));
+      
+      LogWarn(COMPONENT_RPCSEC_GSS,
+              "Bad authentication major=%u minor=%u addr=%s",
+              gr->gr_major, gr->gr_minor, ipstring);
       gd->ctx = GSS_C_NO_CONTEXT;
       goto errout;
     }
@@ -390,8 +369,10 @@ Svcauth_gss_validate(struct svc_req *rqst, struct svc_rpc_gss_data *gd,
     {
       log_sperror_gss(GssError, "gss_verify_mic", maj_stat, min_stat);
       LogCrit(COMPONENT_RPCSEC_GSS, "Error in gss_verify_mic: %s ", GssError);
+      /* todo - log this
       if(log_badverf != NULL)
         (*log_badverf) (gd->client_name, svcauth_gss_name, rqst, msg, log_badverf_data);
+      */
       return (FALSE);
     }
   return (TRUE);
@@ -529,7 +510,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
                    gd->cname.length,
                    gd->established,
                    (long long unsigned int)buff64_2,
-                   rqst->rq_xprt->xp_sock,
+                   rqst->rq_xprt->XP_SOCK,
                    gc->gc_proc,
                    gc->gc_svc,
                    gc->gc_ctx.length,
@@ -573,7 +554,9 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
   if(gd->established)
     {
       rqst->rq_clntname = (char *)gd->client_name;
+#ifndef _USE_TIRPC
       rqst->rq_svccred = (char *)gd->ctx;
+#endif
     }
 
   /* Handle RPCSEC_GSS control procedure. */
@@ -605,7 +588,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
                    (char *)gd->cname.value,
                    gd->cname.length,
                    gd->established,
-                   rqst->rq_xprt->xp_sock,
+                   rqst->rq_xprt->XP_SOCK,
                    gr.gr_major,
                    gr.gr_minor,
                    gr.gr_ctx.length,
@@ -681,14 +664,14 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 
   LogFullDebug(COMPONENT_RPCSEC_GSS,
                "Call to Gssrpc__svcauth_gss - OK ---> (RQ:sock=%u)",
-               rqst->rq_xprt->xp_sock);
+               rqst->rq_xprt->XP_SOCK);
 
   retstat = AUTH_OK;
  freegc:
   if(retstat != AUTH_OK)
     LogCrit(COMPONENT_RPCSEC_GSS,
             "Call to Gssrpc__svcauth_gss - FAILED ---> (RQ:sock=%u)",
-            rqst->rq_xprt->xp_sock);
+            rqst->rq_xprt->XP_SOCK);
 
   xdr_free(xdr_rpc_gss_cred, gc);
   return (retstat);
@@ -764,46 +747,4 @@ char *Svcauth_gss_get_principal(SVCAUTH * auth)
   pname[gd->cname.length] = '\0';
 
   return (pname);
-}
-
-/*
- * Function: Svcauth_gss_set_log_badauth_func
- *
- * Purpose: sets the logging function called when an invalid RPC call
- * arrives
- *
- * See functional specifications.
- */
-void Svcauth_gss_set_log_badauth_func(auth_gssapi_log_badauth_func func, caddr_t data)
-{
-  log_badauth = func;
-  log_badauth_data = data;
-}
-
-/*
- * Function: Svcauth_gss_set_log_badverf_func
- *
- * Purpose: sets the logging function called when an invalid RPC call
- * arrives
- *
- * See functional specifications.
- */
-void Svcauth_gss_set_log_badverf_func(auth_gssapi_log_badverf_func func, caddr_t data)
-{
-  log_badverf = func;
-  log_badverf_data = data;
-}
-
-/*
- * Function: Svcauth_gss_set_log_miscerr_func
- *
- * Purpose: sets the logging function called when a miscellaneous
- * AUTH_GSSAPI error occurs
- *
- * See functional specifications.
- */
-void Svcauth_gss_set_log_miscerr_func(auth_gssapi_log_miscerr_func func, caddr_t data)
-{
-  log_miscerr = func;
-  log_miscerr_data = data;
 }

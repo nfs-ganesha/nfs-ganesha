@@ -378,7 +378,7 @@ void auth_stat2str(enum auth_stat why, char *str)
       strncpy(str, "AUTH_FAILED", AUTH_STR_LEN);
       break;
 
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
     case RPCSEC_GSS_CREDPROBLEM:
       strncpy(str, "RPCSEC_GSS_CREDPROBLEM", AUTH_STR_LEN);
       break;

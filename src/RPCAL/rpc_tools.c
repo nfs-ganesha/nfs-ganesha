@@ -56,16 +56,7 @@
 #include <pwd.h>
 #include <grp.h>
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"

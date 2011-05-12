@@ -97,11 +97,6 @@ char config_path[MAXPATHLEN];
 extern int nfs_do_terminate;
 extern char my_config_path[MAXPATHLEN];
 
-#ifdef _USE_GSSRPC
-bool_t Svcauth_gss_set_svc_name(gss_name_t name);
-int Gss_ctx_Hash_Init(nfs_krb5_parameter_t param);
-#endif
-
 /* States managed by signal handler */
 unsigned int sigusr1_triggered = FALSE ;
 unsigned int sigterm_triggered = FALSE ;
@@ -346,9 +341,9 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->worker_param.nb_client_id_prealloc = 20;
 
   /* krb5 parameter */
-  strncpy(p_nfs_param->krb5_param.principal, DEFAULT_NFS_PRINCIPAL, MAXNAMLEN);
-  strncpy(p_nfs_param->krb5_param.keytab, DEFAULT_NFS_KEYTAB, MAXPATHLEN);
-#ifdef _USE_GSSRPC
+  strncpy(p_nfs_param->krb5_param.principal, DEFAULT_NFS_PRINCIPAL, sizeof(p_nfs_param->krb5_param.principal));
+  strncpy(p_nfs_param->krb5_param.keytab, DEFAULT_NFS_KEYTAB, sizeof(p_nfs_param->krb5_param.keytab));
+#ifdef _HAVE_GSSAPI
   p_nfs_param->krb5_param.hash_param.index_size = PRIME_ID_MAPPER;
   p_nfs_param->krb5_param.hash_param.alphabet_length = 10;      /* Not used for UID_MAPPER */
   p_nfs_param->krb5_param.hash_param.nb_node_prealloc = NB_PREALLOC_ID_MAPPER;
@@ -1489,8 +1484,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   fsal_status_t fsal_status;
   unsigned int i = 0;
   int rc = 0;
-#ifdef _USE_GSSRPC
-  OM_uint32 gss_status = 0;
+#ifdef _HAVE_GSSAPI
   gss_name_t gss_service_name;
   gss_buffer_desc gss_service_buf;
   OM_uint32 maj_stat, min_stat;
@@ -1551,6 +1545,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #ifdef _HAVE_GSSAPI
   if(nfs_param.krb5_param.active_krb5)
     {
+      OM_uint32 gss_status = 0;
 
       if((gss_status =
           krb5_gss_register_acceptor_identity(nfs_param.krb5_param.keytab)) !=
@@ -1571,7 +1566,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #endif
 #endif
 
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
       /* Set up principal to be use for GSSAPPI within GSSRPC/KRB5 */
       gss_service_buf.value = nfs_param.krb5_param.principal;
       gss_service_buf.length = strlen(nfs_param.krb5_param.principal) + 1;      /* The '+1' is not to be forgotten, for the '\0' at the end */
