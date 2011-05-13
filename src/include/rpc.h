@@ -196,4 +196,11 @@ extern int get_port(sockaddr_t *addr);
 /* Returns an EAI value, accepts only numeric strings */
 extern int ipstring_to_sockaddr(const char *str, sockaddr_t *addr);
 
+CLIENT *Clnt_create(char *host,
+                    unsigned long prog,
+                    unsigned long vers,
+                    char *proto);
+
+Clnt_destroy(CLIENT *clnt);
+
 #endif
