@@ -440,3 +440,29 @@ int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
     }
   return rc;
 }
+
+pthread_mutex_t clnt_create_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+CLIENT *Clnt_create(char *host,
+                    unsigned long prog,
+                    unsigned long vers,
+                    char *proto)
+{
+  CLIENT *clnt;
+  pthread_mutex_lock(&clnt_create_mutex);
+  clnt = clnt_create(host, prog, vers, proto);
+  if(clnt == NULL)
+    {
+      const char *err = clnt_spcreateerror("clnt_create failed");
+      LogFullDebug(COMPONENT_RPC, "%s", err);
+    }
+  pthread_mutex_unlock(&clnt_create_mutex);
+  return clnt;
+}
+
+Clnt_destroy(CLIENT *clnt)
+{
+  pthread_mutex_lock(&clnt_create_mutex);
+  clnt_destroy(clnt);
+  pthread_mutex_unlock(&clnt_create_mutex);
+}
