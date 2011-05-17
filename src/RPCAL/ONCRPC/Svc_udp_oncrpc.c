@@ -16,7 +16,7 @@ typedef unsigned int u_int32_t;
 #include   <stdlib.h>
 #include   <string.h>
 #include   "stuff_alloc.h"
-#include   "rpc.h"
+#include   "../rpcal.h"
 #include   <sys/poll.h>
 #include   <sys/socket.h>
 #include   <errno.h>

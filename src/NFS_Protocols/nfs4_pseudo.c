@@ -64,9 +64,6 @@
 #define NB_OPT_TOK 10
 #define NB_TOK_PATH 20
 
-/* The boot time of the server */
-extern time_t ServerBootTime;
-
 static pseudofs_t gPseudoFs;
 
 /**

@@ -64,7 +64,7 @@ libganeshaNFS_la_LDFLAGS = -version-info 1:0:1
 
 else
 
-noinst_LTLIBRARIES	     = libMainServices.la
+noinst_LTLIBRARIES             = libMainServices.la
 
 endif
 
@@ -109,7 +109,6 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/err_inject.h              \
                              $(STAT_SNMP_FILES)
 
-
 libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la                   \
                                       $(PNFS_LIB)                                       \
                                       $(SEC_LIB_FLAGS)                                  \
@@ -118,7 +117,7 @@ libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la           
                                       $(STAT_SNMP_LIB_FLAGS)                            \
                                       ../IdMapper/libidmap.la                           \
                                       ../support/libsupport.la                          \
-				      ../NodeList/libNodeList.la			\
+                                      ../NodeList/libNodeList.la                        \
                                       ../$(CACHE_INODE_DIR)/libcache_inode.la           \
                                       ../File_Content/libcache_content.la               \
                                       ../File_Content_Policy/libcache_content_policy.la \
@@ -130,7 +129,7 @@ libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la           
                                       $(FSAL_LIB)                                       \
                                       ../Log/liblog.la                                  \
                                       ../ConfigParsing/libConfigParsing.la              \
-			              ../RPCAL/librpcal.la                              \
+                                      ../RPCAL/librpcal.la                              \
                                       ../XDR/libnfs_mnt_xdr.la                          \
                                       ../SemN/libSemN.la                                \
                                       ../RW_Lock/librwlock.la                           \
@@ -167,4 +166,3 @@ new: clean all
 doc:
 	doxygen ./doxygen.conf
 	rep=`grep OUTPUT_DIRECTORY doxygen.conf | grep share  | awk -F '=' '{print $$2;}'` ; cd $$rep/latex ; make
-

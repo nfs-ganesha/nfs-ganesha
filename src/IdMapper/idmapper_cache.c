@@ -67,8 +67,6 @@ hash_table_t *ht_pwuid;
 hash_table_t *ht_grgid;
 hash_table_t *ht_uidgid;
 
-extern nfs_parameter_t nfs_param;
-
 /**
  *
  * idmapper_rbt_hash_func: computes the hash value for the entry in id mapper stuff

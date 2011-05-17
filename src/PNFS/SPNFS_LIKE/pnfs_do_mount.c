@@ -26,8 +26,6 @@
 #define PNFS_LAYOUTFILE_NB_OP_EXCHANGEID 2
 #define PNFS_LAYOUTFILE_NB_OP_CREATESESSION 2
 
-extern time_t ServerBootTime;
-
 /**
  *
  * pnfs_do_mount: establishes a NFSv4.1 session between a thread and a DS

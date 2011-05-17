@@ -15,13 +15,11 @@ typedef unsigned long u_long;
 #include   <sys/errno.h>
 #include   "stuff_alloc.h"
 #include   "nfs_core.h"
-#include   "rpc.h"
+#include   "../rpcal.h"
 
 #ifdef _APPLE
 #define __FDS_BITS(set) ((set)->fds_bits)
 #endif
-
-SVCXPRT **Xports;
 
 #define NULL_SVC ((struct svc_callout *)0)
 #define	RQCRED_SIZE	400     /* this size is excessive */
@@ -49,8 +47,6 @@ static struct svc_callout *Svc_find();
 
 /* Un rajout pour voir */
 unsigned int mysvc_maxfd;
-
-fd_set Svc_fdset;
 
 /* ***************  SVCXPRT related stuff **************** */
 

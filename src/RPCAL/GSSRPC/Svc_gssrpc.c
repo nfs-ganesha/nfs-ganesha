@@ -48,19 +48,16 @@
 #if HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
-#include "rpc.h"
+#include "../rpcal.h"
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 
 
-SVCXPRT **Xports;
 extern int gssrpc_svc_fdset_init;
 
 #define NULL_SVC ((struct svc_callout *)0)
 #define	RQCRED_SIZE	1024    /* this size is excessive */
-
-fd_set Svc_fdset;
 
 /*
  * The services list

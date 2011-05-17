@@ -72,9 +72,6 @@
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 
-extern time_t ServerBootTime;
-extern nfs_parameter_t nfs_param;
-
 /**
  *
  * nfs4_is_leased_expired

@@ -66,9 +66,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Hashtable used to cache stats, accessed by their IP addess */
-extern nfs_parameter_t nfs_param;
-
 /**
  *
  *  ip_stats_rbt_hash_func: computes the hash value for the entry in IP stats cache.

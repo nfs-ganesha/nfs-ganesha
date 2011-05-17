@@ -70,11 +70,6 @@
 int getpeereid(int s, uid_t * euid, gid_t * egid);
 int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
 
-pthread_mutex_t *mutex_cond_xprt;
-pthread_cond_t *condvar_xprt;
-
-SVCXPRT **Xports;
-
 extern rw_lock_t Svc_fd_lock;
 
 extern void *rpc_tcp_socket_manager_thread(void *Arg);

@@ -64,8 +64,6 @@
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
-extern nfs_parameter_t nfs_param;
-
 /**
  * nfs41_op_write: The NFS4_OP_WRITE operation
  * 

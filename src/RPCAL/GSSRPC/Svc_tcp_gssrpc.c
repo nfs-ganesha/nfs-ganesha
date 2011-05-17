@@ -53,7 +53,7 @@ int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) 
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "rpc.h"
+#include "../rpcal.h"
 #include <sys/socket.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -70,10 +70,6 @@ extern errno;
 
 #define SVCAUTH_DESTROY(auth) \
      ((*((auth)->svc_ah_ops->svc_ah_destroy))(auth))
-
-pthread_mutex_t *mutex_cond_xprt;
-pthread_cond_t *condvar_xprt;
-extern SVCXPRT ** Xports ;
 
 /*
  * Ops vector for TCP/IP based rpc service handle

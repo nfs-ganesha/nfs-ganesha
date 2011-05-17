@@ -113,9 +113,6 @@ static void action_sighup(int sig)
   sighup_triggered = TRUE ;
 }
 
-/* Use the nfs_param from nfs_init.c */
-extern nfs_parameter_t nfs_param;
-
 /**
  * main: simply the main function.
  *

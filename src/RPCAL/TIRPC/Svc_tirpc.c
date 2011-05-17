@@ -56,10 +56,6 @@
 #define max(a, b) (a > b ? a : b)
 
 /* public data : */
-fd_set Svc_fdset;
-SVCXPRT **Xports;
-
-rw_lock_t Svc_lock;
 rw_lock_t Svc_fd_lock;
 int Svc_maxfd;
 
@@ -207,7 +203,7 @@ void FreeXprt(SVCXPRT *xprt)
   xp_free(xprt->xp_netid);
   xp_free(xprt->xp_rtaddr.buf);
   xp_free(xprt->xp_ltaddr.buf);
-  xp_free(xprt->xp_auth);
+  SVCAUTH_DESTROY(xprt->xp_auth);
   Mem_Free(xprt);
 }
 
@@ -321,7 +317,8 @@ SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
       memcpy(xprt_copy->xp_ltaddr.buf, xprt_orig->xp_ltaddr.buf, sizeof(struct sockaddr_storage));
     }
 
-  if(xprt_orig->xp_auth);
+  if(!copy_svc_authgss(xprt_copy, xprt_orig))
+    goto fail;
 
   return xprt_copy;
 

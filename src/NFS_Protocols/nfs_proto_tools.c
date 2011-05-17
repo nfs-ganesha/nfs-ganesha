@@ -67,8 +67,6 @@
 #include "nfs_file_handle.h"
 #include "nfs_proto_tools.h"
 
-extern nfs_parameter_t nfs_param;
-
 /**
  *
  * nfs_FhandleToCache: Gets a cache entry using a file handle (v2 or v3) as input.

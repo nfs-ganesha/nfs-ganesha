@@ -1654,7 +1654,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
         }
 
       /* Set the index (mostly used for debug purpose */
-      workers_data[i].index = i;
+      workers_data[i].worker_index = i;
 
       /* Set the pointer for the Cache inode hash table */
       workers_data[i].ht = ht;

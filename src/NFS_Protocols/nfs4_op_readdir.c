@@ -51,8 +51,6 @@
 #define arg_READDIR4 op->nfs_argop4_u.opreaddir
 #define res_READDIR4 resp->nfs_resop4_u.opreaddir
 
-extern time_t ServerBootTime;
-
 /**
  * nfs4_op_readdir: The NFS4_OP_READDIR.
  * 

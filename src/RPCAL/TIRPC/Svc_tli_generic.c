@@ -53,7 +53,7 @@
 #include "config.h"
 #endif
 
-#include "rpc.h"
+#include "../rpcal.h"
 #include <Rpc_com_tirpc.h>
 #include <getpeereid.h>
 #include "stuff_alloc.h"
@@ -119,7 +119,7 @@ const char *nettype;            /* Networktype token */
           xprt = Svc_tp_create(dispatch, prognum, versnum, nconf);
           if(xprt)
             {
-              l = (struct xlist *)malloc(sizeof(*l));
+              l = (struct xlist *)Mem_Alloc(sizeof(*l));
               if(l == NULL)
                 {
                   warnx("svc_create: no memory");

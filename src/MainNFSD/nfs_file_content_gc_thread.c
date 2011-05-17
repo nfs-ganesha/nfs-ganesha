@@ -67,7 +67,6 @@
 #include "SemN.h"
 
 /* Structures from another module */
-extern nfs_parameter_t nfs_param;
 extern nfs_worker_data_t *workers_data;
 extern cache_content_client_t recover_datacache_client;
 

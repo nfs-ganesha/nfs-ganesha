@@ -71,7 +71,6 @@
 #include "SemN.h"
 
 extern nfs_worker_data_t *workers_data;
-extern nfs_parameter_t nfs_param;
 
 /* These two variables keep state of the thread that gc at this time */
 unsigned int nb_current_gc_workers;
@@ -193,8 +192,6 @@ int nfs_Init_svc()
   struct sockaddr_in sinaddr_rquota;
 #endif /* _USE_QUOTA */
 
-  int num_sock = nfs_param.core_param.nb_max_fd;
-
   /* Initialize all the sockets to -1 because it makes some code later easier */
   nfs_param.worker_param.nfs_svc_data.socket_nfs_udp = -1;
   nfs_param.worker_param.nfs_svc_data.socket_nfs_tcp = -1;
@@ -208,14 +205,7 @@ int nfs_Init_svc()
   LogInfo(COMPONENT_DISPATCH, "NFS Init for core options = %d",
           nfs_param.core_param.core_options);
 
-  /* Allocate resources that are based on the maximum number of open file descriptors */
-  Xports = (SVCXPRT **) Mem_Alloc_Label(num_sock * sizeof(SVCXPRT *), "Xports array");
-  memset(Xports, 0, num_sock * sizeof(SVCXPRT *));
-  mutex_cond_xprt = (pthread_mutex_t *) Mem_Alloc_Label(num_sock * sizeof(pthread_mutex_t ), "mutex_cond_xprt array");
-  memset(mutex_cond_xprt, 0, num_sock * sizeof(pthread_mutex_t ));
-  condvar_xprt = (pthread_cond_t *) Mem_Alloc_Label(num_sock * sizeof(pthread_cond_t ), "condvar_xprt array");
-  memset(condvar_xprt, 0, num_sock * sizeof(pthread_cond_t ));
-  FD_ZERO(&Svc_fdset);
+  InitRPC(nfs_param.core_param.nb_max_fd);
 
 #ifdef _USE_TIRPC
   LogInfo(COMPONENT_DISPATCH, "NFS INIT: Using TIRPC");
@@ -261,9 +251,6 @@ int nfs_Init_svc()
   LogInfo(COMPONENT_DISPATCH, "netconfig found for UDPv6 and TCPv6");
 #endif
 
-  /* RW_lock need to be initialized */
-  rw_lock_init(&Svc_lock);
-  rw_lock_init(&Svc_fd_lock);
 #endif                          /* _USE_TIRPC */
 
 #ifndef _USE_TIRPC_IPV6
@@ -1696,10 +1683,10 @@ static unsigned int select_worker_queue()
           if((workers_data[i].gc_in_progress == FALSE)
              && (workers_data[i].is_ready == TRUE))
             {
-         if(workers_data[i].pending_request->nb_entry < avg_number_pending)
+              if(workers_data[i].pending_request->nb_entry < avg_number_pending)
                 {
                   worker_index = i;
-             break;
+                  break;
                 }
             }
           else if(!workers_data[i].is_ready)
@@ -1728,9 +1715,9 @@ static unsigned int select_worker_queue()
  * @return the chosen worker index.
  *
  */
-int nfs_rpc_get_worker_index(int mount_protocol_flag)
+unsigned int nfs_rpc_get_worker_index(int mount_protocol_flag)
 {
-  int worker_index = -1;
+  unsigned int worker_index;
 
 #ifndef _NO_MOUNT_LIST
   if(mount_protocol_flag == TRUE)
@@ -1767,10 +1754,8 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
   register long mask, *maskp;
   register int sock;
   char *cred_area;
-  LRU_entry_t *pentry = NULL;
-  LRU_status_t status;
   nfs_request_data_t *pnfsreq = NULL;
-  int worker_index;
+  unsigned int worker_index;
   int mount_flag = FALSE;
 
   /* portable access to fds_bits field */
@@ -1798,14 +1783,10 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
             mount_flag = FALSE;
 
           /* Get a worker to do the job */
-          if((worker_index = nfs_rpc_get_worker_index(mount_flag)) < 0)
-            {
-              LogMajor(COMPONENT_DISPATCH,
-                       "CRITICAL ERROR: Couldn't choose a worker ! Exiting...");
-              exit(1);
-            }
+          worker_index = nfs_rpc_get_worker_index(mount_flag);
+
           LogFullDebug(COMPONENT_DISPATCH,
-                       "Use request from spool #%d, xprt->xp_sock=%d",
+                       "Use request from Worker Thread #%u's pool, xprt->xp_sock=%d",
                        worker_index, xprt->XP_SOCK);
 
           /* Get a pnfsreq from the worker's pool */
@@ -1935,8 +1916,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               /* This is a regular tcp request on an established connection, should be handle by a dedicated thread */
               LogFullDebug(COMPONENT_DISPATCH,
                            "A NFS TCP request from an already connected client");
-              pnfsreq->tcp_xprt = xprt;
-              pnfsreq->xprt = pnfsreq->tcp_xprt;
+              pnfsreq->xprt = xprt;
               pnfsreq->ipproto = IPPROTO_TCP;
 
               pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
@@ -1990,37 +1970,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
           else
             {
               /* This should be used for UDP requests only, TCP request have dedicted management threads */
-              LogFullDebug(COMPONENT_DISPATCH,
-                           "Awaking thread #%d", worker_index);
-
-              P(workers_data[worker_index].mutex_req_condvar);
-              P(workers_data[worker_index].request_pool_mutex);
-
-              if((pentry =
-                  LRU_new_entry(workers_data[worker_index].pending_request,
-                                &status)) == NULL)
-                {
-                  V(workers_data[worker_index].mutex_req_condvar);
-                  V(workers_data[worker_index].request_pool_mutex);
-                  LogMajor(COMPONENT_DISPATCH,
-                           "Error while inserting pending request to Thread #%d... exiting",
-                           worker_index);
-                  exit(1);
-                }
-              pentry->buffdata.pdata = (caddr_t) pnfsreq;
-              pentry->buffdata.len = sizeof(*pnfsreq);
-
-              if(pthread_cond_signal(&(workers_data[worker_index].req_condvar)) == -1)
-                {
-                  V(workers_data[worker_index].mutex_req_condvar);
-                  V(workers_data[worker_index].request_pool_mutex);
-                  LogMajor(COMPONENT_DISPATCH,
-                           "NFS DISPATCH: Cond signal failed for worker#%d , err = %d (%s)",
-                           worker_index, errno, strerror(errno));
-                  exit(1);
-                }
-              V(workers_data[worker_index].mutex_req_condvar);
-              V(workers_data[worker_index].request_pool_mutex);
+              DispatchWork(pnfsreq, worker_index);
             }
         }
     }
@@ -2198,7 +2148,6 @@ int nfs_Init_request_data(nfs_request_data_t * pdata)
   /* Init the SVCXPRT for the tcp socket */
   /* The choice of the fd to be used here doesn't really matter, this fd will be overwrittem later
    * when processing the request */
-  pdata->tcp_xprt = NULL;
 
 #ifdef _USE_TIRPC
   if((pdata->nfs_udp_xprt =

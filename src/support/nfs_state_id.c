@@ -67,9 +67,6 @@
 
 size_t strnlen(const char *s, size_t maxlen);
 
-extern time_t ServerBootTime;
-extern nfs_parameter_t nfs_param;
-
 hash_table_t *ht_state_id;
 
 char all_zero[] = "\0\0\0\0\0\0\0\0\0\0\0\0";

@@ -19,7 +19,7 @@ typedef unsigned int u_int32_t;
 #include   <string.h>
 #include   <unistd.h>
 #include   "stuff_alloc.h"
-#include   "rpc.h"
+#include   "../rpcal.h"
 #include   <sys/socket.h>
 #include   <sys/poll.h>
 #include   <errno.h>
@@ -35,9 +35,6 @@ typedef unsigned int u_int32_t;
 
 int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
 bool_t svcauth_wrap_dummy(XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr);
-
-pthread_mutex_t *mutex_cond_xprt;
-pthread_cond_t *condvar_xprt;
 
 #define SVCAUTH_WRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)
 #define SVCAUTH_UNWRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)

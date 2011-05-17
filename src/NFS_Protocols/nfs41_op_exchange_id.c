@@ -63,8 +63,6 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 
-extern time_t ServerBootTime;
-extern nfs_parameter_t nfs_param;
 /**
  *
  * nfs41_op_exchange_id:  The NFS4_OP_EXCHANGE_ID operation.

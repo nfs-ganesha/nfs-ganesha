@@ -58,7 +58,6 @@ size_t strnlen(const char *s, size_t maxlen);
 /* Hashtable used to cache the hostname, accessed by their IP addess */
 hash_table_t *ht_client_id;
 hash_table_t *ht_client_id_reverse;
-extern nfs_parameter_t nfs_param;
 
 /**
  *

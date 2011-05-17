@@ -153,7 +153,7 @@ static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
     {
       if (ok_errors)
         LogCrit(COMPONENT_LOG_EMERG,
-                "Log_GetThreadFunction - pthread_once returned %d (%s)",
+                "Log_GetThreadContext - pthread_once returned %d (%s)",
                 errno, strerror(errno));
       return NULL;
     }
@@ -170,7 +170,7 @@ static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
         {
           if (ok_errors)
             LogCrit(COMPONENT_LOG_EMERG,
-                    "Log_GetThreadFunction - malloc returned %d (%s)",
+                    "Log_GetThreadContext - malloc returned %d (%s)",
                     errno, strerror(errno));
           return NULL;
         }
@@ -188,7 +188,7 @@ static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
 
   return p_current_thread_vars;
 
-}                               /* Log_GetThreadFunction */
+}                               /* Log_GetThreadContext */
 
 static const char *Log_GetThreadFunction(int ok_errors)
 {
@@ -451,16 +451,6 @@ static int DisplayLogSyslog_valist(log_components_t component, int level, char *
   syslog(tabLogLevel[level].syslog_level, "[%s] :%s", function, texte);
   return 1 ;
 } /* DisplayLogSyslog_valist */
-
-#if 0
-static int DisplayLogFd_valist(int fd, log_components_t component, char *format, va_list arguments)
-{
-  char tampon[STR_LEN_TXT];
-
-  DisplayLogString_valist(tampon, component, format, arguments);
-  return write(fd, tampon, strlen(tampon));
-}                               /* DisplayLogFd_valist */
-#endif
 
 static int DisplayLogFlux_valist(FILE * flux, log_components_t component, char *format, va_list arguments)
 {

@@ -78,8 +78,6 @@
 #include "nfs_proto_tools.h"
 #include "nfs_stat.h"
 
-extern nfs_parameter_t nfs_param;
-
 /**
  *
  * nfs_stat_update: Update a client's statistics.

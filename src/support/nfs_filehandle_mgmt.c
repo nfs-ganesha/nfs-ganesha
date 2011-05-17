@@ -114,9 +114,6 @@
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 
-extern time_t ServerBootTime;
-extern nfs_parameter_t nfs_param;
-
 /**
  *
  *  nfs4_FhandleToFSAL: converts a nfs4 file handle to a FSAL file handle.

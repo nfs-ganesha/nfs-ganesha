@@ -410,12 +410,10 @@ typedef struct nfs_dupreq_stat__
 typedef struct nfs_request_data__
 {
   int ipproto;
-  SVCXPRT *tcp_xprt;
   SVCXPRT *nfs_udp_xprt;
   SVCXPRT *mnt_udp_xprt;
   SVCXPRT *nlm_udp_xprt;
   SVCXPRT *rquota_udp_xprt;
-  SVCXPRT *rquota_tcp_xprt;
   SVCXPRT *xprt;
   SVCXPRT *xprt_copy;
   struct svc_req req;
@@ -454,7 +452,7 @@ typedef enum idmap_type__
 
 typedef struct nfs_worker_data__
 {
-  int index;
+  unsigned int worker_index;
   LRU_list_t *pending_request;
   LRU_list_t *duplicate_request;
   struct prealloc_pool request_pool;
@@ -524,10 +522,15 @@ typedef struct fridge_entry__
   struct fridge_entry__ * pnext ;
 } fridge_entry_t  ;
 
+extern nfs_parameter_t nfs_param;
+extern time_t ServerBootTime;
 
 /* 
  *functions prototypes
  */
+enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
+                                   bool_t *dispatch);
+void DispatchWork(nfs_request_data_t *pnfsreq, unsigned int worker_index);
 void *worker_thread(void *IndexArg);
 void *rpc_dispatcher_thread(void *arg);
 void *admin_thread(void *arg);

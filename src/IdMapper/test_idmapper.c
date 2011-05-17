@@ -34,8 +34,6 @@
 #include "config_parsing.h"
 #include "SemN.h"
 
-nfs_parameter_t nfs_param;
-
 int idmap_computer_hash_value(char *name, uint32_t * phashval)
 {
   char padded_name[PWENT_MAX_LEN+8]; /* +8 to avoid array bounds overflow */

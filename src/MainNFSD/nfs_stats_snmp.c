@@ -35,9 +35,6 @@
 /* case unsensitivity */
 #define STRCMP   strcasecmp
 
-extern time_t ServerBootTime;
-extern nfs_parameter_t nfs_param;
-
 static int config_ok = 0;
 
 static nfs_worker_data_t *workers_data;

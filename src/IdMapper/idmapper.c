@@ -53,8 +53,6 @@
 #include <pwd.h>
 #include <grp.h>
 
-extern nfs_parameter_t nfs_param;
-
 #ifdef _USE_NFSIDMAP
 
 #define _PATH_IDMAPDCONF     "/etc/idmapd.conf"

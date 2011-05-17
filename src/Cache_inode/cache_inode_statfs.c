@@ -63,8 +63,6 @@
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
 
-extern nfs_parameter_t nfs_param;
-
 /*
  * ASSUMPTION: DIR_CONT entries are always garbabbaged before their related DIR_BEGINNG 
  */

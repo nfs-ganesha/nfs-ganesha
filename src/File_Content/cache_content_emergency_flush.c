@@ -75,7 +75,6 @@
 #endif
 
 extern unsigned int cache_content_dir_errno;
-extern nfs_parameter_t nfs_param;
 
 /**
  *

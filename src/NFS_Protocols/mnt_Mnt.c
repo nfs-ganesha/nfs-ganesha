@@ -62,8 +62,6 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 
-extern nfs_parameter_t nfs_param;
-
 /**
  * mnt_Mnt: The Mount proc mount function, for all versions.
  * 

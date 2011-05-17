@@ -39,8 +39,6 @@
  *
  */
 
-extern nfs_parameter_t nfs_param;
-
 int pnfs_lustre_encode_getdeviceinfo(char *buff, unsigned int *plen)
 {
   unsigned int offset = 0;

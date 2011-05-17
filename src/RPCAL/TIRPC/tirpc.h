@@ -4,7 +4,7 @@
 #ifndef GANESHA_TIRPC_H
 #define GANESHA_TIRPC_H
 
-#include "rpc.h"
+#include "../rpcal.h"
 #include <Rpc_com_tirpc.h>
 #ifdef PORTMAP
 #include <rpc/pmap_clnt.h>

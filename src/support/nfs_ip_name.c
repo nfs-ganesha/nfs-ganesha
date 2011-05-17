@@ -56,7 +56,6 @@
 
 /* Hashtable used to cache the hostname, accessed by their IP addess */
 hash_table_t *ht_ip_name;
-extern nfs_parameter_t nfs_param;
 unsigned int expiration_time;
 
 /**

@@ -82,8 +82,6 @@
 #define arg_RENEW4 op->nfs_argop4_u.oprenew
 #define res_RENEW4 resp->nfs_resop4_u.oprenew
 
-extern nfs_parameter_t nfs_param;
-
 int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_renew";

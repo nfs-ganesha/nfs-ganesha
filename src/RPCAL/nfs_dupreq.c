@@ -56,7 +56,7 @@
 #include <pwd.h>
 #include <grp.h>
 
-#include "rpc.h"
+#include "rpcal.h"
 #include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -71,7 +71,6 @@
 #include "nfs_file_handle.h"
 #include "nfs_dupreq.h"
 
-extern nfs_parameter_t nfs_param;
 extern nfs_function_desc_t nfs2_func_desc[];
 extern nfs_function_desc_t nfs3_func_desc[];
 extern nfs_function_desc_t nfs4_func_desc[];

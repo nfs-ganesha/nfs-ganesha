@@ -64,8 +64,6 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 
-extern time_t ServerBootTime;
-
 /**
  *
  * nfs4_op_setclientid:  The NFS4_OP_SETCLIENTID operation.

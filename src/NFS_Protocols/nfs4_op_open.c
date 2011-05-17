@@ -65,8 +65,6 @@
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
-extern nfs_parameter_t nfs_param;
-
 /**
  * nfs4_op_open: NFS4_OP_OPEN, opens and eventually creates a regular file.
  * 
@@ -79,8 +77,6 @@ extern nfs_parameter_t nfs_param;
  * @return NFS4_OK if successfull, other values show an error.  
  * 
  */
-
-extern time_t ServerBootTime;
 
 #define arg_OPEN4 op->nfs_argop4_u.opopen
 #define res_OPEN4 resp->nfs_resop4_u.opopen

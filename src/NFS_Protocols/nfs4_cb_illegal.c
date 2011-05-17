@@ -65,8 +65,6 @@
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
-extern nfs_parameter_t nfs_param;
-
 /**
  * nfs4_cb_getattr: NFS4_OP_CB_getattr, nfsv4 call back to get files attributes
  * 

@@ -18,7 +18,7 @@
 #include "nfs_core.h"
 #include "log_macros.h"
 
-#include "rpc.h"
+#include "rpcal.h"
 #ifdef HAVE_HEIMDAL
 #include <gssapi.h>
 #define gss_nt_service_name GSS_C_NT_HOSTBASED_SERVICE

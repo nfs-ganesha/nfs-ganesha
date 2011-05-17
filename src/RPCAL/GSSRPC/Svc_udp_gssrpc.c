@@ -48,7 +48,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "rpc.h"
+#include "../rpcal.h"
 #include <errno.h>
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>

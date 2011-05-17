@@ -50,7 +50,6 @@
 #include "stuff_alloc.h"
 #include "log_macros.h"
 
-extern nfs_parameter_t nfs_param;
 nfs_admin_data_t *pmydata;
 
 int nfs_Init_admin_data(nfs_admin_data_t *pdata)

@@ -43,7 +43,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "rpc.h"
+#include "rpcal.h"
 #ifdef HAVE_HEIMDAL
 #include <gssapi.h>
 #define gss_nt_service_name GSS_C_NT_HOSTBASED_SERVICE
@@ -245,7 +245,7 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
    * ANDROS: krb5 mechglue returns ctx of size 8 - two pointers,
    * one to the mechanism oid, one to the internal_ctx_id
    */
-  if((gr->gr_ctx.value = mem_alloc(sizeof(gss_union_ctx_id_desc))) == NULL)
+  if((gr->gr_ctx.value = Mem_Alloc(sizeof(gss_union_ctx_id_desc))) == NULL)
     {
       LogCrit(COMPONENT_RPCSEC_GSS,
               "svcauth_gss_accept_context: out of memory");
@@ -415,7 +415,6 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
   enum auth_stat retstat;
   XDR xdrs;
   SVCAUTH *auth;
-  struct svc_rpc_gss_data *psaved_gd;
   struct svc_rpc_gss_data *gd;
   struct rpc_gss_cred *gc;
   struct rpc_gss_init_res gr;
@@ -431,15 +430,15 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
   /* Allocate and set up server auth handle. */
   if(rqst->rq_xprt->xp_auth == NULL || rqst->rq_xprt->xp_auth == &Svc_auth_none)
     {
-      if((auth = calloc(sizeof(*auth), 1)) == NULL)
+      if((auth = Mem_Calloc(sizeof(*auth), 1)) == NULL)
         {
           LogCrit(COMPONENT_RPCSEC_GSS, "svcauth_gss: out_of_memory");
           return (AUTH_FAILED);
         }
-      if((gd = calloc(sizeof(*gd), 1)) == NULL)
+      if((gd = Mem_Calloc(sizeof(*gd), 1)) == NULL)
         {
           LogCrit(COMPONENT_RPCSEC_GSS, "svcauth_gss: out_of_memory");
-          free(auth);
+          Mem_Free(auth);
           return (AUTH_FAILED);
         }
       auth->svc_ah_ops = &Svc_auth_gss_ops;
@@ -489,7 +488,6 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
             {
               gd->sec.svc = gc->gc_svc;
             }
-          //gd = psaved_gd ;
           SVCAUTH_PRIVATE(rqst->rq_xprt->xp_auth) = gd; // C'est la que les bacteries attaquent ....
         }
     }
@@ -544,7 +542,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       else if((unsigned int)offset >= gd->win
               || (gd->seqmask & (1 << (unsigned int)offset)))
         {
-          *no_dispatch = 1;
+          *no_dispatch = TRUE;
           ret_freegc(RPCSEC_GSS_CTXPROBLEM);
         }
       gd->seq = gc->gc_seq;
@@ -577,7 +575,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       if(!Svcauth_gss_nextverf(rqst, htonl(gr.gr_win)))
         {
           gss_release_buffer(&min_stat, &gr.gr_token);
-          mem_free(gr.gr_ctx.value, sizeof(gss_union_ctx_id_desc));
+          Mem_Free(gr.gr_ctx.value);
           ret_freegc(AUTH_FAILED);
         }
       *no_dispatch = TRUE;
@@ -598,7 +596,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 
       gss_release_buffer(&min_stat, &gr.gr_token);
       gss_release_buffer(&min_stat, &gd->checksum);
-      mem_free(gr.gr_ctx.value, sizeof(gss_union_ctx_id_desc));
+      Mem_Free(gr.gr_ctx.value);
       if(!call_stat)
         ret_freegc(AUTH_FAILED);
 
@@ -685,17 +683,14 @@ static bool_t Svcauth_gss_destroy(SVCAUTH * auth)
   gd = SVCAUTH_PRIVATE(auth);
 
   gss_delete_sec_context(&min_stat, &gd->ctx, GSS_C_NO_BUFFER);
-  Mem_Free(gd->cname.value);
-  Mem_Free(gd->checksum.value);
-  // gss_release_buffer(&min_stat, &gd->cname);
-  // gss_release_buffer(&min_stat, &gd->checksum);
+  gss_release_buffer(&min_stat, &gd->cname);
+  gss_release_buffer(&min_stat, &gd->checksum);
 
   if(gd->client_name)
     gss_release_name(&min_stat, &gd->client_name);
 
-        /** @todo BUGAZOMEU fix these two lines */
-  /* mem_free(gd, sizeof(*gd)); */
-  /* mem_free(auth, sizeof(*auth)); */
+  Mem_Free(gd);
+  Mem_Free(auth);
 
   return (TRUE);
 }
@@ -730,21 +725,24 @@ Svcauth_gss_unwrap(SVCAUTH * auth, XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_p
                            gd->ctx, gd->sec.qop, gd->sec.svc, gd->seq));
 }
 
-char *Svcauth_gss_get_principal(SVCAUTH * auth)
+int copy_svc_authgss(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
 {
-  struct svc_rpc_gss_data *gd;
-  char *pname;
-
-  gd = SVCAUTH_PRIVATE(auth);
-
-  if(gd->cname.length == 0)
-    return (NULL);
-
-  if((pname = malloc(gd->cname.length + 1)) == NULL)
-    return (NULL);
-
-  memcpy(pname, gd->cname.value, gd->cname.length);
-  pname[gd->cname.length] = '\0';
-
-  return (pname);
+  if(xprt_orig->xp_auth)
+    {
+      if(xprt_orig->xp_auth->svc_ah_ops == &Svc_auth_gss_ops)
+        {
+          /* Copy GSS auth */
+        }
+      else
+        {
+          /* Should be Svc_auth_none */
+          if(xprt_orig->xp_auth != &Svc_auth_none)
+            LogFullDebug(COMPONENT_RPCSEC_GSS,
+                         "copy_svc_authgss copying unknown xp_auth");
+          xprt_copy->xp_auth = xprt_orig->xp_auth;
+        }
+    }
+  else
+    xprt_copy->xp_auth = NULL;
+  return 1;
 }

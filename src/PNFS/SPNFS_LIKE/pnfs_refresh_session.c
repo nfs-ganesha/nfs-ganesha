@@ -25,8 +25,6 @@
 
 #define PNFS_LAYOUTFILE_NB_OP_CREATESESSION 2
 
-extern time_t ServerBootTime;
-
 /**
  *
  * pnfs_refresh_session: Refreshes a NFSv4.1 session after a NFS4ERR_BADSESSION

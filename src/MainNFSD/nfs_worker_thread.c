@@ -74,7 +74,6 @@ void nfs_debug_debug_label_info();
 #endif
 
 extern nfs_worker_data_t *workers_data;
-extern nfs_parameter_t nfs_param;
 extern hash_table_t *ht_dupreq; /* duplicate request hash */
 
 /* These two variables keep state of the thread that gc at this time */
@@ -378,8 +377,6 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 void nfs_Cleanup_request_data(nfs_request_data_t * pdata)
 {
   pdata->ipproto = 0;
-
-  pdata->tcp_xprt = NULL;
   pdata->xprt = NULL;
 }                               /* nfs_Cleanup_request_data */
 
@@ -690,7 +687,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   lru_dupreq = pworker_data->duplicate_request;
 
   LogDebug(COMPONENT_DISPATCH,
-           "NFS DISPATCH: Program %d, Version %d, Function %d",
+           "Program %d, Version %d, Function %d",
            (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
 
   /* initializing RPC structure */
@@ -716,7 +713,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
   rpcxid = get_rpc_xid(ptr_req);
 
-  LogFullDebug(COMPONENT_DISPATCH, "NFS DISPATCH: Request from %s has xid=%u", addrbuf, rpcxid);
+  LogFullDebug(COMPONENT_DISPATCH,
+               "Request from %s has xid=%u", addrbuf, rpcxid);
   do_dupreq_cache = pworker_data->pfuncdesc->dispatch_behaviour & CAN_BE_DUP;
   LogFullDebug(COMPONENT_DISPATCH, "do_dupreq_cache = %d", do_dupreq_cache);
   status = nfs_dupreq_add_not_finished(rpcxid,
@@ -1281,7 +1279,7 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   if(pthread_cond_init(&(pdata->export_condvar), NULL) != 0)
     return -1;
 
-  sprintf(name, "Worker %d Pending Request", pdata->index);
+  sprintf(name, "Worker Thread #%u Pending Request", pdata->worker_index);
   nfs_param.worker_param.lru_param.name = Str_Dup(name);
 
   if((pdata->pending_request =
@@ -1291,7 +1289,7 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
       return -1;
     }
 
-  sprintf(name, "Worker %d Duplicate Request", pdata->index);
+  sprintf(name, "Worker Thread #%u Duplicate Request", pdata->worker_index);
   nfs_param.worker_param.lru_dupreq.name = Str_Dup(name);
 
   if((pdata->duplicate_request =
@@ -1311,6 +1309,101 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   return 0;
 }                               /* nfs_Init_worker_data */
 
+void DispatchWork(nfs_request_data_t *pnfsreq, unsigned int worker_index)
+{
+  LRU_entry_t *pentry = NULL;
+  LRU_status_t status;
+
+  LogFullDebug(COMPONENT_DISPATCH,
+               "Awaking Worker Thread #%u", worker_index);
+
+  P(workers_data[worker_index].mutex_req_condvar);
+  P(workers_data[worker_index].request_pool_mutex);
+
+  pentry = LRU_new_entry(workers_data[worker_index].pending_request, &status);
+
+  if(pentry == NULL)
+    {
+      V(workers_data[worker_index].mutex_req_condvar);
+      V(workers_data[worker_index].request_pool_mutex);
+      LogMajor(COMPONENT_DISPATCH,
+               "Error while inserting pending request to Worker Thread #%u... Exiting",
+               worker_index);
+      exit(1);
+    }
+
+  pentry->buffdata.pdata = (caddr_t) pnfsreq;
+  pentry->buffdata.len = sizeof(*pnfsreq);
+
+  if(pthread_cond_signal(&(workers_data[worker_index].req_condvar)) == -1)
+    {
+      V(workers_data[worker_index].mutex_req_condvar);
+      V(workers_data[worker_index].request_pool_mutex);
+      LogMajor(COMPONENT_DISPATCH,
+               "Error %d (%s) while signalling Worker Thread #%u... Exiting",
+               errno, strerror(errno), worker_index);
+      exit(1);
+    }
+  V(workers_data[worker_index].mutex_req_condvar);
+  V(workers_data[worker_index].request_pool_mutex);
+}
+
+enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
+                                   bool_t *no_dispatch)
+{
+  struct rpc_msg *pmsg;
+  struct svc_req *preq;
+  SVCXPRT *xprt;
+  enum auth_stat why;
+
+  *no_dispatch = FALSE;
+
+  /* Set pointers */
+  pmsg = &(pnfsreq->msg);
+  preq = &(pnfsreq->req);
+  xprt = pnfsreq->xprt;
+
+  preq->rq_xprt = pnfsreq->xprt;
+  preq->rq_prog = pmsg->rm_call.cb_prog;
+  preq->rq_vers = pmsg->rm_call.cb_vers;
+  preq->rq_proc = pmsg->rm_call.cb_proc;
+  LogFullDebug(COMPONENT_DISPATCH,
+               "About to authenticate Prog = %d, vers = %d, proc = %d xprt=%p",
+               (int)preq->rq_prog, (int)preq->rq_vers,
+               (int)preq->rq_proc, preq->rq_xprt);
+  /* Restore previously save GssData */
+#ifdef _HAVE_GSSAPI
+  if((why = Rpcsecgss__authenticate(preq, pmsg, no_dispatch)) != AUTH_OK)
+#else
+  if((why = _authenticate(preq, pmsg)) != AUTH_OK)
+#endif
+    {
+      char auth_str[AUTH_STR_LEN];
+      auth_stat2str(why, auth_str);
+      LogInfo(COMPONENT_DISPATCH,
+              "Could not authenticate request... rejecting with AUTH_STAT=%s",
+              auth_str);
+      svcerr_auth(xprt, why);
+      return why;
+    }
+  else
+    {
+#ifdef _HAVE_GSSAPI
+      struct rpc_gss_cred *gc;
+
+      if(preq->rq_xprt->xp_verf.oa_flavor == RPCSEC_GSS)
+        {
+          gc = (struct rpc_gss_cred *)preq->rq_clntcred;
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "========> no_dispatch=%d gc->gc_proc=%u RPCSEC_GSS_INIT=%u RPCSEC_GSS_CONTINUE_INIT=%u RPCSEC_GSS_DATA=%u RPCSEC_GSS_DESTROY=%u",
+                       *no_dispatch, gc->gc_proc, RPCSEC_GSS_INIT,
+                       RPCSEC_GSS_CONTINUE_INIT, RPCSEC_GSS_DATA,
+                       RPCSEC_GSS_DESTROY);
+        }
+#endif
+    }             /* else from if( ( why = _authenticate( preq, pmsg) ) != AUTH_OK) */
+}
+
 /**
  * worker_thread: The main function for a worker thread
  *
@@ -1328,85 +1421,70 @@ void *worker_thread(void *IndexArg)
   nfs_worker_data_t *pmydata;
   nfs_request_data_t *pnfsreq;
   LRU_entry_t *pentry;
-  char *cred_area;
-  struct rpc_msg *pmsg;
   struct svc_req *preq;
-  SVCXPRT *xprt;
-  enum auth_stat why;
-  long index;
+  unsigned long worker_index;
   bool_t found = FALSE;
   int rc = 0;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   unsigned int gc_allowed = FALSE;
-  char thr_name[128];
-  char auth_str[AUTH_STR_LEN];
+  char thr_name[16];
   bool_t no_dispatch = FALSE;
 
-  index = (long)IndexArg;
-  pmydata = &(workers_data[index]);
+  worker_index = (unsigned long)IndexArg;
+  pmydata = &(workers_data[worker_index]);
 
-  snprintf(thr_name, 128, "worker#%ld", index);
+  snprintf(thr_name, sizeof(thr_name), "Worker Thread #%lu", worker_index);
   SetNameFunction(thr_name);
 
   LogFullDebug(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu : Starting, nb_entry=%d",
-               index, pmydata->pending_request->nb_entry);
+               "Starting, nb_entry=%d",
+               pmydata->pending_request->nb_entry);
   /* Initialisation of the Buddy Malloc */
-  LogFullDebug(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu : Initialization of memory manager", index);
-
 #ifndef _NO_BUDDY_SYSTEM
   if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
     {
       /* Failed init */
       LogMajor(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: Memory manager could not be initialized, exiting...",
-               index);
+               "Memory manager could not be initialized, exiting...");
       exit(1);
     }
   LogFullDebug(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: Memory manager successfully initialized",
-               index);
+               "Memory manager successfully initialized");
 #endif
 
-  LogDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: my pthread id is %p",
-           index, (caddr_t) pthread_self());
+  LogDebug(COMPONENT_DISPATCH, "my pthread id is %p",
+           (caddr_t) pthread_self());
 
   /* Initialisation of credential for current thread */
   LogFullDebug(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: Initialization of thread's credential",
-               index);
+               "Initialization of thread's credential");
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&pmydata->thread_fsal_context)))
     {
       /* Failed init */
       LogMajor(COMPONENT_DISPATCH,
-               "NFS  WORKER #%lu: Error initializing thread's credential",
-               index);
+               "Error initializing thread's credential");
       exit(1);
     }
 
   /* Init the Cache inode client for this worker */
   if(cache_inode_client_init(&pmydata->cache_inode_client,
                              nfs_param.cache_layers_param.cache_inode_client_param,
-                             index, pmydata))
+                             worker_index, pmydata))
     {
       /* Failed init */
       LogMajor(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: Cache Inode client could not be initialized, exiting...",
-               index);
+               "Cache Inode client could not be initialized, exiting...");
       exit(1);
     }
   LogFullDebug(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: Cache Inode client successfully initialized",
-               index);
+               "Cache Inode client successfully initialized");
 
 #ifdef _USE_MFSL
   if(FSAL_IS_ERROR(MFSL_GetContext(&pmydata->cache_inode_client.mfsl_context,
                                    &pmydata->thread_fsal_context)))
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH,
-               "NFS  WORKER #%lu: Error initing MFSL", index);
+      LogMajor(COMPONENT_DISPATCH, "Error initing MFSL");
       exit(1);
     }
 #endif
@@ -1418,13 +1496,11 @@ void *worker_thread(void *IndexArg)
     {
       /* Failed init */
       LogMajor(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: Cache Content client could not be initialized, exiting...",
-               index);
+               "Cache Content client could not be initialized, exiting...");
       exit(1);
     }
   LogFullDebug(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: Cache Content client successfully initialized",
-               index);
+               "Cache Content client successfully initialized");
 
   /* _USE_PNFS */
 
@@ -1440,19 +1516,17 @@ void *worker_thread(void *IndexArg)
     {
       /* Failed init */
       LogMajor(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: pNFS engine could not be initialized, exiting...",
-               index);
+               "pNFS engine could not be initialized, exiting...");
       exit(1);
     }
   LogFullDebug(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: pNFS engine successfully initialized", index);
+               "pNFS engine successfully initialized");
 #endif
 
   /* notify dispatcher it is ready */
   pmydata->is_ready = TRUE;
 
-  LogInfo(COMPONENT_DISPATCH, "NFS WORKER #%lu successfully initialized",
-          index);
+  LogInfo(COMPONENT_DISPATCH, "Worker successfully initialized");
 
   /* Worker's infinite loop */
   while(1)
@@ -1476,9 +1550,10 @@ void *worker_thread(void *IndexArg)
 
       /* Wait on condition variable for work to be done */
       LogFullDebug(COMPONENT_DISPATCH,
-                   "NFS WORKER #%lu: waiting for requests to process, nb_entry=%d, nb_invalid=%d",
-                   index, pmydata->pending_request->nb_entry,
+                   "waiting for requests to process, nb_entry=%d, nb_invalid=%d",
+                   pmydata->pending_request->nb_entry,
                    pmydata->pending_request->nb_invalid);
+
       P(pmydata->mutex_req_condvar);
       while(pmydata->pending_request->nb_entry == pmydata->pending_request->nb_invalid
             || pmydata->reparse_exports_in_progress == TRUE)
@@ -1497,7 +1572,7 @@ void *worker_thread(void *IndexArg)
             pthread_cond_wait(&(pmydata->req_condvar), &(pmydata->mutex_req_condvar));
         }
       LogFullDebug(COMPONENT_DISPATCH,
-                   "NFS WORKER #%lu: Processing a new request", index);
+                   "Processing a new request");
       V(pmydata->mutex_req_condvar);
 
       found = FALSE;
@@ -1517,100 +1592,58 @@ void *worker_thread(void *IndexArg)
       if(!found)
         {
           LogMajor(COMPONENT_DISPATCH,
-                   "NFS WORKER #%lu : No pending request available",
-                   index);
+                   "No pending request available");
           continue;             /* return to main loop */
         }
 
       pnfsreq = (nfs_request_data_t *) (pentry->buffdata.pdata);
 
       LogFullDebug(COMPONENT_DISPATCH,
-                   "NFS WORKER #%lu : I have some work to do, length=%d, invalid=%d",
-                   index, pmydata->pending_request->nb_entry,
+                   "I have some work to do, length=%d, invalid=%d",
+                   pmydata->pending_request->nb_entry,
                    pmydata->pending_request->nb_invalid);
 
       if(pnfsreq->xprt->XP_SOCK == 0)
       {
         LogFullDebug(COMPONENT_DISPATCH,
-                     "NFS WORKER #%lu:No RPC management, xp_sock==0",
-                     index);
+                     "No RPC management, xp_sock==0");
       }
       else
         {
           /* Set pointers */
-          cred_area = pnfsreq->cred_area;
-          pmsg = &(pnfsreq->msg);
           preq = &(pnfsreq->req);
-          xprt = pnfsreq->xprt;
 
-          /*do */
-          {
-            if(pnfsreq->status)
-              {
-                preq->rq_xprt = pnfsreq->xprt;
-                preq->rq_prog = pmsg->rm_call.cb_prog;
-                preq->rq_vers = pmsg->rm_call.cb_vers;
-                preq->rq_proc = pmsg->rm_call.cb_proc;
-                LogFullDebug(COMPONENT_DISPATCH,
-                             "Prog = %d, vers = %d, proc = %d xprt=%p",
-                             (int)pmsg->rm_call.cb_prog, (int)pmsg->rm_call.cb_vers,
-                             (int)pmsg->rm_call.cb_proc, preq->rq_xprt);
-                /* Restore previously save GssData */
-#ifdef _HAVE_GSSAPI
-                no_dispatch = FALSE;
-                if((why = Rpcsecgss__authenticate(preq, pmsg, &no_dispatch)) != AUTH_OK)
-#else
-                if((why = _authenticate(preq, pmsg)) != AUTH_OK)
-#endif
-                  {
-                    auth_stat2str(why, auth_str);
-                    LogInfo(COMPONENT_DISPATCH,
-                            "Could not authenticate request... rejecting with AUTH_STAT=%s",
-                            auth_str);
-                    svcerr_auth(xprt, why);
-                  }
-                else
-                  {
-#ifdef _HAVE_GSSAPI
-                    struct rpc_gss_cred *gc;
+          if(pnfsreq->status)
+            {
+              if(AuthenticateRequest(pnfsreq, &no_dispatch) == AUTH_OK && !no_dispatch)
+                {
+                  /* A few words of explanation are required here:
+                   * In authentication is AUTH_NONE or AUTH_UNIX, then the value of no_dispatch remains FALSE and the request is proceeded normally
+                   * If authentication is RPCSEC_GSS, no_dispatch may have value TRUE, this means that gc->gc_proc != RPCSEC_GSS_DATA and that the
+                   * message is in fact an internal negociation message from RPCSEC_GSS using GSSAPI. It then should not be proceed by the worker and
+                   * SCV_STAT should be returned to the dispatcher */
 
-                    if(preq->rq_xprt->xp_verf.oa_flavor == RPCSEC_GSS)
-                      {
-                        gc = (struct rpc_gss_cred *)preq->rq_clntcred;
-                        LogFullDebug(COMPONENT_DISPATCH,
-                                     "========> no_dispatch=%u gc->gc_proc=%u RPCSEC_GSS_INIT=%u RPCSEC_GSS_CONTINUE_INIT=%u RPCSEC_GSS_DATA=%u RPCSEC_GSS_DESTROY=%u",
-                                     no_dispatch, gc->gc_proc, RPCSEC_GSS_INIT,
-                                     RPCSEC_GSS_CONTINUE_INIT, RPCSEC_GSS_DATA,
-                                     RPCSEC_GSS_DESTROY);
-                      }
-#endif
-                    /* A few words of explanation are required here:
-                     * In authentication is AUTH_NONE or AUTH_UNIX, then the value of no_dispatch remains FALSE and the request is proceeded normally
-                     * If authentication is RPCSEC_GSS, no_dispatch may have value TRUE, this means that gc->gc_proc != RPCSEC_GSS_DATA and that the
-                     * message is in fact an internal negociation message from RPCSEC_GSS using GSSAPI. It then should not be proceed by the worker and
-                     * SCV_STAT should be returned to the dispatcher */
-                    if(no_dispatch == FALSE)
-                      {
-                        /* Validate the rpc request as being a valid program, version, and proc. If not, report the error.
-                         * Otherwise, execute the funtion. */
-                        if(is_rpc_call_valid(xprt, preq) == TRUE)
-                          nfs_rpc_execute(pnfsreq, pmydata);
-                      }         /* if( no_dispatch == FALSE ) */
-                  }             /* else from if( ( why = _authenticate( preq, pmsg) ) != AUTH_OK) */
-              }                 /* if( pnfsreq->status ) */
-          }                     /* while (  pnfsreq->status == XPRT_MOREREQS ); Now handle at the dispatcher's level */
-
+                      /* Validate the rpc request as being a valid program, version, and proc. If not, report the error.
+                       * Otherwise, execute the funtion. */
+                      LogFullDebug(COMPONENT_DISPATCH,
+                                   "About to execute Prog = %d, vers = %d, proc = %d xprt=%p",
+                                   (int)preq->rq_prog, (int)preq->rq_vers,
+                                   (int)preq->rq_proc, preq->rq_xprt);
+                      if(is_rpc_call_valid(preq->rq_xprt, preq) == TRUE)
+                        nfs_rpc_execute(pnfsreq, pmydata);
+                }
+            }
         }
 
       /* Free the req by releasing the entry */
       LogFullDebug(COMPONENT_DISPATCH,
-                   "NFS DISPATCH: Invalidating processed entry with xprt_stat=%d",
+                   "Invalidating processed entry with xprt_stat=%d",
                    pnfsreq->status);
       P(pmydata->request_pool_mutex);
       if(LRU_invalidate(pmydata->pending_request, pentry) != LRU_LIST_SUCCESS)
         {
           LogCrit(COMPONENT_DISPATCH,
-                  "NFS DISPATCH: Incoherency: released entry for dispatch could not be tagged invalid");
+                  "Incoherency: released entry for dispatch could not be tagged invalid");
         }
       V(pmydata->request_pool_mutex);
 
@@ -1618,8 +1651,8 @@ void *worker_thread(void *IndexArg)
         {
           /* Garbage collection on dup req cache */
           LogFullDebug(COMPONENT_DISPATCH,
-                       "NFS_WORKER #%lu: before dupreq invalidation nb_entry=%d nb_invalid=%d",
-                       index, pmydata->duplicate_request->nb_entry,
+                       "before dupreq invalidation nb_entry=%d nb_invalid=%d",
+                       pmydata->duplicate_request->nb_entry,
                        pmydata->duplicate_request->nb_invalid);
           if((rc =
               LRU_invalidate_by_function(pmydata->duplicate_request,
@@ -1627,33 +1660,31 @@ void *worker_thread(void *IndexArg)
                                          NULL)) != LRU_LIST_SUCCESS)
             {
               LogCrit(COMPONENT_DISPATCH,
-                      "NFS WORKER #%lu: FAILURE: Impossible to invalidate entries for duplicate request cache (error %d)",
-                      index, rc);
+                      "FAILURE: Impossible to invalidate entries for duplicate request cache (error %d)",
+                      rc);
             }
           LogFullDebug(COMPONENT_DISPATCH,
-                       "NFS_WORKER #%lu: after dupreq invalidation nb_entry=%d nb_invalid=%d",
-                       index, pmydata->duplicate_request->nb_entry,
+                       "after dupreq invalidation nb_entry=%d nb_invalid=%d",
+                       pmydata->duplicate_request->nb_entry,
                        pmydata->duplicate_request->nb_invalid);
           if((rc =
               LRU_gc_invalid(pmydata->duplicate_request,
                              (void *)&pmydata->dupreq_pool)) != LRU_LIST_SUCCESS)
             LogCrit(COMPONENT_DISPATCH,
-                    "NFS WORKER #%lu: FAILURE: Impossible to gc entries for duplicate request cache (error %d)",
-                    index, rc);
+                    "FAILURE: Impossible to gc entries for duplicate request cache (error %d)",
+                    rc);
           else
             LogFullDebug(COMPONENT_DISPATCH,
-                         "NFS WORKER #%lu: gc entries for duplicate request cache OK",
-                         index);
+                         "gc entries for duplicate request cache OK");
 
           LogFullDebug(COMPONENT_DISPATCH,
-                       "NFS_WORKER #%lu: after dupreq gc nb_entry=%d nb_invalid=%d",
-                       index, pmydata->duplicate_request->nb_entry,
+                       "after dupreq gc nb_entry=%d nb_invalid=%d",
+                       pmydata->duplicate_request->nb_entry,
                        pmydata->duplicate_request->nb_invalid);
 
           /* Performing garbabbge collection */
           LogFullDebug(COMPONENT_DISPATCH,
-                       "NFS WORKER #%lu: garbage collecting on pending request list",
-                       index);
+                       "Garbage collecting on pending request list");
           pmydata->passcounter = 0;
 
           P(pmydata->request_pool_mutex);
@@ -1661,20 +1692,18 @@ void *worker_thread(void *IndexArg)
           if(LRU_gc_invalid(pmydata->pending_request, (void *)&pmydata->request_pool) !=
              LRU_LIST_SUCCESS)
             LogCrit(COMPONENT_DISPATCH,
-                    "NFS WORKER #%lu: ERROR: Impossible garbage collection on pending request list",
-                    index);
+                    "ERROR: Impossible garbage collection on pending request list");
           else
             LogFullDebug(COMPONENT_DISPATCH,
-                         "NFS WORKER #%lu: garbage collection on pending request list OK",
-                         index);
+                         "Garbage collection on pending request list OK");
 
           V(pmydata->request_pool_mutex);
 
         }
       else
         LogFullDebug(COMPONENT_DISPATCH,
-                     "NFS WORKER #%lu: garbage collection isn't necessary count=%d, max=%d",
-                     index, pmydata->passcounter, nfs_param.worker_param.nb_before_gc);
+                     "garbage collection isn't necessary count=%d, max=%d",
+                     pmydata->passcounter, nfs_param.worker_param.nb_before_gc);
       pmydata->passcounter += 1;
 
       if(pnfsreq->ipproto == IPPROTO_UDP)
@@ -1723,8 +1752,7 @@ void *worker_thread(void *IndexArg)
       if(FSAL_IS_ERROR(fsal_status))
         {
           /* Failed init */
-          LogMajor(COMPONENT_DISPATCH,
-                   "NFS  WORKER #%lu: Error regreshing MFSL context", index);
+          LogMajor(COMPONENT_DISPATCH, "Error regreshing MFSL context");
           exit(1);
         }
 

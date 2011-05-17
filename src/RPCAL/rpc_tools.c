@@ -56,7 +56,7 @@
 #include <pwd.h>
 #include <grp.h>
 
-#include "rpc.h"
+#include "rpcal.h"
 #include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -70,6 +70,11 @@
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 #include "nfs_dupreq.h"
+
+pthread_mutex_t *mutex_cond_xprt;
+pthread_cond_t *condvar_xprt;
+SVCXPRT **Xports;
+fd_set Svc_fdset;
 
 const char *str_sock_type(int st)
 {
@@ -465,4 +470,28 @@ Clnt_destroy(CLIENT *clnt)
   pthread_mutex_lock(&clnt_create_mutex);
   clnt_destroy(clnt);
   pthread_mutex_unlock(&clnt_create_mutex);
+}
+
+void InitRPC(int num_sock)
+{
+  /* Allocate resources that are based on the maximum number of open file descriptors */
+  Xports = (SVCXPRT **) Mem_Alloc_Label(num_sock * sizeof(SVCXPRT *), "Xports array");
+  if(Xports == NULL)
+    {
+      LogMajor(COMPONENT_RPC,
+               "Xports array allocation failed... Exiting");
+      exit(1);
+    }
+  memset(Xports, 0, num_sock * sizeof(SVCXPRT *));
+  mutex_cond_xprt = (pthread_mutex_t *) Mem_Alloc_Label(num_sock * sizeof(pthread_mutex_t ), "mutex_cond_xprt array");
+  memset(mutex_cond_xprt, 0, num_sock * sizeof(pthread_mutex_t ));
+  condvar_xprt = (pthread_cond_t *) Mem_Alloc_Label(num_sock * sizeof(pthread_cond_t ), "condvar_xprt array");
+  memset(condvar_xprt, 0, num_sock * sizeof(pthread_cond_t ));
+
+  FD_ZERO(&Svc_fdset);
+
+#ifdef _USE_TIRPC
+  /* RW_lock need to be initialized */
+  rw_lock_init(&Svc_fd_lock);
+#endif
 }

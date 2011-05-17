@@ -8,7 +8,7 @@
 #include <stdlib.h>  
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "rpc.h"
+#include "rpcal.h"
 
 int DisplayLogComponentLevel(log_components_t component,
                              int level,

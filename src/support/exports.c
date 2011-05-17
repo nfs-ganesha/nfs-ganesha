@@ -70,8 +70,6 @@
 #include <string.h>
 #include <ctype.h>
 
-extern nfs_parameter_t nfs_param;
-
 /* Structures to manage a client to cache inode located in the 'main' thread
  * this cache_inode_client will be used to handle the root of each entry (created when reading export file) */
 cache_inode_client_t small_client;

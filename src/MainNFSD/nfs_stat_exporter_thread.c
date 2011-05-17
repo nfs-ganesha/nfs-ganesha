@@ -64,8 +64,6 @@
 #include "fsal.h"
 #include "rpc.h"
 
-extern nfs_parameter_t nfs_param;
-
 #define DEFAULT_PORT "10401"
 
 #define BACKLOG 10
@@ -76,8 +74,6 @@ extern nfs_parameter_t nfs_param;
 /* Make sure this is <= the same macro in support/exports.c */
 #define EXPORT_MAX_CLIENTS 20
 #define EXPORT_MAX_CLIENTLEN 256        /* client name len */
-
-extern nfs_parameter_t nfs_param;
 
 int stat_export_check_access(struct sockaddr_storage *pssaddr,
                              exportlist_client_t *clients,

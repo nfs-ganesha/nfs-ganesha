@@ -52,8 +52,6 @@
 #include "rquota.h"
 #include "nfs_proto_functions.h"
 
-extern nfs_parameter_t nfs_param;
-
 /**
  * rquota_setquota: The Rquota setquota function, for all versions.
  *

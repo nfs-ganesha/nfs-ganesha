@@ -132,10 +132,15 @@ typedef unsigned long u_long;
 #define SIZE_STR_NFSHANDLE2 (2 * NFS2_FHSIZE + 1)
 #define SIZE_STR_NFSHANDLE3 (2 * NFS3_FHSIZE + 1)
 
-/* unsolved symbol */
+/* unsolved symbols */
 int get_rpc_xid()
 {
   return 0;
+}
+
+void *rpc_tcp_socket_manager_thread(void *Arg)
+{
+  return NULL;
 }
 
 /* encoding/decoding function definitions */

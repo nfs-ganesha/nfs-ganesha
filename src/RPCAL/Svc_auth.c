@@ -42,7 +42,7 @@
 #include "solaris_port.h"
 #endif
 
-#include "rpc.h"
+#include "rpcal.h"
 
 /*
  * Server side authenticators are called from authenticate by

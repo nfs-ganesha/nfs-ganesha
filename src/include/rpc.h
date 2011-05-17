@@ -21,7 +21,6 @@
 
 #ifdef _USE_TIRPC
 #include <rpc/svc_dg.h>
-#include "RW_Lock.h"
 #ifdef _HAVE_GSSAPI
 #include <rpc/auth_gss.h>
 #include <rpc/svc_auth.h>
@@ -52,16 +51,14 @@ typedef struct sockaddr_in sockaddr_t;
 #define AUTH_SYS 1
 #endif
 
+extern void InitRPC(int num_sock);
+
 #ifdef _USE_TIRPC
 extern void Svc_dg_soft_destroy(SVCXPRT * xport);
 extern struct netconfig *getnetconfigent(const char *netid);
 extern void freenetconfigent(struct netconfig *);
 extern SVCXPRT *Svc_vc_create(int, u_int, u_int);
 extern SVCXPRT *Svc_dg_create(int, u_int, u_int);
-extern int Xprt_register(SVCXPRT * xprt);
-extern void Xprt_unregister(SVCXPRT * xprt);
-
-extern void FreeXprt(SVCXPRT *xprt);
 
 #ifdef _DEBUG_MEMLEAKS
 extern int CheckXprt(SVCXPRT *xprt);
@@ -145,12 +142,6 @@ enum auth_stat Rpcsecgss__authenticate(register struct svc_req *rqst,
                                        bool_t * no_dispatch);
 #endif
 
-#ifdef _USE_TIRPC
-/* public data : */
-extern rw_lock_t Svc_lock;
-extern rw_lock_t Svc_fd_lock;
-#endif
-
 extern fd_set Svc_fdset;
 
 /* Declare the various RPC transport dynamic arrays */
@@ -196,11 +187,11 @@ extern int get_port(sockaddr_t *addr);
 /* Returns an EAI value, accepts only numeric strings */
 extern int ipstring_to_sockaddr(const char *str, sockaddr_t *addr);
 
-CLIENT *Clnt_create(char *host,
-                    unsigned long prog,
-                    unsigned long vers,
-                    char *proto);
+extern CLIENT *Clnt_create(char *host,
+                           unsigned long prog,
+                           unsigned long vers,
+                           char *proto);
 
-Clnt_destroy(CLIENT *clnt);
+extern void Clnt_destroy(CLIENT *clnt);
 
 #endif
