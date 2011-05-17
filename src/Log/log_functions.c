@@ -982,7 +982,7 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
         case 'Z':
         case 't':
         case 'j':
-#          if __WORDSIZE == 64
+#          if SIZEOF_LONG == 8
           typelg = LONG_LG;
 #          else
           typelg = LONG_LONG_LG;
