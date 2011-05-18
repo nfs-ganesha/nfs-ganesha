@@ -89,10 +89,12 @@ typedef struct gss_union_ctx_id_t
 
 #ifdef _USE_TIRPC
 static bool_t Svcauth_gss_destroy();
+static bool_t Svcauth_gss_destroy_copy();
 static bool_t Svcauth_gss_wrap();
 static bool_t Svcauth_gss_unwrap();
 #else
 static bool_t Svcauth_gss_destroy(SVCAUTH *);
+static bool_t Svcauth_gss_destroy_copy(SVCAUTH *);
 static bool_t Svcauth_gss_wrap(SVCAUTH *, XDR *, xdrproc_t, caddr_t);
 static bool_t Svcauth_gss_unwrap(SVCAUTH *, XDR *, xdrproc_t, caddr_t);
 #endif
@@ -103,6 +105,12 @@ struct svc_auth_ops Svc_auth_gss_ops = {
   Svcauth_gss_wrap,
   Svcauth_gss_unwrap,
   Svcauth_gss_destroy
+};
+
+struct svc_auth_ops Svc_auth_gss_copy_ops = {
+  Svcauth_gss_wrap,
+  Svcauth_gss_unwrap,
+  Svcauth_gss_destroy_copy
 };
 
 /** @todo: BUGAZOMEU: To be put in a cleaner header file later */
@@ -695,6 +703,17 @@ static bool_t Svcauth_gss_destroy(SVCAUTH * auth)
   return (TRUE);
 }
 
+static bool_t Svcauth_gss_destroy_copy(SVCAUTH * auth)
+{
+  /* svc_ah_private aka gd points to the same gd as the original, so no need
+   * to free or destroy.
+   * Just free the auth structure (pointer to ops and pointer to gd).
+   */
+  Mem_Free(auth);
+
+  return (TRUE);
+}
+
 static bool_t
 Svcauth_gss_wrap(SVCAUTH * auth, XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr)
 {
@@ -729,9 +748,15 @@ int copy_svc_authgss(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
 {
   if(xprt_orig->xp_auth)
     {
-      if(xprt_orig->xp_auth->svc_ah_ops == &Svc_auth_gss_ops)
+      if(xprt_orig->xp_auth->svc_ah_ops == &Svc_auth_gss_ops ||
+         xprt_orig->xp_auth->svc_ah_ops == &Svc_auth_gss_copy_ops)
         {
           /* Copy GSS auth */
+          xprt_copy->xp_auth = Mem_Alloc(sizeof(SVCAUTH));
+          if(xprt_copy->xp_auth == NULL)
+            return 0;
+          xprt_copy->xp_auth->svc_ah_private = xprt_orig->xp_auth->svc_ah_private;
+          xprt_copy->xp_auth->svc_ah_ops = &Svc_auth_gss_copy_ops;
         }
       else
         {
