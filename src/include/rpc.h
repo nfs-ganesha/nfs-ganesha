@@ -131,7 +131,7 @@ typedef struct nfs_krb5_param__
 } nfs_krb5_parameter_t;
 
 #define SVCAUTH_PRIVATE(auth) \
-        (*(struct svc_rpc_gss_data **)&(auth)->svc_ah_private)
+  ((struct svc_rpc_gss_data *)(auth)->svc_ah_private)
 
 bool_t Svcauth_gss_import_name(char *service);
 bool_t Svcauth_gss_acquire_cred(void);

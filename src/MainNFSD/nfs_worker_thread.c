@@ -87,7 +87,7 @@ const nfs_function_desc_t invalid_funcdesc =
   {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void, "invalid_function",
    NOTHING_SPECIAL};
 
-const nfs_function_desc_t *INVALID_FUNCDESC = &invalid_funcdesc;
+  const nfs_function_desc_t *INVALID_FUNCDESC = &invalid_funcdesc;
 
 /* Static array : all the function pointer per nfs v2 functions */
 const nfs_function_desc_t nfs2_func_desc[] = {
@@ -1402,6 +1402,7 @@ enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
         }
 #endif
     }             /* else from if( ( why = _authenticate( preq, pmsg) ) != AUTH_OK) */
+  return AUTH_OK;
 }
 
 /**
