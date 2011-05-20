@@ -668,7 +668,8 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       if(!Svcauth_gss_release_cred())
         ret_freegc(AUTH_FAILED);
 
-      SVCAUTH_DESTROY(rqst->rq_xprt->xp_auth);
+      if(rqst->rq_xprt->xp_auth)
+        SVCAUTH_DESTROY(rqst->rq_xprt->xp_auth);
       rqst->rq_xprt->xp_auth = &Svc_auth_none;
 
       break;
