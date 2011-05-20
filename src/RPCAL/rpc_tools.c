@@ -465,7 +465,7 @@ CLIENT *Clnt_create(char *host,
   return clnt;
 }
 
-Clnt_destroy(CLIENT *clnt)
+void Clnt_destroy(CLIENT *clnt)
 {
   pthread_mutex_lock(&clnt_create_mutex);
   clnt_destroy(clnt);

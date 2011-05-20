@@ -192,6 +192,6 @@ extern CLIENT *Clnt_create(char *host,
                            unsigned long vers,
                            char *proto);
 
-extern void Clnt_destroy(CLIENT *clnt);
+void Clnt_destroy(CLIENT *clnt);
 
 #endif
