@@ -115,8 +115,6 @@ struct svc_auth_ops Svc_auth_gss_copy_ops = {
 
 /** @todo: BUGAZOMEU: To be put in a cleaner header file later */
 int Gss_ctx_Hash_Set(gss_union_ctx_id_desc * pgss_ctx, struct svc_rpc_gss_data *gd);
-int Gss_ctx_Hash_Get(gss_union_ctx_id_desc * pgss_ctx, struct svc_rpc_gss_data *gd);
-int Gss_ctx_Hash_Init(nfs_krb5_parameter_t param);
 int Gss_ctx_Hash_Del(gss_union_ctx_id_desc * pgss_ctx);
 void Gss_ctx_Hash_Print(void);
 int Gss_ctx_Hash_Get_Pointer(gss_union_ctx_id_desc * pgss_ctx,
@@ -565,6 +563,8 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       rqst->rq_clntname = (char *)gd->client_name;
 #ifndef _USE_TIRPC
       rqst->rq_svccred = (char *)gd->ctx;
+#else
+      rqst->rq_svcname = (char *)gd->ctx;
 #endif
     }
 
