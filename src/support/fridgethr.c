@@ -158,10 +158,11 @@ fridge_entry_t * fridgethr_freeze( )
        rc = pthread_cond_timedwait( &pfe->condvar, &pfe->condmutex, &timeout ) ;
     else
        rc = pthread_cond_wait( &pfe->condvar, &pfe->condmutex ) ;
-  V( pfe->condmutex ) ;
 
   if( rc == ETIMEDOUT )
     fridgethr_remove( pfe );  
+
+  V( pfe->condmutex ) ;
 
   return (rc == 0 )?pfe:NULL ; 
 } /* fridgethr_freeze */
