@@ -51,13 +51,13 @@
 
 /**
  *
- * pnfs_lustre_layoutcommit: fills in and encodes the loc_body_val structure in LAYOUTCOMMIT.
+ * pnfs_lustre_layoutcommit: manages the OP4_LAYOUTCOMMIT operation for pNFS/File on top of LUSTRE
  *
- * Encodes the loc_body_val structure in layoutcommit.
+ * Manages the OP4_LAYOUTCOMMIT operation for pNFS/File on top of LUSTRE
  *
- * @param pds_file [IN]  structure representing file's part on the DS.
- * @param buff     [OUT] buffer in which XDR encoding will be made
- * @param plen     [OUT] pointerlength of buffer
+ * @param playoutcommitargs [IN]  pointer to layoutcommit's arguments
+ * @param data              [INOUT]  pointer to related compoud request
+ * @param playoutcommitres  [OUT] pointer to layoutcommit's results
  *
  * @return  NFSv4 status (with NFSv4 error code)
  *
@@ -68,7 +68,7 @@ nfsstat4 pnfs_lustre_layoutcommit( LAYOUTCOMMIT4args  * playoutcommitargs,
 				   LAYOUTCOMMIT4res   * playoutcommitres )
 {
   
-   /* For the moment, returns no new size */
+  /* For the moment, returns no new size */
   playoutcommitres->LAYOUTCOMMIT4res_u.locr_resok4.locr_newsize.ns_sizechanged = TRUE;
   playoutcommitres->LAYOUTCOMMIT4res_u.locr_resok4.locr_newsize.newsize4_u.ns_size =playoutcommitargs->loca_length ;
 

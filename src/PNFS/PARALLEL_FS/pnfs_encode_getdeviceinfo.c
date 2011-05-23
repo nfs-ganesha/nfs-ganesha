@@ -54,9 +54,10 @@
 #include "nfs_proto_functions.h"
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
+
 /**
  *
- * pnfs_ds_encode_getdeviceinfo: encodes the addr_body_val structure in GETDEVICEINFO.
+ * pnfs_lustre_getdeviceinfo: encodes the addr_body_val structure in GETDEVICEINFO.
  *
  * Encode the addr_body_val structure in GETDEVICEINFO.
  *

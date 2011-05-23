@@ -51,13 +51,13 @@
 
 /**
  *
- * pnfs_lustre_layoutreturn: fills in and encodes the loc_body_val structure in LAYOUTRETURN.
+ * pnfs_lustre_layoutreturn: manages the OP4_LAYOUTRETURN operation for pNFS/File on top of LUSTRE
  *
- * Encodes the loc_body_val structure in layoutreturn.
+ * Manages the OP4_LAYOUTRETURNT operation for pNFS/File on top of LUSTRE
  *
- * @param pds_file [IN]  structure representing file's part on the DS.
- * @param buff     [OUT] buffer in which XDR encoding will be made
- * @param plen     [OUT] pointerlength of buffer
+ * @param playoutreturnargs [IN]  pointer to layoutreturn's arguments
+ * @param data           [INOUT]  pointer to related compoud request
+ * @param playoutreturnres [OUT] pointer to layoutreturnt's results
  *
  * @return  NFSv4 status (with NFSv4 error code)
  *

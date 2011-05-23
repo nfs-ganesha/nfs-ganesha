@@ -51,13 +51,13 @@
 
 /**
  *
- * pnfs_lustre_layoutget: fills in and encodes the loc_body_val structure in LAYOUTGET.
+ * pnfs_lustre_layoutget: manages the OP4_LAYOUTGET operation for pNFS/File on top of LUSTRE
  *
- * Encodes the loc_body_val structure in layoutget.
+ * Manages the OP4_LAYOUTGETT operation for pNFS/File on top of LUSTRE
  *
- * @param pds_file [IN]  structure representing file's part on the DS.
- * @param buff     [OUT] buffer in which XDR encoding will be made
- * @param plen     [OUT] pointerlength of buffer
+ * @param playoutgetargs [IN]  pointer to layoutget's arguments
+ * @param data           [INOUT]  pointer to related compoud request
+ * @param playoutgetres [OUT] pointer to layoutgett's results
  *
  * @return  NFSv4 status (with NFSv4 error code)
  *
