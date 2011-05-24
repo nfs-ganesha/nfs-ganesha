@@ -122,9 +122,11 @@ nfsstat4 pnfs_service_layoutreturn( char * buffin, unsigned int * plenin, char *
 nfsstat4 pnfs_service_layoutget( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout)     ;
 
 nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args * pargs, 
+			    compound_data_t * data,
 			     GETDEVICELIST4res  * pres ) ;
 
 nfsstat4 pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs, 
+			     compound_data_t * data,
 			     GETDEVICEINFO4res  * pres ) ;
 
 nfsstat4 pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs, 

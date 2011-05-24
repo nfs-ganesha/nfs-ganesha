@@ -89,14 +89,14 @@ nfsstat4 pnfs_terminate()
 
 /* Forthcoming functions */
 
-nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args * pargs, GETDEVICELIST4res * pres ) 
+nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args * pargs,  compound_data_t * data, GETDEVICELIST4res * pres ) 
 {
-   return NFS4_OK ;
+   return pnfs_lustre_getdevicelist( pargs, data, pres ) ;
 }
 
-nfsstat4 pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs, GETDEVICEINFO4res * pres ) 
+nfsstat4 pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs, compound_data_t * data, GETDEVICEINFO4res * pres ) 
 {
-   return NFS4_OK ;
+   return pnfs_lustre_getdeviceinfo( pargs, data, pres ) ;
 }
 
 nfsstat4 pnfs_layoutget( LAYOUTGET4args * pargs, compound_data_t * data, LAYOUTGET4res * pres ) 
