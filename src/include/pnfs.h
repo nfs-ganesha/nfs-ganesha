@@ -115,12 +115,6 @@ typedef union pnfs_file__
 } pnfs_file_t;
 #endif
 
-nfsstat4 pnfs_service_getdevicelist( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout) ;
-nfsstat4 pnfs_service_getdeviceinfo( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout) ;
-nfsstat4 pnfs_service_layoutcommit( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout)  ;
-nfsstat4 pnfs_service_layoutreturn( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout)  ;
-nfsstat4 pnfs_service_layoutget( char * buffin, unsigned int * plenin, char *buffout, unsigned int *plenout)     ;
-
 nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args * pargs, 
 			    compound_data_t * data,
 			     GETDEVICELIST4res  * pres ) ;

@@ -48,97 +48,12 @@
 #include "nfs_proto_functions.h"
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
+#include "pnfs.h" 
+#include "pnfs_service.h" 
 
-/**
- *
- * pnfs_lustre_layoutget: manages the OP4_LAYOUTGET operation for pNFS/File on top of LUSTRE
- *
- * Manages the OP4_LAYOUTGETT operation for pNFS/File on top of LUSTRE
- *
- * @param playoutgetargs [IN]  pointer to layoutget's arguments
- * @param data           [INOUT]  pointer to related compoud request
- * @param playoutgetres [OUT] pointer to layoutgett's results
- *
- * @return  NFSv4 status (with NFSv4 error code)
- *
- */
-
-nfsstat4 pnfs_lustre_layoutget( char * buffin, unsigned int * plenin, char *buff, unsigned int *plen)
-{
-  unsigned int offset = 0;
-  uint32_t int32 = 0;
-  int64_t int64 = 0LL;
-  unsigned int padlen = 0;
-  char deviceid[NFS4_DEVICEID4_SIZE];
-  unsigned int i;
-
-  unsigned int stripe = 1 ;
-
-  /** @todo It should be better to use xdr_nfsv4_1_file_layout4 on a xdrmem stream */
-
-  /* nfl_deviceid */
-  memset(deviceid, 0, NFS4_DEVICEID4_SIZE);
-  deviceid[0] = 1 ; /** @todo : this part of the code is to be reviewed */
-  memcpy((char *)(buff + offset), deviceid, NFS4_DEVICEID4_SIZE);
-  offset += NFS4_DEVICEID4_SIZE;
-
-  /* nfl_util */
-  int32 = htonl(0x2000);
-  memcpy((char *)(buff + offset), (char *)&int32, sizeof(int32));
-  offset += sizeof(int32);
-
-  /* nfl_first_stripe_index */
-  int32 = 0;
-  memcpy((char *)(buff + offset), (char *)&int32, sizeof(int32));
-  offset += sizeof(int32);
-
-  /* nfl_pattern_offset */
-  int64 = 0LL;
-  memcpy((char *)(buff + offset), (char *)&int64, sizeof(int64));
-  offset += sizeof(int64);
-
-  /* nfl_fh_list.nfl_fh_list_len */
-  int32 = htonl( stripe );
-  memcpy((char *)(buff + offset), (char *)&int32, sizeof(int32));
-  offset += sizeof(int32);
-
-  for(i = 0; i < stripe; i++)
-    {
-      /* nfl_fh_list.nfl_fh_list_val[i].nfs_fh4_len */
-      int32 = htonl(*plenin);
-      memcpy((char *)(buff + offset), (char *)&int32, sizeof(int32));
-      offset += sizeof(int32);
-
-      /* nfl_fh_list.nfl_fh_list_val[i].nfs_fh4_len */
-      memcpy((char *)(buff + offset), buffin, *plenin ) ;
-
-      /* Turn the file handle to a 'DS file handle' */
-      //if(pds_file->filepart[i].is_ganesha == FALSE)
-      //  ((char *)(buff + offset))[2] = 9;
-
-      /* Update the offset for encoding */
-      offset += *plenin ;
-
-      /* XDR padding : keep stuff aligned on 32 bits pattern */
-      if( *plenin == 0)
-        padlen = 0;
-      else
-        padlen = 4 - ( *plenin % 4);
-
-      if(padlen > 0)
-        memset((char *)(buff + offset), 0, padlen);
-
-      offset += padlen;
-
-      *plen = offset;
-    }                           /* for */
-
-  return NFS4_OK ;
-}                               /* pnfs_lustre_layoutget */
-
-nfsstat4 __pnfs_lustre_layoutget( nfs_fh4         * pnfsfh4,
-				  LAYOUTGET4args  * playoutgetargs,
-				  LAYOUTGET4res   * playoutgetres )
+nfsstat4 pnfs_lustre_layoutget( LAYOUTGET4args  * playoutgetargs,
+				compound_data_t * data,
+				LAYOUTGET4res   * playoutgetres )
 {
  unsigned int offset = 0;
   uint32_t int32 = 0;
@@ -148,9 +63,12 @@ nfsstat4 __pnfs_lustre_layoutget( nfs_fh4         * pnfsfh4,
   unsigned int i;
   char * buff = NULL ; 
   unsigned int stripe = 1 ;
+  nfs_fh4 * pnfsfh4 ;
 
-  if( !pnfsfh4 || !playoutgetres )
+  if( !data || !playoutgetres )
     return NFS4ERR_SERVERFAULT ;
+
+  pnfsfh4 = &data->currentFH ; 
 
   if((buff = Mem_Alloc(1024)) == NULL)
     {

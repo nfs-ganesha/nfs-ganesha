@@ -44,40 +44,16 @@
 #include "nfs_proto_functions.h"
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
-
+#include "pnfs.h" 
+#include "pnfs_service.h" 
 
 #ifdef _USE_PNFS_SPNFS_LIKE
 #endif
 
 #ifdef _USE_PNFS_PARALLEL_FS
 
-nfsstat4 pnfs_service_getdevicelist( char * buffin, unsigned int * plenin, char * buff, unsigned int * plen ) 
-{
-   return NFS4_OK ;
-}
-
-nfsstat4 pnfs_service_getdeviceinfo( char * buffin, unsigned int * plenin, char *buff, unsigned int *plen)
-{
-   return pnfs_lustre_getdeviceinfo( buff, plen) ;
-}
-
-nfsstat4 pnfs_service_layoutget( char *buffin, unsigned int *plenin, char *buffout, unsigned int *plenout)
-{
-   return pnfs_lustre_layoutget(  buffin, plenin, buffout, plenout ) ;
-}
-
-nfsstat4 pnfs_service_layoutcommit( char * buffin, unsigned int * plenin, char * buff, unsigned int * plen ) 
-{
-   return NFS4_OK ;
-}
-
-nfsstat4 pnfs_service_layoutreturn( char * buffin, unsigned int * plenin, char * buff, unsigned int * plen ) 
-{
-   return NFS4_OK ;
-}
-
-nfsstat4 pnfs_nit(pnfs_client_t * pnfsclient,
-              pnfs_layoutfile_parameter_t * pnfs_layout_param)
+nfsstat4 pnfs_nit( pnfs_client_t               * pnfsclient,
+                   pnfs_layoutfile_parameter_t * pnfs_layout_param)
 {
    return NFS4_OK;
 }
@@ -101,7 +77,7 @@ nfsstat4 pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs, compound_data_t * data,
 
 nfsstat4 pnfs_layoutget( LAYOUTGET4args * pargs, compound_data_t * data, LAYOUTGET4res * pres ) 
 {
-   return __pnfs_lustre_layoutget( pargs, data, pres ) ;
+   return pnfs_lustre_layoutget( pargs, data, pres ) ;
 }
 
 nfsstat4 pnfs_layoutcommit(LAYOUTCOMMIT4args * pargs, compound_data_t * data, LAYOUTCOMMIT4res * pres ) 

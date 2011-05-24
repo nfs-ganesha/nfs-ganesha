@@ -63,24 +63,24 @@
 
 
 /* Mandatory functions */
-nfsstat4 pnfs_lustre_getdeviceinfo(char *buff, unsigned int *plen);
-nfsstat4 pnfs_lustre_layoutget( char * buffin, unsigned int *plenin,  char *buffout, unsigned int *plenout);
+nfsstat4 pnfs_lustre_getdevicelist( GETDEVICELIST4args * pargs, 
+				    compound_data_t   * data,
+				    GETDEVICELIST4res  * pres ) ;
 
-nfsstat4 __pnfs_lustre_getdevicelist( GETDEVICELIST4args * pargs, 
-				      GETDEVICELIST4res  * pres ) ;
-
-nfsstat4 __pnfs_lustre_getdeviceinfo( GETDEVICEINFO4args * pargs,
-				      GETDEVICEINFO4res  * pres ) ;
+nfsstat4 pnfs_lustre_getdeviceinfo( GETDEVICEINFO4args * pargs,
+				    compound_data_t   * data,
+				    GETDEVICEINFO4res  * pres ) ;
 
 nfsstat4 pnfs_lustre_layoutcommit( LAYOUTCOMMIT4args * pargs, 
 				   compound_data_t   * data,
 	    		           LAYOUTCOMMIT4res  * pres ) ;
 
-nfsstat4 __pnfs_lustre_layoutget( LAYOUTGET4args  * pargs, 
-				  compound_data_t * data,
-				  LAYOUTGET4res   * pres ) ;
+nfsstat4 pnfs_lustre_layoutget( LAYOUTGET4args  * pargs, 
+				compound_data_t * data,
+				LAYOUTGET4res   * pres ) ;
 
-nfsstat4 __pnfs_lustre_layoutreturn( LAYOUTRETURN4args * pargs, 
-				     LAYOUTRETURN4res  * pres ) ; 
+nfsstat4 pnfs_lustre_layoutreturn( LAYOUTRETURN4args * pargs, 
+				   compound_data_t * data,
+				   LAYOUTRETURN4res  * pres ) ; 
 
 #endif                          /* _PNFS_LAYOUT4_NFSV4_1_FILES_H */
