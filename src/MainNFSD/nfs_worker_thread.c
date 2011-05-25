@@ -1428,7 +1428,7 @@ void *worker_thread(void *IndexArg)
   int rc = 0;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   unsigned int gc_allowed = FALSE;
-  char thr_name[16];
+  char thr_name[32];
   bool_t no_dispatch = FALSE;
 
   worker_index = (unsigned long)IndexArg;

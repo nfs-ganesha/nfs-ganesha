@@ -266,6 +266,7 @@ int get_req_uid_gid(struct svc_req *ptr_req,
       /* Get the gss data to process them */
       gd = SVCAUTH_PRIVATE(ptr_req->rq_xprt->xp_auth);
 
+      /*
       if(isFullDebug(COMPONENT_RPCSEC_GSS))
         {
           gss_buffer_desc oidbuff;
@@ -291,11 +292,11 @@ int get_req_uid_gid(struct svc_req *ptr_req,
               LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Client mech=%s len=%lu",
                            (char *)oidbuff.value, oidbuff.length);
 
-              /* Release the string */
+              // Release the string
               (void)gss_release_buffer(&min_stat, &oidbuff); 
             }
        }
-
+      */
       split_credname(gd->cname, username, domainname);
 
       LogFullDebug(COMPONENT_RPCSEC_GSS, "----> User=%s Domain=%s",

@@ -203,7 +203,10 @@ void FreeXprt(SVCXPRT *xprt)
   xp_free(xprt->xp_netid);
   xp_free(xprt->xp_rtaddr.buf);
   xp_free(xprt->xp_ltaddr.buf);
-  SVCAUTH_DESTROY(xprt->xp_auth);
+
+  if (xprt->xp_auth)
+    SVCAUTH_DESTROY(xprt->xp_auth);
+
   Mem_Free(xprt);
 }
 

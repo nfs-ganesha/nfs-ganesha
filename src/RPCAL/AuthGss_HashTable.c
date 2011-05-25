@@ -151,7 +151,7 @@ static int gss_stored2data(struct svc_rpc_gss_data *gd,
   /* Get the gss_buffer_desc */
   if(gd->cname.value == NULL && pstored->cname_len != 0)
     {
-      if((gd->cname.value = (char *)Mem_Alloc(pstored->cname_len)) == NULL)
+      if((gd->cname.value = (char *)malloc(pstored->cname_len)) == NULL)
         return FALSE;
     }
   memcpy(gd->cname.value, pstored->cname_val, pstored->cname_len);
@@ -159,7 +159,7 @@ static int gss_stored2data(struct svc_rpc_gss_data *gd,
 
   if(gd->checksum.value == NULL && pstored->checksum_len != 0)
     {
-      if((gd->checksum.value = (char *)Mem_Alloc(pstored->checksum_len)) == NULL)
+      if((gd->checksum.value = (char *)malloc(pstored->checksum_len)) == NULL)
         return FALSE;
     }
   memcpy(gd->checksum.value, pstored->checksum_val, pstored->checksum_len);
