@@ -2,7 +2,6 @@
 %module FSAL
 %{
 #include "fsal.h"
-#include "fsal_types.h"
 #include "BuddyMalloc.h"
 %}
 
@@ -68,7 +67,6 @@
 }
 
 %include "fsal.h"
-%include "fsal_types.h"
 %include "BuddyMalloc.h"
 
 %inline %{
