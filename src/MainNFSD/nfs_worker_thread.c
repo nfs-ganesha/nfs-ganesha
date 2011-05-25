@@ -1356,6 +1356,13 @@ enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
   SVCXPRT *xprt;
   enum auth_stat why;
 
+  /* A few words of explanation are required here:
+   * In authentication is AUTH_NONE or AUTH_UNIX, then the value of no_dispatch remains FALSE and the request is proceeded normally
+   * If authentication is RPCSEC_GSS, no_dispatch may have value TRUE, this means that gc->gc_proc != RPCSEC_GSS_DATA and that the
+   * message is in fact an internal negociation message from RPCSEC_GSS using GSSAPI. It then should not be proceed by the worker and
+   * SVC_STAT should be returned to the dispatcher.
+   */
+
   *no_dispatch = FALSE;
 
   /* Set pointers */
@@ -1428,8 +1435,7 @@ void *worker_thread(void *IndexArg)
   int rc = 0;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   unsigned int gc_allowed = FALSE;
-  char thr_name[16];
-  bool_t no_dispatch = FALSE;
+  char thr_name[32];
 
   worker_index = (unsigned long)IndexArg;
   pmydata = &(workers_data[worker_index]);
@@ -1614,32 +1620,20 @@ void *worker_thread(void *IndexArg)
           /* Set pointers */
           preq = &(pnfsreq->req);
 
-          if(pnfsreq->status)
-            {
-              if(AuthenticateRequest(pnfsreq, &no_dispatch) == AUTH_OK && !no_dispatch)
-                {
-                  /* A few words of explanation are required here:
-                   * In authentication is AUTH_NONE or AUTH_UNIX, then the value of no_dispatch remains FALSE and the request is proceeded normally
-                   * If authentication is RPCSEC_GSS, no_dispatch may have value TRUE, this means that gc->gc_proc != RPCSEC_GSS_DATA and that the
-                   * message is in fact an internal negociation message from RPCSEC_GSS using GSSAPI. It then should not be proceed by the worker and
-                   * SCV_STAT should be returned to the dispatcher */
-
-                      /* Validate the rpc request as being a valid program, version, and proc. If not, report the error.
-                       * Otherwise, execute the funtion. */
-                      LogFullDebug(COMPONENT_DISPATCH,
-                                   "About to execute Prog = %d, vers = %d, proc = %d xprt=%p",
-                                   (int)preq->rq_prog, (int)preq->rq_vers,
-                                   (int)preq->rq_proc, preq->rq_xprt);
-                      if(is_rpc_call_valid(preq->rq_xprt, preq) == TRUE)
-                        nfs_rpc_execute(pnfsreq, pmydata);
-                }
-            }
+          /* Validate the rpc request as being a valid program, version, and proc. If not, report the error.
+           * Otherwise, execute the funtion.
+           */
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "About to execute Prog = %d, vers = %d, proc = %d xprt=%p",
+                       (int)preq->rq_prog, (int)preq->rq_vers,
+                       (int)preq->rq_proc, preq->rq_xprt);
+          if(is_rpc_call_valid(preq->rq_xprt, preq) == TRUE)
+            nfs_rpc_execute(pnfsreq, pmydata);
         }
 
       /* Free the req by releasing the entry */
       LogFullDebug(COMPONENT_DISPATCH,
-                   "Invalidating processed entry with xprt_stat=%d",
-                   pnfsreq->status);
+                   "Invalidating processed entry");
       P(pmydata->request_pool_mutex);
       if(LRU_invalidate(pmydata->pending_request, pentry) != LRU_LIST_SUCCESS)
         {

@@ -280,7 +280,9 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
 	  
           maj_stat = gss_display_name(&min_stat, gd->client_name,
                                       &gd->cname, &gd->sec.mech);
-	  LogFullDebug(COMPONENT_RPCSEC_GSS, "cname.val: %s  cname.len: %d", (char *)gd->cname.value, gd->cname.length);
+	  LogFullDebug(COMPONENT_RPCSEC_GSS,
+	               "cname.val: %s  cname.len: %d",
+	               (char *)gd->cname.value, (int)gd->cname.length);
 #ifdef SPKM
         }
 #endif
@@ -415,6 +417,23 @@ static bool_t Svcauth_gss_nextverf(struct svc_req *rqst, u_int num)
   return (TRUE);
 }
 
+void sprint_ctx(char *buff, unsigned char *ctx, int len)
+{
+  int i;
+
+  if(ctx == NULL)
+    {
+      sprintf(buff, "<null>");
+      return;
+    }
+
+  if (len > 16)
+    len = 16;
+
+  for(i = 0; i < len; i++)
+    sprintf(buff + i * 2, "%02X", ctx[i]);
+}
+
 #define ret_freegc(code) do { retstat = code; goto freegc; } while (0)
 
 enum auth_stat
@@ -433,7 +452,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
   /* Initialize reply. */
   /* rqst->rq_xprt->xp_verf = _null_auth ; */
   LogMajor(COMPONENT_RPCSEC_GSS, "Gssrpc__svcauth_gss CALLED !!!!!!!!!!!!!!!!!!!!!!");
-  uint64_t buff64;
+  char ctx_str[64];
 
   /* Allocate and set up server auth handle. */
   if(rqst->rq_xprt->xp_auth == NULL || rqst->rq_xprt->xp_auth == &Svc_auth_none)
@@ -502,26 +521,21 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 
   if(isFullDebug(COMPONENT_RPCSEC_GSS))
     {
-      uint64_t buff64_2;
+      char ctx_str_2[64];
 
-      if(gd->ctx != NULL)
-        memcpy(&buff64_2, gd->ctx, 8);
-      else
-        buff64_2 = 0LL;
-      /*
-      memcpy(&buff64, gc->gc_ctx.value, gc->gc_ctx.length);
+      sprint_ctx(ctx_str_2, (unsigned char *)gd->ctx, sizeof(gss_ctx_data));
+      sprint_ctx(ctx_str, (unsigned char *)gc->gc_ctx.value, gc->gc_ctx.length);
+
       LogFullDebug(COMPONENT_RPCSEC_GSS,
-                   "Call to Gssrpc__svcauth_gss ----> Client=%s length=%lu (GD: established=%u ctx=%llx) (RQ:sock=%u) (GC: Proc=%u Svc=%u ctx=%lu|%llx)",
+                   "Call to Gssrpc__svcauth_gss ----> Client=%s length=%lu (GD: established=%u ctx=%s) (RQ:sock=%u) (GC: Proc=%u Svc=%u ctx=%s)",
                    (char *)gd->cname.value,
                    gd->cname.length,
                    gd->established,
-                   (long long unsigned int)buff64_2,
+                   ctx_str_2,
                    rqst->rq_xprt->XP_SOCK,
                    gc->gc_proc,
                    gc->gc_svc,
-                   gc->gc_ctx.length,
-                   (long long unsigned int)buff64);
-      */
+                   ctx_str);
     }
 
   retstat = AUTH_FAILED;
@@ -593,19 +607,19 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
         }
       *no_dispatch = TRUE;
 
-      /*
-      memcpy(&buff64, gr.gr_ctx.value, gr.gr_ctx.length);
-      LogFullDebug(COMPONENT_RPCSEC_GSS,
-                   "Call to Gssrpc__svcauth_gss ----> Client=%s length=%lu (GD: established=%u) (RQ:sock=%u) (GR: maj=%u min=%u ctx=%lu|0x%llx)",
-                   (char *)gd->cname.value,
-                   gd->cname.length,
-                   gd->established,
-                   rqst->rq_xprt->XP_SOCK,
-                   gr.gr_major,
-                   gr.gr_minor,
-                   gr.gr_ctx.length,
-                   (long long unsigned int)buff64);
-      */
+      if(isFullDebug(COMPONENT_RPCSEC_GSS))
+        {
+          sprint_ctx(ctx_str, (unsigned char *)gr.gr_ctx.value, gr.gr_ctx.length);
+          LogFullDebug(COMPONENT_RPCSEC_GSS,
+                       "Call to Gssrpc__svcauth_gss ----> Client=%s length=%lu (GD: established=%u) (RQ:sock=%u) (GR: maj=%u min=%u ctx=%s)",
+                       (char *)gd->cname.value,
+                       gd->cname.length,
+                       gd->established,
+                       rqst->rq_xprt->XP_SOCK,
+                       gr.gr_major,
+                       gr.gr_minor,
+                       ctx_str);
+        }
       call_stat = svc_sendreply(rqst->rq_xprt, (xdrproc_t)xdr_rpc_gss_init_res, (caddr_t) & gr);
 
       gss_release_buffer(&min_stat, &gr.gr_token);
@@ -618,16 +632,20 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       if(gr.gr_major == GSS_S_COMPLETE)
         {
           gd->established = TRUE;
-          /* Keep the gss context in a hash, gr.gr_ctx.value is used as key */
-          memcpy((char *)&gss_ctx_data, (char *)gd->ctx, sizeof(gss_ctx_data));
 
+          /* Keep the gss context in a hash, gr.gr_ctx.value is used as key */
           if(!Gss_ctx_Hash_Set(&gss_ctx_data, gd))
-            LogCrit(COMPONENT_RPCSEC_GSS,
-                    "Could not add context 0x%llx to hashtable", (long long unsigned int)buff64);
+            {
+              sprint_ctx(ctx_str, (unsigned char *)gd->ctx, sizeof(gss_ctx_data));
+              LogCrit(COMPONENT_RPCSEC_GSS,
+                      "Could not add context %s to hashtable", ctx_str);
+            }
           else
-            LogFullDebug(COMPONENT_RPCSEC_GSS,
-                         "Call to Gssrpc_svcauth_gss : gss context 0x%llx added to hash",
-                         (long long unsigned int)buff64);
+            {
+              sprint_ctx(ctx_str, (unsigned char *)gd->ctx, sizeof(gss_ctx_data));
+              LogFullDebug(COMPONENT_RPCSEC_GSS,
+                           "Gss context %s added to hash", ctx_str);
+            }
         }
 
       break;

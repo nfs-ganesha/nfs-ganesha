@@ -105,7 +105,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
   static char my_name[MAXNAMLEN];
   const nfs_function_desc_t *pfuncdesc;
   fridge_entry_t * pfe = NULL ;
-  bool_t no_dispatch;
+  bool_t no_dispatch, recv_status;
   enum auth_stat astatus;
 
   snprintf(my_name, MAXNAMLEN, "tcp_sock_mgr#fd=%ld", tcp_sock);
@@ -207,14 +207,14 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                    "Before calling SVC_RECV on socket %d", (int)tcp_sock);
 
       /* Will block until the client operates on the socket */
-      pnfsreq->status = SVC_RECV(pnfsreq->xprt, pmsg);
+      recv_status = SVC_RECV(pnfsreq->xprt, pmsg);
       LogFullDebug(COMPONENT_DISPATCH,
                    "Status for SVC_RECV on socket %d is %d",
-                   (int)tcp_sock, pnfsreq->status);
+                   (int)tcp_sock, recv_status);
 
       /* If status is ok, the request will be processed by the related
        * worker, otherwise, it should be released by being tagged as invalid*/
-      if(!pnfsreq->status)
+      if(!recv_status)
         {
           /* RPC over TCP specific: RPC/UDP's xprt know only one state: XPRT_IDLE, because UDP is mostly
            * a stateless protocol. With RPC/TCP, they can be XPRT_DIED especially when the client closes
@@ -240,11 +240,6 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
               else
                 LogCrit(COMPONENT_DISPATCH,
                         "Mismatch between tcp_sock and xprt array");
-
-              P(workers_data[worker_index].request_pool_mutex);
-              ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
-              V(workers_data[worker_index].request_pool_mutex);
-
 
               if( ( pfe = fridgethr_freeze( ) ) == NULL )
                 {
@@ -279,6 +274,10 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
             }
 
           /* Release the entry */
+          P(workers_data[worker_index].request_pool_mutex);
+          ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
+          V(workers_data[worker_index].request_pool_mutex);
+
           LogFullDebug(COMPONENT_DISPATCH,
                        "Invalidating entry with xprt_stat=%d",
                        stat);
@@ -350,6 +349,13 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                                (unsigned long long int)timer_diff.tv_sec,
                                (unsigned long long int)timer_diff.tv_usec);
                 }
+            }
+          else
+            {
+              /* Release the entry */
+              P(workers_data[worker_index].request_pool_mutex);
+              ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
+              V(workers_data[worker_index].request_pool_mutex);
             }
         }
     }

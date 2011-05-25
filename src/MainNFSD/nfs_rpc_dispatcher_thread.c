@@ -1757,6 +1757,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
   nfs_request_data_t *pnfsreq = NULL;
   unsigned int worker_index;
   int mount_flag = FALSE;
+  bool_t recv_status;
 
   /* portable access to fds_bits field */
   maskp = __FDS_BITS(readfds);
@@ -1835,16 +1836,12 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               LogFullDebug(COMPONENT_DISPATCH, "A NFS UDP request");
               pnfsreq->xprt = pnfsreq->nfs_udp_xprt;
               pnfsreq->ipproto = IPPROTO_UDP;
-
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
             }
           else if(nfs_param.worker_param.nfs_svc_data.socket_mnt_udp == sock + bit - 1)
             {
               LogFullDebug(COMPONENT_DISPATCH, "A MOUNT UDP request");
               pnfsreq->xprt = pnfsreq->mnt_udp_xprt;
               pnfsreq->ipproto = IPPROTO_UDP;
-
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
             }
 #ifdef _USE_NLM
           else if(nfs_param.worker_param.nfs_svc_data.socket_nlm_udp == sock + bit - 1)
@@ -1852,7 +1849,6 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               LogFullDebug(COMPONENT_DISPATCH, "A NLM UDP request");
               pnfsreq->xprt = pnfsreq->nlm_udp_xprt;
               pnfsreq->ipproto = IPPROTO_UDP;
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
             }
 #endif                          /* _USE_NLM */
 #ifdef _USE_QUOTA
@@ -1861,7 +1857,6 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               LogFullDebug(COMPONENT_DISPATCH, "A RQUOTA UDP request");
               pnfsreq->xprt = pnfsreq->rquota_udp_xprt;
               pnfsreq->ipproto = IPPROTO_UDP;
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
             }
 #endif                          /* _USE_QUOTA */
           else if(nfs_param.worker_param.nfs_svc_data.socket_nfs_tcp == sock + bit - 1)
@@ -1877,8 +1872,6 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                            "An initial NFS TCP request from a new client");
               pnfsreq->xprt = nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp;
               pnfsreq->ipproto = IPPROTO_TCP;
-
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
             }
           else if(nfs_param.worker_param.nfs_svc_data.socket_mnt_tcp == sock + bit - 1)
             {
@@ -1886,8 +1879,6 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                            "An initial MOUNT TCP request from a new client");
               pnfsreq->xprt = nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp;
               pnfsreq->ipproto = IPPROTO_TCP;
-
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
             }
 #ifdef _USE_NLM
           else if(nfs_param.worker_param.nfs_svc_data.socket_nlm_tcp == sock + bit - 1)
@@ -1896,8 +1887,6 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                            "An initial NLM request from a new client");
               pnfsreq->xprt = nfs_param.worker_param.nfs_svc_data.xprt_nlm_tcp;
               pnfsreq->ipproto = IPPROTO_TCP;
-
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
             }
 #endif                          /* _USE_NLM */
 #ifdef _USE_QUOTA
@@ -1907,27 +1896,26 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                            "An initial RQUOTA request from a new client");
               pnfsreq->xprt = nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp;
               pnfsreq->ipproto = IPPROTO_TCP;
-
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
             }
 #endif                          /* _USE_QUOTA */
           else
             {
               /* This is a regular tcp request on an established connection, should be handle by a dedicated thread */
-              LogFullDebug(COMPONENT_DISPATCH,
-                           "A NFS TCP request from an already connected client");
+              LogDebug(COMPONENT_DISPATCH,
+                       "A NFS TCP request from an already connected client");
               pnfsreq->xprt = xprt;
               pnfsreq->ipproto = IPPROTO_TCP;
-
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
             }
+
+          recv_status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
+
           LogFullDebug(COMPONENT_DISPATCH,
                        "Status for SVC_RECV on socket %d is %d",
-                       sock + bit - 1, pnfsreq->status);
+                       sock + bit - 1, recv_status);
 
           /* If status is ok, the request will be processed by the related
            * worker, otherwise, it should be released by being tagged as invalid*/
-          if(!pnfsreq->status)
+          if(!recv_status)
             {
               /* RPC over TCP specific: RPC/UDP's xprt know only one state: XPRT_IDLE, because UDP is mostly
                * a stateless protocol. With RPC/TCP, they can be XPRT_DIED especially when the client closes
@@ -1948,11 +1936,6 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                            pnfsreq->xprt->XP_SOCK, addrbuf);
                   if(Xports[pnfsreq->xprt->XP_SOCK] != NULL)
                     SVC_DESTROY(Xports[pnfsreq->xprt->XP_SOCK]);
-
-                  P(workers_data[worker_index].request_pool_mutex);
-                  ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
-                  V(workers_data[worker_index].request_pool_mutex);
-
                 }
               else if(stat == XPRT_MOREREQS)
                 {
@@ -1962,6 +1945,10 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                 }
 
               /* Release the entry */
+              P(workers_data[worker_index].request_pool_mutex);
+              ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
+              V(workers_data[worker_index].request_pool_mutex);
+
               LogFullDebug(COMPONENT_DISPATCH,
                            "NFS DISPATCH: Invalidating entry with xprt_stat=%d",
                            stat);
@@ -1970,7 +1957,19 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
           else
             {
               /* This should be used for UDP requests only, TCP request have dedicted management threads */
-              DispatchWork(pnfsreq, worker_index);
+              bool_t no_dispatch;
+              enum auth_stat astatus;
+
+              astatus = AuthenticateRequest(pnfsreq, &no_dispatch);
+              if(astatus == AUTH_OK && !no_dispatch)
+                DispatchWork(pnfsreq, worker_index);
+              else
+                {
+                  /* Release the entry */
+                  P(workers_data[worker_index].request_pool_mutex);
+                  ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
+                  V(workers_data[worker_index].request_pool_mutex);
+                }
             }
         }
     }
