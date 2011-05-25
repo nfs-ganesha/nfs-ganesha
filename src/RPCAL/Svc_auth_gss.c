@@ -277,7 +277,6 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
       if(!g_OID_equal(gss_mech_spkm3, mech))
         {
 #endif
-	  
           maj_stat = gss_display_name(&min_stat, gd->client_name,
                                       &gd->cname, &gd->sec.mech);
 	  LogFullDebug(COMPONENT_RPCSEC_GSS,
@@ -451,7 +450,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 
   /* Initialize reply. */
   /* rqst->rq_xprt->xp_verf = _null_auth ; */
-  LogMajor(COMPONENT_RPCSEC_GSS, "Gssrpc__svcauth_gss CALLED !!!!!!!!!!!!!!!!!!!!!!");
+  LogFullDebug(COMPONENT_RPCSEC_GSS, "Gssrpc__svcauth_gss called");
   char ctx_str[64];
 
   /* Allocate and set up server auth handle. */
@@ -587,9 +586,9 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
     {
 
     case RPCSEC_GSS_INIT:
-      LogMajor(COMPONENT_RPCSEC_GSS, "Reached RPCSEC_GSS_INIT:");
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "Reached RPCSEC_GSS_INIT:");
     case RPCSEC_GSS_CONTINUE_INIT:
-      LogMajor(COMPONENT_RPCSEC_GSS, "Reached RPCSEC_GSS_CONTINUE_INIT:");
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "Reached RPCSEC_GSS_CONTINUE_INIT:");
       if(rqst->rq_proc != NULLPROC)
         ret_freegc(AUTH_FAILED);        /* XXX ? */
 
@@ -651,7 +650,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       break;
 
     case RPCSEC_GSS_DATA:
-      LogMajor(COMPONENT_RPCSEC_GSS, "Reached RPCSEC_GSS_DATA:");
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "Reached RPCSEC_GSS_DATA:");
       if(!Svcauth_gss_validate(rqst, gd, msg))
         ret_freegc(RPCSEC_GSS_CREDPROBLEM);
 
@@ -660,7 +659,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       break;
 
     case RPCSEC_GSS_DESTROY:
-      LogMajor(COMPONENT_RPCSEC_GSS, "Reached RPCSEC_GSS_DESTROY:");
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "Reached RPCSEC_GSS_DESTROY:");
       if(rqst->rq_proc != NULLPROC)
         ret_freegc(AUTH_FAILED);        /* XXX ? */
 
@@ -720,6 +719,7 @@ static bool_t Svcauth_gss_destroy(SVCAUTH * auth)
   gd = SVCAUTH_PRIVATE(auth);
 
   gss_delete_sec_context(&min_stat, &gd->ctx, GSS_C_NO_BUFFER);
+
   gss_release_buffer(&min_stat, &gd->cname);
   gss_release_buffer(&min_stat, &gd->checksum);
 
