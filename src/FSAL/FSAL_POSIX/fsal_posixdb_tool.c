@@ -6,7 +6,6 @@
 #endif
 
 #include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_internal.h"
 #include "stuff_alloc.h"
 #include <string.h>

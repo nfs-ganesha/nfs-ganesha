@@ -43,11 +43,6 @@
 
 #ifdef _SOLARIS
 #include "solaris_port.h"
-#ifdef _USE_POSIX
-#define NAME_MAX  255
-#define HOST_NAME_MAX 64
-#define LOGIN_NAME_MAX 256
-#endif                          /* _USE_POSIX */
 #endif                          /* _SOLARIS */
 
 /*
