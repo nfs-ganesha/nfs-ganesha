@@ -19,7 +19,6 @@
 #include <string.h> /* For strncpy */
 
 #include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_glue.h"
 
 const char *fsal_function_names[] = {
