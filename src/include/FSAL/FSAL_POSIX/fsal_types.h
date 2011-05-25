@@ -74,11 +74,6 @@
  *      POSIX FS dependant definitions
  * ------------------------------------------- */
 
-#define FSAL_MAX_NAME_LEN   NAME_MAX
-#define FSAL_MAX_PATH_LEN   PATH_MAX
-
-#define FSAL_NGROUPS_MAX  32
-
 #include "fsal_glue_const.h"
 
 #define fsal_handle_t posixfsal_handle_t

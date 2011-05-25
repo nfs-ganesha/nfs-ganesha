@@ -69,11 +69,6 @@
    * Here are some template types :
    */
 
-/* prefered readdir size */
-
-//# define FSAL_MAX_NAME_LEN  MAXLABEL
-//# define FSAL_MAX_PATH_LEN  SNMP_MAXPATH
-
 #define FSAL_MAX_PROTO_LEN  16
 #define FSAL_MAX_USERNAME_LEN   256
 #define FSAL_MAX_PHRASE_LEN   USM_AUTH_KU_LEN
