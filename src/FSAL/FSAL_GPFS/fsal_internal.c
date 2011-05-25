@@ -58,12 +58,6 @@ fsal_uint_t CredentialLifetime = 3600;
  */
 fsal_staticfsinfo_t global_fs_info;
 
-#ifndef _USE_GPFS_INTERFACE
-char open_by_handle_path[MAXPATHLEN];
-int open_by_handle_fd;
-int use_kernel_module_interface;
-#endif
-
 /* filesystem info for HPSS */
 static fsal_staticfsinfo_t default_gpfs_info = {
   0xFFFFFFFFFFFFFFFFLL,         /* max file size (64bits) */
@@ -586,12 +580,7 @@ fsal_status_t fsal_internal_handle2fd_at(int dirfd,
   oarg.handle = &phandle->data.handle;
   oarg.flags = oflags;
 
-#ifndef _USE_GPFS_INTERFACE
-  if(use_kernel_module_interface)
-    rc = ioctl(open_by_handle_fd, KM_OPENHANDLE_OPEN_BY_HANDLE, &oarg);
-  else
-#endif
-    rc = gpfs_ganesha(OPENHANDLE_OPEN_BY_HANDLE, &oarg);
+  rc = gpfs_ganesha(OPENHANDLE_OPEN_BY_HANDLE, &oarg);
 
   if(rc < 0)
     ReturnCode(posix2fsal_error(errno), errno);
@@ -634,12 +623,7 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
                "Lookup handle for %s",
                p_fsalpath->path);
 
-#ifndef _USE_GPFS_INTERFACE
-  if(use_kernel_module_interface)
-    rc = ioctl(open_by_handle_fd, KM_OPENHANDLE_NAME_TO_HANDLE, &harg);
-  else
-#endif
-    rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
+  rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
 
   if(rc < 0)
     ReturnCode(posix2fsal_error(errno), errno);
@@ -682,12 +666,7 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
                "Lookup handle at for %s",
                p_fsalname->name);
 
-#ifndef _USE_GPFS_INTERFACE
-  if(use_kernel_module_interface)
-    rc = ioctl(open_by_handle_fd, KM_OPENHANDLE_NAME_TO_HANDLE, &harg);
-  else
-#endif
-    rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
+  rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
 
   if(rc < 0)
     ReturnCode(posix2fsal_error(errno), errno);
@@ -726,12 +705,7 @@ fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * p_handle)
                "Lookup handle by fd for %d",
                fd);
 
-#ifndef _USE_GPFS_INTERFACE
-  if(use_kernel_module_interface)
-    rc = ioctl(open_by_handle_fd, KM_OPENHANDLE_NAME_TO_HANDLE, &harg);
-  else
-#endif
-    rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
+  rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
 
   if(rc < 0)
     ReturnCode(posix2fsal_error(errno), errno);
@@ -764,12 +738,7 @@ fsal_status_t fsal_internal_link_at(int srcfd, int dirfd, char *name)
   linkarg.file_fd = srcfd;
   linkarg.name = name;
 
-#ifndef _USE_GPFS_INTERFACE
-  if(use_kernel_module_interface)
-    rc = ioctl(open_by_handle_fd, KM_OPENHANDLE_LINK_BY_FD, &linkarg);
-  else
-#endif
-    rc = gpfs_ganesha(OPENHANDLE_LINK_BY_FD, &linkarg);
+  rc = gpfs_ganesha(OPENHANDLE_LINK_BY_FD, &linkarg);
 
   if(rc < 0)
     ReturnCode(posix2fsal_error(errno), errno);
@@ -804,12 +773,7 @@ fsal_status_t fsal_readlink_by_handle(fsal_op_context_t * p_context,
   readlinkarg.buffer = __buf;
   readlinkarg.size = maxlen;
 
-#ifndef _USE_GPFS_INTERFACE
-  if(use_kernel_module_interface)
-    rc = ioctl(open_by_handle_fd, KM_OPENHANDLE_READLINK_BY_FD, &readlinkarg);
-  else
-#endif
-    rc = gpfs_ganesha(OPENHANDLE_READLINK_BY_FD, &readlinkarg);
+  rc = gpfs_ganesha(OPENHANDLE_READLINK_BY_FD, &readlinkarg);
 
   close(fd);
 
@@ -1001,12 +965,7 @@ fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
   statarg.handle = &p_handle->data.handle;
   statarg.buf = buf;
 
-#ifndef _USE_GPFS_INTERFACE
-  if(use_kernel_module_interface)
-    rc = ioctl(open_by_handle_fd, KM_OPENHANDLE_STAT_BY_HANDLE, &statarg);
-  else
-#endif
-    rc = gpfs_ganesha(OPENHANDLE_STAT_BY_HANDLE, &statarg);
+  rc = gpfs_ganesha(OPENHANDLE_STAT_BY_HANDLE, &statarg);
 
   if(rc < 0)
     ReturnCode(posix2fsal_error(errno), errno);

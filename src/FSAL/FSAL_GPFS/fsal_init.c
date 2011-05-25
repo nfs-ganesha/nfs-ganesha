@@ -121,25 +121,6 @@ fsal_status_t GPFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
   if(!init_info)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_Init);
 
-#ifndef _USE_GPFS_INTERFACE
-  use_kernel_module_interface = init_info->fs_specific_info.use_kernel_module_interface;
-
-  if(use_kernel_module_interface)
-    {
-      /* save open-by-handle char device */
-      memcpy(open_by_handle_path, init_info->fs_specific_info.open_by_handle_dev_file,
-             MAXPATHLEN);
-      open_by_handle_fd = open(init_info->fs_specific_info.open_by_handle_dev_file, O_RDONLY);
-      if(open_by_handle_fd < 0)
-        {
-          LogMajor(COMPONENT_FSAL,
-                   "FSAL INIT: ERROR: Could not open open-by-handle character device file at %s: rc = %d",
-                   init_info->fs_specific_info.open_by_handle_dev_file, errno);
-          ReturnCode(ERR_FSAL_INVAL, 0);
-        }
-    }
-#endif
-
   /* proceeds FSAL internal initialization */
   status = fsal_internal_init_global(&(init_info->fsal_info),
                                      &(init_info->fs_common_info),
@@ -155,9 +136,5 @@ fsal_status_t GPFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
 /* To be called before exiting */
 fsal_status_t GPFSFSAL_terminate()
 {
-#ifndef _USE_GPFS_INTERFACE
-  if(open_by_handle_fd >= 0)
-    close(open_by_handle_fd);
-#endif
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

@@ -94,13 +94,6 @@
 
 #define OPENHANDLE_HANDLE_LEN 40
 #define OPENHANDLE_DRIVER_MAGIC     'O'
-#ifndef _USE_GPFS_INTERFACE
-#define KM_OPENHANDLE_NAME_TO_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 0, struct name_handle_arg)
-#define KM_OPENHANDLE_OPEN_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 1, struct open_arg)
-#define KM_OPENHANDLE_LINK_BY_FD     _IOWR(OPENHANDLE_DRIVER_MAGIC, 2, struct link_arg)
-#define KM_OPENHANDLE_READLINK_BY_FD _IOWR(OPENHANDLE_DRIVER_MAGIC, 3, struct readlink_arg)
-#define KM_OPENHANDLE_STAT_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 4, struct stat_arg)
-#endif // _USE_GPFS_INTERFACE
 #define OPENHANDLE_OFFSET_OF_FILEID (2 * sizeof(int))
 
 /**
@@ -118,61 +111,6 @@ struct file_handle
   /* file identifier */
   unsigned char f_handle[OPENHANDLE_HANDLE_LEN];
 };
-
-#ifndef _USE_GPFS_INTERFACE
-/**
- * name_handle_arg: 
- * 
- * this structure is used in 3 ways.  If the dfd is AT_FWCWD and name
- * is a full path, it returns the handle to the file.
- * 
- * It can also get the same handle by having dfd be the parent
- * directory file handle and the name be the local file name.
- *
- * Lastly, if dfd is actually the file handle for the file, and name
- * == NULL, it can be used to get the handle directly from the file
- * descriptor.
- *
- */
-#if 0
-struct name_handle_arg
-{
-  int dfd;
-  int flag;
-  char *name;
-  struct file_handle *handle;
-};
-
-struct open_arg
-{
-  int mountdirfd;
-  int flags;
-  int openfd;
-  struct file_handle *handle;
-};
-
-struct link_arg
-{
-  int file_fd;
-  int dir_fd;
-  char *name;
-};
-
-struct readlink_arg
-{
-  int fd;
-  char *buffer;
-  int size;
-};
-
-struct stat_arg
-{
-    int mountdirfd;
-    struct file_handle *handle;
-    struct stat64 *buf;
-};
-#endif
-#endif // _USE_GPFS_INTERFACE
 
 /** end of open by handle structures */
 
