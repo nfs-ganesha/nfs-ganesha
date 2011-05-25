@@ -80,8 +80,6 @@
  * ------------------------------------------- */
 #include "fsal_glue_const.h"
 
-#define FSAL_NGROUPS_MAX  32
-
 #define fsal_handle_t lustrefsal_handle_t
 #define fsal_op_context_t lustrefsal_op_context_t
 #define fsal_file_t lustrefsal_file_t

@@ -66,15 +66,6 @@
 
 #define CONF_LABEL_FS_SPECIFIC   "NFSv4_Proxy"
 
-#define FSAL_NGROUPS_MAX  32
-
-/* prefered readdir size */
-/* #define FSAL_READDIR_SIZE 2048  */
-/* #define FSAL_READDIR_SIZE 3072 */
-
-# define FSAL_NAME_INITIALIZER {"",0}
-# define FSAL_PATH_INITIALIZER {"",0}
-
 #define FSAL_PROXY_FILEHANDLE_MAX_LEN 128
 #define FSAL_PROXY_SEND_BUFFER_SIZE   32768
 #define FSAL_PROXY_RECV_BUFFER_SIZE   32768
