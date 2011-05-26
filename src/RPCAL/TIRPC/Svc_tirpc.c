@@ -166,6 +166,8 @@ void FreeXprt(SVCXPRT *xprt)
       
     }
 
+  LogFullDebug(COMPONENT_RPC,
+               "FreeXprt xprt=%p", xprt);
   if(xprt->xp_ops == &dg_ops)
     {
       if(su_data(xprt))
@@ -218,6 +220,23 @@ SVCXPRT *Svcxprt_copycreate()
   return NULL;
  }
 
+unsigned int get_tirpc_xid(SVCXPRT *xprt)
+{
+  if(xprt->xp_ops == &dg_ops)
+    {
+      struct svc_dg_data *su = su_data(xprt);
+      if(su != NULL)
+        return su->su_xid;
+    }
+  else if (xprt->xp_ops == &vc_ops)
+    {
+      struct cf_conn *cd = (struct cf_conn *)xprt->xp_p1;
+      if(cd != NULL)
+        return cd->x_id;
+    }
+  return 0;
+}
+
 /*
  * Duplicate xprt from original to copy.
  */
@@ -229,6 +248,9 @@ SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
   xprt_copy = (SVCXPRT *) Mem_Alloc(sizeof(SVCXPRT));
   if(xprt_copy == NULL)
     return NULL;
+  LogFullDebug(COMPONENT_RPC,
+               "Svcxprt_copy copying xprt_orig=%p to xprt_copy=%p",
+               xprt_orig, xprt_copy);
   memset(xprt_copy, 0, sizeof(SVCXPRT));
   xprt_copy->xp_ops  = xprt_orig->xp_ops;
   xprt_copy->xp_ops2 = xprt_orig->xp_ops2;
@@ -243,9 +265,7 @@ SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
           if(!su_c)
             goto fail;
           su_data_set(xprt_copy) = su_c;
-          memset(su_c, 0, sizeof(struct svc_dg_data));
-          su_c->su_iosz = su_o->su_iosz;
-          su_c->su_cache = NULL;
+          memcpy(su_c, su_o, sizeof(*su_c));
 
           if(su_o->su_cache)
             {
@@ -258,6 +278,12 @@ SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
           if(!rpc_buffer(xprt_copy))
             goto fail;
           xdrmem_create(&(su_c->su_xdrs), rpc_buffer(xprt_copy), su_c->su_iosz, XDR_DECODE);
+          if(xprt_orig->xp_verf.oa_base == su_o->su_verfbody)
+            xprt_copy->xp_verf.oa_base = su_c->su_verfbody;
+          else
+            xprt_copy->xp_verf.oa_base = xprt_orig->xp_verf.oa_base;
+          xprt_copy->xp_verf.oa_flavor = xprt_orig->xp_verf.oa_flavor;
+          xprt_copy->xp_verf.oa_length = xprt_orig->xp_verf.oa_length;
         }
       else
         goto fail;
@@ -271,7 +297,12 @@ SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
       memcpy(cd_c, cd_o, sizeof(*cd_c));
       xprt_copy->xp_p1 = cd_c;
       xdrrec_create(&(cd_c->xdrs), cd_c->sendsize, cd_c->recvsize, xprt_copy, Read_vc, Write_vc);
-      xprt_copy->xp_verf.oa_base = cd_c->verf_body;
+      if(xprt_orig->xp_verf.oa_base == cd_o->verf_body)
+        xprt_copy->xp_verf.oa_base = cd_c->verf_body;
+      else
+        xprt_copy->xp_verf.oa_base = xprt_orig->xp_verf.oa_base;
+      xprt_copy->xp_verf.oa_flavor = xprt_orig->xp_verf.oa_flavor;
+      xprt_copy->xp_verf.oa_length = xprt_orig->xp_verf.oa_length;
     }
   else if (xprt_orig->xp_ops == &rendezvous_ops)
     {
@@ -331,14 +362,6 @@ SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
 }
 
 #ifdef _DEBUG_MEMLEAKS
-
-#define checkif(x, s)                \
-  if(x)                              \
-    {                                \
-      rc = BuddyCheckLabel(x, 1, s); \
-      if(!rc)                        \
-        return 0;                    \
-    }
 
 #define check(x, s)                  \
   if(x)                              \
@@ -401,8 +424,7 @@ int CheckXprt(SVCXPRT *xprt)
   check(xprt->xp_netid, "xp_netid");
   check(xprt->xp_rtaddr.buf, "xp_rtaddr.buf");
   check(xprt->xp_ltaddr.buf, "xp_ltaddr.buf");
-  check(xprt->xp_auth, "xp_auth");
-  return 1;
+  return CheckAuth(xprt->xp_auth);
 }
 #endif
 

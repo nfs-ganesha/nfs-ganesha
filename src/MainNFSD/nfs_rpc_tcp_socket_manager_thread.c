@@ -98,7 +98,6 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
   struct rpc_msg *pmsg;
   struct svc_req *preq;
   register SVCXPRT *xprt;
-  register SVCXPRT *xprt_copy;
   char *cred_area;
   nfs_request_data_t *pnfsreq = NULL;
   unsigned int worker_index;
@@ -196,6 +195,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
       LogFullDebug(COMPONENT_DISPATCH,
                    "A NFS TCP request from an already connected client");
       pnfsreq->xprt = xprt;
+      preq->rq_xprt = xprt;
       pnfsreq->ipproto = IPPROTO_TCP;
 
       if(pnfsreq->xprt->XP_SOCK != tcp_sock)
@@ -209,8 +209,8 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
       /* Will block until the client operates on the socket */
       recv_status = SVC_RECV(pnfsreq->xprt, pmsg);
       LogFullDebug(COMPONENT_DISPATCH,
-                   "Status for SVC_RECV on socket %d is %d",
-                   (int)tcp_sock, recv_status);
+                   "Status for SVC_RECV on socket %d is %d xid=%u",
+                   (int)tcp_sock, recv_status, pmsg->rm_xid);
 
       /* If status is ok, the request will be processed by the related
        * worker, otherwise, it should be released by being tagged as invalid*/
@@ -304,28 +304,33 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           pnfsreq->req.rq_proc = pmsg->rm_call.cb_proc;
 
           pfuncdesc = nfs_rpc_get_funcdesc(pnfsreq);
-          if(pfuncdesc != INVALID_FUNCDESC)
-            nfs_rpc_get_args(pnfsreq, pfuncdesc);
 
           /* Authenticate request using primary xprt (in case xprt has GSS state) */
           pnfsreq->xprt = xprt;
           astatus = AuthenticateRequest(pnfsreq, &no_dispatch);
           if(astatus == AUTH_OK && !no_dispatch)
             {
+              if(pfuncdesc != INVALID_FUNCDESC)
+                nfs_rpc_get_args(pnfsreq, pfuncdesc);
+
               /* Update a copy of SVCXPRT and pass it to the worker thread to use it. */
-              xprt_copy = pnfsreq->xprt_copy;
-              xprt_copy = Svcxprt_copy(xprt_copy, xprt);
-              pnfsreq->xprt = xprt_copy;
-              if(!xprt_copy)
+              pnfsreq->xprt_copy = Svcxprt_copy(pnfsreq->xprt_copy, xprt);
+              
+              if(!pnfsreq->xprt_copy)
                 {
                   //TODO: handle error - barf for now...
                   LogCrit(COMPONENT_DISPATCH,
                           "Svcxprt_copy failed.... oops...");
-                  xprt_copy->XP_SOCK = 0;
+                  // should send some kind of response here
                 }
+              else
+                {
+                  pnfsreq->xprt = pnfsreq->xprt_copy;
+                  preq->rq_xprt = pnfsreq->xprt_copy;
 
-              /* Regular management of the request (UDP request or TCP request on connected handler */
-              DispatchWork(pnfsreq, worker_index);
+                  /* Regular management of the request (UDP request or TCP request on connected handler */
+                  DispatchWork(pnfsreq, worker_index);
+                }
 
               if(pfuncdesc != INVALID_FUNCDESC)
                 {
@@ -348,6 +353,14 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                                (unsigned long long int)timer_end.tv_usec,
                                (unsigned long long int)timer_diff.tv_sec,
                                (unsigned long long int)timer_diff.tv_usec);
+                }
+
+              if(!pnfsreq->xprt_copy)
+                {
+                  /* Release the entry */
+                  P(workers_data[worker_index].request_pool_mutex);
+                  ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
+                  V(workers_data[worker_index].request_pool_mutex);
                 }
             }
           else

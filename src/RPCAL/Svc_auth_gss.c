@@ -631,20 +631,22 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       if(gr.gr_major == GSS_S_COMPLETE)
         {
           gd->established = TRUE;
+          sprint_ctx(ctx_str, (unsigned char *)gd->ctx, sizeof(gss_ctx_data));
+          CheckXprt(rqst->rq_xprt);
 
           /* Keep the gss context in a hash, gr.gr_ctx.value is used as key */
+          memcpy((char *)&gss_ctx_data, (char *)gd->ctx, sizeof(gss_ctx_data));
           if(!Gss_ctx_Hash_Set(&gss_ctx_data, gd))
             {
-              sprint_ctx(ctx_str, (unsigned char *)gd->ctx, sizeof(gss_ctx_data));
               LogCrit(COMPONENT_RPCSEC_GSS,
                       "Could not add context %s to hashtable", ctx_str);
             }
           else
             {
-              sprint_ctx(ctx_str, (unsigned char *)gd->ctx, sizeof(gss_ctx_data));
               LogFullDebug(COMPONENT_RPCSEC_GSS,
                            "Gss context %s added to hash", ctx_str);
             }
+          CheckXprt(rqst->rq_xprt);
         }
 
       break;
@@ -800,3 +802,22 @@ int copy_svc_authgss(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
     xprt_copy->xp_auth = NULL;
   return 1;
 }
+
+#ifdef _DEBUG_MEMLEAKS
+int CheckAuth(SVCAUTH *auth)
+{
+  int rc;
+
+  if(auth == NULL)
+    return 1;
+  if(auth->svc_ah_private != &Svc_auth_none || auth->svc_ah_private)
+    return 1;
+  rc = BuddyCheckLabel(auth, 1, "xp_auth");
+  if(!rc)
+    return 0;
+  rc = BuddyCheckLabel(auth->svc_ah_private, 1, "xp_auth->svc_ah_private");
+  if(!rc)
+    return 0;
+  return 1;
+}
+#endif

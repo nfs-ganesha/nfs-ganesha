@@ -1907,6 +1907,7 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
               pnfsreq->ipproto = IPPROTO_TCP;
             }
 
+          preq->rq_xprt = pnfsreq->xprt;
           recv_status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
 
           LogFullDebug(COMPONENT_DISPATCH,
