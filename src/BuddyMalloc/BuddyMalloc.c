@@ -578,14 +578,25 @@ void log_bad_block(const char *label, BuddyThreadContext_t *context, BuddyBlock_
 /*
  * check current magic number
  */
-int isBadMagicNumber(const char *label, BuddyThreadContext_t *context, BuddyBlock_t *block, unsigned int MagicNumber, int do_guilt)
+int isBadMagicNumber(const char *tag, BuddyThreadContext_t *context, BuddyBlock_t *block, unsigned int MagicNumber, int do_guilt, const char *label)
 {
   if(block->Header.MagicNumber != MagicNumber)
     {
+      const char *_label;
+      if(label != NULL)
+        _label = label;
+      else
+        {
+#ifdef _DEBUG_MEMLEAKS
+          _label = context->label_user_defined;
+#else
+          _label = "";
+#endif
+        }
       LogMajor(COMPONENT_MEMALLOC,
-               "%s block %p has been overwritten or is not a buddy block (Magic number %08X<>%08X)",
-               label, block, block->Header.MagicNumber, MagicNumber);
-      log_bad_block(label, context, block, do_guilt, do_guilt);
+               "%s %s block %p has been overwritten or is not a buddy block (Magic number %08X<>%08X)",
+               tag, _label, block, block->Header.MagicNumber, MagicNumber);
+      log_bad_block(tag, context, block, do_guilt, do_guilt);
       return 1;
     }
   else
@@ -598,14 +609,14 @@ static void Insert_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
   BuddyBlock_t *next;
 
   /* check current magic number */
-  isBadMagicNumber("Insert_FreeBlock:", context, p_buddyblock, MAGIC_NUMBER_FREE, 0);
+  isBadMagicNumber("Insert_FreeBlock:", context, p_buddyblock, MAGIC_NUMBER_FREE, 0, NULL);
 
   /* Is there already a free block in the list ? */
   if((next = context->MemDesc[p_buddyblock->Header.StdInfo.k_size]) != NULL)
     {
 
       /* check current magic number */
-      isBadMagicNumber("Insert_FreeBlock: next", context, next, MAGIC_NUMBER_FREE, 0);
+      isBadMagicNumber("Insert_FreeBlock: next", context, next, MAGIC_NUMBER_FREE, 0, NULL);
 
       context->MemDesc[p_buddyblock->Header.StdInfo.k_size] = p_buddyblock;
       p_buddyblock->Content.FreeBlockInfo.NextBlock = next;
@@ -636,7 +647,7 @@ static void Remove_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
   BuddyBlock_t *next;
 
   /* check current magic number */
-  isBadMagicNumber("Remove_FreeBlock:", context, p_buddyblock, MAGIC_NUMBER_FREE, 0);
+  isBadMagicNumber("Remove_FreeBlock:", context, p_buddyblock, MAGIC_NUMBER_FREE, 0, NULL);
 
   prev = p_buddyblock->Content.FreeBlockInfo.PrevBlock;
   next = p_buddyblock->Content.FreeBlockInfo.NextBlock;
@@ -644,7 +655,7 @@ static void Remove_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
   if(prev)
     {
       /* check current magic number */
-      isBadMagicNumber("Remove_FreeBlock: prev", context, prev, MAGIC_NUMBER_FREE, 0);
+      isBadMagicNumber("Remove_FreeBlock: prev", context, prev, MAGIC_NUMBER_FREE, 0, NULL);
 
       prev->Content.FreeBlockInfo.NextBlock = next;
     }
@@ -656,7 +667,7 @@ static void Remove_FreeBlock(BuddyThreadContext_t * context, BuddyBlock_t * p_bu
   if(next)
     {
       /* check current magic number */
-      isBadMagicNumber("Remove_FreeBlock: next", context, next, MAGIC_NUMBER_FREE, 0);
+      isBadMagicNumber("Remove_FreeBlock: next", context, next, MAGIC_NUMBER_FREE, 0, NULL);
 
       next->Content.FreeBlockInfo.PrevBlock = prev;
     }
@@ -1797,7 +1808,7 @@ void BuddyFree(BUDDY_ADDR_T ptr)
     {
     case FREE_BLOCK:
       /* check for magic number */
-      if(isBadMagicNumber("BuddyFree (FREE BLOCK):", context, p_block, MAGIC_NUMBER_FREE, 1))
+      if(isBadMagicNumber("BuddyFree (FREE BLOCK):", context, p_block, MAGIC_NUMBER_FREE, 1, NULL))
         {
           /* doing nothing is safer !!! */
           return;
@@ -1806,7 +1817,7 @@ void BuddyFree(BUDDY_ADDR_T ptr)
 
     case RESERVED_BLOCK:
       /* check for magic number */
-      if(isBadMagicNumber("BuddyFree (RESERVED BLOCK):", context, p_block, MAGIC_NUMBER_USED, 1))
+      if(isBadMagicNumber("BuddyFree (RESERVED BLOCK):", context, p_block, MAGIC_NUMBER_USED, 1, NULL))
         {
           /* doing nothing is safer !!! */
           return;
@@ -2949,7 +2960,7 @@ int _BuddyCheck(BUDDY_ADDR_T ptr, int other_thread_ok, const char *label)
     {
     case FREE_BLOCK:
       /* check for magic number */
-      if(isBadMagicNumber("BuddyCheck (FREE BLOCK):", context, p_block, MAGIC_NUMBER_FREE, 1))
+      if(isBadMagicNumber("BuddyCheck (FREE BLOCK):", context, p_block, MAGIC_NUMBER_FREE, 1, label))
         {
           /* doing nothing is safer !!! */
           return 0;
@@ -2958,7 +2969,7 @@ int _BuddyCheck(BUDDY_ADDR_T ptr, int other_thread_ok, const char *label)
 
     case RESERVED_BLOCK:
       /* check for magic number */
-      if(isBadMagicNumber("BuddyCheck (RESERVED BLOCK):", context, p_block, MAGIC_NUMBER_USED, 1))
+      if(isBadMagicNumber("BuddyCheck (RESERVED BLOCK):", context, p_block, MAGIC_NUMBER_USED, 1, label))
         {
           /* doing nothing is safer !!! */
           return 0;
@@ -2968,8 +2979,8 @@ int _BuddyCheck(BUDDY_ADDR_T ptr, int other_thread_ok, const char *label)
     default:
       /* Invalid Header status : may not be allocated using BuddyMalloc */
       LogMajor(COMPONENT_MEMALLOC,
-               "BuddyCheck: pointer %p is not a buddy block !!!",
-               ptr);
+               "BuddyCheck: %s pointer %p is not a buddy block !!!",
+               label, ptr);
       log_bad_block("BuddyCheck:", context, p_block, 0, 0);
       return 0;
     }
@@ -2978,8 +2989,8 @@ int _BuddyCheck(BUDDY_ADDR_T ptr, int other_thread_ok, const char *label)
   if(p_block->Header.status == FREE_BLOCK)
     {
       LogWarn(COMPONENT_MEMALLOC,
-              "BuddyCheck: Block %p is already free or has been set to 0",
-              ptr);
+              "BuddyCheck: %s Block %p is already free or has been set to 0",
+              label, ptr);
       log_bad_block("BuddyCheck:", context, p_block, 1, 1);
       return 0;
     }
@@ -2992,16 +3003,16 @@ int _BuddyCheck(BUDDY_ADDR_T ptr, int other_thread_ok, const char *label)
     {
       context->Errno = BUDDY_ERR_EINVAL;
       LogWarn(COMPONENT_MEMALLOC,
-              "BuddyCheck: Block %p may be corrupted)",
-              p_block);
+              "BuddyCheck: %s Block %p may be corrupted)",
+              label, p_block);
       return 0;
     }
 
   if(!other_thread_ok && p_block->Header.OwnerThread != pthread_self())
     {
       LogWarn(COMPONENT_MEMALLOC,
-              "BuddyCheck: Block %p has been allocated by another thread !!!! (%p<>%p)",
-              p_block, (BUDDY_ADDR_T) p_block->Header.OwnerThread,
+              "BuddyCheck: %s Block %p has been allocated by another thread !!!! (%p<>%p)",
+              label, p_block, (BUDDY_ADDR_T) p_block->Header.OwnerThread,
               (BUDDY_ADDR_T) pthread_self());
       log_bad_block("BuddyCheck:", context, p_block, 1, 1);
       return 0;
