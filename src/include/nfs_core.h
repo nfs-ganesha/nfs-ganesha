@@ -419,7 +419,6 @@ typedef struct nfs_request_data__
   struct svc_req req;
   struct rpc_msg msg;
   char cred_area[2 * MAX_AUTH_BYTES + RQCRED_SIZE];
-  int status;
   nfs_res_t res_nfs;
   nfs_arg_t arg_nfs;
 } nfs_request_data_t;

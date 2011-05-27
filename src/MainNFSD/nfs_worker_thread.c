@@ -653,7 +653,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   unsigned int export_check_result;
 
   exportlist_t *pexport;
-  nfs_arg_t arg_nfs;
   nfs_arg_t *parg_nfs = &preqnfs->arg_nfs;
   nfs_res_t res_nfs;
   short exportid;
@@ -662,7 +661,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   SVCXPRT *ptr_svc = preqnfs->xprt;
   nfs_stat_type_t stat_type;
   sockaddr_t hostaddr;
-  char addrbuf[SOCK_NAME_MAX];
   int port;
   int rc;
   int do_dupreq_cache;
@@ -686,35 +684,54 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   /* Get the value from the worker data */
   lru_dupreq = pworker_data->duplicate_request;
 
-  LogDebug(COMPONENT_DISPATCH,
-           "Program %d, Version %d, Function %d",
-           (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
-
   /* initializing RPC structure */
-  memset(&arg_nfs, 0, sizeof(arg_nfs));
   memset(&res_nfs, 0, sizeof(res_nfs));
 
   /* If we reach this point, there was no dupreq cache hit or no dup req cache was necessary */
   /* Get NFS function descriptor. */
   pworker_data->pfuncdesc = nfs_rpc_get_funcdesc(preqnfs);
   if(pworker_data->pfuncdesc == INVALID_FUNCDESC)
-    return;
+    {
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "INVALID_FUNCDESC for Program %d, Version %d, Function %d",
+                   (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
+      return;
+    }
 
   /* In TCP, RPC argument was already extracted. Here extract RPC argument only in UDP. */
   if(preqnfs->ipproto == IPPROTO_UDP)
     {
       if(nfs_rpc_get_args(preqnfs, pworker_data->pfuncdesc) == FALSE)
-        return;
+        {
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "nfs_rpc_get_args failed for Program %d, Version %d, Function %d",
+                       (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
+          return;
+        }
     }
 
   if(copy_xprt_addr(&hostaddr, ptr_svc) == 0)
-    return;
+    {
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "copy_xprt_addr failed for Program %d, Version %d, Function %d",
+                   (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
+      return;
+    }
+
   port = get_port(&hostaddr);
-  sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
   rpcxid = get_rpc_xid(ptr_req);
 
-  LogFullDebug(COMPONENT_DISPATCH,
-               "Request from %s has xid=%u", addrbuf, rpcxid);
+  if(isDebug(COMPONENT_DISPATCH))
+    {
+      char addrbuf[SOCK_NAME_MAX];
+      sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
+      LogDebug(COMPONENT_DISPATCH,
+               "Request from %s for Program %d, Version %d, Function %d has xid=%u",
+               addrbuf,
+               (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc,
+               rpcxid);
+    }
+
   do_dupreq_cache = pworker_data->pfuncdesc->dispatch_behaviour & CAN_BE_DUP;
   LogFullDebug(COMPONENT_DISPATCH, "do_dupreq_cache = %d", do_dupreq_cache);
   status = nfs_dupreq_add_not_finished(rpcxid,
@@ -769,7 +786,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       /* Another thread owns the request */
     case DUPREQ_BEING_PROCESSED:
       LogFullDebug(COMPONENT_DISPATCH,
-                   "Dupreq #%u was asked for process since another thread manage it, reject for avoiding threads starvation...",
+                   "Dupreq xid=%u was asked for process since another thread manage it, reject for avoiding threads starvation...",
                    rpcxid);
       /* Free the arguments */
       if(preqnfs->req.rq_vers == 2 || preqnfs->req.rq_vers == 3 || preqnfs->req.rq_vers == 4)
@@ -829,6 +846,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                     {
                       char dumpfh[1024];
                       char *reason;
+                      char addrbuf[SOCK_NAME_MAX];
+                      sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
                       if(exportid < 0)
                         reason = "has badly formed handle";
                       else if(pexport == NULL)
@@ -877,6 +896,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                     {
                       char dumpfh[1024];
                       char *reason;
+                      char addrbuf[SOCK_NAME_MAX];
+                      sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
                       if(exportid < 0)
                         reason = "has badly formed handle";
                       else if(pexport == NULL)
@@ -994,6 +1015,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                                                 (pworker_data->pfuncdesc->dispatch_behaviour & MAKES_WRITE) == MAKES_WRITE);
   if (export_check_result == EXPORT_PERMISSION_DENIED)
     {
+      char addrbuf[SOCK_NAME_MAX];
+      sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
       LogInfo(COMPONENT_DISPATCH,
               "Host %s is not allowed to access this export entry, vers=%d, proc=%d",
               addrbuf,
@@ -1313,9 +1336,12 @@ void DispatchWork(nfs_request_data_t *pnfsreq, unsigned int worker_index)
 {
   LRU_entry_t *pentry = NULL;
   LRU_status_t status;
+  struct svc_req *ptr_req = &pnfsreq->req;
+  unsigned int rpcxid = get_rpc_xid(ptr_req);
 
   LogFullDebug(COMPONENT_DISPATCH,
-               "Awaking Worker Thread #%u", worker_index);
+               "Awaking Worker Thread #%u for request %p, xid=%u",
+               worker_index, pnfsreq, rpcxid);
 
   P(workers_data[worker_index].mutex_req_condvar);
   P(workers_data[worker_index].request_pool_mutex);
@@ -1355,6 +1381,13 @@ enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
   struct svc_req *preq;
   SVCXPRT *xprt;
   enum auth_stat why;
+
+  /* A few words of explanation are required here:
+   * In authentication is AUTH_NONE or AUTH_UNIX, then the value of no_dispatch remains FALSE and the request is proceeded normally
+   * If authentication is RPCSEC_GSS, no_dispatch may have value TRUE, this means that gc->gc_proc != RPCSEC_GSS_DATA and that the
+   * message is in fact an internal negociation message from RPCSEC_GSS using GSSAPI. It then should not be proceed by the worker and
+   * SVC_STAT should be returned to the dispatcher.
+   */
 
   *no_dispatch = FALSE;
 
@@ -1428,8 +1461,7 @@ void *worker_thread(void *IndexArg)
   int rc = 0;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   unsigned int gc_allowed = FALSE;
-  char thr_name[16];
-  bool_t no_dispatch = FALSE;
+  char thr_name[32];
 
   worker_index = (unsigned long)IndexArg;
   pmydata = &(workers_data[worker_index]);
@@ -1600,9 +1632,11 @@ void *worker_thread(void *IndexArg)
       pnfsreq = (nfs_request_data_t *) (pentry->buffdata.pdata);
 
       LogFullDebug(COMPONENT_DISPATCH,
-                   "I have some work to do, length=%d, invalid=%d",
+                   "I have some work to do, pnfsreq=%p, length=%d, invalid=%d, xid=%u",
+                   pnfsreq,
                    pmydata->pending_request->nb_entry,
-                   pmydata->pending_request->nb_invalid);
+                   pmydata->pending_request->nb_invalid,
+                   pnfsreq->msg.rm_xid);
 
       if(pnfsreq->xprt->XP_SOCK == 0)
       {
@@ -1614,32 +1648,20 @@ void *worker_thread(void *IndexArg)
           /* Set pointers */
           preq = &(pnfsreq->req);
 
-          if(pnfsreq->status)
-            {
-              if(AuthenticateRequest(pnfsreq, &no_dispatch) == AUTH_OK && !no_dispatch)
-                {
-                  /* A few words of explanation are required here:
-                   * In authentication is AUTH_NONE or AUTH_UNIX, then the value of no_dispatch remains FALSE and the request is proceeded normally
-                   * If authentication is RPCSEC_GSS, no_dispatch may have value TRUE, this means that gc->gc_proc != RPCSEC_GSS_DATA and that the
-                   * message is in fact an internal negociation message from RPCSEC_GSS using GSSAPI. It then should not be proceed by the worker and
-                   * SCV_STAT should be returned to the dispatcher */
-
-                      /* Validate the rpc request as being a valid program, version, and proc. If not, report the error.
-                       * Otherwise, execute the funtion. */
-                      LogFullDebug(COMPONENT_DISPATCH,
-                                   "About to execute Prog = %d, vers = %d, proc = %d xprt=%p",
-                                   (int)preq->rq_prog, (int)preq->rq_vers,
-                                   (int)preq->rq_proc, preq->rq_xprt);
-                      if(is_rpc_call_valid(preq->rq_xprt, preq) == TRUE)
-                        nfs_rpc_execute(pnfsreq, pmydata);
-                }
-            }
+          /* Validate the rpc request as being a valid program, version, and proc. If not, report the error.
+           * Otherwise, execute the funtion.
+           */
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "About to execute Prog = %d, vers = %d, proc = %d xprt=%p",
+                       (int)preq->rq_prog, (int)preq->rq_vers,
+                       (int)preq->rq_proc, preq->rq_xprt);
+          if(is_rpc_call_valid(preq->rq_xprt, preq) == TRUE)
+            nfs_rpc_execute(pnfsreq, pmydata);
         }
 
       /* Free the req by releasing the entry */
       LogFullDebug(COMPONENT_DISPATCH,
-                   "Invalidating processed entry with xprt_stat=%d",
-                   pnfsreq->status);
+                   "Invalidating processed entry");
       P(pmydata->request_pool_mutex);
       if(LRU_invalidate(pmydata->pending_request, pentry) != LRU_LIST_SUCCESS)
         {

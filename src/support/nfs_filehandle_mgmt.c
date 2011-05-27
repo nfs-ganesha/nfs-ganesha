@@ -755,7 +755,9 @@ void sprint_mem(char *str, char *buff, int len)
 {
   int i;
 
-  for(i = 0; i < len; i++)
+  if(buff == NULL)
+    sprintf(str, "<null>");
+  else for(i = 0; i < len; i++)
     sprintf(str + i * 2, "%02X", (unsigned char)buff[i]);
 }
 
