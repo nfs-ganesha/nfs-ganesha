@@ -104,8 +104,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
   static char my_name[MAXNAMLEN];
   const nfs_function_desc_t *pfuncdesc;
   fridge_entry_t * pfe = NULL ;
-  bool_t no_dispatch, recv_status;
-  enum auth_stat astatus;
+  bool_t no_dispatch = TRUE, recv_status;
 
   snprintf(my_name, MAXNAMLEN, "tcp_sock_mgr#fd=%ld", tcp_sock);
   SetNameFunction(my_name);
@@ -303,72 +302,63 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           pnfsreq->req.rq_vers = pmsg->rm_call.cb_vers;
           pnfsreq->req.rq_proc = pmsg->rm_call.cb_proc;
 
+          /* Use primary xprt for now (in case xprt has GSS state)
+           * until we make a copy
+           */
+          pnfsreq->xprt = xprt;
+          pnfsreq->req.rq_xprt = xprt;
+
           pfuncdesc = nfs_rpc_get_funcdesc(pnfsreq);
 
-          /* Authenticate request using primary xprt (in case xprt has GSS state) */
-          pnfsreq->xprt = xprt;
-          astatus = AuthenticateRequest(pnfsreq, &no_dispatch);
-          if(astatus == AUTH_OK && !no_dispatch)
-            {
-              if(pfuncdesc != INVALID_FUNCDESC)
-                nfs_rpc_get_args(pnfsreq, pfuncdesc);
+          if(pfuncdesc != INVALID_FUNCDESC)
+            AuthenticateRequest(pnfsreq, &no_dispatch);
+          else
+            no_dispatch = TRUE;
 
+          if(!no_dispatch && !nfs_rpc_get_args(pnfsreq, pfuncdesc))
+            no_dispatch = TRUE;
+
+          if(!no_dispatch)
+            {
               /* Update a copy of SVCXPRT and pass it to the worker thread to use it. */
               pnfsreq->xprt_copy = Svcxprt_copy(pnfsreq->xprt_copy, xprt);
-              
-              if(!pnfsreq->xprt_copy)
-                {
-                  //TODO: handle error - barf for now...
-                  LogCrit(COMPONENT_DISPATCH,
-                          "Svcxprt_copy failed.... oops...");
-                  // should send some kind of response here
-                }
-              else
-                {
-                  pnfsreq->xprt = pnfsreq->xprt_copy;
-                  preq->rq_xprt = pnfsreq->xprt_copy;
-
-                  /* Regular management of the request (UDP request or TCP request on connected handler */
-                  DispatchWork(pnfsreq, worker_index);
-                }
-
-              if(pfuncdesc != INVALID_FUNCDESC)
-                {
-                  gettimeofday(&timer_end, NULL);
-                  timer_diff = time_diff(timer_start, timer_end);
-
-                  /* Update await time. */
-                  stat_type = GANESHA_STAT_SUCCESS;
-                  latency_stat.type = AWAIT_TIME;
-                  latency_stat.latency = timer_diff.tv_sec * 1000000 + timer_diff.tv_usec; /* microseconds */
-                  nfs_stat_update(stat_type,
-                                  &(workers_data[worker_index].stats.stat_req),
-                                  &(pnfsreq->req),
-                                  &latency_stat);
-
-                  LogFullDebug(COMPONENT_DISPATCH,
-                               "Worker Thread #%u has committed the operation: end_time %llu.%.6llu await %llu.%.6llu",
-                               worker_index,
-                               (unsigned long long int)timer_end.tv_sec,
-                               (unsigned long long int)timer_end.tv_usec,
-                               (unsigned long long int)timer_diff.tv_sec,
-                               (unsigned long long int)timer_diff.tv_usec);
-                }
-
-              if(!pnfsreq->xprt_copy)
-                {
-                  /* Release the entry */
-                  P(workers_data[worker_index].request_pool_mutex);
-                  ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
-                  V(workers_data[worker_index].request_pool_mutex);
-                }
+              if(pnfsreq->xprt_copy == NULL)
+                no_dispatch = TRUE;
             }
-          else
+          if(no_dispatch)
             {
               /* Release the entry */
               P(workers_data[worker_index].request_pool_mutex);
               ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
               V(workers_data[worker_index].request_pool_mutex);
+            }
+          else
+            {
+              pnfsreq->xprt = pnfsreq->xprt_copy;
+              preq->rq_xprt = pnfsreq->xprt_copy;
+
+              /* Regular management of the request (UDP request or TCP request on connected handler */
+              DispatchWork(pnfsreq, worker_index);
+
+              gettimeofday(&timer_end, NULL);
+              timer_diff = time_diff(timer_start, timer_end);
+
+              /* Update await time. */
+              stat_type = GANESHA_STAT_SUCCESS;
+              latency_stat.type = AWAIT_TIME;
+              latency_stat.latency = timer_diff.tv_sec * 1000000 + timer_diff.tv_usec; /* microseconds */
+              nfs_stat_update(stat_type,
+                              &(workers_data[worker_index].stats.stat_req),
+                              &(pnfsreq->req),
+                              &latency_stat);
+
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "Worker Thread #%u has committed the operation: end_time %llu.%.6llu await %llu.%.6llu",
+                           worker_index,
+                           (unsigned long long int)timer_end.tv_sec,
+                           (unsigned long long int)timer_end.tv_usec,
+                           (unsigned long long int)timer_diff.tv_sec,
+                           (unsigned long long int)timer_diff.tv_usec);
             }
         }
     }

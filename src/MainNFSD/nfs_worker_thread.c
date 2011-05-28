@@ -569,8 +569,13 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
   struct svc_req *ptr_req = &preqnfs->req;
 
   /* Validate rpc call, but don't report any errors here */
-  if(is_rpc_call_valid(NULL, ptr_req) == FALSE)
-    return INVALID_FUNCDESC;
+  if(is_rpc_call_valid(preqnfs->xprt, ptr_req) == FALSE)
+    {
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "INVALID_FUNCDESC for Program %d, Version %d, Function %d after is_rpc_call_valid",
+                   (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
+      return INVALID_FUNCDESC;
+    }
 
   if(ptr_req->rq_prog == nfs_param.core_param.nfs_program)
     {
@@ -608,6 +613,10 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
 #endif                          /* _USE_QUOTA */
 
   /* Oops, should never get here! */
+  svcerr_noprog(preqnfs->xprt);
+  LogFullDebug(COMPONENT_DISPATCH,
+               "INVALID_FUNCDESC for Program %d, Version %d, Function %d",
+               (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
   return INVALID_FUNCDESC;
 }
 
@@ -627,8 +636,10 @@ int nfs_rpc_get_args(nfs_request_data_t * preqnfs, const nfs_function_desc_t *pf
 
   if(svc_getargs(ptr_svc, pfuncdesc->xdr_decode_func, (caddr_t) parg_nfs) == FALSE)
     {
+      struct svc_req *ptr_req = &preqnfs->req;
       LogMajor(COMPONENT_DISPATCH,
-               "NFS DISPATCHER: FAILURE: Error while calling svc_getargs");
+                   "svc_getargs failed for Program %d, Version %d, Function %d",
+                   (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
       svcerr_decode(ptr_svc);
       return FALSE;
     }
@@ -691,23 +702,13 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   /* Get NFS function descriptor. */
   pworker_data->pfuncdesc = nfs_rpc_get_funcdesc(preqnfs);
   if(pworker_data->pfuncdesc == INVALID_FUNCDESC)
-    {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "INVALID_FUNCDESC for Program %d, Version %d, Function %d",
-                   (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
-      return;
-    }
+    return;
 
   /* In TCP, RPC argument was already extracted. Here extract RPC argument only in UDP. */
   if(preqnfs->ipproto == IPPROTO_UDP)
     {
       if(nfs_rpc_get_args(preqnfs, pworker_data->pfuncdesc) == FALSE)
-        {
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "nfs_rpc_get_args failed for Program %d, Version %d, Function %d",
-                       (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
-          return;
-        }
+        return;
     }
 
   if(copy_xprt_addr(&hostaddr, ptr_svc) == 0)
@@ -715,6 +716,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       LogFullDebug(COMPONENT_DISPATCH,
                    "copy_xprt_addr failed for Program %d, Version %d, Function %d",
                    (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
+      svcerr_systemerr(ptr_svc);
       return;
     }
 
@@ -779,6 +781,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         {
           LogCrit(COMPONENT_DISPATCH,
                   "Error: Duplicate request rejected because it was found in the cache but is not allowed to be cached.");
+          svcerr_systemerr(ptr_svc);
           return;
         }
       break;
@@ -796,28 +799,28 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                     "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
                     pworker_data->pfuncdesc->funcname);
           }
+      svcerr_systemerr(ptr_svc);
       return;
-      break;
 
       /* something is very wrong with the duplicate request cache */
     case DUPREQ_NOT_FOUND:
       LogCrit(COMPONENT_DISPATCH,
               "Did not find the request in the duplicate request cache and couldn't add the request.");
+      svcerr_systemerr(ptr_svc);
       return;
-      break;
 
       /* oom */
     case DUPREQ_INSERT_MALLOC_ERROR:
       LogCrit(COMPONENT_DISPATCH,
               "Cannot process request, not enough memory available!");
+      svcerr_systemerr(ptr_svc);
       return;
-      break;
 
     default:
       LogCrit(COMPONENT_DISPATCH,
               "Unknown duplicate request cache status. This should never be reached!");
+      svcerr_systemerr(ptr_svc);
       return;
-      break;
     }
 
   /* Get the export entry */
@@ -1417,6 +1420,7 @@ enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
               "Could not authenticate request... rejecting with AUTH_STAT=%s",
               auth_str);
       svcerr_auth(xprt, why);
+      *no_dispatch = TRUE;
       return why;
     }
   else

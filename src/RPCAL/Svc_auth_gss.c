@@ -764,6 +764,7 @@ static bool_t
 Svcauth_gss_unwrap(SVCAUTH * auth, XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr)
 {
   struct svc_rpc_gss_data *gd;
+  bool_t rc;
 
   gd = SVCAUTH_PRIVATE(auth);
 
@@ -771,8 +772,15 @@ Svcauth_gss_unwrap(SVCAUTH * auth, XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_p
     {
       return ((*xdr_func) (xdrs, xdr_ptr));
     }
-  return (xdr_rpc_gss_data(xdrs, xdr_func, xdr_ptr,
+  LogFullDebug(COMPONENT_RPCSEC_GSS,
+               "Svcauth_gss_unwrap gd->sec.svc=%d",
+               gd->sec.svc);
+  rc = (xdr_rpc_gss_data(xdrs, xdr_func, xdr_ptr,
                            gd->ctx, gd->sec.qop, gd->sec.svc, gd->seq));
+
+  LogFullDebug(COMPONENT_RPCSEC_GSS,
+               "Svcauth_gss_unwrap xdr_rpc_gss_data = %d", rc);
+  return rc;
 }
 
 int copy_svc_authgss(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)

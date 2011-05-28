@@ -247,7 +247,8 @@ SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
 
   xprt_copy = (SVCXPRT *) Mem_Alloc(sizeof(SVCXPRT));
   if(xprt_copy == NULL)
-    return NULL;
+    goto fail_no_xprt;
+
   LogFullDebug(COMPONENT_RPC,
                "Svcxprt_copy copying xprt_orig=%p to xprt_copy=%p",
                xprt_orig, xprt_copy);
@@ -310,11 +311,11 @@ SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
     }
   else
     {
-      LogCrit(COMPONENT_RPC,
-              "Attempt to copy unknown xprt %p",
-              xprt_orig);
+      LogDebug(COMPONENT_RPC,
+               "Attempt to copy unknown xprt %p",
+               xprt_orig);
       Mem_Free(xprt_copy);
-      return NULL;
+      goto fail_no_xprt;
     }
 
   if(xprt_orig->xp_tp)
@@ -358,6 +359,11 @@ SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
 
  fail:
   FreeXprt(xprt_copy);
+ fail_no_xprt:
+  /* Let caller know about failure */
+  LogCrit(COMPONENT_RPC,
+          "Failed to copy xprt");
+  svcerr_systemerr(xprt_orig);
   return NULL;
 }
 

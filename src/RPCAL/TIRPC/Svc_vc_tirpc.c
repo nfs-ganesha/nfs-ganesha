@@ -537,7 +537,16 @@ bool_t Svc_vc_getargs(SVCXPRT *xprt, xdrproc_t xdr_args, void *args_ptr)
 
   assert(xprt != NULL);
   /* args_ptr may be NULL */
-  return ((*xdr_args) (&(((struct cf_conn *)(xprt->xp_p1))->xdrs), args_ptr));
+  //return ((*xdr_args) (&(((struct cf_conn *)(xprt->xp_p1))->xdrs), args_ptr));
+  if(!SVCAUTH_UNWRAP(xprt->xp_auth,
+                     &(((struct cf_conn *)(xprt->xp_p1))->xdrs),
+                     xdr_args,
+                     args_ptr))
+    {
+      (void)Svc_vc_freeargs(xprt, xdr_args, args_ptr);
+      return FALSE;
+    }
+  return TRUE;
 }
 
 bool_t Svc_vc_freeargs(SVCXPRT *xprt, xdrproc_t xdr_args, void *args_ptr)
@@ -555,21 +564,42 @@ bool_t Svc_vc_freeargs(SVCXPRT *xprt, xdrproc_t xdr_args, void *args_ptr)
 
 bool_t Svc_vc_reply(SVCXPRT *xprt, struct rpc_msg *msg)
 {
-  struct cf_conn *cd;
-  XDR *xdrs;
-  bool_t rstat;
+  struct cf_conn *cd= (struct cf_conn *)(xprt->xp_p1);
+  XDR *xdrs = &(cd->xdrs);
+  bool_t stat;
+  bool_t has_args;
+  xdrproc_t xdr_results;
+  caddr_t xdr_location;
 
   assert(xprt != NULL);
   assert(msg != NULL);
 
-  cd = (struct cf_conn *)(xprt->xp_p1);
-  xdrs = &(cd->xdrs);
+  if(msg->rm_reply.rp_stat == MSG_ACCEPTED &&
+     msg->rm_reply.rp_acpt.ar_stat == SUCCESS)
+    {
+      has_args = TRUE;
+      xdr_results = msg->acpted_rply.ar_results.proc;
+      xdr_location = msg->acpted_rply.ar_results.where;
+
+      msg->acpted_rply.ar_results.proc = xdr_void;
+      msg->acpted_rply.ar_results.where = NULL;
+    }
+  else
+    has_args = FALSE;
 
   xdrs->x_op = XDR_ENCODE;
   msg->rm_xid = cd->x_id;
-  rstat = xdr_replymsg(xdrs, msg);
+  stat = FALSE;
+  if(xdr_replymsg(xdrs, msg) &&
+     (!has_args || (SVCAUTH_WRAP(xprt->xp_auth,
+                                 xdrs,
+                                 xdr_results,
+                                 xdr_location))))
+    {
+      stat = TRUE;
+    }
   (void)xdrrec_endofrecord(xdrs, TRUE);
-  return (rstat);
+  return (stat);
 }
 
 struct xp_ops  vc_ops =
