@@ -99,6 +99,7 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
                           struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutreturn";
+  nfsstat4 rc ;
 
 #ifndef _USE_PNFS
   res_LAYOUTRETURN4.lorr_status = NFS4ERR_NOTSUPP;
@@ -143,6 +144,14 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
 
       return res_LAYOUTRETURN4.lorr_status;
     }
+
+   /* Call pNFS service function */
+  if( ( rc = pnfs_layoutreturn( &arg_LAYOUTRETURN4, data, &res_LAYOUTRETURN4 ) ) != NFS4_OK )
+    {
+      res_LAYOUTRETURN4.lorr_status = rc ;
+      return res_LAYOUTRETURN4.lorr_status;
+    }
+   
 
   res_LAYOUTRETURN4.lorr_status = NFS4_OK;
   return res_LAYOUTRETURN4.lorr_status;

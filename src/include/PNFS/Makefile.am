@@ -5,3 +5,12 @@ endif
 if USE_PNFS_SPNFS_LIKE
 SUBDIRS = SPNFS_LIKE
 endif
+
+if USE_PNFS_OSD
+SUBDIRS = OSD
+endif
+
+if USE_PNFS_BLOCK
+SUBDIRS = BLOCK
+endif
+

@@ -389,6 +389,8 @@ AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|SPNFS_LIKE|NONE (de
 AM_CONDITIONAL(USE_PNFS_NONE, 		test "$PNFS" = "NONE" )
 AM_CONDITIONAL(USE_PNFS_PARALLEL_FS,	test "$PNFS" = "PARALLEL_FS" )
 AM_CONDITIONAL(USE_PNFS_SPNFS_LIKE, 	test "$PNFS" = "SPNFS_LIKE" )
+AM_CONDITIONAL(USE_PNFS_OSD, 	        test "$PNFS" = "OSD" )
+AM_CONDITIONAL(USE_PNFS_BLOCK, 	        test "$PNFS" = "BLOCK" )
 
 AM_CONDITIONAL(USE_PNFS,                 test "$PNFS" != "NONE" )
 
@@ -743,6 +745,16 @@ case $PNFS in
 		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable spnfsd-like NFSv4.1/pNFS support])
 		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
 		;;
+	"OSD")
+		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
+		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable OSD based NFSv4.1/pNFS support])
+		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		;;
+	"BLOCK")
+		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
+		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable Block Device based NFSv4.1/pNFS support])
+		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		;;
 	*)
 		AC_MSG_ERROR([This pNFS layout is not supported])
 esac
@@ -823,6 +835,8 @@ AC_CONFIG_FILES([include/Makefile
                  include/PNFS/Makefile
 		 include/PNFS/SPNFS_LIKE/Makefile
 		 include/PNFS/PARALLEL_FS/Makefile
+		 include/PNFS/OSD/Makefile
+		 include/PNFS/BLOCK/Makefile
                  BuddyMalloc/Makefile
                  Common/Makefile
                  support/Makefile
@@ -841,6 +855,8 @@ AC_CONFIG_FILES([include/Makefile
 		 PNFS/Makefile
 		 PNFS/SPNFS_LIKE/Makefile
 		 PNFS/PARALLEL_FS/Makefile
+		 PNFS/OSD/Makefile
+		 PNFS/BLOCK/Makefile
                  XDR/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile
@@ -856,6 +872,7 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_SNMP/Makefile
 		 FSAL/FSAL_FUSELIKE/Makefile
 		 FSAL/FSAL_LUSTRE/Makefile
+		 FSAL/FSAL_LUSTRE/PNFS/Makefile
 		 FSAL/FSAL_XFS/Makefile
 		 FSAL/FSAL_GPFS/Makefile
                  FSAL/FSAL_ZFS/Makefile

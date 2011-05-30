@@ -42,6 +42,12 @@ libfsallustre_la_SOURCES = fsal_access.c      \
                           ../../include/err_fsal.h   \
                           ../../include/FSAL/FSAL_LUSTRE/fsal_types.h
 
+if USE_PNFS
+SUBDIRS = PNFS
+libfsallustre_la_LIBADD = PNFS/libfsallustrepnfs.la
+libfsallustre_la_DEPENDENCIES =  $(libfsallustre_la_SOURCES) $(libfsallustre_la_LIBADD)
+endif 
+
 
 new: clean all
 
