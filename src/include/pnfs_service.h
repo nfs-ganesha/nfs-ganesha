@@ -40,6 +40,10 @@
 #include "PNFS/PARALLEL_FS/pnfs_layout4_nfsv4_1_files.h"
 #endif
 
+#ifdef _USE_SPNFS_LIKE
+#include "PNFS/SPNFS_LIKE/pnfs_layout4_nfsv4_1_files.h"
+#endif
+
 
 #endif                          /* _USE_PNFS */
 
