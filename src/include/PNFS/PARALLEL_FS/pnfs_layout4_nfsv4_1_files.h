@@ -82,3 +82,4 @@ nfsstat4 pnfs_lustre_layoutreturn( LAYOUTRETURN4args * pargs,
 				   compound_data_t * data,
 				   LAYOUTRETURN4res  * pres ) ; 
 
+#endif 
