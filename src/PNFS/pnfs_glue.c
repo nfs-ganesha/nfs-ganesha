@@ -47,18 +47,8 @@
 #include "pnfs.h" 
 #include "pnfs_service.h" 
 
-nfsstat4 pnfs_nit( pnfs_client_t               * pnfsclient,
-                   pnfs_layoutfile_parameter_t * pnfs_layout_param)
-{
-   return NFS4_OK;
-}
-
-nfsstat4 pnfs_terminate()
-{
-   return ;
-}
-
 #ifdef _USE_PNFS_SPNFS_LIKE
+
 nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args * pargs,  compound_data_t * data, GETDEVICELIST4res * pres ) 
 {
    return pnfs_spnfs_getdevicelist( pargs, data, pres ) ;
@@ -86,7 +76,7 @@ nfsstat4 pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs,
 }
 
 nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args * pargs, 
-                            compound_data_t   * data, i
+                            compound_data_t   * data, 
 			    fsal_pnfs_file_t  * ppnfsfile,
                             LAYOUTRETURN4res  * pres ) 
 {
@@ -130,4 +120,16 @@ nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args * pargs,
    return pnfs_lustre_layoutreturn( pargs, data, pres ) ;
 }
 #endif
+
+nfsstat4 pnfs_nit( pnfs_client_t               * pnfsclient,
+                   pnfs_layoutfile_parameter_t * pnfs_layout_param)
+{
+   return NFS4_OK;
+}
+
+nfsstat4 pnfs_terminate()
+{
+   return ;
+}
+
 

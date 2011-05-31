@@ -51,7 +51,7 @@
 #include "config_parsing.h"
 #include "err_fsal.h"
 #include "err_mfsl.h"
-#include "pnfs.h"
+#include "fsal_pnfs.h"
 
 typedef struct mfsl_parameter__
 {

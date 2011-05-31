@@ -59,7 +59,7 @@
 #include "config_parsing.h"
 #include "nfs23.h"
 #include "nfs4.h"
-
+#include "nfs_exports.h"
 #include "fsal_pnfs.h"
 
 typedef union pnfs_parameter__

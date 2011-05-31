@@ -54,22 +54,6 @@
 
 #include "PNFS/SPNFS_LIKE/pnfs_layout4_nfsv4_1_files.h"
 
-/**
- *
- * pnfs_encode_layoutget: encodes the loc_body_val structure in LAYOUTGET.
- *
- * Encodes the loc_body_val structure in layoutget.
- *
- * @param pds_file [IN]  structure representing file's part on the DS.
- * @param buff     [OUT] buffer in which XDR encoding will be made
- * @param plen     [OUT] pointerlength of buffer
- *
- * @return  nothing (void function)
- *
- */
-nfsstat4 pnfs_spnfs_layoutget( LAYOUTGET4args  * pargs, 
-		   	       compound_data_t * data,
-			       LAYOUTGET4res   * pres ) ;
 
 int pnfs_ds_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned int *plen)
 {
@@ -140,3 +124,77 @@ int pnfs_ds_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned int
 
   return NFS4_OK ;
 }                               /* pnfs_ds_encode_layoutget */
+
+/**
+ *
+ * pnfs_encode_layoutget: encodes the loc_body_val structure in LAYOUTGET.
+ *
+ * Encodes the loc_body_val structure in layoutget.
+ *
+ * @param pds_file [IN]  structure representing file's part on the DS.
+ * @param buff     [OUT] buffer in which XDR encoding will be made
+ * @param plen     [OUT] pointerlength of buffer
+ *
+ * @return  nothing (void function)
+ *
+ */
+nfsstat4 pnfs_spnfs_layoutget( LAYOUTGET4args   * playoutgetargs, 
+		   	       compound_data_t  * data,
+                               fsal_pnfs_file_t * ppnfsfile,
+			       LAYOUTGET4res    * playoutgetres )
+{
+  unsigned int offset = 0;
+  uint32_t int32 = 0;
+  int64_t int64 = 0LL;
+  unsigned int padlen = 0;
+  char deviceid[NFS4_DEVICEID4_SIZE];
+  unsigned int i;
+  int rc = 0 ;
+  char * buff = NULL ; 
+  unsigned int stripe = 1 ;
+
+  if( !data || !playoutgetres )
+    return NFS4ERR_SERVERFAULT ;
+
+
+  if((buff = Mem_Alloc(1024)) == NULL)
+    {
+      playoutgetres->logr_status = NFS4ERR_SERVERFAULT;
+      return playoutgetres->logr_status ;
+    }
+
+  /* No return on close for the moment */
+  playoutgetres->LAYOUTGET4res_u.logr_resok4.logr_return_on_close = FALSE;
+
+  /* Manages the stateid */
+  playoutgetres->LAYOUTGET4res_u.logr_resok4.logr_stateid.seqid = 1;
+  memcpy(playoutgetres->LAYOUTGET4res_u.logr_resok4.logr_stateid.other,
+         playoutgetargs->loga_stateid.other, 12);
+  //file_state->stateid_other, 12);
+
+  playoutgetres->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_len = 1;  /** @todo manages more than one segment */
+  playoutgetres->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val =
+      (layout4 *) Mem_Alloc(sizeof(layout4));
+
+  playoutgetres->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_offset =
+      playoutgetargs->loga_offset;
+  playoutgetres->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_length = 0xFFFFFFFFFFFFFFFFLL;   /* Whole file */
+  playoutgetres->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_iomode =
+      playoutgetargs->loga_iomode;
+  playoutgetres->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
+      lo_content.loc_type = LAYOUT4_NFSV4_1_FILES;
+
+  if( ( rc = pnfs_ds_encode_layoutget( &ppnfsfile->ds_file, buff, &offset ) ) != NFS4_OK )
+    return rc ;
+ 
+  playoutgetres->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
+      lo_content.loc_body.loc_body_len = offset ;
+  playoutgetres->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
+      lo_content.loc_body.loc_body_val = buff;
+
+  playoutgetres->logr_status = NFS4_OK ;
+
+
+  return NFS4_OK ; /* Now the layout specific information */
+}
+

@@ -62,8 +62,8 @@ int pnfs_init(pnfs_client_t * pnfsclient,
    return pnfs_ds_init( pnfsclient, pnfs_layout_param ) ;
 }
 
-void pnfs_terminate()
+nfsstat4 pnfs_terminate()
 {
-   return ;
+   return NFS4_OK ;
 }
 
