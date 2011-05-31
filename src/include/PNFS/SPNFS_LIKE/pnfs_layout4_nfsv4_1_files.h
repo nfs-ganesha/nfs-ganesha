@@ -108,6 +108,31 @@ int pnfs_ds_truncate_file( pnfs_client_t * pnfsclient,
                            size_t newsize,
                            pnfs_ds_file_t * pfile);
 
+int pnfs_get_location(  pnfs_client_t      * pnfsclient,
+                        fsal_handle_t      * phandle, 
+                        pnfs_hints_t       * phints,
+	                pnfs_fileloc_t * pnfs_fileloc ) ;
+
+int pnfs_create_file( pnfs_client_t  * pnfsclient,
+	              pnfs_fileloc_t * pnfs_fileloc,
+		      pnfs_file_t    * pnfs_file ) ;
+
+int pnfs_remove_file( pnfs_client_t  * pnfsclient,
+                      pnfs_file_t    * pfile ) ;
+
+int pnfs_lookup_file( pnfs_client_t  * pnfsclient,
+	              pnfs_fileloc_t * pnfs_fileloc,
+		      pnfs_file_t    * pnfs_file ) ;
+
+int pnfs_truncate_file( pnfs_client_t * pnfsclient,
+			size_t newsize,
+			pnfs_file_t * pnfs_file ) ;
+
+int pnfs_init(pnfs_client_t * pnfsclient,
+              pnfs_layoutfile_parameter_t * pnfs_layout_param) ;
+
+void pnfs_terminate();
+
 /* Internal functions */
 int pnfs_connect(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pnfs_ds_param);
 

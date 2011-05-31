@@ -99,9 +99,6 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   fsal_name_t name;
 
   cache_inode_status_t cache_status;
-#ifdef _USE_PNFS
-  pnfs_file_t pnfs_file;
-#endif
 
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_remove";
 

@@ -51,9 +51,9 @@
 #include "pnfs.h" 
 #include "pnfs_service.h" 
 
-nfsstat4 pnfs_lustre_layoutget( LAYOUTGET4args  * playoutgetargs,
-				compound_data_t * data,
-				LAYOUTGET4res   * playoutgetres )
+nfsstat4 pnfs_lustre_layoutget( LAYOUTGET4args   * playoutgetargs,
+				compound_data_t  * data,
+				LAYOUTGET4res    * playoutgetres )
 {
  unsigned int offset = 0;
   uint32_t int32 = 0;
