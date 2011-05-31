@@ -134,7 +134,7 @@ int pnfs_truncate_file( pnfs_client_t * pnfsclient,
 int pnfs_init(pnfs_client_t * pnfsclient,
               pnfs_layoutfile_parameter_t * pnfs_layout_param) ;
 
-void pnfs_terminate();
+nfsstat4 pnfs_terminate();
 
 /* Internal functions */
 int pnfs_connect(pnfs_ds_client_t * pnfsdsclient, pnfs_ds_parameter_t * pnfs_ds_param);
