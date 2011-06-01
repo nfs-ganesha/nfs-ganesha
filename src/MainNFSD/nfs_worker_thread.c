@@ -69,6 +69,15 @@
 #include "nfs_stat.h"
 #include "SemN.h"
 
+#ifdef _USE_PNFS
+#include "pnfs.h"
+#include "pnfs_service.h"
+#endif
+
+#define NULL_SVC ((struct svc_callout *)0)
+#define SVCAUTH_PRIVATE(auth) \
+        ((struct svc_rpc_gss_data *)(auth)->svc_ah_private)
+
 enum auth_stat _authenticate(register struct svc_req *rqst, struct rpc_msg *msg);
 #ifdef _USE_GSSRPC
 enum auth_stat Rpcsecgss__authenticate(register struct svc_req *rqst, struct rpc_msg *msg,

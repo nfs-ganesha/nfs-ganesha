@@ -9,6 +9,7 @@
 #endif
 
 #include "pnfs.h"
+#include "pnfs_service.h"
 
 int pnfs_get_location(  pnfs_client_t      * pnfsclient,
                         fsal_handle_t      * phandle, 
@@ -45,25 +46,10 @@ int pnfs_truncate_file( pnfs_client_t * pnfsclient,
    return pnfs_ds_truncate_file( pnfsclient, newsize, &pnfs_file->ds_file ) ;
 }
 
-int  pnfs_service_getdeviceinfo( char *buffin, unsigned int *plenin, char *buff, unsigned int *plen)
-{
-   return pnfs_ds_encode_getdeviceinfo( buff, plen) ;
-}
-
-int pnfs_service_layoutget( char *buffin, unsigned int *plenin, char *buffout, unsigned int *plenout)
-{
-   pnfs_ds_file_t * pnfs_ds_file = ( pnfs_ds_file_t *)buffin ;
-   return pnfs_ds_encode_layoutget( pnfs_ds_file, buffout, plenout ) ;
-}
-
 int pnfs_init(pnfs_client_t * pnfsclient,
               pnfs_layoutfile_parameter_t * pnfs_layout_param)
 {
    return pnfs_ds_init( pnfsclient, pnfs_layout_param ) ;
 }
 
-void pnfs_terminate()
-{
-   return ;
-}
 

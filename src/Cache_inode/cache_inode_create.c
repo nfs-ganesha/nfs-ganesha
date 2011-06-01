@@ -205,7 +205,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
                                       &pclient->mfsl_context,
                                       mode, &object_handle,
                                       &object_attributes, &parent_attributes,
-#if definde( _USE_PNFS ) && defined( _USE_PNFS_SPNFS_LIKE )  /** @todo : do the thing in a cleaner way here */
+#ifdef _USE_PNFS_SPNFS_LIKE   /** @todo : do the thing in a cleaner way here */
 	                              &pnfs_file ) ;			      
 #else
                                       NULL);

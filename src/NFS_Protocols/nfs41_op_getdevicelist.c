@@ -99,6 +99,12 @@ int nfs41_op_getdevicelist(struct nfs_argop4 *op,
 #define arg_GETDEVICELIST4  op->nfs_argop4_u.opgetdevicelist
 #define res_GETDEVICELIST4  resp->nfs_resop4_u.opgetdevicelist
 
+#ifndef _USE_PNFS
+  resp->resop = NFS4_OP_GETDEVICELIST;
+  res_GETDEVICELIST4.gdlr_status = NFS4ERR_NOTSUPP;
+  return res_GETDEVICELIST4.gdlr_status;
+#else
+
   resp->resop = NFS4_OP_GETDEVICELIST;
   res_GETDEVICELIST4.gdlr_status = NFS4_OK;
 
@@ -110,6 +116,7 @@ int nfs41_op_getdevicelist(struct nfs_argop4 *op,
 
 
   return res_GETDEVICELIST4.gdlr_status;
+#endif /* _USE_PNFS */
 }                               /* nfs41_op_exchange_id */
 
 /**

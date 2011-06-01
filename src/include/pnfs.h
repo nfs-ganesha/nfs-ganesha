@@ -52,64 +52,17 @@
 #include "config_parsing.h"
 #include "nfs23.h"
 #include "nfs4.h"
-
+#include "nfs_exports.h"
 #include "fsal_pnfs.h"
-#
+
 typedef union pnfs_parameter__
 {
   pnfs_layoutfile_parameter_t layoutfile;
 } pnfs_parameter_t;
 
-#ifdef _USE_PNFS_SPNFS_LIKE
-typedef union pnfs_file__
-{
-  pnfs_ds_file_t ds_file;
-} pnfs_file_t;
-
-typedef union pnfs_file_loc__
-{
-  pnfs_ds_loc_t ds_loc ;
-} pnfs_fileloc_t ;
-
-typedef union pnfs_hints__
-{
-  pnfs_ds_hints_t ds_hints ;
-} pnfs_hints_t ;
-
-int pnfs_get_location(  pnfs_client_t      * pnfsclient,
-                        fsal_handle_t      * phandle, 
-                        pnfs_hints_t       * phints,
-	                pnfs_fileloc_t * pnfs_fileloc ) ;
-
-int pnfs_create_file( pnfs_client_t  * pnfsclient,
-	              pnfs_fileloc_t * pnfs_fileloc,
-		      pnfs_file_t    * pnfs_file ) ;
-
-int pnfs_remove_file( pnfs_client_t  * pnfsclient,
-                      pnfs_file_t    * pfile ) ;
-
-int pnfs_lookup_file( pnfs_client_t  * pnfsclient,
-	              pnfs_fileloc_t * pnfs_fileloc,
-		      pnfs_file_t    * pnfs_file ) ;
-
-int pnfs_truncate_file( pnfs_client_t * pnfsclient,
-			size_t newsize,
-			pnfs_file_t * pnfs_file ) ;
-
-int pnfs_init(pnfs_client_t * pnfsclient,
-              pnfs_layoutfile_parameter_t * pnfs_layout_param) ;
-
-void pnfs_terminate();
-#else
-
-typedef union pnfs_file__
-{
-  int nothing ;
-} pnfs_file_t;
-#endif
 
 nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args * pargs, 
-			    compound_data_t * data,
+			     compound_data_t * data,
 			     GETDEVICELIST4res  * pres ) ;
 
 nfsstat4 pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs, 
@@ -120,12 +73,12 @@ nfsstat4 pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs,
 			    compound_data_t * data,
 			    LAYOUTCOMMIT4res  * pres ) ;
 
-nfsstat4 pnfs_layoutget( LAYOUTGET4args  * pargs, 
-			 compound_data_t * data,
-			 LAYOUTGET4res   * pres ) ;
+nfsstat4 pnfs_layoutget( LAYOUTGET4args   * pargs, 
+			 compound_data_t  * data,
+			 LAYOUTGET4res    * pres ) ;
 
 nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args * pargs, 
-			    compound_data_t * data,
+			    compound_data_t   * data,
 			    LAYOUTRETURN4res  * pres ) ; 
 
 #endif                          /* _PNFS_H */
