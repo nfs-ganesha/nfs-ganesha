@@ -85,33 +85,33 @@ nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args * pargs,
 #ifdef _USE_PNFS_PARALLEL_FS
 nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args * pargs,  compound_data_t * data, GETDEVICELIST4res * pres ) 
 {
-   return pnfs_lustre_getdevicelist( pargs, data, pres ) ;
+   return pnfs_parallel_fs_getdevicelist( pargs, data, pres ) ;
 }
 
 nfsstat4 pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs, compound_data_t * data, GETDEVICEINFO4res * pres ) 
 {
-   return pnfs_lustre_getdeviceinfo( pargs, data, pres ) ;
+   return pnfs_parallel_fs_getdeviceinfo( pargs, data, pres ) ;
 }
 
 nfsstat4 pnfs_layoutget( LAYOUTGET4args   * pargs,
 	                 compound_data_t  * data, 
 			 LAYOUTGET4res    * pres ) 
 {
-   return pnfs_lustre_layoutget( pargs, data, pres ) ;
+   return pnfs_parallel_fs_layoutget( pargs, data, pres ) ;
 }
 
 nfsstat4 pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs, 
                             compound_data_t   * data,
                             LAYOUTCOMMIT4res  * pres ) 
 {
-   return pnfs_lustre_layoutcommit( pargs, data, pres ) ;
+   return pnfs_parallel_fs_layoutcommit( pargs, data, pres ) ;
 }
 
 nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args * pargs, 
                             compound_data_t   * data, 
                             LAYOUTRETURN4res  * pres ) 
 {
-   return pnfs_lustre_layoutreturn( pargs, data, pres ) ;
+   return pnfs_parallel_fs_layoutreturn( pargs, data, pres ) ;
 }
 #endif
 

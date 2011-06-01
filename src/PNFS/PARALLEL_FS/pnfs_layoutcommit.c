@@ -53,9 +53,9 @@
 
 /**
  *
- * pnfs_lustre_layoutcommit: manages the OP4_LAYOUTCOMMIT operation for pNFS/File on top of LUSTRE
+ * pnfs_parallel_fs_layoutcommit: manages the OP4_LAYOUTCOMMIT operation for pNFS/File on top of PARALLEL_FS
  *
- * Manages the OP4_LAYOUTCOMMIT operation for pNFS/File on top of LUSTRE
+ * Manages the OP4_LAYOUTCOMMIT operation for pNFS/File on top of PARALLEL_FS
  *
  * @param playoutcommitargs [IN]  pointer to layoutcommit's arguments
  * @param data              [INOUT]  pointer to related compoud request
@@ -65,7 +65,7 @@
  *
  */
 
-nfsstat4 pnfs_lustre_layoutcommit( LAYOUTCOMMIT4args  * playoutcommitargs,
+nfsstat4 pnfs_parallel_fs_layoutcommit( LAYOUTCOMMIT4args  * playoutcommitargs,
 			           compound_data_t    * data,
 				   LAYOUTCOMMIT4res   * playoutcommitres )
 {
@@ -77,4 +77,4 @@ nfsstat4 pnfs_lustre_layoutcommit( LAYOUTCOMMIT4args  * playoutcommitargs,
   playoutcommitres->locr_status = NFS4_OK;
 
   return playoutcommitres->locr_status  ;
-}                               /* pnfs_lustre_layoutcommit */
+}                               /* pnfs_parallel_fs_layoutcommit */

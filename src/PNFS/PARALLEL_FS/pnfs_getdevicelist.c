@@ -53,9 +53,9 @@
 
 /**
  *
- * pnfs_lustre_getdevicelist: manages the OP4_GETDEVICELIST operation for pNFS/File on top of LUSTRE
+ * pnfs_parallel_fs_getdevicelist: manages the OP4_GETDEVICELIST operation for pNFS/File on top of PARALLEL_FS
  *
- * Manages the OP4_GETDEVICELISTT operation for pNFS/File on top of LUSTRE
+ * Manages the OP4_GETDEVICELIST operation for pNFS/File on top of PARALLEL_FS
  *
  * @param pgetdevicelistargs [IN]  pointer to getdevicelist's arguments
  * @param data           [INOUT]  pointer to related compoud request
@@ -65,7 +65,7 @@
  *
  */
 
-nfsstat4 pnfs_lustre_getdevicelist( GETDEVICELIST4args  * pgetdevicelistargs,
+nfsstat4 pnfs_parallel_fs_getdevicelist( GETDEVICELIST4args  * pgetdevicelistargs,
 			            compound_data_t     * data,
 				    GETDEVICELIST4res   * pgetdevicelistres )
 {
@@ -73,4 +73,4 @@ nfsstat4 pnfs_lustre_getdevicelist( GETDEVICELIST4args  * pgetdevicelistargs,
   pgetdevicelistres->gdlr_status = NFS4_OK;
 
   return pgetdevicelistres->gdlr_status  ;
-}                               /* pnfs_lustre_getdevicelist */
+}                               /* pnfs_parallel_fs_getdevicelist */

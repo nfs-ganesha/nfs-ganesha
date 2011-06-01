@@ -63,24 +63,24 @@
 
 
 /* Mandatory functions */
-nfsstat4 pnfs_lustre_getdevicelist( GETDEVICELIST4args * pargs, 
-				    compound_data_t   * data,
-				    GETDEVICELIST4res  * pres ) ;
+nfsstat4 pnfs_parallel_fs_getdevicelist( GETDEVICELIST4args * pargs, 
+				         compound_data_t   * data,
+				         GETDEVICELIST4res  * pres ) ;
 
-nfsstat4 pnfs_lustre_getdeviceinfo( GETDEVICEINFO4args * pargs,
-				    compound_data_t   * data,
-				    GETDEVICEINFO4res  * pres ) ;
+nfsstat4 pnfs_parallel_fs_getdeviceinfo( GETDEVICEINFO4args * pargs,
+				         compound_data_t   * data,
+				         GETDEVICEINFO4res  * pres ) ;
 
-nfsstat4 pnfs_lustre_layoutcommit( LAYOUTCOMMIT4args * pargs, 
-				   compound_data_t   * data,
-	    		           LAYOUTCOMMIT4res  * pres ) ;
+nfsstat4 pnfs_parallel_fs_layoutcommit( LAYOUTCOMMIT4args * pargs, 
+				        compound_data_t   * data,
+	    		                LAYOUTCOMMIT4res  * pres ) ;
 
-nfsstat4 pnfs_lustre_layoutget( LAYOUTGET4args  * pargs, 
-				compound_data_t * data,
-				LAYOUTGET4res   * pres ) ;
+nfsstat4 pnfs_parallel_fs_layoutget( LAYOUTGET4args  * pargs, 
+				     compound_data_t * data,
+				     LAYOUTGET4res   * pres ) ;
 
-nfsstat4 pnfs_lustre_layoutreturn( LAYOUTRETURN4args * pargs, 
-				   compound_data_t * data,
-				   LAYOUTRETURN4res  * pres ) ; 
+nfsstat4 pnfs_parallel_fs_layoutreturn( LAYOUTRETURN4args * pargs, 
+				        compound_data_t * data,
+				        LAYOUTRETURN4res  * pres ) ; 
 
 #endif                          /* _PNFS_LAYOUT4_NFSV4_1_FILES_H */

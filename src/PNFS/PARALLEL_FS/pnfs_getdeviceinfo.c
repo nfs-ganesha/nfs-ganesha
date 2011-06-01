@@ -56,9 +56,9 @@ extern nfs_parameter_t nfs_param ;
 
 /**
  *
- * pnfs_lustre_getdeviceinfo: manages the OP4_GETDEVICEINFO operation for pNFS/File on top of LUSTRE
+ * pnfs_parallel_fs_getdeviceinfo: manages the OP4_GETDEVICEINFO operation for pNFS/File on top of PARALLEL_FS
  *
- * Manages the OP4_GETDEVICEINFOT operation for pNFS/File on top of LUSTRE
+ * Manages the OP4_GETDEVICEINFOT operation for pNFS/File on top of PARALLEL_FS
  *
  * @param pgetdeviceinfoargs [IN]  pointer to getdeviceinfo's arguments
  * @param data           [INOUT]  pointer to related compoud request
@@ -68,7 +68,7 @@ extern nfs_parameter_t nfs_param ;
  *
  */
 
-nfsstat4 pnfs_lustre_getdeviceinfo( GETDEVICEINFO4args  * pgetdeviceinfoargs,
+nfsstat4 pnfs_parallel_fs_getdeviceinfo( GETDEVICEINFO4args  * pgetdeviceinfoargs,
 			            compound_data_t     * data,
 				    GETDEVICEINFO4res   * pgetdeviceinfores )
 {
@@ -147,4 +147,4 @@ nfsstat4 pnfs_lustre_getdeviceinfo( GETDEVICEINFO4args  * pgetdeviceinfoargs,
   pgetdeviceinfores->gdir_status = NFS4_OK;
 
   return pgetdeviceinfores->gdir_status  ;
-}                               /* pnfs_lustre_getdeviceinfo */
+}                               /* pnfs_parallel_fs_getdeviceinfo */
