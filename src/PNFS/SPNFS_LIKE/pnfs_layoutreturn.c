@@ -67,7 +67,6 @@
 
 nfsstat4 pnfs_spnfs_layoutreturn( LAYOUTRETURN4args  * playoutreturnargs,
 			          compound_data_t    * data,
-                                  fsal_pnfs_file_t   * ppnfsfile,
 				  LAYOUTRETURN4res   * playoutreturnres )
 {
   

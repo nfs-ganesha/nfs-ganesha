@@ -68,9 +68,9 @@ extern nfs_parameter_t nfs_param ;
  *
  */
 
-nfsstat4 pnfs_lustre_getdeviceinfo( GETDEVICEINFO4args  * pgetdeviceinfoargs,
-			            compound_data_t     * data,
-				    GETDEVICEINFO4res   * pgetdeviceinfores )
+nfsstat4 pnfs_spnfs_getdeviceinfo( GETDEVICEINFO4args  * pgetdeviceinfoargs,
+			           compound_data_t     * data,
+				   GETDEVICEINFO4res   * pgetdeviceinfores )
 {
   unsigned int offset = 0;
   uint32_t int32 = 0;

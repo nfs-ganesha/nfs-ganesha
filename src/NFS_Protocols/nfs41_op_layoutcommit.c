@@ -163,11 +163,7 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
     }
 
   /* Call pNFS service function */
-#ifdef _USE_PNFS_PARALLEL_FS 
-  if( ( rc = pnfs_layoutcommit( &arg_LAYOUTCOMMIT4, data, NULL, &res_LAYOUTCOMMIT4 ) ) != NFS4_OK )
-#else
   if( ( rc = pnfs_layoutcommit( &arg_LAYOUTCOMMIT4, data, &res_LAYOUTCOMMIT4 ) ) != NFS4_OK )
-#endif
     {
       res_LAYOUTCOMMIT4.locr_status = rc ;
       return res_LAYOUTCOMMIT4.locr_status;

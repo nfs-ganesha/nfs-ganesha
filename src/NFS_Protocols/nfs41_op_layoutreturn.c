@@ -146,11 +146,7 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
     }
 
    /* Call pNFS service function */
-#ifdef _USE_PNFS_PARALLEL_FS 
-  if( ( rc = pnfs_layoutreturn( &arg_LAYOUTRETURN4, data, NULL, &res_LAYOUTRETURN4 ) ) != NFS4_OK )
-#else
   if( ( rc = pnfs_layoutreturn( &arg_LAYOUTRETURN4, data, &res_LAYOUTRETURN4 ) ) != NFS4_OK )
-#endif
     {
       res_LAYOUTRETURN4.lorr_status = rc ;
       return res_LAYOUTRETURN4.lorr_status;

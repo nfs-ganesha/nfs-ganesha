@@ -78,17 +78,14 @@ nfsstat4 pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs,
 
 nfsstat4 pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs, 
 			    compound_data_t * data,
-                            fsal_pnfs_file_t * ppnfsfile,
 			    LAYOUTCOMMIT4res  * pres ) ;
 
 nfsstat4 pnfs_layoutget( LAYOUTGET4args   * pargs, 
 			 compound_data_t  * data,
-                         fsal_pnfs_file_t * ppnfsfile,
 			 LAYOUTGET4res    * pres ) ;
 
 nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args * pargs, 
 			    compound_data_t   * data,
-                            fsal_pnfs_file_t  * ppnfsfile,
 			    LAYOUTRETURN4res  * pres ) ; 
 
 #endif                          /* _PNFS_H */

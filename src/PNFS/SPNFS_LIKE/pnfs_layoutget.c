@@ -140,7 +140,6 @@ int pnfs_ds_encode_layoutget(pnfs_ds_file_t * pds_file, char *buff, unsigned int
  */
 nfsstat4 pnfs_spnfs_layoutget( LAYOUTGET4args   * playoutgetargs, 
 		   	       compound_data_t  * data,
-                               fsal_pnfs_file_t * ppnfsfile,
 			       LAYOUTGET4res    * playoutgetres )
 {
   unsigned int offset = 0;
@@ -152,6 +151,7 @@ nfsstat4 pnfs_spnfs_layoutget( LAYOUTGET4args   * playoutgetargs,
   int rc = 0 ;
   char * buff = NULL ; 
   unsigned int stripe = 1 ;
+  fsal_pnfs_file_t * ppnfsfile = &data->current_entry->object.file.pnfs_file ;
 
   if( !data || !playoutgetres )
     return NFS4ERR_SERVERFAULT ;

@@ -75,6 +75,10 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 
+#ifdef _USE_PNFS
+#include "pnfs.h"
+#include "pnfs_service.h"
+#endif
 
 /**
  * 
@@ -267,11 +271,7 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
       lo_content.loc_body.loc_body_val = buff;
 
-#ifdef _USE_PNFS_PARALLEL_FS 
-  if( ( rc = pnfs_layoutget( &arg_LAYOUTGET4, data, NULL, &res_LAYOUTGET4 ) ) != NFS4_OK )
-#else
   if( ( rc = pnfs_layoutget( &arg_LAYOUTGET4, data, &res_LAYOUTGET4 ) ) != NFS4_OK )
-#endif
     {
        res_LAYOUTGET4.logr_status = rc ;
        return res_LAYOUTGET4.logr_status;

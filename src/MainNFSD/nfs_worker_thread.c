@@ -81,6 +81,11 @@
 #include "nfs_stat.h"
 #include "SemN.h"
 
+#ifdef _USE_PNFS
+#include "pnfs.h"
+#include "pnfs_service.h"
+#endif
+
 #define NULL_SVC ((struct svc_callout *)0)
 #define SVCAUTH_PRIVATE(auth) \
         ((struct svc_rpc_gss_data *)(auth)->svc_ah_private)

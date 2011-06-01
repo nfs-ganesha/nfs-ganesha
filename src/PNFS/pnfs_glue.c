@@ -61,26 +61,23 @@ nfsstat4 pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs, compound_data_t * data,
 
 nfsstat4 pnfs_layoutget( LAYOUTGET4args   * pargs,
 	                 compound_data_t  * data, 
-			 fsal_pnfs_file_t * ppnfsfile,
 			 LAYOUTGET4res    * pres ) 
 {
-   return pnfs_spnfs_layoutget( pargs, data, ppnfsfile, pres ) ;
+   return pnfs_spnfs_layoutget( pargs, data, pres ) ;
 }
 
 nfsstat4 pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs, 
                             compound_data_t   * data,
-			    fsal_pnfs_file_t  * ppnfsfile,
                             LAYOUTCOMMIT4res  * pres ) 
 {
-   return pnfs_spnfs_layoutcommit( pargs, data, ppnfsfile, pres ) ;
+   return pnfs_spnfs_layoutcommit( pargs, data, pres ) ;
 }
 
 nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args * pargs, 
                             compound_data_t   * data, 
-			    fsal_pnfs_file_t  * ppnfsfile,
                             LAYOUTRETURN4res  * pres ) 
 {
-   return pnfs_spnfs_layoutreturn( pargs, data, ppnfsfile, pres ) ;
+   return pnfs_spnfs_layoutreturn( pargs, data, pres ) ;
 }
 
 #endif
@@ -98,7 +95,6 @@ nfsstat4 pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs, compound_data_t * data,
 
 nfsstat4 pnfs_layoutget( LAYOUTGET4args   * pargs,
 	                 compound_data_t  * data, 
-			 fsal_pnfs_file_t * ppnfsfile,
 			 LAYOUTGET4res    * pres ) 
 {
    return pnfs_lustre_layoutget( pargs, data, pres ) ;
@@ -106,7 +102,6 @@ nfsstat4 pnfs_layoutget( LAYOUTGET4args   * pargs,
 
 nfsstat4 pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs, 
                             compound_data_t   * data,
-			    fsal_pnfs_file_t  * ppnfsfile,
                             LAYOUTCOMMIT4res  * pres ) 
 {
    return pnfs_lustre_layoutcommit( pargs, data, pres ) ;
@@ -114,7 +109,6 @@ nfsstat4 pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs,
 
 nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args * pargs, 
                             compound_data_t   * data, 
-			    fsal_pnfs_file_t  * ppnfsfile,
                             LAYOUTRETURN4res  * pres ) 
 {
    return pnfs_lustre_layoutreturn( pargs, data, pres ) ;

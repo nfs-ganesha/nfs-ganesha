@@ -67,7 +67,6 @@
 
 nfsstat4 pnfs_spnfs_layoutcommit( LAYOUTCOMMIT4args  * playoutcommitargs,
 			          compound_data_t    * data,
-				  fsal_pnfs_file_t   * ppnfsfile,
 				  LAYOUTCOMMIT4res   * playoutcommitres )
 {
   
