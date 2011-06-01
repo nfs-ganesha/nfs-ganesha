@@ -11,16 +11,6 @@ if USE_GSSRPC
 SEC_LIB_FLAGS =
 SVC_FLAGS =
 SVC_LIB_FLAGS = -lgssrpc
-else
-if USE_TIRPC
-SEC_LIB_FLAGS =
-SVC_FLAGS = -I/usr/include/tirpc
-SVC_LIB_FLAGS = -ltirpc
-else
-SEC_LIB_FLAGS =
-SVC_FLAGS =
-SVC_LIB_FLAGS =
-endif
 endif
 if HAVE_GSSAPI
 SEC_LIB_FLAGS = $(SEC_LFLAGS) -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -ldl
