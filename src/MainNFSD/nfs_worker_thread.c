@@ -1364,6 +1364,10 @@ void *worker_thread(void *IndexArg)
   struct rpc_gss_cred *gc;
 #endif
 
+#ifdef _USE_MFSL
+  fsal_status_t fsal_status ;
+#endif 
+
   index = (long)IndexArg;
   pmydata = &(workers_data[index]);
 
