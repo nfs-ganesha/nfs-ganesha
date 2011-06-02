@@ -745,6 +745,184 @@ static bool_t Svcauth_gss_destroy_copy(SVCAUTH * auth)
   return (TRUE);
 }
 
+#ifndef DONT_USE_WRAPUNWRAP
+#define RPC_SLACK_SPACE 1024
+extern bool_t
+xdr_rpc_gss_buf(XDR *xdrs, gss_buffer_t buf, u_int maxsize);
+
+
+bool_t
+Xdr_rpc_gss_wrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
+		      gss_ctx_id_t ctx, gss_qop_t qop,
+		      rpc_gss_svc_t svc, u_int seq)
+{
+	gss_buffer_desc	databuf, wrapbuf;
+	OM_uint32	maj_stat, min_stat;
+	int		start, end, conf_state;
+	bool_t		xdr_stat = FALSE;
+	u_int		databuflen, maxwrapsz;
+
+	/* Skip databody length. */
+	start = XDR_GETPOS(xdrs);
+	XDR_SETPOS(xdrs, start + 4);
+
+	memset(&databuf, 0, sizeof(databuf));
+	memset(&wrapbuf, 0, sizeof(wrapbuf));
+
+	/* Marshal rpc_gss_data_t (sequence number + arguments). */
+	if (!xdr_u_int(xdrs, &seq) || !(*xdr_func)(xdrs, xdr_ptr))
+		return (FALSE);
+	end = XDR_GETPOS(xdrs);
+
+	/* Set databuf to marshalled rpc_gss_data_t. */
+	databuflen = end - start - 4;
+	XDR_SETPOS(xdrs, start + 4);
+	databuf.value = XDR_INLINE(xdrs, databuflen);
+	databuf.length = databuflen;
+
+	xdr_stat = FALSE;
+
+	if (svc == RPCSEC_GSS_SVC_INTEGRITY) {
+		/* Marshal databody_integ length. */
+		XDR_SETPOS(xdrs, start);
+		if (!xdr_u_int(xdrs, (u_int *)&databuflen))
+			return (FALSE);
+
+		/* Checksum rpc_gss_data_t. */
+		maj_stat = gss_get_mic(&min_stat, ctx, qop,
+				       &databuf, &wrapbuf);
+		if (maj_stat != GSS_S_COMPLETE) {
+			LogFullDebug(COMPONENT_RPCSEC_GSS,"gss_get_mic failed");
+			return (FALSE);
+		}
+		/* Marshal checksum. */
+		XDR_SETPOS(xdrs, end);
+		maxwrapsz = (u_int)(wrapbuf.length + RPC_SLACK_SPACE);
+		xdr_stat = xdr_rpc_gss_buf(xdrs, &wrapbuf, maxwrapsz);
+		gss_release_buffer(&min_stat, &wrapbuf);
+	}
+	else if (svc == RPCSEC_GSS_SVC_PRIVACY) {
+		/* Encrypt rpc_gss_data_t. */
+		maj_stat = gss_wrap(&min_stat, ctx, TRUE, qop, &databuf,
+				    &conf_state, &wrapbuf);
+		if (maj_stat != GSS_S_COMPLETE) {
+			LogFullDebug(COMPONENT_RPCSEC_GSS,"gss_wrap %d %d", maj_stat, min_stat);
+			return (FALSE);
+		}
+		/* Marshal databody_priv. */
+		XDR_SETPOS(xdrs, start);
+		maxwrapsz = (u_int)(wrapbuf.length + RPC_SLACK_SPACE);
+		xdr_stat = xdr_rpc_gss_buf(xdrs, &wrapbuf, maxwrapsz);
+		gss_release_buffer(&min_stat, &wrapbuf);
+	}
+	return (xdr_stat);
+}
+
+bool_t
+Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
+			gss_ctx_id_t ctx, gss_qop_t qop,
+			rpc_gss_svc_t svc, u_int seq)
+{
+	XDR		tmpxdrs;
+	gss_buffer_desc	databuf, wrapbuf;
+	OM_uint32	maj_stat, min_stat;
+	u_int		seq_num, qop_state;
+	int			conf_state;
+	bool_t		xdr_stat;
+
+	if (xdr_func == (xdrproc_t)xdr_void || xdr_ptr == NULL)
+		return (TRUE);
+
+	memset(&databuf, 0, sizeof(databuf));
+	memset(&wrapbuf, 0, sizeof(wrapbuf));
+
+	if (svc == RPCSEC_GSS_SVC_INTEGRITY) {
+		/* Decode databody_integ. */
+		if (!xdr_rpc_gss_buf(xdrs, &databuf, (u_int)-1)) {
+			LogFullDebug(COMPONENT_RPCSEC_GSS,"xdr decode databody_integ failed");
+			return (FALSE);
+		}
+		/* Decode checksum. */
+		if (!xdr_rpc_gss_buf(xdrs, &wrapbuf, (u_int)-1)) {
+			gss_release_buffer(&min_stat, &databuf);
+			LogFullDebug(COMPONENT_RPCSEC_GSS,"xdr decode checksum failed");
+			return (FALSE);
+		}
+		/* Verify checksum and QOP. */
+		maj_stat = gss_verify_mic(&min_stat, ctx, &databuf,
+					  &wrapbuf, &qop_state);
+		gss_release_buffer(&min_stat, &wrapbuf);
+
+		if (maj_stat != GSS_S_COMPLETE || qop_state != qop) {
+			gss_release_buffer(&min_stat, &databuf);
+			LogFullDebug(COMPONENT_RPCSEC_GSS,"gss_verify_mic %d %d", maj_stat, min_stat);
+			return (FALSE);
+		}
+	}
+	else if (svc == RPCSEC_GSS_SVC_PRIVACY) {
+		/* Decode databody_priv. */
+		if (!xdr_rpc_gss_buf(xdrs, &wrapbuf, (u_int)-1)) {
+			LogFullDebug(COMPONENT_RPCSEC_GSS,"xdr decode databody_priv failed");
+			return (FALSE);
+		}
+		/* Decrypt databody. */
+		maj_stat = gss_unwrap(&min_stat, ctx, &wrapbuf, &databuf,
+				      &conf_state, &qop_state);
+
+		gss_release_buffer(&min_stat, &wrapbuf);
+
+		/* Verify encryption and QOP. */
+		if (maj_stat != GSS_S_COMPLETE || qop_state != qop ||
+			conf_state != TRUE) {
+			gss_release_buffer(&min_stat, &databuf);
+			LogFullDebug(COMPONENT_RPCSEC_GSS,"gss_unwrap %d %d", maj_stat, min_stat);
+			return (FALSE);
+		}
+	}
+	/* Decode rpc_gss_data_t (sequence number + arguments). */
+	xdrmem_create(&tmpxdrs, databuf.value, databuf.length, XDR_DECODE);
+	xdr_stat = (xdr_u_int(&tmpxdrs, &seq_num) &&
+		    (*xdr_func)(&tmpxdrs, xdr_ptr));
+	XDR_DESTROY(&tmpxdrs);
+	gss_release_buffer(&min_stat, &databuf);
+
+	/* Verify sequence number. */
+	if (xdr_stat == TRUE && seq_num != seq) {
+		LogFullDebug(COMPONENT_RPCSEC_GSS,"wrong sequence number in databody");
+		return (FALSE);
+	}
+	return (xdr_stat);
+}
+
+bool_t
+Xdr_rpc_gss_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
+		 gss_ctx_id_t ctx, gss_qop_t qop,
+		 rpc_gss_svc_t svc, u_int seq)
+{
+	bool_t rc;
+	switch (xdrs->x_op) {
+
+	case XDR_ENCODE:
+		rc = (Xdr_rpc_gss_wrap_data(xdrs, xdr_func, xdr_ptr,
+					      ctx, qop, svc, seq));
+		LogFullDebug(COMPONENT_RPCSEC_GSS,
+		             "Xdr_rpc_gss_data ENCODE returns %d",
+		             rc);
+		return rc;
+	case XDR_DECODE:
+		rc = (Xdr_rpc_gss_unwrap_data(xdrs, xdr_func, xdr_ptr,
+						ctx, qop,svc, seq));
+		LogFullDebug(COMPONENT_RPCSEC_GSS,
+		             "Xdr_rpc_gss_data DECODE returns %d",
+		             rc);
+		return rc;
+	case XDR_FREE:
+		return (TRUE);
+	}
+	return (FALSE);
+}
+#endif
+
 static bool_t
 Svcauth_gss_wrap(SVCAUTH * auth, XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr)
 {
@@ -756,15 +934,19 @@ Svcauth_gss_wrap(SVCAUTH * auth, XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr
     {
       return ((*xdr_func) (xdrs, xdr_ptr));
     }
+#ifndef DONT_USE_WRAPUNWRAP
+  return (Xdr_rpc_gss_data(xdrs, xdr_func, xdr_ptr,
+                           gd->ctx, gd->sec.qop, gd->sec.svc, gd->seq));
+#else
   return (xdr_rpc_gss_data(xdrs, xdr_func, xdr_ptr,
                            gd->ctx, gd->sec.qop, gd->sec.svc, gd->seq));
+#endif
 }
 
 static bool_t
 Svcauth_gss_unwrap(SVCAUTH * auth, XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr)
 {
   struct svc_rpc_gss_data *gd;
-  bool_t rc;
 
   gd = SVCAUTH_PRIVATE(auth);
 
@@ -772,15 +954,13 @@ Svcauth_gss_unwrap(SVCAUTH * auth, XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_p
     {
       return ((*xdr_func) (xdrs, xdr_ptr));
     }
-  LogFullDebug(COMPONENT_RPCSEC_GSS,
-               "Svcauth_gss_unwrap gd->sec.svc=%d",
-               gd->sec.svc);
-  rc = (xdr_rpc_gss_data(xdrs, xdr_func, xdr_ptr,
+#ifndef DONT_USE_WRAPUNWRAP
+  return (Xdr_rpc_gss_data(xdrs, xdr_func, xdr_ptr,
                            gd->ctx, gd->sec.qop, gd->sec.svc, gd->seq));
-
-  LogFullDebug(COMPONENT_RPCSEC_GSS,
-               "Svcauth_gss_unwrap xdr_rpc_gss_data = %d", rc);
-  return rc;
+#else
+  return (xdr_rpc_gss_data(xdrs, xdr_func, xdr_ptr,
+                           gd->ctx, gd->sec.qop, gd->sec.svc, gd->seq));
+#endif
 }
 
 int copy_svc_authgss(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)

@@ -297,7 +297,11 @@ SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
         goto fail;
       memcpy(cd_c, cd_o, sizeof(*cd_c));
       xprt_copy->xp_p1 = cd_c;
+#ifndef NO_XDRREC_PATCH
+      Xdrrec_create(&(cd_c->xdrs), cd_c->sendsize, cd_c->recvsize, xprt_copy, Read_vc, Write_vc);
+#else
       xdrrec_create(&(cd_c->xdrs), cd_c->sendsize, cd_c->recvsize, xprt_copy, Read_vc, Write_vc);
+#endif
       if(xprt_orig->xp_verf.oa_base == cd_o->verf_body)
         xprt_copy->xp_verf.oa_base = cd_c->verf_body;
       else

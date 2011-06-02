@@ -8,7 +8,8 @@ noinst_LTLIBRARIES = librpcalcore.la
 librpcalcore_la_SOURCES = tirpc.h \
                           Svc_tirpc.c    \
                           Svc_vc_tirpc.c \
-                          Svc_dg_tirpc.c 
+                          Svc_dg_tirpc.c \
+                          Xdr_rec.c
 
 new: clean all
 

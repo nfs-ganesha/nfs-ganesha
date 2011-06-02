@@ -98,4 +98,18 @@ extern int Svc_dg_enablecache(SVCXPRT *, u_int);
 extern int Read_vc(void *, void *, int);
 extern int Write_vc(void *, void *, int);
 
+#ifndef NO_XDRREC_PATCH
+extern void Xdrrec_create(XDR *xdrs,
+                          u_int sendsize,
+                          u_int recvsize,
+                          void *tcp_handle,
+                          int (*readit)(void *, void *, int), /* like read, but pass it a tcp_handle, not sock */
+                          int (*writeit)(void *, void *, int)); /* like write, but pass it a tcp_handle, not sock */
+extern bool_t   Xdrrec_eof(XDR *);
+extern bool_t   __Xdrrec_setnonblock(XDR *, int);
+extern bool_t   Xdrrec_endofrecord(XDR *, bool_t);
+extern bool_t   __Xdrrec_getrec(XDR *, enum xprt_stat *, bool_t);
+extern bool_t   Xdrrec_skiprecord(XDR *);
+#endif
+
 #endif
