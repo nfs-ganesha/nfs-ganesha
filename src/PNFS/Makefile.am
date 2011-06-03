@@ -17,4 +17,14 @@ SUBDIRS = SPNFS_LIKE
 libpnfs_la_LIBADD =  SPNFS_LIKE/libpnfslayoutfile.la
 endif
  
+if USE_PNFS_OSD
+SUBDIRS = OSD
+libpnfs_la_LIBADD =  OSD/libpnfslayoutfile.la
+endif
+ 
+if USE_PNFS_BLOCK
+SUBDIRS = BLOCK
+libpnfs_la_LIBADD =  BLOCK/libpnfslayoutfile.la
+endif
+ 
 endif

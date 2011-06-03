@@ -75,6 +75,10 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 
+#ifdef _USE_PNFS
+#include "pnfs.h"
+#include "pnfs_service.h"
+#endif
 
 /**
  * 
@@ -113,9 +117,6 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   res_LAYOUTGET4.logr_status = NFS4ERR_NOTSUPP;
   return res_LAYOUTGET4.logr_status;
 #else
-  char *buffin = NULL;
-  unsigned int lenbuffin = 0;
-
   char *buff = NULL;
   unsigned int lenbuff = 0;
 
@@ -220,11 +221,13 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
 
   /* Add a pstate */
   candidate_type = CACHE_INODE_STATE_LAYOUT;
+#if 0
   candidate_data.layout.layout_type = arg_LAYOUTGET4.loga_layout_type;
   candidate_data.layout.iomode = arg_LAYOUTGET4.loga_iomode;
   candidate_data.layout.offset = arg_LAYOUTGET4.loga_offset;
   candidate_data.layout.length = arg_LAYOUTGET4.loga_length;
   candidate_data.layout.minlength = arg_LAYOUTGET4.loga_minlength;
+#endif
 
   /* Add the lock state to the lock table */
   if(cache_inode_add_state(data->current_entry,
@@ -263,30 +266,16 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
       lo_content.loc_type = LAYOUT4_NFSV4_1_FILES;
 
-#ifdef _USE_PNFS_PARALLEL_FS
-  buffin = data->currentFH.nfs_fh4_val ;
-  lenbuffin = data->currentFH.nfs_fh4_len ;
-#endif 
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
+      lo_content.loc_body.loc_body_len = 1024 ;
+  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
+      lo_content.loc_body.loc_body_val = buff;
 
-#ifdef _USE_PNFS_SPNFS_LIKE
-  buffin =  &data->current_entry->object.file.pnfs_file ;
-  lenbuffin = sizeof( pnfs_file_t ) ;
-#endif
-
-  if( ( rc = pnfs_service_layoutget( buffin,
-                                     &lenbuffin,
-                                     buff,
-                                     &lenbuff) ) != NFS4_OK )
+  if( ( rc = pnfs_layoutget( &arg_LAYOUTGET4, data, &res_LAYOUTGET4 ) ) != NFS4_OK )
     {
        res_LAYOUTGET4.logr_status = rc ;
        return res_LAYOUTGET4.logr_status;
     }
-
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
-      lo_content.loc_body.loc_body_len =
-      lenbuff,
-      res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
-      lo_content.loc_body.loc_body_val = buff;
 
   res_LAYOUTGET4.logr_status = NFS4_OK;
   return res_LAYOUTGET4.logr_status;

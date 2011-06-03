@@ -97,7 +97,7 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdeviceinfo";
-  int rc = 0 ;
+  nfsstat4 rc = 0 ;
 
   resp->resop = NFS4_OP_GETDEVICEINFO;
 
@@ -118,11 +118,6 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
       return res_GETDEVICEINFO4.gdir_status;
     }
 
-#if defined( _USE_PNFS_SPNFS_LIKE ) || defined( _USE_PNFS_PARALLEL_FS )
-  buffin = NULL ; /** @todo : do something less static */
-  lenbuffin = 0 ; 
-#endif
-
   /** @todo handle multiple DS here when this will be implemented (switch on deviceid arg) */
   res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_notification.bitmap4_len = 0;
   res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_notification.bitmap4_val = NULL;
@@ -130,16 +125,17 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
   res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_layout_type =
       LAYOUT4_NFSV4_1_FILES;
 
-  if( ( rc = pnfs_service_getdeviceinfo( buffin, &lenbuffin, buff, &lenbuff) ) != NFS4_OK )
+  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
+      da_addr_body_len = 1024; /** @todo For wanting of something better */
+  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
+      da_addr_body_val = buff;
+
+  if( ( rc = pnfs_getdeviceinfo( &arg_GETDEVICEINFO4, data, &res_GETDEVICEINFO4 ) ) != NFS4_OK )
     {
        res_GETDEVICEINFO4.gdir_status = rc ; 
        return res_GETDEVICEINFO4.gdir_status;
     }
 
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
-      da_addr_body_len = lenbuff;
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
-      da_addr_body_val = buff;
 
   res_GETDEVICEINFO4.gdir_status = NFS4_OK;
 

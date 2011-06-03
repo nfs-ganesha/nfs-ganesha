@@ -1,10 +1,6 @@
 /*
  *
- *
- * Copyright CEA/DAM/DIF  (2010)
- * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
- *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
- *
+ * Copyright CEA/DAM/DIF  (2011)
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,28 +19,41 @@
  * ---------------------------------------
  */
 
-#ifndef _PNFS_SERVICE_H
-#define _PNFS_SERVICE_H
+/**
+ * \file    fsal_pnfs_types.h
+ * \brief   Management of the pNFS features: FSAL/PNFS types.
+ *
+ * fsal_pnfs_types.h : Management of the pNFS features: FSAL/PNFS types.
+ *
+ *
+ */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif                          /* HAVE_CONFIG_H */
+#ifndef _FSAL_PNFS_TYPES_H
+#define _FSAL_PNFS_TYPES_H
 
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
-
-#ifdef _USE_PNFS
-
-#ifdef _USE_PNFS_PARALLEL_FS
-#include "PNFS/PARALLEL_FS/pnfs_layout4_nfsv4_1_files.h"
+#ifdef _USE_PNFS_PARALLEL_FS 
+#include "PNFS/PARALLEL_FS/pnfs_layout4_nfsv4_1_files_types.h"
 #endif
 
 #ifdef _USE_PNFS_SPNFS_LIKE
-#include "PNFS/SPNFS_LIKE/pnfs_layout4_nfsv4_1_files.h"
+#include "PNFS/SPNFS_LIKE/pnfs_layout4_nfsv4_1_files_types.h"
 #endif
 
+/** PNFS layout mode */
+typedef enum fsal_iomode__
+{
+  FSAL_IOMODE_READ       = 1,
+  FSAL_IOMODE_READ_WRITE = 2,
+  FSAL_IOMODE_ANY        = 3,
+  FSAL_IOMODE_WRITE      = 4 
+} fsal_iomode_t ;
 
-#endif                          /* _USE_PNFS */
+typedef enum fsal_layout_type__
+{
+  FSAL_LAYOUT_FILES = 0x1,
+  FSAL_LAYOUT_OSD   = 0x2,
+  FSAL_LAYOUT_BLOCK = 0x3
+} fsal_layout_type_t ;
 
-#endif                          /* _PNFS_SERVICE_H */
+
+#endif                          /* _FSAL_PNFS_TYPES_H */

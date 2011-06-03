@@ -16,37 +16,61 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
+#include <stdio.h>
 #include <string.h>
-#include <signal.h>
-
-#include "stuff_alloc.h"
-
+#include <pthread.h>
+#include <fcntl.h>
+#include <sys/file.h>           /* for having FNDELAY */
+#include "HashData.h"
+#include "HashTable.h"
 #ifdef _USE_GSSRPC
+#include <gssrpc/types.h>
 #include <gssrpc/rpc.h>
+#include <gssrpc/auth.h>
+#include <gssrpc/pmap_clnt.h>
 #else
+#include <rpc/types.h>
 #include <rpc/rpc.h>
+#include <rpc/auth.h>
+#include <rpc/pmap_clnt.h>
 #endif
 
-//#include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
-#include "pnfs.h"
+#include "log_macros.h"
+#include "stuff_alloc.h"
+#include "nfs23.h"
+#include "nfs4.h"
+#include "mount.h"
 #include "nfs_core.h"
+#include "cache_inode.h"
+#include "cache_content.h"
+#include "nfs_exports.h"
+#include "nfs_creds.h"
+#include "nfs_proto_functions.h"
+#include "nfs_file_handle.h"
+#include "nfs_tools.h"
+#include "pnfs.h" 
+#include "pnfs_service.h" 
+
+extern nfs_parameter_t nfs_param ;
+
 
 /**
  *
- * pnfs_ds_encode_getdeviceinfo: encodes the addr_body_val structure in GETDEVICEINFO.
+ * pnfs_lustre_getdeviceinfo: manages the OP4_GETDEVICEINFO operation for pNFS/File on top of LUSTRE
  *
- * Encode the addr_body_val structure in GETDEVICEINFO.
+ * Manages the OP4_GETDEVICEINFOT operation for pNFS/File on top of LUSTRE
  *
- * @param buff [OUT] buffer in which XDR encoding will be made
- * @param plen [OUT] length of buffer
+ * @param pgetdeviceinfoargs [IN]  pointer to getdeviceinfo's arguments
+ * @param data           [INOUT]  pointer to related compoud request
+ * @param pgetdeviceinfores [OUT] pointer to getdeviceinfot's results
  *
- * @return  nothing (void function)
+ * @return  NFSv4 status (with NFSv4 error code)
  *
  */
 
-extern nfs_parameter_t nfs_param;
-
-int pnfs_lustre_encode_getdeviceinfo(char *buff, unsigned int *plen)
+nfsstat4 pnfs_spnfs_getdeviceinfo( GETDEVICEINFO4args  * pgetdeviceinfoargs,
+			           compound_data_t     * data,
+				   GETDEVICEINFO4res   * pgetdeviceinfores )
 {
   unsigned int offset = 0;
   uint32_t int32 = 0;
@@ -54,6 +78,10 @@ int pnfs_lustre_encode_getdeviceinfo(char *buff, unsigned int *plen)
   unsigned int tmplen = 0;
   unsigned int padlen = 0;
   unsigned int i = 0;
+
+  char *buff = NULL ;
+
+  buff = (char *)pgetdeviceinfores->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.da_addr_body_val ;
 
   /* nflda_stripe_indices.nflda_stripe_indices_len */
   int32 = htonl(nfs_param.pnfs_param.layoutfile.stripe_width);
@@ -112,8 +140,11 @@ int pnfs_lustre_encode_getdeviceinfo(char *buff, unsigned int *plen)
       memcpy((char *)(buff + offset), tmpchar, tmplen + padlen);
       offset += tmplen + padlen;
 
-      *plen = offset;
     }                           /* for */
-  
-  return NFS4_OK ;
-}                               /* pnfs_ds_encode_getdeviceinfo */
+ 
+  pgetdeviceinfores->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.da_addr_body_len = offset ;
+ 
+  pgetdeviceinfores->gdir_status = NFS4_OK;
+
+  return pgetdeviceinfores->gdir_status  ;
+}                               /* pnfs_lustre_getdeviceinfo */

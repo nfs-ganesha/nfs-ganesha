@@ -94,14 +94,29 @@ int nfs41_op_getdevicelist(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdevicelist";
+  nfsstat4 rc = 0 ;
 
 #define arg_GETDEVICELIST4  op->nfs_argop4_u.opgetdevicelist
 #define res_GETDEVICELIST4  resp->nfs_resop4_u.opgetdevicelist
 
+#ifndef _USE_PNFS
+  resp->resop = NFS4_OP_GETDEVICELIST;
+  res_GETDEVICELIST4.gdlr_status = NFS4ERR_NOTSUPP;
+  return res_GETDEVICELIST4.gdlr_status;
+#else
+
   resp->resop = NFS4_OP_GETDEVICELIST;
   res_GETDEVICELIST4.gdlr_status = NFS4_OK;
 
+  if( ( rc = pnfs_getdevicelist( &arg_GETDEVICELIST4, data, &res_GETDEVICELIST4 ) ) != NFS4_OK )
+  {
+     res_GETDEVICELIST4.gdlr_status = rc ; 
+     return res_GETDEVICELIST4.gdlr_status;
+  }
+
+
   return res_GETDEVICELIST4.gdlr_status;
+#endif /* _USE_PNFS */
 }                               /* nfs41_op_exchange_id */
 
 /**
