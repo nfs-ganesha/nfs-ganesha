@@ -406,6 +406,9 @@ DIROP2res *objp;
       if(!xdr_DIROP2resok(xdrs, &objp->DIROP2res_u.diropok))
         return (FALSE);
       break;
+    default:
+      return (TRUE);
+      break;
     }
   return (TRUE);
 }
@@ -428,6 +431,9 @@ ATTR2res *objp;
     case NFS_OK:
       if(!xdr_fattr2(xdrs, &objp->ATTR2res_u.attributes))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -579,6 +585,9 @@ STATFS2res *objp;
       if(!xdr_statinfo2(xdrs, &objp->STATFS2res_u.info))
         return (FALSE);
       break;
+    default:
+      return (TRUE);
+      break;
     }
   return (TRUE);
 }
@@ -662,6 +671,9 @@ READDIR2res *objp;
     case NFS_OK:
       if(!xdr_READDIR2resok(xdrs, &objp->READDIR2res_u.readdirok))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -802,6 +814,9 @@ READ2res *objp;
       if(!xdr_READ2resok(xdrs, &objp->READ2res_u.readok))
         return (FALSE);
       break;
+    default:
+      return (TRUE);
+      break;
     }
   return (TRUE);
 }
@@ -846,6 +861,9 @@ READLINK2res *objp;
     case NFS_OK:
       if(!xdr_nfspath2(xdrs, &objp->READLINK2res_u.data))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -1511,6 +1529,9 @@ set_atime *objp;
       if(!xdr_nfstime3(xdrs, &objp->set_atime_u.atime))
         return (FALSE);
       break;
+    default:
+      return (TRUE);
+      break;
     }
   return (TRUE);
 }
@@ -1533,6 +1554,9 @@ set_mtime *objp;
     case SET_TO_CLIENT_TIME:
       if(!xdr_nfstime3(xdrs, &objp->set_mtime_u.mtime))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -1632,6 +1656,9 @@ GETATTR3res *objp;
     case NFS3_OK:
       if(!xdr_GETATTR3resok(xdrs, &objp->GETATTR3res_u.resok))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -2517,6 +2544,9 @@ mknoddata3 *objp;
     case NF3FIFO:
       if(!xdr_sattr3(xdrs, &objp->mknoddata3_u.pipe_attributes))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
