@@ -423,6 +423,43 @@ int shell_Init(int verbose, char *input_file, char *prompt, int shell_index)
 
 /* reads a line from input, and prints a prompt in interactive mode. */
 
+
+#ifdef HAVE_LIBREADLINE
+/* the same as previous, except it doesnt not trunc line at # sign */
+
+static char *skipblanks2(char *str)
+{
+
+  char *curr = str;
+
+  while(1)
+    {
+
+      switch (*curr)
+        {
+          /* end of lines */
+        case '\0':
+          return NULL;
+
+        case ' ':
+        case '\t':
+        case '\r':
+        case '\n':
+          curr++;
+          break;
+
+        default:
+          return curr;
+
+        }                       /* switch */
+
+    }                           /* while */
+
+}                               /* skipblanks2 */
+
+
+#endif
+
 static char *shell_readline(shell_state_t * context, char *s, int n, FILE * stream,
                             int interactive)
 {
@@ -430,6 +467,8 @@ static char *shell_readline(shell_state_t * context, char *s, int n, FILE * stre
   char *retval = shell_GetPrompt(context);
 
 #ifdef HAVE_LIBREADLINE
+
+  char *l;
 
   if(interactive)
     {
