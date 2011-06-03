@@ -28,11 +28,7 @@ register XDR *xdrs;
 int32_t *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int __attribute((__unused__)) * buf;
-#else
-  register long __attribute((__unused__)) * buf;
-#endif
+
 
   if(!xdr_int(xdrs, objp))
     return (FALSE);
@@ -2342,11 +2338,7 @@ register XDR *xdrs;
 SETCLIENTID4args *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfs_client_id4(xdrs, &objp->client))
     return (FALSE);
@@ -2362,11 +2354,7 @@ register XDR *xdrs;
 SETCLIENTID4resok *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_clientid4(xdrs, &objp->clientid))
     return (FALSE);
@@ -2380,11 +2368,7 @@ register XDR *xdrs;
 SETCLIENTID4res *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
@@ -2410,11 +2394,7 @@ register XDR *xdrs;
 SETCLIENTID_CONFIRM4args *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_clientid4(xdrs, &objp->clientid))
     return (FALSE);
@@ -2428,11 +2408,7 @@ register XDR *xdrs;
 SETCLIENTID_CONFIRM4res *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
@@ -2444,11 +2420,7 @@ register XDR *xdrs;
 VERIFY4args *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_fattr4(xdrs, &objp->obj_attributes))
     return (FALSE);
@@ -2460,11 +2432,7 @@ register XDR *xdrs;
 VERIFY4res *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
@@ -2476,11 +2444,7 @@ register XDR *xdrs;
 stable_how4 *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
@@ -2492,11 +2456,7 @@ register XDR *xdrs;
 WRITE4args *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_stateid4(xdrs, &objp->stateid))
     return (FALSE);
@@ -2514,11 +2474,7 @@ register XDR *xdrs;
 WRITE4resok *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_count4(xdrs, &objp->count))
     return (FALSE);
@@ -2534,11 +2490,7 @@ register XDR *xdrs;
 WRITE4res *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
@@ -2560,11 +2512,7 @@ register XDR *xdrs;
 RELEASE_LOCKOWNER4args *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_lock_owner4(xdrs, &objp->lock_owner))
     return (FALSE);
@@ -2576,11 +2524,7 @@ register XDR *xdrs;
 RELEASE_LOCKOWNER4res *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
@@ -2592,11 +2536,7 @@ register XDR *xdrs;
 ILLEGAL4res *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
@@ -2608,11 +2548,7 @@ register XDR *xdrs;
 nfs_opnum4 *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
@@ -2624,11 +2560,7 @@ register XDR *xdrs;
 nfs_argop4 *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfs_opnum4(xdrs, &objp->argop))
     return (FALSE);
@@ -2782,11 +2714,7 @@ register XDR *xdrs;
 nfs_resop4 *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfs_opnum4(xdrs, &objp->resop))
     return (FALSE);
