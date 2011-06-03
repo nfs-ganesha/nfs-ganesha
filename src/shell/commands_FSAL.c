@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -241,9 +241,6 @@ int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib);
 
 /* global FS configuration variables */
 
-static pthread_mutex_t mutex_log = PTHREAD_MUTEX_INITIALIZER;
-
-static int log_level = -1;
 #ifdef OLD_LOGGING
 static desc_log_stream_t voie;
 static log_t log_desc = LOG_INITIALIZER;
@@ -622,7 +619,7 @@ int fn_fsal_init_fs(int argc,   /* IN : number of args in argv */
                     FILE * output)      /* IN : output stream          */
 {
   int rc;
- 
+
   char format[] = "hv";
 
   const char help_init[] =
@@ -949,9 +946,9 @@ int fn_fsal_cd(int argc,        /* IN : number of args in argv */
   /* is it a relative or absolute path. */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
-  if(rc =
+  if((rc =
      solvepath(glob_path, FSAL_MAX_PATH_LEN,
-               argv[1], context->current_dir, &new_hdl, output))
+               argv[1], context->current_dir, &new_hdl, output)))
     return rc;
 
   /* verify if the object is a directory */
@@ -1094,9 +1091,9 @@ int fn_fsal_stat(int argc,      /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves object handle */
-  if(rc =
+  if((rc =
      solvepath(glob_path, FSAL_MAX_PATH_LEN,
-               file, context->current_dir, &new_hdl, output))
+               file, context->current_dir, &new_hdl, output)))
     return rc;
 
   /* retrieve supported attributes */
@@ -1237,9 +1234,9 @@ int fn_fsal_lsxattrs(int argc,  /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves object handle */
-  if(rc =
+  if((rc =
      solvepath(glob_path, FSAL_MAX_PATH_LEN,
-               file, context->current_dir, &new_hdl, output))
+               file, context->current_dir, &new_hdl, output)))
     return rc;
 
   /* list extended attributes */
@@ -1420,9 +1417,9 @@ int fn_fsal_getxattr(int argc,  /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves object handle */
-  if(rc =
+  if((rc =
      solvepath(glob_path, FSAL_MAX_PATH_LEN,
-               file, context->current_dir, &new_hdl, output))
+               file, context->current_dir, &new_hdl, output)))
     return rc;
 
   /* create fsal_name_t */
@@ -1496,11 +1493,11 @@ int fn_fsal_getxattr(int argc,  /* IN : number of args in argv */
       if(returned == 1)
         fprintf(output, "%hhu\n", buffer[0]);
       else if(returned == 2)
-        fprintf(output, "%hu\n", *((unsigned short *)buffer));
+        fprintf(output, "%hu\n", *(buffer));
       else if(returned == 4)
-        fprintf(output, "%u\n", *((unsigned int *)buffer));
+        fprintf(output, "%u\n", *(buffer));
       else if(returned == 8)
-        fprintf(output, "%llu\n", *((unsigned long long *)buffer));
+        fprintf(output, "%llu\n", (long long unsigned int)*(buffer));
       else
         {
           for(index = 0; index < returned; index += 8)
@@ -1678,9 +1675,9 @@ int fn_fsal_ls(int argc,        /* IN : number of args in argv */
       str_name = argv[Optind];
 
       /* retrieving handle */
-      if(rc =
+      if((rc =
          solvepath(glob_path, FSAL_MAX_PATH_LEN,
-                   str_name, context->current_dir, &obj_hdl, output))
+                   str_name, context->current_dir, &obj_hdl, output)))
         return rc;
 
     }
@@ -1837,7 +1834,7 @@ int fn_fsal_ls(int argc,        /* IN : number of args in argv */
                 fprintf(output, "%s\n", item_path);
 
             }
-          while(curr = curr->nextentry);
+          while((curr = curr->nextentry));
         }
       /* preparing next call */
       from = to;
@@ -2101,9 +2098,9 @@ int fn_fsal_unlink(int argc,    /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves path handle */
-  if(rc =
+  if((rc =
      solvepath(glob_path, FSAL_MAX_PATH_LEN,
-               path, context->current_dir, &new_hdl, output))
+               path, context->current_dir, &new_hdl, output)))
     return rc;
 
   /* create fsal_name_t */
@@ -2278,9 +2275,9 @@ int fn_fsal_mkdir(int argc,     /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves path handle */
-  if(rc =
+  if((rc =
      solvepath(glob_path, FSAL_MAX_PATH_LEN,
-               path, context->current_dir, &new_hdl, output))
+               path, context->current_dir, &new_hdl, output)))
     return rc;
 
   /* create fsal_name_t */
@@ -2430,14 +2427,14 @@ int fn_fsal_rename(int argc,    /* IN : number of args in argv */
   strncpy(tgt_glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves paths handles */
-  if(rc =
+  if((rc =
      solvepath(src_glob_path, FSAL_MAX_PATH_LEN,
-               src_path, context->current_dir, &src_path_handle, output))
+               src_path, context->current_dir, &src_path_handle, output)))
     return rc;
 
-  if(rc =
+  if((rc =
      solvepath(tgt_glob_path, FSAL_MAX_PATH_LEN,
-               tgt_path, context->current_dir, &tgt_path_handle, output))
+               tgt_path, context->current_dir, &tgt_path_handle, output)))
     return rc;
 
   /* create fsal_name_t */
@@ -2604,9 +2601,9 @@ int fn_fsal_ln(int argc,        /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves path handle */
-  if(rc =
+  if((rc =
      solvepath(glob_path, FSAL_MAX_PATH_LEN,
-               path, context->current_dir, &path_hdl, output))
+               path, context->current_dir, &path_hdl, output)))
     return rc;
 
   /* create fsal_name_t */
@@ -2775,15 +2772,15 @@ int fn_fsal_hardlink(int argc,  /* IN : number of args in argv */
   strncpy(glob_path_link, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves path handle for target */
-  if(rc =
+  if((rc =
      solvepath(glob_path_target, FSAL_MAX_PATH_LEN,
-               target, context->current_dir, &target_hdl, output))
+               target, context->current_dir, &target_hdl, output)))
     return rc;
 
   /* retrieves path handle for parent dir */
-  if(rc =
+  if((rc =
      solvepath(glob_path_link, FSAL_MAX_PATH_LEN,
-               path, context->current_dir, &dir_hdl, output))
+               path, context->current_dir, &dir_hdl, output)))
     return rc;
 
   /* create fsal_name_t */
@@ -2970,9 +2967,9 @@ int fn_fsal_create(int argc,    /* IN : number of args in argv */
   strncpy(glob_path_dir, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves path handle */
-  if(rc =
+  if((rc =
      solvepath(glob_path_dir, FSAL_MAX_PATH_LEN,
-               path, context->current_dir, &dir_hdl, output))
+               path, context->current_dir, &dir_hdl, output)))
     return rc;
 
   /* create fsal_name_t */
@@ -3125,6 +3122,8 @@ int fn_fsal_setattr(int argc,   /* IN : number of args in argv */
             case ATTR_TIME:
               fprintf(output, "\t %s \t:\t time (format: YYYYMMDDhhmmss)\n",
                       curr_attr->attr_name);
+              break;
+            default:
               break;
             }
         }
@@ -3584,9 +3583,9 @@ int fn_fsal_truncate(int argc,  /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves object handle */
-  if(rc =
+  if((rc =
      solvepath(glob_path, FSAL_MAX_PATH_LEN,
-               file, context->current_dir, &filehdl, output))
+               file, context->current_dir, &filehdl, output)))
     return rc;
 
   if(flag_v)
@@ -3976,9 +3975,9 @@ int fn_fsal_open(int argc,      /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves object handle */
-  if(rc =
+  if((rc =
      solvepath(glob_path, FSAL_MAX_PATH_LEN,
-               file, context->current_dir, &filehdl, output))
+               file, context->current_dir, &filehdl, output)))
     return rc;
 
   /* make open flags */
@@ -4185,9 +4184,9 @@ int fn_fsal_open_byfileid(int argc,     /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves object handle */
-  if(rc =
+  if((rc =
      solvepath(glob_path, FSAL_MAX_PATH_LEN,
-               file, context->current_dir, &filehdl, output))
+               file, context->current_dir, &filehdl, output)))
     return rc;
 
   /* make open flags */
@@ -5365,9 +5364,9 @@ int fn_fsal_cat(int argc,       /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves object handle */
-  if(rc =
+  if((rc =
      solvepath(glob_path, FSAL_MAX_PATH_LEN,
-               file, context->current_dir, &filehdl, output))
+               file, context->current_dir, &filehdl, output)))
     return rc;
 
   /* make open flags */
@@ -5565,9 +5564,9 @@ int fn_fsal_rcp(int argc,       /* IN : number of args in argv */
 
   /* retrieves object handle */
 
-  if(rc =
+  if((rc =
      solvepath(glob_path, FSAL_MAX_PATH_LEN,
-               fsal_file, context->current_dir, &filehdl, output))
+               fsal_file, context->current_dir, &filehdl, output)))
     return rc;
 
   /* build fsal path strcuture for local file */
@@ -5682,9 +5681,9 @@ int fn_fsal_cross(int argc,     /* IN : number of args in argv */
   /* is it a relative or absolute path. */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
-  if(rc =
+  if((rc =
      solvepath(glob_path, FSAL_MAX_PATH_LEN,
-               argv[1], context->current_dir, &junction_hdl, output))
+               argv[1], context->current_dir, &junction_hdl, output)))
     return rc;
 
   /* solves the junction */
@@ -5792,8 +5791,8 @@ int fn_fsal_handle(int argc,     /* IN : number of args in argv */
   {
         /* retrieves object handle */
         strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
-        if(rc = solvepath(glob_path, FSAL_MAX_PATH_LEN,
-                          argv[3], context->current_dir, &filehdl, output))
+        if((rc = solvepath(glob_path, FSAL_MAX_PATH_LEN,
+                           argv[3], context->current_dir, &filehdl, output)))
                 return rc;
 
         st = FSAL_DigestHandle(&context->exp_context, dt, &filehdl, buff);
@@ -5911,14 +5910,14 @@ int fn_fsal_handlecmp(int argc, /* IN : number of args in argv */
   strncpy(glob_path1, context->current_path, FSAL_MAX_PATH_LEN);
   strncpy(glob_path2, context->current_path, FSAL_MAX_PATH_LEN);
 
-  if(rc =
+  if((rc =
      solvepath(glob_path1, FSAL_MAX_PATH_LEN,
-               argv[1], context->current_dir, &hdl1, output))
+               argv[1], context->current_dir, &hdl1, output)))
     return rc;
 
-  if(rc =
+  if((rc =
      solvepath(glob_path2, FSAL_MAX_PATH_LEN,
-               argv[2], context->current_dir, &hdl2, output))
+               argv[2], context->current_dir, &hdl2, output)))
     return rc;
 
   /* it should return :
