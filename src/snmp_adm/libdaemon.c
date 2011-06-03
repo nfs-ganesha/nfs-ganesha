@@ -52,6 +52,7 @@ static void *pool(void *v)
     {
       agent_check_and_process(1);       /* 0 == don't block */
     }
+  return NULL;
 }
 
 /**
@@ -68,6 +69,7 @@ static void *polling_fct(void *arg)
         snmp_adm_send_trap(parg->type, parg->value);
       sleep(parg->second);
     }
+  return NULL;
 }
 
 /*get oid from environment variable SNMP_ADM_ROOT
@@ -89,7 +91,7 @@ static int get_conf_from_env()
     }
   else
     {
-      /* parse str_root 
+      /* parse str_root
        */
 
       /* compute length */
@@ -179,7 +181,7 @@ static void get_oid(oid * myoid, int branch, size_t * plen)
   myoid[(*plen)++] = branch_num[branch]++;
   (*plen)++;
 
-/* output : oid=$(ROOT).prodId.stat.branch_num[branch].***.***.***  
+/* output : oid=$(ROOT).prodId.stat.branch_num[branch].***.***.***
                  <-------------- len ---------->
 		 <---------- MAX_OID_LEN ---------->
 */
@@ -214,14 +216,14 @@ static int register_scal_instance(int type, const register_scal * instance)
 
   if(instance->value != NULL)
     {
-      /* create a register object of scalar type.                
+      /* create a register object of scalar type.
          we know we need 4 netsnmp register objects to record a scalar
        */
       info = new_register(instance->label, instance->desc, SCAL, 4);    /* name+desc+type+value = 4 */
 
       get_oid(myoid, type, &len);
 
-      /* This function will register two value in the tree (name and desc) 
+      /* This function will register two value in the tree (name and desc)
        */
       err1 = register_meta(myoid, len, info->label, info->desc, info->reg);
 
@@ -256,7 +258,7 @@ static int register_get_set_instance(int branch, const register_get_set * instan
     {
 
       get_oid(myoid, branch, &len);
-      /* create a register object of get/set type.               
+      /* create a register object of get/set type.
          we know we need 4 netsnmp register objects to record a get/set
        */
       info = new_register(instance->label, instance->desc, GET_SET, 4); /* name+desc+type+value = 4 */
@@ -271,7 +273,7 @@ static int register_get_set_instance(int branch, const register_get_set * instan
       gs_info->num = myoid[len - 2];
       gs_info->opt_arg = instance->opt_arg;
 
-      /* This function will register two value in the tree (name and desc) 
+      /* This function will register two value in the tree (name and desc)
        */
       err1 = register_meta(myoid, len, info->label, info->desc, info->reg);
       /* value */
@@ -309,10 +311,10 @@ static int register_proc_instance(const register_proc * instance)
 
   get_oid(myoid, PROC_OID, &len);
 
-  /* create a register object of proc type.                  
-     we know we need 2 + 1  (name,desc + trigger) 
+  /* create a register object of proc type.
+     we know we need 2 + 1  (name,desc + trigger)
      + n_in  * types + n_in  * val
-     + n_out * types + n_out * val                             
+     + n_out * types + n_out * val
      netsnmp register objects to record a proc
      This function will register the first and the second (name and desc)
    */
@@ -339,7 +341,7 @@ static int register_proc_instance(const register_proc * instance)
   for(j = 0; j < p_info->nb_out; j++)
     p_info->outputs[j] = calloc(1, sizeof(snmp_adm_type_union));
 
-  /* This function will register two value in the tree (name and desc) 
+  /* This function will register two value in the tree (name and desc)
    */
   err1 = register_meta(myoid, len, info->label, info->desc, info->reg);
   tab_reg_offset += 2;
@@ -348,8 +350,8 @@ static int register_proc_instance(const register_proc * instance)
   err2 = reg_proc(myoid, len, info->reg + tab_reg_offset);      /* register the instance and save info  */
   tab_reg_offset++;
 
-  /* 
-   *  register values 
+  /*
+   *  register values
    */
   /* we need a longer tree */
   len += 2;
@@ -419,7 +421,7 @@ static void free_register_info(register_info * ptr)
  * This parametre should be set according to the snmpd config.
  * @param prod_id product id, unique identifier of this daemon.
  * @param filelog file to record log messages or "syslog".
- * @return 0 on success. 
+ * @return 0 on success.
  */
 int snmp_adm_config_daemon(char *agent_x_socket, char *filelog, int prod_id)
 {
@@ -475,7 +477,7 @@ int snmp_adm_config_daemon(char *agent_x_socket, char *filelog, int prod_id)
  * Register scalars.
  * Note for strings : string provided in code MUST be readonly (ACCESS_RO).
  *                    string MUST be allocated with SNMP_ADM_MAX_STR.
- * Note for label & desc in register_scal* : they are copied in the library own 
+ * Note for label & desc in register_scal* : they are copied in the library own
  * memory, so user can safely free them or reuse them after this call.
  * @param branch the branch number (STAT_OID or CONF_OID).
  * @param tab the values to register.
@@ -505,7 +507,7 @@ int snmp_adm_register_scalars(int branch, register_scal * tab, int len)
 
 /**
  * Register get/set functions.
- * Note for label & desc in register_scal* : they are copied in the library own 
+ * Note for label & desc in register_scal* : they are copied in the library own
  * memory, so user can safely free them or reuse them after this call.
  * @param branch the branch number (STAT_OID or CONF_OID).
  * @param tab the functions to register.
@@ -527,7 +529,7 @@ int snmp_adm_register_get_set_function(int branch, register_get_set * tab, int l
           return 1;
         }
       else
-        snmp_adm_log("register getset %s %s", branch_to_str(branch), 
+        snmp_adm_log("register getset %s %s", branch_to_str(branch),
                      tab[i].label);
 
     }
@@ -538,7 +540,7 @@ int snmp_adm_register_get_set_function(int branch, register_get_set * tab, int l
 
 /**
  * Register procedures.
- * Note for label & desc in register_scal* : they are copied in the library own 
+ * Note for label & desc in register_scal* : they are copied in the library own
  * memory, so user can safely free them or reuse them after this call.
  * @param tab the procedures to register.
  * @param len the array's length.
@@ -682,7 +684,7 @@ int snmp_adm_register_poll_trap(unsigned int second, trap_test test_fct, void *a
       {
 	free( polling_args ) ;
         free( polling_threads ) ;
-        return -1 ; 
+        return -1 ;
       }
       if( ( polling_args = realloc(polling_args, sizeof(polling_arg) * capacity) ) == NULL )
       {

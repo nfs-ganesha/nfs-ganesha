@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -281,10 +281,10 @@ int idmap_gname_init(nfs_idmap_cache_parameter_t param)
   return ID_MAPPER_SUCCESS;
 }                               /* idmap_uid_init */
 
-/** 
- * 
+/**
+ *
  * idmap_compute_hash_value: computes the hash value, based on the string.
- * 
+ *
  * Computes the computes the hash value, based on the string.
  *
  */
@@ -292,7 +292,7 @@ int idmap_gname_init(nfs_idmap_cache_parameter_t param)
 int idmap_compute_hash_value(char *name, uint32_t * phashval)
 {
    uint32_t res ;
-  
+
    res = Lookup3_hash_buff( name, strlen( name ) ) ;
 
     return (int)res ;
@@ -330,10 +330,10 @@ int ___idmap_compute_hash_value(char *name, uint32_t * phashval)
 #endif
 
   /* For each 9 character pack:
-   *   - keep the 7 first bit (the 8th is often 0: ascii string) 
+   *   - keep the 7 first bit (the 8th is often 0: ascii string)
    *   - pack 7x9 bit to 63 bits using xor
    *   - xor the last 8th bit to a single 0 , or-ed with the rest
-   * Proceeding with the next 9 bytes pack will produce a new value that is xored with the 
+   * Proceeding with the next 9 bytes pack will produce a new value that is xored with the
    * one of the previous iteration */
 
   for(offset = 0; offset < PWENT_MAX_LEN; offset += 9)
@@ -373,7 +373,7 @@ int ___idmap_compute_hash_value(char *name, uint32_t * phashval)
           (padded_name[offset + 6] & 0x80) ^
           (padded_name[offset + 7] & 0x80) ^ (padded_name[offset + 8] & 0x80);
 
-      extract = i1 ^ i2 ^ i3 ^ i4 ^ i5 ^ i6 ^ i7 ^ i8 ^ i9 | l;
+      extract = (i1 ^ i2 ^ i3 ^ i4 ^ i5 ^ i6 ^ i7 ^ i8 ^ i9) | l;
 
 #ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
       printf("%llx ", extract);
@@ -394,7 +394,7 @@ int ___idmap_compute_hash_value(char *name, uint32_t * phashval)
 }                               /* idmap_compute_hash_value */
 
 /**
- * 
+ *
  * idmap_add: Adds a value by key
  *
  * Adss a value by key.
@@ -556,7 +556,7 @@ int gnamemap_add(unsigned int key, char *val)
 }                               /* gnamemap_add */
 
 /**
- * 
+ *
  * idmap_get: gets a value by key
  *
  * Gets a value by key.
@@ -778,12 +778,12 @@ int gnamemap_remove(unsigned int key)
 }
 
 /**
- * 
+ *
  * idmap_populate_by_conf: Use the configuration file to populate the ID_MAPPER.
  *
  * Use the configuration file to populate the ID_MAPPER.
  *
- * 
+ *
  */
 int idmap_populate(char *path, idmap_type_t maptype)
 {
@@ -884,7 +884,7 @@ int idmap_populate(char *path, idmap_type_t maptype)
  *
  * Gets the hash table statistics for the idmap et the reverse idmap.
  *
- * @param maptype [IN] type of the mapping to be queried (should be UIDMAP_TYPE or GIDMAP_TYPE) 
+ * @param maptype [IN] type of the mapping to be queried (should be UIDMAP_TYPE or GIDMAP_TYPE)
  * @param phstat [OUT] pointer to the resulting stats for direct map.
  * @param phstat [OUT] pointer to the resulting stats for reverse map.
  *
