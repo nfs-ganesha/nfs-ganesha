@@ -117,8 +117,8 @@ struct svc_auth_ops Svc_auth_gss_copy_ops = {
 int Gss_ctx_Hash_Set(gss_union_ctx_id_desc * pgss_ctx, struct svc_rpc_gss_data *gd);
 int Gss_ctx_Hash_Del(gss_union_ctx_id_desc * pgss_ctx);
 void Gss_ctx_Hash_Print(void);
-int Gss_ctx_Hash_Get_Pointer(gss_union_ctx_id_desc * pgss_ctx,
-                             struct svc_rpc_gss_data **pgd);
+int Gss_ctx_Hash_Get(gss_union_ctx_id_desc * pgss_ctx,
+                     struct svc_rpc_gss_data *gd);
 
 /* Global server credentials. */
 gss_cred_id_t svcauth_gss_creds;
@@ -497,12 +497,12 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
   //if( gd->established == 0 && gc->gc_proc == RPCSEC_GSS_DATA   )
   if(gc->gc_proc == RPCSEC_GSS_DATA)
     {
-
+      /* Fill in svc_rpc_gss_data from cache */
       memcpy((char *)&gss_ctx_data, (char *)gc->gc_ctx.value, gc->gc_ctx.length);
-      if(!Gss_ctx_Hash_Get_Pointer(&gss_ctx_data, &gd))
+      if(!Gss_ctx_Hash_Get(&gss_ctx_data, gd))
         {
           LogCrit(COMPONENT_RPCSEC_GSS, "Could not find gss context ");
-          ret_freegc(AUTH_BADCRED);
+          ret_freegc(AUTH_REJECTEDCRED);
         }
       else
         {
@@ -511,10 +511,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
            * negociation will have been made as if option was -o sec=krb5, the value of sec.svc has to be updated
            * id the stored gd that we got fromn the hash */
           if(gc->gc_svc != gd->sec.svc)
-            {
-              gd->sec.svc = gc->gc_svc;
-            }
-	  rqst->rq_xprt->xp_auth->svc_ah_private = (void *)gd;   // C'est la que les bacteries attaquent ....
+            gd->sec.svc = gc->gc_svc;
         }
     }
 
@@ -971,11 +968,34 @@ int copy_svc_authgss(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
          xprt_orig->xp_auth->svc_ah_ops == &Svc_auth_gss_copy_ops)
         {
           /* Copy GSS auth */
+          struct svc_rpc_gss_data *gd_o, *gd_c;
+
+          gd_o = SVCAUTH_PRIVATE(xprt_orig->xp_auth);
           xprt_copy->xp_auth = (SVCAUTH *)Mem_Alloc(sizeof(SVCAUTH));
           if(xprt_copy->xp_auth == NULL)
             return 0;
-          xprt_copy->xp_auth->svc_ah_private = xprt_orig->xp_auth->svc_ah_private;
-          xprt_copy->xp_auth->svc_ah_ops = &Svc_auth_gss_copy_ops;
+          gd_c = (struct svc_rpc_gss_data *)Mem_Alloc(sizeof(*gd_c));
+          if(gd_c == NULL)
+            {
+              Mem_Free(xprt_copy->xp_auth);
+              xprt_copy->xp_auth = NULL;
+              return 0;
+            }
+
+          /* Copy everything over */
+          memcpy(gd_c, gd_o, sizeof(*gd_c));
+
+          /* Leave the original without the various pointed to things */
+          gd_o->checksum.length = 0;
+          gd_o->checksum.value  = NULL;
+          gd_o->cname.length    = 0;
+          gd_o->cname.value     = NULL;
+          gd_o->client_name     = NULL;
+          gd_o->ctx             = NULL;
+
+          /* fill in xp_auth */
+          xprt_copy->xp_auth->svc_ah_private = (void *)gd_c;
+          xprt_copy->xp_auth->svc_ah_ops = &Svc_auth_gss_ops;
         }
       else
         {

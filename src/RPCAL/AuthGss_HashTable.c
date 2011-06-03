@@ -149,6 +149,14 @@ static int gss_stored2data(struct svc_rpc_gss_data *gd,
   gd->seqmask = pstored->seqmask;
 
   /* Get the gss_buffer_desc */
+  if(gd->cname.length < pstored->cname_len && gd->cname.length != 0)
+    {
+      /* If the current buffer is too small, release it */
+      LogFullDebug(COMPONENT_RPCSEC_GSS,
+                   "gss_stored2data releasing cname.value=%p length was %d need %d",
+                   gd->cname.value, (int)gd->cname.length, (int)pstored->cname_len);
+      gss_release_buffer(&minor, &gd->cname);
+    }
   if(gd->cname.value == NULL && pstored->cname_len != 0)
     {
       if((gd->cname.value = (char *)malloc(pstored->cname_len)) == NULL)
@@ -157,6 +165,14 @@ static int gss_stored2data(struct svc_rpc_gss_data *gd,
   memcpy(gd->cname.value, pstored->cname_val, pstored->cname_len);
   gd->cname.length = pstored->cname_len;
 
+  if(gd->checksum.length < pstored->checksum_len && gd->checksum.length != 0)
+    {
+      /* If the current buffer is too small, release it */
+      LogFullDebug(COMPONENT_RPCSEC_GSS,
+                   "gss_stored2data releasing checksum.value=%p length was %d need %d",
+                   gd->checksum.value, (int)gd->checksum.length, (int)pstored->checksum_len);
+      gss_release_buffer(&minor, &gd->checksum);
+    }
   if(gd->checksum.value == NULL && pstored->checksum_len != 0)
     {
       if((gd->checksum.value = (char *)malloc(pstored->checksum_len)) == NULL)
@@ -166,12 +182,20 @@ static int gss_stored2data(struct svc_rpc_gss_data *gd,
   gd->checksum.length = pstored->checksum_len;
 
   /* Duplicate the gss_name */
+  if(gd->client_name)
+    {
+      LogFullDebug(COMPONENT_RPCSEC_GSS,
+                   "gss_stored2data releasing client_name=%p",
+                   gd->client_name);
+      gss_release_name(&minor, &gd->client_name);
+    }
   if((major = gss_duplicate_name(&minor,
                                  pstored->client_name,
                                  &gd->client_name)) != GSS_S_COMPLETE)
     return FALSE;
 
   /* Import the sec context */
+  gss_delete_sec_context(&minor, &gd->ctx, GSS_C_NO_BUFFER);
   if((major = gss_import_sec_context(&minor,
                                      &pstored->ctx_exported, &gd->ctx)) != GSS_S_COMPLETE)
     return FALSE;
