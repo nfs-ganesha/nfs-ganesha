@@ -674,7 +674,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   unsigned int rpcxid = 0;
   unsigned int export_check_result;
 
-  exportlist_t *pexport;
+  exportlist_t *pexport = NULL;
   nfs_arg_t arg_nfs;
   nfs_arg_t *parg_nfs = &preqnfs->arg_nfs;
   nfs_res_t res_nfs;
@@ -1366,7 +1366,7 @@ void *worker_thread(void *IndexArg)
 
 #ifdef _USE_MFSL
   fsal_status_t fsal_status ;
-#endif 
+#endif
 
   index = (long)IndexArg;
   pmydata = &(workers_data[index]);
