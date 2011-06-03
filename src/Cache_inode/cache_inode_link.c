@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -28,9 +28,9 @@
  * \author  $Author: deniel $
  * \date    $Date: 2005/11/28 17:02:26 $
  * \version $Revision: 1.16 $
- * \brief   Creation of an hardlink.  
+ * \brief   Creation of an hardlink.
  *
- * cache_inode_link.c : Creation of an hardlink. 
+ * cache_inode_link.c : Creation of an hardlink.
  *
  *
  */
@@ -57,8 +57,8 @@
 
 /**
  *
- * cache_inode_link: hardlinks a pentry to another. 
- * 
+ * cache_inode_link: hardlinks a pentry to another.
+ *
  * Hard links a pentry to another. This is basically a equivalent of FSAL_link in the cache inode layer.
  *
  * @param pentry_src [IN] entry pointer the entry to be linked. This can't be a directory.
@@ -67,9 +67,9 @@
  * @param pattr [OUT] attributes for the linked attributes after the operation.
  * @param ht [INOUT] hash table used for the cache.
  * @param pclient [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext [IN] FSAL credentials 
+ * @param pcontext [IN] FSAL credentials
  * @param pstatus [OUT] returned status.
- * 
+ *
  * @return CACHE_INODE_SUCCESS if operation is a success \n
  * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry\n
  * @return CACHE_INODE_BAD_TYPE either source or destination have incorrect type\n
@@ -98,7 +98,10 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
 
   fsal_size_t save_size = 0;
   fsal_size_t save_spaceused = 0;
-  fsal_time_t save_mtime;
+  fsal_time_t save_mtime = {
+    .seconds = 0,
+    .nseconds = 0
+  };
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -156,7 +159,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       return *pstatus;
     }
 
-  /* At this point, we know that the entry does not exist in destination directory, we know that the 
+  /* At this point, we know that the entry does not exist in destination directory, we know that the
    * destination is actually a directory and that the source is no directory */
 
   /* Lock the source */

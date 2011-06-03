@@ -239,7 +239,10 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
   fsal_status_t fsal_status;
   fsal_size_t save_filesize = 0;
   fsal_size_t save_spaceused = 0;
-  fsal_time_t save_mtime;
+  fsal_time_t save_mtime = {
+    .seconds = 0,
+    .nseconds = 0
+  };
 
   if((pentry_dir == NULL) || (pname == NULL) || (pentry_file == NULL) ||
      (pclient == NULL) || (pcontext == NULL) || (pstatus == NULL))
