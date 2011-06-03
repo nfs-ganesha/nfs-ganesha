@@ -77,16 +77,6 @@ extern const gss_OID_desc *const gss_mech_spkm3;
 
 extern SVCAUTH Svc_auth_none;
 
-/*
- * from mit-krb5-1.2.1 mechglue/mglueP.h:
- * Array of context IDs typed by mechanism OID
- */
-typedef struct gss_union_ctx_id_t
-{
-  gss_OID mech_type;
-  gss_ctx_id_t internal_ctx_id;
-} gss_union_ctx_id_desc, *gss_union_ctx_id_t;
-
 #ifdef _USE_TIRPC
 static bool_t Svcauth_gss_destroy();
 static bool_t Svcauth_gss_destroy_copy();
@@ -113,12 +103,16 @@ struct svc_auth_ops Svc_auth_gss_copy_ops = {
   Svcauth_gss_destroy_copy
 };
 
-/** @todo: BUGAZOMEU: To be put in a cleaner header file later */
-int Gss_ctx_Hash_Set(gss_union_ctx_id_desc * pgss_ctx, struct svc_rpc_gss_data *gd);
-int Gss_ctx_Hash_Del(gss_union_ctx_id_desc * pgss_ctx);
-void Gss_ctx_Hash_Print(void);
-int Gss_ctx_Hash_Get(gss_union_ctx_id_desc * pgss_ctx,
-                     struct svc_rpc_gss_data *gd);
+const char *str_gc_proc(rpc_gss_proc_t gc_proc)
+{
+  switch(gc_proc)
+   {
+     case RPCSEC_GSS_DATA: return "RPCSEC_GSS_DATA";
+     case RPCSEC_GSS_INIT: return "RPCSEC_GSS_INIT";
+     case RPCSEC_GSS_CONTINUE_INIT: return "RPCSEC_GSS_CONTINUE_INIT";
+     case RPCSEC_GSS_DESTROY: return "RPCSEC_GSS_DESTROY";
+   }
+}
 
 /* Global server credentials. */
 gss_cred_id_t svcauth_gss_creds;
@@ -416,21 +410,23 @@ static bool_t Svcauth_gss_nextverf(struct svc_req *rqst, u_int num)
   return (TRUE);
 }
 
-void sprint_ctx(char *buff, unsigned char *ctx, int len)
+int sprint_ctx(char *buff, unsigned char *ctx, int len)
 {
   int i;
 
   if(ctx == NULL)
-    {
-      sprintf(buff, "<null>");
-      return;
-    }
+    return sprintf(buff, "<null>");
+
+  LogFullDebug(COMPONENT_RPCSEC_GSS,
+               "sprint_ctx len=%d", len);
 
   if (len > 16)
     len = 16;
 
   for(i = 0; i < len; i++)
     sprintf(buff + i * 2, "%02X", ctx[i]);
+
+  return len * 2;
 }
 
 #define ret_freegc(code) do { retstat = code; goto freegc; } while (0)
@@ -446,12 +442,12 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
   struct rpc_gss_init_res gr;
   int call_stat, offset;
   OM_uint32 min_stat;
-  gss_union_ctx_id_desc gss_ctx_data;
+  gss_union_ctx_id_desc *gss_ctx_data;
+  char ctx_str[64];
 
   /* Initialize reply. */
   /* rqst->rq_xprt->xp_verf = _null_auth ; */
   LogFullDebug(COMPONENT_RPCSEC_GSS, "Gssrpc__svcauth_gss called");
-  char ctx_str[64];
 
   /* Allocate and set up server auth handle. */
   if(rqst->rq_xprt->xp_auth == NULL || rqst->rq_xprt->xp_auth == &Svc_auth_none)
@@ -490,23 +486,38 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
     }
   XDR_DESTROY(&xdrs);
 
-  if(isFullDebug(COMPONENT_RPCSEC_GSS))
-    Gss_ctx_Hash_Print();
+  if(gc->gc_ctx.length != 0)
+    gss_ctx_data = (gss_union_ctx_id_desc *)(gc->gc_ctx.value);
+  else
+    gss_ctx_data = NULL;
 
-        /** @todo Think about restoring the correct lines */
+  if(isFullDebug(COMPONENT_RPCSEC_GSS))
+    {
+      sprint_ctx(ctx_str, (char *)gc->gc_ctx.value, gc->gc_ctx.length);
+      LogFullDebug(COMPONENT_RPCSEC_GSS,
+                   "Gssrpc__svcauth_gss gc_proc (%u) %s context %s",
+                   gc->gc_proc, str_gc_proc(gc->gc_proc), ctx_str);
+    }
+
+  /** @todo Think about restoring the correct lines */
   //if( gd->established == 0 && gc->gc_proc == RPCSEC_GSS_DATA   )
   if(gc->gc_proc == RPCSEC_GSS_DATA)
     {
+      if(isFullDebug(COMPONENT_RPCSEC_GSS))
+        {
+          LogFullDebug(COMPONENT_RPCSEC_GSS,
+                       "Dump context hash table");
+          Gss_ctx_Hash_Print();
+        }
+
       /* Fill in svc_rpc_gss_data from cache */
-      memcpy((char *)&gss_ctx_data, (char *)gc->gc_ctx.value, gc->gc_ctx.length);
-      if(!Gss_ctx_Hash_Get(&gss_ctx_data, gd))
+      if(!Gss_ctx_Hash_Get(gss_ctx_data, gd))
         {
           LogCrit(COMPONENT_RPCSEC_GSS, "Could not find gss context ");
           ret_freegc(AUTH_REJECTEDCRED);
         }
       else
         {
-
           /* If you 'mount -o sec=krb5i' you will have gc->gc_proc > RPCSEC_GSS_SVN_NONE, but the
            * negociation will have been made as if option was -o sec=krb5, the value of sec.svc has to be updated
            * id the stored gd that we got fromn the hash */
@@ -627,23 +638,12 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 
       if(gr.gr_major == GSS_S_COMPLETE)
         {
+          gss_union_ctx_id_desc *gss_ctx_data2 = (gss_union_ctx_id_desc *)gd->ctx;
+
           gd->established = TRUE;
-          sprint_ctx(ctx_str, (unsigned char *)gd->ctx, sizeof(gss_ctx_data));
-          CheckXprt(rqst->rq_xprt);
 
           /* Keep the gss context in a hash, gr.gr_ctx.value is used as key */
-          memcpy((char *)&gss_ctx_data, (char *)gd->ctx, sizeof(gss_ctx_data));
-          if(!Gss_ctx_Hash_Set(&gss_ctx_data, gd))
-            {
-              LogCrit(COMPONENT_RPCSEC_GSS,
-                      "Could not add context %s to hashtable", ctx_str);
-            }
-          else
-            {
-              LogFullDebug(COMPONENT_RPCSEC_GSS,
-                           "Gss context %s added to hash", ctx_str);
-            }
-          CheckXprt(rqst->rq_xprt);
+          (void) Gss_ctx_Hash_Set(gss_ctx_data2, gd);
         }
 
       break;
@@ -672,8 +672,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 
       call_stat = svc_sendreply(rqst->rq_xprt, (xdrproc_t)xdr_void, (caddr_t) NULL);
 
-      memcpy((char *)&gss_ctx_data, (char *)gc->gc_ctx.value, gc->gc_ctx.length);
-      if(!Gss_ctx_Hash_Del(&gss_ctx_data))
+      if(!Gss_ctx_Hash_Del(gss_ctx_data))
         {
           LogCrit(COMPONENT_RPCSEC_GSS,
                   "Could not delete Gss Context from hash");

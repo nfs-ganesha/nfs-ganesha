@@ -540,8 +540,7 @@ bool_t Svc_vc_getargs(SVCXPRT *xprt, xdrproc_t xdr_args, void *args_ptr)
 {
 
   assert(xprt != NULL);
-  /* args_ptr may be NULL */
-  //return ((*xdr_args) (&(((struct cf_conn *)(xprt->xp_p1))->xdrs), args_ptr));
+
   if(!SVCAUTH_UNWRAP(xprt->xp_auth,
                      &(((struct cf_conn *)(xprt->xp_p1))->xdrs),
                      xdr_args,

@@ -73,12 +73,11 @@
 void nfs_debug_debug_label_info();
 #endif
 
-extern nfs_worker_data_t *workers_data;
-extern hash_table_t *ht_dupreq; /* duplicate request hash */
+nfs_worker_data_t *workers_data;
 
 /* These two variables keep state of the thread that gc at this time */
-extern unsigned int nb_current_gc_workers;
-extern pthread_mutex_t lock_nb_current_gc_workers;
+unsigned int nb_current_gc_workers;
+pthread_mutex_t lock_nb_current_gc_workers;
 
 /* is daemon terminating ? If so, it drops all requests */
 int nfs_do_terminate = FALSE;
@@ -363,22 +362,31 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 #endif
 
 /**
- * nfs_Cleanup_request_data: clean the data associated with a request
+ * nfs_Init_gc_counter: Init the worker's gc counters.
  *
- * This function is used to clean the nfs_request_data for a worker. These data are used by the
- * worker for RPC processing.
+ * This functions is used to init a mutex and a counter associated with it, to keep track of the number of worker currently
+ * performing the garbagge collection.
  *
- * @param param A structure of type nfs_worker_parameter_t with all the necessary information related to a worker
- * @param pdata Pointer to the data to be initialized.
+ * @param void No parameters
  *
  * @return 0 if successfull, -1 otherwise.
  *
  */
-void nfs_Cleanup_request_data(nfs_request_data_t * pdata)
+
+int nfs_Init_gc_counter(void)
 {
-  pdata->ipproto = 0;
-  pdata->xprt = NULL;
-}                               /* nfs_Cleanup_request_data */
+  pthread_mutexattr_t mutexattr;
+
+  if(pthread_mutexattr_init(&mutexattr) != 0)
+    return -1;
+
+  if(pthread_mutex_init(&lock_nb_current_gc_workers, &mutexattr) != 0)
+    return -1;
+
+  nb_current_gc_workers = 0;
+
+  return 0;                     /* Success */
+}                               /* nfs_Init_gc_counter */
 
 struct timeval time_diff(struct timeval time_from, struct timeval time_to)
 {
@@ -703,13 +711,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   pworker_data->pfuncdesc = nfs_rpc_get_funcdesc(preqnfs);
   if(pworker_data->pfuncdesc == INVALID_FUNCDESC)
     return;
-
-  /* In TCP, RPC argument was already extracted. Here extract RPC argument only in UDP. */
-  if(preqnfs->ipproto == IPPROTO_UDP)
-    {
-      if(nfs_rpc_get_args(preqnfs, pworker_data->pfuncdesc) == FALSE)
-        return;
-    }
 
   if(copy_xprt_addr(&hostaddr, ptr_svc) == 0)
     {
@@ -1432,10 +1433,8 @@ enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
         {
           gc = (struct rpc_gss_cred *)preq->rq_clntcred;
           LogFullDebug(COMPONENT_DISPATCH,
-                       "========> no_dispatch=%d gc->gc_proc=%u RPCSEC_GSS_INIT=%u RPCSEC_GSS_CONTINUE_INIT=%u RPCSEC_GSS_DATA=%u RPCSEC_GSS_DESTROY=%u",
-                       *no_dispatch, gc->gc_proc, RPCSEC_GSS_INIT,
-                       RPCSEC_GSS_CONTINUE_INIT, RPCSEC_GSS_DATA,
-                       RPCSEC_GSS_DESTROY);
+                       "AuthenticateRequest no_dispatch=%d gc->gc_proc=(%u) %s",
+                       *no_dispatch, gc->gc_proc, str_gc_proc(gc->gc_proc));
         }
 #endif
     }             /* else from if( ( why = _authenticate( preq, pmsg) ) != AUTH_OK) */
@@ -1732,9 +1731,6 @@ void *worker_thread(void *IndexArg)
                      "garbage collection isn't necessary count=%d, max=%d",
                      pmydata->passcounter, nfs_param.worker_param.nb_before_gc);
       pmydata->passcounter += 1;
-
-      if(pnfsreq->ipproto == IPPROTO_UDP)
-        nfs_Cleanup_request_data(pnfsreq);
 
       /* If needed, perform garbage collection on cache_inode layer */
       P(lock_nb_current_gc_workers);

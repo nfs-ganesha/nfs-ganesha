@@ -37,8 +37,6 @@
 
 static int config_ok = 0;
 
-static nfs_worker_data_t *workers_data;
-
 char *nfsv2_function_names[] = {
   "NFSv2_null", "NFSv2_getattr", "NFSv2_setattr", "NFSv2_root",
   "NFSv2_lookup", "NFSv2_readlink", "NFSv2_read", "NFSv2_writecache",

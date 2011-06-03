@@ -27,35 +27,6 @@
 #include <gssapi/gssapi_generic.h>
 #endif
 
-#ifdef SPKM
-
-#ifndef OID_EQls RPC	
-#define g_OID_equal(o1,o2) \
-   (((o1)->length == (o2)->length) && \
-    ((o1)->elements != 0) && ((o2)->elements != 0) && \
-    (memcmp((o1)->elements,(o2)->elements,(int) (o1)->length) == 0))
-#define OID_EQ 1
-#endif                          /* OID_EQ */
-
-extern const gss_OID_desc *const gss_mech_spkm3;
-
-#endif                          /* SPKM */
-
-#ifndef SVCAUTH_DESTROY
-#define SVCAUTH_DESTROY(auth) \
-     ((*((auth)->svc_ah_ops->svc_ah_destroy))(auth))
-#endif
-
-/*
- * from mit-krb5-1.2.1 mechglue/mglueP.h:
- * Array of context IDs typed by mechanism OID
- */
-typedef struct gss_union_ctx_id_t
-{
-  gss_OID mech_type;
-  gss_ctx_id_t internal_ctx_id;
-} gss_union_ctx_id_desc, *gss_union_ctx_id_t;
-
 #define GSS_CNAMELEN  1024
 #define GSS_CKSUM_LEN 1024
 
@@ -87,8 +58,8 @@ struct svc_rpc_gss_data_stored
  * @return 1 is operation is a success, 0 otherwise
  *
  */
-static int gss_data2stored(struct svc_rpc_gss_data *gd,
-                           struct svc_rpc_gss_data_stored *pstored)
+static const char *gss_data2stored(struct svc_rpc_gss_data *gd,
+                                   struct svc_rpc_gss_data_stored *pstored)
 {
   OM_uint32 major;
   OM_uint32 minor;
@@ -112,14 +83,14 @@ static int gss_data2stored(struct svc_rpc_gss_data *gd,
   if((major = gss_duplicate_name(&minor,
                                  gd->client_name,
                                  &pstored->client_name)) != GSS_S_COMPLETE)
-    return FALSE;
+    return "could not duplicate client_name";
 
   /* export the sec context */
   if((major = gss_export_sec_context(&minor,
                                      &gd->ctx, &pstored->ctx_exported)) != GSS_S_COMPLETE)
-    return FALSE;
+    return "could not export context";
 
-  return TRUE;
+  return NULL;
 }                               /* gss_data2stored */
 
 /**
@@ -134,8 +105,8 @@ static int gss_data2stored(struct svc_rpc_gss_data *gd,
  * @return 1 is operation is a success, 0 otherwise
  *
  */
-static int gss_stored2data(struct svc_rpc_gss_data *gd,
-                           struct svc_rpc_gss_data_stored *pstored)
+static const char *gss_stored2data(struct svc_rpc_gss_data *gd,
+                                   struct svc_rpc_gss_data_stored *pstored)
 {
   OM_uint32 major;
   OM_uint32 minor;
@@ -160,7 +131,7 @@ static int gss_stored2data(struct svc_rpc_gss_data *gd,
   if(gd->cname.value == NULL && pstored->cname_len != 0)
     {
       if((gd->cname.value = (char *)malloc(pstored->cname_len)) == NULL)
-        return FALSE;
+        return "could not allocate cname";
     }
   memcpy(gd->cname.value, pstored->cname_val, pstored->cname_len);
   gd->cname.length = pstored->cname_len;
@@ -176,7 +147,7 @@ static int gss_stored2data(struct svc_rpc_gss_data *gd,
   if(gd->checksum.value == NULL && pstored->checksum_len != 0)
     {
       if((gd->checksum.value = (char *)malloc(pstored->checksum_len)) == NULL)
-        return FALSE;
+        return "could not allocate checksum";
     }
   memcpy(gd->checksum.value, pstored->checksum_val, pstored->checksum_len);
   gd->checksum.length = pstored->checksum_len;
@@ -192,15 +163,15 @@ static int gss_stored2data(struct svc_rpc_gss_data *gd,
   if((major = gss_duplicate_name(&minor,
                                  pstored->client_name,
                                  &gd->client_name)) != GSS_S_COMPLETE)
-    return FALSE;
+    return "could not duplicate client_name";
 
   /* Import the sec context */
   gss_delete_sec_context(&minor, &gd->ctx, GSS_C_NO_BUFFER);
   if((major = gss_import_sec_context(&minor,
                                      &pstored->ctx_exported, &gd->ctx)) != GSS_S_COMPLETE)
-    return FALSE;
+    return "could not import context";
 
-  return TRUE;
+  return NULL;
 }                               /* gss_stored2data */
 
 hash_table_t *ht_gss_ctx;
@@ -320,8 +291,7 @@ int display_gss_ctx(hash_buffer_t * pbuff, char *str)
 
   pgss_ctx = (gss_union_ctx_id_desc *) (pbuff->pdata);
 
-  return sprintf(str, "0x%lx%lx", (unsigned long)pgss_ctx->internal_ctx_id,
-                 (unsigned long)pgss_ctx->mech_type);
+  return sprint_ctx(str, (unsigned char *)pgss_ctx, sizeof(*pgss_ctx));
 }                               /* display_gss_ctx */
 
 /**
@@ -360,72 +330,59 @@ int display_gss_svc_data(hash_buffer_t * pbuff, char *str)
  * @return 1 if ok, 0 otherwise.
  *
  */
-int Gss_ctx_Hash_Set(gss_union_ctx_id_desc * pgss_ctx, struct svc_rpc_gss_data *gd)
+int Gss_ctx_Hash_Set(gss_union_ctx_id_desc *pgss_ctx, struct svc_rpc_gss_data *gd)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
   struct svc_rpc_gss_data_stored *stored_gd;
+  char ctx_str[64];
+  const char *failure;
 
-  gss_union_ctx_id_desc gssctx;
+  sprint_ctx(ctx_str, (char *)pgss_ctx, sizeof(*pgss_ctx));
 
-  if((buffkey.pdata = (caddr_t) Mem_Alloc(sizeof(gss_union_ctx_id_desc))) == NULL)
-    return 0;
+  if((buffkey.pdata = (caddr_t) Mem_Alloc(sizeof(*pgss_ctx))) == NULL)
+    {
+      failure = "no memory for context";
+      goto fail;
+    }
 
-  memcpy(buffkey.pdata, pgss_ctx, sizeof(gss_union_ctx_id_desc));
-  buffkey.len = sizeof(gss_union_ctx_id_desc);
+  memcpy(buffkey.pdata, pgss_ctx, sizeof(*pgss_ctx));
+  buffkey.len = sizeof(*pgss_ctx);
 
   if((buffval.pdata =
       (caddr_t) Mem_Alloc(sizeof(struct svc_rpc_gss_data_stored))) == NULL)
-    return 0;
+    {
+      failure = "no memory for stored data";
+      goto fail;
+    }
 
   stored_gd = (struct svc_rpc_gss_data_stored *)buffval.pdata;
-  if(gss_data2stored(gd, stored_gd) == 0)
-    return 0;
 
-  memcpy(&gssctx, buffkey.pdata, buffkey.len);
-  /* LogFullDebug(COMPONENT_HASHTABLE,
-                  "===> Gss_ctx_Hash_Set key=0x%lx%lx",
-                  (unsigned long)gssctx.internal_ctx_id,
-                  (unsigned long)gssctx.mech_type ); */
+  failure = gss_data2stored(gd, stored_gd);
+  if(failure != NULL)
+    goto fail;
+
 
   if(HashTable_Test_And_Set
      (ht_gss_ctx, &buffkey, &buffval,
       HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS)
-    return 0;
-
-  return 1;
-}                               /* Gss_ctx_Hash_Set */
-
-/**
- *
- * Gss_ctx_Hash_Get_Pointer
- *
- * This routine gets a Gss Ctx from the  hashtable, by pointer.
- *
- * @return 1 if ok, 0 otherwise.
- *
- */
-int Gss_ctx_Hash_Get_Pointer(gss_union_ctx_id_desc * pgss_ctx,
-                             struct svc_rpc_gss_data **pgd)
-{
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
-  struct svc_rpc_gss_data_stored *stored_gd;
-
-  buffkey.pdata = (caddr_t) pgss_ctx;
-  buffkey.len = sizeof(gss_union_ctx_id_desc);
-
-  if(HashTable_Get(ht_gss_ctx, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
-      return 0;
+      failure = "unable to set context";
+      goto fail;
     }
 
-  stored_gd = (struct svc_rpc_gss_data_stored *)buffval.pdata;
-  if(gss_stored2data(*pgd, stored_gd) == 0)
-    return 0;
+  LogFullDebug(COMPONENT_RPCSEC_GSS,
+               "Gss context %s added to hash",
+               ctx_str);
 
   return 1;
-}                               /* Gss_ctx_Hash_Get_Pointer */
+
+ fail:
+  LogCrit(COMPONENT_RPCSEC_GSS,
+          "Gss context %s could not be added to hash because %s",
+          ctx_str, failure);
+  return 0;
+}                               /* Gss_ctx_Hash_Set */
 
 /**
  *
@@ -436,23 +393,36 @@ int Gss_ctx_Hash_Get_Pointer(gss_union_ctx_id_desc * pgss_ctx,
  * @return 1 if ok, 0 otherwise.
  *
  */
-int Gss_ctx_Hash_Get(gss_union_ctx_id_desc * pgss_ctx, struct svc_rpc_gss_data *gd)
+int Gss_ctx_Hash_Get(gss_union_ctx_id_desc *pgss_ctx, struct svc_rpc_gss_data *gd)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
   struct svc_rpc_gss_data_stored *stored_gd;
+  char ctx_str[64];
+  const char *failure;
+
+  sprint_ctx(ctx_str, (char *)pgss_ctx, sizeof(*pgss_ctx));
 
   buffkey.pdata = (caddr_t) pgss_ctx;
   buffkey.len = sizeof(gss_union_ctx_id_desc);
 
   if(HashTable_Get(ht_gss_ctx, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
+      LogCrit(COMPONENT_RPCSEC_GSS,
+              "Gss context %s could not be found in hash",
+              ctx_str);
       return 0;
     }
 
   stored_gd = (struct svc_rpc_gss_data_stored *)buffval.pdata;
-  if(gss_stored2data(gd, stored_gd) == 0)
-    return 0;
+  failure = gss_stored2data(gd, stored_gd);
+  if(failure != NULL)
+    {
+      LogCrit(COMPONENT_RPCSEC_GSS,
+              "Gss context %s could not be recovered from hash because %s",
+              ctx_str, failure);
+      return 0;
+    }
 
   return 1;
 }                               /* Gss_ctx_Hash_Get */
