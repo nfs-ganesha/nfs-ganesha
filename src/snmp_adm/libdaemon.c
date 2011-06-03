@@ -804,7 +804,7 @@ void snmp_adm_log(char *format, ...)
   if(issyslog)
     {
       vsnprintf(msg_buf, 256, format, pa);
-      snmp_log(LOG_NOTICE, msg_buf);
+      snmp_log(LOG_NOTICE, "%s", msg_buf);
     }
   else
     {
@@ -833,11 +833,7 @@ void snmp_adm_log(char *format, ...)
 
       vsnprintf(msg_buf, 256, format, pa);
 
-      snmp_log(LOG_NOTICE, now);
-      snmp_log(LOG_NOTICE, constant_buf);
-      snmp_log(LOG_NOTICE, msg_buf);
-      snmp_log(LOG_NOTICE, "\n");
-
+      snmp_log(LOG_NOTICE, "%s => %s : %s\n", now, constant_buf, msg_buf);
     }
   va_end(pa);
 }
