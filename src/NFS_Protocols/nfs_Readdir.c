@@ -441,7 +441,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                       RES_READDIR2_OK.entries[0].name = entry_name_array[0];
                       strcpy(RES_READDIR2_OK.entries[0].name, ".");
 
-                      *(RES_READDIR2_OK.entries[0].cookie)= 1;
+                      *(RES_READDIR2_OK.entries[0].cookie) = 1;
 
                       /* pointer to next entry ( if any ) */
 

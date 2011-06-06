@@ -86,19 +86,20 @@
 
 int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
+#ifndef _WITH_NFSV4_LOCKS
+  resp->resop = NFS4_OP_LOCKU;
+  res_LOCKU4.status = NFS4ERR_LOCK_NOTSUPP;
+  return res_LOCKU4.status;
+#else
+
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_locku";
   cache_inode_status_t cache_status;
   cache_inode_state_t *pstate_found = NULL;
   cache_inode_state_t *pstate_open = NULL;
   unsigned int rc = 0;
 
-  /* Lock are not supported */
+  /* Initialize to sane default */
   resp->resop = NFS4_OP_LOCKU;
-
-#ifndef _WITH_NFSV4_LOCKS
-  res_LOCKU4.status = NFS4ERR_LOCK_NOTSUPP;
-  return res_LOCKU4.status;
-#else
 
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))

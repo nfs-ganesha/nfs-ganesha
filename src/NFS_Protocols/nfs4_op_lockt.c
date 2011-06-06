@@ -86,20 +86,22 @@
 
 int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
+#ifndef _WITH_NFSV4_LOCKS
+  resp->resop = NFS4_OP_LOCKT;
+  res_LOCKT4.status = NFS4ERR_LOCK_NOTSUPP;
+  return res_LOCKT4.status;
+#else
+
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lockt";
+
   cache_inode_status_t cache_status;
   nfs_client_id_t nfs_client_id;
   cache_inode_state_t *pstate_found = NULL;
   uint64_t a, b, a1, b1;
   unsigned int overlap = FALSE;
 
-  /* Lock are not supported */
+  /* Initialize to sane default */
   resp->resop = NFS4_OP_LOCKT;
-
-#ifndef _WITH_NFSV4_LOCKS
-  res_LOCKT4.status = NFS4ERR_LOCK_NOTSUPP;
-  return res_LOCKT4.status;
-#else
 
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))
