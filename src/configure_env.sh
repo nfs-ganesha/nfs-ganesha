@@ -1,6 +1,6 @@
 #!/bin/sh 
 
-export CC='gcc -g -Werror -Wimplicit -Wformat -Wmissing-braces'
-export CFLAGS='-g -Werror -Wimplicit -Wformat -Wmissing-braces'
+export CC='gcc -g -Werror'
+export CFLAGS='-g -Werror'
 
 ./configure $* 
