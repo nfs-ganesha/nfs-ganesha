@@ -236,7 +236,7 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
       char ipstring[SOCK_NAME_MAX];
       copy_xprt_addr(&addr, rqst->rq_xprt);
       sprint_sockaddr(&addr, ipstring, sizeof(ipstring));
-      
+
       LogWarn(COMPONENT_RPCSEC_GSS,
               "Bad authentication major=%u minor=%u addr=%s",
               gr->gr_major, gr->gr_minor, ipstring);
@@ -538,7 +538,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       LogFullDebug(COMPONENT_RPCSEC_GSS,
                    "Call to Gssrpc__svcauth_gss ----> Client=%s length=%lu (GD: established=%u ctx=%s) (RQ:sock=%u) (GC: Proc=%u Svc=%u ctx=%s)",
                    (char *)gd->cname.value,
-                   gd->cname.length,
+                   (long unsigned int)gd->cname.length,
                    gd->established,
                    ctx_str_2,
                    rqst->rq_xprt->XP_SOCK,
@@ -622,7 +622,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
           LogFullDebug(COMPONENT_RPCSEC_GSS,
                        "Call to Gssrpc__svcauth_gss ----> Client=%s length=%lu (GD: established=%u) (RQ:sock=%u) (GR: maj=%u min=%u ctx=%s)",
                        (char *)gd->cname.value,
-                       gd->cname.length,
+                       (long unsigned int)gd->cname.length,
                        gd->established,
                        rqst->rq_xprt->XP_SOCK,
                        gr.gr_major,

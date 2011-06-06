@@ -49,7 +49,7 @@ struct svc_rpc_gss_data_stored
 /**
  *
  *  gss_data2stored: converts a rpc_gss_data into a storable structure.
- * 
+ *
  * converts a rpc_gss_data into a storable structure.
  *
  * @param gd      [IN]  the structure to be used for authentication
@@ -96,7 +96,7 @@ static const char *gss_data2stored(struct svc_rpc_gss_data *gd,
 /**
  *
  *  gss_stored2data: converts a stored rpc_gss_data into a usable structure.
- * 
+ *
  *  Converts a stored rpc_gss_data into a usable structure.
  *
  * @param gd      [OUT] the structure to be used for authentication
@@ -179,7 +179,7 @@ hash_table_t *ht_gss_ctx;
 /**
  *
  *  gss_ctx_hash_func: computes the hash value for the entry in GSS Ctx cache.
- * 
+ *
  * Computes the hash value for the entry in GSS Ctx cache. In fact, it just use addresse as value (identity function) modulo the size of the hash.
  * This function is called internal in the HasTable_* function
  *
@@ -198,13 +198,13 @@ unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buf
 
   pgss_ctx = (gss_union_ctx_id_desc *) (buffclef->pdata);
 
-  /* The gss context is basically made of two address in memory: one for the gss mech and one for the 
+  /* The gss context is basically made of two address in memory: one for the gss mech and one for the
    * mech's specific data for this context */
   hash_func =
       (unsigned long)pgss_ctx->mech_type + (unsigned long)pgss_ctx->internal_ctx_id;
 
   /* LogFullDebug(COMPONENT_HASHTABLE,
-                  "gss_ctx_hash_func : 0x%lx%lx --> %lx", 
+                  "gss_ctx_hash_func : 0x%lx%lx --> %lx",
                   (unsigned long)pgss_ctx->internal_ctx_id,
                   (unsigned long)pgss_ctx->mech_type,
                   hash_func ) ; */
@@ -215,7 +215,7 @@ unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buf
 /**
  *
  *  gss_ctx_rbt_hash_func: computes the rbt value for the entry in GSS Ctx cache.
- * 
+ *
  * Computes the rbt value for the entry in GSS Ctx cache. In fact, it just use the address value
  * itself (which is an unsigned integer) as the rbt value.
  * This function is called internal in the HasTable_* function
@@ -235,13 +235,13 @@ unsigned long gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t *
 
   pgss_ctx = (gss_union_ctx_id_desc *) (buffclef->pdata);
 
-  /* The gss context is basically made of two address in memory: one for the gss mech and one for the 
+  /* The gss context is basically made of two address in memory: one for the gss mech and one for the
    * mech's specific data for this context */
   hash_func =
       (unsigned long)pgss_ctx->mech_type ^ (unsigned long)pgss_ctx->internal_ctx_id;
 
   /* LogFullDebug(COMPONENT_HASHTABLE,
-                  "gss_ctx_rbt_hash_func : 0x%lx%lx --> %lx", 
+                  "gss_ctx_rbt_hash_func : 0x%lx%lx --> %lx",
                   (unsigned long)pgss_ctx->internal_ctx_id,
                   (unsigned long)pgss_ctx->mech_type,
                   hash_func ); */
@@ -253,13 +253,13 @@ unsigned long gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t *
  *
  * compare_gss_ctx: compares the gss_ctx stored in the key buffers.
  *
- * compare the gss_ctx stored in the key buffers. This function is to be used as 'compare_key' field in 
+ * compare the gss_ctx stored in the key buffers. This function is to be used as 'compare_key' field in
  * the hashtable storing the gss context.
  *
  * @param buff1 [IN] first key
  * @param buff2 [IN] second key
  *
- * @return 0 if keys are identifical, 1 if they are different. 
+ * @return 0 if keys are identifical, 1 if they are different.
  *
  */
 int compare_gss_ctx(hash_buffer_t * buff1, hash_buffer_t * buff2)
@@ -276,7 +276,7 @@ int compare_gss_ctx(hash_buffer_t * buff1, hash_buffer_t * buff2)
  *
  * display_gss_ctx: displays the gss_ctx stored in the buffer.
  *
- * displays the gss_ctx stored in the buffer. This function is to be used as 'key_to_str' field in 
+ * displays the gss_ctx stored in the buffer. This function is to be used as 'key_to_str' field in
  * the hashtable storing the gss context.
  *
  * @param buff1 [IN]  buffer to display
@@ -298,7 +298,7 @@ int display_gss_ctx(hash_buffer_t * pbuff, char *str)
  *
  * display_gss_svc_data: displays the gss_svc_data stored in the buffer.
  *
- * displays the gss_svc__data stored in the buffer. This function is to be used as 'value_to_str' field in 
+ * displays the gss_svc__data stored in the buffer. This function is to be used as 'value_to_str' field in
  * the hashtable storing the gss context.
  *
  * @param buff1 [IN]  buffer to display
@@ -316,8 +316,8 @@ int display_gss_svc_data(hash_buffer_t * pbuff, char *str)
 
   return sprintf(str,
                  "established=%u ctx=(%lu) sec=(mech=%p,qop=%u,svc=%u,cred=%p,flags=%u) cname=(%lu|%s) seq=%u win=%u seqlast=%u seqmask=%u",
-                 gd->established, gd->ctx_exported.length, gd->sec.mech, gd->sec.qop,
-                 gd->sec.svc, gd->sec.cred, gd->sec.req_flags, gd->cname_len,
+                 gd->established, (long unsigned int)gd->ctx_exported.length, gd->sec.mech, gd->sec.qop,
+                 gd->sec.svc, gd->sec.cred, gd->sec.req_flags, (long unsigned int)gd->cname_len,
                  gd->cname_val, gd->seq, gd->win, gd->seqlast, gd->seqmask);
 }                               /* display_gss_svc_data */
 
@@ -460,7 +460,7 @@ int Gss_ctx_Hash_Del(gss_union_ctx_id_desc * pgss_ctx)
  * Gss_ctx_Hash_Init: Init the hashtable for GSS Ctx
  *
  * Perform all the required initialization for hashtable Gss ctx cache
- * 
+ *
  * @return 0 if successful, -1 otherwise
  *
  */
@@ -478,7 +478,7 @@ int Gss_ctx_Hash_Init(nfs_krb5_parameter_t param)
 /**
  *
  * Gss_ctx_Hash_Print: Displays the content of the hash table (for debugging)
- * 
+ *
  * Displays the content of the hash table (for debugging).
  *
  * @return nothing (void function)
