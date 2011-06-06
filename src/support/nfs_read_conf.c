@@ -1011,6 +1011,7 @@ int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
   return 0;
 }                               /* nfs_read_gidmap_conf */
 
+#ifdef _HAVE_GSSAPI
 /**
  *
  * nfs_read_krb5_conf: read the configuration for krb5 stuff
@@ -1093,6 +1094,7 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
 
   return 0;
 }                               /* nfs_read_krb5_conf */
+#endif
 
 /**
  *

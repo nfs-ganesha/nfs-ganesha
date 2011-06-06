@@ -676,7 +676,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   unsigned int rpcxid = 0;
   unsigned int export_check_result;
 
-  exportlist_t *pexport;
+  exportlist_t *pexport = NULL;
   nfs_arg_t *parg_nfs = &preqnfs->arg_nfs;
   nfs_res_t res_nfs;
   short exportid;
@@ -1644,11 +1644,11 @@ void *worker_thread(void *IndexArg)
       pnfsreq = (nfs_request_data_t *) (pentry->buffdata.pdata);
 
       LogFullDebug(COMPONENT_DISPATCH,
-                   "I have some work to do, pnfsreq=%p, length=%d, invalid=%d, xid=%u",
+                   "I have some work to do, pnfsreq=%p, length=%d, invalid=%d, xid=%lu",
                    pnfsreq,
                    pmydata->pending_request->nb_entry,
                    pmydata->pending_request->nb_invalid,
-                   pnfsreq->msg.rm_xid);
+                   (unsigned long) pnfsreq->msg.rm_xid);
 
       if(pnfsreq->xprt->XP_SOCK == 0)
       {

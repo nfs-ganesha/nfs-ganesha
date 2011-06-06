@@ -39,6 +39,12 @@ typedef unsigned int u_int32_t;
 
 bool_t svcauth_wrap_dummy(XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr);
 
+#ifdef SVCAUTH_WRAP
+#undef SVCAUTH_WRAP
+#endif
+#ifdef SVCAUTH_UNWRAP
+#undef SVCAUTH_UNWRAP
+#endif
 #define SVCAUTH_WRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)
 #define SVCAUTH_UNWRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)
 
@@ -251,7 +257,7 @@ static bool_t Svcudp_reply(register SVCXPRT * xprt, struct rpc_msg *msg)
             slen, 0, (struct sockaddr *)&(xprt->xp_raddr), xprt->xp_addrlen) != slen)
     {
       LogInfo(COMPONENT_DISPATCH, "EAGAIN indicates UDP buffer is full and not"
-               " allowed to block. sendto() returned %s", sys_errlist[errno]);
+               " allowed to block. sendto() returned %s", strerror(errno));
       return (FALSE);
     }
   return (TRUE);

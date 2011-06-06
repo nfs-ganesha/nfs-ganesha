@@ -134,8 +134,9 @@ process_status_t process_rpc_request(SVCXPRT *xprt)
   recv_status = SVC_RECV(pnfsreq->xprt, pmsg);
 
   LogFullDebug(COMPONENT_DISPATCH,
-               "Status for SVC_RECV on socket %d is %d, xid=%u",
-               pnfsreq->xprt->XP_SOCK, recv_status, pmsg->rm_xid);
+               "Status for SVC_RECV on socket %d is %d, xid=%lu",
+               pnfsreq->xprt->XP_SOCK, recv_status
+               (unsigned_long)pmsg->rm_xid);
 
   /* If status is ok, the request will be processed by the related
    * worker, otherwise, it should be released by being tagged as invalid*/

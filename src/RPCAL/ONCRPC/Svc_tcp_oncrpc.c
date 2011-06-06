@@ -36,6 +36,12 @@ typedef unsigned int u_int32_t;
 int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
 bool_t svcauth_wrap_dummy(XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr);
 
+#ifdef SVCAUTH_WRAP
+#undef SVCAUTH_WRAP
+#endif
+#ifdef SVCAUTH_UNWRAP
+#undef SVCAUTH_UNWRAP
+#endif
 #define SVCAUTH_WRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)
 #define SVCAUTH_UNWRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)
 
