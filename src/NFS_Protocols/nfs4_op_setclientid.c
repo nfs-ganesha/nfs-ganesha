@@ -203,7 +203,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
               nfs_clientid.client_name[arg_SETCLIENTID4.client.id.id_len] = '\0';
 #ifdef _USE_NFS4_1
               strncpy(nfs_clientid.client_r_addr,
-                      arg_SETCLIENTID4.callback.cb_location.na_r_addr, MAXNAMLEN);
+                      arg_SETCLIENTID4.callback.cb_location.na_r_addr, SOCK_NAME_MAX);
               strncpy(nfs_clientid.client_r_netid,
                       arg_SETCLIENTID4.callback.cb_location.na_r_netid, MAXNAMLEN);
 #else
@@ -281,7 +281,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
       nfs_clientid.client_name[arg_SETCLIENTID4.client.id.id_len] = '\0';
 #ifdef _USE_NFS4_1
       strncpy(nfs_clientid.client_r_addr, arg_SETCLIENTID4.callback.cb_location.na_r_addr,
-              MAXNAMLEN);
+              SOCK_NAME_MAX);
       strncpy(nfs_clientid.client_r_netid,
               arg_SETCLIENTID4.callback.cb_location.na_r_netid, MAXNAMLEN);
 #else
