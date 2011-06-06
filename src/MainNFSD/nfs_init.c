@@ -340,10 +340,10 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   /* Workers parameters : Client id pool prealloc */
   p_nfs_param->worker_param.nb_client_id_prealloc = 20;
 
+#ifdef _HAVE_GSSAPI
   /* krb5 parameter */
   strncpy(p_nfs_param->krb5_param.principal, DEFAULT_NFS_PRINCIPAL, sizeof(p_nfs_param->krb5_param.principal));
   strncpy(p_nfs_param->krb5_param.keytab, DEFAULT_NFS_KEYTAB, sizeof(p_nfs_param->krb5_param.keytab));
-#ifdef _HAVE_GSSAPI
   p_nfs_param->krb5_param.hash_param.index_size = PRIME_ID_MAPPER;
   p_nfs_param->krb5_param.hash_param.alphabet_length = 10;      /* Not used for UID_MAPPER */
   p_nfs_param->krb5_param.hash_param.nb_node_prealloc = NB_PREALLOC_ID_MAPPER;
@@ -987,6 +987,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 
 #endif                          /* _USE_NFS4_1 */
 
+#ifdef _HAVE_GSSAPI
   /* NFS kerberos5 configuration */
   if((rc = nfs_read_krb5_conf(config_struct, &p_nfs_param->krb5_param)) < 0)
     {
@@ -1004,6 +1005,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         LogDebug(COMPONENT_INIT,
 		 "NFS/KRB5 configuration read from config file");
     }
+#endif
 
   /* NFSv4 specific configuration */
   if((rc = nfs_read_version4_conf(config_struct, &p_nfs_param->nfsv4_param)) < 0)

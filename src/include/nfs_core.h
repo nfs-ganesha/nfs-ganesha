@@ -356,7 +356,9 @@ typedef struct nfs_param__
   nfs_idmap_cache_parameter_t gnamemap_cache_param;
   nfs_idmap_cache_parameter_t uidgidmap_cache_param;
   nfs_ip_stats_parameter_t ip_stats_param;
+#ifdef _HAVE_GSSAPI
   nfs_krb5_parameter_t krb5_param;
+#endif  
   nfs_version4_parameter_t nfsv4_param;
   nfs_client_id_parameter_t client_id_param;
   nfs_state_id_parameter_t state_id_param;
@@ -566,7 +568,9 @@ int nfs_read_dupreq_hash_conf(config_file_t in_config,
 int nfs_read_ip_name_conf(config_file_t in_config, nfs_ip_name_parameter_t * pparam);
 int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * pparam);
 int nfs_read_client_id_conf(config_file_t in_config, nfs_client_id_parameter_t * pparam);
+#ifdef _HAVE_GSSAPI
 int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam);
+#endif
 int nfs_read_uidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * pparam);
 int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * pparam);
 int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * pparam);

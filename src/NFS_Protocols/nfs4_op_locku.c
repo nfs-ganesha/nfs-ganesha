@@ -87,6 +87,10 @@
 int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_locku";
+  cache_inode_status_t cache_status;
+  cache_inode_state_t *pstate_found = NULL;
+  cache_inode_state_t *pstate_open = NULL;
+  unsigned int rc = 0;
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_LOCKU;
