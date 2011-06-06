@@ -90,24 +90,6 @@ extern char all_one[12];
 int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lock";
-  cache_inode_status_t cache_status;
-  cache_inode_state_data_t candidate_data;
-  cache_inode_state_type_t candidate_type;
-  int rc = 0;
-  cache_inode_state_t *file_state = NULL;
-  cache_inode_state_t *pstate_exists = NULL;
-  cache_inode_state_t *pstate_open = NULL;
-  cache_inode_state_t *pstate_found = NULL;
-  cache_inode_state_t *pstate_previous_iterate = NULL;
-  cache_inode_state_t *pstate_found_iterate = NULL;
-  cache_inode_open_owner_t *powner = NULL;
-  cache_inode_open_owner_t *popen_owner = NULL;
-  cache_inode_open_owner_t *powner_exists = NULL;
-  cache_inode_open_owner_name_t *powner_name = NULL;
-  uint64_t a, b, a1, b1;
-  unsigned int overlap = FALSE;
-  cache_inode_open_owner_name_t owner_name;
-  nfs_client_id_t nfs_client_id;
 
 #ifndef _WITH_NFSV4_LOCKS
   /* Lock are not supported */
