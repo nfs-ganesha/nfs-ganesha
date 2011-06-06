@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
+ * 
  * ---------------------------------------
  */
 
@@ -65,16 +65,16 @@
 #include "nfs_tools.h"
 
 /**
- *
- * nfs4_op_locku: The NFS4_OP_LOCKU operation.
+ * 
+ * nfs4_op_locku: The NFS4_OP_LOCKU operation. 
  *
  * This function implements the NFS4_OP_LOCKU operation.
  *
  * @param op    [IN]    pointer to nfs4_op arguments
  * @param data  [INOUT] Pointer to the compound request's data
  * @param resp  [IN]    Pointer to nfs4_op results
- *
- * @return NFS4_OK if successfull, other values show an error.
+ * 
+ * @return NFS4_OK if successfull, other values show an error. 
  *
  * @see all the nfs4_op_<*> function
  * @see nfs4_Compound
@@ -87,6 +87,10 @@
 int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_locku";
+  cache_inode_status_t cache_status;
+  cache_inode_state_t *pstate_found = NULL;
+  cache_inode_state_t *pstate_open = NULL;
+  unsigned int rc = 0;
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_LOCKU;
@@ -140,7 +144,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_LOCKU4.status;
     }
 
-  /* Check for range overflow
+  /* Check for range overflow 
    * Remember that a length with all bits set to 1 means "lock until the end of file" (RFC3530, page 157) */
   if(arg_LOCKU4.length != 0xffffffffffffffffLL)
     {
@@ -228,13 +232,13 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
 /**
  * nfs4_op_locku_Free: frees what was allocared to handle nfs4_op_locku.
- *
+ * 
  * Frees what was allocared to handle nfs4_op_locku.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- *
+ * 
  */
 void nfs4_op_locku_Free(LOCKU4res * resp)
 {
