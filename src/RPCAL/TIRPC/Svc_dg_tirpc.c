@@ -243,7 +243,11 @@ struct rpc_msg *msg;
       msg->acpted_rply.ar_results.where = NULL;
     }
   else
-    has_args = FALSE;
+    {
+      has_args = FALSE;
+      xdr_results = NULL;
+      xdr_location = NULL;
+    }
 
   xdrs->x_op = XDR_ENCODE;
   XDR_SETPOS(xdrs, 0);

@@ -309,7 +309,6 @@ int log_sperror_gss(char *outmsg, char *tag, OM_uint32 maj_stat, OM_uint32 min_s
   gss_buffer_desc msg;
   gss_buffer_desc msg2;
   int msg_ctx = 0;
-  FILE *tmplog;
 
   if(gss_display_status(&smin,
                         maj_stat,

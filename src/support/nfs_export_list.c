@@ -156,7 +156,6 @@ static void convert_gss_status2str(char *str, OM_uint32 maj_stat, OM_uint32 min_
   OM_uint32 min;
   gss_buffer_desc msg;
   int msg_ctx = 0;
-  FILE *tmplog;
 
   gss_display_status(&min, maj_stat, GSS_C_GSS_CODE, GSS_C_NULL_OID, &msg_ctx, &msg);
   sprintf(str, "GSS_CODE=%s - ", (char *)msg.value);
@@ -222,11 +221,8 @@ int get_req_uid_gid(struct svc_req *ptr_req,
   unsigned int rpcxid = 0;
 #ifdef _HAVE_GSSAPI
   struct svc_rpc_gss_data *gd = NULL;
-  OM_uint32 maj_stat = 0;
-  OM_uint32 min_stat = 0;
   char username[MAXNAMLEN];
-  char domainname[MAXNAMLEN];
-  char *ptr;
+  char domainname[MAXNAMLEN];  
 #endif
 
   if (user_credentials == NULL)
@@ -272,6 +268,10 @@ int get_req_uid_gid(struct svc_req *ptr_req,
       /*
       if(isFullDebug(COMPONENT_RPCSEC_GSS))
         {
+          char *ptr;
+          OM_uint32 maj_stat = 0;
+          OM_uint32 min_stat = 0;
+
           gss_buffer_desc oidbuff;
 
           LogFullDebug(COMPONENT_RPCSEC_GSS,
@@ -463,8 +463,6 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
 
   /* Stuff needed for managing RPCSEC_GSS */
 #ifdef _HAVE_GSSAPI
-  gss_buffer_desc mechname;
-  gss_buffer_desc clientname;
   OM_uint32 maj_stat = 0;
   OM_uint32 min_stat = 0;
   struct svc_rpc_gss_data *gd = NULL;

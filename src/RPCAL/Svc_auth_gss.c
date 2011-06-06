@@ -112,6 +112,8 @@ const char *str_gc_proc(rpc_gss_proc_t gc_proc)
      case RPCSEC_GSS_CONTINUE_INIT: return "RPCSEC_GSS_CONTINUE_INIT";
      case RPCSEC_GSS_DESTROY: return "RPCSEC_GSS_DESTROY";
    }
+
+ return "unknown";
 }
 
 /* Global server credentials. */
