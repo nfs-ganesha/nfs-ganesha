@@ -36,7 +36,14 @@
 
 #ifdef _USE_PNFS
 
-#include "PNFS/LAYOUT4_NFSV4_1_FILES/pnfs_layout4_nfsv4_1_files.h"
+#ifdef _USE_PNFS_PARALLEL_FS
+#include "PNFS/PARALLEL_FS/pnfs_layout4_nfsv4_1_files.h"
+#endif
+
+#ifdef _USE_PNFS_SPNFS_LIKE
+#include "PNFS/SPNFS_LIKE/pnfs_layout4_nfsv4_1_files.h"
+#endif
+
 
 #endif                          /* _USE_PNFS */
 

@@ -239,13 +239,13 @@ int get_req_uid_gid(struct svc_req *ptr_req,
     case AUTH_NONE:
       /* Nothing to be done here... */
       LogFullDebug(COMPONENT_DISPATCH,
-                   "NFS DISPATCH: Request xid=%u has authentication AUTH_NONE",
+                   "Request xid=%u has authentication AUTH_NONE",
                    rpcxid);
       break;
 
     case AUTH_UNIX:
       LogFullDebug(COMPONENT_DISPATCH,
-                   "NFS DISPATCH: Request xid=%u has authentication AUTH_UNIX",
+                   "Request xid=%u has authentication AUTH_UNIX",
                    rpcxid);
       /* We map the rq_cred to Authunix_parms */
       punix_creds = (struct authunix_parms *)ptr_req->rq_clntcred;
@@ -256,12 +256,15 @@ int get_req_uid_gid(struct svc_req *ptr_req,
       user_credentials->caller_glen = punix_creds->aup_len;
       user_credentials->caller_garray = punix_creds->aup_gids;
 
+      LogFullDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
+                   (unsigned int)user_credentials->caller_uid, (unsigned int)user_credentials->caller_gid);
+
       break;
 
 #ifdef _HAVE_GSSAPI
     case RPCSEC_GSS:
       LogFullDebug(COMPONENT_DISPATCH,
-                   "NFS DISPATCH: Request xid=%u has authentication RPCSEC_GSS",
+                   "Request xid=%u has authentication RPCSEC_GSS",
                    rpcxid);
       /* Get the gss data to process them */
       gd = SVCAUTH_PRIVATE(ptr_req->rq_xprt->xp_auth);
@@ -299,21 +302,26 @@ int get_req_uid_gid(struct svc_req *ptr_req,
       */
       split_credname(gd->cname, username, domainname);
 
-      LogFullDebug(COMPONENT_RPCSEC_GSS, "----> User=%s Domain=%s",
+      LogFullDebug(COMPONENT_DISPATCH, "----> User=%s Domain=%s",
                    username, domainname);
 
       /* Convert to uid */
       if(!name2uid(username, &user_credentials->caller_uid))
-        return FALSE;
+        {
+          LogMajor(COMPONENT_DISPATCH,
+                   "FAILURE: Could not resolve User=%s at Domain=%s into credentials",
+                   username, domainname);
+          return FALSE;
+        }
 
       if(uidgidmap_get(user_credentials->caller_uid, &user_credentials->caller_gid) != ID_MAPPER_SUCCESS)
         {
           LogMajor(COMPONENT_DISPATCH,
-                   "NFS_DISPATCH: FAILURE: Could not resolve uidgid map for %u",
+                   "FAILURE: Could not resolve uidgid map for %u",
                    user_credentials->caller_uid);
           user_credentials->caller_gid = -1;
         }
-      LogFullDebug(COMPONENT_RPCSEC_GSS, "----> Uid=%u Gid=%u",
+      LogFullDebug(COMPONENT_DISPATCH, "----> Uid=%u Gid=%u",
                    (unsigned int)user_credentials->caller_uid, (unsigned int)user_credentials->caller_gid);
       user_credentials->caller_glen = 0;
       user_credentials->caller_garray = 0;
@@ -323,7 +331,7 @@ int get_req_uid_gid(struct svc_req *ptr_req,
 
     default:
       LogFullDebug(COMPONENT_DISPATCH,
-                   "NFS DISPATCH: FAILURE : Request xid=%u, has unsupported authentication %d",
+                   "FAILURE: Request xid=%u, has unsupported authentication %d",
                    rpcxid, ptr_req->rq_cred.oa_flavor);
       /* Reject the request for weak authentication and return to worker */
       return FALSE;

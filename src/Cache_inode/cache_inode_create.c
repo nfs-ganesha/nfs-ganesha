@@ -104,9 +104,9 @@ cache_inode_create(cache_entry_t * pentry_parent,
     cache_inode_status_t status;
     struct cache_inode_dir_begin__ *dir_begin;
 #ifdef _USE_PNFS
-    pnfs_file_t pnfs_file ;
 
 #ifdef _USE_PNFS_SPNFS_LIKE  /** @todo : do the thing in a cleaner way here */
+    pnfs_file_t pnfs_file ;
     pnfs_file.ds_file.allocated = FALSE ;
 #endif
 #endif
@@ -205,7 +205,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
                                       &pclient->mfsl_context,
                                       mode, &object_handle,
                                       &object_attributes, &parent_attributes,
-#ifdef _USE_PNFS
+#ifdef _USE_PNFS_SPNFS_LIKE   /** @todo : do the thing in a cleaner way here */
 	                              &pnfs_file ) ;			      
 #else
                                       NULL);

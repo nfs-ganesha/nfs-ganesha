@@ -16,8 +16,12 @@ typedef struct SVCAUTH {
 	void * svc_ah_private;
 } SVCAUTH;
 
-//#undef SVCAUTH_DESTROY
-#define SVCAUTH_DESTROY(auth) ((*((auth)->svc_ah_ops->svc_ah_destroy))(auth))
+#define SVCAUTH_WRAP(auth, xdrs, xfunc, xwhere) \
+     ((*((auth)->svc_ah_ops->svc_ah_wrap))(auth, xdrs, xfunc, xwhere))
+#define SVCAUTH_UNWRAP(auth, xdrs, xfunc, xwhere) \
+     ((*((auth)->svc_ah_ops->svc_ah_unwrap))(auth, xdrs, xfunc, xwhere))
+#define SVCAUTH_DESTROY(auth) \
+     ((*((auth)->svc_ah_ops->svc_ah_destroy))(auth))
 
 __BEGIN_DECLS
 extern enum auth_stat _authenticate(struct svc_req *, struct rpc_msg *);

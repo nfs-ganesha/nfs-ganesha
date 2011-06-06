@@ -229,11 +229,27 @@ struct rpc_msg *msg;
   XDR *xdrs = &(su->su_xdrs);
   bool_t stat = FALSE;
   size_t slen;
+  xdrproc_t xdr_results;
+  caddr_t xdr_location;
+  bool_t has_args;
+
+  if(msg->rm_reply.rp_stat == MSG_ACCEPTED && msg->rm_reply.rp_acpt.ar_stat == SUCCESS)
+    {
+      has_args = TRUE;
+      xdr_results = msg->acpted_rply.ar_results.proc;
+      xdr_location = msg->acpted_rply.ar_results.where;
+
+      msg->acpted_rply.ar_results.proc = (xdrproc_t) xdr_void;
+      msg->acpted_rply.ar_results.where = NULL;
+    }
+  else
+    has_args = FALSE;
 
   xdrs->x_op = XDR_ENCODE;
   XDR_SETPOS(xdrs, 0);
   msg->rm_xid = su->su_xid;
-  if(xdr_replymsg(xdrs, msg))
+  if(xdr_replymsg(xdrs, msg) &&
+     (!has_args || (SVCAUTH_WRAP(xprt->xp_auth, xdrs, xdr_results, xdr_location))))
     {
       slen = XDR_GETPOS(xdrs);
       if(sendto(xprt->xp_fd, rpc_buffer(xprt), slen, 0,
@@ -253,7 +269,12 @@ SVCXPRT *xprt;
 xdrproc_t xdr_args;
 void *args_ptr;
 {
-  return (*xdr_args) (&(su_data(xprt)->su_xdrs), args_ptr);
+  if(!SVCAUTH_UNWRAP(xprt->xp_auth, &(su_data(xprt)->su_xdrs), xdr_args, args_ptr))
+    {
+      (void)Svc_dg_freeargs(xprt, xdr_args, args_ptr);
+      return FALSE;
+    }
+  return TRUE;
 }
 
 static bool_t Svc_dg_freeargs(xprt, xdr_args, args_ptr)

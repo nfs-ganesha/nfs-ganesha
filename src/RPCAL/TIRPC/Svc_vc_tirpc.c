@@ -200,7 +200,11 @@ static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
   xprt->xp_p1 = cd;
 
   cd->strm_stat = XPRT_IDLE;
+#ifndef NO_XDRREC_PATCH
+  Xdrrec_create(&(cd->xdrs), sendsize, recvsize, xprt, Read_vc, Write_vc);
+#else
   xdrrec_create(&(cd->xdrs), sendsize, recvsize, xprt, Read_vc, Write_vc);
+#endif
   xprt->xp_verf.oa_base = cd->verf_body;
   xprt->xp_port = 0;            /* this is a connection, not a rendezvouser */
   xprt->xp_fd = fd;
@@ -306,7 +310,7 @@ static bool_t Rendezvous_request(SVCXPRT *xprt, struct rpc_msg *msg)
       if(cd->recvsize > cd->maxrec)
         cd->recvsize = cd->maxrec;
       cd->nonblock = TRUE;
-      __xdrrec_setnonblock(&cd->xdrs, cd->maxrec);
+      __Xdrrec_setnonblock(&cd->xdrs, cd->maxrec);
     }
   else
     cd->nonblock = FALSE;
@@ -499,7 +503,7 @@ enum xprt_stat Svc_vc_stat(SVCXPRT *xprt)
 
   if(cd->strm_stat == XPRT_DIED)
     return (XPRT_DIED);
-  if(!xdrrec_eof(&(cd->xdrs)))
+  if(!Xdrrec_eof(&(cd->xdrs)))
     return (XPRT_MOREREQS);
   return (XPRT_IDLE);
 }
@@ -517,12 +521,12 @@ bool_t Svc_vc_recv(SVCXPRT *xprt, struct rpc_msg *msg)
 
   if(cd->nonblock)
     {
-      if(!__xdrrec_getrec(xdrs, &cd->strm_stat, TRUE))
+      if(!__Xdrrec_getrec(xdrs, &cd->strm_stat, TRUE))
         return FALSE;
     }
 
   xdrs->x_op = XDR_DECODE;
-  (void)xdrrec_skiprecord(xdrs);
+  (void)Xdrrec_skiprecord(xdrs);
   if(xdr_callmsg(xdrs, msg))
     {
       cd->x_id = msg->rm_xid;
@@ -536,8 +540,16 @@ bool_t Svc_vc_getargs(SVCXPRT *xprt, xdrproc_t xdr_args, void *args_ptr)
 {
 
   assert(xprt != NULL);
-  /* args_ptr may be NULL */
-  return ((*xdr_args) (&(((struct cf_conn *)(xprt->xp_p1))->xdrs), args_ptr));
+
+  if(!SVCAUTH_UNWRAP(xprt->xp_auth,
+                     &(((struct cf_conn *)(xprt->xp_p1))->xdrs),
+                     xdr_args,
+                     args_ptr))
+    {
+      (void)Svc_vc_freeargs(xprt, xdr_args, args_ptr);
+      return FALSE;
+    }
+  return TRUE;
 }
 
 bool_t Svc_vc_freeargs(SVCXPRT *xprt, xdrproc_t xdr_args, void *args_ptr)
@@ -555,21 +567,46 @@ bool_t Svc_vc_freeargs(SVCXPRT *xprt, xdrproc_t xdr_args, void *args_ptr)
 
 bool_t Svc_vc_reply(SVCXPRT *xprt, struct rpc_msg *msg)
 {
-  struct cf_conn *cd;
-  XDR *xdrs;
-  bool_t rstat;
+  struct cf_conn *cd= (struct cf_conn *)(xprt->xp_p1);
+  XDR *xdrs = &(cd->xdrs);
+  bool_t stat;
+  bool_t has_args;
+  xdrproc_t xdr_results;
+  caddr_t xdr_location;
 
   assert(xprt != NULL);
   assert(msg != NULL);
 
-  cd = (struct cf_conn *)(xprt->xp_p1);
-  xdrs = &(cd->xdrs);
+  if(msg->rm_reply.rp_stat == MSG_ACCEPTED &&
+     msg->rm_reply.rp_acpt.ar_stat == SUCCESS)
+    {
+      has_args = TRUE;
+      xdr_results = msg->acpted_rply.ar_results.proc;
+      xdr_location = msg->acpted_rply.ar_results.where;
+
+      msg->acpted_rply.ar_results.proc = (xdrproc_t) xdr_void;
+      msg->acpted_rply.ar_results.where = NULL;
+    }
+  else
+    {
+      has_args = FALSE;
+      xdr_results = NULL;
+      xdr_location = NULL;
+    }
 
   xdrs->x_op = XDR_ENCODE;
   msg->rm_xid = cd->x_id;
-  rstat = xdr_replymsg(xdrs, msg);
-  (void)xdrrec_endofrecord(xdrs, TRUE);
-  return (rstat);
+  stat = FALSE;
+  if(xdr_replymsg(xdrs, msg) &&
+     (!has_args || (SVCAUTH_WRAP(xprt->xp_auth,
+                                 xdrs,
+                                 xdr_results,
+                                 xdr_location))))
+    {
+      stat = TRUE;
+    }
+  (void)Xdrrec_endofrecord(xdrs, TRUE);
+  return (stat);
 }
 
 struct xp_ops  vc_ops =

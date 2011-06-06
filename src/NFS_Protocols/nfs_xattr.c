@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -31,7 +31,7 @@
  * \brief   Routines used for managing the NFS2/3 xattrs
  *
  * nfs_xattr.c: Routines used for managing the NFS2/3 xattrs
- * 
+ *
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -117,13 +117,13 @@ int nfs_XattrD_Name(char *strname, char *objectname)
   return 0;
 }                               /* nfs_Is_XattrD_Name */
 
-/** 
- * nfs3_fh_to_xattrfh: builds the fh to the xattrs ghost directory 
+/**
+ * nfs3_fh_to_xattrfh: builds the fh to the xattrs ghost directory
  *
  * @param pfhin  [IN]  input file handle (the object whose xattr fh is queryied)
  * @param pfhout [OUT] output file handle
  *
- * @return NFS4_OK 
+ * @return NFS4_OK
  *
  */
 nfsstat3 nfs3_fh_to_xattrfh(nfs_fh3 * pfhin, nfs_fh3 * pfhout)
@@ -141,8 +141,8 @@ nfsstat3 nfs3_fh_to_xattrfh(nfs_fh3 * pfhin, nfs_fh3 * pfhout)
   /* the following choice is made for xattr: the field xattr_pos contains :
    * - 0 if the FH is related to an actual FH object
    * - 1 if the FH is the one for the xattr ghost directory
-   * - a value greater than 1 if the fh is related to a ghost file in ghost xattr directory that represents a xattr. The value is then equal 
-   *   to the xattr_id + 1 (see how FSAL manages xattrs for meaning of this field). This limits the number of xattrs per object to 254. 
+   * - a value greater than 1 if the fh is related to a ghost file in ghost xattr directory that represents a xattr. The value is then equal
+   *   to the xattr_id + 1 (see how FSAL manages xattrs for meaning of this field). This limits the number of xattrs per object to 254.
    */
   pfile_handle->xattr_pos = 1;  /**< 1 = xattr ghost directory */
 
@@ -150,16 +150,16 @@ nfsstat3 nfs3_fh_to_xattrfh(nfs_fh3 * pfhin, nfs_fh3 * pfhout)
 }                               /* nfs3_fh_to_xattrfh */
 
 /**
- * 
+ *
  * nfs3_FSALattr_To_Fattr: Converts FSAL Attributes to NFSv3 attributes.
- * 
+ *
  * Converts FSAL Attributes to NFSv3 attributes.
  *
  * @param pexport   [IN]  the related export entry
  * @param FSAL_attr [IN]  pointer to FSAL attributes.
- * @param Fattr     [OUT] pointer to NFSv3 attributes. 
- * 
- * @return 1 if successful, 0 otherwise. 
+ * @param Fattr     [OUT] pointer to NFSv3 attributes.
+ *
+ * @return 1 if successful, 0 otherwise.
  *
  */
 int nfs3_FSALattr_To_XattrDir(exportlist_t * pexport,   /* In: the related export entry */
@@ -190,7 +190,7 @@ int nfs3_FSALattr_To_XattrDir(exportlist_t * pexport,   /* In: the related expor
   /* in NFSv3, we only keeps fsid.major, casted into an nfs_uint64 */
   Fattr->fsid = (nfs3_uint64) pexport->filesystem_id.major;
 
-  Fattr->fileid = 0xFFFFFFFF & ~(FSAL_attr->fileid) - 1;        /* xattr_pos = 1 => Parent Xattrd */
+  Fattr->fileid = (0xFFFFFFFF & ~(FSAL_attr->fileid)) - 1;        /* xattr_pos = 1 => Parent Xattrd */
 
   /* set current time, to force the client refreshing its xattr dir */
   nfs_set_times_current(Fattr);
@@ -203,7 +203,7 @@ int nfs3_FSALattr_To_XattrDir(exportlist_t * pexport,   /* In: the related expor
  * nfs_SetPostOpAttrDir: Converts FSAL Attributes to NFSv3 PostOp Attributes structure.
  *
  * Converts FSAL Attributes to NFSv3 PostOp Attributes structure.
- * 
+ *
  * @param pexport    [IN]  the related export entry
  * @param pfsal_attr [IN]  FSAL attributes
  * @param pattr      [OUT] NFSv3 PostOp structure attributes.
@@ -235,7 +235,7 @@ int nfs_SetPostOpXAttrDir(fsal_op_context_t * pcontext,
  * nfs_SetPostOpAttrDir: Converts FSAL Attributes to NFSv3 PostOp Attributes structure.
  *
  * Converts FSAL Attributes to NFSv3 PostOp Attributes structure.
- * 
+ *
  * @param pexport    [IN]  the related export entry
  * @param pfsal_attr [IN]  FSAL attributes for xattr
  * @param pattr      [OUT] NFSv3 PostOp structure attributes.
@@ -269,16 +269,16 @@ int nfs_SetPostOpXAttrFile(fsal_op_context_t * pcontext,
  * nfs3_Access_Xattr: Implements NFSPROC3_ACCESS for xattr objects
  *
  * Implements NFSPROC3_ACCESS.
- * 
+ *
  * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
+ * @param pexport [IN]    pointer to nfs export list
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
  * @param ht      [INOUT] cache inode hash table
- * @param preq    [IN]    pointer to SVC request related to this call 
+ * @param preq    [IN]    pointer to SVC request related to this call
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
- * @return always NFS_REQ_OK 
+ * @return always NFS_REQ_OK
  *
  */
 
@@ -324,7 +324,7 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
 
   /* for Xattr FH, we adopt the current convention:
    * xattr_pos = 0 ==> the FH is the one of the actual FS object
-   * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory 
+   * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory
    * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
   xattr_id = pfile_handle->xattr_pos - 2;
 
@@ -421,16 +421,16 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
  * nfs3_Lookup_Xattr: Implements NFSPROC3_LOOKUP for xattr ghost directory
  *
  * Implements NFSPROC3_LOOKUP.
- * 
+ *
  * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
+ * @param pexport [IN]    pointer to nfs export list
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
  * @param ht      [INOUT] cache inode hash table
- * @param preq    [IN]    pointer to SVC request related to this call 
+ * @param preq    [IN]    pointer to SVC request related to this call
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
- * @return always NFS_REQ_OK 
+ * @return always NFS_REQ_OK
  *
  */
 
@@ -531,7 +531,7 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
 
   /* for Xattr FH, we adopt the current convention:
    * xattr_pos = 0 ==> the FH is the one of the actual FS object
-   * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory 
+   * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory
    * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
   pfile_handle->xattr_pos = xattr_id + 2;
 
@@ -542,16 +542,16 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
  * nfs3_Readdir_Xattr: Implements NFSPROC3_READDIR for xattr ghost directory
  *
  * Implements NFSPROC3_READDIR.
- * 
+ *
  * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
+ * @param pexport [IN]    pointer to nfs export list
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
  * @param ht      [INOUT] cache inode hash table
- * @param preq    [IN]    pointer to SVC request related to this call 
+ * @param preq    [IN]    pointer to SVC request related to this call
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
- * @return always NFS_REQ_OK 
+ * @return always NFS_REQ_OK
  *
  */
 
@@ -567,7 +567,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
   unsigned int delta = 0;
   cache_entry_t *dir_pentry = NULL;
   unsigned long dircount;
-  unsigned long maxcount;
+  unsigned long maxcount = 0;
   fsal_attrib_list_t dir_attr;
   unsigned int begin_cookie;
   unsigned int xattr_cookie;
@@ -576,7 +576,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
   unsigned int xattr_id = 0;
   int rc;
   unsigned int i = 0;
-  unsigned int num_entries;
+  unsigned int num_entries = 0;
   unsigned long space_used;
   unsigned long estimated_num_entries;
   unsigned long asked_num_entries;
@@ -624,7 +624,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
 
   /* for Xattr FH, we adopt the current convention:
    * xattr_pos = 0 ==> the FH is the one of the actual FS object
-   * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory 
+   * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory
    * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
   xattr_id = pfile_handle->xattr_pos;
 
@@ -642,7 +642,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
    * returned to the client         This value is the mtime of
    * the directory. If verifier is unused (as in many NFS
    * Servers) then only a set of zeros is returned (trivial
-   * value) 
+   * value)
    */
 
   if(pexport->UseCookieVerifier)
@@ -650,14 +650,14 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
 
   /*
    * nothing to do if != 0 because the area is already full of
-   * zero 
+   * zero
    */
 
   if(pexport->UseCookieVerifier && (begin_cookie != 0))
     {
       /*
        * Not the first call, so we have to check the cookie
-       * verifier 
+       * verifier
        */
       if(memcmp(cookie_verifier, parg->arg_readdir3.cookieverf, NFS3_COOKIEVERFSIZE) != 0)
         {
@@ -751,7 +751,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
               /* Fill in '.' */
               if(estimated_num_entries > 0)
                 {
-                  RES_READDIR_REPLY.entries[0].fileid = 0xFFFFFFFF & ~(dir_attr.fileid) - 1;    /* xattr_pos = 1 => Parent Xattrd */
+                  RES_READDIR_REPLY.entries[0].fileid = (0xFFFFFFFF & ~(dir_attr.fileid)) - 1;    /* xattr_pos = 1 => Parent Xattrd */
 
                   RES_READDIR_REPLY.entries[0].name = entry_name_array[0];
                   strcpy(RES_READDIR_REPLY.entries[0].name, ".");
@@ -767,7 +767,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
             {
               if(estimated_num_entries > delta)
                 {
-                  RES_READDIR_REPLY.entries[delta].fileid = 0xFFFFFFFF & ~(dir_attr.fileid) - delta;    /* xattr_pos > 1 => attribute */
+                  RES_READDIR_REPLY.entries[delta].fileid = (0xFFFFFFFF & ~(dir_attr.fileid)) - delta;    /* xattr_pos > 1 => attribute */
 
                   RES_READDIR_REPLY.entries[delta].name = entry_name_array[delta];
                   strcpy(RES_READDIR_REPLY.entries[delta].name, "..");
@@ -800,7 +800,7 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                   if(i == delta)
                     {
                       /*
-                       * Not enough room to make even a single reply 
+                       * Not enough room to make even a single reply
                        */
                       Mem_Free((char *)entry_name_array);
                       Mem_Free((char *)fh3_array);
@@ -869,16 +869,16 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
  * nfs3_Write_Xattr: Implements NFSPROC3_WRITE for xattr ghost files
  *
  * Implements NFSPROC3_WRITE.
- * 
+ *
  * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
+ * @param pexport [IN]    pointer to nfs export list
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
  * @param ht      [INOUT] cache inode hash table
- * @param preq    [IN]    pointer to SVC request related to this call 
+ * @param preq    [IN]    pointer to SVC request related to this call
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
- * @return always NFS_REQ_OK 
+ * @return always NFS_REQ_OK
  *
  */
 int nfs3_Create_Xattr(nfs_arg_t * parg,
@@ -1037,7 +1037,7 @@ int nfs3_Write_Xattr(nfs_arg_t * parg,
 
   /* for Xattr FH, we adopt the current convention:
    * xattr_pos = 0 ==> the FH is the one of the actual FS object
-   * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory 
+   * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory
    * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
   if(pfile_handle->xattr_pos == 0)
     {
@@ -1096,16 +1096,16 @@ int nfs3_Write_Xattr(nfs_arg_t * parg,
  * nfs3_Read_Xattr: Implements NFSPROC3_READ for xattr ghost directory
  *
  * Implements NFSPROC3_READ.
- * 
+ *
  * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
+ * @param pexport [IN]    pointer to nfs export list
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
  * @param ht      [INOUT] cache inode hash table
- * @param preq    [IN]    pointer to SVC request related to this call 
+ * @param preq    [IN]    pointer to SVC request related to this call
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
- * @return always NFS_REQ_OK 
+ * @return always NFS_REQ_OK
  *
  */
 int nfs3_Read_Xattr(nfs_arg_t * parg,
@@ -1151,7 +1151,7 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
 
   /* for Xattr FH, we adopt the current convention:
    * xattr_pos = 0 ==> the FH is the one of the actual FS object
-   * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory 
+   * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory
    * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
   if(pfile_handle->xattr_pos == 0)
     {
@@ -1226,11 +1226,11 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
  * Implements NFSPROC3_READDIRPLUS for ghost xattr objects
  *
  * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
+ * @param pexport [IN]    pointer to nfs export list
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
  * @param ht      [INOUT] cache inode hash table
- * @param preq    [IN]    pointer to SVC request related to this call 
+ * @param preq    [IN]    pointer to SVC request related to this call
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
  * @return NFS_REQ_OK if successfull \n
@@ -1251,7 +1251,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
   unsigned int delta = 0;
   cache_entry_t *dir_pentry = NULL;
   unsigned long dircount;
-  unsigned long maxcount;
+  unsigned long maxcount = 0;
   fsal_attrib_list_t dir_attr;
   unsigned int begin_cookie;
   unsigned int xattr_cookie;
@@ -1260,7 +1260,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
   unsigned int xattr_id = 0;
   int rc;
   unsigned int i = 0;
-  unsigned int num_entries;
+  unsigned int num_entries = 0;
   unsigned long space_used;
   unsigned long estimated_num_entries;
   unsigned long asked_num_entries;
@@ -1309,7 +1309,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
 
   /* for Xattr FH, we adopt the current convention:
    * xattr_pos = 0 ==> the FH is the one of the actual FS object
-   * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory 
+   * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory
    * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
   xattr_id = pfile_handle->xattr_pos;
 
@@ -1327,7 +1327,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
    * returned to the client         This value is the mtime of
    * the directory. If verifier is unused (as in many NFS
    * Servers) then only a set of zeros is returned (trivial
-   * value) 
+   * value)
    */
 
   if(pexport->UseCookieVerifier)
@@ -1335,14 +1335,14 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
 
   /*
    * nothing to do if != 0 because the area is already full of
-   * zero 
+   * zero
    */
 
   if(pexport->UseCookieVerifier && (begin_cookie != 0))
     {
       /*
        * Not the first call, so we have to check the cookie
-       * verifier 
+       * verifier
        */
       if(memcmp(cookie_verifier, parg->arg_readdirplus3.cookieverf, NFS3_COOKIEVERFSIZE)
          != 0)
@@ -1439,7 +1439,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
               /* Fill in '.' */
               if(estimated_num_entries > 0)
                 {
-                  RES_READDIRPLUS_REPLY.entries[0].fileid = 0xFFFFFFFF & ~(dir_attr.fileid) - 1;        /* parent xattrd =>xattr_pos == 1 */
+                  RES_READDIRPLUS_REPLY.entries[0].fileid = (0xFFFFFFFF & ~(dir_attr.fileid)) - 1;        /* parent xattrd =>xattr_pos == 1 */
                   RES_READDIRPLUS_REPLY.entries[0].name = entry_name_array[0];
                   strcpy(RES_READDIRPLUS_REPLY.entries[0].name, ".");
                   RES_READDIRPLUS_REPLY.entries[0].cookie = 1;
@@ -1476,7 +1476,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
             {
               if(estimated_num_entries > delta)
                 {
-                  RES_READDIRPLUS_REPLY.entries[delta].fileid = 0xFFFFFFFF & ~(dir_attr.fileid) - delta;        /* different fileids for each xattr */
+                  RES_READDIRPLUS_REPLY.entries[delta].fileid = (0xFFFFFFFF & ~(dir_attr.fileid)) - delta;        /* different fileids for each xattr */
                   RES_READDIRPLUS_REPLY.entries[delta].name = entry_name_array[delta];
                   strcpy(RES_READDIRPLUS_REPLY.entries[delta].name, "..");
                   RES_READDIRPLUS_REPLY.entries[delta].cookie = 2;
@@ -1528,7 +1528,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                   if(i == delta)
                     {
                       /*
-                       * Not enough room to make even a single reply 
+                       * Not enough room to make even a single reply
                        */
                       Mem_Free((char *)entry_name_array);
                       Mem_Free((char *)fh3_array);
@@ -1556,7 +1556,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                 }
 
               RES_READDIRPLUS_REPLY.entries[i].fileid =
-                  0xFFFFFFFF & xattrs_tab[i - delta].attributes.fileid - xattr_id;
+                (0xFFFFFFFF & xattrs_tab[i - delta].attributes.fileid) - xattr_id;
               FSAL_name2str(&xattrs_tab[i - delta].xattr_name, entry_name_array[i],
                             FSAL_MAX_NAME_LEN);
               RES_READDIRPLUS_REPLY.entries[i].name = entry_name_array[i];
@@ -1633,16 +1633,16 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
  * nfs3_Getattr_Xattr: Implements NFSPROC3_GETATTR for xattr ghost objects
  *
  * Implements NFSPROC3_GETATTR
- * 
+ *
  * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
+ * @param pexport [IN]    pointer to nfs export list
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
  * @param ht      [INOUT] cache inode hash table
- * @param preq    [IN]    pointer to SVC request related to this call 
+ * @param preq    [IN]    pointer to SVC request related to this call
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
- * @return always NFS_REQ_OK 
+ * @return always NFS_REQ_OK
  *
  */
 int nfs3_Getattr_Xattr(nfs_arg_t * parg,
@@ -1684,7 +1684,7 @@ int nfs3_Getattr_Xattr(nfs_arg_t * parg,
 
   /* for Xattr FH, we adopt the current convention:
    * xattr_pos = 0 ==> the FH is the one of the actual FS object
-   * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory 
+   * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory
    * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
   xattr_id = pfile_handle->xattr_pos - 2;
 

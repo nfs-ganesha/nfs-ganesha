@@ -409,11 +409,6 @@ typedef struct nfs_dupreq_stat__
 
 typedef struct nfs_request_data__
 {
-  int ipproto;
-  SVCXPRT *nfs_udp_xprt;
-  SVCXPRT *mnt_udp_xprt;
-  SVCXPRT *nlm_udp_xprt;
-  SVCXPRT *rquota_udp_xprt;
   SVCXPRT *xprt;
   SVCXPRT *xprt_copy;
   struct svc_req req;
@@ -523,6 +518,14 @@ typedef struct fridge_entry__
 
 extern nfs_parameter_t nfs_param;
 extern time_t ServerBootTime;
+extern nfs_worker_data_t *workers_data;
+
+typedef enum process_status
+{
+  PROCESS_DISPATCHED,
+  PROCESS_LOST_CONN,
+  PROCESS_DONE
+} process_status_t;
 
 /* 
  *functions prototypes
@@ -531,6 +534,8 @@ enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
                                    bool_t *dispatch);
 void DispatchWork(nfs_request_data_t *pnfsreq, unsigned int worker_index);
 void *worker_thread(void *IndexArg);
+unsigned int nfs_rpc_get_worker_index(int mount_protocol_flag);
+process_status_t process_rpc_request(SVCXPRT *xprt);
 void *rpc_dispatcher_thread(void *arg);
 void *admin_thread(void *arg);
 void *stats_thread(void *IndexArg);

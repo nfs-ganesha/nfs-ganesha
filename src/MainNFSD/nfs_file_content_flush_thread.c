@@ -68,8 +68,6 @@
 #include "nfs_init.h"
 
 /* Structures from another module */
-extern nfs_worker_data_t *workers_data;
-extern cache_content_client_t recover_datacache_client;
 extern nfs_start_info_t nfs_start_info;
 
 /**

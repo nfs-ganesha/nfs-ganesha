@@ -157,6 +157,7 @@ unsigned long gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam,
 int compare_gss_ctx(hash_buffer_t * buff1, hash_buffer_t * buff2);
 int display_gss_ctx(hash_buffer_t * pbuff, char *str);
 int display_gss_svc_data(hash_buffer_t * pbuff, char *str);
+const char *str_gc_proc(rpc_gss_proc_t gc_proc);
 #endif                          /* _HAVE_GSSAPI */
 
 #ifdef _USE_TIRPC
