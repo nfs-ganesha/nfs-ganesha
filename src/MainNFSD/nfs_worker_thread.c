@@ -69,6 +69,11 @@
 #include "nfs_stat.h"
 #include "SemN.h"
 
+#ifdef _USE_PNFS
+#include "pnfs.h"
+#include "pnfs_service.h"
+#endif
+
 #ifdef _DEBUG_MEMLEAKS
 void nfs_debug_debug_label_info();
 #endif
@@ -1465,6 +1470,10 @@ void *worker_thread(void *IndexArg)
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   unsigned int gc_allowed = FALSE;
   char thr_name[32];
+
+#ifdef _USE_MFSL
+  fsal_status_t fsal_status ;
+#endif
 
   worker_index = (unsigned long)IndexArg;
   pmydata = &(workers_data[worker_index]);

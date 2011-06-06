@@ -20,12 +20,6 @@ BuildRequires:  mysql-devel >= 5.0
 BuildRequires:  mysql-libs >= 5.0
 %endif
 %endif
-%if %{?_with_gpfs:1}%{!?_with_gpfs:0}
-# we have to be really specific on kernel version
-# because we are packaging a module
-%global _use_internal_dependency_generator 0
-BuildRequires: kernel-devel
-%endif
 %if %{?_with_vfs:1}%{!?_with_vfs:0}
 # we have to be really specific on kernel version
 # because we are packaging a module
@@ -307,9 +301,6 @@ install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v8.sql      $RPM_BUILD_ROOT%{
 install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v7.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 FSAL/FSAL_POSIX/DBExt/MYSQL/posixdb_mysql5.sql  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 %endif
-%if %{?_with_gpfs:1}%{!?_with_gpfs:0}
-rm -f $RPM_BUILD_ROOT/lib/modules/*/modules*
-%endif
 
 %if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
 %if %{?_with_fuse:0}%{!?_with_fuse:1}
@@ -378,7 +369,6 @@ rm -rf $RPM_BUILD_ROOT
 %if %{?_with_gpfs:1}%{!?_with_gpfs:0}
 %files gpfs
 %defattr(-,root,root,-)
-/lib/modules/*/extra/*.ko
 %{_bindir}/gpfs.ganesha.*
 %{_bindir}/gpfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-gpfs
@@ -499,21 +489,9 @@ chkconfig --add nfs-ganesha-xfs
 %if %{?_with_gpfs:1}%{!?_with_gpfs:0}
 %preun gpfs
 chkconfig --del nfs-ganesha-gpfs
-/sbin/depmod
-rpm -ql nfs-ganesha-gpfs | grep ".ko$" > /var/run/nfs-ganesha-gpfs.modules
 
 %post gpfs
 chkconfig --add nfs-ganesha-gpfs
-/sbin/depmod -a
-if [ -x "/sbin/weak-modules" ]; then
-    rpm -ql nfs-ganesha-gpfs | grep ".ko$" | /sbin/weak-modules --add-modules
-fi
-
-%postun gpfs
-if [ -x "/sbin/weak-modules" ]; then
-    cat /var/run/nfs-ganesha-gpfs.modules | /sbin/weak-modules --remove-modules
-fi
-rm -f /var/run/nfs-ganesha-gpfs.modules
 %endif
 
 %if %{?_with_vfs:1}%{!?_with_vfs:0}

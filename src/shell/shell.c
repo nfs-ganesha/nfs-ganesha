@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -180,8 +180,6 @@ command_def_t shell_utils[] = {
 
   {NULL, NULL, NULL}            /* End of command list */
 };
-
-static char *skipblanks2(char *str);
 
 /* ------------------------------------------*
  *        Barrier management.
@@ -398,25 +396,25 @@ int shell_Init(int verbose, char *input_file, char *prompt, int shell_index)
 
   /* Initializes verbose mode. */
 
-  if(rc = shell_SetVerbose(context, (verbose ? "1" : "0")))
+  if((rc = shell_SetVerbose(context, (verbose ? "1" : "0"))))
     return rc;
 
-  if(rc = shell_SetDbgLvl(context, "NIV_EVENT"))
+  if((rc = shell_SetDbgLvl(context, "NIV_EVENT")))
     return rc;
 
   /* Then, initializes input file. */
 
-  if(rc = shell_SetInput(context, input_file))
+  if((rc = shell_SetInput(context, input_file)))
     return rc;
 
   /* Initialize prompt */
 
-  if(rc = shell_SetPrompt(context, prompt))
+  if((rc = shell_SetPrompt(context, prompt)))
     return rc;
 
   /* Initialize Shell id */
 
-  if(rc = shell_SetShellId(context, shell_index))
+  if((rc = shell_SetShellId(context, shell_index)))
     return rc;
 
   return SHELL_SUCCESS;
@@ -425,14 +423,52 @@ int shell_Init(int verbose, char *input_file, char *prompt, int shell_index)
 
 /* reads a line from input, and prints a prompt in interactive mode. */
 
+
+#ifdef HAVE_LIBREADLINE
+/* the same as previous, except it doesnt not trunc line at # sign */
+
+static char *skipblanks2(char *str)
+{
+
+  char *curr = str;
+
+  while(1)
+    {
+
+      switch (*curr)
+        {
+          /* end of lines */
+        case '\0':
+          return NULL;
+
+        case ' ':
+        case '\t':
+        case '\r':
+        case '\n':
+          curr++;
+          break;
+
+        default:
+          return curr;
+
+        }                       /* switch */
+
+    }                           /* while */
+
+}                               /* skipblanks2 */
+
+
+#endif
+
 static char *shell_readline(shell_state_t * context, char *s, int n, FILE * stream,
                             int interactive)
 {
 
   char *retval = shell_GetPrompt(context);
-  char *l;
 
 #ifdef HAVE_LIBREADLINE
+
+  char *l;
 
   if(interactive)
     {
@@ -475,7 +511,7 @@ int shell_Launch()
   char *arglist[MAX_ARGS];
   int alloctab[MAX_ARGS];
   int argcount;
-  int rc;
+  int rc = 0;
 
   shell_state_t *context = GetShellContext();
 
@@ -511,7 +547,7 @@ int shell_Launch()
       shell_SetStatus(context, rc);
 
     }
-
+  return rc;
 }
 
 /*------------------------------------------------------------------
@@ -550,38 +586,6 @@ static char *skipblanks(char *str)
     }                           /* while */
 
 }                               /* skipblanks */
-
-/* the same as previous, except it doesnt not trunc line at # sign */
-
-static char *skipblanks2(char *str)
-{
-
-  char *curr = str;
-
-  while(1)
-    {
-
-      switch (*curr)
-        {
-          /* end of lines */
-        case '\0':
-          return NULL;
-
-        case ' ':
-        case '\t':
-        case '\r':
-        case '\n':
-          curr++;
-          break;
-
-        default:
-          return curr;
-
-        }                       /* switch */
-
-    }                           /* while */
-
-}                               /* skipblanks2 */
 
 /* adress of the first blank char
  * outside a string.
@@ -686,7 +690,7 @@ int shell_ParseLine(char *in_out_line, char **out_arglist, int *p_argcount)
 
   /* While there is something after the Oblivion... */
 
-  while(curr_pos = skipblanks(curr_pos))
+  while((curr_pos = skipblanks(curr_pos)))
     {
       out_arglist[(*p_argcount)] = curr_pos;
       (*p_argcount)++;

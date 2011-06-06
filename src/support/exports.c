@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -170,8 +170,8 @@ int local_lru_inode_clean_entry(LRU_entry_t * entry, void *adddata)
 }                               /* lru_clean_entry */
 
 /**
- * nfs_ParseConfLine: parse a line with a settable separator and  end of line 
- * 
+ * nfs_ParseConfLine: parse a line with a settable separator and  end of line
+ *
  * parse a line with a settable separator and  end of line .
  *
  * @param Argv               [OUT] result array
@@ -181,7 +181,7 @@ int local_lru_inode_clean_entry(LRU_entry_t * entry, void *adddata)
  * @param endLine_func       [IN]  function used to identify an end of line
  *
  * @return the number of object found
- * 
+ *
  */
 int nfs_ParseConfLine(char *Argv[],
                       int nbArgv,
@@ -237,17 +237,17 @@ int nfs_ParseConfLine(char *Argv[],
 
 /**
  *
- * nfs_LookupHostAddr: determine host address from string. 
+ * nfs_LookupHostAddr: determine host address from string.
  *
  * This routine is converting a valid host name is both literal or dotted
- *  format into a valid netdb structure. If it could not successfull, NULL is 
+ *  format into a valid netdb structure. If it could not successfull, NULL is
  *  returned by the function.
  *
  * Assumptions:
- *  Dotted host address are 4 hex, decimal, or octal numbers in 
+ *  Dotted host address are 4 hex, decimal, or octal numbers in
  *  base 256 each separated by a period
  *
- * @param host [IN] hostname or dotted address, within a string literal. 
+ * @param host [IN] hostname or dotted address, within a string literal.
  *
  * @return the netdb structure related to this client.
  *
@@ -297,21 +297,21 @@ static struct hostent *nfs_LookupHostAddr(char *host)
 
 /**
  *
- * nfs_LookupNetworkAddr: determine network address from string. 
+ * nfs_LookupNetworkAddr: determine network address from string.
  *
  * This routine is converting a valid host name is both literal or dotted
- *  format into a valid netdb structure. If it could not successfull, NULL is 
+ *  format into a valid netdb structure. If it could not successfull, NULL is
  *  returned by the function.
  *
  * Assumptions:
- *  Dotted host address are 4 hex, decimal, or octal numbers in 
+ *  Dotted host address are 4 hex, decimal, or octal numbers in
  *  base 256 each separated by a period
  *
- * @param host [IN] hostname or dotted address, within a string literal. 
+ * @param host [IN] hostname or dotted address, within a string literal.
  * @param netAddr [OUT] return address
- * @param netMask [OUT] return address mask  
- * 
- * @return 0 if successfull, other values show an error 
+ * @param netMask [OUT] return address mask
+ *
+ * @return 0 if successfull, other values show an error
  *
  * @see inet_addr
  * @see gethostbyname
@@ -331,7 +331,7 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
   unsigned long class;
 
   /*
-   * Initialize local variables.. 
+   * Initialize local variables..
    */
 
   net_mask = 0;
@@ -339,7 +339,7 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
   host_ent = NULL;
 
   /*
-   * Check for dotted address notation. 
+   * Check for dotted address notation.
    */
 
   net_addr = inet_network(host);
@@ -347,13 +347,13 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
   if(net_addr == (in_addr_t) - 1)
     {
       /*
-       * Not a valid dotted IP address. Check for host name. 
+       * Not a valid dotted IP address. Check for host name.
        */
 
       if((host_ent = gethostbyname(host)) != NULL)
         {
           /*
-           * A valid hostname. Just copy the hostent address. 
+           * A valid hostname. Just copy the hostent address.
            */
 
           memcpy(&net_addr, host_ent->h_addr, host_ent->h_length);
@@ -363,7 +363,7 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
         {
 
           /*
-           * Not a valid hostname. Check for a network name. 
+           * Not a valid hostname. Check for a network name.
            */
 
           net_ent = getnetbyname(host);
@@ -384,7 +384,7 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
   /*
    * If no error and address is a network address, convert address to
    * inaddr format by left justifying, determine the network address
-   * class, and compute the network mask.  
+   * class, and compute the network mask.
    */
 
   if(error == 0 && compute_mask)
@@ -686,7 +686,7 @@ int parseAccessParam(char *var_name, char *var_value,
   return rc;
 }
 
-/** 
+/**
  * BuildExportEntry : builds an export entry from configutation file.
  * Don't stop immediately on error,
  * continue parsing the file, for listing other errors.
@@ -923,7 +923,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ACCESSTYPE))
         {
-          // check if it has not already been set 
+          // check if it has not already been set
           if((set_options & FLAG_EXPORT_ACCESSTYPE) == FLAG_EXPORT_ACCESSTYPE)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_ACCESSTYPE);
@@ -1147,7 +1147,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             {
               DEFINED_TWICE_WARNING(CONF_EXPORT_ALL_ANON);
               continue;
-            }          
+            }
 
           if (StrToBoolean(var_value))
             p_entry->all_anonymous = TRUE;
@@ -1498,7 +1498,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid PrefWrite: \"%s\"", 
+                      "NFS READ_EXPORT: ERROR: Invalid PrefWrite: \"%s\"",
                       var_value);
               err_flag = TRUE;
               continue;
@@ -1507,7 +1507,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           if(size < 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: PrefWrite out of range: %lld", 
+                      "NFS READ_EXPORT: ERROR: PrefWrite out of range: %lld",
                       size);
               err_flag = TRUE;
               continue;
@@ -1547,7 +1547,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           if(size < 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: PrefReaddir out of range: %lld", 
+                      "NFS READ_EXPORT: ERROR: PrefReaddir out of range: %lld",
                       size);
               err_flag = TRUE;
               continue;
@@ -1578,7 +1578,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           if(end_ptr == NULL || *end_ptr != '\0' || errno != 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: Invalid PrefWrite: \"%s\"", 
+                      "NFS READ_EXPORT: ERROR: Invalid PrefWrite: \"%s\"",
                       var_value);
               err_flag = TRUE;
               continue;
@@ -1587,7 +1587,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           if(size < 0)
             {
               LogCrit(COMPONENT_CONFIG,
-                      "NFS READ_EXPORT: ERROR: PrefWrite out of range: %lld", 
+                      "NFS READ_EXPORT: ERROR: PrefWrite out of range: %lld",
                       size);
               err_flag = TRUE;
               continue;
@@ -1952,7 +1952,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
       else
         {
           LogCrit(COMPONENT_CONFIG,
-                  "NFS READ_EXPORT: WARNING: Unknown option: %s", 
+                  "NFS READ_EXPORT: WARNING: Unknown option: %s",
                   var_name);
         }
 
@@ -1981,12 +1981,12 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         LogCrit(COMPONENT_CONFIG,
                 "NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
                 CONF_EXPORT_PSEUDO);
-        
+
       err_flag = TRUE;
     }
 
   if (
-      ((set_options & FLAG_EXPORT_ACCESSTYPE) || (set_options & FLAG_EXPORT_ACCESS_LIST)) && 
+      ((set_options & FLAG_EXPORT_ACCESSTYPE) || (set_options & FLAG_EXPORT_ACCESS_LIST)) &&
       (set_options & FLAG_EXPORT_ACCESSTYPE_LIST))
     {
       LogCrit(COMPONENT_CONFIG,
@@ -1999,7 +1999,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   if ((set_options & FLAG_EXPORT_ACCESSTYPE) || (set_options & FLAG_EXPORT_ACCESS_LIST))
     p_entry->new_access_list_version = FALSE;
   else
-    p_entry->new_access_list_version = TRUE;    
+    p_entry->new_access_list_version = TRUE;
 
   /* check if there had any error.
    * if so, free the p_entry and return an error.
@@ -2020,7 +2020,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
 }
 
-/** 
+/**
  * BuildDefaultExport : builds an export entry for '/'
  * with default parameters.
  */
@@ -2092,7 +2092,7 @@ exportlist_t *BuildDefaultExport()
   if(rc != 0)
     {
       LogCrit(COMPONENT_CONFIG,
-              "NFS READ_EXPORT: ERROR: Invalid client \"%s\"", 
+              "NFS READ_EXPORT: ERROR: Invalid client \"%s\"",
               (char *)client_root_access);
       return NULL;
     }
@@ -2119,7 +2119,7 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
   char *blk_name;
   int err_flag = FALSE;
 
-  exportlist_t *p_export_item;
+  exportlist_t *p_export_item = NULL;
   exportlist_t *p_export_last = NULL;
 
   int nb_entries = 0;
@@ -2292,10 +2292,10 @@ int export_client_match(sockaddr_t *hostaddr,
               *pclient_found = clients->clientarray[i];
               return TRUE;
             }
-          
+
           LogFullDebug(COMPONENT_DISPATCH,
                        "Did not match the ip address with a wildcard.");
-          
+
           /* Try to get the entry from th IP/name cache */
           if((rc = nfs_ip_name_get(hostaddr, hostname)) != IP_NAME_SUCCESS)
             {
@@ -2408,7 +2408,7 @@ int export_client_matchv6(struct in6_addr *paddrv6,
 /**
  * nfs_export_check_access: checks if a machine is authorized to access an export entry.
  *
- * Checks if a machine is authorized to access an export entry. 
+ * Checks if a machine is authorized to access an export entry.
  *
  * @param ssaddr        [IN]    the complete remote address (as a sockaddr_storage to be IPv6 compliant)
  * @param ptr_req       [IN]    pointer to the related RPC request.
@@ -2452,7 +2452,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
   ipvalid = sprint_sockip(hostaddr, ipstring, sizeof(ipstring));
   LogFullDebug(COMPONENT_DISPATCH,
                "nfs_export_check_access for address %s", ipstring);
-  
+
   /* For now, no matching client is found */
   memset(pclient_found, 0, sizeof(exportlist_client_entry_t));
 
@@ -2529,7 +2529,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
                   return EXPORT_MDONLY_GRANTED;
                 }
               else
-                { 
+                {
                   LogFullDebug(COMPONENT_DISPATCH,
                                "Root granted export permission");
                   return EXPORT_PERMISSION_GRANTED;
@@ -2540,7 +2540,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
       if(proc_makes_write)
         {
           if(export_client_match(hostaddr,
-                                 ipstring, 
+                                 ipstring,
                                  &(pexport->clients),
                                  pclient_found,
                                  EXPORT_OPTION_WRITE_ACCESS))
@@ -2551,7 +2551,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
             }
           else if(pexport->new_access_list_version &&
                   export_client_match(hostaddr,
-                                      ipstring, 
+                                      ipstring,
                                       &(pexport->clients),
                                       pclient_found,
                                       EXPORT_OPTION_MD_WRITE_ACCESS))
@@ -2587,7 +2587,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
             }
           else if(pexport->new_access_list_version &&
                   export_client_match(hostaddr,
-                                      ipstring, 
+                                      ipstring,
                                       &(pexport->clients),
                                       pclient_found,
                                       EXPORT_OPTION_MD_READ_ACCESS))
@@ -2601,7 +2601,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
       LogFullDebug(COMPONENT_DISPATCH,
                    "export permission denied");
       return EXPORT_PERMISSION_DENIED;
-      
+
 #ifdef _USE_TIRPC_IPV6
     }
   else if(hostaddr->ss_family == AF_INET6)
@@ -2621,12 +2621,12 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
                        "Client has IPv6 adress = %s", txtaddrv6);
         }
 
-      /* If the client socket is IPv4, then it is wrapped into a   ::ffff:a.b.c.d IPv6 address. We check this here 
+      /* If the client socket is IPv4, then it is wrapped into a   ::ffff:a.b.c.d IPv6 address. We check this here
        * This kind of adress is shaped like this:
        * |---------------------------------------------------------------|
        * |   80 bits = 10 bytes  | 16 bits = 2 bytes | 32 bits = 4 bytes |
        * |---------------------------------------------------------------|
-       * |            0          |        FFFF       |    IPv4 address   | 
+       * |            0          |        FFFF       |    IPv4 address   |
        * |---------------------------------------------------------------|   */
       if(!memcmp(psockaddr_in6->sin6_addr.s6_addr, ten_bytes_all_0, 10) &&
          !memcmp((char *)(psockaddr_in6->sin6_addr.s6_addr + 10),
@@ -2654,7 +2654,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
             {
               if (export_client_match(addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_WRITE_ACCESS))
                 return EXPORT_PERMISSION_GRANTED;
-              else if (pexport->new_access_list_version && export_client_match(addr, ipstring, 
+              else if (pexport->new_access_list_version && export_client_match(addr, ipstring,
                                            &(pexport->clients), pclient_found, EXPORT_OPTION_MD_WRITE_ACCESS))
                 {
                   pexport->access_type = ACCESSTYPE_MDONLY;
@@ -2663,7 +2663,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
             } else { /* request will not write anything */
             if (export_client_match(addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_READ_ACCESS))
               return EXPORT_PERMISSION_GRANTED;
-            else if (pexport->new_access_list_version && export_client_match(addr, ipstring, 
+            else if (pexport->new_access_list_version && export_client_match(addr, ipstring,
                                          &(pexport->clients), pclient_found, EXPORT_OPTION_MD_READ_ACCESS))
               {
                 pexport->access_type = ACCESSTYPE_MDONLY_RO;
@@ -2671,7 +2671,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
               }
           }
         }
-      
+
       if((user_credentials->caller_uid == 0) &&
          export_client_matchv6(&(psockaddr_in6->sin6_addr), &(pexport->clients),
                                pclient_found, EXPORT_OPTION_ROOT))
@@ -2701,12 +2701,12 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
         }
     }
 #endif                          /* _USE_TIRPC_IPV6 */
-  
+
   /* If this point is reached, no matching entry was found */
   LogFullDebug(COMPONENT_DISPATCH,
                "export permission denied - no matching entry");
   return EXPORT_PERMISSION_DENIED;
-  
+
 }                               /* nfs_export_check_access */
 
 /**

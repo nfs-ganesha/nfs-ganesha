@@ -144,7 +144,7 @@ int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)
 }
 #endif
 
- 
+
 /**
  *
  * hash_sockaddr: create a hash value based on the sockaddr_t structure
@@ -203,7 +203,7 @@ unsigned long hash_sockaddr(sockaddr_t *addr, ignore_port_t ignore_port)
       addr_hash ^= (port<<16);
     }
 #endif
-  
+
   return addr_hash;
 }
 
@@ -288,7 +288,7 @@ int sprint_sockip(sockaddr_t *addr, char *buf, int len)
  *
  * @param addr_1 [IN] first address
  * @param addr_2 [IN] second address
- * @param ignore_port [IN] 1 if you want to ignore port 
+ * @param ignore_port [IN] 1 if you want to ignore port
  *       comparison, 0 if you need port comparisons
  *
  * @return 1 if addresses match, 0 if they don't
@@ -304,7 +304,7 @@ int cmp_sockaddr(sockaddr_t *addr_1,
 #else
   if(addr_1->sin_family != addr_2->sin_family)
     return 0;
-#endif  
+#endif
 
 #ifdef _USE_TIRPC
   switch (addr_1->ss_family)
@@ -327,7 +327,7 @@ int cmp_sockaddr(sockaddr_t *addr_1,
           struct sockaddr_in6 *paddr2 = (struct sockaddr_in6 *)addr_2;
 
           return (memcmp(
-                         paddr1->sin6_addr.s6_addr, 
+                         paddr1->sin6_addr.s6_addr,
                          paddr2->sin6_addr.s6_addr,
                          sizeof(paddr2->sin6_addr.s6_addr)) == 0)
                   && (ignore_port == IGNORE_PORT || paddr1->sin6_port == paddr2->sin6_port);
@@ -465,7 +465,7 @@ CLIENT *Clnt_create(char *host,
   return clnt;
 }
 
-Clnt_destroy(CLIENT *clnt)
+void Clnt_destroy(CLIENT *clnt)
 {
   pthread_mutex_lock(&clnt_create_mutex);
   clnt_destroy(clnt);

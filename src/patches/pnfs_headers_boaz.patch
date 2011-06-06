@@ -1,0 +1,840 @@
+ src/include/pnfs_files_blocks_xdr.h |  160 ++++++++++++++
+ src/include/pnfs_neo.h              |  243 +++++++++++++++++++++
+ src/include/pnfs_osd_xdr.h          |  410 +++++++++++++++++++++++++++++++++++
+ 3 files changed, 813 insertions(+), 0 deletions(-)
+ create mode 100644 src/include/pnfs_files_blocks_xdr.h
+ create mode 100644 src/include/pnfs_neo.h
+ create mode 100644 src/include/pnfs_osd_xdr.h
+
+diff --git a/src/include/pnfs_files_blocks_xdr.h b/src/include/pnfs_files_blocks_xdr.h
+new file mode 100644
+index 0000000..37742a0
+--- /dev/null
++++ b/src/include/pnfs_files_blocks_xdr.h
+@@ -0,0 +1,160 @@
++/*
++ *  Copyright (c) 2006 The Regents of the University of Michigan.
++ *  All rights reserved.
++ *
++ *  Andy Adamson <andros@umich.edu>
++ *
++ *  Redistribution and use in source and binary forms, with or without
++ *  modification, are permitted provided that the following conditions
++ *  are met:
++ *
++ *  1. Redistributions of source code must retain the above copyright
++ *     notice, this list of conditions and the following disclaimer.
++ *  2. Redistributions in binary form must reproduce the above copyright
++ *     notice, this list of conditions and the following disclaimer in the
++ *     documentation and/or other materials provided with the distribution.
++ *  3. Neither the name of the University nor the names of its
++ *     contributors may be used to endorse or promote products derived
++ *     from this software without specific prior written permission.
++ *
++ *  THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
++ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ *  DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
++ *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
++ *  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
++ *  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
++ *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++ *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ *
++ */
++
++#ifndef _PNFS_FILES_BLOCKS_XDR_H
++#define _PNFS_FILES_BLOCKS_XDR_H
++
++/* FIXME: Needed from pnf_xdr.h
++	struct xdr_netobj
++	struct pnfs_deviceid
++	struct pnfs_fh
++	struct list_head
++	enum nfsstat4
++ */
++#include <pnf_xdr.h>
++
++/* the nfsd4_pnfs_devlist dev_addr for the file layout type */
++struct pnfs_filelayout_devaddr {
++	struct xdr_netobj	r_netid;
++	struct xdr_netobj	r_addr;
++};
++
++/* list of multipath servers */
++struct pnfs_filelayout_multipath {
++	u32				fl_multipath_length;
++	struct pnfs_filelayout_devaddr 	*fl_multipath_list;
++};
++
++struct pnfs_filelayout_device {
++	u32					fl_stripeindices_length;
++	u32       		 		*fl_stripeindices_list;
++	u32					fl_device_length;
++	struct pnfs_filelayout_multipath 	*fl_device_list;
++};
++
++struct pnfs_filelayout_layout {
++	u32                             lg_layout_type; /* response */
++	u32                             lg_stripe_type; /* response */
++	u32                             lg_commit_through_mds; /* response */
++	u64                             lg_stripe_unit; /* response */
++	u64                             lg_pattern_offset; /* response */
++	u32                             lg_first_stripe_index;	/* response */
++	struct pnfs_deviceid		device_id;		/* response */
++	u32                             lg_fh_length;		/* response */
++	struct pnfs_fh			*lg_fh_list;		/* response */
++};
++
++enum stripetype4 {
++	STRIPE_SPARSE = 1,
++	STRIPE_DENSE = 2
++};
++
++enum pnfs_block_extent_state4 {
++        PNFS_BLOCK_READWRITE_DATA       = 0,
++        PNFS_BLOCK_READ_DATA            = 1,
++        PNFS_BLOCK_INVALID_DATA         = 2,
++        PNFS_BLOCK_NONE_DATA            = 3
++};
++
++enum pnfs_block_volume_type4 {
++        PNFS_BLOCK_VOLUME_SIMPLE = 0,
++        PNFS_BLOCK_VOLUME_SLICE = 1,
++        PNFS_BLOCK_VOLUME_CONCAT = 2,
++        PNFS_BLOCK_VOLUME_STRIPE = 3,
++};
++typedef enum pnfs_block_volume_type4 pnfs_block_volume_type4;
++
++enum bl_cache_state {
++	BLOCK_LAYOUT_NEW	= 0,
++	BLOCK_LAYOUT_CACHE	= 1,
++	BLOCK_LAYOUT_UPDATE	= 2,
++};
++
++typedef struct pnfs_blocklayout_layout {
++        struct list_head                bll_list;
++        struct pnfs_deviceid      bll_vol_id;
++        u64                             bll_foff;	// file offset
++        u64                             bll_len;
++        u64                             bll_soff;	// storage offset
++	int				bll_recalled;
++        enum pnfs_block_extent_state4   bll_es;
++	enum bl_cache_state		bll_cache_state;
++} pnfs_blocklayout_layout_t;
++
++typedef struct pnfs_blocklayout_devinfo {
++        struct list_head                bld_list;
++        pnfs_block_volume_type4         bld_type;
++        struct pnfs_deviceid            bld_devid;
++        int                             bld_index_loc;
++        union {
++                struct {
++                        u64             bld_offset;
++                        u32             bld_sig_len,
++                                        *bld_sig;
++                } simple;
++                struct {
++                        u64             bld_start,
++                                        bld_len;
++                        u32             bld_index;      /* Index of Simple Volume */
++                } slice;
++                struct {
++                        u32             bld_stripes;
++                        u64             bld_chunk_size;
++                        u32             *bld_stripe_indexs;
++                } stripe;
++        } u;
++} pnfs_blocklayout_devinfo_t;
++
++struct xdr_stream_t;
++enum nfsstat4
++pnfs_files_encode_layout(struct xdr_stream_t *xdr,
++			 const struct pnfs_filelayout_layout *flp);
++
++enum nfsstat4
++filelayout_encode_devinfo(struct xdr_stream_t *xdr,
++			  const struct pnfs_filelayout_device *fdev);
++
++enum nfsstat4
++blocklayout_encode_layout(struct xdr_stream_t *xdr,
++			  const struct list_head *bl_head);
++
++enum nfsstat4
++blocklayout_encode_devinfo(struct xdr_stream_t *xdr,
++			   const struct list_head *volumes);
++
++/* TBD:
++blocklayout_decode_layout_commit(...)
++blocklayout_decode_layout_return(...)
++*/
++
++#endif /* _PNFS_FILES_BLOCKS_XDR_H */
+diff --git a/src/include/pnfs_neo.h b/src/include/pnfs_neo.h
+new file mode 100644
+index 0000000..ca87f5b
+--- /dev/null
++++ b/src/include/pnfs_neo.h
+@@ -0,0 +1,243 @@
++/*
++ *
++ * Copyright CEA/DAM/DIF  (2011)
++ * contributor : bharrosh@panasas.com
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 3 of the License, or (at your option) any later version.
++ * 
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ * 
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++ * 
++ * ---------------------------------------
++ */
++
++/**
++ * \file    pnfs.h
++ * \author  $Author: Boaz $
++ * \date    $Date: 2010/01/27 12:44:15 $
++ * \brief   Management of the pNFS features.
++ *
++ * pnfs.h : Management of the pNFS features.
++ *
++ *
++ */
++
++#ifndef _PNFS_H
++#define _PNFS_H
++
++/* FIXME: These are all wrongly ganesha name-conventioned and definitions.
++ * Will fix in next iterations.
++ */
++
++/* Philippe: xdr.h (attached) introduces the xdr_stream_t struct and proposed
++             helpers that facilitate in xdr encoding decoding.
++             I'm putting this one just to make things easier on the eye,
++             and it's what we are used too in Kernel. I think this thing can
++             be good down the line when we want to support aio type of scattered
++             dynamic XDR memory allocations. See at xdr.h for proposed helpers
++             that facilitate in xdr encoding decoding.
++ */
++#include <xdr.h>
++
++/* Philippe: I'm using fsal_pnfs_context_t below to mean the "super_block" or
++ *	     "export_root" It's the same one that was received in create or
++ *	     open.
++ */
++typedef fsal_op_context_t fsal_pnfs_context_t
++
++/* It is assumed that a pnfs_file_t has a back pointer to it's
++   parent fsal_pnfs_context_t.
++*/
++typedef fsal_handle_t fsal_pnfs_file_t
++
++/* This is the main switch. If false returned, Ganesha will not enable pnfs
++ * export extensions.
++ */
++bool FSAL_is_pnfs_enabled(fsal_pnfs_context_t context);
++
++/* Basic pnfs in-memory types */
++struct pnfs_lo_segment {
++	u32 lo_type;
++	u32 io_mode;
++	u64 offset;
++	u64 len;
++};
++
++struct pnfs_deviceid {
++	u64	sbid;			/* FSAL export_root unique ID */
++	u64	devid;			/* export_root-wide unique device ID */
++};
++
++/* LAYOUT GET OPERATION */
++struct pnfs_layoutget_arg {
++	u64			lga_minlength;	/* minimum bytes requested */
++	u64			lga_sbid;	/* FSAL use this as the sbid
++						 * part of the device ID
++						 */
++};
++
++struct pnfs_layoutget_res {
++	/* request/response: At input this contains the Client's preferred range.
++	 * On return contains the range given. It should contain at least
++	 * offset..offset+lga_minlength.
++	 * io_mode: read maybe promoted to read/write
++	 * lo_type: Is the format of the layout that will be returned in @xdr.
++	 */
++	struct pnfs_lo_segment	lgr_seg;
++
++	/* Should layout be returned before CLOSE */
++	bool			lgr_return_on_close;
++	/* This cookie is returned in FSAL_pnfs_layout_return() when all bytes
++	 * Handed here are returned by the client. (This layout was removed from
++	 * Ganesha's internal list for this file)
++	 */
++	long			lgr_layout_cookie;
++};
++
++/** pnfs_layout_get: Retrieve and encode a layout for pnfs_file_t, onto the xdr
++ *                  stream.
++ * Return one of the following nfs errors:
++ *      NFS_OK: Success
++ *      NFS4ERR_ACCESS: Permission error
++ *      NFS4ERR_BADIOMODE: Server does not support requested iomode
++ *      NFS4ERR_BADLAYOUT: No layout matching loga_minlength rules
++ *      NFS4ERR_INVAL: Parameter other than layout is invalid
++ *      NFS4ERR_IO: I/O error
++ *      NFS4ERR_LAYOUTTRYLATER: Layout may be retrieved later
++ *      NFS4ERR_LAYOUTUNAVAILABLE: Layout unavailable for this file
++ *      NFS4ERR_LOCKED: Lock conflict
++ *      NFS4ERR_NOSPC: Out-of-space error occurred
++ *      NFS4ERR_RECALLCONFLICT:
++ *                             Layout currently unavailable due to a
++ *                             conflicting CB_LAYOUTRECALL
++ *      NFS4ERR_SERVERFAULT: Server went bezerk
++ *      NFS4ERR_TOOSMALL: loga_maxcount too small to fit layout
++ *      NFS4ERR_WRONG_TYPE: Wrong file type (not a regular file)
++ *
++ * Comments: Implementer should use one of pnfs_files_encode_layout(),
++ *           pnfs_blocks_encode_layout(), or pnfs_objects_encode_layout()
++ *           with the passed xdr, and a FSAL supplied layout information.
++ */
++enum nfsstat4 FSAL_pnfs_layout_get (pnfs_file_t *file, xdr_stream_t *xdr,
++			       const struct pnfs_layoutget_arg *arg,
++			       struct pnfs_layoutget_res *res);
++
++/*TODO: Support return of multple segments, @res will be an array with an
++ *      additional array_size returned.
++ */
++
++/* GET_DEVICE_INFO OPERATION */
++/** pnfs_get_device_info: Given a pnfs_deviceid, Encode device info onto the xdr
++ *                        stream
++ * Return one of the appropriate nfs errors.
++ * Comments: Implementor should use one of pnfs_filelayout_encode_devinfo(),
++ *           pnfs_blocklayout_encode_devinfo(), or pnfs_objects_encode_devinfo()
++ *           with the passed xdr, and a FSAL supplied device information.
++ */
++
++enum nfsstat4 FSAL_pnfs_get_device_info (fsal_pnfs_context_t, xdr_stream_t *xdr,
++				   u32 layout_type,
++				   const struct pnfs_deviceid *did);
++
++/* LAYOUT_COMMIT OPERATION */
++struct pnfs_layoutcommit_arg {
++	struct pnfs_lo_segment	lca_seg;
++	u32			lca_reclaim;
++	u32			lca_newoffset;
++	u64			lca_last_wr; /* The highest byte written by client */
++	struct nfstime4		lca_mtime;   /* last modification time */
++};
++
++struct pnfs_layoutcommit_res {
++	u32			lcr_size_chg;	/* boolean is lcr_newsize set */
++	u64			lcr_newsize;	/* The new current file size */
++};
++
++/** pnfs_layout_commit: Commit meta-data changes to file
++ *	@xdr: In blocks and objects contains the type-specific commit info.
++ *	@arg: The passed in parameters (See struct pnfs_layoutcommit_arg)
++ *	@res: The returned information (See struct pnfs_layoutcommit_res)
++ *
++ * Return: one of the appropriate nfs errors.
++ * Comments: In some files-layout systems where the DSs are set to return
++ *           S_FILE_SYNC for the WRITE operation, or when the COMMIT is through
++ *           the MDS, this function may be empty.
++ */
++enum nfsstat4 FSAL_pnfs_layout_commit (pnfs_file_t *file, xdr_stream_t *xdr,
++				  const struct pnfs_layoutcommit_arg *args,
++				  struct pnfs_layoutcommit_res *res);
++
++/* LAYOUT_RETURN OPERATION */
++struct pnfs_layoutreturn_arg {
++	/* The byte range and io_mode returned */
++	const struct pnfs_lo_segment lra_seg;
++	/* This cookie was handed out by the pnfs_layout_get call
++	 * It is only returned when the last byte of the layout is dereferenced
++	 */
++	void *lra_layout_cookie;
++	/* This cookie was handed to the pnfs_cb_layout_recall call.
++	 * When returned it means the recall was fully satisfied
++	 */
++	void *lra_recall_cookie;
++	/* The return is part of a client expiration */
++	bool lra_fence_off;
++	/* The layout list of this file is now empty */
++	bool lra_is_last;
++};
++
++/** FSAL_pnfs_layout_return: Client Returns the layout
++ *
++ *	Or a return is simulated by NFS-GANESHA.
++ *
++ *	@xdr: In blocks and objects contains the type-specific return info.
++ *	@arg: The passed in parameters (See struct pnfs_layoutreturn_arg)
++ */
++enum nfsstat4 FSAL_pnfs_layout_return (pnfs_file_t *file, xdr_stream_t *xdr,
++				      const struct pnfs_layoutreturn_arg *args);
++
++/* CB_LAYOUTRECALL facility implemented by NFS-GANESHA */
++
++/* TODO: this enum is from the nfs std */
++enum cb_recall_type {
++	CBT_FILE,
++	CBT_ALL,
++	CBT_ANY,
++};
++
++enum CBRL_ret {
++	CBRL_OK = 0, CBRL_NOT_FOUND,
++	CBRL_PROGRESS_MADE, CBRL_ENOMEM, CBRL_ERROR,
++};
++
++enum CBRL_search_flags {
++	SF_SINGLE_CLIENT = 0,
++	SF_ALL_CLIENTS_BUT = 1,
++	SF_SIMULATE_ONLY = 2,
++};
++
++struct cb_layoutrecall_arg {
++	enum recall_type 	cb_type;
++	struct pnfs_lo_segment	cb_seg;
++	nfs_client_id		cb_client;
++	pnfs_file_t		cb_file;
++	int 			cb_search_flags;
++	void 			*cb_recall_cookie;
++};
++
++/** pnfs_cb_layout_recall: filesystems which need to LAYOUT_RECALL an outstanding
++list of LAYOUTS, do to clients access conflicts or error conditions.
++ */
++enum CBRL_ret pnfs_cb_layout_recall(fsal_pnfs_context_t fsal,
++				    struct cb_layoutrecall_arg *args);
++
++
++#endif                          /* _PNFS_H */
+diff --git a/src/include/pnfs_osd_xdr.h b/src/include/pnfs_osd_xdr.h
+new file mode 100644
+index 0000000..9ae7941
+--- /dev/null
++++ b/src/include/pnfs_osd_xdr.h
+@@ -0,0 +1,410 @@
++/*
++ *  pnfs_osd_xdr.h
++ *
++ *  pNFS-osd on-the-wire data structures
++ *
++ *  Copyright (C) 2007-2009 Panasas Inc.
++ *  All rights reserved.
++ *
++ *  Benny Halevy <bhalevy@panasas.com>
++ *  Boaz Harrosh <bharrosh@panasas.com>
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2
++ *  See the file COPYING included with this distribution for more details.
++ *
++ *  Redistribution and use in source and binary forms, with or without
++ *  modification, are permitted provided that the following conditions
++ *  are met:
++ *
++ *  1. Redistributions of source code must retain the above copyright
++ *     notice, this list of conditions and the following disclaimer.
++ *  2. Redistributions in binary form must reproduce the above copyright
++ *     notice, this list of conditions and the following disclaimer in the
++ *     documentation and/or other materials provided with the distribution.
++ *  3. Neither the name of the Panasas company nor the names of its
++ *     contributors may be used to endorse or promote products derived
++ *     from this software without specific prior written permission.
++ *
++ *  THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
++ *  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ *  DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
++ *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
++ *  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
++ *  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
++ *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++ *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++#ifndef __PNFS_OSD_XDR_H__
++#define __PNFS_OSD_XDR_H__
++
++/* FIXME: Needed from pnfs_xdr.h
++	struct pnfs_deviceid
++	struct nfs4_string
++*/
++#included <pnfs_xdr.h>
++
++#define PNFS_OSD_OSDNAME_MAXSIZE 256
++
++/*
++ * draft-ietf-nfsv4-minorversion-22
++ * draft-ietf-nfsv4-pnfs-obj-12
++ */
++
++/* Layout Structure */
++
++enum pnfs_osd_raid_algorithm4 {
++	PNFS_OSD_RAID_0		= 1,
++	PNFS_OSD_RAID_4		= 2,
++	PNFS_OSD_RAID_5		= 3,
++	PNFS_OSD_RAID_PQ	= 4     /* Reed-Solomon P+Q */
++};
++
++/*   struct pnfs_osd_data_map4 {
++ *       uint32_t                    odm_num_comps;
++ *       length4                     odm_stripe_unit;
++ *       uint32_t                    odm_group_width;
++ *       uint32_t                    odm_group_depth;
++ *       uint32_t                    odm_mirror_cnt;
++ *       pnfs_osd_raid_algorithm4    odm_raid_algorithm;
++ *   };
++ */
++struct pnfs_osd_data_map {
++	u32	odm_num_comps;
++	u64	odm_stripe_unit;
++	u32	odm_group_width;
++	u32	odm_group_depth;
++	u32	odm_mirror_cnt;
++	u32	odm_raid_algorithm;
++};
++
++/*   struct pnfs_osd_objid4 {
++ *       deviceid4       oid_device_id;
++ *       uint64_t        oid_partition_id;
++ *       uint64_t        oid_object_id;
++ *   };
++ */
++struct pnfs_osd_objid {
++	struct pnfs_deviceid	oid_device_id;
++	u64			oid_partition_id;
++	u64			oid_object_id;
++};
++
++/* For printout. I use "dev(%llx:%llx)", _DEVID_LO(), _DEVID_HI BE style */
++#define _DEVID_LO(oid_device_id) \
++	(unsigned long long)be64_to_cpup((__be64 *)oid_device_id.data)
++
++#define _DEVID_HI(oid_device_id) \
++	(unsigned long long)be64_to_cpup(((__be64 *)oid_device_id.data) + 1)
++
++enum pnfs_osd_version {
++	PNFS_OSD_MISSING              = 0,
++	PNFS_OSD_VERSION_1            = 1,
++	PNFS_OSD_VERSION_2            = 2
++};
++
++struct pnfs_osd_opaque_cred {
++	u32 cred_len;
++	void *cred;
++};
++
++enum pnfs_osd_cap_key_sec {
++	PNFS_OSD_CAP_KEY_SEC_NONE     = 0,
++	PNFS_OSD_CAP_KEY_SEC_SSV      = 1,
++};
++
++/*   struct pnfs_osd_object_cred4 {
++ *       pnfs_osd_objid4         oc_object_id;
++ *       pnfs_osd_version4       oc_osd_version;
++ *       pnfs_osd_cap_key_sec4   oc_cap_key_sec;
++ *       opaque                  oc_capability_key<>;
++ *       opaque                  oc_capability<>;
++ *   };
++ */
++struct pnfs_osd_object_cred {
++	struct pnfs_osd_objid		oc_object_id;
++	u32				oc_osd_version;
++	u32				oc_cap_key_sec;
++	struct pnfs_osd_opaque_cred	oc_cap_key;
++	struct pnfs_osd_opaque_cred	oc_cap;
++};
++/*   struct pnfs_osd_layout4 {
++ *       pnfs_osd_data_map4      olo_map;
++ *       uint32_t                olo_comps_index;
++ *       pnfs_osd_object_cred4   olo_components<>;
++ *   };
++ */
++struct pnfs_osd_layout {
++	struct pnfs_osd_data_map	olo_map;
++	u32				olo_comps_index;
++	u32				olo_num_comps;
++	struct pnfs_osd_object_cred	*olo_comps;
++};
++
++/* Device Address */
++enum pnfs_osd_targetid_type {
++	OBJ_TARGET_ANON = 1,
++	OBJ_TARGET_SCSI_NAME = 2,
++	OBJ_TARGET_SCSI_DEVICE_ID = 3,
++};
++
++/*   union pnfs_osd_targetid4 switch (pnfs_osd_targetid_type4 oti_type) {
++ *       case OBJ_TARGET_SCSI_NAME:
++ *           string              oti_scsi_name<>;
++ *
++ *       case OBJ_TARGET_SCSI_DEVICE_ID:
++ *           opaque              oti_scsi_device_id<>;
++ *
++ *       default:
++ *           void;
++ *   };
++ *
++ *   union pnfs_osd_targetaddr4 switch (bool ota_available) {
++ *       case TRUE:
++ *           netaddr4            ota_netaddr;
++ *       case FALSE:
++ *           void;
++ *   };
++ *
++ *   struct pnfs_osd_deviceaddr4 {
++ *       pnfs_osd_targetid4      oda_targetid;
++ *       pnfs_osd_targetaddr4    oda_targetaddr;
++ *       uint64_t                oda_lun;
++ *       opaque                  oda_systemid<>;
++ *       pnfs_osd_object_cred4   oda_root_obj_cred;
++ *       opaque                  oda_osdname<>;
++ *   };
++ */
++struct pnfs_osd_targetid {
++	u32				oti_type;
++	struct nfs4_string		oti_scsi_device_id;
++};
++
++enum { PNFS_OSD_TARGETID_MAX = 1 + PNFS_OSD_OSDNAME_MAXSIZE / 4 };
++
++/*   struct netaddr4 {
++ *       // see struct rpcb in RFC1833
++ *       string r_netid<>;    // network id
++ *       string r_addr<>;     // universal address
++ *   };
++ */
++struct pnfs_osd_net_addr {
++	struct nfs4_string	r_netid;
++	struct nfs4_string	r_addr;
++};
++
++struct pnfs_osd_targetaddr {
++	u32				ota_available;
++	struct pnfs_osd_net_addr	ota_netaddr;
++};
++
++enum {
++	NETWORK_ID_MAX = 16 / 4,
++	UNIVERSAL_ADDRESS_MAX = 64 / 4,
++	PNFS_OSD_TARGETADDR_MAX = 3 +  NETWORK_ID_MAX + UNIVERSAL_ADDRESS_MAX,
++};
++
++struct pnfs_osd_deviceaddr {
++	struct pnfs_osd_targetid	oda_targetid;
++	struct pnfs_osd_targetaddr	oda_targetaddr;
++	u8				oda_lun[8];
++	struct nfs4_string		oda_systemid;
++	struct pnfs_osd_object_cred	oda_root_obj_cred;
++	struct nfs4_string		oda_osdname;
++};
++
++enum {
++	ODA_OSDNAME_MAX = PNFS_OSD_OSDNAME_MAXSIZE / 4,
++	PNFS_OSD_DEVICEADDR_MAX =
++		PNFS_OSD_TARGETID_MAX + PNFS_OSD_TARGETADDR_MAX +
++		2 /*oda_lun*/ +
++		1 + OSD_SYSTEMID_LEN +
++		1 + ODA_OSDNAME_MAX,
++};
++
++/* LAYOUTCOMMIT: layoutupdate */
++
++/*   union pnfs_osd_deltaspaceused4 switch (bool dsu_valid) {
++ *       case TRUE:
++ *           int64_t     dsu_delta;
++ *       case FALSE:
++ *           void;
++ *   };
++ *
++ *   struct pnfs_osd_layoutupdate4 {
++ *       pnfs_osd_deltaspaceused4    olu_delta_space_used;
++ *       bool                        olu_ioerr_flag;
++ *   };
++ */
++struct pnfs_osd_layoutupdate {
++	u32	dsu_valid;
++	s64	dsu_delta;
++	u32	olu_ioerr_flag;
++};
++
++/* LAYOUTRETURN: I/O Rrror Report */
++
++enum pnfs_osd_errno {
++	PNFS_OSD_ERR_EIO		= 1,
++	PNFS_OSD_ERR_NOT_FOUND		= 2,
++	PNFS_OSD_ERR_NO_SPACE		= 3,
++	PNFS_OSD_ERR_BAD_CRED		= 4,
++	PNFS_OSD_ERR_NO_ACCESS		= 5,
++	PNFS_OSD_ERR_UNREACHABLE	= 6,
++	PNFS_OSD_ERR_RESOURCE		= 7
++};
++
++/*   struct pnfs_osd_ioerr4 {
++ *       pnfs_osd_objid4     oer_component;
++ *       length4             oer_comp_offset;
++ *       length4             oer_comp_length;
++ *       bool                oer_iswrite;
++ *       pnfs_osd_errno4     oer_errno;
++ *   };
++ */
++struct pnfs_osd_ioerr {
++	struct pnfs_osd_objid	oer_component;
++	u64			oer_comp_offset;
++	u64			oer_comp_length;
++	u32			oer_iswrite;
++	u32			oer_errno;
++};
++
++static inline int
++pnfs_osd_objid_xdr_sz(void)
++{
++	return (NFS4_DEVICEID4_SIZE / 4) + 2 + 2;
++}
++
++static inline unsigned
++pnfs_osd_ioerr_xdr_sz(void)
++{
++	return pnfs_osd_objid_xdr_sz() + 2 + 2 + 1 + 1;
++}
++
++/* OSD XDR API */
++
++/* Layout helpers */
++
++/* Layout decoding is done in two stages:
++ * 1. First Call pnfs_osd_xdr_decode_layout_map to read in only the header part
++ *    of the layout. @iter members need not be initialized.
++ *    Returned:
++ *             @layout members are set. (@layout->olo_comps set to NULL).
++ *             @iter->alloc_bytes contains the requested size for the buffer
++ *              needed at @layout->olo_comps.
++ *             Zero on success, or negative error if passed xdr is broken.
++ *    (FIXME: until API is converted to struct xdr errors are not detected)
++ *
++ * 2. 2nd Call pnfs_osd_xdr_decode_layout_comps()
++ *    There are two possibilities here:
++ *    A. contiguous buffer (easiest, dynamic allocation)
++ *       Decode everything into one buffer. Just set @layout->olo_comps to
++ *       a buffer as big as @iter->alloc_bytes. And call
++ *       pnfs_osd_xdr_decode_layout_comps().
++ *       In this case the return code is always success (0)
++ *       Example:
++ *		struct pnfs_osd_xdr_decode_layout_iter iter;
++ *		struct pnfs_osd_layout layout;
++ *
++ *		pnfs_osd_xdr_decode_layout_map(&layout, &iter, xdr);
++ *		... check error return code;
++ *		layout->olo_comp = kzalloc(iter->alloc_bytes, ...);
++ *		pnfs_osd_xdr_decode_layout_comps(&layout, &iter, xdr);
++ *
++ *    B. Few comps at a time (more complicated, static allocation)
++ *       In this case the user communicates decoding in the @iter members
++ *       @iter->alloc_bytes - Is the number of bytes at @iter->extra_bytes
++ *       @iter->num_comps   - Is the numbers of comps to decode.
++ *                            On return this is updated to num_comps actually
++ *                            decoded.
++ *       @iter->cur_comp    - Is where to decode the struct pnfs_osd_object_cred
++ *                            On return this is updated to After the last
++ *                            decoded comp.
++ *       @iter->extra_bytes  - Is where to place variable string information
++ *                             that belong to the decoded comps.
++ *                             This can be NULL in which case the string pointed
++ *                             by ->cur_comp will point to the actuall passed in
++ *                             XDR buffer. User must make sure to copy or
++ *                             discard these strings before the XDR buffer is
++ *                             returned.
++ *       In system B, the function returns when @iter->num_comps,or all the
++ *       layout, was decoded, which ever triggers first.
++ *    Returned:
++ *       1 if there is more to decode or 0 if we are done.
++ *       Example:
++ *		struct pnfs_osd_xdr_decode_layout_iter iter;
++ *		struct pnfs_osd_layout layout;
++ *
++ *		pnfs_osd_xdr_decode_layout_map(&layout, &iter, xdr);
++ *		do {
++ *			struct pnfs_osd_object_cred one_comp;
++ *
++ *			iter->num_comps = 1;
++ *			iter->cur_comp = &one_comp;
++ *			// We will use the creds below and discard afterwords
++ *			iter->extra_bytes = NULL;
++ *			more = pnfs_osd_xdr_decode_layout_comps(&layout, &iter,
++ *								xdr);
++ *			... use the one_comp structure, Specially copy the creds
++ *			to internal buffers ...
++ *		} while (more);
++ */
++
++struct pnfs_osd_xdr_decode_layout_iter {
++	unsigned decoded_comps;		      /* How many were already decoded*/
++	unsigned alloc_bytes;                     /* Num bytes at extra_bytes */
++	void *extra_bytes;                /* place string information in here */
++	unsigned num_comps;                       /* Num comps at cur_comp    */
++	struct pnfs_osd_object_cred *cur_comp;    /* decode into this comp    */
++	void *p;           /*FIXME: Will be removed when converted to xdr API */
++};
++
++extern int pnfs_objects_decode_layout_map(struct pnfs_osd_layout *layout,
++	struct pnfs_osd_xdr_decode_layout_iter *iter, u32 *xdr);
++
++extern int pnfs_objects_decode_layout_comps(
++	const struct pnfs_osd_layout *layout,
++	struct pnfs_osd_xdr_decode_layout_iter *iter, u32 *xdr);
++
++/* Layout encoding */
++extern int pnfs_objects_encode_layout(
++	struct exp_xdr_stream *xdr,
++	struct pnfs_osd_layout *layout);
++
++/* Device Info helpers */
++
++/* First pass calculate total size for space needed */
++extern size_t pnfs_osd_xdr_deviceaddr_incore_sz(u32 *p);
++
++/* Note: some strings pointed to inside @deviceaddr might point
++ * to space inside @p. @p should stay valid while @deviceaddr
++ * is in use.
++ * It is assumed that @deviceaddr points to bigger memory of size
++ * calculated in first pass by pnfs_osd_xdr_deviceaddr_incore_sz()
++ */
++extern void pnfs_objects_decode_deviceaddr(
++	struct pnfs_osd_deviceaddr *deviceaddr, u32 *p);
++
++/* For Servers */
++extern int pnfs_objects_encode_deviceaddr(
++	struct exp_xdr_stream *xdr, struct pnfs_osd_deviceaddr *devaddr);
++
++/* layoutupdate (layout_commit) xdr helpers */
++extern int
++pnfs_objects_encode_layoutupdate(struct xdr_stream *xdr,
++				 struct pnfs_osd_layoutupdate *lou);
++extern __be32 *
++pnfs_objects_decode_layoutupdate(struct pnfs_osd_layoutupdate *lou, __be32 *p);
++
++/* osd_ioerror encoding/decoding (layout_return) */
++extern unsigned pnfs_objects_ioerr_xdr_sz(void);
++extern int
++pnfs_objects_encode_ioerr(struct xdr_stream *xdr, struct pnfs_osd_ioerr *ioerr);
++extern __be32 *
++pnfs_objects_decode_ioerr(struct pnfs_osd_ioerr *ioerr, __be32 *p);
++
++#endif /* __PNFS_OSD_XDR_H__ */
+-- 1.7.2.3 

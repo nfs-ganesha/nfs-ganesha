@@ -16,11 +16,29 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
+#include <stdio.h>
 #include <string.h>
-#include <signal.h>
-
+#include <pthread.h>
+#include <fcntl.h>
+#include <sys/file.h>           /* for having FNDELAY */
+#include "HashData.h"
+#include "HashTable.h"
 #include "rpc.h"
-#include "PNFS/SPNFS_LIKE/pnfs_layout4_nfsv4_1_files.h"
+#include "log_macros.h"
+#include "stuff_alloc.h"
+#include "nfs23.h"
+#include "nfs4.h"
+#include "mount.h"
+#include "nfs_core.h"
+#include "cache_inode.h"
+#include "cache_content.h"
+#include "nfs_exports.h"
+#include "nfs_creds.h"
+#include "nfs_proto_functions.h"
+#include "nfs_file_handle.h"
+#include "nfs_tools.h"
+#include "pnfs.h" 
+#include "pnfs_service.h"
 #include "PNFS/SPNFS_LIKE/pnfs_nfsv41_macros.h"
 
 #define PNFS_LAYOUTFILE_NB_OP_CREATESESSION 2

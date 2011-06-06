@@ -61,7 +61,6 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
   fd = open(p_export_path->path, O_RDONLY | O_DIRECTORY);
   if(fd < 0)
     {
-      close(open_by_handle_fd);
       LogMajor(COMPONENT_FSAL,
                "FSAL BUILD EXPORT CONTEXT: ERROR: Could not open GPFS mount point %s: rc = %d",
                p_export_path->path, errno);
@@ -88,7 +87,6 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
                                     &(p_export_context->mount_root_handle));
   if(FSAL_IS_ERROR(status))
     {
-      close(open_by_handle_fd);
       close(p_export_context->mount_root_fd);
       LogMajor(COMPONENT_FSAL,
                "FSAL BUILD EXPORT CONTEXT: ERROR: Conversion from gpfs filesystem root path to handle failed : %d",

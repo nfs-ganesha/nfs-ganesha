@@ -227,6 +227,21 @@ AM_CONDITIONAL(USE_DS, test "$enable_ds" = "yes")
 
 
 
+# TI-RPC
+GA_ENABLE_AM_CONDITION([tirpc],[enable TIRPC support],[USE_TIRPC])
+
+if test "$enable_tirpc" == "yes"; then
+	AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
+	AC_CHECK_LIB([tirpc], [svc_tli_create], [AC_DEFINE( _HAVE_TIRPC,1,[enable TIRPC support] ) ], [AC_MSG_ERROR( [TI-RPC could not be found...] ) ] )
+fi
+
+# IPv6
+GA_ENABLE_AM_CONDITION([ipv6],[enable IPv6 support (via IPv6)], [USE_TIRPC_IPV6])
+
+if test "$enable_ipv6" == "yes"; then
+	AC_DEFINE(_USE_TIRPC_IPV6,1,[enable IPv6 support via TIRPC])
+fi
+
 # libnfsidmap
 GA_DISABLE_AM_CONDITION([nfsidmap],[disable the use of libnfsidmap], [USE_NO_NFSIDMAP])
 
@@ -376,6 +391,8 @@ AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|SPNFS_LIKE|NONE (de
 AM_CONDITIONAL(USE_PNFS_NONE, 		test "$PNFS" = "NONE" )
 AM_CONDITIONAL(USE_PNFS_PARALLEL_FS,	test "$PNFS" = "PARALLEL_FS" )
 AM_CONDITIONAL(USE_PNFS_SPNFS_LIKE, 	test "$PNFS" = "SPNFS_LIKE" )
+AM_CONDITIONAL(USE_PNFS_OSD, 	        test "$PNFS" = "OSD" )
+AM_CONDITIONAL(USE_PNFS_BLOCK, 	        test "$PNFS" = "BLOCK" )
 
 AM_CONDITIONAL(USE_PNFS,                 test "$PNFS" != "NONE" )
 
@@ -524,9 +541,28 @@ case $FSAL in
 		FS_NAME="dynfsal"
                 ;;
 	GPFS)
+                # The following are needed in many GPFS environments
+                CFLAGS="$CFLAGS -I/usr/lpp/mmfs/include"
+                LDFLAGS="$LDFLAGS -L/usr/lpp/mmfs/lib"
+
 		AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
+		AC_CHECK_HEADERS([gpfs_nfs.h], [], [AC_MSG_ERROR(missing gpfs include files)])
+		AC_CHECK_DECL([gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs_ganesha function)], [[#include <gpfs_nfs.h>]])
+		AC_CHECK_DECLS([OPENHANDLE_NAME_TO_HANDLE, OPENHANDLE_OPEN_BY_HANDLE, OPENHANDLE_LINK_BY_FD,
+		                OPENHANDLE_READLINK_BY_FD, OPENHANDLE_STAT_BY_HANDLE],
+		               [],
+		               [AC_MSG_ERROR(missing Open By Handle function)],
+		               [[#include <gpfs_nfs.h>]])
+		if [[  $PNFS != "NONE" ]] ; then
+			AC_CHECK_DECLS([OPENHANDLE_LAYOUT_TYPE, OPENHANDLE_GET_DEVICEINFO, OPENHANDLE_GET_DEVICEITER,
+			                OPENHANDLE_LAYOUT_GET, OPENHANDLE_LAYOUT_RETURN],
+			               [],
+			               [AC_MSG_ERROR(missing Layout function)],
+			               [[#include <gpfs_nfs.h>]])
+		fi
+		AC_CHECK_LIB([gpfs], [gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs library)])
 		FSAL_CFLAGS=
-                FSAL_LDFLAGS=""
+		FSAL_LDFLAGS=""
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_GPFS/libfsalgpfs.la"
 		FS_NAME="gpfs"
 		;;
@@ -719,6 +755,16 @@ case $PNFS in
 		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable spnfsd-like NFSv4.1/pNFS support])
 		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
 		;;
+	"OSD")
+		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
+		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable OSD based NFSv4.1/pNFS support])
+		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		;;
+	"BLOCK")
+		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
+		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable Block Device based NFSv4.1/pNFS support])
+		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		;;
 	*)
 		AC_MSG_ERROR([This pNFS layout is not supported])
 esac
@@ -799,6 +845,8 @@ AC_CONFIG_FILES([include/Makefile
                  include/PNFS/Makefile
 		 include/PNFS/SPNFS_LIKE/Makefile
 		 include/PNFS/PARALLEL_FS/Makefile
+		 include/PNFS/OSD/Makefile
+		 include/PNFS/BLOCK/Makefile
                  BuddyMalloc/Makefile
                  Common/Makefile
                  support/Makefile
@@ -817,6 +865,8 @@ AC_CONFIG_FILES([include/Makefile
 		 PNFS/Makefile
 		 PNFS/SPNFS_LIKE/Makefile
 		 PNFS/PARALLEL_FS/Makefile
+		 PNFS/OSD/Makefile
+		 PNFS/BLOCK/Makefile
                  XDR/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile
@@ -832,6 +882,7 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_SNMP/Makefile
 		 FSAL/FSAL_FUSELIKE/Makefile
 		 FSAL/FSAL_LUSTRE/Makefile
+		 FSAL/FSAL_LUSTRE/PNFS/Makefile
 		 FSAL/FSAL_XFS/Makefile
 		 FSAL/FSAL_GPFS/Makefile
                  FSAL/FSAL_ZFS/Makefile

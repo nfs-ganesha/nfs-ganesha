@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -62,11 +62,6 @@
 #define EXPORT_ID 1
 #define ATTR_LEN  100
 
-/** protects log structure */
-static pthread_mutex_t mutex_log = PTHREAD_MUTEX_INITIALIZER;
-
-/** global variables for logging */
-static int log_level = -1;
 static char localmachine[256];
 #ifdef OLD_LOGGING
 static desc_log_stream_t voie_cache;
@@ -1005,8 +1000,8 @@ int fn_Cache_inode_stat(int argc,       /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves object handle */
-  if(rc = cache_solvepath(glob_path,
-                          FSAL_MAX_PATH_LEN, file, context->pentry, &pentry_stat, output))
+  if((rc = cache_solvepath(glob_path,
+                           FSAL_MAX_PATH_LEN, file, context->pentry, &pentry_stat, output)))
     return rc;
 
   /* Get the attributes */
@@ -1277,9 +1272,9 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
       str_name = argv[Optind];
 
       /* retrieving handle */
-      if(rc = cache_solvepath(glob_path,
+      if((rc = cache_solvepath(glob_path,
                               FSAL_MAX_PATH_LEN,
-                              str_name, context->pentry, &pentry_tmp, output))
+                               str_name, context->pentry, &pentry_tmp, output)))
         return rc;
 
     }
@@ -1739,9 +1734,9 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves path handle */
-  if(rc =
+  if((rc =
      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, path, context->pentry, &new_hdl,
-                     output))
+                     output)))
     return rc;
 
   /* create fsal_name_t */
@@ -1885,14 +1880,14 @@ int fn_Cache_inode_link(int argc,       /* IN : number of args in argv */
   strncpy(glob_path_link, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves path handle */
-  if(rc =
+  if((rc =
      cache_solvepath(glob_path_target, FSAL_MAX_PATH_LEN, target, context->pentry,
-                     &target_hdl, output))
+                     &target_hdl, output)))
     return rc;
 
-  if(rc =
+  if((rc =
      cache_solvepath(glob_path_link, FSAL_MAX_PATH_LEN, path, context->pentry, &dir_hdl,
-                     output))
+                     output)))
     return rc;
 
   /* create fsal_name_t */
@@ -2029,9 +2024,9 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves path handle */
-  if(rc =
+  if((rc =
      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, path, context->pentry, &new_hdl,
-                     output))
+                     output)))
     return rc;
 
   /* create fsal_name_t */
@@ -2228,9 +2223,9 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves path handle */
-  if(rc =
+  if((rc =
      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, path, context->pentry, &new_hdl,
-                     output))
+                     output)))
     return rc;
 
   /* create fsal_name_t */
@@ -2377,14 +2372,14 @@ int fn_Cache_inode_rename(int argc,     /* IN : number of args in argv */
   strncpy(tgt_glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves paths handles */
-  if(rc = cache_solvepath(src_glob_path,
+  if((rc = cache_solvepath(src_glob_path,
                           FSAL_MAX_PATH_LEN,
-                          src_path, context->pentry, &src_path_pentry, output))
+                           src_path, context->pentry, &src_path_pentry, output)))
     return rc;
 
-  if(rc = cache_solvepath(tgt_glob_path,
+  if((rc = cache_solvepath(tgt_glob_path,
                           FSAL_MAX_PATH_LEN,
-                          tgt_path, context->pentry, &tgt_path_pentry, output))
+                          tgt_path, context->pentry, &tgt_path_pentry, output)))
     return rc;
 
   /* create fsal_name_t */
@@ -2526,9 +2521,9 @@ int fn_Cache_inode_unlink(int argc,     /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieves path handle */
-  if(rc =
+  if((rc =
      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, path, context->pentry, &new_hdl,
-                     output))
+                     output)))
     return rc;
 
   /* create fsal_name_t */
@@ -2672,6 +2667,8 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
               fprintf(output, "\t %s \t:\t time (format: YYYYMMDDhhmmss)\n",
                       curr_attr->attr_name);
               break;
+            default:
+              break;
             }
         }
 
@@ -2700,9 +2697,9 @@ int fn_Cache_inode_setattr(int argc,    /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieve handle to the file whose attributes are to be changed */
-  if(rc =
+  if((rc =
      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                     output))
+                     output)))
     return rc;
 
   /* Convert the peer (attr_name,attr_val) to an FSAL attribute structure. */
@@ -2869,9 +2866,9 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieve handle to the file whose permissions are to be tested */
-  if(rc =
+  if((rc =
      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                     output))
+                     output)))
     return rc;
 
   /* Convert the permission string to an fsal access test. */
@@ -3027,9 +3024,9 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieve handle to the file whose permissions are to be tested */
-  if(rc =
+  if((rc =
      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                     output))
+                     output)))
     return rc;
 
 #ifdef _USE_PROXY
@@ -3166,9 +3163,9 @@ int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv *
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieve handle to the file whose permissions are to be tested */
-  if(rc =
+  if((rc =
      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                     output))
+                     output)))
     return rc;
 
   if(cache_inode_release_data_cache
@@ -3378,9 +3375,9 @@ int fn_Cache_inode_refresh_cache(int argc,      /* IN : number of args in argv *
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieve handle to the file whose permissions are to be tested */
-  if(rc =
+  if((rc =
      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                     output))
+                     output)))
     return rc;
 
   if(obj_hdl->object.file.pentry_content == NULL)
@@ -3499,9 +3496,9 @@ int fn_Cache_inode_flush_cache(int argc,        /* IN : number of args in argv *
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieve handle to the file whose permissions are to be tested */
-  if(rc =
+  if((rc =
      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                     output))
+                     output)))
     return rc;
 
   if(obj_hdl->object.file.pentry_content == NULL)
@@ -3710,9 +3707,9 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
 
   /* retrieve handle to the file whose permissions are to be tested */
-  if(rc =
+  if((rc =
      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                     output))
+                     output)))
     return rc;
 
   /* Sanity check */
@@ -4152,9 +4149,9 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
   glob_path[FSAL_MAX_PATH_LEN - 1] = '\0';
 
   /* retrieve handle to the file whose permissions are to be tested */
-  if(rc =
+  if((rc =
      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                     output))
+                     output)))
     return rc;
 
   /* Sanity check */
@@ -4652,9 +4649,9 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
   glob_path[FSAL_MAX_PATH_LEN - 1] = '\0';
 
   /* retrieve handle to the file whose permissions are to be tested */
-  if(rc =
+  if((rc =
      cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                     output))
+                     output)))
     return rc;
 
   if(obj_hdl->object.file.pentry_content == NULL)

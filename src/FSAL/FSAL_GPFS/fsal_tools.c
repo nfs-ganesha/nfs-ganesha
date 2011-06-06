@@ -814,6 +814,18 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
           strncpy(out_parameter->fs_specific_info.open_by_handle_dev_file, key_value,
                   MAXPATHLEN);
         }
+      else if(!STRCMP(key_name, "Use_Kernel_Module_Interface"))
+        {
+          int bool = StrToBoolean(key_value);
+          if (bool == -1)
+            {
+              LogCrit(COMPONENT_CONFIG,
+                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s: 0 or 1 expected.",
+                      key_name);
+              ReturnCode(ERR_FSAL_INVAL, 0);
+            }
+          out_parameter->fs_specific_info.use_kernel_module_interface = bool;
+        }
       else
         {
           LogCrit(COMPONENT_CONFIG,
@@ -823,7 +835,7 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
         }
     }
 
-  if(out_parameter->fs_specific_info.open_by_handle_dev_file[0] == '\0')
+  if(out_parameter->fs_specific_info.use_kernel_module_interface && out_parameter->fs_specific_info.open_by_handle_dev_file[0] == '\0')
     {
       LogCrit(COMPONENT_CONFIG,
               "FSAL LOAD PARAMETER: OpenByHandleDeviceFile MUST be specified in the configuration file (item %s)",

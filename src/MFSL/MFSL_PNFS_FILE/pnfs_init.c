@@ -29,7 +29,8 @@
 
 #include "log_macros.h"
 
-#include "PNFS/SPNFS_LIKE/pnfs_layout4_nfsv4_1_files.h"
+#include "pnfs.h"
+#include "pnfs_service.h"
 
 /**
  *
