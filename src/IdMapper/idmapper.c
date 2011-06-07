@@ -351,6 +351,71 @@ int name2uid(char *name, uid_t * puid)
 
 /**
  *
+ * principal2uid: convert a principal (as returned by gss_display_name()) to a uid/gid
+ *
+ * convert a principal (as returned by gss_display_name()) to a uid/gid
+ *
+ * @param name [IN]  the principal of the user as returned by gss_display_name()
+ * @param puid [OUT] the resulting uid
+ *
+ * return 1 if successful, 0 otherwise
+ *
+ */
+int principal2uid(char *principal, uid_t * puid)
+{
+#ifdef _HAVE_GSSAPI
+  gid_t gss_gid;
+  uid_t gss_uid;
+  int rc;
+
+  if(uidmap_get(principal, (unsigned long *)&gss_uid) == ID_MAPPER_SUCCESS)
+    {
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "principal2uid: uidmap_get mapped %s to uid= %d",
+                   principal, gss_uid);
+      *puid = gss_uid;
+    }
+  else
+    {
+      if(!nfsidmap_set_conf())
+        {
+          LogCrit(COMPONENT_IDMAPPER,
+                  "principal2uid: nfsidmap_set_conf failed");
+          return 0;
+        }
+
+      /* nfs4_gss_princ_to_ids required to extract uid/gid from gss creds */
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "calling nfs4_gss_princ_to_ids() to map principal to uid/gid");
+      rc = nfs4_gss_princ_to_ids("krb5", principal, &gss_uid, &gss_gid);
+      if(rc)
+        {
+          LogFullDebug(COMPONENT_IDMAPPER,
+                       "principal2uid: nfs4_gss_princ_to_ids %s failed %d (%s)",
+                       principal, -rc, strerror(-rc));
+          return 0;
+        }
+      if(uidmap_add(principal, gss_uid) != ID_MAPPER_SUCCESS)
+	{
+	  LogCrit(COMPONENT_IDMAPPER,
+		  "principal2uid: uidmap_add %s %d failed",
+		  principal, gss_uid);
+	  return 0;
+	}
+      if(uidgidmap_add(gss_uid, gss_gid) != ID_MAPPER_SUCCESS)
+        {
+          LogCrit(COMPONENT_IDMAPPER,
+                  "principal2uid: uidgidmap_add gss_uid %d gss_gid %d failed",
+                  gss_uid, gss_gid);
+          return 0;
+        }
+    }
+#endif                          /* _HAVE_GSSAPI */
+  return 1;
+}                               /* principal2uid */
+
+/**
+ *
  * gid2name: convert a gid to a name. 
  *
  * convert a uid to a name. 
