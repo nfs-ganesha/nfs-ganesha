@@ -384,8 +384,9 @@ int principal2uid(char *principal, uid_t * puid)
           return 0;
         }
 
-      /* nfs4_gss_princ_to_ids required to extract uid/gid from gss creds
-       * XXX: currently uses unqualified name as per libnfsidmap comments */
+      /* nfs4_gss_princ_to_ids required to extract uid/gid from gss creds */
+      LogFullDebug(COMPONENT_IDMAPPER,
+                   "calling nfs4_gss_princ_to_ids() to map principal to uid/gid");
       rc = nfs4_gss_princ_to_ids("krb5", principal, &gss_uid, &gss_gid);
       if(rc)
         {

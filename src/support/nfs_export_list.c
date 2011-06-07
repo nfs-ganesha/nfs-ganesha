@@ -221,6 +221,9 @@ int get_req_uid_gid(struct svc_req *ptr_req,
   unsigned int rpcxid = 0;
 #ifdef _HAVE_GSSAPI
   struct svc_rpc_gss_data *gd = NULL;
+  OM_uint32 maj_stat = 0;
+  OM_uint32 min_stat = 0;
+  char principal[MAXNAMLEN];
 #endif
 
   if (user_credentials == NULL)
@@ -301,8 +304,11 @@ int get_req_uid_gid(struct svc_req *ptr_req,
       LogFullDebug(COMPONENT_RPCSEC_GSS, "Mapping principal %s to uid/gid",
                    (char *)gd->cname.value);
 
+      memcpy(principal, gd->cname.value, gd->cname.length);
+      principal[gd->cname.length] = 0;
+
       /* Convert to uid */
-      if(!principal2uid((char *)gd->cname.value, &user_credentials->caller_uid))
+      if(!principal2uid(principal, &user_credentials->caller_uid))
 	{
           LogWarn(COMPONENT_IDMAPPER,
 		  "WARNING: Could not map principal to uid; mapping principal "
