@@ -10,8 +10,6 @@
 #include <rpc/pmap_clnt.h>
 #endif                          /* PORTMAP */
 
-#define xp_free(x) if(x) Mem_Free(x)
-
 extern struct xp_ops  rendezvous_ops;
 extern struct xp_ops2 rendesvous_ops2;
 extern struct xp_ops  vc_ops;

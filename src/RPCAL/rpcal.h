@@ -9,6 +9,8 @@
 #include "RW_Lock.h"
 #endif
 
+#define xp_free(x) if(x) Mem_Free(x)
+
 extern int Xprt_register(SVCXPRT * xprt);
 extern void Xprt_unregister(SVCXPRT * xprt);
 

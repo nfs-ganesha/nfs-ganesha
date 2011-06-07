@@ -154,8 +154,6 @@ void __Xprt_unregister_unlocked(SVCXPRT * xprt)
   __Xprt_do_unregister(xprt, FALSE);
 }
 
-#define xp_free(x) if(x) Mem_Free(x)
-
 void FreeXprt(SVCXPRT *xprt)
 {
   if(!xprt)
@@ -218,7 +216,7 @@ void FreeXprt(SVCXPRT *xprt)
 SVCXPRT *Svcxprt_copycreate()
 {
   return NULL;
- }
+}
 
 unsigned int get_tirpc_xid(SVCXPRT *xprt)
 {
@@ -262,7 +260,7 @@ SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
       if(su_data(xprt_orig))
         {
           struct svc_dg_data *su_o = su_data(xprt_orig), *su_c;
-          su_c = (struct svc_dg_data *) Mem_Alloc(sizeof(struct svc_dg_data));
+          su_c = (struct svc_dg_data *) Mem_Alloc(sizeof(*su_c));
           if(!su_c)
             goto fail;
           su_data_set(xprt_copy) = su_c;

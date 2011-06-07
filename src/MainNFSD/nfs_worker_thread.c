@@ -805,7 +805,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                     "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
                     pworker_data->pfuncdesc->funcname);
           }
-      svcerr_systemerr(ptr_svc);
+      /* Ignore the request, send no error */
       return;
 
       /* something is very wrong with the duplicate request cache */
@@ -1130,14 +1130,14 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
       if(timer_diff.tv_sec >= nfs_param.core_param.long_processing_threshold)
         LogEvent(COMPONENT_DISPATCH,
-                 "Function %s exited with status %d taking %llu.%.6llu seconds to process",
-                 pworker_data->pfuncdesc->funcname, rc,
+                 "Function %s xid=%u exited with status %d taking %llu.%.6llu seconds to process",
+                 pworker_data->pfuncdesc->funcname, rpcxid, rc,
                  (unsigned long long)timer_diff.tv_sec,
                  (unsigned long long)timer_diff.tv_usec);
       else
         LogDebug(COMPONENT_DISPATCH,
-                 "Function %s exited with status %d taking %llu.%.6llu seconds to process",
-                 pworker_data->pfuncdesc->funcname, rc,
+                 "Function %s xid=%u exited with status %d taking %llu.%.6llu seconds to process",
+                 pworker_data->pfuncdesc->funcname, rpcxid, rc,
                  (unsigned long long)timer_diff.tv_sec,
                  (unsigned long long)timer_diff.tv_usec);
     }

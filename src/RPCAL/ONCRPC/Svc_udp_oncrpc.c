@@ -16,7 +16,7 @@ typedef unsigned int u_int32_t;
 #include   <stdlib.h>
 #include   <string.h>
 #include   "stuff_alloc.h"
-#include   "../rpcal.h"
+#include   "oncrpc.h"
 #include   <sys/poll.h>
 #include   <sys/socket.h>
 #include   <errno.h>
@@ -34,8 +34,6 @@ typedef unsigned int u_int32_t;
 #ifndef MAX
 #define MAX(a, b)     ((a > b) ? a : b)
 #endif
-
-#define rpc_buffer(xprt) ((xprt)->xp_p1)
 
 bool_t svcauth_wrap_dummy(XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr);
 
@@ -55,7 +53,7 @@ static bool_t Svcudp_getargs();
 static bool_t Svcudp_freeargs();
 static void Svcudp_destroy();
 
-static struct xp_ops Svcudp_op = {
+struct xp_ops Svcudp_op = {
   Svcudp_recv,
   Svcudp_stat,
   Svcudp_getargs,
@@ -63,18 +61,6 @@ static struct xp_ops Svcudp_op = {
   Svcudp_freeargs,
   Svcudp_destroy
 };
-
-/*
- * kept in xprt->xp_p2
- */
-struct Svcudp_data
-{
-  u_int su_iosz;                /* byte size of send.recv buffer */
-  u_long su_xid;                /* transaction id */
-  XDR su_xdrs;                  /* XDR handle */
-  char su_verfbody[MAX_AUTH_BYTES];     /* verifier body */
-};
-#define	Su_data(xprt)	((struct Svcudp_data *)(xprt->xp_p2))
 
 /*
  * Usage:

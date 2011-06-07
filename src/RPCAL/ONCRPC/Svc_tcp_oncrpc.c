@@ -19,7 +19,7 @@ typedef unsigned int u_int32_t;
 #include   <string.h>
 #include   <unistd.h>
 #include   "stuff_alloc.h"
-#include   "../rpcal.h"
+#include   "oncrpc.h"
 #include   <sys/socket.h>
 #include   <sys/poll.h>
 #include   <errno.h>
@@ -55,7 +55,7 @@ static bool_t Svctcp_reply();
 static bool_t Svctcp_freeargs();
 static void Svctcp_destroy();
 
-static struct xp_ops Svctcp_op = {
+struct xp_ops Svctcp_op = {
   Svctcp_recv,
   Svctcp_stat,
   Svctcp_getargs,
@@ -70,29 +70,13 @@ static struct xp_ops Svctcp_op = {
 static bool_t Rendezvous_request();
 static enum xprt_stat Rendezvous_stat();
 
-static struct xp_ops Svctcp_rendezvous_op = {
+struct xp_ops Svctcp_rendezvous_op = {
   Rendezvous_request,
   Rendezvous_stat,
   (bool_t(*)())abort,
   (bool_t(*)())abort,
   (bool_t(*)())abort,
   Svctcp_destroy
-};
-
-int Readtcp(), Writetcp();
-
-struct tcp_rendezvous
-{                               /* kept in xprt->xp_p1 */
-  u_int sendsize;
-  u_int recvsize;
-};
-
-struct tcp_conn
-{                               /* kept in xprt->xp_p1 */
-  enum xprt_stat strm_stat;
-  u_long x_id;
-  XDR xdrs;
-  char verf_body[MAX_AUTH_BYTES];
 };
 
 /*
@@ -206,37 +190,51 @@ static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
   return (xprt);
 }
 
+void FreeXprt(SVCXPRT *xprt)
+{
+  if(!xprt)
+    {
+      LogFullDebug(COMPONENT_RPC,
+                   "Attempt to free NULL xprt");
+      return;
+      
+    }
+
+  LogFullDebug(COMPONENT_RPC,
+               "FreeXprt xprt=%p", xprt);
+  if(xprt->xp_ops == &Svcudp_op)
+    {
+      xp_free(Su_data(xprt));
+      xp_free(rpc_buffer(xprt));
+    }
+  else if (xprt->xp_ops == &Svctcp_op)
+    {
+      struct tcp_conn *cd = (struct tcp_conn *)xprt->xp_p1;
+      XDR_DESTROY(&(cd->xdrs));
+      xp_free(xprt->xp_p1); /* cd */
+    }
+  else if (xprt->xp_ops == &Svctcp_rendezvous_op)
+    {
+      xp_free(xprt->xp_p1); /* r */
+    }
+  else
+    {
+      LogCrit(COMPONENT_RPC,
+              "Attempt to free unknown xprt %p",
+              xprt);
+      return;
+    }
+
+  Mem_Free(xprt);
+}
+
 /*
  * Create a copy of xprt. Currently, sendsize and recvsize of XDR is
  * hard-coded. This should be fixed.
  */
 SVCXPRT *Svcxprt_copycreate()
 {
-  register SVCXPRT *xprt;
-  register struct tcp_conn *cd;
-
-  xprt = (SVCXPRT *) Mem_Alloc(sizeof(SVCXPRT));
-  if(xprt == (SVCXPRT *) NULL)
-    {
-      goto done;
-    }
-
-  cd = (struct tcp_conn *) Mem_Alloc(sizeof(struct tcp_conn));
-  if(cd == (struct tcp_conn *) NULL)
-    {
-      Mem_Free((char *)xprt);
-      xprt = (SVCXPRT *) NULL;
-      goto done;
-    }
-
-  cd->strm_stat = XPRT_IDLE;
-  xdrrec_create(&(cd->xdrs), 32768, 32768, (caddr_t) xprt, Readtcp, Writetcp);
-
-  xprt->xp_p1 = (caddr_t) cd;
-  xprt->xp_verf.oa_base = cd->verf_body;
-
-  done:
-    return (xprt);
+  return NULL;
  }
 
 /*
@@ -244,18 +242,84 @@ SVCXPRT *Svcxprt_copycreate()
  */
 SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
 {
-  register struct tcp_conn *cd_copy = (struct tcp_conn *)(xprt_copy->xp_p1);
-  register struct tcp_conn *cd_orig = (struct tcp_conn *)(xprt_orig->xp_p1);
+  if(xprt_copy)
+    FreeXprt(xprt_copy);
 
+  xprt_copy = (SVCXPRT *) Mem_Alloc(sizeof(SVCXPRT));
+  if(xprt_copy == NULL)
+    goto fail_no_xprt;
+
+  LogFullDebug(COMPONENT_RPC,
+               "Svcxprt_copy copying xprt_orig=%p to xprt_copy=%p",
+               xprt_orig, xprt_copy);
   memcpy(xprt_copy, xprt_orig, sizeof(SVCXPRT));
-  xprt_copy->xp_p1 = (caddr_t) cd_copy;
-  xprt_copy->xp_verf.oa_base = cd_copy->verf_body;
+  xprt_copy->xp_p1 = NULL;
+  xprt_copy->xp_p2 = NULL;
 
-  cd_copy->strm_stat = cd_orig->strm_stat;
-  cd_copy->x_id = cd_orig->x_id;
-  memcpy(cd_copy->verf_body, cd_orig->verf_body, MAX_AUTH_BYTES);
+  if(xprt_orig->xp_ops == &Svcudp_op)
+    {
+      if(Su_data(xprt_orig))
+        {
+          struct Svcudp_data *su_o = Su_data(xprt_orig), *su_c;
+          su_c = (struct Svcudp_data *) Mem_Alloc(sizeof(*su_c));
+          if(!su_c)
+            goto fail;
+          Su_data_set(xprt_copy) = (void *) su_c;
+          memcpy(su_c, su_o, sizeof(*su_c));
+
+          rpc_buffer(xprt_copy) = Mem_Alloc_Label(su_c->su_iosz, "UDP IO Buffer");
+          if(!rpc_buffer(xprt_copy))
+            goto fail;
+          xdrmem_create(&(su_c->su_xdrs), rpc_buffer(xprt_copy), su_c->su_iosz, XDR_DECODE);
+          if(xprt_orig->xp_verf.oa_base == su_o->su_verfbody)
+            xprt_copy->xp_verf.oa_base = su_c->su_verfbody;
+          else
+            xprt_copy->xp_verf.oa_base = xprt_orig->xp_verf.oa_base;
+          xprt_copy->xp_verf.oa_flavor = xprt_orig->xp_verf.oa_flavor;
+          xprt_copy->xp_verf.oa_length = xprt_orig->xp_verf.oa_length;
+        }
+      else
+        goto fail;
+    }
+  else if (xprt_orig->xp_ops == &Svctcp_op)
+    {
+      struct tcp_conn *cd_o = (struct tcp_conn *)xprt_orig->xp_p1, *cd_c;
+      cd_c = (struct tcp_conn *) Mem_Alloc(sizeof(*cd_c));
+      if(!cd_c)
+        goto fail;
+      memcpy(cd_c, cd_o, sizeof(*cd_c));
+      xprt_copy->xp_p1 = (void *) cd_c;
+      xdrrec_create(&(cd_c->xdrs), 32768, 32768, (caddr_t) xprt_copy, Readtcp, Writetcp);
+      if(xprt_orig->xp_verf.oa_base == cd_o->verf_body)
+        xprt_copy->xp_verf.oa_base = cd_c->verf_body;
+      else
+        xprt_copy->xp_verf.oa_base = xprt_orig->xp_verf.oa_base;
+      xprt_copy->xp_verf.oa_flavor = xprt_orig->xp_verf.oa_flavor;
+      xprt_copy->xp_verf.oa_length = xprt_orig->xp_verf.oa_length;
+    }
+  else if (xprt_orig->xp_ops == &Svctcp_rendezvous_op)
+    {
+      goto fail;
+    }
+  else
+    {
+      LogDebug(COMPONENT_RPC,
+               "Attempt to copy unknown xprt %p",
+               xprt_orig);
+      Mem_Free(xprt_copy);
+      goto fail_no_xprt;
+    }
 
   return xprt_copy;
+
+ fail:
+  FreeXprt(xprt_copy);
+ fail_no_xprt:
+  /* Let caller know about failure */
+  LogCrit(COMPONENT_RPC,
+          "Failed to copy xprt");
+  svcerr_systemerr(xprt_orig);
+  return NULL;
 }
 
 void print_xdrrec_fbtbc(char *tag, SVCXPRT * xprt)
@@ -377,12 +441,9 @@ static void Svctcp_destroy(register SVCXPRT * xprt)
  * All read operations timeout after 35 seconds.  A timeout is
  * fatal for the connection.
  */
-int Readtcp(register SVCXPRT * xprt, caddr_t buf, register int len)
+int Readtcp(char *xprtp, char *buf, int len)
 {
-  /* LogFullDebug(COMPONENT_DISPATCH,
-                  "Readtcp: xprt=%p len=%d", xprt, len ) ; */
-  /* print_xdrrec_fbtbc( "Readtcp",  xprt ) ;           */
-
+  register SVCXPRT *xprt = (SVCXPRT *)xprtp;
   register int sock = xprt->XP_SOCK;
   int milliseconds = 35 * 1000;
   struct pollfd pollfd;
@@ -439,9 +500,10 @@ int Readtcp(register SVCXPRT * xprt, caddr_t buf, register int len)
  * writes data to the tcp connection.
  * Any error is fatal and the connection is closed.
  */
-int Writetcp(register SVCXPRT * xprt, caddr_t buf, int len)
+int Writetcp(char *xprtp, char *buf, int len)
 {
   register int i, cnt;
+  register SVCXPRT *xprt = (SVCXPRT *)xprtp;
 
   /* LogFullDebug(COMPONENT_DISPATCH,
                   "Writetcp: xprt=%p len=%d", xprt, len ) ; */
