@@ -307,12 +307,22 @@ int get_req_uid_gid(struct svc_req *ptr_req,
 
       /* Convert to uid */
       if(!name2uid(username, &user_credentials->caller_uid))
-        {
-          LogMajor(COMPONENT_DISPATCH,
-                   "FAILURE: Could not resolve User=%s at Domain=%s into credentials",
-                   username, domainname);
-          return FALSE;
-        }
+	{
+          LogWarn(COMPONENT_IDMAPPER,
+		  "WARNING: Could not map principal to uid; mapping principal "
+		  "to anonymous uid/gid");
+
+	  /* For compatibility with Linux knfsd, we set the uid/gid
+	   * to anonymous when a name->uid mapping can't be found. */
+	  user_credentials->caller_uid = pexport->anonymous_uid;
+	  user_credentials->caller_gid = pexport->anonymous_gid;
+	  
+	  /* No alternate groups for "nobody" */
+	  user_credentials->caller_glen = 0 ;
+	  user_credentials->caller_garray = NULL ;
+
+	  return TRUE;
+	}
 
       if(uidgidmap_get(user_credentials->caller_uid, &user_credentials->caller_gid) != ID_MAPPER_SUCCESS)
         {
