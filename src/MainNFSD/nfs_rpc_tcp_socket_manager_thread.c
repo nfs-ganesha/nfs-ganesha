@@ -50,20 +50,7 @@
 #include <sys/select.h>
 #include "HashData.h"
 #include "HashTable.h"
-
-#if defined( _USE_TIRPC )
-#include <rpc/rpc.h>
-#elif defined( _USE_GSSRPC )
-#include <gssapi/gssapi.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -83,7 +70,6 @@
 /* Useful prototypes */
 int nfs_rpc_get_worker_index(int mount_protocol_flag);
 
-extern fd_set Svc_fdset;
 extern nfs_worker_data_t *workers_data;
 extern nfs_parameter_t nfs_param;
 extern exportlist_t *pexportlist;
@@ -123,9 +109,6 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
   nfs_request_data_t *pnfsreq = NULL;
   int worker_index;
   static char my_name[MAXNAMLEN];
-
-  struct sockaddr_in *paddr_caller = NULL;
-  char str_caller[MAXNAMLEN];
   const nfs_function_desc_t *pfuncdesc;
   fridge_entry_t * pfe = NULL ;
 
@@ -187,15 +170,9 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                   (int)tcp_sock);
           return NULL;
         }
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Use request from spool #%d, xprt->xp_fd=%d",
-                   worker_index, xprt->xp_fd);
-#else
       LogFullDebug(COMPONENT_DISPATCH,
                    "Use request from spool #%d, xprt->xp_sock=%d",
-                   worker_index, xprt->xp_sock);
-#endif
+                   worker_index, xprt->XP_SOCK);
       LogFullDebug(COMPONENT_DISPATCH,
                    "Thread #%d has now %d pending requests",
                    worker_index, workers_data[worker_index].pending_request->nb_entry);
@@ -232,11 +209,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
       pnfsreq->xprt = pnfsreq->tcp_xprt;
       pnfsreq->ipproto = IPPROTO_TCP;
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-      if(pnfsreq->xprt->xp_fd != tcp_sock)
-#else
-      if(pnfsreq->xprt->xp_sock != tcp_sock)
-#endif
+      if(pnfsreq->xprt->XP_SOCK != tcp_sock)
         LogCrit(COMPONENT_DISPATCH,
                 "TCP SOCKET MANAGER : /!\\ Trying to access a bad socket ! Check the source file=%s, line=%u",
                 __FILE__, __LINE__);
@@ -262,23 +235,16 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
           if(stat == XPRT_DIED)
             {
-#ifndef _USE_TIRPC
-              if((paddr_caller = svc_getcaller(pnfsreq->xprt)) != NULL)
-                {
-                  snprintf(str_caller, MAXNAMLEN, "0x%x=%d.%d.%d.%d",
-                           ntohl(paddr_caller->sin_addr.s_addr),
-                           (ntohl(paddr_caller->sin_addr.s_addr) & 0xFF000000) >> 24,
-                           (ntohl(paddr_caller->sin_addr.s_addr) & 0x00FF0000) >> 16,
-                           (ntohl(paddr_caller->sin_addr.s_addr) & 0x0000FF00) >> 8,
-                           (ntohl(paddr_caller->sin_addr.s_addr) & 0x000000FF));
-                }
+              sockaddr_t addr;
+              char addrbuf[SOCK_NAME_MAX];
+              if(copy_xprt_addr(&addr, pnfsreq->xprt) == 1)
+                sprint_sockaddr(&addr, addrbuf, sizeof(addrbuf));
               else
-#endif                          /* _USE_TIRPC */
-                strncpy(str_caller, "unresolved", MAXNAMLEN);
+                sprintf(addrbuf, "<unresolved>");
 
               LogDebug(COMPONENT_DISPATCH,
                        "TCP SOCKET MANAGER Sock=%d: the client (%s) disappeared... Freezing thread %p",
-                       (int)tcp_sock, str_caller, (caddr_t)pthread_self());
+                       (int)tcp_sock, addrbuf, (caddr_t)pthread_self());
 
               if(Xports[tcp_sock] != NULL)
                 SVC_DESTROY(Xports[tcp_sock]);
@@ -371,8 +337,15 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
           /* Update a copy of SVCXPRT and pass it to the worker thread to use it. */
           xprt_copy = pnfsreq->xprt_copy;
-          Svcxprt_copy(xprt_copy, xprt);
+          xprt_copy = Svcxprt_copy(xprt_copy, xprt);
           pnfsreq->xprt = xprt_copy;
+          if(!xprt_copy)
+            {
+              //TODO: handle error - barf for now...
+              LogCrit(COMPONENT_DISPATCH,
+                      "Svcxprt_copy failed.... oops...");
+              xprt_copy->XP_SOCK = 0;
+            }
 
           pentry->buffdata.pdata = (caddr_t) pnfsreq;
           pentry->buffdata.len = sizeof(*pnfsreq);
@@ -387,8 +360,6 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
             }
           V(workers_data[worker_index].mutex_req_condvar);
           V(workers_data[worker_index].request_pool_mutex);
-          LogFullDebug(COMPONENT_DISPATCH, "Waiting for commit from thread #%d",
-                       worker_index);
 
           if(pfuncdesc != INVALID_FUNCDESC)
             {

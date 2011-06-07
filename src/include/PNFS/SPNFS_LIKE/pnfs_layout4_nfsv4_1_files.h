@@ -61,7 +61,6 @@
 
 #include "PNFS/SPNFS_LIKE/pnfs_layout4_nfsv4_1_files_types.h"
 
-
 /* Mandatory functions */
 nfsstat4 pnfs_spnfs_getdevicelist( GETDEVICELIST4args * pargs, 
 				   compound_data_t   * data,

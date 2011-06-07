@@ -24,13 +24,6 @@
 #ifndef NLM_ASYNC_H
 #define NLM_ASYNC_H
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#endif
 
 #include <pthread.h>
 

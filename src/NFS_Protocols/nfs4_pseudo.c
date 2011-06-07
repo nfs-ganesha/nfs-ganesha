@@ -48,18 +48,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs4.h"
@@ -1525,8 +1514,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_LOOKUP;
 
   /* UTF8 strings may not end with \0, but they carry their length */
-  strncpy(name, arg_LOOKUP4.objname.utf8string_val, arg_LOOKUP4.objname.utf8string_len);
-  name[arg_LOOKUP4.objname.utf8string_len] = '\0';
+  utf82str(name, sizeof(name), &arg_LOOKUP4.objname);
 
   /* Get the pseudo fs entry related to the file handle */
   if(!nfs4_FhandleToPseudo(&(data->currentFH), data->pseudofs, &psfsentry))
@@ -1599,7 +1587,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       if( pseudo_is_slash == TRUE )
        {
          strncat( pathfsal, "/", MAXPATHLEN ) ;
-         strncat( pathfsal, name, MAXPATHLEN ) ;
+         strncat( pathfsal, name, MAXPATHLEN - strlen(pathfsal)) ;
        }
 
       if(FSAL_IS_ERROR
@@ -2000,9 +1988,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
     }
 
   /* Cookie verifier has the value of the Server Boot Time for pseudo fs */
+  memset(cookie_verifier, 0, NFS4_VERIFIER_SIZE);
 #ifdef _WITH_COOKIE_VERIFIER
   /* BUGAZOMEU: management of the cookie verifier */
-  memset(cookie_verifier, 0, NFS4_VERIFIER_SIZE);
   if(NFS_SpecificConfig.UseCookieVerf == 1)
     {
       memcpy(cookie_verifier, &ServerBootTime, sizeof(ServerBootTime));

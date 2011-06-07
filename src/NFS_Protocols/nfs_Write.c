@@ -49,18 +49,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -124,7 +113,7 @@ int nfs_Write(nfs_arg_t * parg,
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
-      char str[LEN_FH_STR], *stables;
+      char str[LEN_FH_STR], *stables = "";
 
       switch (preq->rq_vers)
         {
@@ -416,7 +405,7 @@ int nfs_Write(nfs_arg_t * parg,
       seek_descriptor.offset = offset;
 
       if(cache_inode_rdwr(pentry,
-                          CACHE_CONTENT_WRITE,
+                          CACHE_INODE_WRITE,
                           &seek_descriptor,
                           size,
                           &written_size,

@@ -48,13 +48,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/types.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/types.h>
-#endif
 
 #include "LRU_List.h"
 #include "fsal.h"

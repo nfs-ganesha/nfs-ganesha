@@ -169,7 +169,7 @@ BUDDY_ADDR_T BuddyMallocExit(size_t Size);
  * The  BuddyStr_Dup() function returns a pointer to a block of at least
  * Size bytes suitably aligned (32 or 64bits depending on architectures). 
  */
-char *BuddyStr_Dup(char * Str);
+char *BuddyStr_Dup(const char * Str);
 
 /**
  * BuddyStr_Dup_Exit : string duplicator based on buddy system.
@@ -178,7 +178,7 @@ char *BuddyStr_Dup(char * Str);
  * Size bytes suitably aligned (32 or 64bits depending on architectures). 
  * If no memory is available, it stops current process.
  */
-char *BuddyStr_Dup_Exit(char * Str);
+char *BuddyStr_Dup_Exit(const char * Str);
 
 /**
  *  Free a memory block alloced by BuddyMalloc, BuddyCalloc or BuddyCalloc.
@@ -270,7 +270,7 @@ BUDDY_ADDR_T BuddyMalloc_Autolabel(size_t sz,
  * The  BuddyStr_Dup() function returns a pointer to a block of at least
  * Size bytes suitably aligned (32 or 64bits depending on architectures). 
  */
-inline char *BuddyStr_Dup_Autolabel(char * OldStr,
+inline char *BuddyStr_Dup_Autolabel(const char * OldStr,
                                     const char *file,
                                     const char *function,
                                     const unsigned int line,
@@ -319,13 +319,14 @@ void BuddyDumpAll(FILE *output);
 void BuddyDumpPools(FILE *output);
 
 int _BuddyCheck_Autolabel(BUDDY_ADDR_T ptr,
+                          int other_thread_ok,
                           const char *file,
                           const char *function,
                           const unsigned int line,
                           const char *str);
 
-#define BuddyCheck(ptr)           _BuddyCheck_Autolabel(ptr, __FILE__, __FUNCTION__, __LINE__, "BuddyCheck")
-#define BuddyCheckLabel(ptr, lbl) _BuddyCheck_Autolabel(ptr, __FILE__, __FUNCTION__, __LINE__, lbl)
+#define BuddyCheck(ptr, ok)           _BuddyCheck_Autolabel((BUDDY_ADDR_T) ptr, ok, __FILE__, __FUNCTION__, __LINE__, "BuddyCheck")
+#define BuddyCheckLabel(ptr, ok, lbl) _BuddyCheck_Autolabel((BUDDY_ADDR_T) ptr, ok, __FILE__, __FUNCTION__, __LINE__, lbl)
 #else
 /**
  *  test memory corruption for a block.
@@ -333,8 +334,8 @@ int _BuddyCheck_Autolabel(BUDDY_ADDR_T ptr,
  *  false else.
  */
 
-#define BuddyCheck(ptr)           _BuddyCheck(ptr)
-#define BuddyCheckLabel(ptr, lbl) _BuddyCheck(ptr)
+#define BuddyCheck(ptr, ok)           _BuddyCheck((BUDDY_ADDR_T) ptr, ok, "BuddyCheck")
+#define BuddyCheckLabel(ptr, ok, lbl) _BuddyCheck((BUDDY_ADDR_T) ptr, ok, lbl)
 #endif
 
 /**
@@ -342,7 +343,7 @@ int _BuddyCheck_Autolabel(BUDDY_ADDR_T ptr,
  *  true if the block is OK,
  *  false else.
  */
-int _BuddyCheck(BUDDY_ADDR_T ptr);
+int _BuddyCheck(BUDDY_ADDR_T ptr, int other_thread_ok, const char *label);
 
 /**
  * sets default values for buddy configuration structure.

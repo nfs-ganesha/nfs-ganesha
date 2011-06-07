@@ -41,14 +41,7 @@
 #include "solaris_port.h"
 #endif
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#endif
-
+#include "rpc.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs_tools.h"
@@ -227,12 +220,16 @@ int uid2name(char *name, uid_t * puid)
  */
 int name2uid(char *name, uid_t * puid)
 {
+#ifndef _USE_NFSIDMAP
   struct passwd passwd;
   struct passwd *ppasswd;
   char buff[MAXPATHLEN];
+#endif
   uid_t uid;
+#ifdef _USE_GSSRPC
   gid_t gss_gid;
   uid_t gss_uid;
+#endif
   char fqname[MAXNAMLEN];
   int rc;
 
@@ -369,9 +366,14 @@ int name2uid(char *name, uid_t * puid)
  */
 int gid2name(char *name, gid_t * pgid)
 {
+#ifndef _USE_NFSIDMAP
   struct group g;
-  struct group *pg;
-  char buff[MAXPATHLEN];
+#ifndef _SOLARIS
+  struct group *pg = NULL;
+#endif
+  static char buff[MAXPATHLEN]; /* Working area for getgrnam_r */
+#endif
+
 #ifdef _USE_NFSIDMAP
   int rc;
 
@@ -471,9 +473,13 @@ int gid2name(char *name, gid_t * pgid)
  */
 int name2gid(char *name, gid_t * pgid)
 {
+#ifndef _USE_NFSIDMAP
   struct group g;
+#ifndef _SOLARIS
   struct group *pg = NULL;
+#endif
   static char buff[MAXPATHLEN]; /* Working area for getgrnam_r */
+#endif
   gid_t gid;
   int rc;
 
@@ -694,7 +700,9 @@ int utf82uid(utf8string * utf8str, uid_t * Uid)
 {
   char buff[2 * MAXNAMLEN];
   char uidname[MAXNAMLEN];
+#ifndef _USE_NFSIDMAP
   char domainname[MAXNAMLEN];
+#endif
   int  rc;
 
   if(utf8str->utf8string_len == 0)
@@ -705,8 +713,7 @@ int utf82uid(utf8string * utf8str, uid_t * Uid)
       return -1;
     }
 
-  strncpy(buff, utf8str->utf8string_val, utf8str->utf8string_len);
-  buff[utf8str->utf8string_len] = '\0';
+  utf82str(buff, sizeof(buff), utf8str);
 
 #ifndef _USE_NFSIDMAP
   /* User is shown as a string 'user@domain', remove it if libnfsidmap is not used */
@@ -745,7 +752,9 @@ int utf82gid(utf8string * utf8str, gid_t * Gid)
 {
   char buff[2 * MAXNAMLEN];
   char gidname[MAXNAMLEN];
+#ifndef _USE_NFSIDMAP
   char domainname[MAXNAMLEN];
+#endif
   int  rc;
 
   if(utf8str->utf8string_len == 0)
@@ -756,8 +765,7 @@ int utf82gid(utf8string * utf8str, gid_t * Gid)
       return 0;
     }
 
-  strncpy(buff, utf8str->utf8string_val, utf8str->utf8string_len);
-  buff[utf8str->utf8string_len] = '\0';
+  utf82str(buff, sizeof(buff), utf8str);
 
 #ifndef _USE_NFSIDMAP
   /* Group is shown as a string 'group@domain' , remove it if libnfsidmap is not used */

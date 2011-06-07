@@ -99,17 +99,6 @@ char usage[] =
 
 /**
  *
- * SIGCHLD signal management routine, for detecting the end of a child process
- *
- */
-
-static void action_sigusr1( int sig )
-{
-   sigusr1_triggered = TRUE ;
-}
-
-/**
- *
  * SIGTERM signal management routine, for cleanly terminating the daemon
  *
  */
@@ -144,8 +133,9 @@ int main(int argc, char *argv[])
   char *tempo_exec_name = NULL;
   char localmachine[MAXHOSTNAMELEN];
   int c;
+#ifndef HAVE_DAEMON
   pid_t son_pid;
-  struct sigaction act_sigusr1;
+#endif
   struct sigaction act_sigterm;
   struct sigaction act_sighup;
 

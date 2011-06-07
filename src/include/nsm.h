@@ -6,7 +6,8 @@
 #ifndef _NSM_H_RPCGEN
 #define _NSM_H_RPCGEN
 
-#include <rpc/rpc.h>
+#include "config.h"
+#include "rpc.h"
 
 #ifdef __cplusplus
 extern "C"

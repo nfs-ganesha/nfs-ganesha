@@ -7,7 +7,6 @@ SUBDIRS = include             \
           ConfigParsing       \
           RW_Lock             \
           SemN                \
-          test                \
           LRU                 \
           HashTable           \
 	  NodeList	      \
@@ -17,12 +16,13 @@ SUBDIRS = include             \
           File_Content        \
           File_Content_Policy \
           XDR                 \
+          RPCAL               \
           NFS_Protocols       \
           PNFS                \
+          RPCAL               \
           support             \
           IdMapper            \
           snmp_adm            \
-          RPCAL               \
           MainNFSD            \
           cmdline_tools       \
           shell               \

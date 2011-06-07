@@ -7,8 +7,6 @@
 
 bool_t xdr_res(XDR * xdrs, res * objp)
 {
-  register int32_t *buf;
-
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return FALSE;
   return TRUE;
@@ -16,8 +14,6 @@ bool_t xdr_res(XDR * xdrs, res * objp)
 
 bool_t xdr_sm_stat_res(XDR * xdrs, sm_stat_res * objp)
 {
-  register int32_t *buf;
-
   if(!xdr_res(xdrs, &objp->res_stat))
     return FALSE;
   if(!xdr_int(xdrs, &objp->state))
@@ -27,8 +23,6 @@ bool_t xdr_sm_stat_res(XDR * xdrs, sm_stat_res * objp)
 
 bool_t xdr_sm_stat(XDR * xdrs, sm_stat * objp)
 {
-  register int32_t *buf;
-
   if(!xdr_int(xdrs, &objp->state))
     return FALSE;
   return TRUE;
@@ -36,8 +30,6 @@ bool_t xdr_sm_stat(XDR * xdrs, sm_stat * objp)
 
 bool_t xdr_my_id(XDR * xdrs, my_id * objp)
 {
-  register int32_t *buf;
-
   if(!xdr_string(xdrs, &objp->my_name, SM_MAXSTRLEN))
     return FALSE;
   if(!xdr_int(xdrs, &objp->my_prog))
@@ -51,8 +43,6 @@ bool_t xdr_my_id(XDR * xdrs, my_id * objp)
 
 bool_t xdr_mon_id(XDR * xdrs, mon_id * objp)
 {
-  register int32_t *buf;
-
   if(!xdr_string(xdrs, &objp->mon_name, SM_MAXSTRLEN))
     return FALSE;
   if(!xdr_my_id(xdrs, &objp->my_id))
@@ -62,9 +52,6 @@ bool_t xdr_mon_id(XDR * xdrs, mon_id * objp)
 
 bool_t xdr_mon(XDR * xdrs, mon * objp)
 {
-  register int32_t *buf;
-
-  int i;
   if(!xdr_mon_id(xdrs, &objp->mon_id))
     return FALSE;
   if(!xdr_opaque(xdrs, objp->priv, 16))

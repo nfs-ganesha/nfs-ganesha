@@ -1162,7 +1162,7 @@ void *TESTB(void *arg)
   if(isFullDebug(COMPONENT_MEMCORRUPT))
     {
       LogTest("--> Checking an good address %p", pointer);
-      BuddyCheck(pointer);
+      BuddyCheck(pointer, 0);
     }
 
   LogTest("--> Trying to free a good address %p", pointer);
@@ -1176,7 +1176,7 @@ void *TESTB(void *arg)
   if(isFullDebug(COMPONENT_MEMCORRUPT))
     {
       LogTest("--> Checking an invalid address %p", pointer);
-      BuddyCheck(pointer);
+      BuddyCheck(pointer, 0);
     }
 
   LogTest("--> Trying to free an invalid address %p", pointer);
@@ -1195,7 +1195,7 @@ void *TESTB(void *arg)
   if(isFullDebug(COMPONENT_MEMCORRUPT))
     {
       LogTest("--> Checking a libc malloc address %p", pointer);
-      BuddyCheck(pointer);
+      BuddyCheck(pointer, 0);
     }
 
   LogTest("--> Trying to free a libc malloc address %p", pointer);
@@ -1212,7 +1212,7 @@ void *TESTB(void *arg)
   if(isFullDebug(COMPONENT_MEMCORRUPT))
     {
       LogTest("--> Checking a NULL address %p", pointer);
-      BuddyCheck(pointer);
+      BuddyCheck(pointer, 0);
     }
 
   LogTest("--> Trying to free a NULL address %p", pointer);

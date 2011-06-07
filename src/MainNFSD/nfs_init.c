@@ -39,19 +39,7 @@
 #include "solaris_port.h"
 #endif
 
-#ifdef _USE_GSSRPC
-#ifdef HAVE_KRB5
-#include <gssapi/gssapi_krb5.h> /* For krb5_gss_register_acceptor_identity */
-#endif
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "nfs_init.h"
 #include "stuff_alloc.h"
 #include "log_macros.h"
@@ -389,8 +377,8 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->dupreq_param.hash_param.hash_func_key = dupreq_value_hash_func;
   p_nfs_param->dupreq_param.hash_param.hash_func_rbt = dupreq_rbt_hash_func;
   p_nfs_param->dupreq_param.hash_param.compare_key = compare_req;
-  p_nfs_param->dupreq_param.hash_param.key_to_str = display_xid;
-  p_nfs_param->dupreq_param.hash_param.val_to_str = display_xid;
+  p_nfs_param->dupreq_param.hash_param.key_to_str = display_req_key;
+  p_nfs_param->dupreq_param.hash_param.val_to_str = display_req_val;
   p_nfs_param->dupreq_param.hash_param.name = "Duplicate Request Cache";
 
   /*  Worker parameters : IP/name hash table */
@@ -400,8 +388,8 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->ip_name_param.hash_param.hash_func_key = ip_name_value_hash_func;
   p_nfs_param->ip_name_param.hash_param.hash_func_rbt = ip_name_rbt_hash_func;
   p_nfs_param->ip_name_param.hash_param.compare_key = compare_ip_name;
-  p_nfs_param->ip_name_param.hash_param.key_to_str = display_ip_name;
-  p_nfs_param->ip_name_param.hash_param.val_to_str = display_ip_value;
+  p_nfs_param->ip_name_param.hash_param.key_to_str = display_ip_name_key;
+  p_nfs_param->ip_name_param.hash_param.val_to_str = display_ip_name_val;
   p_nfs_param->ip_name_param.hash_param.name = "IP Name";
   p_nfs_param->ip_name_param.expiration_time = IP_NAME_EXPIRATION;
   strncpy(p_nfs_param->ip_name_param.mapfile, "", MAXPATHLEN);
@@ -473,8 +461,8 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->ip_stats_param.hash_param.hash_func_key = ip_stats_value_hash_func;
   p_nfs_param->ip_stats_param.hash_param.hash_func_rbt = ip_stats_rbt_hash_func;
   p_nfs_param->ip_stats_param.hash_param.compare_key = compare_ip_stats;
-  p_nfs_param->ip_stats_param.hash_param.key_to_str = display_ip_stats;
-  p_nfs_param->ip_stats_param.hash_param.val_to_str = display_ip_stats;
+  p_nfs_param->ip_stats_param.hash_param.key_to_str = display_ip_stats_key;
+  p_nfs_param->ip_stats_param.hash_param.val_to_str = display_ip_stats_val;
   p_nfs_param->ip_stats_param.hash_param.name = "IP Stats";
 
   /*  Worker parameters : NFSv4 Client id table */
@@ -1677,7 +1665,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       workers_data[i].ht = ht;
 
       sprintf(name, "IP Stats for worker %d", i);
-      nfs_param.ip_stats_param.hash_param.name = name;
+      nfs_param.ip_stats_param.hash_param.name = Str_Dup(name);
       ht_ip_stats[i] = nfs_Init_ip_stats(nfs_param.ip_stats_param);
       if(ht_ip_stats[i] == NULL)
         {
@@ -2193,7 +2181,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
 #endif
 
       /* Populate the ID_MAPPER file with mapping file if needed */
-      if(!strncmp(nfs_param.uidmap_cache_param.mapfile, "", MAXPATHLEN))
+      if(nfs_param.uidmap_cache_param.mapfile[0] == '\0')
         {
           LogDebug(COMPONENT_INIT, "No Uid Map file is used");
         }
@@ -2206,7 +2194,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
             LogDebug(COMPONENT_INIT, "UID_MAPPER was NOT populated");
         }
 
-      if(!strncmp(nfs_param.gidmap_cache_param.mapfile, "", MAXPATHLEN))
+      if(nfs_param.gidmap_cache_param.mapfile[0] == '\0')
         {
           LogDebug(COMPONENT_INIT, "No Gid Map file is used");
         }
@@ -2219,7 +2207,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
             LogDebug(COMPONENT_INIT, "GID_MAPPER was NOT populated");
         }
 
-      if(!strncmp(nfs_param.ip_name_param.mapfile, "", MAXPATHLEN))
+      if(nfs_param.ip_name_param.mapfile[0] == '\0')
         {
           LogDebug(COMPONENT_INIT, "No Hosts Map file is used");
         }

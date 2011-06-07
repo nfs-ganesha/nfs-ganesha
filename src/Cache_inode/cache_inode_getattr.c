@@ -83,7 +83,7 @@ cache_inode_getattr(cache_entry_t * pentry,
                     cache_inode_status_t * pstatus)
 {
     cache_inode_status_t status;
-    fsal_handle_t *pfsal_handle;
+    fsal_handle_t *pfsal_handle = NULL;
     fsal_status_t fsal_status;
 
     /* sanity check */
@@ -157,6 +157,14 @@ cache_inode_getattr(cache_entry_t * pentry,
                 case CHARACTER_FILE:
                     pfsal_handle = &pentry->object.special_obj.handle;
                     break;
+                case FS_JUNCTION:
+                case UNASSIGNED:
+                case RECYCLED:
+                    *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+                    LogFullDebug(COMPONENT_CACHE_INODE,
+                                 "cache_inode_getattr: returning %d(%s) from cache_inode_renew_entry - unexpected md_type",
+                                 *pstatus, cache_inode_err_str(*pstatus));
+                    return *pstatus;
                 }
 
             /*

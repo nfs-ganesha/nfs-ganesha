@@ -52,17 +52,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <pthread.h>
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "HashData.h"
@@ -119,8 +109,6 @@ int display_open_owner_val(hash_buffer_t * pbuff, char *str)
 
 int compare_open_owner(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  unsigned int rc;
-
   if(isFullDebug(COMPONENT_OPEN_OWNER_HASH))
     {
       char str1[MAXPATHLEN];

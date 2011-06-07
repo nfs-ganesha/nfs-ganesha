@@ -71,10 +71,9 @@ fsal_status_t GPFSFSAL_readlink(gpfsfsal_handle_t * p_linkhandle,       /* IN */
     )
 {
 
-  int rc, errsv;
+  int errsv;
   fsal_status_t status;
   char link_content_out[FSAL_MAX_PATH_LEN];
-  fsal_path_t fsalpath;
 
   /* sanity checks.
    * note : link_attributes is optional.

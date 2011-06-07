@@ -247,7 +247,7 @@ int nlm_send_async(int proc, char *host, void *inarg, void *key)
   struct timeval start, now;
   struct timespec timeout;
 
-  clnt = clnt_create(host, NLMPROG, NLM4_VERS, "tcp");
+  clnt = Clnt_create(host, NLMPROG, NLM4_VERS, "tcp");
   if(!clnt)
     {
       LogMajor(COMPONENT_NLM, "%s: Cannot create connection to %s client",
@@ -299,7 +299,7 @@ int nlm_send_async(int proc, char *host, void *inarg, void *key)
     }
   pthread_mutex_unlock(&nlm_async_resp_mutex);
 
-  clnt_destroy(clnt);
+  Clnt_destroy(clnt);
   return retval;
 }
 

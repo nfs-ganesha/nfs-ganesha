@@ -49,17 +49,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -102,11 +92,12 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
   cache_content_status_t content_status;
   int rc = 0;
   nfs_flush_thread_data_t *p_flush_data = NULL;
-  unsigned long index = 0;
   exportlist_t *pexport;
   char function_name[MAXNAMLEN];
+#ifdef _USE_XFS
   fsal_export_context_t export_context ;
   fsal_path_t export_path ;
+#endif
 
   p_flush_data = (nfs_flush_thread_data_t *) flush_data_arg;
 

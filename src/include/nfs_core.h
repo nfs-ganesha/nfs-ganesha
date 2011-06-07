@@ -43,18 +43,7 @@
 #include <time.h>
 #include <sys/time.h>
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/types.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/auth.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/types.h>
-#include <rpc/svc.h>
-#include <rpc/auth.h>
-#endif
-
+#include "rpc.h"
 #include "LRU_List.h"
 #include "fsal.h"
 #ifdef _USE_MFSL
@@ -212,26 +201,6 @@ typedef enum nfs_clientid_confirm_state__
 #ifndef V
 #define V( sem ) pthread_mutex_unlock( &sem )
 #endif
-
-#ifdef _USE_TIRPC
-void Svc_dg_soft_destroy(SVCXPRT * xport);
-#else
-void Svcudp_soft_destroy(SVCXPRT * xprt);
-#endif                          /* _USE_TIRPC */
-
-#ifdef _USE_GSSRPC
-bool_t Svcauth_gss_import_name(char *service);
-bool_t Svcauth_gss_acquire_cred(void);
-#endif
-void Xprt_register(SVCXPRT * xprt);
-void Xprt_unregister(SVCXPRT * xprt);
-
-
-/* Declare the various RPC transport dynamic arrays */
-extern SVCXPRT         **Xports;
-extern pthread_mutex_t  *mutex_cond_xprt;
-extern pthread_cond_t   *condvar_xprt;
-extern int              *etat_xprt;
 
 /* The default attribute mask for NFSv2/NFSv3 */
 #define FSAL_ATTR_MASK_V2_V3   ( FSAL_ATTRS_MANDATORY | FSAL_ATTR_MODE     | FSAL_ATTR_FILEID | \
@@ -514,7 +483,7 @@ typedef struct nfs_worker_data__
 
   nfs_worker_stat_t stats;
   unsigned int passcounter;
-  struct sockaddr_storage hostaddr;
+  sockaddr_t hostaddr;
   int is_ready;
   unsigned int gc_in_progress;
   unsigned int current_xid;
@@ -617,7 +586,7 @@ int parseAccessParam(char *var_name, char *var_value,
                      exportlist_t *p_entry, int access_option);
 
 /* Checks an access list for a specific client */
-int export_client_match(unsigned int addr,
+int export_client_match(sockaddr_t *hostaddr,
                         char *ipstring,
                         exportlist_client_t *clients,
                         exportlist_client_entry_t * pclient_found,
@@ -639,8 +608,9 @@ void Print_param_in_log(nfs_parameter_t * pparam);
 
 void nfs_reset_stats(void);
 
-int display_xid(hash_buffer_t * pbuff, char *str);
-int compare_xid(hash_buffer_t * buff1, hash_buffer_t * buff2);
+int display_req_key(hash_buffer_t * pbuff, char *str);
+int display_req_val(hash_buffer_t * pbuff, char *str);
+int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
 int print_entry_dupreq(LRU_data_t data, char *str);
 int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam);
@@ -830,9 +800,6 @@ int nfs_Init_ip_name(nfs_ip_name_parameter_t param);
 hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param);
 int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param);
 
-void socket_setoptions(int socketFd);
-int cmp_sockaddr(struct sockaddr *addr_1, struct sockaddr *addr_2);
-
 #ifdef _USE_GSSRPC
 unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
 unsigned long gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam,
@@ -842,10 +809,6 @@ int display_gss_ctx(hash_buffer_t * pbuff, char *str);
 int display_gss_svc_data(hash_buffer_t * pbuff, char *str);
 
 #endif                          /* _USE_GSSRPC */
-
-void Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig);
-void Svcxprt_copydestroy(register SVCXPRT * xprt);
-SVCXPRT *Svcxprt_copycreate();
 
 extern const nfs_function_desc_t *INVALID_FUNCDESC;
 const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs);

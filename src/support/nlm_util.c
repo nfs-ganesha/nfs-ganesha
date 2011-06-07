@@ -36,17 +36,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
+#include "rpc.h"
 #include <sys/time.h>
 #include "log_macros.h"
 #include "stuff_alloc.h"
@@ -326,7 +316,9 @@ nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs * arg,
     struct nlm4_lock *nlm_lock;
     nlm_lock_entry_t *nlm_entry;
     uint64_t nlm_entry_end, nlm_lock_end;
+#ifdef PIN_CACHE_ENTRIES
     cache_inode_status_t pstatus;
+#endif
 
     nlm_lock = &arg->alock;
     exclusive = arg->exclusive;
@@ -395,7 +387,7 @@ nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs * arg,
     if(!nlm_entry)
         goto error_out;
 
-#if 0
+#ifdef PIN_CACHE_ENTRIES
     /* Pin the cache entry */
     pstatus = cache_inode_pin_pentry(pentry, pclient, pcontext);
     if(pstatus != CACHE_INODE_SUCCESS)
@@ -439,6 +431,7 @@ error_out:
     pthread_mutex_unlock(&nlm_lock_list_mutex);
     return nlm_entry;
 
+#ifdef PIN_CACHE_ENTRIES
 free_nlm_entry:
     Mem_Free(nlm_entry->caller_name);
     netobj_free(&nlm_entry->fh);
@@ -447,6 +440,7 @@ free_nlm_entry:
     Mem_Free(nlm_entry);
     nlm_entry = NULL;
     goto error_out;
+#endif
 }
 
 static void do_nlm_remove_from_locklist(nlm_lock_entry_t * nlm_entry)

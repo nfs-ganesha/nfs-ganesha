@@ -31,6 +31,8 @@ typedef unsigned int u_int32_t;
 #include   <sys/socket.h>
 #include   <errno.h>
 
+#include "log_macros.h"
+
 #ifdef _APPLE
 #define MAX(a, b)   ((a) > (b)? (a): (b))
 #endif
@@ -45,8 +47,6 @@ typedef unsigned int u_int32_t;
 
 #define rpc_buffer(xprt) ((xprt)->xp_p1)
 
-void Xprt_register(SVCXPRT * xprt);
-void Xprt_unregister(SVCXPRT * xprt);
 bool_t svcauth_wrap_dummy(XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr);
 
 #define SVCAUTH_WRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)
@@ -277,6 +277,8 @@ static bool_t Svcudp_reply(register SVCXPRT * xprt, struct rpc_msg *msg)
             rpc_buffer(xprt),
             slen, 0, (struct sockaddr *)&(xprt->xp_raddr), xprt->xp_addrlen) != slen)
     {
+      LogInfo(COMPONENT_DISPATCH, "EAGAIN indicates UDP buffer is full and not"
+               " allowed to block. sendto() returned %s", sys_errlist[errno]);
       return (FALSE);
     }
   return (TRUE);

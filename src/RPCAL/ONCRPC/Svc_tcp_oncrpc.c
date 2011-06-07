@@ -43,17 +43,11 @@ typedef unsigned int u_int32_t;
 #define MAX(a, b)     ((a > b) ? a : b)
 #endif
 
-void Xprt_register(SVCXPRT * xprt);
-void Xprt_unregister(SVCXPRT * xprt);
-
-void socket_setoptions(int socketFd);
-
 int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
 bool_t svcauth_wrap_dummy(XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr);
 
 pthread_mutex_t *mutex_cond_xprt;
 pthread_cond_t *condvar_xprt;
-int *etat_xprt;
 
 #define SVCAUTH_WRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)
 #define SVCAUTH_UNWRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)
@@ -228,26 +222,6 @@ static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
 }
 
 /*
- * Free xprt copy. Currently, it is not called, but it should be called
- * when cleanup is needed.
- */
-void Svcxprt_copydestroy(register SVCXPRT * xprt)
-{
-  register struct tcp_conn *cd = NULL;
-
-  if(xprt == (SVCXPRT *) NULL)
-    return;
-
-  cd = (struct tcp_conn *)xprt->xp_p1;
-  if(cd == (struct tcp_conn *) NULL)
-    return;
-
-  XDR_DESTROY(&(cd->xdrs));
-  Mem_Free((caddr_t) cd);
-  Mem_Free((caddr_t) xprt);
-}
-
-/*
  * Create a copy of xprt. Currently, sendsize and recvsize of XDR is
  * hard-coded. This should be fixed.
  */
@@ -283,7 +257,7 @@ SVCXPRT *Svcxprt_copycreate()
 /*
  * Duplicate xprt from original to copy.
  */
-void Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
+SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
 {
   register struct tcp_conn *cd_copy = (struct tcp_conn *)(xprt_copy->xp_p1);
   register struct tcp_conn *cd_orig = (struct tcp_conn *)(xprt_orig->xp_p1);
@@ -295,6 +269,8 @@ void Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
   cd_copy->strm_stat = cd_orig->strm_stat;
   cd_copy->x_id = cd_orig->x_id;
   memcpy(cd_copy->verf_body, cd_orig->verf_body, MAX_AUTH_BYTES);
+
+  return xprt_copy;
 }
 
 void print_xdrrec_fbtbc(char *tag, SVCXPRT * xprt)
@@ -337,7 +313,6 @@ void print_xdrrec_fbtbc(char *tag, SVCXPRT * xprt)
 }
 
 void *rpc_tcp_socket_manager_thread(void *Arg);
-extern fd_set Svc_fdset;
 
 static bool_t Rendezvous_request(register SVCXPRT * xprt)
 {
@@ -373,32 +348,16 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt)
   memcpy(&(xprt->xp_raddr), &addr, sizeof(addr));
   xprt->xp_addrlen = len;
 
-#ifdef _FREEBSD
-  if(pthread_cond_init(&condvar_xprt[xprt->xp_fd], NULL) != 0)
+  if(pthread_cond_init(&condvar_xprt[xprt->XP_SOCK], NULL) != 0)
     return FALSE;
 
-  if(pthread_mutex_init(&mutex_cond_xprt[xprt->xp_fd], NULL) != 0)
+  if(pthread_mutex_init(&mutex_cond_xprt[xprt->XP_SOCK], NULL) != 0)
     return FALSE;
-  etat_xprt[xprt->xp_fd] = 0;
 
   if((rc =
 	fridgethr_get( &sockmgr_thrid, rpc_tcp_socket_manager_thread,
-                     (void *)((unsigned long)xprt->xp_fd))) != 0 )
+                     (void *)((unsigned long)xprt->XP_SOCK))) != 0 )
     return FALSE;
-#else
-  if(pthread_cond_init(&condvar_xprt[xprt->xp_sock], NULL) != 0)
-    return FALSE;
-
-  if(pthread_mutex_init(&mutex_cond_xprt[xprt->xp_sock], NULL) != 0)
-    return FALSE;
-  etat_xprt[xprt->xp_sock] = 0;
-
-  if((rc =
-	fridgethr_get( &sockmgr_thrid, rpc_tcp_socket_manager_thread,
-                     (void *)((unsigned long)xprt->xp_sock))) != 0 )
-    return FALSE;
-
-#endif
 
   return (FALSE);               /* there is never an rpc msg to be processed */
 }

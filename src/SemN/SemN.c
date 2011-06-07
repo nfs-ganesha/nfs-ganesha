@@ -10,22 +10,22 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
 /**
  * \file    $RCSfile: SemN.c,v $
- * \author  $Author: deniel $ 
+ * \author  $Author: deniel $
  * \date    $Date: 2005/11/28 17:02:56 $
  * \brief   Portable system tools.
  *
@@ -78,10 +78,10 @@ int semaphore_init(semaphore_t * sem, int value)
   if(!sem)
     return EINVAL;
 
-  if(retval = pthread_mutex_init(&sem->mutex, NULL))
+  if((retval = pthread_mutex_init(&sem->mutex, NULL)))
     return retval;
 
-  if(retval = pthread_cond_init(&sem->cond, NULL))
+  if((retval = pthread_cond_init(&sem->cond, NULL)))
     return retval;
 
   sem->count = value;
@@ -103,12 +103,8 @@ int semaphore_destroy(semaphore_t * sem)
 
 }
 
-int semaphore_P(semaphore_t * sem)
+void semaphore_P(semaphore_t * sem)
 {
-
-  if(!sem)
-    return EINVAL;
-
   /* enters into the critical section */
   pthread_mutex_lock(&sem->mutex);
 
@@ -119,12 +115,10 @@ int semaphore_P(semaphore_t * sem)
 
   /* leaves the critical section */
   pthread_mutex_unlock(&sem->mutex);
-
 }
 
-int semaphore_V(semaphore_t * sem)
+void semaphore_V(semaphore_t * sem)
 {
-
   /* enters into the critical section */
   pthread_mutex_lock(&sem->mutex);
 
@@ -136,5 +130,4 @@ int semaphore_V(semaphore_t * sem)
 
   /* leaves the critical section */
   pthread_mutex_unlock(&sem->mutex);
-
 }

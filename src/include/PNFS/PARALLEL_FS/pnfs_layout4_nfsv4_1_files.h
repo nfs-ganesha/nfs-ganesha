@@ -61,7 +61,6 @@
 
 #include "PNFS/PARALLEL_FS/pnfs_layout4_nfsv4_1_files_types.h"
 
-
 /* Mandatory functions */
 nfsstat4 pnfs_parallel_fs_getdevicelist( GETDEVICELIST4args * pargs, 
 				         compound_data_t   * data,
@@ -83,4 +82,4 @@ nfsstat4 pnfs_parallel_fs_layoutreturn( LAYOUTRETURN4args * pargs,
 				        compound_data_t * data,
 				        LAYOUTRETURN4res  * pres ) ; 
 
-#endif                          /* _PNFS_LAYOUT4_NFSV4_1_FILES_H */
+#endif 
