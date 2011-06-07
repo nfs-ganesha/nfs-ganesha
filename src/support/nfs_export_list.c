@@ -221,8 +221,6 @@ int get_req_uid_gid(struct svc_req *ptr_req,
   unsigned int rpcxid = 0;
 #ifdef _HAVE_GSSAPI
   struct svc_rpc_gss_data *gd = NULL;
-  char username[MAXNAMLEN];
-  char domainname[MAXNAMLEN];  
 #endif
 
   if (user_credentials == NULL)
@@ -265,12 +263,12 @@ int get_req_uid_gid(struct svc_req *ptr_req,
       /* Get the gss data to process them */
       gd = SVCAUTH_PRIVATE(ptr_req->rq_xprt->xp_auth);
 
-      /*
+
       if(isFullDebug(COMPONENT_RPCSEC_GSS))
         {
-          char *ptr;
           OM_uint32 maj_stat = 0;
           OM_uint32 min_stat = 0;
+	  char ptr[256];
 
           gss_buffer_desc oidbuff;
 
@@ -299,14 +297,12 @@ int get_req_uid_gid(struct svc_req *ptr_req,
               (void)gss_release_buffer(&min_stat, &oidbuff); 
             }
        }
-      */
-      split_credname(gd->cname, username, domainname);
 
-      LogFullDebug(COMPONENT_DISPATCH, "----> User=%s Domain=%s",
-                   username, domainname);
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "Mapping principal %s to uid/gid",
+                   (char *)gd->cname.value);
 
       /* Convert to uid */
-      if(!name2uid(username, &user_credentials->caller_uid))
+      if(!principal2uid((char *)gd->cname.value, &user_credentials->caller_uid))
 	{
           LogWarn(COMPONENT_IDMAPPER,
 		  "WARNING: Could not map principal to uid; mapping principal "
