@@ -51,7 +51,7 @@
 #include "pnfs.h" 
 #include "pnfs_service.h" 
 
-nfsstat4 pnfs_lustre_layoutget( LAYOUTGET4args   * playoutgetargs,
+nfsstat4 pnfs_parallel_fs_layoutget( LAYOUTGET4args   * playoutgetargs,
 				compound_data_t  * data,
 				LAYOUTGET4res    * playoutgetres )
 {
@@ -163,4 +163,4 @@ nfsstat4 pnfs_lustre_layoutget( LAYOUTGET4args   * playoutgetargs,
 
   playoutgetres->logr_status = NFS4_OK ;
   return NFS4_OK ;
-}                               /* pnfs_lustre_layoutget */
+}                               /* pnfs_parallel_fs_layoutget */

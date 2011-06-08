@@ -447,5 +447,5 @@
         - Bug Fix: Bad memset in FSAL_HPSS::HPSSFSAL_lookup. Result was a segfault at init.
 	- Code reorganization : subdirectory RPCAL has been added
 	- Bug fixe : bad 'fd2handle' options in FSAL_XFS::FSAL_rename
-
+	- pNFS : API for implementing pNFS specific feature has been fully refurbished.
 
