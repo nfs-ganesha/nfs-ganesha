@@ -221,8 +221,9 @@ int get_req_uid_gid(struct svc_req *ptr_req,
   unsigned int rpcxid = 0;
 #ifdef _HAVE_GSSAPI
   struct svc_rpc_gss_data *gd = NULL;
-  char username[MAXNAMLEN];
-  char domainname[MAXNAMLEN];  
+  OM_uint32 maj_stat = 0;
+  OM_uint32 min_stat = 0;
+  char principal[MAXNAMLEN];
 #endif
 
   if (user_credentials == NULL)
@@ -265,12 +266,12 @@ int get_req_uid_gid(struct svc_req *ptr_req,
       /* Get the gss data to process them */
       gd = SVCAUTH_PRIVATE(ptr_req->rq_xprt->xp_auth);
 
-      /*
+
       if(isFullDebug(COMPONENT_RPCSEC_GSS))
         {
-          char *ptr;
           OM_uint32 maj_stat = 0;
           OM_uint32 min_stat = 0;
+	  char ptr[256];
 
           gss_buffer_desc oidbuff;
 
@@ -299,20 +300,31 @@ int get_req_uid_gid(struct svc_req *ptr_req,
               (void)gss_release_buffer(&min_stat, &oidbuff); 
             }
        }
-      */
-      split_credname(gd->cname, username, domainname);
 
-      LogFullDebug(COMPONENT_DISPATCH, "----> User=%s Domain=%s",
-                   username, domainname);
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "Mapping principal %s to uid/gid",
+                   (char *)gd->cname.value);
+
+      memcpy(principal, gd->cname.value, gd->cname.length);
+      principal[gd->cname.length] = 0;
 
       /* Convert to uid */
-      if(!name2uid(username, &user_credentials->caller_uid))
-        {
-          LogMajor(COMPONENT_DISPATCH,
-                   "FAILURE: Could not resolve User=%s at Domain=%s into credentials",
-                   username, domainname);
-          return FALSE;
-        }
+      if(!principal2uid(principal, &user_credentials->caller_uid))
+	{
+          LogWarn(COMPONENT_IDMAPPER,
+		  "WARNING: Could not map principal to uid; mapping principal "
+		  "to anonymous uid/gid");
+
+	  /* For compatibility with Linux knfsd, we set the uid/gid
+	   * to anonymous when a name->uid mapping can't be found. */
+	  user_credentials->caller_uid = pexport->anonymous_uid;
+	  user_credentials->caller_gid = pexport->anonymous_gid;
+	  
+	  /* No alternate groups for "nobody" */
+	  user_credentials->caller_glen = 0 ;
+	  user_credentials->caller_garray = NULL ;
+
+	  return TRUE;
+	}
 
       if(uidgidmap_get(user_credentials->caller_uid, &user_credentials->caller_gid) != ID_MAPPER_SUCCESS)
         {
