@@ -1543,49 +1543,37 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #endif
 
   /* If rpcsec_gss is used, set the path to the keytab */
-#ifdef HAVE_KRB5
 #ifdef _HAVE_GSSAPI
+#ifdef HAVE_KRB5
   if(nfs_param.krb5_param.active_krb5)
     {
       OM_uint32 gss_status = 0;
 
-      if((gss_status =
-          krb5_gss_register_acceptor_identity(nfs_param.krb5_param.keytab)) !=
-         GSS_S_COMPLETE)
+      gss_status = krb5_gss_register_acceptor_identity(nfs_param.krb5_param.keytab);
+      if(gss_status != GSS_S_COMPLETE)
         {
-          if(log_sperror_gss
-             (GssError, "krb5_gss_register_acceptor_identity", gss_status, 0) == TRUE)
-            LogCrit(COMPONENT_INIT, "Error setting krb5 keytab to value %s: %s",
-                       nfs_param.krb5_param.keytab, GssError);
-          else
-            LogCrit(COMPONENT_INIT,
-                    "Error setting krb5 keytab to value: non-translatable error");
-
+          log_sperror_gss(GssError, gss_status, 0);
+          LogCrit(COMPONENT_INIT, "Error setting krb5 keytab to value %s is %s",
+                     nfs_param.krb5_param.keytab, GssError);
           exit(1);
         }
       LogInfo(COMPONENT_INIT, "krb5 keytab path successfully set to %s",
               nfs_param.krb5_param.keytab);
-#endif
-#endif
+#endif /* HAVE_KRB5 */
 
-#ifdef _HAVE_GSSAPI
       /* Set up principal to be use for GSSAPPI within GSSRPC/KRB5 */
       gss_service_buf.value = nfs_param.krb5_param.principal;
       gss_service_buf.length = strlen(nfs_param.krb5_param.principal) + 1;      /* The '+1' is not to be forgotten, for the '\0' at the end */
 
-      if((maj_stat = gss_import_name(&min_stat,
-                                     &gss_service_buf,
-                                     (gss_OID) GSS_C_NT_HOSTBASED_SERVICE,
-                                     &gss_service_name)) != GSS_S_COMPLETE)
+      maj_stat = gss_import_name(&min_stat,
+                                 &gss_service_buf,
+                                 (gss_OID) GSS_C_NT_HOSTBASED_SERVICE,
+                                 &gss_service_name);
+      if(maj_stat != GSS_S_COMPLETE)
         {
-          if(log_sperror_gss(GssError, "gss_import_name", maj_stat, min_stat) == TRUE)
-            LogCrit(COMPONENT_INIT, "Error importing gss principal %s: %s",
-                       nfs_param.krb5_param.principal, GssError);
-          else
-            LogCrit(COMPONENT_INIT,
-                    "Error importing gss principal %s: non-translatable error",
-                     nfs_param.krb5_param.principal);
-
+          log_sperror_gss(GssError, maj_stat, min_stat);
+          LogCrit(COMPONENT_INIT, "Error importing gss principal %s is %s",
+                     nfs_param.krb5_param.principal, GssError);
           exit(1);
         }
       LogInfo(COMPONENT_INIT,  "gss principal %s successfully set",
@@ -1606,13 +1594,11 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
         }
       else
         LogInfo(COMPONENT_INIT, "Gss Context Cache successfully initialized");
-#endif                          /* _USE_GSSRPC */
 
 #ifdef HAVE_KRB5
-#ifdef _HAVE_GSSAPI
     }                           /*  if( nfs_param.krb5_param.active_krb5 ) */
-#endif
-#endif
+#endif /* HAVE_KRB5 */
+#endif /* _HAVE_GSSAPI */
 
   /* RPC Initialisation */
   if(nfs_Init_svc() != 0)

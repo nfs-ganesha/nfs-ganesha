@@ -116,6 +116,49 @@ const char *str_gc_proc(rpc_gss_proc_t gc_proc)
  return "unknown";
 }
 
+/**
+ *
+ * sperror_gss: converts GSSAPI status to a string.
+ * 
+ * @param outmsg    [OUT] output string 
+ * @param tag       [IN]  input tag
+ * @param maj_stat  [IN]  GSSAPI major status
+ * @param min_stat  [IN]  GSSAPI minor status
+ *
+ * @return TRUE is successfull, false otherwise.
+ * 
+ */
+void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
+{
+  OM_uint32 smin;
+  gss_buffer_desc msg;
+  gss_buffer_desc msg2;
+  int msg_ctx = 0;
+
+  if(gss_display_status(&smin,
+                        maj_stat,
+                        GSS_C_GSS_CODE, GSS_C_NULL_OID, &msg_ctx, &msg) != GSS_S_COMPLETE)
+    {
+      sprintf(outmsg, "untranslatable error");
+      return;
+    }
+
+  if(gss_display_status(&smin,
+                        min_stat,
+                        GSS_C_MECH_CODE,
+                        GSS_C_NULL_OID, &msg_ctx, &msg2) != GSS_S_COMPLETE)
+    {
+      gss_release_buffer(&smin, &msg);
+      sprintf(outmsg, "%s : untranslatable error", (char *)msg.value);
+      return;
+    }
+
+  sprintf(outmsg, "%s : %s ", (char *)msg.value, (char *)msg2.value);
+
+  gss_release_buffer(&smin, &msg);
+  gss_release_buffer(&smin, &msg2);
+}                               /* log_sperror_gss */
+
 /* Global server credentials. */
 gss_cred_id_t svcauth_gss_creds;
 static gss_name_t svcauth_gss_name = NULL;
@@ -372,8 +415,8 @@ Svcauth_gss_validate(struct svc_req *rqst, struct svc_rpc_gss_data *gd,
 
   if(maj_stat != GSS_S_COMPLETE)
     {
-      log_sperror_gss(GssError, "gss_verify_mic", maj_stat, min_stat);
-      LogCrit(COMPONENT_RPCSEC_GSS, "Error in gss_verify_mic: %s ", GssError);
+      log_sperror_gss(GssError, maj_stat, min_stat);
+      LogCrit(COMPONENT_RPCSEC_GSS, "Error in gss_verify_mic: %s", GssError);
       /* todo - log this
       if(log_badverf != NULL)
         (*log_badverf) (gd->client_name, svcauth_gss_name, rqst, msg, log_badverf_data);
@@ -767,7 +810,7 @@ Xdr_rpc_gss_buf(XDR *xdrs, gss_buffer_t buf, u_int maxsize)
 	             "Xdr_rpc_gss_buf: %s %s (%p:%d)",
 		  (xdrs->x_op == XDR_ENCODE) ? "encode" : "decode",
 		  (xdr_stat == TRUE) ? "success" : "failure",
-		  buf->value, buf->length);
+		  buf->value, (int)buf->length);
 
 	return xdr_stat;
 }

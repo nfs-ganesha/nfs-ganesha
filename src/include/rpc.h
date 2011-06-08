@@ -150,7 +150,7 @@ extern pthread_mutex_t  *mutex_cond_xprt;
 extern pthread_cond_t   *condvar_xprt;
 
 #ifdef _HAVE_GSSAPI
-int log_sperror_gss(char *outmsg, char *tag, OM_uint32 maj_stat, OM_uint32 min_stat);
+void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat);
 unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
 unsigned long gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam,
                                     hash_buffer_t * buffclef);
