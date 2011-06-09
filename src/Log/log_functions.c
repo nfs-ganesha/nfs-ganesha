@@ -55,6 +55,97 @@
 #define MAX_NUM_FAMILY  50
 #define UNUSED_SLOT -1
 
+log_level_t tabLogLevel[NB_LOG_LEVEL] =
+{
+  {NIV_NULL,       "NIV_NULL",       LOG_NOTICE},
+  {NIV_FATAL,      "NIV_FATAL",      LOG_CRIT},
+  {NIV_MAJ,        "NIV_MAJ",        LOG_CRIT},
+  {NIV_CRIT,       "NIV_CRIT",       LOG_ERR},
+  {NIV_WARN,       "NIV_WARN",       LOG_WARNING},
+  {NIV_EVENT,      "NIV_EVENT",      LOG_NOTICE},
+  {NIV_INFO,       "NIV_INFO",       LOG_INFO},
+  {NIV_DEBUG,      "NIV_DEBUG",      LOG_DEBUG},
+  {NIV_FULL_DEBUG, "NIV_FULL_DEBUG", LOG_DEBUG}
+};
+
+/* les code d'error */
+errctx_t __attribute__ ((__unused__)) tab_systeme_err[] =
+{
+  {SUCCES, "SUCCES", "No Error"},
+  {ERR_FAILURE, "FAILURE", "Une error est survenue"},
+  {ERR_EVNT, "EVNT", "Evennement survenu"},
+  {ERR_PTHREAD_KEY_CREATE, "ERR_PTHREAD_KEY_CREATE", "Error in creation of pthread_keys"},
+  {ERR_MALLOC, "ERR_MALLOC", "malloc impossible"},
+  {ERR_SIGACTION, "ERR_SIGACTION", "sigaction impossible"},
+  {ERR_PTHREAD_ONCE, "ERR_PTHREAD_ONCE", "pthread_once impossible"},
+  {ERR_FICHIER_LOG, "ERR_FICHIER_LOG", "impossible d'acceder au fichier de log"},
+  {ERR_GETHOSTBYNAME, "ERR_GETHOSTBYNAME", "gethostbyname impossible"},
+  {ERR_MMAP, "ERR_MMAP", "mmap impossible"},
+  {ERR_SOCKET, "ERR_SOCKET", "socket impossible"},
+  {ERR_BIND, "ERR_BIND", "bind impossible"},
+  {ERR_CONNECT, "ERR_CONNECT", "connect impossible"},
+  {ERR_LISTEN, "ERR_LISTEN", "listen impossible"},
+  {ERR_ACCEPT, "ERR_ACCEPT", "accept impossible"},
+  {ERR_RRESVPORT, "ERR_RRESVPORT", "rresvport impossible"},
+  {ERR_GETHOSTNAME, "ERR_GETHOSTNAME", "gethostname impossible"},
+  {ERR_GETSOCKNAME, "ERR_GETSOCKNAME", "getsockname impossible"},
+  {ERR_IOCTL, "ERR_IOCTL", "ioctl impossible"},
+  {ERR_UTIME, "ERR_UTIME", "utime impossible"},
+  {ERR_XDR, "ERR_XDR", "Un appel XDR a echoue"},
+  {ERR_CHMOD, "ERR_CHMOD", "chmod impossible"},
+  {ERR_SEND, "ERR_SEND", "send impossible"},
+  {ERR_GETHOSTBYADDR, "ERR_GETHOSTBYADDR", "gethostbyaddr impossible"},
+  {ERR_PREAD, "ERR_PREAD", "pread impossible"},
+  {ERR_PWRITE, "ERR_PWRITE", "pwrite impossible"},
+  {ERR_STAT, "ERR_STAT", "stat impossible"},
+  {ERR_GETPEERNAME, "ERR_GETPEERNAME", "getpeername impossible"},
+  {ERR_FORK, "ERR_FORK", "fork impossible"},
+  {ERR_GETSERVBYNAME, "ERR_GETSERVBYNAME", "getservbyname impossible"},
+  {ERR_MUNMAP, "ERR_MUNMAP", "munmap impossible"},
+  {ERR_STATVFS, "ERR_STATVFS", "statvfs impossible"},
+  {ERR_OPENDIR, "ERR_OPENDIR", "opendir impossible"},
+  {ERR_READDIR, "ERR_READDIR", "readdir impossible"},
+  {ERR_CLOSEDIR, "ERR_CLOSEDIR", "closedir impossible"},
+  {ERR_LSTAT, "ERR_LSTAT", "lstat impossible"},
+  {ERR_GETWD, "ERR_GETWD", "getwd impossible"},
+  {ERR_CHDIR, "ERR_CHDIR", "chdir impossible"},
+  {ERR_CHOWN, "ERR_CHOWN", "chown impossible"},
+  {ERR_MKDIR, "ERR_MKDIR", "mkdir impossible"},
+  {ERR_OPEN, "ERR_OPEN", "open impossible"},
+  {ERR_READ, "ERR_READ", "read impossible"},
+  {ERR_WRITE, "ERR_WRITE", "write impossible"},
+  {ERR_UTIMES, "ERR_UTIMES", "utimes impossible"},
+  {ERR_READLINK, "ERR_READLINK", "readlink impossible"},
+  {ERR_SYMLINK, "ERR_SYMLINK", "symlink impossible"},
+  {ERR_SYSTEM, "ERR_SYSTEM", "system impossible"},
+  {ERR_POPEN, "ERR_POPEN", "popen impossible"},
+  {ERR_LSEEK, "ERR_LSEEK", "lseek impossible"},
+  {ERR_PTHREAD_CREATE, "ERR_PTHREAD_CREATE", "pthread_create impossible"},
+  {ERR_RECV, "ERR_RECV", "recv impossible"},
+  {ERR_FOPEN, "ERR_FOPEN", "fopen impossible"},
+  {ERR_GETCWD, "ERR_GETCWD", "getcwd impossible"},
+  {ERR_SETUID, "ERR_SETUID", "setuid impossible"},
+  {ERR_RENAME, "ERR_RENAME", "rename impossible"},
+  {ERR_UNLINK, "ERR_UNLINK", "unlink impossible"},
+  {ERR_SELECT, "ERR_SELECT", "select impossible"},
+  {ERR_WAIT, "ERR_WAIT", "wait impossible"},
+  {ERR_SETSID, "ERR_SETSID", "setsid impossible"},
+  {ERR_SETGID, "ERR_SETGID", "setgid impossible"},
+  {ERR_GETGROUPS, "ERR_GETGROUPS", "getgroups impossible"},
+  {ERR_SETGROUPS, "ERR_SETGROUPS", "setgroups impossible"},
+  {ERR_UMASK, "ERR_UMASK", "umask impossible"},
+  {ERR_CREAT, "ERR_CREAT", "creat impossible"},
+  {ERR_SETSOCKOPT, "ERR_SETSOCKOPT", "setsockopt impossible"},
+  {ERR_DIRECTIO, "ERR_DIRECTIO", "appel a directio impossible"},
+  {ERR_GETRLIMIT, "ERR_GETRLIMIT", "appel a getrlimit impossible"},
+  {ERR_SETRLIMIT, "ERR_SETRLIMIT", "appel a setrlimit"},
+  {ERR_TRUNCATE, "ERR_TRUNCATE", "appel a truncate impossible"},
+  {ERR_PTHREAD_MUTEX_INIT, "ERR_PTHREAD_MUTEX_INIT", "init d'un mutex"},
+  {ERR_PTHREAD_COND_INIT, "ERR_PTHREAD_COND_INIT", "init d'une variable de condition"},
+  {ERR_FCNTL, "ERR_FCNTL", "call to fcntl is impossible"},
+  {ERR_NULL, "ERR_NULL", ""}
+};
+
 /* constants */
 static int masque_log = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 
@@ -92,6 +183,14 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
       DisplayLogComponentLevel(COMPONENT_LOG, \
                                NIV_NULL, "LOG: " format, ## args ); \
   } while (0)
+
+cleanup_list_element *cleanup_list = NULL;
+
+void RegisterCleanup(cleanup_list_element *clean)
+{
+  clean->next = cleanup_list;
+  cleanup_list = clean;
+}
 
 #ifdef _DONT_HAVE_LOCALTIME_R
 
@@ -1530,7 +1629,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
 };
 
 int DisplayLogComponentLevel(log_components_t component,
-                             int level,
+                             log_levels_t level,
                              char *format, ...)
 {
   va_list arguments;
@@ -1563,6 +1662,18 @@ int DisplayLogComponentLevel(log_components_t component,
     }
 
   va_end(arguments);
+
+  if(level == NIV_FATAL)
+    {
+      cleanup_list_element *c = cleanup_list;
+      while(c != NULL)
+        {
+          c->clean();
+          c = c->next;
+        }
+      exit(1);
+    }
+
   return rc;
 }
 
