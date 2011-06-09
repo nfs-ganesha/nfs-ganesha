@@ -32,9 +32,9 @@
  * 
  */
 
-#include  "fsal.h"
-#include <sys/stat.h>
+#include "fsal.h"
 #include "fsal_handle_syscalls.h"
+#include <sys/stat.h>
 
 /* defined the set of attributes supported with POSIX */
 #define VFS_SUPPORTED_ATTRIBUTES (                                       \

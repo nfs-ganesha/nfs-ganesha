@@ -20,9 +20,7 @@
 #ifndef HANDLE_H
 #define HANDLE_H
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +31,23 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
+
+#ifndef __NR_name_to_handle_at
+#if defined(__i386__)
+#define __NR_name_to_handle_at  341
+#define __NR_open_by_handle_at  342
+#elif defined(__x86_64__)
+#define __NR_name_to_handle_at  303
+#define __NR_open_by_handle_at  304
+#endif
+#endif
+
+#define AT_FDCWD		-100
+#define AT_SYMLINK_FOLLOW	0x400
+#define AT_EMPTY_PATH           0x1000
+#define O_NOACCESS     00000003
+#define __O_PATH       010000000
+#define O_PATH         (__O_PATH | O_NOACCESS)
 
 typedef struct vfs_file_handle {
         unsigned int handle_bytes;
@@ -47,24 +62,24 @@ typedef struct vfs_file_handle {
 #define __O_PATH       010000000
 #define O_PATH         (__O_PATH | O_NOACCESS)
 
-static inline int vfs_name_to_handle(const char *name, struct file_handle *fh, int *mnt_id)
+static inline int vfs_name_to_handle(const char *name, vfs_file_handle_t *fh, int *mnt_id)
 {
-	return syscall(341, AT_FDCWD, name, fh, mnt_id, AT_SYMLINK_FOLLOW);
+	return syscall( __NR_name_to_handle_at, AT_FDCWD, name, fh, mnt_id, AT_SYMLINK_FOLLOW);
 }
 
-static inline int vfs_lname_to_handle(const char *name, struct file_handle *fh, int *mnt_id )
+static inline int vfs_lname_to_handle(const char *name, vfs_file_handle_t *fh, int *mnt_id )
 {
-	return syscall(341, AT_FDCWD, name, fh, mnt_id, 0);
+	return syscall( __NR_name_to_handle_at, AT_FDCWD, name, fh, mnt_id, 0);
 }
 
-static inline int vfs_fd_to_handle(int fd, struct file_handle *fh, int *mnt_id)
+static inline int vfs_fd_to_handle(int fd, vfs_file_handle_t * fh, int *mnt_id)
 {
-	return syscall(341, fd, "", fh, mnt_id, AT_EMPTY_PATH);
+	return syscall( __NR_name_to_handle_at, fd, "", fh, mnt_id, AT_EMPTY_PATH);
 }
 
-static inline int vfs_open_by_handle(int mountfd, struct file_handle *fh, int flags)
+static inline int vfs_open_by_handle(int mountfd, vfs_file_handle_t * fh, int flags)
 {
-	return syscall(342, mountfd, fh, flags);
+	return syscall(__NR_open_by_handle_at, mountfd, fh, flags);
 }
 
 
