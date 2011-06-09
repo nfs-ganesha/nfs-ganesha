@@ -237,10 +237,10 @@ int nfs_print_param_config(nfs_parameter_t * p_nfs_param)
 {
   printf("NFS_Core_Param\n{\n");
 
-  printf("\tNFS_Port = %u ;\n", p_nfs_param->core_param.nfs_port);
-  printf("\tMNT_Port = %u ;\n", p_nfs_param->core_param.mnt_port);
-  printf("\tNFS_Program = %u ;\n", p_nfs_param->core_param.nfs_program);
-  printf("\tMNT_Program = %u ;\n", p_nfs_param->core_param.mnt_program);
+  printf("\tNFS_Port = %u ;\n", p_nfs_param->core_param.port[P_NFS]);
+  printf("\tMNT_Port = %u ;\n", p_nfs_param->core_param.port[P_MNT]);
+  printf("\tNFS_Program = %u ;\n", p_nfs_param->core_param.program[P_NFS]);
+  printf("\tMNT_Program = %u ;\n", p_nfs_param->core_param.program[P_NFS]);
   printf("\tNb_Worker = %u ; \n", p_nfs_param->core_param.nb_worker);
   printf("\tb_Call_Before_Queue_Avg = %u ; \n", p_nfs_param->core_param.nb_call_before_queue_avg);
   printf("\tNb_MaxConcurrentGC = %u ; \n", p_nfs_param->core_param.nb_max_concurrent_gc);
@@ -289,16 +289,21 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->core_param.nb_call_before_queue_avg = NB_REQUEST_BEFORE_QUEUE_AVG;
   p_nfs_param->core_param.nb_max_concurrent_gc = NB_MAX_CONCURRENT_GC;
   p_nfs_param->core_param.expiration_dupreq = DUPREQ_EXPIRATION;
-  p_nfs_param->core_param.nfs_port = NFS_PORT;
-  p_nfs_param->core_param.mnt_port = 0;
-  p_nfs_param->core_param.rquota_port = RQUOTA_PORT;
+  p_nfs_param->core_param.port[P_NFS] = NFS_PORT;
+  p_nfs_param->core_param.port[P_MNT] = 0;
   p_nfs_param->core_param.bind_addr.sin_family = AF_INET;       /* IPv4 only right now */
   p_nfs_param->core_param.bind_addr.sin_addr.s_addr = INADDR_ANY;       /* All the interfaces on the machine are used */
   p_nfs_param->core_param.bind_addr.sin_port = 0;       /* No port specified */
-  p_nfs_param->core_param.nfs_program = NFS_PROGRAM;
-  p_nfs_param->core_param.mnt_program = MOUNTPROG;
-  p_nfs_param->core_param.nlm_program = NLMPROG;
-  p_nfs_param->core_param.rquota_program = RQUOTAPROG;
+  p_nfs_param->core_param.program[P_NFS] = NFS_PROGRAM;
+  p_nfs_param->core_param.program[P_MNT] = MOUNTPROG;
+#ifdef _USE_NLM
+  p_nfs_param->core_param.program[P_NLM] = NLMPROG;
+  p_nfs_param->core_param.port[P_NLM] = 0;
+#endif
+#ifdef _USE_QUOTA
+  p_nfs_param->core_param.program[P_RQUOTA] = RQUOTAPROG;
+  p_nfs_param->core_param.port[P_RQUOTA] = RQUOTA_PORT;
+#endif
   p_nfs_param->core_param.drop_io_errors = TRUE;
   p_nfs_param->core_param.drop_inval_errors = FALSE;
   p_nfs_param->core_param.core_dump_size = 0;
@@ -1600,12 +1605,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #endif /* HAVE_KRB5 */
 #endif /* _HAVE_GSSAPI */
 
-  /* RPC Initialisation */
-  if(nfs_Init_svc() != 0)
-    {
-      LogCrit(COMPONENT_INIT, "Error while initializing RPC server ressources");
-      exit(1);
-    }
+  /* RPC Initialisation - exits on failure*/
+  nfs_Init_svc();
   LogInfo(COMPONENT_INIT,  "RPC ressources successfully initialized");
 
   /* Worker initialisation */

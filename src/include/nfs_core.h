@@ -213,26 +213,6 @@ typedef enum nfs_clientid_confirm_state__
                                  FSAL_ATTR_MTIME      | FSAL_ATTR_CTIME    | FSAL_ATTR_SPACEUSED | \
                                  FSAL_ATTR_RAWDEV )
 
-typedef struct nfs_svc_data__
-{
-  int socket_nfs_udp;
-  int socket_nfs_tcp;
-  int socket_mnt_udp;
-  int socket_mnt_tcp;
-  int socket_nlm_udp;
-  int socket_nlm_tcp;
-  int socket_rquota_udp;
-  int socket_rquota_tcp;
-  SVCXPRT *xprt_nfs_udp;
-  SVCXPRT *xprt_nfs_tcp;
-  SVCXPRT *xprt_mnt_udp;
-  SVCXPRT *xprt_mnt_tcp;
-  SVCXPRT *xprt_nlm_udp;
-  SVCXPRT *xprt_nlm_tcp;
-  SVCXPRT *xprt_rquota_udp;
-  SVCXPRT *xprt_rquota_tcp;
-} nfs_svc_data_t;
-
 typedef struct nfs_worker_param__
 {
   LRU_parameter_t lru_param;
@@ -243,7 +223,6 @@ typedef struct nfs_worker_param__
   unsigned int nb_ip_stats_prealloc;
   unsigned int nb_before_gc;
   unsigned int nb_dupreq_before_gc;
-  nfs_svc_data_t nfs_svc_data;
 } nfs_worker_parameter_t;
 
 typedef struct nfs_rpc_dupreq_param__
@@ -260,17 +239,24 @@ typedef struct nfs_cache_layer_parameter__
   cache_content_gc_policy_t dcgcpol;
 } nfs_cache_layers_parameter_t;
 
+typedef enum protos
+{
+  P_NFS,
+  P_MNT,
+#ifdef _USE_NLM
+  P_NLM,
+#endif
+#ifdef _USE_QUOTA
+  P_RQUOTA,
+#endif
+  P_COUNT
+} protos;
+
 typedef struct nfs_core_param__
 {
-  unsigned short nfs_port;
-  unsigned short mnt_port;
-  unsigned short nlm_port;
-  unsigned short rquota_port;
+  unsigned short port[P_COUNT];
   struct sockaddr_in bind_addr; // IPv4 only for now...
-  unsigned int nfs_program;
-  unsigned int mnt_program;
-  unsigned int nlm_program;
-  unsigned int rquota_program;
+  unsigned int program[P_COUNT];
   unsigned int nb_worker;
   unsigned int nb_call_before_queue_avg;
   unsigned int nb_max_concurrent_gc;
@@ -552,7 +538,7 @@ void nfs_operate_on_sigusr1() ;
 void nfs_operate_on_sigterm() ;
 void nfs_operate_on_sighup() ;
 
-int nfs_Init_svc(void);
+void nfs_Init_svc(void);
 int nfs_Init_admin_data(nfs_admin_data_t * pdata);
 int nfs_Init_worker_data(nfs_worker_data_t * pdata);
 int nfs_Init_request_data(nfs_request_data_t * pdata);

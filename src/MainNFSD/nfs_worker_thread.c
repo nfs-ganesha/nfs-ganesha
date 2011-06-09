@@ -420,9 +420,9 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
 {
   int lo_vers, hi_vers;
 
-  if(preq->rq_prog == nfs_param.core_param.nfs_program)
+  if(preq->rq_prog == nfs_param.core_param.program[P_NFS])
     {
-      /* If we go there, preq->rq_prog ==  nfs_param.core_param.nfs_program */
+      /* If we go there, preq->rq_prog ==  nfs_param.core_param.program[P_NFS] */
       if(((preq->rq_vers != NFS_V2) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) == 0)) &&
          ((preq->rq_vers != NFS_V3) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) == 0)) &&
          ((preq->rq_vers != NFS_V4) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) == 0)))
@@ -459,7 +459,7 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
       return TRUE;
     }
 
-  if(preq->rq_prog == nfs_param.core_param.mnt_program &&
+  if(preq->rq_prog == nfs_param.core_param.program[P_MNT] &&
      ((nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0))
     {
       /* Call is with MOUNTPROG */
@@ -511,7 +511,7 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
     }
 
 #ifdef _USE_NLM
-  if(preq->rq_prog == nfs_param.core_param.nlm_program &&
+  if(preq->rq_prog == nfs_param.core_param.program[P_NLM] &&
           ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0))
     {
       /* Call is with NLMPROG */
@@ -536,7 +536,7 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
 #endif                          /* _USE_NLM */
 
 #ifdef _USE_QUOTA
-   if(preq->rq_prog == nfs_param.core_param.rquota_program)
+   if(preq->rq_prog == nfs_param.core_param.program[P_RQUOTA])
      {
        /* Call is with NLMPROG */
        if((preq->rq_vers != RQUOTAVERS) &&
@@ -590,7 +590,7 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
       return INVALID_FUNCDESC;
     }
 
-  if(ptr_req->rq_prog == nfs_param.core_param.nfs_program)
+  if(ptr_req->rq_prog == nfs_param.core_param.program[P_NFS])
     {
       if(ptr_req->rq_vers == NFS_V2)
         return &nfs2_func_desc[ptr_req->rq_proc];
@@ -600,7 +600,7 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
         return &nfs4_func_desc[ptr_req->rq_proc];
     }
 
-  if(ptr_req->rq_prog == nfs_param.core_param.mnt_program)
+  if(ptr_req->rq_prog == nfs_param.core_param.program[P_MNT])
     {
       if(ptr_req->rq_vers == MOUNT_V1)
         return &mnt1_func_desc[ptr_req->rq_proc];
@@ -609,14 +609,14 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
     }
 
 #ifdef _USE_NLM
-  if(ptr_req->rq_prog == nfs_param.core_param.nlm_program)
+  if(ptr_req->rq_prog == nfs_param.core_param.program[P_NLM])
     {
       return &nlm4_func_desc[ptr_req->rq_proc];
     }
 #endif                          /* _USE_NLM */
 
 #ifdef _USE_QUOTA
-  if(ptr_req->rq_prog == nfs_param.core_param.rquota_program)
+  if(ptr_req->rq_prog == nfs_param.core_param.program[P_RQUOTA])
     {
       if(ptr_req->rq_vers == RQUOTAVERS)
         return &rquota1_func_desc[ptr_req->rq_proc];
@@ -830,7 +830,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
     }
 
   /* Get the export entry */
-  if(ptr_req->rq_prog == nfs_param.core_param.nfs_program)
+  if(ptr_req->rq_prog == nfs_param.core_param.program[P_NFS])
     {
       /* The NFSv2 and NFSv3 functions'arguments always begin with the file handle (but not the NULL function)
        * this hook is used to get the fhandle with the arguments and so
@@ -947,7 +947,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }                       /* switch( ptr_req->rq_vers ) */
     }
 #ifdef _USE_NLM
-  else if(ptr_req->rq_prog == nfs_param.core_param.nlm_program)
+  else if(ptr_req->rq_prog == nfs_param.core_param.program[P_NLM])
     {
       /* Always use the whole export list for NLM protocol (FIXME !! Verify) */
       pexport = nfs_param.pexportlist;
@@ -970,7 +970,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   pworker_data->hostaddr = hostaddr;
 
   /* Check if client is using a privileged port, but only for NFS protocol */
-  if(ptr_req->rq_prog == nfs_param.core_param.nfs_program && ptr_req->rq_proc != 0)
+  if(ptr_req->rq_prog == nfs_param.core_param.program[P_NFS] && ptr_req->rq_proc != 0)
     {
       if((pexport->options & EXPORT_OPTION_PRIVILEGED_PORT) &&
          (port >= IPPORT_RESERVED))
@@ -1015,8 +1015,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   export_check_result = nfs_export_check_access(&pworker_data->hostaddr,
                                                 ptr_req,
                                                 pexport,
-                                                nfs_param.core_param.nfs_program,
-                                                nfs_param.core_param.mnt_program,
+                                                nfs_param.core_param.program[P_NFS],
+                                                nfs_param.core_param.program[P_MNT],
                                                 pworker_data->ht_ip_stats,
                                                 &pworker_data->ip_stats_pool,
                                                 &related_client,
@@ -1047,7 +1047,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
     {
       LogDebug(COMPONENT_DISPATCH,
                "Dropping request because nfs_export_check_access() reported this is a RO filesystem.");
-      if(ptr_req->rq_prog == nfs_param.core_param.nfs_program)
+      if(ptr_req->rq_prog == nfs_param.core_param.program[P_NFS])
         {
           if(ptr_req->rq_vers == NFS_V2)
             {

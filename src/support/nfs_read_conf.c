@@ -281,10 +281,6 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->expiration_dupreq = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "NFS_Port"))
-        {
-          pparam->nfs_port = (unsigned short)atoi(key_value);
-        }
       else if(!strcasecmp(key_name, "Drop_IO_Errors"))
         {
           pparam->drop_io_errors = StrToBoolean(key_value);
@@ -293,21 +289,45 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->drop_inval_errors = StrToBoolean(key_value);
         }
+      else if(!strcasecmp(key_name, "NFS_Port"))
+        {
+          pparam->port[P_NFS] = (unsigned short)atoi(key_value);
+        }
       else if(!strcasecmp(key_name, "MNT_Port"))
         {
-          pparam->mnt_port = (unsigned short)atoi(key_value);
+          pparam->port[P_MNT] = (unsigned short)atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "NLM_Port"))
+        {
+#ifdef _USE_NLM
+          pparam->port[P_NLM] = (unsigned short)atoi(key_value);
+#endif
+        }
+      else if(!strcasecmp(key_name, "Rquota_Port"))
+        {
+#ifdef _USE_QUOTA
+          pparam->port[P_RQUOTA] = (unsigned short)atoi(key_value);
+#endif
         }
       else if(!strcasecmp(key_name, "NFS_Program"))
         {
-          pparam->nfs_program = atoi(key_value);
+          pparam->program[P_NFS] = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "MNT_Program"))
         {
-          pparam->mnt_program = atoi(key_value);
+          pparam->program[P_MNT] = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "NLM_Program"))
         {
-          pparam->nlm_program = atoi(key_value);
+#ifdef _USE_NLM
+          pparam->program[P_NLM] = atoi(key_value);
+#endif
+        }
+      else if(!strcasecmp(key_name, "Rquota_Program"))
+        {
+#ifdef _USE_QUOTA
+          pparam->program[P_RQUOTA] = atoi(key_value);
+#endif
         }
       else if(!strcasecmp(key_name, "NFS_Protocols"))
         {
@@ -382,14 +402,6 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
               LogCrit(COMPONENT_CONFIG, "Empty NFS_Protocols list");
               return -1;
             }
-        }
-      else if(!strcasecmp(key_name, "Rquota_Program"))
-        {
-          pparam->rquota_program = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Rquota_Port"))
-        {
-          pparam->rquota_port = (unsigned short)atoi(key_value);
         }
       else if(!strcasecmp(key_name, "Bind_Addr"))
         {

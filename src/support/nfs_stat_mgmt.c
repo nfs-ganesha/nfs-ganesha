@@ -104,7 +104,7 @@ void nfs_stat_update(nfs_stat_type_t type,
       up_counter = 0;
     }
 
-  if(preq->rq_prog == nfs_param.core_param.nfs_program)
+  if(preq->rq_prog == nfs_param.core_param.program[P_NFS])
     {
       switch (preq->rq_vers)
         {
@@ -133,10 +133,9 @@ void nfs_stat_update(nfs_stat_type_t type,
                "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
-          break;
         }
     }
-  else if(preq->rq_prog == nfs_param.core_param.mnt_program)
+  else if(preq->rq_prog == nfs_param.core_param.program[P_MNT])
     {
       switch (preq->rq_vers)
         {
@@ -158,10 +157,10 @@ void nfs_stat_update(nfs_stat_type_t type,
                "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
-          break;
         }
     }
-  else if(preq->rq_prog == nfs_param.core_param.nlm_program)
+#ifdef _USE_NLM
+  else if(preq->rq_prog == nfs_param.core_param.program[P_NLM])
     {
       switch (preq->rq_vers)
         {
@@ -176,10 +175,11 @@ void nfs_stat_update(nfs_stat_type_t type,
                "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
-          break;
         }
     }
-  else if(preq->rq_prog == nfs_param.core_param.rquota_program)
+#endif
+#ifdef _USE_QUOTA
+  else if(preq->rq_prog == nfs_param.core_param.program[P_RQUOTA])
     {
       switch (preq->rq_vers)
         {
@@ -199,10 +199,10 @@ void nfs_stat_update(nfs_stat_type_t type,
                "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
-          break;
         }
 
     }
+#endif
   else
     {
       /* Bad program ? */
