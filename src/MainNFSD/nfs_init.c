@@ -185,12 +185,9 @@ void *sigmgr_thread( void * arg )
  * nfs_prereq_init:
  * Initialize NFSd prerequisites: memory management, logging, ...
  */
-int nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *log_path)
+void nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *log_path)
 {
-  int rc;
-
   /* Initialize logging */
-
   SetNamePgm(program_name);
   SetNameFunction("main");
   SetNameHost(host_name);
@@ -211,29 +208,24 @@ int nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *
   AddFamilyError(ERR_CACHE_CONTENT, "Cache Content related Errors",
                  tab_errstatus_cache_content);
 
-  /* Initilize memory management for this thread */
-
 #ifndef _NO_BUDDY_SYSTEM
 
-  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
+  /* Initilize memory management for this thread */
+  if(BuddyInit(NULL) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogMajor(COMPONENT_INIT, "Memory manager could not be initialized");
-      exit(1);
+      LogFatal(COMPONENT_INIT, "Memory manager could not be initialized");
     }
   LogDebug(COMPONENT_INIT, "Memory manager successfully initialized");
 
 #endif
-
-  return 0;
-
 }
 
 /**
  * nfs_print_param_config
  * print a nfs_parameter_structure under the format of the configuration file 
  */
-int nfs_print_param_config(nfs_parameter_t * p_nfs_param)
+void nfs_print_param_config(nfs_parameter_t * p_nfs_param)
 {
   printf("NFS_Core_Param\n{\n");
 
@@ -272,15 +264,13 @@ int nfs_print_param_config(nfs_parameter_t * p_nfs_param)
 
   printf("NFS_Worker_Param\n{\n");
   printf("}\n\n");
-
-  return 0;
 }                               /* nfs_print_param_config */
 
 /**
  * nfs_set_param_default:
  * Set p_nfs_param structure to default parameters.
  */
-int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
+void nfs_set_param_default(nfs_parameter_t * p_nfs_param)
 {
   memset((char *)p_nfs_param, 0, sizeof(nfs_parameter_t));
 
@@ -652,8 +642,6 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->extern_param.snmp_adm.export_cache_inode_calls_detail = FALSE;
   p_nfs_param->extern_param.snmp_adm.export_fsal_calls_detail = FALSE;
 #endif
-
-  return 0;
 }                               /* nfs_set_param_default */
 
 /**
@@ -677,9 +665,8 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 
   if(!config_struct)
     {
-      LogMajor(COMPONENT_INIT, "Error while parsing %s: %s",
+      LogFatal(COMPONENT_INIT, "Error while parsing %s: %s",
                config_file, config_GetErrorMsg());
-      exit(1);
     }
 #ifndef _NO_BUDDY_SYSTEM
 
@@ -1381,16 +1368,16 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   /* Initialisation of Threads's fridge */
   if( fridgethr_init() != 0 )
    {
-     LogCrit(COMPONENT_INIT, "can't run fridgethr_init... exiting");
-     exit(1);
+     LogFatal(COMPONENT_INIT, "can't run fridgethr_init");
    }
 
   /* Starting the thread dedicated to signal handling */
   if( ( rc = pthread_create( &sigmgr_thrid, &attr_thr, sigmgr_thread, (void *)NULL ) ) != 0 )
-   {
-     LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
-     exit(1);
-   }
+    {
+      LogFatal(COMPONENT_INIT,
+               "Could not create sigmgr_thread, error = %d (%s)",
+               errno, strerror(errno));
+    }
 
   /* Starting all of the worker thread */
   for(i = 0; i < pnfs_param->core_param.nb_worker; i++)
@@ -1398,8 +1385,9 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
       if((rc =
           pthread_create(&(worker_thrid[i]), &attr_thr, worker_thread, (void *)i)) != 0)
         {
-          LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
-          exit(1);
+          LogFatal(COMPONENT_INIT,
+                   "Could not create worker_thread #%lu, error = %d (%s)",
+                   i, errno, strerror(errno));
         }
     }
   LogEvent(COMPONENT_INIT, "%d worker threads were started successfully",
@@ -1410,16 +1398,18 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
       pthread_create(&rpc_dispatcher_thrid, &attr_thr, rpc_dispatcher_thread,
                      (void *)pnfs_param)) != 0)
     {
-      LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+               "Could not create rpc_dispatcher_thread, error = %d (%s)",
+               errno, strerror(errno));
     }
   LogEvent(COMPONENT_INIT, "rpc dispatcher thread was started successfully");
 
   /* Starting the admin thread */
   if((rc = pthread_create(&admin_thrid, &attr_thr, admin_thread, (void *)admin_data)) != 0)
     {
-      LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+               "Could not create admin_thread, error = %d (%s)",
+               errno, strerror(errno));
     }
   LogEvent(COMPONENT_INIT, "admin thread was started successfully");
 
@@ -1427,8 +1417,9 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   if((rc =
       pthread_create(&stat_thrid, &attr_thr, stats_thread, (void *)workers_data)) != 0)
     {
-      LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+               "Could not create stats_thread, error = %d (%s)",
+               errno, strerror(errno));
     }
   LogEvent(COMPONENT_INIT, "statistics thread was started successfully");
 
@@ -1438,8 +1429,9 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   if((rc =
       pthread_create(&stat_thrid, &attr_thr, long_processing_thread, (void *)workers_data)) != 0)
     {
-      LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+               "Could not create long_processing_thread, error = %d (%s)",
+               errno, strerror(errno));
     }
   LogEvent(COMPONENT_INIT,
            "long processing threshold thread was started successfully");
@@ -1448,8 +1440,9 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   if((rc =
       pthread_create(&stat_exporter_thrid, &attr_thr, stat_exporter_thread, (void *)workers_data)) != 0)
     {
-      LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+               "Could not create stat_exporter_thread, error = %d (%s)",
+               errno, strerror(errno));
     }
   LogEvent(COMPONENT_INIT,
            "statistics exporter thread was started successfully");
@@ -1463,8 +1456,9 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
           pthread_create(&fcc_gc_thrid, &attr_thr, file_content_gc_thread,
                          (void *)NULL)) != 0)
         {
-          LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
-          exit(1);
+          LogFatal(COMPONENT_INIT,
+                   "Could not create file_content_gc_thread, error = %d (%s)",
+                   errno, strerror(errno));
         }
       LogEvent(COMPONENT_INIT,
                "file content gc thread was started successfully");
@@ -1503,8 +1497,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   if(FSAL_IS_ERROR(fsal_status))
     {
       /* Failed init */
-      LogMajor(COMPONENT_INIT, "FSAL library could not be initialized");
-      exit(1);
+      LogFatal(COMPONENT_INIT, "FSAL library could not be initialized");
     }
   LogInfo(COMPONENT_INIT, "FSAL library  successfully initialized");
 
@@ -1514,8 +1507,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   if(FSAL_IS_ERROR(fsal_status))
     {
       /* Failed init */
-      LogMajor(COMPONENT_INIT, "MFSL library could not be initialized");
-      exit(1);
+      LogFatal(COMPONENT_INIT, "MFSL library could not be initialized");
     }
   LogInfo(COMPONENT_INIT, "MFSL library  successfully initialized");
 #endif
@@ -1524,10 +1516,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   if((ht =
       cache_inode_init(nfs_param.cache_layers_param.cache_param, &cache_status)) == NULL)
     {
-      LogMajor(COMPONENT_INIT,
+      LogFatal(COMPONENT_INIT,
                "Cache Inode Layer could not be initialized, cache_status=%d",
                cache_status);
-      exit(1);
     }
   LogInfo(COMPONENT_INIT, "Cache Inode library successfully initialized");
 
@@ -1558,9 +1549,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       if(gss_status != GSS_S_COMPLETE)
         {
           log_sperror_gss(GssError, gss_status, 0);
-          LogCrit(COMPONENT_INIT, "Error setting krb5 keytab to value %s is %s",
-                     nfs_param.krb5_param.keytab, GssError);
-          exit(1);
+          LogFatal(COMPONENT_INIT,
+                   "Error setting krb5 keytab to value %s is %s",
+                   nfs_param.krb5_param.keytab, GssError);
         }
       LogInfo(COMPONENT_INIT, "krb5 keytab path successfully set to %s",
               nfs_param.krb5_param.keytab);
@@ -1577,9 +1568,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       if(maj_stat != GSS_S_COMPLETE)
         {
           log_sperror_gss(GssError, maj_stat, min_stat);
-          LogCrit(COMPONENT_INIT, "Error importing gss principal %s is %s",
-                     nfs_param.krb5_param.principal, GssError);
-          exit(1);
+          LogFatal(COMPONENT_INIT,
+                   "Error importing gss principal %s is %s",
+                   nfs_param.krb5_param.principal, GssError);
         }
       LogInfo(COMPONENT_INIT,  "gss principal %s successfully set",
               nfs_param.krb5_param.principal);
@@ -1587,15 +1578,13 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       /* Set the principal to GSSRPC */
       if(!Svcauth_gss_set_svc_name(gss_service_name))
         {
-          LogCrit(COMPONENT_INIT, "Impossible to set gss principal to GSSRPC");
-          exit(1);
+          LogFatal(COMPONENT_INIT, "Impossible to set gss principal to GSSRPC");
         }
 
       /* Init the HashTable */
       if(Gss_ctx_Hash_Init(nfs_param.krb5_param) == -1)
         {
-          LogCrit(COMPONENT_INIT, "Impossible to init GSS CTX cache");
-          exit(1);
+          LogFatal(COMPONENT_INIT, "Impossible to init GSS CTX cache");
         }
       else
         LogInfo(COMPONENT_INIT, "Gss Context Cache successfully initialized");
@@ -1616,15 +1605,14 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                                             "nfs_worker_data_t")) == NULL)
     {
       LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-      exit(1);
+      Fatal();
     }
   memset((char *)workers_data, 0,
          sizeof(nfs_worker_data_t) * nfs_param.core_param.nb_worker);
 
   if(nfs_Init_gc_counter() != 0)
     {
-      LogCrit(COMPONENT_INIT, "Error while initializing worker gc counter");
-      exit(1);
+      LogFatal(COMPONENT_INIT, "Error while initializing worker gc counter");
     }
   LogDebug(COMPONENT_INIT, "worker gc counter successfully initialized");
 
@@ -1636,11 +1624,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
       /* Fill in workers fields (semaphores and other stangenesses */
       if(nfs_Init_worker_data(&(workers_data[i])) != 0)
-        {
-          LogCrit(COMPONENT_INIT, "Error while initializing worker data #%d",
-                  i);
-          exit(1);
-        }
+        LogFatal(COMPONENT_INIT,
+                 "Error while initializing worker data #%d", i);
 
       /* Set the index (mostly used for debug purpose */
       workers_data[i].worker_index = i;
@@ -1651,12 +1636,11 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       sprintf(name, "IP Stats for worker %d", i);
       nfs_param.ip_stats_param.hash_param.name = Str_Dup(name);
       ht_ip_stats[i] = nfs_Init_ip_stats(nfs_param.ip_stats_param);
+
       if(ht_ip_stats[i] == NULL)
-        {
-          LogCrit(COMPONENT_INIT, "Error while initializing IP/stats cache #%d",
-                  i);
-          exit(1);
-        }
+        LogFatal(COMPONENT_INIT,
+                 "Error while initializing IP/stats cache #%d", i);
+
       workers_data[i].ht_ip_stats = ht_ip_stats[i];
 
       /* Allocation of the nfs request pool */
@@ -1671,7 +1655,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
           LogCrit(COMPONENT_INIT,
                   "Error while allocating request data pool #%d", i);
           LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-          exit(1);
+          Fatal();
         }
 
       /* Allocation of the nfs dupreq pool */
@@ -1685,7 +1669,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
           LogCrit(COMPONENT_INIT,
                   "Error while allocating duplicate request pool #%d", i);
           LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-          exit(1);
+          Fatal();
         }
 
       /* Allocation of the IP/name pool */
@@ -1699,7 +1683,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
           LogCrit(COMPONENT_INIT,
                   "Error while allocating IP stats cache pool #%d", i);
           LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-          exit(1);
+          Fatal();
         }
 
       /* Initialize, but do not pre-alloc client-id pool */
@@ -1717,14 +1701,11 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                                            "nfs_admin_data_t")) == NULL)
     {
       LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-      exit(1);
+      Fatal();
     }  
 
   if (nfs_Init_admin_data(admin_data) != 0)
-    {
-      LogCrit(COMPONENT_INIT, "Error while initializing admin thread");
-      exit(1);
-    }
+    LogFatal(COMPONENT_INIT, "Error while initializing admin thread");
 
   admin_data->ht = ht;
   admin_data->config_path = config_path;
@@ -1736,11 +1717,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   /* Creates the pseudo fs */
   LogDebug(COMPONENT_INIT, "Now building pseudo fs");
   if((rc = nfs4_ExportToPseudoFS(nfs_param.pexportlist)) != 0)
-    {
-      LogCrit(COMPONENT_INIT,
-              "Error %d while initializing NFSv4 pseudo file system", rc);
-      exit(1);
-    }
+    LogFatal(COMPONENT_INIT,
+             "Error %d while initializing NFSv4 pseudo file system", rc);
+
   LogInfo(COMPONENT_INIT,
           "NFSv4 pseudo file system successfully initialized");
 
@@ -1748,10 +1727,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogDebug(COMPONENT_INIT, "Now building duplicate request hash table cache");
   if((rc = nfs_Init_dupreq(nfs_param.dupreq_param)) != DUPREQ_SUCCESS)
     {
-      LogCrit(COMPONENT_INIT,
-              "Error %d while initializing duplicate request hash table cache",
-              rc);
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+               "Error %d while initializing duplicate request hash table cache",
+               rc);
     }
   LogInfo(COMPONENT_INIT,
           "duplicate request hash table cache successfully initialized");
@@ -1760,9 +1738,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogDebug(COMPONENT_INIT, "Now building IP/name cache");
   if(nfs_Init_ip_name(nfs_param.ip_name_param) != IP_NAME_SUCCESS)
     {
-      LogCrit(COMPONENT_INIT,
-              "Error while initializing IP/name cache");
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+               "Error while initializing IP/name cache");
     }
   LogInfo(COMPONENT_INIT,
           "IP/name cache successfully initialized");
@@ -1772,9 +1749,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   if((idmap_uid_init(nfs_param.uidmap_cache_param) != ID_MAPPER_SUCCESS) ||
      (idmap_uname_init(nfs_param.unamemap_cache_param) != ID_MAPPER_SUCCESS))
     {
-      LogCrit(COMPONENT_INIT,
-              "Error while initializing UID_MAPPER cache");
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+               "Error while initializing UID_MAPPER cache");
     }
   LogInfo(COMPONENT_INIT,
           "UID_MAPPER cache successfully initialized");
@@ -1784,9 +1760,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
            "Now building UIDGID MAPPER Cache (for RPCSEC_GSS)");
   if(uidgidmap_init(nfs_param.uidgidmap_cache_param) != ID_MAPPER_SUCCESS)
     {
-      LogCrit(COMPONENT_INIT,
+      LogFatal(COMPONENT_INIT,
               "Error while initializing UIDGID_MAPPER cache");
-      exit(1);
     }
   LogInfo(COMPONENT_INIT,
           "UIDGID_MAPPER cache successfully initialized");
@@ -1796,9 +1771,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   if((idmap_gid_init(nfs_param.gidmap_cache_param) != ID_MAPPER_SUCCESS) ||
      (idmap_gname_init(nfs_param.gnamemap_cache_param) != ID_MAPPER_SUCCESS))
     {
-      LogCrit(COMPONENT_INIT,
-              "Error while initializing GID_MAPPER cache");
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+               "Error while initializing GID_MAPPER cache");
     }
   LogInfo(COMPONENT_INIT,
           "GID_MAPPER cache successfully initialized");
@@ -1807,9 +1781,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache");
   if(nfs_Init_client_id(nfs_param.client_id_param) != CLIENT_ID_SUCCESS)
     {
-      LogCrit(COMPONENT_INIT,
-              "Error while initializing NFSv4 clientid cache");
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+               "Error while initializing NFSv4 clientid cache");
     }
   LogInfo(COMPONENT_INIT,
           "NFSv4 clientid cache successfully initialized");
@@ -1818,9 +1791,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache reverse");
   if(nfs_Init_client_id_reverse(nfs_param.client_id_param) != CLIENT_ID_SUCCESS)
     {
-      LogCrit(COMPONENT_INIT,
-              "Error while initializing NFSv4 clientid cache reverse");
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+               "Error while initializing NFSv4 clientid cache reverse");
     }
   LogInfo(COMPONENT_INIT,
           "NFSv4 clientid cache reverse successfully initialized");
@@ -1829,9 +1801,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogDebug(COMPONENT_INIT, "Now building NFSv4 State Id cache");
   if(nfs4_Init_state_id(nfs_param.state_id_param) != 0)
     {
-      LogCrit(COMPONENT_INIT,
-              "Error while initializing NFSv4 State Id cache");
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+               "Error while initializing NFSv4 State Id cache");
     }
   LogInfo(COMPONENT_INIT,
           "NFSv4 State Id cache successfully initialized");
@@ -1840,9 +1811,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogDebug(COMPONENT_INIT, "Now building NFSv4 Open Owner cache");
   if(nfs4_Init_open_owner(nfs_param.open_owner_param) != 0)
     {
-      LogCrit(COMPONENT_INIT,
-              "Error while initializing NFSv4 Open Owner cache");
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+               "Error while initializing NFSv4 Open Owner cache");
     }
   LogInfo(COMPONENT_INIT,
           "NFSv4 Open Owner cache successfully initialized");
@@ -1851,9 +1821,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogDebug(COMPONENT_INIT, "Now building NFSv4 Session Id cache");
   if(nfs41_Init_session_id(nfs_param.session_id_param) != 0)
     {
-      LogCrit(COMPONENT_INIT,
-              "Error while initializing NFSv4 Session Id cache");
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+               "Error while initializing NFSv4 Session Id cache");
     }
   LogInfo(COMPONENT_INIT,
           "NFSv4 Session Id cache successfully initialized");
@@ -1862,9 +1831,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   /* Create the root entries for each exported FS */
   if((rc = nfs_export_create_root_entry(nfs_param.pexportlist, ht)) != TRUE)
     {
-      LogCrit(COMPONENT_INIT,
-              "Error initializing Cache Inode root entries, exiting...");
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+               "Error initializing Cache Inode root entries");
     }
   LogInfo(COMPONENT_INIT,
           "Cache Inode root entries successfully created");
@@ -1915,7 +1883,7 @@ static void nfs_Start_file_content_flushers(unsigned int nb_threads)
                          (void *)&flush_info[i])) != 0)
         {
           LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
-          exit(1);
+          Fatal();
         }
       else
         LogInfo(COMPONENT_INIT, "datacache flusher #%lu started", i);
@@ -1931,7 +1899,7 @@ static void nfs_Start_file_content_flushers(unsigned int nb_threads)
  * nfs_start:
  * start NFS service
  */
-int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
+void nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
 {
   struct rlimit ulimit_data;
   cache_content_status_t content_status;
@@ -2049,7 +2017,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
         {
           LogError(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
           LogMajor(COMPONENT_INIT, "Impossible to get RLIMIT_NOFILE");
-          exit(1);
+          Fatal();
         }
       nfs_param.core_param.nb_max_fd = ulimit_data.rlim_cur;
       LogDebug(COMPONENT_INIT, "RLIMIT_NOFILE was cur %d max %d",
@@ -2062,9 +2030,8 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
                                        cache_content_client_param.cache_dir,
                                        &content_status) != CACHE_CONTENT_SUCCESS)
     {
-      LogCrit(COMPONENT_INIT,
-              "File Content Cache directories could not be allocated, exiting...");
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+               "File Content Cache directories could not be allocated");
     }
   else
     LogInfo(COMPONENT_INIT, "File Content Cache directory initialized");
@@ -2100,7 +2067,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
       if(FSAL_IS_ERROR(fsal_status))
         {
           LogError(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
-          exit(0);
+          Fatal();
         }
 
       LogEvent(COMPONENT_INIT,
@@ -2223,9 +2190,9 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
   /* Regular exit */
   LogEvent(COMPONENT_INIT,
            "NFS EXIT: regular exit, nfs daemon will stop immediately");
-  exit(0);
+  Cleanup();
 
-  return 0;
+  /* let main return 0 to exit */
 }                               /* nfs_start */
 
 /**
@@ -2257,5 +2224,6 @@ void nfs_stop()
             st.major, st.minor);
 
   LogEvent(COMPONENT_INIT, "NFS EXIT: regular exit");
+  Cleanup();
   exit(0);
 }

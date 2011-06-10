@@ -1364,7 +1364,7 @@ void DispatchWork(nfs_request_data_t *pnfsreq, unsigned int worker_index)
       LogMajor(COMPONENT_DISPATCH,
                "Error while inserting pending request to Worker Thread #%u... Exiting",
                worker_index);
-      exit(1);
+      Fatal();
     }
 
   pentry->buffdata.pdata = (caddr_t) pnfsreq;
@@ -1377,7 +1377,7 @@ void DispatchWork(nfs_request_data_t *pnfsreq, unsigned int worker_index)
       LogMajor(COMPONENT_DISPATCH,
                "Error %d (%s) while signalling Worker Thread #%u... Exiting",
                errno, strerror(errno), worker_index);
-      exit(1);
+      Fatal();
     }
   V(workers_data[worker_index].mutex_req_condvar);
   V(workers_data[worker_index].request_pool_mutex);
@@ -1489,9 +1489,8 @@ void *worker_thread(void *IndexArg)
   if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH,
-               "Memory manager could not be initialized, exiting...");
-      exit(1);
+      LogFatal(COMPONENT_DISPATCH,
+               "Memory manager could not be initialized");
     }
   LogFullDebug(COMPONENT_DISPATCH,
                "Memory manager successfully initialized");
@@ -1506,9 +1505,8 @@ void *worker_thread(void *IndexArg)
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&pmydata->thread_fsal_context)))
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH,
+      LogFatal(COMPONENT_DISPATCH,
                "Error initializing thread's credential");
-      exit(1);
     }
 
   /* Init the Cache inode client for this worker */
@@ -1517,9 +1515,8 @@ void *worker_thread(void *IndexArg)
                              worker_index, pmydata))
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH,
-               "Cache Inode client could not be initialized, exiting...");
-      exit(1);
+      LogFatal(COMPONENT_DISPATCH,
+               "Cache Inode client could not be initialized");
     }
   LogFullDebug(COMPONENT_DISPATCH,
                "Cache Inode client successfully initialized");
@@ -1529,8 +1526,7 @@ void *worker_thread(void *IndexArg)
                                    &pmydata->thread_fsal_context)))
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH, "Error initing MFSL");
-      exit(1);
+      LogFatal(COMPONENT_DISPATCH, "Error initing MFSL");
     }
 #endif
 
@@ -1540,9 +1536,8 @@ void *worker_thread(void *IndexArg)
                                thr_name))
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH,
-               "Cache Content client could not be initialized, exiting...");
-      exit(1);
+      LogFatal(COMPONENT_DISPATCH,
+               "Cache Content client could not be initialized");
     }
   LogFullDebug(COMPONENT_DISPATCH,
                "Cache Content client successfully initialized");
@@ -1560,9 +1555,8 @@ void *worker_thread(void *IndexArg)
   if(pnfs_init(&pmydata->cache_inode_client.mfsl_context.pnfsclient, &nfs_param.pnfs_param.layoutfile))
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH,
-               "pNFS engine could not be initialized, exiting...");
-      exit(1);
+      LogFatal(COMPONENT_DISPATCH,
+               "pNFS engine could not be initialized");
     }
   LogFullDebug(COMPONENT_DISPATCH,
                "pNFS engine successfully initialized");
@@ -1784,8 +1778,7 @@ void *worker_thread(void *IndexArg)
       if(FSAL_IS_ERROR(fsal_status))
         {
           /* Failed init */
-          LogMajor(COMPONENT_DISPATCH, "Error regreshing MFSL context");
-          exit(1);
+          LogFatal(COMPONENT_DISPATCH, "Error regreshing MFSL context");
         }
 
       pmydata->gc_in_progress = FALSE;

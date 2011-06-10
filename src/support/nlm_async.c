@@ -123,9 +123,8 @@ void *nlm_async_func(void *argp)
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogMajor(COMPONENT_NLM,
-               "NLM async thread: Memory manager could not be initialized, exiting...");
-      exit(1);
+      LogFatal(COMPONENT_NLM,
+               "NLM async thread: Memory manager could not be initialized");
     }
   LogInfo(COMPONENT_NLM,
           "NLM async thread: Memory manager successfully initialized");

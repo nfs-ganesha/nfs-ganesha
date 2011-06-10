@@ -258,12 +258,7 @@ int ganefuse_main(int argc, char *argv[],
 
   /* initialize memory and logging */
 
-  if(nfs_prereq_init(exec_name, host_name, debug_level, log_path))
-    {
-      LogCrit(COMPONENT_MAIN,
-              "NFS MAIN: Error initializing NFSd prerequisites");
-      exit(1);
-    }
+  nfs_prereq_init(exec_name, host_name, debug_level, log_path);
 
   /* Start in background, if wanted */
   if(detach_flag)
@@ -325,13 +320,8 @@ int ganefuse_main(int argc, char *argv[],
   memset(&nfs_param, 0, sizeof(nfs_param));
 
   /* initialize default parameters */
+  nfs_set_param_default(&nfs_param);
 
-  if(nfs_set_param_default(&nfs_param))
-    {
-      LogCrit(COMPONENT_MAIN,
-              "NFS MAIN: Error setting default parameters.");
-      exit(1);
-    }
   /* return all errors */
   nfs_param.core_param.drop_io_errors = FALSE;
   nfs_param.core_param.drop_inval_errors = FALSE;

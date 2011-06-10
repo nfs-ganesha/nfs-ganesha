@@ -192,6 +192,22 @@ void RegisterCleanup(cleanup_list_element *clean)
   cleanup_list = clean;
 }
 
+void Cleanup(void)
+{
+  cleanup_list_element *c = cleanup_list;
+  while(c != NULL)
+    {
+      c->clean();
+      c = c->next;
+    }
+}
+
+void Fatal(void)
+{
+  Cleanup();
+  exit(1);
+}
+
 #ifdef _DONT_HAVE_LOCALTIME_R
 
 /* Localtime is not reentrant...
@@ -1664,15 +1680,7 @@ int DisplayLogComponentLevel(log_components_t component,
   va_end(arguments);
 
   if(level == NIV_FATAL)
-    {
-      cleanup_list_element *c = cleanup_list;
-      while(c != NULL)
-        {
-          c->clean();
-          c = c->next;
-        }
-      exit(1);
-    }
+    Fatal();
 
   return rc;
 }

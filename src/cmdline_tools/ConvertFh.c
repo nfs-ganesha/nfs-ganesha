@@ -248,18 +248,10 @@ int main(int argc, char *argv[])
 
   /* initialize memory and logging */
 
-  if(nfs_prereq_init("convert_fh", "localhost", NIV_MAJ, "/dev/tty"))
-    {
-      fprintf(stderr, "Error initializing logging and memory\n");
-      exit(1);
-    }
+  nfs_prereq_init("convert_fh", "localhost", NIV_MAJ, "/dev/tty");
 
 #ifdef _USE_SHARED_FSAL
-  if(nfs_get_fsalpathlib_conf(path_cfg, fsal_path_lib))
-    {
-      fprintf(stderr, "NFS MAIN: Error parsing configuration file.");
-      exit(1);
-    }
+  nfs_get_fsalpathlib_conf(path_cfg, fsal_path_lib);
 #endif                          /* _USE_SHARED_FSAL */
 
   /* Load the FSAL library (if needed) */
@@ -277,11 +269,7 @@ int main(int argc, char *argv[])
 
   /* initialize default parameters */
 
-  if(nfs_set_param_default(&nfs_param))
-    {
-      fprintf(stderr, "Error setting default parameters.");
-      exit(1);
-    }
+  nfs_set_param_default(&nfs_param);
 
   /* parse configuration file */
 

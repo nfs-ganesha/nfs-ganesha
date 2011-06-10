@@ -1250,7 +1250,7 @@ void Print_param_in_log(nfs_parameter_t * pparam)
   Print_param_worker_in_log(&(pparam->worker_param));
 }                               /* Print_param_in_log */
 
-int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
+void nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
 {
   int var_max;
   int var_index;
@@ -1263,33 +1263,30 @@ int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
 
   /* Is the config tree initialized ? */
   if(configPath == NULL || PathLib == NULL)
-    return 1;
+    LogFatal(COMPONENT_CONFIG,
+             "nfs_get_fsalpathlib_conf configPath=%p PathLib=%p",
+             configPath, PathLib);
 
   config_struct = config_ParseFile(configPath);
 
   if(!config_struct)
-    {
-      LogMajor(COMPONENT_CONFIG,
-               "NFS STARTUP: Error while parsing %s: %s",
-               configPath, config_GetErrorMsg());
-      exit(1);
-    }
+    LogFatal(COMPONENT_CONFIG,
+             "Error while parsing %s: %s",
+             configPath, config_GetErrorMsg());
 
   /* Get the config BLOCK */
   if((block = config_FindItemByName(config_struct, CONF_LABEL_NFS_CORE)) == NULL)
     {
-      LogDebug(COMPONENT_CONFIG,
+      LogFatal(COMPONENT_CONFIG,
                "Cannot read item \"%s\" from configuration file",
                CONF_LABEL_NFS_CORE);
-      return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
-      LogDebug(COMPONENT_CONFIG,
+      LogFatal(COMPONENT_CONFIG,
                "Item \"%s\" is expected to be a block",
                CONF_LABEL_NFS_CORE);
-      return 1;
     }
 
   var_max = config_GetNbItems(block);
@@ -1303,10 +1300,9 @@ int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
       /* Get key's name */
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
-          LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.",
-                  var_index, CONF_LABEL_NFS_CORE);
-          return CACHE_INODE_INVALID_ARGUMENT;
+          LogFatal(COMPONENT_CONFIG,
+                   "Error reading key[%d] from section \"%s\" of configuration file.",
+                   var_index, CONF_LABEL_NFS_CORE);
         }
 
       if(!strcasecmp(key_name, "FSAL_Shared_Library"))
@@ -1318,7 +1314,6 @@ int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
     }
 
   if(!found)
-    return 1;
-
-  return 0;
+    LogFatal(COMPONENT_CONFIG,
+             "FSAL_Shared_Library not found");
 }                               /* nfs_get_fsalpathlib_conf */

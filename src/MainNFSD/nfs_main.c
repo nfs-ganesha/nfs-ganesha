@@ -257,11 +257,7 @@ int main(int argc, char *argv[])
     }
 
   /* initialize memory and logging */
-  if(nfs_prereq_init(exec_name, host_name, debug_level, log_path))
-    {
-      fprintf(stderr, "NFS MAIN: Error initializing NFSd prerequisites\n");
-      exit(1);
-    }
+  nfs_prereq_init(exec_name, host_name, debug_level, log_path);
 
   /* Start in background, if wanted */
   if(detach_flag)
@@ -270,32 +266,28 @@ int main(int argc, char *argv[])
         /* daemonize the process (fork, close xterm fds,
          * detach from parent process) */
         if (daemon(0, 0))
-        {
-            LogCrit(COMPONENT_INIT,
-                    "Error detaching process from parent: %s",
-                    strerror(errno));
-            exit(1);
-        }
+          LogFatal(COMPONENT_INIT,
+                   "Error detaching process from parent: %s",
+                   strerror(errno));
 #else
       /* Step 1: forking a service process */
       switch (son_pid = fork())
         {
         case -1:
           /* Fork failed */
-          LogMajor(COMPONENT_INIT,
-                   "Could not start nfs daemon (fork error %d (%s), exiting...",
+          LogFatal(COMPONENT_INIT,
+                   "Could not start nfs daemon (fork error %d (%s)",
                    errno, strerror(errno));
-          exit(1);
+          break;
 
         case 0:
           /* This code is within the son (that will actually work)
            * Let's make it the leader of its group of process */
           if(setsid() == -1)
             {
-	      LogMajor(COMPONENT_INIT,
-	               "Could not start nfs daemon (setsid error %d (%s), exiting...",
+	      LogFatal(COMPONENT_INIT,
+	               "Could not start nfs daemon (setsid error %d (%s)",
 	               errno, strerror(errno));
-              exit(1);
             }
           break;
 
@@ -320,10 +312,9 @@ int main(int argc, char *argv[])
 
   if(sigaction(SIGTERM, &act_sigterm, NULL) == -1 )
     {
-      LogMajor(COMPONENT_INIT,
-               "Could not start nfs daemon (sigaction(SIGTERM) error %d (%s), exiting...",
+      LogFatal(COMPONENT_INIT,
+               "Could not start nfs daemon (sigaction(SIGTERM) error %d (%s)",
                errno, strerror(errno));
-      exit(1);
     }
   else
     LogInfo(COMPONENT_INIT,
@@ -335,10 +326,9 @@ int main(int argc, char *argv[])
   act_sighup.sa_handler = action_sighup;
   if(sigaction(SIGHUP, &act_sighup, NULL) == -1)
     {
-      LogMajor(COMPONENT_INIT,
-               "Could not start nfs daemon (sigaction(SIGHUP) error %d (%s), exiting...",
+      LogFatal(COMPONENT_INIT,
+               "Could not start nfs daemon (sigaction(SIGHUP) error %d (%s)",
                errno, strerror(errno));
-      exit(1);
     }
   else
     LogInfo(COMPONENT_INIT,
@@ -346,20 +336,14 @@ int main(int argc, char *argv[])
 
 
 #ifdef _USE_SHARED_FSAL
-  if(nfs_get_fsalpathlib_conf(my_config_path, fsal_path_lib))
-    {
-      LogMajor(COMPONENT_INIT,
-               "NFS MAIN: Error parsing configuration file for FSAL path.");
-      exit(1);
-    }
+  nfs_get_fsalpathlib_conf(my_config_path, fsal_path_lib);
 #endif                          /* _USE_SHARED_FSAL */
 
   /* Load the FSAL library (if needed) */
   if(!FSAL_LoadLibrary(fsal_path_lib))
     {
-      LogMajor(COMPONENT_INIT,
+      LogFatal(COMPONENT_INIT,
 	      "NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib);
-      exit(1);
     }
 
   /* Get the FSAL functions */
@@ -374,27 +358,21 @@ int main(int argc, char *argv[])
 
   /* initialize default parameters */
 
-  if(nfs_set_param_default(&nfs_param))
-    {
-      LogMajor(COMPONENT_INIT, "NFS MAIN: Error setting default parameters.");
-      exit(1);
-    }
+  nfs_set_param_default(&nfs_param);
 
   /* parse configuration file */
 
   if(nfs_set_param_from_conf(&nfs_param, &my_nfs_start_info, my_config_path))
     {
-      LogMajor(COMPONENT_INIT, "NFS MAIN: Error parsing configuration file.");
-      exit(1);
+      LogFatal(COMPONENT_INIT, "NFS MAIN: Error parsing configuration file.");
     }
 
   /* check parameters consitency */
 
   if(nfs_check_param_consistency(&nfs_param))
     {
-      LogMajor(COMPONENT_INIT,
-	       "NFS MAIN: Inconsistent parameters found, could have significant impact on the daemon behavior, exiting...");
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+	       "NFS MAIN: Inconsistent parameters found, could have significant impact on the daemon behavior");
     }
 
   /* Everything seems to be OK! We can now start service threads */

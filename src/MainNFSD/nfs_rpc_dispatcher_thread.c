@@ -762,8 +762,11 @@ process_status_t process_rpc_request(SVCXPRT *xprt)
   V(workers_data[worker_index].request_pool_mutex);
 
   if(pnfsreq == NULL)
-    LogFatal(COMPONENT_DISPATCH,
-            "CRITICAL ERROR: empty request pool for the chosen worker ! Exiting...");
+    {
+      LogMajor(COMPONENT_DISPATCH,
+               "Empty request pool for the chosen worker ! Exiting...");
+      Fatal();
+    }
 
   /* Set up cred area */
   cred_area = pnfsreq->cred_area;
@@ -1217,7 +1220,7 @@ void *rpc_dispatcher_thread(void *Arg)
           "Initialization of memory manager");
   if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
     LogFatal(COMPONENT_DISPATCH,
-             "Memory manager could not be initialized, exiting...");
+             "Memory manager could not be initialized");
 #endif
   /* Calling dispatcher main loop */
   LogInfo(COMPONENT_DISPATCH,

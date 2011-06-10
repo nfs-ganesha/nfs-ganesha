@@ -57,13 +57,13 @@ void *sigmgr_thread( void * arg ) ;
  * nfs_prereq_init:
  * Initialize NFSd prerequisites: memory management, logging, ...
  */
-int nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *log_path);
+void nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *log_path);
 
 /**
  * nfs_set_param_default:
  * Set p_nfs_param structure to default parameters.
  */
-int nfs_set_param_default(nfs_parameter_t * p_nfs_param);
+void nfs_set_param_default(nfs_parameter_t * p_nfs_param);
 
 /**
  * nfs_set_param_from_conf:
@@ -82,7 +82,7 @@ int nfs_check_param_consistency(nfs_parameter_t * p_nfs_param);
  * nfs_start:
  * start NFS service
  */
-int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info);
+void nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info);
 
 /**
  * nfs_stop:
@@ -90,6 +90,6 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info);
  */
 void nfs_stop();
 
-int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib);
+void nfs_get_fsalpathlib_conf(char *configPath, char *PathLib);
 
 #endif

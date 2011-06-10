@@ -1479,7 +1479,7 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
           context->Errno = BUDDY_ERR_OUTOFMEM;
 
           if(do_exit_on_error)
-            exit(1);
+            Fatal();
 
           return NULL;
 
@@ -1523,7 +1523,7 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
           LogMajor(COMPONENT_MEMALLOC, "BuddyMalloc: NOT ENOUGH MEMORY !!!");
 
           if(do_exit_on_error)
-            exit(1);
+            Fatal();
 
           return NULL;
         }
@@ -1537,7 +1537,7 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
                (BUDDY_ADDR_T) pthread_self(), (unsigned long long)Size);
 
       if(do_exit_on_error)
-        exit(1);
+        Fatal();
 
       context->Errno = BUDDY_ERR_OUTOFMEM;
       return NULL;

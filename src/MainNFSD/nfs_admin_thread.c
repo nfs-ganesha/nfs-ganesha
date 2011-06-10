@@ -239,9 +239,8 @@ void *admin_thread(void *Arg)
   if((rc = BuddyInit(&nfs_param.buddy_param_admin)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogMajor(COMPONENT_MAIN,
-               "ADMIN THREAD: Memory manager could not be initialized, exiting...");
-      exit(1);
+      LogFatal(COMPONENT_MAIN,
+               "ADMIN THREAD: Memory manager could not be initialized");
     }
   LogInfo(COMPONENT_MAIN,
           "ADMIN THREAD: Memory manager successfully initialized");

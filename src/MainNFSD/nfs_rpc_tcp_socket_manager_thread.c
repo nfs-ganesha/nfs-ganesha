@@ -92,7 +92,6 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
   if((rc = BuddyInit(&nfs_param.buddy_param_tcp_mgr)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH, "Memory manager could not be initialized");
       #ifdef _DEBUG_MEMLEAKS
       {
         FILE *output = fopen("/tmp/buddymem", "w");
@@ -100,7 +99,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           BuddyDumpAll(output);
       }
       #endif
-      exit(1);
+      LogFatal(COMPONENT_DISPATCH, "Memory manager could not be initialized");
     }
 #endif
 
@@ -116,7 +115,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           /* But do we control sock? */
           LogMajor(COMPONENT_DISPATCH,
                    "Incoherency found in Xports array! Exiting...");
-          exit(1);
+          Fatal();
         }
 
       /*

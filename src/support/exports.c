@@ -2760,9 +2760,8 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       /* creating the 'small_client' */
       if(cache_inode_client_init(&small_client, small_client_param, 255, NULL))
         {
-          LogMajor(COMPONENT_INIT,
-                   "small cache inode client could not be allocated, exiting...");
-          exit(1);
+          LogFatal(COMPONENT_INIT,
+                   "small cache inode client could not be allocated");
         }
       else
         LogInfo(COMPONENT_INIT,
@@ -2774,9 +2773,8 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
           nfs_param.cache_layers_param.cache_content_client_param,
           "recovering"))
         {
-          LogMajor(COMPONENT_INIT,
-                   "cache content client (for datacache recovery) could not be allocated, exiting...");
-          exit(1);
+          LogFatal(COMPONENT_INIT,
+                   "cache content client (for datacache recovery) could not be allocated");
         }
 
       /* Link together the small client and the recover_datacache_client */
@@ -2800,10 +2798,9 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 #ifdef _USE_MFSL_ASYNC
           if(!(pcurrent->options & EXPORT_OPTION_USE_DATACACHE))
             {
-              LogMajor(COMPONENT_INIT,
-                       "ERROR : the export entry iId=%u, Export Path=%s must have datacache enabled... exiting",
+              LogFatal(COMPONENT_INIT,
+                       "ERROR : the export entry iId=%u, Export Path=%s must have datacache enabled...",
                        pcurrent->id, pcurrent->fullpath);
-              exit(1);
             }
 #endif
           /* Build the FSAL path */

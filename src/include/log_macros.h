@@ -89,6 +89,8 @@ typedef struct cleanup_list_element
 } cleanup_list_element;
 
 void RegisterCleanup(cleanup_list_element *clean);
+void Cleanup(void);
+void Fatal(void);
 int SetComponentLogFile(log_components_t component, char *name);
 void SetComponentLogBuffer(log_components_t component, char *buffer);
 void SetComponentLogLevel(log_components_t component, int level_to_set);
