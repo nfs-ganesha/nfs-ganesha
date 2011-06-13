@@ -77,6 +77,7 @@ typedef enum log_components
   COMPONENT_MFSL,
   COMPONENT_NLM,
   COMPONENT_RPC,
+  COMPONENT_THREAD,
 
   COMPONENT_COUNT
 } log_components_t;
