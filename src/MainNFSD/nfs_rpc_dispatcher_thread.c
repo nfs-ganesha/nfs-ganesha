@@ -646,6 +646,7 @@ static unsigned int select_worker_queue()
   unsigned int i;
   static unsigned int last;
   unsigned int cpt = 0;
+  worker_available_rc rc;
 
   P(lock_worker_selection);
   counter++;
@@ -668,22 +669,24 @@ static unsigned int select_worker_queue()
           cpt < nfs_param.core_param.nb_worker;
           cpt++, i = (i + 1) % nfs_param.core_param.nb_worker)
         {
-      /* Choose only fully initialized workers and that does not gc. */
-          if((workers_data[i].gc_in_progress == FALSE)
-             && (workers_data[i].is_ready == TRUE))
+          /* Choose only fully initialized workers and that does not gc. */
+          rc = worker_available(i, avg_number_pending);
+          if(rc == WORKER_AVAILABLE)
             {
-              if(workers_data[i].pending_request->nb_entry < avg_number_pending)
+              worker_index = i;
+              break;
+            }
+          else if(rc == WORKER_ALL_PAUSED)
+            {
+              /* Wait for the threads to awaken */
+              rc = wait_for_workers_to_awaken();
+              if(rc == PAUSE_EXIT)
                 {
-                  worker_index = i;
-                  break;
                 }
             }
-          else if(!workers_data[i].is_ready)
-            LogFullDebug(COMPONENT_DISPATCH,
-                         "worker thread #%u is not ready", i);
-          else if(workers_data[i].gc_in_progress)
-            LogFullDebug(COMPONENT_DISPATCH,
-                         "worker thread #%u is doing garbage collection", i);
+          else if(rc == WORKER_EXIT)
+            {
+            } 
         }
 
   if(worker_index == NO_VALUE_CHOOSEN)
@@ -694,32 +697,6 @@ static unsigned int select_worker_queue()
   return worker_index;
 
 }                               /* select_worker_queue */
-
-/**
- *
- * nfs_rpc_get_worker_index: Returns the index of the worker to be used
- *
- * @param mount_protocol_flag a flag (TRUE of FALSE) to tell if the worker is to be used for mount protocol
- *
- * @return the chosen worker index.
- *
- */
-unsigned int nfs_rpc_get_worker_index(int mount_protocol_flag)
-{
-  unsigned int worker_index;
-
-#ifndef _NO_MOUNT_LIST
-  if(mount_protocol_flag == TRUE)
-    worker_index = 0;           /* worker #0 is dedicated to mount protocol */
-  else
-    worker_index = select_worker_queue();
-#else
-  /* choose a worker depending on its queue length */
-  worker_index = select_worker_queue();
-#endif
-
-  return worker_index;
-}                               /* nfs_rpc_get_worker_index */
 
 /**
  * process_rpc_request: process an RPC request.
@@ -735,18 +712,24 @@ process_status_t process_rpc_request(SVCXPRT *xprt)
   bool_t no_dispatch = TRUE, recv_status;
   nfs_request_data_t *pnfsreq = NULL;
   unsigned int worker_index;
-  int mount_flag = FALSE;
   process_status_t rc = PROCESS_DONE;
 
   /* A few thread manage only mount protocol, check for this */
-  if((udp_socket[P_MNT] == xprt->XP_SOCK) ||
-     (tcp_socket[P_MNT] == xprt->XP_SOCK))
-    mount_flag = TRUE;
-  else
-    mount_flag = FALSE;
 
   /* Get a worker to do the job */
-  worker_index = nfs_rpc_get_worker_index(mount_flag);
+#ifndef _NO_MOUNT_LIST
+  if((udp_socket[P_MNT] == xprt->XP_SOCK) ||
+     (tcp_socket[P_MNT] == xprt->XP_SOCK))
+    {
+      /* worker #0 is dedicated to mount protocol */
+      worker_index = 0;
+    }
+  else
+#endif
+    {
+       /* choose a worker depending on its queue length */
+       worker_index = select_worker_queue();
+    }
 
   LogFullDebug(COMPONENT_DISPATCH,
                "Use request from Worker Thread #%u's pool, xprt->xp_sock=%d, thread has %d pending requests",

@@ -84,9 +84,6 @@ nfs_worker_data_t *workers_data;
 unsigned int nb_current_gc_workers;
 pthread_mutex_t lock_nb_current_gc_workers;
 
-/* is daemon terminating ? If so, it drops all requests */
-int nfs_do_terminate = FALSE;
-
 const nfs_function_desc_t invalid_funcdesc =
   {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void, "invalid_function",
    NOTHING_SPECIAL};
@@ -701,10 +698,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   struct timeval timer_diff;
   nfs_request_latency_stat_t latency_stat;
 
-  /* daemon is terminating, do not process any new request */
-  if(nfs_do_terminate)
-    return;
-
   /* Get the value from the worker data */
   lru_dupreq = pworker_data->duplicate_request;
 
@@ -1278,6 +1271,538 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   return;
 }                               /* nfs_rpc_execute */
 
+pthread_mutex_t active_workers_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t  active_workers_cond  = PTHREAD_COND_INITIALIZER;
+unsigned int    num_active_workers   = 0;
+unsigned int    num_existing_workers = 0;
+awaken_reason_t awaken_reason        = AWAKEN_STARTUP;
+int             num_pauses           = 0; /* Number of things trying to pause - do not awaken until this goes to 0 */
+pause_state_t   pause_state          = STATE_STARTUP;
+
+const char *pause_reason_str[] =
+{
+  "PAUSE_RELOAD_EXPORTS",
+  "PAUSE_SHUTDOWN",
+};
+
+const char *awaken_reason_str[] =
+{
+  "AWAKEN_STARTUP",
+  "AWAKEN_RELOAD_EXPORTS",
+};
+
+const char *pause_state_str[] =
+{
+  "STATE_STARTUP",
+  "STATE_AWAKEN",
+  "STATE_AWAKE",
+  "STATE_PAUSE",
+  "STATE_PAUSED",
+  "STATE_EXIT",
+};
+
+const char *pause_rc_str[] =
+{
+  "PAUSE_OK",
+  "PAUSE_AWAKE",
+  "PAUSE_PAUSE",
+  "PAUSE_EXIT",
+};
+
+worker_available_rc worker_available(unsigned long worker_index, unsigned int avg_number_pending)
+{
+  worker_available_rc rc = WORKER_AVAILABLE;
+  P(workers_data[worker_index].request_mutex);
+  switch(workers_data[worker_index].pause_state)
+    {
+      case STATE_AWAKE:
+      case STATE_AWAKEN:
+        /* Choose only fully initialized workers and that does not gc. */
+        if(workers_data[worker_index].is_ready == FALSE)
+          {
+            LogFullDebug(COMPONENT_THREAD,
+                         "worker thread #%lu is not ready", worker_index);
+            rc = WORKER_PAUSED;
+          }
+        else if(workers_data[worker_index].gc_in_progress == TRUE)
+          {
+            LogFullDebug(COMPONENT_THREAD,
+                         "worker thread #%lu is doing garbage collection", worker_index);
+            rc = WORKER_GC;
+          }
+        else if(workers_data[worker_index].pending_request->nb_entry >= avg_number_pending)
+          {
+            rc = WORKER_BUSY;
+          }
+        break;
+
+      case STATE_STARTUP:
+      case STATE_PAUSE:
+      case STATE_PAUSED:
+        rc = WORKER_ALL_PAUSED;
+        break;
+
+      case STATE_EXIT:
+        rc = WORKER_EXIT;
+        break;
+    }
+  V(workers_data[worker_index].request_mutex);
+
+  return rc;
+}
+
+/**
+ * wait_for_workers_to_exit: Wait for workers to exit
+ *
+ */
+void wait_for_workers_to_exit()
+{
+  struct timespec timeout;
+  int rc;
+  int t1, t2;
+  unsigned int original_existing = num_existing_workers;
+
+  LogDebug(COMPONENT_THREAD,
+           "Waiting for worker threads to exit");
+
+  t1 = time(NULL);
+  while(num_existing_workers > 0)
+    {
+      LogDebug(COMPONENT_THREAD,
+               "Waiting one second for threads to exit, still existing: %u",
+               num_existing_workers);
+      timeout.tv_sec  = time(NULL) + 1;
+      timeout.tv_nsec = 0;
+      rc = pthread_cond_timedwait(&active_workers_cond, &active_workers_mutex, &timeout);
+    }
+  t2 = time(NULL);
+  LogInfo(COMPONENT_THREAD,
+          "%u threads exited out of %u after %d seconds",
+          original_existing - num_existing_workers,
+          original_existing,
+          t2 - t1);
+}
+
+/**
+ * _wait_for_workers_to_pause: Wait for workers to become innactive
+ *
+ */
+pause_rc _wait_for_workers_to_pause()
+{
+  struct timespec timeout;
+  int rc;
+  int t1, t2;
+
+  LogDebug(COMPONENT_THREAD,
+           "Waiting for worker threads to sleep");
+
+  t1 = time(NULL);
+  while(num_active_workers > 0)
+    {
+      /* If we are now trying to exit, just shortcut, let our caller deal with exiting. */
+      if(pause_state == STATE_EXIT)
+        {
+          t2 = time(NULL);
+          LogInfo(COMPONENT_THREAD,
+                  "%u threads asleep of %u after %d seconds before interruption for shutdown",
+                  nfs_param.core_param.nb_worker - num_active_workers,
+                  nfs_param.core_param.nb_worker,
+                  t2 - t1);
+          return PAUSE_EXIT;
+        }
+
+      timeout.tv_sec  = time(NULL) + 1;
+      timeout.tv_nsec = 0;
+      rc = pthread_cond_timedwait(&active_workers_cond, &active_workers_mutex, &timeout);
+    }
+  t2 = time(NULL);
+  LogInfo(COMPONENT_THREAD,
+          "%u threads asleep out of %u after %d seconds",
+          nfs_param.core_param.nb_worker - num_active_workers,
+          nfs_param.core_param.nb_worker,
+          t2 - t1);
+  return PAUSE_OK;
+}
+
+pause_rc wait_for_workers_to_pause()
+{
+  pause_rc rc;
+
+  P(active_workers_mutex);
+
+  rc = _wait_for_workers_to_pause();
+
+  V(active_workers_mutex);
+
+  return rc;
+}
+
+/**
+ * wait_for_workers_to_awaken: Wait for workers to become active
+ *
+ */
+pause_rc _wait_for_workers_to_awaken()
+{
+  struct timespec timeout;
+  int rc;
+  int t1, t2;
+
+  LogDebug(COMPONENT_THREAD,
+           "Waiting for worker threads to awaken");
+
+  t1 = time(NULL);
+  while(num_active_workers < nfs_param.core_param.nb_worker)
+    {
+      /* If trying to exit, don't bother waiting */
+      if(pause_state == STATE_EXIT)
+        {
+          t2 = time(NULL);
+          LogInfo(COMPONENT_THREAD,
+                  "%u threads awake of %u after %d seconds before interruption for shutdown",
+                  num_active_workers,
+                  nfs_param.core_param.nb_worker,
+                  t2 - t1);
+          return PAUSE_EXIT;
+        }
+
+       /* If trying to pause, don't bother waiting */
+     if(pause_state == STATE_PAUSE || pause_state == STATE_PAUSED)
+        {
+          t2 = time(NULL);
+          LogInfo(COMPONENT_THREAD,
+                  "%u threads awake of %u after %d seconds before interruption for pause",
+                  num_active_workers,
+                  nfs_param.core_param.nb_worker,
+                  t2 - t1);
+          return PAUSE_PAUSE;
+        }
+
+      timeout.tv_sec  = time(NULL) + 10;
+      timeout.tv_nsec = 0;
+      rc = pthread_cond_timedwait(&active_workers_cond, &active_workers_mutex, &timeout);
+    }
+  t2 = time(NULL);
+  LogInfo(COMPONENT_THREAD,
+          "%u threads awake out of %u after %d seconds",
+          num_active_workers, nfs_param.core_param.nb_worker, t2 - t1);
+  return PAUSE_OK;
+}
+
+pause_rc wait_for_workers_to_awaken()
+{
+  pause_rc rc;
+
+  P(active_workers_mutex);
+
+  rc = _wait_for_workers_to_awaken();
+
+  V(active_workers_mutex);
+
+  return rc;  
+}
+
+/**
+ * mark_thread_asleep: Mark a thread as asleep
+ *
+ */
+void mark_thread_asleep(nfs_worker_data_t *pmydata)
+{
+  P(active_workers_mutex);
+  P(pmydata->request_mutex);
+
+  if(pmydata->pause_state == STATE_PAUSE)
+    {
+      pmydata->pause_state = STATE_PAUSED;
+      num_active_workers--;
+      pmydata->is_ready = FALSE;
+    }
+
+  pthread_cond_signal(&active_workers_cond);
+  LogDebug(COMPONENT_THREAD,
+           "Worker thread #%u asleep",
+           pmydata->worker_index);
+
+
+  V(pmydata->request_mutex);
+  V(active_workers_mutex);
+}
+
+/**
+ * mark_thread_done: Mark a thread as done
+ *
+ */
+void mark_thread_done(nfs_worker_data_t *pmydata)
+{
+  P(active_workers_mutex);
+  P(pmydata->request_mutex);
+
+  if(pmydata->is_ready)
+    {
+      num_active_workers--;
+      pmydata->is_ready = FALSE;
+    }
+
+  num_existing_workers--;
+  
+  pthread_cond_signal(&active_workers_cond);
+  LogDebug(COMPONENT_THREAD,
+           "Worker thread #%u exiting",
+           pmydata->worker_index);
+
+
+  V(pmydata->request_mutex);
+  V(active_workers_mutex);
+}
+
+/**
+ * mark_thread_exist: Mark a thread as existing
+ *
+ */
+pause_rc mark_thread_existing(nfs_worker_data_t *pmydata)
+{
+  pause_rc rc;
+
+  P(active_workers_mutex);
+  P(pmydata->request_mutex);
+
+  /* Increment count of existing (even if we are about to die,
+   * mark_thread_done will be called in that case).
+   */
+  num_existing_workers++;
+
+  if(pause_state == STATE_EXIT)
+    rc = PAUSE_EXIT;
+  else
+    rc = PAUSE_OK;
+
+  pthread_cond_signal(&active_workers_cond);
+  LogDebug(COMPONENT_THREAD,
+           "Worker thread #%u exists",
+           pmydata->worker_index);
+
+  V(pmydata->request_mutex);
+  V(active_workers_mutex);
+
+  return rc;
+}
+
+/**
+ * mark_thread_awake: Mark a thread as awake
+ *
+ */
+void mark_thread_awake(nfs_worker_data_t *pmydata)
+{
+  P(active_workers_mutex);
+  P(pmydata->request_mutex);
+
+  if(pmydata->pause_state == STATE_STARTUP || pmydata->pause_state == STATE_AWAKEN)
+    {
+      pmydata->pause_state = STATE_AWAKE;
+      num_active_workers++;
+      pmydata->is_ready = TRUE;
+    }
+
+  pthread_cond_signal(&active_workers_cond);
+  LogDebug(COMPONENT_THREAD,
+           "Worker thread #%u active",
+           pmydata->worker_index);
+
+  V(pmydata->request_mutex);
+  V(active_workers_mutex);
+}
+
+void notify_threads_of_new_state()
+{
+  unsigned int worker_index;
+  for(worker_index = 0; worker_index  < nfs_param.core_param.nb_worker; worker_index++)
+    {
+      P(workers_data[worker_index].request_mutex);
+      LogDebug(COMPONENT_THREAD,
+               "Changing state of thread #%u from %s to %s",
+               worker_index,
+               pause_state_str[workers_data[worker_index].pause_state],
+               pause_state_str[pause_state]);
+      workers_data[worker_index].pause_state = pause_state;
+      if(pthread_cond_signal(&(workers_data[worker_index].req_condvar)) == -1)
+        {
+          V(workers_data[worker_index].request_mutex);
+          LogMajor(COMPONENT_THREAD,
+                   "Error %d (%s) while signalling Worker Thread #%u... Exiting",
+                   errno, strerror(errno), worker_index);
+          Fatal();
+        }
+      V(workers_data[worker_index].request_mutex);
+    }
+}
+
+/**
+ * pause_workers: Pause the worker threads.
+ *
+ */
+pause_rc pause_workers(pause_reason_t reason)
+{
+  pause_rc rc = PAUSE_OK; 
+  bool_t new_state = FALSE;
+  bool_t wait = TRUE;
+
+  P(active_workers_mutex);
+
+  LogDebug(COMPONENT_THREAD,
+           "Pause workers for reason: %s pause_state: %s",
+           pause_reason_str[reason], pause_state_str[pause_state]);
+
+  switch(reason)
+    {
+      case PAUSE_RELOAD_EXPORTS:
+        num_pauses++;
+        switch(pause_state)
+          {
+            case STATE_STARTUP:
+              /* We need to wait for all threads to come up the first time
+               * before we can think of trying to pause them.
+               */
+              rc = _wait_for_workers_to_awaken();
+              if(rc != PAUSE_OK)
+                {
+                  LogDebug(COMPONENT_THREAD,
+                           "pause workers for %s interrupted for shutdown",
+                           pause_reason_str[reason]);
+                  V(active_workers_mutex);
+                  return rc;
+                }
+              /* fall through */
+
+            case STATE_AWAKEN:
+            case STATE_AWAKE:
+              pause_state = STATE_PAUSE;
+              new_state = TRUE;
+              break;
+
+            case STATE_PAUSE:
+              break;
+
+            case STATE_PAUSED:
+              /* Already paused, nothing to do. */
+              wait = FALSE;
+              break;
+
+            case STATE_EXIT:
+              /* Ganesha is trying to exit, the caller should exit also */
+              V(active_workers_mutex);
+              return PAUSE_EXIT;
+          }
+        break;
+
+      case PAUSE_SHUTDOWN:
+        num_pauses++;
+        if(pause_state == STATE_EXIT)
+          {
+            /* Already paused, nothing more to do. */
+            wait = FALSE;
+            rc = PAUSE_EXIT;
+          }
+        else
+          {
+            /* Otherwise don't care about current state, startup will handle need to exit. */
+            pause_state = STATE_EXIT;
+            new_state = TRUE;
+          }
+        break;
+    }
+
+  if(new_state)
+    notify_threads_of_new_state();
+
+  /* Wait for all worker threads to pause or exit */
+  if(pause_state == STATE_EXIT && wait)
+    {
+      wait_for_workers_to_exit();
+      rc = PAUSE_EXIT;
+    }
+  else if(wait)
+    {
+      rc = _wait_for_workers_to_pause();
+      if(rc == PAUSE_OK && pause_state == STATE_PAUSE)
+        pause_state = STATE_PAUSED;
+    }
+
+  V(active_workers_mutex);
+
+  return rc;
+}
+
+/**
+ * wake_workers: Wake up worker threads.
+ *
+ */
+pause_rc wake_workers(awaken_reason_t reason)
+{
+  pause_rc rc; 
+  bool_t new_state = FALSE;
+  bool_t wait = TRUE;
+
+  P(active_workers_mutex);
+
+  LogDebug(COMPONENT_THREAD,
+           "Wake workers for reason: %s pause_state: %s",
+           awaken_reason_str[reason], pause_state_str[pause_state]);
+
+  switch(reason)
+    {
+      case AWAKEN_STARTUP:
+        /* Just wait. */
+        break;
+
+      case AWAKEN_RELOAD_EXPORTS:
+        num_pauses--;
+        switch(pause_state)
+          {
+            case STATE_STARTUP:
+            case STATE_AWAKEN:
+              /* Already trying to awaken, just wait. */
+              break;
+
+            case STATE_PAUSE:
+            case STATE_PAUSED:
+              if(num_pauses != 0)
+                {
+                  /* Don't actually wake up yet. */
+                  V(active_workers_mutex);
+                  return PAUSE_PAUSE;
+                }
+              pause_state = STATE_AWAKEN;
+              new_state = TRUE;
+              break;
+
+            case STATE_AWAKE:
+              /* Already awake, nothing to do. */
+              wait = FALSE;
+              rc = PAUSE_OK;
+              break;
+
+            case STATE_EXIT:
+              /* Ganesha is trying to exit, the caller should exit also */
+              V(active_workers_mutex);
+              return PAUSE_EXIT;
+          }
+    }
+
+  if(new_state)
+    notify_threads_of_new_state();
+
+  /* Wait for all worker threads to wake up */
+  if(wait)
+    {
+      rc = _wait_for_workers_to_awaken();
+      if(rc == PAUSE_OK)
+        pause_state = STATE_AWAKE;
+    }
+
+  V(active_workers_mutex);
+
+  return rc;
+}
+
 /**
  * nfs_Init_worker_data: Init the data associated with a worker instance.
  *
@@ -1296,19 +1821,13 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   LRU_status_t status = LRU_LIST_SUCCESS;
   char name[256];
 
-  if(pthread_mutex_init(&(pdata->mutex_req_condvar), NULL) != 0)
+  if(pthread_mutex_init(&(pdata->request_mutex), NULL) != 0)
     return -1;
 
   if(pthread_mutex_init(&(pdata->request_pool_mutex), NULL) != 0)
     return -1;
 
   if(pthread_cond_init(&(pdata->req_condvar), NULL) != 0)
-    return -1;
-
-  if(pthread_mutex_init(&(pdata->mutex_export_condvar), NULL) != 0)
-    return -1;
-
-  if(pthread_cond_init(&(pdata->export_condvar), NULL) != 0)
     return -1;
 
   sprintf(name, "Worker Thread #%u Pending Request", pdata->worker_index);
@@ -1334,8 +1853,6 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   pdata->passcounter = 0;
   pdata->is_ready = FALSE;
   pdata->gc_in_progress = FALSE;
-  pdata->reparse_exports_in_progress = FALSE;
-  pdata->waiting_for_exports = FALSE;
   pdata->pfuncdesc = INVALID_FUNCDESC;
 
   return 0;
@@ -1348,19 +1865,19 @@ void DispatchWork(nfs_request_data_t *pnfsreq, unsigned int worker_index)
   struct svc_req *ptr_req = &pnfsreq->req;
   unsigned int rpcxid = get_rpc_xid(ptr_req);
 
-  LogFullDebug(COMPONENT_DISPATCH,
-               "Awaking Worker Thread #%u for request %p, xid=%u",
-               worker_index, pnfsreq, rpcxid);
+  LogDebug(COMPONENT_DISPATCH,
+           "Awaking Worker Thread #%u for request %p, xid=%u",
+           worker_index, pnfsreq, rpcxid);
 
-  P(workers_data[worker_index].mutex_req_condvar);
+  P(workers_data[worker_index].request_mutex);
   P(workers_data[worker_index].request_pool_mutex);
 
   pentry = LRU_new_entry(workers_data[worker_index].pending_request, &status);
 
   if(pentry == NULL)
     {
-      V(workers_data[worker_index].mutex_req_condvar);
       V(workers_data[worker_index].request_pool_mutex);
+      V(workers_data[worker_index].request_mutex);
       LogMajor(COMPONENT_DISPATCH,
                "Error while inserting pending request to Worker Thread #%u... Exiting",
                worker_index);
@@ -1372,15 +1889,15 @@ void DispatchWork(nfs_request_data_t *pnfsreq, unsigned int worker_index)
 
   if(pthread_cond_signal(&(workers_data[worker_index].req_condvar)) == -1)
     {
-      V(workers_data[worker_index].mutex_req_condvar);
       V(workers_data[worker_index].request_pool_mutex);
-      LogMajor(COMPONENT_DISPATCH,
+      V(workers_data[worker_index].request_mutex);
+      LogMajor(COMPONENT_THREAD,
                "Error %d (%s) while signalling Worker Thread #%u... Exiting",
                errno, strerror(errno), worker_index);
       Fatal();
     }
-  V(workers_data[worker_index].mutex_req_condvar);
   V(workers_data[worker_index].request_pool_mutex);
+  V(workers_data[worker_index].request_mutex);
 }
 
 enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
@@ -1481,6 +1998,15 @@ void *worker_thread(void *IndexArg)
   snprintf(thr_name, sizeof(thr_name), "Worker Thread #%lu", worker_index);
   SetNameFunction(thr_name);
 
+  if(mark_thread_existing(pmydata) == PAUSE_EXIT)
+    {
+      /* Oops, that didn't last long... exit. */
+      mark_thread_done(pmydata);
+      LogDebug(COMPONENT_DISPATCH,
+               "Worker exiting before initialization");
+      return NULL;
+    }
+
   LogFullDebug(COMPONENT_DISPATCH,
                "Starting, nb_entry=%d",
                pmydata->pending_request->nb_entry);
@@ -1544,9 +2070,6 @@ void *worker_thread(void *IndexArg)
 
   /* _USE_PNFS */
 
-  /* The worker thread is not garbagging anything at the time it starts */
-  pmydata->gc_in_progress = FALSE;
-
   /* Bind the data cache client to the inode cache client */
   pmydata->cache_inode_client.pcontent_client = (caddr_t) & pmydata->cache_content_client;
 
@@ -1562,15 +2085,11 @@ void *worker_thread(void *IndexArg)
                "pNFS engine successfully initialized");
 #endif
 
-  /* notify dispatcher it is ready */
-  pmydata->is_ready = TRUE;
-
   LogInfo(COMPONENT_DISPATCH, "Worker successfully initialized");
 
   /* Worker's infinite loop */
   while(1)
     {
-
       /* update memory and FSAL stats,
        * twice often than stats display.
        */
@@ -1593,26 +2112,61 @@ void *worker_thread(void *IndexArg)
                    pmydata->pending_request->nb_entry,
                    pmydata->pending_request->nb_invalid);
 
-      P(pmydata->mutex_req_condvar);
-      while(pmydata->pending_request->nb_entry == pmydata->pending_request->nb_invalid
-            || pmydata->reparse_exports_in_progress == TRUE)
-        {
-          /* block because someone is changing the exports list */
-          if (pmydata->reparse_exports_in_progress == TRUE)
-            {
-              pmydata->waiting_for_exports = TRUE;
-              P(pmydata->mutex_export_condvar);
-              pthread_cond_wait(&(pmydata->export_condvar), &(pmydata->mutex_export_condvar));
-              pmydata->waiting_for_exports = FALSE;
-              V(pmydata->mutex_export_condvar);
-            }
-          /* block until there are requests to process in the queue */
-          else
-            pthread_cond_wait(&(pmydata->req_condvar), &(pmydata->mutex_req_condvar));
-        }
+      P(pmydata->request_mutex);
+      while(1)
+       {
+         if(pmydata->pause_state == STATE_AWAKE &&
+            pmydata->pending_request->nb_entry != pmydata->pending_request->nb_invalid)
+           {
+             /* We have something to do, and we don't need to pause. */
+             LogFullDebug(COMPONENT_DISPATCH,
+                          "Have work, pause_state: %s, nb_entry=%u, nb_invalid=%u",
+                          pause_state_str[pmydata->pause_state],
+                          pmydata->pending_request->nb_entry,
+                          pmydata->pending_request->nb_invalid);
+             break;
+           }
+
+         switch(pmydata->pause_state)
+           {
+             case STATE_STARTUP:
+             case STATE_AWAKEN:
+               /* Mark thread as awake */
+               V(pmydata->request_mutex);
+               mark_thread_awake(pmydata);
+               P(pmydata->request_mutex);
+
+               /* Go back and check new state. */
+               continue;
+
+             case STATE_PAUSE:
+               /* Mark thread as asleep */
+               V(pmydata->request_mutex);
+               mark_thread_asleep(pmydata);
+               P(pmydata->request_mutex);
+
+               /* Go back and check new state. */
+               continue;
+               
+             case STATE_AWAKE:
+             case STATE_PAUSED:
+               /* Wait for something to do */
+               pthread_cond_wait(&(pmydata->req_condvar), &(pmydata->request_mutex));
+               break;
+
+             case STATE_EXIT:
+               /* Need to exit worker thread. */
+               V(pmydata->request_mutex);
+               mark_thread_done(pmydata);
+               LogDebug(COMPONENT_DISPATCH,
+                        "Worker exiting as requested");
+               return NULL;
+           }
+       }
+
       LogFullDebug(COMPONENT_DISPATCH,
                    "Processing a new request");
-      V(pmydata->mutex_req_condvar);
+      V(pmydata->request_mutex);
 
       found = FALSE;
       P(pmydata->request_pool_mutex);
@@ -1746,9 +2300,11 @@ void *worker_thread(void *IndexArg)
         gc_allowed = FALSE;
       V(lock_nb_current_gc_workers);
 
-      if(gc_allowed == TRUE)
+      P(pmydata->request_mutex);
+      if(gc_allowed == TRUE && pmydata->pause_state == STATE_AWAKE)
         {
           pmydata->gc_in_progress = TRUE;
+          V(pmydata->request_mutex);
           LogFullDebug(COMPONENT_DISPATCH,
                        "There are %d concurrent garbage collection",
                        nb_current_gc_workers);
@@ -1765,25 +2321,31 @@ void *worker_thread(void *IndexArg)
           nb_current_gc_workers -= 1;
           V(lock_nb_current_gc_workers);
 
+          P(pmydata->request_mutex);
           pmydata->gc_in_progress = FALSE;
         }
 #ifdef _USE_MFSL
       /* As MFSL context are refresh, and because this could be a time consuming operation, the worker is
        * set as "making garbagge collection" to avoid new requests to come in its pending queue */
-      pmydata->gc_in_progress = TRUE;
-
-      fsal_status = MFSL_RefreshContext(&pmydata->cache_inode_client.mfsl_context,
-                                        &pmydata->thread_fsal_context);
-
-      if(FSAL_IS_ERROR(fsal_status))
+      if(pmydata->pause_state == STATE_AWAKE)
         {
-          /* Failed init */
-          LogFatal(COMPONENT_DISPATCH, "Error regreshing MFSL context");
+          pmydata->gc_in_progress = TRUE;
+
+          fsal_status = MFSL_RefreshContext(&pmydata->cache_inode_client.mfsl_context,
+                                            &pmydata->thread_fsal_context);
+
+          if(FSAL_IS_ERROR(fsal_status))
+            {
+              /* Failed init */
+              V(pmydata->request_mutex);
+              LogFatal(COMPONENT_DISPATCH, "Error regreshing MFSL context");
+            }
+
+          pmydata->gc_in_progress = FALSE;
         }
 
-      pmydata->gc_in_progress = FALSE;
-
 #endif
+      V(pmydata->request_mutex);
 
     }                           /* while( 1 ) */
   return NULL;

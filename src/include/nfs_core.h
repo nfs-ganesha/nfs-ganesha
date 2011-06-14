@@ -432,6 +432,16 @@ typedef enum idmap_type__
   GIDMAP_TYPE = 2
 } idmap_type_t;
 
+typedef enum pause_state
+{
+  STATE_STARTUP,
+  STATE_AWAKEN,
+  STATE_AWAKE,
+  STATE_PAUSE,
+  STATE_PAUSED,
+  STATE_EXIT
+} pause_state_t;
+  
 typedef struct nfs_worker_data__
 {
   unsigned int worker_index;
@@ -449,18 +459,13 @@ typedef struct nfs_worker_data__
 
   /* Used for blocking when request queue is empty. */
   pthread_cond_t req_condvar;
-  pthread_mutex_t mutex_req_condvar;
-
-  /* Used for blocking when the export list is being replaced. */
-  bool_t waiting_for_exports;
-  bool_t reparse_exports_in_progress;
-  pthread_cond_t export_condvar;
-  pthread_mutex_t mutex_export_condvar;
+  pthread_mutex_t request_mutex;
 
   nfs_worker_stat_t stats;
   unsigned int passcounter;
   sockaddr_t hostaddr;
   int is_ready;
+  pause_state_t pause_state;
   unsigned int gc_in_progress;
   unsigned int current_xid;
   fsal_op_context_t thread_fsal_context;
@@ -469,16 +474,6 @@ typedef struct nfs_worker_data__
   const nfs_function_desc_t *pfuncdesc;
   struct timeval timer_start;
 } nfs_worker_data_t;
-
-typedef struct nfs_admin_data_
-{
-  pthread_cond_t admin_condvar;
-  pthread_mutex_t mutex_admin_condvar;
-  bool_t reload_exports;
-  char *config_path;
-  hash_table_t *ht;
-  nfs_worker_data_t *workers_data;
-} nfs_admin_data_t;
 
 /* flush thread data */
 typedef struct nfs_flush_thread_data__
@@ -507,6 +502,7 @@ typedef struct fridge_entry__
 extern nfs_parameter_t nfs_param;
 extern time_t ServerBootTime;
 extern nfs_worker_data_t *workers_data;
+extern char config_path[MAXPATHLEN];
 
 typedef enum process_status
 {
@@ -515,14 +511,48 @@ typedef enum process_status
   PROCESS_DONE
 } process_status_t;
 
+typedef enum pause_reason
+{
+  PAUSE_RELOAD_EXPORTS,
+  PAUSE_SHUTDOWN,
+} pause_reason_t;
+
+typedef enum awaken_reason
+{
+  AWAKEN_STARTUP,
+  AWAKEN_RELOAD_EXPORTS,
+} awaken_reason_t;
+
+typedef enum pause_rc
+{
+  PAUSE_OK,
+  PAUSE_PAUSE, /* Calling thread should pause - most callers can ignore this return code */
+  PAUSE_EXIT,  /* Calling thread should exit */
+} pause_rc;
+
+extern const char *pause_rc_str[];
+
+typedef enum worker_available_rc
+{
+  WORKER_AVAILABLE,
+  WORKER_BUSY,
+  WORKER_PAUSED,
+  WORKER_GC,
+  WORKER_ALL_PAUSED,
+  WORKER_EXIT
+} worker_available_rc;
+
 /* 
  *functions prototypes
  */
 enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
                                    bool_t *dispatch);
+worker_available_rc worker_available(unsigned long index, unsigned int avg_number_pending);
+pause_rc pause_workers(pause_reason_t reason);
+pause_rc wake_workers(awaken_reason_t reason);
+pause_rc wait_for_workers_to_awaken();
 void DispatchWork(nfs_request_data_t *pnfsreq, unsigned int worker_index);
 void *worker_thread(void *IndexArg);
-unsigned int nfs_rpc_get_worker_index(int mount_protocol_flag);
 process_status_t process_rpc_request(SVCXPRT *xprt);
 void *rpc_dispatcher_thread(void *arg);
 void *admin_thread(void *arg);
@@ -539,7 +569,7 @@ void nfs_operate_on_sigterm() ;
 void nfs_operate_on_sighup() ;
 
 void nfs_Init_svc(void);
-int nfs_Init_admin_data(nfs_admin_data_t * pdata);
+void nfs_Init_admin_data(hash_table_t *ht);
 int nfs_Init_worker_data(nfs_worker_data_t * pdata);
 int nfs_Init_request_data(nfs_request_data_t * pdata);
 int nfs_Init_gc_counter(void);

@@ -73,7 +73,6 @@
 nfs_parameter_t nfs_param;
 time_t ServerBootTime = 0;
 nfs_worker_data_t *workers_data = NULL;
-nfs_admin_data_t *admin_data = NULL;
 verifier4 NFS4_write_verifier;  /* NFS V4 write verifier */
 writeverf3 NFS3_write_verifier; /* NFS V3 write verifier */
 
@@ -94,7 +93,6 @@ pthread_t sigmgr_thrid ;
 
 char config_path[MAXPATHLEN];
 
-extern int nfs_do_terminate;
 extern char my_config_path[MAXPATHLEN];
 
 /* States managed by signal handler */
@@ -1405,7 +1403,7 @@ static void nfs_Start_threads(nfs_parameter_t * pnfs_param)
   LogEvent(COMPONENT_INIT, "rpc dispatcher thread was started successfully");
 
   /* Starting the admin thread */
-  if((rc = pthread_create(&admin_thrid, &attr_thr, admin_thread, (void *)admin_data)) != 0)
+  if((rc = pthread_create(&admin_thrid, &attr_thr, admin_thread, NULL)) != 0)
     {
       LogFatal(COMPONENT_INIT,
                "Could not create admin_thread, error = %d (%s)",
@@ -1696,20 +1694,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
     }                           /* for i */
 
   /* Admin initialisation */
-  if((admin_data =
-      (nfs_admin_data_t *) Mem_Alloc_Label(sizeof(nfs_admin_data_t),
-                                           "nfs_admin_data_t")) == NULL)
-    {
-      LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-      Fatal();
-    }  
-
-  if (nfs_Init_admin_data(admin_data) != 0)
-    LogFatal(COMPONENT_INIT, "Error while initializing admin thread");
-
-  admin_data->ht = ht;
-  admin_data->config_path = config_path;
-  admin_data->workers_data = workers_data;
+  nfs_Init_admin_data(ht);
 
   /* Set the stats to zero */
   nfs_reset_stats();
@@ -2171,20 +2156,27 @@ void nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
         }
 
       /* Wait for the threads to complete their init step */
-      sleep(2);
-
-      LogEvent(COMPONENT_INIT,
-               "-------------------------------------------------");
-      LogEvent(COMPONENT_INIT,
-               "             NFS SERVER INITIALIZED");
-      LogEvent(COMPONENT_INIT,
-               "-------------------------------------------------");
+      if(wait_for_workers_to_awaken() != PAUSE_OK)
+        {
+          /* Not quite sure what to do here... */
+        }
+      else
+        {
+          LogEvent(COMPONENT_INIT,
+                   "-------------------------------------------------");
+          LogEvent(COMPONENT_INIT,
+                   "             NFS SERVER INITIALIZED");
+          LogEvent(COMPONENT_INIT,
+                   "-------------------------------------------------");
+        }
 
       /* Wait for dispatcher to exit */
+      LogDebug(COMPONENT_THREAD,
+               "Wait for rpc dispatcher thread to exit");
       pthread_join(rpc_dispatcher_thrid, NULL);
 
-      LogInfo(COMPONENT_INIT,
-              "NFS EXIT: rpc dispatcher thread has exited and was joined, nfs daemon exiting...");
+      LogEvent(COMPONENT_INIT,
+               "NFS EXIT: rpc dispatcher thread has exited and was joined, nfs daemon exiting...");
     }
 
   /* Regular exit */
@@ -2203,11 +2195,17 @@ void nfs_stop()
 {
   fsal_status_t st;
 
-  LogEvent(COMPONENT_INIT, "NFS EXIT: stopping NFS service");
+  LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
+  LogDebug(COMPONENT_THREAD, "Stopping worker threads");
 
-  nfs_do_terminate = TRUE;
+  if(pause_workers(PAUSE_SHUTDOWN) != PAUSE_EXIT)
+    LogDebug(COMPONENT_THREAD,
+             "Unexpected return code from pause_workers");
 
-  LogEvent(COMPONENT_INIT, "NFS EXIT: synchonizing FSAL");
+  LogDebug(COMPONENT_THREAD,
+           "Done waiting for worker threads to exit");
+
+  LogEvent(COMPONENT_MAIN, "NFS EXIT: synchonizing FSAL");
 
 #ifdef _USE_MFSL
   st = MFSL_terminate();
@@ -2220,10 +2218,10 @@ void nfs_stop()
   st = FSAL_terminate();
 
   if(FSAL_IS_ERROR(st))
-    LogCrit(COMPONENT_INIT, "NFS EXIT: ERROR %d.%d while synchonizing FSAL",
+    LogCrit(COMPONENT_MAIN, "NFS EXIT: ERROR %d.%d while synchonizing FSAL",
             st.major, st.minor);
 
-  LogEvent(COMPONENT_INIT, "NFS EXIT: regular exit");
+  LogEvent(COMPONENT_MAIN, "NFS EXIT: regular exit");
   Cleanup();
   exit(0);
 }
