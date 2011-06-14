@@ -96,7 +96,6 @@ char config_path[MAXPATHLEN];
 extern char my_config_path[MAXPATHLEN];
 
 /* States managed by signal handler */
-unsigned int sigusr1_triggered = FALSE ;
 unsigned int sigterm_triggered = FALSE ;
 unsigned int sighup_triggered = FALSE ;
 
@@ -122,26 +121,6 @@ static void operate_on_sighup()
   admin_replace_exports();
 }                               /* action_sigsigh */
 
-static void operate_on_sigusr1()
-{
-  LogEvent(COMPONENT_MAIN,
-           "SIGUSR1_HANDLER: Received SIGUSR1.... signal will be managed");
-
-  /* Set variable force_flush_by_signal that is used in file content cache gc thread */
-  if(force_flush_by_signal)
-    {
-      LogEvent(COMPONENT_MAIN,
-               "SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
-      force_flush_by_signal = FALSE;
-    }
-  else
-    {
-      LogEvent(COMPONENT_MAIN,
-               "SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
-      force_flush_by_signal = TRUE;
-    }
-}                               /* action_sigusr1 */
-
 /**
  *
  * This thread is in charge of signal management 
@@ -152,15 +131,11 @@ static void operate_on_sigusr1()
  */
 void *sigmgr_thread( void * arg )
 {
+  SetNameFunction("sigmgr");
+
   while( 1 ) /* Never ending loop */
    {
      sleep( 1 ) ;
-
-     if( sigusr1_triggered == TRUE )
-      {
-        operate_on_sigusr1() ;
-        sigusr1_triggered = FALSE ;
-      }
 
      if( sigterm_triggered == TRUE )
       {

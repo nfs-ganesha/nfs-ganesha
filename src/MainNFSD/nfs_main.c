@@ -71,7 +71,6 @@ extern fsal_functions_t fsal_functions;
 extern fsal_const_t fsal_consts;
 
 /* States managed by signal handler */
-extern unsigned int sigusr1_triggered ;
 extern unsigned int sigterm_triggered ;
 extern unsigned int sighup_triggered  ;
 

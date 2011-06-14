@@ -90,32 +90,6 @@ char usage[] =
     "DebugLevel : NIV_EVENT\n" "ConfigFile : None\n";
 
 /**
- *
- * SIGCHLD signal management routine, for detecting the end of a child process
- *
- */
-
-static void action_sigusr1(int sig)
-{
-  LogEvent(COMPONENT_MAIN,
-           "NFS_MAIN_SIGUSR1_HANDLER: Receveid SIGUSR1.... signal will be managed");
-
-  /* Set variable force_flush_by_signal that is used in file content cache gc thread */
-  if(force_flush_by_signal)
-    {
-      LogEvent(COMPONENT_MAIN,
-               "NFS_MAIN_SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
-      force_flush_by_signal = FALSE;
-    }
-  else
-    {
-      LogEvent(COMPONENT_MAIN,
-               "NFS_MAIN_SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
-      force_flush_by_signal = TRUE;
-    }
-}                               /* action_sigusr1 */
-
-/**
  * main: simply the main function.
  *
  * The 'main' function as in every C program.
@@ -134,7 +108,6 @@ int ganefuse_main(int argc, char *argv[],
   char localmachine[MAXHOSTNAMELEN];
   int c;
   pid_t son_pid;
-  struct sigaction act_sigusr1;
 
   int argc_local = argc;
   char **argv_local = argv;
@@ -302,21 +275,6 @@ int ganefuse_main(int argc, char *argv[],
   LogEvent(COMPONENT_MAIN,
            ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
            FSAL_GetFSName());
-
-  /* Set the signal handler */
-  memset(&act_sigusr1, 0, sizeof(act_sigusr1));
-  act_sigusr1.sa_flags = 0;
-  act_sigusr1.sa_handler = action_sigusr1;
-  if(sigaction(SIGUSR1, &act_sigusr1, NULL) == -1)
-    {
-      LogError(COMPONENT_MAIN, ERR_SYS, ERR_SIGACTION, errno);
-      exit(1);
-    }
-  else
-    LogEvent(COMPONENT_MAIN,
-             "Signal SIGUSR1 (force flush) is ready to be used");
-
-  memset(&nfs_param, 0, sizeof(nfs_param));
 
   /* initialize default parameters */
   nfs_set_param_default();
