@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
         /* daemonize the process (fork, close xterm fds,
          * detach from parent process) */
         if (daemon(0, 0))
-          LogFatal(COMPONENT_INIT,
+          LogFatal(COMPONENT_MAIN,
                    "Error detaching process from parent: %s",
                    strerror(errno));
 #else
@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
         {
         case -1:
           /* Fork failed */
-          LogFatal(COMPONENT_INIT,
+          LogFatal(COMPONENT_MAIN,
                    "Could not start nfs daemon (fork error %d (%s)",
                    errno, strerror(errno));
           break;
@@ -265,7 +265,7 @@ int main(int argc, char *argv[])
            * Let's make it the leader of its group of process */
           if(setsid() == -1)
             {
-	      LogFatal(COMPONENT_INIT,
+	      LogFatal(COMPONENT_MAIN,
 	               "Could not start nfs daemon (setsid error %d (%s)",
 	               errno, strerror(errno));
             }
@@ -273,7 +273,7 @@ int main(int argc, char *argv[])
 
         default:
           /* This code is within the father, it is useless, it must die */
-          LogFullDebug(COMPONENT_INIT, "Starting a son of pid %d", son_pid);
+          LogFullDebug(COMPONENT_MAIN, "Starting a son of pid %d", son_pid);
           exit(0);
           break;
         }
@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
   sigaddset(&signals_to_block, SIGTERM);
   sigaddset(&signals_to_block, SIGHUP);
   if(pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL) != 0)
-    LogFatal(COMPONENT_INIT,
+    LogFatal(COMPONENT_MAIN,
              "Could not start nfs daemon, pthread_sigmask failed");
 
 #ifdef _USE_SHARED_FSAL
@@ -302,8 +302,8 @@ int main(int argc, char *argv[])
   /* Load the FSAL library (if needed) */
   if(!FSAL_LoadLibrary(fsal_path_lib))
     {
-      LogFatal(COMPONENT_INIT,
-	      "NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib);
+      LogFatal(COMPONENT_MAIN,
+	      "Could not load FSAL dynamic library %s", fsal_path_lib);
     }
 
   /* Get the FSAL functions */
@@ -312,7 +312,7 @@ int main(int argc, char *argv[])
   /* Get the FSAL consts */
   FSAL_LoadConsts();
 
-  LogEvent(COMPONENT_INIT,
+  LogEvent(COMPONENT_MAIN,
            ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
 	   FSAL_GetFSName());
 
@@ -324,7 +324,7 @@ int main(int argc, char *argv[])
 
   if(nfs_set_param_from_conf(&my_nfs_start_info))
     {
-      LogFatal(COMPONENT_INIT, "NFS MAIN: Error parsing configuration file.");
+      LogFatal(COMPONENT_INIT, "Error parsing configuration file.");
     }
 
   /* check parameters consitency */
@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
   if(nfs_check_param_consistency())
     {
       LogFatal(COMPONENT_INIT,
-	       "NFS MAIN: Inconsistent parameters found, could have significant impact on the daemon behavior");
+	       "Inconsistent parameters found, could have significant impact on the daemon behavior");
     }
 
   /* Everything seems to be OK! We can now start service threads */
