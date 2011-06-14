@@ -59,7 +59,7 @@ nfs_start_info_t my_nfs_start_info = {
   .lw_mark_trigger = FALSE
 };
 
-char my_config_path[MAXPATHLEN] = "/etc/ganesha/ganesha.conf";
+char *my_config_path = "/etc/ganesha/ganesha.conf";
 char log_path[MAXPATHLEN] = "";
 char exec_name[MAXPATHLEN] = "nfs-ganesha";
 char host_name[MAXHOSTNAMELEN] = "localhost";
@@ -69,10 +69,6 @@ char ganesha_exec_path[MAXPATHLEN];
 
 extern fsal_functions_t fsal_functions;
 extern fsal_const_t fsal_consts;
-
-/* States managed by signal handler */
-extern unsigned int sigterm_triggered ;
-extern unsigned int sighup_triggered  ;
 
 /* command line syntax */
 
@@ -97,22 +93,6 @@ char usage[] =
     "DebugLevel : NIV_EVENT\n" "ConfigFile : /etc/ganesha/ganesha.conf\n";
 
 /**
- *
- * SIGTERM signal management routine, for cleanly terminating the daemon
- *
- */
-
-static void action_sigterm(int sig)
-{
-   sigterm_triggered = TRUE ;
-}
-
-static void action_sighup(int sig)
-{
-  sighup_triggered = TRUE ;
-}
-
-/**
  * main: simply the main function.
  *
  * The 'main' function as in every C program. 
@@ -132,8 +112,7 @@ int main(int argc, char *argv[])
 #ifndef HAVE_DAEMON
   pid_t son_pid;
 #endif
-  struct sigaction act_sigterm;
-  struct sigaction act_sighup;
+  sigset_t signals_to_block;
 
   char fsal_path_lib[MAXPATHLEN];
 
@@ -154,6 +133,8 @@ int main(int argc, char *argv[])
     }
   else
     strncpy(host_name, localmachine, MAXHOSTNAMELEN);
+
+  strcpy(config_path, my_config_path);
 
   /* now parsing options with getopt */
   while((c = getopt(argc, argv, options)) != EOF)
@@ -186,7 +167,7 @@ int main(int argc, char *argv[])
 
         case 'f':
           /* config file */
-          strncpy(my_config_path, optarg, MAXPATHLEN);
+          strncpy(config_path, optarg, MAXPATHLEN);
           break;
 
         case 'd':
@@ -304,38 +285,18 @@ int main(int argc, char *argv[])
   signal(SIGXFSZ, SIG_IGN);
 #endif
 
-  /* Set the signal handler */
-  memset(&act_sigterm, 0, sizeof(act_sigterm));
-  act_sigterm.sa_flags = 0;
-  act_sigterm.sa_handler = action_sigterm;
-
-  if(sigaction(SIGTERM, &act_sigterm, NULL) == -1 )
-    {
-      LogFatal(COMPONENT_INIT,
-               "Could not start nfs daemon (sigaction(SIGTERM) error %d (%s)",
-               errno, strerror(errno));
-    }
-  else
-    LogInfo(COMPONENT_INIT,
-            "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
-
-  /* Set the signal handler */
-  memset(&act_sighup, 0, sizeof(act_sighup));
-  act_sighup.sa_flags = 0;
-  act_sighup.sa_handler = action_sighup;
-  if(sigaction(SIGHUP, &act_sighup, NULL) == -1)
-    {
-      LogFatal(COMPONENT_INIT,
-               "Could not start nfs daemon (sigaction(SIGHUP) error %d (%s)",
-               errno, strerror(errno));
-    }
-  else
-    LogInfo(COMPONENT_INIT,
-            "Signal SIGHUP (daemon export reload) is ready to be used");
-
+  /* Set up for the signal handler.
+   * Blocks the signals the signal handler will handle.
+   */
+  sigemptyset(&signals_to_block);
+  sigaddset(&signals_to_block, SIGTERM);
+  sigaddset(&signals_to_block, SIGHUP);
+  if(pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL) != 0)
+    LogFatal(COMPONENT_INIT,
+             "Could not start nfs daemon, pthread_sigmask failed");
 
 #ifdef _USE_SHARED_FSAL
-  nfs_get_fsalpathlib_conf(my_config_path, fsal_path_lib);
+  nfs_get_fsalpathlib_conf(config_path, fsal_path_lib);
 #endif                          /* _USE_SHARED_FSAL */
 
   /* Load the FSAL library (if needed) */
@@ -361,7 +322,7 @@ int main(int argc, char *argv[])
 
   /* parse configuration file */
 
-  if(nfs_set_param_from_conf(&my_nfs_start_info, my_config_path))
+  if(nfs_set_param_from_conf(&my_nfs_start_info))
     {
       LogFatal(COMPONENT_INIT, "NFS MAIN: Error parsing configuration file.");
     }

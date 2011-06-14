@@ -80,7 +80,7 @@ int rebuild_export_list()
 
   /* If no configuration file is given, then the caller must want to reparse the
    * configuration file from startup. */
-  if (config_path == NULL)
+  if(config_path[0] == '\0')
     {
       LogCrit(COMPONENT_CONFIG,
               "Error: No configuration file was specified for reloading exports.");
@@ -168,10 +168,10 @@ void *admin_thread(void *Arg)
     {
       /* Failed init */
       LogFatal(COMPONENT_MAIN,
-               "ADMIN THREAD: Memory manager could not be initialized");
+               "Memory manager could not be initialized");
     }
   LogInfo(COMPONENT_MAIN,
-          "ADMIN THREAD: Memory manager successfully initialized");
+          "Memory manager successfully initialized");
 #endif
 
   while(1)
@@ -185,7 +185,7 @@ void *admin_thread(void *Arg)
       if (!rebuild_export_list())
         {
           LogCrit(COMPONENT_MAIN,
-                  "Error, attempt to reload exports list from config file failed.");
+                  "Attempt to reload exports list from config file failed.");
           continue;
         }
 
@@ -200,6 +200,9 @@ void *admin_thread(void *Arg)
         }
 
       ChangeoverExports();
+
+      LogEvent(COMPONENT_MAIN,
+               "Exports reloaded and active");
 
       /* wake_workers could return PAUSE_PAUSE, but we don't have to do
        * anything special in that case.

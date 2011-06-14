@@ -67,7 +67,7 @@ void nfs_set_param_default();
  * nfs_set_param_from_conf:
  * Load parameters from config file.
  */
-int nfs_set_param_from_conf(nfs_start_info_t * p_start_info, char *config_file);
+int nfs_set_param_from_conf(nfs_start_info_t * p_start_info);
 
 /**
  * nfs_check_param_consistency:
@@ -80,12 +80,6 @@ int nfs_check_param_consistency();
  * start NFS service
  */
 void nfs_start(nfs_start_info_t * p_start_info);
-
-/**
- * nfs_stop:
- * stop NFS service and exit
- */
-void nfs_stop();
 
 void nfs_get_fsalpathlib_conf(char *configPath, char *PathLib);
 

@@ -58,7 +58,6 @@ static nfs_start_info_t nfs_start_info = {
   .flush_behaviour = CACHE_CONTENT_FLUSH_AND_DELETE,
 };
 
-static char config_path[MAXPATHLEN] = "";       /* None by default */
 char log_path[MAXPATHLEN] = "";
 char exec_name[MAXPATHLEN] = "ganesha-nfsd";
 char host_name[MAXHOSTNAMELEN] = "localhost";
@@ -287,7 +286,7 @@ int ganefuse_main(int argc, char *argv[],
 
   if(strlen(config_path) > 0)
     {
-      if(nfs_set_param_from_conf(&nfs_start_info, config_path))
+      if(nfs_set_param_from_conf(&nfs_start_info))
         {
           LogCrit(COMPONENT_MAIN,
                   "NFS MAIN: Error parsing configuration file.");

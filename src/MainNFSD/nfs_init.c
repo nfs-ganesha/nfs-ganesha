@@ -66,6 +66,7 @@
 #include <sys/resource.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 
 /* global information exported to all layers (as extern vars) */
 
@@ -89,37 +90,9 @@ pthread_t stat_thrid;
 pthread_t stat_exporter_thrid;
 pthread_t admin_thrid;
 pthread_t fcc_gc_thrid;
-pthread_t sigmgr_thrid ;
+pthread_t sigmgr_thrid;
 
 char config_path[MAXPATHLEN];
-
-extern char my_config_path[MAXPATHLEN];
-
-/* States managed by signal handler */
-unsigned int sigterm_triggered = FALSE ;
-unsigned int sighup_triggered = FALSE ;
-
-static void operate_on_sigterm()
-{
-  static int once = 0 ;
-
-  LogEvent(COMPONENT_MAIN,
-           "SIGTERM_HANDLER: Received SIGTERM.... initiating daemon shutdown");
-
-  if( once == 0 )
-   {
-     once += 1 ;
-     nfs_stop();
-   }
-}                               /* action_sigterm */
-
-static void operate_on_sighup()
-{
-  LogEvent(COMPONENT_MAIN,
-           "SIGHUP_HANDLER: Received SIGHUP.... initiating export list reload");
-
-  admin_replace_exports();
-}                               /* action_sigsigh */
 
 /**
  *
@@ -132,27 +105,61 @@ static void operate_on_sighup()
 void *sigmgr_thread( void * arg )
 {
   SetNameFunction("sigmgr");
+  int signal_caught = 0;
+  fsal_status_t st;
 
-  while( 1 ) /* Never ending loop */
-   {
-     sleep( 1 ) ;
+  /* Loop until we catch SIGTERM */
+  while(signal_caught != SIGTERM)
+    {
+      sigset_t signals_to_catch;
+      sigemptyset(&signals_to_catch);
+      sigaddset(&signals_to_catch, SIGTERM);
+      sigaddset(&signals_to_catch, SIGHUP);
+      if(sigwait(&signals_to_catch, &signal_caught) != 0)
+        {
+          LogFullDebug(COMPONENT_THREAD,
+                       "sigwait exited with error");
+          continue;
+        }
+      if(signal_caught == SIGHUP)
+        {
+          LogEvent(COMPONENT_MAIN,
+                   "SIGHUP_HANDLER: Received SIGHUP.... initiating export list reload");
+          admin_replace_exports();
+        }
+    }
 
-     if( sigterm_triggered == TRUE )
-      {
-        operate_on_sigterm() ;
-        sigterm_triggered = FALSE ;
-      }
+  LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
+  LogDebug(COMPONENT_THREAD, "Stopping worker threads");
 
-     if( sighup_triggered == TRUE )
-      {
-        operate_on_sighup() ;
-        sighup_triggered = FALSE ;
-      }
-   }
+  if(pause_workers(PAUSE_SHUTDOWN) != PAUSE_EXIT)
+    LogDebug(COMPONENT_THREAD,
+             "Unexpected return code from pause_workers");
+  else
+    LogDebug(COMPONENT_THREAD,
+             "Done waiting for worker threads to exit");
 
-  /* This statement is never reached */
-  return NULL ;
-} /* sigmgr_thread */
+  LogEvent(COMPONENT_MAIN, "NFS EXIT: synchonizing FSAL");
+
+#ifdef _USE_MFSL
+  st = MFSL_terminate();
+
+  if(FSAL_IS_ERROR(st))
+    LogCrit(COMPONENT_MAIN, "NFS EXIT: ERROR %d.%d while synchonizing MFSL",
+            st.major, st.minor);
+#endif
+
+  st = FSAL_terminate();
+
+  if(FSAL_IS_ERROR(st))
+    LogCrit(COMPONENT_MAIN, "NFS EXIT: ERROR %d.%d while synchonizing FSAL",
+            st.major, st.minor);
+
+  LogDebug(COMPONENT_THREAD, "sigmgr thread exiting");
+
+  /* Might as well exit - no need for this thread any more */
+  return NULL;
+}                    /* sigmgr_thread */
 
 /**
  * nfs_prereq_init:
@@ -621,7 +628,7 @@ void nfs_set_param_default()
  * nfs_set_param_from_conf:
  * Load parameters from config file.
  */
-int nfs_set_param_from_conf(nfs_start_info_t * p_start_info, char *config_file)
+int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
 {
   config_file_t config_struct;
   int rc;
@@ -629,16 +636,14 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info, char *config_file)
   cache_inode_status_t cache_inode_status;
   cache_content_status_t cache_content_status;
 
-  strncpy(config_path, config_file, MAXPATHLEN);
-
   /* First, parse the configuration file */
 
-  config_struct = config_ParseFile(config_file);
+  config_struct = config_ParseFile(config_path);
 
   if(!config_struct)
     {
       LogFatal(COMPONENT_INIT, "Error while parsing %s: %s",
-               config_file, config_GetErrorMsg());
+               config_path, config_GetErrorMsg());
     }
 #ifndef _NO_BUDDY_SYSTEM
 
@@ -1324,32 +1329,38 @@ static void nfs_Start_threads()
   pthread_attr_t attr_thr;
   unsigned long i = 0;
 
+  LogDebug(COMPONENT_THREAD,
+           "Starting threads");
+
   /* Init for thread parameter (mostly for scheduling) */
   if(pthread_attr_init(&attr_thr) != 0)
-    LogDebug(COMPONENT_INIT, "can't init pthread's attributes");
+    LogDebug(COMPONENT_THREAD, "can't init pthread's attributes");
 
   if(pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) != 0)
-    LogDebug(COMPONENT_INIT, "can't set pthread's scope");
+    LogDebug(COMPONENT_THREAD, "can't set pthread's scope");
 
   if(pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE) != 0)
-    LogDebug(COMPONENT_INIT, "can't set pthread's join state");
+    LogDebug(COMPONENT_THREAD, "can't set pthread's join state");
 
   if(pthread_attr_setstacksize(&attr_thr, THREAD_STACK_SIZE) != 0)
-    LogDebug(COMPONENT_INIT, "can't set pthread's stack size");
+    LogDebug(COMPONENT_THREAD, "can't set pthread's stack size");
 
   /* Initialisation of Threads's fridge */
   if( fridgethr_init() != 0 )
    {
-     LogFatal(COMPONENT_INIT, "can't run fridgethr_init");
+     LogFatal(COMPONENT_THREAD, "can't run fridgethr_init");
    }
 
   /* Starting the thread dedicated to signal handling */
   if( ( rc = pthread_create( &sigmgr_thrid, &attr_thr, sigmgr_thread, (void *)NULL ) ) != 0 )
     {
-      LogFatal(COMPONENT_INIT,
+      LogFatal(COMPONENT_THREAD,
                "Could not create sigmgr_thread, error = %d (%s)",
                errno, strerror(errno));
     }
+
+  LogDebug(COMPONENT_THREAD,
+           "sigmgr thread started");
 
   /* Starting all of the worker thread */
   for(i = 0; i < nfs_param.core_param.nb_worker; i++)
@@ -1357,12 +1368,13 @@ static void nfs_Start_threads()
       if((rc =
           pthread_create(&(worker_thrid[i]), &attr_thr, worker_thread, (void *)i)) != 0)
         {
-          LogFatal(COMPONENT_INIT,
+          LogFatal(COMPONENT_THREAD,
                    "Could not create worker_thread #%lu, error = %d (%s)",
                    i, errno, strerror(errno));
         }
     }
-  LogEvent(COMPONENT_INIT, "%d worker threads were started successfully",
+  LogEvent(COMPONENT_THREAD,
+           "%d worker threads were started successfully",
 	   nfs_param.core_param.nb_worker);
 
   /* Starting the rpc dispatcher thread */
@@ -1370,30 +1382,30 @@ static void nfs_Start_threads()
       pthread_create(&rpc_dispatcher_thrid, &attr_thr, rpc_dispatcher_thread,
                      &nfs_param)) != 0)
     {
-      LogFatal(COMPONENT_INIT,
+      LogFatal(COMPONENT_THREAD,
                "Could not create rpc_dispatcher_thread, error = %d (%s)",
                errno, strerror(errno));
     }
-  LogEvent(COMPONENT_INIT, "rpc dispatcher thread was started successfully");
+  LogEvent(COMPONENT_THREAD, "rpc dispatcher thread was started successfully");
 
   /* Starting the admin thread */
   if((rc = pthread_create(&admin_thrid, &attr_thr, admin_thread, NULL)) != 0)
     {
-      LogFatal(COMPONENT_INIT,
+      LogFatal(COMPONENT_THREAD,
                "Could not create admin_thread, error = %d (%s)",
                errno, strerror(errno));
     }
-  LogEvent(COMPONENT_INIT, "admin thread was started successfully");
+  LogEvent(COMPONENT_THREAD, "admin thread was started successfully");
 
   /* Starting the stats thread */
   if((rc =
       pthread_create(&stat_thrid, &attr_thr, stats_thread, (void *)workers_data)) != 0)
     {
-      LogFatal(COMPONENT_INIT,
+      LogFatal(COMPONENT_THREAD,
                "Could not create stats_thread, error = %d (%s)",
                errno, strerror(errno));
     }
-  LogEvent(COMPONENT_INIT, "statistics thread was started successfully");
+  LogEvent(COMPONENT_THREAD, "statistics thread was started successfully");
 
 #ifdef _USE_STAT_EXPORTER
 
@@ -1401,22 +1413,22 @@ static void nfs_Start_threads()
   if((rc =
       pthread_create(&stat_thrid, &attr_thr, long_processing_thread, (void *)workers_data)) != 0)
     {
-      LogFatal(COMPONENT_INIT,
+      LogFatal(COMPONENT_THREAD,
                "Could not create long_processing_thread, error = %d (%s)",
                errno, strerror(errno));
     }
-  LogEvent(COMPONENT_INIT,
+  LogEvent(COMPONENT_THREAD,
            "long processing threshold thread was started successfully");
 
   /* Starting the stat exporter thread */
   if((rc =
       pthread_create(&stat_exporter_thrid, &attr_thr, stat_exporter_thread, (void *)workers_data)) != 0)
     {
-      LogFatal(COMPONENT_INIT,
+      LogFatal(COMPONENT_THREAD,
                "Could not create stat_exporter_thread, error = %d (%s)",
                errno, strerror(errno));
     }
-  LogEvent(COMPONENT_INIT,
+  LogEvent(COMPONENT_THREAD,
            "statistics exporter thread was started successfully");
 
 #endif      /*  _USE_STAT_EXPORTER */
@@ -1428,11 +1440,11 @@ static void nfs_Start_threads()
           pthread_create(&fcc_gc_thrid, &attr_thr, file_content_gc_thread,
                          (void *)NULL)) != 0)
         {
-          LogFatal(COMPONENT_INIT,
+          LogFatal(COMPONENT_THREAD,
                    "Could not create file_content_gc_thread, error = %d (%s)",
                    errno, strerror(errno));
         }
-      LogEvent(COMPONENT_INIT,
+      LogEvent(COMPONENT_THREAD,
                "file content gc thread was started successfully");
     }
 
@@ -1837,14 +1849,14 @@ static void nfs_Start_file_content_flushers(unsigned int nb_threads)
           pthread_create(&(flusher_thrid[i]), &attr_thr, nfs_file_content_flush_thread,
                          (void *)&flush_info[i])) != 0)
         {
-          LogError(COMPONENT_INIT, ERR_SYS, ERR_PTHREAD_CREATE, rc);
+          LogError(COMPONENT_THREAD, ERR_SYS, ERR_PTHREAD_CREATE, rc);
           Fatal();
         }
       else
-        LogInfo(COMPONENT_INIT, "datacache flusher #%lu started", i);
+        LogInfo(COMPONENT_THREAD, "datacache flusher #%lu started", i);
 
     }
-  LogInfo(COMPONENT_INIT,
+  LogInfo(COMPONENT_THREAD,
           "%u datacache flushers threads were started successfully",
           nb_threads);
 
@@ -1864,7 +1876,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
 
 #if 0
   /* Will remain as long as all FSAL are not yet in new format */
-  printf(COMPONENT_INIT, "---> fsal_handle_t:%u\n", sizeof(proxyfsal_handle_t));
+  printf("---> fsal_handle_t:%u\n", sizeof(proxyfsal_handle_t));
   printf("---> fsal_op_context_t:%u\n", sizeof(proxyfsal_op_context_t));
   printf("---> fsal_file_t:%u\n", sizeof(proxyfsal_file_t));
   printf("---> fsal_dir_t:%u\n", sizeof(proxyfsal_dir_t));
@@ -2042,7 +2054,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
             {
               p_start_info->nb_flush_threads =
                   nfs_param.fsal_param.fsal_info.max_fs_calls;
-              LogCrit(COMPONENT_INIT,
+              LogCrit(COMPONENT_THREAD,
                       "Too much flushers, there should be less flushers than FSAL::max_fs_calls. Using %u threads instead",
                       nfs_param.fsal_param.fsal_info.max_fs_calls);
             }
@@ -2050,7 +2062,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
 
       nfs_Start_file_content_flushers(p_start_info->nb_flush_threads);
 
-      LogDebug(COMPONENT_INIT, "Waiting for datacache flushers to exit");
+      LogDebug(COMPONENT_THREAD, "Waiting for datacache flushers to exit");
 
       /* Wait for the thread to terminate */
       for(i = 0; i < p_start_info->nb_flush_threads; i++)
@@ -2063,20 +2075,20 @@ void nfs_start(nfs_start_info_t * p_start_info)
           nb_errors += flush_info[i].nb_errors;
           nb_orphans += flush_info[i].nb_orphans;
 
-          LogDebug(COMPONENT_INIT, "Flusher #%u terminated", i);
+          LogDebug(COMPONENT_THREAD, "Flusher #%u terminated", i);
         }
 
-      LogDebug(COMPONENT_INIT, "Nbr files flushed sucessfully: %u",
+      LogDebug(COMPONENT_MAIN, "Nbr files flushed sucessfully: %u",
                nb_flushed);
-      LogDebug(COMPONENT_INIT, "Nbr files too young          : %u",
+      LogDebug(COMPONENT_MAIN, "Nbr files too young          : %u",
                nb_too_young);
-      LogDebug(COMPONENT_INIT, "Nbr flush errors             : %u",
+      LogDebug(COMPONENT_MAIN, "Nbr flush errors             : %u",
                nb_errors);
-      LogDebug(COMPONENT_INIT, "Orphan entries removed       : %u",
+      LogDebug(COMPONENT_MAIN, "Orphan entries removed       : %u",
                nb_orphans);
 
       /* Tell the admin that flush is done */
-      LogEvent(COMPONENT_INIT,
+      LogEvent(COMPONENT_MAIN,
                "Flush of the data cache is done, nfs daemon will now exit");
     }
   else
@@ -2145,56 +2157,14 @@ void nfs_start(nfs_start_info_t * p_start_info)
 
       /* Wait for dispatcher to exit */
       LogDebug(COMPONENT_THREAD,
-               "Wait for rpc dispatcher thread to exit");
-      pthread_join(rpc_dispatcher_thrid, NULL);
-
-      LogEvent(COMPONENT_INIT,
-               "NFS EXIT: rpc dispatcher thread has exited and was joined, nfs daemon exiting...");
+               "Wait for sigmgr thread to exit");
+      pthread_join(sigmgr_thrid, NULL);
     }
 
   /* Regular exit */
-  LogEvent(COMPONENT_INIT,
-           "NFS EXIT: regular exit, nfs daemon will stop immediately");
+  LogEvent(COMPONENT_MAIN,
+           "NFS EXIT: regular exit");
   Cleanup();
 
   /* let main return 0 to exit */
 }                               /* nfs_start */
-
-/**
- * nfs_stop:
- * stopping NFS service
- */
-void nfs_stop()
-{
-  fsal_status_t st;
-
-  LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
-  LogDebug(COMPONENT_THREAD, "Stopping worker threads");
-
-  if(pause_workers(PAUSE_SHUTDOWN) != PAUSE_EXIT)
-    LogDebug(COMPONENT_THREAD,
-             "Unexpected return code from pause_workers");
-
-  LogDebug(COMPONENT_THREAD,
-           "Done waiting for worker threads to exit");
-
-  LogEvent(COMPONENT_MAIN, "NFS EXIT: synchonizing FSAL");
-
-#ifdef _USE_MFSL
-  st = MFSL_terminate();
-
-  if(FSAL_IS_ERROR(st))
-    LogCrit(COMPONENT_INIT, "NFS EXIT: ERROR %d.%d while synchonizing MFSL",
-            st.major, st.minor);
-#endif
-
-  st = FSAL_terminate();
-
-  if(FSAL_IS_ERROR(st))
-    LogCrit(COMPONENT_MAIN, "NFS EXIT: ERROR %d.%d while synchonizing FSAL",
-            st.major, st.minor);
-
-  LogEvent(COMPONENT_MAIN, "NFS EXIT: regular exit");
-  Cleanup();
-  exit(0);
-}
