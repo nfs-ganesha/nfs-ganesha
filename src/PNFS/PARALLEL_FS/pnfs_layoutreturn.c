@@ -53,9 +53,9 @@
 
 /**
  *
- * pnfs_lustre_layoutreturn: manages the OP4_LAYOUTRETURN operation for pNFS/File on top of LUSTRE
+ * pnfs_parallel_fs_layoutreturn: manages the OP4_LAYOUTRETURN operation for pNFS/File on top of PARALLE_FS
  *
- * Manages the OP4_LAYOUTRETURNT operation for pNFS/File on top of LUSTRE
+ * Manages the OP4_LAYOUTRETURNT operation for pNFS/File on top of PARALLE_FS
  *
  * @param playoutreturnargs [IN]  pointer to layoutreturn's arguments
  * @param data           [INOUT]  pointer to related compoud request
@@ -65,7 +65,7 @@
  *
  */
 
-nfsstat4 pnfs_lustre_layoutreturn( LAYOUTRETURN4args  * playoutreturnargs,
+nfsstat4 pnfs_parallel_fs_layoutreturn( LAYOUTRETURN4args  * playoutreturnargs,
 			           compound_data_t    * data,
 				   LAYOUTRETURN4res   * playoutreturnres )
 {
@@ -73,4 +73,4 @@ nfsstat4 pnfs_lustre_layoutreturn( LAYOUTRETURN4args  * playoutreturnargs,
   playoutreturnres->lorr_status = NFS4_OK;
 
   return playoutreturnres->lorr_status  ;
-}                               /* pnfs_lustre_layoutreturn */
+}                               /* pnfs_parallel_fs_layoutreturn */
