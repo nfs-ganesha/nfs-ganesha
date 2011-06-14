@@ -38,10 +38,7 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 #include "pnfs.h" 
-#include "pnfs_service.h" 
-
-extern nfs_parameter_t nfs_param ;
-
+#include "pnfs_service.h"
 
 /**
  *

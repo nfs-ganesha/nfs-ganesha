@@ -63,26 +63,25 @@ void nfs_prereq_init(char *program_name, char *host_name, int debug_level, char 
  * nfs_set_param_default:
  * Set p_nfs_param structure to default parameters.
  */
-void nfs_set_param_default(nfs_parameter_t * p_nfs_param);
+void nfs_set_param_default();
 
 /**
  * nfs_set_param_from_conf:
  * Load parameters from config file.
  */
-int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
-                            nfs_start_info_t * p_start_info, char *config_file);
+int nfs_set_param_from_conf(nfs_start_info_t * p_start_info, char *config_file);
 
 /**
  * nfs_check_param_consistency:
  * Checks parameters concistency (limits, ...)
  */
-int nfs_check_param_consistency(nfs_parameter_t * p_nfs_param);
+int nfs_check_param_consistency();
 
 /**
  * nfs_start:
  * start NFS service
  */
-void nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info);
+void nfs_start(nfs_start_info_t * p_start_info);
 
 /**
  * nfs_stop:

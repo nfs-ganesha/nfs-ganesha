@@ -358,25 +358,25 @@ int main(int argc, char *argv[])
 
   /* initialize default parameters */
 
-  nfs_set_param_default(&nfs_param);
+  nfs_set_param_default();
 
   /* parse configuration file */
 
-  if(nfs_set_param_from_conf(&nfs_param, &my_nfs_start_info, my_config_path))
+  if(nfs_set_param_from_conf(&my_nfs_start_info, my_config_path))
     {
       LogFatal(COMPONENT_INIT, "NFS MAIN: Error parsing configuration file.");
     }
 
   /* check parameters consitency */
 
-  if(nfs_check_param_consistency(&nfs_param))
+  if(nfs_check_param_consistency())
     {
       LogFatal(COMPONENT_INIT,
 	       "NFS MAIN: Inconsistent parameters found, could have significant impact on the daemon behavior");
     }
 
   /* Everything seems to be OK! We can now start service threads */
-  nfs_start(&nfs_param, &my_nfs_start_info);
+  nfs_start(&my_nfs_start_info);
 
   return 0;
 

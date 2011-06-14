@@ -920,7 +920,7 @@ free_req:
  * @return Nothing (void function), but calls svcerr_* function to notify the client when an error occures.
  *
  */
-void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
+void nfs_rpc_getreq(fd_set * readfds)
 {
   register SVCXPRT *xprt;
   register int bit;
@@ -1119,7 +1119,7 @@ int print_pending_request(LRU_data_t data, char *str)
  *
  */
 
-void rpc_dispatcher_svc_run(nfs_parameter_t * pnfs_param)
+void rpc_dispatcher_svc_run()
 {
   fd_set readfdset;
   int rc = 0;
@@ -1159,7 +1159,7 @@ void rpc_dispatcher_svc_run(nfs_parameter_t * pnfs_param)
 
         default:
           LogFullDebug(COMPONENT_DISPATCH, "NFS SVC RUN: request(s) received");
-          nfs_rpc_getreq(&readfdset, pnfs_param);
+          nfs_rpc_getreq(&readfdset);
           break;
 
         }                       /* switch */
@@ -1185,23 +1185,20 @@ void rpc_dispatcher_svc_run(nfs_parameter_t * pnfs_param)
  * Thead used for RPC dispatching. It gets the requests and then spool it to one of the worker's LRU.
  * The worker chosen is the one with the smaller load (its LRU is the shorter one).
  *
- * @param IndexArg the index for the worker thread (unused)
+ * @param Arg (unused)
  *
  * @return Pointer to the result (but this function will mostly loop forever).
  *
  */
 void *rpc_dispatcher_thread(void *Arg)
 {
-  int rc = 0;
-  nfs_parameter_t *pnfs_param = (nfs_parameter_t *) Arg;
-
   SetNameFunction("dispatch_thr");
 
 #ifndef _NO_BUDDY_SYSTEM
   /* Initialisation of the Buddy Malloc */
   LogInfo(COMPONENT_DISPATCH,
           "Initialization of memory manager");
-  if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
+  if(BuddyInit(&nfs_param.buddy_param_worker) != BUDDY_SUCCESS)
     LogFatal(COMPONENT_DISPATCH,
              "Memory manager could not be initialized");
 #endif
@@ -1212,7 +1209,7 @@ void *rpc_dispatcher_thread(void *Arg)
   LogDebug(COMPONENT_DISPATCH,
            "My pthread id is %p", (caddr_t) pthread_self());
 
-  rpc_dispatcher_svc_run(pnfs_param);
+  rpc_dispatcher_svc_run();
 
   return NULL;
 }                               /* rpc_dispatcher_thread */

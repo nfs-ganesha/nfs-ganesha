@@ -40,9 +40,6 @@
 #include "pnfs.h" 
 #include "pnfs_service.h" 
 
-extern nfs_parameter_t nfs_param ;
-
-
 /**
  *
  * pnfs_lustre_getdeviceinfo: manages the OP4_GETDEVICEINFO operation for pNFS/File on top of LUSTRE

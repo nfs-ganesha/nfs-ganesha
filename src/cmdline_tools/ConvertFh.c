@@ -54,8 +54,6 @@
 short HashFileID4(u_int64_t fileid4);
 time_t ServerBootTime;
 
-nfs_parameter_t nfs_param;
-
 char ganesha_exec_path[MAXPATHLEN];     /* Just because the symbol is required to compile */
 
 /* determine buffer type and display it */
@@ -269,11 +267,11 @@ int main(int argc, char *argv[])
 
   /* initialize default parameters */
 
-  nfs_set_param_default(&nfs_param);
+  nfs_set_param_default();
 
   /* parse configuration file */
 
-  if(nfs_set_param_from_conf(&nfs_param, &nfs_start_info, path_cfg))
+  if(nfs_set_param_from_conf(&nfs_start_info, path_cfg))
     {
       fprintf(stderr, "Error parsing configuration file '%s'", path_cfg);
       exit(1);
@@ -281,7 +279,7 @@ int main(int argc, char *argv[])
 
   /* check parameters consitency */
 
-  if(nfs_check_param_consistency(&nfs_param))
+  if(nfs_check_param_consistency())
     {
       fprintf(stderr, "Inconsistent parameters found");
       exit(1);

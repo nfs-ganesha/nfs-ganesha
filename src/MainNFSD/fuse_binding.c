@@ -133,7 +133,6 @@ int ganefuse_main(int argc, char *argv[],
   char *tempo_exec_name = NULL;
   char localmachine[MAXHOSTNAMELEN];
   int c;
-  nfs_parameter_t nfs_param;
   pid_t son_pid;
   struct sigaction act_sigusr1;
 
@@ -320,7 +319,7 @@ int ganefuse_main(int argc, char *argv[],
   memset(&nfs_param, 0, sizeof(nfs_param));
 
   /* initialize default parameters */
-  nfs_set_param_default(&nfs_param);
+  nfs_set_param_default();
 
   /* return all errors */
   nfs_param.core_param.drop_io_errors = FALSE;
@@ -330,7 +329,7 @@ int ganefuse_main(int argc, char *argv[],
 
   if(strlen(config_path) > 0)
     {
-      if(nfs_set_param_from_conf(&nfs_param, &nfs_start_info, config_path))
+      if(nfs_set_param_from_conf(&nfs_start_info, config_path))
         {
           LogCrit(COMPONENT_MAIN,
                   "NFS MAIN: Error parsing configuration file.");
@@ -369,7 +368,7 @@ int ganefuse_main(int argc, char *argv[],
 
   /* check parameters consitency */
 
-  if(nfs_check_param_consistency(&nfs_param))
+  if(nfs_check_param_consistency())
     {
       LogMajor(COMPONENT_MAIN,
                "NFS MAIN: Inconsistent parameters found");
@@ -379,8 +378,9 @@ int ganefuse_main(int argc, char *argv[],
     }
 
   /* Everything seems to be OK! We can now start service threads */
-  nfs_start(&nfs_param, &nfs_start_info);
+  nfs_start(&nfs_start_info);
 
   return 0;
 
 }
+fart

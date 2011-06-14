@@ -1242,12 +1242,12 @@ void Print_param_worker_in_log(nfs_worker_parameter_t * pparam)
  * @return none (void function)
  *
  */
-void Print_param_in_log(nfs_parameter_t * pparam)
+void Print_param_in_log()
 {
   LogInfo(COMPONENT_INIT,
           "NFS PARAM : core_param.nb_worker = %d",
-          pparam->core_param.nb_worker);
-  Print_param_worker_in_log(&(pparam->worker_param));
+          nfs_param.core_param.nb_worker);
+  Print_param_worker_in_log(&nfs_param.worker_param);
 }                               /* Print_param_in_log */
 
 void nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)

@@ -627,7 +627,7 @@ exportlist_t *RemoveExportEntry(exportlist_t * exportEntry);
 /* Tools */
 unsigned int get_rpc_xid(struct svc_req *reqp);
 void Print_param_worker_in_log(nfs_worker_parameter_t * pparam);
-void Print_param_in_log(nfs_parameter_t * pparam);
+void Print_param_in_log();
 
 void nfs_reset_stats(void);
 
