@@ -14,11 +14,16 @@
 nfs_parameter_t nfs_param;
 char ganesha_exec_path[MAXPATHLEN] = "/usr/bin/gpfs.ganesha.nfsd";
 
-#define MOUNT 0
-#define READ 1
-#define WRITE 2
-#define MDONLY_READ 3
-#define MDONLY_WRITE 4
+#undef ANON_UID
+#undef ANON_GID
+
+#define OP_MOUNT 0
+#define OP_READ 1
+#define OP_WRITE 2
+#define OP_MDONLY_READ 3
+#define OP_MDONLY_WRITE 4
+
+const char *opnames[] = {"MOUNT", "READ", "WRITE", "MDONLY_READ", "MDONLY_WRITE" };
 
 #define ROOT_UID 0
 #define ROOT_GID 0
@@ -29,7 +34,7 @@ char ganesha_exec_path[MAXPATHLEN] = "/usr/bin/gpfs.ganesha.nfsd";
 #define INVALID_UID -9999
 #define INVALID_GID -9999
 
-void init_vars(hash_table_t **ht_ip_stats, struct prealloc_pool **ip_stats_pool)
+void init_vars(hash_table_t **ht_ip_stats, struct prealloc_pool *ip_stats_pool)
 {
   int rc;
 
@@ -50,7 +55,6 @@ void init_vars(hash_table_t **ht_ip_stats, struct prealloc_pool **ip_stats_pool)
   nfs_set_param_default(&nfs_param);
 
   /*ht_ip_stats*/
-  return;
   *ht_ip_stats = nfs_Init_ip_stats(nfs_param.ip_stats_param);
   /*  if((*ht_ip_stats = HashTable_Init(nfs_param.ip_stats_param.hash_param)) == NULL)
     {
@@ -65,12 +69,12 @@ void init_vars(hash_table_t **ht_ip_stats, struct prealloc_pool **ip_stats_pool)
     }
 
   /*ip_stats_pool*/
-  MakePool(*ip_stats_pool,
+  MakePool(ip_stats_pool,
            100,//           nfs_param.worker_param.nb_ip_stats_prealloc,
            nfs_ip_stats_t, NULL, NULL);
-  NamePool(*ip_stats_pool, "IP Stats Cache Pool %d", i);
+  NamePool(ip_stats_pool, "IP Stats Cache Pool");
 
-  if(!IsPoolPreallocated(*ip_stats_pool))
+  if(!IsPoolPreallocated(ip_stats_pool))
     {
       LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating IP stats cache pool");
       LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
@@ -89,13 +93,13 @@ struct user_cred test_access(char *addr, char *hostname,
   struct user_cred user_credentials;
   unsigned int nfs_prog;
   unsigned int mnt_prog;
-  struct addrinfo *res;
-  struct sockaddr_storage *pssaddr;
+  sockaddr_t ssaddr;
+  sockaddr_t *pssaddr = &ssaddr;
   int errcode;
   int export_check_result;
   bool_t proc_makes_write;
 
-  if (operation == WRITE || operation == MDONLY_WRITE)
+  if (operation == OP_WRITE || operation == OP_MDONLY_WRITE)
     proc_makes_write = TRUE;
   else
     proc_makes_write = FALSE;
@@ -104,24 +108,23 @@ struct user_cred test_access(char *addr, char *hostname,
   user_credentials.caller_gid = INVALID_GID;
 
   /*pssaddr*/
-  errcode = getaddrinfo(addr, NULL, NULL, &res);
+  errcode = ipstring_to_sockaddr(addr, pssaddr);
   if (errcode != 0)
     {
       perror ("getaddrinfo");
       return user_credentials;
     }
-  pssaddr = (struct sockaddr_storage *) res;
 
   /* ptr_req */
   memset(&ptr_req, 0, sizeof(struct svc_req));
   ptr_req.rq_cred.oa_flavor = AUTH_UNIX;
   ptr_req.rq_proc = 23232;
   /*nfs_prog*/
-  nfs_prog = nfs_param.core_param.nfs_program;
+  nfs_prog = nfs_param.core_param.program[P_NFS];
 
   /*mnt_prog*/
-  mnt_prog = nfs_param.core_param.mnt_program;
-  if (operation == MOUNT)
+  mnt_prog = nfs_param.core_param.program[P_MNT];
+  if (operation == OP_MOUNT)
     ptr_req.rq_prog = mnt_prog;
   else
     ptr_req.rq_prog = nfs_prog;
@@ -150,13 +153,12 @@ struct user_cred test_access(char *addr, char *hostname,
 int main(int argc, char *argv[])
 {
   hash_table_t *ht_ip_stats;
-  struct prealloc_pool *ip_stats_pool;
+  struct prealloc_pool ip_stats_pool;
   exportlist_t pexport;
   int root, read, write, mdonly_read, mdonly_write,
-    root_user, uid, operation, export_check_result,
-    predicted_result, mount, nonroot, accesstype,
+    root_user, uid, operation,
+    nonroot, accesstype,
     squashall, gid, return_status=0;
-  bool_t proc_makes_write;
   char *ip = "192.0.2.10";
   //  char *match_str = "192.0.2.10";
   char *match_str = "*";
@@ -213,21 +215,11 @@ int main(int argc, char *argv[])
 			gid = ROOT_GID;
 		      }
                       
-                      printf("TEST: %d %d %d %d %d : %d SQ%d -- ",
-                             root, read, write, mdonly_read, mdonly_write,uid,squashall);
-                      if (operation == MOUNT)
-                        printf("MOUNT");
-                      else if (operation == READ)
-                        printf("READ");
-                      else if (operation == WRITE)
-                        printf("WRITE");
-                      else if (operation == MDONLY_READ)
-                        printf("MDONLY_READ");
-                      else if (operation == MDONLY_WRITE)
-                        printf("MDONLY_WRITE");
+                      printf("TEST: %d %d %d %d %d : %d SQ%d -- %s",
+                             root, read, write, mdonly_read, mdonly_write, uid, squashall, opnames[operation]);
 		      struct user_cred user_credentials;
 
-                      user_credentials = test_access(ip, hostname, ht_ip_stats, ip_stats_pool,
+                      user_credentials = test_access(ip, hostname, ht_ip_stats, &ip_stats_pool,
                                                         &pexport, uid, gid, operation);
                       if (user_credentials.caller_uid == INVALID_UID || user_credentials.caller_gid == INVALID_GID)
 			{
@@ -240,7 +232,7 @@ int main(int argc, char *argv[])
 				 user_credentials.caller_uid, user_credentials.caller_gid);
 			  return_status = 1;
 			}
-                      else if (operation != MOUNT && !squashall && uid == 0 && !root &&
+                      else if (operation != OP_MOUNT && !squashall && uid == 0 && !root &&
                                (read || write || mdonly_read || mdonly_write) &&
                                (user_credentials.caller_uid != ANON_UID || user_credentials.caller_gid != ANON_GID))
 			{
@@ -248,7 +240,7 @@ int main(int argc, char *argv[])
 				 user_credentials.caller_uid, user_credentials.caller_gid);
 			  return_status = 1;
 			}
-                      else if (operation != MOUNT && !squashall && uid == 0 && root &&
+                      else if (operation != OP_MOUNT && !squashall && uid == 0 && root &&
 			       (user_credentials.caller_uid == ANON_UID || user_credentials.caller_gid == ANON_GID))
 			{
 			  printf(" ... FAIL [%d,%d] - Root user should not be anonymous when access is obtained through root client entry.\n",
@@ -277,13 +269,13 @@ int main(int argc, char *argv[])
             if (nonroot)
               parseAccessParam("Access", match_str, &pexport, EXPORT_OPTION_READ_ACCESS|EXPORT_OPTION_WRITE_ACCESS);
             
-            if (accesstype == READ)
+            if (accesstype == OP_READ)
               pexport.access_type = ACCESSTYPE_RO;
-            else if (accesstype == WRITE)
+            else if (accesstype == OP_WRITE)
               pexport.access_type = ACCESSTYPE_RW;
-            else if (accesstype == MDONLY_READ)
+            else if (accesstype == OP_MDONLY_READ)
               pexport.access_type = ACCESSTYPE_MDONLY_RO;
-            else if (accesstype == MDONLY_WRITE)
+            else if (accesstype == OP_MDONLY_WRITE)
               pexport.access_type = ACCESSTYPE_MDONLY;
             else
               printf("FAIL: INVALID access_type \n");
@@ -308,39 +300,30 @@ int main(int argc, char *argv[])
 		  }
                   
                   printf("TEST: %d %d SQ%d -- ", root, nonroot, squashall);
-                  if (accesstype == READ)
+                  if (accesstype == OP_READ)
                     printf("ACCESSTYPE_RO ");
-                  else if (accesstype == WRITE)
+                  else if (accesstype == OP_WRITE)
                     printf("ACCESSTYPE_RW ");
-                  else if (accesstype == MDONLY_READ)
+                  else if (accesstype == OP_MDONLY_READ)
                     printf("ACCESSTYPE_MDONLY_RO ");
-                  else if (accesstype == MDONLY_WRITE)
+                  else if (accesstype == OP_MDONLY_WRITE)
                     printf("ACCESSTYPE_MDONLY ");
                   else
                     printf("INVALID ");
                   printf(": %d ",uid);
-                  if (operation == MOUNT)
-                    printf("MOUNT");
-                  else if (operation == READ)
-                    printf("READ");
-                  else if (operation == WRITE)
-                    printf("WRITE");
-                  else if (operation == MDONLY_READ)
-                    printf("MDONLY_READ");
-                  else if (operation == MDONLY_WRITE)
-                    printf("MDONLY_WRITE");
+                  printf("%s", opnames[operation]);
                   
-                  user_credentials = test_access(ip, hostname, ht_ip_stats, ip_stats_pool,
+                  user_credentials = test_access(ip, hostname, ht_ip_stats, &ip_stats_pool,
 						 &pexport, uid, gid, operation);
 
 		  /* anonymous uid/gid doesn't apply during a mount */
-		  if (operation == MOUNT)
+		  if (operation == OP_MOUNT)
 		    printf(" ... PASS - uid/gid doesn't matter during mount\n");
 		  /* a write on a ro filesystem would return an error, uid/gid don't matter. */
-		  else if ((operation == MDONLY_WRITE || operation == WRITE) && (accesstype == MDONLY_READ || accesstype == READ))
+		  else if ((operation == OP_MDONLY_WRITE || operation == OP_WRITE) && (accesstype == OP_MDONLY_READ || accesstype == OP_READ))
 		    printf(" ... PASS - uid/gid doesn't matter when access is denied\n");
 		  /* a write on an mdonly-rw filesystem would return an error, uid/gid don't matter. */
-		  else if (operation == WRITE && accesstype == MDONLY_WRITE)
+		  else if (operation == OP_WRITE && accesstype == OP_MDONLY_WRITE)
 		    printf(" ... PASS - uid/gid doesn't matter when access is denied\n");
                   else if (user_credentials.caller_uid == INVALID_UID || user_credentials.caller_gid == INVALID_GID)
 		    {

@@ -103,7 +103,7 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
       if(ipstring == NULL)
         {
           LogCrit(COMPONENT_MAIN,
-                  "Error: Could not convert the IPv4 address to a character string.");
+                  "Stat Export Check Access: Could not convert the IPv4 address to a character string.");
           return FALSE;
         }
       if(export_client_match

@@ -32,7 +32,7 @@ void init_vars(hash_table_t **ht_ip_stats, struct prealloc_pool **ip_stats_pool)
 
   /* Initialize buddy malloc */
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
-g    {
+    {
       /* Failed init */
       LogTest("Memory manager could not be initialized");
       exit(1);
@@ -59,7 +59,7 @@ g    {
   MakePool(*ip_stats_pool,
            100,//           nfs_param.worker_param.nb_ip_stats_prealloc,
            nfs_ip_stats_t, NULL, NULL);
-  NamePool(*ip_stats_pool, "IP Stats Cache Pool %d", i);
+  NamePool(*ip_stats_pool, "IP Stats Cache Pool");
 
   if(!IsPoolPreallocated(*ip_stats_pool))
     {
@@ -79,8 +79,8 @@ int test_access(char *addr, char *hostname,
   struct user_cred user_credentials;
   unsigned int nfs_prog;
   unsigned int mnt_prog;
-  struct addrinfo *res;
-  struct sockaddr_storage *pssaddr;
+  sockaddr_t ssaddr;
+  sockaddr_t *pssaddr = &ssaddr;
   int errcode;
   int export_check_result;
   bool_t proc_makes_write;
@@ -91,23 +91,22 @@ int test_access(char *addr, char *hostname,
     proc_makes_write = FALSE;
 
   /*pssaddr*/
-  errcode = getaddrinfo(addr, NULL, NULL, &res);
+  errcode = ipstring_to_sockaddr(addr, pssaddr);
   if (errcode != 0)
     {
       perror ("getaddrinfo");
       return -1;
     }
-  pssaddr = (sockaddr_t *) res;
 
   /* ptr_req */
   memset(&ptr_req, 0, sizeof(struct svc_req));
   ptr_req.rq_cred.oa_flavor = AUTH_UNIX;
   ptr_req.rq_proc = 23232;
   /*nfs_prog*/
-  nfs_prog = nfs_param.core_param.nfs_program;
+  nfs_prog = nfs_param.core_param.program[P_NFS];
 
   /*mnt_prog*/
-  mnt_prog = nfs_param.core_param.mnt_program;
+  mnt_prog = nfs_param.core_param.program[P_MNT];
   if (operation == TEST_MOUNT)
     ptr_req.rq_prog = mnt_prog;
   else
@@ -308,9 +307,8 @@ int main(int argc, char *argv[])
   exportlist_t pexport;
   int root, read, write, mdonly_read, mdonly_write,
     root_user, uid, operation, export_check_result,
-    predicted_result, mount, nonroot, accesstype,
+    predicted_result, nonroot, accesstype,
     return_status=0;
-  bool_t proc_makes_write;
   char *ip = "192.0.2.10";
   //  char *match_str = "192.0.2.10";
   char *match_str = "*";
