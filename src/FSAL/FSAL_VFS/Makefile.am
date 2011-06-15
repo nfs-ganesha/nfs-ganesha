@@ -35,12 +35,12 @@ libfsalvfs_la_SOURCES = fsal_access.c    \
                         fsal_local_op.c  \
 	                fsal_convert.h   \
                         fsal_internal.h  \
-                        fsal_handle_syscalls.h  \
-                        fsal_xattrs.c	        \
-	                ../../include/fsal.h            \
-                        ../../include/fsal_types.h	\
-	                ../../include/err_fsal.h	\
-	                ²../../include/FSAL/FSAL_VFS/fsal_types.h
+                        fsal_xattrs.c    \
+	                ../../include/fsal.h                     \
+                        ../../include/fsal_types.h	         \
+	                ../../include/err_fsal.h	         \
+	                ../../include/FSAL/FSAL_VFS/fsal_types.h \
+	                ../../include/FSAL/FSAL_VFS/fsal_handle_syscalls.h
 
 
 new: clean all

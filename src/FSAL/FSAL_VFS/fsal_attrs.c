@@ -39,13 +39,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <utime.h>
-#include <sys/time.h>
-
-extern fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
-                                                   fsal_attrib_list_t * p_fsalattr_out);
+#include <inttypes.h>
 
 /**
- * VFSFSAL_getattrs:
+ * FSAL_getattrs:
  * Get attributes for the object specified by its filehandle.
  *
  * \param filehandle (input):
@@ -63,89 +60,47 @@ extern fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t VFSFSAL_getattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
-                            vfsfsal_op_context_t * p_context,      /* IN */
-                            fsal_attrib_list_t * p_object_attributes    /* IN/OUT */
+fsal_status_t VFSFSAL_getattrs(vfsfsal_handle_t * p_filehandle, /* IN */
+                               vfsfsal_op_context_t * p_context,        /* IN */
+                               fsal_attrib_list_t * p_object_attributes /* IN/OUT */
     )
 {
+  int rc, errsv;
   fsal_status_t st;
-  struct stat64 buffstat;
+  int fd;
+  struct stat buffstat;
 
   /* sanity checks.
-   * note : object_attributes is mandatory in VFSFSAL_getattrs.
+   * note : object_attributes is mandatory in FSAL_getattrs.
    */
   if(!p_filehandle || !p_context || !p_object_attributes)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
   TakeTokenFSCall();
-  st = fsal_stat_by_handle(p_context,
-                           p_filehandle,
-                           &buffstat);
+  st = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDONLY);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(st))
     ReturnStatus(st, INDEX_FSAL_getattrs);
 
-  /* convert attributes */
-  st = posixstat64_2_fsal_attributes(&buffstat, p_object_attributes);
-  if(FSAL_IS_ERROR(st))
-    {
-      FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
-      FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-      ReturnStatus(st, INDEX_FSAL_getattrs);
-    }
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getattrs);
-
-}
-
-/**
- * VFSFSAL_getattrs_descriptor:
- * Get attributes for the object specified by its descriptor or by it's filehandle.
- *
- * \param p_file_descriptor (input):
- *        The file descriptor of the object to get parameters.
- * \param p_filehandle (input):
- *        The handle of the object to get parameters.
- * \param p_context (input):
- *        Authentication context for the operation (user,...).
- * \param p_object_attributes (mandatory input/output):
- *        The retrieved attributes for the object.
- *        As input, it defines the attributes that the caller
- *        wants to retrieve (by positioning flags into this structure)
- *        and the output is built considering this input
- *        (it fills the structure according to the flags it contains).
- *
- * \return Major error codes :
- *        - ERR_FSAL_NO_ERROR     (no error)
- *        - Another error code if an error occured.
- */
-fsal_status_t VFSFSAL_getattrs_descriptor(vfsfsal_file_t * p_file_descriptor,     /* IN */
-                                           vfsfsal_handle_t * p_filehandle,        /* IN */
-                                           vfsfsal_op_context_t * p_context,       /* IN */
-                                           fsal_attrib_list_t * p_object_attributes /* IN/OUT */
-    )
-{
-  fsal_status_t st;
-  struct stat64 buffstat;
-  int rc, errsv;
-
-  /* sanity checks.
-   * note : object_attributes is mandatory in VFSFSAL_getattrs.
-   */
-  if(!p_file_descriptor || !p_filehandle || !p_context || !p_object_attributes)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
-
+  /* get file metadata */
   TakeTokenFSCall();
-  rc = fstat64(p_file_descriptor->fd, &buffstat);
+  rc = fstat(fd, &buffstat);
   errsv = errno;
   ReleaseTokenFSCall();
 
-  if(rc == -1)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_getattrs);
+  close(fd);
+
+  if(rc != 0)
+    {
+      if(errsv == ENOENT)
+        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_getattrs);
+      else
+        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_getattrs);
+    }
 
   /* convert attributes */
-  st = posixstat64_2_fsal_attributes(&buffstat, p_object_attributes);
+  st = posix2fsal_attributes(&buffstat, p_object_attributes);
   if(FSAL_IS_ERROR(st))
     {
       FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
@@ -158,7 +113,7 @@ fsal_status_t VFSFSAL_getattrs_descriptor(vfsfsal_file_t * p_file_descriptor,   
 }
 
 /**
- * VFSFSAL_setattrs:
+ * FSAL_setattrs:
  * Set attributes for the object specified by its filehandle.
  *
  * \param filehandle (input):
@@ -181,10 +136,10 @@ fsal_status_t VFSFSAL_getattrs_descriptor(vfsfsal_file_t * p_file_descriptor,   
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
-                            vfsfsal_op_context_t * p_context,      /* IN */
-                            fsal_attrib_list_t * p_attrib_set,  /* IN */
-                            fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */
+fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle, /* IN */
+                               vfsfsal_op_context_t * p_context,        /* IN */
+                               fsal_attrib_list_t * p_attrib_set,       /* IN */
+                               fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */
     )
 {
 
@@ -206,10 +161,11 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
   attrs = *p_attrib_set;
 
   /* It does not make sense to setattr on a symlink */
-  /* if(p_filehandle->type == DT_LNK)
-     return fsal_internal_setattrs_symlink(p_filehandle, p_context, p_attrib_set,
-     p_object_attributes);
-   */
+  /** @todo symlink management 
+  //if(p_filehandle->data.type == DT_LNK)
+  //  return fsal_internal_setattrs_symlink(p_filehandle, p_context, p_attrib_set,
+  //                                        p_object_attributes);
+
   /* First, check that FSAL attributes changes are allowed. */
 
   /* Is it allowed to change times ? */
@@ -232,7 +188,7 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
     }
 
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDONLY);
+  status = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDWR);
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_setattrs);
@@ -269,9 +225,11 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
           if((p_context->credential.user != 0)
              && (p_context->credential.user != buffstat.st_uid))
             {
-              LogFullDebug(COMPONENT_FSAL,
-                           "Permission denied for CHMOD opeartion: current owner=%d, credential=%d",
-                           buffstat.st_uid, p_context->credential.user);
+
+              LogFullDebug(COMPONENT_FSAL, 
+                                "Permission denied for CHMOD opeartion: current owner=%d, credential=%d",
+                                buffstat.st_uid, p_context->credential.user);
+
               close(fd);
               Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
             }
@@ -279,6 +237,7 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
           TakeTokenFSCall();
           rc = fchmod(fd, fsal2unix_mode(attrs.mode));
           errsv = errno;
+
           ReleaseTokenFSCall();
 
           if(rc)
@@ -303,9 +262,11 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
          ((p_context->credential.user != buffstat.st_uid) ||
           (p_context->credential.user != attrs.owner)))
         {
+
           LogFullDebug(COMPONENT_FSAL,
-                       "Permission denied for CHOWN opeartion: current owner=%d, credential=%d, new owner=%d",
-                       buffstat.st_uid, p_context->credential.user, attrs.owner);
+                            "Permission denied for CHOWN opeartion: current owner=%d, credential=%d, new owner=%d",
+                            buffstat.st_uid, p_context->credential.user, attrs.owner);
+
           close(fd);
           Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
         }
@@ -336,9 +297,11 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
       /* it must also be in target group */
       if(p_context->credential.user != 0 && !in_grp)
         {
+
           LogFullDebug(COMPONENT_FSAL,
-                       "Permission denied for CHOWN operation: current group=%d, credential=%d, new group=%d",
-                       buffstat.st_gid, p_context->credential.group, attrs.group);
+                            "Permission denied for CHOWN operation: current group=%d, credential=%d, new group=%d",
+                            buffstat.st_gid, p_context->credential.group, attrs.group);
+
           close(fd);
           Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
         }
@@ -346,11 +309,13 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
 
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
     {
-      /*      LogFullDebug(COMPONENT_FSAL, "Performing chown(%s, %d,%d)",
-                        fsalpath.path, FSAL_TEST_MASK(attrs.asked_attributes,
+
+      LogFullDebug(COMPONENT_FSAL, "Performing chown(inode=%"PRIu64", %d,%d)",
+                        buffstat.st_ino, FSAL_TEST_MASK(attrs.asked_attributes,
                                                       FSAL_ATTR_OWNER) ? (int)attrs.owner
                         : -1, FSAL_TEST_MASK(attrs.asked_attributes,
-			FSAL_ATTR_GROUP) ? (int)attrs.group : -1);*/
+                                             FSAL_ATTR_GROUP) ? (int)attrs.group : -1);
+
 
       TakeTokenFSCall();
       rc = fchown(fd,
@@ -428,6 +393,7 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
         {
+          close(fd);
           FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
           FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
         }
@@ -438,6 +404,7 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_setattrs);
 
 }
+
 /**
  * FSAL_getetxattrs:
  * Get attributes for the object specified by its filehandle.
@@ -458,9 +425,9 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
  *        - Another error code if an error occured.
  */
 fsal_status_t VFSFSAL_getextattrs(vfsfsal_handle_t * p_filehandle, /* IN */
-                                   vfsfsal_op_context_t * p_context,        /* IN */
-                                   fsal_extattrib_list_t * p_object_attributes /* OUT */
+                                  vfsfsal_op_context_t * p_context,        /* IN */
+                                  fsal_extattrib_list_t * p_object_attributes /* OUT */
     )
 {
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_getextattrs);
+  Return( ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_getextattrs);
 } /* VFSFSAL_getextattrs */
