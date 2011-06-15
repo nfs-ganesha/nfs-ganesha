@@ -114,8 +114,9 @@ typedef struct
 
 typedef struct
 {
-  char mount_point[FSAL_MAX_PATH_LEN];
-  int  mount_root_fd ;
+  char              mount_point[FSAL_MAX_PATH_LEN];
+  int               mount_root_fd ;
+  vfs_file_handle_t root_handle ;
 } vfsfsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)

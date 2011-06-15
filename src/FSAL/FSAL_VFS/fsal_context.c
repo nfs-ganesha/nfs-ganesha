@@ -58,6 +58,7 @@ fsal_status_t VFSFSAL_BuildExportContext(vfsfsal_export_context_t * p_export_con
 
   size_t pathlen, outlen;
   int rc;
+  int mnt_id = 0 ;
 
   char *handle;
   size_t handle_len = 0;
@@ -148,6 +149,22 @@ fsal_status_t VFSFSAL_BuildExportContext(vfsfsal_export_context_t * p_export_con
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
 
+  p_export_context->root_handle.handle_bytes = VFS_HANDLE_LEN ;
+  if( vfs_fd_to_handle( p_export_context->mount_root_fd, 
+			&p_export_context->root_handle,  
+                        &mnt_id ) )   
+	 Return(posix2fsal_error(errno), errno, INDEX_FSAL_BuildExportContext) ;
+
+#if 0 
+  {
+     char str[1024] ;
+
+     sprint_mem( str, p_export_context->root_handle.handle ,p_export_context->root_handle.handle_bytes ) ;
+     printf( "=====> root Handle: type=%u bytes=%u|%s\n",  
+             p_export_context->root_handle.handle_type,  p_export_context->root_handle.handle_bytes, str ) ;
+
+  }
+#endif
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }

@@ -97,6 +97,11 @@ fsal_status_t VFSFSAL_lookup(vfsfsal_handle_t * p_parent_directory_handle,      
   /* get information about root */
   if(!p_parent_directory_handle)
     {
+      /* Copy the root handle */
+      memcpy( (char *)&p_object_handle->data.vfs_handle, 
+	      (char *)&p_context->export_context->root_handle,
+	      sizeof( vfs_file_handle_t ) ) ;
+       
       /* get attributes, if asked */
       if(p_object_attributes)
         {

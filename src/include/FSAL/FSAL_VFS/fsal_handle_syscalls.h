@@ -83,5 +83,48 @@ static inline int vfs_open_by_handle(int mountfd, vfs_file_handle_t * fh, int fl
 	return syscall(__NR_open_by_handle_at, mountfd, fh, flags);
 }
 
+static inline ssize_t vfs_readlink_by_handle(int mountfd, vfs_file_handle_t *fh, char *buf, size_t bufsize)
+{
+        int fd, ret;
+        fd = vfs_open_by_handle(mountfd, fh, O_PATH);
+        if (fd < 0)
+                return fd;
+        ret = readlinkat(fd, "", buf, bufsize);
+        close(fd);
+        return ret;
+}
+
+static inline int vfs_stat_by_handle(int mountfd, vfs_file_handle_t *fh, struct stat *buf)
+{
+        int fd, ret;
+        fd = vfs_open_by_handle(mountfd, fh, O_PATH);
+        if (fd < 0)
+                return fd;
+        ret = fstatat(fd, "", buf, AT_EMPTY_PATH);
+        close(fd);
+        return ret;
+}
+
+static inline int vfs_link_by_handle(int mountfd, vfs_file_handle_t *fh, int newdirfd, char *newname)
+{
+        int fd, ret;
+        fd = vfs_open_by_handle(mountfd, fh, O_PATH);
+        if (fd < 0)
+                return fd;
+        ret = linkat(fd, "", newdirfd, newname, AT_EMPTY_PATH);
+        close(fd);
+        return ret;
+}
+
+static inline int vfs_chown_by_handle(int mountfd, vfs_file_handle_t *fh, uid_t owner, gid_t group)
+{
+        int fd, ret;
+        fd = vfs_open_by_handle(mountfd, fh, O_PATH);
+        if (fd < 0)
+                return fd;
+        ret = fchownat(fd, "", owner, group, AT_EMPTY_PATH);
+        close(fd);
+        return ret;
+}
 
 #endif
