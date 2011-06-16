@@ -116,8 +116,8 @@
 #define PRIME_STATE_ID            17
 #define NB_PREALLOC_HASH_STATE_ID 10
 
-#define DEFAULT_NFS_PRINCIPAL     "nfs@localhost.localdomain"
-#define DEFAULT_NFS_KEYTAB        "/etc/krb5.conf"
+#define DEFAULT_NFS_PRINCIPAL     "nfs" /* GSSAPI will expand this to nfs/host@DOMAIN */
+#define DEFAULT_NFS_KEYTAB        ""    /* let GSSAPI use keytab specified in /etc/krb5.conf */
 
 /* Config labels */
 #define CONF_LABEL_NFS_CORE         "NFS_Core_Param"

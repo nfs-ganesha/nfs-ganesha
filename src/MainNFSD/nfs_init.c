@@ -319,6 +319,7 @@ void nfs_set_param_default()
   /* krb5 parameter */
   strncpy(nfs_param.krb5_param.principal, DEFAULT_NFS_PRINCIPAL, sizeof(nfs_param.krb5_param.principal));
   strncpy(nfs_param.krb5_param.keytab, DEFAULT_NFS_KEYTAB, sizeof(nfs_param.krb5_param.keytab));
+  nfs_param.krb5_param.active_krb5 = TRUE;
   nfs_param.krb5_param.hash_param.index_size = PRIME_ID_MAPPER;
   nfs_param.krb5_param.hash_param.alphabet_length = 10;      /* Not used for UID_MAPPER */
   nfs_param.krb5_param.hash_param.nb_node_prealloc = NB_PREALLOC_ID_MAPPER;
@@ -1527,9 +1528,11 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #ifdef HAVE_KRB5
   if(nfs_param.krb5_param.active_krb5)
     {
-      OM_uint32 gss_status = 0;
+      OM_uint32 gss_status = GSS_S_COMPLETE;
 
-      gss_status = krb5_gss_register_acceptor_identity(nfs_param.krb5_param.keytab);
+      if(nfs_param.krb5_param.keytab[0] != '\0')
+        gss_status = krb5_gss_register_acceptor_identity(nfs_param.krb5_param.keytab);
+
       if(gss_status != GSS_S_COMPLETE)
         {
           log_sperror_gss(GssError, gss_status, 0);
