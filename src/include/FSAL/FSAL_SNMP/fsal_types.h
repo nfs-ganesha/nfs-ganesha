@@ -94,7 +94,7 @@ typedef union {
 #endif
 } snmpfsal_handle_t;
 
-typedef struct fsal_cred__
+typedef struct
 {
   fsal_uid_t user;
   fsal_gid_t group;
@@ -104,7 +104,7 @@ typedef struct fsal_cred__
    */
 } snmpfsal_cred_t;
 
-typedef struct fsal_export_context__
+typedef struct
 {
   snmpfsal_handle_t root_handle;
   struct tree *root_mib_tree;
@@ -114,7 +114,7 @@ typedef struct fsal_export_context__
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(FSAL_Handle_to_RBTIndex( &(pexport_context->root_handle), 0 ) )
 
-typedef struct fsal_op_context__
+typedef struct
 {
   /* the export context for the next request */
   snmpfsal_export_context_t *export_context;    /* Must be the first entry in this structure */
@@ -133,13 +133,13 @@ typedef struct fsal_op_context__
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
-typedef struct fsal_dir__
+typedef struct
 {
   snmpfsal_handle_t node_handle;
   snmpfsal_op_context_t *p_context;
 } snmpfsal_dir_t;
 
-typedef struct fsal_file__
+typedef struct
 {
   snmpfsal_handle_t file_handle;
   snmpfsal_op_context_t *p_context;
@@ -155,7 +155,7 @@ typedef struct fsal_file__
 //# define FSAL_FILENO(_f) (0)
 
 typedef union {
-  struct fsal_cookie__
+  struct
   {
     /* in SNMP the cookie is the last listed entry */
     oid oid_tab[MAX_OID_LEN];
@@ -168,7 +168,7 @@ typedef union {
 
 //static snmpfsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { {0,}, 0 };
 
-typedef struct fs_specific_initinfo__
+typedef struct
 {
   long snmp_version;
   char snmp_server[HOST_NAME_MAX];
