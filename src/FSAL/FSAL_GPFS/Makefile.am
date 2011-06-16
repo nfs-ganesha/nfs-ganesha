@@ -1,19 +1,3 @@
-SUBDIRS = kernel
-
-EXTRA_DIST = kernel/2.6.18/handle_ioctl.c				\
-	kernel/2.6.18/open_by_handle.c kernel/2.6.18/Makefile		\
-	kernel/2.6.32/handle_ioctl.c kernel/2.6.32/open_by_handle.c	\
-	kernel/2.6.32/Makefile kernel/tests/Makefile			\
-	kernel/tests/append_handle_prg.c				\
-	kernel/tests/create_handle_from_fd_prg.c			\
-	kernel/tests/create_handle_prg.c				\
-	kernel/tests/hardlink_handle_prg.c				\
-	kernel/tests/read_handle_prg.c					\
-	kernel/tests/readlink_handle_prg.c				\
-	kernel/tests/stat_handle_prg.c					\
-	kernel/tests/truncate_handle_prg.c kernel/README		\
-	kernel/Makefile kernel/include/handle.h
-
 AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
 noinst_LTLIBRARIES          = libfsalgpfs.la
@@ -31,6 +15,7 @@ libfsalgpfs_la_SOURCES = fsal_access.c fsal_compat.c fsal_context.c	\
 	../../include/err_fsal.h					\
 	../../include/FSAL/FSAL_GPFS/fsal_types.h
 
+libfsalgpfs_la_LIBADD = -lgpfs
 
 new: clean all
 

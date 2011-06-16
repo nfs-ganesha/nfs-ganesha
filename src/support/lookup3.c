@@ -160,6 +160,8 @@ and these came close:
   c ^= b; c -= rot(b,24); \
 }
 
+#ifndef LITTLEEND
+
 /*
 --------------------------------------------------------------------
  This works on all machines.  To be useful, it requires
@@ -254,6 +256,9 @@ uint32_t       *pb)               /* IN: more seed OUT: secondary hash value */
   *pc=c; *pb=b;
 }
 
+#endif
+
+#ifdef LITTLEEND
 
 /*
 -------------------------------------------------------------------------------
@@ -293,7 +298,9 @@ static uint32_t hashlittle( const void *key, size_t length, uint32_t initval)
   u.ptr = key;
   if (HASH_LITTLE_ENDIAN && ((u.i & 0x3) == 0)) {
     const uint32_t *k = (const uint32_t *)key;         /* read 32-bit chunks */
+#ifdef VALGRIND
     const uint8_t  *k8;
+#endif
 
     /*------ all but last block: aligned reads and affect 32 bits of (a,b,c) */
     while (length > 12)
@@ -478,7 +485,9 @@ static void hashlittle2(
   u.ptr = key;
   if (HASH_LITTLE_ENDIAN && ((u.i & 0x3) == 0)) {
     const uint32_t *k = (const uint32_t *)key;         /* read 32-bit chunks */
+#ifdef VALGRIND
     const uint8_t  *k8;
+#endif
 
     /*------ all but last block: aligned reads and affect 32 bits of (a,b,c) */
     while (length > 12)
@@ -636,7 +645,7 @@ static void hashlittle2(
   *pc=c; *pb=b;
 }
 
-
+#else
 
 /*
  * hashbig():
@@ -655,7 +664,9 @@ static uint32_t hashbig( const void *key, size_t length, uint32_t initval)
   u.ptr = key;
   if (HASH_BIG_ENDIAN && ((u.i & 0x3) == 0)) {
     const uint32_t *k = (const uint32_t *)key;         /* read 32-bit chunks */
+#ifdef VALGRIND
     const uint8_t  *k8;
+#endif
 
     /*------ all but last block: aligned reads and affect 32 bits of (a,b,c) */
     while (length > 12)
@@ -766,6 +777,8 @@ static uint32_t hashbig( const void *key, size_t length, uint32_t initval)
   return c;
 }
 
+#endif
+
 uint32_t Lookup3_hash_buff( char * str, uint32_t len )
 {
   static uint32_t ret = 0 ;
@@ -787,4 +800,3 @@ void Lookup3_hash_buff_dual( char * str, uint32_t len, uint32_t * pval1, uint32_
   hashword2( (caddr_t)str, (size_t)len, pval1, pval2 ) ;
 #endif
 } /* HashTable_hash_buff */
-

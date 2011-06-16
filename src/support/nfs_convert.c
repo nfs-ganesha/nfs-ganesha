@@ -46,22 +46,7 @@
 #endif
 
 #include <string.h>
-#ifdef _USE_GSSRPC
-#include <gssapi/gssapi.h>
-#ifdef HAVE_KRB5
-#include <gssapi/gssapi_krb5.h>
-#endif
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "nfs_core.h"
 #include "nfs_tools.h"
 #include "mount.h"
@@ -324,7 +309,6 @@ int log_sperror_gss(char *outmsg, char *tag, OM_uint32 maj_stat, OM_uint32 min_s
   gss_buffer_desc msg;
   gss_buffer_desc msg2;
   int msg_ctx = 0;
-  FILE *tmplog;
 
   if(gss_display_status(&smin,
                         maj_stat,
@@ -393,7 +377,7 @@ void auth_stat2str(enum auth_stat why, char *str)
       strncpy(str, "AUTH_FAILED", AUTH_STR_LEN);
       break;
 
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
     case RPCSEC_GSS_CREDPROBLEM:
       strncpy(str, "RPCSEC_GSS_CREDPROBLEM", AUTH_STR_LEN);
       break;

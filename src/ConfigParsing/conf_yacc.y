@@ -1,5 +1,8 @@
 %{
 
+#pragma GCC diagnostic ignored "-Wunused-value"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+
 #include "config.h"
 #include "analyse.h"
 
@@ -14,20 +17,20 @@
     void ganesha_yyerror(char*);
 
     list_items * program_result=NULL;
-    
+
 	/* stock le message d'erreur donne par le lexer */
     char local_errormsg[1024]="";
-	
+
     /* stock le message d'erreur complet */
     char extern_errormsg[1024]="";
-    
+
 #ifdef _DEBUG_PARSING
 #define DEBUG_YACK   config_print_list
 #else
 #define DEBUG_YACK
 #endif
 
-    
+
 %}
 
 %union {
@@ -91,11 +94,11 @@ subblock:
 %%
 
     void ganesha_yyerror(char *s){
-        
+
 		snprintf(extern_errormsg,1024,"%s (%s)",local_errormsg,s);
-    
+
     }
-    
+
 
     void set_error(char * s){
         strncpy(local_errormsg,s,1024);

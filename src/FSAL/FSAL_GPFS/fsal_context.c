@@ -42,25 +42,8 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
                                       char *fs_specific_options /* IN */
     )
 {
-  /* Get the mount point for this lustre FS,
-   * so it can be used for building .lustre/fid paths.
-   */
-
-  FILE *fp;
-  struct mntent *p_mnt;
-  struct stat pathstat;
-
-  char rpath[MAXPATHLEN];
-  char mntdir[MAXPATHLEN];
-  char fs_spec[MAXPATHLEN];
-
-  char type[256];
-
-  size_t pathlen, outlen;
   int rc, fd;
 
-  char *handle;
-  size_t handle_len = 0;
   struct statfs stat_buf;
 
   fsal_status_t status;
@@ -78,7 +61,6 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
   fd = open(p_export_path->path, O_RDONLY | O_DIRECTORY);
   if(fd < 0)
     {
-      close(open_by_handle_fd);
       LogMajor(COMPONENT_FSAL,
                "FSAL BUILD EXPORT CONTEXT: ERROR: Could not open GPFS mount point %s: rc = %d",
                p_export_path->path, errno);
@@ -105,7 +87,6 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
                                     &(p_export_context->mount_root_handle));
   if(FSAL_IS_ERROR(status))
     {
-      close(open_by_handle_fd);
       close(p_export_context->mount_root_fd);
       LogMajor(COMPONENT_FSAL,
                "FSAL BUILD EXPORT CONTEXT: ERROR: Conversion from gpfs filesystem root path to handle failed : %d",

@@ -39,15 +39,7 @@
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
-
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#endif
-
+#include "rpc.h"
 #include "RW_Lock.h"
 #include "LRU_List.h"
 #include "HashData.h"
@@ -58,9 +50,7 @@
 #include "config_parsing.h"
 #include "nfs23.h"
 #include "nfs4.h"
-
 #include "PNFS/SPNFS_LIKE/pnfs_layout4_nfsv4_1_files_types.h"
-
 
 /* Mandatory functions */
 nfsstat4 pnfs_spnfs_getdevicelist( GETDEVICELIST4args * pargs, 

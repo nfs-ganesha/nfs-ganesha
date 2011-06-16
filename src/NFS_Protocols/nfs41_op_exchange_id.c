@@ -48,18 +48,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -74,8 +63,6 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 
-extern time_t ServerBootTime;
-extern nfs_parameter_t nfs_param;
 /**
  *
  * nfs41_op_exchange_id:  The NFS4_OP_EXCHANGE_ID operation.

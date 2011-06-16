@@ -50,7 +50,6 @@
 #include "stuff_alloc.h"
 #include "log_macros.h"
 
-extern nfs_parameter_t nfs_param;
 nfs_admin_data_t *pmydata;
 
 int nfs_Init_admin_data(nfs_admin_data_t *pdata)
@@ -91,6 +90,7 @@ static int wake_workers_for_export_reload()
           return -1;
         }
     }
+  return 1;
 }
 
 static int pause_workers_for_export_reload()
@@ -109,7 +109,7 @@ static int pause_workers_for_export_reload()
           LogCrit(COMPONENT_MAIN,
                   "replace_exports: Request cond signal failed for thr#%d , errno = %d (%s)",
                   i, errno, strerror(errno));
-          wake_workers_for_export_reload();
+          i = wake_workers_for_export_reload();
           return -1;
         }
   }
@@ -224,8 +224,7 @@ int rebuild_export_list(char *config_file)
   /* We no longer need the head that was created for
    * the new list since the export list is built as a linked list. */
   Mem_Free(temp_pexportlist);
-  wake_workers_for_export_reload();
-  return status; /* 1 if success */
+  return wake_workers_for_export_reload();
 }
 
 void *admin_thread(void *Arg)

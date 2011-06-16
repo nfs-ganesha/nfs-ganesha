@@ -77,8 +77,6 @@ fsal_status_t GPFSFSAL_dynamic_fsinfo(gpfsfsal_handle_t * p_filehandle, /* IN */
                                   fsal_dynamicfsinfo_t * p_dynamicinfo  /* OUT */
     )
 {
-  fsal_path_t pathfsal;
-  fsal_status_t status;
   struct statvfs buffstatvfs;
   int rc, errsv;
   /* sanity checks. */

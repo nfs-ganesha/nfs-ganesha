@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -75,20 +75,19 @@
 #endif
 
 extern unsigned int cache_content_dir_errno;
-extern nfs_parameter_t nfs_param;
 
 /**
  *
- * cache_content_emergency_flush: Flushes the content of a file in the local cache to the FSAL data. 
+ * cache_content_emergency_flush: Flushes the content of a file in the local cache to the FSAL data.
  *
- * Flushes the content of a file in the local cache to the FSAL data. 
- * This routine should be called only from the cache_inode layer. 
+ * Flushes the content of a file in the local cache to the FSAL data.
+ * This routine should be called only from the cache_inode layer.
  *
- * No lock management is done in this layer: the related pentry in the cache inode layer is 
+ * No lock management is done in this layer: the related pentry in the cache inode layer is
  * locked and will prevent from concurent accesses.
  *
  * @param cachedir     [IN]    cachedir the filesystem where the cache resides
- * @param flushhow     [IN]    should we delete local files or not ? 
+ * @param flushhow     [IN]    should we delete local files or not ?
  * @param lw_mark_trig [IN]    shpuld we purge until low water mark is reached ?
  * @param grace_period [IN]    grace_period The grace period for a file before being considered for deletion
  * @param p_nb_flushed [INOUT] current flushed count
@@ -114,6 +113,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                                                      fsal_op_context_t * pcontext,
                                                      cache_content_status_t * pstatus)
 {
+  int rc;
   fsal_handle_t fsal_handle;
   fsal_status_t fsal_status;
   cache_content_dirinfo_t directory;
@@ -141,8 +141,11 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
   unsigned long dispo_hw;
   unsigned long dispo_lw;
   double tx_used;
-  double hw;
-  double lw;
+
+  /* TODO: I'm not really sure how these work at all as I don't see an
+     assignment later, just that these get used */
+  double hw = 0;
+  double lw = 0;
 
   *pstatus = CACHE_CONTENT_SUCCESS;
 
@@ -216,12 +219,13 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
           if((stream = fopen(indexpath, "r")) == NULL)
             return CACHE_CONTENT_LOCAL_CACHE_ERROR;
 
+          /* BUG: what happens if any of these fail? */
           #define XSTR(s) STR(s)
           #define STR(s) #s
-          fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
-          fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
-          fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
-          fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
+          rc = fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          rc = fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          rc = fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          rc = fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
           #undef STR
           #undef XSTR
 

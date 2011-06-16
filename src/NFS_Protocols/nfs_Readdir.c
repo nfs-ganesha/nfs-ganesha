@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -47,18 +47,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -80,11 +69,11 @@
  * Implements the NFS PROC CREATE function (for V2 and V3).
  *
  * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
+ * @param pexport [IN]    pointer to nfs export list
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
  * @param ht      [INOUT] cache inode hash table
- * @param preq    [IN]    pointer to SVC request related to this call 
+ * @param preq    [IN]    pointer to SVC request related to this call
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
  * @return NFS_REQ_OK if successfull \n
@@ -105,7 +94,7 @@ int nfs_Readdir(nfs_arg_t * parg,
   cache_entry_t *pentry_dot_dot = NULL;
   unsigned long count = 0;
   fsal_attrib_list_t dir_attr;
-  unsigned int cookie;
+  unsigned int cookie = 0;
   unsigned int cache_inode_cookie;
   unsigned int end_cookie;
   cache_inode_dir_entry_t *dirent_array;
@@ -211,21 +200,21 @@ int nfs_Readdir(nfs_arg_t * parg,
          * client         This value is the mtime of
          * the directory. If verifier is unused (as
          * in many NFS Servers) then only a set of
-         * zeros is returned (trivial value) 
+         * zeros is returned (trivial value)
          */
 
         if(pexport->UseCookieVerifier)
           memcpy(cookie_verifier, &(dir_attr.mtime), sizeof(dir_attr.mtime));
         /*
          * nothing to do if != 0 because the area is
-         * already full of zero 
+         * already full of zero
          */
 
         if((cookie != 0) && (pexport->UseCookieVerifier))
           {
             /*
              * Not the first call, so we have to
-             * check the cookie verifier 
+             * check the cookie verifier
              */
             if(memcmp
                (cookie_verifier, parg->arg_readdir3.cookieverf, NFS3_COOKIEVERFSIZE) != 0)
@@ -238,13 +227,13 @@ int nfs_Readdir(nfs_arg_t * parg,
           {
             /*
              * This cookie verifier will always produce
-             * errors if it is used by the client 
+             * errors if it is used by the client
              */
             memset(cookie_verifier, 0xFF, sizeof(cookieverf3));
           }
         /*
          * At thist point we ignore errors, the next vnode
-         * call will fail and we will return the error 
+         * call will fail and we will return the error
          */
       }
 
@@ -263,7 +252,7 @@ int nfs_Readdir(nfs_arg_t * parg,
         case NFS_V2:
           /*
            * In the RFC tell it not good but it does
-           * not tell what to do ... 
+           * not tell what to do ...
            */
           pres->res_readdir2.status = NFSERR_NOTDIR;
           break;
@@ -288,7 +277,7 @@ int nfs_Readdir(nfs_arg_t * parg,
         case NFS_V2:
           /*
            * In the RFC tell it not good but it does
-           * not tell what to do ... 
+           * not tell what to do ...
            */
           pres->res_readdir2.status = NFSERR_IO;
           break;
@@ -309,7 +298,7 @@ int nfs_Readdir(nfs_arg_t * parg,
         case NFS_V2:
           /*
            * In the RFC tell it not good but it does
-           * not tell what to do ... 
+           * not tell what to do ...
            */
           pres->res_readdir2.status = NFSERR_IO;
           break;
@@ -452,7 +441,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                       RES_READDIR2_OK.entries[0].name = entry_name_array[0];
                       strcpy(RES_READDIR2_OK.entries[0].name, ".");
 
-                      *((int *)RES_READDIR2_OK.entries[0].cookie) = 1;
+                      *(RES_READDIR2_OK.entries[0].cookie) = 1;
 
                       /* pointer to next entry ( if any ) */
 
@@ -514,7 +503,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                       RES_READDIR2_OK.entries[delta].name = entry_name_array[delta];
                       strcpy(RES_READDIR2_OK.entries[delta].name, "..");
 
-                      *((int *)RES_READDIR2_OK.entries[delta].cookie) = 2;
+                      *(RES_READDIR2_OK.entries[delta].cookie) = 2;
 
                       /* pointer to next entry ( if any ) */
 
@@ -543,7 +532,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                       if(i == delta)
                         {
                           /*
-                           * Not enough room to make even 1 reply 
+                           * Not enough room to make even 1 reply
                            */
                           pres->res_readdir2.status = NFSERR_IO;
                           Mem_Free(dirent_array);
@@ -565,16 +554,16 @@ int nfs_Readdir(nfs_arg_t * parg,
                   RES_READDIR2_OK.entries[i].name = entry_name_array[i];
 
                   /* Set cookie :
-                   * If we are not at last returned dirent, the cookie is the index 
+                   * If we are not at last returned dirent, the cookie is the index
                    * of the next p_entry + 2.
                    * Else, the cookie is the end_cookie + 2.
                    */
 
                   if(i != num_entries + delta - 1)
-                    *((int *)RES_READDIR2_OK.entries[i].cookie) =
+                    *(RES_READDIR2_OK.entries[i].cookie) =
                         cookie_array[i + 1 - delta] + 2;
                   else
-                    *((int *)RES_READDIR2_OK.entries[i].cookie) = end_cookie + 2;
+                    *(RES_READDIR2_OK.entries[i].cookie) = end_cookie + 2;
 
                   RES_READDIR2_OK.entries[i].nextentry = NULL;
                   if(i != 0)
@@ -731,7 +720,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                            * Not enough
                            * room to
                            * make even
-                           * 1 reply 
+                           * 1 reply
                            */
                           pres->res_readdir3.status = NFS3ERR_TOOSMALL;
                           Mem_Free(dirent_array);
@@ -754,7 +743,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                   RES_READDIR3_OK.reply.entries[i].name = entry_name_array[i];
 
                   /* Set cookie :
-                   * If we are not at last returned dirent, the cookie is the index 
+                   * If we are not at last returned dirent, the cookie is the index
                    * of the next p_entry + 2.
                    * Else, the cookie is the end_cookie + 2.
                    */
@@ -839,9 +828,9 @@ int nfs_Readdir(nfs_arg_t * parg,
 
 /**
  * nfs2_Readdir_Free: Frees the result structure allocated for nfs2_Readdir.
- * 
+ *
  * Frees the result structure allocated for nfs2_Readdir.
- * 
+ *
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */
@@ -857,9 +846,9 @@ void nfs2_Readdir_Free(nfs_res_t * resp)
 
 /**
  * nfs3_Readdir_Free: Frees the result structure allocated for nfs3_Readdir.
- * 
+ *
  * Frees the result structure allocated for nfs3_Readdir.
- * 
+ *
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */

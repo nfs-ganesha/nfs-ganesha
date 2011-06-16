@@ -80,13 +80,11 @@
 #ifndef _CMD_NFSTOOLS_H
 #define _CMD_NFSTOOLS_H
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
+
+#include "rpc.h"
 #include "nfs_proto_functions.h"
 #include "nfs_remote_functions.h"
 

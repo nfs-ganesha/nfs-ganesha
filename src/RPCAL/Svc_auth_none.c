@@ -39,7 +39,7 @@
 #include "solaris_port.h"
 #endif
 
-#include <gssrpc/rpc.h>
+#include "rpcal.h"
 
 bool_t Svcauth_none_destroy(SVCAUTH *);
 bool_t Svcauth_none_wrap(SVCAUTH *, XDR *, xdrproc_t, caddr_t);

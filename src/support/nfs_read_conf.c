@@ -85,17 +85,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <ctype.h>
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
+#include "rpc.h"
 #include "log_functions.h"
 #include "stuff_alloc.h"
 #include "fsal.h"
@@ -1021,6 +1011,7 @@ int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
   return 0;
 }                               /* nfs_read_gidmap_conf */
 
+#ifdef _HAVE_GSSAPI
 /**
  *
  * nfs_read_krb5_conf: read the configuration for krb5 stuff
@@ -1082,11 +1073,11 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
 
       if(!strcasecmp(key_name, "PrincipalName"))
         {
-          strncpy(pparam->principal, key_value, MAXNAMLEN);
+          strncpy(pparam->principal, key_value, sizeof(pparam->principal));
         }
       else if(!strcasecmp(key_name, "KeytabPath"))
         {
-          strncpy(pparam->keytab, key_value, MAXPATHLEN);
+          strncpy(pparam->keytab, key_value, sizeof(pparam->keytab));
         }
       else if(!strcasecmp(key_name, "Active_krb5"))
         {
@@ -1103,6 +1094,7 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
 
   return 0;
 }                               /* nfs_read_krb5_conf */
+#endif
 
 /**
  *

@@ -103,17 +103,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
@@ -123,9 +113,6 @@
 #include "nfs_tools.h"
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
-
-extern time_t ServerBootTime;
-extern nfs_parameter_t nfs_param;
 
 /**
  *
@@ -144,7 +131,6 @@ int nfs4_FhandleToFSAL(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
 {
   fsal_status_t fsal_status;
   file_handle_v4_t *pfile_handle;
-  unsigned long long checksum;
 
   print_fhandle4(COMPONENT_FILEHANDLE, pfh4);
 
@@ -325,7 +311,6 @@ int nfs3_FSALToFhandle(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
 {
   fsal_status_t fsal_status;
   file_handle_v3_t file_handle;
-  unsigned long long cksum;
 
   print_buff(COMPONENT_FILEHANDLE, (char *)pfsalhandle, sizeof(fsal_handle_t));
 
@@ -761,7 +746,6 @@ void print_buff(log_components_t component, char *buff, int len)
 
 void sprint_buff(char *str, char *buff, int len)
 {
-  int i = 0;
   char *tmp = str + sprintf(str, "  Len=%u Buff=%p Val: ", len, buff);
 
   sprint_mem(tmp, buff, len);
@@ -771,7 +755,9 @@ void sprint_mem(char *str, char *buff, int len)
 {
   int i;
 
-  for(i = 0; i < len; i++)
+  if(buff == NULL)
+    sprintf(str, "<null>");
+  else for(i = 0; i < len; i++)
     sprintf(str + i * 2, "%02X", (unsigned char)buff[i]);
 }
 

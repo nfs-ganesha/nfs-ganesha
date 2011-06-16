@@ -56,6 +56,43 @@
 #include <pthread.h>
 #include <string.h>
 
+char *cache_inode_function_names[] = {
+  "cache_inode_access",
+  "cache_inode_getattr",
+  "cache_inode_mkdir",
+  "cache_inode_remove",
+  "cache_inode_statfs",
+  "cache_inode_link",
+  "cache_inode_readdir",
+  "cache_inode_rename",
+  "cache_inode_symlink",
+  "cache_inode_create",
+  "cache_inode_lookup",
+  "cache_inode_lookupp",
+  "cache_inode_readlink",
+  "cache_inode_truncate",
+  "cache_inode_get",
+  "cache_inode_release",
+  "cache_inode_setattr",
+  "cache_inode_new_entry",
+  "cache_inode_read_data",
+  "cache_inode_write_data",
+  "cache_inode_add_data_cache",
+  "cache_inode_release_data_cache",
+  "cache_inode_renew_entry",
+  "cache_inode_lock_create",
+  "cache_inode_lock",
+  "cache_inode_locku",
+  "cache_inode_lockt",
+  "cache_inode_add_state",
+  "cache_inode_add_state",
+  "cache_inode_get_state",
+  "cache_inode_set_state",
+  "cache_inode_update_state",
+  "cache_inode_state_del_all",
+  "cache_inode_commit"
+};
+
 const char *cache_inode_err_str(int err)
 {
   switch(err)
@@ -1108,6 +1145,11 @@ void cache_inode_get_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
       *pattr = pentry->object.special_obj.attributes;
       break;
 
+    case UNASSIGNED:
+    case RECYCLED:
+      memset(pattr, 0, sizeof(fsal_attrib_list_t));
+      LogFullDebug(COMPONENT_CACHE_INODE,
+                   "Unexpected UNNASIGNED or RECYLCED type in cache_inode_get_attributes");
     }
 }                               /* cache_inode_get_attributes */
 
@@ -1153,6 +1195,11 @@ void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
     case BLOCK_FILE:
     case CHARACTER_FILE:
       pentry->object.special_obj.attributes = *pattr;
+      break;
+    case UNASSIGNED:
+    case RECYCLED:
+      LogFullDebug(COMPONENT_CACHE_INODE,
+                   "Unexpected UNNASIGNED or RECYLCED type in cache_inode_set_attributes");
       break;
     }
 }                               /* cache_inode_set_attributes */
@@ -1458,6 +1505,7 @@ cache_inode_status_t cache_inode_dump_content(char *path, cache_entry_t * pentry
 cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pentry)
 {
   FILE *stream = NULL;
+  int rc;
 
   char buff[CACHE_INODE_DUMP_LEN+1];
 
@@ -1469,18 +1517,19 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
   pentry->internal_md.type = REGULAR_FILE;
   pentry->internal_md.valid_state = VALID;
 
+  /* BUG: what happens if the fscanf's fail? */
   /* Read the information */
   #define XSTR(s) STR(s)
   #define STR(s) #s
-  fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+  rc = fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
   pentry->internal_md.read_time = atoi(buff);
 
-  fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+  rc = fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
   pentry->internal_md.mod_time = atoi(buff);
 
-  fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+  rc = fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
 
-  fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
+  rc = fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
   #undef STR
   #undef XSTR
 

@@ -350,7 +350,7 @@ off_t cache_content_recover_size(char *basepath, u_int64_t inum);
 cache_inode_status_t cache_content_error_convert(cache_content_status_t status);
 
 cache_content_status_t cache_content_valid(cache_content_entry_t * pentry,
-                                           cache_inode_op_t op,
+                                           cache_content_op_t op,
                                            cache_content_client_t * pclient);
 
 cache_content_status_t cache_content_read_conf_gc_policy(config_file_t in_config,

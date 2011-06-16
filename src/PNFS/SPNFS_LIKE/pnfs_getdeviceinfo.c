@@ -23,18 +23,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -67,7 +56,6 @@ extern nfs_parameter_t nfs_param ;
  * @return  NFSv4 status (with NFSv4 error code)
  *
  */
-
 nfsstat4 pnfs_spnfs_getdeviceinfo( GETDEVICEINFO4args  * pgetdeviceinfoargs,
 			           compound_data_t     * data,
 				   GETDEVICEINFO4res   * pgetdeviceinfores )

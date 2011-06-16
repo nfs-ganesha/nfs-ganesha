@@ -83,17 +83,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
+#include "rpc.h"
 #include "log_functions.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
@@ -181,14 +171,14 @@ int nfs_Add_MountList_Entry(char *hostname, char *dirpath)
 
   if(isFullDebug(COMPONENT_MEMCORRUPT))
     {
-      if(!BuddyCheck(MNT_List_head) || !BuddyCheck(MNT_List_tail))
+      if(!BuddyCheck(MNT_List_head, 0) || !BuddyCheck(MNT_List_tail, 0))
         {
           LogFullDebug(COMPONENT_MEMCORRUPT,
                        "Memory corruption in nfs_Add_MountList_Entry. Head = %p, Tail = %p.",
                        MNT_List_head, MNT_List_tail);
         }
-      if(!BuddyCheck(pnew_mnt_list_entry->ml_hostname)
-         || !BuddyCheck(pnew_mnt_list_entry->ml_directory))
+      if(!BuddyCheck(pnew_mnt_list_entry->ml_hostname, 0)
+         || !BuddyCheck(pnew_mnt_list_entry->ml_directory, 0))
         {
           LogFullDebug(COMPONENT_MEMCORRUPT,
                        "Memory corruption in nfs_Add_MountList_Entry. Hostname = %p, Directory = %p.",
@@ -235,9 +225,9 @@ int nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
 
       if(isFullDebug(COMPONENT_MEMCORRUPT))
         {
-          if(!BuddyCheck(piter_mnt_list_entry)
-             || !BuddyCheck(piter_mnt_list_entry->ml_hostname)
-             || !BuddyCheck(piter_mnt_list_entry->ml_directory))
+          if(!BuddyCheck(piter_mnt_list_entry, 0)
+             || !BuddyCheck(piter_mnt_list_entry->ml_hostname, 0)
+             || !BuddyCheck(piter_mnt_list_entry->ml_directory, 0))
             {
               LogFullDebug(COMPONENT_MEMCORRUPT,
                            "Memory corruption in nfs_Remove_MountList_Entry. Current = %p, Head = %p, Tail = %p.",

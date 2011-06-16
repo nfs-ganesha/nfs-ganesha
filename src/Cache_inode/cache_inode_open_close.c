@@ -195,7 +195,7 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
 
   /* if file descriptor is too high, garbage collect FDs */
   if(pclient->use_cache
-     && (pentry, pentry->object.file.open_fd.fileno > pclient->max_fd_per_thread))
+     && (pentry->object.file.open_fd.fileno > pclient->max_fd_per_thread))
     {
       if(cache_inode_gc_fd(pclient, pstatus) != CACHE_INODE_SUCCESS)
         {
@@ -237,9 +237,12 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
                                               cache_inode_status_t * pstatus)
 {
   fsal_status_t fsal_status;
-  fsal_size_t save_filesize;
-  fsal_size_t save_spaceused;
-  fsal_time_t save_mtime;
+  fsal_size_t save_filesize = 0;
+  fsal_size_t save_spaceused = 0;
+  fsal_time_t save_mtime = {
+    .seconds = 0,
+    .nseconds = 0
+  };
 
   if((pentry_dir == NULL) || (pname == NULL) || (pentry_file == NULL) ||
      (pclient == NULL) || (pcontext == NULL) || (pstatus == NULL))

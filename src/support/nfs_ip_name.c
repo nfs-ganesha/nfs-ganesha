@@ -56,14 +56,13 @@
 
 /* Hashtable used to cache the hostname, accessed by their IP addess */
 hash_table_t *ht_ip_name;
-extern nfs_parameter_t nfs_param;
 unsigned int expiration_time;
 
 /**
  *
  *  ip_name_rbt_hash_func: computes the hash value for the entry in IP/name cache.
  * 
- * Computes the hash value for the entry in IP/name cache. In fact, it just use addresse as value (identity function) modulo the size of the hash.
+ * Computes the hash value for the entry in IP/name cache.
  * This function is called internal in the HasTable_* function
  *
  * @param hparam [IN] hash table parameter.
@@ -77,15 +76,14 @@ unsigned int expiration_time;
 unsigned long int ip_name_value_hash_func(hash_parameter_t * p_hparam,
                                           hash_buffer_t * buffclef)
 {
-  return (unsigned long int)(buffclef->pdata) % p_hparam->index_size;
-}                               /*  ip_name_value_hash_func */
+  return hash_sockaddr((sockaddr_t *)buffclef->pdata, IGNORE_PORT) % p_hparam->index_size;
+}
 
 /**
  *
  *  ip_name_rbt_hash_func: computes the rbt value for the entry in IP/name cache.
  * 
- * Computes the rbt value for the entry in IP/name cache. In fact, it just use the address value
- * itself (which is an unsigned integer) as the rbt value.
+ * Computes the rbt value for the entry in IP/name cache.
  * This function is called internal in the HasTable_* function
  *
  * @param hparam [IN] hash table parameter.
@@ -99,9 +97,8 @@ unsigned long int ip_name_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long int ip_name_rbt_hash_func(hash_parameter_t * p_hparam,
                                         hash_buffer_t * buffclef)
 {
-  /* We use the Xid as the rbt value */
-  return (unsigned long int)(buffclef->pdata);
-}                               /* ip_name_rbt_hash_func */
+  return hash_sockaddr((sockaddr_t *)buffclef->pdata, IGNORE_PORT);
+} 
 
 /**
  *
@@ -118,17 +115,14 @@ unsigned long int ip_name_rbt_hash_func(hash_parameter_t * p_hparam,
  */
 int compare_ip_name(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  unsigned long int xid1 = (unsigned long int)(buff1->pdata);
-  unsigned long int xid2 = (unsigned long int)(buff2->pdata);
-  return (xid1 == xid2) ? 0 : 1;
-}                               /* compare_xid */
+  return (cmp_sockaddr((sockaddr_t *)(buff1->pdata), (sockaddr_t *)(buff2->pdata), IGNORE_PORT) != 0) ? 0 : 1;
+}
 
 /**
  *
- * display_ip_name: displays the ip_name stored in the buffer.
+ * display_ip_name_key: displays the ip_name stored in the buffer.
  *
- * displays the ip_name stored in the buffer. This function is to be used as 'key_to_str' field in 
- * the hashtable storing the nfs duplicated requests. 
+ * displays the ip_name key stored in the buffer. This function is to be used as 'key_to_str' field. 
  *
  * @param buff1 [IN]  buffer to display
  * @param buff2 [OUT] output string
@@ -136,26 +130,32 @@ int compare_ip_name(hash_buffer_t * buff1, hash_buffer_t * buff2)
  * @return number of character written.
  *
  */
-int display_ip_name(hash_buffer_t * pbuff, char *str)
+int display_ip_name_key(hash_buffer_t * pbuff, char *str)
 {
-  unsigned long int ip_name = ntohl((unsigned long int)(pbuff->pdata));
+  sockaddr_t *addr = (sockaddr_t *)(pbuff->pdata);
 
-  return sprintf(str, "%x : %u.%u.%u.%u",
-                 (unsigned int)ip_name,
-                 ((unsigned int)ip_name & 0xFF000000) >> 24,
-                 ((unsigned int)ip_name & 0x00FF0000) >> 16,
-                 ((unsigned int)ip_name & 0x0000FF00) >> 8,
-                 ((unsigned int)ip_name & 0x000000FF));
-}                               /* display_ip_name */
+  sprint_sockaddr(addr, str, HASHTABLE_DISPLAY_STRLEN);
+  return strlen(str);
+}
 
-int display_ip_value(hash_buffer_t * pbuff, char *str)
+/**
+ *
+ * display_ip_name_vale: displays the ip_name stored in the buffer.
+ *
+ * displays the ip_name value stored in the buffer. This function is to be used as 'val_to_str' field. 
+ *
+ * @param buff1 [IN]  buffer to display
+ * @param buff2 [OUT] output string
+ *
+ * @return number of character written.
+ *
+ */
+int display_ip_name_val(hash_buffer_t * pbuff, char *str)
 {
-  nfs_ip_name_t *pnfs_ip_name;
+  nfs_ip_name_t *pnfs_ip_name = (nfs_ip_name_t *) (pbuff->pdata);
 
-  pnfs_ip_name = (nfs_ip_name_t *) (pbuff->pdata);
-
-  return sprintf(str, "%s", pnfs_ip_name->hostname);
-}                               /* display_ip_name */
+  return snprintf(str, HASHTABLE_DISPLAY_STRLEN, "%s", pnfs_ip_name->hostname);
+}
 
 /**
  *
@@ -172,52 +172,57 @@ int display_ip_value(hash_buffer_t * pbuff, char *str)
  *
  */
 
-#define GETHOST_BUF_SZ  4096
-
-int nfs_ip_name_add(unsigned int ipaddr, char *hostname)
+int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
   nfs_ip_name_t *pnfs_ip_name = NULL;
-  struct hostent hostentry;
-  int    host_errno;
-  struct hostent * hp;
-  unsigned long int local_ipaddr = ipaddr;
-  int length = sizeof(local_ipaddr);
-  char resolv_buff[GETHOST_BUF_SZ];
+  sockaddr_t *pipaddr = NULL;
+  int rc;
+  char ipstring[SOCK_NAME_MAX];
 
   pnfs_ip_name = (nfs_ip_name_t *) Mem_Alloc_Label(sizeof(nfs_ip_name_t), "nfs_ip_name_t");
 
   if(pnfs_ip_name == NULL)
     return IP_NAME_INSERT_MALLOC_ERROR;
 
+  pipaddr = (sockaddr_t *) Mem_Alloc(sizeof(sockaddr_t));
+  if(pipaddr == NULL) 
+    {
+      Mem_Free(pnfs_ip_name);
+      return IP_NAME_INSERT_MALLOC_ERROR;
+    }
+
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
    * this also means that buffkey->len will be 0 */
-  buffkey.pdata = (caddr_t) local_ipaddr;
-  buffkey.len = 0;
+  memcpy(pipaddr, ipaddr, sizeof(sockaddr_t));
+ 
+  buffkey.pdata = (caddr_t) pipaddr;
+  buffkey.len = sizeof(sockaddr_t);
+
+  rc = getnameinfo((struct sockaddr *)pipaddr, sizeof(sockaddr_t),
+                   pnfs_ip_name->hostname, sizeof(pnfs_ip_name->hostname),
+                   NULL, 0, 0);
+
+  sprint_sockaddr(pipaddr, ipstring, sizeof(ipstring));
 
   /* Ask for the name to be cached */
-  if ( (gethostbyaddr_r(&local_ipaddr, length, AF_INET, &hostentry,
-                        resolv_buff, GETHOST_BUF_SZ,
-                        &hp, &host_errno ) != 0 ) || (hp == NULL) )
-  {
-     LogEvent(COMPONENT_DISPATCH,
-              "Cannot resolve address %lu.%lu.%lu.%lu",
-              local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
-              (local_ipaddr>>24)&0xFF);
+  if(rc != 0)
+    {
+       LogEvent(COMPONENT_DISPATCH,
+                "Cannot resolve address %s, error %s",
+                ipstring, gai_strerror(rc));
 
-     Mem_Free((void *)pnfs_ip_name);
-     return IP_NAME_NETDB_ERROR;
-  }
+       Mem_Free(pnfs_ip_name);
+       Mem_Free(pipaddr);
+       return IP_NAME_NETDB_ERROR;
+    }
 
   LogDebug(COMPONENT_DISPATCH,
-           "Inserting %lu.%lu.%lu.%lu->%s to addr cache",
-           local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
-           (local_ipaddr>>24)&0xFF, hp->h_name);
+           "Inserting %s->%s to addr cache",
+           ipstring, pnfs_ip_name->hostname);
 
   /* I build the data with the request pointer that should be in state 'IN USE' */
-  pnfs_ip_name->ipaddr = ipaddr;
-  strncpy(pnfs_ip_name->hostname, hp->h_name, MAXHOSTNAMELEN);
   pnfs_ip_name->timestamp = time(NULL);
 
   buffdata.pdata = (caddr_t) pnfs_ip_name;
@@ -244,16 +249,17 @@ int nfs_ip_name_add(unsigned int ipaddr, char *hostname)
  * @return the result previously set if *pstatus == IP_NAME_SUCCESS
  *
  */
-int nfs_ip_name_get(unsigned int ipaddr, char *hostname)
+int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
-  int status;
   nfs_ip_name_t *pnfs_ip_name;
-  unsigned long int local_ipaddr = ipaddr;
+  char ipstring[SOCK_NAME_MAX];
 
-  buffkey.pdata = (caddr_t) local_ipaddr;
-  buffkey.len = 0;
+  sprint_sockaddr(ipaddr, ipstring, sizeof(ipstring));
+
+  buffkey.pdata = (caddr_t) ipaddr;
+  buffkey.len = sizeof(sockaddr_t);
 
   if(HashTable_Get(ht_ip_name, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
@@ -261,26 +267,17 @@ int nfs_ip_name_get(unsigned int ipaddr, char *hostname)
       strncpy(hostname, pnfs_ip_name->hostname, MAXHOSTNAMELEN);
 
       LogFullDebug(COMPONENT_DISPATCH,
-                   "Cache hit for %lu.%lu.%lu.%lu->%s",
-                   local_ipaddr&0xFF,
-                   (local_ipaddr>>8)&0xFF,
-                   (local_ipaddr>>16)&0xFF,
-                   (local_ipaddr>>24)&0xFF,
-                   hostname);
+                   "Cache get hit for %s->%s",
+                   ipstring, pnfs_ip_name->hostname);
 
-      status = IP_NAME_SUCCESS;
+      return IP_NAME_SUCCESS;
     }
-  else
-    {
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Cache miss for %lu.%lu.%lu.%lu",
-                   local_ipaddr&0xFF,
-                   (local_ipaddr>>8)&0xFF,
-                   (local_ipaddr>>16)&0xFF,
-                   (local_ipaddr>>24)&0xFF);
-      status = IP_NAME_NOT_FOUND;
-    }
-  return status;
+
+  LogFullDebug(COMPONENT_DISPATCH,
+               "Cache get miss for %s",
+               ipstring);
+
+  return IP_NAME_NOT_FOUND;
 }                               /* nfs_ip_name_get */
 
 /**
@@ -294,27 +291,34 @@ int nfs_ip_name_get(unsigned int ipaddr, char *hostname)
  * @return the result previously set if *pstatus == IP_NAME_SUCCESS
  *
  */
-int nfs_ip_name_remove(int ipaddr)
+int nfs_ip_name_remove(sockaddr_t *ipaddr)
 {
   hash_buffer_t buffkey, old_value;
-  int status = IP_NAME_SUCCESS;
   nfs_ip_name_t *pnfs_ip_name = NULL;
-  unsigned long int local_ipaddr = ipaddr;
+  char ipstring[SOCK_NAME_MAX];
 
-  buffkey.pdata = (caddr_t) local_ipaddr;
-  buffkey.len = 0;
+  sprint_sockaddr(ipaddr, ipstring, sizeof(ipstring));
+
+  buffkey.pdata = (caddr_t) ipaddr;
+  buffkey.len = sizeof(sockaddr_t);
 
   if(HashTable_Del(ht_ip_name, &buffkey, NULL, &old_value) == HASHTABLE_SUCCESS)
     {
       pnfs_ip_name = (nfs_ip_name_t *) old_value.pdata;
+
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Cache remove hit for %s->%s",
+                   ipstring, pnfs_ip_name->hostname);
+
       Mem_Free((void *)pnfs_ip_name);
-    }
-  else
-    {
-      status = IP_NAME_NOT_FOUND;
+      return IP_NAME_SUCCESS;
     }
 
-  return status;
+  LogFullDebug(COMPONENT_DISPATCH,
+               "Cache remove miss for %s",
+               ipstring);
+
+  return IP_NAME_NOT_FOUND;
 }                               /* nfs_ip_name_remove */
 
 /**
@@ -352,9 +356,9 @@ int nfs_ip_name_populate(char *path)
   char *key_name;
   char *key_value;
   char label[MAXNAMLEN];
-  unsigned int ipaddr;
-  unsigned long int long_ipaddr;
+  sockaddr_t ipaddr;
   nfs_ip_name_t *pnfs_ip_name;
+  sockaddr_t *pipaddr;
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
 
@@ -395,35 +399,51 @@ int nfs_ip_name_populate(char *path)
           LogCrit(COMPONENT_CONFIG,
                   "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, label);
-          return ID_MAPPER_NOT_FOUND;
+          return IP_NAME_NOT_FOUND;
         }
 
-      ipaddr = inet_addr(key_value);
-      long_ipaddr = ipaddr;
+      err = ipstring_to_sockaddr(key_value, &ipaddr);
+      if(err != 0)
+        {
+          LogCrit(COMPONENT_CONFIG,
+                  "Error converting %s to an ipaddress %s",
+                  key_value, gai_strerror(err));
+          return IP_NAME_NOT_FOUND;
+        }
 
       /* Entry to be cached */
-      if((pnfs_ip_name = (nfs_ip_name_t *) Mem_Alloc(sizeof(nfs_ip_name_t))) == NULL)
-        return ID_MAPPER_INSERT_MALLOC_ERROR;
+      pnfs_ip_name = (nfs_ip_name_t *) Mem_Alloc(sizeof(nfs_ip_name_t));
+      if(pnfs_ip_name == NULL)
+        return IP_NAME_INSERT_MALLOC_ERROR;
 
-      /* I build the data with the request pointer that should be in state 'IN USE' */
-      pnfs_ip_name->ipaddr = ipaddr;
+      pipaddr = (sockaddr_t *) Mem_Alloc(sizeof(sockaddr_t));
+      if(pipaddr == NULL)
+        {
+          Mem_Free(pnfs_ip_name);
+          return IP_NAME_INSERT_MALLOC_ERROR;
+        }
+
       strncpy(pnfs_ip_name->hostname, key_name, MAXHOSTNAMELEN);
       pnfs_ip_name->timestamp = time(NULL);
+      memcpy(pipaddr, &ipaddr, sizeof(sockaddr_t));
 
       buffdata.pdata = (caddr_t) pnfs_ip_name;
       buffdata.len = sizeof(nfs_ip_name_t);
 
-      /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
-       * this also means that buffkey->len will be 0 */
-      buffkey.pdata = (caddr_t) long_ipaddr;
-      buffkey.len = 0;
+      buffkey.pdata = (caddr_t) pipaddr;
+      buffkey.len = sizeof(sockaddr_t);
 
       if(HashTable_Set(ht_ip_name, &buffkey, &buffdata) != HASHTABLE_SUCCESS)
-        return IP_NAME_INSERT_MALLOC_ERROR;
-
+        {
+          Mem_Free(pnfs_ip_name);
+          Mem_Free(pipaddr);
+          return IP_NAME_INSERT_MALLOC_ERROR;
+        }
     }
 
-  /* HashTable_Log( ht_ip_name ) ; */
+  if(isFullDebug(COMPONENT_CONFIG))
+    HashTable_Log(COMPONENT_CONFIG, ht_ip_name);
+
   return IP_NAME_SUCCESS;
 }                               /* nfs_ip_name_populate */
 

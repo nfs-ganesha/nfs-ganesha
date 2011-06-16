@@ -23,18 +23,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -50,13 +39,10 @@
 #include "nfs_tools.h"
 #include "pnfs.h" 
 #include "pnfs_service.h" 
-
 #include "PNFS/SPNFS_LIKE/pnfs_nfsv41_macros.h"
 
 #define PNFS_LAYOUTFILE_NB_OP_EXCHANGEID 2
 #define PNFS_LAYOUTFILE_NB_OP_CREATESESSION 2
-
-extern time_t ServerBootTime;
 
 /**
  *

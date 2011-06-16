@@ -55,8 +55,6 @@ extern fsal_staticfsinfo_t global_fs_info;
 /* export_context_t is not given to every function, but
  * most functions need to use the open-by-handle funcionality.
  */
-extern char open_by_handle_path[MAXPATHLEN];
-extern int open_by_handle_fd;
 
 #endif
 

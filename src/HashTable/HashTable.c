@@ -400,30 +400,32 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
   ht->parameter = hparam;
 
   if(pthread_mutexattr_init(&mutexattr) != 0)
-   {
-     Mem_Free( ht ) ;
-     return NULL;
-   }
+    {
+      Mem_Free( ht ) ;
+      return NULL;
+    }
 
   /* Initialization of the node array */
   if((ht->array_rbt =
       (struct rbt_head *)Mem_Alloc_Label(sizeof(struct rbt_head) * hparam.index_size,
                                          "rbt_head")) == NULL)
-  {
-    Mem_Free( ht ) ;
-    return NULL;
-  }
+    {
+      Mem_Free( ht ) ;
+      return NULL;
+    }
+
+  memset((char *)ht->array_rbt, 0, sizeof(struct rbt_head) * hparam.index_size);
 
   /* Initialization of the stat array */
   if((ht->stat_dynamic =
       (hash_stat_dynamic_t *) Mem_Alloc_Label(sizeof(hash_stat_dynamic_t) *
                                               hparam.index_size,
                                               "hash_stat_dynamic_t")) == NULL)
-  {
-    Mem_Free( ht->array_rbt ) ;
-    Mem_Free( ht ) ;
-    return NULL;
-  }
+    {
+      Mem_Free( ht->array_rbt ) ;
+      Mem_Free( ht ) ;
+      return NULL;
+    }
 
   /* Init the stats */
   memset((char *)ht->stat_dynamic, 0, sizeof(hash_stat_dynamic_t) * hparam.index_size);
@@ -432,25 +434,44 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
   if((ht->array_lock =
       (rw_lock_t *) Mem_Alloc_Label(sizeof(rw_lock_t) * hparam.index_size,
                                     "rw_lock_t")) == NULL)
-  {
-    Mem_Free( ht->array_rbt ) ;
-    Mem_Free( ht->array_lock ) ;
-    Mem_Free( ht ) ;
-    return NULL;
-  }
+    {
+      Mem_Free( ht->array_rbt ) ;
+      Mem_Free( ht->stat_dynamic ) ;
+      Mem_Free( ht ) ;
+      return NULL;
+    }
+
+  memset((char *)ht->array_lock, 0, sizeof(rw_lock_t) * hparam.index_size);
 
   /* Initialize the array of pre-allocated node */
   if((ht->node_prealloc =
       (struct prealloc_pool *)Mem_Calloc_Label(hparam.index_size,
                                                sizeof(struct prealloc_pool),
                                                "rbt_node_pool")) == NULL)
-    return NULL;
+    {
+      Mem_Free( ht->array_rbt ) ;
+      Mem_Free( ht->stat_dynamic ) ;
+      Mem_Free( ht->array_lock ) ;
+      Mem_Free( ht ) ;
+      return NULL;
+    }
+
+  memset((char *)ht->node_prealloc, 0, sizeof(prealloc_pool) * hparam.index_size);
 
   if((ht->pdata_prealloc =
       (struct prealloc_pool *) Mem_Calloc_Label(hparam.index_size,
                                                 sizeof(struct prealloc_pool),
                                                 "hash_data_pool")) == NULL)
-    return NULL;
+    {
+      Mem_Free( ht->array_rbt ) ;
+      Mem_Free( ht->stat_dynamic ) ;
+      Mem_Free( ht->array_lock ) ;
+      Mem_Free( ht->node_prealloc ) ;
+      Mem_Free( ht ) ;
+      return NULL;
+    }
+
+  memset((char *)ht->pdata_prealloc, 0, sizeof(prealloc_pool) * hparam.index_size);
 
   for(i = 0; i < hparam.index_size; i++)
     {

@@ -43,17 +43,7 @@
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
-
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#endif
-
+#include "rpc.h"
 #include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -62,40 +52,20 @@
 #include "cache_content.h"
 
 #define NFS_V2_NB_COMMAND 18
-static char *nfsv2_function_names[] = {
-  "NFSv2_null", "NFSv2_getattr", "NFSv2_setattr", "NFSv2_root",
-  "NFSv2_lookup", "NFSv2_readlink", "NFSv2_read", "NFSv2_writecache",
-  "NFSv2_write", "NFSv2_create", "NFSv2_remove", "NFSv2_rename",
-  "NFSv2_link", "NFSv2_symlink", "NFSv2_mkdir", "NFSv2_rmdir",
-  "NFSv2_readdir", "NFSv2_statfs"
-};
+extern char *nfsv2_function_names[];
 
 #define NFS_V3_NB_COMMAND 22
-static char *nfsv3_function_names[] = {
-  "NFSv3_null", "NFSv3_getattr", "NFSv3_setattr", "NFSv3_lookup",
-  "NFSv3_access", "NFSv3_readlink", "NFSv3_read", "NFSv3_write",
-  "NFSv3_create", "NFSv3_mkdir", "NFSv3_symlink", "NFSv3_mknod",
-  "NFSv3_remove", "NFSv3_rmdir", "NFSv3_rename", "NFSv3_link",
-  "NFSv3_readdir", "NFSv3_readdirplus", "NFSv3_fsstat",
-  "NFSv3_fsinfo", "NFSv3_pathconf", "NFSv3_commit"
-};
+extern char *nfsv3_function_names[];
 
 #define NFS_V4_NB_COMMAND 2
-static char *nfsv4_function_names[] = {
-  "NFSv4_null", "NFSv4_compound"
-};
+extern char *nfsv4_function_names[];
 
 #define MNT_V1_NB_COMMAND 6
 #define MNT_V3_NB_COMMAND 6
-static char *mnt_function_names[] = {
-  "MNT_null", "MNT_mount", "MNT_dump", "MNT_umount", "MNT_umountall", "MNT_export"
-};
+extern char *mnt_function_names[];
 
 #define RQUOTA_NB_COMMAND 5
-static char *rquota_functions_names[] = {
-  "rquota_Null", "rquota_getquota", "rquota_getquotaspecific", "rquota_setquota",
-  "rquota_setquotaspecific"
-};
+extern char *rquota_functions_names[];
 
 #define NFS_V40_NB_OPERATION 39
 #define NFS_V41_NB_OPERATION 58

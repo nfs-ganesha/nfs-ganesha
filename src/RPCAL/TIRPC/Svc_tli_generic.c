@@ -41,7 +41,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <rpc/rpc.h>
 #include <rpc/nettype.h>
 #include <stdio.h>
 #include <errno.h>
@@ -54,7 +53,7 @@
 #include "config.h"
 #endif
 
-#include <rpc/rpc.h>
+#include "../rpcal.h"
 #include <Rpc_com_tirpc.h>
 #include <getpeereid.h>
 #include "stuff_alloc.h"
@@ -120,7 +119,7 @@ const char *nettype;            /* Networktype token */
           xprt = Svc_tp_create(dispatch, prognum, versnum, nconf);
           if(xprt)
             {
-              l = (struct xlist *)malloc(sizeof(*l));
+              l = (struct xlist *)Mem_Alloc(sizeof(*l));
               if(l == NULL)
                 {
                   warnx("svc_create: no memory");
@@ -302,8 +301,8 @@ u_int recvsz;                   /* Max recvsize */
 
   if(nconf)
     {
-      xprt->xp_netid = strdup(nconf->nc_netid);
-      xprt->xp_tp = strdup(nconf->nc_device);
+      xprt->xp_netid = Str_Dup(nconf->nc_netid);
+      xprt->xp_tp = Str_Dup(nconf->nc_device);
     }
   return (xprt);
 

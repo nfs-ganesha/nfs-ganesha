@@ -42,15 +42,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#ifdef _USE_GSSRPC
-#include <gssapi/gssapi.h>
-#include <gssapi/gssapi_krb5.h>
-
-#include <gssrpc/rpc.h>
-#else
-#include <rpc/rpc.h>
-#endif
-
+#include "rpc.h"
 #include "LRU_List.h"
 #include "fsal.h"
 #include "cache_inode.h"
@@ -75,7 +67,7 @@ typedef struct CredUnix__
 
 typedef struct CredGss__
 {
-#if(  defined( HAVE_KRB5 ) && defined ( _USE_GSSRPC ) )
+#if(  defined( HAVE_KRB5 ) && defined ( _HAVE_GSSAPI ) )
   gss_qop_t qop;
   gss_OID mech;
   rpc_gss_svc_t svc;

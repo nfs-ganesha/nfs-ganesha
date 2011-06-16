@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -49,18 +49,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -76,16 +65,16 @@
 #include "nfs_tools.h"
 
 /**
- * 
- * nfs4_op_lock: The NFS4_OP_LOCK operation. 
+ *
+ * nfs4_op_lock: The NFS4_OP_LOCK operation.
  *
  * This function implements the NFS4_OP_LOCK operation.
  *
  * @param op    [IN]    pointer to nfs4_op arguments
  * @param data  [INOUT] Pointer to the compound request's data
  * @param resp  [IN]    Pointer to nfs4_op results
- * 
- * @return NFS4_OK if successfull, other values show an error. 
+ *
+ * @return NFS4_OK if successfull, other values show an error.
  *
  * @see all the nfs4_op_<*> function
  * @see nfs4_Compound
@@ -101,6 +90,15 @@ extern char all_one[12];
 int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lock";
+
+#ifndef _WITH_NFSV4_LOCKS
+  /* Lock are not supported */
+  resp->resop = NFS4_OP_LOCK;
+  res_LOCK4.status = NFS4ERR_LOCK_NOTSUPP;
+
+  return res_LOCK4.status;
+#else
+
 
   cache_inode_status_t cache_status;
   cache_inode_state_data_t candidate_data;
@@ -121,13 +119,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   cache_inode_open_owner_name_t owner_name;
   nfs_client_id_t nfs_client_id;
 
-  /* Lock are not supported */
+  /* Initialize to sane starting values */
   resp->resop = NFS4_OP_LOCK;
-  res_LOCK4.status = NFS4ERR_LOCK_NOTSUPP;
-
-#ifndef _WITH_NFSV4_LOCKS
-  return res_LOCK4.status;
-#else
 
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))
@@ -173,7 +166,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       return res_LOCK4.status;
     }
 
-  /* Check for range overflow 
+  /* Check for range overflow
    * Remember that a length with all bits set to 1 means "lock until the end of file" (RFC3530, page 157) */
   if(arg_LOCK4.length != 0xffffffffffffffffLL)
     {
@@ -583,13 +576,13 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
 /**
  * nfs4_op_lock_Free: frees what was allocared to handle nfs4_op_lock.
- * 
+ *
  * Frees what was allocared to handle nfs4_op_lock.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs4_op_lock_Free(LOCK4res * resp)
 {

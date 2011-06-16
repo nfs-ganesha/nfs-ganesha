@@ -94,10 +94,10 @@ cache_inode_create(cache_entry_t * pentry_parent,
     fsal_status_t fsal_status;
 #ifdef _USE_MFSL
     mfsl_object_t object_handle;
+    fsal_attrib_list_t parent_attributes;
 #else
     fsal_handle_t object_handle;
 #endif
-    fsal_attrib_list_t parent_attributes;
     fsal_attrib_list_t object_attributes;
     fsal_handle_t dir_handle;
     cache_inode_fsal_data_t fsal_data;

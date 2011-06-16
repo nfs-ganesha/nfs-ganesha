@@ -52,17 +52,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <pthread.h>
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "HashData.h"
@@ -76,9 +66,6 @@
 #include "nfs_file_handle.h"
 
 size_t strnlen(const char *s, size_t maxlen);
-
-extern time_t ServerBootTime;
-extern nfs_parameter_t nfs_param;
 
 hash_table_t *ht_session_id;
 uint32_t global_sequence = 0;

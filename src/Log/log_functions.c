@@ -153,7 +153,7 @@ static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
     {
       if (ok_errors)
         LogCrit(COMPONENT_LOG_EMERG,
-                "Log_GetThreadFunction - pthread_once returned %d (%s)",
+                "Log_GetThreadContext - pthread_once returned %d (%s)",
                 errno, strerror(errno));
       return NULL;
     }
@@ -170,7 +170,7 @@ static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
         {
           if (ok_errors)
             LogCrit(COMPONENT_LOG_EMERG,
-                    "Log_GetThreadFunction - malloc returned %d (%s)",
+                    "Log_GetThreadContext - malloc returned %d (%s)",
                     errno, strerror(errno));
           return NULL;
         }
@@ -188,7 +188,7 @@ static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
 
   return p_current_thread_vars;
 
-}                               /* Log_GetThreadFunction */
+}                               /* Log_GetThreadContext */
 
 static const char *Log_GetThreadFunction(int ok_errors)
 {
@@ -452,14 +452,6 @@ static int DisplayLogSyslog_valist(log_components_t component, int level, char *
   return 1 ;
 } /* DisplayLogSyslog_valist */
 
-static int DisplayLogFd_valist(int fd, log_components_t component, char *format, va_list arguments)
-{
-  char tampon[STR_LEN_TXT];
-
-  DisplayLogString_valist(tampon, component, format, arguments);
-  return write(fd, tampon, strlen(tampon));
-}                               /* DisplayLogFd_valist */
-
 static int DisplayLogFlux_valist(FILE * flux, log_components_t component, char *format, va_list arguments)
 {
   char tampon[STR_LEN_TXT];
@@ -482,7 +474,7 @@ static int DisplayTest_valist(log_components_t component, char *format, va_list 
 
 static int DisplayBuffer_valist(char *buffer, log_components_t component, char *format, va_list arguments)
 {
-  log_vsnprintf(buffer, STR_LEN_TXT, format, arguments);
+  return log_vsnprintf(buffer, STR_LEN_TXT, format, arguments);
 }
 
 static int DisplayLogPath_valist(char *path, log_components_t component, char *format, va_list arguments)
@@ -531,7 +523,13 @@ static int DisplayLogPath_valist(char *path, log_components_t component, char *f
 #else
       if((fd = open(path, O_WRONLY | O_NONBLOCK | O_APPEND | O_CREAT, masque_log)) != -1)
         {
-          write(fd, tampon, strlen(tampon));
+          if(write(fd, tampon, strlen(tampon)) < strlen(tampon)) 
+          {
+            fprintf(stderr, "Error: couldn't complete write to the log file, ensure disk has not filled up");
+            close(fd); 
+            return ERR_FICHIER_LOG;
+          }
+          
           /* fermeture du fichier */
           close(fd);
           return SUCCES;
@@ -1524,6 +1522,11 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
+  { COMPONENT_RPC,               "COMPONENT_RPC", "RPC",
+    NIV_EVENT,
+    SYSLOG,
+    "SYSLOG"
+  },
 };
 
 int DisplayLogComponentLevel(log_components_t component,
@@ -1554,6 +1557,7 @@ int DisplayLogComponentLevel(log_components_t component,
       break;
     case BUFFLOG:
       rc = DisplayBuffer_valist(LogComponents[component].comp_buffer, component, format, arguments);
+      break;
     default:
       rc = ERR_FAILURE;
     }
@@ -1581,7 +1585,6 @@ static int isValidLogPath(char *pathname)
   char tempname[MAXPATHLEN];
 
   char *directory_name;
-  struct stat *buf;
   int rc;
 
   strncpy(tempname, pathname, MAXPATHLEN);
@@ -1679,8 +1682,8 @@ int SetComponentLogFile(log_components_t component, char *name)
         }
       }
 
-  changed = newtype != LogComponents[component].comp_log_type ||
-            newtype == FILELOG && strcmp(name, LogComponents[component].comp_log_file) != 0;
+  changed = (newtype != LogComponents[component].comp_log_type) ||
+            (newtype == FILELOG && strcmp(name, LogComponents[component].comp_log_file) != 0);
 
   if (component != COMPONENT_LOG && changed)
     LogChanges("Changing log destination for %s from %s to %s",

@@ -129,8 +129,6 @@ int cache_content_client_init(cache_content_client_t * pclient,
                               cache_content_client_parameter_t param,
                               char *name)
 {
-  LRU_status_t lru_status;
-
   pclient->nb_prealloc = param.nb_prealloc_entry;
   pclient->flush_force_fsal = param.flush_force_fsal;
   pclient->max_fd_per_thread = param.max_fd_per_thread;

@@ -40,17 +40,8 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/types.h>
-#include <rpc/svc.h>
-#endif
-
-#ifdef _USE_GSSRPC
+#include "rpc.h"
+#ifdef _HAVE_GSSAPI
 #include <gssapi/gssapi.h>
 #include <gssapi/gssapi_krb5.h>
 #endif
@@ -177,6 +168,10 @@ typedef struct exportlist__
   fsal_handle_t *proot_handle;  /* FSAL handle for the root of the file system */
 
   uid_t anonymous_uid;          /* root uid when no root access is available   */
+                                /* uid when access is available but all users are being squashed. */
+  gid_t anonymous_gid;          /* root gid when no root access is available   */
+                                /* gid when access is available but all users are being squashed. */
+  bool_t all_anonymous;         /* When set to true, all users including root will be given the anon uid/gid */
   unsigned int options;         /* avail. mnt options */
 
   unsigned char seckey[EXPORT_KEY_SIZE];        /* Checksum for FH validity */
@@ -342,6 +337,9 @@ typedef struct compoud_data
 
 /* Export list related functions */
 exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exportid);
+int nfs_check_anon(exportlist_client_entry_t * pexport_client,
+                    exportlist_t * pexport,
+                    struct user_cred *user_credentials);
 int nfs_build_fsal_context(struct svc_req *ptr_req,
                            exportlist_client_entry_t * pexport_client,
                            exportlist_t * pexport, fsal_op_context_t * pcontext,
@@ -359,7 +357,7 @@ cache_content_status_t cache_content_prepare_directories(exportlist_t * pexportl
                                                          cache_content_status_t *
                                                          pstatus);
 
-int nfs_export_check_access(struct sockaddr_storage *pssaddr,
+int nfs_export_check_access(sockaddr_t *hostaddr,
                             struct svc_req *ptr_req,
                             exportlist_t * pexport,
                             unsigned int nfs_prog,

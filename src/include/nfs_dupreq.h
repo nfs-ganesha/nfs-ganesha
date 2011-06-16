@@ -38,24 +38,13 @@
 #ifndef _NFS_DUPREQ_H
 #define _NFS_DUPREQ_H
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/types.h>
-#include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
 #ifdef _SOLARIS
 #ifndef _USE_SNMP
 typedef unsigned long u_long;
 #endif
 #endif                          /* _SOLARIS */
 
+#include "rpc.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "nfs_core.h"
@@ -70,11 +59,11 @@ typedef struct dupreq_key__
    * The same xids can be recycled by the same client or used
    * by different clients ... it's too weak to make the dup req
    * cache useful. */
-  int xid;
+  long xid;
 
   /* The IP and port are also used to identify duplicate requests.
    * This is much much stronger. */
-  struct sockaddr addr;
+  sockaddr_t addr;
 
   /* In very rare cases, ip/port/xid is not enough. In databases
    * and other specific applications this may be a greater concern.
@@ -86,7 +75,7 @@ typedef struct dupreq_key__
 typedef struct dupreq_entry__
 {
   long xid;
-  struct sockaddr addr;
+  sockaddr_t addr;
   int checksum;
 
   pthread_mutex_t dupreq_mutex;

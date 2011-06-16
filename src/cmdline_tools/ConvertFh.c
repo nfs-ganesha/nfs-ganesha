@@ -54,7 +54,7 @@
 short HashFileID4(u_int64_t fileid4);
 time_t ServerBootTime;
 
-static nfs_parameter_t nfs_param;
+nfs_parameter_t nfs_param;
 
 char ganesha_exec_path[MAXPATHLEN];     /* Just because the symbol is required to compile */
 

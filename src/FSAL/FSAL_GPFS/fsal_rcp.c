@@ -24,10 +24,10 @@
 
 /**
  * FSAL_rcp:
- * Copy an HPSS file to/from a local filesystem.
+ * Copy an GPFS file to/from a local filesystem.
  *
  * \param filehandle (input):
- *        Handle of the HPSS file to be copied.
+ *        Handle of the GPFS file to be copied.
  * \param cred (input):
  *        Authentication context for the operation (user,...).
  * \param p_local_path (input):
@@ -221,12 +221,14 @@ fsal_status_t GPFSFSAL_rcp(gpfsfsal_handle_t * filehandle,      /* IN */
       /* initialize error code */
       st = FSAL_STATUS_NO_ERROR;
 
-      LogFullDebug(COMPONENT_FSAL, "Read a block from source");
+      
 
       /* read */
 
       if(to_fs)                 /* from local filesystem */
         {
+          LogFullDebug(COMPONENT_FSAL,
+                       "Read a block from local file system");
           local_size = read(local_fd, IObuffer, RCP_BUFFER_SIZE);
 
           if(local_size == -1)
@@ -237,43 +239,43 @@ fsal_status_t GPFSFSAL_rcp(gpfsfsal_handle_t * filehandle,      /* IN */
             }
 
           eof = (local_size == 0);
+          if(!eof)
+            {
+              LogFullDebug(COMPONENT_FSAL,
+                           "Write a block (%llu bytes) to FSAL",
+                            (unsigned long long)local_size);
+
+              st = FSAL_write(&fs_fd, NULL, local_size, IObuffer, &fs_size);
+              if(FSAL_IS_ERROR(st))
+                {
+                  LogFullDebug(COMPONENT_FSAL,
+                               "Error writing to FSAL");
+                  break;          /* exit loop */
+                }
+            }
+          else
+            {
+              LogFullDebug(COMPONENT_FSAL,
+                           "End of file on local file system");
+            }
 
         }
       else                      /* from FSAL filesystem */
         {
+          LogFullDebug(COMPONENT_FSAL,
+                       "Read a block from FSAL");
           fs_size = 0;
           st = FSAL_read(&fs_fd, NULL, RCP_BUFFER_SIZE, IObuffer, &fs_size, &eof);
 
           if(FSAL_IS_ERROR(st))
             break;              /* exit loop */
-
-          LogFullDebug(COMPONENT_FSAL, "Size read from source: %llu",
-                       (unsigned long long)fs_size);
-        }
-
-      /* write (if not eof) */
-
-      if(!eof || ((!to_fs) && (fs_size > 0)))
-        {
-
-          LogFullDebug(COMPONENT_FSAL, "Write a block to destination");
-
-          if(to_fs)             /* to FSAL filesystem */
+          if(fs_size > 0)
             {
-
-              st = FSAL_write(&fs_fd, NULL, local_size, IObuffer, &fs_size);
-
-              if(FSAL_IS_ERROR(st))
-                break;          /* exit loop */
-
-            }
-          else                  /* to local filesystem */
-            {
+              LogFullDebug(COMPONENT_FSAL,
+                           "Write a block (%llu bytes) to local file system",
+                            (unsigned long long)fs_size);
 
               local_size = write(local_fd, IObuffer, fs_size);
-
-              LogFullDebug(COMPONENT_FSAL, "Size written to target: %llu",
-                           (unsigned long long)local_size);
 
               if(local_size == -1)
                 {
@@ -281,12 +283,17 @@ fsal_status_t GPFSFSAL_rcp(gpfsfsal_handle_t * filehandle,      /* IN */
                   st.minor = errno;
                   break;        /* exit loop */
                 }
+            }
+          else
+            {
+              LogFullDebug(COMPONENT_FSAL,
+                           "End of file on FSAL");
+              break;
+            }
 
-            }                   /* if to_fs */
-
-        }                       /* if eof */
-      else
-        LogFullDebug(COMPONENT_FSAL, "End of source file reached");
+          LogFullDebug(COMPONENT_FSAL, "Size read from source: %llu",
+                       (unsigned long long)fs_size);
+        }
     }                           /* while !eof */
 
   /* Clean */

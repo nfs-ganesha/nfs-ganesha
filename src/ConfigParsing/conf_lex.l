@@ -1,4 +1,9 @@
 %{
+
+#pragma GCC diagnostic ignored "-Wunused-value"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-function"
+
 #include "config.h"
 #include "analyse.h"
 #include "conf_yacc.h"
@@ -24,12 +29,12 @@ void set_error(char * s);
 #define ERRLEN 1024
 char err_str[ERRLEN]="";
 
-/* Stockage des chaines 
+/* Stockage des chaines
 */
 char YY_PARSED_STRING[MAXSTRLEN];
 
 void YY_BUFFER_APPEND(char * s){
-    strncat( YY_PARSED_STRING,s, MAXSTRLEN);
+    strncat( YY_PARSED_STRING,s, MAXSTRLEN - strlen(s));
 }
 
 void YY_BUFFER_RESET(void){
@@ -93,7 +98,7 @@ IDENTIFIER_CHAR    [a-zA-Z0-9_.\-]
 
 %%
 
-                    
+
 <YY_INIT>"%include" {/* debut de lecture d'un fichier d'include */
                         DEBUG_LEX("INCLUDE\n");
                         BEGIN INCLUDE;
@@ -112,21 +117,21 @@ IDENTIFIER_CHAR    [a-zA-Z0-9_.\-]
                         unsigned int i;
                         char new_file_path[FILE_LEN];
                         DEBUG_LEX(">");
-                        
+
                         if ( include_stack_index >= MAX_INCLUDE_DEPTH )
                         {
                            /* error */
                            snprintf(err_str,ERRLEN,"in \"%s\", line %d: includes nested too deeply",current_file, ganesha_yylineno);
                            set_error(err_str);
-                           return _ERROR_;                        
+                           return _ERROR_;
                         }
-                        
+
                         include_stack[include_stack_index] = YY_CURRENT_BUFFER;
-                        lines_stack[include_stack_index] = ganesha_yylineno;                        
+                        lines_stack[include_stack_index] = ganesha_yylineno;
                         strncpy( files_stack[include_stack_index], current_file, FILE_LEN );
-                        
+
                         /* relative path management */
-                        
+
                         /* 1) if the new path is absolute, nothing to do
                          * 2) if there was no '/' in previous dir, the new path
                          *  is relative to the current dir.
@@ -140,61 +145,61 @@ IDENTIFIER_CHAR    [a-zA-Z0-9_.\-]
                         {
                             /* in any other case, path is relative to the current config file
                              * directory */
-                            
+
                             char tmp_buf[FILE_LEN];
                             char * path;
-                            
+
                             strncpy( tmp_buf, current_file, FILE_LEN );
-                            
+
                             path = dirname( tmp_buf );
 
                             snprintf( new_file_path, FILE_LEN, "%s/%s", path, YY_PARSED_STRING );
-                        }                        
-                                               
+                        }
+
                         /* loop detection */
-                        
+
                         for ( i = 0; i <= include_stack_index; i++ )
                         {
                             if (!strncmp(files_stack[i], new_file_path, FILE_LEN))
                             {
                                snprintf(err_str,ERRLEN,"in \"%s\", line %d: include loop detected: \"%s\" already parsed",current_file, ganesha_yylineno, new_file_path );
                                set_error(err_str);
-                               return _ERROR_;                                
+                               return _ERROR_;
                             }
                         }
-                        
+
                         include_stack_index ++;
-                        
+
                         ganesha_yyin = fopen( new_file_path, "r" );
-                        
+
                         if ( ganesha_yyin == NULL )
                         {
                            /* error */
                            snprintf(err_str,ERRLEN,"in \"%s\", line %d: error %d opening file \"%s\": %s",current_file,ganesha_yylineno,
                                     errno, new_file_path, strerror(errno) );
                            set_error(err_str);
-                           return _ERROR_;                    
+                           return _ERROR_;
                         }
-                        
+
                         ganesha_yylineno = 1;
                         strncpy( current_file, new_file_path, FILE_LEN );
-                        
+
                         /* change current buffer */
                         ganesha_yy_switch_to_buffer( ganesha_yy_create_buffer( ganesha_yyin, YY_BUF_SIZE ) );
-                                                
+
                         /* start reading file from scratch */
                         BEGIN YY_INIT;
-                        
+
                     }
-                    
-                    
+
+
 <INCL_STRING>\n      {
                             snprintf(err_str,ERRLEN,"in \"%s\", line %d: missing closing quote.",current_file, ganesha_yylineno);
                             set_error(err_str);
                             ganesha_yylineno++;
                             return _ERROR_;
                      }
-                     
+
 <INCL_STRING>.      {YY_BUFFER_APPEND(ganesha_yytext); DEBUG_LEX("%c",*ganesha_yytext);/* caractere du fichier */}
 
 <INCL_ESC>\n        {BEGIN INCL_STRING; ganesha_yylineno++;}/* ignore un saut de ligne echappe*/
@@ -203,12 +208,12 @@ IDENTIFIER_CHAR    [a-zA-Z0-9_.\-]
 
 <<EOF>> { /* end of included file */
             DEBUG_LEX("<EOF>\n");
-            
+
             include_stack_index --;
-            
+
             if ( include_stack_index < 0 )
             {
-                /* eof of all streams */                
+                /* eof of all streams */
                 yyterminate();
             }
             else
@@ -216,10 +221,10 @@ IDENTIFIER_CHAR    [a-zA-Z0-9_.\-]
                 fclose(ganesha_yyin);
                 /*go down into stack */
                 ganesha_yy_delete_buffer( YY_CURRENT_BUFFER );
-                
+
                 ganesha_yylineno = lines_stack[include_stack_index];
                 strncpy( current_file, files_stack[include_stack_index], FILE_LEN );
-                
+
                 ganesha_yy_switch_to_buffer( include_stack[include_stack_index] );
             }
         }
@@ -242,17 +247,17 @@ IDENTIFIER_CHAR    [a-zA-Z0-9_.\-]
                         return BEGIN_BLOCK;
                  }
 
-<INBLOC>{LETTER}({IDENTIFIER_CHAR})* {                   
+<INBLOC>{LETTER}({IDENTIFIER_CHAR})* {
                     /* identifier */
                     DEBUG_LEX("[id:%s",ganesha_yytext);
                     strncpy(ganesha_yylval.str_val,ganesha_yytext,MAXSTRLEN);
                     BEGIN AFFECT_OR_SUB_BLOCK;
                     return IDENTIFIER;
                 }
-                
+
 <INBLOC>"}"     {   /* end of block */
                     DEBUG_LEX("END_BLOCK\n",ganesha_yytext);
-                    
+
                     if ( accolades <= 0 )
                     {
                        /* error */
@@ -262,7 +267,7 @@ IDENTIFIER_CHAR    [a-zA-Z0-9_.\-]
                     }
                     else
                         accolades --;
-                    
+
                     if ( accolades == 0 )
                     {
                         BEGIN YY_INIT;
@@ -273,7 +278,7 @@ IDENTIFIER_CHAR    [a-zA-Z0-9_.\-]
                         BEGIN INBLOC;
                         return END_SUB_BLOCK;
                     }
-                     
+
                 }
 
 <AFFECT_OR_SUB_BLOCK>"="  {
@@ -282,7 +287,7 @@ IDENTIFIER_CHAR    [a-zA-Z0-9_.\-]
                     BEGIN VALUE;
                     return AFFECTATION;
                 }
-                
+
 <AFFECT_OR_SUB_BLOCK>"{"    {
                                 /* sub-block */
                                 DEBUG_LEX("\nBEGIN_SUB_BLOCK\n",ganesha_yytext);

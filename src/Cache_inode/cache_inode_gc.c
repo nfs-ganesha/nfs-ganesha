@@ -456,7 +456,6 @@ int cache_inode_gc_function(LRU_entry_t * plru_entry, void *addparam)
   time_t current_time = time(NULL);
   cache_entry_t *pentry = NULL;
   cache_inode_param_gc_t *pgcparam = (cache_inode_param_gc_t *) addparam;
-  cache_inode_status_t status;
 
   time_t allocated;
 
@@ -664,13 +663,9 @@ cache_inode_status_t cache_inode_gc(hash_table_t * ht,
 
 int cache_inode_gc_fd_func(LRU_entry_t * plru_entry, void *addparam)
 {
-  time_t entry_time = 0;
-  time_t current_time = time(NULL);
   cache_entry_t *pentry = NULL;
   cache_inode_param_gc_t *pgcparam = (cache_inode_param_gc_t *) addparam;
   cache_inode_status_t status;
-
-  time_t allocated;
 
   /* Get the entry */
   pentry = (cache_entry_t *) (plru_entry->buffdata.pdata);

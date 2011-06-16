@@ -34,18 +34,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -61,8 +50,6 @@
 
 #define arg_READDIR4 op->nfs_argop4_u.opreaddir
 #define res_READDIR4 resp->nfs_resop4_u.opreaddir
-
-extern time_t ServerBootTime;
 
 /**
  * nfs4_op_readdir: The NFS4_OP_READDIR.
@@ -107,8 +94,8 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
 
   unsigned int i = 0;
 
-  bitmap4 RdAttrErrorBitmap;
-  attrlist4 RdAttrErrorVals;
+  bitmap4 RdAttrErrorBitmap = { 1, (uint32_t *) "\0\0\0\b" };   /* 0xB = 11 = FATTR4_RDATTR_ERROR */
+  attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be seen here */
 
   resp->resop = NFS4_OP_READDIR;
   res_READDIR4.status = NFS4_OK;

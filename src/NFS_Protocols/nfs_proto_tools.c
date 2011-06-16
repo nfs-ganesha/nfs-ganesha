@@ -51,18 +51,7 @@
 #include <grp.h>
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -77,8 +66,6 @@
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 #include "nfs_proto_tools.h"
-
-extern nfs_parameter_t nfs_param;
 
 /**
  *
@@ -523,7 +510,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   fattr4_time_create time_create;
   fattr4_maxfilesize max_filesize;
   fattr4_supported_attrs supported_attrs;
-  fattr4_fs_locations fs_locations;
   fattr4_maxread maxread;
   fattr4_maxwrite maxwrite;
   fattr4_maxname maxname;
@@ -531,8 +517,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   fattr4_homogeneous homogeneous;
   fattr4_aclsupport aclsupport;
   fattr4_acl acl;
-  fattr4_mimetype mimetype;
-  fattr4_mounted_on_fileid mounted_on_fileid;
   fattr4_rdattr_error rdattr_error;
   fattr4_quota_avail_hard quota_avail_hard;
   fattr4_quota_avail_soft quota_avail_soft;
@@ -579,9 +563,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   int statfscalled = 0;
   fsal_staticfsinfo_t staticinfo;
   fsal_dynamicfsinfo_t dynamicinfo;
-
-  fsal_handle_t fsal_handle;
-  fsal_status_t fsal_status;
 
   /* basic init */
   memset(attrvalsBuffer, 0, NFS4_ATTRVALS_BUFFLEN);
@@ -851,7 +832,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_ACL:
-          acl.fattr4_acl_len = htonl(0);        /* NOT IMPLEMENTED YET, BUT WILL BE, no ACL for the moment */
+          memset(&acl, 0, sizeof(acl));
+          /* NOT IMPLEMENTED YET, BUT WILL BE, no ACL for the moment */
           memcpy((char *)(attrvalsBuffer + LastOffset), &acl, sizeof(fattr4_acl));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
@@ -1191,8 +1173,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_MIMETYPE:
-          mimetype.utf8string_len = htonl(0);
-          memcpy((char *)(attrvalsBuffer + LastOffset), &mimetype,
+          memset((char *)(attrvalsBuffer + LastOffset), 0,
                  sizeof(fattr4_mimetype));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;  /* No supported for the moment */
@@ -1781,6 +1762,7 @@ int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
     case FSAL_TYPE_SOCK:
       pFattr->type = NFSOCK;
       /** @todo mode mask ? */
+      break;
 
     default:
       pFattr->type = NFBAD;
@@ -2523,7 +2505,6 @@ int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap )
 {
   uint_t i = 0;
   uint_t val = 0;
-  uint_t index = 0;
   uint_t offset = 0;
 
   uint32_t bitmap_val[2] ;
@@ -3665,6 +3646,8 @@ int nfs4_MakeCred(compound_data_t * data)
       == FALSE)
     return NFS4ERR_WRONGSEC;
 
+  LogFullDebug(COMPONENT_DISPATCH,
+               "nfs4_MakeCred about to call nfs_export_check_access");
   if(nfs_export_check_access(&pworker->hostaddr,
                              data->reqp,
                              data->pexport,

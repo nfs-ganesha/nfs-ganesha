@@ -39,19 +39,7 @@
 #include "solaris_port.h"
 #endif
 
-#ifdef _USE_GSSRPC
-#ifdef HAVE_KRB5
-#include <gssapi/gssapi_krb5.h> /* For krb5_gss_register_acceptor_identity */
-#endif
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "nfs_init.h"
 #include "stuff_alloc.h"
 #include "log_macros.h"
@@ -108,11 +96,6 @@ char config_path[MAXPATHLEN];
 
 extern int nfs_do_terminate;
 extern char my_config_path[MAXPATHLEN];
-
-#ifdef _USE_GSSRPC
-bool_t Svcauth_gss_set_svc_name(gss_name_t name);
-int Gss_ctx_Hash_Init(nfs_krb5_parameter_t param);
-#endif
 
 /* States managed by signal handler */
 unsigned int sigusr1_triggered = FALSE ;
@@ -357,10 +340,10 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   /* Workers parameters : Client id pool prealloc */
   p_nfs_param->worker_param.nb_client_id_prealloc = 20;
 
+#ifdef _HAVE_GSSAPI
   /* krb5 parameter */
-  strncpy(p_nfs_param->krb5_param.principal, DEFAULT_NFS_PRINCIPAL, MAXNAMLEN);
-  strncpy(p_nfs_param->krb5_param.keytab, DEFAULT_NFS_KEYTAB, MAXPATHLEN);
-#ifdef _USE_GSSRPC
+  strncpy(p_nfs_param->krb5_param.principal, DEFAULT_NFS_PRINCIPAL, sizeof(p_nfs_param->krb5_param.principal));
+  strncpy(p_nfs_param->krb5_param.keytab, DEFAULT_NFS_KEYTAB, sizeof(p_nfs_param->krb5_param.keytab));
   p_nfs_param->krb5_param.hash_param.index_size = PRIME_ID_MAPPER;
   p_nfs_param->krb5_param.hash_param.alphabet_length = 10;      /* Not used for UID_MAPPER */
   p_nfs_param->krb5_param.hash_param.nb_node_prealloc = NB_PREALLOC_ID_MAPPER;
@@ -389,8 +372,8 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->dupreq_param.hash_param.hash_func_key = dupreq_value_hash_func;
   p_nfs_param->dupreq_param.hash_param.hash_func_rbt = dupreq_rbt_hash_func;
   p_nfs_param->dupreq_param.hash_param.compare_key = compare_req;
-  p_nfs_param->dupreq_param.hash_param.key_to_str = display_xid;
-  p_nfs_param->dupreq_param.hash_param.val_to_str = display_xid;
+  p_nfs_param->dupreq_param.hash_param.key_to_str = display_req_key;
+  p_nfs_param->dupreq_param.hash_param.val_to_str = display_req_val;
   p_nfs_param->dupreq_param.hash_param.name = "Duplicate Request Cache";
 
   /*  Worker parameters : IP/name hash table */
@@ -400,8 +383,8 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->ip_name_param.hash_param.hash_func_key = ip_name_value_hash_func;
   p_nfs_param->ip_name_param.hash_param.hash_func_rbt = ip_name_rbt_hash_func;
   p_nfs_param->ip_name_param.hash_param.compare_key = compare_ip_name;
-  p_nfs_param->ip_name_param.hash_param.key_to_str = display_ip_name;
-  p_nfs_param->ip_name_param.hash_param.val_to_str = display_ip_value;
+  p_nfs_param->ip_name_param.hash_param.key_to_str = display_ip_name_key;
+  p_nfs_param->ip_name_param.hash_param.val_to_str = display_ip_name_val;
   p_nfs_param->ip_name_param.hash_param.name = "IP Name";
   p_nfs_param->ip_name_param.expiration_time = IP_NAME_EXPIRATION;
   strncpy(p_nfs_param->ip_name_param.mapfile, "", MAXPATHLEN);
@@ -473,8 +456,8 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->ip_stats_param.hash_param.hash_func_key = ip_stats_value_hash_func;
   p_nfs_param->ip_stats_param.hash_param.hash_func_rbt = ip_stats_rbt_hash_func;
   p_nfs_param->ip_stats_param.hash_param.compare_key = compare_ip_stats;
-  p_nfs_param->ip_stats_param.hash_param.key_to_str = display_ip_stats;
-  p_nfs_param->ip_stats_param.hash_param.val_to_str = display_ip_stats;
+  p_nfs_param->ip_stats_param.hash_param.key_to_str = display_ip_stats_key;
+  p_nfs_param->ip_stats_param.hash_param.val_to_str = display_ip_stats_val;
   p_nfs_param->ip_stats_param.hash_param.name = "IP Stats";
 
   /*  Worker parameters : NFSv4 Client id table */
@@ -1004,6 +987,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
 
 #endif                          /* _USE_NFS4_1 */
 
+#ifdef _HAVE_GSSAPI
   /* NFS kerberos5 configuration */
   if((rc = nfs_read_krb5_conf(config_struct, &p_nfs_param->krb5_param)) < 0)
     {
@@ -1021,6 +1005,7 @@ int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
         LogDebug(COMPONENT_INIT,
 		 "NFS/KRB5 configuration read from config file");
     }
+#endif
 
   /* NFSv4 specific configuration */
   if((rc = nfs_read_version4_conf(config_struct, &p_nfs_param->nfsv4_param)) < 0)
@@ -1501,8 +1486,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   fsal_status_t fsal_status;
   unsigned int i = 0;
   int rc = 0;
-#ifdef _USE_GSSRPC
-  OM_uint32 gss_status = 0;
+#ifdef _HAVE_GSSAPI
   gss_name_t gss_service_name;
   gss_buffer_desc gss_service_buf;
   OM_uint32 maj_stat, min_stat;
@@ -1563,6 +1547,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #ifdef _HAVE_GSSAPI
   if(nfs_param.krb5_param.active_krb5)
     {
+      OM_uint32 gss_status = 0;
 
       if((gss_status =
           krb5_gss_register_acceptor_identity(nfs_param.krb5_param.keytab)) !=
@@ -1583,7 +1568,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #endif
 #endif
 
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
       /* Set up principal to be use for GSSAPPI within GSSRPC/KRB5 */
       gss_service_buf.value = nfs_param.krb5_param.principal;
       gss_service_buf.length = strlen(nfs_param.krb5_param.principal) + 1;      /* The '+1' is not to be forgotten, for the '\0' at the end */
@@ -1671,13 +1656,13 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
         }
 
       /* Set the index (mostly used for debug purpose */
-      workers_data[i].index = i;
+      workers_data[i].worker_index = i;
 
       /* Set the pointer for the Cache inode hash table */
       workers_data[i].ht = ht;
 
       sprintf(name, "IP Stats for worker %d", i);
-      nfs_param.ip_stats_param.hash_param.name = name;
+      nfs_param.ip_stats_param.hash_param.name = Str_Dup(name);
       ht_ip_stats[i] = nfs_Init_ip_stats(nfs_param.ip_stats_param);
       if(ht_ip_stats[i] == NULL)
         {
@@ -2193,7 +2178,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
 #endif
 
       /* Populate the ID_MAPPER file with mapping file if needed */
-      if(!strncmp(nfs_param.uidmap_cache_param.mapfile, "", MAXPATHLEN))
+      if(nfs_param.uidmap_cache_param.mapfile[0] == '\0')
         {
           LogDebug(COMPONENT_INIT, "No Uid Map file is used");
         }
@@ -2206,7 +2191,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
             LogDebug(COMPONENT_INIT, "UID_MAPPER was NOT populated");
         }
 
-      if(!strncmp(nfs_param.gidmap_cache_param.mapfile, "", MAXPATHLEN))
+      if(nfs_param.gidmap_cache_param.mapfile[0] == '\0')
         {
           LogDebug(COMPONENT_INIT, "No Gid Map file is used");
         }
@@ -2219,7 +2204,7 @@ int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info)
             LogDebug(COMPONENT_INIT, "GID_MAPPER was NOT populated");
         }
 
-      if(!strncmp(nfs_param.ip_name_param.mapfile, "", MAXPATHLEN))
+      if(nfs_param.ip_name_param.mapfile[0] == '\0')
         {
           LogDebug(COMPONENT_INIT, "No Hosts Map file is used");
         }

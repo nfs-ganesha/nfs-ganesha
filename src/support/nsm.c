@@ -22,8 +22,8 @@
  *
  */
 
-#include <rpc/rpc.h>
-
+#include "config.h"
+#include "rpc.h"
 #include "nsm.h"
 #include "nlm4.h"
 #include "log_macros.h"
@@ -45,7 +45,7 @@ int nsm_monitor(char *host)
   /* nothing to put in the private data */
 
   /* create a connection to nsm on the localhost */
-  clnt = clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
+  clnt = Clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
   if(!clnt)
     {
       LogDebug(COMPONENT_NLM,
@@ -66,7 +66,7 @@ int nsm_monitor(char *host)
                host, ret);
       free(nsm_mon.mon_id.mon_name);
       free(nsm_mon.mon_id.my_id.my_name);
-      clnt_destroy(clnt);
+      Clnt_destroy(clnt);
       return -1;
     }
   if(res.res_stat != STAT_SUCC)
@@ -76,12 +76,12 @@ int nsm_monitor(char *host)
                host, res.res_stat);
       free(nsm_mon.mon_id.mon_name);
       free(nsm_mon.mon_id.my_id.my_name);
-      clnt_destroy(clnt);
+      Clnt_destroy(clnt);
       return -1;
     }
   free(nsm_mon.mon_id.mon_name);
   free(nsm_mon.mon_id.my_id.my_name);
-  clnt_destroy(clnt);
+  Clnt_destroy(clnt);
   return 0;
 }
 
@@ -101,7 +101,7 @@ int nsm_unmonitor(char *host)
   nsm_mon_id.my_id.my_proc = NLMPROC4_SM_NOTIFY;
 
   /* create a connection to nsm on the localhost */
-  clnt = clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
+  clnt = Clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
   if(!clnt)
     {
       free(nsm_mon_id.mon_name);
@@ -116,12 +116,12 @@ int nsm_unmonitor(char *host)
     {
       free(nsm_mon_id.mon_name);
       free(nsm_mon_id.my_id.my_name);
-      clnt_destroy(clnt);
+      Clnt_destroy(clnt);
       return -1;
     }
   free(nsm_mon_id.mon_name);
   free(nsm_mon_id.my_id.my_name);
-  clnt_destroy(clnt);
+  Clnt_destroy(clnt);
   return 0;
 }
 
@@ -139,7 +139,7 @@ int nsm_unmonitor_all(void)
   nsm_id.my_proc = NLMPROC4_SM_NOTIFY;
 
   /* create a connection to nsm on the localhost */
-  clnt = clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
+  clnt = Clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
   if(!clnt)
     {
       free(nsm_id.my_name);
@@ -152,10 +152,10 @@ int nsm_unmonitor_all(void)
   if(ret != RPC_SUCCESS)
     {
       free(nsm_id.my_name);
-      clnt_destroy(clnt);
+      Clnt_destroy(clnt);
       return -1;
     }
   free(nsm_id.my_name);
-  clnt_destroy(clnt);
+  Clnt_destroy(clnt);
   return 0;
 }

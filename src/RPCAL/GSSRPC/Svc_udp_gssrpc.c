@@ -48,11 +48,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/svc_auth.h>
+#include "../rpcal.h"
 #include <errno.h>
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
@@ -78,9 +74,6 @@ static enum xprt_stat Svcudp_stat(SVCXPRT *);
 static bool_t Svcudp_getargs(SVCXPRT *, xdrproc_t, void *);
 static bool_t Svcudp_freeargs(SVCXPRT *, xdrproc_t, void *);
 static void Svcudp_destroy(SVCXPRT *);
-
-void Xprt_register(SVCXPRT * xprt);
-void Xprt_unregister(SVCXPRT * xprt);
 
 static struct xp_ops Svcudp_op = {
   Svcudp_recv,
@@ -176,7 +169,7 @@ SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz)
   xprt->xp_verf.oa_base = su->su_verfbody;
   xprt->xp_ops = &Svcudp_op;
   xprt->xp_port = ntohs(addr.sin_port);
-  xprt->xp_sock = sock;
+  xprt->XP_SOCK = sock;
   Xprt_register(xprt);
   return (xprt);
 }
@@ -211,7 +204,7 @@ static bool_t Svcudp_recv(register SVCXPRT * xprt, struct rpc_msg *msg)
   dummy.msg_iovlen = 1;
   dummy.msg_namelen = xprt->xp_laddrlen = sizeof(struct sockaddr_in);
   dummy.msg_name = (char *)&xprt->xp_laddr;
-  rlen = recvmsg(xprt->xp_sock, &dummy, MSG_PEEK);
+  rlen = recvmsg(xprt->XP_SOCK, &dummy, MSG_PEEK);
   if(rlen == -1)
     {
       if(errno == EINTR)
@@ -221,7 +214,7 @@ static bool_t Svcudp_recv(register SVCXPRT * xprt, struct rpc_msg *msg)
     }
 
   xprt->xp_addrlen = sizeof(struct sockaddr_in);
-  rlen = recvfrom(xprt->xp_sock, rpc_buffer(xprt), (int)su->su_iosz,
+  rlen = recvfrom(xprt->XP_SOCK, rpc_buffer(xprt), (int)su->su_iosz,
                   0, (struct sockaddr *)&(xprt->xp_raddr), &(xprt->xp_addrlen));
   if(rlen == -1 && errno == EINTR)
     goto again;
@@ -266,7 +259,7 @@ static bool_t Svcudp_reply(register SVCXPRT * xprt, struct rpc_msg *msg)
      (!has_args || (SVCAUTH_WRAP(xprt->xp_auth, xdrs, xdr_results, xdr_location))))
     {
       slen = (int)XDR_GETPOS(xdrs);
-      if(sendto(xprt->xp_sock, rpc_buffer(xprt), slen, 0,
+      if(sendto(xprt->XP_SOCK, rpc_buffer(xprt), slen, 0,
                 (struct sockaddr *)&(xprt->xp_raddr), xprt->xp_addrlen) == slen)
         {
           stat = TRUE;
@@ -307,9 +300,9 @@ static void Svcudp_destroy(register SVCXPRT * xprt)
   register struct svcudp_data *su = su_data(xprt);
 
   Xprt_unregister(xprt);
-  if(xprt->xp_sock != -1)
-    (void)close(xprt->xp_sock);
-  xprt->xp_sock = -1;
+  if(xprt->XP_SOCK != -1)
+    (void)close(xprt->XP_SOCK);
+  xprt->XP_SOCK = -1;
   if(xprt->xp_auth != NULL)
     {
       SVCAUTH_DESTROY(xprt->xp_auth);

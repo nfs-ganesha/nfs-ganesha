@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -132,10 +132,15 @@ typedef unsigned long u_long;
 #define SIZE_STR_NFSHANDLE2 (2 * NFS2_FHSIZE + 1)
 #define SIZE_STR_NFSHANDLE3 (2 * NFS3_FHSIZE + 1)
 
-/* unsolved symbol */
+/* unsolved symbols */
 int get_rpc_xid()
 {
   return 0;
+}
+
+void *rpc_tcp_socket_manager_thread(void *Arg)
+{
+  return NULL;
 }
 
 /* encoding/decoding function definitions */
@@ -197,7 +202,7 @@ int cmdnfs_dirpath(cmdnfs_encodetype_t encodeflag,
     default:
       return FALSE;
     }
-
+  return FALSE;
 }
 
 int cmdnfs_fhandle2(cmdnfs_encodetype_t encodeflag,
@@ -906,7 +911,7 @@ int cmdnfs_diropargs2(cmdnfs_encodetype_t encodeflag,
     default:
       return FALSE;
     }
-
+  return FALSE;
 }
 
 #define READLINKRES_PATH( _p_rl2res ) ( (_p_rl2res)->READLINK2res_u.data )
@@ -1209,7 +1214,7 @@ int cmdnfs_CREATE2args(cmdnfs_encodetype_t encodeflag,
     default:
       return FALSE;
     }
-
+  return FALSE;
 }
 
 int cmdnfs_SETATTR2args(cmdnfs_encodetype_t encodeflag,
@@ -1255,7 +1260,7 @@ int cmdnfs_SETATTR2args(cmdnfs_encodetype_t encodeflag,
     default:
       return FALSE;
     }
-
+  return FALSE;
 }
 
 int cmdnfs_READDIR2args(cmdnfs_encodetype_t encodeflag,
@@ -1312,7 +1317,7 @@ int cmdnfs_READDIR2args(cmdnfs_encodetype_t encodeflag,
     default:
       return FALSE;
     }
-
+  return FALSE;
 }
 
 static int cmdnfs_READDIR2resok(cmdnfs_encodetype_t encodeflag,
@@ -1337,7 +1342,7 @@ static int cmdnfs_READDIR2resok(cmdnfs_encodetype_t encodeflag,
           fprintf(out_stream, "%*sfileid = %#x\n", indent + 4, " ", p_entry2->fileid);
           fprintf(out_stream, "%*sname = %s\n", indent + 4, " ", p_entry2->name);
           fprintf(out_stream, "%*scookie = %u\n", indent + 4, " ",
-                  *((int *)p_entry2->cookie));
+                  *(p_entry2->cookie));
           fprintf(out_stream, "%*s}\n", indent + 2, " ");
 
           p_entry2 = p_entry2->nextentry;
@@ -1869,7 +1874,7 @@ int cmdnfs_diropargs3(cmdnfs_encodetype_t encodeflag,
     default:
       return FALSE;
     }
-
+  return FALSE;
 }
 
 int cmdnfs_postopattr(cmdnfs_encodetype_t encodeflag,
@@ -2228,6 +2233,7 @@ int cmdnfs_READDIR3args(cmdnfs_encodetype_t encodeflag,
     default:
       return FALSE;
     }
+  return FALSE;
 }
 
 #define READDIR3_OK( _p_READDIR3res ) ( (_p_READDIR3res)->READDIR3res_u.resok )
@@ -2414,6 +2420,7 @@ int cmdnfs_READDIRPLUS3args(cmdnfs_encodetype_t encodeflag,
     default:
       return FALSE;
     }
+  return FALSE;
 }
 
 static int cmdnfs_dirlistplus3(cmdnfs_encodetype_t encodeflag,
@@ -3008,6 +3015,7 @@ int cmdnfs_preopattr(cmdnfs_encodetype_t encodeflag,
     default:
       return FALSE;
     }
+  return FALSE;
 }
 
 int cmdnfs_wccdata(cmdnfs_encodetype_t encodeflag,
@@ -3417,7 +3425,7 @@ int cmdnfs_sattrguard3(cmdnfs_encodetype_t encodeflag,
 
   time_t c_sec;
   int c_nsec;
-  char *nsec_str;
+  char *nsec_str = NULL;
   char *time_str;
 
   /* sanity check */
@@ -4217,13 +4225,13 @@ int cmdnfs_PATHCONF3res(cmdnfs_encodetype_t encodeflag,
 /**
  * print_nfsitem_line:
  * Prints a nfs element on one line, like the Unix ls command.
- * 
+ *
  * \param out (in FILE*) The file where the item is to be printed.
  * \param attrib (fattr3 *) the NFS attributes for the item.
  * \param name (in char *) The name of the item to be printed.
  * \param target (in char *) It the item is a symbolic link,
  *        this contains the link target.
- * \return Nothing. 
+ * \return Nothing.
  */
 #define print_mask(_out,_mode,_mask,_lettre) do {    \
         if (_mode & _mask) fprintf(_out,_lettre);    \
@@ -4328,7 +4336,7 @@ void print_nfsitem_line(FILE * out, fattr3 * attrib, char *name, char *target)
 /**
  * print_nfs_attributes:
  * print an fattr3 to a given output file.
- * 
+ *
  * \param attrs (in fattr3) The attributes to be printed.
  * \param output (in FILE *) The file where the attributes are to be printed.
  * \return Nothing.

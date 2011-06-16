@@ -48,18 +48,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -74,8 +63,6 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
-
-extern nfs_parameter_t nfs_param;
 
 /**
  * nfs4_op_write: The NFS4_OP_WRITE operation
@@ -280,7 +267,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* The size to be written should not be greater than FATTR4_MAXWRITESIZE because this value is asked 
    * by the client at mount time, but we check this by security */
-  if((data->pexport->options & EXPORT_OPTION_MAXWRITE == EXPORT_OPTION_MAXWRITE) &&
+  if((data->pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE &&
      size > data->pexport->MaxWrite)
     {
       /*

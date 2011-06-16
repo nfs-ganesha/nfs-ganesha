@@ -48,22 +48,16 @@
 #if HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/svc_auth.h>
-#include <gssrpc/pmap_clnt.h>
+#include "../rpcal.h"
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 
 
-SVCXPRT **Xports;
 extern int gssrpc_svc_fdset_init;
 
 #define NULL_SVC ((struct svc_callout *)0)
 #define	RQCRED_SIZE	1024    /* this size is excessive */
-
-fd_set Svc_fdset;
 
 /*
  * The services list
@@ -90,7 +84,7 @@ static void Svc_do_xprt(SVCXPRT * xprt);
  */
 void Xprt_register(SVCXPRT * xprt)
 {
-  register int sock = xprt->xp_sock;
+  register int sock = xprt->XP_SOCK;
 
 #ifdef FD_SETSIZE
   if(gssrpc_svc_fdset_init == 0)
@@ -119,7 +113,7 @@ void Xprt_register(SVCXPRT * xprt)
  */
 void Xprt_unregister(SVCXPRT * xprt)
 {
-  register int sock = xprt->xp_sock;
+  register int sock = xprt->XP_SOCK;
 
 #ifdef FD_SETSIZE
   if((sock < FD_SETSIZE) && (Xports[sock] == xprt))

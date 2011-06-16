@@ -42,7 +42,7 @@
 #include "solaris_port.h"
 #endif
 
-#include <gssrpc/rpc.h>
+#include "rpcal.h"
 
 /*
  * Server side authenticators are called from authenticate by
@@ -74,8 +74,10 @@ static struct svcauthsw_type
   enum auth_stat (*authenticator) (struct svc_req *, struct rpc_msg *, bool_t *);
 } svcauthsw[] =
 {
+#ifdef AUTH_GSSAPI
   {
   AUTH_GSSAPI, Gssrpc__svcauth_gss},    /* AUTH_GSSAPI */
+#endif
   {
   AUTH_NONE, Gssrpc__svcauth_none},     /* AUTH_NONE */
 #if 0

@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -144,7 +144,7 @@ struct tm *Localtime_r(const time_t * p_time, struct tm *p_tm)
   return p_tm;
 }
 
-/** 
+/**
  * my_atoi:
  * This function converts a string to an integer.
  *
@@ -178,7 +178,7 @@ int my_atoi(char *str)
 
 }
 
-/** 
+/**
  * atomode:
  * This function converts a string to a unix access mode.
  *
@@ -397,7 +397,7 @@ time_t atotime(char *str)
  * split_path:
  * splits a path 'dir/dir/dir/obj' in two strings :
  * 'dir/dir/dir' and 'obj'.
- * 
+ *
  * \param in_path (in/out char *)
  * \param p_path (out char **)
  * \param p_file (out char **)
@@ -505,7 +505,7 @@ char *time2str(time_t time_in, char *str_out)
  * Transform a path to a cannonical path.
  * Remove //,  /./,  /../, final /
  * from a POSIX-like path.
- * 
+ *
  * \param str (in/out char*) The path to be transformed.
  * \param len (in int)       The max path length.
  * \return Nothing.
@@ -558,7 +558,8 @@ void clean_path(char *str, int len)
       /* we copy everything after "/./" to sdd_index */
       indexsrc = 3;             /* index in sdd_index */
       indexdest = 1;            /* index in sdd_index */
-      while(sdd_index[indexdest] = sdd_index[indexsrc])
+      /* BUG: I'm pretty sure this can't be right???? */
+      while((sdd_index[indexdest] = sdd_index[indexsrc]))
         {
           indexdest++;
           indexsrc++;
@@ -602,7 +603,7 @@ void clean_path(char *str, int len)
           /* we copy everything after "/../" to slash_index */
           indexsrc = 4;         /* index in sdd_index */
           indexdest = 1;        /* index in slash_index */
-          while(slash_index[indexdest] = sdd_index[indexsrc])
+          while((slash_index[indexdest] = sdd_index[indexsrc]))
             {
               indexdest++;
               indexsrc++;
@@ -629,7 +630,7 @@ void clean_path(char *str, int len)
 
               indexsrc = 3;     /* index in str */
               indexdest = 0;    /* index in str */
-              while(str[indexdest] = str[indexsrc])
+              while((str[indexdest] = str[indexsrc]))
                 {
                   indexdest++;
                   indexsrc++;
@@ -681,6 +682,32 @@ void print_fsal_status(FILE * output, fsal_status_t status)
 
   fprintf(output, "%s", _str_);
 }
+
+/**
+ * fsal_status_to_string:
+ * this function converts an fsal_status_t to a a string buffer
+ *
+ * \param output (in char *) The output where the status is to be printed.
+ * \param status (in status) The status to be printed.
+ *
+ * \return Nothing.
+ */
+void fsal_status_to_string(char * output, fsal_status_t status)
+{
+
+#ifdef _USE_GHOSTFS
+
+  log_snprintf(output, sizeof(output), "%J%r,%J%r",
+               ERR_FSAL, status.major, ERR_GHOSTFS, status.minor);
+
+#else
+
+  log_snprintf(output, sizeof(output), "%J%r, filesystem status: %d",
+               ERR_FSAL, status.major, status.minor);
+
+#endif
+}
+
 
 /**
  * print_fsal_attrib_mask:
@@ -763,7 +790,7 @@ char *strtype(fsal_nodetype_t type)
 /**
  * print_fsal_attributes:
  * print an fsal_attrib_list_t to a given output file.
- * 
+ *
  * \param attrs (in fsal_attrib_list_t) The attributes to be printed.
  * \param output (in FILE *) The file where the attributes are to be printed.
  * \return Nothing.
@@ -809,14 +836,14 @@ void print_fsal_attributes(fsal_attrib_list_t attrs, FILE * output)
 /**
  * print_item_line:
  * Prints a filesystem element on one line, like the Unix ls command.
- * 
+ *
  * \param out (in FILE*) The file where the item is to be printed.
  * \param attrib (in fsal_attrib_list_t *) the attributes for the
  *        item.
  * \param name (in char *) The name of the item to be printed.
  * \param target (in char *) It the item is a symbolic link,
  *        this contains the link target.
- * \return Nothing. 
+ * \return Nothing.
  */
 #define print_mask(_out,_mode,_mask,_lettre) do {    \
         if (_mode & _mask) fprintf(_out,_lettre);\
@@ -1077,7 +1104,8 @@ int MkFSALSetAttrStruct(char *attribute_list, fsal_attrib_list_t * fsal_set_attr
           *p_time = param_time;
 
           break;
-
+        default:
+          break;
         }
 
       /* now process the next attribute */

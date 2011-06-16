@@ -50,20 +50,7 @@
 #include <sys/select.h>
 #include "HashData.h"
 #include "HashTable.h"
-
-#if defined( _USE_TIRPC )
-#include <rpc/rpc.h>
-#elif defined( _USE_GSSRPC )
-#include <gssapi/gssapi.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -82,44 +69,6 @@
 #include "nfs_file_handle.h"
 #include "nfs_stat.h"
 #include "SemN.h"
-
-#ifdef _APPLE
-#define __FDS_BITS(set) ((set)->fds_bits)
-#endif
-
-#ifdef _USE_TIRPC
-struct netconfig *getnetconfigent(const char *netid);
-void freenetconfigent(struct netconfig *);
-SVCXPRT *Svc_vc_create(int, u_int, u_int);
-SVCXPRT *Svc_dg_create(int, u_int, u_int);
-#else
-SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize);
-SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz);
-bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*dispatch) (),
-                    int protocol);
-#endif
-
-void socket_setoptions(int socketFd);
-
-#define NULL_SVC ((struct svc_callout *)0)
-
-extern fd_set Svc_fdset;
-extern nfs_worker_data_t *workers_data;
-extern nfs_parameter_t nfs_param;
-#ifdef _RPCSEC_GS_64_INSTALLED
-struct svc_rpc_gss_data **TabGssData;
-#endif
-extern hash_table_t *ht_dupreq; /* duplicate request hash */
-
-#if _USE_TIRPC
-/* public data : */
-rw_lock_t Svc_lock;
-rw_lock_t Svc_fd_lock;
-#endif
-
-/* These two variables keep state of the thread that gc at this time */
-unsigned int nb_current_gc_workers;
-pthread_mutex_t lock_nb_current_gc_workers;
 
 static pthread_mutex_t lock_worker_selection = PTHREAD_MUTEX_INITIALIZER;
 
@@ -204,8 +153,6 @@ int nfs_Init_svc()
 #endif
   struct sockaddr_in sinaddr_nfs;
   struct sockaddr_in sinaddr_mnt;
-  struct sockaddr_in sinaddr_nlm;
-  struct sockaddr_in sinaddr_rquota;
 #ifdef _USE_TIRPC_IPV6
   struct sockaddr_in6 sinaddr_nfs_udp6;
   struct sockaddr_in6 sinaddr_mnt_udp6;
@@ -230,14 +177,14 @@ int nfs_Init_svc()
   int nb_svc_mnt_ok = 0;
   int nb_svc_nlm_ok = 0;
   int nb_svc_rquota_ok = 0;
-#ifdef _USE_GSSRPC
-  OM_uint32 maj_stat;
-  OM_uint32 min_stat;
-  char GssError[1024];
-  gss_cred_id_t test_gss_cred = NULL;
-  gss_name_t imported_name = NULL;
-#endif
-  int num_sock = nfs_param.core_param.nb_max_fd;
+
+#ifdef _USE_NLM
+  struct sockaddr_in sinaddr_nlm;
+#endif /* _USE_NLM */
+
+#ifdef _USE_QUOTA
+  struct sockaddr_in sinaddr_rquota;
+#endif /* _USE_QUOTA */
 
   /* Initialize all the sockets to -1 because it makes some code later easier */
   nfs_param.worker_param.nfs_svc_data.socket_nfs_udp = -1;
@@ -252,12 +199,7 @@ int nfs_Init_svc()
   LogInfo(COMPONENT_DISPATCH, "NFS Init for core options = %d",
           nfs_param.core_param.core_options);
 
-  /* Allocate resources that are based on the maximum number of open file descriptors */
-  Xports = (SVCXPRT **) Mem_Alloc_Label(num_sock * sizeof(SVCXPRT *), "Xports array");
-  mutex_cond_xprt = (pthread_mutex_t *) Mem_Alloc_Label(num_sock * sizeof(pthread_mutex_t ), "mutex_cond_xprt array");
-  condvar_xprt = (pthread_cond_t *) Mem_Alloc_Label(num_sock * sizeof(pthread_cond_t ), "condvar_xprt array");
-  etat_xprt = (int *) Mem_Alloc_Label(num_sock * sizeof(int), "etat_xprt array");
-  FD_ZERO(&Svc_fdset);
+  InitRPC(nfs_param.core_param.nb_max_fd);
 
 #ifdef _USE_TIRPC
   LogInfo(COMPONENT_DISPATCH, "NFS INIT: Using TIRPC");
@@ -303,9 +245,6 @@ int nfs_Init_svc()
   LogInfo(COMPONENT_DISPATCH, "netconfig found for UDPv6 and TCPv6");
 #endif
 
-  /* RW_lock need to be initialized */
-  rw_lock_init(&Svc_lock);
-  rw_lock_init(&Svc_fd_lock);
 #endif                          /* _USE_TIRPC */
 
 #ifndef _USE_TIRPC_IPV6
@@ -882,6 +821,7 @@ int nfs_Init_svc()
   rpcb_unset(nfs_param.core_param.mnt_program, MOUNT_V3, netconfig_tcpv4);
 
   rpcb_unset(nfs_param.core_param.nlm_program, NLM4_VERS, netconfig_tcpv4);
+  rpcb_unset(nfs_param.core_param.nlm_program, NLM4_VERS, netconfig_udpv4);
 
 #ifdef _USE_QUOTA
   rpcb_unset(nfs_param.core_param.rquota_program, RQUOTAVERS, netconfig_tcpv4);
@@ -970,9 +910,9 @@ int nfs_Init_svc()
 
 #ifdef _USE_TIRPC_IPV6
   nfs_param.worker_param.nfs_svc_data.xprt_nfs_udp->xp_netid =
-      strdup(netconfig_udpv6->nc_netid);
+      Str_Dup(netconfig_udpv6->nc_netid);
   nfs_param.worker_param.nfs_svc_data.xprt_nfs_udp->xp_tp =
-      strdup(netconfig_udpv6->nc_device);
+      Str_Dup(netconfig_udpv6->nc_device);
 #endif                          /* _USE_TIRPC_IPV6 */
 
   if((nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp =
@@ -1000,9 +940,9 @@ int nfs_Init_svc()
     }
 
   nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp->xp_netid =
-      strdup(netconfig_tcpv6->nc_netid);
+      Str_Dup(netconfig_tcpv6->nc_netid);
   nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp->xp_tp =
-      strdup(netconfig_tcpv6->nc_device);
+      Str_Dup(netconfig_tcpv6->nc_device);
 #endif                          /* _USE_TIRPC_IPV6 */
 
   if((nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0)
@@ -1023,9 +963,9 @@ int nfs_Init_svc()
 
 #ifdef _USE_TIRPC_IPV6
       nfs_param.worker_param.nfs_svc_data.xprt_mnt_udp->xp_netid =
-          strdup(netconfig_udpv6->nc_netid);
+          Str_Dup(netconfig_udpv6->nc_netid);
       nfs_param.worker_param.nfs_svc_data.xprt_mnt_udp->xp_tp =
-          strdup(netconfig_udpv6->nc_device);
+          Str_Dup(netconfig_udpv6->nc_device);
 #endif                          /* _USE_TIRPC_IPV6 */
 
       if((nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp =
@@ -1117,13 +1057,13 @@ int nfs_Init_svc()
         }
 
       nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp->xp_netid =
-          strdup(netconfig_tcpv6->nc_netid);
+          Str_Dup(netconfig_tcpv6->nc_netid);
       nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp->xp_tp =
-          strdup(netconfig_tcpv6->nc_device);
+          Str_Dup(netconfig_tcpv6->nc_device);
 #endif                          /* _USE_TIRPC_IPV6 */
     }
 
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
   /* Acquire RPCSEC_GSS basis if needed */
   if(nfs_param.krb5_param.active_krb5 == TRUE)
     {
@@ -1157,7 +1097,7 @@ int nfs_Init_svc()
         }
     }
   /* if( nfs_param.krb5_param.active_krb5 == TRUE ) */
-#endif                          /* _USE_GSSRPC */
+#endif                          /* _HAVE_GSSAPI */
 
 #ifndef _NO_PORTMAPPER
 
@@ -1703,7 +1643,6 @@ static unsigned int select_worker_queue()
 {
   #define NO_VALUE_CHOOSEN  1000000
   unsigned int worker_index = NO_VALUE_CHOOSEN;
-  unsigned int min_number_pending = NO_VALUE_CHOOSEN;
   unsigned int avg_number_pending = NO_VALUE_CHOOSEN;
   unsigned int total_number_pending = 0;
 
@@ -1738,10 +1677,10 @@ static unsigned int select_worker_queue()
           if((workers_data[i].gc_in_progress == FALSE)
              && (workers_data[i].is_ready == TRUE))
             {
-         if(workers_data[i].pending_request->nb_entry < avg_number_pending)
+              if(workers_data[i].pending_request->nb_entry < avg_number_pending)
                 {
                   worker_index = i;
-             break;
+                  break;
                 }
             }
           else if(!workers_data[i].is_ready)
@@ -1770,9 +1709,9 @@ static unsigned int select_worker_queue()
  * @return the chosen worker index.
  *
  */
-int nfs_rpc_get_worker_index(int mount_protocol_flag)
+unsigned int nfs_rpc_get_worker_index(int mount_protocol_flag)
 {
-  int worker_index = -1;
+  unsigned int worker_index;
 
 #ifndef _NO_MOUNT_LIST
   if(mount_protocol_flag == TRUE)
@@ -1801,32 +1740,24 @@ int nfs_rpc_get_worker_index(int mount_protocol_flag)
  */
 void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
 {
-  enum xprt_stat stat;
-  struct rpc_msg *pmsg;
-  struct svc_req *preq;
   register SVCXPRT *xprt;
   register int bit;
   register long mask, *maskp;
   register int sock;
-  char *cred_area;
-  struct sockaddr_in *pdead_caller = NULL;
-  char dead_caller[MAXNAMLEN];
-
-  LRU_entry_t *pentry = NULL;
-  LRU_status_t status;
-  nfs_request_data_t *pnfsreq = NULL;
-  int worker_index;
-  int mount_flag = FALSE;
+  register int rpc_sock;
+  process_status_t status;
 
   /* portable access to fds_bits field */
   maskp = __FDS_BITS(readfds);
 
   for(sock = 0; sock < FD_SETSIZE; sock += NFDBITS)
     {
-      for(mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1)))
+      for(mask = *maskp++; (bit = ffs(mask)); mask ^= (1 << (bit - 1)))
         {
           /* sock has input waiting */
-          xprt = Xports[sock + bit - 1];
+          rpc_sock = sock + bit - 1;
+
+          xprt = Xports[rpc_sock];
           if(xprt == NULL)
             {
               /* But do we control sock? */
@@ -1834,54 +1765,6 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                       "CRITICAL ERROR: Incoherency found in Xports array");
               continue;
             }
-
-          /* A few thread manage only mount protocol, check for this */
-          if((nfs_param.worker_param.nfs_svc_data.socket_mnt_udp == sock + bit - 1) ||
-             (nfs_param.worker_param.nfs_svc_data.socket_mnt_tcp == sock + bit - 1))
-            mount_flag = TRUE;
-          else
-            mount_flag = FALSE;
-
-          /* Get a worker to do the job */
-          if((worker_index = nfs_rpc_get_worker_index(mount_flag)) < 0)
-            {
-              LogMajor(COMPONENT_DISPATCH,
-                       "CRITICAL ERROR: Couldn't choose a worker ! Exiting...");
-              exit(1);
-            }
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Use request from spool #%d, xprt->xp_sock=%d",
-                       worker_index, xprt->xp_fd);
-#else
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Use request from spool #%d, xprt->xp_sock=%d",
-                       worker_index, xprt->xp_sock);
-#endif
-
-          /* Get a pnfsreq from the worker's pool */
-          P(workers_data[worker_index].request_pool_mutex);
-
-          GetFromPool(pnfsreq, &workers_data[worker_index].request_pool,
-                      nfs_request_data_t);
-
-          V(workers_data[worker_index].request_pool_mutex);
-
-          if(pnfsreq == NULL)
-            {
-              LogMajor(COMPONENT_DISPATCH,
-                      "CRITICAL ERROR: empty request pool for the chosen worker ! Exiting...");
-              exit(1);
-            }
-
-          /* Set up pointers */
-          cred_area = pnfsreq->cred_area;
-          preq = &(pnfsreq->req);
-          pmsg = &(pnfsreq->msg);
-
-          pmsg->rm_call.cb_cred.oa_base = cred_area;
-          pmsg->rm_call.cb_verf.oa_base = &(cred_area[MAX_AUTH_BYTES]);
-          preq->rq_clntcred = &(cred_area[2 * MAX_AUTH_BYTES]);
 
           /*
            * UDP RPCs are quite simple: everything comes to the same socket, so several SVCXPRT
@@ -1899,42 +1782,48 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
            * all the other cases are requests from already connected TCP Clients
            */
 
-          if(nfs_param.worker_param.nfs_svc_data.socket_nfs_udp == sock + bit - 1)
+          if(nfs_param.worker_param.nfs_svc_data.socket_nfs_udp == rpc_sock)
             {
               /* This is a regular UDP connection */
               LogFullDebug(COMPONENT_DISPATCH, "A NFS UDP request");
-              pnfsreq->xprt = pnfsreq->nfs_udp_xprt;
-              pnfsreq->ipproto = IPPROTO_UDP;
-
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
+              if(xprt != nfs_param.worker_param.nfs_svc_data.xprt_nfs_udp)
+                LogCrit(COMPONENT_DISPATCH,
+                        "Oops, UDP xprt doesn't match xprt=%p xprt_nfs_udp=%p",
+                        xprt, nfs_param.worker_param.nfs_svc_data.xprt_nfs_udp);
+              xprt = nfs_param.worker_param.nfs_svc_data.xprt_nfs_udp;
             }
-          else if(nfs_param.worker_param.nfs_svc_data.socket_mnt_udp == sock + bit - 1)
+          else if(nfs_param.worker_param.nfs_svc_data.socket_mnt_udp == rpc_sock)
             {
               LogFullDebug(COMPONENT_DISPATCH, "A MOUNT UDP request");
-              pnfsreq->xprt = pnfsreq->mnt_udp_xprt;
-              pnfsreq->ipproto = IPPROTO_UDP;
-
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
+              if(xprt != nfs_param.worker_param.nfs_svc_data.xprt_mnt_udp)
+                LogCrit(COMPONENT_DISPATCH,
+                        "Oops, UDP xprt doesn't match xprt=%p xprt_mnt_udp=%p",
+                        xprt, nfs_param.worker_param.nfs_svc_data.xprt_mnt_udp);
+              xprt = nfs_param.worker_param.nfs_svc_data.xprt_mnt_udp;
             }
 #ifdef _USE_NLM
-          else if(nfs_param.worker_param.nfs_svc_data.socket_nlm_udp == sock + bit - 1)
+          else if(nfs_param.worker_param.nfs_svc_data.socket_nlm_udp == rpc_sock)
             {
               LogFullDebug(COMPONENT_DISPATCH, "A NLM UDP request");
-              pnfsreq->xprt = pnfsreq->nlm_udp_xprt;
-              pnfsreq->ipproto = IPPROTO_UDP;
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
+              if(xprt != nfs_param.worker_param.nfs_svc_data.xprt_nlm_udp)
+                LogCrit(COMPONENT_DISPATCH,
+                        "Oops, UDP xprt doesn't match xprt=%p xprt_nlm_udp=%p",
+                        xprt, nfs_param.worker_param.nfs_svc_data.xprt_nlm_udp);
+              xprt = nfs_param.worker_param.nfs_svc_data.xprt_nlm_udp;
             }
 #endif                          /* _USE_NLM */
 #ifdef _USE_QUOTA
-          else if(nfs_param.worker_param.nfs_svc_data.socket_rquota_udp == sock + bit - 1)
+          else if(nfs_param.worker_param.nfs_svc_data.socket_rquota_udp == rpc_sock)
             {
               LogFullDebug(COMPONENT_DISPATCH, "A RQUOTA UDP request");
-              pnfsreq->xprt = pnfsreq->rquota_udp_xprt;
-              pnfsreq->ipproto = IPPROTO_UDP;
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
+              if(xprt != nfs_param.worker_param.nfs_svc_data.xprt_rquota_udp)
+                LogCrit(COMPONENT_DISPATCH,
+                        "Oops, UDP xprt doesn't match xprt=%p xprt_rquota_udp=%p",
+                        xprt, nfs_param.worker_param.nfs_svc_data.xprt_rquota_udp);
+              xprt = nfs_param.worker_param.nfs_svc_data.xprt_rquota_udp;
             }
 #endif                          /* _USE_QUOTA */
-          else if(nfs_param.worker_param.nfs_svc_data.socket_nfs_tcp == sock + bit - 1)
+          else if(nfs_param.worker_param.nfs_svc_data.socket_nfs_tcp == rpc_sock)
             {
               /*
                * This is an initial tcp connection
@@ -1945,153 +1834,54 @@ void nfs_rpc_getreq(fd_set * readfds, nfs_parameter_t * pnfs_para)
                */
               LogFullDebug(COMPONENT_DISPATCH,
                            "An initial NFS TCP request from a new client");
-              pnfsreq->xprt = nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp;
-              pnfsreq->ipproto = IPPROTO_TCP;
-
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
+              if(xprt != nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp)
+                LogCrit(COMPONENT_DISPATCH,
+                        "Oops, UDP xprt doesn't match xprt=%p xprt_nfs_tcp=%p",
+                        xprt, nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp);
+              xprt = nfs_param.worker_param.nfs_svc_data.xprt_nfs_tcp;
             }
-          else if(nfs_param.worker_param.nfs_svc_data.socket_mnt_tcp == sock + bit - 1)
+          else if(nfs_param.worker_param.nfs_svc_data.socket_mnt_tcp == rpc_sock)
             {
               LogFullDebug(COMPONENT_DISPATCH,
                            "An initial MOUNT TCP request from a new client");
-              pnfsreq->xprt = nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp;
-              pnfsreq->ipproto = IPPROTO_TCP;
-
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
+              if(xprt != nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp)
+                LogCrit(COMPONENT_DISPATCH,
+                        "Oops, UDP xprt doesn't match xprt=%p xprt_mnt_tcp=%p",
+                        xprt, nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp);
+              xprt = nfs_param.worker_param.nfs_svc_data.xprt_mnt_tcp;
             }
 #ifdef _USE_NLM
-          else if(nfs_param.worker_param.nfs_svc_data.socket_nlm_tcp == sock + bit - 1)
+          else if(nfs_param.worker_param.nfs_svc_data.socket_nlm_tcp == rpc_sock)
             {
               LogFullDebug(COMPONENT_DISPATCH,
                            "An initial NLM request from a new client");
-              pnfsreq->xprt = nfs_param.worker_param.nfs_svc_data.xprt_nlm_tcp;
-              pnfsreq->ipproto = IPPROTO_TCP;
-
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
+              if(xprt != nfs_param.worker_param.nfs_svc_data.xprt_nlm_tcp)
+                LogCrit(COMPONENT_DISPATCH,
+                        "Oops, UDP xprt doesn't match xprt=%p xprt_nlm_tcp=%p",
+                        xprt, nfs_param.worker_param.nfs_svc_data.xprt_nlm_tcp);
+              xprt = nfs_param.worker_param.nfs_svc_data.xprt_nlm_tcp;
             }
 #endif                          /* _USE_NLM */
 #ifdef _USE_QUOTA
-          else if(nfs_param.worker_param.nfs_svc_data.socket_rquota_tcp == sock + bit - 1)
+          else if(nfs_param.worker_param.nfs_svc_data.socket_rquota_tcp == rpc_sock)
             {
               LogFullDebug(COMPONENT_DISPATCH,
                            "An initial RQUOTA request from a new client");
-              pnfsreq->xprt = nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp;
-              pnfsreq->ipproto = IPPROTO_TCP;
-
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
+              if(xprt != nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp)
+                LogCrit(COMPONENT_DISPATCH,
+                        "Oops, UDP xprt doesn't match xprt=%p xprt_rquota_tcp=%p",
+                        xprt, nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp);
+              xprt = nfs_param.worker_param.nfs_svc_data.xprt_rquota_tcp;
             }
 #endif                          /* _USE_QUOTA */
           else
             {
               /* This is a regular tcp request on an established connection, should be handle by a dedicated thread */
-              LogFullDebug(COMPONENT_DISPATCH,
-                           "A NFS TCP request from an already connected client");
-              pnfsreq->tcp_xprt = xprt;
-              pnfsreq->xprt = pnfsreq->tcp_xprt;
-              pnfsreq->ipproto = IPPROTO_TCP;
-
-              pnfsreq->status = SVC_RECV(pnfsreq->xprt, &(pnfsreq->msg));
+              LogDebug(COMPONENT_DISPATCH,
+                       "A NFS TCP request from an already connected client");
             }
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Status for SVC_RECV on socket %d is %d",
-                       sock + bit - 1, pnfsreq->status);
 
-          /* If status is ok, the request will be processed by the related
-           * worker, otherwise, it should be released by being tagged as invalid*/
-          if(!pnfsreq->status)
-            {
-              /* RPC over TCP specific: RPC/UDP's xprt know only one state: XPRT_IDLE, because UDP is mostly
-               * a stateless protocol. With RPC/TCP, they can be XPRT_DIED especially when the client closes
-               * the peer's socket. We have to cope with this aspect in the next lines */
-
-              stat = SVC_STAT(pnfsreq->xprt);
-              if(stat == XPRT_DIED)
-                {
-#ifndef _USE_TIRPC
-                  if((pdead_caller = svc_getcaller(pnfsreq->xprt)) != NULL)
-                    {
-                      snprintf(dead_caller, MAXNAMLEN, "0x%x=%d.%d.%d.%d",
-                               ntohl(pdead_caller->sin_addr.s_addr),
-                               (ntohl(pdead_caller->sin_addr.s_addr) & 0xFF000000) >> 24,
-                               (ntohl(pdead_caller->sin_addr.s_addr) & 0x00FF0000) >> 16,
-                               (ntohl(pdead_caller->sin_addr.s_addr) & 0x0000FF00) >> 8,
-                               (ntohl(pdead_caller->sin_addr.s_addr) & 0x000000FF));
-                    }
-                  else
-#endif                          /* _USE_TIRPC */
-                    strncpy(dead_caller, "unresolved", MAXNAMLEN);
-
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-                  LogDebug(COMPONENT_DISPATCH,
-                           "A client disappeared... socket=%d, addr=%s",
-                           pnfsreq->xprt->xp_fd, dead_caller);
-                  if(Xports[pnfsreq->xprt->xp_fd] != NULL)
-                    SVC_DESTROY(Xports[pnfsreq->xprt->xp_fd]);
-#else
-                  LogDebug(COMPONENT_DISPATCH,
-                           "A client disappeared... socket=%d, addr=%s",
-                           pnfsreq->xprt->xp_sock, dead_caller);
-                  if(Xports[pnfsreq->xprt->xp_sock] != NULL)
-                    SVC_DESTROY(Xports[pnfsreq->xprt->xp_sock]);
-#endif
-
-                  P(workers_data[worker_index].request_pool_mutex);
-                  ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
-                  V(workers_data[worker_index].request_pool_mutex);
-
-                }
-              else if(stat == XPRT_MOREREQS)
-                {
-                  LogDebug(COMPONENT_DISPATCH,
-                           "Client on socket %d has status XPRT_MOREREQS",
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-                           pnfsreq->xprt->xp_fd);
-#else
-                           pnfsreq->xprt->xp_sock);
-#endif
-                }
-
-              /* Release the entry */
-              LogFullDebug(COMPONENT_DISPATCH,
-                           "NFS DISPATCH: Invalidating entry with xprt_stat=%d",
-                           stat);
-              workers_data[worker_index].passcounter += 1;
-            }
-          else
-            {
-              /* This should be used for UDP requests only, TCP request have dedicted management threads */
-              LogFullDebug(COMPONENT_DISPATCH,
-                           "Awaking thread #%d", worker_index);
-
-              P(workers_data[worker_index].mutex_req_condvar);
-              P(workers_data[worker_index].request_pool_mutex);
-
-              if((pentry =
-                  LRU_new_entry(workers_data[worker_index].pending_request,
-                                &status)) == NULL)
-                {
-                  V(workers_data[worker_index].mutex_req_condvar);
-                  V(workers_data[worker_index].request_pool_mutex);
-                  LogMajor(COMPONENT_DISPATCH,
-                           "Error while inserting pending request to Thread #%d... exiting",
-                           worker_index);
-                  exit(1);
-                }
-              pentry->buffdata.pdata = (caddr_t) pnfsreq;
-              pentry->buffdata.len = sizeof(*pnfsreq);
-
-              if(pthread_cond_signal(&(workers_data[worker_index].req_condvar)) == -1)
-                {
-                  V(workers_data[worker_index].mutex_req_condvar);
-                  V(workers_data[worker_index].request_pool_mutex);
-                  LogMajor(COMPONENT_DISPATCH,
-                           "NFS DISPATCH: Cond signal failed for worker#%d , err = %d (%s)",
-                           worker_index, errno, strerror(errno));
-                  exit(1);
-                }
-              V(workers_data[worker_index].mutex_req_condvar);
-              V(workers_data[worker_index].request_pool_mutex);
-            }
+          status = process_rpc_request(xprt);
         }
     }
 }                               /* nfs_rpc_getreq */
@@ -2250,101 +2040,6 @@ void *rpc_dispatcher_thread(void *Arg)
 }                               /* rpc_dispatcher_thread */
 
 /**
- * nfs_Init_request_data: Init the data associated with a pending request
- *
- * This function is used to init the nfs_request_data for a worker. These data are used by the
- * worker for RPC processing.
- *
- * @param param A structure of type nfs_worker_parameter_t with all the necessary information related to a worker
- * @param pdata Pointer to the data to be initialized.
- *
- * @return 0 if successfull, -1 otherwise.
- *
- */
-int nfs_Init_request_data(nfs_request_data_t * pdata)
-{
-  pdata->ipproto = 0;
-
-  /* Init the SVCXPRT for the tcp socket */
-  /* The choice of the fd to be used here doesn't really matter, this fd will be overwrittem later
-   * when processing the request */
-  pdata->tcp_xprt = NULL;
-
-#ifdef _USE_TIRPC
-  if((pdata->nfs_udp_xprt =
-      Svc_dg_create(nfs_param.worker_param.nfs_svc_data.socket_nfs_udp,
-                    NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
-#else
-  if((pdata->nfs_udp_xprt =
-      Svcudp_bufcreate(nfs_param.worker_param.nfs_svc_data.socket_nfs_udp,
-                       NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
-#endif
-    {
-      LogCrit(COMPONENT_DISPATCH,
-              "NFS EXIT: Cannot allocate NFS/UDP SVCXPRT");
-      return -1;
-    }
-
-  if((nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0)
-    {
-#ifdef _USE_TIRPC
-      if((pdata->mnt_udp_xprt =
-          Svc_dg_create(nfs_param.worker_param.nfs_svc_data.socket_mnt_udp,
-                        NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
-#else
-      if((pdata->mnt_udp_xprt =
-          Svcudp_bufcreate(nfs_param.worker_param.nfs_svc_data.socket_mnt_udp,
-                           NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
-#endif
-        {
-          LogCrit(COMPONENT_DISPATCH,
-                  "NFS EXIT: Cannot allocate MNT/UDP SVCXPRT");
-          return -1;
-        }
-
-#ifdef _USE_NLM
-#ifdef _USE_TIRPC
-      if((pdata->nlm_udp_xprt =
-          Svc_dg_create(nfs_param.worker_param.nfs_svc_data.socket_nlm_udp,
-                        NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
-#else
-      if((pdata->nlm_udp_xprt =
-          Svcudp_bufcreate(nfs_param.worker_param.nfs_svc_data.socket_nlm_udp,
-                           NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
-#endif                          /* _USE_TIRPC */
-        {
-          LogCrit(COMPONENT_DISPATCH,
-                  "NFS EXIT: Cannot allocate NLM/UDP SVCXPRT");
-          return -1;
-        }
-#endif                          /* _USE_NLM */
-    }
-
-#ifdef _USE_QUOTA
-#ifdef _USE_TIRPC
-  if((pdata->rquota_udp_xprt =
-      Svc_dg_create(nfs_param.worker_param.nfs_svc_data.socket_rquota_udp,
-                    NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
-#else
-  if((pdata->rquota_udp_xprt =
-      Svcudp_bufcreate(nfs_param.worker_param.nfs_svc_data.socket_rquota_udp,
-                       NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE)) == NULL)
-#endif                          /* _USE_TIRPC */
-    {
-      LogCrit(COMPONENT_DISPATCH,
-              "NFS EXIT: Cannot allocate RQUOTA/UDP SVCXPRT");
-      return -1;
-    }
-#endif                          /* _USE_QUOTA */
-
-  pdata->xprt = NULL;
-
-  pdata->xprt_copy = Svcxprt_copycreate();
-
-  return 0;
-}                               /* nfs_Init_request_data */
-
-/**
  * constructor_nfs_request_data_t: Constructor for a nfs_request_data_t structure
  *
  * This function is used to init the nfs_request_data for a worker. These data are used by the
@@ -2358,37 +2053,8 @@ int nfs_Init_request_data(nfs_request_data_t * pdata)
 
 void constructor_nfs_request_data_t(void *ptr)
 {
-  if(nfs_Init_request_data(ptr) != 0)
-    {
-      LogMajor(COMPONENT_DISPATCH,
-               "NFS INIT: Error initializing request data ");
-      exit(1);
-    }
+  nfs_request_data_t * pdata = (nfs_request_data_t *) ptr;
+
+  memset(pdata, 0, sizeof(*pdata));
+  pdata->xprt_copy = Svcxprt_copycreate();
 }
-
-/**
- * nfs_Init_gc_counter: Init the worker's gc counters.
- *
- * This functions is used to init a mutex and a counter associated with it, to keep track of the number of worker currently
- * performing the garbagge collection.
- *
- * @param void No parameters
- *
- * @return 0 if successfull, -1 otherwise.
- *
- */
-
-int nfs_Init_gc_counter(void)
-{
-  pthread_mutexattr_t mutexattr;
-
-  if(pthread_mutexattr_init(&mutexattr) != 0)
-    return -1;
-
-  if(pthread_mutex_init(&lock_nb_current_gc_workers, &mutexattr) != 0)
-    return -1;
-
-  nb_current_gc_workers = 0;
-
-  return 0;                     /* Success */
-}                               /* nfs_Init_gc_counter */

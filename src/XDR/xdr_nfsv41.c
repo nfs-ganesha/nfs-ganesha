@@ -11,18 +11,7 @@
 #include "solaris_port.h"
 #endif
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/xdr.h>
-#define xdr_uint32_t  xdr_u_int32
-#define AUTH_SYS        1
-bool_t xdr_uint64_t(XDR * __xdrs, uint64_t * __up);
-bool_t xdr_int64_t(XDR * __xdrs, uint64_t * __up);
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#endif
+#include "rpc.h"
 
 #include "nfsv41.h"
 
@@ -32,13 +21,6 @@ bool_t xdr_int64_t(XDR * __xdrs, uint64_t * __up);
 
 #ifndef _AUTH_SYS_DEFINE_FOR_NFSv41
 #define _AUTH_SYS_DEFINE_FOR_NFSv41
-#ifdef _USE_GSSRPC
-//#include <gssrpc/auth_sys.h>
-#include <gssrpc/auth_unix.h>
-#else
-//#include <rpc/auth_sys.h>
-#include <rpc/auth_unix.h>
-#endif
 typedef struct authsys_parms authsys_parms;
 #endif                          /*  _AUTH_SYS_DEFINE_FOR_NFSv41 */
 

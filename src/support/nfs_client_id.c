@@ -58,7 +58,6 @@ size_t strnlen(const char *s, size_t maxlen);
 /* Hashtable used to cache the hostname, accessed by their IP addess */
 hash_table_t *ht_client_id;
 hash_table_t *ht_client_id_reverse;
-extern nfs_parameter_t nfs_param;
 
 /**
  *
@@ -716,7 +715,7 @@ int nfs_client_id_compute(char *name, clientid4 * pclientid)
           (padded_name[offset + 7] & 0x80) ^
           (padded_name[offset + 8] & 0x80) ^ (padded_name[offset + 9] & 0x80);
 
-      extract = i1 ^ i2 ^ i3 ^ i4 ^ i5 ^ i6 ^ i7 ^ i8 ^ i9 | l;
+      extract = (i1 ^ i2 ^ i3 ^ i4 ^ i5 ^ i6 ^ i7 ^ i8 ^ i9) | l;
 
       computed_value ^= extract;
       computed_value ^= sum;

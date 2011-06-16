@@ -53,11 +53,7 @@ int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) 
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/svc_auth.h>
+#include "../rpcal.h"
 #include <sys/socket.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -74,14 +70,6 @@ extern errno;
 
 #define SVCAUTH_DESTROY(auth) \
      ((*((auth)->svc_ah_ops->svc_ah_destroy))(auth))
-
-void Xprt_register(SVCXPRT * xprt);
-void Xprt_unregister(SVCXPRT * xprt);
-
-pthread_mutex_t *mutex_cond_xprt;
-pthread_cond_t *condvar_xprt;
-int *etat_xprt;
-extern SVCXPRT ** Xports ;
 
 /*
  * Ops vector for TCP/IP based rpc service handle
@@ -218,7 +206,7 @@ SVCXPRT *Svctcp_create(register int sock, u_int sendsize, u_int recvsize)
   /*xprt->xp_verf = null_auth ; */
   xprt->xp_ops = &Svctcp_rendezvous_op;
   xprt->xp_port = ntohs(addr.sin_port);
-  xprt->xp_sock = sock;
+  xprt->XP_SOCK = sock;
   xprt->xp_laddrlen = 0;
   Xprt_register(xprt);
   return (xprt);
@@ -258,14 +246,13 @@ static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
   xprt->xp_laddrlen = 0;
   xprt->xp_ops = &Svctcp_op;    /* truely deals with calls */
   xprt->xp_port = 0;            /* this is a connection, not a rendezvouser */
-  xprt->xp_sock = fd;
+  xprt->XP_SOCK = fd;
   Xports[fd] = xprt;
  done:
   return (xprt);
 }
 
 void *rpc_tcp_socket_manager_thread(void *Arg);
-extern fd_set Svc_fdset;
 
 static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
 {
@@ -280,7 +267,7 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
   r = (struct tcp_rendezvous *)xprt->xp_p1;
  again:
   len = llen = sizeof(struct sockaddr_in);
-  if((sock = accept(xprt->xp_sock, (struct sockaddr *)&addr, &len)) < 0)
+  if((sock = accept(xprt->XP_SOCK, (struct sockaddr *)&addr, &len)) < 0)
     {
       if(errno == EINTR)
         goto again;
@@ -298,19 +285,17 @@ static bool_t Rendezvous_request(register SVCXPRT * xprt, struct rpc_msg *msg)
   xprt->xp_laddr = laddr;
   xprt->xp_laddrlen = llen;
 
-  FD_CLR(xprt->xp_sock, &Svc_fdset);
+  FD_CLR(xprt->XP_SOCK, &Svc_fdset);
 
-  if(pthread_cond_init(&condvar_xprt[xprt->xp_sock], NULL) != 0)
+  if(pthread_cond_init(&condvar_xprt[xprt->XP_SOCK], NULL) != 0)
     return FALSE;
 
-  if(pthread_mutex_init(&mutex_cond_xprt[xprt->xp_sock], NULL) != 0)
+  if(pthread_mutex_init(&mutex_cond_xprt[xprt->XP_SOCK], NULL) != 0)
     return FALSE;
-
-  etat_xprt[xprt->xp_sock] = 0;
 
   if((rc =
       fridgethr_get(&sockmgr_thrid, rpc_tcp_socket_manager_thread,
-                     (void *)((unsigned long)xprt->xp_sock))) != 0)
+                     (void *)((unsigned long)xprt->XP_SOCK))) != 0)
     {
       return FALSE;
     }
@@ -329,7 +314,7 @@ static void Svctcp_destroy(register SVCXPRT * xprt)
   register struct tcp_conn *cd = (struct tcp_conn *)xprt->xp_p1;
 
   Xprt_unregister(xprt);
-  (void)close(xprt->xp_sock);
+  (void)close(xprt->XP_SOCK);
   if(xprt->xp_port != 0)
     {
       /* a rendezvouser socket */
@@ -363,7 +348,7 @@ static struct timeval wait_per_try = { 35, 0 };
 static int Readtcp(char *xprtptr, caddr_t buf, register int len)
 {
   register SVCXPRT *xprt = (SVCXPRT *) (void *)xprtptr;
-  register int sock = xprt->xp_sock;
+  register int sock = xprt->XP_SOCK;
   struct timeval tout;
 #ifdef FD_SETSIZE
   fd_set mask;
@@ -414,7 +399,7 @@ static int Writetcp(char *xprtptr, caddr_t buf, int len)
 
   for(cnt = len; cnt > 0; cnt -= i, buf += i)
     {
-      if((i = write(xprt->xp_sock, buf, (size_t) cnt)) < 0)
+      if((i = write(xprt->XP_SOCK, buf, (size_t) cnt)) < 0)
         {
           ((struct tcp_conn *)(xprt->xp_p1))->strm_stat = XPRT_DIED;
           return (-1);
@@ -559,7 +544,7 @@ SVCXPRT *Svcxprt_copycreate()
 /*
  * Duplicate xprt from original to copy.
  */
-void Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
+SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
 {
   register struct tcp_conn *cd_copy = (struct tcp_conn *)(xprt_copy->xp_p1);
   register struct tcp_conn *cd_orig = (struct tcp_conn *)(xprt_orig->xp_p1);
@@ -571,6 +556,8 @@ void Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
   cd_copy->strm_stat = cd_orig->strm_stat;
   cd_copy->x_id = cd_orig->x_id;
   memcpy(cd_copy->verf_body, cd_orig->verf_body, MAX_AUTH_BYTES);
+
+  return xprt_copy;
 }
 
 

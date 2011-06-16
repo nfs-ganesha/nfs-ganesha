@@ -16,20 +16,12 @@ typedef unsigned int u_int32_t;
 #include   <stdlib.h>
 #include   <string.h>
 #include   "stuff_alloc.h"
-
-#ifdef _USE_GSSRPC
-#include   <gssrpc/rpc.h>
-#include   <gssrpc/auth.h>
-#include   <gssrpc/svc.h>
-#else
-#include   <rpc/rpc.h>
-#include   <rpc/auth.h>
-#include   <rpc/svc.h>
-#endif
-
+#include   "oncrpc.h"
 #include   <sys/poll.h>
 #include   <sys/socket.h>
 #include   <errno.h>
+
+#include "log_macros.h"
 
 #ifdef _APPLE
 #define MAX(a, b)   ((a) > (b)? (a): (b))
@@ -43,12 +35,14 @@ typedef unsigned int u_int32_t;
 #define MAX(a, b)     ((a > b) ? a : b)
 #endif
 
-#define rpc_buffer(xprt) ((xprt)->xp_p1)
-
-void Xprt_register(SVCXPRT * xprt);
-void Xprt_unregister(SVCXPRT * xprt);
 bool_t svcauth_wrap_dummy(XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr);
 
+#ifdef SVCAUTH_WRAP
+#undef SVCAUTH_WRAP
+#endif
+#ifdef SVCAUTH_UNWRAP
+#undef SVCAUTH_UNWRAP
+#endif
 #define SVCAUTH_WRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)
 #define SVCAUTH_UNWRAP(auth, xdrs, xfunc, xwhere) svcauth_wrap_dummy( xdrs, xfunc, xwhere)
 
@@ -59,7 +53,7 @@ static bool_t Svcudp_getargs();
 static bool_t Svcudp_freeargs();
 static void Svcudp_destroy();
 
-static struct xp_ops Svcudp_op = {
+struct xp_ops Svcudp_op = {
   Svcudp_recv,
   Svcudp_stat,
   Svcudp_getargs,
@@ -67,18 +61,6 @@ static struct xp_ops Svcudp_op = {
   Svcudp_freeargs,
   Svcudp_destroy
 };
-
-/*
- * kept in xprt->xp_p2
- */
-struct Svcudp_data
-{
-  u_int su_iosz;                /* byte size of send.recv buffer */
-  u_long su_xid;                /* transaction id */
-  XDR su_xdrs;                  /* XDR handle */
-  char su_verfbody[MAX_AUTH_BYTES];     /* verifier body */
-};
-#define	Su_data(xprt)	((struct Svcudp_data *)(xprt->xp_p2))
 
 /*
  * Usage:
@@ -155,11 +137,7 @@ SVCXPRT *Svcudp_bufcreate(register int sock, u_int sendsz, u_int recvsz)
   xprt->xp_verf.oa_base = su->su_verfbody;
   xprt->xp_ops = &Svcudp_op;
   xprt->xp_port = ntohs(addr.sin_port);
-#ifdef _FREEBSD
-  xprt->xp_fd = sock;
-#else
-  xprt->xp_sock = sock;
-#endif
+  xprt->XP_SOCK = sock;
 
   Xprt_register(xprt);
 
@@ -188,11 +166,7 @@ static void Svcudp_destroy(register SVCXPRT * xprt)
   register struct Svcudp_data *su = Su_data(xprt);
 
   Xprt_unregister(xprt);
-#ifdef _FREEBSD
-  (void)close(xprt->xp_fd);
-#else
-  (void)close(xprt->xp_sock);
-#endif
+  (void)close(xprt->XP_SOCK);
   XDR_DESTROY(&(su->su_xdrs));
   Mem_Free(rpc_buffer(xprt));
   Mem_Free((caddr_t) su);
@@ -214,13 +188,8 @@ static bool_t Svcudp_recv(register SVCXPRT * xprt, struct rpc_msg *msg)
 
  again:
   xprt->xp_addrlen = sizeof(struct sockaddr_in);
-#ifdef _FREEBSD
-  rlen = recvfrom(xprt->xp_fd, rpc_buffer(xprt), (int)su->su_iosz,
+  rlen = recvfrom(xprt->XP_SOCK, rpc_buffer(xprt), (int)su->su_iosz,
                   0, (struct sockaddr *)&(xprt->xp_raddr), &(xprt->xp_addrlen));
-#else
-  rlen = recvfrom(xprt->xp_sock, rpc_buffer(xprt), (int)su->su_iosz,
-                  0, (struct sockaddr *)&(xprt->xp_raddr), &(xprt->xp_addrlen));
-#endif
 
   if(rlen == -1 && errno == EINTR)
     goto again;
@@ -269,14 +238,12 @@ static bool_t Svcudp_reply(register SVCXPRT * xprt, struct rpc_msg *msg)
     }
   slen = (int)XDR_GETPOS(xdrs);
 
-#ifdef _FREEBSD
-  if(sendto(xprt->xp_fd,
-#else
-  if(sendto(xprt->xp_sock,
-#endif
+  if(sendto(xprt->XP_SOCK,
             rpc_buffer(xprt),
             slen, 0, (struct sockaddr *)&(xprt->xp_raddr), xprt->xp_addrlen) != slen)
     {
+      LogInfo(COMPONENT_DISPATCH, "EAGAIN indicates UDP buffer is full and not"
+               " allowed to block. sendto() returned %s", strerror(errno));
       return (FALSE);
     }
   return (TRUE);
