@@ -195,7 +195,7 @@ typedef struct
   gpfsfsal_handle_t handle;
 } gpfsfsal_dir_t;
 
-typedef struct fsal_file__
+typedef struct
 {
   int fd;
   int ro;                       /* read only file ? */

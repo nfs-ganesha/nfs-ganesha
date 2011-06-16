@@ -99,7 +99,7 @@ typedef union {
 #endif
 }  proxyfsal_handle_t;
 
-typedef struct fsal_cred__
+typedef struct
 {
   fsal_uid_t user;
   fsal_gid_t group;
@@ -107,14 +107,14 @@ typedef struct fsal_cred__
   fsal_gid_t alt_groups[FSAL_NGROUPS_MAX];
 } proxyfsal_cred_t;
 
-typedef struct fsal_export_context__ 
+typedef struct
 {
   proxyfsal_handle_t root_handle;
 } proxyfsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(pexport_context->root_handle.fileid4)
 
-typedef struct fsal_op_context__
+typedef struct
 {
   proxyfsal_export_context_t *export_context;   /* Must be the first entry in this structure */
   proxyfsal_cred_t user_credential;
@@ -140,14 +140,14 @@ typedef struct fsal_op_context__
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->user_credential.user )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->user_credential.group )
 
-typedef struct fsal_dir__
+typedef struct
 {
   proxyfsal_handle_t fhandle;
   verifier4 verifier;
   proxyfsal_op_context_t *pcontext;
 } proxyfsal_dir_t;
 
-typedef struct fsal_file__
+typedef struct
 {
   proxyfsal_handle_t fhandle;
   unsigned int openflags;
@@ -168,7 +168,7 @@ typedef union {
 
 #define FSAL_READDIR_FROM_BEGINNING 0
 
-typedef struct fs_specific_initinfo__
+typedef struct
 {
   unsigned int retry_sleeptime;
   unsigned int srv_addr;
