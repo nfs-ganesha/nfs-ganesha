@@ -535,6 +535,47 @@ fsal_status_t fsal_internal_Path2Handle(vfsfsal_op_context_t * p_context,       
 }                               /* fsal_internal_Path2Handle */
 
 
+/**
+ * fsal_internal_get_handle_at:
+ * Create a handle from a directory pointer and filename
+ *
+ * \param dfd (input):
+ *        Open directory handle
+ * \param p_fsalname (input):
+ *        Name of the file
+ * \param p_handle (output):
+ *        The handle that is found and returned
+ *
+ * \return status of operation
+ */
+
+fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
+                                          fsal_name_t * p_fsalname,     /* IN */
+                                          fsal_handle_t * p_handle      /* OUT
+                                                                         */ )
+{
+  char procpath[MAXPATHLEN];
+  char pathproccontent[MAXPATHLEN];
+  int mnt_id = 0 ;
+
+  memset(procpath, 0, MAXPATHLEN);
+  memset(pathproccontent, 0, MAXPATHLEN);
+
+  snprintf(procpath, MAXPATHLEN, "/proc/%u/fd/%u", getpid(), dfd);
+
+  if(readlink(procpath, pathproccontent, MAXPATHLEN) == -1)
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  strncat( pathproccontent, "/", MAXPATHLEN ) ;  
+  strncat( pathproccontent, p_fsalname->name, MAXPATHLEN ) ;  
+  
+  if( vfs_lname_to_handle( pathproccontent, &p_handle->data.vfs_handle, &mnt_id ) )
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+} /* fsal_internal_get_handle_at */
+
+
 /*
    Check the access from an existing fsal_attrib_list_t or struct stat
 */
