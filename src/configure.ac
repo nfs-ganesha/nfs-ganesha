@@ -899,6 +899,7 @@ AC_CONFIG_FILES([include/Makefile
                  RPCAL/GSSRPC/Makefile
                  RPCAL/TIRPC/Makefile
                  MainNFSD/Makefile
+                 test/Makefile
                  cmdline_tools/Makefile
                  shell/Makefile
                  snmp_adm/Makefile

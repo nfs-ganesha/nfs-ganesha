@@ -2501,7 +2501,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
       if(!ipvalid)
         {
           LogCrit(COMPONENT_DISPATCH,
-                  "Error: Could not convert the IPv4 address to a character string.");
+                  "Could not convert the IPv4 address to a character string.");
           return EXPORT_PERMISSION_DENIED;
         }
 

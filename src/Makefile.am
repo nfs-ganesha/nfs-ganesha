@@ -7,6 +7,7 @@ SUBDIRS = include             \
           ConfigParsing       \
           RW_Lock             \
           SemN                \
+          test                \
           LRU                 \
           HashTable           \
 	  NodeList	      \
