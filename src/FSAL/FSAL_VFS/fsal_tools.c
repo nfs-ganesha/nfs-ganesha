@@ -243,6 +243,20 @@ fsal_status_t VFSFSAL_DigestHandle(vfsfsal_export_context_t * p_expcontext,     
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
       memcpy(out_buff, p_in_fsal_handle, FSAL_DIGEST_SIZE_HDLV4);
       break;
+  
+   case FSAL_DIGEST_FILEID2:
+      ReturnCode(ERR_FSAL_NOTSUPP, 0);
+
+   case FSAL_DIGEST_FILEID3:
+      memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
+      memcpy(out_buff, p_in_fsal_handle, FSAL_DIGEST_SIZE_FILEID3);
+      break;
+
+
+   case FSAL_DIGEST_FILEID4:
+      memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID4);
+      memcpy(out_buff, p_in_fsal_handle, FSAL_DIGEST_SIZE_FILEID4);
+      break;
 
     default:
       ReturnCode(ERR_FSAL_SERVERFAULT, 0);
