@@ -568,7 +568,8 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
 
   strncat( pathproccontent, "/", MAXPATHLEN ) ;  
   strncat( pathproccontent, p_fsalname->name, MAXPATHLEN ) ;  
-  
+ 
+  p_handle->data.vfs_handle.handle_bytes = VFS_HANDLE_LEN ;
   if( vfs_lname_to_handle( pathproccontent, &p_handle->data.vfs_handle, &mnt_id ) )
     ReturnCode(posix2fsal_error(errno), errno);
 
