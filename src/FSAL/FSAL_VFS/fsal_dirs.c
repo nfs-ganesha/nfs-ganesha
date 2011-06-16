@@ -288,10 +288,7 @@ fsal_status_t VFSFSAL_readdir(vfsfsal_dir_t * p_dir_descriptor, /* IN */
                   Return(posix2fsal_error(errno), errno, INDEX_FSAL_readdir);
                 }
 
-	      /** @tdodo symlink management */	
-              //st = fsal_internal_inum2handle(&p_dir_descriptor->context,
-              //                               buffstat.st_ino, tmp_handle);
-
+              st = fsal_internal_get_handle_at( p_dir_descriptor->fd, dp->d_name, tmp_handle ) ;
               if(FSAL_IS_ERROR(st))
                 {
                   ReleaseTokenFSCall();
