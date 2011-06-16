@@ -64,10 +64,10 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t VFSFSAL_readlink(vfsfsal_handle_t * p_linkhandle, /* IN */
-                               vfsfsal_op_context_t * p_context,        /* IN */
-                               fsal_path_t * p_link_content,    /* OUT */
-                               fsal_attrib_list_t * p_link_attributes   /* [ IN/OUT ] */
+fsal_status_t VFSFSAL_readlink(vfsfsal_handle_t * p_linkhandle,       /* IN */
+                            vfsfsal_op_context_t * p_context,      /* IN */
+                            fsal_path_t * p_link_content,       /* OUT */
+                            fsal_attrib_list_t * p_link_attributes      /* [ IN/OUT ] */
     )
 {
 
@@ -75,7 +75,6 @@ fsal_status_t VFSFSAL_readlink(vfsfsal_handle_t * p_linkhandle, /* IN */
   fsal_status_t status;
   char link_content_out[FSAL_MAX_PATH_LEN];
   fsal_path_t fsalpath;
-  int fd = 0 ;
 
   /* sanity checks.
    * note : link_attributes is optional.
@@ -86,25 +85,15 @@ fsal_status_t VFSFSAL_readlink(vfsfsal_handle_t * p_linkhandle, /* IN */
   memset(link_content_out, 0, FSAL_MAX_PATH_LEN);
 
   /* Read the link on the filesystem */
-
   TakeTokenFSCall();
-  rc = vfs_open_by_handle( p_context->export_context->mount_root_fd,
-                           &p_linkhandle->data.vfs_handle,
-                           O_PATH ) ;
-  if(rc == -1)
-    {
-      errsv = errno;
-    
-      ReturnCode(posix2fsal_error(errsv), errsv);
-    }
-
-  rc = readlinkat( fd, "", link_content_out, FSAL_MAX_PATH_LEN);
+  rc = vfs_readlink_by_handle( p_context->export_context->mount_root_fd,
+                               &p_linkhandle->data.vfs_handle,
+                               link_content_out,
+                               FSAL_MAX_PATH_LEN ) ;
   errsv = errno;
   ReleaseTokenFSCall();
-  close( fd ) ;
 
-  /* rc is the length for the symlink content or -1 on error !!! */
-  if(rc < 0)
+  if( rc == -1 )
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_readlink);
 
   /* convert char * to fsal_path_t */
@@ -163,20 +152,20 @@ fsal_status_t VFSFSAL_readlink(vfsfsal_handle_t * p_linkhandle, /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t VFSFSAL_symlink(vfsfsal_handle_t * p_parent_directory_handle,     /* IN */
-                              fsal_name_t * p_linkname, /* IN */
-                              fsal_path_t * p_linkcontent,      /* IN */
-                              vfsfsal_op_context_t * p_context, /* IN */
-                              fsal_accessmode_t accessmode,     /* IN (ignored) */
-                              vfsfsal_handle_t * p_link_handle, /* OUT */
-                              fsal_attrib_list_t * p_link_attributes    /* [ IN/OUT ] */
+fsal_status_t VFSFSAL_symlink(vfsfsal_handle_t * p_parent_directory_handle,   /* IN */
+                           fsal_name_t * p_linkname,    /* IN */
+                           fsal_path_t * p_linkcontent, /* IN */
+                           vfsfsal_op_context_t * p_context,       /* IN */
+                           fsal_accessmode_t accessmode,        /* IN (ignored) */
+                           vfsfsal_handle_t * p_link_handle,       /* OUT */
+                           fsal_attrib_list_t * p_link_attributes       /* [ IN/OUT ] */
     )
 {
 
   int rc, errsv;
   fsal_status_t status;
   int fd;
-  struct stat buffstat, lbuffstat;
+  struct stat buffstat;
   int setgid_bit = FALSE;
 
   /* sanity checks.
@@ -193,7 +182,8 @@ fsal_status_t VFSFSAL_symlink(vfsfsal_handle_t * p_parent_directory_handle,     
 
   TakeTokenFSCall();
   status =
-      fsal_internal_handle2fd(p_context, p_parent_directory_handle, &fd, O_DIRECTORY);
+      fsal_internal_handle2fd(p_context, p_parent_directory_handle, &fd,
+                              O_RDONLY | O_DIRECTORY);
   ReleaseTokenFSCall();
 
   if(FSAL_IS_ERROR(status))
@@ -222,6 +212,8 @@ fsal_status_t VFSFSAL_symlink(vfsfsal_handle_t * p_parent_directory_handle,     
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_symlink);
 
+  /* build symlink path */
+
   /* create the symlink on the filesystem. */
 
   TakeTokenFSCall();
@@ -235,44 +227,37 @@ fsal_status_t VFSFSAL_symlink(vfsfsal_handle_t * p_parent_directory_handle,     
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
     }
 
-  /* chown the symlink to the current user/group */
+  /* now get the associated handle, while there is a race, there is
+     also a race lower down  */
+  status = fsal_internal_get_handle_at(fd, p_linkname, p_link_handle);
 
+  if(FSAL_IS_ERROR(status))
+    {
+      close(fd);
+      ReturnStatus(status, INDEX_FSAL_symlink);
+    }
+
+  /* chown the symlink to the current user/group */
   TakeTokenFSCall();
   rc = fchownat(fd, p_linkname->name, p_context->credential.user,
                 setgid_bit ? -1 : p_context->credential.group, AT_SYMLINK_NOFOLLOW);
   errsv = errno;
   ReleaseTokenFSCall();
 
-  if(rc)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
-
-  /* Build vfsfsal_handle_t */
-  /* build symlink path */
-  TakeTokenFSCall();
-  rc = fstatat(fd, p_linkname->name, &lbuffstat, AT_SYMLINK_NOFOLLOW);
-  errsv = errno;
-  ReleaseTokenFSCall();
-  if(rc)
-    {
-      close(fd);
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
-    }
-
   close(fd);
 
-  /** @todo symlink management */
-  //status = fsal_internal_inum2handle(p_context, lbuffstat.st_ino, p_link_handle);
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_symlink);
+  if(rc)
+    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
 
   /* get attributes if asked */
 
   if(p_link_attributes)
     {
 
-      status = posix2fsal_attributes(&lbuffstat, p_link_attributes);
+      status = VFSFSAL_getattrs(p_link_handle, p_context, p_link_attributes);
 
       /* On error, we set a flag in the returned attributes */
+
       if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_link_attributes->asked_attributes);

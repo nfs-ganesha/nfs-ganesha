@@ -36,6 +36,18 @@ fsal_status_t WRAP_VFSFSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
                           (vfsfsal_op_context_t *) p_context, p_object_attributes);
 }
 
+fsal_status_t WRAP_VFSFSAL_getattrs_descriptor(fsal_file_t * p_file_descriptor, /* IN */
+                                               fsal_handle_t * p_filehandle,    /* IN */
+                                               fsal_op_context_t * p_context,   /* IN */
+                                               fsal_attrib_list_t *
+                                               p_object_attributes /* IN/OUT */ )
+{
+  return VFSFSAL_getattrs_descriptor((vfsfsal_file_t *) p_file_descriptor,
+                                     (vfsfsal_handle_t *) p_filehandle,
+                                     (vfsfsal_op_context_t *) p_context,
+                                     p_object_attributes);
+}
+
 fsal_status_t WRAP_VFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
                                     fsal_op_context_t * p_context,      /* IN */
                                     fsal_attrib_list_t * p_attrib_set,  /* IN */
@@ -666,6 +678,7 @@ fsal_status_t WRAP_VFSFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
 fsal_functions_t fsal_vfs_functions = {
   .fsal_access = WRAP_VFSFSAL_access,
   .fsal_getattrs = WRAP_VFSFSAL_getattrs,
+  .fsal_getattrs_descriptor = WRAP_VFSFSAL_getattrs_descriptor,
   .fsal_setattrs = WRAP_VFSFSAL_setattrs,
   .fsal_buildexportcontext = WRAP_VFSFSAL_BuildExportContext,
   .fsal_cleanupexportcontext = WRAP_VFSFSAL_CleanUpExportContext,

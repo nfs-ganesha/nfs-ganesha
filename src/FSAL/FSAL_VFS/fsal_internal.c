@@ -572,6 +572,16 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
   if( vfs_lname_to_handle( pathproccontent, &p_handle->data.vfs_handle, &mnt_id ) )
     ReturnCode(posix2fsal_error(errno), errno);
 
+#if 0 
+  {
+    char str[1024] ;
+    sprint_mem( str, p_handle->data.vfs_handle.handle, p_handle->data.vfs_handle.handle_bytes ) ;
+    printf( "=====> fsal_internal_get_handle_at: type=%u bytes=%u|%s\n",
+            p_handle->data.vfs_handle.handle_type, p_handle->data.vfs_handle.handle_bytes, str ) ;
+  }
+#endif
+
+
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 } /* fsal_internal_get_handle_at */
 

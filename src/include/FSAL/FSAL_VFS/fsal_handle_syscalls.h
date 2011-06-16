@@ -86,6 +86,17 @@ static inline int vfs_open_by_handle(int mountfd, vfs_file_handle_t * fh, int fl
 static inline ssize_t vfs_readlink_by_handle(int mountfd, vfs_file_handle_t *fh, char *buf, size_t bufsize)
 {
         int fd, ret;
+
+#if 1 
+  {
+    char str[1024] ;
+    sprint_mem( str, fh->handle, fh->handle_bytes ) ;
+    printf( "=====> vfs_readlink_by_handle: type=%u bytes=%u|%s\n",  
+            fh->handle_type, fh->handle_bytes, str ) ;
+  }
+#endif
+
+
         fd = vfs_open_by_handle(mountfd, fh, O_PATH);
         if (fd < 0)
                 return fd;
