@@ -199,6 +199,17 @@ void *admin_thread(void *Arg)
           break;
         }
 
+      /* Clear the id mapping cache for gss principals to uid/gid.
+       * The id mapping may have changed.
+       */
+#ifdef _HAVE_GSSAPI
+#ifdef _USE_NFSIDMAP
+      uidgidmap_clear();
+      idmap_clear();
+      namemap_clear();
+#endif _USE_NFSIDMAP
+#endif _HAVE_GSSAPI
+
       ChangeoverExports();
 
       LogEvent(COMPONENT_MAIN,

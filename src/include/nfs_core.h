@@ -167,6 +167,7 @@
 #define ID_MAPPER_INSERT_MALLOC_ERROR 1
 #define ID_MAPPER_NOT_FOUND           2
 #define ID_MAPPER_INVALID_ARGUMENT    3
+#define ID_MAPPER_FAIL                4
 
 /* Hard and soft limit for nfsv4 quotas */
 #define NFS_V4_MAX_QUOTA_SOFT 4294967296LL      /*  4 GB */
@@ -770,6 +771,10 @@ int namemap_remove(hash_table_t * ht, unsigned int key);
 int unamemap_remove(unsigned int key);
 int gnamemap_remove(unsigned int key);
 int uidgidmap_remove(unsigned int key);
+
+int uidgidmap_clear();
+int idmap_clear();
+int namemap_clear();
 
 void idmap_get_stats(idmap_type_t maptype, hash_stat_t * phstat,
                      hash_stat_t * phstat_reverse);

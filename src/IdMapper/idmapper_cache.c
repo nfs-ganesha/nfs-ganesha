@@ -424,7 +424,8 @@ int idmap_add(hash_table_t * ht, char *key, unsigned int val)
   /* Build the value */
   buffdata.pdata = (caddr_t) local_val;
   buffdata.len = sizeof(unsigned long);
-
+  LogFullDebug(COMPONENT_IDMAPPER, "Adding the following principal->uid mapping: %s->%d",
+	       (char *)buffkey.pdata, (unsigned long int)buffdata.pdata);
   rc = HashTable_Test_And_Set(ht, &buffkey, &buffdata,
                               HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
@@ -455,6 +456,8 @@ int namemap_add(hash_table_t * ht, unsigned int key, char *val)
   buffkey.pdata = (caddr_t) local_key;
   buffkey.len = sizeof(unsigned int);
 
+  LogFullDebug(COMPONENT_IDMAPPER, "Adding the following uid->principal mapping: %d->%s",
+	       (unsigned long int)buffkey.pdata, (char *)buffdata.pdata);
   rc = HashTable_Test_And_Set(ht, &buffkey, &buffdata,
                               HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
@@ -488,6 +491,68 @@ int uidgidmap_add(unsigned int key, unsigned int value)
   return ID_MAPPER_SUCCESS;
 
 }                               /* uidgidmap_add */
+
+static int uidgidmap_free(hash_buffer_t key, hash_buffer_t val)
+{
+    LogFullDebug(COMPONENT_IDMAPPER, "Freeing uid->gid mapping: %d->%d",
+		 (unsigned long)key.pdata, (unsigned long)val.pdata);
+  return 1;
+}
+
+int uidgidmap_clear()
+{
+  int rc;
+  LogInfo(COMPONENT_IDMAPPER, "Clearing all uid->gid map entries.");
+  rc = HashTable_Delall(ht_uidgid, uidgidmap_free);
+  if (rc != HASHTABLE_SUCCESS)
+    return ID_MAPPER_FAIL;
+  return ID_MAPPER_SUCCESS;
+}
+
+static int idmap_free(hash_buffer_t key, hash_buffer_t val)
+{
+  if (val.pdata != NULL)
+    LogFullDebug(COMPONENT_IDMAPPER, "Freeing uid->principal mapping: %d->%s",
+		 (unsigned long)key.pdata, (char *)val.pdata);
+
+  /* key is just an integer caste to charptr */
+  if (val.pdata != NULL)
+    Mem_Free(val.pdata);
+  return 1;
+}
+
+int idmap_clear()
+{
+  int rc;
+  LogInfo(COMPONENT_IDMAPPER, "Clearing all principal->uid map entries.");
+  HashTable_Delall(ht_pwuid, idmap_free);
+  if (rc != HASHTABLE_SUCCESS)
+    return ID_MAPPER_FAIL;
+  return ID_MAPPER_SUCCESS;
+}
+
+static int namemap_free(hash_buffer_t key, hash_buffer_t val)
+{
+  if (key.pdata != NULL)
+    LogFullDebug(COMPONENT_IDMAPPER, "Freeing principal->uid mapping: %s->%d",
+		 (char *)key.pdata, (unsigned long)val.pdata);
+
+  /* val is just an integer caste to charptr */
+  if (key.pdata != NULL)
+    Mem_Free(key.pdata);  
+  return 1;
+}
+
+int namemap_clear()
+{
+  int rc;
+  LogInfo(COMPONENT_IDMAPPER, "Clearing all uid->principal map entries.");
+  HashTable_Delall(ht_pwnam, namemap_free);
+  if (rc != HASHTABLE_SUCCESS)
+    return ID_MAPPER_FAIL;
+  return ID_MAPPER_SUCCESS;
+}
+
 
 int uidmap_add(char *key, unsigned int val)
 {
