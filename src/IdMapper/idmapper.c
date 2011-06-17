@@ -361,21 +361,14 @@ int name2uid(char *name, uid_t * puid)
  * return 1 if successful, 0 otherwise
  *
  */
+#ifdef _HAVE_GSSAPI
 int principal2uid(char *principal, uid_t * puid)
 {
-#ifdef _HAVE_GSSAPI
   gid_t gss_gid;
   uid_t gss_uid;
   int rc;
 
-  if(uidmap_get(principal, (unsigned long *)&gss_uid) == ID_MAPPER_SUCCESS)
-    {
-      LogFullDebug(COMPONENT_IDMAPPER,
-                   "principal2uid: uidmap_get mapped %s to uid= %d",
-                   principal, gss_uid);
-      *puid = gss_uid;
-    }
-  else
+  if(uidmap_get(principal, (unsigned long *)&gss_uid) != ID_MAPPER_SUCCESS)
     {
       if(!nfsidmap_set_conf())
         {
@@ -410,9 +403,15 @@ int principal2uid(char *principal, uid_t * puid)
           return 0;
         }
     }
-#endif                          /* _HAVE_GSSAPI */
+
+  LogFullDebug(COMPONENT_IDMAPPER,
+               "principal2uid: uidmap_get mapped %s to uid= %d",
+               principal, gss_uid);
+  *puid = gss_uid;
+
   return 1;
 }                               /* principal2uid */
+#endif                          /* _HAVE_GSSAPI */
 
 /**
  *

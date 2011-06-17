@@ -1367,7 +1367,9 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
 
 int uid2name(char *name, uid_t * puid);
 int name2uid(char *name, uid_t * puid);
+#ifdef _HAVE_GSSAPI
 int principal2uid(char *principal, uid_t * puid);
+#endif
 
 int gid2name(char *name, gid_t * pgid);
 int name2gid(char *name, gid_t * pgid);

@@ -120,7 +120,7 @@ static const char *gss_stored2data(struct svc_rpc_gss_data *gd,
   gd->seqmask = pstored->seqmask;
 
   /* Get the gss_buffer_desc */
-  if(gd->cname.length < pstored->cname_len && gd->cname.length != 0)
+  if(gd->cname.length <= pstored->cname_len && gd->cname.length != 0)
     {
       /* If the current buffer is too small, release it */
       LogFullDebug(COMPONENT_RPCSEC_GSS,
@@ -130,10 +130,11 @@ static const char *gss_stored2data(struct svc_rpc_gss_data *gd,
     }
   if(gd->cname.value == NULL && pstored->cname_len != 0)
     {
-      if((gd->cname.value = (char *)malloc(pstored->cname_len)) == NULL)
+      if((gd->cname.value = (void *)malloc(pstored->cname_len+1)) == NULL)
         return "could not allocate cname";
     }
   memcpy(gd->cname.value, pstored->cname_val, pstored->cname_len);
+  ((char *)gd->cname.value)[pstored->cname_len] = '\0';
   gd->cname.length = pstored->cname_len;
 
   if(gd->checksum.length < pstored->checksum_len && gd->checksum.length != 0)
