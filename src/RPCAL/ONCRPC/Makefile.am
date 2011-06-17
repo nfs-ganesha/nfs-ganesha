@@ -5,6 +5,8 @@ AM_CFLAGS = -Wimplicit $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS
 
 noinst_LTLIBRARIES = librpcalcore.la
 
+noinst_HEADERS = oncrpc.h
+
 librpcalcore_la_SOURCES = Svc_oncrpc.c     \
                           Svc_tcp_oncrpc.c \
                           Svc_udp_oncrpc.c 
