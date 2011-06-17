@@ -20,7 +20,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * -------------
+ * ------------- 
  */
 
 /**
@@ -31,23 +31,26 @@
  * \version $Revision: 1.24 $
  * \brief   Defines the datas that are to be
  *          accessed as extern by the fsal modules
- *
+ * 
  */
 #define FSAL_INTERNAL_C
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <sys/ioctl.h>
 #include  "fsal.h"
 #include "fsal_internal.h"
 #include "stuff_alloc.h"
 #include "SemN.h"
 #include "fsal_convert.h"
 #include <libgen.h>             /* used for 'dirname' */
-
 #include <pthread.h>
 #include <string.h>
+#include <sys/types.h>
+#include <mntent.h>
+
+/* Add missing prototype in vfs/*.h */
+int fd_to_handle(int fd, void **hanp, size_t * hlen);
 
 /* credential lifetime (1h) */
 fsal_uint_t CredentialLifetime = 3600;
@@ -58,11 +61,8 @@ fsal_uint_t CredentialLifetime = 3600;
  */
 fsal_staticfsinfo_t global_fs_info;
 
-char open_by_handle_path[MAXPATHLEN];
-int open_by_handle_fd;
-
 /* filesystem info for HPSS */
-static fsal_staticfsinfo_t default_vfs_info = {
+static fsal_staticfsinfo_t default_posix_info = {
   0xFFFFFFFFFFFFFFFFLL,         /* max file size (64bits) */
   _POSIX_LINK_MAX,              /* max links */
   FSAL_MAX_NAME_LEN,            /* max filename */
@@ -81,7 +81,7 @@ static fsal_staticfsinfo_t default_vfs_info = {
   FSAL_ACLSUPPORT_ALLOW,        /* ACL support */
   TRUE,                         /* can change times */
   TRUE,                         /* homogenous */
-  VFS_SUPPORTED_ATTRIBUTES,    /* supported attributes */
+  VFS_SUPPORTED_ATTRIBUTES,     /* supported attributes */
   0,                            /* maxread size */
   0,                            /* maxwrite size */
   0,                            /* default umask */
@@ -97,18 +97,11 @@ semaphore_t sem_fs_calls;
 static pthread_key_t key_stats;
 static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 
-static void free_pthread_specific_stats(void *buff)
-{
-  Mem_Free(buff);
-}
-
 /* init keys */
 static void init_keys(void)
 {
-  if(pthread_key_create(&key_stats, free_pthread_specific_stats) == -1)
-    LogMajor(COMPONENT_FSAL,
-             "Could not create thread specific stats (pthread_key_create) err %d (%s)",
-             errno, strerror(errno));
+  if(pthread_key_create(&key_stats, NULL) == -1)
+    LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_KEY_CREATE, errno);
 
   return;
 }                               /* init_keys */
@@ -138,9 +131,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
   if(pthread_once(&once_key, init_keys) != 0)
     {
-      LogMajor(COMPONENT_FSAL,
-               "Could not create thread specific stats (pthread_once) err %d (%s)",
-               errno, strerror(errno));
+      LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_ONCE, errno);
       return;
     }
 
@@ -154,15 +145,11 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
     {
       int i;
 
-      bythread_stat = (fsal_statistics_t *) Mem_Alloc_Label(sizeof(fsal_statistics_t), "fsal_statistics_t");
+      bythread_stat = (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t));
 
       if(bythread_stat == NULL)
         {
-          LogCrit(COMPONENT_FSAL,
-                  "Could not allocate memory for FSAL statistics err %d (%s)",
-                  Mem_Errno, strerror(Mem_Errno));
-          /* we don't have real memory, bail */
-          return;
+          LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
         }
 
       /* inits the struct */
@@ -188,7 +175,7 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
 
       if(!FSAL_IS_ERROR(status))
         bythread_stat->func_stats.nb_success[function_index]++;
-      else if(fsal_is_retryable(status))
+      else if(status.major == ERR_FSAL_DELAY)   /* Error is retryable */
         bythread_stat->func_stats.nb_err_retryable[function_index]++;
       else
         bythread_stat->func_stats.nb_err_unrecover[function_index]++;
@@ -215,9 +202,7 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
   /* first, we init the keys if this is the first time */
   if(pthread_once(&once_key, init_keys) != 0)
     {
-      LogMajor(COMPONENT_FSAL,
-               "Could not create thread specific stats (pthread_once) err %d (%s)",
-               errno, strerror(errno));
+      LogError(COMPONENT_FSAL, ERR_SYS, ERR_PTHREAD_ONCE, errno);
       return;
     }
 
@@ -230,14 +215,8 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
       int i;
 
       if((bythread_stat =
-          (fsal_statistics_t *) Mem_Alloc_Label(sizeof(fsal_statistics_t), "fsal_statistics_t")) == NULL)
-      {
-        /* we don't have working memory, bail */
-        LogCrit(COMPONENT_FSAL,
-                "Could not allocate memory for FSAL statistics err %d (%s)",
-                Mem_Errno, strerror(Mem_Errno));
-        return;
-      }
+          (fsal_statistics_t *) Mem_Alloc(sizeof(fsal_statistics_t))) == NULL)
+        LogError(COMPONENT_FSAL, ERR_SYS, ERR_MALLOC, Mem_Errno);
 
       /* inits the struct */
       for(i = 0; i < FSAL_NB_FUNC; i++)
@@ -258,21 +237,6 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
 
   return;
 
-}
-
-/**
- * Set credential lifetime.
- * (For internal use in the FSAL).
- * Set the period for thread's credential renewal.
- *
- * \param lifetime_in (input):
- *        The period for thread's credential renewal.
- *
- * \return Nothing.
- */
-void fsal_internal_SetCredentialLifetime(fsal_uint_t lifetime_in)
-{
-  CredentialLifetime = lifetime_in;
 }
 
 /**
@@ -367,7 +331,7 @@ void ReleaseTokenFSCall()
  */
 fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                                         fs_common_initinfo_t * fs_common_info,
-                                        fs_specific_initinfo_t * fs_specific_info)
+                                        vfsfs_specific_initinfo_t * fs_specific_info)
 {
 
   /* sanity check */
@@ -387,86 +351,62 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
         ReturnCode(ERR_FSAL_SERVERFAULT, rc);
 
       LogDebug(COMPONENT_FSAL,
-               "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
-               fsal_info->max_fs_calls);
+                        "FSAL INIT: Max simultaneous calls to filesystem is limited to %u.",
+                        fsal_info->max_fs_calls);
+
     }
   else
     {
       LogDebug(COMPONENT_FSAL,
-               "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
+                        "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
     }
 
   /* setting default values. */
-  global_fs_info = default_vfs_info;
+  global_fs_info = default_posix_info;
 
-  if(isFullDebug(COMPONENT_FSAL))
-    {
-      LogFullDebug(COMPONENT_FSAL, "{");
-      LogFullDebug(COMPONENT_FSAL,
-                   "  maxfilesize  = %llX    ",
-                   default_vfs_info.maxfilesize);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  maxlink  = %lu   ",
-                   default_vfs_info.maxlink);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  maxnamelen  = %lu  ",
-                   default_vfs_info.maxnamelen);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  maxpathlen  = %lu  ",
-                   default_vfs_info.maxpathlen);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  no_trunc  = %d ",
-                   default_vfs_info.no_trunc);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  chown_restricted  = %d ",
-                   default_vfs_info.chown_restricted);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  case_insensitive  = %d ",
-                   default_vfs_info.case_insensitive);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  case_preserving  = %d ",
-                   default_vfs_info.case_preserving);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  fh_expire_type  = %hu ",
-                   default_vfs_info.fh_expire_type);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  link_support  = %d  ",
-                   default_vfs_info.link_support);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  symlink_support  = %d  ",
-                   default_vfs_info.symlink_support);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  lock_support  = %d  ",
-                   default_vfs_info.lock_support);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  named_attr  = %d  ",
-                   default_vfs_info.named_attr);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  unique_handles  = %d  ",
-                   default_vfs_info.unique_handles);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  acl_support  = %hu  ",
-                   default_vfs_info.acl_support);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  cansettime  = %d  ",
-                   default_vfs_info.cansettime);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  homogenous  = %d  ",
-                   default_vfs_info.homogenous);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  supported_attrs  = %llX  ",
-                   default_vfs_info.supported_attrs);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  maxread  = %llX     ",
-                   default_vfs_info.maxread);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  maxwrite  = %llX     ",
-                   default_vfs_info.maxwrite);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  umask  = %X ",
-                   default_vfs_info.umask);
-      LogFullDebug(COMPONENT_FSAL, "}");
-    }
+  LogDebug(COMPONENT_FSAL, "{");
+  LogDebug(COMPONENT_FSAL, "  maxfilesize  = %llX    ",
+           default_posix_info.maxfilesize);
+  LogDebug(COMPONENT_FSAL, "  maxlink  = %lu   ",
+           default_posix_info.maxlink);
+  LogDebug(COMPONENT_FSAL, "  maxnamelen  = %lu  ",
+           default_posix_info.maxnamelen);
+  LogDebug(COMPONENT_FSAL, "  maxpathlen  = %lu  ",
+           default_posix_info.maxpathlen);
+  LogDebug(COMPONENT_FSAL, "  no_trunc  = %d ",
+           default_posix_info.no_trunc);
+  LogDebug(COMPONENT_FSAL, "  chown_restricted  = %d ",
+           default_posix_info.chown_restricted);
+  LogDebug(COMPONENT_FSAL, "  case_insensitive  = %d ",
+           default_posix_info.case_insensitive);
+  LogDebug(COMPONENT_FSAL, "  case_preserving  = %d ",
+           default_posix_info.case_preserving);
+  LogDebug(COMPONENT_FSAL, "  fh_expire_type  = %hu ",
+           default_posix_info.fh_expire_type);
+  LogDebug(COMPONENT_FSAL, "  link_support  = %d  ",
+           default_posix_info.link_support);
+  LogDebug(COMPONENT_FSAL, "  symlink_support  = %d  ",
+           default_posix_info.symlink_support);
+  LogDebug(COMPONENT_FSAL, "  lock_support  = %d  ",
+           default_posix_info.lock_support);
+  LogDebug(COMPONENT_FSAL, "  named_attr  = %d  ",
+           default_posix_info.named_attr);
+  LogDebug(COMPONENT_FSAL, "  unique_handles  = %d  ",
+           default_posix_info.unique_handles);
+  LogDebug(COMPONENT_FSAL, "  acl_support  = %hu  ",
+           default_posix_info.acl_support);
+  LogDebug(COMPONENT_FSAL, "  cansettime  = %d  ",
+           default_posix_info.cansettime);
+  LogDebug(COMPONENT_FSAL, "  homogenous  = %d  ",
+           default_posix_info.homogenous);
+  LogDebug(COMPONENT_FSAL, "  supported_attrs  = %llX  ",
+           default_posix_info.supported_attrs);
+  LogDebug(COMPONENT_FSAL, "  maxread  = %llX     ",
+           default_posix_info.maxread);
+  LogDebug(COMPONENT_FSAL, "  maxwrite  = %llX     ",
+           default_posix_info.maxwrite);
+  LogDebug(COMPONENT_FSAL, "  umask  = %X ", default_posix_info.umask);
+  LogDebug(COMPONENT_FSAL, "}");
 
   /* Analyzing fs_common_info struct */
 
@@ -498,139 +438,102 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
 
   LogFullDebug(COMPONENT_FSAL,
-               "Supported attributes constant = 0x%llX.",
-               VFS_SUPPORTED_ATTRIBUTES);
+                    "Supported attributes constant = 0x%llX.",
+                    VFS_SUPPORTED_ATTRIBUTES);
 
   LogFullDebug(COMPONENT_FSAL,
-               "Supported attributes default = 0x%llX.",
-               default_vfs_info.supported_attrs);
+                    "Supported attributes default = 0x%llX.",
+                    default_posix_info.supported_attrs);
 
-  LogFullDebug(COMPONENT_FSAL,
-               "FSAL INIT: Supported attributes mask = 0x%llX.",
-               global_fs_info.supported_attrs);
+  LogDebug(COMPONENT_FSAL,
+                    "FSAL INIT: Supported attributes mask = 0x%llX.",
+                    global_fs_info.supported_attrs);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-/*********************************************************************
- *
- *  VFS FSAL char device driver interaces
- *
- ********************************************************************/
-
-/**
- * fsal_internal_handle2fd:
- * Open a file by handle within an export.
- *
- * \param p_context (input):
- *        Pointer to current context.  Used to get export root fd.
- * \param phandle (input):
- *        Opaque filehandle
- * \param pfd (output):
- *        File descriptor openned by the function
- * \param oflags (input):
- *        Flags to open the file with
- *
- * \return status of operation
- */
-
-fsal_status_t fsal_internal_handle2fd(fsal_op_context_t * p_context,
-                                      fsal_handle_t * phandle, int *pfd, int oflags)
+fsal_status_t fsal_internal_handle2fd(vfsfsal_op_context_t * p_context,
+                                      vfsfsal_handle_t * phandle, int *pfd, int oflags)
 {
   int rc = 0;
-  int dirfd = 0;
-  fsal_status_t status;
+  int errsv = 0;
 
-  if(!phandle || !pfd || !p_context || !p_context->export_context)
+
+  if(!phandle || !pfd || !p_context)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  dirfd = p_context->export_context->mount_root_fd;
+#if 0
+  {
+  char str[1024] ;
+  sprint_mem( str, phandle->data.vfs_handle.handle, phandle->data.vfs_handle.handle_bytes ) ;
+  printf( "=====> fsal_internal_handle2fd: type=%u bytes=%u|%s\n",  
+          phandle->data.vfs_handle.handle_type, phandle->data.vfs_handle.handle_bytes, str ) ;
+  }
+#endif
 
-  status = fsal_internal_handle2fd_at(dirfd, phandle, pfd, oflags);
 
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_open);
+  rc =  vfs_open_by_handle( p_context->export_context->mount_root_fd,
+			    &phandle->data.vfs_handle, 
+                            oflags ) ;
+  if(rc == -1)
+    {
+      errsv = errno;
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
-
-/**
- * fsal_internal_handle2fd_at:
- * Open a file by handle from in an open directory
- *
- * \param dirfd (input):
- *        Open file descriptor of parent directory
- * \param phandle (input):
- *        Opaque filehandle
- * \param pfd (output):
- *        File descriptor openned by the function
- * \param oflags (input):
- *        Flags to open the file with
- *
- * \return status of operation
- */
-
-fsal_status_t fsal_internal_handle2fd_at(int dirfd,
-                                         fsal_handle_t * phandle, int *pfd, int oflags)
-{
-  int rc = 0;
-  struct open_arg oarg;
-
-  if(!phandle || !pfd)
-    ReturnCode(ERR_FSAL_FAULT, 0);
-
-  oarg.mountdirfd = dirfd;
-
-  oarg.handle = &phandle->data.handle;
-  oarg.flags = oflags;
-
-  if((rc = ioctl(open_by_handle_fd, OPENHANDLE_OPEN_BY_HANDLE, &oarg)) < 0)
-    ReturnCode(posix2fsal_error(errno), errno);
+      ReturnCode(posix2fsal_error(errsv), errsv);
+    }
 
   *pfd = rc;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
+}                               /* fsal_internal_handle2fd */
 
-/**
- * fsal_internal_get_handle:
- * Create a handle from a file path
- *
- * \param pcontext (input):
- *        A context pointer for the root of the current export
- * \param p_fsalpath (input):
- *        Full path to the file
- * \param p_handle (output):
- *        The handle that is found and returned
- *
- * \return status of operation
- */
-fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
-                                       fsal_path_t * p_fsalpath,        /* IN */
-                                       fsal_handle_t * p_handle /* OUT */ )
+fsal_status_t fsal_internal_fd2handle( vfsfsal_op_context_t * p_context,
+                                       int fd, 
+				       vfsfsal_handle_t * phandle)
 {
-  int rc;
-  struct name_handle_arg harg;
+  int rc = 0 ;
+  int errsv = 0 ; 
+  int mnt_id = 0 ;
+
+
+  phandle->data.vfs_handle.handle_bytes = VFS_HANDLE_LEN ;
+  if( ( rc = vfs_fd_to_handle( fd, &phandle->data.vfs_handle, &mnt_id ) ) )
+   ReturnCode(posix2fsal_error(errsv), errsv);
+
+#if 0 
+  {
+    char str[1024] ;
+    sprint_mem( str, phandle->data.vfs_handle.handle, phandle->data.vfs_handle.handle_bytes ) ;
+    printf( "=====> fsal_internal_fd2handle: type=%u bytes=%u|%s\n",  
+            phandle->data.vfs_handle.handle_type, phandle->data.vfs_handle.handle_bytes, str ) ;
+  }
+#endif
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}                               /* fsal_internal_fd2handle */
+
+fsal_status_t fsal_internal_Path2Handle(vfsfsal_op_context_t * p_context,       /* IN */
+                                        fsal_path_t * p_fsalpath,       /* IN */
+                                        vfsfsal_handle_t * p_handle /* OUT */ )
+{
   int objectfd;
+  fsal_status_t st;
 
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  harg.handle = &p_handle->data.handle;
-  harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
-  harg.name = p_fsalpath->path;
-  harg.dfd = AT_FDCWD;
-  harg.flag = 0;
+  memset(p_handle, 0, sizeof(vfsfsal_handle_t));
 
-  LogFullDebug(COMPONENT_FSAL,
-               "Lookup handle for %s",
-               p_fsalpath->path);
+  LogFullDebug(COMPONENT_FSAL, "Lookup handle for %s", p_fsalpath->path);
 
-  if((rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg)) < 0)
+  if((objectfd = open(p_fsalpath->path, O_RDONLY, 0600)) < 0)
     ReturnCode(posix2fsal_error(errno), errno);
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
+  st = fsal_internal_fd2handle(p_context, objectfd, p_handle);
+  close(objectfd);
+  return st;
+}                               /* fsal_internal_Path2Handle */
+
 
 /**
  * fsal_internal_get_handle_at:
@@ -651,141 +554,46 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
                                           fsal_handle_t * p_handle      /* OUT
                                                                          */ )
 {
-  int rc;
-  struct name_handle_arg harg;
-  int objectfd;
+  char procpath[MAXPATHLEN];
+  char pathproccontent[MAXPATHLEN];
+  int mnt_id = 0 ;
 
-  if(!p_handle || !p_fsalname)
-    ReturnCode(ERR_FSAL_FAULT, 0);
+  memset(procpath, 0, MAXPATHLEN);
+  memset(pathproccontent, 0, MAXPATHLEN);
 
-  harg.handle = &p_handle->data.handle;
-  harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
-  harg.name = p_fsalname->name;
-  harg.dfd = dfd;
-  harg.flag = 0;
+  snprintf(procpath, MAXPATHLEN, "/proc/%u/fd/%u", getpid(), dfd);
 
-  LogFullDebug(COMPONENT_FSAL,
-               "Lookup handle at for %s",
-               p_fsalname->name);
-
-  if((rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg)) < 0)
+  if(readlink(procpath, pathproccontent, MAXPATHLEN) == -1)
     ReturnCode(posix2fsal_error(errno), errno);
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
-
-/**
- * fsal_internal_fd2handle:
- * convert an fd to a handle
- *
- * \param fd (input):
- *        Open file descriptor for target file
- * \param p_handle (output):
- *        The handle that is found and returned
- *
- * \return status of operation
- */
-fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * p_handle)
-{
-  int rc;
-  struct name_handle_arg harg;
-
-  if(!p_handle || !&p_handle->data.handle)
-    ReturnCode(ERR_FSAL_FAULT, 0);
-
-  harg.handle = &p_handle->data.handle;
-  memset(&p_handle->data.handle, 0, sizeof(struct file_handle));
-
-  harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
-  harg.name = NULL;
-  harg.dfd = fd;
-  harg.flag = 0;
-
-  LogFullDebug(COMPONENT_FSAL,
-               "Lookup handle by fd for %d",
-               fd);
-
-  if((rc = ioctl(open_by_handle_fd, OPENHANDLE_NAME_TO_HANDLE, &harg)) < 0)
+  strncat( pathproccontent, "/", MAXPATHLEN ) ;  
+  strncat( pathproccontent, p_fsalname->name, MAXPATHLEN ) ;  
+ 
+  p_handle->data.vfs_handle.handle_bytes = VFS_HANDLE_LEN ;
+  if( vfs_lname_to_handle( pathproccontent, &p_handle->data.vfs_handle, &mnt_id ) )
     ReturnCode(posix2fsal_error(errno), errno);
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
+#if 0 
+  {
+    char str[1024] ;
+    sprint_mem( str, p_handle->data.vfs_handle.handle, p_handle->data.vfs_handle.handle_bytes ) ;
+    printf( "=====> fsal_internal_get_handle_at: type=%u bytes=%u|%s\n",
+            p_handle->data.vfs_handle.handle_type, p_handle->data.vfs_handle.handle_bytes, str ) ;
+  }
+#endif
 
-/**
- * fsal_internal_link_at:
- * Create a link based on a file descriptor, dirfd, and new name
- *
- * \param srcfd (input):
- *          file descriptor of source file
- * \param dirfd (input):
- *          file descriptor of target directory
- * \param name (input):
- *          name for the new file
- *
- * \return status of operation
- */
-fsal_status_t fsal_internal_link_at(int srcfd, int dirfd, char *name)
-{
-  int rc;
-  struct link_arg linkarg;
-
-  if(!name)
-    ReturnCode(ERR_FSAL_FAULT, 0);
-
-  linkarg.dir_fd = dirfd;
-  linkarg.file_fd = srcfd;
-  linkarg.name = name;
-
-  if((rc = ioctl(open_by_handle_fd, OPENHANDLE_LINK_BY_FD, &linkarg)) < 0)
-    ReturnCode(posix2fsal_error(errno), errno);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
+} /* fsal_internal_get_handle_at */
 
-}
-
-/**
- * fsal_readlink_by_handle:
- * Reads the contents of the link
- *
- *
- * \return status of operation
- */
-
-fsal_status_t fsal_readlink_by_handle(fsal_op_context_t * p_context,
-                                      fsal_handle_t * p_handle, char *__buf, int maxlen)
-{
-  int fd;
-  int rc;
-  fsal_status_t status;
-  struct readlink_arg readlinkarg;
-
-  status = fsal_internal_handle2fd(p_context, p_handle, &fd, O_RDONLY);
-
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_open);
-
-  memset(__buf, 0, maxlen);
-  readlinkarg.fd = fd;
-  readlinkarg.buffer = __buf;
-  readlinkarg.size = maxlen;
-
-  rc = ioctl(open_by_handle_fd, OPENHANDLE_READLINK_BY_FD, &readlinkarg);
-
-  close(fd);
-
-  if(rc < 0)
-      Return(rc, 0, INDEX_FSAL_readlink);
-
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
 
 /*
    Check the access from an existing fsal_attrib_list_t or struct stat
 */
 /* XXX : ACL */
-fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
+fsal_status_t fsal_internal_testAccess(vfsfsal_op_context_t * p_context,        /* IN */
                                        fsal_accessflags_t access_type,  /* IN */
-                                       struct stat *p_buffstat, /* IN */
+                                       struct stat * p_buffstat,        /* IN */
                                        fsal_attrib_list_t * p_object_attributes /* IN */ )
 {
   fsal_accessflags_t missing_access;
@@ -804,11 +612,13 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
   if(access_type & FSAL_F_OK)
     ReturnCode(ERR_FSAL_INVAL, 0);
 
-  /* The root user ignores the mode/uid/gid of the file */
+  /* test root access */
+
   if(p_context->credential.user == 0)
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
   /* unsatisfied flags */
+
   missing_access = access_type;
 
   if(p_object_attributes)
@@ -816,7 +626,6 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
       uid = p_object_attributes->owner;
       gid = p_object_attributes->group;
       mode = p_object_attributes->mode;
-
     }
   else
     {
@@ -825,22 +634,12 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
       mode = unix2fsal_mode(p_buffstat->st_mode);
     }
 
-  LogFullDebug(COMPONENT_FSAL,
-               "file Mode=%#o, file uid=%d, file gid= %d",
-               mode,uid, gid);
-  LogFullDebug(COMPONENT_FSAL,
-               "user uid=%d, user gid= %d, access_type=%#o",
-               p_context->credential.user,
-               p_context->credential.group,
-               access_type);
+  /* Test if file belongs to user. */
 
-  /* If the uid of the file matches the uid of the user,
-   * then the uid mode bits take precedence. */
   if(p_context->credential.user == uid)
     {
 
-      LogFullDebug(COMPONENT_FSAL,
-                   "File belongs to user %d", uid);
+      LogFullDebug(COMPONENT_FSAL, "File belongs to user %d", uid);
 
       if(mode & FSAL_MODE_RUSR)
         missing_access &= ~FSAL_R_OK;
@@ -851,50 +650,48 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
       if(mode & FSAL_MODE_XUSR)
         missing_access &= ~FSAL_X_OK;
 
-      /* handle the creation of a new 500 file correctly */
-      if((missing_access & FSAL_OWNER_OK) != 0)
-        missing_access = 0;
-
       if(missing_access == 0)
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
       else
         {
           LogFullDebug(COMPONENT_FSAL,
-                       "Mode=%#o, Access=%#o, Rights missing: %#o",
-                       mode, access_type, missing_access);
+                            "Mode=%#o, Access=%#o, Rights missing: %#o", mode,
+                            access_type, missing_access);
           ReturnCode(ERR_FSAL_ACCESS, 0);
         }
 
     }
 
-  /* missing_access will be nonzero triggering a failure
-   * even though FSAL_OWNER_OK is not even a real posix file
-   * permission */
-  missing_access &= ~FSAL_OWNER_OK;
-
   /* Test if the file belongs to user's group. */
+
   is_grp = (p_context->credential.group == gid);
+
   if(is_grp)
-    LogFullDebug(COMPONENT_FSAL,
-                 "File belongs to user's group %d",
-                 p_context->credential.group);
+    LogFullDebug(COMPONENT_FSAL, "File belongs to user's group %d",
+                      p_context->credential.group);
+
 
   /* Test if file belongs to alt user's groups */
-  if(!is_grp)
-    for(i = 0; i < p_context->credential.nbgroups; i++)
-      {
-        is_grp = (p_context->credential.alt_groups[i] == gid);
-        if(is_grp)
-          LogFullDebug(COMPONENT_FSAL,
-                       "File belongs to user's alt group %d",
-                       p_context->credential.alt_groups[i]);
-        if(is_grp)
-          break;
-      }
 
-  /* If the gid of the file matches the gid of the user or
-   * one of the alternatve gids of the user, then the uid mode
-   * bits take precedence. */
+  if(!is_grp)
+    {
+      for(i = 0; i < p_context->credential.nbgroups; i++)
+        {
+          is_grp = (p_context->credential.alt_groups[i] == gid);
+
+          if(is_grp)
+            LogFullDebug(COMPONENT_FSAL,
+                              "File belongs to user's alt group %d",
+                              p_context->credential.alt_groups[i]);
+
+          // exits loop if found
+          if(is_grp)
+            break;
+        }
+    }
+
+  /* finally apply group rights */
+
   if(is_grp)
     {
       if(mode & FSAL_MODE_RGRP)
@@ -913,9 +710,8 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
     }
 
-  /* If the user uid is not 0, the uid does not match the file's, and
-   * the user's gids do not match the file's gid, we apply the "other"
-   * mode bits to the user. */
+  /* test other perms */
+
   if(mode & FSAL_MODE_ROTH)
     missing_access &= ~FSAL_R_OK;
 
@@ -925,44 +721,26 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
   if(mode & FSAL_MODE_XOTH)
     missing_access &= ~FSAL_X_OK;
 
+  /* XXX ACLs. */
+
   if(missing_access == 0)
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
-  else {
-    LogFullDebug(COMPONENT_FSAL,
-                 "Mode=%#o, Access=%#o, Rights missing: %#o",
-                 mode, access_type, missing_access);
+  else
     ReturnCode(ERR_FSAL_ACCESS, 0);
-  }
 
 }
 
-/**
- * fsal_stat_by_handle:
- * get the stat value
- *
- *
- * \return status of operation
- */
-
-fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
-                                  fsal_handle_t * p_handle, struct stat64 *buf)
+fsal_status_t fsal_internal_setattrs_symlink(vfsfsal_handle_t * p_filehandle,   /* IN */
+                                             vfsfsal_op_context_t * p_context,  /* IN */
+                                             fsal_attrib_list_t * p_attrib_set, /* IN */
+                                             fsal_attrib_list_t * p_object_attributes)
 {
-  int rc;
-  int dirfd = 0;
-  struct stat_arg statarg;
+  if(!p_filehandle || !p_context || !p_attrib_set)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
 
-  if(!p_handle || !p_context || !p_context->export_context)
-      ReturnCode(ERR_FSAL_FAULT, 0);
-
-  dirfd = p_context->export_context->mount_root_fd;
-
-  statarg.mountdirfd = dirfd;
-
-  statarg.handle = &p_handle->data.handle;
-  statarg.buf = buf;
-
-  if((rc = ioctl(open_by_handle_fd, OPENHANDLE_STAT_BY_HANDLE, &statarg)) < 0)
-      ReturnCode(posix2fsal_error(errno), errno);
+  *p_object_attributes = *p_attrib_set;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}
+}                               /* fsal_internal_setattrs_symlink */
+
+

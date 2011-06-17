@@ -37,15 +37,15 @@ fsal_status_t WRAP_VFSFSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
 }
 
 fsal_status_t WRAP_VFSFSAL_getattrs_descriptor(fsal_file_t * p_file_descriptor, /* IN */
-                                                fsal_handle_t * p_filehandle,    /* IN */
-                                                fsal_op_context_t * p_context,   /* IN */
-                                                fsal_attrib_list_t *
-                                                p_object_attributes /* IN/OUT */ )
+                                               fsal_handle_t * p_filehandle,    /* IN */
+                                               fsal_op_context_t * p_context,   /* IN */
+                                               fsal_attrib_list_t *
+                                               p_object_attributes /* IN/OUT */ )
 {
   return VFSFSAL_getattrs_descriptor((vfsfsal_file_t *) p_file_descriptor,
-                                      (vfsfsal_handle_t *) p_filehandle,
-                                      (vfsfsal_op_context_t *) p_context,
-                                      p_object_attributes);
+                                     (vfsfsal_handle_t *) p_filehandle,
+                                     (vfsfsal_op_context_t *) p_context,
+                                     p_object_attributes);
 }
 
 fsal_status_t WRAP_VFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */

@@ -32,7 +32,7 @@
  * 
  */
 
-#include  "fsal.h"
+#include "fsal.h"
 #include <sys/stat.h>
 
 /* defined the set of attributes supported with POSIX */
@@ -86,14 +86,18 @@ void ReleaseTokenFSCall();
 /**
  * Gets a fd from a handle 
  */
-fsal_status_t fsal_internal_handle2fd(fsal_op_context_t * p_context,
-                                      fsal_handle_t * phandle, int *pfd, int oflags);
+fsal_status_t fsal_internal_handle2fd(vfsfsal_op_context_t * p_context,
+                                      vfsfsal_handle_t * phandle, int *pfd, int oflags);
 
 fsal_status_t fsal_internal_handle2fd_at(int dirfd,
-                                         fsal_handle_t * phandle, int *pfd, int oflags);
+                                         vfsfsal_handle_t * phandle, int *pfd, int oflags);
+
+fsal_status_t fsal_internal_Path2Handle(vfsfsal_op_context_t * p_context,       /* IN */
+                                        fsal_path_t * p_fsalpath,       /* IN */
+                                        vfsfsal_handle_t * p_handle /* OUT */ ) ;
 
 fsal_status_t fsal_internal_get_handle_at(int dfd, fsal_name_t * p_fsalname,    /* IN */
-                                          fsal_handle_t * p_handle /* OUT */ );
+                                          vfsfsal_handle_t * p_handle /* OUT */ );
 /**
  * Access a link by a file handle.
  */
@@ -103,15 +107,16 @@ fsal_status_t fsal_readlink_by_handle(fsal_op_context_t * p_context,
 /**
  * Get the handle for a path (posix or fid path)
  */
-fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
+fsal_status_t fsal_internal_get_handle(vfsfsal_op_context_t * p_context,   /* IN */
                                        fsal_path_t * p_fsalpath,        /* IN */
-                                       fsal_handle_t * p_handle /* OUT */ );
+                                       vfsfsal_handle_t * p_handle /* OUT */ );
 
 fsal_status_t fsal_internal_get_handle_at(int dfd, fsal_name_t * p_fsalname,    /* IN */
-                                          fsal_handle_t * p_handle /* OUT */ );
+                                          vfsfsal_handle_t * p_handle /* OUT */ );
 
-fsal_status_t fsal_internal_fd2handle(int fd,   /* IN */
-                                      fsal_handle_t * p_handle  /* OUT */
+fsal_status_t fsal_internal_fd2handle(  vfsfsal_op_context_t * p_context,
+					int fd,   /* IN */
+                                        vfsfsal_handle_t * p_handle  /* OUT */
     );
 
 fsal_status_t fsal_internal_link_at(int srcfd, int dfd, char *name);

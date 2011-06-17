@@ -86,14 +86,15 @@ fsal_status_t VFSFSAL_readlink(vfsfsal_handle_t * p_linkhandle,       /* IN */
 
   /* Read the link on the filesystem */
   TakeTokenFSCall();
-  status =
-      fsal_readlink_by_handle(p_context, p_linkhandle, link_content_out,
-                              FSAL_MAX_PATH_LEN);
+  rc = vfs_readlink_by_handle( p_context->export_context->mount_root_fd,
+                               &p_linkhandle->data.vfs_handle,
+                               link_content_out,
+                               FSAL_MAX_PATH_LEN ) ;
   errsv = errno;
   ReleaseTokenFSCall();
 
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_readlink);
+  if( rc == -1 )
+    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_readlink);
 
   /* convert char * to fsal_path_t */
   status = FSAL_str2path(link_content_out, FSAL_MAX_PATH_LEN, p_link_content);
