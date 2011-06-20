@@ -77,13 +77,10 @@ int VFSFSAL_handlecmp(vfsfsal_handle_t * handle1, vfsfsal_handle_t * handle2,
       return -1;
     }
 
-  if(handle1->data.handle.handle_size != handle2->data.handle.handle_size)
+  if(handle1->data.vfs_handle.handle_bytes != handle2->data.vfs_handle.handle_bytes)
     return -2;
 
-  if(memcmp
-     (handle1->data.handle.f_handle, handle2->data.handle.f_handle, handle1->data.handle.handle_size))
-    //FSF && (handle1->fsid[0] == handle2->fsid[0])
-    //FSF && (handle1->fsid[1] == handle2->fsid[1]) )
+  if(memcmp(&handle1->data.vfs_handle, &handle2->data.vfs_handle, sizeof( vfs_file_handle_t) ) )
     return -3;
 
   return 0;
@@ -115,24 +112,23 @@ unsigned int VFSFSAL_Handle_to_HashIndex(vfsfsal_handle_t * p_handle,
    * chars after the end of the handle. We must avoid this by skipping the last loop
    * and doing a special processing for the last bytes */
 
-  mod = p_handle->data.handle.handle_size % sizeof(unsigned int);
+  mod = p_handle->data.vfs_handle.handle_bytes % sizeof(unsigned int);
 
   sum = cookie;
-  for(cpt = 0; cpt < p_handle->data.handle.handle_size - mod; cpt += sizeof(unsigned int))
+  for(cpt = 0; cpt < p_handle->data.vfs_handle.handle_bytes - mod; cpt += sizeof(unsigned int))
     {
-      memcpy(&extract, &(p_handle->data.handle.f_handle[cpt]), sizeof(unsigned int));
+      memcpy(&extract, &(p_handle->data.vfs_handle.handle[cpt]), sizeof(unsigned int));
       sum = (3 * sum + 5 * extract + 1999) % index_size;
     }
 
   if(mod)
     {
       extract = 0;
-      for(cpt = p_handle->data.handle.handle_size - mod; cpt < p_handle->data.handle.handle_size;
-          cpt++)
+      for(cpt = p_handle->data.vfs_handle.handle_bytes - mod; cpt < p_handle->data.vfs_handle.handle_bytes; cpt++ )
         {
           /* shift of 1 byte */
           extract <<= 8;
-          extract |= (unsigned int)p_handle->data.handle.f_handle[cpt];
+          extract |= (unsigned int)p_handle->data.vfs_handle.handle[cpt];
         }
       sum = (3 * sum + 5 * extract + 1999) % index_size;
     }
@@ -165,23 +161,23 @@ unsigned int VFSFSAL_Handle_to_RBTIndex(vfsfsal_handle_t * p_handle, unsigned in
    * chars after the end of the handle. We must avoid this by skipping the last loop
    * and doing a special processing for the last bytes */
 
-  mod = p_handle->data.handle.handle_size % sizeof(unsigned int);
+  mod = p_handle->data.vfs_handle.handle_bytes % sizeof(unsigned int);
 
-  for(cpt = 0; cpt < p_handle->data.handle.handle_size - mod; cpt += sizeof(unsigned int))
+  for(cpt = 0; cpt < p_handle->data.vfs_handle.handle_bytes - mod; cpt += sizeof(unsigned int))
     {
-      memcpy(&extract, &(p_handle->data.handle.f_handle[cpt]), sizeof(unsigned int));
+      memcpy(&extract, &(p_handle->data.vfs_handle.handle[cpt]), sizeof(unsigned int));
       h = (857 * h ^ extract) % 715827883;
     }
 
   if(mod)
     {
       extract = 0;
-      for(cpt = p_handle->data.handle.handle_size - mod; cpt < p_handle->data.handle.handle_size;
+      for(cpt = p_handle->data.vfs_handle.handle_bytes - mod; cpt < p_handle->data.vfs_handle.handle_bytes;
           cpt++)
         {
           /* shift of 1 byte */
           extract <<= 8;
-          extract |= (unsigned int)p_handle->data.handle.f_handle[cpt];
+          extract |= (unsigned int)p_handle->data.vfs_handle.handle[cpt];
         }
       h = (857 * h ^ extract) % 715827883;
     }
@@ -191,7 +187,7 @@ unsigned int VFSFSAL_Handle_to_RBTIndex(vfsfsal_handle_t * p_handle, unsigned in
 
 /**
  * FSAL_DigestHandle :
- *  Convert an fsal_handle_t to a buffer
+ *  Convert an vfsfsal_handle_t to a buffer
  *  to be included into NFS handles,
  *  or another digest.
  *
@@ -205,12 +201,14 @@ unsigned int VFSFSAL_Handle_to_RBTIndex(vfsfsal_handle_t * p_handle, unsigned in
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t VFSFSAL_DigestHandle(vfsfsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t output_type,  /* IN */
-                                vfsfsal_handle_t * p_in_fsal_handle,       /* IN */
-                                caddr_t out_buff        /* OUT */
+fsal_status_t VFSFSAL_DigestHandle(vfsfsal_export_context_t * p_expcontext,     /* IN */
+                                   fsal_digesttype_t output_type,       /* IN */
+                                   vfsfsal_handle_t * p_in_fsal_handle, /* IN */
+                                   caddr_t out_buff     /* OUT */
     )
 {
+  unsigned int ino32;
+
   /* sanity checks */
   if(!p_in_fsal_handle || !out_buff || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -221,8 +219,12 @@ fsal_status_t VFSFSAL_DigestHandle(vfsfsal_export_context_t * p_expcontext,   /*
       /* NFS handle digest */
     case FSAL_DIGEST_NFSV2:
 
-      /* VFS FSAL can no longer support NFS v2 */
-      ReturnCode(ERR_FSAL_NOTSUPP, 0);
+      if(sizeof(vfsfsal_handle_t) > FSAL_DIGEST_SIZE_HDLV2)
+        ReturnCode(ERR_FSAL_TOOSMALL, 0);
+
+      memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
+      memcpy(out_buff, p_in_fsal_handle, FSAL_DIGEST_SIZE_HDLV2);
+      break;
 
     case FSAL_DIGEST_NFSV3:
 
@@ -230,7 +232,7 @@ fsal_status_t VFSFSAL_DigestHandle(vfsfsal_export_context_t * p_expcontext,   /*
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(vfsfsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle, sizeof(vfsfsal_handle_t) ) ;
       break;
 
     case FSAL_DIGEST_NFSV4:
@@ -239,35 +241,21 @@ fsal_status_t VFSFSAL_DigestHandle(vfsfsal_export_context_t * p_expcontext,   /*
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(vfsfsal_handle_t));
+      memcpy(out_buff, p_in_fsal_handle, sizeof( vfsfsal_handle_t ) ) ;
       break;
-
-      /* FileId digest for NFSv2 */
-    case FSAL_DIGEST_FILEID2:
-
-      /* VFS FSAL can no longer support NFS v2 */
+  
+   case FSAL_DIGEST_FILEID2:
       ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
-      /* FileId digest for NFSv3 */
-    case FSAL_DIGEST_FILEID3:
-
-      /* sanity check about output size */
+   case FSAL_DIGEST_FILEID3:
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
-      /* If the handle_size is the full OPENHANDLE_HANDLE_LEN then we assume it's a new style VFS handle */
-      if(p_in_fsal_handle->data.handle.handle_size < OPENHANDLE_HANDLE_LEN)
-        memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle, sizeof(int));
-      else
-        memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle + OPENHANDLE_OFFSET_OF_FILEID, sizeof(uint64_t));
+      memcpy(out_buff, p_in_fsal_handle->data.vfs_handle.handle, FSAL_DIGEST_SIZE_FILEID3);
       break;
 
-      /* FileId digest for NFSv4 */
-    case FSAL_DIGEST_FILEID4:
 
+   case FSAL_DIGEST_FILEID4:
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID4);
-      if(p_in_fsal_handle->data.handle.handle_size < OPENHANDLE_HANDLE_LEN)
-        memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle, sizeof(int));
-      else
-        memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle + OPENHANDLE_OFFSET_OF_FILEID, sizeof(uint64_t));
+      memcpy(out_buff, p_in_fsal_handle->data.vfs_handle.handle, FSAL_DIGEST_SIZE_FILEID4);
       break;
 
     default:
@@ -294,13 +282,12 @@ fsal_status_t VFSFSAL_DigestHandle(vfsfsal_export_context_t * p_expcontext,   /*
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t VFSFSAL_ExpandHandle(vfsfsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t in_type,      /* IN */
-                                caddr_t in_buff,        /* IN */
-                                vfsfsal_handle_t * p_out_fsal_handle       /* OUT */
+fsal_status_t VFSFSAL_ExpandHandle(vfsfsal_export_context_t * p_expcontext,     /* IN */
+                                   fsal_digesttype_t in_type,   /* IN */
+                                   caddr_t in_buff,     /* IN */
+                                   vfsfsal_handle_t * p_out_fsal_handle /* OUT */
     )
 {
-
   /* sanity checks */
   if(!p_out_fsal_handle || !in_buff || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -310,20 +297,18 @@ fsal_status_t VFSFSAL_ExpandHandle(vfsfsal_export_context_t * p_expcontext,   /*
 
       /* NFSV2 handle digest */
     case FSAL_DIGEST_NFSV2:
-
-      /* VFS FSAL can no longer support NFS v2 */
-      ReturnCode(ERR_FSAL_NOTSUPP, 0);
+      memset(p_out_fsal_handle, 0, sizeof(vfsfsal_handle_t));
+      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
+      break;
 
       /* NFSV3 handle digest */
     case FSAL_DIGEST_NFSV3:
-
       memset(p_out_fsal_handle, 0, sizeof(vfsfsal_handle_t));
       memcpy(p_out_fsal_handle, in_buff, sizeof(vfsfsal_handle_t));
       break;
 
       /* NFSV4 handle digest */
     case FSAL_DIGEST_NFSV4:
-
       memset(p_out_fsal_handle, 0, sizeof(vfsfsal_handle_t));
       memcpy(p_out_fsal_handle, in_buff, sizeof(vfsfsal_handle_t));
       break;
@@ -764,72 +749,10 @@ fsal_status_t VFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_config
 }                               /* FSAL_load_FS_common_parameter_from_conf */
 
 /* load specific filesystem configuration options */
-
 fsal_status_t VFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
-                                                        fsal_parameter_t * out_parameter)
+                                                           fsal_parameter_t *
+                                                           out_parameter)
 {
-  int err;
-  int var_max, var_index;
-  char *key_name;
-  char *key_value;
-  config_item_t block;
-
-  block = config_FindItemByName(in_config, CONF_LABEL_FS_SPECIFIC);
-
-  /* cannot read item */
-  if(block == NULL)
-    {
-      LogCrit(COMPONENT_CONFIG,
-              "FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
-              CONF_LABEL_FS_SPECIFIC);
-      ReturnCode(ERR_FSAL_NOENT, 0);
-    }
-  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
-    {
-      LogCrit(COMPONENT_CONFIG,
-              "FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
-              CONF_LABEL_FS_SPECIFIC);
-      ReturnCode(ERR_FSAL_INVAL, 0);
-    }
-
-  var_max = config_GetNbItems(block);
-
-  for(var_index = 0; var_index < var_max; var_index++)
-    {
-      config_item_t item;
-
-      item = config_GetItemByIndex(block, var_index);
-
-      err = config_GetKeyValue(item, &key_name, &key_value);
-      if(err)
-        {
-          LogCrit(COMPONENT_CONFIG,
-                  "FSAL LOAD PARAMETER: ERROR reading key[%d] from section \"%s\" of configuration file.",
-                  var_index, CONF_LABEL_FS_SPECIFIC);
-          ReturnCode(ERR_FSAL_SERVERFAULT, err);
-        }
-      /* does the variable exists ? */
-      if(!STRCMP(key_name, "OpenByHandleDeviceFile"))
-        {
-          strncpy(out_parameter->fs_specific_info.open_by_handle_dev_file, key_value,
-                  MAXPATHLEN);
-        }
-      else
-        {
-          LogCrit(COMPONENT_CONFIG,
-                  "FSAL LOAD PARAMETER: ERROR: Unknown or unsettable key: %s (item %s)",
-                  key_name, CONF_LABEL_FS_SPECIFIC);
-          ReturnCode(ERR_FSAL_INVAL, 0);
-        }
-    }
-
-  if(out_parameter->fs_specific_info.open_by_handle_dev_file[0] == '\0')
-    {
-      LogCrit(COMPONENT_CONFIG,
-              "FSAL LOAD PARAMETER: OpenByHandleDeviceFile MUST be specified in the configuration file (item %s)",
-              CONF_LABEL_FS_SPECIFIC);
-      ReturnCode(ERR_FSAL_NOENT, 0);
-    }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
