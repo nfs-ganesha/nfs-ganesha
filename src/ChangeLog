@@ -447,6 +447,8 @@
         - Bug Fix: Bad memset in FSAL_HPSS::HPSSFSAL_lookup. Result was a segfault at init.
 	- Code reorganization : subdirectory RPCAL has been added
 	- Bug fixe : bad 'fd2handle' options in FSAL_XFS::FSAL_rename
+        - Log: new log levels LogFatal, LogCleanup added  
+	- TIRPC now supports the RPCSEC_GSS feature
 	- pNFS : API for implementing pNFS specific feature has been fully refurbished.
         - FSAL_VFS: new FSAL using "open_by_handle" feature added in the kernel higher than 2.6.39.
           This FSAL makes it possible to export any filesystem managed by the VFS. 
