@@ -24,6 +24,9 @@
  *
  */
 
+#ifndef _NLM_LIST_H
+#define _NLM_LIST_H
+
 #include <stddef.h>
 
 struct glist_head
@@ -110,3 +113,5 @@ static inline int glist_empty(struct glist_head *head)
 #define glist_for_each_safe(node, noden, head)			    \
   for (node = (head)->next, noden = node->next; node != (head);	    \
        node = noden, noden = node->next)
+
+#endif                          /* _NLM_LIST_H */

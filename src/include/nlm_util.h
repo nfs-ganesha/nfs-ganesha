@@ -21,22 +21,24 @@
  * 
  *
  */
+
+#ifndef _NLM_UTIL_H
+#define _NLM_UTIL_H
+
 #include "nlm_list.h"
+#include "nlm4.h"
+#include "cache_inode.h"
 
 struct nlm_lock_entry
 {
-  char *caller_name;
-  netobj fh;
-  netobj oh;
-  netobj cookie;
-  int32_t svid;
-  uint64_t start;
-  uint64_t len;
+  struct nlm4_lockargs arg;
   int state;
-  int exclusive;
   int ref_count;
   pthread_mutex_t lock;
   struct glist_head lock_list;
+#ifdef _DEBUG_MEMLEAKS
+  struct glist_head all_locks;
+#endif
   cache_entry_t *pentry;
   cache_inode_client_t *pclient;
   hash_table_t *ht;
@@ -44,6 +46,9 @@ struct nlm_lock_entry
 
 typedef struct nlm_lock_entry nlm_lock_entry_t;
 
+extern void dump_lock_list(void);
+extern void dump_all_locks(void);
+extern void nlm_init_locklist(void);
 extern const char *lock_result_str(int rc);
 extern netobj *copy_netobj(netobj * dst, netobj * src);
 extern void netobj_free(netobj * obj);
@@ -57,7 +62,7 @@ extern nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs *args,
                                       cache_inode_client_t * pclient,
                                       fsal_op_context_t * pcontext);
 extern void nlm_remove_from_locklist(nlm_lock_entry_t * nlm_entry);
-extern int nlm_delete_lock_entry(struct nlm4_lock *nlm_lock);
+extern void nlm_delete_lock_entry(struct nlm4_lock *nlm_lock);
 extern void nlm_init(void);
 extern nlm_lock_entry_t *nlm_find_lock_entry(struct nlm4_lock *nlm_lock,
                                              int exclusive, int state);
@@ -73,3 +78,5 @@ extern void nlm_grant_blocked_locks(netobj * orig_fh);
 
 extern nlm_lock_entry_t *nlm_find_lock_entry_by_cookie(netobj * cookie);
 extern void nlm_resend_grant_msg(void *arg);
+
+#endif                          /* _NLM_UTIL_H */

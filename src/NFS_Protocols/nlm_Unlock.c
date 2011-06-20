@@ -74,7 +74,7 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
                 struct svc_req *preq /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ )
 {
-  int lck_cnt, lck_state;
+  int lck_state;
   nlm4_unlockargs *arg = &parg->arg_nlm4_unlock;
   cache_entry_t *pentry;
   fsal_attrib_list_t attr;
@@ -145,8 +145,9 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
                "nlm4_Unlock nlm_entry %p, pentry %p pclient %p",
                nlm_entry, nlm_entry->pentry, nlm_entry->pclient);
   lck_state = nlm_lock_entry_get_state(nlm_entry);
+  nlm_lock_entry_dec_ref(nlm_entry);
   pres->res_nlm4.stat.stat = NLM4_GRANTED;
-  lck_cnt = nlm_delete_lock_entry(&(arg->alock));
+  nlm_delete_lock_entry(&arg->alock);
   nlm_unmonitor_host(arg->alock.caller_name);
   /*
    * Now check whether we have blocked locks.
@@ -154,7 +155,6 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
    */
   if(lck_state == NLM4_GRANTED)
     nlm_grant_blocked_locks(&(arg->alock.fh));
-  nlm_lock_entry_dec_ref(nlm_entry);
   LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
            lock_result_str(pres->res_nlm4.stat.stat));
   return NFS_REQ_OK;
