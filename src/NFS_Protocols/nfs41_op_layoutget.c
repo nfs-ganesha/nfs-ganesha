@@ -92,12 +92,14 @@
 int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
                        struct nfs_resop4 *resp)
 {
+#ifdef _USE_PNFS
   cache_inode_state_data_t candidate_data;
   cache_inode_state_type_t candidate_type;
   cache_inode_state_t *file_state = NULL;
   cache_inode_status_t cache_status;
   cache_inode_state_t *pstate_exists = NULL;
   int rc;
+#endif
 
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutget";
 

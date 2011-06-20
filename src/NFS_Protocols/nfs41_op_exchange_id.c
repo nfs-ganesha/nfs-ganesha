@@ -79,6 +79,7 @@
  *
  */
 
+#if 0
 static uint32_t all_eia_flags = 
     EXCHGID4_FLAG_SUPP_MOVED_MIGR |
     EXCHGID4_FLAG_BIND_PRINC_STATEID |
@@ -87,6 +88,7 @@ static uint32_t all_eia_flags =
     EXCHGID4_FLAG_USE_PNFS_DS |
     EXCHGID4_FLAG_MASK_PNFS |
     EXCHGID4_FLAG_UPD_CONFIRMED_REC_A | EXCHGID4_FLAG_CONFIRMED_R;
+#endif
 
 int nfs41_op_exchange_id(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp)

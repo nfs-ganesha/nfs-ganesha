@@ -99,7 +99,6 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   bool_t AttrProvided = FALSE;
   fsal_accessmode_t mode = 0600;
   nfs_fh4 newfh4;
-  nfs_client_id_t nfs_clientid;
   nfs_worker_data_t *pworker = NULL;
   int convrc = 0;
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open";
@@ -114,7 +113,6 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   cache_inode_open_owner_name_t owner_name;
   cache_inode_open_owner_name_t *powner_name = NULL;
   cache_inode_open_owner_t *powner = NULL;
-  bool_t open_owner_known = FALSE;
 
   resp->resop = NFS4_OP_OPEN;
   res_OPEN4.status = NFS4_OK;
@@ -122,7 +120,11 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   uint32_t tmp_attr[2];
   uint_t tmp_int = 2;
 
+#ifdef _USE_PNFS
+  nfs_client_id_t nfs_clientid;
+  bool_t open_owner_known = FALSE;
   int pnfs_status;
+#endif
   cache_inode_create_arg_t create_arg;
 
   pworker = (nfs_worker_data_t *) data->pclient->pworker;
