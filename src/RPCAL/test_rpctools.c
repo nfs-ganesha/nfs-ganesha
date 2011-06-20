@@ -10,8 +10,19 @@
 #include <arpa/inet.h>
 #include "rpcal.h"
 
+void *rpc_tcp_socket_manager_thread(void *Arg)
+{
+  return NULL;
+}
+
+
+void Fatal(void) 
+{
+    return;
+}
+
 int DisplayLogComponentLevel(log_components_t component,
-                             int level,
+                             log_levels_t  level,
                              char *format, ...)
 {
     return 0;
