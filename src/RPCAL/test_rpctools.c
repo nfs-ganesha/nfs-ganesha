@@ -12,7 +12,7 @@
 
 int DisplayLogComponentLevel(log_components_t component,
                              int level,
-                             char *format, ...)
+                             char *format, ...) __attribute__((format(printf, 3, 4)))
 {
     return 0;
 }
