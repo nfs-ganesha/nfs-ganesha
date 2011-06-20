@@ -443,7 +443,7 @@
 	- Add a new tool to find all the instances of LogXXX
 	- New LogInfo and LogWarn log level
 
-1.0.6   -
+1.1.0   -
         - Bug Fix: Bad memset in FSAL_HPSS::HPSSFSAL_lookup. Result was a segfault at init.
 	- Code reorganization : subdirectory RPCAL has been added
 	- Bug fixe : bad 'fd2handle' options in FSAL_XFS::FSAL_rename
