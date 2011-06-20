@@ -565,15 +565,11 @@ fsal_status_t VFSFSAL_sync(vfsfsal_file_t * p_file_descriptor       /* IN */)
   if(!p_file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_sync);
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync);
-
   /* Flush data. */
   TakeTokenFSCall();
   rc = fsync(p_file_descriptor->fd);
   errsv = errno;
   ReleaseTokenFSCall();
-
-  printf( "=============> fsal_sync: fd=%d errsv=%u\n", p_file_descriptor->fd, errsv ) ;
 
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_sync);
