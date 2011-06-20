@@ -24,22 +24,21 @@
 #include <pthread.h>
 #include <mntent.h>             /* for handling mntent */
 #include <libgen.h>             /* for dirname */
-#include <sys/vfs.h>            /* for fsid */
 
 /**
  * @defgroup FSALCredFunctions Credential handling functions.
  *
  * Those functions handle security contexts (credentials).
- * 
+ *
  * @{
  */
 
 /**
  * build the export entry
  */
-fsal_status_t VFSFSAL_BuildExportContext(vfsfsal_export_context_t * p_export_context, /* OUT */
-                                      fsal_path_t * p_export_path,      /* IN */
-                                      char *fs_specific_options /* IN */
+fsal_status_t VFSFSAL_BuildExportContext(vfsfsal_export_context_t * p_export_context,   /* OUT */
+                                         fsal_path_t * p_export_path,   /* IN */
+                                         char *fs_specific_options      /* IN */
     )
 {
   /* Get the mount point for this lustre FS,
@@ -54,66 +53,133 @@ fsal_status_t VFSFSAL_BuildExportContext(vfsfsal_export_context_t * p_export_con
   char mntdir[MAXPATHLEN];
   char fs_spec[MAXPATHLEN];
 
+  char *first_vfs_dir = NULL;
   char type[256];
 
   size_t pathlen, outlen;
-  int rc, fd;
+  int rc;
+  int mnt_id = 0 ;
 
   char *handle;
   size_t handle_len = 0;
-  struct statfs stat_buf;
-
-  fsal_status_t status;
-  fsal_op_context_t op_context;
 
   /* sanity check */
-  if((p_export_context == NULL) || (p_export_path == NULL))
+  if(p_export_context == NULL)
     {
-      LogCrit(COMPONENT_FSAL,
-              "NULL mandatory argument passed to %s()", __FUNCTION__);
+      LogCrit(COMPONENT_FSAL, "NULL mandatory argument passed to %s()", __FUNCTION__);
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
     }
 
-  /* save file descriptor to root of VFS share */
-  fd = open(p_export_path->path, O_RDONLY | O_DIRECTORY);
-  if(fd < 0)
-    {
-      close(open_by_handle_fd);
-      LogMajor(COMPONENT_FSAL,
-               "FSAL BUILD EXPORT CONTEXT: ERROR: Could not open VFS mount point %s: rc = %d",
-               p_export_path->path, errno);
-      ReturnCode(ERR_FSAL_INVAL, 0);
-    }
-  p_export_context->mount_root_fd = fd;
+  outlen = 0;
 
-  /* save filesystem ID */
-  rc = statfs(p_export_path->path, &stat_buf);
-  if(rc)
-    {
-      LogMajor(COMPONENT_FSAL,
-               "statfs call failed on file %s: %d", p_export_path->path, rc);
-      ReturnCode(ERR_FSAL_INVAL, 0);
-    }
-  p_export_context->fsid[0] = stat_buf.f_fsid.__val[0];
-  p_export_context->fsid[1] = stat_buf.f_fsid.__val[1];
+  if(p_export_path != NULL)
+    strncpy(rpath, p_export_path->path, MAXPATHLEN);
 
-  /* save file handle to root of VFS share */
-  op_context.export_context = p_export_context;
-  // op_context.credential = ???
-  status = fsal_internal_get_handle(&op_context,
-                                    p_export_path,
-                                    &(p_export_context->mount_root_handle));
-  if(FSAL_IS_ERROR(status))
+  /* open mnt file */
+  fp = setmntent(MOUNTED, "r");
+
+  if(fp == NULL)
     {
-      close(open_by_handle_fd);
-      close(p_export_context->mount_root_fd);
+      rc = errno;
+      LogCrit(COMPONENT_FSAL, "Error %d in setmntent(%s): %s", rc, MOUNTED,
+                      strerror(rc));
+      Return(posix2fsal_error(rc), rc, INDEX_FSAL_BuildExportContext);
+    }
+
+  while((p_mnt = getmntent(fp)) != NULL)
+    {
+      /* get the longer path vfs related export that matches export path */
+
+      if(p_mnt->mnt_dir != NULL)
+        {
+
+          pathlen = strlen(p_mnt->mnt_dir);
+
+          if(first_vfs_dir == NULL)
+            first_vfs_dir = p_mnt->mnt_dir;
+
+          if((pathlen > outlen) && !strcmp(p_mnt->mnt_dir, "/"))
+            {
+              LogDebug(COMPONENT_FSAL,
+                              "Root mountpoint is allowed for matching %s, type=%s, fs=%s",
+                              rpath, p_mnt->mnt_type, p_mnt->mnt_fsname);
+              outlen = pathlen;
+              strncpy(mntdir, p_mnt->mnt_dir, MAXPATHLEN);
+              strncpy(type, p_mnt->mnt_type, 256);
+              strncpy(fs_spec, p_mnt->mnt_fsname, MAXPATHLEN);
+            }
+          /* in other cases, the filesystem must be <mountpoint>/<smthg> or <mountpoint>\0 */
+          else if((pathlen > outlen) &&
+                  !strncmp(rpath, p_mnt->mnt_dir, pathlen) &&
+                  ((rpath[pathlen] == '/') || (rpath[pathlen] == '\0')))
+            {
+              LogFullDebug(COMPONENT_FSAL, "%s is under mountpoint %s, type=%s, fs=%s",
+                              rpath, p_mnt->mnt_dir, p_mnt->mnt_type, p_mnt->mnt_fsname);
+
+              outlen = pathlen;
+              strncpy(mntdir, p_mnt->mnt_dir, MAXPATHLEN);
+              strncpy(type, p_mnt->mnt_type, 256);
+              strncpy(fs_spec, p_mnt->mnt_fsname, MAXPATHLEN);
+            }
+        }
+    }
+
+  if(outlen <= 0)
+    {
+      if(p_export_path == NULL)
+        strncpy(mntdir, first_vfs_dir, MAXPATHLEN);
+      else
+        {
+          LogCrit(COMPONENT_FSAL, "No mount entry matches '%s' in %s", rpath, MOUNTED);
+          endmntent(fp);
+          Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_BuildExportContext);
+        }
+    }
+
+  /* Do the path_to_fshandle call to init the vfs's libhandle */
+  strncpy(p_export_context->mount_point, mntdir, MAXPATHLEN);
+
+  /* save file descriptor to root of GPFS share */
+  if( ( p_export_context->mount_root_fd = open(p_export_context->mount_point, O_RDONLY | O_DIRECTORY) ) < 0 )
+    {
+      close( p_export_context->mount_root_fd );
       LogMajor(COMPONENT_FSAL,
-               "FSAL BUILD EXPORT CONTEXT: ERROR: Conversion from vfs filesystem root path to handle failed : %d",
-               status.minor);
+               "FSAL BUILD EXPORT CONTEXT: ERROR: Could not open GPFS mount point %s: rc = %d",
+               p_export_context->mount_point, errno);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
+
+  p_export_context->root_handle.handle_bytes = VFS_HANDLE_LEN ;
+  if( vfs_fd_to_handle( p_export_context->mount_root_fd, 
+			&p_export_context->root_handle,  
+                        &mnt_id ) )   
+	 Return(posix2fsal_error(errno), errno, INDEX_FSAL_BuildExportContext) ;
+
+#if 0 
+  {
+     char str[1024] ;
+
+     sprint_mem( str, p_export_context->root_handle.handle ,p_export_context->root_handle.handle_bytes ) ;
+     printf( "=====> root Handle: type=%u bytes=%u|%s\n",  
+             p_export_context->root_handle.handle_type,  p_export_context->root_handle.handle_bytes, str ) ;
+
+  }
+#endif
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
+}
+
+/**
+ * FSAL_CleanUpExportContext :
+ * this will clean up and state in an export that was created during
+ * the BuildExportContext phase.  For many FSALs this may be a noop.
+ *
+ * \param p_export_context (in, gpfsfsal_export_context_t)
+ */
+
+fsal_status_t VFSFSAL_CleanUpExportContext(vfsfsal_export_context_t * p_export_context)
+{
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
 }
 
 fsal_status_t VFSFSAL_InitClientContext(vfsfsal_op_context_t * p_thr_context)
@@ -130,32 +196,10 @@ fsal_status_t VFSFSAL_InitClientContext(vfsfsal_op_context_t * p_thr_context)
 
 }
 
-/**
- * FSAL_CleanUpExportContext :
- * this will clean up and state in an export that was created during
- * the BuildExportContext phase.  For many FSALs this may be a noop.
- *
- * \param p_export_context (in, vfsfsal_export_context_t)
- */
-
-fsal_status_t VFSFSAL_CleanUpExportContext(vfsfsal_export_context_t * p_export_context) 
-{
-  if(p_export_context == NULL) 
-  {
-    LogCrit(COMPONENT_FSAL,
-            "NULL mandatory argument passed to %s()", __FUNCTION__);
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_CleanUpExportContext);
-  }
-  
-  close(p_export_context->mount_root_fd);
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
-}
-
  /**
  * FSAL_GetUserCred :
  * Get a user credential from its uid.
- * 
+ *
  * \param p_cred (in out, fsal_cred_t *)
  *        Initialized credential to be changed
  *        for representing user.
@@ -175,12 +219,12 @@ fsal_status_t VFSFSAL_CleanUpExportContext(vfsfsal_export_context_t * p_export_c
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t VFSFSAL_GetClientContext(vfsfsal_op_context_t * p_thr_context,  /* IN/OUT  */
-                                    vfsfsal_export_context_t * p_export_context,   /* IN */
-                                    fsal_uid_t uid,     /* IN */
-                                    fsal_gid_t gid,     /* IN */
-                                    fsal_gid_t * alt_groups,    /* IN */
-                                    fsal_count_t nb_alt_groups  /* IN */
+fsal_status_t VFSFSAL_GetClientContext(vfsfsal_op_context_t * p_thr_context,    /* IN/OUT  */
+                                       vfsfsal_export_context_t * p_export_context,     /* IN */
+                                       fsal_uid_t uid,  /* IN */
+                                       fsal_gid_t gid,  /* IN */
+                                       fsal_gid_t * alt_groups, /* IN */
+                                       fsal_count_t nb_alt_groups       /* IN */
     )
 {
 
@@ -211,18 +255,20 @@ fsal_status_t VFSFSAL_GetClientContext(vfsfsal_op_context_t * p_thr_context,  /*
   if(isFullDebug(COMPONENT_FSAL))
     {
       /* traces: prints p_credential structure */
+
       LogFullDebug(COMPONENT_FSAL, "credential modified:");
       LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
-                   p_thr_context->credential.user,
-                   p_thr_context->credential.group);
+                        p_thr_context->credential.user, p_thr_context->credential.group);
 
-      for(i = 0; i < p_thr_context->credential.nbgroups; i++)
-        LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
-                     p_thr_context->credential.alt_groups[i]);
-    }
+      if (isFullDebug(COMPONENT_FSAL))
+        {
+          for(i = 0; i < p_thr_context->credential.nbgroups; i++)
+            LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
+                         p_thr_context->credential.alt_groups[i]);
+        }
+   }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
-
 }
 
 /* @} */

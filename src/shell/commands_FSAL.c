@@ -356,6 +356,10 @@ int Init_Thread_Context(FILE * output, cmdfsal_thr_info_t * context, int flag_v)
   fsal_path_t local_path_fsal;
   st = FSAL_str2path("/xfs", strlen("/xfs"), &local_path_fsal);
   st = FSAL_BuildExportContext(&context->exp_context, &local_path_fsal, NULL);
+#elif defined( _USE_VFS )
+  fsal_path_t local_path_fsal;
+  st = FSAL_str2path("/tmp", strlen("/tmp"), &local_path_fsal);
+  st = FSAL_BuildExportContext(&context->exp_context, &local_path_fsal, NULL);
 #else
   st = FSAL_BuildExportContext(&context->exp_context, NULL, NULL);
 #endif

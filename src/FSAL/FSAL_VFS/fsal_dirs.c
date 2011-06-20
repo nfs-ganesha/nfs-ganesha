@@ -41,10 +41,10 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t VFSFSAL_opendir(vfsfsal_handle_t * p_dir_handle,        /* IN */
-                           vfsfsal_op_context_t * p_context,       /* IN */
-                           vfsfsal_dir_t * p_dir_descriptor,       /* OUT */
-                           fsal_attrib_list_t * p_dir_attributes        /* [ IN/OUT ] */
+fsal_status_t VFSFSAL_opendir(vfsfsal_handle_t * p_dir_handle,  /* IN */
+                              vfsfsal_op_context_t * p_context, /* IN */
+                              vfsfsal_dir_t * p_dir_descriptor, /* OUT */
+                              fsal_attrib_list_t * p_dir_attributes     /* [ IN/OUT ] */
     )
 {
   int rc, errsv;
@@ -89,8 +89,8 @@ fsal_status_t VFSFSAL_opendir(vfsfsal_handle_t * p_dir_handle,        /* IN */
 
   /* if everything is OK, fills the dir_desc structure : */
 
-  memcpy(&(p_dir_descriptor->context), p_context, sizeof(fsal_op_context_t));
-  memcpy(&(p_dir_descriptor->handle), p_dir_handle, sizeof(fsal_handle_t));
+  memcpy(&(p_dir_descriptor->context), p_context, sizeof(vfsfsal_op_context_t));
+  memcpy(&(p_dir_descriptor->handle), p_dir_handle, sizeof(vfsfsal_handle_t));
 
   if(p_dir_attributes)
     {
@@ -152,19 +152,18 @@ struct linux_dirent
 
 #define BUF_SIZE 1024
 
-fsal_status_t VFSFSAL_readdir(vfsfsal_dir_t * p_dir_descriptor,       /* IN */
-                           vfsfsal_cookie_t start_position,        /* IN */
-                           fsal_attrib_mask_t get_attr_mask,    /* IN */
-                           fsal_mdsize_t buffersize,    /* IN */
-                           fsal_dirent_t * p_pdirent,   /* OUT */
-                           vfsfsal_cookie_t * p_end_position,      /* OUT */
-                           fsal_count_t * p_nb_entries, /* OUT */
-                           fsal_boolean_t * p_end_of_dir        /* OUT */
+fsal_status_t VFSFSAL_readdir(vfsfsal_dir_t * p_dir_descriptor, /* IN */
+                              vfsfsal_cookie_t start_position,  /* IN */
+                              fsal_attrib_mask_t get_attr_mask, /* IN */
+                              fsal_mdsize_t buffersize, /* IN */
+                              fsal_dirent_t * p_pdirent,        /* OUT */
+                              vfsfsal_cookie_t * p_end_position,        /* OUT */
+                              fsal_count_t * p_nb_entries,      /* OUT */
+                              fsal_boolean_t * p_end_of_dir     /* OUT */
     )
 {
   fsal_status_t st;
   fsal_count_t max_dir_entries;
-  fsal_name_t entry_name;
   char buff[BUF_SIZE];
   struct linux_dirent *dp = NULL;
   int bpos = 0;
@@ -176,7 +175,6 @@ fsal_status_t VFSFSAL_readdir(vfsfsal_dir_t * p_dir_descriptor,       /* IN */
   int errsv = 0, rc = 0;
 
   memset(buff, 0, BUF_SIZE);
-  memset(&entry_name, 0, sizeof(fsal_name_t));
 
   /*****************/
   /* sanity checks */
@@ -241,9 +239,8 @@ fsal_status_t VFSFSAL_readdir(vfsfsal_dir_t * p_dir_descriptor,       /* IN */
                                                     /** @todo not used for the moment. Waiting for information on symlink management */
           bpos += dp->d_reclen;
 
-          /* LogFullDebug(COMPONENT_FSAL,
-                          "\tino=%8ld|%8lx off=%d|%x reclen=%d|%x name=%s|%d", dp->d_ino, dp->d_ino, (int)dp->d_off, (int)dp->d_off, 
-                          dp->d_reclen, dp->d_reclen, dp->d_name, (int)dp->d_name[0]  ) ; */
+          /* LogFullDebug(COMPONENT_FSAL, "\tino=%8ld|%8lx off=%d|%x reclen=%d|%x name=%s|%d", dp->d_ino, dp->d_ino, (int)dp->d_off, (int)dp->d_off, 
+             dp->d_reclen, dp->d_reclen, dp->d_name, (int)dp->d_name[0]  ) ; */
 
           if(!(*p_nb_entries < max_dir_entries))
             break;
@@ -260,28 +257,11 @@ fsal_status_t VFSFSAL_readdir(vfsfsal_dir_t * p_dir_descriptor,       /* IN */
             ReturnStatus(st, INDEX_FSAL_readdir);
 
           d_type = DT_UNKNOWN;
-
-          // TODO: there is a race here, because between handle fetch
-          // and open at things might change.  we need to figure out if there
-          // is another way to open without the pcontext
-
-          strncpy(entry_name.name, dp->d_name, sizeof(entry_name.name));
-          entry_name.len = strlen(entry_name.name);
-
-          if(FSAL_IS_ERROR
-             (st =
-              fsal_internal_get_handle_at(p_dir_descriptor->fd, &entry_name,
-                                          &(p_pdirent[*p_nb_entries].handle))))
-            ReturnStatus(st, INDEX_FSAL_readdir);
-
-          if(FSAL_IS_ERROR
-             (st =
-              fsal_internal_handle2fd_at(p_dir_descriptor->fd,
-                                         &(p_pdirent[*p_nb_entries].handle), &tmpfd,
-                                         O_RDONLY | O_NOFOLLOW)))
+          if((tmpfd =
+              openat(p_dir_descriptor->fd, dp->d_name, O_RDONLY | O_NOFOLLOW, 0600)) < 0)
             {
               if(errno != ELOOP)        /* ( p_dir_descriptor->fd, dp->d_name) is not a symlink */
-                ReturnStatus(st, INDEX_FSAL_readdir);
+                Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_readdir);
               else
                 d_type = DT_LNK;
             }
@@ -290,10 +270,17 @@ fsal_status_t VFSFSAL_readdir(vfsfsal_dir_t * p_dir_descriptor,       /* IN */
           TakeTokenFSCall();
           if(d_type != DT_LNK)
             {
+              vfsfsal_handle_t *tmp_handle =
+                  (vfsfsal_handle_t *) (&(p_pdirent[*p_nb_entries].handle));
+
+              st = fsal_internal_fd2handle(&p_dir_descriptor->context, tmpfd, tmp_handle);
               close(tmpfd);
             }
           else
             {
+              vfsfsal_handle_t *tmp_handle =
+                  (vfsfsal_handle_t *) (&(p_pdirent[*p_nb_entries].handle));
+
               if(fstatat(p_dir_descriptor->fd, dp->d_name, &buffstat, AT_SYMLINK_NOFOLLOW)
                  < 0)
                 {
@@ -301,6 +288,12 @@ fsal_status_t VFSFSAL_readdir(vfsfsal_dir_t * p_dir_descriptor,       /* IN */
                   Return(posix2fsal_error(errno), errno, INDEX_FSAL_readdir);
                 }
 
+              st = fsal_internal_get_handle_at( p_dir_descriptor->fd, dp->d_name, tmp_handle ) ;
+              if(FSAL_IS_ERROR(st))
+                {
+                  ReleaseTokenFSCall();
+                  ReturnStatus(st, INDEX_FSAL_readdir);
+                }
               p_pdirent[*p_nb_entries].attributes.asked_attributes = get_attr_mask;
 
               st = posix2fsal_attributes(&buffstat, &p_pdirent[*p_nb_entries].attributes);
@@ -326,9 +319,10 @@ fsal_status_t VFSFSAL_readdir(vfsfsal_dir_t * p_dir_descriptor,       /* IN */
             {
               p_pdirent[*p_nb_entries].attributes.asked_attributes = get_attr_mask;
 
-              st = VFSFSAL_getattrs(&(p_pdirent[*p_nb_entries].handle),
-                                 &p_dir_descriptor->context,
-                                 &p_pdirent[*p_nb_entries].attributes);
+              st = VFSFSAL_getattrs((vfsfsal_handle_t
+                                     *) (&(p_pdirent[*p_nb_entries].handle)),
+                                    (vfsfsal_op_context_t *) & p_dir_descriptor->context,
+                                    &p_pdirent[*p_nb_entries].attributes);
               if(FSAL_IS_ERROR(st))
                 {
                   FSAL_CLEAR_MASK(p_pdirent[*p_nb_entries].attributes.asked_attributes);
@@ -336,12 +330,16 @@ fsal_status_t VFSFSAL_readdir(vfsfsal_dir_t * p_dir_descriptor,       /* IN */
                                 FSAL_ATTR_RDATTR_ERR);
                 }
             }
-          p_pdirent[*p_nb_entries].cookie.data.cookie = dp->d_off;
+          //p_pdirent[*p_nb_entries].cookie.cookie = dp->d_off;
+          ((vfsfsal_cookie_t *) (&p_pdirent[*p_nb_entries].cookie))->data.cookie = dp->d_off;
           p_pdirent[*p_nb_entries].nextentry = NULL;
           if(*p_nb_entries)
             p_pdirent[*p_nb_entries - 1].nextentry = &(p_pdirent[*p_nb_entries]);
 
-          (*p_end_position) = p_pdirent[*p_nb_entries].cookie;
+          //(*p_end_position) = p_pdirent[*p_nb_entries].cookie;
+          memcpy((char *)p_end_position, (char *)&p_pdirent[*p_nb_entries].cookie,
+                 sizeof(vfsfsal_cookie_t));
+
           (*p_nb_entries)++;
 
         }                       /* for */
@@ -362,7 +360,7 @@ fsal_status_t VFSFSAL_readdir(vfsfsal_dir_t * p_dir_descriptor,       /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t VFSFSAL_closedir(vfsfsal_dir_t * p_dir_descriptor       /* IN */
+fsal_status_t VFSFSAL_closedir(vfsfsal_dir_t * p_dir_descriptor /* IN */
     )
 {
 
@@ -377,7 +375,7 @@ fsal_status_t VFSFSAL_closedir(vfsfsal_dir_t * p_dir_descriptor       /* IN */
     Return(posix2fsal_error(errno), errno, INDEX_FSAL_closedir);
 
   /* fill dir_descriptor with zeros */
-  memset(p_dir_descriptor, 0, sizeof(fsal_dir_t));
+  memset(p_dir_descriptor, 0, sizeof(vfsfsal_dir_t));
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_closedir);
 

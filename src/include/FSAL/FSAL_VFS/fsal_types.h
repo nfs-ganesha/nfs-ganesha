@@ -76,101 +76,11 @@
  *      POSIX FS dependant definitions
  * ------------------------------------------- */
 
-#define FSAL_MAX_NAME_LEN   NAME_MAX
-#define FSAL_MAX_PATH_LEN   PATH_MAX
-
-#define FSAL_NGROUPS_MAX  32
-
-#define FSAL_NAME_INITIALIZER {"",0}
-#define FSAL_PATH_INITIALIZER {"",0}
-
-#define FSAL_VFS_HANDLE_LEN 64
+#define FSAL_VFS_HANDLE_LEN 29
 #define FSAL_VFS_FSHANDLE_LEN 64
 
-/** the following come from using the character driver */
-
-#define AT_FDCWD   -100
-
-#define OPENHANDLE_HANDLE_LEN 40
-#define OPENHANDLE_DRIVER_MAGIC     'O'
-#define OPENHANDLE_NAME_TO_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 0, struct name_handle_arg)
-#define OPENHANDLE_OPEN_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 1, struct open_arg)
-#define OPENHANDLE_LINK_BY_FD     _IOWR(OPENHANDLE_DRIVER_MAGIC, 2, struct link_arg)
-#define OPENHANDLE_READLINK_BY_FD _IOWR(OPENHANDLE_DRIVER_MAGIC, 3, struct readlink_arg)
-#define OPENHANDLE_STAT_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 4, struct stat_arg)
-#define OPENHANDLE_OFFSET_OF_FILEID (2 * sizeof(int))
-
-/**
- *  The following structures are also defined in the kernel module,
- *  and if any change happens it needs to happen both places.  They
- *  are the same except for the change of file_handle.f_handle to a
- *  static 20 character array to work better with the way that ganesha
- *  does memory management.
- */
-
-struct file_handle
-{
-  int handle_size;
-  int handle_type;
-  /* file identifier */
-  unsigned char f_handle[OPENHANDLE_HANDLE_LEN];
-};
-
-/**
- * name_handle_arg: 
- * 
- * this structure is used in 3 ways.  If the dfd is AT_FWCWD and name
- * is a full path, it returns the handle to the file.
- * 
- * It can also get the same handle by having dfd be the parent
- * directory file handle and the name be the local file name.
- *
- * Lastly, if dfd is actually the file handle for the file, and name
- * == NULL, it can be used to get the handle directly from the file
- * descriptor.
- *
- */
-
-struct name_handle_arg
-{
-  int dfd;
-  int flag;
-  char *name;
-  struct file_handle *handle;
-};
-
-struct open_arg
-{
-  int mountdirfd;
-  int flags;
-  int openfd;
-  struct file_handle *handle;
-};
-
-struct link_arg
-{
-  int file_fd;
-  int dir_fd;
-  char *name;
-};
-
-struct readlink_arg
-{
-  int fd;
-  char *buffer;
-  int size;
-};
-
-struct stat_arg
-{
-    int mountdirfd;
-    struct file_handle *handle;
-    struct stat64 *buf;
-};
-
-/** end of open by handle structures */
-
-#ifndef _USE_SHARED_FSAL
+#include "fsal_handle_syscalls.h"
+#include "fsal_glue_const.h"
 
 #define fsal_handle_t vfsfsal_handle_t
 #define fsal_op_context_t vfsfsal_op_context_t
@@ -182,20 +92,19 @@ struct stat_arg
 #define fs_specific_initinfo_t vfsfs_specific_initinfo_t
 #define fsal_cred_t vfsfsal_cred_t
 
-#endif
-
-typedef struct
-{
-  struct
+typedef union {
+ struct
   {
-    //  unsigned int fsid[2];
-    struct file_handle handle;
+     vfs_file_handle_t vfs_handle ;
   } data ;
+#ifdef _BUILD_SHARED_FSAL
+  char pad[FSAL_HANDLE_T_SIZE];
+#endif
 } vfsfsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */
 
-typedef struct 
+typedef struct
 {
   uid_t user;
   gid_t group;
@@ -205,30 +114,27 @@ typedef struct
 
 typedef struct
 {
-  /* Warning: This string is not currently filled in or used. */
-  char mount_point[FSAL_MAX_PATH_LEN];
-
-  int open_by_handle_fd;
-  int mount_root_fd;
-  fsal_handle_t mount_root_handle;
-  unsigned int fsid[2];
+  char              mount_point[FSAL_MAX_PATH_LEN];
+  int               mount_root_fd ;
+  vfs_file_handle_t root_handle ;
 } vfsfsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)
 
+//#define FSAL_GET_EXP_CTX( popctx ) (fsal_export_context_t *)(( (vfsfsal_op_context_t *)popctx)->export_context)
+
 typedef struct
 {
-  fsal_export_context_t *export_context;        /* Must be the first entry in this structure */
-  fsal_cred_t credential;
+  vfsfsal_export_context_t *export_context;     /* /* Must be the first entry in this structure */
+  vfsfsal_cred_t credential;
 } vfsfsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
-typedef struct 
+typedef struct
 {
   char vfs_mount_point[MAXPATHLEN];
-  char open_by_handle_dev_file[MAXPATHLEN];
 } vfsfs_specific_initinfo_t;
 
 /**< directory cookie */
@@ -242,7 +148,7 @@ typedef union {
 #endif
 } vfsfsal_cookie_t;
 
-// static const fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
+//static const vfsfsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
 
 typedef struct
 {
@@ -254,7 +160,7 @@ typedef struct
 typedef struct
 {
   int fd;
-  vfsfsal_op_context_t context;    /* credential for accessing the directory */
+  vfsfsal_op_context_t context; /* credential for accessing the directory */
   fsal_path_t path;
   unsigned int dir_offset;
   vfsfsal_handle_t handle;
@@ -266,6 +172,7 @@ typedef struct fsal_file__
   int ro;                       /* read only file ? */
 } vfsfsal_file_t;
 
-//#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->fd )
+//#define FSAL_GET_EXP_CTX( popctx ) (fsal_export_context_t *)(( (vfsfsal_op_context_t *)popctx)->export_context)
+//#define FSAL_FILENO( p_fsal_file )  ((vfsfsal_file_t *)p_fsal_file)->fd 
 
 #endif                          /* _FSAL_TYPES__SPECIFIC_H */
