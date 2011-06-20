@@ -11,8 +11,8 @@
 #include "rpcal.h"
 
 int DisplayLogComponentLevel(log_components_t component,
-                             int level,
-                             char *format, ...) __attribute__((format(printf, 3, 4)))
+                             log_levels_t  level,
+                             char *format, ...)
 {
     return 0;
 }
