@@ -91,15 +91,16 @@ extern bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*disp
 #define _authenticate __authenticate
 #endif
 
+#ifdef _USE_TIRPC
+#define xdr_uint64_t xdr_u_int64_t
+#define xdr_uint32_t  xdr_u_int32_t
+#endif
+
 #if defined(_USE_GSSRPC) || defined(_USE_TIRPC)
 /* These prototypes are missing in gssrpc/xdr.h and tirpc/rpc/xdr.h */
 bool_t xdr_longlong_t(XDR * __xdrs, quad_t * __llp);
 bool_t xdr_u_longlong_t(XDR * __xdrs, u_quad_t * __ullp);
 bool_t xdr_uint64_t(XDR * __xdrs, uint64_t * __up);
-#endif
-
-#ifdef _USE_TIRPC
-#define xdr_uint32_t  xdr_u_int32_t
 #endif
 
 #ifdef _USE_GSSRPC
