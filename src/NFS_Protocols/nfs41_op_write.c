@@ -105,8 +105,6 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   cache_inode_state_t *pstate_iterate = NULL;
   cache_inode_state_t *pstate_previous_iterate = NULL;
 
-  int rc = 0;
-
   cache_content_policy_data_t datapol;
 
   datapol.UseMaxCacheSize = FALSE;
@@ -240,7 +238,7 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   /* The size to be written should not be greater than FATTR4_MAXWRITESIZE because this value is asked 
    * by the client at mount time, but we check this by security */
-  if((data->pexport->options & EXPORT_OPTION_MAXWRITE == EXPORT_OPTION_MAXWRITE) &&
+  if(((data->pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE) &&
      size > data->pexport->MaxWrite)
     {
       /*

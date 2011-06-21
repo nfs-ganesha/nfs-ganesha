@@ -83,8 +83,6 @@ int display_session_id_key(hash_buffer_t * pbuff, char *str)
 
 int display_session_id_val(hash_buffer_t * pbuff, char *str)
 {
-  nfs41_session_t *psession = (nfs41_session_t *) (pbuff->pdata);
-
   return sprintf(str, "not implemented");
 }                               /* display_session_id_val */
 
@@ -141,7 +139,7 @@ unsigned long session_id_rbt_hash_func(hash_parameter_t * p_hparam,
                "--->  session_id_rbt_hash_func=%lu",
                (unsigned long)(i1 ^ i2 ^ i3));
 
-  return (unsigned long)(i1 ^ i2 ^ i3 | i4);
+  return (unsigned long)((i1 ^ i2 ^ i3) | i4);
 }                               /* session_id_rbt_hash_func */
 
 /**

@@ -83,7 +83,9 @@ int nfs41_op_getdevicelist(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdevicelist";
+#ifdef _USE_PNFS
   nfsstat4 rc = 0 ;
+#endif
 
 #define arg_GETDEVICELIST4  op->nfs_argop4_u.opgetdevicelist
 #define res_GETDEVICELIST4  resp->nfs_resop4_u.opgetdevicelist

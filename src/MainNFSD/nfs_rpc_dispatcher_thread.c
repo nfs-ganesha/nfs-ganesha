@@ -858,9 +858,10 @@ process_status_t process_rpc_request(SVCXPRT *xprt)
 
       pfuncdesc = nfs_rpc_get_funcdesc(pnfsreq);
 
-      if(pfuncdesc != INVALID_FUNCDESC)
-        AuthenticateRequest(pnfsreq, &no_dispatch);
-      else
+      if(pfuncdesc == INVALID_FUNCDESC)
+        goto free_req;
+
+      if(AuthenticateRequest(pnfsreq, &no_dispatch) != AUTH_OK || no_dispatch)
         goto free_req;
 
       if(!nfs_rpc_get_args(pnfsreq, pfuncdesc))

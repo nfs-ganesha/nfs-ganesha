@@ -86,7 +86,9 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdeviceinfo";
+#ifdef _USE_PNFS
   nfsstat4 rc = 0 ;
+#endif
 
   resp->resop = NFS4_OP_GETDEVICEINFO;
 

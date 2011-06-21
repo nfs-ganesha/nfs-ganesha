@@ -101,7 +101,6 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   cache_entry_t *entry = NULL;
   cache_inode_state_t *pstate_iterate = NULL;
   cache_inode_state_t *pstate_previous_iterate = NULL;
-  int rc = 0;
 
   cache_content_policy_data_t datapol;
 
@@ -235,7 +234,7 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       }
 
   /* Do not read more than FATTR4_MAXREAD */
-  if((data->pexport->options & EXPORT_OPTION_MAXREAD == EXPORT_OPTION_MAXREAD) &&
+  if(((data->pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD) &&
      size > data->pexport->MaxRead)
     {
       /* the client asked for too much data, 

@@ -207,8 +207,8 @@ void *admin_thread(void *Arg)
       uidgidmap_clear();
       idmap_clear();
       namemap_clear();
-#endif _USE_NFSIDMAP
-#endif _HAVE_GSSAPI
+#endif /* _USE_NFSIDMAP */
+#endif /* _HAVE_GSSAPI */
 
       ChangeoverExports();
 

@@ -362,6 +362,25 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
   return (FALSE);
 }
 
+int sprint_ctx(char *buff, unsigned char *ctx, int len)
+{
+  int i;
+
+  if(ctx == NULL)
+    return sprintf(buff, "<null>");
+
+  LogFullDebug(COMPONENT_RPCSEC_GSS,
+               "sprint_ctx len=%d", len);
+
+  if (len > 16)
+    len = 16;
+
+  for(i = 0; i < len; i++)
+    sprintf(buff + i * 2, "%02X", ctx[i]);
+
+  return len * 2;
+}
+
 static bool_t
 Svcauth_gss_validate(struct svc_req *rqst, struct svc_rpc_gss_data *gd,
                      struct rpc_msg *msg)
@@ -376,6 +395,43 @@ Svcauth_gss_validate(struct svc_req *rqst, struct svc_rpc_gss_data *gd,
   memset(rpchdr, 0, sizeof(rpchdr));
 
   /* XXX - Reconstruct RPC header for signing (from xdr_callmsg). */
+  oa = &msg->rm_call.cb_cred;
+
+  LogFullDebug(COMPONENT_RPCSEC_GSS,
+               "Call to Svcauth_gss_validate --> xid=%u dir=%u rpcvers=%u prog=%u vers=%u proc=%u flavor=%u len=%u base=%p ckeck.len=%u check.val=%p",
+               msg->rm_xid,
+               msg->rm_direction,
+               msg->rm_call.cb_rpcvers,
+               msg->rm_call.cb_prog,
+               msg->rm_call.cb_vers,
+               msg->rm_call.cb_proc,
+               oa->oa_flavor,
+               oa->oa_length,
+               oa->oa_base,
+               msg->rm_call.cb_verf.oa_length,
+               msg->rm_call.cb_verf.oa_base);
+
+  if(oa->oa_length > MAX_AUTH_BYTES)
+    {
+      LogCrit(COMPONENT_RPCSEC_GSS,
+              "Svcauth_gss_validate oa->oa_length (%u) > MAX_AUTH_BYTES (%u)",
+              oa->oa_length, MAX_AUTH_BYTES);
+      return (FALSE);
+    }
+  
+  /* 8 XDR units from the IXDR macro calls. */
+  if(sizeof(rpchdr) < (8 * BYTES_PER_XDR_UNIT +
+     RNDUP(oa->oa_length)))
+    {
+      LogCrit(COMPONENT_RPCSEC_GSS,
+              "Svcauth_gss_validate sizeof(rpchdr) (%d) < (8 * BYTES_PER_XDR_UNIT (%d) + RNDUP(oa->oa_length (%u))) (%d)",
+              (int) sizeof(rpchdr),
+              (int) (8 * BYTES_PER_XDR_UNIT),
+              oa->oa_length,
+              (int) (8 * BYTES_PER_XDR_UNIT + RNDUP(oa->oa_length)));
+      return (FALSE);
+    }
+
   buf = (int32_t *) (void *)rpchdr;
   IXDR_PUT_LONG(buf, msg->rm_xid);
   IXDR_PUT_ENUM(buf, msg->rm_direction);
@@ -383,7 +439,6 @@ Svcauth_gss_validate(struct svc_req *rqst, struct svc_rpc_gss_data *gd,
   IXDR_PUT_LONG(buf, msg->rm_call.cb_prog);
   IXDR_PUT_LONG(buf, msg->rm_call.cb_vers);
   IXDR_PUT_LONG(buf, msg->rm_call.cb_proc);
-  oa = &msg->rm_call.cb_cred;
   IXDR_PUT_ENUM(buf, oa->oa_flavor);
   IXDR_PUT_LONG(buf, oa->oa_length);
   if(oa->oa_length)
@@ -394,22 +449,18 @@ Svcauth_gss_validate(struct svc_req *rqst, struct svc_rpc_gss_data *gd,
   rpcbuf.value = rpchdr;
   rpcbuf.length = (u_char *) buf - rpchdr;
 
-  LogFullDebug(COMPONENT_RPCSEC_GSS,
-               "Call to Svcauth_gss_validate --> xid=%u dir=%u rpcvers=%u prog=%u vers=%u proc=%u flavor=%u len=%u base=%p ckeck.len=%u check.val=%p",
-               msg->rm_xid,
-               msg->rm_direction,
-               msg->rm_call.cb_rpcvers,
-               msg->rm_call.cb_prog,
-               msg->rm_call.cb_rpcvers,
-               msg->rm_call.cb_proc,
-               oa->oa_flavor,
-               oa->oa_length,
-               oa->oa_base,
-               msg->rm_call.cb_verf.oa_length,
-               msg->rm_call.cb_verf.oa_base);
-
   checksum.value = msg->rm_call.cb_verf.oa_base;
   checksum.length = msg->rm_call.cb_verf.oa_length;
+
+  if(isFullDebug(COMPONENT_RPCSEC_GSS))
+    {
+      char ctx_str[64];
+      sprint_ctx(ctx_str, (unsigned char *)gd->ctx, sizeof(gss_union_ctx_id_desc));
+      LogFullDebug(COMPONENT_RPCSEC_GSS,
+                   "Svcauth_gss_validate context %s rpcbuf=%p:%u checksum=%p:$%u)",
+                   ctx_str, rpcbuf.value, (unsigned int) rpcbuf.length,
+                   checksum.value, (unsigned int) checksum.length);
+    }
 
   maj_stat = gss_verify_mic(&min_stat, gd->ctx, &rpcbuf, &checksum, &qop_state);
 
@@ -417,10 +468,6 @@ Svcauth_gss_validate(struct svc_req *rqst, struct svc_rpc_gss_data *gd,
     {
       log_sperror_gss(GssError, maj_stat, min_stat);
       LogCrit(COMPONENT_RPCSEC_GSS, "Error in gss_verify_mic: %s", GssError);
-      /* todo - log this
-      if(log_badverf != NULL)
-        (*log_badverf) (gd->client_name, svcauth_gss_name, rqst, msg, log_badverf_data);
-      */
       return (FALSE);
     }
   return (TRUE);
@@ -453,25 +500,6 @@ static bool_t Svcauth_gss_nextverf(struct svc_req *rqst, u_int num)
   rqst->rq_xprt->xp_verf.oa_length = (u_int) gd->checksum.length;
 
   return (TRUE);
-}
-
-int sprint_ctx(char *buff, unsigned char *ctx, int len)
-{
-  int i;
-
-  if(ctx == NULL)
-    return sprintf(buff, "<null>");
-
-  LogFullDebug(COMPONENT_RPCSEC_GSS,
-               "sprint_ctx len=%d", len);
-
-  if (len > 16)
-    len = 16;
-
-  for(i = 0; i < len; i++)
-    sprintf(buff + i * 2, "%02X", ctx[i]);
-
-  return len * 2;
 }
 
 #define ret_freegc(code) do { retstat = code; goto freegc; } while (0)
@@ -546,7 +574,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 
   /** @todo Think about restoring the correct lines */
   //if( gd->established == 0 && gc->gc_proc == RPCSEC_GSS_DATA   )
-  if(gc->gc_proc == RPCSEC_GSS_DATA)
+  if(gc->gc_proc == RPCSEC_GSS_DATA || gc->gc_proc == RPCSEC_GSS_DESTROY)
     {
       if(isFullDebug(COMPONENT_RPCSEC_GSS))
         {
