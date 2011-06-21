@@ -35,10 +35,19 @@
 #include <strings.h>
 #include <string.h>
 #include <malloc.h>
+#include "rpc.h"
 #include "log_macros.h"
 #include "nlm_list.h"
 #include "nlm_util.h"
 #include "nlm_async.h"
+#include "nfs_core.h"
+
+nfs_parameter_t nfs_param;
+
+void *rpc_tcp_socket_manager_thread(void *Arg)
+{
+  return NULL;
+}
 
 netobj *create_int_netobj(netobj *obj, int x)
 {
@@ -164,7 +173,7 @@ int remove_lock(char *id, char *caller_name, char *file, int owner, int svid, ui
       return 1;
     }
   nlm_lock_entry_dec_ref(nlm_entry);
-  nlm_delete_lock_entry(&lock);
+  nlm_delete_lock_entry(&(lock.alock));
   return 0;
 }
 

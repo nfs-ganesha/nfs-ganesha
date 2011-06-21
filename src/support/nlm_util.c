@@ -173,16 +173,17 @@ void LogKernel(struct nlm4_lockargs *arg, int exclusive)
       char *type;
       switch(exclusive)
         {
-          case 0: type = "F_RDLCK";
-                  break;
-          case 1: type = "F_WRLCK";
-                  break;
-          case 2: type = "F_UNLCK";
-                  break;
+          case 0:  type = "F_RDLCK";
+                   break;
+          case 1:  type = "F_WRLCK";
+                   break;
+          case 2:  type = "F_UNLCK";
+                   break;
+          default: type = "UNKNOWN";
         }
       LogDebug(COMPONENT_NLM,
-               "%s start=0x%llx, end=0x%llx",
-               type,
+               "%s(%d) start=0x%llx, end=0x%llx",
+               type, exclusive,
                (unsigned long long) nlm_lock->l_offset,
                (unsigned long long) lock_end(nlm_lock->l_offset, nlm_lock->l_len));
     }
@@ -572,8 +573,8 @@ nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs * arg,
     struct glist_head *glist;
     struct nlm4_lock *nlm_lock = &arg->alock;
     nlm_lock_entry_t *nlm_entry;
-    uint64_t nlm_entry_end, nlm_lock_end;
     uint64_t nlm_entry_end, nlm_lock_end = lock_end(nlm_lock->l_offset, nlm_lock->l_len);
+#ifdef PIN_CACHE_ENTRIES
     cache_inode_status_t pstatus;
 #endif
 
