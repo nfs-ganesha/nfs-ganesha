@@ -69,13 +69,14 @@ __FS_NAME__ganeshell_SOURCES    = Getopt.c                            \
                                   ../include/nfs_tools.h              \
                                   ../include/stuff_alloc.h
 
-		
+
 shell_libs =      ../NFS_Protocols/libnfsproto.la                    \
                   ../$(CACHE_INODE_DIR)/libcache_inode.la            \
                   ../File_Content/libcache_content.la                \
                   ../File_Content_Policy/libcache_content_policy.la  \
                   ../IdMapper/libidmap.la                            \
                   ../support/libsupport.la                           \
+		  ../RPCAL/librpcal.la				     \
                   ../NodeList/libNodeList.la                         \
                   ../HashTable/libhashtable.la                       \
                   ../LRU/liblru.la                                   \

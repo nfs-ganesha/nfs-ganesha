@@ -14,6 +14,7 @@ COMMON_LDADD = ../NFS_Protocols/libnfsproto.la                   \
                $(EXT_LDADD)                                      \
                ../IdMapper/libidmap.la                           \
                ../support/libsupport.la                          \
+	       ../RPCAL/librpcal.la				 \
                  ../NodeList/libNodeList.la                      \
                ../$(CACHE_INODE_DIR)/libcache_inode.la           \
                ../File_Content/libcache_content.la               \
