@@ -658,11 +658,7 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
 
       if(p_hpss_attr_in->ExtendedACLs == 0)
         {
-          int i;
-          for(i = 0; i < FSAL_MAX_ACL; i++)
-            {
-              p_fsalattr_out->acls[i].type = FSAL_ACL_EMPTY;    /* empty ACL slot */
-            }
+          p_fsalattr_out->acl = NULL;
         }
       else
         {

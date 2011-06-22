@@ -14,7 +14,8 @@ libfsalgpfs_la_SOURCES = fsal_access.c fsal_compat.c fsal_context.c	\
 	fsal_quota.c fsal_xattrs.c fsal_local_op.c		\
 	fsal_xattrs.c
 
-libfsalgpfs_la_LIBADD = -lgpfs
+libfsalgpfs_la_LIBADD = -lgpfs                                          \
+			../../support/libsupport.la
 
 new: clean all
 

@@ -221,6 +221,25 @@ cache_inode_getattr(cache_entry_t * pentry,
     else
         inc_func_success(pclient, CACHE_INODE_GETATTR);
 
+    if(isDebug(COMPONENT_NFS_V4_ACL))
+      {
+        LogDebug(COMPONENT_CACHE_INODE,
+                 "cache_inode_getattr: pentry = %p, acl = %p",
+                 pentry, pattr->acl);
+
+        if(pattr->acl)
+          {
+            fsal_ace_t *pace;
+            for(pace = pattr->acl->aces; pace < pattr->acl->aces + pattr->acl->naces; pace++)
+              {
+                LogDebug(COMPONENT_CACHE_INODE,
+                         "cache_inode_getattr: ace type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
+                         pace->type, pace->flag, pace->perm, IS_FSAL_ACE_SPECIAL_ID(*pace),
+                         GET_FSAL_ACE_WHO_TYPE(*pace), GET_FSAL_ACE_WHO(*pace));
+              }
+          }
+      }
+
     LogFullDebug(COMPONENT_CACHE_INODE,
                  "cache_inode_getattr: returning %d(%s) from cache_inode_valid",
                  *pstatus, cache_inode_err_str(*pstatus));

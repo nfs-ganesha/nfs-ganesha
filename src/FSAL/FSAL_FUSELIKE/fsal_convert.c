@@ -205,14 +205,7 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
     }
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ACL))
     {
-
-      /* XXX : manage ACL */
-      int i;
-      for(i = 0; i < FSAL_MAX_ACL; i++)
-        {
-          p_fsalattr_out->acls[i].type = FSAL_ACL_EMPTY;        /* empty ACL slot */
-        }
-
+      p_fsalattr_out->acl = NULL;
     }
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
     {

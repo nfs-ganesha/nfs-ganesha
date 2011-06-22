@@ -649,7 +649,7 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                        "-----> Wanting FATTR4_ACL_SUPPORT");
 
-          aclsupport = htonl(ACL4_SUPPORT_DENY_ACL);    /* temporary, wanting for houston to give me information to implemente ACL's support */
+          aclsupport = htonl(ACL4_SUPPORT_ALLOW_ACL | ACL4_SUPPORT_DENY_ACL);
           memcpy((char *)(attrvalsBuffer + LastOffset), &aclsupport,
                  sizeof(fattr4_aclsupport));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;

@@ -17,6 +17,8 @@
 #endif
 #include "fsal_convert.h"
 #include "fsal_internal.h"
+#include "nfs4_acls.h"
+#include "gpfs.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -25,6 +27,9 @@
 
 #define MAX_2( x, y )    ( (x) > (y) ? (x) : (y) )
 #define MAX_3( x, y, z ) ( (x) > (y) ? MAX_2((x),(z)) : MAX_2((y),(z)) )
+
+static int gpfs_acl_2_fsal_acl(fsal_attrib_list_t * p_object_attributes,
+                               gpfs_acl_t *p_gpfsacl);
 
 /**
  * posix2fsal_error :
@@ -269,14 +274,7 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
     }
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ACL))
     {
-
-      /* XXX : manage ACL */
-      int i;
-      for(i = 0; i < FSAL_MAX_ACL; i++)
-        {
-          p_fsalattr_out->acls[i].type = FSAL_ACL_EMPTY;        /* empty ACL slot */
-        }
-
+      p_fsalattr_out->acl = NULL;
     }
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
     {
@@ -384,14 +382,7 @@ fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ACL))
         {
-
-            /* XXX : manage ACL */
-            int i;
-            for(i = 0; i < FSAL_MAX_ACL; i++)
-                {
-                    p_fsalattr_out->acls[i].type = FSAL_ACL_EMPTY;        /* empty ACL slot */
-                }
-
+            p_fsalattr_out->acl = NULL;
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
         {
@@ -506,14 +497,10 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ACL))
         {
-
-            /* XXX : manage ACL */
-            int i;
-            for(i = 0; i < FSAL_MAX_ACL; i++)
-                {
-                    p_fsalattr_out->acls[i].type = FSAL_ACL_EMPTY;        /* empty ACL slot */
-                }
-            LogFullDebug(COMPONENT_FSAL, "acl");
+            if(gpfs_acl_2_fsal_acl(p_fsalattr_out,
+                                   (gpfs_acl_t *)p_buffxstat->buffacl) != ERR_FSAL_NO_ERROR)
+              p_fsalattr_out->acl = NULL;
+            LogFullDebug(COMPONENT_FSAL, "acl = %p", p_fsalattr_out->acl);
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
         {
@@ -588,4 +575,66 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
     /* everything has been copied ! */
 
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
+/* Covert GPFS NFS4 ACLs to FSAL ACLs, and set the ACL
+ * pointer of attribute. */
+static int gpfs_acl_2_fsal_acl(fsal_attrib_list_t * p_object_attributes,
+	                           gpfs_acl_t *p_gpfsacl)
+{
+  fsal_acl_status_t status;
+  fsal_acl_data_t acldata;
+  fsal_ace_t *pace;
+  fsal_acl_t *pacl;
+  gpfs_ace_v4_t *pace_gpfs;
+
+  /* sanity checks */
+  if(!p_object_attributes || !p_gpfsacl)
+    return ERR_FSAL_FAULT;
+
+  /* Create fsal acl data. */
+  acldata.naces = p_gpfsacl->acl_nace;
+  acldata.aces = (fsal_ace_t *)nfs4_ace_alloc(acldata.naces);
+
+  /* Fill fsal acl data from gpfs acl. */
+  for(pace = acldata.aces, pace_gpfs = p_gpfsacl->ace_v4;
+      pace < acldata.aces + acldata.naces; pace++, pace_gpfs++)
+    {
+      pace->type = pace_gpfs->aceType;
+      pace->flag = pace_gpfs->aceFlags;
+      pace->iflag = pace_gpfs->aceIFlags;
+      pace->perm = pace_gpfs->aceMask;
+
+      if(IS_FSAL_ACE_SPECIAL_ID(*pace))  /* Record special user. */
+        {
+          pace->who.uid = pace_gpfs->aceWho;
+        }
+        else
+        {
+          if(IS_FSAL_ACE_GROUP_ID(*pace))  /* Record group. */
+            pace->who.gid = pace_gpfs->aceWho;
+          else  /* Record user. */
+            pace->who.uid = pace_gpfs->aceWho;
+        }
+
+        LogDebug(COMPONENT_FSAL,
+                 "gpfs_acl_2_fsal_acl: fsal ace: type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
+                 pace->type, pace->flag, pace->perm, IS_FSAL_ACE_SPECIAL_ID(*pace),
+                 GET_FSAL_ACE_WHO_TYPE(*pace), GET_FSAL_ACE_WHO(*pace));
+    }
+
+  /* Create a new hash table entry for fsal acl. */
+  pacl = nfs4_acl_new_entry(&acldata, &status);
+  LogDebug(COMPONENT_FSAL, "fsal acl = %p, fsal_acl_status = %u", pacl, status);
+
+  if(pacl == NULL)
+    {
+      LogCrit(COMPONENT_FSAL, "gpfs_acl_2_fsal_acl: failed to create a new acl entry");
+      return ERR_FSAL_FAULT;
+    }
+
+  /* Add fsal acl to attribute. */
+  p_object_attributes->acl = pacl;
+
+  return ERR_FSAL_NO_ERROR;
 }

@@ -1647,6 +1647,11 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
+  { COMPONENT_NFS_V4_ACL,        "COMPONENT_NFS_V4_ACL", "NFS V4 ACL",
+    NIV_EVENT,
+    SYSLOG,
+    "SYSLOG"
+  },
 };
 
 int DisplayLogComponentLevel(log_components_t component,

@@ -214,6 +214,13 @@ typedef enum nfs_clientid_confirm_state__
                                  FSAL_ATTR_MTIME      | FSAL_ATTR_CTIME    | FSAL_ATTR_SPACEUSED | \
                                  FSAL_ATTR_RAWDEV )
 
+/* The default attribute mask for NFSv4 */
+#define FSAL_ATTR_MASK_V4   ( FSAL_ATTRS_MANDATORY | FSAL_ATTR_MODE     | FSAL_ATTR_FILEID | \
+                                 FSAL_ATTR_FSID       | FSAL_ATTR_NUMLINKS | FSAL_ATTR_OWNER  | \
+                                 FSAL_ATTR_GROUP      | FSAL_ATTR_SIZE     | FSAL_ATTR_ATIME  | \
+                                 FSAL_ATTR_MTIME      | FSAL_ATTR_CTIME    | FSAL_ATTR_SPACEUSED | \
+                                 FSAL_ATTR_RAWDEV | FSAL_ATTR_ACL )
+
 typedef struct nfs_worker_param__
 {
   LRU_parameter_t lru_param;

@@ -46,6 +46,8 @@
 #include "config.h"
 #endif
 
+#include <openssl/md5.h>
+
 #ifdef _SOLARIS
 #ifndef MAXNAMLEN
 #define MAXNAMLEN 512
@@ -68,6 +70,7 @@ typedef unsigned long long int u_int64_t;
 #include <dirent.h>             /* for MAXNAMLEN */
 #include "config_parsing.h"
 #include "err_fsal.h"
+#include "RW_Lock.h"
 
 /* FSAL function indexes, and names */
 
@@ -274,61 +277,189 @@ typedef fsal_ushort_t fsal_aclsupp_t;
 #define FSAL_ACLSUPPORT_ALLOW 0x01
 #define FSAL_ACLSUPPORT_DENY  0x02
 
-/** ACL types */
+/** ACE types */
 
-typedef enum fsal_acltype__
+typedef unsigned int fsal_acetype_t;
+
+#define FSAL_ACE_TYPE_ALLOW 0
+#define FSAL_ACE_TYPE_DENY  1
+#define FSAL_ACE_TYPE_AUDIT 2
+#define FSAL_ACE_TYPE_ALARM 3
+
+
+/** ACE flag */
+
+typedef unsigned int fsal_aceflag_t;
+
+#define FSAL_ACE_FLAG_FILE_INHERIT    0x00000001
+#define FSAL_ACE_FLAG_DIR_INHERIT     0x00000002
+#define FSAL_ACE_FLAG_NO_PROPAGATE    0x00000004
+#define FSAL_ACE_FLAG_INHERIT_ONLY    0x00000008
+#define FSAL_ACE_FLAG_SUCCESSFUL      0x00000010
+#define FSAL_ACE_FLAG_FAILED          0x00000020
+#define FSAL_ACE_FLAG_GROUP_ID        0x00000040
+#define FSAL_ACE_FLAG_INHERITED       0x00000080
+
+/** ACE internal flags */
+
+#define FSAL_ACE_IFLAG_EXCLUDE_FILES  0x40000000
+#define FSAL_ACE_IFLAG_EXCLUDE_DIRS   0x20000000
+#define FSAL_ACE_IFLAG_SPECIAL_ID     0x80000000
+
+#define FSAL_ACE_FLAG_INHERIT (FSAL_ACE_FLAG_FILE_INHERIT | FSAL_ACE_FLAG_DIR_INHERIT |\
+                           FSAL_ACE_FLAG_INHERIT_ONLY)
+
+/** ACE permissions */
+
+typedef fsal_uint_t fsal_aceperm_t;
+
+#define FSAL_ACE_PERM_READ_DATA         0x00000001
+#define FSAL_ACE_PERM_LIST_DIR          0x00000001
+#define FSAL_ACE_PERM_WRITE_DATA        0x00000002
+#define FSAL_ACE_PERM_ADD_FILE          0x00000002
+#define FSAL_ACE_PERM_APPEND_DATA       0x00000004
+#define FSAL_ACE_PERM_ADD_SUBDIRECTORY  0x00000004
+#define FSAL_ACE_PERM_READ_NAMED_ATTR   0x00000008
+#define FSAL_ACE_PERM_WRITE_NAMED_ATTR  0x00000010
+#define FSAL_ACE_PERM_EXECUTE           0x00000020
+#define FSAL_ACE_PERM_DELETE_CHILD      0x00000040
+#define FSAL_ACE_PERM_READ_ATTR         0x00000080
+#define FSAL_ACE_PERM_WRITE_ATTR        0x00000100
+#define FSAL_ACE_PERM_DELETE            0x00010000
+#define FSAL_ACE_PERM_READ_ACL          0x00020000
+#define FSAL_ACE_PERM_WRITE_ACL         0x00040000
+#define FSAL_ACE_PERM_WRITE_OWNER       0x00080000
+#define FSAL_ACE_PERM_SYNCHRONIZE       0x00100000
+
+/** ACE who */
+
+#define FSAL_ACE_NORMAL_WHO                 0
+#define FSAL_ACE_SPECIAL_OWNER              1
+#define FSAL_ACE_SPECIAL_GROUP              2
+#define FSAL_ACE_SPECIAL_EVERYONE           3
+
+static struct {
+  char *string;
+  int   stringlen;
+  int type;
+} whostr_2_type_map[] = {
+  {
+    .string    = "OWNER@",
+    .stringlen = sizeof("OWNER@") - 1,
+    .type      = FSAL_ACE_SPECIAL_OWNER,
+  },
+  {
+    .string    = "GROUP@",
+    .stringlen = sizeof("GROUP@") - 1,
+    .type      = FSAL_ACE_SPECIAL_GROUP,
+  },
+  {
+    .string    = "EVERYONE@",
+    .stringlen = sizeof("EVERYONE@") - 1,
+    .type      = FSAL_ACE_SPECIAL_EVERYONE,
+  },
+};
+
+typedef struct fsal_ace__
 {
-  FSAL_ACL_EMPTY,               /* empty ACL slot */
-  FSAL_ACL_ALLOW,
-  FSAL_ACL_DENY
-} fsal_acltype_t;
 
-/** ACL flag */
+  fsal_acetype_t type;
+  fsal_aceperm_t perm;
 
-typedef enum fsal_aclflag__
-{
-  FSAL_ACL_USER,
-  FSAL_ACL_GROUP
-} fsal_aclflag_t;
-
-/** ACL permissions */
-
-typedef fsal_uint_t fsal_aclperm_t;
-
-#define FSAL_PERM_READ_DATA         0x00000001
-#define FSAL_PERM_LIST_DIR          0x00000001
-#define FSAL_PERM_WRITE_DATA        0x00000002
-#define FSAL_PERM_ADD_FILE          0x00000002
-#define FSAL_PERM_APPEND_DATA       0x00000004
-#define FSAL_PERM_ADD_SUBDIRECTORY  0x00000004
-#define FSAL_PERM_READ_NAMED_ATTR   0x00000008
-#define FSAL_PERM_WRITE_NAMED_ATTR  0x00000010
-#define FSAL_PERM_EXECUTE           0x00000020
-#define FSAL_PERM_DELETE_CHILD      0x00000040
-#define FSAL_PERM_READ_ATTR         0x00000080
-#define FSAL_PERM_WRITE_ATTR        0x00000100
-#define FSAL_PERM_DELETE            0x00010000
-#define FSAL_PERM_READ_ACL          0x00020000
-#define FSAL_PERM_WRITE_ACL         0x00040000
-#define FSAL_PERM_WRITE_OWNER       0x00080000
-#define FSAL_PERM_SYNCHRONIZE       0x00100000
-
-/** ACL entry */
-
-typedef struct fsal_acl__
-{
-
-  fsal_acltype_t type;
-  fsal_aclperm_t perm;
-
-  fsal_aclflag_t flag;
+  fsal_aceflag_t flag;
+  fsal_aceflag_t iflag;  /* Internal flags. */
   union
   {
     fsal_uid_t uid;
     fsal_gid_t gid;
   } who;
 
+} fsal_ace_t;
+
+typedef struct fsal_acl__
+{
+  fsal_uint_t naces;
+  fsal_ace_t *aces;
+  rw_lock_t lock;
+  fsal_uint_t ref;
 } fsal_acl_t;
+
+typedef struct fsal_acl_data__
+{
+  fsal_uint_t naces;
+  fsal_ace_t *aces;
+} fsal_acl_data_t;
+
+typedef struct fsal_acl_key__
+{
+  char digest[MD5_DIGEST_LENGTH];
+} fsal_acl_key_t;
+
+/* Macros for NFS4 ACE flags, masks, and special who values. */
+
+#define GET_FSAL_ACE_TYPE(ACE)            (ACE).type
+#define GET_FSAL_ACE_PERM(ACE)            (ACE).perm
+#define GET_FSAL_ACE_FLAG(ACE)            (ACE).flag
+#define GET_FSAL_ACE_IFLAG(ACE)           (ACE).iflag
+#define GET_FSAL_ACE_USER(ACE)            (ACE).who.uid
+#define GET_FSAL_ACE_GROUP(ACE)           (ACE).who.gid
+
+#define IS_FSAL_ACE_BIT(WORD, BIT)        (0 != ((WORD) & (BIT)))
+#define IS_FSAL_ACE_ALL_BITS(WORD, BITS)  (BITS == ((WORD) & (BITS)))
+
+#define IS_FSAL_ACE_TYPE(ACE, VALUE)      ((GET_FSAL_ACE_TYPE(ACE)) == (VALUE))
+#define IS_FSAL_ACE_USER(ACE, VALUE)      ((GET_FSAL_ACE_USER(ACE)) == (VALUE))
+#define IS_FSAL_ACE_GROUP(ACE, VALUE)     ((GET_FSAL_ACE_GROUP(ACE)) == (VALUE))
+
+#define IS_FSAL_ACE_ALLOW(ACE)            IS_FSAL_ACE_TYPE(ACE, FSAL_ACE_TYPE_ALLOW)
+#define IS_FSAL_ACE_DENY(ACE)             IS_FSAL_ACE_TYPE(ACE, FSAL_ACE_TYPE_DENY)
+#define IS_FSAL_ACE_AUDIT(ACE)            IS_FSAL_ACE_TYPE(ACE, FSAL_ACE_TYPE_AUDIT)
+#define IS_FSAL_ACE_ALRAM(ACE)            IS_FSAL_ACE_TYPE(ACE, FSAL_ACE_TYPE_ALARM)
+
+#define IS_FSAL_ACE_FILE_INHERIT(ACE)     IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE),FSAL_ACE_FLAG_FILE_INHERIT)
+#define IS_FSAL_ACE_DIR_INHERIT(ACE)      IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE),FSAL_ACE_FLAG_DIR_INHERIT)
+#define IS_FSAL_ACE_NO_PROPAGATE(ACE)     IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE),FSAL_ACE_FLAG_NO_PROPAGATE)
+#define IS_FSAL_ACE_INHERIT_ONLY(ACE)     IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE),FSAL_ACE_FLAG_INHERIT_ONLY)
+#define IS_FSAL_ACE_FLAG_SUCCESSFUL(ACE)  IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE),FSAL_ACE_FLAG_SUCCESSFUL)
+#define IS_FSAL_ACE_AUDIT_FAILURE(ACE)    IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE),FSAL_ACE_FLAG_FAILED)
+#define IS_FSAL_ACE_GROUP_ID(ACE)         IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE),FSAL_ACE_FLAG_GROUP_ID)
+#define IS_FSAL_ACE_INHERIT(ACE)          IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE),FSAL_ACE_FLAG_INHERIT)
+#define IS_FSAL_ACE_INHERTED(ACE)         IS_FSAL_ACE_BIT(GET_FSAL_ACE_FLAG(ACE),FSAL_ACE_FLAG_INHERITED)
+
+#define GET_FSAL_ACE_WHO_TYPE(ACE)        IS_FSAL_ACE_GROUP_ID(ACE) ? "gid" : "uid"
+#define GET_FSAL_ACE_WHO(ACE)             IS_FSAL_ACE_GROUP_ID(ACE) ? (ACE).who.gid : (ACE).who.uid
+
+#define IS_FSAL_ACE_SPECIAL_OWNER(ACE)    IS_FSAL_ACE_USER(ACE,FSAL_ACE_SPECIAL_OWNER)
+#define IS_FSAL_ACE_SPECIAL_GROUP(ACE)    IS_FSAL_ACE_USER(ACE,FSAL_ACE_SPECIAL_GROUP)
+#define IS_FSAL_ACE_SPECIAL_EVERYONE(ACE) IS_FSAL_ACE_USER(ACE,FSAL_ACE_SPECIAL_EVERYONE)
+
+/* Macros for internal NFS4 ACE flags. */
+
+#define IS_FSAL_ACE_SPECIAL_ID(ACE)       IS_FSAL_ACE_BIT(GET_FSAL_ACE_IFLAG(ACE),FSAL_ACE_IFLAG_SPECIAL_ID)
+#define IS_FSAL_FILE_APPLICABLE(ACE) \
+        (!IS_FSAL_ACE_BIT(GET_FSAL_ACE_IFLAG(ACE),FSAL_ACE_IFLAG_EXCLUDE_FILES))
+#define IS_FSAL_DIR_APPLICABLE(ACE)  \
+        (!IS_FSAL_ACE_BIT(GET_FSAL_ACE_IFLAG(ACE),FSAL_ACE_IFLAG_EXCLUDE_DIRS))
+
+/* Macros for NFS4 ACE permissions. */
+
+#define IS_FSAL_ACE_READ_DATA(ACE)        IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_READ_DATA)
+#define IS_FSAL_ACE_LIST_DIR(ACE)         IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_LIST_DIR)
+#define IS_FSAL_ACE_WRITE_DATA(ACE)       IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_WRITE_DATA)
+#define IS_FSAL_ACE_ADD_FIILE(ACE)        IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_ADD_FILE)
+#define IS_FSAL_ACE_APPEND_DATA(ACE)      IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_APPEND_DATA)
+#define IS_FSAL_ACE_ADD_SUBDIRECTORY(ACE) IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_ADD_SUBDIRECTORY)
+#define IS_FSAL_ACE_READ_NAMED_ATTR(ACE)  IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_READ_NAMED_ATTR)
+#define IS_FSAL_ACE_WRITE_NAMED_ATTR(ACE) IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_WRITE_NAMED_ATTR)
+#define IS_FSAL_ACE_EXECUTE(ACE)          IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_EXECUTE)
+#define IS_FSAL_ACE_DELETE_CHILD(ACE)     IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_DELETE_CHILD)
+#define IS_FSAL_ACE_READ_ATTR(ACE)        IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_READ_ATTR)
+#define IS_FSAL_ACE_WRITE_ATTR(ACE)       IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_WRITE_ATTR)
+#define IS_FSAL_ACE_DELETE(ACE)           IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_DELETE)
+#define IS_FSAL_ACE_READ_ACL(ACE)         IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_READ_ACL)
+#define IS_FSAL_ACE_WRITE_ACL(ACE)        IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_WRITE_ACL)
+#define IS_FSAL_ACE_WRITE_OWNER(ACE)      IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_WRITE_OWNER)
+#define IS_FSAL_ACE_SYNCHRONIZE(ACE)      IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE),FSAL_ACE_PERM_SYNCHRONIZE)
 
 /** Modes constants */
 
@@ -444,7 +575,7 @@ typedef struct fsal_attrib_list__
   fsal_nodetype_t type;
   fsal_size_t filesize;
   fsal_fsid_t fsid;
-  fsal_acl_t acls[FSAL_MAX_ACL];
+  fsal_acl_t *acl;
   fsal_u64_t fileid;
   fsal_accessmode_t mode;
   fsal_count_t numlinks;

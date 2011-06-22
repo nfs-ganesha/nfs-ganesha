@@ -42,7 +42,7 @@
           FSAL_ATTR_MODE     | FSAL_ATTR_NUMLINKS | FSAL_ATTR_OWNER     | \
           FSAL_ATTR_GROUP    | FSAL_ATTR_ATIME    | FSAL_ATTR_RAWDEV    | \
           FSAL_ATTR_CTIME    | FSAL_ATTR_MTIME    | FSAL_ATTR_SPACEUSED | \
-          FSAL_ATTR_CHGTIME  )
+          FSAL_ATTR_CHGTIME | FSAL_ATTR_ACL  )
 
 /* the following variables must not be defined in fsal_internal.c */
 #ifndef FSAL_INTERNAL_C

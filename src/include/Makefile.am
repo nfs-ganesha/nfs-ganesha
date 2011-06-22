@@ -57,6 +57,7 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  rbt_tree.h                      \
                  stuff_alloc.h                   \
                  nfs_ip_stats.h                  \
+                 nfs4_acls.h                     \
                  Connectathon_config_parsing.h   \
 		 rpc.h 	\
                  Rpc_com_tirpc.h                 \

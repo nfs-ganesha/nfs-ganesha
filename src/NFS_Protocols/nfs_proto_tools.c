@@ -450,6 +450,180 @@ void nfs_SetFailedStatus(fsal_op_context_t * pcontext,
     }
 }
 
+static int nfs4_encode_acl_special_user(int who, char *attrvalsBuffer,
+                                        u_int *LastOffset)
+{
+  int rc = 0;
+  int i;
+  u_int utf8len = 0;
+  u_int deltalen = 0;
+
+  for (i = 0; i < FSAL_ACE_SPECIAL_EVERYONE; i++)
+    {
+      if (whostr_2_type_map[i].type == who)
+        {
+          if(whostr_2_type_map[i].stringlen % 4 == 0)
+            deltalen = 0;
+          else
+            deltalen = 4 - whostr_2_type_map[i].stringlen % 4;
+
+          utf8len = htonl(whostr_2_type_map[i].stringlen + deltalen);
+          memcpy((char *)(attrvalsBuffer + *LastOffset), &utf8len, sizeof(int));
+          *LastOffset += sizeof(int);
+
+          memcpy((char *)(attrvalsBuffer + *LastOffset), whostr_2_type_map[i].string,
+                 whostr_2_type_map[i].stringlen);
+          *LastOffset += whostr_2_type_map[i].stringlen;
+
+          /* Pad with zero to keep xdr alignement */
+          if(deltalen != 0)
+            memset((char *)(attrvalsBuffer + *LastOffset), 0, deltalen);
+          *LastOffset += deltalen;
+        }
+    }
+
+  return rc;
+}
+
+static int nfs4_encode_acl_group_name(fsal_gid_t gid, char *attrvalsBuffer,
+                                      u_int *LastOffset)
+{
+  int rc = 0;
+  char name[MAXNAMLEN];
+  u_int utf8len = 0;
+  u_int stringlen = 0;
+  u_int deltalen = 0;
+
+  rc = gid2name(name, &gid);
+  LogDebug(COMPONENT_NFS_V4, "encode gid2name = %s, strlen = %d", name, strlen(name));
+
+  stringlen = strlen(name);
+  if(stringlen % 4 == 0)
+    deltalen = 0;
+  else
+    deltalen = 4 - (stringlen % 4);
+
+  utf8len = htonl(stringlen + deltalen);
+  memcpy((char *)(attrvalsBuffer + *LastOffset), &utf8len, sizeof(int));
+  *LastOffset += sizeof(int);
+
+  memcpy((char *)(attrvalsBuffer + *LastOffset), name, stringlen);
+  *LastOffset += stringlen;
+
+  /* Pad with zero to keep xdr alignement */
+  if(deltalen != 0)
+    memset((char *)(attrvalsBuffer + *LastOffset), 0, deltalen);
+  *LastOffset += deltalen;
+
+  return rc;
+}
+
+static int nfs4_encode_acl_user_name(int whotype, fsal_uid_t uid,
+                                     char *attrvalsBuffer, u_int *LastOffset)
+{
+  int rc = 0;
+  char name[MAXNAMLEN];
+  u_int utf8len = 0;
+  u_int stringlen = 0;
+  u_int deltalen = 0;
+
+  if (whotype != FSAL_ACE_NORMAL_WHO)
+    rc = nfs4_encode_acl_special_user(uid, attrvalsBuffer, LastOffset);
+  else
+    {
+      rc = uid2name(name, &uid);
+      LogDebug(COMPONENT_NFS_V4, "econde uid2name = %s, strlen = %d", name, strlen(name));
+
+      stringlen = strlen(name);
+      if(stringlen % 4 == 0)
+        deltalen = 0;
+      else
+        deltalen = 4 - (stringlen % 4);
+
+      utf8len = htonl(stringlen + deltalen);
+      memcpy((char *)(attrvalsBuffer + *LastOffset), &utf8len, sizeof(int));
+      *LastOffset += sizeof(int);
+
+      memcpy((char *)(attrvalsBuffer + *LastOffset), name, stringlen);
+      *LastOffset += stringlen;
+
+      /* Pad with zero to keep xdr alignement */
+      if(deltalen != 0)
+        memset((char *)(attrvalsBuffer + *LastOffset), 0, deltalen);
+      *LastOffset += deltalen;
+    }
+
+  return rc;
+}
+
+static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_int *LastOffset)
+{
+  int rc = 0;
+  uint32_t naces, type, flag, access_mask, whotype;
+  fsal_ace_t *pace;
+
+  if(pattr->acl)
+    {
+      LogDebug(COMPONENT_NFS_V4, "nfs4_encode_acl: processing aces");
+
+      /* Encode number of ACEs. */
+      naces = htonl(pattr->acl->naces);
+      memcpy((char *)(attrvalsBuffer + *LastOffset), &naces, sizeof(uint32_t));
+      *LastOffset += sizeof(uint32_t);
+
+      /* Encode ACEs. */
+      for(pace = pattr->acl->aces; pace < pattr->acl->aces + pattr->acl->naces; pace++)
+        {
+          type = htonl(pace->type);
+          flag = htonl(pace->flag);
+          access_mask = htonl(pace->perm);
+
+          memcpy((char *)(attrvalsBuffer + *LastOffset), &type, sizeof(uint32_t));
+          *LastOffset += sizeof(uint32_t);
+
+          memcpy((char *)(attrvalsBuffer + *LastOffset), &flag, sizeof(uint32_t));
+          *LastOffset += sizeof(uint32_t);
+
+          memcpy((char *)(attrvalsBuffer + *LastOffset), &access_mask, sizeof(uint32_t));
+          *LastOffset += sizeof(uint32_t);
+
+          if(IS_FSAL_ACE_GROUP_ID(*pace))  /* Encode group name. */
+            {
+              rc = nfs4_encode_acl_group_name(pace->who.gid, attrvalsBuffer, LastOffset);
+            }
+          else
+            {
+              if(!IS_FSAL_ACE_SPECIAL_ID(*pace))
+                {
+                  whotype = FSAL_ACE_NORMAL_WHO;
+                }
+              else
+                whotype = pace->who.uid;
+
+              /* Encode special or normal user name. */
+              rc = nfs4_encode_acl_user_name(whotype, pace->who.uid, attrvalsBuffer, LastOffset);
+            }
+
+          LogDebug(COMPONENT_NFS_V4, "nfs4_encode_acl: special = %u, %s = %u",
+                   IS_FSAL_ACE_SPECIAL_ID(*pace),
+                   IS_FSAL_ACE_GROUP_ID(*pace) ? "gid" : "uid",
+                   IS_FSAL_ACE_GROUP_ID(*pace) ? pace->who.gid : pace->who.uid);
+
+        }
+    }
+  else
+    {
+      LogDebug(COMPONENT_NFS_V4, "nfs4_encode_acl: no acl available");
+
+      fattr4_acl acl;
+      acl.fattr4_acl_len = htonl(0);
+      memcpy((char *)(attrvalsBuffer + *LastOffset), &acl, sizeof(fattr4_acl));
+      *LastOffset += fattr4tab[FATTR4_ACL].size_fattr4;
+    }
+
+  return rc;
+}
+
 /**
  *
  * nfs4_FSALattr_To_Fattr: Converts FSAL Attributes to NFSv4 Fattr buffer.
@@ -832,16 +1006,12 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_ACL:
-          memset(&acl, 0, sizeof(acl));
-          /* NOT IMPLEMENTED YET, BUT WILL BE, no ACL for the moment */
-          memcpy((char *)(attrvalsBuffer + LastOffset), &acl, sizeof(fattr4_acl));
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+          nfs4_encode_acl(pattr, attrvalsBuffer, &LastOffset);
           op_attr_success = 1;
           break;
 
         case FATTR4_ACLSUPPORT:
-          /* aclsupport = htonl( ACL4_SUPPORT_DENY_ACL ); *//* temporary, wanting for houston to give me information to implemente ACL's support */
-          aclsupport = htonl(0);
+          aclsupport = htonl(ACL4_SUPPORT_ALLOW_ACL | ACL4_SUPPORT_DENY_ACL);
           memcpy((char *)(attrvalsBuffer + LastOffset), &aclsupport,
                  sizeof(fattr4_aclsupport));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;

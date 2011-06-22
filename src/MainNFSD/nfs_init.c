@@ -62,6 +62,7 @@
 #include "config_parsing.h"
 #include "SemN.h"
 #include "external_tools.h"
+#include "nfs4_acls.h"
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
@@ -563,7 +564,7 @@ void nfs_set_param_default()
   nfs_param.cache_layers_param.cache_inode_client_param.use_test_access = 1;
   nfs_param.cache_layers_param.cache_inode_client_param.getattr_dir_invalidation = 0;
   nfs_param.cache_layers_param.cache_inode_client_param.attrmask =
-      FSAL_ATTR_MASK_V2_V3;
+      FSAL_ATTR_MASK_V4;
   nfs_param.cache_layers_param.cache_inode_client_param.max_fd_per_thread = 20;
   nfs_param.cache_layers_param.cache_inode_client_param.use_cache = 0;
   nfs_param.cache_layers_param.cache_inode_client_param.use_fsal_hash = 1;
@@ -1800,6 +1801,18 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
     }
   LogInfo(COMPONENT_INIT,
           "NFSv4 Session Id cache successfully initialized");
+#endif
+
+#ifdef _USE_NFS4_0
+  LogDebug(COMPONENT_INIT, "Now building NFSv4 ACL cache");
+  if(nfs4_acls_init() != 0)
+    {
+      LogCrit(COMPONENT_INIT,
+              "Error while initializing NFSv4 ACLs");
+      exit(1);
+    }
+  LogInfo(COMPONENT_INIT,
+          "NFSv4 ACL cache successfully initialized");
 #endif
 
   /* Create the root entries for each exported FS */
