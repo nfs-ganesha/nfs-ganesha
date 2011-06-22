@@ -196,7 +196,9 @@ typedef struct exportlist__
   unsigned int UseCookieVerifier;       /* Is Cookie verifier to be used ?                   */
   exportlist_client_t clients;  /* allowed clients                                   */
   struct exportlist__ *next;    /* next entry                                        */
-
+#ifdef _USE_SHARED_FSAL
+   unsigned int fsalid ;
+#endif
 } exportlist_t;
 
 /* Used to record the uid and gid of the client that made a request. */
