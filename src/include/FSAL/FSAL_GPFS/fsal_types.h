@@ -211,4 +211,14 @@ typedef struct fsal_file__
 
 //#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->fd )
 
+/* Define the buffer size for GPFS NFS4 ACL. */
+#define GPFS_ACL_BUF_SIZE 0x1000
+
+/* A set of buffers to retrieve multiple attributes at the same time. */
+typedef struct fsal_xstat__
+{
+  struct stat64 buffstat;
+  char buffacl[GPFS_ACL_BUF_SIZE];
+} gpfsfsal_xstat_t;
+
 #endif                          /* _FSAL_TYPES__SPECIFIC_H */

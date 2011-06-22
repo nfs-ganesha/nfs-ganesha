@@ -49,6 +49,8 @@
 #include <pthread.h>
 #include <string.h>
 
+#include "gpfs.h"
+
 /* credential lifetime (1h) */
 fsal_uint_t CredentialLifetime = 3600;
 
@@ -971,4 +973,85 @@ fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
     ReturnCode(posix2fsal_error(errno), errno);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
+/* Get NFS4 ACL as well as stat. For now, get stat only until NFS4 ACL
+ * support is enabled. */
+fsal_status_t fsal_get_xstat_by_handle(fsal_op_context_t * p_context,
+                                       fsal_handle_t * p_handle, gpfsfsal_xstat_t *p_buffxstat)
+{
+  int rc;
+  int dirfd = 0;
+  struct xstat_arg xstatarg;
+
+  if(!p_handle || !p_context || !p_context->export_context || !p_buffxstat)
+      ReturnCode(ERR_FSAL_FAULT, 0);
+
+  memset(p_buffxstat, 0, sizeof(gpfsfsal_xstat_t));
+
+  dirfd = p_context->export_context->mount_root_fd;
+
+  xstatarg.attr_valid = XATTR_STAT;
+  xstatarg.mountdirfd = dirfd;
+  xstatarg.handle = &p_handle->data.handle;
+  xstatarg.acl = NULL;
+  xstatarg.attr_changed = 0;
+  xstatarg.buf = &p_buffxstat->buffstat;
+
+  rc = gpfs_ganesha(OPENHANDLE_GET_XSTAT, &xstatarg);
+  LogDebug(COMPONENT_FSAL, "gpfs_ganesha: GET_XSTAT returned, rc = %d", rc);
+
+  if(rc < 0)
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
+/* Set NFS4 ACL as well as stat. For now, set stat only until NFS4 ACL
+ * support is enabled. */
+fsal_status_t fsal_set_xstat_by_handle(fsal_op_context_t * p_context,
+                                       fsal_handle_t * p_handle, int attr_valid,
+                                       int attr_changed, gpfsfsal_xstat_t *p_buffxstat)
+{
+  int rc;
+  int dirfd = 0;
+  struct xstat_arg xstatarg;
+
+  if(!p_handle || !p_context || !p_context->export_context || !p_buffxstat)
+      ReturnCode(ERR_FSAL_FAULT, 0);
+
+  dirfd = p_context->export_context->mount_root_fd;
+
+  xstatarg.attr_valid = XATTR_STAT;
+  xstatarg.mountdirfd = dirfd;
+  xstatarg.handle = &p_handle->data.handle;
+  xstatarg.acl = NULL;
+  xstatarg.attr_changed = attr_changed;
+  xstatarg.buf = &p_buffxstat->buffstat;
+
+  rc = gpfs_ganesha(OPENHANDLE_SET_XSTAT, &xstatarg);
+  LogDebug(COMPONENT_FSAL, "gpfs_ganesha: SET_XSTAT returned, rc = %d", rc);
+
+  if(rc < 0)
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
+/* Access check function that accepts stat64. */
+fsal_status_t fsal_check_access_by_mode(fsal_op_context_t * p_context,   /* IN */
+                                        fsal_accessflags_t access_type,  /* IN */
+                                        struct stat64 *p_buffstat /* IN */)
+{
+  struct stat buffstat;
+
+  if(!p_context || !p_buffstat)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  /* Convert to stat. We only need uid, gid, and mode. */
+  buffstat.st_uid = p_buffstat->st_uid;
+  buffstat.st_gid = p_buffstat->st_gid;
+  buffstat.st_mode = p_buffstat->st_mode;
+
+  return fsal_internal_testAccess(p_context, access_type, &buffstat, NULL);
 }

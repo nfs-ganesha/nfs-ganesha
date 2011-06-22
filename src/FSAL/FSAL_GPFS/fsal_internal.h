@@ -127,6 +127,17 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
                                   fsal_handle_t * p_handle, struct stat64 *buf);
 
+fsal_status_t fsal_get_xstat_by_handle(fsal_op_context_t * p_context,
+                                       fsal_handle_t * p_handle, gpfsfsal_xstat_t *p_buffxstat);
+
+fsal_status_t fsal_set_xstat_by_handle(fsal_op_context_t * p_context,
+                                       fsal_handle_t * p_handle, int attr_valid,
+                                       int attr_changed, gpfsfsal_xstat_t *p_buffxstat);
+
+fsal_status_t fsal_check_access_by_mode(fsal_op_context_t * p_context,   /* IN */
+                                        fsal_accessflags_t access_type,  /* IN */
+                                        struct stat64 *p_buffstat /* IN */);
+
 
 /* All the call to FSAL to be wrapped */
 fsal_status_t GPFSFSAL_access(gpfsfsal_handle_t * p_object_handle,        /* IN */
