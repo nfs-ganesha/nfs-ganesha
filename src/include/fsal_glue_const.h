@@ -38,6 +38,8 @@
 #define FSAL_PROXY_INDEX 1
 
 #define FSAL_HANDLE_T_SIZE 148
+#define FSAL_HANDLE_T_SIZE_WITH_FSALID 152 /* The former const + sizeof(int) */
+
 #define FSAL_OP_CONTEXT_T_SIZE 620
 #define FSAL_DIR_T_SIZE 4876
 #define FSAL_EXPORT_CONTEXT_T_SIZE 4204

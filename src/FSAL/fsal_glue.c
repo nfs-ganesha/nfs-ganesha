@@ -297,6 +297,8 @@ fsal_status_t FSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
    { 
       p_dir_descriptor->fsalid = p_context->fsalid ;
    }
+
+  return fsal_status ;
 #else
   return fsal_functions.fsal_opendir(p_dir_handle, p_context, p_dir_descriptor,
                                      p_dir_attributes);
