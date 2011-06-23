@@ -42,14 +42,15 @@
  *        - Another error code if an error occurred.
  */
 
-fsal_status_t POSIXFSAL_truncate(posixfsal_handle_t * p_filehandle,     /* IN */
-                                 posixfsal_op_context_t * p_context,    /* IN */
+fsal_status_t POSIXFSAL_truncate(fsal_handle_t * filehandle,     /* IN */
+                                 fsal_op_context_t * context,    /* IN */
                                  fsal_size_t length,    /* IN */
-                                 posixfsal_file_t * file_descriptor,    /* Unused in this FSAL */
+                                 fsal_file_t * file_descriptor,    /* Unused in this FSAL */
                                  fsal_attrib_list_t * p_object_attributes       /* [ IN/OUT ] */
     )
 {
-
+  posixfsal_handle_t * p_filehandle = (posixfsal_handle_t *) filehandle;
+  posixfsal_op_context_t * p_context = (posixfsal_op_context_t *) context;
   int rc, errsv;
   struct stat buffstat;
   fsal_path_t fsalpath;
