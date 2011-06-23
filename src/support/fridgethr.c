@@ -161,8 +161,8 @@ fridge_entry_t * fridgethr_freeze( )
 
   if( rc == ETIMEDOUT )
     fridgethr_remove( pfe );  
-
-  V( pfe->condmutex ) ;
+  else
+    V( pfe->condmutex ) ;
 
   return (rc == 0 )?pfe:NULL ; 
 } /* fridgethr_freeze */

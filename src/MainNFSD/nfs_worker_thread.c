@@ -1174,7 +1174,16 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }
 #endif
 
-      rc = pworker_data->pfuncdesc->service_function(parg_nfs, pexport, &pworker_data->thread_fsal_context, &(pworker_data->cache_inode_client), pworker_data->ht, ptr_req, &res_nfs);  /* BUGAZOMEU Un appel crade pour debugger */
+#ifdef _USE_SHARED_FSAL
+      pworker_data->thread_fsal_context.fsalid = 42 ;
+#endif
+      rc = pworker_data->pfuncdesc->service_function(parg_nfs, 
+						     pexport, 
+                                                     &pworker_data->thread_fsal_context, 
+                                                     &(pworker_data->cache_inode_client), 
+                                                     pworker_data->ht, 
+                                                     ptr_req, 
+                                                     &res_nfs); 
 
       gettimeofday(&timer_end, NULL);
       timer_diff = time_diff(*timer_start, timer_end);

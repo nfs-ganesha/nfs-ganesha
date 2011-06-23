@@ -772,6 +772,11 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   strcpy(p_entry->FS_specific, "");
   strcpy(p_entry->FS_tag, "");
 
+#ifdef _USE_SHARED_FSAL
+  p_entry->fsalid = 42 ;
+#endif
+
+
   /* parse options for this export entry */
 
   for(i = 0; i < config_GetNbItems(block); i++)
