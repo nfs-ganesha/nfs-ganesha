@@ -5,7 +5,6 @@
 #include "config.h"
 #endif
 #include <string.h>
-#include "fsal_types.h"
 #include "posixdb_internal.h"
 #include "posixdb_consistency.h"
 #include "RW_Lock.h"

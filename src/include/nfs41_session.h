@@ -50,7 +50,6 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
-#include "fsal_types.h"
 #ifdef _USE_MFSL
 #include "mfsl.h"
 #endif

@@ -17,7 +17,6 @@
 #endif
 
 #include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_glue.h"
 
 fsal_functions_t fsal_functions;

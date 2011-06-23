@@ -68,7 +68,6 @@
 }
 
 %include "cache_inode.h"
-%include "fsal_types.h"
 %include "BuddyMalloc.h"
 
 %inline %{
