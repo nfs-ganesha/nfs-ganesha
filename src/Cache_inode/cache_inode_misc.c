@@ -134,6 +134,7 @@ const char *cache_inode_err_str(int err)
       case CACHE_INODE_STATE_ERROR:           return "CACHE_INODE_STATE_ERROR";
       case CACHE_INODE_FSAL_DELAY:            return "CACHE_INODE_FSAL_DELAY";
       case CACHE_INODE_NAME_TOO_LONG:         return "CACHE_INODE_NAME_TOO_LONG";
+      case CACHE_INODE_LOCK_CONFLICT:         return "CACHE_INODE_LOCK_CONFLICT";
       default: return "unknown";
     }
 }
