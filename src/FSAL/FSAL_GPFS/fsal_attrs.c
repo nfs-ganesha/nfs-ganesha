@@ -134,7 +134,7 @@ fsal_status_t GPFSFSAL_getattrs_descriptor(gpfsfsal_file_t * p_file_descriptor, 
    * note : object_attributes is mandatory in GPFSFSAL_getattrs.
    */
   if(!p_file_descriptor || !p_filehandle || !p_context || !p_object_attributes)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs_descriptor);
 
   TakeTokenFSCall();
   rc = fstat64(p_file_descriptor->fd, &buffstat);
@@ -142,7 +142,7 @@ fsal_status_t GPFSFSAL_getattrs_descriptor(gpfsfsal_file_t * p_file_descriptor, 
   ReleaseTokenFSCall();
 
   if(rc == -1)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_getattrs);
+    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_getattrs_descriptor);
 
   /* convert attributes */
   st = posixstat64_2_fsal_attributes(&buffstat, p_object_attributes);
@@ -150,10 +150,10 @@ fsal_status_t GPFSFSAL_getattrs_descriptor(gpfsfsal_file_t * p_file_descriptor, 
     {
       FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
       FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-      ReturnStatus(st, INDEX_FSAL_getattrs);
+      ReturnStatus(st, INDEX_FSAL_getattrs_descriptor);
     }
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getattrs);
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getattrs_descriptor);
 
 }
 
