@@ -51,45 +51,36 @@ typedef struct __nfs_start_info
   int lw_mark_trigger;
 } nfs_start_info_t;
 
-void *sigmgr_thread( void * arg ) ;
-
 /**
  * nfs_prereq_init:
  * Initialize NFSd prerequisites: memory management, logging, ...
  */
-int nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *log_path);
+void nfs_prereq_init(char *program_name, char *host_name, int debug_level, char *log_path);
 
 /**
  * nfs_set_param_default:
  * Set p_nfs_param structure to default parameters.
  */
-int nfs_set_param_default(nfs_parameter_t * p_nfs_param);
+void nfs_set_param_default();
 
 /**
  * nfs_set_param_from_conf:
  * Load parameters from config file.
  */
-int nfs_set_param_from_conf(nfs_parameter_t * p_nfs_param,
-                            nfs_start_info_t * p_start_info, char *config_file);
+int nfs_set_param_from_conf(nfs_start_info_t * p_start_info);
 
 /**
  * nfs_check_param_consistency:
  * Checks parameters concistency (limits, ...)
  */
-int nfs_check_param_consistency(nfs_parameter_t * p_nfs_param);
+int nfs_check_param_consistency();
 
 /**
  * nfs_start:
  * start NFS service
  */
-int nfs_start(nfs_parameter_t * p_nfs_param, nfs_start_info_t * p_start_info);
+void nfs_start(nfs_start_info_t * p_start_info);
 
-/**
- * nfs_stop:
- * stop NFS service and exit
- */
-void nfs_stop();
-
-int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib);
+void nfs_get_fsalpathlib_conf(char *configPath, char *PathLib);
 
 #endif

@@ -280,75 +280,66 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info /* IN */ )
   /* Sanity check (only useful when dlopen is used, otherwise type are macros to FSAL specific types */
   if(fsal_consts.fsal_handle_t_size != sizeof(fsal_handle_t))
     {
-      LogMajor(COMPONENT_FSAL,
+      LogFatal(COMPONENT_FSAL,
                "Implementation Error, local and specific fsal_handle_t do not match: %u |%u !!!!",
                fsal_consts.fsal_handle_t_size, sizeof(fsal_handle_t));
-      exit(1);
     }
   if(fsal_consts.fsal_cookie_t_size != sizeof(fsal_cookie_t))
     {
-      LogMajor(COMPONENT_FSAL,
+      LogFatal(COMPONENT_FSAL,
                "Implementation Error, local and specific fsal_cookie_t do not match: %u |%u !!!!",
                fsal_consts.fsal_cookie_t_size, sizeof(fsal_cookie_t));
-      exit(1);
     }
 
 #if 0
   if(fsal_consts.fsal_op_context_t_size != sizeof(fsal_op_context_t) - sizeof(void *))
     {
-      LogMajor(COMPONENT_FSAL,
+      LogFatal(COMPONENT_FSAL,
                "Implementation Error, local and specific fsal_op_context_t do not match: %u |%u !!!!",
                fsal_consts.fsal_op_context_t_size,
                sizeof(fsal_op_context_t) - sizeof(void *));
-      exit(1);
     }
 
   if(fsal_consts.fsal_export_context_t_size != sizeof(fsal_export_context_t))
     {
-      LogMajor(COMPONENT_FSAL,
+      LogFatal(COMPONENT_FSAL,
                "Implementation Error, local and specific fsal_export_context_t do not match: %u |%u !!!!",
                fsal_consts.fsal_export_context_t_size, sizeof(fsal_export_context_t));
-      exit(1);
     }
 
   if(fsal_consts.fsal_file_t_size != sizeof(fsal_file_t))
     {
-      LogMajor(COMPONENT_FSAL,
+      LogFatal(COMPONENT_FSAL,
                "Implementation Error, local and specific fsal_file_context_t do not match: %u |%u !!!!",
                fsal_consts.fsal_file_t_size, sizeof(fsal_file_t));
-      exit(1);
     }
 
   if(fsal_consts.fsal_lockdesc_t_size != sizeof(fsal_lockdesc_t))
     {
-      LogMajor(COMPONENT_FSAL,
+      LogFatal(COMPONENT_FSAL,
                "Implementation Error, local and specific fsal_lockdesc_t do not match: %u |%u !!!!",
                fsal_consts.fsal_lockdesc_t_size, sizeof(fsal_lockdesc_t));
-      exit(1);
     }
 
   if(fsal_consts.fsal_cred_t_size != sizeof(fsal_cred_t))
     {
-      LogMajor(COMPONENT_FSAL,
+      LogFatal(COMPONENT_FSAL,
                "Implementation Error, local and specific fsal_cred_t do not match: %u |%u !!!!",
                fsal_consts.fsal_cred_t_size, sizeof(fsal_cred_t));
-      exit(1);
     }
 
   if(fsal_consts.fs_specific_initinfo_t_size != sizeof(fs_specific_initinfo_t))
     {
-      LogMajor(COMPONENT_FSAL,
+      LogFatal(COMPONENT_FSAL,
                "Implementation Error, local and specific fs_specific_initinfo_t do not match: %u |%u !!!!",
                fsal_consts.fs_specific_initinfo_t_size, sizeof(fs_specific_initinfo_t));
-      exit(1);
     }
 
   if(fsal_consts.fsal_dir_t_size != sizeof(fsal_dir_t))
     {
-      LogMajor(COMPONENT_FSAL,
+      LogFatal(COMPONENT_FSAL,
                "Implementation Error, local and specific fsal_dir_t do not match: %u |%u !!!!",
                fsal_consts.fsal_dir_t_size, sizeof(fsal_dir_t));
-      exit(1);
     }
 #endif /* 0 */
 

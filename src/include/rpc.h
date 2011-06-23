@@ -91,20 +91,19 @@ extern bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*disp
 #define _authenticate __authenticate
 #endif
 
-#if defined(_USE_GSSRPC) || defined(_USE_TIRPC)
-/* These prototypes are missing in gssrpc/xdr.h and tirpc/rpc/xdr.h */
-bool_t xdr_longlong_t(XDR * __xdrs, quad_t * __llp);
-bool_t xdr_u_longlong_t(XDR * __xdrs, u_quad_t * __ullp);
-bool_t xdr_uint64_t(XDR * __xdrs, uint64_t * __up);
-#endif
-
 #ifdef _USE_TIRPC
+/* These functions were renamed between rpc and tirpc, make our code work either way */
+#define xdr_uint64_t xdr_u_int64_t
 #define xdr_uint32_t  xdr_u_int32_t
 #endif
 
 #ifdef _USE_GSSRPC
+/* These prototypes are missing in gssrpc/xdr.h */
 #define xdr_uint32_t  xdr_u_int32
+bool_t xdr_uint64_t(XDR * __xdrs, uint64_t * __up);
 bool_t xdr_int64_t(XDR * __xdrs, uint64_t * __up);
+bool_t xdr_longlong_t(XDR * __xdrs, quad_t * __llp);
+bool_t xdr_u_longlong_t(XDR * __xdrs, u_quad_t * __ullp);
 #endif
 
 #ifdef _HAVE_GSSAPI
@@ -150,7 +149,7 @@ extern pthread_mutex_t  *mutex_cond_xprt;
 extern pthread_cond_t   *condvar_xprt;
 
 #ifdef _HAVE_GSSAPI
-int log_sperror_gss(char *outmsg, char *tag, OM_uint32 maj_stat, OM_uint32 min_stat);
+void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat);
 unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
 unsigned long gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam,
                                     hash_buffer_t * buffclef);

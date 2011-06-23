@@ -69,7 +69,6 @@
 /* Structures from another module */
 
 extern char ganesha_exec_path[MAXPATHLEN];
-extern char config_path[MAXPATHLEN];
 extern char fcc_log_path[MAXPATHLEN];
 extern int fcc_debug_level;
 

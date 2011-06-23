@@ -88,7 +88,9 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
                           struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutreturn";
-  nfsstat4 rc ;
+#ifdef _USE_PNFS
+  nfsstat4 rc = 0 ;
+#endif
 
 #ifndef _USE_PNFS
   res_LAYOUTRETURN4.lorr_status = NFS4ERR_NOTSUPP;

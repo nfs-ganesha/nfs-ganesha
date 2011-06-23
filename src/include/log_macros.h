@@ -77,10 +77,21 @@ typedef enum log_components
   COMPONENT_MFSL,
   COMPONENT_NLM,
   COMPONENT_RPC,
+  COMPONENT_THREAD,
 
   COMPONENT_COUNT
 } log_components_t;
 
+typedef void (*cleanup_function)(void);
+typedef struct cleanup_list_element
+{
+  struct cleanup_list_element *next;
+  cleanup_function             clean;
+} cleanup_list_element;
+
+void RegisterCleanup(cleanup_list_element *clean);
+void Cleanup(void);
+void Fatal(void);
 int SetComponentLogFile(log_components_t component, char *name);
 void SetComponentLogBuffer(log_components_t component, char *buffer);
 void SetComponentLogLevel(log_components_t component, int level_to_set);
@@ -89,7 +100,7 @@ void SetComponentLogLevel(log_components_t component, int level_to_set);
   SetComponentLogLevel(COMPONENT_ALL, level_to_set)
 
 int DisplayLogComponentLevel(log_components_t component,
-                             int level,
+                             log_levels_t level,
                              char *format, ...)
 __attribute__((format(printf, 3, 4))); /* 3=format 4=params */ ;
 int DisplayErrorComponentLogLine(log_components_t component,
@@ -137,6 +148,14 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
   do { \
     DisplayLogComponentLevel(COMPONENT_ALL, NIV_NULL, \
                              format, ## args ); \
+  } while (0)
+
+#define LogFatal(component, format, args...) \
+  do { \
+    if (LogComponents[component].comp_log_level >= NIV_FATAL) \
+      DisplayLogComponentLevel(component, NIV_FATAL, \
+                               "%s: FATAL ERROR: " format, \
+                               LogComponents[component].comp_str, ## args ); \
   } while (0)
 
 #define LogMajor(component, format, args...) \

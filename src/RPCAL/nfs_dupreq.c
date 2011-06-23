@@ -186,7 +186,7 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
     return 0;                   /* don't free the dupreq twice */
 
   /* Locate the function descriptor associated with this cached request */
-  if(pdupreq->rq_prog == nfs_param.core_param.nfs_program)
+  if(pdupreq->rq_prog == nfs_param.core_param.program[P_NFS])
     {
       switch (pdupreq->rq_vers)
         {
@@ -209,7 +209,7 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
                    (int)pdupreq->rq_vers);
         }
     }
-  else if(pdupreq->rq_prog == nfs_param.core_param.mnt_program)
+  else if(pdupreq->rq_prog == nfs_param.core_param.program[P_MNT])
     {
       switch (pdupreq->rq_vers)
         {
@@ -230,7 +230,7 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
         }                       /* switch( pdupreq->vers ) */
     }
 #ifdef _USE_NLM
-  else if(pdupreq->rq_prog == nfs_param.core_param.nlm_program)
+  else if(pdupreq->rq_prog == nfs_param.core_param.program[P_NLM])
     {
 
       switch (pdupreq->rq_vers)
@@ -242,7 +242,7 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
     }
 #endif                          /* _USE_NLM */
 #ifdef _USE_QUOTA
-  else if(pdupreq->rq_prog == nfs_param.core_param.rquota_program)
+  else if(pdupreq->rq_prog == nfs_param.core_param.program[P_RQUOTA])
     {
 
       switch (pdupreq->rq_vers)

@@ -448,4 +448,6 @@
 	- Code reorganization : subdirectory RPCAL has been added
 	- Bug fixe : bad 'fd2handle' options in FSAL_XFS::FSAL_rename
 	- pNFS : API for implementing pNFS specific feature has been fully refurbished.
+        - FSAL_VFS: new FSAL using "open_by_handle" feature added in the kernel higher than 2.6.39.
+          This FSAL makes it possible to export any filesystem managed by the VFS. 
 

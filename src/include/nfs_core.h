@@ -116,8 +116,8 @@
 #define PRIME_STATE_ID            17
 #define NB_PREALLOC_HASH_STATE_ID 10
 
-#define DEFAULT_NFS_PRINCIPAL     "nfs@localhost.localdomain"
-#define DEFAULT_NFS_KEYTAB        "/etc/krb5.conf"
+#define DEFAULT_NFS_PRINCIPAL     "nfs" /* GSSAPI will expand this to nfs/host@DOMAIN */
+#define DEFAULT_NFS_KEYTAB        ""    /* let GSSAPI use keytab specified in /etc/krb5.conf */
 
 /* Config labels */
 #define CONF_LABEL_NFS_CORE         "NFS_Core_Param"
@@ -167,6 +167,7 @@
 #define ID_MAPPER_INSERT_MALLOC_ERROR 1
 #define ID_MAPPER_NOT_FOUND           2
 #define ID_MAPPER_INVALID_ARGUMENT    3
+#define ID_MAPPER_FAIL                4
 
 /* Hard and soft limit for nfsv4 quotas */
 #define NFS_V4_MAX_QUOTA_SOFT 4294967296LL      /*  4 GB */
@@ -213,26 +214,6 @@ typedef enum nfs_clientid_confirm_state__
                                  FSAL_ATTR_MTIME      | FSAL_ATTR_CTIME    | FSAL_ATTR_SPACEUSED | \
                                  FSAL_ATTR_RAWDEV )
 
-typedef struct nfs_svc_data__
-{
-  int socket_nfs_udp;
-  int socket_nfs_tcp;
-  int socket_mnt_udp;
-  int socket_mnt_tcp;
-  int socket_nlm_udp;
-  int socket_nlm_tcp;
-  int socket_rquota_udp;
-  int socket_rquota_tcp;
-  SVCXPRT *xprt_nfs_udp;
-  SVCXPRT *xprt_nfs_tcp;
-  SVCXPRT *xprt_mnt_udp;
-  SVCXPRT *xprt_mnt_tcp;
-  SVCXPRT *xprt_nlm_udp;
-  SVCXPRT *xprt_nlm_tcp;
-  SVCXPRT *xprt_rquota_udp;
-  SVCXPRT *xprt_rquota_tcp;
-} nfs_svc_data_t;
-
 typedef struct nfs_worker_param__
 {
   LRU_parameter_t lru_param;
@@ -243,7 +224,6 @@ typedef struct nfs_worker_param__
   unsigned int nb_ip_stats_prealloc;
   unsigned int nb_before_gc;
   unsigned int nb_dupreq_before_gc;
-  nfs_svc_data_t nfs_svc_data;
 } nfs_worker_parameter_t;
 
 typedef struct nfs_rpc_dupreq_param__
@@ -260,17 +240,24 @@ typedef struct nfs_cache_layer_parameter__
   cache_content_gc_policy_t dcgcpol;
 } nfs_cache_layers_parameter_t;
 
+typedef enum protos
+{
+  P_NFS,
+  P_MNT,
+#ifdef _USE_NLM
+  P_NLM,
+#endif
+#ifdef _USE_QUOTA
+  P_RQUOTA,
+#endif
+  P_COUNT
+} protos;
+
 typedef struct nfs_core_param__
 {
-  unsigned short nfs_port;
-  unsigned short mnt_port;
-  unsigned short nlm_port;
-  unsigned short rquota_port;
+  unsigned short port[P_COUNT];
   struct sockaddr_in bind_addr; // IPv4 only for now...
-  unsigned int nfs_program;
-  unsigned int mnt_program;
-  unsigned int nlm_program;
-  unsigned int rquota_program;
+  unsigned int program[P_COUNT];
   unsigned int nb_worker;
   unsigned int nb_call_before_queue_avg;
   unsigned int nb_max_concurrent_gc;
@@ -446,6 +433,16 @@ typedef enum idmap_type__
   GIDMAP_TYPE = 2
 } idmap_type_t;
 
+typedef enum pause_state
+{
+  STATE_STARTUP,
+  STATE_AWAKEN,
+  STATE_AWAKE,
+  STATE_PAUSE,
+  STATE_PAUSED,
+  STATE_EXIT
+} pause_state_t;
+  
 typedef struct nfs_worker_data__
 {
   unsigned int worker_index;
@@ -463,18 +460,13 @@ typedef struct nfs_worker_data__
 
   /* Used for blocking when request queue is empty. */
   pthread_cond_t req_condvar;
-  pthread_mutex_t mutex_req_condvar;
-
-  /* Used for blocking when the export list is being replaced. */
-  bool_t waiting_for_exports;
-  bool_t reparse_exports_in_progress;
-  pthread_cond_t export_condvar;
-  pthread_mutex_t mutex_export_condvar;
+  pthread_mutex_t request_mutex;
 
   nfs_worker_stat_t stats;
   unsigned int passcounter;
   sockaddr_t hostaddr;
   int is_ready;
+  pause_state_t pause_state;
   unsigned int gc_in_progress;
   unsigned int current_xid;
   fsal_op_context_t thread_fsal_context;
@@ -483,16 +475,6 @@ typedef struct nfs_worker_data__
   const nfs_function_desc_t *pfuncdesc;
   struct timeval timer_start;
 } nfs_worker_data_t;
-
-typedef struct nfs_admin_data_
-{
-  pthread_cond_t admin_condvar;
-  pthread_mutex_t mutex_admin_condvar;
-  bool_t reload_exports;
-  char *config_path;
-  hash_table_t *ht;
-  nfs_worker_data_t *workers_data;
-} nfs_admin_data_t;
 
 /* flush thread data */
 typedef struct nfs_flush_thread_data__
@@ -521,6 +503,7 @@ typedef struct fridge_entry__
 extern nfs_parameter_t nfs_param;
 extern time_t ServerBootTime;
 extern nfs_worker_data_t *workers_data;
+extern char config_path[MAXPATHLEN];
 
 typedef enum process_status
 {
@@ -529,21 +512,54 @@ typedef enum process_status
   PROCESS_DONE
 } process_status_t;
 
+typedef enum pause_reason
+{
+  PAUSE_RELOAD_EXPORTS,
+  PAUSE_SHUTDOWN,
+} pause_reason_t;
+
+typedef enum awaken_reason
+{
+  AWAKEN_STARTUP,
+  AWAKEN_RELOAD_EXPORTS,
+} awaken_reason_t;
+
+typedef enum pause_rc
+{
+  PAUSE_OK,
+  PAUSE_PAUSE, /* Calling thread should pause - most callers can ignore this return code */
+  PAUSE_EXIT,  /* Calling thread should exit */
+} pause_rc;
+
+extern const char *pause_rc_str[];
+
+typedef enum worker_available_rc
+{
+  WORKER_AVAILABLE,
+  WORKER_BUSY,
+  WORKER_PAUSED,
+  WORKER_GC,
+  WORKER_ALL_PAUSED,
+  WORKER_EXIT
+} worker_available_rc;
+
 /* 
  *functions prototypes
  */
 enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
                                    bool_t *dispatch);
+worker_available_rc worker_available(unsigned long index, unsigned int avg_number_pending);
+pause_rc pause_workers(pause_reason_t reason);
+pause_rc wake_workers(awaken_reason_t reason);
+pause_rc wait_for_workers_to_awaken();
 void DispatchWork(nfs_request_data_t *pnfsreq, unsigned int worker_index);
 void *worker_thread(void *IndexArg);
-unsigned int nfs_rpc_get_worker_index(int mount_protocol_flag);
 process_status_t process_rpc_request(SVCXPRT *xprt);
 void *rpc_dispatcher_thread(void *arg);
 void *admin_thread(void *arg);
 void *stats_thread(void *IndexArg);
 void *long_processing_thread(void *arg);
 void *stat_exporter_thread(void *IndexArg);
-void *sigmgr_thread(void *arg);
 int stats_snmp(nfs_worker_data_t * workers_data_local);
 void *file_content_gc_thread(void *IndexArg);
 void *nfs_file_content_flush_thread(void *flush_data_arg);
@@ -552,8 +568,8 @@ void nfs_operate_on_sigusr1() ;
 void nfs_operate_on_sigterm() ;
 void nfs_operate_on_sighup() ;
 
-int nfs_Init_svc(void);
-int nfs_Init_admin_data(nfs_admin_data_t * pdata);
+void nfs_Init_svc(void);
+void nfs_Init_admin_data(hash_table_t *ht);
 int nfs_Init_worker_data(nfs_worker_data_t * pdata);
 int nfs_Init_request_data(nfs_request_data_t * pdata);
 int nfs_Init_gc_counter(void);
@@ -611,7 +627,7 @@ exportlist_t *RemoveExportEntry(exportlist_t * exportEntry);
 /* Tools */
 unsigned int get_rpc_xid(struct svc_req *reqp);
 void Print_param_worker_in_log(nfs_worker_parameter_t * pparam);
-void Print_param_in_log(nfs_parameter_t * pparam);
+void Print_param_in_log();
 
 void nfs_reset_stats(void);
 
@@ -755,6 +771,10 @@ int namemap_remove(hash_table_t * ht, unsigned int key);
 int unamemap_remove(unsigned int key);
 int gnamemap_remove(unsigned int key);
 int uidgidmap_remove(unsigned int key);
+
+int uidgidmap_clear();
+int idmap_clear();
+int namemap_clear();
 
 void idmap_get_stats(idmap_type_t maptype, hash_stat_t * phstat,
                      hash_stat_t * phstat_reverse);

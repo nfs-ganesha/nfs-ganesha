@@ -87,9 +87,11 @@
 int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
                           struct nfs_resop4 *resp)
 {
+#ifdef _USE_PNFS
   cache_inode_status_t cache_status;
   fsal_attrib_list_t fsal_attr;
   nfsstat4 rc ; 
+#endif
 
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutcommit";
   /* Lock are not supported */

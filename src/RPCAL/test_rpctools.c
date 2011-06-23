@@ -10,11 +10,31 @@
 #include <arpa/inet.h>
 #include "rpcal.h"
 
+int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg )
+{
+  return 0;
+}
+
+void *rpc_tcp_socket_manager_thread(void *Arg)
+{
+  return NULL;
+}
+
+
+void Fatal(void) 
+{
+    return;
+}
+
 int DisplayLogComponentLevel(log_components_t component,
-                             int level,
+                             log_levels_t  level,
                              char *format, ...)
 {
     return 0;
+}
+
+void GetNameFunction(char *name, int len)
+{
 }
 
 #define EQUALS(a, b, msg) do {                    \

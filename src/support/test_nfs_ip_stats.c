@@ -39,6 +39,11 @@ sockaddr_t ipv6a;
 sockaddr_t ipv6b;
 sockaddr_t ipv6c;
 
+void *rpc_tcp_socket_manager_thread(void *Arg)
+{
+  return NULL;
+}
+
 void create_ipv4(char * ip, int port, struct sockaddr_in * addr) 
 {
     memset(addr, 0, sizeof(struct sockaddr_in));

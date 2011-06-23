@@ -114,59 +114,6 @@ const char *Rpc_gss_svc_name[] =
   "RPCSEC_GSS_SVC_PRIVACY"
 };
 
-#ifdef _HAVE_GSSAPI
-/* Cred Name is "name@DOMAIN" */
-static void split_credname(gss_buffer_desc credname, char *username, char *domainname)
-{
-  char *ptr = NULL;
-  int pos = 0;
-  if(credname.value == NULL)
-    return;
-
-  ptr = (char *)credname.value;
-  for(pos = 0; pos < credname.length; pos++)
-    {
-      if(ptr[pos] == '@' && pos + 1 < credname.length)
-        {
-          strncpy(username, ptr, pos);
-          username[pos] = '\0';
-          strncpy(domainname, ptr + pos + 1, credname.length - pos - 1);
-          domainname[credname.length - pos - 1] = '\0';
-          break;
-        }
-    }
-}
-
-/**
- *
- * convert_gss_status2str: Converts GSSAPI error into human-readable string.
- *
- * Converts GSSAPI error into human-readable string.
- *
- * @paran str      [OUT] the string that will contain the translated error code
- * @param maj_stat [IN] the GSSAPI major status (focused on GSSAPI's mechanism)
- * @param min_stat [IN] the GSSAPI minor status (focused on the mechanism)
- *
- * @return nothing (void function)
- *
- */
-
-static void convert_gss_status2str(char *str, OM_uint32 maj_stat, OM_uint32 min_stat)
-{
-  OM_uint32 min;
-  gss_buffer_desc msg;
-  int msg_ctx = 0;
-
-  gss_display_status(&min, maj_stat, GSS_C_GSS_CODE, GSS_C_NULL_OID, &msg_ctx, &msg);
-  sprintf(str, "GSS_CODE=%s - ", (char *)msg.value);
-  gss_release_buffer(&min, &msg);
-
-  gss_display_status(&min, min_stat, GSS_C_MECH_CODE, GSS_C_NULL_OID, &msg_ctx, &msg);
-  sprintf(str, "MECH_CODE=%s", (char *)msg.value);
-  gss_release_buffer(&min, &msg);
-}                               /* convert_gss_status2str */
-#endif
-
 /**
  *
  * nfs_Get_export_by_id: Gets an export entry from its export id. 
@@ -221,8 +168,6 @@ int get_req_uid_gid(struct svc_req *ptr_req,
   unsigned int rpcxid = 0;
 #ifdef _HAVE_GSSAPI
   struct svc_rpc_gss_data *gd = NULL;
-  OM_uint32 maj_stat = 0;
-  OM_uint32 min_stat = 0;
   char principal[MAXNAMLEN];
 #endif
 
@@ -479,7 +424,6 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
   OM_uint32 min_stat = 0;
   struct svc_rpc_gss_data *gd = NULL;
   gss_buffer_desc oidbuff;
-  char errbuff[1024];
 #endif
 
   if(reqp == NULL || pcred == NULL)
@@ -515,8 +459,10 @@ int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred)
 
       if((maj_stat = gss_oid_to_str(&min_stat, gd->sec.mech, &oidbuff)) != GSS_S_COMPLETE)
         {
-          convert_gss_status2str(errbuff, maj_stat, min_stat);
-          LogCrit(COMPONENT_DISPATCH, "GSSAPI ERROR: %u|%u = %s",
+          char errbuff[1024];
+          log_sperror_gss(errbuff, maj_stat, min_stat);
+          LogCrit(COMPONENT_DISPATCH,
+                  "GSSAPI ERROR: %u|%u = %s",
                   maj_stat, min_stat, errbuff);
           return -1;
         }

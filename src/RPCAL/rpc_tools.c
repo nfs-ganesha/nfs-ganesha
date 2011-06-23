@@ -477,11 +477,9 @@ void InitRPC(int num_sock)
   /* Allocate resources that are based on the maximum number of open file descriptors */
   Xports = (SVCXPRT **) Mem_Alloc_Label(num_sock * sizeof(SVCXPRT *), "Xports array");
   if(Xports == NULL)
-    {
-      LogMajor(COMPONENT_RPC,
-               "Xports array allocation failed... Exiting");
-      exit(1);
-    }
+    LogFatal(COMPONENT_RPC,
+             "Xports array allocation failed");
+
   memset(Xports, 0, num_sock * sizeof(SVCXPRT *));
   mutex_cond_xprt = (pthread_mutex_t *) Mem_Alloc_Label(num_sock * sizeof(pthread_mutex_t ), "mutex_cond_xprt array");
   memset(mutex_cond_xprt, 0, num_sock * sizeof(pthread_mutex_t ));

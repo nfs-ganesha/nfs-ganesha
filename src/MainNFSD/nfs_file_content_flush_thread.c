@@ -110,10 +110,9 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
   if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogCrit(COMPONENT_MAIN,
-              "NFS DATACACHE FLUSHER THREAD #%u : Memory manager could not be initialized, exiting...",
-              p_flush_data->thread_index);
-      exit(1);
+      LogFatal(COMPONENT_MAIN,
+               "NFS DATACACHE FLUSHER THREAD #%u : Memory manager could not be initialized",
+               p_flush_data->thread_index);
     }
   LogInfo(COMPONENT_MAIN,
           "NFS DATACACHE FLUSHER THREAD #%u : Memory manager successfully initialized",
@@ -127,10 +126,9 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&(fsal_context[p_flush_data->thread_index]))))
     {
       /* Failed init */
-      LogCrit(COMPONENT_MAIN,
-              "NFS DATACACHE FLUSHER THREAD #%u : Error initializing thread's credential",
-              p_flush_data->thread_index);
-      exit(1);
+      LogFatal(COMPONENT_MAIN,
+               "NFS DATACACHE FLUSHER THREAD #%u : Error initializing thread's credential",
+               p_flush_data->thread_index);
     }
 
   /* check for each pexport entry to get those who are data cached */

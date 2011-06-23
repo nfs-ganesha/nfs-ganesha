@@ -67,206 +67,6 @@
 #include "nfs_stat.h"
 #include "SemN.h"
 
-process_status_t process_rpc_request(SVCXPRT *xprt)
-{
-  char *cred_area;
-  struct rpc_msg *pmsg;
-  struct svc_req *preq;
-  enum xprt_stat stat;
-  const nfs_function_desc_t *pfuncdesc;
-  bool_t no_dispatch = TRUE, recv_status;
-  nfs_request_data_t *pnfsreq = NULL;
-  unsigned int worker_index;
-  int mount_flag = FALSE;
-  process_status_t rc = PROCESS_DONE;
-
-  /* A few thread manage only mount protocol, check for this */
-  if((nfs_param.worker_param.nfs_svc_data.socket_mnt_udp == xprt->XP_SOCK) ||
-     (nfs_param.worker_param.nfs_svc_data.socket_mnt_tcp == xprt->XP_SOCK))
-    mount_flag = TRUE;
-  else
-    mount_flag = FALSE;
-
-  /* Get a worker to do the job */
-  worker_index = nfs_rpc_get_worker_index(mount_flag);
-
-  LogFullDebug(COMPONENT_DISPATCH,
-               "Use request from Worker Thread #%u's pool, xprt->xp_sock=%d, thread has %d pending requests",
-               worker_index, xprt->XP_SOCK,
-               workers_data[worker_index].pending_request->nb_entry);
-
-  /* Get a pnfsreq from the worker's pool */
-  P(workers_data[worker_index].request_pool_mutex);
-
-  GetFromPool(pnfsreq, &workers_data[worker_index].request_pool,
-              nfs_request_data_t);
-
-  V(workers_data[worker_index].request_pool_mutex);
-
-  if(pnfsreq == NULL)
-    {
-      LogMajor(COMPONENT_DISPATCH,
-              "CRITICAL ERROR: empty request pool for the chosen worker ! Exiting...");
-      exit(1);
-    }
-
-  /* Set up cred area */
-  cred_area = pnfsreq->cred_area;
-  preq = &(pnfsreq->req);
-  pmsg = &(pnfsreq->msg);
-
-  pmsg->rm_call.cb_cred.oa_base = cred_area;
-  pmsg->rm_call.cb_verf.oa_base = &(cred_area[MAX_AUTH_BYTES]);
-  preq->rq_clntcred = &(cred_area[2 * MAX_AUTH_BYTES]);
-
-  /* Set up xprt */
-  pnfsreq->xprt = xprt;
-  preq->rq_xprt = xprt;
-
-  /*
-   * Receive from socket.
-   * Will block until the client operates on the socket
-   */
-  LogFullDebug(COMPONENT_DISPATCH,
-               "Before calling SVC_RECV on socket %d",
-               pnfsreq->xprt->XP_SOCK);
-
-  recv_status = SVC_RECV(pnfsreq->xprt, pmsg);
-
-  LogFullDebug(COMPONENT_DISPATCH,
-               "Status for SVC_RECV on socket %d is %d, xid=%lu",
-               pnfsreq->xprt->XP_SOCK, recv_status,
-               (unsigned long)pmsg->rm_xid);
-
-  /* If status is ok, the request will be processed by the related
-   * worker, otherwise, it should be released by being tagged as invalid*/
-  if(!recv_status)
-    {
-      /* RPC over TCP specific: RPC/UDP's xprt know only one state: XPRT_IDLE, because UDP is mostly
-       * a stateless protocol. With RPC/TCP, they can be XPRT_DIED especially when the client closes
-       * the peer's socket. We have to cope with this aspect in the next lines */
-
-      sockaddr_t addr;
-      char addrbuf[SOCK_NAME_MAX];
-
-      if(copy_xprt_addr(&addr, pnfsreq->xprt) == 1)
-        sprint_sockaddr(&addr, addrbuf, sizeof(addrbuf));
-      else
-        sprintf(addrbuf, "<unresolved>");
-
-      stat = SVC_STAT(pnfsreq->xprt);
-
-      if(stat == XPRT_DIED)
-        {
-
-          LogDebug(COMPONENT_DISPATCH,
-                   "Client on socket=%d, addr=%s disappeared...",
-                   pnfsreq->xprt->XP_SOCK, addrbuf);
-
-          if(Xports[pnfsreq->xprt->XP_SOCK] != NULL)
-            SVC_DESTROY(Xports[pnfsreq->xprt->XP_SOCK]);
-
-          rc = PROCESS_LOST_CONN;
-        }
-      else if(stat == XPRT_MOREREQS)
-        {
-          LogDebug(COMPONENT_DISPATCH,
-                   "Client on socket=%d, addr=%s has status XPRT_MOREREQS",
-                   pnfsreq->xprt->XP_SOCK, addrbuf);
-        }
-      else if(stat == XPRT_IDLE)
-        {
-          LogDebug(COMPONENT_DISPATCH,
-                   "Client on socket=%d, addr=%s has status XPRT_IDLE",
-                   pnfsreq->xprt->XP_SOCK, addrbuf);
-        }
-      else
-        {
-          LogDebug(COMPONENT_DISPATCH,
-                   "Client on socket=%d, addr=%s has status unknown (%d)",
-                   pnfsreq->xprt->XP_SOCK, addrbuf, (int)stat);
-        }
-
-      goto free_req;
-    }
-  else
-    {
-      struct timeval timer_start;
-      struct timeval timer_end;
-      struct timeval timer_diff;
-
-      nfs_stat_type_t stat_type;
-      nfs_request_latency_stat_t latency_stat;
-
-      memset(&timer_start, 0, sizeof(struct timeval));
-      memset(&timer_end, 0, sizeof(struct timeval));
-      memset(&timer_diff, 0, sizeof(struct timeval));
-
-      gettimeofday(&timer_start, NULL);
-
-      /* Call svc_getargs before making copy to prevent race conditions. */
-      pnfsreq->req.rq_prog = pmsg->rm_call.cb_prog;
-      pnfsreq->req.rq_vers = pmsg->rm_call.cb_vers;
-      pnfsreq->req.rq_proc = pmsg->rm_call.cb_proc;
-
-      /* Use primary xprt for now (in case xprt has GSS state)
-       * until we make a copy
-       */
-      pnfsreq->xprt = xprt;
-      pnfsreq->req.rq_xprt = xprt;
-
-      pfuncdesc = nfs_rpc_get_funcdesc(pnfsreq);
-
-      if(pfuncdesc != INVALID_FUNCDESC)
-        AuthenticateRequest(pnfsreq, &no_dispatch);
-      else
-        goto free_req;
-
-      if(!nfs_rpc_get_args(pnfsreq, pfuncdesc))
-        goto free_req;
-
-      /* Update a copy of SVCXPRT and pass it to the worker thread to use it. */
-      pnfsreq->xprt_copy = Svcxprt_copy(pnfsreq->xprt_copy, xprt);
-      if(pnfsreq->xprt_copy == NULL)
-        goto free_req;
-
-      pnfsreq->xprt = pnfsreq->xprt_copy;
-      preq->rq_xprt = pnfsreq->xprt_copy;
-
-      /* Regular management of the request (UDP request or TCP request on connected handler */
-      DispatchWork(pnfsreq, worker_index);
-
-      gettimeofday(&timer_end, NULL);
-      timer_diff = time_diff(timer_start, timer_end);
-
-      /* Update await time. */
-      stat_type = GANESHA_STAT_SUCCESS;
-      latency_stat.type = AWAIT_TIME;
-      latency_stat.latency = timer_diff.tv_sec * 1000000 + timer_diff.tv_usec; /* microseconds */
-      nfs_stat_update(stat_type,
-                      &(workers_data[worker_index].stats.stat_req),
-                      &(pnfsreq->req),
-                      &latency_stat);
-
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Worker Thread #%u has committed the operation: end_time %llu.%.6llu await %llu.%.6llu",
-                   worker_index,
-                   (unsigned long long int)timer_end.tv_sec,
-                   (unsigned long long int)timer_end.tv_usec,
-                   (unsigned long long int)timer_diff.tv_sec,
-                   (unsigned long long int)timer_diff.tv_usec);
-      return PROCESS_DISPATCHED;
-    }
-
-free_req:
-  /* Release the entry */
-  P(workers_data[worker_index].request_pool_mutex);
-  ReleaseToPool(pnfsreq, &workers_data[worker_index].request_pool);
-  workers_data[worker_index].passcounter += 1;
-  V(workers_data[worker_index].request_pool_mutex);
-  return rc;
-}
-
 /**
  * rpc_tcp_socket_manager_thread: manages a TCP socket connected to a client.
  *
@@ -292,7 +92,6 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
   if((rc = BuddyInit(&nfs_param.buddy_param_tcp_mgr)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH, "Memory manager could not be initialized");
       #ifdef _DEBUG_MEMLEAKS
       {
         FILE *output = fopen("/tmp/buddymem", "w");
@@ -300,7 +99,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           BuddyDumpAll(output);
       }
       #endif
-      exit(1);
+      LogFatal(COMPONENT_DISPATCH, "Memory manager could not be initialized");
     }
 #endif
 
@@ -316,7 +115,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
           /* But do we control sock? */
           LogMajor(COMPONENT_DISPATCH,
                    "Incoherency found in Xports array! Exiting...");
-          exit(1);
+          Fatal();
         }
 
       /*

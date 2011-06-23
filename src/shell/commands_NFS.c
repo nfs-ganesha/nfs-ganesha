@@ -158,7 +158,6 @@
 #include <string.h>
 #include "cmd_tools.h"
 
-nfs_parameter_t nfs_param;
 writeverf3 NFS3_write_verifier;
 
 /* Function used for debugging */

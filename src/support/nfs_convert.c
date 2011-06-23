@@ -290,46 +290,6 @@ uint64_t nfs_ntohl64(uint64_t arg64)
   return res64;
 }                               /* nfs_ntonl64 */
 
-#ifdef _HAVE_GSSAPI
-/**
- *
- * sperror_gss: converts GSSAPI status to a string.
- * 
- * @param outmsg    [OUT] output string 
- * @param tag       [IN]  input tag
- * @param maj_stat  [IN]  GSSAPI major status
- * @param min_stat  [IN]  GSSAPI minor status
- *
- * @return TRUE is successfull, false otherwise.
- * 
- */
-int log_sperror_gss(char *outmsg, char *tag, OM_uint32 maj_stat, OM_uint32 min_stat)
-{
-  OM_uint32 smin;
-  gss_buffer_desc msg;
-  gss_buffer_desc msg2;
-  int msg_ctx = 0;
-
-  if(gss_display_status(&smin,
-                        maj_stat,
-                        GSS_C_GSS_CODE, GSS_C_NULL_OID, &msg_ctx, &msg) != GSS_S_COMPLETE)
-    return FALSE;
-
-  if(gss_display_status(&smin,
-                        min_stat,
-                        GSS_C_MECH_CODE,
-                        GSS_C_NULL_OID, &msg_ctx, &msg2) != GSS_S_COMPLETE)
-    return FALSE;
-
-  sprintf(outmsg, "%s - %s : %s ", tag, (char *)msg.value, (char *)msg2.value);
-
-  gss_release_buffer(&smin, &msg);
-  gss_release_buffer(&smin, &msg2);
-
-  return TRUE;
-}                               /* log_sperror_gss */
-#endif
-
 /**
  *
  * auth_stat2str: converts a auth_stat enum to a string
