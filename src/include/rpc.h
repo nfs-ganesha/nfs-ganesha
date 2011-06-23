@@ -92,20 +92,18 @@ extern bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*disp
 #endif
 
 #ifdef _USE_TIRPC
+/* These functions were renamed between rpc and tirpc, make our code work either way */
 #define xdr_uint64_t xdr_u_int64_t
 #define xdr_uint32_t  xdr_u_int32_t
 #endif
 
-#if defined(_USE_GSSRPC) || defined(_USE_TIRPC)
-/* These prototypes are missing in gssrpc/xdr.h and tirpc/rpc/xdr.h */
+#ifdef _USE_GSSRPC
+/* These prototypes are missing in gssrpc/xdr.h */
+#define xdr_uint32_t  xdr_u_int32
+bool_t xdr_uint64_t(XDR * __xdrs, uint64_t * __up);
+bool_t xdr_int64_t(XDR * __xdrs, uint64_t * __up);
 bool_t xdr_longlong_t(XDR * __xdrs, quad_t * __llp);
 bool_t xdr_u_longlong_t(XDR * __xdrs, u_quad_t * __ullp);
-bool_t xdr_uint64_t(XDR * __xdrs, uint64_t * __up);
-#endif
-
-#ifdef _USE_GSSRPC
-#define xdr_uint32_t  xdr_u_int32
-bool_t xdr_int64_t(XDR * __xdrs, uint64_t * __up);
 #endif
 
 #ifdef _HAVE_GSSAPI
