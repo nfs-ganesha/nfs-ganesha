@@ -58,8 +58,7 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
 #ifdef _USE_SHARED_FSAL
   fsal_status_t fsal_status ;
 
-  printf( "---> line=%u p_context->fsalid=%u\n", __LINE__, p_context->fsalid ) ;
-  printf( "---> line=%u p_filehandle=%u\n", __LINE__, p_filehandle->fsalid ) ;
+  printf( "---> FSAL_getattrs p_context=%u\n", p_context->fsalid ) ;
 
   fsal_status = fsal_functions.fsal_getattrs(p_filehandle, p_context, p_object_attributes);
 
@@ -143,7 +142,7 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
                                       char *fs_specific_options /* IN */ )
 {
 #ifdef _USE_SHARED_FSAL
-  printf( "---> line=%u p_export_context->fsalid=%u\n", __LINE__, p_export_context->fsalid ) ;
+  printf( "---> FSAL_BuildExportContext p_export_context->fsalid=%u\n", p_export_context->fsalid ) ;
 
   return fsal_functions.fsal_buildexportcontext(p_export_context, p_export_path,
                                                 fs_specific_options);
@@ -168,7 +167,7 @@ fsal_status_t FSAL_CleanUpExportContext(fsal_export_context_t * p_export_context
 fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 {
 #ifdef _USE_SHARED_FSAL
-  printf( "---> line=%u p_thr_context->fsalid=%u\n", __LINE__, p_thr_context->fsalid ) ;
+  printf( "---> FSAL_InitClientContext p_thr_context->fsalid=%u\n", p_thr_context->fsalid ) ;
 
   return fsal_functions.fsal_initclientcontext(p_thr_context);
 #else
@@ -184,8 +183,7 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
                                     fsal_count_t nb_alt_groups /* IN */ )
 {
 #ifdef _USE_SHARED_FSAL
-  printf( "---> line=%u p_export_context->fsalid=%u\n", __LINE__, p_export_context->fsalid ) ;
-  printf( "---> line=%u p_thr_context->fsalid=%u\n", __LINE__, p_thr_context->fsalid ) ;
+  printf( "---> FSAL_GetClientContext p_export_context->fsalid=%u\n", p_export_context->fsalid ) ;
 
   return fsal_functions.fsal_getclientcontext(p_thr_context, p_export_context, uid, gid,
                                               alt_groups, nb_alt_groups);
@@ -516,8 +514,7 @@ fsal_status_t FSAL_static_fsinfo(fsal_handle_t * p_filehandle,  /* IN */
 #ifdef _USE_SHARED_FSAL
   fsal_status_t fsal_status ;
 
-  printf( "---> line=%u p_filehandle->fsalid=%u\n", __LINE__, p_filehandle->fsalid ) ;
-  printf( "---> line=%u p_context->fsalid=%u\n", __LINE__, p_context->fsalid ) ;
+  printf( "---> FSAL_static_fsinfo p_filehandle->fsalid=%u\n", p_filehandle->fsalid ) ;
 
   fsal_status = fsal_functions.fsal_static_fsinfo(p_filehandle, p_context, p_staticinfo);
 
@@ -761,7 +758,7 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
 #ifdef _USE_SHARED_FSAL
   fsal_status_t fsal_status ;
 
-  printf( "---> line=%u p_context->fsalid=%u\n", __LINE__, p_context->fsalid ) ;
+  printf( "---> FSAL_lookupPath p_context->fsalid=%u\n", p_context->fsalid ) ;
 
   fsal_status = fsal_functions.fsal_lookuppath(p_path, p_context, object_handle,
                                                p_object_attributes);
@@ -1034,7 +1031,7 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
                    fsal_status_t * status)
 {
 #ifdef _USE_SHARED_FSAL
-  printf( "---> line=%u handle1->fsalid=%u\n", __LINE__, handle1->fsalid ) ;
+  printf( "--->  handlecmp handle1->fsalid=%u\n",handle1->fsalid ) ;
 
   return fsal_functions.fsal_handlecmp(handle1, handle2, status);
 #else
@@ -1060,7 +1057,7 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
 unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie)
 {
 #ifdef _USE_SHARED_FSAL
-  printf( "---> line=%u p_handle->fsalid=%u\n", __LINE__, p_handle->fsalid ) ;
+  printf( "---> FSAL_Handle_to_RBTIndex=%u p_handle->fsalid=%u\n", p_handle->fsalid ) ;
 
   return fsal_functions.fsal_handle_to_rbtindex(p_handle, cookie);
 #else
@@ -1073,7 +1070,7 @@ unsigned int FSAL_Handle_to_Hash_both(fsal_handle_t * p_handle, unsigned int coo
 {
 
 #ifdef _USE_SHARED_FSAL
-  printf( "---> line=%u p_handle->fsalid=%u\n", __LINE__, p_handle->fsalid ) ;
+  printf( "--->  FSAL_Handle_to_Hash_both p_handle->fsalid=%u\n", p_handle->fsalid ) ;
 
   if( fsal_functions.fsal_handle_to_hash_both != NULL ) 
     return fsal_functions.fsal_handle_to_hash_both( p_handle, cookie, alphabet_len, index_size, phashval, prbtval) ;
@@ -1112,7 +1109,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
 #ifdef _USE_SHARED_FSAL
   fsal_status_t fsal_status ;
 
-  printf( "---> line=%u p_expcontext->fsalid=%u\n", __LINE__, p_expcontext->fsalid ) ;
+  printf( "---> FSAL_DigestHandle p_expcontext->fsalid=%u\n", p_expcontext->fsalid ) ;
 
  
   fsal_status =  fsal_functions.fsal_digesthandle(p_expcontext, output_type, p_in_fsal_handle,
@@ -1136,7 +1133,7 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
 #ifdef _USE_SHARED_FSAL
   fsal_status_t fsal_status ;
 
-  printf( "---> line=%u p_expcontext->fsalid=%u\n", __LINE__, p_expcontext->fsalid ) ;
+  printf( "---> FSAL_ExpandHandle=%u p_expcontext->fsalid=%u\n", p_expcontext->fsalid ) ;
 
   fsal_status = fsal_functions.fsal_expandhandle(p_expcontext, in_type, in_buff,
                                                  p_out_fsal_handle);

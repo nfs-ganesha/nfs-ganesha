@@ -1480,6 +1480,7 @@ void *worker_thread(void *IndexArg)
   LogFullDebug(COMPONENT_DISPATCH,
                "NFS WORKER #%lu: Initialization of thread's credential",
                index);
+  pmydata->thread_fsal_context.fsalid = 42 ; /** @todo BUGAZOMEU : Gerer mieux le FSAL client ctx si plusieurs FSAL */
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&pmydata->thread_fsal_context)))
     {
       /* Failed init */
