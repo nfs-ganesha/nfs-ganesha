@@ -551,19 +551,31 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 
   /* Check version. */
   if(gc->gc_v != RPCSEC_GSS_VERSION)
-    ret_freegc(AUTH_BADCRED);
+    {
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: bad GSS version.");
+      ret_freegc(AUTH_BADCRED);
+    }
 
   /* Check RPCSEC_GSS service. */
   if(gc->gc_svc != RPCSEC_GSS_SVC_NONE &&
      gc->gc_svc != RPCSEC_GSS_SVC_INTEGRITY && gc->gc_svc != RPCSEC_GSS_SVC_PRIVACY)
-    ret_freegc(AUTH_BADCRED);
+    {
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: bad GSS service (krb5, krb5i, krb5p)");
+      ret_freegc(AUTH_BADCRED);
+    }
 
   /* Check sequence number. */
   if(gd->established)
     {
+      /* Sequence should be less than the max sequence number */
       if(gc->gc_seq > MAXSEQ)
-        ret_freegc(RPCSEC_GSS_CTXPROBLEM);
+	{
+	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: max sequence number exceeded.");
+	  ret_freegc(RPCSEC_GSS_CTXPROBLEM);
+	}
 
+      /* Check the difference between the current sequence number 
+       * and the last sequence number. */
       if((offset = gd->seqlast - gc->gc_seq) < 0)
         {
           gd->seqlast = gc->gc_seq;
@@ -575,6 +587,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
               || (gd->seqmask & (1 << (unsigned int)offset)))
         {
           *no_dispatch = TRUE;
+	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: offset greater than window allows");
           ret_freegc(RPCSEC_GSS_CTXPROBLEM);
         }
       gd->seq = gc->gc_seq;
@@ -600,18 +613,28 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
     case RPCSEC_GSS_CONTINUE_INIT:
       LogFullDebug(COMPONENT_RPCSEC_GSS, "Reached RPCSEC_GSS_CONTINUE_INIT:");
       if(rqst->rq_proc != NULLPROC)
-        ret_freegc(AUTH_FAILED);        /* XXX ? */
+	{
+	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: request proc != NULL during INIT request");
+	  ret_freegc(AUTH_FAILED);        /* XXX ? */
+	}
 
       if(!Svcauth_gss_acquire_cred())
-        ret_freegc(AUTH_FAILED);
+	{
+	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Can't acquire credentials from RPC request.");
+	  ret_freegc(AUTH_FAILED);
+	}
 
       if(!Svcauth_gss_accept_sec_context(rqst, &gr))
-        ret_freegc(AUTH_REJECTEDCRED);
+	{
+	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Can't accept the security context.");
+	  ret_freegc(AUTH_REJECTEDCRED);
+	}
 
       if(!Svcauth_gss_nextverf(rqst, htonl(gr.gr_win)))
         {
           gss_release_buffer(&min_stat, &gr.gr_token);
           Mem_Free(gr.gr_ctx.value);
+	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Checksum verification failed");
           ret_freegc(AUTH_FAILED);
         }
       *no_dispatch = TRUE;
@@ -636,7 +659,10 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       Mem_Free(gr.gr_ctx.value);
 
       if(!call_stat)
-        ret_freegc(AUTH_FAILED);
+	{
+	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: svc_sendreply failed.");
+	  ret_freegc(AUTH_FAILED);
+	}
 
       if(gr.gr_major == GSS_S_COMPLETE)
         {
@@ -653,10 +679,16 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
     case RPCSEC_GSS_DATA:
       LogFullDebug(COMPONENT_RPCSEC_GSS, "Reached RPCSEC_GSS_DATA:");
       if(!Svcauth_gss_validate(rqst, gd, msg))
-        ret_freegc(RPCSEC_GSS_CREDPROBLEM);
+	{
+	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Couldn't validate request.");
+	  ret_freegc(RPCSEC_GSS_CREDPROBLEM);
+	}
 
       if(!Svcauth_gss_nextverf(rqst, htonl(gc->gc_seq)))
-        ret_freegc(AUTH_FAILED);
+	{
+	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Checksum verification failed.");
+	  ret_freegc(AUTH_FAILED);
+	}
       break;
 
     case RPCSEC_GSS_DESTROY:
@@ -668,7 +700,10 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
         ret_freegc(RPCSEC_GSS_CREDPROBLEM);
 
       if(!Svcauth_gss_nextverf(rqst, htonl(gc->gc_seq)))
-        ret_freegc(AUTH_FAILED);
+	{
+	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Checksum verification failed.");
+	  ret_freegc(AUTH_FAILED);
+	}
 
       *no_dispatch = TRUE;
 
@@ -683,7 +718,10 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
         LogFullDebug(COMPONENT_RPCSEC_GSS, "Gss_ctx_Hash_Del OK");
 
       if(!Svcauth_gss_release_cred())
-        ret_freegc(AUTH_FAILED);
+	{
+	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Failed to release credentials.");
+	  ret_freegc(AUTH_FAILED);
+	}
 
       if(rqst->rq_xprt->xp_auth)
         SVCAUTH_DESTROY(rqst->rq_xprt->xp_auth);
@@ -692,6 +730,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       break;
 
     default:
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Request is not INIT, INIT_CONTINUE, DATA, OR DESTROY.");
       ret_freegc(AUTH_REJECTEDCRED);
       break;
     }
