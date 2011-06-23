@@ -359,8 +359,8 @@ AM_CONDITIONAL(USE_FSAL_ZFS,      test "$FSAL" = "ZFS")
 AM_CONDITIONAL(USE_FSAL_VFS,      test "$FSAL" = "VFS")
 
 # NFSv4.0 NFSv4.1 switch
-AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  (default=0)], [specify if server support NFSv4 or NFSv4.1] ),
-             NFS4_MINOR="$withval", NFS4_MINOR="0" )
+AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  (default=1)], [specify if server support NFSv4 or NFSv4.1] ),
+             NFS4_MINOR="$withval", NFS4_MINOR="1" )
 
 AM_CONDITIONAL(USE_NFS4_1, test "$NFS4_MINOR" = "1")
 AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")
