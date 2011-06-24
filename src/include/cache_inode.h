@@ -59,7 +59,9 @@
 #include "config_parsing.h"
 #include "nfs23.h"
 #include "nfs4.h"
-
+#ifdef _USE_NLM
+#include "nlm4.h"
+#endif
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
 
@@ -323,6 +325,8 @@ typedef struct cache_entry__
       void *pentry_content;                                          /**< Entry in file content cache (NULL if not cached)     */
       void *pstate_head;                                             /**< Pointer used for the head of the state chain         */
       void *pstate_tail;                                             /**< Current pointer for the state chain                  */
+      void *lock_list_head;                                          /**< Pointer used for the head of the lock list           */
+      void *lock_list_tail;                                          /**< Current pointer for the lock list                    */
       cache_inode_unstable_data_t unstable_data;                     /**< Unstable data, for use with WRITE/COMMIT             */
     } file;                                   /**< file related filed     */
 
@@ -395,11 +399,36 @@ typedef struct cache_inode_open_owner_name__
   char owner_val[MAXNAMLEN];
 } cache_inode_open_owner_name_t;
 
+typedef enum cache_lock_owner_type_t
+{
+  CACHE_LOCK_OWNER_NLM,
+  CACHE_LOCK_OWNER_NFSV4
+} cache_lock_owner_type_t;
+
+/* Undistinguished lock owner type */
+typedef struct cache_lock_owner_t
+{
+  cache_lock_owner_type_t clo_type;
+} cache_lock_owner_t;
+
+#ifdef _USE_NLM
+typedef struct cache_inode_nlm_owner_t
+{
+  cache_lock_owner_type_t owner_type; /* must start with this field so locking can distinguish types */
+  int32_t clo_nlm_svid;
+  int     clo_nlm_caller_name_len;
+  int     clo_nlm_oh_len;
+  char    clo_nlm_oh[MAX_NETOBJ_SZ];
+  char    clo_nlm_caller_name[LM_MAXSTRLEN];
+} cache_inode_nlm_owner_t;
+#endif
+
 typedef struct cache_inode_open_owner__
 {
+  cache_lock_owner_type_t owner_type; /* must start with this field so locking can distinguish types */
   clientid4 clientid;
   unsigned int owner_len;
-  char owner_val[MAXNAMLEN];
+  char owner_val[NFS4_OPAQUE_LIMIT];
   unsigned int confirmed;
   unsigned int seqid;
   pthread_mutex_t lock;
@@ -996,32 +1025,6 @@ typedef enum cache_blocking_t
   CACHE_NLM_BLOCKING,
   CACHE_NFSV4_BLOCKING
 } cache_blocking_t;
-
-typedef enum cache_lock_owner_type_t
-{
-  CACHE_LOCK_OWNER_NLM,
-  CACHE_LOCK_OWNER_NFSV4
-} cache_lock_owner_type_t;
-
-typedef struct cache_lock_owner_nlm_t
-{
-  int32_t clo_nlm_svid;
-  int     clo_nlm_caller_name_len;
-  int     clo_nlm_oh_len;
-  char    clo_nlm_oh[1024];
-  char    clo_nlm_caller_name[1024];
-} cache_lock_owner_nlm_t;
-
-typedef struct cache_lock_owner_t
-{
-  cache_lock_owner_type_t clo_type;
-  union clo_owner__
-  {
-    cache_lock_owner_nlm_t   clo_owner_nlm;
-    cache_inode_open_owner_t clo_owner_nfsv4;
-  } clo_owner;
-  
-} cache_lock_owner_t;
 
 typedef enum cache_lock_t
 {

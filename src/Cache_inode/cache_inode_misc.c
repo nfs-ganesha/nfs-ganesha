@@ -461,6 +461,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       pentry->object.file.pentry_content = NULL;        /* Not yet a File Content entry associated with this entry */
       pentry->object.file.pstate_head = NULL;   /* No associated client yet                                */
       pentry->object.file.pstate_tail = NULL;   /* No associated client yet                                */
+      pentry->object.file.lock_list_head = NULL;   /* No associated locks yet */
+      pentry->object.file.lock_list_tail = NULL;   /* No associated locks yet */
       pentry->object.file.open_fd.fileno = 0;
       pentry->object.file.open_fd.last_op = 0;
       pentry->object.file.open_fd.openflags = 0;

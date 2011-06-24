@@ -58,7 +58,7 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
 libsupport_la_LIBADD         =   ../RPCAL/librpcal.la 
 
 if USE_NLM
-libsupport_la_SOURCES += nlm_util.c nlm_async.c nsm.c
+libsupport_la_SOURCES += nlm_util.c nlm_async.c nsm.c nlm_owner.c
 endif
 
 if USE_NFS4_1

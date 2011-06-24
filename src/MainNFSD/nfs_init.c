@@ -520,6 +520,19 @@ void nfs_set_param_default()
   nfs_param.open_owner_param.hash_param.val_to_str = display_open_owner_val;
   nfs_param.open_owner_param.hash_param.name = "Open Owner";
 
+#ifdef _USE_NLM
+  /* NLM Owner hash */
+  nfs_param.nlm_owner_param.hash_param.index_size = PRIME_STATE_ID;
+  nfs_param.nlm_owner_param.hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
+  nfs_param.nlm_owner_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
+  nfs_param.nlm_owner_param.hash_param.hash_func_key = nlm_owner_value_hash_func;
+  nfs_param.nlm_owner_param.hash_param.hash_func_rbt = nlm_owner_rbt_hash_func;
+  nfs_param.nlm_owner_param.hash_param.compare_key = compare_nlm_owner_key;
+  nfs_param.nlm_owner_param.hash_param.key_to_str = display_nlm_owner_key;
+  nfs_param.nlm_owner_param.hash_param.val_to_str = display_nlm_owner_val;
+  nfs_param.nlm_owner_param.hash_param.name = "Open Owner";
+#endif
+
   /* Cache inode parameters : hash table */
   nfs_param.cache_layers_param.cache_param.hparam.index_size = PRIME_CACHE_INODE;
   nfs_param.cache_layers_param.cache_param.hparam.alphabet_length = 10;      /* Buffer seen as a decimal polynom */
@@ -1790,6 +1803,18 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
     }
   LogInfo(COMPONENT_INIT,
           "NFSv4 Open Owner cache successfully initialized");
+
+#ifdef _USE_NLM
+  /* Init The NLM Owner cache */
+  LogDebug(COMPONENT_INIT, "Now building NLM Owner cache");
+  if(nfs4_Init_nlm_owner(nfs_param.nlm_owner_param) != 0)
+    {
+      LogFatal(COMPONENT_INIT,
+               "Error while initializing NLM Owner cache");
+    }
+  LogInfo(COMPONENT_INIT,
+          "NLM Owner cache successfully initialized");
+#endif
 
 #ifdef _USE_NFS4_1
   LogDebug(COMPONENT_INIT, "Now building NFSv4 Session Id cache");

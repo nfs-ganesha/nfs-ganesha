@@ -57,6 +57,88 @@
 #include <pthread.h>
 #include <string.h>
 
+typedef struct cache_lock_entry_t
+{
+  struct cache_lock_entry_t * cle_next;
+  struct cache_lock_entry_t * cle_prev;
+  cache_blocking_t            cle_blocked;
+  cache_lock_owner_type_t     cle_type;
+  cache_inode_nlm_owner_t   * cle_owner_nlm;
+  cache_inode_open_owner_t  * cle_owner_nfsv4;
+  cache_lock_desc_t           cle_lock;
+  void                      * cle_pcookie;
+  int                         cle_cookie_size;
+  granted_callback_t          cle_granted_callback;
+} cache_lock_entry_t;
+
+cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
+                                      cache_lock_owner_t   * powner,
+                                      cache_lock_desc_t    * lock,
+                                      cache_lock_owner_t   * holder,   /* owner that holds conflicting lock */
+                                      cache_lock_desc_t    * conflict, /* description of conflicting lock */
+                                      cache_inode_client_t * pclient,
+                                      fsal_op_context_t    * pcontext,
+                                      cache_inode_status_t * pstatus)
+{
+  *pstatus = CACHE_INODE_LOCK_CONFLICT;
+  return *pstatus;
+}
+
+cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
+                                      void                 * pcookie,
+                                      int                    cookie_size,
+                                      cache_blocking_t       blocking,
+                                      granted_callback_t     granted_callback,
+                                      bool_t                 reclaim,
+                                      cache_lock_owner_t   * powner,
+                                      cache_lock_desc_t    * lock,
+                                      cache_lock_owner_t   * holder,   /* owner that holds conflicting lock */
+                                      cache_lock_desc_t    * conflict, /* description of conflicting lock */
+                                      cache_inode_client_t * pclient,
+                                      fsal_op_context_t    * pcontext,
+                                      cache_inode_status_t * pstatus)
+{
+  cache_lock_entry_t *new_lock = (void *)Mem_Alloc_Label(sizeof(*new_lock), "cache_lock_entry_t");
+  *pstatus = CACHE_INODE_LOCK_CONFLICT;
+  return *pstatus;
+}
+
+cache_inode_status_t cache_inode_unlock(cache_entry_t        * pentry,
+                                        void                 * pcookie,
+                                        int                    cookie_size,
+                                        cache_lock_owner_t   * powner,
+                                        cache_lock_desc_t    * lock,
+                                        cache_inode_client_t * pclient,
+                                        fsal_op_context_t    * pcontext,
+                                        cache_inode_status_t * pstatus)
+{
+  *pstatus = CACHE_INODE_NOT_SUPPORTED;
+  return *pstatus;
+}
+
+cache_inode_status_t cache_inode_cancel(cache_entry_t        * pentry,
+                                        cache_lock_owner_t   * powner,
+                                        void                 * pcookie,
+                                        int                    cookie_size,
+                                        cache_lock_desc_t    * lock,
+                                        cache_inode_client_t * pclient,
+                                        fsal_op_context_t    * pcontext,
+                                        cache_inode_status_t * pstatus)
+{
+  *pstatus = CACHE_INODE_NOT_SUPPORTED;
+  return *pstatus;
+}
+
+cache_inode_status_t cache_inode_notify(cache_entry_t        * pentry,
+                                        cache_lock_owner_t   * powner,
+                                        cache_inode_client_t * pclient,
+                                        fsal_op_context_t    * pcontext,
+                                        cache_inode_status_t * pstatus)
+{
+  *pstatus = CACHE_INODE_NOT_SUPPORTED;
+  return *pstatus;
+}
+
 #ifdef BUGAZOMEU
 static void cache_inode_lock_print(cache_entry_t * pentry)
 {
