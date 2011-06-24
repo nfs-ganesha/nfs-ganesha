@@ -190,8 +190,6 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
                             fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */
     )
 {
-
-  int rc, errsv;
   unsigned int i;
   fsal_status_t status;
   fsal_attrib_list_t attrs;

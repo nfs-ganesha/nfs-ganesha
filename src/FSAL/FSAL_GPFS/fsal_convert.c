@@ -524,7 +524,7 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MODE))
         {
             p_fsalattr_out->mode = unix2fsal_mode(p_buffstat->st_mode);
-            LogFullDebug(COMPONENT_FSAL, "mode = %llu", p_fsalattr_out->mode);
+            LogFullDebug(COMPONENT_FSAL, "mode = %llu", (long long unsigned int) p_fsalattr_out->mode);
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_NUMLINKS))
         {
