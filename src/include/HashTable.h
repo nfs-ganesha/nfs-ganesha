@@ -122,7 +122,7 @@ typedef enum hashtable_set_how__
 /* @} */
 
 /* How many character used to display a key or value */
-#define HASHTABLE_DISPLAY_STRLEN 1024
+#define HASHTABLE_DISPLAY_STRLEN 8192
 
 /* Possible errors */
 #define HASHTABLE_SUCCESS                  0
