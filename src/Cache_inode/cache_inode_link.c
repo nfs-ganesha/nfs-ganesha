@@ -314,33 +314,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
     }
 
   /* Update cached attributes */
-  switch (pentry_src->internal_md.type)
-    {
-    case REGULAR_FILE:
-      pentry_src->object.file.attributes = link_attributes;
-      break;
-
-    case SYMBOLIC_LINK:
-      pentry_src->object.symlink.attributes = link_attributes;
-      break;
-
-    case CHARACTER_FILE:
-    case BLOCK_FILE:
-    case SOCKET_FILE:
-    case FIFO_FILE:
-      pentry_src->object.special_obj.attributes = link_attributes;
-      break;
-
-    case UNASSIGNED:
-    case RECYCLED:
-    case FS_JUNCTION:
-    case DIR_BEGINNING:
-    case DIR_CONTINUE:
-      LogCrit(COMPONENT_CACHE_INODE,
-              "WARNING: Major type incoherency line %d in file %s",
-              __LINE__, __FILE__);
-      break;
-    }
+  cache_inode_set_attributes(pentry_src, &link_attributes);
 
   /* Add the new entry in the destination directory */
   if(cache_inode_add_cached_dirent(pentry_dir_dest,

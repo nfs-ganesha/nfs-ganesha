@@ -182,6 +182,29 @@ static void nfs4_release_acldata_key(hash_buffer_t *pkey)
   V(fsal_acl_key_pool_mutex);
  }
 
+void nfs4_acl_entry_inc_ref(fsal_acl_t *pacl)
+{
+  if(!pacl)
+    return;
+
+  /* Increase ref counter */
+  P_w(&pacl->lock);
+  pacl->ref++;
+  LogDebug(COMPONENT_NFS_V4_ACL, "nfs4_acl_entry_inc_ref: (acl, ref) = (%p, %u)", pacl, pacl->ref);
+  V_w(&pacl->lock);
+}
+
+/* Should be called with lock held. */
+static void nfs4_acl_entry_dec_ref(fsal_acl_t *pacl)
+{
+  if(!pacl)
+    return;
+
+  /* Decrease ref counter */
+  pacl->ref--;
+  LogDebug(COMPONENT_NFS_V4_ACL, "nfs4_acl_entry_dec_ref: (acl, ref) = (%p, %u)", pacl, pacl->ref);
+}
+
 fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata, fsal_acl_status_t *pstatus)
 {
   fsal_acl_t *pacl = NULL;
@@ -218,12 +241,6 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata, fsal_acl_status_t *pst
 
       nfs4_ace_free(pacldata->aces);
 
-      /* Increase reference counter */
-      P_w(&pacl->lock);
-      pacl->ref++;
-      LogDebug(COMPONENT_NFS_V4_ACL, "nfs4_acl_new_entry: (acl, ref) = (%p, %u)", pacl, pacl->ref);
-      V_w(&pacl->lock);
-
       return pacl;
     }
 
@@ -246,6 +263,7 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata, fsal_acl_status_t *pst
 
   pacl->naces = pacldata->naces;
   pacl->aces = pacldata->aces;
+  pacl->ref = 0;
 
   /* Build the value */
   buffvalue.pdata = (caddr_t) pacl;
@@ -291,21 +309,9 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata, fsal_acl_status_t *pst
 
         nfs4_release_acldata_key(&buffkey);
 
-        /* Increase reference counter */
-        P_w(&pacl->lock);
-        pacl->ref++;
-        LogDebug(COMPONENT_NFS_V4_ACL, "nfs4_acl_new_entry: (acl, ref) = (%p, %u)", pacl, pacl->ref);
-        V_w(&pacl->lock);
-
         return pacl;
       }
     }
-
-  /* Increase reference counter */
-  P_w(&pacl->lock);
-  pacl->ref++;
-  LogDebug(COMPONENT_NFS_V4_ACL, "nfs4_acl_new_entry: (acl, ref) = (%p, %u)", pacl, pacl->ref);
-  V_w(&pacl->lock);
 
   return pacl;
 }
@@ -321,10 +327,9 @@ void nfs4_acl_release_entry(fsal_acl_t *pacl, fsal_acl_status_t *pstatus)
   *pstatus = NFS_V4_ACL_SUCCESS;
 
   P_w(&pacl->lock);
+  nfs4_acl_entry_dec_ref(pacl);
   if(pacl->ref)
     {
-      pacl->ref--;
-      LogDebug(COMPONENT_NFS_V4_ACL, "nfs4_acl_release_entry: (acl, ref) = (%p, %u)", pacl, pacl->ref);
       V_w(&pacl->lock);
       return;
     }
@@ -407,11 +412,13 @@ static void nfs4_acls_test()
     }
 
   pacl = nfs4_acl_new_entry(&acldata, &status);
+  nfs4_acl_entry_inc_ref(pacl);
   P_r(&pacl->lock);
   LogDebug(COMPONENT_NFS_V4_ACL, "pacl = %p, ref = %u, status = %u", pacl, pacl->ref, status);
   V_r(&pacl->lock);
 
   pacl = nfs4_acl_new_entry(&acldata, &status);
+  nfs4_acl_entry_inc_ref(pacl);
   P_r(&pacl->lock);
   LogDebug(COMPONENT_NFS_V4_ACL, "re-access: pacl = %p, ref = %u, status = %u", pacl, pacl->ref, status);
   V_r(&pacl->lock);
@@ -419,11 +426,6 @@ static void nfs4_acls_test()
   nfs4_acl_release_entry(pacl, &status);
   P_r(&pacl->lock);
   LogDebug(COMPONENT_NFS_V4_ACL, "release: pacl = %p, ref = %u, status = %u", pacl, pacl->ref, status);
-  V_r(&pacl->lock);
-
-  nfs4_acl_release_entry(pacl, &status);
-  P_r(&pacl->lock);
-  LogDebug(COMPONENT_NFS_V4_ACL, "re-release: pacl = %p, ref = %u, status = %u", pacl, pacl->ref, status);
   V_r(&pacl->lock);
 
   nfs4_acl_release_entry(pacl, &status);
