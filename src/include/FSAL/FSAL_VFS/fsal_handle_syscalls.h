@@ -49,7 +49,7 @@
 #define __O_PATH       010000000
 #define O_PATH         (__O_PATH | O_NOACCESS)
 
-#define VFS_HANDLE_LEN 40
+#define VFS_HANDLE_LEN 10
 typedef struct vfs_file_handle {
         unsigned int handle_bytes;
         int handle_type;
