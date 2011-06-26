@@ -993,7 +993,7 @@ fsal_status_t fsal_get_xstat_by_handle(fsal_op_context_t * p_context,
   dirfd = p_context->export_context->mount_root_fd;
 
   /* Initialize acl header so that GPFS knows what we want. */
-  pacl_gpfs = p_buffxstat->buffacl;
+  pacl_gpfs = (gpfs_acl_t *) p_buffxstat->buffacl;
   pacl_gpfs->acl_level = 0;
   pacl_gpfs->acl_version = GPFS_ACL_VERSION_NFS4;
   pacl_gpfs->acl_type = GPFS_ACL_TYPE_NFS4;
@@ -1030,10 +1030,10 @@ fsal_status_t fsal_set_xstat_by_handle(fsal_op_context_t * p_context,
 
   dirfd = p_context->export_context->mount_root_fd;
 
-  xstatarg.attr_valid = XATTR_STAT;
+  xstatarg.attr_valid = attr_valid;
   xstatarg.mountdirfd = dirfd;
   xstatarg.handle = &p_handle->data.handle;
-  xstatarg.acl = NULL;
+  xstatarg.acl = (gpfs_acl_t *) p_buffxstat->buffacl;
   xstatarg.attr_changed = attr_changed;
   xstatarg.buf = &p_buffxstat->buffstat;
 

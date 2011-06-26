@@ -474,6 +474,9 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
 
     p_buffstat = &p_buffxstat->buffstat;
 
+    /* Intialize acl. */
+    p_fsalattr_out->acl = NULL;
+
     /* Fills the output struct */
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
         {
@@ -637,4 +640,47 @@ static int gpfs_acl_2_fsal_acl(fsal_attrib_list_t * p_object_attributes,
   p_object_attributes->acl = pacl;
 
   return ERR_FSAL_NO_ERROR;
+}
+
+/* Covert FSAL ACLs to GPFS NFS4 ACLs. */
+fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t *p_fsalacl, gpfsfsal_xstat_t *p_buffxstat)
+{
+  int i;
+  fsal_ace_t *pace;
+  gpfs_acl_t *p_gpfsacl;
+
+  p_gpfsacl = (gpfs_acl_t *) p_buffxstat->buffacl;
+
+  p_gpfsacl->acl_level   =  0;
+  p_gpfsacl->acl_version =  GPFS_ACL_VERSION_NFS4;
+  p_gpfsacl->acl_type    =  GPFS_ACL_TYPE_NFS4;
+  p_gpfsacl->acl_nace = p_fsalacl->naces;
+  p_gpfsacl->acl_len = ((int)(signed long)&(((gpfs_acl_t *) 0)->ace_v1)) + p_gpfsacl->acl_nace * sizeof(gpfs_ace_v4_t);
+
+  for(pace = p_fsalacl->aces, i = 0; pace < p_fsalacl->aces + p_fsalacl->naces; pace++, i++)
+    {
+      p_gpfsacl->ace_v4[i].aceType = pace->type;
+      p_gpfsacl->ace_v4[i].aceFlags = pace->flag;
+      p_gpfsacl->ace_v4[i].aceIFlags = pace->iflag;
+      p_gpfsacl->ace_v4[i].aceMask = pace->perm;
+
+      if(IS_FSAL_ACE_SPECIAL_ID(*pace))
+        p_gpfsacl->ace_v4[i].aceWho = pace->who.uid;
+      else
+        {
+          if(IS_FSAL_ACE_GROUP_ID(*pace))
+            p_gpfsacl->ace_v4[i].aceWho = pace->who.gid;
+          else
+            p_gpfsacl->ace_v4[i].aceWho = pace->who.uid;
+        }
+
+      LogDebug(COMPONENT_FSAL, "fsal_acl_2_gpfs_acl: gpfs ace: type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
+               p_gpfsacl->ace_v4[i].aceType, p_gpfsacl->ace_v4[i].aceFlags, p_gpfsacl->ace_v4[i].aceMask,
+               (p_gpfsacl->ace_v4[i].aceIFlags & FSAL_ACE_IFLAG_SPECIAL_ID) ? 1 : 0,
+               (p_gpfsacl->ace_v4[i].aceFlags & FSAL_ACE_FLAG_GROUP_ID) ? "gid" : "uid",
+               p_gpfsacl->ace_v4[i].aceWho);
+
+    }
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

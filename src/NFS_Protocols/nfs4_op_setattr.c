@@ -181,7 +181,8 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_OWNER) ||
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_GROUP) ||
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME) ||
-     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME))
+     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME) ||
+     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ACL))
     {
       /* Check for root access when using chmod */
       if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MODE))

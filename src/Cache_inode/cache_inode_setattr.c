@@ -49,6 +49,7 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "stuff_alloc.h"
+#include "nfs4_acls.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -312,6 +313,25 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
 
       if(result_attributes.asked_attributes & FSAL_ATTR_MTIME)
         p_object_attributes->mtime = result_attributes.mtime;
+    }
+  
+  if(result_attributes.asked_attributes & FSAL_ATTR_ACL)
+    {
+      LogDebug(COMPONENT_CACHE_INODE, "cache_inode_setattr: old acl = %p, new acl = %p",
+               p_object_attributes->acl, result_attributes.acl);
+
+      /* Release previous acl entry. */
+      if(p_object_attributes->acl)
+        {
+          fsal_acl_status_t status;
+          nfs4_acl_release_entry(p_object_attributes->acl, &status);
+          if(status != NFS_V4_ACL_SUCCESS)
+            LogEvent(COMPONENT_CACHE_INODE, "cache_inode_setattr: Failed to release old acl:"
+                     " status = %d", status);
+        }
+
+      /* Update with new acl entry. */
+      p_object_attributes->acl = result_attributes.acl;
     }
 
   /* Return the attributes as set */

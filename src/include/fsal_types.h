@@ -338,28 +338,6 @@ typedef fsal_uint_t fsal_aceperm_t;
 #define FSAL_ACE_SPECIAL_GROUP              2
 #define FSAL_ACE_SPECIAL_EVERYONE           3
 
-static struct {
-  char *string;
-  int   stringlen;
-  int type;
-} whostr_2_type_map[] = {
-  {
-    .string    = "OWNER@",
-    .stringlen = sizeof("OWNER@") - 1,
-    .type      = FSAL_ACE_SPECIAL_OWNER,
-  },
-  {
-    .string    = "GROUP@",
-    .stringlen = sizeof("GROUP@") - 1,
-    .type      = FSAL_ACE_SPECIAL_GROUP,
-  },
-  {
-    .string    = "EVERYONE@",
-    .stringlen = sizeof("EVERYONE@") - 1,
-    .type      = FSAL_ACE_SPECIAL_EVERYONE,
-  },
-};
-
 typedef struct fsal_ace__
 {
 

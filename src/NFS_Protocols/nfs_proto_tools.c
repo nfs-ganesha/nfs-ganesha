@@ -66,6 +66,30 @@
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 #include "nfs_proto_tools.h"
+#include "nfs4_acls.h"
+
+/* Define mapping of NFS4 who name and type. */
+static struct {
+  char *string;
+  int   stringlen;
+  int type;
+} whostr_2_type_map[] = {
+  {
+    .string    = "OWNER@",
+    .stringlen = sizeof("OWNER@") - 1,
+    .type      = FSAL_ACE_SPECIAL_OWNER,
+  },
+  {
+    .string    = "GROUP@",
+    .stringlen = sizeof("GROUP@") - 1,
+    .type      = FSAL_ACE_SPECIAL_GROUP,
+  },
+  {
+    .string    = "EVERYONE@",
+    .stringlen = sizeof("EVERYONE@") - 1,
+    .type      = FSAL_ACE_SPECIAL_EVERYONE,
+  },
+};
 
 /**
  *
@@ -495,7 +519,7 @@ static int nfs4_encode_acl_group_name(fsal_gid_t gid, char *attrvalsBuffer,
   u_int deltalen = 0;
 
   rc = gid2name(name, &gid);
-  LogDebug(COMPONENT_NFS_V4, "encode gid2name = %s, strlen = %d", name, strlen(name));
+  LogDebug(COMPONENT_NFS_V4, "encode gid2name = %s, strlen = %llu", name, (long long unsigned int)strlen(name));
 
   stringlen = strlen(name);
   if(stringlen % 4 == 0)
@@ -532,7 +556,7 @@ static int nfs4_encode_acl_user_name(int whotype, fsal_uid_t uid,
   else
     {
       rc = uid2name(name, &uid);
-      LogDebug(COMPONENT_NFS_V4, "econde uid2name = %s, strlen = %d", name, strlen(name));
+      LogDebug(COMPONENT_NFS_V4, "econde uid2name = %s, strlen = %llu", name, (long long unsigned int)strlen(name));
 
       stringlen = strlen(name);
       if(stringlen % 4 == 0)
@@ -690,7 +714,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   fattr4_maxlink maxlink;
   fattr4_homogeneous homogeneous;
   fattr4_aclsupport aclsupport;
-  fattr4_acl acl;
   fattr4_rdattr_error rdattr_error;
   fattr4_quota_avail_hard quota_avail_hard;
   fattr4_quota_avail_soft quota_avail_soft;
@@ -2982,6 +3005,129 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
     return FALSE;
 }
 
+static int nfs4_decode_acl_special_user(utf8string *utf8str, int *who)
+{
+  int i;
+
+  for (i = 0; i < FSAL_ACE_SPECIAL_EVERYONE; i++)
+    {
+      if(strncmp(utf8str->utf8string_val, whostr_2_type_map[i].string, utf8str->utf8string_len) == 0)
+        {
+          *who = whostr_2_type_map[i].type;
+          return 0;
+        }
+    }
+
+  return -1;
+}
+
+static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_int *LastOffset)
+{
+  fsal_acl_status_t status;
+  fsal_acl_data_t acldata;
+  fsal_ace_t *pace;
+  fsal_acl_t *pacl;
+  int len;
+  char buffer[MAXNAMLEN];
+  utf8string utf8buffer;
+  int who;
+
+  /* Decode number of ACEs. */
+  memcpy(&(acldata.naces), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(u_int));
+  acldata.naces = ntohl(acldata.naces);
+  LogDebug(COMPONENT_NFS_V4, "        SATTR: Number of ACEs = %u", acldata.naces);
+  *LastOffset += sizeof(u_int);
+
+  /* Allocate memory for ACEs. */
+  acldata.aces = (fsal_ace_t *)nfs4_ace_alloc(acldata.naces);
+  if(acldata.aces == NULL)
+    {
+      LogCrit(COMPONENT_NFS_V4, "        SATTR: Failed to allocate ACEs");
+      return -1;
+    }
+  else
+    memset(acldata.aces, 0, acldata.naces * sizeof(fsal_ace_t));
+
+  /* Decode ACEs. */
+  for(pace = acldata.aces; pace < acldata.aces + acldata.naces; pace++)
+    {
+      memcpy(&(pace->type), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(fsal_acetype_t));
+      pace->type = ntohl(pace->type);
+      LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE type = 0x%x", pace->type);
+      *LastOffset += sizeof(fsal_acetype_t);
+
+      memcpy(&(pace->flag), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(fsal_aceflag_t));
+      pace->flag = ntohl(pace->flag);
+      LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE flag = 0x%x", pace->flag);
+      *LastOffset += sizeof(fsal_aceflag_t);
+
+      memcpy(&(pace->perm), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(fsal_aceperm_t));
+      pace->perm = ntohl(pace->perm);
+      LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE perm = 0x%x", pace->perm);
+      *LastOffset += sizeof(fsal_aceperm_t);
+
+      /* Find out who type */
+
+      /* Convert name to uid or gid */
+      memcpy(&len, (char *)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(u_int));
+      len = ntohl(len);        /* xdr marshalling on fattr4 */
+      *LastOffset += sizeof(u_int);
+
+      memcpy(buffer, (char *)(Fattr->attr_vals.attrlist4_val + *LastOffset), len);
+      buffer[len] = '\0';
+
+      /* Do not forget that xdr_opaque are aligned on 32bit long words */
+      while((len % 4) != 0)
+        len += 1;
+
+      *LastOffset += len;
+
+      /* Decode users. */
+      LogDebug(COMPONENT_NFS_V4, "        SATTR: owner = %s, len = %d, type = %s", buffer, len,
+               GET_FSAL_ACE_WHO_TYPE(*pace));
+
+      utf8buffer.utf8string_val = buffer;
+      utf8buffer.utf8string_len = strlen(buffer);
+
+      if(nfs4_decode_acl_special_user(&utf8buffer, &who) == 0)  /* Decode special user. */
+        {
+          /* Clear group flag for special users */
+          pace->flag &= ~(FSAL_ACE_FLAG_GROUP_ID);
+          pace->iflag |= FSAL_ACE_IFLAG_SPECIAL_ID;
+          pace->who.uid = who;
+          LogDebug(COMPONENT_NFS_V4, "		  SATTR: ACE special who.uid = 0x%x", pace->who.uid);
+        }
+      else
+        {
+          if(pace->flag == FSAL_ACE_FLAG_GROUP_ID)  /* Decode group. */
+            {
+              utf82gid(&utf8buffer, &(pace->who.gid));
+              LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE who.gid = 0x%x", pace->who.gid);
+            }
+          else  /* Decode user. */
+            {
+              utf82uid(&utf8buffer, &(pace->who.uid));
+              LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE who.uid = 0x%x", pace->who.uid);
+            }
+        }
+    }
+
+  pacl = nfs4_acl_new_entry(&acldata, &status);
+  if(pacl == NULL)
+    {
+      LogCrit(COMPONENT_NFS_V4, "        SATTR: Failed to create a new entry for ACL");
+      return -1;
+    }
+  else
+     LogDebug(COMPONENT_NFS_V4, "        SATTR: Successfully created a new entry for ACL, status = %u", status);
+
+  /* Set new ACL */
+  pFSAL_attr->acl = pacl;
+  LogDebug(COMPONENT_NFS_V4, "        SATTR: new acl = %p", pacl);
+
+  return 0;
+}
+
 /**
  * 
  * nfs4_Fattr_To_FSAL_attr: Converts NFSv4 attributes buffer to a FSAL attributes structure.
@@ -3384,6 +3530,11 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           rdattr_error = ntohl(rdattr_error);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
 
+          break;
+
+        case FATTR4_ACL:
+          nfs4_decode_acl(pFSAL_attr, Fattr, &LastOffset);
+          pFSAL_attr->asked_attributes |= FSAL_ATTR_ACL;
           break;
 
         default:

@@ -89,8 +89,6 @@ static int display_fsal_acl_key(hash_buffer_t * p_val, char *outbuff)
 
 static int display_fsal_acl_val(hash_buffer_t * p_val, char *outbuff)
 {
-  fsal_acl_t *p_aclval = (fsal_acl_t *) p_val->pdata;
-
   return sprintf(outbuff, "not implemented");
 }
 

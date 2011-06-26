@@ -47,6 +47,8 @@ extern fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
 extern fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
                                                       fsal_attrib_list_t *p_fsalattr_out);
 
+extern fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t *p_fsalacl, gpfsfsal_xstat_t *p_buffxstat);
+
 /**
  * GPFSFSAL_getattrs:
  * Get attributes for the object specified by its filehandle.
@@ -382,11 +384,37 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
         }
     }
 
-  /* If there is any change in stat, send it down to file system. */
-  if(attr_valid == XATTR_STAT && attr_changed !=0)
+   /***********
+   *  ACL  *
+   ***********/
+
+  if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ACL))
+    {
+      if(p_attrib_set->acl)
+        {
+          attr_valid |= XATTR_ACL;
+          LogDebug(COMPONENT_FSAL, "setattr acl = %p", p_attrib_set->acl);
+
+          /* Convert FSAL ACL to GPFS NFS4 ACL. */
+          status = fsal_acl_2_gpfs_acl(p_attrib_set->acl, &buffxstat);
+
+          if(FSAL_IS_ERROR(status))
+            ReturnStatus(status, INDEX_FSAL_setattrs);
+        }
+      else
+        {
+          LogCrit(COMPONENT_FSAL, "setattr acl is NULL");
+          Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
+        }
+    }
+
+  /* If there is any change in stat or acl or both, send it down to file system. */
+  if((attr_valid == XATTR_STAT && attr_changed !=0) || attr_valid == XATTR_ACL)
     {
       /* Copy stat to be set. */
       buffxstat.buffstat = newbuffstat;
+
+      /* ACL is copied already. */
 
       status = fsal_set_xstat_by_handle(p_context,
                                         p_filehandle,
