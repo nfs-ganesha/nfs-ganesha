@@ -99,40 +99,40 @@ int display_nlm_owner_val(hash_buffer_t * pbuff, char *str)
   return display_nlm_owner((cache_inode_nlm_owner_t *)pbuff->pdata, str);
 }
 
-int compare_nlm_owner(cache_inode_nlm_owner_t *pkey1,
-                      cache_inode_nlm_owner_t *pkey2)
+int compare_nlm_owner(cache_inode_nlm_owner_t *powner1,
+                      cache_inode_nlm_owner_t *powner2)
 {
   if(isFullDebug(COMPONENT_OPEN_OWNER_HASH))
     {
       char str1[HASHTABLE_DISPLAY_STRLEN];
       char str2[HASHTABLE_DISPLAY_STRLEN];
 
-      display_nlm_owner(pkey1, str1);
-      display_nlm_owner(pkey2, str2);
+      display_nlm_owner(powner1, str1);
+      display_nlm_owner(powner2, str2);
       LogFullDebug(COMPONENT_OPEN_OWNER_HASH,
                    "compare_nlm_owners => {%s}|{%s}", str1, str2);
     }
 
-  if(pkey1 == NULL || pkey2 == NULL)
+  if(powner1 == NULL || powner2 == NULL)
     return 1;
 
-  if(pkey1->clo_nlm_svid != pkey2->clo_nlm_svid)
+  if(powner1->clo_nlm_svid != powner2->clo_nlm_svid)
     return 1;
 
-  if(pkey1->clo_nlm_oh_len != pkey2->clo_nlm_oh_len)
+  if(powner1->clo_nlm_oh_len != powner2->clo_nlm_oh_len)
     return 1;
 
-  if(memcmp(pkey1->clo_nlm_oh,
-            pkey2->clo_nlm_oh,
-            pkey1->clo_nlm_oh_len) != 0)
+  if(memcmp(powner1->clo_nlm_oh,
+            powner2->clo_nlm_oh,
+            powner1->clo_nlm_oh_len) != 0)
     return 1;
 
-  if(pkey1->clo_nlm_caller_name_len != pkey2->clo_nlm_caller_name_len)
+  if(powner1->clo_nlm_caller_name_len != powner2->clo_nlm_caller_name_len)
     return 1;
 
-  return memcmp(pkey1->clo_nlm_caller_name,
-                pkey2->clo_nlm_caller_name,
-                pkey1->clo_nlm_caller_name_len);
+  return memcmp(powner1->clo_nlm_caller_name,
+                powner2->clo_nlm_caller_name,
+                powner1->clo_nlm_caller_name_len);
 }
 
 int compare_nlm_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2)

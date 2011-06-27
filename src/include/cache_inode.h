@@ -61,6 +61,7 @@
 #include "nfs4.h"
 #ifdef _USE_NLM
 #include "nlm4.h"
+#include "nlm_list.h"
 #endif
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
@@ -325,8 +326,9 @@ typedef struct cache_entry__
       void *pentry_content;                                          /**< Entry in file content cache (NULL if not cached)     */
       void *pstate_head;                                             /**< Pointer used for the head of the state chain         */
       void *pstate_tail;                                             /**< Current pointer for the state chain                  */
-      void *lock_list_head;                                          /**< Pointer used for the head of the lock list           */
-      void *lock_list_tail;                                          /**< Current pointer for the lock list                    */
+      fsal_lock_support_t fsal_lock_support;                         /**< Type of lock support FSAL provides for this file     */
+      struct glist_head lock_list;                                   /**< Pointers for lock list                               */
+      pthread_mutex_t lock_list_mutex;                               /**< Mutex to protect lock list                           */
       cache_inode_unstable_data_t unstable_data;                     /**< Unstable data, for use with WRITE/COMMIT             */
     } file;                                   /**< file related filed     */
 
@@ -401,6 +403,7 @@ typedef struct cache_inode_open_owner_name__
 
 typedef enum cache_lock_owner_type_t
 {
+  CACHE_LOCK_OWNER_UNKNOWN,
   CACHE_LOCK_OWNER_NLM,
   CACHE_LOCK_OWNER_NFSV4
 } cache_lock_owner_type_t;
@@ -584,6 +587,8 @@ typedef union cache_inode_create_arg__
 #define CACHE_INODE_FSAL_DELAY            35
 #define CACHE_INODE_NAME_TOO_LONG         36
 #define CACHE_INODE_LOCK_CONFLICT         37
+#define CACHE_INODE_LOCK_BLOCKED          38
+#define CACHE_INODE_LOCK_DEADLOCK         39
 
 const char *cache_inode_err_str(int err);
 
@@ -1038,6 +1043,20 @@ typedef struct cache_lock_desc_t
   uint64_t     cld_offset;
   uint64_t     cld_length;
 } cache_lock_desc_t;
+
+/*
+typedef struct cache_lock_entry_t
+{
+  struct glist_head    cle_list;
+  cache_entry_t      * cle_pentry;
+  cache_blocking_t     cle_blocked;
+  cache_lock_owner_t * cle_owner;
+  cache_lock_desc_t    cle_lock;
+  void               * cle_pcookie;
+  int                  cle_cookie_size;
+  granted_callback_t   cle_granted_callback;
+} cache_lock_entry_t;
+*/
 
 typedef cache_inode_status_t (*granted_callback_t)(cache_entry_t        * pentry,
                                                    void                 * pcookie,
