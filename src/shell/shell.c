@@ -185,8 +185,8 @@ command_def_t shell_utils[] = {
  *        Barrier management.
  * ------------------------------------------*/
 
-#define P( _mutex_ ) pthread_mutex_lock( &_mutex_ )
-#define V( _mutex_ ) pthread_mutex_unlock( &_mutex_ )
+#define P_shell( _mutex_ ) pthread_mutex_lock( &_mutex_ )
+#define V_shell( _mutex_ ) pthread_mutex_unlock( &_mutex_ )
 
 /* variables for managing barriers */
 
@@ -209,17 +209,17 @@ static int nb_waiting_threads = 0;
 int shell_BarrierInit(int nb_threads)
 {
 
-  P(barrier_mutex);
+  P_shell(barrier_mutex);
 
   if(total_nb_threads == -1)
     {
       total_nb_threads = nb_threads;
-      V(barrier_mutex);
+      V_shell(barrier_mutex);
       return SHELL_SUCCESS;
     }
   else
     {
-      V(barrier_mutex);
+      V_shell(barrier_mutex);
       printf("ganeshell: Error: Barrier already initialized\n");
       return SHELL_ERROR;
     }
@@ -228,13 +228,13 @@ int shell_BarrierInit(int nb_threads)
 static int shell_BarrierWait()
 {
 
-  P(barrier_mutex);
+  P_shell(barrier_mutex);
 
   /* not used in a single thread environment */
 
   if(total_nb_threads == -1)
     {
-      V(barrier_mutex);
+      V_shell(barrier_mutex);
       return SHELL_ERROR;
     }
 
@@ -258,7 +258,7 @@ static int shell_BarrierWait()
 
   /* leaves the critical section */
 
-  V(barrier_mutex);
+  V_shell(barrier_mutex);
 
   return SHELL_SUCCESS;
 
