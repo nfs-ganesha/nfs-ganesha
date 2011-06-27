@@ -1174,9 +1174,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }
 #endif
 
-#ifdef _USE_SHARED_FSAL
-      pworker_data->thread_fsal_context.fsalid = 42 ;
-#endif
       rc = pworker_data->pfuncdesc->service_function(parg_nfs, 
 						     pexport, 
                                                      &pworker_data->thread_fsal_context, 
@@ -1486,7 +1483,6 @@ void *worker_thread(void *IndexArg)
                index);
 #ifdef _USE_SHARED_FSAL
   FSAL_SetId( 42 ) ;
-  pmydata->thread_fsal_context.fsalid = 42 ; /** @todo BUGAZOMEU : Gerer mieux le FSAL client ctx si plusieurs FSAL */
 #endif
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&pmydata->thread_fsal_context)))
     {
