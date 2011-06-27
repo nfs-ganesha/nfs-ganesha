@@ -1473,6 +1473,10 @@ void *worker_thread(void *IndexArg)
                index);
 #endif
 
+#ifdef _USE_SHARED_FSAL
+  FSAL_InitKey( ) ;
+#endif
+
   LogDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: my pthread id is %p",
            index, (caddr_t) pthread_self());
 
@@ -1481,6 +1485,7 @@ void *worker_thread(void *IndexArg)
                "NFS WORKER #%lu: Initialization of thread's credential",
                index);
 #ifdef _USE_SHARED_FSAL
+  FSAL_SetId( 42 ) ;
   pmydata->thread_fsal_context.fsalid = 42 ; /** @todo BUGAZOMEU : Gerer mieux le FSAL client ctx si plusieurs FSAL */
 #endif
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&pmydata->thread_fsal_context)))
