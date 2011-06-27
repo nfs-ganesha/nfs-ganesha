@@ -556,6 +556,7 @@ static inline int different_lock(cache_lock_desc_t *lock1, cache_lock_desc_t *lo
          (lock1->cld_length != lock2->cld_length);
 }
 
+#if 0
 static cache_lock_entry_t *get_overlapping_entry(cache_entry_t        * pentry,
                                                  cache_lock_owner_t   * powner,
                                                  cache_lock_desc_t    * plock,
@@ -598,19 +599,6 @@ static cache_lock_entry_t *get_overlapping_entry(cache_entry_t        * pentry,
     }
 
   return NULL;
-}
-
-#if 0
-cache_lock_entry_t *nlm_overlapping_entry(struct nlm4_lock * nlm_lock, int exclusive)
-{
-  cache_lock_entry_t *found_entry;
-
-  P(pentry->object.file.lock_list_mutex);
-  found_entry = get_overlapping_entry(nlm_lock, exclusive);
-  lock_entry_inc_ref(found_entry);
-  V(pentry->object.file.lock_list_mutex);
-
-  return nlm_entry;
 }
 #endif
 
@@ -1182,7 +1170,7 @@ static void do_nlm_grant_blocked_locks(void *arg)
         }
       nlm_lock.cle_lock.cld_offset = nlm_entry->cle_lock.cld_offset;
       nlm_lock.cle_lock.cld_length = nlm_entry->arg.alock.cle_lock.cld_length;
-      nlm_entry_overlap = get_nlm_overlapping_entry(&nlm_lock, nlm_entry->arg.exclusive);
+      nlm_entry_overlap = get_overlapping_entry(&nlm_lock, nlm_entry->arg.exclusive);
       netobj_free(&nlm_lock.fh);
       if(nlm_entry_overlap)
         {
@@ -1346,26 +1334,56 @@ void copy_conflict(cache_lock_entry_t   * found_entry,
 
 cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
                                       cache_lock_owner_t   * powner,
-                                      cache_lock_desc_t    * lock,
+                                      cache_lock_desc_t    * plock,
                                       cache_lock_owner_t   * holder,   /* owner that holds conflicting lock */
                                       cache_lock_desc_t    * conflict, /* description of conflicting lock */
                                       cache_inode_client_t * pclient,
                                       fsal_op_context_t    * pcontext,
                                       cache_inode_status_t * pstatus)
 {
+  struct glist_head *glist;
   cache_lock_entry_t *found_entry;
+  uint64_t found_entry_end, plock_end = lock_end(plock);
+
+  *pstatus = CACHE_INODE_SUCCESS;
 
   P(pentry->object.file.lock_list_mutex);
-  found_entry = get_overlapping_entry(pentry, powner, lock, pcontext);
-  LogEntry("cache_inode_test found conflict",
-           pentry, pcontext, found_entry);
-  copy_conflict(found_entry, holder, conflict);
-  V(pentry->object.file.lock_list_mutex);
 
-  if(found_entry == NULL)
-    *pstatus = CACHE_INODE_SUCCESS;
-  else
-    *pstatus = CACHE_INODE_LOCK_CONFLICT;
+  glist_for_each(glist, &pentry->object.file.lock_list)
+    {
+      found_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+
+      LogEntry("get_overlapping_entry Checking",
+               pentry, pcontext, found_entry);
+
+      /* Skip blocked locks */
+      if(found_entry->cle_blocked != CACHE_NON_BLOCKING)
+          continue;
+
+      found_entry_end = lock_end(&found_entry->cle_lock);
+
+      if((found_entry_end >= plock->cld_offset) &&
+         (found_entry->cle_lock.cld_offset <= plock_end))
+        {
+          /* lock overlaps see if we can allow 
+           * allow if neither lock is exclusive or the owner is the same
+           */
+          if((found_entry->cle_lock.cld_type == CACHE_INODE_LOCK_W ||
+              plock->cld_type == CACHE_INODE_LOCK_W) &&
+             different_owners(found_entry->cle_owner, powner)
+             )
+            {
+              /* found a conflicting lock, return it */
+              LogEntry("cache_inode_test found conflict",
+                       pentry, pcontext, found_entry);
+              copy_conflict(found_entry, holder, conflict);
+              *pstatus = CACHE_INODE_LOCK_CONFLICT;
+              break;
+            }
+        }
+    }
+
+  V(pentry->object.file.lock_list_mutex);
 
   return *pstatus;
 }
@@ -1410,7 +1428,7 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
         continue;
       /*
        * We have matched all atribute of the existing lock.
-       * Just return the found_entry with ref count inc
+       * Just return with blocked status. Client may be polling.
        */
       V(pentry->object.file.lock_list_mutex);
       LogEntry("cache_inode_lock Found blocked",
