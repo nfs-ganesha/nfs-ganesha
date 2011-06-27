@@ -132,12 +132,14 @@ void DisplayOwner(cache_lock_owner_t *powner, char *buf)
 {
   char *tmp = buf;
 
-  switch(powner->clo_type)
+  switch(powner->clo_owner.clo_type)
     {
+#ifdef _USE_NLM
       case CACHE_LOCK_OWNER_NLM:
         tmp += sprintf(buf, "CACHE_LOCK_OWNER_NLM: ");
         display_nlm_owner((cache_inode_nlm_owner_t *)powner, tmp);
         break;
+#endif
 
       case CACHE_LOCK_OWNER_NFSV4:
         tmp += sprintf(buf, "CACHE_LOCK_OWNER_NFSV4: ");
@@ -495,17 +497,52 @@ void remove_from_locklist(cache_entry_t      *pentry,
     V(pentry->object.file.lock_list_mutex);
 }
 
+/**
+ * cache_copy_owner: copy a lock owner structure
+ *
+ * pdest->clo_owner.clo_type should be initialized with the type of owner expected
+ * or CACHE_LOCK_OWNER_UNKNOWN if any owner type is acceptable.
+ */
+void cache_copy_owner(cache_lock_owner_t *pdest, cache_lock_owner_t *psrc)
+{
+  /* If the destination is not unknown type, don't copy if the type is not
+   * as expected.
+   */
+  if(pdest->clo_owner.clo_type != CACHE_LOCK_OWNER_UNKNOWN &&
+      pdest->clo_owner.clo_type != psrc->clo_owner.clo_type)
+    pdest->clo_owner.clo_type = CACHE_LOCK_OWNER_UNKNOWN;
+  else
+    switch(psrc->clo_owner.clo_type)
+      {
+        case CACHE_LOCK_OWNER_UNKNOWN:
+          pdest->clo_owner.clo_type = psrc->clo_owner.clo_type;
+          break;
+
+#ifdef _USE_NLM
+        case CACHE_LOCK_OWNER_NLM:
+          memcpy(pdest, psrc, sizeof(cache_inode_nlm_owner_t));
+          break;
+#endif
+
+        case CACHE_LOCK_OWNER_NFSV4:
+          memcpy(pdest, psrc, sizeof(cache_inode_open_owner_t));
+          break;
+        }
+}
+
 /* This is not complete, it doesn't check the owner's IP address...*/
 static inline int different_owners(cache_lock_owner_t *powner1, cache_lock_owner_t *powner2)
 {
-  if(powner1->clo_type != powner2->clo_type)
+  if(powner1->clo_owner.clo_type != powner2->clo_owner.clo_type)
     return 1;
 
-  switch(powner1->clo_type)
+  switch(powner1->clo_owner.clo_type)
     {
+#ifdef _USE_NLM
       case CACHE_LOCK_OWNER_NLM:
         return compare_nlm_owner((cache_inode_nlm_owner_t *)powner1,
                                  (cache_inode_nlm_owner_t *)powner2);
+#endif
       case CACHE_LOCK_OWNER_NFSV4:
       default:
         return powner1 != powner2;
@@ -1237,7 +1274,9 @@ cache_inode_status_t KernelLockOp(cache_entry_t        * pentry,
                                   fsal_op_context_t    * pcontext,
                                   cache_lock_owner_t   * powner,
                                   fsal_lock_op_t         lock_op,
-                                  cache_lock_desc_t    * lock)
+                                  cache_lock_desc_t    * lock,
+                                  cache_lock_owner_t   * holder,   /* owner that holds conflicting lock */
+                                  cache_lock_desc_t    * conflict) /* description of conflicting lock */
 {
   fsal_status_t fsal_status;
   cache_inode_status_t status;
@@ -1282,6 +1321,15 @@ cache_inode_status_t KernelLockOp(cache_entry_t        * pentry,
   status = cache_inode_error_convert(fsal_status);
   if(status == CACHE_INODE_FSAL_DELAY || status == CACHE_INODE_FSAL_EACCESS)
     status = CACHE_INODE_LOCK_CONFLICT;
+  if(status == CACHE_INODE_LOCK_CONFLICT)
+    {
+      if(holder != NULL)
+        holder->clo_owner.clo_type = CACHE_LOCK_OWNER_UNKNOWN;
+      if(conflict != NULL)
+        {
+          memset(conflict, 0, sizeof(*conflict));
+        }
+    }
   return status;
 }
 
@@ -1414,6 +1462,10 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
       V(pentry->object.file.lock_list_mutex);
       LogEntry("cache_inode_lock conflicts with",
                pentry, pcontext, found_entry);
+      if(holder != NULL)
+        cache_copy_owner(holder, found_entry->cle_owner);
+      if(conflict != NULL)
+        *conflict = found_entry->cle_lock;
       *pstatus = CACHE_INODE_LOCK_CONFLICT;
       return *pstatus;
     }
@@ -1452,7 +1504,9 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
                                   pcontext,
                                   powner,
                                   FSAL_OP_LOCK,
-                                  plock);
+                                  plock,
+                                  holder,
+                                  conflict);
           if(*pstatus != CACHE_INODE_SUCCESS)
             {
               free_cache_lock_entry(found_entry);

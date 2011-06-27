@@ -404,15 +404,11 @@ typedef struct cache_inode_open_owner_name__
 typedef enum cache_lock_owner_type_t
 {
   CACHE_LOCK_OWNER_UNKNOWN,
+#ifdef _USE_NLM
   CACHE_LOCK_OWNER_NLM,
+#endif
   CACHE_LOCK_OWNER_NFSV4
 } cache_lock_owner_type_t;
-
-/* Undistinguished lock owner type */
-typedef struct cache_lock_owner_t
-{
-  cache_lock_owner_type_t clo_type;
-} cache_lock_owner_t;
 
 #ifdef _USE_NLM
 typedef struct cache_inode_nlm_owner_t
@@ -438,6 +434,19 @@ typedef struct cache_inode_open_owner__
   uint32_t counter;                           /** < Counter is used to build unique stateids */
   struct cache_inode_open_owner__ *related_owner;
 } cache_inode_open_owner_t;
+
+/* Undistinguished lock owner type */
+typedef struct cache_lock_owner_t
+{
+  union
+  {
+    cache_lock_owner_type_t  clo_type;
+    cache_inode_open_owner_t clo_open_owner;
+    cache_inode_nlm_owner_t  clo_nlm_owner;
+#ifdef _USE_NLM
+#endif
+  } clo_owner;
+} cache_lock_owner_t;
 
 typedef struct cache_inode_state__
 {
