@@ -98,7 +98,7 @@ typedef union {
      vfs_file_handle_t vfs_handle ;
   } data ;
 #ifdef _BUILD_SHARED_FSAL
-  char pad[FSAL_HANDLE_T_SIZE];
+  char pad[FSAL_HANDLE_T_SIZE_WITH_FSALID];
 #endif
 } vfsfsal_handle_t;  /**< FS object handle */
 
