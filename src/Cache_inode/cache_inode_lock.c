@@ -412,26 +412,26 @@ static inline cache_lock_entry_t *nlm4_lockargs_to_nlm_lock_entry(struct nlm4_lo
 void nlm_lock_entry_to_nlm_holder(cache_lock_entry_t * lock_entry,
                                   struct nlm4_holder *holder)
 {
-    /*
-     * Take the lock to make sure other threads don't update
-     * lock_entry contents in parallel
-     */
-    P(lock_entry->cle_mutex);
-    holder->exclusive = lock_entry->arg.exclusive;
-    holder->oh = lock_entry->arg.alock.oh;
-    holder->svid = lock_entry->arg.alock.svid;
-    holder->cle_lock.cld_offset = lock_entry->cle_lock.cld_offset;
-    holder->cle_lock.cld_length = lock_entry->arg.alock.cle_lock.cld_length;
-    V(lock_entry->cle_mutex);
+  /*
+   * Take the lock to make sure other threads don't update
+   * lock_entry contents in parallel
+   */
+  P(lock_entry->cle_mutex);
+  holder->exclusive = lock_entry->arg.exclusive;
+  holder->oh = lock_entry->arg.alock.oh;
+  holder->svid = lock_entry->arg.alock.svid;
+  holder->cle_lock.cld_offset = lock_entry->cle_lock.cld_offset;
+  holder->cle_lock.cld_length = lock_entry->arg.alock.cle_lock.cld_length;
+  V(lock_entry->cle_mutex);
 }
 
 int nlm_lock_entry_get_state(cache_lock_entry_t * lock_entry)
 {
-    int lck_state;
-    P(lock_entry->cle_mutex);
-    lck_state = lock_entry->state;
-    V(lock_entry->cle_mutex);
-    return lck_state;
+  int lck_state;
+  P(lock_entry->cle_mutex);
+  lck_state = lock_entry->state;
+  V(lock_entry->cle_mutex);
+  return lck_state;
 }
 #endif
 
@@ -450,51 +450,51 @@ void lock_entry_dec_ref(cache_entry_t      *pentry,
                         fsal_op_context_t  *pcontext,
                         cache_lock_entry_t *lock_entry) 
 {
-    int to_free = 0;
-    P(lock_entry->cle_mutex);
-    lock_entry->cle_ref_count--;
-    if(!lock_entry->cle_ref_count)
-        {
-            /*
-             * We should already be removed from the lock_list
-             * So we can free the lock_entry without any locking
-             */
-            to_free = 1;
-        }
-    V(lock_entry->cle_mutex);
-    if(to_free)
-        {
-            LogEntry("nlm_lock_entry_dec_ref Freeing",
-                     pentry, pcontext, lock_entry);
+  int to_free = 0;
+  P(lock_entry->cle_mutex);
+  lock_entry->cle_ref_count--;
+  if(!lock_entry->cle_ref_count)
+    {
+      /*
+       * We should already be removed from the lock_list
+       * So we can free the lock_entry without any locking
+       */
+      to_free = 1;
+    }
+  V(lock_entry->cle_mutex);
+  if(to_free)
+    {
+      LogEntry("nlm_lock_entry_dec_ref Freeing",
+               pentry, pcontext, lock_entry);
 #ifdef _DEBUG_MEMLEAKS
-            glist_del(&lock_entry->cle_all_locks);
+      glist_del(&lock_entry->cle_all_locks);
 #endif
 
-            if(lock_entry->cle_pcookie)
-              Mem_Free(lock_entry->cle_pcookie);
-            Mem_Free(lock_entry);
-        }
+      if(lock_entry->cle_pcookie)
+        Mem_Free(lock_entry->cle_pcookie);
+      Mem_Free(lock_entry);
+    }
 }
 
 static void do_remove_from_locklist(cache_entry_t      *pentry,
                                     fsal_op_context_t  *pcontext,
                                     cache_lock_entry_t *lock_entry)
 {
-    /*
-     * If some other thread is holding a reference to this nlm_lock_entry
-     * don't free the structure. But drop from the lock list
-     */
-    glist_del(&lock_entry->cle_list);
-    lock_entry_dec_ref(pentry, pcontext, lock_entry);
+  /*
+   * If some other thread is holding a reference to this nlm_lock_entry
+   * don't free the structure. But drop from the lock list
+   */
+  glist_del(&lock_entry->cle_list);
+  lock_entry_dec_ref(pentry, pcontext, lock_entry);
 }
 
 void remove_from_locklist(cache_entry_t      *pentry,
                           fsal_op_context_t  *pcontext,
                           cache_lock_entry_t *lock_entry)
 {
-    P(pentry->object.file.lock_list_mutex);
-    do_remove_from_locklist(pentry, pcontext, lock_entry);
-    V(pentry->object.file.lock_list_mutex);
+  P(pentry->object.file.lock_list_mutex);
+  do_remove_from_locklist(pentry, pcontext, lock_entry);
+  V(pentry->object.file.lock_list_mutex);
 }
 
 /**
@@ -603,14 +603,14 @@ static cache_lock_entry_t *get_overlapping_entry(cache_entry_t        * pentry,
 #if 0
 cache_lock_entry_t *nlm_overlapping_entry(struct nlm4_lock * nlm_lock, int exclusive)
 {
-    cache_lock_entry_t *found_entry;
+  cache_lock_entry_t *found_entry;
 
-    P(pentry->object.file.lock_list_mutex);
-    found_entry = get_overlapping_entry(nlm_lock, exclusive);
-    lock_entry_inc_ref(found_entry);
-    V(pentry->object.file.lock_list_mutex);
+  P(pentry->object.file.lock_list_mutex);
+  found_entry = get_overlapping_entry(nlm_lock, exclusive);
+  lock_entry_inc_ref(found_entry);
+  V(pentry->object.file.lock_list_mutex);
 
-    return nlm_entry;
+  return nlm_entry;
 }
 #endif
 
@@ -622,137 +622,136 @@ static void merge_lock_entry(cache_entry_t        * pentry,
                              fsal_op_context_t    * pcontext,
                              cache_lock_entry_t   * lock_entry)
 {
-    cache_lock_entry_t *check_entry;
-    uint64_t check_entry_end;
-    uint64_t lock_entry_end;
-    struct glist_head *glist, *glistn;
+  cache_lock_entry_t *check_entry;
+  uint64_t check_entry_end;
+  uint64_t lock_entry_end;
+  struct glist_head *glist, *glistn;
 
-    glist_for_each_safe(glist, glistn, &pentry->object.file.lock_list)
-        {
-            check_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+  glist_for_each_safe(glist, glistn, &pentry->object.file.lock_list)
+    {
+      check_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
 
-            if(different_owners(check_entry->cle_owner, lock_entry->cle_owner))
-                continue;
+      if(different_owners(check_entry->cle_owner, lock_entry->cle_owner))
+        continue;
 
-            check_entry_end = lock_end(&check_entry->cle_lock);
-            lock_entry_end  = lock_end(&lock_entry->cle_lock);
+      check_entry_end = lock_end(&check_entry->cle_lock);
+      lock_entry_end  = lock_end(&lock_entry->cle_lock);
 
-            if((check_entry_end + 1) < lock_entry->cle_lock.cld_offset)
-                /* nothing to merge */
-                continue;
+      if((check_entry_end + 1) < lock_entry->cle_lock.cld_offset)
+        /* nothing to merge */
+        continue;
 
-            if((lock_entry_end + 1) < check_entry->cle_lock.cld_offset)
-                /* nothing to merge */
-                continue;
+      if((lock_entry_end + 1) < check_entry->cle_lock.cld_offset)
+        /* nothing to merge */
+        continue;
 
-            /* check_entry touches or overlaps lock_entry, expand lock_entry */
-            if(lock_entry_end < check_entry_end)
-                /* Expand end of lock_entry */
-                lock_entry_end = check_entry_end;
+      /* check_entry touches or overlaps lock_entry, expand lock_entry */
+      if(lock_entry_end < check_entry_end)
+        /* Expand end of lock_entry */
+        lock_entry_end = check_entry_end;
 
-            if(check_entry->cle_lock.cld_offset < lock_entry->cle_lock.cld_offset)
-                /* Expand start of lock_entry */
-                check_entry->cle_lock.cld_offset = lock_entry->cle_lock.cld_offset;
+      if(check_entry->cle_lock.cld_offset < lock_entry->cle_lock.cld_offset)
+        /* Expand start of lock_entry */
+        check_entry->cle_lock.cld_offset = lock_entry->cle_lock.cld_offset;
 
-            /* Compute new lock length */
-            lock_entry->cle_lock.cld_length = lock_entry_end - check_entry->cle_lock.cld_offset + 1;
+      /* Compute new lock length */
+      lock_entry->cle_lock.cld_length = lock_entry_end - check_entry->cle_lock.cld_offset + 1;
 
-            /* Remove merged entry */
-            LogEntry("nlm_merge_lock_entry Merging", pentry, pcontext, check_entry);
-            do_remove_from_locklist(pentry, pcontext, check_entry);
-        }
+      /* Remove merged entry */
+      LogEntry("nlm_merge_lock_entry Merging", pentry, pcontext, check_entry);
+      do_remove_from_locklist(pentry, pcontext, check_entry);
+    }
 }
 
 #if 0
 cache_lock_entry_t *nlm_find_lock_entry(struct nlm4_lock *nlm_lock,
                                       int exclusive, int state)
 {
-    cache_lock_entry_t *nlm_entry;
-    struct glist_head *glist;
-    P(pentry->object.file.lock_list_mutex);
-    glist_for_each(glist, &pentry->object.file.lock_list)
+  cache_lock_entry_t *nlm_entry;
+  struct glist_head *glist;
+  P(pentry->object.file.lock_list_mutex);
+  glist_for_each(glist, &pentry->object.file.lock_list)
+    {
+      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+
+      LogEntry("nlm_find_lock_entry Checking", nlm_entry);
+
+      if(strcmp(nlm_entry->arg.alock.caller_name, nlm_lock->caller_name))
+        continue;
+      if(netobj_compare(&nlm_entry->arg.alock.oh, &nlm_lock->oh))
+        continue;
+      if(nlm_entry->arg.alock.svid != nlm_lock->svid)
+        continue;
+      if(state == NLM4_GRANTED)
         {
-            nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
-
-            LogEntry("nlm_find_lock_entry Checking", nlm_entry);
-
-            if(strcmp(nlm_entry->arg.alock.caller_name, nlm_lock->caller_name))
-                continue;
-            if(netobj_compare(&nlm_entry->arg.alock.oh, &nlm_lock->oh))
-                continue;
-            if(nlm_entry->arg.alock.svid != nlm_lock->svid)
-                continue;
-            if(state == NLM4_GRANTED)
-                {
-                    /*
-                     * We don't check the below flag when looking for
-                     * lock in the lock list with state granted. Lookup
-                     * with state granted happens for unlock operation
-                     * and RFC says it should only match caller_name, fh,oh
-                     * and svid
-                     */
-                    break;
-                }
-            if(nlm_entry->cle_lock.cld_offset != nlm_lock->cle_lock.cld_offset)
-                continue;
-            if(nlm_entry->arg.alock.cle_lock.cld_length != nlm_lock->cle_lock.cld_length)
-                continue;
-            if(nlm_entry->arg.exclusive != exclusive)
-                continue;
-            if(nlm_entry->state != state)
-                continue;
-            /* We have matched all atribute of the nlm4_lock */
-            break;
+          /*
+           * We don't check the below flag when looking for
+           * lock in the lock list with state granted. Lookup
+           * with state granted happens for unlock operation
+           * and RFC says it should only match caller_name, fh,oh
+           * and svid
+           */
+          break;
         }
-    if(glist == &pentry->object.file.lock_list)
-        nlm_entry = NULL;
-    else
-      {
-        nlm_lock_entry_inc_ref(nlm_entry);
-        LogEntry("nlm_find_lock_entry Found", nlm_entry);
+      if(nlm_entry->cle_lock.cld_offset != nlm_lock->cle_lock.cld_offset)
+        continue;
+      if(nlm_entry->arg.alock.cle_lock.cld_length != nlm_lock->cle_lock.cld_length)
+        continue;
+      if(nlm_entry->arg.exclusive != exclusive)
+        continue;
+      if(nlm_entry->state != state)
+        continue;
+      /* We have matched all atribute of the nlm4_lock */
+      break;
       }
-    V(pentry->object.file.lock_list_mutex);
+  if(glist == &pentry->object.file.lock_list)
+    nlm_entry = NULL;
+  else
+    {
+      nlm_lock_entry_inc_ref(nlm_entry);
+      LogEntry("nlm_find_lock_entry Found", nlm_entry);
+    }
+  V(pentry->object.file.lock_list_mutex);
 
-    return nlm_entry;
+  return nlm_entry;
 }
 
 static cache_lock_entry_t *cache_lock_entry_t_dup(cache_lock_entry_t * orig_nlm_entry)
 {
-    cache_lock_entry_t *nlm_entry;
-    nlm_entry = (cache_lock_entry_t *) Mem_Calloc_Label(1, sizeof(cache_lock_entry_t),
-                                                      "cache_lock_entry_t");
-    if(!nlm_entry)
-        return NULL;
-    nlm_entry->arg.alock.caller_name = Str_Dup(orig_nlm_entry->arg.alock.caller_name);
-    if(!copy_netobj(&nlm_entry->arg.alock.fh, &orig_nlm_entry->arg.alock.fh))
-        goto err_out;
-    if(!copy_netobj(&nlm_entry->arg.alock.oh, &orig_nlm_entry->arg.alock.oh))
-        goto err_out;
-    if(!copy_netobj(&nlm_entry->arg.cookie, &orig_nlm_entry->arg.cookie))
-        goto err_out;
-    nlm_entry->arg.alock.svid = orig_nlm_entry->arg.alock.svid;
-    nlm_entry->cle_lock.cld_offset = orig_nlm_entry->cle_lock.cld_offset;
-    nlm_entry->arg.alock.cle_lock.cld_length = orig_nlm_entry->arg.alock.cle_lock.cld_length;
-    nlm_entry->state = orig_nlm_entry->state;
-    nlm_entry->arg.exclusive = orig_nlm_entry->arg.exclusive;
-    nlm_entry->cle_ref_count = 0;
-    pthread_mutex_init(&nlm_entry->lock, NULL);
-    nlm_entry->pentry = orig_nlm_entry->pentry;
-    nlm_entry->pclient = orig_nlm_entry->pclient;
-    nlm_entry->ht = orig_nlm_entry->ht;
-    //cache_inode_pin_pentry(nlm_entry->pentry, nlm_entry->pclient, NULL);
-#ifdef _DEBUG_MEMLEAKS
-    glist_add_tail(&cache_inode_all_locks, &nlm_entry->cle_all_locks);
-#endif
-    return nlm_entry;
-err_out:
-    Mem_Free(nlm_entry->arg.alock.caller_name);
-    netobj_free(&nlm_entry->arg.alock.fh);
-    netobj_free(&nlm_entry->arg.alock.oh);
-    netobj_free(&nlm_entry->arg.cookie);
-    Mem_Free(nlm_entry);
+  cache_lock_entry_t *nlm_entry;
+  nlm_entry = (cache_lock_entry_t *) Mem_Calloc_Label(1, sizeof(cache_lock_entry_t),
+                                                    "cache_lock_entry_t");
+  if(!nlm_entry)
     return NULL;
-
+  nlm_entry->arg.alock.caller_name = Str_Dup(orig_nlm_entry->arg.alock.caller_name);
+  if(!copy_netobj(&nlm_entry->arg.alock.fh, &orig_nlm_entry->arg.alock.fh))
+    goto err_out;
+  if(!copy_netobj(&nlm_entry->arg.alock.oh, &orig_nlm_entry->arg.alock.oh))
+    goto err_out;
+  if(!copy_netobj(&nlm_entry->arg.cookie, &orig_nlm_entry->arg.cookie))
+    goto err_out;
+  nlm_entry->arg.alock.svid = orig_nlm_entry->arg.alock.svid;
+  nlm_entry->cle_lock.cld_offset = orig_nlm_entry->cle_lock.cld_offset;
+  nlm_entry->arg.alock.cle_lock.cld_length = orig_nlm_entry->arg.alock.cle_lock.cld_length;
+  nlm_entry->state = orig_nlm_entry->state;
+  nlm_entry->arg.exclusive = orig_nlm_entry->arg.exclusive;
+  nlm_entry->cle_ref_count = 0;
+  pthread_mutex_init(&nlm_entry->lock, NULL);
+  nlm_entry->pentry = orig_nlm_entry->pentry;
+  nlm_entry->pclient = orig_nlm_entry->pclient;
+  nlm_entry->ht = orig_nlm_entry->ht;
+  //cache_inode_pin_pentry(nlm_entry->pentry, nlm_entry->pclient, NULL);
+#ifdef _DEBUG_MEMLEAKS
+  glist_add_tail(&cache_inode_all_locks, &nlm_entry->cle_all_locks);
+#endif
+  return nlm_entry;
+err_out:
+  Mem_Free(nlm_entry->arg.alock.caller_name);
+  netobj_free(&nlm_entry->arg.alock.fh);
+  netobj_free(&nlm_entry->arg.alock.oh);
+  netobj_free(&nlm_entry->arg.cookie);
+  Mem_Free(nlm_entry);
+  return NULL;
 }
 
 /* Subtract a lock from a lock entry, placing any remaining bits into the split list. */
@@ -760,59 +759,59 @@ static void subtract_lock_from_entry(cache_lock_entry_t *nlm_entry,
                                      struct nlm4_lock *nlm_lock,
                                      struct glist_head *split_list)
 {
-    uint64_t nlm_entry_end = lock_end(nlm_entry->cle_lock.cld_offset, nlm_entry->arg.alock.cle_lock.cld_length);
-    uint64_t nlm_lock_end = lock_end(nlm_lock->cle_lock.cld_offset, nlm_lock->cle_lock.cld_length);
-    cache_lock_entry_t *nlm_entry_left = NULL;
-    cache_lock_entry_t *nlm_entry_right = NULL;
+  uint64_t nlm_entry_end = lock_end(nlm_entry->cle_lock.cld_offset, nlm_entry->arg.alock.cle_lock.cld_length);
+  uint64_t nlm_lock_end = lock_end(nlm_lock->cle_lock.cld_offset, nlm_lock->cle_lock.cld_length);
+  cache_lock_entry_t *nlm_entry_left = NULL;
+  cache_lock_entry_t *nlm_entry_right = NULL;
 
-    if(nlm_lock_end < nlm_entry->cle_lock.cld_offset)
-        /* nothing to split */
-        return;
+  if(nlm_lock_end < nlm_entry->cle_lock.cld_offset)
+    /* nothing to split */
+    return;
 
-    if(nlm_entry_end < nlm_lock->cle_lock.cld_offset)
-        /* nothing to split */
-        return;
+  if(nlm_entry_end < nlm_lock->cle_lock.cld_offset)
+    /* nothing to split */
+    return;
 
-    if((nlm_lock->cle_lock.cld_offset <= nlm_entry->cle_lock.cld_offset) &&
-       nlm_lock_end >= nlm_entry_end)
-      {
-        /* Fully overlap */
-        LogEntry("subtract_lock_from_entry Remove Complete", nlm_entry);
-        goto complete_remove;
-      }
+  if((nlm_lock->cle_lock.cld_offset <= nlm_entry->cle_lock.cld_offset) &&
+     nlm_lock_end >= nlm_entry_end)
+    {
+      /* Fully overlap */
+      LogEntry("subtract_lock_from_entry Remove Complete", nlm_entry);
+      goto complete_remove;
+    }
 
-    LogEntry("subtract_lock_from_entry Split", nlm_entry);
+  LogEntry("subtract_lock_from_entry Split", nlm_entry);
 
-    /* Delete the old entry and add one or two new entries */
-    if(nlm_lock->cle_lock.cld_offset > nlm_entry->cle_lock.cld_offset)
+  /* Delete the old entry and add one or two new entries */
+  if(nlm_lock->cle_lock.cld_offset > nlm_entry->cle_lock.cld_offset)
+    {
+      nlm_entry_left = cache_lock_entry_t_dup(nlm_entry);
+      /* FIXME handle error */
+      if(nlm_entry_left)
         {
-            nlm_entry_left = cache_lock_entry_t_dup(nlm_entry);
-            /* FIXME handle error */
-            if(nlm_entry_left)
-              {
-                nlm_entry_left->arg.alock.cle_lock.cld_length = nlm_lock->cle_lock.cld_offset - nlm_entry->cle_lock.cld_offset;
-                LogEntry("subtract_lock_from_entry left split", nlm_entry_left);
-                nlm_lock_entry_inc_ref(nlm_entry_left);
-                glist_add_tail(split_list, &(nlm_entry_left->lock_list));
-              }
+          nlm_entry_left->arg.alock.cle_lock.cld_length = nlm_lock->cle_lock.cld_offset - nlm_entry->cle_lock.cld_offset;
+          LogEntry("subtract_lock_from_entry left split", nlm_entry_left);
+          nlm_lock_entry_inc_ref(nlm_entry_left);
+          glist_add_tail(split_list, &(nlm_entry_left->lock_list));
         }
+    }
 
-    if(nlm_lock_end < nlm_entry_end)
+  if(nlm_lock_end < nlm_entry_end)
+    {
+      nlm_entry_right = cache_lock_entry_t_dup(nlm_entry);
+      /* FIXME handle error */
+      if(nlm_entry_right)
         {
-            nlm_entry_right = cache_lock_entry_t_dup(nlm_entry);
-            /* FIXME handle error */
-            if(nlm_entry_right)
-              {
-                nlm_entry_right->cle_lock.cld_offset = nlm_lock_end + 1;
-                nlm_entry_right->arg.alock.cle_lock.cld_length = nlm_entry_end - nlm_lock_end;
-                LogEntry("subtract_lock_from_entry right split", nlm_entry_right);
-                nlm_lock_entry_inc_ref(nlm_entry_right);
-                glist_add_tail(split_list, &(nlm_entry_right->lock_list));
-              }
+          nlm_entry_right->cle_lock.cld_offset = nlm_lock_end + 1;
+          nlm_entry_right->arg.alock.cle_lock.cld_length = nlm_entry_end - nlm_lock_end;
+          LogEntry("subtract_lock_from_entry right split", nlm_entry_right);
+          nlm_lock_entry_inc_ref(nlm_entry_right);
+          glist_add_tail(split_list, &(nlm_entry_right->lock_list));
         }
+    }
 
 complete_remove:
-    do_remove_from_locklist(nlm_entry);
+  do_remove_from_locklist(nlm_entry);
 }
 
 /* Subtract a lock from a list of locks, possibly splitting entries in the list. */
@@ -820,28 +819,28 @@ void subtract_lock_from_list(struct nlm4_lock *nlm_lock,
                              struct glist_head *list,
                              int care_about_owner)
 {
-    cache_lock_entry_t *nlm_entry;
-    struct glist_head split_lock_list;
-    struct glist_head *glist, *glistn;
+  cache_lock_entry_t *nlm_entry;
+  struct glist_head split_lock_list;
+  struct glist_head *glist, *glistn;
 
-    init_glist(&split_lock_list);
+  init_glist(&split_lock_list);
 
-    glist_for_each_safe(glist, glistn, list)
-        {
-            nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+  glist_for_each_safe(glist, glistn, list)
+    {
+      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
 
-            if(care_about_owner && different_owners(&nlm_entry->arg.alock, nlm_lock))
-                continue;
-            /*
-             * We have matched all atribute of the nlm4_lock
-             * Even though we are taking a reference to nlm_entry, we
-             * don't inc the ref count because we want to drop the lock entry.
-             */
-            subtract_lock_from_entry(nlm_entry, nlm_lock, &split_lock_list);
-        }
+      if(care_about_owner && different_owners(&nlm_entry->arg.alock, nlm_lock))
+          continue;
+      /*
+       * We have matched all atribute of the nlm4_lock
+       * Even though we are taking a reference to nlm_entry, we
+       * don't inc the ref count because we want to drop the lock entry.
+       */
+      subtract_lock_from_entry(nlm_entry, nlm_lock, &split_lock_list);
+    }
 
-    /* now add the split lock list */
-    glist_add_list_tail(list, &split_lock_list);
+  /* now add the split lock list */
+  glist_add_list_tail(list, &split_lock_list);
 }
 
 void subtract_list_from_list(struct glist_head *target,
@@ -852,11 +851,11 @@ void subtract_list_from_list(struct glist_head *target,
   struct glist_head *glist, *glistn;
 
   glist_for_each_safe(glist, glistn, source)
-      {
-          nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+    {
+      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
 
-          subtract_lock_from_list(&nlm_entry->arg.alock, target, 0);
-      }
+      subtract_lock_from_list(&nlm_entry->arg.alock, target, 0);
+    }
 }
 
 void send_kernel_unlock(struct glist_head *list)
@@ -865,13 +864,13 @@ void send_kernel_unlock(struct glist_head *list)
   struct glist_head *glist, *glistn;
 
   glist_for_each_safe(glist, glistn, list)
-      {
-          nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+    {
+      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
 
-          LogKernel(&nlm_entry->arg, 2);
+      LogKernel(&nlm_entry->arg, 2);
 
-          do_remove_from_locklist(nlm_entry);
-      }
+      do_remove_from_locklist(nlm_entry);
+    }
 }
 
 /* We need to iterate over the full lock list and remove
@@ -920,311 +919,311 @@ void nlm_delete_lock_entry(struct nlm4_lock *nlm_lock)
 
 cache_lock_entry_t *nlm_find_lock_entry_by_cookie(netobj * cookie)
 {
-    cache_lock_entry_t *nlm_entry;
-    struct glist_head *glist;
-    char buffer[1024];
+  cache_lock_entry_t *nlm_entry;
+  struct glist_head *glist;
+  char buffer[1024];
 
-    netobj_to_string(cookie, buffer, 1024);
-    LogFullDebug(COMPONENT_NLM,
-                 "nlm_find_lock_entry_by_cookie searching for %s", buffer);
-    P(pentry->object.file.lock_list_mutex);
-    glist_for_each(glist, &pentry->object.file.lock_list)
-        {
-            nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
-            netobj_to_string(&nlm_entry->arg.cookie, buffer, 1024);
-            LogFullDebug(COMPONENT_NLM,
-                         "nlm_find_lock_entry_by_cookie checking %s", buffer);
-            if(!netobj_compare(&nlm_entry->arg.cookie, cookie))
-                break;
-        }
-    if(glist == &pentry->object.file.lock_list)
-        nlm_entry = NULL;
-    else
-        nlm_lock_entry_inc_ref(nlm_entry);
-    V(pentry->object.file.lock_list_mutex);
-    return nlm_entry;
+  netobj_to_string(cookie, buffer, 1024);
+  LogFullDebug(COMPONENT_NLM,
+               "nlm_find_lock_entry_by_cookie searching for %s", buffer);
+  P(pentry->object.file.lock_list_mutex);
+  glist_for_each(glist, &pentry->object.file.lock_list)
+    {
+      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+      netobj_to_string(&nlm_entry->arg.cookie, buffer, 1024);
+      LogFullDebug(COMPONENT_NLM,
+                   "nlm_find_lock_entry_by_cookie checking %s", buffer);
+      if(!netobj_compare(&nlm_entry->arg.cookie, cookie))
+          break;
+    }
+  if(glist == &pentry->object.file.lock_list)
+    nlm_entry = NULL;
+  else
+    nlm_lock_entry_inc_ref(nlm_entry);
+  V(pentry->object.file.lock_list_mutex);
+  return nlm_entry;
 }
 
 int start_nlm_grace_period(void)
 {
-    return gettimeofday(&nlm_grace_tv, NULL);
+  return gettimeofday(&nlm_grace_tv, NULL);
 }
 
 int in_nlm_grace_period(void)
 {
-    struct timeval tv;
-    if(nlm_grace_tv.tv_sec == 0)
-        return 0;
-
-    if(gettimeofday(&tv, NULL) == 0)
-        {
-            if(tv.tv_sec < (nlm_grace_tv.tv_sec + NLM4_GRACE_PERIOD))
-                {
-                    return 1;
-                }
-            else
-                {
-                    nlm_grace_tv.tv_sec = 0;
-                    return 0;
-                }
-        }
+  struct timeval tv;
+  if(nlm_grace_tv.tv_sec == 0)
     return 0;
+
+  if(gettimeofday(&tv, NULL) == 0)
+    {
+      if(tv.tv_sec < (nlm_grace_tv.tv_sec + NLM4_GRACE_PERIOD))
+        {
+          return 1;
+        }
+      else
+        {
+          nlm_grace_tv.tv_sec = 0;
+          return 0;
+        }
+    }
+  return 0;
 }
 
 void nlm_init(void)
 {
-    nlm_async_callback_init();
-    nlm_init_locklist();
-    nsm_unmonitor_all();
-    start_nlm_grace_period();
+  nlm_async_callback_init();
+  nlm_init_locklist();
+  nsm_unmonitor_all();
+  start_nlm_grace_period();
 }
 
 void nlm_node_recovery(char *name,
                        fsal_op_context_t * pcontext,
                        cache_inode_client_t * pclient, hash_table_t * ht)
 {
-    cache_lock_entry_t *nlm_entry;
-    struct glist_head *glist, *glistn;
+  cache_lock_entry_t *nlm_entry;
+  struct glist_head *glist, *glistn;
 
-    LogDebug(COMPONENT_NLM, "Recovery for host %s", name);
+  LogDebug(COMPONENT_NLM, "Recovery for host %s", name);
 
-    P(pentry->object.file.lock_list_mutex);
-    glist_for_each_safe(glist, glistn, &pentry->object.file.lock_list)
+  P(pentry->object.file.lock_list_mutex);
+  glist_for_each_safe(glist, glistn, &pentry->object.file.lock_list)
+    {
+      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+      if(strcmp(nlm_entry->arg.alock.caller_name, name))
+        continue;
+
+      /*
+       * inc ref so that we can remove entry from the list
+       * and still use the lock entry values
+       */
+      nlm_lock_entry_inc_ref(nlm_entry);
+
+      /*
+       * now remove the from locklist
+       */
+      do_remove_from_locklist(nlm_entry);
+
+      /*
+       * We don't inc ref count because we want to drop the lock entry
+       */
+      if(nlm_entry->state == NLM4_GRANTED)
         {
-            nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
-            if(strcmp(nlm_entry->arg.alock.caller_name, name))
-                continue;
-
-            /*
-             * inc ref so that we can remove entry from the list
-             * and still use the lock entry values
-             */
-            nlm_lock_entry_inc_ref(nlm_entry);
-
-            /*
-             * now remove the from locklist
-             */
-            do_remove_from_locklist(nlm_entry);
-
-            /*
-             * We don't inc ref count because we want to drop the lock entry
-             */
-            if(nlm_entry->state == NLM4_GRANTED)
-                {
-                    /*
-                     * Submit the async request to send granted response for
-                     * locks that can be granted
-                     */
-                    nlm_grant_blocked_locks(&nlm_entry->arg.alock.fh);
-                }
-            nlm_lock_entry_dec_ref(nlm_entry);
+          /*
+           * Submit the async request to send granted response for
+           * locks that can be granted
+           */
+          nlm_grant_blocked_locks(&nlm_entry->arg.alock.fh);
         }
-    V(pentry->object.file.lock_list_mutex);
+      nlm_lock_entry_dec_ref(nlm_entry);
+    }
+  V(pentry->object.file.lock_list_mutex);
 }
 
 int nlm_monitor_host(char *name)
 {
-    cache_lock_entry_t *nlm_entry;
-    struct glist_head *glist;
+  cache_lock_entry_t *nlm_entry;
+  struct glist_head *glist;
 
-    P(pentry->object.file.lock_list_mutex);
-    glist_for_each(glist, &pentry->object.file.lock_list)
+  P(pentry->object.file.lock_list_mutex);
+  glist_for_each(glist, &pentry->object.file.lock_list)
+    {
+      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+      if(!strcmp(nlm_entry->arg.alock.caller_name, name))
         {
-            nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
-            if(!strcmp(nlm_entry->arg.alock.caller_name, name))
-                {
-                    /* there is already a lock with the same
-                     * caller_name. So we should already be monitoring
-                     * the host
-                     */
-                    V(pentry->object.file.lock_list_mutex);
-                    return 0;
-                }
+           /* there is already a lock with the same
+            * caller_name. So we should already be monitoring
+            * the host
+            */
+           V(pentry->object.file.lock_list_mutex);
+           return 0;
         }
-    V(pentry->object.file.lock_list_mutex);
-    /* There is nobody monitoring the host */
-    LogFullDebug(COMPONENT_NLM, "Monitoring host %s", name);
-    return nsm_monitor(name);
+    }
+  V(pentry->object.file.lock_list_mutex);
+  /* There is nobody monitoring the host */
+  LogFullDebug(COMPONENT_NLM, "Monitoring host %s", name);
+  return nsm_monitor(name);
 }
 
 int nlm_unmonitor_host(char *name)
 {
-    cache_lock_entry_t *nlm_entry;
-    struct glist_head *glist;
+  cache_lock_entry_t *nlm_entry;
+  struct glist_head *glist;
 
-    P(pentry->object.file.lock_list_mutex);
-    glist_for_each(glist, &pentry->object.file.lock_list)
+  P(pentry->object.file.lock_list_mutex);
+  glist_for_each(glist, &pentry->object.file.lock_list)
+    {
+      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+      if(!strcmp(nlm_entry->arg.alock.caller_name, name))
         {
-            nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
-            if(!strcmp(nlm_entry->arg.alock.caller_name, name))
-                {
-                    /* We have locks tracking the same caller_name
-                     * we cannot unmonitor the host now. We will do
-                     * it for the last unlock from the host
-                     */
-                    V(pentry->object.file.lock_list_mutex);
-                    return 0;
-                }
+          /* We have locks tracking the same caller_name
+           * we cannot unmonitor the host now. We will do
+           * it for the last unlock from the host
+           */
+          V(pentry->object.file.lock_list_mutex);
+          return 0;
         }
-    V(pentry->object.file.lock_list_mutex);
-    /* There is nobody holding a lock with host */
-    LogFullDebug(COMPONENT_NLM, "Unmonitoring host %s", name);
-    return nsm_unmonitor(name);
+    }
+  V(pentry->object.file.lock_list_mutex);
+  /* There is nobody holding a lock with host */
+  LogFullDebug(COMPONENT_NLM, "Unmonitoring host %s", name);
+  return nsm_unmonitor(name);
 }
 
 static void nlm4_send_grant_msg(void *arg)
 {
     int retval;
-    struct nlm4_testargs inarg;
-    cache_lock_entry_t *nlm_entry = (cache_lock_entry_t *) arg;
-    char buffer[1024];
+  struct nlm4_testargs inarg;
+  cache_lock_entry_t *nlm_entry = (cache_lock_entry_t *) arg;
+  char buffer[1024];
 
-    /* If we fail allocation the best is to delete the block entry
-     * so that client can try again and get the lock. May be
-     * by then we are able to allocate objects
-     */
-    if(!copy_netobj(&inarg.alock.fh, &nlm_entry->arg.alock.fh))
-        {
-            goto free_nlm_lock_entry;
-        }
-    if(!copy_netobj(&inarg.alock.oh, &nlm_entry->arg.alock.oh))
-        {
-            netobj_free(&inarg.alock.fh);
-            goto free_nlm_lock_entry;
-        }
+  /* If we fail allocation the best is to delete the block entry
+   * so that client can try again and get the lock. May be
+   * by then we are able to allocate objects
+   */
+  if(!copy_netobj(&inarg.alock.fh, &nlm_entry->arg.alock.fh))
+    {
+      goto free_nlm_lock_entry;
+    }
+  if(!copy_netobj(&inarg.alock.oh, &nlm_entry->arg.alock.oh))
+    {
+      netobj_free(&inarg.alock.fh);
+      goto free_nlm_lock_entry;
+    }
 
-    if(!copy_netobj(&inarg.cookie, &nlm_entry->arg.cookie))
-        {
-            netobj_free(&inarg.alock.oh);
-            netobj_free(&inarg.alock.fh);
-            goto free_nlm_lock_entry;
-        }
-    inarg.alock.caller_name = Str_Dup(nlm_entry->arg.alock.caller_name);
-    if(!inarg.alock.caller_name)
-        {
-            netobj_free(&inarg.cookie);
-            netobj_free(&inarg.alock.oh);
-            netobj_free(&inarg.alock.fh);
-            goto free_nlm_lock_entry;
-        }
-    inarg.exclusive = nlm_entry->arg.exclusive;
-    inarg.alock.svid = nlm_entry->arg.alock.svid;
-    inarg.alock.cle_lock.cld_offset = nlm_entry->cle_lock.cld_offset;
-    inarg.alock.cle_lock.cld_length = nlm_entry->arg.alock.cle_lock.cld_length;
-    netobj_to_string(&inarg.cookie, buffer, 1024);
-    LogDebug(COMPONENT_NLM,
-             "nlm4_send_grant_msg Sending GRANTED for %p svid=%d start=%llx len=%llx cookie=%s",
-             nlm_entry, nlm_entry->arg.alock.svid,
-             (unsigned long long) nlm_entry->cle_lock.cld_offset, (unsigned long long) nlm_entry->arg.alock.cle_lock.cld_length,
-             buffer);
+  if(!copy_netobj(&inarg.cookie, &nlm_entry->arg.cookie))
+    {
+      netobj_free(&inarg.alock.oh);
+      netobj_free(&inarg.alock.fh);
+      goto free_nlm_lock_entry;
+    }
+  inarg.alock.caller_name = Str_Dup(nlm_entry->arg.alock.caller_name);
+  if(!inarg.alock.caller_name)
+    {
+      netobj_free(&inarg.cookie);
+      netobj_free(&inarg.alock.oh);
+      netobj_free(&inarg.alock.fh);
+      goto free_nlm_lock_entry;
+    }
+  inarg.exclusive = nlm_entry->arg.exclusive;
+  inarg.alock.svid = nlm_entry->arg.alock.svid;
+  inarg.alock.cle_lock.cld_offset = nlm_entry->cle_lock.cld_offset;
+  inarg.alock.cle_lock.cld_length = nlm_entry->arg.alock.cle_lock.cld_length;
+  netobj_to_string(&inarg.cookie, buffer, 1024);
+  LogDebug(COMPONENT_NLM,
+           "nlm4_send_grant_msg Sending GRANTED for %p svid=%d start=%llx len=%llx cookie=%s",
+           nlm_entry, nlm_entry->arg.alock.svid,
+           (unsigned long long) nlm_entry->cle_lock.cld_offset, (unsigned long long) nlm_entry->arg.alock.cle_lock.cld_length,
+           buffer);
 
-    retval = nlm_send_async(NLMPROC4_GRANTED_MSG, nlm_entry->arg.alock.caller_name, &inarg, nlm_entry);
-    Mem_Free(inarg.alock.caller_name);
-    netobj_free(&inarg.alock.fh);
-    netobj_free(&inarg.alock.oh);
-    netobj_free(&inarg.cookie);
+  retval = nlm_send_async(NLMPROC4_GRANTED_MSG, nlm_entry->arg.alock.caller_name, &inarg, nlm_entry);
+  Mem_Free(inarg.alock.caller_name);
+  netobj_free(&inarg.alock.fh);
+  netobj_free(&inarg.alock.oh);
+  netobj_free(&inarg.cookie);
 
-    /* If success, we are done. */
-    if(retval == RPC_SUCCESS)
-      return;
+  /* If success, we are done. */
+  if(retval == RPC_SUCCESS)
+    return;
 
-    /*
-     * We are not able call granted callback. Some client may retry
-     * the lock again. So remove the existing blocked nlm entry
-     */
-    LogMajor(COMPONENT_NLM,
-             "%s: GRANTED_MSG RPC call failed with return code %d. Removing the blocking lock",
-             __func__, retval);
+  /*
+   * We are not able call granted callback. Some client may retry
+   * the lock again. So remove the existing blocked nlm entry
+   */
+  LogMajor(COMPONENT_NLM,
+           "%s: GRANTED_MSG RPC call failed with return code %d. Removing the blocking lock",
+           __func__, retval);
 
 free_nlm_lock_entry:
-    remove_from_locklist(nlm_entry);
-    /*
-     * Submit the async request to send granted response for
-     * locks that can be granted, because of this removal
-     * from the lock list. If the client is lucky. It
-     * will send the lock request again and before the
-     * block locks are granted it gets the lock.
-     */
-    nlm_grant_blocked_locks(&nlm_entry->arg.alock.fh);
-    nlm_lock_entry_dec_ref(nlm_entry);
-    return;
+  remove_from_locklist(nlm_entry);
+  /*
+   * Submit the async request to send granted response for
+   * locks that can be granted, because of this removal
+   * from the lock list. If the client is lucky. It
+   * will send the lock request again and before the
+   * block locks are granted it gets the lock.
+   */
+  nlm_grant_blocked_locks(&nlm_entry->arg.alock.fh);
+  nlm_lock_entry_dec_ref(nlm_entry);
+  return;
 }
 
 static void do_nlm_grant_blocked_locks(void *arg)
 {
-    netobj *fh;
-    struct nlm4_lock nlm_lock;
-    cache_lock_entry_t *nlm_entry;
-    struct glist_head *glist, *glistn;
-    cache_lock_entry_t *nlm_entry_overlap;
+  netobj *fh;
+  struct nlm4_lock nlm_lock;
+  cache_lock_entry_t *nlm_entry;
+  struct glist_head *glist, *glistn;
+  cache_lock_entry_t *nlm_entry_overlap;
 
-    fh = (netobj *) arg;
-    P(pentry->object.file.lock_list_mutex);
-    glist_for_each_safe(glist, glistn, &pentry->object.file.lock_list)
+  fh = (netobj *) arg;
+  P(pentry->object.file.lock_list_mutex);
+  glist_for_each_safe(glist, glistn, &pentry->object.file.lock_list)
+    {
+      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+      if(netobj_compare(&nlm_entry->arg.alock.fh, fh))
+          continue;
+      if(nlm_entry->state != NLM4_BLOCKED)
+          continue;
+      /*
+       * found a blocked entry for this file handle
+       * See if we can place the lock
+       */
+      /* dummy nlm4_lock */
+      if(!copy_netobj(&nlm_lock.fh, &nlm_entry->arg.alock.fh))
         {
-            nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
-            if(netobj_compare(&nlm_entry->arg.alock.fh, fh))
-                continue;
-            if(nlm_entry->state != NLM4_BLOCKED)
-                continue;
-            /*
-             * found a blocked entry for this file handle
-             * See if we can place the lock
-             */
-            /* dummy nlm4_lock */
-            if(!copy_netobj(&nlm_lock.fh, &nlm_entry->arg.alock.fh))
-                {
-                    /* If we fail the best is to delete the block entry
-                     * so that client can try again and get the lock. May be
-                     * by then we are able to allocate objects
-                     */
-                    do_remove_from_locklist(nlm_entry);
-                    continue;
-                }
-            nlm_lock.cle_lock.cld_offset = nlm_entry->cle_lock.cld_offset;
-            nlm_lock.cle_lock.cld_length = nlm_entry->arg.alock.cle_lock.cld_length;
-            nlm_entry_overlap = get_nlm_overlapping_entry(&nlm_lock, nlm_entry->arg.exclusive);
-            netobj_free(&nlm_lock.fh);
-            if(nlm_entry_overlap)
-                {
-                    nlm_lock_entry_dec_ref(nlm_entry_overlap);
-                    continue;
-                }
-
-            P(nlm_entry->cle_mutex);
-            /*
-             * Mark the nlm_entry as granted and send a grant msg rpc
-             * Some os only support grant msg rpc
-             */
-
-            nlm_entry->state = NLM4_GRANTED;
-            nlm_entry->cle_ref_count++;
-            V(nlm_entry->cle_mutex);
-            /*
-             * We don't want to send the granted_msg rpc holding
-             * pentry->object.file.lock_list_mutex. That will prevent other lock operation
-             * at the server. We have incremented nlm_entry cle_ref_count.
-             */
-            nlm_async_callback(nlm4_send_grant_msg, (void *)nlm_entry);
+          /* If we fail the best is to delete the block entry
+           * so that client can try again and get the lock. May be
+           * by then we are able to allocate objects
+           */
+          do_remove_from_locklist(nlm_entry);
+          continue;
         }
-    V(pentry->object.file.lock_list_mutex);
-    netobj_free(fh);
-    Mem_Free(fh);
+      nlm_lock.cle_lock.cld_offset = nlm_entry->cle_lock.cld_offset;
+      nlm_lock.cle_lock.cld_length = nlm_entry->arg.alock.cle_lock.cld_length;
+      nlm_entry_overlap = get_nlm_overlapping_entry(&nlm_lock, nlm_entry->arg.exclusive);
+      netobj_free(&nlm_lock.fh);
+      if(nlm_entry_overlap)
+        {
+          nlm_lock_entry_dec_ref(nlm_entry_overlap);
+          continue;
+        }
+
+      P(nlm_entry->cle_mutex);
+      /*
+       * Mark the nlm_entry as granted and send a grant msg rpc
+       * Some os only support grant msg rpc
+       */
+
+      nlm_entry->state = NLM4_GRANTED;
+      nlm_entry->cle_ref_count++;
+      V(nlm_entry->cle_mutex);
+      /*
+       * We don't want to send the granted_msg rpc holding
+       * pentry->object.file.lock_list_mutex. That will prevent other lock operation
+       * at the server. We have incremented nlm_entry cle_ref_count.
+       */
+      nlm_async_callback(nlm4_send_grant_msg, (void *)nlm_entry);
+    }
+  V(pentry->object.file.lock_list_mutex);
+  netobj_free(fh);
+  Mem_Free(fh);
 }
 
 void nlm_grant_blocked_locks(netobj * orig_fh)
 {
-    netobj *fh;
-    fh = (netobj *) Mem_Alloc(sizeof(netobj));
-    if(copy_netobj(fh, orig_fh) != NULL)
-      {
-        /*
-         * We don't want to block the unlock request to wait
-         * for us to grant lock to other host. So create an async
-         * task
-         */
-        nlm_async_callback(do_nlm_grant_blocked_locks, (void *)fh);
-      }
+  netobj *fh;
+  fh = (netobj *) Mem_Alloc(sizeof(netobj));
+  if(copy_netobj(fh, orig_fh) != NULL)
+    {
+      /*
+       * We don't want to block the unlock request to wait
+       * for us to grant lock to other host. So create an async
+       * task
+       */
+      nlm_async_callback(do_nlm_grant_blocked_locks, (void *)fh);
+    }
 }
 
 /*
@@ -1233,12 +1232,12 @@ void nlm_grant_blocked_locks(netobj * orig_fh)
  */
 void nlm_resend_grant_msg(void *arg)
 {
-    /*
-     * We should wait for client grace period
-     */
-    sleep(NLM4_CLIENT_GRACE_PERIOD);
+  /*
+   * We should wait for client grace period
+   */
+  sleep(NLM4_CLIENT_GRACE_PERIOD);
 
-    nlm4_send_grant_msg(arg);
+  nlm4_send_grant_msg(arg);
 }
 #endif
 
