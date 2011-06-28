@@ -121,6 +121,7 @@ AC_CHECK_LIB([c], [main])
 AC_CHECK_LIB([curses], [scr_init])
 AC_CHECK_LIB([pthread], [pthread_create])
 AC_CHECK_LIB([readline], [readline])
+AC_CHECK_LIB([ssl],[SSL_accept])
 
 # Checks for header files.
 AC_HEADER_DIRENT
