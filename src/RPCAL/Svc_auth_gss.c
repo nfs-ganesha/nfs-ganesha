@@ -518,8 +518,14 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
   gss_union_ctx_id_desc *gss_ctx_data;
   char ctx_str[64];
 
+  /* Used to update the hashtable entries. 
+   * These should not be used for purposes other than updating
+   * hashtable entries. */
+  bool_t *p_established = NULL;
+  u_int *p_seqlast = NULL;
+  uint32_t *p_seqmask = NULL;
+
   /* Initialize reply. */
-  /* rqst->rq_xprt->xp_verf = _null_auth ; */
   LogFullDebug(COMPONENT_RPCSEC_GSS, "Gssrpc__svcauth_gss called");
 
   /* Allocate and set up server auth handle. */
@@ -572,6 +578,12 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
                    gc->gc_proc, str_gc_proc(gc->gc_proc), ctx_str);
     }
 
+  /* If we do not retrieve gss data from the cache, then this important
+   * variables could not possibly be meaningful. */
+  gd->seqlast = 0;
+  gd->seqmask = 0;
+  gd->established = 0;
+
   /** @todo Think about restoring the correct lines */
   //if( gd->established == 0 && gc->gc_proc == RPCSEC_GSS_DATA   )
   if(gc->gc_proc == RPCSEC_GSS_DATA || gc->gc_proc == RPCSEC_GSS_DESTROY)
@@ -582,10 +594,16 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
                        "Dump context hash table");
           Gss_ctx_Hash_Print();
         }
-
+      
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "Getting gss data struct from hashtable.");
+      
       /* Fill in svc_rpc_gss_data from cache */
-      if(!Gss_ctx_Hash_Get(gss_ctx_data, gd))
-        {
+      if(!Gss_ctx_Hash_Get(gss_ctx_data,
+			   gd,
+			   &p_established,
+			   &p_seqlast,
+			   &p_seqmask))
+	{
           LogCrit(COMPONENT_RPCSEC_GSS, "Could not find gss context ");
           ret_freegc(AUTH_REJECTEDCRED);
         }
@@ -623,7 +641,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
   /* Check version. */
   if(gc->gc_v != RPCSEC_GSS_VERSION)
     {
-      LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: bad GSS version.");
+      LogDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: bad GSS version.");
       ret_freegc(AUTH_BADCRED);
     }
 
@@ -631,7 +649,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
   if(gc->gc_svc != RPCSEC_GSS_SVC_NONE &&
      gc->gc_svc != RPCSEC_GSS_SVC_INTEGRITY && gc->gc_svc != RPCSEC_GSS_SVC_PRIVACY)
     {
-      LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: bad GSS service (krb5, krb5i, krb5p)");
+      LogDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: bad GSS service (krb5, krb5i, krb5p)");
       ret_freegc(AUTH_BADCRED);
     }
 
@@ -641,12 +659,15 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       /* Sequence should be less than the max sequence number */
       if(gc->gc_seq > MAXSEQ)
 	{
-	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: max sequence number exceeded.");
+	  LogDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: max sequence number exceeded.");
 	  ret_freegc(RPCSEC_GSS_CTXPROBLEM);
 	}
 
       /* Check the difference between the current sequence number 
        * and the last sequence number. */
+      LogFullDebug(COMPONENT_RPCSEC_GSS, "seqlast: %d  seqnum: %d offset: %d seqwin: %d seqmask: %x",
+		   gd->seqlast, gc->gc_seq, gd->seqlast - gc->gc_seq, gd->win, gd->seqmask);
+
       if((offset = gd->seqlast - gc->gc_seq) < 0)
         {
           gd->seqlast = gc->gc_seq;
@@ -657,8 +678,13 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       else if((unsigned int)offset >= gd->win
               || (gd->seqmask & (1 << (unsigned int)offset)))
         {
+	  if ((unsigned int)offset >= gd->win)
+	    LogDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: the current seqnum is lower"
+		     " than seqlast by %d and out of the seq window of size %d.", offset, gd->win);
+	  else
+	    LogDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: the current seqnum has already been used.");
+
           *no_dispatch = TRUE;
-	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: offset greater than window allows");
           ret_freegc(RPCSEC_GSS_CTXPROBLEM);
         }
       gd->seq = gc->gc_seq;
@@ -760,6 +786,15 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Checksum verification failed.");
 	  ret_freegc(AUTH_FAILED);
 	}
+
+      /* Update a few important values in the hashtable entry */
+      if ( p_established != NULL)
+	*p_established = gd->established;
+      if ( p_seqlast != NULL)
+	*p_seqlast = gd->seqlast;
+      if (p_seqmask != NULL)
+	*p_seqmask = gd->seqmask;
+
       break;
 
     case RPCSEC_GSS_DESTROY:
