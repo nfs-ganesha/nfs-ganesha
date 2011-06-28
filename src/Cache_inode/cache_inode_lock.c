@@ -58,21 +58,6 @@
 #include "stuff_alloc.h"
 #include "nfs_core.h"
 
-typedef struct cache_lock_entry_t
-{
-  struct glist_head           cle_list;
-  struct glist_head           cle_all_locks;
-  int                         cle_ref_count;
-  cache_entry_t             * cle_pentry;
-  cache_blocking_t            cle_blocked;
-  cache_lock_owner_t        * cle_owner;
-  cache_lock_desc_t           cle_lock;
-  void                      * cle_pcookie;
-  int                         cle_cookie_size;
-  granted_callback_t          cle_granted_callback;
-  pthread_mutex_t             cle_mutex;
-} cache_lock_entry_t;
-
 /*
  * cache_lock_entry_t locking rule:
  * The value is always updated/read with nlm_lock_entry->lock held
@@ -169,8 +154,9 @@ const char *str_blocking(cache_blocking_t blocking)
       case CACHE_NON_BLOCKING:   return "NON_BLOCKING  ";
       case CACHE_NLM_BLOCKING:   return "NLM_BLOCKING  ";
       case CACHE_NFSV4_BLOCKING: return "NFSV4_BLOCKING";
-      default:                   return "unknown       ";
+      case CACHE_GRANTING:       return "GRANTING      ";
     }
+  return "unknown       ";
 }
 
 const char *str_blocked(cache_blocking_t blocked)
@@ -180,8 +166,9 @@ const char *str_blocked(cache_blocking_t blocked)
       case CACHE_NON_BLOCKING:   return "GRANTED       ";
       case CACHE_NLM_BLOCKING:   return "NLM_BLOCKING  ";
       case CACHE_NFSV4_BLOCKING: return "NFSV4_BLOCKING";
-      default:                   return "unknown       ";
+      case CACHE_GRANTING:       return "GRANTING      ";
     }
+  return "unknown       ";
 }
 
 void LogEntry(const char         *reason, 
@@ -193,11 +180,14 @@ void LogEntry(const char         *reason,
     {
       char owner[1024];
       uint64_t fileid_digest = 0;
+
       DisplayOwner(ple->cle_owner, owner);
+
       FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                         FSAL_DIGEST_FILEID3,
                         &(pentry->object.file.handle),
                         (caddr_t) &fileid_digest);
+
       LogFullDebug(COMPONENT_NLM,
                    "%s Entry: %p fileid=%llu, owner=%s, type=%s, start=0x%llx, end=0x%llx, blocked=%s",
                    reason, pentry, (unsigned long long) fileid_digest,
@@ -208,71 +198,54 @@ void LogEntry(const char         *reason,
     }
 }
 
-#if 0
-void LogLock(const char *reason, struct nlm4_lock *nlm_lock)
+void LogLock(const char         *reason, 
+             cache_entry_t      *pentry,
+             fsal_op_context_t  *pcontext,
+             cache_lock_owner_t *powner,
+             cache_lock_desc_t  *plock)
 {
   if(isFullDebug(COMPONENT_NLM))
     {
-      char fh_buff[1024], oh_buff[1024];
-      netobj_to_string(&nlm_lock->oh, oh_buff, 1023);
-      netobj_to_string(&nlm_lock->fh, fh_buff, 1023);
+      char owner[1024];
+      uint64_t fileid_digest = 0;
+
+      DisplayOwner(powner, owner);
+
+      FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
+                        FSAL_DIGEST_FILEID3,
+                        &(pentry->object.file.handle),
+                        (caddr_t) &fileid_digest);
+
       LogFullDebug(COMPONENT_NLM,
-                   "%s Lock: caller=%s, fh=%s, oh=%s, svid=%d, start=0x%llx, end=0x%llx",
-                   reason, nlm_lock->caller_name, fh_buff,
-                   oh_buff, nlm_lock->svid,
-                   (unsigned long long) nlm_lock->cle_lock.cld_offset,
-                   (unsigned long long) lock_end(nlm_lock->cle_lock.cld_offset, nlm_lock->cle_lock.cld_length));
+                   "%s Lock: fileid=%llu, owner=%s, type=%s, start=0x%llx, end=0x%llx",
+                   reason, (unsigned long long) fileid_digest,
+                   owner, str_lockt(plock->cld_type),
+                   (unsigned long long) plock->cld_offset,
+                   (unsigned long long) lock_end(plock));
     }
 }
-#endif
 
-#if 0
-void LogArgs(const char *reason, struct nlm4_lockargs *arg)
+void LogUnlock(cache_entry_t      *pentry,
+               fsal_op_context_t  *pcontext,
+               cache_lock_entry_t *ple)
 {
-  struct nlm4_lock *nlm_lock = &arg->alock;
-
   if(isFullDebug(COMPONENT_NLM))
     {
-      char fh_buff[1024], oh_buff[1024];
-      netobj_to_string(&nlm_lock->oh, oh_buff, 1023);
-      netobj_to_string(&nlm_lock->fh, fh_buff, 1023);
+      uint64_t fileid_digest = 0;
+
+      FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
+                        FSAL_DIGEST_FILEID3,
+                        &(pentry->object.file.handle),
+                        (caddr_t) &fileid_digest);
+
       LogFullDebug(COMPONENT_NLM,
-                   "%s Lock: caller=%s, fh=%s, oh=%s, svid=%d, start=0x%llx, end=0x%llx, exclusive=%d",
-                   reason, nlm_lock->caller_name, fh_buff,
-                   oh_buff, nlm_lock->svid,
-                   (unsigned long long) nlm_lock->cle_lock.cld_offset,
-                   (unsigned long long) lock_end(nlm_lock->cle_lock.cld_offset, nlm_lock->cle_lock.cld_length),
-                   arg->exclusive);
+                   "FSAL Unlock fileid=%llu, type=%s, start=0x%llx, end=0x%llx",
+                   (unsigned long long) fileid_digest,
+                   str_lockt(ple->cle_lock.cld_type),
+                   (unsigned long long) ple->cle_lock.cld_offset,
+                   (unsigned long long) lock_end(&ple->cle_lock));
     }
 }
-#endif
-
-#if 0
-void LogKernel(struct nlm4_lockargs *arg, int exclusive)
-{
-
-  if(isDebug(COMPONENT_NLM))
-    {
-      struct nlm4_lock *nlm_lock = &arg->alock;
-      char *type;
-      switch(exclusive)
-        {
-          case 0:  type = "F_RDLCK";
-                   break;
-          case 1:  type = "F_WRLCK";
-                   break;
-          case 2:  type = "F_UNLCK";
-                   break;
-          default: type = "UNKNOWN";
-        }
-      LogDebug(COMPONENT_NLM,
-               "%s(%d) start=0x%llx, end=0x%llx",
-               type, exclusive,
-               (unsigned long long) nlm_lock->cle_lock.cld_offset,
-               (unsigned long long) lock_end(nlm_lock->cle_lock.cld_offset, nlm_lock->cle_lock.cld_length));
-    }
-}
-#endif
 
 #if 0
 void dump_entry(cache_lock_entry_t *entry)
@@ -312,9 +285,7 @@ void dump_lock_list(void)
   else
     LogTest("(empty)\n");
 }
-#endif
 
-#if 0
 void dump_all_locks(void)
 {
 #ifdef _DEBUG_MEMLEAKS
@@ -398,61 +369,23 @@ void free_cache_lock_entry(cache_lock_entry_t *ple)
   Mem_Free(ple);
 }
 
-#if 0
-static inline cache_lock_entry_t *nlm4_lock_to_nlm_lock_entry(struct nlm4_lock *nlm_lock, netobj *cookie)
-{
-  return create_nlm_lock_entry(nlm_lock, cookie, 0);
-}
-
-static inline cache_lock_entry_t *nlm4_lockargs_to_nlm_lock_entry(struct nlm4_lockargs *args)
-{
-  return create_nlm_lock_entry(&args->alock, &args->cookie, args->exclusive);
-}
-
-void nlm_lock_entry_to_nlm_holder(cache_lock_entry_t * lock_entry,
-                                  struct nlm4_holder *holder)
-{
-  /*
-   * Take the lock to make sure other threads don't update
-   * lock_entry contents in parallel
-   */
-  P(lock_entry->cle_mutex);
-  holder->exclusive = lock_entry->arg.exclusive;
-  holder->oh = lock_entry->arg.alock.oh;
-  holder->svid = lock_entry->arg.alock.svid;
-  holder->cle_lock.cld_offset = lock_entry->cle_lock.cld_offset;
-  holder->cle_lock.cld_length = lock_entry->arg.alock.cle_lock.cld_length;
-  V(lock_entry->cle_mutex);
-}
-
-int nlm_lock_entry_get_state(cache_lock_entry_t * lock_entry)
-{
-  int lck_state;
-  P(lock_entry->cle_mutex);
-  lck_state = lock_entry->state;
-  V(lock_entry->cle_mutex);
-  return lck_state;
-}
-#endif
-
-#if 0
-static void lock_entry_inc_ref(cache_entry_t      *pentry,
-                               fsal_op_context_t  *pcontext,
-                               cache_lock_entry_t *lock_entry)
+void lock_entry_inc_ref(cache_lock_entry_t *lock_entry)
 {
     P(lock_entry->cle_mutex);
     lock_entry->cle_ref_count++;
     V(lock_entry->cle_mutex);
 }
-#endif
 
 void lock_entry_dec_ref(cache_entry_t      *pentry,
                         fsal_op_context_t  *pcontext,
-                        cache_lock_entry_t *lock_entry) 
+                        cache_lock_entry_t *lock_entry)
 {
   int to_free = 0;
+
   P(lock_entry->cle_mutex);
+
   lock_entry->cle_ref_count--;
+
   if(!lock_entry->cle_ref_count)
     {
       /*
@@ -461,7 +394,9 @@ void lock_entry_dec_ref(cache_entry_t      *pentry,
        */
       to_free = 1;
     }
+
   V(lock_entry->cle_mutex);
+
   if(to_free)
     {
       LogEntry("nlm_lock_entry_dec_ref Freeing",
@@ -524,6 +459,10 @@ void cache_copy_owner(cache_lock_owner_t *pdest, cache_lock_owner_t *psrc)
 /* This is not complete, it doesn't check the owner's IP address...*/
 static inline int different_owners(cache_lock_owner_t *powner1, cache_lock_owner_t *powner2)
 {
+  /* Shortcut in case we actually are pointing to the same owner structure */
+  if(powner1 == powner2)
+    return 0;
+
   if(powner1->clo_owner.clo_type != powner2->clo_owner.clo_type)
     return 1;
 
@@ -547,11 +486,10 @@ static inline int different_lock(cache_lock_desc_t *lock1, cache_lock_desc_t *lo
          (lock1->cld_length != lock2->cld_length);
 }
 
-#if 0
 static cache_lock_entry_t *get_overlapping_entry(cache_entry_t        * pentry,
+                                                 fsal_op_context_t    * pcontext,
                                                  cache_lock_owner_t   * powner,
-                                                 cache_lock_desc_t    * plock,
-                                                 fsal_op_context_t    * pcontext)
+                                                 cache_lock_desc_t    * plock)
 {
   struct glist_head *glist;
   cache_lock_entry_t *found_entry = NULL;
@@ -577,10 +515,8 @@ static cache_lock_entry_t *get_overlapping_entry(cache_entry_t        * pentry,
            * allow if neither lock is exclusive or the owner is the same
            */
           if((found_entry->cle_lock.cld_type == CACHE_INODE_LOCK_W ||
-              plock->cld_type == CACHE_INODE_LOCK_W)
-              /* TODO: do we need to check owner... certainly should for TEST
-              &&
-             different_owners(found_entry->cle_owner, powner) */
+              plock->cld_type == CACHE_INODE_LOCK_W) &&
+             different_owners(found_entry->cle_owner, powner)
              )
             {
               /* found a conflicting lock, return it */
@@ -591,7 +527,6 @@ static cache_lock_entry_t *get_overlapping_entry(cache_entry_t        * pentry,
 
   return NULL;
 }
-#endif
 
 /* We need to iterate over the full lock list and remove
  * any mapping entry. And l_offset = 0 and cle_lock.cld_length = 0 lock_entry
@@ -694,208 +629,209 @@ cache_lock_entry_t *nlm_find_lock_entry(struct nlm4_lock *nlm_lock,
 
   return nlm_entry;
 }
-
-static cache_lock_entry_t *cache_lock_entry_t_dup(cache_lock_entry_t * orig_nlm_entry)
-{
-  cache_lock_entry_t *nlm_entry;
-  nlm_entry = (cache_lock_entry_t *) Mem_Calloc_Label(1, sizeof(cache_lock_entry_t),
-                                                    "cache_lock_entry_t");
-  if(!nlm_entry)
-    return NULL;
-  nlm_entry->arg.alock.caller_name = Str_Dup(orig_nlm_entry->arg.alock.caller_name);
-  if(!copy_netobj(&nlm_entry->arg.alock.fh, &orig_nlm_entry->arg.alock.fh))
-    goto err_out;
-  if(!copy_netobj(&nlm_entry->arg.alock.oh, &orig_nlm_entry->arg.alock.oh))
-    goto err_out;
-  if(!copy_netobj(&nlm_entry->arg.cookie, &orig_nlm_entry->arg.cookie))
-    goto err_out;
-  nlm_entry->arg.alock.svid = orig_nlm_entry->arg.alock.svid;
-  nlm_entry->cle_lock.cld_offset = orig_nlm_entry->cle_lock.cld_offset;
-  nlm_entry->arg.alock.cle_lock.cld_length = orig_nlm_entry->arg.alock.cle_lock.cld_length;
-  nlm_entry->state = orig_nlm_entry->state;
-  nlm_entry->arg.exclusive = orig_nlm_entry->arg.exclusive;
-  nlm_entry->cle_ref_count = 0;
-  pthread_mutex_init(&nlm_entry->lock, NULL);
-  nlm_entry->pentry = orig_nlm_entry->pentry;
-  nlm_entry->pclient = orig_nlm_entry->pclient;
-  nlm_entry->ht = orig_nlm_entry->ht;
-  //cache_inode_pin_pentry(nlm_entry->pentry, nlm_entry->pclient, NULL);
-#ifdef _DEBUG_MEMLEAKS
-  glist_add_tail(&cache_inode_all_locks, &nlm_entry->cle_all_locks);
 #endif
-  return nlm_entry;
-err_out:
-  Mem_Free(nlm_entry->arg.alock.caller_name);
-  netobj_free(&nlm_entry->arg.alock.fh);
-  netobj_free(&nlm_entry->arg.alock.oh);
-  netobj_free(&nlm_entry->arg.cookie);
-  Mem_Free(nlm_entry);
-  return NULL;
+
+static cache_lock_entry_t *cache_lock_entry_t_dup(cache_lock_entry_t * orig_entry)
+{
+  cache_lock_entry_t *new_entry;
+
+  new_entry = (cache_lock_entry_t *) Mem_Alloc_Label(sizeof(cache_lock_entry_t),
+                                                     "cache_lock_entry_t");
+  if(!new_entry)
+    return NULL;
+
+  memset(new_entry, 0, sizeof(*new_entry));
+
+  if(orig_entry->cle_pcookie != NULL)
+    {
+      new_entry->cle_pcookie = Mem_Alloc_Label(orig_entry->cle_cookie_size,
+                                               "nlm_cookie");
+      if(new_entry->cle_pcookie == NULL)
+        {
+          Mem_Free(new_entry);
+          return NULL;
+        }
+      memcpy(new_entry->cle_pcookie, orig_entry->cle_pcookie, orig_entry->cle_cookie_size);
+    }
+
+  new_entry->cle_ref_count   = 1;
+  new_entry->cle_pentry      = orig_entry->cle_pentry;
+  new_entry->cle_blocked     = orig_entry->cle_blocked;
+  new_entry->cle_owner       = orig_entry->cle_owner;
+  new_entry->cle_cookie_size = orig_entry->cle_cookie_size;
+
+  if(pthread_mutex_init(&new_entry->cle_mutex, NULL) == -1)
+    {
+      if(new_entry->cle_pcookie)
+        Mem_Free(new_entry->cle_pcookie);
+      Mem_Free(new_entry);
+      return NULL;
+    }
+
+#ifdef _DEBUG_MEMLEAKS
+  glist_add_tail(&cache_inode_all_locks, &new_entry->cle_all_locks);
+#endif
+
+  return new_entry;
+}
+
+static void free_list(cache_entry_t        * pentry,
+                      fsal_op_context_t    * pcontext,
+                      struct glist_head    * list)
+{
+  cache_lock_entry_t *found_entry;
+  struct glist_head *glist, *glistn;
+
+  glist_for_each_safe(glist, glistn, list)
+    {
+      found_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+
+      remove_from_locklist(pentry, pcontext, found_entry);
+    }
 }
 
 /* Subtract a lock from a lock entry, placing any remaining bits into the split list. */
-static void subtract_lock_from_entry(cache_lock_entry_t *nlm_entry,
-                                     struct nlm4_lock *nlm_lock,
-                                     struct glist_head *split_list)
+static bool_t subtract_lock_from_entry(cache_entry_t        * pentry,
+                                       fsal_op_context_t    * pcontext,
+                                       cache_lock_entry_t   * found_entry,
+                                       cache_lock_desc_t    * plock,
+                                       struct glist_head    * split_list,
+                                       cache_inode_status_t * pstatus)
 {
-  uint64_t nlm_entry_end = lock_end(nlm_entry->cle_lock.cld_offset, nlm_entry->arg.alock.cle_lock.cld_length);
-  uint64_t nlm_lock_end = lock_end(nlm_lock->cle_lock.cld_offset, nlm_lock->cle_lock.cld_length);
-  cache_lock_entry_t *nlm_entry_left = NULL;
-  cache_lock_entry_t *nlm_entry_right = NULL;
+  uint64_t found_entry_end = lock_end(&found_entry->cle_lock);
+  uint64_t plock_end = lock_end(plock);
+  cache_lock_entry_t *found_entry_left = NULL;
+  cache_lock_entry_t *found_entry_right = NULL;
 
-  if(nlm_lock_end < nlm_entry->cle_lock.cld_offset)
+  *pstatus = CACHE_INODE_SUCCESS;
+
+  if(plock_end < found_entry->cle_lock.cld_offset)
     /* nothing to split */
-    return;
+    FALSE;
 
-  if(nlm_entry_end < nlm_lock->cle_lock.cld_offset)
+  if(found_entry_end < plock->cld_offset)
     /* nothing to split */
-    return;
+    FALSE;
 
-  if((nlm_lock->cle_lock.cld_offset <= nlm_entry->cle_lock.cld_offset) &&
-     nlm_lock_end >= nlm_entry_end)
+  if((plock->cld_offset <= found_entry->cle_lock.cld_offset) &&
+     plock_end >= found_entry_end)
     {
       /* Fully overlap */
-      LogEntry("subtract_lock_from_entry Remove Complete", nlm_entry);
+      LogEntry("subtract_lock_from_entry Remove Complete",
+               pentry, pcontext, found_entry);
       goto complete_remove;
     }
 
-  LogEntry("subtract_lock_from_entry Split", nlm_entry);
+  LogEntry("subtract_lock_from_entry Split",
+           pentry, pcontext, found_entry);
 
   /* Delete the old entry and add one or two new entries */
-  if(nlm_lock->cle_lock.cld_offset > nlm_entry->cle_lock.cld_offset)
+  if(plock->cld_offset > found_entry->cle_lock.cld_offset)
     {
-      nlm_entry_left = cache_lock_entry_t_dup(nlm_entry);
-      /* FIXME handle error */
-      if(nlm_entry_left)
+      found_entry_left = cache_lock_entry_t_dup(found_entry);
+      if(found_entry_left == NULL)
         {
-          nlm_entry_left->arg.alock.cle_lock.cld_length = nlm_lock->cle_lock.cld_offset - nlm_entry->cle_lock.cld_offset;
-          LogEntry("subtract_lock_from_entry left split", nlm_entry_left);
-          nlm_lock_entry_inc_ref(nlm_entry_left);
-          glist_add_tail(split_list, &(nlm_entry_left->lock_list));
+          free_list(pentry, pcontext, split_list);
+          *pstatus = CACHE_INODE_MALLOC_ERROR;
+          return FALSE;
         }
+
+      found_entry_left->cle_lock.cld_length = plock->cld_offset - found_entry->cle_lock.cld_offset;
+      LogEntry("subtract_lock_from_entry left split",
+               pentry, pcontext, found_entry_left);
+      glist_add_tail(split_list, &(found_entry_left->cle_list));
     }
 
-  if(nlm_lock_end < nlm_entry_end)
+  if(plock_end < found_entry_end)
     {
-      nlm_entry_right = cache_lock_entry_t_dup(nlm_entry);
-      /* FIXME handle error */
-      if(nlm_entry_right)
+      found_entry_right = cache_lock_entry_t_dup(found_entry);
+      if(found_entry_right == NULL)
         {
-          nlm_entry_right->cle_lock.cld_offset = nlm_lock_end + 1;
-          nlm_entry_right->arg.alock.cle_lock.cld_length = nlm_entry_end - nlm_lock_end;
-          LogEntry("subtract_lock_from_entry right split", nlm_entry_right);
-          nlm_lock_entry_inc_ref(nlm_entry_right);
-          glist_add_tail(split_list, &(nlm_entry_right->lock_list));
+          free_list(pentry, pcontext, split_list);
+          *pstatus = CACHE_INODE_MALLOC_ERROR;
+          return FALSE;
         }
+
+      found_entry_right->cle_lock.cld_offset = plock_end + 1;
+      found_entry_right->cle_lock.cld_length = found_entry_end - plock_end;
+      LogEntry("subtract_lock_from_entry right split",
+               pentry, pcontext, found_entry_right);
+      glist_add_tail(split_list, &(found_entry_right->cle_list));
     }
 
 complete_remove:
-  remove_from_locklist(nlm_entry);
+  remove_from_locklist(pentry, pcontext, found_entry);
+
+  return TRUE;
 }
 
 /* Subtract a lock from a list of locks, possibly splitting entries in the list. */
-void subtract_lock_from_list(struct nlm4_lock *nlm_lock,
-                             struct glist_head *list,
-                             int care_about_owner)
+bool_t subtract_lock_from_list(cache_entry_t        * pentry,
+                               fsal_op_context_t    * pcontext,
+                               cache_lock_owner_t   * powner,
+                               cache_lock_desc_t    * plock,
+                               cache_inode_status_t * pstatus,
+                               struct glist_head    * list,
+                               int                    care_about_owner)
 {
-  cache_lock_entry_t *nlm_entry;
+  cache_lock_entry_t *found_entry;
   struct glist_head split_lock_list;
   struct glist_head *glist, *glistn;
+  bool_t rc = FALSE;
 
   init_glist(&split_lock_list);
 
   glist_for_each_safe(glist, glistn, list)
     {
-      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+      found_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
 
-      if(care_about_owner && different_owners(&nlm_entry->arg.alock, nlm_lock))
+      if(care_about_owner && different_owners(found_entry->cle_owner, powner))
           continue;
       /*
-       * We have matched all atribute of the nlm4_lock
-       * Even though we are taking a reference to nlm_entry, we
+       * We have matched all atribute of powner/plock
+       * Even though we are taking a reference to found_entry, we
        * don't inc the ref count because we want to drop the lock entry.
        */
-      subtract_lock_from_entry(nlm_entry, nlm_lock, &split_lock_list);
+      rc |= subtract_lock_from_entry(pentry, pcontext, found_entry, plock, &split_lock_list, pstatus);
+      //TODO: deal with pstatus
     }
 
   /* now add the split lock list */
   glist_add_list_tail(list, &split_lock_list);
+
+  return rc;
 }
 
-void subtract_list_from_list(struct glist_head *target,
-                             struct glist_head *source,
-                             struct nlm4_lock *nlm_lock)
+cache_inode_status_t subtract_list_from_list(cache_entry_t        * pentry,
+                                             fsal_op_context_t    * pcontext,
+                                             struct glist_head    * target,
+                                             struct glist_head    * source,
+                                             cache_lock_owner_t   * powner,
+                                             cache_inode_status_t * pstatus)
 {
-  cache_lock_entry_t *nlm_entry;
+  cache_lock_entry_t *found_entry;
   struct glist_head *glist, *glistn;
+
+  *pstatus = CACHE_INODE_SUCCESS;
 
   glist_for_each_safe(glist, glistn, source)
     {
-      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+      found_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
 
-      subtract_lock_from_list(&nlm_entry->arg.alock, target, 0);
+      subtract_lock_from_list(pentry,
+                              pcontext,
+                              found_entry->cle_owner,
+                              &found_entry->cle_lock,
+                              pstatus,
+                              target,
+                              0);
+      if(*pstatus != CACHE_INODE_SUCCESS)
+        break;
     }
+  return *pstatus;
 }
 
-void send_kernel_unlock(struct glist_head *list)
-{
-  cache_lock_entry_t *nlm_entry;
-  struct glist_head *glist, *glistn;
-
-  glist_for_each_safe(glist, glistn, list)
-    {
-      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
-
-      LogKernel(&nlm_entry->arg, 2);
-
-      remove_from_locklist(nlm_entry);
-    }
-}
-
-/* We need to iterate over the full lock list and remove
- * any mapping entry. And cle_lock.cld_offset = 0 and cle_lock.cld_length = 0 nlm_lock
- * implies remove all entries
- */
-void nlm_delete_lock_entry(struct nlm4_lock *nlm_lock)
-{
-  cache_lock_entry_t *nlm_entry;
-
-  P(pentry->object.file.lock_list_mutex);
-
-  LogFullDebug(COMPONENT_NLM,
-               "----------------------------------------------------------------------");
-  LogLock("nlm_delete_lock_entry Subtracting", nlm_lock);
-  LogFullDebug(COMPONENT_NLM,
-               "----------------------------------------------------------------------");
-
-  subtract_lock_from_list(nlm_lock, &pentry->object.file.lock_list, 1);
-
-  nlm_entry = nlm4_lock_to_nlm_lock_entry(nlm_lock, NULL);
-  if(nlm_entry != NULL)
-    {
-      struct glist_head kernel_unlock_list;
-
-      init_glist(&kernel_unlock_list);
-      nlm_entry->cle_ref_count += 1;
-      glist_add_tail(&kernel_unlock_list, &nlm_entry->lock_list);
-      LogFullDebug(COMPONENT_NLM,
-                   "----------------------------------------------------------------------");
-      LogLock("nlm_delete_lock_entry Generating Kernel Unlock List", nlm_lock);
-      LogFullDebug(COMPONENT_NLM,
-                   "----------------------------------------------------------------------");
-      subtract_list_from_list(&kernel_unlock_list, &pentry->object.file.lock_list, nlm_lock);
-      send_kernel_unlock(&kernel_unlock_list);
-    }
-
-  LogFullDebug(COMPONENT_NLM,
-               "----------------------------------------------------------------------");
-  LogLock("nlm_delete_lock_entry Done", nlm_lock);
-  LogFullDebug(COMPONENT_NLM,
-               "----------------------------------------------------------------------");
-
-  V(pentry->object.file.lock_list_mutex);
-}
-
+#if 0
 cache_lock_entry_t *nlm_find_lock_entry_by_cookie(netobj * cookie)
 {
   cache_lock_entry_t *nlm_entry;
@@ -982,7 +918,7 @@ void nlm_node_recovery(char *name,
       /*
        * now remove the from locklist
        */
-      remove_from_locklist(nlm_entry);
+      remove_from_locklist(pentry, pcontext, nlm_entry);
 
       /*
        * We don't inc ref count because we want to drop the lock entry
@@ -1129,98 +1065,54 @@ free_nlm_lock_entry:
   nlm_lock_entry_dec_ref(nlm_entry);
   return;
 }
+#endif
 
-static void do_nlm_grant_blocked_locks(void *arg)
+static void grant_blocked_locks(cache_entry_t        * pentry,
+                                fsal_op_context_t    * pcontext,
+                                cache_inode_client_t * pclient)
 {
-  netobj *fh;
-  struct nlm4_lock nlm_lock;
-  cache_lock_entry_t *nlm_entry;
+  cache_lock_entry_t *found_entry;
   struct glist_head *glist, *glistn;
-  cache_lock_entry_t *nlm_entry_overlap;
+  cache_inode_status_t status;
 
-  fh = (netobj *) arg;
-  P(pentry->object.file.lock_list_mutex);
   glist_for_each_safe(glist, glistn, &pentry->object.file.lock_list)
     {
-      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
-      if(netobj_compare(&nlm_entry->arg.alock.fh, fh))
+      found_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+
+      if(found_entry->cle_blocked == CACHE_NON_BLOCKING)
           continue;
-      if(nlm_entry->state != NLM4_BLOCKED)
-          continue;
-      /*
-       * found a blocked entry for this file handle
-       * See if we can place the lock
-       */
-      /* dummy nlm4_lock */
-      if(!copy_netobj(&nlm_lock.fh, &nlm_entry->arg.alock.fh))
+
+      /* Found a blocked entry for this file, see if we can place the lock. */
+
+      if(get_overlapping_entry(pentry,
+                               pcontext,
+                               found_entry->cle_owner,
+                               &found_entry->cle_lock) != NULL)
+        continue;
+
+      if(found_entry->cle_granted_callback != NULL)
         {
-          /* If we fail the best is to delete the block entry
-           * so that client can try again and get the lock. May be
-           * by then we are able to allocate objects
+          /*
+           * Mark the found_entry as granted and make the granted call back.
+           * The granted call back is responsible for acquiring a reference to
+           * the lock entry if needed.
            */
-          remove_from_locklist(nlm_entry);
-          continue;
+          found_entry->cle_blocked = CACHE_GRANTING;
+
+          status = found_entry->cle_granted_callback(pentry,
+                                                     pcontext,
+                                                     found_entry,
+                                                     pclient,
+                                                     &status);
+
+          if(status == CACHE_INODE_SUCCESS)
+            continue;
         }
-      nlm_lock.cle_lock.cld_offset = nlm_entry->cle_lock.cld_offset;
-      nlm_lock.cle_lock.cld_length = nlm_entry->arg.alock.cle_lock.cld_length;
-      nlm_entry_overlap = get_overlapping_entry(&nlm_lock, nlm_entry->arg.exclusive);
-      netobj_free(&nlm_lock.fh);
-      if(nlm_entry_overlap)
-        {
-          nlm_lock_entry_dec_ref(nlm_entry_overlap);
-          continue;
-        }
 
-      P(nlm_entry->cle_mutex);
-      /*
-       * Mark the nlm_entry as granted and send a grant msg rpc
-       * Some os only support grant msg rpc
-       */
-
-      nlm_entry->state = NLM4_GRANTED;
-      nlm_entry->cle_ref_count++;
-      V(nlm_entry->cle_mutex);
-      /*
-       * We don't want to send the granted_msg rpc holding
-       * pentry->object.file.lock_list_mutex. That will prevent other lock operation
-       * at the server. We have incremented nlm_entry cle_ref_count.
-       */
-      nlm_async_callback(nlm4_send_grant_msg, (void *)nlm_entry);
-    }
-  V(pentry->object.file.lock_list_mutex);
-  netobj_free(fh);
-  Mem_Free(fh);
-}
-
-void nlm_grant_blocked_locks(netobj * orig_fh)
-{
-  netobj *fh;
-  fh = (netobj *) Mem_Alloc(sizeof(netobj));
-  if(copy_netobj(fh, orig_fh) != NULL)
-    {
-      /*
-       * We don't want to block the unlock request to wait
-       * for us to grant lock to other host. So create an async
-       * task
-       */
-      nlm_async_callback(do_nlm_grant_blocked_locks, (void *)fh);
+      /* There was no granted call back or it failed, remove lock from list */
+      remove_from_locklist(pentry, pcontext, found_entry);
     }
 }
-
-/*
- * called when server get a response from client
- * saying the grant message is denied due to grace period
- */
-void nlm_resend_grant_msg(void *arg)
-{
-  /*
-   * We should wait for client grace period
-   */
-  sleep(NLM4_CLIENT_GRACE_PERIOD);
-
-  nlm4_send_grant_msg(arg);
-}
-#endif
 
 inline fsal_lock_t fsal_lock_type(cache_lock_desc_t *lock)
 {
@@ -1249,45 +1141,9 @@ inline cache_lock_t cache_inode_lock_type(fsal_lock_t type)
   return lt;
 }
 
-cache_inode_status_t KernelLockOp(cache_entry_t        * pentry,
-                                  fsal_op_context_t    * pcontext,
-                                  cache_lock_owner_t   * powner,
-                                  fsal_lock_op_t         lock_op,
-                                  cache_lock_desc_t    * lock,
-                                  cache_lock_owner_t   * holder,   /* owner that holds conflicting lock */
-                                  cache_lock_desc_t    * conflict) /* description of conflicting lock */
+cache_inode_status_t convert_fsal_lock_status(fsal_status_t fsal_status)
 {
-  fsal_status_t fsal_status;
   cache_inode_status_t status;
-
-  switch(pentry->object.file.fsal_lock_support)
-    {
-      case FSAL_NO_LOCKS:
-        return CACHE_INODE_SUCCESS;
-
-      case FSAL_LOCKS_NO_OWNER:
-        fsal_status = FSAL_lock_op_no_owner(cache_inode_fd(pentry),
-                                            &pentry->object.file.handle,
-                                            pcontext,
-                                            lock_op,
-                                            fsal_lock_type(lock),
-                                            lock->cld_offset,
-                                            lock->cld_length);
-        break;
-
-      case FSAL_LOCKS_OWNER:
-        /* TODO: need a better owner to pass, will depend on what FSAL is capable of */
-        fsal_status = FSAL_lock_op_owner(cache_inode_fd(pentry),
-                                         &pentry->object.file.handle,
-                                         pcontext,
-                                         &powner,
-                                         sizeof(cache_lock_owner_t *),
-                                         lock_op,
-                                         fsal_lock_type(lock),
-                                         lock->cld_offset,
-                                         lock->cld_length);
-        break;
-    }
 
   /* TODO: may need more details on status, currently will not convert
    * lock failure right.
@@ -1300,6 +1156,124 @@ cache_inode_status_t KernelLockOp(cache_entry_t        * pentry,
   status = cache_inode_error_convert(fsal_status);
   if(status == CACHE_INODE_FSAL_DELAY || status == CACHE_INODE_FSAL_EACCESS)
     status = CACHE_INODE_LOCK_CONFLICT;
+  return status;
+}
+
+cache_inode_status_t FSAL_unlock_no_owner(cache_entry_t        * pentry,
+                                          fsal_op_context_t    * pcontext,
+                                          cache_lock_owner_t   * powner,
+                                          cache_lock_desc_t    * plock)
+{
+  cache_lock_entry_t *unlock_entry;
+  struct glist_head fsal_unlock_list;
+  struct glist_head *glist, *glistn;
+  cache_lock_entry_t *found_entry;
+  fsal_status_t fsal_status;
+  cache_inode_status_t status = CACHE_INODE_SUCCESS, t_status;
+
+  unlock_entry = create_cache_lock_entry(pentry,
+                                         CACHE_NON_BLOCKING,
+                                         powner,
+                                         plock,
+                                         NULL, /* No cookie */
+                                         0,
+                                         NULL);
+
+  if(unlock_entry == NULL)
+    return CACHE_INODE_MALLOC_ERROR;
+
+  init_glist(&fsal_unlock_list);
+  unlock_entry->cle_ref_count = 1;
+  glist_add_tail(&fsal_unlock_list, &unlock_entry->cle_list);
+
+  LogFullDebug(COMPONENT_NLM,
+               "----------------------------------------------------------------------");
+  LogLock("cache_inode_unlock Generating FSAL Unlock List", pentry, pcontext, powner, plock);
+
+  LogFullDebug(COMPONENT_NLM,
+               "----------------------------------------------------------------------");
+
+  status = subtract_list_from_list(pentry,
+                                   pcontext,
+                                   &fsal_unlock_list,
+                                   &pentry->object.file.lock_list,
+                                   powner,
+                                   &status);
+  //TODO: deal with return
+
+  glist_for_each_safe(glist, glistn, &fsal_unlock_list)
+    {
+      found_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+
+      LogUnlock(pentry, pcontext, found_entry);
+
+      fsal_status = FSAL_lock_op_no_owner(cache_inode_fd(pentry),
+                                          &pentry->object.file.handle,
+                                          pcontext,
+                                          FSAL_OP_UNLOCK,
+                                          fsal_lock_type(plock),
+                                          plock->cld_offset,
+                                          plock->cld_length);
+
+      t_status = convert_fsal_lock_status(fsal_status);
+      if(t_status != CACHE_INODE_SUCCESS)
+        status = t_status;
+
+      remove_from_locklist(pentry, pcontext, found_entry);
+    }
+
+  return status;
+}
+
+cache_inode_status_t FSAL_LockOp(cache_entry_t        * pentry,
+                                 fsal_op_context_t    * pcontext,
+                                 fsal_lock_op_t         lock_op,
+                                 cache_lock_owner_t   * powner,
+                                 cache_lock_desc_t    * plock,
+                                 cache_lock_owner_t   * holder,   /* owner that holds conflicting lock */
+                                 cache_lock_desc_t    * conflict) /* description of conflicting lock */
+{
+  fsal_status_t fsal_status;
+  cache_inode_status_t status = CACHE_INODE_SUCCESS;
+
+  switch(pentry->object.file.fsal_lock_support)
+    {
+      case FSAL_NO_LOCKS:
+        return CACHE_INODE_SUCCESS;
+
+      case FSAL_LOCKS_NO_OWNER:
+        if(lock_op == FSAL_OP_UNLOCK)
+          {
+            status = FSAL_unlock_no_owner(pentry, pcontext, powner, plock);
+          }
+        else
+          {
+            fsal_status = FSAL_lock_op_no_owner(cache_inode_fd(pentry),
+                                                &pentry->object.file.handle,
+                                                pcontext,
+                                                lock_op,
+                                                fsal_lock_type(plock),
+                                                plock->cld_offset,
+                                                plock->cld_length);
+            status = convert_fsal_lock_status(fsal_status);
+          }
+        break;
+
+      case FSAL_LOCKS_OWNER:
+        /* TODO: need a better owner to pass, will depend on what FSAL is capable of */
+        fsal_status = FSAL_lock_op_owner(cache_inode_fd(pentry),
+                                         &pentry->object.file.handle,
+                                         pcontext,
+                                         &powner,
+                                         sizeof(cache_lock_owner_t *),
+                                         lock_op,
+                                         fsal_lock_type(plock),
+                                         plock->cld_offset,
+                                         plock->cld_length);
+        status = convert_fsal_lock_status(fsal_status);
+        break;
+    }
+
   if(status == CACHE_INODE_LOCK_CONFLICT)
     {
       if(holder != NULL)
@@ -1309,6 +1283,7 @@ cache_inode_status_t KernelLockOp(cache_entry_t        * pentry,
           memset(conflict, 0, sizeof(*conflict));
         }
     }
+
   return status;
 }
 
@@ -1326,55 +1301,30 @@ void copy_conflict(cache_lock_entry_t   * found_entry,
 }
 
 cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
+                                      fsal_op_context_t    * pcontext,
                                       cache_lock_owner_t   * powner,
                                       cache_lock_desc_t    * plock,
                                       cache_lock_owner_t   * holder,   /* owner that holds conflicting lock */
                                       cache_lock_desc_t    * conflict, /* description of conflicting lock */
                                       cache_inode_client_t * pclient,
-                                      fsal_op_context_t    * pcontext,
                                       cache_inode_status_t * pstatus)
 {
-  struct glist_head *glist;
   cache_lock_entry_t *found_entry;
-  uint64_t found_entry_end, plock_end = lock_end(plock);
-
-  *pstatus = CACHE_INODE_SUCCESS;
 
   P(pentry->object.file.lock_list_mutex);
 
-  glist_for_each(glist, &pentry->object.file.lock_list)
+  found_entry = get_overlapping_entry(pentry, pcontext, powner, plock);
+
+  if(found_entry != NULL)
     {
-      found_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
-
-      LogEntry("get_overlapping_entry Checking",
+      /* found a conflicting lock, return it */
+      LogEntry("cache_inode_test found conflict",
                pentry, pcontext, found_entry);
-
-      /* Skip blocked locks */
-      if(found_entry->cle_blocked != CACHE_NON_BLOCKING)
-          continue;
-
-      found_entry_end = lock_end(&found_entry->cle_lock);
-
-      if((found_entry_end >= plock->cld_offset) &&
-         (found_entry->cle_lock.cld_offset <= plock_end))
-        {
-          /* lock overlaps see if we can allow 
-           * allow if neither lock is exclusive or the owner is the same
-           */
-          if((found_entry->cle_lock.cld_type == CACHE_INODE_LOCK_W ||
-              plock->cld_type == CACHE_INODE_LOCK_W) &&
-             different_owners(found_entry->cle_owner, powner)
-             )
-            {
-              /* found a conflicting lock, return it */
-              LogEntry("cache_inode_test found conflict",
-                       pentry, pcontext, found_entry);
-              copy_conflict(found_entry, holder, conflict);
-              *pstatus = CACHE_INODE_LOCK_CONFLICT;
-              break;
-            }
-        }
+      copy_conflict(found_entry, holder, conflict);
+      *pstatus = CACHE_INODE_LOCK_CONFLICT;
     }
+  else
+    *pstatus = CACHE_INODE_SUCCESS;
 
   V(pentry->object.file.lock_list_mutex);
 
@@ -1382,6 +1332,7 @@ cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
 }
 
 cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
+                                      fsal_op_context_t    * pcontext,
                                       void                 * pcookie,
                                       int                    cookie_size,
                                       cache_blocking_t       blocking,
@@ -1392,7 +1343,6 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
                                       cache_lock_owner_t   * holder,   /* owner that holds conflicting lock */
                                       cache_lock_desc_t    * conflict, /* description of conflicting lock */
                                       cache_inode_client_t * pclient,
-                                      fsal_op_context_t    * pcontext,
                                       cache_inode_status_t * pstatus)
 {
   int allow = 1, overlap = 0;
@@ -1532,13 +1482,13 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
       if(!overlap && pentry->object.file.fsal_lock_support != FSAL_NO_LOCKS)
         {
           /* Need to call down to the FSAL for this lock */
-          *pstatus = KernelLockOp(pentry,
-                                  pcontext,
-                                  powner,
-                                  FSAL_OP_LOCK,
-                                  plock,
-                                  holder,
-                                  conflict);
+          *pstatus = FSAL_LockOp(pentry,
+                                 pcontext,
+                                 FSAL_OP_LOCK,
+                                 powner,
+                                 plock,
+                                 holder,
+                                 conflict);
           if(*pstatus != CACHE_INODE_SUCCESS)
             {
               free_cache_lock_entry(found_entry);
@@ -1565,25 +1515,71 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
 }
 
 cache_inode_status_t cache_inode_unlock(cache_entry_t        * pentry,
+                                        fsal_op_context_t    * pcontext,
                                         void                 * pcookie,
                                         int                    cookie_size,
                                         cache_lock_owner_t   * powner,
                                         cache_lock_desc_t    * plock,
                                         cache_inode_client_t * pclient,
-                                        fsal_op_context_t    * pcontext,
                                         cache_inode_status_t * pstatus)
 {
-  *pstatus = CACHE_INODE_NOT_SUPPORTED;
+  bool_t gotsome;
+
+  /* We need to iterate over the full lock list and remove
+   * any mapping entry. And cle_lock.cld_offset = 0 and cle_lock.cld_length = 0 nlm_lock
+   * implies remove all entries
+   */
+  P(pentry->object.file.lock_list_mutex);
+
+  LogFullDebug(COMPONENT_NLM,
+               "----------------------------------------------------------------------");
+  LogLock("cache_inode_unlock Subtracting", pentry, pcontext, powner, plock);
+  LogFullDebug(COMPONENT_NLM,
+               "----------------------------------------------------------------------");
+
+  /* Release the lock from cache inode lock list for pentry */
+  gotsome = subtract_lock_from_list(pentry,
+                                    pcontext,
+                                    powner,
+                                    plock,
+                                    pstatus,
+                                    &pentry->object.file.lock_list,
+                                    1);
+
+  if(*pstatus != CACHE_INODE_SUCCESS)
+    {
+      V(pentry->object.file.lock_list_mutex);
+      return *pstatus;
+    }
+
+  *pstatus = FSAL_LockOp(pentry,
+                         pcontext,
+                         FSAL_OP_UNLOCK,
+                         powner,
+                         plock,
+                         NULL,   /* no conflict expected */
+                         NULL);
+
+  LogFullDebug(COMPONENT_NLM,
+               "----------------------------------------------------------------------");
+  LogLock("cache_inode_unlock Done", pentry, pcontext, powner, plock);
+  LogFullDebug(COMPONENT_NLM,
+               "----------------------------------------------------------------------");
+
+  V(pentry->object.file.lock_list_mutex);
+
+  grant_blocked_locks(pentry, pcontext, pclient);
+
   return *pstatus;
 }
 
 cache_inode_status_t cache_inode_cancel(cache_entry_t        * pentry,
+                                        fsal_op_context_t    * pcontext,
                                         cache_lock_owner_t   * powner,
                                         void                 * pcookie,
                                         int                    cookie_size,
                                         cache_lock_desc_t    * plock,
                                         cache_inode_client_t * pclient,
-                                        fsal_op_context_t    * pcontext,
                                         cache_inode_status_t * pstatus)
 {
   struct glist_head *glist;
@@ -1622,9 +1618,9 @@ cache_inode_status_t cache_inode_cancel(cache_entry_t        * pentry,
 }
 
 cache_inode_status_t cache_inode_notify(cache_entry_t        * pentry,
+                                        fsal_op_context_t    * pcontext,
                                         cache_lock_owner_t   * powner,
                                         cache_inode_client_t * pclient,
-                                        fsal_op_context_t    * pcontext,
                                         cache_inode_status_t * pstatus)
 {
   *pstatus = CACHE_INODE_NOT_SUPPORTED;
