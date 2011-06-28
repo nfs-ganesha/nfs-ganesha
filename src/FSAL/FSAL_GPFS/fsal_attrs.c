@@ -47,7 +47,9 @@ extern fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
 extern fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
                                                       fsal_attrib_list_t *p_fsalattr_out);
 
+#ifdef _USE_NFS4_ACL
 extern fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t *p_fsalacl, gpfsfsal_xstat_t *p_buffxstat);
+#endif                          /* _USE_NFS4_ACL */
 
 /**
  * GPFSFSAL_getattrs:
@@ -384,6 +386,7 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
         }
     }
 
+#ifdef _USE_NFS4_ACL
    /***********
    *  ACL  *
    ***********/
@@ -407,6 +410,7 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
           Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_setattrs);
         }
     }
+#endif                          /* _USE_NFS4_ACL */
 
   /* If there is any change in stat or acl or both, send it down to file system. */
   if((attr_valid == XATTR_STAT && attr_changed !=0) || attr_valid == XATTR_ACL)

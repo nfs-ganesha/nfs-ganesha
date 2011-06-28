@@ -46,7 +46,9 @@
 #include "config.h"
 #endif
 
+#ifdef _USE_NFS4_ACL
 #include <openssl/md5.h>
+#endif                          /* _USE_NFS4_ACL */
 
 #ifdef _SOLARIS
 #ifndef MAXNAMLEN
@@ -367,6 +369,10 @@ typedef struct fsal_acl_data__
   fsal_uint_t naces;
   fsal_ace_t *aces;
 } fsal_acl_data_t;
+
+#ifndef _USE_NFS4_ACL
+#define MD5_DIGEST_LENGTH  16
+#endif
 
 typedef struct fsal_acl_key__
 {

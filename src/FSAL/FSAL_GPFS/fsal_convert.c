@@ -28,8 +28,10 @@
 #define MAX_2( x, y )    ( (x) > (y) ? (x) : (y) )
 #define MAX_3( x, y, z ) ( (x) > (y) ? MAX_2((x),(z)) : MAX_2((y),(z)) )
 
+#ifdef _USE_NFS4_ACL
 static int gpfs_acl_2_fsal_acl(fsal_attrib_list_t * p_object_attributes,
                                gpfs_acl_t *p_gpfsacl);
+#endif                          /* _USE_NFS4_ACL */
 
 /**
  * posix2fsal_error :
@@ -255,6 +257,10 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
       ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
     }
 
+  /* Initialize ACL regardless of whether ACL was asked or not.
+   * This is needed to make sure ACL attribute is initialized. */
+  p_fsalattr_out->acl = NULL;
+
   /* Fills the output struct */
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
     {
@@ -362,6 +368,10 @@ fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
                          unsupp_attr);
             ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
         }
+
+    /* Initialize ACL regardless of whether ACL was asked or not.
+     * This is needed to make sure ACL attribute is initialized. */
+    p_fsalattr_out->acl = NULL;
 
     /* Fills the output struct */
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
@@ -474,7 +484,8 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
 
     p_buffstat = &p_buffxstat->buffstat;
 
-    /* Intialize acl. */
+    /* Initialize ACL regardless of whether ACL was asked or not.
+     * This is needed to make sure ACL attribute is initialized. */
     p_fsalattr_out->acl = NULL;
 
     /* Fills the output struct */
@@ -500,9 +511,13 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ACL))
         {
+#ifndef _USE_NFS4_ACL
+            p_fsalattr_out->acl = NULL;
+#else
             if(gpfs_acl_2_fsal_acl(p_fsalattr_out,
                                    (gpfs_acl_t *)p_buffxstat->buffacl) != ERR_FSAL_NO_ERROR)
               p_fsalattr_out->acl = NULL;
+#endif                          /* _USE_NFS4_ACL */
             LogFullDebug(COMPONENT_FSAL, "acl = %p", p_fsalattr_out->acl);
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
@@ -580,6 +595,7 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
+#ifdef _USE_NFS4_ACL
 /* Covert GPFS NFS4 ACLs to FSAL ACLs, and set the ACL
  * pointer of attribute. */
 static int gpfs_acl_2_fsal_acl(fsal_attrib_list_t * p_object_attributes,
@@ -684,3 +700,4 @@ fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t *p_fsalacl, gpfsfsal_xstat_t *p_buf
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
+#endif                          /* _USE_NFS4_ACL */

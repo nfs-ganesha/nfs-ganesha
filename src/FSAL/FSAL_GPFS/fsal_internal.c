@@ -983,7 +983,9 @@ fsal_status_t fsal_get_xstat_by_handle(fsal_op_context_t * p_context,
   int rc;
   int dirfd = 0;
   struct xstat_arg xstatarg;
+#ifdef _USE_NFS4_ACL
   gpfs_acl_t *pacl_gpfs;
+#endif                          /* _USE_NFS4_ACL */
 
   if(!p_handle || !p_context || !p_context->export_context || !p_buffxstat)
       ReturnCode(ERR_FSAL_FAULT, 0);
@@ -992,17 +994,27 @@ fsal_status_t fsal_get_xstat_by_handle(fsal_op_context_t * p_context,
 
   dirfd = p_context->export_context->mount_root_fd;
 
+#ifdef _USE_NFS4_ACL
   /* Initialize acl header so that GPFS knows what we want. */
   pacl_gpfs = (gpfs_acl_t *) p_buffxstat->buffacl;
   pacl_gpfs->acl_level = 0;
   pacl_gpfs->acl_version = GPFS_ACL_VERSION_NFS4;
   pacl_gpfs->acl_type = GPFS_ACL_TYPE_NFS4;
   pacl_gpfs->acl_len = GPFS_ACL_BUF_SIZE;
+#endif                          /* _USE_NFS4_ACL */
 
+#ifdef _USE_NFS4_ACL
   xstatarg.attr_valid = XATTR_STAT | XATTR_ACL;
+#else
+xstatarg.attr_valid = XATTR_STAT;
+#endif
   xstatarg.mountdirfd = dirfd;
   xstatarg.handle = &p_handle->data.handle;
+#ifdef _USE_NFS4_ACL
   xstatarg.acl = pacl_gpfs;
+#else
+  xstatarg.acl = NULL;
+#endif
   xstatarg.attr_changed = 0;
   xstatarg.buf = &p_buffxstat->buffstat;
 

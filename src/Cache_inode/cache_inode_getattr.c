@@ -221,6 +221,7 @@ cache_inode_getattr(cache_entry_t * pentry,
     else
         inc_func_success(pclient, CACHE_INODE_GETATTR);
 
+#ifdef _USE_NFS4_ACL
     if(isDebug(COMPONENT_NFS_V4_ACL))
       {
         LogDebug(COMPONENT_CACHE_INODE,
@@ -239,6 +240,7 @@ cache_inode_getattr(cache_entry_t * pentry,
               }
           }
       }
+#endif                          /* _USE_NFS4_ACL */
 
     LogFullDebug(COMPONENT_CACHE_INODE,
                  "cache_inode_getattr: returning %d(%s) from cache_inode_valid",

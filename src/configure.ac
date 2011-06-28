@@ -121,7 +121,6 @@ AC_CHECK_LIB([c], [main])
 AC_CHECK_LIB([curses], [scr_init])
 AC_CHECK_LIB([pthread], [pthread_create])
 AC_CHECK_LIB([readline], [readline])
-AC_CHECK_LIB([ssl],[SSL_accept])
 
 # Checks for header files.
 AC_HEADER_DIRENT
@@ -330,6 +329,15 @@ GA_ENABLE_FLAG( [profiling], [turn on code profiling (-g and -pg)], [-g -pg] )
 
 # enable code profiling
 GA_ENABLE_FLAG( [strict-compile], [turn on strict compiler flags], [-Werror -Wimplicit -Wformat -Wmissing-braces] )
+
+# NFSv4 ACL
+GA_ENABLE_AM_CONDITION([nfs4-acl],[enable NFSv4 ACL support],[USE_NFS4_ACL])
+
+if test "$enable_nfs4_acl" == "yes"; then
+        AC_CHECK_LIB([ssl],[MD5_Init])
+        AC_DEFINE(_USE_NFS4_ACL,1,[enable NFSv4 ACL support])
+fi
+AM_CONDITIONAL(USE_NFS4_ACL, test "$enable_nfs4_acl" == "yes" )
 
 # makes it possible to add some extra include dir
 

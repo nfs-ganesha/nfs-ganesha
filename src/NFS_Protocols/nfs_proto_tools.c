@@ -68,6 +68,7 @@
 #include "nfs_proto_tools.h"
 #include "nfs4_acls.h"
 
+#ifdef _USE_NFS4_ACL
 /* Define mapping of NFS4 who name and type. */
 static struct {
   char *string;
@@ -90,6 +91,7 @@ static struct {
     .type      = FSAL_ACE_SPECIAL_EVERYONE,
   },
 };
+#endif                          /* _USE_NFS4_ACL */
 
 /**
  *
@@ -474,6 +476,7 @@ void nfs_SetFailedStatus(fsal_op_context_t * pcontext,
     }
 }
 
+#ifdef _USE_NFS4_ACL
 static int nfs4_encode_acl_special_user(int who, char *attrvalsBuffer,
                                         u_int *LastOffset)
 {
@@ -647,6 +650,7 @@ static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_i
 
   return rc;
 }
+#endif                          /* _USE_NFS4_ACL */
 
 /**
  *
@@ -714,6 +718,9 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   fattr4_maxlink maxlink;
   fattr4_homogeneous homogeneous;
   fattr4_aclsupport aclsupport;
+#ifndef _USE_NFS4_ACL
+  fattr4_acl acl;
+#endif
   fattr4_rdattr_error rdattr_error;
   fattr4_quota_avail_hard quota_avail_hard;
   fattr4_quota_avail_soft quota_avail_soft;
@@ -1029,12 +1036,22 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_ACL:
+#ifdef _USE_NFS4_ACL
           nfs4_encode_acl(pattr, attrvalsBuffer, &LastOffset);
+#else
+          memset(&acl, 0, sizeof(acl));
+          memcpy((char *)(attrvalsBuffer + LastOffset), &acl, sizeof(fattr4_acl));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+#endif
           op_attr_success = 1;
           break;
 
         case FATTR4_ACLSUPPORT:
+#ifdef _USE_NFS4_ACL
           aclsupport = htonl(ACL4_SUPPORT_ALLOW_ACL | ACL4_SUPPORT_DENY_ACL);
+#else
+          aclsupport = htonl(0);
+#endif
           memcpy((char *)(attrvalsBuffer + LastOffset), &aclsupport,
                  sizeof(fattr4_aclsupport));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
@@ -3005,6 +3022,7 @@ int nfs4_Fattr_cmp(fattr4 * Fattr1, fattr4 * Fattr2)
     return FALSE;
 }
 
+#ifdef _USE_NFS4_ACL
 static int nfs4_decode_acl_special_user(utf8string *utf8str, int *who)
 {
   int i;
@@ -3127,6 +3145,7 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
 
   return 0;
 }
+#endif                          /* _USE_NFS4_ACL */
 
 /**
  * 
@@ -3532,10 +3551,12 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
 
           break;
 
+#ifdef _USE_NFS4_ACL
         case FATTR4_ACL:
           nfs4_decode_acl(pFSAL_attr, Fattr, &LastOffset);
           pFSAL_attr->asked_attributes |= FSAL_ATTR_ACL;
           break;
+#endif                          /* _USE_NFS4_ACL */
 
         default:
           LogFullDebug(COMPONENT_NFS_V4,

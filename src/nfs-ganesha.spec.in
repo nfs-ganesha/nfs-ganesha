@@ -11,6 +11,10 @@ Group: Applications/System
 Requires: nfs-utils-lib
 BuildRequires: nfs-utils-lib-devel
 %endif
+%if %{?_with_nfs4acl:1}%{!?_with_nfs4acl:0}
+Requires: openssl
+BuildRequires: openssl-devel
+%endif
 %if %{?_with_posix:1}%{!?_with_posix:0}
 %if %{?_with_postgresql:1}%{!?_with_postgresql:0}
 BuildRequires:  postgresql-devel >= 7.1

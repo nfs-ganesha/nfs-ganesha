@@ -133,6 +133,10 @@ if USE_NFSIDMAP
 RPM_DB_ARGS += --with nfsidmap
 endif 
 
+if USE_NFS4_ACL
+RPM_DB_ARGS += --with nfs4acl
+endif
+
 #indent:
 #	find . -name '*.[ch]' ! -path './rpm/*' -exec indent -linux -nsaf -nsai -nsaw -nut -bl -bls -i4 -l90 -lc90 -nce -hnl {} \;
 

@@ -1155,8 +1155,8 @@ void cache_inode_get_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
  *
  * cache_inode_init_attributes: sets the initial attributes cached in the entry.
  *
- * Sets the initial attributes cached in the entry. Since it sets the initial attributes,
- * only update the reference counter of new acl.
+ * Sets the initial attributes cached in the entry. If NFS4 ACL is used,
+ * update the reference counter of ACL.
  *
  * @param pentry [OUT] the entry to deal with.
  * @param pattr [IN] the attributes to be set for this entry.
@@ -1166,8 +1166,6 @@ void cache_inode_get_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
  */
 static void cache_inode_init_attributes(cache_entry_t *pentry, fsal_attrib_list_t *pattr)
 {
-  fsal_acl_t *p_newacl = pattr->acl;
-
   switch (pentry->internal_md.type)
     {
     case REGULAR_FILE:
@@ -1200,12 +1198,14 @@ static void cache_inode_init_attributes(cache_entry_t *pentry, fsal_attrib_list_
       break;
     }
 
+#ifdef _USE_NFS4_ACL
   LogDebug(COMPONENT_CACHE_INODE, "init_attributes: md_type=%d, acl=%p",
-           pentry->internal_md.type, p_newacl);
+           pentry->internal_md.type, pattr->acl);
 
   /* Bump up reference counter of new acl. */
-  if(p_newacl)
-    nfs4_acl_entry_inc_ref(p_newacl);
+  if(pattr->acl)
+    nfs4_acl_entry_inc_ref(pattr->acl);
+#endif                          /* _USE_NFS4_ACL */
 }
 
 /**
@@ -1222,24 +1222,32 @@ static void cache_inode_init_attributes(cache_entry_t *pentry, fsal_attrib_list_
  */
 void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pattr)
 {
+#ifdef _USE_NFS4_ACL
   fsal_acl_t *p_oldacl = NULL;
   fsal_acl_t *p_newacl = pattr->acl;
+#endif                          /* _USE_NFS4_ACL */
 
   switch (pentry->internal_md.type)
     {
     case REGULAR_FILE:
+#ifdef _USE_NFS4_ACL
       p_oldacl = pentry->object.file.attributes.acl;
+#endif                          /* _USE_NFS4_ACL */
       pentry->object.file.attributes = *pattr;
       break;
 
     case SYMBOLIC_LINK:
+#ifdef _USE_NFS4_ACL
       p_oldacl = pentry->object.symlink.attributes.acl;
+#endif                          /* _USE_NFS4_ACL */
       pentry->object.symlink.attributes = *pattr;
       break;
 
     case FS_JUNCTION:
     case DIR_BEGINNING:
+#ifdef _USE_NFS4_ACL
       p_oldacl = pentry->object.dir_begin.attributes.acl;
+#endif                          /* _USE_NFS4_ACL */
       pentry->object.dir_begin.attributes = *pattr;
       break;
 
@@ -1247,7 +1255,9 @@ void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
       /* lock the related dir_begin (dir begin are garbagge collected AFTER their related dir_cont)
        * this means that if a DIR_CONTINUE exists, its pdir pointer is not endless */
       P_r(&pentry->object.dir_cont.pdir_begin->lock);
+#ifdef _USE_NFS4_ACL
       p_oldacl = pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes.acl;
+#endif                          /* _USE_NFS4_ACL */
       pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes = *pattr;
       V_r(&pentry->object.dir_cont.pdir_begin->lock);
       break;
@@ -1256,7 +1266,9 @@ void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
     case FIFO_FILE:
     case BLOCK_FILE:
     case CHARACTER_FILE:
+#ifdef _USE_NFS4_ACL
       p_oldacl = pentry->object.special_obj.attributes.acl;
+#endif                          /* _USE_NFS4_ACL */
       pentry->object.special_obj.attributes = *pattr;
       break;
     case UNASSIGNED:
@@ -1266,6 +1278,7 @@ void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
       break;
     }
 
+#ifdef _USE_NFS4_ACL
   /* If acl has been changed, release old acl and increase the reference
    * counter of new acl. */
   if(p_oldacl != p_newacl)
@@ -1290,6 +1303,7 @@ void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
       if(p_newacl)
         nfs4_acl_entry_inc_ref(p_newacl);
     }
+#endif                          /* _USE_NFS4_ACL */
 }                               /* cache_inode_set_attributes */
 
 /**

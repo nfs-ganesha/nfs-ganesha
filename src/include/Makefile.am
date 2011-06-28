@@ -57,7 +57,6 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  rbt_tree.h                      \
                  stuff_alloc.h                   \
                  nfs_ip_stats.h                  \
-                 nfs4_acls.h                     \
                  Connectathon_config_parsing.h   \
 		 rpc.h 	\
                  Rpc_com_tirpc.h                 \
@@ -66,6 +65,10 @@ noinst_HEADERS = BuddyMalloc.h                   \
 
 if USE_NLM
 noinst_HEADERS += nlm4.h nlm_util.h nlm_list.h
+endif
+
+if USE_NFS4_ACL
+noinst_HEADERS += nfs4_acls.h
 endif
 
 if USE_PNFS

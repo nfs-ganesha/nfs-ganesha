@@ -315,6 +315,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
         p_object_attributes->mtime = result_attributes.mtime;
     }
   
+#ifdef _USE_NFS4_ACL
   if(result_attributes.asked_attributes & FSAL_ATTR_ACL)
     {
       LogDebug(COMPONENT_CACHE_INODE, "cache_inode_setattr: old acl = %p, new acl = %p",
@@ -333,6 +334,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
       /* Update with new acl entry. */
       p_object_attributes->acl = result_attributes.acl;
     }
+#endif                          /* _USE_NFS4_ACL */
 
   /* Return the attributes as set */
   *pattr = *p_object_attributes;

@@ -59,7 +59,9 @@
 
 static cache_inode_gc_policy_t cache_inode_gc_policy;   /*<< the policy to be used by the garbage collector */
 
+#ifdef _USE_NFS4_ACL
 static void cache_inode_gc_acl(cache_entry_t * pentry);
+#endif                          /* _USE_NFS4_ACL */
 
 /**
  * @defgroup Cache_inode_gc_internal Cache Inode GC internal functions.
@@ -208,8 +210,10 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
   LogFullDebug(COMPONENT_CACHE_INODE_GC,
                "++++> pdir_data (if needed) sent back to pool");
 
+#ifdef _USE_NFS4_ACL
   /* If entry has NFS4 ACL, release it. */
   cache_inode_gc_acl(pentry);
+#endif                          /* _USE_NFS4_ACL */
 
   /* Free and Destroy the mutex associated with the pentry */
   V_w(&pentry->lock);
@@ -735,6 +739,7 @@ cache_inode_status_t cache_inode_gc_fd(cache_inode_client_t * pclient,
   return *pstatus;
 }
 
+#ifdef _USE_NFS4_ACL
 /**
  * Garbagge NFS4 ACLs if any.
  */
@@ -788,5 +793,6 @@ static void cache_inode_gc_acl(cache_entry_t * pentry)
         LogEvent(COMPONENT_CACHE_INODE_GC, "cache_inode_gc_acl: Failed to gc acl, status=%d", status);
     }
 }                               /* cache_inode_gc_acl */
+#endif                          /* _USE_NFS4_ACL */
 
 /* @} */
