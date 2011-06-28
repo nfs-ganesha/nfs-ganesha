@@ -773,7 +773,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   strcpy(p_entry->FS_tag, "");
 
 #ifdef _USE_SHARED_FSAL
-  p_entry->fsalid = 42 ;
+  FSAL_SetId( 42 ) ;
 #endif
 
 
@@ -2104,6 +2104,7 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
               continue;
             }
 #ifdef _USE_SHARED_FSAL
+          FSAL_SetId( 42 ) ;
 	  p_export_item->fsalid = 42 ;
 #endif
 
@@ -2658,7 +2659,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       /* Link together the small client and the recover_datacache_client */
       small_client.pcontent_client = (void *)&recover_datacache_client;
 
-#ifndef  _USE_SHARED_FSAL
       /* Get the context for FSAL super user */
       fsal_status = FSAL_InitClientContext(&context);
 
@@ -2668,7 +2668,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
                   "Couldn't get the context for FSAL super user");
           return FALSE;
         }
-#endif
 
       /* loop the export list */
 
@@ -2691,21 +2690,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
           /* inits context for the current export entry */
 
-#ifdef _USE_SHARED_FSAL
-          /* If mulitple FSALs are used, several FSALs may be used */
-          /* Get the context for FSAL super user */
-          context.fsalid =  pcurrent->fsalid ;
-          fsal_status = FSAL_InitClientContext(&context);
-
-          if(FSAL_IS_ERROR(fsal_status))
-          {
-            LogCrit(COMPONENT_INIT,
-                    "Couldn't get the context for FSAL super user");
-            return FALSE;
-          }
-
-          pcurrent->FS_export_context.fsalid = pcurrent->fsalid ;
-#endif
           fsal_status =
               FSAL_BuildExportContext(&pcurrent->FS_export_context, &exportpath_fsal,
                                       pcurrent->FS_specific);

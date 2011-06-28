@@ -50,6 +50,17 @@
 #include "common_utils.h"
 
 #ifndef _USE_SWIG
+
+#ifdef _USE_SHARED_FSAL
+/******************************************************
+ *    FSAL ID management for multiple FSAL support 
+ ******************************************************/
+void FSAL_InitKey( void ) ;
+void FSAL_SetId( int fsalid ) ;
+int FSAL_GetId( void ) ;
+#endif
+
+
 /******************************************************
  *            Attribute mask management.
  ******************************************************/

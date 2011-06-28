@@ -1174,9 +1174,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }
 #endif
 
-#ifdef _USE_SHARED_FSAL
-      pworker_data->thread_fsal_context.fsalid = 42 ;
-#endif
       rc = pworker_data->pfuncdesc->service_function(parg_nfs, 
 						     pexport, 
                                                      &pworker_data->thread_fsal_context, 
@@ -1473,6 +1470,10 @@ void *worker_thread(void *IndexArg)
                index);
 #endif
 
+#ifdef _USE_SHARED_FSAL
+  FSAL_InitKey( ) ;
+#endif
+
   LogDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: my pthread id is %p",
            index, (caddr_t) pthread_self());
 
@@ -1480,7 +1481,9 @@ void *worker_thread(void *IndexArg)
   LogFullDebug(COMPONENT_DISPATCH,
                "NFS WORKER #%lu: Initialization of thread's credential",
                index);
-  pmydata->thread_fsal_context.fsalid = 42 ; /** @todo BUGAZOMEU : Gerer mieux le FSAL client ctx si plusieurs FSAL */
+#ifdef _USE_SHARED_FSAL
+  FSAL_SetId( 42 ) ;
+#endif
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&pmydata->thread_fsal_context)))
     {
       /* Failed init */

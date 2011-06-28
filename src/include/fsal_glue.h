@@ -41,7 +41,6 @@
 typedef struct
 {
   char data[FSAL_HANDLE_T_SIZE];
-  unsigned int fsalid ;
 } fsal_handle_t;
 
 typedef fsal_handle_t fsal_handle_storage_t ;
@@ -50,25 +49,21 @@ typedef struct
 {
   void *export_context;
   char data[FSAL_OP_CONTEXT_T_SIZE];
-  unsigned int fsalid ;
 } fsal_op_context_t;
 
 typedef struct
 {
   char data[FSAL_DIR_T_SIZE];
-  unsigned int fsalid ;
 } fsal_dir_t;
 
 typedef struct
 {
   char data[FSAL_EXPORT_CONTEXT_T_SIZE];
-  unsigned int fsalid ;
 } fsal_export_context_t;
 
 typedef struct
 {
   char data[FSAL_FILE_T_SIZE];
-  unsigned int fsalid ;
 } fsal_file_t;
 
 typedef struct
@@ -79,7 +74,6 @@ typedef struct
 typedef struct
 {
   char data[FSAL_LOCKDESC_T_SIZE];
-  unsigned int fsalid ;
 } fsal_lockdesc_t;
 
 typedef struct
