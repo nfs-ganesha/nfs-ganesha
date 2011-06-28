@@ -79,7 +79,6 @@ fsal_status_t VFSFSAL_lookup(vfsfsal_handle_t * p_parent_directory_handle,      
   fsal_path_t pathfsal;
 
   int parentfd;
-  int objectfd;
   int errsrv;
 
   /* sanity checks
@@ -167,24 +166,20 @@ fsal_status_t VFSFSAL_lookup(vfsfsal_handle_t * p_parent_directory_handle,      
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_lookup);
 
-  /* get file handle, it it exists */
+   /* get file handle, it it exists */
   TakeTokenFSCall();
-  objectfd = openat(parentfd, p_filename->name, O_RDONLY, 0600);
-  errsrv = errno;
-  ReleaseTokenFSCall();
 
-  if(objectfd < 0)
-    {
-      close(parentfd);
+  p_object_handle->data.vfs_handle.handle_bytes = VFS_HANDLE_LEN ;
+  if( vfs_name_by_handle_at( parentfd,  p_filename->name, &p_object_handle->data.vfs_handle ) != 0 )
+   {
+      errsrv = errno;
+      ReleaseTokenFSCall();
       Return(posix2fsal_error(errsrv), errsrv, INDEX_FSAL_lookup);
-    }
+   }
 
-  status = fsal_internal_fd2handle(p_context, objectfd, p_object_handle);
-  close(parentfd);
-  close(objectfd);
+  ReleaseTokenFSCall();
+  close( parentfd ) ;
 
-  if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_lookup);
 
   /* get object attributes */
   if(p_object_attributes)
