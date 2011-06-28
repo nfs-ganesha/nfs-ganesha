@@ -683,19 +683,6 @@ unsigned long open_owner_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long open_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t * buffclef);
 
-#ifdef _USE_NLM
-int display_nlm_owner(cache_inode_nlm_owner_t *pkey, char *str);
-int display_nlm_owner_val(hash_buffer_t * pbuff, char *str);
-int display_nlm_owner_key(hash_buffer_t * pbuff, char *str);
-int compare_nlm_owner(cache_inode_nlm_owner_t *pkey1,
-                      cache_inode_nlm_owner_t *pkey2);
-int compare_nlm_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
-unsigned long nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
-                                        hash_buffer_t    * buffclef);
-unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
-                                      hash_buffer_t    * buffclef);
-#endif
-
 int display_client_id(hash_buffer_t * pbuff, char *str);
 int display_client_id_reverse(hash_buffer_t * pbuff, char *str);
 int display_client_id_val(hash_buffer_t * pbuff, char *str);
@@ -749,18 +736,26 @@ int nfs_open_owner_Set(cache_inode_open_owner_name_t * pname,
 int nfs4_Init_open_owner(nfs_open_owner_parameter_t param);
 
 #ifdef _USE_NLM
+void inc_nlm_owner_ref(cache_inode_nlm_owner_t *powner);
+void dec_nlm_owner_ref(cache_inode_nlm_owner_t *powner);
+int display_nlm_owner(cache_inode_nlm_owner_t *pkey, char *str);
+int display_nlm_owner_val(hash_buffer_t * pbuff, char *str);
+int display_nlm_owner_key(hash_buffer_t * pbuff, char *str);
+int compare_nlm_owner(cache_inode_nlm_owner_t *pkey1,
+                      cache_inode_nlm_owner_t *pkey2);
+int compare_nlm_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
+unsigned long nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
+                                        hash_buffer_t    * buffclef);
+unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
+                                      hash_buffer_t    * buffclef);
 int convert_nlm_owner(const char              * caller_name,
                       netobj                  * oh,
                       uint32_t                  svid,
                       cache_inode_nlm_owner_t * pnlm_owner);
 void nlm_owner_PrintAll(void);
 int nlm_owner_Del(cache_inode_nlm_owner_t * pname);
-int nlm_owner_Update(cache_inode_nlm_owner_t * pname,
-                     cache_inode_nlm_owner_t * pnlm_owner);
 int nlm_owner_Get_Pointer(cache_inode_nlm_owner_t * pname,
                           cache_inode_nlm_owner_t * *pnlm_owner);
-int nlm_owner_Get(cache_inode_nlm_owner_t * pname,
-                  cache_inode_nlm_owner_t * pnlm_owner);
 int nlm_owner_Set(cache_inode_nlm_owner_t * pname,
                   cache_inode_nlm_owner_t * pnlm_owner);
 int nfs4_Init_nlm_owner(nlm_owner_parameter_t param);

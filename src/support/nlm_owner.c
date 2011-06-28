@@ -222,7 +222,7 @@ int nfs4_Init_nlm_owner(nlm_owner_parameter_t param)
  * nlm_owner_Set
  * 
  *
- * This routine sets a open owner into the related hashtable
+ * This routine sets a NLM owner into the related hashtable
  *
  * @return 1 if ok, 0 otherwise.
  *
@@ -261,38 +261,9 @@ int nlm_owner_Set(cache_inode_nlm_owner_t * pkey,
 
 /**
  *
- * nlm_owner_Get
- *
- * This routine gets open owner from the openowner's hashtable.
- *
- * @param pstate      [IN] pointer to the stateid to be checked.
- * @param pstate_data [OUT] found state
- *
- * @return 1 if ok, 0 otherwise.
- *
- */
-int nlm_owner_Get(cache_inode_nlm_owner_t * pkey,
-                  cache_inode_nlm_owner_t * powner)
-{
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
-
-  buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(cache_inode_nlm_owner_t);
-
-  if(HashTable_Get(ht_nlm_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
-    return 0;
-
-  memcpy((char *)powner, buffval.pdata, sizeof(cache_inode_nlm_owner_t));
-
-  return 1;
-}                               /* nlm_owner_Get */
-
-/**
- *
  * nlm_owner_Get_Pointer
  *
- * This routine gets a pointer to an open owner from the open owners's hashtable.
+ * This routine gets a pointer to an NLM owner from the nlm_owner's hashtable.
  *
  * @param pstate       [IN] pointer to the stateid to be checked.
  * @param ppstate_data [OUT] pointer's state found 
@@ -337,39 +308,10 @@ int nlm_owner_Get_Pointer(cache_inode_nlm_owner_t * pkey,
 }                               /* nlm_owner_Get_Pointer */
 
 /**
- * 
- * nlm_owner_Update
- *
- * This routine updates a open owner from the open owners's hashtable.
- *
- * @param pstate      [IN] pointer to the stateid to be checked.
- * @param pstate_data [IN] new state
- *
- * @return 1 if ok, 0 otherwise.
- * 
- */
-int nlm_owner_Update(cache_inode_nlm_owner_t * pkey,
-                     cache_inode_nlm_owner_t * powner)
-{
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
-
-  buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(cache_inode_nlm_owner_t);
-
-  if(HashTable_Get(ht_nlm_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
-    return 0;
-
-  memcpy(buffval.pdata, powner, sizeof(cache_inode_nlm_owner_t));
-
-  return 1;
-}                               /* nlm_owner_Update */
-
-/**
  *
  * nlm_owner_Del
  *
- * This routine removes a open owner from the nlm_owner's hashtable.
+ * This routine removes a NLM owner from the nlm_owner's hashtable.
  *
  * @param other [IN] stateid'other field, used as a hash key
  *
