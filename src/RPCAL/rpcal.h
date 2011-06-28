@@ -47,7 +47,10 @@ extern int Gss_ctx_Hash_Set(gss_union_ctx_id_desc *pgss_ctx,
 extern int Gss_ctx_Hash_Del(gss_union_ctx_id_desc *pgss_ctx);
 extern void Gss_ctx_Hash_Print(void);
 extern int Gss_ctx_Hash_Get(gss_union_ctx_id_desc *pgss_ctx,
-                            struct svc_rpc_gss_data *gd);
+                            struct svc_rpc_gss_data *gd,
+			    bool_t **established,
+			    u_int **seqlast,
+			    uint32_t **seqmask);
 #endif                          /* _HAVE_GSSAPI */
 
 #endif /* GANESHA_RPCAL_H */
