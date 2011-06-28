@@ -365,6 +365,9 @@ int main(int argc, char *argv[])
                "NFS MAIN: Error parsing configuration file for FSAL path.");
       exit(1);
     }
+
+   /* Set the FSAL id */
+   FSAL_SetId( 42 ) ;
 #endif                          /* _USE_SHARED_FSAL */
 
   /* Load the FSAL library (if needed) */
