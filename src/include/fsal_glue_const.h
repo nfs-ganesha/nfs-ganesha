@@ -48,4 +48,23 @@
 #define FSAL_CRED_T_SIZE 140
 #define FSAL_FS_SPECIFIC_INITINFO_T 17208
 
+/* Const related to multiple FSAL support */
+#ifdef _USE_SHARED_FSAL
+#define NB_AVAILABLE_FSAL 11
+#else
+#define NB_AVAILABLE_FSAL 1
+#endif
+
+#define FSAL_CEPH_ID     0
+#define FSAL_HPSS_ID     1 
+#define FSAL_SNMP_ID     2   
+#define FSAL_ZFS_ID      3    
+#define FSAL_FUSELIKE_ID 4  
+#define FSAL_LUSTRE_ID   5  
+#define FSAL_POSIX_ID    6 
+#define FSAL_VFS_ID      7   
+#define FSAL_GPFS_ID     8   
+#define FSAL_PROXY_ID    9
+#define FSAL_XFS_ID      10
+
 #endif                          /* _FSAL_GLUE_CONST_H */

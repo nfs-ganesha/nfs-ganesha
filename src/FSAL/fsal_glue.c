@@ -20,8 +20,8 @@
 #include "fsal_types.h"
 #include "fsal_glue.h"
 
-fsal_functions_t fsal_functions;
-fsal_const_t fsal_consts;
+fsal_functions_t fsal_functions[NB_AVAILABLE_FSAL];
+fsal_const_t fsal_consts[NB_AVAILABLE_FSAL];
 
 #ifdef _USE_SHARED_FSAL
 fsal_functions_t(*getfunctions) (void);
@@ -101,12 +101,12 @@ fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_access(object_handle, p_context, access_type,
+  fsal_status = fsal_functions[0].fsal_access(object_handle, p_context, access_type,
                                            object_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_access(object_handle, p_context, access_type,
+  return fsal_functions[0].fsal_access(object_handle, p_context, access_type,
                                     object_attributes);
 #endif
 }
@@ -121,11 +121,11 @@ fsal_status_t FSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_getattrs(p_filehandle, p_context, p_object_attributes);
+  fsal_status = fsal_functions[0].fsal_getattrs(p_filehandle, p_context, p_object_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_getattrs(p_filehandle, p_context, p_object_attributes);
+  return fsal_functions[0].fsal_getattrs(p_filehandle, p_context, p_object_attributes);
 #endif
 }
 
@@ -140,32 +140,32 @@ fsal_status_t FSAL_getattrs_descriptor(fsal_file_t * p_file_descriptor,         
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  if(fsal_functions.fsal_getattrs_descriptor != NULL && p_file_descriptor != NULL)
+  if(fsal_functions[0].fsal_getattrs_descriptor != NULL && p_file_descriptor != NULL)
     {
       LogFullDebug(COMPONENT_FSAL,
                    "FSAL_getattrs_descriptor calling fsal_getattrs_descriptor");
-      fsal_status = fsal_functions.fsal_getattrs_descriptor(p_file_descriptor, p_filehandle, p_context, p_object_attributes);
+      fsal_status = fsal_functions[0].fsal_getattrs_descriptor(p_file_descriptor, p_filehandle, p_context, p_object_attributes);
     }
   else
     {
       LogFullDebug(COMPONENT_FSAL,
                    "FSAL_getattrs_descriptor calling fsal_getattrs");
-      fsal_status = fsal_functions.fsal_getattrs(p_filehandle, p_context, p_object_attributes);
+      fsal_status = fsal_functions[0].fsal_getattrs(p_filehandle, p_context, p_object_attributes);
     }
 
   return fsal_status ;
 #else
-   if(fsal_functions.fsal_getattrs_descriptor != NULL && p_file_descriptor != NULL)
+   if(fsal_functions[0].fsal_getattrs_descriptor != NULL && p_file_descriptor != NULL)
     {
       LogFullDebug(COMPONENT_FSAL,
                    "FSAL_getattrs_descriptor calling fsal_getattrs_descriptor");
-      return fsal_functions.fsal_getattrs_descriptor(p_file_descriptor, p_filehandle, p_context, p_object_attributes);
+      return fsal_functions[0].fsal_getattrs_descriptor(p_file_descriptor, p_filehandle, p_context, p_object_attributes);
     }
   else
     {
       LogFullDebug(COMPONENT_FSAL,
                    "FSAL_getattrs_descriptor calling fsal_getattrs");
-      return fsal_functions.fsal_getattrs(p_filehandle, p_context, p_object_attributes);
+      return fsal_functions[0].fsal_getattrs(p_filehandle, p_context, p_object_attributes);
     }
 #endif
 }
@@ -181,12 +181,12 @@ fsal_status_t FSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_setattrs(p_filehandle, p_context, p_attrib_set,
+  fsal_status = fsal_functions[0].fsal_setattrs(p_filehandle, p_context, p_attrib_set,
                                              p_object_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_setattrs(p_filehandle, p_context, p_attrib_set,
+  return fsal_functions[0].fsal_setattrs(p_filehandle, p_context, p_attrib_set,
                                       p_object_attributes);
 #endif
 }
@@ -200,10 +200,10 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_buildexportcontext(p_export_context, p_export_path,
+  return fsal_functions[0].fsal_buildexportcontext(p_export_context, p_export_path,
                                                 fs_specific_options);
 #else
-  return fsal_functions.fsal_buildexportcontext(p_export_context, p_export_path,
+  return fsal_functions[0].fsal_buildexportcontext(p_export_context, p_export_path,
                                                 fs_specific_options);
 #endif
 }
@@ -215,9 +215,9 @@ fsal_status_t FSAL_CleanUpExportContext(fsal_export_context_t * p_export_context
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_cleanupexportcontext(p_export_context);
+  return fsal_functions[0].fsal_cleanupexportcontext(p_export_context);
 #else
-  return fsal_functions.fsal_cleanupexportcontext(p_export_context);
+  return fsal_functions[0].fsal_cleanupexportcontext(p_export_context);
 #endif
 }
 
@@ -229,9 +229,9 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_initclientcontext(p_thr_context);
+  return fsal_functions[0].fsal_initclientcontext(p_thr_context);
 #else
-  return fsal_functions.fsal_initclientcontext(p_thr_context);
+  return fsal_functions[0].fsal_initclientcontext(p_thr_context);
 #endif
 }
 
@@ -247,10 +247,10 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_getclientcontext(p_thr_context, p_export_context, uid, gid,
+  return fsal_functions[0].fsal_getclientcontext(p_thr_context, p_export_context, uid, gid,
                                               alt_groups, nb_alt_groups);
 #else
-  return fsal_functions.fsal_getclientcontext(p_thr_context, p_export_context, uid, gid,
+  return fsal_functions[0].fsal_getclientcontext(p_thr_context, p_export_context, uid, gid,
                                               alt_groups, nb_alt_groups);
 #endif
 }
@@ -268,12 +268,12 @@ fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status =  fsal_functions.fsal_create(p_parent_directory_handle, p_filename, p_context,
+  fsal_status =  fsal_functions[0].fsal_create(p_parent_directory_handle, p_filename, p_context,
                                             accessmode, p_object_handle, p_object_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_create(p_parent_directory_handle, p_filename, p_context,
+  return fsal_functions[0].fsal_create(p_parent_directory_handle, p_filename, p_context,
                                     accessmode, p_object_handle, p_object_attributes);
 #endif
 }
@@ -291,12 +291,12 @@ fsal_status_t FSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_mkdir(p_parent_directory_handle, p_dirname, p_context,
+  fsal_status = fsal_functions[0].fsal_mkdir(p_parent_directory_handle, p_dirname, p_context,
                                           accessmode, p_object_handle, p_object_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_mkdir(p_parent_directory_handle, p_dirname, p_context,
+  return fsal_functions[0].fsal_mkdir(p_parent_directory_handle, p_dirname, p_context,
                                    accessmode, p_object_handle, p_object_attributes);
 #endif
 }
@@ -313,12 +313,12 @@ fsal_status_t FSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_link(p_target_handle, p_dir_handle, p_link_name, p_context,
+  fsal_status = fsal_functions[0].fsal_link(p_target_handle, p_dir_handle, p_link_name, p_context,
                                          p_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_link(p_target_handle, p_dir_handle, p_link_name, p_context,
+  return fsal_functions[0].fsal_link(p_target_handle, p_dir_handle, p_link_name, p_context,
                                   p_attributes);
 #endif
 }
@@ -338,12 +338,12 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_mknode(parentdir_handle, p_node_name, p_context, accessmode,
+  fsal_status = fsal_functions[0].fsal_mknode(parentdir_handle, p_node_name, p_context, accessmode,
                                            nodetype, dev, p_object_handle, node_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_mknode(parentdir_handle, p_node_name, p_context, accessmode,
+  return fsal_functions[0].fsal_mknode(parentdir_handle, p_node_name, p_context, accessmode,
                                     nodetype, dev, p_object_handle, node_attributes);
 #endif
 }
@@ -359,12 +359,12 @@ fsal_status_t FSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_opendir(p_dir_handle, p_context, p_dir_descriptor,
+  fsal_status = fsal_functions[0].fsal_opendir(p_dir_handle, p_context, p_dir_descriptor,
                                             p_dir_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_opendir(p_dir_handle, p_context, p_dir_descriptor,
+  return fsal_functions[0].fsal_opendir(p_dir_handle, p_context, p_dir_descriptor,
                                      p_dir_attributes);
 #endif
 }
@@ -383,11 +383,11 @@ fsal_status_t FSAL_readdir(fsal_dir_t * p_dir_descriptor,       /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_readdir(p_dir_descriptor, start_position, get_attr_mask,
+  return fsal_functions[0].fsal_readdir(p_dir_descriptor, start_position, get_attr_mask,
                                      buffersize, p_pdirent, p_end_position, p_nb_entries,
                                      p_end_of_dir);
 #else
-  return fsal_functions.fsal_readdir(p_dir_descriptor, start_position, get_attr_mask,
+  return fsal_functions[0].fsal_readdir(p_dir_descriptor, start_position, get_attr_mask,
                                      buffersize, p_pdirent, p_end_position, p_nb_entries,
                                      p_end_of_dir);
 #endif
@@ -400,9 +400,9 @@ fsal_status_t FSAL_closedir(fsal_dir_t * p_dir_descriptor /* IN */ )
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_closedir(p_dir_descriptor);
+  return fsal_functions[0].fsal_closedir(p_dir_descriptor);
 #else
-  return fsal_functions.fsal_closedir(p_dir_descriptor);
+  return fsal_functions[0].fsal_closedir(p_dir_descriptor);
 #endif
 }
 
@@ -420,12 +420,12 @@ fsal_status_t FSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
 
   fsal_status_t fsal_status ;
 
-  fsal_status = fsal_functions.fsal_open_by_name(dirhandle, filename, p_context, openflags,
+  fsal_status = fsal_functions[0].fsal_open_by_name(dirhandle, filename, p_context, openflags,
                                                  file_descriptor, file_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_open_by_name(dirhandle, filename, p_context, openflags,
+  return fsal_functions[0].fsal_open_by_name(dirhandle, filename, p_context, openflags,
                                           file_descriptor, file_attributes);
 #endif
 }
@@ -443,12 +443,12 @@ fsal_status_t FSAL_open(fsal_handle_t * p_filehandle,   /* IN */
   if( fsalid != 42 ) abort() ;
 
 
-  fsal_status = fsal_functions.fsal_open(p_filehandle, p_context, openflags, p_file_descriptor,
+  fsal_status = fsal_functions[0].fsal_open(p_filehandle, p_context, openflags, p_file_descriptor,
                                          p_file_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_open(p_filehandle, p_context, openflags, p_file_descriptor,
+  return fsal_functions[0].fsal_open(p_filehandle, p_context, openflags, p_file_descriptor,
                                   p_file_attributes);
 #endif
 }
@@ -465,10 +465,10 @@ fsal_status_t FSAL_read(fsal_file_t * p_file_descriptor,        /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_read(p_file_descriptor, p_seek_descriptor, buffer_size,
+  return fsal_functions[0].fsal_read(p_file_descriptor, p_seek_descriptor, buffer_size,
                                   buffer, p_read_amount, p_end_of_file);
 #else
-  return fsal_functions.fsal_read(p_file_descriptor, p_seek_descriptor, buffer_size,
+  return fsal_functions[0].fsal_read(p_file_descriptor, p_seek_descriptor, buffer_size,
                                   buffer, p_read_amount, p_end_of_file);
 #endif
 }
@@ -484,10 +484,10 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_write(p_file_descriptor, p_seek_descriptor, buffer_size,
+  return fsal_functions[0].fsal_write(p_file_descriptor, p_seek_descriptor, buffer_size,
                                    buffer, p_write_amount);
 #else
-  return fsal_functions.fsal_write(p_file_descriptor, p_seek_descriptor, buffer_size,
+  return fsal_functions[0].fsal_write(p_file_descriptor, p_seek_descriptor, buffer_size,
                                    buffer, p_write_amount);
 #endif
 }
@@ -499,9 +499,9 @@ fsal_status_t FSAL_sync(fsal_file_t * p_file_descriptor)
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_sync(p_file_descriptor);
+  return fsal_functions[0].fsal_sync(p_file_descriptor);
 #else
-  return fsal_functions.fsal_sync(p_file_descriptor);
+  return fsal_functions[0].fsal_sync(p_file_descriptor);
 #endif
 }
 
@@ -512,9 +512,9 @@ fsal_status_t FSAL_close(fsal_file_t * p_file_descriptor /* IN */ )
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_close(p_file_descriptor);
+  return fsal_functions[0].fsal_close(p_file_descriptor);
 #else
-  return fsal_functions.fsal_close(p_file_descriptor);
+  return fsal_functions[0].fsal_close(p_file_descriptor);
 #endif
 }
 
@@ -531,12 +531,12 @@ fsal_status_t FSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_open_by_fileid(filehandle, fileid, p_context, openflags,
+  fsal_status = fsal_functions[0].fsal_open_by_fileid(filehandle, fileid, p_context, openflags,
                                                    file_descriptor, file_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_open_by_fileid(filehandle, fileid, p_context, openflags,
+  return fsal_functions[0].fsal_open_by_fileid(filehandle, fileid, p_context, openflags,
                                             file_descriptor, file_attributes);
 #endif
 }
@@ -549,9 +549,9 @@ fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_close_by_fileid(file_descriptor, fileid);
+  return fsal_functions[0].fsal_close_by_fileid(file_descriptor, fileid);
 #else
-  return fsal_functions.fsal_close_by_fileid(file_descriptor, fileid);
+  return fsal_functions[0].fsal_close_by_fileid(file_descriptor, fileid);
 #endif
 }
 
@@ -565,11 +565,11 @@ fsal_status_t FSAL_static_fsinfo(fsal_handle_t * p_filehandle,  /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_static_fsinfo(p_filehandle, p_context, p_staticinfo);
+  fsal_status = fsal_functions[0].fsal_static_fsinfo(p_filehandle, p_context, p_staticinfo);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_static_fsinfo(p_filehandle, p_context, p_staticinfo);
+  return fsal_functions[0].fsal_static_fsinfo(p_filehandle, p_context, p_staticinfo);
 #endif
 }
 
@@ -583,11 +583,11 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle, /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_dynamic_fsinfo(p_filehandle, p_context, p_dynamicinfo);
+  fsal_status = fsal_functions[0].fsal_dynamic_fsinfo(p_filehandle, p_context, p_dynamicinfo);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_dynamic_fsinfo(p_filehandle, p_context, p_dynamicinfo);
+  return fsal_functions[0].fsal_dynamic_fsinfo(p_filehandle, p_context, p_dynamicinfo);
 #endif
 }
 
@@ -599,18 +599,18 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info /* IN */ )
   if( fsalid != 42 ) abort() ;
 
   /* Sanity check (only useful when dlopen is used, otherwise type are macros to FSAL specific types */
-  if(fsal_consts.fsal_handle_t_size != sizeof(fsal_handle_t))
+  if(fsal_consts[0].fsal_handle_t_size != sizeof(fsal_handle_t))
     {
       LogMajor(COMPONENT_FSAL,
                "Implementation Error, local and specific fsal_handle_t do not match: %u |%u !!!!",
-               fsal_consts.fsal_handle_t_size, sizeof(fsal_handle_t));
+               fsal_consts[0].fsal_handle_t_size, sizeof(fsal_handle_t));
       exit(1);
     }
-  if(fsal_consts.fsal_cookie_t_size != sizeof(fsal_cookie_t))
+  if(fsal_consts[0].fsal_cookie_t_size != sizeof(fsal_cookie_t))
     {
       LogMajor(COMPONENT_FSAL,
                "Implementation Error, local and specific fsal_cookie_t do not match: %u |%u !!!!",
-               fsal_consts.fsal_cookie_t_size, sizeof(fsal_cookie_t));
+               fsal_consts[0].fsal_cookie_t_size, sizeof(fsal_cookie_t));
       exit(1);
     }
 
@@ -675,7 +675,7 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info /* IN */ )
 
 #endif                          /* USE_SHARED_FSAL */
 
-  return fsal_functions.fsal_init(init_info);
+  return fsal_functions[0].fsal_init(init_info);
 }
 
 fsal_status_t FSAL_terminate()
@@ -685,9 +685,9 @@ fsal_status_t FSAL_terminate()
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_terminate();
+  return fsal_functions[0].fsal_terminate();
 #else
-  return fsal_functions.fsal_terminate();
+  return fsal_functions[0].fsal_terminate();
 #endif
 }
 
@@ -700,9 +700,9 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_test_access(p_context, access_type, p_object_attributes);
+  return fsal_functions[0].fsal_test_access(p_context, access_type, p_object_attributes);
 #else
-  return fsal_functions.fsal_test_access(p_context, access_type, p_object_attributes);
+  return fsal_functions[0].fsal_test_access(p_context, access_type, p_object_attributes);
 #endif
 }
 
@@ -715,10 +715,10 @@ fsal_status_t FSAL_setattr_access(fsal_op_context_t * p_context,        /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_setattr_access(p_context, candidate_attributes,
+  return fsal_functions[0].fsal_setattr_access(p_context, candidate_attributes,
                                             object_attributes);
 #else
-  return fsal_functions.fsal_setattr_access(p_context, candidate_attributes,
+  return fsal_functions[0].fsal_setattr_access(p_context, candidate_attributes,
                                             object_attributes);
 #endif
 }
@@ -732,9 +732,9 @@ fsal_status_t FSAL_rename_access(fsal_op_context_t * pcontext,  /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_rename_access(pcontext, pattrsrc, pattrdest);
+  return fsal_functions[0].fsal_rename_access(pcontext, pattrsrc, pattrdest);
 #else
-  return fsal_functions.fsal_rename_access(pcontext, pattrsrc, pattrdest);
+  return fsal_functions[0].fsal_rename_access(pcontext, pattrsrc, pattrdest);
 #endif
 }
 
@@ -746,9 +746,9 @@ fsal_status_t FSAL_create_access(fsal_op_context_t * pcontext,  /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_create_access(pcontext, pattr);
+  return fsal_functions[0].fsal_create_access(pcontext, pattr);
 #else
-  return fsal_functions.fsal_create_access(pcontext, pattr);
+  return fsal_functions[0].fsal_create_access(pcontext, pattr);
 #endif
 }
 
@@ -760,9 +760,9 @@ fsal_status_t FSAL_unlink_access(fsal_op_context_t * pcontext,  /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_unlink_access(pcontext, pattr);
+  return fsal_functions[0].fsal_unlink_access(pcontext, pattr);
 #else
-  return fsal_functions.fsal_unlink_access(pcontext, pattr);
+  return fsal_functions[0].fsal_unlink_access(pcontext, pattr);
 #endif
 }
 
@@ -774,9 +774,9 @@ fsal_status_t FSAL_link_access(fsal_op_context_t * pcontext,    /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_link_access(pcontext, pattr);
+  return fsal_functions[0].fsal_link_access(pcontext, pattr);
 #else
-  return fsal_functions.fsal_link_access(pcontext, pattr);
+  return fsal_functions[0].fsal_link_access(pcontext, pattr);
 #endif
 }
 
@@ -789,9 +789,9 @@ fsal_status_t FSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_merge_attrs(pinit_attr, pnew_attr, presult_attr);
+  return fsal_functions[0].fsal_merge_attrs(pinit_attr, pnew_attr, presult_attr);
 #else
-  return fsal_functions.fsal_merge_attrs(pinit_attr, pnew_attr, presult_attr);
+  return fsal_functions[0].fsal_merge_attrs(pinit_attr, pnew_attr, presult_attr);
 #endif
 }
 
@@ -807,12 +807,12 @@ fsal_status_t FSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_lookup(p_parent_directory_handle, p_filename, p_context,
+  fsal_status = fsal_functions[0].fsal_lookup(p_parent_directory_handle, p_filename, p_context,
                                            p_object_handle, p_object_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_lookup(p_parent_directory_handle, p_filename, p_context,
+  return fsal_functions[0].fsal_lookup(p_parent_directory_handle, p_filename, p_context,
                                     p_object_handle, p_object_attributes);
 #endif
 }
@@ -828,12 +828,12 @@ fsal_status_t FSAL_lookupPath(fsal_path_t * p_path,     /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_lookuppath(p_path, p_context, object_handle,
+  fsal_status = fsal_functions[0].fsal_lookuppath(p_path, p_context, object_handle,
                                                p_object_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_lookuppath(p_path, p_context, object_handle,
+  return fsal_functions[0].fsal_lookuppath(p_path, p_context, object_handle,
                                         p_object_attributes);
 #endif
 }
@@ -850,12 +850,12 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_lookupjunction(p_junction_handle, p_context, p_fsoot_handle,
+  fsal_status = fsal_functions[0].fsal_lookupjunction(p_junction_handle, p_context, p_fsoot_handle,
                                                    p_fsroot_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_lookupjunction(p_junction_handle, p_context, p_fsoot_handle,
+  return fsal_functions[0].fsal_lookupjunction(p_junction_handle, p_context, p_fsoot_handle,
                                             p_fsroot_attributes);
 #endif
 }
@@ -869,11 +869,11 @@ fsal_status_t FSAL_lock(fsal_file_t * obj_handle,
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_lock(obj_handle, ldesc, blocking);
+  fsal_status = fsal_functions[0].fsal_lock(obj_handle, ldesc, blocking);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_lock(obj_handle, ldesc, blocking);
+  return fsal_functions[0].fsal_lock(obj_handle, ldesc, blocking);
 #endif
 }
 
@@ -885,9 +885,9 @@ fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / 
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_changelock(lock_descriptor, lock_info);
+  return fsal_functions[0].fsal_changelock(lock_descriptor, lock_info);
 #else
-  return fsal_functions.fsal_changelock(lock_descriptor, lock_info);
+  return fsal_functions[0].fsal_changelock(lock_descriptor, lock_info);
 #endif
 }
 
@@ -898,9 +898,9 @@ fsal_status_t FSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_unlock(obj_handle, ldesc);
+  return fsal_functions[0].fsal_unlock(obj_handle, ldesc);
 #else
-  return fsal_functions.fsal_unlock(obj_handle, ldesc);
+  return fsal_functions[0].fsal_unlock(obj_handle, ldesc);
 #endif
 }
 
@@ -911,9 +911,9 @@ fsal_status_t FSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_getlock(obj_handle, ldesc);
+  return fsal_functions[0].fsal_getlock(obj_handle, ldesc);
 #else
-  return fsal_functions.fsal_getlock(obj_handle, ldesc);
+  return fsal_functions[0].fsal_getlock(obj_handle, ldesc);
 #endif
 }
 
@@ -924,9 +924,9 @@ fsal_status_t FSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle)
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_cleanobjectresources(in_fsal_handle);
+  return fsal_functions[0].fsal_cleanobjectresources(in_fsal_handle);
 #else
-  return fsal_functions.fsal_cleanobjectresources(in_fsal_handle);
+  return fsal_functions[0].fsal_cleanobjectresources(in_fsal_handle);
 #endif
 }
 
@@ -941,10 +941,10 @@ fsal_status_t FSAL_set_quota(fsal_path_t * pfsal_path,  /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_set_quota(pfsal_path, quota_type, fsal_uid, pquota,
+  return fsal_functions[0].fsal_set_quota(pfsal_path, quota_type, fsal_uid, pquota,
                                        presquota);
 #else
-  return fsal_functions.fsal_set_quota(pfsal_path, quota_type, fsal_uid, pquota,
+  return fsal_functions[0].fsal_set_quota(pfsal_path, quota_type, fsal_uid, pquota,
                                        presquota);
 #endif
 }
@@ -959,9 +959,9 @@ fsal_status_t FSAL_get_quota(fsal_path_t * pfsal_path,  /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_get_quota(pfsal_path, quota_type, fsal_uid, pquota);
+  return fsal_functions[0].fsal_get_quota(pfsal_path, quota_type, fsal_uid, pquota);
 #else
-  return fsal_functions.fsal_get_quota(pfsal_path, quota_type, fsal_uid, pquota);
+  return fsal_functions[0].fsal_get_quota(pfsal_path, quota_type, fsal_uid, pquota);
 #endif
 }
 
@@ -976,11 +976,11 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_rcp(filehandle, p_context, p_local_path, transfer_opt);
+  fsal_status = fsal_functions[0].fsal_rcp(filehandle, p_context, p_local_path, transfer_opt);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_rcp(filehandle, p_context, p_local_path, transfer_opt);
+  return fsal_functions[0].fsal_rcp(filehandle, p_context, p_local_path, transfer_opt);
 #endif
 }
 
@@ -996,12 +996,12 @@ fsal_status_t FSAL_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_rcp_by_fileid(filehandle, fileid, p_context, p_local_path,
+  fsal_status = fsal_functions[0].fsal_rcp_by_fileid(filehandle, fileid, p_context, p_local_path,
                                                   transfer_opt);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_rcp_by_fileid(filehandle, fileid, p_context, p_local_path,
+  return fsal_functions[0].fsal_rcp_by_fileid(filehandle, fileid, p_context, p_local_path,
                                            transfer_opt);
 #endif
 }
@@ -1020,13 +1020,13 @@ fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_rename(p_old_parentdir_handle, p_old_name,
+  fsal_status = fsal_functions[0].fsal_rename(p_old_parentdir_handle, p_old_name,
                                            p_new_parentdir_handle, p_new_name, p_context,
                                            p_src_dir_attributes, p_tgt_dir_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_rename(p_old_parentdir_handle, p_old_name,
+  return fsal_functions[0].fsal_rename(p_old_parentdir_handle, p_old_name,
                                     p_new_parentdir_handle, p_new_name, p_context,
                                     p_src_dir_attributes, p_tgt_dir_attributes);
 #endif
@@ -1040,9 +1040,9 @@ void FSAL_get_stats(fsal_statistics_t * stats,  /* OUT */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_get_stats(stats, reset);
+  return fsal_functions[0].fsal_get_stats(stats, reset);
 #else
-  return fsal_functions.fsal_get_stats(stats, reset);
+  return fsal_functions[0].fsal_get_stats(stats, reset);
 #endif
 }
 
@@ -1057,12 +1057,12 @@ fsal_status_t FSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_readlink(p_linkhandle, p_context, p_link_content,
+  fsal_status = fsal_functions[0].fsal_readlink(p_linkhandle, p_context, p_link_content,
                                              p_link_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_readlink(p_linkhandle, p_context, p_link_content,
+  return fsal_functions[0].fsal_readlink(p_linkhandle, p_context, p_link_content,
                                       p_link_attributes);
 #endif
 }
@@ -1081,13 +1081,13 @@ fsal_status_t FSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_symlink(p_parent_directory_handle, p_linkname, p_linkcontent,
+  fsal_status = fsal_functions[0].fsal_symlink(p_parent_directory_handle, p_linkname, p_linkcontent,
                                             p_context, accessmode, p_link_handle,
                                             p_link_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_symlink(p_parent_directory_handle, p_linkname, p_linkcontent,
+  return fsal_functions[0].fsal_symlink(p_parent_directory_handle, p_linkname, p_linkcontent,
                                      p_context, accessmode, p_link_handle,
                                      p_link_attributes);
 #endif
@@ -1101,9 +1101,9 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_handlecmp(handle1, handle2, status);
+  return fsal_functions[0].fsal_handlecmp(handle1, handle2, status);
 #else
-  return fsal_functions.fsal_handlecmp(handle1, handle2, status);
+  return fsal_functions[0].fsal_handlecmp(handle1, handle2, status);
 #endif
 }
 
@@ -1116,10 +1116,10 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_handle_to_hashindex(p_handle, cookie, alphabet_len,
+  return fsal_functions[0].fsal_handle_to_hashindex(p_handle, cookie, alphabet_len,
                                                  index_size);
 #else
-  return fsal_functions.fsal_handle_to_hashindex(p_handle, cookie, alphabet_len,
+  return fsal_functions[0].fsal_handle_to_hashindex(p_handle, cookie, alphabet_len,
                                                  index_size);
 #endif
 }
@@ -1131,9 +1131,9 @@ unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cook
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_handle_to_rbtindex(p_handle, cookie);
+  return fsal_functions[0].fsal_handle_to_rbtindex(p_handle, cookie);
 #else
-  return fsal_functions.fsal_handle_to_rbtindex(p_handle, cookie);
+  return fsal_functions[0].fsal_handle_to_rbtindex(p_handle, cookie);
 #endif
 }
 
@@ -1146,28 +1146,28 @@ unsigned int FSAL_Handle_to_Hash_both(fsal_handle_t * p_handle, unsigned int coo
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  if( fsal_functions.fsal_handle_to_hash_both != NULL ) 
-    return fsal_functions.fsal_handle_to_hash_both( p_handle, cookie, alphabet_len, index_size, phashval, prbtval) ;
+  if( fsal_functions[0].fsal_handle_to_hash_both != NULL ) 
+    return fsal_functions[0].fsal_handle_to_hash_both( p_handle, cookie, alphabet_len, index_size, phashval, prbtval) ;
   else
     {
         if( phashval == NULL || prbtval == NULL )
 	   return 0 ;
 
-	*phashval = fsal_functions.fsal_handle_to_hashindex( p_handle, cookie, alphabet_len, index_size ) ;
-        *prbtval = fsal_functions.fsal_handle_to_rbtindex( p_handle, cookie);
+	*phashval = fsal_functions[0].fsal_handle_to_hashindex( p_handle, cookie, alphabet_len, index_size ) ;
+        *prbtval = fsal_functions[0].fsal_handle_to_rbtindex( p_handle, cookie);
 
         return 1 ;
     }
 #else
-  if( fsal_functions.fsal_handle_to_hash_both != NULL ) 
-    return fsal_functions.fsal_handle_to_hash_both( p_handle, cookie, alphabet_len, index_size, phashval, prbtval) ;
+  if( fsal_functions[0].fsal_handle_to_hash_both != NULL ) 
+    return fsal_functions[0].fsal_handle_to_hash_both( p_handle, cookie, alphabet_len, index_size, phashval, prbtval) ;
   else
     {
         if( phashval == NULL || prbtval == NULL )
 	   return 0 ;
 
-	*phashval = fsal_functions.fsal_handle_to_hashindex( p_handle, cookie, alphabet_len, index_size ) ;
-        *prbtval = fsal_functions.fsal_handle_to_rbtindex( p_handle, cookie);
+	*phashval = fsal_functions[0].fsal_handle_to_hashindex( p_handle, cookie, alphabet_len, index_size ) ;
+        *prbtval = fsal_functions[0].fsal_handle_to_rbtindex( p_handle, cookie);
 
         return 1 ;
     }
@@ -1186,12 +1186,12 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status =  fsal_functions.fsal_digesthandle(p_expcontext, output_type, p_in_fsal_handle,
+  fsal_status =  fsal_functions[0].fsal_digesthandle(p_expcontext, output_type, p_in_fsal_handle,
                                                   out_buff);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_digesthandle(p_expcontext, output_type, p_in_fsal_handle,
+  return fsal_functions[0].fsal_digesthandle(p_expcontext, output_type, p_in_fsal_handle,
                                           out_buff);
 #endif
 }
@@ -1207,11 +1207,11 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_expandhandle(p_expcontext, in_type, in_buff,
+  fsal_status = fsal_functions[0].fsal_expandhandle(p_expcontext, in_type, in_buff,
                                                  p_out_fsal_handle);
   return fsal_status ;
 #else
-  return fsal_functions.fsal_expandhandle(p_expcontext, in_type, in_buff,
+  return fsal_functions[0].fsal_expandhandle(p_expcontext, in_type, in_buff,
                                           p_out_fsal_handle);
 #endif
 }
@@ -1223,9 +1223,9 @@ fsal_status_t FSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter)
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_setdefault_fsal_parameter(out_parameter);
+  return fsal_functions[0].fsal_setdefault_fsal_parameter(out_parameter);
 #else
-  return fsal_functions.fsal_setdefault_fsal_parameter(out_parameter);
+  return fsal_functions[0].fsal_setdefault_fsal_parameter(out_parameter);
 #endif
 }
 
@@ -1236,9 +1236,9 @@ fsal_status_t FSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_paramet
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_setdefault_fs_common_parameter(out_parameter);
+  return fsal_functions[0].fsal_setdefault_fs_common_parameter(out_parameter);
 #else
-  return fsal_functions.fsal_setdefault_fs_common_parameter(out_parameter);
+  return fsal_functions[0].fsal_setdefault_fs_common_parameter(out_parameter);
 #endif
 }
 
@@ -1249,9 +1249,9 @@ fsal_status_t FSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_param
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_setdefault_fs_specific_parameter(out_parameter);
+  return fsal_functions[0].fsal_setdefault_fs_specific_parameter(out_parameter);
 #else
-  return fsal_functions.fsal_setdefault_fs_specific_parameter(out_parameter);
+  return fsal_functions[0].fsal_setdefault_fs_specific_parameter(out_parameter);
 #endif
 }
 
@@ -1263,9 +1263,9 @@ fsal_status_t FSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_load_fsal_parameter_from_conf(in_config, out_parameter);
+  return fsal_functions[0].fsal_load_fsal_parameter_from_conf(in_config, out_parameter);
 #else
-  return fsal_functions.fsal_load_fsal_parameter_from_conf(in_config, out_parameter);
+  return fsal_functions[0].fsal_load_fsal_parameter_from_conf(in_config, out_parameter);
 #endif
 }
 
@@ -1277,9 +1277,9 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_load_fs_common_parameter_from_conf(in_config, out_parameter);
+  return fsal_functions[0].fsal_load_fs_common_parameter_from_conf(in_config, out_parameter);
 #else
-  return fsal_functions.fsal_load_fs_common_parameter_from_conf(in_config, out_parameter);
+  return fsal_functions[0].fsal_load_fs_common_parameter_from_conf(in_config, out_parameter);
 #endif
 }
 
@@ -1291,10 +1291,10 @@ fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_load_fs_specific_parameter_from_conf(in_config,
+  return fsal_functions[0].fsal_load_fs_specific_parameter_from_conf(in_config,
                                                                   out_parameter);
 #else
-  return fsal_functions.fsal_load_fs_specific_parameter_from_conf(in_config,
+  return fsal_functions[0].fsal_load_fs_specific_parameter_from_conf(in_config,
                                                                   out_parameter);
 #endif
 }
@@ -1311,12 +1311,12 @@ fsal_status_t FSAL_truncate(fsal_handle_t * p_filehandle,
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_truncate(p_filehandle, p_context, length, file_descriptor,
+  fsal_status = fsal_functions[0].fsal_truncate(p_filehandle, p_context, length, file_descriptor,
                                              p_object_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_truncate(p_filehandle, p_context, length, file_descriptor,
+  return fsal_functions[0].fsal_truncate(p_filehandle, p_context, length, file_descriptor,
                                       p_object_attributes);
 #endif
 }
@@ -1333,12 +1333,12 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_unlink(p_parent_directory_handle, p_object_name, p_context,
+  fsal_status = fsal_functions[0].fsal_unlink(p_parent_directory_handle, p_object_name, p_context,
                                            p_parent_directory_attributes);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_unlink(p_parent_directory_handle, p_object_name, p_context,
+  return fsal_functions[0].fsal_unlink(p_parent_directory_handle, p_object_name, p_context,
                                     p_parent_directory_attributes);
 #endif
 }
@@ -1347,9 +1347,9 @@ char *FSAL_GetFSName()
 {
 #ifdef _USE_SHARED_FSAL
   return "Multiple Dynamic FSAL" ;
-  //return fsal_functions.fsal_getfsname();
+  //return fsal_functions[0].fsal_getfsname();
 #else
-  return fsal_functions.fsal_getfsname();
+  return fsal_functions[0].fsal_getfsname();
 #endif
 }
 
@@ -1364,11 +1364,11 @@ fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_getxattrattrs(p_objecthandle, p_context, xattr_id, p_attrs);
+  fsal_status = fsal_functions[0].fsal_getxattrattrs(p_objecthandle, p_context, xattr_id, p_attrs);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_getxattrattrs(p_objecthandle, p_context, xattr_id, p_attrs);
+  return fsal_functions[0].fsal_getxattrattrs(p_objecthandle, p_context, xattr_id, p_attrs);
 #endif
 }
 
@@ -1386,13 +1386,13 @@ fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_listxattrs(p_objecthandle, cookie, p_context,
+  fsal_status = fsal_functions[0].fsal_listxattrs(p_objecthandle, cookie, p_context,
                                                xattrs_tab, xattrs_tabsize, p_nb_returned,
                                                end_of_list);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_listxattrs(p_objecthandle, cookie, p_context,
+  return fsal_functions[0].fsal_listxattrs(p_objecthandle, cookie, p_context,
                                         xattrs_tab, xattrs_tabsize, p_nb_returned,
                                         end_of_list);
 #endif
@@ -1411,12 +1411,12 @@ fsal_status_t FSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_getxattrvaluebyid(p_objecthandle, xattr_id, p_context,
+  fsal_status = fsal_functions[0].fsal_getxattrvaluebyid(p_objecthandle, xattr_id, p_context,
                                                       buffer_addr, buffer_size, p_output_size);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_getxattrvaluebyid(p_objecthandle, xattr_id, p_context,
+  return fsal_functions[0].fsal_getxattrvaluebyid(p_objecthandle, xattr_id, p_context,
                                                buffer_addr, buffer_size, p_output_size);
 #endif
 }
@@ -1432,11 +1432,11 @@ fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_getxattridbyname(p_objecthandle, xattr_name, p_context,
+  fsal_status = fsal_functions[0].fsal_getxattridbyname(p_objecthandle, xattr_name, p_context,
                                                      pxattr_id);
   return fsal_status ;
 #else
-  return fsal_functions.fsal_getxattridbyname(p_objecthandle, xattr_name, p_context,
+  return fsal_functions[0].fsal_getxattridbyname(p_objecthandle, xattr_name, p_context,
                                               pxattr_id);
 #endif
 }
@@ -1454,12 +1454,12 @@ fsal_status_t FSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_getxattrvaluebyname(p_objecthandle, xattr_name, p_context,
+  fsal_status = fsal_functions[0].fsal_getxattrvaluebyname(p_objecthandle, xattr_name, p_context,
                                                         buffer_addr, buffer_size, p_output_size);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_getxattrvaluebyname(p_objecthandle, xattr_name, p_context,
+  return fsal_functions[0].fsal_getxattrvaluebyname(p_objecthandle, xattr_name, p_context,
                                                  buffer_addr, buffer_size, p_output_size);
 #endif
 }
@@ -1477,12 +1477,12 @@ fsal_status_t FSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,        /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_setxattrvalue(p_objecthandle, xattr_name, p_context,
+  fsal_status = fsal_functions[0].fsal_setxattrvalue(p_objecthandle, xattr_name, p_context,
                                                   buffer_addr, buffer_size, create);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_setxattrvalue(p_objecthandle, xattr_name, p_context,
+  return fsal_functions[0].fsal_setxattrvalue(p_objecthandle, xattr_name, p_context,
                                            buffer_addr, buffer_size, create);
 #endif
 }
@@ -1499,12 +1499,12 @@ fsal_status_t FSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,    /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_setxattrvaluebyid(p_objecthandle, xattr_id, p_context,
+  fsal_status = fsal_functions[0].fsal_setxattrvaluebyid(p_objecthandle, xattr_id, p_context,
                                                       buffer_addr, buffer_size);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_setxattrvaluebyid(p_objecthandle, xattr_id, p_context,
+  return fsal_functions[0].fsal_setxattrvaluebyid(p_objecthandle, xattr_id, p_context,
                                                buffer_addr, buffer_size);
 #endif
 }
@@ -1519,11 +1519,11 @@ fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,      /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_removexattrbyid(p_objecthandle, p_context, xattr_id);
+  fsal_status = fsal_functions[0].fsal_removexattrbyid(p_objecthandle, p_context, xattr_id);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_removexattrbyid(p_objecthandle, p_context, xattr_id);
+  return fsal_functions[0].fsal_removexattrbyid(p_objecthandle, p_context, xattr_id);
 #endif
 }
 
@@ -1537,11 +1537,11 @@ fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  fsal_status = fsal_functions.fsal_removexattrbyname(p_objecthandle, p_context, xattr_name);
+  fsal_status = fsal_functions[0].fsal_removexattrbyname(p_objecthandle, p_context, xattr_name);
 
   return fsal_status ;
 #else
-  return fsal_functions.fsal_removexattrbyname(p_objecthandle, p_context, xattr_name);
+  return fsal_functions[0].fsal_removexattrbyname(p_objecthandle, p_context, xattr_name);
 #endif
 }
 
@@ -1552,9 +1552,9 @@ unsigned int FSAL_GetFileno(fsal_file_t * pfile)
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-  return fsal_functions.fsal_getfileno(pfile);
+  return fsal_functions[0].fsal_getfileno(pfile);
 #else
-  return fsal_functions.fsal_getfileno(pfile);
+  return fsal_functions[0].fsal_getfileno(pfile);
 #endif
 }
 
@@ -1568,11 +1568,11 @@ fsal_status_t FSAL_getextattrs( fsal_handle_t * p_filehandle, /* IN */
   fsalid = FSAL_GetId() ;
   if( fsalid != 42 ) abort() ;
 
-   fsal_status = fsal_functions.fsal_getextattrs( p_filehandle, p_context, p_object_attributes ) ;
+   fsal_status = fsal_functions[0].fsal_getextattrs( p_filehandle, p_context, p_object_attributes ) ;
 
   return fsal_status ;
 #else
-   return fsal_functions.fsal_getextattrs( p_filehandle, p_context, p_object_attributes ) ;
+   return fsal_functions[0].fsal_getextattrs( p_filehandle, p_context, p_object_attributes ) ;
 #endif
 }
 
@@ -1619,12 +1619,12 @@ int FSAL_LoadLibrary(char *path)
 
 void FSAL_LoadFunctions(void)
 {
-  fsal_functions = (*getfunctions) ();
+  fsal_functions[0] = (*getfunctions) ();
 }
 
 void FSAL_LoadConsts(void)
 {
-  fsal_consts = (*getconsts) ();
+  fsal_consts[0] = (*getconsts) ();
 }
 
 #else
@@ -1635,12 +1635,12 @@ int FSAL_LoadLibrary(char *path)
 
 void FSAL_LoadFunctions(void)
 {
-  fsal_functions = FSAL_GetFunctions();
+  fsal_functions[0] = FSAL_GetFunctions();
 }
 
 void FSAL_LoadConsts(void)
 {
-  fsal_consts = FSAL_GetConsts();
+  fsal_consts[0] = FSAL_GetConsts();
 }
 
 #endif
