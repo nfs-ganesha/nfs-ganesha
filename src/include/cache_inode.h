@@ -1071,14 +1071,14 @@ typedef cache_inode_status_t (*granted_callback_t)(cache_entry_t        * pentry
                                                    void                 * pcookie,
                                                    int                    cookie_size,
                                                    cache_lock_owner_t   * powner,
-                                                   cache_lock_desc_t    * lock,
+                                                   cache_lock_desc_t    * plock,
                                                    cache_inode_client_t * pclient,
                                                    fsal_op_context_t    * pcontext,
                                                    cache_inode_status_t * pstatus);
 
 cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
                                       cache_lock_owner_t   * powner,
-                                      cache_lock_desc_t    * lock,
+                                      cache_lock_desc_t    * plock,
                                       cache_lock_owner_t   * holder,   /* owner that holds conflicting lock */
                                       cache_lock_desc_t    * conflict, /* description of conflicting lock */
                                       cache_inode_client_t * pclient,
@@ -1092,7 +1092,7 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
                                       granted_callback_t     granted_callback,
                                       bool_t                 reclaim,
                                       cache_lock_owner_t   * powner,
-                                      cache_lock_desc_t    * lock,
+                                      cache_lock_desc_t    * plock,
                                       cache_lock_owner_t   * holder,   /* owner that holds conflicting lock */
                                       cache_lock_desc_t    * conflict, /* description of conflicting lock */
                                       cache_inode_client_t * pclient,
@@ -1112,7 +1112,7 @@ cache_inode_status_t cache_inode_cancel(cache_entry_t        * pentry,
                                         cache_lock_owner_t   * powner,
                                         void                 * pcookie,
                                         int                    cookie_size,
-                                        cache_lock_desc_t    * lock,
+                                        cache_lock_desc_t    * plock,
                                         cache_inode_client_t * pclient,
                                         fsal_op_context_t    * pcontext,
                                         cache_inode_status_t * pstatus);

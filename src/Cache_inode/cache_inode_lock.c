@@ -476,9 +476,9 @@ void lock_entry_dec_ref(cache_entry_t      *pentry,
     }
 }
 
-static void do_remove_from_locklist(cache_entry_t      *pentry,
-                                    fsal_op_context_t  *pcontext,
-                                    cache_lock_entry_t *lock_entry)
+static void remove_from_locklist(cache_entry_t      *pentry,
+                                 fsal_op_context_t  *pcontext,
+                                 cache_lock_entry_t *lock_entry)
 {
   /*
    * If some other thread is holding a reference to this nlm_lock_entry
@@ -486,15 +486,6 @@ static void do_remove_from_locklist(cache_entry_t      *pentry,
    */
   glist_del(&lock_entry->cle_list);
   lock_entry_dec_ref(pentry, pcontext, lock_entry);
-}
-
-void remove_from_locklist(cache_entry_t      *pentry,
-                          fsal_op_context_t  *pcontext,
-                          cache_lock_entry_t *lock_entry)
-{
-  P(pentry->object.file.lock_list_mutex);
-  do_remove_from_locklist(pentry, pcontext, lock_entry);
-  V(pentry->object.file.lock_list_mutex);
 }
 
 /**
@@ -647,7 +638,7 @@ static void merge_lock_entry(cache_entry_t        * pentry,
 
       /* Remove merged entry */
       LogEntry("nlm_merge_lock_entry Merging", pentry, pcontext, check_entry);
-      do_remove_from_locklist(pentry, pcontext, check_entry);
+      remove_from_locklist(pentry, pcontext, check_entry);
     }
 }
 
@@ -799,7 +790,7 @@ static void subtract_lock_from_entry(cache_lock_entry_t *nlm_entry,
     }
 
 complete_remove:
-  do_remove_from_locklist(nlm_entry);
+  remove_from_locklist(nlm_entry);
 }
 
 /* Subtract a lock from a list of locks, possibly splitting entries in the list. */
@@ -857,7 +848,7 @@ void send_kernel_unlock(struct glist_head *list)
 
       LogKernel(&nlm_entry->arg, 2);
 
-      do_remove_from_locklist(nlm_entry);
+      remove_from_locklist(nlm_entry);
     }
 }
 
@@ -991,7 +982,7 @@ void nlm_node_recovery(char *name,
       /*
        * now remove the from locklist
        */
-      do_remove_from_locklist(nlm_entry);
+      remove_from_locklist(nlm_entry);
 
       /*
        * We don't inc ref count because we want to drop the lock entry
@@ -1124,7 +1115,9 @@ static void nlm4_send_grant_msg(void *arg)
            __func__, retval);
 
 free_nlm_lock_entry:
-  remove_from_locklist(nlm_entry);
+  P(pentry->object.file.lock_list_mutex);
+  remove_from_locklist(pentry, pcontext, nlm_entry);
+  V(pentry->object.file.lock_list_mutex);
   /*
    * Submit the async request to send granted response for
    * locks that can be granted, because of this removal
@@ -1165,7 +1158,7 @@ static void do_nlm_grant_blocked_locks(void *arg)
            * so that client can try again and get the lock. May be
            * by then we are able to allocate objects
            */
-          do_remove_from_locklist(nlm_entry);
+          remove_from_locklist(nlm_entry);
           continue;
         }
       nlm_lock.cle_lock.cld_offset = nlm_entry->cle_lock.cld_offset;
@@ -1575,7 +1568,7 @@ cache_inode_status_t cache_inode_unlock(cache_entry_t        * pentry,
                                         void                 * pcookie,
                                         int                    cookie_size,
                                         cache_lock_owner_t   * powner,
-                                        cache_lock_desc_t    * lock,
+                                        cache_lock_desc_t    * plock,
                                         cache_inode_client_t * pclient,
                                         fsal_op_context_t    * pcontext,
                                         cache_inode_status_t * pstatus)
@@ -1588,12 +1581,43 @@ cache_inode_status_t cache_inode_cancel(cache_entry_t        * pentry,
                                         cache_lock_owner_t   * powner,
                                         void                 * pcookie,
                                         int                    cookie_size,
-                                        cache_lock_desc_t    * lock,
+                                        cache_lock_desc_t    * plock,
                                         cache_inode_client_t * pclient,
                                         fsal_op_context_t    * pcontext,
                                         cache_inode_status_t * pstatus)
 {
-  *pstatus = CACHE_INODE_NOT_SUPPORTED;
+  struct glist_head *glist;
+  cache_lock_entry_t *found_entry;
+
+  *pstatus = CACHE_INODE_NOT_FOUND;
+
+  P(pentry->object.file.lock_list_mutex);
+
+  glist_for_each(glist, &pentry->object.file.lock_list)
+    {
+      found_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+
+      if(different_owners(found_entry->cle_owner, powner))
+        continue;
+
+      if(found_entry->cle_blocked == CACHE_NON_BLOCKING)
+        continue;
+
+      if(different_lock(&found_entry->cle_lock, plock))
+        continue;
+
+      /*
+       * We have matched all atribute of the existing lock.
+       * Just return with blocked status. Client may be polling.
+       */
+      LogEntry("cache_inode_lock cancelling blocked",
+               pentry, pcontext, found_entry);
+      remove_from_locklist(pentry, pcontext, found_entry);
+      break;
+    }
+
+  V(pentry->object.file.lock_list_mutex);
+
   return *pstatus;
 }
 
