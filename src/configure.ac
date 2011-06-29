@@ -331,7 +331,7 @@ GA_ENABLE_FLAG( [profiling], [turn on code profiling (-g and -pg)], [-g -pg] )
 GA_ENABLE_FLAG( [strict-compile], [turn on strict compiler flags], [-Werror -Wimplicit -Wformat -Wmissing-braces] )
 
 # NFSv4 ACL
-GA_ENABLE_AM_CONDITION([nfs4-acl],[enable NFSv4 ACL support],[USE_NFS4_ACL])
+GA_DISABLE_AM_CONDITION([nfs4-acl],[disable NFSv4 ACL support],[USE_NO_NFS4_ACL])
 
 if test "$enable_nfs4_acl" == "yes"; then
         AC_CHECK_LIB([ssl],[MD5_Init])
