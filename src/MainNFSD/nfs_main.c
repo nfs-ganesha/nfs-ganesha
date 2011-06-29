@@ -367,7 +367,7 @@ int main(int argc, char *argv[])
     }
 
    /* Set the FSAL id */
-   FSAL_SetId( 42 ) ;
+   FSAL_SetId( 3 ) ;
 #endif                          /* _USE_SHARED_FSAL */
 
   /* Load the FSAL library (if needed) */

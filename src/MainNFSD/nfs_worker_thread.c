@@ -1482,7 +1482,7 @@ void *worker_thread(void *IndexArg)
                "NFS WORKER #%lu: Initialization of thread's credential",
                index);
 #ifdef _USE_SHARED_FSAL
-  FSAL_SetId( 42 ) ;
+  FSAL_SetId( 3 ) ;
 #endif
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&pmydata->thread_fsal_context)))
     {

@@ -52,7 +52,7 @@
 #ifdef _USE_SHARED_FSAL
 #define NB_AVAILABLE_FSAL 11
 #else
-#define NB_AVAILABLE_FSAL 1
+#define NB_AVAILABLE_FSAL 1 /* No need to allocate more than once in the static case */
 #endif
 
 #define FSAL_CEPH_ID     0
