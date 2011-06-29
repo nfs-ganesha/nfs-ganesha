@@ -149,7 +149,9 @@ int main(int argc, char *argv[])
   struct sigaction act_sigterm;
   struct sigaction act_sighup;
 
+  int fsalid = -1 ;
   char fsal_path_lib[MAXPATHLEN];
+  char fsal_path_param[MAXPATHLEN];
 
   /* retrieve executable file's name */
   strncpy(ganesha_exec_path, argv[0], MAXPATHLEN);
@@ -359,13 +361,23 @@ int main(int argc, char *argv[])
 
 
 #ifdef _USE_SHARED_FSAL
-  if(nfs_get_fsalpathlib_conf(my_config_path, fsal_path_lib))
+  if(nfs_get_fsalpathlib_conf(my_config_path, fsal_path_param))
+    {
+      LogMajor(COMPONENT_INIT,
+               "NFS MAIN: Error parsing configuration file for FSAL dynamic lib param.");
+      exit(1);
+    }
+
+  if( FSAL_param_load_fsal_split( fsal_path_param, &fsalid, fsal_path_lib ) )
     {
       LogMajor(COMPONENT_INIT,
                "NFS MAIN: Error parsing configuration file for FSAL path.");
       exit(1);
     }
 
+   LogEvent( COMPONENT_INIT,
+	    "Loading FSAL module for %s located at %s\n", FSAL_fsalid2name( fsalid ), fsal_path_lib ) ;
+   
    /* Set the FSAL id */
    FSAL_SetId( 3 ) ;
 #endif                          /* _USE_SHARED_FSAL */

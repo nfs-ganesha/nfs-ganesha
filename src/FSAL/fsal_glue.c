@@ -23,6 +23,112 @@
 fsal_functions_t fsal_functions[NB_AVAILABLE_FSAL];
 fsal_const_t fsal_consts[NB_AVAILABLE_FSAL];
 
+int FSAL_name2fsalid( char * fsname )
+{
+   if(      !strncasecmp( fsname, "CEPH" ) )     return FSAL_CEPH_ID ;
+   else if( !strncasecmp( fsname, "HPSS" ) )     return FSAL_HPSS_ID ;
+   else if( !strncasecmp( fsname, "SNMP" ) )     return FSAL_SNMP_ID ;
+   else if( !strncasecmp( fsname, "ZFS" ) )      return FSAL_ZFS_ID  ;
+   else if( !strncasecmp( fsname, "FUSELIKE" ) ) return FSAL_FUSELIKE_ID ; 
+   else if( !strncasecmp( fsname, "LUSTRE" ) )   return FSAL_LUSTRE_ID ;
+   else if( !strncasecmp( fsname, "POSIX" ) )    return FSAL_POSIX_ID ;
+   else if( !strncasecmp( fsname, "VFS" ) )      return FSAL_VFS_ID ;
+   else if( !strncasecmp( fsname, "GPFS" ) )     return FSAL_GPFS_ID ;
+   else if( !strncasecmp( fsname, "PROXY" ) )    return FSAL_PROXY_ID ;
+   else if( !strncasecmp( fsname, "XFS" ) )      return FSAL_XFS_ID ;
+   else return -1 ;
+} /* FSAL_name2fsalid */
+
+char * FSAL_fsalid2name( int fsalid )
+{
+  switch( fsalid )
+   {
+	case FSAL_CEPH_ID:
+		return "CEPH" ;
+		break ;
+
+	case FSAL_HPSS_ID:
+		return "HPSS" ;
+		break ;
+
+	case FSAL_SNMP_ID:
+		return "SNMP" ;
+		break ;
+
+	case FSAL_ZFS_ID:
+		return "ZFS" ;
+		break ;
+
+	case FSAL_FUSELIKE_ID: 
+		return "FUSELIKE" ;
+		break ;
+
+	case FSAL_LUSTRE_ID:
+		return "LUSTRE" ;
+		break ;
+
+	case FSAL_POSIX_ID:
+		return "POSIX" ;
+		break ;
+
+	case FSAL_VFS_ID:
+		return "VFS" ;
+		break ;
+
+	case FSAL_GPFS_ID:
+		return "GPFS" ;
+		break ;
+
+	case FSAL_PROXY_ID:
+		return "PROXY" ;
+		break ;
+
+	case FSAL_XFS_ID:
+		return "XFS" ;
+		break ;
+
+	default:
+		return "not found" ;
+		break ;
+
+   }
+  return "You should not see this message... Implementation error !!!!" ;
+} /* FSAL_fsalid2name */
+
+/* Split the fsal_param into a fsalid and a path for a fsal lib 
+ * for example "XFS:/usr/lib/libfsalxfs.so.1.1.0" will produce FSAL_XFS_ID and "/usr/lib/libfsalxfs.so.1.1.0"  */
+int FSAL_param_load_fsal_split( char * param, int * fsalid, char * pathlib )
+{
+  char *p1 = NULL ;
+  int foundcolon = 0 ;
+
+  char strwork[MAXPATHLEN] ;
+  char str1[MAXNAMLEN] ;
+
+  if( !param || !fsalid || !pathlib )
+    return -1 ;
+
+  strncpy( strwork, param, MAXPATHLEN ) ;
+  for( p1 = strwork; *p1 != '\0' ; p1++ )
+   {
+      if( *p1 == ':' )
+       {
+         foundcolon = 1 ;
+         *p1 = '\0';
+	 
+         break ; 
+       }
+   }
+
+  if( foundcolon != 1 )
+    return -1 ;
+
+  p1+= 1 ;
+  strncpy( pathlib, p1, MAXPATHLEN ) ;
+  *fsalid = FSAL_name2fsalid( strwork ) ;
+  return 0 ;
+} /* FSAL_param_load_fsal_split */
+
 #ifdef _USE_SHARED_FSAL
 fsal_functions_t(*getfunctions) (void);
 fsal_const_t(*getconsts) (void);
