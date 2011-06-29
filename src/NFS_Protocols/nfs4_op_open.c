@@ -312,7 +312,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                  sizeof(cache_inode_open_owner_name_t));
 
           /* set up the content of the open_owner */
-          powner->owner_type = CACHE_LOCK_OWNER_NFSV4;
           powner->confirmed = FALSE;
           powner->seqid = 0;
           powner->related_owner = NULL;

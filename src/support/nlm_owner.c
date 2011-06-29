@@ -67,78 +67,172 @@
 #include "cache_inode.h"
 
 hash_table_t *ht_nlm_owner;
+hash_table_t *ht_nlm_client;
 
-int display_nlm_owner(cache_inode_nlm_owner_t *pkey, char *str)
+int display_nlm_client(cache_inode_nlm_client_t *pkey, char *str)
+{
+  char *strtmp = str;
+
+  strtmp += sprintf(strtmp, "caller_name=");
+  strncpy(strtmp, pkey->clc_nlm_caller_name, pkey->clc_nlm_caller_name_len);
+  strtmp += pkey->clc_nlm_caller_name_len;
+
+  return strlen(str);
+}
+
+int display_nlm_client_key(hash_buffer_t * pbuff, char *str)
+{
+  return display_nlm_client((cache_inode_nlm_client_t *)pbuff->pdata, str);
+}
+
+int display_nlm_client_val(hash_buffer_t * pbuff, char *str)
+{
+  return display_nlm_client((cache_inode_nlm_client_t *)pbuff->pdata, str);
+}
+
+int compare_nlm_client(cache_inode_nlm_client_t *pclient1,
+                       cache_inode_nlm_client_t *pclient2)
+{
+  if(isFullDebug(COMPONENT_NLM))
+    {
+      char str1[HASHTABLE_DISPLAY_STRLEN];
+      char str2[HASHTABLE_DISPLAY_STRLEN];
+
+      display_nlm_client(pclient1, str1);
+      display_nlm_client(pclient2, str2);
+      LogFullDebug(COMPONENT_NLM,
+                   "compare_nlm_clients => {%s}|{%s}", str1, str2);
+    }
+
+  if(pclient1 == NULL || pclient2 == NULL)
+    return 1;
+
+  if(pclient1 == pclient2)
+    return 0;
+
+  if(pclient1->clc_nlm_caller_name_len != pclient2->clc_nlm_caller_name_len)
+    return 1;
+
+  return memcmp(pclient1->clc_nlm_caller_name,
+                pclient2->clc_nlm_caller_name,
+                pclient1->clc_nlm_caller_name_len);
+}
+
+int compare_nlm_client_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
+{
+  return compare_nlm_client((cache_inode_nlm_client_t *)buff1->pdata,
+                            (cache_inode_nlm_client_t *)buff2->pdata);
+
+}                               /* compare_nlm_client */
+
+unsigned long nlm_client_value_hash_func(hash_parameter_t * p_hparam,
+                                        hash_buffer_t * buffclef)
+{
+  unsigned int sum = 0;
+  unsigned int i;
+  unsigned long res;
+  cache_inode_nlm_client_t *pkey = (cache_inode_nlm_client_t *)buffclef->pdata;
+
+  /* Compute the sum of all the characters */
+  for(i = 0; i < pkey->clc_nlm_caller_name_len; i++)
+    sum +=(unsigned char) pkey->clc_nlm_caller_name[i];
+
+  res = (unsigned long) sum +
+        (unsigned long) pkey->clc_nlm_caller_name_len;
+
+  LogFullDebug(COMPONENT_NLM,
+               "---> rbt_hash_val = %lu", res % p_hparam->index_size);
+
+  return (unsigned long)(res % p_hparam->index_size);
+
+}                               /* nlm_clo_nlm_ohue_hash_func */
+
+unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
+                                      hash_buffer_t * buffclef)
+{
+  unsigned int sum = 0;
+  unsigned int i;
+  unsigned long res;
+  cache_inode_nlm_client_t *pkey = (cache_inode_nlm_client_t *)buffclef->pdata;
+
+  /* Compute the sum of all the characters */
+  for(i = 0; i < pkey->clc_nlm_caller_name_len; i++)
+    sum +=(unsigned char) pkey->clc_nlm_caller_name[i];
+
+  res = (unsigned long) sum +
+        (unsigned long) pkey->clc_nlm_caller_name_len;
+
+  LogFullDebug(COMPONENT_NLM, "---> rbt_hash_func = %lu", res);
+
+  return res;
+}                               /* state_id_rbt_hash_func */
+
+int display_nlm_owner(cache_lock_owner_t *pkey, char *str)
 {
   unsigned int i = 0;
   char *strtmp = str;
 
-  strtmp += sprintf(strtmp, "caller_name=");
-  strncpy(strtmp, pkey->clo_nlm_caller_name, pkey->clo_nlm_caller_name_len);
-  strtmp += pkey->clo_nlm_caller_name_len;
+  strtmp += display_nlm_client(pkey->clo_owner.clo_nlm_owner.clo_client, str);
 
-  strtmp += sprintf(strtmp, " oh=(%u|", pkey->clo_nlm_oh_len);
+  strtmp += sprintf(strtmp, " oh=(%u|", pkey->clo_owner.clo_nlm_owner.clo_nlm_oh_len);
 
-  for(i = 0; i < pkey->clo_nlm_oh_len; i++)
+  for(i = 0; i < pkey->clo_owner.clo_nlm_owner.clo_nlm_oh_len; i++)
     {
-      sprintf(strtmp, "%02x", (unsigned char)pkey->clo_nlm_oh[i]);
+      sprintf(strtmp, "%02x", (unsigned char)pkey->clo_owner.clo_nlm_owner.clo_nlm_oh[i]);
       strtmp += 2;
     }
 
-  strtmp += sprintf(strtmp, ") svid=%d", pkey->clo_nlm_svid);
+  strtmp += sprintf(strtmp, ") svid=%d", pkey->clo_owner.clo_nlm_owner.clo_nlm_svid);
   return strlen(str);
 }
 
 int display_nlm_owner_key(hash_buffer_t * pbuff, char *str)
 {
-  return display_nlm_owner((cache_inode_nlm_owner_t *)pbuff->pdata, str);
+  return display_nlm_owner((cache_lock_owner_t *)pbuff->pdata, str);
 }
 
 int display_nlm_owner_val(hash_buffer_t * pbuff, char *str)
 {
-  return display_nlm_owner((cache_inode_nlm_owner_t *)pbuff->pdata, str);
+  return display_nlm_owner((cache_lock_owner_t *)pbuff->pdata, str);
 }
 
-int compare_nlm_owner(cache_inode_nlm_owner_t *powner1,
-                      cache_inode_nlm_owner_t *powner2)
+int compare_nlm_owner(cache_lock_owner_t *powner1,
+                      cache_lock_owner_t *powner2)
 {
-  if(isFullDebug(COMPONENT_OPEN_OWNER_HASH))
+  if(isFullDebug(COMPONENT_NLM))
     {
       char str1[HASHTABLE_DISPLAY_STRLEN];
       char str2[HASHTABLE_DISPLAY_STRLEN];
 
       display_nlm_owner(powner1, str1);
       display_nlm_owner(powner2, str2);
-      LogFullDebug(COMPONENT_OPEN_OWNER_HASH,
+      LogFullDebug(COMPONENT_NLM,
                    "compare_nlm_owners => {%s}|{%s}", str1, str2);
     }
 
   if(powner1 == NULL || powner2 == NULL)
     return 1;
 
-  if(powner1->clo_nlm_svid != powner2->clo_nlm_svid)
+  if(powner1 == powner2)
+    return 0;
+
+  if(compare_nlm_client(powner1->clo_owner.clo_nlm_owner.clo_client,
+                        powner2->clo_owner.clo_nlm_owner.clo_client) != 0)
     return 1;
 
-  if(powner1->clo_nlm_oh_len != powner2->clo_nlm_oh_len)
+  if(powner1->clo_owner.clo_nlm_owner.clo_nlm_oh_len !=
+     powner2->clo_owner.clo_nlm_owner.clo_nlm_oh_len)
     return 1;
 
-  if(memcmp(powner1->clo_nlm_oh,
-            powner2->clo_nlm_oh,
-            powner1->clo_nlm_oh_len) != 0)
-    return 1;
-
-  if(powner1->clo_nlm_caller_name_len != powner2->clo_nlm_caller_name_len)
-    return 1;
-
-  return memcmp(powner1->clo_nlm_caller_name,
-                powner2->clo_nlm_caller_name,
-                powner1->clo_nlm_caller_name_len);
+  return memcmp(powner1->clo_owner.clo_nlm_owner.clo_nlm_oh,
+                powner2->clo_owner.clo_nlm_owner.clo_nlm_oh,
+                powner1->clo_owner.clo_nlm_owner.clo_nlm_oh_len);
 }
 
 int compare_nlm_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  return compare_nlm_owner((cache_inode_nlm_owner_t *)buff1->pdata,
-                           (cache_inode_nlm_owner_t *)buff2->pdata);
+  return compare_nlm_owner((cache_lock_owner_t *)buff1->pdata,
+                           (cache_lock_owner_t *)buff2->pdata);
 
 }                               /* compare_nlm_owner */
 
@@ -148,21 +242,17 @@ unsigned long nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  cache_inode_nlm_owner_t *pkey = (cache_inode_nlm_owner_t *)buffclef->pdata;
+  cache_lock_owner_t *pkey = (cache_lock_owner_t *)buffclef->pdata;
 
   /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->clo_nlm_oh_len; i++)
-    sum += (unsigned char)pkey->clo_nlm_oh[i];
+  for(i = 0; i < pkey->clo_owner.clo_nlm_owner.clo_nlm_oh_len; i++)
+    sum += (unsigned char)pkey->clo_owner.clo_nlm_owner.clo_nlm_oh[i];
 
-  /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->clo_nlm_caller_name_len; i++)
-    sum +=(unsigned char) pkey->clo_nlm_caller_name[i];
-
-  res = (unsigned long) (pkey->clo_nlm_svid) +
+  res = (unsigned long) (pkey->clo_owner.clo_nlm_owner.clo_nlm_svid) +
         (unsigned long) sum +
-        (unsigned long) pkey->clo_nlm_oh_len;
+        (unsigned long) pkey->clo_owner.clo_nlm_owner.clo_nlm_oh_len;
 
-  LogFullDebug(COMPONENT_OPEN_OWNER_HASH,
+  LogFullDebug(COMPONENT_NLM,
                "---> rbt_hash_val = %lu", res % p_hparam->index_size);
 
   return (unsigned long)(res % p_hparam->index_size);
@@ -175,28 +265,24 @@ unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  cache_inode_nlm_owner_t *pkey = (cache_inode_nlm_owner_t *)buffclef->pdata;
+  cache_lock_owner_t *pkey = (cache_lock_owner_t *)buffclef->pdata;
 
   /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->clo_nlm_oh_len; i++)
-    sum += (unsigned char)pkey->clo_nlm_oh[i];
+  for(i = 0; i < pkey->clo_owner.clo_nlm_owner.clo_nlm_oh_len; i++)
+    sum += (unsigned char)pkey->clo_owner.clo_nlm_owner.clo_nlm_oh[i];
 
-  /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->clo_nlm_caller_name_len; i++)
-    sum +=(unsigned char) pkey->clo_nlm_caller_name[i];
-
-  res = (unsigned long) (pkey->clo_nlm_svid) +
+  res = (unsigned long) (pkey->clo_owner.clo_nlm_owner.clo_nlm_svid) +
         (unsigned long) sum +
-        (unsigned long) pkey->clo_nlm_oh_len;
+        (unsigned long) pkey->clo_owner.clo_nlm_owner.clo_nlm_oh_len;
 
-  LogFullDebug(COMPONENT_OPEN_OWNER_HASH, "---> rbt_hash_func = %lu", res);
+  LogFullDebug(COMPONENT_NLM, "---> rbt_hash_func = %lu", res);
 
   return res;
 }                               /* state_id_rbt_hash_func */
 
 /**
  *
- * nfs4_Init_nlm_owner: Init the hashtable for NLM Owner cache.
+ * Init_nlm_hash: Init the hashtable for NLM Owner cache.
  *
  * Perform all the required initialization for hashtable State Id cache
  * 
@@ -205,18 +291,246 @@ unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
  * @return 0 if successful, -1 otherwise
  *
  */
-int nfs4_Init_nlm_owner(nlm_owner_parameter_t param)
+int Init_nlm_hash(hash_parameter_t client_param, hash_parameter_t owner_param)
 {
 
-  if((ht_nlm_owner = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_nlm_client = HashTable_Init(client_param)) == NULL)
     {
-      LogCrit(COMPONENT_OPEN_OWNER_HASH,
-              "NFS STATE_ID: Cannot init NLM Owner cache");
+      LogCrit(COMPONENT_NLM,
+              "Cannot init NLM Client cache");
+      return -1;
+    }
+
+  if((ht_nlm_owner = HashTable_Init(owner_param)) == NULL)
+    {
+      LogCrit(COMPONENT_NLM,
+              "Cannot init NLM Owner cache");
       return -1;
     }
 
   return 0;
-}                               /* nfs4_Init_nlm_owner */
+}                               /* Init_nlm_hash */
+
+/**
+ * nlm_client_Set
+ * 
+ *
+ * This routine sets a NLM client into the related hashtable
+ *
+ * @return 1 if ok, 0 otherwise.
+ *
+ */
+int nlm_client_Set(cache_inode_nlm_client_t * pkey,
+                   cache_inode_nlm_client_t * pclient)
+{
+  hash_buffer_t buffkey;
+  hash_buffer_t buffval;
+
+  if(isFullDebug(COMPONENT_NLM))
+    {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      buffkey.pdata = (caddr_t) pkey;
+      buffkey.len = sizeof(cache_inode_nlm_client_t);
+
+      display_nlm_client_key(&buffkey, str);
+      LogFullDebug(COMPONENT_NLM,
+                   "nlm_client_Set => KEY {%s}", str);
+    }
+
+  buffkey.pdata = (caddr_t) pkey;
+  buffkey.len = sizeof(cache_inode_nlm_client_t);
+
+  buffval.pdata = (caddr_t) pclient;
+  buffval.len = sizeof(cache_inode_nlm_client_t);
+
+  if(HashTable_Test_And_Set
+     (ht_nlm_client, &buffkey, &buffval,
+      HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS)
+    return 0;
+
+  return 1;
+}                               /* nlm_client_Set */
+
+static int Hash_del_nlm_client_ref(hash_buffer_t *buffval)
+{
+  int rc;
+  cache_inode_nlm_client_t *pclient = (cache_inode_nlm_client_t *)(buffval->pdata);
+
+  P(pclient->clc_mutex);
+
+  pclient->clc_refcount--;
+  rc = pclient->clc_refcount;
+
+  V(pclient->clc_mutex);  
+
+  return rc;
+}
+
+static void Hash_inc_client_ref(hash_buffer_t *buffval)
+{
+  cache_inode_nlm_client_t *pclient = (cache_inode_nlm_client_t *)(buffval->pdata);
+
+  P(pclient->clc_mutex);
+  pclient->clc_refcount++;
+  V(pclient->clc_mutex);  
+}
+
+void inc_nlm_client_ref(cache_inode_nlm_client_t *pclient)
+{
+  P(pclient->clc_mutex);
+  pclient->clc_refcount++;
+  V(pclient->clc_mutex);
+}
+
+void dec_nlm_client_ref(cache_inode_nlm_client_t *pclient)
+{
+  bool_t remove = FALSE;
+
+  P(pclient->clc_mutex);
+  if(pclient->clc_refcount > 1)
+    pclient->clc_refcount--;
+  else
+    remove = TRUE;
+  V(pclient->clc_mutex);
+  if(remove)
+    {
+      hash_buffer_t buffkey, old_key, old_value;
+
+      buffkey.pdata = (caddr_t) pclient;
+      buffkey.len = sizeof(cache_inode_nlm_client_t);
+
+      switch(HashTable_DelRef(ht_nlm_client, &buffkey, &old_key, &old_value, Hash_del_nlm_client_ref))
+        {
+          case HASHTABLE_SUCCESS:
+            Mem_Free(old_key.pdata);
+            Mem_Free(old_value.pdata);
+            break;
+
+          case HASHTABLE_NOT_DELETED:
+            /* ref count didn't end up at 0, don't free. */
+            break;
+
+          default:
+            /* some problem occurred */
+            LogFullDebug(COMPONENT_NLM,
+                         "HashTable_Del failed");
+            break;
+        }
+    }
+}
+
+/**
+ *
+ * nlm_client_Get_Pointer
+ *
+ * This routine gets a pointer to an NLM client from the nlm_client's hashtable.
+ *
+ * @param pstate       [IN] pointer to the stateid to be checked.
+ * @param ppstate_data [OUT] pointer's state found 
+ *
+ * @return 1 if ok, 0 otherwise.
+ *
+ */
+int nlm_client_Get_Pointer(cache_inode_nlm_client_t * pkey,
+                           cache_inode_nlm_client_t * *pclient)
+{
+  hash_buffer_t buffkey;
+  hash_buffer_t buffval;
+
+  if(isFullDebug(COMPONENT_NLM))
+    {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      buffkey.pdata = (caddr_t) pkey;
+      buffkey.len = sizeof(cache_inode_nlm_client_t);
+
+      display_nlm_client_key(&buffkey, str);
+      LogFullDebug(COMPONENT_NLM,
+                   "nlm_client_Get_Pointer => KEY {%s}", str);
+    }
+
+  buffkey.pdata = (caddr_t) pkey;
+  buffkey.len = sizeof(cache_inode_nlm_client_t);
+
+  if(HashTable_GetRef(ht_nlm_client, &buffkey, &buffval, Hash_inc_client_ref) != HASHTABLE_SUCCESS)
+    {
+      LogFullDebug(COMPONENT_NLM,
+                   "nlm_client_Get_Pointer => NOTFOUND");
+      return 0;
+    }
+
+  *pclient = (cache_inode_nlm_client_t *) buffval.pdata;
+
+  LogFullDebug(COMPONENT_NLM,
+               "nlm_client_Get_Pointer => FOUND");
+
+  return 1;
+}                               /* nlm_client_Get_Pointer */
+
+/**
+ *
+ * nlm_client_Del
+ *
+ * This routine removes a NLM client from the nlm_client's hashtable.
+ *
+ * @param other [IN] stateid'other field, used as a hash key
+ *
+ * @return 1 if ok, 0 otherwise.
+ *
+ */
+int nlm_client_Del(cache_inode_nlm_client_t * pkey)
+{
+  hash_buffer_t buffkey, old_key, old_value;
+
+  buffkey.pdata = (caddr_t) pkey;
+  buffkey.len = sizeof(cache_inode_nlm_client_t);
+
+  if(HashTable_Del(ht_nlm_client, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
+    {
+      /* free the key that was stored in hash table */
+      Mem_Free((void *)old_key.pdata);
+
+      /* State is managed in stuff alloc, no fre is needed for old_value.pdata */
+
+      return 1;
+    }
+  else
+    return 0;
+}                               /* nlm_client_Del */
+
+/**
+ * 
+ *  nlm_client_PrintAll
+ *  
+ * This routine displays the content of the hashtable used to store the NLM clients. 
+ * 
+ * @return nothing (void function)
+ */
+
+void nlm_client_PrintAll(void)
+{
+  HashTable_Log(COMPONENT_NLM, ht_nlm_client);
+}                               /* nlm_client_PrintAll */
+
+int convert_nlm_client(const char               * caller_name,
+                       cache_inode_nlm_client_t * pnlm_client)
+{
+  if(caller_name == NULL || pnlm_client == NULL)
+    return 0;
+
+  memset(pnlm_client, 0, sizeof(*pnlm_client));
+  pnlm_client->clc_nlm_caller_name_len = strlen(caller_name);
+
+  if(pnlm_client->clc_nlm_caller_name_len > LM_MAXSTRLEN)
+    return 0;
+
+  memcpy(pnlm_client->clc_nlm_caller_name,
+         caller_name,
+         pnlm_client->clc_nlm_caller_name_len);
+
+  return 1;
+}                               /* nfs_convert_nlm_client */
 
 /**
  * nlm_owner_Set
@@ -227,29 +541,29 @@ int nfs4_Init_nlm_owner(nlm_owner_parameter_t param)
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nlm_owner_Set(cache_inode_nlm_owner_t * pkey,
-                  cache_inode_nlm_owner_t * powner)
+int nlm_owner_Set(cache_lock_owner_t * pkey,
+                  cache_lock_owner_t * powner)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
 
-  if(isFullDebug(COMPONENT_OPEN_OWNER_HASH))
+  if(isFullDebug(COMPONENT_NLM))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
       buffkey.pdata = (caddr_t) pkey;
-      buffkey.len = sizeof(cache_inode_nlm_owner_t);
+      buffkey.len = sizeof(cache_lock_owner_t);
 
       display_nlm_owner_key(&buffkey, str);
-      LogFullDebug(COMPONENT_OPEN_OWNER_HASH,
+      LogFullDebug(COMPONENT_NLM,
                    "nlm_owner_Set => KEY {%s}", str);
     }
 
   buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(cache_inode_nlm_owner_t);
+  buffkey.len = sizeof(cache_lock_owner_t);
 
   buffval.pdata = (caddr_t) powner;
-  buffval.len = sizeof(cache_inode_nlm_owner_t);
+  buffval.len = sizeof(cache_lock_owner_t);
 
   if(HashTable_Test_And_Set
      (ht_nlm_owner, &buffkey, &buffval,
@@ -258,6 +572,74 @@ int nlm_owner_Set(cache_inode_nlm_owner_t * pkey,
 
   return 1;
 }                               /* nlm_owner_Set */
+
+static int Hash_del_nlm_owner_ref(hash_buffer_t *buffval)
+{
+  int rc;
+  cache_lock_owner_t *powner = (cache_lock_owner_t *)(buffval->pdata);
+
+  P(powner->clo_mutex);
+
+  powner->clo_refcount--;
+  rc = powner->clo_refcount;
+
+  V(powner->clo_mutex);  
+
+  return rc;
+}
+
+static void Hash_inc_owner_ref(hash_buffer_t *buffval)
+{
+  cache_lock_owner_t *powner = (cache_lock_owner_t *)(buffval->pdata);
+
+  P(powner->clo_mutex);
+  powner->clo_refcount++;
+  V(powner->clo_mutex);  
+}
+
+void inc_nlm_owner_ref(cache_lock_owner_t *powner)
+{
+  P(powner->clo_mutex);
+  powner->clo_refcount++;
+  V(powner->clo_mutex);
+}
+
+void dec_nlm_owner_ref(cache_lock_owner_t *powner)
+{
+  bool_t remove = FALSE;
+
+  P(powner->clo_mutex);
+  if(powner->clo_refcount > 1)
+    powner->clo_refcount--;
+  else
+    remove = TRUE;
+  V(powner->clo_mutex);
+  if(remove)
+    {
+      hash_buffer_t buffkey, old_key, old_value;
+
+      buffkey.pdata = (caddr_t) powner;
+      buffkey.len = sizeof(cache_lock_owner_t);
+
+      switch(HashTable_DelRef(ht_nlm_owner, &buffkey, &old_key, &old_value, Hash_del_nlm_owner_ref))
+        {
+          case HASHTABLE_SUCCESS:
+            Mem_Free(old_key.pdata);
+            Mem_Free(old_value.pdata);
+            break;
+
+          case HASHTABLE_NOT_DELETED:
+            /* ref count didn't end up at 0, don't free. */
+            break;
+
+          default:
+            /* some problem occurred */
+            LogFullDebug(COMPONENT_NLM,
+                         "HashTable_Del failed");
+            break;
+        }
+    }
+}
 
 /**
  *
@@ -271,37 +653,37 @@ int nlm_owner_Set(cache_inode_nlm_owner_t * pkey,
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nlm_owner_Get_Pointer(cache_inode_nlm_owner_t * pkey,
-                          cache_inode_nlm_owner_t * *powner)
+int nlm_owner_Get_Pointer(cache_lock_owner_t * pkey,
+                          cache_lock_owner_t * *powner)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
 
-  if(isFullDebug(COMPONENT_OPEN_OWNER_HASH))
+  if(isFullDebug(COMPONENT_NLM))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
       buffkey.pdata = (caddr_t) pkey;
-      buffkey.len = sizeof(cache_inode_nlm_owner_t);
+      buffkey.len = sizeof(cache_lock_owner_t);
 
       display_nlm_owner_key(&buffkey, str);
-      LogFullDebug(COMPONENT_OPEN_OWNER_HASH,
+      LogFullDebug(COMPONENT_NLM,
                    "nlm_owner_Get_Pointer => KEY {%s}", str);
     }
 
   buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(cache_inode_nlm_owner_t);
+  buffkey.len = sizeof(cache_lock_owner_t);
 
-  if(HashTable_Get(ht_nlm_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
+  if(HashTable_GetRef(ht_nlm_owner, &buffkey, &buffval, Hash_inc_owner_ref) != HASHTABLE_SUCCESS)
     {
-      LogFullDebug(COMPONENT_OPEN_OWNER_HASH,
+      LogFullDebug(COMPONENT_NLM,
                    "nlm_owner_Get_Pointer => NOTFOUND");
       return 0;
     }
 
-  *powner = (cache_inode_nlm_owner_t *) buffval.pdata;
+  *powner = (cache_lock_owner_t *) buffval.pdata;
 
-  LogFullDebug(COMPONENT_OPEN_OWNER_HASH,
+  LogFullDebug(COMPONENT_NLM,
                "nlm_owner_Get_Pointer => FOUND");
 
   return 1;
@@ -318,12 +700,12 @@ int nlm_owner_Get_Pointer(cache_inode_nlm_owner_t * pkey,
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nlm_owner_Del(cache_inode_nlm_owner_t * pkey)
+int nlm_owner_Del(cache_lock_owner_t * pkey)
 {
   hash_buffer_t buffkey, old_key, old_value;
 
   buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(cache_inode_nlm_owner_t);
+  buffkey.len = sizeof(cache_lock_owner_t);
 
   if(HashTable_Del(ht_nlm_owner, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
     {
@@ -349,32 +731,30 @@ int nlm_owner_Del(cache_inode_nlm_owner_t * pkey)
 
 void nlm_owner_PrintAll(void)
 {
-  HashTable_Log(COMPONENT_OPEN_OWNER_HASH, ht_nlm_owner);
+  HashTable_Log(COMPONENT_NLM, ht_nlm_owner);
 }                               /* nlm_owner_PrintAll */
 
-int convert_nlm_owner(const char              * caller_name,
-                      netobj                  * oh,
-                      uint32_t                  svid,
-                      cache_inode_nlm_owner_t * pnlm_owner)
+int convert_nlm_owner(cache_inode_nlm_client_t * pclient, 
+                      netobj                   * oh,
+                      uint32_t                   svid,
+                      cache_lock_owner_t       * pnlm_owner)
 {
-  if(caller_name == NULL || oh == NULL || pnlm_owner == NULL)
+  if(pnlm_owner == NULL)
     return 0;
 
   memset(pnlm_owner, 0, sizeof(*pnlm_owner));
-  pnlm_owner->clo_nlm_caller_name_len = strlen(caller_name);
 
-  if(pnlm_owner->clo_nlm_caller_name_len > LM_MAXSTRLEN ||
-     oh->n_len > LM_MAXSTRLEN)
+  if(oh == NULL || oh->n_len > MAX_NETOBJ_SZ)
     return 0;
 
-  pnlm_owner->clo_nlm_svid = svid;
-  pnlm_owner->clo_nlm_oh_len = oh->n_len;
-  memcpy(pnlm_owner->clo_nlm_oh,
+  pnlm_owner->clo_type     = CACHE_LOCK_OWNER_NLM;
+  pnlm_owner->clo_refcount = 1;
+  pnlm_owner->clo_owner.clo_nlm_owner.clo_client     = pclient;
+  pnlm_owner->clo_owner.clo_nlm_owner.clo_nlm_svid   = svid;
+  pnlm_owner->clo_owner.clo_nlm_owner.clo_nlm_oh_len = oh->n_len;
+  memcpy(pnlm_owner->clo_owner.clo_nlm_owner.clo_nlm_oh,
          oh->n_bytes,
          oh->n_len);
-  memcpy(pnlm_owner->clo_nlm_caller_name,
-         caller_name,
-         pnlm_owner->clo_nlm_caller_name_len);
 
   return 1;
 }                               /* nfs_convert_nlm_owner */

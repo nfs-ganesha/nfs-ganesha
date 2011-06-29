@@ -318,13 +318,6 @@ typedef struct nfs_open_owner_param__
   hash_parameter_t hash_param;
 } nfs_open_owner_parameter_t;
 
-#ifdef _USE_NLM
-typedef struct nlm_owner_parameter_t
-{
-  hash_parameter_t hash_param;
-} nlm_owner_parameter_t;
-#endif
-
 typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
 
 typedef struct nfs_version4_parameter__
@@ -364,7 +357,8 @@ typedef struct nfs_param__
 #endif                          /* _USE_NFS4_1 */
   nfs_open_owner_parameter_t open_owner_param;
 #ifdef _USE_NLM
-  nlm_owner_parameter_t  nlm_owner_param;
+  hash_parameter_t nlm_client_hash_param;
+  hash_parameter_t nlm_owner_hash_param;
 #endif
   nfs_cache_layers_parameter_t cache_layers_param;
   fsal_parameter_t fsal_param;
@@ -736,29 +730,49 @@ int nfs_open_owner_Set(cache_inode_open_owner_name_t * pname,
 int nfs4_Init_open_owner(nfs_open_owner_parameter_t param);
 
 #ifdef _USE_NLM
-void inc_nlm_owner_ref(cache_inode_nlm_owner_t *powner);
-void dec_nlm_owner_ref(cache_inode_nlm_owner_t *powner);
-int display_nlm_owner(cache_inode_nlm_owner_t *pkey, char *str);
+void inc_nlm_client_ref(cache_inode_nlm_client_t *pclient);
+void dec_nlm_client_ref(cache_inode_nlm_client_t *pclient);
+int display_nlm_client(cache_inode_nlm_client_t *pkey, char *str);
+int display_nlm_client_val(hash_buffer_t * pbuff, char *str);
+int display_nlm_client_key(hash_buffer_t * pbuff, char *str);
+int compare_nlm_client(cache_inode_nlm_client_t *pkey1,
+                       cache_inode_nlm_client_t *pkey2);
+int compare_nlm_client_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
+unsigned long nlm_client_value_hash_func(hash_parameter_t * p_hparam,
+                                         hash_buffer_t    * buffclef);
+unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
+                                      hash_buffer_t    * buffclef);
+int convert_nlm_client(const char               * caller_name,
+                       cache_inode_nlm_client_t * pnlm_client);
+void nlm_client_PrintAll(void);
+int nlm_owner_Del(cache_lock_owner_t * pname);
+int nlm_owner_Get_Pointer(cache_lock_owner_t * pname,
+                          cache_lock_owner_t * *pnlm_owner);
+int nlm_owner_Set(cache_lock_owner_t * pname,
+                  cache_lock_owner_t * pnlm_owner);
+void inc_nlm_owner_ref(cache_lock_owner_t *powner);
+void dec_nlm_owner_ref(cache_lock_owner_t *powner);
+int display_nlm_owner(cache_lock_owner_t *pkey, char *str);
 int display_nlm_owner_val(hash_buffer_t * pbuff, char *str);
 int display_nlm_owner_key(hash_buffer_t * pbuff, char *str);
-int compare_nlm_owner(cache_inode_nlm_owner_t *pkey1,
-                      cache_inode_nlm_owner_t *pkey2);
+int compare_nlm_owner(cache_lock_owner_t *pkey1,
+                      cache_lock_owner_t *pkey2);
 int compare_nlm_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
 unsigned long nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
                                         hash_buffer_t    * buffclef);
 unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                       hash_buffer_t    * buffclef);
-int convert_nlm_owner(const char              * caller_name,
-                      netobj                  * oh,
-                      uint32_t                  svid,
-                      cache_inode_nlm_owner_t * pnlm_owner);
+int convert_nlm_owner(cache_inode_nlm_client_t * pclient, 
+                      netobj                   * oh,
+                      uint32_t                   svid,
+                      cache_lock_owner_t       * pnlm_owner);
 void nlm_owner_PrintAll(void);
-int nlm_owner_Del(cache_inode_nlm_owner_t * pname);
-int nlm_owner_Get_Pointer(cache_inode_nlm_owner_t * pname,
-                          cache_inode_nlm_owner_t * *pnlm_owner);
-int nlm_owner_Set(cache_inode_nlm_owner_t * pname,
-                  cache_inode_nlm_owner_t * pnlm_owner);
-int nfs4_Init_nlm_owner(nlm_owner_parameter_t param);
+int nlm_owner_Del(cache_lock_owner_t * pname);
+int nlm_owner_Get_Pointer(cache_lock_owner_t * pname,
+                          cache_lock_owner_t * *pnlm_owner);
+int nlm_owner_Set(cache_lock_owner_t * pname,
+                  cache_lock_owner_t * pnlm_owner);
+int Init_nlm_hash(hash_parameter_t client_param, hash_parameter_t owner_param);
 #endif
 
 int idmap_populate(char *path, idmap_type_t maptype);

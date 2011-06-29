@@ -521,16 +521,26 @@ void nfs_set_param_default()
   nfs_param.open_owner_param.hash_param.name = "Open Owner";
 
 #ifdef _USE_NLM
+  /* NLM Client hash */
+  nfs_param.nlm_client_hash_param.index_size = PRIME_STATE_ID;
+  nfs_param.nlm_client_hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
+  nfs_param.nlm_client_hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
+  nfs_param.nlm_client_hash_param.hash_func_key = nlm_client_value_hash_func;
+  nfs_param.nlm_client_hash_param.hash_func_rbt = nlm_client_rbt_hash_func;
+  nfs_param.nlm_client_hash_param.compare_key = compare_nlm_client_key;
+  nfs_param.nlm_client_hash_param.key_to_str = display_nlm_client_key;
+  nfs_param.nlm_client_hash_param.val_to_str = display_nlm_client_val;
+  nfs_param.nlm_client_hash_param.name = "NLM Client";
   /* NLM Owner hash */
-  nfs_param.nlm_owner_param.hash_param.index_size = PRIME_STATE_ID;
-  nfs_param.nlm_owner_param.hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
-  nfs_param.nlm_owner_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
-  nfs_param.nlm_owner_param.hash_param.hash_func_key = nlm_owner_value_hash_func;
-  nfs_param.nlm_owner_param.hash_param.hash_func_rbt = nlm_owner_rbt_hash_func;
-  nfs_param.nlm_owner_param.hash_param.compare_key = compare_nlm_owner_key;
-  nfs_param.nlm_owner_param.hash_param.key_to_str = display_nlm_owner_key;
-  nfs_param.nlm_owner_param.hash_param.val_to_str = display_nlm_owner_val;
-  nfs_param.nlm_owner_param.hash_param.name = "Open Owner";
+  nfs_param.nlm_owner_hash_param.index_size = PRIME_STATE_ID;
+  nfs_param.nlm_owner_hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
+  nfs_param.nlm_owner_hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
+  nfs_param.nlm_owner_hash_param.hash_func_key = nlm_owner_value_hash_func;
+  nfs_param.nlm_owner_hash_param.hash_func_rbt = nlm_owner_rbt_hash_func;
+  nfs_param.nlm_owner_hash_param.compare_key = compare_nlm_owner_key;
+  nfs_param.nlm_owner_hash_param.key_to_str = display_nlm_owner_key;
+  nfs_param.nlm_owner_hash_param.val_to_str = display_nlm_owner_val;
+  nfs_param.nlm_owner_hash_param.name = "NLM Owner";
 #endif
 
   /* Cache inode parameters : hash table */
@@ -1518,6 +1528,13 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                "Cache Inode Layer could not be initialized, cache_status=%d",
                cache_status);
     }
+
+  if(cache_inode_lock_init(&cache_status) != CACHE_INODE_SUCCESS)
+    {
+      LogFatal(COMPONENT_INIT,
+               "Cache Inode Layer could not be initialized, cache_status=%d",
+               cache_status);
+    }
   LogInfo(COMPONENT_INIT, "Cache Inode library successfully initialized");
 
   /* Set the cache inode GC policy */
@@ -1807,7 +1824,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #ifdef _USE_NLM
   /* Init The NLM Owner cache */
   LogDebug(COMPONENT_INIT, "Now building NLM Owner cache");
-  if(nfs4_Init_nlm_owner(nfs_param.nlm_owner_param) != 0)
+  if(Init_nlm_hash(nfs_param.nlm_client_hash_param, nfs_param.nlm_owner_hash_param) != 0)
     {
       LogFatal(COMPONENT_INIT,
                "Error while initializing NLM Owner cache");

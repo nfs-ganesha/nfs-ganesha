@@ -411,26 +411,32 @@ typedef enum cache_lock_owner_type_t
 } cache_lock_owner_type_t;
 
 #ifdef _USE_NLM
+typedef struct cache_inode_nlm_client_t
+{
+  pthread_mutex_t         clc_mutex;
+  struct glist_head       clc_lock_list;
+  int                     clc_refcount;
+  int                     clc_nlm_caller_name_len;
+  char                    clc_nlm_caller_name[LM_MAXSTRLEN];
+} cache_inode_nlm_client_t;
+
 typedef struct cache_inode_nlm_owner_t
 {
-  cache_lock_owner_type_t owner_type; /* must start with this field so locking can distinguish types */
-  int32_t clo_nlm_svid;
-  int     clo_nlm_caller_name_len;
-  int     clo_nlm_oh_len;
-  char    clo_nlm_oh[MAX_NETOBJ_SZ];
-  char    clo_nlm_caller_name[LM_MAXSTRLEN];
+  cache_inode_nlm_client_t *clo_client;
+  int32_t                   clo_nlm_svid;
+  int                       clo_nlm_oh_len;
+  char                      clo_nlm_oh[MAX_NETOBJ_SZ];
 } cache_inode_nlm_owner_t;
 #endif
 
 typedef struct cache_inode_open_owner__
 {
-  cache_lock_owner_type_t owner_type; /* must start with this field so locking can distinguish types */
   clientid4 clientid;
   unsigned int owner_len;
   char owner_val[NFS4_OPAQUE_LIMIT];
   unsigned int confirmed;
   unsigned int seqid;
-  pthread_mutex_t lock;
+  pthread_mutex_t lock;                       //TODO FSF: remove this and use clo_lock
   uint32_t counter;                           /** < Counter is used to build unique stateids */
   struct cache_inode_open_owner__ *related_owner;
 } cache_inode_open_owner_t;
@@ -438,9 +444,12 @@ typedef struct cache_inode_open_owner__
 /* Undistinguished lock owner type */
 typedef struct cache_lock_owner_t
 {
+  cache_lock_owner_type_t    clo_type;
+  struct glist_head          clo_lock_list;
+  pthread_mutex_t            clo_mutex;
+  int                        clo_refcount;
   union
   {
-    cache_lock_owner_type_t  clo_type;
     cache_inode_open_owner_t clo_open_owner;
     cache_inode_nlm_owner_t  clo_nlm_owner;
 #ifdef _USE_NLM
@@ -1065,6 +1074,10 @@ typedef cache_inode_status_t (*granted_callback_t)(cache_entry_t        * pentry
 typedef struct cache_lock_entry_t
 {
   struct glist_head           cle_list;
+  struct glist_head           cle_owner_locks;
+#ifdef _USE_NLM
+  struct glist_head           cle_client_locks;
+#endif
 #ifdef _DEBUG_MEMLEAKS
   struct glist_head           cle_all_locks;
 #endif
@@ -1079,17 +1092,21 @@ typedef struct cache_lock_entry_t
   pthread_mutex_t             cle_mutex;
 } cache_lock_entry_t;
 
+cache_inode_status_t cache_inode_lock_init(cache_inode_status_t * pstatus);
+
 void lock_entry_inc_ref(cache_lock_entry_t *lock_entry);
 
 void lock_entry_dec_ref(cache_entry_t      *pentry,
                         fsal_op_context_t  *pcontext,
                         cache_lock_entry_t *lock_entry);
 
+void release_lock_owner(cache_lock_owner_t *powner);
+
 cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
                                       fsal_op_context_t    * pcontext,
                                       cache_lock_owner_t   * powner,
                                       cache_lock_desc_t    * plock,
-                                      cache_lock_owner_t   * holder,   /* owner that holds conflicting lock */
+                                      cache_lock_owner_t  ** holder,   /* owner that holds conflicting lock */
                                       cache_lock_desc_t    * conflict, /* description of conflicting lock */
                                       cache_inode_client_t * pclient,
                                       cache_inode_status_t * pstatus);
@@ -1103,7 +1120,7 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
                                       bool_t                 reclaim,
                                       cache_lock_owner_t   * powner,
                                       cache_lock_desc_t    * plock,
-                                      cache_lock_owner_t   * holder,   /* owner that holds conflicting lock */
+                                      cache_lock_owner_t  ** holder,   /* owner that holds conflicting lock */
                                       cache_lock_desc_t    * conflict, /* description of conflicting lock */
                                       cache_inode_client_t * pclient,
                                       cache_inode_status_t * pstatus);
@@ -1126,11 +1143,11 @@ cache_inode_status_t cache_inode_cancel(cache_entry_t        * pentry,
                                         cache_inode_client_t * pclient,
                                         cache_inode_status_t * pstatus);
 
-cache_inode_status_t cache_inode_notify(cache_entry_t        * pentry,
-                                        fsal_op_context_t    * pcontext,
-                                        cache_lock_owner_t   * powner,
-                                        cache_inode_client_t * pclient,
-                                        cache_inode_status_t * pstatus);
+cache_inode_status_t cache_inode_nlm_notify(cache_entry_t            * pentry,
+                                            fsal_op_context_t        * pcontext,
+                                            cache_inode_nlm_client_t * pnlmclient,
+                                            cache_inode_client_t     * pclient,
+                                            cache_inode_status_t     * pstatus);
 
 int cache_inode_state_conflict(cache_inode_state_t * pstate,
                                cache_inode_state_type_t state_type,
