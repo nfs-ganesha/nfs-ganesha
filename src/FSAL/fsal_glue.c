@@ -25,17 +25,17 @@ fsal_const_t fsal_consts[NB_AVAILABLE_FSAL];
 
 int FSAL_name2fsalid( char * fsname )
 {
-   if(      !strncasecmp( fsname, "CEPH" ) )     return FSAL_CEPH_ID ;
-   else if( !strncasecmp( fsname, "HPSS" ) )     return FSAL_HPSS_ID ;
-   else if( !strncasecmp( fsname, "SNMP" ) )     return FSAL_SNMP_ID ;
-   else if( !strncasecmp( fsname, "ZFS" ) )      return FSAL_ZFS_ID  ;
-   else if( !strncasecmp( fsname, "FUSELIKE" ) ) return FSAL_FUSELIKE_ID ; 
-   else if( !strncasecmp( fsname, "LUSTRE" ) )   return FSAL_LUSTRE_ID ;
-   else if( !strncasecmp( fsname, "POSIX" ) )    return FSAL_POSIX_ID ;
-   else if( !strncasecmp( fsname, "VFS" ) )      return FSAL_VFS_ID ;
-   else if( !strncasecmp( fsname, "GPFS" ) )     return FSAL_GPFS_ID ;
-   else if( !strncasecmp( fsname, "PROXY" ) )    return FSAL_PROXY_ID ;
-   else if( !strncasecmp( fsname, "XFS" ) )      return FSAL_XFS_ID ;
+   if(      !strncasecmp( fsname, "CEPH",     MAXNAMLEN ) ) return FSAL_CEPH_ID ;
+   else if( !strncasecmp( fsname, "HPSS",     MAXNAMLEN ) ) return FSAL_HPSS_ID ;
+   else if( !strncasecmp( fsname, "SNMP",     MAXNAMLEN ) ) return FSAL_SNMP_ID ;
+   else if( !strncasecmp( fsname, "ZFS",      MAXNAMLEN ) ) return FSAL_ZFS_ID  ;
+   else if( !strncasecmp( fsname, "FUSELIKE", MAXNAMLEN ) ) return FSAL_FUSELIKE_ID ; 
+   else if( !strncasecmp( fsname, "LUSTRE",   MAXNAMLEN ) ) return FSAL_LUSTRE_ID ;
+   else if( !strncasecmp( fsname, "POSIX",    MAXNAMLEN ) ) return FSAL_POSIX_ID ;
+   else if( !strncasecmp( fsname, "VFS",      MAXNAMLEN ) ) return FSAL_VFS_ID ;
+   else if( !strncasecmp( fsname, "GPFS",     MAXNAMLEN ) ) return FSAL_GPFS_ID ;
+   else if( !strncasecmp( fsname, "PROXY",    MAXNAMLEN ) ) return FSAL_PROXY_ID ;
+   else if( !strncasecmp( fsname, "XFS",      MAXNAMLEN ) ) return FSAL_XFS_ID ;
    else return -1 ;
 } /* FSAL_name2fsalid */
 
