@@ -418,7 +418,6 @@ static void DisplayLogString_valist(char *buff_dest, char * function, log_compon
   char texte[STR_LEN_TXT];
   struct tm the_date;
   time_t tm;
-  //const char *function = Log_GetThreadFunction(component != COMPONENT_LOG_EMERG);
 
   tm = time(NULL);
   Localtime_r(&tm, &the_date);
@@ -437,7 +436,6 @@ static void DisplayLogString_valist(char *buff_dest, char * function, log_compon
 static int DisplayLogSyslog_valist(log_components_t component, char * function, int level, char * format, va_list arguments)
 {
   char texte[STR_LEN_TXT];
-  //const char *function = Log_GetThreadFunction(component != COMPONENT_LOG_EMERG);
 
   if( !syslog_opened )
    {
