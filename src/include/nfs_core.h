@@ -766,6 +766,8 @@ int convert_nlm_owner(cache_inode_nlm_client_t * pclient,
                       netobj                   * oh,
                       uint32_t                   svid,
                       cache_lock_owner_t       * pnlm_owner);
+void make_nlm_special_owner(cache_inode_nlm_client_t * pclient,
+                            cache_lock_owner_t       * pnlm_owner);
 void nlm_owner_PrintAll(void);
 int nlm_owner_Del(cache_lock_owner_t * pname);
 int nlm_owner_Get_Pointer(cache_lock_owner_t * pname,

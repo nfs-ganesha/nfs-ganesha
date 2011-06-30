@@ -107,6 +107,10 @@ static inline int glist_empty(struct glist_head *head)
 	const typeof( ((type *)0)->member ) *__mptr = (addr);	\
 	(type *)( (char *)__mptr - offsetof(type,member) );})
 
+#define glist_first_entry(head, type, member) \
+        ((head)->next != (head) ? \
+          container_of((head)->next, type, member) : NULL)
+
 #define glist_entry(node, type, member) \
 	container_of(node, type, member)
 

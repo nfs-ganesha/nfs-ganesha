@@ -1127,10 +1127,8 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
 
 cache_inode_status_t cache_inode_unlock(cache_entry_t        * pentry,
                                         fsal_op_context_t    * pcontext,
-                                        void                 * pcookie,
-                                        int                    cookie_size,
                                         cache_lock_owner_t   * powner,
-                                        cache_lock_desc_t    * lock,
+                                        cache_lock_desc_t    * plock,
                                         cache_inode_client_t * pclient,
                                         cache_inode_status_t * pstatus);
 
@@ -1143,11 +1141,17 @@ cache_inode_status_t cache_inode_cancel(cache_entry_t        * pentry,
                                         cache_inode_client_t * pclient,
                                         cache_inode_status_t * pstatus);
 
-cache_inode_status_t cache_inode_nlm_notify(cache_entry_t            * pentry,
-                                            fsal_op_context_t        * pcontext,
+#ifdef _USE_NLM
+cache_inode_status_t cache_inode_nlm_notify(fsal_op_context_t        * pcontext,
                                             cache_inode_nlm_client_t * pnlmclient,
                                             cache_inode_client_t     * pclient,
                                             cache_inode_status_t     * pstatus);
+#endif
+
+cache_inode_status_t cache_inode_owner_unlock_all(fsal_op_context_t        * pcontext,
+                                                  cache_lock_owner_t       * powner,
+                                                  cache_inode_client_t     * pclient,
+                                                  cache_inode_status_t     * pstatus);
 
 int cache_inode_state_conflict(cache_inode_state_t * pstate,
                                cache_inode_state_type_t state_type,

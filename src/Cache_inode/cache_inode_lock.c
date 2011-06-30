@@ -74,6 +74,7 @@
  */
 #ifdef _DEBUG_MEMLEAKS
 static struct glist_head cache_inode_all_locks;
+pthread_mutex_t all_locks_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 #if 0
@@ -131,23 +132,28 @@ void DisplayOwner(cache_lock_owner_t *powner, char *buf)
 {
   char *tmp = buf;
 
-  switch(powner->clo_type)
+  if(powner == NULL)
     {
+      sprintf(buf, "N/A");
+    }
+  else
+    switch(powner->clo_type)
+      {
 #ifdef _USE_NLM
-      case CACHE_LOCK_OWNER_NLM:
-        tmp += sprintf(buf, "CACHE_LOCK_OWNER_NLM: ");
-        display_nlm_owner(powner, tmp);
-        break;
+        case CACHE_LOCK_OWNER_NLM:
+          tmp += sprintf(buf, "CACHE_LOCK_OWNER_NLM: ");
+          display_nlm_owner(powner, tmp);
+          break;
 #endif
 
-      case CACHE_LOCK_OWNER_NFSV4:
-        tmp += sprintf(buf, "CACHE_LOCK_OWNER_NFSV4: ");
-        sprintf(buf, "undecoded");
-        break;
+        case CACHE_LOCK_OWNER_NFSV4:
+          tmp += sprintf(buf, "CACHE_LOCK_OWNER_NFSV4: ");
+          sprintf(buf, "undecoded");
+          break;
 
-      default:
-        sprintf(buf, "unknown owner");
-        break;
+        case CACHE_LOCK_OWNER_UNKNOWN:
+          sprintf(buf, "CACHE_LOCK_OWNER_UNKNOWN");
+          break;
     }
 }
 
@@ -192,7 +198,7 @@ static void LogEntry(const char         *reason,
 {
   if(isFullDebug(COMPONENT_NLM))
     {
-      char owner[1024];
+      char owner[HASHTABLE_DISPLAY_STRLEN];
       uint64_t fileid_digest = 0;
 
       DisplayOwner(ple->cle_owner, owner);
@@ -220,7 +226,7 @@ static void LogLock(const char         *reason,
 {
   if(isFullDebug(COMPONENT_NLM))
     {
-      char owner[1024];
+      char owner[HASHTABLE_DISPLAY_STRLEN];
       uint64_t fileid_digest = 0;
 
       DisplayOwner(powner, owner);
@@ -307,6 +313,7 @@ void dump_all_locks(void)
   cache_lock_entry_t *entry = NULL;
   int count = 0;
 
+  P(all_locks_mutex);
   LogTest("\nALL LOCKS");
   glist_for_each(glist, &cache_inode_all_locks)
     {
@@ -319,6 +326,7 @@ void dump_all_locks(void)
     LogTest("\n");
   else
     LogTest("(empty)\n");
+  V(all_locks_mutex);
 #else
   return;
 #endif
@@ -361,35 +369,6 @@ void get_lock_owner(cache_lock_owner_t *powner)
 #endif
 }
 
-void free_cache_lock_entry(cache_lock_entry_t *lock_entry)
-{
-  if(lock_entry->cle_owner != NULL)
-    {
-      P(lock_entry->cle_owner->clo_mutex);
-      glist_del(&lock_entry->cle_owner_locks);
-      V(lock_entry->cle_owner->clo_mutex);
-
-#ifdef _USE_NLM
-      if(lock_entry->cle_owner->clo_type == CACHE_LOCK_OWNER_NLM)
-        {
-          P(lock_entry->cle_owner->clo_owner.clo_nlm_owner.clo_client->clc_mutex);
-          glist_del(&lock_entry->cle_client_locks);
-          V(lock_entry->cle_owner->clo_owner.clo_nlm_owner.clo_client->clc_mutex);
-        }
-#endif
-
-      release_lock_owner(lock_entry->cle_owner);
-    }
-
-  glist_del(&lock_entry->cle_list);
-#ifdef _DEBUG_MEMLEAKS
-  glist_del(&lock_entry->cle_all_locks);
-#endif
-  if(lock_entry->cle_pcookie != NULL)
-    Mem_Free(lock_entry->cle_pcookie);
-  Mem_Free(lock_entry);
-}
-
 static cache_lock_entry_t *create_cache_lock_entry(cache_entry_t      * pentry,
                                                    cache_blocking_t     blocked,
                                                    cache_lock_owner_t * powner,
@@ -412,7 +391,7 @@ static cache_lock_entry_t *create_cache_lock_entry(cache_entry_t      * pentry,
       new_entry->cle_pcookie = Mem_Alloc_Label(cookie_size, "lock_cookie");
       if(new_entry->cle_pcookie == NULL)
         {
-          free_cache_lock_entry(new_entry);
+          Mem_Free(new_entry);
           return NULL;
         }
       memcpy(new_entry->cle_pcookie, pcookie, cookie_size);
@@ -421,7 +400,9 @@ static cache_lock_entry_t *create_cache_lock_entry(cache_entry_t      * pentry,
 
   if(pthread_mutex_init(&new_entry->cle_mutex, NULL) == -1)
     {
-      free_cache_lock_entry(new_entry);
+      if(new_entry->cle_pcookie != NULL)
+        Mem_Free(new_entry->cle_pcookie);
+      Mem_Free(new_entry);
       return NULL;
     }
 
@@ -432,23 +413,27 @@ static cache_lock_entry_t *create_cache_lock_entry(cache_entry_t      * pentry,
   new_entry->cle_granted_callback = granted_callback;
   memcpy(&new_entry->cle_lock, plock, sizeof(new_entry->cle_lock));
 
-  P(new_entry->cle_owner->clo_mutex);
-  new_entry->cle_owner->clo_refcount++;
-  glist_add_tail(&new_entry->cle_owner->clo_lock_list, &new_entry->cle_owner_locks);
-  V(new_entry->cle_owner->clo_mutex);
+  /* Add to list of locks owned by powner */
+  P(powner->clo_mutex);
+  powner->clo_refcount++;
+  glist_add_tail(&powner->clo_lock_list, &new_entry->cle_owner_locks);
+  V(powner->clo_mutex);
 
 #ifdef _USE_NLM
-  if(new_entry->cle_owner->clo_type == CACHE_LOCK_OWNER_NLM)
+  /* Add to list of locks owner by NLM Client */
+  if(powner->clo_type == CACHE_LOCK_OWNER_NLM)
     {
-      P(new_entry->cle_owner->clo_owner.clo_nlm_owner.clo_client->clc_mutex);
-      new_entry->cle_owner->clo_owner.clo_nlm_owner.clo_client->clc_refcount++;
-      glist_add_tail(&new_entry->cle_owner->clo_owner.clo_nlm_owner.clo_client->clc_lock_list, &new_entry->cle_client_locks);
-      V(new_entry->cle_owner->clo_owner.clo_nlm_owner.clo_client->clc_mutex);
+      P(powner->clo_owner.clo_nlm_owner.clo_client->clc_mutex);
+      powner->clo_owner.clo_nlm_owner.clo_client->clc_refcount++;
+      glist_add_tail(&powner->clo_owner.clo_nlm_owner.clo_client->clc_lock_list, &new_entry->cle_client_locks);
+      V(powner->clo_owner.clo_nlm_owner.clo_client->clc_mutex);
     }
 #endif
     
 #ifdef _DEBUG_MEMLEAKS
+    P(all_locks_mutex);
     glist_add_tail(&cache_inode_all_locks, &new_entry->cle_all_locks);
+    V(all_locks_mutex);
 #endif
 
   return new_entry;
@@ -497,7 +482,14 @@ void lock_entry_dec_ref(cache_entry_t      *pentry,
     {
       LogEntry("nlm_lock_entry_dec_ref Freeing",
                pentry, pcontext, lock_entry);
-      free_cache_lock_entry(lock_entry);
+#ifdef _DEBUG_MEMLEAKS
+      P(all_locks_mutex);
+      glist_del(&lock_entry->cle_all_locks);
+      V(all_locks_mutex);
+#endif
+      if(lock_entry->cle_pcookie != NULL)
+        Mem_Free(lock_entry->cle_pcookie);
+      Mem_Free(lock_entry);
     }
 }
 
@@ -509,6 +501,24 @@ static void remove_from_locklist(cache_entry_t      *pentry,
    * If some other thread is holding a reference to this nlm_lock_entry
    * don't free the structure. But drop from the lock list
    */
+  if(lock_entry->cle_owner != NULL)
+    {
+      P(lock_entry->cle_owner->clo_mutex);
+      glist_del(&lock_entry->cle_owner_locks);
+      V(lock_entry->cle_owner->clo_mutex);
+
+#ifdef _USE_NLM
+      if(lock_entry->cle_owner->clo_type == CACHE_LOCK_OWNER_NLM)
+        {
+          P(lock_entry->cle_owner->clo_owner.clo_nlm_owner.clo_client->clc_mutex);
+          glist_del(&lock_entry->cle_client_locks);
+          V(lock_entry->cle_owner->clo_owner.clo_nlm_owner.clo_client->clc_mutex);
+        }
+#endif
+
+      release_lock_owner(lock_entry->cle_owner);
+    }
+
   glist_del(&lock_entry->cle_list);
   lock_entry_dec_ref(pentry, pcontext, lock_entry);
 }
@@ -783,8 +793,7 @@ static bool_t subtract_lock_from_list(cache_entry_t        * pentry,
                                       cache_lock_owner_t   * powner,
                                       cache_lock_desc_t    * plock,
                                       cache_inode_status_t * pstatus,
-                                      struct glist_head    * list,
-                                      int                    care_about_owner)
+                                      struct glist_head    * list)
 {
   cache_lock_entry_t *found_entry;
   struct glist_head split_lock_list;
@@ -797,7 +806,7 @@ static bool_t subtract_lock_from_list(cache_entry_t        * pentry,
     {
       found_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
 
-      if(care_about_owner && different_owners(found_entry->cle_owner, powner))
+      if(powner != NULL && different_owners(found_entry->cle_owner, powner))
           continue;
       /*
        * We have matched all atribute of powner/plock
@@ -818,7 +827,6 @@ static cache_inode_status_t subtract_list_from_list(cache_entry_t        * pentr
                                                     fsal_op_context_t    * pcontext,
                                                     struct glist_head    * target,
                                                     struct glist_head    * source,
-                                                    cache_lock_owner_t   * powner,
                                                     cache_inode_status_t * pstatus)
 {
   cache_lock_entry_t *found_entry;
@@ -832,11 +840,10 @@ static cache_inode_status_t subtract_list_from_list(cache_entry_t        * pentr
 
       subtract_lock_from_list(pentry,
                               pcontext,
-                              found_entry->cle_owner,
+                              NULL,
                               &found_entry->cle_lock,
                               pstatus,
-                              target,
-                              0);
+                              target);
       if(*pstatus != CACHE_INODE_SUCCESS)
         break;
     }
@@ -903,99 +910,6 @@ void nlm_init(void)
   nlm_init_locklist();
   nsm_unmonitor_all();
   start_nlm_grace_period();
-}
-
-void nlm_node_recovery(char *name,
-                       fsal_op_context_t * pcontext,
-                       cache_inode_client_t * pclient, hash_table_t * ht)
-{
-  cache_lock_entry_t *nlm_entry;
-  struct glist_head *glist, *glistn;
-
-  LogDebug(COMPONENT_NLM, "Recovery for host %s", name);
-
-  P(pentry->object.file.lock_list_mutex);
-  glist_for_each_safe(glist, glistn, &pentry->object.file.lock_list)
-    {
-      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
-      if(strcmp(nlm_entry->arg.alock.caller_name, name))
-        continue;
-
-      /*
-       * inc ref so that we can remove entry from the list
-       * and still use the lock entry values
-       */
-      nlm_lock_entry_inc_ref(nlm_entry);
-
-      /*
-       * now remove the from locklist
-       */
-      remove_from_locklist(pentry, pcontext, nlm_entry);
-
-      /*
-       * We don't inc ref count because we want to drop the lock entry
-       */
-      if(nlm_entry->state == NLM4_GRANTED)
-        {
-          /*
-           * Submit the async request to send granted response for
-           * locks that can be granted
-           */
-          nlm_grant_blocked_locks(&nlm_entry->arg.alock.fh);
-        }
-      nlm_lock_entry_dec_ref(nlm_entry);
-    }
-  V(pentry->object.file.lock_list_mutex);
-}
-
-int nlm_monitor_host(char *name)
-{
-  cache_lock_entry_t *nlm_entry;
-  struct glist_head *glist;
-
-  P(pentry->object.file.lock_list_mutex);
-  glist_for_each(glist, &pentry->object.file.lock_list)
-    {
-      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
-      if(!strcmp(nlm_entry->arg.alock.caller_name, name))
-        {
-           /* there is already a lock with the same
-            * caller_name. So we should already be monitoring
-            * the host
-            */
-           V(pentry->object.file.lock_list_mutex);
-           return 0;
-        }
-    }
-  V(pentry->object.file.lock_list_mutex);
-  /* There is nobody monitoring the host */
-  LogFullDebug(COMPONENT_NLM, "Monitoring host %s", name);
-  return nsm_monitor(name);
-}
-
-int nlm_unmonitor_host(char *name)
-{
-  cache_lock_entry_t *nlm_entry;
-  struct glist_head *glist;
-
-  P(pentry->object.file.lock_list_mutex);
-  glist_for_each(glist, &pentry->object.file.lock_list)
-    {
-      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
-      if(!strcmp(nlm_entry->arg.alock.caller_name, name))
-        {
-          /* We have locks tracking the same caller_name
-           * we cannot unmonitor the host now. We will do
-           * it for the last unlock from the host
-           */
-          V(pentry->object.file.lock_list_mutex);
-          return 0;
-        }
-    }
-  V(pentry->object.file.lock_list_mutex);
-  /* There is nobody holding a lock with host */
-  LogFullDebug(COMPONENT_NLM, "Unmonitoring host %s", name);
-  return nsm_unmonitor(name);
 }
 
 static void nlm4_send_grant_msg(void *arg)
@@ -1173,7 +1087,6 @@ cache_inode_status_t convert_fsal_lock_status(fsal_status_t fsal_status)
 
 cache_inode_status_t FSAL_unlock_no_owner(cache_entry_t        * pentry,
                                           fsal_op_context_t    * pcontext,
-                                          cache_lock_owner_t   * powner,
                                           cache_lock_desc_t    * plock)
 {
   cache_lock_entry_t *unlock_entry;
@@ -1185,7 +1098,7 @@ cache_inode_status_t FSAL_unlock_no_owner(cache_entry_t        * pentry,
 
   unlock_entry = create_cache_lock_entry(pentry,
                                          CACHE_NON_BLOCKING,
-                                         powner,
+                                         &unknown_owner, /* no real owner */
                                          plock,
                                          NULL, /* No cookie */
                                          0,
@@ -1195,12 +1108,13 @@ cache_inode_status_t FSAL_unlock_no_owner(cache_entry_t        * pentry,
     return CACHE_INODE_MALLOC_ERROR;
 
   init_glist(&fsal_unlock_list);
+
   unlock_entry->cle_ref_count = 1;
   glist_add_tail(&fsal_unlock_list, &unlock_entry->cle_list);
 
   LogFullDebug(COMPONENT_NLM,
                "----------------------------------------------------------------------");
-  LogLock("cache_inode_unlock Generating FSAL Unlock List", pentry, pcontext, powner, plock);
+  LogLock("cache_inode_unlock Generating FSAL Unlock List", pentry, pcontext, NULL, plock);
 
   LogFullDebug(COMPONENT_NLM,
                "----------------------------------------------------------------------");
@@ -1209,7 +1123,6 @@ cache_inode_status_t FSAL_unlock_no_owner(cache_entry_t        * pentry,
                                    pcontext,
                                    &fsal_unlock_list,
                                    &pentry->object.file.lock_list,
-                                   powner,
                                    &status);
   //TODO FSF: deal with return
 
@@ -1256,7 +1169,7 @@ cache_inode_status_t FSAL_LockOp(cache_entry_t        * pentry,
       case FSAL_LOCKS_NO_OWNER:
         if(lock_op == FSAL_OP_UNLOCK)
           {
-            status = FSAL_unlock_no_owner(pentry, pcontext, powner, plock);
+            status = FSAL_unlock_no_owner(pentry, pcontext, plock);
           }
         else
           {
@@ -1509,7 +1422,8 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
                                  conflict);
           if(*pstatus != CACHE_INODE_SUCCESS)
             {
-              free_cache_lock_entry(found_entry);
+              lock_entry_inc_ref(found_entry);
+              remove_from_locklist(pentry, pcontext, found_entry);
               V(pentry->object.file.lock_list_mutex);
               return *pstatus;
             }
@@ -1534,8 +1448,6 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
 
 cache_inode_status_t cache_inode_unlock(cache_entry_t        * pentry,
                                         fsal_op_context_t    * pcontext,
-                                        void                 * pcookie,
-                                        int                    cookie_size,
                                         cache_lock_owner_t   * powner,
                                         cache_lock_desc_t    * plock,
                                         cache_inode_client_t * pclient,
@@ -1561,8 +1473,7 @@ cache_inode_status_t cache_inode_unlock(cache_entry_t        * pentry,
                                     powner,
                                     plock,
                                     pstatus,
-                                    &pentry->object.file.lock_list,
-                                    1);
+                                    &pentry->object.file.lock_list);
 
   if(*pstatus != CACHE_INODE_SUCCESS)
     {
@@ -1635,13 +1546,105 @@ cache_inode_status_t cache_inode_cancel(cache_entry_t        * pentry,
   return *pstatus;
 }
 
-cache_inode_status_t cache_inode_nlm_notify(cache_entry_t            * pentry,
-                                            fsal_op_context_t        * pcontext,
+#ifdef _USE_NLM
+cache_inode_status_t cache_inode_nlm_notify(fsal_op_context_t        * pcontext,
                                             cache_inode_nlm_client_t * pnlmclient,
                                             cache_inode_client_t     * pclient,
                                             cache_inode_status_t     * pstatus)
 {
-  *pstatus = CACHE_INODE_NOT_SUPPORTED;
+  cache_lock_owner_t   owner;
+  cache_lock_entry_t * found_entry;
+  cache_lock_desc_t    lock;
+  cache_entry_t      * pentry;
+
+  while(1)
+    {
+      P(pnlmclient->clc_mutex);
+
+      /* We just need to find any file this client has locks on.
+       * We pick the first lock the client holds, and use it's file.
+       */
+      found_entry = glist_first_entry(&pnlmclient->clc_lock_list, cache_lock_entry_t, cle_client_locks);
+      lock_entry_inc_ref(found_entry);
+
+      V(pnlmclient->clc_mutex);
+
+      /* If we don't find any entries, then we are done. */
+      if(found_entry == NULL)
+        break;
+
+      /* Extract the cache inode entry from the lock entry and release the lock entry */
+      pentry = found_entry->cle_pentry;
+      lock_entry_dec_ref(pentry, pcontext, found_entry);
+
+      /* Make lock that covers the whole file - type doesn't matter for unlock */
+      lock.cld_type   = CACHE_INODE_LOCK_R;
+      lock.cld_offset = 0;
+      lock.cld_length = 0;
+
+      /* Make special NLM Owner that matches all owners from NLM Client */
+      make_nlm_special_owner(pnlmclient, &owner);
+
+      /* Remove all locks held by this NLM Client on the file */
+      if(cache_inode_unlock(pentry,
+                            pcontext,
+                            &owner,
+                            &lock,
+                            pclient,
+                            pstatus) != CACHE_INODE_SUCCESS)
+        {
+          /* TODO FSF: what do we do now? */
+        }
+    }
+  return *pstatus;
+}
+#endif
+
+cache_inode_status_t cache_inode_owner_unlock_all(fsal_op_context_t        * pcontext,
+                                                  cache_lock_owner_t       * powner,
+                                                  cache_inode_client_t     * pclient,
+                                                  cache_inode_status_t     * pstatus)
+{
+  cache_lock_entry_t * found_entry;
+  cache_lock_desc_t    lock;
+  cache_entry_t      * pentry;
+
+  while(1)
+    {
+      P(powner->clo_mutex);
+
+      /* We just need to find any file this client has locks on.
+       * We pick the first lock the client holds, and use it's file.
+       */
+      found_entry = glist_first_entry(&powner->clo_lock_list, cache_lock_entry_t, cle_owner_locks);
+      lock_entry_inc_ref(found_entry);
+
+      V(powner->clo_mutex);
+
+      /* If we don't find any entries, then we are done. */
+      if(found_entry == NULL)
+        break;
+
+      /* Extract the cache inode entry from the lock entry and release the lock entry */
+      pentry = found_entry->cle_pentry;
+      lock_entry_dec_ref(pentry, pcontext, found_entry);
+
+      /* Make lock that covers the whole file - type doesn't matter for unlock */
+      lock.cld_type   = CACHE_INODE_LOCK_R;
+      lock.cld_offset = 0;
+      lock.cld_length = 0;
+
+      /* Remove all locks held by this owner on the file */
+      if(cache_inode_unlock(pentry,
+                            pcontext,
+                            powner,
+                            &lock,
+                            pclient,
+                            pstatus) != CACHE_INODE_SUCCESS)
+        {
+          /* TODO FSF: what do we do now? */
+        }
+    }
   return *pstatus;
 }
 

@@ -220,6 +220,15 @@ int compare_nlm_owner(cache_lock_owner_t *powner1,
                         powner2->clo_owner.clo_nlm_owner.clo_client) != 0)
     return 1;
 
+  /* Handle special owner that matches any lock owner with the same nlm client */
+  if(powner1->clo_owner.clo_nlm_owner.clo_nlm_oh_len == -1 ||
+     powner2->clo_owner.clo_nlm_owner.clo_nlm_oh_len == -1)
+    return 0;
+
+  if(powner1->clo_owner.clo_nlm_owner.clo_nlm_svid !=
+     powner2->clo_owner.clo_nlm_owner.clo_nlm_svid)
+    return 1;
+
   if(powner1->clo_owner.clo_nlm_owner.clo_nlm_oh_len !=
      powner2->clo_owner.clo_nlm_owner.clo_nlm_oh_len)
     return 1;
@@ -747,6 +756,8 @@ int convert_nlm_owner(cache_inode_nlm_client_t * pclient,
   if(oh == NULL || oh->n_len > MAX_NETOBJ_SZ)
     return 0;
 
+  inc_nlm_client_ref(pclient);
+
   pnlm_owner->clo_type     = CACHE_LOCK_OWNER_NLM;
   pnlm_owner->clo_refcount = 1;
   pnlm_owner->clo_owner.clo_nlm_owner.clo_client     = pclient;
@@ -758,3 +769,19 @@ int convert_nlm_owner(cache_inode_nlm_client_t * pclient,
 
   return 1;
 }                               /* nfs_convert_nlm_owner */
+
+void make_nlm_special_owner(cache_inode_nlm_client_t * pclient,
+                            cache_lock_owner_t       * pnlm_owner)
+{
+  if(pnlm_owner == NULL)
+    return;
+
+  memset(pnlm_owner, 0, sizeof(*pnlm_owner));
+
+  inc_nlm_client_ref(pclient);
+
+  pnlm_owner->clo_type     = CACHE_LOCK_OWNER_NLM;
+  pnlm_owner->clo_refcount = 1;
+  pnlm_owner->clo_owner.clo_nlm_owner.clo_client     = pclient;
+  pnlm_owner->clo_owner.clo_nlm_owner.clo_nlm_oh_len = -1;
+}
