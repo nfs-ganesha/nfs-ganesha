@@ -2,7 +2,7 @@ noinst_LTLIBRARIES            = liboutils_profiling.la
 
 TESTS = $(check_PROGRAMS)
 
-check_PROGRAMS                = test_anon_support test_access_list_types test_mesure_temps test_glist
+check_PROGRAMS                = test_access_list_types test_mesure_temps test_glist
 
 liboutils_profiling_la_SOURCES = MesureTemps.c ../include/MesureTemps.h
 
@@ -35,8 +35,8 @@ COMMON_LDADD = ../NFS_Protocols/libnfsproto.la                   \
 test_access_list_types_LDADD = $(COMMON_LDADD)
 test_access_list_types_SOURCES = test_access_list_types.c
 
-test_anon_support_LDADD = $(COMMON_LDADD)
-test_anon_support_SOURCES = test_anon_support.c
+#####test_anon_support_LDADD = $(COMMON_LDADD)
+#####test_anon_support_SOURCES = test_anon_support.c
 
 test_mesure_temps_SOURCES    = test_mesure_temps.c
 test_mesure_temps_LDADD      = liboutils_profiling.la
