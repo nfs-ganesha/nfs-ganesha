@@ -124,9 +124,13 @@ static inline int vfs_name_by_handle_at(int atfd, const char *name, vfs_file_han
   int mnt_id;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   return name_to_handle_at(atfd, name,(struct file_handle *)fh, &mnt_id, 0);
 =======
   return name_to_handle_at(atfd, name, fh, &mnt_id, 0);
+>>>>>>> Make open_by_handle calls handle new kernels
+=======
+  return name_to_handle_at(atfd, name,(struct file_handle *)fh, &mnt_id, 0);
 >>>>>>> Make open_by_handle calls handle new kernels
 }
 
