@@ -96,7 +96,7 @@ extern void nlm_resend_grant_msg(void *arg);
  * ppnlm_client: NLM Client to fill in, returns a reference to the client
  * ppowner:      NLM Owner to fill in, returns a reference to the owner
  */
-int process_nlm_parameters(struct svc_req            * preq,
+int nlm_process_parameters(struct svc_req            * preq,
                            bool_t                      exclusive,
                            nlm4_lock                 * alock,
                            cache_lock_desc_t         * plock,
@@ -107,5 +107,11 @@ int process_nlm_parameters(struct svc_req            * preq,
                            bool_t                      care,
                            cache_inode_nlm_client_t ** ppnlm_client,
                            cache_lock_owner_t       ** ppowner);
+
+void nlm_process_conflict(nlm4_holder        * nlm_holder,
+                          cache_lock_owner_t * holder,
+                          cache_lock_desc_t  * conflict);
+
+nlm4_stats nlm_convert_cache_inode_error(cache_inode_status_t status);
 
 #endif                          /* _NLM_UTIL_H */

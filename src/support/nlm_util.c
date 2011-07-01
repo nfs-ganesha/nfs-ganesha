@@ -249,16 +249,37 @@ void dump_all_locks(void)
 #endif
 }
 
+void fill_netobj(netobj * dst, char *data, int len)
+{
+  dst->n_len   = 0;
+  dst->n_bytes = NULL;
+  if(len != 0)
+    {
+      dst->n_bytes = (char *)Mem_Alloc(len);
+      if(dst->n_bytes != NULL)
+        {
+          dst->n_len = len;
+          memcpy(dst->n_bytes, data, len);
+        }
+    }
+}
+
 netobj *copy_netobj(netobj * dst, netobj * src)
 {
     if(dst == NULL)
       return NULL;
     dst->n_len = 0;
-    dst->n_bytes = (char *)Mem_Alloc(src->n_len);
-    if(!dst->n_bytes)
-      return NULL;
+    if(src->n_len != 0)
+      {
+        dst->n_bytes = (char *)Mem_Alloc(src->n_len);
+        if(!dst->n_bytes)
+          return NULL;
+        memcpy(dst->n_bytes, src->n_bytes, src->n_len);
+      }
+    else
+      dst->n_bytes = NULL;
+
     dst->n_len = src->n_len;
-    memcpy(dst->n_bytes, src->n_bytes, src->n_len);
     return dst;
 }
 
@@ -1309,7 +1330,7 @@ void nlm_resend_grant_msg(void *arg)
     nlm4_send_grant_msg(arg);
 }
 
-int process_nlm_parameters(struct svc_req            * preq,
+int nlm_process_parameters(struct svc_req            * preq,
                            bool_t                      exclusive,
                            nlm4_lock                 * alock,
                            cache_lock_desc_t         * plock,
@@ -1384,4 +1405,55 @@ int process_nlm_parameters(struct svc_req            * preq,
   plock->cld_length = alock->l_len;
 
   return -1;
+}
+
+void nlm_process_conflict(nlm4_holder        * nlm_holder,
+                          cache_lock_owner_t * holder,
+                          cache_lock_desc_t  * conflict)
+{
+  if(conflict != NULL)
+    {
+      nlm_holder->exclusive = conflict->cld_type == CACHE_INODE_LOCK_W;
+      nlm_holder->l_offset  = conflict->cld_offset;
+      nlm_holder->l_len     = conflict->cld_length;
+    }
+  else
+    {
+      /* For some reason, don't have an actual conflict,
+       * just make it exclusive over the whole file
+       * (which would conflict with any lock requested).
+       */
+      nlm_holder->exclusive = TRUE;
+      nlm_holder->l_offset  = 0;
+      nlm_holder->l_len     = 0;
+    }
+
+  if(holder != NULL || holder->clo_type == CACHE_LOCK_OWNER_NLM)
+    {
+      nlm_holder->svid = holder->clo_owner.clo_nlm_owner.clo_nlm_svid;
+      fill_netobj(&nlm_holder->oh,
+                  holder->clo_owner.clo_nlm_owner.clo_nlm_oh,
+                  holder->clo_owner.clo_nlm_owner.clo_nlm_oh_len);
+    }
+  else
+    {
+      /* If we don't have an NLM owner, not much we can do. */
+      nlm_holder->svid       = 0;
+      nlm_holder->oh.n_len   = 0;
+      nlm_holder->oh.n_bytes = NULL;
+    }
+}
+
+nlm4_stats nlm_convert_cache_inode_error(cache_inode_status_t status)
+{
+  switch(status)
+    {
+      case CACHE_INODE_SUCCESS:       return NLM4_GRANTED;
+      case CACHE_INODE_LOCK_CONFLICT: return NLM4_DENIED;
+      case CACHE_INODE_LOCK_BLOCKED:  return NLM4_BLOCKED;
+      case CACHE_INODE_LOCK_DEADLOCK: return NLM4_DEADLCK;
+      case CACHE_INODE_MALLOC_ERROR:  return NLM4_DENIED_NOLOCKS;
+      case CACHE_INODE_NOT_FOUND:     return NLM4_STALE_FH;
+      default:                        return NLM4_FAILED;
+    }
 }

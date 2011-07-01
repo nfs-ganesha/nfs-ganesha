@@ -73,13 +73,14 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
               struct svc_req *preq /* IN     */ ,
               nfs_res_t * pres /* OUT    */ )
 {
-  nlm4_testargs *arg = &parg->arg_nlm4_test;
-  cache_entry_t *pentry;
-  fsal_attrib_list_t attr;
-  nlm_lock_entry_t *nlm_entry;
-  cache_inode_status_t cache_status;
-  cache_inode_fsal_data_t fsal_data;
-  char buffer[1024];
+  nlm4_testargs            * arg = &parg->arg_nlm4_test;
+  cache_entry_t            * pentry;
+  cache_inode_status_t       cache_status;
+  char                       buffer[MAXNETOBJ_SZ * 2];
+  cache_inode_nlm_client_t * nlm_client;
+  cache_lock_owner_t       * nlm_owner, * holder;
+  cache_lock_desc_t          lock, conflict;
+  int                        rc;
 
   netobj_to_string(&arg->cookie, buffer, 1024);
   LogDebug(COMPONENT_NLM,
@@ -105,42 +106,61 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
       return NFS_REQ_OK;
     }
 
-  /* Convert file handle into a cache entry */
-  if(!nfs3_FhandleToFSAL((nfs_fh3 *) & (arg->alock.fh), &fsal_data.handle, pcontext))
+  /* TODO FSF:
+   *
+   * TEST passes TRUE for care because we do need a non-NULL owner,  but
+   * we could expand the options to allow for a "free" owner to be
+   * returned, that doesn't need to be in the hash table, so if the
+   * owner isn't found in the Hash table, don't add it, just return
+   * the "free" owner.
+   */
+  rc = nlm_process_parameters(preq,
+                              arg->exclusive,
+                              &arg->alock,
+                              &lock,
+                              ht,
+                              &pentry,
+                              pcontext,
+                              pclient,
+                              TRUE,
+                              &nlm_client,
+                              &nlm_owner);
+
+  if(rc >= 0)
     {
-      /* handle is not valid */
-      pres->res_nlm4test.test_stat.stat = NLM4_STALE_FH;
-      /*
-       * Should we do a REQ_OK so that the client get
-       * a response ? FIXME!!
-       */
-      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Test %s",
-               lock_result_str(pres->res_nlm4.stat.stat));
-      return NFS_REQ_DROP;
-    }
-  /* Now get the cached inode attributes */
-  fsal_data.cookie = DIR_START;
-  if((pentry = cache_inode_get(&fsal_data, &attr, ht,
-                               pclient, pcontext, &cache_status)) == NULL)
-    {
-      /* handle is not valid */
-      pres->res_nlm4test.test_stat.stat = NLM4_STALE_FH;
-      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Test %s",
+      /* Present the error back to the client */
+      pres->res_nlm4.stat.stat = (nlm4_stats)rc;
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
                lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
-  nlm_entry = nlm_overlapping_entry(&(arg->alock), arg->exclusive);
-  if(!nlm_entry)
+
+  if(cache_inode_test(pentry,
+                      pcontext,
+                      nlm_owner,
+                      &lock,
+                      &holder,
+                      &conflict,
+                      pclient,
+                      &cache_status) != CACHE_INODE_SUCCESS)
     {
-      pres->res_nlm4test.test_stat.stat = NLM4_GRANTED;
+      pres->res_nlm4test.test_stat.stat = nlm_convert_cache_inode_error(cache_status);
+
+      if(cache_status == CACHE_INODE_LOCK_CONFLICT)
+        {
+          nlm_process_conflict(&pres->res_nlm4test.test_stat.nlm4_testrply_u.holder,
+                               holder,
+                               &conflict);
+        }
     }
   else
     {
-      pres->res_nlm4test.test_stat.stat = NLM4_DENIED;
-      nlm_lock_entry_to_nlm_holder(nlm_entry,
-                                   &pres->res_nlm4test.test_stat.nlm4_testrply_u.holder);
-      nlm_lock_entry_dec_ref(nlm_entry);
+      pres->res_nlm4.stat.stat = NLM4_GRANTED;
     }
+
+  /* Release the NLM Client and NLM Owner references we have */
+  dec_nlm_client_ref(nlm_client);
+  dec_nlm_owner_ref(nlm_owner);
 
   LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Test %s",
            lock_result_str(pres->res_nlm4.stat.stat));

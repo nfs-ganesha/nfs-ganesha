@@ -91,7 +91,15 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
            (unsigned long long) arg->alock.l_len,
            buffer);
 
-  copy_netobj(&pres->res_nlm4test.cookie, &arg->cookie);
+  if(!copy_netobj(&pres->res_nlm4test.cookie, &arg->cookie))
+    {
+      pres->res_nlm4.stat.stat = NLM4_FAILED;
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
+      return NFS_REQ_OK;
+    }
+
+
   if(in_nlm_grace_period())
     {
       pres->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
@@ -100,7 +108,7 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
       return NFS_REQ_OK;
     }
 
-  rc = process_nlm_parameters(preq,
+  rc = nlm_process_parameters(preq,
                               FALSE, /* exlcusive doesn't matter */
                               &arg->alock,
                               &lock,
@@ -128,7 +136,8 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
                         pclient,
                         &cache_status) != CACHE_INODE_SUCCESS)
     {
-      /* Deal with failure to unlock */
+      /* TODO FSF: Deal with failure to unlock */
+      pres->res_nlm4test.test_stat.stat = nlm_convert_cache_inode_error(cache_status);
     }
   else
     {
