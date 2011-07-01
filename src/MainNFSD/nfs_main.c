@@ -150,8 +150,10 @@ int main(int argc, char *argv[])
   struct sigaction act_sighup;
 
   int fsalid = -1 ;
-  char fsal_path_lib[MAXPATHLEN];
-  char fsal_path_param[MAXPATHLEN];
+  unsigned int i = 0 ;
+  int nb_fsal = NB_AVAILABLE_FSAL ;
+  path_str_t fsal_path_param[NB_AVAILABLE_FSAL];
+  path_str_t fsal_path_lib;
 
   /* retrieve executable file's name */
   strncpy(ganesha_exec_path, argv[0], MAXPATHLEN);
@@ -361,40 +363,57 @@ int main(int argc, char *argv[])
 
 
 #ifdef _USE_SHARED_FSAL
-  if(nfs_get_fsalpathlib_conf(my_config_path, fsal_path_param))
+  nb_fsal = NB_AVAILABLE_FSAL ;
+  if(nfs_get_fsalpathlib_conf(my_config_path, fsal_path_param, &nb_fsal))
     {
       LogMajor(COMPONENT_INIT,
                "NFS MAIN: Error parsing configuration file for FSAL dynamic lib param.");
       exit(1);
     }
 
-  if( FSAL_param_load_fsal_split( fsal_path_param, &fsalid, fsal_path_lib ) )
-    {
-      LogMajor(COMPONENT_INIT,
-               "NFS MAIN: Error parsing configuration file for FSAL path.");
-      exit(1);
-    }
+  printf( "===================> nb_fsal=%u\n", nb_fsal ) ;
 
-   LogEvent( COMPONENT_INIT,
-	    "Loading FSAL module for %s located at %s\n", FSAL_fsalid2name( fsalid ), fsal_path_lib ) ;
+  for( i = 0 ; i < nb_fsal ; i++ )
+    {
+      printf( "====================> %u %s\n", i,  fsal_path_param[i] ) ;
+      if( FSAL_param_load_fsal_split( fsal_path_param[i], &fsalid, fsal_path_lib ) )
+        {
+          LogMajor(COMPONENT_INIT,
+                   "NFS MAIN: Error parsing configuration file for FSAL path.");
+          exit(1);
+        }
+
+      LogEvent( COMPONENT_INIT,
+	        "Loading FSAL module for %s", FSAL_fsalid2name( fsalid ) ) ;
    
-   /* Set the FSAL id */
-   FSAL_SetId( 3 ) ;
-#endif                          /* _USE_SHARED_FSAL */
+      /* Load the FSAL library (if needed) */
+      if(!FSAL_LoadLibrary(fsal_path_lib))
+       {
+         LogMajor(COMPONENT_INIT,
+	          "NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib);
+         exit(1);
+        }
 
-  /* Load the FSAL library (if needed) */
-  if(!FSAL_LoadLibrary(fsal_path_lib))
-    {
-      LogMajor(COMPONENT_INIT,
-	      "NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib);
-      exit(1);
-    }
+     /* Set the FSAL id */
+     FSAL_SetId( fsalid ) ;
 
+     /* Get the FSAL functions */
+     FSAL_LoadFunctions();
+
+     /* Get the FSAL consts */
+     FSAL_LoadConsts();
+   } /* for */
+
+  /* Set the FSAL id */
+  FSAL_SetId( FAKE_ID ) ;
+
+#else
   /* Get the FSAL functions */
   FSAL_LoadFunctions();
 
   /* Get the FSAL consts */
   FSAL_LoadConsts();
+#endif                          /* _USE_SHARED_FSAL */
 
   LogEvent(COMPONENT_INIT,
            ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",

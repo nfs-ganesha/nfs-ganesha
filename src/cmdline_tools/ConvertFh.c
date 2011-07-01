@@ -164,7 +164,8 @@ int main(int argc, char *argv[])
   fsal_status_t fsal_status;
   char path_cfg[MAXPATHLEN];
   unsigned int nfs_version = 3;
-  char fsal_path_lib[MAXPATHLEN];
+  path_str_t fsal_path_lib[NB_AVAILABLE_FSAL];
+  int lentab = NB_AVAILABLE_FSAL ;
 
   short cache_content_hash;
   char entry_path[MAXPATHLEN];
@@ -255,7 +256,7 @@ int main(int argc, char *argv[])
     }
 
 #ifdef _USE_SHARED_FSAL
-  if(nfs_get_fsalpathlib_conf(path_cfg, fsal_path_lib))
+  if(nfs_get_fsalpathlib_conf(path_cfg, fsal_path_lib, &lentab))
     {
       fprintf(stderr, "NFS MAIN: Error parsing configuration file.");
       exit(1);

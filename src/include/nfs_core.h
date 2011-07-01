@@ -203,6 +203,8 @@ typedef enum nfs_clientid_confirm_state__
   CB_RECONFIGURED_CLIENT_ID = 4
 } nfs_clientid_confirm_state_t;
 
+typedef char path_str_t[MAXPATHLEN] ;
+
 #define CLIENT_ID_MAX_LEN             72        /* MUST be a multiple of 9 */
 
 #ifndef P
@@ -518,7 +520,11 @@ typedef struct nfs_worker_data__
   int is_ready;
   unsigned int gc_in_progress;
   unsigned int current_xid;
+#ifdef _USE_SHARED_FSAL
+  fsal_op_context_t thread_fsal_context[NB_AVAILABLE_FSAL];
+#else
   fsal_op_context_t thread_fsal_context;
+#endif
 
   /* Description of current or most recent function processed and start time (or 0) */
   const nfs_function_desc_t *pfuncdesc;

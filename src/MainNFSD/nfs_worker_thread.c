@@ -1138,7 +1138,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         {
           if(nfs_build_fsal_context
              (ptr_req, &related_client, pexport,
+#ifdef _USE_SHARED_FSAL
+              &pworker_data->thread_fsal_context[FAKE_ID], &user_credentials) == FALSE)
+#else
               &pworker_data->thread_fsal_context, &user_credentials) == FALSE)
+#endif
             {
               svcerr_auth(ptr_svc, AUTH_TOOWEAK);
               pworker_data->current_xid = 0;    /* No more xid managed */
@@ -1176,7 +1180,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
       rc = pworker_data->pfuncdesc->service_function(parg_nfs, 
 						     pexport, 
+#ifdef _USE_SHARED_FSAL
+                                                     &pworker_data->thread_fsal_context[FAKE_ID], 
+#else
                                                      &pworker_data->thread_fsal_context, 
+#endif
                                                      &(pworker_data->cache_inode_client), 
                                                      pworker_data->ht, 
                                                      ptr_req, 
@@ -1482,9 +1490,11 @@ void *worker_thread(void *IndexArg)
                "NFS WORKER #%lu: Initialization of thread's credential",
                index);
 #ifdef _USE_SHARED_FSAL
-  FSAL_SetId( 3 ) ;
-#endif
+  FSAL_SetId( FAKE_ID ) ;
+  if(FSAL_IS_ERROR(FSAL_InitClientContext(&(pmydata->thread_fsal_context[FAKE_ID]))))
+#else
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&pmydata->thread_fsal_context)))
+#endif
     {
       /* Failed init */
       LogMajor(COMPONENT_DISPATCH,
@@ -1510,7 +1520,11 @@ void *worker_thread(void *IndexArg)
 
 #ifdef _USE_MFSL
   if(FSAL_IS_ERROR(MFSL_GetContext(&pmydata->cache_inode_client.mfsl_context,
+#ifdef _USE_SHARED_FSAL
+                                   &pmydata->thread_fsal_context[FAKE_ID])))
+#else
                                    &pmydata->thread_fsal_context)))
+#endif
     {
       /* Failed init */
       LogMajor(COMPONENT_DISPATCH,
@@ -1833,7 +1847,11 @@ void *worker_thread(void *IndexArg)
       pmydata->gc_in_progress = TRUE;
 
       fsal_status = MFSL_RefreshContext(&pmydata->cache_inode_client.mfsl_context,
+#ifdef _USE_SHARED_FSAL
+                                        &pmydata->thread_fsal_context[FAKE_ID]);
+#else
                                         &pmydata->thread_fsal_context);
+#endif
 
       if(FSAL_IS_ERROR(fsal_status))
         {
