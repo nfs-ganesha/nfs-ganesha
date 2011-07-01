@@ -552,6 +552,23 @@ static inline int different_lock(cache_lock_desc_t *lock1, cache_lock_desc_t *lo
          (lock1->cld_length != lock2->cld_length);
 }
 
+bool_t same_cookie(char * pcookie1,
+                   int    cookie_size1,
+                   char * pcookie2,
+                   int    cookie_size2)
+{
+  if(pcookie1 == pcookie2)
+    return TRUE;
+
+  if(cookie_size1 != cookie_size2)
+    return FALSE;
+
+  if(pcookie1 == NULL || pcookie2 == NULL)
+    return FALSE;
+
+  return memcmp(pcookie1, pcookie2, cookie_size1) == 0;
+}
+
 static cache_lock_entry_t *get_overlapping_entry(cache_entry_t        * pentry,
                                                  fsal_op_context_t    * pcontext,
                                                  cache_lock_owner_t   * powner,
@@ -1131,6 +1148,13 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
 
       if(different_lock(&found_entry->cle_lock, plock))
         continue;
+
+      if(!same_cookie(found_entry->cle_pcookie,
+                      found_entry->cle_cookie_size,
+                      pcookie,
+                      cookie_size))
+        continue;
+
       /*
        * We have matched all atribute of the existing lock.
        * Just return with blocked status. Client may be polling.
