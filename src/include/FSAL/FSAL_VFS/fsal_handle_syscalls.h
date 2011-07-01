@@ -35,7 +35,7 @@
 #ifdef LINUX
 #ifndef MAX_HANDLE_SZ
 
-/* syscalls introduced in 2.6.39 and enabled in glibc 2.14 
+/* syscalls introduced in 2.6.39 and enabled in glibc 2.14
  * if we are not building against 2.14, create our own versions
  * as inlines. Glibc versions are externs to glibc...
  */
@@ -123,7 +123,11 @@ static inline int vfs_name_by_handle_at(int atfd, const char *name, vfs_file_han
 {
   int mnt_id;
 
+<<<<<<< HEAD
   return name_to_handle_at(atfd, name,(struct file_handle *)fh, &mnt_id, 0);
+=======
+  return name_to_handle_at(atfd, name, fh, &mnt_id, 0);
+>>>>>>> Make open_by_handle calls handle new kernels
 }
 
 static inline ssize_t vfs_readlink_by_handle(int mountfd, vfs_file_handle_t *fh, char *buf, size_t bufsize)
