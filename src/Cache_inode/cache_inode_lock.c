@@ -461,7 +461,7 @@ void lock_entry_dec_ref(cache_entry_t      *pentry,
                         fsal_op_context_t  *pcontext,
                         cache_lock_entry_t *lock_entry)
 {
-  int to_free = 0;
+  bool_t to_free = FALSE;
 
   P(lock_entry->cle_mutex);
 
@@ -473,7 +473,7 @@ void lock_entry_dec_ref(cache_entry_t      *pentry,
        * We should already be removed from the lock_list
        * So we can free the lock_entry without any locking
        */
-      to_free = 1;
+      to_free = TRUE;
     }
 
   V(lock_entry->cle_mutex);
@@ -642,60 +642,6 @@ static void merge_lock_entry(cache_entry_t        * pentry,
       remove_from_locklist(pentry, pcontext, check_entry);
     }
 }
-
-#if 0
-cache_lock_entry_t *nlm_find_lock_entry(struct nlm4_lock *nlm_lock,
-                                      int exclusive, int state)
-{
-  cache_lock_entry_t *nlm_entry;
-  struct glist_head *glist;
-  P(pentry->object.file.lock_list_mutex);
-  glist_for_each(glist, &pentry->object.file.lock_list)
-    {
-      nlm_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
-
-      LogEntry("nlm_find_lock_entry Checking", nlm_entry);
-
-      if(strcmp(nlm_entry->arg.alock.caller_name, nlm_lock->caller_name))
-        continue;
-      if(netobj_compare(&nlm_entry->arg.alock.oh, &nlm_lock->oh))
-        continue;
-      if(nlm_entry->arg.alock.svid != nlm_lock->svid)
-        continue;
-      if(state == NLM4_GRANTED)
-        {
-          /*
-           * We don't check the below flag when looking for
-           * lock in the lock list with state granted. Lookup
-           * with state granted happens for unlock operation
-           * and RFC says it should only match caller_name, fh,oh
-           * and svid
-           */
-          break;
-        }
-      if(nlm_entry->cle_lock.cld_offset != nlm_lock->cle_lock.cld_offset)
-        continue;
-      if(nlm_entry->arg.alock.cle_lock.cld_length != nlm_lock->cle_lock.cld_length)
-        continue;
-      if(nlm_entry->arg.exclusive != exclusive)
-        continue;
-      if(nlm_entry->state != state)
-        continue;
-      /* We have matched all atribute of the nlm4_lock */
-      break;
-      }
-  if(glist == &pentry->object.file.lock_list)
-    nlm_entry = NULL;
-  else
-    {
-      nlm_lock_entry_inc_ref(nlm_entry);
-      LogEntry("nlm_find_lock_entry Found", nlm_entry);
-    }
-  V(pentry->object.file.lock_list_mutex);
-
-  return nlm_entry;
-}
-#endif
 
 static void free_list(cache_entry_t        * pentry,
                       fsal_op_context_t    * pcontext,
@@ -876,120 +822,6 @@ cache_lock_entry_t *nlm_find_lock_entry_by_cookie(netobj * cookie)
     nlm_lock_entry_inc_ref(nlm_entry);
   V(pentry->object.file.lock_list_mutex);
   return nlm_entry;
-}
-
-int start_nlm_grace_period(void)
-{
-  return gettimeofday(&nlm_grace_tv, NULL);
-}
-
-int in_nlm_grace_period(void)
-{
-  struct timeval tv;
-  if(nlm_grace_tv.tv_sec == 0)
-    return 0;
-
-  if(gettimeofday(&tv, NULL) == 0)
-    {
-      if(tv.tv_sec < (nlm_grace_tv.tv_sec + NLM4_GRACE_PERIOD))
-        {
-          return 1;
-        }
-      else
-        {
-          nlm_grace_tv.tv_sec = 0;
-          return 0;
-        }
-    }
-  return 0;
-}
-
-void nlm_init(void)
-{
-  nlm_async_callback_init();
-  nlm_init_locklist();
-  nsm_unmonitor_all();
-  start_nlm_grace_period();
-}
-
-static void nlm4_send_grant_msg(void *arg)
-{
-    int retval;
-  struct nlm4_testargs inarg;
-  cache_lock_entry_t *nlm_entry = (cache_lock_entry_t *) arg;
-  char buffer[1024];
-
-  /* If we fail allocation the best is to delete the block entry
-   * so that client can try again and get the lock. May be
-   * by then we are able to allocate objects
-   */
-  if(!copy_netobj(&inarg.alock.fh, &nlm_entry->arg.alock.fh))
-    {
-      goto free_nlm_lock_entry;
-    }
-  if(!copy_netobj(&inarg.alock.oh, &nlm_entry->arg.alock.oh))
-    {
-      netobj_free(&inarg.alock.fh);
-      goto free_nlm_lock_entry;
-    }
-
-  if(!copy_netobj(&inarg.cookie, &nlm_entry->arg.cookie))
-    {
-      netobj_free(&inarg.alock.oh);
-      netobj_free(&inarg.alock.fh);
-      goto free_nlm_lock_entry;
-    }
-  inarg.alock.caller_name = Str_Dup(nlm_entry->arg.alock.caller_name);
-  if(!inarg.alock.caller_name)
-    {
-      netobj_free(&inarg.cookie);
-      netobj_free(&inarg.alock.oh);
-      netobj_free(&inarg.alock.fh);
-      goto free_nlm_lock_entry;
-    }
-  inarg.exclusive = nlm_entry->arg.exclusive;
-  inarg.alock.svid = nlm_entry->arg.alock.svid;
-  inarg.alock.cle_lock.cld_offset = nlm_entry->cle_lock.cld_offset;
-  inarg.alock.cle_lock.cld_length = nlm_entry->arg.alock.cle_lock.cld_length;
-  netobj_to_string(&inarg.cookie, buffer, 1024);
-  LogDebug(COMPONENT_NLM,
-           "nlm4_send_grant_msg Sending GRANTED for %p svid=%d start=%llx len=%llx cookie=%s",
-           nlm_entry, nlm_entry->arg.alock.svid,
-           (unsigned long long) nlm_entry->cle_lock.cld_offset, (unsigned long long) nlm_entry->arg.alock.cle_lock.cld_length,
-           buffer);
-
-  retval = nlm_send_async(NLMPROC4_GRANTED_MSG, nlm_entry->arg.alock.caller_name, &inarg, nlm_entry);
-  Mem_Free(inarg.alock.caller_name);
-  netobj_free(&inarg.alock.fh);
-  netobj_free(&inarg.alock.oh);
-  netobj_free(&inarg.cookie);
-
-  /* If success, we are done. */
-  if(retval == RPC_SUCCESS)
-    return;
-
-  /*
-   * We are not able call granted callback. Some client may retry
-   * the lock again. So remove the existing blocked nlm entry
-   */
-  LogMajor(COMPONENT_NLM,
-           "%s: GRANTED_MSG RPC call failed with return code %d. Removing the blocking lock",
-           __func__, retval);
-
-free_nlm_lock_entry:
-  P(pentry->object.file.lock_list_mutex);
-  remove_from_locklist(pentry, pcontext, nlm_entry);
-  V(pentry->object.file.lock_list_mutex);
-  /*
-   * Submit the async request to send granted response for
-   * locks that can be granted, because of this removal
-   * from the lock list. If the client is lucky. It
-   * will send the lock request again and before the
-   * block locks are granted it gets the lock.
-   */
-  nlm_grant_blocked_locks(&nlm_entry->arg.alock.fh);
-  nlm_lock_entry_dec_ref(nlm_entry);
-  return;
 }
 #endif
 

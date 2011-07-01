@@ -1075,6 +1075,7 @@ typedef struct cache_lock_entry_t
 {
   struct glist_head           cle_list;
   struct glist_head           cle_owner_locks;
+  struct glist_head           cle_blocked_locks;
 #ifdef _USE_NLM
   struct glist_head           cle_client_locks;
 #endif
@@ -1101,6 +1102,13 @@ void lock_entry_dec_ref(cache_entry_t      *pentry,
                         cache_lock_entry_t *lock_entry);
 
 void release_lock_owner(cache_lock_owner_t *powner);
+
+cache_inode_status_t cache_inode_find_lock(cache_entry_t       ** pentry,
+                                           fsal_op_context_t    * pcontext,
+                                           void                 * pcookie,
+                                           int                    cookie_size,
+                                           cache_inode_client_t * pclient,
+                                           cache_inode_status_t * pstatus);
 
 cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
                                       fsal_op_context_t    * pcontext,

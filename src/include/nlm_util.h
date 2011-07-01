@@ -46,37 +46,15 @@ struct nlm_lock_entry
 
 typedef struct nlm_lock_entry nlm_lock_entry_t;
 
-extern void dump_lock_list(void);
-extern void dump_all_locks(void);
-extern void nlm_init_locklist(void);
 extern const char *lock_result_str(int rc);
 extern netobj *copy_netobj(netobj * dst, netobj * src);
 extern void netobj_free(netobj * obj);
 extern void netobj_to_string(netobj *obj, char *buffer, int maxlen);
-extern void nlm_lock_entry_to_nlm_holder(nlm_lock_entry_t * nlm_entry,
-                                         struct nlm4_holder *holder);
-extern int nlm_lock_entry_get_state(nlm_lock_entry_t * nlm_entry);
-extern nlm_lock_entry_t *nlm_overlapping_entry(struct nlm4_lock *nlm_lock, int exclusive);
-extern nlm_lock_entry_t *nlm_add_to_locklist(struct nlm4_lockargs *args,
-                                      cache_entry_t * pentry,
-                                      cache_inode_client_t * pclient,
-                                      fsal_op_context_t * pcontext);
-extern void nlm_remove_from_locklist(nlm_lock_entry_t * nlm_entry);
-extern void nlm_delete_lock_entry(struct nlm4_lock *nlm_lock);
-extern void nlm_init(void);
-extern nlm_lock_entry_t *nlm_find_lock_entry(struct nlm4_lock *nlm_lock,
-                                             int exclusive, int state);
 extern void nlm_lock_entry_dec_ref(nlm_lock_entry_t * nlm_entry);
-extern int start_nlm_grace_period(void);
 extern int in_nlm_grace_period(void);
-extern void nlm_node_recovery(char *name,
-                              fsal_op_context_t * pcontext,
-                              cache_inode_client_t * pclient, hash_table_t * ht);
 extern int nlm_monitor_host(char *name);
 extern int nlm_unmonitor_host(char *name);
 extern void nlm_grant_blocked_locks(netobj * orig_fh);
-
-extern nlm_lock_entry_t *nlm_find_lock_entry_by_cookie(netobj * cookie);
 extern void nlm_resend_grant_msg(void *arg);
 
 /**
