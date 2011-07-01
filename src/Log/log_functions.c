@@ -89,7 +89,7 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
   do { \
     if (LogComponents[COMPONENT_LOG].comp_log_type != TESTLOG || \
         LogComponents[COMPONENT_LOG].comp_log_level == NIV_FULL_DEBUG) \
-      DisplayLogComponentLevel(COMPONENT_LOG, \
+      DisplayLogComponentLevel(COMPONENT_LOG, (char *)__FUNCTION__, \
                                NIV_NULL, "LOG: " format, ## args ); \
   } while (0)
 
@@ -413,12 +413,11 @@ void InitLogging()
  * Une fonction d'affichage tout a fait generique
  */
 
-static void DisplayLogString_valist(char *buff_dest, log_components_t component, char *format, va_list arguments)
+static void DisplayLogString_valist(char *buff_dest, char * function, log_components_t component, char *format, va_list arguments)
 {
   char texte[STR_LEN_TXT];
   struct tm the_date;
   time_t tm;
-  const char *function = Log_GetThreadFunction(component != COMPONENT_LOG_EMERG);
 
   tm = time(NULL);
   Localtime_r(&tm, &the_date);
@@ -434,10 +433,9 @@ static void DisplayLogString_valist(char *buff_dest, log_components_t component,
            texte);
 }                               /* DisplayLogString_valist */
 
-static int DisplayLogSyslog_valist(log_components_t component, int level, char * format, va_list arguments)
+static int DisplayLogSyslog_valist(log_components_t component, char * function, int level, char * format, va_list arguments)
 {
   char texte[STR_LEN_TXT];
-  const char *function = Log_GetThreadFunction(component != COMPONENT_LOG_EMERG);
 
   if( !syslog_opened )
    {
@@ -452,19 +450,19 @@ static int DisplayLogSyslog_valist(log_components_t component, int level, char *
   return 1 ;
 } /* DisplayLogSyslog_valist */
 
-static int DisplayLogFd_valist(int fd, log_components_t component, char *format, va_list arguments)
+static int DisplayLogFd_valist(int fd, char * function, log_components_t component, char *format, va_list arguments)
 {
   char tampon[STR_LEN_TXT];
 
-  DisplayLogString_valist(tampon, component, format, arguments);
+  DisplayLogString_valist(tampon, function, component, format, arguments);
   return write(fd, tampon, strlen(tampon));
 }                               /* DisplayLogFd_valist */
 
-static int DisplayLogFlux_valist(FILE * flux, log_components_t component, char *format, va_list arguments)
+static int DisplayLogFlux_valist(FILE * flux, char * function, log_components_t component, char *format, va_list arguments)
 {
   char tampon[STR_LEN_TXT];
 
-  DisplayLogString_valist(tampon, component, format, arguments);
+  DisplayLogString_valist(tampon, function, component, format, arguments);
 
   fprintf(flux, "%s", tampon);
   return fflush(flux);
@@ -485,12 +483,12 @@ static int DisplayBuffer_valist(char *buffer, log_components_t component, char *
   log_vsnprintf(buffer, STR_LEN_TXT, format, arguments);
 }
 
-static int DisplayLogPath_valist(char *path, log_components_t component, char *format, va_list arguments)
+static int DisplayLogPath_valist(char *path, char * function, log_components_t component, char *format, va_list arguments)
 {
   char tampon[STR_LEN_TXT];
   int fd, my_status;
 
-  DisplayLogString_valist(tampon, component, format, arguments);
+  DisplayLogString_valist(tampon, function, component, format, arguments);
 
   if(path[0] != '\0')
     {
@@ -1527,27 +1525,27 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
 };
 
 int DisplayLogComponentLevel(log_components_t component,
+                             char * function,
                              int level,
                              char *format, ...)
 {
   va_list arguments;
   int rc;
-
   va_start(arguments, format);
 
   switch(LogComponents[component].comp_log_type)
     {
     case SYSLOG:
-      rc = DisplayLogSyslog_valist(component, level, format, arguments);
+      rc = DisplayLogSyslog_valist(component, function, level, format, arguments);
       break;
     case FILELOG:
-      rc = DisplayLogPath_valist(LogComponents[component].comp_log_file, component, format, arguments);
+      rc = DisplayLogPath_valist(LogComponents[component].comp_log_file, function, component, format, arguments);
       break;
     case STDERRLOG:
-      rc = DisplayLogFlux_valist(stderr, component, format, arguments);
+      rc = DisplayLogFlux_valist(stderr, function, component, format, arguments);
       break;
     case STDOUTLOG:
-      rc = DisplayLogFlux_valist(stdout, component, format, arguments);
+      rc = DisplayLogFlux_valist(stdout, function, component, format, arguments);
       break;
     case TESTLOG:
       rc = DisplayTest_valist(component, format, arguments);
@@ -1563,6 +1561,7 @@ int DisplayLogComponentLevel(log_components_t component,
 }
 
 int DisplayErrorComponentLogLine(log_components_t component,
+                                 char * function,
                                  int num_family,
                                  int num_error,
                                  int status,
@@ -1572,7 +1571,7 @@ int DisplayErrorComponentLogLine(log_components_t component,
 
   if(MakeLogError(buffer, num_family, num_error, status, ma_ligne) == -1)
     return -1;
-  return DisplayLogComponentLevel(component, NIV_CRIT, "%s: %s",
+  return DisplayLogComponentLevel(component, function, NIV_CRIT, "%s: %s",
                                   LogComponents[component].comp_str, buffer);
 }                               /* DisplayErrorLogLine */
 
