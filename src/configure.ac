@@ -581,16 +581,6 @@ case $FSAL in
                 FSAL_LDFLAGS=""
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_VFS/libfsalvfs.la"
 		FS_NAME="vfs"
-		# Check for kernel version (should be at least 2.6.39)
-		if test `uname -r |cut -d. -f1` -lt 2 ; then
-		 AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
-                fi
-		if test `uname -r |cut -d. -f2` -lt 6 ; then 
-		 AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
-		fi
-		if test `uname -r |cut -d. -f3 | cut -d- -f1` -lt 39 ; then
-		 AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
-		fi
 		;;
         ZFS)
                 AC_DEFINE([_USE_ZFS], 1, [GANESHA exports ZFS Filesystem])
