@@ -405,7 +405,13 @@ typedef struct nfs_param__
 #endif                          /* _USE_NFS4_1 */
   nfs_open_owner_parameter_t open_owner_param;
   nfs_cache_layers_parameter_t cache_layers_param;
+#ifdef _USE_SHARED_FSAL
+  unsigned int nb_loaded_fsal ;
+  unsigned int loaded_fsal[NB_AVAILABLE_FSAL];
+  fsal_parameter_t fsal_param[NB_AVAILABLE_FSAL];
+#else
   fsal_parameter_t fsal_param;
+#endif
   external_tools_parameter_t extern_param;
 
   /* list of exports declared in config file */

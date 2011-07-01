@@ -371,6 +371,9 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
+  /* Keep track of the loaded FSALs */
+  nfs_param.nb_loaded_fsal = nb_fsal ;
+
   for( i = 0 ; i < nb_fsal ; i++ )
     {
       if( FSAL_param_load_fsal_split( fsal_path_param[i], &fsalid, fsal_path_lib ) )
@@ -379,6 +382,9 @@ int main(int argc, char *argv[])
                    "NFS MAIN: Error parsing configuration file for FSAL path.");
           exit(1);
         }
+
+      /* Keep track of the loaded FSALs */
+      nfs_param.loaded_fsal[i] = fsalid ;
 
       LogEvent( COMPONENT_INIT,
 	        "Loading FSAL module for %s", FSAL_fsalid2name( fsalid ) ) ;
