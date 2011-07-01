@@ -371,11 +371,8 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-  printf( "===================> nb_fsal=%u\n", nb_fsal ) ;
-
   for( i = 0 ; i < nb_fsal ; i++ )
     {
-      printf( "====================> %u %s\n", i,  fsal_path_param[i] ) ;
       if( FSAL_param_load_fsal_split( fsal_path_param[i], &fsalid, fsal_path_lib ) )
         {
           LogMajor(COMPONENT_INIT,
