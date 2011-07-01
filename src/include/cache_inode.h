@@ -1113,12 +1113,11 @@ cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
 
 cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
                                       fsal_op_context_t    * pcontext,
+                                      cache_lock_owner_t   * powner,
                                       void                 * pcookie,
                                       int                    cookie_size,
                                       cache_blocking_t       blocking,
                                       granted_callback_t     granted_callback,
-                                      bool_t                 reclaim,
-                                      cache_lock_owner_t   * powner,
                                       cache_lock_desc_t    * plock,
                                       cache_lock_owner_t  ** holder,   /* owner that holds conflicting lock */
                                       cache_lock_desc_t    * conflict, /* description of conflicting lock */

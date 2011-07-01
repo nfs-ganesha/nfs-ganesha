@@ -1457,3 +1457,12 @@ nlm4_stats nlm_convert_cache_inode_error(cache_inode_status_t status)
       default:                        return NLM4_FAILED;
     }
 }
+
+cache_inode_status_t nlm_granted_callback(cache_entry_t        * pentry,
+                                          fsal_op_context_t    * pcontext,
+                                          cache_lock_entry_p     plock_entry,
+                                          cache_inode_client_t * pclient,
+                                          cache_inode_status_t * pstatus)
+{
+  return CACHE_INODE_NOT_SUPPORTED;
+}
