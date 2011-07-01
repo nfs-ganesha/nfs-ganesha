@@ -1308,3 +1308,80 @@ void nlm_resend_grant_msg(void *arg)
 
     nlm4_send_grant_msg(arg);
 }
+
+int process_nlm_parameters(struct svc_req            * preq,
+                           bool_t                      exclusive,
+                           nlm4_lock                 * alock,
+                           cache_lock_desc_t         * plock,
+                           hash_table_t              * ht,
+                           cache_entry_t            ** ppentry,
+                           fsal_op_context_t         * pcontext,
+                           cache_inode_client_t      * pclient,
+                           bool_t                      care,
+                           cache_inode_nlm_client_t ** ppnlm_client,
+                           cache_lock_owner_t       ** ppowner)
+{
+  cache_inode_fsal_data_t fsal_data;
+  fsal_attrib_list_t      attr;
+  cache_inode_status_t    cache_status;
+
+  *ppnlm_client = NULL;
+  *ppowner      = NULL;
+
+  /* Convert file handle into a cache entry */
+  if(!nfs3_FhandleToFSAL((nfs_fh3 *) &alock->fh, &fsal_data.handle, pcontext))
+    {
+      /* handle is not valid */
+      return NLM4_STALE_FH;
+    }
+
+  /* Now get the cached inode attributes */
+  fsal_data.cookie = DIR_START;
+  *ppentry = cache_inode_get(&fsal_data,
+                             &attr,
+                             ht,
+                             pclient,
+                             pcontext,
+                             &cache_status);
+  if(*ppentry == NULL)
+    {
+      /* handle is not valid */
+      return NLM4_STALE_FH;
+    }
+
+  *ppnlm_client = get_nlm_client(alock->caller_name);
+  if(*ppnlm_client == NULL)
+    {
+      /* If client is not found, and we don't care (such as unlock),
+       * just return GRANTED (the unlock must succeed, there can't be
+       * any locks).
+       */
+      if(care)
+        return NLM4_DENIED_NOLOCKS;
+      else
+        return NLM4_GRANTED;
+    }
+
+  *ppowner = get_nlm_owner(*ppnlm_client, &alock->oh, alock->svid);
+  if(*ppowner == NULL)
+    {
+      dec_nlm_client_ref(*ppnlm_client);
+      *ppnlm_client = NULL;
+
+      /* If owner is not found, and we don't care (such as unlock),
+       * just return GRANTED (the unlock must succeed, there can't be
+       * any locks).
+       */
+      if(care)
+        return NLM4_DENIED_NOLOCKS;
+      else
+        return NLM4_GRANTED;
+    }
+
+  /* Fill in plock */
+  plock->cld_type   = exclusive ? CACHE_INODE_LOCK_W : CACHE_INODE_LOCK_R;
+  plock->cld_offset = alock->l_offset;
+  plock->cld_length = alock->l_len;
+
+  return -1;
+}

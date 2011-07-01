@@ -66,6 +66,8 @@
 #include "nfs_file_handle.h"
 #include "cache_inode.h"
 
+//TODO FSF: check if can optimize by using same reference as key and value
+
 hash_table_t *ht_nlm_owner;
 hash_table_t *ht_nlm_client;
 
@@ -541,6 +543,55 @@ int convert_nlm_client(const char               * caller_name,
   return 1;
 }                               /* nfs_convert_nlm_client */
 
+cache_inode_nlm_client_t *get_nlm_client(const char * caller_name)
+{
+  cache_inode_nlm_client_t *pkey, *pclient;
+
+  if(caller_name == NULL)
+    return NULL;
+
+  pkey = (cache_inode_nlm_client_t *)Mem_Alloc(sizeof(*pkey));
+  if(pkey == NULL)
+    return NULL;
+
+  memset(pkey, 0, sizeof(*pkey));
+  pkey->clc_nlm_caller_name_len = strlen(caller_name);
+
+  if(pkey->clc_nlm_caller_name_len > LM_MAXSTRLEN)
+    return 0;
+
+  memcpy(pkey->clc_nlm_caller_name,
+         caller_name,
+         pkey->clc_nlm_caller_name_len);
+
+  if(nlm_client_Get_Pointer(pkey, &pclient) == HASHTABLE_SUCCESS)
+    {
+      /* Discard the key we created and return the found NLM Client */
+      Mem_Free(pkey);
+      return pclient;
+    }
+
+  pclient = (cache_inode_nlm_client_t *)Mem_Alloc(sizeof(*pkey));
+
+  /* Copy everything over */
+  *pclient = *pkey;
+
+  if(pthread_mutex_init(&pclient->clc_mutex, NULL) == -1)
+    {
+      /* Mutex initialization failed, free the key and created owner */
+      Mem_Free(pkey);
+      Mem_Free(pclient);
+      return NULL;
+    }
+
+  if(nlm_client_Set(pkey, pclient) == HASHTABLE_SUCCESS)
+    return pclient;
+
+  Mem_Free(pkey);
+  Mem_Free(pclient);
+  return NULL;
+}
+
 /**
  * nlm_owner_Set
  * 
@@ -633,6 +684,7 @@ void dec_nlm_owner_ref(cache_lock_owner_t *powner)
       switch(HashTable_DelRef(ht_nlm_owner, &buffkey, &old_key, &old_value, Hash_del_nlm_owner_ref))
         {
           case HASHTABLE_SUCCESS:
+            dec_nlm_client_ref(powner->clo_owner.clo_nlm_owner.clo_client);
             Mem_Free(old_key.pdata);
             Mem_Free(old_value.pdata);
             break;
@@ -769,6 +821,62 @@ int convert_nlm_owner(cache_inode_nlm_client_t * pclient,
 
   return 1;
 }                               /* nfs_convert_nlm_owner */
+
+cache_lock_owner_t *get_nlm_owner(cache_inode_nlm_client_t * pclient, 
+                                  netobj                   * oh,
+                                  uint32_t                   svid)
+{
+  cache_lock_owner_t *pkey, *powner;
+
+  if(pclient == NULL || oh == NULL || oh->n_len > MAX_NETOBJ_SZ)
+    return NULL;
+
+  pkey = (cache_lock_owner_t *)Mem_Alloc(sizeof(*pkey));
+  if(pkey == NULL)
+    return NULL;
+
+  memset(pkey, 0, sizeof(*pkey));
+
+  inc_nlm_client_ref(pclient);
+
+  pkey->clo_type     = CACHE_LOCK_OWNER_NLM;
+  pkey->clo_refcount = 1;
+  pkey->clo_owner.clo_nlm_owner.clo_client     = pclient;
+  pkey->clo_owner.clo_nlm_owner.clo_nlm_svid   = svid;
+  pkey->clo_owner.clo_nlm_owner.clo_nlm_oh_len = oh->n_len;
+  memcpy(pkey->clo_owner.clo_nlm_owner.clo_nlm_oh,
+         oh->n_bytes,
+         oh->n_len);
+
+  if(nlm_owner_Get_Pointer(pkey, &powner) == HASHTABLE_SUCCESS)
+    {
+      /* Discard the key we created and return the found NLM Owner */
+      Mem_Free(pkey);
+      return powner;
+    }
+
+  powner = (cache_lock_owner_t *)Mem_Alloc(sizeof(*pkey));
+
+  /* Copy everything over */
+  *powner = *pkey;
+
+  if(pthread_mutex_init(&powner->clo_mutex, NULL) == -1)
+    {
+      /* Mutex initialization failed, free the key and created owner */
+      Mem_Free(pkey);
+      Mem_Free(powner);
+      return NULL;
+    }
+
+  /* Ref count the client as being used by this owner */
+  inc_nlm_client_ref(pclient);
+  if(nlm_owner_Set(pkey, powner) == HASHTABLE_SUCCESS)
+    return powner;
+
+  Mem_Free(pkey);
+  Mem_Free(powner);
+  return NULL;
+}
 
 void make_nlm_special_owner(cache_inode_nlm_client_t * pclient,
                             cache_lock_owner_t       * pnlm_owner)

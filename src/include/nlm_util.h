@@ -79,4 +79,33 @@ extern void nlm_grant_blocked_locks(netobj * orig_fh);
 extern nlm_lock_entry_t *nlm_find_lock_entry_by_cookie(netobj * cookie);
 extern void nlm_resend_grant_msg(void *arg);
 
+/**
+ * process_nlm_parameters: Process NLM parameters
+ *
+ * Returns -1 for a request that needs processing, otherwise returns an NLM status
+ *
+ * preq:         passed in so interface doesn't need to change when NLM Client uses IP address
+ * exclusive:    TRUE if lock is a write lock
+ * alock:        nlm4_lock request structure
+ * plock:        cache_lock_desc_t to fill in from alock
+ * ppentry:      cache inode entry pointer to fill in
+ * pcontext:     FSAL op context
+ * pclient:      cache inode client
+ * care:         TRUE if this caller cares if an owner is found (otherwise return NLM4_GRANTED
+ *               because the caller will have nothing to do)
+ * ppnlm_client: NLM Client to fill in, returns a reference to the client
+ * ppowner:      NLM Owner to fill in, returns a reference to the owner
+ */
+int process_nlm_parameters(struct svc_req            * preq,
+                           bool_t                      exclusive,
+                           nlm4_lock                 * alock,
+                           cache_lock_desc_t         * plock,
+                           hash_table_t              * ht,
+                           cache_entry_t            ** ppentry,
+                           fsal_op_context_t         * pcontext,
+                           cache_inode_client_t      * pclient,
+                           bool_t                      care,
+                           cache_inode_nlm_client_t ** ppnlm_client,
+                           cache_lock_owner_t       ** ppowner);
+
 #endif                          /* _NLM_UTIL_H */
