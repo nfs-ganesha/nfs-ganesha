@@ -624,11 +624,23 @@ static void merge_lock_entry(cache_entry_t        * pentry,
   uint64_t lock_entry_end;
   struct glist_head *glist, *glistn;
 
+  /* Don't merge blocked locks */
+  if(lock_entry->cle_blocked != CACHE_NON_BLOCKING)
+    return;
+
   glist_for_each_safe(glist, glistn, &pentry->object.file.lock_list)
     {
       check_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
 
       if(different_owners(check_entry->cle_owner, lock_entry->cle_owner))
+        continue;
+
+      /* Don't merge blocked locks */
+      if(check_entry->cle_blocked != CACHE_NON_BLOCKING)
+        continue;
+
+      /* Don't merge locks of different types */
+      if(check_entry->cle_lock.cld_type != lock_entry->cle_lock.cld_type)
         continue;
 
       check_entry_end = lock_end(&check_entry->cle_lock);
@@ -1189,6 +1201,7 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
               break;
             }
         }
+
       if(found_entry_end >= plock_end &&
          found_entry->cle_lock.cld_offset <= plock->cld_offset &&
          found_entry->cle_lock.cld_type == plock->cld_type &&
@@ -1209,7 +1222,6 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
               return *pstatus;
             }
 
-          
           if(pentry->object.file.fsal_lock_support == FSAL_LOCKS_NO_OWNER)
             {
               /* Found a compatoible lock with a different lock owner that
