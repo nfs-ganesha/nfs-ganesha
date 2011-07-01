@@ -1349,7 +1349,7 @@ int process_nlm_parameters(struct svc_req            * preq,
       return NLM4_STALE_FH;
     }
 
-  *ppnlm_client = get_nlm_client(alock->caller_name);
+  *ppnlm_client = get_nlm_client(care, alock->caller_name);
   if(*ppnlm_client == NULL)
     {
       /* If client is not found, and we don't care (such as unlock),
@@ -1362,7 +1362,7 @@ int process_nlm_parameters(struct svc_req            * preq,
         return NLM4_GRANTED;
     }
 
-  *ppowner = get_nlm_owner(*ppnlm_client, &alock->oh, alock->svid);
+  *ppowner = get_nlm_owner(care, *ppnlm_client, &alock->oh, alock->svid);
   if(*ppowner == NULL)
     {
       dec_nlm_client_ref(*ppnlm_client);

@@ -543,7 +543,7 @@ int convert_nlm_client(const char               * caller_name,
   return 1;
 }                               /* nfs_convert_nlm_client */
 
-cache_inode_nlm_client_t *get_nlm_client(const char * caller_name)
+cache_inode_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
 {
   cache_inode_nlm_client_t *pkey, *pclient;
 
@@ -564,7 +564,8 @@ cache_inode_nlm_client_t *get_nlm_client(const char * caller_name)
          caller_name,
          pkey->clc_nlm_caller_name_len);
 
-  if(nlm_client_Get_Pointer(pkey, &pclient) == HASHTABLE_SUCCESS)
+  /* If we found it, return it, if we don't care, return NULL */
+  if(nlm_client_Get_Pointer(pkey, &pclient) == HASHTABLE_SUCCESS || !care)
     {
       /* Discard the key we created and return the found NLM Client */
       Mem_Free(pkey);
@@ -822,7 +823,8 @@ int convert_nlm_owner(cache_inode_nlm_client_t * pclient,
   return 1;
 }                               /* nfs_convert_nlm_owner */
 
-cache_lock_owner_t *get_nlm_owner(cache_inode_nlm_client_t * pclient, 
+cache_lock_owner_t *get_nlm_owner(bool_t                     care,
+                                  cache_inode_nlm_client_t * pclient, 
                                   netobj                   * oh,
                                   uint32_t                   svid)
 {
@@ -848,13 +850,14 @@ cache_lock_owner_t *get_nlm_owner(cache_inode_nlm_client_t * pclient,
          oh->n_bytes,
          oh->n_len);
 
-  if(nlm_owner_Get_Pointer(pkey, &powner) == HASHTABLE_SUCCESS)
+  /* If we found it, return it, if we don't care, return NULL */
+  if(nlm_owner_Get_Pointer(pkey, &powner) == HASHTABLE_SUCCESS || !care)
     {
       /* Discard the key we created and return the found NLM Owner */
       Mem_Free(pkey);
       return powner;
     }
-
+    
   powner = (cache_lock_owner_t *)Mem_Alloc(sizeof(*pkey));
 
   /* Copy everything over */
