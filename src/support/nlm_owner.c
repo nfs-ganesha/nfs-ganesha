@@ -449,20 +449,17 @@ int nlm_client_Get_Pointer(cache_inode_nlm_client_t * pkey,
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
 
+  buffkey.pdata = (caddr_t) pkey;
+  buffkey.len = sizeof(cache_inode_nlm_client_t);
+
   if(isFullDebug(COMPONENT_NLM))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
-
-      buffkey.pdata = (caddr_t) pkey;
-      buffkey.len = sizeof(cache_inode_nlm_client_t);
 
       display_nlm_client_key(&buffkey, str);
       LogFullDebug(COMPONENT_NLM,
                    "nlm_client_Get_Pointer => KEY {%s}", str);
     }
-
-  buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(cache_inode_nlm_client_t);
 
   if(HashTable_GetRef(ht_nlm_client, &buffkey, &buffval, Hash_inc_client_ref) != HASHTABLE_SUCCESS)
     {
@@ -480,37 +477,6 @@ int nlm_client_Get_Pointer(cache_inode_nlm_client_t * pkey,
 }                               /* nlm_client_Get_Pointer */
 
 /**
- *
- * nlm_client_Del
- *
- * This routine removes a NLM client from the nlm_client's hashtable.
- *
- * @param other [IN] stateid'other field, used as a hash key
- *
- * @return 1 if ok, 0 otherwise.
- *
- */
-int nlm_client_Del(cache_inode_nlm_client_t * pkey)
-{
-  hash_buffer_t buffkey, old_key, old_value;
-
-  buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(cache_inode_nlm_client_t);
-
-  if(HashTable_Del(ht_nlm_client, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
-    {
-      /* free the key that was stored in hash table */
-      Mem_Free((void *)old_key.pdata);
-
-      /* State is managed in stuff alloc, no fre is needed for old_value.pdata */
-
-      return 1;
-    }
-  else
-    return 0;
-}                               /* nlm_client_Del */
-
-/**
  * 
  *  nlm_client_PrintAll
  *  
@@ -523,25 +489,6 @@ void nlm_client_PrintAll(void)
 {
   HashTable_Log(COMPONENT_NLM, ht_nlm_client);
 }                               /* nlm_client_PrintAll */
-
-int convert_nlm_client(const char               * caller_name,
-                       cache_inode_nlm_client_t * pnlm_client)
-{
-  if(caller_name == NULL || pnlm_client == NULL)
-    return 0;
-
-  memset(pnlm_client, 0, sizeof(*pnlm_client));
-  pnlm_client->clc_nlm_caller_name_len = strlen(caller_name);
-
-  if(pnlm_client->clc_nlm_caller_name_len > LM_MAXSTRLEN)
-    return 0;
-
-  memcpy(pnlm_client->clc_nlm_caller_name,
-         caller_name,
-         pnlm_client->clc_nlm_caller_name_len);
-
-  return 1;
-}                               /* nfs_convert_nlm_client */
 
 cache_inode_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
 {
@@ -721,20 +668,17 @@ int nlm_owner_Get_Pointer(cache_lock_owner_t * pkey,
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
 
+  buffkey.pdata = (caddr_t) pkey;
+  buffkey.len = sizeof(cache_lock_owner_t);
+
   if(isFullDebug(COMPONENT_NLM))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
-
-      buffkey.pdata = (caddr_t) pkey;
-      buffkey.len = sizeof(cache_lock_owner_t);
 
       display_nlm_owner_key(&buffkey, str);
       LogFullDebug(COMPONENT_NLM,
                    "nlm_owner_Get_Pointer => KEY {%s}", str);
     }
-
-  buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(cache_lock_owner_t);
 
   if(HashTable_GetRef(ht_nlm_owner, &buffkey, &buffval, Hash_inc_owner_ref) != HASHTABLE_SUCCESS)
     {
@@ -752,37 +696,6 @@ int nlm_owner_Get_Pointer(cache_lock_owner_t * pkey,
 }                               /* nlm_owner_Get_Pointer */
 
 /**
- *
- * nlm_owner_Del
- *
- * This routine removes a NLM owner from the nlm_owner's hashtable.
- *
- * @param other [IN] stateid'other field, used as a hash key
- *
- * @return 1 if ok, 0 otherwise.
- *
- */
-int nlm_owner_Del(cache_lock_owner_t * pkey)
-{
-  hash_buffer_t buffkey, old_key, old_value;
-
-  buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(cache_lock_owner_t);
-
-  if(HashTable_Del(ht_nlm_owner, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
-    {
-      /* free the key that was stored in hash table */
-      Mem_Free((void *)old_key.pdata);
-
-      /* State is managed in stuff alloc, no fre is needed for old_value.pdata */
-
-      return 1;
-    }
-  else
-    return 0;
-}                               /* nlm_owner_Del */
-
-/**
  * 
  *  nlm_owner_PrintAll
  *  
@@ -795,33 +708,6 @@ void nlm_owner_PrintAll(void)
 {
   HashTable_Log(COMPONENT_NLM, ht_nlm_owner);
 }                               /* nlm_owner_PrintAll */
-
-int convert_nlm_owner(cache_inode_nlm_client_t * pclient, 
-                      netobj                   * oh,
-                      uint32_t                   svid,
-                      cache_lock_owner_t       * pnlm_owner)
-{
-  if(pnlm_owner == NULL)
-    return 0;
-
-  memset(pnlm_owner, 0, sizeof(*pnlm_owner));
-
-  if(oh == NULL || oh->n_len > MAX_NETOBJ_SZ)
-    return 0;
-
-  inc_nlm_client_ref(pclient);
-
-  pnlm_owner->clo_type     = CACHE_LOCK_OWNER_NLM;
-  pnlm_owner->clo_refcount = 1;
-  pnlm_owner->clo_owner.clo_nlm_owner.clo_client     = pclient;
-  pnlm_owner->clo_owner.clo_nlm_owner.clo_nlm_svid   = svid;
-  pnlm_owner->clo_owner.clo_nlm_owner.clo_nlm_oh_len = oh->n_len;
-  memcpy(pnlm_owner->clo_owner.clo_nlm_owner.clo_nlm_oh,
-         oh->n_bytes,
-         oh->n_len);
-
-  return 1;
-}                               /* nfs_convert_nlm_owner */
 
 cache_lock_owner_t *get_nlm_owner(bool_t                     care,
                                   cache_inode_nlm_client_t * pclient, 
