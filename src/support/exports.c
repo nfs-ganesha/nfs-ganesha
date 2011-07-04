@@ -775,8 +775,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
 #ifdef _USE_SHARED_FSAL
   FSAL_SetId( FAKE_ID ) ;
-  unsigned int fsalid_is_set= FALSE ;
 #endif
+  unsigned int fsalid_is_set= FALSE ;
 
 
   /* parse options for this export entry */
@@ -2770,9 +2770,9 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
           /* Lookup for the FSAL Path */
 #ifdef _USE_SHARED_FSAL
-          if(FSAL_IS_ERROR((fsal_status = FSAL_lookupPath(&exportpath_fsal, &context, &fsal_handle, NULL))))
-#else
           if(FSAL_IS_ERROR((fsal_status = FSAL_lookupPath(&exportpath_fsal, &context[pexportlist->fsalid], &fsal_handle, NULL))))
+#else
+          if(FSAL_IS_ERROR((fsal_status = FSAL_lookupPath(&exportpath_fsal, &context, &fsal_handle, NULL))))
 #endif
             {
               LogCrit(COMPONENT_INIT,
