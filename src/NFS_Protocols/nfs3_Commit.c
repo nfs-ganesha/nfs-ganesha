@@ -148,23 +148,22 @@ int nfs3_Commit(nfs_arg_t * parg,
     return NFS_REQ_OK;    
 
   /* Do not use DC if data cache is enabled, the data is kept synchronous is the DC */
-  if( !(pexport->options  & EXPORT_OPTION_USE_DATACACHE) )
-    if(cache_inode_commit(pentry,
-                          parg->arg_commit3.offset,
-                          parg->arg_commit3.count,
-                          &pre_attr,
-                          ht, pclient, pcontext, typeofcommit, &cache_status) != CACHE_INODE_SUCCESS)
-      {
-        pres->res_commit3.status = NFS3ERR_IO;;
+  if(cache_inode_commit(pentry,
+                        parg->arg_commit3.offset,
+                        parg->arg_commit3.count,
+                        &pre_attr,
+                        ht, pclient, pcontext, typeofcommit, &cache_status) != CACHE_INODE_SUCCESS)
+    {
+      pres->res_commit3.status = NFS3ERR_IO;;
 
-        nfs_SetWccData(pcontext,
-                       pexport,
-                       pentry,
-                       ppre_attr,
-                       ppre_attr, &(pres->res_commit3.COMMIT3res_u.resfail.file_wcc));
+      nfs_SetWccData(pcontext,
+                     pexport,
+                     pentry,
+                     ppre_attr,
+                     ppre_attr, &(pres->res_commit3.COMMIT3res_u.resfail.file_wcc));
 
-        return NFS_REQ_OK;
-      }
+      return NFS_REQ_OK;
+    }
 
   /* Set the pre_attr */
   ppre_attr = &pre_attr;
