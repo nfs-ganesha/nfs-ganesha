@@ -446,10 +446,11 @@
 1.1.0   -
         - Bug Fix: Bad memset in FSAL_HPSS::HPSSFSAL_lookup. Result was a segfault at init.
 	- Code reorganization : subdirectory RPCAL has been added
-	- Bug fixe : bad 'fd2handle' options in FSAL_XFS::FSAL_rename
+	- Bug fi : bad 'fd2handle' options in FSAL_XFS::FSAL_rename
 	- pNFS : API for implementing pNFS specific feature has been fully refurbished.
         - FSAL_VFS: new FSAL using "open_by_handle" feature added in the kernel higher than 2.6.39.
           This FSAL makes it possible to export any filesystem managed by the VFS. 
         - NFSv4: the product is now compiled with NFSv4.1 support by default
         - Log module: now using __FUNCTION__ macro to get the function's name
+	- Bug Fix: the cache_inode_commit function badly managed the Data Cache. 
 
