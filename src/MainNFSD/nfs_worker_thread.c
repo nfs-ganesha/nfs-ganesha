@@ -1189,7 +1189,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       else
 	pfsal_op_ctx = NULL ; /* Only for mount protocol (pexport is then meaningless */
 #else
-      pfsalk_op_ctx =  &pworker_data->thread_fsal_context ;
+      pfsal_op_ctx =  &pworker_data->thread_fsal_context ;
 #endif
 
       rc = pworker_data->pfuncdesc->service_function(parg_nfs, 

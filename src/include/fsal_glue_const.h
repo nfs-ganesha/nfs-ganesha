@@ -67,6 +67,4 @@
 #define FSAL_PROXY_ID    9
 #define FSAL_XFS_ID      10
 
-#define FAKE_ID  FSAL_XFS_ID
-
 #endif                          /* _FSAL_GLUE_CONST_H */
