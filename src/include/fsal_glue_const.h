@@ -37,7 +37,7 @@
 #define FSAL_XFS_INDEX 0
 #define FSAL_PROXY_INDEX 1
 
-#define FSAL_HANDLE_T_SIZE 148
+#define FSAL_HANDLE_T_SIZE 152  /* Has to be a multiple of 8 for alignement reasons */
 
 #define FSAL_OP_CONTEXT_T_SIZE 620
 #define FSAL_DIR_T_SIZE 4876

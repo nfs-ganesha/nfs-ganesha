@@ -112,7 +112,7 @@ typedef union {
 #ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_HANDLE_T_SIZE];
 #endif
-} __attribute__((packed)) proxyfsal_handle_t;
+}  proxyfsal_handle_t;
 
 typedef struct fsal_cred__
 {
