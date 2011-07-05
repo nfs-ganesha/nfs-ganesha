@@ -773,9 +773,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   strcpy(p_entry->FS_specific, "");
   strcpy(p_entry->FS_tag, "");
 
-#ifdef _USE_SHARED_FSAL
-  FSAL_SetId( FAKE_ID ) ;
-#endif
   unsigned int fsalid_is_set= FALSE ;
 
 
@@ -2130,9 +2127,6 @@ int ReadExports(config_file_t in_config,        /* The file that contains the ex
               err_flag = TRUE;
               continue;
             }
-#ifdef _USE_SHARED_FSAL
-          FSAL_SetId( FAKE_ID ) ;
-#endif
 
           p_export_item->next = NULL;
 
