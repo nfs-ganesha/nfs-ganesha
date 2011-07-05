@@ -342,7 +342,7 @@ int nlm_client_Set(cache_inode_nlm_client_t * pkey,
       char str[HASHTABLE_DISPLAY_STRLEN];
 
       buffkey.pdata = (caddr_t) pkey;
-      buffkey.len = sizeof(cache_inode_nlm_client_t);
+      buffkey.len = sizeof(*pkey);
 
       display_nlm_client_key(&buffkey, str);
       LogFullDebug(COMPONENT_NLM,
@@ -350,10 +350,10 @@ int nlm_client_Set(cache_inode_nlm_client_t * pkey,
     }
 
   buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(cache_inode_nlm_client_t);
+  buffkey.len = sizeof(*pkey);
 
   buffval.pdata = (caddr_t) pclient;
-  buffval.len = sizeof(cache_inode_nlm_client_t);
+  buffval.len = sizeof(*pclient);
 
   if(HashTable_Test_And_Set
      (ht_nlm_client, &buffkey, &buffval,
@@ -409,7 +409,7 @@ void dec_nlm_client_ref(cache_inode_nlm_client_t *pclient)
       hash_buffer_t buffkey, old_key, old_value;
 
       buffkey.pdata = (caddr_t) pclient;
-      buffkey.len = sizeof(cache_inode_nlm_client_t);
+      buffkey.len = sizeof(*pclient);
 
       switch(HashTable_DelRef(ht_nlm_client, &buffkey, &old_key, &old_value, Hash_del_nlm_client_ref))
         {
@@ -450,7 +450,7 @@ int nlm_client_Get_Pointer(cache_inode_nlm_client_t * pkey,
   hash_buffer_t buffval;
 
   buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(cache_inode_nlm_client_t);
+  buffkey.len = sizeof(*pkey);
 
   if(isFullDebug(COMPONENT_NLM))
     {
@@ -560,7 +560,7 @@ int nlm_owner_Set(cache_lock_owner_t * pkey,
       char str[HASHTABLE_DISPLAY_STRLEN];
 
       buffkey.pdata = (caddr_t) pkey;
-      buffkey.len = sizeof(cache_lock_owner_t);
+      buffkey.len = sizeof(*pkey);
 
       display_nlm_owner_key(&buffkey, str);
       LogFullDebug(COMPONENT_NLM,
@@ -568,10 +568,10 @@ int nlm_owner_Set(cache_lock_owner_t * pkey,
     }
 
   buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(cache_lock_owner_t);
+  buffkey.len = sizeof(*pkey);
 
   buffval.pdata = (caddr_t) powner;
-  buffval.len = sizeof(cache_lock_owner_t);
+  buffval.len = sizeof(*powner);
 
   if(HashTable_Test_And_Set
      (ht_nlm_owner, &buffkey, &buffval,
@@ -627,7 +627,7 @@ void dec_nlm_owner_ref(cache_lock_owner_t *powner)
       hash_buffer_t buffkey, old_key, old_value;
 
       buffkey.pdata = (caddr_t) powner;
-      buffkey.len = sizeof(cache_lock_owner_t);
+      buffkey.len = sizeof(*powner);
 
       switch(HashTable_DelRef(ht_nlm_owner, &buffkey, &old_key, &old_value, Hash_del_nlm_owner_ref))
         {
@@ -669,7 +669,7 @@ int nlm_owner_Get_Pointer(cache_lock_owner_t * pkey,
   hash_buffer_t buffval;
 
   buffkey.pdata = (caddr_t) pkey;
-  buffkey.len = sizeof(cache_lock_owner_t);
+  buffkey.len = sizeof(*pkey);
 
   if(isFullDebug(COMPONENT_NLM))
     {
