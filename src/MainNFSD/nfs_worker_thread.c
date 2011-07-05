@@ -1182,7 +1182,10 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
 #ifdef _USE_SHARED_FSAL
       if( pexport != NULL )
-        pfsal_op_ctx = &pworker_data->thread_fsal_context[pexport->fsalid] ; 
+       {
+         pfsal_op_ctx = &pworker_data->thread_fsal_context[pexport->fsalid] ; 
+         FSAL_SetId( pexport->fsalid ) ;
+       }
       else
 	pfsal_op_ctx = NULL ; /* Only for mount protocol (pexport is then meaningless */
 #else
@@ -1458,6 +1461,11 @@ void *worker_thread(void *IndexArg)
   struct rpc_gss_cred *gc;
 #endif
 
+#ifdef _USE_SHARED_FSAL 
+  unsigned int i = 0 ;
+  unsigned int fsalid = 0 ;
+#endif
+
   index = (long)IndexArg;
   pmydata = &(workers_data[index]);
 
@@ -1496,12 +1504,25 @@ void *worker_thread(void *IndexArg)
   LogFullDebug(COMPONENT_DISPATCH,
                "NFS WORKER #%lu: Initialization of thread's credential",
                index);
+
 #ifdef _USE_SHARED_FSAL
-  FSAL_SetId( FAKE_ID ) ;
-  if(FSAL_IS_ERROR(FSAL_InitClientContext(&(pmydata->thread_fsal_context[FAKE_ID]))))
+  for( i = 0 ; i < nfs_param.nb_loaded_fsal ; i++ )
+   {
+      fsalid =  nfs_param.loaded_fsal[i] ;
+
+      FSAL_SetId( fsalid ) ;
+
+      if(FSAL_IS_ERROR(FSAL_InitClientContext(&(pmydata->thread_fsal_context[fsalid]))))
+       {
+         /* Failed init */
+         LogMajor(COMPONENT_DISPATCH,
+                  "NFS  WORKER #%lu: Error initializing thread's credential for FSAL %s",
+                 index, FSAL_fsalid2name( fsalid ) );
+         exit(1);
+       }
+   } /* for */
 #else
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&pmydata->thread_fsal_context)))
-#endif
     {
       /* Failed init */
       LogMajor(COMPONENT_DISPATCH,
@@ -1509,6 +1530,9 @@ void *worker_thread(void *IndexArg)
                index);
       exit(1);
     }
+
+
+#endif /* _USE_SHARED_FSAL */
 
   /* Init the Cache inode client for this worker */
   if(cache_inode_client_init(&pmydata->cache_inode_client,
