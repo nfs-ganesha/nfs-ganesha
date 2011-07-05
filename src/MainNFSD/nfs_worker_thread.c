@@ -727,6 +727,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   exportlist_client_entry_t related_client;
   struct user_cred user_credentials;
 
+  fsal_op_context_t * pfsal_op_ctx = NULL ;
+
 #ifdef _DEBUG_MEMLEAKS
   static int nb_iter_memleaks = 0;
 #endif
@@ -1178,13 +1180,18 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }
 #endif
 
+#ifdef _USE_SHARED_FSAL
+      if( pexport != NULL )
+        pfsal_op_ctx = &pworker_data->thread_fsal_context[pexport->fsalid] ; 
+      else
+	pfsal_op_ctx = NULL ; /* Only for mount protocol (pexport is then meaningless */
+#else
+      pfsalk_op_ctx =  &pworker_data->thread_fsal_context ;
+#endif
+
       rc = pworker_data->pfuncdesc->service_function(parg_nfs, 
 						     pexport, 
-#ifdef _USE_SHARED_FSAL
-                                                     &pworker_data->thread_fsal_context[FAKE_ID], 
-#else
-                                                     &pworker_data->thread_fsal_context, 
-#endif
+						     pfsal_op_ctx,
                                                      &(pworker_data->cache_inode_client), 
                                                      pworker_data->ht, 
                                                      ptr_req, 
@@ -1519,12 +1526,7 @@ void *worker_thread(void *IndexArg)
                index);
 
 #ifdef _USE_MFSL
-  if(FSAL_IS_ERROR(MFSL_GetContext(&pmydata->cache_inode_client.mfsl_context,
-#ifdef _USE_SHARED_FSAL
-                                   &pmydata->thread_fsal_context[FAKE_ID])))
-#else
-                                   &pmydata->thread_fsal_context)))
-#endif
+  if(FSAL_IS_ERROR(MFSL_GetContext(&pmydata->cache_inode_client.mfsl_context, pfsal_op_ctx ) ;
     {
       /* Failed init */
       LogMajor(COMPONENT_DISPATCH,
@@ -1846,9 +1848,10 @@ void *worker_thread(void *IndexArg)
        * set as "making garbagge collection" to avoid new requests to come in its pending queue */
       pmydata->gc_in_progress = TRUE;
 
+
       fsal_status = MFSL_RefreshContext(&pmydata->cache_inode_client.mfsl_context,
 #ifdef _USE_SHARED_FSAL
-                                        &pmydata->thread_fsal_context[FAKE_ID]);
+                                        &pmydata->thread_fsal_context[pexport->fsalid]);
 #else
                                         &pmydata->thread_fsal_context);
 #endif
