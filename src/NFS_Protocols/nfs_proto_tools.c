@@ -366,6 +366,19 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
         }
       break;
 
+    case CACHE_INODE_FSAL_DELAY:
+      if(nfs_param.core_param.drop_delay_errors)
+        {
+          /* Drop the request */
+          return TRUE;
+        }
+      else
+        {
+          /* Propagate error to the client */
+          return FALSE;
+        }
+      break;
+
     case CACHE_INODE_SUCCESS:
       LogCrit(COMPONENT_NFSPROTO,
               "Possible implementation error: CACHE_INODE_SUCCESS managed as an error");
@@ -383,7 +396,6 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_INCONSISTENT_ENTRY:
     case CACHE_INODE_HASH_TABLE_ERROR:
     case CACHE_INODE_INSERT_ERROR:
-    case CACHE_INODE_FSAL_DELAY:
       /* Internal error, should be dropped and retryed */
       return TRUE;
       break;

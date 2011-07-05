@@ -22,6 +22,10 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+#ifdef _SHOOK
+#include "shook_svr.h"
+#endif
+
 /**
  * FSAL_truncate:
  * Modify the data length of a regular file.
@@ -67,6 +71,42 @@ fsal_status_t LUSTREFSAL_truncate(lustrefsal_handle_t * p_filehandle,   /* IN */
   st = fsal_internal_Handle2FidPath(p_context, p_filehandle, &fsalpath);
   if(FSAL_IS_ERROR(st))
     ReturnStatus(st, INDEX_FSAL_truncate);
+
+#ifdef _SHOOK
+    /* If the file is not online:
+     * - call "shook restore_trunc" in case of  truncate(0)
+     * - call "shook restore" in case of truncate(>0)
+     */
+    shook_state state;
+    rc = shook_get_status(fsalpath.path, &state, FALSE);
+    if (rc)
+        LogEvent(COMPONENT_FSAL, "Error retrieving shook status of %s: %s",
+                 fsalpath.path, strerror(-rc));
+    else if (state != SS_ONLINE)
+    {
+        if (length == 0)
+        {
+            LogInfo(COMPONENT_FSAL, "File is offline: calling shook restore_trunc");
+
+            /* XXX MAKE SURE IT IS SYNCHRONOUS */
+            rc = shook_server_call(SA_RESTORE_TRUNC, p_context->export_context->fsname,
+                                   &p_filehandle->data.fid, NULL, NULL);
+            if (rc)
+                Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_truncate);
+        }
+        else
+        {
+            /* Start async restore and return delay. FIXME make it ASYNC ? */
+            rc = shook_server_call(SA_RESTORE, p_context->export_context->fsname,
+                                   &p_filehandle->data.fid, NULL, NULL);
+            if (rc)
+                Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
+
+            Return(ERR_FSAL_DELAY, 0, INDEX_FSAL_open);
+        }
+    }
+    /* else (online): call truncate directly */
+#endif
 
   /* Executes the POSIX truncate operation */
 

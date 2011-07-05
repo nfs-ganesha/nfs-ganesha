@@ -285,6 +285,12 @@ int nfs_print_param_config(nfs_parameter_t * p_nfs_param)
     printf("\tDrop_Inval_Errors = TRUE ; \n");
   else
     printf("\tDrop_Inval_Errors = FALSE ;\n");
+
+  if(p_nfs_param->core_param.drop_delay_errors)
+    printf("\tDrop_Delay_Errors = TRUE ; \n");
+  else
+    printf("\tDrop_Delay_Errors = FALSE ;\n");
+
   printf("}\n\n");
 
   printf("NFS_Worker_Param\n{\n");
@@ -318,6 +324,7 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   p_nfs_param->core_param.rquota_program = RQUOTAPROG;
   p_nfs_param->core_param.drop_io_errors = TRUE;
   p_nfs_param->core_param.drop_inval_errors = FALSE;
+  p_nfs_param->core_param.drop_delay_errors = TRUE;
   p_nfs_param->core_param.core_dump_size = 0;
   p_nfs_param->core_param.nb_max_fd = -1;       /* Use OS's default */
   p_nfs_param->core_param.stats_update_delay = 60;

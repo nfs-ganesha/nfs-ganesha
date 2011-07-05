@@ -311,6 +311,17 @@ GA_ENABLE_FLAG(  [debug-symbols],	 [include debug symbols to binaries (-g option
 # enable code profiling
 GA_ENABLE_FLAG( [profiling], [turn on code profiling (-g and -pg)], [-g -pg] )
 
+
+AC_ARG_ENABLE( [shook], AS_HELP_STRING([--enable-shook],
+                                       [Enable shook binding system]),
+               [use_shook="$enableval"],[use_shook="no"] )
+
+if test "x$use_shook" = "xyes" ; then
+    AC_CHECK_LIB([shooksvr], [shook_restore],, AC_MSG_ERROR([shook is enabled but libshooksvr not found]))
+    AC_DEFINE(_SHOOK, 1, [shook is enabled])
+    LDFLAGS="$LDFLAGS -lshooksvr"
+fi
+
 # makes it possible to add some extra include dir
 
 AC_ARG_WITH( [extra-includedir], AS_HELP_STRING([--with-extra-includedir=<path>], [Alternative path to include files] ),
@@ -496,9 +507,9 @@ case $FSAL in
 			AC_DEFINE([_LUSTRE_HSM], 1, [Lustre version supports HSM binding])
 		fi
 
-		FSAL_CFLAGS=
-                FSAL_LDFLAGS="-llustreapi"
-		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
+        FSAL_CFLAGS=
+        FSAL_LDFLAGS="-llustreapi"
+        FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
 		FS_NAME="lustre"
 		;;
 	XFS)

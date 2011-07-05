@@ -18,6 +18,11 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
+#ifdef _SHOOK
+#include "shook_svr.h"
+#endif
+
+
 /**
  * FSAL_open_byname:
  * Open a regular file for reading/writing its data content.
@@ -117,7 +122,6 @@ fsal_status_t LUSTREFSAL_open(lustrefsal_handle_t * p_filehandle,       /* IN */
                               fsal_attrib_list_t * p_file_attributes    /* [ IN/OUT ] */
     )
 {
-
   int rc, errsv;
   fsal_status_t status;
 
@@ -169,6 +173,49 @@ fsal_status_t LUSTREFSAL_open(lustrefsal_handle_t * p_filehandle,       /* IN */
                         openflags);
       Return(rc, 0, INDEX_FSAL_open);
     }
+
+  /* @TODO  For HSM systems, trigger file asynchronous restore
+   * if the file in offline, to avoid freezing current thread.
+   * In this case, return EAGAIN to the upper layers.
+   */
+#ifdef _LUSTRE_HSM
+    /* call "lfs hsm_restore" if file is released */
+    /* @TODO */
+#endif
+#ifdef _SHOOK
+    /* call "shook restore" if file is not online
+     * or "shook restore_trunc" if file is not online and openflag
+     * includes O_TRUNC
+     */
+    shook_state state;
+    int follow = (posix_flags & O_NOFOLLOW ? 0:1);
+    rc = shook_get_status(fsalpath.path, &state, follow);
+    if (rc)
+        LogEvent(COMPONENT_FSAL, "Error retrieving shook status of %s: %s",
+                 fsalpath.path, strerror(-rc));
+    else if (state != SS_ONLINE)
+    {
+        LogInfo(COMPONENT_FSAL, "File is offline: triggering shook restore");
+
+        if (posix_flags & O_TRUNC) {
+            /* XXX Is this synchronous? */
+            rc = shook_server_call(SA_RESTORE_TRUNC, p_context->export_context->fsname,
+                                   &p_filehandle->data.fid, NULL, NULL);
+            if (rc)
+                Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
+            /* then continue to open */
+        } else {
+            /*  start async restore and return delay. XXX is this async? */
+            rc = shook_server_call(SA_RESTORE, p_context->export_context->fsname,
+                                   &p_filehandle->data.fid, NULL, NULL);
+            if (rc)
+                Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
+
+            Return(ERR_FSAL_DELAY, 0, INDEX_FSAL_open);
+        }
+    }
+    /* else: we can open file directly */
+#endif
 
   TakeTokenFSCall();
   p_file_descriptor->fd = open(fsalpath.path, posix_flags, 0644);
