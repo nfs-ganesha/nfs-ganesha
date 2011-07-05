@@ -305,8 +305,6 @@ int nfs_set_param_default(nfs_parameter_t * p_nfs_param)
   unsigned int fsalid = 0 ;
 #endif
 
-  memset((char *)p_nfs_param, 0, sizeof(nfs_parameter_t));
-
   /* Core parameters */
   p_nfs_param->core_param.nb_worker = NB_WORKER_THREAD_DEFAULT;
   p_nfs_param->core_param.nb_call_before_queue_avg = NB_REQUEST_BEFORE_QUEUE_AVG;

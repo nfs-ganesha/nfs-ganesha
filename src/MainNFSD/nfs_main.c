@@ -361,6 +361,8 @@ int main(int argc, char *argv[])
     LogInfo(COMPONENT_INIT,
             "Signal SIGHUP (daemon export reload) is ready to be used");
 
+  /* Set the parameter to 0 before doing anything */
+  memset((char *)&nfs_param, 0, sizeof(nfs_parameter_t));
 
 #ifdef _USE_SHARED_FSAL
   nb_fsal = NB_AVAILABLE_FSAL ;
