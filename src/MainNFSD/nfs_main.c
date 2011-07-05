@@ -409,9 +409,6 @@ int main(int argc, char *argv[])
      FSAL_LoadConsts();
    } /* for */
 
-  /* Set the FSAL id */
-  FSAL_SetId( FAKE_ID ) ;
-
 #else
   /* Get the FSAL functions */
   FSAL_LoadFunctions();

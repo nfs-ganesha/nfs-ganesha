@@ -1139,7 +1139,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
           if(nfs_build_fsal_context
              (ptr_req, &related_client, pexport,
 #ifdef _USE_SHARED_FSAL
-              &pworker_data->thread_fsal_context[FAKE_ID], &user_credentials) == FALSE)
+              &pworker_data->thread_fsal_context[pexport->fsalid], &user_credentials) == FALSE)
 #else
               &pworker_data->thread_fsal_context, &user_credentials) == FALSE)
 #endif
