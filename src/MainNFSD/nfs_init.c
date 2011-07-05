@@ -531,6 +531,7 @@ void nfs_set_param_default()
   nfs_param.nlm_client_hash_param.key_to_str = display_nlm_client_key;
   nfs_param.nlm_client_hash_param.val_to_str = display_nlm_client_val;
   nfs_param.nlm_client_hash_param.name = "NLM Client";
+
   /* NLM Owner hash */
   nfs_param.nlm_owner_hash_param.index_size = PRIME_STATE_ID;
   nfs_param.nlm_owner_hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
@@ -557,6 +558,17 @@ void nfs_set_param_default()
   nfs_param.cache_layers_param.cache_param.hparam.key_to_str = display_cache;
   nfs_param.cache_layers_param.cache_param.hparam.val_to_str = display_cache;
   nfs_param.cache_layers_param.cache_param.hparam.name = "Cache Inode";
+
+  /* Cache inode parameters : cookie hash table */
+  nfs_param.cache_layers_param.cache_param.cookie_param.index_size = PRIME_STATE_ID;
+  nfs_param.cache_layers_param.cache_param.cookie_param.alphabet_length = 10;      /* Buffer seen as a decimal polynom */
+  nfs_param.cache_layers_param.cache_param.cookie_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
+  nfs_param.cache_layers_param.cache_param.cookie_param.hash_func_key = lock_cookie_value_hash_func ;
+  nfs_param.cache_layers_param.cache_param.cookie_param.hash_func_rbt = lock_cookie_rbt_hash_func ;
+  nfs_param.cache_layers_param.cache_param.cookie_param.compare_key = compare_lock_cookie_key;
+  nfs_param.cache_layers_param.cache_param.cookie_param.key_to_str = display_lock_cookie_key;
+  nfs_param.cache_layers_param.cache_param.cookie_param.val_to_str = display_lock_cookie_val;
+  nfs_param.cache_layers_param.cache_param.cookie_param.name = "Lock Cookie";
 
   /* Cache inode parameters : Garbage collection policy */
   nfs_param.cache_layers_param.gcpol.file_expiration_delay = -1;     /* No gc */
@@ -1529,7 +1541,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                cache_status);
     }
 
-  if(cache_inode_lock_init(&cache_status) != CACHE_INODE_SUCCESS)
+  if(cache_inode_lock_init(&cache_status,
+                           nfs_param.cache_layers_param.cache_param.cookie_param) != CACHE_INODE_SUCCESS)
     {
       LogFatal(COMPONENT_INIT,
                "Cache Inode Layer could not be initialized, cache_status=%d",

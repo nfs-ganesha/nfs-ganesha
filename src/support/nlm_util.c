@@ -34,6 +34,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
+#include <sys/time.h>
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
@@ -79,6 +80,27 @@ static struct timeval nlm_grace_tv;
  * message request again
  */
 #define NLM4_CLIENT_GRACE_PERIOD 3
+
+/* We manage our own cookie for GRANTED call backs
+ * Cookie 
+ */
+typedef struct granted_cookie_t
+{
+  unsigned long gc_seconds;
+  unsigned long gc_microseconds;
+  unsigned long gc_cookie;
+} granted_cookie_t;
+
+granted_cookie_t granted_cookie;
+pthread_mutex_t granted_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+void next_granted_cookie(granted_cookie_t *cookie)
+{
+  P(granted_mutex);
+  granted_cookie.gc_cookie++;
+  *cookie = granted_cookie;
+  V(granted_mutex);
+}
 
 const char *lock_result_str(int rc)
 {
@@ -341,11 +363,16 @@ int in_nlm_grace_period(void)
 
 void nlm_init(void)
 {
-    nlm_async_callback_init();
-    nsm_unmonitor_all();
+  nlm_async_callback_init();
+  nsm_unmonitor_all();
 
-    /* start NLM grace period */
-    gettimeofday(&nlm_grace_tv, NULL);
+  /* start NLM grace period */
+  gettimeofday(&nlm_grace_tv, NULL);
+
+  /* also use this time to initialize granted_cookie */
+  granted_cookie.gc_seconds      = (unsigned long) nlm_grace_tv.tv_sec;
+  granted_cookie.gc_microseconds = (unsigned long) nlm_grace_tv.tv_usec;
+  granted_cookie.gc_cookie       = 0;
 }
 
 int nlm_monitor_host(char *name)

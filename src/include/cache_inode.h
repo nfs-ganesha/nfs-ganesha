@@ -161,6 +161,7 @@ typedef int cache_inode_status_t;
 typedef struct cache_inode_parameter__
 {
   hash_parameter_t hparam;                      /**< Parameter used for hashtable initialization */
+  hash_parameter_t cookie_param;                /**< Parameters used for cookie hash table initialization */
 } cache_inode_parameter_t;
 
 typedef struct cache_inode_client_parameter__
@@ -1073,27 +1074,29 @@ typedef cache_inode_status_t (*granted_callback_t)(cache_entry_t        * pentry
 
 typedef struct cache_lock_entry_t
 {
-  struct glist_head           cle_list;
-  struct glist_head           cle_owner_locks;
-  struct glist_head           cle_blocked_locks;
+  struct glist_head             cle_list;
+  struct glist_head             cle_owner_locks;
+  struct glist_head             cle_blocked_locks;
 #ifdef _USE_NLM
-  struct glist_head           cle_client_locks;
+  struct glist_head             cle_client_locks;
 #endif
 #ifdef _DEBUG_MEMLEAKS
-  struct glist_head           cle_all_locks;
+  struct glist_head             cle_all_locks;
 #endif
-  int                         cle_ref_count;
-  cache_entry_t             * cle_pentry;
-  cache_blocking_t            cle_blocked;
-  cache_lock_owner_t        * cle_owner;
-  cache_lock_desc_t           cle_lock;
-  void                      * cle_pcookie;
-  int                         cle_cookie_size;
-  granted_callback_t          cle_granted_callback;
-  pthread_mutex_t             cle_mutex;
+  int                           cle_ref_count;
+  cache_entry_t               * cle_pentry;
+  cache_blocking_t              cle_blocked;
+  cache_lock_owner_t          * cle_owner;
+  cache_lock_desc_t             cle_lock;
+  void                        * cle_pcookie;
+  int                           cle_cookie_size;
+  granted_callback_t            cle_granted_callback;
+  struct cache_cookie_entry_t * cle_blocked_cookie;
+  pthread_mutex_t               cle_mutex;
 } cache_lock_entry_t;
 
-cache_inode_status_t cache_inode_lock_init(cache_inode_status_t * pstatus);
+cache_inode_status_t cache_inode_lock_init(cache_inode_status_t * pstatus,
+                                           hash_parameter_t       cookie_param);
 
 void lock_entry_inc_ref(cache_lock_entry_t *lock_entry);
 
@@ -1103,12 +1106,30 @@ void lock_entry_dec_ref(cache_entry_t      *pentry,
 
 void release_lock_owner(cache_lock_owner_t *powner);
 
-cache_inode_status_t cache_inode_find_lock(cache_entry_t       ** pentry,
-                                           fsal_op_context_t    * pcontext,
-                                           void                 * pcookie,
-                                           int                    cookie_size,
-                                           cache_inode_client_t * pclient,
-                                           cache_inode_status_t * pstatus);
+#ifdef _USE_NLM
+typedef struct cache_cookie_entry_t
+{
+  pthread_mutex_t     lce_mutex;
+  int                 lce_refcount;
+  cache_entry_t      *lce_pentry;
+  fsal_op_context_t  *lce_pcontext;
+  cache_lock_entry_t *lce_lock_entry;
+} cache_cookie_entry_t;
+
+void cookie_entry_inc_ref(cache_cookie_entry_t * p_cookie_entry);
+void cookie_entry_dec_ref(cache_cookie_entry_t * p_cookie_entry);
+
+int cache_inode_insert_block(cache_entry_t            * pentry,
+                             fsal_op_context_t        * pcontext,
+                             void                     * pcookie,
+                             int                        cookie_size,
+                             cache_lock_entry_t       * lock_entry,
+                             cache_inode_status_t     * pstatus);
+
+cache_inode_status_t cache_inode_grant_block(void                  * pcookie,
+                                             int                     cookie_size,
+                                             cache_inode_status_t  * pstatus);
+#endif
 
 cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
                                       fsal_op_context_t    * pcontext,
@@ -1223,5 +1244,13 @@ unsigned int cache_inode_fsal_rbt_both( hash_parameter_t * p_hparam,
 int display_key(hash_buffer_t * pbuff, char *str);
 int display_not_implemented(hash_buffer_t * pbuff, char *str);
 int display_value(hash_buffer_t * pbuff, char *str);
+
+int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
+int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);
+int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
+unsigned long lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
+                                          hash_buffer_t * buffclef);
+unsigned long lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
+                                        hash_buffer_t * buffclef);
 
 #endif                          /*  _CACHE_INODE_H */
