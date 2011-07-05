@@ -61,8 +61,8 @@
 #include "nfs4.h"
 #ifdef _USE_NLM
 #include "nlm4.h"
-#include "nlm_list.h"
 #endif
+#include "nlm_list.h"
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
 
@@ -161,7 +161,9 @@ typedef int cache_inode_status_t;
 typedef struct cache_inode_parameter__
 {
   hash_parameter_t hparam;                      /**< Parameter used for hashtable initialization */
+#ifdef _USE_NLM
   hash_parameter_t cookie_param;                /**< Parameters used for cookie hash table initialization */
+#endif
 } cache_inode_parameter_t;
 
 typedef struct cache_inode_client_parameter__
@@ -452,8 +454,8 @@ typedef struct cache_lock_owner_t
   union
   {
     cache_inode_open_owner_t clo_open_owner;
-    cache_inode_nlm_owner_t  clo_nlm_owner;
 #ifdef _USE_NLM
+    cache_inode_nlm_owner_t  clo_nlm_owner;
 #endif
   } clo_owner;
 } cache_lock_owner_t;
@@ -1095,8 +1097,12 @@ typedef struct cache_lock_entry_t
   pthread_mutex_t               cle_mutex;
 } cache_lock_entry_t;
 
+#ifdef _USE_NLM
 cache_inode_status_t cache_inode_lock_init(cache_inode_status_t * pstatus,
                                            hash_parameter_t       cookie_param);
+#else
+cache_inode_status_t cache_inode_lock_init(cache_inode_status_t * pstatus);
+#endif
 
 void lock_entry_inc_ref(cache_lock_entry_t *lock_entry);
 

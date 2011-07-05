@@ -559,6 +559,7 @@ void nfs_set_param_default()
   nfs_param.cache_layers_param.cache_param.hparam.val_to_str = display_cache;
   nfs_param.cache_layers_param.cache_param.hparam.name = "Cache Inode";
 
+#ifdef _USE_NLM
   /* Cache inode parameters : cookie hash table */
   nfs_param.cache_layers_param.cache_param.cookie_param.index_size = PRIME_STATE_ID;
   nfs_param.cache_layers_param.cache_param.cookie_param.alphabet_length = 10;      /* Buffer seen as a decimal polynom */
@@ -569,6 +570,7 @@ void nfs_set_param_default()
   nfs_param.cache_layers_param.cache_param.cookie_param.key_to_str = display_lock_cookie_key;
   nfs_param.cache_layers_param.cache_param.cookie_param.val_to_str = display_lock_cookie_val;
   nfs_param.cache_layers_param.cache_param.cookie_param.name = "Lock Cookie";
+#endif
 
   /* Cache inode parameters : Garbage collection policy */
   nfs_param.cache_layers_param.gcpol.file_expiration_delay = -1;     /* No gc */
@@ -1541,8 +1543,13 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                cache_status);
     }
 
+#ifdef _USE_NLM
   if(cache_inode_lock_init(&cache_status,
-                           nfs_param.cache_layers_param.cache_param.cookie_param) != CACHE_INODE_SUCCESS)
+                           nfs_param.cache_layers_param.cache_param.cookie_param)
+#else
+  if(cache_inode_lock_init(&cache_status)
+#endif
+     != CACHE_INODE_SUCCESS)
     {
       LogFatal(COMPONENT_INIT,
                "Cache Inode Layer could not be initialized, cache_status=%d",

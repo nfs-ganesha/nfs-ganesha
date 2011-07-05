@@ -83,8 +83,12 @@ hash_table_t *ht_lock_cookies;
 
 cache_lock_owner_t unknown_owner;
 
+#ifdef _USE_NLM
 cache_inode_status_t cache_inode_lock_init(cache_inode_status_t * pstatus,
                                            hash_parameter_t       cookie_param)
+#else
+cache_inode_status_t cache_inode_lock_init(cache_inode_status_t * pstatus)
+#endif
 {
   *pstatus = CACHE_INODE_SUCCESS;
 
@@ -1105,13 +1109,12 @@ cache_inode_status_t cache_inode_find_block(void                  * pcookie,
   *pstatus = CACHE_INODE_SUCCESS;
   return *pstatus;
 }
+#endif
 
 void grant_blocked_lock(cache_entry_t      *pentry,
                         fsal_op_context_t  *pcontext,
                         cache_lock_entry_t *lock_entry)
 {
-  cache_cookie_entry_t *p_cookie_entry = lock_entry->cle_blocked_cookie;
-
   /* Mark lock as granted and detach cookie and granted call back */
   lock_entry->cle_blocked          = CACHE_NON_BLOCKING;
   lock_entry->cle_blocked_cookie   = NULL;
@@ -1122,8 +1125,10 @@ void grant_blocked_lock(cache_entry_t      *pentry,
                      pcontext,
                      lock_entry);
 
+#ifdef _USE_NLM
   /* Don't need reference to cookie entry any more */
-  cookie_entry_dec_ref(p_cookie_entry);
+  cookie_entry_dec_ref(lock_entry->cle_blocked_cookie);
+#endif
 
   /* Merge any touching or overlapping locks into this one. */
   merge_lock_entry(pentry, pcontext, lock_entry);
@@ -1131,6 +1136,7 @@ void grant_blocked_lock(cache_entry_t      *pentry,
            pentry, pcontext, lock_entry);
 }
 
+#ifdef _USE_NLM
 cache_inode_status_t cache_inode_grant_block(void                  * pcookie,
                                              int                     cookie_size,
                                              cache_inode_status_t  * pstatus)
