@@ -50,11 +50,9 @@ extern const char *lock_result_str(int rc);
 extern netobj *copy_netobj(netobj * dst, netobj * src);
 extern void netobj_free(netobj * obj);
 extern void netobj_to_string(netobj *obj, char *buffer, int maxlen);
-extern void nlm_lock_entry_dec_ref(nlm_lock_entry_t * nlm_entry);
 extern int in_nlm_grace_period(void);
 extern int nlm_monitor_host(char *name);
 extern int nlm_unmonitor_host(char *name);
-extern void nlm_grant_blocked_locks(netobj * orig_fh);
 extern void nlm_resend_grant_msg(void *arg);
 
 /**

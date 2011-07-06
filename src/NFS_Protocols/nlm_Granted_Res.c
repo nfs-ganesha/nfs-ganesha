@@ -109,7 +109,7 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
           //TODO FSF: handle error
         }
       nlm_signal_async_resp(nlm_entry);
-      nlm_lock_entry_dec_ref(nlm_entry);
+      //nlm_lock_entry_dec_ref(nlm_entry);
     }
   /*
    * Consider all other return status as success

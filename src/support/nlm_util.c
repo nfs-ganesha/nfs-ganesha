@@ -128,26 +128,6 @@ inline uint64_t lock_end(uint64_t start, uint64_t len)
     return start + len - 1;
 }
 
-void LogEntry(const char *reason, nlm_lock_entry_t *entry)
-{
-  struct nlm4_lockargs *arg = &entry->arg;
-  struct nlm4_lock *nlm_lock = &arg->alock;
-
-  if(isFullDebug(COMPONENT_NLM))
-    {
-      char fh_buff[1024], oh_buff[1024];
-      netobj_to_string(&nlm_lock->oh, oh_buff, 1023);
-      netobj_to_string(&nlm_lock->fh, fh_buff, 1023);
-      LogFullDebug(COMPONENT_NLM,
-                   "%s Entry: %p caller=%s, fh=%s, oh=%s, svid=%d, start=0x%llx, end=0x%llx, exclusive=%d, state=%s, ref_count=%d",
-                   reason, entry, nlm_lock->caller_name, fh_buff,
-                   oh_buff, nlm_lock->svid,
-                   (unsigned long long) nlm_lock->l_offset,
-                   (unsigned long long) lock_end(nlm_lock->l_offset, nlm_lock->l_len),
-                   arg->exclusive, lock_result_str(entry->state), entry->ref_count);
-    }
-}
-
 void fill_netobj(netobj * dst, char *data, int len)
 {
   dst->n_len   = 0;
@@ -188,15 +168,6 @@ void netobj_free(netobj * obj)
         Mem_Free(obj->n_bytes);
 }
 
-static int netobj_compare(netobj * obj1, netobj * obj2)
-{
-    if(obj1->n_len != obj2->n_len)
-        return 1;
-    if(memcmp(obj1->n_bytes, obj2->n_bytes, obj1->n_len))
-        return 1;
-    return 0;
-}
-
 void netobj_to_string(netobj *obj, char *buffer, int maxlen)
 {
   int left = maxlen, pos = 0;
@@ -214,130 +185,11 @@ void netobj_to_string(netobj *obj, char *buffer, int maxlen)
     }
 }
 
-static void nlm_lock_entry_inc_ref(nlm_lock_entry_t * nlm_entry)
-{
-    pthread_mutex_lock(&nlm_entry->lock);
-    nlm_entry->ref_count++;
-    pthread_mutex_unlock(&nlm_entry->lock);
-}
-
-void nlm_lock_entry_dec_ref(nlm_lock_entry_t *nlm_entry) 
-{
-    int to_free = 0;
-    pthread_mutex_lock(&nlm_entry->lock);
-    nlm_entry->ref_count--;
-    if(!nlm_entry->ref_count)
-        {
-            /*
-             * We should already be removed from the lock_list
-             * So we can free the lock_entry without any locking
-             */
-            to_free = 1;
-        }
-    pthread_mutex_unlock(&nlm_entry->lock);
-    if(to_free)
-        {
-            LogEntry("nlm_lock_entry_dec_ref Freeing", nlm_entry);
-#ifdef _DEBUG_MEMLEAKS
-            glist_del(&nlm_entry->all_locks);
-#endif
-
-	    /** @todo : Use SAL to manage state */
-            //cache_inode_unpin_pentry(nlm_entry->pentry, nlm_entry->pclient, nlm_entry->ht);
-            Mem_Free(nlm_entry->arg.alock.caller_name);
-            netobj_free(&nlm_entry->arg.alock.fh);
-            netobj_free(&nlm_entry->arg.alock.oh);
-            netobj_free(&nlm_entry->arg.cookie);
-            Mem_Free(nlm_entry);
-        }
-}
-
-static void do_nlm_remove_from_locklist(nlm_lock_entry_t * nlm_entry)
-{
-    /*
-     * If some other thread is holding a reference to this nlm_lock_entry
-     * don't free the structure. But drop from the lock list
-     */
-    glist_del(&nlm_entry->lock_list);
-    nlm_lock_entry_dec_ref(nlm_entry);
-}
-
 void nlm_remove_from_locklist(nlm_lock_entry_t * nlm_entry)
 {
     pthread_mutex_lock(&nlm_lock_list_mutex);
-    do_nlm_remove_from_locklist(nlm_entry);
+    //do_nlm_remove_from_locklist(nlm_entry);
     pthread_mutex_unlock(&nlm_lock_list_mutex);
-}
-
-static inline int different_files(struct nlm4_lock *lock1, struct nlm4_lock *lock2)
-{
-  return netobj_compare(&lock1->fh, &lock2->fh);
-}
-
-/* This is not complete, it doesn't check the owner's IP address...*/
-static inline int different_owners(struct nlm4_lock *lock1, struct nlm4_lock *lock2)
-{
-  if(lock1->svid != lock2->svid)
-    return 1;
-  if(netobj_compare(&lock1->oh, &lock2->oh))
-    return 1;
-  return strcmp(lock1->caller_name, lock2->caller_name);
-}
-
-static inline int different_lock(struct nlm4_lockargs *lock1, struct nlm4_lockargs *lock2)
-{
-  return (lock1->alock.l_offset != lock2->alock.l_offset) ||
-         (lock1->alock.l_len    != lock2->alock.l_len) ||
-         (lock1->exclusive      != lock2->exclusive);
-}
-
-static nlm_lock_entry_t *get_nlm_overlapping_entry(struct nlm4_lock *nlm_lock,
-                                                   int exclusive)
-{
-    int overlap = 0;
-    struct glist_head *glist;
-    nlm_lock_entry_t *nlm_entry = NULL;
-    uint64_t nlm_entry_end, nlm_lock_end;
-
-    glist_for_each(glist, &nlm_lock_list)
-        {
-            nlm_entry = glist_entry(glist, nlm_lock_entry_t, lock_list);
-
-            LogEntry("get_nlm_overlapping_entry Checking", nlm_entry);
-
-            if(different_files(&nlm_entry->arg.alock, nlm_lock))
-                continue;
-
-            if(nlm_entry->state != NLM4_GRANTED)
-                continue;
-
-            if(nlm_entry->arg.alock.l_len)
-                nlm_entry_end = nlm_entry->arg.alock.l_offset + nlm_entry->arg.alock.l_len;
-            else
-                nlm_entry_end = UINT64_MAX;
-
-            if(nlm_lock->l_len)
-                nlm_lock_end = nlm_lock->l_offset + nlm_lock->l_len;
-            else
-                nlm_lock_end = UINT64_MAX;
-
-            if((nlm_entry_end > nlm_lock->l_offset) &&
-               (nlm_lock_end > nlm_entry->arg.alock.l_offset))
-                {
-                    /* lock overlaps see if we can allow */
-                    if(nlm_entry->arg.exclusive || exclusive)
-                        {
-                            overlap = 1;
-                            break;
-                        }
-                }
-        }
-
-    if(!overlap)
-        return NULL;
-
-    nlm_lock_entry_inc_ref(nlm_entry);
-    return nlm_entry;
 }
 
 int in_nlm_grace_period(void)
@@ -498,86 +350,9 @@ free_nlm_lock_entry:
      * will send the lock request again and before the
      * block locks are granted it gets the lock.
      */
-    nlm_grant_blocked_locks(&nlm_entry->arg.alock.fh);
-    nlm_lock_entry_dec_ref(nlm_entry);
+    //nlm_grant_blocked_locks(&nlm_entry->arg.alock.fh);
+    //nlm_lock_entry_dec_ref(nlm_entry);
     return;
-}
-
-static void do_nlm_grant_blocked_locks(void *arg)
-{
-    netobj *fh;
-    struct nlm4_lock nlm_lock;
-    nlm_lock_entry_t *nlm_entry;
-    struct glist_head *glist, *glistn;
-    nlm_lock_entry_t *nlm_entry_overlap;
-
-    fh = (netobj *) arg;
-    pthread_mutex_lock(&nlm_lock_list_mutex);
-    glist_for_each_safe(glist, glistn, &nlm_lock_list)
-        {
-            nlm_entry = glist_entry(glist, nlm_lock_entry_t, lock_list);
-            if(netobj_compare(&nlm_entry->arg.alock.fh, fh))
-                continue;
-            if(nlm_entry->state != NLM4_BLOCKED)
-                continue;
-            /*
-             * found a blocked entry for this file handle
-             * See if we can place the lock
-             */
-            /* dummy nlm4_lock */
-            if(!copy_netobj(&nlm_lock.fh, &nlm_entry->arg.alock.fh))
-                {
-                    /* If we fail the best is to delete the block entry
-                     * so that client can try again and get the lock. May be
-                     * by then we are able to allocate objects
-                     */
-                    do_nlm_remove_from_locklist(nlm_entry);
-                    continue;
-                }
-            nlm_lock.l_offset = nlm_entry->arg.alock.l_offset;
-            nlm_lock.l_len = nlm_entry->arg.alock.l_len;
-            nlm_entry_overlap = get_nlm_overlapping_entry(&nlm_lock, nlm_entry->arg.exclusive);
-            netobj_free(&nlm_lock.fh);
-            if(nlm_entry_overlap)
-                {
-                    nlm_lock_entry_dec_ref(nlm_entry_overlap);
-                    continue;
-                }
-
-            pthread_mutex_lock(&nlm_entry->lock);
-            /*
-             * Mark the nlm_entry as granted and send a grant msg rpc
-             * Some os only support grant msg rpc
-             */
-
-            nlm_entry->state = NLM4_GRANTED;
-            nlm_entry->ref_count++;
-            pthread_mutex_unlock(&nlm_entry->lock);
-            /*
-             * We don't want to send the granted_msg rpc holding
-             * nlm_lock_list_mutex. That will prevent other lock operation
-             * at the server. We have incremented nlm_entry ref_count.
-             */
-            nlm_async_callback(nlm4_send_grant_msg, (void *)nlm_entry);
-        }
-    pthread_mutex_unlock(&nlm_lock_list_mutex);
-    netobj_free(fh);
-    Mem_Free(fh);
-}
-
-void nlm_grant_blocked_locks(netobj * orig_fh)
-{
-    netobj *fh;
-    fh = (netobj *) Mem_Alloc(sizeof(netobj));
-    if(copy_netobj(fh, orig_fh) != NULL)
-      {
-        /*
-         * We don't want to block the unlock request to wait
-         * for us to grant lock to other host. So create an async
-         * task
-         */
-        nlm_async_callback(do_nlm_grant_blocked_locks, (void *)fh);
-      }
 }
 
 /*
