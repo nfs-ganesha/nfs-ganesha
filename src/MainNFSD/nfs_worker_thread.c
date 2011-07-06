@@ -1138,12 +1138,20 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       /* Do the authentication stuff, if needed */
       if(pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
         {
-          if(nfs_build_fsal_context
-             (ptr_req, &related_client, pexport,
 #ifdef _USE_SHARED_FSAL
-              &pworker_data->thread_fsal_context[pexport->fsalid], &user_credentials) == FALSE)
+	  FSAL_SetId( pexport->fsalid ) ;
+
+          if(nfs_build_fsal_context( ptr_req, 
+                                     &related_client, 
+                                     pexport,
+                                     &pworker_data->thread_fsal_context[pexport->fsalid], 
+                                     &user_credentials) == FALSE)
 #else
-              &pworker_data->thread_fsal_context, &user_credentials) == FALSE)
+          if(nfs_build_fsal_context( ptr_req, 
+                                     &related_client, 
+                                     pexport,
+                                     &pworker_data->thread_fsal_context, 
+                                     &user_credentials) == FALSE)
 #endif
             {
               svcerr_auth(ptr_svc, AUTH_TOOWEAK);
@@ -1183,11 +1191,15 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 #ifdef _USE_SHARED_FSAL
       if( pexport != NULL )
        {
+         printf( "==============> pexport->fsalid=%u %s %u\n", pexport->fsalid, __FUNCTION__, __LINE__ ) ;
          pfsal_op_ctx = &pworker_data->thread_fsal_context[pexport->fsalid] ; 
          FSAL_SetId( pexport->fsalid ) ;
        }
       else
+       {
+        printf( "============================> pexport = NULL prog=%u vers=%u req=%u\n", ptr_req->rq_prog, ptr_req->rq_vers, ptr_req->rq_proc ) ; 
 	pfsal_op_ctx = NULL ; /* Only for mount protocol (pexport is then meaningless */
+       }
 #else
       pfsal_op_ctx =  &pworker_data->thread_fsal_context ;
 #endif
@@ -1511,6 +1523,8 @@ void *worker_thread(void *IndexArg)
       fsalid =  nfs_param.loaded_fsal[i] ;
 
       FSAL_SetId( fsalid ) ;
+
+      printf( "-----------> FSAL_InitClientContext for FSAL %u|%s line=%u\n", fsalid, FSAL_fsalid2name( fsalid ), __LINE__ ) ;
 
       if(FSAL_IS_ERROR(FSAL_InitClientContext(&(pmydata->thread_fsal_context[fsalid]))))
        {

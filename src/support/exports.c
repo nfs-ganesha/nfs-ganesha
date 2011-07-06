@@ -2691,7 +2691,12 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 #ifdef _USE_SHARED_FSAL
       for( i = 0 ; i < nfs_param.nb_loaded_fsal ; i++ )
        {
-          fsalid = nfs_param.loaded_fsal[i] ;
+         fsalid = nfs_param.loaded_fsal[i] ;
+
+         FSAL_SetId( fsalid ) ;
+
+         printf( "-----------> FSAL_InitClientContext for FSAL %u|%s line=%u\n", fsalid, FSAL_fsalid2name( fsalid ), __LINE__ ) ;
+
            
          fsal_status = FSAL_InitClientContext(&context[fsalid]);
          if(FSAL_IS_ERROR(fsal_status))
@@ -2716,7 +2721,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       for(pcurrent = pexportlist; pcurrent != NULL; pcurrent = pcurrent->next)
         {
 #ifdef _USE_SHARED_FSAL
-         FSAL_SetId( pexportlist->fsalid ) ;
+         FSAL_SetId( pcurrent->fsalid ) ;
 #endif 
 
 #ifdef _USE_MFSL_ASYNC
@@ -2750,7 +2755,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
           /* get the related client context */
 #ifdef _USE_SHARED_FSAL
-          fsal_status = FSAL_GetClientContext(&context[pexportlist->fsalid], &pcurrent->FS_export_context, 0, 0, NULL, 0 ) ;
+          fsal_status = FSAL_GetClientContext(&context[pcurrent->fsalid], &pcurrent->FS_export_context, 0, 0, NULL, 0 ) ;
 #else
           fsal_status = FSAL_GetClientContext(&context, &pcurrent->FS_export_context, 0, 0, NULL, 0 ) ;
 #endif
@@ -2764,7 +2769,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
           /* Lookup for the FSAL Path */
 #ifdef _USE_SHARED_FSAL
-          if(FSAL_IS_ERROR((fsal_status = FSAL_lookupPath(&exportpath_fsal, &context[pexportlist->fsalid], &fsal_handle, NULL))))
+          if(FSAL_IS_ERROR((fsal_status = FSAL_lookupPath(&exportpath_fsal, &context[pcurrent->fsalid], &fsal_handle, NULL))))
 #else
           if(FSAL_IS_ERROR((fsal_status = FSAL_lookupPath(&exportpath_fsal, &context, &fsal_handle, NULL))))
 #endif
@@ -2797,7 +2802,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
                                              ht,
                                              &small_client,
 #ifdef _USE_SHARED_FSAL
-                                             &context[pexportlist->fsalid], 
+                                             &context[pcurrent->fsalid], 
 #else
                                              &context, 
 #endif
@@ -2819,7 +2824,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
             return FALSE;
 
 #ifdef _USE_SHARED_FSAL
-          if( FSAL_IS_ERROR((fsal_status = FSAL_static_fsinfo(&fsal_handle, &context[pexportlist->fsalid], pstaticinfo))))
+          if( FSAL_IS_ERROR((fsal_status = FSAL_static_fsinfo(&fsal_handle, &context[pcurrent->fsalid], pstaticinfo))))
 #else
           if( FSAL_IS_ERROR((fsal_status = FSAL_static_fsinfo(&fsal_handle, &context, pstaticinfo))))
 #endif
@@ -2848,7 +2853,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
                   &cache_content_status) != CACHE_CONTENT_SUCCESS)
 #else
               if(cache_content_crash_recover
-                 (pcurrent->id, &recover_datacache_client, &small_client, ht, &context[pexportlist->fsalid],
+                 (pcurrent->id, &recover_datacache_client, &small_client, ht, &context[pcurrent->fsalid],
                   &cache_content_status) != CACHE_CONTENT_SUCCESS)
 #endif
                 {

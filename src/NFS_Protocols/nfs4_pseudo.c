@@ -1563,6 +1563,11 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       return res_LOOKUP4.status;
     }
 
+#ifdef _USE_SHARED_FSAL 
+  /* Set the FSAL ID here */
+  FSAL_SetId( iter->junction_export->fsalid ) ;
+#endif
+
  
   /* A matching entry was found */
   if(iter->junction_export == NULL)
