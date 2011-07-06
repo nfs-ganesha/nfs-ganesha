@@ -451,8 +451,6 @@ static cache_lock_entry_t *create_cache_lock_entry(cache_entry_t      * pentry,
                                                    cache_blocking_t     blocked,
                                                    cache_lock_owner_t * powner,
                                                    cache_lock_desc_t  * plock,
-                                                   void               * pcookie,
-                                                   int                  cookie_size,
                                                    granted_callback_t   granted_callback)
 {
   cache_lock_entry_t *new_entry;
@@ -464,22 +462,8 @@ static cache_lock_entry_t *create_cache_lock_entry(cache_entry_t      * pentry,
 
   memset(new_entry, 0, sizeof(*new_entry));
 
-  if(pcookie != NULL && cookie_size != 0)
-    {
-      new_entry->cle_pcookie = Mem_Alloc_Label(cookie_size, "lock_cookie");
-      if(new_entry->cle_pcookie == NULL)
-        {
-          Mem_Free(new_entry);
-          return NULL;
-        }
-      memcpy(new_entry->cle_pcookie, pcookie, cookie_size);
-      new_entry->cle_cookie_size = cookie_size;
-    }
-
   if(pthread_mutex_init(&new_entry->cle_mutex, NULL) == -1)
     {
-      if(new_entry->cle_pcookie != NULL)
-        Mem_Free(new_entry->cle_pcookie);
       Mem_Free(new_entry);
       return NULL;
     }
@@ -523,8 +507,6 @@ inline cache_lock_entry_t *cache_lock_entry_t_dup(cache_lock_entry_t * orig_entr
                                  orig_entry->cle_blocked,
                                  orig_entry->cle_owner,
                                  &orig_entry->cle_lock,
-                                 orig_entry->cle_pcookie,
-                                 orig_entry->cle_cookie_size,
                                  orig_entry->cle_granted_callback);
 }
 
@@ -565,8 +547,6 @@ void lock_entry_dec_ref(cache_entry_t      *pentry,
       glist_del(&lock_entry->cle_all_locks);
       V(all_locks_mutex);
 #endif
-      if(lock_entry->cle_pcookie != NULL)
-        Mem_Free(lock_entry->cle_pcookie);
       Mem_Free(lock_entry);
     }
 }
@@ -1482,8 +1462,6 @@ cache_inode_status_t FSAL_unlock_no_owner(cache_entry_t        * pentry,
                                          CACHE_NON_BLOCKING,
                                          &unknown_owner, /* no real owner */
                                          plock,
-                                         NULL, /* No cookie */
-                                         0,
                                          NULL);
 
   if(unlock_entry == NULL)
@@ -1652,8 +1630,6 @@ cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
 cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
                                       fsal_op_context_t    * pcontext,
                                       cache_lock_owner_t   * powner,
-                                      void                 * pcookie,
-                                      int                    cookie_size,
                                       cache_blocking_t       blocking,
                                       granted_callback_t     granted_callback,
                                       cache_lock_desc_t    * plock,
@@ -1687,12 +1663,6 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
             continue;
       
           if(different_lock(&found_entry->cle_lock, plock))
-            continue;
-      
-          if(!same_cookie(found_entry->cle_pcookie,
-                          found_entry->cle_cookie_size,
-                          pcookie,
-                          cookie_size))
             continue;
       
           /*
@@ -1805,8 +1775,6 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
                                         blocked,
                                         powner,
                                         plock,
-                                        pcookie,
-                                        cookie_size,
                                         granted_callback);
   if(!found_entry)
     {
@@ -1924,8 +1892,6 @@ cache_inode_status_t cache_inode_unlock(cache_entry_t        * pentry,
 cache_inode_status_t cache_inode_cancel(cache_entry_t        * pentry,
                                         fsal_op_context_t    * pcontext,
                                         cache_lock_owner_t   * powner,
-                                        void                 * pcookie,
-                                        int                    cookie_size,
                                         cache_lock_desc_t    * plock,
                                         cache_inode_client_t * pclient,
                                         cache_inode_status_t * pstatus)

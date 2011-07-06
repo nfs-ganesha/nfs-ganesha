@@ -130,8 +130,6 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
   if(cache_inode_cancel(pentry,
                         pcontext,
                         nlm_owner,
-                        arg->alock.oh.n_bytes,
-                        arg->alock.oh.n_len,
                         &lock,
                         pclient,
                         &cache_status) != CACHE_INODE_SUCCESS)

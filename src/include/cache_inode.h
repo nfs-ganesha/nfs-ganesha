@@ -1092,8 +1092,6 @@ typedef struct cache_lock_entry_t
   cache_blocking_t              cle_blocked;
   cache_lock_owner_t          * cle_owner;
   cache_lock_desc_t             cle_lock;
-  void                        * cle_pcookie;
-  int                           cle_cookie_size;
   granted_callback_t            cle_granted_callback;
   cache_cookie_entry_t        * cle_blocked_cookie;
   pthread_mutex_t               cle_mutex;
@@ -1156,8 +1154,6 @@ cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
 cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
                                       fsal_op_context_t    * pcontext,
                                       cache_lock_owner_t   * powner,
-                                      void                 * pcookie,
-                                      int                    cookie_size,
                                       cache_blocking_t       blocking,
                                       granted_callback_t     granted_callback,
                                       cache_lock_desc_t    * plock,
@@ -1176,8 +1172,6 @@ cache_inode_status_t cache_inode_unlock(cache_entry_t        * pentry,
 cache_inode_status_t cache_inode_cancel(cache_entry_t        * pentry,
                                         fsal_op_context_t    * pcontext,
                                         cache_lock_owner_t   * powner,
-                                        void                 * pcookie,
-                                        int                    cookie_size,
                                         cache_lock_desc_t    * plock,
                                         cache_inode_client_t * pclient,
                                         cache_inode_status_t * pstatus);
