@@ -1050,7 +1050,8 @@ typedef enum cache_blocking_t
   CACHE_NON_BLOCKING,
   CACHE_NLM_BLOCKING,
   CACHE_NFSV4_BLOCKING,
-  CACHE_GRANTING
+  CACHE_GRANTING,
+  CACHE_CANCELED
 } cache_blocking_t;
 
 typedef enum cache_lock_t
@@ -1067,6 +1068,7 @@ typedef struct cache_lock_desc_t
 } cache_lock_desc_t;
 
 typedef struct cache_lock_entry_t *cache_lock_entry_p;
+typedef struct cache_cookie_entry_t cache_cookie_entry_t;
 
 typedef cache_inode_status_t (*granted_callback_t)(cache_entry_t        * pentry,
                                                    fsal_op_context_t    * pcontext,
@@ -1093,7 +1095,7 @@ typedef struct cache_lock_entry_t
   void                        * cle_pcookie;
   int                           cle_cookie_size;
   granted_callback_t            cle_granted_callback;
-  struct cache_cookie_entry_t * cle_blocked_cookie;
+  cache_cookie_entry_t        * cle_blocked_cookie;
   pthread_mutex_t               cle_mutex;
 } cache_lock_entry_t;
 
@@ -1113,14 +1115,14 @@ void lock_entry_dec_ref(cache_entry_t      *pentry,
 void release_lock_owner(cache_lock_owner_t *powner);
 
 #ifdef _USE_NLM
-typedef struct cache_cookie_entry_t
+struct cache_cookie_entry_t
 {
   pthread_mutex_t     lce_mutex;
   int                 lce_refcount;
   cache_entry_t      *lce_pentry;
   fsal_op_context_t  *lce_pcontext;
   cache_lock_entry_t *lce_lock_entry;
-} cache_cookie_entry_t;
+};
 
 void cookie_entry_inc_ref(cache_cookie_entry_t * p_cookie_entry);
 void cookie_entry_dec_ref(cache_cookie_entry_t * p_cookie_entry);
@@ -1135,6 +1137,11 @@ int cache_inode_insert_block(cache_entry_t            * pentry,
 cache_inode_status_t cache_inode_grant_block(void                  * pcookie,
                                              int                     cookie_size,
                                              cache_inode_status_t  * pstatus);
+
+cache_inode_status_t cach_inode_release_block(void                 * pcookie,
+                                              int                    cookie_size,
+                                              cache_inode_status_t * pstatus,
+                                              cache_inode_client_t * pclient);
 #endif
 
 cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,

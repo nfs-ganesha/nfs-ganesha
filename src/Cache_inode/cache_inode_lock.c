@@ -116,6 +116,14 @@ cache_inode_status_t cache_inode_lock_init(cache_inode_status_t * pstatus)
   return *pstatus;
 }
 
+cache_inode_status_t FSAL_LockOp(cache_entry_t        * pentry,
+                                 fsal_op_context_t    * pcontext,
+                                 fsal_lock_op_t         lock_op,
+                                 cache_lock_owner_t   * powner,
+                                 cache_lock_desc_t    * plock,
+                                 cache_lock_owner_t  ** holder,    /* owner that holds conflicting lock */
+                                 cache_lock_desc_t    * conflict); /* description of conflicting lock */
+
 /******************************************************************************
  *
  * Functions to display various aspects of a lock
@@ -174,6 +182,7 @@ const char *str_blocking(cache_blocking_t blocking)
       case CACHE_NLM_BLOCKING:   return "NLM_BLOCKING  ";
       case CACHE_NFSV4_BLOCKING: return "NFSV4_BLOCKING";
       case CACHE_GRANTING:       return "GRANTING      ";
+      case CACHE_CANCELED:       return "CANCELED      ";
     }
   return "unknown       ";
 }
@@ -186,6 +195,7 @@ const char *str_blocked(cache_blocking_t blocked)
       case CACHE_NLM_BLOCKING:   return "NLM_BLOCKING  ";
       case CACHE_NFSV4_BLOCKING: return "NFSV4_BLOCKING";
       case CACHE_GRANTING:       return "GRANTING      ";
+      case CACHE_CANCELED:       return "CANCELED      ";
     }
   return "unknown       ";
 }
@@ -809,7 +819,7 @@ static bool_t subtract_lock_from_list(cache_entry_t        * pentry,
       if(powner != NULL && different_owners(found_entry->cle_owner, powner))
           continue;
       /*
-       * We have matched all atribute of powner/plock
+       * We have matched owner.
        * Even though we are taking a reference to found_entry, we
        * don't inc the ref count because we want to drop the lock entry.
        */
@@ -967,6 +977,20 @@ void cookie_entry_inc_ref(cache_cookie_entry_t * p_cookie_entry)
   V(p_cookie_entry->lce_mutex);
 }
 
+void cookie_entry_unhook(cache_cookie_entry_t * p_cookie_entry)
+{
+  cache_entry_t * pentry = p_cookie_entry->lce_pentry;
+
+  P(pentry->object.file.lock_list_mutex);
+
+  /* Don't need reference to lock entry any more */
+  lock_entry_dec_ref(p_cookie_entry->lce_pentry,
+                     p_cookie_entry->lce_pcontext,
+                     p_cookie_entry->lce_lock_entry);
+
+  V(pentry->object.file.lock_list_mutex);
+}
+
 void cookie_entry_dec_ref(cache_cookie_entry_t * p_cookie_entry)
 {
   bool_t remove = FALSE;
@@ -987,6 +1011,8 @@ void cookie_entry_dec_ref(cache_cookie_entry_t * p_cookie_entry)
       switch(HashTable_DelRef(ht_lock_cookies, &buffkey, &old_key, &old_value, Hash_del_cookie_entry_ref))
         {
           case HASHTABLE_SUCCESS:
+            /* Removed from hash table, now unlink from lock entry */
+            cookie_entry_unhook((cache_cookie_entry_t *)old_value.pdata);
             Mem_Free(old_key.pdata);
             Mem_Free(old_value.pdata);
             break;
@@ -1115,24 +1141,24 @@ void grant_blocked_lock(cache_entry_t      *pentry,
                         fsal_op_context_t  *pcontext,
                         cache_lock_entry_t *lock_entry)
 {
+#ifdef _USE_NLM
+  cache_cookie_entry_t *pcookie = lock_entry->cle_blocked_cookie;
+#endif
+
   /* Mark lock as granted and detach cookie and granted call back */
   lock_entry->cle_blocked          = CACHE_NON_BLOCKING;
   lock_entry->cle_blocked_cookie   = NULL;
   lock_entry->cle_granted_callback = NULL;
 
-  /* Don't need reference to lock entry any more */
-  lock_entry_dec_ref(pentry,
-                     pcontext,
-                     lock_entry);
-
 #ifdef _USE_NLM
   /* Don't need reference to cookie entry any more */
-  cookie_entry_dec_ref(lock_entry->cle_blocked_cookie);
+  if(pcookie != NULL)
+    cookie_entry_dec_ref(pcookie);
 #endif
 
   /* Merge any touching or overlapping locks into this one. */
   merge_lock_entry(pentry, pcontext, lock_entry);
-  LogEntry("cache_inode_grant_block granted entry",
+  LogEntry("grant_blocked_lock granted entry",
            pentry, pcontext, lock_entry);
 }
 
@@ -1164,13 +1190,15 @@ cache_inode_status_t cache_inode_grant_block(void                  * pcookie,
    */
   if(lock_entry->cle_blocked == CACHE_GRANTING)
     {
-      /* Handle the actual guts of granting the blocked lock */
+      /* Handle the actual guts of releasing the blocked lock */
       grant_blocked_lock(p_cookie_entry->lce_pentry,
                          p_cookie_entry->lce_pcontext,
                          p_cookie_entry->lce_lock_entry);
     }
 
   V(pentry->object.file.lock_list_mutex);
+
+  cookie_entry_dec_ref(p_cookie_entry);
 
   *pstatus = CACHE_INODE_SUCCESS;
   return *pstatus;
@@ -1224,6 +1252,152 @@ static void grant_blocked_locks(cache_entry_t        * pentry,
     }
 }
 
+void cancel_blocked_lock(cache_entry_t        * pentry,
+                         fsal_op_context_t    * pcontext,
+                         cache_lock_entry_t   * lock_entry)
+{
+#ifdef _USE_NLM
+  cache_cookie_entry_t *pcookie = lock_entry->cle_blocked_cookie;
+#endif
+
+  /* Remove the lock from the lock list*/
+  LogEntry("cancel_blocked_lock Removing", pentry, pcontext, lock_entry);
+  remove_from_locklist(pentry, pcontext, lock_entry);
+  
+  /* Mark lock as granted and detach cookie and granted call back */
+  lock_entry->cle_blocked          = CACHE_CANCELED;
+  lock_entry->cle_blocked_cookie   = NULL;
+  lock_entry->cle_granted_callback = NULL;
+
+#ifdef _USE_NLM
+  /* Don't need reference to cookie entry any more */
+  if(pcookie != NULL)
+    cookie_entry_dec_ref(pcookie);
+#endif
+}
+
+/**
+ *
+ * cancel_blocked_locks_range: Cancel blocked locks that overlap this lock.
+ *
+ * Handle the situation where we have granted a lock and the client now
+ * assumes it holds the lock, but we haven't received the GRANTED RSP, and
+ * now the client is unlocking the lock.
+ *
+ * This will also handle the case of a client that uses UNLOCK to cancel
+ * a blocked lock.
+ *
+ * Because this will release any blocked lock that was in the process of
+ * being granted that overlaps the lock at all, we protect ourselves from
+ * having a stuck lock at the risk of the client thinking it has a lock
+ * it now doesn't.
+ *
+ * If the client unlock doesn't happen to fully overlap a blocked lock,
+ * the blocked lock will be cancelled in full. Hopefully the client will
+ * retry the remainder lock that should have still been blocking.
+ */
+void cancel_blocked_locks_range(cache_entry_t        * pentry,
+                                fsal_op_context_t    * pcontext,
+                                cache_lock_owner_t   * powner,
+                                cache_lock_desc_t    * plock,
+                                cache_inode_client_t * pclient)
+{
+  struct glist_head *glist;
+  cache_lock_entry_t *found_entry = NULL;
+  uint64_t found_entry_end, plock_end = lock_end(plock);
+
+  glist_for_each(glist, &pentry->object.file.lock_list)
+    {
+      found_entry = glist_entry(glist, cache_lock_entry_t, cle_list);
+
+      /* Skip locks not owned by owner */
+      if(powner != NULL && different_owners(found_entry->cle_owner, powner))
+          continue;
+
+      /* Skip granted locks */
+      if(found_entry->cle_blocked == CACHE_NON_BLOCKING)
+          continue;
+
+      LogEntry("cancel_blocked_locks_range Checking",
+               pentry, pcontext, found_entry);
+
+      found_entry_end = lock_end(&found_entry->cle_lock);
+
+      if((found_entry_end >= plock->cld_offset) &&
+         (found_entry->cle_lock.cld_offset <= plock_end))
+        {
+          /* lock overlaps, cancel it. */
+          cancel_blocked_lock(pentry, pcontext, found_entry);
+        }
+    }
+}
+
+#ifdef _USE_NLM
+cache_inode_status_t cach_inode_release_block(void                 * pcookie,
+                                              int                    cookie_size,
+                                              cache_inode_status_t * pstatus,
+                                              cache_inode_client_t * pclient)
+{ 
+  cache_cookie_entry_t * p_cookie_entry; 
+  cache_lock_entry_t   * lock_entry;
+  cache_entry_t        * pentry;
+  fsal_op_context_t    * pcontext;
+  cache_lock_owner_t   * powner;
+  cache_lock_desc_t      lock;
+
+  if(cache_inode_find_block(pcookie,
+                            cookie_size,
+                            &p_cookie_entry,
+                            pstatus) != CACHE_INODE_SUCCESS)
+    {
+      return *pstatus;
+    }
+
+  lock_entry = p_cookie_entry->lce_lock_entry;
+  pentry     = p_cookie_entry->lce_pentry;
+  pcontext   = p_cookie_entry->lce_pcontext;
+
+  P(pentry->object.file.lock_list_mutex);
+
+  /* We need to make sure lock is only "granted" once...
+   * It's (remotely) possible that due to latency, we might end up processing
+   * two GRANTED_RSP calls at the same time.
+   */
+  if(lock_entry->cle_blocked == CACHE_GRANTING)
+    {
+      /* Get a reference to the lock owner and duplicate the lock */
+      powner = lock_entry->cle_owner;
+      get_lock_owner(powner);
+      lock = lock_entry->cle_lock;
+      
+      /* Handle the actual guts of canceling the blocked lock */
+      cancel_blocked_lock(pentry, pcontext, lock_entry);
+
+      /* We had acquired an FSAL lock, need to release it. */
+      *pstatus = FSAL_LockOp(pentry,
+                             pcontext,
+                             FSAL_OP_UNLOCK,
+                             powner,
+                             &lock,
+                             NULL,   /* no conflict expected */
+                             NULL);
+
+      /* Release the lock owner reference */
+      release_lock_owner(powner);
+
+      /* Check to see if we can grant any blocked locks. */
+      grant_blocked_locks(pentry, pcontext, pclient);
+    }
+
+  V(pentry->object.file.lock_list_mutex);
+
+  cookie_entry_dec_ref(p_cookie_entry);
+
+  *pstatus = CACHE_INODE_SUCCESS;
+  return *pstatus;
+}
+#endif
+
 /******************************************************************************
  *
  * Functions to interract with FSAL
@@ -1274,6 +1448,25 @@ cache_inode_status_t convert_fsal_lock_status(fsal_status_t fsal_status)
   return status;
 }
 
+/**
+ *
+ * FSAL_unlock_no_owner: Handle FSAL unlock when owner is not supported.
+ *
+ * When the FSAL doesn't support lock owners, we can't just arbitrarily
+ * unlock the entire range in the FSAL, we might have locks owned by
+ * other owners that still exist, either because there were several
+ * lock owners with read locks, or the client unlocked a larger range
+ * that is actually locked (some (most) clients will actually unlock the
+ * entire file when closing a file or terminating a process).
+ *
+ * Basically, we want to create a list of ranges to unlock. To do so
+ * we create a dummy entry in a dummy list for the unlock range. Then
+ * we subtract each existing lock from the dummy list.
+ *
+ * The list of unlock ranges will include ranges that the original onwer
+ * didn't actually have locks in. This behavior is actually helpful
+ * for some callers of FSAL_OP_UNLOCK.
+ */
 cache_inode_status_t FSAL_unlock_no_owner(cache_entry_t        * pentry,
                                           fsal_op_context_t    * pcontext,
                                           cache_lock_desc_t    * plock)
@@ -1681,6 +1874,13 @@ cache_inode_status_t cache_inode_unlock(cache_entry_t        * pentry,
   LogFullDebug(COMPONENT_NLM,
                "----------------------------------------------------------------------");
 
+  /* First cancel any blocking locks that might overlap the unlocked range. */
+  cancel_blocked_locks_range(pentry,
+                             pcontext,
+                             powner,
+                             plock,
+                             pclient);
+
   /* Release the lock from cache inode lock list for pentry */
   gotsome = subtract_lock_from_list(pentry,
                                     pcontext,
@@ -1691,10 +1891,15 @@ cache_inode_status_t cache_inode_unlock(cache_entry_t        * pentry,
 
   if(*pstatus != CACHE_INODE_SUCCESS)
     {
+      // TODO FSF: do we really want to exit here?
       V(pentry->object.file.lock_list_mutex);
       return *pstatus;
     }
 
+  /* Unlocking the entire region will remove any FSAL locks we held, whether
+   * from fully granted locks, or from blocking locks that were in the process
+   * of being granted.
+   */
   *pstatus = FSAL_LockOp(pentry,
                          pcontext,
                          FSAL_OP_UNLOCK,
@@ -1751,7 +1956,23 @@ cache_inode_status_t cache_inode_cancel(cache_entry_t        * pentry,
        */
       LogEntry("cache_inode_lock cancelling blocked",
                pentry, pcontext, found_entry);
-      remove_from_locklist(pentry, pcontext, found_entry);
+      cancel_blocked_lock(pentry, pcontext, found_entry);
+
+      /* Unlocking the entire region will remove any FSAL locks we held, whether
+       * from fully granted locks, or from blocking locks that were in the process
+       * of being granted.
+       */
+      *pstatus = FSAL_LockOp(pentry,
+                             pcontext,
+                             FSAL_OP_UNLOCK,
+                             powner,
+                             plock,
+                             NULL,   /* no conflict expected */
+                             NULL);
+
+      /* Check to see if we can grant any blocked locks. */
+      grant_blocked_locks(pentry, pcontext, pclient);
+
       break;
     }
 

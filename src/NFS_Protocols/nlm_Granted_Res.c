@@ -76,6 +76,7 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
   nlm4_res *arg = &parg->arg_nlm4_res;
   nlm_lock_entry_t *nlm_entry = NULL;
   char buffer[1024];
+  cache_inode_status_t cache_status;
 
   netobj_to_string(&arg->cookie, buffer, 1024);
   LogDebug(COMPONENT_NLM,
@@ -87,18 +88,26 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
   if(!nlm_entry)
     return NFS_REQ_OK;
 
-  if(arg->stat.stat == NLM4_DENIED_GRACE_PERIOD)
+  if(arg->stat.stat != NLM4_GRANTED)
     {
       LogMajor(COMPONENT_NLM,
-               "Granted call failed due to client grace period, Retrying...");
-
-      /*
-       * nlm_resend_grant_msg will drop the lock entry ref count
-       */
-      nlm_async_callback(nlm_resend_grant_msg, (void *)nlm_entry);
+               "Granted call failed due to client error, releasing lock");
+      if(cach_inode_release_block(arg->cookie.n_bytes,
+                                  arg->cookie.n_len,
+                                  &cache_status,
+                                  pclient) != CACHE_INODE_SUCCESS)
+        {
+          //TODO FSF: handle error
+        }
     }
   else
     {
+      if(cache_inode_grant_block(arg->cookie.n_bytes,
+                                 arg->cookie.n_len,
+                                 &cache_status) != CACHE_INODE_SUCCESS)
+        {
+          //TODO FSF: handle error
+        }
       nlm_signal_async_resp(nlm_entry);
       nlm_lock_entry_dec_ref(nlm_entry);
     }
