@@ -293,6 +293,9 @@ void nfs_set_param_default()
   nfs_param.core_param.dump_stats_per_client = 0;
   strncpy(nfs_param.core_param.stats_per_client_directory, "/tmp", MAXPATHLEN);
 
+  nfs_param.core_param.max_send_buffer_size = NFS_DEFAULT_SEND_BUFFER_SIZE;
+  nfs_param.core_param.max_recv_buffer_size = NFS_DEFAULT_RECV_BUFFER_SIZE;
+
   /* Worker parameters : LRU */
   nfs_param.worker_param.lru_param.nb_entry_prealloc = NB_PREALLOC_LRU_WORKER;
   nfs_param.worker_param.lru_param.clean_entry = clean_pending_request;

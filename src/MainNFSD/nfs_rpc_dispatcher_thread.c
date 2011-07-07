@@ -237,9 +237,13 @@ void unregister_rpc(void)
 void Create_udp(protos prot)
 {
 #ifdef _USE_TIRPC
-  udp_xprt[prot] = Svc_dg_create(udp_socket[prot], NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE);
+  udp_xprt[prot] = Svc_dg_create(udp_socket[prot],
+                                 nfs_param.core_param.max_send_buffer_size,
+                                 nfs_param.core_param.max_recv_buffer_size);
 #else
-  udp_xprt[prot] = Svcudp_bufcreate(udp_socket[prot], NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE);
+  udp_xprt[prot] = Svcudp_bufcreate(udp_socket[prot],
+                                    nfs_param.core_param.max_send_buffer_size,
+                                    nfs_param.core_param.max_recv_buffer_size);
 #endif
   if(udp_xprt[prot] == NULL)
     LogFatal(COMPONENT_DISPATCH,
@@ -254,9 +258,13 @@ void Create_udp(protos prot)
 void Create_tcp(protos prot)
 {
 #ifdef _USE_TIRPC
-  tcp_xprt[prot] = Svc_vc_create(tcp_socket[prot], NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE);
+  tcp_xprt[prot] = Svc_vc_create(tcp_socket[prot],
+                                 nfs_param.core_param.max_send_buffer_size,
+                                 nfs_param.core_param.max_recv_buffer_size);
 #else
-  tcp_xprt[prot] = Svctcp_create(tcp_socket[prot], NFS_SEND_BUFFER_SIZE, NFS_RECV_BUFFER_SIZE);
+  tcp_xprt[prot] = Svctcp_create(tcp_socket[prot],
+                                 nfs_param.core_param.max_send_buffer_size,
+                                 nfs_param.core_param.max_recv_buffer_size);
 #endif
   if(tcp_xprt[prot] == NULL)
     LogFatal(COMPONENT_DISPATCH,
