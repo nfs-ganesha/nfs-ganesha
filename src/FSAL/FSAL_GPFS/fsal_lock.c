@@ -30,6 +30,91 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
+/**
+ * FSAL_lock_op_no_owner:
+ * Lock/unlock/test an owner independent (anonymous) lock for a region in a file.
+ *
+ * \param p_file_descriptor (input):
+ *        File descriptor of the file to lock.
+ * \param p_filehandle (input):
+ *        File handle of the file to lock.
+ * \param p_context (input):
+ *        Context
+ * \param lock_op (input):
+ *        Can be either FSAL_OP_LOCKT, FSAL_OP_LOCK, FSAL_OP_UNLOCK.
+ *        The operations are test if a file region is locked, lock a file region, unlock a
+ *        file region.
+ * \param lock_type (input):
+ *        Can be either FSAL_LOCK_R, FSAL_LOCK_W.
+ *        Either a read lock or write lock.
+ * \param lock_start (input):
+ *        Start of lock region measured as offset of bytes from start of file.
+ * \param lock_length (input):
+ *        Number of bytes to lock.
+ *
+ * \return Major error codes:
+ *      - ERR_FSAL_NO_ERROR: no error.
+ *      - ERR_FSAL_FAULT: One of the in put parameters is NULL.
+ *      - ERR_FSAL_PERM: lock_op was FSAL_OP_LOCKT and the result was that the operation would not be possible.
+ */
+fsal_status_t GPFSFSAL_lock_op_no_owner( gpfsfsal_file_t       * p_file_descriptor,   /* IN */
+                                         gpfsfsal_handle_t     * p_filehandle,        /* IN */
+                                         fsal_op_context_t * p_context,           /* IN */
+                                         fsal_lock_op_t      lock_op,             /* IN */
+                                         fsal_lock_t         lock_type,           /* IN */
+                                         fsal_size_t         lock_start,          /* IN */
+                                         fsal_size_t         lock_length)         /* IN */
+{
+  int retval;
+  struct flock lock_args;
+  int fcntl_comm;
+  int lk_op;
+
+  if (p_file_descriptor == NULL || p_filehandle == NULL || p_context == NULL)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op_no_owner);
+
+  if (lock_type == FSAL_LOCK_R)
+    lock_args.l_type = F_RDLCK;
+  else if (lock_type == FSAL_LOCK_W)
+    lock_args.l_type = F_WRLCK;
+  else if (lock_op == FSAL_OP_UNLOCK)
+    lock_args.l_type = F_UNLCK;
+  else
+    {
+      LogDebug(COMPONENT_FSAL, "The requested lock type was not read or write and we are not unlocking.");
+      Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op_no_owner);
+    }
+
+  lock_args.l_len = lock_length;
+  lock_args.l_start = lock_start;
+  lock_args.l_whence = SEEK_SET;
+
+  if (lock_op == FSAL_OP_LOCKT)
+    fcntl_comm = F_GETLK;
+  else if (lock_op == FSAL_OP_LOCK || lock_op == FSAL_OP_UNLOCK)
+    fcntl_comm = F_SETLK;
+  else
+    {
+      LogDebug(COMPONENT_FSAL, "Lock operation requested was not TEST, READ, or WRITE.");
+      Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op_no_owner);      
+    }
+
+  /* Can always unlock a region? */
+  if (lock_op == FSAL_OP_LOCKT && lock_args.l_type == F_UNLCK)
+    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lock_op_no_owner);
+
+  errno = 0;
+  retval = fcntl(p_file_descriptor->fd, fcntl_comm, &lock_args);
+  if (retval)
+    Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock_op_no_owner);
+
+  /* F_UNLCK is returned when the tested operation would be possible. */
+  if (lock_op == FSAL_OP_LOCKT && lock_args.l_type != F_UNLCK)
+    Return(ERR_FSAL_PERM, 0, INDEX_FSAL_lock_op_no_owner);
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lock_op_no_owner);
+}
+
 static int do_blocking_lock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
   /*
