@@ -651,10 +651,9 @@ fsal_status_t FSAL_lock_op_no_owner( fsal_file_t       * p_file_descriptor,   /*
                                      fsal_handle_t     * p_filehandle,        /* IN */
                                      fsal_op_context_t * p_context,           /* IN */
                                      fsal_lock_op_t      lock_op,             /* IN */
-                                     fsal_lock_t         lock_type,           /* IN */
-                                     fsal_size_t         lock_start,          /* IN */
-                                     fsal_size_t         lock_length          /* IN */
-    );
+                                     fsal_lock_param_t         request_lock,        /* IN */
+                                     fsal_lock_param_t       * conflicting_lock     /* OUT */
+                                     );
 
 fsal_status_t FSAL_lock_op_owner( fsal_file_t       * p_file_descriptor,   /* IN */
                                   fsal_handle_t     * p_filehandle,        /* IN */
@@ -662,10 +661,9 @@ fsal_status_t FSAL_lock_op_owner( fsal_file_t       * p_file_descriptor,   /* IN
                                   void              * p_owner,             /* IN (opaque to FSAL) */
                                   int                 owner_size,          /* IN */
                                   fsal_lock_op_t      lock_op,             /* IN */
-                                  fsal_lock_t         lock_type,           /* IN */
-                                  fsal_size_t         lock_start,          /* IN */
-                                  fsal_size_t         lock_length          /* IN */
-    );
+                                  fsal_lock_param_t         request_lock,        /* IN */
+                                  fsal_lock_param_t       * conflicting_lock     /* OUT */
+                                  );
 
 /* To be called before exiting */
 fsal_status_t FSAL_terminate();
@@ -1373,9 +1371,8 @@ typedef struct fsal_functions__
                                           fsal_handle_t     * p_filehandle,        /* IN */
                                           fsal_op_context_t * p_context,           /* IN */
                                           fsal_lock_op_t      lock_op,             /* IN */
-                                          fsal_lock_t         lock_type,           /* IN */
-                                          fsal_size_t         lock_start,          /* IN */
-                                          fsal_size_t         lock_length          /* IN */ );
+                                          fsal_lock_param_t         request_lock,        /* IN */
+                                          fsal_lock_param_t       * conflicting_lock     /* OUT */ );
 
   fsal_status_t (*fsal_lock_op_owner)( fsal_file_t       * p_file_descriptor,   /* IN */
                                        fsal_handle_t     * p_filehandle,        /* IN */
@@ -1383,9 +1380,8 @@ typedef struct fsal_functions__
                                        void              * p_owner,             /* IN (opaque to FSAL) */
                                        int                 owner_size,          /* IN */
                                        fsal_lock_op_t      lock_op,             /* IN */
-                                       fsal_lock_t         lock_type,           /* IN */
-                                       fsal_size_t         lock_start,          /* IN */
-                                       fsal_size_t         lock_length          /* IN */ );
+                                       fsal_lock_param_t         request_lock,        /* IN */
+                                       fsal_lock_param_t       * conflicting_lock     /* OUT */ );
 
   /* get fileno */
   unsigned int (*fsal_getfileno) (fsal_file_t *);

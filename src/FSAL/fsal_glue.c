@@ -769,18 +769,16 @@ fsal_status_t FSAL_lock_op_no_owner( fsal_file_t       * p_file_descriptor,   /*
                                      fsal_handle_t     * p_filehandle,        /* IN */
                                      fsal_op_context_t * p_context,           /* IN */
                                      fsal_lock_op_t      lock_op,             /* IN */
-                                     fsal_lock_t         lock_type,           /* IN */
-                                     fsal_size_t         lock_start,          /* IN */
-                                     fsal_size_t         lock_length)         /* IN */
+                                     fsal_lock_param_t         request_lock,        /* IN */
+                                     fsal_lock_param_t       * conflicting_lock)    /* OUT */
 {
   if(fsal_functions.fsal_lock_op_no_owner != NULL)
     return fsal_functions.fsal_lock_op_no_owner(p_file_descriptor,
                                                 p_filehandle,
                                                 p_context,
                                                 lock_op,
-                                                lock_type,
-                                                lock_start,
-                                                lock_length);
+                                                request_lock,
+                                                conflicting_lock);
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op_no_owner);
 }
@@ -791,9 +789,8 @@ fsal_status_t FSAL_lock_op_owner( fsal_file_t       * p_file_descriptor,   /* IN
                                   void              * p_owner,             /* IN (opaque to FSAL) */
                                   int                 owner_size,          /* IN */
                                   fsal_lock_op_t      lock_op,             /* IN */
-                                  fsal_lock_t         lock_type,           /* IN */
-                                  fsal_size_t         lock_start,          /* IN */
-                                  fsal_size_t         lock_length)         /* IN */
+                                  fsal_lock_param_t         request_lock,        /* IN */
+                                  fsal_lock_param_t       * conflicting_lock)    /* OUT */
 {
   if(fsal_functions.fsal_lock_op_owner != NULL)
     return fsal_functions.fsal_lock_op_owner(p_file_descriptor,
@@ -802,9 +799,8 @@ fsal_status_t FSAL_lock_op_owner( fsal_file_t       * p_file_descriptor,   /* IN
                                              p_owner,
                                              owner_size,
                                              lock_op,
-                                             lock_type,
-                                             lock_start,
-                                             lock_length);
+                                             request_lock,
+                                             conflicting_lock);
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op_owner);
 }

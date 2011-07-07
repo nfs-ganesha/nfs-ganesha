@@ -59,58 +59,67 @@
  */
 fsal_status_t GPFSFSAL_lock_op_no_owner( gpfsfsal_file_t       * p_file_descriptor,   /* IN */
                                          gpfsfsal_handle_t     * p_filehandle,        /* IN */
-                                         fsal_op_context_t * p_context,           /* IN */
-                                         fsal_lock_op_t      lock_op,             /* IN */
-                                         fsal_lock_t         lock_type,           /* IN */
-                                         fsal_size_t         lock_start,          /* IN */
-                                         fsal_size_t         lock_length)         /* IN */
+                                         fsal_op_context_t     * p_context,           /* IN */
+                                         fsal_lock_op_t          lock_op,             /* IN */
+                                         fsal_lock_param_t             request_lock,        /* IN */
+                                         fsal_lock_param_t           * conflicting_lock)    /* OUT */
 {
   int retval;
   struct flock lock_args;
   int fcntl_comm;
-  int lk_op;
 
   if (p_file_descriptor == NULL || p_filehandle == NULL || p_context == NULL)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op_no_owner);
 
-  if (lock_type == FSAL_LOCK_R)
-    lock_args.l_type = F_RDLCK;
-  else if (lock_type == FSAL_LOCK_W)
-    lock_args.l_type = F_WRLCK;
-  else if (lock_op == FSAL_OP_UNLOCK)
-    lock_args.l_type = F_UNLCK;
-  else
-    {
-      LogDebug(COMPONENT_FSAL, "The requested lock type was not read or write and we are not unlocking.");
-      Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op_no_owner);
-    }
-
-  lock_args.l_len = lock_length;
-  lock_args.l_start = lock_start;
-  lock_args.l_whence = SEEK_SET;
-
   if (lock_op == FSAL_OP_LOCKT)
-    fcntl_comm = F_GETLK;
+    {
+      fcntl_comm = F_GETLK;
+      if (conflicting_lock == NULL)
+        {
+          LogDebug(COMPONENT_FSAL, "ERROR: Lock operation was test lock but conflicting_lock = NULL.");
+          Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op_no_owner);
+        }
+    }
   else if (lock_op == FSAL_OP_LOCK || lock_op == FSAL_OP_UNLOCK)
     fcntl_comm = F_SETLK;
   else
     {
-      LogDebug(COMPONENT_FSAL, "Lock operation requested was not TEST, READ, or WRITE.");
+      LogDebug(COMPONENT_FSAL, "ERROR: Lock operation requested was not TEST, READ, or WRITE.");
       Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op_no_owner);      
     }
 
-  /* Can always unlock a region? */
-  if (lock_op == FSAL_OP_LOCKT && lock_args.l_type == F_UNLCK)
-    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lock_op_no_owner);
+  if (request_lock.lock_type == FSAL_LOCK_R)
+    lock_args.l_type = F_RDLCK;
+  else if (request_lock.lock_type == FSAL_LOCK_W)
+    lock_args.l_type = F_WRLCK;
+  else
+    {
+      LogDebug(COMPONENT_FSAL, "ERROR: The requested lock type was not read or write.");
+      Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op_no_owner);
+    }
+
+  lock_args.l_len = request_lock.lock_length;
+  lock_args.l_start = request_lock.lock_start;
+  lock_args.l_whence = SEEK_SET;
 
   errno = 0;
   retval = fcntl(p_file_descriptor->fd, fcntl_comm, &lock_args);
   if (retval)
     Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock_op_no_owner);
 
-  /* F_UNLCK is returned when the tested operation would be possible. */
+  /* F_UNLCK is returned then the tested operation would be possible. */
   if (lock_op == FSAL_OP_LOCKT && lock_args.l_type != F_UNLCK)
-    Return(ERR_FSAL_PERM, 0, INDEX_FSAL_lock_op_no_owner);
+    {
+      conflicting_lock->lock_length = lock_args.l_len;
+      conflicting_lock->lock_start = lock_args.l_start;
+      conflicting_lock->lock_type = lock_args.l_type;
+    }
+  else
+    {
+      conflicting_lock->lock_length = 0;
+      conflicting_lock->lock_start = 0;
+      conflicting_lock->lock_type = FSAL_NO_LOCK;
+    }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lock_op_no_owner);
 }

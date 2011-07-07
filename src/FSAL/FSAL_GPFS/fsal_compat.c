@@ -374,13 +374,12 @@ fsal_status_t WRAP_GPFSFSAL_lock_op_no_owner( fsal_file_t       * p_file_descrip
                                               fsal_handle_t     * p_filehandle,        /* IN */
                                               fsal_op_context_t * p_context,           /* IN */
                                               fsal_lock_op_t      lock_op,             /* IN */
-                                              fsal_lock_t         lock_type,           /* IN */
-                                              fsal_size_t         lock_start,          /* IN */
-                                              fsal_size_t         lock_length)         /* IN */
+                                              fsal_lock_param_t         request_lock,        /* IN */
+                                              fsal_lock_param_t       * conflicting_lock)    /* OUT */
 {
   return GPFSFSAL_lock_op_no_owner((gpfsfsal_file_t *) p_file_descriptor,
                                    (gpfsfsal_handle_t *) p_filehandle,
-                                   p_context, lock_op, lock_type, lock_start, lock_length);
+                                   p_context, lock_op, request_lock, conflicting_lock);
 }
 fsal_status_t WRAP_GPFSFSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
