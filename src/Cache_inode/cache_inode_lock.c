@@ -722,11 +722,11 @@ static bool_t subtract_lock_from_entry(cache_entry_t        * pentry,
 
   if(plock_end < found_entry->cle_lock.cld_offset)
     /* nothing to split */
-    FALSE;
+    return FALSE;
 
   if(found_entry_end < plock->cld_offset)
     /* nothing to split */
-    FALSE;
+    return FALSE;
 
   if((plock->cld_offset <= found_entry->cle_lock.cld_offset) &&
      plock_end >= found_entry_end)
@@ -1395,6 +1395,7 @@ inline fsal_lock_t fsal_lock_type(cache_lock_desc_t *lock)
     {
       case CACHE_INODE_LOCK_R: lt = FSAL_LOCK_R;
       case CACHE_INODE_LOCK_W: lt = FSAL_LOCK_W;
+      case CACHE_INODE_NO_LOCK: lt = FSAL_NO_LOCK;
     }
 
   return lt;
@@ -1408,6 +1409,7 @@ inline cache_lock_t cache_inode_lock_type(fsal_lock_t type)
     {
       case FSAL_LOCK_R: lt = CACHE_INODE_LOCK_R;
       case FSAL_LOCK_W: lt = CACHE_INODE_LOCK_W;
+      case FSAL_NO_LOCK: lt = CACHE_INODE_NO_LOCK;
     }
 
   return lt;
@@ -1460,6 +1462,7 @@ cache_inode_status_t FSAL_unlock_no_owner(cache_entry_t        * pentry,
   cache_lock_entry_t *found_entry;
   fsal_status_t fsal_status;
   cache_inode_status_t status = CACHE_INODE_SUCCESS, t_status;
+  fsal_lock_param_t lock_params;
 
   unlock_entry = create_cache_lock_entry(pentry,
                                          CACHE_NON_BLOCKING,
@@ -1495,13 +1498,16 @@ cache_inode_status_t FSAL_unlock_no_owner(cache_entry_t        * pentry,
 
       LogUnlock(pentry, pcontext, found_entry);
 
+      lock_params.lock_type = fsal_lock_type(plock);
+      lock_params.lock_start = plock->cld_offset;
+      lock_params.lock_length = plock->cld_length;
+
       fsal_status = FSAL_lock_op_no_owner(cache_inode_fd(pentry),
                                           &pentry->object.file.handle,
                                           pcontext,
                                           FSAL_OP_UNLOCK,
-                                          fsal_lock_type(plock),
-                                          plock->cld_offset,
-                                          plock->cld_length);
+					  lock_params,
+					  NULL);
 
       t_status = convert_fsal_lock_status(fsal_status);
       if(t_status != CACHE_INODE_SUCCESS)
@@ -1523,6 +1529,8 @@ cache_inode_status_t FSAL_LockOp(cache_entry_t        * pentry,
 {
   fsal_status_t fsal_status;
   cache_inode_status_t status = CACHE_INODE_SUCCESS;
+  fsal_lock_param_t lock_params;
+  fsal_lock_param_t conflicting_lock;
 
   switch(pentry->object.file.fsal_lock_support)
     {
@@ -1536,18 +1544,26 @@ cache_inode_status_t FSAL_LockOp(cache_entry_t        * pentry,
           }
         else
           {
+	    lock_params.lock_type = fsal_lock_type(plock);
+	    lock_params.lock_start = plock->cld_offset;
+	    lock_params.lock_length = plock->cld_length;
+
             fsal_status = FSAL_lock_op_no_owner(cache_inode_fd(pentry),
                                                 &pentry->object.file.handle,
                                                 pcontext,
                                                 lock_op,
-                                                fsal_lock_type(plock),
-                                                plock->cld_offset,
-                                                plock->cld_length);
+						lock_params,
+					       &conflicting_lock);
             status = convert_fsal_lock_status(fsal_status);
           }
         break;
 
       case FSAL_LOCKS_OWNER:
+
+	lock_params.lock_type = fsal_lock_type(plock);
+	lock_params.lock_start = plock->cld_offset;
+	lock_params.lock_length = plock->cld_length;
+
         /* TODO FSF: need a better owner to pass, will depend on what FSAL is capable of */
         fsal_status = FSAL_lock_op_owner(cache_inode_fd(pentry),
                                          &pentry->object.file.handle,
@@ -1555,9 +1571,8 @@ cache_inode_status_t FSAL_LockOp(cache_entry_t        * pentry,
                                          &powner,
                                          sizeof(powner),
                                          lock_op,
-                                         fsal_lock_type(plock),
-                                         plock->cld_offset,
-                                         plock->cld_length);
+					 lock_params,
+					 &conflicting_lock);
         status = convert_fsal_lock_status(fsal_status);
         break;
     }
@@ -1566,12 +1581,27 @@ cache_inode_status_t FSAL_LockOp(cache_entry_t        * pentry,
     {
       if(holder != NULL)
         {
+	  //conflicting_lock.lock_owner is the pid of the owner holding the lock
           *holder = &unknown_owner;
           get_lock_owner(&unknown_owner);
         }
       if(conflict != NULL)
         {
           memset(conflict, 0, sizeof(*conflict));
+	  switch(conflicting_lock.lock_type)
+	    {
+	       case FSAL_LOCK_R:
+		 conflict->cld_type = CACHE_INODE_LOCK_R;
+		 break;
+	       case FSAL_LOCK_W:
+		 conflict->cld_type = CACHE_INODE_LOCK_W;
+		 break;
+	       case FSAL_NO_LOCK:
+		 conflict->cld_type = CACHE_INODE_NO_LOCK;
+		 break;
+	    }
+	  conflict->cld_offset = conflicting_lock.lock_start;
+	  conflict->cld_length = conflicting_lock.lock_length;
         }
     }
 

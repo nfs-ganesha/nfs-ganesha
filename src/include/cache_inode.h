@@ -1056,8 +1056,9 @@ typedef enum cache_blocking_t
 
 typedef enum cache_lock_t
 {
-  CACHE_INODE_LOCK_R,  /* not exclusive */
-  CACHE_INODE_LOCK_W   /* exclusive */
+  CACHE_INODE_LOCK_R,   /* not exclusive */
+  CACHE_INODE_LOCK_W,   /* exclusive */
+  CACHE_INODE_NO_LOCK   /* used when test lock returns success */
 } cache_lock_t;
 
 typedef struct cache_lock_desc_t

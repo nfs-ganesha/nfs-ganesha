@@ -68,18 +68,11 @@ fsal_status_t GPFSFSAL_lock_op_no_owner( gpfsfsal_file_t       * p_file_descript
   struct flock lock_args;
   int fcntl_comm;
 
-  if (p_file_descriptor == NULL || p_filehandle == NULL || p_context == NULL)
+  if (p_file_descriptor == NULL || p_filehandle == NULL || p_context == NULL || conflicting_lock == NULL)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op_no_owner);
 
   if (lock_op == FSAL_OP_LOCKT)
-    {
-      fcntl_comm = F_GETLK;
-      if (conflicting_lock == NULL)
-        {
-          LogDebug(COMPONENT_FSAL, "ERROR: Lock operation was test lock but conflicting_lock = NULL.");
-          Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op_no_owner);
-        }
-    }
+    fcntl_comm = F_GETLK;
   else if (lock_op == FSAL_OP_LOCK || lock_op == FSAL_OP_UNLOCK)
     fcntl_comm = F_SETLK;
   else
@@ -104,18 +97,34 @@ fsal_status_t GPFSFSAL_lock_op_no_owner( gpfsfsal_file_t       * p_file_descript
 
   errno = 0;
   retval = fcntl(p_file_descriptor->fd, fcntl_comm, &lock_args);
-  if (retval)
-    Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock_op_no_owner);
+  if (retval && lock_op == FSAL_OP_LOCK)
+    {
+      fcntl_comm = F_GETLK;
+      retval = fcntl(p_file_descriptor->fd, fcntl_comm, &lock_args);
+      if (retval)
+	{
+	  LogCrit(COMPONENT_FSAL, "After failing a lock request, I couldn't even"
+		  " get the details of who owns the lock.");
+	  Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock_op_no_owner);
+	}
+      conflicting_lock->lock_owner = lock_args.l_pid;
+      conflicting_lock->lock_length = lock_args.l_len;
+      conflicting_lock->lock_start = lock_args.l_start;
+      conflicting_lock->lock_type = lock_args.l_type;
+      Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock_op_no_owner);
+    }
 
   /* F_UNLCK is returned then the tested operation would be possible. */
   if (lock_op == FSAL_OP_LOCKT && lock_args.l_type != F_UNLCK)
     {
+      conflicting_lock->lock_owner = lock_args.l_pid;
       conflicting_lock->lock_length = lock_args.l_len;
       conflicting_lock->lock_start = lock_args.l_start;
       conflicting_lock->lock_type = lock_args.l_type;
     }
   else
     {
+      conflicting_lock->lock_owner = 0;
       conflicting_lock->lock_length = 0;
       conflicting_lock->lock_start = 0;
       conflicting_lock->lock_type = FSAL_NO_LOCK;
