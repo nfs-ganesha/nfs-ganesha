@@ -203,6 +203,8 @@ typedef enum nfs_clientid_confirm_state__
   CB_RECONFIGURED_CLIENT_ID = 4
 } nfs_clientid_confirm_state_t;
 
+typedef char path_str_t[MAXPATHLEN] ;
+
 #define CLIENT_ID_MAX_LEN             72        /* MUST be a multiple of 9 */
 
 #ifndef P
@@ -403,7 +405,13 @@ typedef struct nfs_param__
 #endif                          /* _USE_NFS4_1 */
   nfs_open_owner_parameter_t open_owner_param;
   nfs_cache_layers_parameter_t cache_layers_param;
+#ifdef _USE_SHARED_FSAL
+  unsigned int nb_loaded_fsal ;
+  unsigned int loaded_fsal[NB_AVAILABLE_FSAL];
+  fsal_parameter_t fsal_param[NB_AVAILABLE_FSAL];
+#else
   fsal_parameter_t fsal_param;
+#endif
   external_tools_parameter_t extern_param;
 
   /* list of exports declared in config file */
@@ -518,7 +526,11 @@ typedef struct nfs_worker_data__
   int is_ready;
   unsigned int gc_in_progress;
   unsigned int current_xid;
+#ifdef _USE_SHARED_FSAL
+  fsal_op_context_t thread_fsal_context[NB_AVAILABLE_FSAL];
+#else
   fsal_op_context_t thread_fsal_context;
+#endif
 
   /* Description of current or most recent function processed and start time (or 0) */
   const nfs_function_desc_t *pfuncdesc;

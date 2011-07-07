@@ -727,6 +727,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   exportlist_client_entry_t related_client;
   struct user_cred user_credentials;
 
+  fsal_op_context_t * pfsal_op_ctx = NULL ;
+
 #ifdef _DEBUG_MEMLEAKS
   static int nb_iter_memleaks = 0;
 #endif
@@ -1136,9 +1138,21 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       /* Do the authentication stuff, if needed */
       if(pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
         {
-          if(nfs_build_fsal_context
-             (ptr_req, &related_client, pexport,
-              &pworker_data->thread_fsal_context, &user_credentials) == FALSE)
+#ifdef _USE_SHARED_FSAL
+	  FSAL_SetId( pexport->fsalid ) ;
+
+          if(nfs_build_fsal_context( ptr_req, 
+                                     &related_client, 
+                                     pexport,
+                                     &pworker_data->thread_fsal_context[pexport->fsalid], 
+                                     &user_credentials) == FALSE)
+#else
+          if(nfs_build_fsal_context( ptr_req, 
+                                     &related_client, 
+                                     pexport,
+                                     &pworker_data->thread_fsal_context, 
+                                     &user_credentials) == FALSE)
+#endif
             {
               svcerr_auth(ptr_svc, AUTH_TOOWEAK);
               pworker_data->current_xid = 0;    /* No more xid managed */
@@ -1174,7 +1188,25 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }
 #endif
 
-      rc = pworker_data->pfuncdesc->service_function(parg_nfs, pexport, &pworker_data->thread_fsal_context, &(pworker_data->cache_inode_client), pworker_data->ht, ptr_req, &res_nfs);  /* BUGAZOMEU Un appel crade pour debugger */
+#ifdef _USE_SHARED_FSAL
+      if( pexport != NULL )
+       {
+         pfsal_op_ctx = &pworker_data->thread_fsal_context[pexport->fsalid] ; 
+         FSAL_SetId( pexport->fsalid ) ;
+       }
+      else
+	pfsal_op_ctx = NULL ; /* Only for mount protocol (pexport is then meaningless */
+#else
+      pfsal_op_ctx =  &pworker_data->thread_fsal_context ;
+#endif
+
+      rc = pworker_data->pfuncdesc->service_function(parg_nfs, 
+						     pexport, 
+						     pfsal_op_ctx,
+                                                     &(pworker_data->cache_inode_client), 
+                                                     pworker_data->ht, 
+                                                     ptr_req, 
+                                                     &res_nfs); 
 
       gettimeofday(&timer_end, NULL);
       timer_diff = time_diff(*timer_start, timer_end);
@@ -1437,6 +1469,11 @@ void *worker_thread(void *IndexArg)
   struct rpc_gss_cred *gc;
 #endif
 
+#ifdef _USE_SHARED_FSAL 
+  unsigned int i = 0 ;
+  unsigned int fsalid = 0 ;
+#endif
+
   index = (long)IndexArg;
   pmydata = &(workers_data[index]);
 
@@ -1464,6 +1501,10 @@ void *worker_thread(void *IndexArg)
                index);
 #endif
 
+#ifdef _USE_SHARED_FSAL
+  FSAL_InitKey( ) ;
+#endif
+
   LogDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: my pthread id is %p",
            index, (caddr_t) pthread_self());
 
@@ -1471,6 +1512,24 @@ void *worker_thread(void *IndexArg)
   LogFullDebug(COMPONENT_DISPATCH,
                "NFS WORKER #%lu: Initialization of thread's credential",
                index);
+
+#ifdef _USE_SHARED_FSAL
+  for( i = 0 ; i < nfs_param.nb_loaded_fsal ; i++ )
+   {
+      fsalid =  nfs_param.loaded_fsal[i] ;
+
+      FSAL_SetId( fsalid ) ;
+
+      if(FSAL_IS_ERROR(FSAL_InitClientContext(&(pmydata->thread_fsal_context[fsalid]))))
+       {
+         /* Failed init */
+         LogMajor(COMPONENT_DISPATCH,
+                  "NFS  WORKER #%lu: Error initializing thread's credential for FSAL %s",
+                 index, FSAL_fsalid2name( fsalid ) );
+         exit(1);
+       }
+   } /* for */
+#else
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&pmydata->thread_fsal_context)))
     {
       /* Failed init */
@@ -1479,6 +1538,9 @@ void *worker_thread(void *IndexArg)
                index);
       exit(1);
     }
+
+
+#endif /* _USE_SHARED_FSAL */
 
   /* Init the Cache inode client for this worker */
   if(cache_inode_client_init(&pmydata->cache_inode_client,
@@ -1496,8 +1558,7 @@ void *worker_thread(void *IndexArg)
                index);
 
 #ifdef _USE_MFSL
-  if(FSAL_IS_ERROR(MFSL_GetContext(&pmydata->cache_inode_client.mfsl_context,
-                                   &pmydata->thread_fsal_context)))
+  if(FSAL_IS_ERROR(MFSL_GetContext(&pmydata->cache_inode_client.mfsl_context, pfsal_op_ctx ) ;
     {
       /* Failed init */
       LogMajor(COMPONENT_DISPATCH,
@@ -1819,8 +1880,13 @@ void *worker_thread(void *IndexArg)
        * set as "making garbagge collection" to avoid new requests to come in its pending queue */
       pmydata->gc_in_progress = TRUE;
 
+
       fsal_status = MFSL_RefreshContext(&pmydata->cache_inode_client.mfsl_context,
+#ifdef _USE_SHARED_FSAL
+                                        &pmydata->thread_fsal_context[pexport->fsalid]);
+#else
                                         &pmydata->thread_fsal_context);
+#endif
 
       if(FSAL_IS_ERROR(fsal_status))
         {
