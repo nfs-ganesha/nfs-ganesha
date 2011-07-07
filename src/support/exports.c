@@ -2695,8 +2695,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 
          FSAL_SetId( fsalid ) ;
 
-         printf( "-----------> FSAL_InitClientContext for FSAL %u|%s line=%u\n", fsalid, FSAL_fsalid2name( fsalid ), __LINE__ ) ;
-
            
          fsal_status = FSAL_InitClientContext(&context[fsalid]);
          if(FSAL_IS_ERROR(fsal_status))

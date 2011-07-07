@@ -1191,15 +1191,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 #ifdef _USE_SHARED_FSAL
       if( pexport != NULL )
        {
-         printf( "==============> pexport->fsalid=%u %s %u\n", pexport->fsalid, __FUNCTION__, __LINE__ ) ;
          pfsal_op_ctx = &pworker_data->thread_fsal_context[pexport->fsalid] ; 
          FSAL_SetId( pexport->fsalid ) ;
        }
       else
-       {
-        printf( "============================> pexport = NULL prog=%u vers=%u req=%u\n", ptr_req->rq_prog, ptr_req->rq_vers, ptr_req->rq_proc ) ; 
 	pfsal_op_ctx = NULL ; /* Only for mount protocol (pexport is then meaningless */
-       }
 #else
       pfsal_op_ctx =  &pworker_data->thread_fsal_context ;
 #endif
@@ -1523,8 +1519,6 @@ void *worker_thread(void *IndexArg)
       fsalid =  nfs_param.loaded_fsal[i] ;
 
       FSAL_SetId( fsalid ) ;
-
-      printf( "-----------> FSAL_InitClientContext for FSAL %u|%s line=%u\n", fsalid, FSAL_fsalid2name( fsalid ), __LINE__ ) ;
 
       if(FSAL_IS_ERROR(FSAL_InitClientContext(&(pmydata->thread_fsal_context[fsalid]))))
        {
