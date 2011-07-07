@@ -40,7 +40,7 @@ typedef struct nlm_async_res
 
 typedef void (nlm_callback_func) (void *arg);
 extern int nlm_async_callback_init();
-void nlm_async_callback(nlm_callback_func * func, void *arg);
+extern int nlm_async_callback(nlm_callback_func * func, void *arg);
 extern int nlm_async_callback_init();
 
 extern nlm_async_res_t *nlm_build_async_res_nlm4(char *caller_name, nfs_res_t * pres);

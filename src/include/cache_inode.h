@@ -59,7 +59,10 @@
 #include "config_parsing.h"
 #include "nfs23.h"
 #include "nfs4.h"
-
+#ifdef _USE_NLM
+#include "nlm4.h"
+#endif
+#include "nlm_list.h"
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
 
@@ -158,6 +161,9 @@ typedef int cache_inode_status_t;
 typedef struct cache_inode_parameter__
 {
   hash_parameter_t hparam;                      /**< Parameter used for hashtable initialization */
+#ifdef _USE_NLM
+  hash_parameter_t cookie_param;                /**< Parameters used for cookie hash table initialization */
+#endif
 } cache_inode_parameter_t;
 
 typedef struct cache_inode_client_parameter__
@@ -323,6 +329,9 @@ typedef struct cache_entry__
       void *pentry_content;                                          /**< Entry in file content cache (NULL if not cached)     */
       void *pstate_head;                                             /**< Pointer used for the head of the state chain         */
       void *pstate_tail;                                             /**< Current pointer for the state chain                  */
+      fsal_lock_support_t fsal_lock_support;                         /**< Type of lock support FSAL provides for this file     */
+      struct glist_head lock_list;                                   /**< Pointers for lock list                               */
+      pthread_mutex_t lock_list_mutex;                               /**< Mutex to protect lock list                           */
       cache_inode_unstable_data_t unstable_data;                     /**< Unstable data, for use with WRITE/COMMIT             */
     } file;                                   /**< file related filed     */
 
@@ -395,17 +404,61 @@ typedef struct cache_inode_open_owner_name__
   char owner_val[MAXNAMLEN];
 } cache_inode_open_owner_name_t;
 
+typedef enum cache_lock_owner_type_t
+{
+  CACHE_LOCK_OWNER_UNKNOWN,
+#ifdef _USE_NLM
+  CACHE_LOCK_OWNER_NLM,
+#endif
+  CACHE_LOCK_OWNER_NFSV4
+} cache_lock_owner_type_t;
+
+#ifdef _USE_NLM
+typedef struct cache_inode_nlm_client_t
+{
+  pthread_mutex_t         clc_mutex;
+  struct glist_head       clc_lock_list;
+  int                     clc_refcount;
+  int                     clc_nlm_caller_name_len;
+  char                    clc_nlm_caller_name[LM_MAXSTRLEN];
+} cache_inode_nlm_client_t;
+
+typedef struct cache_inode_nlm_owner_t
+{
+  cache_inode_nlm_client_t *clo_client;
+  int32_t                   clo_nlm_svid;
+  int                       clo_nlm_oh_len;
+  char                      clo_nlm_oh[MAX_NETOBJ_SZ];
+} cache_inode_nlm_owner_t;
+#endif
+
 typedef struct cache_inode_open_owner__
 {
   clientid4 clientid;
   unsigned int owner_len;
-  char owner_val[MAXNAMLEN];
+  char owner_val[NFS4_OPAQUE_LIMIT];
   unsigned int confirmed;
   unsigned int seqid;
-  pthread_mutex_t lock;
+  pthread_mutex_t lock;                       //TODO FSF: remove this and use clo_lock
   uint32_t counter;                           /** < Counter is used to build unique stateids */
   struct cache_inode_open_owner__ *related_owner;
 } cache_inode_open_owner_t;
+
+/* Undistinguished lock owner type */
+typedef struct cache_lock_owner_t
+{
+  cache_lock_owner_type_t    clo_type;
+  struct glist_head          clo_lock_list;
+  pthread_mutex_t            clo_mutex;
+  int                        clo_refcount;
+  union
+  {
+    cache_inode_open_owner_t clo_open_owner;
+#ifdef _USE_NLM
+    cache_inode_nlm_owner_t  clo_nlm_owner;
+#endif
+  } clo_owner;
+} cache_lock_owner_t;
 
 typedef struct cache_inode_state__
 {
@@ -555,6 +608,8 @@ typedef union cache_inode_create_arg__
 #define CACHE_INODE_FSAL_DELAY            35
 #define CACHE_INODE_NAME_TOO_LONG         36
 #define CACHE_INODE_LOCK_CONFLICT         37
+#define CACHE_INODE_LOCK_BLOCKED          38
+#define CACHE_INODE_LOCK_DEADLOCK         39
 
 const char *cache_inode_err_str(int err);
 
@@ -994,34 +1049,10 @@ typedef enum cache_blocking_t
 {
   CACHE_NON_BLOCKING,
   CACHE_NLM_BLOCKING,
-  CACHE_NFSV4_BLOCKING
+  CACHE_NFSV4_BLOCKING,
+  CACHE_GRANTING,
+  CACHE_CANCELED
 } cache_blocking_t;
-
-typedef enum cache_lock_owner_type_t
-{
-  CACHE_LOCK_OWNER_NLM,
-  CACHE_LOCK_OWNER_NFSV4
-} cache_lock_owner_type_t;
-
-typedef struct cache_lock_owner_nlm_t
-{
-  int32_t clo_nlm_svid;
-  int     clo_nlm_caller_name_len;
-  int     clo_nlm_oh_len;
-  char    clo_nlm_oh[1024];
-  char    clo_nlm_caller_name[1024];
-} cache_lock_owner_nlm_t;
-
-typedef struct cache_lock_owner_t
-{
-  cache_lock_owner_type_t clo_type;
-  union clo_owner__
-  {
-    cache_lock_owner_nlm_t   clo_owner_nlm;
-    cache_inode_open_owner_t clo_owner_nfsv4;
-  } clo_owner;
-  
-} cache_lock_owner_t;
 
 typedef enum cache_lock_t
 {
@@ -1036,61 +1067,129 @@ typedef struct cache_lock_desc_t
   uint64_t     cld_length;
 } cache_lock_desc_t;
 
+typedef struct cache_lock_entry_t   cache_lock_entry_t;
+typedef struct cache_cookie_entry_t cache_cookie_entry_t;
+
+/* The granted call back is responsible for acquiring a reference to
+ * the lock entry if needed.
+ */
 typedef cache_inode_status_t (*granted_callback_t)(cache_entry_t        * pentry,
-                                                   void                 * pcookie,
-                                                   int                    cookie_size,
-                                                   cache_lock_owner_t   * powner,
-                                                   cache_lock_desc_t    * lock,
-                                                   cache_inode_client_t * pclient,
                                                    fsal_op_context_t    * pcontext,
+                                                   cache_lock_entry_t   * lock_entry,
+                                                   cache_inode_client_t * pclient,
                                                    cache_inode_status_t * pstatus);
 
+struct cache_lock_entry_t
+{
+  struct glist_head             cle_list;
+  struct glist_head             cle_owner_locks;
+  struct glist_head             cle_blocked_locks;
+#ifdef _USE_NLM
+  struct glist_head             cle_client_locks;
+#endif
+#ifdef _DEBUG_MEMLEAKS
+  struct glist_head             cle_all_locks;
+#endif
+  int                           cle_ref_count;
+  cache_entry_t               * cle_pentry;
+  cache_blocking_t              cle_blocked;
+  cache_lock_owner_t          * cle_owner;
+  cache_lock_desc_t             cle_lock;
+  granted_callback_t            cle_granted_callback;
+  cache_cookie_entry_t        * cle_blocked_cookie;
+  pthread_mutex_t               cle_mutex;
+};
+
+#ifdef _USE_NLM
+cache_inode_status_t cache_inode_lock_init(cache_inode_status_t * pstatus,
+                                           hash_parameter_t       cookie_param);
+#else
+cache_inode_status_t cache_inode_lock_init(cache_inode_status_t * pstatus);
+#endif
+
+void lock_entry_inc_ref(cache_lock_entry_t *lock_entry);
+
+void lock_entry_dec_ref(cache_entry_t      *pentry,
+                        fsal_op_context_t  *pcontext,
+                        cache_lock_entry_t *lock_entry);
+
+void release_lock_owner(cache_lock_owner_t *powner);
+
+#ifdef _USE_NLM
+struct cache_cookie_entry_t
+{
+  pthread_mutex_t     lce_mutex;
+  int                 lce_refcount;
+  cache_entry_t      *lce_pentry;
+  fsal_op_context_t  *lce_pcontext;
+  cache_lock_entry_t *lce_lock_entry;
+};
+
+void cookie_entry_inc_ref(cache_cookie_entry_t * p_cookie_entry);
+void cookie_entry_dec_ref(cache_cookie_entry_t * p_cookie_entry);
+
+int cache_inode_insert_block(cache_entry_t            * pentry,
+                             fsal_op_context_t        * pcontext,
+                             void                     * pcookie,
+                             int                        cookie_size,
+                             cache_lock_entry_t       * lock_entry,
+                             cache_inode_status_t     * pstatus);
+
+cache_inode_status_t cache_inode_grant_block(void                  * pcookie,
+                                             int                     cookie_size,
+                                             cache_inode_status_t  * pstatus);
+
+cache_inode_status_t cach_inode_release_block(void                 * pcookie,
+                                              int                    cookie_size,
+                                              cache_inode_status_t * pstatus,
+                                              cache_inode_client_t * pclient);
+#endif
+
 cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
+                                      fsal_op_context_t    * pcontext,
                                       cache_lock_owner_t   * powner,
-                                      cache_lock_desc_t    * lock,
-                                      cache_lock_owner_t   * holder,   /* owner that holds conflicting lock */
+                                      cache_lock_desc_t    * plock,
+                                      cache_lock_owner_t  ** holder,   /* owner that holds conflicting lock */
                                       cache_lock_desc_t    * conflict, /* description of conflicting lock */
                                       cache_inode_client_t * pclient,
-                                      fsal_op_context_t    * pcontext,
                                       cache_inode_status_t * pstatus);
 
 cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
-                                      void                 * pcookie,
-                                      int                    cookie_size,
+                                      fsal_op_context_t    * pcontext,
+                                      cache_lock_owner_t   * powner,
                                       cache_blocking_t       blocking,
                                       granted_callback_t     granted_callback,
-                                      bool_t                 reclaim,
-                                      cache_lock_owner_t   * powner,
-                                      cache_lock_desc_t    * lock,
-                                      cache_lock_owner_t   * holder,   /* owner that holds conflicting lock */
+                                      cache_lock_desc_t    * plock,
+                                      cache_lock_owner_t  ** holder,   /* owner that holds conflicting lock */
                                       cache_lock_desc_t    * conflict, /* description of conflicting lock */
                                       cache_inode_client_t * pclient,
-                                      fsal_op_context_t    * pcontext,
                                       cache_inode_status_t * pstatus);
 
 cache_inode_status_t cache_inode_unlock(cache_entry_t        * pentry,
-                                        void                 * pcookie,
-                                        int                    cookie_size,
-                                        cache_lock_owner_t   * powner,
-                                        cache_lock_desc_t    * lock,
-                                        cache_inode_client_t * pclient,
                                         fsal_op_context_t    * pcontext,
+                                        cache_lock_owner_t   * powner,
+                                        cache_lock_desc_t    * plock,
+                                        cache_inode_client_t * pclient,
                                         cache_inode_status_t * pstatus);
 
 cache_inode_status_t cache_inode_cancel(cache_entry_t        * pentry,
-                                        cache_lock_owner_t   * powner,
-                                        void                 * pcookie,
-                                        int                    cookie_size,
-                                        cache_lock_desc_t    * lock,
-                                        cache_inode_client_t * pclient,
                                         fsal_op_context_t    * pcontext,
+                                        cache_lock_owner_t   * powner,
+                                        cache_lock_desc_t    * plock,
+                                        cache_inode_client_t * pclient,
                                         cache_inode_status_t * pstatus);
 
-cache_inode_status_t cache_inode_notify(cache_entry_t        * pentry,
-                                        cache_lock_owner_t   * powner,
-                                        cache_inode_client_t * pclient,
-                                        fsal_op_context_t    * pcontext,
-                                        cache_inode_status_t * pstatus);
+#ifdef _USE_NLM
+cache_inode_status_t cache_inode_nlm_notify(fsal_op_context_t        * pcontext,
+                                            cache_inode_nlm_client_t * pnlmclient,
+                                            cache_inode_client_t     * pclient,
+                                            cache_inode_status_t     * pstatus);
+#endif
+
+cache_inode_status_t cache_inode_owner_unlock_all(fsal_op_context_t        * pcontext,
+                                                  cache_lock_owner_t       * powner,
+                                                  cache_inode_client_t     * pclient,
+                                                  cache_inode_status_t     * pstatus);
 
 int cache_inode_state_conflict(cache_inode_state_t * pstate,
                                cache_inode_state_type_t state_type,
@@ -1155,5 +1254,13 @@ unsigned int cache_inode_fsal_rbt_both( hash_parameter_t * p_hparam,
 int display_key(hash_buffer_t * pbuff, char *str);
 int display_not_implemented(hash_buffer_t * pbuff, char *str);
 int display_value(hash_buffer_t * pbuff, char *str);
+
+int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
+int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);
+int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
+unsigned long lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
+                                          hash_buffer_t * buffclef);
+unsigned long lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
+                                        hash_buffer_t * buffclef);
 
 #endif                          /*  _CACHE_INODE_H */

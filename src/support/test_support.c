@@ -42,6 +42,7 @@
 #include "nlm_async.h"
 #include "nfs_core.h"
 
+/*
 nfs_parameter_t nfs_param;
 
 void *rpc_tcp_socket_manager_thread(void *Arg)
@@ -187,7 +188,7 @@ int remove_write_lock(char *id, char *caller_name, char *file, int owner, int sv
   return remove_lock(id, caller_name, file, owner, svid, offset, len, 1);
 }
 
-/* Allocate and write into memory. */
+/ * Allocate and write into memory. * /
 int TEST_NLM(void)
 {
   LogTest("TEST_NLM");
@@ -263,6 +264,7 @@ int TEST_NLM(void)
 
   return 0;
 }
+*/
 
 static char usage[] =
     "Usage :\n"
@@ -285,8 +287,10 @@ int main(int argc, char **argv)
   SetNamePgm("test_support");
   InitLogging();
 
+#if 0
   if(!strcmp(argv[1], "nlm"))
     return TEST_NLM();
+#endif
 
   else
     {

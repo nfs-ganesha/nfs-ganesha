@@ -41,11 +41,11 @@
 #include "nlm4.h"
 
 static pthread_t nlm_async_thread;
-static pthread_mutex_t nlm_async_queue_mutex;
 static struct glist_head nlm_async_queue;
-static pthread_cond_t nlm_async_queue_cond;
-pthread_mutex_t nlm_async_resp_mutex;
-pthread_cond_t nlm_async_resp_cond;
+static pthread_mutex_t nlm_async_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t  nlm_async_queue_cond  = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t nlm_async_resp_mutex  = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t  nlm_async_resp_cond   = PTHREAD_COND_INITIALIZER;
 
 typedef struct
 {
@@ -171,38 +171,36 @@ void *nlm_async_func(void *argp)
 }
 
 /* Insert 'func' to async queue */
-void nlm_async_callback(nlm_callback_func * func, void *arg)
+int nlm_async_callback(nlm_callback_func * func, void *arg)
 {
+  int rc;
   nlm_queue_t *q;
 
   q = (nlm_queue_t *) Mem_Alloc(sizeof(nlm_queue_t));
+  if(q == NULL)
+    return -1;
+
   q->func = func;
-  q->arg = arg;
+  q->arg  = arg;
 
   LogFullDebug(COMPONENT_NLM, "nlm_async_callback %p:%p", func, arg);
-  pthread_mutex_lock(&nlm_async_queue_mutex);
+
+  P(nlm_async_queue_mutex);
   glist_add_tail(&nlm_async_queue, &q->glist);
-  pthread_cond_signal(&nlm_async_queue_cond);
-  pthread_mutex_unlock(&nlm_async_queue_mutex);
+  rc = pthread_cond_signal(&nlm_async_queue_cond);
+  V(nlm_async_queue_mutex);
+
+  if(rc == -1)
+    Mem_Free(q);
+
+  return rc;
 }
 
 int nlm_async_callback_init()
 {
-  int rc;
-
-  pthread_mutex_init(&nlm_async_queue_mutex, NULL);
-  pthread_cond_init(&nlm_async_queue_cond, NULL);
-  pthread_mutex_init(&nlm_async_resp_mutex, NULL);
-  pthread_cond_init(&nlm_async_resp_cond, NULL);
   init_glist(&nlm_async_queue);
 
-  rc = pthread_create(&nlm_async_thread, NULL, nlm_async_func, NULL);
-  if(rc < 0)
-    {
-      return -1;
-    }
-
-  return 0;
+  return pthread_create(&nlm_async_thread, NULL, nlm_async_func, NULL);
 }
 
 nlm_reply_proc_t nlm_reply_proc[] = {
