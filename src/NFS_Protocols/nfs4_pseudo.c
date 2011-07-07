@@ -1563,12 +1563,6 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       return res_LOOKUP4.status;
     }
 
-#ifdef _USE_SHARED_FSAL 
-  /* Set the FSAL ID here */
-  FSAL_SetId( iter->junction_export->fsalid ) ;
-#endif
-
- 
   /* A matching entry was found */
   if(iter->junction_export == NULL)
     {
@@ -1581,6 +1575,11 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
     }
   else
     {
+#ifdef _USE_SHARED_FSAL 
+      /* Set the FSAL ID here */
+      FSAL_SetId( iter->junction_export->fsalid ) ;
+#endif
+
       /* The entry is a junction */
       LogFullDebug(COMPONENT_NFS_V4_PSEUDO,      
                    "A junction in pseudo fs is traversed: name = %s, id = %d",
