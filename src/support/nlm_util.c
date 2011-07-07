@@ -81,6 +81,14 @@ static struct timeval nlm_grace_tv;
  */
 #define NLM4_CLIENT_GRACE_PERIOD 3
 
+typedef struct nlm_grant_parms_t
+{
+  cache_entry_t        * nlm_grant_pentry;
+  fsal_op_context_t    * nlm_grant_pcontext;
+  cache_lock_entry_t   * nlm_grant_lock_entry;
+  cache_inode_client_t * nlm_grant_pclient;
+} nlm_grant_parms_t;
+
 /* We manage our own cookie for GRANTED call backs
  * Cookie 
  */
@@ -277,11 +285,29 @@ int nlm_unmonitor_host(char *name)
     return nsm_unmonitor(name);
 }
 
+#if 0
+// TODO FSF: need to implement
 static void nlm4_send_grant_msg(void *arg)
 {
+  nlm_grant_parms_t *parms = arg;
+  struct nlm4_testargs inarg;
+  nfs_fh3 fh3;
+  fh3.data.data_val = Mem_Alloc(NFS3_FHSIZE);
+  if(fh3.data.data_val == NULL)
+    {
+      // TODO FSF: handle error
+    }
+  if(nfs3_FSALToFhandle(&fh3, &(pentry->object.file.handle), 
+  
+
+  ***************
+  ***************
+  ** I AM HERE **
+  ***************
+  ***************
+
+  if(nfs3_FSALToFhandle((nfs_fh3 *)
     int retval;
-    struct nlm4_testargs inarg;
-    nlm_lock_entry_t *nlm_entry = (nlm_lock_entry_t *) arg;
     char buffer[1024];
 
     /* If we fail allocation the best is to delete the block entry
@@ -368,6 +394,7 @@ void nlm_resend_grant_msg(void *arg)
 
     nlm4_send_grant_msg(arg);
 }
+#endif
 
 int nlm_process_parameters(struct svc_req            * preq,
                            bool_t                      exclusive,
@@ -499,9 +526,36 @@ nlm4_stats nlm_convert_cache_inode_error(cache_inode_status_t status)
 
 cache_inode_status_t nlm_granted_callback(cache_entry_t        * pentry,
                                           fsal_op_context_t    * pcontext,
-                                          cache_lock_entry_p     plock_entry,
+                                          cache_lock_entry_t   * lock_entry,
                                           cache_inode_client_t * pclient,
                                           cache_inode_status_t * pstatus)
 {
-  return CACHE_INODE_NOT_SUPPORTED;
+#if 0
+// TODO FSF: need to implement
+  nlm_grant_parms_t *parms;
+
+  parms = (nlm_grant_parms_t *) Mem_Alloc_Label(sizeof(*parms), "nlm_grant_parms_t");
+  if(parms == NULL)
+    {
+      *pstatus = CACHE_INODE_MALLOC_ERROR;
+      return *pstatus;
+    }
+
+  /* Get a reference to the lock entry */
+  lock_entry_inc_ref(lock_entry);
+  parms-> nlm_grant_pentry     = pentry;
+  parms-> nlm_grant_pcontext   = pcontext;
+  parms-> nlm_grant_lock_entry = lock_entry;
+  parms-> nlm_grant_pclient    = pclient;
+  if(nlm_async_callback(nlm4_send_grant_msg, parms) == -1)
+    {
+      Mem_Free(parms);
+      *pstatus = CACHE_INODE_MALLOC_ERROR;
+      return *pstatus;
+    }
+  *pstatus = CACHE_INODE_SUCCESS;
+#else
+  *pstatus = CACHE_INODE_NOT_SUPPORTED;
+#endif
+  return *pstatus;
 }

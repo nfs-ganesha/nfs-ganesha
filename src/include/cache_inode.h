@@ -1067,16 +1067,19 @@ typedef struct cache_lock_desc_t
   uint64_t     cld_length;
 } cache_lock_desc_t;
 
-typedef struct cache_lock_entry_t *cache_lock_entry_p;
+typedef struct cache_lock_entry_t   cache_lock_entry_t;
 typedef struct cache_cookie_entry_t cache_cookie_entry_t;
 
+/* The granted call back is responsible for acquiring a reference to
+ * the lock entry if needed.
+ */
 typedef cache_inode_status_t (*granted_callback_t)(cache_entry_t        * pentry,
                                                    fsal_op_context_t    * pcontext,
-                                                   cache_lock_entry_p     plock_entry,
+                                                   cache_lock_entry_t   * lock_entry,
                                                    cache_inode_client_t * pclient,
                                                    cache_inode_status_t * pstatus);
 
-typedef struct cache_lock_entry_t
+struct cache_lock_entry_t
 {
   struct glist_head             cle_list;
   struct glist_head             cle_owner_locks;
@@ -1095,7 +1098,7 @@ typedef struct cache_lock_entry_t
   granted_callback_t            cle_granted_callback;
   cache_cookie_entry_t        * cle_blocked_cookie;
   pthread_mutex_t               cle_mutex;
-} cache_lock_entry_t;
+};
 
 #ifdef _USE_NLM
 cache_inode_status_t cache_inode_lock_init(cache_inode_status_t * pstatus,

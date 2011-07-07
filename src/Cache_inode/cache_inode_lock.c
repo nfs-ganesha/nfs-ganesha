@@ -112,6 +112,9 @@ cache_inode_status_t cache_inode_lock_init(cache_inode_status_t * pstatus)
       return *pstatus;
     }
 #endif
+#ifdef _DEBUG_MEMLEAKS
+  init_glist(&cache_inode_all_locks);
+#endif
 
   return *pstatus;
 }

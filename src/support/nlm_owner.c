@@ -78,6 +78,7 @@ int display_nlm_client(cache_inode_nlm_client_t *pkey, char *str)
   strtmp += sprintf(strtmp, "caller_name=");
   strncpy(strtmp, pkey->clc_nlm_caller_name, pkey->clc_nlm_caller_name_len);
   strtmp += pkey->clc_nlm_caller_name_len;
+  *strtmp = '\0';
 
   return strlen(str);
 }
@@ -465,6 +466,7 @@ int nlm_client_Get_Pointer(cache_inode_nlm_client_t * pkey,
     {
       LogFullDebug(COMPONENT_NLM,
                    "nlm_client_Get_Pointer => NOTFOUND");
+      *pclient = NULL;
       return 0;
     }
 
@@ -494,6 +496,9 @@ cache_inode_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
 {
   cache_inode_nlm_client_t *pkey, *pclient;
 
+  LogFullDebug(COMPONENT_NLM,
+               "get_nlm_client %s", caller_name);
+
   if(caller_name == NULL)
     return NULL;
 
@@ -505,17 +510,37 @@ cache_inode_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
   pkey->clc_nlm_caller_name_len = strlen(caller_name);
 
   if(pkey->clc_nlm_caller_name_len > LM_MAXSTRLEN)
-    return 0;
+    return NULL;
 
   memcpy(pkey->clc_nlm_caller_name,
          caller_name,
          pkey->clc_nlm_caller_name_len);
 
+  
+  if(isFullDebug(COMPONENT_NLM))
+    {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      display_nlm_client(pkey, str);
+      LogFullDebug(COMPONENT_NLM,
+                   "get_nlm_client pkey=%s", str);
+    }
+
   /* If we found it, return it, if we don't care, return NULL */
-  if(nlm_client_Get_Pointer(pkey, &pclient) == HASHTABLE_SUCCESS || !care)
+  if(nlm_client_Get_Pointer(pkey, &pclient) == 1 || !care)
     {
       /* Discard the key we created and return the found NLM Client */
       Mem_Free(pkey);
+
+      if(isFullDebug(COMPONENT_NLM))
+        {
+          char str[HASHTABLE_DISPLAY_STRLEN];
+
+          display_nlm_client(pclient, str);
+          LogFullDebug(COMPONENT_NLM,
+                       "get_nlm_client found pclient=%s", str);
+        }
+
       return pclient;
     }
 
@@ -523,6 +548,16 @@ cache_inode_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
 
   /* Copy everything over */
   *pclient = *pkey;
+  init_glist(&pclient->clc_lock_list);
+
+  if(isFullDebug(COMPONENT_NLM))
+    {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      display_nlm_client(pclient, str);
+      LogFullDebug(COMPONENT_NLM,
+                   "get_nlm_client new pclient=%s", str);
+    }
 
   if(pthread_mutex_init(&pclient->clc_mutex, NULL) == -1)
     {
@@ -532,7 +567,7 @@ cache_inode_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
       return NULL;
     }
 
-  if(nlm_client_Set(pkey, pclient) == HASHTABLE_SUCCESS)
+  if(nlm_client_Set(pkey, pclient) == 1)
     return pclient;
 
   Mem_Free(pkey);
@@ -727,6 +762,15 @@ cache_lock_owner_t *get_nlm_owner(bool_t                     care,
 
   inc_nlm_client_ref(pclient);
 
+  if(isFullDebug(COMPONENT_NLM))
+    {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      display_nlm_client(pclient, str);
+      LogFullDebug(COMPONENT_NLM,
+                   "get_nlm_owner pclient=%s", str);
+    }
+
   pkey->clo_type     = CACHE_LOCK_OWNER_NLM;
   pkey->clo_refcount = 1;
   pkey->clo_owner.clo_nlm_owner.clo_client     = pclient;
@@ -736,11 +780,30 @@ cache_lock_owner_t *get_nlm_owner(bool_t                     care,
          oh->n_bytes,
          oh->n_len);
 
+  if(isFullDebug(COMPONENT_NLM))
+    {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      display_nlm_owner(pkey, str);
+      LogFullDebug(COMPONENT_NLM,
+                   "get_nlm_owner pkey=%s", str);
+    }
+
   /* If we found it, return it, if we don't care, return NULL */
-  if(nlm_owner_Get_Pointer(pkey, &powner) == HASHTABLE_SUCCESS || !care)
+  if(nlm_owner_Get_Pointer(pkey, &powner) == 1 || !care)
     {
       /* Discard the key we created and return the found NLM Owner */
       Mem_Free(pkey);
+
+      if(isFullDebug(COMPONENT_NLM))
+        {
+          char str[HASHTABLE_DISPLAY_STRLEN];
+
+          display_nlm_owner(powner, str);
+          LogFullDebug(COMPONENT_NLM,
+                       "get_nlm_owner new powner=%s", str);
+        }
+
       return powner;
     }
     
@@ -748,6 +811,7 @@ cache_lock_owner_t *get_nlm_owner(bool_t                     care,
 
   /* Copy everything over */
   *powner = *pkey;
+  init_glist(&powner->clo_lock_list);
 
   if(pthread_mutex_init(&powner->clo_mutex, NULL) == -1)
     {
@@ -757,9 +821,18 @@ cache_lock_owner_t *get_nlm_owner(bool_t                     care,
       return NULL;
     }
 
+  if(isFullDebug(COMPONENT_NLM))
+    {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      display_nlm_owner(powner, str);
+      LogFullDebug(COMPONENT_NLM,
+                   "get_nlm_owner new powner=%s", str);
+    }
+
   /* Ref count the client as being used by this owner */
   inc_nlm_client_ref(pclient);
-  if(nlm_owner_Set(pkey, powner) == HASHTABLE_SUCCESS)
+  if(nlm_owner_Set(pkey, powner) == 1)
     return powner;
 
   Mem_Free(pkey);
