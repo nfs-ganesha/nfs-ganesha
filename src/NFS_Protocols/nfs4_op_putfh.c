@@ -178,6 +178,9 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
               res_PUTFH4.status = error;
               return res_PUTFH4.status;
             }
+#ifdef _USE_SHARED_FSAL
+	FSAL_SetId( data->pexport->fsalid ) ;
+#endif 
         }
 
       /* Build the pentry */
