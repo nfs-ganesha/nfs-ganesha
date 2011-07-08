@@ -175,8 +175,12 @@ fsal_status_t GPFSFSAL_open(gpfsfsal_handle_t * p_filehandle,   /* IN */
     ReturnStatus(status, INDEX_FSAL_open);
 
   /* Set both mode and ace4 mask */
-  access_mask = FSAL_MODE_MASK_SET((openflags & FSAL_O_RDONLY ? FSAL_R_OK : FSAL_W_OK) | FSAL_OWNER_OK) |
-                FSAL_ACE4_MASK_SET(openflags & FSAL_O_RDONLY ? FSAL_ACE_PERM_READ_DATA : FSAL_ACE_PERM_WRITE_DATA | FSAL_ACE_PERM_APPEND_DATA);
+  if(openflags & FSAL_O_RDONLY)
+    access_mask = FSAL_MODE_MASK_SET(FSAL_R_OK | FSAL_OWNER_OK) |
+                  FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_DATA);
+  else
+    access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_OWNER_OK) |
+                  FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA | FSAL_ACE_PERM_APPEND_DATA);
 
   status = fsal_internal_testAccess(p_context, access_mask, NULL, &file_attrs);
   if(FSAL_IS_ERROR(status))

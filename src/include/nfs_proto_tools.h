@@ -129,4 +129,10 @@ void nfs_SetFailedStatus(fsal_op_context_t * pcontext,
                          cache_entry_t * pentry2,
                          fsal_attrib_list_t * ppre_vattr2, wcc_data * pwcc_data2);
 
+fsal_accessflags_t nfs_get_access_mask(uint32_t op, fsal_attrib_list_t *pattr);
+
+void nfs3_access_debug(char *label, uint32_t access);
+
+void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask);
+
 #endif                          /* _NFS_PROTO_TOOLS_H */

@@ -99,6 +99,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
 
   cache_inode_fsal_data_t new_entry_fsdata;
   int i = 0;
+  fsal_accessflags_t access_mask = 0;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -161,8 +162,10 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
       /* This is a "regular lookup" (not on "." or "..") */
 
       /* Check is user (as specified by the credentials) is authorized to lookup the directory or not */
+      access_mask = FSAL_MODE_MASK_SET(FSAL_X_OK) |
+                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR);
       if(cache_inode_access_no_mutex(pentry_parent,
-                                     FSAL_X_OK,
+                                     access_mask,
                                      ht,
                                      pclient, pcontext, pstatus) != CACHE_INODE_SUCCESS)
         {

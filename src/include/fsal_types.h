@@ -615,6 +615,8 @@ typedef fsal_uint_t fsal_accessflags_t;
 #define IS_FSAL_MODE_MASK_VALID(access)  ((access & FSAL_ACCESS_FLAG_BIT_MASK) == FSAL_MODE_MASK_FLAG)
 #define IS_FSAL_ACE4_MASK_VALID(access)  ((access & FSAL_ACCESS_FLAG_BIT_MASK) == FSAL_ACE4_MASK_FLAG)
 
+#define IS_FSAL_DIR(filetype)  (filetype == FSAL_TYPE_DIR)
+
 /** directory entry */
 
 typedef struct fsal_dirent__

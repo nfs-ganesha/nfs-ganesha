@@ -816,6 +816,10 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
 #ifdef _USE_NFS4_ACL
   /* If ACL exists and given access type is ace4 mask, use ACL to check access. */
+  LogDebug(COMPONENT_FSAL, "fsal_internal_testAccess: pattr=%p, pacl=%p, is_ace4_mask=%d",
+           p_object_attributes, p_object_attributes ? p_object_attributes->acl : 0,
+           IS_FSAL_ACE4_MASK_VALID(access_type));
+
   if(p_object_attributes && p_object_attributes->acl &&
      IS_FSAL_ACE4_MASK_VALID(access_type))
     {
@@ -825,8 +829,7 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 #endif
 
   /* Use mode to check access. */
-  if(IS_FSAL_MODE_MASK_VALID(access_type))
-    return fsal_internal_testAccess_no_acl(p_context, FSAL_MODE_MASK(access_type),
+  return fsal_internal_testAccess_no_acl(p_context, FSAL_MODE_MASK(access_type),
                                            p_buffstat, p_object_attributes);
 
   LogDebug(COMPONENT_FSAL, "fsal_internal_testAccess: invalid access_type = 0X%x",
