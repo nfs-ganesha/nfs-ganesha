@@ -257,7 +257,7 @@ int main(int argc, char *argv[])
 #endif                          /* _USE_SHARED_FSAL */
 
   /* Load the FSAL library (if needed) */
-  if(!FSAL_LoadLibrary(fsal_path_lib))
+  if(!FSAL_LoadLibrary((char *)fsal_path_lib))
     {
       fprintf(stderr, "NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib);
       exit(1);
