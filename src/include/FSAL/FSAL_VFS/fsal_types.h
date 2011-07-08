@@ -125,7 +125,7 @@ typedef struct
 
 typedef struct
 {
-  vfsfsal_export_context_t *export_context;     /* /* Must be the first entry in this structure */
+  vfsfsal_export_context_t *export_context;     /* Must be the first entry in this structure */
   vfsfsal_cred_t credential;
 } vfsfsal_op_context_t;
 
