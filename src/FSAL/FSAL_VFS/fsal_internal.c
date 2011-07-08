@@ -554,34 +554,22 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
                                           fsal_handle_t * p_handle      /* OUT
                                                                          */ )
 {
-  char procpath[MAXPATHLEN];
-  char pathproccontent[MAXPATHLEN];
-  int mnt_id = 0 ;
+  fsal_status_t st;
+  int errsrv = 0 ;
 
-  memset(procpath, 0, MAXPATHLEN);
-  memset(pathproccontent, 0, MAXPATHLEN);
-
-  snprintf(procpath, MAXPATHLEN, "/proc/%u/fd/%u", getpid(), dfd);
-
-  if(readlink(procpath, pathproccontent, MAXPATHLEN) == -1)
-    ReturnCode(posix2fsal_error(errno), errno);
-
-  strncat( pathproccontent, "/", MAXPATHLEN ) ;  
-  strncat( pathproccontent, p_fsalname->name, MAXPATHLEN ) ;  
+  if( !p_fsalname || !p_handle )
+    ReturnCode(ERR_FSAL_FAULT, 0);
  
+  memset(p_handle, 0, sizeof(vfsfsal_handle_t));
+
+  LogFullDebug(COMPONENT_FSAL, "get handle at for %s", p_fsalname->name);
+
   p_handle->data.vfs_handle.handle_bytes = VFS_HANDLE_LEN ;
-  if( vfs_lname_to_handle( pathproccontent, &p_handle->data.vfs_handle, &mnt_id ) )
-    ReturnCode(posix2fsal_error(errno), errno);
-
-#if 0 
-  {
-    char str[1024] ;
-    sprint_mem( str, p_handle->data.vfs_handle.handle, p_handle->data.vfs_handle.handle_bytes ) ;
-    printf( "=====> fsal_internal_get_handle_at: type=%u bytes=%u|%s\n",
-            p_handle->data.vfs_handle.handle_type, p_handle->data.vfs_handle.handle_bytes, str ) ;
-  }
-#endif
-
+  if( vfs_name_by_handle_at( dfd,  p_fsalname->name, &p_handle->data.vfs_handle ) != 0 )
+   {
+      errsrv = errno;
+      ReturnCode(posix2fsal_error(errsrv), errsrv);
+   }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 } /* fsal_internal_get_handle_at */

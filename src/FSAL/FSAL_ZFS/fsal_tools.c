@@ -138,26 +138,26 @@ fsal_status_t ZFSFSAL_DigestHandle(zfsfsal_export_context_t * p_expcontext,   /*
 
       /* NFSV2 handle digest */
     case FSAL_DIGEST_NFSV2:
-      if(sizeof(zfsfsal_handle_t) > FSAL_DIGEST_SIZE_HDLV2)
+      if(sizeof(in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV2)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
-      memcpy(out_buff, in_fsal_handle, sizeof(zfsfsal_handle_t));
+      memcpy(out_buff, in_fsal_handle, sizeof(in_fsal_handle->data) );
       break;
 
       /* NFSV3 handle digest */
     case FSAL_DIGEST_NFSV3:
-      if(sizeof(zfsfsal_handle_t) > FSAL_DIGEST_SIZE_HDLV3)
+      if(sizeof(in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV3)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
-      memcpy(out_buff, in_fsal_handle, sizeof(zfsfsal_handle_t));
+      memcpy(out_buff, in_fsal_handle, sizeof(in_fsal_handle->data));
       break;
 
       /* NFSV4 handle digest */
     case FSAL_DIGEST_NFSV4:
-      if(sizeof(zfsfsal_handle_t) > FSAL_DIGEST_SIZE_HDLV4)
+      if(sizeof(in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV4)
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
       memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
-      memcpy(out_buff, in_fsal_handle, sizeof(zfsfsal_handle_t));
+      memcpy(out_buff, in_fsal_handle, sizeof(in_fsal_handle->data));
       break;
 
       /* FileId digest for NFSv2 */
@@ -219,17 +219,17 @@ fsal_status_t ZFSFSAL_ExpandHandle(zfsfsal_export_context_t * p_expcontext,   /*
 
     case FSAL_DIGEST_NFSV2:
       memset(out_fsal_handle, 0, sizeof(zfsfsal_handle_t));
-      memcpy(out_fsal_handle, in_buff, sizeof(zfsfsal_handle_t));
+      memcpy(out_fsal_handle, in_buff, sizeof(out_fsal_handle->data));
       break;
 
     case FSAL_DIGEST_NFSV3:
       memset(out_fsal_handle, 0, sizeof(zfsfsal_handle_t));
-      memcpy(out_fsal_handle, in_buff, sizeof(zfsfsal_handle_t));
+      memcpy(out_fsal_handle, in_buff, sizeof(out_fsal_handle->data));
       break;
 
     case FSAL_DIGEST_NFSV4:
       memset(out_fsal_handle, 0, sizeof(zfsfsal_handle_t));
-      memcpy(out_fsal_handle, in_buff, sizeof(zfsfsal_handle_t));
+      memcpy(out_fsal_handle, in_buff, sizeof(out_fsal_handle->data));
       break;
 
     default:

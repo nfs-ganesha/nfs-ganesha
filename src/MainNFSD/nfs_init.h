@@ -81,6 +81,6 @@ int nfs_check_param_consistency();
  */
 void nfs_start(nfs_start_info_t * p_start_info);
 
-void nfs_get_fsalpathlib_conf(char *configPath, char *PathLib);
+int nfs_get_fsalpathlib_conf(char *configPath,  path_str_t * PathLib, unsigned int *plen) ;
 
 #endif

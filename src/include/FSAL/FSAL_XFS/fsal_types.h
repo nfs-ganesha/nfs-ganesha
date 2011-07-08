@@ -133,7 +133,7 @@ typedef struct
 
 typedef struct
 {
-  xfsfsal_export_context_t *export_context;     /* /* Must be the first entry in this structure */
+  xfsfsal_export_context_t *export_context;     /* Must be the first entry in this structure */
   xfsfsal_cred_t credential;
 } xfsfsal_op_context_t;
 
