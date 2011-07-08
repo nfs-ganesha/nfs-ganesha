@@ -86,9 +86,11 @@ fsal_status_t GPFSFSAL_rename(gpfsfsal_handle_t * p_old_parentdir_handle,       
 
   int rc, errsv;
   fsal_status_t status;
-  struct stat old_parent_buffstat, new_parent_buffstat, buffstat;
+  struct stat buffstat;
   int old_parent_fd, new_parent_fd;
   int src_equal_tgt = FALSE;
+  fsal_accessflags_t access_mask = 0;
+  fsal_attrib_list_t src_dir_attrs, tgt_dir_attrs;
 
   /* sanity checks.
    * note : src/tgt_dir_attributes are optional.
@@ -110,26 +112,17 @@ fsal_status_t GPFSFSAL_rename(gpfsfsal_handle_t * p_old_parentdir_handle,       
 
   /* retrieve directory metadata for checking access rights */
 
-  TakeTokenFSCall();
-  rc = fstat(old_parent_fd, &old_parent_buffstat);
-  errsv = errno;
-  ReleaseTokenFSCall();
-
-  if(rc)
-    {
-      close(old_parent_fd);
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_rename);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
-    }
+  src_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
+  status = GPFSFSAL_getattrs(p_old_parentdir_handle, p_context, &src_dir_attrs);
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_rename);
 
   /* optimisation : don't do the job twice if source dir = dest dir  */
   if(!FSAL_handlecmp(p_old_parentdir_handle, p_new_parentdir_handle, &status))
     {
       new_parent_fd = old_parent_fd;
       src_equal_tgt = TRUE;
-      new_parent_buffstat = old_parent_buffstat;
+      tgt_dir_attrs = src_dir_attrs;
     }
   else
     {
@@ -144,41 +137,35 @@ fsal_status_t GPFSFSAL_rename(gpfsfsal_handle_t * p_old_parentdir_handle,       
           close(old_parent_fd);
           ReturnStatus(status, INDEX_FSAL_rename);
         }
+
       /* retrieve destination attrs */
-      TakeTokenFSCall();
-      rc = fstat(new_parent_fd, &new_parent_buffstat);
-      errsv = errno;
-      ReleaseTokenFSCall();
-
-      if(rc)
-        {
-          /* close old and new parent fd */
-          close(old_parent_fd);
-          close(new_parent_fd);
-          if(errsv == ENOENT)
-            Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_rename);
-          else
-            Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_rename);
-        }
-
+      tgt_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
+      status = GPFSFSAL_getattrs(p_new_parentdir_handle, p_context, &tgt_dir_attrs);
+      if(FSAL_IS_ERROR(status))
+        ReturnStatus(status, INDEX_FSAL_rename);
     }
 
   /* check access rights */
 
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK,
-                                    &old_parent_buffstat,
-                                    NULL);
+  /* Set both mode and ace4 mask */
+  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
+                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD);
+
+  status = fsal_internal_testAccess(p_context, access_mask, NULL, &src_dir_attrs);
   if(FSAL_IS_ERROR(status)) {
     close(old_parent_fd);
     if (!src_equal_tgt)
       close(new_parent_fd);
     ReturnStatus(status, INDEX_FSAL_rename);
   }
+
   if(!src_equal_tgt)
     {
-      status =  fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK,
-                                         &new_parent_buffstat,
-                                         NULL);
+      access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
+                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE |
+                                   FSAL_ACE_PERM_ADD_SUBDIRECTORY);
+
+      status = fsal_internal_testAccess(p_context, access_mask, NULL, &tgt_dir_attrs);
       if(FSAL_IS_ERROR(status)) {
         close(old_parent_fd);
         close(new_parent_fd);
@@ -201,8 +188,8 @@ fsal_status_t GPFSFSAL_rename(gpfsfsal_handle_t * p_old_parentdir_handle,       
   /* Check sticky bits */
 
   /* Sticky bit on the source directory => the user who wants to delete the file must own it or its parent dir */
-  if((old_parent_buffstat.st_mode & S_ISVTX) &&
-     old_parent_buffstat.st_uid != p_context->credential.user &&
+  if((fsal2unix_mode(src_dir_attrs.mode) & S_ISVTX) &&
+     src_dir_attrs.owner != p_context->credential.user &&
      buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0) {
     close(old_parent_fd);
     if (!src_equal_tgt)
@@ -211,7 +198,7 @@ fsal_status_t GPFSFSAL_rename(gpfsfsal_handle_t * p_old_parentdir_handle,       
   }
 
   /* Sticky bit on the target directory => the user who wants to create the file must own it or its parent dir */
-  if(new_parent_buffstat.st_mode & S_ISVTX)
+  if(fsal2unix_mode(tgt_dir_attrs.mode) & S_ISVTX)
     {
       TakeTokenFSCall();
       rc = fstatat(new_parent_fd, p_new_name->name, &buffstat, AT_SYMLINK_NOFOLLOW);
@@ -231,7 +218,7 @@ fsal_status_t GPFSFSAL_rename(gpfsfsal_handle_t * p_old_parentdir_handle,       
       else
         {
 
-          if(new_parent_buffstat.st_uid != p_context->credential.user
+          if(tgt_dir_attrs.owner != p_context->credential.user
              && buffstat.st_uid != p_context->credential.user
              && p_context->credential.user != 0)
             {

@@ -351,7 +351,7 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME)
      && (p_context->credential.user != 0)
      && (p_context->credential.user != buffxstat.buffstat.st_uid)
-     && ((status = fsal_check_access_by_mode(p_context, FSAL_R_OK, &buffxstat.buffstat)).major
+     && ((status = fsal_check_access_by_mode(p_context, FSAL_MODE_MASK_SET(FSAL_R_OK), &buffxstat.buffstat)).major
          != ERR_FSAL_NO_ERROR))
     {
       ReturnStatus(status, INDEX_FSAL_setattrs);
@@ -360,7 +360,7 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME)
      && (p_context->credential.user != 0)
      && (p_context->credential.user != buffxstat.buffstat.st_uid)
-     && ((status = fsal_check_access_by_mode(p_context, FSAL_W_OK, &buffxstat.buffstat)).major
+     && ((status = fsal_check_access_by_mode(p_context, FSAL_MODE_MASK_SET(FSAL_W_OK), &buffxstat.buffstat)).major
          != ERR_FSAL_NO_ERROR))
     {
       ReturnStatus(status, INDEX_FSAL_setattrs);

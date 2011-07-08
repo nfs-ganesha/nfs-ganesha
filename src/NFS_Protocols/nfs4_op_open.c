@@ -115,6 +115,12 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   cache_inode_open_owner_name_t *powner_name = NULL;
   cache_inode_open_owner_t *powner = NULL;
 
+  fsal_accessflags_t write_access = FSAL_MODE_MASK_SET(FSAL_W_OK) |
+                                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA |
+                                                       FSAL_ACE_PERM_APPEND_DATA);
+  fsal_accessflags_t read_access = FSAL_MODE_MASK_SET(FSAL_R_OK) |
+                                   FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_DATA);
+
   resp->resop = NFS4_OP_OPEN;
   res_OPEN4.status = NFS4_OK;
 
@@ -418,7 +424,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   if(arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE)
                     {
                       if(cache_inode_access(pentry_lookup,
-                                            FSAL_W_OK,
+                                            write_access,
                                             data->ht,
                                             data->pclient,
                                             data->pcontext,
@@ -434,7 +440,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ)
                     {
                       if(cache_inode_access(pentry_lookup,
-                                            FSAL_R_OK,
+                                            read_access,
                                             data->ht,
                                             data->pclient,
                                             data->pcontext,
@@ -471,7 +477,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE)
                     {
                       if(cache_inode_access(pentry_lookup,
-                                            FSAL_W_OK,
+                                            write_access,
                                             data->ht,
                                             data->pclient,
                                             data->pcontext,
@@ -882,7 +888,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           if(arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE)
             {
               if(cache_inode_access(pentry_newfile,
-                                    FSAL_W_OK,
+                                    write_access,
                                     data->ht,
                                     data->pclient,
                                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
@@ -897,7 +903,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ)
             {
               if(cache_inode_access(pentry_newfile,
-                                    FSAL_R_OK,
+                                    read_access,
                                     data->ht,
                                     data->pclient,
                                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
@@ -912,7 +918,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE)
             {
               if(cache_inode_access(pentry_newfile,
-                                    FSAL_W_OK,
+                                    write_access,
                                     data->ht,
                                     data->pclient,
                                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
