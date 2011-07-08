@@ -68,8 +68,26 @@ fsal_status_t GPFSFSAL_lock_op_no_owner( gpfsfsal_file_t       * p_file_descript
   struct flock lock_args;
   int fcntl_comm;
 
-  if (p_file_descriptor == NULL || p_filehandle == NULL || p_context == NULL || conflicting_lock == NULL)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op_no_owner);
+  if (p_file_descriptor == NULL || p_filehandle == NULL || p_context == NULL)
+    {
+      if (p_file_descriptor == NULL)
+	LogDebug(COMPONENT_FSAL, "GPFSFSAL_lock_op_no_owner: p_file_descriptor argument is NULL.");
+      if (p_filehandle == NULL)
+	LogDebug(COMPONENT_FSAL, "GPFSFSAL_lock_op_no_owner: p_filehandle argument is NULL.");
+      if (p_context == NULL)
+	LogDebug(COMPONENT_FSAL, "GPFSFSAL_lock_op_no_owner: p_context argument is NULL.");
+      Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op_no_owner);
+    }
+
+  if (conflicting_lock == NULL && lock_op == FSAL_OP_LOCKT)
+    {
+      LogDebug(COMPONENT_FSAL, "GPFSFSAL_lock_op_no_owner: conflicting_lock argument can't"
+	       " be NULL with lock_op  = LOCKT");
+      Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op_no_owner);
+    }
+
+  LogFullDebug(COMPONENT_FSAL, "Locking: op:%d type:%d start:%llu length:%llu ", lock_op,
+	       request_lock.lock_type, request_lock.lock_start, request_lock.lock_length);
 
   if (lock_op == FSAL_OP_LOCKT)
     fcntl_comm = F_GETLK;
@@ -99,18 +117,21 @@ fsal_status_t GPFSFSAL_lock_op_no_owner( gpfsfsal_file_t       * p_file_descript
   retval = fcntl(p_file_descriptor->fd, fcntl_comm, &lock_args);
   if (retval && lock_op == FSAL_OP_LOCK)
     {
-      fcntl_comm = F_GETLK;
-      retval = fcntl(p_file_descriptor->fd, fcntl_comm, &lock_args);
-      if (retval)
+      if (conflicting_lock != NULL)
 	{
-	  LogCrit(COMPONENT_FSAL, "After failing a lock request, I couldn't even"
-		  " get the details of who owns the lock.");
-	  Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock_op_no_owner);
+	  fcntl_comm = F_GETLK;
+	  retval = fcntl(p_file_descriptor->fd, fcntl_comm, &lock_args);
+	  if (retval)
+	    {
+	      LogCrit(COMPONENT_FSAL, "After failing a lock request, I couldn't even"
+		      " get the details of who owns the lock.");
+	      Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock_op_no_owner);
+	    }
+	  conflicting_lock->lock_owner = lock_args.l_pid;
+	  conflicting_lock->lock_length = lock_args.l_len;
+	  conflicting_lock->lock_start = lock_args.l_start;
+	  conflicting_lock->lock_type = lock_args.l_type;
 	}
-      conflicting_lock->lock_owner = lock_args.l_pid;
-      conflicting_lock->lock_length = lock_args.l_len;
-      conflicting_lock->lock_start = lock_args.l_start;
-      conflicting_lock->lock_type = lock_args.l_type;
       Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock_op_no_owner);
     }
 

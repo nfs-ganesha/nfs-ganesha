@@ -727,6 +727,7 @@ fsal_functions_t fsal_gpfs_functions = {
   .fsal_lock = WRAP_GPFSFSAL_lock,
   .fsal_changelock = WRAP_GPFSFSAL_changelock,
   .fsal_lock_op_no_owner = WRAP_GPFSFSAL_lock_op_no_owner,
+  .fsal_lock_op_owner = NULL,
   .fsal_unlock = WRAP_GPFSFSAL_unlock,
   .fsal_getlock = WRAP_GPFSFSAL_getlock,
   .fsal_cleanobjectresources = WRAP_GPFSFSAL_CleanObjectResources,
