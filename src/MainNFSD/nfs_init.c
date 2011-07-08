@@ -598,18 +598,18 @@ void nfs_set_param_default()
 
 #ifdef _USE_SHARED_FSAL
   saved_fsalid = FSAL_GetId() ;
-  for( i = 0 ; i < p_nfs_param->nb_loaded_fsal ; i++ )
+  for( i = 0 ; i < nfs_param.nb_loaded_fsal ; i++ )
    {
-     fsalid =  p_nfs_param->loaded_fsal[i] ;
+     fsalid =  nfs_param.loaded_fsal[i] ;
 
      FSAL_SetId( fsalid ) ;
 
      /* FSAL parameters */
-     p_nfs_param->fsal_param[fsalid].fsal_info.max_fs_calls = 30;  /* No semaphore to access the FSAL */
+     nfs_param.fsal_param[fsalid].fsal_info.max_fs_calls = 30;  /* No semaphore to access the FSAL */
 
-     FSAL_SetDefault_FSAL_parameter(&p_nfs_param->fsal_param[fsalid]);
-     FSAL_SetDefault_FS_common_parameter(&p_nfs_param->fsal_param[fsalid]);
-     FSAL_SetDefault_FS_specific_parameter(&p_nfs_param->fsal_param[fsalid]);
+     FSAL_SetDefault_FSAL_parameter(&nfs_param.fsal_param[fsalid]);
+     FSAL_SetDefault_FS_common_parameter(&nfs_param.fsal_param[fsalid]);
+     FSAL_SetDefault_FS_specific_parameter(&nfs_param.fsal_param[fsalid]);
    }
   FSAL_SetId( saved_fsalid ) ;
 #else
@@ -742,14 +742,14 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
 
 #ifdef _USE_SHARED_FSAL
   saved_fsalid = FSAL_GetId() ;
-  for( i = 0 ; i < p_nfs_param->nb_loaded_fsal ; i++ )
+  for( i = 0 ; i < nfs_param.nb_loaded_fsal ; i++ )
    {
-     fsalid =  p_nfs_param->loaded_fsal[i] ;
+     fsalid =  nfs_param.loaded_fsal[i] ;
      FSAL_SetId( fsalid ) ;
 
      /* Load FSAL configuration from parsed file */
      fsal_status =
-        FSAL_load_FSAL_parameter_from_conf(config_struct, &p_nfs_param->fsal_param[fsalid]);
+        FSAL_load_FSAL_parameter_from_conf(config_struct, &nfs_param.fsal_param[fsalid]);
      if(FSAL_IS_ERROR(fsal_status))
       {
          if(fsal_status.major == ERR_FSAL_NOENT)
@@ -768,7 +768,7 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
 
      /* Load FSAL configuration from parsed file */
      fsal_status =
-          FSAL_load_FS_common_parameter_from_conf(config_struct, &p_nfs_param->fsal_param[fsalid]);
+          FSAL_load_FS_common_parameter_from_conf(config_struct, &nfs_param.fsal_param[fsalid]);
      if(FSAL_IS_ERROR(fsal_status))
       {
         if(fsal_status.major == ERR_FSAL_NOENT)
@@ -788,7 +788,7 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
 
     /* Load FSAL configuration from parsed file */
     fsal_status =
-        FSAL_load_FS_specific_parameter_from_conf(config_struct, &p_nfs_param->fsal_param[fsalid]);
+        FSAL_load_FS_specific_parameter_from_conf(config_struct, &nfs_param.fsal_param[fsalid]);
     if(FSAL_IS_ERROR(fsal_status))
       {
         if(fsal_status.major == ERR_FSAL_NOENT)

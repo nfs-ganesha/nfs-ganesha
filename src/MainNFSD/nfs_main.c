@@ -301,7 +301,7 @@ int main(int argc, char *argv[])
 
 #ifdef _USE_SHARED_FSAL
   nb_fsal = NB_AVAILABLE_FSAL ;
-  if(nfs_get_fsalpathlib_conf(my_config_path, fsal_path_param, &nb_fsal))
+  if(nfs_get_fsalpathlib_conf(config_path, fsal_path_param, &nb_fsal))
     {
       LogMajor(COMPONENT_INIT,
                "NFS MAIN: Error parsing configuration file for FSAL dynamic lib param.");

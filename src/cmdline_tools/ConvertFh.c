@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
   nfs_prereq_init("convert_fh", "localhost", NIV_MAJ, "/dev/tty");
 
 #ifdef _USE_SHARED_FSAL
-  if(nfs_get_fsalpathlib_conf(path_cfg, fsal_path_lib, &lentab))
+  if(nfs_get_fsalpathlib_conf(config_path, fsal_path_lib, &lentab))
     {
       fprintf(stderr, "NFS MAIN: Error parsing configuration file.");
       exit(1);
