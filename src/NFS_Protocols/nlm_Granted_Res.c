@@ -92,10 +92,10 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
     {
       LogMajor(COMPONENT_NLM,
                "Granted call failed due to client error, releasing lock");
-      if(cach_inode_release_block(arg->cookie.n_bytes,
-                                  arg->cookie.n_len,
-                                  &cache_status,
-                                  pclient) != CACHE_INODE_SUCCESS)
+      if(cache_inode_release_block(arg->cookie.n_bytes,
+                                   arg->cookie.n_len,
+                                   &cache_status,
+                                   pclient) != CACHE_INODE_SUCCESS)
         {
           //TODO FSF: handle error
         }

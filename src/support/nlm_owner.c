@@ -75,6 +75,9 @@ int display_nlm_client(cache_inode_nlm_client_t *pkey, char *str)
 {
   char *strtmp = str;
 
+  if(pkey == NULL)
+    return sprintf(str, "<NULL>");
+
   strtmp += sprintf(strtmp, "caller_name=");
   strncpy(strtmp, pkey->clc_nlm_caller_name, pkey->clc_nlm_caller_name_len);
   strtmp += pkey->clc_nlm_caller_name_len;
@@ -174,6 +177,9 @@ int display_nlm_owner(cache_lock_owner_t *pkey, char *str)
 {
   unsigned int i = 0;
   char *strtmp = str;
+
+  if(pkey == NULL)
+    return sprintf(str, "<NULL>");
 
   strtmp += display_nlm_client(pkey->clo_owner.clo_nlm_owner.clo_client, str);
 
@@ -545,6 +551,11 @@ cache_inode_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
     }
 
   pclient = (cache_inode_nlm_client_t *)Mem_Alloc(sizeof(*pkey));
+  if(pclient == NULL)
+    {
+      Mem_Free(pkey);
+      return NULL;
+    }
 
   /* Copy everything over */
   *pclient = *pkey;
@@ -808,6 +819,11 @@ cache_lock_owner_t *get_nlm_owner(bool_t                     care,
     }
     
   powner = (cache_lock_owner_t *)Mem_Alloc(sizeof(*pkey));
+  if(powner == NULL)
+    {
+      Mem_Free(pkey);
+      return NULL;
+    }
 
   /* Copy everything over */
   *powner = *pkey;

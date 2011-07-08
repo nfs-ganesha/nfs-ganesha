@@ -95,6 +95,7 @@ cache_inode_status_t cache_inode_lock_init(cache_inode_status_t * pstatus)
   memset(&unknown_owner, 0, sizeof(unknown_owner));
   unknown_owner.clo_type     = CACHE_LOCK_OWNER_UNKNOWN;
   unknown_owner.clo_refcount = 1;
+  init_glist(&unknown_owner.clo_lock_list);
 
   if(pthread_mutex_init(&unknown_owner.clo_mutex, NULL) == -1)
     {
@@ -171,10 +172,12 @@ const char *str_lockt(cache_lock_t ltype)
 {
   switch(ltype)
     {
-      case CACHE_INODE_LOCK_R: return "READ ";
-      case CACHE_INODE_LOCK_W: return "WRITE";
+      case CACHE_INODE_LOCK_R:  return "READ ";
+      case CACHE_INODE_LOCK_W:  return "WRITE";
+      case CACHE_INODE_NO_LOCK: return "NO LOCK";
       default:                 return "?????";
     }
+  return "????";
 }
 
 const char *str_blocking(cache_blocking_t blocking)
@@ -1316,10 +1319,10 @@ void cancel_blocked_locks_range(cache_entry_t        * pentry,
 }
 
 #ifdef _USE_NLM
-cache_inode_status_t cach_inode_release_block(void                 * pcookie,
-                                              int                    cookie_size,
-                                              cache_inode_status_t * pstatus,
-                                              cache_inode_client_t * pclient)
+cache_inode_status_t cache_inode_release_block(void                 * pcookie,
+                                               int                    cookie_size,
+                                               cache_inode_status_t * pstatus,
+                                               cache_inode_client_t * pclient)
 { 
   cache_cookie_entry_t * p_cookie_entry; 
   cache_lock_entry_t   * lock_entry;
@@ -1388,31 +1391,37 @@ cache_inode_status_t cach_inode_release_block(void                 * pcookie,
  ******************************************************************************/
 inline fsal_lock_t fsal_lock_type(cache_lock_desc_t *lock)
 {
-
-  fsal_lock_t lt;
-
   switch(lock->cld_type)
     {
-      case CACHE_INODE_LOCK_R: lt = FSAL_LOCK_R;
-      case CACHE_INODE_LOCK_W: lt = FSAL_LOCK_W;
-      case CACHE_INODE_NO_LOCK: lt = FSAL_NO_LOCK;
+      case CACHE_INODE_LOCK_R:  return FSAL_LOCK_R;
+      case CACHE_INODE_LOCK_W:  return FSAL_LOCK_W;
+      case CACHE_INODE_NO_LOCK: return FSAL_NO_LOCK;
     }
 
-  return lt;
+  return FSAL_NO_LOCK;
 }
 
 inline cache_lock_t cache_inode_lock_type(fsal_lock_t type)
 {
-  cache_lock_t lt;
-
   switch(type)
     {
-      case FSAL_LOCK_R: lt = CACHE_INODE_LOCK_R;
-      case FSAL_LOCK_W: lt = CACHE_INODE_LOCK_W;
-      case FSAL_NO_LOCK: lt = CACHE_INODE_NO_LOCK;
+      case FSAL_LOCK_R:  return CACHE_INODE_LOCK_R;
+      case FSAL_LOCK_W:  return CACHE_INODE_LOCK_W;
+      case FSAL_NO_LOCK: return CACHE_INODE_NO_LOCK;
     }
 
-  return lt;
+  return CACHE_INODE_NO_LOCK;
+}
+
+inline const char *fsal_lock_op_str(fsal_lock_op_t op)
+{
+  switch(op)
+    {
+      case FSAL_OP_LOCKT:  return "FSAL_OP_LOCKT ";
+      case FSAL_OP_LOCK:   return "FSAL_OP_LOCK  ";
+      case FSAL_OP_UNLOCK: return "FSAL_OP_UNLOCK";
+    }
+  return "unknown";
 }
 
 cache_inode_status_t convert_fsal_lock_status(fsal_status_t fsal_status)
@@ -1532,6 +1541,10 @@ cache_inode_status_t FSAL_LockOp(cache_entry_t        * pentry,
   fsal_lock_param_t lock_params;
   fsal_lock_param_t conflicting_lock;
 
+  LogLock(fsal_lock_op_str(lock_op), pentry, pcontext, powner, plock);
+  LogFullDebug(COMPONENT_NLM,
+               "Lock type %d", (int) fsal_lock_type(plock));
+
   switch(pentry->object.file.fsal_lock_support)
     {
       case FSAL_NO_LOCKS:
@@ -1544,8 +1557,8 @@ cache_inode_status_t FSAL_LockOp(cache_entry_t        * pentry,
           }
         else
           {
-	    lock_params.lock_type = fsal_lock_type(plock);
-	    lock_params.lock_start = plock->cld_offset;
+	    lock_params.lock_type   = fsal_lock_type(plock);
+	    lock_params.lock_start  = plock->cld_offset;
 	    lock_params.lock_length = plock->cld_length;
 
             fsal_status = FSAL_lock_op_no_owner(cache_inode_fd(pentry),
@@ -1560,8 +1573,8 @@ cache_inode_status_t FSAL_LockOp(cache_entry_t        * pentry,
 
       case FSAL_LOCKS_OWNER:
 
-	lock_params.lock_type = fsal_lock_type(plock);
-	lock_params.lock_start = plock->cld_offset;
+	lock_params.lock_type   = fsal_lock_type(plock);
+	lock_params.lock_start  = plock->cld_offset;
 	lock_params.lock_length = plock->cld_length;
 
         /* TODO FSF: need a better owner to pass, will depend on what FSAL is capable of */
@@ -1588,18 +1601,7 @@ cache_inode_status_t FSAL_LockOp(cache_entry_t        * pentry,
       if(conflict != NULL)
         {
           memset(conflict, 0, sizeof(*conflict));
-	  switch(conflicting_lock.lock_type)
-	    {
-	       case FSAL_LOCK_R:
-		 conflict->cld_type = CACHE_INODE_LOCK_R;
-		 break;
-	       case FSAL_LOCK_W:
-		 conflict->cld_type = CACHE_INODE_LOCK_W;
-		 break;
-	       case FSAL_NO_LOCK:
-		 conflict->cld_type = CACHE_INODE_NO_LOCK;
-		 break;
-	    }
+          conflict->cld_type   = cache_inode_lock_type(conflicting_lock.lock_type);
 	  conflict->cld_offset = conflicting_lock.lock_start;
 	  conflict->cld_length = conflicting_lock.lock_length;
         }
@@ -1640,6 +1642,13 @@ cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
 {
   cache_lock_entry_t *found_entry;
 
+  if(cache_inode_open(pentry, pclient, FSAL_O_RDWR, pcontext, pstatus) != CACHE_INODE_SUCCESS)
+    {
+      LogFullDebug(COMPONENT_NLM,
+                   "cache_inode_test could not close file");
+      return *pstatus;
+    }
+
   P(pentry->object.file.lock_list_mutex);
 
   found_entry = get_overlapping_entry(pentry, pcontext, powner, plock);
@@ -1676,6 +1685,13 @@ cache_inode_status_t cache_inode_lock(cache_entry_t        * pentry,
   cache_lock_entry_t *found_entry;
   cache_blocking_t blocked = blocking;
   uint64_t found_entry_end, plock_end = lock_end(plock);
+
+  if(cache_inode_open(pentry, pclient, FSAL_O_RDWR, pcontext, pstatus) != CACHE_INODE_SUCCESS)
+    {
+      LogFullDebug(COMPONENT_NLM,
+                   "cache_inode_lock could not close file");
+      return *pstatus;
+    }
 
   P(pentry->object.file.lock_list_mutex);
   if(blocking != CACHE_NON_BLOCKING)

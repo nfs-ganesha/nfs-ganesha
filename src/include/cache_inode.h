@@ -1140,10 +1140,10 @@ cache_inode_status_t cache_inode_grant_block(void                  * pcookie,
                                              int                     cookie_size,
                                              cache_inode_status_t  * pstatus);
 
-cache_inode_status_t cach_inode_release_block(void                 * pcookie,
-                                              int                    cookie_size,
-                                              cache_inode_status_t * pstatus,
-                                              cache_inode_client_t * pclient);
+cache_inode_status_t cache_inode_release_block(void                 * pcookie,
+                                               int                    cookie_size,
+                                               cache_inode_status_t * pstatus,
+                                               cache_inode_client_t * pclient);
 #endif
 
 cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
