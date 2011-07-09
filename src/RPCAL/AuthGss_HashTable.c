@@ -389,12 +389,18 @@ int Gss_ctx_Hash_Set(gss_union_ctx_id_desc *pgss_ctx, struct svc_rpc_gss_data *g
  *
  * Gss_ctx_Hash_Get
  *
- * This routine gets a Gss Ctx from the  hashtable.
+ * This routine gets a Gss Ctx from the hashtable and returns
+ * a pointers to a the established, seqlast, and seqmask variables
+ * of the context.
  *
  * @return 1 if ok, 0 otherwise.
  *
  */
-int Gss_ctx_Hash_Get(gss_union_ctx_id_desc *pgss_ctx, struct svc_rpc_gss_data *gd)
+int Gss_ctx_Hash_Get(gss_union_ctx_id_desc *pgss_ctx,
+		     struct svc_rpc_gss_data *gd,
+		     bool_t **established,
+		     u_int **seqlast,
+		     uint32_t **seqmask)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -424,6 +430,10 @@ int Gss_ctx_Hash_Get(gss_union_ctx_id_desc *pgss_ctx, struct svc_rpc_gss_data *g
               ctx_str, failure);
       return 0;
     }
+
+  *established = &stored_gd->established;
+  *seqlast = &stored_gd->seqlast;
+  *seqmask = &stored_gd->seqmask;
 
   return 1;
 }                               /* Gss_ctx_Hash_Get */
