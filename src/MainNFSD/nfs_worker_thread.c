@@ -1554,7 +1554,7 @@ void *worker_thread(void *IndexArg)
                index);
 
 #ifdef _USE_MFSL
-  if(FSAL_IS_ERROR(MFSL_GetContext(&pmydata->cache_inode_client.mfsl_context, pfsal_op_ctx ) ;
+  if(FSAL_IS_ERROR(MFSL_GetContext(&pmydata->cache_inode_client.mfsl_context, pfsal_op_ctx)) ) ;
     {
       /* Failed init */
       LogMajor(COMPONENT_DISPATCH,
