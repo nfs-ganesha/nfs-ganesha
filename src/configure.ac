@@ -628,9 +628,9 @@ case $FSAL in
 				"7."*)
 					AC_DEFINE([_USE_PGSQL], 1, [Using PostgreSQL database])
 					;;
-				"8."*)
+				"8."*|"9."*)
 					AC_DEFINE([_USE_PGSQL], 1, [Using PostgreSQL database])
-					AC_DEFINE([_PGSQL8], 1, [Using PostgreSQL version 8.x])
+					AC_DEFINE([_PGSQL8], 1, [Using PostgreSQL version >= 8.x])
 					;;
 				*)
 					AC_MSG_ERROR("Unsupported PostgreSQL version: $PGSQL_VERSION")
