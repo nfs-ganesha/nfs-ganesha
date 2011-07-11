@@ -331,7 +331,9 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
                    "current uid = %d, new uid = %d",
                    current_attrs.owner, buffxstat.buffstat.st_uid);
         }
-      else  /* Fill wanted group. */
+
+      /* Fill wanted group. */
+      if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_GROUP))
         {
           buffxstat.buffstat.st_gid = (int)wanted_attrs.group;
           LogDebug(COMPONENT_FSAL,
@@ -382,7 +384,9 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
                    "current atime = %lu, new atime = %lu",
                    (unsigned long)current_attrs.atime.seconds, (unsigned long)buffxstat.buffstat.st_atime);
         }
-      else  /* Fill wanted mtime. */
+
+      /* Fill wanted mtime. */
+      if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MTIME))
         {
           buffxstat.buffstat.st_mtime = (time_t) wanted_attrs.mtime.seconds;
           LogDebug(COMPONENT_FSAL,
