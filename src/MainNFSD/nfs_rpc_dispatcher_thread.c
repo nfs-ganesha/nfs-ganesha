@@ -226,11 +226,11 @@ void unregister_rpc(void)
 
 #ifdef _USE_NLM
 #define test_for_additional_nfs_protocols(p) \
-  ((p != P_MNT || p != P_NLM) && \
+  ((p != P_MNT && p != P_NLM) || \
   (nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0)
 #else
 #define test_for_additional_nfs_protocols(p) \
-  (p != P_MNT && \
+  (p != P_MNT || \
   (nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0)
 #endif
 

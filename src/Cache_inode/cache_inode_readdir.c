@@ -1005,6 +1005,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   unsigned int i = 0;
   unsigned int cookie_iter = 0;
   unsigned int nbdirchain = 0;
+  fsal_accessflags_t access_mask = 0;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -1063,8 +1064,10 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
     }
 
   /* Check is user (as specified by the credentials) is authorized to read the directory or not */
+  access_mask = FSAL_MODE_MASK_SET(FSAL_R_OK) |
+                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR);
   if(cache_inode_access_no_mutex(dir_pentry,
-                                 FSAL_R_OK,
+                                 access_mask,
                                  ht, pclient, pcontext, pstatus) != CACHE_INODE_SUCCESS)
     {
       V_w(&dir_pentry->lock);

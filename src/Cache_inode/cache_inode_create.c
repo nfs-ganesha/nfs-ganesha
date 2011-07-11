@@ -111,6 +111,8 @@ cache_inode_create(cache_entry_t * pentry_parent,
 #endif
 #endif
 
+    fsal_accessflags_t access_mask = 0;
+
     /* Set the return default to CACHE_INODE_SUCCESS */
     *pstatus = CACHE_INODE_SUCCESS;
 
@@ -134,8 +136,11 @@ cache_inode_create(cache_entry_t * pentry_parent,
     /*
      * Check if caller is allowed to perform the operation
      */
+    access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK) |
+                  FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE |
+                                     FSAL_ACE_PERM_ADD_SUBDIRECTORY);
     status = cache_inode_access(pentry_parent,
-                                FSAL_W_OK, ht,
+                                access_mask, ht,
                                 pclient, pcontext, &status);
     if (status != CACHE_INODE_SUCCESS)
         {

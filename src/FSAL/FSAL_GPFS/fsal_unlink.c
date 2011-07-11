@@ -73,8 +73,10 @@ fsal_status_t GPFSFSAL_unlink(gpfsfsal_handle_t * p_parent_directory_handle,    
 
   fsal_status_t status;
   int rc, errsv;
-  struct stat buffstat, buffstat_parent;
+  struct stat buffstat;
   int fd;
+  fsal_accessflags_t access_mask = 0;
+  fsal_attrib_list_t parent_dir_attrs;
 
   /* sanity checks. */
   if(!p_parent_directory_handle || !p_context || !p_object_name)
@@ -90,19 +92,10 @@ fsal_status_t GPFSFSAL_unlink(gpfsfsal_handle_t * p_parent_directory_handle,    
     ReturnStatus(status, INDEX_FSAL_unlink);
 
   /* get directory metadata */
-  TakeTokenFSCall();
-  rc = fstat(fd, &buffstat_parent);
-  errsv = errno;
-  ReleaseTokenFSCall();
-  if(rc)
-    {
-      close(fd);
-
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_unlink);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_unlink);
-    }
+  parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
+  status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_unlink);
 
   /* build the child path */
 
@@ -120,8 +113,8 @@ fsal_status_t GPFSFSAL_unlink(gpfsfsal_handle_t * p_parent_directory_handle,    
   /* check access rights */
 
   /* Sticky bit on the directory => the user who wants to delete the file must own it or its parent dir */
-  if((buffstat_parent.st_mode & S_ISVTX)
-     && buffstat_parent.st_uid != p_context->credential.user
+  if((fsal2unix_mode(parent_dir_attrs.mode) & S_ISVTX)
+     && parent_dir_attrs.owner != p_context->credential.user
      && buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0)
     {
       close(fd);
@@ -129,8 +122,12 @@ fsal_status_t GPFSFSAL_unlink(gpfsfsal_handle_t * p_parent_directory_handle,    
     }
 
   /* client must be able to lookup the parent directory and modify it */
-  status =
-      fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_parent, NULL);
+
+  /* Set both mode and ace4 mask */
+  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK  | FSAL_X_OK) |
+                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD);
+
+  status = fsal_internal_testAccess(p_context, access_mask, NULL, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_unlink);
 

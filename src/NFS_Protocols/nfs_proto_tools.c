@@ -4010,3 +4010,102 @@ int nfs4_MakeCred(compound_data_t * data)
 
   return NFS4_OK;
 }                               /* nfs4_MakeCred */
+
+/* Create access mask based on given access operation. Both mode and ace4
+ * mask are encoded. */
+fsal_accessflags_t nfs_get_access_mask(uint32_t op, fsal_attrib_list_t *pattr)
+{
+  fsal_accessflags_t access_mask = 0;
+
+  switch(op)
+    {
+      case ACCESS3_READ:
+        access_mask |= FSAL_MODE_MASK_SET(FSAL_R_OK);
+        if(IS_FSAL_DIR(pattr->type))
+          access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR);
+        else
+          access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_DATA);
+      break;
+
+      case ACCESS3_LOOKUP:
+        if(!IS_FSAL_DIR(pattr->type))
+          break;
+        access_mask |= FSAL_MODE_MASK_SET(FSAL_X_OK);
+        access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR);
+      break;
+
+      case ACCESS3_MODIFY:
+        access_mask |= FSAL_MODE_MASK_SET(FSAL_W_OK);
+        if(IS_FSAL_DIR(pattr->type))
+          access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD);
+        else
+          access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA);
+      break;
+
+      case ACCESS3_EXTEND:
+        access_mask |= FSAL_MODE_MASK_SET(FSAL_W_OK);
+        if(IS_FSAL_DIR(pattr->type))
+          access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE |
+                                            FSAL_ACE_PERM_ADD_SUBDIRECTORY);
+        else
+          access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_APPEND_DATA);
+      break;
+
+      case ACCESS3_DELETE:
+        if(!IS_FSAL_DIR(pattr->type))
+          break;
+        access_mask |= FSAL_MODE_MASK_SET(FSAL_W_OK);
+        access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD);
+      break;
+
+      case ACCESS3_EXECUTE:
+        if(IS_FSAL_DIR(pattr->type))
+          break;
+        access_mask |= FSAL_MODE_MASK_SET(FSAL_X_OK);
+        access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE);
+      break;
+    }
+
+  return access_mask;
+}
+
+void nfs3_access_debug(char *label, uint32_t access)
+{
+  LogDebug(COMPONENT_NFSPROTO, "%s=%s,%s,%s,%s,%s,%s",
+           label,
+           FSAL_TEST_MASK(access, ACCESS3_READ) ? "READ" : "-",
+           FSAL_TEST_MASK(access, ACCESS3_LOOKUP) ? "LOOKUP" : "-",
+           FSAL_TEST_MASK(access, ACCESS3_MODIFY) ? "MODIFY" : "-",
+           FSAL_TEST_MASK(access, ACCESS3_EXTEND) ? "EXTEND" : "-",
+           FSAL_TEST_MASK(access, ACCESS3_DELETE) ? "DELETE" : "-",
+           FSAL_TEST_MASK(access, ACCESS3_EXECUTE) ? "EXECUTE" : "-");
+}
+
+void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask)
+{
+  LogDebug(COMPONENT_NFSPROTO, "%s=%s,%s,%s,%s,%s,%s",
+           label,
+           FSAL_TEST_MASK(access, ACCESS3_READ) ? "READ" : "-",
+           FSAL_TEST_MASK(access, ACCESS3_LOOKUP) ? "LOOKUP" : "-",
+           FSAL_TEST_MASK(access, ACCESS3_MODIFY) ? "MODIFY" : "-",
+           FSAL_TEST_MASK(access, ACCESS3_EXTEND) ? "EXTEND" : "-",
+           FSAL_TEST_MASK(access, ACCESS3_DELETE) ? "DELETE" : "-",
+           FSAL_TEST_MASK(access, ACCESS3_EXECUTE) ? "EXECUTE" : "-");
+
+  if(v4mask)
+    LogDebug(COMPONENT_NFSPROTO, "v4mask=%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+             FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_READ_DATA)		 ? 'r':'-',
+             FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_WRITE_DATA)		 ? 'w':'-',
+             FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_EXECUTE)		 ? 'x':'-',
+             FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_ADD_SUBDIRECTORY)    ? 'm':'-',
+             FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_READ_NAMED_ATTR)	 ? 'n':'-',
+             FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_WRITE_NAMED_ATTR) 	 ? 'N':'-',
+             FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_DELETE_CHILD) 	 ? 'p':'-',
+             FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_READ_ATTR)		 ? 't':'-',
+             FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_WRITE_ATTR)		 ? 'T':'-',
+             FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_DELETE)		 ? 'd':'-',
+             FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_READ_ACL) 		 ? 'c':'-',
+             FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_WRITE_ACL)		 ? 'C':'-',
+             FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_WRITE_OWNER)	 ? 'o':'-',
+             FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_SYNCHRONIZE)	 ? 'z':'-');
+}
