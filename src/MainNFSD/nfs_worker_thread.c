@@ -1501,10 +1501,6 @@ void *worker_thread(void *IndexArg)
                index);
 #endif
 
-#ifdef _USE_SHARED_FSAL
-  FSAL_InitKey( ) ;
-#endif
-
   LogDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: my pthread id is %p",
            index, (caddr_t) pthread_self());
 
