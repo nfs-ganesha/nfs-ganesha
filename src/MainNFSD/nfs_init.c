@@ -253,7 +253,6 @@ void nfs_print_param_config()
  */
 void nfs_set_param_default()
 {
-  memset(&nfs_param, 0, sizeof(nfs_param));
 #ifdef _USE_SHARED_FSAL
   unsigned int i = 0 ;
   unsigned int saved_fsalid = 0 ;

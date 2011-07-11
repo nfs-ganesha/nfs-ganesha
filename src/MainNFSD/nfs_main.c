@@ -299,6 +299,9 @@ int main(int argc, char *argv[])
     LogFatal(COMPONENT_MAIN,
              "Could not start nfs daemon, pthread_sigmask failed");
 
+  /* Set the parameter to 0 before doing anything */
+  memset((char *)&nfs_param, 0, sizeof(nfs_parameter_t));
+
 #ifdef _USE_SHARED_FSAL
   nb_fsal = NB_AVAILABLE_FSAL ;
   if(nfs_get_fsalpathlib_conf(config_path, fsal_path_param, &nb_fsal))
