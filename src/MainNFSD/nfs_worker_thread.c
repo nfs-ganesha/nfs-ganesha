@@ -2058,13 +2058,6 @@ void *worker_thread(void *IndexArg)
                "Memory manager successfully initialized");
 #endif
 
-  LogDebug(COMPONENT_DISPATCH, "my pthread id is %p",
-           (caddr_t) pthread_self());
-
-  /* Initialisation of credential for current thread */
-  LogFullDebug(COMPONENT_DISPATCH,
-               "Initialization of thread's credential");
-
   LogDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: my pthread id is %p",
            worker_index, (caddr_t) pthread_self());
 
