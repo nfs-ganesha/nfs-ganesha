@@ -52,14 +52,8 @@
 #include "nlm_util.h"
 #include "nlm_async.h"
 
-static void do_cancel_lock(nlm_lock_entry_t * nlm_entry)
-{
-  /* remove the lock from the blocklist */
-  nlm_remove_from_locklist(nlm_entry);
-}
-
 /**
- * nlm4_Lock: Set a range lock
+ * nlm4_Cancel: Cancel a blocked range lock
  *
  *  @param parg        [IN]
  *  @param pexportlist [IN]
@@ -79,13 +73,14 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
                 struct svc_req *preq /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ )
 {
-  nlm4_cancargs *arg = &parg->arg_nlm4_cancel;
-  cache_entry_t *pentry;
-  fsal_attrib_list_t attr;
-  nlm_lock_entry_t *nlm_entry;
-  cache_inode_status_t cache_status;
-  cache_inode_fsal_data_t fsal_data;
-  char buffer[1024];
+  nlm4_cancargs            * arg = &parg->arg_nlm4_cancel;
+  cache_entry_t            * pentry;
+  cache_inode_status_t       cache_status;
+  char                       buffer[MAXNETOBJ_SZ * 2];
+  cache_inode_nlm_client_t * nlm_client;
+  cache_lock_owner_t       * nlm_owner;
+  cache_lock_desc_t          lock;
+  int                        rc;
 
   netobj_to_string(&arg->cookie, buffer, 1024);
   LogDebug(COMPONENT_NLM,
@@ -111,39 +106,46 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
       return NFS_REQ_OK;
     }
 
-  /* Convert file handle into a cache entry */
-  if(!nfs3_FhandleToFSAL((nfs_fh3 *) & (arg->alock.fh), &fsal_data.handle, pcontext))
+  rc = nlm_process_parameters(preq,
+                              arg->exclusive,
+                              &arg->alock,
+                              &lock,
+                              ht,
+                              &pentry,
+                              pcontext,
+                              pclient,
+                              FALSE, /* cancel doesn't care if owner is found */
+                              &nlm_client,
+                              &nlm_owner);
+
+  if(rc >= 0)
     {
-      /* handle is not valid */
-      pres->res_nlm4.stat.stat = NLM4_STALE_FH;
-      /*
-       * Should we do a REQ_OK so that the client get
-       * a response ? FIXME!!
-       */
-      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Cancel %s",
-               lock_result_str(pres->res_nlm4.stat.stat));
-      return NFS_REQ_DROP;
-    }
-  /* Now get the cached inode attributes */
-  fsal_data.cookie = DIR_START;
-  if((pentry = cache_inode_get(&fsal_data, &attr, ht,
-                               pclient, pcontext, &cache_status)) == NULL)
-    {
-      /* handle is not valid */
-      pres->res_nlm4.stat.stat = NLM4_STALE_FH;
-      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Cancel %s",
+      /* Present the error back to the client */
+      pres->res_nlm4.stat.stat = (nlm4_stats)rc;
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
                lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
-  nlm_entry = nlm_find_lock_entry(&(arg->alock), arg->exclusive, NLM4_BLOCKED);
-  if(!nlm_entry)
+
+  if(cache_inode_cancel(pentry,
+                        pcontext,
+                        nlm_owner,
+                        &lock,
+                        pclient,
+                        &cache_status) != CACHE_INODE_SUCCESS)
     {
-      pres->res_nlm4.stat.stat = NLM4_DENIED;
-      return NFS_REQ_OK;
+      /* TODO FSF: Deal with failure to cancel */
+      pres->res_nlm4test.test_stat.stat = nlm_convert_cache_inode_error(cache_status);
     }
-  do_cancel_lock(nlm_entry);
-  nlm_lock_entry_dec_ref(nlm_entry);
-  pres->res_nlm4.stat.stat = NLM4_GRANTED;
+  else
+    {
+      pres->res_nlm4.stat.stat = NLM4_GRANTED;
+    }
+
+  /* Release the NLM Client and NLM Owner references we have */
+  dec_nlm_client_ref(nlm_client);
+  dec_nlm_owner_ref(nlm_owner);
+
   LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Cancel %s",
            lock_result_str(pres->res_nlm4.stat.stat));
   return NFS_REQ_OK;

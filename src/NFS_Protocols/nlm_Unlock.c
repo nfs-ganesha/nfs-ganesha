@@ -74,16 +74,16 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
                 struct svc_req *preq /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ )
 {
-  int lck_cnt, lck_state;
-  nlm4_unlockargs *arg = &parg->arg_nlm4_unlock;
-  cache_entry_t *pentry;
-  fsal_attrib_list_t attr;
-  nlm_lock_entry_t *nlm_entry;
-  cache_inode_status_t cache_status;
-  cache_inode_fsal_data_t fsal_data;
-  char buffer[1024];
+  nlm4_unlockargs          * arg = &parg->arg_nlm4_unlock;
+  cache_entry_t            * pentry;
+  cache_inode_status_t       cache_status;
+  char                       buffer[MAXNETOBJ_SZ * 2];
+  cache_inode_nlm_client_t * nlm_client;
+  cache_lock_owner_t       * nlm_owner;
+  cache_lock_desc_t          lock;
+  int                        rc;
 
-  netobj_to_string(&arg->cookie, buffer, 1024);
+  netobj_to_string(&arg->cookie, buffer, sizeof(buffer));
   LogDebug(COMPONENT_NLM,
            "REQUEST PROCESSING: Calling nlm4_Unlock svid=%d off=%llx len=%llx cookie=%s",
            (int) arg->alock.svid,
@@ -91,70 +91,63 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
            (unsigned long long) arg->alock.l_len,
            buffer);
 
-  copy_netobj(&pres->res_nlm4test.cookie, &arg->cookie);
+  if(!copy_netobj(&pres->res_nlm4test.cookie, &arg->cookie))
+    {
+      pres->res_nlm4.stat.stat = NLM4_FAILED;
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
+               lock_result_str(pres->res_nlm4.stat.stat));
+      return NFS_REQ_OK;
+    }
+
+
   if(in_nlm_grace_period())
     {
-      pres->res_nlm4test.test_stat.stat = NLM4_DENIED_GRACE_PERIOD;
+      pres->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
       LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
                lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
 
-  /* Convert file handle into a cache entry */
-  if(!nfs3_FhandleToFSAL((nfs_fh3 *) & (arg->alock.fh), &fsal_data.handle, pcontext))
+  rc = nlm_process_parameters(preq,
+                              FALSE, /* exlcusive doesn't matter */
+                              &arg->alock,
+                              &lock,
+                              ht,
+                              &pentry,
+                              pcontext,
+                              pclient,
+                              FALSE, /* unlock doesn't care if owner is found */
+                              &nlm_client,
+                              &nlm_owner);
+
+  if(rc >= 0)
     {
-      /* handle is not valid */
-      pres->res_nlm4.stat.stat = NLM4_STALE_FH;
-      /*
-       * Should we do a REQ_OK so that the client get
-       * a response ? FIXME!!
-       */
-      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
-               lock_result_str(pres->res_nlm4.stat.stat));
-      return NFS_REQ_DROP;
-    }
-  /* Now get the cached inode attributes */
-  fsal_data.cookie = DIR_START;
-  if((pentry = cache_inode_get(&fsal_data, &attr, ht,
-                               pclient, pcontext, &cache_status)) == NULL)
-    {
-      /* handle is not valid */
-      pres->res_nlm4.stat.stat = NLM4_STALE_FH;
+      /* Present the error back to the client */
+      pres->res_nlm4.stat.stat = (nlm4_stats)rc;
       LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
                lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
 
-  /*
-   * nlm_find_lock_entry with state NLM4_GRANTED will search for lock
-   * in both blocked and granted state. We can get an unlock request
-   * even for a lock in blocked state because grant rpc response could
-   * get dropped and the client can think that lock is granted but the
-   * server still consider it locked.
-   */
-  nlm_entry = nlm_find_lock_entry(&(arg->alock), 0, NLM4_GRANTED);
-  if(!nlm_entry)
+  if(cache_inode_unlock(pentry,
+                        pcontext,
+                        nlm_owner,
+                        &lock,
+                        pclient,
+                        &cache_status) != CACHE_INODE_SUCCESS)
+    {
+      /* TODO FSF: Deal with failure to unlock */
+      pres->res_nlm4test.test_stat.stat = nlm_convert_cache_inode_error(cache_status);
+    }
+  else
     {
       pres->res_nlm4.stat.stat = NLM4_GRANTED;
-      LogDebug(COMPONENT_NLM,
-               "REQUEST RESULT: nlm4_Unlock not found returning %s anyway",
-               lock_result_str(pres->res_nlm4.stat.stat));
-      return NFS_REQ_OK;
     }
-  LogFullDebug(COMPONENT_NLM,
-               "nlm4_Unlock nlm_entry %p, pentry %p pclient %p",
-               nlm_entry, nlm_entry->pentry, nlm_entry->pclient);
-  lck_state = nlm_lock_entry_get_state(nlm_entry);
-  pres->res_nlm4.stat.stat = NLM4_GRANTED;
-  lck_cnt = nlm_delete_lock_entry(&(arg->alock));
-  nlm_unmonitor_host(arg->alock.caller_name);
-  /*
-   * Now check whether we have blocked locks.
-   * if found grant them the lock
-   */
-  if(lck_state == NLM4_GRANTED)
-    nlm_grant_blocked_locks(&(arg->alock.fh));
-  nlm_lock_entry_dec_ref(nlm_entry);
+
+  /* Release the NLM Client and NLM Owner references we have */
+  dec_nlm_client_ref(nlm_client);
+  dec_nlm_owner_ref(nlm_owner);
+
   LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
            lock_result_str(pres->res_nlm4.stat.stat));
   return NFS_REQ_OK;

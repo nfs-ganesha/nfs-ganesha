@@ -72,11 +72,26 @@ int nlm4_Sm_Notify(nfs_arg_t * parg /* IN     */ ,
                    struct svc_req *preq /* IN     */ ,
                    nfs_res_t * pres /* OUT    */ )
 {
-  nlm4_sm_notifyargs *arg;
-  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm4_sm_notify");
+  nlm4_sm_notifyargs       * arg = &parg->arg_nlm4_sm_notify;
+  cache_inode_status_t       cache_status;
+  cache_inode_nlm_client_t * nlm_client;
 
-  arg = &parg->arg_nlm4_sm_notify;
-  nlm_node_recovery(arg->name, pcontext, pclient, ht);
+  LogDebug(COMPONENT_NLM,
+           "REQUEST PROCESSING: Calling nlm4_sm_notify for %s",
+           arg->name);
+
+  nlm_client = get_nlm_client(TRUE, arg->name);
+  if(nlm_client != NULL)
+    {
+      if(cache_inode_nlm_notify(pcontext,
+                                nlm_client,
+                                pclient,
+                                &cache_status) != CACHE_INODE_SUCCESS)
+        {
+          /* Deal with error */
+        }
+    }
+
   return NFS_REQ_OK;
 }
 

@@ -678,7 +678,8 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
  * @see HashTable_Del
  */
 
-int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * buffval)
+int HashTable_GetRef(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * buffval,
+                     void (*get_ref)(hash_buffer_t *) )
 {
   unsigned int hashval;
   struct rbt_node *pn;
@@ -723,10 +724,18 @@ int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * bu
 
   ht->stat_dynamic[hashval].ok.nb_get += 1;
 
+  if(get_ref != NULL)
+    get_ref(buffval);
+
   /* Release mutex */
   V_r(&(ht->array_lock[hashval]));
 
   return HASHTABLE_SUCCESS;
+}                               /* HashTable_Get */
+
+int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * buffval)
+{
+  return HashTable_GetRef(ht, buffkey, buffval, NULL);
 }                               /* HashTable_Get */
 
 /**
@@ -820,8 +829,9 @@ int HashTable_Delall(hash_table_t * ht, int (*free_func)(hash_buffer_t, hash_buf
  * @see HashTable_Init
  * @see HashTable_Get
  */
-int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
-                  hash_buffer_t * p_usedbuffkey, hash_buffer_t * p_usedbuffdata)
+int HashTable_DelRef(hash_table_t * ht, hash_buffer_t * buffkey,
+                     hash_buffer_t * p_usedbuffkey, hash_buffer_t * p_usedbuffdata,
+                     int (*put_ref)(hash_buffer_t *) )
 {
   unsigned int hashval;
   struct rbt_node *pn;
@@ -866,6 +876,13 @@ int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
   if(p_usedbuffdata != NULL)
     *p_usedbuffdata = pdata->buffval;
 
+  if(put_ref != NULL)
+    if(put_ref(&pdata->buffval) == 0)
+      {
+        V_w(&(ht->array_lock[hashval]));
+        return HASHTABLE_NOT_DELETED;
+      }
+
   /* Key was found */
   tete_rbt = &(ht->array_rbt[hashval]);
   RBT_UNLINK(tete_rbt, pn);
@@ -886,6 +903,12 @@ int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
 
   return HASHTABLE_SUCCESS;
 }                               /*  HashTable_Del */
+
+int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
+                  hash_buffer_t * p_usedbuffkey, hash_buffer_t * p_usedbuffdata)
+{
+  return HashTable_DelRef(ht, buffkey, p_usedbuffkey, p_usedbuffdata, NULL);
+}
 
 /**
  * 
