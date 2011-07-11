@@ -109,6 +109,9 @@ fsal_status_t GPFSFSAL_lock_op_no_owner( gpfsfsal_file_t       * p_file_descript
       Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op_no_owner);
     }
 
+  if(lock_op == FSAL_OP_UNLOCK)
+    lock_args.l_type = F_UNLCK;
+
   lock_args.l_len = request_lock.lock_length;
   lock_args.l_start = request_lock.lock_start;
   lock_args.l_whence = SEEK_SET;
