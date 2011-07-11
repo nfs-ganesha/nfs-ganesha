@@ -643,7 +643,10 @@ fsal_status_t fsal_internal_getPathFromHandle(posixfsal_op_context_t * p_context
               status = FSAL_str2name(bname, FSAL_MAX_NAME_LEN, &filename);
 
               /* get the handle of /path/to */
-              status = POSIXFSAL_lookupPath(&parentdir, p_context, &parenthdl, NULL);
+
+              status = POSIXFSAL_lookupPath(&parentdir,
+					    (fsal_op_context_t *)p_context,
+					    (fsal_handle_t *)&parenthdl, NULL);
 
               if(!FSAL_IS_ERROR(status))
                 {
