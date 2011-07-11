@@ -55,7 +55,6 @@
 /******************************************************
  *    FSAL ID management for multiple FSAL support 
  ******************************************************/
-void FSAL_InitKey( void ) ;
 void FSAL_SetId( int fsalid ) ;
 int FSAL_GetId( void ) ;
 #endif
