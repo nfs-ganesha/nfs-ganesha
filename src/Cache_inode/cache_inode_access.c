@@ -88,6 +88,9 @@ cache_inode_access_sw(cache_entry_t * pentry,
     fsal_accessflags_t used_access_type;
     fsal_handle_t *pfsal_handle = NULL;
 
+    LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_access_sw: access_type=0X%x",
+                 access_type);
+
     /* Set the return default to CACHE_INODE_SUCCESS */
     *pstatus = CACHE_INODE_SUCCESS;
 

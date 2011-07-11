@@ -589,15 +589,33 @@ typedef struct fsal_extattrib_list__
  fsal_uint_t   generation ;
 } fsal_extattrib_list_t ;
 
-/** mask for permission testing */
+/** Mask for permission testing. Both mode and ace4 mask are encoded. */
 
-typedef fsal_ushort_t fsal_accessflags_t;
+typedef fsal_uint_t fsal_accessflags_t;
 
-#define	FSAL_OWNER_OK   8       /* Allow owner override */
-#define	FSAL_R_OK	4       /* Test for Read permission */
-#define	FSAL_W_OK	2       /* Test for Write permission */
-#define	FSAL_X_OK	1       /* Test for execute permission */
-#define	FSAL_F_OK	0       /* Test for existence of File */
+#define	FSAL_OWNER_OK   0x08000000       /* Allow owner override */
+#define	FSAL_R_OK	0x04000000       /* Test for Read permission */
+#define	FSAL_W_OK	0x02000000       /* Test for Write permission */
+#define	FSAL_X_OK	0x01000000       /* Test for execute permission */
+#define	FSAL_F_OK	0x00000000       /* Test for existence of File */
+
+#define FSAL_ACCESS_FLAG_BIT_MASK  0xF0000000
+#define FSAL_MODE_BIT_MASK         0x0F000000
+#define FSAL_ACE4_BIT_MASK         0x00FFFFFF
+
+#define FSAL_MODE_MASK(access)     (access & FSAL_MODE_BIT_MASK)
+#define FSAL_ACE4_MASK(access)     (access & FSAL_ACE4_BIT_MASK)
+
+#define FSAL_MODE_MASK_FLAG        0x00000000
+#define FSAL_ACE4_MASK_FLAG        0x10000000
+
+#define FSAL_MODE_MASK_SET(access) (access | FSAL_MODE_MASK_FLAG)
+#define FSAL_ACE4_MASK_SET(access) (access | FSAL_ACE4_MASK_FLAG)
+
+#define IS_FSAL_MODE_MASK_VALID(access)  ((access & FSAL_ACCESS_FLAG_BIT_MASK) == FSAL_MODE_MASK_FLAG)
+#define IS_FSAL_ACE4_MASK_VALID(access)  ((access & FSAL_ACCESS_FLAG_BIT_MASK) == FSAL_ACE4_MASK_FLAG)
+
+#define IS_FSAL_DIR(filetype)  (filetype == FSAL_TYPE_DIR)
 
 /** directory entry */
 

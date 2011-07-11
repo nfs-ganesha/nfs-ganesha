@@ -74,11 +74,12 @@ fsal_status_t GPFSFSAL_lookup(gpfsfsal_handle_t * p_parent_directory_handle,    
                           fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
     )
 {
-  int rc, errsv;
+  int errsv;
   fsal_status_t status;
-  struct stat buffstat;
   int parentfd;
   int objectfd;
+  fsal_accessflags_t access_mask = 0;
+  fsal_attrib_list_t parent_dir_attrs;
 
   /* sanity checks
    * note : object_attributes is optionnal
@@ -125,21 +126,14 @@ fsal_status_t GPFSFSAL_lookup(gpfsfsal_handle_t * p_parent_directory_handle,    
     ReturnStatus(status, INDEX_FSAL_lookup);
 
   /* get directory metadata */
-  TakeTokenFSCall();
-  rc = fstat(parentfd, &buffstat);
-  errsv = errno;
-  ReleaseTokenFSCall();
 
-  if(rc)
-    {
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_lookup);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_lookup);
-    }
+  parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
+  status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_lookup);
 
   /* Be careful about junction crossing, symlinks, hardlinks,... */
-  switch (posix2fsal_type(buffstat.st_mode))
+  switch (parent_dir_attrs.type)
     {
     case FSAL_TYPE_DIR:
       // OK
@@ -165,7 +159,12 @@ fsal_status_t GPFSFSAL_lookup(gpfsfsal_handle_t * p_parent_directory_handle,    
   //               p_filename->name);
 
   /* check rights to enter into the directory */
-  status = fsal_internal_testAccess(p_context, FSAL_X_OK, &buffstat, NULL);
+
+  /* Set both mode and ace4 mask */
+  access_mask = FSAL_MODE_MASK_SET(FSAL_X_OK) |
+                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR);
+
+  status = fsal_internal_testAccess(p_context, access_mask, NULL, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_lookup);
 

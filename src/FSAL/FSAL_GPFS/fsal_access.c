@@ -94,8 +94,7 @@ fsal_status_t GPFSFSAL_access(gpfsfsal_handle_t * p_object_handle,      /* IN */
   if(p_object_attributes)
     {
 
-      FSAL_SET_MASK(p_object_attributes->asked_attributes,
-                    FSAL_ATTR_OWNER | FSAL_ATTR_GROUP | FSAL_ATTR_ACL | FSAL_ATTR_MODE);
+      p_object_attributes->asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
       status = GPFSFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
 
       /* on error, we set a special bit in the mask. */
@@ -115,8 +114,7 @@ fsal_status_t GPFSFSAL_access(gpfsfsal_handle_t * p_object_handle,      /* IN */
       fsal_attrib_list_t attrs;
 
       FSAL_CLEAR_MASK(attrs.asked_attributes);
-      FSAL_SET_MASK(attrs.asked_attributes,
-                    FSAL_ATTR_OWNER | FSAL_ATTR_GROUP | FSAL_ATTR_ACL | FSAL_ATTR_MODE);
+      attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
 
       status = GPFSFSAL_getattrs(p_object_handle, p_context, &attrs);
 

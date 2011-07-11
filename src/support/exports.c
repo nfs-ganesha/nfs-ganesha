@@ -2793,7 +2793,11 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       small_client_param.expire_type_link    = CACHE_INODE_EXPIRE_NEVER;
       small_client_param.expire_type_dirent  = CACHE_INODE_EXPIRE_NEVER;
       small_client_param.use_test_access = 1;
+#ifdef _USE_NFS4_ACL
+      small_client_param.attrmask = FSAL_ATTR_MASK_V4;
+#else
       small_client_param.attrmask = FSAL_ATTR_MASK_V2_V3;
+#endif
 
       /* creating the 'small_client' */
       if(cache_inode_client_init(&small_client, small_client_param, 255, NULL))
