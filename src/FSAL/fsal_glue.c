@@ -33,8 +33,12 @@ const char *fsal_function_names[] = {
   "FSAL_ListXAttrs", "FSAL_GetXAttrValue", "FSAL_SetXAttrValue", "FSAL_GetXAttrAttrs",
   "FSAL_close_by_fileid", "FSAL_setattr_access", "FSAL_merge_attrs", "FSAL_rename_access",
   "FSAL_unlink_access", "FSAL_link_access", "FSAL_create_access", "FSAL_getlock", "FSAL_CleanUpExportContext",
-  "FSAL_getextattrs", "FSAL_sync"
+  "FSAL_getextattrs", "FSAL_sync", "FSAL_getattrs_descriptor",
+  "FSAL_get_lock_support", "FSAL_lock_op_no_owner", "FSAL_lock_op_owner"
 };
+
+/* define this so we can use Return, ReturnStatus, and ReturnCode macros in glue layer */
+#define fsal_increment_nbcall( _f_,_struct_status_ )
 
 fsal_functions_t fsal_functions;
 fsal_const_t fsal_consts;
@@ -744,6 +748,61 @@ fsal_status_t FSAL_getextattrs( fsal_handle_t * p_filehandle, /* IN */
                                 fsal_extattrib_list_t * p_object_attributes /* OUT */)
 {
    return fsal_functions.fsal_getextattrs( p_filehandle, p_context, p_object_attributes ) ;
+}
+
+fsal_lock_support_t FSAL_get_lock_support( fsal_op_context_t * p_context,     /* IN */
+                                           fsal_handle_t * p_objecthandle)    /* IN */
+{
+  if(fsal_functions.fsal_get_lock_support != NULL)
+    return fsal_functions.fsal_get_lock_support(p_context, p_objecthandle);
+
+  if(fsal_functions.fsal_lock_op_owner != NULL)
+    return FSAL_LOCKS_OWNER;
+
+  if(fsal_functions.fsal_lock_op_no_owner != NULL)
+    return FSAL_LOCKS_NO_OWNER;
+
+  return FSAL_NO_LOCKS;
+}
+
+fsal_status_t FSAL_lock_op_no_owner( fsal_file_t       * p_file_descriptor,   /* IN */
+                                     fsal_handle_t     * p_filehandle,        /* IN */
+                                     fsal_op_context_t * p_context,           /* IN */
+                                     fsal_lock_op_t      lock_op,             /* IN */
+                                     fsal_lock_param_t         request_lock,        /* IN */
+                                     fsal_lock_param_t       * conflicting_lock)    /* OUT */
+{
+  if(fsal_functions.fsal_lock_op_no_owner != NULL)
+    return fsal_functions.fsal_lock_op_no_owner(p_file_descriptor,
+                                                p_filehandle,
+                                                p_context,
+                                                lock_op,
+                                                request_lock,
+                                                conflicting_lock);
+
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op_no_owner);
+}
+
+fsal_status_t FSAL_lock_op_owner( fsal_file_t       * p_file_descriptor,   /* IN */
+                                  fsal_handle_t     * p_filehandle,        /* IN */
+                                  fsal_op_context_t * p_context,           /* IN */
+                                  void              * p_owner,             /* IN (opaque to FSAL) */
+                                  int                 owner_size,          /* IN */
+                                  fsal_lock_op_t      lock_op,             /* IN */
+                                  fsal_lock_param_t         request_lock,        /* IN */
+                                  fsal_lock_param_t       * conflicting_lock)    /* OUT */
+{
+  if(fsal_functions.fsal_lock_op_owner != NULL)
+    return fsal_functions.fsal_lock_op_owner(p_file_descriptor,
+                                             p_filehandle,
+                                             p_context,
+                                             p_owner,
+                                             owner_size,
+                                             lock_op,
+                                             request_lock,
+                                             conflicting_lock);
+
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op_owner);
 }
 
 #ifdef _USE_SHARED_FSAL

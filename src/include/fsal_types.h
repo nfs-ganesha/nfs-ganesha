@@ -129,9 +129,13 @@ typedef unsigned long long int u_int64_t;
 #define INDEX_FSAL_CleanUpExportContext 50
 #define INDEX_FSAL_getextattrs          51
 #define INDEX_FSAL_sync                 52
+#define INDEX_FSAL_getattrs_descriptor  53
+#define INDEX_FSAL_get_lock_support     54
+#define INDEX_FSAL_lock_op_no_owner     55
+#define INDEX_FSAL_lock_op_owner        56
 
 /* number of FSAL functions */
-#define FSAL_NB_FUNC  52
+#define FSAL_NB_FUNC  56
 
 extern const char *fsal_function_names[];
 
@@ -929,5 +933,34 @@ typedef enum fsal_digesttype_t
       , FSAL_DIGEST_NODETYPE
 #endif
 } fsal_digesttype_t;
+
+typedef enum fsal_lock_support_t
+{
+  FSAL_NO_LOCKS,
+  FSAL_LOCKS_NO_OWNER,
+  FSAL_LOCKS_OWNER
+} fsal_lock_support_t;
+
+typedef enum fsal_lock_op_t
+{
+  FSAL_OP_LOCKT,
+  FSAL_OP_LOCK,
+  FSAL_OP_UNLOCK
+} fsal_lock_op_t;
+
+typedef enum fsal_lock_t
+{
+  FSAL_LOCK_R,
+  FSAL_LOCK_W,
+  FSAL_NO_LOCK
+} fsal_lock_t;
+
+typedef struct fsal_lock_param__
+{
+  fsal_lock_t         lock_type;
+  fsal_size_t         lock_start;
+  fsal_size_t         lock_length;
+  pid_t               lock_owner;
+} fsal_lock_param_t;
 
 #endif                          /* _FSAL_TYPES_H */
