@@ -290,14 +290,12 @@ int main(int argc, char **argv)
 #if 0
   if(!strcmp(argv[1], "nlm"))
     return TEST_NLM();
-#endif
-
   else
     {
       LogTest("***** Unknown test: \"%s\" ******", argv[1]);
       LogTest("%s", usage);
       exit(1);
     }
-
+#endif
   return 0;
 }
