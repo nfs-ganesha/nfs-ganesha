@@ -1554,7 +1554,12 @@ void *worker_thread(void *IndexArg)
                index);
 
 #ifdef _USE_MFSL
-  if(FSAL_IS_ERROR(MFSL_GetContext(&pmydata->cache_inode_client.mfsl_context, pfsal_op_ctx)) ) ;
+
+#ifdef _USE_SHARED_FSAL
+#error "For the moment, no MFSL are supported with dynamic FSALs"
+#else
+  if(FSAL_IS_ERROR(MFSL_GetContext(&pmydata->cache_inode_client.mfsl_context, (&(pmydata->thread_fsal_context) ) ) ) ) 
+#endif
     {
       /* Failed init */
       LogMajor(COMPONENT_DISPATCH,
