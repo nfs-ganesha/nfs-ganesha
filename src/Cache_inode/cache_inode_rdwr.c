@@ -96,7 +96,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                                       hash_table_t * ht,
                                       cache_inode_client_t * pclient,
                                       fsal_op_context_t * pcontext,
-                                      uint64_t stable, cache_inode_status_t * pstatus)
+                                      uint64_t stable, 
+				      cache_inode_status_t * pstatus)
 {
   int statindex = 0;
   cache_content_io_direction_t io_direction;
