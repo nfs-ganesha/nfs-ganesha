@@ -345,8 +345,6 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
               return *pstatus;
             }
 
-          rw_lock_downgrade(&pentry->lock);
-
           /* Call FSAL_read or FSAL_write */
 
           switch (read_or_write)
@@ -375,6 +373,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                                        seek_descriptor, io_size, buffer, pio_size);
 #endif
 
+#if 0
               /* Alright, the unstable write is complete. Now if it was supposed to be a stable write
                * we can sync to the hard drive. */
               if(stable == FSAL_SAFE_WRITE_TO_FS) {
@@ -388,11 +387,12 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                            "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
                            fsal_status.major);
               }
+#endif
 
               break;
             }
 
-          V_r(&pentry->lock);
+          V_w(&pentry->lock);
           LogFullDebug(COMPONENT_FSAL,
                        "cache_inode_rdwr: FSAL IO operation returned %d, asked_size=%llu, effective_size=%llu",
                        fsal_status.major, (unsigned long long)io_size,

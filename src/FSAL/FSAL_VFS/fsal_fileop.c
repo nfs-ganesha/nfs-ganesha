@@ -571,6 +571,13 @@ fsal_status_t VFSFSAL_sync(vfsfsal_file_t * p_file_descriptor       /* IN */)
   errsv = errno;
   ReleaseTokenFSCall();
 
+  if( rc )
+   {
+      printf( "=======================> rc=%d fd=%u sleep de 200 pour analyse\n", rc, p_file_descriptor->fd ) ;
+      // sleep( 200 ) ;
+      abort() ;
+   }
+
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_sync);
 
