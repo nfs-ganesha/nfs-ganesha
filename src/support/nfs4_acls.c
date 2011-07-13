@@ -119,7 +119,7 @@ static fsal_acl_t *nfs4_acl_alloc()
   return pacl;
 }
 
-static void nfs4_ace_free(fsal_ace_t *pace)
+void nfs4_ace_free(fsal_ace_t *pace)
 {
   if(!pace)
     return;

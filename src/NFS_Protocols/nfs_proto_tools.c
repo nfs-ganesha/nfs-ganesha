@@ -3065,7 +3065,7 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
   if(acldata.aces == NULL)
     {
       LogCrit(COMPONENT_NFS_V4, "        SATTR: Failed to allocate ACEs");
-      return -1;
+      return NFS4ERR_SERVERFAULT;
     }
   else
     memset(acldata.aces, 0, acldata.naces * sizeof(fsal_ace_t));
@@ -3132,13 +3132,22 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
               LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE who.uid = 0x%x", pace->who.uid);
             }
         }
+
+      /* Check if we can map a name string to uid or gid. If we can't, do cleanup
+       * and bubble up NFS4ERR_BADOWNER. */
+      if((pace->flag == FSAL_ACE_FLAG_GROUP_ID ? pace->who.gid : pace->who.uid) == -1)
+        {
+          LogDebug(COMPONENT_NFS_V4, "		  SATTR: bad owner");
+          nfs4_ace_free(acldata.aces);
+          return NFS4ERR_BADOWNER;
+        }
     }
 
   pacl = nfs4_acl_new_entry(&acldata, &status);
   if(pacl == NULL)
     {
       LogCrit(COMPONENT_NFS_V4, "        SATTR: Failed to create a new entry for ACL");
-      return -1;
+      return NFS4ERR_SERVERFAULT;
     }
   else
      LogDebug(COMPONENT_NFS_V4, "        SATTR: Successfully created a new entry for ACL, status = %u", status);
@@ -3147,7 +3156,7 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
   pFSAL_attr->acl = pacl;
   LogDebug(COMPONENT_NFS_V4, "        SATTR: new acl = %p", pacl);
 
-  return 0;
+  return NFS4_OK;
 }
 #endif                          /* _USE_NFS4_ACL */
 
@@ -3160,11 +3169,12 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
  * @param pFSAL_attr [OUT]  pointer to FSAL attributes.
  * @param Fattr      [IN] pointer to NFSv4 attributes. 
  * 
- * @return 1 if successful, 0 if not supported, -1 if argument is badly formed
+ * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
  */
 int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
 {
+  int rc;
   u_int LastOffset = 0;
   unsigned int i = 0;
   char __attribute__ ((__unused__)) funcname[] = "nfs4_FattrToSattr";
@@ -3192,11 +3202,11 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
   fattr4_time_metadata attr_time_metadata;
 
   if(pFSAL_attr == NULL || Fattr == NULL)
-    return -1;
+    return NFS4ERR_BADXDR;
 
   /* Check attributes data */
   if(Fattr->attr_vals.attrlist4_val == NULL)
-    return -1;
+    return NFS4ERR_BADXDR;
 
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(&(Fattr->attrmask), &attrmasklen, attrmasklist);
@@ -3557,7 +3567,9 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
 
 #ifdef _USE_NFS4_ACL
         case FATTR4_ACL:
-          nfs4_decode_acl(pFSAL_attr, Fattr, &LastOffset);
+          if((rc = nfs4_decode_acl(pFSAL_attr, Fattr, &LastOffset)) != NFS4_OK)
+            return rc;
+
           pFSAL_attr->asked_attributes |= FSAL_ATTR_ACL;
           break;
 #endif                          /* _USE_NFS4_ACL */
@@ -3567,12 +3579,12 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
                        "      SATTR: Attribut no supporte %d name=%s",
                        attribute_to_set, fattr4tab[attribute_to_set].name);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          /* return 0 ; *//* Should not stop processing */
+          /* return NFS4ERR_ATTRNOTSUPP ; *//* Should not stop processing */
           break;
         }                       /* switch */
     }                           /* for */
 
-  return 1;
+  return NFS4_OK;
 }                               /* nfs4_Fattr_To_FSAL_attr */
 
 /* Error conversion routines */

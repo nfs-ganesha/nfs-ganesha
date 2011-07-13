@@ -360,17 +360,11 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                           &(arg_OPEN4.openhow.openflag4_u.how.
                                             createhow4_u.createattrs));
 
-              if(convrc == 0)
-                {
-                  res_OPEN4.status = NFS4ERR_ATTRNOTSUPP;
+              if(convrc != NFS4_OK)
+              	{
+                  res_OPEN4.status = convrc;
                   return res_OPEN4.status;
-                }
-
-              if(convrc == -1)
-                {
-                  res_OPEN4.status = NFS4ERR_BADXDR;
-                  return res_OPEN4.status;
-                }
+              	}
 
               AttrProvided = TRUE;
             }
