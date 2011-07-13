@@ -591,7 +591,8 @@ static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_i
 
   if(pattr->acl)
     {
-      LogDebug(COMPONENT_NFS_V4, "nfs4_encode_acl: processing aces");
+      LogDebug(COMPONENT_NFS_V4, "        GATTR: Number of ACEs = %u",
+               pattr->acl->naces);
 
       /* Encode number of ACEs. */
       naces = htonl(pattr->acl->naces);
@@ -601,6 +602,9 @@ static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_i
       /* Encode ACEs. */
       for(pace = pattr->acl->aces; pace < pattr->acl->aces + pattr->acl->naces; pace++)
         {
+          LogDebug(COMPONENT_NFS_V4, "        GATTR: type=0X%x, flag=0X%x, "
+                   "perm=0X%x", pace->type, pace->flag, pace->perm);
+
           type = htonl(pace->type);
           flag = htonl(pace->flag);
           access_mask = htonl(pace->perm);
@@ -631,7 +635,7 @@ static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_i
               rc = nfs4_encode_acl_user_name(whotype, pace->who.uid, attrvalsBuffer, LastOffset);
             }
 
-          LogDebug(COMPONENT_NFS_V4, "nfs4_encode_acl: special = %u, %s = %u",
+          LogDebug(COMPONENT_NFS_V4, "        GATTR: special = %u, %s = %u",
                    IS_FSAL_ACE_SPECIAL_ID(*pace),
                    IS_FSAL_ACE_GROUP_ID(*pace) ? "gid" : "uid",
                    IS_FSAL_ACE_GROUP_ID(*pace) ? pace->who.gid : pace->who.uid);
