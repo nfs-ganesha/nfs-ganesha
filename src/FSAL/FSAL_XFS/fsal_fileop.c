@@ -566,6 +566,9 @@ fsal_status_t XFSFSAL_sync(xfsfsal_file_t * p_file_descriptor       /* IN */)
   if(!p_file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_sync);
 
+  if( p_file_descriptor->fd == 0 )
+    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync); /* Nothing to sync, the file is not opened */
+
   /* Flush data. */
   TakeTokenFSCall();
   rc = fsync(p_file_descriptor->fd);

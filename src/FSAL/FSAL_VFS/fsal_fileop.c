@@ -569,6 +569,8 @@ fsal_status_t VFSFSAL_sync(vfsfsal_file_t * p_file_descriptor       /* IN */)
   if(!p_file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_sync);
 
+  if( p_file_descriptor->fd == 0 )
+    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync); /* Nothing to sync, the fd is not opened */
 
   /* Flush data. */
   TakeTokenFSCall();
