@@ -455,4 +455,6 @@
 	- Bug Fix: the cache_inode_commit function badly managed the Data Cache. 
         - Multiple FSAL support: it is now possible to 'dlopen' several fsal shared objects. 
           Attention: there are changes to be done in the configuration file
+        - Bug Fix: issue occured in 'Tbl' pass of cthon04 test for FSAL_XFS and FSAL_VFS because 
+          of a badly managed opened fd. This is now fixed.
 
