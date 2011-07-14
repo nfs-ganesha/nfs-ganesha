@@ -1232,7 +1232,7 @@ static fsal_status_t fsal_internal_testAccess_acl(fsal_op_context_t * p_context,
       missing_access &= ~(FSAL_ACE_PERM_WRITE_ATTR | FSAL_ACE_PERM_READ_ATTR);
       if(!missing_access)
         {
-          LogDebug(COMPONENT_FSAL, "fsal_internal_testAccess_acl: Nothing was requested");
+          LogDebug(COMPONENT_FSAL, "fsal_internal_testAccess_acl: Met owner privileges");
           ReturnCode(ERR_FSAL_NO_ERROR, 0);
         }
     }
