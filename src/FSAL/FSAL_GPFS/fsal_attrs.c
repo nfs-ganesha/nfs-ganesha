@@ -402,6 +402,14 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
 
   if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ACL))
     {
+      /* Check permission to set ACL. */
+      access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK) |
+                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ACL);
+
+      status = fsal_internal_testAccess(p_context, access_mask, NULL, &current_attrs);
+      if(FSAL_IS_ERROR(status))
+        ReturnStatus(status, INDEX_FSAL_setattrs);
+
       if(wanted_attrs.acl)
         {
           attr_valid |= XATTR_ACL;
