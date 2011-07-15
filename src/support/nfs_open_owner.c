@@ -75,31 +75,29 @@ pthread_mutex_t open_owner_counter_lock = PTHREAD_MUTEX_INITIALIZER;
 
 int display_open_owner_key(hash_buffer_t * pbuff, char *str)
 {
-  char strtmp[MAXNAMLEN * 2];
+  char strtmp[NFS4_OPAQUE_LIMIT * 2 + 1];
   unsigned int i = 0;
-  unsigned int len = 0;
 
   cache_inode_open_owner_name_t *pname = (cache_inode_open_owner_name_t *) pbuff->pdata;
 
   for(i = 0; i < pname->owner_len; i++)
-    len += sprintf(&(strtmp[i * 2]), "%02x", (unsigned char)pname->owner_val[i]);
+    sprintf(&(strtmp[i * 2]), "%02x", (unsigned char)pname->owner_val[i]);
 
-  return len + sprintf(str, "clientid=%llu owner=(%u|%s)",
-                       (unsigned long long)pname->clientid, pname->owner_len, strtmp);
+  return sprintf(str, "clientid=%llu owner=(%u|%s)",
+                 (unsigned long long)pname->clientid, pname->owner_len, strtmp);
 }                               /* display_state_id_val */
 
 int display_open_owner_val(hash_buffer_t * pbuff, char *str)
 {
-  char strtmp[MAXNAMLEN * 2];
+  char strtmp[NFS4_OPAQUE_LIMIT * 2 + 1];
   unsigned int i = 0;
-  unsigned int len = 0;
 
   cache_inode_open_owner_t *powner = (cache_inode_open_owner_t *) (pbuff->pdata);
 
   for(i = 0; i < powner->owner_len; i++)
-    len += sprintf(&(strtmp[i * 2]), "%02x", (unsigned char)powner->owner_val[i]);
+    sprintf(&(strtmp[i * 2]), "%02x", (unsigned char)powner->owner_val[i]);
 
-  return len + sprintf(str, "clientid=%llu owner=(%u|%s) confirmed=%u seqid=%u",
+  return sprintf(str, "clientid=%llu owner=(%u|%s) confirmed=%u seqid=%u",
                        (unsigned long long)powner->clientid, powner->owner_len, strtmp,
                        powner->confirmed, powner->seqid);
 }                               /* display_state_id_val */
@@ -108,8 +106,8 @@ int compare_open_owner(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
   if(isFullDebug(COMPONENT_OPEN_OWNER_HASH))
     {
-      char str1[MAXPATHLEN];
-      char str2[MAXPATHLEN];
+      char str1[HASHTABLE_DISPLAY_STRLEN];
+      char str2[HASHTABLE_DISPLAY_STRLEN];
 
       display_open_owner_key(buff1, str1);
       display_open_owner_key(buff2, str2);
@@ -186,7 +184,7 @@ unsigned long open_owner_rbt_hash_func(hash_parameter_t * p_hparam,
 
 /**
  *
- * nfs4_Init_state_id: Init the hashtable for Client Id cache.
+ * nfs4_Init_open_owner: Init the hashtable for NFS Open Owner cache.
  *
  * Perform all the required initialization for hashtable State Id cache
  * 
@@ -201,7 +199,7 @@ int nfs4_Init_open_owner(nfs_open_owner_parameter_t param)
   if((ht_open_owner = HashTable_Init(param.hash_param)) == NULL)
     {
       LogCrit(COMPONENT_OPEN_OWNER_HASH,
-              "NFS STATE_ID: Cannot init State Id cache");
+              "NFS STATE_ID: Cannot init NFS Open Owner cache");
       return -1;
     }
 
@@ -225,7 +223,7 @@ int nfs_open_owner_Set(cache_inode_open_owner_name_t * pname,
 
   if(isFullDebug(COMPONENT_OPEN_OWNER_HASH))
     {
-      char str[MAXPATHLEN];
+      char str[HASHTABLE_DISPLAY_STRLEN];
 
       buffkey.pdata = (caddr_t) pname;
       buffkey.len = sizeof(cache_inode_open_owner_name_t);
@@ -305,7 +303,7 @@ int nfs_open_owner_Get_Pointer(cache_inode_open_owner_name_t * pname,
 
   if(isFullDebug(COMPONENT_OPEN_OWNER_HASH))
     {
-      char str[MAXPATHLEN];
+      char str[HASHTABLE_DISPLAY_STRLEN];
 
       buffkey.pdata = (caddr_t) pname;
       buffkey.len = sizeof(cache_inode_open_owner_name_t);

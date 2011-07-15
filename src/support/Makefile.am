@@ -1,6 +1,6 @@
 AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
-check_PROGRAMS = test_nfs_ip_stats test_nfs_ip_name
+check_PROGRAMS = test_nfs_ip_stats test_nfs_ip_name test_support
 
 test_nfs_ip_stats_SOURCES = test_nfs_ip_stats.c
 test_nfs_ip_stats_LDADD = libsupport.la ../HashTable/libhashtable.la ../BuddyMalloc/libBuddyMalloc.la ../Log/liblog.la ../RW_Lock/librwlock.la
@@ -9,7 +9,7 @@ test_nfs_ip_name_SOURCES = test_nfs_ip_name.c
 test_nfs_ip_name_LDADD = libsupport.la ../HashTable/libhashtable.la ../BuddyMalloc/libBuddyMalloc.la ../Log/liblog.la ../RW_Lock/librwlock.la ../ConfigParsing/libConfigParsing.la
 
 
-TESTS = test_nfs_ip_stats test_nfs_ip_name
+TESTS = test_nfs_ip_stats test_nfs_ip_name $(check_SCRIPTS)
 
 noinst_LTLIBRARIES            = libsupport.la
 
@@ -58,7 +58,7 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
 libsupport_la_LIBADD         =   ../RPCAL/librpcal.la 
 
 if USE_NLM
-libsupport_la_SOURCES += nlm_util.c nlm_async.c nsm.c
+libsupport_la_SOURCES += nlm_util.c nlm_async.c nsm.c nlm_owner.c
 endif
 
 if USE_NFS4_ACL
@@ -75,10 +75,25 @@ endif
 
 libsupport_la_DEPENDENCIES = $(libsupport_la_SOURCES) $(libsupport_la_LIBADD)
 
+#TESTS =
+
+check_SCRIPTS = test_libsupport_nlm.sh
+
+test_support_SOURCES    = test_support.c
+test_support_LDADD    	= libsupport.la \
+                          ../Log/liblog.la\
+                          ../NFS_Protocols/libnfsproto.la\
+                          ../BuddyMalloc/libBuddyMalloc.la\
+                          ../XDR/libnfs_mnt_xdr.la \
+                          ../HashTable/libhashtable.la \
+                          ../RW_Lock/librwlock.la
 
 new: clean all 
 
 doc:
 	doxygen ./doxygen.conf
 	rep=`grep OUTPUT_DIRECTORY doxygen.conf | grep share  | awk -F '=' '{print $$2;}'` ; cd $$rep/latex ; make
+
+testrunner:  $(check_PROGRAMS)
+	../tools/maketest -x support -f ./maketest.conf > ../testres-xml/support.xml
 

@@ -135,6 +135,9 @@ const char *cache_inode_err_str(int err)
       case CACHE_INODE_STATE_ERROR:           return "CACHE_INODE_STATE_ERROR";
       case CACHE_INODE_FSAL_DELAY:            return "CACHE_INODE_FSAL_DELAY";
       case CACHE_INODE_NAME_TOO_LONG:         return "CACHE_INODE_NAME_TOO_LONG";
+      case CACHE_INODE_LOCK_CONFLICT:         return "CACHE_INODE_LOCK_CONFLICT";
+      case CACHE_INODE_LOCK_BLOCKED:          return "CACHE_INODE_LOCK_BLOCKED";
+      case CACHE_INODE_LOCK_DEADLOCK:         return "CACHE_INODE_LOCK_DEADLOCK";
       default: return "unknown";
     }
 }
@@ -462,6 +465,22 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       pentry->object.file.pentry_content = NULL;        /* Not yet a File Content entry associated with this entry */
       pentry->object.file.pstate_head = NULL;   /* No associated client yet                                */
       pentry->object.file.pstate_tail = NULL;   /* No associated client yet                                */
+      pentry->object.file.fsal_lock_support = FSAL_get_lock_support(pcontext, &pentry->object.file.handle);
+      init_glist(&pentry->object.file.lock_list);  /* No associated locks yet */
+      if(pthread_mutex_init(&pentry->object.file.lock_list_mutex, NULL) != 0)
+        {
+          ReleaseToPool(pentry, &pclient->pool_entry);
+
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "cache_inode_new_entry: pthread_mutex_init of lock_list_mutex returned %d (%s)",
+                  errno, strerror(errno));
+
+          *pstatus = CACHE_INODE_INIT_ENTRY_FAILED;
+
+          /* stat */
+          pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_NEW_ENTRY] += 1;
+          return NULL;
+        }
       pentry->object.file.open_fd.fileno = 0;
       pentry->object.file.open_fd.last_op = 0;
       pentry->object.file.open_fd.openflags = 0;

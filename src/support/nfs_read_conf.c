@@ -450,6 +450,14 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           strncpy(pparam->fsal_shared_library, key_value, MAXPATHLEN);
         }
+      else if(!strcasecmp( key_name, "MaxRPCSendBufferSize" ) )
+        {
+          pparam->max_send_buffer_size = atoi(key_value);
+        }      
+      else if(!strcasecmp( key_name, "MaxRPCRecvBufferSize" ) )
+        {
+          pparam->max_recv_buffer_size = atoi(key_value);
+        }      
       else
         {
           LogCrit(COMPONENT_CONFIG,
