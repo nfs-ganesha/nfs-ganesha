@@ -77,7 +77,10 @@ fsal_status_t GPFSFSAL_getattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
 {
   fsal_status_t st;
   gpfsfsal_xstat_t buffxstat;
+
+#ifdef _USE_NFS4_ACL
   fsal_accessflags_t access_mask = 0;
+#endif
 
   /* sanity checks.
    * note : object_attributes is mandatory in GPFSFSAL_getattrs.
@@ -103,13 +106,19 @@ fsal_status_t GPFSFSAL_getattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
       ReturnStatus(st, INDEX_FSAL_getattrs);
     }
 
-  /* Check permission to get attributes and ACL. */
-  access_mask = FSAL_MODE_MASK_SET(FSAL_R_OK) |
-                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ATTR | FSAL_ACE_PERM_READ_ACL);
-
-  st = fsal_internal_testAccess(p_context, access_mask, NULL, p_object_attributes);
-  if(FSAL_IS_ERROR(st))
-    ReturnStatus(st, INDEX_FSAL_getattrs);
+#ifdef _USE_NFS4_ACL
+  if(p_object_attributes->acl)
+    {
+      /* Check permission to get attributes and ACL. */
+      access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy */
+                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ATTR |
+                                       FSAL_ACE_PERM_READ_ACL);
+    
+      st = fsal_internal_testAccess(p_context, access_mask, NULL, p_object_attributes);
+      if(FSAL_IS_ERROR(st))
+        ReturnStatus(st, INDEX_FSAL_getattrs);
+    }
+#endif
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getattrs);
 
@@ -251,8 +260,8 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
           if(current_attrs.acl)
             {
               /* Check permission using ACL. */
-              access_mask = FSAL_MODE_MASK_SET(0)  /* Dummy. */
-                            | FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ATTR);
+              access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy. */
+                            FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ATTR);
 
               status = fsal_internal_testAccess(p_context, access_mask, NULL, &current_attrs);
               if(FSAL_IS_ERROR(status))
@@ -298,8 +307,8 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
       if(current_attrs.acl)
         {
           /* Check permission using ACL. */
-          access_mask = FSAL_MODE_MASK_SET(0)  /* Dummy. */
-                        | FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
+          access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy. */
+                        FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
 
           status = fsal_internal_testAccess(p_context, access_mask, NULL, &current_attrs);
           if(FSAL_IS_ERROR(status))
@@ -331,8 +340,8 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
       if(current_attrs.acl)
         {
           /* Check permission using ACL. */
-          access_mask = FSAL_MODE_MASK_SET(0)  /* Dummy. */
-                        | FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
+          access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy. */
+                        FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
 
           status = fsal_internal_testAccess(p_context, access_mask, NULL, &current_attrs);
           if(FSAL_IS_ERROR(status))
@@ -464,7 +473,7 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
   if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ACL))
     {
       /* Check permission to set ACL. */
-      access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK) |
+      access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy */
                     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ACL);
 
       status = fsal_internal_testAccess(p_context, access_mask, NULL, &current_attrs);
