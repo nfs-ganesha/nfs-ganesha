@@ -96,7 +96,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                                       hash_table_t * ht,
                                       cache_inode_client_t * pclient,
                                       fsal_op_context_t * pcontext,
-                                      uint64_t stable, cache_inode_status_t * pstatus)
+                                      uint64_t stable, 
+				      cache_inode_status_t * pstatus)
 {
   int statindex = 0;
   cache_content_io_direction_t io_direction;
@@ -343,8 +344,6 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
               return *pstatus;
             }
 
-          rw_lock_downgrade(&pentry->lock);
-
           /* Call FSAL_read or FSAL_write */
 
           if(read_or_write == CACHE_INODE_READ)
@@ -372,6 +371,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                                        seek_descriptor, io_size, buffer, pio_size);
 #endif
 
+#if 0
               /* Alright, the unstable write is complete. Now if it was supposed to be a stable write
                * we can sync to the hard drive. */
               if(stable == FSAL_SAFE_WRITE_TO_FS)
@@ -381,14 +381,25 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 #else
                   fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd));
 #endif
+<<<<<<< HEAD
                   if(FSAL_IS_ERROR(fsal_status))
                     LogMajor(COMPONENT_CACHE_INODE,
                              "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
                              fsal_status.major);
                 }
+=======
+                if(FSAL_IS_ERROR(fsal_status))
+                  LogMajor(COMPONENT_CACHE_INODE,
+                           "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
+                           fsal_status.major);
+              }
+#endif
+
+              break;
+>>>>>>> master
             }
 
-          V_r(&pentry->lock);
+          V_w(&pentry->lock);
           LogFullDebug(COMPONENT_FSAL,
                        "cache_inode_rdwr: FSAL IO operation returned %d, asked_size=%llu, effective_size=%llu",
                        fsal_status.major, (unsigned long long)io_size,

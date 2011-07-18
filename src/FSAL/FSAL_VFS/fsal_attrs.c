@@ -242,13 +242,10 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
      /* Symbolic link are handled here, they are to be opened as O_PATH */
      if( status.minor == ELOOP )
       {
-        status = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_PATH ) ;
-
-        if(FSAL_IS_ERROR(status))
-          ReturnStatus(status, INDEX_FSAL_setattrs);
+       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_setattrs);
       }
-
-     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_setattrs);
+       
+     ReturnStatus( status, INDEX_FSAL_setattrs);
    }
 
   /* get current attributes */
