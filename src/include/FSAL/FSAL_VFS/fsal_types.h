@@ -114,7 +114,7 @@ typedef struct
 
 typedef struct
 {
-  char              mount_point[FSAL_MAX_PATH_LEN];
+  char              fstype[MAXNAMLEN] ;
   int               mount_root_fd ;
   vfs_file_handle_t root_handle ;
 } vfsfsal_export_context_t;
