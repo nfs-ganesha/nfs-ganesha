@@ -248,6 +248,39 @@ fsal_status_t VFSFSAL_DigestHandle(vfsfsal_export_context_t * p_expcontext,     
       ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
    case FSAL_DIGEST_FILEID3:
+      /* Extracting FileId from VFS handle requires internal knowledge on the handle's structure 
+       * which is given by 'struct fid' in kernel's sources. For most FS, it looks like this:
+       * struct fid {
+	union {
+		struct {
+			u32 ino;
+			u32 gen;
+			u32 parent_ino;
+			u32 parent_gen;
+		} i32;
+ 		struct {
+ 			u32 block;
+ 			u16 partref;
+ 			u16 parent_partref;
+ 			u32 generation;
+ 			u32 parent_block;
+ 			u32 parent_generation;
+ 		} udf;
+		__u32 raw[0];
+	};
+      }; 
+      This means that in most cases, fileid will be found in the first 32 bits of the structure. But there are exception
+      BTRFS is one of them, with a struct fid like this 
+      struct btrfs_fid {
+	u64 objectid;
+	u64 root_objectid;
+	u32 gen;
+
+	u64 parent_objectid;
+	u32 parent_gen;
+
+	u64 parent_root_objectid;
+      } __attribute__ ((packed));*/
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
       memcpy(out_buff, p_in_fsal_handle->data.vfs_handle.handle, FSAL_DIGEST_SIZE_FILEID3);
       break;
