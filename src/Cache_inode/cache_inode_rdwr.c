@@ -381,22 +381,9 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 #else
                   fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd));
 #endif
-<<<<<<< HEAD
-                  if(FSAL_IS_ERROR(fsal_status))
-                    LogMajor(COMPONENT_CACHE_INODE,
-                             "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
-                             fsal_status.major);
-                }
-=======
-                if(FSAL_IS_ERROR(fsal_status))
-                  LogMajor(COMPONENT_CACHE_INODE,
-                           "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
-                           fsal_status.major);
-              }
 #endif
 
               break;
->>>>>>> master
             }
 
           V_w(&pentry->lock);
