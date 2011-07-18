@@ -383,7 +383,6 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 #endif
 #endif
 
-              break;
             }
 
           V_w(&pentry->lock);
