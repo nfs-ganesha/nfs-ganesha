@@ -49,7 +49,7 @@
 #define __O_PATH       010000000
 #define O_PATH         (__O_PATH | O_NOACCESS)
 
-#define VFS_HANDLE_LEN 10
+#define VFS_HANDLE_LEN 24 /* At least 20 for BTRFS support */
 typedef struct vfs_file_handle {
         unsigned int handle_bytes;
         int handle_type;
