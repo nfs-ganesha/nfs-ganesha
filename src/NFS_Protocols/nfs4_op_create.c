@@ -232,17 +232,11 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       /* Arguments were supplied, extract them */
       convrc = nfs4_Fattr_To_FSAL_attr(&sattr, &(arg_CREATE4.createattrs));
 
-      if(convrc == 0)
-        {
-          res_CREATE4.status = NFS4ERR_ATTRNOTSUPP;
+      if(convrc != NFS4_OK)
+      	{
+          res_CREATE4.status = convrc;
           return res_CREATE4.status;
-        }
-
-      if(convrc == -1)
-        {
-          res_CREATE4.status = NFS4ERR_BADXDR;
-          return res_CREATE4.status;
-        }
+      	}
     }
 
   /* Create either a symbolic link or a directory */

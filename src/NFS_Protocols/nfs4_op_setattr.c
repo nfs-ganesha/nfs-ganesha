@@ -137,15 +137,9 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
   /* Convert the fattr4 in the request to a nfs3_sattr structure */
   rc = nfs4_Fattr_To_FSAL_attr(&sattr, &(arg_SETATTR4.obj_attributes));
 
-  if(rc == 0)
+  if(rc != NFS4_OK)
     {
-      res_SETATTR4.status = NFS4ERR_ATTRNOTSUPP;
-      return res_SETATTR4.status;
-    }
-
-  if(rc == -1)
-    {
-      res_SETATTR4.status = NFS4ERR_BADXDR;
+      res_SETATTR4.status = rc;
       return res_SETATTR4.status;
     }
 

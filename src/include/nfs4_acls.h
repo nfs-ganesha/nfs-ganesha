@@ -16,6 +16,8 @@ typedef int fsal_acl_status_t;
 
 fsal_ace_t *nfs4_ace_alloc(int nace);
 
+void nfs4_ace_free(fsal_ace_t *pace);
+
 void nfs4_acl_entry_inc_ref(fsal_acl_t *pacl);
 
 fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata, fsal_acl_status_t *pstatus);
