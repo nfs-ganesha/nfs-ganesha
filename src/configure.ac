@@ -202,7 +202,7 @@ AM_CONDITIONAL(BUILD_SHARED_FSAL, test "$enable_buildsharedfsal" = "yes")
 GA_ENABLE_AM_CONDITION([nlm],[enable NLMv4 support (Lock management for NFSv3)],[USE_NLM])
 
 if test "$enable_nlm" == "yes"; then
-	AC_DEFINE(_USE_NLM,1,[enable NFSv4 support])
+	AC_DEFINE(_USE_NLM,1,[enable NLMv4 support])
 fi
 AM_CONDITIONAL(USE_NLM, test "$enable_nlm" = "yes")
 
