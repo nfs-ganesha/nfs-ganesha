@@ -204,15 +204,6 @@ void Test1(char *str, char *file)
   LogTest("My PID = %d", getpid());
 
   LogTest("------------------------------------------------------");
-
-  LogTest("Test ERR_DUMMY");
-  LogTest("A numerical error : error %%d = %%J%%R, in ERR_DUMMY_2 %%J%%R");
-  log_snprintf(tempstr, sizeof(tempstr),
-               "A numerical error : error %d = %J%R, in ERR_DUMMY_2 %J%R",
-               ERR_SIGACTION, ERR_SYS, ERR_SIGACTION, ERR_DUMMY, ERR_DUMMY_2);
-  LogTest("%s", tempstr);
-
-  LogTest("------------------------------------------------------");
   LogTest("Test conversion of log levels between string and integer");
   for (i = NIV_NULL; i < NB_LOG_LEVEL; i++)
     {
@@ -236,8 +227,6 @@ void Test1(char *str, char *file)
 
   log_snprintf(tempstr, sizeof(tempstr), "Test log_snprintf");
   LogTest("%s", tempstr);
-  LogTest("\nTesting LogError function");
-  LogError(COMPONENT_CONFIG, ERR_SYS, ERR_MALLOC, EINVAL);
   LogTest("\nTesting possible environment variable");
   LogTest("COMPONENT_MEMCORRUPT debug level is %s",
           ReturnLevelInt(LogComponents[COMPONENT_MEMCORRUPT].comp_log_level));
@@ -454,32 +443,6 @@ void Test2()
   TestFormat("%3$llx %2$d %1d", 1, 2, (long long)0x12345678);
    */
 
-  LogTest("------------------------------------------------------");
-  LogTest("Ganesha specific tags");
-  LogTest("\nTest %%b, %%B, %%h, %%H, %%y, and %%Y. These are odd tags:");
-  LogTest("   %%b, %%B, %%h, and %%H each consume int1, str2, str3 even if not all are printed");
-  LogTest("   %%y and %%Y each consume int1, str2, str3, int4, str5, str6 even if not all are printed");
-  LogTest("   An extra string parameter is printed to demonstrate how the parameters are consumed");
-  TestGaneshaFormat(TRUE,  "str2(1) (not part of %b)", "%b %s", 1, "str2", "str3", "(not part of %b)");
-  TestGaneshaFormat(TRUE,  "str2(1) : 'str3' (not part of %B)", "%B %s", 1, "str2", "str3", "(not part of %B)");
-  TestGaneshaFormat(TRUE,  "str2(1) (not part of %h)", "%h %s", 1, "str2", "str3", "(not part of %h)");
-  TestGaneshaFormat(TRUE,  "str2(1) : 'str3' (not part of %H)", "%H %s", 1, "str2", "str3", "(not part of %H)");
-  TestGaneshaFormat(TRUE,  "str2 str5(4) (not part of %y)", "%y %s", 1, "str2", "str3", 4, "str5", "str6", "(not part of %y)");
-  TestGaneshaFormat(TRUE,  "str2(1) : 'str3' -> str5(4) : 'str6' (not part of %Y)", "%Y %s", 1, "str2", "str3", 4, "str5", "str6", "(not part of %Y)");
-  LogTest("\nTest new tags for reporting errno values");
-  TestGaneshaFormat(TRUE,  "EINVAL(22)", "%w", EINVAL);
-  TestGaneshaFormat(TRUE,  "EINVAL(22) : 'Invalid argument'", "%W", EINVAL);
-  LogTest("\nTest context sensitive tags");
-  LogTest("%%K, %%V, and %%v go together, defaulting to ERR_SYS");
-  LogTest("%%J, %%R, and %%r go together, defaulting to ERR_POSIX");
-  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) : 'sigaction impossible' EINVAL(22) : 'Invalid argument'", "%K%V %K%V", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
-  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) EINVAL(22)", "%K%v %K%v", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
-  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) : 'sigaction impossible' EINVAL(22) : 'Invalid argument'", "%J%R %J%R", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
-  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) EINVAL(22)", "%J%r %J%r", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
-  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) : 'sigaction impossible' EINVAL(22) : 'Invalid argument'", "%V %R", ERR_SIGACTION, EINVAL);
-  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) EINVAL(22)", "%v %r", ERR_SIGACTION, EINVAL);
-  LogTest("Ganesha expects it's tags to just be two characters, for example %%b");
-  TestGaneshaFormat(FALSE, "str2(1) (not part of %b)", "%5b %s", 1, "str2", "str3", "(not part of %b)");
 }
 
 void run_Tests(int all, char *arg, char *str, char *file)
