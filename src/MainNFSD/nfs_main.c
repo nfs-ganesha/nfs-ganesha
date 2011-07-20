@@ -67,9 +67,6 @@ int debug_level = -1;
 int detach_flag = FALSE;
 char ganesha_exec_path[MAXPATHLEN];
 
-extern fsal_functions_t fsal_functions;
-extern fsal_const_t fsal_consts;
-
 /* command line syntax */
 
 char options[] = "h@RTdS:F:S:P:f:L:N:";
