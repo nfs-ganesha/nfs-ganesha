@@ -237,7 +237,7 @@ fsal_status_t PROXYFSAL_open_by_name(proxyfsal_handle_t * dirhandle,    /* IN */
   if(nfs4_Fattr_To_FSAL_attr(&attributes,
                              &resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETATTR].
                              nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
-                             obj_attributes) != 1)
+                             obj_attributes) != NFS4_OK)
     {
       FSAL_CLEAR_MASK(file_attributes->asked_attributes);
       FSAL_SET_MASK(file_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -424,7 +424,7 @@ static fsal_status_t PROXYFSAL_open_stateless(proxyfsal_handle_t * filehandle,  
                                  &resnfs4.resarray.resarray_val
                                  [FSAL_OPEN_STATELESS_IDX_OP_GETATTR].
                                  nfs_resop4_u.opgetattr.GETATTR4res_u.resok4.
-                                 obj_attributes) != 1)
+                                 obj_attributes) != NFS4_OK)
         {
           FSAL_CLEAR_MASK(file_attributes->asked_attributes);
           FSAL_SET_MASK(file_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -1146,7 +1146,7 @@ fsal_status_t PROXYFSAL_open_by_fileid(proxyfsal_handle_t * filehandle, /* IN */
   if(nfs4_Fattr_To_FSAL_attr(&attributes,
                              &resnfs4.resarray.
                              resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETATTR].nfs_resop4_u.
-                             opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
+                             opgetattr.GETATTR4res_u.resok4.obj_attributes) != NFS4_OK)
     {
       FSAL_CLEAR_MASK(file_attributes->asked_attributes);
       FSAL_SET_MASK(file_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

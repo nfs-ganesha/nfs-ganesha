@@ -333,7 +333,7 @@ fsal_status_t PROXYFSAL_lookup(proxyfsal_handle_t * parent_directory_handle,    
   /* Use NFSv4 service function to build the FSAL_attr */
   if(nfs4_Fattr_To_FSAL_attr(&attributes,
                              &resnfs4.resarray.resarray_val[index_getattr].nfs_resop4_u.
-                             opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
+                             opgetattr.GETATTR4res_u.resok4.obj_attributes) != NFS4_OK)
     {
       FSAL_CLEAR_MASK(object_attributes->asked_attributes);
       FSAL_SET_MASK(object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

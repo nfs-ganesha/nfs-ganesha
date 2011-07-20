@@ -78,6 +78,10 @@ fsal_status_t GPFSFSAL_getattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
   fsal_status_t st;
   gpfsfsal_xstat_t buffxstat;
 
+#ifdef _USE_NFS4_ACL
+  fsal_accessflags_t access_mask = 0;
+#endif
+
   /* sanity checks.
    * note : object_attributes is mandatory in GPFSFSAL_getattrs.
    */
@@ -101,6 +105,20 @@ fsal_status_t GPFSFSAL_getattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
       FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
       ReturnStatus(st, INDEX_FSAL_getattrs);
     }
+
+#ifdef _USE_NFS4_ACL
+  if(p_object_attributes->acl)
+    {
+      /* Check permission to get attributes and ACL. */
+      access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy */
+                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ATTR |
+                                       FSAL_ACE_PERM_READ_ACL);
+    
+      st = fsal_internal_testAccess(p_context, access_mask, NULL, p_object_attributes);
+      if(FSAL_IS_ERROR(st))
+        ReturnStatus(st, INDEX_FSAL_getattrs);
+    }
+#endif
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getattrs);
 
@@ -238,19 +256,36 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
       if(current_attrs.type != FSAL_TYPE_LNK)
         {
 
-          /* For modifying mode, user must be root or the owner */
-          if((p_context->credential.user != 0)
-             && (p_context->credential.user != current_attrs.owner))
+#ifdef _USE_NFS4_ACL
+          if(current_attrs.acl)
             {
-              LogFullDebug(COMPONENT_FSAL,
-                           "Permission denied for CHMOD opeartion: current owner=%d, credential=%d",
-                           current_attrs.owner, p_context->credential.user);
-              Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
-            }
+              /* Check permission using ACL. */
+              access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy. */
+                            FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ATTR);
 
+              status = fsal_internal_testAccess(p_context, access_mask, NULL, &current_attrs);
+              if(FSAL_IS_ERROR(status))
+                ReturnStatus(status, INDEX_FSAL_setattrs);
+            }
+          else
+            {
+#endif
+              /* For modifying mode, user must be root or the owner */
+              if((p_context->credential.user != 0)
+                 && (p_context->credential.user != current_attrs.owner))
+                {
+                  LogFullDebug(COMPONENT_FSAL,
+                               "Permission denied for CHMOD opeartion: current owner=%d, credential=%d",
+                               current_attrs.owner, p_context->credential.user);
+                  Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
+                }
+#ifdef _USE_NFS4_ACL
+             }
+#endif
+    
             attr_valid |= XATTR_STAT;
             attr_changed |= XATTR_MODE;
-
+    
             /* Fill wanted mode. */
             buffxstat.buffstat.st_mode = fsal2unix_mode(wanted_attrs.mode);
             LogDebug(COMPONENT_FSAL,
@@ -268,47 +303,82 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
   if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_OWNER))
     {
 
-      /* For modifying owner, user must be root or current owner==wanted==client */
-      if((p_context->credential.user != 0) &&
-         ((p_context->credential.user != current_attrs.owner) ||
-          (p_context->credential.user != wanted_attrs.owner)))
+#ifdef _USE_NFS4_ACL
+      if(current_attrs.acl)
         {
-          LogFullDebug(COMPONENT_FSAL,
-                       "Permission denied for CHOWN opeartion: current owner=%d, credential=%d, new owner=%d",
-                       current_attrs.owner, p_context->credential.user, wanted_attrs.owner);
-          Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
+          /* Check permission using ACL. */
+          access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy. */
+                        FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
+
+          status = fsal_internal_testAccess(p_context, access_mask, NULL, &current_attrs);
+          if(FSAL_IS_ERROR(status))
+            ReturnStatus(status, INDEX_FSAL_setattrs);
         }
+      else
+        {
+#endif
+          /* For modifying owner, user must be root or current owner==wanted==client */
+          if((p_context->credential.user != 0) &&
+             ((p_context->credential.user != current_attrs.owner) ||
+              (p_context->credential.user != wanted_attrs.owner)))
+            {
+              LogFullDebug(COMPONENT_FSAL,
+                           "Permission denied for CHOWN opeartion: current owner=%d, credential=%d, new owner=%d",
+                           current_attrs.owner, p_context->credential.user, wanted_attrs.owner);
+              Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
+            }
+#ifdef _USE_NFS4_ACL
+        }
+#endif
+
     }
 
   if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_GROUP))
     {
 
-      /* For modifying group, user must be root or current owner */
-      if((p_context->credential.user != 0)
-         && (p_context->credential.user != current_attrs.owner))
+#ifdef _USE_NFS4_ACL
+      if(current_attrs.acl)
         {
-          Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
-        }
+          /* Check permission using ACL. */
+          access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy. */
+                        FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
 
-      int in_grp = 0;
-      /* set in_grp */
-      if(p_context->credential.group == wanted_attrs.group)
-        in_grp = 1;
+          status = fsal_internal_testAccess(p_context, access_mask, NULL, &current_attrs);
+          if(FSAL_IS_ERROR(status))
+            ReturnStatus(status, INDEX_FSAL_setattrs);
+        }
       else
-        for(i = 0; i < p_context->credential.nbgroups; i++)
-          {
-            if((in_grp = (wanted_attrs.group == p_context->credential.alt_groups[i])))
-              break;
-          }
-
-      /* it must also be in target group */
-      if(p_context->credential.user != 0 && !in_grp)
         {
-          LogFullDebug(COMPONENT_FSAL,
-                       "Permission denied for CHOWN operation: current group=%d, credential=%d, new group=%d",
-                       current_attrs.group, p_context->credential.group, wanted_attrs.group);
-          Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
+#endif
+          /* For modifying group, user must be root or current owner */
+          if((p_context->credential.user != 0)
+             && (p_context->credential.user != current_attrs.owner))
+            {
+              Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
+            }
+    
+          int in_grp = 0;
+          /* set in_grp */
+          if(p_context->credential.group == wanted_attrs.group)
+            in_grp = 1;
+          else
+            for(i = 0; i < p_context->credential.nbgroups; i++)
+              {
+                if((in_grp = (wanted_attrs.group == p_context->credential.alt_groups[i])))
+                  break;
+              }
+    
+          /* it must also be in target group */
+          if(p_context->credential.user != 0 && !in_grp)
+            {
+              LogFullDebug(COMPONENT_FSAL,
+                           "Permission denied for CHOWN operation: current group=%d, credential=%d, new group=%d",
+                           current_attrs.group, p_context->credential.group, wanted_attrs.group);
+              Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
+            }
+#ifdef _USE_NFS4_ACL
         }
+#endif
     }
 
   if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_OWNER | FSAL_ATTR_GROUP))
@@ -331,7 +401,9 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
                    "current uid = %d, new uid = %d",
                    current_attrs.owner, buffxstat.buffstat.st_uid);
         }
-      else  /* Fill wanted group. */
+
+      /* Fill wanted group. */
+      if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_GROUP))
         {
           buffxstat.buffstat.st_gid = (int)wanted_attrs.group;
           LogDebug(COMPONENT_FSAL,
@@ -382,7 +454,9 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
                    "current atime = %lu, new atime = %lu",
                    (unsigned long)current_attrs.atime.seconds, (unsigned long)buffxstat.buffstat.st_atime);
         }
-      else  /* Fill wanted mtime. */
+
+      /* Fill wanted mtime. */
+      if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MTIME))
         {
           buffxstat.buffstat.st_mtime = (time_t) wanted_attrs.mtime.seconds;
           LogDebug(COMPONENT_FSAL,
@@ -398,6 +472,14 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
 
   if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ACL))
     {
+      /* Check permission to set ACL. */
+      access_mask = FSAL_MODE_MASK_SET(0) |  /* Dummy */
+                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ACL);
+
+      status = fsal_internal_testAccess(p_context, access_mask, NULL, &current_attrs);
+      if(FSAL_IS_ERROR(status))
+        ReturnStatus(status, INDEX_FSAL_setattrs);
+
       if(wanted_attrs.acl)
         {
           attr_valid |= XATTR_ACL;

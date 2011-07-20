@@ -477,6 +477,7 @@ void nfs_SetFailedStatus(fsal_op_context_t * pcontext,
 }
 
 #ifdef _USE_NFS4_ACL
+/* Following idmapper function conventions, return 1 if successful, 0 otherwise. */
 static int nfs4_encode_acl_special_user(int who, char *attrvalsBuffer,
                                         u_int *LastOffset)
 {
@@ -506,12 +507,17 @@ static int nfs4_encode_acl_special_user(int who, char *attrvalsBuffer,
           if(deltalen != 0)
             memset((char *)(attrvalsBuffer + *LastOffset), 0, deltalen);
           *LastOffset += deltalen;
+
+          /* Found a matched one. */
+          rc = 1;
+          break;
         }
     }
 
   return rc;
 }
 
+/* Following idmapper function conventions, return 1 if successful, 0 otherwise. */
 static int nfs4_encode_acl_group_name(fsal_gid_t gid, char *attrvalsBuffer,
                                       u_int *LastOffset)
 {
@@ -523,6 +529,11 @@ static int nfs4_encode_acl_group_name(fsal_gid_t gid, char *attrvalsBuffer,
 
   rc = gid2name(name, &gid);
   LogDebug(COMPONENT_NFS_V4, "encode gid2name = %s, strlen = %llu", name, (long long unsigned int)strlen(name));
+  if(rc == 0)  /* Failure. */
+    {
+      /* Encode gid itself without @. */
+      sprintf(name, "%u", gid);
+    }
 
   stringlen = strlen(name);
   if(stringlen % 4 == 0)
@@ -545,6 +556,7 @@ static int nfs4_encode_acl_group_name(fsal_gid_t gid, char *attrvalsBuffer,
   return rc;
 }
 
+/* Following idmapper function conventions, return 1 if successful, 0 otherwise. */
 static int nfs4_encode_acl_user_name(int whotype, fsal_uid_t uid,
                                      char *attrvalsBuffer, u_int *LastOffset)
 {
@@ -554,35 +566,45 @@ static int nfs4_encode_acl_user_name(int whotype, fsal_uid_t uid,
   u_int stringlen = 0;
   u_int deltalen = 0;
 
+  /* Encode special user first. */
   if (whotype != FSAL_ACE_NORMAL_WHO)
-    rc = nfs4_encode_acl_special_user(uid, attrvalsBuffer, LastOffset);
-  else
     {
-      rc = uid2name(name, &uid);
-      LogDebug(COMPONENT_NFS_V4, "econde uid2name = %s, strlen = %llu", name, (long long unsigned int)strlen(name));
-
-      stringlen = strlen(name);
-      if(stringlen % 4 == 0)
-        deltalen = 0;
-      else
-        deltalen = 4 - (stringlen % 4);
-
-      utf8len = htonl(stringlen + deltalen);
-      memcpy((char *)(attrvalsBuffer + *LastOffset), &utf8len, sizeof(int));
-      *LastOffset += sizeof(int);
-
-      memcpy((char *)(attrvalsBuffer + *LastOffset), name, stringlen);
-      *LastOffset += stringlen;
-
-      /* Pad with zero to keep xdr alignement */
-      if(deltalen != 0)
-        memset((char *)(attrvalsBuffer + *LastOffset), 0, deltalen);
-      *LastOffset += deltalen;
+      rc = nfs4_encode_acl_special_user(uid, attrvalsBuffer, LastOffset);
+      if(rc == 1)  /* Success. */
+        return rc;
     }
+
+  /* Encode normal user or previous user we failed to encode as special user. */
+  rc = uid2name(name, &uid);
+  LogDebug(COMPONENT_NFS_V4, "econde uid2name = %s, strlen = %llu", name, (long long unsigned int)strlen(name));
+  if(rc == 0)  /* Failure. */
+    {
+      /* Encode uid itself without @. */
+      sprintf(name, "%u", uid);
+    }
+
+  stringlen = strlen(name);
+  if(stringlen % 4 == 0)
+    deltalen = 0;
+  else
+    deltalen = 4 - (stringlen % 4);
+
+  utf8len = htonl(stringlen + deltalen);
+  memcpy((char *)(attrvalsBuffer + *LastOffset), &utf8len, sizeof(int));
+  *LastOffset += sizeof(int);
+
+  memcpy((char *)(attrvalsBuffer + *LastOffset), name, stringlen);
+  *LastOffset += stringlen;
+
+  /* Pad with zero to keep xdr alignement */
+  if(deltalen != 0)
+    memset((char *)(attrvalsBuffer + *LastOffset), 0, deltalen);
+  *LastOffset += deltalen;
 
   return rc;
 }
 
+/* Following idmapper function conventions, return 1 if successful, 0 otherwise. */
 static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_int *LastOffset)
 {
   int rc = 0;
@@ -591,7 +613,8 @@ static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_i
 
   if(pattr->acl)
     {
-      LogDebug(COMPONENT_NFS_V4, "nfs4_encode_acl: processing aces");
+      LogDebug(COMPONENT_NFS_V4, "        GATTR: Number of ACEs = %u",
+               pattr->acl->naces);
 
       /* Encode number of ACEs. */
       naces = htonl(pattr->acl->naces);
@@ -601,6 +624,9 @@ static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_i
       /* Encode ACEs. */
       for(pace = pattr->acl->aces; pace < pattr->acl->aces + pattr->acl->naces; pace++)
         {
+          LogDebug(COMPONENT_NFS_V4, "        GATTR: type=0X%x, flag=0X%x, "
+                   "perm=0X%x", pace->type, pace->flag, pace->perm);
+
           type = htonl(pace->type);
           flag = htonl(pace->flag);
           access_mask = htonl(pace->perm);
@@ -631,7 +657,7 @@ static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_i
               rc = nfs4_encode_acl_user_name(whotype, pace->who.uid, attrvalsBuffer, LastOffset);
             }
 
-          LogDebug(COMPONENT_NFS_V4, "nfs4_encode_acl: special = %u, %s = %u",
+          LogDebug(COMPONENT_NFS_V4, "        GATTR: special = %u, %s = %u",
                    IS_FSAL_ACE_SPECIAL_ID(*pace),
                    IS_FSAL_ACE_GROUP_ID(*pace) ? "gid" : "uid",
                    IS_FSAL_ACE_GROUP_ID(*pace) ? pace->who.gid : pace->who.uid);
@@ -767,6 +793,9 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   int statfscalled = 0;
   fsal_staticfsinfo_t staticinfo;
   fsal_dynamicfsinfo_t dynamicinfo;
+#ifdef _USE_NFS4_ACL
+  int rc;
+#endif
 
   /* basic init */
   memset(attrvalsBuffer, 0, NFS4_ATTRVALS_BUFFLEN);
@@ -1037,7 +1066,9 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
         case FATTR4_ACL:
 #ifdef _USE_NFS4_ACL
-          nfs4_encode_acl(pattr, attrvalsBuffer, &LastOffset);
+          rc = nfs4_encode_acl(pattr, attrvalsBuffer, &LastOffset);
+          if(rc == 0)  /* uid/gid mapping to a string failure */
+            LogEvent(COMPONENT_NFS_V4, "Failed to map uid/gid to a string.");
 #else
           memset(&acl, 0, sizeof(acl));
           memcpy((char *)(attrvalsBuffer + LastOffset), &acl, sizeof(fattr4_acl));
@@ -3061,7 +3092,7 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
   if(acldata.aces == NULL)
     {
       LogCrit(COMPONENT_NFS_V4, "        SATTR: Failed to allocate ACEs");
-      return -1;
+      return NFS4ERR_SERVERFAULT;
     }
   else
     memset(acldata.aces, 0, acldata.naces * sizeof(fsal_ace_t));
@@ -3128,13 +3159,22 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
               LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE who.uid = 0x%x", pace->who.uid);
             }
         }
+
+      /* Check if we can map a name string to uid or gid. If we can't, do cleanup
+       * and bubble up NFS4ERR_BADOWNER. */
+      if((pace->flag == FSAL_ACE_FLAG_GROUP_ID ? pace->who.gid : pace->who.uid) == -1)
+        {
+          LogDebug(COMPONENT_NFS_V4, "		  SATTR: bad owner");
+          nfs4_ace_free(acldata.aces);
+          return NFS4ERR_BADOWNER;
+        }
     }
 
   pacl = nfs4_acl_new_entry(&acldata, &status);
   if(pacl == NULL)
     {
       LogCrit(COMPONENT_NFS_V4, "        SATTR: Failed to create a new entry for ACL");
-      return -1;
+      return NFS4ERR_SERVERFAULT;
     }
   else
      LogDebug(COMPONENT_NFS_V4, "        SATTR: Successfully created a new entry for ACL, status = %u", status);
@@ -3143,7 +3183,7 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
   pFSAL_attr->acl = pacl;
   LogDebug(COMPONENT_NFS_V4, "        SATTR: new acl = %p", pacl);
 
-  return 0;
+  return NFS4_OK;
 }
 #endif                          /* _USE_NFS4_ACL */
 
@@ -3156,7 +3196,7 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
  * @param pFSAL_attr [OUT]  pointer to FSAL attributes.
  * @param Fattr      [IN] pointer to NFSv4 attributes. 
  * 
- * @return 1 if successful, 0 if not supported, -1 if argument is badly formed
+ * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
  */
 int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
@@ -3186,13 +3226,16 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
   fattr4_time_access attr_time_access;
   fattr4_time_modify attr_time_modify;
   fattr4_time_metadata attr_time_metadata;
+#ifdef _USE_NFS4_ACL
+  int rc;
+#endif
 
   if(pFSAL_attr == NULL || Fattr == NULL)
-    return -1;
+    return NFS4ERR_BADXDR;
 
   /* Check attributes data */
   if(Fattr->attr_vals.attrlist4_val == NULL)
-    return -1;
+    return NFS4ERR_BADXDR;
 
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(&(Fattr->attrmask), &attrmasklen, attrmasklist);
@@ -3553,7 +3596,9 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
 
 #ifdef _USE_NFS4_ACL
         case FATTR4_ACL:
-          nfs4_decode_acl(pFSAL_attr, Fattr, &LastOffset);
+          if((rc = nfs4_decode_acl(pFSAL_attr, Fattr, &LastOffset)) != NFS4_OK)
+            return rc;
+
           pFSAL_attr->asked_attributes |= FSAL_ATTR_ACL;
           break;
 #endif                          /* _USE_NFS4_ACL */
@@ -3563,12 +3608,12 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
                        "      SATTR: Attribut no supporte %d name=%s",
                        attribute_to_set, fattr4tab[attribute_to_set].name);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          /* return 0 ; *//* Should not stop processing */
+          /* return NFS4ERR_ATTRNOTSUPP ; *//* Should not stop processing */
           break;
         }                       /* switch */
     }                           /* for */
 
-  return 1;
+  return NFS4_OK;
 }                               /* nfs4_Fattr_To_FSAL_attr */
 
 /* Error conversion routines */

@@ -1224,6 +1224,19 @@ static fsal_status_t fsal_internal_testAccess_acl(fsal_op_context_t * p_context,
   is_owner = fsal_check_ace_owner(uid, p_context);
   is_group = fsal_check_ace_group(gid, p_context);
 
+  /* Always grant READ_ACL, WRITE_ACL and READ_ATTR, WRITE_ATTR to the file
+   * owner. */
+  if(is_owner)
+    {
+      missing_access &= ~(FSAL_ACE_PERM_WRITE_ACL | FSAL_ACE_PERM_READ_ACL);
+      missing_access &= ~(FSAL_ACE_PERM_WRITE_ATTR | FSAL_ACE_PERM_READ_ATTR);
+      if(!missing_access)
+        {
+          LogDebug(COMPONENT_FSAL, "fsal_internal_testAccess_acl: Met owner privileges");
+          ReturnCode(ERR_FSAL_NO_ERROR, 0);
+        }
+    }
+
   // TODO: Even if user is admin, audit/alarm checks should be done.
 
   ace_number = 1;

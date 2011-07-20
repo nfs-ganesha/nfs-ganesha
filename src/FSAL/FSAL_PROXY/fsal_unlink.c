@@ -170,7 +170,7 @@ fsal_status_t PROXYFSAL_unlink(proxyfsal_handle_t * parentdir_handle,   /* IN */
       if(nfs4_Fattr_To_FSAL_attr(parentdir_attributes,
                                  &resnfs4.resarray.
                                  resarray_val[FSAL_UNLINK_IDX_OP_GETATTR].nfs_resop4_u.
-                                 opgetattr.GETATTR4res_u.resok4.obj_attributes) != 1)
+                                 opgetattr.GETATTR4res_u.resok4.obj_attributes) != NFS4_OK)
         {
           FSAL_CLEAR_MASK(parentdir_attributes->asked_attributes);
           FSAL_SET_MASK(parentdir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);

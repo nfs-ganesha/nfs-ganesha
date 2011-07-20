@@ -381,16 +381,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   nfs4_Fattr_To_FSAL_attr(&sattr,
                                           &(arg_OPEN4.openhow.openflag4_u.how.
                                             createhow4_u.createattrs));
-
-              if(convrc == 0)
+         
+              if(convrc != NFS4_OK)
                 {
-                  res_OPEN4.status = NFS4ERR_ATTRNOTSUPP;
-                  return res_OPEN4.status;
-                }
-
-              if(convrc == -1)
-                {
-                  res_OPEN4.status = NFS4ERR_BADXDR;
+                  res_OPEN4.status = convrc;
                   return res_OPEN4.status;
                 }
 

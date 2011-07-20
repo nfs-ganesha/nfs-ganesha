@@ -597,17 +597,18 @@ typedef fsal_uint_t fsal_accessflags_t;
 #define	FSAL_R_OK	0x04000000       /* Test for Read permission */
 #define	FSAL_W_OK	0x02000000       /* Test for Write permission */
 #define	FSAL_X_OK	0x01000000       /* Test for execute permission */
-#define	FSAL_F_OK	0x00000000       /* Test for existence of File */
+#define	FSAL_F_OK	0x10000000       /* Test for existence of File */
+#define FSAL_ACCESS_OK  0x00000000       /* Allow */
 
-#define FSAL_ACCESS_FLAG_BIT_MASK  0xF0000000
-#define FSAL_MODE_BIT_MASK         0x0F000000
+#define FSAL_ACCESS_FLAG_BIT_MASK  0x80000000
+#define FSAL_MODE_BIT_MASK         0x7F000000
 #define FSAL_ACE4_BIT_MASK         0x00FFFFFF
 
 #define FSAL_MODE_MASK(access)     (access & FSAL_MODE_BIT_MASK)
 #define FSAL_ACE4_MASK(access)     (access & FSAL_ACE4_BIT_MASK)
 
 #define FSAL_MODE_MASK_FLAG        0x00000000
-#define FSAL_ACE4_MASK_FLAG        0x10000000
+#define FSAL_ACE4_MASK_FLAG        0x80000000
 
 #define FSAL_MODE_MASK_SET(access) (access | FSAL_MODE_MASK_FLAG)
 #define FSAL_ACE4_MASK_SET(access) (access | FSAL_ACE4_MASK_FLAG)
