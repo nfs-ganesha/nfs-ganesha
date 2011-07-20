@@ -28,7 +28,6 @@ BuildRequires:  mysql-libs >= 5.0
 # we have to be really specific on kernel version
 # because we are packaging a module
 %global _use_internal_dependency_generator 0
-BuildRequires: kernel-devel >= 2.6.39
 Requires: kernel >= 2.6.39
 %endif
 BuildRequires: flex
