@@ -555,7 +555,7 @@ chkconfig --add nfs-ganesha-zfs
 
 
 %changelog
-* Mon Apr 11 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.1.0-1
+* Wed Apr  7 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.1.0-1
 - Bug Fix: Bad memset in FSAL_HPSS::HPSSFSAL_lookup. Result was a segfault at init.
 - Code reorganization : subdirectory RPCAL has been added
 - Bug fix: bad 'fd2handle' options in FSAL_XFS::FSAL_rename
@@ -566,6 +566,8 @@ chkconfig --add nfs-ganesha-zfs
 - Bug Fix: the cache_inode_commit function badly managed the Data Cache.
 - Multiple FSAL support: it is now possible to 'dlopen' several fsal shared objects.
 - Bug Fix: issue occured in 'Tbl' pass of cthon04 test for FSAL_XFS and FSAL_VFS
+- NFSv4 ACLs support
+- GPFS ACLs support (to be used with NFSv4 ACL support)
 
 * Wed Apr  6 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.0.5-1
 - Using function daemon() to start the daemon in a cleaner way

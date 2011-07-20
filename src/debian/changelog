@@ -9,8 +9,10 @@ nfs-ganesha (1.0.1-1) stable; urgency=low
  * Bug Fix: the cache_inode_commit function badly managed the Data Cache.
  * Multiple FSAL support: it is now possible to 'dlopen' several fsal shared objects.
  * Bug Fix: issue occured in 'Tbl' pass of cthon04 test for FSAL_XFS and FSAL_VFS
+ * NFSv4 ACLs support
+ * GPFS ACLs support (to be used with NFSv4 ACL support)
 
- -- Philippe Deniel <philippe.deniel@cea.fr>  Mon, 11 Apr 2011 12:36:00 +0200
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Wed,  7 Apr 2011 11:23:00 +0200
 
 nfs-ganesha (1.0.5-1) stable; urgency=low
   * Using function daemon() to start the daemon in a cleaner way
