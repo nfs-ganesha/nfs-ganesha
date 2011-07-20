@@ -593,7 +593,6 @@ fsal_status_t fsal_internal_handle2fd_at(int dirfd,
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   oarg.mountdirfd = dirfd;
-
   oarg.handle = &phandle->data.handle;
   oarg.flags = oflags;
 
@@ -630,6 +629,7 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
+  memset(p_handle, 0, sizeof(*p_handle));
   harg.handle = &p_handle->data.handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.name = p_fsalpath->path;
@@ -673,6 +673,7 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
   if(!p_handle || !p_fsalname)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
+  memset(p_handle, 0, sizeof(*p_handle));
   harg.handle = &p_handle->data.handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.name = p_fsalname->name;
@@ -713,6 +714,7 @@ fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * p_handle)
   harg.handle = &p_handle->data.handle;
   memset(&p_handle->data.handle, 0, sizeof(struct file_handle));
 
+  memset(p_handle, 0, sizeof(*p_handle));
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.name = NULL;
   harg.dfd = fd;

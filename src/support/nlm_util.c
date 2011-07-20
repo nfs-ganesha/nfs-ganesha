@@ -81,14 +81,6 @@ static struct timeval nlm_grace_tv;
  */
 #define NLM4_CLIENT_GRACE_PERIOD 3
 
-typedef struct nlm_grant_parms_t
-{
-  cache_entry_t        * nlm_grant_pentry;
-  fsal_op_context_t    * nlm_grant_pcontext;
-  cache_lock_entry_t   * nlm_grant_lock_entry;
-  cache_inode_client_t * nlm_grant_pclient;
-} nlm_grant_parms_t;
-
 /* We manage our own cookie for GRANTED call backs
  * Cookie 
  */
@@ -136,7 +128,7 @@ inline uint64_t lock_end(uint64_t start, uint64_t len)
     return start + len - 1;
 }
 
-void fill_netobj(netobj * dst, char *data, int len)
+bool_t fill_netobj(netobj * dst, char *data, int len)
 {
   dst->n_len   = 0;
   dst->n_bytes = NULL;
@@ -148,7 +140,10 @@ void fill_netobj(netobj * dst, char *data, int len)
           dst->n_len = len;
           memcpy(dst->n_bytes, data, len);
         }
+      else
+        return FALSE;
     }
+  return TRUE;
 }
 
 netobj *copy_netobj(netobj * dst, netobj * src)
@@ -221,9 +216,11 @@ int in_nlm_grace_period(void)
     return 0;
 }
 
-void nlm_init(void)
+int nlm_init(void)
 {
-  nlm_async_callback_init();
+  if(nlm_async_callback_init() == -1)
+    return -1;
+
   nsm_unmonitor_all();
 
   /* start NLM grace period */
@@ -233,6 +230,8 @@ void nlm_init(void)
   granted_cookie.gc_seconds      = (unsigned long) nlm_grace_tv.tv_sec;
   granted_cookie.gc_microseconds = (unsigned long) nlm_grace_tv.tv_usec;
   granted_cookie.gc_cookie       = 0;
+
+  return 0;
 }
 
 int nlm_monitor_host(char *name)
@@ -285,116 +284,74 @@ int nlm_unmonitor_host(char *name)
     return nsm_unmonitor(name);
 }
 
-#if 0
-// TODO FSF: need to implement
-static void nlm4_send_grant_msg(void *arg)
+void free_grant_arg(nlm_async_queue_t *arg)
 {
-  nlm_grant_parms_t *parms = arg;
-  struct nlm4_testargs inarg;
-  nfs_fh3 fh3;
-  fh3.data.data_val = Mem_Alloc(NFS3_FHSIZE);
-  if(fh3.data.data_val == NULL)
-    {
-      // TODO FSF: handle error
-    }
-  if(nfs3_FSALToFhandle(&fh3, &(pentry->object.file.handle), 
-  
-
-  ***************
-  ***************
-  ** I AM HERE **
-  ***************
-  ***************
-
-  if(nfs3_FSALToFhandle((nfs_fh3 *)
-    int retval;
-    char buffer[1024];
-
-    /* If we fail allocation the best is to delete the block entry
-     * so that client can try again and get the lock. May be
-     * by then we are able to allocate objects
-     */
-    if(!copy_netobj(&inarg.alock.fh, &nlm_entry->arg.alock.fh))
-        {
-            goto free_nlm_lock_entry;
-        }
-    if(!copy_netobj(&inarg.alock.oh, &nlm_entry->arg.alock.oh))
-        {
-            netobj_free(&inarg.alock.fh);
-            goto free_nlm_lock_entry;
-        }
-
-    if(!copy_netobj(&inarg.cookie, &nlm_entry->arg.cookie))
-        {
-            netobj_free(&inarg.alock.oh);
-            netobj_free(&inarg.alock.fh);
-            goto free_nlm_lock_entry;
-        }
-    inarg.alock.caller_name = Str_Dup(nlm_entry->arg.alock.caller_name);
-    if(!inarg.alock.caller_name)
-        {
-            netobj_free(&inarg.cookie);
-            netobj_free(&inarg.alock.oh);
-            netobj_free(&inarg.alock.fh);
-            goto free_nlm_lock_entry;
-        }
-    inarg.exclusive = nlm_entry->arg.exclusive;
-    inarg.alock.svid = nlm_entry->arg.alock.svid;
-    inarg.alock.l_offset = nlm_entry->arg.alock.l_offset;
-    inarg.alock.l_len = nlm_entry->arg.alock.l_len;
-    netobj_to_string(&inarg.cookie, buffer, 1024);
-    LogDebug(COMPONENT_NLM,
-             "nlm4_send_grant_msg Sending GRANTED for %p svid=%d start=%llx len=%llx cookie=%s",
-             nlm_entry, nlm_entry->arg.alock.svid,
-             (unsigned long long) nlm_entry->arg.alock.l_offset, (unsigned long long) nlm_entry->arg.alock.l_len,
-             buffer);
-
-    retval = nlm_send_async(NLMPROC4_GRANTED_MSG, nlm_entry->arg.alock.caller_name, &inarg, nlm_entry);
-    Mem_Free(inarg.alock.caller_name);
-    netobj_free(&inarg.alock.fh);
-    netobj_free(&inarg.alock.oh);
-    netobj_free(&inarg.cookie);
-
-    /* If success, we are done. */
-    if(retval == RPC_SUCCESS)
-      return;
-
-    /*
-     * We are not able call granted callback. Some client may retry
-     * the lock again. So remove the existing blocked nlm entry
-     */
-    LogMajor(COMPONENT_NLM,
-             "%s: GRANTED_MSG RPC call failed with return code %d. Removing the blocking lock",
-             __func__, retval);
-
-free_nlm_lock_entry:
-    nlm_remove_from_locklist(nlm_entry);
-    /*
-     * Submit the async request to send granted response for
-     * locks that can be granted, because of this removal
-     * from the lock list. If the client is lucky. It
-     * will send the lock request again and before the
-     * block locks are granted it gets the lock.
-     */
-    //nlm_grant_blocked_locks(&nlm_entry->arg.alock.fh);
-    //nlm_lock_entry_dec_ref(nlm_entry);
-    return;
+  netobj_free(&arg->nlm_async_args.nlm_async_grant.cookie);
+  netobj_free(&arg->nlm_async_args.nlm_async_grant.alock.oh);
+  netobj_free(&arg->nlm_async_args.nlm_async_grant.alock.fh);
+  if(arg->nlm_async_args.nlm_async_grant.alock.caller_name != NULL)
+    Mem_Free(arg->nlm_async_args.nlm_async_grant.alock.caller_name);
+  Mem_Free(arg);
 }
 
-/*
- * called when server get a response from client
- * saying the grant message is denied due to grace period
+/**
+ *
+ * nlm4_send_grant_msg: Send NLMPROC4_GRANTED_MSG
+ *
+ * This runs in the nlm_asyn_thread context.
  */
-void nlm_resend_grant_msg(void *arg)
+static void nlm4_send_grant_msg(nlm_async_queue_t *arg)
 {
-    /*
-     * We should wait for client grace period
-     */
-    sleep(NLM4_CLIENT_GRACE_PERIOD);
+  int retval;
 
-    nlm4_send_grant_msg(arg);
+  if(isDebug(COMPONENT_NLM))
+    {
+      char buffer[1024];
+
+      netobj_to_string(&arg->nlm_async_args.nlm_async_grant.cookie,
+                       buffer, sizeof(buffer));
+
+      LogDebug(COMPONENT_NLM,
+               "nlm4_send_grant_msg Sending GRANTED for arg=%p svid=%d start=%llx len=%llx cookie=%s",
+               arg, arg->nlm_async_args.nlm_async_grant.alock.svid,
+               (unsigned long long) arg->nlm_async_args.nlm_async_grant.alock.l_offset,
+               (unsigned long long) arg->nlm_async_args.nlm_async_grant.alock.l_len,
+               buffer);
+    }
+
+  retval = nlm_send_async(NLMPROC4_GRANTED_MSG,
+                          arg->nlm_async_host,
+                          &(arg->nlm_async_args.nlm_async_grant),
+                          arg->nlm_async_key);
+
+  free_grant_arg(arg);
+
+  /* If success, we are done. */
+  if(retval == RPC_SUCCESS)
+    return;
+
+  /*
+   * We are not able call granted callback. Some client may retry
+   * the lock again. So remove the existing blocked nlm entry
+   */
+  LogMajor(COMPONENT_NLM,
+           "%s: GRANTED_MSG RPC call failed with return code %d. Removing the blocking lock",
+           __func__, retval);
+
+  // TODO FSF: fix up cleanup
+
+  //nlm_remove_from_locklist(nlm_entry);
+  /*
+   * Submit the async request to send granted response for
+   * locks that can be granted, because of this removal
+   * from the lock list. If the client is lucky. It
+   * will send the lock request again and before the
+   * block locks are granted it gets the lock.
+   */
+  //nlm_grant_blocked_locks(&nlm_entry->arg.alock.fh);
+  //nlm_lock_entry_dec_ref(nlm_entry);
+  return;
 }
-#endif
 
 int nlm_process_parameters(struct svc_req            * preq,
                            bool_t                      exclusive,
@@ -406,17 +363,20 @@ int nlm_process_parameters(struct svc_req            * preq,
                            cache_inode_client_t      * pclient,
                            bool_t                      care,
                            cache_inode_nlm_client_t ** ppnlm_client,
-                           cache_lock_owner_t       ** ppowner)
+                           cache_lock_owner_t       ** ppowner,
+                           cache_inode_block_data_t ** ppblock_data)
 {
   cache_inode_fsal_data_t fsal_data;
   fsal_attrib_list_t      attr;
   cache_inode_status_t    cache_status;
+  SVCXPRT                *ptr_svc = preq->rq_xprt;
 
   *ppnlm_client = NULL;
   *ppowner      = NULL;
 
   /* Convert file handle into a cache entry */
-  if(!nfs3_FhandleToFSAL((nfs_fh3 *) &alock->fh, &fsal_data.handle, pcontext))
+  if(alock->fh.n_len > MAX_NETOBJ_SZ ||
+     !nfs3_FhandleToFSAL((nfs_fh3 *) &alock->fh, &fsal_data.handle, pcontext))
     {
       /* handle is not valid */
       return NLM4_STALE_FH;
@@ -465,6 +425,42 @@ int nlm_process_parameters(struct svc_req            * preq,
         return NLM4_GRANTED;
     }
 
+  if(ppblock_data != NULL)
+    {
+      *ppblock_data = (cache_inode_block_data_t *) Mem_Alloc_Label(sizeof(**ppblock_data),
+                                                                   "NLM_Block_Data");
+      /* Fill in the block data, if we don't get one, we will just proceed
+       * without (which will mean the lock doesn't block.
+       */
+      if(*ppblock_data != NULL)
+        {
+          if(copy_xprt_addr(&(*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_nlm_hostaddr, ptr_svc) == 0)
+            {
+              LogFullDebug(COMPONENT_NLM,
+                           "copy_xprt_addr failed for Program %d, Version %d, Function %d",
+                           (int)preq->rq_prog, (int)preq->rq_vers, (int)preq->rq_proc);
+              Mem_Free(*ppblock_data);
+              *ppblock_data = NULL;
+              return NLM4_FAILED;
+            }
+          memset(*ppblock_data, 0, sizeof(**ppblock_data));
+          (*ppblock_data)->cbd_granted_callback = nlm_granted_callback;
+          (*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_nlm_fh.n_bytes =
+            (*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_nlm_fh_buf;
+          (*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_nlm_fh.n_len = alock->fh.n_len;
+          memcpy((*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_nlm_fh_buf,
+                 alock->fh.n_bytes,
+                 alock->fh.n_len);
+          /* TODO FSF: fill in credential information
+          (*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_caller_uid  = ???;
+          (*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_caller_gid  = ???;
+          (*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_caller_glen = ???;
+          memcpy((*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_groups,
+                 ???,
+                 ???);
+          */
+        }
+    }
   /* Fill in plock */
   plock->cld_type   = exclusive ? CACHE_INODE_LOCK_W : CACHE_INODE_LOCK_R;
   plock->cld_offset = alock->l_offset;
@@ -494,7 +490,7 @@ void nlm_process_conflict(nlm4_holder        * nlm_holder,
       nlm_holder->l_len     = 0;
     }
 
-  if(holder != NULL || holder->clo_type == CACHE_LOCK_OWNER_NLM)
+  if(holder != NULL && holder->clo_type == CACHE_LOCK_OWNER_NLM)
     {
       nlm_holder->svid = holder->clo_owner.clo_nlm_owner.clo_nlm_svid;
       fill_netobj(&nlm_holder->oh,
@@ -508,6 +504,10 @@ void nlm_process_conflict(nlm4_holder        * nlm_holder,
       nlm_holder->oh.n_len   = 0;
       nlm_holder->oh.n_bytes = NULL;
     }
+
+  /* Release any lock owner reference passed back from cache inode */
+  if(holder != NULL)
+    release_lock_owner(holder);
 }
 
 nlm4_stats nlm_convert_cache_inode_error(cache_inode_status_t status)
@@ -524,38 +524,192 @@ nlm4_stats nlm_convert_cache_inode_error(cache_inode_status_t status)
     }
 }
 
+bool_t nlm_block_data_to_fsal_context(cache_inode_nlm_block_data_t * nlm_block_data,
+                                      fsal_op_context_t            * fsal_context)
+{
+  exportlist_t                 * pexport = NULL;
+  short                          exportid;
+  fsal_status_t                  fsal_status;
+
+  /* Get export ID from handle */
+  exportid = nlm4_FhandleToExportId(&nlm_block_data->cbd_nlm_fh);
+
+  /* Get export matching export ID */
+  if(exportid < 0 ||
+     (pexport = nfs_Get_export_by_id(nfs_param.pexportlist, exportid)) == NULL ||
+     (pexport->options & EXPORT_OPTION_NFSV3) == 0)
+    {
+      /* Reject the request for authentication reason (incompatible file handle) */
+      if(isInfo(COMPONENT_NLM))
+        {
+          char dumpfh[1024];
+          char *reason;
+          char addrbuf[SOCK_NAME_MAX];
+          sprint_sockaddr(&nlm_block_data->cbd_nlm_hostaddr,
+                          addrbuf,
+                          sizeof(addrbuf));
+          if(exportid < 0)
+            reason = "has badly formed handle";
+          else if(pexport == NULL)
+            reason = "has invalid export";
+          else
+            reason = "V3 not allowed on this export";
+          sprint_fhandle_nlm(dumpfh, &nlm_block_data->cbd_nlm_fh);
+          LogMajor(COMPONENT_NLM,
+                   "NLM4 granted lock from host %s %s, FH=%s",
+                   addrbuf, reason, dumpfh);
+        }
+
+      return FALSE;
+    }
+
+  LogFullDebug(COMPONENT_NLM,
+               "Found export entry for dirname=%s as exportid=%d",
+               pexport->dirname, pexport->id);
+  /* Build the credentials */
+  fsal_status = FSAL_GetClientContext(fsal_context,
+                                      &pexport->FS_export_context,
+                                      nlm_block_data->cbd_nlm_caller_uid,
+                                      nlm_block_data->cbd_nlm_caller_gid,
+                                      nlm_block_data->cbd_nlm_caller_garray,
+                                      nlm_block_data->cbd_nlm_caller_glen);
+
+  if(FSAL_IS_ERROR(fsal_status))
+    {
+      LogEvent(COMPONENT_NLM,
+               "Could not get credentials for (uid=%d,gid=%d), fsal error=(%d,%d)",
+               nlm_block_data->cbd_nlm_caller_uid,
+               nlm_block_data->cbd_nlm_caller_gid,
+               fsal_status.major, fsal_status.minor);
+      return FALSE;
+    }
+  else
+    LogDebug(COMPONENT_NLM,
+             "FSAL Cred acquired for (uid=%d,gid=%d)",
+             nlm_block_data->cbd_nlm_caller_uid, nlm_block_data->cbd_nlm_caller_gid);
+
+  return TRUE;
+}
+
 cache_inode_status_t nlm_granted_callback(cache_entry_t        * pentry,
-                                          fsal_op_context_t    * pcontext,
                                           cache_lock_entry_t   * lock_entry,
                                           cache_inode_client_t * pclient,
                                           cache_inode_status_t * pstatus)
 {
-#if 0
-// TODO FSF: need to implement
-  nlm_grant_parms_t *parms;
+  fsal_op_context_t              fsal_context, *pcontext = &fsal_context;
+  cache_inode_block_data_t     * block_data     = lock_entry->cle_block_data;
+  cache_inode_nlm_block_data_t * nlm_block_data = &block_data->cbd_block_data.cbd_nlm_block_data;
+  cache_cookie_entry_t         * cookie_entry;
+  nlm_async_queue_t            * arg;
+  nlm4_testargs                * inarg;
+  cache_inode_nlm_owner_t      * nlm_grant_owner  = &lock_entry->cle_owner->clo_owner.clo_nlm_owner;
+  cache_inode_nlm_client_t     * nlm_grant_client = nlm_grant_owner->clo_client;
+  granted_cookie_t               nlm_grant_cookie;
 
-  parms = (nlm_grant_parms_t *) Mem_Alloc_Label(sizeof(*parms), "nlm_grant_parms_t");
-  if(parms == NULL)
+  if(nlm_block_data_to_fsal_context(nlm_block_data, &fsal_context) != TRUE)
     {
-      *pstatus = CACHE_INODE_MALLOC_ERROR;
+      *pstatus = CACHE_INODE_INCONSISTENT_ENTRY;
       return *pstatus;
     }
 
-  /* Get a reference to the lock entry */
-  lock_entry_inc_ref(lock_entry);
-  parms-> nlm_grant_pentry     = pentry;
-  parms-> nlm_grant_pcontext   = pcontext;
-  parms-> nlm_grant_lock_entry = lock_entry;
-  parms-> nlm_grant_pclient    = pclient;
-  if(nlm_async_callback(nlm4_send_grant_msg, parms) == -1)
+  arg = (nlm_async_queue_t *) Mem_Alloc(sizeof(*arg));
+  if(arg == NULL)
     {
-      Mem_Free(parms);
+      /* If we fail allocation the best is to delete the block entry
+      * so that client can try again and get the lock. May be
+      * by then we are able to allocate objects
+      */
       *pstatus = CACHE_INODE_MALLOC_ERROR;
       return *pstatus;
+   }
+
+  memset(arg, 0, sizeof(*arg));
+
+  /* Get a cookie to use for this grant */
+  next_granted_cookie(&nlm_grant_cookie);
+
+  /* Add a cookie to the blocked lock pending grant.
+   * It will also request lock from FSAL.
+   * Could return CACHE_INODE_LOCK_BLOCKED because FSAL would have had to block.
+   */
+  if(cache_inode_add_grant_cookie(pentry,
+                                  pcontext,
+                                  &nlm_grant_cookie,
+                                  sizeof(nlm_grant_cookie),
+                                  lock_entry,
+                                  &cookie_entry,
+                                  pclient,
+                                  pstatus) != CACHE_INODE_SUCCESS)
+    {
+      free_grant_arg(arg);
+      return *pstatus;
     }
+
+  /* Fill in the arguments for the NLMPROC4_GRANTED_MSG call */
+  arg->nlm_async_func = nlm4_send_grant_msg;
+  arg->nlm_async_host = nlm_grant_client;
+  arg->nlm_async_key  = cookie_entry;
+  inarg = &arg->nlm_async_args.nlm_async_grant;
+
+  if(!copy_netobj(&inarg->alock.fh, &nlm_block_data->cbd_nlm_fh))
+    goto grant_fail;
+
+  if(!fill_netobj(&inarg->alock.oh,
+                  nlm_grant_owner->clo_nlm_oh,
+                  nlm_grant_owner->clo_nlm_oh_len))
+    goto grant_fail;
+
+  if(!fill_netobj(&inarg->cookie,
+                  (char *) &nlm_grant_cookie,
+                  sizeof(nlm_grant_cookie)))
+    goto grant_fail;
+
+  inarg->alock.caller_name = Str_Dup(nlm_grant_client->clc_nlm_caller_name);
+  if(!inarg->alock.caller_name)
+    goto grant_fail;
+
+  inarg->exclusive      = lock_entry->cle_lock.cld_type == CACHE_INODE_LOCK_W;
+  inarg->alock.svid     = nlm_grant_owner->clo_nlm_svid;
+  inarg->alock.l_offset = lock_entry->cle_lock.cld_offset;
+  inarg->alock.l_len    = lock_entry->cle_lock.cld_length;
+  if(isDebug(COMPONENT_NLM))
+    {
+      char buffer[1024];
+
+      netobj_to_string(&inarg->cookie, buffer, sizeof(buffer));
+
+      LogDebug(COMPONENT_NLM,
+               "nlm_granted_callback Sending GRANTED for arg=%p svid=%d start=%llx len=%llx cookie=%s",
+               arg, inarg->alock.svid,
+               (unsigned long long) inarg->alock.l_offset, (unsigned long long) inarg->alock.l_len,
+               buffer);
+    }
+
+  /* Now try to schedule NLMPROC4_GRANTED_MSG call */
+  if(nlm_async_callback(arg) == -1)
+    goto grant_fail;
+
   *pstatus = CACHE_INODE_SUCCESS;
-#else
-  *pstatus = CACHE_INODE_NOT_SUPPORTED;
-#endif
+  return *pstatus;
+
+ grant_fail:
+
+  /* Something went wrong after we added a grant cookie, need to clean up */
+
+  /* Clean up NLMPROC4_GRANTED_MSG arguments */
+  free_grant_arg(arg);
+
+  /* Cancel the pending grant to release the cookie */
+  if(cache_inode_cancel_grant(pcontext,
+                              cookie_entry,
+                              pclient,
+                              pstatus) != CACHE_INODE_SUCCESS)
+    {
+      /* Not much we can do other than log that something bad happened. */
+      LogCrit(COMPONENT_NLM,
+              "nlm_granted_callback was unable to clean up lock");
+    }
+
+  *pstatus = CACHE_INODE_MALLOC_ERROR;
   return *pstatus;
 }

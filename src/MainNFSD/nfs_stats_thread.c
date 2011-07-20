@@ -74,7 +74,6 @@ void set_max_latency(nfs_request_stat_item_t *cur_stat, unsigned int val)
 
 void *stats_thread(void *addr)
 {
-  int rc = 0;
   FILE *stats_file = NULL;
   struct stat statref;
   struct stat stattest;
@@ -105,6 +104,7 @@ void *stats_thread(void *addr)
   unsigned int avg_latency;
 
 #ifndef _NO_BUDDY_SYSTEM
+  int rc = 0;
   buddy_stats_t global_buddy_stat;
 #endif
 

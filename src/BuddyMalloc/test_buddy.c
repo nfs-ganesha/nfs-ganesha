@@ -48,8 +48,7 @@ buddy_parameter_t parameter = {
   FALSE,
   FALSE,
   -1,
-  -1,
-  "/dev/tty"
+  -1
 };
 
 buddy_parameter_t parameter_realloc = {
@@ -59,8 +58,7 @@ buddy_parameter_t parameter_realloc = {
   TRUE,
   TRUE,
   3,
-  5,
-  "/dev/tty"
+  5
 };
 
 #define MEM_SIZE_SMALL 10000LL
@@ -72,8 +70,7 @@ buddy_parameter_t parameter_realloc_small = {
   TRUE,
   TRUE,
   2,
-  5,
-  "/dev/tty"
+  5
 };
 
 typedef struct string_info
@@ -198,7 +195,7 @@ void *TEST1(void *arg)
 #endif
 
   /* destroy thread resources */
-  if(rc = BuddyDestroy())
+  if((rc = BuddyDestroy()))
     {
       LogTest("ERROR in BuddyDestroy: %d", rc);
     }

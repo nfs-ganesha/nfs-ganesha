@@ -25,7 +25,6 @@
 #include "config.h"
 #endif
 
-#include "BuddyMalloc.h"
 #include <pthread.h>
 #include "log_macros.h"
 #include <errno.h>
@@ -296,6 +295,9 @@ int main(int argc, char **argv)
       LogTest("%s", usage);
       exit(1);
     }
+#else
+      LogTest("%s", usage);
 #endif
+
   return 0;
 }

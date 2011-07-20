@@ -424,7 +424,7 @@ short nfs4_FhandleToExportId(nfs_fh4 * pfh4)
  */
 short nfs3_FhandleToExportId(nfs_fh3 * pfh3)
 {
-  file_handle_v3_t *pfile_handle = NULL;
+  file_handle_v3_t *pfile_handle;
 
   pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
 
@@ -435,6 +435,22 @@ short nfs3_FhandleToExportId(nfs_fh3 * pfh3)
 
   return pfile_handle->exportid;
 }                               /* nfs3_FhandleToExportId */
+
+#ifdef _USE_NLM
+short nlm4_FhandleToExportId(netobj * pfh3)
+{
+  file_handle_v3_t *pfile_handle;
+
+  if(pfh3->n_bytes == NULL || pfh3->n_len < sizeof(file_handle_v3_t))
+    return -1;                  /* Badly formed argument */
+
+  pfile_handle = (file_handle_v3_t *) (pfh3->n_bytes);
+
+  print_buff(COMPONENT_FILEHANDLE, pfh3->n_bytes, pfh3->n_len);
+
+  return pfile_handle->exportid;
+}
+#endif
 
 /**
  *
@@ -449,7 +465,7 @@ short nfs3_FhandleToExportId(nfs_fh3 * pfh3)
  */
 short nfs2_FhandleToExportId(fhandle2 * pfh2)
 {
-  file_handle_v2_t *pfile_handle = NULL;
+  file_handle_v2_t *pfile_handle;
 
   pfile_handle = (file_handle_v2_t *) (*pfh2);
 
@@ -720,6 +736,35 @@ void sprint_fhandle4(char *str, nfs_fh4 *fh)
 
   sprint_mem(tmp, fh->nfs_fh4_val, fh->nfs_fh4_len);
 }                               /* sprint_fhandle4 */
+
+/**
+ *
+ * print_fhandle_nlm
+ *
+ * This routine prints a NFSv3 file handle (for debugging purpose)
+ *
+ * @param fh [IN] file handle to print.
+ * 
+ * @return nothing (void function).
+ *
+ */
+void print_fhandle_nlm(log_components_t component, netobj *fh)
+{
+  if(isFullDebug(component))
+    {
+      char str[LEN_FH_STR];
+
+      sprint_fhandle_nlm(str, fh);
+      LogFullDebug(component, "%s", str);
+    }
+}                               /* print_fhandle_nlm */
+
+void sprint_fhandle_nlm(char *str, netobj *fh)
+{
+  char *tmp = str + sprintf(str, "File Handle V3: Len=%u ", fh->n_len);
+
+  sprint_mem(tmp, fh->n_bytes, fh->n_len);
+}                               /* sprint_fhandle_nlm */
 
 /**
  *

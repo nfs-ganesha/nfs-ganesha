@@ -192,6 +192,8 @@ struct rpc_msg *msg;
       if(xprt->xp_rtaddr.len != 0)
         Mem_Free(xprt->xp_rtaddr.buf);
       xprt->xp_rtaddr.buf = Mem_Alloc(alen);
+      if(xprt->xp_rtaddr.buf == NULL)
+        return (FALSE);
       xprt->xp_rtaddr.len = alen;
     }
   memcpy(xprt->xp_rtaddr.buf, &ss, alen);

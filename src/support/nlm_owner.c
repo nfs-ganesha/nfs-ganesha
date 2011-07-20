@@ -521,7 +521,7 @@ cache_inode_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
   memcpy(pkey->clc_nlm_caller_name,
          caller_name,
          pkey->clc_nlm_caller_name_len);
-
+  pkey->clc_nlm_caller_name[pkey->clc_nlm_caller_name_len] = '\0';
   
   if(isFullDebug(COMPONENT_NLM))
     {

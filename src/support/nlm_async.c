@@ -40,78 +40,120 @@
 #include "nlm_async.h"
 #include "nlm4.h"
 
-static pthread_t nlm_async_thread;
-static struct glist_head nlm_async_queue;
-static pthread_mutex_t nlm_async_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t  nlm_async_queue_cond  = PTHREAD_COND_INITIALIZER;
-pthread_mutex_t nlm_async_resp_mutex  = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t  nlm_async_resp_cond   = PTHREAD_COND_INITIALIZER;
+static pthread_t               nlm_async_thread_id;
+static struct glist_head       nlm_async_queue;
+static pthread_mutex_t         nlm_async_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t          nlm_async_queue_cond  = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t                nlm_async_resp_mutex  = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t                 nlm_async_resp_cond   = PTHREAD_COND_INITIALIZER;
+cache_inode_client_parameter_t nlm_async_cache_inode_client_param;
+cache_inode_client_t           nlm_async_cache_inode_client;
 
-typedef struct
+int nlm_send_async_res_nlm4(cache_inode_nlm_client_t * host,
+                            nlm_callback_func          func,
+                            nfs_res_t                * pres)
 {
-  nlm_callback_func *func;
-  void *arg;
-  struct glist_head glist;
-} nlm_queue_t;
-
-nlm_async_res_t *nlm_build_async_res_nlm4(char *caller_name, nfs_res_t * pres)
-{
-  nlm_async_res_t *arg;
-  arg = (nlm_async_res_t *) Mem_Alloc(sizeof(nlm_async_res_t));
+  nlm_async_queue_t *arg = (nlm_async_queue_t *) Mem_Alloc(sizeof(*arg));
   if(arg != NULL)
     {
-      arg->caller_name = Str_Dup(caller_name);
-      if(arg->caller_name == NULL)
+      memset(arg, 0, sizeof(*arg));
+      arg->nlm_async_host               = host;
+      arg->nlm_async_func               = func;
+      arg->nlm_async_args.nlm_async_res = *pres;
+      if(!copy_netobj(&arg->nlm_async_args.nlm_async_res.res_nlm4.cookie, &pres->res_nlm4.cookie))
         {
+          LogFullDebug(COMPONENT_NLM,
+                       "Unable to copy async response file handle");
           Mem_Free(arg);
-          return NULL;
-        }
-      memcpy(&(arg->pres), pres, sizeof(nfs_res_t));
-      if(!copy_netobj(&arg->pres.res_nlm4.cookie, &pres->res_nlm4.cookie))
-        {
-          Mem_Free(arg);
-          return NULL;
+          return NFS_REQ_DROP;
         }
    }
-  return arg;
+ else
+   {
+      LogFullDebug(COMPONENT_NLM,
+                   "Unable to allocate async response");
+      return NFS_REQ_DROP;
+   }
+
+  P(nlm_async_queue_mutex);
+  glist_add_tail(&nlm_async_queue, &arg->nlm_async_glist);
+  if(pthread_cond_signal(&nlm_async_queue_cond) == -1)
+    {
+      LogFullDebug(COMPONENT_NLM,
+                   "Unable to signal nlm_asyn_thread");
+      glist_del(&arg->nlm_async_glist);
+      netobj_free(&arg->nlm_async_args.nlm_async_res.res_nlm4.cookie);
+      Mem_Free(arg);
+      arg = NULL;
+    }
+  V(nlm_async_queue_mutex);
+
+  return arg != NULL ? NFS_REQ_OK : NFS_REQ_DROP;
 }
 
-nlm_async_res_t *nlm_build_async_res_nlm4test(char *caller_name, nfs_res_t * pres)
+int nlm_send_async_res_nlm4test(cache_inode_nlm_client_t * host,
+                                nlm_callback_func          func,
+                                nfs_res_t                * pres)
 {
-  nlm_async_res_t *arg;
-  arg = (nlm_async_res_t *) Mem_Alloc(sizeof(nlm_async_res_t));
+  nlm_async_queue_t *arg = (nlm_async_queue_t *) Mem_Alloc(sizeof(*arg));
   if(arg != NULL)
     {
-      arg->caller_name = Str_Dup(caller_name);
-      if(arg->caller_name == NULL)
+      memset(arg, 0, sizeof(*arg));
+      arg->nlm_async_host               = host;
+      arg->nlm_async_func               = func;
+      arg->nlm_async_args.nlm_async_res = *pres;
+      if(!copy_netobj(&arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie, &pres->res_nlm4test.cookie))
         {
+          LogFullDebug(COMPONENT_NLM,
+                       "Unable to copy async response file handle");
           Mem_Free(arg);
-          return NULL;
-        }
-      memcpy(&(arg->pres), pres, sizeof(nfs_res_t));
-      if(!copy_netobj(&arg->pres.res_nlm4test.cookie, &pres->res_nlm4test.cookie))
-        {
-          Mem_Free(arg);
-          return NULL;
+          return NFS_REQ_DROP;
         }
       else if(pres->res_nlm4test.test_stat.stat == NLM4_DENIED)
         {
-          if(!copy_netobj(&arg->pres.res_nlm4test.test_stat.nlm4_testrply_u.holder.oh, &pres->res_nlm4test.test_stat.nlm4_testrply_u.holder.oh))
+          if(!copy_netobj(&arg->nlm_async_args.nlm_async_res.res_nlm4test.test_stat.nlm4_testrply_u.holder.oh,
+                          &pres->res_nlm4test.test_stat.nlm4_testrply_u.holder.oh))
             {
-              netobj_free(&arg->pres.res_nlm4test.cookie);
+              LogFullDebug(COMPONENT_NLM,
+                           "Unable to copy async response oh");
+              netobj_free(&arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie);
               Mem_Free(arg);
-              return NULL;
+              return NFS_REQ_DROP;
             }
         }
    }
-  return arg;
+ else
+   {
+      LogFullDebug(COMPONENT_NLM,
+                   "Unable to allocate async response");
+      return NFS_REQ_DROP;
+   }
+
+  P(nlm_async_queue_mutex);
+  glist_add_tail(&nlm_async_queue, &arg->nlm_async_glist);
+  if(pthread_cond_signal(&nlm_async_queue_cond) == -1)
+    {
+      LogFullDebug(COMPONENT_NLM,
+                   "Unable to signal nlm_asyn_thread");
+      glist_del(&arg->nlm_async_glist);
+      netobj_free(&arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie);
+      if(pres->res_nlm4test.test_stat.stat == NLM4_DENIED)
+        netobj_free(&arg->nlm_async_args.nlm_async_res.res_nlm4test.test_stat.nlm4_testrply_u.holder.oh);
+      Mem_Free(arg);
+      arg = NULL;
+    }
+  V(nlm_async_queue_mutex);
+
+  return arg != NULL ? NFS_REQ_OK : NFS_REQ_DROP;
 }
 
 /* Execute a func from the async queue */
-void *nlm_async_func(void *argp)
+void *nlm_async_thread(void *argp)
 {
+#ifndef _NO_BUDDY_SYSTEM
   int rc;
-  nlm_queue_t *entry;
+#endif
+  nlm_async_queue_t *entry;
   struct timeval now;
   struct timespec timeout;
   struct glist_head nlm_async_tmp_queue;
@@ -152,7 +194,7 @@ void *nlm_async_func(void *argp)
        */
       glist_for_each_safe(glist, glistn, &nlm_async_queue)
       {
-        entry = glist_entry(glist, nlm_queue_t, glist);
+        entry = glist_entry(glist, nlm_async_queue_t, nlm_async_glist);
         glist_del(glist);
         glist_add(&nlm_async_tmp_queue, glist);
 
@@ -160,47 +202,75 @@ void *nlm_async_func(void *argp)
       pthread_mutex_unlock(&nlm_async_queue_mutex);
       glist_for_each_safe(glist, glistn, &nlm_async_tmp_queue)
       {
-        entry = glist_entry(glist, nlm_queue_t, glist);
-        glist_del(&entry->glist);
-        /* FIXME should we handle error here ? */
-        (*(entry->func)) (entry->arg);
-        Mem_Free(entry);
+        entry = glist_entry(glist, nlm_async_queue_t, nlm_async_glist);
+        glist_del(&entry->nlm_async_glist);
+        entry->nlm_async_func(entry);
       }
     }
 
 }
 
 /* Insert 'func' to async queue */
-int nlm_async_callback(nlm_callback_func * func, void *arg)
+int nlm_async_callback(nlm_async_queue_t *arg)
 {
   int rc;
-  nlm_queue_t *q;
 
-  q = (nlm_queue_t *) Mem_Alloc(sizeof(nlm_queue_t));
-  if(q == NULL)
-    return -1;
-
-  q->func = func;
-  q->arg  = arg;
-
-  LogFullDebug(COMPONENT_NLM, "nlm_async_callback %p:%p", func, arg);
+  LogFullDebug(COMPONENT_NLM, "nlm_async_callback %p", arg);
 
   P(nlm_async_queue_mutex);
-  glist_add_tail(&nlm_async_queue, &q->glist);
+  glist_add_tail(&nlm_async_queue, &arg->nlm_async_glist);
   rc = pthread_cond_signal(&nlm_async_queue_cond);
-  V(nlm_async_queue_mutex);
-
   if(rc == -1)
-    Mem_Free(q);
+    glist_del(&arg->nlm_async_glist);
+  V(nlm_async_queue_mutex);
 
   return rc;
 }
+
+static int local_lru_inode_entry_to_str(LRU_data_t data, char *str)
+{
+  return sprintf(str, "N/A ");
+}                               /* local_lru_inode_entry_to_str */
+
+static int local_lru_inode_clean_entry(LRU_entry_t * entry, void *adddata)
+{
+  return 0;
+}                               /* lru_clean_entry */
 
 int nlm_async_callback_init()
 {
   init_glist(&nlm_async_queue);
 
-  return pthread_create(&nlm_async_thread, NULL, nlm_async_func, NULL);
+  /* setting the 'nlm_async_cache_inode_client_param' structure */
+  nlm_async_cache_inode_client_param.lru_param.nb_entry_prealloc = 10;
+  nlm_async_cache_inode_client_param.lru_param.entry_to_str = local_lru_inode_entry_to_str;
+  nlm_async_cache_inode_client_param.lru_param.clean_entry = local_lru_inode_clean_entry;
+  nlm_async_cache_inode_client_param.nb_prealloc_entry = 0;
+  nlm_async_cache_inode_client_param.nb_pre_dir_data = 0;
+  nlm_async_cache_inode_client_param.nb_pre_parent = 0;
+  nlm_async_cache_inode_client_param.nb_pre_state_v4 = 0;
+  nlm_async_cache_inode_client_param.grace_period_link = 0;
+  nlm_async_cache_inode_client_param.grace_period_attr = 0;
+  nlm_async_cache_inode_client_param.grace_period_dirent = 0;
+  nlm_async_cache_inode_client_param.grace_period_attr   = 0;
+  nlm_async_cache_inode_client_param.grace_period_link   = 0;
+  nlm_async_cache_inode_client_param.grace_period_dirent = 0;
+  nlm_async_cache_inode_client_param.expire_type_attr    = CACHE_INODE_EXPIRE_NEVER;
+  nlm_async_cache_inode_client_param.expire_type_link    = CACHE_INODE_EXPIRE_NEVER;
+  nlm_async_cache_inode_client_param.expire_type_dirent  = CACHE_INODE_EXPIRE_NEVER;
+  nlm_async_cache_inode_client_param.use_test_access = 1;
+  nlm_async_cache_inode_client_param.attrmask = 0;
+
+  if(cache_inode_client_init(&nlm_async_cache_inode_client,
+                             nlm_async_cache_inode_client_param,
+                             NLM_THREAD_INDEX, NULL))
+    {
+      LogCrit(COMPONENT_NLM,
+              "Could not initialize cache inode client for NLM Async Thread");
+      return -1;
+    }
+  
+  return pthread_create(&nlm_async_thread_id, NULL, nlm_async_thread, NULL);
 }
 
 nlm_reply_proc_t nlm_reply_proc[] = {
@@ -235,7 +305,10 @@ nlm_reply_proc_t nlm_reply_proc[] = {
 static void *resp_key;
 
 /* Client routine  to send the asynchrnous response, key is used to wait for a response */
-int nlm_send_async(int proc, char *host, void *inarg, void *key)
+int nlm_send_async(int                        proc,
+                   cache_inode_nlm_client_t * host,
+                   void                     * inarg,
+                   void                     * key)
 {
   CLIENT *clnt;
   struct timeval tout = { 0, 10 };
@@ -244,11 +317,15 @@ int nlm_send_async(int proc, char *host, void *inarg, void *key)
   struct timeval start, now;
   struct timespec timeout;
 
-  clnt = Clnt_create(host, NLMPROG, NLM4_VERS, "tcp");
+  LogFullDebug(COMPONENT_NLM,
+               "nlm_send_async Clnt_create %s",
+               host->clc_nlm_caller_name);
+  clnt = Clnt_create(host->clc_nlm_caller_name, NLMPROG, NLM4_VERS, "tcp");
   if(!clnt)
     {
-      LogMajor(COMPONENT_NLM, "%s: Cannot create connection to %s client",
-               __func__, host);
+      LogMajor(COMPONENT_NLM,
+               "nlm_send_async: Cannot create connection to %s client",
+               host->clc_nlm_caller_name);
       return -1;
     }
   inproc = nlm_reply_proc[proc].inproc;

@@ -956,7 +956,7 @@ typedef enum fsal_lock_t
   FSAL_NO_LOCK
 } fsal_lock_t;
 
-typedef struct fsal_lock_param__
+typedef struct fsal_lock_param_t
 {
   fsal_lock_t         lock_type;
   fsal_size_t         lock_start;

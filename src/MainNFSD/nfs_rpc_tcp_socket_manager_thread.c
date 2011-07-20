@@ -79,7 +79,9 @@
  */
 void *rpc_tcp_socket_manager_thread(void *Arg)
 {
+#ifndef _NO_BUDDY_SYSTEM
   int rc = 0;
+#endif
   long int tcp_sock = (long int)Arg;
   static char my_name[MAXNAMLEN];
   fridge_entry_t * pfe = NULL;

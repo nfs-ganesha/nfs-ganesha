@@ -45,6 +45,7 @@ struct prealloc_pool;
 
 #ifdef _NO_BUDDY_SYSTEM
 
+#include <malloc.h>
 #include <errno.h>
 
 #define Mem_Alloc( a )                  malloc( a )
@@ -56,6 +57,7 @@ struct prealloc_pool;
 #define Mem_Free( a )                   free( a )
 #define Mem_Free_Label( a, lbl )        free( a )
 #define Mem_Errno                       errno
+#define Str_Dup( a )                    strdup( a )
 
 #define GetPreferedPool( _n, _s )  (_n)
 
@@ -72,6 +74,8 @@ struct prealloc_pool;
 #  define Mem_Realloc_Label( p, s, lbl)   BuddyRealloc_Autolabel( (caddr_t)(p), s, __FILE__, __FUNCTION__, __LINE__, lbl )
 #  define Mem_Free( a )                   BuddyFree_Autolabel( (caddr_t) (a), __FILE__, __FUNCTION__, __LINE__, "BuddyFree" )
 #  define Mem_Free_Label( a, lbl )        BuddyFree_Autolabel( (caddr_t) (a), __FILE__, __FUNCTION__, __LINE__, lbl )
+#  define Str_Dup( a )                    BuddyStr_Dup_Autolabel( a , __FILE__, __FUNCTION__, __LINE__, "BuddyMalloc" )
+#  define Str_Dup_Label( a, lbl )         BuddyStr_Dup_Autolabel( a , __FILE__, __FUNCTION__, __LINE__, lbl )
 #else
 #  define Mem_Alloc( a )                  BuddyMallocExit( a )
 #  define Mem_Calloc( s1, s2 )            BuddyCalloc( s1, s2 )
@@ -81,6 +85,8 @@ struct prealloc_pool;
 #  define Mem_Realloc_Label( p, s, lbl)   BuddyRealloc( (caddr_t)(p), s )
 #  define Mem_Free( a )                   BuddyFree( (caddr_t) (a) )
 #  define Mem_Free_Label( a, lbl )        BuddyFree( (caddr_t) (a) )
+#  define Str_Dup( a )                    BuddyStr_Dup_Exit( a )
+#  define Str_Dup_Label( a, lbl )         BuddyStr_Dup_Exit( a )
 #endif
 
 #define Mem_Errno            BuddyErrno
@@ -129,7 +135,7 @@ typedef struct prealloc_pool
   int                     pa_allocated;   // number of entries preallocated
 } prealloc_pool;
 
-#define IsPoolPreallocated(pool) ((pool)->pa_allocated > 0)
+#define IsPoolPreallocated(pool) ((pool)->pa_num == 0 || (pool)->pa_allocated > 0)
 
 /*******************************************
  *
@@ -197,6 +203,7 @@ do {                                                         \
 #define InitPool(pool, num_alloc, type, ctor, dtor)          \
 do {                                                         \
   int size;                                                  \
+  memset((pool), 0, sizeof(*(pool)));                        \
   (pool)->pa_free        = NULL;                             \
   (pool)->pa_constructor = ctor;                             \
   (pool)->pa_destructor  = dtor;                             \
@@ -433,7 +440,7 @@ typedef struct prealloc_pool
 {
   constructor             pa_constructor;
   constructor             pa_destructor;
-}
+} prealloc_pool;
 
 /* Don't care if pool is pre-allocated */
 #define IsPoolPreallocated(pool) (1)
@@ -447,6 +454,8 @@ do {                                                         \
 #define MakePool(pool, num_alloc, type, ctor, dtor)          \
   InitPool(pool, num_alloc, type, ctor, dtor)
 
+#define NamePool(pool, fmt, args...)
+
 #define GetFromPool(entry, pool, type)                       \
 do {                                                         \
   entry = (type *)Mem_Alloc_Label(sizeof(type), # type);     \
@@ -454,11 +463,11 @@ do {                                                         \
     (pool)->pa_constructor(entry);                           \
 } while (0)
 
-#define ReleaseToPool(entry, pool, type)                     \
+#define ReleaseToPool(entry, pool)                           \
 do {                                                         \
   if ((pool)->pa_destructor != NULL)                         \
     (pool)->pa_destructor(entry);                            \
-  Mem_Free_Label(entry, # type);                             \
+  Mem_Free(entry);                                           \
 } while (0)
 
 #endif                          /* no block preallocation */
