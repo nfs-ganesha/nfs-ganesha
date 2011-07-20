@@ -459,4 +459,6 @@
           Attention: there are changes to be done in the configuration file
         - Bug Fix: issue occured in 'Tbl' pass of cthon04 test for FSAL_XFS and FSAL_VFS because 
           of a badly managed opened fd. This is now fixed.
+        - NFSv4 ACLs support
+        - GPFS ACLs support (to be used with NFSv4 ACL support)
 
