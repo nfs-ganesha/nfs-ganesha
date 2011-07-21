@@ -11,7 +11,6 @@ SUBDIRS = include             \
           LRU                 \
           HashTable           \
 	  NodeList	      \
-          MFSL                \
           Cache_inode         \
           File_Content        \
           File_Content_Policy \
@@ -22,6 +21,7 @@ SUBDIRS = include             \
           RPCAL               \
           support             \
           FSAL                \
+          MFSL                \
           IdMapper            \
           snmp_adm            \
           MainNFSD            \
