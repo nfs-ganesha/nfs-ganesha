@@ -9,7 +9,7 @@ endif
 TESTS = $(check_PROGRAMS)
 
 if USE_FSAL_GPFS
-check_PROGRAMS                = test_anon_support test_access_list_types test_mesure_temps test_glist
+check_PROGRAMS                = test_access_list_types test_mesure_temps test_glist
 else
 check_PROGRAMS                = test_mesure_temps 
 endif 
