@@ -9,7 +9,6 @@
 #include "solaris_port.h"
 #endif
 
-#include "fsal_types.h"
 #include "posixdb_internal.h"
 #include "posixdb_consistency.h"
 #include <string.h>

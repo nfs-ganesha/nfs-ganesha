@@ -38,7 +38,6 @@
 
 /* fsal_types contains constants and type definitions for FSAL */
 #include "fsal.h"
-#include "fsal_types.h"
 #include "mfsl_types.h"
 #include "common_utils.h"
 

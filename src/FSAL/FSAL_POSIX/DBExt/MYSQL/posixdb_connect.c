@@ -4,7 +4,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "fsal_types.h"
 #include "posixdb_internal.h"
 #include "stuff_alloc.h"
 

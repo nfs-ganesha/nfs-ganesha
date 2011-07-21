@@ -19,7 +19,6 @@
 #include <string.h> /* For strncpy */
 
 #include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_glue.h"
 
 int __thread my_fsalid = -1 ;

@@ -1,9 +1,9 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "fsal_types.h"
-#include "posixdb_consistency.h"
+
 #include "posixdb_internal.h"
+#include "posixdb_consistency.h"
 #include <string.h>
 
 fsal_posixdb_status_t fsal_posixdb_replace(fsal_posixdb_conn * p_conn,  /* IN */
