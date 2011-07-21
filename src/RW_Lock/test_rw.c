@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
 
   LogTest("End of sleep( %d ) ",
          (MAX_WRITTERS + MAX_READERS) * NB_ITER + MARGE_SECURITE);
-  if(OkWrite == 1 & OkRead == 1)
+  if((OkWrite == 1) && (OkRead == 1))
     {
       LogTest("Test RW_Lock succeeded: no deadlock detected");
       exit(0);
