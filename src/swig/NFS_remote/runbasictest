@@ -1,8 +1,0 @@
-INCPM=../../../libswig/`archi -M`/
-SERVER=localhost
-#SERVER=galion17
-FILECONF=/tmp/connectathon.tests.conf
-MOUNTPOINT=/opt/ganesha_posix_fs
-#MOUNTPOINT=/tmp/dossier
-
-perl -I $INCPM $1 -t -f $FILECONF -m $MOUNTPOINT -s $SERVER

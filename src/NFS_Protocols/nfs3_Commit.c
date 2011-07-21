@@ -134,7 +134,8 @@ int nfs3_Commit(nfs_arg_t * parg,
   else 
     /* We only do stable writes with this export so no need to execute a commit */
     return NFS_REQ_OK;    
-  
+
+  /* Do not use DC if data cache is enabled, the data is kept synchronous is the DC */
   if(cache_inode_commit(pentry,
                         parg->arg_commit3.offset,
                         parg->arg_commit3.count,

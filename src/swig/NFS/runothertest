@@ -1,6 +1,0 @@
-#!/bin/sh
-INCPM=../../../libswig/`archi -M`/
-SERVER=~/posix.ganesha.nfsd.conf
-MOUNTPOINT=/tmp/exports_posix
-
-perl -I $INCPM $1 -m $MOUNTPOINT -s $SERVER

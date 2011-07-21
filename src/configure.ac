@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [1.0.6], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [1.1.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
 AC_SUBST(RELEASE, [0])
 
@@ -50,7 +50,7 @@ GA_PROG_DOXYGEN
 # define everything necessary for accessing large files (64bits offset)
 AC_SYS_LARGEFILE
 
-CFLAGS="$CFLAGS -D_REENTRANT -Wall -Wimplicit -Wformat -Wmissing-braces -Wno-pointer-sign"
+CFLAGS="$CFLAGS -D_REENTRANT"
 
 # Version number for shared object
 LIBVERSION=`echo $VERSION | sed -e 's/\./:/g'`
@@ -203,7 +203,7 @@ AM_CONDITIONAL(BUILD_SHARED_FSAL, test "$enable_buildsharedfsal" = "yes")
 GA_ENABLE_AM_CONDITION([nlm],[enable NLMv4 support (Lock management for NFSv3)],[USE_NLM])
 
 if test "$enable_nlm" == "yes"; then
-	AC_DEFINE(_USE_NLM,1,[enable NFSv4 support])
+	AC_DEFINE(_USE_NLM,1,[enable NLMv4 support])
 fi
 AM_CONDITIONAL(USE_NLM, test "$enable_nlm" = "yes")
 
@@ -331,7 +331,7 @@ GA_ENABLE_FLAG( [profiling], [turn on code profiling (-g and -pg)], [-g -pg] )
 GA_ENABLE_FLAG( [strict-compile], [turn on strict compiler flags], [-Werror -Wimplicit -Wformat -Wmissing-braces] )
 
 # NFSv4 ACL
-GA_DISABLE_AM_CONDITION([nfs4-acl],[disable NFSv4 ACL support],[USE_NO_NFS4_ACL])
+GA_ENABLE_AM_CONDITION([nfs4-acl],[disable NFSv4 ACL support],[USE_NO_NFS4_ACL])
 
 if test "$enable_nfs4_acl" == "yes"; then
         AC_CHECK_LIB([ssl],[MD5_Init])
@@ -367,9 +367,13 @@ AM_CONDITIONAL(SHARED_FSAL,       test "$FSAL" = "DYNFSAL")
 AM_CONDITIONAL(USE_FSAL_ZFS,      test "$FSAL" = "ZFS")
 AM_CONDITIONAL(USE_FSAL_VFS,      test "$FSAL" = "VFS")
 
+
+AM_CONDITIONAL(RESULT_IS_LIB,      test "$FSAL" = "FUSE")
+AM_CONDITIONAL(RESULT_IS_DAEMON,   test "$FSAL" != "FUSE")
+
 # NFSv4.0 NFSv4.1 switch
-AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  (default=0)], [specify if server support NFSv4 or NFSv4.1] ),
-             NFS4_MINOR="$withval", NFS4_MINOR="0" )
+AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  (default=1)], [specify if server support NFSv4 or NFSv4.1] ),
+             NFS4_MINOR="$withval", NFS4_MINOR="1" )
 
 AM_CONDITIONAL(USE_NFS4_1, test "$NFS4_MINOR" = "1")
 AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")

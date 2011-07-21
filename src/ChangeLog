@@ -443,11 +443,22 @@
 	- Add a new tool to find all the instances of LogXXX
 	- New LogInfo and LogWarn log level
 
-1.0.6   -
+1.1.0   - Wed  7 Apr 2011
         - Bug Fix: Bad memset in FSAL_HPSS::HPSSFSAL_lookup. Result was a segfault at init.
 	- Code reorganization : subdirectory RPCAL has been added
 	- Bug fixe : bad 'fd2handle' options in FSAL_XFS::FSAL_rename
+        - Log: new log levels LogFatal, LogCleanup added  
+	- TIRPC now supports the RPCSEC_GSS feature
 	- pNFS : API for implementing pNFS specific feature has been fully refurbished.
         - FSAL_VFS: new FSAL using "open_by_handle" feature added in the kernel higher than 2.6.39.
           This FSAL makes it possible to export any filesystem managed by the VFS. 
+        - NFSv4: the product is now compiled with NFSv4.1 support by default
+        - Log module: now using __FUNCTION__ macro to get the function's name
+	- Bug Fix: the cache_inode_commit function badly managed the Data Cache. 
+        - Multiple FSAL support: it is now possible to 'dlopen' several fsal shared objects. 
+          Attention: there are changes to be done in the configuration file
+        - Bug Fix: issue occured in 'Tbl' pass of cthon04 test for FSAL_XFS and FSAL_VFS because 
+          of a badly managed opened fd. This is now fixed.
+        - NFSv4 ACLs support
+        - GPFS ACLs support (to be used with NFSv4 ACL support)
 

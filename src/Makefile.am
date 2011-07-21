@@ -17,7 +17,6 @@ SUBDIRS = include             \
           LRU                 \
           HashTable           \
 	  NodeList	      \
-          MFSL                \
           Cache_inode         \
           File_Content        \
           File_Content_Policy \
@@ -28,6 +27,7 @@ SUBDIRS = include             \
           RPCAL               \
           support             \
           FSAL                \
+          MFSL                \
           IdMapper            \
           snmp_adm            \
           MainNFSD            \
@@ -102,7 +102,7 @@ rpms: rpm srpm
 
 codecheck:
 	rm -f cppcheck-xml/cppcheck.xml
-	 cppcheck -j12 -v --force --xml --enable=unusedFunction -I`pwd`/include $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS) . 2>cppcheck-xml/cppcheck.xml
+	 cppcheck -j12 -v --force --xml --enable=all -I`pwd`/include $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS) . 2>cppcheck-xml/cppcheck.xml
 
 cscope:
 	find . -type f -name "*.[ch]" | grep -v rpm/ > cscope.namefile
