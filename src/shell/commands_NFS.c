@@ -3696,8 +3696,12 @@ int fn_nfs_id(int argc,         /* IN : number of args in argv */
         }
     }
 #ifdef _USE_POSIX
-  fprintf(output, "Current user : uid = %d, gid = %d\n",
-          p_thr_info->context.credential.user, p_thr_info->context.credential.group);
+  {
+    posixfsal_op_context_t * p_cred
+      = (posixfsal_op_context_t *)&p_thr_info->context;
+    fprintf(output, "Current user : uid = %d, gid = %d\n",
+          p_cred->credential.user, p_cred->credential.group);
+  }
 #endif
 
   return 0;

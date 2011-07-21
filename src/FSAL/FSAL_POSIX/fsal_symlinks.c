@@ -42,13 +42,14 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t POSIXFSAL_readlink(posixfsal_handle_t * p_linkhandle,     /* IN */
-                                 posixfsal_op_context_t * p_context,    /* IN */
+fsal_status_t POSIXFSAL_readlink(fsal_handle_t * linkhandle,     /* IN */
+                                 fsal_op_context_t * context,    /* IN */
                                  fsal_path_t * p_link_content,  /* OUT */
                                  fsal_attrib_list_t * p_link_attributes /* [ IN/OUT ] */
     )
 {
-
+  posixfsal_handle_t * p_linkhandle = (posixfsal_handle_t *) linkhandle;
+  posixfsal_op_context_t * p_context = (posixfsal_op_context_t *) context;
   int rc, errsv;
   fsal_status_t status;
   char link_content_out[FSAL_MAX_PATH_LEN];
@@ -134,16 +135,19 @@ fsal_status_t POSIXFSAL_readlink(posixfsal_handle_t * p_linkhandle,     /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t POSIXFSAL_symlink(posixfsal_handle_t * p_parent_directory_handle, /* IN */
+fsal_status_t POSIXFSAL_symlink(fsal_handle_t * parent_directory_handle, /* IN */
                                 fsal_name_t * p_linkname,       /* IN */
                                 fsal_path_t * p_linkcontent,    /* IN */
-                                posixfsal_op_context_t * p_context,     /* IN */
+                                fsal_op_context_t * context,     /* IN */
                                 fsal_accessmode_t accessmode,   /* IN (ignored) */
-                                posixfsal_handle_t * p_link_handle,     /* OUT */
+                                fsal_handle_t * link_handle,     /* OUT */
                                 fsal_attrib_list_t * p_link_attributes  /* [ IN/OUT ] */
     )
 {
-
+  posixfsal_handle_t * p_parent_directory_handle
+    = (posixfsal_handle_t *) parent_directory_handle;
+  posixfsal_op_context_t * p_context = (posixfsal_op_context_t *) context;
+  posixfsal_handle_t * p_link_handle = (posixfsal_handle_t *) link_handle;
   int rc, errsv;
   fsal_status_t status;
   fsal_path_t fsalpath;

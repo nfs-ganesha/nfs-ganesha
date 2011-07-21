@@ -36,7 +36,7 @@
 #include "fsal_glue_const.h"
 
 /* In the "static" case, original types are used, this is safer */
-#ifdef _USE_SHARED_FSAL
+#if defined(_USE_SHARED_FSAL) || defined(_USE_POSIX)
 
 typedef struct
 {
