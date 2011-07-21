@@ -1,6 +1,0 @@
-#!/bin/sh
-INCPM=../../../libswig/`archi -M`/
-SERVERCONF=~/posix.ganesha.nfsd.conf
-PATHROOT=/tmp/exports_posix
-
-perl -I $INCPM $1 -p $PATHROOT -s $SERVERCONF
