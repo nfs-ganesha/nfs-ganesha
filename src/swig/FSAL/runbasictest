@@ -1,8 +1,0 @@
-#!/bin/sh
-INCPM=../../../libswig/`archi -M`/dbg/
-SERVERCONF=/tmp/posix.ganesha.nfsd.conf
-PATHROOT=/opt/ganesha_posix_fs
-FILECONF=/tmp/connectathon.tests.conf
-
-
-perl -I $INCPM $1 -t -f $FILECONF -p $PATHROOT -s $SERVERCONF

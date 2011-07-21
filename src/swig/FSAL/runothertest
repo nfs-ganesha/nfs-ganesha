@@ -1,6 +1,0 @@
-#!/bin/sh
-INCPM=../../../libswig/`archi -M`/dbg/
-SERVERCONF=/tmp/posix.ganesha.nfsd.conf
-PATHROOT=/opt/ganesha_posix_fs
-
-perl -I $INCPM $1 -p $PATHROOT -s $SERVERCONF

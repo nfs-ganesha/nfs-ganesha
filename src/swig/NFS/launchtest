@@ -1,2 +1,0 @@
-#!/bin/sh
-perl -I ../../../libswig/`archi -M`/ $*
