@@ -28,13 +28,13 @@
 #include "config.h"
 #endif
 
-#include "FSAL/FSAL_GHOST_FS/ghost_fs.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <libgen.h>
+#include "fsal_types.h"
 
 #define TRUE 1
 #define FALSE 0

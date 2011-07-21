@@ -174,7 +174,7 @@ typedef struct
   xfsfsal_handle_t handle;
 } xfsfsal_dir_t;
 
-typedef struct fsal_file__
+typedef struct
 {
   int fd;
   int ro;                       /* read only file ? */

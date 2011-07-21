@@ -42,9 +42,11 @@ static int do_blocking_lock(posixfsal_file_t * obj_handle, posixfsal_lockdesc_t 
 /**
  * FSAL_lock:
  */
-fsal_status_t POSIXFSAL_lock(posixfsal_file_t * obj_handle,
-                             posixfsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
+fsal_status_t POSIXFSAL_lock(fsal_file_t * obj_hdl,
+                             fsal_lockdesc_t * lockdesc, fsal_boolean_t blocking)
 {
+  posixfsal_file_t * obj_handle = (posixfsal_file_t *) obj_hdl;
+  posixfsal_lockdesc_t * ldesc = (posixfsal_lockdesc_t *) lockdesc;
   int cmd;
   int retval;
   int fd = obj_handle->filefd;
@@ -75,7 +77,7 @@ fsal_status_t POSIXFSAL_lock(posixfsal_file_t * obj_handle,
  * FSAL_changelock:
  * Not implemented.
  */
-fsal_status_t POSIXFSAL_changelock(posixfsal_lockdesc_t * lock_descriptor,      /* IN / OUT */
+fsal_status_t POSIXFSAL_changelock(fsal_lockdesc_t * lock_descriptor,      /* IN / OUT */
                                    fsal_lockparam_t * lock_info /* IN */
     )
 {
@@ -92,9 +94,11 @@ fsal_status_t POSIXFSAL_changelock(posixfsal_lockdesc_t * lock_descriptor,      
  * FSAL_unlock:
  *
  */
-fsal_status_t POSIXFSAL_unlock(posixfsal_file_t * obj_handle,
-                               posixfsal_lockdesc_t * ldesc)
+fsal_status_t POSIXFSAL_unlock(fsal_file_t * obj_hdl,
+                               fsal_lockdesc_t * lockdesc)
 {
+  posixfsal_file_t * obj_handle = (posixfsal_file_t *) obj_hdl;
+  posixfsal_lockdesc_t * ldesc = (posixfsal_lockdesc_t *) lockdesc;
   int retval;
   int fd = obj_handle->filefd;
 
@@ -107,9 +111,11 @@ fsal_status_t POSIXFSAL_unlock(posixfsal_file_t * obj_handle,
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_unlock);
 }
 
-fsal_status_t POSIXFSAL_getlock(posixfsal_file_t * obj_handle,
-                                posixfsal_lockdesc_t * ldesc)
+fsal_status_t POSIXFSAL_getlock(fsal_file_t * obj_hdl,
+                                fsal_lockdesc_t * lockdesc)
 {
+  posixfsal_file_t * obj_handle = (posixfsal_file_t *) obj_hdl;
+  posixfsal_lockdesc_t * ldesc = (posixfsal_lockdesc_t *) lockdesc;
   int retval;
   int fd = obj_handle->filefd;
 

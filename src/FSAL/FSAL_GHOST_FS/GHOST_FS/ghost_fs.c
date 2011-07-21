@@ -36,10 +36,10 @@
 #include "config.h"
 #endif
 
-#include "FSAL/FSAL_GHOST_FS/ghost_fs.h"
-#include "stuff_alloc.h"
 #include <string.h>
 #include <sys/time.h>
+#include "fsal_types.h"
+#include "stuff_alloc.h"
 
 #define TRUE  1
 #define FALSE 0

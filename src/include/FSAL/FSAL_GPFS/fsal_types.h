@@ -77,14 +77,6 @@
  *      POSIX FS dependant definitions
  * ------------------------------------------- */
 
-#define FSAL_MAX_NAME_LEN   NAME_MAX
-#define FSAL_MAX_PATH_LEN   PATH_MAX
-
-#define FSAL_NGROUPS_MAX  32
-
-#define FSAL_NAME_INITIALIZER {"",0}
-#define FSAL_PATH_INITIALIZER {"",0}
-
 #define FSAL_GPFS_HANDLE_LEN 64
 #define FSAL_GPFS_FSHANDLE_LEN 64
 
@@ -203,7 +195,7 @@ typedef struct
   gpfsfsal_handle_t handle;
 } gpfsfsal_dir_t;
 
-typedef struct fsal_file__
+typedef struct
 {
   int fd;
   int ro;                       /* read only file ? */

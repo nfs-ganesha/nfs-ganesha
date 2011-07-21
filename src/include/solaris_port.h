@@ -34,6 +34,9 @@
 #ifdef _USE_POSIX
 #include <sys/time_impl.h>
 #define S_BLKSIZE      512      /* Block size for `st_blocks'.  */
+#define NAME_MAX  255
+#define HOST_NAME_MAX 64
+#define LOGIN_NAME_MAX 256
 #endif
 
 #ifdef _USE_SNMP

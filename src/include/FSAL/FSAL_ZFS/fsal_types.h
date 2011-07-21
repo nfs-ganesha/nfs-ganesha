@@ -82,7 +82,7 @@ typedef union
 #endif
 } zfsfsal_handle_t;
 
-typedef struct fsal_cred__
+typedef struct
 {
   creden_t cred;
   int ticket_handle;
@@ -90,7 +90,7 @@ typedef struct fsal_cred__
 
 } zfsfsal_cred_t;
 
-typedef struct fsal_export_context__
+typedef struct
 {
   fsal_handle_t root_handle;
   libzfswrap_vfs_t *p_vfs;
@@ -99,7 +99,7 @@ typedef struct fsal_export_context__
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(FSAL_Handle_to_RBTIndex( &(pexport_context->root_handle), 0 ) )
 
-typedef struct fsal_op_context__
+typedef struct
 {
   fsal_cred_t user_credential;
   int thread_connect_array[32];
@@ -110,7 +110,7 @@ typedef struct fsal_op_context__
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.cred.uid )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.cred.gid )
 
-typedef struct fsal_dir__
+typedef struct
 {
   creden_t cred;
   libzfswrap_vnode_t *p_vnode;
@@ -118,7 +118,7 @@ typedef struct fsal_dir__
 
 } zfsfsal_dir_t;
 
-typedef struct fsal_file__
+typedef struct
 {
   creden_t cred;
   zfsfsal_handle_t handle;
@@ -142,7 +142,7 @@ typedef union
 
 #define FSAL_READDIR_FROM_BEGINNING 0
 
-typedef struct fs_specific_initinfo__
+typedef struct
 {
   char psz_zpool[FSAL_MAX_NAME_LEN];
 

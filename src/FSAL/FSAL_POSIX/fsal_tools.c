@@ -44,10 +44,11 @@ char *POSIXFSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int POSIXFSAL_handlecmp(posixfsal_handle_t * handle1, posixfsal_handle_t * handle2,
+int POSIXFSAL_handlecmp(fsal_handle_t * hdl1, fsal_handle_t * hdl2,
                         fsal_status_t * status)
 {
-
+  posixfsal_handle_t * handle1 = (posixfsal_handle_t *) hdl1;
+  posixfsal_handle_t * handle2 = (posixfsal_handle_t *) hdl2;
   *status = FSAL_STATUS_NO_ERROR;
 
   if(!handle1 || !handle2)
@@ -74,11 +75,12 @@ int POSIXFSAL_handlecmp(posixfsal_handle_t * handle1, posixfsal_handle_t * handl
  * \return The hash value
  */
 
-unsigned int POSIXFSAL_Handle_to_HashIndex(posixfsal_handle_t * p_handle,
+unsigned int POSIXFSAL_Handle_to_HashIndex(fsal_handle_t * handle,
                                            unsigned int cookie,
                                            unsigned int alphabet_len,
                                            unsigned int index_size)
 {
+  posixfsal_handle_t * p_handle = (posixfsal_handle_t *) handle;
   unsigned int h;
   h = (cookie * alphabet_len + ((unsigned int)p_handle->data.id ^ (unsigned int)p_handle->data.ts));
   return (3 * h + 1999) % index_size;
@@ -96,11 +98,13 @@ unsigned int POSIXFSAL_Handle_to_HashIndex(posixfsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int POSIXFSAL_Handle_to_RBTIndex(posixfsal_handle_t * p_handle,
+unsigned int POSIXFSAL_Handle_to_RBTIndex(fsal_handle_t * handle,
                                           unsigned int cookie)
 {
 #define MAGIC   0xABCD1234
+  posixfsal_handle_t * p_handle = (posixfsal_handle_t *) handle;
   unsigned int h;
+
   h = (cookie ^ (unsigned int)p_handle->data.id ^ (unsigned int)p_handle->data.ts ^ MAGIC);
   return h;
 }
@@ -121,12 +125,15 @@ unsigned int POSIXFSAL_Handle_to_RBTIndex(posixfsal_handle_t * p_handle,
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t POSIXFSAL_DigestHandle(posixfsal_export_context_t * p_expcontext, /* IN */
+fsal_status_t POSIXFSAL_DigestHandle(fsal_export_context_t * expcontext, /* IN */
                                      fsal_digesttype_t output_type,     /* IN */
-                                     posixfsal_handle_t * p_in_fsal_handle,     /* IN */
+                                     fsal_handle_t * in_fsal_handle,     /* IN */
                                      caddr_t out_buff   /* OUT */
     )
 {
+  posixfsal_export_context_t * p_expcontext
+    = (posixfsal_export_context_t *) expcontext;
+  posixfsal_handle_t * p_in_fsal_handle = (posixfsal_handle_t *) in_fsal_handle;
   /* sanity checks */
   if(!p_in_fsal_handle || !out_buff || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -249,12 +256,15 @@ fsal_status_t POSIXFSAL_DigestHandle(posixfsal_export_context_t * p_expcontext, 
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t POSIXFSAL_ExpandHandle(posixfsal_export_context_t * p_expcontext, /* IN */
+fsal_status_t POSIXFSAL_ExpandHandle(fsal_export_context_t * expcontext, /* IN */
                                      fsal_digesttype_t in_type, /* IN */
                                      caddr_t in_buff,   /* IN */
-                                     posixfsal_handle_t * p_out_fsal_handle     /* OUT */
+                                     fsal_handle_t * out_fsal_handle     /* OUT */
     )
 {
+  posixfsal_export_context_t * p_expcontext
+    = (posixfsal_export_context_t *) expcontext;
+  posixfsal_handle_t * p_out_fsal_handle = (posixfsal_handle_t *) out_fsal_handle;
 
   /* sanity checks */
   if(!p_out_fsal_handle || !in_buff || !p_expcontext)
@@ -348,28 +358,31 @@ fsal_status_t POSIXFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_pa
 
 fsal_status_t POSIXFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
 {
+  posixfs_specific_initinfo_t * p_init_info;
+
   /* defensive programming... */
   if(out_parameter == NULL)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   /* set default values for all parameters of fs_specific_info */
+  p_init_info = (posixfs_specific_initinfo_t *)&out_parameter->fs_specific_info;
 
 #ifdef _USE_PGSQL
 
   /* pgsql db */
-  strcpy(out_parameter->fs_specific_info.dbparams.host, "localhost");
-  strcpy(out_parameter->fs_specific_info.dbparams.port, "5432");
-  out_parameter->fs_specific_info.dbparams.dbname[0] = '\0';
-  out_parameter->fs_specific_info.dbparams.login[0] = '\0';
-  out_parameter->fs_specific_info.dbparams.passwdfile[0] = '\0';
+  strcpy(p_init_info->dbparams.host, "localhost");
+  strcpy(p_init_info->dbparams.port, "5432");
+  p_init_info->dbparams.dbname[0] = '\0';
+  p_init_info->dbparams.login[0] = '\0';
+  p_init_info->dbparams.passwdfile[0] = '\0';
 
 #elif defined(_USE_MYSQL)
 
-  strcpy(out_parameter->fs_specific_info.dbparams.host, "localhost");
-  strcpy(out_parameter->fs_specific_info.dbparams.port, "");
-  out_parameter->fs_specific_info.dbparams.dbname[0] = '\0';
-  out_parameter->fs_specific_info.dbparams.login[0] = '\0';
-  out_parameter->fs_specific_info.dbparams.passwdfile[0] = '\0';
+  strcpy(p_init_info->dbparams.host, "localhost");
+  strcpy(p_init_info->dbparams.port, "");
+  p_init_info->dbparams.dbname[0] = '\0';
+  p_init_info->dbparams.login[0] = '\0';
+  p_init_info->dbparams.passwdfile[0] = '\0';
 
 #endif
 
@@ -721,11 +734,19 @@ fsal_status_t POSIXFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
                                                              fsal_parameter_t *
                                                              out_parameter)
 {
+  posixfs_specific_initinfo_t * p_init_info;
   int err;
   int var_max, var_index;
   char *key_name;
   char *key_value;
   config_item_t block;
+
+  /* defensive programming... */
+  if(out_parameter == NULL)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  /* set default values for all parameters of fs_specific_info */
+  p_init_info = (posixfs_specific_initinfo_t *)&out_parameter->fs_specific_info;
 
   block = config_FindItemByName(in_config, CONF_LABEL_FS_SPECIFIC);
 
@@ -762,7 +783,7 @@ fsal_status_t POSIXFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
       /* does the variable exists ? */
       if(!STRCMP(key_name, "DB_Host"))
         {
-          strncpy(out_parameter->fs_specific_info.dbparams.host,
+          strncpy(p_init_info->dbparams.host,
                   key_value, FSAL_MAX_DBHOST_NAME_LEN);
         }
       else if(!STRCMP(key_name, "DB_Port"))
@@ -776,22 +797,22 @@ fsal_status_t POSIXFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
                    key_name, USHRT_MAX);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
-          strncpy(out_parameter->fs_specific_info.dbparams.port,
+          strncpy(p_init_info->dbparams.port,
                   key_value, FSAL_MAX_DBPORT_STR_LEN);
         }
       else if(!STRCMP(key_name, "DB_Name"))
         {
-          strncpy(out_parameter->fs_specific_info.dbparams.dbname,
+          strncpy(p_init_info->dbparams.dbname,
                   key_value, FSAL_MAX_DB_NAME_LEN);
         }
       else if(!STRCMP(key_name, "DB_Login"))
         {
-          strncpy(out_parameter->fs_specific_info.dbparams.login,
+          strncpy(p_init_info->dbparams.login,
                   key_value, FSAL_MAX_DB_LOGIN_LEN);
         }
       else if(!STRCMP(key_name, "DB_keytab"))
         {
-          strncpy(out_parameter->fs_specific_info.dbparams.passwdfile,
+          strncpy(p_init_info->dbparams.passwdfile,
                   key_value, FSAL_MAX_PATH_LEN);
         }
       else
@@ -803,8 +824,8 @@ fsal_status_t POSIXFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
         }
     }
 
-  if(out_parameter->fs_specific_info.dbparams.host[0] == '\0'
-     || out_parameter->fs_specific_info.dbparams.dbname[0] == '\0')
+  if(p_init_info->dbparams.host[0] == '\0'
+     || p_init_info->dbparams.dbname[0] == '\0')
     {
       LogCrit(COMPONENT_CONFIG,
            "FSAL LOAD PARAMETER: DB_Host and DB_Name MUST be specified in the configuration file");

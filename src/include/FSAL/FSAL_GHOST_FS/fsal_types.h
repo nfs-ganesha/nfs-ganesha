@@ -51,34 +51,6 @@
  *      GHOST FS dependant definitions
  * ------------------------------------------- */
 
-#define FSAL_MAX_NAME_LEN   GHOSTFS_MAX_FILENAME
-#define FSAL_MAX_PATH_LEN   GHOSTFS_MAX_PATH
-
-/* prefered readdir size */
-#define FSAL_READDIR_SIZE 2048
-
-/** object name.  */
-
-typedef struct fsal_name__
-{
-  char name[FSAL_MAX_NAME_LEN];
-  unsigned int len;
-} fsal_name_t;
-
-/** object path.  */
-
-typedef struct fsal_path__
-{
-  char path[FSAL_MAX_PATH_LEN];
-  unsigned int len;
-} fsal_path_t;
-
-#define FSAL_NAME_INITIALIZER {"",0}
-#define FSAL_PATH_INITIALIZER {"",0}
-
-static fsal_name_t FSAL_DOT = { ".", 1 };
-static fsal_name_t FSAL_DOT_DOT = { "..", 2 };
-
 typedef GHOSTFS_handle_t fsal_handle_t;    /**< FS object handle.            */
 
 /** Authentification context.    */
