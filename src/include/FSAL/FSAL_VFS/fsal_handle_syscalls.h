@@ -69,7 +69,6 @@ static inline int open_by_handle_at(int mdirfd, struct file_handle * handle,
 {
   return syscall(__NR_open_by_handle_at, mdirfd, handle, flags);
 }
-#endif
 
 #ifndef AT_FDCWD
 #error "Very old kernel and/or glibc"
@@ -95,6 +94,14 @@ static inline int open_by_handle_at(int mdirfd, struct file_handle * handle,
 
 #ifndef O_PATH
 #define O_PATH 010000000
+#endif
+
+#ifndef O_NOACCESS
+#define O_NOACCESS O_ACCMODE
+#endif
+
+#else /* ifdef LINUX */
+#error "Not Linux, no by handle syscalls defined."
 #endif
 
 #ifndef O_NOACCESS
