@@ -87,7 +87,9 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
   fsal_status_t fsal_status;
   char cache_sub_dir[MAXPATHLEN];
   cache_content_status_t content_status;
+#ifndef _NO_BUDDY_SYSTEM
   int rc = 0;
+#endif
   nfs_flush_thread_data_t *p_flush_data = NULL;
   exportlist_t *pexport;
   char function_name[MAXNAMLEN];

@@ -46,6 +46,8 @@ struct nlm_lock_entry
 
 typedef struct nlm_lock_entry nlm_lock_entry_t;
 
+bool_t nlm_block_data_to_fsal_context(cache_inode_nlm_block_data_t * nlm_block_data,
+                                      fsal_op_context_t            * fsal_context);
 extern const char *lock_result_str(int rc);
 extern netobj *copy_netobj(netobj * dst, netobj * src);
 extern void netobj_free(netobj * obj);
@@ -53,7 +55,6 @@ extern void netobj_to_string(netobj *obj, char *buffer, int maxlen);
 extern int in_nlm_grace_period(void);
 extern int nlm_monitor_host(char *name);
 extern int nlm_unmonitor_host(char *name);
-extern void nlm_resend_grant_msg(void *arg);
 
 /**
  * process_nlm_parameters: Process NLM parameters
@@ -82,7 +83,8 @@ int nlm_process_parameters(struct svc_req            * preq,
                            cache_inode_client_t      * pclient,
                            bool_t                      care,
                            cache_inode_nlm_client_t ** ppnlm_client,
-                           cache_lock_owner_t       ** ppowner);
+                           cache_lock_owner_t       ** ppowner,
+                           cache_inode_block_data_t ** ppblock_data);
 
 void nlm_process_conflict(nlm4_holder        * nlm_holder,
                           cache_lock_owner_t * holder,
@@ -91,7 +93,6 @@ void nlm_process_conflict(nlm4_holder        * nlm_holder,
 nlm4_stats nlm_convert_cache_inode_error(cache_inode_status_t status);
 
 cache_inode_status_t nlm_granted_callback(cache_entry_t        * pentry,
-                                          fsal_op_context_t    * pcontext,
                                           cache_lock_entry_t   * lock_entry,
                                           cache_inode_client_t * pclient,
                                           cache_inode_status_t * pstatus);

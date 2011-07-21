@@ -1,8 +1,14 @@
 ACLOCAL_AMFLAGS = -I m4
 
+if USE_BUDDY_SYSTEM
+BUDDYDIR = BuddyMalloc
+else
+BUDDYDIR =
+endif
+
 SUBDIRS = include             \
           Log 		      \
-          BuddyMalloc         \
+          $(BUDDYDIR)         \
           Common              \
           ConfigParsing       \
           RW_Lock             \
@@ -45,7 +51,11 @@ DOCDIRS = Cache_inode ConfigParsing File_Content File_Content_Policy HashTable I
           FSAL/FSAL_HPSS FSAL/FSAL_POSIX FSAL/FSAL_PROXY FSAL/FSAL_SNMP FSAL/FSAL_FUSE FSAL/FSAL_ZFS \
           MFSL/MFSL_NULL MFSL/MFSL_ASYNC MFSL/MFSL_PROXY_RPCSECGSS MFSL/MFSL_AIO
 
-TESTRUNNER_DIRS = BuddyMalloc HashTable LRU Log RW_Lock
+TESTRUNNER_DIRS = HashTable LRU Log RW_Lock
+
+if USE_BUDDY_SYSTEM
+TESTRUNNER_DIRS += BuddyMalloc
+endif
 
 testrunner: 
 	for i in $(TESTRUNNER_DIRS) ; do cd $$i ; make testrunner ; cd .. ; done

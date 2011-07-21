@@ -78,7 +78,7 @@
 
 static pthread_mutex_t lock_worker_selection = PTHREAD_MUTEX_INITIALIZER;
 
-#ifdef _DEBUG_MEMLEAKS
+#if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
 /**
  *
  * nfs_debug_debug_label_debug_info: a function used for debugging purpose, tracing Buddy Malloc activity.
@@ -1178,7 +1178,9 @@ void rpc_dispatcher_svc_run()
       if(nb_iter_memleaks > 1000)
         {
           nb_iter_memleaks = 0;
+#ifndef _NO_BUDDY_SYSTEM
           nfs_debug_buddy_info();
+#endif
         }
       else
         nb_iter_memleaks += 1;

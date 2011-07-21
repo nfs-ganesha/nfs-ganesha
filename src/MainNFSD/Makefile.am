@@ -6,12 +6,18 @@ endif
 
 AM_CFLAGS                     = -Wimplicit $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS)
 
+if USE_BUDDY_SYSTEM
+BUDDY_LIB_FLAGS = ../BuddyMalloc/libBuddyMalloc.la
+else
+BUDDY_LIB_FLAGS =
+endif
 
 if USE_GSSRPC
 SEC_LIB_FLAGS =
 SVC_FLAGS =
 SVC_LIB_FLAGS = -lgssrpc
 endif
+
 if HAVE_GSSAPI
 SEC_LIB_FLAGS = $(SEC_LFLAGS) -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -ldl
 endif
@@ -105,6 +111,7 @@ libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la           
                                       $(SVC_LIB_FLAGS)                                  \
                                       $(NFSIDMAP_LIB_FLAGS)                             \
                                       $(STAT_SNMP_LIB_FLAGS)                            \
+                                      $(BUDDY_LIB_FLAGS)                                \
                                       ../IdMapper/libidmap.la                           \
                                       ../support/libsupport.la                          \
                                       ../NodeList/libNodeList.la                        \
@@ -113,7 +120,6 @@ libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la           
                                       ../File_Content_Policy/libcache_content_policy.la \
                                       ../HashTable/libhashtable.la                      \
                                       ../LRU/liblru.la                                  \
-                                      ../BuddyMalloc/libBuddyMalloc.la                  \
                                       ../FSAL/libfsalcommon.la                          \
                                       $(MFSL_LIB)                                       \
                                       $(FSAL_LIB)                                       \
@@ -126,7 +132,6 @@ libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la           
                                       ../Common/libcommon_utils.la
 
 libMainServices_la_DEPENDENCIES = $(libMainServices_la_SOURCES) $(libMainServices_la_LIBADD)
-
 
 if USE_FSAL_FUSE
 

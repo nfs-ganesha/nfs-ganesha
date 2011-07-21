@@ -36,7 +36,6 @@
 #include "config.h"
 #endif
 
-#include "BuddyMalloc.h"
 #include "fsal.h"
 
 #include "cache_inode.h"
