@@ -238,66 +238,6 @@ int nfs_ParseConfLine(char *Argv[],
 
 /**
  *
- * nfs_LookupHostAddr: determine host address from string.
- *
- * This routine is converting a valid host name is both literal or dotted
- *  format into a valid netdb structure. If it could not successfull, NULL is
- *  returned by the function.
- *
- * Assumptions:
- *  Dotted host address are 4 hex, decimal, or octal numbers in
- *  base 256 each separated by a period
- *
- * @param host [IN] hostname or dotted address, within a string literal.
- *
- * @return the netdb structure related to this client.
- *
- * @see inet_addr
- * @see gethostbyname
- * @see gethostbyaddr
- *
- */
-static struct hostent *nfs_LookupHostAddr(char *host)
-{
-  struct hostent *output;
-  unsigned long hostaddr;
-  int length = sizeof(hostaddr);
-
-#ifdef _USE_TIRPC_IPV6
-  struct sockaddr_storage addrv6;
-  struct sockaddr_in6 *paddrv6 = (struct sockaddr_in6 *)&addrv6;
-#endif
-
-  /* First try gethhostbyname */
-  if((output = gethostbyname(host)) == NULL)
-    {
-      /* Convert from dotted notation to adddress format */
-      hostaddr = inet_addr(host);
-
-      /* gethostbyname was of no help, try gethostaddr */
-      output = gethostbyaddr((char *)&hostaddr, length, AF_INET);
-    }
-#ifdef _USE_TIRPC_IPV6
-  /* if output == NULL it may be an IPv6 address */
-  if(output == NULL)
-    {
-      if((output = gethostbyname2(host, AF_INET6)) == NULL)
-        {
-          /* Maybe an address in the ASCII format */
-          if(inet_pton(AF_INET6, host, paddrv6->sin6_addr.s6_addr))
-            {
-              output = gethostbyaddr(paddrv6->sin6_addr.s6_addr,
-                                     sizeof(paddrv6->sin6_addr.s6_addr), AF_INET6);
-            }
-        }
-    }
-#endif
-
-  return output;
-}                               /* nfs_LookupHostAddr */
-
-/**
- *
  * nfs_LookupNetworkAddr: determine network address from string.
  *
  * This routine is converting a valid host name is both literal or dotted
@@ -441,7 +381,7 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
   int j = 0;
   unsigned int l = 0;
   char *client_hostname;
-  struct hostent *hostEntry;
+  struct addrinfo *info;
   exportlist_client_entry_t *p_clients;
   int is_wildcarded_host = FALSE;
   unsigned long netMask;
@@ -484,16 +424,15 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
                    (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                    p_clients[i].client.netgroup.netgroupname);
         }
-      else if((hostEntry = nfs_LookupHostAddr(client_hostname)) != NULL)
+      else if( getaddrinfo(client_hostname, NULL, NULL, &info) == 0)
         {
-
           /* Entry is a hostif */
-          if(hostEntry->h_addrtype == AF_INET)
+          if(info->ai_family == AF_INET)
             {
-              memcpy(&(p_clients[i].client.hostif.clientaddr), hostEntry->h_addr,
-                     hostEntry->h_length);
+              struct in_addr infoaddr = ((struct sockaddr_in *)info->ai_addr)->sin_addr;
+              memcpy(&(p_clients[i].client.hostif.clientaddr), &infoaddr,
+                     sizeof(struct in_addr));
               p_clients[i].type = HOSTIF_CLIENT;
-
               LogDebug(COMPONENT_CONFIG,
                        "----------------- %s to client %s = %d.%d.%d.%d",
                        (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
@@ -503,13 +442,15 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
                        (unsigned int)((p_clients[i].client.hostif.clientaddr >> 8) & 0xFF),
                        (unsigned int)(p_clients[i].client.hostif.clientaddr & 0xFF));
             }
-          else
+          else /* AF_INET6 */
             {
+              struct in6_addr infoaddr = ((struct sockaddr_in6 *)info->ai_addr)->sin6_addr;
               /* IPv6 address */
-              memcpy(&(p_clients[i].client.hostif.clientaddr6), hostEntry->h_addr,
-                     hostEntry->h_length);
+              memcpy(&(p_clients[i].client.hostif.clientaddr6), &infoaddr,
+                     sizeof(struct in6_addr));
               p_clients[i].type = HOSTIF_CLIENT_V6;
             }
+          freeaddrinfo(info);
         }
       else if(((error = nfs_LookupNetworkAddr(client_hostname,
                                               (unsigned long *)&netAddr,
