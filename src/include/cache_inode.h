@@ -44,13 +44,6 @@
 #include <time.h>
 #include <pthread.h>
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#endif
 
 #include "stuff_alloc.h"
 #include "RW_Lock.h"
@@ -101,76 +94,41 @@
 
 #define CACHE_INODE_DUMP_LEN 1024
 
-static char *cache_inode_function_names[] = {
+extern char *cache_inode_function_names[];
 #define CACHE_INODE_ACCESS               0
-  "cache_inode_access",
 #define CACHE_INODE_GETATTR              1
-  "cache_inode_getattr",
 #define CACHE_INODE_MKDIR                2
-  "cache_inode_mkdir",
 #define CACHE_INODE_REMOVE               3
-  "cache_inode_remove",
 #define CACHE_INODE_STATFS               4
-  "cache_inode_statfs",
 #define CACHE_INODE_LINK                 5
-  "cache_inode_link",
 #define CACHE_INODE_READDIR              6
-  "cache_inode_readdir",
 #define CACHE_INODE_RENAME               7
-  "cache_inode_rename",
 #define CACHE_INODE_SYMLINK              8
-  "cache_inode_symlink",
 #define CACHE_INODE_CREATE               9
-  "cache_inode_create",
 #define CACHE_INODE_LOOKUP              10
-  "cache_inode_lookup",
 #define CACHE_INODE_LOOKUPP             11
-  "cache_inode_lookupp",
 #define CACHE_INODE_READLINK            12
-  "cache_inode_readlink",
 #define CACHE_INODE_TRUNCATE            13
-  "cache_inode_truncate",
 #define CACHE_INODE_GET                 14
-  "cache_inode_get",
 #define CACHE_INODE_RELEASE             15
-  "cache_inode_release",
 #define CACHE_INODE_SETATTR             16
-  "cache_inode_setattr",
 #define CACHE_INODE_NEW_ENTRY           17
-  "cache_inode_new_entry",
 #define CACHE_INODE_READ_DATA           18
-  "cache_inode_read_data",
 #define CACHE_INODE_WRITE_DATA          19
-  "cache_inode_write_data",
 #define CACHE_INODE_ADD_DATA_CACHE      20
-  "cache_inode_add_data_cache",
 #define CACHE_INODE_RELEASE_DATA_CACHE  21
-  "cache_inode_release_data_cache",
 #define CACHE_INODE_RENEW_ENTRY         22
-  "cache_inode_renew_entry",
 #define CACHE_INODE_LOCK_CREATE         23
-  "cache_inode_lock_create",
 #define CACHE_INODE_LOCK                24
-  "cache_inode_lock",
 #define CACHE_INODE_LOCKU               25
-  "cache_inode_locku",
 #define CACHE_INODE_LOCKT               26
-  "cache_inode_lockt",
 #define CACHE_INODE_ADD_STATE           27
-  "cache_inode_add_state",
 #define CACHE_INODE_DEL_STATE           28
-  "cache_inode_add_state",
 #define CACHE_INODE_GET_STATE           29
-  "cache_inode_get_state",
 #define CACHE_INODE_SET_STATE           30
-  "cache_inode_set_state",
 #define CACHE_INODE_UPDATE_STATE        31
-  "cache_inode_update_state",
 #define CACHE_INODE_DEL_ALL_STATE       32
-  "cache_inode_state_del_all",
 #define CACHE_INODE_COMMIT              33
-  "cache_inode_commit"
-};
 
 #define CACHE_INODE_NB_COMMAND      34
 

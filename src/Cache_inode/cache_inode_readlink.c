@@ -89,6 +89,9 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
     case BLOCK_FILE:
     case SOCKET_FILE:
     case FIFO_FILE:
+    case UNASSIGNED:
+    case FS_JUNCTION:
+    case RECYCLED:
       *pstatus = CACHE_INODE_BAD_TYPE;
       V_r(&pentry->lock);
 

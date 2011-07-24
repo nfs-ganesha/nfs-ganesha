@@ -48,18 +48,7 @@ t*
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs4.h"
@@ -125,13 +114,9 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
   fattr4_quota_avail_hard quota_avail_hard;
   fattr4_quota_avail_soft quota_avail_soft;
   fattr4_quota_used quota_used;
-  fattr4_mounted_on_fileid mounted_on_fileid;
   fattr4_rdattr_error rdattr_error;
   file_handle_v4_t *pfile_handle = NULL;
-
   fsal_attrib_list_t fsalattr;
-  fsal_handle_t mounted_on_fsal_handle;
-  fsal_status_t fsal_status;
 
   u_int fhandle_len = 0;
   uint32_t supported_attrs_len = 0;
@@ -1194,9 +1179,7 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
     }
 
   /* UTF8 strings may not end with \0, but they carry their length */
-  strncpy(strname, arg_LOOKUP4.objname.utf8string_val,
-          arg_LOOKUP4.objname.utf8string_len);
-  strname[arg_LOOKUP4.objname.utf8string_len] = '\0';
+  utf82str(strname, sizeof(strname), &arg_LOOKUP4.objname);
 
   /* Build the FSAL name */
   if((cache_status = cache_inode_error_convert(FSAL_str2name(strname,
@@ -1270,8 +1253,6 @@ int nfs4_op_lookupp_xattr(struct nfs_argop4 *op,
  * 
  */
 
-extern time_t ServerBootTime;
-
 /* shorter notation to avoid typo */
 #define arg_READDIR4 op->nfs_argop4_u.opreaddir
 #define res_READDIR4 resp->nfs_resop4_u.opreaddir
@@ -1292,15 +1273,9 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   entry4 *entry_nfs_array = NULL;
   entry_name_array_item_t *entry_name_array = NULL;
   nfs_fh4 entryFH;
-  cache_inode_fsal_data_t fsdata;
-  fsal_path_t exportpath_fsal;
-  fsal_attrib_list_t attr;
   fsal_handle_t *pfsal_handle = NULL;
-  fsal_mdsize_t strsize = MNTPATHLEN + 1;
   fsal_status_t fsal_status;
-  int error = 0;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-  cache_entry_t *pentry = NULL;
   file_handle_v4_t file_handle;
   nfs_fh4 nfsfh;
 
@@ -1372,11 +1347,11 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
       res_READDIR4.status = NFS4ERR_TOOSMALL;
       return res_READDIR4.status;
     }
-  /* Cookie verifier has the value of the Server Boot Time for pseudo fs */
 
+  /* Cookie verifier has the value of the Server Boot Time for pseudo fs */
+  memset(cookie_verifier, 0, NFS4_VERIFIER_SIZE);
 #ifdef _WITH_COOKIE_VERIFIER
   /* BUGAZOMEU: management of the cookie verifier */
-  memset(cookie_verifier, 0, NFS4_VERIFIER_SIZE);
   if(NFS_SpecificConfig.UseCookieVerf == 1)
     {
       memcpy(cookie_verifier, &ServerBootTime, sizeof(ServerBootTime));
@@ -1544,9 +1519,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
     }
 
   /* UTF8 strings may not end with \0, but they carry their length */
-  strncpy(strname, arg_OPEN4.claim.open_claim4_u.file.utf8string_val,
-          arg_OPEN4.claim.open_claim4_u.file.utf8string_len);
-  strname[arg_OPEN4.claim.open_claim4_u.file.utf8string_len] = '\0';
+  utf82str(strname, sizeof(strname), &arg_OPEN4.claim.open_claim4_u.file);
 
   /* Build the FSAL name */
   if((cache_status = cache_inode_error_convert(FSAL_str2name(strname,
@@ -1625,18 +1598,18 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
 
   res_OPEN4.status = NFS4_OK;
   return NFS4_OK;
-}                               /* nfs4_op_open_xattr
+}                               /* nfs4_op_open_xattr */
 
-                                   /**
-                                   * nfs4_op_read_xattr: Reads the content of a xattr attribute
-                                   * 
-                                   * @param op    [IN]    pointer to nfs4_op arguments
-                                   * @param data  [INOUT] Pointer to the compound request's data
-                                   * @param resp  [IN]    Pointer to nfs4_op results
-                                   * 
-                                   * @return NFS4_OK if successfull, other values show an error. 
-                                   * 
-                                 */
+/**
+ * nfs4_op_read_xattr: Reads the content of a xattr attribute
+ * 
+ * @param op    [IN]    pointer to nfs4_op arguments
+ * @param data  [INOUT] Pointer to the compound request's data
+ * @param resp  [IN]    Pointer to nfs4_op results
+ * 
+ * @return NFS4_OK if successfull, other values show an error. 
+ * 
+ */
 #define arg_READ4 op->nfs_argop4_u.opread
 #define res_READ4 resp->nfs_resop4_u.opread
 
@@ -1728,8 +1701,6 @@ int nfs4_op_write_xattr(struct nfs_argop4 *op,
   unsigned int xattr_id = 0;
   cache_inode_status_t cache_status;
   fsal_status_t fsal_status;
-  char *buffer = NULL;
-  size_t size_returned;
 
   /* Get the FSAL Handle fo the current object */
   pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);

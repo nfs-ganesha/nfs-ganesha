@@ -49,18 +49,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -74,8 +63,6 @@
 #include "nfs_proto_functions.h"
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
-
-extern time_t ServerBootTime;
 
 /**
  *
@@ -216,12 +203,12 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
               nfs_clientid.client_name[arg_SETCLIENTID4.client.id.id_len] = '\0';
 #ifdef _USE_NFS4_1
               strncpy(nfs_clientid.client_r_addr,
-                      arg_SETCLIENTID4.callback.cb_location.na_r_addr, MAXNAMLEN);
+                      arg_SETCLIENTID4.callback.cb_location.na_r_addr, SOCK_NAME_MAX);
               strncpy(nfs_clientid.client_r_netid,
                       arg_SETCLIENTID4.callback.cb_location.na_r_netid, MAXNAMLEN);
 #else
               strncpy(nfs_clientid.client_r_addr,
-                      arg_SETCLIENTID4.callback.cb_location.r_addr, MAXNAMLEN);
+                      arg_SETCLIENTID4.callback.cb_location.r_addr, SOCK_NAME_MAX);
               strncpy(nfs_clientid.client_r_netid,
                       arg_SETCLIENTID4.callback.cb_location.r_netid, MAXNAMLEN);
 #endif
@@ -294,12 +281,12 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
       nfs_clientid.client_name[arg_SETCLIENTID4.client.id.id_len] = '\0';
 #ifdef _USE_NFS4_1
       strncpy(nfs_clientid.client_r_addr, arg_SETCLIENTID4.callback.cb_location.na_r_addr,
-              MAXNAMLEN);
+              SOCK_NAME_MAX);
       strncpy(nfs_clientid.client_r_netid,
               arg_SETCLIENTID4.callback.cb_location.na_r_netid, MAXNAMLEN);
 #else
       strncpy(nfs_clientid.client_r_addr, arg_SETCLIENTID4.callback.cb_location.r_addr,
-              MAXNAMLEN);
+              SOCK_NAME_MAX);
       strncpy(nfs_clientid.client_r_netid, arg_SETCLIENTID4.callback.cb_location.r_netid,
               MAXNAMLEN);
 #endif

@@ -62,17 +62,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -87,8 +77,6 @@
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
 #include "nfs_stat.h"
-
-extern nfs_parameter_t nfs_param;
 
 /**
  *
@@ -116,7 +104,7 @@ void nfs_stat_update(nfs_stat_type_t type,
       up_counter = 0;
     }
 
-  if(preq->rq_prog == nfs_param.core_param.nfs_program)
+  if(preq->rq_prog == nfs_param.core_param.program[P_NFS])
     {
       switch (preq->rq_vers)
         {
@@ -145,10 +133,9 @@ void nfs_stat_update(nfs_stat_type_t type,
                "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
-          break;
         }
     }
-  else if(preq->rq_prog == nfs_param.core_param.mnt_program)
+  else if(preq->rq_prog == nfs_param.core_param.program[P_MNT])
     {
       switch (preq->rq_vers)
         {
@@ -170,10 +157,10 @@ void nfs_stat_update(nfs_stat_type_t type,
                "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
-          break;
         }
     }
-  else if(preq->rq_prog == nfs_param.core_param.nlm_program)
+#ifdef _USE_NLM
+  else if(preq->rq_prog == nfs_param.core_param.program[P_NLM])
     {
       switch (preq->rq_vers)
         {
@@ -188,10 +175,11 @@ void nfs_stat_update(nfs_stat_type_t type,
                "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
-          break;
         }
     }
-  else if(preq->rq_prog == nfs_param.core_param.rquota_program)
+#endif
+#ifdef _USE_QUOTA
+  else if(preq->rq_prog == nfs_param.core_param.program[P_RQUOTA])
     {
       switch (preq->rq_vers)
         {
@@ -211,10 +199,10 @@ void nfs_stat_update(nfs_stat_type_t type,
                "IMPLEMENTATION ERROR: /!\\ | you should never step here file %s, line %d",
                __FILE__, __LINE__);
           return;
-          break;
         }
 
     }
+#endif
   else
     {
       /* Bad program ? */

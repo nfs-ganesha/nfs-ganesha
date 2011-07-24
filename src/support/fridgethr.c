@@ -52,8 +52,6 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-extern nfs_parameter_t nfs_param ;
-
 static pthread_mutex_t fridge_mutex ;
 static fridge_entry_t * fridge_content = NULL ;
 static pthread_attr_t attr_thr ;

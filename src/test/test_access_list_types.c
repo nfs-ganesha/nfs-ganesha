@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,9 +16,9 @@
 nfs_parameter_t nfs_param;
 char ganesha_exec_path[MAXPATHLEN] = "/usr/bin/gpfs.ganesha.nfsd";
 
-#define MOUNT 0
-#define READ 1
-#define WRITE 2
+#define TEST_MOUNT 0
+#define TEST_READ 1
+#define TEST_WRITE 2
 #define MDONLY_READ 3
 #define MDONLY_WRITE 4
 
@@ -59,7 +61,7 @@ void init_vars(hash_table_t **ht_ip_stats, struct prealloc_pool **ip_stats_pool)
   MakePool(*ip_stats_pool,
            100,//           nfs_param.worker_param.nb_ip_stats_prealloc,
            nfs_ip_stats_t, NULL, NULL);
-  NamePool(*ip_stats_pool, "IP Stats Cache Pool %d", i);
+  NamePool(*ip_stats_pool, "IP Stats Cache Pool");
 
   if(!IsPoolPreallocated(*ip_stats_pool))
     {
@@ -79,36 +81,35 @@ int test_access(char *addr, char *hostname,
   struct user_cred user_credentials;
   unsigned int nfs_prog;
   unsigned int mnt_prog;
-  struct addrinfo *res;
-  struct sockaddr_storage *pssaddr;
+  sockaddr_t ssaddr;
+  sockaddr_t *pssaddr = &ssaddr;
   int errcode;
   int export_check_result;
   bool_t proc_makes_write;
 
-  if (operation == WRITE || operation == MDONLY_WRITE)
+  if (operation == TEST_WRITE || operation == MDONLY_WRITE)
     proc_makes_write = TRUE;
   else
     proc_makes_write = FALSE;
 
   /*pssaddr*/
-  errcode = getaddrinfo(addr, NULL, NULL, &res);
+  errcode = ipstring_to_sockaddr(addr, pssaddr);
   if (errcode != 0)
     {
       perror ("getaddrinfo");
       return -1;
     }
-  pssaddr = (struct sockaddr_storage *) res;
 
   /* ptr_req */
   memset(&ptr_req, 0, sizeof(struct svc_req));
   ptr_req.rq_cred.oa_flavor = AUTH_UNIX;
   ptr_req.rq_proc = 23232;
   /*nfs_prog*/
-  nfs_prog = nfs_param.core_param.nfs_program;
+  nfs_prog = nfs_param.core_param.program[P_NFS];
 
   /*mnt_prog*/
-  mnt_prog = nfs_param.core_param.mnt_program;
-  if (operation == MOUNT)
+  mnt_prog = nfs_param.core_param.program[P_MNT];
+  if (operation == TEST_MOUNT)
     ptr_req.rq_prog = mnt_prog;
   else
     ptr_req.rq_prog = nfs_prog;
@@ -129,11 +130,12 @@ int test_access(char *addr, char *hostname,
   return export_check_result;
 }
 
-void expected(int expected_result, int export_check_result) {
+int expected(int expected_result, int export_check_result) {
   if (export_check_result == expected_result)
-    return;
-  else
+    return 0;
+  else {
       printf("\tFAIL: ");
+  }
   
   if (export_check_result == EXPORT_PERMISSION_DENIED)
     {
@@ -184,6 +186,7 @@ void expected(int expected_result, int export_check_result) {
     {
       printf("Not sure what to expect\n");
     }
+  return 1;
 }
 
 int predict(char *addr, char *hostname, int root, int read, int write,
@@ -193,10 +196,10 @@ int predict(char *addr, char *hostname, int root, int read, int write,
   /* if uid = 0 then uid will be anonymous and may be declined in the FSAL.
    * However we still give permissions to continue executing request. */
 
-  if (operation == MOUNT)
+  if (operation == TEST_MOUNT)
     return EXPORT_PERMISSION_GRANTED;
 
-  if (operation == WRITE || operation == MDONLY_WRITE)
+  if (operation == TEST_WRITE || operation == MDONLY_WRITE)
     {
       if (root && uid == 0)
         return EXPORT_PERMISSION_GRANTED;
@@ -210,7 +213,7 @@ int predict(char *addr, char *hostname, int root, int read, int write,
       return EXPORT_PERMISSION_DENIED;
     }
 
-  if (operation == READ || operation == MDONLY_READ)
+  if (operation == TEST_READ || operation == MDONLY_READ)
     {
       if (root && uid == 0)
 	return EXPORT_PERMISSION_GRANTED;
@@ -231,18 +234,18 @@ int predict(char *addr, char *hostname, int root, int read, int write,
 int old_predict(char *ip, char *hostname, int root, int nonroot,
 		int accesstype, int uid, int operation)
 {
-  if (operation == MOUNT)
+  if (operation == TEST_MOUNT)
     return EXPORT_PERMISSION_GRANTED;
 
-  if (operation == WRITE)
+  if (operation == TEST_WRITE)
     {
       if (((nonroot && uid != 0) || (nonroot && uid == 0) || (root && uid == 0)) &&
-	  accesstype == WRITE)
+	  accesstype == TEST_WRITE)
         return EXPORT_PERMISSION_GRANTED;
 
       if (accesstype == MDONLY_READ)
 	return EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO;
-      if (accesstype == READ)
+      if (accesstype == TEST_READ)
 	return EXPORT_WRITE_ATTEMPT_WHEN_RO;
 
       return EXPORT_PERMISSION_DENIED;
@@ -251,7 +254,7 @@ int old_predict(char *ip, char *hostname, int root, int nonroot,
   if (operation == MDONLY_WRITE)
     {
       if (((nonroot && uid != 0) || (nonroot && uid == 0) || (root && uid == 0)) &&
-	  accesstype == WRITE)
+	  accesstype == TEST_WRITE)
         return EXPORT_PERMISSION_GRANTED;
 
       if (((nonroot && uid != 0) || (nonroot && uid == 0) || (root && uid == 0)) &&
@@ -260,16 +263,16 @@ int old_predict(char *ip, char *hostname, int root, int nonroot,
 
       if (accesstype == MDONLY_READ)
 	return EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO;
-      if (accesstype == READ)
+      if (accesstype == TEST_READ)
 	return EXPORT_WRITE_ATTEMPT_WHEN_RO;
 
       return EXPORT_PERMISSION_DENIED;
     }
 
-  if (operation == READ)
+  if (operation == TEST_READ)
     {
       if (((nonroot && uid != 0) || (nonroot && uid == 0) || (root && uid == 0)) &&
-	  (accesstype == READ || accesstype == WRITE))
+	  (accesstype == TEST_READ || accesstype == TEST_WRITE))
         return EXPORT_PERMISSION_GRANTED;
 
       if (((nonroot && uid != 0) || (nonroot && uid == 0) || (root && uid == 0)) &&
@@ -282,7 +285,7 @@ int old_predict(char *ip, char *hostname, int root, int nonroot,
   if (operation == MDONLY_READ)
     {
       if (((nonroot && uid != 0) || (nonroot && uid == 0) || (root && uid == 0)) &&
-	  (accesstype == READ || accesstype == WRITE))
+	  (accesstype == TEST_READ || accesstype == TEST_WRITE))
         return EXPORT_PERMISSION_GRANTED;
 
       if (((nonroot && uid != 0) || (nonroot && uid == 0) || (root && uid == 0)) &&
@@ -306,8 +309,8 @@ int main(int argc, char *argv[])
   exportlist_t pexport;
   int root, read, write, mdonly_read, mdonly_write,
     root_user, uid, operation, export_check_result,
-    predicted_result, mount, nonroot, accesstype;
-  bool_t proc_makes_write;
+    predicted_result, nonroot, accesstype,
+    return_status=0;
   char *ip = "192.0.2.10";
   //  char *match_str = "192.0.2.10";
   char *match_str = "*";
@@ -357,11 +360,11 @@ int main(int argc, char *argv[])
 		    
 		    printf("TEST: %d %d %d %d %d : %d ",
 			   root, read, write, mdonly_read, mdonly_write,uid);
-		    if (operation == MOUNT)
-		      printf("MOUNT\n");
-		    else if (operation == READ)
+		    if (operation == TEST_MOUNT)
+		      printf("TEST_MOUNT\n");
+		    else if (operation == TEST_READ)
 		      printf("READ\n");
-		    else if (operation == WRITE)
+		    else if (operation == TEST_WRITE)
 		      printf("WRITE\n");
 		    else if (operation == MDONLY_READ)
 		      printf("MDONLY_READ\n");
@@ -376,7 +379,8 @@ int main(int argc, char *argv[])
 					       mdonly_read, mdonly_write, uid, operation);
 		    
 		    /* report on what was expected vs what we received */
-		    expected(predicted_result, export_check_result);
+		    if (expected(predicted_result, export_check_result) == 1)
+		      return_status = 1;
 		  }
             }
   
@@ -396,9 +400,9 @@ int main(int argc, char *argv[])
 	if (nonroot)
 	  parseAccessParam("Access", match_str, &pexport, EXPORT_OPTION_READ_ACCESS|EXPORT_OPTION_WRITE_ACCESS);
 
-	if (accesstype == READ)
+	if (accesstype == TEST_READ)
 	  pexport.access_type = ACCESSTYPE_RO;
-	else if (accesstype == WRITE)
+	else if (accesstype == TEST_WRITE)
 	  pexport.access_type = ACCESSTYPE_RW;
 	else if (accesstype == MDONLY_READ)
 	  pexport.access_type = ACCESSTYPE_MDONLY_RO;
@@ -420,9 +424,9 @@ int main(int argc, char *argv[])
 		uid = ROOT_UID;
 	      
 	      printf("TEST: %d %d ", root, nonroot);
-	      if (accesstype == READ)
+	      if (accesstype == TEST_READ)
 		printf("ACCESSTYPE_RO ");
-	      else if (accesstype == WRITE)
+	      else if (accesstype == TEST_WRITE)
 		printf("ACCESSTYPE_RW ");
 	      else if (accesstype == MDONLY_READ)
 		printf("ACCESSTYPE_MDONLY_RO ");
@@ -431,11 +435,11 @@ int main(int argc, char *argv[])
 	      else
 		printf("INVALID ");
 	      printf(": %d ",uid);
-	      if (operation == MOUNT)
-		printf("MOUNT\n");
-	      else if (operation == READ)
+	      if (operation == TEST_MOUNT)
+		printf("TEST_MOUNT\n");
+	      else if (operation == TEST_READ)
 		printf("READ\n");
-	      else if (operation == WRITE)
+	      else if (operation == TEST_WRITE)
 		printf("WRITE\n");
 	      else if (operation == MDONLY_READ)
 		printf("MDONLY_READ\n");
@@ -446,15 +450,24 @@ int main(int argc, char *argv[])
 						&pexport, uid, operation);
 	      
 	      /* predict how the result will turn out */
-	      if ((operation == WRITE || operation == MDONLY_WRITE) && accesstype == READ)
+	      if ((operation == TEST_WRITE || operation == MDONLY_WRITE) && accesstype == TEST_READ)
 		predicted_result = EXPORT_WRITE_ATTEMPT_WHEN_RO;
 	      else
 		predicted_result = old_predict(ip, hostname, root, nonroot,
 					       accesstype, uid, operation);
 	      
 	      /* report on what was expected vs what we received */
-	      expected(predicted_result, export_check_result);
+	      if (expected(predicted_result, export_check_result) == 1)
+		return_status = 1;
 	    }
       }
-  return 0;
+
+  printf("----------------------------------------------------\n");
+  if (!return_status)
+    printf("ALL ACCESS LIST TYPE TESTS COMPLETED SUCCESSFULLY!!\n");
+  else
+    printf("ACCESS LIST TYPE TESTS FAILED!!\n");
+  printf("----------------------------------------------------\n");
+
+  return return_status;
 }

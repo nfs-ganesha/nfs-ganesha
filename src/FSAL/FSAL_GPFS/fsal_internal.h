@@ -42,7 +42,7 @@
           FSAL_ATTR_MODE     | FSAL_ATTR_NUMLINKS | FSAL_ATTR_OWNER     | \
           FSAL_ATTR_GROUP    | FSAL_ATTR_ATIME    | FSAL_ATTR_RAWDEV    | \
           FSAL_ATTR_CTIME    | FSAL_ATTR_MTIME    | FSAL_ATTR_SPACEUSED | \
-          FSAL_ATTR_CHGTIME  )
+          FSAL_ATTR_CHGTIME | FSAL_ATTR_ACL  )
 
 /* the following variables must not be defined in fsal_internal.c */
 #ifndef FSAL_INTERNAL_C
@@ -55,8 +55,6 @@ extern fsal_staticfsinfo_t global_fs_info;
 /* export_context_t is not given to every function, but
  * most functions need to use the open-by-handle funcionality.
  */
-extern char open_by_handle_path[MAXPATHLEN];
-extern int open_by_handle_fd;
 
 #endif
 
@@ -128,6 +126,17 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
 
 fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
                                   fsal_handle_t * p_handle, struct stat64 *buf);
+
+fsal_status_t fsal_get_xstat_by_handle(fsal_op_context_t * p_context,
+                                       fsal_handle_t * p_handle, gpfsfsal_xstat_t *p_buffxstat);
+
+fsal_status_t fsal_set_xstat_by_handle(fsal_op_context_t * p_context,
+                                       fsal_handle_t * p_handle, int attr_valid,
+                                       int attr_changed, gpfsfsal_xstat_t *p_buffxstat);
+
+fsal_status_t fsal_check_access_by_mode(fsal_op_context_t * p_context,   /* IN */
+                                        fsal_accessflags_t access_type,  /* IN */
+                                        struct stat64 *p_buffstat /* IN */);
 
 
 /* All the call to FSAL to be wrapped */

@@ -59,21 +59,13 @@ nfs_start_info_t my_nfs_start_info = {
   .lw_mark_trigger = FALSE
 };
 
-char my_config_path[MAXPATHLEN] = "/etc/ganesha/ganesha.conf";
+char *my_config_path = "/etc/ganesha/ganesha.conf";
 char log_path[MAXPATHLEN] = "";
 char exec_name[MAXPATHLEN] = "nfs-ganesha";
 char host_name[MAXHOSTNAMELEN] = "localhost";
 int debug_level = -1;
 int detach_flag = FALSE;
 char ganesha_exec_path[MAXPATHLEN];
-
-extern fsal_functions_t fsal_functions;
-extern fsal_const_t fsal_consts;
-
-/* States managed by signal handler */
-extern unsigned int sigusr1_triggered ;
-extern unsigned int sigterm_triggered ;
-extern unsigned int sighup_triggered  ;
 
 /* command line syntax */
 
@@ -98,36 +90,6 @@ char usage[] =
     "DebugLevel : NIV_EVENT\n" "ConfigFile : /etc/ganesha/ganesha.conf\n";
 
 /**
- *
- * SIGCHLD signal management routine, for detecting the end of a child process
- *
- */
-
-static void action_sigusr1( int sig )
-{
-   sigusr1_triggered = TRUE ;
-}
-
-/**
- *
- * SIGTERM signal management routine, for cleanly terminating the daemon
- *
- */
-
-static void action_sigterm(int sig)
-{
-   sigterm_triggered = TRUE ;
-}
-
-static void action_sighup(int sig)
-{
-  sighup_triggered = TRUE ;
-}
-
-/* Use the nfs_param from nfs_init.c */
-extern nfs_parameter_t nfs_param;
-
-/**
  * main: simply the main function.
  *
  * The 'main' function as in every C program. 
@@ -144,12 +106,16 @@ int main(int argc, char *argv[])
   char *tempo_exec_name = NULL;
   char localmachine[MAXHOSTNAMELEN];
   int c;
+#ifndef HAVE_DAEMON
   pid_t son_pid;
-  struct sigaction act_sigusr1;
-  struct sigaction act_sigterm;
-  struct sigaction act_sighup;
+#endif
+  sigset_t signals_to_block;
 
-  char fsal_path_lib[MAXPATHLEN];
+  int fsalid = -1 ;
+  unsigned int i = 0 ;
+  int nb_fsal = NB_AVAILABLE_FSAL ;
+  path_str_t fsal_path_param[NB_AVAILABLE_FSAL];
+  path_str_t fsal_path_lib;
 
   /* retrieve executable file's name */
   strncpy(ganesha_exec_path, argv[0], MAXPATHLEN);
@@ -168,6 +134,8 @@ int main(int argc, char *argv[])
     }
   else
     strncpy(host_name, localmachine, MAXHOSTNAMELEN);
+
+  strcpy(config_path, my_config_path);
 
   /* now parsing options with getopt */
   while((c = getopt(argc, argv, options)) != EOF)
@@ -200,7 +168,7 @@ int main(int argc, char *argv[])
 
         case 'f':
           /* config file */
-          strncpy(my_config_path, optarg, MAXPATHLEN);
+          strncpy(config_path, optarg, MAXPATHLEN);
           break;
 
         case 'd':
@@ -270,11 +238,7 @@ int main(int argc, char *argv[])
     }
 
   /* initialize memory and logging */
-  if(nfs_prereq_init(exec_name, host_name, debug_level, log_path))
-    {
-      fprintf(stderr, "NFS MAIN: Error initializing NFSd prerequisites\n");
-      exit(1);
-    }
+  nfs_prereq_init(exec_name, host_name, debug_level, log_path);
 
   /* Start in background, if wanted */
   if(detach_flag)
@@ -283,38 +247,34 @@ int main(int argc, char *argv[])
         /* daemonize the process (fork, close xterm fds,
          * detach from parent process) */
         if (daemon(0, 0))
-        {
-            LogCrit(COMPONENT_INIT,
-                    "Error detaching process from parent: %s",
-                    strerror(errno));
-            exit(1);
-        }
+          LogFatal(COMPONENT_MAIN,
+                   "Error detaching process from parent: %s",
+                   strerror(errno));
 #else
       /* Step 1: forking a service process */
       switch (son_pid = fork())
         {
         case -1:
           /* Fork failed */
-          LogMajor(COMPONENT_INIT,
-                   "Could not start nfs daemon (fork error %d (%s), exiting...",
+          LogFatal(COMPONENT_MAIN,
+                   "Could not start nfs daemon (fork error %d (%s)",
                    errno, strerror(errno));
-          exit(1);
+          break;
 
         case 0:
           /* This code is within the son (that will actually work)
            * Let's make it the leader of its group of process */
           if(setsid() == -1)
             {
-	      LogMajor(COMPONENT_INIT,
-	               "Could not start nfs daemon (setsid error %d (%s), exiting...",
+	      LogFatal(COMPONENT_MAIN,
+	               "Could not start nfs daemon (setsid error %d (%s)",
 	               errno, strerror(errno));
-              exit(1);
             }
           break;
 
         default:
           /* This code is within the father, it is useless, it must die */
-          LogFullDebug(COMPONENT_INIT, "Starting a son of pid %d", son_pid);
+          LogFullDebug(COMPONENT_MAIN, "Starting a son of pid %d", son_pid);
           exit(0);
           break;
         }
@@ -326,92 +286,97 @@ int main(int argc, char *argv[])
   signal(SIGXFSZ, SIG_IGN);
 #endif
 
-  /* Set the signal handler */
-  memset(&act_sigterm, 0, sizeof(act_sigterm));
-  act_sigterm.sa_flags = 0;
-  act_sigterm.sa_handler = action_sigterm;
+  /* Set up for the signal handler.
+   * Blocks the signals the signal handler will handle.
+   */
+  sigemptyset(&signals_to_block);
+  sigaddset(&signals_to_block, SIGTERM);
+  sigaddset(&signals_to_block, SIGHUP);
+  if(pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL) != 0)
+    LogFatal(COMPONENT_MAIN,
+             "Could not start nfs daemon, pthread_sigmask failed");
 
-  if(sigaction(SIGTERM, &act_sigterm, NULL) == -1 )
-    {
-      LogMajor(COMPONENT_INIT,
-               "Could not start nfs daemon (sigaction(SIGTERM) error %d (%s), exiting...",
-               errno, strerror(errno));
-      exit(1);
-    }
-  else
-    LogInfo(COMPONENT_INIT,
-            "Signals SIGTERM and SIGINT (daemon shutdown) are ready to be used");
-
-  /* Set the signal handler */
-  memset(&act_sighup, 0, sizeof(act_sighup));
-  act_sighup.sa_flags = 0;
-  act_sighup.sa_handler = action_sighup;
-  if(sigaction(SIGHUP, &act_sighup, NULL) == -1)
-    {
-      LogMajor(COMPONENT_INIT,
-               "Could not start nfs daemon (sigaction(SIGHUP) error %d (%s), exiting...",
-               errno, strerror(errno));
-      exit(1);
-    }
-  else
-    LogInfo(COMPONENT_INIT,
-            "Signal SIGHUP (daemon export reload) is ready to be used");
-
+  /* Set the parameter to 0 before doing anything */
+  memset((char *)&nfs_param, 0, sizeof(nfs_parameter_t));
 
 #ifdef _USE_SHARED_FSAL
-  if(nfs_get_fsalpathlib_conf(my_config_path, fsal_path_lib))
+  nb_fsal = NB_AVAILABLE_FSAL ;
+  if(nfs_get_fsalpathlib_conf(config_path, fsal_path_param, &nb_fsal))
     {
       LogMajor(COMPONENT_INIT,
-               "NFS MAIN: Error parsing configuration file for FSAL path.");
-      exit(1);
-    }
-#endif                          /* _USE_SHARED_FSAL */
-
-  /* Load the FSAL library (if needed) */
-  if(!FSAL_LoadLibrary(fsal_path_lib))
-    {
-      LogMajor(COMPONENT_INIT,
-	      "NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib);
+               "NFS MAIN: Error parsing configuration file for FSAL dynamic lib param.");
       exit(1);
     }
 
+  /* Keep track of the loaded FSALs */
+  nfs_param.nb_loaded_fsal = nb_fsal ;
+
+  for( i = 0 ; i < nb_fsal ; i++ )
+    {
+      if( FSAL_param_load_fsal_split( fsal_path_param[i], &fsalid, fsal_path_lib ) )
+        {
+          LogFatal(COMPONENT_INIT,
+                   "NFS MAIN: Error parsing configuration file for FSAL path.");
+          exit(1);
+        }
+
+      /* Keep track of the loaded FSALs */
+      nfs_param.loaded_fsal[i] = fsalid ;
+
+      LogEvent( COMPONENT_INIT,
+	        "Loading FSAL module for %s", FSAL_fsalid2name( fsalid ) ) ;
+   
+      /* Load the FSAL library (if needed) */
+      if(!FSAL_LoadLibrary(fsal_path_lib))
+       {
+         LogMajor(COMPONENT_INIT,
+	          "NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib);
+         exit(1);
+        }
+
+     /* Set the FSAL id */
+     FSAL_SetId( fsalid ) ;
+
+     /* Get the FSAL functions */
+     FSAL_LoadFunctions();
+
+     /* Get the FSAL consts */
+     FSAL_LoadConsts();
+   } /* for */
+
+#else
   /* Get the FSAL functions */
   FSAL_LoadFunctions();
 
   /* Get the FSAL consts */
   FSAL_LoadConsts();
+#endif                          /* _USE_SHARED_FSAL */
 
-  LogEvent(COMPONENT_INIT,
+  LogEvent(COMPONENT_MAIN,
            ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
 	   FSAL_GetFSName());
 
   /* initialize default parameters */
 
-  if(nfs_set_param_default(&nfs_param))
-    {
-      LogMajor(COMPONENT_INIT, "NFS MAIN: Error setting default parameters.");
-      exit(1);
-    }
+  nfs_set_param_default();
 
   /* parse configuration file */
 
-  if(nfs_set_param_from_conf(&nfs_param, &my_nfs_start_info, my_config_path))
+  if(nfs_set_param_from_conf(&my_nfs_start_info))
     {
-      LogMajor(COMPONENT_INIT, "NFS MAIN: Error parsing configuration file.");
-      exit(1);
+      LogFatal(COMPONENT_INIT, "Error parsing configuration file.");
     }
 
   /* check parameters consitency */
 
-  if(nfs_check_param_consistency(&nfs_param))
+  if(nfs_check_param_consistency())
     {
-      LogMajor(COMPONENT_INIT,
-	       "NFS MAIN: Inconsistent parameters found, could have significant impact on the daemon behavior, exiting...");
-      exit(1);
+      LogFatal(COMPONENT_INIT,
+	       "Inconsistent parameters found, could have significant impact on the daemon behavior");
     }
 
   /* Everything seems to be OK! We can now start service threads */
-  nfs_start(&nfs_param, &my_nfs_start_info);
+  nfs_start(&my_nfs_start_info);
 
   return 0;
 

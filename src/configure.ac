@@ -26,6 +26,7 @@ AC_PROG_LIBTOOL
 # Checks for programs.
 AC_PROG_YACC
 AC_PROG_LEX
+PKG_PROG_PKG_CONFIG
 
 if test "${ac_cv_prog_YACC+set}" != "set"; then
 	AC_MSG_ERROR([Yacc, Bison or an equivalent tool is needed: check you have installed it on your system])
@@ -148,7 +149,7 @@ AC_HEADER_TIME
 AC_STRUCT_TM
 AC_C_VOLATILE
 AC_CHECK_TYPES([ptrdiff_t])
-AC_CHECK_SIZEOF([long]) 
+AC_CHECK_SIZEOF([long])
 
 # Ceck daemon() function
 AC_CHECK_FUNC([daemon],[has_daemon=yes],[has_daemon=no])
@@ -189,20 +190,20 @@ GA_ENABLE_AM_CONDITION([buildsharedfsal],[when enable, build the FSAL as both st
 
 if test "$enable_buildsharedfsal" == "yes"; then
         AC_DEFINE(_BUILD_SHARED_FSAL,1,[Build shared FSAL])
-	SHARED_FSAL=1 
-	SHARED_FSAL_PKG=yes 
+	SHARED_FSAL=1
+	SHARED_FSAL_PKG=yes
 else
-	SHARED_FSAL=0 
-	SHARED_FSAL_PKG=no 
+	SHARED_FSAL=0
+	SHARED_FSAL_PKG=no
 fi
 AM_CONDITIONAL(BUILD_SHARED_FSAL, test "$enable_buildsharedfsal" = "yes")
 
 
-# NLMv4 
+# NLMv4
 GA_ENABLE_AM_CONDITION([nlm],[enable NLMv4 support (Lock management for NFSv3)],[USE_NLM])
 
 if test "$enable_nlm" == "yes"; then
-	AC_DEFINE(_USE_NLM,1,[enable NFSv4 support])
+	AC_DEFINE(_USE_NLM,1,[enable NLMv4 support])
 fi
 AM_CONDITIONAL(USE_NLM, test "$enable_nlm" = "yes")
 
@@ -226,6 +227,21 @@ AM_CONDITIONAL(USE_DS, test "$enable_ds" = "yes")
 
 
 
+# TI-RPC
+GA_ENABLE_AM_CONDITION([tirpc],[enable TIRPC support],[USE_TIRPC])
+
+if test "$enable_tirpc" == "yes"; then
+	AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
+	AC_CHECK_LIB([tirpc], [svc_tli_create], [AC_DEFINE( _HAVE_TIRPC,1,[enable TIRPC support] ) ], [AC_MSG_ERROR( [TI-RPC could not be found...] ) ] )
+fi
+
+# IPv6
+GA_ENABLE_AM_CONDITION([ipv6],[enable IPv6 support (via IPv6)], [USE_TIRPC_IPV6])
+
+if test "$enable_ipv6" == "yes"; then
+	AC_DEFINE(_USE_TIRPC_IPV6,1,[enable IPv6 support via TIRPC])
+fi
+
 # libnfsidmap
 GA_DISABLE_AM_CONDITION([nfsidmap],[disable the use of libnfsidmap], [USE_NO_NFSIDMAP])
 
@@ -241,7 +257,7 @@ AM_CONDITIONAL(USE_NFSIDMAP, test "$enable_nfsidmap" == "yes" )
 
 CACHE_INODE_DIR="Cache_inode"
 
-AC_SUBST(CACHE_INODE_DIR) 	
+AC_SUBST(CACHE_INODE_DIR)
 
 GA_ENABLE_AM_CONDITION([snmp-adm], [export GANESHA statistics with SNMP], [USE_SNMP_ADM])
 
@@ -278,8 +294,8 @@ fi
 
 GA_ENABLE_AM_CONDITION([efence],[link with efence memory debug library],[USE_EFENCE])
 
-if test "$enable_efence" == "yes" ; then 
-	EFENCE=-lefence 
+if test "$enable_efence" == "yes" ; then
+	EFENCE=-lefence
 else
 	EFENCE=
 fi
@@ -311,7 +327,19 @@ GA_ENABLE_FLAG(  [debug-symbols],	 [include debug symbols to binaries (-g option
 # enable code profiling
 GA_ENABLE_FLAG( [profiling], [turn on code profiling (-g and -pg)], [-g -pg] )
 
+# enable code profiling
+GA_ENABLE_FLAG( [strict-compile], [turn on strict compiler flags], [-Werror -Wimplicit -Wformat -Wmissing-braces] )
 
+# NFSv4 ACL
+GA_ENABLE_AM_CONDITION([nfs4-acl],[disable NFSv4 ACL support],[USE_NO_NFS4_ACL])
+
+if test "$enable_nfs4_acl" == "yes"; then
+        AC_CHECK_LIB([ssl],[MD5_Init])
+        AC_DEFINE(_USE_NFS4_ACL,1,[enable NFSv4 ACL support])
+fi
+AM_CONDITIONAL(USE_NFS4_ACL, test "$enable_nfs4_acl" == "yes" )
+
+# using shook HSM binding system
 AC_ARG_ENABLE( [shook], AS_HELP_STRING([--enable-shook],
                                        [Enable shook binding system]),
                [use_shook="$enableval"],[use_shook="no"] )
@@ -325,7 +353,7 @@ fi
 # makes it possible to add some extra include dir
 
 AC_ARG_WITH( [extra-includedir], AS_HELP_STRING([--with-extra-includedir=<path>], [Alternative path to include files] ),
-		EXTRA_INCLUDE_DIR="$withval" ) 
+		EXTRA_INCLUDE_DIR="$withval" )
 
 if test "${with_extra_includedir+set}" == "set"; then
 	CFLAGS="$CFLAGS -I$EXTRA_INCLUDE_DIR"
@@ -350,6 +378,10 @@ AM_CONDITIONAL(SHARED_FSAL,       test "$FSAL" = "DYNFSAL")
 AM_CONDITIONAL(USE_FSAL_ZFS,      test "$FSAL" = "ZFS")
 AM_CONDITIONAL(USE_FSAL_VFS,      test "$FSAL" = "VFS")
 
+
+AM_CONDITIONAL(RESULT_IS_LIB,      test "$FSAL" = "FUSE")
+AM_CONDITIONAL(RESULT_IS_DAEMON,   test "$FSAL" != "FUSE")
+
 # NFSv4.0 NFSv4.1 switch
 AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  (default=1)], [specify if server support NFSv4 or NFSv4.1] ),
              NFS4_MINOR="$withval", NFS4_MINOR="1" )
@@ -358,16 +390,18 @@ AM_CONDITIONAL(USE_NFS4_1, test "$NFS4_MINOR" = "1")
 AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")
 
 # RPCAL switch argument (default is ONCRPC)
-AC_ARG_WITH( [rpcal], AS_HELP_STRING([--with-rpcal=ONCRPC|GSSRPC|TIRPC (default=ONCRPC)], [specify the type of RPCAL to be used] ), 
+AC_ARG_WITH( [rpcal], AS_HELP_STRING([--with-rpcal=ONCRPC|GSSRPC|TIRPC (default=ONCRPC)], [specify the type of RPCAL to be used] ),
               RPCAL="$withval", RPCAL="ONCRPC")
 AM_CONDITIONAL(USE_GSSRPC, test "$RPCAL" = "GSSRPC" )
+AM_CONDITIONAL(HAVE_GSSAPI, test "$RPCAL" = "GSSRPC" )
 AM_CONDITIONAL(USE_TIRPC,  test "$RPCAL" = "TIRPC" )
+AM_CONDITIONAL(HAVE_GSSAPI, test "$RPCAL" = "TIRPC" )
 AM_CONDITIONAL(USE_ONCRPC, test "$RPCAL" = "ONCRPC" )
 
 # IPv6
 GA_ENABLE_AM_CONDITION([ipv6],[enable IPv6 support (via IPv6)], [USE_TIRPC_IPV6])
 
-if test "$enable_ipv6" == "yes"; then 
+if test "$enable_ipv6" == "yes"; then
 	AC_DEFINE(_USE_TIRPC_IPV6,1,[enable IPv6 support via TIRPC])
 	if test "$RPCAL" != "TIRPC" ; then
 		AC_MSG_ERROR([IPv6 support is available only when --with-rpcal=TIRPC is used])
@@ -384,7 +418,7 @@ AM_CONDITIONAL(USE_PNFS_SPNFS_LIKE, 	test "$PNFS" = "SPNFS_LIKE" )
 AM_CONDITIONAL(USE_PNFS_OSD, 	        test "$PNFS" = "OSD" )
 AM_CONDITIONAL(USE_PNFS_BLOCK, 	        test "$PNFS" = "BLOCK" )
 
-AM_CONDITIONAL(USE_PNFS,                 test "$PNFS" != "NONE" ) 
+AM_CONDITIONAL(USE_PNFS,                 test "$PNFS" != "NONE" )
 
 AM_CONDITIONAL(USE_MFSL_PNFS_FILE, test "$PNFS" = "SPNFS_LIKE")
 AM_CONDITIONAL(USE_MFSL,           test "$PNFS" = "SPNFS_LIKE")
@@ -399,7 +433,7 @@ AM_CONDITIONAL(USE_MFSL_NULL,            test "$MFSL" = "NULL")
 AM_CONDITIONAL(USE_MFSL_ASYNC,           test "$MFSL" = "ASYNC")
 AM_CONDITIONAL(USE_MFSL_PROXY_RPCSECGSS, test "$MFSL" = "PROXY_RPCSECGSS")
 
-AM_CONDITIONAL(USE_MFSL,                 test "$MFSL" != "NONE" ) 
+AM_CONDITIONAL(USE_MFSL,                 test "$MFSL" != "NONE" )
 
 # If "spnfsd-like" pNFS layout requires MFS_PNFS_FILE
 if test "$PNFS" = "SPNFS_LIKE" ; then
@@ -417,7 +451,7 @@ AM_CONDITIONAL(USE_MYSQL, test "$DBTYPE" = "MYSQL")
 
 # kerberos5 location
 AC_ARG_WITH( [krb5], AS_HELP_STRING([--with-krb5=<path>], [Path where kerberos5 is installed] ),
-		KRB5_PATH_LOCAL="$withval" ) 
+		KRB5_PATH_LOCAL="$withval" )
 
 if test "${with_krb5+set}" == "set"; then
     SEC_CFLAGS="-I$KRB5_PATH_LOCAL/include"
@@ -428,12 +462,12 @@ else
     SEC_CFLAGS=""
     SEC_LFLAGS=""
     SEC_RPATH=""
-fi  
+fi
 
 # Compile with "NO_MOUNT_LIST"
 AC_DEFINE([_NO_MOUNT_LIST], 1, [Don't use MOUNT PROTOCOL's client list])
 
-# define filesystem relative flags 
+# define filesystem relative flags
 
 # HOOK: we escape the '$' sign in FSAL_LIB, so that '$(top_builddir)' is kept uninterpreted until compilation time
 
@@ -457,13 +491,13 @@ case $FSAL in
 			"5.1")
 				FSAL_LDFLAGS="$FSAL_LDFLAGS -L/opt/dcelocal/lib -ldce -ldcepthreads"
 				;;
-		esac 
+		esac
 		;;
 	PROXY)
 		AC_DEFINE([_USE_PROXY], 1, [GANESHA is compiled with NFS PROXY FSAL])
                 FSAL_CFLAGS=
                 FSAL_LDFLAGS=$SEC_RPATH
-		if test "$enable_handle_mapping" == "yes"; then 
+		if test "$enable_handle_mapping" == "yes"; then
 			FSAL_LIB="\$(top_builddir)/FSAL/FSAL_PROXY/libfsalproxy.la \$(top_builddir)/FSAL/FSAL_PROXY/handle_mapping/libhandlemapping.la"
 			FSAL_LDFLAGS="$FSAL_LDFLAGS -lsqlite3"
 		else
@@ -474,8 +508,8 @@ case $FSAL in
 	SNMP)
 		AC_DEFINE([_USE_SNMP], 1, [GANESHA is compiled with SNMP FSAL])
                 AC_CHECK_HEADERS([net-snmp/net-snmp-config.h], [], [AC_MSG_ERROR(missing libsnmp include files)])
-                case "$MYOS" in 
-			FREEBSD) 
+                case "$MYOS" in
+			FREEBSD)
 				FSAL_CFLAGS=`$NETSNMP_CONFIG --cflags`
 				;;
 			*)
@@ -531,9 +565,28 @@ case $FSAL in
 		FS_NAME="dynfsal"
                 ;;
 	GPFS)
+                # The following are needed in many GPFS environments
+                CFLAGS="$CFLAGS -I/usr/lpp/mmfs/include"
+                LDFLAGS="$LDFLAGS -L/usr/lpp/mmfs/lib"
+
 		AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
+		AC_CHECK_HEADERS([gpfs_nfs.h], [], [AC_MSG_ERROR(missing gpfs include files)])
+		AC_CHECK_DECL([gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs_ganesha function)], [[#include <gpfs_nfs.h>]])
+		AC_CHECK_DECLS([OPENHANDLE_NAME_TO_HANDLE, OPENHANDLE_OPEN_BY_HANDLE, OPENHANDLE_LINK_BY_FD,
+		                OPENHANDLE_READLINK_BY_FD, OPENHANDLE_STAT_BY_HANDLE],
+		               [],
+		               [AC_MSG_ERROR(missing Open By Handle function)],
+		               [[#include <gpfs_nfs.h>]])
+		if [[  $PNFS != "NONE" ]] ; then
+			AC_CHECK_DECLS([OPENHANDLE_LAYOUT_TYPE, OPENHANDLE_GET_DEVICEINFO, OPENHANDLE_GET_DEVICEITER,
+			                OPENHANDLE_LAYOUT_GET, OPENHANDLE_LAYOUT_RETURN],
+			               [],
+			               [AC_MSG_ERROR(missing Layout function)],
+			               [[#include <gpfs_nfs.h>]])
+		fi
+		AC_CHECK_LIB([gpfs], [gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs library)])
 		FSAL_CFLAGS=
-                FSAL_LDFLAGS=""
+		FSAL_LDFLAGS=""
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_GPFS/libfsalgpfs.la"
 		FS_NAME="gpfs"
 		;;
@@ -570,7 +623,7 @@ case $FSAL in
 
 		case "$DBTYPE" in
 
-		"PGSQL") 
+		"PGSQL")
 			# define PG_CONFIG program name and PGSQL_VERSION
 			GA_PGSQL_INFO
 
@@ -585,16 +638,16 @@ case $FSAL in
 				"LINUX")
 					DBEXT_LDADD="-L$DBEXT_LIB_PATH -lcrypt -lpq"
 					;;
-				"MACOS") 
+				"MACOS")
 					DBEXT_LDADD="-L$DBEXT_LIB_PATH -lpq"
 					;;
-				"FREEBSD") 
+				"FREEBSD")
 					DBEXT_LDADD="-L$DBEXT_LIB_PATH -lpq"
 					;;
-				"SOLARIS") 
+				"SOLARIS")
 					DBEXT_LDADD="-L$DBEXT_LIB_PATH -lpq"
 					;;
-			esac 
+			esac
 
 			case "$PGSQL_VERSION" in
 				"7."*)
@@ -639,7 +692,7 @@ case $FSAL in
                 ;;
 
 	*)
-		AC_MSG_ERROR([This FSAL is not supported yet]) 
+		AC_MSG_ERROR([This FSAL is not supported yet])
 esac
 
 case $MFSL in
@@ -673,7 +726,7 @@ case $MFSL in
 		;;
 	*)
 		AC_MSG_ERROR([This MFSL is not supported yet])
-	
+
 esac
 
 case $RPCAL in
@@ -682,18 +735,35 @@ case $RPCAL in
 	"GSSRPC")
                 AC_DEFINE(_USE_GSSRPC,1,[enable security management with GSSRPC])
 	        # ==> Add here libraries needed for GSSRPC
-                AC_CHECK_LIB([gssapi_krb5], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ], 	
+                AC_CHECK_LIB([gssapi_krb5], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ],
 			     [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )
-                AC_CHECK_LIB([gssrpc], [gssrpc_authunix_create_default], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ], 
+                AC_CHECK_LIB([gssrpc], [gssrpc_authunix_create_default], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ],
 			      [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
 		;;
 	"TIRPC")
-	        AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
-	        AC_CHECK_LIB([tirpc], [svc_tli_create], [AC_DEFINE( _HAVE_TIRPC,1,[enable TIRPC support] ) ], [AC_MSG_ERROR( [TI-RPC could not be found...] ) ] )
+                PKG_CHECK_MODULES(TIRPC, libtirpc,
+                  [
+                        AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
+                        AC_DEFINE( _HAVE_TIRPC,1,[enable TIRPC support])
+                        CFLAGS="$CFLAGS $TIRPC_CFLAGS"
+                        LIBS="$TIRPC_LIBS $LIBS"
+                  ],
+                  [
+                        AC_MSG_ERROR( [TI-RPC could not be found...] )
+                  ]
+                )
+
+                KRBLIBS=`krb5-config --libs gssapi`
+                if test "$KRBLIBS" == ""; then
+                   AC_MSG_ERROR( [krb5 libs not found, is krb5-config available...?] )
+                else
+                   AC_DEFINE(_HAVE_GSSAPI,1,[enable gss in tirpc])
+                   LIBS="$KRBLIBS $LIBS"
+                fi
 		;;
 	*)
 		AC_MSG_ERROR([This RPCAL is not supported])
-	
+
 esac
 
 case $PNFS in
@@ -751,11 +821,12 @@ fi
 
 # MFSL_ASYNC should not be used with HPSS
 if [[ $FSAL == "HPSS" ]] ; then
-  if [[ $MFSL == "ASYNC" ]] ; then 
+  if [[ $MFSL == "ASYNC" ]] ; then
 		AC_MSG_ERROR([FSAL_HPSS and MFSL_ASYNC are incompatible])
   fi
 fi
 
+AC_SUBST(CFLAGS)
 AC_SUBST(FSAL_CFLAGS)
 AC_SUBST(FSAL_LDFLAGS)
 AC_SUBST(FSAL_LIB)
@@ -805,7 +876,6 @@ AC_CONFIG_FILES([include/Makefile
                  support/Makefile
                  Log/Makefile
                  NodeList/Makefile
-                 test/Makefile 
                  ConfigParsing/Makefile
                  IdMapper/Makefile
                  RW_Lock/Makefile
@@ -843,16 +913,17 @@ AC_CONFIG_FILES([include/Makefile
                  FSAL/FSAL_VFS/Makefile
 		 FSAL/FSAL_TEMPLATE/Makefile
 		 MFSL/Makefile
-		 MFSL/MFSL_NULL/Makefile                 
-		 MFSL/MFSL_ASYNC/Makefile                 
-		 MFSL/MFSL_AIO/Makefile                 
-		 MFSL/MFSL_PNFS_FILE/Makefile                 
-		 MFSL/MFSL_PROXY_RPCSECGSS/Makefile                 
+		 MFSL/MFSL_NULL/Makefile
+		 MFSL/MFSL_ASYNC/Makefile
+		 MFSL/MFSL_AIO/Makefile
+		 MFSL/MFSL_PNFS_FILE/Makefile
+		 MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  RPCAL/Makefile
                  RPCAL/ONCRPC/Makefile
                  RPCAL/GSSRPC/Makefile
                  RPCAL/TIRPC/Makefile
                  MainNFSD/Makefile
+                 test/Makefile
                  cmdline_tools/Makefile
                  shell/Makefile
                  snmp_adm/Makefile

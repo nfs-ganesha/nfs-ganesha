@@ -49,17 +49,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -78,9 +68,6 @@
 #include "nfs_init.h"
 
 /* Structures from another module */
-extern nfs_parameter_t nfs_param;
-extern nfs_worker_data_t *workers_data;
-extern cache_content_client_t recover_datacache_client;
 extern nfs_start_info_t nfs_start_info;
 
 /**
@@ -102,11 +89,12 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
   cache_content_status_t content_status;
   int rc = 0;
   nfs_flush_thread_data_t *p_flush_data = NULL;
-  unsigned long index = 0;
   exportlist_t *pexport;
   char function_name[MAXNAMLEN];
+#ifdef _USE_XFS
   fsal_export_context_t export_context ;
   fsal_path_t export_path ;
+#endif
 
   p_flush_data = (nfs_flush_thread_data_t *) flush_data_arg;
 
@@ -122,10 +110,9 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
   if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogCrit(COMPONENT_MAIN,
-              "NFS DATACACHE FLUSHER THREAD #%u : Memory manager could not be initialized, exiting...",
-              p_flush_data->thread_index);
-      exit(1);
+      LogFatal(COMPONENT_MAIN,
+               "NFS DATACACHE FLUSHER THREAD #%u : Memory manager could not be initialized",
+               p_flush_data->thread_index);
     }
   LogInfo(COMPONENT_MAIN,
           "NFS DATACACHE FLUSHER THREAD #%u : Memory manager successfully initialized",
@@ -139,10 +126,9 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&(fsal_context[p_flush_data->thread_index]))))
     {
       /* Failed init */
-      LogCrit(COMPONENT_MAIN,
-              "NFS DATACACHE FLUSHER THREAD #%u : Error initializing thread's credential",
-              p_flush_data->thread_index);
-      exit(1);
+      LogFatal(COMPONENT_MAIN,
+               "NFS DATACACHE FLUSHER THREAD #%u : Error initializing thread's credential",
+               p_flush_data->thread_index);
     }
 
   /* check for each pexport entry to get those who are data cached */

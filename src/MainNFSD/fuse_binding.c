@@ -58,7 +58,6 @@ static nfs_start_info_t nfs_start_info = {
   .flush_behaviour = CACHE_CONTENT_FLUSH_AND_DELETE,
 };
 
-static char config_path[MAXPATHLEN] = "";       /* None by default */
 char log_path[MAXPATHLEN] = "";
 char exec_name[MAXPATHLEN] = "ganesha-nfsd";
 char host_name[MAXHOSTNAMELEN] = "localhost";
@@ -90,32 +89,6 @@ char usage[] =
     "DebugLevel : NIV_EVENT\n" "ConfigFile : None\n";
 
 /**
- *
- * SIGCHLD signal management routine, for detecting the end of a child process
- *
- */
-
-static void action_sigusr1(int sig)
-{
-  LogEvent(COMPONENT_MAIN,
-           "NFS_MAIN_SIGUSR1_HANDLER: Receveid SIGUSR1.... signal will be managed");
-
-  /* Set variable force_flush_by_signal that is used in file content cache gc thread */
-  if(force_flush_by_signal)
-    {
-      LogEvent(COMPONENT_MAIN,
-               "NFS_MAIN_SIGUSR1_HANDLER: force_flush_by_signal is set to FALSE");
-      force_flush_by_signal = FALSE;
-    }
-  else
-    {
-      LogEvent(COMPONENT_MAIN,
-               "NFS_MAIN_SIGUSR1_HANDLER: force_flush_by_signal is set to TRUE");
-      force_flush_by_signal = TRUE;
-    }
-}                               /* action_sigusr1 */
-
-/**
  * main: simply the main function.
  *
  * The 'main' function as in every C program.
@@ -133,9 +106,7 @@ int ganefuse_main(int argc, char *argv[],
   char *tempo_exec_name = NULL;
   char localmachine[MAXHOSTNAMELEN];
   int c;
-  nfs_parameter_t nfs_param;
   pid_t son_pid;
-  struct sigaction act_sigusr1;
 
   int argc_local = argc;
   char **argv_local = argv;
@@ -258,12 +229,7 @@ int ganefuse_main(int argc, char *argv[],
 
   /* initialize memory and logging */
 
-  if(nfs_prereq_init(exec_name, host_name, debug_level, log_path))
-    {
-      LogCrit(COMPONENT_MAIN,
-              "NFS MAIN: Error initializing NFSd prerequisites");
-      exit(1);
-    }
+  nfs_prereq_init(exec_name, host_name, debug_level, log_path);
 
   /* Start in background, if wanted */
   if(detach_flag)
@@ -309,29 +275,9 @@ int ganefuse_main(int argc, char *argv[],
            ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
            FSAL_GetFSName());
 
-  /* Set the signal handler */
-  memset(&act_sigusr1, 0, sizeof(act_sigusr1));
-  act_sigusr1.sa_flags = 0;
-  act_sigusr1.sa_handler = action_sigusr1;
-  if(sigaction(SIGUSR1, &act_sigusr1, NULL) == -1)
-    {
-      LogError(COMPONENT_MAIN, ERR_SYS, ERR_SIGACTION, errno);
-      exit(1);
-    }
-  else
-    LogEvent(COMPONENT_MAIN,
-             "Signal SIGUSR1 (force flush) is ready to be used");
-
-  memset(&nfs_param, 0, sizeof(nfs_param));
-
   /* initialize default parameters */
+  nfs_set_param_default();
 
-  if(nfs_set_param_default(&nfs_param))
-    {
-      LogCrit(COMPONENT_MAIN,
-              "NFS MAIN: Error setting default parameters.");
-      exit(1);
-    }
   /* return all errors */
   nfs_param.core_param.drop_io_errors = FALSE;
   nfs_param.core_param.drop_inval_errors = FALSE;
@@ -341,7 +287,7 @@ int ganefuse_main(int argc, char *argv[],
 
   if(strlen(config_path) > 0)
     {
-      if(nfs_set_param_from_conf(&nfs_param, &nfs_start_info, config_path))
+      if(nfs_set_param_from_conf(&nfs_start_info))
         {
           LogCrit(COMPONENT_MAIN,
                   "NFS MAIN: Error parsing configuration file.");
@@ -380,7 +326,7 @@ int ganefuse_main(int argc, char *argv[],
 
   /* check parameters consitency */
 
-  if(nfs_check_param_consistency(&nfs_param))
+  if(nfs_check_param_consistency())
     {
       LogMajor(COMPONENT_MAIN,
                "NFS MAIN: Inconsistent parameters found");
@@ -390,7 +336,7 @@ int ganefuse_main(int argc, char *argv[],
     }
 
   /* Everything seems to be OK! We can now start service threads */
-  nfs_start(&nfs_param, &nfs_start_info);
+  nfs_start(&nfs_start_info);
 
   return 0;
 

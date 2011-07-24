@@ -49,18 +49,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -94,7 +83,9 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 {
   fsal_name_t name;
   char strname[MAXNAMLEN];
+#ifndef _NO_XATTRD
   char objname[MAXNAMLEN];
+#endif
   unsigned int xattr_found = FALSE;
   cache_entry_t *dir_pentry = NULL;
   cache_entry_t *file_pentry = NULL;
@@ -156,9 +147,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 #endif
 
   /* UTF8 strings may not end with \0, but they carry their length */
-  strncpy(strname, arg_LOOKUP4.objname.utf8string_val,
-          arg_LOOKUP4.objname.utf8string_len);
-  strname[arg_LOOKUP4.objname.utf8string_len] = '\0';
+  utf82str(strname, sizeof(strname), &arg_LOOKUP4.objname);
 
 #ifndef _NO_XATTRD
   /* Is this a .xattr.d.<object> name ? */

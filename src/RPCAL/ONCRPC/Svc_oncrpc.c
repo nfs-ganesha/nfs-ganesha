@@ -15,26 +15,16 @@ typedef unsigned long u_long;
 #include   <sys/errno.h>
 #include   "stuff_alloc.h"
 #include   "nfs_core.h"
-
-#include   <rpc/rpc.h>
-#include   <rpc/auth.h>
-#include   <rpc/svc.h>
-#include   <rpc/pmap_clnt.h>
+#include   "../rpcal.h"
 
 #ifdef _APPLE
 #define __FDS_BITS(set) ((set)->fds_bits)
 #endif
 
-SVCXPRT **Xports;
-
 #define NULL_SVC ((struct svc_callout *)0)
 #define	RQCRED_SIZE	400     /* this size is excessive */
 
 #define max(a, b) (a > b ? a : b)
-
-#ifdef _SOLARIS
-#define _authenticate __authenticate
-#endif
 
 #ifdef xp_stat
 #undef xp_statv
@@ -58,21 +48,15 @@ static struct svc_callout *Svc_find();
 /* Un rajout pour voir */
 unsigned int mysvc_maxfd;
 
-fd_set Svc_fdset;
-
 /* ***************  SVCXPRT related stuff **************** */
 
 /*
  * Activate a transport handle.
  */
 /*  */
-void Xprt_register(SVCXPRT * xprt)
+int Xprt_register(SVCXPRT * xprt)
 {
-#ifdef _FREEBSD
-  register int sock = xprt->xp_fd;
-#else
-  register int sock = xprt->xp_sock;
-#endif
+  register int sock = xprt->XP_SOCK;
 
   Xports[sock] = xprt;
 
@@ -81,6 +65,8 @@ void Xprt_register(SVCXPRT * xprt)
       FD_SET(sock, &Svc_fdset);
       mysvc_maxfd = max(mysvc_maxfd, sock);
     }
+
+  return TRUE;
 }
 
 /*
@@ -89,11 +75,7 @@ void Xprt_register(SVCXPRT * xprt)
 /*  */
 void Xprt_unregister(SVCXPRT * xprt)
 {
-#ifdef _FREEBSD
-  register int sock = xprt->xp_fd;
-#else
-  register int sock = xprt->xp_sock;
-#endif
+  register int sock = xprt->XP_SOCK;
 
   if(Xports[sock] == xprt)
     {
@@ -195,103 +177,6 @@ static struct svc_callout *Svc_find(u_long prog, u_long vers, struct svc_callout
  done:
   *prev = p;
   return (s);
-}
-
-void Svc_getreqset(fd_set * readfds)
-{
-  enum xprt_stat stat;
-  struct rpc_msg msg;
-  int prog_found;
-  u_long low_vers;
-  u_long high_vers;
-  struct svc_req r;
-  register SVCXPRT *xprt;
-  register int bit;
-  /*    register u_int32_t mask, *maskp; */
-  register long mask, *maskp;
-  register int sock;
-  char cred_area[2 * MAX_AUTH_BYTES + RQCRED_SIZE];
-  msg.rm_call.cb_cred.oa_base = cred_area;
-
-  /* Set the struct Svc_req r to zero */
-  memset(&r, 0, sizeof(struct svc_req));
-
-  msg.rm_call.cb_verf.oa_base = &(cred_area[MAX_AUTH_BYTES]);
-  r.rq_clntcred = &(cred_area[2 * MAX_AUTH_BYTES]);
-
-/* portable access to fds_bits */
-  maskp = __FDS_BITS(readfds);
-
-  for(sock = 0; sock < FD_SETSIZE; sock += NFDBITS)
-    {
-      for(mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1)))
-        {
-          /* sock has input waiting */
-          xprt = Xports[sock + bit - 1];
-          if(xprt == NULL)
-            /* But do we control sock? */
-            continue;
-          /* now receive msgs from xprtprt (support batch calls) */
-          do
-            {
-              if(SVC_RECV(xprt, &msg))
-                {
-                  /* now find the exported program and call it */
-                  register struct svc_callout *s;
-                  enum auth_stat why;
-
-                  r.rq_xprt = xprt;
-                  r.rq_prog = msg.rm_call.cb_prog;
-                  r.rq_vers = msg.rm_call.cb_vers;
-                  r.rq_proc = msg.rm_call.cb_proc;
-                  r.rq_cred = msg.rm_call.cb_cred;
-
-                  /* first authenticate the message */
-                  if((why = _authenticate(&r, &msg)) != AUTH_OK)
-                    {
-                      svcerr_auth(xprt, why);
-                      goto call_done;
-                    }
-                  /* now match message with a registered service */
-                  prog_found = FALSE;
-                  low_vers = 0 - 1;
-                  high_vers = 0;
-                  for(s = svc_head; s != NULL_SVC; s = s->sc_next)
-                    {
-                      if(s->sc_prog == r.rq_prog)
-                        {
-                          if(s->sc_vers == r.rq_vers)
-                            {
-                              (*s->sc_dispatch) (&r, xprt);
-                              goto call_done;
-                            }   /* found correct version */
-                          prog_found = TRUE;
-                          if(s->sc_vers < low_vers)
-                            low_vers = s->sc_vers;
-                          if(s->sc_vers > high_vers)
-                            high_vers = s->sc_vers;
-                        }       /* found correct program */
-                    }
-                  /*
-                   * if we got here, the program or version
-                   * is not served ...
-                   */
-                  if(prog_found)
-                    svcerr_progvers(xprt, low_vers, high_vers);
-                  else
-                    svcerr_noprog(xprt);
-                  /* Fall through to ... */
-                }
- call_done:
-              if((stat = SVC_STAT(xprt)) == XPRT_DIED)
-                {
-                  SVC_DESTROY(xprt);
-                  break;
-                }
-            }
-          while(stat == XPRT_MOREREQS);
-        }
-    }
 }
 
 bool_t svcauth_wrap_dummy(XDR * xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr)

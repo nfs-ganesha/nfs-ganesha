@@ -76,10 +76,23 @@ typedef enum log_components
   COMPONENT_RW_LOCK,
   COMPONENT_MFSL,
   COMPONENT_NLM,
+  COMPONENT_RPC,
+  COMPONENT_THREAD,
+  COMPONENT_NFS_V4_ACL,
 
   COMPONENT_COUNT
 } log_components_t;
 
+typedef void (*cleanup_function)(void);
+typedef struct cleanup_list_element
+{
+  struct cleanup_list_element *next;
+  cleanup_function             clean;
+} cleanup_list_element;
+
+void RegisterCleanup(cleanup_list_element *clean);
+void Cleanup(void);
+void Fatal(void);
 int SetComponentLogFile(log_components_t component, char *name);
 void SetComponentLogBuffer(log_components_t component, char *buffer);
 void SetComponentLogLevel(log_components_t component, int level_to_set);
@@ -89,7 +102,7 @@ void SetComponentLogLevel(log_components_t component, int level_to_set);
 
 int DisplayLogComponentLevel(log_components_t component,
                              char * function,
-                             int level,
+                             log_levels_t level,
                              char *format, ...)
 __attribute__((format(printf, 4, 5))); /* 4=format 5=params */ ;
 int DisplayErrorComponentLogLine(log_components_t component,
@@ -138,6 +151,14 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
   do { \
     DisplayLogComponentLevel(COMPONENT_ALL,  (char *)__FUNCTION__, NIV_NULL, \
                              format, ## args ); \
+  } while (0)
+
+#define LogFatal(component, format, args...) \
+  do { \
+    if (LogComponents[component].comp_log_level >= NIV_FATAL) \
+      DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_FATAL, \
+                               "%s: FATAL ERROR: " format, \
+                               LogComponents[component].comp_str, ## args ); \
   } while (0)
 
 #define LogMajor(component, format, args...) \
@@ -201,6 +222,9 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
     if (LogComponents[component].comp_log_level >= NIV_CRIT) \
       DisplayErrorComponentLogLine( component,(char *)__FUNCTION__, a, b, c, __LINE__ ); \
   } while (0)
+
+#define isInfo(component) \
+  (LogComponents[component].comp_log_level >= NIV_INFO)
 
 #define isDebug(component) \
   (LogComponents[component].comp_log_level >= NIV_DEBUG)

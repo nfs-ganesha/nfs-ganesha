@@ -49,18 +49,6 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -541,13 +529,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 	       * sizeof(entryplus3). */
 	      /* FIXME: There is still a 4 byte over estimate here on x86_64. */
               needed =
-		sizeof(reference_entry.fileid) +
-		sizeof(reference_entry.cookie) +
-		sizeof(reference_entry.name_attributes.attributes_follow) +
-		sizeof(reference_entry.name_attributes.post_op_attr_u.attributes) +
-		sizeof(reference_entry.name_handle.handle_follows) +
-		sizeof(reference_entry.name_handle.post_op_fh3_u.handle.data.data_len) +
-		+ 4 /* value follows field */
+		sizeof(reference_entry)
 		+ NFS3_FHSIZE
 		+ ((strlen(dirent_array[i - delta].name.name) + 3) & ~3);
 

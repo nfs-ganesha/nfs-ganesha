@@ -239,7 +239,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
          object_attributes.mtime.seconds)
         {
           /* Cached directory content is obsolete, it must be renewed */
-          pentry->object.dir_begin.attributes = object_attributes;
+          cache_inode_set_attributes(pentry, &object_attributes);
 
           /* Return the attributes as set */
           if(pattr != NULL)
@@ -341,7 +341,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
             }
         }
 
-      pentry->object.dir_begin.attributes = object_attributes;
+      cache_inode_set_attributes(pentry, &object_attributes);
 
       /* Return the attributes as set */
       if(pattr != NULL)
@@ -424,7 +424,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
           return *pstatus;
         }
 
-      pentry->object.dir_begin.attributes = object_attributes;
+      cache_inode_set_attributes(pentry, &object_attributes);
 
       /* Return the attributes as set */
       if(pattr != NULL)
@@ -465,6 +465,17 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
         case BLOCK_FILE:
           pfsal_handle = &pentry->object.special_obj.handle;
           break;
+
+        case DIR_BEGINNING:
+        case DIR_CONTINUE:
+        case FS_JUNCTION:
+        case UNASSIGNED:
+        case RECYCLED:
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
+                  pentry->internal_md.type, __LINE__, __FILE__);
+          *pstatus = CACHE_INODE_BAD_TYPE;
+          return *pstatus;
         }
 
       /* Call FSAL to get the attributes */
@@ -510,23 +521,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
         }
 
       /* Keep the new attribute in cache */
-      switch (pentry->internal_md.type)
-        {
-        case REGULAR_FILE:
-          pentry->object.file.attributes = object_attributes;
-          break;
-
-        case SYMBOLIC_LINK:
-          pentry->object.symlink.attributes = object_attributes;
-          break;
-
-        case SOCKET_FILE:
-        case FIFO_FILE:
-        case CHARACTER_FILE:
-        case BLOCK_FILE:
-          pentry->object.special_obj.attributes = object_attributes;
-          break;
-        }
+      cache_inode_set_attributes(pentry, &object_attributes);
 
       /* Return the attributes as set */
       if(pattr != NULL)

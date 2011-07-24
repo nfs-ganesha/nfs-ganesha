@@ -11,18 +11,19 @@ SUBDIRS = include             \
           LRU                 \
           HashTable           \
 	  NodeList	      \
-          FSAL                \
-          MFSL                \
           Cache_inode         \
           File_Content        \
           File_Content_Policy \
           XDR                 \
+          RPCAL               \
           NFS_Protocols       \
           PNFS                \
+          RPCAL               \
           support             \
+          FSAL                \
+          MFSL                \
           IdMapper            \
           snmp_adm            \
-          RPCAL               \
           MainNFSD            \
           cmdline_tools       \
           shell               \
@@ -91,7 +92,7 @@ rpms: rpm srpm
 
 codecheck:
 	rm -f cppcheck-xml/cppcheck.xml
-	 cppcheck -j12 -v --force --xml --enable=unusedFunction -I`pwd`/include $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS) . 2>cppcheck-xml/cppcheck.xml
+	 cppcheck -j12 -v --force --xml --enable=all -I`pwd`/include $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS) . 2>cppcheck-xml/cppcheck.xml
 
 cscope:
 	find . -type f -name "*.[ch]" | grep -v rpm/ > cscope.namefile
@@ -131,6 +132,10 @@ endif
 if USE_NFSIDMAP
 RPM_DB_ARGS += --with nfsidmap
 endif 
+
+if USE_NFS4_ACL
+RPM_DB_ARGS += --with nfs4acl
+endif
 
 #indent:
 #	find . -name '*.[ch]' ! -path './rpm/*' -exec indent -linux -nsaf -nsai -nsaw -nut -bl -bls -i4 -l90 -lc90 -nce -hnl {} \;

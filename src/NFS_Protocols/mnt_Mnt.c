@@ -48,19 +48,6 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -74,8 +61,6 @@
 #include "mount.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
-
-extern nfs_parameter_t nfs_param;
 
 /**
  * mnt_Mnt: The Mount proc mount function, for all versions.
@@ -104,7 +89,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   char exportPath[MNTPATHLEN + 1];
   exportlist_t *p_current_item;
 
-  fsal_handle_t *pfsal_handle = NULL;
+  fsal_handle_t pfsal_handle;
 
   int auth_flavor[NB_AUTH_FLAVOR];
   int index_auth = 0;
@@ -114,7 +99,6 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   char tmplist_path[MAXPATHLEN];
   char tmpexport_path[MAXPATHLEN];
   char *hostname;
-  fsal_handle_t res_handle;
   fsal_path_t fsal_path;
   unsigned int bytag = FALSE;
 
@@ -196,6 +180,12 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
         }
       return NFS_REQ_OK;
     }
+
+#ifdef _USE_SHARED_FSAL
+  /* At this step, the export entry is known and it's required to use it to set the current thread's fsalid */
+  FSAL_SetId( p_current_item->fsalid ) ;
+#endif
+
   LogDebug(COMPONENT_NFSPROTO,
            "MOUNT: Export entry Path=%s Tag=%s matches %s, export_id=%u",
            exported_path, p_current_item->FS_tag, exportPath,
@@ -225,7 +215,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
    * retrieve the associated NFS handle
    */
 
-  pfsal_handle = p_current_item->proot_handle;
+  pfsal_handle = *p_current_item->proot_handle;
   if(!(bytag == TRUE || !strncmp(tmpexport_path, tmplist_path, MAXPATHLEN)))
     {
       if(FSAL_IS_ERROR(FSAL_str2path(tmpexport_path, MAXPATHLEN, &fsal_path)))
@@ -245,7 +235,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
 
       LogEvent(COMPONENT_NFSPROTO,
                "MOUNT: Performance warning: Export entry is not cached");
-      if(FSAL_IS_ERROR(FSAL_lookupPath(&fsal_path, pcontext, pfsal_handle, NULL)))
+      if(FSAL_IS_ERROR(FSAL_lookupPath(&fsal_path, pcontext, &pfsal_handle, NULL)))
         {
           switch (preq->rq_vers)
             {
@@ -266,7 +256,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
     {
     case MOUNT_V1:
       if(!nfs2_FSALToFhandle(&(pres->res_mnt1.fhstatus2_u.directory),
-                             pfsal_handle, p_current_item))
+                             &pfsal_handle, p_current_item))
         {
           pres->res_mnt1.status = NFSERR_IO;
         }
@@ -283,7 +273,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
       else
         {
           if(!nfs3_FSALToFhandle
-             ((nfs_fh3 *) & (pres->res_mnt3.mountres3_u.mountinfo.fhandle), pfsal_handle,
+             ((nfs_fh3 *) & (pres->res_mnt3.mountres3_u.mountinfo.fhandle), &pfsal_handle,
               p_current_item))
             {
               pres->res_mnt3.fhs_status = MNT3ERR_INVAL;
@@ -306,7 +296,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
         auth_flavor[index_auth++] = AUTH_NONE;
       if(p_current_item->options & EXPORT_OPTION_AUTH_UNIX)
         auth_flavor[index_auth++] = AUTH_UNIX;
-#ifdef _USE_GSSRPC
+#ifdef _HAVE_GSSAPI
       if(nfs_param.krb5_param.active_krb5 == TRUE)
         {
           auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;

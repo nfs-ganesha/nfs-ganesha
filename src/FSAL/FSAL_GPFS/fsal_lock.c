@@ -48,7 +48,6 @@ static int do_blocking_lock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 fsal_status_t GPFSFSAL_lock(gpfsfsal_file_t * obj_handle,
                         gpfsfsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
 {
-  int cmd;
   int retval;
   int fd = FSAL_FILENO(obj_handle);
 

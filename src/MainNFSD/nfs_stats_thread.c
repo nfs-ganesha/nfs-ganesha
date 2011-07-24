@@ -51,8 +51,6 @@
 #include "nfs_exports.h"
 #include "log_macros.h"
 
-extern nfs_parameter_t nfs_param;
-extern time_t ServerBootTime;
 extern hash_table_t *ht_ip_stats[NB_MAX_WORKER_THREAD];
 
 void set_min_latency(nfs_request_stat_item_t *cur_stat, unsigned int val)
@@ -116,9 +114,8 @@ void *stats_thread(void *addr)
   if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogMajor(COMPONENT_MAIN,
-               "NFS STATS : Memory manager could not be initialized, exiting...");
-      exit(1);
+      LogFatal(COMPONENT_MAIN,
+               "NFS STATS : Memory manager could not be initialized");
     }
   LogInfo(COMPONENT_MAIN,
           "NFS STATS : Memory manager successfully initialized");

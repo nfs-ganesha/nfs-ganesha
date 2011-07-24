@@ -17,13 +17,7 @@
 
 #include <string.h>
 #include <signal.h>
-
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#else
-#include <rpc/rpc.h>
-#endif
-
+#include "rpc.h"
 #include "PNFS/SPNFS_LIKE/pnfs_layout4_nfsv4_1_files.h"
 
 #define PNFS_PRINT_HANDLE( tag, handle )                         \

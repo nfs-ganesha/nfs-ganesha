@@ -140,8 +140,9 @@ fsal_status_t GPFSFSAL_open(gpfsfsal_handle_t * p_filehandle,   /* IN */
   fsal_status_t status;
 
   int fd;
-  struct stat buffstat;
   int posix_flags = 0;
+  fsal_accessflags_t access_mask = 0;
+  fsal_attrib_list_t file_attrs;
 
   /* sanity checks.
    * note : file_attributes is optional.
@@ -168,25 +169,20 @@ fsal_status_t GPFSFSAL_open(gpfsfsal_handle_t * p_filehandle,   /* IN */
 
   /* retrieve file attributes for checking access rights */
 
-  TakeTokenFSCall();
-  rc = fstat(fd, &buffstat);
-  errsv = errno;
-  ReleaseTokenFSCall();
+  file_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
+  status = GPFSFSAL_getattrs(p_filehandle, p_context, &file_attrs);
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_open);
 
-  if(rc)
-    {
-      close(fd);
+  /* Set both mode and ace4 mask */
+  if(openflags & FSAL_O_RDONLY)
+    access_mask = FSAL_MODE_MASK_SET(FSAL_R_OK | FSAL_OWNER_OK) |
+                  FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_DATA);
+  else
+    access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_OWNER_OK) |
+                  FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA | FSAL_ACE_PERM_APPEND_DATA);
 
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_open);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_open);
-    }
-
-  status =
-      fsal_internal_testAccess(p_context,
-                               (openflags & FSAL_O_RDONLY ? FSAL_R_OK : FSAL_W_OK) |
-                               FSAL_OWNER_OK, &buffstat, NULL);
+  status = fsal_internal_testAccess(p_context, access_mask, NULL, &file_attrs);
   if(FSAL_IS_ERROR(status))
     {
       close(fd);
@@ -203,16 +199,7 @@ fsal_status_t GPFSFSAL_open(gpfsfsal_handle_t * p_filehandle,   /* IN */
 
   /* output attributes */
   if(p_file_attributes)
-    {
-
-      status = posix2fsal_attributes(&buffstat, p_file_attributes);
-
-      if(FSAL_IS_ERROR(status))
-        {
-          FSAL_CLEAR_MASK(p_file_attributes->asked_attributes);
-          FSAL_SET_MASK(p_file_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-        }
-    }
+    *p_file_attributes = file_attrs;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_open);
 
@@ -253,7 +240,7 @@ fsal_status_t GPFSFSAL_read(gpfsfsal_file_t * p_file_descriptor,        /* IN */
 
   size_t i_size;
   ssize_t nb_read;
-  int rc, errsv;
+  int rc = 0, errsv = 0;
   int pcall = FALSE;
 
   /* sanity checks. */
@@ -368,7 +355,7 @@ fsal_status_t GPFSFSAL_write(gpfsfsal_file_t * p_file_descriptor,       /* IN */
 
   ssize_t nb_written;
   size_t i_size;
-  int rc, errsv;
+  int rc = 0, errsv = 0;
   int pcall = FALSE;
 
   /* sanity checks. */

@@ -48,6 +48,7 @@
 #include "cache_inode.h"
 #include "cache_content.h"
 #include "stuff_alloc.h"
+#include "nfs4_acls.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -55,6 +56,43 @@
 #include <time.h>
 #include <pthread.h>
 #include <string.h>
+
+char *cache_inode_function_names[] = {
+  "cache_inode_access",
+  "cache_inode_getattr",
+  "cache_inode_mkdir",
+  "cache_inode_remove",
+  "cache_inode_statfs",
+  "cache_inode_link",
+  "cache_inode_readdir",
+  "cache_inode_rename",
+  "cache_inode_symlink",
+  "cache_inode_create",
+  "cache_inode_lookup",
+  "cache_inode_lookupp",
+  "cache_inode_readlink",
+  "cache_inode_truncate",
+  "cache_inode_get",
+  "cache_inode_release",
+  "cache_inode_setattr",
+  "cache_inode_new_entry",
+  "cache_inode_read_data",
+  "cache_inode_write_data",
+  "cache_inode_add_data_cache",
+  "cache_inode_release_data_cache",
+  "cache_inode_renew_entry",
+  "cache_inode_lock_create",
+  "cache_inode_lock",
+  "cache_inode_locku",
+  "cache_inode_lockt",
+  "cache_inode_add_state",
+  "cache_inode_add_state",
+  "cache_inode_get_state",
+  "cache_inode_set_state",
+  "cache_inode_update_state",
+  "cache_inode_state_del_all",
+  "cache_inode_commit"
+};
 
 const char *cache_inode_err_str(int err)
 {
@@ -104,6 +142,8 @@ const char *cache_inode_err_str(int err)
 #ifdef _USE_PROXY
 void cache_inode_print_srvhandle(char *comment, cache_entry_t * pentry);
 #endif
+
+static void cache_inode_init_attributes(cache_entry_t *pentry, fsal_attrib_list_t *pattr);
 
 /**
  *
@@ -419,7 +459,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       pentry->mobject.plock = &pentry->lock;
 #endif
 #endif
-      pentry->object.file.attributes = fsal_attributes;
       pentry->object.file.pentry_content = NULL;        /* Not yet a File Content entry associated with this entry */
       pentry->object.file.pstate_head = NULL;   /* No associated client yet                                */
       pentry->object.file.pstate_tail = NULL;   /* No associated client yet                                */
@@ -453,7 +492,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 #ifdef _USE_MFSL
       pentry->mobject.handle = pentry->object.dir_begin.handle;
 #endif
-      pentry->object.dir_begin.attributes = fsal_attributes;
 
       pentry->object.dir_begin.has_been_readdir = CACHE_INODE_NO;
       pentry->object.dir_begin.end_of_dir = END_OF_DIR;
@@ -526,7 +564,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 #ifdef _USE_MFSL
       pentry->mobject.handle = pentry->object.symlink.handle;
 #endif
-      pentry->object.symlink.attributes = fsal_attributes;
       fsal_status =
           FSAL_pathcpy(&pentry->object.symlink.content, &pcreate_arg->link_content);
       if(FSAL_IS_ERROR(fsal_status))
@@ -548,7 +585,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 #ifdef _USE_MFSL
       pentry->mobject.handle = pentry->object.special_obj.handle;
 #endif
-      pentry->object.special_obj.attributes = fsal_attributes;
       break;
 
     case FIFO_FILE:
@@ -560,7 +596,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 #ifdef _USE_MFSL
       pentry->mobject.handle = pentry->object.special_obj.handle;
 #endif
-      pentry->object.special_obj.attributes = fsal_attributes;
       break;
 
     case BLOCK_FILE:
@@ -572,7 +607,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 #ifdef _USE_MFSL
       pentry->mobject.handle = pentry->object.special_obj.handle;
 #endif
-      pentry->object.special_obj.attributes = fsal_attributes;
       break;
 
     case CHARACTER_FILE:
@@ -584,7 +618,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 #ifdef _USE_MFSL
       pentry->mobject.handle = pentry->object.special_obj.handle;
 #endif
-      pentry->object.special_obj.attributes = fsal_attributes;
       break;
 
     case FS_JUNCTION:
@@ -618,7 +651,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 #ifdef _USE_MFSL
       pentry->mobject.handle = pentry->object.dir_begin.handle;
 #endif
-      pentry->object.dir_begin.attributes = fsal_attributes;
 
       pentry->object.dir_begin.has_been_readdir = CACHE_INODE_NO;
       pentry->object.dir_begin.end_of_dir = END_OF_DIR;
@@ -707,6 +739,9 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
         return pentry ;
       }
     }
+
+  /* Now that added as a new entry, init attribute. */
+  cache_inode_init_attributes(pentry, &fsal_attributes);
 
   /* if entry is a REGULAR_FILE and has a related data cache entry from a previous server instance that crashed, recover it */
   /* This is done only when this is not a creation (when creating a new file, it is impossible to have it cached)           */
@@ -1108,14 +1143,20 @@ void cache_inode_get_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
       *pattr = pentry->object.special_obj.attributes;
       break;
 
+    case UNASSIGNED:
+    case RECYCLED:
+      memset(pattr, 0, sizeof(fsal_attrib_list_t));
+      LogFullDebug(COMPONENT_CACHE_INODE,
+                   "Unexpected UNNASIGNED or RECYLCED type in cache_inode_get_attributes");
     }
 }                               /* cache_inode_get_attributes */
 
 /**
  *
- * cache_inode_set_attributes: sets the attributes cached in the entry.
+ * cache_inode_init_attributes: sets the initial attributes cached in the entry.
  *
- * Sets the attributes cached in the entry.
+ * Sets the initial attributes cached in the entry. If NFS4 ACL is used,
+ * update the reference counter of ACL.
  *
  * @param pentry [OUT] the entry to deal with.
  * @param pattr [IN] the attributes to be set for this entry.
@@ -1123,7 +1164,7 @@ void cache_inode_get_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
  * @return nothing (void function).
  *
  */
-void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pattr)
+static void cache_inode_init_attributes(cache_entry_t *pentry, fsal_attrib_list_t *pattr)
 {
   switch (pentry->internal_md.type)
     {
@@ -1141,11 +1182,7 @@ void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
       break;
 
     case DIR_CONTINUE:
-      /* lock the related dir_begin (dir begin are garbagge collected AFTER their related dir_cont)
-       * this means that if a DIR_CONTINUE exists, its pdir pointer is not endless */
-      P_r(&pentry->object.dir_cont.pdir_begin->lock);
-      pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes = *pattr;
-      V_r(&pentry->object.dir_cont.pdir_begin->lock);
+      return;
       break;
 
     case SOCKET_FILE:
@@ -1154,7 +1191,119 @@ void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
     case CHARACTER_FILE:
       pentry->object.special_obj.attributes = *pattr;
       break;
+    case UNASSIGNED:
+    case RECYCLED:
+      LogFullDebug(COMPONENT_CACHE_INODE,
+                   "Unexpected UNNASIGNED or RECYLCED type in cache_inode_set_attributes");
+      break;
     }
+
+#ifdef _USE_NFS4_ACL
+  LogDebug(COMPONENT_CACHE_INODE, "init_attributes: md_type=%d, acl=%p",
+           pentry->internal_md.type, pattr->acl);
+
+  /* Bump up reference counter of new acl. */
+  if(pattr->acl)
+    nfs4_acl_entry_inc_ref(pattr->acl);
+#endif                          /* _USE_NFS4_ACL */
+}
+
+/**
+ *
+ * cache_inode_set_attributes: sets the attributes cached in the entry.
+ *
+ * Sets the attributes cached in the entry.
+ *
+ * @param pentry [OUT] the entry to deal with.
+ * @param pattr [IN] the attributes to be set for this entry.
+ *
+ * @return nothing (void function).
+ *
+ */
+void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pattr)
+{
+#ifdef _USE_NFS4_ACL
+  fsal_acl_t *p_oldacl = NULL;
+  fsal_acl_t *p_newacl = pattr->acl;
+#endif                          /* _USE_NFS4_ACL */
+
+  switch (pentry->internal_md.type)
+    {
+    case REGULAR_FILE:
+#ifdef _USE_NFS4_ACL
+      p_oldacl = pentry->object.file.attributes.acl;
+#endif                          /* _USE_NFS4_ACL */
+      pentry->object.file.attributes = *pattr;
+      break;
+
+    case SYMBOLIC_LINK:
+#ifdef _USE_NFS4_ACL
+      p_oldacl = pentry->object.symlink.attributes.acl;
+#endif                          /* _USE_NFS4_ACL */
+      pentry->object.symlink.attributes = *pattr;
+      break;
+
+    case FS_JUNCTION:
+    case DIR_BEGINNING:
+#ifdef _USE_NFS4_ACL
+      p_oldacl = pentry->object.dir_begin.attributes.acl;
+#endif                          /* _USE_NFS4_ACL */
+      pentry->object.dir_begin.attributes = *pattr;
+      break;
+
+    case DIR_CONTINUE:
+      /* lock the related dir_begin (dir begin are garbagge collected AFTER their related dir_cont)
+       * this means that if a DIR_CONTINUE exists, its pdir pointer is not endless */
+      P_r(&pentry->object.dir_cont.pdir_begin->lock);
+#ifdef _USE_NFS4_ACL
+      p_oldacl = pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes.acl;
+#endif                          /* _USE_NFS4_ACL */
+      pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes = *pattr;
+      V_r(&pentry->object.dir_cont.pdir_begin->lock);
+      break;
+
+    case SOCKET_FILE:
+    case FIFO_FILE:
+    case BLOCK_FILE:
+    case CHARACTER_FILE:
+#ifdef _USE_NFS4_ACL
+      p_oldacl = pentry->object.special_obj.attributes.acl;
+#endif                          /* _USE_NFS4_ACL */
+      pentry->object.special_obj.attributes = *pattr;
+      break;
+    case UNASSIGNED:
+    case RECYCLED:
+      LogFullDebug(COMPONENT_CACHE_INODE,
+                   "Unexpected UNNASIGNED or RECYLCED type in cache_inode_set_attributes");
+      break;
+    }
+
+#ifdef _USE_NFS4_ACL
+  /* If acl has been changed, release old acl and increase the reference
+   * counter of new acl. */
+  if(p_oldacl != p_newacl)
+    {
+      fsal_acl_status_t status;
+      LogDebug(COMPONENT_CACHE_INODE, "acl has been changed: old acl=%p, new acl=%p",
+               p_oldacl, p_newacl);
+
+      /* Release old acl. */
+      if(p_oldacl)
+        {
+          LogDebug(COMPONENT_CACHE_INODE, "md_type = %d, release old acl = %p",
+                   pentry->internal_md.type, p_oldacl);
+
+          nfs4_acl_release_entry(p_oldacl, &status);
+
+          if(status != NFS_V4_ACL_SUCCESS)
+            LogEvent(COMPONENT_CACHE_INODE, "Failed to release old acl, status=%d", status);
+        }
+
+      /* Bump up reference counter of new acl. */
+      if(p_newacl)
+        nfs4_acl_entry_inc_ref(p_newacl);
+    }
+#endif                          /* _USE_NFS4_ACL */
 }                               /* cache_inode_set_attributes */
 
 /**
@@ -1458,6 +1607,7 @@ cache_inode_status_t cache_inode_dump_content(char *path, cache_entry_t * pentry
 cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pentry)
 {
   FILE *stream = NULL;
+  int rc;
 
   char buff[CACHE_INODE_DUMP_LEN+1];
 
@@ -1469,18 +1619,19 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
   pentry->internal_md.type = REGULAR_FILE;
   pentry->internal_md.valid_state = VALID;
 
+  /* BUG: what happens if the fscanf's fail? */
   /* Read the information */
   #define XSTR(s) STR(s)
   #define STR(s) #s
-  fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+  rc = fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
   pentry->internal_md.read_time = atoi(buff);
 
-  fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+  rc = fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
   pentry->internal_md.mod_time = atoi(buff);
 
-  fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+  rc = fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
 
-  fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
+  rc = fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
   #undef STR
   #undef XSTR
 

@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -181,14 +181,12 @@ command_def_t shell_utils[] = {
   {NULL, NULL, NULL}            /* End of command list */
 };
 
-static char *skipblanks2(char *str);
-
 /* ------------------------------------------*
  *        Barrier management.
  * ------------------------------------------*/
 
-#define P( _mutex_ ) pthread_mutex_lock( &_mutex_ )
-#define V( _mutex_ ) pthread_mutex_unlock( &_mutex_ )
+#define P_shell( _mutex_ ) pthread_mutex_lock( &_mutex_ )
+#define V_shell( _mutex_ ) pthread_mutex_unlock( &_mutex_ )
 
 /* variables for managing barriers */
 
@@ -211,17 +209,17 @@ static int nb_waiting_threads = 0;
 int shell_BarrierInit(int nb_threads)
 {
 
-  P(barrier_mutex);
+  P_shell(barrier_mutex);
 
   if(total_nb_threads == -1)
     {
       total_nb_threads = nb_threads;
-      V(barrier_mutex);
+      V_shell(barrier_mutex);
       return SHELL_SUCCESS;
     }
   else
     {
-      V(barrier_mutex);
+      V_shell(barrier_mutex);
       printf("ganeshell: Error: Barrier already initialized\n");
       return SHELL_ERROR;
     }
@@ -230,13 +228,13 @@ int shell_BarrierInit(int nb_threads)
 static int shell_BarrierWait()
 {
 
-  P(barrier_mutex);
+  P_shell(barrier_mutex);
 
   /* not used in a single thread environment */
 
   if(total_nb_threads == -1)
     {
-      V(barrier_mutex);
+      V_shell(barrier_mutex);
       return SHELL_ERROR;
     }
 
@@ -260,7 +258,7 @@ static int shell_BarrierWait()
 
   /* leaves the critical section */
 
-  V(barrier_mutex);
+  V_shell(barrier_mutex);
 
   return SHELL_SUCCESS;
 
@@ -398,25 +396,25 @@ int shell_Init(int verbose, char *input_file, char *prompt, int shell_index)
 
   /* Initializes verbose mode. */
 
-  if(rc = shell_SetVerbose(context, (verbose ? "1" : "0")))
+  if((rc = shell_SetVerbose(context, (verbose ? "1" : "0"))))
     return rc;
 
-  if(rc = shell_SetDbgLvl(context, "NIV_EVENT"))
+  if((rc = shell_SetDbgLvl(context, "NIV_EVENT")))
     return rc;
 
   /* Then, initializes input file. */
 
-  if(rc = shell_SetInput(context, input_file))
+  if((rc = shell_SetInput(context, input_file)))
     return rc;
 
   /* Initialize prompt */
 
-  if(rc = shell_SetPrompt(context, prompt))
+  if((rc = shell_SetPrompt(context, prompt)))
     return rc;
 
   /* Initialize Shell id */
 
-  if(rc = shell_SetShellId(context, shell_index))
+  if((rc = shell_SetShellId(context, shell_index)))
     return rc;
 
   return SHELL_SUCCESS;
@@ -425,14 +423,52 @@ int shell_Init(int verbose, char *input_file, char *prompt, int shell_index)
 
 /* reads a line from input, and prints a prompt in interactive mode. */
 
+
+#ifdef HAVE_LIBREADLINE
+/* the same as previous, except it doesnt not trunc line at # sign */
+
+static char *skipblanks2(char *str)
+{
+
+  char *curr = str;
+
+  while(1)
+    {
+
+      switch (*curr)
+        {
+          /* end of lines */
+        case '\0':
+          return NULL;
+
+        case ' ':
+        case '\t':
+        case '\r':
+        case '\n':
+          curr++;
+          break;
+
+        default:
+          return curr;
+
+        }                       /* switch */
+
+    }                           /* while */
+
+}                               /* skipblanks2 */
+
+
+#endif
+
 static char *shell_readline(shell_state_t * context, char *s, int n, FILE * stream,
                             int interactive)
 {
 
   char *retval = shell_GetPrompt(context);
-  char *l;
 
 #ifdef HAVE_LIBREADLINE
+
+  char *l;
 
   if(interactive)
     {
@@ -475,7 +511,7 @@ int shell_Launch()
   char *arglist[MAX_ARGS];
   int alloctab[MAX_ARGS];
   int argcount;
-  int rc;
+  int rc = 0;
 
   shell_state_t *context = GetShellContext();
 
@@ -511,7 +547,7 @@ int shell_Launch()
       shell_SetStatus(context, rc);
 
     }
-
+  return rc;
 }
 
 /*------------------------------------------------------------------
@@ -550,38 +586,6 @@ static char *skipblanks(char *str)
     }                           /* while */
 
 }                               /* skipblanks */
-
-/* the same as previous, except it doesnt not trunc line at # sign */
-
-static char *skipblanks2(char *str)
-{
-
-  char *curr = str;
-
-  while(1)
-    {
-
-      switch (*curr)
-        {
-          /* end of lines */
-        case '\0':
-          return NULL;
-
-        case ' ':
-        case '\t':
-        case '\r':
-        case '\n':
-          curr++;
-          break;
-
-        default:
-          return curr;
-
-        }                       /* switch */
-
-    }                           /* while */
-
-}                               /* skipblanks2 */
 
 /* adress of the first blank char
  * outside a string.
@@ -686,7 +690,7 @@ int shell_ParseLine(char *in_out_line, char **out_arglist, int *p_argcount)
 
   /* While there is something after the Oblivion... */
 
-  while(curr_pos = skipblanks(curr_pos))
+  while((curr_pos = skipblanks(curr_pos)))
     {
       out_arglist[(*p_argcount)] = curr_pos;
       (*p_argcount)++;
@@ -1799,7 +1803,7 @@ int shellcmd_if(int argc,       /* IN : number of args in argv */
   int index_cmd2 = -1;
   int longueur_cmd2 = -1;
 
-  static char *help_if =
+  const char *help_if =
       "Usage: if command0 ? command1 [: command2]\n"
       "   Execute command1 if command0 returns a null status.\n"
       "   Else, execute command2 (if any).\n"
@@ -1853,7 +1857,7 @@ int shellcmd_if(int argc,       /* IN : number of args in argv */
 
   if((longueur_test <= 0) || (longueur_cmd1 <= 0))
     {
-      fprintf(output, help_if);
+      fprintf(output, help_if, NULL);
       return SHELL_SYNTAX_ERROR;
     }
 
@@ -2116,7 +2120,7 @@ int shellcmd_time(int argc,     /* IN : number of args in argv */
     )
 {
 
-  static char *help_time =
+  const char help_time[] =
       "Usage: time command [args ...]\n"
       "   Measure the time for executing a command.\n" "Ex: time shell ls\n";
 

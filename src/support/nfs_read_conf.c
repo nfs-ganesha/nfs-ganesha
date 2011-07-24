@@ -85,17 +85,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <ctype.h>
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
+#include "rpc.h"
 #include "log_functions.h"
 #include "stuff_alloc.h"
 #include "fsal.h"
@@ -291,10 +281,6 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->expiration_dupreq = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "NFS_Port"))
-        {
-          pparam->nfs_port = (unsigned short)atoi(key_value);
-        }
       else if(!strcasecmp(key_name, "Drop_IO_Errors"))
         {
           pparam->drop_io_errors = StrToBoolean(key_value);
@@ -307,21 +293,45 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->drop_delay_errors = StrToBoolean(key_value);
         }
+      else if(!strcasecmp(key_name, "NFS_Port"))
+        {
+          pparam->port[P_NFS] = (unsigned short)atoi(key_value);
+        }
       else if(!strcasecmp(key_name, "MNT_Port"))
         {
-          pparam->mnt_port = (unsigned short)atoi(key_value);
+          pparam->port[P_MNT] = (unsigned short)atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "NLM_Port"))
+        {
+#ifdef _USE_NLM
+          pparam->port[P_NLM] = (unsigned short)atoi(key_value);
+#endif
+        }
+      else if(!strcasecmp(key_name, "Rquota_Port"))
+        {
+#ifdef _USE_QUOTA
+          pparam->port[P_RQUOTA] = (unsigned short)atoi(key_value);
+#endif
         }
       else if(!strcasecmp(key_name, "NFS_Program"))
         {
-          pparam->nfs_program = atoi(key_value);
+          pparam->program[P_NFS] = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "MNT_Program"))
         {
-          pparam->mnt_program = atoi(key_value);
+          pparam->program[P_MNT] = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "NLM_Program"))
         {
-          pparam->nlm_program = atoi(key_value);
+#ifdef _USE_NLM
+          pparam->program[P_NLM] = atoi(key_value);
+#endif
+        }
+      else if(!strcasecmp(key_name, "Rquota_Program"))
+        {
+#ifdef _USE_QUOTA
+          pparam->program[P_RQUOTA] = atoi(key_value);
+#endif
         }
       else if(!strcasecmp(key_name, "NFS_Protocols"))
         {
@@ -396,14 +406,6 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
               LogCrit(COMPONENT_CONFIG, "Empty NFS_Protocols list");
               return -1;
             }
-        }
-      else if(!strcasecmp(key_name, "Rquota_Program"))
-        {
-          pparam->rquota_program = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Rquota_Port"))
-        {
-          pparam->rquota_port = (unsigned short)atoi(key_value);
         }
       else if(!strcasecmp(key_name, "Bind_Addr"))
         {
@@ -1025,6 +1027,7 @@ int nfs_read_gidmap_conf(config_file_t in_config, nfs_idmap_cache_parameter_t * 
   return 0;
 }                               /* nfs_read_gidmap_conf */
 
+#ifdef _HAVE_GSSAPI
 /**
  *
  * nfs_read_krb5_conf: read the configuration for krb5 stuff
@@ -1086,11 +1089,11 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
 
       if(!strcasecmp(key_name, "PrincipalName"))
         {
-          strncpy(pparam->principal, key_value, MAXNAMLEN);
+          strncpy(pparam->principal, key_value, sizeof(pparam->principal));
         }
       else if(!strcasecmp(key_name, "KeytabPath"))
         {
-          strncpy(pparam->keytab, key_value, MAXPATHLEN);
+          strncpy(pparam->keytab, key_value, sizeof(pparam->keytab));
         }
       else if(!strcasecmp(key_name, "Active_krb5"))
         {
@@ -1107,6 +1110,7 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
 
   return 0;
 }                               /* nfs_read_krb5_conf */
+#endif
 
 /**
  *
@@ -1242,15 +1246,15 @@ void Print_param_worker_in_log(nfs_worker_parameter_t * pparam)
  * @return none (void function)
  *
  */
-void Print_param_in_log(nfs_parameter_t * pparam)
+void Print_param_in_log()
 {
   LogInfo(COMPONENT_INIT,
           "NFS PARAM : core_param.nb_worker = %d",
-          pparam->core_param.nb_worker);
-  Print_param_worker_in_log(&(pparam->worker_param));
+          nfs_param.core_param.nb_worker);
+  Print_param_worker_in_log(&nfs_param.worker_param);
 }                               /* Print_param_in_log */
 
-int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
+int nfs_get_fsalpathlib_conf(char *configPath, path_str_t * PathLib, unsigned int *plen)
 {
   int var_max;
   int var_index;
@@ -1260,36 +1264,36 @@ int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
   config_item_t block;
   unsigned int found = FALSE;
   config_file_t config_struct;
+ 
+  unsigned int lenmax=*plen ;
+  unsigned int index=0 ;
 
   /* Is the config tree initialized ? */
   if(configPath == NULL || PathLib == NULL)
-    return 1;
+    LogFatal(COMPONENT_CONFIG,
+             "nfs_get_fsalpathlib_conf configPath=%p PathLib=%p",
+             configPath, PathLib);
 
   config_struct = config_ParseFile(configPath);
 
   if(!config_struct)
-    {
-      LogMajor(COMPONENT_CONFIG,
-               "NFS STARTUP: Error while parsing %s: %s",
-               configPath, config_GetErrorMsg());
-      exit(1);
-    }
+    LogFatal(COMPONENT_CONFIG,
+             "Error while parsing %s: %s",
+             configPath, config_GetErrorMsg());
 
   /* Get the config BLOCK */
   if((block = config_FindItemByName(config_struct, CONF_LABEL_NFS_CORE)) == NULL)
     {
-      LogDebug(COMPONENT_CONFIG,
+      LogFatal(COMPONENT_CONFIG,
                "Cannot read item \"%s\" from configuration file",
                CONF_LABEL_NFS_CORE);
-      return 1;
     }
   else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       /* Expected to be a block */
-      LogDebug(COMPONENT_CONFIG,
+      LogFatal(COMPONENT_CONFIG,
                "Item \"%s\" is expected to be a block",
                CONF_LABEL_NFS_CORE);
-      return 1;
     }
 
   var_max = config_GetNbItems(block);
@@ -1303,22 +1307,32 @@ int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
       /* Get key's name */
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
-          LogCrit(COMPONENT_CONFIG,
-                  "Error reading key[%d] from section \"%s\" of configuration file.",
-                  var_index, CONF_LABEL_NFS_CORE);
-          return CACHE_INODE_INVALID_ARGUMENT;
+          LogFatal(COMPONENT_CONFIG,
+                   "Error reading key[%d] from section \"%s\" of configuration file.",
+                   var_index, CONF_LABEL_NFS_CORE);
         }
 
       if(!strcasecmp(key_name, "FSAL_Shared_Library"))
         {
-          strncpy(PathLib, key_value, MAXPATHLEN);
+          strncpy(PathLib[index], key_value, MAXPATHLEN);
+          index += 1 ;
+
           found = TRUE;
+
+          /* Do not exceed array size */
+          if( index == *plen ) 
+	     break ;
         }
 
     }
 
   if(!found)
+   {
+    LogFatal(COMPONENT_CONFIG,
+             "FSAL_Shared_Library not found");
     return 1;
+   }
 
+  *plen = index ;
   return 0;
 }                               /* nfs_get_fsalpathlib_conf */

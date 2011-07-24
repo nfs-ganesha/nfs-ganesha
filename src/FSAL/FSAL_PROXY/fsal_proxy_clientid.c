@@ -312,7 +312,7 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
 #endif
 
   memset((char *)&fsal_context, 0, sizeof(proxyfsal_op_context_t));
-  fsal_status = FSAL_InitClientContext(p_context);
+  fsal_status = PROXYFSAL_InitClientContext(p_context);
 
   if(FSAL_IS_ERROR(fsal_status))
     {

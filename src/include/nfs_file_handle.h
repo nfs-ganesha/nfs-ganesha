@@ -40,13 +40,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/types.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/types.h>
-#endif
 
 #include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>              /* for having MAXHOSTNAMELEN */

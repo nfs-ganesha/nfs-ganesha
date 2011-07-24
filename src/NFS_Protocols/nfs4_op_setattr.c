@@ -49,18 +49,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -148,15 +137,9 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
   /* Convert the fattr4 in the request to a nfs3_sattr structure */
   rc = nfs4_Fattr_To_FSAL_attr(&sattr, &(arg_SETATTR4.obj_attributes));
 
-  if(rc == 0)
+  if(rc != NFS4_OK)
     {
-      res_SETATTR4.status = NFS4ERR_ATTRNOTSUPP;
-      return res_SETATTR4.status;
-    }
-
-  if(rc == -1)
-    {
-      res_SETATTR4.status = NFS4ERR_BADXDR;
+      res_SETATTR4.status = rc;
       return res_SETATTR4.status;
     }
 
@@ -192,7 +175,12 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_OWNER) ||
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_GROUP) ||
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MTIME) ||
+#ifdef _USE_NFS4_ACL
+     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME) ||
+     FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ACL))
+#else
      FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_ATIME))
+#endif
     {
       /* Check for root access when using chmod */
       if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_MODE))

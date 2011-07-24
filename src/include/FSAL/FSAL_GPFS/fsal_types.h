@@ -65,6 +65,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <gpfs_nfs.h>
 
 /*
  * labels in the config file
@@ -93,11 +94,6 @@
 
 #define OPENHANDLE_HANDLE_LEN 40
 #define OPENHANDLE_DRIVER_MAGIC     'O'
-#define OPENHANDLE_NAME_TO_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 0, struct name_handle_arg)
-#define OPENHANDLE_OPEN_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 1, struct open_arg)
-#define OPENHANDLE_LINK_BY_FD     _IOWR(OPENHANDLE_DRIVER_MAGIC, 2, struct link_arg)
-#define OPENHANDLE_READLINK_BY_FD _IOWR(OPENHANDLE_DRIVER_MAGIC, 3, struct readlink_arg)
-#define OPENHANDLE_STAT_BY_HANDLE _IOWR(OPENHANDLE_DRIVER_MAGIC, 4, struct stat_arg)
 #define OPENHANDLE_OFFSET_OF_FILEID (2 * sizeof(int))
 
 /**
@@ -114,58 +110,6 @@ struct file_handle
   int handle_type;
   /* file identifier */
   unsigned char f_handle[OPENHANDLE_HANDLE_LEN];
-};
-
-/**
- * name_handle_arg: 
- * 
- * this structure is used in 3 ways.  If the dfd is AT_FWCWD and name
- * is a full path, it returns the handle to the file.
- * 
- * It can also get the same handle by having dfd be the parent
- * directory file handle and the name be the local file name.
- *
- * Lastly, if dfd is actually the file handle for the file, and name
- * == NULL, it can be used to get the handle directly from the file
- * descriptor.
- *
- */
-
-struct name_handle_arg
-{
-  int dfd;
-  int flag;
-  char *name;
-  struct file_handle *handle;
-};
-
-struct open_arg
-{
-  int mountdirfd;
-  int flags;
-  int openfd;
-  struct file_handle *handle;
-};
-
-struct link_arg
-{
-  int file_fd;
-  int dir_fd;
-  char *name;
-};
-
-struct readlink_arg
-{
-  int fd;
-  char *buffer;
-  int size;
-};
-
-struct stat_arg
-{
-    int mountdirfd;
-    struct file_handle *handle;
-    struct stat64 *buf;
 };
 
 /** end of open by handle structures */
@@ -208,7 +152,6 @@ typedef struct
   /* Warning: This string is not currently filled in or used. */
   char mount_point[FSAL_MAX_PATH_LEN];
 
-  int open_by_handle_fd;
   int mount_root_fd;
   fsal_handle_t mount_root_handle;
   unsigned int fsid[2];
@@ -227,7 +170,7 @@ typedef struct
 
 typedef struct 
 {
-  char gpfs_mount_point[MAXPATHLEN];
+  int  use_kernel_module_interface;
   char open_by_handle_dev_file[MAXPATHLEN];
 } gpfsfs_specific_initinfo_t;
 
@@ -267,5 +210,15 @@ typedef struct fsal_file__
 } gpfsfsal_file_t;
 
 //#define FSAL_FILENO( p_fsal_file )  ( (p_fsal_file)->fd )
+
+/* Define the buffer size for GPFS NFS4 ACL. */
+#define GPFS_ACL_BUF_SIZE 0x1000
+
+/* A set of buffers to retrieve multiple attributes at the same time. */
+typedef struct fsal_xstat__
+{
+  struct stat64 buffstat;
+  char buffacl[GPFS_ACL_BUF_SIZE];
+} gpfsfsal_xstat_t;
 
 #endif                          /* _FSAL_TYPES__SPECIFIC_H */

@@ -7,15 +7,7 @@
 #define	_NFS23_H_RPCGEN
 
 #ifndef _USE_SWIG
-
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/types.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/types.h>
-#endif
-
+#include "rpc.h"
 #endif                          /* SWIG */
 
 #ifdef _SOLARIS

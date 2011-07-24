@@ -71,10 +71,9 @@ fsal_status_t GPFSFSAL_readlink(gpfsfsal_handle_t * p_linkhandle,       /* IN */
     )
 {
 
-  int rc, errsv;
+  int errsv;
   fsal_status_t status;
   char link_content_out[FSAL_MAX_PATH_LEN];
-  fsal_path_t fsalpath;
 
   /* sanity checks.
    * note : link_attributes is optional.
@@ -164,8 +163,9 @@ fsal_status_t GPFSFSAL_symlink(gpfsfsal_handle_t * p_parent_directory_handle,   
   int rc, errsv;
   fsal_status_t status;
   int fd;
-  struct stat buffstat;
   int setgid_bit = FALSE;
+  fsal_accessflags_t access_mask = 0;
+  fsal_attrib_list_t parent_dir_attrs;
 
   /* sanity checks.
    * note : link_attributes is optional.
@@ -189,25 +189,19 @@ fsal_status_t GPFSFSAL_symlink(gpfsfsal_handle_t * p_parent_directory_handle,   
     ReturnStatus(status, INDEX_FSAL_symlink);
 
   /* retrieve directory metadata, for checking access */
-  TakeTokenFSCall();
-  rc = fstat(fd, &buffstat);
-  errsv = errno;
-  ReleaseTokenFSCall();
+  parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
+  status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_symlink);
 
-  if(rc)
-    {
-      close(fd);
-
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_symlink);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
-    }
-
-  if(buffstat.st_mode & S_ISGID)
+  if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID)
     setgid_bit = TRUE;
 
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK, &buffstat, NULL);
+  /* Set both mode and ace4 mask */
+  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK) |
+                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
+
+  status = fsal_internal_testAccess(p_context, access_mask, NULL, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_symlink);
 

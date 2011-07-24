@@ -54,8 +54,6 @@
 short HashFileID4(u_int64_t fileid4);
 time_t ServerBootTime;
 
-static nfs_parameter_t nfs_param;
-
 char ganesha_exec_path[MAXPATHLEN];     /* Just because the symbol is required to compile */
 
 /* determine buffer type and display it */
@@ -162,9 +160,9 @@ int main(int argc, char *argv[])
   exportlist_t *pexport = NULL;
   nfs_start_info_t nfs_start_info;
   fsal_status_t fsal_status;
-  char path_cfg[MAXPATHLEN];
   unsigned int nfs_version = 3;
-  char fsal_path_lib[MAXPATHLEN];
+  path_str_t fsal_path_lib[NB_AVAILABLE_FSAL];
+  int lentab = NB_AVAILABLE_FSAL ;
 
   short cache_content_hash;
   char entry_path[MAXPATHLEN];
@@ -193,7 +191,7 @@ int main(int argc, char *argv[])
   if((tempo_exec_name = strrchr(argv[0], '/')) != NULL)
     strcpy((char *)exec_name, tempo_exec_name + 1);
 
-  strncpy(path_cfg, DEFAULT_CONFIG_FILE, MAXPATHLEN);
+  strncpy(config_path, DEFAULT_CONFIG_FILE, MAXPATHLEN);
 
   /* now parsing options with getopt */
   while((c = getopt(argc, argv, options)) != EOF)
@@ -211,7 +209,7 @@ int main(int argc, char *argv[])
           break;
 
         case 'f':
-          strncpy(path_cfg, optarg, MAXPATHLEN);
+          strncpy(config_path, optarg, MAXPATHLEN);
           break;
 
         case 'i':
@@ -248,14 +246,10 @@ int main(int argc, char *argv[])
 
   /* initialize memory and logging */
 
-  if(nfs_prereq_init("convert_fh", "localhost", NIV_MAJ, "/dev/tty"))
-    {
-      fprintf(stderr, "Error initializing logging and memory\n");
-      exit(1);
-    }
+  nfs_prereq_init("convert_fh", "localhost", NIV_MAJ, "/dev/tty");
 
 #ifdef _USE_SHARED_FSAL
-  if(nfs_get_fsalpathlib_conf(path_cfg, fsal_path_lib))
+  if(nfs_get_fsalpathlib_conf(config_path, fsal_path_lib, &lentab))
     {
       fprintf(stderr, "NFS MAIN: Error parsing configuration file.");
       exit(1);
@@ -263,7 +257,7 @@ int main(int argc, char *argv[])
 #endif                          /* _USE_SHARED_FSAL */
 
   /* Load the FSAL library (if needed) */
-  if(!FSAL_LoadLibrary(fsal_path_lib))
+  if(!FSAL_LoadLibrary((char *)fsal_path_lib))
     {
       fprintf(stderr, "NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib);
       exit(1);
@@ -277,23 +271,19 @@ int main(int argc, char *argv[])
 
   /* initialize default parameters */
 
-  if(nfs_set_param_default(&nfs_param))
-    {
-      fprintf(stderr, "Error setting default parameters.");
-      exit(1);
-    }
+  nfs_set_param_default();
 
   /* parse configuration file */
 
-  if(nfs_set_param_from_conf(&nfs_param, &nfs_start_info, path_cfg))
+  if(nfs_set_param_from_conf(&nfs_start_info))
     {
-      fprintf(stderr, "Error parsing configuration file '%s'", path_cfg);
+      fprintf(stderr, "Error parsing configuration file '%s'", config_path);
       exit(1);
     }
 
   /* check parameters consitency */
 
-  if(nfs_check_param_consistency(&nfs_param))
+  if(nfs_check_param_consistency())
     {
       fprintf(stderr, "Inconsistent parameters found");
       exit(1);

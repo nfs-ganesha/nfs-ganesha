@@ -636,6 +636,10 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
       /* ReturnCode( ERR_FSAL_ATTRNOTSUPP, 0 ); */
     }
 
+  /* Initialize ACL regardless of whether ACL was asked or not.
+   * This is needed to make sure ACL attribute is initialized. */
+  p_fsalattr_out->acl = NULL;
+
   /* Fills the output struct */
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
     {
@@ -658,11 +662,7 @@ fsal_status_t hpss2fsal_attributes(ns_ObjHandle_t * p_hpss_handle_in,
 
       if(p_hpss_attr_in->ExtendedACLs == 0)
         {
-          int i;
-          for(i = 0; i < FSAL_MAX_ACL; i++)
-            {
-              p_fsalattr_out->acls[i].type = FSAL_ACL_EMPTY;    /* empty ACL slot */
-            }
+          p_fsalattr_out->acl = NULL;
         }
       else
         {

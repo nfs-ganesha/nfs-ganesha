@@ -131,6 +131,7 @@ typedef enum hashtable_set_how__
 #define HASHTABLE_ERROR_NO_SUCH_KEY        3
 #define HASHTABLE_ERROR_KEY_ALREADY_EXISTS 4
 #define HASHTABLE_ERROR_INVALID_ARGUMENT   5
+#define HASHTABLE_ERROR_DELALL_FAIL        6
 
 unsigned long double_hash_func(hash_parameter_t * hc, hash_buffer_t * buffclef);
 hash_table_t *HashTable_Init(hash_parameter_t hc);
@@ -139,12 +140,12 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
 int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * buffval);
 int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
                   hash_buffer_t * p_usedbuffkey, hash_buffer_t * p_usedbuffdata);
+int HashTable_Delall(hash_table_t * ht,
+		     int (*free_func)(hash_buffer_t, hash_buffer_t) );
 #define HashTable_Set( ht, buffkey, buffval ) HashTable_Test_And_Set( ht, buffkey, buffval, HASHTABLE_SET_HOW_SET_OVERWRITE )
 void HashTable_GetStats(hash_table_t * ht, hash_stat_t * hstat);
 void HashTable_Log(log_components_t component, hash_table_t * ht);
 void HashTable_Print(hash_table_t * ht);
 unsigned int HashTable_GetSize(hash_table_t * ht);
-
-uint32_t HashTable_hash_buff( char * str, uint32_t len ) ;
 
 #endif                          /* _HASHTABLE_H */

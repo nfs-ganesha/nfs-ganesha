@@ -51,8 +51,6 @@
 #include <strings.h>
 #include <sys/types.h>
 
-extern nfs_parameter_t nfs_param;
-
 /**
  *
  * cache_inode_fsal_hash_func: Compute the hash value for the cache_inode hash table.

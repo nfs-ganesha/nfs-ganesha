@@ -444,22 +444,37 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
           fsdata.cookie = pdir_chain->object.dir_cont.dir_cont_pos + 1;
           pentry = pdir_chain->object.dir_cont.pdir_cont;
           break;
+
+        default:
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
+                  pdir_chain->internal_md.type, __LINE__, __FILE__);
+          *pstatus = CACHE_INODE_BAD_TYPE;
+          return *pstatus;
         }
 
       /* Allocate a new DIR_CONTINUE to the dir chain if needed */
       if(pentry == NULL)
-
-        if((pentry = cache_inode_new_entry(&fsdata, NULL, DIR_CONTINUE, NULL, pdir_chain, ht, pclient, pcontext, FALSE, /* this is population, no creation */
-                                           pstatus)) == NULL)
-          {
-            return *pstatus;
-          }
-        else
-          {
-            /* reset status in case it already exists,
-               so it is not propagated to caller */
-
-            *pstatus = 0;
+        {
+          if((pentry = cache_inode_new_entry(&fsdata,
+                                             NULL,
+                                             DIR_CONTINUE,
+                                             NULL,
+                                             pdir_chain,
+                                             ht,
+                                             pclient,
+                                             pcontext,
+                                             FALSE, /* this is population, no creation */
+                                             pstatus)) == NULL)
+            {
+              return *pstatus;
+            }
+          else
+            {
+              /* reset status in case it already exists,
+                 so it is not propagated to caller */
+              *pstatus = 0;
+            }
           }
 
       /* Chain the new entry with the pdir_chain */
@@ -480,6 +495,13 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
           pdir_chain->object.dir_cont.pdir_begin->object.dir_begin.pdir_last = pentry;
           pdir_chain->object.dir_cont.pdir_begin->object.dir_begin.nbdircont += 1;
           break;
+
+        default:
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
+                  pdir_chain->internal_md.type, __LINE__, __FILE__);
+          *pstatus = CACHE_INODE_BAD_TYPE;
+          return *pstatus;
         }
 
       /* slot to be used in the dirent array will be the first */
@@ -983,6 +1005,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   unsigned int i = 0;
   unsigned int cookie_iter = 0;
   unsigned int nbdirchain = 0;
+  fsal_accessflags_t access_mask = 0;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -1041,8 +1064,10 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
     }
 
   /* Check is user (as specified by the credentials) is authorized to read the directory or not */
+  access_mask = FSAL_MODE_MASK_SET(FSAL_R_OK) |
+                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR);
   if(cache_inode_access_no_mutex(dir_pentry,
-                                 FSAL_R_OK,
+                                 access_mask,
                                  ht, pclient, pcontext, pstatus) != CACHE_INODE_SUCCESS)
     {
       V_w(&dir_pentry->lock);

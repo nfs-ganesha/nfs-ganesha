@@ -50,132 +50,51 @@
 #include "stuff_alloc.h"
 #include "log_macros.h"
 
-extern nfs_parameter_t nfs_param;
-nfs_admin_data_t *pmydata;
+exportlist_t *temp_pexportlist;
+pthread_cond_t admin_condvar = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t mutex_admin_condvar = PTHREAD_MUTEX_INITIALIZER;
+bool_t reload_exports;
+hash_table_t *admin_ht;
 
-int nfs_Init_admin_data(nfs_admin_data_t *pdata)
+void nfs_Init_admin_data(hash_table_t *ht)
 {
-  if(pthread_mutex_init(&(pdata->mutex_admin_condvar), NULL) != 0)
-    return -1;
-
-  if(pthread_cond_init(&(pdata->admin_condvar), NULL) != 0)
-    return -1;
-
-  pdata->reload_exports = FALSE;
-
-  return 0;
-}                               /* nfs_Init_admin_data */
+  admin_ht = ht;
+}
 
 void admin_replace_exports()
 {
-  P(pmydata->mutex_admin_condvar);
-  pmydata->reload_exports = TRUE;
-  if(pthread_cond_signal(&(pmydata->admin_condvar)) == -1)
+  P(mutex_admin_condvar);
+  reload_exports = TRUE;
+  if(pthread_cond_signal(&(admin_condvar)) == -1)
       LogCrit(COMPONENT_MAIN,
               "admin_replace_exports - admin cond signal failed , errno = %d (%s)",
               errno, strerror(errno));
-  V(pmydata->mutex_admin_condvar);
-}
-
-static int wake_workers_for_export_reload()
-{
-  int i;
-  for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-    {
-      pmydata->workers_data[i].reparse_exports_in_progress = FALSE;
-      if(pthread_cond_signal(&(pmydata->workers_data[i].export_condvar)) == -1)
-        {
-          LogCrit(COMPONENT_MAIN,
-                  "replace_exports: Export cond signal failed for thr#%d , errno = %d (%s)",
-                  i, errno, strerror(errno));
-          return -1;
-        }
-    }
-}
-
-static int pause_workers_for_export_reload()
-{
-  int all_blocked,i;
-
-  /* Pause worker threads */
-  for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-    {
-      pmydata->workers_data[i].reparse_exports_in_progress = TRUE;
-
-      /* If threads are blocked on the request queue, wake them up
-       * so they are blocked on the exports list replacement. */
-      if(pthread_cond_signal(&(pmydata->workers_data[i].req_condvar)) == -1)
-        {
-          LogCrit(COMPONENT_MAIN,
-                  "replace_exports: Request cond signal failed for thr#%d , errno = %d (%s)",
-                  i, errno, strerror(errno));
-          wake_workers_for_export_reload();
-          return -1;
-        }
-  }
-
-  /* Wait for all worker threads to block */
-  while(1)
-    {
-      all_blocked = 1;
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        if (pmydata->workers_data[i].waiting_for_exports == FALSE)
-          all_blocked = 0;
-      if (all_blocked)
-        break;
-    }
-
-  return 1;
-}
-
-/* Skips deleting first entry of export list.
- * This function also frees the fd in the head node of the list. */
-int RemoveAllExportsExceptHead(exportlist_t * pexportlist)
-{
-  exportlist_t *pcurrent;
-
-  pcurrent = pexportlist->next;
-  while(pcurrent != NULL)
-    {
-      /* Leave the head so that the list may be replaced later without
-       * changing the reference pointer in worker threads. */
-      CleanUpExportContext(&pcurrent->FS_export_context);
-
-      if (pcurrent == pexportlist)
-        break;
-
-
-      pexportlist->next = RemoveExportEntry(pcurrent);
-      pcurrent = pexportlist->next;
-    }
-
-  return 1;   /* Success */
+  V(mutex_admin_condvar);
 }
 
 /* Skips deleting first entry of export list. */
-int rebuild_export_list(char *config_file)
+int rebuild_export_list()
 {
   int status = 0;
-  exportlist_t * temp_pexportlist;
   config_file_t config_struct;
 
   /* If no configuration file is given, then the caller must want to reparse the
    * configuration file from startup. */
-  if (config_file == NULL)
+  if(config_path[0] == '\0')
     {
       LogCrit(COMPONENT_CONFIG,
               "Error: No configuration file was specified for reloading exports.");
-      return -1;
+      return 0;
     }
 
   /* Attempt to parse the new configuration file */
-  config_struct = config_ParseFile(config_file);
+  config_struct = config_ParseFile(config_path);
   if(!config_struct)
     {
       LogCrit(COMPONENT_CONFIG,
               "rebuild_export_list: Error while parsing new configuration file %s: %s",
-              config_file, config_GetErrorMsg());
-      return -1;
+              config_path, config_GetErrorMsg());
+      return 0;
     }
 
   /* Create the new exports list */
@@ -195,27 +114,38 @@ int rebuild_export_list(char *config_file)
 
   /* At least one worker thread should exist. Each worker thread has a pointer to
    * the same hash table. */
-  if( nfs_export_create_root_entry(temp_pexportlist, pmydata->ht) != TRUE)
+  if(nfs_export_create_root_entry(temp_pexportlist, admin_ht) != TRUE)
     {
       LogCrit(COMPONENT_MAIN,
               "replace_exports: Error initializing Cache Inode root entries");
-      return -1;
+      return 0;
     }
 
-  if (!pause_workers_for_export_reload())
-    {
-      LogCrit(COMPONENT_MAIN,
-              "replace_exports: Error, could not pause all worker threads.");
-      return -1;
-    }
+  return 1;
+}
+
+static void ChangeoverExports()
+{
+  exportlist_t *pcurrent;
 
   /* Now we know that the configuration was parsed successfully.
    * And that worker threads are no longer accessing the export list.
-   * Remove all but the first export entry in the exports list. */
-  status = RemoveAllExportsExceptHead(nfs_param.pexportlist);
-  if (status <= 0)
-    LogCrit(COMPONENT_MAIN,
-            "rebuild_export_list: CRITICAL ERROR while removing some export entries.");
+   * Remove all but the first export entry in the exports list.
+   */
+  pcurrent = nfs_param.pexportlist->next;
+
+  while(pcurrent != NULL)
+    {
+      /* Leave the head so that the list may be replaced later without
+       * changing the reference pointer in worker threads. */
+      CleanUpExportContext(&pcurrent->FS_export_context);
+
+      if (pcurrent == nfs_param.pexportlist)
+        break;
+
+      nfs_param.pexportlist->next = RemoveExportEntry(pcurrent);
+      pcurrent = nfs_param.pexportlist->next;
+    }
 
   /* Changed the old export list head to the new export list head.
    * All references to the exports list should be up-to-date now. */
@@ -224,14 +154,11 @@ int rebuild_export_list(char *config_file)
   /* We no longer need the head that was created for
    * the new list since the export list is built as a linked list. */
   Mem_Free(temp_pexportlist);
-  wake_workers_for_export_reload();
-  return status; /* 1 if success */
+  temp_pexportlist = NULL;
 }
 
 void *admin_thread(void *Arg)
 {
-  pmydata = (nfs_admin_data_t *)Arg;
-
   int rc = 0;
 
   SetNameFunction("admin_thr");
@@ -240,25 +167,66 @@ void *admin_thread(void *Arg)
   if((rc = BuddyInit(&nfs_param.buddy_param_admin)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogMajor(COMPONENT_MAIN,
-               "ADMIN THREAD: Memory manager could not be initialized, exiting...");
-      exit(1);
+      LogFatal(COMPONENT_MAIN,
+               "Memory manager could not be initialized");
     }
   LogInfo(COMPONENT_MAIN,
-          "ADMIN THREAD: Memory manager successfully initialized");
+          "Memory manager successfully initialized");
 #endif
 
   while(1)
     {
-      P(pmydata->mutex_admin_condvar);
-      while(pmydata->reload_exports == FALSE)
-            pthread_cond_wait(&(pmydata->admin_condvar), &(pmydata->mutex_admin_condvar));
-      pmydata->reload_exports = FALSE;
-      V(pmydata->mutex_admin_condvar);
+      P(mutex_admin_condvar);
+      while(reload_exports == FALSE)
+            pthread_cond_wait(&(admin_condvar), &(mutex_admin_condvar));
+      reload_exports = FALSE;
+      V(mutex_admin_condvar);
 
-      if (!rebuild_export_list(pmydata->config_path))
-        LogCrit(COMPONENT_MAIN,
-                "Error, attempt to reload exports list from config file failed.");
+      if (!rebuild_export_list())
+        {
+          LogCrit(COMPONENT_MAIN,
+                  "Attempt to reload exports list from config file failed.");
+          continue;
+        }
+
+      if(pause_workers(PAUSE_RELOAD_EXPORTS) == PAUSE_EXIT)
+        {
+          LogDebug(COMPONENT_MAIN,
+                   "Export reload interrupted by shutdown while pausing workers");
+          /* Be helpfull and exit
+           * (other termination will just blow us away, and that's ok...
+           */
+          break;
+        }
+
+      /* Clear the id mapping cache for gss principals to uid/gid.
+       * The id mapping may have changed.
+       */
+#ifdef _HAVE_GSSAPI
+#ifdef _USE_NFSIDMAP
+      uidgidmap_clear();
+      idmap_clear();
+      namemap_clear();
+#endif /* _USE_NFSIDMAP */
+#endif /* _HAVE_GSSAPI */
+
+      ChangeoverExports();
+
+      LogEvent(COMPONENT_MAIN,
+               "Exports reloaded and active");
+
+      /* wake_workers could return PAUSE_PAUSE, but we don't have to do
+       * anything special in that case.
+       */
+      if(wake_workers(AWAKEN_RELOAD_EXPORTS) == PAUSE_EXIT)
+        {
+          LogDebug(COMPONENT_MAIN,
+                   "Export reload interrupted by shutdown while waking workers");
+          /* Be helpfull and exit
+           * (other termination will just blow us away, and that's ok...
+           */
+          break;
+        }
     }
 
   return NULL;

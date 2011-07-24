@@ -49,17 +49,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -77,12 +67,8 @@
 #include "SemN.h"
 
 /* Structures from another module */
-extern nfs_parameter_t nfs_param;
-extern nfs_worker_data_t *workers_data;
-extern cache_content_client_t recover_datacache_client;
 
 extern char ganesha_exec_path[MAXPATHLEN];
-extern char config_path[MAXPATHLEN];
 extern char fcc_log_path[MAXPATHLEN];
 extern int fcc_debug_level;
 
@@ -151,9 +137,7 @@ int file_content_gc_manage_entry(LRU_entry_t * plru_entry, void *addparam)
 
 void *file_content_gc_thread(void *IndexArg)
 {
-  long index = (long)IndexArg;
   char command[2 * MAXPATHLEN];
-  unsigned int i;
   exportlist_t *pexport = NULL;
   int is_hw_reached = FALSE;
   int some_flush_to_do = FALSE;

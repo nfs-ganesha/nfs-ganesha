@@ -12,12 +12,6 @@
 #include "solaris_port.h"
 #endif
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#else
-#include <rpc/rpc.h>
-#endif
-
 #endif                          /* ifndef _USE_SWIG */
 
 #define	MNTPATHLEN 1024

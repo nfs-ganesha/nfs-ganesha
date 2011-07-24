@@ -56,16 +56,7 @@
 #include <pwd.h>
 #include <grp.h>
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpcal.h"
 #include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -80,7 +71,6 @@
 #include "nfs_file_handle.h"
 #include "nfs_dupreq.h"
 
-extern nfs_parameter_t nfs_param;
 extern nfs_function_desc_t nfs2_func_desc[];
 extern nfs_function_desc_t nfs3_func_desc[];
 extern nfs_function_desc_t nfs4_func_desc[];
@@ -95,6 +85,17 @@ extern nfs_function_desc_t rquota2_func_desc[];
 #endif                          /* _USE_QUOTA */
 /* Structure used for duplicated request cache */
 hash_table_t *ht_dupreq;
+
+void LogDupReq(const char *label, sockaddr_t *addr, long xid, u_long rq_prog)
+{
+  char namebuf[SOCK_NAME_MAX];
+
+  sprint_sockaddr(addr, namebuf, sizeof(namebuf));
+
+  LogFullDebug(COMPONENT_DUPREQ,
+               "%s addr=%s xid=%ld rq_prog=%ld",
+               label, namebuf, xid, rq_prog);
+}
 
 /**
  *
@@ -120,6 +121,10 @@ unsigned int get_rpc_xid(struct svc_req *reqp)
    * ONC RPC protocol definitions, and used internally by the ONC layers. Since I need to know the xid
    * the structures are defined here */
 
+#ifdef _USE_TIRPC
+  return get_tirpc_xid(reqp->rq_xprt);
+#else 
+  unsigned int Xid = 0;
   struct udp_private2__
   {                             /* kept in xprt->xp_p2 */
     int up_unused;
@@ -134,8 +139,6 @@ unsigned int get_rpc_xid(struct svc_req *reqp)
     char verf_body[MAX_AUTH_BYTES];
   };
 
-  unsigned int Xid;
-
   /* Map the xp1 and xp2 field to the udp and tcp private structures */
   struct tcp_conn2__ *ptcpxp = (struct tcp_conn2__ *)(reqp->rq_xprt->xp_p1);
   struct udp_private2__ *pudpxp = (struct udp_private2__ *)(reqp->rq_xprt->xp_p2);
@@ -143,10 +146,11 @@ unsigned int get_rpc_xid(struct svc_req *reqp)
   /* The request is either UDP or TCP. If UDP Xid is null, then look for TCP xid */
   if(reqp->rq_xprt->xp_p2 != NULL)
     Xid = pudpxp->up_xid;       /* UDP XID */
-  else
+  else if (reqp->rq_xprt->xp_p1 != NULL)
     Xid = ptcpxp->x_id;         /* TCP XID */
 
   return Xid;
+#endif
 }                               /* get_rpc_xid */
 
 /**
@@ -171,7 +175,7 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
                           struct prealloc_pool *dupreq_pool, int nfs_req_status)
 {
   int rc;
-  nfs_function_desc_t funcdesc;
+  nfs_function_desc_t funcdesc = nfs2_func_desc[0];
 
   rc = HashTable_Del(ht_dupreq, buffkey, NULL, NULL);
 
@@ -182,7 +186,7 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
     return 0;                   /* don't free the dupreq twice */
 
   /* Locate the function descriptor associated with this cached request */
-  if(pdupreq->rq_prog == nfs_param.core_param.nfs_program)
+  if(pdupreq->rq_prog == nfs_param.core_param.program[P_NFS])
     {
       switch (pdupreq->rq_vers)
         {
@@ -203,11 +207,9 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
           LogMajor(COMPONENT_DUPREQ,
                    "NFS Protocol version %d unknown in dupreq_gc",
                    (int)pdupreq->rq_vers);
-          funcdesc = nfs2_func_desc[0]; /* free function for PROC_NULL does nothing */
-          break;
         }
     }
-  else if(pdupreq->rq_prog == nfs_param.core_param.mnt_program)
+  else if(pdupreq->rq_prog == nfs_param.core_param.program[P_MNT])
     {
       switch (pdupreq->rq_vers)
         {
@@ -225,11 +227,10 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
                    "MOUNT Protocol version %d unknown in dupreq_gc",
                    (int)pdupreq->rq_vers);
           break;
-
         }                       /* switch( pdupreq->vers ) */
     }
 #ifdef _USE_NLM
-  else if(pdupreq->rq_prog == nfs_param.core_param.nlm_program)
+  else if(pdupreq->rq_prog == nfs_param.core_param.program[P_NLM])
     {
 
       switch (pdupreq->rq_vers)
@@ -241,7 +242,7 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
     }
 #endif                          /* _USE_NLM */
 #ifdef _USE_QUOTA
-  else if(pdupreq->rq_prog == nfs_param.core_param.rquota_program)
+  else if(pdupreq->rq_prog == nfs_param.core_param.program[P_RQUOTA])
     {
 
       switch (pdupreq->rq_vers)
@@ -281,49 +282,37 @@ int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
 
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
-
-  struct sockaddr_in *phostaddr;
-  dupreq_key_t pdupkey;
-  dupreq_entry_t *dupreq;
+  dupreq_key_t dupkey;
+  dupreq_entry_t *pdupreq;
 
   /* Get the socket address for the key */
-  phostaddr = (struct sockaddr_in *)svc_getcaller(xprt);
-  memcpy((char *)&pdupkey.addr, (char *)phostaddr,
-         sizeof(pdupkey.addr));
-  pdupkey.xid = xid;
-  /* Checksum the request */
-  pdupkey.checksum = 0;
+  if(copy_xprt_addr(&dupkey.addr, xprt) == 0)
+    return DUPREQ_NOT_FOUND;
+
+  dupkey.xid = xid;
+  dupkey.checksum = 0;
+
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
    * this also means that buffkey->len will be 0 */
-  buffkey.pdata = (caddr_t) &pdupkey;
+  buffkey.pdata = (caddr_t) &dupkey;
   buffkey.len = sizeof(dupreq_key_t);
 
   if(HashTable_Get(ht_dupreq, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
+      pdupreq = (dupreq_entry_t *) buffval.pdata;
+
       /* reset timestamp */
-      ((dupreq_entry_t *) buffval.pdata)->timestamp = time(NULL);
+      pdupreq->timestamp = time(NULL);
 
       status = DUPREQ_SUCCESS;
-      dupreq = (dupreq_entry_t *) buffval.pdata;
-      LogDebug(COMPONENT_DUPREQ,
-               "Hit in the dupreq cache for xid=%ld addr=%d",
-               xid, phostaddr->sin_addr.s_addr);
     }
   else {
     return DUPREQ_NOT_FOUND;
   }
 
-  LogFullDebug(COMPONENT_DUPREQ,
-               "REMOVING ip= %d.%d.%d.%d port=%d xid=%ld rq_prog=%ld",
-               (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
-               (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
-               (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
-               (ntohl(phostaddr->sin_addr.s_addr) & 0x000000FF),
-               phostaddr->sin_port,
-               xid,
-               dupreq->rq_prog);
+  LogDupReq("REMOVING", &pdupreq->addr, pdupreq->xid, pdupreq->rq_prog);
 
-  status = _remove_dupreq(&buffkey, dupreq, dupreq_pool, ! NFS_REQ_OK);
+  status = _remove_dupreq(&buffkey, pdupreq, dupreq_pool, ! NFS_REQ_OK);
   return status;
 }
 
@@ -342,28 +331,21 @@ int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
 int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
 {
   hash_buffer_t buffkey;
-  nfs_function_desc_t funcdesc;
   struct prealloc_pool *dupreq_pool = (struct prealloc_pool *) addparam;
   dupreq_entry_t *pdupreq = (dupreq_entry_t *) (pentry->buffdata.pdata);
-  int rc;
-
-  struct sockaddr_in *phostaddr;
-  dupreq_key_t pdupkey;
+  dupreq_key_t dupkey;
 
   /* Get the socket address for the key */
-  memcpy((char *)&pdupkey.addr, (char *)&pdupreq->addr, sizeof(pdupkey.addr));
-  pdupkey.xid = pdupreq->xid;
-  /* Checksum the request */
-  pdupkey.checksum = pdupreq->checksum;
+  memcpy((char *)&dupkey.addr, (char *)&pdupreq->addr, sizeof(dupkey.addr));
+  dupkey.xid = pdupreq->xid;
+  dupkey.checksum = pdupreq->checksum;
 
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
    * this also means that buffkey->len will be 0 */
-  buffkey.pdata = (caddr_t) &pdupkey;
+  buffkey.pdata = (caddr_t) &dupkey;
   buffkey.len = sizeof(dupreq_key_t);
 
-  LogDebug(COMPONENT_DUPREQ,
-           "Garbage collection on xid=%ld",
-           pdupreq->xid);
+  LogDupReq("Garbage collection on", &pdupreq->addr, pdupreq->xid, pdupreq->rq_prog);
 
   return _remove_dupreq(&buffkey, pdupreq, dupreq_pool, NFS_REQ_OK);
 }                               /* clean_entry_dupreq */
@@ -386,28 +368,10 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
 unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
                                      hash_buffer_t * buffclef)
 {
-  dupreq_key_t *key = (dupreq_key_t *)(buffclef->pdata);
-  unsigned long addr_hash = 0;
-  int port;
+  dupreq_key_t *pdupkey = (dupreq_key_t *)(buffclef->pdata);
+  unsigned long addr_hash = hash_sockaddr((sockaddr_t *) &pdupkey->addr, CHECK_PORT);
 
-  if(key->addr.sa_family == AF_INET)
-    {
-      addr_hash += ((struct sockaddr_in *)&key->addr)->sin_addr.s_addr;
-      port = ((struct sockaddr_in *)&key->addr)->sin_port;
-      addr_hash ^= (port<<16);
-    }
-#ifdef _USE_TIRPC_IPV6
-  else if(key->addr.sa_family == AF_INET)
-    {
-      //      addr_hash += ((struct sockaddr_in6 *)key->addr)->sin6_addr.s6_addr;
-      //      addr_hash += ((struct sockaddr_in6 *)key->addr)->sin6_port;
-    }
-#endif                          /* _USE_TIRPC_IPV6 */
-  else
-      LogCrit(COMPONENT_DUPREQ,
-              "Could not determine whether dupreq entry used a IPV4 or IPV6 address.");
-
-  return (((unsigned long)key->xid + addr_hash)^(key->checksum)) % p_hparam->index_size;
+  return (((unsigned long)pdupkey->xid + addr_hash)^(pdupkey->checksum)) % p_hparam->index_size;
 }                               /*  dupreq_value_hash_func */
 
 /**
@@ -428,28 +392,11 @@ unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
  */
 unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef)
 {
-  dupreq_key_t *key = (dupreq_key_t *)(buffclef->pdata);
-  unsigned long addr_hash = 0;
-  int port;
+  dupreq_key_t *pdupkey = (dupreq_key_t *)(buffclef->pdata);
 
-  if(key->addr.sa_family == AF_INET)
-    {
-      addr_hash += ((struct sockaddr_in *)&key->addr)->sin_addr.s_addr;
-      port = ((struct sockaddr_in *)&key->addr)->sin_port;
-      addr_hash ^= (port<<16);
-    }
-#ifdef _USE_TIRPC_IPV6
-  else if(key->addr.sa_family == AF_INET)
-    {
-      //      addr_hash += ((struct sockaddr_in6 *)key->addr)->sin6_addr.s6_addr;
-      //      addr_hash += ((struct sockaddr_in6 *)key->addr)->sin6_port;
-    }
-#endif                          /* _USE_TIRPC_IPV6 */
-  else
-      LogCrit(COMPONENT_DUPREQ,
-              "Could not determine whether dupreq entry used a IPV4 or IPV6 address.");
+  unsigned long addr_hash = hash_sockaddr((sockaddr_t *) &pdupkey->addr, CHECK_PORT);
 
-  return ((unsigned long)key->xid + addr_hash)^(key->checksum);
+  return (((unsigned long)pdupkey->xid + addr_hash)^(pdupkey->checksum)) % p_hparam->index_size;
 }                               /* dupreq_rbt_hash_func */
 
 /**
@@ -475,7 +422,7 @@ int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2)
 
   if (key1->xid != key2->xid)
     return 1;
-  if (cmp_sockaddr(&key1->addr, &key2->addr) == 0)
+  if (cmp_sockaddr(&key1->addr, &key2->addr, CHECK_PORT) == 0)
     return 1;
   if (key1->checksum != key2->checksum)
     return 1;
@@ -484,9 +431,9 @@ int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2)
 
 /**
  *
- * display_xid: displays the xid stored in the buffer.
+ * display_req_key: displays the key stored in the buffer.
  *
- * displays the xid stored in the buffer. This function is to be used as 'key_to_str' field in
+ * displays the key stored in the buffer. This function is to be used as 'key_to_str' field in
  * the hashtable storing the nfs duplicated requests.
  *
  * @param buff1 [IN]  buffer to display
@@ -495,11 +442,41 @@ int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2)
  * @return number of character written.
  *
  */
-int display_xid(hash_buffer_t * pbuff, char *str)
+int display_req_key(hash_buffer_t * pbuff, char *str)
 {
-  long xid = (long)(pbuff->pdata);
+  dupreq_key_t *pdupkey = (dupreq_key_t *)(pbuff->pdata);
+  char namebuf[SOCK_NAME_MAX];
 
-  return sprintf(str, "%lX", xid);
+  sprint_sockaddr(&pdupkey->addr, namebuf, sizeof(namebuf));
+
+  return sprintf("addr=%s xid=%ld checksum=%d",
+                 namebuf, pdupkey->xid, pdupkey->checksum);
+
+}
+
+/**
+ *
+ * display_req_val: displays the value stored in the buffer.
+ *
+ * displays the value stored in the buffer. This function is to be used as 'val_to_str' field in
+ * the hashtable storing the nfs duplicated requests.
+ *
+ * @param buff1 [IN]  buffer to display
+ * @param buff2 [OUT] output string
+ *
+ * @return number of character written.
+ *
+ */
+int display_req_val(hash_buffer_t * pbuff, char *str)
+{
+  dupreq_entry_t *pdupreq = (dupreq_entry_t *)(pbuff->pdata);
+  char namebuf[SOCK_NAME_MAX];
+
+  sprint_sockaddr(&pdupreq->addr, namebuf, sizeof(namebuf));
+
+  return sprintf("addr=%s xid=%ld checksum=%d rq_prog=%lu rq_vers=%lu rq_proc=%lu",
+                 namebuf, pdupreq->xid, pdupreq->checksum,
+                 pdupreq->rq_prog, pdupreq->rq_vers, pdupreq->rq_proc);
 }
 
 /**
@@ -549,28 +526,35 @@ int nfs_dupreq_add_not_finished(long xid,
   hash_buffer_t buffval;
   hash_buffer_t buffdata;
   dupreq_entry_t *pdupreq = NULL;
-  int status;
-
-  struct sockaddr_in *phostaddr;
+  int status = 0;
   dupreq_key_t *pdupkey = NULL;
-
+  
   /* Entry to be cached */
   GetFromPool(pdupreq, dupreq_pool, dupreq_entry_t);
   if(pdupreq == NULL)
     return DUPREQ_INSERT_MALLOC_ERROR;
 
   if((pdupkey = (dupreq_key_t *) Mem_Alloc(sizeof(dupreq_key_t))) == NULL)
-    return DUPREQ_INSERT_MALLOC_ERROR;
+    {
+      ReleaseToPool(pdupreq, dupreq_pool);
+      return DUPREQ_INSERT_MALLOC_ERROR;
+    }
 
-  /* Get the socket address for the key */
-  phostaddr = (struct sockaddr_in *)svc_getcaller(xprt);
-  memcpy((char *)&pdupkey->addr, (char *)phostaddr,
-         sizeof(pdupkey->addr));
+  /* Get the socket address for the key and the request */
+  if(copy_xprt_addr(&pdupkey->addr, xprt) == 0 ||
+     copy_xprt_addr(&pdupreq->addr, xprt) == 0)
+    {
+      Mem_Free(pdupkey);
+      ReleaseToPool(pdupreq, dupreq_pool);
+      return DUPREQ_INSERT_MALLOC_ERROR;
+    }
 
   pdupkey->xid = xid;
+  pdupreq->xid = xid;
 
   /* Checksum the request */
   pdupkey->checksum = 0;
+  pdupreq->checksum = 0;
 
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
    * this also means that buffkey->len will be 0 */
@@ -578,10 +562,6 @@ int nfs_dupreq_add_not_finished(long xid,
   buffkey.len = sizeof(dupreq_key_t);
 
   /* I build the data with the request pointer that should be in state 'IN USE' */
-  pdupreq->xid = pdupkey->xid;
-  memcpy((char *)&pdupreq->addr, (char *)&pdupkey->addr,
-        sizeof(pdupkey->addr));
-  pdupreq->checksum = pdupkey->checksum;
   pdupreq->rq_prog = ptr_req->rq_prog;
   pdupreq->rq_vers = ptr_req->rq_vers;
   pdupreq->rq_proc = ptr_req->rq_proc;
@@ -590,15 +570,7 @@ int nfs_dupreq_add_not_finished(long xid,
   buffdata.pdata = (caddr_t) pdupreq;
   buffdata.len = sizeof(dupreq_entry_t);
 
-  LogFullDebug(COMPONENT_DUPREQ,
-               "TEST_AND_SET ip= %d.%d.%d.%d port=%d xid=%ld rq_prog=%ld",
-               (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
-               (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
-               (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
-               (ntohl(phostaddr->sin_addr.s_addr) & 0x000000FF),
-               phostaddr->sin_port,
-               xid,
-               pdupreq->rq_prog);
+  LogDupReq("Add Not Finished", &pdupreq->addr, pdupreq->xid, pdupreq->rq_prog);
 
   status = HashTable_Test_And_Set(ht_dupreq, &buffkey, &buffdata,
                                   HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
@@ -657,34 +629,36 @@ int nfs_dupreq_finish(long xid,
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
-  nfs_res_t res_nfs;
   LRU_entry_t *pentry = NULL;
   LRU_status_t lru_status;
-
-  struct sockaddr_in *phostaddr;
-  dupreq_key_t pdupkey;
+  dupreq_key_t dupkey;
+  dupreq_entry_t *pdupreq;
 
   /* Get the socket address for the key */
-  phostaddr = (struct sockaddr_in *)svc_getcaller(xprt);
-  memcpy((char *)&pdupkey.addr, (char *)phostaddr,
-         sizeof(pdupkey.addr));
-  pdupkey.xid = xid;
-  /* Checksum the request */
-  pdupkey.checksum = 0;
+  if(copy_xprt_addr(&dupkey.addr, xprt) == 0)
+    return DUPREQ_NOT_FOUND;
+
+  dupkey.xid = xid;
+  dupkey.checksum = 0;
+
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
    * this also means that buffkey->len will be 0 */
-  buffkey.pdata = (caddr_t) &pdupkey;
+  buffkey.pdata = (caddr_t) &dupkey;
   buffkey.len = sizeof(dupreq_key_t);
   if(HashTable_Get(ht_dupreq, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     return DUPREQ_NOT_FOUND;
 
-  LogDebug(COMPONENT_DUPREQ, "Hit in the dupreq cache for xid=%ld", xid);
+  pdupreq = (dupreq_entry_t *)buffval.pdata;
 
-  P(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
-  ((dupreq_entry_t *)buffval.pdata)->res_nfs = *p_res_nfs;
-  ((dupreq_entry_t *)buffval.pdata)->timestamp = time(NULL);
-  ((dupreq_entry_t *)buffval.pdata)->processing = 0;
-  V(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
+  LogDupReq("Finish", &pdupreq->addr, pdupreq->xid, pdupreq->rq_prog);
+
+  P(pdupreq->dupreq_mutex);
+
+  pdupreq->res_nfs = *p_res_nfs;
+  pdupreq->timestamp = time(NULL);
+  pdupreq->processing = 0;
+
+  V(pdupreq->dupreq_mutex);
 
   /* Add it to lru list */
   if((pentry = LRU_new_entry(lru_dupreq, &lru_status)) == NULL)
@@ -712,41 +686,39 @@ nfs_res_t nfs_dupreq_get(long xid, struct svc_req *ptr_req, SVCXPRT *xprt, int *
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
   nfs_res_t res_nfs;
+  dupreq_key_t dupkey;
 
-  struct sockaddr_in *phostaddr;
-  dupreq_key_t pdupkey;
+  memset(&res_nfs, 0, sizeof(res_nfs));
 
   /* Get the socket address for the key */
-  phostaddr = (struct sockaddr_in *)svc_getcaller(xprt);
-  memcpy((char *)&pdupkey.addr, (char *)phostaddr,
-         sizeof(pdupkey.addr));
-  pdupkey.xid = xid;
-  /* Checksum the request */
-  pdupkey.checksum = 0;
+  if(copy_xprt_addr(&dupkey.addr, xprt) == 0)
+    {
+      *pstatus = DUPREQ_NOT_FOUND;
+      return res_nfs;
+    }
+
+  dupkey.xid = xid;
+  dupkey.checksum = 0;
+
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
    * this also means that buffkey->len will be 0 */
-  buffkey.pdata = (caddr_t) &pdupkey;
+  buffkey.pdata = (caddr_t) &dupkey;
   buffkey.len = sizeof(dupreq_key_t);
   if(HashTable_Get(ht_dupreq, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
+      dupreq_entry_t *pdupreq = (dupreq_entry_t *)buffval.pdata;
       /* reset timestamp */
-      ((dupreq_entry_t *) buffval.pdata)->timestamp = time(NULL);
+      pdupreq->timestamp = time(NULL);
 
       *pstatus = DUPREQ_SUCCESS;
-      res_nfs = ((dupreq_entry_t *) buffval.pdata)->res_nfs;
-      LogDebug(COMPONENT_DUPREQ, "Hit in the dupreq cache for xid=%ld", xid);
+      res_nfs = pdupreq->res_nfs;
+      LogDupReq("Hit in the dupreq cache for", &pdupreq->addr, pdupreq->xid, pdupreq->rq_prog);
     }
-  else {
-    LogFullDebug(COMPONENT_DUPREQ,
-                 "Failed to get dupreq entry: ip= %d.%d.%d.%d port=%d xid=%ld",
-                 (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
-                 (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
-                 (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
-                 (ntohl(phostaddr->sin_addr.s_addr) & 0x000000FF),
-                 phostaddr->sin_port,
-                 xid);
+  else
+    {
+      LogDupReq("Failed to get dupreq entry", &dupkey.addr, dupkey.xid, ptr_req->rq_prog);
       *pstatus = DUPREQ_NOT_FOUND;
-  }
+    }
   return res_nfs;
 }                               /* nfs_dupreq_get */
 

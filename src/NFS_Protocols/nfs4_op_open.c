@@ -49,18 +49,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -76,8 +65,6 @@
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
-extern nfs_parameter_t nfs_param;
-
 /**
  * nfs4_op_open: NFS4_OP_OPEN, opens and eventually creates a regular file.
  * 
@@ -90,8 +77,6 @@ extern nfs_parameter_t nfs_param;
  * @return NFS4_OK if successfull, other values show an error.  
  * 
  */
-
-extern time_t ServerBootTime;
 
 #define arg_OPEN4 op->nfs_argop4_u.opopen
 #define res_OPEN4 resp->nfs_resop4_u.opopen
@@ -129,7 +114,12 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   cache_inode_open_owner_name_t owner_name;
   cache_inode_open_owner_name_t *powner_name = NULL;
   cache_inode_open_owner_t *powner = NULL;
-  bool_t open_owner_known = FALSE;
+
+  fsal_accessflags_t write_access = FSAL_MODE_MASK_SET(FSAL_W_OK) |
+                                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA |
+                                                       FSAL_ACE_PERM_APPEND_DATA);
+  fsal_accessflags_t read_access = FSAL_MODE_MASK_SET(FSAL_R_OK) |
+                                   FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_DATA);
 
   resp->resop = NFS4_OP_OPEN;
   res_OPEN4.status = NFS4_OK;
@@ -391,16 +381,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   nfs4_Fattr_To_FSAL_attr(&sattr,
                                           &(arg_OPEN4.openhow.openflag4_u.how.
                                             createhow4_u.createattrs));
-
-              if(convrc == 0)
+         
+              if(convrc != NFS4_OK)
                 {
-                  res_OPEN4.status = NFS4ERR_ATTRNOTSUPP;
-                  return res_OPEN4.status;
-                }
-
-              if(convrc == -1)
-                {
-                  res_OPEN4.status = NFS4ERR_BADXDR;
+                  res_OPEN4.status = convrc;
                   return res_OPEN4.status;
                 }
 
@@ -434,7 +418,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   if(arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE)
                     {
                       if(cache_inode_access(pentry_lookup,
-                                            FSAL_W_OK,
+                                            write_access,
                                             data->ht,
                                             data->pclient,
                                             data->pcontext,
@@ -450,7 +434,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ)
                     {
                       if(cache_inode_access(pentry_lookup,
-                                            FSAL_R_OK,
+                                            read_access,
                                             data->ht,
                                             data->pclient,
                                             data->pcontext,
@@ -487,7 +471,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE)
                     {
                       if(cache_inode_access(pentry_lookup,
-                                            FSAL_W_OK,
+                                            write_access,
                                             data->ht,
                                             data->pclient,
                                             data->pcontext,
@@ -898,7 +882,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           if(arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE)
             {
               if(cache_inode_access(pentry_newfile,
-                                    FSAL_W_OK,
+                                    write_access,
                                     data->ht,
                                     data->pclient,
                                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
@@ -913,7 +897,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ)
             {
               if(cache_inode_access(pentry_newfile,
-                                    FSAL_R_OK,
+                                    read_access,
                                     data->ht,
                                     data->pclient,
                                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
@@ -928,7 +912,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE)
             {
               if(cache_inode_access(pentry_newfile,
-                                    FSAL_W_OK,
+                                    write_access,
                                     data->ht,
                                     data->pclient,
                                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)

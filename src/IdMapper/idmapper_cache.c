@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -66,8 +66,6 @@ hash_table_t *ht_grnam;
 hash_table_t *ht_pwuid;
 hash_table_t *ht_grgid;
 hash_table_t *ht_uidgid;
-
-extern nfs_parameter_t nfs_param;
 
 /**
  *
@@ -281,10 +279,10 @@ int idmap_gname_init(nfs_idmap_cache_parameter_t param)
   return ID_MAPPER_SUCCESS;
 }                               /* idmap_uid_init */
 
-/** 
- * 
+/**
+ *
  * idmap_compute_hash_value: computes the hash value, based on the string.
- * 
+ *
  * Computes the computes the hash value, based on the string.
  *
  */
@@ -292,8 +290,8 @@ int idmap_gname_init(nfs_idmap_cache_parameter_t param)
 int idmap_compute_hash_value(char *name, uint32_t * phashval)
 {
    uint32_t res ;
-  
-   res = HashTable_hash_buff( name, strlen( name ) ) ;
+
+   res = Lookup3_hash_buff( name, strlen( name ) ) ;
 
     return (int)res ;
 }
@@ -330,10 +328,10 @@ int ___idmap_compute_hash_value(char *name, uint32_t * phashval)
 #endif
 
   /* For each 9 character pack:
-   *   - keep the 7 first bit (the 8th is often 0: ascii string) 
+   *   - keep the 7 first bit (the 8th is often 0: ascii string)
    *   - pack 7x9 bit to 63 bits using xor
    *   - xor the last 8th bit to a single 0 , or-ed with the rest
-   * Proceeding with the next 9 bytes pack will produce a new value that is xored with the 
+   * Proceeding with the next 9 bytes pack will produce a new value that is xored with the
    * one of the previous iteration */
 
   for(offset = 0; offset < PWENT_MAX_LEN; offset += 9)
@@ -373,7 +371,7 @@ int ___idmap_compute_hash_value(char *name, uint32_t * phashval)
           (padded_name[offset + 6] & 0x80) ^
           (padded_name[offset + 7] & 0x80) ^ (padded_name[offset + 8] & 0x80);
 
-      extract = i1 ^ i2 ^ i3 ^ i4 ^ i5 ^ i6 ^ i7 ^ i8 ^ i9 | l;
+      extract = (i1 ^ i2 ^ i3 ^ i4 ^ i5 ^ i6 ^ i7 ^ i8 ^ i9) | l;
 
 #ifdef WITH_PRINTF_DEBUG_PWHASH_COMPUTE
       printf("%llx ", extract);
@@ -394,7 +392,7 @@ int ___idmap_compute_hash_value(char *name, uint32_t * phashval)
 }                               /* idmap_compute_hash_value */
 
 /**
- * 
+ *
  * idmap_add: Adds a value by key
  *
  * Adss a value by key.
@@ -426,7 +424,8 @@ int idmap_add(hash_table_t * ht, char *key, unsigned int val)
   /* Build the value */
   buffdata.pdata = (caddr_t) local_val;
   buffdata.len = sizeof(unsigned long);
-
+  LogFullDebug(COMPONENT_IDMAPPER, "Adding the following principal->uid mapping: %s->%lu",
+	       (char *)buffkey.pdata, (unsigned long int)buffdata.pdata);
   rc = HashTable_Test_And_Set(ht, &buffkey, &buffdata,
                               HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
@@ -457,6 +456,8 @@ int namemap_add(hash_table_t * ht, unsigned int key, char *val)
   buffkey.pdata = (caddr_t) local_key;
   buffkey.len = sizeof(unsigned int);
 
+  LogFullDebug(COMPONENT_IDMAPPER, "Adding the following uid->principal mapping: %lu->%s",
+	       (unsigned long int)buffkey.pdata, (char *)buffdata.pdata);
   rc = HashTable_Test_And_Set(ht, &buffkey, &buffdata,
                               HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
@@ -490,6 +491,68 @@ int uidgidmap_add(unsigned int key, unsigned int value)
   return ID_MAPPER_SUCCESS;
 
 }                               /* uidgidmap_add */
+
+static int uidgidmap_free(hash_buffer_t key, hash_buffer_t val)
+{
+    LogFullDebug(COMPONENT_IDMAPPER, "Freeing uid->gid mapping: %lu->%lu",
+		 (unsigned long)key.pdata, (unsigned long)val.pdata);
+  return 1;
+}
+
+int uidgidmap_clear()
+{
+  int rc;
+  LogInfo(COMPONENT_IDMAPPER, "Clearing all uid->gid map entries.");
+  rc = HashTable_Delall(ht_uidgid, uidgidmap_free);
+  if (rc != HASHTABLE_SUCCESS)
+    return ID_MAPPER_FAIL;
+  return ID_MAPPER_SUCCESS;
+}
+
+static int idmap_free(hash_buffer_t key, hash_buffer_t val)
+{
+  if (val.pdata != NULL)
+    LogFullDebug(COMPONENT_IDMAPPER, "Freeing uid->principal mapping: %lu->%s",
+		 (unsigned long)key.pdata, (char *)val.pdata);
+
+  /* key is just an integer caste to charptr */
+  if (val.pdata != NULL)
+    Mem_Free(val.pdata);
+  return 1;
+}
+
+int idmap_clear()
+{
+  int rc;
+  LogInfo(COMPONENT_IDMAPPER, "Clearing all principal->uid map entries.");
+  rc = HashTable_Delall(ht_pwuid, idmap_free);
+  if (rc != HASHTABLE_SUCCESS)
+    return ID_MAPPER_FAIL;
+  return ID_MAPPER_SUCCESS;
+}
+
+static int namemap_free(hash_buffer_t key, hash_buffer_t val)
+{
+  if (key.pdata != NULL)
+    LogFullDebug(COMPONENT_IDMAPPER, "Freeing principal->uid mapping: %s->%lu",
+		 (char *)key.pdata, (unsigned long)val.pdata);
+
+  /* val is just an integer caste to charptr */
+  if (key.pdata != NULL)
+    Mem_Free(key.pdata);  
+  return 1;
+}
+
+int namemap_clear()
+{
+  int rc;
+  LogInfo(COMPONENT_IDMAPPER, "Clearing all uid->principal map entries.");
+  rc = HashTable_Delall(ht_pwnam, namemap_free);
+  if (rc != HASHTABLE_SUCCESS)
+    return ID_MAPPER_FAIL;
+  return ID_MAPPER_SUCCESS;
+}
+
 
 int uidmap_add(char *key, unsigned int val)
 {
@@ -556,7 +619,7 @@ int gnamemap_add(unsigned int key, char *val)
 }                               /* gnamemap_add */
 
 /**
- * 
+ *
  * idmap_get: gets a value by key
  *
  * Gets a value by key.
@@ -778,12 +841,12 @@ int gnamemap_remove(unsigned int key)
 }
 
 /**
- * 
+ *
  * idmap_populate_by_conf: Use the configuration file to populate the ID_MAPPER.
  *
  * Use the configuration file to populate the ID_MAPPER.
  *
- * 
+ *
  */
 int idmap_populate(char *path, idmap_type_t maptype)
 {
@@ -884,7 +947,7 @@ int idmap_populate(char *path, idmap_type_t maptype)
  *
  * Gets the hash table statistics for the idmap et the reverse idmap.
  *
- * @param maptype [IN] type of the mapping to be queried (should be UIDMAP_TYPE or GIDMAP_TYPE) 
+ * @param maptype [IN] type of the mapping to be queried (should be UIDMAP_TYPE or GIDMAP_TYPE)
  * @param phstat [OUT] pointer to the resulting stats for direct map.
  * @param phstat [OUT] pointer to the resulting stats for reverse map.
  *

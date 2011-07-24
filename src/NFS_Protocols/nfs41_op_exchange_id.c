@@ -48,18 +48,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -74,8 +63,6 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 
-extern time_t ServerBootTime;
-extern nfs_parameter_t nfs_param;
 /**
  *
  * nfs41_op_exchange_id:  The NFS4_OP_EXCHANGE_ID operation.
@@ -92,6 +79,7 @@ extern nfs_parameter_t nfs_param;
  *
  */
 
+#if 0
 static uint32_t all_eia_flags = 
     EXCHGID4_FLAG_SUPP_MOVED_MIGR |
     EXCHGID4_FLAG_BIND_PRINC_STATEID |
@@ -100,6 +88,7 @@ static uint32_t all_eia_flags =
     EXCHGID4_FLAG_USE_PNFS_DS |
     EXCHGID4_FLAG_MASK_PNFS |
     EXCHGID4_FLAG_UPD_CONFIRMED_REC_A | EXCHGID4_FLAG_CONFIRMED_R;
+#endif
 
 int nfs41_op_exchange_id(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp)

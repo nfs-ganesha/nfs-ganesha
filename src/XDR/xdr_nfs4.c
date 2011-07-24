@@ -10,101 +10,17 @@
 #include "solaris_port.h"
 #endif
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#endif
-
+#include "rpc.h"
 #include "nfs4.h"
 
 #ifndef RPCSEC_GSS
 #define RPCSEC_GSS 6
 #endif
 
-#ifdef _USE_GSSRPC
-/* These prototypes are missing in gssrpc/xdr.h */
-bool_t xdr_longlong_t(XDR * __xdrs, quad_t * __llp);
-bool_t xdr_u_longlong_t(XDR * __xdrs, u_quad_t * __ullp);
-#endif
-
-bool_t xdr_int32_t(xdrs, objp)
-register XDR *xdrs;
-int32_t *objp;
-{
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int __attribute((__unused__)) * buf;
-#else
-  register long __attribute((__unused__)) * buf;
-#endif
-
-  if(!xdr_int(xdrs, objp))
-    return (FALSE);
-  return (TRUE);
-}
-
-bool_t xdr_uint32_t(xdrs, objp)
-register XDR *xdrs;
-uint32_t *objp;
-{
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
-  if(!xdr_u_int(xdrs, objp))
-    return (FALSE);
-  return (TRUE);
-}
-
-bool_t xdr_int64_t(xdrs, objp)
-register XDR *xdrs;
-int64_t *objp;
-{
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
-  if(!xdr_longlong_t(xdrs, objp))
-    return (FALSE);
-  return (TRUE);
-}
-
-bool_t xdr_uint64_t(xdrs, objp)
-register XDR *xdrs;
-uint64_t *objp;
-{
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
-  if(!xdr_u_longlong_t(xdrs, objp))
-    return (FALSE);
-  return (TRUE);
-}
-
 bool_t xdr_nfs_ftype4(xdrs, objp)
 register XDR *xdrs;
 nfs_ftype4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
   return (TRUE);
@@ -114,13 +30,6 @@ bool_t xdr_nfsstat4(xdrs, objp)
 register XDR *xdrs;
 nfsstat4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
   return (TRUE);
@@ -130,12 +39,6 @@ bool_t xdr_bitmap4(xdrs, objp)
 register XDR *xdrs;
 bitmap4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
   if(objp->bitmap4_val == NULL && objp->bitmap4_len != 0)
     objp->bitmap4_len = 0;
 
@@ -149,13 +52,6 @@ bool_t xdr_offset4(xdrs, objp)
 register XDR *xdrs;
 offset4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -165,13 +61,6 @@ bool_t xdr_count4(xdrs, objp)
 register XDR *xdrs;
 count4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -181,13 +70,6 @@ bool_t xdr_length4(xdrs, objp)
 register XDR *xdrs;
 length4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -197,13 +79,6 @@ bool_t xdr_clientid4(xdrs, objp)
 register XDR *xdrs;
 clientid4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -213,13 +88,6 @@ bool_t xdr_seqid4(xdrs, objp)
 register XDR *xdrs;
 seqid4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -229,12 +97,6 @@ bool_t xdr_utf8string(xdrs, objp)
 register XDR *xdrs;
 utf8string *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
   if(!xdr_bytes
      (xdrs, (char **)&objp->utf8string_val, (u_int *) & objp->utf8string_len, ~0))
     return (FALSE);
@@ -245,13 +107,6 @@ bool_t xdr_utf8str_cis(xdrs, objp)
 register XDR *xdrs;
 utf8str_cis *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_utf8string(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -261,13 +116,6 @@ bool_t xdr_utf8str_cs(xdrs, objp)
 register XDR *xdrs;
 utf8str_cs *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_utf8string(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -277,13 +125,7 @@ bool_t xdr_utf8str_mixed(xdrs, objp)
 register XDR *xdrs;
 utf8str_mixed *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-  if(!xdr_utf8string(xdrs, objp))
+ if(!xdr_utf8string(xdrs, objp))
     return (FALSE);
   return (TRUE);
 }
@@ -292,12 +134,6 @@ bool_t xdr_component4(xdrs, objp)
 register XDR *xdrs;
 component4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
   if(!xdr_utf8str_cs(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -307,13 +143,6 @@ bool_t xdr_pathname4(xdrs, objp)
 register XDR *xdrs;
 pathname4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_array(xdrs, (char **)&objp->pathname4_val, (u_int *) & objp->pathname4_len, ~0,
                 sizeof(component4), (xdrproc_t) xdr_component4))
     return (FALSE);
@@ -324,13 +153,6 @@ bool_t xdr_nfs_lockid4(xdrs, objp)
 register XDR *xdrs;
 nfs_lockid4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -340,13 +162,6 @@ bool_t xdr_nfs_cookie4(xdrs, objp)
 register XDR *xdrs;
 nfs_cookie4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -356,13 +171,6 @@ bool_t xdr_linktext4(xdrs, objp)
 register XDR *xdrs;
 linktext4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_utf8str_cs(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -372,13 +180,6 @@ bool_t xdr_sec_oid4(xdrs, objp)
 register XDR *xdrs;
 sec_oid4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bytes(xdrs, (char **)&objp->sec_oid4_val, (u_int *) & objp->sec_oid4_len, ~0))
     return (FALSE);
   return (TRUE);
@@ -388,13 +189,6 @@ bool_t xdr_qop4(xdrs, objp)
 register XDR *xdrs;
 qop4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -404,13 +198,6 @@ bool_t xdr_mode4(xdrs, objp)
 register XDR *xdrs;
 mode4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -420,13 +207,6 @@ bool_t xdr_changeid4(xdrs, objp)
 register XDR *xdrs;
 changeid4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -436,13 +216,6 @@ bool_t xdr_verifier4(xdrs, objp)
 register XDR *xdrs;
 verifier4 objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_opaque(xdrs, objp, NFS4_VERIFIER_SIZE))
     return (FALSE);
   return (TRUE);
@@ -452,13 +225,6 @@ bool_t xdr_nfstime4(xdrs, objp)
 register XDR *xdrs;
 nfstime4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_int64_t(xdrs, &objp->seconds))
     return (FALSE);
   if(!xdr_uint32_t(xdrs, &objp->nseconds))
@@ -470,13 +236,6 @@ bool_t xdr_time_how4(xdrs, objp)
 register XDR *xdrs;
 time_how4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
   return (TRUE);
@@ -486,13 +245,6 @@ bool_t xdr_settime4(xdrs, objp)
 register XDR *xdrs;
 settime4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_time_how4(xdrs, &objp->set_it))
     return (FALSE);
   switch (objp->set_it)
@@ -500,6 +252,9 @@ settime4 *objp;
     case SET_TO_CLIENT_TIME4:
       if(!xdr_nfstime4(xdrs, &objp->settime4_u.time))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -509,12 +264,6 @@ bool_t xdr_nfs_fh4(xdrs, objp)
 register XDR *xdrs;
 nfs_fh4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
   if(!xdr_bytes
      (xdrs, (char **)&objp->nfs_fh4_val, (u_int *) & objp->nfs_fh4_len, NFS4_FHSIZE))
     return (FALSE);
@@ -525,13 +274,6 @@ bool_t xdr_fsid4(xdrs, objp)
 register XDR *xdrs;
 fsid4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, &objp->major))
     return (FALSE);
   if(!xdr_uint64_t(xdrs, &objp->minor))
@@ -543,13 +285,6 @@ bool_t xdr_fs_location4(xdrs, objp)
 register XDR *xdrs;
 fs_location4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_array
      (xdrs, (char **)&objp->server.server_val, (u_int *) & objp->server.server_len, ~0,
       sizeof(utf8str_cis), (xdrproc_t) xdr_utf8str_cis))
@@ -563,13 +298,6 @@ bool_t xdr_fs_locations4(xdrs, objp)
 register XDR *xdrs;
 fs_locations4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_pathname4(xdrs, &objp->fs_root))
     return (FALSE);
   if(!xdr_array
@@ -584,13 +312,6 @@ bool_t xdr_acetype4(xdrs, objp)
 register XDR *xdrs;
 acetype4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -600,13 +321,6 @@ bool_t xdr_aceflag4(xdrs, objp)
 register XDR *xdrs;
 aceflag4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -616,13 +330,6 @@ bool_t xdr_acemask4(xdrs, objp)
 register XDR *xdrs;
 acemask4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -632,13 +339,6 @@ bool_t xdr_nfsace4(xdrs, objp)
 register XDR *xdrs;
 nfsace4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_acetype4(xdrs, &objp->type))
     return (FALSE);
   if(!xdr_aceflag4(xdrs, &objp->flag))
@@ -654,13 +354,6 @@ bool_t xdr_specdata4(xdrs, objp)
 register XDR *xdrs;
 specdata4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, &objp->specdata1))
     return (FALSE);
   if(!xdr_uint32_t(xdrs, &objp->specdata2))
@@ -672,13 +365,6 @@ bool_t xdr_fattr4_supported_attrs(xdrs, objp)
 register XDR *xdrs;
 fattr4_supported_attrs *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bitmap4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -688,13 +374,6 @@ bool_t xdr_fattr4_type(xdrs, objp)
 register XDR *xdrs;
 fattr4_type *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfs_ftype4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -704,13 +383,6 @@ bool_t xdr_fattr4_fh_expire_type(xdrs, objp)
 register XDR *xdrs;
 fattr4_fh_expire_type *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -720,13 +392,6 @@ bool_t xdr_fattr4_change(xdrs, objp)
 register XDR *xdrs;
 fattr4_change *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_changeid4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -736,13 +401,6 @@ bool_t xdr_fattr4_size(xdrs, objp)
 register XDR *xdrs;
 fattr4_size *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -752,13 +410,6 @@ bool_t xdr_fattr4_link_support(xdrs, objp)
 register XDR *xdrs;
 fattr4_link_support *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bool(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -768,13 +419,6 @@ bool_t xdr_fattr4_symlink_support(xdrs, objp)
 register XDR *xdrs;
 fattr4_symlink_support *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bool(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -784,13 +428,6 @@ bool_t xdr_fattr4_named_attr(xdrs, objp)
 register XDR *xdrs;
 fattr4_named_attr *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bool(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -800,13 +437,6 @@ bool_t xdr_fattr4_fsid(xdrs, objp)
 register XDR *xdrs;
 fattr4_fsid *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_fsid4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -816,13 +446,6 @@ bool_t xdr_fattr4_unique_handles(xdrs, objp)
 register XDR *xdrs;
 fattr4_unique_handles *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bool(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -832,13 +455,6 @@ bool_t xdr_fattr4_lease_time(xdrs, objp)
 register XDR *xdrs;
 fattr4_lease_time *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -848,13 +464,6 @@ bool_t xdr_fattr4_rdattr_error(xdrs, objp)
 register XDR *xdrs;
 fattr4_rdattr_error *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -864,13 +473,6 @@ bool_t xdr_fattr4_acl(xdrs, objp)
 register XDR *xdrs;
 fattr4_acl *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_array
      (xdrs, (char **)&objp->fattr4_acl_val, (u_int *) & objp->fattr4_acl_len, ~0,
       sizeof(nfsace4), (xdrproc_t) xdr_nfsace4))
@@ -882,13 +484,6 @@ bool_t xdr_fattr4_aclsupport(xdrs, objp)
 register XDR *xdrs;
 fattr4_aclsupport *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -898,13 +493,6 @@ bool_t xdr_fattr4_archive(xdrs, objp)
 register XDR *xdrs;
 fattr4_archive *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bool(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -914,13 +502,6 @@ bool_t xdr_fattr4_cansettime(xdrs, objp)
 register XDR *xdrs;
 fattr4_cansettime *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bool(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -930,13 +511,6 @@ bool_t xdr_fattr4_case_insensitive(xdrs, objp)
 register XDR *xdrs;
 fattr4_case_insensitive *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bool(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -946,13 +520,6 @@ bool_t xdr_fattr4_case_preserving(xdrs, objp)
 register XDR *xdrs;
 fattr4_case_preserving *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bool(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -962,13 +529,6 @@ bool_t xdr_fattr4_chown_restricted(xdrs, objp)
 register XDR *xdrs;
 fattr4_chown_restricted *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bool(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -978,13 +538,6 @@ bool_t xdr_fattr4_fileid(xdrs, objp)
 register XDR *xdrs;
 fattr4_fileid *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -994,13 +547,6 @@ bool_t xdr_fattr4_files_avail(xdrs, objp)
 register XDR *xdrs;
 fattr4_files_avail *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1010,13 +556,6 @@ bool_t xdr_fattr4_filehandle(xdrs, objp)
 register XDR *xdrs;
 fattr4_filehandle *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfs_fh4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1026,13 +565,6 @@ bool_t xdr_fattr4_files_free(xdrs, objp)
 register XDR *xdrs;
 fattr4_files_free *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1042,13 +574,6 @@ bool_t xdr_fattr4_files_total(xdrs, objp)
 register XDR *xdrs;
 fattr4_files_total *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1058,13 +583,6 @@ bool_t xdr_fattr4_fs_locations(xdrs, objp)
 register XDR *xdrs;
 fattr4_fs_locations *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_fs_locations4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1074,13 +592,6 @@ bool_t xdr_fattr4_hidden(xdrs, objp)
 register XDR *xdrs;
 fattr4_hidden *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bool(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1090,14 +601,7 @@ bool_t xdr_fattr4_homogeneous(xdrs, objp)
 register XDR *xdrs;
 fattr4_homogeneous *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
-  if(!xdr_bool(xdrs, objp))
+ if(!xdr_bool(xdrs, objp))
     return (FALSE);
   return (TRUE);
 }
@@ -1106,13 +610,6 @@ bool_t xdr_fattr4_maxfilesize(xdrs, objp)
 register XDR *xdrs;
 fattr4_maxfilesize *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1122,13 +619,6 @@ bool_t xdr_fattr4_maxlink(xdrs, objp)
 register XDR *xdrs;
 fattr4_maxlink *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1138,13 +628,6 @@ bool_t xdr_fattr4_maxname(xdrs, objp)
 register XDR *xdrs;
 fattr4_maxname *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1154,13 +637,6 @@ bool_t xdr_fattr4_maxread(xdrs, objp)
 register XDR *xdrs;
 fattr4_maxread *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1170,13 +646,6 @@ bool_t xdr_fattr4_maxwrite(xdrs, objp)
 register XDR *xdrs;
 fattr4_maxwrite *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1186,13 +655,6 @@ bool_t xdr_fattr4_mimetype(xdrs, objp)
 register XDR *xdrs;
 fattr4_mimetype *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_utf8str_cs(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1202,13 +664,6 @@ bool_t xdr_fattr4_mode(xdrs, objp)
 register XDR *xdrs;
 fattr4_mode *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_mode4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1218,13 +673,6 @@ bool_t xdr_fattr4_mounted_on_fileid(xdrs, objp)
 register XDR *xdrs;
 fattr4_mounted_on_fileid *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1234,13 +682,6 @@ bool_t xdr_fattr4_no_trunc(xdrs, objp)
 register XDR *xdrs;
 fattr4_no_trunc *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bool(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1250,13 +691,6 @@ bool_t xdr_fattr4_numlinks(xdrs, objp)
 register XDR *xdrs;
 fattr4_numlinks *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1266,12 +700,6 @@ bool_t xdr_fattr4_owner(xdrs, objp)
 register XDR *xdrs;
 fattr4_owner *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
   if(!xdr_utf8str_mixed(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1281,12 +709,6 @@ bool_t xdr_fattr4_owner_group(xdrs, objp)
 register XDR *xdrs;
 fattr4_owner_group *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
   if(!xdr_utf8str_mixed(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1296,13 +718,6 @@ bool_t xdr_fattr4_quota_avail_hard(xdrs, objp)
 register XDR *xdrs;
 fattr4_quota_avail_hard *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1312,13 +727,6 @@ bool_t xdr_fattr4_quota_avail_soft(xdrs, objp)
 register XDR *xdrs;
 fattr4_quota_avail_soft *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1328,13 +736,6 @@ bool_t xdr_fattr4_quota_used(xdrs, objp)
 register XDR *xdrs;
 fattr4_quota_used *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1344,13 +745,6 @@ bool_t xdr_fattr4_rawdev(xdrs, objp)
 register XDR *xdrs;
 fattr4_rawdev *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_specdata4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1360,13 +754,6 @@ bool_t xdr_fattr4_space_avail(xdrs, objp)
 register XDR *xdrs;
 fattr4_space_avail *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1376,13 +763,6 @@ bool_t xdr_fattr4_space_free(xdrs, objp)
 register XDR *xdrs;
 fattr4_space_free *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1392,13 +772,6 @@ bool_t xdr_fattr4_space_total(xdrs, objp)
 register XDR *xdrs;
 fattr4_space_total *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1408,13 +781,6 @@ bool_t xdr_fattr4_space_used(xdrs, objp)
 register XDR *xdrs;
 fattr4_space_used *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint64_t(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1424,13 +790,6 @@ bool_t xdr_fattr4_system(xdrs, objp)
 register XDR *xdrs;
 fattr4_system *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bool(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1440,13 +799,6 @@ bool_t xdr_fattr4_time_access(xdrs, objp)
 register XDR *xdrs;
 fattr4_time_access *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfstime4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1456,13 +808,6 @@ bool_t xdr_fattr4_time_access_set(xdrs, objp)
 register XDR *xdrs;
 fattr4_time_access_set *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_settime4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1472,13 +817,6 @@ bool_t xdr_fattr4_time_backup(xdrs, objp)
 register XDR *xdrs;
 fattr4_time_backup *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfstime4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1488,13 +826,6 @@ bool_t xdr_fattr4_time_create(xdrs, objp)
 register XDR *xdrs;
 fattr4_time_create *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfstime4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1504,13 +835,6 @@ bool_t xdr_fattr4_time_delta(xdrs, objp)
 register XDR *xdrs;
 fattr4_time_delta *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfstime4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1520,13 +844,6 @@ bool_t xdr_fattr4_time_metadata(xdrs, objp)
 register XDR *xdrs;
 fattr4_time_metadata *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfstime4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1536,13 +853,6 @@ bool_t xdr_fattr4_time_modify(xdrs, objp)
 register XDR *xdrs;
 fattr4_time_modify *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfstime4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1552,13 +862,6 @@ bool_t xdr_fattr4_time_modify_set(xdrs, objp)
 register XDR *xdrs;
 fattr4_time_modify_set *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_settime4(xdrs, objp))
     return (FALSE);
   return (TRUE);
@@ -1568,12 +871,6 @@ bool_t xdr_attrlist4(xdrs, objp)
 register XDR *xdrs;
 attrlist4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
   if(!xdr_bytes(xdrs, (char **)&objp->attrlist4_val, (u_int *) & objp->attrlist4_len, ~0))
     return (FALSE);
   return (TRUE);
@@ -1583,13 +880,6 @@ bool_t xdr_fattr4(xdrs, objp)
 register XDR *xdrs;
 fattr4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bitmap4(xdrs, &objp->attrmask))
     return (FALSE);
   if(!xdr_attrlist4(xdrs, &objp->attr_vals))
@@ -1601,13 +891,6 @@ bool_t xdr_change_info4(xdrs, objp)
 register XDR *xdrs;
 change_info4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bool(xdrs, &objp->atomic))
     return (FALSE);
   if(!xdr_changeid4(xdrs, &objp->before))
@@ -1621,13 +904,6 @@ bool_t xdr_clientaddr4(xdrs, objp)
 register XDR *xdrs;
 clientaddr4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_string(xdrs, &objp->r_netid, ~0))
     return (FALSE);
   if(!xdr_string(xdrs, &objp->r_addr, ~0))
@@ -1639,13 +915,6 @@ bool_t xdr_cb_client4(xdrs, objp)
 register XDR *xdrs;
 cb_client4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, &objp->cb_program))
     return (FALSE);
   if(!xdr_clientaddr4(xdrs, &objp->cb_location))
@@ -1657,14 +926,6 @@ bool_t xdr_stateid4(xdrs, objp)
 register XDR *xdrs;
 stateid4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
-  int i;
   if(!xdr_uint32_t(xdrs, &objp->seqid))
     return (FALSE);
   if(!xdr_opaque(xdrs, objp->other, 12))
@@ -1676,13 +937,6 @@ bool_t xdr_nfs_client_id4(xdrs, objp)
 register XDR *xdrs;
 nfs_client_id4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_verifier4(xdrs, objp->verifier))
     return (FALSE);
   if(!xdr_bytes
@@ -1695,13 +949,6 @@ bool_t xdr_open_owner4(xdrs, objp)
 register XDR *xdrs;
 open_owner4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_clientid4(xdrs, &objp->clientid))
     return (FALSE);
   if(!xdr_bytes
@@ -1715,13 +962,6 @@ bool_t xdr_lock_owner4(xdrs, objp)
 register XDR *xdrs;
 lock_owner4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_clientid4(xdrs, &objp->clientid))
     return (FALSE);
   if(!xdr_bytes
@@ -1735,13 +975,6 @@ bool_t xdr_nfs_lock_type4(xdrs, objp)
 register XDR *xdrs;
 nfs_lock_type4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
   return (TRUE);
@@ -1751,13 +984,6 @@ bool_t xdr_ACCESS4args(xdrs, objp)
 register XDR *xdrs;
 ACCESS4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, &objp->access))
     return (FALSE);
   return (TRUE);
@@ -1767,13 +993,6 @@ bool_t xdr_ACCESS4resok(xdrs, objp)
 register XDR *xdrs;
 ACCESS4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, &objp->supported))
     return (FALSE);
   if(!xdr_uint32_t(xdrs, &objp->access))
@@ -1785,13 +1004,6 @@ bool_t xdr_ACCESS4res(xdrs, objp)
 register XDR *xdrs;
 ACCESS4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -1799,6 +1011,9 @@ ACCESS4res *objp;
     case NFS4_OK:
       if(!xdr_ACCESS4resok(xdrs, &objp->ACCESS4res_u.resok4))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -1808,13 +1023,6 @@ bool_t xdr_CLOSE4args(xdrs, objp)
 register XDR *xdrs;
 CLOSE4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_seqid4(xdrs, &objp->seqid))
     return (FALSE);
   if(!xdr_stateid4(xdrs, &objp->open_stateid))
@@ -1826,13 +1034,6 @@ bool_t xdr_CLOSE4res(xdrs, objp)
 register XDR *xdrs;
 CLOSE4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -1841,7 +1042,10 @@ CLOSE4res *objp;
       if(!xdr_stateid4(xdrs, &objp->CLOSE4res_u.open_stateid))
         return (FALSE);
       break;
-    }
+    default:
+      return (TRUE);
+      break;
+   }
   return (TRUE);
 }
 
@@ -1849,13 +1053,6 @@ bool_t xdr_COMMIT4args(xdrs, objp)
 register XDR *xdrs;
 COMMIT4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_offset4(xdrs, &objp->offset))
     return (FALSE);
   if(!xdr_count4(xdrs, &objp->count))
@@ -1867,13 +1064,6 @@ bool_t xdr_COMMIT4resok(xdrs, objp)
 register XDR *xdrs;
 COMMIT4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_verifier4(xdrs, objp->writeverf))
     return (FALSE);
   return (TRUE);
@@ -1883,13 +1073,6 @@ bool_t xdr_COMMIT4res(xdrs, objp)
 register XDR *xdrs;
 COMMIT4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -1897,6 +1080,9 @@ COMMIT4res *objp;
     case NFS4_OK:
       if(!xdr_COMMIT4resok(xdrs, &objp->COMMIT4res_u.resok4))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -1906,13 +1092,6 @@ bool_t xdr_createtype4(xdrs, objp)
 register XDR *xdrs;
 createtype4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfs_ftype4(xdrs, &objp->type))
     return (FALSE);
   switch (objp->type)
@@ -1930,6 +1109,9 @@ createtype4 *objp;
     case NF4FIFO:
     case NF4DIR:
       break;
+    default:
+      return (TRUE);
+      break;
     }
   return (TRUE);
 }
@@ -1938,13 +1120,6 @@ bool_t xdr_CREATE4args(xdrs, objp)
 register XDR *xdrs;
 CREATE4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_createtype4(xdrs, &objp->objtype))
     return (FALSE);
   if(!xdr_component4(xdrs, &objp->objname))
@@ -1958,13 +1133,6 @@ bool_t xdr_CREATE4resok(xdrs, objp)
 register XDR *xdrs;
 CREATE4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_change_info4(xdrs, &objp->cinfo))
     return (FALSE);
   if(!xdr_bitmap4(xdrs, &objp->attrset))
@@ -1976,13 +1144,6 @@ bool_t xdr_CREATE4res(xdrs, objp)
 register XDR *xdrs;
 CREATE4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -1990,6 +1151,9 @@ CREATE4res *objp;
     case NFS4_OK:
       if(!xdr_CREATE4resok(xdrs, &objp->CREATE4res_u.resok4))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -1999,13 +1163,6 @@ bool_t xdr_DELEGPURGE4args(xdrs, objp)
 register XDR *xdrs;
 DELEGPURGE4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_clientid4(xdrs, &objp->clientid))
     return (FALSE);
   return (TRUE);
@@ -2015,13 +1172,6 @@ bool_t xdr_DELEGPURGE4res(xdrs, objp)
 register XDR *xdrs;
 DELEGPURGE4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   return (TRUE);
@@ -2031,13 +1181,6 @@ bool_t xdr_DELEGRETURN4args(xdrs, objp)
 register XDR *xdrs;
 DELEGRETURN4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_stateid4(xdrs, &objp->deleg_stateid))
     return (FALSE);
   return (TRUE);
@@ -2047,13 +1190,6 @@ bool_t xdr_DELEGRETURN4res(xdrs, objp)
 register XDR *xdrs;
 DELEGRETURN4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   return (TRUE);
@@ -2063,13 +1199,6 @@ bool_t xdr_GETATTR4args(xdrs, objp)
 register XDR *xdrs;
 GETATTR4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bitmap4(xdrs, &objp->attr_request))
     return (FALSE);
   return (TRUE);
@@ -2079,13 +1208,6 @@ bool_t xdr_GETATTR4resok(xdrs, objp)
 register XDR *xdrs;
 GETATTR4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_fattr4(xdrs, &objp->obj_attributes))
     return (FALSE);
   return (TRUE);
@@ -2095,13 +1217,6 @@ bool_t xdr_GETATTR4res(xdrs, objp)
 register XDR *xdrs;
 GETATTR4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -2109,6 +1224,9 @@ GETATTR4res *objp;
     case NFS4_OK:
       if(!xdr_GETATTR4resok(xdrs, &objp->GETATTR4res_u.resok4))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -2118,13 +1236,6 @@ bool_t xdr_GETFH4resok(xdrs, objp)
 register XDR *xdrs;
 GETFH4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfs_fh4(xdrs, &objp->object))
     return (FALSE);
   return (TRUE);
@@ -2134,13 +1245,6 @@ bool_t xdr_GETFH4res(xdrs, objp)
 register XDR *xdrs;
 GETFH4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -2148,6 +1252,9 @@ GETFH4res *objp;
     case NFS4_OK:
       if(!xdr_GETFH4resok(xdrs, &objp->GETFH4res_u.resok4))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -2157,13 +1264,6 @@ bool_t xdr_LINK4args(xdrs, objp)
 register XDR *xdrs;
 LINK4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_component4(xdrs, &objp->newname))
     return (FALSE);
   return (TRUE);
@@ -2173,13 +1273,6 @@ bool_t xdr_LINK4resok(xdrs, objp)
 register XDR *xdrs;
 LINK4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_change_info4(xdrs, &objp->cinfo))
     return (FALSE);
   return (TRUE);
@@ -2189,13 +1282,6 @@ bool_t xdr_LINK4res(xdrs, objp)
 register XDR *xdrs;
 LINK4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -2204,7 +1290,10 @@ LINK4res *objp;
       if(!xdr_LINK4resok(xdrs, &objp->LINK4res_u.resok4))
         return (FALSE);
       break;
-    }
+    default:
+      return (TRUE);
+      break;
+   }
   return (TRUE);
 }
 
@@ -2212,13 +1301,6 @@ bool_t xdr_open_to_lock_owner4(xdrs, objp)
 register XDR *xdrs;
 open_to_lock_owner4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_seqid4(xdrs, &objp->open_seqid))
     return (FALSE);
   if(!xdr_stateid4(xdrs, &objp->open_stateid))
@@ -2234,13 +1316,6 @@ bool_t xdr_exist_lock_owner4(xdrs, objp)
 register XDR *xdrs;
 exist_lock_owner4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_stateid4(xdrs, &objp->lock_stateid))
     return (FALSE);
   if(!xdr_seqid4(xdrs, &objp->lock_seqid))
@@ -2252,13 +1327,6 @@ bool_t xdr_locker4(xdrs, objp)
 register XDR *xdrs;
 locker4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bool(xdrs, &objp->new_lock_owner))
     return (FALSE);
   switch (objp->new_lock_owner)
@@ -2281,13 +1349,6 @@ bool_t xdr_LOCK4args(xdrs, objp)
 register XDR *xdrs;
 LOCK4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfs_lock_type4(xdrs, &objp->locktype))
     return (FALSE);
   if(!xdr_bool(xdrs, &objp->reclaim))
@@ -2305,13 +1366,6 @@ bool_t xdr_LOCK4denied(xdrs, objp)
 register XDR *xdrs;
 LOCK4denied *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_offset4(xdrs, &objp->offset))
     return (FALSE);
   if(!xdr_length4(xdrs, &objp->length))
@@ -2327,13 +1381,6 @@ bool_t xdr_LOCK4resok(xdrs, objp)
 register XDR *xdrs;
 LOCK4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_stateid4(xdrs, &objp->lock_stateid))
     return (FALSE);
   return (TRUE);
@@ -2343,13 +1390,6 @@ bool_t xdr_LOCK4res(xdrs, objp)
 register XDR *xdrs;
 LOCK4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -2362,6 +1402,9 @@ LOCK4res *objp;
       if(!xdr_LOCK4denied(xdrs, &objp->LOCK4res_u.denied))
         return (FALSE);
       break;
+    default:
+      return (TRUE);
+      break;
     }
   return (TRUE);
 }
@@ -2370,13 +1413,6 @@ bool_t xdr_LOCKT4args(xdrs, objp)
 register XDR *xdrs;
 LOCKT4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfs_lock_type4(xdrs, &objp->locktype))
     return (FALSE);
   if(!xdr_offset4(xdrs, &objp->offset))
@@ -2392,13 +1428,6 @@ bool_t xdr_LOCKT4res(xdrs, objp)
 register XDR *xdrs;
 LOCKT4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -2409,6 +1438,9 @@ LOCKT4res *objp;
       break;
     case NFS4_OK:
       break;
+    default:
+      return (TRUE);
+      break;
     }
   return (TRUE);
 }
@@ -2417,13 +1449,6 @@ bool_t xdr_LOCKU4args(xdrs, objp)
 register XDR *xdrs;
 LOCKU4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfs_lock_type4(xdrs, &objp->locktype))
     return (FALSE);
   if(!xdr_seqid4(xdrs, &objp->seqid))
@@ -2441,13 +1466,6 @@ bool_t xdr_LOCKU4res(xdrs, objp)
 register XDR *xdrs;
 LOCKU4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -2455,6 +1473,9 @@ LOCKU4res *objp;
     case NFS4_OK:
       if(!xdr_stateid4(xdrs, &objp->LOCKU4res_u.lock_stateid))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -2464,13 +1485,6 @@ bool_t xdr_LOOKUP4args(xdrs, objp)
 register XDR *xdrs;
 LOOKUP4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_component4(xdrs, &objp->objname))
     return (FALSE);
   return (TRUE);
@@ -2480,13 +1494,6 @@ bool_t xdr_LOOKUP4res(xdrs, objp)
 register XDR *xdrs;
 LOOKUP4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   return (TRUE);
@@ -2496,13 +1503,6 @@ bool_t xdr_LOOKUPP4res(xdrs, objp)
 register XDR *xdrs;
 LOOKUPP4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   return (TRUE);
@@ -2512,13 +1512,6 @@ bool_t xdr_NVERIFY4args(xdrs, objp)
 register XDR *xdrs;
 NVERIFY4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_fattr4(xdrs, &objp->obj_attributes))
     return (FALSE);
   return (TRUE);
@@ -2528,13 +1521,6 @@ bool_t xdr_NVERIFY4res(xdrs, objp)
 register XDR *xdrs;
 NVERIFY4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   return (TRUE);
@@ -2544,13 +1530,6 @@ bool_t xdr_createmode4(xdrs, objp)
 register XDR *xdrs;
 createmode4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
   return (TRUE);
@@ -2560,13 +1539,6 @@ bool_t xdr_createhow4(xdrs, objp)
 register XDR *xdrs;
 createhow4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_createmode4(xdrs, &objp->mode))
     return (FALSE);
   switch (objp->mode)
@@ -2590,13 +1562,6 @@ bool_t xdr_opentype4(xdrs, objp)
 register XDR *xdrs;
 opentype4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
   return (TRUE);
@@ -2606,13 +1571,6 @@ bool_t xdr_openflag4(xdrs, objp)
 register XDR *xdrs;
 openflag4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_opentype4(xdrs, &objp->opentype))
     return (FALSE);
   switch (objp->opentype)
@@ -2620,6 +1578,9 @@ openflag4 *objp;
     case OPEN4_CREATE:
       if(!xdr_createhow4(xdrs, &objp->openflag4_u.how))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -2629,13 +1590,6 @@ bool_t xdr_limit_by4(xdrs, objp)
 register XDR *xdrs;
 limit_by4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
   return (TRUE);
@@ -2645,13 +1599,6 @@ bool_t xdr_nfs_modified_limit4(xdrs, objp)
 register XDR *xdrs;
 nfs_modified_limit4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, &objp->num_blocks))
     return (FALSE);
   if(!xdr_uint32_t(xdrs, &objp->bytes_per_block))
@@ -2663,13 +1610,6 @@ bool_t xdr_nfs_space_limit4(xdrs, objp)
 register XDR *xdrs;
 nfs_space_limit4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_limit_by4(xdrs, &objp->limitby))
     return (FALSE);
   switch (objp->limitby)
@@ -2692,13 +1632,6 @@ bool_t xdr_open_delegation_type4(xdrs, objp)
 register XDR *xdrs;
 open_delegation_type4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
   return (TRUE);
@@ -2708,13 +1641,6 @@ bool_t xdr_open_claim_type4(xdrs, objp)
 register XDR *xdrs;
 open_claim_type4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
   return (TRUE);
@@ -2724,13 +1650,6 @@ bool_t xdr_open_claim_delegate_cur4(xdrs, objp)
 register XDR *xdrs;
 open_claim_delegate_cur4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_stateid4(xdrs, &objp->delegate_stateid))
     return (FALSE);
   if(!xdr_component4(xdrs, &objp->file))
@@ -2742,13 +1661,6 @@ bool_t xdr_open_claim4(xdrs, objp)
 register XDR *xdrs;
 open_claim4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_open_claim_type4(xdrs, &objp->claim))
     return (FALSE);
   switch (objp->claim)
@@ -2779,13 +1691,6 @@ bool_t xdr_OPEN4args(xdrs, objp)
 register XDR *xdrs;
 OPEN4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_seqid4(xdrs, &objp->seqid))
     return (FALSE);
   if(!xdr_uint32_t(xdrs, &objp->share_access))
@@ -2805,13 +1710,6 @@ bool_t xdr_open_read_delegation4(xdrs, objp)
 register XDR *xdrs;
 open_read_delegation4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_stateid4(xdrs, &objp->stateid))
     return (FALSE);
   if(!xdr_bool(xdrs, &objp->recall))
@@ -2825,13 +1723,6 @@ bool_t xdr_open_write_delegation4(xdrs, objp)
 register XDR *xdrs;
 open_write_delegation4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_stateid4(xdrs, &objp->stateid))
     return (FALSE);
   if(!xdr_bool(xdrs, &objp->recall))
@@ -2847,13 +1738,6 @@ bool_t xdr_open_delegation4(xdrs, objp)
 register XDR *xdrs;
 open_delegation4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_open_delegation_type4(xdrs, &objp->delegation_type))
     return (FALSE);
   switch (objp->delegation_type)
@@ -2878,13 +1762,6 @@ bool_t xdr_OPEN4resok(xdrs, objp)
 register XDR *xdrs;
 OPEN4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_stateid4(xdrs, &objp->stateid))
     return (FALSE);
   if(!xdr_change_info4(xdrs, &objp->cinfo))
@@ -2902,13 +1779,6 @@ bool_t xdr_OPEN4res(xdrs, objp)
 register XDR *xdrs;
 OPEN4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -2916,6 +1786,9 @@ OPEN4res *objp;
     case NFS4_OK:
       if(!xdr_OPEN4resok(xdrs, &objp->OPEN4res_u.resok4))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -2925,13 +1798,6 @@ bool_t xdr_OPENATTR4args(xdrs, objp)
 register XDR *xdrs;
 OPENATTR4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bool(xdrs, &objp->createdir))
     return (FALSE);
   return (TRUE);
@@ -2941,13 +1807,6 @@ bool_t xdr_OPENATTR4res(xdrs, objp)
 register XDR *xdrs;
 OPENATTR4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   return (TRUE);
@@ -2957,13 +1816,6 @@ bool_t xdr_OPEN_CONFIRM4args(xdrs, objp)
 register XDR *xdrs;
 OPEN_CONFIRM4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_stateid4(xdrs, &objp->open_stateid))
     return (FALSE);
   if(!xdr_seqid4(xdrs, &objp->seqid))
@@ -2975,13 +1827,6 @@ bool_t xdr_OPEN_CONFIRM4resok(xdrs, objp)
 register XDR *xdrs;
 OPEN_CONFIRM4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_stateid4(xdrs, &objp->open_stateid))
     return (FALSE);
   return (TRUE);
@@ -2991,13 +1836,6 @@ bool_t xdr_OPEN_CONFIRM4res(xdrs, objp)
 register XDR *xdrs;
 OPEN_CONFIRM4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -3005,6 +1843,9 @@ OPEN_CONFIRM4res *objp;
     case NFS4_OK:
       if(!xdr_OPEN_CONFIRM4resok(xdrs, &objp->OPEN_CONFIRM4res_u.resok4))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -3014,13 +1855,6 @@ bool_t xdr_OPEN_DOWNGRADE4args(xdrs, objp)
 register XDR *xdrs;
 OPEN_DOWNGRADE4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_stateid4(xdrs, &objp->open_stateid))
     return (FALSE);
   if(!xdr_seqid4(xdrs, &objp->seqid))
@@ -3036,13 +1870,6 @@ bool_t xdr_OPEN_DOWNGRADE4resok(xdrs, objp)
 register XDR *xdrs;
 OPEN_DOWNGRADE4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_stateid4(xdrs, &objp->open_stateid))
     return (FALSE);
   return (TRUE);
@@ -3052,13 +1879,6 @@ bool_t xdr_OPEN_DOWNGRADE4res(xdrs, objp)
 register XDR *xdrs;
 OPEN_DOWNGRADE4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -3066,6 +1886,9 @@ OPEN_DOWNGRADE4res *objp;
     case NFS4_OK:
       if(!xdr_OPEN_DOWNGRADE4resok(xdrs, &objp->OPEN_DOWNGRADE4res_u.resok4))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -3075,13 +1898,6 @@ bool_t xdr_PUTFH4args(xdrs, objp)
 register XDR *xdrs;
 PUTFH4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfs_fh4(xdrs, &objp->object))
     return (FALSE);
   return (TRUE);
@@ -3091,13 +1907,6 @@ bool_t xdr_PUTFH4res(xdrs, objp)
 register XDR *xdrs;
 PUTFH4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   return (TRUE);
@@ -3107,13 +1916,6 @@ bool_t xdr_PUTPUBFH4res(xdrs, objp)
 register XDR *xdrs;
 PUTPUBFH4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   return (TRUE);
@@ -3123,13 +1925,6 @@ bool_t xdr_PUTROOTFH4res(xdrs, objp)
 register XDR *xdrs;
 PUTROOTFH4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   return (TRUE);
@@ -3139,13 +1934,6 @@ bool_t xdr_READ4args(xdrs, objp)
 register XDR *xdrs;
 READ4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_stateid4(xdrs, &objp->stateid))
     return (FALSE);
   if(!xdr_offset4(xdrs, &objp->offset))
@@ -3159,13 +1947,6 @@ bool_t xdr_READ4resok(xdrs, objp)
 register XDR *xdrs;
 READ4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_bool(xdrs, &objp->eof))
     return (FALSE);
   if(!xdr_bytes(xdrs, (char **)&objp->data.data_val, (u_int *) & objp->data.data_len, ~0))
@@ -3177,13 +1958,6 @@ bool_t xdr_READ4res(xdrs, objp)
 register XDR *xdrs;
 READ4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -3191,6 +1965,9 @@ READ4res *objp;
     case NFS4_OK:
       if(!xdr_READ4resok(xdrs, &objp->READ4res_u.resok4))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -3200,13 +1977,6 @@ bool_t xdr_READDIR4args(xdrs, objp)
 register XDR *xdrs;
 READDIR4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfs_cookie4(xdrs, &objp->cookie))
     return (FALSE);
   if(!xdr_verifier4(xdrs, objp->cookieverf))
@@ -3224,13 +1994,6 @@ bool_t xdr_entry4(xdrs, objp)
 register XDR *xdrs;
 entry4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfs_cookie4(xdrs, &objp->cookie))
     return (FALSE);
   if(!xdr_component4(xdrs, &objp->name))
@@ -3247,12 +2010,6 @@ bool_t xdr_dirlist4(xdrs, objp)
 register XDR *xdrs;
 dirlist4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
   if(!xdr_pointer(xdrs, (char **)&objp->entries, sizeof(entry4), (xdrproc_t) xdr_entry4))
     return (FALSE);
   if(!xdr_bool(xdrs, &objp->eof))
@@ -3264,13 +2021,6 @@ bool_t xdr_READDIR4resok(xdrs, objp)
 register XDR *xdrs;
 READDIR4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_verifier4(xdrs, objp->cookieverf))
     return (FALSE);
   if(!xdr_dirlist4(xdrs, &objp->reply))
@@ -3282,13 +2032,6 @@ bool_t xdr_READDIR4res(xdrs, objp)
 register XDR *xdrs;
 READDIR4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -3296,6 +2039,9 @@ READDIR4res *objp;
     case NFS4_OK:
       if(!xdr_READDIR4resok(xdrs, &objp->READDIR4res_u.resok4))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -3305,13 +2051,6 @@ bool_t xdr_READLINK4resok(xdrs, objp)
 register XDR *xdrs;
 READLINK4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_linktext4(xdrs, &objp->link))
     return (FALSE);
   return (TRUE);
@@ -3321,13 +2060,6 @@ bool_t xdr_READLINK4res(xdrs, objp)
 register XDR *xdrs;
 READLINK4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -3335,6 +2067,9 @@ READLINK4res *objp;
     case NFS4_OK:
       if(!xdr_READLINK4resok(xdrs, &objp->READLINK4res_u.resok4))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -3344,13 +2079,6 @@ bool_t xdr_REMOVE4args(xdrs, objp)
 register XDR *xdrs;
 REMOVE4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_component4(xdrs, &objp->target))
     return (FALSE);
   return (TRUE);
@@ -3360,13 +2088,6 @@ bool_t xdr_REMOVE4resok(xdrs, objp)
 register XDR *xdrs;
 REMOVE4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_change_info4(xdrs, &objp->cinfo))
     return (FALSE);
   return (TRUE);
@@ -3376,13 +2097,6 @@ bool_t xdr_REMOVE4res(xdrs, objp)
 register XDR *xdrs;
 REMOVE4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -3390,6 +2104,9 @@ REMOVE4res *objp;
     case NFS4_OK:
       if(!xdr_REMOVE4resok(xdrs, &objp->REMOVE4res_u.resok4))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -3399,13 +2116,6 @@ bool_t xdr_RENAME4args(xdrs, objp)
 register XDR *xdrs;
 RENAME4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_component4(xdrs, &objp->oldname))
     return (FALSE);
   if(!xdr_component4(xdrs, &objp->newname))
@@ -3417,13 +2127,6 @@ bool_t xdr_RENAME4resok(xdrs, objp)
 register XDR *xdrs;
 RENAME4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_change_info4(xdrs, &objp->source_cinfo))
     return (FALSE);
   if(!xdr_change_info4(xdrs, &objp->target_cinfo))
@@ -3435,13 +2138,6 @@ bool_t xdr_RENAME4res(xdrs, objp)
 register XDR *xdrs;
 RENAME4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -3449,6 +2145,9 @@ RENAME4res *objp;
     case NFS4_OK:
       if(!xdr_RENAME4resok(xdrs, &objp->RENAME4res_u.resok4))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -3458,13 +2157,6 @@ bool_t xdr_RENEW4args(xdrs, objp)
 register XDR *xdrs;
 RENEW4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_clientid4(xdrs, &objp->clientid))
     return (FALSE);
   return (TRUE);
@@ -3474,13 +2166,6 @@ bool_t xdr_RENEW4res(xdrs, objp)
 register XDR *xdrs;
 RENEW4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   return (TRUE);
@@ -3490,13 +2175,6 @@ bool_t xdr_RESTOREFH4res(xdrs, objp)
 register XDR *xdrs;
 RESTOREFH4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   return (TRUE);
@@ -3506,13 +2184,6 @@ bool_t xdr_SAVEFH4res(xdrs, objp)
 register XDR *xdrs;
 SAVEFH4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   return (TRUE);
@@ -3522,13 +2193,6 @@ bool_t xdr_SECINFO4args(xdrs, objp)
 register XDR *xdrs;
 SECINFO4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_component4(xdrs, &objp->name))
     return (FALSE);
   return (TRUE);
@@ -3538,13 +2202,6 @@ bool_t xdr_rpc_gss_svc_t(xdrs, objp)
 register XDR *xdrs;
 rpc_gss_svc_t *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
   return (TRUE);
@@ -3554,13 +2211,6 @@ bool_t xdr_rpcsec_gss_info(xdrs, objp)
 register XDR *xdrs;
 rpcsec_gss_info *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_sec_oid4(xdrs, &objp->oid))
     return (FALSE);
   if(!xdr_qop4(xdrs, &objp->qop))
@@ -3574,13 +2224,6 @@ bool_t xdr_secinfo4(xdrs, objp)
 register XDR *xdrs;
 secinfo4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_uint32_t(xdrs, &objp->flavor))
     return (FALSE);
   switch (objp->flavor)
@@ -3597,13 +2240,6 @@ bool_t xdr_SECINFO4resok(xdrs, objp)
 register XDR *xdrs;
 SECINFO4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_array
      (xdrs, (char **)&objp->SECINFO4resok_val, (u_int *) & objp->SECINFO4resok_len, ~0,
       sizeof(secinfo4), (xdrproc_t) xdr_secinfo4))
@@ -3615,13 +2251,6 @@ bool_t xdr_SECINFO4res(xdrs, objp)
 register XDR *xdrs;
 SECINFO4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -3629,6 +2258,9 @@ SECINFO4res *objp;
     case NFS4_OK:
       if(!xdr_SECINFO4resok(xdrs, &objp->SECINFO4res_u.resok4))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -3638,13 +2270,6 @@ bool_t xdr_SETATTR4args(xdrs, objp)
 register XDR *xdrs;
 SETATTR4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_stateid4(xdrs, &objp->stateid))
     return (FALSE);
   if(!xdr_fattr4(xdrs, &objp->obj_attributes))
@@ -3656,13 +2281,6 @@ bool_t xdr_SETATTR4res(xdrs, objp)
 register XDR *xdrs;
 SETATTR4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   if(!xdr_bitmap4(xdrs, &objp->attrsset))
@@ -3675,11 +2293,7 @@ register XDR *xdrs;
 SETCLIENTID4args *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfs_client_id4(xdrs, &objp->client))
     return (FALSE);
@@ -3695,11 +2309,7 @@ register XDR *xdrs;
 SETCLIENTID4resok *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_clientid4(xdrs, &objp->clientid))
     return (FALSE);
@@ -3713,11 +2323,7 @@ register XDR *xdrs;
 SETCLIENTID4res *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
@@ -3731,6 +2337,9 @@ SETCLIENTID4res *objp;
       if(!xdr_clientaddr4(xdrs, &objp->SETCLIENTID4res_u.client_using))
         return (FALSE);
       break;
+    default:
+      return (TRUE);
+      break;
     }
   return (TRUE);
 }
@@ -3740,11 +2349,7 @@ register XDR *xdrs;
 SETCLIENTID_CONFIRM4args *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_clientid4(xdrs, &objp->clientid))
     return (FALSE);
@@ -3758,11 +2363,7 @@ register XDR *xdrs;
 SETCLIENTID_CONFIRM4res *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
@@ -3774,11 +2375,7 @@ register XDR *xdrs;
 VERIFY4args *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_fattr4(xdrs, &objp->obj_attributes))
     return (FALSE);
@@ -3790,11 +2387,7 @@ register XDR *xdrs;
 VERIFY4res *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
@@ -3806,11 +2399,7 @@ register XDR *xdrs;
 stable_how4 *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
@@ -3822,11 +2411,7 @@ register XDR *xdrs;
 WRITE4args *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_stateid4(xdrs, &objp->stateid))
     return (FALSE);
@@ -3844,11 +2429,7 @@ register XDR *xdrs;
 WRITE4resok *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_count4(xdrs, &objp->count))
     return (FALSE);
@@ -3864,11 +2445,7 @@ register XDR *xdrs;
 WRITE4res *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
@@ -3877,6 +2454,9 @@ WRITE4res *objp;
     case NFS4_OK:
       if(!xdr_WRITE4resok(xdrs, &objp->WRITE4res_u.resok4))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -3887,11 +2467,7 @@ register XDR *xdrs;
 RELEASE_LOCKOWNER4args *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_lock_owner4(xdrs, &objp->lock_owner))
     return (FALSE);
@@ -3903,11 +2479,7 @@ register XDR *xdrs;
 RELEASE_LOCKOWNER4res *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
@@ -3919,11 +2491,7 @@ register XDR *xdrs;
 ILLEGAL4res *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
@@ -3935,11 +2503,7 @@ register XDR *xdrs;
 nfs_opnum4 *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
@@ -3951,11 +2515,7 @@ register XDR *xdrs;
 nfs_argop4 *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfs_opnum4(xdrs, &objp->argop))
     return (FALSE);
@@ -4109,11 +2669,7 @@ register XDR *xdrs;
 nfs_resop4 *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
+
 
   if(!xdr_nfs_opnum4(xdrs, &objp->resop))
     return (FALSE);
@@ -4281,13 +2837,6 @@ bool_t xdr_COMPOUND4args(xdrs, objp)
 register XDR *xdrs;
 COMPOUND4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_utf8str_cs(xdrs, &objp->tag))
     return (FALSE);
   if(!xdr_uint32_t(xdrs, &objp->minorversion))
@@ -4304,13 +2853,6 @@ bool_t xdr_COMPOUND4res(xdrs, objp)
 register XDR *xdrs;
 COMPOUND4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   if(!xdr_utf8str_cs(xdrs, &objp->tag))
@@ -4327,13 +2869,6 @@ bool_t xdr_CB_GETATTR4args(xdrs, objp)
 register XDR *xdrs;
 CB_GETATTR4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfs_fh4(xdrs, &objp->fh))
     return (FALSE);
   if(!xdr_bitmap4(xdrs, &objp->attr_request))
@@ -4345,13 +2880,6 @@ bool_t xdr_CB_GETATTR4resok(xdrs, objp)
 register XDR *xdrs;
 CB_GETATTR4resok *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_fattr4(xdrs, &objp->obj_attributes))
     return (FALSE);
   return (TRUE);
@@ -4361,13 +2889,6 @@ bool_t xdr_CB_GETATTR4res(xdrs, objp)
 register XDR *xdrs;
 CB_GETATTR4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   switch (objp->status)
@@ -4375,6 +2896,9 @@ CB_GETATTR4res *objp;
     case NFS4_OK:
       if(!xdr_CB_GETATTR4resok(xdrs, &objp->CB_GETATTR4res_u.resok4))
         return (FALSE);
+      break;
+    default:
+      return (TRUE);
       break;
     }
   return (TRUE);
@@ -4384,13 +2908,6 @@ bool_t xdr_CB_RECALL4args(xdrs, objp)
 register XDR *xdrs;
 CB_RECALL4args *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_stateid4(xdrs, &objp->stateid))
     return (FALSE);
   if(!xdr_bool(xdrs, &objp->truncate))
@@ -4404,13 +2921,6 @@ bool_t xdr_CB_RECALL4res(xdrs, objp)
 register XDR *xdrs;
 CB_RECALL4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   return (TRUE);
@@ -4420,13 +2930,6 @@ bool_t xdr_CB_ILLEGAL4res(xdrs, objp)
 register XDR *xdrs;
 CB_ILLEGAL4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);
   return (TRUE);
@@ -4436,13 +2939,6 @@ bool_t xdr_nfs_cb_opnum4(xdrs, objp)
 register XDR *xdrs;
 nfs_cb_opnum4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return (FALSE);
   return (TRUE);
@@ -4452,13 +2948,6 @@ bool_t xdr_nfs_cb_argop4(xdrs, objp)
 register XDR *xdrs;
 nfs_cb_argop4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_u_int(xdrs, &objp->argop))
     return (FALSE);
   switch (objp->argop)
@@ -4483,12 +2972,6 @@ bool_t xdr_nfs_cb_resop4(xdrs, objp)
 register XDR *xdrs;
 nfs_cb_resop4 *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
 
   if(!xdr_u_int(xdrs, &objp->resop))
     return (FALSE);
@@ -4517,12 +3000,6 @@ register XDR *xdrs;
 CB_COMPOUND4args *objp;
 {
 
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
-
   if(!xdr_utf8str_cs(xdrs, &objp->tag))
     return (FALSE);
   if(!xdr_uint32_t(xdrs, &objp->minorversion))
@@ -4541,12 +3018,6 @@ bool_t xdr_CB_COMPOUND4res(xdrs, objp)
 register XDR *xdrs;
 CB_COMPOUND4res *objp;
 {
-
-#if defined(_LP64) || defined(_KERNEL)
-  register int *buf;
-#else
-  register long *buf;
-#endif
 
   if(!xdr_nfsstat4(xdrs, &objp->status))
     return (FALSE);

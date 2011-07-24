@@ -52,17 +52,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <pthread.h>
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "HashData.h"
@@ -76,9 +66,6 @@
 #include "nfs_file_handle.h"
 
 size_t strnlen(const char *s, size_t maxlen);
-
-extern time_t ServerBootTime;
-extern nfs_parameter_t nfs_param;
 
 hash_table_t *ht_session_id;
 uint32_t global_sequence = 0;
@@ -96,8 +83,6 @@ int display_session_id_key(hash_buffer_t * pbuff, char *str)
 
 int display_session_id_val(hash_buffer_t * pbuff, char *str)
 {
-  nfs41_session_t *psession = (nfs41_session_t *) (pbuff->pdata);
-
   return sprintf(str, "not implemented");
 }                               /* display_session_id_val */
 
@@ -154,7 +139,7 @@ unsigned long session_id_rbt_hash_func(hash_parameter_t * p_hparam,
                "--->  session_id_rbt_hash_func=%lu",
                (unsigned long)(i1 ^ i2 ^ i3));
 
-  return (unsigned long)(i1 ^ i2 ^ i3 | i4);
+  return (unsigned long)((i1 ^ i2 ^ i3) | i4);
 }                               /* session_id_rbt_hash_func */
 
 /**

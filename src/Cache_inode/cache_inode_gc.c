@@ -49,6 +49,7 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "stuff_alloc.h"
+#include "nfs4_acls.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -57,6 +58,10 @@
 #include <pthread.h>
 
 static cache_inode_gc_policy_t cache_inode_gc_policy;   /*<< the policy to be used by the garbage collector */
+
+#ifdef _USE_NFS4_ACL
+static void cache_inode_gc_acl(cache_entry_t * pentry);
+#endif                          /* _USE_NFS4_ACL */
 
 /**
  * @defgroup Cache_inode_gc_internal Cache Inode GC internal functions.
@@ -204,6 +209,11 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
     }
   LogFullDebug(COMPONENT_CACHE_INODE_GC,
                "++++> pdir_data (if needed) sent back to pool");
+
+#ifdef _USE_NFS4_ACL
+  /* If entry has NFS4 ACL, release it. */
+  cache_inode_gc_acl(pentry);
+#endif                          /* _USE_NFS4_ACL */
 
   /* Free and Destroy the mutex associated with the pentry */
   V_w(&pentry->lock);
@@ -456,7 +466,6 @@ int cache_inode_gc_function(LRU_entry_t * plru_entry, void *addparam)
   time_t current_time = time(NULL);
   cache_entry_t *pentry = NULL;
   cache_inode_param_gc_t *pgcparam = (cache_inode_param_gc_t *) addparam;
-  cache_inode_status_t status;
 
   time_t allocated;
 
@@ -664,13 +673,9 @@ cache_inode_status_t cache_inode_gc(hash_table_t * ht,
 
 int cache_inode_gc_fd_func(LRU_entry_t * plru_entry, void *addparam)
 {
-  time_t entry_time = 0;
-  time_t current_time = time(NULL);
   cache_entry_t *pentry = NULL;
   cache_inode_param_gc_t *pgcparam = (cache_inode_param_gc_t *) addparam;
   cache_inode_status_t status;
-
-  time_t allocated;
 
   /* Get the entry */
   pentry = (cache_entry_t *) (plru_entry->buffdata.pdata);
@@ -733,5 +738,61 @@ cache_inode_status_t cache_inode_gc_fd(cache_inode_client_t * pclient,
   *pstatus = CACHE_INODE_SUCCESS;
   return *pstatus;
 }
+
+#ifdef _USE_NFS4_ACL
+/**
+ * Garbagge NFS4 ACLs if any.
+ */
+static void cache_inode_gc_acl(cache_entry_t * pentry)
+{
+  fsal_acl_status_t status = NFS_V4_ACL_SUCCESS;
+  fsal_acl_t *pacl = NULL;
+
+  switch (pentry->internal_md.type)
+    {
+    case REGULAR_FILE:
+      pacl = pentry->object.file.attributes.acl;
+      break;
+
+    case SYMBOLIC_LINK:
+      pacl = pentry->object.symlink.attributes.acl;
+      break;
+
+    case FS_JUNCTION:
+    case DIR_BEGINNING:
+      pacl = pentry->object.dir_begin.attributes.acl;
+      break;
+
+    case DIR_CONTINUE:
+      pacl = pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes.acl;
+      break;
+
+    case SOCKET_FILE:
+    case FIFO_FILE:
+    case BLOCK_FILE:
+    case CHARACTER_FILE:
+      pacl = pentry->object.special_obj.attributes.acl;
+      break;
+
+    case UNASSIGNED:
+    case RECYCLED:
+      LogDebug(COMPONENT_CACHE_INODE_GC,
+                   "Unexpected UNNASIGNED or RECYLCED type in cache_inode_gc_acl");
+      break;
+    }
+
+  /* Release an acl. */
+  if(pacl)
+    {
+      LogDebug(COMPONENT_CACHE_INODE_GC, "cache_inode_gc_acl: md_type = %d, acl  = %p",
+               pentry->internal_md.type, pacl);
+
+      nfs4_acl_release_entry(pacl, &status);
+
+      if(status != NFS_V4_ACL_SUCCESS)
+        LogEvent(COMPONENT_CACHE_INODE_GC, "cache_inode_gc_acl: Failed to gc acl, status=%d", status);
+    }
+}                               /* cache_inode_gc_acl */
+#endif                          /* _USE_NFS4_ACL */
 
 /* @} */

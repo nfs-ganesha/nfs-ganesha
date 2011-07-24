@@ -49,6 +49,7 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "stuff_alloc.h"
+#include "nfs4_acls.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -79,9 +80,9 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
                                          fsal_op_context_t * pcontext,
                                          cache_inode_status_t * pstatus)
 {
-  fsal_handle_t *pfsal_handle;
+  fsal_handle_t *pfsal_handle = NULL;
   fsal_status_t fsal_status;
-  fsal_attrib_list_t *p_object_attributes;
+  fsal_attrib_list_t *p_object_attributes = NULL;
   fsal_attrib_list_t result_attributes;
   fsal_attrib_list_t truncate_attributes;
 
@@ -105,6 +106,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
       pfsal_handle = &pentry->object.symlink.handle;
       break;
 
+    case FS_JUNCTION:
     case DIR_BEGINNING:
       pfsal_handle = &pentry->object.dir_begin.handle;
       break;
@@ -123,6 +125,14 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
     case FIFO_FILE:
       pfsal_handle = &pentry->object.special_obj.handle;
       break;
+
+    case UNASSIGNED:
+    case RECYCLED:
+      LogCrit(COMPONENT_CACHE_INODE,
+              "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
+              pentry->internal_md.type, __LINE__, __FILE__);
+      *pstatus = CACHE_INODE_BAD_TYPE;
+      return *pstatus;
     }
 
   /* Call FSAL to set the attributes */
@@ -219,6 +229,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
       p_object_attributes = &(pentry->object.symlink.attributes);
       break;
 
+    case FS_JUNCTION:
     case DIR_BEGINNING:
       p_object_attributes = &(pentry->object.dir_begin.attributes);
       break;
@@ -239,6 +250,13 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
       p_object_attributes = &(pentry->object.special_obj.attributes);
       break;
 
+    case UNASSIGNED:
+    case RECYCLED:
+      LogCrit(COMPONENT_CACHE_INODE,
+              "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
+              pentry->internal_md.type, __LINE__, __FILE__);
+      *pstatus = CACHE_INODE_BAD_TYPE;
+      return *pstatus;
     }
 
   /* Update the cached attributes */
@@ -296,6 +314,27 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
       if(result_attributes.asked_attributes & FSAL_ATTR_MTIME)
         p_object_attributes->mtime = result_attributes.mtime;
     }
+  
+#ifdef _USE_NFS4_ACL
+  if(result_attributes.asked_attributes & FSAL_ATTR_ACL)
+    {
+      LogDebug(COMPONENT_CACHE_INODE, "cache_inode_setattr: old acl = %p, new acl = %p",
+               p_object_attributes->acl, result_attributes.acl);
+
+      /* Release previous acl entry. */
+      if(p_object_attributes->acl)
+        {
+          fsal_acl_status_t status;
+          nfs4_acl_release_entry(p_object_attributes->acl, &status);
+          if(status != NFS_V4_ACL_SUCCESS)
+            LogEvent(COMPONENT_CACHE_INODE, "cache_inode_setattr: Failed to release old acl:"
+                     " status = %d", status);
+        }
+
+      /* Update with new acl entry. */
+      p_object_attributes->acl = result_attributes.acl;
+    }
+#endif                          /* _USE_NFS4_ACL */
 
   /* Return the attributes as set */
   *pattr = *p_object_attributes;

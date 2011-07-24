@@ -272,8 +272,8 @@ cache_content_status_t cache_content_read_conf_gc_policy(config_file_t in_config
       /* Get key's name */
       if((err = config_GetKeyValue(item, &key_name, &key_value)) != 0)
         {
-          fprintf(stderr,
-                  "Error reading key[%d] from section \"%s\" of configuration file.\n",
+          LogCrit(COMPONENT_CONFIG,
+                  "Error reading key[%d] from section \"%s\" of configuration file.",
                   var_index, CONF_LABEL_CACHE_CONTENT_GCPOL);
           return CACHE_CONTENT_INVALID_ARGUMENT;
         }
@@ -304,8 +304,8 @@ cache_content_status_t cache_content_read_conf_gc_policy(config_file_t in_config
         }
       else
         {
-          fprintf(stderr,
-                  "Unknown or unsettable key: %s (item %s)\n",
+          LogCrit(COMPONENT_CONFIG,
+                  "Unknown or unsettable key: %s (item %s)",
                   key_name, CONF_LABEL_CACHE_CONTENT_GCPOL);
           return CACHE_CONTENT_INVALID_ARGUMENT;
         }

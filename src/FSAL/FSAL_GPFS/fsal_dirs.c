@@ -47,10 +47,9 @@ fsal_status_t GPFSFSAL_opendir(gpfsfsal_handle_t * p_dir_handle,        /* IN */
                            fsal_attrib_list_t * p_dir_attributes        /* [ IN/OUT ] */
     )
 {
-  int rc, errsv;
   fsal_status_t status;
-
-  struct stat buffstat;
+  fsal_accessflags_t access_mask = 0;
+  fsal_attrib_list_t dir_attrs;
 
   /* sanity checks
    * note : dir_attributes is optionnal.
@@ -69,21 +68,18 @@ fsal_status_t GPFSFSAL_opendir(gpfsfsal_handle_t * p_dir_handle,        /* IN */
     ReturnStatus(status, INDEX_FSAL_opendir);
 
   /* get directory metadata */
-  TakeTokenFSCall();
-  rc = fstat(p_dir_descriptor->fd, &buffstat);
-  ReleaseTokenFSCall();
-
-  if(rc != 0)
-    {
-      close(p_dir_descriptor->fd);
-      if(rc == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_opendir);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_opendir);
-    }
+  dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
+  status = GPFSFSAL_getattrs(p_dir_handle, p_context, &dir_attrs);
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_opendir);
 
   /* Test access rights for this directory */
-  status = fsal_internal_testAccess(p_context, FSAL_R_OK, &buffstat, NULL);
+
+  /* Set both mode and ace4 mask */
+  access_mask = FSAL_MODE_MASK_SET(FSAL_R_OK) |
+                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR);
+
+  status = fsal_internal_testAccess(p_context, access_mask, NULL, &dir_attrs);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_opendir);
 
@@ -93,14 +89,7 @@ fsal_status_t GPFSFSAL_opendir(gpfsfsal_handle_t * p_dir_handle,        /* IN */
   memcpy(&(p_dir_descriptor->handle), p_dir_handle, sizeof(fsal_handle_t));
 
   if(p_dir_attributes)
-    {
-      status = posix2fsal_attributes(&buffstat, p_dir_attributes);
-      if(FSAL_IS_ERROR(status))
-        {
-          FSAL_CLEAR_MASK(p_dir_attributes->asked_attributes);
-          FSAL_SET_MASK(p_dir_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-        }
-    }
+      *p_dir_attributes = dir_attrs;
 
   p_dir_descriptor->dir_offset = 0;
 
@@ -173,7 +162,7 @@ fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
   char d_type;
   struct stat buffstat;
 
-  int errsv = 0, rc = 0;
+  int rc = 0;
 
   memset(buff, 0, BUF_SIZE);
   memset(&entry_name, 0, sizeof(fsal_name_t));

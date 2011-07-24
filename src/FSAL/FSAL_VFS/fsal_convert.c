@@ -250,6 +250,10 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
       ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
     }
 
+  /* Initialize ACL regardless of whether ACL was asked or not.
+   * This is needed to make sure ACL attribute is initialized. */
+  p_fsalattr_out->acl = NULL;
+
   /* Fills the output struct */
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
     {
@@ -269,14 +273,7 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
     }
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ACL))
     {
-
-      /* XXX : manage ACL */
-      int i;
-      for(i = 0; i < FSAL_MAX_ACL; i++)
-        {
-          p_fsalattr_out->acls[i].type = FSAL_ACL_EMPTY;        /* empty ACL slot */
-        }
-
+      p_fsalattr_out->acl = NULL;
     }
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
     {
@@ -365,6 +362,10 @@ fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
             ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
         }
 
+    /* Initialize ACL regardless of whether ACL was asked or not.
+     * This is needed to make sure ACL attribute is initialized. */
+    p_fsalattr_out->acl = NULL;
+
     /* Fills the output struct */
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
         {
@@ -384,14 +385,7 @@ fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ACL))
         {
-
-            /* XXX : manage ACL */
-            int i;
-            for(i = 0; i < FSAL_MAX_ACL; i++)
-                {
-                    p_fsalattr_out->acls[i].type = FSAL_ACL_EMPTY;        /* empty ACL slot */
-                }
-
+          p_fsalattr_out->acl = NULL;
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
         {

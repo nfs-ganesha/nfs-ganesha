@@ -505,7 +505,7 @@ cache_content_status_t cache_content_prepare_directories(exportlist_t * pexportl
  *
  */
 cache_content_status_t cache_content_valid(cache_content_entry_t * pentry,
-                                           cache_inode_op_t op,
+                                           cache_content_op_t op,
                                            cache_content_client_t * pclient)
 {
   /* /!\ NOTE THIS CAREFULLY: entry is supposed to be locked when this function is called !! */

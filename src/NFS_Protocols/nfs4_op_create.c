@@ -48,18 +48,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -243,17 +232,11 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       /* Arguments were supplied, extract them */
       convrc = nfs4_Fattr_To_FSAL_attr(&sattr, &(arg_CREATE4.createattrs));
 
-      if(convrc == 0)
-        {
-          res_CREATE4.status = NFS4ERR_ATTRNOTSUPP;
+      if(convrc != NFS4_OK)
+      	{
+          res_CREATE4.status = convrc;
           return res_CREATE4.status;
-        }
-
-      if(convrc == -1)
-        {
-          res_CREATE4.status = NFS4ERR_BADXDR;
-          return res_CREATE4.status;
-        }
+      	}
     }
 
   /* Create either a symbolic link or a directory */

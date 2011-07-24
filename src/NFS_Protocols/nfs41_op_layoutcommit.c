@@ -49,18 +49,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -98,9 +87,11 @@
 int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
                           struct nfs_resop4 *resp)
 {
+#ifdef _USE_PNFS
   cache_inode_status_t cache_status;
   fsal_attrib_list_t fsal_attr;
   nfsstat4 rc ; 
+#endif
 
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutcommit";
   /* Lock are not supported */

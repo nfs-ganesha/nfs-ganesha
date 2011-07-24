@@ -61,13 +61,7 @@
 #include <sys/param.h>
 #include "config_parsing.h"
 #include "err_fsal.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/clnt.h>
-#endif
+#include "rpc.h"
 #include "nfs4.h"
 
 #define CONF_LABEL_FS_SPECIFIC   "NFSv4_Proxy"
@@ -112,7 +106,7 @@ typedef union {
 #ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_HANDLE_T_SIZE];
 #endif
-} __attribute__((packed)) proxyfsal_handle_t;
+}  proxyfsal_handle_t;
 
 typedef struct fsal_cred__
 {

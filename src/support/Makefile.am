@@ -1,5 +1,15 @@
 AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
+check_PROGRAMS = test_nfs_ip_stats test_nfs_ip_name
+
+test_nfs_ip_stats_SOURCES = test_nfs_ip_stats.c
+test_nfs_ip_stats_LDADD = libsupport.la ../HashTable/libhashtable.la ../BuddyMalloc/libBuddyMalloc.la ../Log/liblog.la ../RW_Lock/librwlock.la
+
+test_nfs_ip_name_SOURCES = test_nfs_ip_name.c
+test_nfs_ip_name_LDADD = libsupport.la ../HashTable/libhashtable.la ../BuddyMalloc/libBuddyMalloc.la ../Log/liblog.la ../RW_Lock/librwlock.la ../ConfigParsing/libConfigParsing.la
+
+
+TESTS = test_nfs_ip_stats test_nfs_ip_name
 
 noinst_LTLIBRARIES            = libsupport.la
 
@@ -45,8 +55,16 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          ../include/err_inject.h            \
                          ../include/stuff_alloc.h
 
+if RESULT_IS_DAEMON
+libsupport_la_LIBADD         =   ../RPCAL/librpcal.la 
+endif
+
 if USE_NLM
 libsupport_la_SOURCES += nlm_util.c nlm_async.c nsm.c
+endif
+
+if USE_NFS4_ACL
+libsupport_la_SOURCES += nfs4_acls.c
 endif
 
 if USE_NFS4_1
@@ -56,6 +74,8 @@ endif
 if ERROR_INJECTION
 libsupport_la_SOURCES += err_inject.c
 endif
+
+libsupport_la_DEPENDENCIES = $(libsupport_la_SOURCES) $(libsupport_la_LIBADD)
 
 
 new: clean all 

@@ -50,19 +50,7 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-
-#if defined( _USE_TIRPC )
-#include <rpc/rpc.h>
-#elif defined( _USE_GSSRPC )
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -86,40 +74,21 @@
 #include "pnfs_service.h"
 #endif
 
-#define NULL_SVC ((struct svc_callout *)0)
-#define SVCAUTH_PRIVATE(auth) \
-        ((struct svc_rpc_gss_data *)(auth)->svc_ah_private)
-
-enum auth_stat _authenticate(register struct svc_req *rqst, struct rpc_msg *msg);
-#ifdef _USE_GSSRPC
-enum auth_stat Rpcsecgss__authenticate(register struct svc_req *rqst, struct rpc_msg *msg,
-                                       bool_t * no_dispatch);
-#endif
-
-#ifdef _SOLARIS
-#define _authenticate __authenticate
-#endif
-
 #ifdef _DEBUG_MEMLEAKS
 void nfs_debug_debug_label_info();
 #endif
 
-extern nfs_worker_data_t *workers_data;
-extern nfs_parameter_t nfs_param;
-extern hash_table_t *ht_dupreq; /* duplicate request hash */
+nfs_worker_data_t *workers_data;
 
 /* These two variables keep state of the thread that gc at this time */
-extern unsigned int nb_current_gc_workers;
-extern pthread_mutex_t lock_nb_current_gc_workers;
-
-/* is daemon terminating ? If so, it drops all requests */
-int nfs_do_terminate = FALSE;
+unsigned int nb_current_gc_workers;
+pthread_mutex_t lock_nb_current_gc_workers;
 
 const nfs_function_desc_t invalid_funcdesc =
   {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void, "invalid_function",
    NOTHING_SPECIAL};
 
-const nfs_function_desc_t *INVALID_FUNCDESC = &invalid_funcdesc;
+  const nfs_function_desc_t *INVALID_FUNCDESC = &invalid_funcdesc;
 
 /* Static array : all the function pointer per nfs v2 functions */
 const nfs_function_desc_t nfs2_func_desc[] = {
@@ -394,31 +363,32 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 
 #endif
 
-#ifdef _USE_TIRPC
-void Svc_dg_soft_destroy(register SVCXPRT * xprt);
-#else
-void Svcudp_soft_destroy(register SVCXPRT * xprt);
-#endif
-
 /**
- * nfs_Cleanup_request_data: clean the data associated with a request
+ * nfs_Init_gc_counter: Init the worker's gc counters.
  *
- * This function is used to clean the nfs_request_data for a worker. These data are used by the
- * worker for RPC processing.
+ * This functions is used to init a mutex and a counter associated with it, to keep track of the number of worker currently
+ * performing the garbagge collection.
  *
- * @param param A structure of type nfs_worker_parameter_t with all the necessary information related to a worker
- * @param pdata Pointer to the data to be initialized.
+ * @param void No parameters
  *
  * @return 0 if successfull, -1 otherwise.
  *
  */
-void nfs_Cleanup_request_data(nfs_request_data_t * pdata)
-{
-  pdata->ipproto = 0;
 
-  pdata->tcp_xprt = NULL;
-  pdata->xprt = NULL;
-}                               /* nfs_Cleanup_request_data */
+int nfs_Init_gc_counter(void)
+{
+  pthread_mutexattr_t mutexattr;
+
+  if(pthread_mutexattr_init(&mutexattr) != 0)
+    return -1;
+
+  if(pthread_mutex_init(&lock_nb_current_gc_workers, &mutexattr) != 0)
+    return -1;
+
+  nb_current_gc_workers = 0;
+
+  return 0;                     /* Success */
+}                               /* nfs_Init_gc_counter */
 
 struct timeval time_diff(struct timeval time_from, struct timeval time_to)
 {
@@ -447,9 +417,9 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
 {
   int lo_vers, hi_vers;
 
-  if(preq->rq_prog == nfs_param.core_param.nfs_program)
+  if(preq->rq_prog == nfs_param.core_param.program[P_NFS])
     {
-      /* If we go there, preq->rq_prog ==  nfs_param.core_param.nfs_program */
+      /* If we go there, preq->rq_prog ==  nfs_param.core_param.program[P_NFS] */
       if(((preq->rq_vers != NFS_V2) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) == 0)) &&
          ((preq->rq_vers != NFS_V3) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) == 0)) &&
          ((preq->rq_vers != NFS_V4) || ((nfs_param.core_param.core_options & CORE_OPTION_NFSV4) == 0)))
@@ -486,7 +456,7 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
       return TRUE;
     }
 
-  if(preq->rq_prog == nfs_param.core_param.mnt_program &&
+  if(preq->rq_prog == nfs_param.core_param.program[P_MNT] &&
      ((nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0))
     {
       /* Call is with MOUNTPROG */
@@ -538,7 +508,7 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
     }
 
 #ifdef _USE_NLM
-  if(preq->rq_prog == nfs_param.core_param.nlm_program &&
+  if(preq->rq_prog == nfs_param.core_param.program[P_NLM] &&
           ((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0))
     {
       /* Call is with NLMPROG */
@@ -563,7 +533,7 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
 #endif                          /* _USE_NLM */
 
 #ifdef _USE_QUOTA
-   if(preq->rq_prog == nfs_param.core_param.rquota_program)
+   if(preq->rq_prog == nfs_param.core_param.program[P_RQUOTA])
      {
        /* Call is with NLMPROG */
        if((preq->rq_vers != RQUOTAVERS) &&
@@ -609,10 +579,15 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
   struct svc_req *ptr_req = &preqnfs->req;
 
   /* Validate rpc call, but don't report any errors here */
-  if(is_rpc_call_valid(NULL, ptr_req) == FALSE)
-    return INVALID_FUNCDESC;
+  if(is_rpc_call_valid(preqnfs->xprt, ptr_req) == FALSE)
+    {
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "INVALID_FUNCDESC for Program %d, Version %d, Function %d after is_rpc_call_valid",
+                   (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
+      return INVALID_FUNCDESC;
+    }
 
-  if(ptr_req->rq_prog == nfs_param.core_param.nfs_program)
+  if(ptr_req->rq_prog == nfs_param.core_param.program[P_NFS])
     {
       if(ptr_req->rq_vers == NFS_V2)
         return &nfs2_func_desc[ptr_req->rq_proc];
@@ -622,7 +597,7 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
         return &nfs4_func_desc[ptr_req->rq_proc];
     }
 
-  if(ptr_req->rq_prog == nfs_param.core_param.mnt_program)
+  if(ptr_req->rq_prog == nfs_param.core_param.program[P_MNT])
     {
       if(ptr_req->rq_vers == MOUNT_V1)
         return &mnt1_func_desc[ptr_req->rq_proc];
@@ -631,14 +606,14 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
     }
 
 #ifdef _USE_NLM
-  if(ptr_req->rq_prog == nfs_param.core_param.nlm_program)
+  if(ptr_req->rq_prog == nfs_param.core_param.program[P_NLM])
     {
       return &nlm4_func_desc[ptr_req->rq_proc];
     }
 #endif                          /* _USE_NLM */
 
 #ifdef _USE_QUOTA
-  if(ptr_req->rq_prog == nfs_param.core_param.rquota_program)
+  if(ptr_req->rq_prog == nfs_param.core_param.program[P_RQUOTA])
     {
       if(ptr_req->rq_vers == RQUOTAVERS)
         return &rquota1_func_desc[ptr_req->rq_proc];
@@ -648,6 +623,10 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
 #endif                          /* _USE_QUOTA */
 
   /* Oops, should never get here! */
+  svcerr_noprog(preqnfs->xprt);
+  LogFullDebug(COMPONENT_DISPATCH,
+               "INVALID_FUNCDESC for Program %d, Version %d, Function %d",
+               (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
   return INVALID_FUNCDESC;
 }
 
@@ -661,20 +640,16 @@ int nfs_rpc_get_args(nfs_request_data_t * preqnfs, const nfs_function_desc_t *pf
 
   memset(parg_nfs, 0, sizeof(nfs_arg_t));
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
   LogFullDebug(COMPONENT_DISPATCH,
-               "Before svc_getargs on socket %u, xprt=%p",
-               ptr_svc->xp_fd, ptr_svc);
-#else
-  LogFullDebug(COMPONENT_DISPATCH,
-               "Before svc_getargs on socket %u, xprt=%p",
-               ptr_svc->xp_sock, ptr_svc);
-#endif
+               "Before svc_getargs on socket %d, xprt=%p",
+               ptr_svc->XP_SOCK, ptr_svc);
 
   if(svc_getargs(ptr_svc, pfuncdesc->xdr_decode_func, (caddr_t) parg_nfs) == FALSE)
     {
+      struct svc_req *ptr_req = &preqnfs->req;
       LogMajor(COMPONENT_DISPATCH,
-               "NFS DISPATCHER: FAILURE: Error while calling svc_getargs");
+                   "svc_getargs failed for Program %d, Version %d, Function %d",
+                   (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
       svcerr_decode(ptr_svc);
       return FALSE;
     }
@@ -696,11 +671,9 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                             nfs_worker_data_t * pworker_data)
 {
   unsigned int rpcxid = 0;
-  nfs_function_desc_t funcdesc;
   unsigned int export_check_result;
 
   exportlist_t *pexport = NULL;
-  nfs_arg_t arg_nfs;
   nfs_arg_t *parg_nfs = &preqnfs->arg_nfs;
   nfs_res_t res_nfs;
   short exportid;
@@ -708,24 +681,15 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   struct svc_req *ptr_req = &preqnfs->req;
   SVCXPRT *ptr_svc = preqnfs->xprt;
   nfs_stat_type_t stat_type;
-  struct sockaddr_in hostaddr;
-  struct sockaddr_in *phostaddr;
-
-  struct sockaddr_in *tmp_childaddr;
-#ifdef _USE_TIRPC_IPV6
-  struct sockaddr_in6 *tmp_hostaddr_inet6;
-  struct sockaddr_in6 *tmp_childaddr_inet6;
-#endif                          /* _USE_TIRPC_IPV6 */
-
-#ifdef _USE_TIRPC
-  struct netbuf *pnetbuf;
-#endif
+  sockaddr_t hostaddr;
+  int port;
   int rc;
   int do_dupreq_cache;
   int status;
-  unsigned int i;
   exportlist_client_entry_t related_client;
   struct user_cred user_credentials;
+
+  fsal_op_context_t * pfsal_op_ctx = NULL ;
 
 #ifdef _DEBUG_MEMLEAKS
   static int nb_iter_memleaks = 0;
@@ -736,19 +700,10 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   struct timeval timer_diff;
   nfs_request_latency_stat_t latency_stat;
 
-  /* daemon is terminating, do not process any new request */
-  if(nfs_do_terminate)
-    return;
-
   /* Get the value from the worker data */
   lru_dupreq = pworker_data->duplicate_request;
 
-  LogDebug(COMPONENT_DISPATCH,
-           "NFS DISPATCH: Program %d, Version %d, Function %d",
-           (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
-
   /* initializing RPC structure */
-  memset(&arg_nfs, 0, sizeof(arg_nfs));
   memset(&res_nfs, 0, sizeof(res_nfs));
 
   /* If we reach this point, there was no dupreq cache hit or no dup req cache was necessary */
@@ -757,15 +712,29 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   if(pworker_data->pfuncdesc == INVALID_FUNCDESC)
     return;
 
-  /* In TCP, RPC argument was already extracted. Here extract RPC argument only in UDP. */
-  if(preqnfs->ipproto == IPPROTO_UDP)
+  if(copy_xprt_addr(&hostaddr, ptr_svc) == 0)
     {
-      if(nfs_rpc_get_args(preqnfs, pworker_data->pfuncdesc) == FALSE)
-        return;
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "copy_xprt_addr failed for Program %d, Version %d, Function %d",
+                   (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
+      svcerr_systemerr(ptr_svc);
+      return;
     }
 
+  port = get_port(&hostaddr);
   rpcxid = get_rpc_xid(ptr_req);
-  LogFullDebug(COMPONENT_DISPATCH, "NFS DISPATCH: Request has xid=%u", rpcxid);
+
+  if(isDebug(COMPONENT_DISPATCH))
+    {
+      char addrbuf[SOCK_NAME_MAX];
+      sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
+      LogDebug(COMPONENT_DISPATCH,
+               "Request from %s for Program %d, Version %d, Function %d has xid=%u",
+               addrbuf,
+               (int)ptr_req->rq_prog, (int)ptr_req->rq_vers, (int)ptr_req->rq_proc,
+               rpcxid);
+    }
+
   do_dupreq_cache = pworker_data->pfuncdesc->dispatch_behaviour & CAN_BE_DUP;
   LogFullDebug(COMPONENT_DISPATCH, "do_dupreq_cache = %d", do_dupreq_cache);
   status = nfs_dupreq_add_not_finished(rpcxid,
@@ -788,50 +757,32 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                        "NFS DISPATCHER: DupReq Cache Hit: using previous reply, rpcxid=%u",
                        rpcxid);
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
           LogFullDebug(COMPONENT_DISPATCH,
-                       "Before svc_sendreply on socket %u (dup req)",
-                       ptr_svc->xp_fd);
-#else
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Before svc_sendreply on socket %u (dup req)",
-                       ptr_svc->xp_sock);
-#endif
+                       "Before svc_sendreply on socket %d (dup req)",
+                       ptr_svc->XP_SOCK);
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-          P(mutex_cond_xprt[ptr_svc->xp_fd]);
-#else
-          P(mutex_cond_xprt[ptr_svc->xp_sock]);
-#endif
+          P(mutex_cond_xprt[ptr_svc->XP_SOCK]);
+
           if(svc_sendreply
              (ptr_svc, pworker_data->pfuncdesc->xdr_encode_func, (caddr_t) & res_nfs) == FALSE)
             {
-              LogEvent(COMPONENT_DISPATCH,
+              LogDebug(COMPONENT_DISPATCH,
                        "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply");
-              svcerr_decode(ptr_svc);
+              svcerr_systemerr(ptr_svc);
             }
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-          V(mutex_cond_xprt[ptr_svc->xp_fd]);
-#else
-          V(mutex_cond_xprt[ptr_svc->xp_sock]);
-#endif
+          V(mutex_cond_xprt[ptr_svc->XP_SOCK]);
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
           LogFullDebug(COMPONENT_DISPATCH,
-                       "After svc_sendreply on socket %u (dup req)",
-                       ptr_svc->xp_fd);
-#else
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "After svc_sendreply on socket %u (dup req)",
-                       ptr_svc->xp_sock);
-#endif
+                       "After svc_sendreply on socket %d (dup req)",
+                       ptr_svc->XP_SOCK);
           return;
         }
       else
         {
           LogCrit(COMPONENT_DISPATCH,
                   "Error: Duplicate request rejected because it was found in the cache but is not allowed to be cached.");
+          svcerr_systemerr(ptr_svc);
           return;
         }
       break;
@@ -839,7 +790,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       /* Another thread owns the request */
     case DUPREQ_BEING_PROCESSED:
       LogFullDebug(COMPONENT_DISPATCH,
-                   "Dupreq #%u was asked for process since another thread manage it, reject for avoiding threads starvation...",
+                   "Dupreq xid=%u was asked for process since another thread manage it, reject for avoiding threads starvation...",
                    rpcxid);
       /* Free the arguments */
       if(preqnfs->req.rq_vers == 2 || preqnfs->req.rq_vers == 3 || preqnfs->req.rq_vers == 4)
@@ -849,32 +800,32 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                     "NFS DISPATCHER: FAILURE: Bad SVC_FREEARGS for %s",
                     pworker_data->pfuncdesc->funcname);
           }
+      /* Ignore the request, send no error */
       return;
-      break;
 
       /* something is very wrong with the duplicate request cache */
     case DUPREQ_NOT_FOUND:
       LogCrit(COMPONENT_DISPATCH,
               "Did not find the request in the duplicate request cache and couldn't add the request.");
+      svcerr_systemerr(ptr_svc);
       return;
-      break;
 
       /* oom */
     case DUPREQ_INSERT_MALLOC_ERROR:
       LogCrit(COMPONENT_DISPATCH,
               "Cannot process request, not enough memory available!");
+      svcerr_systemerr(ptr_svc);
       return;
-      break;
 
     default:
       LogCrit(COMPONENT_DISPATCH,
               "Unknown duplicate request cache status. This should never be reached!");
+      svcerr_systemerr(ptr_svc);
       return;
-      break;
     }
 
   /* Get the export entry */
-  if(ptr_req->rq_prog == nfs_param.core_param.nfs_program)
+  if(ptr_req->rq_prog == nfs_param.core_param.program[P_NFS])
     {
       /* The NFSv2 and NFSv3 functions'arguments always begin with the file handle (but not the NULL function)
        * this hook is used to get the fhandle with the arguments and so
@@ -889,27 +840,48 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
             {
               exportid = nfs2_FhandleToExportId((fhandle2 *) parg_nfs);
 
-              if(exportid < 0)
-                {
-                  /* Bad argument */
-                  svcerr_auth(ptr_svc, AUTH_FAILED);
-                }
-
-              if((pexport =
-                  nfs_Get_export_by_id(nfs_param.pexportlist, exportid)) == NULL)
+              if(exportid < 0 ||
+                 (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
+                                                 exportid)) == NULL ||
+                 (pexport->options & EXPORT_OPTION_NFSV2) == 0)
                 {
                   /* Reject the request for authentication reason (incompatible file handle) */
+                  if(isInfo(COMPONENT_DISPATCH))
+                    {
+                      char dumpfh[1024];
+                      char *reason;
+                      char addrbuf[SOCK_NAME_MAX];
+                      sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
+                      if(exportid < 0)
+                        reason = "has badly formed handle";
+                      else if(pexport == NULL)
+                        reason = "has invalid export";
+                      else
+                        reason = "V2 not allowed on this export";
+                      sprint_fhandle2(dumpfh, (fhandle2 *) parg_nfs);
+                      LogMajor(COMPONENT_DISPATCH,
+                               "NFS2 Request from host %s %s, proc=%d, FH=%s",
+                               addrbuf, reason,
+                               (int)ptr_req->rq_proc, dumpfh);
+                    }
+                  /* Bad argument */
                   svcerr_auth(ptr_svc, AUTH_FAILED);
+                  if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                                        &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+                    {
+                      LogCrit(COMPONENT_DISPATCH,
+                              "Attempt to delete duplicate request failed on line %d",
+                              __LINE__);
+                    }
+                  return;
                 }
-              if((pexport->options & EXPORT_OPTION_NFSV2) == 0)
-                {
-                  /* Reject the request for authentication reason (NFS v2 not allowed for this export) */
-                  svcerr_auth(ptr_svc, AUTH_FAILED);
-                }
+
               LogFullDebug(COMPONENT_DISPATCH,
                            "Found export entry for dirname=%s as exportid=%d",
                            pexport->dirname, pexport->id);
             }
+          else
+            pexport = nfs_param.pexportlist;
 
           break;
 
@@ -917,18 +889,32 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
           if(ptr_req->rq_proc != NFSPROC_NULL)
             {
               exportid = nfs3_FhandleToExportId((nfs_fh3 *) parg_nfs);
-              if(exportid < 0)
+
+              if(exportid < 0 ||
+                 (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
+                                                 exportid)) == NULL ||
+                 (pexport->options & EXPORT_OPTION_NFSV3) == 0)
                 {
-                  char dumpfh[1024];
                   /* Reject the request for authentication reason (incompatible file handle) */
-                  LogMajor(COMPONENT_DISPATCH,
-                           "Host 0x%x = %d.%d.%d.%d has badly formed file handle, vers=%d, proc=%d FH=%s",
-                           ntohs(hostaddr.sin_addr.s_addr),
-                           (ntohl(hostaddr.sin_addr.s_addr) & 0xFF000000) >> 24,
-                           (ntohl(hostaddr.sin_addr.s_addr) & 0x00FF0000) >> 16,
-                           (ntohl(hostaddr.sin_addr.s_addr) & 0x0000FF00) >> 8,
-                           (ntohl(hostaddr.sin_addr.s_addr) & 0x000000FF),
-                           (int)ptr_req->rq_vers, (int)ptr_req->rq_proc, dumpfh);
+                  if(isInfo(COMPONENT_DISPATCH))
+                    {
+                      char dumpfh[1024];
+                      char *reason;
+                      char addrbuf[SOCK_NAME_MAX];
+                      sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
+                      if(exportid < 0)
+                        reason = "has badly formed handle";
+                      else if(pexport == NULL)
+                        reason = "has invalid export";
+                      else
+                        reason = "V3 not allowed on this export";
+                      sprint_fhandle3(dumpfh, (nfs_fh3 *) parg_nfs);
+                      LogMajor(COMPONENT_DISPATCH,
+                               "NFS3 Request from host %s %s, proc=%d, FH=%s",
+                               addrbuf, reason,
+                               (int)ptr_req->rq_proc, dumpfh);
+                    }
+                  /* Bad argument */
                   svcerr_auth(ptr_svc, AUTH_FAILED);
                   if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
                                         &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
@@ -940,65 +926,33 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                   return;
                 }
 
-              if((pexport =
-                  nfs_Get_export_by_id(nfs_param.pexportlist, exportid)) == NULL)
-                {
-                  char dumpfh[1024];
-                  /* Reject the request for authentication reason (incompatible file handle) */
-                  LogMajor(COMPONENT_DISPATCH,
-                           "Host 0x%x = %d.%d.%d.%d has badly formed file handle, vers=%d, proc=%d FH=%s",
-                           ntohs(hostaddr.sin_addr.s_addr),
-                           (ntohl(hostaddr.sin_addr.s_addr) & 0xFF000000) >> 24,
-                           (ntohl(hostaddr.sin_addr.s_addr) & 0x00FF0000) >> 16,
-                           (ntohl(hostaddr.sin_addr.s_addr) & 0x0000FF00) >> 8,
-                           (ntohl(hostaddr.sin_addr.s_addr) & 0x000000FF),
-                           (int)ptr_req->rq_vers, (int)ptr_req->rq_proc, dumpfh);
-                  svcerr_auth(ptr_svc, AUTH_FAILED);
-
-                  if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
-                                        &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
-                    {
-                      LogCrit(COMPONENT_DISPATCH,
-                              "Attempt to delete duplicate request failed on line %d",
-                              __LINE__);
-                    }
-                  return;
-                }
-              if((pexport->options & EXPORT_OPTION_NFSV3) == 0)
-                {
-                  /* Reject the request for authentication reason (NFS v3 not allowed for this export) */
-                  svcerr_auth(ptr_svc, AUTH_FAILED);
-                }
               LogFullDebug(COMPONENT_DISPATCH,
                            "Found export entry for dirname=%s as exportid=%d",
                            pexport->dirname, pexport->id);
             }
+          else
+            pexport = nfs_param.pexportlist;
+
           break;
 
-        case NFS_V4:
+        default:
+          /* NFSv4 or invalid version (which should never get here) */
           pexport = nfs_param.pexportlist;
           break;
         }                       /* switch( ptr_req->rq_vers ) */
     }
-  else if(ptr_req->rq_prog == nfs_param.core_param.mnt_program)
-    {
-      /* Always use the whole export list for mount protocol */
-      pexport = nfs_param.pexportlist;
-    }                           /* switch( ptr_req->rq_prog ) */
 #ifdef _USE_NLM
-  else if(ptr_req->rq_prog == nfs_param.core_param.nlm_program)
+  else if(ptr_req->rq_prog == nfs_param.core_param.program[P_NLM])
     {
       /* Always use the whole export list for NLM protocol (FIXME !! Verify) */
       pexport = nfs_param.pexportlist;
     }
 #endif                          /* _USE_NLM */
-#ifdef _USE_QUOTA
-  else if(ptr_req->rq_prog == nfs_param.core_param.rquota_program)
+  else
     {
-      /* Always use the whole export list for NLM protocol (FIXME !! Verify) */
+      /* All other protocols use the whole export list */
       pexport = nfs_param.pexportlist;
     }
-#endif                          /* _USE_QUOTA */
 
   /* Zero out timers prior to starting processing */
   memset(timer_start, 0, sizeof(struct timeval));
@@ -1008,32 +962,17 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   /*
    * It is now time for checking if export list allows the machine to perform the request
    */
-
-  /* Ask the RPC layer for the adresse of the machine */
-#ifdef _USE_TIRPC
-  /*
-   * In tirpc svc_getcaller is deprecated and replaced by
-   * svc_getrpccaller().
-   * svc_getrpccaller return a struct netbuf (see rpc/types.h) instead
-   * of a struct sockaddr_in directly.
-   */
-  pnetbuf = svc_getrpccaller(ptr_svc);
-  memcpy((char *)&pworker_data->hostaddr, (char *)pnetbuf->buf, pnetbuf->len);
-#else
-  phostaddr = svc_getcaller(ptr_svc);
-  memcpy((char *)&pworker_data->hostaddr, (char *)phostaddr,
-         sizeof(pworker_data->hostaddr));
-#endif
+  pworker_data->hostaddr = hostaddr;
 
   /* Check if client is using a privileged port, but only for NFS protocol */
-  if(ptr_req->rq_prog == nfs_param.core_param.nfs_program && ptr_req->rq_proc != 0)
+  if(ptr_req->rq_prog == nfs_param.core_param.program[P_NFS] && ptr_req->rq_proc != 0)
     {
       if((pexport->options & EXPORT_OPTION_PRIVILEGED_PORT) &&
-         (ntohs(hostaddr.sin_port) >= IPPORT_RESERVED))
+         (port >= IPPORT_RESERVED))
         {
           LogInfo(COMPONENT_DISPATCH,
                   "Port %d is too high for this export entry, rejecting client",
-                  hostaddr.sin_port);
+                  port);
           svcerr_auth(ptr_svc, AUTH_TOOWEAK);
           pworker_data->current_xid = 0;    /* No more xid managed */
 
@@ -1066,11 +1005,13 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }
     }
 
+  LogFullDebug(COMPONENT_DISPATCH,
+               "nfs_rpc_execute about to call nfs_export_check_access");
   export_check_result = nfs_export_check_access(&pworker_data->hostaddr,
                                                 ptr_req,
                                                 pexport,
-                                                nfs_param.core_param.nfs_program,
-                                                nfs_param.core_param.mnt_program,
+                                                nfs_param.core_param.program[P_NFS],
+                                                nfs_param.core_param.program[P_MNT],
                                                 pworker_data->ht_ip_stats,
                                                 &pworker_data->ip_stats_pool,
                                                 &related_client,
@@ -1078,13 +1019,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                                                 (pworker_data->pfuncdesc->dispatch_behaviour & MAKES_WRITE) == MAKES_WRITE);
   if (export_check_result == EXPORT_PERMISSION_DENIED)
     {
+      char addrbuf[SOCK_NAME_MAX];
+      sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
       LogInfo(COMPONENT_DISPATCH,
-              "Host 0x%x = %d.%d.%d.%d is not allowed to access this export entry, vers=%d, proc=%d",
-              ntohs(phostaddr->sin_addr.s_addr),
-              (ntohl(phostaddr->sin_addr.s_addr) & 0xFF000000) >> 24,
-              (ntohl(phostaddr->sin_addr.s_addr) & 0x00FF0000) >> 16,
-              (ntohl(phostaddr->sin_addr.s_addr) & 0x0000FF00) >> 8,
-              (ntohl(phostaddr->sin_addr.s_addr) & 0x000000FF),
+              "Host %s is not allowed to access this export entry, vers=%d, proc=%d",
+              addrbuf,
               (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
       svcerr_auth( ptr_svc, AUTH_TOOWEAK );
       pworker_data->current_xid = 0;        /* No more xid managed */
@@ -1103,7 +1042,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
     {
       LogDebug(COMPONENT_DISPATCH,
                "Dropping request because nfs_export_check_access() reported this is a RO filesystem.");
-      if(ptr_req->rq_prog == nfs_param.core_param.nfs_program)
+      if(ptr_req->rq_prog == nfs_param.core_param.program[P_NFS])
         {
           if(ptr_req->rq_vers == NFS_V2)
             {
@@ -1128,17 +1067,33 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       /* If not EXPORT_PERMISSION_GRANTED, then we are all out of options! */
       LogMajor(COMPONENT_DISPATCH,
                "nfs_export_check_access() returned none of the expected flags. This is an unexpected state!");
+      rc = NFS_REQ_DROP;
     }
   else  /* export_check_result == EXPORT_PERMISSION_GRANTED is TRUE */
     {
       LogFullDebug(COMPONENT_DISPATCH,
                    "nfs_export_check_access() reported PERMISSION GRANTED.");
+
       /* Do the authentication stuff, if needed */
       if(pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
         {
-          if(nfs_build_fsal_context
-             (ptr_req, &related_client, pexport,
-              &pworker_data->thread_fsal_context, &user_credentials) == FALSE)
+#ifdef _USE_SHARED_FSAL
+	  FSAL_SetId( pexport->fsalid ) ;
+
+	  /* Swap the anonymous uid/gid if the user should be anonymous */
+          if(nfs_check_anon(&related_client, pexport, &user_credentials) == FALSE
+	     || nfs_build_fsal_context(ptr_req,
+                                       &related_client, pexport,
+				       &pworker_data->thread_fsal_context[pexport->fsalid],
+				       &user_credentials) == FALSE)
+#else
+	  /* Swap the anonymous uid/gid if the user should be anonymous */
+          if(nfs_check_anon(&related_client, pexport, &user_credentials) == FALSE
+	     || nfs_build_fsal_context(ptr_req,
+                                       &related_client, pexport,
+				       &pworker_data->thread_fsal_context,
+                                       &user_credentials) == FALSE)
+#endif
             {
               svcerr_auth(ptr_svc, AUTH_TOOWEAK);
               pworker_data->current_xid = 0;    /* No more xid managed */
@@ -1174,7 +1129,25 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }
 #endif
 
-      rc = pworker_data->pfuncdesc->service_function(parg_nfs, pexport, &pworker_data->thread_fsal_context, &(pworker_data->cache_inode_client), pworker_data->ht, ptr_req, &res_nfs);  /* BUGAZOMEU Un appel crade pour debugger */
+#ifdef _USE_SHARED_FSAL
+      if( pexport != NULL )
+       {
+         pfsal_op_ctx = &pworker_data->thread_fsal_context[pexport->fsalid] ; 
+         FSAL_SetId( pexport->fsalid ) ;
+       }
+      else
+	pfsal_op_ctx = NULL ; /* Only for mount protocol (pexport is then meaningless */
+#else
+      pfsal_op_ctx =  &pworker_data->thread_fsal_context ;
+#endif
+
+      rc = pworker_data->pfuncdesc->service_function(parg_nfs, 
+						     pexport, 
+						     pfsal_op_ctx,
+                                                     &(pworker_data->cache_inode_client), 
+                                                     pworker_data->ht, 
+                                                     ptr_req, 
+                                                     &res_nfs); 
 
       gettimeofday(&timer_end, NULL);
       timer_diff = time_diff(*timer_start, timer_end);
@@ -1182,14 +1155,14 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
       if(timer_diff.tv_sec >= nfs_param.core_param.long_processing_threshold)
         LogEvent(COMPONENT_DISPATCH,
-                 "Function %s exited with status %d taking %llu.%.6llu seconds to process",
-                 pworker_data->pfuncdesc->funcname, rc,
+                 "Function %s xid=%u exited with status %d taking %llu.%.6llu seconds to process",
+                 pworker_data->pfuncdesc->funcname, rpcxid, rc,
                  (unsigned long long)timer_diff.tv_sec,
                  (unsigned long long)timer_diff.tv_usec);
       else
         LogDebug(COMPONENT_DISPATCH,
-                 "Function %s exited with status %d taking %llu.%.6llu seconds to process",
-                 pworker_data->pfuncdesc->funcname, rc,
+                 "Function %s xid=%u exited with status %d taking %llu.%.6llu seconds to process",
+                 pworker_data->pfuncdesc->funcname, rpcxid, rc,
                  (unsigned long long)timer_diff.tv_sec,
                  (unsigned long long)timer_diff.tv_usec);
     }
@@ -1218,36 +1191,36 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                "Drop request rpc_xid=%u, program %u, version %u, function %u",
                rpcxid, (int)ptr_req->rq_prog,
                (int)ptr_req->rq_vers, (int)ptr_req->rq_proc);
+
+      /* If the request is not normally cached, then the entry will be removed
+       * later. We only remove a reply that is normally cached that has been
+       * dropped. */
+      if(do_dupreq_cache)
+        if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                              &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+          {
+            LogCrit(COMPONENT_DISPATCH,
+                    "Attempt to delete duplicate request failed on line %d",
+                    __LINE__);
+          }
     }
   else
     {
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Before svc_sendreply on socket %u",
-                   ptr_svc->xp_fd);
-#else
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Before svc_sendreply on socket %u",
-                   ptr_svc->xp_sock);
-#endif
+      P(mutex_cond_xprt[ptr_svc->XP_SOCK]);
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-      P(mutex_cond_xprt[ptr_svc->xp_fd]);
-#else
-      P(mutex_cond_xprt[ptr_svc->xp_sock]);
-#endif
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "Before svc_sendreply on socket %d",
+                   ptr_svc->XP_SOCK);
 
       /* encoding the result on xdr output */
+      CheckXprt(ptr_svc);
       if(svc_sendreply(ptr_svc, pworker_data->pfuncdesc->xdr_encode_func, (caddr_t) & res_nfs) == FALSE)
         {
-          LogEvent(COMPONENT_DISPATCH,
+          LogDebug(COMPONENT_DISPATCH,
                    "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply");
-          svcerr_decode(ptr_svc);
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-          V(mutex_cond_xprt[ptr_svc->xp_fd]);
-#else
-          V(mutex_cond_xprt[ptr_svc->xp_sock]);
-#endif
+          svcerr_systemerr(ptr_svc);
+
+          V(mutex_cond_xprt[ptr_svc->XP_SOCK]);
 
           if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
                                 &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
@@ -1259,21 +1232,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
           return;
         }
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-      V(mutex_cond_xprt[ptr_svc->xp_fd]);
-#else
-      V(mutex_cond_xprt[ptr_svc->xp_sock]);
-#endif
+      LogFullDebug(COMPONENT_DISPATCH,
+                   "After svc_sendreply on socket %d",
+                   ptr_svc->XP_SOCK);
 
-#if defined( _USE_TIRPC ) || defined( _FREEBSD )
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "After svc_sendreply on socket %u",
-                   ptr_svc->xp_fd);
-#else
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "After svc_sendreply on socket %u",
-                   ptr_svc->xp_sock);
-#endif
+      V(mutex_cond_xprt[ptr_svc->XP_SOCK]);
 
       /* Mark request as finished */
       LogFullDebug(COMPONENT_DUPREQ, "YES?: %d", do_dupreq_cache);
@@ -1300,7 +1263,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   /* Free the reply.
    * This should not be done if the request is dupreq cached because this will
    * mark the dupreq cached info eligible for being reuse by other requests */
-
   if(!do_dupreq_cache)
     {
       if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
@@ -1336,8 +1298,542 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
     nb_iter_memleaks += 1;
 #endif
 
+  /* By now the dupreq cache entry should have been completed w/ a request that is reusable
+   * or the dupreq cache entry should have been removed. */
   return;
 }                               /* nfs_rpc_execute */
+
+pthread_mutex_t active_workers_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t  active_workers_cond  = PTHREAD_COND_INITIALIZER;
+unsigned int    num_active_workers   = 0;
+unsigned int    num_existing_workers = 0;
+awaken_reason_t awaken_reason        = AWAKEN_STARTUP;
+int             num_pauses           = 0; /* Number of things trying to pause - do not awaken until this goes to 0 */
+pause_state_t   pause_state          = STATE_STARTUP;
+
+const char *pause_reason_str[] =
+{
+  "PAUSE_RELOAD_EXPORTS",
+  "PAUSE_SHUTDOWN",
+};
+
+const char *awaken_reason_str[] =
+{
+  "AWAKEN_STARTUP",
+  "AWAKEN_RELOAD_EXPORTS",
+};
+
+const char *pause_state_str[] =
+{
+  "STATE_STARTUP",
+  "STATE_AWAKEN",
+  "STATE_AWAKE",
+  "STATE_PAUSE",
+  "STATE_PAUSED",
+  "STATE_EXIT",
+};
+
+const char *pause_rc_str[] =
+{
+  "PAUSE_OK",
+  "PAUSE_AWAKE",
+  "PAUSE_PAUSE",
+  "PAUSE_EXIT",
+};
+
+worker_available_rc worker_available(unsigned long worker_index, unsigned int avg_number_pending)
+{
+  worker_available_rc rc = WORKER_AVAILABLE;
+  P(workers_data[worker_index].request_mutex);
+  switch(workers_data[worker_index].pause_state)
+    {
+      case STATE_AWAKE:
+      case STATE_AWAKEN:
+        /* Choose only fully initialized workers and that does not gc. */
+        if(workers_data[worker_index].is_ready == FALSE)
+          {
+            LogFullDebug(COMPONENT_THREAD,
+                         "worker thread #%lu is not ready", worker_index);
+            rc = WORKER_PAUSED;
+          }
+        else if(workers_data[worker_index].gc_in_progress == TRUE)
+          {
+            LogFullDebug(COMPONENT_THREAD,
+                         "worker thread #%lu is doing garbage collection", worker_index);
+            rc = WORKER_GC;
+          }
+        else if(workers_data[worker_index].pending_request->nb_entry >= avg_number_pending)
+          {
+            rc = WORKER_BUSY;
+          }
+        break;
+
+      case STATE_STARTUP:
+      case STATE_PAUSE:
+      case STATE_PAUSED:
+        rc = WORKER_ALL_PAUSED;
+        break;
+
+      case STATE_EXIT:
+        rc = WORKER_EXIT;
+        break;
+    }
+  V(workers_data[worker_index].request_mutex);
+
+  return rc;
+}
+
+/**
+ * wait_for_workers_to_exit: Wait for workers to exit
+ *
+ */
+void wait_for_workers_to_exit()
+{
+  struct timespec timeout;
+  int rc;
+  int t1, t2;
+  unsigned int original_existing = num_existing_workers;
+
+  LogDebug(COMPONENT_THREAD,
+           "Waiting for worker threads to exit");
+
+  t1 = time(NULL);
+  while(num_existing_workers > 0)
+    {
+      LogDebug(COMPONENT_THREAD,
+               "Waiting one second for threads to exit, still existing: %u",
+               num_existing_workers);
+      timeout.tv_sec  = time(NULL) + 1;
+      timeout.tv_nsec = 0;
+      rc = pthread_cond_timedwait(&active_workers_cond, &active_workers_mutex, &timeout);
+    }
+  t2 = time(NULL);
+  LogInfo(COMPONENT_THREAD,
+          "%u threads exited out of %u after %d seconds",
+          original_existing - num_existing_workers,
+          original_existing,
+          t2 - t1);
+}
+
+/**
+ * _wait_for_workers_to_pause: Wait for workers to become innactive
+ *
+ */
+pause_rc _wait_for_workers_to_pause()
+{
+  struct timespec timeout;
+  int rc;
+  int t1, t2;
+
+  LogDebug(COMPONENT_THREAD,
+           "Waiting for worker threads to sleep");
+
+  t1 = time(NULL);
+  while(num_active_workers > 0)
+    {
+      /* If we are now trying to exit, just shortcut, let our caller deal with exiting. */
+      if(pause_state == STATE_EXIT)
+        {
+          t2 = time(NULL);
+          LogInfo(COMPONENT_THREAD,
+                  "%u threads asleep of %u after %d seconds before interruption for shutdown",
+                  nfs_param.core_param.nb_worker - num_active_workers,
+                  nfs_param.core_param.nb_worker,
+                  t2 - t1);
+          return PAUSE_EXIT;
+        }
+
+      timeout.tv_sec  = time(NULL) + 1;
+      timeout.tv_nsec = 0;
+      rc = pthread_cond_timedwait(&active_workers_cond, &active_workers_mutex, &timeout);
+    }
+  t2 = time(NULL);
+  LogInfo(COMPONENT_THREAD,
+          "%u threads asleep out of %u after %d seconds",
+          nfs_param.core_param.nb_worker - num_active_workers,
+          nfs_param.core_param.nb_worker,
+          t2 - t1);
+  return PAUSE_OK;
+}
+
+pause_rc wait_for_workers_to_pause()
+{
+  pause_rc rc;
+
+  P(active_workers_mutex);
+
+  rc = _wait_for_workers_to_pause();
+
+  V(active_workers_mutex);
+
+  return rc;
+}
+
+/**
+ * wait_for_workers_to_awaken: Wait for workers to become active
+ *
+ */
+pause_rc _wait_for_workers_to_awaken()
+{
+  struct timespec timeout;
+  int rc;
+  int t1, t2;
+
+  LogDebug(COMPONENT_THREAD,
+           "Waiting for worker threads to awaken");
+
+  t1 = time(NULL);
+  while(num_active_workers < nfs_param.core_param.nb_worker)
+    {
+      /* If trying to exit, don't bother waiting */
+      if(pause_state == STATE_EXIT)
+        {
+          t2 = time(NULL);
+          LogInfo(COMPONENT_THREAD,
+                  "%u threads awake of %u after %d seconds before interruption for shutdown",
+                  num_active_workers,
+                  nfs_param.core_param.nb_worker,
+                  t2 - t1);
+          return PAUSE_EXIT;
+        }
+
+       /* If trying to pause, don't bother waiting */
+     if(pause_state == STATE_PAUSE || pause_state == STATE_PAUSED)
+        {
+          t2 = time(NULL);
+          LogInfo(COMPONENT_THREAD,
+                  "%u threads awake of %u after %d seconds before interruption for pause",
+                  num_active_workers,
+                  nfs_param.core_param.nb_worker,
+                  t2 - t1);
+          return PAUSE_PAUSE;
+        }
+
+      timeout.tv_sec  = time(NULL) + 10;
+      timeout.tv_nsec = 0;
+      rc = pthread_cond_timedwait(&active_workers_cond, &active_workers_mutex, &timeout);
+    }
+  t2 = time(NULL);
+  LogInfo(COMPONENT_THREAD,
+          "%u threads awake out of %u after %d seconds",
+          num_active_workers, nfs_param.core_param.nb_worker, t2 - t1);
+  return PAUSE_OK;
+}
+
+pause_rc wait_for_workers_to_awaken()
+{
+  pause_rc rc;
+
+  P(active_workers_mutex);
+
+  rc = _wait_for_workers_to_awaken();
+
+  V(active_workers_mutex);
+
+  return rc;  
+}
+
+/**
+ * mark_thread_asleep: Mark a thread as asleep
+ *
+ */
+void mark_thread_asleep(nfs_worker_data_t *pmydata)
+{
+  P(active_workers_mutex);
+  P(pmydata->request_mutex);
+
+  if(pmydata->pause_state == STATE_PAUSE)
+    {
+      pmydata->pause_state = STATE_PAUSED;
+      num_active_workers--;
+      pmydata->is_ready = FALSE;
+    }
+
+  pthread_cond_signal(&active_workers_cond);
+  LogDebug(COMPONENT_THREAD,
+           "Worker thread #%u asleep",
+           pmydata->worker_index);
+
+
+  V(pmydata->request_mutex);
+  V(active_workers_mutex);
+}
+
+/**
+ * mark_thread_done: Mark a thread as done
+ *
+ */
+void mark_thread_done(nfs_worker_data_t *pmydata)
+{
+  P(active_workers_mutex);
+  P(pmydata->request_mutex);
+
+  if(pmydata->is_ready)
+    {
+      num_active_workers--;
+      pmydata->is_ready = FALSE;
+    }
+
+  num_existing_workers--;
+  
+  pthread_cond_signal(&active_workers_cond);
+  LogDebug(COMPONENT_THREAD,
+           "Worker thread #%u exiting",
+           pmydata->worker_index);
+
+
+  V(pmydata->request_mutex);
+  V(active_workers_mutex);
+}
+
+/**
+ * mark_thread_exist: Mark a thread as existing
+ *
+ */
+pause_rc mark_thread_existing(nfs_worker_data_t *pmydata)
+{
+  pause_rc rc;
+
+  P(active_workers_mutex);
+  P(pmydata->request_mutex);
+
+  /* Increment count of existing (even if we are about to die,
+   * mark_thread_done will be called in that case).
+   */
+  num_existing_workers++;
+
+  if(pause_state == STATE_EXIT)
+    rc = PAUSE_EXIT;
+  else
+    rc = PAUSE_OK;
+
+  pthread_cond_signal(&active_workers_cond);
+  LogDebug(COMPONENT_THREAD,
+           "Worker thread #%u exists",
+           pmydata->worker_index);
+
+  V(pmydata->request_mutex);
+  V(active_workers_mutex);
+
+  return rc;
+}
+
+/**
+ * mark_thread_awake: Mark a thread as awake
+ *
+ */
+void mark_thread_awake(nfs_worker_data_t *pmydata)
+{
+  P(active_workers_mutex);
+  P(pmydata->request_mutex);
+
+  if(pmydata->pause_state == STATE_STARTUP || pmydata->pause_state == STATE_AWAKEN)
+    {
+      pmydata->pause_state = STATE_AWAKE;
+      num_active_workers++;
+      pmydata->is_ready = TRUE;
+    }
+
+  pthread_cond_signal(&active_workers_cond);
+  LogDebug(COMPONENT_THREAD,
+           "Worker thread #%u active",
+           pmydata->worker_index);
+
+  V(pmydata->request_mutex);
+  V(active_workers_mutex);
+}
+
+void notify_threads_of_new_state()
+{
+  unsigned int worker_index;
+  for(worker_index = 0; worker_index  < nfs_param.core_param.nb_worker; worker_index++)
+    {
+      P(workers_data[worker_index].request_mutex);
+      LogDebug(COMPONENT_THREAD,
+               "Changing state of thread #%u from %s to %s",
+               worker_index,
+               pause_state_str[workers_data[worker_index].pause_state],
+               pause_state_str[pause_state]);
+      workers_data[worker_index].pause_state = pause_state;
+      if(pthread_cond_signal(&(workers_data[worker_index].req_condvar)) == -1)
+        {
+          V(workers_data[worker_index].request_mutex);
+          LogMajor(COMPONENT_THREAD,
+                   "Error %d (%s) while signalling Worker Thread #%u... Exiting",
+                   errno, strerror(errno), worker_index);
+          Fatal();
+        }
+      V(workers_data[worker_index].request_mutex);
+    }
+}
+
+/**
+ * pause_workers: Pause the worker threads.
+ *
+ */
+pause_rc pause_workers(pause_reason_t reason)
+{
+  pause_rc rc = PAUSE_OK; 
+  bool_t new_state = FALSE;
+  bool_t wait = TRUE;
+
+  P(active_workers_mutex);
+
+  LogDebug(COMPONENT_THREAD,
+           "Pause workers for reason: %s pause_state: %s",
+           pause_reason_str[reason], pause_state_str[pause_state]);
+
+  switch(reason)
+    {
+      case PAUSE_RELOAD_EXPORTS:
+        num_pauses++;
+        switch(pause_state)
+          {
+            case STATE_STARTUP:
+              /* We need to wait for all threads to come up the first time
+               * before we can think of trying to pause them.
+               */
+              rc = _wait_for_workers_to_awaken();
+              if(rc != PAUSE_OK)
+                {
+                  LogDebug(COMPONENT_THREAD,
+                           "pause workers for %s interrupted for shutdown",
+                           pause_reason_str[reason]);
+                  V(active_workers_mutex);
+                  return rc;
+                }
+              /* fall through */
+
+            case STATE_AWAKEN:
+            case STATE_AWAKE:
+              pause_state = STATE_PAUSE;
+              new_state = TRUE;
+              break;
+
+            case STATE_PAUSE:
+              break;
+
+            case STATE_PAUSED:
+              /* Already paused, nothing to do. */
+              wait = FALSE;
+              break;
+
+            case STATE_EXIT:
+              /* Ganesha is trying to exit, the caller should exit also */
+              V(active_workers_mutex);
+              return PAUSE_EXIT;
+          }
+        break;
+
+      case PAUSE_SHUTDOWN:
+        num_pauses++;
+        if(pause_state == STATE_EXIT)
+          {
+            /* Already paused, nothing more to do. */
+            wait = FALSE;
+            rc = PAUSE_EXIT;
+          }
+        else
+          {
+            /* Otherwise don't care about current state, startup will handle need to exit. */
+            pause_state = STATE_EXIT;
+            new_state = TRUE;
+          }
+        break;
+    }
+
+  if(new_state)
+    notify_threads_of_new_state();
+
+  /* Wait for all worker threads to pause or exit */
+  if(pause_state == STATE_EXIT && wait)
+    {
+      wait_for_workers_to_exit();
+      rc = PAUSE_EXIT;
+    }
+  else if(wait)
+    {
+      rc = _wait_for_workers_to_pause();
+      if(rc == PAUSE_OK && pause_state == STATE_PAUSE)
+        pause_state = STATE_PAUSED;
+    }
+
+  V(active_workers_mutex);
+
+  return rc;
+}
+
+/**
+ * wake_workers: Wake up worker threads.
+ *
+ */
+pause_rc wake_workers(awaken_reason_t reason)
+{
+  pause_rc rc; 
+  bool_t new_state = FALSE;
+  bool_t wait = TRUE;
+
+  P(active_workers_mutex);
+
+  LogDebug(COMPONENT_THREAD,
+           "Wake workers for reason: %s pause_state: %s",
+           awaken_reason_str[reason], pause_state_str[pause_state]);
+
+  switch(reason)
+    {
+      case AWAKEN_STARTUP:
+        /* Just wait. */
+        break;
+
+      case AWAKEN_RELOAD_EXPORTS:
+        num_pauses--;
+        switch(pause_state)
+          {
+            case STATE_STARTUP:
+            case STATE_AWAKEN:
+              /* Already trying to awaken, just wait. */
+              break;
+
+            case STATE_PAUSE:
+            case STATE_PAUSED:
+              if(num_pauses != 0)
+                {
+                  /* Don't actually wake up yet. */
+                  V(active_workers_mutex);
+                  return PAUSE_PAUSE;
+                }
+              pause_state = STATE_AWAKEN;
+              new_state = TRUE;
+              break;
+
+            case STATE_AWAKE:
+              /* Already awake, nothing to do. */
+              wait = FALSE;
+              rc = PAUSE_OK;
+              break;
+
+            case STATE_EXIT:
+              /* Ganesha is trying to exit, the caller should exit also */
+              V(active_workers_mutex);
+              return PAUSE_EXIT;
+          }
+    }
+
+  if(new_state)
+    notify_threads_of_new_state();
+
+  /* Wait for all worker threads to wake up */
+  if(wait)
+    {
+      rc = _wait_for_workers_to_awaken();
+      if(rc == PAUSE_OK)
+        pause_state = STATE_AWAKE;
+    }
+
+  V(active_workers_mutex);
+
+  return rc;
+}
 
 /**
  * nfs_Init_worker_data: Init the data associated with a worker instance.
@@ -1357,7 +1853,7 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   LRU_status_t status = LRU_LIST_SUCCESS;
   char name[256];
 
-  if(pthread_mutex_init(&(pdata->mutex_req_condvar), NULL) != 0)
+  if(pthread_mutex_init(&(pdata->request_mutex), NULL) != 0)
     return -1;
 
   if(pthread_mutex_init(&(pdata->request_pool_mutex), NULL) != 0)
@@ -1366,14 +1862,8 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   if(pthread_cond_init(&(pdata->req_condvar), NULL) != 0)
     return -1;
 
-  if(pthread_mutex_init(&(pdata->mutex_export_condvar), NULL) != 0)
-    return -1;
-
-  if(pthread_cond_init(&(pdata->export_condvar), NULL) != 0)
-    return -1;
-
-  sprintf(name, "Worker %d Pending Request", pdata->index);
-  nfs_param.worker_param.lru_param.name = name;
+  sprintf(name, "Worker Thread #%u Pending Request", pdata->worker_index);
+  nfs_param.worker_param.lru_param.name = Str_Dup(name);
 
   if((pdata->pending_request =
       LRU_Init(nfs_param.worker_param.lru_param, &status)) == NULL)
@@ -1382,8 +1872,8 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
       return -1;
     }
 
-  sprintf(name, "Worker %d Duplicate Request", pdata->index);
-  nfs_param.worker_param.lru_dupreq.name = name;
+  sprintf(name, "Worker Thread #%u Duplicate Request", pdata->worker_index);
+  nfs_param.worker_param.lru_dupreq.name = Str_Dup(name);
 
   if((pdata->duplicate_request =
       LRU_Init(nfs_param.worker_param.lru_dupreq, &status)) == NULL)
@@ -1395,12 +1885,115 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   pdata->passcounter = 0;
   pdata->is_ready = FALSE;
   pdata->gc_in_progress = FALSE;
-  pdata->reparse_exports_in_progress = FALSE;
-  pdata->waiting_for_exports = FALSE;
   pdata->pfuncdesc = INVALID_FUNCDESC;
 
   return 0;
 }                               /* nfs_Init_worker_data */
+
+void DispatchWork(nfs_request_data_t *pnfsreq, unsigned int worker_index)
+{
+  LRU_entry_t *pentry = NULL;
+  LRU_status_t status;
+  struct svc_req *ptr_req = &pnfsreq->req;
+  unsigned int rpcxid = get_rpc_xid(ptr_req);
+
+  LogDebug(COMPONENT_DISPATCH,
+           "Awaking Worker Thread #%u for request %p, xid=%u",
+           worker_index, pnfsreq, rpcxid);
+
+  P(workers_data[worker_index].request_mutex);
+  P(workers_data[worker_index].request_pool_mutex);
+
+  pentry = LRU_new_entry(workers_data[worker_index].pending_request, &status);
+
+  if(pentry == NULL)
+    {
+      V(workers_data[worker_index].request_pool_mutex);
+      V(workers_data[worker_index].request_mutex);
+      LogMajor(COMPONENT_DISPATCH,
+               "Error while inserting pending request to Worker Thread #%u... Exiting",
+               worker_index);
+      Fatal();
+    }
+
+  pentry->buffdata.pdata = (caddr_t) pnfsreq;
+  pentry->buffdata.len = sizeof(*pnfsreq);
+
+  if(pthread_cond_signal(&(workers_data[worker_index].req_condvar)) == -1)
+    {
+      V(workers_data[worker_index].request_pool_mutex);
+      V(workers_data[worker_index].request_mutex);
+      LogMajor(COMPONENT_THREAD,
+               "Error %d (%s) while signalling Worker Thread #%u... Exiting",
+               errno, strerror(errno), worker_index);
+      Fatal();
+    }
+  V(workers_data[worker_index].request_pool_mutex);
+  V(workers_data[worker_index].request_mutex);
+}
+
+enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
+                                   bool_t *no_dispatch)
+{
+  struct rpc_msg *pmsg;
+  struct svc_req *preq;
+  SVCXPRT *xprt;
+  enum auth_stat why;
+
+  /* A few words of explanation are required here:
+   * In authentication is AUTH_NONE or AUTH_UNIX, then the value of no_dispatch remains FALSE and the request is proceeded normally
+   * If authentication is RPCSEC_GSS, no_dispatch may have value TRUE, this means that gc->gc_proc != RPCSEC_GSS_DATA and that the
+   * message is in fact an internal negociation message from RPCSEC_GSS using GSSAPI. It then should not be proceed by the worker and
+   * SVC_STAT should be returned to the dispatcher.
+   */
+
+  *no_dispatch = FALSE;
+
+  /* Set pointers */
+  pmsg = &(pnfsreq->msg);
+  preq = &(pnfsreq->req);
+  xprt = pnfsreq->xprt;
+
+  preq->rq_xprt = pnfsreq->xprt;
+  preq->rq_prog = pmsg->rm_call.cb_prog;
+  preq->rq_vers = pmsg->rm_call.cb_vers;
+  preq->rq_proc = pmsg->rm_call.cb_proc;
+  LogFullDebug(COMPONENT_DISPATCH,
+               "About to authenticate Prog = %d, vers = %d, proc = %d xprt=%p",
+               (int)preq->rq_prog, (int)preq->rq_vers,
+               (int)preq->rq_proc, preq->rq_xprt);
+  /* Restore previously save GssData */
+#ifdef _HAVE_GSSAPI
+  if((why = Rpcsecgss__authenticate(preq, pmsg, no_dispatch)) != AUTH_OK)
+#else
+  if((why = _authenticate(preq, pmsg)) != AUTH_OK)
+#endif
+    {
+      char auth_str[AUTH_STR_LEN];
+      auth_stat2str(why, auth_str);
+      LogInfo(COMPONENT_DISPATCH,
+              "Could not authenticate request... rejecting with AUTH_STAT=%s",
+              auth_str);
+      svcerr_auth(xprt, why);
+      *no_dispatch = TRUE;
+      return why;
+    }
+  else
+    {
+#ifdef _HAVE_GSSAPI
+      struct rpc_gss_cred *gc;
+
+      if(preq->rq_xprt->xp_verf.oa_flavor == RPCSEC_GSS)
+        {
+          gc = (struct rpc_gss_cred *)preq->rq_clntcred;
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "AuthenticateRequest no_dispatch=%d gc->gc_proc=(%u) %s",
+                       *no_dispatch, gc->gc_proc, str_gc_proc(gc->gc_proc));
+        }
+#endif
+    }             /* else from if( ( why = _authenticate( preq, pmsg) ) != AUTH_OK) */
+  return AUTH_OK;
+}
 
 /**
  * worker_thread: The main function for a worker thread
@@ -1419,90 +2012,107 @@ void *worker_thread(void *IndexArg)
   nfs_worker_data_t *pmydata;
   nfs_request_data_t *pnfsreq;
   LRU_entry_t *pentry;
-  char *cred_area;
-  struct rpc_msg *pmsg;
   struct svc_req *preq;
-  SVCXPRT *xprt;
-  enum auth_stat why;
-  long index;
+  unsigned long worker_index;
   bool_t found = FALSE;
   int rc = 0;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   unsigned int gc_allowed = FALSE;
-  char thr_name[128];
-  char auth_str[AUTH_STR_LEN];
-  bool_t no_dispatch = FALSE;
-  fsal_status_t fsal_status;
-#ifdef _USE_GSSRPC
-  struct rpc_gss_cred *gc;
+  char thr_name[32];
+
+#ifdef _USE_MFSL
+  fsal_status_t fsal_status ;
 #endif
 
-  index = (long)IndexArg;
-  pmydata = &(workers_data[index]);
+  worker_index = (unsigned long)IndexArg;
+  pmydata = &(workers_data[worker_index]);
+#ifdef _USE_SHARED_FSAL 
+  unsigned int i = 0 ;
+  unsigned int fsalid = 0 ;
+#endif
 
-  snprintf(thr_name, 128, "worker#%ld", index);
+  snprintf(thr_name, sizeof(thr_name), "Worker Thread #%lu", worker_index);
   SetNameFunction(thr_name);
 
-  LogFullDebug(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu : Starting, nb_entry=%d",
-               index, pmydata->pending_request->nb_entry);
-  /* Initialisation of the Buddy Malloc */
-  LogFullDebug(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu : Initialization of memory manager", index);
+  if(mark_thread_existing(pmydata) == PAUSE_EXIT)
+    {
+      /* Oops, that didn't last long... exit. */
+      mark_thread_done(pmydata);
+      LogDebug(COMPONENT_DISPATCH,
+               "Worker exiting before initialization");
+      return NULL;
+    }
 
+  LogFullDebug(COMPONENT_DISPATCH,
+               "Starting, nb_entry=%d",
+               pmydata->pending_request->nb_entry);
+  /* Initialisation of the Buddy Malloc */
 #ifndef _NO_BUDDY_SYSTEM
   if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: Memory manager could not be initialized, exiting...",
-               index);
-      exit(1);
+      LogFatal(COMPONENT_DISPATCH,
+               "Memory manager could not be initialized");
     }
   LogFullDebug(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: Memory manager successfully initialized",
-               index);
+               "Memory manager successfully initialized");
 #endif
 
   LogDebug(COMPONENT_DISPATCH, "NFS WORKER #%lu: my pthread id is %p",
-           index, (caddr_t) pthread_self());
+           worker_index, (caddr_t) pthread_self());
 
   /* Initialisation of credential for current thread */
   LogFullDebug(COMPONENT_DISPATCH,
                "NFS WORKER #%lu: Initialization of thread's credential",
-               index);
+               worker_index);
+
+#ifdef _USE_SHARED_FSAL
+  for( i = 0 ; i < nfs_param.nb_loaded_fsal ; i++ )
+   {
+      fsalid =  nfs_param.loaded_fsal[i] ;
+
+      FSAL_SetId( fsalid ) ;
+
+      if(FSAL_IS_ERROR(FSAL_InitClientContext(&(pmydata->thread_fsal_context[fsalid]))))
+       {
+         /* Failed init */
+         LogMajor(COMPONENT_DISPATCH,
+                  "NFS  WORKER #%lu: Error initializing thread's credential for FSAL %s",
+                 worker_index, FSAL_fsalid2name( fsalid ) );
+         exit(1);
+       }
+   } /* for */
+#else
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&pmydata->thread_fsal_context)))
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH,
-               "NFS  WORKER #%lu: Error initializing thread's credential",
-               index);
-      exit(1);
+      LogFatal(COMPONENT_DISPATCH,
+               "Error initializing thread's credential");
     }
+#endif /* _USE_SHARED_FSAL */
 
   /* Init the Cache inode client for this worker */
   if(cache_inode_client_init(&pmydata->cache_inode_client,
                              nfs_param.cache_layers_param.cache_inode_client_param,
-                             index, pmydata))
+                             worker_index, pmydata))
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: Cache Inode client could not be initialized, exiting...",
-               index);
-      exit(1);
+      LogFatal(COMPONENT_DISPATCH,
+               "Cache Inode client could not be initialized");
     }
   LogFullDebug(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: Cache Inode client successfully initialized",
-               index);
+               "Cache Inode client successfully initialized");
 
 #ifdef _USE_MFSL
-  if(FSAL_IS_ERROR(MFSL_GetContext(&pmydata->cache_inode_client.mfsl_context,
-                                   &pmydata->thread_fsal_context)))
+
+#ifdef _USE_SHARED_FSAL
+#error "For the moment, no MFSL are supported with dynamic FSALs"
+#else
+  if(FSAL_IS_ERROR(MFSL_GetContext(&pmydata->cache_inode_client.mfsl_context, (&(pmydata->thread_fsal_context) ) ) ) ) 
+#endif
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH,
-               "NFS  WORKER #%lu: Error initing MFSL", index);
-      exit(1);
+      LogFatal(COMPONENT_DISPATCH, "Error initing MFSL");
     }
 #endif
 
@@ -1512,19 +2122,13 @@ void *worker_thread(void *IndexArg)
                                thr_name))
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: Cache Content client could not be initialized, exiting...",
-               index);
-      exit(1);
+      LogFatal(COMPONENT_DISPATCH,
+               "Cache Content client could not be initialized");
     }
   LogFullDebug(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: Cache Content client successfully initialized",
-               index);
+               "Cache Content client successfully initialized");
 
   /* _USE_PNFS */
-
-  /* The worker thread is not garbagging anything at the time it starts */
-  pmydata->gc_in_progress = FALSE;
 
   /* Bind the data cache client to the inode cache client */
   pmydata->cache_inode_client.pcontent_client = (caddr_t) & pmydata->cache_content_client;
@@ -1534,25 +2138,18 @@ void *worker_thread(void *IndexArg)
   if(pnfs_init(&pmydata->cache_inode_client.mfsl_context.pnfsclient, &nfs_param.pnfs_param.layoutfile))
     {
       /* Failed init */
-      LogMajor(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: pNFS engine could not be initialized, exiting...",
-               index);
-      exit(1);
+      LogFatal(COMPONENT_DISPATCH,
+               "pNFS engine could not be initialized");
     }
   LogFullDebug(COMPONENT_DISPATCH,
-               "NFS WORKER #%lu: pNFS engine successfully initialized", index);
+               "pNFS engine successfully initialized");
 #endif
 
-  /* notify dispatcher it is ready */
-  pmydata->is_ready = TRUE;
-
-  LogInfo(COMPONENT_DISPATCH, "NFS WORKER #%lu successfully initialized",
-          index);
+  LogInfo(COMPONENT_DISPATCH, "Worker successfully initialized");
 
   /* Worker's infinite loop */
   while(1)
     {
-
       /* update memory and FSAL stats,
        * twice often than stats display.
        */
@@ -1571,29 +2168,65 @@ void *worker_thread(void *IndexArg)
 
       /* Wait on condition variable for work to be done */
       LogFullDebug(COMPONENT_DISPATCH,
-                   "NFS WORKER #%lu: waiting for requests to process, nb_entry=%d, nb_invalid=%d",
-                   index, pmydata->pending_request->nb_entry,
+                   "waiting for requests to process, nb_entry=%d, nb_invalid=%d",
+                   pmydata->pending_request->nb_entry,
                    pmydata->pending_request->nb_invalid);
-      P(pmydata->mutex_req_condvar);
-      while(pmydata->pending_request->nb_entry == pmydata->pending_request->nb_invalid
-            || pmydata->reparse_exports_in_progress == TRUE)
-        {
-          /* block because someone is changing the exports list */
-          if (pmydata->reparse_exports_in_progress == TRUE)
-            {
-              pmydata->waiting_for_exports = TRUE;
-              P(pmydata->mutex_export_condvar);
-              pthread_cond_wait(&(pmydata->export_condvar), &(pmydata->mutex_export_condvar));
-              pmydata->waiting_for_exports = FALSE;
-              V(pmydata->mutex_export_condvar);
-            }
-          /* block until there are requests to process in the queue */
-          else
-            pthread_cond_wait(&(pmydata->req_condvar), &(pmydata->mutex_req_condvar));
-        }
+
+      P(pmydata->request_mutex);
+      while(1)
+       {
+         if(pmydata->pause_state == STATE_AWAKE &&
+            pmydata->pending_request->nb_entry != pmydata->pending_request->nb_invalid)
+           {
+             /* We have something to do, and we don't need to pause. */
+             LogFullDebug(COMPONENT_DISPATCH,
+                          "Have work, pause_state: %s, nb_entry=%u, nb_invalid=%u",
+                          pause_state_str[pmydata->pause_state],
+                          pmydata->pending_request->nb_entry,
+                          pmydata->pending_request->nb_invalid);
+             break;
+           }
+
+         switch(pmydata->pause_state)
+           {
+             case STATE_STARTUP:
+             case STATE_AWAKEN:
+               /* Mark thread as awake */
+               V(pmydata->request_mutex);
+               mark_thread_awake(pmydata);
+               P(pmydata->request_mutex);
+
+               /* Go back and check new state. */
+               continue;
+
+             case STATE_PAUSE:
+               /* Mark thread as asleep */
+               V(pmydata->request_mutex);
+               mark_thread_asleep(pmydata);
+               P(pmydata->request_mutex);
+
+               /* Go back and check new state. */
+               continue;
+               
+             case STATE_AWAKE:
+             case STATE_PAUSED:
+               /* Wait for something to do */
+               pthread_cond_wait(&(pmydata->req_condvar), &(pmydata->request_mutex));
+               break;
+
+             case STATE_EXIT:
+               /* Need to exit worker thread. */
+               V(pmydata->request_mutex);
+               mark_thread_done(pmydata);
+               LogDebug(COMPONENT_DISPATCH,
+                        "Worker exiting as requested");
+               return NULL;
+           }
+       }
+
       LogFullDebug(COMPONENT_DISPATCH,
-                   "NFS WORKER #%lu: Processing a new request", index);
-      V(pmydata->mutex_req_condvar);
+                   "Processing a new request");
+      V(pmydata->request_mutex);
 
       found = FALSE;
       P(pmydata->request_pool_mutex);
@@ -1612,107 +2245,48 @@ void *worker_thread(void *IndexArg)
       if(!found)
         {
           LogMajor(COMPONENT_DISPATCH,
-                   "NFS WORKER #%lu : No pending request available",
-                   index);
+                   "No pending request available");
           continue;             /* return to main loop */
         }
 
       pnfsreq = (nfs_request_data_t *) (pentry->buffdata.pdata);
 
       LogFullDebug(COMPONENT_DISPATCH,
-                   "NFS WORKER #%lu : I have some work to do, length=%d, invalid=%d",
-                   index, pmydata->pending_request->nb_entry,
-                   pmydata->pending_request->nb_invalid);
+                   "I have some work to do, pnfsreq=%p, length=%d, invalid=%d, xid=%lu",
+                   pnfsreq,
+                   pmydata->pending_request->nb_entry,
+                   pmydata->pending_request->nb_invalid,
+                   (unsigned long) pnfsreq->msg.rm_xid);
 
-#if defined(_USE_TIRPC) || defined( _FREEBSD )
-      if(pnfsreq->xprt->xp_fd == 0)
+      if(pnfsreq->xprt->XP_SOCK == 0)
       {
         LogFullDebug(COMPONENT_DISPATCH,
-                     "NFS WORKER #%lu:No RPC management, xp_fd==0",
-                     index);
+                     "No RPC management, xp_sock==0");
       }
-#else
-      if(pnfsreq->xprt->xp_sock == 0)
-      {
-        LogFullDebug(COMPONENT_DISPATCH,
-                     "NFS WORKER #%lu:No RPC management, xp_sock==0",
-                     index);
-      }
-#endif
       else
         {
           /* Set pointers */
-          cred_area = pnfsreq->cred_area;
-          pmsg = &(pnfsreq->msg);
           preq = &(pnfsreq->req);
-          xprt = pnfsreq->xprt;
 
-          /*do */
-          {
-            if(pnfsreq->status)
-              {
-                preq->rq_xprt = pnfsreq->xprt;
-                preq->rq_prog = pmsg->rm_call.cb_prog;
-                preq->rq_vers = pmsg->rm_call.cb_vers;
-                preq->rq_proc = pmsg->rm_call.cb_proc;
-                LogFullDebug(COMPONENT_DISPATCH,
-                             "Prog = %d, vers = %d, proc = %d xprt=%p",
-                             (int)pmsg->rm_call.cb_prog, (int)pmsg->rm_call.cb_vers,
-                             (int)pmsg->rm_call.cb_proc, preq->rq_xprt);
-                /* Restore previously save GssData */
-#ifdef _USE_GSSRPC
-                no_dispatch = FALSE;
-                if((why = Rpcsecgss__authenticate(preq, pmsg, &no_dispatch)) != AUTH_OK)
-#else
-                if((why = _authenticate(preq, pmsg)) != AUTH_OK)
-#endif
-                  {
-                    auth_stat2str(why, auth_str);
-                    LogInfo(COMPONENT_DISPATCH,
-                            "Could not authenticate request... rejecting with AUTH_STAT=%s",
-                            auth_str);
-                    svcerr_auth(xprt, why);
-                  }
-                else
-                  {
-#ifdef _USE_GSSRPC
-                    if(preq->rq_xprt->xp_verf.oa_flavor == RPCSEC_GSS)
-                      {
-                        gc = (struct rpc_gss_cred *)preq->rq_clntcred;
-                        LogFullDebug(COMPONENT_DISPATCH,
-                                     "========> no_dispatch=%u gc->gc_proc=%u RPCSEC_GSS_INIT=%u RPCSEC_GSS_CONTINUE_INIT=%u RPCSEC_GSS_DATA=%u RPCSEC_GSS_DESTROY=%u",
-                                     no_dispatch, gc->gc_proc, RPCSEC_GSS_INIT,
-                                     RPCSEC_GSS_CONTINUE_INIT, RPCSEC_GSS_DATA,
-                                     RPCSEC_GSS_DESTROY);
-                      }
-#endif
-                    /* A few words of explanation are required here:
-                     * In authentication is AUTH_NONE or AUTH_UNIX, then the value of no_dispatch remains FALSE and the request is proceeded normally
-                     * If authentication is RPCSEC_GSS, no_dispatch may have value TRUE, this means that gc->gc_proc != RPCSEC_GSS_DATA and that the
-                     * message is in fact an internal negociation message from RPCSEC_GSS using GSSAPI. It then should not be proceed by the worker and
-                     * SCV_STAT should be returned to the dispatcher */
-                    if(no_dispatch == FALSE)
-                      {
-                        /* Validate the rpc request as being a valid program, version, and proc. If not, report the error.
-                         * Otherwise, execute the funtion. */
-                        if(is_rpc_call_valid(xprt, preq) == TRUE)
-                          nfs_rpc_execute(pnfsreq, pmydata);
-                      }         /* if( no_dispatch == FALSE ) */
-                  }             /* else from if( ( why = _authenticate( preq, pmsg) ) != AUTH_OK) */
-              }                 /* if( pnfsreq->status ) */
-          }                     /* while (  pnfsreq->status == XPRT_MOREREQS ); Now handle at the dispatcher's level */
-
+          /* Validate the rpc request as being a valid program, version, and proc. If not, report the error.
+           * Otherwise, execute the funtion.
+           */
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "About to execute Prog = %d, vers = %d, proc = %d xprt=%p",
+                       (int)preq->rq_prog, (int)preq->rq_vers,
+                       (int)preq->rq_proc, preq->rq_xprt);
+          if(is_rpc_call_valid(preq->rq_xprt, preq) == TRUE)
+            nfs_rpc_execute(pnfsreq, pmydata);
         }
 
       /* Free the req by releasing the entry */
       LogFullDebug(COMPONENT_DISPATCH,
-                   "NFS DISPATCH: Invalidating processed entry with xprt_stat=%d",
-                   pnfsreq->status);
+                   "Invalidating processed entry");
       P(pmydata->request_pool_mutex);
       if(LRU_invalidate(pmydata->pending_request, pentry) != LRU_LIST_SUCCESS)
         {
           LogCrit(COMPONENT_DISPATCH,
-                  "NFS DISPATCH: Incoherency: released entry for dispatch could not be tagged invalid");
+                  "Incoherency: released entry for dispatch could not be tagged invalid");
         }
       V(pmydata->request_pool_mutex);
 
@@ -1720,8 +2294,8 @@ void *worker_thread(void *IndexArg)
         {
           /* Garbage collection on dup req cache */
           LogFullDebug(COMPONENT_DISPATCH,
-                       "NFS_WORKER #%lu: before dupreq invalidation nb_entry=%d nb_invalid=%d",
-                       index, pmydata->duplicate_request->nb_entry,
+                       "before dupreq invalidation nb_entry=%d nb_invalid=%d",
+                       pmydata->duplicate_request->nb_entry,
                        pmydata->duplicate_request->nb_invalid);
           if((rc =
               LRU_invalidate_by_function(pmydata->duplicate_request,
@@ -1729,33 +2303,31 @@ void *worker_thread(void *IndexArg)
                                          NULL)) != LRU_LIST_SUCCESS)
             {
               LogCrit(COMPONENT_DISPATCH,
-                      "NFS WORKER #%lu: FAILURE: Impossible to invalidate entries for duplicate request cache (error %d)",
-                      index, rc);
+                      "FAILURE: Impossible to invalidate entries for duplicate request cache (error %d)",
+                      rc);
             }
           LogFullDebug(COMPONENT_DISPATCH,
-                       "NFS_WORKER #%lu: after dupreq invalidation nb_entry=%d nb_invalid=%d",
-                       index, pmydata->duplicate_request->nb_entry,
+                       "after dupreq invalidation nb_entry=%d nb_invalid=%d",
+                       pmydata->duplicate_request->nb_entry,
                        pmydata->duplicate_request->nb_invalid);
           if((rc =
               LRU_gc_invalid(pmydata->duplicate_request,
                              (void *)&pmydata->dupreq_pool)) != LRU_LIST_SUCCESS)
             LogCrit(COMPONENT_DISPATCH,
-                    "NFS WORKER #%lu: FAILURE: Impossible to gc entries for duplicate request cache (error %d)",
-                    index, rc);
+                    "FAILURE: Impossible to gc entries for duplicate request cache (error %d)",
+                    rc);
           else
             LogFullDebug(COMPONENT_DISPATCH,
-                         "NFS WORKER #%lu: gc entries for duplicate request cache OK",
-                         index);
+                         "gc entries for duplicate request cache OK");
 
           LogFullDebug(COMPONENT_DISPATCH,
-                       "NFS_WORKER #%lu: after dupreq gc nb_entry=%d nb_invalid=%d",
-                       index, pmydata->duplicate_request->nb_entry,
+                       "after dupreq gc nb_entry=%d nb_invalid=%d",
+                       pmydata->duplicate_request->nb_entry,
                        pmydata->duplicate_request->nb_invalid);
 
           /* Performing garbabbge collection */
           LogFullDebug(COMPONENT_DISPATCH,
-                       "NFS WORKER #%lu: garbage collecting on pending request list",
-                       index);
+                       "Garbage collecting on pending request list");
           pmydata->passcounter = 0;
 
           P(pmydata->request_pool_mutex);
@@ -1763,24 +2335,19 @@ void *worker_thread(void *IndexArg)
           if(LRU_gc_invalid(pmydata->pending_request, (void *)&pmydata->request_pool) !=
              LRU_LIST_SUCCESS)
             LogCrit(COMPONENT_DISPATCH,
-                    "NFS WORKER #%lu: ERROR: Impossible garbage collection on pending request list",
-                    index);
+                    "ERROR: Impossible garbage collection on pending request list");
           else
             LogFullDebug(COMPONENT_DISPATCH,
-                         "NFS WORKER #%lu: garbage collection on pending request list OK",
-                         index);
+                         "Garbage collection on pending request list OK");
 
           V(pmydata->request_pool_mutex);
 
         }
       else
         LogFullDebug(COMPONENT_DISPATCH,
-                     "NFS WORKER #%lu: garbage collection isn't necessary count=%d, max=%d",
-                     index, pmydata->passcounter, nfs_param.worker_param.nb_before_gc);
+                     "garbage collection isn't necessary count=%d, max=%d",
+                     pmydata->passcounter, nfs_param.worker_param.nb_before_gc);
       pmydata->passcounter += 1;
-
-      if(pnfsreq->ipproto == IPPROTO_UDP)
-        nfs_Cleanup_request_data(pnfsreq);
 
       /* If needed, perform garbage collection on cache_inode layer */
       P(lock_nb_current_gc_workers);
@@ -1793,9 +2360,11 @@ void *worker_thread(void *IndexArg)
         gc_allowed = FALSE;
       V(lock_nb_current_gc_workers);
 
-      if(gc_allowed == TRUE)
+      P(pmydata->request_mutex);
+      if(gc_allowed == TRUE && pmydata->pause_state == STATE_AWAKE)
         {
           pmydata->gc_in_progress = TRUE;
+          V(pmydata->request_mutex);
           LogFullDebug(COMPONENT_DISPATCH,
                        "There are %d concurrent garbage collection",
                        nb_current_gc_workers);
@@ -1812,27 +2381,35 @@ void *worker_thread(void *IndexArg)
           nb_current_gc_workers -= 1;
           V(lock_nb_current_gc_workers);
 
+          P(pmydata->request_mutex);
           pmydata->gc_in_progress = FALSE;
         }
 #ifdef _USE_MFSL
       /* As MFSL context are refresh, and because this could be a time consuming operation, the worker is
        * set as "making garbagge collection" to avoid new requests to come in its pending queue */
-      pmydata->gc_in_progress = TRUE;
+      if(pmydata->pause_state == STATE_AWAKE)
+        {
+          pmydata->gc_in_progress = TRUE;
 
       fsal_status = MFSL_RefreshContext(&pmydata->cache_inode_client.mfsl_context,
+#ifdef _USE_SHARED_FSAL
+                                        &pmydata->thread_fsal_context[pexport->fsalid]);
+#else
                                         &pmydata->thread_fsal_context);
+#endif
 
-      if(FSAL_IS_ERROR(fsal_status))
-        {
-          /* Failed init */
-          LogMajor(COMPONENT_DISPATCH,
-                   "NFS  WORKER #%lu: Error regreshing MFSL context", index);
-          exit(1);
+          if(FSAL_IS_ERROR(fsal_status))
+            {
+              /* Failed init */
+              V(pmydata->request_mutex);
+              LogFatal(COMPONENT_DISPATCH, "Error regreshing MFSL context");
+            }
+
+          pmydata->gc_in_progress = FALSE;
         }
 
-      pmydata->gc_in_progress = FALSE;
-
 #endif
+      V(pmydata->request_mutex);
 
     }                           /* while( 1 ) */
   return NULL;

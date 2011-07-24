@@ -1,7 +1,18 @@
-nfs-ganesha (1.0.6-1) stable; urgency=low
- * Bug Fix : bad memset in FSAL_HPSS:fsal_lookup.c
+nfs-ganesha (1.0.1-1) stable; urgency=low
+ * Bug Fix: Bad memset in FSAL_HPSS::HPSSFSAL_lookup. Result was a segfault at init.
+ * Code reorganization : subdirectory RPCAL has been added
+ * Bug fix: bad 'fd2handle' options in FSAL_XFS::FSAL_rename
+ * pNFS : API for implementing pNFS specific feature has been fully refurbished.
+ * FSAL_VFS: new FSAL using "open_by_handle" feature added in the kernel higher than 2.6.39.
+ * NFSv4: the product is now compiled with NFSv4.1 support by default
+ * Log module: now using __FUNCTION__ macro to get the function's name
+ * Bug Fix: the cache_inode_commit function badly managed the Data Cache.
+ * Multiple FSAL support: it is now possible to 'dlopen' several fsal shared objects.
+ * Bug Fix: issue occured in 'Tbl' pass of cthon04 test for FSAL_XFS and FSAL_VFS
+ * NFSv4 ACLs support
+ * GPFS ACLs support (to be used with NFSv4 ACL support)
 
- -- Philippe Deniel <philippe.deniel@cea.fr>  Mon, 11 Apr 2011 12:36:00 +0200
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Wed,  7 Apr 2011 11:23:00 +0200
 
 nfs-ganesha (1.0.5-1) stable; urgency=low
   * Using function daemon() to start the daemon in a cleaner way

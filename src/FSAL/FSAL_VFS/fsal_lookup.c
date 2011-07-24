@@ -131,6 +131,8 @@ fsal_status_t VFSFSAL_lookup(vfsfsal_handle_t * p_parent_directory_handle,      
 
   if(rc)
     {
+      close( parentfd ) ;
+
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_lookup);
       else
@@ -146,15 +148,18 @@ fsal_status_t VFSFSAL_lookup(vfsfsal_handle_t * p_parent_directory_handle,      
 
     case FSAL_TYPE_JUNCTION:
       // This is a junction
+      close( parentfd ) ;
       Return(ERR_FSAL_XDEV, 0, INDEX_FSAL_lookup);
 
     case FSAL_TYPE_FILE:
     case FSAL_TYPE_LNK:
     case FSAL_TYPE_XATTR:
       // not a directory 
+      close( parentfd ) ;
       Return(ERR_FSAL_NOTDIR, 0, INDEX_FSAL_lookup);
 
     default:
+      close( parentfd ) ;
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_lookup);
     }
 
@@ -174,6 +179,7 @@ fsal_status_t VFSFSAL_lookup(vfsfsal_handle_t * p_parent_directory_handle,      
    {
       errsrv = errno;
       ReleaseTokenFSCall();
+      close( parentfd ) ;
       Return(posix2fsal_error(errsrv), errsrv, INDEX_FSAL_lookup);
    }
 

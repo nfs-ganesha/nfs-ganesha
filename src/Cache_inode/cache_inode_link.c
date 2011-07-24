@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -28,9 +28,9 @@
  * \author  $Author: deniel $
  * \date    $Date: 2005/11/28 17:02:26 $
  * \version $Revision: 1.16 $
- * \brief   Creation of an hardlink.  
+ * \brief   Creation of an hardlink.
  *
- * cache_inode_link.c : Creation of an hardlink. 
+ * cache_inode_link.c : Creation of an hardlink.
  *
  *
  */
@@ -57,8 +57,8 @@
 
 /**
  *
- * cache_inode_link: hardlinks a pentry to another. 
- * 
+ * cache_inode_link: hardlinks a pentry to another.
+ *
  * Hard links a pentry to another. This is basically a equivalent of FSAL_link in the cache inode layer.
  *
  * @param pentry_src [IN] entry pointer the entry to be linked. This can't be a directory.
@@ -67,9 +67,9 @@
  * @param pattr [OUT] attributes for the linked attributes after the operation.
  * @param ht [INOUT] hash table used for the cache.
  * @param pclient [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext [IN] FSAL credentials 
+ * @param pcontext [IN] FSAL credentials
  * @param pstatus [OUT] returned status.
- * 
+ *
  * @return CACHE_INODE_SUCCESS if operation is a success \n
  * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry\n
  * @return CACHE_INODE_BAD_TYPE either source or destination have incorrect type\n
@@ -96,9 +96,14 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
   cache_entry_t *pentry_lookup = NULL;
   fsal_attrib_list_t lookup_attributes;
 
-  fsal_size_t save_size;
-  fsal_size_t save_spaceused;
-  fsal_time_t save_mtime;
+  fsal_size_t save_size = 0;
+  fsal_size_t save_spaceused = 0;
+  fsal_time_t save_mtime = {
+    .seconds = 0,
+    .nseconds = 0
+  };
+
+  fsal_accessflags_t access_mask = 0;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -119,8 +124,10 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
     }
 
   /* Check if caller is allowed to perform the operation */
+  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK) |
+                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
   if((status = cache_inode_access(pentry_dir_dest,
-                                  FSAL_W_OK,
+                                  access_mask,
                                   ht, pclient, pcontext, &status)) != CACHE_INODE_SUCCESS)
     {
       *pstatus = status;
@@ -156,7 +163,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       return *pstatus;
     }
 
-  /* At this point, we know that the entry does not exist in destination directory, we know that the 
+  /* At this point, we know that the entry does not exist in destination directory, we know that the
    * destination is actually a directory and that the source is no directory */
 
   /* Lock the source */
@@ -176,6 +183,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       handle_src = pentry_src->object.symlink.handle;
       break;
 
+    case FS_JUNCTION:
     case DIR_BEGINNING:
       handle_src = pentry_src->object.dir_begin.handle;
       break;
@@ -195,7 +203,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       handle_src = pentry_src->object.special_obj.handle;
       break;
 
-    default:
+    case UNASSIGNED:
+    case RECYCLED:
       LogCrit(COMPONENT_CACHE_INODE,
               "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
               pentry_src->internal_md.type, __LINE__, __FILE__);
@@ -206,6 +215,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
 
   switch (pentry_dir_dest->internal_md.type)
     {
+    case FS_JUNCTION:
     case DIR_BEGINNING:
       handle_dest = pentry_dir_dest->object.dir_begin.handle;
       break;
@@ -217,6 +227,14 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       handle_dest = pentry_src->object.dir_cont.pdir_begin->object.dir_begin.handle;
       V_r(&pentry_dir_dest->object.dir_cont.pdir_begin->lock);
       break;
+
+    default:
+      LogCrit(COMPONENT_CACHE_INODE,
+              "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
+              pentry_src->internal_md.type, __LINE__, __FILE__);
+      *pstatus = CACHE_INODE_BAD_TYPE;
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK] += 1;
+      return *pstatus;
     }
 
   /* If object is a data cached regular file, keeps it mtime and size, STEP 1 */
@@ -300,29 +318,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
     }
 
   /* Update cached attributes */
-  switch (pentry_src->internal_md.type)
-    {
-    case REGULAR_FILE:
-      pentry_src->object.file.attributes = link_attributes;
-      break;
-
-    case SYMBOLIC_LINK:
-      pentry_src->object.symlink.attributes = link_attributes;
-      break;
-
-    case CHARACTER_FILE:
-    case BLOCK_FILE:
-    case SOCKET_FILE:
-    case FIFO_FILE:
-      pentry_src->object.special_obj.attributes = link_attributes;
-      break;
-
-    default:
-      LogCrit(COMPONENT_CACHE_INODE,
-              "WARNING: Major type incoherency line %d in file %s",
-              __LINE__, __FILE__);
-      break;
-    }
+  cache_inode_set_attributes(pentry_src, &link_attributes);
 
   /* Add the new entry in the destination directory */
   if(cache_inode_add_cached_dirent(pentry_dir_dest,

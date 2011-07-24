@@ -35,12 +35,37 @@
 /* case unsensitivity */
 #define STRCMP   strcasecmp
 
-extern time_t ServerBootTime;
-extern nfs_parameter_t nfs_param;
-
 static int config_ok = 0;
 
-static nfs_worker_data_t *workers_data;
+char *nfsv2_function_names[] = {
+  "NFSv2_null", "NFSv2_getattr", "NFSv2_setattr", "NFSv2_root",
+  "NFSv2_lookup", "NFSv2_readlink", "NFSv2_read", "NFSv2_writecache",
+  "NFSv2_write", "NFSv2_create", "NFSv2_remove", "NFSv2_rename",
+  "NFSv2_link", "NFSv2_symlink", "NFSv2_mkdir", "NFSv2_rmdir",
+  "NFSv2_readdir", "NFSv2_statfs"
+};
+
+char *nfsv3_function_names[] = {
+  "NFSv3_null", "NFSv3_getattr", "NFSv3_setattr", "NFSv3_lookup",
+  "NFSv3_access", "NFSv3_readlink", "NFSv3_read", "NFSv3_write",
+  "NFSv3_create", "NFSv3_mkdir", "NFSv3_symlink", "NFSv3_mknod",
+  "NFSv3_remove", "NFSv3_rmdir", "NFSv3_rename", "NFSv3_link",
+  "NFSv3_readdir", "NFSv3_readdirplus", "NFSv3_fsstat",
+  "NFSv3_fsinfo", "NFSv3_pathconf", "NFSv3_commit"
+};
+
+char *nfsv4_function_names[] = {
+  "NFSv4_null", "NFSv4_compound"
+};
+
+char *mnt_function_names[] = {
+  "MNT_null", "MNT_mount", "MNT_dump", "MNT_umount", "MNT_umountall", "MNT_export"
+};
+
+char *rquota_functions_names[] = {
+  "rquota_Null", "rquota_getquota", "rquota_getquotaspecific", "rquota_setquota",
+  "rquota_setquotaspecific"
+};
 
 #ifndef _NO_BUDDY_SYSTEM
 buddy_stats_t global_buddy_stat;
@@ -49,7 +74,6 @@ buddy_stats_t global_buddy_stat;
 int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_parameter)
 {
   int err;
-  int blk_index;
   int var_max, var_index;
   char *key_name;
   char *key_value;
@@ -724,7 +748,6 @@ static int get_buddy(snmp_adm_type_union * param, void *opt_arg)
 static int set_buddy(const snmp_adm_type_union * param, void *opt_arg)
 {
   long cs = (long)opt_arg;
-  unsigned int i;
 
   switch (cs)
     {
@@ -1099,8 +1122,7 @@ static register_get_set snmp_export_stat_buddy[] = {
 
 static void create_dyn_cache_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
 {
-  long n = 0, j;
-  unsigned int i;
+  long j;
 
   *p_dyn_gs_count = 4 * CACHE_INODE_NB_COMMAND;
   *p_dyn_gs =
@@ -1153,9 +1175,8 @@ static void create_dyn_cache_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
     }
 }
 
-static int create_dyn_mntv1_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
+static void create_dyn_mntv1_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
 {
-  unsigned int i;
   long j;
 
   *p_dyn_gs_count = 3 * MNT_V1_NB_COMMAND;
@@ -1193,9 +1214,8 @@ static int create_dyn_mntv1_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_cou
     }
 }
 
-static int create_dyn_mntv3_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
+static void create_dyn_mntv3_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
 {
-  unsigned int i;
   long j;
 
   *p_dyn_gs_count = 3 * MNT_V3_NB_COMMAND;
@@ -1233,9 +1253,8 @@ static int create_dyn_mntv3_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_cou
     }
 }
 
-static int create_dyn_nfsv2_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
+static void create_dyn_nfsv2_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
 {
-  unsigned int i;
   long j;
 
   *p_dyn_gs_count = 3 * NFS_V2_NB_COMMAND;
@@ -1273,9 +1292,8 @@ static int create_dyn_nfsv2_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_cou
     }
 }
 
-static int create_dyn_nfsv3_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
+static void create_dyn_nfsv3_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
 {
-  unsigned int i;
   long j;
 
   *p_dyn_gs_count = 3 * NFS_V3_NB_COMMAND;
@@ -1313,9 +1331,8 @@ static int create_dyn_nfsv3_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_cou
     }
 }
 
-static int create_dyn_nfsv4_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
+static void create_dyn_nfsv4_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
 {
-  unsigned int i;
   long j;
 
   *p_dyn_gs_count = 3 * NFS_V4_NB_COMMAND;
@@ -1353,9 +1370,8 @@ static int create_dyn_nfsv4_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_cou
     }
 }
 
-static int create_dyn_fsal_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
+static void create_dyn_fsal_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
 {
-  unsigned int i;
   long j;
 
   *p_dyn_gs_count = 4 * FSAL_NB_FUNC;
@@ -1402,9 +1418,8 @@ static int create_dyn_fsal_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_coun
     }
 }
 
-static int create_dyn_log_control(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
+static void create_dyn_log_control(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
 {
-  unsigned int i;
   long j;
 
   *p_dyn_gs_count = COMPONENT_COUNT;

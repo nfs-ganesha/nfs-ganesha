@@ -8,25 +8,24 @@ AM_CFLAGS                     = -Wimplicit $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) $(SEC
 
 
 if USE_GSSRPC
-SEC_LIB_FLAGS = $(SEC_LFLAGS) -lgssrpc -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -ldl
+SEC_LIB_FLAGS =
 SVC_FLAGS =
-SVC_LIB_FLAGS = 
-else 
-if USE_TIRPC
-SEC_LIB_FLAGS = 
-SVC_FLAGS = -I/usr/include/tirpc
-SVC_LIB_FLAGS = -ltirpc
-else
-SEC_LIB_FLAGS = 
-SVC_FLAGS =
-SVC_LIB_FLAGS = 
+SVC_LIB_FLAGS = -lgssrpc
 endif
+if HAVE_GSSAPI
+SEC_LIB_FLAGS = $(SEC_LFLAGS) -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -ldl
 endif
 
 if USE_NFSIDMAP
 NFSIDMAP_LIB_FLAGS = -lnfsidmap
 else
-NFSIDMAP_LIB_FLAGS = 
+NFSIDMAP_LIB_FLAGS =
+endif
+
+if USE_NFS4_ACL
+NFS4_ACL_LIB_FLAGS = -lssl -lcrypto
+else
+NFS4_ACL_LIB_FLAGS = 
 endif
 
 if USE_SNMP_ADM
@@ -40,7 +39,7 @@ endif
 if USE_STAT_EXPORTER
 STAT_EXPORTER_FILE = nfs_stat_exporter_thread.c
 else
-STAT_EXPORTER_FILE = 
+STAT_EXPORTER_FILE =
 endif
 
 if USE_FSAL_FUSE
@@ -55,13 +54,13 @@ lib_LTLIBRARIES              = libganeshaNFS.la
 #   3. If the library source code has changed at all since the last update, then increment revision (c:r:a becomes c:r+1:a).
 #   4. If any interfaces have been added, removed, or changed since the last update, increment current, and set revision to 0.
 #   5. If any interfaces have been added since the last public release, then increment age.
-#   6. If any interfaces have been removed since the last public release, then set age to 0. 
+#   6. If any interfaces have been removed since the last public release, then set age to 0.
 
 libganeshaNFS_la_LDFLAGS = -version-info 1:0:1
 
 else
 
-noinst_LTLIBRARIES	     = libMainServices.la
+noinst_LTLIBRARIES             = libMainServices.la
 
 endif
 
@@ -104,18 +103,18 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/SemN.h                    \
                              ../include/external_tools.h          \
                              ../include/err_inject.h              \
-                             $(STAT_SNMP_FILES)  
-
+                             $(STAT_SNMP_FILES)
 
 libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la                   \
                                       $(PNFS_LIB)                                       \
                                       $(SEC_LIB_FLAGS)                                  \
                                       $(SVC_LIB_FLAGS)                                  \
                                       $(NFSIDMAP_LIB_FLAGS)                             \
+                                      $(NFS4_ACL_LIB_FLAGS)                             \
                                       $(STAT_SNMP_LIB_FLAGS)                            \
                                       ../IdMapper/libidmap.la                           \
                                       ../support/libsupport.la                          \
-				      ../NodeList/libNodeList.la			\
+                                      ../NodeList/libNodeList.la                        \
                                       ../$(CACHE_INODE_DIR)/libcache_inode.la           \
                                       ../File_Content/libcache_content.la               \
                                       ../File_Content_Policy/libcache_content_policy.la \
@@ -127,12 +126,11 @@ libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la           
                                       $(FSAL_LIB)                                       \
                                       ../Log/liblog.la                                  \
                                       ../ConfigParsing/libConfigParsing.la              \
-			              ../RPCAL/librpcal.la                              \
+                                      ../RPCAL/librpcal.la                              \
                                       ../XDR/libnfs_mnt_xdr.la                          \
                                       ../SemN/libSemN.la                                \
                                       ../RW_Lock/librwlock.la                           \
                                       ../Common/libcommon_utils.la
-                             
 
 libMainServices_la_DEPENDENCIES = $(libMainServices_la_SOURCES) $(libMainServices_la_LIBADD)
 
@@ -165,4 +163,3 @@ new: clean all
 doc:
 	doxygen ./doxygen.conf
 	rep=`grep OUTPUT_DIRECTORY doxygen.conf | grep share  | awk -F '=' '{print $$2;}'` ; cd $$rep/latex ; make
-

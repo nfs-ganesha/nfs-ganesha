@@ -48,13 +48,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/types.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/types.h>
-#endif
 
 #include "LRU_List.h"
 #include "fsal.h"
@@ -997,10 +990,18 @@ static const fattr4_dent_t __attribute__ ((__unused__)) fattr4tab[] =
   "FATTR4_RDATTR_ERROR", 11, 1, sizeof(fattr4_rdattr_error), FATTR4_ATTR_READ}
   ,
   {
+#ifdef _USE_NFS4_ACL
+  "FATTR4_ACL", 12, 1, sizeof(fattr4_acl), FATTR4_ATTR_READ_WRITE}
+#else
   "FATTR4_ACL", 12, 0, sizeof(fattr4_acl), FATTR4_ATTR_READ_WRITE}
+#endif
   ,
   {
+#ifdef _USE_NFS4_ACL
+  "FATTR4_ACLSUPPORT", 13, 1, sizeof(fattr4_aclsupport), FATTR4_ATTR_READ}
+#else
   "FATTR4_ACLSUPPORT", 13, 0, sizeof(fattr4_aclsupport), FATTR4_ATTR_READ}
+#endif
   ,
   {
   "FATTR4_ARCHIVE", 14, 1, sizeof(fattr4_archive), FATTR4_ATTR_READ_WRITE}
@@ -1374,6 +1375,9 @@ int nfs4_referral_str_To_Fattr_fs_location(char *input_str, char *buff, u_int * 
 
 int uid2name(char *name, uid_t * puid);
 int name2uid(char *name, uid_t * puid);
+#ifdef _HAVE_GSSAPI
+int principal2uid(char *principal, uid_t * puid);
+#endif
 
 int gid2name(char *name, gid_t * pgid);
 int name2gid(char *name, gid_t * pgid);

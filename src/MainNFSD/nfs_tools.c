@@ -64,16 +64,7 @@
 #include <pwd.h>
 
 #include <grp.h>
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/rpc.h>
-#include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
+#include "rpc.h"
 #include "log_functions.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
@@ -192,50 +183,3 @@ int lru_data_clean_entry(LRU_entry_t * entry, void *adddata)
 {
   return 0;
 }                               /* lru_data_clean_entry */
-
-void socket_setoptions(int socketFd)
-{
-  unsigned int SbMax = (1 << 30);       /* 1GB */
-
-  while(SbMax > 1048576)
-    {
-      if((setsockopt(socketFd, SOL_SOCKET, SO_SNDBUF, (char *)&SbMax, sizeof(SbMax)) < 0)
-         || (setsockopt(socketFd, SOL_SOCKET, SO_RCVBUF, (char *)&SbMax, sizeof(SbMax)) <
-             0))
-        {
-          SbMax >>= 1;          /* SbMax = SbMax/2 */
-          continue;
-        }
-
-      break;
-    }
-
-  return;
-}                               /* socket_setoptions_ctrl */
-
-int cmp_sockaddr(struct sockaddr *addr_1, struct sockaddr *addr_2)
-{
-  if(addr_1->sa_family == AF_INET && (addr_2->sa_family == AF_INET))
-    {
-      if(((struct sockaddr_in *)addr_1)->sin_addr.s_addr
-         == ((struct sockaddr_in *)addr_2)->sin_addr.s_addr
-         && ((struct sockaddr_in *)addr_1)->sin_port
-         == ((struct sockaddr_in *)addr_2)->sin_port)
-        {
-          return 1;
-        }
-    }
-#ifdef _USE_TIRPC_IPV6
-  else if(addr_1->sa_family == AF_INET6 && addr_2->sa_family == AF_INET6)
-    {
-      if(((struct sockaddr_in6 *)addr_1)->sin6_addr.s6_addr
-         == ((struct sockaddr_in6 *)addr_2)->sin6_addr.s6_addr
-         && ((struct sockaddr_in6 *)addr_1)->sin6_port
-         == ((struct sockaddr_in6 *)addr_2)->sin6_port)
-        {
-          return 1;
-        }
-    }
-#endif                          /* _USE_TIRPC_IPV6 */
-  return 0;
-}

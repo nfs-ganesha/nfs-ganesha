@@ -132,6 +132,8 @@ fsal_status_t XFSFSAL_lookup(xfsfsal_handle_t * p_parent_directory_handle,      
 
   if(rc)
     {
+      close( parentfd ) ;
+
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_lookup);
       else
@@ -146,16 +148,19 @@ fsal_status_t XFSFSAL_lookup(xfsfsal_handle_t * p_parent_directory_handle,      
       break;
 
     case FSAL_TYPE_JUNCTION:
+      close( parentfd ) ;
       // This is a junction
       Return(ERR_FSAL_XDEV, 0, INDEX_FSAL_lookup);
 
     case FSAL_TYPE_FILE:
     case FSAL_TYPE_LNK:
     case FSAL_TYPE_XATTR:
+      close( parentfd ) ;
       // not a directory 
       Return(ERR_FSAL_NOTDIR, 0, INDEX_FSAL_lookup);
 
     default:
+      close( parentfd ) ;
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_lookup);
     }
 

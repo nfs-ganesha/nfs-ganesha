@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  *
  */
@@ -35,17 +35,7 @@ typedef unsigned short u_short;
 #endif
 #endif
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/clnt.h>
-#endif
+#include "rpc.h"
 #include <string.h>
 #include "fsal.h"
 #include "cache_inode.h"
@@ -580,7 +570,7 @@ int fn_rpc_init(int argc,       /* IN : number of args in argv */
   char *proto = "";
   int port = 0;
 
-  static char help_rpc_init[] =
+  const char help_rpc_init[] =
       "usage: rpc_init [options] <hostname> <program_version> <protocol> [<port>]\n"
       "<hostname> : name, localhost, machine.mondomaine.com ...\n"
       "<program> : nfs2 / nfs3 / mount1 / mount3\n"
@@ -1098,7 +1088,7 @@ int nfs_remote_solvepath(shell_fh3_t * p_mounted_path_hdl,      /* IN - handle o
 
       /* adds /name at the end of the path */
       strncat(tmp_path, "/", FSAL_MAX_PATH_LEN);
-      strncat(tmp_path, next_name, FSAL_MAX_PATH_LEN);
+      strncat(tmp_path, next_name, FSAL_MAX_PATH_LEN - strlen(tmp_path));
 
       /* updates cursors */
       if(!last)
@@ -1935,7 +1925,7 @@ int nfs_remote_mount(char *str_path,    /* IN */
 }                               /* nfs_remote_mount */
 
 /*------------------------------------------------------------
- *          High level, shell-like commands 
+ *          High level, shell-like commands
  *-----------------------------------------------------------*/
 
 /** mount a path to browse it. */
@@ -2103,7 +2093,7 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
   char glob_path[NFS2_MAXPATHLEN];
 
   static char format[] = "hvdlSHz";
-  static char help_ls[] = "usage: ls [options] [name|path]\n"
+  const char help_ls[] = "usage: ls [options] [name|path]\n"
       "options :\n"
       "\t-h print this help\n"
       "\t-v verbose mode\n"
@@ -2233,10 +2223,10 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
       str_name = argv[Optind];
 
       /* retrieving handle */
-      if(rc = nfs_remote_solvepath(&mounted_path_hdl,
+      if((rc = nfs_remote_solvepath(&mounted_path_hdl,
                                    glob_path,
                                    NFS2_MAXPATHLEN,
-                                   str_name, &current_path_hdl, &handle_tmp, output))
+                                    str_name, &current_path_hdl, &handle_tmp, output)))
         return rc;
     }
   else
@@ -2248,7 +2238,7 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
   if(flag_v)
     fprintf(output, "proceeding ls (using NFS protocol) on \"%s\"\n", glob_path);
 
-  if(rc = nfs_remote_getattr(&handle_tmp, &attrs, output))
+  if((rc = nfs_remote_getattr(&handle_tmp, &attrs, output)))
     return rc;
 
   /*
@@ -2259,7 +2249,7 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
     {
       if((attrs.type == NF3LNK) && flag_l)
         {
-          if(rc = nfs_remote_readlink(&handle_tmp, linkdata, output))
+          if((rc = nfs_remote_readlink(&handle_tmp, linkdata, output)))
             return rc;
         }
 
@@ -2309,8 +2299,8 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
         fprintf(output, "-->nfs3_remote_Readdirplus( path=%s, cookie=%llu )\n",
                 glob_path, begin_cookie);
 
-      if(rc = nfs_remote_readdirplus(&handle_tmp, begin_cookie, &cookieverf,    /* IN/OUT */
-                                     &dirlist, &to_free, output))
+      if((rc = nfs_remote_readdirplus(&handle_tmp, begin_cookie, &cookieverf,    /* IN/OUT */
+                                      &dirlist, &to_free, output)))
         return rc;
 
       p_entry = dirlist.entries;
@@ -2343,7 +2333,7 @@ int fn_nfs_remote_ls(int argc,  /* IN : number of args in argv */
 
           if((p_attrs != NULL) && (p_hdl != NULL) && (p_attrs->type == NF3LNK))
             {
-              if(rc = nfs_remote_readlink(p_hdl, linkdata, output))
+              if((rc = nfs_remote_readlink(p_hdl, linkdata, output)))
                 return rc;
             }
 
@@ -2395,7 +2385,7 @@ int fn_nfs_remote_cd(int argc,  /* IN : number of args in argv */
     )
 {
 
-  static char help_cd[] = "usage: cd <path>\n";
+  const char help_cd[] = "usage: cd <path>\n";
 
   char glob_path[NFS2_MAXPATHLEN];
   shell_fh3_t new_hdl;
@@ -2420,14 +2410,14 @@ int fn_nfs_remote_cd(int argc,  /* IN : number of args in argv */
 
   strncpy(glob_path, current_path, NFS2_MAXPATHLEN);
 
-  if(rc =
+  if((rc =
      nfs_remote_solvepath(&mounted_path_hdl, glob_path, NFS2_MAXPATHLEN,
-                          argv[1], &current_path_hdl, &new_hdl, output))
+                          argv[1], &current_path_hdl, &new_hdl, output)))
     return rc;
 
   /* verify if the object is a directory */
 
-  if(rc = nfs_remote_getattr(&new_hdl, &attrs, output))
+  if((rc = nfs_remote_getattr(&new_hdl, &attrs, output)))
     return rc;
 
   if(attrs.type != NF3DIR)
@@ -2438,7 +2428,7 @@ int fn_nfs_remote_cd(int argc,  /* IN : number of args in argv */
 
   /* verify lookup permission  */
   mask = ACCESS3_LOOKUP;
-  if(rc = nfs_remote_access(&new_hdl, &mask, output))
+  if((rc = nfs_remote_access(&new_hdl, &mask, output)))
     return rc;
 
   if(!(mask & ACCESS3_LOOKUP))
@@ -2471,7 +2461,7 @@ int fn_nfs_remote_create(int argc,      /* IN : number of args in argv */
 {
   static char format[] = "hv";
 
-  static char help_create[] =
+  const char help_create[] =
       "usage: create [-h][-v] <path> <mode>\n"
       "       path: path of the file to be created\n"
       "       mode: octal mode for the directory to be created (ex: 644)\n";
@@ -2561,11 +2551,11 @@ int fn_nfs_remote_create(int argc,      /* IN : number of args in argv */
   strncpy(glob_path, current_path, NFS2_MAXPATHLEN);
 
   /* retrieves path handle */
-  if(rc = nfs_remote_solvepath(&mounted_path_hdl, glob_path, NFS2_MAXPATHLEN,
-                               path, &current_path_hdl, &subdir_hdl, output))
+  if((rc = nfs_remote_solvepath(&mounted_path_hdl, glob_path, NFS2_MAXPATHLEN,
+                                path, &current_path_hdl, &subdir_hdl, output)))
     return rc;
 
-  if(rc = nfs_remote_create(&subdir_hdl, file, mode, &new_hdl, output))
+  if((rc = nfs_remote_create(&subdir_hdl, file, mode, &new_hdl, output)))
     return rc;
 
   if(flag_v)
@@ -2587,7 +2577,7 @@ int fn_nfs_remote_mkdir(int argc,       /* IN : number of args in argv */
 {
   static char format[] = "hv";
 
-  static char help_mkdir[] =
+  const char help_mkdir[] =
       "usage: mkdir [-h][-v] <path> <mode>\n"
       "       path: path of the directory to be created\n"
       "       mode: octal mode for the dir to be created (ex: 755)\n";
@@ -2677,11 +2667,11 @@ int fn_nfs_remote_mkdir(int argc,       /* IN : number of args in argv */
   strncpy(glob_path, current_path, NFS2_MAXPATHLEN);
 
   /* retrieves path handle */
-  if(rc = nfs_remote_solvepath(&mounted_path_hdl, glob_path, NFS2_MAXPATHLEN,
-                               path, &current_path_hdl, &subdir_hdl, output))
+  if((rc = nfs_remote_solvepath(&mounted_path_hdl, glob_path, NFS2_MAXPATHLEN,
+                                path, &current_path_hdl, &subdir_hdl, output)))
     return rc;
 
-  if(rc = nfs_remote_mkdir(&subdir_hdl, file, mode, &new_hdl, output))
+  if((rc = nfs_remote_mkdir(&subdir_hdl, file, mode, &new_hdl, output)))
     return rc;
 
   if(flag_v)
@@ -2704,7 +2694,7 @@ int fn_nfs_remote_unlink(int argc,      /* IN : number of args in argv */
 {
   static char format[] = "hv";
 
-  static char help_unlink[] =
+  const char help_unlink[] =
       "usage: unlink [-h][-v] <path>\n"
       "       path: path of the directory to be unlinkd\n";
 
@@ -2780,23 +2770,23 @@ int fn_nfs_remote_unlink(int argc,      /* IN : number of args in argv */
   strncpy(glob_path_parent, current_path, NFS2_MAXPATHLEN);
 
   /* retrieves parent dir handle */
-  if(rc = nfs_remote_solvepath(&mounted_path_hdl, glob_path_parent, NFS2_MAXPATHLEN,
-                               path, &current_path_hdl, &subdir_hdl, output))
+  if((rc = nfs_remote_solvepath(&mounted_path_hdl, glob_path_parent, NFS2_MAXPATHLEN,
+                                path, &current_path_hdl, &subdir_hdl, output)))
     return rc;
 
   /* copy parent path */
   strncpy(glob_path_object, glob_path_parent, NFS2_MAXPATHLEN);
 
   /* lookup on child object */
-  if(rc = nfs_remote_solvepath(&mounted_path_hdl, glob_path_object, NFS2_MAXPATHLEN,
-                               file, &subdir_hdl, &obj_hdl, output))
+  if((rc = nfs_remote_solvepath(&mounted_path_hdl, glob_path_object, NFS2_MAXPATHLEN,
+                                file, &subdir_hdl, &obj_hdl, output)))
     return rc;
 
   /* get attributes of child object */
   if(flag_v)
     fprintf(output, "Getting attributes for %s...\n", glob_path_object);
 
-  if(rc = nfs_remote_getattr(&obj_hdl, &attrs, output))
+  if((rc = nfs_remote_getattr(&obj_hdl, &attrs, output)))
     return rc;
 
   if(attrs.type != NF3DIR)
@@ -2805,7 +2795,7 @@ int fn_nfs_remote_unlink(int argc,      /* IN : number of args in argv */
         fprintf(output, "%s is not a directory: calling nfs3_remove...\n",
                 glob_path_object);
 
-      if(rc = nfs_remote_remove(&subdir_hdl, file, output))
+      if((rc = nfs_remote_remove(&subdir_hdl, file, output)))
         return rc;
     }
   else
@@ -2813,7 +2803,7 @@ int fn_nfs_remote_unlink(int argc,      /* IN : number of args in argv */
       if(flag_v)
         fprintf(output, "%s is a directory: calling nfs3_rmdir...\n", glob_path_object);
 
-      if(rc = nfs_remote_rmdir(&subdir_hdl, file, output))
+      if((rc = nfs_remote_rmdir(&subdir_hdl, file, output)))
         return rc;
     }
 
@@ -2832,7 +2822,7 @@ int fn_nfs_remote_setattr(int argc,     /* IN : number of args in argv */
 
   static char format[] = "hv";
 
-  static char help_setattr[] =
+  const char help_setattr[] =
       "usage: setattr [-h][-v] <path> <attr>=<value>,<attr>=<value>,...\n"
       "       where <attr> can be :\n"
       "          mode(octal value),\n"
@@ -2920,9 +2910,9 @@ int fn_nfs_remote_setattr(int argc,     /* IN : number of args in argv */
   strncpy(glob_path, current_path, NFS2_MAXPATHLEN);
 
   /* retrieve handle to the file whose attributes are to be changed */
-  if(rc =
+  if((rc =
      nfs_remote_solvepath(&mounted_path_hdl, glob_path, NFS2_MAXPATHLEN, file,
-                          &current_path_hdl, &obj_hdl, output))
+                          &current_path_hdl, &obj_hdl, output)))
     return rc;
 
   /* Convert the peer (attr_name,attr_val) to an sattr3 structure. */
@@ -2931,7 +2921,7 @@ int fn_nfs_remote_setattr(int argc,     /* IN : number of args in argv */
     return rc;
 
   /* executes set attrs */
-  if(rc = nfs_remote_setattr(&obj_hdl, &set_attrs, output))
+  if((rc = nfs_remote_setattr(&obj_hdl, &set_attrs, output)))
     return rc;
 
   if(flag_v)
@@ -2949,7 +2939,7 @@ int fn_nfs_remote_rename(int argc,      /* IN : number of args in argv */
 
   static char format[] = "hv";
 
-  static char help_rename[] = "usage: rename [-h][-v] <src> <dest>\n";
+  const char help_rename[] = "usage: rename [-h][-v] <src> <dest>\n";
 
   char src_glob_path[NFS2_MAXPATHLEN];
   char tgt_glob_path[NFS2_MAXPATHLEN];
@@ -3040,23 +3030,23 @@ int fn_nfs_remote_rename(int argc,      /* IN : number of args in argv */
   strncpy(tgt_glob_path, current_path, NFS2_MAXPATHLEN);
 
   /* retrieves paths handles */
-  if(rc =
+  if((rc =
      nfs_remote_solvepath(&mounted_path_hdl, src_glob_path, NFS2_MAXPATHLEN,
-                          src_path, &current_path_hdl, &src_path_handle, output))
+                          src_path, &current_path_hdl, &src_path_handle, output)))
     return rc;
 
-  if(rc =
+  if((rc =
      nfs_remote_solvepath(&mounted_path_hdl, tgt_glob_path, NFS2_MAXPATHLEN,
-                          tgt_path, &current_path_hdl, &tgt_path_handle, output))
+                          tgt_path, &current_path_hdl, &tgt_path_handle, output)))
     return rc;
 
   /* Rename operation */
 
-  if(rc = nfs_remote_rename(&src_path_handle,   /* IN */
+  if((rc = nfs_remote_rename(&src_path_handle,   /* IN */
                             src_file,   /* IN */
                             &tgt_path_handle,   /* IN */
                             tgt_file,   /* IN */
-                            output))
+                             output)))
     return rc;
 
   if(flag_v)
@@ -3076,7 +3066,7 @@ int fn_nfs_remote_hardlink(int argc,    /* IN : number of args in argv */
 
   static char format[] = "hv";
 
-  static char help_hardlink[] =
+  const char help_hardlink[] =
       "hardlink: create a hard link.\n"
       "usage: hardlink [-h][-v] <target> <new_path>\n"
       "       target: path of an existing file.\n"
@@ -3166,15 +3156,15 @@ int fn_nfs_remote_hardlink(int argc,    /* IN : number of args in argv */
   strncpy(glob_path_link, current_path, NFS2_MAXPATHLEN);
 
   /* retrieves path handle for target */
-  if(rc =
+  if((rc =
      nfs_remote_solvepath(&mounted_path_hdl, glob_path_target, NFS2_MAXPATHLEN,
-                          target, &current_path_hdl, &target_hdl, output))
+                          target, &current_path_hdl, &target_hdl, output)))
     return rc;
 
   /* retrieves path handle for parent dir */
-  if(rc =
+  if((rc =
      nfs_remote_solvepath(&mounted_path_hdl, glob_path_link, NFS2_MAXPATHLEN,
-                          path, &current_path_hdl, &dir_hdl, output))
+                          path, &current_path_hdl, &dir_hdl, output)))
     return rc;
 
   rc = nfs_remote_link(&target_hdl,     /* IN - target file */
@@ -3202,7 +3192,7 @@ int fn_nfs_remote_ln(int argc,  /* IN : number of args in argv */
 
   static char format[] = "hv";
 
-  static char help_ln[] =
+  const char help_ln[] =
       "ln: create a symbolic link.\n"
       "usage: ln [-h][-v] <link_content> <link_path>\n"
       "       link_content: content of the symbolic link to be created\n"
@@ -3288,9 +3278,9 @@ int fn_nfs_remote_ln(int argc,  /* IN : number of args in argv */
   strncpy(glob_path, current_path, NFS2_MAXPATHLEN);
 
   /* retrieves path handle */
-  if(rc =
+  if((rc =
      nfs_remote_solvepath(&mounted_path_hdl, glob_path, NFS2_MAXPATHLEN,
-                          path, &current_path_hdl, &path_hdl, output))
+                          path, &current_path_hdl, &path_hdl, output)))
     return rc;
 
   /* Prepare link attributes : empty sattr3 list */
@@ -3337,7 +3327,7 @@ int fn_nfs_remote_stat(int argc,        /* IN : number of args in argv */
   char glob_path[NFS2_MAXPATHLEN];
 
   static char format[] = "hvHz";
-  static char help_stat[] = "usage: stat [options] <path>\n"
+  const char help_stat[] = "usage: stat [options] <path>\n"
       "options :\n"
       "\t-h print this help\n"
       "\t-v verbose mode\n"
@@ -3437,15 +3427,18 @@ int fn_nfs_remote_stat(int argc,        /* IN : number of args in argv */
   strncpy(glob_path, current_path, NFS2_MAXPATHLEN);
 
   /* retrieving handle */
-  if(rc = nfs_remote_solvepath(&mounted_path_hdl,
+  if((rc = nfs_remote_solvepath(&mounted_path_hdl,
                                glob_path,
                                NFS2_MAXPATHLEN,
-                               str_name, &current_path_hdl, &handle_tmp, output))
+                                str_name, &current_path_hdl, &handle_tmp, output)))
+  {
+    return rc;
+  }
 
-    if(flag_v)
-      fprintf(output, "proceeding stat (using NFS protocol) on \"%s\"\n", glob_path);
+  if(flag_v)
+    fprintf(output, "proceeding stat (using NFS protocol) on \"%s\"\n", glob_path);
 
-  if(rc = nfs_remote_getattr(&handle_tmp, &attrs, output))
+  if((rc = nfs_remote_getattr(&handle_tmp, &attrs, output)))
     return rc;
 
   if(flag_H)
@@ -3482,7 +3475,7 @@ int fn_nfs_remote_su(int argc,  /* IN : number of args in argv */
   gid_t groups_tab[MAX_GRPS];
   int nb_grp;
 
-  static char help_su[] = "usage: su <uid>\n";
+  const char help_su[] = "usage: su <uid>\n";
 
   prog_vers_client_def_t *clnts = progvers_clnts;
   AUTH *auth;

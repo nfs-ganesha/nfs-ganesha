@@ -114,7 +114,7 @@ typedef struct
 
 typedef struct
 {
-  char              mount_point[FSAL_MAX_PATH_LEN];
+  char              fstype[MAXNAMLEN] ;
   int               mount_root_fd ;
   vfs_file_handle_t root_handle ;
 } vfsfsal_export_context_t;
@@ -125,7 +125,7 @@ typedef struct
 
 typedef struct
 {
-  vfsfsal_export_context_t *export_context;     /* /* Must be the first entry in this structure */
+  vfsfsal_export_context_t *export_context;     /* Must be the first entry in this structure */
   vfsfsal_cred_t credential;
 } vfsfsal_op_context_t;
 

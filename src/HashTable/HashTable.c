@@ -400,30 +400,32 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
   ht->parameter = hparam;
 
   if(pthread_mutexattr_init(&mutexattr) != 0)
-   {
-     Mem_Free( ht ) ;
-     return NULL;
-   }
+    {
+      Mem_Free( ht ) ;
+      return NULL;
+    }
 
   /* Initialization of the node array */
   if((ht->array_rbt =
       (struct rbt_head *)Mem_Alloc_Label(sizeof(struct rbt_head) * hparam.index_size,
                                          "rbt_head")) == NULL)
-  {
-    Mem_Free( ht ) ;
-    return NULL;
-  }
+    {
+      Mem_Free( ht ) ;
+      return NULL;
+    }
+
+  memset((char *)ht->array_rbt, 0, sizeof(struct rbt_head) * hparam.index_size);
 
   /* Initialization of the stat array */
   if((ht->stat_dynamic =
       (hash_stat_dynamic_t *) Mem_Alloc_Label(sizeof(hash_stat_dynamic_t) *
                                               hparam.index_size,
                                               "hash_stat_dynamic_t")) == NULL)
-  {
-    Mem_Free( ht->array_rbt ) ;
-    Mem_Free( ht ) ;
-    return NULL;
-  }
+    {
+      Mem_Free( ht->array_rbt ) ;
+      Mem_Free( ht ) ;
+      return NULL;
+    }
 
   /* Init the stats */
   memset((char *)ht->stat_dynamic, 0, sizeof(hash_stat_dynamic_t) * hparam.index_size);
@@ -432,25 +434,44 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
   if((ht->array_lock =
       (rw_lock_t *) Mem_Alloc_Label(sizeof(rw_lock_t) * hparam.index_size,
                                     "rw_lock_t")) == NULL)
-  {
-    Mem_Free( ht->array_rbt ) ;
-    Mem_Free( ht->array_lock ) ;
-    Mem_Free( ht ) ;
-    return NULL;
-  }
+    {
+      Mem_Free( ht->array_rbt ) ;
+      Mem_Free( ht->stat_dynamic ) ;
+      Mem_Free( ht ) ;
+      return NULL;
+    }
+
+  memset((char *)ht->array_lock, 0, sizeof(rw_lock_t) * hparam.index_size);
 
   /* Initialize the array of pre-allocated node */
   if((ht->node_prealloc =
       (struct prealloc_pool *)Mem_Calloc_Label(hparam.index_size,
                                                sizeof(struct prealloc_pool),
                                                "rbt_node_pool")) == NULL)
-    return NULL;
+    {
+      Mem_Free( ht->array_rbt ) ;
+      Mem_Free( ht->stat_dynamic ) ;
+      Mem_Free( ht->array_lock ) ;
+      Mem_Free( ht ) ;
+      return NULL;
+    }
+
+  memset((char *)ht->node_prealloc, 0, sizeof(prealloc_pool) * hparam.index_size);
 
   if((ht->pdata_prealloc =
       (struct prealloc_pool *) Mem_Calloc_Label(hparam.index_size,
                                                 sizeof(struct prealloc_pool),
                                                 "hash_data_pool")) == NULL)
-    return NULL;
+    {
+      Mem_Free( ht->array_rbt ) ;
+      Mem_Free( ht->stat_dynamic ) ;
+      Mem_Free( ht->array_lock ) ;
+      Mem_Free( ht->node_prealloc ) ;
+      Mem_Free( ht ) ;
+      return NULL;
+    }
+
+  memset((char *)ht->pdata_prealloc, 0, sizeof(prealloc_pool) * hparam.index_size);
 
   for(i = 0; i < hparam.index_size; i++)
     {
@@ -707,6 +728,79 @@ int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * bu
 
   return HASHTABLE_SUCCESS;
 }                               /* HashTable_Get */
+
+/**
+ * 
+ * HashTable_Delall: Remove and free all (key,val) couples from the hashtable.
+ *
+ * Remove all (key,val) couples from the hashtable and free the stored data
+ * with a function provided as the second argument.
+ *
+ * @param ht the hashtable to be cleared of all entries.
+ * @param free_func the function with which to free the contents of each entry
+ *
+ * @return HASHTABLE_SUCCESS if successfull.
+ * @return HASHTABLE_ERROR_NO_SUCH_KEY is the key was not found.
+ *
+ */
+int HashTable_Delall(hash_table_t * ht, int (*free_func)(hash_buffer_t, hash_buffer_t) )
+{
+  struct rbt_head *head_rbt;
+  hash_data_t *pdata = NULL;
+  int hashval, rc;
+  struct rbt_node *pn;
+  struct rbt_node *qn = NULL;
+  hash_buffer_t p_usedbuffkey;
+  hash_buffer_t p_usedbuffdata;
+
+  /* Sanity check */
+  if (ht == NULL || free_func == NULL)
+    return HASHTABLE_ERROR_INVALID_ARGUMENT;
+
+  LogFullDebug(COMPONENT_HASHTABLE, "Deleting all entries in hashtable.");
+
+  /* For each bucket of the hashtable */
+  for(hashval = 0; hashval < ht->parameter.index_size; hashval++)
+    {
+      head_rbt = &(ht->array_rbt[hashval]);
+
+      /* acquire mutex */
+      P_w(&(ht->array_lock[hashval]));
+
+      /* continue until there are no more entries in the red-black-tree*/
+      while(ht->stat_dynamic[hashval].nb_entries != 0)
+        {
+          pn = RBT_LEFTMOST(head_rbt);
+          if (pn == NULL)
+            break;
+
+	  qn = pn;
+          RBT_UNLINK(head_rbt, pn);
+          pdata = RBT_OPAQ(qn);
+
+	  p_usedbuffkey = pdata->buffkey;
+	  p_usedbuffdata = pdata->buffval;
+
+          /* put back the pdata buffer to pool */
+          ReleaseToPool(pdata, &ht->pdata_prealloc[hashval]);
+          /* Put the node back in the table of preallocated nodes (it could be reused) */
+          ReleaseToPool(qn, &ht->node_prealloc[hashval]);
+
+          /* the key was located, the deletion is done */
+          ht->stat_dynamic[hashval].nb_entries -= 1;
+          ht->stat_dynamic[hashval].ok.nb_del += 1;
+
+          /* Free the data that was being stored for key and value. */
+          rc = free_func(p_usedbuffkey, p_usedbuffdata);
+
+          if (rc == 0)
+            return HASHTABLE_ERROR_DELALL_FAIL;
+        }
+      V_w(&(ht->array_lock[hashval]));
+    }
+
+  return HASHTABLE_SUCCESS;  
+}
 
 /**
  * 
@@ -996,3 +1090,4 @@ void HashTable_Print(hash_table_t * ht)
 }                               /* HashTable_Print */
 
 /* @} */
+

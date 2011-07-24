@@ -1,8 +1,8 @@
 %define _with_@FS_NAME@ 1
 %define _with_sharedfsal@SHARED_FSAL_PKG@ 1
 
-Name: @PACKAGE@ 
-Version: @VERSION@ 
+Name: @PACKAGE@
+Version: @VERSION@
 Release: @RELEASE@%{?dist}
 Summary: NFS Server running in user space with large cache
 License: LGPLv3
@@ -10,6 +10,10 @@ Group: Applications/System
 %if %{?_with_nfsidmap:1}%{!?_with_nfsidmap:0}
 Requires: nfs-utils-lib
 BuildRequires: nfs-utils-lib-devel
+%endif
+%if %{?_with_nfs4acl:1}%{!?_with_nfs4acl:0}
+Requires: openssl
+BuildRequires: openssl-devel
 %endif
 %if %{?_with_posix:1}%{!?_with_posix:0}
 %if %{?_with_postgresql:1}%{!?_with_postgresql:0}
@@ -20,17 +24,10 @@ BuildRequires:  mysql-devel >= 5.0
 BuildRequires:  mysql-libs >= 5.0
 %endif
 %endif
-%if %{?_with_gpfs:1}%{!?_with_gpfs:0}
-# we have to be really specific on kernel version
-# because we are packaging a module
-%global _use_internal_dependency_generator 0
-BuildRequires: kernel-devel
-%endif
 %if %{?_with_vfs:1}%{!?_with_vfs:0}
 # we have to be really specific on kernel version
 # because we are packaging a module
 %global _use_internal_dependency_generator 0
-BuildRequires: kernel-devel >= 2.6.39
 Requires: kernel >= 2.6.39
 %endif
 BuildRequires: flex
@@ -45,7 +42,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # Removing HPSS related dependencies (for hpss packages)
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
-%define _use_internal_dependency_generator 0 
+%define _use_internal_dependency_generator 0
 %define our_find_requires %{_builddir}/%{name}-%{version}/find_requires
 %endif
 
@@ -58,7 +55,7 @@ name-spaces. This version is compiled to support the @FS_NAME@ back-end.
 Summary: Common files for all NFS-GANESHA server variants
 Group: Applications/System
 Provides: %{name} = %{version}-%{release}
-Obsoletes: %{name} < @VERSION@ 
+Obsoletes: %{name} < @VERSION@
 
 %description common
 NFS-GANESHA is a NFS Server running in user space with a large cache.
@@ -176,10 +173,10 @@ Group: Applications/System
 Requires: %{name}-common = %{version}-%{release}
 
 %description dynfsal
-The NFS-GANESHA server compiled in a FSAL-les way. 
+The NFS-GANESHA server compiled in a FSAL-les way.
 This requires the use of FSAL compiled as shared objects. FSALs are loaded
 dynamically at runtime using the dlopen() function.
-%endif 
+%endif
 
 %if %{?_with_snmp:1}%{!?_with_snmp:0}
 %package snmp
@@ -200,7 +197,7 @@ browse SNMP exported information in a procfs-like way.
 
 
 %if %{?_with_fuse:1}%{!?_with_fuse:0}
-%package fuselike 
+%package fuselike
 Summary: The ganeshaNFS library for FUSE-like bindings
 Group: Applications/System
 Requires: %{name}-common = %{version}-%{release}
@@ -280,7 +277,7 @@ chmod +x %{our_find_requires}
 
 %configure @ac_configure_args@ 'CC=gcc -g' 'CFLAGS=-g' 'CXXFLAGS=-g'
 
-# try 1 recovery when there is a // make error, then use simple make at 2nd error 
+# try 1 recovery when there is a // make error, then use simple make at 2nd error
 make %{?_smp_mflags}  || make %{?_smp_mflags}  || make
 
 
@@ -289,9 +286,12 @@ rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/init.d
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
 mkdir -p $RPM_BUILD_ROOT%{_bindir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/pkgconfig
+
+install -m 644 config_samples/logrotate_ganesha                 $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/ganesha
 
 make install DESTDIR=$RPM_BUILD_ROOT sysconfdir=/etc/ganesha
 
@@ -303,9 +303,6 @@ install -m 755 nfs-ganesha.@FS_NAME@.init                      $RPM_BUILD_ROOT%{
 install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v8.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 FSAL/FSAL_POSIX/DBExt/PGSQL/posixdb_v7.sql      $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 install -m 644 FSAL/FSAL_POSIX/DBExt/MYSQL/posixdb_mysql5.sql  $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
-%endif
-%if %{?_with_gpfs:1}%{!?_with_gpfs:0}
-rm -f $RPM_BUILD_ROOT/lib/modules/*/modules*
 %endif
 
 %if %{?_with_sharedfsalyes:1}%{!?_with_sharedfsalyes:0}
@@ -321,9 +318,9 @@ install -m 644 ganesha_au.vim  $RPM_BUILD_ROOT%{_datadir}/%{name}
 for vimver in 63 64 70 71 ; do
   mkdir -p $RPM_BUILD_ROOT%{_datadir}/vim/vim$vimver/syntax
   mkdir -p $RPM_BUILD_ROOT%{_datadir}/vim/vim$vimver/autoload
-  cd $RPM_BUILD_ROOT%{_datadir}/vim/vim$vimver/syntax 
+  cd $RPM_BUILD_ROOT%{_datadir}/vim/vim$vimver/syntax
   ln -s ../../../%{name}/ganesha.vim .
-  cd $RPM_BUILD_ROOT%{_datadir}/vim/vim$vimver/autoload 
+  cd $RPM_BUILD_ROOT%{_datadir}/vim/vim$vimver/autoload
   ln -s ../../../%{name}/ganesha_au.vim .
 done
 
@@ -340,6 +337,7 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/ganesha/uidgid_mapfile.ganesha
 %{_bindir}/ganestat.pl
 %{_bindir}/ganesha_log_level
+%{_sysconfdir}/logrotate.d/ganesha
 
 %files doc
 %defattr(-,root,root,-)
@@ -374,7 +372,6 @@ rm -rf $RPM_BUILD_ROOT
 %if %{?_with_gpfs:1}%{!?_with_gpfs:0}
 %files gpfs
 %defattr(-,root,root,-)
-/lib/modules/*/extra/*.ko
 %{_bindir}/gpfs.ganesha.*
 %{_bindir}/gpfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-gpfs
@@ -410,15 +407,15 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %if %{?_with_posix:1}%{!?_with_posix:0}
-%files posix 
+%files posix
 %defattr(-,root,root,-)
 %{_bindir}/posix.ganesha.*
 %{_bindir}/posix.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-posix
-%config(noreplace) %{_sysconfdir}/ganesha/posixdb_v8.sql 
-%config(noreplace) %{_sysconfdir}/ganesha/posixdb_mysql5.sql 
-%config(noreplace) %{_sysconfdir}/ganesha/posixdb_v7.sql 
-%config(noreplace) %{_sysconfdir}/ganesha/posix.ganesha* 
+%config(noreplace) %{_sysconfdir}/ganesha/posixdb_v8.sql
+%config(noreplace) %{_sysconfdir}/ganesha/posixdb_mysql5.sql
+%config(noreplace) %{_sysconfdir}/ganesha/posixdb_v7.sql
+%config(noreplace) %{_sysconfdir}/ganesha/posix.ganesha*
 %endif
 
 
@@ -432,7 +429,7 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %if %{?_with_fuse:1}%{!?_with_fuse:0}
-%files fuselike 
+%files fuselike
 %defattr(-,root,root,-)
 %{_libdir}/libganeshaNFS.la
 %{_libdir}/libganeshaNFS.a
@@ -495,21 +492,9 @@ chkconfig --add nfs-ganesha-xfs
 %if %{?_with_gpfs:1}%{!?_with_gpfs:0}
 %preun gpfs
 chkconfig --del nfs-ganesha-gpfs
-/sbin/depmod
-rpm -ql nfs-ganesha-gpfs | grep ".ko$" > /var/run/nfs-ganesha-gpfs.modules
 
 %post gpfs
 chkconfig --add nfs-ganesha-gpfs
-/sbin/depmod -a
-if [ -x "/sbin/weak-modules" ]; then
-    rpm -ql nfs-ganesha-gpfs | grep ".ko$" | /sbin/weak-modules --add-modules
-fi
-
-%postun gpfs
-if [ -x "/sbin/weak-modules" ]; then
-    cat /var/run/nfs-ganesha-gpfs.modules | /sbin/weak-modules --remove-modules
-fi
-rm -f /var/run/nfs-ganesha-gpfs.modules
 %endif
 
 %if %{?_with_vfs:1}%{!?_with_vfs:0}
@@ -546,7 +531,7 @@ chkconfig --add nfs-ganesha-snmp
 %endif
 
 %if %{?_with_hpss:1}%{!?_with_hpss:0}
-%preun 
+%preun
 
 %post
 %endif
@@ -560,17 +545,29 @@ chkconfig --add nfs-ganesha-zfs
 %endif
 
 %if %{?_with_fuse:1}%{!?_with_fuse:0}
-%preun 
+%preun
 
 %post
 %endif
 
-%postun 
+%postun
 
 
 %changelog
-* Mon Apr 11 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.0.6-1
-- Bug Fix : bad memset in FSAL_HPSS:fsal_lookup.c
+* Wed Apr  7 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.1.0-1
+- Bug Fix: Bad memset in FSAL_HPSS::HPSSFSAL_lookup. Result was a segfault at init.
+- Code reorganization : subdirectory RPCAL has been added
+- Bug fix: bad 'fd2handle' options in FSAL_XFS::FSAL_rename
+- pNFS : API for implementing pNFS specific feature has been fully refurbished.
+- FSAL_VFS: new FSAL using "open_by_handle" feature added in the kernel higher than 2.6.39.
+- NFSv4: the product is now compiled with NFSv4.1 support by default
+- Log module: now using __FUNCTION__ macro to get the function's name
+- Bug Fix: the cache_inode_commit function badly managed the Data Cache.
+- Multiple FSAL support: it is now possible to 'dlopen' several fsal shared objects.
+- Bug Fix: issue occured in 'Tbl' pass of cthon04 test for FSAL_XFS and FSAL_VFS
+- NFSv4 ACLs support
+- GPFS ACLs support (to be used with NFSv4 ACL support)
+
 * Wed Apr  6 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.0.5-1
 - Using function daemon() to start the daemon in a cleaner way
 - Using gethostbyaddr_r to avoid contention when resolving address in nfs_ip_name.c
@@ -578,7 +575,7 @@ chkconfig --add nfs-ganesha-zfs
 - pNFS related sources were reorganized with a design closer to what is done with FSAL/MFSL
 - "stable_how" flag management has been remade in deep, including a new FSAL_sync call to every FSAL
 - FSAL_PROXY: the FSAL is no able to deal correctly when the remote server restarts
-- Data Cache : a set of flushers threads has been added to the daemon, making it possible to run the flush operations internally 
+- Data Cache : a set of flushers threads has been added to the daemon, making it possible to run the flush operations internally
 - Bug Fix: FSAL error was not converted into a Cache_inode error, and thus was  dropped, causing client to infinite retry
 - Add a new tool to find all the instances of LogXXX
 - New LogInfo and LogWarn log level
@@ -600,7 +597,7 @@ chkconfig --add nfs-ganesha-zfs
 - security fixed : when 'root' is mapped as nobody, its 'altgroups' is cleared
 - Configuration can now reduce the version of NFS advertsised to rpcbind (to avoid NFSv2 for example).
 - XML output has been added to non-regression tests for easier integration in HudsonCI
-- A few changes in NLM implementation 
+- A few changes in NLM implementation
 - FSAL_HPSS has been ported to HPSSv7.3.2
 - Better management of NFSv4.x attribute FATTR4_CHANGE
 
@@ -656,7 +653,7 @@ chkconfig --add nfs-ganesha-zfs
 
 * Thu Mar 25  2010 Philippe Deniel <philippe.deniel@cea.fr> 0.99.63-1
 - A big patch provided by Aneesh Kumar (aneesh.kumar@linux.vnet.ibm.com) implements the NLMv4 protocol
-- A "indent" target has been add to the src/Makefile.am . 
+- A "indent" target has been add to the src/Makefile.am .
 - C-format style template for emacs provided by Sean Dague (japh@us.ibm.com)
 - Bug fix (Frank Filz) : readdir had an extraneous empty request with eod=TRUE
 - Bug fix : It was impossible to mount an exported entry's sub directory
@@ -692,11 +689,11 @@ chkconfig --add nfs-ganesha-zfs
 - Bug Fix : most of the time, files opened/created via NFSv4 were never closed
 
 * Fri Sep 14  2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.58-1
-- Early implementation of NFSv4.1 added 
+- Early implementation of NFSv4.1 added
 - Add use of libnfsidmap
 
 * Thu Jul 30  2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.57-1
-- Add write/commit logic to NFSv3 / NFSv4 
+- Add write/commit logic to NFSv3 / NFSv4
 - Fix many bugs related to clientid/open_owner/lockonwner/seqid
 
 * Thu Jul  9 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.56-1
@@ -728,7 +725,7 @@ chkconfig --add nfs-ganesha-zfs
 
 * Tue Mar  3 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.51-1
 - Bug Fixes
-- FSAL_POSIX has been ported to MySQL. 
+- FSAL_POSIX has been ported to MySQL.
 - MFSL_ASYNC has been added for unlink/link/rename/remove/setattr/mkdir/create
 
 * Fri Jan 23 2009 Philippe Deniel <philippe.deniel@cea.fr> 0.99.50-1
@@ -752,9 +749,9 @@ chkconfig --add nfs-ganesha-zfs
 - Added a new module name MFSL (will provide additionnal features like md writeback in later versions)
 
 * Thu Nov 18 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.46-1
-- Bug Fix in tcp dispatcher 
+- Bug Fix in tcp dispatcher
 - use of RW_lock inside md cache
-- use external command to perform datacache gc 
+- use external command to perform datacache gc
 
 * Mon Nov  5 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.45-1
 - Add IPv6 support via TIRPC
@@ -772,7 +769,7 @@ chkconfig --add nfs-ganesha-zfs
 - FUSE-like binding now support filesystems with no inode numbers.
 
 * Wed Oct 15 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.44-2
-- Add libganeshaNFS.pc so that to provide with pkgconfig support 
+- Add libganeshaNFS.pc so that to provide with pkgconfig support
 
 * Tue Oct 14 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.44-1
 - Many bug fixed in nfs4_op_lock.c
@@ -785,7 +782,7 @@ chkconfig --add nfs-ganesha-zfs
 - more cleanups
 
 * Mon Oct  6 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.43-1
-- NodeSets syntax can now be used in the configuration file 
+- NodeSets syntax can now be used in the configuration file
 
 * Mon Oct  6 2008 Tom "spot" Callaway <tcallawa@redhat.com> 0.99.43-1
 - first pass at a Fedora package
@@ -832,10 +829,10 @@ chkconfig --add nfs-ganesha-zfs
 - Added conditionnal snmp_adm
 
 * Tue Jul  1 2008 Thomas Leibovici <thomas.leibovici@cea.fr> 0.99.36-1
-- Added extra documentation to packages 
+- Added extra documentation to packages
 
 * Thu Jun  5 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.35-1
-- Added ganestat.pl to the different packages 
+- Added ganestat.pl to the different packages
 
 * Wed Apr 16 2008 Philippe Deniel <philippe.deniel@cea.fr> 0.99.34-1
 - Added sub-packages for hpss, with conditionnals

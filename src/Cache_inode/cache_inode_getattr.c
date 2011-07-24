@@ -83,7 +83,7 @@ cache_inode_getattr(cache_entry_t * pentry,
                     cache_inode_status_t * pstatus)
 {
     cache_inode_status_t status;
-    fsal_handle_t *pfsal_handle;
+    fsal_handle_t *pfsal_handle = NULL;
     fsal_status_t fsal_status;
 
     /* sanity check */
@@ -157,6 +157,14 @@ cache_inode_getattr(cache_entry_t * pentry,
                 case CHARACTER_FILE:
                     pfsal_handle = &pentry->object.special_obj.handle;
                     break;
+                case FS_JUNCTION:
+                case UNASSIGNED:
+                case RECYCLED:
+                    *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+                    LogFullDebug(COMPONENT_CACHE_INODE,
+                                 "cache_inode_getattr: returning %d(%s) from cache_inode_renew_entry - unexpected md_type",
+                                 *pstatus, cache_inode_err_str(*pstatus));
+                    return *pstatus;
                 }
 
             /*
@@ -212,6 +220,27 @@ cache_inode_getattr(cache_entry_t * pentry,
         inc_func_err_retryable(pclient, CACHE_INODE_GETATTR);
     else
         inc_func_success(pclient, CACHE_INODE_GETATTR);
+
+#ifdef _USE_NFS4_ACL
+    if(isDebug(COMPONENT_NFS_V4_ACL))
+      {
+        LogDebug(COMPONENT_CACHE_INODE,
+                 "cache_inode_getattr: pentry = %p, acl = %p",
+                 pentry, pattr->acl);
+
+        if(pattr->acl)
+          {
+            fsal_ace_t *pace;
+            for(pace = pattr->acl->aces; pace < pattr->acl->aces + pattr->acl->naces; pace++)
+              {
+                LogDebug(COMPONENT_CACHE_INODE,
+                         "cache_inode_getattr: ace type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
+                         pace->type, pace->flag, pace->perm, IS_FSAL_ACE_SPECIAL_ID(*pace),
+                         GET_FSAL_ACE_WHO_TYPE(*pace), GET_FSAL_ACE_WHO(*pace));
+              }
+          }
+      }
+#endif                          /* _USE_NFS4_ACL */
 
     LogFullDebug(COMPONENT_CACHE_INODE,
                  "cache_inode_getattr: returning %d(%s) from cache_inode_valid",

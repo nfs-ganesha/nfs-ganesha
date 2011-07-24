@@ -58,13 +58,14 @@ fsal_status_t GPFSFSAL_create(gpfsfsal_handle_t * p_parent_directory_handle,    
     )
 {
 
-  int rc, errsv;
+  int rc = 0, errsv;
   int setgid_bit = 0;
   fsal_status_t status;
 
   int fd, newfd;
-  struct stat buffstat;
   mode_t unix_mode;
+  fsal_accessflags_t access_mask = 0;
+  fsal_attrib_list_t parent_dir_attrs;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -89,27 +90,21 @@ fsal_status_t GPFSFSAL_create(gpfsfsal_handle_t * p_parent_directory_handle,    
     ReturnStatus(status, INDEX_FSAL_create);
 
   /* retrieve directory metadata */
-  TakeTokenFSCall();
-  rc = fstat(fd, &buffstat);
-  errsv = errno;
-  ReleaseTokenFSCall();
-
-  if(rc)
-    {
-      close(fd);
-
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_create);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
-    }
+  parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
+  status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_create);
 
   /* Check the user can write in the directory, and check the setgid bit on the directory */
 
-  if(buffstat.st_mode & S_ISGID)
+  if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID)
     setgid_bit = 1;
 
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
+  /* Set both mode and ace4 mask */
+  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
+                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
+
+  status = fsal_internal_testAccess(p_context, access_mask, NULL, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_create);
 
@@ -240,10 +235,11 @@ fsal_status_t GPFSFSAL_mkdir(gpfsfsal_handle_t * p_parent_directory_handle,     
 
   int rc, errsv;
   int setgid_bit = 0;
-  struct stat buffstat;
   mode_t unix_mode;
   fsal_status_t status;
   int fd, newfd;
+  fsal_accessflags_t access_mask = 0;
+  fsal_attrib_list_t parent_dir_attrs;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -251,7 +247,7 @@ fsal_status_t GPFSFSAL_mkdir(gpfsfsal_handle_t * p_parent_directory_handle,     
   if(!p_parent_directory_handle || !p_context || !p_object_handle || !p_dirname)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mkdir);
 
-  /* convert FSAL mode to HPSS mode. */
+  /* convert FSAL mode to unix mode. */
   unix_mode = fsal2unix_mode(accessmode);
 
   /* Apply umask */
@@ -265,26 +261,21 @@ fsal_status_t GPFSFSAL_mkdir(gpfsfsal_handle_t * p_parent_directory_handle,     
     ReturnStatus(status, INDEX_FSAL_mkdir);
 
   /* get directory metadata */
-  TakeTokenFSCall();
-  rc = fstat(fd, &buffstat);
-  errsv = errno;
-  ReleaseTokenFSCall();
-  if(rc)
-    {
-      close(fd);
-
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_create);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
-    }
+  parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
+  status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_create);
 
   /* Check the user can write in the directory, and check the setgid bit on the directory */
 
-  if(buffstat.st_mode & S_ISGID)
+  if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID)
     setgid_bit = 1;
 
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
+  /* Set both mode and ace4 mask */
+  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
+                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_SUBDIRECTORY);
+
+  status = fsal_internal_testAccess(p_context, access_mask, NULL, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_mkdir);
 
@@ -333,7 +324,7 @@ fsal_status_t GPFSFSAL_mkdir(gpfsfsal_handle_t * p_parent_directory_handle,     
     }
 
   /* the directory has been created */
-  /* chown the file to the current user/group */
+  /* chown the dir to the current user/group */
 
   if(p_context->credential.user != geteuid())
     {
@@ -409,10 +400,10 @@ fsal_status_t GPFSFSAL_link(gpfsfsal_handle_t * p_target_handle,        /* IN */
                         fsal_attrib_list_t * p_attributes       /* [ IN/OUT ] */
     )
 {
-  int rc, errsv;
   fsal_status_t status;
   int srcfd, dstfd;
-  struct stat buffstat_dir;
+  fsal_accessflags_t access_mask = 0;
+  fsal_attrib_list_t parent_dir_attrs;
 
   /* sanity checks.
    * note : attributes is optional.
@@ -443,27 +434,20 @@ fsal_status_t GPFSFSAL_link(gpfsfsal_handle_t * p_target_handle,        /* IN */
       close(srcfd);
       ReturnStatus(status, INDEX_FSAL_link);
     }
+
   /* retrieve target directory metadata */
-
-  TakeTokenFSCall();
-  rc = fstat(dstfd, &buffstat_dir);
-  errsv = errno;
-  ReleaseTokenFSCall();
-
-  if(rc < 0)
-    {
-      close(srcfd);
-      close(dstfd);
-
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_link);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_link);
-    }
+  parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
+  status = GPFSFSAL_getattrs(p_dir_handle, p_context, &parent_dir_attrs);
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_link);
 
   /* check permission on target directory */
-  status =
-      fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_dir, NULL);
+
+  /* Set both mode and ace4 mask */
+  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
+                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
+
+  status = fsal_internal_testAccess(p_context, access_mask, NULL, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_link);
 
@@ -521,12 +505,13 @@ fsal_status_t GPFSFSAL_mknode(gpfsfsal_handle_t * parentdir_handle,     /* IN */
 {
   int rc, errsv;
   int setgid_bit = 0;
-  struct stat buffstat;
   fsal_status_t status;
   int fd, newfd;
 
   mode_t unix_mode = 0;
   dev_t unix_dev = 0;
+  fsal_accessflags_t access_mask = 0;
+  fsal_attrib_list_t parent_dir_attrs;
 
   /* sanity checks.
    * note : link_attributes is optional.
@@ -577,24 +562,20 @@ fsal_status_t GPFSFSAL_mknode(gpfsfsal_handle_t * parentdir_handle,     /* IN */
     ReturnStatus(status, INDEX_FSAL_mknode);
 
   /* retrieve directory attributes */
-  rc = fstat(fd, &buffstat);
-  errsv = errno;
-
-  if(rc)
-    {
-      close(fd);
-
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_mknode);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mknode);
-    }
+  parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
+  status = GPFSFSAL_getattrs(parentdir_handle, p_context, &parent_dir_attrs);
+  if(FSAL_IS_ERROR(status))
+    ReturnStatus(status, INDEX_FSAL_mknode);
 
   /* Check the user can write in the directory, and check weither the setgid bit on the directory */
-  if(buffstat.st_mode & S_ISGID)
+  if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID)
     setgid_bit = 1;
 
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
+  /* Set both mode and ace4 mask */
+  access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
+                FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
+
+  status = fsal_internal_testAccess(p_context, access_mask, NULL, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_mknode);
 

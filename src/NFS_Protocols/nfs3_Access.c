@@ -49,18 +49,6 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#ifdef _USE_GSSRPC
-#include <gssrpc/types.h>
-#include <gssrpc/rpc.h>
-#include <gssrpc/auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else
-#include <rpc/types.h>
-#include <rpc/rpc.h>
-#include <rpc/auth.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
@@ -150,24 +138,37 @@ int nfs3_Access(nfs_arg_t * parg,
   access_mode = 0;
 
   if(parg->arg_access3.access & ACCESS3_READ)
-    access_mode |= FSAL_R_OK;
+    access_mode |= nfs_get_access_mask(ACCESS3_READ, &attr);
 
-  if(parg->arg_access3.access & (ACCESS3_MODIFY | ACCESS3_EXTEND))
-    access_mode |= FSAL_W_OK;
+  if(parg->arg_access3.access & ACCESS3_MODIFY)
+    access_mode |= nfs_get_access_mask(ACCESS3_MODIFY, &attr);
+
+  if(parg->arg_access3.access & ACCESS3_EXTEND)
+    access_mode |= nfs_get_access_mask(ACCESS3_EXTEND, &attr);
 
   if(filetype == REGULAR_FILE)
     {
       if(parg->arg_access3.access & ACCESS3_EXECUTE)
-        access_mode |= FSAL_X_OK;
+        access_mode |= nfs_get_access_mask(ACCESS3_EXECUTE, &attr);
     }
   else if(parg->arg_access3.access & ACCESS3_LOOKUP)
-    access_mode |= X_OK;
+    access_mode |= nfs_get_access_mask(ACCESS3_LOOKUP, &attr);
+
+  if(filetype == DIR_BEGINNING || filetype == DIR_CONTINUE)
+    {
+      if(parg->arg_access3.access & ACCESS3_DELETE)
+        access_mode |= nfs_get_access_mask(ACCESS3_DELETE, &attr);
+    }
+
+  nfs3_access_debug("requested access", parg->arg_access3.access);
 
   /* Perform the 'access' call */
   if(cache_inode_access(pentry,
                         access_mode,
                         ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
+      nfs3_access_debug("granted access", parg->arg_access3.access);
+
       /* In Unix, delete permission only applies to directories */
 
       if(filetype == DIR_BEGINNING || filetype == DIR_CONTINUE)
@@ -193,32 +194,54 @@ int nfs3_Access(nfs_arg_t * parg,
        */
       pres->res_access3.ACCESS3res_u.resok.access = 0;
 
+      access_mode = nfs_get_access_mask(ACCESS3_READ, &attr);
       if(cache_inode_access(pentry,
-                            FSAL_R_OK,
+                            access_mode,
                             ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
         pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_READ;
 
+      access_mode = nfs_get_access_mask(ACCESS3_MODIFY, &attr);
       if(cache_inode_access(pentry,
-                            FSAL_W_OK,
+                            access_mode,
                             ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
-        pres->res_access3.ACCESS3res_u.resok.access |= (ACCESS3_MODIFY | ACCESS3_EXTEND);
+        pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_MODIFY;
+
+      access_mode = nfs_get_access_mask(ACCESS3_EXTEND, &attr);
+      if(cache_inode_access(pentry,
+                            access_mode,
+                            ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+        pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_EXTEND;
 
       if(filetype == REGULAR_FILE)
         {
+          access_mode = nfs_get_access_mask(ACCESS3_EXECUTE, &attr);
           if(cache_inode_access(pentry,
-                                FSAL_X_OK,
+                                access_mode,
                                 ht,
                                 pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
             pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_EXECUTE;
         }
       else
         {
+          access_mode = nfs_get_access_mask(ACCESS3_LOOKUP, &attr);
           if(cache_inode_access(pentry,
-                                FSAL_X_OK,
+                                access_mode,
                                 ht,
                                 pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
             pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_LOOKUP;
         }
+
+      if(filetype == DIR_BEGINNING || filetype == DIR_CONTINUE)
+        {
+          access_mode = nfs_get_access_mask(ACCESS3_DELETE, &attr);
+          if(cache_inode_access(pentry,
+                                access_mode,
+                                ht,
+                                pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+            pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_DELETE;
+        }
+
+      nfs3_access_debug("reduced access", pres->res_access3.ACCESS3res_u.resok.access);
 
       pres->res_access3.status = NFS3_OK;
       return NFS_REQ_OK;

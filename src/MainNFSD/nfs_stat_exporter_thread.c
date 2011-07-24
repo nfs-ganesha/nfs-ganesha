@@ -62,8 +62,7 @@
 #include "nodelist.h"
 #include "stuff_alloc.h"
 #include "fsal.h"
-
-extern nfs_parameter_t nfs_param;
+#include "rpc.h"
 
 #define DEFAULT_PORT "10401"
 
@@ -76,27 +75,21 @@ extern nfs_parameter_t nfs_param;
 #define EXPORT_MAX_CLIENTS 20
 #define EXPORT_MAX_CLIENTLEN 256        /* client name len */
 
-extern nfs_parameter_t nfs_param;
-
 int stat_export_check_access(struct sockaddr_storage *pssaddr,
                              exportlist_client_t *clients,
                              exportlist_client_entry_t * pclient_found)
 {
-  int rc;
-  unsigned int addr;
-  struct sockaddr_in *psockaddr_in;
+  sockaddr_t *psockaddr_in;
 #ifdef _USE_TIRPC_IPV6
   struct sockaddr_in6 *psockaddr_in6;
-#endif
   static char ten_bytes_all_0[10];
   static unsigned two_bytes_all_1 = 0xFFFF;
-  char ipstring[MAXHOSTNAMELEN];
   char ip6string[MAXHOSTNAMELEN];
-
   memset(ten_bytes_all_0, 0, 10);
+#endif
+  char ipstring[SOCK_NAME_MAX];
 
-  psockaddr_in = (struct sockaddr_in *)pssaddr;
-  addr = psockaddr_in->sin_addr.s_addr;
+  psockaddr_in = (sockaddr_t *)pssaddr;
 
   /* For now, no matching client is found */
   memset(pclient_found, 0, sizeof(exportlist_client_entry_t));
@@ -106,16 +99,15 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
     {
 #endif                          /* _USE_TIRPC_IPV6 */
       /* Convert IP address into a string for wild character access checks. */
-      inet_ntop(psockaddr_in->sin_family, &psockaddr_in->sin_addr,
-                ipstring, INET_ADDRSTRLEN);
+      sprint_sockip(psockaddr_in, ipstring, sizeof(ipstring));
       if(ipstring == NULL)
         {
           LogCrit(COMPONENT_MAIN,
-                  "Error: Could not convert the IPv4 address to a character string.");
+                  "Stat Export Check Access: Could not convert the IPv4 address to a character string.");
           return FALSE;
         }
       if(export_client_match
-         (addr, ipstring, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
+         (psockaddr_in, ipstring, clients, pclient_found, EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS))
         return TRUE;
 #ifdef _USE_TIRPC_IPV6
     }
@@ -261,7 +253,6 @@ static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
 int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t * out_parameter)
 {
   int err;
-  int blk_index;
   int var_max, var_index;
   char *key_name;
   char *key_value;
@@ -326,13 +317,6 @@ int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t *
   return 0;
 }
 
-void *get_in_addr(struct sockaddr *sa)
-{
-  if(sa->sa_family == AF_INET)
-    return &(((struct sockaddr_in*)sa)->sin_addr);
-  return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
-
 int merge_stats(nfs_request_stat_item_t *global_stat_items,
                 nfs_request_stat_item_t **workers_stat_items, int function_index, int detail_flag)
 {
@@ -394,8 +378,8 @@ int write_stats(char *stat_buf, int num_cmds, char **function_names, nfs_request
   unsigned int i = 0;
   unsigned int tot_calls =0, tot_latency = 0;
   unsigned int tot_await_time = 0;
-  float tot_latency_ms;
-  float tot_await_time_ms;
+  float tot_latency_ms = 0;
+  float tot_await_time_ms = 0;
   char *name = NULL;
   char *ver = NULL;
   char *call = NULL;
@@ -415,7 +399,7 @@ int write_stats(char *stat_buf, int num_cmds, char **function_names, nfs_request
 
 
       /* Extract call name from function name. */
-      name = strdup(function_names[i]);
+      name = Str_Dup(function_names[i]);
       ver = strtok_r(name, "_", &saveptr);
       call = strtok_r(NULL, "_", &saveptr);
 
@@ -430,7 +414,7 @@ int write_stats(char *stat_buf, int num_cmds, char **function_names, nfs_request
           offset += 1;
         }
 
-      free(name);
+      Mem_Free(name);
     }
 
   return rc;
@@ -664,9 +648,7 @@ void *stat_exporter_thread(void *addr)
           continue;
         }
 
-      inet_ntop(their_addr.ss_family,
-                get_in_addr((struct sockaddr *)&their_addr),
-                s, sizeof s);
+      sprint_sockip((sockaddr_t *)&their_addr, s, sizeof s);
 
       if (stat_export_check_access(&their_addr,
                                    &(nfs_param.extern_param.stat_export.allowed_clients),
