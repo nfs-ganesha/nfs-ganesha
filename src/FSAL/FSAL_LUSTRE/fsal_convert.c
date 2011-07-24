@@ -148,7 +148,9 @@ int posix2fsal_error(int posix_errorcode)
       /* Error code that needs a retry */
     case EAGAIN:
     case EBUSY:
-
+#ifdef _SHOOK
+    case ETIME:
+#endif
       return ERR_FSAL_DELAY;
 
     case ENOTSUP:

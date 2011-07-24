@@ -161,8 +161,8 @@ fsal_status_t LUSTREFSAL_BuildExportContext(lustrefsal_export_context_t * p_expo
   ptr = strrchr(fs_spec, '/');
   if (ptr) {
       ptr++;
-      LogDebug(COMPONENT_FSAL, "Lustre fsname for %s is '%s'", mntdir, fs_spec);
-      strncpy(p_export_context->fsname, fs_spec, MAX_LUSTRE_FSNAME);
+      LogDebug(COMPONENT_FSAL, "Lustre fsname for %s is '%s'", mntdir, ptr);
+      strncpy(p_export_context->fsname, ptr, MAX_LUSTRE_FSNAME);
   }
   p_export_context->dev_id = pathstat.st_dev;
 

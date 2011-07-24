@@ -188,30 +188,49 @@ fsal_status_t LUSTREFSAL_open(lustrefsal_handle_t * p_filehandle,       /* IN */
      * includes O_TRUNC
      */
     shook_state state;
-    int follow = (posix_flags & O_NOFOLLOW ? 0:1);
-    rc = shook_get_status(fsalpath.path, &state, follow);
+    rc = shook_get_status(fsalpath.path, &state, 0);
     if (rc)
+    {
         LogEvent(COMPONENT_FSAL, "Error retrieving shook status of %s: %s",
                  fsalpath.path, strerror(-rc));
+        Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
+    }
     else if (state != SS_ONLINE)
     {
         LogInfo(COMPONENT_FSAL, "File is offline: triggering shook restore");
 
-        if (posix_flags & O_TRUNC) {
-            /* XXX Is this synchronous? */
-            rc = shook_server_call(SA_RESTORE_TRUNC, p_context->export_context->fsname,
-                                   &p_filehandle->data.fid, NULL, NULL);
-            if (rc)
-                Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
-            /* then continue to open */
-        } else {
-            /*  start async restore and return delay. XXX is this async? */
-            rc = shook_server_call(SA_RESTORE, p_context->export_context->fsname,
-                                   &p_filehandle->data.fid, NULL, NULL);
-            if (rc)
-                Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
+        if (posix_flags & O_TRUNC)
+        {
+            TakeTokenFSCall();
+            rc = truncate(fsalpath.path, 0);
+            errsv = errno;
+            ReleaseTokenFSCall();
 
-            Return(ERR_FSAL_DELAY, 0, INDEX_FSAL_open);
+            if (rc == 0)
+            {
+                /* use a short timeout of 2s */
+                rc = shook_server_call(SA_RESTORE_TRUNC, p_context->export_context->fsname,
+                                       &p_filehandle->data.fid, 2);
+                if (rc)
+                    Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
+            }
+            else
+            {
+                  if(errsv == ENOENT)
+                    Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_open);
+                  else
+                    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_open);
+            }
+            /* continue to open */
+
+        } else {
+            /* trigger restore. Give it a chance to retrieve the file in less than a second.
+             * Else, it returns ETIME that is converted in ERR_DELAY */
+            rc = shook_server_call(SA_RESTORE, p_context->export_context->fsname,
+                                   &p_filehandle->data.fid, 1);
+            if (rc)
+                Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
+            /* if rc = 0, file can be opened */
         }
     }
     /* else: we can open file directly */
