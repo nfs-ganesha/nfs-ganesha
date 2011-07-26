@@ -339,17 +339,6 @@ if test "$enable_nfs4_acl" == "yes"; then
 fi
 AM_CONDITIONAL(USE_NFS4_ACL, test "$enable_nfs4_acl" == "yes" )
 
-# using shook HSM binding system
-AC_ARG_ENABLE( [shook], AS_HELP_STRING([--enable-shook],
-                                       [Enable shook binding system]),
-               [use_shook="$enableval"],[use_shook="no"] )
-
-if test "x$use_shook" = "xyes" ; then
-    AC_CHECK_LIB([shooksvr], [shook_restore],, AC_MSG_ERROR([shook is enabled but libshooksvr not found]))
-    AC_DEFINE(_SHOOK, 1, [shook is enabled])
-    LDFLAGS="$LDFLAGS -lshooksvr"
-fi
-
 # makes it possible to add some extra include dir
 
 AC_ARG_WITH( [extra-includedir], AS_HELP_STRING([--with-extra-includedir=<path>], [Alternative path to include files] ),
@@ -360,7 +349,7 @@ if test "${with_extra_includedir+set}" == "set"; then
 fi
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|DYNFSAL (default=PROXY)],[specify the type of filesystem to be exported] ),
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|DYNFSAL|SHOOK (default=PROXY)],[specify the type of filesystem to be exported] ),
 	     FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
@@ -371,6 +360,7 @@ AM_CONDITIONAL(USE_FSAL_PROXY,    test "$FSAL" = "PROXY")
 AM_CONDITIONAL(USE_FSAL_SNMP,     test "$FSAL" = "SNMP")
 AM_CONDITIONAL(USE_FSAL_FUSE,     test "$FSAL" = "FUSE")
 AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
+AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "SHOOK") # variant of Lustre FSAL
 AM_CONDITIONAL(USE_FSAL_XFS,      test "$FSAL" = "XFS")
 AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
@@ -546,6 +536,24 @@ case $FSAL in
         FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
 		FS_NAME="lustre"
 		;;
+
+    SHOOK)
+        # Lustre FSAL compiled with special compilation directives
+        AC_CHECK_LIB([shooksvr], [shook_restore],, AC_MSG_ERROR([libshooksvr not found]))
+        AC_DEFINE(_SHOOK, 1, [shook is enabled])
+
+		AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
+		AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
+		if test "x$have_lustre2_api" != "xyes" ; then
+	            AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])
+		fi
+		AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
+        FSAL_CFLAGS=
+        FSAL_LDFLAGS="-lshooksvr -llustreapi"
+        FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
+		FS_NAME="shook"
+        ;;
+
 	XFS)
 		AC_DEFINE([_USE_XFS], 1, [GANESHA exports XFS Filesystem])
  		AC_CHECK_HEADERS([xfs/xfs.h], [], [AC_MSG_ERROR( missing xfs include files)])
