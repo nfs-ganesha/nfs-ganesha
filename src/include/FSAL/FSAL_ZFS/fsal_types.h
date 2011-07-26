@@ -101,9 +101,9 @@ typedef struct fsal_export_context__
 
 typedef struct fsal_op_context__
 {
+  fsal_export_context_t *export_context; /* Must be the first member of this structure */
   fsal_cred_t user_credential;
   int thread_connect_array[32];
-  fsal_export_context_t *export_context;
 
 } zfsfsal_op_context_t;
 
