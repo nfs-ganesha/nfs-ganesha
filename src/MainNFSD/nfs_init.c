@@ -2040,6 +2040,18 @@ void nfs_start(nfs_start_info_t * p_start_info)
 #endif
 #if 0
   /* Will remain as long as all FSAL are not yet in new format */
+  printf("---> fsal_handle_t:%u\n", sizeof(zfsfsal_handle_t));
+  printf("---> fsal_op_context_t:%u\n", sizeof(zfsfsal_op_context_t));
+  printf("---> fsal_file_t:%u\n", sizeof(zfsfsal_file_t));
+  printf("---> fsal_dir_t:%u\n", sizeof(zfsfsal_dir_t));
+  printf("---> fsal_lockdesc_t:%u\n", sizeof(zfsfsal_lockdesc_t));
+  printf("---> fsal_export_context_t:%u\n", sizeof(zfsfsal_export_context_t));
+  printf("---> fsal_cookie_t:%u\n", sizeof(zfsfsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%u\n", sizeof(zfsfs_specific_initinfo_t));
+  printf("---> fsal_cred_t:%u\n", sizeof(zfsfsal_cred_t));
+#endif
+#if 0
+  /* Will remain as long as all FSAL are not yet in new format */
   printf("---> fsal_handle_t:%lu\n", sizeof(lustrefsal_handle_t));
   printf("---> fsal_op_context_t:%lu\n", sizeof(lustrefsal_op_context_t));
   printf("---> fsal_file_t:%lu\n", sizeof(lustrefsal_file_t));
