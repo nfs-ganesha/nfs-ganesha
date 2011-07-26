@@ -37,16 +37,15 @@
 #define FSAL_XFS_INDEX 0
 #define FSAL_PROXY_INDEX 1
 
-#define FSAL_HANDLE_T_SIZE 152  /* Has to be a multiple of 8 for alignement reasons */
-
-#define FSAL_OP_CONTEXT_T_SIZE 620
-#define FSAL_DIR_T_SIZE 4876
-#define FSAL_EXPORT_CONTEXT_T_SIZE 4204
-#define FSAL_FILE_T_SIZE 184
-#define FSAL_COOKIE_T_SIZE 8
-#define FSAL_LOCKDESC_T_SIZE 24
-#define FSAL_CRED_T_SIZE 140
-#define FSAL_FS_SPECIFIC_INITINFO_T 17208
+#define FSAL_HANDLE_T_SIZE 152             /* Has to be a multiple of 8 for alignement reasons */
+#define FSAL_OP_CONTEXT_T_SIZE 680         /* Has to be a multiple of 8 for alignement reasons */
+#define FSAL_DIR_T_SIZE 4880               /* Has to be a multiple of 8 for alignement reasons */
+#define FSAL_EXPORT_CONTEXT_T_SIZE 4208    /* Has to be a multiple of 8 for alignement reasons */
+#define FSAL_FILE_T_SIZE 192               /* Has to be a multiple of 8 for alignement reasons */
+#define FSAL_COOKIE_T_SIZE 8               /* Has to be a multiple of 8 for alignement reasons */
+#define FSAL_LOCKDESC_T_SIZE 24            /* Has to be a multiple of 8 for alignement reasons */
+#define FSAL_CRED_T_SIZE 144               /* Has to be a multiple of 8 for alignement reasons */
+#define FSAL_FS_SPECIFIC_INITINFO_T 17216  /* Has to be a multiple of 8 for alignement reasons */
 
 /* Const related to multiple FSAL support */
 #ifdef _USE_SHARED_FSAL
