@@ -1980,7 +1980,17 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                 CONF_EXPORT_FSALID);
         return -1 ;
    }
+
+  /* Check is FSAL is loaded */
+  if( !FSAL_Is_Loaded( p_entry->fsalid ) ) 
+   {
+        LogCrit(COMPONENT_CONFIG,
+                "NFS READ_EXPORT: ERROR: FSAL library not loaded for fsalid=%s in export entry (id=%u)", 
+                FSAL_fsalid2name( p_entry->fsalid ), p_entry->id ) ;
+        return -1 ;
+   }
 #endif
+
 
   *pp_export = p_entry;
 

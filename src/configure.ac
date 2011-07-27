@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [1.1.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [1.1.1], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
 AC_SUBST(RELEASE, [0])
 
@@ -349,7 +349,7 @@ if test "${with_extra_includedir+set}" == "set"; then
 fi
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|DYNFSAL (default=PROXY)],[specify the type of filesystem to be exported] ),
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|DYNFSAL|SHOOK (default=PROXY)],[specify the type of filesystem to be exported] ),
 	     FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
@@ -360,6 +360,7 @@ AM_CONDITIONAL(USE_FSAL_PROXY,    test "$FSAL" = "PROXY")
 AM_CONDITIONAL(USE_FSAL_SNMP,     test "$FSAL" = "SNMP")
 AM_CONDITIONAL(USE_FSAL_FUSE,     test "$FSAL" = "FUSE")
 AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
+AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "SHOOK") # variant of Lustre FSAL
 AM_CONDITIONAL(USE_FSAL_XFS,      test "$FSAL" = "XFS")
 AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
@@ -542,11 +543,29 @@ case $FSAL in
 			AC_DEFINE([_LUSTRE_HSM], 1, [Lustre version supports HSM binding])
 		fi
 
-		FSAL_CFLAGS=
-                FSAL_LDFLAGS="-llustreapi"
-		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
+        FSAL_CFLAGS=
+        FSAL_LDFLAGS="-llustreapi"
+        FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
 		FS_NAME="lustre"
 		;;
+
+    SHOOK)
+        # Lustre FSAL compiled with special compilation directives
+        AC_CHECK_LIB([shooksvr], [shook_restore],, AC_MSG_ERROR([libshooksvr not found]))
+        AC_DEFINE(_SHOOK, 1, [shook is enabled])
+
+		AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
+		AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
+		if test "x$have_lustre2_api" != "xyes" ; then
+	            AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])
+		fi
+		AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
+        FSAL_CFLAGS=
+        FSAL_LDFLAGS="-lshooksvr -llustreapi"
+        FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
+		FS_NAME="shook"
+        ;;
+
 	XFS)
 		AC_DEFINE([_USE_XFS], 1, [GANESHA exports XFS Filesystem])
  		AC_CHECK_HEADERS([xfs/xfs.h], [], [AC_MSG_ERROR( missing xfs include files)])
@@ -788,22 +807,22 @@ case $PNFS in
 	"PARALLEL_FS")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
 		AC_DEFINE(_USE_PNFS_PARALLEL_FS,1,[enable NFSv4.1/pNFS support for parallel file system ])
-		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
 	"SPNFS_LIKE")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
 		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable spnfsd-like NFSv4.1/pNFS support])
-		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
 	"OSD")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
 		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable OSD based NFSv4.1/pNFS support])
-		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
 	"BLOCK")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
 		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable Block Device based NFSv4.1/pNFS support])
-		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
 	*)
 		AC_MSG_ERROR([This pNFS layout is not supported])
@@ -901,12 +920,14 @@ AC_CONFIG_FILES([include/Makefile
                  Cache_inode/Makefile
                  File_Content/Makefile
                  File_Content_Policy/Makefile
-		 NFS_Protocols/Makefile
-		 PNFS/Makefile
-		 PNFS/SPNFS_LIKE/Makefile
-		 PNFS/PARALLEL_FS/Makefile
-		 PNFS/OSD/Makefile
-		 PNFS/BLOCK/Makefile
+		 Protocols/Makefile
+                 Protocols/9P/Makefile
+		 Protocols/NFS/Makefile
+		 Protocols/PNFS/Makefile
+		 Protocols/PNFS/SPNFS_LIKE/Makefile
+		 Protocols/PNFS/PARALLEL_FS/Makefile
+		 Protocols/PNFS/OSD/Makefile
+		 Protocols/PNFS/BLOCK/Makefile
                  XDR/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile

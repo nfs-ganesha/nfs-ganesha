@@ -111,7 +111,7 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/err_inject.h              \
                              $(STAT_SNMP_FILES)
 
-libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la                   \
+libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la                   \
                                       $(PNFS_LIB)                                       \
                                       $(SEC_LIB_FLAGS)                                  \
                                       $(SVC_LIB_FLAGS)                                  \

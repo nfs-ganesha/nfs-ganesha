@@ -374,13 +374,13 @@ fsal_status_t PROXYFSAL_ExpandHandle(proxyfsal_export_context_t * p_expcontext, 
         {
           if(rc == HANDLEMAP_STALE)
             LogFullDebug(COMPONENT_FSAL, "File id=%llu : HandleMap_GetFH returns HANDLEMAP_STALE\n",
-                         map_hdl.object_id);
+                         (unsigned long long)map_hdl.object_id);
           else if(rc == 0)
             LogFullDebug(COMPONENT_FSAL, "File id=%llu : HandleMap_GetFH returns HANDLEMAP_SUCCESS\n",
-                         map_hdl.object_id);
+                         (unsigned long long)map_hdl.object_id);
           else
             LogFullDebug(COMPONENT_FSAL, "File id=%llu : HandleMap_GetFH returns error %d\n",
-                         map_hdl.object_id, rc);
+                         (unsigned long long)map_hdl.object_id, rc);
         }
 
       if(rc == HANDLEMAP_STALE)

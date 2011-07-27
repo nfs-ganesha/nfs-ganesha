@@ -281,6 +281,7 @@ int ganefuse_main(int argc, char *argv[],
   /* return all errors */
   nfs_param.core_param.drop_io_errors = FALSE;
   nfs_param.core_param.drop_inval_errors = FALSE;
+  nfs_param.core_param.drop_delay_errors = FALSE;
 
   /* parse configuration file (if specified) */
 

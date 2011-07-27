@@ -241,6 +241,12 @@ void nfs_print_param_config()
     printf("\tDrop_Inval_Errors = TRUE ; \n");
   else
     printf("\tDrop_Inval_Errors = FALSE ;\n");
+
+  if(nfs_param.core_param.drop_delay_errors)
+    printf("\tDrop_Delay_Errors = TRUE ; \n");
+  else
+    printf("\tDrop_Delay_Errors = FALSE ;\n");
+
   printf("}\n\n");
 
   printf("NFS_Worker_Param\n{\n");
@@ -281,6 +287,7 @@ void nfs_set_param_default()
 #endif
   nfs_param.core_param.drop_io_errors = TRUE;
   nfs_param.core_param.drop_inval_errors = FALSE;
+  nfs_param.core_param.drop_delay_errors = TRUE;
   nfs_param.core_param.core_dump_size = 0;
   nfs_param.core_param.nb_max_fd = -1;       /* Use OS's default */
   nfs_param.core_param.stats_update_delay = 60;
@@ -2102,6 +2109,18 @@ void nfs_start(nfs_start_info_t * p_start_info)
   printf("---> fsal_cookie_t:%u\n", sizeof(xfsfsal_cookie_t));
   printf("---> fs_specific_initinfo_t:%u\n", sizeof(xfsfs_specific_initinfo_t));
   printf("---> fsal_cred_t:%u\n", sizeof(xfsfsal_cred_t));
+#endif
+#if 0
+  /* Will remain as long as all FSAL are not yet in new format */
+  printf("---> fsal_handle_t:%u\n", sizeof(zfsfsal_handle_t));
+  printf("---> fsal_op_context_t:%u\n", sizeof(zfsfsal_op_context_t));
+  printf("---> fsal_file_t:%u\n", sizeof(zfsfsal_file_t));
+  printf("---> fsal_dir_t:%u\n", sizeof(zfsfsal_dir_t));
+  printf("---> fsal_lockdesc_t:%u\n", sizeof(zfsfsal_lockdesc_t));
+  printf("---> fsal_export_context_t:%u\n", sizeof(zfsfsal_export_context_t));
+  printf("---> fsal_cookie_t:%u\n", sizeof(zfsfsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%u\n", sizeof(zfsfs_specific_initinfo_t));
+  printf("---> fsal_cred_t:%u\n", sizeof(zfsfsal_cred_t));
 #endif
 #if 0
   /* Will remain as long as all FSAL are not yet in new format */

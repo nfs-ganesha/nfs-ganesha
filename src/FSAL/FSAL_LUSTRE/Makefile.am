@@ -4,7 +4,7 @@ if BUILD_SHARED_FSAL
 
 lib_LTLIBRARIES = libfsallustre.la
 libfsallustre_la_LDFLAGS = -version-number @LIBVERSION@
-libfsallustre_la_LIBADD = ../../SemN/libSemN.la 
+libfsallustre_la_LIBADD = ../../SemN/libSemN.la -llustreapi
 
 else
 noinst_LTLIBRARIES          = libfsallustre.la
@@ -44,7 +44,7 @@ libfsallustre_la_SOURCES = fsal_access.c      \
 
 if USE_PNFS
 SUBDIRS = PNFS
-libfsallustre_la_LIBADD = PNFS/libfsallustrepnfs.la
+libfsallustre_la_LIBADD = Protocols/PNFS/libfsallustrepnfs.la
 libfsallustre_la_DEPENDENCIES =  $(libfsallustre_la_SOURCES) $(libfsallustre_la_LIBADD)
 endif 
 
