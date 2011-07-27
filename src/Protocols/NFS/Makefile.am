@@ -116,7 +116,7 @@ libnfsproto_la_SOURCES += rquota_Null.c            \
                           rquota_getquota.c        \
                           rquota_getactivequota.c  \
                           rquota_setquota.c        \
-                          rquota_setactivequota.c 
+                          rquota_setactivequota.c
 
 endif
 
@@ -139,13 +139,13 @@ libnfsproto_la_SOURCES += nfs41_op_exchange_id.c      \
                           nfs41_op_reclaim_complete.c \
                           nfs41_op_sequence.c         \
                           nfs41_op_set_ssv.c          \
-                          nfs41_op_write.c            
+                          nfs41_op_write.c
 endif
 
 
 test_mnt_proto_SOURCES       = test_mnt_proto.c
 
-test_mnt_proto_LDADD = libnfsproto.la ../BuddyMalloc/libBuddyMalloc.la ../Log/liblog.la
+test_mnt_proto_LDADD = libnfsproto.la ../../BuddyMalloc/libBuddyMalloc.la ../../Log/liblog.la
 
 new: clean all
 
