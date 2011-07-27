@@ -874,7 +874,8 @@ AC_CONFIG_FILES([include/Makefile
                  Cache_inode/Makefile
                  File_Content/Makefile
                  File_Content_Policy/Makefile
-		 NFS_Protocols/Makefile
+		 Protocols/Makefile
+		 Protocols/NFS/Makefile
 		 PNFS/Makefile
 		 PNFS/SPNFS_LIKE/Makefile
 		 PNFS/PARALLEL_FS/Makefile
