@@ -43,7 +43,7 @@
 #define FSAL_DIR_T_SIZE              4880  /* Has to be a multiple of 8 for alignement reasons */
 #define FSAL_LOCKDESC_T_SIZE           24  /* Has to be a multiple of 8 for alignement reasons */
 #define FSAL_EXPORT_CONTEXT_T_SIZE   4208  /* Has to be a multiple of 8 for alignement reasons */
-#define FSAL_COOKIE_T_SIZE              8  /* Has to be a multiple of 8 for alignement reasons */
+#define FSAL_COOKIE_T_SIZE             16  /* Has to be a multiple of 8 for alignement reasons */
 #define FSAL_FS_SPECIFIC_INITINFO_T 17216  /* Has to be a multiple of 8 for alignement reasons */
 #define FSAL_CRED_T_SIZE              144  /* Has to be a multiple of 8 for alignement reasons */
 
