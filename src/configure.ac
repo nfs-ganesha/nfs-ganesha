@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [1.1.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [1.1.1], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
 AC_SUBST(RELEASE, [0])
 
@@ -875,6 +875,7 @@ AC_CONFIG_FILES([include/Makefile
                  File_Content/Makefile
                  File_Content_Policy/Makefile
 		 Protocols/Makefile
+                 Protocols/9P/Makefile
 		 Protocols/NFS/Makefile
 		 Protocols/PNFS/Makefile
 		 Protocols/PNFS/SPNFS_LIKE/Makefile
