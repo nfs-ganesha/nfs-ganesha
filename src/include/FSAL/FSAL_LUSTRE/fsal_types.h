@@ -113,10 +113,12 @@ typedef struct
   gid_t alt_groups[FSAL_NGROUPS_MAX];
 } lustrefsal_cred_t;
 
-typedef struct
+#define MAX_LUSTRE_FSNAME 128
+typedef struct lustrefsal_export_context_t
 {
   char mount_point[FSAL_MAX_PATH_LEN];
   unsigned int mnt_len;         /* for optimizing concatenation */
+  char fsname[MAX_LUSTRE_FSNAME];
   dev_t dev_id;
 } lustrefsal_export_context_t;
 

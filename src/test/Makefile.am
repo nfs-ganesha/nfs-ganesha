@@ -10,7 +10,7 @@ TESTS = $(check_PROGRAMS)
 
 liboutils_profiling_la_SOURCES = MesureTemps.c ../include/MesureTemps.h
 
-COMMON_LDADD = ../NFS_Protocols/libnfsproto.la                   \
+COMMON_LDADD = ../Protocols/NFS/libnfsproto.la                   \
                $(PNFS_LIB)                                       \
                $(SEC_LIB_FLAGS)                                  \
                $(SVC_LIB_FLAGS)                                  \

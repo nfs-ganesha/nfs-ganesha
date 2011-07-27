@@ -241,6 +241,12 @@ void nfs_print_param_config()
     printf("\tDrop_Inval_Errors = TRUE ; \n");
   else
     printf("\tDrop_Inval_Errors = FALSE ;\n");
+
+  if(nfs_param.core_param.drop_delay_errors)
+    printf("\tDrop_Delay_Errors = TRUE ; \n");
+  else
+    printf("\tDrop_Delay_Errors = FALSE ;\n");
+
   printf("}\n\n");
 
   printf("NFS_Worker_Param\n{\n");
@@ -281,6 +287,7 @@ void nfs_set_param_default()
 #endif
   nfs_param.core_param.drop_io_errors = TRUE;
   nfs_param.core_param.drop_inval_errors = FALSE;
+  nfs_param.core_param.drop_delay_errors = TRUE;
   nfs_param.core_param.core_dump_size = 0;
   nfs_param.core_param.nb_max_fd = -1;       /* Use OS's default */
   nfs_param.core_param.stats_update_delay = 60;
