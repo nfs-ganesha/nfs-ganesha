@@ -57,6 +57,7 @@
  ******************************************************/
 void FSAL_SetId( int fsalid ) ;
 int FSAL_GetId( void ) ;
+int FSAL_Is_Loaded( int fsalid ) ;
 #endif
 int FSAL_param_load_fsal_split( char * param, int * fsalid, char * pathlib ) ;
 int FSAL_name2fsalid( char * fsname ) ;

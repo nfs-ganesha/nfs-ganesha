@@ -16,8 +16,7 @@ SUBDIRS = include             \
           File_Content_Policy \
           XDR                 \
           RPCAL               \
-          NFS_Protocols       \
-          PNFS                \
+          Protocols           \
           RPCAL               \
           support             \
           FSAL                \
@@ -41,7 +40,7 @@ if USE_FSAL_FUSE
 SUBDIRS += example-fuse
 endif
 
-DOCDIRS = Cache_inode ConfigParsing File_Content File_Content_Policy HashTable IdMapper LRU Log MainNFSD NFS_Protocols SemN StuffAlloc shell support \
+DOCDIRS = Cache_inode ConfigParsing File_Content File_Content_Policy HashTable IdMapper LRU Log MainNFSD Protocols/NFS SemN StuffAlloc shell support \
           FSAL/FSAL_HPSS FSAL/FSAL_POSIX FSAL/FSAL_PROXY FSAL/FSAL_SNMP FSAL/FSAL_FUSE FSAL/FSAL_ZFS \
           MFSL/MFSL_NULL MFSL/MFSL_ASYNC MFSL/MFSL_PROXY_RPCSECGSS MFSL/MFSL_AIO
 
