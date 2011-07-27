@@ -20,7 +20,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
+ * -------------
  */
 
 /**
@@ -31,7 +31,7 @@
  * \version $Revision: 1.24 $
  * \brief   Defines the datas that are to be
  *          accessed as extern by the fsal modules
- * 
+ *
  */
 #define FSAL_INTERNAL_C
 #ifdef HAVE_CONFIG_H
@@ -466,14 +466,14 @@ fsal_status_t fsal_internal_handle2fd(vfsfsal_op_context_t * p_context,
   {
   char str[1024] ;
   sprint_mem( str, phandle->data.vfs_handle.handle, phandle->data.vfs_handle.handle_bytes ) ;
-  printf( "=====> fsal_internal_handle2fd: type=%u bytes=%u|%s\n",  
+  printf( "=====> fsal_internal_handle2fd: type=%u bytes=%u|%s\n",
           phandle->data.vfs_handle.handle_type, phandle->data.vfs_handle.handle_bytes, str ) ;
   }
 #endif
 
 
   rc =  vfs_open_by_handle( p_context->export_context->mount_root_fd,
-			    &phandle->data.vfs_handle, 
+			    &phandle->data.vfs_handle,
                             oflags ) ;
   if(rc == -1)
     {
@@ -488,11 +488,11 @@ fsal_status_t fsal_internal_handle2fd(vfsfsal_op_context_t * p_context,
 }                               /* fsal_internal_handle2fd */
 
 fsal_status_t fsal_internal_fd2handle( vfsfsal_op_context_t * p_context,
-                                       int fd, 
+                                       int fd,
 				       vfsfsal_handle_t * phandle)
 {
   int rc = 0 ;
-  int errsv = 0 ; 
+  int errsv = 0 ;
   int mnt_id = 0 ;
 
 
@@ -500,11 +500,11 @@ fsal_status_t fsal_internal_fd2handle( vfsfsal_op_context_t * p_context,
   if( ( rc = vfs_fd_to_handle( fd, &phandle->data.vfs_handle, &mnt_id ) ) )
    ReturnCode(posix2fsal_error(errsv), errsv);
 
-#if 0 
+#if 0
   {
     char str[1024] ;
     sprint_mem( str, phandle->data.vfs_handle.handle, phandle->data.vfs_handle.handle_bytes ) ;
-    printf( "=====> fsal_internal_fd2handle: type=%u bytes=%u|%s\n",  
+    printf( "=====> fsal_internal_fd2handle: type=%u bytes=%u|%s\n",
             phandle->data.vfs_handle.handle_type, phandle->data.vfs_handle.handle_bytes, str ) ;
   }
 #endif
@@ -559,7 +559,7 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
 
   if( !p_fsalname || !p_handle )
     ReturnCode(ERR_FSAL_FAULT, 0);
- 
+
   memset(p_handle, 0, sizeof(vfsfsal_handle_t));
 
   LogFullDebug(COMPONENT_FSAL, "get handle at for %s", p_fsalname->name);
@@ -638,6 +638,10 @@ fsal_status_t fsal_internal_testAccess(vfsfsal_op_context_t * p_context,        
       if(mode & FSAL_MODE_XUSR)
         missing_access &= ~FSAL_X_OK;
 
+      /* handle the creation of a new 500 file correctly */
+      if((missing_access & FSAL_OWNER_OK) != 0)
+        missing_access = 0;
+
       if(missing_access == 0)
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
       else
@@ -649,6 +653,11 @@ fsal_status_t fsal_internal_testAccess(vfsfsal_op_context_t * p_context,        
         }
 
     }
+
+  /* missing_access will be nonzero triggering a failure
+   * even though FSAL_OWNER_OK is not even a real posix file
+   * permission */
+  missing_access &= ~FSAL_OWNER_OK;
 
   /* Test if the file belongs to user's group. */
 
