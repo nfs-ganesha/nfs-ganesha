@@ -4,7 +4,7 @@ if BUILD_SHARED_FSAL
 
 lib_LTLIBRARIES = libfsallustre.la
 libfsallustre_la_LDFLAGS = -version-number @LIBVERSION@
-libfsallustre_la_LIBADD = ../../SemN/libSemN.la 
+libfsallustre_la_LIBADD = ../../SemN/libSemN.la -llustreapi
 
 else
 noinst_LTLIBRARIES          = libfsallustre.la
