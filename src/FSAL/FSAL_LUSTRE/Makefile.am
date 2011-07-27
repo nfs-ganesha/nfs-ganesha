@@ -44,7 +44,7 @@ libfsallustre_la_SOURCES = fsal_access.c      \
 
 if USE_PNFS
 SUBDIRS = PNFS
-libfsallustre_la_LIBADD = PNFS/libfsallustrepnfs.la
+libfsallustre_la_LIBADD = Protocols/PNFS/libfsallustrepnfs.la
 libfsallustre_la_DEPENDENCIES =  $(libfsallustre_la_SOURCES) $(libfsallustre_la_LIBADD)
 endif 
 

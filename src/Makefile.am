@@ -17,7 +17,6 @@ SUBDIRS = include             \
           XDR                 \
           RPCAL               \
           Protocols           \
-          PNFS                \
           RPCAL               \
           support             \
           FSAL                \

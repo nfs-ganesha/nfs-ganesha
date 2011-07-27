@@ -761,22 +761,22 @@ case $PNFS in
 	"PARALLEL_FS")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
 		AC_DEFINE(_USE_PNFS_PARALLEL_FS,1,[enable NFSv4.1/pNFS support for parallel file system ])
-		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
 	"SPNFS_LIKE")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
 		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable spnfsd-like NFSv4.1/pNFS support])
-		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
 	"OSD")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
 		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable OSD based NFSv4.1/pNFS support])
-		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
 	"BLOCK")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
 		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable Block Device based NFSv4.1/pNFS support])
-		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
 	*)
 		AC_MSG_ERROR([This pNFS layout is not supported])
@@ -876,11 +876,11 @@ AC_CONFIG_FILES([include/Makefile
                  File_Content_Policy/Makefile
 		 Protocols/Makefile
 		 Protocols/NFS/Makefile
-		 PNFS/Makefile
-		 PNFS/SPNFS_LIKE/Makefile
-		 PNFS/PARALLEL_FS/Makefile
-		 PNFS/OSD/Makefile
-		 PNFS/BLOCK/Makefile
+		 Protocols/PNFS/Makefile
+		 Protocols/PNFS/SPNFS_LIKE/Makefile
+		 Protocols/PNFS/PARALLEL_FS/Makefile
+		 Protocols/PNFS/OSD/Makefile
+		 Protocols/PNFS/BLOCK/Makefile
                  XDR/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile
