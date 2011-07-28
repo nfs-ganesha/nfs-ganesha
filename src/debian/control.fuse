@@ -1,0 +1,18 @@
+Package: nfs-ganesha-fuselike
+Section: libs
+Architecture: any
+Depends: nfs-ganesha-common, ${shlibs:Depends}
+Description: NFS-GANESHA library for FUSE-like backends
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. This package provides the components for FUSE-like bindings.
+
+Package: nfs-ganesha-fuselike-dev
+Section: libdevel
+Architecture: any
+Depends: nfs-ganesha-common, nfs-ganesha-fuselike (= ${binary:Version}), pkg-config, ${misc:Depends}
+Description: NFS-GANESHA library and headers for FUSE-like backends
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. This package provides the headers for FUSE-like bindings.
+

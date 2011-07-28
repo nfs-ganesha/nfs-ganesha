@@ -1,0 +1,41 @@
+
+Here's another way of handling bibliographies; it does
+not use a .bib file, but includes the items at the end
+of the paper, before \end{document}.
+
+Each item has the format
+\bibitem[printName]{citeName} details
+
+The "printName" will be printed at the point of your citation,
+and again in the list of references.  The "citeName" is what
+you use in the source to create the citation.  For example,
+using the first entry below, I could \cite{menyhart} and
+have the author's name print out properly in the appropriate
+places.
+
+The bibliography below comes from Tony Luck's 2003 Linux
+Symposium paper:
+
+
+\begin{thebibliography}{99}
+\raggedright
+\bibitem[Menyh\'{a}rt]{menyhart} Z.\ Menyh\'{a}rt and D.\ Song,
+{\em OS Machine Check Recovery on Itanium Architecture-base Platforms},
+Intel Developer Forum, Fall 2002
+
+\bibitem[Ziegler]{ziegler} J.F.\ Ziegler,
+{\em Terrestrial cosmic ray intensities},
+IBM Journal of Research and Development, Volume 42, Number 1, 1998
+
+\bibitem[SDV]{SDV} Intel,
+{\em Intel Itanium Architecture Software Developer's Manual, Volume 1--3}
+
+\bibitem[EHG]{EHG} Intel,
+{\em Itanium Processor Family Error Handling Guide}, August 2001
+
+\bibitem[SAL]{SAL} Intel,
+{\em Itanium Processor Family System Abstraction Layer (SAL) Specification}, November 2002
+
+\end{thebibliography}
+
+

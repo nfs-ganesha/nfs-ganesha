@@ -1,0 +1,70 @@
+If the --enable-stat-exporter flag is used when configuring Ganesha, when
+Ganesha runs there will be a socket open that exports statistics on the
+performance of NFS requests. There is a very simple protocol to query data from
+the socket. There is also a section in the configuration file to change the
+permissions and port number of the stat exporter socket.
+
+Configuration File
+---------------------------------------
+The statistics exporter section in the configuration file looks like this:
+
+
+STAT_EXPORTER
+{
+    Access = "192.168.122.1,localhost";
+    Port = "10401";
+}
+
+The Access parameter uses the same facilities as an NFS export to determine
+whether a client has permission to access the resource.
+
+
+Protocol
+---------------------------------------
+Ganesha listens for a message that contains one of the following strings:
+"version=2"
+"version=3"
+"version=4"
+
+Simply sending this string will trigger Ganesha to respond with the total number
+of each possible request as well as the time it took to process that number of
+requests. These statistics accumulate as Ganesha runs.
+
+A second parameter can be comma separated from the version string. To receive
+the total amount of time requests have waited to be processed (the time where a
+request is received but waiting in a queue) include the string:
+"type=all_detail"
+
+So the total message would look like:
+"type=all_detail,version=3"
+
+
+Output
+---------------------------------------
+The output from the stat exporter socket will be one line consisting of the
+request name, total number of requests, cumulative await time (if the all_detail
+option was used), and cumulative process time. It will look like the following:
+
+_null_ 0 0.00 0.00 _getattr_ 98618 7090.80 11.52 _setattr_ 3035 99.61 33.29 _lookup_ 80909 7791.38 80.21 _access_ 19847 1151.30 29.91 _readlink_ 0 0.00 0.00 _read_ 585830 57931.27 0.00 _write_ 60657 8089.17 839.03 _create_ 40405 11325.19 81.87 _mkdir_ 58980 12558.32 34.31 _symlink_ 20154 4992.98 3.26 _mknod_ 0 0.00 0.00 _remove_ 80429 13200.48 27.24 _rmdir_ 39399 7001.25 7.13 _rename_ 300 18.93 1.54 _link_ 19870 3437.89 1.42 _readdir_ 0 0.00 0.00 _readdirplus_ 55136 5300.85 173.92 _fsstat_ 22540 3892.41 11.64 _fsinfo_ 19554 1648.50 3.55 _pathconf_ 7 4.05 4.80 _commit_ 19570 1048.27 0.00
+
+
+Example Perl client
+---------------------------------------
+Below is a very simple Perl client to query for statistics. There is also a
+Perl client called 'statistics' in the 'cmdline_tools' directory.
+
+#!/usr/bin/perl -w
+use strict;
+use IO::Socket;
+my $sock = IO::Socket::INET->new(
+    PeerHost => '192.168.122.101',
+    PeerPort => '10401',
+    Proto    => 'tcp');
+die "$!" unless $sock;
+$sock->autoflush();
+$sock->print("type=all_detail,version=3\015\012");
+#$sock->print("version=3\015\012");
+my $statistics = join('', $sock->getlines());
+print "$statistics\n";
+
+close($sock);

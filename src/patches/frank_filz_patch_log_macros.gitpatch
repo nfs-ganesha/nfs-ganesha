@@ -1,0 +1,445 @@
+diff --git a/src/include/log_macros.h b/src/include/log_macros.h
+new file mode 100644
+index 0000000..f10d40a
+--- /dev/null
++++ b/src/include/log_macros.h
+@@ -0,0 +1,217 @@
++#ifndef _LOG_MACROSS_H
++#define _LOG_MACROSS_H
++
++#include "log_functions.h"
++
++/*
++ * definition des codes d'error
++ *
++ *
++ * Copyright CEA/DAM/DIF  (2008)
++ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
++ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
++ *
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 3 of the License, or (at your option) any later version.
++ * 
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ * 
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++ * 
++ * ---------------------------------------
++ *
++ *
++ */
++
++enum log_components
++{
++  COMPONENT_NONE = 0,
++  COMPONENT_MEMALLOC,
++  COMPONENT_STATES,
++  COMPONENT_MEMLEAKS,
++  COMPONENT_FSAL,
++  COMPONENT_NFSPROTO,
++  COMPONENT_NFS_V4,
++  COMPONENT_NFS_V4_PSEUDO,
++  COMPONENT_FILEHANDLE,
++  COMPONENT_NFS_SHELL,
++  COMPONENT_DISPATCH,
++  COMPONENT_CACHE_CONTENT,
++  COMPONENT_CACHE_INODE,
++  COMPONENT_CACHE_INODE_GC,
++  COMPONENT_HASHTABLE,
++  COMPONENT_LRU,
++  COMPONENT_DUPREQ,
++  COMPONENT_LOG,
++  COMPONENT_RPCSEC_GSS
++};
++
++typedef struct log_component_info
++{
++  int   value;
++  char *str;
++  int   log_level;
++} log_component_info;
++  
++static log_component_info __attribute__ ((__unused__)) LogComponents[] =
++{
++  { COMPONENT_NONE,            "NONE,",           
++    NIV_NULL
++  },
++  { COMPONENT_MEMALLOC,        "MEMALLOC,",       
++#ifdef _DEBUG_MEMALLOC      
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_STATES,          "STATES,",         
++#ifdef _DEBUG_STATES        
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_MEMLEAKS,        "MEMLEAKS,",       
++#ifdef _DEBUG_MEMLEAKS      
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_FSAL,            "FSAL,",           
++#ifdef _DEBUG_FSAL          
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_NFSPROTO,        "NFSPROTO,",       
++#ifdef _DEBUG_NFSPROTO      
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_NFS_V4,          "NFS_V4,",         
++#ifdef _DEBUG_NFS_V4        
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_NFS_V4_PSEUDO,   "NFS_V4_PSEUDO,",  
++#ifdef _DEBUG_NFS_V4_PSEUDO 
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_FILEHANDLE,      "FILEHANDLE,",     
++#ifdef _DEBUG_FILEHANDLE    
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_NFS_SHELL,       "NFS_SHELL,",      
++#ifdef _DEBUG_NFS_SHELL     
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_DISPATCH,        "DISPATCH,",       
++#ifdef _DEBUG_DISPATCH      
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_CACHE_CONTENT,   "CACHE_CONTENT,",  
++#ifdef _DEBUG_CACHE_CONTENT 
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_CACHE_INODE,     "CACHE_INODE,",    
++#ifdef _DEBUG_CACHE_INODE   
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_CACHE_INODE_GC,  "CACHE_INODE_GC",  
++#ifdef _DEBUG_CACHE_INODE_GC
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_HASHTABLE,       "HASHTABLE,",      
++#ifdef _DEBUG_HASHTABLE     
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_LRU,             "LRU,",            
++#ifdef _DEBUG_LRU           
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_DUPREQ,          "DUPREQ,",         
++#ifdef _DEBUG_DUPREQ        
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_LOG,             "LOG,",            
++#ifdef _DEBUG_LOG           
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_RPCSEC_GSS,      "RPCSEC_GSS,",     
++#ifdef _DEBUG_RPCSEC_GSS    
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  }
++};
++
++
++
++
++#define LogMajor(component, format, args...) \
++   if (LogComponents[component].log_level >= NIV_MAJOR) \
++     DisplayLogLevel(NIV_MAJ, format, ## args );
++
++#define LogCrit(component, format, args...) \
++   if (LogComponents[component].log_level >= NIV_MAJOR) \
++     DisplayLogLevel(NIV_CRIT, format, ## args );
++
++#define LogEvent(component, format, args...) \
++   if (LogComponents[component].log_level >= NIV_MAJOR) \
++     DisplayLogLevel(NIV_EVENT, format, ## args );
++
++#define LogDebug(component, format, args...) \
++   if (LogComponents[component].log_level >= NIV_MAJOR) \
++     DisplayLogLevel(NIV_DEBUG, format, ## args );
++
++
++#endififf --git a/src/include/log_macros.h b/src/include/log_macros.h
+new file mode 100644
+index 0000000..f10d40a
+--- /dev/null
++++ b/src/include/log_macros.h
+@@ -0,0 +1,217 @@
++#ifndef _LOG_MACROSS_H
++#define _LOG_MACROSS_H
++
++#include "log_functions.h"
++
++/*
++ * definition des codes d'error
++ *
++ *
++ * Copyright CEA/DAM/DIF  (2008)
++ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
++ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
++ *
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 3 of the License, or (at your option) any later version.
++ * 
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ * 
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
++ * 
++ * ---------------------------------------
++ *
++ *
++ */
++
++enum log_components
++{
++  COMPONENT_NONE = 0,
++  COMPONENT_MEMALLOC,
++  COMPONENT_STATES,
++  COMPONENT_MEMLEAKS,
++  COMPONENT_FSAL,
++  COMPONENT_NFSPROTO,
++  COMPONENT_NFS_V4,
++  COMPONENT_NFS_V4_PSEUDO,
++  COMPONENT_FILEHANDLE,
++  COMPONENT_NFS_SHELL,
++  COMPONENT_DISPATCH,
++  COMPONENT_CACHE_CONTENT,
++  COMPONENT_CACHE_INODE,
++  COMPONENT_CACHE_INODE_GC,
++  COMPONENT_HASHTABLE,
++  COMPONENT_LRU,
++  COMPONENT_DUPREQ,
++  COMPONENT_LOG,
++  COMPONENT_RPCSEC_GSS
++};
++
++typedef struct log_component_info
++{
++  int   value;
++  char *str;
++  int   log_level;
++} log_component_info;
++  
++static log_component_info __attribute__ ((__unused__)) LogComponents[] =
++{
++  { COMPONENT_NONE,            "NONE,",           
++    NIV_NULL
++  },
++  { COMPONENT_MEMALLOC,        "MEMALLOC,",       
++#ifdef _DEBUG_MEMALLOC      
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_STATES,          "STATES,",         
++#ifdef _DEBUG_STATES        
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_MEMLEAKS,        "MEMLEAKS,",       
++#ifdef _DEBUG_MEMLEAKS      
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_FSAL,            "FSAL,",           
++#ifdef _DEBUG_FSAL          
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_NFSPROTO,        "NFSPROTO,",       
++#ifdef _DEBUG_NFSPROTO      
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_NFS_V4,          "NFS_V4,",         
++#ifdef _DEBUG_NFS_V4        
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_NFS_V4_PSEUDO,   "NFS_V4_PSEUDO,",  
++#ifdef _DEBUG_NFS_V4_PSEUDO 
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_FILEHANDLE,      "FILEHANDLE,",     
++#ifdef _DEBUG_FILEHANDLE    
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_NFS_SHELL,       "NFS_SHELL,",      
++#ifdef _DEBUG_NFS_SHELL     
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_DISPATCH,        "DISPATCH,",       
++#ifdef _DEBUG_DISPATCH      
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_CACHE_CONTENT,   "CACHE_CONTENT,",  
++#ifdef _DEBUG_CACHE_CONTENT 
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_CACHE_INODE,     "CACHE_INODE,",    
++#ifdef _DEBUG_CACHE_INODE   
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_CACHE_INODE_GC,  "CACHE_INODE_GC",  
++#ifdef _DEBUG_CACHE_INODE_GC
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_HASHTABLE,       "HASHTABLE,",      
++#ifdef _DEBUG_HASHTABLE     
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_LRU,             "LRU,",            
++#ifdef _DEBUG_LRU           
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_DUPREQ,          "DUPREQ,",         
++#ifdef _DEBUG_DUPREQ        
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_LOG,             "LOG,",            
++#ifdef _DEBUG_LOG           
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  },
++  { COMPONENT_RPCSEC_GSS,      "RPCSEC_GSS,",     
++#ifdef _DEBUG_RPCSEC_GSS    
++    NIV_DEBUG
++#else
++    NIV_EVENT
++#endif
++  }
++};
++
++
++
++
++#define LogMajor(component, format, args...) \
++   if (LogComponents[component].log_level >= NIV_MAJOR) \
++     DisplayLogLevel(NIV_MAJ, format, ## args );
++
++#define LogCrit(component, format, args...) \
++   if (LogComponents[component].log_level >= NIV_MAJOR) \
++     DisplayLogLevel(NIV_CRIT, format, ## args );
++
++#define LogEvent(component, format, args...) \
++   if (LogComponents[component].log_level >= NIV_MAJOR) \
++     DisplayLogLevel(NIV_EVENT, format, ## args );
++
++#define LogDebug(component, format, args...) \
++   if (LogComponents[component].log_level >= NIV_MAJOR) \
++     DisplayLogLevel(NIV_DEBUG, format, ## args );
++
++
++#endif

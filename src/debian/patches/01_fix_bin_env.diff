@@ -1,0 +1,10 @@
+Use /usr/bin/env instead of /bin/env
+
+--- nfs-ganesha-1.0.1.orig/tools/ganestat.pl	2010-09-23 13:09:19.796588049 +0200
++++ nfs-ganesha-1.0.1/tools/ganestat.pl	        2010-09-23 13:08:59.712983437 +0200
+@@ -1,4 +1,4 @@
+-#!/bin/env perl
++#!/usr/bin/env perl
+ #
+ ################## Doxygen header ##################
+ #*

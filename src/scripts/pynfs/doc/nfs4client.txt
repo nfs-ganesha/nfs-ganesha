@@ -1,0 +1,39 @@
+The Python NFSv4 command line client
+====================================
+This command line client was developed mainly as a tool to simplify
+development, to gain further understanding of the protocol and to test
+nfs4lib.py. It builds upon nfs4lib.py and the Python standard library
+module cmd.py, which provides a framework for building line-oriented
+interpreters. An example session is given below:
+
+[peter@maggie pynfs]$ ./nfs4client.py ford
+nfs4: >cd doc
+nfs4: /doc>ls
+README
+porting
+nfs4: /doc>cat README
+Welcome to this NFS4 server.
+Enjoy.
+
+nfs4: /doc>
+
+One feature of this client is that it can run in a pythonmode. This
+means that it acts as a normal Python interactive interpreter,
+extended with NFS client commands. It can be used for constructing
+NFSv4 requests manually, for example. The NFSv4 client instance is
+accessible via the c.ncl reference. An example is given below:
+
+[peter@maggie pynfs]$ ./nfs4client.py ford
+nfs4: >pythonmode 
+pythonmode is now on
+nfs4: >putrootfhop = c.ncl.putrootfh_op()
+nfs4: >lookupop = c.ncl.lookup_op("doc")
+nfs4: >accessop = c.ncl.access_op(ACCESS4_READ)
+nfs4: >res = c.ncl.compound([putrootfhop, lookupop, accessop])
+nfs4: >res
+<COMPOUND4res: status=0 tag= resarray=[<nfs_resop4: resop=24 opaccess=None opclose=N...>
+nfs4: >res.resarray[2].arm
+<ACCESS4res: status=0 resok4=<ACCESS4resok: supported=1 access=1>>
+nfs4: >res.resarray[2].arm.arm
+<ACCESS4resok: supported=1 access=1>
+nfs4: >

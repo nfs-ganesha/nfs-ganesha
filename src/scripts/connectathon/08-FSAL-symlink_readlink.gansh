@@ -1,0 +1,54 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_DEBUG"
+
+#configuration file
+set CONFIG_FILE "../../../share/conf/connectathon-ganesha.hpss.conf"
+
+# getting user name
+set USER `chomp \`shell env USER\` `
+
+# test dir
+set TEST_DIR  "/cea/prot/S/lama/s8/" $USER "/connectathon-ganesha"
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+
+# initializing this layer
+init_fs $CONFIG_FILE
+
+cd $TEST_DIR
+
+ln "./Contenu/du/lien 1" symlink_1
+ln "../Contenu/du/lien 2" symlink_2
+ln "../../Contenu/du/lien 3" symlink_3
+ln "symlink_1" symlink_4
+ln "./symlink_2" symlink_5
+ln $TEST_DIR symlink_6
+ln .. symlink_7
+ln . symlink_8
+
+ls -l symlink_1
+ls -l symlink_2
+ls -l symlink_3
+ls -l symlink_4
+ls -l symlink_5
+ls -l symlink_6
+ls -l symlink_7
+ls -l symlink_8
+
+unlink symlink_1
+unlink symlink_2
+unlink symlink_3
+unlink symlink_4
+unlink symlink_5
+unlink symlink_6
+unlink symlink_7
+unlink symlink_8

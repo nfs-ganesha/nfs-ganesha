@@ -1,0 +1,100 @@
+# test des readir et getattrs
+
+layer set FSAL
+init_fs ../../share/conf/ghostfs.conf
+
+layer set Cache_inode
+init_cache
+
+# on se place dans le repertoire /AIX_5/bin
+
+# cd absolu
+cd /AIX_5/bin
+
+# readdir relatif
+set LS_REL ls -Sv ..
+
+# readdir du repertoire /AIX_5
+set LS_ABS ls -Sv /AIX_5 
+
+# ici, on ne doit avoir que les chemins qui different
+diff LS_REL LS_ABS
+
+# check whether there the same count of elements
+set LS_AIX5 ls -l ..
+wc LS_AIX5
+set LS_AIX5 ls -l /AIX_5
+wc LS_AIX5
+
+# on effectue les meme tests sur d'autres repertoires
+cd /share
+set LS_REL ls -Sv ..
+set LS_ABS ls -Sv /
+diff LS_REL LS_ABS
+
+# encore un
+cd include
+set LS_REL ls -Sv ..
+set LS_ABS ls -Sv /share
+diff LS_REL LS_ABS
+
+# A last one,... for the road
+cd /AIX_5/bin
+set LS_BIG ls -l 
+
+# check whether there are the same count of elements
+set LS_SHARE ls -l /share
+
+# sleep 2 seconds (in order to have expired entries to be garbagged)
+sleep 2
+
+# call the garbagge collector
+print "Calling gc"
+gc -d 1 -f 1 -H 5 -L 2 
+
+print "I redo the operations to check if the cache is still ok after garbagge collection"
+
+# Redo the operation after gc to check coherency 
+# count root elements using many ways
+
+# on se place dans le repertoire /AIX_5/bin
+
+# cd absolu
+cd /AIX_5/bin
+
+# readdir relatif
+set LS_REL_GC ls -Sv ..
+
+# readdir du repertoire /AIX_5
+set LS_ABS_GC ls -Sv /AIX_5
+
+# ici, on ne doit avoir que les chemins qui different
+diff LS_REL_GC LS_ABS_GC
+
+# check whether there the same count of elements
+set LS_AIX5_GC ls -l /AIX_5
+
+# on effectue les meme tests sur d'autres repertoires
+cd /share
+set LS_REL_GC ls -Sv ..
+set LS_ABS_GC ls -Sv /
+diff LS_REL_GC LS_ABS_GC
+
+# encore un
+cd include
+set LS_REL_GC ls -Sv ..
+
+# check whether there are the same count of elements
+set LS_SHARE_GC ls -l /share
+
+# A last one,... for the road
+cd /AIX_5/bin
+set LS_BIG_GC ls -l 
+
+# Diff between before and after the gc
+
+print "=====> Final DIFF"
+cmp LS_SHARE LS_SHARE_GC
+cmp LS_REL LS_REL_GC
+cmp LS_AIX5 LS_AIX5_GC
+cmp LS_BIG LS_BIG_GC

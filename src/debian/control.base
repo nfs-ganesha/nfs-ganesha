@@ -1,0 +1,26 @@
+Source: nfs-ganesha
+Section: net
+Priority: extra
+Maintainer: Philippe Deniel <philippe.deniel@cea.fr>
+Build-Depends: debhelper (>= 7), quilt, bison, flex
+Standards-Version: 3.7.2
+Homepage: http://nfs-ganesha.sourceforge.net
+
+Package: nfs-ganesha-common
+Architecture: any
+Depends: ${perl:Depends}, ${misc:Depends}
+Description: nfs-ganesha is a NFS server in User Space
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. Supported name spaces are POSIX, PROXY, SNMP, FUSE-like,
+ HPSS, LUSTRE, XFS and ZFS.
+
+Package: nfs-ganesha-doc
+Section: doc
+Architecture: all
+Description: Documentation for nfs-ganesha
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. Supported name spaces are POSIX, PROXY, SNMP, FUSE-like,
+ HPSS, LUSTRE, XFS and ZFS.
+

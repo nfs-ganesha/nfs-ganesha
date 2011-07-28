@@ -1,0 +1,163 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_EVENT"
+
+# test dir
+set TEST_DIR  "/cea/prot/S/lama/s8/leibovic/connectathon-ganesha"
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+
+# waiting for main thread
+# (it does FSAL initialization and creates test directory)
+barrier
+
+cd $TEST_DIR
+
+create  FICHIER_3.1 666
+create  FICHIER_3.2 666
+create  FICHIER_3.3 666
+
+barrier
+cd DIR_1
+
+    create  FICHIER_3.1 666
+    create  FICHIER_3.2 666
+    create  FICHIER_3.3 666
+
+    barrier
+    cd DIR_1
+    
+        create  FICHIER_3.1 666
+        create  FICHIER_3.2 666
+        create  FICHIER_3.3 666
+        mkdir DIR_3.1 755
+        mkdir DIR_3.2 755
+        mkdir DIR_3.3 755
+
+    cd ..
+    
+    barrier
+    cd DIR_2
+    
+        create  FICHIER_3.1 666
+        create  FICHIER_3.2 666
+        create  FICHIER_3.3 666
+        mkdir DIR_3.1 755
+        mkdir DIR_3.2 755
+        mkdir DIR_3.3 755
+        
+    cd ..
+    
+    barrier
+    cd DIR_3
+    
+        create  FICHIER_3.1 666
+        create  FICHIER_3.2 666
+        create  FICHIER_3.3 666
+        mkdir DIR_3.1 755
+        mkdir DIR_3.2 755
+        mkdir DIR_3.3 755
+    
+    cd ..
+
+cd ..
+
+barrier
+cd DIR_2
+
+    create  FICHIER_3.1 666
+    create  FICHIER_3.2 666
+    create  FICHIER_3.3 666
+
+    barrier
+    cd DIR_1
+    
+        create  FICHIER_3.1 666
+        create  FICHIER_3.2 666
+        create  FICHIER_3.3 666
+        mkdir DIR_3.1 755
+        mkdir DIR_3.2 755
+        mkdir DIR_3.3 755
+
+    cd ..
+    
+    barrier
+    cd DIR_2
+    
+        create  FICHIER_3.1 666
+        create  FICHIER_3.2 666
+        create  FICHIER_3.3 666
+        mkdir DIR_3.1 755
+        mkdir DIR_3.2 755
+        mkdir DIR_3.3 755
+        
+    cd ..
+    
+    barrier
+    cd DIR_3
+    
+        create  FICHIER_3.1 666
+        create  FICHIER_3.2 666
+        create  FICHIER_3.3 666
+        mkdir DIR_3.1 755
+        mkdir DIR_3.2 755
+        mkdir DIR_3.3 755
+    
+    cd ..
+
+cd ..
+
+
+barrier
+cd DIR_3
+
+    create  FICHIER_3.1 666
+    create  FICHIER_3.2 666
+    create  FICHIER_3.3 666
+
+    barrier
+    cd DIR_1
+    
+        create  FICHIER_3.1 666
+        create  FICHIER_3.2 666
+        create  FICHIER_3.3 666
+        mkdir DIR_3.1 755
+        mkdir DIR_3.2 755
+        mkdir DIR_3.3 755
+
+    cd ..
+    
+    barrier
+    cd DIR_2
+    
+        create  FICHIER_3.1 666
+        create  FICHIER_3.2 666
+        create  FICHIER_3.3 666
+        mkdir DIR_3.1 755
+        mkdir DIR_3.2 755
+        mkdir DIR_3.3 755
+        
+    cd ..
+    
+    barrier
+    cd DIR_3
+    
+        create  FICHIER_3.1 666
+        create  FICHIER_3.2 666
+        create  FICHIER_3.3 666
+        mkdir DIR_3.1 755
+        mkdir DIR_3.2 755
+        mkdir DIR_3.3 755
+    
+    cd ..
+
+cd ..
+

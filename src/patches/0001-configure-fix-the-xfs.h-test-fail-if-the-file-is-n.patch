@@ -1,0 +1,27 @@
+From f0e897bf383465e7743afa1c017548454b3c7eac Mon Sep 17 00:00:00 2001
+From: Remi Duraffort <duraffortr@ocre.cea.fr>
+Date: Thu, 3 Jun 2010 15:23:07 +0200
+Subject: [PATCH] configure: fix the xfs.h test (fail if the file is not found).
+
+---
+ src/configure.ac |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/configure.ac b/src/configure.ac
+index c0b707b..e7a3bd5 100644
+--- a/src/configure.ac
++++ b/src/configure.ac
+@@ -446,8 +446,8 @@ case $FSAL in
+ 		;;
+ 	XFS)
+ 		AC_DEFINE([_USE_XFS], 1, [GANESHA exports XFS Filesystem])
+-                AC_CHECK_HEADERS([xfs/xfs.h])
+-                AC_CHECK_HEADERS([xfs/handle.h])
++                AC_CHECK_HEADERS([xfs/xfs.h], [], [AC_MSG_ERROR(xfs include files not present)])
++                AC_CHECK_HEADERS([xfs/handle.h], [], [AC_MSG_ERROR(xfs include files not present)])
+ 		FSAL_CFLAGS=
+                 FSAL_LDFLAGS="-lhandle"
+ 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_XFS/libfsalxfs.la"
+-- 
+1.6.1.3
+

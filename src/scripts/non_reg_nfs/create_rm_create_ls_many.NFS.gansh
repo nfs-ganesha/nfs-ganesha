@@ -1,0 +1,847 @@
+set DEBUG_LEVEL "NIV_DEBUG"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+
+set CONFIG_FILE "/tmp/hpss.ganesha.conf"
+
+
+init_fs $CONFIG_FILE
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_DEBUG"
+
+init_cache $CONFIG_FILE
+
+
+set LAYER NFS
+nfs_init -v $CONFIG_FILE
+mount /cea/prot/S/lama/s8/leibovic
+if ne -- $STATUS 0 ? quit : echo "mount OK"
+
+mkdir rep_bug003_1 0755
+
+create rep_bug003_1/1 0755
+create rep_bug003_1/2 0755
+create rep_bug003_1/3 0755
+create rep_bug003_1/4 0755
+create rep_bug003_1/5 0755
+create rep_bug003_1/6 0755
+create rep_bug003_1/7 0755
+create rep_bug003_1/8 0755
+create rep_bug003_1/9 0755
+create rep_bug003_1/10 0755
+create rep_bug003_1/11 0755
+create rep_bug003_1/12 0755
+create rep_bug003_1/13 0755
+create rep_bug003_1/14 0755
+create rep_bug003_1/15 0755
+create rep_bug003_1/16 0755
+create rep_bug003_1/17 0755
+create rep_bug003_1/18 0755
+create rep_bug003_1/19 0755
+create rep_bug003_1/20 0755
+create rep_bug003_1/21 0755
+create rep_bug003_1/22 0755
+create rep_bug003_1/23 0755
+create rep_bug003_1/24 0755
+create rep_bug003_1/25 0755
+create rep_bug003_1/26 0755
+create rep_bug003_1/27 0755
+create rep_bug003_1/28 0755
+create rep_bug003_1/29 0755
+create rep_bug003_1/30 0755
+create rep_bug003_1/31 0755
+create rep_bug003_1/32 0755
+create rep_bug003_1/33 0755
+create rep_bug003_1/34 0755
+create rep_bug003_1/35 0755
+create rep_bug003_1/36 0755
+create rep_bug003_1/37 0755
+create rep_bug003_1/38 0755
+create rep_bug003_1/39 0755
+create rep_bug003_1/40 0755
+create rep_bug003_1/41 0755
+create rep_bug003_1/42 0755
+create rep_bug003_1/43 0755
+create rep_bug003_1/44 0755
+create rep_bug003_1/45 0755
+create rep_bug003_1/46 0755
+create rep_bug003_1/47 0755
+create rep_bug003_1/48 0755
+create rep_bug003_1/49 0755
+create rep_bug003_1/50 0755
+create rep_bug003_1/51 0755
+create rep_bug003_1/52 0755
+create rep_bug003_1/53 0755
+create rep_bug003_1/54 0755
+create rep_bug003_1/55 0755
+create rep_bug003_1/56 0755
+create rep_bug003_1/57 0755
+create rep_bug003_1/58 0755
+create rep_bug003_1/59 0755
+create rep_bug003_1/60 0755
+create rep_bug003_1/61 0755
+create rep_bug003_1/62 0755
+create rep_bug003_1/63 0755
+create rep_bug003_1/64 0755
+create rep_bug003_1/65 0755
+create rep_bug003_1/66 0755
+create rep_bug003_1/67 0755
+create rep_bug003_1/68 0755
+create rep_bug003_1/69 0755
+create rep_bug003_1/70 0755
+create rep_bug003_1/71 0755
+create rep_bug003_1/72 0755
+create rep_bug003_1/73 0755
+create rep_bug003_1/74 0755
+create rep_bug003_1/75 0755
+create rep_bug003_1/76 0755
+create rep_bug003_1/77 0755
+create rep_bug003_1/78 0755
+create rep_bug003_1/79 0755
+create rep_bug003_1/80 0755
+create rep_bug003_1/81 0755
+create rep_bug003_1/82 0755
+create rep_bug003_1/83 0755
+create rep_bug003_1/84 0755
+create rep_bug003_1/85 0755
+create rep_bug003_1/86 0755
+create rep_bug003_1/87 0755
+create rep_bug003_1/88 0755
+create rep_bug003_1/89 0755
+create rep_bug003_1/90 0755
+create rep_bug003_1/91 0755
+create rep_bug003_1/92 0755
+create rep_bug003_1/93 0755
+create rep_bug003_1/94 0755
+create rep_bug003_1/95 0755
+create rep_bug003_1/96 0755
+create rep_bug003_1/97 0755
+create rep_bug003_1/98 0755
+create rep_bug003_1/99 0755
+create rep_bug003_1/100 0755
+create rep_bug003_1/101 0755
+create rep_bug003_1/102 0755
+create rep_bug003_1/103 0755
+create rep_bug003_1/104 0755
+create rep_bug003_1/105 0755
+create rep_bug003_1/106 0755
+create rep_bug003_1/107 0755
+create rep_bug003_1/108 0755
+create rep_bug003_1/109 0755
+create rep_bug003_1/110 0755
+create rep_bug003_1/111 0755
+create rep_bug003_1/112 0755
+create rep_bug003_1/113 0755
+create rep_bug003_1/114 0755
+create rep_bug003_1/115 0755
+create rep_bug003_1/116 0755
+create rep_bug003_1/117 0755
+create rep_bug003_1/118 0755
+create rep_bug003_1/119 0755
+create rep_bug003_1/120 0755
+create rep_bug003_1/121 0755
+create rep_bug003_1/122 0755
+create rep_bug003_1/123 0755
+create rep_bug003_1/124 0755
+create rep_bug003_1/125 0755
+create rep_bug003_1/126 0755
+create rep_bug003_1/127 0755
+create rep_bug003_1/128 0755
+create rep_bug003_1/129 0755
+create rep_bug003_1/130 0755
+create rep_bug003_1/131 0755
+create rep_bug003_1/132 0755
+create rep_bug003_1/133 0755
+create rep_bug003_1/134 0755
+create rep_bug003_1/135 0755
+create rep_bug003_1/136 0755
+create rep_bug003_1/137 0755
+create rep_bug003_1/138 0755
+create rep_bug003_1/139 0755
+create rep_bug003_1/140 0755
+create rep_bug003_1/141 0755
+create rep_bug003_1/142 0755
+create rep_bug003_1/143 0755
+create rep_bug003_1/144 0755
+create rep_bug003_1/145 0755
+create rep_bug003_1/146 0755
+create rep_bug003_1/147 0755
+create rep_bug003_1/148 0755
+create rep_bug003_1/149 0755
+create rep_bug003_1/150 0755
+create rep_bug003_1/151 0755
+create rep_bug003_1/152 0755
+create rep_bug003_1/153 0755
+create rep_bug003_1/154 0755
+create rep_bug003_1/155 0755
+create rep_bug003_1/156 0755
+create rep_bug003_1/157 0755
+create rep_bug003_1/158 0755
+create rep_bug003_1/159 0755
+create rep_bug003_1/160 0755
+create rep_bug003_1/161 0755
+create rep_bug003_1/162 0755
+create rep_bug003_1/163 0755
+create rep_bug003_1/164 0755
+create rep_bug003_1/165 0755
+create rep_bug003_1/166 0755
+create rep_bug003_1/167 0755
+create rep_bug003_1/168 0755
+create rep_bug003_1/169 0755
+create rep_bug003_1/170 0755
+create rep_bug003_1/171 0755
+create rep_bug003_1/172 0755
+create rep_bug003_1/173 0755
+create rep_bug003_1/174 0755
+create rep_bug003_1/175 0755
+create rep_bug003_1/176 0755
+create rep_bug003_1/177 0755
+create rep_bug003_1/178 0755
+create rep_bug003_1/179 0755
+create rep_bug003_1/180 0755
+create rep_bug003_1/181 0755
+create rep_bug003_1/182 0755
+create rep_bug003_1/183 0755
+create rep_bug003_1/184 0755
+create rep_bug003_1/185 0755
+create rep_bug003_1/186 0755
+create rep_bug003_1/187 0755
+create rep_bug003_1/188 0755
+create rep_bug003_1/189 0755
+create rep_bug003_1/190 0755
+create rep_bug003_1/191 0755
+create rep_bug003_1/192 0755
+create rep_bug003_1/193 0755
+create rep_bug003_1/194 0755
+create rep_bug003_1/195 0755
+create rep_bug003_1/196 0755
+create rep_bug003_1/197 0755
+create rep_bug003_1/198 0755
+create rep_bug003_1/199 0755
+
+unlink rep_bug003_1/1
+unlink rep_bug003_1/2
+unlink rep_bug003_1/3
+unlink rep_bug003_1/4
+unlink rep_bug003_1/5
+unlink rep_bug003_1/6
+unlink rep_bug003_1/7
+unlink rep_bug003_1/8
+unlink rep_bug003_1/9
+unlink rep_bug003_1/10
+unlink rep_bug003_1/11
+unlink rep_bug003_1/12
+unlink rep_bug003_1/13
+unlink rep_bug003_1/14
+unlink rep_bug003_1/15
+unlink rep_bug003_1/16
+unlink rep_bug003_1/17
+unlink rep_bug003_1/18
+unlink rep_bug003_1/19
+unlink rep_bug003_1/20
+unlink rep_bug003_1/21
+unlink rep_bug003_1/22
+unlink rep_bug003_1/23
+unlink rep_bug003_1/24
+unlink rep_bug003_1/25
+unlink rep_bug003_1/26
+unlink rep_bug003_1/27
+unlink rep_bug003_1/28
+unlink rep_bug003_1/29
+unlink rep_bug003_1/30
+unlink rep_bug003_1/31
+unlink rep_bug003_1/32
+unlink rep_bug003_1/33
+unlink rep_bug003_1/34
+unlink rep_bug003_1/35
+unlink rep_bug003_1/36
+unlink rep_bug003_1/37
+unlink rep_bug003_1/38
+unlink rep_bug003_1/39
+unlink rep_bug003_1/40
+unlink rep_bug003_1/41
+unlink rep_bug003_1/42
+unlink rep_bug003_1/43
+unlink rep_bug003_1/44
+unlink rep_bug003_1/45
+unlink rep_bug003_1/46
+unlink rep_bug003_1/47
+unlink rep_bug003_1/48
+unlink rep_bug003_1/49
+unlink rep_bug003_1/50
+unlink rep_bug003_1/51
+unlink rep_bug003_1/52
+unlink rep_bug003_1/53
+unlink rep_bug003_1/54
+unlink rep_bug003_1/55
+unlink rep_bug003_1/56
+unlink rep_bug003_1/57
+unlink rep_bug003_1/58
+unlink rep_bug003_1/59
+unlink rep_bug003_1/60
+unlink rep_bug003_1/61
+unlink rep_bug003_1/62
+unlink rep_bug003_1/63
+unlink rep_bug003_1/64
+unlink rep_bug003_1/65
+unlink rep_bug003_1/66
+unlink rep_bug003_1/67
+unlink rep_bug003_1/68
+unlink rep_bug003_1/69
+unlink rep_bug003_1/70
+unlink rep_bug003_1/71
+unlink rep_bug003_1/72
+unlink rep_bug003_1/73
+unlink rep_bug003_1/74
+unlink rep_bug003_1/75
+unlink rep_bug003_1/76
+unlink rep_bug003_1/77
+unlink rep_bug003_1/78
+unlink rep_bug003_1/79
+unlink rep_bug003_1/80
+unlink rep_bug003_1/81
+unlink rep_bug003_1/82
+unlink rep_bug003_1/83
+unlink rep_bug003_1/84
+unlink rep_bug003_1/85
+unlink rep_bug003_1/86
+unlink rep_bug003_1/87
+unlink rep_bug003_1/88
+unlink rep_bug003_1/89
+unlink rep_bug003_1/90
+unlink rep_bug003_1/91
+unlink rep_bug003_1/92
+unlink rep_bug003_1/93
+unlink rep_bug003_1/94
+unlink rep_bug003_1/95
+unlink rep_bug003_1/96
+unlink rep_bug003_1/97
+unlink rep_bug003_1/98
+unlink rep_bug003_1/99
+unlink rep_bug003_1/100
+unlink rep_bug003_1/101
+unlink rep_bug003_1/102
+unlink rep_bug003_1/103
+unlink rep_bug003_1/104
+unlink rep_bug003_1/105
+unlink rep_bug003_1/106
+unlink rep_bug003_1/107
+unlink rep_bug003_1/108
+unlink rep_bug003_1/109
+unlink rep_bug003_1/110
+unlink rep_bug003_1/111
+unlink rep_bug003_1/112
+unlink rep_bug003_1/113
+unlink rep_bug003_1/114
+unlink rep_bug003_1/115
+unlink rep_bug003_1/116
+unlink rep_bug003_1/117
+unlink rep_bug003_1/118
+unlink rep_bug003_1/119
+unlink rep_bug003_1/120
+unlink rep_bug003_1/121
+unlink rep_bug003_1/122
+unlink rep_bug003_1/123
+unlink rep_bug003_1/124
+unlink rep_bug003_1/125
+unlink rep_bug003_1/126
+unlink rep_bug003_1/127
+unlink rep_bug003_1/128
+unlink rep_bug003_1/129
+unlink rep_bug003_1/130
+unlink rep_bug003_1/131
+unlink rep_bug003_1/132
+unlink rep_bug003_1/133
+unlink rep_bug003_1/134
+unlink rep_bug003_1/135
+unlink rep_bug003_1/136
+unlink rep_bug003_1/137
+unlink rep_bug003_1/138
+unlink rep_bug003_1/139
+unlink rep_bug003_1/140
+unlink rep_bug003_1/141
+unlink rep_bug003_1/142
+unlink rep_bug003_1/143
+unlink rep_bug003_1/144
+unlink rep_bug003_1/145
+unlink rep_bug003_1/146
+unlink rep_bug003_1/147
+unlink rep_bug003_1/148
+unlink rep_bug003_1/149
+unlink rep_bug003_1/150
+unlink rep_bug003_1/151
+unlink rep_bug003_1/152
+unlink rep_bug003_1/153
+unlink rep_bug003_1/154
+unlink rep_bug003_1/155
+unlink rep_bug003_1/156
+unlink rep_bug003_1/157
+unlink rep_bug003_1/158
+unlink rep_bug003_1/159
+unlink rep_bug003_1/160
+unlink rep_bug003_1/161
+unlink rep_bug003_1/162
+unlink rep_bug003_1/163
+unlink rep_bug003_1/164
+unlink rep_bug003_1/165
+unlink rep_bug003_1/166
+unlink rep_bug003_1/167
+unlink rep_bug003_1/168
+unlink rep_bug003_1/169
+unlink rep_bug003_1/170
+unlink rep_bug003_1/171
+unlink rep_bug003_1/172
+unlink rep_bug003_1/173
+unlink rep_bug003_1/174
+unlink rep_bug003_1/175
+unlink rep_bug003_1/176
+unlink rep_bug003_1/177
+unlink rep_bug003_1/178
+unlink rep_bug003_1/179
+unlink rep_bug003_1/180
+unlink rep_bug003_1/181
+unlink rep_bug003_1/182
+unlink rep_bug003_1/183
+unlink rep_bug003_1/184
+unlink rep_bug003_1/185
+unlink rep_bug003_1/186
+unlink rep_bug003_1/187
+unlink rep_bug003_1/188
+unlink rep_bug003_1/189
+unlink rep_bug003_1/190
+unlink rep_bug003_1/191
+unlink rep_bug003_1/192
+unlink rep_bug003_1/193
+unlink rep_bug003_1/194
+unlink rep_bug003_1/195
+unlink rep_bug003_1/196
+unlink rep_bug003_1/197
+unlink rep_bug003_1/198
+unlink rep_bug003_1/199
+
+
+mkdir rep_bug003_2 0755
+
+
+create rep_bug003_2/1 0755
+create rep_bug003_2/2 0755
+create rep_bug003_2/3 0755
+create rep_bug003_2/4 0755
+create rep_bug003_2/5 0755
+create rep_bug003_2/6 0755
+create rep_bug003_2/7 0755
+create rep_bug003_2/8 0755
+create rep_bug003_2/9 0755
+create rep_bug003_2/10 0755
+create rep_bug003_2/11 0755
+create rep_bug003_2/12 0755
+create rep_bug003_2/13 0755
+create rep_bug003_2/14 0755
+create rep_bug003_2/15 0755
+create rep_bug003_2/16 0755
+create rep_bug003_2/17 0755
+create rep_bug003_2/18 0755
+create rep_bug003_2/19 0755
+create rep_bug003_2/20 0755
+create rep_bug003_2/21 0755
+create rep_bug003_2/22 0755
+create rep_bug003_2/23 0755
+create rep_bug003_2/24 0755
+create rep_bug003_2/25 0755
+create rep_bug003_2/26 0755
+create rep_bug003_2/27 0755
+create rep_bug003_2/28 0755
+create rep_bug003_2/29 0755
+create rep_bug003_2/30 0755
+create rep_bug003_2/31 0755
+create rep_bug003_2/32 0755
+create rep_bug003_2/33 0755
+create rep_bug003_2/34 0755
+create rep_bug003_2/35 0755
+create rep_bug003_2/36 0755
+create rep_bug003_2/37 0755
+create rep_bug003_2/38 0755
+create rep_bug003_2/39 0755
+create rep_bug003_2/40 0755
+create rep_bug003_2/41 0755
+create rep_bug003_2/42 0755
+create rep_bug003_2/43 0755
+create rep_bug003_2/44 0755
+create rep_bug003_2/45 0755
+create rep_bug003_2/46 0755
+create rep_bug003_2/47 0755
+create rep_bug003_2/48 0755
+create rep_bug003_2/49 0755
+create rep_bug003_2/50 0755
+create rep_bug003_2/51 0755
+create rep_bug003_2/52 0755
+create rep_bug003_2/53 0755
+create rep_bug003_2/54 0755
+create rep_bug003_2/55 0755
+create rep_bug003_2/56 0755
+create rep_bug003_2/57 0755
+create rep_bug003_2/58 0755
+create rep_bug003_2/59 0755
+create rep_bug003_2/60 0755
+create rep_bug003_2/61 0755
+create rep_bug003_2/62 0755
+create rep_bug003_2/63 0755
+create rep_bug003_2/64 0755
+create rep_bug003_2/65 0755
+create rep_bug003_2/66 0755
+create rep_bug003_2/67 0755
+create rep_bug003_2/68 0755
+create rep_bug003_2/69 0755
+create rep_bug003_2/70 0755
+create rep_bug003_2/71 0755
+create rep_bug003_2/72 0755
+create rep_bug003_2/73 0755
+create rep_bug003_2/74 0755
+create rep_bug003_2/75 0755
+create rep_bug003_2/76 0755
+create rep_bug003_2/77 0755
+create rep_bug003_2/78 0755
+create rep_bug003_2/79 0755
+create rep_bug003_2/80 0755
+create rep_bug003_2/81 0755
+create rep_bug003_2/82 0755
+create rep_bug003_2/83 0755
+create rep_bug003_2/84 0755
+create rep_bug003_2/85 0755
+create rep_bug003_2/86 0755
+create rep_bug003_2/87 0755
+create rep_bug003_2/88 0755
+create rep_bug003_2/89 0755
+create rep_bug003_2/90 0755
+create rep_bug003_2/91 0755
+create rep_bug003_2/92 0755
+create rep_bug003_2/93 0755
+create rep_bug003_2/94 0755
+create rep_bug003_2/95 0755
+create rep_bug003_2/96 0755
+create rep_bug003_2/97 0755
+create rep_bug003_2/98 0755
+create rep_bug003_2/99 0755
+create rep_bug003_2/100 0755
+create rep_bug003_2/101 0755
+create rep_bug003_2/102 0755
+create rep_bug003_2/103 0755
+create rep_bug003_2/104 0755
+create rep_bug003_2/105 0755
+create rep_bug003_2/106 0755
+create rep_bug003_2/107 0755
+create rep_bug003_2/108 0755
+create rep_bug003_2/109 0755
+create rep_bug003_2/110 0755
+create rep_bug003_2/111 0755
+create rep_bug003_2/112 0755
+create rep_bug003_2/113 0755
+create rep_bug003_2/114 0755
+create rep_bug003_2/115 0755
+create rep_bug003_2/116 0755
+create rep_bug003_2/117 0755
+create rep_bug003_2/118 0755
+create rep_bug003_2/119 0755
+create rep_bug003_2/120 0755
+create rep_bug003_2/121 0755
+create rep_bug003_2/122 0755
+create rep_bug003_2/123 0755
+create rep_bug003_2/124 0755
+create rep_bug003_2/125 0755
+create rep_bug003_2/126 0755
+create rep_bug003_2/127 0755
+create rep_bug003_2/128 0755
+create rep_bug003_2/129 0755
+create rep_bug003_2/130 0755
+create rep_bug003_2/131 0755
+create rep_bug003_2/132 0755
+create rep_bug003_2/133 0755
+create rep_bug003_2/134 0755
+create rep_bug003_2/135 0755
+create rep_bug003_2/136 0755
+create rep_bug003_2/137 0755
+create rep_bug003_2/138 0755
+create rep_bug003_2/139 0755
+create rep_bug003_2/140 0755
+create rep_bug003_2/141 0755
+create rep_bug003_2/142 0755
+create rep_bug003_2/143 0755
+create rep_bug003_2/144 0755
+create rep_bug003_2/145 0755
+create rep_bug003_2/146 0755
+create rep_bug003_2/147 0755
+create rep_bug003_2/148 0755
+create rep_bug003_2/149 0755
+create rep_bug003_2/150 0755
+create rep_bug003_2/151 0755
+create rep_bug003_2/152 0755
+create rep_bug003_2/153 0755
+create rep_bug003_2/154 0755
+create rep_bug003_2/155 0755
+create rep_bug003_2/156 0755
+create rep_bug003_2/157 0755
+create rep_bug003_2/158 0755
+create rep_bug003_2/159 0755
+create rep_bug003_2/160 0755
+create rep_bug003_2/161 0755
+create rep_bug003_2/162 0755
+create rep_bug003_2/163 0755
+create rep_bug003_2/164 0755
+create rep_bug003_2/165 0755
+create rep_bug003_2/166 0755
+create rep_bug003_2/167 0755
+create rep_bug003_2/168 0755
+create rep_bug003_2/169 0755
+create rep_bug003_2/170 0755
+create rep_bug003_2/171 0755
+create rep_bug003_2/172 0755
+create rep_bug003_2/173 0755
+create rep_bug003_2/174 0755
+create rep_bug003_2/175 0755
+create rep_bug003_2/176 0755
+create rep_bug003_2/177 0755
+create rep_bug003_2/178 0755
+create rep_bug003_2/179 0755
+create rep_bug003_2/180 0755
+create rep_bug003_2/181 0755
+create rep_bug003_2/182 0755
+create rep_bug003_2/183 0755
+create rep_bug003_2/184 0755
+create rep_bug003_2/185 0755
+create rep_bug003_2/186 0755
+create rep_bug003_2/187 0755
+create rep_bug003_2/188 0755
+create rep_bug003_2/189 0755
+create rep_bug003_2/190 0755
+create rep_bug003_2/191 0755
+create rep_bug003_2/192 0755
+create rep_bug003_2/193 0755
+create rep_bug003_2/194 0755
+create rep_bug003_2/195 0755
+create rep_bug003_2/196 0755
+create rep_bug003_2/197 0755
+create rep_bug003_2/198 0755
+create rep_bug003_2/199 0755
+
+
+ls -l rep_bug003_2
+if ne 0 $STATUS ? echo "ERROR LS" : echo "LS OK"
+
+unlink rep_bug003_2/1
+unlink rep_bug003_2/2
+unlink rep_bug003_2/3
+unlink rep_bug003_2/4
+unlink rep_bug003_2/5
+unlink rep_bug003_2/6
+unlink rep_bug003_2/7
+unlink rep_bug003_2/8
+unlink rep_bug003_2/9
+unlink rep_bug003_2/10
+unlink rep_bug003_2/11
+unlink rep_bug003_2/12
+unlink rep_bug003_2/13
+unlink rep_bug003_2/14
+unlink rep_bug003_2/15
+unlink rep_bug003_2/16
+unlink rep_bug003_2/17
+unlink rep_bug003_2/18
+unlink rep_bug003_2/19
+unlink rep_bug003_2/20
+unlink rep_bug003_2/21
+unlink rep_bug003_2/22
+unlink rep_bug003_2/23
+unlink rep_bug003_2/24
+unlink rep_bug003_2/25
+unlink rep_bug003_2/26
+unlink rep_bug003_2/27
+unlink rep_bug003_2/28
+unlink rep_bug003_2/29
+unlink rep_bug003_2/30
+unlink rep_bug003_2/31
+unlink rep_bug003_2/32
+unlink rep_bug003_2/33
+unlink rep_bug003_2/34
+unlink rep_bug003_2/35
+unlink rep_bug003_2/36
+unlink rep_bug003_2/37
+unlink rep_bug003_2/38
+unlink rep_bug003_2/39
+unlink rep_bug003_2/40
+unlink rep_bug003_2/41
+unlink rep_bug003_2/42
+unlink rep_bug003_2/43
+unlink rep_bug003_2/44
+unlink rep_bug003_2/45
+unlink rep_bug003_2/46
+unlink rep_bug003_2/47
+unlink rep_bug003_2/48
+unlink rep_bug003_2/49
+unlink rep_bug003_2/50
+unlink rep_bug003_2/51
+unlink rep_bug003_2/52
+unlink rep_bug003_2/53
+unlink rep_bug003_2/54
+unlink rep_bug003_2/55
+unlink rep_bug003_2/56
+unlink rep_bug003_2/57
+unlink rep_bug003_2/58
+unlink rep_bug003_2/59
+unlink rep_bug003_2/60
+unlink rep_bug003_2/61
+unlink rep_bug003_2/62
+unlink rep_bug003_2/63
+unlink rep_bug003_2/64
+unlink rep_bug003_2/65
+unlink rep_bug003_2/66
+unlink rep_bug003_2/67
+unlink rep_bug003_2/68
+unlink rep_bug003_2/69
+unlink rep_bug003_2/70
+unlink rep_bug003_2/71
+unlink rep_bug003_2/72
+unlink rep_bug003_2/73
+unlink rep_bug003_2/74
+unlink rep_bug003_2/75
+unlink rep_bug003_2/76
+unlink rep_bug003_2/77
+unlink rep_bug003_2/78
+unlink rep_bug003_2/79
+unlink rep_bug003_2/80
+unlink rep_bug003_2/81
+unlink rep_bug003_2/82
+unlink rep_bug003_2/83
+unlink rep_bug003_2/84
+unlink rep_bug003_2/85
+unlink rep_bug003_2/86
+unlink rep_bug003_2/87
+unlink rep_bug003_2/88
+unlink rep_bug003_2/89
+unlink rep_bug003_2/90
+unlink rep_bug003_2/91
+unlink rep_bug003_2/92
+unlink rep_bug003_2/93
+unlink rep_bug003_2/94
+unlink rep_bug003_2/95
+unlink rep_bug003_2/96
+unlink rep_bug003_2/97
+unlink rep_bug003_2/98
+unlink rep_bug003_2/99
+unlink rep_bug003_2/100
+unlink rep_bug003_2/101
+unlink rep_bug003_2/102
+unlink rep_bug003_2/103
+unlink rep_bug003_2/104
+unlink rep_bug003_2/105
+unlink rep_bug003_2/106
+unlink rep_bug003_2/107
+unlink rep_bug003_2/108
+unlink rep_bug003_2/109
+unlink rep_bug003_2/110
+unlink rep_bug003_2/111
+unlink rep_bug003_2/112
+unlink rep_bug003_2/113
+unlink rep_bug003_2/114
+unlink rep_bug003_2/115
+unlink rep_bug003_2/116
+unlink rep_bug003_2/117
+unlink rep_bug003_2/118
+unlink rep_bug003_2/119
+unlink rep_bug003_2/120
+unlink rep_bug003_2/121
+unlink rep_bug003_2/122
+unlink rep_bug003_2/123
+unlink rep_bug003_2/124
+unlink rep_bug003_2/125
+unlink rep_bug003_2/126
+unlink rep_bug003_2/127
+unlink rep_bug003_2/128
+unlink rep_bug003_2/129
+unlink rep_bug003_2/130
+unlink rep_bug003_2/131
+unlink rep_bug003_2/132
+unlink rep_bug003_2/133
+unlink rep_bug003_2/134
+unlink rep_bug003_2/135
+unlink rep_bug003_2/136
+unlink rep_bug003_2/137
+unlink rep_bug003_2/138
+unlink rep_bug003_2/139
+unlink rep_bug003_2/140
+unlink rep_bug003_2/141
+unlink rep_bug003_2/142
+unlink rep_bug003_2/143
+unlink rep_bug003_2/144
+unlink rep_bug003_2/145
+unlink rep_bug003_2/146
+unlink rep_bug003_2/147
+unlink rep_bug003_2/148
+unlink rep_bug003_2/149
+unlink rep_bug003_2/150
+unlink rep_bug003_2/151
+unlink rep_bug003_2/152
+unlink rep_bug003_2/153
+unlink rep_bug003_2/154
+unlink rep_bug003_2/155
+unlink rep_bug003_2/156
+unlink rep_bug003_2/157
+unlink rep_bug003_2/158
+unlink rep_bug003_2/159
+unlink rep_bug003_2/160
+unlink rep_bug003_2/161
+unlink rep_bug003_2/162
+unlink rep_bug003_2/163
+unlink rep_bug003_2/164
+unlink rep_bug003_2/165
+unlink rep_bug003_2/166
+unlink rep_bug003_2/167
+unlink rep_bug003_2/168
+unlink rep_bug003_2/169
+unlink rep_bug003_2/170
+unlink rep_bug003_2/171
+unlink rep_bug003_2/172
+unlink rep_bug003_2/173
+unlink rep_bug003_2/174
+unlink rep_bug003_2/175
+unlink rep_bug003_2/176
+unlink rep_bug003_2/177
+unlink rep_bug003_2/178
+unlink rep_bug003_2/179
+unlink rep_bug003_2/180
+unlink rep_bug003_2/181
+unlink rep_bug003_2/182
+unlink rep_bug003_2/183
+unlink rep_bug003_2/184
+unlink rep_bug003_2/185
+unlink rep_bug003_2/186
+unlink rep_bug003_2/187
+unlink rep_bug003_2/188
+unlink rep_bug003_2/189
+unlink rep_bug003_2/190
+unlink rep_bug003_2/191
+unlink rep_bug003_2/192
+unlink rep_bug003_2/193
+unlink rep_bug003_2/194
+unlink rep_bug003_2/195
+unlink rep_bug003_2/196
+unlink rep_bug003_2/197
+unlink rep_bug003_2/198
+unlink rep_bug003_2/199
+
+
+unlink rep_bug003_1
+if ne -- $STATUS 0 ? echo "***** ERROR UNLINK !!! *****" : echo "unlink OK"
+
+set LS_1 `ls rep_bug003_1`
+
+unlink rep_bug003_2
+if ne -- $STATUS 0 ? echo "***** ERROR UNLINK !!! *****" : echo "unlink OK"
+
+set LS_3 `ls rep_bug003_2`
+
+echo "ls rep_bug003_1 (after unlink) returned :" `chomp $LS_1`
+
+echo "ls rep_bug003_2 (after unlink) returned :" `chomp $LS_3`
+
+

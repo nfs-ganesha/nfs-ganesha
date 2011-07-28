@@ -1,0 +1,46 @@
+set VERBOSE "ON"
+set DEBUG_LEVEL "NIV_DEBUG"
+
+set LAYER "FSAL"
+set DEBUG_LEVEL "NIV_EVENT"
+init_fs -v /tmp/hpss.ganesha.conf
+
+set LAYER "Cache_inode"
+set DEBUG_LEVEL "NIV_DEBUG"
+init_cache -v /tmp/hpss.ganesha.conf
+
+print "------------ Je suis root -------------"
+# je deviens leibovic
+su 0
+
+cd /cea/prot/S/lama/s8/leibovic/ganeshell
+
+# je mets le repertoire en access pout tous
+setattr . MODE 755
+
+print "----- Creation de differents fichiers et repertoires -----"
+
+mkdir rep_access_s8      770
+mkdir rep_access_sherpa  770
+
+setattr rep_access_s8     group 5683
+setattr rep_access_sherpa group 2907
+
+print "------------ Je suis exploit -------------"
+# je deviens exploit
+su exploit
+
+# all perms should be denied
+
+access R rep_access_s8
+access X rep_access_s8
+cd rep_access_s8
+
+access R rep_access_sherpa
+access X rep_access_sherpa
+cd rep_access_sherpa
+
+print "----- Terminaison -----"
+su 0
+unlink rep_access_s8
+unlink rep_access_sherpa

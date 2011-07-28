@@ -1,0 +1,79 @@
+The Python NFSv4 Server Test Suite
+==================================
+
+Overview
+---------
+nfs4st.py stands for "NFSv4 Server Test". This application was the
+main goal for our work. More information about how it was developed
+can be found in chapter 4. nfs4st.py is based on the Python module
+unittest.py, which is a framework for unit testing. 
+
+The source code is grouped into test suites, with each suite covering
+one NFSv4 operation. Each suite contains a number of tests. 
+
+
+Running
+-------
+Before running the test suite, you must create a special directory
+structure, called the "test tree". This is done with the program
+test_tree_net.py. Refer to test_tree_net.txt for more information. 
+
+Failing to create the test tree will mean that most test cases will
+fail with NFS4ERR_NOENT.
+
+The program takes the server host name, with an optional prefix, as
+argument.
+
+By default, it runs all available tests. It is also possible to
+specify test suites or tests to run. If you give the class name of a
+test suite class as argument, all test cases in that test suite will
+be executed. Example:
+
+$./nfs4st ford AccessSuite
+
+You can also run individual test cases by specifying the test suite
+and test name. Example:
+
+$./nfs4st.py ford AccessSuite.testNoExecOnDir
+AccessSuite.testNoExecOnDir:
+ ACCESS4_EXECUTE should never be returned for directory ... FAIL
+----------------------------------------------------------------
+Ran 1 tests in 0.139s
+
+FAILED (failures=1)
+
+In this mode, no details about failures are given. To see these, use
+the -v option. An example is given below:
+
+[peter@maggie pynfs]$ ./nfs4st.py ford AccessSuite.testNoExecOnDir -v
+AccessSuite.testNoExecOnDir:
+ ACCESS4_EXECUTE should never be returned for directory ... FAIL
+
+=====================================================================
+FAIL: ACCESS4_EXECUTE should never be returned for directory
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "./nfs4st.py", line 502, in testNoExecOnDir
+    "server returned ACCESS4_EXECUTE for root dir (supported=%d)" % supported)
+  File "/var/tmp/python2-2.1-root/usr/lib/python2.1/unittest.py", line 245, in failIf
+    if expr: raise self.failureException, msg
+AssertionError: server returned ACCESS4_EXECUTE for root dir (supported=32)
+----------------------------------------------------------------------
+Ran 1 tests in 0.199s
+
+FAILED (failures=1)
+
+
+Various, unsorted notes
+-----------------------
+
+* It's not possible to test NFS4ERR_BADHANDLE, since there is no way
+  of knowing the servers internal representation.
+
+* With servers supporting files named "." and "..", several additional
+  tests could be made. No such tests are currently done, because I
+  have no such server. Probably no existing server supports "." or
+  ".." as file names. 
+
+* It's not possible to run two instances of nfs4st.py against the
+  same test tree at the same time. 

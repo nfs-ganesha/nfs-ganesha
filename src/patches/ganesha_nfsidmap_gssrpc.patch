@@ -1,0 +1,188 @@
+--- orig/IdMapper/idmapper.c    2009-10-29 08:35:27.000000000 -0400
++++ nfs-ganesha-0.99.60/IdMapper/idmapper.c     2010-01-16 17:02:16.000000000 -0500
+@@ -115,6 +115,8 @@ extern nfs_parameter_t nfs_param ;
+
+ #define _PATH_IDMAPDCONF     "/etc/idmapd.conf"
+ #define NFS4_MAX_DOMAIN_LEN 512
++#define NFSIDMAP_VERBOSITY 99
++#define MAXNAMELEN 1024
+
+ typedef void (*nfs4_idmap_log_function_t)(const char *, ...);
+
+@@ -131,10 +133,22 @@ void nfs4_set_debug(int dbg_level, nfs4_
+ char idmap_domain[NFS4_MAX_DOMAIN_LEN];
+ static int nfsidmap_conf_read = FALSE ;
+
++void nfsidmap_logger(const char* str, ...){
++    va_list arg;
++    va_start(arg,str);
++    printf("nfsidmap_logger: ");
++    vprintf(str,arg);
++    va_end(arg);
++}
++
++
+ int nfsidmap_set_conf()
+ {
+   if( !nfsidmap_conf_read )
+      {
++
++    nfs4_set_debug(NFSIDMAP_VERBOSITY,&nfsidmap_logger);
++
+         if (nfs4_init_name_mapping( _PATH_IDMAPDCONF ))
+           return 0 ;
+
+@@ -161,6 +175,7 @@ int nfsidmap_set_conf()
+  */
+ int uid2name( char * name, uid_t * puid )
+ {
++    char* fqname[MAXNAMELEN];
+ #ifdef _USE_NFSIDMAP
+   if( !nfsidmap_set_conf() )
+       return 0 ;
+@@ -173,12 +188,19 @@ int uid2name( char * name, uid_t * puid
+    {
+       if( !nfsidmap_set_conf() )
+         return 0 ;
+-
++
+       if(  nfs4_uid_to_name( *puid, idmap_domain, name, MAXNAMLEN ) )
+        return 0 ;
++
++      strncpy(fqname,name,MAXNAMELEN);
++      if(strchr(name,'@') == NULL) {
++       sprintf( fqname, "%s@%s", name, idmap_domain ) ;
++       strncpy( name, fqname, MAXNAMELEN );
++      }
+
+-     if( uidmap_add( name, *puid ) != ID_MAPPER_SUCCESS )
++     if( uidmap_add( fqname, *puid ) != ID_MAPPER_SUCCESS )
+        return 0 ;
++
+     }
+   return 1 ;
+
+@@ -227,6 +249,9 @@ int name2uid( char * name, uid_t * puid
+   struct passwd * ppasswd ;
+   char buff[MAXPATHLEN] ;
+   uid_t           uid ;
++  gid_t                  gss_gid;
++  uid_t                  gss_uid;
++  char fqname[MAXNAMELEN];
+
+   /* NFsv4 specific features: RPCSEC_GSS will provide user like nfs/<host>
+    * choice is made to map them to root */
+@@ -248,26 +273,33 @@ int name2uid( char * name, uid_t * puid
+     if( !nfsidmap_set_conf() )
+      return 0 ;
+
+-    if( nfs4_name_to_uid( name, puid ) )
++    /* obtain fully qualified name */
++    strncpy(fqname,name,MAXNAMELEN-1);
++    if(strchr(name,'@') == NULL)
++       sprintf( fqname, "%s@%s", name, idmap_domain ) ;
++
++    if( nfs4_name_to_uid( fqname, puid ) )
+        return 0 ;
+-
+-    if( uidmap_add( name, *puid ) != ID_MAPPER_SUCCESS )
++
++    if( uidmap_add( fqname, *puid ) != ID_MAPPER_SUCCESS )
+        return 0 ;
+
+
+ #ifdef _USE_GSSRPC
+-       if( uidgidmap_add( passwd.pw_uid, passwd.pw_gid ) != ID_MAPPER_SUCCESS )
+-         return 0 ;
+-#endif
+-       if( uidmap_add( name, passwd.pw_uid ) != ID_MAPPER_SUCCESS )
+-         return 0 ;
++    /* nfs4_gss_princ_to_ids required to extract uid/gid from gss creds
++     * XXX: currently uses unqualified name as per libnfsidmap comments */
++    if(nfs4_gss_princ_to_ids("krb5",name,&gss_uid,&gss_gid))
++       return 0 ;
++    if( uidgidmap_add( gss_uid, gss_gid ) != ID_MAPPER_SUCCESS )
++      return 0 ;
++#endif /* _USE_GSSRPC */
+
+-#else
++#else /* _USE_NFSIDMAP */
+ #ifdef _SOLARIS
+     if( getpwnam_r( name, &passwd, buff, MAXPATHLEN ) != 0 )
+ #else
+     if( getpwnam_r( name, &passwd, buff, MAXPATHLEN, &ppasswd ) != 0 )
+-#endif
++#endif /* SOLARIS */
+       {
+         *puid = -1 ;
+         return 0 ;
+@@ -278,12 +310,12 @@ int name2uid( char * name, uid_t * puid
+ #ifdef _USE_GSSRPC
+        if( uidgidmap_add( passwd.pw_uid, passwd.pw_gid ) != ID_MAPPER_SUCCESS )
+          return 0 ;
+-#endif
++#endif /* _USE_GSSRPC */
+        if( uidmap_add( name, passwd.pw_uid ) != ID_MAPPER_SUCCESS )
+          return 0 ;
+
+       }
+-#endif
++#endif /* _USE_NFSIDMAP */
+     }
+
+   return 1 ;
+
+--- orig/support/nfs_export_list.c      2009-04-06 04:41:39.000000000 -0400
++++ nfs-ganesha-0.99.60/support/nfs_export_list.c       2010-01-16 14:05:21.000000000 -0500
+@@ -200,17 +200,23 @@ struct svc_rpc_gss_data {
+ const char * Rpc_gss_svc_name[] = { "no name", "RPCSEC_GSS_SVC_NONE", "RPCSEC_GSS_SVC_INTEGRITY", "RPCSEC_GSS_SVC_PRIVACY" } ;
+
+
+-static void split_credname( char * credname, char * username, char * domainname )
++/* Cred Name is "name@DOMAIN" */
++static void split_credname( gss_buffer_desc credname, char * username, char * domainname )
+ {
+-   char * piter = NULL ;
+-   int    pos   = 0 ;
+-
+-   /* Cred Name is "name@DOMAIN" */
+-   for( piter = credname ; *piter != '@' && *piter != '\0' ; pos++, piter++) ;
+-
+-   strncpy( username, credname, pos ) ;
+-   username[pos] = '\0' ;
+-   strcpy( domainname, piter+1 ) ;
++   char* ptr = NULL;
++   int pos = 0;
++   if(credname.value == NULL) return;
++
++   ptr = (char*)credname.value;
++   for ( pos = 0; pos < credname.length; pos++) {
++       if(ptr[pos] == '@' && pos+1 < credname.length) {
++           strncpy(username,ptr,pos);
++           username[pos] = '\0';
++           strncpy(domainname,ptr+pos+1,credname.length-pos-1);
++           domainname[credname.length-pos-1] = '\0';
++           break;
++       }
++   }
+ }
+
+ #ifdef _HAVE_GSSAPI
+@@ -344,7 +350,7 @@ int nfs_build_fsal_context( struct svc_r
+ #ifdef _USE_GSSRPC
+     case RPCSEC_GSS:
+ #ifndef _DEBUG_DISPATCH
+-      DisplayLogLevel( NIV_FULL_DEBUG, "NFS DISPATCH: Request xid=%u has authentication AUTH_UNIX", rpcxid ) ;
++      DisplayLogLevel( NIV_FULL_DEBUG, "NFS DISPATCH: Request xid=%u has authentication RPCSEC_GSS", rpcxid ) ;
+ #endif
+       /* Get the gss data to process them */
+       gd = SVCAUTH_PRIVATE(ptr_req->rq_xprt->xp_auth);
+@@ -375,7 +381,7 @@ int nfs_build_fsal_context( struct svc_r
+       /* Je fais le menage derriere moi */
+       (void)gss_release_buffer( &min_stat, &oidbuff ) ;
+
+-      split_credname( (char *)gd->cname.value, username, domainname ) ;
++      split_credname( gd->cname, username, domainname ) ;
+
+ #ifdef _DEBUG_RPCSEC_GSS
+       printf( "----> User=%s Domain=%s\n", username, domainname ) ;

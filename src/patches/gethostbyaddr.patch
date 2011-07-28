@@ -1,0 +1,106 @@
+diff -rup -x '*.o' nfs-ganesha-1.0.3-efix-26012011/support/exports.c nfs-ganesha-1.0.3-improvements-27012011/support/exports.c
+--- nfs-ganesha-1.0.3-efix-26012011/support/exports.c	2010-10-26 13:37:21.000000000 +0200
++++ nfs-ganesha-1.0.3-improvements-27012011/support/exports.c	2011-01-27 09:52:35.000000000 +0100
+@@ -1983,7 +1983,7 @@ int export_client_match(unsigned int add
+           if((clients->clientarray[i].client.network.netmask & addr) ==
+              clients->clientarray[i].client.network.netaddr)
+             {
+-              LogFullDebug(COMPONENT_DISPATCH, "This matches network adress");
++              LogFullDebug(COMPONENT_DISPATCH, "This matches network address");
+               *pclient_found = clients->clientarray[i];
+               return TRUE;
+             }
+@@ -2024,11 +2024,11 @@ int export_client_match(unsigned int add
+                   if(nfs_ip_name_add(addr, hostname) != IP_NAME_SUCCESS)
+                     {
+                       /* Major failure, name could not be resolved */
+-                      LogFullDebug(COMPONENT_DISPATCH, "Could not resolve addr %u.%u.%u.%u",
+-                             (unsigned int)(addr >> 24),
+-                             (unsigned int)(addr >> 16) & 0xFF,
++                      LogMajor(COMPONENT_DISPATCH, "Could not resolve addr %u.%u.%u.%u",
++                             (unsigned int)(addr & 0xFF),
+                              (unsigned int)(addr >> 8) & 0xFF,
+-                             (unsigned int)(addr & 0xFF));
++                             (unsigned int)(addr >> 16) & 0xFF,
++                             (unsigned int)(addr >> 24));
+                       strncpy(hostname, "unresolved", 10);
+                     }
+                 }
+Binary files nfs-ganesha-1.0.3-efix-26012011/support/.libs/libsupport.a and nfs-ganesha-1.0.3-improvements-27012011/support/.libs/libsupport.a differ
+diff -rup -x '*.o' nfs-ganesha-1.0.3-efix-26012011/support/nfs_ip_name.c nfs-ganesha-1.0.3-improvements-27012011/support/nfs_ip_name.c
+--- nfs-ganesha-1.0.3-efix-26012011/support/nfs_ip_name.c	2010-10-26 13:37:21.000000000 +0200
++++ nfs-ganesha-1.0.3-improvements-27012011/support/nfs_ip_name.c	2011-01-27 09:14:34.000000000 +0100
+@@ -172,14 +172,19 @@ int display_ip_value(hash_buffer_t * pbu
+  *
+  */
+ 
++#define GETHOST_BUF_SZ  4096
++
+ int nfs_ip_name_add(unsigned int ipaddr, char *hostname)
+ {
+   hash_buffer_t buffkey;
+   hash_buffer_t buffdata;
+   nfs_ip_name_t *pnfs_ip_name = NULL;
+-  struct hostent *hp;
++  struct hostent hostentry;
++  int    host_errno;
++  struct hostent * hp;
+   unsigned long int local_ipaddr = ipaddr;
+   int length = sizeof(local_ipaddr);
++  char resolv_buff[GETHOST_BUF_SZ];
+ 
+   pnfs_ip_name = (nfs_ip_name_t *) Mem_Alloc_Label(sizeof(nfs_ip_name_t), "nfs_ip_name_t");
+ 
+@@ -192,11 +197,21 @@ int nfs_ip_name_add(unsigned int ipaddr,
+   buffkey.len = 0;
+ 
+   /* Ask for the name to be cached */
+-  if((hp = gethostbyaddr((char *)&local_ipaddr, length, AF_INET)) == NULL)
+-    {
+-      Mem_Free((void *)pnfs_ip_name);
+-      return IP_NAME_NETDB_ERROR;
+-    }
++  if ( (gethostbyaddr_r(&local_ipaddr, length, AF_INET, &hostentry,
++                        resolv_buff, GETHOST_BUF_SZ,
++                        &hp, &host_errno ) != 0 ) || (hp == NULL) )
++  {
++     LogEvent( COMPONENT_DISPATCH, "Cannot resolve address %u.%u.%u.%u",
++               local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
++               (local_ipaddr>>24)&0xFF );
++
++     Mem_Free((void *)pnfs_ip_name);
++     return IP_NAME_NETDB_ERROR;
++  }
++
++  LogDebug( COMPONENT_DISPATCH, "Inserting %u.%u.%u.%u->%s to addr cache",
++            local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
++            (local_ipaddr>>24)&0xFF, hp->h_name );
+ 
+   /* I build the data with the request pointer that should be in state 'IN USE' */
+   pnfs_ip_name->ipaddr = ipaddr;
+@@ -243,10 +258,17 @@ int nfs_ip_name_get(unsigned int ipaddr,
+       pnfs_ip_name = (nfs_ip_name_t *) buffval.pdata;
+       strncpy(hostname, pnfs_ip_name->hostname, MAXHOSTNAMELEN);
+ 
++      LogFullDebug( COMPONENT_DISPATCH, "Cache hit for %u.%u.%u.%u->%s",
++                    local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
++                    (local_ipaddr>>24)&0xFF, hostname );
++
+       status = IP_NAME_SUCCESS;
+     }
+   else
+     {
++      LogFullDebug( COMPONENT_DISPATCH, "Cache miss for %u.%u.%u.%u",
++                    local_ipaddr&0xFF, (local_ipaddr>>8)&0xFF, (local_ipaddr>>16)&0xFF,
++                    (local_ipaddr>>24)&0xFF );
+       status = IP_NAME_NOT_FOUND;
+     }
+   return status;
+@@ -383,7 +405,6 @@ int nfs_ip_name_populate(char *path)
+       /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this,
+        * this also means that buffkey->len will be 0 */
+       buffkey.pdata = (caddr_t) long_ipaddr;
+-
+       buffkey.len = 0;
+ 
+       if(HashTable_Set(ht_ip_name, &buffkey, &buffdata) != HASHTABLE_SUCCESS)

@@ -1,0 +1,5 @@
+etc/ganesha/hosts.ganesha
+etc/ganesha/snmp.conf
+etc/ganesha/uidgid_mapfile.ganesha
+usr/bin/ganesha_log_level
+usr/bin/ganestat.pl

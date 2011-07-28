@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Modifying a zpool</TITLE>
+<META NAME="description" CONTENT="Modifying a zpool">
+<META NAME="keywords" CONTENT="using_zfs_fsal">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="using_zfs_fsal.css">
+
+<LINK REL="next" HREF="node6.html">
+<LINK REL="previous" HREF="node4.html">
+<LINK REL="up" HREF="node2.html">
+<LINK REL="next" HREF="node6.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html64"
+  HREF="node6.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="../../images/next.png"></A> 
+<A NAME="tex2html62"
+  HREF="node2.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="../../images/up.png"></A> 
+<A NAME="tex2html56"
+  HREF="node4.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="../../images/prev.png"></A>   
+<BR>
+<B> Next:</B> <A NAME="tex2html65"
+  HREF="node6.html">Destroying a zpool</A>
+<B> Up:</B> <A NAME="tex2html63"
+  HREF="node2.html">Managing zpool</A>
+<B> Previous:</B> <A NAME="tex2html57"
+  HREF="node4.html">Getting information about zpool</A>
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H2><A NAME="SECTION00023000000000000000">
+Modifying a zpool</A>
+</H2>
+<P>
+<I><I><I>It's always possible to add disk or group of disk to a zpool.
+</I></I></I><PRE>
+    root@localhost% lzw_zpool add pool raidz /dev/sdc /dev/sdd /dev/sde
+    root@localhost% lzw_zpool status
+      pool: pool
+     state: ONLINE
+     scrub: none requested
+    config:
+    
+            NAME            STATE     READ WRITE CKSUM
+            pool            ONLINE       0     0     0
+              mirror-0      ONLINE       0     0     0
+                /dev/sda    ONLINE       0     0     0
+                /dev/sdb    ONLINE       0     0     0
+              raidz1-1      ONLINE       0     0     0
+                /dev/sdc    ONLINE       0     0     0
+                /dev/sdd    ONLINE       0     0     0
+                /dev/sde    ONLINE       0     0     0
+    
+    errors: No known data errors
+    
+      pool: tank
+     state: ONLINE
+     scrub: none requested
+    config:
+    
+            NAME        STATE     READ WRITE CKSUM
+            tank        ONLINE       0     0     0
+              mirror-0  ONLINE       0     0     0
+                hda3    ONLINE       0     0     0
+                hda4    ONLINE       0     0     0
+    
+    errors: No known data errors
+</PRE>
+<P>
+<I><I><I>The 'add' command takes as arguments:
+</I></I></I>
+<UL>
+<LI>'pool': name of the pool
+</LI>
+<LI>'raidz': type of the disk set to add
+</LI>
+<LI>the list of devices that form the disk set to add
+</LI>
+</UL>
+<P>
+<I><I><I>That's also possible to detach a device from a mirror. In this example,
+detaching one device from the mirror inside the first pool is possible with:
+</I></I></I><PRE>
+    root@localhost% lzw_zpool detach pool /dev/sdb
+    root@localhost% lsz_zpool status
+      pool: pool
+     state: ONLINE
+     scrub: none requested
+    config:
+    
+            NAME            STATE     READ WRITE CKSUM
+            pool            ONLINE       0     0     0
+              /dev/sda      ONLINE       0     0     0
+              raidz1-1      ONLINE       0     0     0
+                /dev/sdc    ONLINE       0     0     0
+                /dev/sdd    ONLINE       0     0     0
+                /dev/sde    ONLINE       0     0     0
+    
+    errors: No known data errors
+    
+      pool: tank
+     state: ONLINE
+     scrub: none requested
+    config:
+    
+            NAME        STATE     READ WRITE CKSUM
+            tank        ONLINE       0     0     0
+              mirror-0  ONLINE       0     0     0
+                hda3    ONLINE       0     0     0
+                hda4    ONLINE       0     0     0
+    
+    errors: No known data errors
+</PRE>
+<P>
+<I><I><I>To undo this operation just use the 'attach' command:
+</I></I></I><PRE>
+    root@localhost% lzw_zpool attach pool /dev/sda /dev/sdb
+</PRE>
+<P>
+<I><I><I>This command takes as argument:
+</I></I></I>
+<UL>
+<LI>'pool': name of the pool
+</LI>
+<LI>'/dev/sda': device to use as attachment point
+</LI>
+<LI>'/dev/sdb': device to attach to the previous argument
+</LI>
+</UL>
+<P>
+<BR><HR>
+<ADDRESS>
+remi
+2010-09-17
+</ADDRESS>
+</BODY>
+</HTML>

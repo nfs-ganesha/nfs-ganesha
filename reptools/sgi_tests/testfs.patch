@@ -1,0 +1,890 @@
+Index: linux/fs/Kconfig
+===================================================================
+--- linux.orig/fs/Kconfig	2006-06-14 14:04:21.220702106 +1000
++++ linux/fs/Kconfig	2006-06-14 14:04:23.901017670 +1000
+@@ -1888,5 +1888,15 @@ endmenu
+ 
+ source "fs/nls/Kconfig"
+ 
++config TESTFS
++	tristate "Filesystem for testing NFS Server (EXPERIMENTAL)"
++	depends on EXPORTFS && EXPERIMENTAL
++	help
++	  If you say Y here, you will get an experimental Testfs driver.
++	  Testfs is simple pseudo filesystem designed for providing
++	  predictable loads for the kernel NFS server.
++
++	  If unsure, say N.
++
+ endmenu
+ 
+Index: linux/fs/Makefile
+===================================================================
+--- linux.orig/fs/Makefile	2006-06-14 14:04:21.221678542 +1000
++++ linux/fs/Makefile	2006-06-14 14:04:23.901994105 +1000
+@@ -106,3 +106,4 @@ obj-$(CONFIG_HPPFS)		+= hppfs/
+ obj-$(CONFIG_DEBUG_FS)		+= debugfs/
+ obj-$(CONFIG_CONFIGFS_FS)	+= configfs/
+ obj-$(CONFIG_OCFS2_FS)		+= ocfs2/
++obj-$(CONFIG_TESTFS)		+= testfs/
+Index: linux/fs/testfs/Makefile
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux/fs/testfs/Makefile	2006-06-14 14:04:23.955698060 +1000
+@@ -0,0 +1,24 @@
++#
++# Makefile for the Linux testfs
++#
++# Copyright (c) 2006-2009 Silicon Graphics, Inc. All rights reserved.
++#         By Greg Banks <gnb@sgi.com>
++#
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 2 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program; if not, write to the Free Software
++# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
++#
++
++obj-$(CONFIG_TESTFS) += testfs.o
++
++testfs-y		:= inode.o sleep.o
+Index: linux/fs/testfs/inode.c
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux/fs/testfs/inode.c	2006-06-20 17:53:45.765408391 +1000
+@@ -0,0 +1,483 @@
++/*
++ * Testfs: inode.c
++ *
++ * Copyright (c) 2006-2009 Silicon Graphics, Inc. All rights reserved.
++ *         By Greg Banks <gnb@sgi.com>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
++ */
++
++#include <linux/kernel.h>
++#include <linux/smp_lock.h>
++#include <linux/fs.h>
++#include <linux/statfs.h>
++#include <linux/mm.h>
++#include <linux/time.h>
++#include <linux/module.h>
++#include <asm/uaccess.h>
++#include "testfs.h"
++
++static struct inode *testfs_iget(struct super_block *, unsigned int, int);
++
++/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
++
++int testfs_int_attr_get(struct testfs_attr *ta, struct testfs_load *tl,
++			char *buf, int size)
++{
++	if (size == 0) {
++		/* caller probing for attribute length */
++		static char tmpbuf[32];	/* throw away value */
++		buf = tmpbuf;
++		size = sizeof(tmpbuf);
++	}
++
++	snprintf(buf, size, "%d", *(int *)((char *)tl + ta->offset));
++	return strlen(buf);
++}
++
++int testfs_int_attr_set(struct testfs_attr *ta, struct testfs_load *tl,
++			const char *buf, int size)
++{
++	char tmpbuf[32];
++
++	if (size > sizeof(tmpbuf)-1)
++		return -EINVAL;
++	memcpy(tmpbuf, buf, size);
++	tmpbuf[size] = '\0';
++	*(int *)((char *)tl + ta->offset) = simple_strtol(tmpbuf, NULL, 0);
++	return 0;
++}
++
++/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
++
++static struct dentry *testfs_lookup(struct inode *dir, struct dentry *dentry,
++				    struct nameidata *nd)
++{
++	if (dentry->d_name.len > NAME_MAX)
++		return ERR_PTR(-ENAMETOOLONG);
++	/* We want dentry->d_op = NULL (the default) so that
++	 * the dentry survives the last reference being dropped.
++	 * The dentry tree forms the only tree structure testfs
++	 * has, so we don't want it evaporating.
++	 */
++	d_add(dentry, NULL);
++	return NULL;
++}
++
++static int testfs_create(struct inode *dir, struct dentry *dentry,
++		         int mode, struct nameidata *nd)
++{
++	struct testfs_super *ts = TESTFS_SUPER(dir->i_sb);
++	struct inode *inode;
++	unsigned int inum;
++
++	spin_lock(&ts->lock);
++	inum = ts->next_inum++;
++	spin_unlock(&ts->lock);
++
++	inode = testfs_iget(dir->i_sb, inum, S_IFREG|mode);
++	printk(KERN_INFO "testfs_create(%p) -> %p\n", dir, inode);
++	if (inode == NULL)
++		return -EACCES;
++	d_instantiate(dentry, inode);
++	return 0;
++}
++
++static int testfs_mkdir(struct inode *dir, struct dentry *dentry, int mode)
++{
++	struct testfs_super *ts = TESTFS_SUPER(dir->i_sb);
++	struct inode *inode;
++	unsigned int inum;
++
++	spin_lock(&ts->lock);
++	inum = ts->next_inum++;
++	spin_unlock(&ts->lock);
++
++	inode = testfs_iget(dir->i_sb, inum, S_IFDIR|mode);
++	printk(KERN_INFO "testfs_mkdir(%p) -> %p\n", dir, inode);
++	if (inode == NULL)
++		return -EACCES;
++	d_instantiate(dentry, inode);
++	return 0;
++}
++
++/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
++
++/* tl->ops is constant for the life of the tl, no locking required */
++static struct testfs_attr *testfs_findattr(struct testfs_load *tl,
++				           const char *name)
++{
++	struct testfs_attr *ta;
++
++	for (ta = tl->ops->attrs ; ta->name != NULL ; ta++) {
++	     	if (!strcmp(name, ta->name))
++			return ta;
++	}
++	return NULL;
++}
++
++/* locked by i_mutex, in vfs_setxattr */
++static int testfs_setxattr(struct dentry *dentry, const char *name,
++			   const void *data, size_t size, int flags)
++{
++	struct testfs_load *tl = TESTFS_LOAD(dentry->d_inode);
++	struct testfs_attr *ta;
++
++	if (!strcmp(name, TESTFS_LOAD_ATTR)) {
++		/* TODO: implement changing of the load */
++		return -EINVAL;
++	}
++	ta = testfs_findattr(tl, name);
++	if (ta == NULL)
++		return -EINVAL;
++	return ta->set(ta, tl, data, size);
++}
++
++/* unlocked when called, use i_mutex internally */
++static ssize_t testfs_getxattr(struct dentry *dentry, const char *name,
++			       void *data, size_t size)
++{
++	struct inode *inode = dentry->d_inode;
++	struct testfs_load *tl;
++	struct testfs_attr *ta;
++	ssize_t ret = -EINVAL;
++
++	mutex_lock(&inode->i_mutex);
++
++	tl = TESTFS_LOAD(dentry->d_inode);
++
++	if (!strcmp(name, TESTFS_LOAD_ATTR)) {
++		/* The "load" xattr is special, it controls the inode's load */
++		strncpy(data, tl->ops->name, size);
++		ret = strlen(tl->ops->name);
++		if (ret > size)
++			ret = size;
++		goto out_unlock;
++	}
++
++	ta = testfs_findattr(tl, name);
++	if (ta == NULL)
++		goto out_unlock;
++
++	ret = ta->get(ta, tl, data, size);
++
++out_unlock:
++	mutex_unlock(&inode->i_mutex);
++	return ret;
++}
++
++/* unlocked when called, use i_mutex internally */
++static ssize_t testfs_listxattr(struct dentry *dentry, char *data, size_t size)
++{
++	struct inode *inode = dentry->d_inode;
++	struct testfs_load *tl;
++	struct testfs_attr *ta;
++	size_t len;
++
++	mutex_lock(&inode->i_mutex);
++
++	tl = TESTFS_LOAD(dentry->d_inode);
++
++	/* calculate length required */
++	len = strlen(TESTFS_LOAD_ATTR)+1;
++	for (ta = tl->ops->attrs ; ta->name != NULL ; ta++)
++		len += strlen(ta->name)+1;
++
++	if (size > 0)
++	{
++		if (len > size) {
++			len = -ERANGE;	/* not enough space in buffer */
++			goto out_unlock;
++		}
++
++		strcpy(data, TESTFS_LOAD_ATTR);
++		data += strlen(data)+1;
++		for (ta = tl->ops->attrs ; ta->name != NULL ; ta++) {
++			strcpy(data, ta->name);
++			data += strlen(data)+1;
++		}
++	}
++
++out_unlock:
++	mutex_unlock(&inode->i_mutex);
++	return len;
++}
++
++
++#define RECORD_SIZE	16
++static ssize_t testfs_read(struct file *file, char __user *buf,
++			   size_t size, loff_t *offp)
++{
++	struct dentry *dentry = file->f_dentry;
++	struct inode *inode = dentry->d_inode;
++	struct testfs_load *tl = TESTFS_LOAD(inode);
++	size_t remain, off;
++	union { char bytes[RECORD_SIZE]; u64 w8[0]; } record;
++
++	memset(&record, 0, sizeof(record));
++	strcpy(record.bytes, "TESTFS  ");
++
++	if (*offp >= inode->i_size)
++		return 0;	/* EOF */
++
++	remain = size;
++	if (*offp + remain > inode->i_size)
++		size = remain = inode->i_size - *offp;
++
++	/* handle possible partial record at start */
++	off = (*offp & (RECORD_SIZE-1));
++	if (off) {
++		size_t len = RECORD_SIZE - off;
++		if (len > remain)
++			len = remain;
++		record.w8[1] = (*offp & ~(RECORD_SIZE-1));
++		if (copy_to_user(buf, &record.bytes[off], len))
++			return -EFAULT;
++		buf += len;
++		*offp += len;
++		remain -= len;
++	}
++
++	/* handle zero or more full records */
++	while (remain > RECORD_SIZE)
++	{
++		record.w8[1] = *offp;
++		if (copy_to_user(buf, &record.bytes[0], RECORD_SIZE))
++			return -EFAULT;
++		buf += RECORD_SIZE;
++		*offp += RECORD_SIZE;
++		remain -= RECORD_SIZE;
++	}
++
++	/* handle possible partial record at end */
++	if (remain) {
++		record.w8[1] = *offp;
++		if (copy_to_user(buf, &record.bytes[0], remain))
++			return -EFAULT;
++		buf += remain;
++		*offp += remain;
++		remain -= remain;
++	}
++
++	tl->ops->read(tl);
++	return size;
++}
++
++static ssize_t testfs_write(struct file *file, const char __user *buf,
++			    size_t size, loff_t *offp)
++{
++	struct dentry *dentry = file->f_dentry;
++	struct inode *inode = dentry->d_inode;
++	struct testfs_load *tl = TESTFS_LOAD(inode);
++
++	if (*offp + size > inode->i_size)
++		i_size_write(inode, *offp + size);
++	*offp += size;
++
++	tl->ops->write(tl);
++
++	return size;
++}
++
++static int testfs_fsync(struct file *file, struct dentry *dentry, int datasync)
++{
++	struct testfs_load *tl = TESTFS_LOAD(file->f_dentry->d_inode);
++	tl->ops->sync(tl);
++	return 0;
++}
++
++#if 0
++static ssize_t testfs_sendfile(struct file *file, loff_t *offp, size_t size,
++			       read_actor_t actor, void __user *buf)
++{
++	return -EINVAL;
++}
++#endif
++
++/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
++
++static void testfs_read_inode(struct inode *inode)
++{
++	struct testfs_load_operations *ops;
++	struct testfs_load *tl;
++
++	printk(KERN_INFO "testfs_read_inode(%p)\n", inode);
++
++	/* TODO: need some kind of registration arrangement */
++	ops = &testfs_sleep_ops;
++	tl = ops->create();
++	/* TODO: handle failure to create */
++	tl->ops = ops;
++	inode->u.generic_ip = tl;
++}
++
++static void testfs_delete_inode(struct inode *inode)
++{
++	struct testfs_load *tl = TESTFS_LOAD(inode);
++	printk(KERN_INFO "testfs_delete_inode(%p)\n", inode);
++	inode->u.generic_ip = NULL;
++	tl->ops->delete(tl);
++	truncate_inode_pages(&inode->i_data, 0);
++	clear_inode(inode);
++}
++
++static int testfs_statfs(struct super_block *sb, struct kstatfs *stat)
++{
++	struct testfs_super *ts = TESTFS_SUPER(sb);
++
++	stat->f_type = TESTFS_SUPER_MAGIC;
++	stat->f_bsize = sb->s_blocksize;
++	stat->f_blocks = 1024;
++	stat->f_bfree = 512;
++	stat->f_bavail = 512;
++	stat->f_files = ts->next_inum;
++	stat->f_ffree = 1024;
++	stat->f_namelen = 256;
++	return 0;
++}
++
++/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
++
++static struct dentry *testfs_get_parent(struct dentry *child)
++{
++	/*
++	 * The nice thing about a filesystem which is entirely
++	 * in-memory is that we don't need to worry about
++	 * disconnected dentries and can just return the
++	 * actual dentry parent.
++	 */
++	return dget_parent(child);
++}
++
++/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
++
++static struct inode_operations testfs_dir_inode_ops = {
++	.create = testfs_create,
++	.mkdir = testfs_mkdir,
++	.lookup = testfs_lookup,
++};
++
++static struct inode_operations testfs_file_inode_ops = {
++	.setxattr = testfs_setxattr,
++	.getxattr = testfs_getxattr,
++	.listxattr = testfs_listxattr
++};
++
++static struct file_operations testfs_file_ops = {
++	.read = testfs_read,
++	.write = testfs_write,
++	.fsync = testfs_fsync
++};
++
++static struct export_operations testfs_export_ops = {
++	.get_parent = testfs_get_parent
++};
++
++static struct super_operations testfs_super_ops = {
++	.read_inode = testfs_read_inode,
++	.delete_inode = testfs_delete_inode,
++	.statfs = testfs_statfs
++};
++
++/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
++
++static struct inode *testfs_iget(struct super_block *sb,
++				 unsigned int ino, int mode)
++{
++	struct inode *inode;
++
++	inode = iget(sb, ino);
++	if (inode) {
++		inode->i_mode = mode;
++		inode->i_uid = 0;
++		inode->i_gid = 0;
++		if ((mode & S_IFMT) == S_IFDIR) {
++			inode->i_op = &testfs_dir_inode_ops;
++			inode->i_fop = &simple_dir_operations;
++		} else {
++			inode->i_op = &testfs_file_inode_ops;
++			inode->i_fop = &testfs_file_ops;
++		}
++	}
++	return inode;
++}
++
++/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
++
++static int testfs_fill_super(struct super_block *sb, void *data, int flags)
++{
++	struct inode *root_inode;
++	struct testfs_super *ts;
++
++	ts = kmalloc(sizeof(struct testfs_super), GFP_KERNEL);
++	if (ts == NULL)
++		return -ENOMEM;
++	spin_lock_init(&ts->lock);
++	ts->next_inum = TESTFS_ROOT_INUM+1;
++
++	sb->s_magic = TESTFS_SUPER_MAGIC;
++	sb->s_op = &testfs_super_ops;
++	sb->s_export_op = &testfs_export_ops;
++	sb->s_fs_info = ts;
++	root_inode = testfs_iget(sb, TESTFS_ROOT_INUM, S_IFDIR|S_IRUGO|S_IXUGO);
++	sb->s_root = d_alloc_root(root_inode);
++	sb->s_flags |= MS_NODIRATIME;
++	/* totally fictitious limits */
++	sb->s_blocksize = 1024;
++	sb->s_blocksize_bits = 10;
++	sb->s_maxbytes = 1024*1024;
++
++	printk(KERN_INFO "testfs_fill_super: sb=%p root=%p\n", sb, sb->s_root);
++
++	return 0;
++}
++
++static struct super_block *testfs_get_sb(struct file_system_type *type,
++				         int flags, const char *dev, void *data)
++{
++	return get_sb_single(type, flags, data, testfs_fill_super);
++}
++
++/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
++
++static struct file_system_type testfs_type = {
++	.owner = THIS_MODULE,
++	.name = "testfs",
++	.get_sb = testfs_get_sb,
++	.kill_sb = kill_anon_super
++};
++
++static int __init testfs_init(void)
++{
++	printk(KERN_INFO "Testfs: test load filesystem for kernel NFS server,"
++			 "by Greg Banks <gnb@melbourne.sgi.com>\n");
++	return register_filesystem(&testfs_type);
++}
++
++static void __exit testfs_exit(void)
++{
++	unregister_filesystem(&testfs_type);
++}
++
++/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
++
++MODULE_AUTHOR("Greg Banks <gnb@melbourne.sgi.com>");
++MODULE_DESCRIPTION("NFS Load Test Filesystem");
++MODULE_LICENSE("GPL");
++
++module_init(testfs_init)
++module_exit(testfs_exit)
++
++/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+Index: linux/fs/testfs/testfs.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux/fs/testfs/testfs.h	2006-06-14 14:04:23.968391722 +1000
+@@ -0,0 +1,64 @@
++/*
++ *
++ * Copyright (c) 2006-2009 Silicon Graphics, Inc. All rights reserved.
++ *         By Greg Banks <gnb@sgi.com>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
++ */
++#ifndef _LINUX_TESTFS_TESTFS_H_
++#define _LINUX_TESTFS_TESTFS_H_ 1
++
++#define TESTFS_ROOT_INUM 1
++#define TESTFS_SUPER_MAGIC 0xee10
++
++struct testfs_super
++{
++	spinlock_t lock;
++	unsigned int next_inum;
++};
++
++struct testfs_load;
++
++struct testfs_attr
++{
++	const char *name;
++	unsigned int offset;
++	int (*get)(struct testfs_attr *, struct testfs_load *, char *, int);
++	int (*set)(struct testfs_attr *, struct testfs_load *, const char *, int);
++};
++
++struct testfs_load_operations
++{
++	struct list_head link;
++	const char *name;
++	struct testfs_attr *attrs;
++	struct testfs_load * (*create)(void);
++	void (*delete)(struct testfs_load *);
++	void (*read)(struct testfs_load *);
++	void (*write)(struct testfs_load *);
++	void (*sync)(struct testfs_load *);
++};
++
++/*
++ * A separate testfs_load instance is attached to each
++ * testfs inode; the testfs_load and its contents are
++ * locked by i_mutex in the owning inode.'
++ */
++struct testfs_load
++{
++	struct testfs_load_operations *ops;
++};
++
++#define TESTFS_ATTR_PREFIX "user."
++#define TESTFS_LOAD_ATTR TESTFS_ATTR_PREFIX "load"
++#define TESTFS_SUPER(sb) ((struct testfs_super *)(sb)->s_fs_info)
++#define TESTFS_LOAD(inode) ((struct testfs_load *)(inode)->u.generic_ip)
++
++#define TESTFS_INT_ATTR(nm, off) \
++	{ \
++		.name = TESTFS_ATTR_PREFIX nm, \
++		.offset = off, \
++		.get = testfs_int_attr_get, \
++		.set = testfs_int_attr_set \
++	}
++#define TESTFS_END_ATTRS { .name = NULL }
++
++
++extern struct testfs_load_operations testfs_sleep_ops;
++extern int testfs_int_attr_get(struct testfs_attr *, struct testfs_load *, char *, int);
++extern int testfs_int_attr_set(struct testfs_attr *, struct testfs_load *, const char *, int);
++
++#endif /* _LINUX_TESTFS_TESTFS_H_ */
+Index: linux/fs/testfs/sleep.c
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux/fs/testfs/sleep.c	2006-06-15 17:58:29.330960841 +1000
+@@ -0,0 +1,162 @@
++/*
++ * Testfs: sleep.c
++ *
++ * Copyright (c) 2006-2009 Silicon Graphics, Inc. All rights reserved.
++ *         By Greg Banks <gnb@sgi.com>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
++ */
++
++#include <linux/kernel.h>
++#include <linux/smp_lock.h>
++#include <linux/fs.h>
++#include <linux/statfs.h>
++#include <linux/mm.h>
++#include <linux/time.h>
++#include <linux/ktime.h>
++#include <linux/module.h>
++#include "testfs.h"
++
++struct testfs_delay_state
++{
++    int delay_ms;	    /* set from userspace via a testfs_attr */
++    spinlock_t lock;
++    ktime_t error_kt;	    /* error term for delay, nanosec resolution */
++};
++
++struct testfs_sleep_load
++{
++	struct testfs_load parent;
++	struct testfs_delay_state read;
++	struct testfs_delay_state write;
++	struct testfs_delay_state sync;
++};
++
++static struct testfs_attr testfs_sleep_attrs[] = {
++	TESTFS_INT_ATTR("read_delay_ms",
++		        offsetof(struct testfs_sleep_load, read.delay_ms)),
++	TESTFS_INT_ATTR("write_delay_ms",
++			offsetof(struct testfs_sleep_load, write.delay_ms)),
++	TESTFS_INT_ATTR("sync_delay_ms",
++			offsetof(struct testfs_sleep_load, sync.delay_ms)),
++	TESTFS_END_ATTRS
++};
++
++/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
++
++static void testfs_delay(struct testfs_delay_state *state)
++{
++	ktime_t error, delay, start, end;
++	struct hrtimer timer;
++
++	start = ktime_get_real();
++
++	// attempt to consume all the current error
++	spin_lock(&state->lock);
++	error = state->error_kt;
++	state->error_kt = ktime_set(0, 0);
++	spin_unlock(&state->lock);
++
++	// delay for some time
++	hrtimer_init(&timer, CLOCK_MONOTONIC, HRTIMER_REL);
++	delay = ktime_add_ns(error, 1000000 * (u64)state->delay_ms);
++
++	if (ktime_to_ns(delay) > 1000000) {
++		timer.expires = delay;
++		set_current_state(TASK_INTERRUPTIBLE);
++		timer.data = current;
++		hrtimer_start(&timer, timer.expires, HRTIMER_REL);
++		schedule();
++		hrtimer_cancel(&timer);
++	}
++
++	// work out how long we actually slept
++	end = ktime_get_real();
++	error = ktime_sub(delay, ktime_sub(end, start));
++
++	// accumulate error for this thread
++	spin_lock(&state->lock);
++	state->error_kt = ktime_add(state->error_kt, error);
++	spin_unlock(&state->lock);
++}
++
++/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
++
++static struct testfs_load * testfs_sleep_create(void)
++{
++	struct testfs_sleep_load *tsl;
++
++	tsl = kmalloc(sizeof(struct testfs_sleep_load), GFP_KERNEL);
++	if (tsl != NULL) {
++		memset(tsl, 0, sizeof(*tsl));
++		spin_lock_init(&tsl->read.lock);
++		spin_lock_init(&tsl->write.lock);
++		spin_lock_init(&tsl->sync.lock);
++	}
++	return (struct testfs_load *)tsl;
++}
++
++static void testfs_sleep_delete(struct testfs_load *tl)
++{
++	kfree(tl);
++}
++
++static void testfs_sleep_read(struct testfs_load *tl)
++{
++	struct testfs_sleep_load *tsl = (struct testfs_sleep_load *)tl;
++
++	if (tsl->read.delay_ms) {
++// 		set_current_state(TASK_INTERRUPTIBLE);
++// 		schedule_timeout(tsl->read_delay_ms * HZ / 1000);
++		testfs_delay(&tsl->read);
++	}
++}
++
++static void testfs_sleep_write(struct testfs_load *tl)
++{
++	struct testfs_sleep_load *tsl = (struct testfs_sleep_load *)tl;
++
++	if (tsl->write.delay_ms) {
++// 		set_current_state(TASK_INTERRUPTIBLE);
++// 		schedule_timeout(tsl->write_delay_ms * HZ / 1000);
++		testfs_delay(&tsl->write);
++	}
++}
++
++static void testfs_sleep_sync(struct testfs_load *tl)
++{
++	struct testfs_sleep_load *tsl = (struct testfs_sleep_load *)tl;
++
++	if (tsl->sync.delay_ms) {
++// 		set_current_state(TASK_INTERRUPTIBLE);
++// 		schedule_timeout(tsl->sync_delay_ms * HZ / 1000);
++		testfs_delay(&tsl->sync);
++	}
++}
++
++/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
++
++struct testfs_load_operations testfs_sleep_ops = {
++	.name = "sleep",
++	.attrs = testfs_sleep_attrs,
++	.create = testfs_sleep_create,
++	.delete = testfs_sleep_delete,
++	.read = testfs_sleep_read,
++	.write = testfs_sleep_write,
++	.sync = testfs_sleep_sync
++};
++
++/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
++/*END*/
+Index: linux/include/linux/ktime.h
+===================================================================
+--- linux.orig/include/linux/ktime.h	2006-06-14 14:04:21.228513591 +1000
++++ linux/include/linux/ktime.h	2006-06-14 14:04:24.012331322 +1000
+@@ -292,5 +292,7 @@ extern void ktime_get_ts(struct timespec
+ 
+ /* Get the real (wall-) time in timespec format: */
+ #define ktime_get_real_ts(ts)	getnstimeofday(ts)
++/* Get the real (wall-) time in ktime format: */
++extern ktime_t ktime_get_real(void);
+ 
+ #endif
+Index: linux/kernel/hrtimer.c
+===================================================================
+--- linux.orig/kernel/hrtimer.c	2006-06-14 14:04:21.226560720 +1000
++++ linux/kernel/hrtimer.c	2006-06-14 14:04:24.033812904 +1000
+@@ -59,7 +59,7 @@ static ktime_t ktime_get(void)
+  *
+  * returns the time in ktime_t format
+  */
+-static ktime_t ktime_get_real(void)
++ktime_t ktime_get_real(void)
+ {
+ 	struct timespec now;
+ 
+@@ -319,6 +319,7 @@ hrtimer_forward(struct hrtimer *timer, k
+ 
+ 	return orun;
+ }
++EXPORT_SYMBOL_GPL(hrtimer_forward);
+ 
+ /*
+  * enqueue_hrtimer - internal function to (re)start a timer
+@@ -439,6 +440,7 @@ hrtimer_start(struct hrtimer *timer, kti
+ 
+ 	return ret;
+ }
++EXPORT_SYMBOL_GPL(hrtimer_start);
+ 
+ /**
+  * hrtimer_try_to_cancel - try to deactivate a timer
+@@ -467,6 +469,7 @@ int hrtimer_try_to_cancel(struct hrtimer
+ 	return ret;
+ 
+ }
++EXPORT_SYMBOL_GPL(hrtimer_try_to_cancel);
+ 
+ /**
+  * hrtimer_cancel - cancel a timer and wait for the handler to finish.
+@@ -486,6 +489,7 @@ int hrtimer_cancel(struct hrtimer *timer
+ 			return ret;
+ 	}
+ }
++EXPORT_SYMBOL_GPL(hrtimer_cancel);
+ 
+ /**
+  * hrtimer_get_remaining - get remaining time for the timer
+@@ -504,6 +508,7 @@ ktime_t hrtimer_get_remaining(const stru
+ 
+ 	return rem;
+ }
++EXPORT_SYMBOL_GPL(hrtimer_get_remaining);
+ 
+ #ifdef CONFIG_NO_IDLE_HZ
+ /**
+@@ -561,6 +566,7 @@ void hrtimer_init(struct hrtimer *timer,
+ 
+ 	timer->base = &bases[clock_id];
+ }
++EXPORT_SYMBOL_GPL(hrtimer_init);
+ 
+ /**
+  * hrtimer_get_res - get the timer resolution for a clock
+@@ -580,6 +586,7 @@ int hrtimer_get_res(const clockid_t whic
+ 
+ 	return 0;
+ }
++EXPORT_SYMBOL_GPL(hrtimer_get_res);
+ 
+ /*
+  * Expire the per base hrtimer-queue:
+@@ -766,6 +773,7 @@ long hrtimer_nanosleep(struct timespec *
+ 
+ 	return -ERESTART_RESTARTBLOCK;
+ }
++EXPORT_SYMBOL_GPL(hrtimer_nanosleep);
+ 
+ asmlinkage long
+ sys_nanosleep(struct timespec __user *rqtp, struct timespec __user *rmtp)

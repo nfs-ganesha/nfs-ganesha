@@ -1,0 +1,115 @@
+From 568781b9471f4affd421b34e97835abb688404a6 Mon Sep 17 00:00:00 2001
+From: Remi Duraffort <duraffortr@ocre.cea.fr>
+Date: Thu, 23 Sep 2010 10:33:12 +0200
+Subject: [PATCH] Build the debian package in pkg-deb + some more fixes.
+
+---
+ src/.gitignore           |    2 +-
+ src/Makefile.am          |   26 ++++++++++++++++++--------
+ src/debian/Makefile.am   |    3 ++-
+ src/debian/changelog     |   13 +++++++++++++
+ src/debian/source/format |    1 +
+ 5 files changed, 35 insertions(+), 10 deletions(-)
+ create mode 100644 src/debian/source/format
+
+diff --git a/src/.gitignore b/src/.gitignore
+index a2d435a..8170841 100644
+--- a/src/.gitignore
++++ b/src/.gitignore
+@@ -14,7 +14,7 @@ build-aux/
+ libganeshaNFS.pc
+ nfs-ganesha.spec
+ rpm/
+-deb-pkg/
++pkg-deb/
+ cppcheck.*
+ cscope.*
+ nfs-ganesha*.tar.gz
+diff --git a/src/Makefile.am b/src/Makefile.am
+index 5ddf3f9..38fa4d4 100644
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -42,23 +42,33 @@ DOCDIRS = Cache_inode ConfigParsing File_Content File_Content_Policy HashTable I
+ 
+ new: clean all
+ 
+-deb:
+-	cp debian/rules.auto debian/rules
+-	chmod 754 debian/rules
++prepare-deb: distdir
++	rm -rf pkg-deb ; \
++	mkdir pkg-deb ; \
++	mv nfs-ganesha-@PACKAGE_VERSION@ pkg-deb/ ; \
++	cd pkg-deb/nfs-ganesha-@PACKAGE_VERSION@ ; \
++	cp debian/rules.auto debian/rules ; \
++	chmod 754 debian/rules ; \
+ 	cp debian/control.base debian/control
++
++prepare-deb-control: prepare-deb
+ if USE_FSAL_ZFS
+-	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libzfswrap-dev/' debian/control
++	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libzfswrap-dev/' pkg-deb/nfs-ganesha-@PACKAGE_VERSION@/debian/control
+ else
+ if USE_FSAL_POSIX
+-	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libmysqlclient-dev/' debian/control
++	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libmysqlclient-dev/' pkg-deb/nfs-ganesha-@PACKAGE_VERSION@/debian/control
+ else
+ if USE_FSAL_XFS
+-	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libattr1-dev, xfslibs-dev/' debian/control
++	sed -i 's/debhelper (>= 7)/debhelper (>= 7), libattr1-dev, xfslibs-dev/' pkg-deb/nfs-ganesha-@PACKAGE_VERSION@/debian/control
+ endif
+ endif
+ endif
+-	cat debian/control.@FS_NAME@ >> debian/control
+-	dpkg-buildpackage -rfakeroot
++
++deb: prepare-deb-control
++	cd pkg-deb/nfs-ganesha-@PACKAGE_VERSION@ ; \
++	cat debian/control.@FS_NAME@ >> debian/control ; \
++	dpkg-buildpackage -rfakeroot ; \
++	cd ../../
+ 
+ rpms: rpm srpm
+ 
+diff --git a/src/debian/Makefile.am b/src/debian/Makefile.am
+index ab1af47..e056e07 100644
+--- a/src/debian/Makefile.am
++++ b/src/debian/Makefile.am
+@@ -13,4 +13,5 @@ EXTRA_DIST = changelog                          \
+ 	     nfs-ganesha-proxy.install          \
+ 	     nfs-ganesha-xfs.install            \
+ 	     nfs-ganesha-zfs.install            \
+-	     rules.auto
++	     rules.auto                         \
++             source
+diff --git a/src/debian/changelog b/src/debian/changelog
+index d4906eb..5142213 100644
+--- a/src/debian/changelog
++++ b/src/debian/changelog
+@@ -1,3 +1,16 @@
++nfs-ganesha (1.0.1-1) stable; urgency=low
++  * New FSAL model: FSAL modules can now be compile as shared object and can be loaded at runtime
++  * New FSAL to support ZFS filesystem
++  * Add the capability to build a "FSAL-less" daemon that loads FSAL shared object by using the dlopen function.
++  * FSAL_PROXY: the embedded client now can allocate a tcp socket on a privileged port to contact the "proxyfied" server
++  * FSAL shared objects are provided as precompiled rpms
++  * Log layer now uses syslog as a possible log stream
++  * Add new call FSAL_getextattrs to get info such a generation number or creation time
++  * New Log management from IBM
++  * Several potential buffer overflow in fscanf fixed
++
++ -- Philippe Deniel <philippe.deniel@cea.fr>  Thu, 23 Sep 2010 10:10:00 +0200
++
+ nfs-ganesha (0.99.65-1) stable; urgency=low
+ 
+   * FSAL_XFS now has lock support
+diff --git a/src/debian/source/format b/src/debian/source/format
+new file mode 100644
+index 0000000..89ae9db
+--- /dev/null
++++ b/src/debian/source/format
+@@ -0,0 +1 @@
++3.0 (native)
+-- 
+1.6.1.3
+

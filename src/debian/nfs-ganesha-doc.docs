@@ -1,0 +1,12 @@
+COMPILING_HOWTO.txt
+TODO
+Docs/nfs-ganesha-adminguide.pdf
+Docs/nfs-ganesha-userguide.pdf 
+Docs/nfs-ganeshell-userguide.pdf 
+Docs/nfs-ganesha-ganestat.pdf 
+Docs/nfs-ganesha-convert_fh.pdf 
+Docs/using_snmp_fsal.pdf  
+Docs/using_posix_fsal.pdf  
+Docs/using_ganeshell.pdf  
+Docs/using_fuse_fsal.pdf  
+Docs/ganesha_snmp_adm.pdf

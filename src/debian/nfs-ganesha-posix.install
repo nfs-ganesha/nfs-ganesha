@@ -1,0 +1,8 @@
+etc/ganesha/posix.ganesha.nfsd.conf
+etc/init.d/nfs-ganesha.posix
+usr/bin/posix.ganesha.nfsd
+usr/bin/posix.ganesha.convertFH
+usr/bin/posix.ganeshell
+etc/ganesha/posixdb_mysql5.sql
+#etc/ganesha/posixdb_v8.sql
+#etc/ganesha/posixdb_v7.sql

@@ -1,0 +1,1091 @@
+diff --git a/share/conf/hpss.ganesha.conf b/share/conf/hpss.ganesha.conf
+index a5612d2..67d8dc1 100644
+--- a/share/conf/hpss.ganesha.conf
++++ b/share/conf/hpss.ganesha.conf
+@@ -182,6 +182,8 @@ FileSystem
+   # a junction in a "LookupPath" (used for export entries).
+   auth_xdev_export = TRUE;
+ 
++  # writable xattrs can be modified by root
++  xattr_access_rights = 0600;
+ }
+ 
+ 
+diff --git a/src/FSAL/FSAL_FUSELIKE/fsal_xattrs.c b/src/FSAL/FSAL_FUSELIKE/fsal_xattrs.c
+index 0d6be2d..b2fb3db 100644
+--- a/src/FSAL/FSAL_FUSELIKE/fsal_xattrs.c
++++ b/src/FSAL/FSAL_FUSELIKE/fsal_xattrs.c
+@@ -460,6 +460,7 @@ fsal_status_t FSAL_GetXAttrValueById(
+ fsal_status_t FSAL_GetXAttrIdByName(
+     fsal_handle_t     * p_objecthandle,  /* IN */
+     const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
+     unsigned int      * pxattr_id        /* OUT */
+ )
+ {
+@@ -536,3 +537,26 @@ fsal_status_t FSAL_GetXAttrValueByName(
+   
+ }
+ 
++fsal_status_t FSAL_SetXAttrValue(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size,     /* IN */
++    int                 create           /* IN */
++)
++{
++	Return(ERR_FSAL_PERM ,0 , INDEX_FSAL_SetXAttrValue);
++}
++
++
++fsal_status_t FSAL_SetXAttrValueById(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    unsigned int        xattr_id,        /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size      /* IN */
++)
++{
++	Return(ERR_FSAL_PERM ,0 , INDEX_FSAL_SetXAttrValue);
++}
+diff --git a/src/FSAL/FSAL_GHOST_FS/fsal_xattrs.c b/src/FSAL/FSAL_GHOST_FS/fsal_xattrs.c
+index 61982e9..f1b035c 100644
+--- a/src/FSAL/FSAL_GHOST_FS/fsal_xattrs.c
++++ b/src/FSAL/FSAL_GHOST_FS/fsal_xattrs.c
+@@ -440,6 +440,7 @@ fsal_status_t FSAL_GetXAttrValueById(
+ fsal_status_t FSAL_GetXAttrIdByName(
+     fsal_handle_t     * p_objecthandle,  /* IN */
+     const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
+     unsigned int      * pxattr_id        /* OUT */
+ )
+ {
+@@ -521,3 +522,26 @@ fsal_status_t FSAL_GetXAttrValueByName(
+   
+ }
+ 
++fsal_status_t FSAL_SetXAttrValue(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size,     /* IN */
++    int                 create           /* IN */
++)
++{
++	Return(ERR_FSAL_PERM ,0 , INDEX_FSAL_SetXAttrValue);
++}
++
++
++fsal_status_t FSAL_SetXAttrValueById(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    unsigned int        xattr_id,        /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size      /* IN */
++)
++{
++	Return(ERR_FSAL_PERM ,0 , INDEX_FSAL_SetXAttrValue);
++}
+diff --git a/src/FSAL/FSAL_HPSS/fsal_internal.h b/src/FSAL/FSAL_HPSS/fsal_internal.h
+index 3a17ac2..88f2224 100644
+--- a/src/FSAL/FSAL_HPSS/fsal_internal.h
++++ b/src/FSAL/FSAL_HPSS/fsal_internal.h
+@@ -20,7 +20,7 @@
+ /* defined the set of attributes supported with HPSS */
+ #define HPSS_SUPPORTED_ATTRIBUTES (                                       \
+           FSAL_ATTR_SUPPATTR | FSAL_ATTR_TYPE     | FSAL_ATTR_SIZE      | \
+-          FSAL_ATTR_FSID     | FSAL_ATTR_ACL      | FSAL_ATTR_FILEID    | \
++          FSAL_ATTR_FSID     | FSAL_ATTR_FILEID    | \
+           FSAL_ATTR_MODE     | FSAL_ATTR_NUMLINKS | FSAL_ATTR_OWNER     | \
+           FSAL_ATTR_GROUP    | FSAL_ATTR_ATIME    | FSAL_ATTR_CREATION  | \
+           FSAL_ATTR_CTIME    | FSAL_ATTR_MTIME    | FSAL_ATTR_SPACEUSED | \
+diff --git a/src/FSAL/FSAL_HPSS/fsal_xattrs.c b/src/FSAL/FSAL_HPSS/fsal_xattrs.c
+index f5adada..5927013 100644
+--- a/src/FSAL/FSAL_HPSS/fsal_xattrs.c
++++ b/src/FSAL/FSAL_HPSS/fsal_xattrs.c
+@@ -365,6 +365,17 @@ static int do_match_type( int xattr_flag, fsal_nodetype_t obj_type )
+   }  
+ }
+ 
++static int attr_is_read_only( unsigned int attr_index )
++{
++	if ( attr_index < XATTR_COUNT )
++	{
++		if ( xattr_list[attr_index].flags & XATTR_RO )
++			return TRUE;
++	}
++	/* else : UDA */
++	return FALSE;
++}
++
+ 
+ static int file_attributes_to_xattr_attrs( fsal_attrib_list_t * file_attrs, fsal_attrib_list_t * p_xattr_attrs, unsigned int attr_index )
+ {
+@@ -416,7 +427,8 @@ static int file_attributes_to_xattr_attrs( fsal_attrib_list_t * file_attrs, fsal
+    if ( p_xattr_attrs->asked_attributes & FSAL_ATTR_MODE )
+    {
+         p_xattr_attrs->mode = file_attrs->mode & global_fs_info.xattr_access_rights;
+-	if ( xattr_list[attr_index].flags & XATTR_RO )
++
++	if ( attr_is_read_only( attr_index ) )
+ 		p_xattr_attrs->mode &= ~(0222);
+    }
+    
+@@ -484,7 +496,7 @@ static int file_attributes_to_xattr_attrs( fsal_attrib_list_t * file_attrs, fsal
+    {
+ 	p_xattr_attrs->owner = 0;
+ 	p_xattr_attrs->mode = 0600;
+-	if ( xattr_list[attr_index].flags & XATTR_RO )
++	if ( attr_is_read_only( attr_index ) )
+ 		p_xattr_attrs->mode &= ~(0200);
+    }
+ 
+@@ -518,11 +530,15 @@ fsal_status_t FSAL_GetXAttrAttrs(
+     Return( ERR_FSAL_FAULT, 0, INDEX_FSAL_GetXAttrAttrs );
+ 
+   /* check that this index match the type of entry */
+-  if ( xattr_id >= XATTR_COUNT
+-      || !do_match_type( xattr_list[xattr_id].flags, p_objecthandle->obj_type ) )
++  if ( xattr_id < XATTR_COUNT && !do_match_type( xattr_list[xattr_id].flags, p_objecthandle->obj_type ) )
+   {
+     Return( ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrAttrs );
+   }
++  else if ( xattr_id >= XATTR_COUNT )
++  {
++    /* This is UDA */
++    DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "Getting attributes for UDA #%u", xattr_id-XATTR_COUNT );
++  }
+     
+    /* object attributes we want to retrieve from parent */
+    file_attrs.asked_attributes = FSAL_ATTR_MODE | FSAL_ATTR_FILEID | FSAL_ATTR_OWNER
+@@ -549,6 +565,49 @@ fsal_status_t FSAL_GetXAttrAttrs(
+ } /* FSAL_GetXAttrAttrs */
+ 
+ 
++static int hpss_uda_name_2_fsal( const char * src, char * out )
++{
++	const char * curr_src = src;
++	char * curr = out;
++
++	/* skip first '/' */
++	while((*curr_src == '/') && (*curr_src != '\0' ))
++		curr_src++;
++	if ( *curr_src == '\0' )
++		return ERR_FSAL_INVAL;
++
++	strcpy( curr, curr_src );
++	while ( (curr = strchr(out, '/')) != NULL )
++	{
++		*curr = ':';
++	}
++	return 0;
++} 
++
++static int fsal_xattr_name_2_uda( const char * src, char * out )
++{
++	char * curr = out;
++
++	/* add first / */
++	*curr = '/';
++	curr++;
++
++	/* copy the xattr name */
++	strcpy( curr, src );
++
++	/* then replace ':' with '/' */
++	while ( (curr = strchr(out, ':')) != NULL )
++	{
++		*curr = '/';
++	}
++
++	/* UDA path must start with '/hpss/' */
++	if ( strncmp( out, "/hpss/", 6 ) != 0 )
++		return ERR_FSAL_INVAL;
++
++	return 0;
++}
++ 
+ 
+ /**
+  * Retrieves the list of extended attributes for an object in the filesystem.
+@@ -576,6 +635,7 @@ fsal_status_t FSAL_ListXAttrs(
+   unsigned int out_index;
+   fsal_status_t st;
+   fsal_attrib_list_t file_attrs;
++  int rc;
+   
+   /* sanity checks */
+   if ( !p_objecthandle || !p_context || !xattrs_tab || !p_nb_returned || !end_of_list )
+@@ -601,6 +661,7 @@ fsal_status_t FSAL_ListXAttrs(
+   {
+     if ( do_match_type( xattr_list[index].flags, p_objecthandle->obj_type ) )
+     {
++
+       /* fills an xattr entry */
+       xattrs_tab[out_index].xattr_id = index;
+       FSAL_str2name( xattr_list[index].xattr_name, FSAL_MAX_NAME_LEN, &xattrs_tab[out_index].xattr_name );
+@@ -609,9 +670,12 @@ fsal_status_t FSAL_ListXAttrs(
+       /* set asked attributes (all supported) */
+       xattrs_tab[out_index].attributes.asked_attributes = global_fs_info.supported_attrs;
+       
+-      if ( file_attributes_to_xattr_attrs( &file_attrs, &xattrs_tab[out_index].attributes, index ) )
++      rc = file_attributes_to_xattr_attrs( &file_attrs, &xattrs_tab[out_index].attributes, index );
++
++      if ( rc != 0 )
+       {
+           /* set error flag */
++    	  DisplayLogJdLevel( fsal_log, NIV_DEBUG, "Error %d getting attributes for xattr '%s'", rc, xattrs_tab[out_index].xattr_name );
+           xattrs_tab[out_index].attributes.asked_attributes = FSAL_ATTR_RDATTR_ERR ;
+       }
+           
+@@ -619,9 +683,83 @@ fsal_status_t FSAL_ListXAttrs(
+       out_index++;
+     }
+   }
++
++  *end_of_list = (index == XATTR_COUNT);
++
++#if HPSS_LEVEL >= 730
++  {
++	  /* get list of UDAs for this entry */
++	  hpss_userattr_list_t attr_list;
++
++	  memset( &attr_list, 0, sizeof(hpss_userattr_list_t) );
++
++  	  TakeTokenFSCall();
++	  rc = hpss_UserAttrListAttrHandle( &(p_objecthandle->ns_handle),
++					    NULL,
++					    &(p_context->credential.hpss_usercred),
++					    &attr_list,
++					    XML_ATTR );
++  	  ReleaseTokenFSCall();
++
++	  if ( rc == 0 )
++	  {
++		unsigned int i;
++		for ( i = 0; (i < attr_list.len) && (out_index < xattrs_tabsize); i++ )
++		{
++			char attr_name[FSAL_MAX_NAME_LEN];
++
++			/* the id is XATTR_COUNT + index of HPSS UDA */
++			index = XATTR_COUNT + i;
++
++			/* continue while index < cookie */
++			if ( index < cookie )
++				continue;
++
++			xattrs_tab[out_index].xattr_id = index;
++
++			if ( strlen( attr_list.Pair[i].Key ) >= FSAL_MAX_NAME_LEN )
++				 Return( ERR_FSAL_NAMETOOLONG, 0, INDEX_FSAL_ListXAttrs );
++
++			/* HPSS UDAs namespace is slash-separated.
++			 * we convert '/' to ':'
++			 */
++			rc = hpss_uda_name_2_fsal( attr_list.Pair[i].Key, attr_name );
++
++			if ( rc != ERR_FSAL_NO_ERROR )
++				Return( rc, 0, INDEX_FSAL_ListXAttrs );
++
++			FSAL_str2name( attr_name , FSAL_MAX_NAME_LEN, &xattrs_tab[out_index].xattr_name );
++			xattrs_tab[out_index].xattr_cookie = index + 1;
++
++      			/* set asked attributes (all supported) */
++		        xattrs_tab[out_index].attributes.asked_attributes = global_fs_info.supported_attrs;
++
++			rc = file_attributes_to_xattr_attrs( &file_attrs, &xattrs_tab[out_index].attributes, index );
++
++			if ( rc != 0 )
++			{
++				/* set error flag */
++    	  			DisplayLogJdLevel( fsal_log, NIV_DEBUG,
++					"Error %d getting attributes for xattr \'%s\'", rc, xattrs_tab[out_index].xattr_name );
++				xattrs_tab[out_index].attributes.asked_attributes = FSAL_ATTR_RDATTR_ERR ;
++			}
++			/* we know the size here (+2 for \n\0) */
++			else if ( attr_list.Pair[i].Value != NULL )
++				xattrs_tab[out_index].attributes.filesize = strlen( attr_list.Pair[i].Value ) + 2;
++
++			/* next output slot */
++			out_index++;
++		}
++		/* not end of list if there is more UDAs */
++		if ( i < attr_list.len )
++			*end_of_list = FALSE;
++
++  		printf("end of list = %u\n", *end_of_list );
++	  }
++  }
++#endif
+   
+   *p_nb_returned = out_index;
+-  *end_of_list = (index == XATTR_COUNT);
+   
+   Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_ListXAttrs );
+   
+@@ -657,11 +795,51 @@ fsal_status_t FSAL_GetXAttrValueById(
+     Return( ERR_FSAL_FAULT, 0, INDEX_FSAL_GetXAttrValue );
+     
+   /* check that this index match the type of entry */
+-  if ( xattr_id >= XATTR_COUNT
+-      || !do_match_type( xattr_list[xattr_id].flags, p_objecthandle->obj_type ) )
++  if ( xattr_id < XATTR_COUNT && !do_match_type( xattr_list[xattr_id].flags, p_objecthandle->obj_type ) )
+   {
+     Return( ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrValue );
+   }
++  else if ( xattr_id >= XATTR_COUNT )
++  {
++#if HPSS_LEVEL >= 730
++    /* This is a UDA */
++    hpss_userattr_list_t attr_list;
++    unsigned int i;
++    memset( &attr_list, 0, sizeof(hpss_userattr_list_t) );
++
++    DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "Getting value for UDA #%u", xattr_id-XATTR_COUNT );
++
++    /* get list of UDAs for this entry, and return the good value */
++
++    TakeTokenFSCall();
++    rc = hpss_UserAttrListAttrHandle( &(p_objecthandle->ns_handle),
++  				      NULL,
++				      &(p_context->credential.hpss_usercred),
++				      &attr_list,
++				      XML_ATTR );
++    ReleaseTokenFSCall();
++
++    if (rc != 0)
++	Return( hpss2fsal_error( rc ), rc, INDEX_FSAL_GetXAttrValue );
++    else if ( xattr_id - XATTR_COUNT >= attr_list.len )
++	/* this xattr does not exist anymore */
++	Return( ERR_FSAL_STALE, 0, INDEX_FSAL_GetXAttrValue );
++
++    if ( (attr_list.Pair[xattr_id - XATTR_COUNT].Value != NULL)
++	&& (attr_list.Pair[xattr_id - XATTR_COUNT].Value[0] != '\0') )
++	snprintf( (char*)buffer_addr, buffer_size, "%s\n", attr_list.Pair[xattr_id - XATTR_COUNT].Value );
++    else
++	strcpy( (char*)buffer_addr, "" );
++
++    *p_output_size = strlen((char*)buffer_addr)+1;
++
++    Return( ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrValue ); 
++	
++#else
++    /* udas are not supported. xattr_id is too high. */
++    Return( ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrValue );
++#endif
++  }
+   
+   /* get the value */
+  
+@@ -703,10 +881,11 @@ fsal_status_t FSAL_GetXAttrValueById(
+ fsal_status_t FSAL_GetXAttrIdByName(
+     fsal_handle_t     * p_objecthandle,  /* IN */
+     const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
+     unsigned int      * pxattr_id        /* OUT */
+ )
+ {
+-  unsigned int index;
++  unsigned int index, i;
+   int found = FALSE ;
+ 
+   /* sanity checks */
+@@ -723,6 +902,55 @@ fsal_status_t FSAL_GetXAttrIdByName(
+     }
+   }
+ 
++#if HPSS_LEVEL >= 730
++  if ( ! found )
++  {
++    /* search for name in UDAs */
++    hpss_userattr_list_t attr_list;
++    unsigned int i;
++    int rc;
++    char attrpath[FSAL_MAX_NAME_LEN];
++
++    /* convert FSAL xattr name to HPSS attr path.
++     * returns error if it is not a UDA name.
++     */
++    if ( fsal_xattr_name_2_uda( xattr_name->name, attrpath ) == 0 )
++    {
++
++	    memset( &attr_list, 0, sizeof(hpss_userattr_list_t) );
++
++	    DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "looking for xattr '%s' in UDAs", xattr_name->name );
++
++	    /* get list of UDAs for this entry, and return the good index */
++
++	    TakeTokenFSCall();
++	    rc = hpss_UserAttrListAttrHandle( &(p_objecthandle->ns_handle),
++					      NULL,
++					      &(p_context->credential.hpss_usercred),
++					      &attr_list,
++					      XML_ATTR );
++	    ReleaseTokenFSCall();
++
++	    if (rc == 0)
++	    {
++
++		for ( i = 0; i < attr_list.len; i++ )
++		{
++			if ( !strcmp( attr_list.Pair[i].Key, attrpath ) )
++			{
++				/* xattr index is XATTR_COUNT + UDA index */
++				index = XATTR_COUNT + i;
++				found = TRUE;
++				break;
++			}
++		}
++	    }
++
++      } /* enf if valid UDA name */
++
++  } /* end if not found */
++#endif
++
+   if( found )
+    {
+       *pxattr_id = index ;
+@@ -753,6 +981,7 @@ fsal_status_t FSAL_GetXAttrValueByName(
+ )
+ { 
+   unsigned int index;
++  fsal_status_t st;
+   
+   /* sanity checks */
+   if ( !p_objecthandle || !p_context || !p_output_size || !buffer_addr || !xattr_name)
+@@ -770,9 +999,148 @@ fsal_status_t FSAL_GetXAttrValueByName(
+       
+     }
+   }
++
++#if HPSS_LEVEL >= 730
++  /* try to get the id for this Attr */
++  st = FSAL_GetXAttrIdByName( p_objecthandle, xattr_name, p_context, &index );
++  if ( FSAL_IS_ERROR(st) )
++	Return( st.major, st.minor, INDEX_FSAL_GetXAttrValue );
++
++  /* found */
++  return FSAL_GetXAttrValueById( p_objecthandle, index, p_context, buffer_addr, buffer_size, p_output_size );
++#endif
+   
+   /* not found */  
+   Return( ERR_FSAL_NOENT, 0, INDEX_FSAL_GetXAttrValue );
+   
+ }
+ 
++
++static void chomp_attr_value( char * str, size_t size )
++{
++    int len;
++
++    if ( str == NULL )
++	return;
++
++    /* security: set last char to '\0' */
++    str[size-1] = '\0';
++
++    len = strlen(str);
++    if ( (len > 0) && (str[len-1] == '\n') )
++	str[len-1] = '\0';
++}
++
++fsal_status_t FSAL_SetXAttrValue(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size,     /* IN */
++    int                 create           /* IN */
++)
++{
++#if HPSS_LEVEL >= 730
++    int rc;
++    char attrpath[FSAL_MAX_NAME_LEN];
++    hpss_userattr_list_t inAttr;
++
++    /* check that UDA name is valid */
++    if ( fsal_xattr_name_2_uda( xattr_name->name, attrpath ) != 0 )
++	Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_SetXAttrValue);
++
++    /* remove '\n" */
++    chomp_attr_value((char*) buffer_addr, buffer_size);
++
++    /* Set the UDA value */
++
++    inAttr.len = 1;
++    /* must use malloc()  here, because hpss clapi may free() it */
++    inAttr.Pair = malloc(inAttr.len * sizeof(hpss_userattr_t));
++    inAttr.Pair[0].Key = attrpath;
++    inAttr.Pair[0].Value = (char*) buffer_addr;
++
++    TakeTokenFSCall();
++    rc = hpss_UserAttrSetAttrHandle(
++			&(p_objecthandle->ns_handle),
++			NULL,
++			&(p_context->credential.hpss_usercred),
++			&inAttr,
++			NULL );
++    ReleaseTokenFSCall();
++
++    free(inAttr.Pair);
++
++    Return( hpss2fsal_error( rc ), rc, INDEX_FSAL_SetXAttrValue );
++
++#else
++    Return(ERR_FSAL_PERM, 0, INDEX_FSAL_SetXAttrValue);
++#endif
++}
++
++fsal_status_t FSAL_SetXAttrValueById(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    unsigned int        xattr_id,        /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size      /* IN */
++)
++{
++#if HPSS_LEVEL >= 730
++    hpss_userattr_list_t attr_list;
++    hpss_userattr_list_t inAttr;
++    unsigned int i;
++    int rc;
++
++    if ( attr_is_read_only( xattr_id ) )
++	Return(ERR_FSAL_PERM, 0, INDEX_FSAL_SetXAttrValue);
++    else if ( xattr_id < XATTR_COUNT )
++	/* this is not a UDA (setattr not supported) */
++	Return(ERR_FSAL_PERM, 0, INDEX_FSAL_SetXAttrValue);
++
++    /* remove '\n" */
++    chomp_attr_value((char*) buffer_addr, buffer_size);
++
++    memset( &attr_list, 0, sizeof(hpss_userattr_list_t) );
++
++    DisplayLogJdLevel( fsal_log, NIV_FULL_DEBUG, "Getting name of UDA #%u", xattr_id-XATTR_COUNT );
++
++    TakeTokenFSCall();
++    rc = hpss_UserAttrListAttrHandle( &(p_objecthandle->ns_handle),
++  				      NULL,
++				      &(p_context->credential.hpss_usercred),
++				      &attr_list,
++				      XML_ATTR );
++    ReleaseTokenFSCall();
++
++    if (rc != 0)
++	Return( hpss2fsal_error( rc ), rc, INDEX_FSAL_SetXAttrValue );
++    else if ( xattr_id - XATTR_COUNT >= attr_list.len )
++	/* this xattr does not exist anymore */
++	Return( ERR_FSAL_STALE, 0, INDEX_FSAL_SetXAttrValue );
++
++    /* set the UDA by its name */
++
++    inAttr.len = 1;
++    /* must use malloc()  here, because hpss clapi may free() it */
++    inAttr.Pair = malloc(inAttr.len * sizeof(hpss_userattr_t));
++    inAttr.Pair[0].Key = attr_list.Pair[xattr_id - XATTR_COUNT].Key;
++    inAttr.Pair[0].Value = (char*) buffer_addr;
++
++    TakeTokenFSCall();
++    rc = hpss_UserAttrSetAttrHandle(
++			&(p_objecthandle->ns_handle),
++			NULL,
++			&(p_context->credential.hpss_usercred),
++			&inAttr,
++			NULL );
++    ReleaseTokenFSCall();
++
++    free(inAttr.Pair);
++
++    Return( hpss2fsal_error( rc ), rc, INDEX_FSAL_SetXAttrValue );
++
++#else
++    Return(ERR_FSAL_PERM, 0, INDEX_FSAL_SetXAttrValue);
++#endif
++}
+diff --git a/src/FSAL/FSAL_LUSTRE/fsal_xattrs.c b/src/FSAL/FSAL_LUSTRE/fsal_xattrs.c
+index 67adc0f..a941aee 100644
+--- a/src/FSAL/FSAL_LUSTRE/fsal_xattrs.c
++++ b/src/FSAL/FSAL_LUSTRE/fsal_xattrs.c
+@@ -544,6 +544,7 @@ fsal_status_t FSAL_GetXAttrValueById( fsal_handle_t * p_objecthandle,   /* IN */
+ 
+ fsal_status_t FSAL_GetXAttrIdByName( fsal_handle_t * p_objecthandle,    /* IN */
+                                      const fsal_name_t * xattr_name,    /* IN */
++    				     fsal_op_context_t * p_context,       /* IN */
+                                      unsigned int *pxattr_id    /* OUT */
+      )
+ {
+@@ -625,3 +626,26 @@ fsal_status_t FSAL_GetXAttrValueByName( fsal_handle_t * p_objecthandle, /* IN */
+     Return( ERR_FSAL_NOENT, 0, INDEX_FSAL_GetXAttrValue );
+ 
+ }
++
++fsal_status_t FSAL_SetXAttrValue(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size,     /* IN */
++    int                 create           /* IN */
++)
++{
++	Return(ERR_FSAL_PERM ,0 , INDEX_FSAL_SetXAttrValue);
++}
++
++fsal_status_t FSAL_SetXAttrValueById(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    unsigned int        xattr_id,        /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size      /* IN */
++)
++{
++	Return(ERR_FSAL_PERM ,0 , INDEX_FSAL_SetXAttrValue);
++}
+diff --git a/src/FSAL/FSAL_POSIX/fsal_xattrs.c b/src/FSAL/FSAL_POSIX/fsal_xattrs.c
+index 0851591..2fb519b 100644
+--- a/src/FSAL/FSAL_POSIX/fsal_xattrs.c
++++ b/src/FSAL/FSAL_POSIX/fsal_xattrs.c
+@@ -661,6 +661,7 @@ fsal_status_t FSAL_GetXAttrValueById(
+ fsal_status_t FSAL_GetXAttrIdByName(
+     fsal_handle_t     * p_objecthandle,  /* IN */
+     const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
+     unsigned int      * pxattr_id        /* OUT */
+ )
+ {
+@@ -733,3 +734,26 @@ fsal_status_t FSAL_GetXAttrValueByName(
+   
+ }
+ 
++fsal_status_t FSAL_SetXAttrValue(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size,     /* IN */
++    int                 create           /* IN */
++)
++{
++	Return(ERR_FSAL_PERM ,0 , INDEX_FSAL_SetXAttrValue);
++}
++
++
++fsal_status_t FSAL_SetXAttrValueById(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    unsigned int        xattr_id,        /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size      /* IN */
++)
++{
++	Return(ERR_FSAL_PERM ,0 , INDEX_FSAL_SetXAttrValue);
++}
+diff --git a/src/FSAL/FSAL_PROXY/fsal_xattrs.c b/src/FSAL/FSAL_PROXY/fsal_xattrs.c
+index ab0cf77..61fbe9f 100644
+--- a/src/FSAL/FSAL_PROXY/fsal_xattrs.c
++++ b/src/FSAL/FSAL_PROXY/fsal_xattrs.c
+@@ -657,6 +657,7 @@ fsal_status_t FSAL_GetXAttrValueById(
+ fsal_status_t FSAL_GetXAttrIdByName(
+     fsal_handle_t     * p_objecthandle,  /* IN */
+     const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
+     unsigned int      * pxattr_id        /* OUT */
+ )
+ {
+@@ -729,3 +730,26 @@ fsal_status_t FSAL_GetXAttrValueByName(
+   
+ }
+ 
++fsal_status_t FSAL_SetXAttrValue(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size,     /* IN */
++    int                 create           /* IN */
++)
++{
++	Return(ERR_FSAL_PERM ,0 , INDEX_FSAL_SetXAttrValue);
++}
++
++
++fsal_status_t FSAL_SetXAttrValueById(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    unsigned int        xattr_id,        /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size      /* IN */
++)
++{
++	Return(ERR_FSAL_PERM ,0 , INDEX_FSAL_SetXAttrValue);
++}
+diff --git a/src/FSAL/FSAL_SNMP/fsal_xattrs.c b/src/FSAL/FSAL_SNMP/fsal_xattrs.c
+index 34d3c3f..ababf46 100644
+--- a/src/FSAL/FSAL_SNMP/fsal_xattrs.c
++++ b/src/FSAL/FSAL_SNMP/fsal_xattrs.c
+@@ -481,6 +481,7 @@ fsal_status_t FSAL_GetXAttrValueById(
+ fsal_status_t FSAL_GetXAttrIdByName(
+     fsal_handle_t     * p_objecthandle,  /* IN */
+     const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
+     unsigned int      * pxattr_id        /* OUT */
+ )
+ {
+@@ -554,3 +555,26 @@ fsal_status_t FSAL_GetXAttrValueByName(
+   
+ }
+ 
++fsal_status_t FSAL_SetXAttrValue(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size,     /* IN */
++    int                 create           /* IN */
++)
++{
++	Return(ERR_FSAL_PERM ,0 , INDEX_FSAL_SetXAttrValue);
++}
++
++
++fsal_status_t FSAL_SetXAttrValueById(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    unsigned int        xattr_id,        /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size      /* IN */
++)
++{
++	Return(ERR_FSAL_PERM ,0 , INDEX_FSAL_SetXAttrValue);
++}
+diff --git a/src/FSAL/FSAL_TEMPLATE/fsal_xattrs.c b/src/FSAL/FSAL_TEMPLATE/fsal_xattrs.c
+index ba85df0..039e168 100644
+--- a/src/FSAL/FSAL_TEMPLATE/fsal_xattrs.c
++++ b/src/FSAL/FSAL_TEMPLATE/fsal_xattrs.c
+@@ -429,6 +429,7 @@ fsal_status_t FSAL_GetXAttrValueById(
+ fsal_status_t FSAL_GetXAttrIdByName(
+     fsal_handle_t     * p_objecthandle,  /* IN */
+     const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
+     unsigned int      * pxattr_id        /* OUT */
+ )
+ {
+@@ -502,3 +503,26 @@ fsal_status_t FSAL_GetXAttrValueByName(
+   
+ }
+ 
++fsal_status_t FSAL_SetXAttrValue(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size,     /* IN */
++    int                 create           /* IN */
++)
++{
++	Return(ERR_FSAL_PERM ,0 , INDEX_FSAL_SetXAttrValue);
++}
++
++
++fsal_status_t FSAL_SetXAttrValueById(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    unsigned int        xattr_id,        /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size      /* IN */
++)
++{
++	Return(ERR_FSAL_PERM ,0 , INDEX_FSAL_SetXAttrValue);
++}
+diff --git a/src/NFS_Protocols/nfs4_xattr.c b/src/NFS_Protocols/nfs4_xattr.c
+index 57c5dad..eaa1227 100644
+--- a/src/NFS_Protocols/nfs4_xattr.c
++++ b/src/NFS_Protocols/nfs4_xattr.c
+@@ -1227,6 +1227,7 @@ int nfs4_op_lookup_xattr(  struct nfs_argop4 * op ,
+   /* Try to get a FSAL_XAttr of that name */
+   fsal_status = FSAL_GetXAttrIdByName( pfsal_handle,
+ 				       &name,
++                                       data->pcontext,
+ 				       &xattr_id ) ;
+   if( FSAL_IS_ERROR( fsal_status ) )
+    {
+diff --git a/src/NFS_Protocols/nfs_Create.c b/src/NFS_Protocols/nfs_Create.c
+index c91c061..04528b3 100644
+--- a/src/NFS_Protocols/nfs_Create.c
++++ b/src/NFS_Protocols/nfs_Create.c
+@@ -174,15 +174,22 @@ int nfs_Create( nfs_arg_t         * parg,
+   cache_inode_status_t    cache_status_lookup  ;
+   cache_inode_file_type_t parent_filetype      ;
+   fsal_handle_t         * pfsal_handle         ;
++
++    if( ( preq->rq_vers == NFS_V3 ) &&
++      ( nfs3_Is_Fh_Xattr( &(parg->arg_create3.where.dir) ) ) ) 
++    {
++        DisplayLogLevel( NIV_DEBUG, "Trying to create new xattr \"%s\"", parg->arg_create3.where.name );
++        return nfs3_Create_Xattr( parg, pexport, pcontext, pclient, ht, preq, pres );
++    }
+   
+-	if (preq->rq_vers == NFS_V3)
++    if (preq->rq_vers == NFS_V3)
+     {
+       /* to avoid setting it on each error case */
+       pres->res_create3.CREATE3res_u.resfail.dir_wcc.before.attributes_follow = FALSE;
+       pres->res_create3.CREATE3res_u.resfail.dir_wcc.after.attributes_follow = FALSE;
+       ppre_attr = NULL;
+     }
+-  
++
+   if( ( parent_pentry = nfs_FhandleToCache( preq->rq_vers, 
+                                             &(parg->arg_create2.where.dir),
+                                             &(parg->arg_create3.where.dir),
+@@ -199,9 +206,9 @@ int nfs_Create( nfs_arg_t         * parg,
+       /* Stale NFS FH ? */
+       return rc ;
+     }
+-  
+-	/* get directory attributes before action (for V3 reply) */
+-  ppre_attr = &parent_attr;
++
++    /* get directory attributes before action (for V3 reply) */
++    ppre_attr = &parent_attr;
+   
+   /* Extract the filetype */
+   parent_filetype = cache_inode_fsal_type_convert( parent_attr.type ) ;
+diff --git a/src/NFS_Protocols/nfs_xattr.c b/src/NFS_Protocols/nfs_xattr.c
+index 9f14c0e..d5619c4 100644
+--- a/src/NFS_Protocols/nfs_xattr.c
++++ b/src/NFS_Protocols/nfs_xattr.c
+@@ -204,8 +204,14 @@ int nfs3_FSALattr_To_XattrDir( exportlist_t       * pexport,    /* In: the relat
+     return 0 ;
+ 
+   Fattr->type = NF3DIR ; /** Xattr directory is indeed a directory */
+-   
+-  Fattr->mode           = 0555 ; /* r-xr-xr-x (cannot create or remove xattrs)*/
++
++  /* r-xr-xr-x (cannot create or remove xattrs, except if HAVE_XATTR_CREATE is defined)*/
++#ifdef HAVE_XATTR_CREATE
++  Fattr->mode           = 0755 ;
++#else
++  Fattr->mode           = 0555 ;
++#endif
++
+   Fattr->nlink          = 2 ; /* like a directory */
+   Fattr->uid            = FSAL_attr->owner ;
+   Fattr->gid            = FSAL_attr->group ;
+@@ -526,6 +532,7 @@ int nfs3_Lookup_Xattr( nfs_arg_t               * parg,
+      /* Try to get a FSAL_XAttr of that name */
+      fsal_status = FSAL_GetXAttrIdByName( pfsal_handle,
+   				          &name,
++                                          pcontext,
+ 				          &xattr_id ) ;
+      if( FSAL_IS_ERROR( fsal_status ) )
+       {
+@@ -948,6 +955,70 @@ int nfs3_Readdir_Xattr( nfs_arg_t               * parg,
+  * @return always NFS_REQ_OK 
+  *
+  */
++int nfs3_Create_Xattr( nfs_arg_t         * parg,    
++                exportlist_t      * pexport, 
++                fsal_op_context_t       * pcontext,   
++                cache_inode_client_t    * pclient,
++                hash_table_t      * ht,
++                struct svc_req    * preq,    
++                nfs_res_t         * pres )
++{
++    cache_entry_t         * parent_pentry = NULL ;
++    fsal_attrib_list_t      parent_attr          ;
++    cache_inode_status_t    cache_status = CACHE_INODE_SUCCESS;
++    fsal_handle_t         * pfsal_handle = NULL ;
++    fsal_name_t             attr_name = FSAL_NAME_INITIALIZER;
++    fsal_status_t           fsal_status;
++    int rc;
++    char empty_buff[16] = "";
++
++    if (preq->rq_vers == NFS_V3)
++    {
++      /* to avoid setting it on each error case */
++      pres->res_create3.CREATE3res_u.resfail.dir_wcc.before.attributes_follow = FALSE;
++      pres->res_create3.CREATE3res_u.resfail.dir_wcc.after.attributes_follow = FALSE;
++    }
++
++    if( ( parent_pentry = nfs_FhandleToCache( preq->rq_vers, 
++                                            NULL,
++                                            &(parg->arg_create3.where.dir),
++                                            NULL, 
++                                            &(pres->res_dirop2.status),
++                                            NULL,
++                                            NULL,
++                                            &parent_attr, 
++                                            pcontext, 
++                                            pclient, 
++                                            ht, 
++                                            &rc ) ) == NULL )
++    {
++      /* Stale NFS FH ? */
++      return rc ;
++    }
++
++    /* Get the associated FSAL Handle */
++    pfsal_handle = cache_inode_get_fsal_handle( parent_pentry, &cache_status ) ;
++
++    /* convert attr name to FSAL name */
++    FSAL_str2name( parg->arg_create3.where.name, FSAL_MAX_NAME_LEN, &attr_name ); 
++
++    fsal_status = FSAL_SetXAttrValue( pfsal_handle,
++                                      &attr_name,
++                                      pcontext,
++                                      empty_buff,
++                                      16,
++                                      TRUE );
++
++    if( FSAL_IS_ERROR( fsal_status ) )
++    {
++        pres->res_create3.status = nfs3_Errno( cache_inode_error_convert(fsal_status) ) ;
++        return NFS_REQ_OK ;
++    }
++
++    /* @todo to be continued */
++    return NFS_REQ_OK ;
++ 
++}
+ 
+ int nfs3_Write_Xattr( nfs_arg_t               * parg,    
+                       exportlist_t            * pexport, 
+@@ -966,6 +1037,7 @@ int nfs3_Write_Xattr( nfs_arg_t               * parg,
+   fsal_size_t               size = 0 ;
+   fsal_size_t               written_size;
+   fsal_off_t                offset = 0;
++  fsal_status_t             fsal_status ;
+   caddr_t                   data = NULL;
+   enum stable_how           stable;     /* NFS V3 storage stability, see RFC1813 page 50 */
+   cache_inode_file_type_t   filetype      ;
+@@ -994,7 +1066,6 @@ int nfs3_Write_Xattr( nfs_arg_t               * parg,
+       return rc ;
+     }
+ 
+-
+   /* Turn the nfs FH into something readable */
+   pfile_handle = (file_handle_v3_t *)(parg->arg_write3.file.data.data_val) ;
+ 
+@@ -1022,14 +1093,20 @@ int nfs3_Write_Xattr( nfs_arg_t               * parg,
+ 
+   offset = parg->arg_write3.offset;
+ 
+-  /* Get the xattr related to this xattr_id */
+-  if( ( data = (char *)Mem_Alloc( XATTR_BUFFERSIZE ) ) == NULL )
+-   {
+-      return NFS_REQ_DROP ;
+-   }
+-   memset( data, 0, XATTR_BUFFERSIZE );
++  if ( offset > 0 )
++  {
++       pres->res_write3.status = NFS3ERR_INVAL;
++       return NFS_REQ_OK;
++  }
++
++  fsal_status = FSAL_SetXAttrValueById( pfsal_handle,
++                                        xattr_id,
++                                        pcontext,
++                                        parg->arg_write3.data.data_val,
++                                        parg->arg_write3.data.data_len );
+ 
+    /** @todo to be continued */
++
+    return NFS_REQ_OK ;
+ } /* nfs3_Write_Xattr */
+ 
+diff --git a/src/config_samples/hpss.ganesha.nfsd.conf b/src/config_samples/hpss.ganesha.nfsd.conf
+index 01477fe..1e75367 100644
+--- a/src/config_samples/hpss.ganesha.nfsd.conf
++++ b/src/config_samples/hpss.ganesha.nfsd.conf
+@@ -229,8 +229,8 @@ FileSystem
+   # a junction in a "LookupPath" (used for export entries).
+   auth_xdev_export = TRUE;
+ 
+-  # defines access mask for extended attributes
+-  xattr_access_rights = 0600; 
++  # writable xattrs can be modified by root
++  xattr_access_rights = 0600;
+   
+ }
+ 
+diff --git a/src/include/FSAL/FSAL_HPSS/fsal_types.h b/src/include/FSAL/FSAL_HPSS/fsal_types.h
+index 74a252f..71fa041 100644
+--- a/src/include/FSAL/FSAL_HPSS/fsal_types.h
++++ b/src/include/FSAL/FSAL_HPSS/fsal_types.h
+@@ -319,6 +319,10 @@ typedef u_signed64 fsal_cookie_t;
+ 
+ typedef void * fsal_lockdesc_t;  /**< not implemented in hpss */
+ 
++#if HPSS_LEVEL >= 730
++#define HAVE_XATTR_CREATE 1
++#endif
++
+ 
+ #endif /* _FSAL_TYPES_SPECIFIC_H */
+ 
+diff --git a/src/include/fsal.h b/src/include/fsal.h
+index 359b353..5cbb4fa 100644
+--- a/src/include/fsal.h
++++ b/src/include/fsal.h
+@@ -781,6 +781,7 @@ fsal_status_t FSAL_ListXAttrs(
+ fsal_status_t FSAL_GetXAttrIdByName(
+     fsal_handle_t     * p_objecthandle,  /* IN */
+     const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
+     unsigned int      * pxattr_id        /* OUT */
+ );
+ 
+@@ -837,11 +838,28 @@ fsal_status_t FSAL_GetXAttrValueById(
+ fsal_status_t FSAL_SetXAttrValue(
+     fsal_handle_t     * p_objecthandle,  /* IN */
+     const fsal_name_t * xattr_name,      /* IN */
++    fsal_op_context_t * p_context,       /* IN */
+     caddr_t             buffer_addr,     /* IN */
+     size_t              buffer_size,     /* IN */
+     int                 create           /* IN */
+ );
+ 
++/**
++ * Set the value of an extended attribute by its Id.
++ *
++ * \param p_objecthandle Handle of the object you want to set attribute for.
++ * \param xattr_id index of the attribute to be written.
++ * \param p_context pointer to the current security context.
++ * \param buffer_addr address of the buffer where the xattr value is stored.
++ * \param buffer_size size of the buffer where the xattr value is stored.
++ */
++fsal_status_t FSAL_SetXAttrValueById(
++    fsal_handle_t     * p_objecthandle,  /* IN */
++    unsigned int        xattr_id,        /* IN */
++    fsal_op_context_t * p_context,       /* IN */
++    caddr_t             buffer_addr,     /* IN */
++    size_t              buffer_size );   /* IN */
++
+ 
+ /**
+  * Get the attributes of an extended attribute from its index.
+diff --git a/src/include/nfs_proto_functions.h b/src/include/nfs_proto_functions.h
+index b08abc4..f0b904a 100644
+--- a/src/include/nfs_proto_functions.h
++++ b/src/include/nfs_proto_functions.h
+@@ -1106,6 +1106,15 @@ int nfs3_Read_Xattr( nfs_arg_t               * parg,
+                      struct svc_req          * preq,    
+                      nfs_res_t               * pres ) ; 
+ 
++int nfs3_Create_Xattr( nfs_arg_t         * parg,
++	               exportlist_t      * pexport,
++                	fsal_op_context_t       * pcontext,
++                	cache_inode_client_t    * pclient,
++                	hash_table_t      * ht,
++                	struct svc_req    * preq,
++                	nfs_res_t         * pres );
++
++
+ int nfs3_Write_Xattr( nfs_arg_t               * parg,    
+                       exportlist_t            * pexport, 
+                       fsal_op_context_t       * pcontext,   

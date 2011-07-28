@@ -1,0 +1,100 @@
+% The file must begin with this \documentclass declaration. You can 
+% give one of three different options which control how picky LaTeX 
+% is when typesetting:
+%
+% galley - All ``this doesn't fit'' warnings are suppressed, and 
+%          references are disabled (the key will be printed as a
+%          reminder).  Use this mode while writing.
+%
+% proof -  All ``this doesn't fit'' warnings are active, as are
+%          references.  Overfull hboxes make ugly black blobs in
+%          the margin.  Use this mode to tidy up formatting after
+%          you're done writing.  (Same as article's ``draft'' mode.)
+%
+% final -  As proof, but the ugly black blobs are turned off.  Use
+%          this to render PDFs or PostScript to give to other people,
+%          when you're completely done.  (As with article, this is the
+%          default.)
+%
+% You can also use the leqno, fleqn, or openbib options to article.cls
+% if you wish.  None of article's other options will work.
+
+%%%
+%%% PLEASE CHANGE 'galley' to 'final' BEFORE SUBMITTING.  THANKS!
+%%% (to submit: "make clean" in the toplevel directory; tar and gzip *only* your directory;
+%%% email the gzipped tarball to papers@linuxsymposium.org.)
+%%%
+\documentclass[final]{ols}
+
+% These two packages allow easy handling of urls and identifiers per the example paper.
+\usepackage{url}
+\usepackage{zrl}
+
+% The following package is not required, but is a handy way to put PDF and EPS graphics
+% into your paper using the \includegraphics command.
+\ifpdf
+\usepackage[pdftex]{graphicx}
+\else
+\usepackage{graphicx}
+\fi
+
+
+% Here in the preamble, you may load additional packages, or
+% define whatever macros you like, with the following exceptions:
+%
+% - Do not mess with the page layout, either by hand or with packages
+%   (e.g., typearea, geometry).
+% - Do not change the principal fonts, either by hand or with packages.
+% - Do not use \pagestyle, or load any page header-related packages.
+% - Do not redefine any commands having to do with article titles.
+% - If you are using something that is not part of the standard
+%   tetex-2 distribution, please make a note of whether it's on CTAN,
+%   or include a copy with your submission.
+%
+
+\begin{document}
+
+% Mandatory: article title specification.
+% Do not put line breaks or other clever formatting in \title or
+% \shortauthor; these are moving arguments.
+
+\title{__TITLE__}
+\subtitle{__SUBTITLE__}  % Subtitle is optional.
+\date{}             % You can put a fixed date in if you wish,
+                    % allow LaTeX to use the date of typesetting,
+                    % or use \date{} to have no date at all.
+                    % Whatever you do, there will not be a date
+                    % shown in the proceedings.
+
+\shortauthor{__AUTHOR__}  % Just you and your coauthors' names.
+% for example, \shortauthor{A.N.\ Author and A.\ Nother}
+% or perchance \shortauthor{Smith, Jones, Black, White, Gray, \& Greene}
+
+\author{%  Authors, affiliations, and email addresses go here, like this:
+__AUTHOR__ \\
+{\itshape Your affiliation}\\
+{\ttfamily\normalsize your-address@example.com}\\
+% \and
+% Bob \\
+% {\itshape Bob's affiliation.}\\
+% {\ttfamily\normalsize bob@example.com}\\
+} % end author section
+
+\maketitle
+
+\begin{abstract}
+% Article abstract goes here.
+\input{__ABSTRACT__}
+\end{abstract}
+
+% Body of your article goes here.  You are mostly unrestricted in what
+% LaTeX features you can use; however, the following will not work:
+% \thispagestyle
+% \marginpar
+% table of contents
+% list of figures / tables
+% glossaries
+% indices
+
+\end{document}
+
