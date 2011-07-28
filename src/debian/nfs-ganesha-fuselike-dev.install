@@ -1,0 +1,4 @@
+/usr/include/ganesha_fuse_wrap.h
+/usr/lib/libganeshaNFS.a
+/usr/lib/libganeshaNFS.so
+/usr/lib/pkgconfig/libganeshaNFS.pc

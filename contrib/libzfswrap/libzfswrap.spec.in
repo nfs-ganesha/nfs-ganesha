@@ -1,0 +1,86 @@
+Name: @PACKAGE_NAME@
+Version: @PACKAGE_VERSION@
+Release: 1.0
+Summary: Library to access to a ZFS file system without fuse
+License: CDDL
+Group: Development/Libraries
+Url: http://nfs-ganesha.sourceforge.net
+Source0: %{name}-%{version}.tar.bz2
+BuildRoot: %{_tmppath}/%{name}-%{version}-root-%(%{__id_u} -n)
+BuildRequires: libaio-devel openssl-devel zlib-devel
+BuildRequires: autoconf automake gcc
+Requires: openssl
+
+%description
+libzfswrap is a library that allows access and manipulation of a ZFS file
+system with no need of fuse.
+
+%package devel
+Summary: Development file for the library that access to a ZFS file system without fuse
+Group: Development/Libraries
+Requires: %{name} = %{version}-%{release} pkgconfig
+
+%package utils
+Summary: Tool to manage a ZFS file system with no need of fuse
+Group: Applications/File
+Requires: %{name} = %{version}-%{release}
+
+
+%description devel
+libzfswrap is a library that allows access and manipulation of a ZFS file
+system with no need of fuse. This package contains the development headers for
+the libzfswrap library.
+
+%description utils
+libzfswrap is a library that allows access and manipulation of a ZFS file
+system with no need of fuse. This package contains the tools to administrate
+the ZFS file system using libzfswrap.
+
+
+%prep
+%setup -q -n %{name}-%{version}
+
+%build
+%configure @ac_configure_args@
+make %{?_smp_mflags} || make %{?_smp_mflags} || make
+
+%install
+rm -rf $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT%{_bindir}
+mkdir -p $RPM_BUILD_ROOT%{_libdir}
+mkdir -p $RPM_BUILD_ROOT%{_libdir}/pkgconfig
+
+make install DESTDIR=$RPM_BUILD_ROOT
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files
+%defattr(-,root,root)
+%doc README
+%{_libdir}/libzfswrap.la
+%{_libdir}/libzfswrap.so.*
+
+%files devel
+%defattr(-,root,root)
+%{_libdir}/pkgconfig/libzfswrap.pc
+%{_includedir}/libzfswrap.h
+%{_libdir}/libzfswrap.so
+%{_libdir}/libzfswrap.a
+
+%files utils
+%defattr(-,root,root)
+%{_bindir}/lzw_zfs
+%{_bindir}/lzw_zpool
+
+
+%changelog
+* Tue Nov 9 2010 Duraffort Remi <duraffortr@ocre.cea.fr> 1.0.2
+- fix the destruction of snapshots
+
+* Tue Oct 19 2010 Duraffort Remi <duraffortr@ocre.cea.fr> 1.0.1
+- add snapshots handling
+
+* Wed Jul 21 2010 Duraffort Remi <duraffortr@ocre.cea.fr> 1.0.0
+- initial release

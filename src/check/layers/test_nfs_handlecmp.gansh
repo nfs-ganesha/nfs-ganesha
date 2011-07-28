@@ -1,0 +1,102 @@
+set VERBOSE "OFF"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+init_fs -v ../all_fs.ganesha.nfsd.conf 
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_DEBUG"
+init_cache -v ../all_fs.ganesha.nfsd.conf
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+set LAYER NFS
+set DEBUG_LEVEL "NIV_EVENT"
+nfs_init -v ../all_fs.ganesha.nfsd.conf
+if ne -- $STATUS 0 ? print "INIT_ERROR" : print "INIT_OK"
+
+mount /
+
+# retrieving test users
+
+set USER1 `shell "cat user1.sav"`
+set USER2 `shell "cat user2.sav"`
+set USER3 `shell "cat user3.sav"`
+set TESTDIR `shell "cat testdir.sav"`
+
+set USER1 `chomp $USER1`
+set USER2 `chomp $USER2`
+set USER3 `chomp $USER3`
+set TESTDIR `chomp $TESTDIR`
+
+if eq $USER1 "" ? print "error: USER1 not set"
+if eq $USER2 "" ? print "error: USER2 not set"
+if eq $USER3 "" ? print "error: USER3 not set"
+if eq $TESTDIR "" ? print "error: TESTDIR not set"
+
+
+# je deviens user1
+su $USER1
+if ne -- $STATUS 0 ? print "SU_ERROR" : print "SU_OK"
+
+set chemin $TESTDIR "/TEST_DIR"
+
+mkdir $chemin 777
+
+# set the mode in case directory already exists
+if eq -- $STATUS 17 ? setattr $chemin MODE=777
+
+cd $chemin
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+# creation d'un sous-repertoire
+mkdir TEST_HANDLE_CMP 700
+if ne -- $STATUS 0 ? print "MKDIR_ERROR" : print "MKDIR_OK"
+
+cd ./TEST_HANDLE_CMP
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+#creation d'un fichier
+create FICHIER1 755
+if ne -- $STATUS 0 ? print "CREATE_ERROR" : print "CREATE_OK"
+
+#creation d'un 2e fichier
+create FICHIER2 755
+if ne -- $STATUS 0 ? print "CREATE_ERROR" : print "CREATE_OK"
+
+#creation d'un lien hard
+hardlink FICHIER1 FICHIER1_HL
+if ne -- $STATUS 0 ? print "HARDLINK_ERROR" : print "HARDLINK_OK"
+
+# comparaison des handles
+handlecmp . ..
+if eq -- $STATUS 0 ? print "HANDLECMP_ERROR" : print "HANDLECMP_OK"
+
+handlecmp FICHIER1 FICHIER2
+if eq -- $STATUS 0 ? print "HANDLECMP_ERROR" : print "HANDLECMP_OK"
+
+handlecmp FICHIER1 FICHIER1
+if ne -- $STATUS 0 ? print "HANDLECMP_ERROR" : print "HANDLECMP_OK"
+
+handlecmp FICHIER1 FICHIER1_HL
+if ne -- $STATUS 0 ? print "HANDLECMP_ERROR" : print "HANDLECMP_OK"
+
+handlecmp . ../TEST_HANDLE_CMP
+if ne -- $STATUS 0 ? print "HANDLECMP_ERROR" : print "HANDLECMP_OK"
+
+# on supprime les fichiers
+unlink FICHIER1
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink FICHIER2
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+unlink FICHIER1_HL
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"
+
+# return to higher level
+cd ..
+if ne -- $STATUS 0 ? print "CD_ERROR" : print "CD_OK"
+
+unlink TEST_HANDLE_CMP
+if ne -- $STATUS 0 ? print "UNLINK_ERROR" : print "UNLINK_OK"

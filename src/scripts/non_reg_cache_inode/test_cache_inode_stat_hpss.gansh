@@ -1,0 +1,154 @@
+# $Header: /cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/scripts/non_reg_cache_inode/test_cache_inode_stat_hpss.gansh,v 1.4 2006/02/08 12:57:52 leibovic Exp $
+#
+# $Log: test_cache_inode_stat_hpss.gansh,v $
+# Revision 1.4  2006/02/08 12:57:52  leibovic
+# changing NIV_EVNMT to NIV_EVENT.
+#
+# Revision 1.3  2005/10/07 08:29:57  deniel
+# Added su to Thomas id in the non regression scripts
+#
+# Revision 1.2  2005/09/28 08:08:14  leibovic
+# Using absolute path in order to launch the test from anywhere...
+#
+# Revision 1.1  2005/08/25 12:21:05  leibovic
+# Tests de non regression pour la cache_inode.
+#
+# Revision 1.3  2005/05/10 11:06:53  leibovic
+# Adapting to ganeshell v2.
+#
+# Revision 1.2  2005/04/19 15:20:26  leibovic
+# New interface for init_fs (filesystem).
+#
+# Revision 1.1  2005/04/15 09:16:45  leibovic
+# Tests de non regression pour la FSAL hpss.
+#
+#
+# tests du bug detecte sur les stats
+#
+
+# options du shell
+set VERBOSE "OFF"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+init_fs /tmp/hpss.ganesha.conf
+if ne -- $STATUS 0 ? print "INIT_FSAL_ERROR" : print "INIT_FSAL_OK"
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_DEBUG"
+init_cache -v /tmp/hpss.ganesha.conf
+if ne -- $STATUS 0 ? print "INIT_CACHE_ERROR" : print "INIT_CACHE_OK"
+
+# on se place a la racine
+cd /
+
+# TEST 1 : on fait des stat sur la racine par un stat /
+# puis par un stat . et on compare les resultats
+
+print "------ TEST 1 : stat / and stat .        -------"
+
+set STAT1_1 `stat /`
+set STAT1_2 `stat /`
+set STAT1_3 `stat .`
+set STAT1_4 `stat /`
+set STAT1_5 `stat .`
+
+print "STAT1_1: " `wc $STAT1_1`
+print "STAT1_2: " `wc $STAT1_2`
+print "STAT1_3: " `wc $STAT1_3`
+print "STAT1_4: " `wc $STAT1_4`
+print "STAT1_5: " `wc $STAT1_5`
+
+set ERROR_STAT 0
+
+if ne -- $STAT1_1 $STAT1_2 ? set ERROR_STAT 1
+if ne -- $STAT1_1 $STAT1_4 ? set ERROR_STAT 1
+if ne -- $STAT1_3 $STAT1_5 ? set ERROR_STAT 1
+
+if ne -n $ERROR_STAT 0  ? print "STAT_ERROR" : print "STAT_OK"
+
+# test de stats sur d'autres repertoires
+# entrecoupes d'autres appels
+
+print "------ TEST 2 : stat, cd, stat           -------"
+
+# Prise de l'identite de Thomas
+su 3733
+
+set STAT2_1 `stat /cea/prot/S/lama/s8/leibovic/ganeshell`
+set STAT2_2 `stat /cea/prot/S/lama/s8/leibovic/ganeshell`
+cd /cea/prot/S/lama/s8/leibovic
+set STAT2_3 `stat ganeshell`
+set STAT2_4 `stat ganeshell`
+
+print "STAT2_1: " `wc $STAT2_1`
+print "STAT2_2: " `wc $STAT2_2`
+print "STAT2_3: " `wc $STAT2_3`
+print "STAT2_4: " `wc $STAT2_4`
+
+
+set ERROR_STAT 0
+
+if ne -- $STAT2_1 $STAT2_2 ? set ERROR_STAT 1
+if ne -- $STAT2_3 $STAT2_4 ? set ERROR_STAT 1
+if ne -- $STAT2_1 $STAT2_3 ? set ERROR_STAT 1
+
+if ne -n $ERROR_STAT 0  ? print "STAT_ERROR" : print "STAT_OK"
+
+
+# idem avec un ls -l entre les deux
+
+print  "------ TEST 3 : stat, ls -l, stat, ls -l -------"
+
+
+set STAT3_1 `stat /cea/prot/S/lama/s8/leibovic`
+set LS3_1   `ls -ld /cea/prot/S/lama/s8/leibovic`
+set STAT3_2 `stat /cea/prot/S/lama/s8/leibovic`
+set LS3_2   `ls -ld /cea/prot/S/lama/s8/leibovic`
+
+print "STAT3_1: " `wc $STAT3_1`
+print "STAT3_2: " `wc $STAT3_2`
+
+if ne -- $STAT3_1 $STAT3_2 ? print "STAT_ERROR" : print "STAT_OK"
+
+print "LS3_1: " `wc $LS3_1`
+print "LS3_2: " `wc $LS3_2`
+if ne -- $LS3_1 $LS3_2 ?  print "LS_ERROR" : print "LS_OK"
+
+
+# idem avec un ls -S entre les deux
+
+print "------ TEST 4 : stat, ls -S, stat  ls -S -------"
+
+set STAT4_1 `stat /cea/prot/S/lama/s8/leibovic`
+set LS4_1   `ls -Sd /cea/prot/S/lama/s8/leibovic`
+set STAT4_2 `stat /cea/prot/S/lama/s8/leibovic`
+set LS4_2   `ls -Sd /cea/prot/S/lama/s8/leibovic`
+
+print "STAT4_1: " `wc $STAT4_1`
+print "STAT4_2: " `wc $STAT4_2`
+if ne -- $STAT4_1 $STAT4_2 ? print "STAT_ERROR" : print "STAT_OK"
+
+print "LS4_1: " `wc $LS4_1`
+print "LS4_2: " `wc $LS4_2`
+if ne -- $LS4_1 $LS4_2 ? print "LS_ERROR" : print "LS_OK"
+
+#idem avec un cd et un ls entre les 2
+
+print "------ TEST 5 : stat, cd, ls, stat, ls   ------- "
+
+
+set STAT5_1 `stat /cea/prot/S/lama/s8/deniel`
+cd /cea/prot/S/lama/s8
+set LS5_1 `ls -l`
+set STAT5_2 `stat deniel`
+set LS5_2 `ls -l`
+
+print "STAT5_1: " `wc $STAT5_1`
+print "STAT5_2: " `wc $STAT5_2`
+if ne -- $STAT5_1 $STAT5_2 ? print "STAT_ERROR" : print "STAT_OK"
+
+print "LS5_1: " `wc $LS5_1`
+print "LS5_2: " `wc $LS5_2`
+if ne -- $LS5_1 $LS5_2 ? print "LS_ERROR" : print "LS_OK"
+

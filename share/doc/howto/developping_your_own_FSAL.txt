@@ -1,0 +1,1126 @@
+
+Developping a Filesystem Abstration Layer
+for exporting a specific filesystem type.
+
+
+Intro : topo Philippe sur la genericite du design
+=====
+
+
+Preparing a new FSAL
+====================
+
+The first thing you have to do is to duplicate
+the FSAL_TEMPLATE directory. This contains a FSAL with
+only some basic utility functions, but without any
+filesystem processing (empty prototypes).
+Let's name it 'FSAL_MYFS' for this tutorial.
+
+Edit the 'configure.ac' file to define compilation flags for this new FSAL:
+- add 'MYFS' to the brief help of the '--with-fsal' option:
+	AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=PROXY|POSIX|...|MYFS ...
+- define an automake condition, so you can add an FSAL switch to makefiles:
+	AM_CONDITIONAL(USE_FSAL_MYFS,    test "$FSAL" = "MYFS")
+- add a 'MYFS' case in the following switch:
+
+case $FSAL in
+	MYFS)
+		AC_DEFINE([_USE_MYFS], 1, [GANESHA is compiled with MYFS FSAL])
+		# FS specific compilation flags
+		FSAL_CFLAGS="-I/opt/myfs/include"
+		# FS specific linking flags
+		FSAL_LDFLAGS="-L/opt/myfs/lib -Wl,-rpath,/opt/myfs/lib -lmyfs"
+		# path to FSAL libraries in GANESHA source tree
+        	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_MYFS/libfsalmyfs.la \$(top_builddir)/FSAL/FSAL_MYFS/subdir/libmyfs_tools.la"
+               	FS_NAME="myfs"
+		;;
+
+Add a path to the FSAL Makefile in AC_CONFIG_FILES directive:
+                 include/FSAL/FSAL_MYFS/Makefile
+
+In "src/FSAL/Makefile.am", add a case for this new FSAL:
+if USE_FSAL_MYFS
+SUBDIRS = FSAL_MYFS
+endif
+
+Create and fill "src/FSAL/FSAL_MYFS/Makefile.am".
+
+Finally, run 'autoreconf' in project root to regenerate './configure' and
+Makefile.
+
+FSAL includes
+=============
+
+The FSAL interface is always defined by the same 2 include files,
+whatever the filesystem your are using.
+The types definitions are selected at compilation time
+depending on the _USE_<FSname> define.
+
+- fsal_types.h : defines some generic types that are the same
+for all filesystems, but also defines some data strutures
+that can be filesystem dependant.
+
+- fsal.h : defines the FSAL functions prototypes
+(must be same for all filesystems).
+
+
+
+fsal_types.h
+------------
+
+In the fsal_types.h, you must define the types that will be used
+with your FSAL.
+Thus, you have to fill the places everywhere you have
+a "ifdef _USE_TEMPLATE" statement :
+
+* First, if your filesystem types require some specific includes,
+you have to include them in the "FS relative includes" section.
+To do so, add a "#elif defined(_USE_MYFS)" statement and write your
+include statements.
+
+* You also have to specify the label of the configuration file section
+that will contain your filesystem specific configuration.
+Example: #define CONF_LABEL_FS_SPECIFIC "MYFS"
+
+* Then, in the "FS dependant" section, you have to define the following
+types and values, depending on your implementation :
+(after a #elif defined(_USE_MYFS)" statement)
+
+- FSAL_MAX_NAME_LEN: the maximum filename length of the underlying filesystem.
+
+- FSAL_MAX_PATH_LEN: the maximum path length of the underlying filesystem.
+
+- fsal_name_t : the structure for storing a filesystem filename. It must have at least
+  one field called "name" that is a 'char *' representing the filename.
+  
+- fsal_path_t : the structure for storing a filesystem path. It must have at least
+  one field called "path" that is a 'char *' representing the object path.
+  
+- FSAL_NAME_INITIALIZER: a macro that initializes a fsal_name_t structure.
+
+- FSAL_PATH_INITIALIZER: a macro that initializes a fsal_path_t structure.
+
+- FSAL_DOT: a macro that must return a fsal_name_t that corresponds to the name of
+  the current directory (the '.' entry of a directory).
+  
+- FSAL_DOT_DOT: a macro that must return a fsal_name_t that corresponds to the name of
+  the parent directory (the '..' entry of a directory).
+  
+- fsal_handle_t: this structure must contain the information you need
+  to address an object of your filesystem.
+  
+- fsal_cred_t: this structure must contain the authentication info
+  you need to keep about a user, for issuing a request to the filesystem
+  For example: a credential, a ticket, or uid and gid,...
+  
+- fsal_export_context_t: if you need to keep some specific info
+  about an export entry of the NFS server, put it in this structure.
+  
+- fsal_op_context_t: when the server does an FSAL call, it will provide you
+  this structure that must contain :
+  * information about the user who does this request (basically a fsal_cred_t)
+  * information about the related export entry (basically a fsal_export_context_t)
+  NB: this structure is thread-specific (associated to a single worker thread).
+  
+- fsal_dir_t: put in this structure the information you want to keep for
+  a FSAL_Opendir/FSAL_Readdir/FSAL_Closedir session.
+  
+- fsal_file_t: put in this structure the information you want to keep for
+  a FSAL_Open/FSAL_Read/FSAL_Write/FSAL_Close session.
+  
+- FSAL_FILENO: this macro must return a unique filedescriptor index
+  for a given fsal_file_t structure.
+  
+- fsal_cookie_t: this struture is used by FSAL_Readdir, for specifying
+  the offset of the next entry to be returned.
+  
+- FSAL_READDIR_FROM_BEGINNING: this macro is the value of the cookie
+  that must be used for reading a directory from its first entry.
+  
+- fs_specific_initinfo_t: this structure must describe the specific
+  configuration info that will be provided by the configuration file.
+
+- fsal_lockdesc_t : this is a lock descritor, if your filesystem
+  supports object locking.
+
+
+/!\ To ensure GANESHA's multi-filesystem compatibility,
+you must not change the type definitions that are after the line :
+"/*----- end of FS dependant definitions -----*/"
+
+
+
+Implementing the FSAL
+=====================
+
+Conversion functions
+-----------------------
+
+FSAL has been designed to have a generic interface for accessing
+all kinds of filesystems.
+For ensuring such a genericity, it has its own error codes,
+its own permission masks, its own open flags, its own data types,
+whatever the type of filesystem.
+Thus, you may consider implementing some conversion functions
+that should be used all other your FSAL, for converting filesystem
+error codes to FSAL error codes, or for translating your filesystem
+attributes and types to the associated FSAL types.
+
+Write your conversion functions prototypes in the 'fsal_convert.h'
+(it may be just a macro, or an inline procedure)
+and write the associated implementations in the 'fsal_convert.c' file.
+
+Examples:
+
+int myfs2fsal_error(int myfs_error_code);
+
+int fsal2myfs_openflags( fsal_openflags_t fsal_flags, int * p_myfs_flags );
+
+fsal_status_t myfs2fsal_attributes(  myfs_Handle_t  * p_myfs_handle_in,
+                                     myfs_Attrs_t   * p_myfs_attrs_in,
+                                     fsal_attrib_list_t * p_fsalattr_out );
+
+fsal_time_t myfs2fsal_time( myfs_timestamp_t tsec );
+
+
+Digest/expand functions
+-----------------------
+
+In the FSAL design, object are addressed using a FS dependant structure
+(fsal_handle_t) that can contain all the information you need for handling
+objects.
+However, this handle needs to be converted to a minimal piece
+of data (a NFS handle) that will be used be the NFS clients
+for addressing filesystem objects. This minimal set of information
+must not exceed 25 bytes.
+Thus, you have to implement a function that will extract
+the minimum information that is necessary for addressing an object
+in your filesystem, and for building back the original fsal_handle_t.
+This operation is made by the 'FSAL_DigestHandle' function, in the 'fsal_tool.c' file.
+The function that will build back the fsal_handle_t from the NFS handle
+is 'FSAL_ExpandHandle', in 'fsal_tools.c'.
+
+'FSAL_DigestHandle' must so provide other digest facilities,
+depending on its 'output_type' parameter :
+- FSAL_DIGEST_NFSV2: must return a handle digest in a buffer of size FSAL_DIGEST_SIZE_HDLV2
+- FSAL_DIGEST_NFSV3: must return a handle digest in a buffer of size FSAL_DIGEST_SIZE_HDLV3
+- FSAL_DIGEST_NFSV4: must return a handle digest in a buffer of size FSAL_DIGEST_SIZE_HDLV4
+- FSAL_DIGEST_FILEID2: must return the fileid in a buffer of size FSAL_DIGEST_SIZE_FILEID2
+- FSAL_DIGEST_FILEID3: must return the fileid in a buffer of size FSAL_DIGEST_SIZE_FILEID3
+- FSAL_DIGEST_FILEID4: must return the fileid in a buffer of size FSAL_DIGEST_SIZE_FILEID4
+- FSAL_DIGEST_NODETYPE: must return the object type in a buffer of size FSAL_DIGEST_SIZE_NODETYPE
+
+
+Other tools functions you have to provide
+-----------------------------------------
+
+FSAL_handlecmp in fsal_tools.c,
+
+
+
+Configuration parsing
+---------------------
+
+At runtime, GANESHA's configuration file is first analyzed
+and converted to a semantical representation that is passed to
+all modules, so each of them can read the sections it is interested in,
+and fill its own initialization structures.
+
+Thus, most FSALs are configured using 3 sections of the configuration file :
+
+- The 'FSAL' section : defines general information of the FSAL module
+(log file, log level, maximum simultaneous FS calls)
+
+- The 'FileSystem' section : information that is to be provided
+by all filesystems.
+
+- The FS specific section (whose name is set by the 'CONF_LABEL_FS_SPECIFIC' define
+in 'fsal_types.h'). It can contain configuration that is specific to a filesystem.
+For example :
+
+MYFS
+{
+  myfs_ticket="/var/myfs/root.tkt";
+  myfs_server="myhost";
+  ...
+}
+
+The first 2 blocks are already parsed and analyzed by the FSAL_TEMPLATE implementation
+(this is done by the functions 'FSAL_load_FSAL_parameter_from_conf' and
+'FSAL_load_FS_common_parameter_from_conf').
+
+However, you have to interpret the content of the 3rd block, that is filesystem dependant.
+
+Thus, you have to provide 2 functions :
+
+- FSAL_SetDefault_FS_specific_parameter :
+this function must initialize a 'fs_specific_initinfo_t' structure
+(you defined in the 'fsal_types.h') with some default values.
+
+- FSAL_load_FS_specific_parameter_from_conf:
+this function must fill a 'fs_specific_initinfo_t' structure
+by analizing the content of the specific section of the config file.
+To write this function, you can use 'FSAL_load_FSAL_parameter_from_conf'
+as a model, or an implementation of 'FSAL_load_FS_specific_parameter_from_conf'
+from other FSALs.
+
+
+Initialization and global state functions
+-----------------------------------------
+
+The FSAL_Init function (in fsal_init.c) takes a structure that consists of
+3 sub-structures associated with the 3 sections of the config file
+('FSAL', 'FileSystem' and your filesystem specific section).
+Thus, you can initialize your FSAL module using the values in those
+structures.
+
+Note that 'fsal_internal.h' and 'fsal_internal.c' files can be used
+for managing some global shared values in the FSAL (stats, configuration values,
+semaphores for limiting simultaneous FS calls, etc...)
+So you can define in those files functions that will store some
+configuration values, so that they can be used later by FSAL functions.
+
+
+Credential and context management functions
+-------------------------------------------
+
+For accessing your filesystem, you may need to manage some security features,
+and keep some information about the filesystem access context (connections,
+specific access configuration for each NFS export, etc...)
+
+Thus, FSAL makes it possible :
+- To maintain a context for each GANESHA's worker thread
+- To have some information about the user who issues the request
+- To keep a context that is specific to each export entry
+
+This context management is done by the functions in the 'fsal_context.c' file :
+- FSAL_BuildExportContext
+- FSAL_InitClientContext
+- FSAL_GetClientContext
+
+FSAL_BuildExportContext creates a context that is related to an export entry
+(fsal_export_context_t structure). It takes a parameter that can be set
+in the configuration of an export entry ('FS_Specific' parameter).
+This parameter is a string in the "getsubopt" format.
+For example, you can create a connection to a server for this export, etc...
+/!\ the resources of this structure could be accessed concurrently
+by several worker threads, if some of them are simultaneously processing requests
+on the same NFS export. So you have to take care about thread-safety.
+
+FSAL_InitClientContext creates a structure that will be attached to a single worker thread
+(the one who calls the function). So you have to put in this structure
+the elements that must not be modified by other threads during a filesystem call
+(a user's credential for example).
+
+FSAL_GetClientContext is called before each FSAL call.
+It takes the following arguments :
+- the initialized export context that is related to the export entry to be accessed
+- an fsal_op_context_t whose the thread specific info has been initialized
+- informations about the user who issued this filesystem request (uid, gid, secondary groups)
+
+Then, you must fill or update the fsal_op_context_t structure so that
+the next FSAL request will be done using correct export and thread contexts.
+For example, you may have to renew a credential, or 'su' it so that the request
+will be done with the user's identity, or you may have to check some networks or database
+connections, negociate a security context, etc...
+
+After that, the fsal_op_context_t structure will be passed as argument of the next FSAL call,
+and must contain all the information for user's authentication and security context.
+
+
+FSAL status and error codes
+---------------------------
+
+The status returned by FSAL functions (type fsal_status_t) consists
+of 2 fields, 'major' and 'minor' :
+- 'major' must be set to the appropriate FSAL error code and is interpreted
+by the upper modules (Cache inode, ...)
+- 'minor' can be set to the underlying filesystem error code so that
+it will be traced in the log file for providing additionnal debug info.
+This value is not interpreted by upper modules, and it only for administrator
+information.
+
+To easily handle FSAL status, you can use the following macros :
+
+ReturnCode( int major, int minor )
+This returns from the current function a fsal_status_t stucture
+filled with the specified values for major and minor.
+
+Return( int major, int minor, int function_index )
+This returns from the current function, with a fsal_status_t stucture
+filled with the specifies values for major and minor.
+What's more, it updates FSAL statistics and may write a log message
+if the verbosity level is high enough.
+
+FSAL_IS_ERROR( fsal_status_t status )
+indicates if the status returned by a FSAL call is errorneous.
+
+FSAL error codes are documented into 'include/err_fsal.h',
+be sure you choose the appropriate error code for each situation.
+
+
+The standard FSAL calls
+=======================
+
+Now that your FSAL is able to be configured, and your security management and other
+context stuff are implemented, you can now write the 'classical' filesystem functions.
+You have to respect the behaviors described below for each function.
+
+General behavior
+----------------
+
+You have to keep in mind the following rules when implementing FSAL functions :
+
+- If you want to keep the load limitation support implemented
+  in the template FSAL, you have to put the following lines
+  just before and after your filesystem calls :
+
+  TakeTokenFSCall();
+  [You filesystem call]
+  ReleaseTokenFSCall();
+
+  Be sure you release each token you take (no return statement beetween the 2 calls).
+
+- For all functions that return post operation attributes of objects
+  (except for FSAL_getattrs), if getting postop attributes failed,
+  the function does not return an error but the FSAL_ATTR_RDATTR_ERR
+  bit is set in the postop attributes 'asked_attributes' field.
+
+- FSAL semantics must be very cute of the NFS behavior. Thus, if you have a specific
+  question about what you have to do in a specific case (for ex. when renaming a file
+  into a hardlink of it, etc...) just open your NFS RFCs ;-)
+
+
+Functions prototypes
+--------------------
+
+fsal_status_t FSAL_access (fsal_handle_t * object_handle, fsal_op_context_t * p_context, fsal_accessflags_t access_type, fsal_attrib_list_t * object_attributes)
+       
+       FSAL_access : Tests whether the user or entity identified by the p_context structure can access the object identified by object_handle, as indicated by the
+       access_type parameter.
+
+       Parameters:
+           object_handle (input): The handle of the object to test permissions on.
+           p_context (input):     Authentication context for the operation (export entry, user,...).
+           access_type (input):   Indicates the permissions to be tested. This is an inclusive OR of the permissions to be checked for the user specified by p_context.
+           Permissions constants are :
+
+           - FSAL_R_OK : test for read permission
+
+           - FSAL_W_OK : test for write permission
+
+           - FSAL_X_OK : test for exec permission
+
+           - FSAL_F_OK : test for file existence
+
+           object_attributes (optional input/output): The post operation attributes for the object. As input, it defines the attributes that the caller wants to retrieve
+           (by positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains). Can be
+           NULL.
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error, asked permission is granted)
+
+           - ERR_FSAL_ACCESS (object permissions doesn't fit asked access type)
+
+           - ERR_FSAL_STALE (object_handle does not address an existing object)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes when something anormal occurs.
+           
+           
+ fsal_status_t FSAL_test_access (fsal_op_context_t * p_context, fsal_accessflags_t access_type, fsal_attrib_list_t * object_attributes)
+       FSAL_test_access : Tests whether the user identified by the p_context structure can access the object as indicated by the access_type parameter. This function
+       tests access rights using cached attributes given as parameter (no calls to filesystem). Thus, it cannot test FSAL_F_OK flag, and asking such a flag will result in
+       a ERR_FSAL_INVAL error.
+
+       Parameters:
+           p_context (input): Authentication context for the operation (user,...).
+           access_type (input): Indicates the permissions to test. This is an inclusive OR of the permissions to be checked for the user identified by cred. Permissions
+           constants are :
+
+           - FSAL_R_OK : test for read permission
+
+           - FSAL_W_OK : test for write permission
+
+           - FSAL_X_OK : test for exec permission
+
+           - FSAL_F_OK : test for file existence
+
+           object_attributes (mandatory input): The cached attributes for the object to test rights on. The following attributes MUST be filled : owner, group, mode,
+           ACLs.
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error, permission granted)
+
+           - ERR_FSAL_ACCESS (object permissions doesn't fit asked access type)
+
+           - ERR_FSAL_INVAL (FSAL_test_access is not able to test such a permission)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Another error code if an error occured.
+           
+
+   fsal_status_t FSAL_getattrs (fsal_handle_t * filehandle, fsal_op_context_t * p_context, fsal_attrib_list_t * object_attributes)
+       FSAL_getattrs: Get attributes for the object specified by its filehandle.
+
+       Parameters:
+           filehandle (input): The handle of the object to get parameters.
+           p_context (input): Authentication context for the operation (user, export...).
+           object_attributes (mandatory input/output): The retrieved attributes for the object. As input, it defines the attributes that the caller wants to retrieve (by
+           positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains).
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_STALE (object_handle does not address an existing object)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Another error code if an error occured.
+
+
+   fsal_status_t FSAL_setattrs (fsal_handle_t * filehandle, fsal_op_context_t * p_context, fsal_attrib_list_t * attrib_set, fsal_attrib_list_t * object_attributes)
+       FSAL_setattrs: Set attributes for the object specified by its filehandle.
+
+       Parameters:
+           filehandle (input): The handle of the object to get parameters.
+           p_context (input): Authentication context for the operation (user,...).
+           attrib_set (mandatory input): The attributes to be set for the object. It defines the attributes that the caller wants to set and their values.
+           object_attributes (optionnal input/output): The post operation attributes for the object. As input, it defines the attributes that the caller wants to retrieve
+           (by positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains). May be
+           NULL.
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_STALE (object_handle does not address an existing object)
+
+           - ERR_FSAL_INVAL (tried to modify a read-only attribute)
+
+           - ERR_FSAL_ATTRNOTSUPP (tried to modify a non-supported attribute)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Another error code if an error occured.
+           
+           NB: if getting postop attributes failed, the function does not return an error but the FSAL_ATTR_RDATTR_ERR bit is
+           set in the object_attributes->asked_attributes field.
+
+fsal_status_t FSAL_create (fsal_handle_t * parent_directory_handle, fsal_name_t * p_filename, fsal_op_context_t * p_context, fsal_accessmode_t accessmode,
+       fsal_handle_t * object_handle, fsal_attrib_list_t * object_attributes)
+       FSAL_create: Create a regular file.
+
+       Parameters:
+           parent_directory_handle (input): Handle of the parent directory where the file is to be created.
+           p_filename (input): Pointer to the name of the file to be created.
+           cred (input): Authentication context for the operation (user, export...).
+           accessmode (input): Mode for the file to be created. (the umask defined into the FSAL configuration file will be applied on it).
+           object_handle (output): Pointer to the handle of the created file.
+           object_attributes (optionnal input/output): The postop attributes of the created file. As input, it defines the attributes that the caller wants to retrieve
+           (by positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains). Can be
+           NULL.
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_STALE (parent_directory_handle does not address an existing object)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_EXIST, ERR_FSAL_IO, ...
+
+       NB: if getting postop attributes failed, the function does not return an error but the FSAL_ATTR_RDATTR_ERR bit is set in the object_attributes->asked_attributes
+       field.
+
+   fsal_status_t FSAL_link (fsal_handle_t * target_handle, fsal_handle_t * dir_handle, fsal_name_t * p_link_name, fsal_op_context_t * p_context, fsal_attrib_list_t *
+       attributes)
+       FSAL_link: Create a hardlink.
+
+       Parameters:
+           target_handle (input): Handle of the target object.
+           dir_handle (input): Pointer to the directory handle where the hardlink is to be created.
+           p_link_name (input): Pointer to the name of the hardlink to be created.
+           cred (input): Authentication context for the operation (user,...).
+           accessmode (input): Mode for the directory to be created. (the umask defined into the FSAL configuration file will be applied on it).
+           attributes (optionnal input/output): The post_operation attributes of the linked object. As input, it defines the attributes that the caller wants to retrieve
+           (by positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains). May be
+           NULL.
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_STALE (target_handle or dir_handle does not address an existing object)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_EXIST, ERR_FSAL_IO, ...
+
+       NB: if getting postop attributes failed, the function does not return an error but the FSAL_ATTR_RDATTR_ERR bit is set in the attributes->asked_attributes field.
+
+
+  fsal_status_t FSAL_mkdir (fsal_handle_t * parent_directory_handle, fsal_name_t * p_dirname, fsal_op_context_t * p_context, fsal_accessmode_t accessmode, fsal_handle_t
+       * object_handle, fsal_attrib_list_t * object_attributes)
+       FSAL_mkdir: Create a directory.
+
+       Parameters:
+           parent_directory_handle (input): Handle of the parent directory where the subdirectory is to be created.
+           p_dirname (input): Pointer to the name of the directory to be created.
+           cred (input): Authentication context for the operation (user,...).
+           accessmode (input): Mode for the directory to be created. (the umask defined into the FSAL configuration file will be applied on it).
+           object_handle (output): Pointer to the handle of the created directory.
+           object_attributes (optionnal input/output): The attributes of the created directory. As input, it defines the attributes that the caller wants to retrieve (by
+           positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains). May be NULL.
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_STALE (parent_directory_handle does not address an existing object)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_EXIST, ERR_FSAL_IO, ...
+
+       NB: if getting postop attributes failed, the function does not return an error but the FSAL_ATTR_RDATTR_ERR bit is set in the object_attributes->asked_attributes
+       field.
+
+
+ fsal_status_t FSAL_opendir (fsal_handle_t * dir_handle, fsal_op_context_t * p_context, fsal_dir_t * dir_descriptor, fsal_attrib_list_t * dir_attributes)
+       FSAL_opendir : Opens a directory for reading its content.
+
+       Parameters:
+           dir_handle (input) the handle of the directory to be opened.
+           p_context (input) Permission context for the operation (user, export context...).
+           dir_descriptor (output) pointer to an allocated structure that will receive directory stream informations, on successfull completion.
+           dir_attributes (optional output) On successfull completion,the structure pointed by dir_attributes receives the new directory attributes. Can be NULL.
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_ACCESS (user does not have read permission on directory)
+
+           - ERR_FSAL_STALE (dir_handle does not address an existing object)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_IO, ...
+
+   fsal_status_t FSAL_closedir (fsal_dir_t * dir_descriptor)
+       FSAL_closedir : Free the resources allocated for reading directory entries.
+
+       Parameters:
+           dir_descriptor (input): Pointer to a directory descriptor filled by FSAL_opendir.
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_IO, ...
+           
+ fsal_status_t FSAL_readdir (fsal_dir_t * dir_descriptor, fsal_cookie_t start_position, fsal_attrib_mask_t get_attr_mask, fsal_mdsize_t buffersize, fsal_dirent_t *
+       pdirent, fsal_cookie_t * end_position, fsal_count_t * nb_entries, fsal_boolean_t * end_of_dir)
+       FSAL_readdir : Read the entries of an opened directory.
+
+       Parameters:
+           dir_descriptor (input): Pointer to the directory descriptor filled by FSAL_opendir.
+           start_position (input): Cookie that indicates the first object to be read during this readdir operation. This should be :
+
+           - FSAL_READDIR_FROM_BEGINNING for reading the content of the directory from the beginning.
+
+           - The end_position parameter returned by the previous call to FSAL_readdir.
+
+           get_attr_mask (input) Specify the set of attributes to be retrieved for directory entries.
+           buffersize (input) The size (in bytes) of the buffer where the direntries are to be stored.
+           pdirent (output) Adresse of the buffer where the direntries are to be stored.
+           end_position (output) Cookie that indicates the current position in the directory.
+           nb_entries (output) Pointer to the number of entries read during the call.
+           end_of_dir (output) Pointer to a boolean that indicates if the end of dir has been reached during the call.
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_IO, ...
+
+
+  fsal_status_t FSAL_open (fsal_handle_t * filehandle, fsal_op_context_t * p_context, fsal_openflags_t openflags, fsal_file_t * file_descriptor, fsal_attrib_list_t *
+       file_attributes)
+       FSAL_open: Open a regular file for reading/writing its data content.
+
+       Parameters:
+           filehandle (input): Handle of the file to be read/modified.
+           cred (input): Authentication context for the operation (user,...).
+           openflags (input): Flags that indicates behavior for file opening and access. This is an inclusive OR of the following values ( such of them are not
+           compatible) :
+
+           - FSAL_O_RDONLY: opening file for reading only.
+
+           - FSAL_O_RDWR: opening file for reading and writing.
+
+           - FSAL_O_WRONLY: opening file for writting only.
+
+           - FSAL_O_APPEND: always write at the end of the file.
+
+           - FSAL_O_TRUNC: truncate the file to 0 on opening.
+
+           file_descriptor (output): The file descriptor to be used for FSAL_read/write operations.
+           file_attributes (optionnal input/output): Post operation attributes. As input, it defines the attributes that the caller wants to retrieve (by positioning
+           flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains).
+
+       Returns:
+           Major error codes:
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_ACCESS (user doesn't have the permissions for opening the file)
+
+           - ERR_FSAL_STALE (filehandle does not address an existing object)
+
+           - ERR_FSAL_INVAL (filehandle does not address a regular file, or open flags are conflicting)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_IO, ...
+
+  fsal_status_t FSAL_open_by_name (fsal_handle_t * dirhandle, fsal_name_t * filename, fsal_op_context_t * p_context, 
+		fsal_openflags_t openflags, fsal_file_t * file_descriptor, fsal_attrib_list_t * file_attributes
+       FSAL_open: Open a regular file for reading/writing its data content in
+                  a "lookup" way. This is needed for the state model in NFSv4
+
+       Parameters:
+           dirhandle (input): Handle of the directory in which resides the
+                              file to be read/modified.
+           filename (input): Name of the file to be read/modified.
+           cred (input): Authentication context for the operation (user,...).
+           openflags (input): Flags that indicates behavior for file opening and access. This is an inclusive OR of the following values ( such of them are not
+           compatible) :
+
+           - FSAL_O_RDONLY: opening file for reading only.
+
+           - FSAL_O_RDWR: opening file for reading and writing.
+
+           - FSAL_O_WRONLY: opening file for writting only.
+
+           - FSAL_O_APPEND: always write at the end of the file.
+
+           - FSAL_O_TRUNC: truncate the file to 0 on opening.
+
+           file_descriptor (output): The file descriptor to be used for FSAL_read/write operations.
+           file_attributes (optionnal input/output): Post operation attributes. As input, it defines the attributes that the caller wants to retrieve (by positioning
+           flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains).
+
+       Returns:
+           Major error codes:
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_ACCESS (user doesn't have the permissions for opening the file)
+
+           - ERR_FSAL_STALE (filehandle does not address an existing object)
+
+           - ERR_FSAL_INVAL (filehandle does not address a regular file, or open flags are conflicting)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_IO, ...
+
+
+
+   fsal_status_t FSAL_close (fsal_file_t * file_descriptor)
+       FSAL_close: Free the resources allocated by the FSAL_open call.
+
+       Parameters:
+           file_descriptor (input): The file descriptor returned by FSAL_open.
+
+       Returns:
+           Major error codes:
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_IO, ...
+           
+   fsal_status_t FSAL_read (fsal_file_t * file_descriptor, fsal_seek_t * seek_descriptor, fsal_size_t buffer_size, caddr_t buffer, fsal_size_t * read_amount,
+       fsal_boolean_t * end_of_file)
+       FSAL_read: Perform a read operation on an opened file.
+
+       Parameters:
+           file_descriptor (input): The file descriptor returned by FSAL_open.
+           seek_descriptor (optional input): Specifies the position where data is to be read. If not specified, data will be read at the current position.
+           buffer_size (input): Amount (in bytes) of data to be read.
+           buffer (output): Address where the read data is to be stored in memory.
+           read_amount (output): Pointer to the amount of data (in bytes) that have been read during this call.
+           end_of_file (output): Pointer to a boolean that indicates whether the end of file has been reached during this call.
+
+       Returns:
+           Major error codes:
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_INVAL (invalid parameter)
+
+           - ERR_FSAL_NOT_OPENED (tried to read in a non-opened fsal_file_t)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_IO, ...
+
+   fsal_status_t FSAL_write (fsal_file_t * file_descriptor, fsal_seek_t * seek_descriptor, fsal_size_t buffer_size, caddr_t buffer, fsal_size_t * write_amount)
+       FSAL_write: Perform a write operation on an opened file.
+
+       Parameters:
+           file_descriptor (input): The file descriptor returned by FSAL_open.
+           seek_descriptor (optional input): Specifies the position where data is to be written. If not specified, data will be written at the current position.
+           buffer_size (input): Amount (in bytes) of data to be written.
+           buffer (input): Address in memory of the data to write to file.
+           write_amount (output): Pointer to the amount of data (in bytes) that have been written during this call.
+
+       Returns:
+           Major error codes:
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_INVAL (invalid parameter)
+
+           - ERR_FSAL_NOT_OPENED (tried to write in a non-opened fsal_file_t)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
+
+  fsal_status_t FSAL_dynamic_fsinfo (fsal_handle_t * filehandle, fsal_op_context_t * p_context, fsal_dynamicfsinfo_t * dynamicinfo)
+       FSAL_dynamic_fsinfo: Return dynamic filesystem info such as used size, free size, number of objects...
+
+       Parameters:
+           filehandle (input): Handle of an object in the filesystem whom info is to be retrieved.
+           p_context (input): Authentication context for the operation (user,...).
+           dynamicinfo (output): Pointer to the static info of the filesystem.
+
+       Returns:
+           Major error codes:
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_IO, ...
+
+   fsal_status_t FSAL_static_fsinfo (fsal_handle_t * filehandle, fsal_op_context_t * p_context, fsal_staticfsinfo_t * staticinfo)
+       FSAL_static_fsinfo: Return static filesystem info such as behavior, configuration, supported operations...
+
+       Parameters:
+           filehandle (input): Handle of an object in the filesystem whom info is to be retrieved.
+           cred (input): Authentication context for the operation (user,...).
+           staticinfo (output): Pointer to the static info of the filesystem.
+
+       Returns:
+           Major error codes:
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_IO, ...
+
+
+   fsal_status_t FSAL_lookup (fsal_handle_t * parent_directory_handle, fsal_name_t * p_filename, fsal_op_context_t * p_context, fsal_handle_t * object_handle,
+       fsal_attrib_list_t * object_attributes)
+       FSAL_lookup : Looks up for an object into a directory.
+
+       Note : if parent handle and filename are NULL, this retrieves root's handle.
+
+       Parameters:
+           parent_directory_handle (input) Handle of the parent directory to search the object in.
+           filename (input) The name of the object to find.
+           p_context (input) Authentication context for the operation (user,...).
+           object_handle (output) The handle of the object corresponding to filename.
+           object_attributes (optional input/output) Pointer to the attributes of the object we found. As input, it defines the attributes that the caller wants to
+           retrieve (by positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains).
+           It can be NULL (increases performances).
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_STALE (parent_directory_handle does not address an existing object)
+
+           - ERR_FSAL_NOTDIR (parent_directory_handle does not address a directory)
+
+           - ERR_FSAL_NOENT (the object designated by p_filename does not exist)
+
+           - ERR_FSAL_XDEV (tried to operate a lookup on a filesystem junction. Use FSAL_lookupJunction instead)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
+
+  fsal_status_t FSAL_lookupPath (fsal_path_t * p_path, fsal_op_context_t * p_context, fsal_handle_t * object_handle, fsal_attrib_list_t * object_attributes)
+       FSAL_lookupPath : Looks up for an object into the namespace.
+
+       Note : if path equals '/', this retrieves root's handle.
+
+       Parameters:
+           path (input) The path of the object to find.
+           p_context (input) Authentication context for the operation (user,...).
+           object_handle (output) The handle of the object corresponding to filename.
+           object_attributes (optional input/output) Pointer to the attributes of the object we found. As input, it defines the attributes that the caller wants to
+           retrieve (by positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains).
+           It can be NULL (increases performances).
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - ERR_FSAL_INVAL (the path argument is not absolute)
+
+           - ERR_FSAL_NOENT (an element in the path does not exist)
+
+           - ERR_FSAL_NOTDIR (an element in the path is not a directory)
+
+           - ERR_FSAL_XDEV (tried to cross a filesystem junction, whereas is has not been authorized in the server configuration - FSAL::auth_xdev_export parameter)
+
+           - Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
+
+   fsal_status_t FSAL_lookupJunction (fsal_handle_t * p_junction_handle, fsal_op_context_t * p_context, fsal_handle_t * p_fsoot_handle, fsal_attrib_list_t *
+       p_fsroot_attributes)
+       FSAL_lookupJunction : Get the fileset root for a junction.
+
+       Parameters:
+           p_junction_handle (input) Handle of the junction to be looked up.
+           cred (input) Authentication context for the operation (user,...).
+           p_fsroot_handle (output) The handle of root directory of the fileset.
+           p_fsroot_attributes (optional input/output) Pointer to the attributes of the root directory for the fileset. As input, it defines the attributes that the
+           caller wants to retrieve (by positioning flags into this structure) and the output is built considering this input (it fills the structure according to the
+           flags it contains). It can be NULL (increases performances).
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_STALE (p_junction_handle does not address an existing object)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
+
+  fsal_status_t FSAL_CleanObjectResources (fsal_handle_t * in_fsal_handle)
+       FSAL_CleanObjectResources: This function cleans remanent internal resources that are kept for a given FSAL handle.
+
+       Parameters:
+           in_fsal_handle (input): The handle whose the resources are to be cleaned.
+
+   fsal_status_t FSAL_rcp (fsal_handle_t * filehandle, fsal_op_context_t * p_context, fsal_path_t * p_local_path, fsal_rcpflag_t transfer_opt)
+       FSAL_rcp: Copy an HPSS file to/from a local filesystem.
+
+       Parameters:
+           filehandle (input): Handle of the HPSS file to be copied.
+           p_context (input): Authentication context for the operation (user,...).
+           p_local_path (input): Path of the file in the local filesystem.
+           transfer_opt (input): Flags that indicate transfer direction and options. This consists of an inclusive OR between the following values :
+
+           - FSAL_RCP_FS_TO_LOCAL: Copy the file from the filesystem to a local path.
+
+           - FSAL_RCP_LOCAL_TO_FS: Copy the file from local path to the filesystem.
+
+           - FSAL_RCP_LOCAL_CREAT: Create the target local file if it doesn't exist.
+
+           - FSAL_RCP_LOCAL_EXCL: Produce an error if the target local file already exists.
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_ACCESS (user doesn't have the permissions for opening the file)
+
+           - ERR_FSAL_STALE (filehandle does not address an existing object)
+
+           - ERR_FSAL_INVAL (filehandle does not address a regular file, or tranfert options are conflicting)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
+
+  fsal_status_t FSAL_rename (fsal_handle_t * old_parentdir_handle, fsal_name_t * p_old_name, fsal_handle_t * new_parentdir_handle, fsal_name_t * p_new_name,
+       fsal_op_context_t * p_context, fsal_attrib_list_t * src_dir_attributes, fsal_attrib_list_t * tgt_dir_attributes)
+       FSAL_rename: Change name and/or parent dir of a filesystem object.
+
+       Parameters:
+           old_parentdir_handle (input): Source parent directory of the object is to be moved/renamed.
+           p_old_name (input): Pointer to the current name of the object to be moved/renamed.
+           new_parentdir_handle (input): Target parent directory for the object.
+           p_new_name (input): Pointer to the new name for the object.
+           p_context (input): Authentication context for the operation (user,...).
+           src_dir_attributes (optionnal input/output): Post operation attributes for the source directory. As input, it defines the attributes that the caller wants to
+           retrieve (by positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains).
+           May be NULL.
+           tgt_dir_attributes (optionnal input/output): Post operation attributes for the target directory. As input, it defines the attributes that the caller wants to
+           retrieve (by positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains).
+           May be NULL.
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_STALE (a parent directory handle does not address an existing object)
+
+           - ERR_FSAL_NOTDIR (a parent directory handle does not address a directory)
+
+           - ERR_FSAL_NOENT (the object designated by p_old_name does not exist)
+
+           - ERR_FSAL_NOTEMPTY (the target object is a non empty directory)
+
+           - ERR_FSAL_XDEV (tried to move an object across different filesystems)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
+
+ fsal_status_t FSAL_readlink (fsal_handle_t * linkhandle, fsal_op_context_t * p_context, fsal_path_t * p_link_content, fsal_attrib_list_t * link_attributes)
+       FSAL_readlink: Read the content of a symbolic link.
+
+       Parameters:
+           linkhandle (input): Handle of the link to be read.
+           cred (input): Authentication context for the operation (user,...).
+           p_link_content (output): Pointer to an fsal path structure where the link content is to be stored..
+           link_attributes (optionnal input/output): The post operation attributes of the symlink link. As input, it defines the attributes that the caller wants to
+           retrieve (by positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains).
+           May be NULL.
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_STALE (linkhandle does not address an existing object)
+
+           - ERR_FSAL_INVAL (linkhandle does not address a symbolic link)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
+
+   fsal_status_t FSAL_symlink (fsal_handle_t * parent_directory_handle, fsal_name_t * p_linkname, fsal_path_t * p_linkcontent, fsal_op_context_t * p_context,
+       fsal_accessmode_t accessmode, fsal_handle_t * link_handle, fsal_attrib_list_t * link_attributes)
+       FSAL_symlink: Create a symbolic link.
+
+       Parameters:
+           parent_directory_handle (input): Handle of the parent directory where the link is to be created.
+           p_linkname (input): Name of the link to be created.
+           p_linkcontent (input): Content of the link to be created.
+           cred (input): Authentication context for the operation (user,...).
+           accessmode (ignored input): Mode of the link to be created. It has no sense in HPSS nor UNIX filesystems.
+           link_handle (output): Pointer to the handle of the created symlink.
+           link_attributes (optionnal input/output): Attributes of the newly created symlink. As input, it defines the attributes that the caller wants to retrieve (by
+           positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains). May be NULL.
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_STALE (parent_directory_handle does not address an existing object)
+
+           - ERR_FSAL_NOTDIR (parent_directory_handle does not address a directory)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
+
+fsal_status_t FSAL_truncate (fsal_handle_t * filehandle, fsal_op_context_t * p_context, fsal_size_t length, fsal_attrib_list_t * object_attributes)
+       FSAL_truncate: Modify the data length of a regular file.
+
+       Parameters:
+           filehandle (input): Handle of the file is to be truncated.
+           cred (input): Authentication context for the operation (user,...).
+           length (input): The new data length for the file.
+           object_attributes (optionnal input/output): The post operation attributes of the file. As input, it defines the attributes that the caller wants to retrieve
+           (by positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains). May be
+           NULL.
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_STALE (filehandle does not address an existing object)
+
+           - ERR_FSAL_INVAL (filehandle does not address a regular file)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
+
+  fsal_status_t FSAL_unlink (fsal_handle_t * parentdir_handle, fsal_name_t * p_object_name, fsal_op_context_t * p_context, fsal_attrib_list_t * parentdir_attributes)
+       FSAL_unlink: Remove a filesystem object .
+
+       Parameters:
+           parentdir_handle (input): Handle of the parent directory of the object to be deleted.
+           p_object_name (input): Name of the object to be removed.
+           p_context (input): Authentication context for the operation (user,...).
+           parentdir_attributes (optionnal input/output): Post operation attributes of the parent directory. As input, it defines the attributes that the caller wants to
+           retrieve (by positioning flags into this structure) and the output is built considering this input (it fills the structure according to the flags it contains).
+           May be NULL.
+
+       Returns:
+           Major error codes :
+
+           - ERR_FSAL_NO_ERROR (no error)
+
+           - ERR_FSAL_STALE (parentdir_handle does not address an existing object)
+
+           - ERR_FSAL_NOTDIR (parentdir_handle does not address a directory)
+
+           - ERR_FSAL_NOENT (the object designated by p_object_name does not exist)
+
+           - ERR_FSAL_NOTEMPTY (tried to remove a non empty directory)
+
+           - ERR_FSAL_FAULT (a NULL pointer was passed as mandatory argument)
+
+           - Other error codes can be returned : ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
+
+
+Other layers
+============
+
+Once your FSAL is OK, you just have to make some changes
+into the "glue" layer.
+
+Indeed, other layers need to have an efficient hash function
+for your handles, so you must give a good method for hashing them.
+
+Thus, in the file 'cache_inode_fsal_glue.c', you have to develop
+2 functions : 'cache_inode_fsal_hash_func' and 'cache_inode_fsal_rbt_func'
+on the same model as the other filesystems.
+Those two functions must not be the same.
+

@@ -1,0 +1,119 @@
+[root@mercury pynfs]# ./nfs4client.py -p pinatubo1
+Dans try_cd dir= /  cwd= []
+   candidate_cwd =  []
+   lookupops =  []
+Le masque est  [2L]
+   obj_type =  0
+Cannot change directory to /
+nfs4: >putrootfhop = c.ncl.putrootfh_op()
+nfs4: >attr_request = nfs4lib.list2attrmask([FATTR4_TYPE])
+nfs4: >getattrop = c.ncl.getattr_op( attr_request )
+nfs4: >res = c.ncl.compound([putrootfhop, getattrop])
+nfs4: >res
+<COMPOUND4res: status=0 tag= resarray=[<nfs_resop4: resop=24 opaccess=None opclose=N...>
+nfs4: >res.resarray[-1]
+<nfs_resop4: resop=9 opaccess=None opclose=None opcommit=None opcreate=None opdele...>
+nfs4: >res.resarray[-1].arm
+<GETATTR4res: status=0 resok4=<GETATTR4resok: obj_attributes=<fattr4: attrmask=[1] ...>
+nfs4: >res.resarray[-1].arm.arm
+<GETATTR4resok: obj_attributes=<fattr4: attrmask=[1] attr_vals=>>
+nfs4: >res.resarray[-1].arm.arm.obj_attributes
+<fattr4: attrmask=[1] attr_vals=>
+nfs4: >nfs4lib.opaque2long(res.resarray[-1].arm.arm.obj_attributes.attr_vals)
+0L
+nfs4: >
+lookupop = c.ncl.lookup_op("a")
+res = c.ncl.compound([putrootfhop, lookupop, getattrop])
+
+nfs4: >attr_request = nfs4lib.list2attrmask([FATTR4_TYPE,FATTR4_SIZE])
+nfs4: >getattrop = c.ncl.getattr_op( attr_request )
+nfs4: >res = c.ncl.compound([putrootfhop, getattrop])
+nfs4: >nfs4lib.opaque2long(res.resarray[-1].arm.arm.obj_attributes.attr_vals)
+680564733841876926926749214863536423424L
+nfs4: >res.resarray[-1].arm.arm
+<GETATTR4resok: obj_attributes=<fattr4: attrmask=[18] attr_vals=>>
+nfs4: >res.resarray[-1].arm.arm.obj_attributes
+<fattr4: attrmask=[18] attr_vals=>
+nfs4: >nfs4lib.attrmask2list( res.resarray[-1].arm.arm.obj_attributes.attrmask ) 
+[1, 4]
+nfs4: >nfs4lib.fattr2dict( res.resarray[-1].arm.arm.obj_attributes )
+{'type': 2, 'size': 512L}
+putrootfhop = c.ncl.putrootfh_op()
+
+
+nfs4: >putrootfhopc.ncl.putrootfh_op()
+Traceback (most recent call last):
+  File "./nfs4client.py", line 695, in default
+    exec code in globals()
+  File "<stdin>", line 1, in ?
+NameError: name 'putrootfhopc' is not defined
+nfs4: >putrootfhop = c.ncl.putrootfh_op()
+nfs4: >attr_request = nfs4lib.list2attrmask([FATTR4_TYPE, FATTR4_SIZE, FATTR4_TIME_MODIFY])
+nfs4: >operations = [putrootfhop] 
+nfs4: >getfhop = c.ncl.getfh_op()
+nfs4: >operations = [putrootfhop,getfhop]
+nfs4: >res = c.ncl.compound(operations)
+nfs4: > getfhresult = res.resarray[-1].arm
+nfs4: >fh = getfhresult.arm.object
+nfs4: >fh
+'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+nfs4: >entries = self.ncl.do_readdir(fh, attr_request)
+Traceback (most recent call last):
+  File "./nfs4client.py", line 695, in default
+    exec code in globals()
+  File "<stdin>", line 1, in ?
+NameError: name 'self' is not defined
+nfs4: >entries = c.ncl.do_readdir(fh, attr_request)
+--> unpack_array: n= 0
+nfs4: >entries
+[<entry4: cookie=4 name= attrs=<fattr4: attrmask=[] attr_vals=> nextentry=[]>]
+nfs4: >
+
+
+
+
+
+
+
+
+i
+nfs4: >putrootfhop = c.ncl.putrootfh_op()
+nfs4: >attr_request = nfs4lib.list2attrmask([FATTR4_TYPE, FATTR4_SIZE, FATTR4_TIME_MODIFY])
+nfs4: >operations = [putrootfhop] 
+nfs4: >getfhop = c.ncl.getfh_op()
+nfs4: >operations = [putrootfhop,getfhop]
+nfs4: >res = c.ncl.compound(operations)
+nfs4: > getfhresult = res.resarray[-1].arm
+nfs4: >fh = getfhresult.arm.object
+nfs4: >fh
+'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+nfs4: >entries = self.ncl.do_readdir(fh, attr_request)
+Traceback (most recent call last):
+  File "./nfs4client.py", line 695, in default
+    exec code in globals()
+  File "<stdin>", line 1, in ?
+NameError: name 'self' is not defined
+nfs4: >entries = c.ncl.do_readdir(fh, attr_request)
+--> unpack_array: n= 0
+nfs4: >entries
+[<entry4: cookie=4 name= attrs=<fattr4: attrmask=[] attr_vals=> nextentry=[]>]
+nfs4: >entries[0]
+<entry4: cookie=4 name= attrs=<fattr4: attrmask=[] attr_vals=> nextentry=[]>
+nfs4: >entries[1]
+Traceback (most recent call last):
+  File "./nfs4client.py", line 695, in default
+    exec code in globals()
+  File "<stdin>", line 1, in ?
+IndexError: list index out of range
+nfs4: >entries.arm
+Traceback (most recent call last):
+  File "./nfs4client.py", line 695, in default
+   exec code in globals()
+  File "<stdin>", line 1, in ?
+AttributeError: 'list' object has no attribute 'arm'
+nfs4: >entries[0].name
+''
+nfs4: >entry=entries[0]
+nfs4: > attrdict = nfs4lib.fattr2dict(entry.attrs)
+nfs4: >attrdict
+

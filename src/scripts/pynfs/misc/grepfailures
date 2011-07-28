@@ -1,0 +1,2 @@
+#!/bin/sh
+grep -B 1 "... FAIL"

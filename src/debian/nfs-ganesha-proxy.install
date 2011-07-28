@@ -1,0 +1,5 @@
+etc/ganesha/proxy.ganesha.nfsd.conf
+etc/init.d/nfs-ganesha.proxy
+usr/bin/proxy.ganesha.nfsd
+usr/bin/proxy.ganesha.convertFH
+usr/bin/proxy.ganeshell

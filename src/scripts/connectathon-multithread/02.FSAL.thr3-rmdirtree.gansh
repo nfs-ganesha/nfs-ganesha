@@ -1,0 +1,165 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_DEBUG"
+
+#configuration file
+set CONFIG_FILE "../../../share/conf/ganesha.hpss.conf"
+
+# test dir
+set TEST_DIR  "/cea/prot/S/lama/s8/leibovic/connectathon-ganesha"
+
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+
+barrier
+
+cd $TEST_DIR
+
+unlink  FICHIER_3.1
+unlink  FICHIER_3.2
+unlink  FICHIER_3.3
+
+cd DIR_1
+
+    unlink  FICHIER_3.1
+    unlink  FICHIER_3.2
+    unlink  FICHIER_3.3
+
+    cd DIR_1
+    
+        unlink  FICHIER_3.1
+        unlink  FICHIER_3.2
+        unlink  FICHIER_3.3
+        unlink DIR_3.1
+        unlink DIR_3.2
+        unlink DIR_3.3
+
+    cd ..
+    barrier
+    
+    cd DIR_2
+    
+        unlink  FICHIER_3.1
+        unlink  FICHIER_3.2
+        unlink  FICHIER_3.3
+        unlink DIR_3.1
+        unlink DIR_3.2
+        unlink DIR_3.3
+        
+    cd ..
+    barrier
+    
+    cd DIR_3
+    
+        unlink  FICHIER_3.1
+        unlink  FICHIER_3.2
+        unlink  FICHIER_3.3
+        unlink DIR_3.1
+        unlink DIR_3.2
+        unlink DIR_3.3
+    
+    cd ..
+    barrier
+
+cd ..
+barrier
+
+cd DIR_2
+
+    unlink  FICHIER_3.1
+    unlink  FICHIER_3.2
+    unlink  FICHIER_3.3
+
+    cd DIR_1
+    
+        unlink  FICHIER_3.1
+        unlink  FICHIER_3.2
+        unlink  FICHIER_3.3
+        unlink DIR_3.1
+        unlink DIR_3.2
+        unlink DIR_3.3
+
+    cd ..
+    barrier        
+    
+    cd DIR_2
+    
+        unlink  FICHIER_3.1
+        unlink  FICHIER_3.2
+        unlink  FICHIER_3.3
+        unlink DIR_3.1
+        unlink DIR_3.2
+        unlink DIR_3.3
+        
+    cd ..
+    barrier        
+    
+    cd DIR_3
+    
+        unlink  FICHIER_3.1
+        unlink  FICHIER_3.2
+        unlink  FICHIER_3.3
+        unlink DIR_3.1
+        unlink DIR_3.2
+        unlink DIR_3.3
+    
+    cd ..
+    barrier        
+
+cd ..
+barrier
+
+
+cd DIR_3
+
+    unlink  FICHIER_3.1
+    unlink  FICHIER_3.2
+    unlink  FICHIER_3.3
+
+    cd DIR_1
+    
+        unlink  FICHIER_3.1
+        unlink  FICHIER_3.2
+        unlink  FICHIER_3.3
+        unlink DIR_3.1
+        unlink DIR_3.2
+        unlink DIR_3.3
+
+    cd ..
+    barrier        
+    
+    cd DIR_2
+    
+        unlink  FICHIER_3.1
+        unlink  FICHIER_3.2
+        unlink  FICHIER_3.3
+        unlink DIR_3.1
+        unlink DIR_3.2
+        unlink DIR_3.3
+        
+    cd ..
+    barrier        
+    
+    cd DIR_3
+    
+        unlink  FICHIER_3.1
+        unlink  FICHIER_3.2
+        unlink  FICHIER_3.3
+        unlink DIR_3.1
+        unlink DIR_3.2
+        unlink DIR_3.3
+    
+    cd ..
+    barrier        
+
+cd ..
+barrier
+

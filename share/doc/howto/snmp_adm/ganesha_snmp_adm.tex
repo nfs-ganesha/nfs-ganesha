@@ -1,0 +1,517 @@
+%% LyX 1.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\usepackage{graphicx}
+
+\makeatletter
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+
+\usepackage{babel}
+\makeatother
+\begin{document}
+
+\author{thomas.leibovici@cea.fr}
+\title{\center{ \Large \textbf{Exporting GANESHA's statistics with SNMP} }}
+\maketitle
+
+%% \tableofcontents
+%% \newpage
+
+GANESHA is able to export its internal statistics so that an administrator can
+browse them using the SNMP protocol. It also provides a client for easily
+broswing its SNMP tree in a convivial and human understandable way.
+
+This document describes the requirements for this feature (libraries needed,
+SNMPd configuration...) and how to enable and configure it in GANESHA NFSD.
+
+\section{Requirements}
+
+SNMP support in GANESHA is based on the Net-SNMP library. This is a free
+implementation of SNMP that comes with most Linux distributions. It can also be
+retrieved from \texttt{http://net-snmp.sourceforge.net}.
+
+GANESHA's SNMP support has been validated with Net-SNMP v5.1.4. However,
+Net-SNMP v5.4 or higher is recommended.
+
+Install the following packages on the machine where you are compiling and
+running GANESHA NFSD:
+
+\begin{itemize}
+\item \emph{net-snmp} contains the snmpd and snmptrapd daemons ;
+\item \emph{net-snmp-utils} contains various utilities for snmp ;
+\item \emph{net-snmp-perl} contains the perl API ;
+\item \emph{net-snmp-libs} XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX ;
+\item \emph{net-snmp-devel} contains the development libraries and
+header files.
+\end{itemize}
+
+Note that the net-snmp library needs symbols defined in \emph{lm-sensors},
+\emph{zlib}, and \emph{openssl} libraries, so you will also need to install
+\emph{lm-sensors-devel}, \emph{zlib-devel}, and \emph{openssl-devel} packages on
+your system.
+
+\medskip
+For using the SNMP client tool \texttt{snmp\_adm} provided with GANESHA, you
+will also need the following perl modules:
+
+\begin{itemize}
+\item
+  \emph{SNMP}\footnote{\texttt{http://search.cpan.org/~gsm/SNMP-5.0400001/SNMP.pm}}
+  provided by the \emph{net-snmp-perl} RedHat's package
+\item \emph{XML::DOM}\footnote{\texttt{http://search.cpan.org/~tjmather/XML-DOM-1.44/lib/XML/DOM.pm}}
+  for XML outputs.
+  \item
+  \emph{Getopt::Std}\footnote{\texttt{http://search.cpan.org/~nwclark/perl-5.8.8/lib/Getopt/Std.pm}}
+  to parse command line options.
+  \item \emph{Config::General}\footnote{\texttt{http://search.cpan.org/~tlinden/Config-General-2.33/General.pm}}
+ to parse config file
+\item
+  \emph{SNMP::Trapinfo}\footnote{\texttt{http://search.cpan.org/~tonvoon/SNMP-Trapinfo-1.0/lib/SNMP/Trapinfo.pm}}
+  to manage SNMP traps.
+\end{itemize}
+
+
+\section{SNMPd setup}
+
+GANESHA does not handle SNMP requests directly. Actually, it registers its SNMP sub-tree
+on a SNMPd daemon, using an extention of the SNMP protocol called \emph{AgentX}.
+
+The SNMPd daemon that exports GANESHA's SNMP tree can be located on the same host,
+but it can also run on a remote management station.
+
+\medskip
+For activating agentX extension, add the following line
+to your SNMPd configuration file (default location is \texttt{/etc/snmp/snmpd.conf}):
+\begin{verbatim}
+master agentx
+\end{verbatim}
+
+You must then specify a way to communicate with GANESHA:
+\begin{itemize}
+\item if it runs on the same host, you can use a socket file.
+In this case, add the following line to SNMPd configuration file \texttt{/etc/snmp/snmpd.conf}:
+\begin{verbatim}
+AgentXSocket <path to the socket file>
+ 
+E.g:
+AgentXSocket /var/tmp/agentx/sock_file
+\end{verbatim}
+\item In any case (local or remote SNMPd), you can also use a standard
+socket connection:
+\begin{verbatim}
+AgentXSocket <protocol>[:<network interface address>]:<port number>
+
+E.g:
+# listening on a single network interface
+AgentXSocket tcp:192.168.0.42:761
+
+# listening on all network interfaces
+AgentXSocket tcp:761
+\end{verbatim}
+
+Note that the AgentX default port number is 705.
+\end{itemize}
+
+\medskip
+Your SNMPd is now ready for exporting GANESHA statistics. Restart it after you
+changed its configuration file.
+
+\medskip
+Note: if you want to restrict the access of GANESHA's SNMP subtree, refer to the
+snmpd documentation about \emph{views}, \emph{groups},
+\emph{SNMPv2 communities}, and \emph{SNMPv3 authentication}.
+
+Figure \ref{examplesnmpdconf} shows an example SNMP configuration file that
+should work for localhost access to SNMP.
+\begin{figure}[h]
+\begin{verbatim}
+##       sec.name  source          community
+com2sec  local     localhost       ganesha
+com2sec  mynetwork 192.168.122.0/24    ganesha
+
+##     group.name sec.model  sec.name
+group  MyRWGroup  any        local
+group  MyROGroup  any        mynetwork
+
+##           incl/excl subtree                          mask
+view all     included  .1                               80
+
+##                context sec.model sec.level prefix read   write  notif
+access MyROGroup  ""      any       noauth    0      all    none   none
+access MyRWGroup  ""      any       noauth    0      all    all    all
+
+
+# System contact information
+syslocation Unknown (edit /etc/snmp/snmpd.conf)
+syscontact Root <root@localhost> (configure /etc/snmp/snmp.local.conf)
+
+# Added for support of bcm5820 cards.
+pass .1.3.6.1.4.1.4413.4.1 /usr/bin/ucd5820stat
+
+# AgentX support
+master agentx
+agentXSocket   tcp:localhost:705
+agentXTimeout  5
+agentXRetries  2
+\end{verbatim}
+\caption{Example snmpd.conf}
+\label{examplesnmpdconf}
+\end{figure}
+
+\section{Enabling SNMP support in GANESHA}
+
+\subsection{Compilation}
+
+By default, GANESHA is compiled without SNMP support.
+To enable this feature, add \texttt{--enable-snmp-adm} argument
+to the \texttt{configure} command line. To be safe, \texttt{make clean} should
+be run before rebuilding GANESHA.
+
+\begin{verbatim}
+E.g:
+./configure --with-fsal=FUSE --enable-snmp-adm
+\end{verbatim}
+
+\subsection{Configuration}
+
+A specific section of GANESHA's configuration file is dedicated
+to SNMP options.
+This block must be labelized with the \texttt{SNMP\_ADM} tag.
+
+It must include the following parameters:
+
+\begin{itemize}
+\item \textbf{snmp\_agentx\_socket}: the socket file or the network interface
+for communicating with SNMPd (as it appears in the SNMPd configuration file).
+\item \textbf{product\_id}: this number must be unique for each instance of GANESHA
+you are exporting with the same SNMPd.
+\item \textbf{snmp\_adm\_log}: The log file for SNMP related logs.
+
+\item \textbf{export\_cache\_stats}: indicates if cache stats are exported.
+\item \textbf{export\_requests\_stats}: indicates if NFS requests stats are exported.
+\item \textbf{export\_maps\_stats}: indicates if UID/GID map stats are exported.
+\item \textbf{export\_buddy\_stats}: indicates if memory usage stats are exported.
+
+\item \textbf{export\_nfs\_calls\_detail}: indicates if detailled stats about NFS calls are exported.
+\item \textbf{export\_cache\_inode\_calls\_detail}: indicates if detailled stats about metadata cache calls are exported.
+\item \textbf{export\_fsal\_calls\_detail}: indicates if detailled stats about filesystem calls are exported.
+\end{itemize}
+
+
+\begin{verbatim}
+E.g:
+
+SNMP_ADM
+{
+    snmp_agentx_socket = "tcp:localhost:761";
+    product_id = 2;
+    snmp_adm_log = "/var/log/ganesha/snmp_adm.log";
+
+    export_cache_stats    = TRUE;
+    export_requests_stats = TRUE;
+    export_maps_stats     = FALSE;
+    export_buddy_stats    = TRUE;
+
+    export_nfs_calls_detail = FALSE;
+    export_cache_inode_calls_detail = FALSE;
+    export_fsal_calls_detail = FALSE;
+}
+\end{verbatim}
+
+\section{Browsing/Accessing GANESHA's SNMP tree}
+
+\subsection{Tree description}
+
+The SNMP tree of GANESHA is located under this OID:
+\begin{verbatim}
+.iso.org.dod.internet.private.enterprise.cea.snmp-admin.<product_id>
+\end{verbatim}
+where \texttt{product\_id} is the value you specified in GANESHA's config file.
+If some MIBs are missing, you can however access the tree with the numeric OID:
+\begin{verbatim}
+.1.3.6.1.4.1.12384.999.<product_id>
+\end{verbatim}
+
+\medskip
+
+The product subtree is planned to be divided in tree parts:
+\begin{itemize}
+\item \texttt{<product\_root>.0} contains dynamic statistics of the NFSD;
+\item \texttt{<product\_root>.1} contains configuration values;
+\item \texttt{<product\_root>.2} contains special OIDs for executing administrative
+actions on the daemon (flushing cache, ...).
+\end{itemize}
+
+At this time, only the first subtree (\texttt{<product\_root>.0}) is exported.
+
+\medskip
+
+GANESHA's SNMP tree is self-descriptive and it can be understood without any
+specific MIB installed on your system.
+
+Thus, each exported value \texttt{<i>} is described by the following OIDs:
+
+\begin{itemize}
+\item \texttt{<product\_root>.0.<i>.0} contains the name of the variable
+\item \texttt{<product\_root>.0.<i>.1} contains the description of it
+\item \texttt{<product\_root>.0.<i>.2.0} is the type of the variable\footnote{This is mainly unsed
+for handling 64 bits integers. Indeed, as SNMP doesn't support them, we return them
+as a string but this field will indicate they must be interpreted as integers.}.
+\item \texttt{<product\_root>.0.<i>.2.1} contains the value.
+\end{itemize}
+
+This tree is represented in the figure \ref{figtree}.
+
+\begin{figure}
+  \center \includegraphics[scale=0.6]{snmp_tree.eps}
+  \caption{GANESHA's SNMP tree}
+  \label{figtree}
+\end{figure}
+
+\medskip
+
+Example of \texttt{snmp\_walk} on a GANESHA variable:
+
+\begin{verbatim}
+$ snmpwalk -v 2c -c public localhost  .1.3.6.1.4.1.12384.999.2.0.4
+SNMPv2-SMI::enterprises.12384.999.2.0.4.0 = STRING: "cache_nb_entries"
+SNMPv2-SMI::enterprises.12384.999.2.0.4.1 = STRING: "number of entries in cache"
+SNMPv2-SMI::enterprises.12384.999.2.0.4.2.0 = STRING: "INTEGER"
+SNMPv2-SMI::enterprises.12384.999.2.0.4.2.1 = INTEGER: 51
+\end{verbatim}
+
+\subsection{Examining GANESHA's Logging Levels Through SNMP}
+
+Every log message from GANESHA is labelled first by the component it belongs to
+and second by the severity of the message. An explanation of each component and
+severity level can be found in the GANESHA Logging document.
+
+All components and their ids are shown in Figure \ref{componentoid}.
+\begin{figure}
+  \center
+  \begin{tabular}{ | l | l |}
+    \hline Log Component  & ID Number \\
+    \hline ALL & 0 \\
+    \hline LOG & 1 \\
+    \hline MEMALLOC & 2 \\
+    \hline STATES & 3 \\
+    \hline MEMLEAKS & 4 \\
+    \hline FSAL & 5 \\
+    \hline NFSPROTO & 6 \\
+    \hline NFSV4 & 7 \\
+    \hline NFSV4\_PSEUDO & 8 \\
+    \hline FILEHANDLE & 9 \\
+    \hline NFS\_SHELL & 10 \\
+    \hline DISPATCH & 11 \\
+    \hline CACHE\_CONTENT & 12 \\
+    \hline CACHE\_INODE & 13 \\
+    \hline CACHE\_INODE\_GC & 14 \\
+    \hline HASHTABLE & 15 \\
+    \hline LRU & 16 \\
+    \hline DUPREQ & 17 \\
+    \hline RPCSEC\_GSS & 18 \\
+    \hline INIT & 19 \\
+    \hline MAIN & 20 \\
+    \hline IDMAPPER & 21 \\
+    \hline NFS\_READDIR & 22 \\
+    \hline NFSV4\_LOCK & 23 \\
+    \hline NFSV4\_XATTR & 24 \\
+    \hline NFSV4\_REFERRAL & 25 \\
+    \hline MEMCORRUPT & 26 \\
+    \hline CONFIG & 27 \\
+    \hline CLIENT\_ID\_COMPUTE & 28 \\
+    \hline STDOUT & 29 \\
+    \hline OPEN\_OWNER\_HASH & 30 \\
+    \hline SESSIONS & 31 \\
+    \hline PNFS & 32 \\
+    \hline RPC\_CACHE & 33 \\
+    \hline
+  \end{tabular}
+  \caption{GANESHA's Logging Component Categories and OID values}
+  \label{componentoid}
+\end{figure}
+
+The debug levels and their order of severity are as follows:
+\begin{itemize}
+\item NIV\_NULL - no messages are printed.
+\item NIV\_MAJ - only major messages are printed.
+\item NIV\_CRIT - critical messages or higher are printed.
+\item NIV\_EVENT - event messages or higher printed.
+\item NIV\_DEBUG - debug messages or higher are printed.
+\item NIV\_FULL\_DEBUG - extremely verbose debug messages or higher are printed.
+\end{itemize}$\\$
+
+Figure \ref{logleveloid} OID as it pertains to GANESHA's logging system , using
+$.1.3.6.1.4.1.12384.999.1.1.10.2.1$ as an example.
+
+\begin{figure}[h]
+\center
+  \begin{tabular}{ | l | l |}
+    \hline $.1.3.6.1.4.1$ & .iso.org.dod.internet.private.enterprise or more simply
+    enterprises, \\&e.g. enterprises$.12384.999.1.1.10.2.1$ \\
+    \hline  $.12384$ & CEA - the organization that originated Ganesha \\
+    \hline  $.999$ & snmp\_adm - the program \\
+    \hline  $.1$ & Product\_Id from the config file \\
+    \hline  $.1$ & LOG\_OID - the portion of GANESHA's snmp tree devoted to logging \\
+    \hline  $.0$ & component ID (all)\\
+    \hline  $.2$ & logging level of the component \\
+    \hline  $.1$ & specifies the \emph{value} of the logging level \\
+    \hline
+  \end{tabular}
+  \caption{Deconstruction of an OID string that identifies the logging level of a
+    component}
+  \label{logleveloid}
+\end{figure}
+
+The following commands are example uses of the \emph{snmpwalk} command to query
+for the log level of different components.$\\$$\\$
+To see all information pertaining to the logging snmp variables:
+\begin{verbatim}
+$ snmpwalk -Os -c ganesha -v 1 localhost .1.3.6.1.4.1.12384.999.1.1
+\end{verbatim}
+To see just what is actually useful and fits in a reasonable window:
+\begin{verbatim}
+$ snmpwalk -Os -c ganesha -v 1 localhost .1.3.6.1.4.1.12384.999.1.1 | grep -v
+'\"STRING\"' | grep -v ``Log level''
+\end{verbatim}
+To see logging information on a particular component:
+\begin{verbatim}
+$ snmpwalk -Os -c ganesha -v 1 localhost .1.3.6.1.4.1.12384.999.1.1.3 | grep -v
+'\"STRING\"' | grep -v ``Log level''
+\end{verbatim}
+
+\subsection{Changing GANESHA's Logging Levels Through SNMP}
+
+The following commands are example uses of the \emph{snmpset} command to change
+the severity level of messages that should be logged for one or all
+components.$\\$$\\$
+To change the level for \emph{COMPONENT\_DISPATCH} (note that you specify the
+level by name, just like in the config file or on the command line):
+\begin{verbatim}
+$ snmpset -Os -c ganesha -v 1 localhost .1.3.6.1.4.1.12384.999.1.1.10.2.1 s
+NIV_FULL_DEBUG
+\end{verbatim}
+To change the level for all components:
+\begin{verbatim}
+$ snmpset -Os -c ganesha -v 1 localhost .1.3.6.1.4.1.12384.999.1.1.0.2.1 s
+NIV_FULL_DEBUG
+\end{verbatim}
+
+\subsection{Using the SNMP client provided with GANESHA}
+
+Even if GANESHA statistics can be browsed using standard SNMP commands
+(\texttt{snmp\_get}, \texttt{snmp\_walk}...), GANESHA comes with a SNMP client tool
+(\texttt{snmp\_adm})
+for easily browsing those stats in a convivial way, without having to handle OIDs,
+and all SNMP relative stuff.
+
+It is located in the '\texttt{snmp\_adm/client}' directory of GANESHA's distribution,
+and is also available in GANESHA RPMs that include SNMP support.
+
+\subsubsection{\texttt{snmp\_adm} client configuration file}
+
+If you're bored of typing OIDs, SNMP version, community name and all that stuff,
+just create a \texttt{.snmp\_adm.conf} file in your home (with mode 600) with the following
+lines inside:
+\begin{verbatim}
+host       <snmpd_address>[:<snmpd_port>]
+product_id <the product id of your favorite NFS server>
+
+#if you are using SNMPv3 protocol, also specify the following information:
+# password for authentication
+auth_pass "password"
+# password for encoding
+enc_pass "password"
+# user name
+sec_name "snmpadm"
+\end{verbatim}
+
+\subsubsection{SNMP relative options}
+
+If you don't want to use a configuration file,
+or if you want to overwrite the values it specifies,
+you can indicate them on \texttt{snmp\_adm} command line:
+\begin{verbatim}
+SNMP relative options:
+
+  -s <host>[:port] : the host where SNMP server is running
+      (default is localhost)
+  -p <product_id|product_name> : the deamon to be queried
+      (default is the first product of server's admin tree)
+  -C <community>: Community name for SNMPv2c (default is public).
+  -A <auth>: authentication for SNMPv3.
+  -X <pass>: password for SNMPv3.
+  -u <secname>: security name for SNMPv3.
+  -f <path>: path to the configuration file.
+\end{verbatim}
+
+\subsubsection{\texttt{snmp\_adm} commands}
+
+The main command you will use is '\texttt{snmp\_adm liststat}'.
+When used without options, it only displays the list of available variables.
+When used with '\texttt{-d}' it displays the description of each variable.
+When used with '\texttt{-v}' it displays the values of variables.
+You can also specify an expression, so only the variables
+whose name contains this expression will be displayed.
+
+\begin{verbatim}
+E.g:
+
+$ ./snmp_adm -v liststat cache
+
+Statistics for product_id=2:
+name                          type       value
+
+cache_nb_gc_lru_active         INTEGER    176
+cache_nb_gc_lru_total          INTEGER    432
+cache_nb_call_total            INTEGER    25323
+cache_nb_entries               INTEGER    5176
+cache_min_rbt_num_node         INTEGER    32
+cache_max_rbt_num_node         INTEGER    37
+cache_avg_rbt_num_node         INTEGER    34
+cache_nbset                    INTEGER    5465
+cache_nbtest                   INTEGER    0
+cache_nbget                    INTEGER    6243
+cache_nbdel                    INTEGER    132
+\end{verbatim}
+
+\section{Troubleshooting}
+
+Make sure the agentX addresses are the same in both snmpd.conf and the ganesha
+configuration file:
+\begin{verbatim}
+$ grep Snmp_Agentx_Socket /etc/ganesha/gpfs.ganesha.main.conf
+Snmp_Agentx_Socket = "tcp:localhost:705" ;
+$ grep agentXSocket /etc/snmp/snmpd.conf
+agentXSocket   tcp:localhost:705
+\end{verbatim}
+Iptables could potenetially block snmp. The default iptables setup for RHEL 5
+should be fine for local use of SNMP.
+If GANESHA was compiled with SNMP support the following message will be logged
+soon after startup with NIV\_EVENT:
+\begin{verbatim}
+$ grep "SNMP stats service was started successfully" /var/log/messages
+Sep  8 15:14:46 localhost nfs-ganesha[25074]: [stat_snmp] :MAIN: EVENT: NFS \
+STATS: SNMP stats service was started successfully
+\end{verbatim}
+Make sure SNMP and GANESHA are running. In the following example we are using
+the GPFS FSAL. An alternative FSAL will have a different name for the init
+script.
+\begin{verbatim}
+$ /etc/init.d/snmpd status
+snmpd (pid  24991) is running...
+$ /etc/init.d/nfs-ganesha.gpfs status
+GPFS Ganesha is running.
+Open-by-handle module is loaded.
+\end{verbatim}
+%To check if SNMP encountered errors:
+%\begin{verbatim}
+%
+%\end{verbatim}
+
+
+\end{document}
+
+

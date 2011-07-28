@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--Converted with LaTeX2HTML 2008 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Creating zpool</TITLE>
+<META NAME="description" CONTENT="Creating zpool">
+<META NAME="keywords" CONTENT="using_zfs_fsal">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="using_zfs_fsal.css">
+
+<LINK REL="next" HREF="node4.html">
+<LINK REL="previous" HREF="node2.html">
+<LINK REL="up" HREF="node2.html">
+<LINK REL="next" HREF="node4.html">
+</HEAD>
+
+<BODY >
+
+<DIV CLASS="navigation"><!--Navigation Panel-->
+<A NAME="tex2html44"
+  HREF="node4.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="../../images/next.png"></A> 
+<A NAME="tex2html42"
+  HREF="node2.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="../../images/up.png"></A> 
+<A NAME="tex2html36"
+  HREF="node2.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="../../images/prev.png"></A>   
+<BR>
+<B> Next:</B> <A NAME="tex2html45"
+  HREF="node4.html">Getting information about zpool</A>
+<B> Up:</B> <A NAME="tex2html43"
+  HREF="node2.html">Managing zpool</A>
+<B> Previous:</B> <A NAME="tex2html37"
+  HREF="node2.html">Managing zpool</A>
+<BR>
+<BR></DIV>
+<!--End of Navigation Panel-->
+
+<H2><A NAME="SECTION00021000000000000000">
+Creating zpool</A>
+</H2>
+
+<P>
+A zpool is a set of disk that can be grouped together with or without
+redundancy to form a logical volume. This pool of disk form the first ZFS
+filesystem that you can directly access and use in NFS-Ganesha.
+
+<P>
+Creating a zpool is really straightforward:
+<PRE>
+    root@localhost% lzw_zpool create tank mirror /dev/sda /dev/sdb
+</PRE>
+
+<P>
+This command will create a zpool called tank that form a mirror using
+<I>/dev/sda and <I>/dev/sdb.
+</I></I>
+<P>
+<I><I>The third argument of the command is the type of zpool that will be created.
+Several types exist:
+</I></I>
+<UL>
+<LI>mirror: each disk is a mirror
+</LI>
+<LI>raidz: like a classical RAID5
+</LI>
+<LI>raidz[1..255]: like a RAID5 with n disk for the parity (raidz3 implies n=3)
+</LI>
+</UL>
+<P>
+<BR><HR>
+<ADDRESS>
+remi
+2010-09-17
+</ADDRESS>
+</BODY>
+</HTML>

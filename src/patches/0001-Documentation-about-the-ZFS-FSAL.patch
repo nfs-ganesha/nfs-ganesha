@@ -1,0 +1,1313 @@
+From 7c982a2287d5b49d2e0a022e012a4387ae9d6a04 Mon Sep 17 00:00:00 2001
+From: Remi Duraffort <duraffortr@ocre.cea.fr>
+Date: Fri, 17 Sep 2010 09:22:35 +0200
+Subject: [PATCH] Documentation about the ZFS FSAL.
+
+---
+ share/doc/howto/fsal_zfs/using_zfs_fsal.tex  |  224 ++++++++++++++++++++++++++
+ web/pages/doc.html                           |    1 +
+ web/pages/using_zfs_fsal/WARNINGS            |    1 +
+ web/pages/using_zfs_fsal/index.html          |   78 +++++++++
+ web/pages/using_zfs_fsal/labels.pl           |   13 ++
+ web/pages/using_zfs_fsal/node1.html          |   78 +++++++++
+ web/pages/using_zfs_fsal/node2.html          |   88 ++++++++++
+ web/pages/using_zfs_fsal/node3.html          |   91 +++++++++++
+ web/pages/using_zfs_fsal/node4.html          |  110 +++++++++++++
+ web/pages/using_zfs_fsal/node5.html          |  159 ++++++++++++++++++
+ web/pages/using_zfs_fsal/node6.html          |   70 ++++++++
+ web/pages/using_zfs_fsal/node7.html          |   81 +++++++++
+ web/pages/using_zfs_fsal/node8.html          |   72 ++++++++
+ web/pages/using_zfs_fsal/using_zfs_fsal.css  |   34 ++++
+ web/pages/using_zfs_fsal/using_zfs_fsal.html |   78 +++++++++
+ 15 files changed, 1178 insertions(+), 0 deletions(-)
+ create mode 100644 share/doc/howto/fsal_zfs/using_zfs_fsal.tex
+ create mode 100644 web/pages/using_zfs_fsal/WARNINGS
+ create mode 100644 web/pages/using_zfs_fsal/index.html
+ create mode 100644 web/pages/using_zfs_fsal/labels.pl
+ create mode 100644 web/pages/using_zfs_fsal/node1.html
+ create mode 100644 web/pages/using_zfs_fsal/node2.html
+ create mode 100644 web/pages/using_zfs_fsal/node3.html
+ create mode 100644 web/pages/using_zfs_fsal/node4.html
+ create mode 100644 web/pages/using_zfs_fsal/node5.html
+ create mode 100644 web/pages/using_zfs_fsal/node6.html
+ create mode 100644 web/pages/using_zfs_fsal/node7.html
+ create mode 100644 web/pages/using_zfs_fsal/node8.html
+ create mode 100644 web/pages/using_zfs_fsal/using_zfs_fsal.css
+ create mode 100644 web/pages/using_zfs_fsal/using_zfs_fsal.html
+
+diff --git a/share/doc/howto/fsal_zfs/using_zfs_fsal.tex b/share/doc/howto/fsal_zfs/using_zfs_fsal.tex
+new file mode 100644
+index 0000000..325bb1a
+--- /dev/null
++++ b/share/doc/howto/fsal_zfs/using_zfs_fsal.tex
+@@ -0,0 +1,224 @@
++\documentclass[english]{article}
++\usepackage[T1]{fontenc}
++\usepackage[utf-8]{inputenc}
++
++\makeatletter
++
++\usepackage{babel}
++\makeatother
++\begin{document}
++
++{\Large \textbf{Exporting a ZFS filesystem with GANESHA} }\\
++
++\section{Introduction}
++
++Thanks to the ZFS FSAL, NFS-Ganesha is able to access and manipulate a ZFS
++filesystem. This access is not done through FUSE and the zfs-fuse project but
++directly using a custom library.
++
++This library called libzfswrap is distributed along with NFS-Ganesha and is
++mostly based on zfs-fuse. Packages for rpm based distributions and deb based
++distributions are also available.
++
++This document will explain the creation and managing of zpool and the
++configuration of NFS-Ganesha to use the zpool newly created.
++
++\section{Managing zpool}
++
++A set of tools has been created on top of libzfswrap to manage ZFS zpools. This
++set of tools is not fully finished as some features are still missing. Anyway
++the classical zfs-fuse based tools can also be used to manage the same zpool.
++
++A zpool created and managed by libzfswrap is also visible by zfs-fuse and
++conversely.
++
++\subsection{Creating zpool}
++
++A zpool is a set of disk that can be grouped together with or without
++redundancy to form a logical volume. This pool of disk form the first ZFS
++filesystem that you can directly access and use in NFS-Ganesha.
++
++Creating a zpool is really straightforward:
++\begin{verbatim}
++    root@localhost% lzw_zpool create tank mirror /dev/sda /dev/sdb
++\end{verbatim}
++
++This command will create a zpool called tank that form a mirror using
++\it{/dev/sda} and \it{/dev/sdb}.
++
++The third argument of the command is the type of zpool that will be created.
++Several types exist:
++\begin{itemize}
++    \item mirror: each disk is a mirror
++    \item raidz: like a classical RAID5
++    \item raidz[1..255]: like a RAID5 with n disk for the parity (raidz3 implies n=3)
++\end{itemize}
++
++\subsection{Getting information about zpool}
++
++To list the available zpool on the system and some information about them:
++\begin{verbatim}
++    root@localhost% lzw_zpool list
++      NAME   SIZE  ALLOC   FREE    CAP  DEDUP  HEALTH  ALTROOT
++      pool  1016M   106K  1016M     0%  1.00x  ONLINE  -
++      tank  4.59G  2.02G  2.57G    43%  1.00x  ONLINE  -
++\end{verbatim}
++
++You can specify the list of properties you want to get by providing as second
++argument the name of them separated by colons.
++\begin{verbatim}
++    root@localhost% lzw_zpool list name,size,health
++      NAME   SIZE  HEALTH
++      pool  1016M  ONLINE
++      tank  4.59G  ONLINE
++\end{verbatim}
++
++To get more detailed information about the structure and the status of each disk in the pool, just use the \it{status} command:
++\begin{verbatim}
++    root@localhost% lzw_zpool status
++      pool: pool
++     state: ONLINE
++     scrub: none requested
++    config:
++    
++            NAME            STATE     READ WRITE CKSUM
++            pool            ONLINE       0     0     0
++              mirror-0      ONLINE       0     0     0
++                /dev/sda    ONLINE       0     0     0
++                /dev/sdb    ONLINE       0     0     0
++    
++    errors: No known data errors
++    
++      pool: tank
++     state: ONLINE
++     scrub: none requested
++    config:
++    
++            NAME        STATE     READ WRITE CKSUM
++            tank        ONLINE       0     0     0
++              mirror-0  ONLINE       0     0     0
++                hda3    ONLINE       0     0     0
++                hda4    ONLINE       0     0     0
++    
++    errors: No known data errors
++\end{verbatim}
++
++\subsection{Modifying a zpool}
++
++It's always possible to add disk or group of disk to a zpool.
++\begin{verbatim}
++    root@localhost% lzw_zpool add pool raidz /dev/sdc /dev/sdd /dev/sde
++    root@localhost% lzw_zpool status
++      pool: pool
++     state: ONLINE
++     scrub: none requested
++    config:
++    
++            NAME            STATE     READ WRITE CKSUM
++            pool            ONLINE       0     0     0
++              mirror-0      ONLINE       0     0     0
++                /dev/sda    ONLINE       0     0     0
++                /dev/sdb    ONLINE       0     0     0
++              raidz1-1      ONLINE       0     0     0
++                /dev/sdc    ONLINE       0     0     0
++                /dev/sdd    ONLINE       0     0     0
++                /dev/sde    ONLINE       0     0     0
++    
++    errors: No known data errors
++    
++      pool: tank
++     state: ONLINE
++     scrub: none requested
++    config:
++    
++            NAME        STATE     READ WRITE CKSUM
++            tank        ONLINE       0     0     0
++              mirror-0  ONLINE       0     0     0
++                hda3    ONLINE       0     0     0
++                hda4    ONLINE       0     0     0
++    
++    errors: No known data errors
++\end{verbatim}
++
++The 'add' command takes as arguments:
++\begin{itemize}
++    \item 'pool': name of the pool
++    \item 'raidz': type of the disk set to add
++    \item the list of devices that form the disk set to add
++\end{itemize}
++
++
++That's also possible to detach a device from a mirror. In this example,
++detaching one device from the mirror inside the first pool is possible with:
++\begin{verbatim}
++    root@localhost% lzw_zpool detach pool /dev/sdb
++    root@localhost% lsz_zpool status
++      pool: pool
++     state: ONLINE
++     scrub: none requested
++    config:
++    
++            NAME            STATE     READ WRITE CKSUM
++            pool            ONLINE       0     0     0
++              /dev/sda      ONLINE       0     0     0
++              raidz1-1      ONLINE       0     0     0
++                /dev/sdc    ONLINE       0     0     0
++                /dev/sdd    ONLINE       0     0     0
++                /dev/sde    ONLINE       0     0     0
++    
++    errors: No known data errors
++    
++      pool: tank
++     state: ONLINE
++     scrub: none requested
++    config:
++    
++            NAME        STATE     READ WRITE CKSUM
++            tank        ONLINE       0     0     0
++              mirror-0  ONLINE       0     0     0
++                hda3    ONLINE       0     0     0
++                hda4    ONLINE       0     0     0
++    
++    errors: No known data errors
++\end{verbatim}
++
++To undo this operation just use the 'attach' command:
++\begin{verbatim}
++    root@localhost% lzw_zpool attach pool /dev/sda /dev/sdb
++\end{verbatim}
++
++This command takes as argument:
++\begin{itemize}
++    \item 'pool': name of the pool
++    \item '/dev/sda': device to use as attachment point
++    \item '/dev/sdb': device to attach to the previous argument
++\end{itemize}
++
++\subsection{Destroying a zpool}
++
++To destroy a zpool only one command is needed:
++\begin{verbatim}
++  root@localhost% lzw_zpool destroy pool
++  root@localhost% lzw_zpool list
++      NAME   SIZE  ALLOC   FREE    CAP  DEDUP  HEALTH  ALTROOT
++      tank  4.59G  2.02G  2.57G    43%  1.00x  ONLINE  -
++\end{verbatim}
++
++\section{Configuring Ganesha}
++
++To configure NFS-Ganesha to access to a zpool, you must set some options in the
++configuration file, in the \texttt{ZFS} configuration block
++
++The only parameter to set is the name of the pool that NFS-Ganesha must use.
++
++\begin{verbatim}
++ZFS
++{
++    # Zpool to use
++    zpool = "tank";
++}
++\end{verbatim}
++
++Moreover the Path variable in the Export block must be "/".
++
++\end{document}
+diff --git a/web/pages/doc.html b/web/pages/doc.html
+index bb310d6..2c9d78a 100644
+--- a/web/pages/doc.html
++++ b/web/pages/doc.html
+@@ -30,6 +30,7 @@
+ 			<li><a class="bodylinks" href="index.php?page=using_snmp_fsal/index">a SNMP tree</a></li>
+ 			<li><a class="bodylinks" href="index.php?page=using_fuse_fsal/index">any FUSE-bound filesystem</a></li>
+ 			<li><a class="bodylinks" href="index.php?page=FSAL_PROXY_HOWTO">another NFSv4 server (as a proxy server)</a></li>
++			<li><a class="bodylinks" href="index.php?page=using_zfs_fsal/index">a ZFS filesystem</a></li>
+ 		</ul>
+ 	    </li>
+ 	</ul>
+diff --git a/web/pages/using_zfs_fsal/WARNINGS b/web/pages/using_zfs_fsal/WARNINGS
+new file mode 100644
+index 0000000..4fa64c7
+--- /dev/null
++++ b/web/pages/using_zfs_fsal/WARNINGS
+@@ -0,0 +1 @@
++No implementation found for style `fontenc'
+diff --git a/web/pages/using_zfs_fsal/index.html b/web/pages/using_zfs_fsal/index.html
+new file mode 100644
+index 0000000..7d1bbfb
+--- /dev/null
++++ b/web/pages/using_zfs_fsal/index.html
+@@ -0,0 +1,78 @@
++<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
++
++<!--Converted with LaTeX2HTML 2008 (1.71)
++original version by:  Nikos Drakos, CBLU, University of Leeds
++* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
++* with significant contributions from:
++  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
++<HTML>
++<HEAD>
++<TITLE>using_zfs_fsal</TITLE>
++<META NAME="description" CONTENT="using_zfs_fsal">
++<META NAME="keywords" CONTENT="using_zfs_fsal">
++<META NAME="resource-type" CONTENT="document">
++<META NAME="distribution" CONTENT="global">
++
++<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
++<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
++
++<LINK REL="STYLESHEET" HREF="using_zfs_fsal.css">
++
++<LINK REL="next" HREF="node1.html">
++</HEAD>
++
++<BODY >
++
++<DIV CLASS="navigation"><!--Navigation Panel-->
++<A NAME="tex2html2"
++  HREF="node1.html">
++<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
++ SRC="/usr/share/latex2html/icons/next.png"></A> 
++<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
++ SRC="/usr/share/latex2html/icons/up_g.png"> 
++<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
++ SRC="/usr/share/latex2html/icons/prev_g.png">   
++<BR>
++<B> Next:</B> <A NAME="tex2html3"
++  HREF="node1.html">Introduction</A>
++<BR>
++<BR></DIV>
++<!--End of Navigation Panel-->
++
++<P>
++<BIG CLASS="XLARGE"><SPAN  CLASS="textbf">Exporting a ZFS filesystem with GANESHA</SPAN> </BIG>
++<BR>
++<P>
++<BR><HR>
++<!--Table of Child-Links-->
++<A NAME="CHILD_LINKS"></A>
++
++<UL CLASS="ChildLinks">
++<LI><A NAME="tex2html4"
++  HREF="node1.html">Introduction</A>
++<LI><A NAME="tex2html5"
++  HREF="node2.html">Managing zpool</A>
++<UL>
++<LI><A NAME="tex2html6"
++  HREF="node3.html">Creating zpool</A>
++<LI><A NAME="tex2html7"
++  HREF="node4.html">Getting information about zpool</A>
++<LI><A NAME="tex2html8"
++  HREF="node5.html">Modifying a zpool</A>
++<LI><A NAME="tex2html9"
++  HREF="node6.html">Destroying a zpool</A>
++</UL>
++<BR>
++<LI><A NAME="tex2html10"
++  HREF="node7.html">Configuring Ganesha</A>
++<LI><A NAME="tex2html11"
++  HREF="node8.html">About this document ...</A>
++</UL>
++<!--End of Table of Child-Links-->
++<BR><HR>
++<ADDRESS>
++remi
++2010-09-17
++</ADDRESS>
++</BODY>
++</HTML>
+diff --git a/web/pages/using_zfs_fsal/labels.pl b/web/pages/using_zfs_fsal/labels.pl
+new file mode 100644
+index 0000000..e5b868d
+--- /dev/null
++++ b/web/pages/using_zfs_fsal/labels.pl
+@@ -0,0 +1,13 @@
++# LaTeX2HTML 2008 (1.71)
++# Associate labels original text with physical files.
++
++
++1;
++
++
++# LaTeX2HTML 2008 (1.71)
++# labels from external_latex_labels array.
++
++
++1;
++
+diff --git a/web/pages/using_zfs_fsal/node1.html b/web/pages/using_zfs_fsal/node1.html
+new file mode 100644
+index 0000000..22cabd9
+--- /dev/null
++++ b/web/pages/using_zfs_fsal/node1.html
+@@ -0,0 +1,78 @@
++<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
++
++<!--Converted with LaTeX2HTML 2008 (1.71)
++original version by:  Nikos Drakos, CBLU, University of Leeds
++* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
++* with significant contributions from:
++  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
++<HTML>
++<HEAD>
++<TITLE>Introduction</TITLE>
++<META NAME="description" CONTENT="Introduction">
++<META NAME="keywords" CONTENT="using_zfs_fsal">
++<META NAME="resource-type" CONTENT="document">
++<META NAME="distribution" CONTENT="global">
++
++<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
++<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
++
++<LINK REL="STYLESHEET" HREF="using_zfs_fsal.css">
++
++<LINK REL="next" HREF="node2.html">
++<LINK REL="previous" HREF="using_zfs_fsal.html">
++<LINK REL="up" HREF="using_zfs_fsal.html">
++<LINK REL="next" HREF="node2.html">
++</HEAD>
++
++<BODY >
++
++<DIV CLASS="navigation"><!--Navigation Panel-->
++<A NAME="tex2html20"
++  HREF="node2.html">
++<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
++ SRC="/usr/share/latex2html/icons/next.png"></A> 
++<A NAME="tex2html18"
++  HREF="using_zfs_fsal.html">
++<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
++ SRC="/usr/share/latex2html/icons/up.png"></A> 
++<A NAME="tex2html12"
++  HREF="using_zfs_fsal.html">
++<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
++ SRC="/usr/share/latex2html/icons/prev.png"></A>   
++<BR>
++<B> Next:</B> <A NAME="tex2html21"
++  HREF="node2.html">Managing zpool</A>
++<B> Up:</B> <A NAME="tex2html19"
++  HREF="using_zfs_fsal.html">using_zfs_fsal</A>
++<B> Previous:</B> <A NAME="tex2html13"
++  HREF="using_zfs_fsal.html">using_zfs_fsal</A>
++<BR>
++<BR></DIV>
++<!--End of Navigation Panel-->
++
++<H1><A NAME="SECTION00010000000000000000">
++Introduction</A>
++</H1>
++
++<P>
++Thanks to the ZFS FSAL, NFS-Ganesha is able to access and manipulate a ZFS
++filesystem. This access is not done through FUSE and the zfs-fuse project but
++directly using a custom library.
++
++<P>
++This library called libzfswrap is distributed along with NFS-Ganesha and is
++mostly based on zfs-fuse. Packages for rpm based distributions and deb based
++distributions are also available.
++
++<P>
++This document will explain the creation and managing of zpool and the
++configuration of NFS-Ganesha to use the zpool newly created.
++
++<P>
++<BR><HR>
++<ADDRESS>
++remi
++2010-09-17
++</ADDRESS>
++</BODY>
++</HTML>
+diff --git a/web/pages/using_zfs_fsal/node2.html b/web/pages/using_zfs_fsal/node2.html
+new file mode 100644
+index 0000000..dc28672
+--- /dev/null
++++ b/web/pages/using_zfs_fsal/node2.html
+@@ -0,0 +1,88 @@
++<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
++
++<!--Converted with LaTeX2HTML 2008 (1.71)
++original version by:  Nikos Drakos, CBLU, University of Leeds
++* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
++* with significant contributions from:
++  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
++<HTML>
++<HEAD>
++<TITLE>Managing zpool</TITLE>
++<META NAME="description" CONTENT="Managing zpool">
++<META NAME="keywords" CONTENT="using_zfs_fsal">
++<META NAME="resource-type" CONTENT="document">
++<META NAME="distribution" CONTENT="global">
++
++<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
++<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
++
++<LINK REL="STYLESHEET" HREF="using_zfs_fsal.css">
++
++<LINK REL="next" HREF="node7.html">
++<LINK REL="previous" HREF="node1.html">
++<LINK REL="up" HREF="using_zfs_fsal.html">
++<LINK REL="next" HREF="node3.html">
++</HEAD>
++
++<BODY >
++
++<DIV CLASS="navigation"><!--Navigation Panel-->
++<A NAME="tex2html30"
++  HREF="node3.html">
++<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
++ SRC="/usr/share/latex2html/icons/next.png"></A> 
++<A NAME="tex2html28"
++  HREF="using_zfs_fsal.html">
++<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
++ SRC="/usr/share/latex2html/icons/up.png"></A> 
++<A NAME="tex2html22"
++  HREF="node1.html">
++<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
++ SRC="/usr/share/latex2html/icons/prev.png"></A>   
++<BR>
++<B> Next:</B> <A NAME="tex2html31"
++  HREF="node3.html">Creating zpool</A>
++<B> Up:</B> <A NAME="tex2html29"
++  HREF="using_zfs_fsal.html">using_zfs_fsal</A>
++<B> Previous:</B> <A NAME="tex2html23"
++  HREF="node1.html">Introduction</A>
++<BR>
++<BR></DIV>
++<!--End of Navigation Panel-->
++
++<H1><A NAME="SECTION00020000000000000000">
++Managing zpool</A>
++</H1>
++
++<P>
++A set of tools has been created on top of libzfswrap to manage ZFS zpools. This
++set of tools is not fully finished as some features are still missing. Anyway
++the classical zfs-fuse based tools can also be used to manage the same zpool.
++
++<P>
++A zpool created and managed by libzfswrap is also visible by zfs-fuse and
++conversely.
++
++<P>
++<BR><HR>
++<!--Table of Child-Links-->
++<A NAME="CHILD_LINKS"><STRONG>Subsections</STRONG></A>
++
++<UL CLASS="ChildLinks">
++<LI><A NAME="tex2html32"
++  HREF="node3.html">Creating zpool</A>
++<LI><A NAME="tex2html33"
++  HREF="node4.html">Getting information about zpool</A>
++<LI><A NAME="tex2html34"
++  HREF="node5.html">Modifying a zpool</A>
++<LI><A NAME="tex2html35"
++  HREF="node6.html">Destroying a zpool</A>
++</UL>
++<!--End of Table of Child-Links-->
++<BR><HR>
++<ADDRESS>
++remi
++2010-09-17
++</ADDRESS>
++</BODY>
++</HTML>
+diff --git a/web/pages/using_zfs_fsal/node3.html b/web/pages/using_zfs_fsal/node3.html
+new file mode 100644
+index 0000000..c61080e
+--- /dev/null
++++ b/web/pages/using_zfs_fsal/node3.html
+@@ -0,0 +1,91 @@
++<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
++
++<!--Converted with LaTeX2HTML 2008 (1.71)
++original version by:  Nikos Drakos, CBLU, University of Leeds
++* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
++* with significant contributions from:
++  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
++<HTML>
++<HEAD>
++<TITLE>Creating zpool</TITLE>
++<META NAME="description" CONTENT="Creating zpool">
++<META NAME="keywords" CONTENT="using_zfs_fsal">
++<META NAME="resource-type" CONTENT="document">
++<META NAME="distribution" CONTENT="global">
++
++<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
++<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
++
++<LINK REL="STYLESHEET" HREF="using_zfs_fsal.css">
++
++<LINK REL="next" HREF="node4.html">
++<LINK REL="previous" HREF="node2.html">
++<LINK REL="up" HREF="node2.html">
++<LINK REL="next" HREF="node4.html">
++</HEAD>
++
++<BODY >
++
++<DIV CLASS="navigation"><!--Navigation Panel-->
++<A NAME="tex2html44"
++  HREF="node4.html">
++<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
++ SRC="/usr/share/latex2html/icons/next.png"></A> 
++<A NAME="tex2html42"
++  HREF="node2.html">
++<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
++ SRC="/usr/share/latex2html/icons/up.png"></A> 
++<A NAME="tex2html36"
++  HREF="node2.html">
++<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
++ SRC="/usr/share/latex2html/icons/prev.png"></A>   
++<BR>
++<B> Next:</B> <A NAME="tex2html45"
++  HREF="node4.html">Getting information about zpool</A>
++<B> Up:</B> <A NAME="tex2html43"
++  HREF="node2.html">Managing zpool</A>
++<B> Previous:</B> <A NAME="tex2html37"
++  HREF="node2.html">Managing zpool</A>
++<BR>
++<BR></DIV>
++<!--End of Navigation Panel-->
++
++<H2><A NAME="SECTION00021000000000000000">
++Creating zpool</A>
++</H2>
++
++<P>
++A zpool is a set of disk that can be grouped together with or without
++redundancy to form a logical volume. This pool of disk form the first ZFS
++filesystem that you can directly access and use in NFS-Ganesha.
++
++<P>
++Creating a zpool is really straightforward:
++<PRE>
++    root@localhost% lzw_zpool create tank mirror /dev/sda /dev/sdb
++</PRE>
++
++<P>
++This command will create a zpool called tank that form a mirror using
++<I>/dev/sda and <I>/dev/sdb.
++</I></I>
++<P>
++<I><I>The third argument of the command is the type of zpool that will be created.
++Several types exist:
++</I></I>
++<UL>
++<LI>mirror: each disk is a mirror
++</LI>
++<LI>raidz: like a classical RAID5
++</LI>
++<LI>raidz[1..255]: like a RAID5 with n disk for the parity (raidz3 implies n=3)
++</LI>
++</UL>
++<P>
++<BR><HR>
++<ADDRESS>
++remi
++2010-09-17
++</ADDRESS>
++</BODY>
++</HTML>
+diff --git a/web/pages/using_zfs_fsal/node4.html b/web/pages/using_zfs_fsal/node4.html
+new file mode 100644
+index 0000000..c209884
+--- /dev/null
++++ b/web/pages/using_zfs_fsal/node4.html
+@@ -0,0 +1,110 @@
++<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
++
++<!--Converted with LaTeX2HTML 2008 (1.71)
++original version by:  Nikos Drakos, CBLU, University of Leeds
++* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
++* with significant contributions from:
++  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
++<HTML>
++<HEAD>
++<TITLE>Getting information about zpool</TITLE>
++<META NAME="description" CONTENT="Getting information about zpool">
++<META NAME="keywords" CONTENT="using_zfs_fsal">
++<META NAME="resource-type" CONTENT="document">
++<META NAME="distribution" CONTENT="global">
++
++<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
++<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
++
++<LINK REL="STYLESHEET" HREF="using_zfs_fsal.css">
++
++<LINK REL="next" HREF="node5.html">
++<LINK REL="previous" HREF="node3.html">
++<LINK REL="up" HREF="node2.html">
++<LINK REL="next" HREF="node5.html">
++</HEAD>
++
++<BODY >
++
++<DIV CLASS="navigation"><!--Navigation Panel-->
++<A NAME="tex2html54"
++  HREF="node5.html">
++<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
++ SRC="/usr/share/latex2html/icons/next.png"></A> 
++<A NAME="tex2html52"
++  HREF="node2.html">
++<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
++ SRC="/usr/share/latex2html/icons/up.png"></A> 
++<A NAME="tex2html46"
++  HREF="node3.html">
++<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
++ SRC="/usr/share/latex2html/icons/prev.png"></A>   
++<BR>
++<B> Next:</B> <A NAME="tex2html55"
++  HREF="node5.html">Modifying a zpool</A>
++<B> Up:</B> <A NAME="tex2html53"
++  HREF="node2.html">Managing zpool</A>
++<B> Previous:</B> <A NAME="tex2html47"
++  HREF="node3.html">Creating zpool</A>
++<BR>
++<BR></DIV>
++<!--End of Navigation Panel-->
++
++<H2><A NAME="SECTION00022000000000000000">
++Getting information about zpool</A>
++</H2>
++<P>
++<I><I>To list the available zpool on the system and some information about them:
++</I></I><PRE>
++    root@localhost% lzw_zpool list
++      NAME   SIZE  ALLOC   FREE    CAP  DEDUP  HEALTH  ALTROOT
++      pool  1016M   106K  1016M     0%  1.00x  ONLINE  -
++      tank  4.59G  2.02G  2.57G    43%  1.00x  ONLINE  -
++</PRE>
++<P>
++<I><I>You can specify the list of properties you want to get by providing as second
++argument the name of them separated by colons.
++</I></I><PRE>
++    root@localhost% lzw_zpool list name,size,health
++      NAME   SIZE  HEALTH
++      pool  1016M  ONLINE
++      tank  4.59G  ONLINE
++</PRE>
++<P>
++<I><I>To get more detailed information about the structure and the status of each disk in the pool, just use the <I>status command:
++</I></I></I><PRE>
++    root@localhost% lzw_zpool status
++      pool: pool
++     state: ONLINE
++     scrub: none requested
++    config:
++    
++            NAME            STATE     READ WRITE CKSUM
++            pool            ONLINE       0     0     0
++              mirror-0      ONLINE       0     0     0
++                /dev/sda    ONLINE       0     0     0
++                /dev/sdb    ONLINE       0     0     0
++    
++    errors: No known data errors
++    
++      pool: tank
++     state: ONLINE
++     scrub: none requested
++    config:
++    
++            NAME        STATE     READ WRITE CKSUM
++            tank        ONLINE       0     0     0
++              mirror-0  ONLINE       0     0     0
++                hda3    ONLINE       0     0     0
++                hda4    ONLINE       0     0     0
++    
++    errors: No known data errors
++</PRE>
++<P>
++<BR><HR>
++<ADDRESS>
++remi
++2010-09-17
++</ADDRESS>
++</BODY>
++</HTML>
+diff --git a/web/pages/using_zfs_fsal/node5.html b/web/pages/using_zfs_fsal/node5.html
+new file mode 100644
+index 0000000..1c85c2c
+--- /dev/null
++++ b/web/pages/using_zfs_fsal/node5.html
+@@ -0,0 +1,159 @@
++<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
++
++<!--Converted with LaTeX2HTML 2008 (1.71)
++original version by:  Nikos Drakos, CBLU, University of Leeds
++* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
++* with significant contributions from:
++  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
++<HTML>
++<HEAD>
++<TITLE>Modifying a zpool</TITLE>
++<META NAME="description" CONTENT="Modifying a zpool">
++<META NAME="keywords" CONTENT="using_zfs_fsal">
++<META NAME="resource-type" CONTENT="document">
++<META NAME="distribution" CONTENT="global">
++
++<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
++<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
++
++<LINK REL="STYLESHEET" HREF="using_zfs_fsal.css">
++
++<LINK REL="next" HREF="node6.html">
++<LINK REL="previous" HREF="node4.html">
++<LINK REL="up" HREF="node2.html">
++<LINK REL="next" HREF="node6.html">
++</HEAD>
++
++<BODY >
++
++<DIV CLASS="navigation"><!--Navigation Panel-->
++<A NAME="tex2html64"
++  HREF="node6.html">
++<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
++ SRC="/usr/share/latex2html/icons/next.png"></A> 
++<A NAME="tex2html62"
++  HREF="node2.html">
++<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
++ SRC="/usr/share/latex2html/icons/up.png"></A> 
++<A NAME="tex2html56"
++  HREF="node4.html">
++<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
++ SRC="/usr/share/latex2html/icons/prev.png"></A>   
++<BR>
++<B> Next:</B> <A NAME="tex2html65"
++  HREF="node6.html">Destroying a zpool</A>
++<B> Up:</B> <A NAME="tex2html63"
++  HREF="node2.html">Managing zpool</A>
++<B> Previous:</B> <A NAME="tex2html57"
++  HREF="node4.html">Getting information about zpool</A>
++<BR>
++<BR></DIV>
++<!--End of Navigation Panel-->
++
++<H2><A NAME="SECTION00023000000000000000">
++Modifying a zpool</A>
++</H2>
++<P>
++<I><I><I>It's always possible to add disk or group of disk to a zpool.
++</I></I></I><PRE>
++    root@localhost% lzw_zpool add pool raidz /dev/sdc /dev/sdd /dev/sde
++    root@localhost% lzw_zpool status
++      pool: pool
++     state: ONLINE
++     scrub: none requested
++    config:
++    
++            NAME            STATE     READ WRITE CKSUM
++            pool            ONLINE       0     0     0
++              mirror-0      ONLINE       0     0     0
++                /dev/sda    ONLINE       0     0     0
++                /dev/sdb    ONLINE       0     0     0
++              raidz1-1      ONLINE       0     0     0
++                /dev/sdc    ONLINE       0     0     0
++                /dev/sdd    ONLINE       0     0     0
++                /dev/sde    ONLINE       0     0     0
++    
++    errors: No known data errors
++    
++      pool: tank
++     state: ONLINE
++     scrub: none requested
++    config:
++    
++            NAME        STATE     READ WRITE CKSUM
++            tank        ONLINE       0     0     0
++              mirror-0  ONLINE       0     0     0
++                hda3    ONLINE       0     0     0
++                hda4    ONLINE       0     0     0
++    
++    errors: No known data errors
++</PRE>
++<P>
++<I><I><I>The 'add' command takes as arguments:
++</I></I></I>
++<UL>
++<LI>'pool': name of the pool
++</LI>
++<LI>'raidz': type of the disk set to add
++</LI>
++<LI>the list of devices that form the disk set to add
++</LI>
++</UL>
++<P>
++<I><I><I>That's also possible to detach a device from a mirror. In this example,
++detaching one device from the mirror inside the first pool is possible with:
++</I></I></I><PRE>
++    root@localhost% lzw_zpool detach pool /dev/sdb
++    root@localhost% lsz_zpool status
++      pool: pool
++     state: ONLINE
++     scrub: none requested
++    config:
++    
++            NAME            STATE     READ WRITE CKSUM
++            pool            ONLINE       0     0     0
++              /dev/sda      ONLINE       0     0     0
++              raidz1-1      ONLINE       0     0     0
++                /dev/sdc    ONLINE       0     0     0
++                /dev/sdd    ONLINE       0     0     0
++                /dev/sde    ONLINE       0     0     0
++    
++    errors: No known data errors
++    
++      pool: tank
++     state: ONLINE
++     scrub: none requested
++    config:
++    
++            NAME        STATE     READ WRITE CKSUM
++            tank        ONLINE       0     0     0
++              mirror-0  ONLINE       0     0     0
++                hda3    ONLINE       0     0     0
++                hda4    ONLINE       0     0     0
++    
++    errors: No known data errors
++</PRE>
++<P>
++<I><I><I>To undo this operation just use the 'attach' command:
++</I></I></I><PRE>
++    root@localhost% lzw_zpool attach pool /dev/sda /dev/sdb
++</PRE>
++<P>
++<I><I><I>This command takes as argument:
++</I></I></I>
++<UL>
++<LI>'pool': name of the pool
++</LI>
++<LI>'/dev/sda': device to use as attachment point
++</LI>
++<LI>'/dev/sdb': device to attach to the previous argument
++</LI>
++</UL>
++<P>
++<BR><HR>
++<ADDRESS>
++remi
++2010-09-17
++</ADDRESS>
++</BODY>
++</HTML>
+diff --git a/web/pages/using_zfs_fsal/node6.html b/web/pages/using_zfs_fsal/node6.html
+new file mode 100644
+index 0000000..aa7ff1b
+--- /dev/null
++++ b/web/pages/using_zfs_fsal/node6.html
+@@ -0,0 +1,70 @@
++<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
++
++<!--Converted with LaTeX2HTML 2008 (1.71)
++original version by:  Nikos Drakos, CBLU, University of Leeds
++* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
++* with significant contributions from:
++  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
++<HTML>
++<HEAD>
++<TITLE>Destroying a zpool</TITLE>
++<META NAME="description" CONTENT="Destroying a zpool">
++<META NAME="keywords" CONTENT="using_zfs_fsal">
++<META NAME="resource-type" CONTENT="document">
++<META NAME="distribution" CONTENT="global">
++
++<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
++<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
++
++<LINK REL="STYLESHEET" HREF="using_zfs_fsal.css">
++
++<LINK REL="previous" HREF="node5.html">
++<LINK REL="up" HREF="node2.html">
++<LINK REL="next" HREF="node7.html">
++</HEAD>
++
++<BODY >
++
++<DIV CLASS="navigation"><!--Navigation Panel-->
++<A NAME="tex2html72"
++  HREF="node7.html">
++<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
++ SRC="/usr/share/latex2html/icons/next.png"></A> 
++<A NAME="tex2html70"
++  HREF="node2.html">
++<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
++ SRC="/usr/share/latex2html/icons/up.png"></A> 
++<A NAME="tex2html66"
++  HREF="node5.html">
++<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
++ SRC="/usr/share/latex2html/icons/prev.png"></A>   
++<BR>
++<B> Next:</B> <A NAME="tex2html73"
++  HREF="node7.html">Configuring Ganesha</A>
++<B> Up:</B> <A NAME="tex2html71"
++  HREF="node2.html">Managing zpool</A>
++<B> Previous:</B> <A NAME="tex2html67"
++  HREF="node5.html">Modifying a zpool</A>
++<BR>
++<BR></DIV>
++<!--End of Navigation Panel-->
++
++<H2><A NAME="SECTION00024000000000000000">
++Destroying a zpool</A>
++</H2>
++<P>
++<I><I><I>To destroy a zpool only one command is needed:
++</I></I></I><PRE>
++  root@localhost% lzw_zpool destroy pool
++  root@localhost% lzw_zpool list
++      NAME   SIZE  ALLOC   FREE    CAP  DEDUP  HEALTH  ALTROOT
++      tank  4.59G  2.02G  2.57G    43%  1.00x  ONLINE  -
++</PRE>
++<P>
++<BR><HR>
++<ADDRESS>
++remi
++2010-09-17
++</ADDRESS>
++</BODY>
++</HTML>
+diff --git a/web/pages/using_zfs_fsal/node7.html b/web/pages/using_zfs_fsal/node7.html
+new file mode 100644
+index 0000000..5f3be84
+--- /dev/null
++++ b/web/pages/using_zfs_fsal/node7.html
+@@ -0,0 +1,81 @@
++<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
++
++<!--Converted with LaTeX2HTML 2008 (1.71)
++original version by:  Nikos Drakos, CBLU, University of Leeds
++* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
++* with significant contributions from:
++  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
++<HTML>
++<HEAD>
++<TITLE>Configuring Ganesha</TITLE>
++<META NAME="description" CONTENT="Configuring Ganesha">
++<META NAME="keywords" CONTENT="using_zfs_fsal">
++<META NAME="resource-type" CONTENT="document">
++<META NAME="distribution" CONTENT="global">
++
++<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
++<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
++
++<LINK REL="STYLESHEET" HREF="using_zfs_fsal.css">
++
++<LINK REL="next" HREF="node8.html">
++<LINK REL="previous" HREF="node2.html">
++<LINK REL="up" HREF="using_zfs_fsal.html">
++<LINK REL="next" HREF="node8.html">
++</HEAD>
++
++<BODY >
++
++<DIV CLASS="navigation"><!--Navigation Panel-->
++<A NAME="tex2html82"
++  HREF="node8.html">
++<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
++ SRC="/usr/share/latex2html/icons/next.png"></A> 
++<A NAME="tex2html80"
++  HREF="using_zfs_fsal.html">
++<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
++ SRC="/usr/share/latex2html/icons/up.png"></A> 
++<A NAME="tex2html74"
++  HREF="node6.html">
++<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
++ SRC="/usr/share/latex2html/icons/prev.png"></A>   
++<BR>
++<B> Next:</B> <A NAME="tex2html83"
++  HREF="node8.html">About this document ...</A>
++<B> Up:</B> <A NAME="tex2html81"
++  HREF="using_zfs_fsal.html">using_zfs_fsal</A>
++<B> Previous:</B> <A NAME="tex2html75"
++  HREF="node6.html">Destroying a zpool</A>
++<BR>
++<BR></DIV>
++<!--End of Navigation Panel-->
++
++<H1><A NAME="SECTION00030000000000000000">
++Configuring Ganesha</A>
++</H1>
++<P>
++<I><I><I>To configure NFS-Ganesha to access to a zpool, you must set some options in the
++configuration file, in the <TT>ZFS</TT> configuration block
++</I></I></I>
++<P>
++<I><I><I>The only parameter to set is the name of the pool that NFS-Ganesha must use.
++</I></I></I>
++<P>
++<PRE>
++ZFS
++{
++    # Zpool to use
++    zpool = "tank";
++}
++</PRE>
++<P>
++<I><I><I>Moreover the Path variable in the Export block must be "/".
++</I></I></I>
++<P>
++<BR><HR>
++<ADDRESS>
++remi
++2010-09-17
++</ADDRESS>
++</BODY>
++</HTML>
+diff --git a/web/pages/using_zfs_fsal/node8.html b/web/pages/using_zfs_fsal/node8.html
+new file mode 100644
+index 0000000..0a75001
+--- /dev/null
++++ b/web/pages/using_zfs_fsal/node8.html
+@@ -0,0 +1,72 @@
++<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
++
++<!--Converted with LaTeX2HTML 2008 (1.71)
++original version by:  Nikos Drakos, CBLU, University of Leeds
++* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
++* with significant contributions from:
++  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
++<HTML>
++<HEAD>
++<TITLE>About this document ...</TITLE>
++<META NAME="description" CONTENT="About this document ...">
++<META NAME="keywords" CONTENT="using_zfs_fsal">
++<META NAME="resource-type" CONTENT="document">
++<META NAME="distribution" CONTENT="global">
++
++<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
++<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
++
++<LINK REL="STYLESHEET" HREF="using_zfs_fsal.css">
++
++<LINK REL="previous" HREF="node7.html">
++<LINK REL="up" HREF="using_zfs_fsal.html">
++</HEAD>
++
++<BODY >
++
++<DIV CLASS="navigation"><!--Navigation Panel-->
++<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
++ SRC="/usr/share/latex2html/icons/next_g.png"> 
++<A NAME="tex2html88"
++  HREF="using_zfs_fsal.html">
++<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
++ SRC="/usr/share/latex2html/icons/up.png"></A> 
++<A NAME="tex2html84"
++  HREF="node7.html">
++<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
++ SRC="/usr/share/latex2html/icons/prev.png"></A>   
++<BR>
++<B> Up:</B> <A NAME="tex2html89"
++  HREF="using_zfs_fsal.html">using_zfs_fsal</A>
++<B> Previous:</B> <A NAME="tex2html85"
++  HREF="node7.html">Configuring Ganesha</A>
++<BR>
++<BR></DIV>
++<!--End of Navigation Panel-->
++
++<H1><A NAME="SECTION00040000000000000000">
++About this document ...</A>
++</H1><P>
++This document was generated using the
++<A HREF="http://www.latex2html.org/"><STRONG>LaTeX</STRONG>2<tt>HTML</tt></A> translator Version 2008 (1.71)
++<P>
++Copyright &#169; 1993, 1994, 1995, 1996,
++Nikos Drakos, 
++Computer Based Learning Unit, University of Leeds.
++<BR>
++Copyright &#169; 1997, 1998, 1999,
++<A HREF="http://www.maths.mq.edu.au/~ross/">Ross Moore</A>, 
++Mathematics Department, Macquarie University, Sydney.
++<P>
++The command line arguments were: <BR>
++ <STRONG>latex2html</STRONG> <TT><A NAME="tex2html1"
++  HREF="../using_zfs_fsal.tex">using_zfs_fsal.tex</A></TT>
++<P>
++The translation was initiated by remi on 2010-09-17
++<BR><HR>
++<ADDRESS>
++remi
++2010-09-17
++</ADDRESS>
++</BODY>
++</HTML>
+diff --git a/web/pages/using_zfs_fsal/using_zfs_fsal.css b/web/pages/using_zfs_fsal/using_zfs_fsal.css
+new file mode 100644
+index 0000000..031a580
+--- /dev/null
++++ b/web/pages/using_zfs_fsal/using_zfs_fsal.css
+@@ -0,0 +1,34 @@
++/* Century Schoolbook font is very similar to Computer Modern Math: cmmi */
++.MATH    { font-family: "Century Schoolbook", serif; }
++.MATH I  { font-family: "Century Schoolbook", serif; font-style: italic }
++.BOLDMATH { font-family: "Century Schoolbook", serif; font-weight: bold }
++
++/* implement both fixed-size and relative sizes */
++SMALL.XTINY		{ font-size : xx-small }
++SMALL.TINY		{ font-size : x-small  }
++SMALL.SCRIPTSIZE	{ font-size : smaller  }
++SMALL.FOOTNOTESIZE	{ font-size : small    }
++SMALL.SMALL		{  }
++BIG.LARGE		{  }
++BIG.XLARGE		{ font-size : large    }
++BIG.XXLARGE		{ font-size : x-large  }
++BIG.HUGE		{ font-size : larger   }
++BIG.XHUGE		{ font-size : xx-large }
++
++/* heading styles */
++H1		{  }
++H2		{  }
++H3		{  }
++H4		{  }
++H5		{  }
++
++/* mathematics styles */
++DIV.displaymath		{ }	/* math displays */
++TD.eqno			{ }	/* equation-number cells */
++
++
++/* document-specific styles come next */
++PRE.preform		{   }
++DIV.navigation		{   }
++SPAN.textbf		{ font-weight: bold  }
++SPAN.arabic		{   }
+diff --git a/web/pages/using_zfs_fsal/using_zfs_fsal.html b/web/pages/using_zfs_fsal/using_zfs_fsal.html
+new file mode 100644
+index 0000000..7d1bbfb
+--- /dev/null
++++ b/web/pages/using_zfs_fsal/using_zfs_fsal.html
+@@ -0,0 +1,78 @@
++<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
++
++<!--Converted with LaTeX2HTML 2008 (1.71)
++original version by:  Nikos Drakos, CBLU, University of Leeds
++* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
++* with significant contributions from:
++  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
++<HTML>
++<HEAD>
++<TITLE>using_zfs_fsal</TITLE>
++<META NAME="description" CONTENT="using_zfs_fsal">
++<META NAME="keywords" CONTENT="using_zfs_fsal">
++<META NAME="resource-type" CONTENT="document">
++<META NAME="distribution" CONTENT="global">
++
++<META NAME="Generator" CONTENT="LaTeX2HTML v2008">
++<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
++
++<LINK REL="STYLESHEET" HREF="using_zfs_fsal.css">
++
++<LINK REL="next" HREF="node1.html">
++</HEAD>
++
++<BODY >
++
++<DIV CLASS="navigation"><!--Navigation Panel-->
++<A NAME="tex2html2"
++  HREF="node1.html">
++<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
++ SRC="/usr/share/latex2html/icons/next.png"></A> 
++<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
++ SRC="/usr/share/latex2html/icons/up_g.png"> 
++<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
++ SRC="/usr/share/latex2html/icons/prev_g.png">   
++<BR>
++<B> Next:</B> <A NAME="tex2html3"
++  HREF="node1.html">Introduction</A>
++<BR>
++<BR></DIV>
++<!--End of Navigation Panel-->
++
++<P>
++<BIG CLASS="XLARGE"><SPAN  CLASS="textbf">Exporting a ZFS filesystem with GANESHA</SPAN> </BIG>
++<BR>
++<P>
++<BR><HR>
++<!--Table of Child-Links-->
++<A NAME="CHILD_LINKS"></A>
++
++<UL CLASS="ChildLinks">
++<LI><A NAME="tex2html4"
++  HREF="node1.html">Introduction</A>
++<LI><A NAME="tex2html5"
++  HREF="node2.html">Managing zpool</A>
++<UL>
++<LI><A NAME="tex2html6"
++  HREF="node3.html">Creating zpool</A>
++<LI><A NAME="tex2html7"
++  HREF="node4.html">Getting information about zpool</A>
++<LI><A NAME="tex2html8"
++  HREF="node5.html">Modifying a zpool</A>
++<LI><A NAME="tex2html9"
++  HREF="node6.html">Destroying a zpool</A>
++</UL>
++<BR>
++<LI><A NAME="tex2html10"
++  HREF="node7.html">Configuring Ganesha</A>
++<LI><A NAME="tex2html11"
++  HREF="node8.html">About this document ...</A>
++</UL>
++<!--End of Table of Child-Links-->
++<BR><HR>
++<ADDRESS>
++remi
++2010-09-17
++</ADDRESS>
++</BODY>
++</HTML>
+-- 
+1.7.1
+

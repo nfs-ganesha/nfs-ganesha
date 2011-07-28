@@ -1,0 +1,96 @@
+%% LyX 1.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+
+\makeatletter
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+
+\usepackage{babel}
+\makeatother
+\begin{document}
+
+{\center{ \Large \textbf{Exporting FUSE-based filesystems} }}
+{\center{ \Large \textbf{with GANESHA} }}
+
+
+\section{Quick Start}
+
+\subsection{Compiling and installing}
+
+Go to the "src" directory of NFS-GANESHA distribution.
+Then run:
+\begin{verbatim}
+ ./configure --with-fsal=FUSE
+ make
+ make install
+\end{verbatim}
+
+\subsection{Exporting your FUSE-based file system}
+
+\begin{itemize}
+\item In your source code, replace \texttt{\#include <fuse.h>} with \texttt{\#include <ganesha\_fuse\_wrap.h>}
+\item For linking your program, replace \texttt{-lfuse} with \texttt{-lganeshaNFS}
+\end{itemize}
+
+That's done! You can now start your daemon and mount your filesystem (here is an example in NFSv3):
+\begin{verbatim}
+ ./my_daemon
+ mount -o vers=3,udp localhost:/ /mnt
+\end{verbatim}
+
+\section{Details about GANESHA FUSE-like binding}
+
+\subsection{Interface}
+
+Ganesha FUSE-like interface provides most FUSE's "high-level" structures and calls (struct fuse\_file\_info, struct fuse\_operations, fuse\_main(), fuse\_get\_context(), ...)
+
+Basically, it supports FUSE-based filesystems using \texttt{<fuse.h>} (at least version 2.6).
+
+\subsection{Filesystem mandatory features}
+
+For being able to export your filesystem with NFS-GANESHA, the following features are mandatory:
+\begin{itemize}
+\item \textbf{getattr} must be implemented
+\item Each entry in your filesystem must have a unic <st\_ino, st\_dev> peer
+\item You must set a correct value to the "st\_mode" field of "struct stat" (type and access mode)
+\item The "st\_nlink" field of "struct stat" must not be null
+\item Deprecated call "getdir" is not supported, replace it with "readdir"
+\end{itemize}
+
+\subsection{Command line arguments}
+
+fuse\_main() parameters slightly differ from FUSE implementation.
+
+The expected command line parameters are:
+\begin{verbatim}
+ Usage: fusexmp [-hds][-L <logfile>][-N <dbg_lvl>][-f <config_file>]
+        [-h]                display this help
+        [-s]                single-threaded (for MT-unsafe filesystems)
+        [-L <logfile>]      set the logfile for the daemon
+        [-N <dbg_lvl>]      set the verbosity level
+        [-f <config_file>]  set the config file to be used
+        [-d]                the daemon starts in background,
+                            in a new process group
+        [-R]                daemon will manage RPCSEC_GSS
+                            (default is no RPCSEC_GSS)
+        [-F] <nb_flushers>  flushes the data cache with purge,
+                            but do not answer to requests
+        [-S] <nb_flushers>  flushes the data cache without purge,
+                            but do not answer to requests
+\end{verbatim}
+
+\subsection{Example}
+
+FUSE-binding examples are provided in the GANESHA repository (directory src/example-fuse).
+
+These are the same as provided with FUSE distributions, except that \texttt{\#include <fuse.h>} have been changed to \texttt{\#include <ganesha\_fuse\_wrap.h>}.
+
+After compiling GANESHA with FUSE FSAL, you can simply run it the following way:
+\begin{verbatim}
+ ./fusexmp
+\end{verbatim}
+
+
+\end{document}

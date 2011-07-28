@@ -1,0 +1,15 @@
+rpc.gssd sur le client
+rpc.svcgssd sur le serveur
+
+principals nfs/<host> + keytabs /etc/krb5.kyetab (en coherence avec /etc/krb5.conf)
+
+modprobe rpcsec_gss_krb5
+
+[root@scratchy ~]# lsmod | grep gss
+rpcsec_gss_krb5        10256  2 
+auth_rpcgss            36872  3 rpcsec_gss_krb5,nfsd
+sunrpc                151412  16 rpcsec_gss_krb5,nfs,nfsd,lockd,nfs_acl,auth_rpcgss
+
+je colle le modprobe dans /etc/rc.d/rc.local 
+
+dans /etc/sysconfig/nfs decommenter "SECURE_NFS"

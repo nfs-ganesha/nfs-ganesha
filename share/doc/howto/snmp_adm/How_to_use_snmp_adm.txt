@@ -1,0 +1,48 @@
+Step 1: configure the snmp daemon to use AgentX correctly. AgentX allow a daemon to define it's snmp exported information dynamically and prevent 
+from writting a specifc MIB file.
+
+	in /etc/snmp/snmpd.conf add:
+
+	master agentx
+	AgentXSocket /tmp/agentx_sockfile
+
+	createUser snmpadm MD5 password DES password
+	group ganesha usm snmpadm
+	view    systemview    included    .1.3.6.1.4.1.12384.999
+
+    .1.3.6.1.4.1.12384 is OID base dedicated to CEA
+    .1.3.6.1.4.1.12384.999 is the OID for snmp_adm interface (hardcoded for the moment)
+
+Step 2:
+	restart snmp service (service snmpd restart)
+
+Step 3: compile nfs-ganesha with snmp_adm support (add " --enable-snmp-adm" at ./configure time)
+
+Step 4: Add this block to nfs-ganesha's configuration file:
+	SNMP_ADM
+	{
+   		Snmp_Agentx_Socket = "/tmp/agentx_sockfile" ;
+   		Product_Id = 1 ;
+   		Snmp_adm_log = "/tmp/ganesha_snmp_adm.log" ;
+
+   		Export_cache_stats = FALSE ;
+   		Export_requests_stats = TRUE ;
+   		Export_maps_stats = FALSE ;
+   		Export_buddy_stats = TRUE ;
+   		Export_nfs_calls_detail = FALSE ;
+   		Export_cache_inode_calls_detail = TRUE ;
+   		Export_FSAL_calls_detail = TRUE ;
+	}
+ 
+   	Here Export* flags can be set to FALSE or TRUE. 
+	Product_Id is to be appended to .1.3.6.1.4.1.12384.999 for knowing the base OID for snmp_adm
+
+Step 5: start nfs-ganesha (check log for SNMP_ADM messages) and use snmpwalk to test snmp_adm 
+		run: snmpwalk -v1 -c public localhost   .1.3.6.1.4.1.12384.999.1
+
+Step 6 : go to src/snmp_adm/ and use "client" perl script to get snmp information:  ./snmp_adm liststat
+You may require perl packages to interface PERL and snmp here.
+
+Note : the snmp_adm support needs to be refurbished and packaged in a cleaner way.
+
+

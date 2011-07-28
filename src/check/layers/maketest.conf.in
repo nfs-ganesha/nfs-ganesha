@@ -1,0 +1,2226 @@
+Test FSAL_AccessGrant
+{
+   Product = FSAL.
+   Command = ../../shell/@FS_NAME@.ganeshell  test_fsal_access.gansh
+   Comment = FSAL Test. Access/test_access.
+
+	# No error occured: all commands succeeded
+    
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /cd returned 0/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      
+      
+      Failure CREATE_FAILED
+      {       
+        STDERR =~ /create returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        AND
+        NOT
+        STDERR =~ /mkdir returned 17/m
+      }
+ 
+      
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      Failure ACCESS_DENIED
+      {
+	STDERR =~ /access returned [^0]/m 
+        AND 
+        STDERR !~ /access returned 10032/m 
+        OR
+        NOT
+        STDERR =~ /access returned 0/m
+      }
+     
+}
+
+Test FSAL_AccessDeny
+{
+   Product = FSAL
+   Command = ../../shell/@FS_NAME@.ganeshell  test_fsal_access2.gansh
+   Comment = FSAL Test. Access/test_access.
+
+	# No error occured: all commands succeeded
+    
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /cd returned 0/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      
+      
+      Failure CREATE_FAILED
+      {       
+        STDERR =~ /create returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        AND 
+        NOT
+        STDERR =~ /mkdir returned 17/m
+      }
+ 
+      
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      Failure ACCESS_SHOULD_BE_DENIED
+      {
+        STDERR =~ /access returned 0/m
+        OR
+        NOT
+        STDERR =~ /access returned [^0]/m
+      }
+
+      Failure ACCESS_FAILED
+      {
+        STDERR =~ /access returned (?:[^1]|1[^3]|13[0-9]|(^10032))/m AND 
+	STDERR !~ /access returned 10032/m
+      }
+      
+     
+}
+
+Test FSAL_Stat
+{
+   Product = FSAL layer.
+   Command = ../../shell/@FS_NAME@.ganeshell test_fsal_stat.gansh
+   Comment = FSAL test.
+
+        Failure ANORMAL_TERMINATION
+        {
+          STATUS != 0
+        }
+  
+        Failure SHELL_ERROR
+        {
+          STDERR =~ /ERROR/
+        }
+        
+        # some stat are different (except atime)
+        Failure DIFFERENT_STAT
+        {
+          STDOUT =~ /STAT_ERROR/
+        }
+
+        # some stat are different
+        Failure DIFFERENT_LS
+        {
+          STDOUT =~ /LS_ERROR/
+        }
+      
+        Failure INVALID_ATTRIBUTES_COUNT
+        {
+          STDOUT =~ /STAT[^:\n]+: [0-9]+ (?:[^1]|1[^34]|1[34][0-9])/
+        }
+
+}
+
+
+Test FSAL_Mkdir
+{
+   Product = FSAL
+   Command = ../../shell/@FS_NAME@.ganeshell test_fsal_mkdir.gansh
+   Comment = FSAL Test. Mkdir, unlink.
+
+	# No error occured: all commands succeeded
+    
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_OK/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /MKDIR_OK/m
+      }
+
+
+      Failure ALREADY_EXIST_should_be_returned
+      {
+        STDOUT =~ /ALREADY_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /ALREADY_OK/m
+      }
+ 
+      
+      Failure NOT_EMPTY_should_be_returned
+      {
+        STDOUT =~ /NOTEMPTY_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /NOTEMPTY_OK/m
+      }
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+
+
+}
+
+
+
+
+
+Test FSAL_Rename
+{
+   Product = FSAL.
+   Command = ../../shell/@FS_NAME@.ganeshell test_fsal_rename.gansh
+   Comment = FSAL Test. Rename.
+
+	# No error occured: all commands succeeded
+    
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_OK/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /MKDIR_OK/m
+      }
+
+
+      Failure NOT_EMPTY_SHOULD_BE_RETURNED
+      {
+        STDOUT !~ /NOTEMPTY_ERROR/m
+      }
+      
+      Failure RENAME_FAILED
+      {
+        STDOUT =~ /RENAME_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /RENAME_OK/m
+      }
+      
+      
+      Failure TARGET_FILE_NOT_FOUND
+      {
+        STDOUT =~ /TARGET_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /TARGET_OK/m
+      }
+
+      Failure SOURCE_FILE_STILL_EXIST
+      {
+        STDOUT =~ /STILLEXIST_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /STILLEXIST_OK/m
+      }
+
+ 
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+      
+     
+}
+
+
+Test FSAL_Symlinks
+{
+   Product = FSAL.
+   Command = ../../shell/@FS_NAME@.ganeshell test_fsal_symlinks.gansh
+   Comment = FSAL Test. Symlink/Readlink.
+
+	# No error occured: all commands succeeded
+    
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_OK/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+      }
+      
+
+      Failure SYMLINK_FAILED
+      {
+        STDOUT =~ /SYMLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SYMLINK_OK/m
+      }
+      
+      Failure LS_FAILED
+      {
+        STDOUT =~ /LS_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /LS_OK/m
+      }      
+ 
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+      
+      
+      Failure BAD_LINK_CONTENT
+      {
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+\.\/lien_test_1 -> \.\.\/contenu_du_lien_1/
+        OR
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+\.\/lien_test_3 -> \.\.\/contenu_du_lien_3/
+        OR
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+TEST_DIR\/lien_test_2 -> \.\.\/\.\.\/contenu_du_lien_2/
+        OR
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+TEST_DIR\/lien_test_4 -> \.\.\/\.\.\/contenu_du_lien_4/
+      }
+     
+     
+}
+
+
+
+Test FSAL_HandleCmp
+{
+   Product = FSAL.
+   Command = ../../shell/@FS_NAME@.ganeshell  test_fsal_handlecmp.gansh
+   Comment = FSAL hardlink and handlecmp.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+        AND
+        STDOUT =~ /_OK/
+        AND
+        NOT
+        STDOUT =~ /_ERROR/
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_OK/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /MKDIR_OK/m
+      }
+      
+      Failure CREATE_FAILED
+      {
+        STDOUT =~ /CREATE_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CREATE_OK/m
+      }
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+      
+      Failure HARDLINK_FAILED
+      {
+        STDOUT =~ /HARDLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /HARDLINK_OK/m
+      }
+           
+}
+
+
+
+
+Test FSAL_ChownRestriction
+{
+   Product = FSAL.
+   Command = ../../shell/@FS_NAME@.ganeshell  test_fsal_chown.gansh 
+   Comment = FSAL Test. Create/setattr/chown rights.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_OK/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      
+      
+      Failure CREATE_FAILED
+      {       
+        STDOUT =~ /CREATE_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CREATE_OK/m
+      }
+      
+
+      Failure CHOWN_SHOULD_FAIL
+      {
+        STDOUT =~ /SHOULDFAIL_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SHOULDFAIL_OK/m
+      }
+      
+      
+      Failure CHOWN_FAILED
+      {
+        STDOUT =~ /CHOWN_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CHOWN_OK/m   
+      }      
+ 
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m   
+      }
+      
+      
+     
+}
+
+
+Test FSAL_Rights
+{
+   Product = FSAL.
+   Command = ../../shell/@FS_NAME@.ganeshell test_fsal_rights.gansh
+   Comment = FSAL Test. Access/Lookup/Create/opendir.
+
+	# No error occured: all commands succeeded
+    
+      Success TestOk
+      {
+        STATUS == 0
+      }
+
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /cd returned 0/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        AND
+        NOT
+        STDERR =~ /mkdir returned 17/m
+      }
+ 
+      Failure UNLINK_FAILED
+      {
+        STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      # here are the things we really want to test      
+      
+      Failure OPERATION_NOT_DENIED
+      {      
+        STDOUT !~ /DENY_OK/m   
+      }
+
+      Failure OPERATION_NOT_GRANTED
+      {      
+        STDOUT =~ /GRANT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /GRANT_OK/m   
+      }
+      
+}
+
+
+
+Test FSAL_RootAccess
+{
+   Product = FSAL.
+   Command = ../../shell/@FS_NAME@.ganeshell  test_fsal_rootaccess.gansh
+   Comment = FSAL Test. Access/Lookup/Create/opendir.
+
+	# No error occured: all commands succeeded
+    
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+      
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m      
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+      }
+ 
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+      }
+      
+      
+      # here are the things we really want to test      
+      
+      Failure OPERATION_NOT_GRANTED
+      {      
+          NOT
+          STDERR =~ /ls returned 0/m
+          OR
+          NOT
+          STDERR =~ /create returned 0/m
+      }
+     
+}
+
+###################################
+
+
+Test CacheInode_AccessGrant
+{
+   Product = Cache_Inode.
+   Command = ../../shell/@FS_NAME@.ganeshell  test_cache_access.gansh
+   Comment = Cache Inode Test. Access/test_access.
+
+	# No error occured: all commands succeeded
+    
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /cd returned 0/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      
+      
+      Failure CREATE_FAILED
+      {       
+        STDERR =~ /create returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        AND
+        NOT
+        STDERR =~ /mkdir returned 12/m
+      }
+ 
+      
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      Failure ACCESS_DENIED
+      {
+          STDERR =~ /access returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /access returned 0/m
+      }
+     
+}
+
+Test CacheInode_AccessDeny
+{
+   Product = Cache_Inode
+   Command = ../../shell/@FS_NAME@.ganeshell  test_cache_access2.gansh
+   Comment = Cache Inode Test. Access/test_access.
+
+	# No error occured: all commands succeeded
+    
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /cd returned 0/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      
+      
+      Failure CREATE_FAILED
+      {       
+        STDERR =~ /create returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        AND
+        NOT
+        STDERR =~ /mkdir returned 12/m
+      }
+ 
+      
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      Failure ACCESS_SHOULD_BE_DENIED
+      {
+        STDERR =~ /access returned 0/m
+        OR
+        NOT
+        STDERR =~ /access returned [^0]/m
+      }
+
+      Failure ACCESS_FAILED
+      {
+        STDERR =~ /access returned (?:[^1]|1[^8]|18[0-9])/m
+      }
+      
+     
+}
+
+Test CacheInode_Stat
+{
+   Product = Cache_Inode layer.
+   Command = ../../shell/@FS_NAME@.ganeshell test_cache_stat.gansh
+   Comment = Cache Inode test.
+
+        Failure ANORMAL_TERMINATION
+        {
+          STATUS != 0
+        }
+  
+        Failure SHELL_ERROR
+        {
+          STDERR =~ /ERROR/
+        }
+        
+        # some stat are different (except atime)
+        Failure DIFFERENT_STAT
+        {
+          STDOUT =~ /STAT_ERROR/
+        }
+
+        # some stat are different
+        Failure DIFFERENT_LS
+        {
+          STDOUT =~ /LS_ERROR/
+        }
+      
+        Failure INVALID_ATTRIBUTES_COUNT
+        {
+          STDOUT =~ /STAT[^:\n]+: [0-9]+ (?:[^1]|1[^34]|1[34][0-9])/
+        }
+
+}
+
+
+Test CacheInode_Mkdir
+{
+   Product = Cache_Inode
+   Command = ../../shell/@FS_NAME@.ganeshell test_cache_mkdir.gansh
+   Comment = Cache Inode Test. Mkdir, unlink.
+
+	# No error occured: all commands succeeded
+    
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_OK/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /MKDIR_OK/m
+      }
+
+
+      Failure ALREADY_EXIST_should_be_returned
+      {
+        STDOUT =~ /ALREADY_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /ALREADY_OK/m
+      }
+ 
+      
+      Failure NOT_EMPTY_should_be_returned
+      {
+        STDOUT !~ /NOTEMPTY_ERROR/m
+        AND 
+        NOT
+        STDOUT =~ /NOTEMPTY_OK/m
+      }
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+
+
+      # verify the number of objects in each directory
+      # (including . and ..)
+      
+      Failure INVALID_DIR_COUNT
+      {
+          NOT
+          STDOUT =~ /LS1: [0-9]+ 3/
+          OR
+          NOT
+          STDOUT =~ /LS2: [0-9]+ 0/
+          OR
+          NOT
+          STDOUT =~ /LS3: [0-9]+ 0/
+          OR
+          NOT
+          STDOUT =~ /LS4: [0-9]+ 0/
+          OR
+          NOT
+          STDOUT =~ /LS5<>LS6/
+          OR
+          STDOUT =~ /LS5=LS6/
+      }
+      
+}
+
+
+
+
+
+Test CacheInode_Rename
+{
+   Product = Cache_Inode.
+   Command = ../../shell/@FS_NAME@.ganeshell test_cache_rename.gansh
+   Comment = Cache Inode Test. Rename.
+
+	# No error occured: all commands succeeded
+    
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_OK/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /MKDIR_OK/m
+      }
+
+
+      Failure NOT_EMPTY_SHOULD_BE_RETURNED
+      {
+        STDOUT =~ /NOTEMPTY_ERROR/m
+      }
+      
+      Failure RENAME_FAILED
+      {
+        STDOUT =~ /RENAME_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /RENAME_OK/m
+      }
+      
+      
+      Failure TARGET_FILE_NOT_FOUND
+      {
+        STDOUT =~ /TARGET_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /TARGET_OK/m
+      }
+
+      Failure SOURCE_FILE_STILL_EXIST
+      {
+        STDOUT =~ /STILLEXIST_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /STILLEXIST_OK/m
+      }
+
+ 
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+      
+     
+}
+
+
+Test CacheInode_Symlinks
+{
+   Product = Cache_Inode.
+   Command = ../../shell/@FS_NAME@.ganeshell test_cache_symlinks.gansh
+   Comment = Cache Inode Test. Symlink/Readlink.
+
+	# No error occured: all commands succeeded
+    
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure SHELL_ERROR
+      {
+        STDERR =~ /ERROR/
+      }
+
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_OK/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+      }
+      
+
+      Failure SYMLINK_FAILED
+      {
+        STDOUT =~ /SYMLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SYMLINK_OK/m
+      }
+      
+      Failure LS_FAILED
+      {
+        STDOUT =~ /LS_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /LS_OK/m
+      }      
+ 
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+      
+      
+      Failure BAD_LINK_CONTENT
+      {
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+\.\/lien_test_1 -> \.\.\/contenu_du_lien_1/
+        OR
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+\.\/lien_test_3 -> \.\.\/contenu_du_lien_3/
+        OR
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+TEST_DIR\/lien_test_2 -> \.\.\/\.\.\/contenu_du_lien_2/
+        OR
+        NOT
+        STDOUT =~ /lrwxrwxrwx[^\n]+TEST_DIR\/lien_test_4 -> \.\.\/\.\.\/contenu_du_lien_4/
+      }
+     
+     
+}
+
+
+
+Test CacheInode_HandleCmp
+{
+   Product = Cache_Inode.
+   Command = ../../shell/@FS_NAME@.ganeshell  test_cache_handlecmp.gansh
+   Comment = Cache Inode hardlink and handlecmp.
+
+	# No error occured: all commands succeeded
+    
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_OK/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      Failure MKDIR_FAILED
+      {
+        STDOUT =~ /MKDIR_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /MKDIR_OK/m
+      }
+      
+      Failure CREATE_FAILED
+      {
+        STDOUT =~ /CREATE_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CREATE_OK/m
+      }
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m
+      }
+      
+      Failure HARDLINK_FAILED
+      {
+        STDOUT =~ /HARDLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /HARDLINK_OK/m
+      }
+           
+}
+
+
+
+
+Test CacheInode_ChownRestriction
+{
+   Product = Cache_Inode.
+   Command = ../../shell/@FS_NAME@.ganeshell  test_cache_chown.gansh 
+   Comment = Cache_Inode Test. Create/setattr/chown rights.
+
+	# No error occured: all commands succeeded
+    
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDOUT =~ /INIT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /INIT_OK/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDOUT =~ /SU_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SU_OK/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDOUT =~ /CD_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CD_OK/m
+      }
+      
+      
+      
+      Failure CREATE_FAILED
+      {       
+        STDOUT =~ /CREATE_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CREATE_OK/m
+      }
+      
+
+      Failure CHOWN_SHOULD_FAIL
+      {
+        STDOUT =~ /SHOULDFAIL_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /SHOULDFAIL_OK/m
+      }
+      
+      
+      Failure CHOWN_FAILED
+      {
+        STDOUT =~ /CHOWN_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /CHOWN_OK/m   
+      }      
+ 
+      
+      Failure UNLINK_FAILED
+      {
+        STDOUT =~ /UNLINK_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /UNLINK_OK/m   
+      }
+      
+      
+     
+}
+
+
+Test CacheInode_Rights
+{
+   Product = Cache_Inode.
+   Command = ../../shell/@FS_NAME@.ganeshell test_cache_rights.gansh
+   Comment = Cache_Inode Test. Access/Lookup/Create/opendir.
+
+	# No error occured: all commands succeeded
+    
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /init_fs returned 0/m
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /cd returned 0/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /su returned 0/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+        AND 
+        NOT
+        STDERR =~ /mkdir returned 12/m
+      }
+ 
+      Failure UNLINK_FAILED
+      {
+        STDERR =~ /unlink returned [^0]/m
+        OR
+        NOT
+        STDERR =~ /unlink returned 0/m
+      }
+      
+      
+      # here are the things we really want to test      
+      
+      Failure OPERATION_NOT_DENIED
+      {      
+        STDOUT =~ /DENY_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /DENY_OK/m   
+      }
+
+      Failure OPERATION_NOT_GRANTED
+      {      
+        STDOUT =~ /GRANT_ERROR/m
+        OR
+        NOT
+        STDOUT =~ /GRANT_OK/m   
+      }
+      
+}
+
+
+
+Test CacheInode_RootAccess
+{
+   Product = Cache_Inode.
+   Command = ../../shell/@FS_NAME@.ganeshell  test_cache_rootaccess.gansh
+   Comment = Cache_Inode Test. Access/Lookup/Create/opendir.
+
+	# No error occured: all commands succeeded
+    
+      Failure ANORMAL_TERMINATION
+      {
+        STATUS != 0
+      }
+        
+      Failure INIT_FAILED
+      {
+        STDERR =~ /init_fs returned [^0]/m      
+      }
+      
+      Failure CD_FAILED
+      {
+        STDERR =~ /cd returned [^0]/m
+      }
+      
+      Failure CHMOD_FAILED
+      {
+        STDERR =~ /setattr returned [^0]/m
+      }
+
+      Failure SU_FAILED
+      {
+        STDERR =~ /su returned [^0]/m
+      }
+      
+      Failure MKDIR_FAILED
+      {       
+        STDERR =~ /mkdir returned [^0]/m
+      }
+ 
+      Failure UNLINK_FAILED
+      {
+         STDERR =~ /unlink returned [^0]/m
+      }
+      
+      
+      # here are the things we really want to test      
+      
+      Failure OPERATION_NOT_GRANTED
+      {      
+          NOT
+          STDERR =~ /ls returned 0/m
+          OR
+          NOT
+          STDERR =~ /create returned 0/m
+      }
+     
+}
+
+
+##################################
+#####
+#####Test NFS_Stat
+#####{
+#####   Product = NFS layer layer.
+#####   Command = ../../shell/@FS_NAME@.ganeshell test_nfs_stat.gansh
+#####   Comment = NFS protocol test.
+#####
+#####        Failure ANORMAL_TERMINATION
+#####        {
+#####          STATUS != 0
+#####        }
+#####  
+#####        # some stat are different (except atime)
+#####        Failure DIFFERENT_STAT
+#####        {
+#####          STDOUT =~ /STAT_ERROR/
+#####        }
+#####
+#####        # some stat are different
+#####        Failure DIFFERENT_LS
+#####        {
+#####          STDOUT =~ /LS_ERROR/
+#####        }
+#####      
+#####        Failure INVALID_DIRECTORY_COUNT
+#####        {
+#####          STDOUT =~ /LS5_1:\s+[0-9]+\s+(?:[^4]|4[0-9])/
+#####        }
+#####        
+#####        Failure INVALID_ATTRIBUTES_COUNT
+#####        {
+#####          STDOUT =~ /STAT[^:\n]+: [0-9]+ (?:[^1]|1[^3]|13[0-9])/
+#####        }
+#####
+#####}
+#####
+#####
+#####Test NFS_Mkdir
+#####{
+#####   Product = NFS layer
+#####   Command = ../../shell/@FS_NAME@.ganeshell test_nfs_mkdir.gansh
+#####   Comment = NFS protocol Test. Mkdir, unlink.
+#####
+#####	# No error occured: all commands succeeded
+#####    
+#####      Failure ANORMAL_TERMINATION
+#####      {
+#####        STATUS != 0
+#####      }
+#####        
+#####      Failure INIT_FAILED
+#####      {
+#####        STDOUT =~ /INIT_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /INIT_OK/m
+#####      }
+#####
+#####      Failure SU_FAILED
+#####      {
+#####        STDOUT =~ /SU_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /SU_OK/m
+#####      }
+#####      
+#####      Failure CD_FAILED
+#####      {
+#####        STDOUT =~ /CD_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /CD_OK/m
+#####      }
+#####      
+#####      Failure MKDIR_FAILED
+#####      {
+#####        STDOUT =~ /MKDIR_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /MKDIR_OK/m
+#####      }
+#####
+#####
+#####      Failure ALREADY_EXIST_should_be_returned
+#####      {
+#####        STDOUT =~ /ALREADY_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /ALREADY_OK/m
+#####      }
+##### 
+#####      
+#####      Failure NOT_EMPTY_should_be_returned
+#####      {
+#####        STDOUT =~ /NOTEMPTY_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /NOTEMPTY_OK/m
+#####      }
+#####      
+#####      Failure UNLINK_FAILED
+#####      {
+#####        STDOUT =~ /UNLINK_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /UNLINK_OK/m
+#####      }
+#####
+#####
+#####      # verify the number of objects in each directory
+#####      # (including . and ..)
+#####      
+#####      Failure INVALID_DIR_COUNT
+#####      {
+#####          NOT
+#####          STDOUT =~ /LS1: [0-9]+ 5/
+#####          OR
+#####          NOT
+#####          STDOUT =~ /LS2: [0-9]+ 2/
+#####          OR
+#####          NOT
+#####          STDOUT =~ /LS3: [0-9]+ 2/
+#####          OR
+#####          NOT
+#####          STDOUT =~ /LS4: [0-9]+ 2/
+#####          OR
+#####          NOT
+#####          STDOUT =~ /LS5<>LS6/
+#####          OR
+#####          STDOUT =~ /LS5=LS6/
+#####      }
+#####      
+#####}
+#####
+#####
+#####
+#####
+#####
+#####Test NFS_Rename
+#####{
+#####   Product = NFS layer.
+#####   Command = ../../shell/@FS_NAME@.ganeshell test_nfs_rename.gansh
+#####   Comment = NFS protocol Test. Rename.
+#####
+#####	# No error occured: all commands succeeded
+#####    
+#####      Failure ANORMAL_TERMINATION
+#####      {
+#####        STATUS != 0
+#####      }
+#####        
+#####      Failure INIT_FAILED
+#####      {
+#####        STDOUT =~ /INIT_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /INIT_OK/m
+#####      }
+#####
+#####      Failure SU_FAILED
+#####      {
+#####        STDOUT =~ /SU_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /SU_OK/m
+#####      }
+#####      
+#####      Failure CD_FAILED
+#####      {
+#####        STDOUT =~ /CD_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /CD_OK/m
+#####      }
+#####      
+#####      Failure MKDIR_FAILED
+#####      {
+#####        STDOUT =~ /MKDIR_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /MKDIR_OK/m
+#####      }
+#####
+#####
+#####      Failure NOT_EMPTY_SHOULD_BE_RETURNED
+#####      {
+#####        STDOUT =~ /NOTEMPTY_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /NOTEMPTY_OK/m
+#####      }
+#####      
+#####      Failure RENAME_FAILED
+#####      {
+#####        STDOUT =~ /RENAME_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /RENAME_OK/m
+#####      }
+#####      
+#####      
+#####      Failure TARGET_FILE_NOT_FOUND
+#####      {
+#####        STDOUT =~ /TARGET_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /TARGET_OK/m
+#####      }
+#####
+#####      Failure SOURCE_FILE_STILL_EXIST
+#####      {
+#####        STDOUT =~ /STILLEXIST_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /STILLEXIST_OK/m
+#####      }
+#####
+##### 
+#####      
+#####      Failure UNLINK_FAILED
+#####      {
+#####        STDOUT =~ /UNLINK_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /UNLINK_OK/m
+#####      }
+#####      
+#####     
+#####}
+#####
+#####
+#####Test NFS_Symlinks
+#####{
+#####   Product = NFS layer.
+#####   Command = ../../shell/@FS_NAME@.ganeshell test_nfs_symlinks.gansh
+#####   Comment = NFS protocol Test. Symlink/Readlink.
+#####
+#####	# No error occured: all commands succeeded
+#####    
+#####      Failure ANORMAL_TERMINATION
+#####      {
+#####        STATUS != 0
+#####      }
+#####        
+#####      Failure INIT_FAILED
+#####      {
+#####        STDOUT =~ /INIT_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /INIT_OK/m
+#####      }
+#####
+#####      Failure SU_FAILED
+#####      {
+#####        STDOUT =~ /SU_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /SU_OK/m
+#####      }
+#####      
+#####      Failure CD_FAILED
+#####      {
+#####        STDOUT =~ /CD_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /CD_OK/m
+#####      }
+#####      
+#####      Failure MKDIR_FAILED
+#####      {
+#####        STDOUT =~ /MKDIR_ERROR/m
+#####      }
+#####      
+#####
+#####      Failure SYMLINK_FAILED
+#####      {
+#####        STDOUT =~ /SYMLINK_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /SYMLINK_OK/m
+#####      }
+#####      
+#####      Failure LS_FAILED
+#####      {
+#####        STDOUT =~ /LS_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /LS_OK/m
+#####      }      
+##### 
+#####      
+#####      Failure UNLINK_FAILED
+#####      {
+#####        STDOUT =~ /UNLINK_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /UNLINK_OK/m
+#####      }
+#####      
+#####      
+#####      Failure BAD_LINK_CONTENT
+#####      {
+#####        NOT
+#####        STDOUT =~ /lrwxrwxrwx[^\n]+\.\/lien_test_1 -> \.\.\/contenu_du_lien_1/
+#####        OR
+#####        NOT
+#####        STDOUT =~ /lrwxrwxrwx[^\n]+\.\/lien_test_3 -> \.\.\/contenu_du_lien_3/
+#####        OR
+#####        NOT
+#####        STDOUT =~ /lrwxrwxrwx[^\n]+TEST_DIR\/lien_test_2 -> \.\.\/\.\.\/contenu_du_lien_2/
+#####        OR
+#####        NOT
+#####        STDOUT =~ /lrwxrwxrwx[^\n]+TEST_DIR\/lien_test_4 -> \.\.\/\.\.\/contenu_du_lien_4/
+#####      }
+#####     
+#####     
+#####}
+#####
+#####
+#####
+#####Test NFS_HandleCmp
+#####{
+#####   Product = NFS layer.
+#####   Command = ../../shell/@FS_NAME@.ganeshell  test_nfs_handlecmp.gansh
+#####   Comment = NFS protocol hardlink and handlecmp.
+#####
+#####	# No error occured: all commands succeeded
+#####    
+#####      Failure ANORMAL_TERMINATION
+#####      {
+#####        STATUS != 0
+#####      }
+#####        
+#####      Failure INIT_FAILED
+#####      {
+#####        STDOUT =~ /INIT_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /INIT_OK/m
+#####      }
+#####
+#####      Failure SU_FAILED
+#####      {
+#####        STDOUT =~ /SU_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /SU_OK/m
+#####      }
+#####      
+#####      Failure CD_FAILED
+#####      {
+#####        STDOUT =~ /CD_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /CD_OK/m
+#####      }
+#####      
+#####      Failure MKDIR_FAILED
+#####      {
+#####        STDOUT =~ /MKDIR_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /MKDIR_OK/m
+#####      }
+#####      
+#####      Failure CREATE_FAILED
+#####      {
+#####        STDOUT =~ /CREATE_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /CREATE_OK/m
+#####      }
+#####      
+#####      Failure UNLINK_FAILED
+#####      {
+#####        STDOUT =~ /UNLINK_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /UNLINK_OK/m
+#####      }
+#####      
+#####      Failure HARDLINK_FAILED
+#####      {
+#####        STDOUT =~ /HARDLINK_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /HARDLINK_OK/m
+#####      }
+#####           
+#####}
+#####
+#####
+#####
+#####
+#####Test NFS_ChownRestriction
+#####{
+#####   Product = NFS layer.
+#####   Command = ../../shell/@FS_NAME@.ganeshell  test_nfs_chown.gansh 
+#####   Comment = NFS protocol Test. Create/setattr/chown rights.
+#####
+#####	# No error occured: all commands succeeded
+#####    
+#####      Success TestOk
+#####      {
+#####        STATUS == 0
+#####      }
+#####
+#####      Failure ANORMAL_TERMINATION
+#####      {
+#####        STATUS != 0
+#####      }
+#####        
+#####      Failure INIT_FAILED
+#####      {
+#####        STDOUT =~ /INIT_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /INIT_OK/m
+#####      }
+#####
+#####      Failure SU_FAILED
+#####      {
+#####        STDOUT =~ /SU_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /SU_OK/m
+#####      }
+#####      
+#####      Failure CD_FAILED
+#####      {
+#####        STDOUT =~ /CD_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /CD_OK/m
+#####      }
+#####      
+#####      
+#####      
+#####      Failure CREATE_FAILED
+#####      {       
+#####        STDOUT =~ /CREATE_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /CREATE_OK/m
+#####      }
+#####      
+#####
+#####      Failure CHOWN_SHOULD_FAIL
+#####      {
+#####        STDOUT =~ /SHOULDFAIL_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /SHOULDFAIL_OK/m
+#####      }
+#####      
+#####      
+#####      Failure CHOWN_FAILED
+#####      {
+#####        STDOUT =~ /CHOWN_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /CHOWN_OK/m   
+#####      }      
+##### 
+#####      
+#####      Failure UNLINK_FAILED
+#####      {
+#####        STDOUT =~ /UNLINK_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /UNLINK_OK/m   
+#####      }
+#####      
+#####      
+#####     
+#####}
+#####
+#####
+#####Test NFS_Rights
+#####{
+#####   Product = NFS layer.
+#####   Command = ../../shell/@FS_NAME@.ganeshell test_nfs_rights.gansh
+#####   Comment = NFS protocol Test. Access/Lookup/Create/opendir.
+#####
+#####	# No error occured: all commands succeeded
+#####    
+#####      Success TestOk
+#####      {
+#####        STATUS == 0
+#####      }
+#####
+#####      Failure ANORMAL_TERMINATION
+#####      {
+#####        STATUS != 0
+#####      }
+#####        
+#####      Failure INIT_FAILED
+#####      {
+#####        STDERR =~ /init_fs returned [^0]/m
+#####        OR
+#####        NOT
+#####        STDERR =~ /init_fs returned 0/m
+#####      }
+#####      
+#####      Failure CD_FAILED
+#####      {
+#####        STDERR =~ /cd returned [^0]/m
+#####        OR
+#####        NOT
+#####        STDERR =~ /cd returned 0/m
+#####      }
+#####      
+#####      Failure CHMOD_FAILED
+#####      {
+#####        STDERR =~ /setattr returned [^0]/m
+#####      }
+#####
+#####      Failure SU_FAILED
+#####      {
+#####        STDERR =~ /su returned [^0]/m
+#####        OR
+#####        NOT
+#####        STDERR =~ /su returned 0/m
+#####      }
+#####      
+#####      Failure MKDIR_FAILED
+#####      {       
+#####        STDERR =~ /mkdir returned [^0]/m
+#####        AND 
+#####        NOT
+#####        STDERR =~ /mkdir returned 17/m
+#####      }
+##### 
+#####      Failure UNLINK_FAILED
+#####      {
+#####        STDERR =~ /unlink returned [^0]/m
+#####        OR
+#####        NOT
+#####        STDERR =~ /unlink returned 0/m
+#####      }
+#####      
+#####      
+#####      # here are the things we really want to test      
+#####      
+#####      Failure OPERATION_NOT_DENIED
+#####      {      
+#####        STDOUT =~ /DENY_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /DENY_OK/m   
+#####      }
+#####
+#####      Failure OPERATION_NOT_GRANTED
+#####      {      
+#####        STDOUT =~ /GRANT_ERROR/m
+#####        OR
+#####        NOT
+#####        STDOUT =~ /GRANT_OK/m   
+#####      }
+#####      
+#####}
+#####
+#####
+#####
+#####Test NFS_RootAccess
+#####{
+#####   Product = NFS layer.
+#####   Command = ../../shell/@FS_NAME@.ganeshell  test_nfs_rootaccess.gansh
+#####   Comment = NFS protocol Test. Access/Lookup/Create/opendir.
+#####
+#####	# No error occured: all commands succeeded
+#####    
+#####      Failure ANORMAL_TERMINATION
+#####      {
+#####        STATUS != 0
+#####      }
+#####        
+#####      Failure INIT_FAILED
+#####      {
+#####        STDERR =~ /init_fs returned [^0]/m      
+#####      }
+#####      
+#####      Failure CD_FAILED
+#####      {
+#####        STDERR =~ /cd returned [^0]/m
+#####      }
+#####      
+#####      Failure CHMOD_FAILED
+#####      {
+#####        STDERR =~ /setattr returned [^0]/m
+#####      }
+#####
+#####      Failure SU_FAILED
+#####      {
+#####        STDERR =~ /su returned [^0]/m
+#####      }
+#####      
+#####      Failure MKDIR_FAILED
+#####      {       
+#####        STDERR =~ /mkdir returned [^0]/m
+#####	AND
+#####	NOT
+#####        STDERR =~ /mkdir returned 17/m
+#####      }
+##### 
+#####      Failure UNLINK_FAILED
+#####      {
+#####         STDERR =~ /unlink returned [^0]/m
+#####      }
+#####      
+#####      
+#####      # here are the things we really want to test      
+#####      
+#####      Failure OPERATION_NOT_GRANTED
+#####      {      
+#####          NOT
+#####          STDERR =~ /ls returned 0/m
+#####          OR
+#####          NOT
+#####          STDERR =~ /create returned 0/m
+#####      }
+#####     
+#####}

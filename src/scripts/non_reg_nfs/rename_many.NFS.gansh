@@ -1,0 +1,1405 @@
+
+set DEBUG_LEVEL "NIV_DEBUG"
+
+set LAYER FSAL
+set DEBUG_LEVEL "NIV_EVENT"
+
+set CONFIG_FILE "/tmp/hpss.ganesha.conf"
+
+
+init_fs $CONFIG_FILE
+
+set LAYER Cache_inode
+set DEBUG_LEVEL "NIV_EVENT"
+
+init_cache $CONFIG_FILE
+
+
+set LAYER NFS
+nfs_init -v $CONFIG_FILE
+mount /cea/prot/S/lama/s8/leibovic
+if ne -- $STATUS 0 ? quit : echo "mount OK"
+
+mkdir rep_bug004_1 0755
+
+create rep_bug004_1/1 0755
+create rep_bug004_1/2 0755
+create rep_bug004_1/3 0755
+create rep_bug004_1/4 0755
+create rep_bug004_1/5 0755
+create rep_bug004_1/6 0755
+create rep_bug004_1/7 0755
+create rep_bug004_1/8 0755
+create rep_bug004_1/9 0755
+create rep_bug004_1/10 0755
+create rep_bug004_1/11 0755
+create rep_bug004_1/12 0755
+create rep_bug004_1/13 0755
+create rep_bug004_1/14 0755
+create rep_bug004_1/15 0755
+create rep_bug004_1/16 0755
+create rep_bug004_1/17 0755
+create rep_bug004_1/18 0755
+create rep_bug004_1/19 0755
+create rep_bug004_1/20 0755
+create rep_bug004_1/21 0755
+create rep_bug004_1/22 0755
+create rep_bug004_1/23 0755
+create rep_bug004_1/24 0755
+create rep_bug004_1/25 0755
+create rep_bug004_1/26 0755
+create rep_bug004_1/27 0755
+create rep_bug004_1/28 0755
+create rep_bug004_1/29 0755
+create rep_bug004_1/30 0755
+create rep_bug004_1/31 0755
+create rep_bug004_1/32 0755
+create rep_bug004_1/33 0755
+create rep_bug004_1/34 0755
+create rep_bug004_1/35 0755
+create rep_bug004_1/36 0755
+create rep_bug004_1/37 0755
+create rep_bug004_1/38 0755
+create rep_bug004_1/39 0755
+create rep_bug004_1/40 0755
+create rep_bug004_1/41 0755
+create rep_bug004_1/42 0755
+create rep_bug004_1/43 0755
+create rep_bug004_1/44 0755
+create rep_bug004_1/45 0755
+create rep_bug004_1/46 0755
+create rep_bug004_1/47 0755
+create rep_bug004_1/48 0755
+create rep_bug004_1/49 0755
+create rep_bug004_1/50 0755
+create rep_bug004_1/51 0755
+create rep_bug004_1/52 0755
+create rep_bug004_1/53 0755
+create rep_bug004_1/54 0755
+create rep_bug004_1/55 0755
+create rep_bug004_1/56 0755
+create rep_bug004_1/57 0755
+create rep_bug004_1/58 0755
+create rep_bug004_1/59 0755
+create rep_bug004_1/60 0755
+create rep_bug004_1/61 0755
+create rep_bug004_1/62 0755
+create rep_bug004_1/63 0755
+create rep_bug004_1/64 0755
+create rep_bug004_1/65 0755
+create rep_bug004_1/66 0755
+create rep_bug004_1/67 0755
+create rep_bug004_1/68 0755
+create rep_bug004_1/69 0755
+create rep_bug004_1/70 0755
+create rep_bug004_1/71 0755
+create rep_bug004_1/72 0755
+create rep_bug004_1/73 0755
+create rep_bug004_1/74 0755
+create rep_bug004_1/75 0755
+create rep_bug004_1/76 0755
+create rep_bug004_1/77 0755
+create rep_bug004_1/78 0755
+create rep_bug004_1/79 0755
+create rep_bug004_1/80 0755
+create rep_bug004_1/81 0755
+create rep_bug004_1/82 0755
+create rep_bug004_1/83 0755
+create rep_bug004_1/84 0755
+create rep_bug004_1/85 0755
+create rep_bug004_1/86 0755
+create rep_bug004_1/87 0755
+create rep_bug004_1/88 0755
+create rep_bug004_1/89 0755
+create rep_bug004_1/90 0755
+create rep_bug004_1/91 0755
+create rep_bug004_1/92 0755
+create rep_bug004_1/93 0755
+create rep_bug004_1/94 0755
+create rep_bug004_1/95 0755
+create rep_bug004_1/96 0755
+create rep_bug004_1/97 0755
+create rep_bug004_1/98 0755
+create rep_bug004_1/99 0755
+create rep_bug004_1/100 0755
+create rep_bug004_1/101 0755
+create rep_bug004_1/102 0755
+create rep_bug004_1/103 0755
+create rep_bug004_1/104 0755
+create rep_bug004_1/105 0755
+create rep_bug004_1/106 0755
+create rep_bug004_1/107 0755
+create rep_bug004_1/108 0755
+create rep_bug004_1/109 0755
+create rep_bug004_1/110 0755
+create rep_bug004_1/111 0755
+create rep_bug004_1/112 0755
+create rep_bug004_1/113 0755
+create rep_bug004_1/114 0755
+create rep_bug004_1/115 0755
+create rep_bug004_1/116 0755
+create rep_bug004_1/117 0755
+create rep_bug004_1/118 0755
+create rep_bug004_1/119 0755
+create rep_bug004_1/120 0755
+create rep_bug004_1/121 0755
+create rep_bug004_1/122 0755
+create rep_bug004_1/123 0755
+create rep_bug004_1/124 0755
+create rep_bug004_1/125 0755
+create rep_bug004_1/126 0755
+create rep_bug004_1/127 0755
+create rep_bug004_1/128 0755
+create rep_bug004_1/129 0755
+create rep_bug004_1/130 0755
+create rep_bug004_1/131 0755
+create rep_bug004_1/132 0755
+create rep_bug004_1/133 0755
+create rep_bug004_1/134 0755
+create rep_bug004_1/135 0755
+create rep_bug004_1/136 0755
+create rep_bug004_1/137 0755
+create rep_bug004_1/138 0755
+create rep_bug004_1/139 0755
+create rep_bug004_1/140 0755
+create rep_bug004_1/141 0755
+create rep_bug004_1/142 0755
+create rep_bug004_1/143 0755
+create rep_bug004_1/144 0755
+create rep_bug004_1/145 0755
+create rep_bug004_1/146 0755
+create rep_bug004_1/147 0755
+create rep_bug004_1/148 0755
+create rep_bug004_1/149 0755
+create rep_bug004_1/150 0755
+create rep_bug004_1/151 0755
+create rep_bug004_1/152 0755
+create rep_bug004_1/153 0755
+create rep_bug004_1/154 0755
+create rep_bug004_1/155 0755
+create rep_bug004_1/156 0755
+create rep_bug004_1/157 0755
+create rep_bug004_1/158 0755
+create rep_bug004_1/159 0755
+create rep_bug004_1/160 0755
+create rep_bug004_1/161 0755
+create rep_bug004_1/162 0755
+create rep_bug004_1/163 0755
+create rep_bug004_1/164 0755
+create rep_bug004_1/165 0755
+create rep_bug004_1/166 0755
+create rep_bug004_1/167 0755
+create rep_bug004_1/168 0755
+create rep_bug004_1/169 0755
+create rep_bug004_1/170 0755
+create rep_bug004_1/171 0755
+create rep_bug004_1/172 0755
+create rep_bug004_1/173 0755
+create rep_bug004_1/174 0755
+create rep_bug004_1/175 0755
+create rep_bug004_1/176 0755
+create rep_bug004_1/177 0755
+create rep_bug004_1/178 0755
+create rep_bug004_1/179 0755
+create rep_bug004_1/180 0755
+create rep_bug004_1/181 0755
+create rep_bug004_1/182 0755
+create rep_bug004_1/183 0755
+create rep_bug004_1/184 0755
+create rep_bug004_1/185 0755
+create rep_bug004_1/186 0755
+create rep_bug004_1/187 0755
+create rep_bug004_1/188 0755
+create rep_bug004_1/189 0755
+create rep_bug004_1/190 0755
+create rep_bug004_1/191 0755
+create rep_bug004_1/192 0755
+create rep_bug004_1/193 0755
+create rep_bug004_1/194 0755
+create rep_bug004_1/195 0755
+create rep_bug004_1/196 0755
+create rep_bug004_1/197 0755
+create rep_bug004_1/198 0755
+create rep_bug004_1/199 0755
+
+ls -l rep_bug004_1
+if ne 0 $STATUS ? echo "****** ERROR LS" : echo "LS OK"
+
+cd rep_bug004_1
+
+# rename 1/2
+
+rename 1 1.new
+rename 3 3.new
+rename 5 5.new
+rename 7 7.new
+rename 9 9.new
+rename 11 11.new
+rename 13 13.new
+rename 15 15.new
+rename 17 17.new
+rename 19 19.new
+rename 21 21.new
+rename 23 23.new
+rename 25 25.new
+rename 27 27.new
+rename 29 29.new
+rename 31 31.new
+rename 33 33.new
+rename 35 35.new
+rename 37 37.new
+rename 39 39.new
+rename 41 41.new
+rename 43 43.new
+rename 45 45.new
+rename 47 47.new
+rename 49 49.new
+rename 51 51.new
+rename 53 53.new
+rename 55 55.new
+rename 57 57.new
+rename 59 59.new
+rename 61 61.new
+rename 63 63.new
+rename 65 65.new
+rename 67 67.new
+rename 69 69.new
+rename 71 71.new
+rename 73 73.new
+rename 75 75.new
+rename 77 77.new
+rename 79 79.new
+rename 81 81.new
+rename 83 83.new
+rename 85 85.new
+rename 87 87.new
+rename 89 89.new
+rename 91 91.new
+rename 93 93.new
+rename 95 95.new
+rename 97 97.new
+rename 99 99.new
+rename 101 101.new
+rename 103 103.new
+rename 105 105.new
+rename 107 107.new
+rename 109 109.new
+rename 111 111.new
+rename 113 113.new
+rename 115 115.new
+rename 117 117.new
+rename 119 119.new
+rename 121 121.new
+rename 123 123.new
+rename 125 125.new
+rename 127 127.new
+rename 129 129.new
+rename 131 131.new
+rename 133 133.new
+rename 135 135.new
+rename 137 137.new
+rename 139 139.new
+rename 141 141.new
+rename 143 143.new
+rename 145 145.new
+rename 147 147.new
+rename 149 149.new
+rename 151 151.new
+rename 153 153.new
+rename 155 155.new
+rename 157 157.new
+rename 159 159.new
+rename 161 161.new
+rename 163 163.new
+rename 165 165.new
+rename 167 167.new
+rename 169 169.new
+rename 171 171.new
+rename 173 173.new
+rename 175 175.new
+rename 177 177.new
+rename 179 179.new
+rename 181 181.new
+rename 183 183.new
+rename 185 185.new
+rename 187 187.new
+rename 189 189.new
+rename 191 191.new
+rename 193 193.new
+rename 195 195.new
+rename 197 197.new
+rename 199 199.new
+
+# some tests after rename
+
+ls -l .
+if ne 0 $STATUS ? echo "****** ERROR LS" : echo "LS OK"
+
+stat 1
+if ne 2 $STATUS ? echo "****** ERROR STILL EXISTS 1" : echo "RENAME OK"
+
+stat 1.new
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 1.new" : echo "GETATTR OK for 1.new"
+
+stat 197
+if ne 2 $STATUS ? echo "****** ERROR STILL EXISTS 197" : echo "RENAME OK"
+
+stat 197.new
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 197.new" : echo "GETATTR OK for 197.new"
+
+stat 198
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 198" : echo "GETATTR OK for 198"
+
+
+rename 1.new 1
+rename 3.new 3
+rename 5.new 5
+rename 7.new 7
+rename 9.new 9
+rename 11.new 11
+rename 13.new 13
+rename 15.new 15
+rename 17.new 17
+rename 19.new 19
+rename 21.new 21
+rename 23.new 23
+rename 25.new 25
+rename 27.new 27
+rename 29.new 29
+rename 31.new 31
+rename 33.new 33
+rename 35.new 35
+rename 37.new 37
+rename 39.new 39
+rename 41.new 41
+rename 43.new 43
+rename 45.new 45
+rename 47.new 47
+rename 49.new 49
+rename 51.new 51
+rename 53.new 53
+rename 55.new 55
+rename 57.new 57
+rename 59.new 59
+rename 61.new 61
+rename 63.new 63
+rename 65.new 65
+rename 67.new 67
+rename 69.new 69
+rename 71.new 71
+rename 73.new 73
+rename 75.new 75
+rename 77.new 77
+rename 79.new 79
+rename 81.new 81
+rename 83.new 83
+rename 85.new 85
+rename 87.new 87
+rename 89.new 89
+rename 91.new 91
+rename 93.new 93
+rename 95.new 95
+rename 97.new 97
+rename 99.new 99
+rename 101.new 101
+rename 103.new 103
+rename 105.new 105
+rename 107.new 107
+rename 109.new 109
+rename 111.new 111
+rename 113.new 113
+rename 115.new 115
+rename 117.new 117
+rename 119.new 119
+rename 121.new 121
+rename 123.new 123
+rename 125.new 125
+rename 127.new 127
+rename 129.new 129
+rename 131.new 131
+rename 133.new 133
+rename 135.new 135
+rename 137.new 137
+rename 139.new 139
+rename 141.new 141
+rename 143.new 143
+rename 145.new 145
+rename 147.new 147
+rename 149.new 149
+rename 151.new 151
+rename 153.new 153
+rename 155.new 155
+rename 157.new 157
+rename 159.new 159
+rename 161.new 161
+rename 163.new 163
+rename 165.new 165
+rename 167.new 167
+rename 169.new 169
+rename 171.new 171
+rename 173.new 173
+rename 175.new 175
+rename 177.new 177
+rename 179.new 179
+rename 181.new 181
+rename 183.new 183
+rename 185.new 185
+rename 187.new 187
+rename 189.new 189
+rename 191.new 191
+rename 193.new 193
+rename 195.new 195
+rename 197.new 197
+rename 199.new 199
+
+
+# some tests after rename
+
+ls -l .
+if ne 0 $STATUS ? echo "****** ERROR LS" : echo "LS OK"
+
+stat 1
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 1" : echo "GETATTR OK for 1"
+
+stat 1.new
+if ne 2 $STATUS ? echo "****** ERROR STILL EXISTS 1.new" : echo "RENAME OK"
+
+stat 197
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 197" : echo "GETATTR OK for 197"
+
+stat 197.new
+if ne 2 $STATUS ? echo "****** ERROR STILL EXISTS 197.new" : echo "RENAME OK"
+
+stat 198
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 198" : echo "GETATTR OK for 198"
+
+
+# now get rename the same file many times
+
+rename 177   177.0
+rename 177.0 177.1
+rename 177.1 177.2
+rename 177.2 177.3
+rename 177.3 177.4
+rename 177.4 177.5
+rename 177.5 177.6
+rename 177.6 177.7
+rename 177.7 177.8
+rename 177.8 177.9
+rename 177.9 177.10
+rename 177.10 177.11
+rename 177.11 177.12
+rename 177.12 177.13
+rename 177.13 177.14
+rename 177.14 177.15
+rename 177.15 177.16
+rename 177.16 177.17
+rename 177.17 177.18
+rename 177.18 177.19
+rename 177.19 177.20
+rename 177.20 177.21
+rename 177.21 177.22
+rename 177.22 177.23
+rename 177.23 177.24
+rename 177.24 177.25
+rename 177.25 177.26
+rename 177.26 177.27
+rename 177.27 177.28
+rename 177.28 177.29
+rename 177.29 177.0
+
+stat 177.0
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 177.0" : echo "GETATTR OK for 177.0"
+
+stat 177.29
+if ne 2 $STATUS ? echo "****** ERROR STILL EXISTS 177.29" : echo "RENAME OK"
+
+stat 177.18
+if ne 2 $STATUS ? echo "****** ERROR STILL EXISTS 177.18" : echo "RENAME OK"
+
+
+rename 177.0 177.1
+rename 177.1 177.2
+rename 177.2 177.3
+rename 177.3 177.4
+rename 177.4 177.5
+rename 177.5 177.6
+rename 177.6 177.7
+rename 177.7 177.8
+rename 177.8 177.9
+rename 177.9 177.10
+rename 177.10 177.11
+rename 177.11 177.12
+rename 177.12 177.13
+rename 177.13 177.14
+rename 177.14 177.15
+rename 177.15 177.16
+rename 177.16 177.17
+rename 177.17 177.18
+rename 177.18 177.19
+rename 177.19 177.20
+rename 177.20 177.21
+rename 177.21 177.22
+rename 177.22 177.23
+rename 177.23 177.24
+rename 177.24 177.25
+rename 177.25 177.26
+rename 177.26 177.27
+rename 177.27 177.28
+rename 177.28 177.29
+rename 177.29 177.0
+
+stat 177.0
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 177.0" : echo "GETATTR OK for 177.0"
+
+rename 177.0 177.1
+rename 177.1 177.2
+rename 177.2 177.3
+rename 177.3 177.4
+rename 177.4 177.5
+rename 177.5 177.6
+rename 177.6 177.7
+rename 177.7 177.8
+rename 177.8 177.9
+rename 177.9 177.10
+rename 177.10 177.11
+rename 177.11 177.12
+rename 177.12 177.13
+rename 177.13 177.14
+rename 177.14 177.15
+rename 177.15 177.16
+rename 177.16 177.17
+rename 177.17 177.18
+rename 177.18 177.19
+rename 177.19 177.20
+rename 177.20 177.21
+rename 177.21 177.22
+rename 177.22 177.23
+rename 177.23 177.24
+rename 177.24 177.25
+rename 177.25 177.26
+rename 177.26 177.27
+rename 177.27 177.28
+rename 177.28 177.29
+rename 177.29 177.0
+
+ls -l .
+if ne 0 $STATUS ? echo "****** ERROR LS" : echo "LS OK"
+
+stat 177.0
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 177.0" : echo "GETATTR OK for 177.0"
+
+rename 177.0 177.1
+rename 177.1 177.2
+rename 177.2 177.3
+rename 177.3 177.4
+rename 177.4 177.5
+rename 177.5 177.6
+rename 177.6 177.7
+rename 177.7 177.8
+rename 177.8 177.9
+rename 177.9 177.10
+rename 177.10 177.11
+rename 177.11 177.12
+rename 177.12 177.13
+rename 177.13 177.14
+rename 177.14 177.15
+rename 177.15 177.16
+rename 177.16 177.17
+rename 177.17 177.18
+rename 177.18 177.19
+rename 177.19 177.20
+rename 177.20 177.21
+rename 177.21 177.22
+rename 177.22 177.23
+rename 177.23 177.24
+rename 177.24 177.25
+rename 177.25 177.26
+rename 177.26 177.27
+rename 177.27 177.28
+rename 177.28 177.29
+rename 177.29 177.0
+
+stat 177.0
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 177.0" : echo "GETATTR OK for 177.0"
+
+rename 177.0 177.1
+rename 177.1 177.2
+rename 177.2 177.3
+rename 177.3 177.4
+rename 177.4 177.5
+rename 177.5 177.6
+rename 177.6 177.7
+rename 177.7 177.8
+rename 177.8 177.9
+rename 177.9 177.10
+rename 177.10 177.11
+rename 177.11 177.12
+rename 177.12 177.13
+rename 177.13 177.14
+rename 177.14 177.15
+rename 177.15 177.16
+rename 177.16 177.17
+rename 177.17 177.18
+rename 177.18 177.19
+rename 177.19 177.20
+rename 177.20 177.21
+rename 177.21 177.22
+rename 177.22 177.23
+rename 177.23 177.24
+rename 177.24 177.25
+rename 177.25 177.26
+rename 177.26 177.27
+rename 177.27 177.28
+rename 177.28 177.29
+rename 177.29 177.0
+
+stat 177.0
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 177.0" : echo "GETATTR OK for 177.0"
+
+rename 177.0 177.1
+rename 177.1 177.2
+rename 177.2 177.3
+rename 177.3 177.4
+rename 177.4 177.5
+rename 177.5 177.6
+rename 177.6 177.7
+rename 177.7 177.8
+rename 177.8 177.9
+rename 177.9 177.10
+rename 177.10 177.11
+rename 177.11 177.12
+rename 177.12 177.13
+rename 177.13 177.14
+rename 177.14 177.15
+rename 177.15 177.16
+rename 177.16 177.17
+rename 177.17 177.18
+rename 177.18 177.19
+rename 177.19 177.20
+rename 177.20 177.21
+rename 177.21 177.22
+rename 177.22 177.23
+rename 177.23 177.24
+rename 177.24 177.25
+rename 177.25 177.26
+rename 177.26 177.27
+rename 177.27 177.28
+rename 177.28 177.29
+rename 177.29 177.0
+
+stat 177.0
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 177.0" : echo "GETATTR OK for 177.0"
+
+
+rename 177.0 177.1
+rename 177.1 177.2
+rename 177.2 177.3
+rename 177.3 177.4
+rename 177.4 177.5
+rename 177.5 177.6
+rename 177.6 177.7
+rename 177.7 177.8
+rename 177.8 177.9
+rename 177.9 177.10
+rename 177.10 177.11
+rename 177.11 177.12
+rename 177.12 177.13
+rename 177.13 177.14
+rename 177.14 177.15
+rename 177.15 177.16
+rename 177.16 177.17
+rename 177.17 177.18
+rename 177.18 177.19
+rename 177.19 177.20
+rename 177.20 177.21
+rename 177.21 177.22
+rename 177.22 177.23
+rename 177.23 177.24
+rename 177.24 177.25
+rename 177.25 177.26
+rename 177.26 177.27
+rename 177.27 177.28
+rename 177.28 177.29
+rename 177.29 177.0
+
+stat 177.0
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 177.0" : echo "GETATTR OK for 177.0"
+
+rename 177.0 177.1
+rename 177.1 177.2
+rename 177.2 177.3
+rename 177.3 177.4
+rename 177.4 177.5
+rename 177.5 177.6
+rename 177.6 177.7
+rename 177.7 177.8
+rename 177.8 177.9
+rename 177.9 177.10
+rename 177.10 177.11
+rename 177.11 177.12
+rename 177.12 177.13
+rename 177.13 177.14
+rename 177.14 177.15
+rename 177.15 177.16
+rename 177.16 177.17
+rename 177.17 177.18
+
+stat 177.18
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 177.18" : echo "GETATTR OK for 177.18"
+
+rename 177.18 177.19
+rename 177.19 177.20
+rename 177.20 177.21
+rename 177.21 177.22
+rename 177.22 177.23
+rename 177.23 177.24
+rename 177.24 177.25
+rename 177.25 177.26
+rename 177.26 177.27
+rename 177.27 177.28
+rename 177.28 177.29
+rename 177.29 177.0
+rename 177.0 177.1
+rename 177.1 177.2
+rename 177.2 177.3
+rename 177.3 177.4
+rename 177.4 177.5
+rename 177.5 177.6
+rename 177.6 177.7
+rename 177.7 177.8
+rename 177.8 177.9
+rename 177.9 177.10
+rename 177.10 177.11
+rename 177.11 177.12
+rename 177.12 177.13
+rename 177.13 177.14
+rename 177.14 177.15
+rename 177.15 177.16
+rename 177.16 177.17
+rename 177.17 177.18
+
+stat 177.18
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 177.18" : echo "GETATTR OK for 177.18"
+
+
+rename 177.18 177.19
+rename 177.19 177.20
+rename 177.20 177.21
+rename 177.21 177.22
+rename 177.22 177.23
+rename 177.23 177.24
+rename 177.24 177.25
+rename 177.25 177.26
+rename 177.26 177.27
+rename 177.27 177.28
+rename 177.28 177.29
+rename 177.29 177.0
+rename 177.0 177.1
+rename 177.1 177.2
+rename 177.2 177.3
+rename 177.3 177.4
+rename 177.4 177.5
+rename 177.5 177.6
+rename 177.6 177.7
+rename 177.7 177.8
+rename 177.8 177.9
+rename 177.9 177.10
+rename 177.10 177.11
+rename 177.11 177.12
+rename 177.12 177.13
+rename 177.13 177.14
+rename 177.14 177.15
+rename 177.15 177.16
+rename 177.16 177.17
+rename 177.17 177.18
+
+stat 177.18
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 177.18" : echo "GETATTR OK for 177.18"
+
+
+rename 177.18 177.19
+rename 177.19 177.20
+rename 177.20 177.21
+rename 177.21 177.22
+rename 177.22 177.23
+rename 177.23 177.24
+rename 177.24 177.25
+rename 177.25 177.26
+rename 177.26 177.27
+rename 177.27 177.28
+rename 177.28 177.29
+rename 177.29 177.0
+rename 177.0  177
+
+stat 177
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 177" : echo "GETATTR OK for 177"
+
+
+
+
+# now get rename the same file many times
+
+rename 178   178.0
+rename 178.0 178.1
+rename 178.1 178.2
+rename 178.2 178.3
+rename 178.3 178.4
+rename 178.4 178.5
+rename 178.5 178.6
+rename 178.6 178.7
+rename 178.7 178.8
+rename 178.8 178.9
+rename 178.9 178.10
+rename 178.10 178.11
+rename 178.11 178.12
+rename 178.12 178.13
+rename 178.13 178.14
+rename 178.14 178.15
+rename 178.15 178.16
+rename 178.16 178.17
+rename 178.17 178.18
+rename 178.18 178.19
+rename 178.19 178.20
+rename 178.20 178.21
+rename 178.21 178.22
+rename 178.22 178.23
+rename 178.23 178.24
+rename 178.24 178.25
+rename 178.25 178.26
+rename 178.26 178.27
+rename 178.27 178.28
+rename 178.28 178.29
+rename 178.29 178.0
+
+stat 178.0
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 178.0" : echo "GETATTR OK for 178.0"
+
+rename 178.0 178.1
+rename 178.1 178.2
+rename 178.2 178.3
+rename 178.3 178.4
+rename 178.4 178.5
+rename 178.5 178.6
+rename 178.6 178.7
+rename 178.7 178.8
+rename 178.8 178.9
+rename 178.9 178.10
+rename 178.10 178.11
+rename 178.11 178.12
+rename 178.12 178.13
+rename 178.13 178.14
+rename 178.14 178.15
+rename 178.15 178.16
+rename 178.16 178.17
+rename 178.17 178.18
+rename 178.18 178.19
+rename 178.19 178.20
+rename 178.20 178.21
+rename 178.21 178.22
+rename 178.22 178.23
+rename 178.23 178.24
+rename 178.24 178.25
+rename 178.25 178.26
+rename 178.26 178.27
+rename 178.27 178.28
+rename 178.28 178.29
+rename 178.29 178.0
+
+stat 178.0
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 178.0" : echo "GETATTR OK for 178.0"
+
+rename 178.0 178.1
+rename 178.1 178.2
+rename 178.2 178.3
+rename 178.3 178.4
+rename 178.4 178.5
+rename 178.5 178.6
+rename 178.6 178.7
+rename 178.7 178.8
+rename 178.8 178.9
+rename 178.9 178.10
+rename 178.10 178.11
+rename 178.11 178.12
+rename 178.12 178.13
+rename 178.13 178.14
+rename 178.14 178.15
+rename 178.15 178.16
+rename 178.16 178.17
+rename 178.17 178.18
+rename 178.18 178.19
+rename 178.19 178.20
+rename 178.20 178.21
+rename 178.21 178.22
+rename 178.22 178.23
+rename 178.23 178.24
+rename 178.24 178.25
+rename 178.25 178.26
+rename 178.26 178.27
+rename 178.27 178.28
+rename 178.28 178.29
+rename 178.29 178.0
+
+stat 178.0
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 178.0" : echo "GETATTR OK for 178.0"
+
+rename 178.0 178.1
+rename 178.1 178.2
+rename 178.2 178.3
+rename 178.3 178.4
+rename 178.4 178.5
+rename 178.5 178.6
+rename 178.6 178.7
+rename 178.7 178.8
+rename 178.8 178.9
+rename 178.9 178.10
+rename 178.10 178.11
+rename 178.11 178.12
+rename 178.12 178.13
+rename 178.13 178.14
+rename 178.14 178.15
+rename 178.15 178.16
+rename 178.16 178.17
+rename 178.17 178.18
+rename 178.18 178.19
+rename 178.19 178.20
+rename 178.20 178.21
+rename 178.21 178.22
+rename 178.22 178.23
+rename 178.23 178.24
+rename 178.24 178.25
+rename 178.25 178.26
+rename 178.26 178.27
+rename 178.27 178.28
+rename 178.28 178.29
+rename 178.29 178.0
+
+stat 178.0
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 178.0" : echo "GETATTR OK for 178.0"
+
+rename 178.0 178.1
+rename 178.1 178.2
+rename 178.2 178.3
+rename 178.3 178.4
+rename 178.4 178.5
+rename 178.5 178.6
+rename 178.6 178.7
+rename 178.7 178.8
+rename 178.8 178.9
+rename 178.9 178.10
+rename 178.10 178.11
+rename 178.11 178.12
+rename 178.12 178.13
+rename 178.13 178.14
+rename 178.14 178.15
+rename 178.15 178.16
+rename 178.16 178.17
+rename 178.17 178.18
+rename 178.18 178.19
+rename 178.19 178.20
+rename 178.20 178.21
+rename 178.21 178.22
+rename 178.22 178.23
+rename 178.23 178.24
+rename 178.24 178.25
+rename 178.25 178.26
+rename 178.26 178.27
+rename 178.27 178.28
+rename 178.28 178.29
+rename 178.29 178.0
+
+stat 178.0
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 178.0" : echo "GETATTR OK for 178.0"
+
+rename 178.0 178.1
+rename 178.1 178.2
+rename 178.2 178.3
+rename 178.3 178.4
+rename 178.4 178.5
+rename 178.5 178.6
+rename 178.6 178.7
+rename 178.7 178.8
+rename 178.8 178.9
+rename 178.9 178.10
+rename 178.10 178.11
+rename 178.11 178.12
+rename 178.12 178.13
+rename 178.13 178.14
+rename 178.14 178.15
+rename 178.15 178.16
+rename 178.16 178.17
+rename 178.17 178.18
+rename 178.18 178.19
+rename 178.19 178.20
+rename 178.20 178.21
+rename 178.21 178.22
+rename 178.22 178.23
+rename 178.23 178.24
+rename 178.24 178.25
+rename 178.25 178.26
+rename 178.26 178.27
+rename 178.27 178.28
+rename 178.28 178.29
+rename 178.29 178.0
+
+stat 178.0
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 178.0" : echo "GETATTR OK for 178.0"
+
+
+rename 178.0 178.1
+rename 178.1 178.2
+rename 178.2 178.3
+rename 178.3 178.4
+rename 178.4 178.5
+rename 178.5 178.6
+rename 178.6 178.7
+rename 178.7 178.8
+rename 178.8 178.9
+rename 178.9 178.10
+rename 178.10 178.11
+rename 178.11 178.12
+rename 178.12 178.13
+rename 178.13 178.14
+rename 178.14 178.15
+rename 178.15 178.16
+rename 178.16 178.17
+rename 178.17 178.18
+rename 178.18 178.19
+rename 178.19 178.20
+rename 178.20 178.21
+rename 178.21 178.22
+rename 178.22 178.23
+rename 178.23 178.24
+rename 178.24 178.25
+rename 178.25 178.26
+rename 178.26 178.27
+rename 178.27 178.28
+rename 178.28 178.29
+rename 178.29 178.0
+
+stat 178.0
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 178.0" : echo "GETATTR OK for 178.0"
+
+rename 178.0 178.1
+rename 178.1 178.2
+rename 178.2 178.3
+rename 178.3 178.4
+rename 178.4 178.5
+rename 178.5 178.6
+rename 178.6 178.7
+rename 178.7 178.8
+rename 178.8 178.9
+rename 178.9 178.10
+rename 178.10 178.11
+rename 178.11 178.12
+rename 178.12 178.13
+rename 178.13 178.14
+rename 178.14 178.15
+rename 178.15 178.16
+rename 178.16 178.17
+rename 178.17 178.18
+
+stat 178.18
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 178.18" : echo "GETATTR OK for 178.18"
+
+rename 178.18 178.19
+rename 178.19 178.20
+rename 178.20 178.21
+rename 178.21 178.22
+rename 178.22 178.23
+rename 178.23 178.24
+rename 178.24 178.25
+rename 178.25 178.26
+rename 178.26 178.27
+rename 178.27 178.28
+rename 178.28 178.29
+rename 178.29 178.0
+rename 178.0 178.1
+rename 178.1 178.2
+rename 178.2 178.3
+rename 178.3 178.4
+rename 178.4 178.5
+rename 178.5 178.6
+rename 178.6 178.7
+rename 178.7 178.8
+rename 178.8 178.9
+rename 178.9 178.10
+rename 178.10 178.11
+rename 178.11 178.12
+rename 178.12 178.13
+rename 178.13 178.14
+rename 178.14 178.15
+rename 178.15 178.16
+rename 178.16 178.17
+rename 178.17 178.18
+
+stat 178.18
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 178.18" : echo "GETATTR OK for 178.18"
+
+
+rename 178.18 178.19
+rename 178.19 178.20
+rename 178.20 178.21
+rename 178.21 178.22
+rename 178.22 178.23
+rename 178.23 178.24
+rename 178.24 178.25
+rename 178.25 178.26
+rename 178.26 178.27
+rename 178.27 178.28
+rename 178.28 178.29
+rename 178.29 178.0
+rename 178.0 178.1
+rename 178.1 178.2
+rename 178.2 178.3
+rename 178.3 178.4
+rename 178.4 178.5
+rename 178.5 178.6
+rename 178.6 178.7
+rename 178.7 178.8
+rename 178.8 178.9
+rename 178.9 178.10
+rename 178.10 178.11
+rename 178.11 178.12
+rename 178.12 178.13
+rename 178.13 178.14
+rename 178.14 178.15
+rename 178.15 178.16
+rename 178.16 178.17
+rename 178.17 178.18
+
+stat 178.18
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 178.18" : echo "GETATTR OK for 178.18"
+
+
+rename 178.18 178.19
+rename 178.19 178.20
+rename 178.20 178.21
+rename 178.21 178.22
+rename 178.22 178.23
+rename 178.23 178.24
+rename 178.24 178.25
+rename 178.25 178.26
+rename 178.26 178.27
+rename 178.27 178.28
+rename 178.28 178.29
+rename 178.29 178.0
+rename 178.0  178
+
+stat 178
+if ne 0 $STATUS ? echo "****** ERROR GETATTR 178" : echo "GETATTR OK for 178"
+
+
+
+cd ..
+
+unlink rep_bug004_1/1
+unlink rep_bug004_1/2
+unlink rep_bug004_1/3
+unlink rep_bug004_1/4
+unlink rep_bug004_1/5
+unlink rep_bug004_1/6
+unlink rep_bug004_1/7
+unlink rep_bug004_1/8
+unlink rep_bug004_1/9
+unlink rep_bug004_1/10
+unlink rep_bug004_1/11
+unlink rep_bug004_1/12
+unlink rep_bug004_1/13
+unlink rep_bug004_1/14
+unlink rep_bug004_1/15
+unlink rep_bug004_1/16
+unlink rep_bug004_1/17
+unlink rep_bug004_1/18
+unlink rep_bug004_1/19
+unlink rep_bug004_1/20
+unlink rep_bug004_1/21
+unlink rep_bug004_1/22
+unlink rep_bug004_1/23
+unlink rep_bug004_1/24
+unlink rep_bug004_1/25
+unlink rep_bug004_1/26
+unlink rep_bug004_1/27
+unlink rep_bug004_1/28
+unlink rep_bug004_1/29
+unlink rep_bug004_1/30
+unlink rep_bug004_1/31
+unlink rep_bug004_1/32
+unlink rep_bug004_1/33
+unlink rep_bug004_1/34
+unlink rep_bug004_1/35
+unlink rep_bug004_1/36
+unlink rep_bug004_1/37
+unlink rep_bug004_1/38
+unlink rep_bug004_1/39
+unlink rep_bug004_1/40
+unlink rep_bug004_1/41
+unlink rep_bug004_1/42
+unlink rep_bug004_1/43
+unlink rep_bug004_1/44
+unlink rep_bug004_1/45
+unlink rep_bug004_1/46
+unlink rep_bug004_1/47
+unlink rep_bug004_1/48
+unlink rep_bug004_1/49
+unlink rep_bug004_1/50
+unlink rep_bug004_1/51
+unlink rep_bug004_1/52
+unlink rep_bug004_1/53
+unlink rep_bug004_1/54
+unlink rep_bug004_1/55
+unlink rep_bug004_1/56
+unlink rep_bug004_1/57
+unlink rep_bug004_1/58
+unlink rep_bug004_1/59
+unlink rep_bug004_1/60
+unlink rep_bug004_1/61
+unlink rep_bug004_1/62
+unlink rep_bug004_1/63
+unlink rep_bug004_1/64
+unlink rep_bug004_1/65
+unlink rep_bug004_1/66
+unlink rep_bug004_1/67
+unlink rep_bug004_1/68
+unlink rep_bug004_1/69
+unlink rep_bug004_1/70
+unlink rep_bug004_1/71
+unlink rep_bug004_1/72
+unlink rep_bug004_1/73
+unlink rep_bug004_1/74
+unlink rep_bug004_1/75
+unlink rep_bug004_1/76
+unlink rep_bug004_1/77
+unlink rep_bug004_1/78
+unlink rep_bug004_1/79
+unlink rep_bug004_1/80
+unlink rep_bug004_1/81
+unlink rep_bug004_1/82
+unlink rep_bug004_1/83
+unlink rep_bug004_1/84
+unlink rep_bug004_1/85
+unlink rep_bug004_1/86
+unlink rep_bug004_1/87
+unlink rep_bug004_1/88
+unlink rep_bug004_1/89
+unlink rep_bug004_1/90
+unlink rep_bug004_1/91
+unlink rep_bug004_1/92
+unlink rep_bug004_1/93
+unlink rep_bug004_1/94
+unlink rep_bug004_1/95
+unlink rep_bug004_1/96
+unlink rep_bug004_1/97
+unlink rep_bug004_1/98
+unlink rep_bug004_1/99
+unlink rep_bug004_1/100
+unlink rep_bug004_1/101
+unlink rep_bug004_1/102
+unlink rep_bug004_1/103
+unlink rep_bug004_1/104
+unlink rep_bug004_1/105
+unlink rep_bug004_1/106
+unlink rep_bug004_1/107
+unlink rep_bug004_1/108
+unlink rep_bug004_1/109
+unlink rep_bug004_1/110
+unlink rep_bug004_1/111
+unlink rep_bug004_1/112
+unlink rep_bug004_1/113
+unlink rep_bug004_1/114
+unlink rep_bug004_1/115
+unlink rep_bug004_1/116
+unlink rep_bug004_1/117
+unlink rep_bug004_1/118
+unlink rep_bug004_1/119
+unlink rep_bug004_1/120
+unlink rep_bug004_1/121
+unlink rep_bug004_1/122
+unlink rep_bug004_1/123
+unlink rep_bug004_1/124
+unlink rep_bug004_1/125
+unlink rep_bug004_1/126
+unlink rep_bug004_1/127
+unlink rep_bug004_1/128
+unlink rep_bug004_1/129
+unlink rep_bug004_1/130
+unlink rep_bug004_1/131
+unlink rep_bug004_1/132
+unlink rep_bug004_1/133
+unlink rep_bug004_1/134
+unlink rep_bug004_1/135
+unlink rep_bug004_1/136
+unlink rep_bug004_1/137
+unlink rep_bug004_1/138
+unlink rep_bug004_1/139
+unlink rep_bug004_1/140
+unlink rep_bug004_1/141
+unlink rep_bug004_1/142
+unlink rep_bug004_1/143
+unlink rep_bug004_1/144
+unlink rep_bug004_1/145
+unlink rep_bug004_1/146
+unlink rep_bug004_1/147
+unlink rep_bug004_1/148
+unlink rep_bug004_1/149
+unlink rep_bug004_1/150
+unlink rep_bug004_1/151
+unlink rep_bug004_1/152
+unlink rep_bug004_1/153
+unlink rep_bug004_1/154
+unlink rep_bug004_1/155
+unlink rep_bug004_1/156
+unlink rep_bug004_1/157
+unlink rep_bug004_1/158
+unlink rep_bug004_1/159
+unlink rep_bug004_1/160
+unlink rep_bug004_1/161
+unlink rep_bug004_1/162
+unlink rep_bug004_1/163
+unlink rep_bug004_1/164
+unlink rep_bug004_1/165
+unlink rep_bug004_1/166
+unlink rep_bug004_1/167
+unlink rep_bug004_1/168
+unlink rep_bug004_1/169
+unlink rep_bug004_1/170
+unlink rep_bug004_1/171
+unlink rep_bug004_1/172
+unlink rep_bug004_1/173
+unlink rep_bug004_1/174
+unlink rep_bug004_1/175
+unlink rep_bug004_1/176
+unlink rep_bug004_1/177
+unlink rep_bug004_1/178
+unlink rep_bug004_1/179
+unlink rep_bug004_1/180
+unlink rep_bug004_1/181
+unlink rep_bug004_1/182
+unlink rep_bug004_1/183
+unlink rep_bug004_1/184
+unlink rep_bug004_1/185
+unlink rep_bug004_1/186
+unlink rep_bug004_1/187
+unlink rep_bug004_1/188
+unlink rep_bug004_1/189
+unlink rep_bug004_1/190
+unlink rep_bug004_1/191
+unlink rep_bug004_1/192
+unlink rep_bug004_1/193
+unlink rep_bug004_1/194
+unlink rep_bug004_1/195
+unlink rep_bug004_1/196
+unlink rep_bug004_1/197
+unlink rep_bug004_1/198
+unlink rep_bug004_1/199
+
+
+unlink rep_bug004_1
+if ne -- $STATUS 0 ? echo "***** ERROR UNLINK !!! *****" : echo "unlink OK"
+
+set LS_1 `ls rep_bug004_1`
+
+echo "ls rep_bug004_1 (after unlink) returned :" `chomp $LS_1`
+
+
+

@@ -1,0 +1,9 @@
+Package: nfs-ganesha-xfs
+Architecture: any
+Depends: nfs-ganesha-common, libattr1, xfsprogs, ${shlibs:Depends}
+Description: NFS-GANESHA usable to export XFS
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. This package provides support for NFS-GANESHA to export
+ XFS.
+

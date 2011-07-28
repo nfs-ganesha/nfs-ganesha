@@ -1,0 +1,121 @@
+#!/bin/bash
+#
+# chkconfig: 2345 50 50
+# description: GANESHA NFS Daemon
+#
+# processname: /usr/bin/zfs.ganesha.nfsd
+# config: /etc/ganesha/zfs.ganesha.nfsd.conf
+# pidfile: /var/run/nfs-ganesha.pid
+#
+### BEGIN INIT INFO
+# Provides: nfs-ganesha.zfs
+# Required-Start: $local_fs $named $time $network
+# Required-Stop: $local_fs $named $time $network
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: start and stop nfs-ganesha/ZFS daemon
+# Description: NFS-GANESHA
+### END INIT INFO
+
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+PATHPROG=/usr/bin/zfs.ganesha.nfsd 
+
+# Default HPSS options
+LOGFILE=/var/log/zfs.ganesha.nfsd.log
+CONFFILE=/etc/ganesha/zfs.ganesha.nfsd.conf
+
+OPTIONS="-d -L $LOGFILE -f $CONFFILE -N NIV_EVENT"
+RETVAL=0
+
+prog=zfs.ganesha.nfsd
+PID_FILE=${PID_FILE:=/var/run/${prog}.pid}
+LOCK_FILE=${LOCK_FILE:=/var/lock/subsys/${prog}}
+
+[ -f /etc/sysconfig/nfs-ganesha.zfs ] && . /etc/sysconfig/nfs-ganesha.zfs 
+
+start() {
+        echo -n $"Starting $prog: "
+        if [ $UID -ne 0 ]; then
+                RETVAL=1
+                failure
+        else
+                daemon --pidfile $PID_FILE $PATHPROG $OPTIONS
+                RETVAL=$?
+                if [ $RETVAL -eq 0 ]; then 
+		 touch $LOCK_FILE
+		else
+		  RETVAL=1
+                fi
+        fi
+        echo 
+}
+
+stop() {
+        echo -n $"Stopping $prog: "
+        if [ $UID -ne 0 ]; then
+                RETVAL=1
+                failure
+        else
+                killproc $PATHPROG
+                RETVAL=$?
+                if [ $RETVAL -eq 0 ]; then 
+		  rm -f  $LOCK_FILE
+                  success
+		else
+		  failure
+                fi
+
+        fi
+        echo
+        return $RETVAL
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	if [ -f $LOCK_FILE ] ; then
+		stop
+	fi
+	start
+        ;;
+  reload)
+	if [ ! -f $LOCK_FILE ] ; then
+	   killproc -p $PID_FILE $prog -HUP
+        fi
+        RETVAL=0 ;
+        ;;
+  force-reload)
+	stop 
+	start
+	;;
+  try-restart)
+	if [ -f $LOCK_FILE ] ; then
+		stop
+
+		#avoid race
+		sleep 3
+		start
+	fi
+	;;
+  status)
+	if [ $RETVAL -eq 5 ] ; then 
+	    RETVAL=3
+        else
+	   status -p $PID_FILE $PATHPROG
+	   RETVAL=$?
+        fi
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart|reload|try-restart|status}"
+	RETVAL=1
+esac
+
+exit $RETVAL

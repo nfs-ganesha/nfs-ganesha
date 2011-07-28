@@ -1,0 +1,77 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_DEBUG"
+
+#configuration file
+set CONFIG_FILE "../../../share/conf/ganesha.hpss.conf"
+
+# test dir
+set TEST_DIR  "/cea/prot/S/lama/s8/leibovic/connectathon-ganesha"
+
+# sleep time for possible cache invalidation
+set SLEEP_TIME 10
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+
+barrier
+
+cd $TEST_DIR
+
+pwd
+ls -ld .
+pwd
+ls -ld $TEST_DIR
+pwd
+ls -ld .
+ls -ld $TEST_DIR
+pwd
+ls -ld $TEST_DIR
+ls -ld .
+pwd
+ls -ld .
+ls -ld .
+pwd
+ls -ld $TEST_DIR
+ls -ld $TEST_DIR
+pwd
+ls -ld $TEST_DIR
+ls -ld .
+pwd
+ls -ld .
+ls -ld $TEST_DIR
+pwd
+
+print "Waiting " $SLEEP_TIME " sec. for detecting possible cache problems..."
+sleep $SLEEP_TIME
+
+pwd
+ls -ld .
+pwd
+ls -ld $TEST_DIR
+pwd
+ls -ld .
+ls -ld $TEST_DIR
+pwd
+ls -ld $TEST_DIR
+ls -ld .
+pwd
+ls -ld .
+ls -ld .
+pwd
+ls -ld $TEST_DIR
+ls -ld $TEST_DIR
+pwd
+ls -ld $TEST_DIR
+ls -ld .
+pwd
+ls -ld .
+ls -ld $TEST_DIR
+pwd

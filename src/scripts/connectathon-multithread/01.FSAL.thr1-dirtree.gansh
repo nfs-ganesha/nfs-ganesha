@@ -1,0 +1,185 @@
+# main script.
+
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_EVENT"
+
+#configuration file
+set CONFIG_FILE "../../../share/conf/connectathon-ganesha.hpss.conf"
+
+# test dir
+set TEST_DIR  "/cea/prot/S/lama/s8/leibovic/connectathon-ganesha"
+
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+
+# initializing this layer
+init_fs $CONFIG_FILE
+
+mkdir $TEST_DIR  755
+
+# synchronization with other threads
+barrier
+
+cd $TEST_DIR
+
+create  FICHIER_1.1 666
+create  FICHIER_1.2 666
+create  FICHIER_1.3 666
+
+mkdir DIR_1 755
+barrier
+cd DIR_1
+
+    create  FICHIER_1.1 666
+    create  FICHIER_1.2 666
+    create  FICHIER_1.3 666
+
+    mkdir DIR_1 755
+    barrier
+    cd DIR_1
+    
+        create  FICHIER_1.1 666
+        create  FICHIER_1.2 666
+        create  FICHIER_1.3 666
+        mkdir DIR_1.1 755
+        mkdir DIR_1.2 755
+        mkdir DIR_1.3 755
+
+    cd ..
+    
+    mkdir DIR_2 755
+    barrier
+    cd DIR_2
+    
+        create  FICHIER_1.1 666
+        create  FICHIER_1.2 666
+        create  FICHIER_1.3 666
+        mkdir DIR_1.1 755
+        mkdir DIR_1.2 755
+        mkdir DIR_1.3 755
+        
+    cd ..
+    
+    mkdir DIR_3 755
+    barrier
+    cd DIR_3
+    
+        create  FICHIER_1.1 666
+        create  FICHIER_1.2 666
+        create  FICHIER_1.3 666
+        mkdir DIR_1.1 755
+        mkdir DIR_1.2 755
+        mkdir DIR_1.3 755
+    
+    cd ..
+
+cd ..
+
+mkdir DIR_2 755
+barrier
+cd DIR_2
+
+    create  FICHIER_1.1 666
+    create  FICHIER_1.2 666
+    create  FICHIER_1.3 666
+
+    mkdir DIR_1 755
+    barrier
+    cd DIR_1
+    
+        create  FICHIER_1.1 666
+        create  FICHIER_1.2 666
+        create  FICHIER_1.3 666
+        mkdir DIR_1.1 755
+        mkdir DIR_1.2 755
+        mkdir DIR_1.3 755
+
+    cd ..
+    
+    mkdir DIR_2 755
+    barrier
+    cd DIR_2
+    
+        create  FICHIER_1.1 666
+        create  FICHIER_1.2 666
+        create  FICHIER_1.3 666
+        mkdir DIR_1.1 755
+        mkdir DIR_1.2 755
+        mkdir DIR_1.3 755
+        
+    cd ..
+    
+    mkdir DIR_3 755
+    barrier
+    cd DIR_3
+    
+        create  FICHIER_1.1 666
+        create  FICHIER_1.2 666
+        create  FICHIER_1.3 666
+        mkdir DIR_1.1 755
+        mkdir DIR_1.2 755
+        mkdir DIR_1.3 755
+    
+    cd ..
+
+cd ..
+
+
+mkdir DIR_3 755
+barrier
+cd DIR_3
+
+    create  FICHIER_1.1 666
+    create  FICHIER_1.2 666
+    create  FICHIER_1.3 666
+
+    mkdir DIR_1 755
+    barrier
+    cd DIR_1
+    
+        create  FICHIER_1.1 666
+        create  FICHIER_1.2 666
+        create  FICHIER_1.3 666
+        mkdir DIR_1.1 755
+        mkdir DIR_1.2 755
+        mkdir DIR_1.3 755
+
+    cd ..
+    
+    mkdir DIR_2 755
+    barrier
+    cd DIR_2
+    
+        create  FICHIER_1.1 666
+        create  FICHIER_1.2 666
+        create  FICHIER_1.3 666
+        mkdir DIR_1.1 755
+        mkdir DIR_1.2 755
+        mkdir DIR_1.3 755
+        
+    cd ..
+    
+    mkdir DIR_3 755
+    barrier
+    cd DIR_3
+    
+        create  FICHIER_1.1 666
+        create  FICHIER_1.2 666
+        create  FICHIER_1.3 666
+        mkdir DIR_1.1 755
+        mkdir DIR_1.2 755
+        mkdir DIR_1.3 755
+    
+    cd ..
+
+cd ..
+

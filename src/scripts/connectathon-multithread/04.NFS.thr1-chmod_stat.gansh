@@ -1,0 +1,94 @@
+############################
+#     TEST CONFIGURATION
+############################
+
+# debug level
+set DEBUG_LEVEL "NIV_EVENT"
+
+#configuration file
+set CONFIG_FILE "../../../share/conf/connectathon-ganesha.hpss.conf"
+
+# test dir
+set MOUNT_DIR "/cea/prot/S/lama/s8/leibovic"
+set TEST_DIR  "/connectathon-ganesha"
+
+# nfs export file
+set EXPORT_FILE $CONFIG_FILE
+
+
+############################
+#     TEST BODY
+############################
+
+# setting FSAL layer
+set LAYER FSAL
+
+# initializing this layer
+init_fs $CONFIG_FILE
+
+# setting cache_inode layer
+set LAYER Cache_inode
+init_cache $CONFIG_FILE
+
+# setting NFS layer
+set LAYER NFS
+nfs_init -v $EXPORT_FILE
+
+mount $MOUNT_DIR
+
+barrier
+
+cd $TEST_DIR
+
+create FICHIER_1.1 666
+create FICHIER_1.2 666
+create FICHIER_1.3 666
+
+setattr FICHIER_1.1 mode=0000
+ls -l FICHIER_1.1
+setattr FICHIER_1.1 mode=0666
+ls -l FICHIER_1.1
+
+setattr FICHIER_1.2 mode=0000
+ls -l FICHIER_1.2
+setattr FICHIER_1.2 mode=0666
+ls -l FICHIER_1.2
+
+setattr FICHIER_1.3 mode=0000
+ls -l FICHIER_1.3
+setattr FICHIER_1.3 mode=0666
+ls -l FICHIER_1.3
+
+setattr FICHIER_1.1 mode=0000
+ls -l FICHIER_1.1
+setattr FICHIER_1.1 mode=0666
+ls -l FICHIER_1.1
+
+setattr FICHIER_1.2 mode=0000
+ls -l FICHIER_1.2
+setattr FICHIER_1.2 mode=0666
+ls -l FICHIER_1.2
+
+setattr FICHIER_1.3 mode=0000
+ls -l FICHIER_1.3
+setattr FICHIER_1.3 mode=0666
+ls -l FICHIER_1.3
+
+setattr FICHIER_1.1 mode=0000
+ls -l FICHIER_1.1
+setattr FICHIER_1.1 mode=0666
+ls -l FICHIER_1.1
+
+setattr FICHIER_1.2 mode=0000
+ls -l FICHIER_1.2
+setattr FICHIER_1.2 mode=0666
+ls -l FICHIER_1.2
+
+setattr FICHIER_1.3 mode=0000
+ls -l FICHIER_1.3
+setattr FICHIER_1.3 mode=0666
+ls -l FICHIER_1.3
+
+unlink FICHIER_1.1
+unlink FICHIER_1.2
+unlink FICHIER_1.3
