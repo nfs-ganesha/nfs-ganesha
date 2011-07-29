@@ -14,7 +14,6 @@ SUBDIRS = include             \
           Cache_inode         \
           File_Content        \
           File_Content_Policy \
-          XDR                 \
           RPCAL               \
           Protocols           \
           RPCAL               \

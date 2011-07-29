@@ -127,7 +127,7 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       ../Log/liblog.la                                  \
                                       ../ConfigParsing/libConfigParsing.la              \
                                       ../RPCAL/librpcal.la                              \
-                                      ../XDR/libnfs_mnt_xdr.la                          \
+                                      ../Protocols/XDR/libnfs_mnt_xdr.la                \
                                       ../SemN/libSemN.la                                \
                                       ../RW_Lock/librwlock.la                           \
                                       ../Common/libcommon_utils.la
