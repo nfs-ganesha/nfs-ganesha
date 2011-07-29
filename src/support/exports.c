@@ -557,6 +557,7 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
             }
           else
             {
+              p_clients[i].type = BAD_CLIENT;
               /* Last case: type for client could not be identified. This should not occur */
               LogCrit(COMPONENT_CONFIG,
                       "Unsupported type for client %s", client_hostname);
@@ -2379,9 +2380,15 @@ int export_client_match(sockaddr_t *hostaddr,
           return FALSE;
           break;
 
+       case BAD_CLIENT:
+          LogDebug(COMPONENT_DISPATCH,
+                  "Bad client in position %u seen in export list", i );
+	  continue ;
+
         default:
-          return FALSE;         /* Should never occurs */
-          break;
+           LogCrit(COMPONENT_DISPATCH,
+                   "Unsupported client in position %u in export list with type %u", i, clients->clientarray[i].type);
+	   continue ;
         }                       /* switch */
     }                           /* for */
 

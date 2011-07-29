@@ -1,14 +1,14 @@
 AM_CFLAGS                     = -Wimplicit $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
-used_libs  = $(FSAL_LIB) $(FSAL_LDFLAGS) \
-                                ../../Log/liblog.la \
-                                ../../HashTable/libhashtable.la \
-                                ../../BuddyMalloc/libBuddyMalloc.la \
-                                ../../RW_Lock/librwlock.la \
-                                ../../SemN/libSemN.la \
-                                ../../ConfigParsing/libConfigParsing.la \
-                                ../../Common/libcommon_utils.la \
-                                -lpthread
+used_libs  = $(FSAL_LIB) $(FSAL_LDFLAGS)             \
+             ../../Log/liblog.la                     \
+             ../../HashTable/libhashtable.la         \
+             ../../BuddyMalloc/libBuddyMalloc.la     \
+             ../../RW_Lock/librwlock.la              \
+             ../../SemN/libSemN.la                   \
+             ../../ConfigParsing/libConfigParsing.la \
+             ../../Common/libcommon_utils.la         \
+             -lpthread
 
 noinst_LTLIBRARIES          = libfsalfuse.la
 
