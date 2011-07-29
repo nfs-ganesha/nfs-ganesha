@@ -882,7 +882,7 @@ AC_CONFIG_FILES([include/Makefile
 		 Protocols/PNFS/PARALLEL_FS/Makefile
 		 Protocols/PNFS/OSD/Makefile
 		 Protocols/PNFS/BLOCK/Makefile
-                 XDR/Makefile
+                 Protocols/XDR/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile
 		 FSAL/FSAL_HPSS/HPSSclapiExt/Makefile
