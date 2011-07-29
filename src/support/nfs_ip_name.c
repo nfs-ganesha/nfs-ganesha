@@ -216,7 +216,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname)
   {
        LogEvent(COMPONENT_DISPATCH,
                 "Warning: long DNS query for %s: %u.%06u sec", ipstring,
-                dur.tv_sec, dur.tv_usec );
+                (unsigned int) dur.tv_sec, (unsigned int) dur.tv_usec );
   }
 
 

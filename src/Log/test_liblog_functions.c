@@ -25,6 +25,9 @@
  *
  *
  */
+
+#pragma GCC diagnostic ignored "-Wformat"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -57,7 +60,7 @@ void TestAlways(int expect, char *buff, log_components_t component, char *string
   sprintf(compare, "%s: %s", LogComponents[component].comp_str, string);
   buff[0] = '\0';
   LogAlways(component, "%s", string);
-  if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
+  if ((expect && (strcmp(compare, buff) != 0)) || (!expect && (buff[0] != '\0')))
     {
       LogTest("FAILURE: %s produced \"%s\" expected \"%s\"",
               string, buff, compare);
@@ -72,8 +75,8 @@ void TestMajor(int expect, char *buff, log_components_t component, char *string)
   sprintf(compare, "%s: MAJOR ERROR: %s", LogComponents[component].comp_str, string);
   buff[0] = '\0';
   LogMajor(component, "%s", string);
-  if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
-    {
+  if ((expect && (strcmp(compare, buff) != 0)) || (!expect && (buff[0] != '\0')))
+  {
       LogTest("FAILURE: %s produced \"%s\" expected \"%s\"",
               string, buff, compare);
       exit(1);
@@ -90,8 +93,8 @@ void TestCrit(int expect, char *buff, log_components_t component, char *string)
   sprintf(compare, "%s: CRITICAL ERROR: %s", LogComponents[component].comp_str, string);
   buff[0] = '\0';
   LogCrit(component, "%s", string);
-  if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
-    {
+  if ((expect && (strcmp(compare, buff) != 0)) || (!expect && (buff[0] != '\0')))
+  {
       LogTest("FAILURE: %s produced \"%s\" expected \"%s\"",
               string, buff, compare);
       exit(1);
@@ -108,8 +111,8 @@ void TestEvent(int expect, char *buff, log_components_t component, char *string)
   sprintf(compare, "%s: EVENT: %s", LogComponents[component].comp_str, string);
   buff[0] = '\0';
   LogEvent(component, "%s", string);
-  if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
-    {
+  if ((expect && (strcmp(compare, buff) != 0)) || (!expect && (buff[0] != '\0')))
+  {
       LogTest("FAILURE: %s produced \"%s\" expected \"%s\"",
               string, buff, compare);
       exit(1);
@@ -126,7 +129,8 @@ void TestDebug(int expect, char *buff, log_components_t component, char *string)
   sprintf(compare, "%s: DEBUG: %s", LogComponents[component].comp_str, string);
   buff[0] = '\0';
   LogDebug(component, "%s", string);
-  if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
+  
+  if ((expect && (strcmp(compare, buff) != 0)) || (!expect && (buff[0] != '\0')))
     {
       LogTest("FAILURE: %s produced \"%s\" expected \"%s\"",
               string, buff, compare);
@@ -144,7 +148,7 @@ void TestFullDebug(int expect, char *buff, log_components_t component, char *str
   sprintf(compare, "%s: FULLDEBUG: %s", LogComponents[component].comp_str, string);
   buff[0] = '\0';
   LogFullDebug(component, "%s", string);
-  if (expect && strcmp(compare, buff) != 0 || !expect && buff[0] != '\0')
+  if ((expect && (strcmp(compare, buff) != 0)) || (!expect && (buff[0] != '\0')))
     {
       LogTest("FAILURE: %s produced \"%s\" expected \"%s\"",
               string, buff, compare);
@@ -190,7 +194,7 @@ void TestFullDebug(int expect, char *buff, log_components_t component, char *str
 /**
  *  Tests about Log streams and special printf functions.
  */
-int Test1(char *str, char *file)
+void Test1(char *str, char *file)
 {
   char tempstr[2048];
   int  i;
@@ -198,17 +202,6 @@ int Test1(char *str, char *file)
   SetComponentLogFile(COMPONENT_INIT, "STDOUT");
   LogAlways(COMPONENT_INIT, "%s", "Starting Log Tests");
   LogTest("My PID = %d", getpid());
-
-  LogTest("------------------------------------------------------");
-
-  LogTest("Test ERR_DUMMY");
-  LogTest("A numerical error : error %%d = %%J%%R, in ERR_DUMMY_2 %%J%%R");
-  log_snprintf(tempstr, sizeof(tempstr),
-               "A numerical error : error %d = %J%R, in ERR_DUMMY_2 %J%R",
-               ERR_SIGACTION, ERR_SYS, ERR_SIGACTION, ERR_DUMMY, ERR_DUMMY_2);
-  LogTest("%s", tempstr);
-  LogTest("A numerical error : error %d = %J%R, in ERR_DUMMY_1 %J%R",
-          ERR_OPEN, ERR_SYS, ERR_OPEN, ERR_DUMMY, ERR_DUMMY_1);
 
   LogTest("------------------------------------------------------");
   LogTest("Test conversion of log levels between string and integer");
@@ -234,8 +227,6 @@ int Test1(char *str, char *file)
 
   log_snprintf(tempstr, sizeof(tempstr), "Test log_snprintf");
   LogTest("%s", tempstr);
-  LogTest("\nTesting LogError function");
-  LogError(COMPONENT_CONFIG, ERR_SYS, ERR_MALLOC, EINVAL);
   LogTest("\nTesting possible environment variable");
   LogTest("COMPONENT_MEMCORRUPT debug level is %s",
           ReturnLevelInt(LogComponents[COMPONENT_MEMCORRUPT].comp_log_level));
@@ -380,14 +371,14 @@ void Test2()
   TestFormat("Field Length: %3d %s", 1, "extra");
   TestFormat("Variable Field Length: %*d %s", 5, 123, "extra");
   TestFormat("Alignment flags: %+d %+d %-5d %-5d %05d %05d % d % d %s", 2, -2, 333, -333, 444, -444, 5, -5, "extra");
-  TestFormat("Two Flags: %-05d %-05d %0-5d %0-5d %s", 333, -333, 444, -444, "extra");
-  TestFormat("Two Flags: %+ d %+ d % +d % +d %s", 333, -333, 444, -444, "extra");
+  // TestFormat("Two Flags: %-05d %-05d %0-5d %0-5d %s", 333, -333, 444, -444, "extra");
+  // TestFormat("Two Flags: %+ d %+ d % +d % +d %s", 333, -333, 444, -444, "extra");
   TestFormat("Two Flags: %-+5d %-+5d %+-5d %+-5d %s", 333, -333, 444, -444, "extra");
   TestFormat("Two Flags: %- 5d %- 5d % -5d % -5d %s", 333, -333, 444, -444, "extra");
   TestFormat("Two Flags: %+05d %+05d %0+5d %0+5d %s", 333, -333, 444, -444, "extra");
   TestFormat("Two Flags: % 05d % 05d %0 5d %0 5d %s", 333, -333, 444, -444, "extra");
   TestFormat("Use of # Flag: %#x %#3x %#05x %#-5x %-#5x %0#5x", 1, 2, 3, 4, 5, 6);
-  TestFormat("Many Flags: %#-0 +#-0 +#-0 +5d", 4);
+  // TestFormat("Many Flags: %#-0 +#-0 +#-0 +5d", 4);
   TestFormat("Special Flags (may not be supported) %'d %Id %s", 12345, 67, "extra");
 
   LogTest("------------------------------------------------------");
@@ -452,35 +443,9 @@ void Test2()
   TestFormat("%3$llx %2$d %1d", 1, 2, (long long)0x12345678);
    */
 
-  LogTest("------------------------------------------------------");
-  LogTest("Ganesha specific tags");
-  LogTest("\nTest %%b, %%B, %%h, %%H, %%y, and %%Y. These are odd tags:");
-  LogTest("   %%b, %%B, %%h, and %%H each consume int1, str2, str3 even if not all are printed");
-  LogTest("   %%y and %%Y each consume int1, str2, str3, int4, str5, str6 even if not all are printed");
-  LogTest("   An extra string parameter is printed to demonstrate how the parameters are consumed");
-  TestGaneshaFormat(TRUE,  "str2(1) (not part of %b)", "%b %s", 1, "str2", "str3", "(not part of %b)");
-  TestGaneshaFormat(TRUE,  "str2(1) : 'str3' (not part of %B)", "%B %s", 1, "str2", "str3", "(not part of %B)");
-  TestGaneshaFormat(TRUE,  "str2(1) (not part of %h)", "%h %s", 1, "str2", "str3", "(not part of %h)");
-  TestGaneshaFormat(TRUE,  "str2(1) : 'str3' (not part of %H)", "%H %s", 1, "str2", "str3", "(not part of %H)");
-  TestGaneshaFormat(TRUE,  "str2 str5(4) (not part of %y)", "%y %s", 1, "str2", "str3", 4, "str5", "str6", "(not part of %y)");
-  TestGaneshaFormat(TRUE,  "str2(1) : 'str3' -> str5(4) : 'str6' (not part of %Y)", "%Y %s", 1, "str2", "str3", 4, "str5", "str6", "(not part of %Y)");
-  LogTest("\nTest new tags for reporting errno values");
-  TestGaneshaFormat(TRUE,  "EINVAL(22)", "%w", EINVAL);
-  TestGaneshaFormat(TRUE,  "EINVAL(22) : 'Invalid argument'", "%W", EINVAL);
-  LogTest("\nTest context sensitive tags");
-  LogTest("%%K, %%V, and %%v go together, defaulting to ERR_SYS");
-  LogTest("%%J, %%R, and %%r go together, defaulting to ERR_POSIX");
-  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) : 'sigaction impossible' EINVAL(22) : 'Invalid argument'", "%K%V %K%V", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
-  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) EINVAL(22)", "%K%v %K%v", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
-  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) : 'sigaction impossible' EINVAL(22) : 'Invalid argument'", "%J%R %J%R", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
-  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) EINVAL(22)", "%J%r %J%r", ERR_SYS, ERR_SIGACTION, ERR_POSIX, EINVAL);
-  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) : 'sigaction impossible' EINVAL(22) : 'Invalid argument'", "%V %R", ERR_SIGACTION, EINVAL);
-  TestGaneshaFormat(TRUE,  "ERR_SIGACTION(5) EINVAL(22)", "%v %r", ERR_SIGACTION, EINVAL);
-  LogTest("Ganesha expects it's tags to just be two characters, for example %%b");
-  TestGaneshaFormat(FALSE, "str2(1) (not part of %b)", "%5b %s", 1, "str2", "str3", "(not part of %b)");
 }
 
-run_Tests(int all, char *arg, char *str, char *file)
+void run_Tests(int all, char *arg, char *str, char *file)
 {
   SetNameFunction(arg);
 
@@ -512,7 +477,6 @@ int main(int argc, char *argv[])
 
       if(!strcmp(argv[1], "STD"))
         {
-          int rc;
           char *str = "No extra string provided";
           char *file = NULL;
 
@@ -598,5 +562,5 @@ int main(int argc, char *argv[])
       fprintf(stderr, "%s", usage);
       exit(1);
     }
-
+  return 0;
 }
