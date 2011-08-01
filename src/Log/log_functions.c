@@ -1224,6 +1224,10 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
                 case STRING_TYPE:
                   va_arg(arguments, char *);
                   break;
+
+		default:
+		  /* Should not occurr */
+                  continue ;
                 }
 
               break;
@@ -1246,6 +1250,10 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
                 case DOUBLE_TYPE:
                   va_arg(arguments, long double);
                   break;
+
+		default:
+		  /* Should not occurr */
+                  continue ;
                 }
               break;
 
@@ -1261,9 +1269,17 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
                 case DOUBLE_TYPE:
                   va_arg(arguments, long double);
                   break;
+
+		default:
+		  /* Should not occurr */
+                  continue ;
                 }
 
               break;
+
+	    default:
+              /* Should not occurr */
+              continue ;
             }
         }                       /* if( type != EXTENDED_TYPE ) */
       else
@@ -1401,6 +1417,10 @@ int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
               snprintf(tmpout, MAX_STR_TOK, "%s(%d) : '%s'", the_error.label, numero,
                        the_error.msg);
               break;
+
+	    default:
+	      /* Should not occur */
+              continue ;
 
             }                   /* switch */
 
@@ -1767,7 +1787,10 @@ static int isValidLogPath(char *pathname)
       LogCrit(COMPONENT_LOG,
               "%s points outside your accessible address space.",
               directory_name);
-      break;
+      break; 
+
+    default:
+	break ;
     }
 
   return 1;
