@@ -29,25 +29,9 @@
 #include "nlm4.h"
 #include "cache_inode.h"
 
-struct nlm_lock_entry
-{
-  struct nlm4_lockargs arg;
-  int state;
-  int ref_count;
-  pthread_mutex_t lock;
-  struct glist_head lock_list;
-#ifdef _DEBUG_MEMLEAKS
-  struct glist_head all_locks;
-#endif
-  cache_entry_t *pentry;
-  cache_inode_client_t *pclient;
-  hash_table_t *ht;
-};
-
-typedef struct nlm_lock_entry nlm_lock_entry_t;
-
 bool_t nlm_block_data_to_fsal_context(cache_inode_nlm_block_data_t * nlm_block_data,
                                       fsal_op_context_t            * fsal_context);
+
 extern const char *lock_result_str(int rc);
 extern netobj *copy_netobj(netobj * dst, netobj * src);
 extern void netobj_free(netobj * obj);
@@ -72,6 +56,7 @@ extern int nlm_unmonitor_host(char *name);
  *               because the caller will have nothing to do)
  * ppnlm_client: NLM Client to fill in, returns a reference to the client
  * ppowner:      NLM Owner to fill in, returns a reference to the owner
+ * ppblock_data: Data required to make a call back to the client to grant a blocked lock
  */
 int nlm_process_parameters(struct svc_req            * preq,
                            bool_t                      exclusive,

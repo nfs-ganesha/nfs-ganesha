@@ -55,23 +55,6 @@
 #include "nsm.h"
 #include "nlm_async.h"
 
-/*
- * nlm_lock_entry_t locking rule:
- * The value is always updated/read with nlm_lock_entry->lock held
- * If we have nlm_lock_list mutex held we can read it safely, because the
- * value is always updated while walking the list with nlm_lock_list_mutex held.
- * The updation happens as below:
- *  pthread_mutex_lock(nlm_lock_list_mutex)
- *  pthread_mutex_lock(nlm_entry->lock)
- *    update the nlm_entry value
- *  ........
- * The value is ref counted with nlm_lock_entry->ref_count so that a
- * parallel cancel/unlock won't endup freeing the datastructure. The last
- * release on the data structure ensure that it is freed.
- */
-static struct glist_head nlm_lock_list;
-static pthread_mutex_t nlm_lock_list_mutex;
-
 /* nlm grace time tracking */
 static struct timeval nlm_grace_tv;
 #define NLM4_GRACE_PERIOD 10
@@ -148,27 +131,27 @@ bool_t fill_netobj(netobj * dst, char *data, int len)
 
 netobj *copy_netobj(netobj * dst, netobj * src)
 {
-    if(dst == NULL)
-      return NULL;
-    dst->n_len = 0;
-    if(src->n_len != 0)
-      {
-        dst->n_bytes = (char *)Mem_Alloc(src->n_len);
-        if(!dst->n_bytes)
-          return NULL;
-        memcpy(dst->n_bytes, src->n_bytes, src->n_len);
-      }
-    else
-      dst->n_bytes = NULL;
+  if(dst == NULL)
+    return NULL;
+  dst->n_len = 0;
+  if(src->n_len != 0)
+    {
+      dst->n_bytes = (char *)Mem_Alloc(src->n_len);
+      if(!dst->n_bytes)
+        return NULL;
+      memcpy(dst->n_bytes, src->n_bytes, src->n_len);
+    }
+  else
+    dst->n_bytes = NULL;
 
-    dst->n_len = src->n_len;
-    return dst;
+  dst->n_len = src->n_len;
+  return dst;
 }
 
 void netobj_free(netobj * obj)
 {
-    if(obj->n_bytes)
-        Mem_Free(obj->n_bytes);
+  if(obj->n_bytes)
+    Mem_Free(obj->n_bytes);
 }
 
 void netobj_to_string(netobj *obj, char *buffer, int maxlen)
@@ -188,32 +171,26 @@ void netobj_to_string(netobj *obj, char *buffer, int maxlen)
     }
 }
 
-void nlm_remove_from_locklist(nlm_lock_entry_t * nlm_entry)
-{
-    pthread_mutex_lock(&nlm_lock_list_mutex);
-    //do_nlm_remove_from_locklist(nlm_entry);
-    pthread_mutex_unlock(&nlm_lock_list_mutex);
-}
-
 int in_nlm_grace_period(void)
 {
-    struct timeval tv;
-    if(nlm_grace_tv.tv_sec == 0)
-        return 0;
-
-    if(gettimeofday(&tv, NULL) == 0)
-        {
-            if(tv.tv_sec < (nlm_grace_tv.tv_sec + NLM4_GRACE_PERIOD))
-                {
-                    return 1;
-                }
-            else
-                {
-                    nlm_grace_tv.tv_sec = 0;
-                    return 0;
-                }
-        }
+  struct timeval tv;
+  if(nlm_grace_tv.tv_sec == 0)
     return 0;
+
+  if(gettimeofday(&tv, NULL) == 0)
+    {
+      if(tv.tv_sec < (nlm_grace_tv.tv_sec + NLM4_GRACE_PERIOD))
+        {
+          return 1;
+        }
+      else
+        {
+          nlm_grace_tv.tv_sec = 0;
+          return 0;
+        }
+    }
+
+  return 0;
 }
 
 int nlm_init(void)
@@ -236,52 +213,16 @@ int nlm_init(void)
 
 int nlm_monitor_host(char *name)
 {
-    nlm_lock_entry_t *nlm_entry;
-    struct glist_head *glist;
-
-    pthread_mutex_lock(&nlm_lock_list_mutex);
-    glist_for_each(glist, &nlm_lock_list)
-        {
-            nlm_entry = glist_entry(glist, nlm_lock_entry_t, lock_list);
-            if(!strcmp(nlm_entry->arg.alock.caller_name, name))
-                {
-                    /* there is already a lock with the same
-                     * caller_name. So we should already be monitoring
-                     * the host
-                     */
-                    pthread_mutex_unlock(&nlm_lock_list_mutex);
-                    return 0;
-                }
-        }
-    pthread_mutex_unlock(&nlm_lock_list_mutex);
-    /* There is nobody monitoring the host */
-    LogFullDebug(COMPONENT_NLM, "Monitoring host %s", name);
-    return nsm_monitor(name);
+  /* TODO FSF: this needs to be integrated with NLM Client structure */
+  LogFullDebug(COMPONENT_NLM, "Monitoring host %s", name);
+  return nsm_monitor(name);
 }
 
 int nlm_unmonitor_host(char *name)
 {
-    nlm_lock_entry_t *nlm_entry;
-    struct glist_head *glist;
-
-    pthread_mutex_lock(&nlm_lock_list_mutex);
-    glist_for_each(glist, &nlm_lock_list)
-        {
-            nlm_entry = glist_entry(glist, nlm_lock_entry_t, lock_list);
-            if(!strcmp(nlm_entry->arg.alock.caller_name, name))
-                {
-                    /* We have locks tracking the same caller_name
-                     * we cannot unmonitor the host now. We will do
-                     * it for the last unlock from the host
-                     */
-                    pthread_mutex_unlock(&nlm_lock_list_mutex);
-                    return 0;
-                }
-        }
-    pthread_mutex_unlock(&nlm_lock_list_mutex);
-    /* There is nobody holding a lock with host */
-    LogFullDebug(COMPONENT_NLM, "Unmonitoring host %s", name);
-    return nsm_unmonitor(name);
+  /* TODO FSF: this needs to be integrated with NLM Client structure */
+  LogFullDebug(COMPONENT_NLM, "Unmonitoring host %s", name);
+  return nsm_unmonitor(name);
 }
 
 void free_grant_arg(nlm_async_queue_t *arg)
@@ -302,12 +243,14 @@ void free_grant_arg(nlm_async_queue_t *arg)
  */
 static void nlm4_send_grant_msg(nlm_async_queue_t *arg)
 {
-  int retval;
+  int                    retval;
+  char                   buffer[1024];
+  cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
+  cache_cookie_entry_t * cookie_entry;
+  fsal_op_context_t      context, * pcontext = &context;
 
   if(isDebug(COMPONENT_NLM))
     {
-      char buffer[1024];
-
       netobj_to_string(&arg->nlm_async_args.nlm_async_grant.cookie,
                        buffer, sizeof(buffer));
 
@@ -335,22 +278,38 @@ static void nlm4_send_grant_msg(nlm_async_queue_t *arg)
    * the lock again. So remove the existing blocked nlm entry
    */
   LogMajor(COMPONENT_NLM,
-           "%s: GRANTED_MSG RPC call failed with return code %d. Removing the blocking lock",
-           __func__, retval);
+           "GRANTED_MSG RPC call failed with return code %d. Removing the blocking lock",
+           retval);
 
-  // TODO FSF: fix up cleanup
+  if(cache_inode_find_grant(arg->nlm_async_args.nlm_async_grant.cookie.n_bytes,
+                            arg->nlm_async_args.nlm_async_grant.cookie.n_len,
+                            &cookie_entry,
+                            &cache_status) != CACHE_INODE_SUCCESS)
+    {
+      /* This must be an old NLM_GRANTED_RES */
+      LogFullDebug(COMPONENT_NLM,
+                   "nlm4_send_grant_msg could not find cookie=%s",
+                   buffer);
+      return;
+    }
 
-  //nlm_remove_from_locklist(nlm_entry);
-  /*
-   * Submit the async request to send granted response for
-   * locks that can be granted, because of this removal
-   * from the lock list. If the client is lucky. It
-   * will send the lock request again and before the
-   * block locks are granted it gets the lock.
-   */
-  //nlm_grant_blocked_locks(&nlm_entry->arg.alock.fh);
-  //nlm_lock_entry_dec_ref(nlm_entry);
-  return;
+  P(cookie_entry->lce_pentry->object.file.lock_list_mutex);
+
+  if(cookie_entry->lce_lock_entry->cle_block_data == NULL ||
+     !nlm_block_data_to_fsal_context(&cookie_entry->lce_lock_entry->cle_block_data->cbd_block_data.cbd_nlm_block_data,
+                                     pcontext))
+    {
+      /* Wow, we're not doing well... */
+      V(cookie_entry->lce_pentry->object.file.lock_list_mutex);
+      LogFullDebug(COMPONENT_NLM,
+                   "nlm4_send_grant_msg could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
+                   buffer);
+      return;
+    }
+
+  V(cookie_entry->lce_pentry->object.file.lock_list_mutex);
+
+  cache_inode_complete_grant(pcontext, cookie_entry, &nlm_async_cache_inode_client);
 }
 
 int nlm_process_parameters(struct svc_req            * preq,
@@ -451,14 +410,13 @@ int nlm_process_parameters(struct svc_req            * preq,
           memcpy((*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_nlm_fh_buf,
                  alock->fh.n_bytes,
                  alock->fh.n_len);
-          /* TODO FSF: fill in credential information
-          (*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_caller_uid  = ???;
-          (*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_caller_gid  = ???;
-          (*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_caller_glen = ???;
-          memcpy((*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_groups,
-                 ???,
-                 ???);
-          */
+          /* TODO FSF: Fill in credential information with dummy information */
+          (*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_nlm_caller_uid  = 0;
+          (*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_nlm_caller_gid  = 0;
+          (*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_nlm_caller_glen = 0;
+          memset((*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_nlm_caller_garray,
+                 0,
+                 sizeof((*ppblock_data)->cbd_block_data.cbd_nlm_block_data.cbd_nlm_caller_garray));
         }
     }
   /* Fill in plock */
@@ -516,10 +474,14 @@ nlm4_stats nlm_convert_cache_inode_error(cache_inode_status_t status)
     {
       case CACHE_INODE_SUCCESS:       return NLM4_GRANTED;
       case CACHE_INODE_LOCK_CONFLICT: return NLM4_DENIED;
-      case CACHE_INODE_LOCK_BLOCKED:  return NLM4_BLOCKED;
-      case CACHE_INODE_LOCK_DEADLOCK: return NLM4_DEADLCK;
       case CACHE_INODE_MALLOC_ERROR:  return NLM4_DENIED_NOLOCKS;
+      case CACHE_INODE_LOCK_BLOCKED:  return NLM4_BLOCKED;
+      case CACHE_INODE_GRACE_PERIOD:  return NLM4_DENIED_GRACE_PERIOD;
+      case CACHE_INODE_LOCK_DEADLOCK: return NLM4_DEADLCK;
+      case CACHE_INODE_READ_ONLY_FS:  return NLM4_ROFS;
       case CACHE_INODE_NOT_FOUND:     return NLM4_STALE_FH;
+      case CACHE_INODE_FSAL_ESTALE:   return NLM4_STALE_FH;
+      case CACHE_INODE_FILE_BIG:      return NLM4_FBIG;
       default:                        return NLM4_FAILED;
     }
 }

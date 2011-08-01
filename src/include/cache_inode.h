@@ -156,8 +156,6 @@ typedef struct cache_inode_stat__
   unsigned int nb_call_total;                                       /**< Total number of calls */
 } cache_inode_stat_t;
 
-typedef int cache_inode_status_t;
-
 typedef struct cache_inode_parameter__
 {
   hash_parameter_t hparam;                      /**< Parameter used for hashtable initialization */
@@ -574,48 +572,54 @@ typedef union cache_inode_create_arg__
 /*
  * Possible errors 
  */
-#define CACHE_INODE_SUCCESS               0
-#define CACHE_INODE_MALLOC_ERROR          1
-#define CACHE_INODE_POOL_MUTEX_INIT_ERROR 2
-#define CACHE_INODE_GET_NEW_LRU_ENTRY     3
-#define CACHE_INODE_UNAPPROPRIATED_KEY    4
-#define CACHE_INODE_INIT_ENTRY_FAILED     5
-#define CACHE_INODE_FSAL_ERROR            6
-#define CACHE_INODE_LRU_ERROR             7
-#define CACHE_INODE_HASH_SET_ERROR        8
-#define CACHE_INODE_NOT_A_DIRECTORY       9
-#define CACHE_INODE_INCONSISTENT_ENTRY    10
-#define CACHE_INODE_BAD_TYPE              11
-#define CACHE_INODE_ENTRY_EXISTS          12
-#define CACHE_INODE_DIR_NOT_EMPTY         13
-#define CACHE_INODE_NOT_FOUND             14
-#define CACHE_INODE_INVALID_ARGUMENT      15
-#define CACHE_INODE_INSERT_ERROR          16
-#define CACHE_INODE_HASH_TABLE_ERROR      17
-#define CACHE_INODE_FSAL_EACCESS          18
-#define CACHE_INODE_IS_A_DIRECTORY        19
-#define CACHE_INODE_FSAL_EPERM            20
-#define CACHE_INODE_NO_SPACE_LEFT         21
-#define CACHE_INODE_CACHE_CONTENT_ERROR   22
-#define CACHE_INODE_CACHE_CONTENT_EXISTS  23
-#define CACHE_INODE_CACHE_CONTENT_EMPTY   24
-#define CACHE_INODE_READ_ONLY_FS          25
-#define CACHE_INODE_IO_ERROR              26
-#define CACHE_INODE_FSAL_ESTALE           27
-#define CACHE_INODE_FSAL_ERR_SEC          28
-#define CACHE_INODE_STATE_CONFLICT        29
-#define CACHE_INODE_QUOTA_EXCEEDED        30
-#define CACHE_INODE_DEAD_ENTRY            31
-#define CACHE_INODE_ASYNC_POST_ERROR      32
-#define CACHE_INODE_NOT_SUPPORTED         33
-#define CACHE_INODE_STATE_ERROR           34
-#define CACHE_INODE_FSAL_DELAY            35
-#define CACHE_INODE_NAME_TOO_LONG         36
-#define CACHE_INODE_LOCK_CONFLICT         37
-#define CACHE_INODE_LOCK_BLOCKED          38
-#define CACHE_INODE_LOCK_DEADLOCK         39
+typedef enum cache_inode_status_t
+{
+  CACHE_INODE_SUCCESS               = 0,
+  CACHE_INODE_MALLOC_ERROR          = 1,
+  CACHE_INODE_POOL_MUTEX_INIT_ERROR = 2,
+  CACHE_INODE_GET_NEW_LRU_ENTRY     = 3,
+  CACHE_INODE_UNAPPROPRIATED_KEY    = 4,
+  CACHE_INODE_INIT_ENTRY_FAILED     = 5,
+  CACHE_INODE_FSAL_ERROR            = 6,
+  CACHE_INODE_LRU_ERROR             = 7,
+  CACHE_INODE_HASH_SET_ERROR        = 8,
+  CACHE_INODE_NOT_A_DIRECTORY       = 9,
+  CACHE_INODE_INCONSISTENT_ENTRY    = 10,
+  CACHE_INODE_BAD_TYPE              = 11,
+  CACHE_INODE_ENTRY_EXISTS          = 12,
+  CACHE_INODE_DIR_NOT_EMPTY         = 13,
+  CACHE_INODE_NOT_FOUND             = 14,
+  CACHE_INODE_INVALID_ARGUMENT      = 15,
+  CACHE_INODE_INSERT_ERROR          = 16,
+  CACHE_INODE_HASH_TABLE_ERROR      = 17,
+  CACHE_INODE_FSAL_EACCESS          = 18,
+  CACHE_INODE_IS_A_DIRECTORY        = 19,
+  CACHE_INODE_FSAL_EPERM            = 20,
+  CACHE_INODE_NO_SPACE_LEFT         = 21,
+  CACHE_INODE_CACHE_CONTENT_ERROR   = 22,
+  CACHE_INODE_CACHE_CONTENT_EXISTS  = 23,
+  CACHE_INODE_CACHE_CONTENT_EMPTY   = 24,
+  CACHE_INODE_READ_ONLY_FS          = 25,
+  CACHE_INODE_IO_ERROR              = 26,
+  CACHE_INODE_FSAL_ESTALE           = 27,
+  CACHE_INODE_FSAL_ERR_SEC          = 28,
+  CACHE_INODE_STATE_CONFLICT        = 29,
+  CACHE_INODE_QUOTA_EXCEEDED        = 30,
+  CACHE_INODE_DEAD_ENTRY            = 31,
+  CACHE_INODE_ASYNC_POST_ERROR      = 32,
+  CACHE_INODE_NOT_SUPPORTED         = 33,
+  CACHE_INODE_STATE_ERROR           = 34,
+  CACHE_INODE_FSAL_DELAY            = 35,
+  CACHE_INODE_NAME_TOO_LONG         = 36,
+  CACHE_INODE_LOCK_CONFLICT         = 37,
+  CACHE_INODE_LOCK_BLOCKED          = 38,
+  CACHE_INODE_LOCK_DEADLOCK         = 39,
+  CACHE_INODE_BAD_COOKIE            = 40,
+  CACHE_INODE_FILE_BIG              = 41,
+  CACHE_INODE_GRACE_PERIOD          = 42,
+} cache_inode_status_t;
 
-const char *cache_inode_err_str(int err);
+const char *cache_inode_err_str(cache_inode_status_t err);
 
 #define CACHE_INODE_LOCK_OFFSET_EOF 0xFFFFFFFFFFFFFFFFLL
 
@@ -1113,7 +1117,6 @@ struct cache_lock_entry_t
 {
   struct glist_head             cle_list;
   struct glist_head             cle_owner_locks;
-  struct glist_head             cle_blocked_locks;
 #ifdef _USE_NLM
   struct glist_head             cle_client_locks;
 #endif

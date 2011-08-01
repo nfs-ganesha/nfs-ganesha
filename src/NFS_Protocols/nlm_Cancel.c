@@ -135,7 +135,10 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
                         pclient,
                         &cache_status) != CACHE_INODE_SUCCESS)
     {
-      /* TODO FSF: Deal with failure to cancel */
+      /* Cancel could fail in the FSAL and make a bit of a mess, especially if
+       * we are in out of memory situation. Such an error is logged by
+       * Cache Inode.
+       */
       pres->res_nlm4test.test_stat.stat = nlm_convert_cache_inode_error(cache_status);
     }
   else

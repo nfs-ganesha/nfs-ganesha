@@ -859,8 +859,8 @@ typedef struct fsal_statistics__
 
 typedef struct fsal_status__
 {
-  int major;    /**< major error code */
-  int minor;    /**< minor error code */
+  fsal_errors_t major;    /**< major error code */
+  int           minor;    /**< minor error code */
 } fsal_status_t;
 
 /* No error constant */
@@ -944,9 +944,12 @@ typedef enum fsal_lock_support_t
 
 typedef enum fsal_lock_op_t
 {
-  FSAL_OP_LOCKT,
-  FSAL_OP_LOCK,
-  FSAL_OP_UNLOCK
+  FSAL_OP_LOCKT,  /* test if this lock may be applied      */
+  FSAL_OP_LOCK,   /* request a non-blocking lock           */
+  FSAL_OP_LOCKB,  /* request a blocking lock         (NEW) */
+  FSAL_OP_UNLOCK, /* release a lock                        */
+  FSAL_OP_CANCEL  /* cancel a blocking lock          (NEW) */
+
 } fsal_lock_op_t;
 
 typedef enum fsal_lock_t

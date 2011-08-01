@@ -121,7 +121,8 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
                                    pclient,
                                    &cache_status) != CACHE_INODE_SUCCESS)
         {
-          //TODO FSF: handle error
+          LogDebug(COMPONENT_NLM,
+                   "cache_inode_release_grant failed");
         }
     }
   else

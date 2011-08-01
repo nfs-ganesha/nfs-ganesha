@@ -97,6 +97,7 @@ int posix2fsal_error(int posix_errorcode)
       return ERR_FSAL_NOT_OPENED;
 
     case ENOMEM:
+    case ENOLCK:
       return ERR_FSAL_NOMEM;
 
     case EACCES:
@@ -160,6 +161,15 @@ int posix2fsal_error(int posix_errorcode)
 
     case ENOTSUP:
       return ERR_FSAL_NOTSUPP;
+
+    case EOVERFLOW:
+      return ERR_FSAL_OVERFLOW;
+
+    case EDEADLK:
+      return ERR_FSAL_DEADLOCK;
+
+    case EINTR:
+      return ERR_FSAL_INTERRUPT;
 
     default:
 
