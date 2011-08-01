@@ -111,11 +111,13 @@ int main(int argc, char *argv[])
 #endif
   sigset_t signals_to_block;
 
+#ifdef _USE_SHARED_FSAL
   int fsalid = -1 ;
   unsigned int i = 0 ;
   int nb_fsal = NB_AVAILABLE_FSAL ;
   path_str_t fsal_path_param[NB_AVAILABLE_FSAL];
   path_str_t fsal_path_lib;
+#endif
 
   /* retrieve executable file's name */
   strncpy(ganesha_exec_path, argv[0], MAXPATHLEN);

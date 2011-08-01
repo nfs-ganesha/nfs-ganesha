@@ -659,7 +659,6 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
 {
   config_file_t config_struct;
   int rc;
-  unsigned int i = 0 ;
   fsal_status_t fsal_status;
   cache_inode_status_t cache_inode_status;
   cache_content_status_t cache_content_status;
@@ -667,6 +666,7 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
 #ifdef _USE_SHARED_FSAL
   unsigned int saved_fsalid = 0 ;
   unsigned int fsalid = 0 ;
+  unsigned int i = 0 ;
 #endif
 
   /* First, parse the configuration file */
