@@ -8,8 +8,6 @@ endif
 
 noinst_LTLIBRARIES            = libnfsproto.la
 
-check_PROGRAMS                = test_mnt_proto
-
 libnfsproto_la_SOURCES = mnt_Export.c			  \
                          mnt_Null.c                       \
                          mnt_Mnt.c                        \
@@ -147,11 +145,6 @@ libnfsproto_la_SOURCES += nfs41_op_exchange_id.c      \
                           nfs41_op_set_ssv.c          \
                           nfs41_op_write.c            
 endif
-
-
-test_mnt_proto_SOURCES       = test_mnt_proto.c
-
-test_mnt_proto_LDADD = libnfsproto.la $(BUDDY_LIB_FLAGS) ../Log/liblog.la
 
 new: clean all
 

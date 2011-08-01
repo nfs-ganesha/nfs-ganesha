@@ -28,7 +28,6 @@ BuildRequires:  mysql-libs >= 5.0
 # we have to be really specific on kernel version
 # because we are packaging a module
 %global _use_internal_dependency_generator 0
-BuildRequires: kernel-devel >= 2.6.39
 Requires: kernel >= 2.6.39
 %endif
 BuildRequires: flex
@@ -167,6 +166,21 @@ name-spaces. This package provides support for GANESHA using the LUSTRE
 interface.
 %endif
 
+%if %{?_with_shook:1}%{!?_with_shook:0}
+%package shook
+Summary: The NFS-GANESHA server compiled for exporting Lustre filesystem with shook HSM binding system.
+Group: Applications/System
+BuildRequires: libattr-devel
+Requires: %{name}-common = %{version}-%{release}
+
+%description shook
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for GANESHA using the LUSTRE
+interface and the shook HSM binding system.
+%endif
+
+
 %if %{?_with_dynfsal:1}%{!?_with_dynfsal:0}
 %package dynfsal
 Summary: The NFS-GANESHA server compiled in a FSAL-les way
@@ -276,7 +290,7 @@ chmod +x %{our_find_requires}
 
 %build
 
-%configure @ac_configure_args@ 'CC=gcc -g' 'CFLAGS=-g' 'CXXFLAGS=-g'
+%configure @ac_configure_args@ 'CC=gcc -g' "CFLAGS=$CFLAGS -g" 'CXXFLAGS=-g'
 
 # try 1 recovery when there is a // make error, then use simple make at 2nd error
 make %{?_smp_mflags}  || make %{?_smp_mflags}  || make
@@ -396,6 +410,15 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/lustre.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-lustre
 %config(noreplace) %{_sysconfdir}/ganesha/lustre.ganesha*
+%endif
+
+%if %{?_with_shook:1}%{!?_with_shook:0}
+%files shook
+%defattr(-,root,root,-)
+%{_bindir}/shook.ganesha.*
+%{_bindir}/shook.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha-shook
+%config(noreplace) %{_sysconfdir}/ganesha/shook.ganesha*
 %endif
 
 %if %{?_with_dynfsal:1}%{!?_with_dynfsal:0}
@@ -555,8 +578,20 @@ chkconfig --add nfs-ganesha-zfs
 
 
 %changelog
-* Mon Apr 11 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.0.6-1
-- Bug Fix : bad memset in FSAL_HPSS:fsal_lookup.c
+* Wed Apr  7 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.1.0-1
+- Bug Fix: Bad memset in FSAL_HPSS::HPSSFSAL_lookup. Result was a segfault at init.
+- Code reorganization : subdirectory RPCAL has been added
+- Bug fix: bad 'fd2handle' options in FSAL_XFS::FSAL_rename
+- pNFS : API for implementing pNFS specific feature has been fully refurbished.
+- FSAL_VFS: new FSAL using "open_by_handle" feature added in the kernel higher than 2.6.39.
+- NFSv4: the product is now compiled with NFSv4.1 support by default
+- Log module: now using __FUNCTION__ macro to get the function's name
+- Bug Fix: the cache_inode_commit function badly managed the Data Cache.
+- Multiple FSAL support: it is now possible to 'dlopen' several fsal shared objects.
+- Bug Fix: issue occured in 'Tbl' pass of cthon04 test for FSAL_XFS and FSAL_VFS
+- NFSv4 ACLs support
+- GPFS ACLs support (to be used with NFSv4 ACL support)
+
 * Wed Apr  6 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.0.5-1
 - Using function daemon() to start the daemon in a cleaner way
 - Using gethostbyaddr_r to avoid contention when resolving address in nfs_ip_name.c

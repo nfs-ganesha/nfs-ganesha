@@ -101,10 +101,17 @@ cache_inode_commit(cache_entry_t * pentry,
     cache_inode_unstable_data_t *udata;
     fsal_status_t fsal_status;
 
+    /* Do not use this function is Data Cache is used */
+    if(pentry->object.file.pentry_content != NULL)
+     {
+            *pstatus = CACHE_INODE_SUCCESS;
+            return *pstatus;
+     }
 
     /* If we aren't using the Ganesha write buffer, then we're using the filesystem
      * write buffer so execute a normal fsal_sync() call. */
-    if (typeofcommit == FSAL_UNSAFE_WRITE_TO_FS_BUFFER) {
+    if (typeofcommit == FSAL_UNSAFE_WRITE_TO_FS_BUFFER)
+    {
 
       P_w(&pentry->lock);
 
@@ -127,7 +134,8 @@ cache_inode_commit(cache_entry_t * pentry,
 #else
       fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd));
 #endif
-      if(FSAL_IS_ERROR(fsal_status)) {
+      if(FSAL_IS_ERROR(fsal_status))
+      {
         LogMajor(COMPONENT_CACHE_INODE,
                  "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
                  fsal_status.major);
@@ -142,6 +150,7 @@ cache_inode_commit(cache_entry_t * pentry,
       }
       *pstatus = CACHE_INODE_SUCCESS;
 
+#if 0
       if(cache_inode_close(pentry, pclient, pstatus) != CACHE_INODE_SUCCESS)
         {
           LogEvent(COMPONENT_CACHE_INODE,
@@ -155,6 +164,7 @@ cache_inode_commit(cache_entry_t * pentry,
           
           return *pstatus;
         }
+#endif
 
       V_w(&pentry->lock);      
       return *pstatus;

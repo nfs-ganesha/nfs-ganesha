@@ -28,6 +28,12 @@ else
 NFSIDMAP_LIB_FLAGS =
 endif
 
+if USE_NFS4_ACL
+NFS4_ACL_LIB_FLAGS = -lssl -lcrypto
+else
+NFS4_ACL_LIB_FLAGS = 
+endif
+
 if USE_SNMP_ADM
 STAT_SNMP_FILES = nfs_stats_snmp.c
 STAT_SNMP_LIB_FLAGS = ../snmp_adm/libsnmp_adm.la
@@ -105,11 +111,12 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/err_inject.h              \
                              $(STAT_SNMP_FILES)
 
-libMainServices_la_LIBADD         =   ../NFS_Protocols/libnfsproto.la                   \
+libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la                   \
                                       $(PNFS_LIB)                                       \
                                       $(SEC_LIB_FLAGS)                                  \
                                       $(SVC_LIB_FLAGS)                                  \
                                       $(NFSIDMAP_LIB_FLAGS)                             \
+                                      $(NFS4_ACL_LIB_FLAGS)                             \
                                       $(STAT_SNMP_LIB_FLAGS)                            \
                                       $(BUDDY_LIB_FLAGS)                                \
                                       ../IdMapper/libidmap.la                           \

@@ -443,12 +443,11 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
   if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME | FSAL_ATTR_MTIME))
     {
       attr_valid |= XATTR_STAT;
-      attr_changed |= FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME) ?
-                      XATTR_ATIME_SET : XATTR_MTIME_SET;
 
       /* Fill wanted atime. */
       if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME))
         {
+          attr_changed |= XATTR_ATIME;
           buffxstat.buffstat.st_atime = (time_t) wanted_attrs.atime.seconds;
           LogDebug(COMPONENT_FSAL,
                    "current atime = %lu, new atime = %lu",
@@ -458,6 +457,7 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
       /* Fill wanted mtime. */
       if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MTIME))
         {
+          attr_changed |= XATTR_CTIME;
           buffxstat.buffstat.st_mtime = (time_t) wanted_attrs.mtime.seconds;
           LogDebug(COMPONENT_FSAL,
                    "current mtime = %lu, new mtime = %lu",

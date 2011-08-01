@@ -1,5 +1,0 @@
-INCPM=../../../libswig/`archi -M`/
-SERVER=localhost
-MOUNTPOINT=/opt/ganesha_posix_fs
-
-perl -I $INCPM $1 -m $MOUNTPOINT -s $SERVER

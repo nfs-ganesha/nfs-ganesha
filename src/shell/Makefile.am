@@ -18,6 +18,12 @@ else
 NFSIDMAP_LIB_FLAGS = 
 endif
 
+if USE_NFS4_ACL
+NFS4_ACL_LIB_FLAGS = -lssl -lcrypto
+else
+NFS4_ACL_LIB_FLAGS = 
+endif
+
 if USE_GSSRPC
 SEC_LIB_FLAGS = $(SEC_LFLAGS) -lgssrpc -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -ldl
 else
@@ -76,7 +82,7 @@ __FS_NAME__ganeshell_SOURCES    = Getopt.c                            \
                                   ../include/stuff_alloc.h
 
 		
-shell_libs =      ../NFS_Protocols/libnfsproto.la                    \
+shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
                   ../$(CACHE_INODE_DIR)/libcache_inode.la            \
                   ../File_Content/libcache_content.la                \
                   ../File_Content_Policy/libcache_content_policy.la  \
@@ -99,6 +105,7 @@ shell_libs =      ../NFS_Protocols/libnfsproto.la                    \
 
 __FS_NAME__ganeshell_LDADD = $(shell_libs)                           \
                     $(FSAL_LDFLAGS) $(NFSIDMAP_LIB_FLAGS)            \
+                    $(NFS4_ACL_LIB_FLAGS)                            \
                     $(SEC_LIB_FLAGS) @EFENCE@ @EXTRA_LIB@ 
 
 __FS_NAME__ganeshell_DEPENDENCIES = $(__FS_NAME__ganeshell_SOURCES) $(shell_libs)

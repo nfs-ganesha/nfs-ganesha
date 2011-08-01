@@ -61,7 +61,9 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          ../include/err_inject.h            \
                          ../include/stuff_alloc.h
 
+if RESULT_IS_DAEMON
 libsupport_la_LIBADD         =   ../RPCAL/librpcal.la 
+endif
 
 if USE_NLM
 libsupport_la_SOURCES += nlm_util.c nlm_async.c nsm.c nlm_owner.c

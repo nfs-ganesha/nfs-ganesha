@@ -99,20 +99,22 @@ typedef struct exportlist_client_gss__
 
 typedef enum exportlist_access_type__
 {
-  ACCESSTYPE_RW = 1,            /* All operations are allowed                */
-  ACCESSTYPE_RO = 2,            /* Filesystem is readonly (nfs_read allowed) */
-  ACCESSTYPE_MDONLY = 3,        /* Data operations are forbidden             */
+  ACCESSTYPE_RW        = 1,     /* All operations are allowed                */
+  ACCESSTYPE_RO        = 2,     /* Filesystem is readonly (nfs_read allowed) */
+  ACCESSTYPE_MDONLY    = 3,     /* Data operations are forbidden             */
   ACCESSTYPE_MDONLY_RO = 4      /* Data operations are forbidden,
                                    and the filesystem is read-only.          */
 } exportlist_access_type_t;
 
 typedef enum exportlist_client_type__
-{ HOSTIF_CLIENT = 1,
-  NETWORK_CLIENT = 2,
-  NETGROUP_CLIENT = 3,
+{ 
+  HOSTIF_CLIENT       = 1,
+  NETWORK_CLIENT      = 2,
+  NETGROUP_CLIENT     = 3,
   WILDCARDHOST_CLIENT = 4,
   GSSPRINCIPAL_CLIENT = 5,
-  HOSTIF_CLIENT_V6 = 6
+  HOSTIF_CLIENT_V6    = 6,
+  BAD_CLIENT          = 7
 } exportlist_client_type_t;
 
 typedef enum exportlist_status__
@@ -191,7 +193,7 @@ typedef struct exportlist__
   unsigned int UseCookieVerifier;       /* Is Cookie verifier to be used ?                   */
   exportlist_client_t clients;  /* allowed clients                                   */
   struct exportlist__ *next;    /* next entry                                        */
-
+   unsigned int fsalid ;
 } exportlist_t;
 
 /* Used to record the uid and gid of the client that made a request. */

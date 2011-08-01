@@ -331,7 +331,7 @@ static int db_load_operation(db_thread_info_t * p_info, hash_table_t * p_hash)
       else
         LogCrit(COMPONENT_FSAL,
                 "ERROR %d adding entry to hash table <object_id=%llu, FH_hash=%u, FSAL_Handle=%s>",
-                (unsigned long long)object_id, handle_hash, fsal_handle_str);
+                rc, (unsigned long long)object_id, handle_hash, fsal_handle_str);
 
       rc = sqlite3_step(p_info->prep_stmt[LOAD_ALL_STATEMENT]);
       CheckStep(p_info->db_conn, rc, p_info->prep_stmt[LOAD_ALL_STATEMENT]);

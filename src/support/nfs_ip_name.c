@@ -178,6 +178,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname)
   hash_buffer_t buffdata;
   nfs_ip_name_t *pnfs_ip_name = NULL;
   sockaddr_t *pipaddr = NULL;
+  struct timeval tv0, tv1, dur;
   int rc;
   char ipstring[SOCK_NAME_MAX];
 
@@ -200,11 +201,24 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname)
   buffkey.pdata = (caddr_t) pipaddr;
   buffkey.len = sizeof(sockaddr_t);
 
+  gettimeofday(&tv0, NULL) ;
   rc = getnameinfo((struct sockaddr *)pipaddr, sizeof(sockaddr_t),
                    pnfs_ip_name->hostname, sizeof(pnfs_ip_name->hostname),
                    NULL, 0, 0);
+  gettimeofday(&tv1, NULL) ;
+  timersub(&tv1, &tv0, &dur) ;
+
 
   sprint_sockaddr(pipaddr, ipstring, sizeof(ipstring));
+
+  /* display warning if DNS resolution took more that 1.0s */
+  if (dur.tv_sec >= 1)
+  {
+       LogEvent(COMPONENT_DISPATCH,
+                "Warning: long DNS query for %s: %u.%06u sec", ipstring,
+                dur.tv_sec, dur.tv_usec );
+  }
+
 
   /* Ask for the name to be cached */
   if(rc != 0)

@@ -51,79 +51,7 @@
 #include "nfs23.h"
 #include "nfs4.h"
 
-<<<<<<< HEAD
-#define NB_MAX_PNFS_DS 2
-#define PNFS_NFS4      4
-#define PNFS_SENDSIZE 32768
-#define PNFS_RECVSIZE 32768
-
-#define PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN 128
-#define PNFS_LAYOUTFILE_PADDING_LEN  NFS4_OPAQUE_LIMIT
-#define PNFS_LAYOUTFILE_OWNER_LEN 128
-
-typedef struct pnfs_ds_parameter__
-{
-#ifndef _USE_TIRPC
-  unsigned int ipaddr;
-  unsigned short ipport;
-#endif
-  unsigned int prognum;
-  char rootpath[MAXPATHLEN];
-  char ipaddr_ascii[SOCK_NAME_MAX];
-  unsigned int id;
-  bool_t is_ganesha;
-} pnfs_ds_parameter_t;
-
-typedef struct pnfs_layoutfile_parameter__
-{
-  unsigned int stripe_size;
-  unsigned int stripe_width;
-  pnfs_ds_parameter_t ds_param[NB_MAX_PNFS_DS];
-} pnfs_layoutfile_parameter_t;
-
-
-typedef struct pnfs_client__
-{
-  unsigned int nb_ds;
-} pnfs_client_t;
-||||||| merged common ancestors
-#define NB_MAX_PNFS_DS 2
-#define PNFS_NFS4      4
-#define PNFS_SENDSIZE 32768
-#define PNFS_RECVSIZE 32768
-
-#define PNFS_LAYOUTFILE_FILEHANDLE_MAX_LEN 128
-#define PNFS_LAYOUTFILE_PADDING_LEN  NFS4_OPAQUE_LIMIT
-#define PNFS_LAYOUTFILE_OWNER_LEN 128
-
-typedef struct pnfs_ds_parameter__
-{
-#ifndef _USE_TIRPC
-  unsigned int ipaddr;
-  unsigned short ipport;
-#endif
-  unsigned int prognum;
-  char rootpath[MAXPATHLEN];
-  char ipaddr_ascii[MAXNAMLEN];
-  unsigned int id;
-  bool_t is_ganesha;
-} pnfs_ds_parameter_t;
-
-typedef struct pnfs_layoutfile_parameter__
-{
-  unsigned int stripe_size;
-  unsigned int stripe_width;
-  pnfs_ds_parameter_t ds_param[NB_MAX_PNFS_DS];
-} pnfs_layoutfile_parameter_t;
-
-
-typedef struct pnfs_client__
-{
-  unsigned int nb_ds;
-} pnfs_client_t;
-=======
 #include "PNFS/PARALLEL_FS/pnfs_layout4_nfsv4_1_files_types.h"
->>>>>>> b28dac0719fd5ec7de9f3b31e47726eabe78f1e3
 
 /* Mandatory functions */
 nfsstat4 pnfs_parallel_fs_getdevicelist( GETDEVICELIST4args * pargs, 

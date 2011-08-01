@@ -178,7 +178,7 @@ static int print_digest(hash_buffer_t * p_val, char *outbuff)
 {
   digest_pool_entry_t *p_digest = (digest_pool_entry_t *) p_val->pdata;
 
-  return sprintf(outbuff, "%llu, %u", p_digest->nfs23_digest.object_id,
+  return sprintf(outbuff, "%llu, %u", (unsigned long long)p_digest->nfs23_digest.object_id,
                  p_digest->nfs23_digest.handle_hash);
 }
 

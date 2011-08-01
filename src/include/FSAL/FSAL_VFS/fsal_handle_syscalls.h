@@ -49,7 +49,7 @@
 #define __O_PATH       010000000
 #define O_PATH         (__O_PATH | O_NOACCESS)
 
-#define VFS_HANDLE_LEN 40
+#define VFS_HANDLE_LEN 24 /* At least 20 for BTRFS support */
 typedef struct vfs_file_handle {
         unsigned int handle_bytes;
         int handle_type;
@@ -65,22 +65,29 @@ typedef struct vfs_file_handle {
 
 static inline int vfs_name_to_handle(const char *name, vfs_file_handle_t *fh, int *mnt_id)
 {
-	return syscall( __NR_name_to_handle_at, AT_FDCWD, name, fh, mnt_id, AT_SYMLINK_FOLLOW);
+  return syscall( __NR_name_to_handle_at, AT_FDCWD, name, fh, mnt_id, AT_SYMLINK_FOLLOW);
 }
 
 static inline int vfs_lname_to_handle(const char *name, vfs_file_handle_t *fh, int *mnt_id )
 {
-	return syscall( __NR_name_to_handle_at, AT_FDCWD, name, fh, mnt_id, 0);
+  return syscall( __NR_name_to_handle_at, AT_FDCWD, name, fh, mnt_id, 0);
 }
 
 static inline int vfs_fd_to_handle(int fd, vfs_file_handle_t * fh, int *mnt_id)
 {
-	return syscall( __NR_name_to_handle_at, fd, "", fh, mnt_id, AT_EMPTY_PATH);
+  return syscall( __NR_name_to_handle_at, fd, "", fh, mnt_id, AT_EMPTY_PATH);
 }
 
 static inline int vfs_open_by_handle(int mountfd, vfs_file_handle_t * fh, int flags)
 {
-	return syscall(__NR_open_by_handle_at, mountfd, fh, flags);
+  return syscall(__NR_open_by_handle_at, mountfd, fh, flags);
+}
+
+static inline int vfs_name_by_handle_at(int atfd, char * name, vfs_file_handle_t * fh)
+{
+  int mnt_id ;
+
+  return syscall( __NR_name_to_handle_at, atfd, name, fh, &mnt_id, 0);
 }
 
 static inline ssize_t vfs_readlink_by_handle(int mountfd, vfs_file_handle_t *fh, char *buf, size_t bufsize)

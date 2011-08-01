@@ -54,7 +54,7 @@ fsal_status_t VFSFSAL_BuildExportContext(vfsfsal_export_context_t * p_export_con
   char fs_spec[MAXPATHLEN];
 
   char *first_vfs_dir = NULL;
-  char type[256];
+  char type[MAXNAMLEN];
 
   size_t pathlen, outlen;
   int rc;
@@ -136,18 +136,25 @@ fsal_status_t VFSFSAL_BuildExportContext(vfsfsal_export_context_t * p_export_con
         }
     }
 
-  /* Do the path_to_fshandle call to init the vfs's libhandle */
-  strncpy(p_export_context->mount_point, mntdir, MAXPATHLEN);
-
   /* save file descriptor to root of GPFS share */
-  if( ( p_export_context->mount_root_fd = open(p_export_context->mount_point, O_RDONLY | O_DIRECTORY) ) < 0 )
+  if( ( p_export_context->mount_root_fd = open(mntdir, O_RDONLY | O_DIRECTORY) ) < 0 )
     {
       close( p_export_context->mount_root_fd );
       LogMajor(COMPONENT_FSAL,
-               "FSAL BUILD EXPORT CONTEXT: ERROR: Could not open GPFS mount point %s: rc = %d",
-               p_export_context->mount_point, errno);
+               "FSAL BUILD EXPORT CONTEXT: ERROR: Could not open VFS mount point %s: rc = %d",
+               mntdir, errno);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
+  
+  /* Keep fstype in export_context */
+  strncpy(  p_export_context->fstype, type, MAXNAMLEN ) ; 
+
+  if( !strncmp( type, "xfs", MAXNAMLEN ) )
+   {
+     LogMajor( COMPONENT_FSAL,
+               "Trying to export XFS filesystem via FSAL_VFS for mount point %s. Use FSAL_XFS instead", mntdir ) ;
+     ReturnCode(ERR_FSAL_INVAL, 0);
+   }
 
   p_export_context->root_handle.handle_bytes = VFS_HANDLE_LEN ;
   if( vfs_fd_to_handle( p_export_context->mount_root_fd, 

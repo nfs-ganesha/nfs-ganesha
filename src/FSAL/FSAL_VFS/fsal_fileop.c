@@ -506,8 +506,10 @@ fsal_status_t VFSFSAL_close(vfsfsal_file_t * p_file_descriptor        /* IN */
   if(!p_file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
 
-  /* call to close */
+  if(  p_file_descriptor->fd == 0 )
+       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
 
+  /* call to close */
   TakeTokenFSCall();
 
   rc = close(p_file_descriptor->fd);
@@ -517,6 +519,8 @@ fsal_status_t VFSFSAL_close(vfsfsal_file_t * p_file_descriptor        /* IN */
 
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_close);
+
+  p_file_descriptor->fd = 0 ;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
 
@@ -565,11 +569,15 @@ fsal_status_t VFSFSAL_sync(vfsfsal_file_t * p_file_descriptor       /* IN */)
   if(!p_file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_sync);
 
+  if( p_file_descriptor->fd == 0 )
+    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync); /* Nothing to sync, the fd is not opened */
+
   /* Flush data. */
   TakeTokenFSCall();
   rc = fsync(p_file_descriptor->fd);
   errsv = errno;
   ReleaseTokenFSCall();
+
 
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_sync);

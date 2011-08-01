@@ -114,6 +114,7 @@ cache_content_client_t recover_datacache_client;
 #define CONF_EXPORT_MAX_OFF_READ       "MaxOffsetRead"
 #define CONF_EXPORT_MAX_CACHE_SIZE     "MaxCacheSize"
 #define CONF_EXPORT_REFERRAL           "Referral"
+#define CONF_EXPORT_FSALID             "FSALID"
 #define CONF_EXPORT_PNFS               "Use_pNFS"
 #define CONF_EXPORT_USE_COMMIT                  "Use_NFS_Commit"
 #define CONF_EXPORT_USE_GANESHA_WRITE_BUFFER    "Use_Ganesha_Write_Buffer"
@@ -234,66 +235,6 @@ int nfs_ParseConfLine(char *Argv[],
   return -2;
 
 }                               /* nfs_ParseConfLine */
-
-/**
- *
- * nfs_LookupHostAddr: determine host address from string.
- *
- * This routine is converting a valid host name is both literal or dotted
- *  format into a valid netdb structure. If it could not successfull, NULL is
- *  returned by the function.
- *
- * Assumptions:
- *  Dotted host address are 4 hex, decimal, or octal numbers in
- *  base 256 each separated by a period
- *
- * @param host [IN] hostname or dotted address, within a string literal.
- *
- * @return the netdb structure related to this client.
- *
- * @see inet_addr
- * @see gethostbyname
- * @see gethostbyaddr
- *
- */
-static struct hostent *nfs_LookupHostAddr(char *host)
-{
-  struct hostent *output;
-  unsigned long hostaddr;
-  int length = sizeof(hostaddr);
-
-#ifdef _USE_TIRPC_IPV6
-  struct sockaddr_storage addrv6;
-  struct sockaddr_in6 *paddrv6 = (struct sockaddr_in6 *)&addrv6;
-#endif
-
-  /* First try gethhostbyname */
-  if((output = gethostbyname(host)) == NULL)
-    {
-      /* Convert from dotted notation to adddress format */
-      hostaddr = inet_addr(host);
-
-      /* gethostbyname was of no help, try gethostaddr */
-      output = gethostbyaddr((char *)&hostaddr, length, AF_INET);
-    }
-#ifdef _USE_TIRPC_IPV6
-  /* if output == NULL it may be an IPv6 address */
-  if(output == NULL)
-    {
-      if((output = gethostbyname2(host, AF_INET6)) == NULL)
-        {
-          /* Maybe an address in the ASCII format */
-          if(inet_pton(AF_INET6, host, paddrv6->sin6_addr.s6_addr))
-            {
-              output = gethostbyaddr(paddrv6->sin6_addr.s6_addr,
-                                     sizeof(paddrv6->sin6_addr.s6_addr), AF_INET6);
-            }
-        }
-    }
-#endif
-
-  return output;
-}                               /* nfs_LookupHostAddr */
 
 /**
  *
@@ -440,7 +381,7 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
   int j = 0;
   unsigned int l = 0;
   char *client_hostname;
-  struct hostent *hostEntry;
+  struct addrinfo *info;
   exportlist_client_entry_t *p_clients;
   int is_wildcarded_host = FALSE;
   unsigned long netMask;
@@ -483,16 +424,15 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
                    (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                    p_clients[i].client.netgroup.netgroupname);
         }
-      else if((hostEntry = nfs_LookupHostAddr(client_hostname)) != NULL)
+      else if( getaddrinfo(client_hostname, NULL, NULL, &info) == 0)
         {
-
           /* Entry is a hostif */
-          if(hostEntry->h_addrtype == AF_INET)
+          if(info->ai_family == AF_INET)
             {
-              memcpy(&(p_clients[i].client.hostif.clientaddr), hostEntry->h_addr,
-                     hostEntry->h_length);
+              struct in_addr infoaddr = ((struct sockaddr_in *)info->ai_addr)->sin_addr;
+              memcpy(&(p_clients[i].client.hostif.clientaddr), &infoaddr,
+                     sizeof(struct in_addr));
               p_clients[i].type = HOSTIF_CLIENT;
-
               LogDebug(COMPONENT_CONFIG,
                        "----------------- %s to client %s = %d.%d.%d.%d",
                        (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
@@ -502,13 +442,15 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
                        (unsigned int)((p_clients[i].client.hostif.clientaddr >> 8) & 0xFF),
                        (unsigned int)(p_clients[i].client.hostif.clientaddr & 0xFF));
             }
-          else
+          else /* AF_INET6 */
             {
+              struct in6_addr infoaddr = ((struct sockaddr_in6 *)info->ai_addr)->sin6_addr;
               /* IPv6 address */
-              memcpy(&(p_clients[i].client.hostif.clientaddr6), hostEntry->h_addr,
-                     hostEntry->h_length);
+              memcpy(&(p_clients[i].client.hostif.clientaddr6), &infoaddr,
+                     sizeof(struct in6_addr));
               p_clients[i].type = HOSTIF_CLIENT_V6;
             }
+          freeaddrinfo(info);
         }
       else if(((error = nfs_LookupNetworkAddr(client_hostname,
                                               (unsigned long *)&netAddr,
@@ -556,6 +498,7 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
             }
           else
             {
+              p_clients[i].type = BAD_CLIENT;
               /* Last case: type for client could not be identified. This should not occur */
               LogCrit(COMPONENT_CONFIG,
                       "Unsupported type for client %s", client_hostname);
@@ -746,6 +689,11 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->PrefWrite = (fsal_size_t) 16384;
   p_entry->PrefRead = (fsal_size_t) 16384;
   p_entry->PrefReaddir = (fsal_size_t) 16384;
+
+  strcpy(p_entry->FS_specific, "");
+  strcpy(p_entry->FS_tag, "");
+
+  unsigned int fsalid_is_set= FALSE ;
 
   /* parse options for this export entry */
 
@@ -1949,6 +1897,21 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               }
             }
         }
+      else if(!STRCMP(var_name, CONF_EXPORT_FSALID))
+        {
+           if( ( p_entry->fsalid = FSAL_name2fsalid( var_value ) ) == -1 )
+            {
+                LogCrit(COMPONENT_CONFIG,
+                        "NFS READ_EXPORT: ERROR: Invalid value for %s (%s)", var_name, var_value ) ;
+#ifdef _USE_SHARED_FSAL
+		/* Critacal only for the FSAL-less daemon */
+                err_flag= TRUE ;
+#endif
+		continue;
+            }
+          else
+            fsalid_is_set = TRUE ;
+        }
       else
         {
           LogCrit(COMPONENT_CONFIG,
@@ -2009,6 +1972,26 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
       Mem_Free(p_entry);
       return -1;
     }
+
+#ifdef _USE_SHARED_FSAL
+  if( fsalid_is_set == FALSE ) 
+   {
+        LogCrit(COMPONENT_CONFIG,
+                "NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
+                CONF_EXPORT_FSALID);
+        return -1 ;
+   }
+
+  /* Check is FSAL is loaded */
+  if( !FSAL_Is_Loaded( p_entry->fsalid ) ) 
+   {
+        LogCrit(COMPONENT_CONFIG,
+                "NFS READ_EXPORT: ERROR: FSAL library not loaded for fsalid=%s in export entry (id=%u)", 
+                FSAL_fsalid2name( p_entry->fsalid ), p_entry->id ) ;
+        return -1 ;
+   }
+#endif
+
 
   *pp_export = p_entry;
 
@@ -2338,9 +2321,15 @@ int export_client_match(sockaddr_t *hostaddr,
           return FALSE;
           break;
 
+       case BAD_CLIENT:
+          LogDebug(COMPONENT_DISPATCH,
+                  "Bad client in position %u seen in export list", i );
+	  continue ;
+
         default:
-          return FALSE;         /* Should never occurs */
-          break;
+           LogCrit(COMPONENT_DISPATCH,
+                   "Unsupported client in position %u in export list with type %u", i, clients->clientarray[i].type);
+	   continue ;
         }                       /* switch */
     }                           /* for */
 
@@ -2723,19 +2712,26 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
  */
 int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 {
-  exportlist_t *pcurrent;
-  cache_inode_status_t cache_status;
+      exportlist_t *pcurrent = NULL;
+      cache_inode_status_t cache_status;
 #ifdef _CRASH_RECOVERY_AT_STARTUP
-  cache_content_status_t cache_content_status;
+      cache_content_status_t cache_content_status;
 #endif
-  fsal_status_t fsal_status;
-  cache_inode_fsal_data_t fsdata;
-  fsal_handle_t fsal_handle;
-  fsal_path_t exportpath_fsal;
-  fsal_mdsize_t strsize = MNTPATHLEN + 1;
-  cache_entry_t *pentry;
-  fsal_staticfsinfo_t *pstaticinfo;
-  fsal_op_context_t context;
+      fsal_status_t fsal_status;
+      cache_inode_fsal_data_t fsdata;
+      fsal_handle_t fsal_handle;
+      fsal_path_t exportpath_fsal;
+      fsal_mdsize_t strsize = MNTPATHLEN + 1;
+      cache_entry_t *pentry = NULL;
+      fsal_staticfsinfo_t *pstaticinfo = NULL;
+
+#ifdef _USE_SHARED_FSAL
+      unsigned int i = 0 ;
+      unsigned int fsalid = 0 ;
+      fsal_op_context_t context[NB_AVAILABLE_FSAL];
+#else
+      fsal_op_context_t context;
+#endif
 
       /* setting the 'small_client' structure */
       small_client_param.lru_param.nb_entry_prealloc = 10;
@@ -2781,24 +2777,45 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
                    "cache content client (for datacache recovery) could not be allocated");
         }
 
+
       /* Link together the small client and the recover_datacache_client */
       small_client.pcontent_client = (void *)&recover_datacache_client;
 
       /* Get the context for FSAL super user */
+#ifdef _USE_SHARED_FSAL
+      for( i = 0 ; i < nfs_param.nb_loaded_fsal ; i++ )
+       {
+         fsalid = nfs_param.loaded_fsal[i] ;
+
+         FSAL_SetId( fsalid ) ;
+
+           
+         fsal_status = FSAL_InitClientContext(&context[fsalid]);
+         if(FSAL_IS_ERROR(fsal_status))
+          {
+            LogCrit(COMPONENT_INIT,
+                    "Couldn't get the context for FSAL super user on FSAL %s", FSAL_fsalid2name( fsalid ) );
+            return FALSE;
+          }
+       }
+#else
       fsal_status = FSAL_InitClientContext(&context);
-
-
       if(FSAL_IS_ERROR(fsal_status))
         {
           LogCrit(COMPONENT_INIT,
                   "Couldn't get the context for FSAL super user");
           return FALSE;
         }
+#endif
 
       /* loop the export list */
 
       for(pcurrent = pexportlist; pcurrent != NULL; pcurrent = pcurrent->next)
         {
+#ifdef _USE_SHARED_FSAL
+         FSAL_SetId( pcurrent->fsalid ) ;
+#endif 
+
 #ifdef _USE_MFSL_ASYNC
           if(!(pcurrent->options & EXPORT_OPTION_USE_DATACACHE))
             {
@@ -2807,6 +2824,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
                        pcurrent->id, pcurrent->fullpath);
             }
 #endif
+ 
           /* Build the FSAL path */
           if(FSAL_IS_ERROR((fsal_status = FSAL_str2path(pcurrent->fullpath,
                                                         strsize, &exportpath_fsal))))
@@ -2827,9 +2845,11 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
             }
 
           /* get the related client context */
-          fsal_status =
-              FSAL_GetClientContext(&context, &pcurrent->FS_export_context, 0, 0, NULL,
-                                    0);
+#ifdef _USE_SHARED_FSAL
+          fsal_status = FSAL_GetClientContext(&context[pcurrent->fsalid], &pcurrent->FS_export_context, 0, 0, NULL, 0 ) ;
+#else
+          fsal_status = FSAL_GetClientContext(&context, &pcurrent->FS_export_context, 0, 0, NULL, 0 ) ;
+#endif
 
           if(FSAL_IS_ERROR(fsal_status))
             {
@@ -2839,8 +2859,11 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
             }
 
           /* Lookup for the FSAL Path */
-          if(FSAL_IS_ERROR((fsal_status = FSAL_lookupPath(&exportpath_fsal,
-                                                          &context, &fsal_handle, NULL))))
+#ifdef _USE_SHARED_FSAL
+          if(FSAL_IS_ERROR((fsal_status = FSAL_lookupPath(&exportpath_fsal, &context[pcurrent->fsalid], &fsal_handle, NULL))))
+#else
+          if(FSAL_IS_ERROR((fsal_status = FSAL_lookupPath(&exportpath_fsal, &context, &fsal_handle, NULL))))
+#endif
             {
               LogCrit(COMPONENT_INIT,
                       "Couldn't access the root of the exported namespace, ExportId=%u Path=%s FSAL_ERROR=(%u,%u)",
@@ -2869,7 +2892,12 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
           if((pentry = cache_inode_make_root(&fsdata,
                                              ht,
                                              &small_client,
-                                             &context, &cache_status)) == NULL)
+#ifdef _USE_SHARED_FSAL
+                                             &context[pcurrent->fsalid], 
+#else
+                                             &context, 
+#endif
+                                             &cache_status)) == NULL)
             {
               LogCrit(COMPONENT_INIT,
                       "Error when creating root cached entry for %s, export_id=%d, cache_status=%d",
@@ -2886,8 +2914,11 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
               (fsal_staticfsinfo_t *) Mem_Alloc((sizeof(fsal_staticfsinfo_t)))) == NULL)
             return FALSE;
 
-          if(FSAL_IS_ERROR
-             ((fsal_status = FSAL_static_fsinfo(&fsal_handle, &context, pstaticinfo))))
+#ifdef _USE_SHARED_FSAL
+          if( FSAL_IS_ERROR((fsal_status = FSAL_static_fsinfo(&fsal_handle, &context[pcurrent->fsalid], pstaticinfo))))
+#else
+          if( FSAL_IS_ERROR((fsal_status = FSAL_static_fsinfo(&fsal_handle, &context, pstaticinfo))))
+#endif
             return FALSE;
 
           /* Attach to the exportlist entry */
@@ -2907,9 +2938,15 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
             {
               LogEvent(COMPONENT_INIT, "Recovering Data Cache for export id %u",
                        pcurrent->id);
+#ifdef _USE_SHARED_FSAL
               if(cache_content_crash_recover
                  (pcurrent->id, &recover_datacache_client, &small_client, ht, &context,
                   &cache_content_status) != CACHE_CONTENT_SUCCESS)
+#else
+              if(cache_content_crash_recover
+                 (pcurrent->id, &recover_datacache_client, &small_client, ht, &context[pcurrent->fsalid],
+                  &cache_content_status) != CACHE_CONTENT_SUCCESS)
+#endif
                 {
                   LogWarn(COMPONENT_INIT,
                           "Datacache for export id %u is not recoverable: error = %d",

@@ -289,6 +289,10 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->drop_inval_errors = StrToBoolean(key_value);
         }
+      else if(!strcasecmp(key_name, "Drop_Delay_Errors"))
+        {
+          pparam->drop_delay_errors = StrToBoolean(key_value);
+        }
       else if(!strcasecmp(key_name, "NFS_Port"))
         {
           pparam->port[P_NFS] = (unsigned short)atoi(key_value);
@@ -1258,7 +1262,7 @@ void Print_param_in_log()
   Print_param_worker_in_log(&nfs_param.worker_param);
 }                               /* Print_param_in_log */
 
-void nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
+int nfs_get_fsalpathlib_conf(char *configPath, path_str_t * PathLib, unsigned int *plen)
 {
   int var_max;
   int var_index;
@@ -1268,6 +1272,9 @@ void nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
   config_item_t block;
   unsigned int found = FALSE;
   config_file_t config_struct;
+ 
+  unsigned int lenmax=*plen ;
+  unsigned int index=0 ;
 
   /* Is the config tree initialized ? */
   if(configPath == NULL || PathLib == NULL)
@@ -1315,13 +1322,25 @@ void nfs_get_fsalpathlib_conf(char *configPath, char *PathLib)
 
       if(!strcasecmp(key_name, "FSAL_Shared_Library"))
         {
-          strncpy(PathLib, key_value, MAXPATHLEN);
+          strncpy(PathLib[index], key_value, MAXPATHLEN);
+          index += 1 ;
+
           found = TRUE;
+
+          /* Do not exceed array size */
+          if( index == *plen ) 
+	     break ;
         }
 
     }
 
   if(!found)
+   {
     LogFatal(COMPONENT_CONFIG,
              "FSAL_Shared_Library not found");
+    return 1;
+   }
+
+  *plen = index ;
+  return 0;
 }                               /* nfs_get_fsalpathlib_conf */

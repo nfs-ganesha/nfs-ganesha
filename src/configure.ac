@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [1.0.6], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [1.1.1], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
 AC_SUBST(RELEASE, [0])
 
@@ -50,7 +50,7 @@ GA_PROG_DOXYGEN
 # define everything necessary for accessing large files (64bits offset)
 AC_SYS_LARGEFILE
 
-CFLAGS="$CFLAGS -D_REENTRANT -Wall -Wimplicit -Wformat -Wmissing-braces -Wno-pointer-sign"
+CFLAGS="$CFLAGS -D_REENTRANT"
 
 # Version number for shared object
 LIBVERSION=`echo $VERSION | sed -e 's/\./:/g'`
@@ -203,7 +203,7 @@ AM_CONDITIONAL(BUILD_SHARED_FSAL, test "$enable_buildsharedfsal" = "yes")
 GA_ENABLE_AM_CONDITION([nlm],[enable NLMv4 support (Lock management for NFSv3)],[USE_NLM])
 
 if test "$enable_nlm" == "yes"; then
-	AC_DEFINE(_USE_NLM,1,[enable NFSv4 support])
+	AC_DEFINE(_USE_NLM,1,[enable NLMv4 support])
 fi
 AM_CONDITIONAL(USE_NLM, test "$enable_nlm" = "yes")
 
@@ -331,7 +331,7 @@ GA_ENABLE_FLAG( [profiling], [turn on code profiling (-g and -pg)], [-g -pg] )
 GA_ENABLE_FLAG( [strict-compile], [turn on strict compiler flags], [-Werror -Wimplicit -Wformat -Wmissing-braces] )
 
 # NFSv4 ACL
-GA_DISABLE_AM_CONDITION([nfs4-acl],[disable NFSv4 ACL support],[USE_NO_NFS4_ACL])
+GA_ENABLE_AM_CONDITION([nfs4-acl],[disable NFSv4 ACL support],[USE_NO_NFS4_ACL])
 
 if test "$enable_nfs4_acl" == "yes"; then
         AC_CHECK_LIB([ssl],[MD5_Init])
@@ -349,7 +349,7 @@ if test "${with_extra_includedir+set}" == "set"; then
 fi
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|DYNFSAL (default=PROXY)],[specify the type of filesystem to be exported] ),
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|DYNFSAL|SHOOK (default=PROXY)],[specify the type of filesystem to be exported] ),
 	     FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
@@ -360,6 +360,7 @@ AM_CONDITIONAL(USE_FSAL_PROXY,    test "$FSAL" = "PROXY")
 AM_CONDITIONAL(USE_FSAL_SNMP,     test "$FSAL" = "SNMP")
 AM_CONDITIONAL(USE_FSAL_FUSE,     test "$FSAL" = "FUSE")
 AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
+AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "SHOOK") # variant of Lustre FSAL
 AM_CONDITIONAL(USE_FSAL_XFS,      test "$FSAL" = "XFS")
 AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
@@ -367,9 +368,13 @@ AM_CONDITIONAL(SHARED_FSAL,       test "$FSAL" = "DYNFSAL")
 AM_CONDITIONAL(USE_FSAL_ZFS,      test "$FSAL" = "ZFS")
 AM_CONDITIONAL(USE_FSAL_VFS,      test "$FSAL" = "VFS")
 
+
+AM_CONDITIONAL(RESULT_IS_LIB,      test "$FSAL" = "FUSE")
+AM_CONDITIONAL(RESULT_IS_DAEMON,   test "$FSAL" != "FUSE")
+
 # NFSv4.0 NFSv4.1 switch
-AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  (default=0)], [specify if server support NFSv4 or NFSv4.1] ),
-             NFS4_MINOR="$withval", NFS4_MINOR="0" )
+AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  (default=1)], [specify if server support NFSv4 or NFSv4.1] ),
+             NFS4_MINOR="$withval", NFS4_MINOR="1" )
 
 AM_CONDITIONAL(USE_NFS4_1, test "$NFS4_MINOR" = "1")
 AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")
@@ -538,11 +543,29 @@ case $FSAL in
 			AC_DEFINE([_LUSTRE_HSM], 1, [Lustre version supports HSM binding])
 		fi
 
-		FSAL_CFLAGS=
-                FSAL_LDFLAGS="-llustreapi"
-		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
+        FSAL_CFLAGS=
+        FSAL_LDFLAGS="-llustreapi"
+        FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
 		FS_NAME="lustre"
 		;;
+
+    SHOOK)
+        # Lustre FSAL compiled with special compilation directives
+        AC_CHECK_LIB([shooksvr], [shook_restore],, AC_MSG_ERROR([libshooksvr not found]))
+        AC_DEFINE(_SHOOK, 1, [shook is enabled])
+
+		AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
+		AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
+		if test "x$have_lustre2_api" != "xyes" ; then
+	            AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])
+		fi
+		AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
+        FSAL_CFLAGS=
+        FSAL_LDFLAGS="-lshooksvr -llustreapi"
+        FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
+		FS_NAME="shook"
+        ;;
+
 	XFS)
 		AC_DEFINE([_USE_XFS], 1, [GANESHA exports XFS Filesystem])
  		AC_CHECK_HEADERS([xfs/xfs.h], [], [AC_MSG_ERROR( missing xfs include files)])
@@ -605,15 +628,19 @@ case $FSAL in
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_VFS/libfsalvfs.la"
 		FS_NAME="vfs"
 		# Check for kernel version (should be at least 2.6.39)
-		if test `uname -r |cut -d. -f1` -lt 2 ; then
-		 AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
+                if test `uname -r |cut -d. -f1` -gt 2 ; then
+                   AC_MSG_RESULT(Kernel 3.0 found, life is good)
+                else
+		  if test `uname -r |cut -d. -f1` -lt 2 ; then
+		   AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
+                  fi
+		  if test `uname -r |cut -d. -f2` -lt 6 ; then 
+		   AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
+		  fi
+		  if test `uname -r |cut -d. -f3 | cut -d- -f1` -lt 39 ; then
+		   AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
+		  fi
                 fi
-		if test `uname -r |cut -d. -f2` -lt 6 ; then 
-		 AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
-		fi
-		if test `uname -r |cut -d. -f3 | cut -d- -f1` -lt 39 ; then
-		 AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
-		fi
 		;;
         ZFS)
                 AC_DEFINE([_USE_ZFS], 1, [GANESHA exports ZFS Filesystem])
@@ -780,22 +807,22 @@ case $PNFS in
 	"PARALLEL_FS")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
 		AC_DEFINE(_USE_PNFS_PARALLEL_FS,1,[enable NFSv4.1/pNFS support for parallel file system ])
-		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
 	"SPNFS_LIKE")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
 		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable spnfsd-like NFSv4.1/pNFS support])
-		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
 	"OSD")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
 		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable OSD based NFSv4.1/pNFS support])
-		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
 	"BLOCK")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
 		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable Block Device based NFSv4.1/pNFS support])
-		PNFS_LIB="\$(top_builddir)/PNFS/libpnfs.la"
+		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
 	*)
 		AC_MSG_ERROR([This pNFS layout is not supported])
@@ -893,12 +920,14 @@ AC_CONFIG_FILES([include/Makefile
                  Cache_inode/Makefile
                  File_Content/Makefile
                  File_Content_Policy/Makefile
-		 NFS_Protocols/Makefile
-		 PNFS/Makefile
-		 PNFS/SPNFS_LIKE/Makefile
-		 PNFS/PARALLEL_FS/Makefile
-		 PNFS/OSD/Makefile
-		 PNFS/BLOCK/Makefile
+		 Protocols/Makefile
+                 Protocols/9P/Makefile
+		 Protocols/NFS/Makefile
+		 Protocols/PNFS/Makefile
+		 Protocols/PNFS/SPNFS_LIKE/Makefile
+		 Protocols/PNFS/PARALLEL_FS/Makefile
+		 Protocols/PNFS/OSD/Makefile
+		 Protocols/PNFS/BLOCK/Makefile
                  XDR/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile
