@@ -118,6 +118,7 @@ int main(int argc, char *argv[])
   path_str_t fsal_path_param[NB_AVAILABLE_FSAL];
   path_str_t fsal_path_lib;
 #endif
+
   /* retrieve executable file's name */
   strncpy(ganesha_exec_path, argv[0], MAXPATHLEN);
 
