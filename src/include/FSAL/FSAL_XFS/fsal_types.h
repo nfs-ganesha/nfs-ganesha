@@ -83,16 +83,6 @@
 
 #include "fsal_glue_const.h"
 
-#define fsal_handle_t xfsfsal_handle_t
-#define fsal_op_context_t xfsfsal_op_context_t
-#define fsal_file_t xfsfsal_file_t
-#define fsal_dir_t xfsfsal_dir_t
-#define fsal_export_context_t xfsfsal_export_context_t
-#define fsal_lockdesc_t xfsfsal_lockdesc_t
-#define fsal_cookie_t xfsfsal_cookie_t
-#define fs_specific_initinfo_t xfsfs_specific_initinfo_t
-#define fsal_cred_t xfsfsal_cred_t
-
 typedef union {
  struct
   {
