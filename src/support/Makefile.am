@@ -90,7 +90,7 @@ check_SCRIPTS = test_libsupport_nlm.sh
 test_support_SOURCES    = test_support.c
 test_support_LDADD    	= libsupport.la \
                           ../Log/liblog.la\
-                          ../NFS_Protocols/libnfsproto.la\
+                          ../Protocols/NFS/libnfsproto.la\
                           $(BUDDY_LIB_FLAGS)\
                           ../XDR/libnfs_mnt_xdr.la \
                           ../HashTable/libhashtable.la \
