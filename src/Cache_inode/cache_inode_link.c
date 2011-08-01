@@ -163,6 +163,11 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       return *pstatus;
     }
 
+#if 0
+  if( pentry_src->internal_md.type == REGULAR_FILE )
+    printf( "=== link === %p | inode=%llu\n", pentry_src, pentry_src->object.file.attributes.fileid ) ;
+#endif
+
   /* At this point, we know that the entry does not exist in destination directory, we know that the
    * destination is actually a directory and that the source is no directory */
 

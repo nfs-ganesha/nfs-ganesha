@@ -1775,6 +1775,8 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
   cache_entry_t *pentry_iter_save = NULL;
   cache_inode_status_t kill_status;
 
+  memset( (char *)&fsaldata, 0, sizeof( fsaldata ) ) ;
+
   LogInfo(COMPONENT_CACHE_INODE,
           "Using cache_inode_kill_entry for entry %p", pentry);
 

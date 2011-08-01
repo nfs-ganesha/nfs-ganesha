@@ -96,10 +96,11 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
   cache_inode_create_arg_t create_arg;
   cache_inode_file_type_t type;
   cache_inode_status_t cache_status;
-
   cache_inode_fsal_data_t new_entry_fsdata;
-  int i = 0;
   fsal_accessflags_t access_mask = 0;
+  int i = 0;
+
+  memset( (char *)&new_entry_fsdata, 0, sizeof( new_entry_fsdata ) ) ; 
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
