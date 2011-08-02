@@ -385,12 +385,10 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
             }
 
-          V_w(&pentry->lock);
           LogFullDebug(COMPONENT_FSAL,
                        "cache_inode_rdwr: FSAL IO operation returned %d, asked_size=%llu, effective_size=%llu",
                        fsal_status.major, (unsigned long long)io_size,
                        (unsigned long long)*pio_size);
-          P_w(&pentry->lock);
 
           if(FSAL_IS_ERROR(fsal_status))
             {
