@@ -1558,13 +1558,8 @@ cache_inode_status_t convert_fsal_lock_status(fsal_status_t fsal_status)
 {
   cache_inode_status_t status;
 
-  /* TODO FSF: may need more details on status, currently will not convert
-   * lock failure right.
-   *
-   * CACHE_INODE_FSAL_DELAY: EAGAIN, EBUSY
-   * CACHE_INODE_FSAL_EACCESS: EACCESS
-   * need to add EDEADLK -> CACHE_INODE_LOCK_DEADLOCK
-   * need to add ENOLCK
+  /* Convert CACHE_INODE_FSAL_DELAY and CACHE_INODE_FSAL_EACCESS: EACCESS
+   * to CACHE_INODE_LOCK_CONFLICT for FSAL lock status.
    */
   status = cache_inode_error_convert(fsal_status);
   if(status == CACHE_INODE_FSAL_DELAY || status == CACHE_INODE_FSAL_EACCESS)

@@ -49,6 +49,7 @@ extern int nlm_unmonitor_host(char *name);
  * exclusive:    TRUE if lock is a write lock
  * alock:        nlm4_lock request structure
  * plock:        cache_lock_desc_t to fill in from alock
+ * ht:           The cache inode hash table used to find cache inode entries
  * ppentry:      cache inode entry pointer to fill in
  * pcontext:     FSAL op context
  * pclient:      cache inode client
