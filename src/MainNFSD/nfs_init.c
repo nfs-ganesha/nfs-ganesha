@@ -93,6 +93,10 @@ pthread_t admin_thrid;
 pthread_t fcc_gc_thrid;
 pthread_t sigmgr_thrid;
 
+#ifdef _USE_9P
+pthread_t ninep_dispatcher_thrid;
+#endif
+
 char config_path[MAXPATHLEN];
 
 /**
@@ -212,6 +216,9 @@ void nfs_print_param_config()
 
   printf("\tNFS_Port = %u ;\n", nfs_param.core_param.port[P_NFS]);
   printf("\tMNT_Port = %u ;\n", nfs_param.core_param.port[P_MNT]);
+#ifdef _USE_9P
+  printf("\t9P_Port = %u ;\n", nfs_param.core_param.ninep_port);
+#endif
   printf("\tNFS_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
   printf("\tMNT_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
   printf("\tNb_Worker = %u ; \n", nfs_param.core_param.nb_worker);
@@ -274,6 +281,9 @@ void nfs_set_param_default()
 #ifdef _USE_NLM
   nfs_param.core_param.program[P_NLM] = NLMPROG;
   nfs_param.core_param.port[P_NLM] = 0;
+#endif
+#ifdef _USE_9P
+  nfs_param.core_param.ninep_port = NINEP_PORT ;
 #endif
 #ifdef _USE_QUOTA
   nfs_param.core_param.program[P_RQUOTA] = RQUOTAPROG;
@@ -1489,6 +1499,17 @@ static void nfs_Start_threads()
                errno, strerror(errno));
     }
   LogEvent(COMPONENT_THREAD, "rpc dispatcher thread was started successfully");
+
+#ifdef _USE_9P
+  /* Starting the 9p dispatcher thread */
+  if((rc = pthread_create(&ninep_dispatcher_thrid, &attr_thr, ninep_dispatcher_thread, NULL ) ) != 0 )     
+    {
+      LogFatal(COMPONENT_THREAD,
+               "Could not create  9p dispatcher_thread, error = %d (%s)",
+               errno, strerror(errno));
+    }
+  LogEvent(COMPONENT_THREAD, "9p dispatcher thread was started successfully");
+#endif
 
   /* Starting the admin thread */
   if((rc = pthread_create(&admin_thrid, &attr_thr, admin_thread, NULL)) != 0)

@@ -570,7 +570,7 @@ void nfs_Init_svc()
   LogDebug(COMPONENT_DISPATCH,
            "Socket numbers are: rquota_udp=%u  rquota_tcp=%u",
            udp_socket[P_RQUOTA],
-           tcp_socket[P_RQUOTA])
+           tcp_socket[P_RQUOTA]) ;
 #endif
 
   /* Bind the tcp and udp sockets */

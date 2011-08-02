@@ -147,6 +147,11 @@
 #define NFS_SEND_BUFFER_SIZE 32768
 #define NFS_RECV_BUFFER_SIZE 32768
 
+/* 9P specific values */
+#define NINEP_PORT 564
+#define NINEP_SEND_BUFFER_SIZE 65560
+#define NINEP_RECV_BUFFER_SIZE 65560
+
 /* Default 'Raw Dev' values */
 #define GANESHA_RAW_DEV_MAJOR 168
 #define GANESHA_RAW_DEV_MINOR 168
@@ -267,6 +272,9 @@ typedef struct nfs_core_param__
   unsigned short port[P_COUNT];
   struct sockaddr_in bind_addr; // IPv4 only for now...
   unsigned int program[P_COUNT];
+#ifdef _USE_9P
+  unsigned short ninep_port ;
+#endif
   unsigned int nb_worker;
   unsigned int nb_call_before_queue_avg;
   unsigned int nb_max_concurrent_gc;
@@ -575,6 +583,9 @@ void DispatchWork(nfs_request_data_t *pnfsreq, unsigned int worker_index);
 void *worker_thread(void *IndexArg);
 process_status_t process_rpc_request(SVCXPRT *xprt);
 void *rpc_dispatcher_thread(void *arg);
+#ifdef _USE_9P
+void *ninep_dispatcher_thread(void *arg);
+#endif
 void *admin_thread(void *arg);
 void *stats_thread(void *IndexArg);
 void *long_processing_thread(void *arg);
