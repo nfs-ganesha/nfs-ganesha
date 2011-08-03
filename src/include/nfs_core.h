@@ -71,6 +71,10 @@
 #endif                          /* _USE_PNFS */
 #endif
 
+#ifdef _USE_9P
+#include "9p.h"
+#endif
+
 #ifdef _ERROR_INJECTION
 #include "err_inject.h"
 #endif
@@ -419,6 +423,13 @@ typedef struct nfs_dupreq_stat__
   hash_stat_t htstat;
 } nfs_dupreq_stat_t;
 
+#ifdef _USE_9P
+typedef struct _9p_request_data__
+{
+  char buff[_9P_SIZE] ;
+} _9p_request_data_t ;
+#endif
+
 typedef struct nfs_request_data__
 {
   SVCXPRT *xprt;
@@ -429,6 +440,24 @@ typedef struct nfs_request_data__
   nfs_res_t res_nfs;
   nfs_arg_t arg_nfs;
 } nfs_request_data_t;
+
+typedef enum request_type__
+{
+  NFS_REQUEST,
+  _9P_REQUEST
+} request_type_t ;
+
+typedef struct request_data__
+{
+  request_type_t rtype ;
+  union request_content__
+   {
+      nfs_request_data_t nfs ;
+#ifdef _USE_9P
+      _9p_request_data_t _9p ;
+#endif
+   } rcontent ;
+} request_data_t ;
 
 typedef struct nfs_client_id__
 {
