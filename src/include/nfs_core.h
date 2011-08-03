@@ -273,7 +273,7 @@ typedef struct nfs_core_param__
   struct sockaddr_in bind_addr; // IPv4 only for now...
   unsigned int program[P_COUNT];
 #ifdef _USE_9P
-  unsigned short ninep_port ;
+  unsigned short _9p_port ;
 #endif
   unsigned int nb_worker;
   unsigned int nb_call_before_queue_avg;
@@ -584,7 +584,7 @@ void *worker_thread(void *IndexArg);
 process_status_t process_rpc_request(SVCXPRT *xprt);
 void *rpc_dispatcher_thread(void *arg);
 #ifdef _USE_9P
-void *ninep_dispatcher_thread(void *arg);
+void * _9p_dispatcher_thread(void *arg);
 #endif
 void *admin_thread(void *arg);
 void *stats_thread(void *IndexArg);

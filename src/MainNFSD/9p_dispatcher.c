@@ -24,11 +24,11 @@
  */
 
 /**
- * \file    ninep_dispatcher.c
+ * \file    9p_dispatcher.c
  * \date    $Date: 2006/02/23 12:33:05 $
- * \brief   The file that contain the 'ninep_dispatcher_thread' routine for ganesha.
+ * \brief   The file that contain the '_9p_dispatcher_thread' routine for ganesha.
  *
- * ninep_dispatcher.c : The file that contain the 'ninep_dispatcher_thread' routine for ganesha (and all
+ * 9p_dispatcher.c : The file that contain the '_9p_dispatcher_thread' routine for ganesha (and all
  * the related stuff).
  *
  */
@@ -70,7 +70,7 @@
 #endif
 
 /**
- * ninep_socket_thread: 9p socket manager.
+ * _9p_socket_thread: 9p socket manager.
  *
  * This function is the main loop for the 9p socket manager. One such thread exists per connection.
  *
@@ -86,7 +86,7 @@ typedef union sockarg__
    int sock ;
 } sockarg_t ;
 
-void * ninep_socket_thread( void * Arg )
+void * _9p_socket_thread( void * Arg )
 {
   sockarg_t sockarg ;
  
@@ -100,10 +100,10 @@ void * ninep_socket_thread( void * Arg )
    }
  
   return NULL ;
-} /* ninep_socket_thread */
+} /* _9p_socket_thread */
 
 /**
- * ninep_create_socket: create the accept socket for 9P 
+ * _9p_create_socket: create the accept socket for 9P 
  *
  * This function create the accept socket for the 9p dispatcher thread.
  *
@@ -112,7 +112,7 @@ void * ninep_socket_thread( void * Arg )
  * @return socket fd or -1 if failed.
  *
  */
-int ninep_create_socket( void )
+int _9p_create_socket( void )
 {
   int sock = -1 ;
   int one = 1 ;
@@ -144,7 +144,7 @@ int ninep_create_socket( void )
   memset( &sinaddr, 0, sizeof(sinaddr));
   sinaddr.sin_family      = AF_INET;
   sinaddr.sin_addr.s_addr = nfs_param.core_param.bind_addr.sin_addr.s_addr;
-  sinaddr.sin_port        = htons(nfs_param.core_param.ninep_port);
+  sinaddr.sin_port        = htons(nfs_param.core_param._9p_port);
 
   if(bind(sock, (struct sockaddr *)&sinaddr, sizeof(sinaddr)) == -1)
    {
@@ -165,7 +165,7 @@ int ninep_create_socket( void )
   memset(&sinaddr_tcp6, 0, sizeof(sinaddr_tcp6));
   sinaddr_tcp6.sin6_family = AF_INET6;
   sinaddr_tcp6.sin6_addr   = in6addr_any;     /* All the interfaces on the machine are used */
-  sinaddr_tcp6.sin6_port   = htons(nfs_param.core_param.ninep_port);
+  sinaddr_tcp6.sin6_port   = htons(nfs_param.core_param._9p_port);
 
   netbuf_tcp6.maxlen = sizeof(sinaddr_tcp6);
   netbuf_tcp6.len    = sizeof(sinaddr_tcp6);
@@ -203,10 +203,10 @@ int ninep_create_socket( void )
 #endif
 
   return sock ;
-} /* ninep_create_socket */
+} /* _9p_create_socket */
 
 /**
- * ninep_dispatcher_svc_run: main loop for 9p dispatcher
+ * _9p_dispatcher_svc_run: main loop for 9p dispatcher
  *
  * This function is the main loop for the 9p dispatcher. It never returns because it is an infinite loop.
  *
@@ -215,7 +215,7 @@ int ninep_create_socket( void )
  * @return nothing (void function). 
  *
  */
-void ninep_dispatcher_svc_run( int sock )
+void _9p_dispatcher_svc_run( int sock )
 {
   int rc = 0;
   struct sockaddr_in addr;
@@ -252,7 +252,7 @@ void ninep_dispatcher_svc_run( int sock )
        }
 
       /* Starting the thread dedicated to signal handling */
-      if( ( rc = pthread_create( &tcp_thrid, &attr_thr, ninep_socket_thread, (void *)sock ) ) != 0 )
+      if( ( rc = pthread_create( &tcp_thrid, &attr_thr, _9p_socket_thread, (void *)sock ) ) != 0 )
        {
          LogFatal(COMPONENT_THREAD,
                   "Could not create 9p socket manager thread, error = %d (%s)",
@@ -272,11 +272,11 @@ void ninep_dispatcher_svc_run( int sock )
     }                           /* while */
 
   return;
-}                               /* ninep_dispatcher_svc_run */ 
+}                               /* _9p_dispatcher_svc_run */ 
 
 
 /**
- * ninep_dispatcher_thread: thread used for RPC dispatching.
+ * _9p_dispatcher_thread: thread used for RPC dispatching.
  *
  * Thead used for RPC dispatching. It gets the requests and then spool it to one of the worker's LRU.
  * The worker chosen is the one with the smaller load (its LRU is the shorter one).
@@ -286,11 +286,11 @@ void ninep_dispatcher_svc_run( int sock )
  * @return Pointer to the result (but this function will mostly loop forever).
  *
  */
-void *ninep_dispatcher_thread(void *Arg)
+void * _9p_dispatcher_thread(void *Arg)
 {
-  int ninep_socket = -1 ;
+  int _9p_socket = -1 ;
 
-  SetNameFunction("ninep_dispatch_thr");
+  SetNameFunction("_9p_dispatch_thr");
 
 #ifndef _NO_BUDDY_SYSTEM
   /* Initialisation of the Buddy Malloc */
@@ -307,16 +307,16 @@ void *ninep_dispatcher_thread(void *Arg)
   LogDebug(COMPONENT_9P_DISPATCH,
            "My pthread id is %p", (caddr_t) pthread_self());
 
-  /* Set up the ninep_socket */
-  if( ( ninep_socket =  ninep_create_socket() ) == -1 )
+  /* Set up the _9p_socket */
+  if( ( _9p_socket =  _9p_create_socket() ) == -1 )
    {
      LogCrit( COMPONENT_9P_DISPATCH,
               "Can't get socket for 9p dispatcher" ) ;
      exit( 1 ) ;
    }
 
-  ninep_dispatcher_svc_run( ninep_socket );
+  _9p_dispatcher_svc_run( _9p_socket );
 
   return NULL;
-}                               /* ninep_dispatcher_thread */
+}                               /* _9p_dispatcher_thread */
 
