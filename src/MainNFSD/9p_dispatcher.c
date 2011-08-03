@@ -46,6 +46,7 @@
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
 #include <sys/select.h>
+#include <poll.h>
 #include "HashData.h"
 #include "HashTable.h"
 #include "log_macros.h"
@@ -79,25 +80,104 @@
  * @return NULL 
  *
  */
-
-typedef union sockarg__
-{
-   void * arg;
-   int sock ;
-} sockarg_t ;
-
 void * _9p_socket_thread( void * Arg )
 {
-  sockarg_t sockarg ;
- 
-  sockarg.arg = Arg ;
- 
-  printf( "Je gère la socket %d\n", sockarg.sock );
-  
-  while( 1 ) 
+  long int tcp_sock = (long int)Arg;
+  int rc = -1 ;
+  struct pollfd fds[1] ;
+  int fdcount = 1 ;
+  static char my_name[MAXNAMLEN];
+  struct sockaddr_in addrpeer ;
+  socklen_t addrpeerlen = sizeof( addrpeer ) ;
+  char strcaller[MAXNAMLEN] ;
+
+  char sockbuff[_9P_SIZE] ;
+  int readlen = 0  ;
+
+  printf( "Je gère la socket %d\n", tcp_sock );
+
+  snprintf(my_name, MAXNAMLEN, "9p_sock_mgr#fd=%ld", tcp_sock);
+  SetNameFunction(my_name);
+
+#ifndef _NO_BUDDY_SYSTEM
+  if((rc = BuddyInit(&nfs_param.buddy_param_tcp_mgr)) != BUDDY_SUCCESS)
+    {
+      /* Failed init */
+      #ifdef _DEBUG_MEMLEAKS
+      {
+        FILE *output = fopen("/tmp/buddymem", "w");
+        if (output != NULL)
+          BuddyDumpAll(output);
+      }
+      #endif
+      LogFatal(COMPONENT_DISPATCH, "Memory manager could not be initialized");
+    }
+#endif
+
+  if( ( rc =  getpeername( tcp_sock, (struct sockaddr *)&addrpeer, &addrpeerlen) ) == -1 )
    {
-      sleep( 10 ) ;
+      LogMajor(COMPONENT_9P,
+               "Cannot get peername to tcp socket for 9p, error %d (%s)", errno, strerror(errno));
+      strncpy( strcaller, "(unresolved)", MAXNAMLEN ) ;
    }
+  else
+   {
+     snprintf(strcaller, MAXNAMLEN, "0x%x=%d.%d.%d.%d",
+              ntohl(addrpeer.sin_addr.s_addr),
+             (ntohl(addrpeer.sin_addr.s_addr) & 0xFF000000) >> 24,
+             (ntohl(addrpeer.sin_addr.s_addr) & 0x00FF0000) >> 16,
+             (ntohl(addrpeer.sin_addr.s_addr) & 0x0000FF00) >> 8,
+             (ntohl(addrpeer.sin_addr.s_addr) & 0x000000FF));
+
+     LogEvent( COMPONENT_9P, "9p socket #%d is connected to %s", tcp_sock, strcaller ) ; 
+   }
+
+  /* Set up the structure used by poll */
+  memset( (char *)fds, 0, sizeof( struct pollfd ) ) ;
+  fds[0].fd = tcp_sock ;
+  fds[0].events = POLLIN|POLLPRI| POLLRDBAND|POLLRDNORM|POLLRDHUP|POLLHUP|POLLERR|POLLNVAL;
+
+
+  for( ;; ) /* Infinite loop */
+   {
+     if( ( rc = poll( fds, fdcount, -1 ) ) == -1 ) /* timeout = -1 =>Wait indefinitely for incoming events */
+      {
+         /* Interruption if not an issue */
+         if( errno == EINTR )
+           continue ;
+
+         LogCrit( COMPONENT_9P,
+                  "Got error %u (%s) on fd %d connect to %s while polling on socket", 
+                  errno, strerror( errno ), tcp_sock, strcaller ) ;
+
+      }
+
+     if( fds[0].revents & POLLNVAL )
+      {
+        LogEvent( COMPONENT_9P, "Client %s on socket %lu produced POLLNVAL", strcaller, tcp_sock ) ;
+                  close( tcp_sock );
+        return NULL ;
+      }
+
+     if( fds[0].revents & (POLLERR|POLLHUP|POLLRDHUP) )
+      {
+        LogEvent( COMPONENT_9P, "Client %s on socket %lu has shut down and closed", strcaller, tcp_sock ) ;
+                  close( tcp_sock );
+        return NULL ;
+      }
+
+     if( fds[0].revents & (POLLIN|POLLRDNORM) )
+      {
+        readlen = recv( fds[0].fd, sockbuff ,sizeof (sockbuff), 0);
+        printf( "readlen=%d\n", readlen ) ;
+        if( readlen == 0 )
+         {
+           LogEvent( COMPONENT_9P, "Client %s on socket %lu has shut down", strcaller, tcp_sock ) ;
+           close( tcp_sock );
+           return NULL ;
+         }
+      }
+   } /* for( ;; ) */
  
   return NULL ;
 } /* _9p_socket_thread */
@@ -215,12 +295,12 @@ int _9p_create_socket( void )
  * @return nothing (void function). 
  *
  */
-void _9p_dispatcher_svc_run( int sock )
+void _9p_dispatcher_svc_run( long int sock )
 {
   int rc = 0;
   struct sockaddr_in addr;
   socklen_t addrlen = sizeof( addr ) ;
-  int newsock = -1 ;
+  long int newsock = -1 ;
   pthread_attr_t attr_thr;
   pthread_t tcp_thrid ;
 
@@ -252,7 +332,7 @@ void _9p_dispatcher_svc_run( int sock )
        }
 
       /* Starting the thread dedicated to signal handling */
-      if( ( rc = pthread_create( &tcp_thrid, &attr_thr, _9p_socket_thread, (void *)sock ) ) != 0 )
+      if( ( rc = pthread_create( &tcp_thrid, &attr_thr, _9p_socket_thread, (void *)newsock ) ) != 0 )
        {
          LogFatal(COMPONENT_THREAD,
                   "Could not create 9p socket manager thread, error = %d (%s)",
