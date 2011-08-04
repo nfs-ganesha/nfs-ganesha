@@ -48,8 +48,7 @@ buddy_parameter_t parameter = {
   FALSE,
   FALSE,
   -1,
-  -1,
-  "/dev/tty"
+  -1
 };
 
 buddy_parameter_t parameter_realloc = {
@@ -59,8 +58,7 @@ buddy_parameter_t parameter_realloc = {
   TRUE,
   TRUE,
   3,
-  5,
-  "/dev/tty"
+  5
 };
 
 #define MEM_SIZE_SMALL 10000LL
@@ -72,8 +70,7 @@ buddy_parameter_t parameter_realloc_small = {
   TRUE,
   TRUE,
   2,
-  5,
-  "/dev/tty"
+  5
 };
 
 typedef struct string_info
@@ -276,7 +273,7 @@ void *TEST2(void *arg)
 #endif
 
   /* destroy thread resources */
-  if(rc = BuddyDestroy())
+  if((rc = BuddyDestroy()))
     {
       LogTest("ERROR in BuddyDestroy: %d", rc);
     }
@@ -343,7 +340,7 @@ void *TEST3(void *arg)
 #endif
 
   /* destroy thread resources */
-  if(rc = BuddyDestroy())
+  if((rc = BuddyDestroy()))
     {
       LogTest("ERROR in BuddyDestroy: %d", rc);
     }
@@ -465,7 +462,7 @@ void *TEST4(void *arg)
 #endif
 
   /* destroy thread resources */
-  if(rc = BuddyDestroy())
+  if((rc = BuddyDestroy()))
     {
       LogTest("ERROR in BuddyDestroy: %d", rc);
     }
@@ -622,7 +619,7 @@ void *TEST5(void *arg)
 #endif
 
   /* destroy thread resources */
-  if(rc = BuddyDestroy())
+  if((rc = BuddyDestroy()))
     {
       LogTest("ERROR in BuddyDestroy: %d", rc);
     }
@@ -643,7 +640,7 @@ void *TEST6(void *arg)
 
   int th = (long)arg;
 
-  int i, rc;
+  int rc;
 
   size_t min_alloc = MEM_SIZE / 10;
   size_t max_alloc = 3 * MEM_SIZE / 4;
@@ -694,7 +691,7 @@ void *TEST6(void *arg)
     }
 
   /* destroy thread resources */
-  if(rc = BuddyDestroy())
+  if((rc = BuddyDestroy()))
     {
       LogTest("ERROR in BuddyDestroy: %d", rc);
     }
@@ -758,7 +755,7 @@ void *TEST7(void *arg)
           len = (unsigned long)my_rand() % (max_alloc - min_alloc) + min_alloc;
 
           if(isFullDebug(COMPONENT_MEMALLOC))
-            LogTest("---------- BuddyMalloc( %lu ) ---------", len);
+            LogTest("---------- BuddyMalloc( %lu ) ---------", (long unsigned int) len);
 
           ptr = BuddyMalloc(len);
 
@@ -824,7 +821,7 @@ void *TEST7(void *arg)
   print_mallinfo();
 
   /* destroy thread resources */
-  if(rc = BuddyDestroy())
+  if((rc = BuddyDestroy()))
     {
       LogTest("ERROR in BuddyDestroy: %d", rc);
     }
@@ -893,7 +890,7 @@ void *TEST8(void *arg)
           len = (unsigned long)my_rand() % (max_alloc - min_alloc) + min_alloc;
 
           if(isFullDebug(COMPONENT_MEMALLOC))
-            LogTest("---------- BuddyMalloc( %lu ) ---------", len);
+            LogTest("---------- BuddyMalloc( %lu ) ---------", (long unsigned int) len);
 
           ptr = BuddyMalloc(len);
 
@@ -933,7 +930,7 @@ void *TEST8(void *arg)
 
       if(isFullDebug(COMPONENT_MEMALLOC))
         LogTest("%d;%lu;%lu;%u;%u;",
-                th, stats.StdMemSpace, stats.StdUsedSpace,
+                th, (long unsigned int) stats.StdMemSpace,  (long unsigned int) stats.StdUsedSpace,
                 stats.NbStdPages, stats.NbStdUsed);
       else
         if((stats.NbStdPages != last_pages) || (stats.NbStdUsed != last_used))
@@ -948,7 +945,7 @@ void *TEST8(void *arg)
     }
 
   /* destroy thread resources */
-  if(rc = BuddyDestroy())
+  if((rc = BuddyDestroy()))
     {
       LogTest("ERROR in BuddyDestroy: %d", rc);
     }
@@ -1050,7 +1047,6 @@ void *TESTA(void *arg)
   unsigned int slot;
   unsigned long duration;
   size_t len;
-  caddr_t block;
   size_t total = MEM_SIZE / 10;
   int nloop, rc;
 
@@ -1132,7 +1128,7 @@ void *TESTA(void *arg)
   DisplayMemoryMap(stdout);
 #endif
   /* destroy thread resources */
-  if ( rc = BuddyDestroy() )
+  if ((rc = BuddyDestroy()))
         LogTest("ERROR in BuddyDestroy: %d", rc );
   else
         LogTest("All resources released successfully");
@@ -1220,7 +1216,7 @@ void *TESTB(void *arg)
   BuddyFree(pointer);
 
   /* destroy thread resources */
-  if(rc = BuddyDestroy())
+  if((rc = BuddyDestroy()))
     {
       LogTest("ERROR in BuddyDestroy: %d", rc);
     }

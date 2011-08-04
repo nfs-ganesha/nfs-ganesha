@@ -75,7 +75,7 @@ int main(int argc, char **argv)
             else
               LogTest("\tsub-block = %s", config_GetBlockName(item));
           }
-        LogTest("");
+        LogTest(" ");
 
       }
 
