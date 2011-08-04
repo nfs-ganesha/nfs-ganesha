@@ -1890,7 +1890,7 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   return 0;
 }                               /* nfs_Init_worker_data */
 
-void DispatchWork(request_data_t *pnfsreq, unsigned int worker_index)
+void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index)
 {
   LRU_entry_t *pentry = NULL;
   LRU_status_t status;
@@ -2009,6 +2009,7 @@ enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
 static void _9p_execute( _9p_request_data_t * preq9p, 
                           nfs_worker_data_t * pworker_data)
 {
+  printf( "A WORKER has a request to process \n" ) ;
   return ;
 } /* _9p_execute */
 #endif

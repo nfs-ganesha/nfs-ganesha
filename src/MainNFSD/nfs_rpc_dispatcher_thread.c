@@ -880,7 +880,7 @@ process_status_t process_rpc_request(SVCXPRT *xprt)
       preq->rq_xprt = pnfsreq->rcontent.nfs.xprt_copy;
 
       /* Regular management of the request (UDP request or TCP request on connected handler */
-      DispatchWork(pnfsreq, worker_index);
+      DispatchWorkNFS(pnfsreq, worker_index);
 
       gettimeofday(&timer_end, NULL);
       timer_diff = time_diff(timer_start, timer_end);
