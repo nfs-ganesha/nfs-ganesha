@@ -91,10 +91,12 @@ void * _9p_socket_thread( void * Arg )
   socklen_t addrpeerlen = sizeof( addrpeer ) ;
   char strcaller[MAXNAMLEN] ;
 
-  char sockbuff[_9P_SIZE] ;
+  char _9pmsg[_9P_MSG_SIZE] ;
+  uint32_t * p_9pmsglen = NULL ;
+
   int readlen = 0  ;
 
-  printf( "Je gère la socket %d\n", tcp_sock );
+  printf( "Je gère la socket %ld\n", tcp_sock );
 
   snprintf(my_name, MAXNAMLEN, "9p_sock_mgr#fd=%ld", tcp_sock);
   SetNameFunction(my_name);
@@ -129,7 +131,7 @@ void * _9p_socket_thread( void * Arg )
              (ntohl(addrpeer.sin_addr.s_addr) & 0x0000FF00) >> 8,
              (ntohl(addrpeer.sin_addr.s_addr) & 0x000000FF));
 
-     LogEvent( COMPONENT_9P, "9p socket #%d is connected to %s", tcp_sock, strcaller ) ; 
+     LogEvent( COMPONENT_9P, "9p socket #%ld is connected to %s", tcp_sock, strcaller ) ; 
    }
 
   /* Set up the structure used by poll */
@@ -147,7 +149,7 @@ void * _9p_socket_thread( void * Arg )
            continue ;
 
          LogCrit( COMPONENT_9P,
-                  "Got error %u (%s) on fd %d connect to %s while polling on socket", 
+                  "Got error %u (%s) on fd %ld connect to %s while polling on socket", 
                   errno, strerror( errno ), tcp_sock, strcaller ) ;
 
       }
@@ -168,13 +170,45 @@ void * _9p_socket_thread( void * Arg )
 
      if( fds[0].revents & (POLLIN|POLLRDNORM) )
       {
-        readlen = recv( fds[0].fd, sockbuff ,sizeof (sockbuff), 0);
-        printf( "readlen=%d\n", readlen ) ;
-        if( readlen == 0 )
+        /* An incoming 9P request: the msg has a 4 bytes header showing the size of the msg including the header */
+        if( (readlen = recv( fds[0].fd, _9pmsg ,_9P_HDR_SIZE, 0) == _9P_HDR_SIZE ) )
+         {
+	    p_9pmsglen = (uint32_t *)_9pmsg ;
+
+	    printf( "MSGLEN=%u\n", *p_9pmsglen ) ;
+
+	    if(  *p_9pmsglen < _9P_HDR_SIZE )
+             {
+		LogEvent( COMPONENT_9P, 
+			  "Badly formed 9P message: Header is too small for client %s on socket %lu", 
+                          strcaller, tcp_sock ) ;
+                continue ;
+             }
+
+            if( ( readlen = recv( fds[0].fd,
+				 (char *)(_9pmsg + _9P_HDR_SIZE),  
+                                 *p_9pmsglen - _9P_HDR_SIZE, 0 ) ) !=  *p_9pmsglen - _9P_HDR_SIZE )
+             {
+		LogEvent( COMPONENT_9P, 
+			  "Badly formed 9P message: msg has not advertised length for client %s on socket %lu",
+                          strcaller, tcp_sock ) ;
+                continue ;
+             }
+	    else
+             {
+		printf( "MSG OK, length = %u\n",  *p_9pmsglen ) ;
+             }
+         }
+        else if( readlen == 0 )
          {
            LogEvent( COMPONENT_9P, "Client %s on socket %lu has shut down", strcaller, tcp_sock ) ;
            close( tcp_sock );
            return NULL ;
+         }
+        else
+         {
+	   LogEvent( COMPONENT_9P, "Badly formed 9P header for client %s on socket %lu", strcaller, tcp_sock ) ;
+           continue ;
          }
       }
    } /* for( ;; ) */

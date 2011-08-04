@@ -426,7 +426,7 @@ typedef struct nfs_dupreq_stat__
 #ifdef _USE_9P
 typedef struct _9p_request_data__
 {
-  char buff[_9P_SIZE] ;
+  char buff[_9P_MSG_SIZE] ;
 } _9p_request_data_t ;
 #endif
 
@@ -608,7 +608,7 @@ worker_available_rc worker_available(unsigned long index, unsigned int avg_numbe
 pause_rc pause_workers(pause_reason_t reason);
 pause_rc wake_workers(awaken_reason_t reason);
 pause_rc wait_for_workers_to_awaken();
-void DispatchWork(nfs_request_data_t *pnfsreq, unsigned int worker_index);
+void DispatchWork(request_data_t *pnfsreq, unsigned int worker_index);
 void *worker_thread(void *IndexArg);
 process_status_t process_rpc_request(SVCXPRT *xprt);
 void *rpc_dispatcher_thread(void *arg);

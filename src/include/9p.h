@@ -36,7 +36,8 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
-#define _9P_SIZE 65560 
+#define _9P_MSG_SIZE 65560 
+#define _9P_HDR_SIZE 4
 
 /**
  * enum p9_msg_t - 9P message types
