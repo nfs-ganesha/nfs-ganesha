@@ -195,7 +195,7 @@ void *TEST1(void *arg)
 #endif
 
   /* destroy thread resources */
-  if(rc = BuddyDestroy())
+  if((rc = BuddyDestroy()))
     {
       LogTest("ERROR in BuddyDestroy: %d", rc);
     }

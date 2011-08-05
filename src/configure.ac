@@ -50,7 +50,7 @@ GA_PROG_DOXYGEN
 # define everything necessary for accessing large files (64bits offset)
 AC_SYS_LARGEFILE
 
-CFLAGS="$CFLAGS -D_REENTRANT"
+CFLAGS="$CFLAGS -D_REENTRANT -Wall -Wimplicit -Wformat -Wmissing-braces -Wno-pointer-sign"
 
 # Version number for shared object
 LIBVERSION=`echo $VERSION | sed -e 's/\./:/g'`
@@ -580,10 +580,21 @@ case $FSAL in
 		AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
 		AC_CHECK_HEADERS([gpfs_nfs.h], [], [AC_MSG_ERROR(missing gpfs include files)])
 		AC_CHECK_DECL([gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs_ganesha function)], [[#include <gpfs_nfs.h>]])
-		AC_CHECK_DECLS([OPENHANDLE_NAME_TO_HANDLE, OPENHANDLE_OPEN_BY_HANDLE, OPENHANDLE_LINK_BY_FD,
-		                OPENHANDLE_READLINK_BY_FD, OPENHANDLE_STAT_BY_HANDLE],
+		AC_CHECK_DECLS([OPENHANDLE_NAME_TO_HANDLE, 
+                                OPENHANDLE_OPEN_BY_HANDLE,
+                                OPENHANDLE_LINK_BY_FD,
+		                OPENHANDLE_READLINK_BY_FD,
+                                OPENHANDLE_STAT_BY_HANDLE, 
+                                XATTR_STAT,
+                                XATTR_MODE,
+                                XATTR_UID,
+                                XATTR_GID,
+                                XATTR_ATIME_SET,
+                                XATTR_MTIME_SET,
+                                XATTR_ACL
+                                ],
 		               [],
-		               [AC_MSG_ERROR(missing Open By Handle function)],
+		               [AC_MSG_ERROR(GPFS < 3.5.0 found, you must upgrade GPFS to use this feature)],
 		               [[#include <gpfs_nfs.h>]])
 		if [[  $PNFS != "NONE" ]] ; then
 			AC_CHECK_DECLS([OPENHANDLE_LAYOUT_TYPE, OPENHANDLE_GET_DEVICEINFO, OPENHANDLE_GET_DEVICEITER,
@@ -605,15 +616,19 @@ case $FSAL in
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_VFS/libfsalvfs.la"
 		FS_NAME="vfs"
 		# Check for kernel version (should be at least 2.6.39)
-		if test `uname -r |cut -d. -f1` -lt 2 ; then
-		 AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
+                if test `uname -r |cut -d. -f1` -gt 2 ; then
+                   AC_MSG_RESULT(Kernel 3.0 found, life is good)
+                else
+		  if test `uname -r |cut -d. -f1` -lt 2 ; then
+		   AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
+                  fi
+		  if test `uname -r |cut -d. -f2` -lt 6 ; then 
+		   AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
+		  fi
+		  if test `uname -r |cut -d. -f3 | cut -d- -f1` -lt 39 ; then
+		   AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
+		  fi
                 fi
-		if test `uname -r |cut -d. -f2` -lt 6 ; then 
-		 AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
-		fi
-		if test `uname -r |cut -d. -f3 | cut -d- -f1` -lt 39 ; then
-		 AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
-		fi
 		;;
         ZFS)
                 AC_DEFINE([_USE_ZFS], 1, [GANESHA exports ZFS Filesystem])
