@@ -61,7 +61,7 @@ fsal_uint_t CredentialLifetime = 3600;
  */
 fsal_staticfsinfo_t global_fs_info;
 
-/* filesystem info for HPSS */
+/* filesystem info for VFS */
 static fsal_staticfsinfo_t default_posix_info = {
   0xFFFFFFFFFFFFFFFFLL,         /* max file size (64bits) */
   _POSIX_LINK_MAX,              /* max links */
@@ -264,7 +264,7 @@ void ReleaseTokenFSCall()
 
 }
 
-#define SET_INTEGER_PARAM( cfg, p_init_info, _field )             \
+#define VFS_SET_INTEGER_PARAM( cfg, p_init_info, _field )         \
     switch( (p_init_info)->behaviors._field ){                    \
     case FSAL_INIT_FORCE_VALUE :                                  \
       /* force the value in any case */                           \
@@ -286,7 +286,7 @@ void ReleaseTokenFSCall()
         break;                                                    \
     }
 
-#define SET_BITMAP_PARAM( cfg, p_init_info, _field )              \
+#define VFS_SET_BITMAP_PARAM( cfg, p_init_info, _field )          \
     switch( (p_init_info)->behaviors._field ){                    \
     case FSAL_INIT_FORCE_VALUE :                                  \
         /* force the value in any case */                         \
@@ -306,7 +306,7 @@ void ReleaseTokenFSCall()
         break;                                                    \
     }
 
-#define SET_BOOLEAN_PARAM( cfg, p_init_info, _field )             \
+#define VFS_SET_BOOLEAN_PARAM( cfg, p_init_info, _field )         \
     switch( (p_init_info)->behaviors._field ){                    \
     case FSAL_INIT_FORCE_VALUE :                                  \
         /* force the value in any case */                         \
@@ -423,19 +423,19 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
      (fs_common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT))
     ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
 
-  SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);
-  SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxwrite);
+  VFS_SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);
+  VFS_SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxwrite);
 
-  SET_BITMAP_PARAM(global_fs_info, fs_common_info, umask);
+  VFS_SET_BITMAP_PARAM(global_fs_info, fs_common_info, umask);
 
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, auth_exportpath_xdev);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, auth_exportpath_xdev);
 
-  SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
+  VFS_SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
 
   LogFullDebug(COMPONENT_FSAL,
                     "Supported attributes constant = 0x%llX.",

@@ -132,7 +132,7 @@ fsal_status_t VFSFSAL_BuildExportContext(vfsfsal_export_context_t * p_export_con
         }
     }
 
-  /* save file descriptor to root of GPFS share */
+  /* save file descriptor to root of VFS export */
   if( ( p_export_context->mount_root_fd = open(mntdir, O_RDONLY | O_DIRECTORY) ) < 0 )
     {
       close( p_export_context->mount_root_fd );
@@ -179,7 +179,7 @@ fsal_status_t VFSFSAL_BuildExportContext(vfsfsal_export_context_t * p_export_con
  * this will clean up and state in an export that was created during
  * the BuildExportContext phase.  For many FSALs this may be a noop.
  *
- * \param p_export_context (in, gpfsfsal_export_context_t)
+ * \param p_export_context (in, vfsfsal_export_context_t)
  */
 
 fsal_status_t VFSFSAL_CleanUpExportContext(vfsfsal_export_context_t * p_export_context)
@@ -243,7 +243,6 @@ fsal_status_t VFSFSAL_GetClientContext(vfsfsal_op_context_t * p_thr_context,    
   /* set the export specific context */
   p_thr_context->export_context = p_export_context;
 
-  /* Extracted from  /opt/hpss/src/nfs/nfsd/nfs_Dispatch.c */
   p_thr_context->credential.user = uid;
   p_thr_context->credential.group = gid;
 

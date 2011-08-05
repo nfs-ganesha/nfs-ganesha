@@ -24,10 +24,10 @@
 
 /**
  * FSAL_rcp:
- * Copy an HPSS file to/from a local filesystem.
+ * Copy an VFS file to/from a local filesystem.
  *
  * \param filehandle (input):
- *        Handle of the HPSS file to be copied.
+ *        Handle of the VFS file to be copied.
  * \param cred (input):
  *        Authentication context for the operation (user,...).
  * \param p_local_path (input):

@@ -136,7 +136,7 @@ fsal_status_t VFSFSAL_readlink(vfsfsal_handle_t * p_linkhandle,       /* IN */
  *        Authentication context for the operation (user,...).
  * \param accessmode (ignored input):
  *        Mode of the link to be created.
- *        It has no sense in HPSS nor UNIX filesystems.
+ *        It has no sense in VFS nor UNIX filesystems.
  * \param link_handle (output):
  *        Pointer to the handle of the created symlink.
  * \param link_attributes (optionnal input/output): 
