@@ -49,7 +49,7 @@
 #include <sys/types.h>
 #include <mntent.h>
 
-/* Add missing prototype in vfs/*.h */
+/* Add missing prototype in vfs.h */
 int fd_to_handle(int fd, void **hanp, size_t * hlen);
 
 /* credential lifetime (1h) */
@@ -456,7 +456,7 @@ fsal_status_t fsal_internal_handle2fd(vfsfsal_op_context_t * p_context,
                                       vfsfsal_handle_t * phandle, int *pfd, int oflags)
 {
   int rc = 0;
-  int errsv = 0;
+  int errsv;
 
 
   if(!phandle || !pfd || !p_context)
@@ -492,13 +492,16 @@ fsal_status_t fsal_internal_fd2handle( vfsfsal_op_context_t * p_context,
 				       vfsfsal_handle_t * phandle)
 {
   int rc = 0 ;
-  int errsv = 0 ; 
+  int errsv; 
   int mnt_id = 0 ;
 
 
   phandle->data.vfs_handle.handle_bytes = VFS_HANDLE_LEN ;
   if( ( rc = vfs_fd_to_handle( fd, &phandle->data.vfs_handle, &mnt_id ) ) )
-   ReturnCode(posix2fsal_error(errsv), errsv);
+    {
+      errsv = errno;
+      ReturnCode(posix2fsal_error(errsv), errsv);
+    }
 
 #if 0 
   {
@@ -554,7 +557,6 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
                                           fsal_handle_t * p_handle      /* OUT
                                                                          */ )
 {
-  fsal_status_t st;
   int errsrv = 0 ;
 
   if( !p_fsalname || !p_handle )

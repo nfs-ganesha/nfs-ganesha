@@ -207,8 +207,6 @@ fsal_status_t VFSFSAL_DigestHandle(vfsfsal_export_context_t * p_expcontext,     
                                    caddr_t out_buff     /* OUT */
     )
 {
-  unsigned int ino32;
-
   /* sanity checks */
   if(!p_in_fsal_handle || !out_buff || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
