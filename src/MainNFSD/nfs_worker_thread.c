@@ -2009,7 +2009,7 @@ enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
 static void _9p_execute( _9p_request_data_t * preq9p, 
                           nfs_worker_data_t * pworker_data)
 {
-  printf( "A WORKER has a request to process \n" ) ;
+  _9p_process_request( preq9p ) ;
   return ;
 } /* _9p_execute */
 #endif

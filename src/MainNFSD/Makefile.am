@@ -43,9 +43,11 @@ STAT_EXPORTER_FILE =
 endif
 
 if USE_9P
-DISPATCH_9P_FILES = 9p_dispatcher.c
+DISPATCH_9P_FILES = 9p_dispatcher.c 
+_9P_LIB = ../Protocols/9P/lib9p.la
 else
 DISPATCH_9P_FILES = 
+_9P_LIB = 
 endif
 
 if USE_FSAL_FUSE
@@ -134,6 +136,7 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       ../Log/liblog.la                                  \
                                       ../ConfigParsing/libConfigParsing.la              \
                                       ../RPCAL/librpcal.la                              \
+                                      $(_9P_LIB)                                        \
                                       ../Protocols/XDR/libnfs_mnt_xdr.la                \
                                       ../SemN/libSemN.la                                \
                                       ../RW_Lock/librwlock.la                           \

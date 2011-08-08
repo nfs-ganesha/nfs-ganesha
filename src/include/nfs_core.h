@@ -616,6 +616,7 @@ void *rpc_dispatcher_thread(void *arg);
 #ifdef _USE_9P
 void * _9p_dispatcher_thread(void *arg);
 void DispatchWork9P(request_data_t *pnfsreq, unsigned int worker_index);
+void _9p_process_request( _9p_request_data_t * preq9p ) ;
 #endif
 void *admin_thread(void *arg);
 void *stats_thread(void *IndexArg);

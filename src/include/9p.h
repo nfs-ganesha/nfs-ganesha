@@ -37,144 +37,148 @@ typedef uint32_t u32;
 typedef uint64_t u64;
 
 #define _9P_MSG_SIZE 65560 
-#define _9P_HDR_SIZE 4
+#define _9P_HDR_SIZE  4
+#define _9P_TYPE_SIZE 1
+#define _9P_TAG_SIZE  2
+
+int _9p_version( u32 * plenin, char *pmsg, u32 * plenout, char * preply) ;
 
 /**
- * enum p9_msg_t - 9P message types
- * @P9_TLERROR: not used
- * @P9_RLERROR: response for any failed request for 9P2000.L
- * @P9_TSTATFS: file system status request
- * @P9_RSTATFS: file system status response
- * @P9_TSYMLINK: make symlink request
- * @P9_RSYMLINK: make symlink response
- * @P9_TMKNOD: create a special file object request
- * @P9_RMKNOD: create a special file object response
- * @P9_TLCREATE: prepare a handle for I/O on an new file for 9P2000.L
- * @P9_RLCREATE: response with file access information for 9P2000.L
- * @P9_TRENAME: rename request
- * @P9_RRENAME: rename response
- * @P9_TMKDIR: create a directory request
- * @P9_RMKDIR: create a directory response
- * @P9_TVERSION: version handshake request
- * @P9_RVERSION: version handshake response
- * @P9_TAUTH: request to establish authentication channel
- * @P9_RAUTH: response with authentication information
- * @P9_TATTACH: establish user access to file service
- * @P9_RATTACH: response with top level handle to file hierarchy
- * @P9_TERROR: not used
- * @P9_RERROR: response for any failed request
- * @P9_TFLUSH: request to abort a previous request
- * @P9_RFLUSH: response when previous request has been cancelled
- * @P9_TWALK: descend a directory hierarchy
- * @P9_RWALK: response with new handle for position within hierarchy
- * @P9_TOPEN: prepare a handle for I/O on an existing file
- * @P9_ROPEN: response with file access information
- * @P9_TCREATE: prepare a handle for I/O on a new file
- * @P9_RCREATE: response with file access information
- * @P9_TREAD: request to transfer data from a file or directory
- * @P9_RREAD: response with data requested
- * @P9_TWRITE: reuqest to transfer data to a file
- * @P9_RWRITE: response with out much data was transfered to file
- * @P9_TCLUNK: forget about a handle to an entity within the file system
- * @P9_RCLUNK: response when server has forgotten about the handle
- * @P9_TREMOVE: request to remove an entity from the hierarchy
- * @P9_RREMOVE: response when server has removed the entity
- * @P9_TSTAT: request file entity attributes
- * @P9_RSTAT: response with file entity attributes
- * @P9_TWSTAT: request to update file entity attributes
- * @P9_RWSTAT: response when file entity attributes are updated
+ * enum _9p_msg_t - 9P message types
+ * @_9P_TLERROR: not used
+ * @_9P_RLERROR: response for any failed request for 9P2000.L
+ * @_9P_TSTATFS: file system status request
+ * @_9P_RSTATFS: file system status response
+ * @_9P_TSYMLINK: make symlink request
+ * @_9P_RSYMLINK: make symlink response
+ * @_9P_TMKNOD: create a special file object request
+ * @_9P_RMKNOD: create a special file object response
+ * @_9P_TLCREATE: prepare a handle for I/O on an new file for 9P2000.L
+ * @_9P_RLCREATE: response with file access information for 9P2000.L
+ * @_9P_TRENAME: rename request
+ * @_9P_RRENAME: rename response
+ * @_9P_TMKDIR: create a directory request
+ * @_9P_RMKDIR: create a directory response
+ * @_9P_TVERSION: version handshake request
+ * @_9P_RVERSION: version handshake response
+ * @_9P_TAUTH: request to establish authentication channel
+ * @_9P_RAUTH: response with authentication information
+ * @_9P_TATTACH: establish user access to file service
+ * @_9P_RATTACH: response with top level handle to file hierarchy
+ * @_9P_TERROR: not used
+ * @_9P_RERROR: response for any failed request
+ * @_9P_TFLUSH: request to abort a previous request
+ * @_9P_RFLUSH: response when previous request has been cancelled
+ * @_9P_TWALK: descend a directory hierarchy
+ * @_9P_RWALK: response with new handle for position within hierarchy
+ * @_9P_TOPEN: prepare a handle for I/O on an existing file
+ * @_9P_ROPEN: response with file access information
+ * @_9P_TCREATE: prepare a handle for I/O on a new file
+ * @_9P_RCREATE: response with file access information
+ * @_9P_TREAD: request to transfer data from a file or directory
+ * @_9P_RREAD: response with data requested
+ * @_9P_TWRITE: reuqest to transfer data to a file
+ * @_9P_RWRITE: response with out much data was transfered to file
+ * @_9P_TCLUNK: forget about a handle to an entity within the file system
+ * @_9P_RCLUNK: response when server has forgotten about the handle
+ * @_9P_TREMOVE: request to remove an entity from the hierarchy
+ * @_9P_RREMOVE: response when server has removed the entity
+ * @_9P_TSTAT: request file entity attributes
+ * @_9P_RSTAT: response with file entity attributes
+ * @_9P_TWSTAT: request to update file entity attributes
+ * @_9P_RWSTAT: response when file entity attributes are updated
  *
  * There are 14 basic operations in 9P2000, paired as
  * requests and responses.  The one special case is ERROR
- * as there is no @P9_TERROR request for clients to transmit to
+ * as there is no @_9P_TERROR request for clients to transmit to
  * the server, but the server may respond to any other request
- * with an @P9_RERROR.
+ * with an @_9P_RERROR.
  *
  * See Also: http://plan9.bell-labs.com/sys/man/5/INDEX.html
  */
 
-enum p9_msg_t {
-	P9_TLERROR = 6,
-	P9_RLERROR,
-	P9_TSTATFS = 8,
-	P9_RSTATFS,
-	P9_TLOPEN = 12,
-	P9_RLOPEN,
-	P9_TLCREATE = 14,
-	P9_RLCREATE,
-	P9_TSYMLINK = 16,
-	P9_RSYMLINK,
-	P9_TMKNOD = 18,
-	P9_RMKNOD,
-	P9_TRENAME = 20,
-	P9_RRENAME,
-	P9_TREADLINK = 22,
-	P9_RREADLINK,
-	P9_TGETATTR = 24,
-	P9_RGETATTR,
-	P9_TSETATTR = 26,
-	P9_RSETATTR,
-	P9_TXATTRWALK = 30,
-	P9_RXATTRWALK,
-	P9_TXATTRCREATE = 32,
-	P9_RXATTRCREATE,
-	P9_TREADDIR = 40,
-	P9_RREADDIR,
-	P9_TFSYNC = 50,
-	P9_RFSYNC,
-	P9_TLOCK = 52,
-	P9_RLOCK,
-	P9_TGETLOCK = 54,
-	P9_RGETLOCK,
-	P9_TLINK = 70,
-	P9_RLINK,
-	P9_TMKDIR = 72,
-	P9_RMKDIR,
-	P9_TRENAMEAT = 74,
-	P9_RRENAMEAT,
-	P9_TUNLINKAT = 76,
-	P9_RUNLINKAT,
-	P9_TVERSION = 100,
-	P9_RVERSION,
-	P9_TAUTH = 102,
-	P9_RAUTH,
-	P9_TATTACH = 104,
-	P9_RATTACH,
-	P9_TERROR = 106,
-	P9_RERROR,
-	P9_TFLUSH = 108,
-	P9_RFLUSH,
-	P9_TWALK = 110,
-	P9_RWALK,
-	P9_TOPEN = 112,
-	P9_ROPEN,
-	P9_TCREATE = 114,
-	P9_RCREATE,
-	P9_TREAD = 116,
-	P9_RREAD,
-	P9_TWRITE = 118,
-	P9_RWRITE,
-	P9_TCLUNK = 120,
-	P9_RCLUNK,
-	P9_TREMOVE = 122,
-	P9_RREMOVE,
-	P9_TSTAT = 124,
-	P9_RSTAT,
-	P9_TWSTAT = 126,
-	P9_RWSTAT,
+enum _9p_msg_t {
+	_9P_TLERROR = 6,
+	_9P_RLERROR,
+	_9P_TSTATFS = 8,
+	_9P_RSTATFS,
+	_9P_TLOPEN = 12,
+	_9P_RLOPEN,
+	_9P_TLCREATE = 14,
+	_9P_RLCREATE,
+	_9P_TSYMLINK = 16,
+	_9P_RSYMLINK,
+	_9P_TMKNOD = 18,
+	_9P_RMKNOD,
+	_9P_TRENAME = 20,
+	_9P_RRENAME,
+	_9P_TREADLINK = 22,
+	_9P_RREADLINK,
+	_9P_TGETATTR = 24,
+	_9P_RGETATTR,
+	_9P_TSETATTR = 26,
+	_9P_RSETATTR,
+	_9P_TXATTRWALK = 30,
+	_9P_RXATTRWALK,
+	_9P_TXATTRCREATE = 32,
+	_9P_RXATTRCREATE,
+	_9P_TREADDIR = 40,
+	_9P_RREADDIR,
+	_9P_TFSYNC = 50,
+	_9P_RFSYNC,
+	_9P_TLOCK = 52,
+	_9P_RLOCK,
+	_9P_TGETLOCK = 54,
+	_9P_RGETLOCK,
+	_9P_TLINK = 70,
+	_9P_RLINK,
+	_9P_TMKDIR = 72,
+	_9P_RMKDIR,
+	_9P_TRENAMEAT = 74,
+	_9P_RRENAMEAT,
+	_9P_TUNLINKAT = 76,
+	_9P_RUNLINKAT,
+	_9P_TVERSION = 100,
+	_9P_RVERSION,
+	_9P_TAUTH = 102,
+	_9P_RAUTH,
+	_9P_TATTACH = 104,
+	_9P_RATTACH,
+	_9P_TERROR = 106,
+	_9P_RERROR,
+	_9P_TFLUSH = 108,
+	_9P_RFLUSH,
+	_9P_TWALK = 110,
+	_9P_RWALK,
+	_9P_TOPEN = 112,
+	_9P_ROPEN,
+	_9P_TCREATE = 114,
+	_9P_RCREATE,
+	_9P_TREAD = 116,
+	_9P_RREAD,
+	_9P_TWRITE = 118,
+	_9P_RWRITE,
+	_9P_TCLUNK = 120,
+	_9P_RCLUNK,
+	_9P_TREMOVE = 122,
+	_9P_RREMOVE,
+	_9P_TSTAT = 124,
+	_9P_RSTAT,
+	_9P_TWSTAT = 126,
+	_9P_RWSTAT,
 };
 
 /**
- * enum p9_qid_t - QID types
- * @P9_QTDIR: directory
- * @P9_QTAPPEND: append-only
- * @P9_QTEXCL: excluse use (only one open handle allowed)
- * @P9_QTMOUNT: mount points
- * @P9_QTAUTH: authentication file
- * @P9_QTTMP: non-backed-up files
- * @P9_QTSYMLINK: symbolic links (9P2000.u)
- * @P9_QTLINK: hard-link (9P2000.u)
- * @P9_QTFILE: normal files
+ * enum _9p_qid_t - QID types
+ * @_9P_QTDIR: directory
+ * @_9P_QTAPPEND: append-only
+ * @_9P_QTEXCL: excluse use (only one open handle allowed)
+ * @_9P_QTMOUNT: mount points
+ * @_9P_QTAUTH: authentication file
+ * @_9P_QTTMP: non-backed-up files
+ * @_9P_QTSYMLINK: symbolic links (9P2000.u)
+ * @_9P_QTLINK: hard-link (9P2000.u)
+ * @_9P_QTFILE: normal files
  *
  * QID types are a subset of permissions - they are primarily
  * used to differentiate semantics for a file system entity via
@@ -183,32 +187,32 @@ enum p9_msg_t {
  *
  * See Also: http://plan9.bell-labs.com/magic/man2html/2/stat
  */
-enum p9_qid_t {
-	P9_QTDIR = 0x80,
-	P9_QTAPPEND = 0x40,
-	P9_QTEXCL = 0x20,
-	P9_QTMOUNT = 0x10,
-	P9_QTAUTH = 0x08,
-	P9_QTTMP = 0x04,
-	P9_QTSYMLINK = 0x02,
-	P9_QTLINK = 0x01,
-	P9_QTFILE = 0x00,
+enum _9p_qid_t {
+	_9P_QTDIR = 0x80,
+	_9P_QTAPPEND = 0x40,
+	_9P_QTEXCL = 0x20,
+	_9P_QTMOUNT = 0x10,
+	_9P_QTAUTH = 0x08,
+	_9P_QTTMP = 0x04,
+	_9P_QTSYMLINK = 0x02,
+	_9P_QTLINK = 0x01,
+	_9P_QTFILE = 0x00,
 };
 
 /* 9P Magic Numbers */
-#define P9_NOTAG	(u16)(~0)
-#define P9_NOFID	(u32)(~0)
-#define P9_NONUNAME	(u32)(~0)
-#define P9_MAXWELEM	16
+#define _9P_NOTAG	(u16)(~0)
+#define _9P_NOFID	(u32)(~0)
+#define _9P_NONUNAME	(u32)(~0)
+#define _9P_MAXWELEM	16
 
-/* ample room for P9_TWRITE/P9_RREAD header */
-#define P9_IOHDRSZ	24
+/* ample room for _9P_TWRITE/_9P_RREAD header */
+#define _9P_IOHDRSZ	24
 
 /* Room for readdir header */
-#define P9_READDIRHDRSZ	24
+#define _9P_READDIRHDRSZ	24
 
 /**
- * struct p9_str - length prefixed string type
+ * struct _9p_str - length prefixed string type
  * @len: length of the string
  * @str: the string
  *
@@ -217,13 +221,13 @@ enum p9_qid_t {
  * string members.
  */
 
-struct p9_str {
+struct _9p_str {
 	u16 len;
 	char *str;
 };
 
 /**
- * struct p9_qid - file system entity information
+ * struct _9p_qid - file system entity information
  * @type: 8-bit type &p9_qid_t
  * @version: 16-bit monotonically incrementing version number
  * @path: 64-bit per-server-unique ID for a file system element
@@ -242,7 +246,7 @@ struct p9_str {
  * See Also://plan9.bell-labs.com/magic/man2html/2/stat
  */
 
-struct p9_qid {
+struct _9p_qid {
 	u8 type;
 	u32 version;
 	u64 path;
@@ -250,57 +254,57 @@ struct p9_qid {
 
 /* Bit values for getattr valid field.
  */
-#define P9_GETATTR_MODE		0x00000001ULL
-#define P9_GETATTR_NLINK	0x00000002ULL
-#define P9_GETATTR_UID		0x00000004ULL
-#define P9_GETATTR_GID		0x00000008ULL
-#define P9_GETATTR_RDEV		0x00000010ULL
-#define P9_GETATTR_ATIME	0x00000020ULL
-#define P9_GETATTR_MTIME	0x00000040ULL
-#define P9_GETATTR_CTIME	0x00000080ULL
-#define P9_GETATTR_INO		0x00000100ULL
-#define P9_GETATTR_SIZE		0x00000200ULL
-#define P9_GETATTR_BLOCKS	0x00000400ULL
+#define _9P_GETATTR_MODE		0x00000001ULL
+#define _9P_GETATTR_NLINK	0x00000002ULL
+#define _9P_GETATTR_UID		0x00000004ULL
+#define _9P_GETATTR_GID		0x00000008ULL
+#define _9P_GETATTR_RDEV		0x00000010ULL
+#define _9P_GETATTR_ATIME	0x00000020ULL
+#define _9P_GETATTR_MTIME	0x00000040ULL
+#define _9P_GETATTR_CTIME	0x00000080ULL
+#define _9P_GETATTR_INO		0x00000100ULL
+#define _9P_GETATTR_SIZE		0x00000200ULL
+#define _9P_GETATTR_BLOCKS	0x00000400ULL
 
-#define P9_GETATTR_BTIME	0x00000800ULL
-#define P9_GETATTR_GEN		0x00001000ULL
-#define P9_GETATTR_DATA_VERSION	0x00002000ULL
+#define _9P_GETATTR_BTIME	0x00000800ULL
+#define _9P_GETATTR_GEN		0x00001000ULL
+#define _9P_GETATTR_DATA_VERSION	0x00002000ULL
 
-#define P9_GETATTR_BASIC	0x000007ffULL /* Mask for fields up to BLOCKS */
-#define P9_GETATTR_ALL		0x00003fffULL /* Mask for All fields above */
+#define _9P_GETATTR_BASIC	0x000007ffULL /* Mask for fields up to BLOCKS */
+#define _9P_GETATTR_ALL		0x00003fffULL /* Mask for All fields above */
 
 /* Bit values for setattr valid field from <linux/fs.h>.
  */
-#define P9_SETATTR_MODE		0x00000001UL
-#define P9_SETATTR_UID		0x00000002UL
-#define P9_SETATTR_GID		0x00000004UL
-#define P9_SETATTR_SIZE		0x00000008UL
-#define P9_SETATTR_ATIME	0x00000010UL
-#define P9_SETATTR_MTIME	0x00000020UL
-#define P9_SETATTR_CTIME	0x00000040UL
-#define P9_SETATTR_ATIME_SET	0x00000080UL
-#define P9_SETATTR_MTIME_SET	0x00000100UL
+#define _9P_SETATTR_MODE		0x00000001UL
+#define _9P_SETATTR_UID		0x00000002UL
+#define _9P_SETATTR_GID		0x00000004UL
+#define _9P_SETATTR_SIZE		0x00000008UL
+#define _9P_SETATTR_ATIME	0x00000010UL
+#define _9P_SETATTR_MTIME	0x00000020UL
+#define _9P_SETATTR_CTIME	0x00000040UL
+#define _9P_SETATTR_ATIME_SET	0x00000080UL
+#define _9P_SETATTR_MTIME_SET	0x00000100UL
 
 /* Bit values for lock status.
  */
-#define P9_LOCK_SUCCESS 0
-#define P9_LOCK_BLOCKED 1
-#define P9_LOCK_ERROR 2
-#define P9_LOCK_GRACE 3
+#define _9P_LOCK_SUCCESS 0
+#define _9P_LOCK_BLOCKED 1
+#define _9P_LOCK_ERROR 2
+#define _9P_LOCK_GRACE 3
 
 /* Bit values for lock flags.
  */
-#define P9_LOCK_FLAGS_BLOCK 1
-#define P9_LOCK_FLAGS_RECLAIM 2
+#define _9P_LOCK_FLAGS_BLOCK 1
+#define _9P_LOCK_FLAGS_RECLAIM 2
 
 /* Structures for Protocol Operations */
-struct p9_rlerror {
+struct _9p_rlerror {
 	u32 ecode;
 };
-struct p9_tstatfs {
+struct _9p_tstatfs {
 	u32 fid;
 };
-struct p9_rstatfs {
+struct _9p_rstatfs {
 	u32 type;
 	u32 bsize;
 	u64 blocks;
@@ -311,65 +315,65 @@ struct p9_rstatfs {
 	u64 fsid;
 	u32 namelen;
 };
-struct p9_tlopen {
+struct _9p_tlopen {
 	u32 fid;
 	u32 flags;
 };
-struct p9_rlopen {
-	struct p9_qid qid;
+struct _9p_rlopen {
+	struct _9p_qid qid;
 	u32 iounit;
 };
-struct p9_tlcreate {
+struct _9p_tlcreate {
 	u32 fid;
-	struct p9_str name;
+	struct _9p_str name;
 	u32 flags;
 	u32 mode;
 	u32 gid;
 };
-struct p9_rlcreate {
-	struct p9_qid qid;
+struct _9p_rlcreate {
+	struct _9p_qid qid;
 	u32 iounit;
 };
-struct p9_tsymlink {
+struct _9p_tsymlink {
 	u32 fid;
-	struct p9_str name;
-	struct p9_str symtgt;
+	struct _9p_str name;
+	struct _9p_str symtgt;
 	u32 gid;
 };
-struct p9_rsymlink {
-	struct p9_qid qid;
+struct _9p_rsymlink {
+	struct _9p_qid qid;
 };
-struct p9_tmknod {
+struct _9p_tmknod {
 	u32 fid;
-	struct p9_str name;
+	struct _9p_str name;
 	u32 mode;
 	u32 major;
 	u32 minor;
 	u32 gid;
 };
-struct p9_rmknod {
-	struct p9_qid qid;
+struct _9p_rmknod {
+	struct _9p_qid qid;
 };
-struct p9_trename {
+struct _9p_trename {
 	u32 fid;
 	u32 dfid;
-	struct p9_str name;
+	struct _9p_str name;
 };
-struct p9_rrename {
+struct _9p_rrename {
 };
-struct p9_treadlink {
+struct _9p_treadlink {
 	u32 fid;
 };
-struct p9_rreadlink {
-	struct p9_str target;
+struct _9p_rreadlink {
+	struct _9p_str target;
 };
-struct p9_tgetattr {
+struct _9p_tgetattr {
 	u32 fid;
 	u64 request_mask;
 };
-struct p9_rgetattr {
+struct _9p_rgetattr {
 	u64 valid;
-	struct p9_qid qid;
+	struct _9p_qid qid;
 	u32 mode;
 	u32 uid;
 	u32 gid;
@@ -389,7 +393,7 @@ struct p9_rgetattr {
 	u64 gen;
 	u64 data_version;
 };
-struct p9_tsetattr {
+struct _9p_tsetattr {
 	u32 fid;
 	u32 valid;
 	u32 mode;
@@ -401,97 +405,97 @@ struct p9_tsetattr {
 	u64 mtime_sec;
 	u64 mtime_nsec;
 };
-struct p9_rsetattr {
+struct _9p_rsetattr {
 };
-struct p9_txattrwalk {
+struct _9p_txattrwalk {
 	u32 fid;
 	u32 attrfid;
-	struct p9_str name;
+	struct _9p_str name;
 };
-struct p9_rxattrwalk {
+struct _9p_rxattrwalk {
 	u64 size;
 };
-struct p9_txattrcreate {
+struct _9p_txattrcreate {
 	u32 fid;
-	struct p9_str name;
+	struct _9p_str name;
 	u64 size;
 	u32 flag;
 };
-struct p9_rxattrcreate {
+struct _9p_rxattrcreate {
 };
-struct p9_treaddir {
+struct _9p_treaddir {
 	u32 fid;
 	u64 offset;
 	u32 count;
 };
-struct p9_rreaddir {
+struct _9p_rreaddir {
 	u32 count;
 	u8 *data;
 };
-struct p9_tfsync {
+struct _9p_tfsync {
 	u32 fid;
 };
-struct p9_rfsync {
+struct _9p_rfsync {
 };
-struct p9_tlock {
+struct _9p_tlock {
 	u32 fid;
 	u8 type;
 	u32 flags;
 	u64 start;
 	u64 length;
 	u32 proc_id;
-	struct p9_str client_id;
+	struct _9p_str client_id;
 };
-struct p9_rlock {
+struct _9p_rlock {
 	u8 status;
 };
-struct p9_tgetlock {
+struct _9p_tgetlock {
 	u32 fid;
 	u8 type;
 	u64 start;
 	u64 length;
 	u32 proc_id;
-	struct p9_str client_id;
+	struct _9p_str client_id;
 };
-struct p9_rgetlock {
+struct _9p_rgetlock {
 	u8 type;
 	u64 start;
 	u64 length;
 	u32 proc_id;
-	struct p9_str client_id;
+	struct _9p_str client_id;
 };
-struct p9_tlink {
+struct _9p_tlink {
 	u32 dfid;
 	u32 fid;
-	struct p9_str name;
+	struct _9p_str name;
 };
-struct p9_rlink {
+struct _9p_rlink {
 };
-struct p9_tmkdir {
+struct _9p_tmkdir {
 	u32 fid;
-	struct p9_str name;
+	struct _9p_str name;
 	u32 mode;
 	u32 gid;
 };
-struct p9_rmkdir {
-	struct p9_qid qid;
+struct _9p_rmkdir {
+	struct _9p_qid qid;
 };
-struct p9_trenameat {
+struct _9p_trenameat {
 	u32 olddirfid;
-	struct p9_str oldname;
+	struct _9p_str oldname;
 	u32 newdirfid;
-	struct p9_str newname;
+	struct _9p_str newname;
 };
-struct p9_rrenameat {
+struct _9p_rrenameat {
 };
-struct p9_tunlinkat {
+struct _9p_tunlinkat {
 	u32 dirfid;
-	struct p9_str name;
+	struct _9p_str name;
 	u32 flags;
 };
-struct p9_runlinkat {
+struct _9p_runlinkat {
 };
-struct p9_tawrite {
+struct _9p_tawrite {
 	u32 fid;
 	u8 datacheck;
 	u64 offset;
@@ -500,101 +504,103 @@ struct p9_tawrite {
 	u8 *data;
 	u32 check;
 };
-struct p9_rawrite {
+struct _9p_rawrite {
 	u32 count;
 };
-struct p9_tversion {
+struct _9p_tversion {
 	u32 msize;
-	struct p9_str version;
+	struct _9p_str version;
 };
-struct p9_rversion {
+struct _9p_rversion {
 	u32 msize;
-	struct p9_str version;
+	struct _9p_str version;
 };
-struct p9_tauth {
+struct _9p_tauth {
 	u32 afid;
-	struct p9_str uname;
-	struct p9_str aname;
+	struct _9p_str uname;
+	struct _9p_str aname;
 	u32 n_uname;		/* 9P2000.u extensions */
 };
-struct p9_rauth {
-	struct p9_qid qid;
+struct _9p_rauth {
+	struct _9p_qid qid;
 };
-struct p9_rerror {
-	struct p9_str error;
+struct _9p_rerror {
+	struct _9p_str error;
 	u32 errnum;		/* 9p2000.u extension */
 };
-struct p9_tflush {
+struct _9p_tflush {
 	u16 oldtag;
 };
-struct p9_rflush {
+struct _9p_rflush {
 };
-struct p9_tattach {
+struct _9p_tattach {
 	u32 fid;
 	u32 afid;
-	struct p9_str uname;
-	struct p9_str aname;
+	struct _9p_str uname;
+	struct _9p_str aname;
 	u32 n_uname;		/* 9P2000.u extensions */
 };
-struct p9_rattach {
-	struct p9_qid qid;
+struct _9p_rattach {
+	struct _9p_qid qid;
 };
-struct p9_twalk {
+struct _9p_twalk {
 	u32 fid;
 	u32 newfid;
 	u16 nwname;
-	struct p9_str wnames[P9_MAXWELEM];
+	struct _9p_str wnames[_9P_MAXWELEM];
 };
-struct p9_rwalk {
+struct _9p_rwalk {
 	u16 nwqid;
-	struct p9_qid wqids[P9_MAXWELEM];
+	struct _9p_qid wqids[_9P_MAXWELEM];
 };
-struct p9_topen {
+struct _9p_topen {
 	u32 fid;
 	u8 mode;
 };
-struct p9_ropen {
-	struct p9_qid qid;
+struct _9p_ropen {
+	struct _9p_qid qid;
 	u32 iounit;
 };
-struct p9_tcreate {
+struct _9p_tcreate {
 	u32 fid;
-	struct p9_str name;
+	struct _9p_str name;
 	u32 perm;
 	u8 mode;
-	struct p9_str extension;
+	struct _9p_str extension;
 };
-struct p9_rcreate {
-	struct p9_qid qid;
+struct _9p_rcreate {
+	struct _9p_qid qid;
 	u32 iounit;
 };
-struct p9_tread {
+struct _9p_tread {
 	u32 fid;
 	u64 offset;
 	u32 count;
 };
-struct p9_rread {
+struct _9p_rread {
 	u32 count;
 	u8 *data;
 };
-struct p9_twrite {
+struct _9p_twrite {
 	u32 fid;
 	u64 offset;
 	u32 count;
 	u8 *data;
 };
-struct p9_rwrite {
+struct _9p_rwrite {
 	u32 count;
 };
-struct p9_tclunk {
+struct _9p_tclunk {
 	u32 fid;
 };
-struct p9_rclunk {
+struct _9p_rclunk {
 };
-struct p9_tremove {
+struct _9p_tremove {
 	u32 fid;
 };
-struct p9_rremove {
+struct _9p_rremove {
 };
 
+union _9p_tmsg {
+} ;
 #endif /* NET_9P_H */
