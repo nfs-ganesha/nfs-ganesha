@@ -342,9 +342,15 @@ void _9p_process_request( _9p_request_data_t * preq9p )
         else if( send( preq9p->_9psockfd, replypayload, outdatalen, 0 ) != outdatalen )
            printf( "VERSION: BADSIZE sent\n" ) ;
         break ;
+
      case _9P_TAUTH:
         break ;
      case _9P_TATTACH:
+        if( ( rc = _9p_attach( &indatalen, msgdata, &outdatalen, replypayload ) ) < 0 )
+	  printf( "ATTACH: Got rc = %d\n", rc ) ;
+        else if( send( preq9p->_9psockfd, replypayload, outdatalen, 0 ) != outdatalen )
+           printf( "ATTACH: BADSIZE sent\n" ) ;
+
         break ;
      case _9P_TERROR:
         break ;

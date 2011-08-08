@@ -41,6 +41,7 @@ typedef uint64_t u64;
 #define _9P_TYPE_SIZE 1
 #define _9P_TAG_SIZE  2
 
+int _9p_attach( u32 * plenin, char *pmsg, u32 * plenout, char * preply) ;
 int _9p_version( u32 * plenin, char *pmsg, u32 * plenout, char * preply) ;
 
 /**
