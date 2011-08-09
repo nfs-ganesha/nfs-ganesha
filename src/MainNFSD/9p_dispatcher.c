@@ -77,7 +77,7 @@ void DispatchWork9P( request_data_t *preq, unsigned int worker_index)
 
   LogDebug(COMPONENT_DISPATCH,
            "Awaking Worker Thread #%u for 9P request %p, tcpsock=%lu",
-           worker_index, preq, preq->rcontent._9p._9psockfd);
+           worker_index, preq, preq->rcontent._9p.pconn->sockfd);
 
   P(workers_data[worker_index].request_mutex);
   P(workers_data[worker_index].request_pool_mutex);
@@ -201,6 +201,8 @@ void * _9p_socket_thread( void * Arg )
   request_data_t *preq = NULL;
   unsigned int worker_index;
 
+  _9p_conn_t _9p_conn ;
+
   char * _9pmsg ;
   uint32_t * p_9pmsglen = NULL ;
 
@@ -210,6 +212,12 @@ void * _9p_socket_thread( void * Arg )
 
   snprintf(my_name, MAXNAMLEN, "9p_sock_mgr#fd=%ld", tcp_sock);
   SetNameFunction(my_name);
+
+  /* Init the _9p_conn_t structure */
+  _9p_conn.sockfd = tcp_sock ;
+  _9p_conn.lowest_fid = -1 ;
+  pthread_mutex_init( &_9p_conn.lock, NULL ) ;
+  FD_ZERO( &_9p_conn.fidset ) ;
 
 #ifndef _NO_BUDDY_SYSTEM
   if((rc = BuddyInit(&nfs_param.buddy_param_tcp_mgr)) != BUDDY_SUCCESS)
@@ -295,7 +303,7 @@ void * _9p_socket_thread( void * Arg )
         /* Prepare to read the message */
         preq->rtype = _9P_REQUEST ;
         _9pmsg = preq->rcontent._9p._9pmsg ;
-        preq->rcontent._9p._9psockfd = tcp_sock ;
+        preq->rcontent._9p.pconn = &_9p_conn ;
 
         /* An incoming 9P request: the msg has a 4 bytes header showing the size of the msg including the header */
         if( (readlen = recv( fds[0].fd, _9pmsg ,_9P_HDR_SIZE, 0) == _9P_HDR_SIZE ) )

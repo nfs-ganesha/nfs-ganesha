@@ -50,77 +50,41 @@
 
 static char version_9p200l[] = "9P2000.L" ;
 
-int _9p_version( char *pmsg, u32 * plenout, char * preply)
+int _9p_version( _9p_request_data_t * preq9p, u32 * plenout, char * preply)
 {
-  char * cursor = pmsg ;
-  u16 * pmsgtag = NULL ;
-  u32 * pmsize = NULL ;
-  u16 * pstrlen = NULL ;
-  char * strdata = NULL ;
+  char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
 
-  struct _9p_tversion * tversion = NULL ;
+  u16 * msgtag = NULL ;
+  u32 * msize = NULL ;
+  u16 * version_len = NULL ;
+  char * version_str = NULL ;
 
-
-  if ( !pmsg || !plenout || !preply )
+  if ( !preq9p || !plenout || !preply )
    return -1 ;
 
-  /* Get message's tag */
-  pmsgtag = (u16 *)cursor ;
-  cursor += _9P_TAG_SIZE ;
- 
-  LogDebug( COMPONENT_9P, "VERSION: The 9P message has tag %u", (u32)*pmsgtag ) ;
+  /* Get data */
+  _9p_getptr( cursor, msgtag, u16 ) ; 
+  _9p_getptr( cursor, msize,  u32 ) ;
+  _9p_getstr( cursor, version_len, version_str ) ;
 
-  tversion = (struct _9p_tversion *)(pmsgtag+_9P_TAG_SIZE) ;
+  LogDebug( COMPONENT_9P, "TVERSION: tag=%u msize=%u version='%.*s'", (u32)*msgtag, *msize, (int)*version_len, version_str ) ;
 
-  /* Get the version size */
-  pmsize = (u32 *)cursor ;
-  cursor += sizeof( u32 ) ;
-
-
-  /* Get the length of the string containing the version */
-  pstrlen = (u16 *)cursor ;
-  cursor += sizeof( u16 ) ;
-  strdata = cursor ;
-
-  LogDebug( COMPONENT_9P, "TVERSION: msize = %u version='%s'\n", *pmsize, strdata ) ;
-
-  if( strncmp( strdata, version_9p200l, *pstrlen ) )
+  if( strncmp( version_str, version_9p200l, *version_len ) )
    {
-      LogEvent( COMPONENT_9P, "RVERSION: BAD VERSION\n" ) ;
+      LogEvent( COMPONENT_9P, "RVERSION: BAD VERSION" ) ;
       return -1 ;
    } 
 
   /* Good version, build the reply */
-  cursor = preply ;
-  cursor += _9P_HDR_SIZE ; /* to be set at the end */
+  _9p_setinitptr( cursor, preply, _9P_RVERSION ) ;
+  _9p_setptr( cursor, msgtag, u16 ) ;
 
-  /* Set reply type */
-  *((u8 *)cursor) = _9P_RVERSION ;
-  cursor += sizeof( u8 ) ;
+  _9p_setptr( cursor, msize,  u32 ) ;
+  _9p_setstr( cursor, version_len, version_str ) ;
+  _9p_setendptr( cursor, preply ) ;
+  _9p_checkbound( cursor, preply, plenout ) ;
 
-  /* Set the tag */
-  *((u16 *)cursor) =  *pmsgtag ;
-  cursor += sizeof( u16 ) ;
-
-  /* Set the msize */
-  *((u32 *)cursor) = *pmsize ;  
-  cursor += sizeof( u32 ) ;
-
-  /* set the string */
-  *((u16 *)cursor) = *pstrlen ;
-  cursor += sizeof( u16 ) ;
-
-  memcpy( cursor, strdata, *pstrlen ) ;
-  cursor += *pstrlen ;
-
-  /* Now that the full size if computable, fill in the header size */
-  if( ( (u32)(cursor - preply) )  > *plenout )
-    return -1 ;
-
-  *((u32 *)preply) =  (u32)(cursor - preply) ;
-  *plenout =  (u32)(cursor - preply) ;
-
-  LogDebug( COMPONENT_9P, "RVERSION: msize = %u version='%s'\n", *pmsize, strdata ) ;
+  LogDebug( COMPONENT_9P, "RVERSION: msize=%u version='%.*s'", *msize, (int)*version_len, version_str ) ;
 
   return 1 ;
 }

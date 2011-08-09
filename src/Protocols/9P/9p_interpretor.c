@@ -271,10 +271,8 @@ void _9p_process_request( _9p_request_data_t * preq9p )
   int rc = 0 ; 
 
   char replydata[_9P_MSG_SIZE] ;
-  char *replypayload = NULL ;
 
   msgdata =  preq9p->_9pmsg;
-  replypayload = replydata + _9P_HDR_SIZE + _9P_TYPE_SIZE + _9P_TAG_SIZE ;
 
   /* Get message's length */
   pmsglen = (u32 *)msgdata ;
@@ -291,83 +289,147 @@ void _9p_process_request( _9p_request_data_t * preq9p )
   switch( *pmsgtype )
    {
      case _9P_TLERROR:
+     LogEvent( COMPONENT_9P,  "_9P_TLERROR not implemented yet" ) ;
         break ;
+
      case _9P_TSTATFS:
+     LogEvent( COMPONENT_9P, " _9P_TSTATFS not implemented yet" ) ;
         break ;
+
      case _9P_TLOPEN:
+     LogEvent( COMPONENT_9P, " _9P_TLOPEN not implemented yet" ) ;
         break ;
+
      case _9P_TLCREATE:
+     LogEvent( COMPONENT_9P, " _9P_TLCREATE not implemented yet" ) ;
         break ;
+
      case _9P_TSYMLINK:
+     LogEvent( COMPONENT_9P, " _9P_TSYMLINK not implemented yet" ) ;
         break ;
+
      case _9P_TMKNOD:
+     LogEvent( COMPONENT_9P, " _9P_TMKNOD not implemented yet" ) ;
         break ;
+
      case _9P_TRENAME:
+     LogEvent( COMPONENT_9P, "_9P_TRENAME not implemented yet" ) ;
         break ;
+
      case _9P_TREADLINK:
+     LogEvent( COMPONENT_9P, "_9P_TREADLINK not implemented yet" ) ;
         break ;
+
      case _9P_TGETATTR:
+     LogEvent( COMPONENT_9P, "_9P_TGETATTR not implemented yet" ) ;
         break ;
+
      case _9P_TSETATTR:
+     LogEvent( COMPONENT_9P, "_9P_TSETATTR not implemented yet" ) ;
         break ;
+
      case _9P_TXATTRWALK:
+     LogEvent( COMPONENT_9P, "_9P_TXATTRWALK not implemented yet" ) ;
         break ;
+
      case _9P_TXATTRCREATE:
+     LogEvent( COMPONENT_9P, "_9P_TXATTRCREATE not implemented yet" ) ;
         break ;
+
      case _9P_TREADDIR:
+     LogEvent( COMPONENT_9P, "_9P_TREADDIR not implemented yet" ) ;
         break ;
+
      case _9P_TFSYNC:
+     LogEvent( COMPONENT_9P, "_9P_TFSYNC not implemented yet" ) ;
         break ;
+
      case _9P_TLOCK:
+     LogEvent( COMPONENT_9P, "_9P_TLOCK not implemented yet" ) ;
         break ;
+
      case _9P_TGETLOCK:
+     LogEvent( COMPONENT_9P, "_9P_TGETLOCK not implemented yet" ) ;
         break ;
+
      case _9P_TLINK:
+     LogEvent( COMPONENT_9P, "_9P_TLINK not implemented yet" ) ;
         break ;
+
      case _9P_TMKDIR:
+     LogEvent( COMPONENT_9P, "_9P_TMKDIR not implemented yet" ) ;
         break ;
+
      case _9P_TRENAMEAT:
+     LogEvent( COMPONENT_9P, "_9P_TRENAMEAT not implemented yet" ) ;
         break ;
+
      case _9P_TUNLINKAT:
+     LogEvent( COMPONENT_9P, "_9P_TUNLINKAT not implemented yet" ) ;
         break ;
+
      case _9P_TVERSION:
-        if(  ( ( rc = _9p_version( msgdata, &outdatalen, replypayload ) ) < 0 )  ||
-             ( send( preq9p->_9psockfd, replypayload, outdatalen, 0 ) != outdatalen ) )
+        if(  ( ( rc = _9p_version( preq9p, &outdatalen, replydata ) ) < 0 )  ||
+             ( send( preq9p->pconn->sockfd, replydata, outdatalen, 0 ) != outdatalen ) )
            printf( "VERSION: Error \n" ) ;
         break ;
 
      case _9P_TAUTH:
+     LogEvent( COMPONENT_9P, "_9P_TAUTH not implemented yet" ) ;
         break ;
-     case _9P_TATTACH:
-        if( ( rc = _9p_attach( msgdata, &outdatalen, replypayload ) ) < 0 )
-	  printf( "ATTACH: Got rc = %d\n", rc ) ;
-        else if( send( preq9p->_9psockfd, replypayload, outdatalen, 0 ) != outdatalen )
-           printf( "ATTACH: BADSIZE sent\n" ) ;
 
+     case _9P_TATTACH:
+        if( ( ( rc = _9p_attach( preq9p, &outdatalen, replydata ) ) < 0 )  ||
+            ( send( preq9p->pconn->sockfd, replydata, outdatalen, 0 ) != outdatalen ) )
+           printf( "ATTACH: Error\n" ) ;
         break ;
+
      case _9P_TERROR:
+     LogEvent( COMPONENT_9P, "_9P_TERROR not implemented yet" ) ;
         break ;
+
      case _9P_TFLUSH:
+     LogEvent( COMPONENT_9P, "_9P_TFLUSH not implemented yet" ) ;
         break ;
+
      case _9P_TWALK:
+     LogEvent( COMPONENT_9P, "_9P_TWALK not implemented yet" ) ;
         break ;
+
      case _9P_TOPEN:
+     LogEvent( COMPONENT_9P, "_9P_TOPEN not implemented yet" ) ;
         break ;
+
      case _9P_TCREATE:
+     LogEvent( COMPONENT_9P, "_9P_TCREATE not implemented yet" ) ;
         break ;
+
      case _9P_TREAD:
+     LogEvent( COMPONENT_9P, "_9P_TREAD not implemented yet" ) ;
         break ;
+
      case _9P_TWRITE:
+     LogEvent( COMPONENT_9P, "_9P_TWRITE not implemented yet" ) ;
         break ;
+
      case _9P_TCLUNK:
+     LogEvent( COMPONENT_9P, "_9P_TCLUNK not implemented yet" ) ;
         break ;
+
      case _9P_TREMOVE:
+     LogEvent( COMPONENT_9P, "_9P_TREMOVE not implemented yet" ) ;
         break ;
+
      case _9P_TSTAT:
+     LogEvent( COMPONENT_9P, "_9P_TSTAT not implemented yet" ) ;
         break ;
+
      case _9P_TWSTAT:
+     LogEvent( COMPONENT_9P, "_9P_TWSTAT not implemented yet" ) ;
         break ;
+
      default:
+     LogCrit( COMPONENT_9P, "Received a 9P message of unknown type %u", (u32)*pmsgtype ) ;
 	break ;
    }
   return ;

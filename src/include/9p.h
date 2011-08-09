@@ -30,6 +30,11 @@
 
 #ifndef NET_9P_H
 #define NET_9P_H
+#include <sys/select.h>
+#include "fsal.h"
+#include "cache_inode.h"
+#include "cache_content.h"
+
 
 typedef uint8_t   u8;
 typedef uint16_t u16;
@@ -41,8 +46,84 @@ typedef uint64_t u64;
 #define _9P_TYPE_SIZE 1
 #define _9P_TAG_SIZE  2
 
-int _9p_attach( char *pmsg, u32 * plenout, char * preply) ;
-int _9p_version( char *pmsg, u32 * plenout, char * preply) ;
+typedef struct _9p_conn__
+{
+  fd_set          fidset ; /* fd_set is used to keep track of which fid is set or not */
+  pthread_mutex_t lock ; 
+  long int        sockfd ;
+  int             lowest_fid ;
+} _9p_conn_t ;
+
+typedef struct _9p_fid__
+{
+  u32   fid ;
+  uid_t uid ;
+  fsal_handle_t handle ;
+} _9p_fid_t ;
+
+typedef struct _9p_request_data__
+{
+  char         _9pmsg[_9P_MSG_SIZE] ;
+  _9p_conn_t * pconn ; 
+} _9p_request_data_t ;
+
+int _9p_attach( _9p_request_data_t * preq9p, u32 * plenout, char * preply) ;
+int _9p_version( _9p_request_data_t * preq9p, u32 * plenout, char * preply) ;
+
+#define _9p_getptr( cursor, pvar, type ) \
+do                                       \
+{                                        \
+  pvar=(type *)cursor ;                  \
+  cursor += sizeof( type ) ;             \
+} while( 0 ) 
+
+#define _9p_getstr( cursor, len, str ) \
+do                                     \
+{                                      \
+  len = (u16 *)cursor ;                \
+  cursor += sizeof( u16 ) ;            \
+  str = cursor ;                       \
+  cursor += *len ;                     \
+} while( 0 )                           
+#define _9p_setptr( cursor, pvar, type ) \
+do                                       \
+{                                        \
+  *((type *)cursor) = *pvar ;            \
+  cursor += sizeof( type ) ;             \
+} while( 0 ) 
+
+#define _9p_setstr( cursor, len, str ) \
+do                                     \
+{                                      \
+  *((u16 *)cursor) = *len ;            \
+  cursor += sizeof( u16 ) ;            \
+  memcpy( cursor, str, *len ) ;        \
+  cursor += *len ;                     \
+} while( 0 )
+
+#define _9p_setinitptr( cursor, start, reqtype ) \
+do                                               \
+{                                                \
+  cursor = start + _9P_HDR_SIZE;                 \
+  *((u8 *)cursor) = reqtype ;                    \
+  cursor += sizeof( u8 ) ;                       \
+} while( 0 ) 
+
+#define _9p_setendptr( cursor, start )       \
+do                                           \
+{                                            \
+  *((u32 *)start) =  (u32)(cursor - start) ; \
+} while( 0 ) 
+
+#define _9p_checkbound( cursor, start, maxlen ) \
+do                                              \
+{                                               \
+if( (u32)( cursor - start ) > *maxlen )         \
+  return -1 ;                                   \
+else                                            \
+   *maxlen = (u32)( cursor - start )  ;         \
+} while( 0 ) 
+
 
 /**
  * enum _9p_msg_t - 9P message types
@@ -223,7 +304,7 @@ enum _9p_qid_t {
  */
 
 struct _9p_str {
-	u16 * len   ;
+	u16  len   ;
 	char *str ;
 };
 
@@ -509,7 +590,7 @@ struct _9p_rawrite {
 	u32 count;
 };
 struct _9p_tversion {
-	u32 * msize              ;
+	u32  msize              ;
 	struct _9p_str version ;
 };
 struct _9p_rversion {

@@ -423,14 +423,6 @@ typedef struct nfs_dupreq_stat__
   hash_stat_t htstat;
 } nfs_dupreq_stat_t;
 
-#ifdef _USE_9P
-typedef struct _9p_request_data__
-{
-  char     _9pmsg[_9P_MSG_SIZE] ;
-  long int _9psockfd ;
-} _9p_request_data_t ;
-#endif
-
 typedef struct nfs_request_data__
 {
   SVCXPRT *xprt;

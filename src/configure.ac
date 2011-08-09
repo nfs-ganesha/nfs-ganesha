@@ -391,11 +391,6 @@ AM_CONDITIONAL(USE_ONCRPC, test "$RPCAL" = "ONCRPC" )
 GA_ENABLE_AM_CONDITION([9p],[enable 9P support], [USE_9P])
 if test "$enable_9p" == "yes"; then
 	AC_DEFINE(_USE_9P, 1, [enable 9P support])
-	AC_CHECK_HEADERS([spfs.h], [], [AC_MSG_ERROR(missing libspfs header files)])
-       	AC_CHECK_LIB([spfs], [spfile_clunk], [have_spfs="yes"])
-	if test "x$have_spfs" != "xyes" ; then
-            AC_MSG_ERROR([libspfs is required])
-	fi
 fi
 
 

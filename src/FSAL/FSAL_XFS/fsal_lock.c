@@ -49,7 +49,6 @@ fsal_status_t XFSFSAL_lock(xfsfsal_file_t * obj_handle,
                            xfsfsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
 {
   int retval;
-  int errsv = 0;
 
   int fd = obj_handle->fd;
 
