@@ -1,1 +1,5 @@
 SUBDIRS = NFS PNFS 9P XDR
+
+if USE_NLM
+SUBDIRS += NLM
+endif

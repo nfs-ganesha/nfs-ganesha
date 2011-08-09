@@ -42,6 +42,12 @@ else
 STAT_EXPORTER_FILE =
 endif
 
+if USE_NLM
+NLM_LIB = ../Protocols/NLM/libnlm.la
+else
+NLM_LIB =
+endif
+
 if USE_FSAL_FUSE
 noinst_LTLIBRARIES           = libMainServices.la
 lib_LTLIBRARIES              = libganeshaNFS.la
@@ -107,6 +113,7 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
 
 libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la                   \
                                       $(PNFS_LIB)                                       \
+                                      $(NLM_LIB)                                        \
                                       $(SEC_LIB_FLAGS)                                  \
                                       $(SVC_LIB_FLAGS)                                  \
                                       $(NFSIDMAP_LIB_FLAGS)                             \
