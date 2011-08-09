@@ -130,6 +130,7 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       ../support/libsupport.la                          \
                                       ../NodeList/libNodeList.la                        \
                                       ../$(CACHE_INODE_DIR)/libcache_inode.la           \
+                                      ../SAL/libsal.la                                  \
                                       ../File_Content/libcache_content.la               \
                                       ../File_Content_Policy/libcache_content_policy.la \
                                       ../HashTable/libhashtable.la                      \

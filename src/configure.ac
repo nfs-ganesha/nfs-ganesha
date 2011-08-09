@@ -918,6 +918,7 @@ AC_CONFIG_FILES([include/Makefile
                  LRU/Makefile
                  HashTable/Makefile
                  Cache_inode/Makefile
+                 SAL/Makefile
                  File_Content/Makefile
                  File_Content_Policy/Makefile
 		 Protocols/Makefile

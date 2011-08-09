@@ -18,6 +18,7 @@ SUBDIRS = include             \
           HashTable           \
 	  NodeList	      \
           Cache_inode         \
+          SAL                 \
           File_Content        \
           File_Content_Policy \
           RPCAL               \
