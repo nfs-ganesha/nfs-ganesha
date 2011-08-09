@@ -68,6 +68,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+#include "nlm_util.h"
 
 /* global information exported to all layers (as extern vars) */
 

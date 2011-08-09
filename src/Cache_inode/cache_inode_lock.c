@@ -57,6 +57,9 @@
 #include "cache_inode.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
+#ifdef _USE_NLM
+#include "nlm_util.h"
+#endif
 
 /*
  * cache_lock_entry_t locking rule:

@@ -40,6 +40,43 @@ extern int in_nlm_grace_period(void);
 extern int nlm_monitor_host(char *name);
 extern int nlm_unmonitor_host(char *name);
 
+void inc_nlm_client_ref(cache_inode_nlm_client_t *pclient);
+void dec_nlm_client_ref(cache_inode_nlm_client_t *pclient);
+int display_nlm_client(cache_inode_nlm_client_t *pkey, char *str);
+int display_nlm_client_val(hash_buffer_t * pbuff, char *str);
+int display_nlm_client_key(hash_buffer_t * pbuff, char *str);
+int compare_nlm_client(cache_inode_nlm_client_t *pkey1,
+                       cache_inode_nlm_client_t *pkey2);
+int compare_nlm_client_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
+unsigned long nlm_client_value_hash_func(hash_parameter_t * p_hparam,
+                                         hash_buffer_t    * buffclef);
+unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
+                                      hash_buffer_t    * buffclef);
+cache_inode_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name);
+void nlm_client_PrintAll(void);
+
+void inc_nlm_owner_ref(cache_lock_owner_t *powner);
+void dec_nlm_owner_ref(cache_lock_owner_t *powner);
+int display_nlm_owner(cache_lock_owner_t *pkey, char *str);
+int display_nlm_owner_val(hash_buffer_t * pbuff, char *str);
+int display_nlm_owner_key(hash_buffer_t * pbuff, char *str);
+int compare_nlm_owner(cache_lock_owner_t *pkey1,
+                      cache_lock_owner_t *pkey2);
+int compare_nlm_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
+unsigned long nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
+                                        hash_buffer_t    * buffclef);
+unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
+                                      hash_buffer_t    * buffclef);
+void make_nlm_special_owner(cache_inode_nlm_client_t * pclient,
+                            cache_lock_owner_t       * pnlm_owner);
+cache_lock_owner_t *get_nlm_owner(bool_t                     care,
+                                  cache_inode_nlm_client_t * pclient, 
+                                  netobj                   * oh,
+                                  uint32_t                   svid);
+void nlm_owner_PrintAll(void);
+
+int Init_nlm_hash(hash_parameter_t client_param, hash_parameter_t owner_param);
+
 /**
  * process_nlm_parameters: Process NLM parameters
  *

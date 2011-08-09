@@ -6,7 +6,8 @@ else
 BUDDY_LIB_FLAGS =
 endif
 
-check_PROGRAMS = test_nfs_ip_stats test_nfs_ip_name test_support
+#check_PROGRAMS = test_nfs_ip_stats test_nfs_ip_name test_support
+check_PROGRAMS = test_nfs_ip_stats test_nfs_ip_name
 
 test_nfs_ip_stats_SOURCES = test_nfs_ip_stats.c
 test_nfs_ip_stats_LDADD = libsupport.la ../HashTable/libhashtable.la $(BUDDY_LIB_FLAGS) ../Log/liblog.la ../RW_Lock/librwlock.la
@@ -81,16 +82,16 @@ libsupport_la_DEPENDENCIES = $(libsupport_la_SOURCES) $(libsupport_la_LIBADD)
 
 #TESTS =
 
-check_SCRIPTS = test_libsupport_nlm.sh
+#check_SCRIPTS = test_libsupport_nlm.sh
 
-test_support_SOURCES    = test_support.c
-test_support_LDADD    	= libsupport.la \
-                          ../Log/liblog.la\
-                          ../Protocols/NFS/libnfsproto.la\
-                          $(BUDDY_LIB_FLAGS)\
-                          ../XDR/libnfs_mnt_xdr.la \
-                          ../HashTable/libhashtable.la \
-                          ../RW_Lock/librwlock.la
+#test_support_SOURCES    = test_support.c
+#test_support_LDADD    	= libsupport.la \
+#                          ../Log/liblog.la\
+#                          ../Protocols/NFS/libnfsproto.la\
+#                          $(BUDDY_LIB_FLAGS)\
+#                          ../XDR/libnfs_mnt_xdr.la \
+#                          ../HashTable/libhashtable.la \
+#                          ../RW_Lock/librwlock.la
 
 new: clean all 
 
