@@ -41,8 +41,8 @@ typedef uint64_t u64;
 #define _9P_TYPE_SIZE 1
 #define _9P_TAG_SIZE  2
 
-int _9p_attach( u32 * plenin, char *pmsg, u32 * plenout, char * preply) ;
-int _9p_version( u32 * plenin, char *pmsg, u32 * plenout, char * preply) ;
+int _9p_attach( char *pmsg, u32 * plenout, char * preply) ;
+int _9p_version( char *pmsg, u32 * plenout, char * preply) ;
 
 /**
  * enum _9p_msg_t - 9P message types
@@ -223,13 +223,13 @@ enum _9p_qid_t {
  */
 
 struct _9p_str {
-	u16 len;
-	char *str;
+	u16 * len   ;
+	char *str ;
 };
 
 /**
  * struct _9p_qid - file system entity information
- * @type: 8-bit type &p9_qid_t
+ * @type: 8-bit type &_9p_qid_t
  * @version: 16-bit monotonically incrementing version number
  * @path: 64-bit per-server-unique ID for a file system element
  *
@@ -509,8 +509,8 @@ struct _9p_rawrite {
 	u32 count;
 };
 struct _9p_tversion {
-	u32 msize;
-	struct _9p_str version;
+	u32 * msize              ;
+	struct _9p_str version ;
 };
 struct _9p_rversion {
 	u32 msize;
@@ -604,4 +604,5 @@ struct _9p_rremove {
 
 union _9p_tmsg {
 } ;
+
 #endif /* NET_9P_H */

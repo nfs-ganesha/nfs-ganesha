@@ -267,14 +267,11 @@ void _9p_process_request( _9p_request_data_t * preq9p )
   char * msgdata ;
   u32 * pmsglen = NULL ;
   u8 * pmsgtype = NULL ;
-  u32 indatalen = 0 ;
   u32 outdatalen = 0 ;
   int rc = 0 ; 
 
   char replydata[_9P_MSG_SIZE] ;
   char *replypayload = NULL ;
-
-  printf( "A WORKER has a request to process \n" ) ;
 
   msgdata =  preq9p->_9pmsg;
   replypayload = replydata + _9P_HDR_SIZE + _9P_TYPE_SIZE + _9P_TAG_SIZE ;
@@ -283,16 +280,13 @@ void _9p_process_request( _9p_request_data_t * preq9p )
   pmsglen = (u32 *)msgdata ;
   msgdata += _9P_HDR_SIZE;
 
-  printf( "The 9P message has length %u\n",  *pmsglen ) ;
-
   /* Get message's type */
   pmsgtype = (u8 *)msgdata ;
   msgdata += _9P_TYPE_SIZE ;
 
-  indatalen = *pmsglen - ( _9P_HDR_SIZE + _9P_TYPE_SIZE  );
   outdatalen = _9P_MSG_SIZE  -  _9P_HDR_SIZE ;
 
-  printf( "The 9P message is of type (%u|%s)\n", (u32)*pmsgtype, _9p_msgtype2str( *pmsgtype ) ) ;
+  LogFullDebug( COMPONENT_9P, "9P msg: length=%u type (%u|%s)",  *pmsglen, (u32)*pmsgtype, _9p_msgtype2str( *pmsgtype ) ) ;
 
   switch( *pmsgtype )
    {
@@ -337,16 +331,15 @@ void _9p_process_request( _9p_request_data_t * preq9p )
      case _9P_TUNLINKAT:
         break ;
      case _9P_TVERSION:
-        if( ( rc = _9p_version( &indatalen, msgdata, &outdatalen, replypayload ) ) < 0 )
-	  printf( "VERSION: Got rc = %d\n", rc ) ;
-        else if( send( preq9p->_9psockfd, replypayload, outdatalen, 0 ) != outdatalen )
-           printf( "VERSION: BADSIZE sent\n" ) ;
+        if(  ( ( rc = _9p_version( msgdata, &outdatalen, replypayload ) ) < 0 )  ||
+             ( send( preq9p->_9psockfd, replypayload, outdatalen, 0 ) != outdatalen ) )
+           printf( "VERSION: Error \n" ) ;
         break ;
 
      case _9P_TAUTH:
         break ;
      case _9P_TATTACH:
-        if( ( rc = _9p_attach( &indatalen, msgdata, &outdatalen, replypayload ) ) < 0 )
+        if( ( rc = _9p_attach( msgdata, &outdatalen, replypayload ) ) < 0 )
 	  printf( "ATTACH: Got rc = %d\n", rc ) ;
         else if( send( preq9p->_9psockfd, replypayload, outdatalen, 0 ) != outdatalen )
            printf( "ATTACH: BADSIZE sent\n" ) ;

@@ -24,11 +24,10 @@
  */
 
 /**
- * \file    9p_attach.c
+ * \file    9p_encode.c
  * \brief   9P version
  *
- * 9p_attach.c : _9P_interpretor, request ATTACH
- *
+ * 9p_encode.c : _9P_interpretor, encoding functions
  *
  */
 
@@ -48,7 +47,7 @@
 #include "log_macros.h"
 #include "9p.h"
 
-int _9p_attach( char *pmsg, u32 * plenout, char * preply)
+int _9p_encode( u32 * plenin, char *pmsg, u32 * plenout, char * preply)
 {
   //char * cursor = pmsg ;
   //u16 * pmsgtag = NULL ;

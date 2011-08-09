@@ -24,11 +24,10 @@
  */
 
 /**
- * \file    9p_attach.c
+ * \file    9p_proto_tools.c
  * \brief   9P version
  *
- * 9p_attach.c : _9P_interpretor, request ATTACH
- *
+ * 9p_proto_tools.c : _9P_interpretor, protocol's service functions
  *
  */
 
@@ -47,11 +46,4 @@
 #include "stuff_alloc.h"
 #include "log_macros.h"
 #include "9p.h"
-
-int _9p_attach( char *pmsg, u32 * plenout, char * preply)
-{
-  //char * cursor = pmsg ;
-  //u16 * pmsgtag = NULL ;
-  return 1 ;
-}
 

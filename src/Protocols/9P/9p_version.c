@@ -48,7 +48,9 @@
 #include "log_macros.h"
 #include "9p.h"
 
-int _9p_version( u32 * plenin, char *pmsg, u32 * plenout, char * preply)
+static char version_9p200l[] = "9P2000.L" ;
+
+int _9p_version( char *pmsg, u32 * plenout, char * preply)
 {
   char * cursor = pmsg ;
   u16 * pmsgtag = NULL ;
@@ -56,38 +58,35 @@ int _9p_version( u32 * plenin, char *pmsg, u32 * plenout, char * preply)
   u16 * pstrlen = NULL ;
   char * strdata = NULL ;
 
-  u32 lenout ; 
+  struct _9p_tversion * tversion = NULL ;
 
-  char version_9p200l[] = "9P2000.L" ;
 
-  if ( !plenin || !pmsg || !plenout || !preply )
+  if ( !pmsg || !plenout || !preply )
    return -1 ;
 
   /* Get message's tag */
   pmsgtag = (u16 *)cursor ;
   cursor += _9P_TAG_SIZE ;
  
-  printf( "VERSION: The 9P message is of tag %u\n", (u32)*pmsgtag ) ;
+  LogDebug( COMPONENT_9P, "VERSION: The 9P message has tag %u", (u32)*pmsgtag ) ;
+
+  tversion = (struct _9p_tversion *)(pmsgtag+_9P_TAG_SIZE) ;
 
   /* Get the version size */
   pmsize = (u32 *)cursor ;
   cursor += sizeof( u32 ) ;
 
-  printf( "VERSION: msize = %u\n", *pmsize ) ;
 
   /* Get the length of the string containing the version */
   pstrlen = (u16 *)cursor ;
   cursor += sizeof( u16 ) ;
-
-  printf( "VERSION: version length = %u\n", *pstrlen ) ;
-  
   strdata = cursor ;
 
-  printf( "VERSION: version string = %s\n", strdata ) ;
+  LogDebug( COMPONENT_9P, "TVERSION: msize = %u version='%s'\n", *pmsize, strdata ) ;
 
   if( strncmp( strdata, version_9p200l, *pstrlen ) )
    {
-      printf( "VERSION: BAD VERSION\n" ) ;
+      LogEvent( COMPONENT_9P, "RVERSION: BAD VERSION\n" ) ;
       return -1 ;
    } 
 
@@ -115,14 +114,14 @@ int _9p_version( u32 * plenin, char *pmsg, u32 * plenout, char * preply)
   cursor += *pstrlen ;
 
   /* Now that the full size if computable, fill in the header size */
-  lenout = (u32)(cursor - preply) ;
-  *((u32 *)preply) = lenout ;
- 
-  if( lenout > *plenout )
+  if( ( (u32)(cursor - preply) )  > *plenout )
     return -1 ;
-  else 
-    *plenout = lenout ;
- 
+
+  *((u32 *)preply) =  (u32)(cursor - preply) ;
+  *plenout =  (u32)(cursor - preply) ;
+
+  LogDebug( COMPONENT_9P, "RVERSION: msize = %u version='%s'\n", *pmsize, strdata ) ;
+
   return 1 ;
 }
 
