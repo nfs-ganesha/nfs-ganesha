@@ -541,7 +541,7 @@ static void DisplayLogString_valist(char *buff_dest, char * function, log_compon
   /* Ecriture sur le fichier choisi */
   log_vsnprintf(texte, STR_LEN_TXT, format, arguments);
 
-  if(LogComponents[component].comp_log_level < NIV_DEBUG)
+  if(LogComponents[component].comp_log_level < LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level)
     snprintf(buff_dest, STR_LEN_TXT,
              "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :%s\n",
              the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
@@ -571,7 +571,7 @@ static int DisplayLogSyslog_valist(log_components_t component, char * function, 
   /* Ecriture sur le fichier choisi */
   log_vsnprintf(texte, STR_LEN_TXT, format, arguments);
 
-  if(LogComponents[component].comp_log_level < NIV_DEBUG)
+  if(LogComponents[component].comp_log_level < LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level)
     syslog(tabLogLevel[level].syslog_level, "[%s] :%s", threadname, texte);
   else
     syslog(tabLogLevel[level].syslog_level, "[%s] :%s :%s", threadname, function, texte);
@@ -1074,6 +1074,11 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
   },
   { COMPONENT_NFS_V4_ACL,        "COMPONENT_NFS_V4_ACL", "NFS V4 ACL",
     NIV_EVENT,
+    SYSLOG,
+    "SYSLOG"
+  },
+  { LOG_MESSAGE_VERBOSITY,        "LOG_MESSAGE_VERBOSITY", "LOG MESSAGE VERBOSITY",
+    NIV_NULL,
     SYSLOG,
     "SYSLOG"
   },
