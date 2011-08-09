@@ -1,1 +1,6 @@
+if USE_9P
 SUBDIRS = NFS PNFS 9P XDR
+else
+SUBDIRS = NFS PNFS XDR
+endif
+
