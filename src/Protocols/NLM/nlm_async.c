@@ -31,14 +31,12 @@
 
 #include <stdio.h>
 #include <pthread.h>
-#include <sys/time.h>
-#include <strings.h>
 
 #include "stuff_alloc.h"
-#include "nfs_proto_functions.h"
+#include "cache_inode.h"
+#include "nlm4.h"
 #include "nlm_util.h"
 #include "nlm_async.h"
-#include "nlm4.h"
 
 static pthread_t               nlm_async_thread_id;
 static struct glist_head       nlm_async_queue;

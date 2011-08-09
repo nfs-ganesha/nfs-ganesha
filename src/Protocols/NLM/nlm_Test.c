@@ -32,28 +32,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include "HashData.h"
-#include "HashTable.h"
 #include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "nfs_core.h"
+#include "nlm4.h"
 #include "cache_inode.h"
-#include "cache_content.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_tools.h"
-#include "mount.h"
-#include "nfs_proto_functions.h"
 #include "nlm_util.h"
 #include "nlm_async.h"
 
 /**
- * nlm4_Lock: Set a range lock
+ * nlm4_Test: Test lock
  *
  *  @param parg        [IN]
  *  @param pexportlist [IN]
@@ -65,15 +53,15 @@
  *
  */
 
-int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
-              exportlist_t         * pexport  /* IN     */ ,
-              fsal_op_context_t    * pcontext /* IN     */ ,
-              cache_inode_client_t * pclient  /* INOUT  */ ,
-              hash_table_t         * ht       /* INOUT  */ ,
-              struct svc_req       * preq     /* IN     */ ,
-              nfs_res_t            * pres     /* OUT    */ )
+int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
+              exportlist_t * pexport /* IN     */ ,
+              fsal_op_context_t * pcontext /* IN     */ ,
+              cache_inode_client_t * pclient /* INOUT  */ ,
+              hash_table_t * ht /* INOUT  */ ,
+              struct svc_req *preq /* IN     */ ,
+              nfs_res_t * pres /* OUT    */ )
 {
-  nlm4_lockargs            * arg = &parg->arg_nlm4_lock;
+  nlm4_testargs            * arg = &parg->arg_nlm4_test;
   cache_entry_t            * pentry;
   cache_inode_status_t       cache_status = CACHE_INODE_SUCCESS;
   char                       buffer[MAXNETOBJ_SZ * 2];
@@ -81,40 +69,39 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
   cache_lock_owner_t       * nlm_owner, * holder;
   cache_lock_desc_t          lock, conflict;
   int                        rc;
-  cache_inode_block_data_t * pblock_data;
 
   netobj_to_string(&arg->cookie, buffer, 1024);
   LogDebug(COMPONENT_NLM,
-           "REQUEST PROCESSING: Calling nlm4_Lock svid=%d off=%llx len=%llx cookie=%s",
+           "REQUEST PROCESSING: Calling nlm4_Test svid=%d off=%llx len=%llx cookie=%s",
            (int) arg->alock.svid,
            (unsigned long long) arg->alock.l_offset,
-           (unsigned long long) arg->alock.l_len, buffer);
+           (unsigned long long) arg->alock.l_len,
+           buffer);
 
   if(!copy_netobj(&pres->res_nlm4test.cookie, &arg->cookie))
     {
-      pres->res_nlm4.stat.stat = NLM4_FAILED;
+      pres->res_nlm4test.test_stat.stat = NLM4_FAILED;
       LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Test %s",
                lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
 
-  /* allow only reclaim lock request during recovery */
-  if(in_nlm_grace_period() && !arg->reclaim)
+  if(in_nlm_grace_period())
     {
-      pres->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
-      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
+      pres->res_nlm4test.test_stat.stat = NLM4_DENIED_GRACE_PERIOD;
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Test %s",
                lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
 
-  if(!in_nlm_grace_period() && arg->reclaim)
-    {
-      pres->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
-      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
-               lock_result_str(pres->res_nlm4.stat.stat));
-      return NFS_REQ_OK;
-    }
-
+  /* TODO FSF:
+   *
+   * TEST passes TRUE for care because we do need a non-NULL owner,  but
+   * we could expand the options to allow for a "free" owner to be
+   * returned, that doesn't need to be in the hash table, so if the
+   * owner isn't found in the Hash table, don't add it, just return
+   * the "free" owner.
+   */
   rc = nlm_process_parameters(preq,
                               arg->exclusive,
                               &arg->alock,
@@ -126,7 +113,7 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
                               TRUE,
                               &nlm_client,
                               &nlm_owner,
-                              &pblock_data);
+                              NULL);
 
   if(rc >= 0)
     {
@@ -137,11 +124,9 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
       return NFS_REQ_OK;
     }
 
-  if(cache_inode_lock(pentry,
+  if(cache_inode_test(pentry,
                       pcontext,
                       nlm_owner,
-                      arg->block,
-                      pblock_data,
                       &lock,
                       &holder,
                       &conflict,
@@ -156,10 +141,6 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
                                holder,
                                &conflict);
         }
-
-      /* If we didn't block, release the block data */
-      if(cache_status != CACHE_INODE_LOCK_BLOCKED && pblock_data != NULL)
-        Mem_Free(pblock_data);
     }
   else
     {
@@ -170,32 +151,32 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
   dec_nlm_client_ref(nlm_client);
   dec_nlm_owner_ref(nlm_owner);
 
-  LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
+  LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Test %s",
            lock_result_str(pres->res_nlm4.stat.stat));
   return NFS_REQ_OK;
 }
 
-static void nlm4_lock_message_resp(nlm_async_queue_t *arg)
+static void nlm4_test_message_resp(nlm_async_queue_t *arg)
 {
   if(isFullDebug(COMPONENT_NLM))
     {
       char buffer[1024];
       netobj_to_string(&arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie, buffer, 1024);
       LogFullDebug(COMPONENT_NLM,
-                   "nlm4_lock_message_resp calling nlm_send_async cookie=%s status=%s",
-                   buffer, lock_result_str(arg->nlm_async_args.nlm_async_res.res_nlm4.stat.stat));
+                   "nlm4_test_message_resp calling nlm_send_async cookie=%s status=%s",
+                   buffer, lock_result_str(arg->nlm_async_args.nlm_async_res.res_nlm4test.test_stat.stat));
     }
-  nlm_send_async(NLMPROC4_LOCK_RES,
+  nlm_send_async(NLMPROC4_TEST_RES,
                  arg->nlm_async_host,
                  &(arg->nlm_async_args.nlm_async_res),
                  NULL);
-  nlm4_Lock_Free(&arg->nlm_async_args.nlm_async_res);
+  nlm4_Test_Free(&arg->nlm_async_args.nlm_async_res);
   dec_nlm_client_ref(arg->nlm_async_host);
   Mem_Free(arg);
 }
 
 /**
- * nlm4_Lock_Message: Lock Message
+ * nlm4_Test_Message: Test lock Message
  *
  *  @param parg        [IN]
  *  @param pexportlist [IN]
@@ -206,7 +187,8 @@ static void nlm4_lock_message_resp(nlm_async_queue_t *arg)
  *  @param pres        [OUT]
  *
  */
-int nlm4_Lock_Message(nfs_arg_t * parg /* IN     */ ,
+
+int nlm4_Test_Message(nfs_arg_t * parg /* IN     */ ,
                       exportlist_t * pexport /* IN     */ ,
                       fsal_op_context_t * pcontext /* IN     */ ,
                       cache_inode_client_t * pclient /* INOUT  */ ,
@@ -215,42 +197,43 @@ int nlm4_Lock_Message(nfs_arg_t * parg /* IN     */ ,
                       nfs_res_t * pres /* OUT    */ )
 {
   cache_inode_nlm_client_t * nlm_client;
-  nlm4_lockargs            * arg = &parg->arg_nlm4_lock;
+  nlm4_testargs            * arg = &parg->arg_nlm4_test;
   int                        rc = NFS_REQ_OK;
 
-  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Lock_Message");
+  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Test_Message");
 
   nlm_client = get_nlm_client(TRUE, arg->alock.caller_name);
   if(nlm_client == NULL)
     rc = NFS_REQ_DROP;
   else
-    rc = nlm4_Lock(parg, pexport, pcontext, pclient, ht, preq, pres);
+    rc = nlm4_Test(parg, pexport, pcontext, pclient, ht, preq, pres);
 
   if(rc == NFS_REQ_OK)
-    rc = nlm_send_async_res_nlm4(nlm_client, nlm4_lock_message_resp, pres);
+    rc = nlm_send_async_res_nlm4test(nlm_client, nlm4_test_message_resp, pres);
 
   if(rc == NFS_REQ_DROP)
     {
       if(nlm_client != NULL)
         dec_nlm_client_ref(nlm_client);
       LogCrit(COMPONENT_NLM,
-            "Could not send async response for nlm_Lock_Message");
+              "Could not send async response for nlm_Test_Message");
     }
 
   return NFS_REQ_DROP;
-
 }
 
 /**
- * nlm4_Lock_Free: Frees the result structure allocated for nlm4_Lock
+ * nlm_Test_Free: Frees the result structure allocated for nlm4_Test
  *
- * Frees the result structure allocated for nlm4_Lock. Does Nothing in fact.
+ * Frees the result structure allocated for nlm_Null. Does Nothing in fact.
  *
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */
-void nlm4_Lock_Free(nfs_res_t * pres)
+void nlm4_Test_Free(nfs_res_t * pres)
 {
   netobj_free(&pres->res_nlm4test.cookie);
+  if(pres->res_nlm4test.test_stat.stat == NLM4_DENIED)
+    netobj_free(&pres->res_nlm4test.test_stat.nlm4_testrply_u.holder.oh);
   return;
 }

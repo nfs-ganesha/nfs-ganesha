@@ -100,7 +100,7 @@ shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
                   ../RW_Lock/librwlock.la                            \
                   ../Log/liblog.la                                   \
                   ../ConfigParsing/libConfigParsing.la               \
-                  ../XDR/libnfs_mnt_xdr.la                           \
+                  ../Protocols/XDR/libnfs_mnt_xdr.la                 \
 		  ../Common/libcommon_utils.la
 
 __FS_NAME__ganeshell_LDADD = $(shell_libs)                           \

@@ -97,20 +97,6 @@ libnfsproto_la_SOURCES = mnt_Export.c	      		     \
                          ../../include/err_inject.h          \
                          ../../include/nfs_file_handle.h
 
-if USE_NLM
-libnfsproto_la_SOURCES += nlm_Unlock.c	  	\
-                          nlm_Cancel.c	  	\
-                          nlm_Lock.c	  	\
-                          nlm_Test.c	  	\
-                          nlm_Null.c	  	\
-                          nlm_Sm_Notify.c 	\
-                          nlm_Granted_Res.c \
-			../../include/nlm4.h  \
-			../../include/nlm_async.h \
-			../../include/nlm_list.h \
-			../../include/nlm_util.h
-endif
-
 if USE_QUOTA
 libnfsproto_la_SOURCES += rquota_Null.c            \
                           rquota_getquota.c        \

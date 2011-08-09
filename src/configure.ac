@@ -923,12 +923,13 @@ AC_CONFIG_FILES([include/Makefile
 		 Protocols/Makefile
                  Protocols/9P/Makefile
 		 Protocols/NFS/Makefile
+		 Protocols/NLM/Makefile
 		 Protocols/PNFS/Makefile
 		 Protocols/PNFS/SPNFS_LIKE/Makefile
 		 Protocols/PNFS/PARALLEL_FS/Makefile
 		 Protocols/PNFS/OSD/Makefile
 		 Protocols/PNFS/BLOCK/Makefile
-                 XDR/Makefile
+                 Protocols/XDR/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile
 		 FSAL/FSAL_HPSS/HPSSclapiExt/Makefile

@@ -36,11 +36,19 @@ endif
 endif
 endif
 
+if IS_LINUX
+if USE_NFS4_ACL
+fusexmp_LDADD += -lssl -lcrypto
+endif
+endif
+
 if USE_NFSIDMAP
 fusexmp_LDADD += -lnfsidmap
 if IS_LINUX
 fusexmp_use_shared_LDADD +=  -lnfsidmap
 endif
+
+
 endif
 
 
