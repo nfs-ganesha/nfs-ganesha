@@ -65,8 +65,8 @@
 #include "nlm_list.h"
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
-
 #endif                          /* _USE_NFS4_1 */
+#include "sal_data.h"
 
 /* Some habits concerning mutex management */
 #ifndef P
@@ -308,7 +308,7 @@ typedef struct cache_inode_unstable_data__
   uint32_t length;
 } cache_inode_unstable_data_t;
 
-typedef struct cache_entry__
+struct cache_entry_t
 {
   union cache_inode_fsobj__
   {
@@ -321,7 +321,7 @@ typedef struct cache_entry__
       cache_inode_opened_file_t open_fd;                             /**< Cached fsal_file_t for optimized access              */
 #ifdef _USE_PROXY
       fsal_name_t *pname;                                            /**< Pointer to filename, for PROXY only                  */
-      struct cache_entry__ *pentry_parent_open;                      /**< Parent associated with pname, for PROXY only         */
+      cache_entry_t *pentry_parent_open;                             /**< Parent associated with pname, for PROXY only         */
 #endif                          /* _USE_PROXY */
       fsal_attrib_list_t attributes;                                 /**< The FSAL Attributes                                  */
       void *pentry_content;                                          /**< Entry in file content cache (NULL if not cached)     */
@@ -340,8 +340,8 @@ typedef struct cache_entry__
       fsal_handle_t handle;                     /**< The FSAL Handle                                         */
       fsal_attrib_list_t attributes;            /**< The FSAL Attributes                                     */
       cache_inode_endofdir_t end_of_dir;        /**< A flag to know if this entry is the end of dir          */
-      struct cache_entry__ *pdir_cont;          /**< If needed, pointer to the next entries in the directory */
-      struct cache_entry__ *pdir_last;          /**< Pointer to the last entry in the dir_chain              */
+      cache_entry_t *pdir_cont;                 /**< If needed, pointer to the next entries in the directory */
+      cache_entry_t *pdir_last;                 /**< Pointer to the last entry in the dir_chain              */
       unsigned int nbactive;                    /**< Number of known active childrens                        */
       unsigned int nbdircont;                   /**< Number of DIR_CONT associated with the DIR_BEGIN        */
       cache_inode_flag_t has_been_readdir;      /**< True if a full readdir was performed on the directory   */
@@ -352,7 +352,7 @@ typedef struct cache_entry__
         struct cache_inode_dir_entry__
         {
           cache_inode_entry_valid_state_t active;       /**< A flag to get the validity state for the direntry   */
-          struct cache_entry__ *pentry;                 /**< Pointer to the cached entry (if direntry is active) */
+          cache_entry_t *pentry;                        /**< Pointer to the cached entry (if direntry is active) */
           fsal_name_t name;                             /**< Name of the entry                                   */
         } dir_entries[CHILDREN_ARRAY_SIZE];             /**< Array of cached directory entries                   */
       } *pdir_data;
@@ -361,14 +361,14 @@ typedef struct cache_entry__
 
     struct cache_inode_dir_cont__
     {
-      struct cache_entry__ *pdir_begin;              /**< Pointer to the related DIR_BEGINNING              */
-      struct cache_entry__ *pdir_cont;               /**< Pointer to the next DIR_CONTINUE (if needed)      */
-      struct cache_entry__ *pdir_prev;               /**< Pointer to the next DIR_BEGINNING or DIR_CONTINUE */
+      cache_entry_t *pdir_begin;                     /**< Pointer to the related DIR_BEGINNING              */
+      cache_entry_t *pdir_cont;                      /**< Pointer to the next DIR_CONTINUE (if needed)      */
+      cache_entry_t *pdir_prev;                      /**< Pointer to the next DIR_BEGINNING or DIR_CONTINUE */
       cache_inode_endofdir_t end_of_dir;             /**< A flag to know if this entry is the end of dir    */
       unsigned int nbactive;                         /**< Number of known active childrens                  */
       unsigned int dir_cont_pos;                     /**< Position of this dir_cont in the dir_cont list    */
       struct cache_inode_dir_data__ *pdir_data;      /**< Dirent data                                       */
-    } dir_cont;                                 /**< DIR_CONTINUE related field                                */
+    } dir_cont;                                      /**< DIR_CONTINUE related field                                */
 
     struct cache_inode_special_object__
     {
@@ -387,13 +387,13 @@ typedef struct cache_entry__
   struct cache_inode_parent_entry__
   {
     unsigned int subdirpos;                           /**< Position of the entry in the dirent array          */
-    struct cache_entry__ *parent;                     /**< Parent entry (a dir_begin or a dir_count)          */
+    cache_entry_t *parent;                            /**< Parent entry (a dir_begin or a dir_count)          */
     struct cache_inode_parent_entry__ *next_parent;   /**< Next parent (for gc, in case of a hard link)       */
   } *parent_list;
 #ifdef _USE_MFSL
   mfsl_object_t mobject;
 #endif
-} cache_entry_t;
+};
 
 typedef struct cache_inode_open_owner_name__
 {
@@ -473,7 +473,7 @@ typedef struct cache_inode_state__
   cache_inode_open_owner_t *powner;                      /**< Open Owner related to this state           */
   struct cache_inode_state__ *next;                      /**< Next entry in the state list               */
   struct cache_inode_state__ *prev;                      /**< Prev entry in the state list               */
-  struct cache_entry__ *pentry;                          /**< Related pentry                             */
+  cache_entry_t *pentry;                                 /**< Related pentry                             */
 } cache_inode_state_t;
 
 typedef struct cache_inode_dir_begin__ cache_inode_dir_begin_t;
@@ -496,7 +496,7 @@ typedef struct cache_inode_fsal_data__
 #define SMALL_CLIENT_INDEX 0x20000000
 #define NLM_THREAD_INDEX   0x40000000
 
-typedef struct cache_inode_client__
+struct cache_inode_client_t
 {
   LRU_list_t *lru_gc;                                              /**< Pointer to the worker's LRU used for Garbagge collection */
   struct prealloc_pool pool_entry;                                 /**< Worker's preallocad cache entries pool                   */
@@ -535,7 +535,7 @@ typedef struct cache_inode_client__
 #ifdef _USE_MFSL
   mfsl_context_t mfsl_context;                                     /**< Context to be used for MFSL module                       */
 #endif
-} cache_inode_client_t;
+};
 
 typedef struct cache_inode_gc_policy__
 {

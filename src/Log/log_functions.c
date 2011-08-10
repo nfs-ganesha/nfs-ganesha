@@ -1071,6 +1071,11 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
+  { COMPONENT_STATE,             "COMPONENT_STATE", "STATE",
+    NIV_EVENT,
+    SYSLOG,
+    "SYSLOG"
+  },
 };
 
 int DisplayLogComponentLevel(log_components_t component,

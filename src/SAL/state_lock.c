@@ -110,7 +110,7 @@ cache_inode_status_t cache_inode_lock_init(cache_inode_status_t * pstatus)
   ht_lock_cookies = HashTable_Init(cookie_param);
   if(ht_lock_cookies == NULL)
     {
-      LogCrit(COMPONENT_NLM,
+      LogCrit(COMPONENT_STATE,
               "Cannot init NLM Client cache");
       *pstatus = CACHE_INODE_INIT_ENTRY_FAILED;
       return *pstatus;
@@ -286,13 +286,13 @@ bool_t same_cookie(char * pcookie1,
 static void LogEntry(const char         *reason, 
                      cache_lock_entry_t *ple)
 {
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char owner[HASHTABLE_DISPLAY_STRLEN];
 
       DisplayOwner(ple->cle_owner, owner);
 
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "%s Entry: %p fileid=%llu, owner=%s, type=%s, start=0x%llx, end=0x%llx, blocked=%s, refcount=%d",
                    reason, ple, ple->cle_fileid,
                    owner, str_lockt(ple->cle_lock.cld_type),
@@ -306,7 +306,7 @@ static void LogEntry(const char         *reason,
 static void LogList(const char        * reason,
                     struct glist_head * list)
 {
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     {
       struct glist_head  * glist;
       cache_lock_entry_t * found_entry;
@@ -325,7 +325,7 @@ static void LogLock(const char         *reason,
                     cache_lock_owner_t *powner,
                     cache_lock_desc_t  *plock)
 {
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char owner[HASHTABLE_DISPLAY_STRLEN];
       uint64_t fileid_digest = 0;
@@ -337,7 +337,7 @@ static void LogLock(const char         *reason,
                         &(pentry->object.file.handle),
                         (caddr_t) &fileid_digest);
 
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "%s Lock: fileid=%llu, owner=%s, type=%s, start=0x%llx, end=0x%llx",
                    reason, (unsigned long long) fileid_digest,
                    owner, str_lockt(plock->cld_type),
@@ -350,7 +350,7 @@ void LogUnlock(cache_entry_t      *pentry,
                fsal_op_context_t  *pcontext,
                cache_lock_entry_t *ple)
 {
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     {
       uint64_t fileid_digest = 0;
 
@@ -359,7 +359,7 @@ void LogUnlock(cache_entry_t      *pentry,
                         &(pentry->object.file.handle),
                         (caddr_t) &fileid_digest);
 
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "FSAL Unlock: %p fileid=%llu, type=%s, start=0x%llx, end=0x%llx",
                    ple, ple->cle_fileid,
                    str_lockt(ple->cle_lock.cld_type),
@@ -876,7 +876,7 @@ static bool_t subtract_lock_from_list(cache_entry_t        * pentry,
       /* We ran out of memory while splitting. split_lock_list has been freed.
        * For each entry on the remove_list, put it back on the list.
        */
-      LogDebug(COMPONENT_NLM,
+      LogDebug(COMPONENT_STATE,
                "subtract_lock_from_list failed %s",
                cache_inode_err_str(*pstatus));
       glist_for_each_safe(glist, glistn, &remove_list)
@@ -895,7 +895,7 @@ static bool_t subtract_lock_from_list(cache_entry_t        * pentry,
       glist_add_list_tail(list, &split_lock_list);
     }
 
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "subtract_lock_from_list list of all locks for pentry=%p returning %d",
                pentry, (int) rc);
 
@@ -984,7 +984,7 @@ unsigned long lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
   res = (unsigned long) sum +
         (unsigned long) buffclef->len;
 
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "---> rbt_hash_val = %lu", res % p_hparam->index_size);
 
   return (unsigned long)(res % p_hparam->index_size);
@@ -1005,7 +1005,7 @@ unsigned long lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
   res = (unsigned long) sum +
         (unsigned long) buffclef->len;
 
-  LogFullDebug(COMPONENT_NLM, "---> rbt_hash_func = %lu", res);
+  LogFullDebug(COMPONENT_STATE, "---> rbt_hash_func = %lu", res);
 
   return res;
 }
@@ -1068,7 +1068,7 @@ void cookie_entry_dec_ref(cache_cookie_entry_t * p_cookie_entry)
 
           default:
             /* some problem occurred */
-            LogFullDebug(COMPONENT_NLM,
+            LogFullDebug(COMPONENT_STATE,
                          "HashTable_Del failed");
             break;
         }
@@ -1097,13 +1097,13 @@ cache_inode_status_t cache_inode_add_grant_cookie(cache_entry_t            * pen
       return *pstatus;
     }
 
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     display_lock_cookie(pcookie, cookie_size, str);
 
   hash_entry = (cache_cookie_entry_t *) Mem_Alloc(sizeof(*hash_entry));
   if(hash_entry == NULL)
     {
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "cache_inode_insert_block => KEY {%s} NO MEMORY",
                    str);
       *pstatus = CACHE_INODE_MALLOC_ERROR;
@@ -1115,7 +1115,7 @@ cache_inode_status_t cache_inode_add_grant_cookie(cache_entry_t            * pen
   buffkey.pdata = (caddr_t) Mem_Alloc(cookie_size);
   if(buffkey.pdata == NULL)
     {
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "cache_inode_insert_block => KEY {%s} NO MEMORY",
                    str);
       Mem_Free(hash_entry);
@@ -1126,7 +1126,7 @@ cache_inode_status_t cache_inode_add_grant_cookie(cache_entry_t            * pen
   if(pthread_mutex_init(&hash_entry->lce_mutex, NULL) == -1)
     {
       Mem_Free(hash_entry);
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "cache_inode_insert_block => KEY {%s} COULD NOT INIT MUTEX",
                    str);
       *pstatus = CACHE_INODE_POOL_MUTEX_INIT_ERROR;
@@ -1147,7 +1147,7 @@ cache_inode_status_t cache_inode_add_grant_cookie(cache_entry_t            * pen
       HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS)
     {
       Mem_Free(hash_entry);
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "cache_inode_insert_block => KEY {%s} HASH TABLE ERROR",
                    str);
       *pstatus = CACHE_INODE_HASH_TABLE_ERROR;
@@ -1158,7 +1158,7 @@ cache_inode_status_t cache_inode_add_grant_cookie(cache_entry_t            * pen
   lock_entry_inc_ref(lock_entry);
   lock_entry->cle_block_data->cbd_blocked_cookie = hash_entry;
 
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "cache_inode_insert_block => KEY {%s} SUCCESS",
                str);
 
@@ -1177,7 +1177,7 @@ cache_inode_status_t cache_inode_add_grant_cookie(cache_entry_t            * pen
       /* lock will be returned to right blocking type if it is still blocking
        * we could lose a block if we failed for any other reason
        */
-      LogMajor(COMPONENT_NLM,
+      LogMajor(COMPONENT_STATE,
                "cache_inode_add_grant_cookie unable to lock, error=%s",
                cache_inode_err_str(*pstatus));
 
@@ -1212,7 +1212,7 @@ cache_inode_status_t cache_inode_cancel_grant(fsal_op_context_t     * pcontext,
                          NULL);
 
   if(*pstatus != CACHE_INODE_SUCCESS)
-    LogMajor(COMPONENT_NLM,
+    LogMajor(COMPONENT_STATE,
              "cache_inode_cancel_grant unable to unlock, error=%s",
              cache_inode_err_str(*pstatus));
 
@@ -1234,15 +1234,15 @@ cache_inode_status_t cache_inode_find_grant(void                  * pcookie,
   buffkey.pdata = (caddr_t) pcookie;
   buffkey.len   = cookie_size;
 
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     display_lock_cookie_key(&buffkey, str);
 
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "cache_inode_find_block => KEY {%s}", str);
 
   if(HashTable_GetRef(ht_lock_cookies, &buffkey, &buffval, Hash_inc_client_ref) != HASHTABLE_SUCCESS)
     {
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "cache_inode_find_block => KEY {%s} NOTFOUND",
                    str);
       *pstatus = CACHE_INODE_BAD_COOKIE;
@@ -1251,7 +1251,7 @@ cache_inode_status_t cache_inode_find_grant(void                  * pcookie,
 
   *ppcookie_entry = (cache_cookie_entry_t *) buffval.pdata;
 
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "cache_inode_find_block => {%s} FOUND",
                str);
 
@@ -1496,7 +1496,7 @@ cache_inode_status_t cache_inode_release_grant(fsal_op_context_t     * pcontext,
                              NULL);
 
       if(*pstatus != CACHE_INODE_SUCCESS)
-        LogMajor(COMPONENT_NLM,
+        LogMajor(COMPONENT_STATE,
                  "cache_inode_release_grant unable to unlock, error=%s",
                  cache_inode_err_str(*pstatus));
 
@@ -1616,11 +1616,11 @@ cache_inode_status_t FSAL_unlock_no_owner(cache_entry_t        * pentry,
   unlock_entry->cle_ref_count = 1;
   glist_add_tail(&fsal_unlock_list, &unlock_entry->cle_list);
 
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "----------------------------------------------------------------------");
   LogLock("FSAL_unlock_no_owner Generating FSAL Unlock List", pentry, pcontext, NULL, plock);
 
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "----------------------------------------------------------------------");
 
   if(subtract_list_from_list(pentry,
@@ -1633,7 +1633,7 @@ cache_inode_status_t FSAL_unlock_no_owner(cache_entry_t        * pentry,
        * We have already released the locks from cache inode lock list.
        */
       // TODO FSF: what do we do now?
-      LogMajor(COMPONENT_NLM,
+      LogMajor(COMPONENT_STATE,
                "FSAL_unlock_no_owner error %s while trying to create unlock list",
                cache_inode_err_str(status));
     }
@@ -1680,7 +1680,7 @@ cache_inode_status_t FSAL_LockOp(cache_entry_t        * pentry,
   fsal_lock_param_t conflicting_lock;
 
   LogLock(fsal_lock_op_str(lock_op), pentry, pcontext, powner, plock);
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "Lock type %d", (int) fsal_lock_type(plock));
 
   memset(&conflicting_lock, 0, sizeof(conflicting_lock));
@@ -1785,7 +1785,7 @@ cache_inode_status_t cache_inode_test(cache_entry_t        * pentry,
 
   if(cache_inode_open(pentry, pclient, FSAL_O_RDWR, pcontext, pstatus) != CACHE_INODE_SUCCESS)
     {
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "cache_inode_test could not close file");
       return *pstatus;
     }
@@ -1828,7 +1828,7 @@ cache_inode_status_t cache_inode_lock(cache_entry_t            * pentry,
 
   if(cache_inode_open(pentry, pclient, FSAL_O_RDWR, pcontext, pstatus) != CACHE_INODE_SUCCESS)
     {
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "cache_inode_lock could not close file");
       return *pstatus;
     }
@@ -1985,7 +1985,7 @@ cache_inode_status_t cache_inode_lock(cache_entry_t            * pentry,
                                  conflict);
           if(*pstatus != CACHE_INODE_SUCCESS)
             {
-              LogMajor(COMPONENT_NLM,
+              LogMajor(COMPONENT_STATE,
                        "cache_inode_lock unable to lock, error=%s",
                        cache_inode_err_str(*pstatus));
               lock_entry_inc_ref(found_entry);
@@ -2026,10 +2026,10 @@ cache_inode_status_t cache_inode_unlock(cache_entry_t        * pentry,
    */
   P(pentry->object.file.lock_list_mutex);
 
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "----------------------------------------------------------------------");
   LogLock("cache_inode_unlock Subtracting", pentry, pcontext, powner, plock);
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "----------------------------------------------------------------------");
 
   /* First cancel any blocking locks that might overlap the unlocked range. */
@@ -2050,7 +2050,7 @@ cache_inode_status_t cache_inode_unlock(cache_entry_t        * pentry,
   if(*pstatus != CACHE_INODE_SUCCESS)
     {
       /* The unlock has not taken affect (other than canceling any blocking locks. */
-      LogMajor(COMPONENT_NLM,
+      LogMajor(COMPONENT_STATE,
                "cache_inode_unlock unable to remove lock from list, error=%s",
                cache_inode_err_str(*pstatus));
       V(pentry->object.file.lock_list_mutex);
@@ -2070,14 +2070,14 @@ cache_inode_status_t cache_inode_unlock(cache_entry_t        * pentry,
                          NULL);
 
   if(*pstatus != CACHE_INODE_SUCCESS)
-    LogMajor(COMPONENT_NLM,
+    LogMajor(COMPONENT_STATE,
              "cache_inode_unlock unable to unlock, error=%s",
              cache_inode_err_str(*pstatus));
 
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "----------------------------------------------------------------------");
   LogLock("cache_inode_unlock Done", pentry, pcontext, powner, plock);
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "----------------------------------------------------------------------");
 
   V(pentry->object.file.lock_list_mutex);
@@ -2134,7 +2134,7 @@ cache_inode_status_t cache_inode_cancel(cache_entry_t        * pentry,
                              NULL);
 
       if(*pstatus != CACHE_INODE_SUCCESS)
-        LogMajor(COMPONENT_NLM,
+        LogMajor(COMPONENT_STATE,
                  "cache_inode_cancel unable to cancel, error=%s",
                  cache_inode_err_str(*pstatus));
 

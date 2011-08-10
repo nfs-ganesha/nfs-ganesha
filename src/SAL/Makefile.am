@@ -6,7 +6,10 @@ noinst_LTLIBRARIES            = libsal.la
 #check_PROGRAMS                = test_cache_inode test_cache_inode_readlink \
 #                                test_cache_inode_readdir test_cache_inode_lookup 
 
-libsal_la_SOURCES = state_lock.c \
+libsal_la_SOURCES = state_lock.c                     \
+                    state_misc.c                     \
+                    ../include/state_data.h          \
+                    ../include/state_functions.h     \
                     ../include/cache_inode.h         \
                     ../include/BuddyMalloc.h         \
                     ../include/stuff_alloc.h         \
