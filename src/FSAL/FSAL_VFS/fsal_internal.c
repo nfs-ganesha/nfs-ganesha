@@ -495,6 +495,7 @@ fsal_status_t fsal_internal_fd2handle( vfsfsal_op_context_t * p_context,
   int errsv; 
   int mnt_id = 0 ;
 
+  memset(phandle, 0, sizeof(vfsfsal_handle_t));
 
   phandle->data.vfs_handle.handle_bytes = VFS_HANDLE_LEN ;
   if( ( rc = vfs_fd_to_handle( fd, &phandle->data.vfs_handle, &mnt_id ) ) )
@@ -524,8 +525,6 @@ fsal_status_t fsal_internal_Path2Handle(vfsfsal_op_context_t * p_context,       
 
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
-
-  memset(p_handle, 0, sizeof(vfsfsal_handle_t));
 
   LogFullDebug(COMPONENT_FSAL, "Lookup handle for %s", p_fsalpath->path);
 
