@@ -163,7 +163,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
       return 1;
     }
 
-  MakePool(&pclient->pool_state_v4, pclient->nb_pre_state_v4, cache_inode_state_t, NULL, NULL);
+  MakePool(&pclient->pool_state_v4, pclient->nb_pre_state_v4, state_t, NULL, NULL);
   NamePool(&pclient->pool_state_v4, "%s State V4 Pool", name);
   if(!IsPoolPreallocated(&pclient->pool_state_v4))
     {
@@ -173,7 +173,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
     }
 
   /* TODO: warning - entries in this pool are never released! */
-  MakePool(&pclient->pool_open_owner, pclient->nb_pre_state_v4, cache_inode_open_owner_t, NULL, NULL);
+  MakePool(&pclient->pool_open_owner, pclient->nb_pre_state_v4, state_open_owner_t, NULL, NULL);
   NamePool(&pclient->pool_open_owner, "%s Open Owner Pool", name);
   if(!IsPoolPreallocated(&pclient->pool_open_owner))
     {
@@ -183,7 +183,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
     }
 
   /* TODO: warning - entries in this pool are never released! */
-  MakePool(&pclient->pool_open_owner_name, pclient->nb_pre_state_v4, cache_inode_open_owner_name_t, NULL, NULL);
+  MakePool(&pclient->pool_open_owner_name, pclient->nb_pre_state_v4, state_open_owner_name_t, NULL, NULL);
   NamePool(&pclient->pool_open_owner_name, "%s Open Owner Name Pool", name);
   if(!IsPoolPreallocated(&pclient->pool_open_owner_name))
     {

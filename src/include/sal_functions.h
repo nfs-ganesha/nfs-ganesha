@@ -28,7 +28,7 @@
  * \author  $Author: deniel $
  * \date    $Date: 2006/01/24 11:43:15 $
  * \version $Revision: 1.95 $
- * \brief   Management of the cached inode layer. 
+ * \brief   Management of the state abstraction layer. 
  *
  * sal_functions.h : Management of the state abstraction layer
  *
@@ -52,45 +52,58 @@ const char *state_err_str(state_status_t err);
 
 state_status_t state_error_convert(fsal_status_t fsal_status);
 
+state_status_t cache_inode_status_to_state_status(cache_inode_status_t status);
+
 /******************************************************************************
  *
  * NLM State functions
  *
  ******************************************************************************/
 
-void inc_nlm_client_ref(cache_inode_nlm_client_t *pclient);
-void dec_nlm_client_ref(cache_inode_nlm_client_t *pclient);
-int display_nlm_client(cache_inode_nlm_client_t *pkey, char *str);
-int display_nlm_client_val(hash_buffer_t * pbuff, char *str);
-int display_nlm_client_key(hash_buffer_t * pbuff, char *str);
-int compare_nlm_client(cache_inode_nlm_client_t *pkey1,
-                       cache_inode_nlm_client_t *pkey2);
+void inc_nlm_client_ref(state_nlm_client_t * pclient);
+void dec_nlm_client_ref(state_nlm_client_t * pclient);
+int display_nlm_client(state_nlm_client_t * pkey, char * str);
+int display_nlm_client_val(hash_buffer_t * pbuff, char * str);
+int display_nlm_client_key(hash_buffer_t * pbuff, char * str);
+
+int compare_nlm_client(state_nlm_client_t * pkey1,
+                       state_nlm_client_t * pkey2);
+
 int compare_nlm_client_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
+
 unsigned long nlm_client_value_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t    * buffclef);
+
 unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
-                                      hash_buffer_t    * buffclef);
-cache_inode_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name);
+                                       hash_buffer_t    * buffclef);
+
+state_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name);
 void nlm_client_PrintAll(void);
 
-void inc_nlm_owner_ref(cache_lock_owner_t *powner);
-void dec_nlm_owner_ref(cache_lock_owner_t *powner);
-int display_nlm_owner(cache_lock_owner_t *pkey, char *str);
-int display_nlm_owner_val(hash_buffer_t * pbuff, char *str);
-int display_nlm_owner_key(hash_buffer_t * pbuff, char *str);
-int compare_nlm_owner(cache_lock_owner_t *pkey1,
-                      cache_lock_owner_t *pkey2);
+void inc_nlm_owner_ref(state_lock_owner_t * powner);
+void dec_nlm_owner_ref(state_lock_owner_t * powner);
+int display_nlm_owner(state_lock_owner_t * pkey, char * str);
+int display_nlm_owner_val(hash_buffer_t * pbuff, char * str);
+int display_nlm_owner_key(hash_buffer_t * pbuff, char * str);
+
+int compare_nlm_owner(state_lock_owner_t * pkey1,
+                      state_lock_owner_t * pkey2);
+
 int compare_nlm_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
+
 unsigned long nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
                                         hash_buffer_t    * buffclef);
+
 unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                       hash_buffer_t    * buffclef);
-void make_nlm_special_owner(cache_inode_nlm_client_t * pclient,
-                            cache_lock_owner_t       * pnlm_owner);
-cache_lock_owner_t *get_nlm_owner(bool_t                     care,
-                                  cache_inode_nlm_client_t * pclient, 
-                                  netobj                   * oh,
-                                  uint32_t                   svid);
+
+void make_nlm_special_owner(state_nlm_client_t * pclient,
+                            state_lock_owner_t * pnlm_owner);
+
+state_lock_owner_t *get_nlm_owner(bool_t               care,
+                                  state_nlm_client_t * pclient, 
+                                  netobj             * oh,
+                                  uint32_t             svid);
 void nlm_owner_PrintAll(void);
 
 int Init_nlm_hash(hash_parameter_t client_param, hash_parameter_t owner_param);
@@ -102,30 +115,56 @@ int Init_nlm_hash(hash_parameter_t client_param, hash_parameter_t owner_param);
  *
  ******************************************************************************/
 
+int nfs4_BuildStateId_Other(cache_entry_t      * pentry,
+                            fsal_op_context_t  * pcontext,
+                            state_open_owner_t * popen_owner,
+                            char               * other);
+
+int nfs4_Check_Stateid(struct stateid4 * pstate,
+                       cache_entry_t   * pentry,
+                       clientid4         clientid);
+
+int nfs4_Init_state_id(nfs_state_id_parameter_t param);
+int nfs4_State_Set(char other[12], state_t * pstate_data);
+int nfs4_State_Get(char other[12], state_t * pstate_data);
+int nfs4_State_Get_Pointer(char other[12], state_t * *pstate_data);
+int nfs4_State_Del(char other[12]);
+int nfs4_State_Update(char other[12], state_t * pstate_data);
+void nfs_State_PrintAll(void);
+
 int nfs4_is_lease_expired(cache_entry_t * pentry);
+
 int display_state_id_val(hash_buffer_t * pbuff, char *str);
 int display_state_id_key(hash_buffer_t * pbuff, char *str);
 
 int display_open_owner_val(hash_buffer_t * pbuff, char *str);
 int display_open_owner_key(hash_buffer_t * pbuff, char *str);
 int compare_open_owner(hash_buffer_t * buff1, hash_buffer_t * buff2);
+
 unsigned long open_owner_value_hash_func(hash_parameter_t * p_hparam,
-                                         hash_buffer_t * buffclef);
+                                         hash_buffer_t    * buffclef);
+
 unsigned long open_owner_rbt_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t * buffclef);
+                                       hash_buffer_t    * buffclef);
 
 int nfs_convert_open_owner(open_owner4 * pnfsowoner,
-                           cache_inode_open_owner_name_t * pname_owner);
+                           state_open_owner_name_t * pname_owner);
+
 void nfs_open_owner_PrintAll(void);
-int nfs_open_owner_Del(cache_inode_open_owner_name_t * pname);
-int nfs_open_owner_Update(cache_inode_open_owner_name_t * pname,
-                          cache_inode_open_owner_t * popen_owner);
-int nfs_open_owner_Get_Pointer(cache_inode_open_owner_name_t * pname,
-                               cache_inode_open_owner_t * *popen_owner);
-int nfs_open_owner_Get(cache_inode_open_owner_name_t * pname,
-                       cache_inode_open_owner_t * popen_owner);
-int nfs_open_owner_Set(cache_inode_open_owner_name_t * pname,
-                       cache_inode_open_owner_t * popen_owner);
+int nfs_open_owner_Del(state_open_owner_name_t * pname);
+
+int nfs_open_owner_Update(state_open_owner_name_t * pname,
+                          state_open_owner_t      * popen_owner);
+
+int nfs_open_owner_Get_Pointer(state_open_owner_name_t  * pname,
+                               state_open_owner_t      ** popen_owner);
+
+int nfs_open_owner_Get(state_open_owner_name_t * pname,
+                       state_open_owner_t      * popen_owner);
+
+int nfs_open_owner_Set(state_open_owner_name_t * pname,
+                       state_open_owner_t      * popen_owner);
+
 int nfs4_Init_open_owner(nfs_open_owner_parameter_t param);
 
 /******************************************************************************

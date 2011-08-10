@@ -77,6 +77,8 @@ typedef struct cache_inode_client_t cache_inode_client_t;
 #define V( a ) pthread_mutex_unlock( &a )
 #endif
 
+#define STATE_LOCK_OFFSET_EOF 0xFFFFFFFFFFFFFFFFLL
+
 typedef struct nfs_state_id_param__
 {
   hash_parameter_t hash_param;
@@ -186,7 +188,7 @@ typedef struct state_lock_owner_t
 #ifdef _USE_NLM
     state_nlm_owner_t     slo_nlm_owner;
 #endif
-  } clo_owner;
+  } slo_owner;
 } state_lock_owner_t;
 
 typedef struct state_t
@@ -257,6 +259,7 @@ typedef enum state_status_t
   STATE_BAD_COOKIE            = 40,
   STATE_FILE_BIG              = 41,
   STATE_GRACE_PERIOD          = 42,
+  STATE_CACHE_INODE_ERR       = 43,
 } state_status_t;
 
 typedef enum state_blocking_t
@@ -288,7 +291,7 @@ typedef struct state_cookie_entry_t state_cookie_entry_t;
 /* The granted call back is responsible for acquiring a reference to
  * the lock entry if needed.
  */
-typedef state_status_t (*granted_callback_s)(cache_entry_t        * pentry,
+typedef state_status_t (*granted_callback_t)(cache_entry_t        * pentry,
                                              state_lock_entry_t   * lock_entry,
                                              cache_inode_client_t * pclient,
                                              state_status_t       * pstatus);
@@ -308,7 +311,7 @@ typedef struct state_nlm_block_data_t
 
 typedef struct state_block_data_t
 {
-  granted_callback_s           sbd_granted_callback;
+  granted_callback_t           sbd_granted_callback;
   state_cookie_entry_t       * sbd_blocked_cookie;
   union
     {

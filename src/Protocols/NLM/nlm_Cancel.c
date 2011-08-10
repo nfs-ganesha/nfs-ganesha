@@ -63,11 +63,11 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
 {
   nlm4_cancargs            * arg = &parg->arg_nlm4_cancel;
   cache_entry_t            * pentry;
-  cache_inode_status_t       cache_status = CACHE_INODE_SUCCESS;
+  state_status_t             state_status = STATE_SUCCESS;
   char                       buffer[MAXNETOBJ_SZ * 2];
-  cache_inode_nlm_client_t * nlm_client;
-  cache_lock_owner_t       * nlm_owner;
-  cache_lock_desc_t          lock;
+  state_nlm_client_t       * nlm_client;
+  state_lock_owner_t       * nlm_owner;
+  state_lock_desc_t          lock;
   int                        rc;
 
   netobj_to_string(&arg->cookie, buffer, 1024);
@@ -116,18 +116,18 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
       return NFS_REQ_OK;
     }
 
-  if(cache_inode_cancel(pentry,
-                        pcontext,
-                        nlm_owner,
-                        &lock,
-                        pclient,
-                        &cache_status) != CACHE_INODE_SUCCESS)
+  if(state_cancel(pentry,
+                  pcontext,
+                  nlm_owner,
+                  &lock,
+                  pclient,
+                  &state_status) != STATE_SUCCESS)
     {
       /* Cancel could fail in the FSAL and make a bit of a mess, especially if
        * we are in out of memory situation. Such an error is logged by
        * Cache Inode.
        */
-      pres->res_nlm4test.test_stat.stat = nlm_convert_cache_inode_error(cache_status);
+      pres->res_nlm4test.test_stat.stat = nlm_convert_state_error(state_status);
     }
   else
     {
@@ -176,13 +176,13 @@ static void nlm4_cancel_message_resp(nlm_async_queue_t *arg)
  *  @param pres        [OUT]
  *
  */
-int nlm4_Cancel_Message(nfs_arg_t * parg /* IN     */ ,
-                        exportlist_t * pexport /* IN     */ ,
-                        fsal_op_context_t * pcontext /* IN     */ ,
-                        cache_inode_client_t * pclient /* INOUT  */ ,
-                        hash_table_t * ht /* INOUT  */ ,
-                        struct svc_req *preq /* IN     */ ,
-                        nfs_res_t * pres /* OUT    */ )
+int nlm4_Cancel_Message(nfs_arg_t            * parg     /* IN     */ ,
+                        exportlist_t         * pexport  /* IN     */ ,
+                        fsal_op_context_t    * pcontext /* IN     */ ,
+                        cache_inode_client_t * pclient  /* INOUT  */ ,
+                        hash_table_t         * ht       /* INOUT  */ ,
+                        struct svc_req       * preq     /* IN     */ ,
+                        nfs_res_t            * pres     /* OUT    */ )
 {
   cache_inode_nlm_client_t * nlm_client;
   nlm4_cancargs            * arg = &parg->arg_nlm4_cancel;

@@ -100,8 +100,60 @@ const char *state_err_str(state_status_t err)
       case STATE_BAD_COOKIE:            return "STATE_BAD_COOKIE";
       case STATE_FILE_BIG:              return "STATE_FILE_BIG";
       case STATE_GRACE_PERIOD:          return "STATE_GRACE_PERIOD";
+      case STATE_CACHE_INODE_ERR:       return "STATE_CACHE_INODE_ERR";
     }
   return "unknown";
+}
+
+state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
+{
+  switch(status)
+    {
+      case CACHE_INODE_SUCCESS:               return STATE_SUCCESS;
+      case CACHE_INODE_MALLOC_ERROR:          return STATE_MALLOC_ERROR;
+      case CACHE_INODE_POOL_MUTEX_INIT_ERROR: return STATE_POOL_MUTEX_INIT_ERROR;
+      case CACHE_INODE_GET_NEW_LRU_ENTRY:     return STATE_GET_NEW_LRU_ENTRY;
+      case CACHE_INODE_UNAPPROPRIATED_KEY:    return STATE_UNAPPROPRIATED_KEY;
+      case CACHE_INODE_INIT_ENTRY_FAILED:     return STATE_INIT_ENTRY_FAILED;
+      case CACHE_INODE_FSAL_ERROR:            return STATE_FSAL_ERROR;
+      case CACHE_INODE_LRU_ERROR:             return STATE_LRU_ERROR;
+      case CACHE_INODE_HASH_SET_ERROR:        return STATE_HASH_SET_ERROR;
+      case CACHE_INODE_NOT_A_DIRECTORY:       return STATE_NOT_A_DIRECTORY;
+      case CACHE_INODE_INCONSISTENT_ENTRY:    return STATE_INCONSISTENT_ENTRY;
+      case CACHE_INODE_BAD_TYPE:              return STATE_BAD_TYPE;
+      case CACHE_INODE_ENTRY_EXISTS:          return STATE_ENTRY_EXISTS;
+      case CACHE_INODE_DIR_NOT_EMPTY:         return STATE_DIR_NOT_EMPTY;
+      case CACHE_INODE_NOT_FOUND:             return STATE_NOT_FOUND;
+      case CACHE_INODE_INVALID_ARGUMENT:      return STATE_INVALID_ARGUMENT;
+      case CACHE_INODE_INSERT_ERROR:          return STATE_INSERT_ERROR;
+      case CACHE_INODE_HASH_TABLE_ERROR:      return STATE_HASH_TABLE_ERROR;
+      case CACHE_INODE_FSAL_EACCESS:          return STATE_FSAL_EACCESS;
+      case CACHE_INODE_IS_A_DIRECTORY:        return STATE_IS_A_DIRECTORY;
+      case CACHE_INODE_FSAL_EPERM:            return STATE_FSAL_EPERM;
+      case CACHE_INODE_NO_SPACE_LEFT:         return STATE_NO_SPACE_LEFT;
+      case CACHE_INODE_CACHE_CONTENT_ERROR:   return STATE_CACHE_CONTENT_ERROR;
+      case CACHE_INODE_CACHE_CONTENT_EXISTS:  return STATE_CACHE_CONTENT_EXISTS;
+      case CACHE_INODE_CACHE_CONTENT_EMPTY:   return STATE_CACHE_CONTENT_EMPTY;
+      case CACHE_INODE_READ_ONLY_FS:          return STATE_READ_ONLY_FS;
+      case CACHE_INODE_IO_ERROR:              return STATE_IO_ERROR;
+      case CACHE_INODE_FSAL_ESTALE:           return STATE_FSAL_ESTALE;
+      case CACHE_INODE_FSAL_ERR_SEC:          return STATE_FSAL_ERR_SEC;
+      case CACHE_INODE_STATE_CONFLICT:        return STATE_STATE_CONFLICT;
+      case CACHE_INODE_QUOTA_EXCEEDED:        return STATE_QUOTA_EXCEEDED;
+      case CACHE_INODE_DEAD_ENTRY:            return STATE_DEAD_ENTRY;
+      case CACHE_INODE_ASYNC_POST_ERROR:      return STATE_ASYNC_POST_ERROR;
+      case CACHE_INODE_NOT_SUPPORTED:         return STATE_NOT_SUPPORTED;
+      case CACHE_INODE_STATE_ERROR:           return STATE_STATE_ERROR;
+      case CACHE_INODE_FSAL_DELAY:            return STATE_FSAL_DELAY;
+      case CACHE_INODE_NAME_TOO_LONG:         return STATE_NAME_TOO_LONG;
+      case CACHE_INODE_LOCK_CONFLICT:         return STATE_LOCK_CONFLICT;
+      case CACHE_INODE_LOCK_BLOCKED:          return STATE_LOCK_BLOCKED;
+      case CACHE_INODE_LOCK_DEADLOCK:         return STATE_LOCK_DEADLOCK;
+      case CACHE_INODE_BAD_COOKIE:            return STATE_BAD_COOKIE;
+      case CACHE_INODE_FILE_BIG:              return STATE_FILE_BIG;
+      case CACHE_INODE_GRACE_PERIOD:          return STATE_GRACE_PERIOD;
+    }
+  return STATE_CACHE_INODE_ERR;
 }
 
 /**

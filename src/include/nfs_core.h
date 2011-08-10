@@ -770,19 +770,6 @@ int namemap_clear();
 void idmap_get_stats(idmap_type_t maptype, hash_stat_t * phstat,
                      hash_stat_t * phstat_reverse);
 
-int nfs4_BuildStateId_Other(cache_entry_t * pentry,
-                            fsal_op_context_t * pcontext,
-                            cache_inode_open_owner_t * popen_owner, char *other);
-int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
-                       clientid4 clientid);
-int nfs4_Init_state_id(nfs_state_id_parameter_t param);
-int nfs4_State_Set(char other[12], cache_inode_state_t * pstate_data);
-int nfs4_State_Get(char other[12], cache_inode_state_t * pstate_data);
-int nfs4_State_Get_Pointer(char other[12], cache_inode_state_t * *pstate_data);
-int nfs4_State_Del(char other[12]);
-int nfs4_State_Update(char other[12], cache_inode_state_t * pstate_data);
-void nfs_State_PrintAll(void);
-
 int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
 fridge_entry_t * fridgethr_freeze( ) ;
 int fridgethr_init() ;

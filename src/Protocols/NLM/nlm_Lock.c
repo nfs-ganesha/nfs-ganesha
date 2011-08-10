@@ -61,15 +61,15 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
               struct svc_req       * preq     /* IN     */ ,
               nfs_res_t            * pres     /* OUT    */ )
 {
-  nlm4_lockargs            * arg = &parg->arg_nlm4_lock;
-  cache_entry_t            * pentry;
-  cache_inode_status_t       cache_status = CACHE_INODE_SUCCESS;
-  char                       buffer[MAXNETOBJ_SZ * 2];
-  cache_inode_nlm_client_t * nlm_client;
-  cache_lock_owner_t       * nlm_owner, * holder;
-  cache_lock_desc_t          lock, conflict;
-  int                        rc;
-  cache_inode_block_data_t * pblock_data;
+  nlm4_lockargs        * arg = &parg->arg_nlm4_lock;
+  cache_entry_t        * pentry;
+  cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
+  char                   buffer[MAXNETOBJ_SZ * 2];
+  state_nlm_client_t   * nlm_client;
+  state_lock_owner_t   * nlm_owner, * holder;
+  state_lock_desc_t      lock, conflict;
+  int                    rc;
+  state_block_data_t   * pblock_data;
 
   netobj_to_string(&arg->cookie, buffer, 1024);
   LogDebug(COMPONENT_NLM,
@@ -125,7 +125,7 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
       return NFS_REQ_OK;
     }
 
-  if(cache_inode_lock(pentry,
+  if(state_inode_lock(pentry,
                       pcontext,
                       nlm_owner,
                       arg->block,
