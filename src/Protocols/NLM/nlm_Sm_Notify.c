@@ -36,7 +36,7 @@
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nlm4.h"
-#include "cache_inode.h"
+#include "sal_functions.h"
 #include "nfs_proto_functions.h"
 #include "nlm_util.h"
 

@@ -313,22 +313,12 @@ typedef struct nfs_idmap_cache_param__
   char mapfile[MAXPATHLEN];
 } nfs_idmap_cache_parameter_t;
 
-typedef struct nfs_state_id_param__
-{
-  hash_parameter_t hash_param;
-} nfs_state_id_parameter_t;
-
 #ifdef _USE_NFS4_1
 typedef struct nfs_session_id_param__
 {
   hash_parameter_t hash_param;
 } nfs_session_id_parameter_t;
 #endif
-
-typedef struct nfs_open_owner_param__
-{
-  hash_parameter_t hash_param;
-} nfs_open_owner_parameter_t;
 
 typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
 
@@ -691,14 +681,6 @@ int nfs_client_id_set(clientid4 clientid,
 int nfs_client_id_compute(char *name, clientid4 * pclientid);
 int nfs_client_id_basic_compute(char *name, clientid4 * pclientid);
 
-int display_open_owner_val(hash_buffer_t * pbuff, char *str);
-int display_open_owner_key(hash_buffer_t * pbuff, char *str);
-int compare_open_owner(hash_buffer_t * buff1, hash_buffer_t * buff2);
-unsigned long open_owner_value_hash_func(hash_parameter_t * p_hparam,
-                                         hash_buffer_t * buffclef);
-unsigned long open_owner_rbt_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t * buffclef);
-
 int display_client_id(hash_buffer_t * pbuff, char *str);
 int display_client_id_reverse(hash_buffer_t * pbuff, char *str);
 int display_client_id_val(hash_buffer_t * pbuff, char *str);
@@ -737,20 +719,6 @@ unsigned long int namemapper_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long idmapper_value_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t * buffclef);
 
-int nfs_convert_open_owner(open_owner4 * pnfsowoner,
-                           cache_inode_open_owner_name_t * pname_owner);
-void nfs_open_owner_PrintAll(void);
-int nfs_open_owner_Del(cache_inode_open_owner_name_t * pname);
-int nfs_open_owner_Update(cache_inode_open_owner_name_t * pname,
-                          cache_inode_open_owner_t * popen_owner);
-int nfs_open_owner_Get_Pointer(cache_inode_open_owner_name_t * pname,
-                               cache_inode_open_owner_t * *popen_owner);
-int nfs_open_owner_Get(cache_inode_open_owner_name_t * pname,
-                       cache_inode_open_owner_t * popen_owner);
-int nfs_open_owner_Set(cache_inode_open_owner_name_t * pname,
-                       cache_inode_open_owner_t * popen_owner);
-int nfs4_Init_open_owner(nfs_open_owner_parameter_t param);
-
 int idmap_populate(char *path, idmap_type_t maptype);
 
 int idmap_gid_init(nfs_idmap_cache_parameter_t param);
@@ -762,9 +730,6 @@ int uidgidmap_init(nfs_idmap_cache_parameter_t param);
 
 int display_idmapper_val(hash_buffer_t * pbuff, char *str);
 int display_idmapper_key(hash_buffer_t * pbuff, char *str);
-
-int display_state_id_val(hash_buffer_t * pbuff, char *str);
-int display_state_id_key(hash_buffer_t * pbuff, char *str);
 
 int compare_idmapper(hash_buffer_t * buff1, hash_buffer_t * buff2);
 int compare_namemapper(hash_buffer_t * buff1, hash_buffer_t * buff2);
@@ -810,7 +775,6 @@ int nfs4_BuildStateId_Other(cache_entry_t * pentry,
                             cache_inode_open_owner_t * popen_owner, char *other);
 int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
                        clientid4 clientid);
-int nfs4_is_lease_expired(cache_entry_t * pentry);
 int nfs4_Init_state_id(nfs_state_id_parameter_t param);
 int nfs4_State_Set(char other[12], cache_inode_state_t * pstate_data);
 int nfs4_State_Get(char other[12], cache_inode_state_t * pstate_data);

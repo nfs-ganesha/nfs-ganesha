@@ -77,6 +77,16 @@ typedef struct cache_inode_client_t cache_inode_client_t;
 #define V( a ) pthread_mutex_unlock( &a )
 #endif
 
+typedef struct nfs_state_id_param__
+{
+  hash_parameter_t hash_param;
+} nfs_state_id_parameter_t;
+
+typedef struct nfs_open_owner_param__
+{
+  hash_parameter_t hash_param;
+} nfs_open_owner_parameter_t;
+
 typedef enum state_type_t
 {
   STATE_TYPE_NONE    = 0,
