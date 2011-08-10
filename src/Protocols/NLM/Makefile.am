@@ -10,7 +10,6 @@ libnlm_la_SOURCES = nlm_Cancel.c                        \
                     nlm_Test.c                          \
                     nlm_Unlock.c                        \
                     nlm_async.c                         \
-                    nlm_owner.c                         \
                     nlm_util.c                          \
                     nsm.c                               \
                     ../../include/nlm4.h                \

@@ -29,9 +29,6 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          nfs_ip_name.c                      \
                          nfs_ip_stats.c                     \
                          nfs_client_id.c                    \
-                         nfs_state_id.c                     \
-                         nfs_open_owner.c                   \
-                         nfs4_tools.c                       \
                          exports.c                          \
                          fridgethr.c                        \
                          lookup3.c                          \
