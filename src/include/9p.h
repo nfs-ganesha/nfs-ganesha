@@ -1,35 +1,33 @@
 /*
- * include/net/9p/9p.h
+ * vim:expandtab:shiftwidth=8:tabstop=8:
  *
- * 9P protocol definitions.
+ * Copyright CEA/DAM/DIF  (2011)
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
  *
- *  Copyright (C) 2005 by Latchesar Ionkov <lucho@ionkov.net>
- *  Copyright (C) 2004 by Eric Van Hensbergen <ericvh@gmail.com>
- *  Copyright (C) 2002 by Ron Minnich <rminnich@lanl.gov>
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2
- *  as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to:
- *  Free Software Foundation
- *  51 Franklin Street, Fifth Floor
- *  Boston, MA  02111-1301  USA
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
+ * ---------------------------------------
  */
 
 /* 
  * Copied from 2.6.38-rc2 kernel, taken from diod sources (code.google.com/p/diod/) then adapted to ganesha
  */
 
-#ifndef NET_9P_H
-#define NET_9P_H
+#ifndef _9P_H
+#define _9P_H
 #include <sys/select.h>
 #include "fsal.h"
 #include "cache_inode.h"
@@ -41,10 +39,25 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
+#define NB_PREALLOC_HASH_9P 100
+#define PRIME_9P 17 
+
+#define _9P_PORT 564
+#define _9P_SEND_BUFFER_SIZE 65560
+#define _9P_RECV_BUFFER_SIZE 65560
+
+#define CONF_LABEL_9P "_9P"
+
 #define _9P_MSG_SIZE 65560 
 #define _9P_HDR_SIZE  4
 #define _9P_TYPE_SIZE 1
 #define _9P_TAG_SIZE  2
+
+typedef struct _9p_param__
+{
+  unsigned short _9p_port ;
+  hash_parameter_t hash_param;
+} _9p_parameter_t ;
 
 typedef struct _9p_conn__
 {
@@ -54,6 +67,13 @@ typedef struct _9p_conn__
   int             lowest_fid ;
 } _9p_conn_t ;
 
+typedef struct _9p_hash_fid_key__
+{
+  u32      fid ;
+  long int sockfd ;
+} _9p_hash_fid_key_t ;
+
+ 
 typedef struct _9p_fid__
 {
   u32   fid ;
@@ -379,311 +399,21 @@ struct _9p_qid {
 #define _9P_LOCK_FLAGS_BLOCK 1
 #define _9P_LOCK_FLAGS_RECLAIM 2
 
-/* Structures for Protocol Operations */
-struct _9p_rlerror {
-	u32 ecode;
-};
-struct _9p_tstatfs {
-	u32 fid;
-};
-struct _9p_rstatfs {
-	u32 type;
-	u32 bsize;
-	u64 blocks;
-	u64 bfree;
-	u64 bavail;
-	u64 files;
-	u64 ffree;
-	u64 fsid;
-	u32 namelen;
-};
-struct _9p_tlopen {
-	u32 fid;
-	u32 flags;
-};
-struct _9p_rlopen {
-	struct _9p_qid qid;
-	u32 iounit;
-};
-struct _9p_tlcreate {
-	u32 fid;
-	struct _9p_str name;
-	u32 flags;
-	u32 mode;
-	u32 gid;
-};
-struct _9p_rlcreate {
-	struct _9p_qid qid;
-	u32 iounit;
-};
-struct _9p_tsymlink {
-	u32 fid;
-	struct _9p_str name;
-	struct _9p_str symtgt;
-	u32 gid;
-};
-struct _9p_rsymlink {
-	struct _9p_qid qid;
-};
-struct _9p_tmknod {
-	u32 fid;
-	struct _9p_str name;
-	u32 mode;
-	u32 major;
-	u32 minor;
-	u32 gid;
-};
-struct _9p_rmknod {
-	struct _9p_qid qid;
-};
-struct _9p_trename {
-	u32 fid;
-	u32 dfid;
-	struct _9p_str name;
-};
-struct _9p_rrename {
-};
-struct _9p_treadlink {
-	u32 fid;
-};
-struct _9p_rreadlink {
-	struct _9p_str target;
-};
-struct _9p_tgetattr {
-	u32 fid;
-	u64 request_mask;
-};
-struct _9p_rgetattr {
-	u64 valid;
-	struct _9p_qid qid;
-	u32 mode;
-	u32 uid;
-	u32 gid;
-	u64 nlink;
-	u64 rdev;
-	u64 size;
-	u64 blksize;
-	u64 blocks;
-	u64 atime_sec;
-	u64 atime_nsec;
-	u64 mtime_sec;
-	u64 mtime_nsec;
-	u64 ctime_sec;
-	u64 ctime_nsec;
-	u64 btime_sec;
-	u64 btime_nsec;
-	u64 gen;
-	u64 data_version;
-};
-struct _9p_tsetattr {
-	u32 fid;
-	u32 valid;
-	u32 mode;
-	u32 uid;
-	u32 gid;
-	u64 size;
-	u64 atime_sec;
-	u64 atime_nsec;
-	u64 mtime_sec;
-	u64 mtime_nsec;
-};
-struct _9p_rsetattr {
-};
-struct _9p_txattrwalk {
-	u32 fid;
-	u32 attrfid;
-	struct _9p_str name;
-};
-struct _9p_rxattrwalk {
-	u64 size;
-};
-struct _9p_txattrcreate {
-	u32 fid;
-	struct _9p_str name;
-	u64 size;
-	u32 flag;
-};
-struct _9p_rxattrcreate {
-};
-struct _9p_treaddir {
-	u32 fid;
-	u64 offset;
-	u32 count;
-};
-struct _9p_rreaddir {
-	u32 count;
-	u8 *data;
-};
-struct _9p_tfsync {
-	u32 fid;
-};
-struct _9p_rfsync {
-};
-struct _9p_tlock {
-	u32 fid;
-	u8 type;
-	u32 flags;
-	u64 start;
-	u64 length;
-	u32 proc_id;
-	struct _9p_str client_id;
-};
-struct _9p_rlock {
-	u8 status;
-};
-struct _9p_tgetlock {
-	u32 fid;
-	u8 type;
-	u64 start;
-	u64 length;
-	u32 proc_id;
-	struct _9p_str client_id;
-};
-struct _9p_rgetlock {
-	u8 type;
-	u64 start;
-	u64 length;
-	u32 proc_id;
-	struct _9p_str client_id;
-};
-struct _9p_tlink {
-	u32 dfid;
-	u32 fid;
-	struct _9p_str name;
-};
-struct _9p_rlink {
-};
-struct _9p_tmkdir {
-	u32 fid;
-	struct _9p_str name;
-	u32 mode;
-	u32 gid;
-};
-struct _9p_rmkdir {
-	struct _9p_qid qid;
-};
-struct _9p_trenameat {
-	u32 olddirfid;
-	struct _9p_str oldname;
-	u32 newdirfid;
-	struct _9p_str newname;
-};
-struct _9p_rrenameat {
-};
-struct _9p_tunlinkat {
-	u32 dirfid;
-	struct _9p_str name;
-	u32 flags;
-};
-struct _9p_runlinkat {
-};
-struct _9p_tawrite {
-	u32 fid;
-	u8 datacheck;
-	u64 offset;
-	u32 count;
-	u32 rsize;
-	u8 *data;
-	u32 check;
-};
-struct _9p_rawrite {
-	u32 count;
-};
-struct _9p_tversion {
-	u32  msize              ;
-	struct _9p_str version ;
-};
-struct _9p_rversion {
-	u32 msize;
-	struct _9p_str version;
-};
-struct _9p_tauth {
-	u32 afid;
-	struct _9p_str uname;
-	struct _9p_str aname;
-	u32 n_uname;		/* 9P2000.u extensions */
-};
-struct _9p_rauth {
-	struct _9p_qid qid;
-};
-struct _9p_rerror {
-	struct _9p_str error;
-	u32 errnum;		/* 9p2000.u extension */
-};
-struct _9p_tflush {
-	u16 oldtag;
-};
-struct _9p_rflush {
-};
-struct _9p_tattach {
-	u32 fid;
-	u32 afid;
-	struct _9p_str uname;
-	struct _9p_str aname;
-	u32 n_uname;		/* 9P2000.u extensions */
-};
-struct _9p_rattach {
-	struct _9p_qid qid;
-};
-struct _9p_twalk {
-	u32 fid;
-	u32 newfid;
-	u16 nwname;
-	struct _9p_str wnames[_9P_MAXWELEM];
-};
-struct _9p_rwalk {
-	u16 nwqid;
-	struct _9p_qid wqids[_9P_MAXWELEM];
-};
-struct _9p_topen {
-	u32 fid;
-	u8 mode;
-};
-struct _9p_ropen {
-	struct _9p_qid qid;
-	u32 iounit;
-};
-struct _9p_tcreate {
-	u32 fid;
-	struct _9p_str name;
-	u32 perm;
-	u8 mode;
-	struct _9p_str extension;
-};
-struct _9p_rcreate {
-	struct _9p_qid qid;
-	u32 iounit;
-};
-struct _9p_tread {
-	u32 fid;
-	u64 offset;
-	u32 count;
-};
-struct _9p_rread {
-	u32 count;
-	u8 *data;
-};
-struct _9p_twrite {
-	u32 fid;
-	u64 offset;
-	u32 count;
-	u8 *data;
-};
-struct _9p_rwrite {
-	u32 count;
-};
-struct _9p_tclunk {
-	u32 fid;
-};
-struct _9p_rclunk {
-};
-struct _9p_tremove {
-	u32 fid;
-};
-struct _9p_rremove {
-};
+/* service functions */
+int _9p_read_conf( config_file_t   in_config,
+                   _9p_parameter_t *pparam ) ;
 
-union _9p_tmsg {
-} ;
+/* Protocol functions */
+int _9p_attach( _9p_request_data_t * preq9p, u32 * plenout, char * preply) ;
+int _9p_version( _9p_request_data_t * preq9p, u32 * plenout, char * preply) ;
 
-#endif /* NET_9P_H */
+/* hash functions */
+unsigned long int _9p_hash_fid_key_value_hash_func(hash_parameter_t * p_hparam,
+                                                   hash_buffer_t * buffclef) ;
+unsigned long int _9p_hash_fid_rbt_hash_func(hash_parameter_t * p_hparam,
+                                              hash_buffer_t * buffclef) ;
+int _9p_compare_key(hash_buffer_t * buff1, hash_buffer_t * buff2) ;
+int display_9p_hash_fid_key(hash_buffer_t * pbuff, char *str) ; 
+int display_9p_hash_fid_val(hash_buffer_t * pbuff, char *str) ;
+
+#endif /* _9P_H */

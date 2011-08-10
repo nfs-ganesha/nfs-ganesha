@@ -216,9 +216,6 @@ void nfs_print_param_config()
 
   printf("\tNFS_Port = %u ;\n", nfs_param.core_param.port[P_NFS]);
   printf("\tMNT_Port = %u ;\n", nfs_param.core_param.port[P_MNT]);
-#ifdef _USE_9P
-  printf("\t9P_Port = %u ;\n", nfs_param.core_param._9p_port);
-#endif
   printf("\tNFS_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
   printf("\tMNT_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
   printf("\tNb_Worker = %u ; \n", nfs_param.core_param.nb_worker);
@@ -283,7 +280,17 @@ void nfs_set_param_default()
   nfs_param.core_param.port[P_NLM] = 0;
 #endif
 #ifdef _USE_9P
-  nfs_param.core_param._9p_port = NINEP_PORT ;
+  nfs_param._9p_param._9p_port = _9P_PORT ;
+  nfs_param._9p_param.hash_param.index_size = PRIME_9P ;
+  nfs_param._9p_param.hash_param.alphabet_length = 10;    /* Xid is a numerical decimal value */
+  nfs_param._9p_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_9P;
+  nfs_param._9p_param.hash_param.hash_func_key = _9p_hash_fid_key_value_hash_func ;
+  nfs_param._9p_param.hash_param.hash_func_rbt = _9p_hash_fid_rbt_hash_func ;
+  nfs_param._9p_param.hash_param.compare_key = _9p_compare_key ;
+  nfs_param._9p_param.hash_param.key_to_str = display_9p_hash_fid_key ;
+  nfs_param._9p_param.hash_param.val_to_str = display_9p_hash_fid_val ;
+  nfs_param._9p_param.hash_param.name = "FID Hash Table" ;
+
 #endif
 #ifdef _USE_QUOTA
   nfs_param.core_param.program[P_RQUOTA] = RQUOTAPROG;
@@ -1105,6 +1112,22 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
         LogDebug(COMPONENT_INIT,
                  "NFSv4 specific configuration read from config file");
     }
+
+#ifdef _USE_9P
+  if( ( rc = _9p_read_conf( config_struct,
+                            &nfs_param._9p_param ) ) < 0 )
+    {
+        if( rc == -2 )
+          LogDebug(COMPONENT_INIT,
+                   "No 9P configuration found, using default");
+        else
+          {
+	     LogCrit( COMPONENT_INIT,
+	   	      "Error while parsing 9P configuration" ) ;
+             return -1 ;
+          }
+    }
+#endif
 
   /* Cache inode parameters : hash table */
   if((cache_inode_status =

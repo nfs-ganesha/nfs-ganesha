@@ -397,7 +397,7 @@ int _9p_create_socket( void )
   memset( &sinaddr, 0, sizeof(sinaddr));
   sinaddr.sin_family      = AF_INET;
   sinaddr.sin_addr.s_addr = nfs_param.core_param.bind_addr.sin_addr.s_addr;
-  sinaddr.sin_port        = htons(nfs_param.core_param._9p_port);
+  sinaddr.sin_port        = htons(nfs_param._9p_param._9p_port);
 
   if(bind(sock, (struct sockaddr *)&sinaddr, sizeof(sinaddr)) == -1)
    {

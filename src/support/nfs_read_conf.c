@@ -309,12 +309,6 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
           pparam->port[P_RQUOTA] = (unsigned short)atoi(key_value);
 #endif
         }
-      else if(!strcasecmp( key_name, "9P_Port" ) )
-	{
-#ifdef _USE_9P
-          pparam->_9p_port = (unsigned short)atoi(key_value);
-#endif
-	}
       else if(!strcasecmp(key_name, "NFS_Program"))
         {
           pparam->program[P_NFS] = atoi(key_value);

@@ -151,11 +151,6 @@
 #define NFS_SEND_BUFFER_SIZE 32768
 #define NFS_RECV_BUFFER_SIZE 32768
 
-/* 9P specific values */
-#define NINEP_PORT 564
-#define NINEP_SEND_BUFFER_SIZE 65560
-#define NINEP_RECV_BUFFER_SIZE 65560
-
 /* Default 'Raw Dev' values */
 #define GANESHA_RAW_DEV_MAJOR 168
 #define GANESHA_RAW_DEV_MINOR 168
@@ -276,9 +271,6 @@ typedef struct nfs_core_param__
   unsigned short port[P_COUNT];
   struct sockaddr_in bind_addr; // IPv4 only for now...
   unsigned int program[P_COUNT];
-#ifdef _USE_9P
-  unsigned short _9p_port ;
-#endif
   unsigned int nb_worker;
   unsigned int nb_call_before_queue_avg;
   unsigned int nb_max_concurrent_gc;
@@ -364,6 +356,9 @@ typedef struct nfs_param__
   nfs_idmap_cache_parameter_t gnamemap_cache_param;
   nfs_idmap_cache_parameter_t uidgidmap_cache_param;
   nfs_ip_stats_parameter_t ip_stats_param;
+#ifdef _USE_9P
+  _9p_parameter_t _9p_param ;
+#endif
 #ifdef _HAVE_GSSAPI
   nfs_krb5_parameter_t krb5_param;
 #endif  
@@ -605,11 +600,6 @@ void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index);
 void *worker_thread(void *IndexArg);
 process_status_t process_rpc_request(SVCXPRT *xprt);
 void *rpc_dispatcher_thread(void *arg);
-#ifdef _USE_9P
-void * _9p_dispatcher_thread(void *arg);
-void DispatchWork9P(request_data_t *pnfsreq, unsigned int worker_index);
-void _9p_process_request( _9p_request_data_t * preq9p ) ;
-#endif
 void *admin_thread(void *arg);
 void *stats_thread(void *IndexArg);
 void *long_processing_thread(void *arg);
@@ -617,6 +607,12 @@ void *stat_exporter_thread(void *IndexArg);
 int stats_snmp(nfs_worker_data_t * workers_data_local);
 void *file_content_gc_thread(void *IndexArg);
 void *nfs_file_content_flush_thread(void *flush_data_arg);
+
+#ifdef _USE_9P
+void * _9p_dispatcher_thread(void *arg);
+void DispatchWork9P(request_data_t *pnfsreq, unsigned int worker_index);
+void _9p_process_request( _9p_request_data_t * preq9p ) ;
+#endif
 
 void nfs_operate_on_sigusr1() ;
 void nfs_operate_on_sigterm() ;
