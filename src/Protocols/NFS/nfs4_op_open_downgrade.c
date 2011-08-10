@@ -45,24 +45,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
-#include "cache_content.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
+#include "sal_functions.h"
 #include "nfs_proto_functions.h"
-#include "nfs_file_handle.h"
-#include "nfs_tools.h"
+#include "nfs_proto_tools.h"
 
 /**
  * nfs4_op_open_downgrade: The NFS4_OP_OPEN_DOWNGRADE
@@ -84,8 +76,9 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_downgrade";
 
-  cache_inode_state_t *pstate_found = NULL;
-  cache_inode_status_t cache_status;
+  state_t              * pstate_found = NULL;
+  cache_inode_status_t   cache_status;
+  state_status_t         state_status;
 
   resp->resop = NFS4_OP_OPEN_DOWNGRADE;
   res_OPEN_DOWNGRADE4.status = NFS4_OK;
@@ -119,10 +112,11 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
     }
 
   /* Get the state */
-  if(cache_inode_get_state(arg_OPEN_DOWNGRADE4.open_stateid.other,
-                           &pstate_found,
-                           data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+  if(state_get(arg_OPEN_DOWNGRADE4.open_stateid.other,
+               &pstate_found,
+               data->pclient, &state_status) != STATE_SUCCESS)
     {
+      cache_status = state_status_to_cache_inode_status(state_status);
       res_OPEN_DOWNGRADE4.status = nfs4_Errno(cache_status);
       return res_OPEN_DOWNGRADE4.status;
     }

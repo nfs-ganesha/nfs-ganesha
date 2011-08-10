@@ -45,24 +45,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
-#include "cache_content.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
+#include "sal_functions.h"
 #include "nfs_proto_functions.h"
-#include "nfs_tools.h"
-#include "nfs_file_handle.h"
+#include "nfs_proto_tools.h"
 
 /**
  * nfs4_op_open_confirm: The NFS4_OP_OPEN_CONFIRM
@@ -83,9 +75,10 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_confirm";
-  int rc = 0;
-  cache_inode_state_t *pstate_found = NULL;
-  cache_inode_status_t cache_status;
+  int                    rc = 0;
+  state_t              * pstate_found = NULL;
+  cache_inode_status_t   cache_status;
+  state_status_t         state_status;
 
   resp->resop = NFS4_OP_OPEN_CONFIRM;
   res_OPEN_CONFIRM4.status = NFS4_OK;
@@ -139,10 +132,11 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
     }
 
   /* Get the related state */
-  if(cache_inode_get_state(arg_OPEN_CONFIRM4.open_stateid.other,
-                           &pstate_found,
-                           data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+  if(state_get(arg_OPEN_CONFIRM4.open_stateid.other,
+               &pstate_found,
+               data->pclient, &state_status) != STATE_SUCCESS)
     {
+      cache_status = state_status_to_cache_inode_status(state_status);
       res_OPEN_CONFIRM4.status = nfs4_Errno(cache_status);
       return res_OPEN_CONFIRM4.status;
     }
@@ -173,9 +167,10 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
 
   /* Update the state */
   pstate_found->seqid += 1;
-  if(cache_inode_update_state(pstate_found,
-                              data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+  if(state_update(pstate_found,
+                  data->pclient, &state_status) != STATE_SUCCESS)
     {
+      cache_status = state_status_to_cache_inode_status(state_status);
       res_OPEN_CONFIRM4.status = nfs4_Errno(cache_status);
       return res_OPEN_CONFIRM4.status;
     }

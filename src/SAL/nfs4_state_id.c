@@ -84,7 +84,7 @@ int display_state_id_key(hash_buffer_t * pbuff, char *str)
 
 int display_state_id_val(hash_buffer_t * pbuff, char *str)
 {
-  cache_inode_state_t *pstate = (cache_inode_state_t *) (pbuff->pdata);
+  state_t *pstate = (state_t *) (pbuff->pdata);
 
   return sprintf(str,
                  "state %p is associated with pentry=%p type=%u seqid=%u prev=%p next=%p",
@@ -205,9 +205,10 @@ int nfs4_Init_state_id(nfs_state_id_parameter_t param)
  *
  */
 
-int nfs4_BuildStateId_Other(cache_entry_t * pentry,
-                            fsal_op_context_t * pcontext,
-                            cache_inode_open_owner_t * popen_owner, char *other)
+int nfs4_BuildStateId_Other(cache_entry_t      * pentry,
+                            fsal_op_context_t  * pcontext,
+                            state_open_owner_t * popen_owner,
+                            char               * other)
 {
   uint64_t fileid_digest = 0;
   u_int16_t srvboot_digest = 0;
@@ -265,7 +266,7 @@ int nfs4_BuildStateId_Other(cache_entry_t * pentry,
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs4_State_Set(char other[12], cache_inode_state_t * pstate_data)
+int nfs4_State_Set(char other[12], state_t * pstate_data)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -285,7 +286,7 @@ int nfs4_State_Set(char other[12], cache_inode_state_t * pstate_data)
   buffkey.len = 12;
 
   buffval.pdata = (caddr_t) pstate_data;
-  buffval.len = sizeof(cache_inode_state_t);
+  buffval.len = sizeof(state_t);
 
   if(HashTable_Test_And_Set
      (ht_state_id, &buffkey, &buffval,
@@ -307,7 +308,7 @@ int nfs4_State_Set(char other[12], cache_inode_state_t * pstate_data)
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs4_State_Get(char other[12], cache_inode_state_t * pstate_data)
+int nfs4_State_Get(char other[12], state_t * pstate_data)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -331,7 +332,7 @@ int nfs4_State_Get(char other[12], cache_inode_state_t * pstate_data)
       return 0;
     }
 
-  memcpy(pstate_data, buffval.pdata, sizeof(cache_inode_state_t));
+  memcpy(pstate_data, buffval.pdata, sizeof(state_t));
 
   LogFullDebug(COMPONENT_STATES,
                "---> nfs4_State_Get Found :-)");
@@ -351,7 +352,7 @@ int nfs4_State_Get(char other[12], cache_inode_state_t * pstate_data)
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs4_State_Get_Pointer(char other[12], cache_inode_state_t * *pstate_data)
+int nfs4_State_Get_Pointer(char other[12], state_t * *pstate_data)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -375,7 +376,7 @@ int nfs4_State_Get_Pointer(char other[12], cache_inode_state_t * *pstate_data)
       return 0;
     }
 
-  *pstate_data = (cache_inode_state_t *) buffval.pdata;
+  *pstate_data = (state_t *) buffval.pdata;
 
   LogFullDebug(COMPONENT_STATES,
                "---> nfs4_State_Get_Pointer Found :-)");
@@ -395,7 +396,7 @@ int nfs4_State_Get_Pointer(char other[12], cache_inode_state_t * *pstate_data)
  * @return 1 if ok, 0 otherwise.
  * 
  */
-int nfs4_State_Update(char other[12], cache_inode_state_t * pstate_data)
+int nfs4_State_Update(char other[12], state_t * pstate_data)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -419,7 +420,7 @@ int nfs4_State_Update(char other[12], cache_inode_state_t * pstate_data)
       return 0;
     }
 
-  memcpy(buffval.pdata, pstate_data, sizeof(cache_inode_state_t));
+  memcpy(buffval.pdata, pstate_data, sizeof(state_t));
 
   LogFullDebug(COMPONENT_STATES,
                "---> nfs4_State_Update Found :-)");
@@ -481,8 +482,8 @@ int nfs4_State_Del(char other[12])
 int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
                        clientid4 clientid)
 {
-  u_int16_t time_digest = 0;
-  cache_inode_state_t state;
+  u_int16_t       time_digest = 0;
+  state_t         state;
   nfs_client_id_t nfs_clientid;
 
   if(isFullDebug(COMPONENT_STATES))

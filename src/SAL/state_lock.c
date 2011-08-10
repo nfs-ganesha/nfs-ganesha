@@ -2588,14 +2588,14 @@ cache_inode_status_t cache_inode_lock_create(cache_entry_t * pentry,
     if(*pstatus != STATE_SUCCESS)
         {
             /* stat */
-            inc_func_err_unrecover(pclient, STATE_LOCK_CREATE);
+            inc_func_err_unrecover(pclient, CACHE_INODE_LOCK_CREATE);
             V_w(&pentry->lock);
 
             return *pstatus;
         }
 
     /* Get a new lock */
-    GetFromPool(pfilelock, &pclient->pool_state_v4, cache_inode_state_t);
+    GetFromPool(pfilelock, &pclient->pool_state_v4, state_t);
 
     if(pfilelock == NULL)
         {
@@ -2604,18 +2604,18 @@ cache_inode_status_t cache_inode_lock_create(cache_entry_t * pentry,
             *pstatus = STATE_MALLOC_ERROR;
 
             /* stat */
-            inc_func_err_unrecover(pclient, STATE_LOCK_CREATE);
+            inc_func_err_unrecover(pclient, CACHE_INODE_LOCK_CREATE);
             V_w(&pentry->lock);
 
             return *pstatus;
         }
 
     /* Fills in the lock structure */
-    memset(pfilelock, 0, sizeof(cache_inode_state_v4_t));
+    memset(pfilelock, 0, sizeof(state_v4_t));
     pfilelock->data.lock.offset = offset;
     pfilelock->data.lock.length = abslength;
     pfilelock->data.lock.lock_type = lock_type;
-    pfilelock->state_type = STATE_STATE_LOCK;
+    pfilelock->state_type = STATE_TYPE_LOCK;
     pfilelock->clientid4 = clientid;
     pfilelock->client_inst_num = client_inst_num;
     pfilelock->seqid = 0;
@@ -2625,7 +2625,7 @@ cache_inode_status_t cache_inode_lock_create(cache_entry_t * pentry,
     cache_inode_lock_insert(pentry, pfilelock);
 
     /* Successful operation */
-    inc_func_success(pclient, STATE_LOCK_CREATE);
+    inc_func_success(pclient, CACHE_INODE_LOCK_CREATE);
 
     V_w(&pentry->lock);
     cache_inode_lock_print(pentry);

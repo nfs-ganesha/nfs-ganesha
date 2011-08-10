@@ -45,24 +45,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
-#include "cache_content.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
+#include "sal_functions.h"
 #include "nfs_proto_functions.h"
-#include "nfs_file_handle.h"
-#include "nfs_tools.h"
 
 /**
  *
@@ -94,11 +85,11 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lockt";
 
-  cache_inode_status_t cache_status;
-  nfs_client_id_t nfs_client_id;
-  cache_inode_state_t *pstate_found = NULL;
-  uint64_t a, b, a1, b1;
-  unsigned int overlap = FALSE;
+  state_status_t    state_status;
+  nfs_client_id_t   nfs_client_id;
+  state_t         * pstate_found = NULL;
+  uint64_t          a, b, a1, b1;
+  unsigned int      overlap = FALSE;
 
   /* Initialize to sane default */
   resp->resop = NFS4_OP_LOCKT;
@@ -172,12 +163,12 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   pstate_found = NULL;
   do
     {
-      cache_inode_state_iterate(data->current_entry,
-                                &pstate_found,
-                                pstate_found,
-                                data->pclient, data->pcontext, &cache_status);
-      if((cache_status == CACHE_INODE_STATE_ERROR)
-         || (cache_status == CACHE_INODE_INVALID_ARGUMENT))
+      state_iterate(data->current_entry,
+                    &pstate_found,
+                    pstate_found,
+                    data->pclient, data->pcontext, &state_status);
+      if((state_status == STATE_STATE_ERROR)
+         || (state_status == STATE_INVALID_ARGUMENT))
         {
           res_LOCKT4.status = NFS4ERR_INVAL;
           return res_LOCKT4.status;
@@ -185,7 +176,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
       if(pstate_found != NULL)
         {
-          if(pstate_found->state_type == CACHE_INODE_STATE_LOCK)
+          if(pstate_found->state_type == STATE_TYPE_LOCK)
             {
 
               /* We found a lock, check is they overlap */

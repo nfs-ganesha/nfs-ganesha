@@ -41,21 +41,21 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "LRU_List.h"
-#include "log_macros.h"
-#include "HashData.h"
-#include "HashTable.h"
-#include "fsal.h"
-#include "cache_inode.h"
-#include "stuff_alloc.h"
-#include "nfs_core.h"
-
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
 #include <string.h>
+
+#include "LRU_List.h"
+#include "log_macros.h"
+#include "HashData.h"
+#include "HashTable.h"
+#include "fsal.h"
+#include "sal_functions.h"
+#include "stuff_alloc.h"
+#include "nfs_core.h"
 
 /**
  *
@@ -70,9 +70,9 @@
  * @return TRUE if there is a conflict, FALSE if no conflict has been found
  *
  */
-int cache_inode_state_conflict(cache_inode_state_t * pstate,
-                               cache_inode_state_type_t state_type,
-                               cache_inode_state_data_t * pstate_data)
+int cache_inode_state_conflict(state_t      * pstate,
+                               state_type_t   state_type,
+                               state_data_t * pstate_data)
 {
   int rc = FALSE;
 
@@ -81,27 +81,27 @@ int cache_inode_state_conflict(cache_inode_state_t * pstate,
 
   switch (state_type)
     {
-    case CACHE_INODE_STATE_NONE:
+    case STATE_TYPE_NONE:
       rc = FALSE;               /* STATE_NONE conflicts with nobody */
       break;
 
-    case CACHE_INODE_STATE_SHARE:
-      if(pstate->state_type == CACHE_INODE_STATE_SHARE)
+    case STATE_TYPE_SHARE:
+      if(pstate->state_type == STATE_TYPE_SHARE)
         {
           if((pstate->state_data.share.share_access & pstate_data->share.share_deny) ||
              (pstate->state_data.share.share_deny & pstate_data->share.share_access))
             rc = TRUE;
         }
 
-    case CACHE_INODE_STATE_LOCK:
+    case STATE_TYPE_LOCK:
       rc = FALSE;
       break;                    /* lock conflict is managed in the NFS request */
 
-    case CACHE_INODE_STATE_LAYOUT:
+    case STATE_TYPE_LAYOUT:
       rc = FALSE;  /** @todo No conflict management on layout for now */
       break;
 
-    case CACHE_INODE_STATE_DELEG:
+    case STATE_TYPE_DELEG:
     default:
       /* Not yet implemented for now, answer TRUE to
        * avoid weird behavior */
@@ -130,21 +130,21 @@ int cache_inode_state_conflict(cache_inode_state_t * pstate,
  * @return the same as *pstatus
  *
  */
-cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
-                                           cache_inode_state_type_t state_type,
-                                           cache_inode_state_data_t * pstate_data,
-                                           cache_inode_open_owner_t * powner_input,
-                                           cache_inode_client_t * pclient,
-                                           fsal_op_context_t * pcontext,
-                                           cache_inode_state_t * *ppstate,
-                                           cache_inode_status_t * pstatus)
+cache_inode_status_t cache_inode_add_state(cache_entry_t         * pentry,
+                                           state_type_t            state_type,
+                                           state_data_t          * pstate_data,
+                                           state_open_owner_t    * powner_input,
+                                           cache_inode_client_t  * pclient,
+                                           fsal_op_context_t     * pcontext,
+                                           state_t              ** ppstate,
+                                           cache_inode_status_t  * pstatus)
 {
-  cache_inode_state_t *pnew_state = NULL;
-  cache_inode_state_t *piter_state = NULL;
-  cache_inode_state_t *piter_saved = NULL;
-  cache_inode_open_owner_t *powner = powner_input;
-  char debug_str[25];
-  bool_t conflict_found = FALSE;
+  state_t            * pnew_state = NULL;
+  state_t            * piter_state = NULL;
+  state_t            * piter_saved = NULL;
+  state_open_owner_t * powner = powner_input;
+  char                 debug_str[25];
+  bool_t               conflict_found = FALSE;
 
   /* Sanity Check */
   if(pstatus == NULL)
@@ -167,7 +167,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
   /* Acquire lock to enter critical section on this entry */
   P_w(&pentry->lock);
 
-  GetFromPool(pnew_state, &pclient->pool_state_v4, cache_inode_state_t);
+  GetFromPool(pnew_state, &pclient->pool_state_v4, state_t);
 
   if(pnew_state == NULL)
     {
@@ -208,8 +208,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
 
       /* Set the type and data for this state */
       pnew_state->state_type = state_type;
-      memcpy((char *)&(pnew_state->state_data), (char *)pstate_data,
-             sizeof(cache_inode_state_data_t));
+      memcpy(&(pnew_state->state_data), pstate_data, sizeof(state_data_t));
       pnew_state->seqid = 0;
       pnew_state->pentry = pentry;
       pnew_state->powner = powner;
@@ -269,8 +268,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
 
       /* Set the type and data for this state */
       pnew_state->state_type = state_type;
-      memcpy((char *)&(pnew_state->state_data), (char *)pstate_data,
-             sizeof(cache_inode_state_data_t));
+      memcpy(&(pnew_state->state_data), pstate_data, sizeof(state_data_t));
       pnew_state->seqid = 0;
       pnew_state->pentry = pentry;
       pnew_state->powner = powner;
@@ -324,10 +322,10 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t * pentry,
  * @return the same as *pstatus
  *
  */
-cache_inode_status_t cache_inode_get_state(char other[12],
-                                           cache_inode_state_t * *ppstate,
-                                           cache_inode_client_t * pclient,
-                                           cache_inode_status_t * pstatus)
+cache_inode_status_t cache_inode_get_state(char                    other[12],
+                                           state_t              ** ppstate,
+                                           cache_inode_client_t *  pclient,
+                                           cache_inode_status_t *  pstatus)
 {
   if(pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
@@ -370,7 +368,7 @@ cache_inode_status_t cache_inode_get_state(char other[12],
  * @return the same as *pstatus
  *
  */
-cache_inode_status_t cache_inode_update_state(cache_inode_state_t * pstate,
+cache_inode_status_t cache_inode_update_state(state_t              * pstate,
                                               cache_inode_client_t * pclient,
                                               cache_inode_status_t * pstatus)
 {
@@ -415,8 +413,8 @@ cache_inode_status_t cache_inode_del_state_by_key(char other[12],
                                                   cache_inode_client_t * pclient,
                                                   cache_inode_status_t * pstatus)
 {
-  cache_inode_state_t *pstate = NULL;
-  cache_entry_t *pentry = NULL;
+  state_t       * pstate = NULL;
+  cache_entry_t * pentry = NULL;
 
   if(pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
@@ -483,7 +481,7 @@ cache_inode_status_t cache_inode_del_state_by_key(char other[12],
 
       /* reset the pstate field to avoid later mistakes */
       memset((char *)pstate->stateid_other, 0, 12);
-      pstate->state_type = CACHE_INODE_STATE_NONE;
+      pstate->state_type = STATE_TYPE_NONE;
       pstate->next = NULL;
       pstate->prev = NULL;
       pstate->pentry = NULL;
@@ -511,11 +509,11 @@ cache_inode_status_t cache_inode_del_state_by_key(char other[12],
  * @return the same as *pstatus
  *
  */
-cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
+cache_inode_status_t cache_inode_del_state(state_t              * pstate,
                                            cache_inode_client_t * pclient,
                                            cache_inode_status_t * pstatus)
 {
-  cache_inode_state_t *ptest_state = NULL;
+  state_t *ptest_state = NULL;
   cache_entry_t *pentry = NULL;
   char str[25];
   if(pstatus == NULL)
@@ -586,7 +584,7 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
 
   /* reset the pstate field to avoid later mistakes */
   memset((char *)pstate->stateid_other, 0, 12);
-  pstate->state_type = CACHE_INODE_STATE_NONE;
+  pstate->state_type = STATE_TYPE_NONE;
   pstate->next = NULL;
   pstate->prev = NULL;
   pstate->pentry = NULL;
@@ -616,15 +614,15 @@ cache_inode_status_t cache_inode_del_state(cache_inode_state_t * pstate,
  * @return the same as *pstatus
  *
  */
-cache_inode_status_t cache_inode_state_iterate(cache_entry_t * pentry,
-                                               cache_inode_state_t * *ppstate,
-                                               cache_inode_state_t * previous_pstate,
-                                               cache_inode_client_t * pclient,
-                                               fsal_op_context_t * pcontext,
-                                               cache_inode_status_t * pstatus)
+cache_inode_status_t cache_inode_state_iterate(cache_entry_t         * pentry,
+                                               state_t              ** ppstate,
+                                               state_t               * previous_pstate,
+                                               cache_inode_client_t  * pclient,
+                                               fsal_op_context_t     * pcontext,
+                                               cache_inode_status_t  * pstatus)
 {
-  cache_inode_state_t *piter_state = NULL;
-  uint64_t fileid_digest = 0;
+  state_t  * piter_state = NULL;
+  uint64_t   fileid_digest = 0;
 
   if(pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;

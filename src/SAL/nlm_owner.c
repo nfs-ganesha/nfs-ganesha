@@ -37,41 +37,22 @@
 #include "solaris_port.h"
 #endif
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <ctype.h>              /* for having isalnum */
-#include <stdlib.h>             /* for having atoi */
-#include <dirent.h>             /* for having MAXNAMLEN */
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include <pwd.h>
-#include <grp.h>
-#include <pthread.h>
-#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "nfs_core.h"
-#include "nfs23.h"
 #include "nlm4.h"
-#include "fsal.h"
-#include "nfs_tools.h"
-#include "nfs_exports.h"
-#include "nfs_file_handle.h"
-#include "cache_inode.h"
+#include "sal_functions.h"
 
 //TODO FSF: check if can optimize by using same reference as key and value
 
 hash_table_t *ht_nlm_owner;
 hash_table_t *ht_nlm_client;
 
-int display_nlm_client(cache_inode_nlm_client_t *pkey, char *str)
+int display_nlm_client(state_nlm_client_t *pkey, char *str)
 {
   char *strtmp = str;
 
@@ -79,8 +60,8 @@ int display_nlm_client(cache_inode_nlm_client_t *pkey, char *str)
     return sprintf(str, "<NULL>");
 
   strtmp += sprintf(strtmp, "caller_name=");
-  strncpy(strtmp, pkey->clc_nlm_caller_name, pkey->clc_nlm_caller_name_len);
-  strtmp += pkey->clc_nlm_caller_name_len;
+  strncpy(strtmp, pkey->slc_nlm_caller_name, pkey->slc_nlm_caller_name_len);
+  strtmp += pkey->slc_nlm_caller_name_len;
   *strtmp = '\0';
 
   return strlen(str);
@@ -88,16 +69,16 @@ int display_nlm_client(cache_inode_nlm_client_t *pkey, char *str)
 
 int display_nlm_client_key(hash_buffer_t * pbuff, char *str)
 {
-  return display_nlm_client((cache_inode_nlm_client_t *)pbuff->pdata, str);
+  return display_nlm_client((state_nlm_client_t *)pbuff->pdata, str);
 }
 
 int display_nlm_client_val(hash_buffer_t * pbuff, char *str)
 {
-  return display_nlm_client((cache_inode_nlm_client_t *)pbuff->pdata, str);
+  return display_nlm_client((state_nlm_client_t *)pbuff->pdata, str);
 }
 
-int compare_nlm_client(cache_inode_nlm_client_t *pclient1,
-                       cache_inode_nlm_client_t *pclient2)
+int compare_nlm_client(state_nlm_client_t *pclient1,
+                       state_nlm_client_t *pclient2)
 {
   if(isFullDebug(COMPONENT_NLM))
     {
@@ -116,18 +97,18 @@ int compare_nlm_client(cache_inode_nlm_client_t *pclient1,
   if(pclient1 == pclient2)
     return 0;
 
-  if(pclient1->clc_nlm_caller_name_len != pclient2->clc_nlm_caller_name_len)
+  if(pclient1->slc_nlm_caller_name_len != pclient2->slc_nlm_caller_name_len)
     return 1;
 
-  return memcmp(pclient1->clc_nlm_caller_name,
-                pclient2->clc_nlm_caller_name,
-                pclient1->clc_nlm_caller_name_len);
+  return memcmp(pclient1->slc_nlm_caller_name,
+                pclient2->slc_nlm_caller_name,
+                pclient1->slc_nlm_caller_name_len);
 }
 
 int compare_nlm_client_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  return compare_nlm_client((cache_inode_nlm_client_t *)buff1->pdata,
-                            (cache_inode_nlm_client_t *)buff2->pdata);
+  return compare_nlm_client((state_nlm_client_t *)buff1->pdata,
+                            (state_nlm_client_t *)buff2->pdata);
 
 }                               /* compare_nlm_client */
 
@@ -137,21 +118,21 @@ unsigned long nlm_client_value_hash_func(hash_parameter_t * p_hparam,
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  cache_inode_nlm_client_t *pkey = (cache_inode_nlm_client_t *)buffclef->pdata;
+  state_nlm_client_t *pkey = (state_nlm_client_t *)buffclef->pdata;
 
   /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->clc_nlm_caller_name_len; i++)
-    sum +=(unsigned char) pkey->clc_nlm_caller_name[i];
+  for(i = 0; i < pkey->slc_nlm_caller_name_len; i++)
+    sum +=(unsigned char) pkey->slc_nlm_caller_name[i];
 
   res = (unsigned long) sum +
-        (unsigned long) pkey->clc_nlm_caller_name_len;
+        (unsigned long) pkey->slc_nlm_caller_name_len;
 
   LogFullDebug(COMPONENT_NLM,
                "---> rbt_hash_val = %lu", res % p_hparam->index_size);
 
   return (unsigned long)(res % p_hparam->index_size);
 
-}                               /* nlm_clo_nlm_ohue_hash_func */
+}                               /* nlm_slo_nlm_ohue_hash_func */
 
 unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
                                       hash_buffer_t * buffclef)
@@ -159,21 +140,21 @@ unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  cache_inode_nlm_client_t *pkey = (cache_inode_nlm_client_t *)buffclef->pdata;
+  state_nlm_client_t *pkey = (state_nlm_client_t *)buffclef->pdata;
 
   /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->clc_nlm_caller_name_len; i++)
-    sum +=(unsigned char) pkey->clc_nlm_caller_name[i];
+  for(i = 0; i < pkey->slc_nlm_caller_name_len; i++)
+    sum +=(unsigned char) pkey->slc_nlm_caller_name[i];
 
   res = (unsigned long) sum +
-        (unsigned long) pkey->clc_nlm_caller_name_len;
+        (unsigned long) pkey->slc_nlm_caller_name_len;
 
   LogFullDebug(COMPONENT_NLM, "---> rbt_hash_func = %lu", res);
 
   return res;
 }                               /* state_id_rbt_hash_func */
 
-int display_nlm_owner(cache_lock_owner_t *pkey, char *str)
+int display_nlm_owner(state_lock_owner_t *pkey, char *str)
 {
   unsigned int i = 0;
   char *strtmp = str;
@@ -181,32 +162,32 @@ int display_nlm_owner(cache_lock_owner_t *pkey, char *str)
   if(pkey == NULL)
     return sprintf(str, "<NULL>");
 
-  strtmp += display_nlm_client(pkey->clo_owner.clo_nlm_owner.clo_client, str);
+  strtmp += display_nlm_client(pkey->slo_owner.slo_nlm_owner.slo_client, str);
 
-  strtmp += sprintf(strtmp, " oh=(%u|", pkey->clo_owner.clo_nlm_owner.clo_nlm_oh_len);
+  strtmp += sprintf(strtmp, " oh=(%u|", pkey->slo_owner.slo_nlm_owner.slo_nlm_oh_len);
 
-  for(i = 0; i < pkey->clo_owner.clo_nlm_owner.clo_nlm_oh_len; i++)
+  for(i = 0; i < pkey->slo_owner.slo_nlm_owner.slo_nlm_oh_len; i++)
     {
-      sprintf(strtmp, "%02x", (unsigned char)pkey->clo_owner.clo_nlm_owner.clo_nlm_oh[i]);
+      sprintf(strtmp, "%02x", (unsigned char)pkey->slo_owner.slo_nlm_owner.slo_nlm_oh[i]);
       strtmp += 2;
     }
 
-  strtmp += sprintf(strtmp, ") svid=%d", pkey->clo_owner.clo_nlm_owner.clo_nlm_svid);
+  strtmp += sprintf(strtmp, ") svid=%d", pkey->slo_owner.slo_nlm_owner.slo_nlm_svid);
   return strlen(str);
 }
 
 int display_nlm_owner_key(hash_buffer_t * pbuff, char *str)
 {
-  return display_nlm_owner((cache_lock_owner_t *)pbuff->pdata, str);
+  return display_nlm_owner((state_lock_owner_t *)pbuff->pdata, str);
 }
 
 int display_nlm_owner_val(hash_buffer_t * pbuff, char *str)
 {
-  return display_nlm_owner((cache_lock_owner_t *)pbuff->pdata, str);
+  return display_nlm_owner((state_lock_owner_t *)pbuff->pdata, str);
 }
 
-int compare_nlm_owner(cache_lock_owner_t *powner1,
-                      cache_lock_owner_t *powner2)
+int compare_nlm_owner(state_lock_owner_t *powner1,
+                      state_lock_owner_t *powner2)
 {
   if(isFullDebug(COMPONENT_NLM))
     {
@@ -225,32 +206,32 @@ int compare_nlm_owner(cache_lock_owner_t *powner1,
   if(powner1 == powner2)
     return 0;
 
-  if(compare_nlm_client(powner1->clo_owner.clo_nlm_owner.clo_client,
-                        powner2->clo_owner.clo_nlm_owner.clo_client) != 0)
+  if(compare_nlm_client(powner1->slo_owner.slo_nlm_owner.slo_client,
+                        powner2->slo_owner.slo_nlm_owner.slo_client) != 0)
     return 1;
 
   /* Handle special owner that matches any lock owner with the same nlm client */
-  if(powner1->clo_owner.clo_nlm_owner.clo_nlm_oh_len == -1 ||
-     powner2->clo_owner.clo_nlm_owner.clo_nlm_oh_len == -1)
+  if(powner1->slo_owner.slo_nlm_owner.slo_nlm_oh_len == -1 ||
+     powner2->slo_owner.slo_nlm_owner.slo_nlm_oh_len == -1)
     return 0;
 
-  if(powner1->clo_owner.clo_nlm_owner.clo_nlm_svid !=
-     powner2->clo_owner.clo_nlm_owner.clo_nlm_svid)
+  if(powner1->slo_owner.slo_nlm_owner.slo_nlm_svid !=
+     powner2->slo_owner.slo_nlm_owner.slo_nlm_svid)
     return 1;
 
-  if(powner1->clo_owner.clo_nlm_owner.clo_nlm_oh_len !=
-     powner2->clo_owner.clo_nlm_owner.clo_nlm_oh_len)
+  if(powner1->slo_owner.slo_nlm_owner.slo_nlm_oh_len !=
+     powner2->slo_owner.slo_nlm_owner.slo_nlm_oh_len)
     return 1;
 
-  return memcmp(powner1->clo_owner.clo_nlm_owner.clo_nlm_oh,
-                powner2->clo_owner.clo_nlm_owner.clo_nlm_oh,
-                powner1->clo_owner.clo_nlm_owner.clo_nlm_oh_len);
+  return memcmp(powner1->slo_owner.slo_nlm_owner.slo_nlm_oh,
+                powner2->slo_owner.slo_nlm_owner.slo_nlm_oh,
+                powner1->slo_owner.slo_nlm_owner.slo_nlm_oh_len);
 }
 
 int compare_nlm_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  return compare_nlm_owner((cache_lock_owner_t *)buff1->pdata,
-                           (cache_lock_owner_t *)buff2->pdata);
+  return compare_nlm_owner((state_lock_owner_t *)buff1->pdata,
+                           (state_lock_owner_t *)buff2->pdata);
 
 }                               /* compare_nlm_owner */
 
@@ -260,22 +241,22 @@ unsigned long nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  cache_lock_owner_t *pkey = (cache_lock_owner_t *)buffclef->pdata;
+  state_lock_owner_t *pkey = (state_lock_owner_t *)buffclef->pdata;
 
   /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->clo_owner.clo_nlm_owner.clo_nlm_oh_len; i++)
-    sum += (unsigned char)pkey->clo_owner.clo_nlm_owner.clo_nlm_oh[i];
+  for(i = 0; i < pkey->slo_owner.slo_nlm_owner.slo_nlm_oh_len; i++)
+    sum += (unsigned char)pkey->slo_owner.slo_nlm_owner.slo_nlm_oh[i];
 
-  res = (unsigned long) (pkey->clo_owner.clo_nlm_owner.clo_nlm_svid) +
+  res = (unsigned long) (pkey->slo_owner.slo_nlm_owner.slo_nlm_svid) +
         (unsigned long) sum +
-        (unsigned long) pkey->clo_owner.clo_nlm_owner.clo_nlm_oh_len;
+        (unsigned long) pkey->slo_owner.slo_nlm_owner.slo_nlm_oh_len;
 
   LogFullDebug(COMPONENT_NLM,
                "---> rbt_hash_val = %lu", res % p_hparam->index_size);
 
   return (unsigned long)(res % p_hparam->index_size);
 
-}                               /* nlm_clo_nlm_ohue_hash_func */
+}                               /* nlm_slo_nlm_ohue_hash_func */
 
 unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                       hash_buffer_t * buffclef)
@@ -283,15 +264,15 @@ unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  cache_lock_owner_t *pkey = (cache_lock_owner_t *)buffclef->pdata;
+  state_lock_owner_t *pkey = (state_lock_owner_t *)buffclef->pdata;
 
   /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->clo_owner.clo_nlm_owner.clo_nlm_oh_len; i++)
-    sum += (unsigned char)pkey->clo_owner.clo_nlm_owner.clo_nlm_oh[i];
+  for(i = 0; i < pkey->slo_owner.slo_nlm_owner.slo_nlm_oh_len; i++)
+    sum += (unsigned char)pkey->slo_owner.slo_nlm_owner.slo_nlm_oh[i];
 
-  res = (unsigned long) (pkey->clo_owner.clo_nlm_owner.clo_nlm_svid) +
+  res = (unsigned long) (pkey->slo_owner.slo_nlm_owner.slo_nlm_svid) +
         (unsigned long) sum +
-        (unsigned long) pkey->clo_owner.clo_nlm_owner.clo_nlm_oh_len;
+        (unsigned long) pkey->slo_owner.slo_nlm_owner.slo_nlm_oh_len;
 
   LogFullDebug(COMPONENT_NLM, "---> rbt_hash_func = %lu", res);
 
@@ -338,8 +319,8 @@ int Init_nlm_hash(hash_parameter_t client_param, hash_parameter_t owner_param)
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nlm_client_Set(cache_inode_nlm_client_t * pkey,
-                   cache_inode_nlm_client_t * pclient)
+int nlm_client_Set(state_nlm_client_t * pkey,
+                   state_nlm_client_t * pclient)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -373,44 +354,44 @@ int nlm_client_Set(cache_inode_nlm_client_t * pkey,
 static int Hash_del_nlm_client_ref(hash_buffer_t *buffval)
 {
   int rc;
-  cache_inode_nlm_client_t *pclient = (cache_inode_nlm_client_t *)(buffval->pdata);
+  state_nlm_client_t *pclient = (state_nlm_client_t *)(buffval->pdata);
 
-  P(pclient->clc_mutex);
+  P(pclient->slc_mutex);
 
-  pclient->clc_refcount--;
-  rc = pclient->clc_refcount;
+  pclient->slc_refcount--;
+  rc = pclient->slc_refcount;
 
-  V(pclient->clc_mutex);  
+  V(pclient->slc_mutex);  
 
   return rc;
 }
 
 static void Hash_inc_client_ref(hash_buffer_t *buffval)
 {
-  cache_inode_nlm_client_t *pclient = (cache_inode_nlm_client_t *)(buffval->pdata);
+  state_nlm_client_t *pclient = (state_nlm_client_t *)(buffval->pdata);
 
-  P(pclient->clc_mutex);
-  pclient->clc_refcount++;
-  V(pclient->clc_mutex);  
+  P(pclient->slc_mutex);
+  pclient->slc_refcount++;
+  V(pclient->slc_mutex);  
 }
 
-void inc_nlm_client_ref(cache_inode_nlm_client_t *pclient)
+void inc_nlm_client_ref(state_nlm_client_t *pclient)
 {
-  P(pclient->clc_mutex);
-  pclient->clc_refcount++;
-  V(pclient->clc_mutex);
+  P(pclient->slc_mutex);
+  pclient->slc_refcount++;
+  V(pclient->slc_mutex);
 }
 
-void dec_nlm_client_ref(cache_inode_nlm_client_t *pclient)
+void dec_nlm_client_ref(state_nlm_client_t *pclient)
 {
   bool_t remove = FALSE;
 
-  P(pclient->clc_mutex);
-  if(pclient->clc_refcount > 1)
-    pclient->clc_refcount--;
+  P(pclient->slc_mutex);
+  if(pclient->slc_refcount > 1)
+    pclient->slc_refcount--;
   else
     remove = TRUE;
-  V(pclient->clc_mutex);
+  V(pclient->slc_mutex);
   if(remove)
     {
       hash_buffer_t buffkey, old_key, old_value;
@@ -450,8 +431,8 @@ void dec_nlm_client_ref(cache_inode_nlm_client_t *pclient)
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nlm_client_Get_Pointer(cache_inode_nlm_client_t * pkey,
-                           cache_inode_nlm_client_t * *pclient)
+int nlm_client_Get_Pointer(state_nlm_client_t * pkey,
+                           state_nlm_client_t * *pclient)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -476,7 +457,7 @@ int nlm_client_Get_Pointer(cache_inode_nlm_client_t * pkey,
       return 0;
     }
 
-  *pclient = (cache_inode_nlm_client_t *) buffval.pdata;
+  *pclient = (state_nlm_client_t *) buffval.pdata;
 
   LogFullDebug(COMPONENT_NLM,
                "nlm_client_Get_Pointer => FOUND");
@@ -498,9 +479,9 @@ void nlm_client_PrintAll(void)
   HashTable_Log(COMPONENT_NLM, ht_nlm_client);
 }                               /* nlm_client_PrintAll */
 
-cache_inode_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
+state_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
 {
-  cache_inode_nlm_client_t *pkey, *pclient;
+  state_nlm_client_t *pkey, *pclient;
 
   LogFullDebug(COMPONENT_NLM,
                "get_nlm_client %s", caller_name);
@@ -508,20 +489,20 @@ cache_inode_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
   if(caller_name == NULL)
     return NULL;
 
-  pkey = (cache_inode_nlm_client_t *)Mem_Alloc(sizeof(*pkey));
+  pkey = (state_nlm_client_t *)Mem_Alloc(sizeof(*pkey));
   if(pkey == NULL)
     return NULL;
 
   memset(pkey, 0, sizeof(*pkey));
-  pkey->clc_nlm_caller_name_len = strlen(caller_name);
+  pkey->slc_nlm_caller_name_len = strlen(caller_name);
 
-  if(pkey->clc_nlm_caller_name_len > LM_MAXSTRLEN)
+  if(pkey->slc_nlm_caller_name_len > LM_MAXSTRLEN)
     return NULL;
 
-  memcpy(pkey->clc_nlm_caller_name,
+  memcpy(pkey->slc_nlm_caller_name,
          caller_name,
-         pkey->clc_nlm_caller_name_len);
-  pkey->clc_nlm_caller_name[pkey->clc_nlm_caller_name_len] = '\0';
+         pkey->slc_nlm_caller_name_len);
+  pkey->slc_nlm_caller_name[pkey->slc_nlm_caller_name_len] = '\0';
   
   if(isFullDebug(COMPONENT_NLM))
     {
@@ -550,7 +531,7 @@ cache_inode_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
       return pclient;
     }
 
-  pclient = (cache_inode_nlm_client_t *)Mem_Alloc(sizeof(*pkey));
+  pclient = (state_nlm_client_t *)Mem_Alloc(sizeof(*pkey));
   if(pclient == NULL)
     {
       Mem_Free(pkey);
@@ -559,7 +540,7 @@ cache_inode_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
 
   /* Copy everything over */
   *pclient = *pkey;
-  init_glist(&pclient->clc_lock_list);
+  init_glist(&pclient->slc_lock_list);
 
   if(isFullDebug(COMPONENT_NLM))
     {
@@ -570,7 +551,7 @@ cache_inode_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
                    "get_nlm_client new pclient=%s", str);
     }
 
-  if(pthread_mutex_init(&pclient->clc_mutex, NULL) == -1)
+  if(pthread_mutex_init(&pclient->slc_mutex, NULL) == -1)
     {
       /* Mutex initialization failed, free the key and created owner */
       Mem_Free(pkey);
@@ -595,8 +576,8 @@ cache_inode_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nlm_owner_Set(cache_lock_owner_t * pkey,
-                  cache_lock_owner_t * powner)
+int nlm_owner_Set(state_lock_owner_t * pkey,
+                  state_lock_owner_t * powner)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -630,44 +611,44 @@ int nlm_owner_Set(cache_lock_owner_t * pkey,
 static int Hash_del_nlm_owner_ref(hash_buffer_t *buffval)
 {
   int rc;
-  cache_lock_owner_t *powner = (cache_lock_owner_t *)(buffval->pdata);
+  state_lock_owner_t *powner = (state_lock_owner_t *)(buffval->pdata);
 
-  P(powner->clo_mutex);
+  P(powner->slo_mutex);
 
-  powner->clo_refcount--;
-  rc = powner->clo_refcount;
+  powner->slo_refcount--;
+  rc = powner->slo_refcount;
 
-  V(powner->clo_mutex);  
+  V(powner->slo_mutex);  
 
   return rc;
 }
 
 static void Hash_inc_owner_ref(hash_buffer_t *buffval)
 {
-  cache_lock_owner_t *powner = (cache_lock_owner_t *)(buffval->pdata);
+  state_lock_owner_t *powner = (state_lock_owner_t *)(buffval->pdata);
 
-  P(powner->clo_mutex);
-  powner->clo_refcount++;
-  V(powner->clo_mutex);  
+  P(powner->slo_mutex);
+  powner->slo_refcount++;
+  V(powner->slo_mutex);  
 }
 
-void inc_nlm_owner_ref(cache_lock_owner_t *powner)
+void inc_nlm_owner_ref(state_lock_owner_t *powner)
 {
-  P(powner->clo_mutex);
-  powner->clo_refcount++;
-  V(powner->clo_mutex);
+  P(powner->slo_mutex);
+  powner->slo_refcount++;
+  V(powner->slo_mutex);
 }
 
-void dec_nlm_owner_ref(cache_lock_owner_t *powner)
+void dec_nlm_owner_ref(state_lock_owner_t *powner)
 {
   bool_t remove = FALSE;
 
-  P(powner->clo_mutex);
-  if(powner->clo_refcount > 1)
-    powner->clo_refcount--;
+  P(powner->slo_mutex);
+  if(powner->slo_refcount > 1)
+    powner->slo_refcount--;
   else
     remove = TRUE;
-  V(powner->clo_mutex);
+  V(powner->slo_mutex);
   if(remove)
     {
       hash_buffer_t buffkey, old_key, old_value;
@@ -678,7 +659,7 @@ void dec_nlm_owner_ref(cache_lock_owner_t *powner)
       switch(HashTable_DelRef(ht_nlm_owner, &buffkey, &old_key, &old_value, Hash_del_nlm_owner_ref))
         {
           case HASHTABLE_SUCCESS:
-            dec_nlm_client_ref(powner->clo_owner.clo_nlm_owner.clo_client);
+            dec_nlm_client_ref(powner->slo_owner.slo_nlm_owner.slo_client);
             Mem_Free(old_key.pdata);
             Mem_Free(old_value.pdata);
             break;
@@ -708,8 +689,8 @@ void dec_nlm_owner_ref(cache_lock_owner_t *powner)
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nlm_owner_Get_Pointer(cache_lock_owner_t * pkey,
-                          cache_lock_owner_t * *powner)
+int nlm_owner_Get_Pointer(state_lock_owner_t * pkey,
+                          state_lock_owner_t * *powner)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -733,7 +714,7 @@ int nlm_owner_Get_Pointer(cache_lock_owner_t * pkey,
       return 0;
     }
 
-  *powner = (cache_lock_owner_t *) buffval.pdata;
+  *powner = (state_lock_owner_t *) buffval.pdata;
 
   LogFullDebug(COMPONENT_NLM,
                "nlm_owner_Get_Pointer => FOUND");
@@ -755,17 +736,17 @@ void nlm_owner_PrintAll(void)
   HashTable_Log(COMPONENT_NLM, ht_nlm_owner);
 }                               /* nlm_owner_PrintAll */
 
-cache_lock_owner_t *get_nlm_owner(bool_t                     care,
-                                  cache_inode_nlm_client_t * pclient, 
-                                  netobj                   * oh,
-                                  uint32_t                   svid)
+state_lock_owner_t *get_nlm_owner(bool_t               care,
+                                  state_nlm_client_t * pclient, 
+                                  netobj             * oh,
+                                  uint32_t             svid)
 {
-  cache_lock_owner_t *pkey, *powner;
+  state_lock_owner_t *pkey, *powner;
 
   if(pclient == NULL || oh == NULL || oh->n_len > MAX_NETOBJ_SZ)
     return NULL;
 
-  pkey = (cache_lock_owner_t *)Mem_Alloc(sizeof(*pkey));
+  pkey = (state_lock_owner_t *)Mem_Alloc(sizeof(*pkey));
   if(pkey == NULL)
     return NULL;
 
@@ -782,12 +763,12 @@ cache_lock_owner_t *get_nlm_owner(bool_t                     care,
                    "get_nlm_owner pclient=%s", str);
     }
 
-  pkey->clo_type     = CACHE_LOCK_OWNER_NLM;
-  pkey->clo_refcount = 1;
-  pkey->clo_owner.clo_nlm_owner.clo_client     = pclient;
-  pkey->clo_owner.clo_nlm_owner.clo_nlm_svid   = svid;
-  pkey->clo_owner.clo_nlm_owner.clo_nlm_oh_len = oh->n_len;
-  memcpy(pkey->clo_owner.clo_nlm_owner.clo_nlm_oh,
+  pkey->slo_type     = STATE_LOCK_OWNER_NLM;
+  pkey->slo_refcount = 1;
+  pkey->slo_owner.slo_nlm_owner.slo_client     = pclient;
+  pkey->slo_owner.slo_nlm_owner.slo_nlm_svid   = svid;
+  pkey->slo_owner.slo_nlm_owner.slo_nlm_oh_len = oh->n_len;
+  memcpy(pkey->slo_owner.slo_nlm_owner.slo_nlm_oh,
          oh->n_bytes,
          oh->n_len);
 
@@ -818,7 +799,7 @@ cache_lock_owner_t *get_nlm_owner(bool_t                     care,
       return powner;
     }
     
-  powner = (cache_lock_owner_t *)Mem_Alloc(sizeof(*pkey));
+  powner = (state_lock_owner_t *)Mem_Alloc(sizeof(*pkey));
   if(powner == NULL)
     {
       Mem_Free(pkey);
@@ -827,9 +808,9 @@ cache_lock_owner_t *get_nlm_owner(bool_t                     care,
 
   /* Copy everything over */
   *powner = *pkey;
-  init_glist(&powner->clo_lock_list);
+  init_glist(&powner->slo_lock_list);
 
-  if(pthread_mutex_init(&powner->clo_mutex, NULL) == -1)
+  if(pthread_mutex_init(&powner->slo_mutex, NULL) == -1)
     {
       /* Mutex initialization failed, free the key and created owner */
       Mem_Free(pkey);
@@ -856,8 +837,8 @@ cache_lock_owner_t *get_nlm_owner(bool_t                     care,
   return NULL;
 }
 
-void make_nlm_special_owner(cache_inode_nlm_client_t * pclient,
-                            cache_lock_owner_t       * pnlm_owner)
+void make_nlm_special_owner(state_nlm_client_t * pclient,
+                            state_lock_owner_t * pnlm_owner)
 {
   if(pnlm_owner == NULL)
     return;
@@ -866,8 +847,8 @@ void make_nlm_special_owner(cache_inode_nlm_client_t * pclient,
 
   inc_nlm_client_ref(pclient);
 
-  pnlm_owner->clo_type     = CACHE_LOCK_OWNER_NLM;
-  pnlm_owner->clo_refcount = 1;
-  pnlm_owner->clo_owner.clo_nlm_owner.clo_client     = pclient;
-  pnlm_owner->clo_owner.clo_nlm_owner.clo_nlm_oh_len = -1;
+  pnlm_owner->slo_type     = STATE_LOCK_OWNER_NLM;
+  pnlm_owner->slo_refcount = 1;
+  pnlm_owner->slo_owner.slo_nlm_owner.slo_client     = pclient;
+  pnlm_owner->slo_owner.slo_nlm_owner.slo_nlm_oh_len = -1;
 }

@@ -52,6 +52,8 @@ const char *state_err_str(state_status_t err);
 
 state_status_t state_error_convert(fsal_status_t fsal_status);
 
+cache_inode_status_t state_status_to_cache_inode_status(state_status_t status);
+
 state_status_t cache_inode_status_to_state_status(cache_inode_status_t status);
 
 /******************************************************************************
@@ -283,53 +285,53 @@ state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
                                       cache_inode_client_t * pclient,
                                       state_status_t       * pstatus);
 
-int state_state_conflict(state_t      * pstate,
-                         state_type_t   state_type,
-                         state_data_t * pstate_data);
+int state_conflict(state_t      * pstate,
+                   state_type_t   state_type,
+                   state_data_t * pstate_data);
 
-state_status_t state_add_state(cache_entry_t         * pentry,
-                               state_type_t            state_type,
-                               state_data_t          * pstate_data,
-                               state_open_owner_t    * powner_input,
-                               cache_inode_client_t  * pclient,
-                               fsal_op_context_t     * pcontext,
-                               state_t              ** ppstate,
-                               state_status_t        * pstatus);
+state_status_t state_add(cache_entry_t         * pentry,
+                         state_type_t            state_type,
+                         state_data_t          * pstate_data,
+                         state_open_owner_t    * powner_input,
+                         cache_inode_client_t  * pclient,
+                         fsal_op_context_t     * pcontext,
+                         state_t              ** ppstate,
+                         state_status_t        * pstatus);
 
-state_status_t state_get_state(char                    other[12],
-                               state_t              ** ppstate,
-                               cache_inode_client_t  * pclient,
-                               state_status_t        * pstatus);
+state_status_t state_get(char                    other[12],
+                         state_t              ** ppstate,
+                         cache_inode_client_t  * pclient,
+                         state_status_t        * pstatus);
 
-state_status_t state_set_state(state_t              * pstate,
-                               cache_inode_client_t * pclient,
-                               state_status_t       * pstatus);
+state_status_t state_set(state_t              * pstate,
+                         cache_inode_client_t * pclient,
+                         state_status_t       * pstatus);
 
-state_status_t state_update_state(state_t              * pstate,
-                                  cache_inode_client_t * pclient,
-                                  state_status_t       * pstatus);
+state_status_t state_update(state_t              * pstate,
+                            cache_inode_client_t * pclient,
+                            state_status_t       * pstatus);
 
-state_status_t state_del_state(state_t              * pstate,
-                               cache_inode_client_t * pclient,
-                               state_status_t       * pstatus);
+state_status_t state_del(state_t              * pstate,
+                         cache_inode_client_t * pclient,
+                         state_status_t       * pstatus);
 
-state_status_t state_find_state_by_owner(cache_entry_t         * pentry,
-                                         open_owner4           * powner,
-                                         state_t              ** ppstate,
-                                         state_t               * previous_pstate,
-                                         cache_inode_client_t  * pclient,
-                                         fsal_op_context_t     * pcontext,
-                                         state_status_t        * pstatus);
+state_status_t state_find_by_owner(cache_entry_t         * pentry,
+                                   open_owner4           * powner,
+                                   state_t              ** ppstate,
+                                   state_t               * previous_pstate,
+                                   cache_inode_client_t  * pclient,
+                                   fsal_op_context_t     * pcontext,
+                                   state_status_t        * pstatus);
 
-state_status_t state_state_iterate(cache_entry_t        * pentry,
-                                   state_t              * *ppstate,
-                                   state_t              * previous_pstate,
-                                   cache_inode_client_t * pclient,
-                                   fsal_op_context_t    * pcontext,
-                                   state_status_t       * pstatus);
+state_status_t state_iterate(cache_entry_t        * pentry,
+                             state_t              * *ppstate,
+                             state_t              * previous_pstate,
+                             cache_inode_client_t * pclient,
+                             fsal_op_context_t    * pcontext,
+                             state_status_t       * pstatus);
 
-state_status_t state_del_state_by_key(char                   other[12],
-                                      cache_inode_client_t * pclient,
-                                      state_status_t       * pstatus);
+state_status_t state_del_by_key(char                   other[12],
+                                cache_inode_client_t * pclient,
+                                state_status_t       * pstatus);
 
 #endif                          /*  _SAL_FUNCTIONS_H */

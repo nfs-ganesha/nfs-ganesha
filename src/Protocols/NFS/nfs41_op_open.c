@@ -74,36 +74,36 @@
 
 int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  cache_entry_t *pentry_parent = NULL;
-  cache_entry_t *pentry_lookup = NULL;
-  cache_entry_t *pentry_newfile = NULL;
-  fsal_handle_t *pnewfsal_handle = NULL;
-  fsal_attrib_list_t attr_parent;
-  fsal_attrib_list_t attr;
-  fsal_attrib_list_t attr_newfile;
-  fsal_attrib_list_t sattr;
-  fsal_openflags_t openflags = 0;
-  cache_inode_status_t cache_status;
-  nfsstat4 rc;
-  int retval;
-  fsal_name_t filename;
-  bool_t AttrProvided = FALSE;
-  fsal_accessmode_t mode = 0600;
-  nfs_fh4 newfh4;
-  nfs_worker_data_t *pworker = NULL;
-  int convrc = 0;
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open";
 
-  cache_inode_state_data_t candidate_data;
-  cache_inode_state_type_t candidate_type;
-  cache_inode_state_t *pfile_state = NULL;
-  cache_inode_state_t *pstate_found_iterate = NULL;
-  cache_inode_state_t *pstate_previous_iterate = NULL;
-  cache_inode_state_t *pstate_found_same_owner = NULL;
-
-  cache_inode_open_owner_name_t owner_name;
-  cache_inode_open_owner_name_t *powner_name = NULL;
-  cache_inode_open_owner_t *powner = NULL;
+  cache_entry_t           * pentry_parent = NULL;
+  cache_entry_t           * pentry_lookup = NULL;
+  cache_entry_t           * pentry_newfile = NULL;
+  fsal_handle_t           * pnewfsal_handle = NULL;
+  fsal_attrib_list_t        attr_parent;
+  fsal_attrib_list_t        attr;
+  fsal_attrib_list_t        attr_newfile;
+  fsal_attrib_list_t        sattr;
+  fsal_openflags_t          openflags = 0;
+  cache_inode_status_t      cache_status;
+  state_status_t            state_status;
+  nfsstat4                  rc;
+  int                       retval;
+  fsal_name_t               filename;
+  bool_t                    AttrProvided = FALSE;
+  fsal_accessmode_t         mode = 0600;
+  nfs_fh4                   newfh4;
+  nfs_worker_data_t       * pworker = NULL;
+  int                       convrc = 0;
+  state_data_t              candidate_data;
+  state_type_t              candidate_type;
+  state_t                 * pfile_state = NULL;
+  state_t                 * pstate_found_iterate = NULL;
+  state_t                 * pstate_previous_iterate = NULL;
+  state_t                 * pstate_found_same_owner = NULL;
+  state_open_owner_name_t   owner_name;
+  state_open_owner_name_t * powner_name = NULL;
+  state_open_owner_t      * powner = NULL;
 
   fsal_accessflags_t write_access = FSAL_MODE_MASK_SET(FSAL_W_OK) |
                                     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA |
@@ -290,9 +290,9 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       if(!nfs_open_owner_Get_Pointer(&owner_name, &powner))
         {
           /* This open owner is not known yet, allocated and set up a new one */
-          GetFromPool(powner, &data->pclient->pool_open_owner, cache_inode_open_owner_t);
+          GetFromPool(powner, &data->pclient->pool_open_owner, state_open_owner_t);
 
-          GetFromPool(powner_name, &data->pclient->pool_open_owner_name, cache_inode_open_owner_name_t);
+          GetFromPool(powner_name, &data->pclient->pool_open_owner_name, state_open_owner_name_t);
 
           if(powner == NULL || powner_name == NULL)
             {
@@ -301,7 +301,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
             }
 
           memcpy((char *)powner_name, (char *)&owner_name,
-                 sizeof(cache_inode_open_owner_name_t));
+                 sizeof(state_open_owner_name_t));
 
           /* set up the content of the open_owner */
           powner->confirmed = FALSE;
@@ -455,7 +455,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                   /* Set the state for the related file */
 
                   /* Prepare state management structure */
-                  candidate_type = CACHE_INODE_STATE_SHARE;
+                  candidate_type = STATE_TYPE_SHARE;
                   candidate_data.share.share_deny = arg_OPEN4.share_deny;
                   candidate_data.share.share_access = arg_OPEN4.share_access;
 
@@ -571,7 +571,10 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                                     data->pclient,
                                                     data->pcontext, &cache_status);
                           if(cache_status == CACHE_INODE_STATE_ERROR)
-                            break;
+                            {
+                              cache_status = CACHE_INODE_STATE_ERROR;
+                              break;
+                            }
 
                           if(cache_status == CACHE_INODE_INVALID_ARGUMENT)
                             {
@@ -588,7 +591,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                           if(pstate_found_iterate != NULL)
                             {
                               if((pstate_found_iterate->state_type ==
-                                  CACHE_INODE_STATE_SHARE)
+                                  STATE_TYPE_SHARE)
                                  && !memcmp(arg_OPEN4.owner.owner.owner_val,
                                             pstate_found_iterate->powner->owner_val,
                                             pstate_found_iterate->powner->owner_len)
@@ -706,7 +709,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
             }
 
           /* Prepare state management structure */
-          candidate_type = CACHE_INODE_STATE_SHARE;
+          candidate_type = STATE_TYPE_SHARE;
           candidate_data.share.share_deny = arg_OPEN4.share_deny;
           candidate_data.share.share_access = arg_OPEN4.share_access;
           candidate_data.share.lockheld = 0;
@@ -877,7 +880,10 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                         pstate_previous_iterate,
                                         data->pclient, data->pcontext, &cache_status);
               if(cache_status == CACHE_INODE_STATE_ERROR)
-                break;          /* Get out of the loop */
+                {
+                  cache_status = CACHE_INODE_STATE_ERROR;
+                  break;          /* Get out of the loop */
+                }
 
               if(cache_status == CACHE_INODE_INVALID_ARGUMENT)
                 {
@@ -888,7 +894,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
               /* Check is open_owner is the same */
               if(pstate_found_iterate != NULL)
                 {
-                  if((pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE) &&
+                  if((pstate_found_iterate->state_type == STATE_TYPE_SHARE) &&
                      (pstate_found_iterate->powner->clientid == arg_OPEN4.owner.clientid)
                      &&
                      ((pstate_found_iterate->powner->owner_len ==
@@ -913,7 +919,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                         {
                           switch (pstate_found_iterate->state_type)
                             {
-                            case CACHE_INODE_STATE_SHARE:
+                            case STATE_TYPE_SHARE:
                               if((pstate_found_iterate->state_data.share.
                                   share_access & OPEN4_SHARE_ACCESS_WRITE)
                                  && (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE))
@@ -930,7 +936,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
                   /* In all cases opening in read access a read denied file or write access to a write denied file 
                    * should fail, even if the owner is the same, see discussion in 14.2.16 and 8.9 */
-                  if(pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE)
+                  if(pstate_found_iterate->state_type == STATE_TYPE_SHARE)
                     {
                       /* deny read access on read denied file */
                       if((pstate_found_iterate->state_data.share.
@@ -983,7 +989,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
             {
               /* Set the state for the related file */
               /* Prepare state management structure */
-              candidate_type = CACHE_INODE_STATE_SHARE;
+              candidate_type = STATE_TYPE_SHARE;
               candidate_data.share.share_deny = arg_OPEN4.share_deny;
               candidate_data.share.share_access = arg_OPEN4.share_access;
 

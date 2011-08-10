@@ -45,24 +45,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
-#include "cache_content.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
+#include "sal_functions.h"
 #include "nfs_proto_functions.h"
-#include "nfs_file_handle.h"
-#include "nfs_tools.h"
 
 /**
  *
@@ -93,10 +84,10 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 #else
 
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_locku";
-  cache_inode_status_t cache_status;
-  cache_inode_state_t *pstate_found = NULL;
-  cache_inode_state_t *pstate_open = NULL;
-  unsigned int rc = 0;
+  state_status_t   state_status;
+  state_t        * pstate_found = NULL;
+  state_t        * pstate_open = NULL;
+  unsigned int     rc = 0;
 
   /* Initialize to sane default */
   resp->resop = NFS4_OP_LOCKU;
@@ -166,14 +157,14 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Get the related state */
-  if(cache_inode_get_state(arg_LOCKU4.lock_stateid.other,
-                           &pstate_found,
-                           data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+  if(state_get(arg_LOCKU4.lock_stateid.other,
+               &pstate_found,
+               data->pclient, &state_status) != STATE_SUCCESS)
     {
-      if(cache_status == CACHE_INODE_NOT_FOUND)
+      if(state_status == STATE_NOT_FOUND)
         res_LOCKU4.status = NFS4ERR_LOCK_RANGE;
       else
-        res_LOCKU4.status = nfs4_Errno(cache_status);
+        res_LOCKU4.status = nfs4_Errno(state_status);
 
       return res_LOCKU4.status;
     }
@@ -195,7 +186,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Increment the seqid for the open-stateid related to this lock */
-  pstate_open = (cache_inode_state_t *) (pstate_found->state_data.lock.popenstate);
+  pstate_open = (state_t *) (pstate_found->state_data.lock.popenstate);
   if(pstate_open != NULL)
     {
       pstate_open->seqid += 1;    /** @todo BUGAZOMEU may not be useful */
@@ -218,10 +209,10 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   V(pstate_found->powner->related_owner->lock);
 
   /* Remove the state associated with the lock */
-  if(cache_inode_del_state(pstate_found,
-                           data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+  if(state_del(pstate_found,
+               data->pclient, &state_status) != STATE_SUCCESS)
     {
-      res_LOCKU4.status = nfs4_Errno(cache_status);
+      res_LOCKU4.status = nfs4_Errno(state_status);
       return res_LOCKU4.status;
     }
 

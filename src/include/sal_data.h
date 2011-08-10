@@ -191,25 +191,27 @@ typedef struct state_lock_owner_t
   } slo_owner;
 } state_lock_owner_t;
 
-typedef struct state_t
-{
-  state_type_t state_type;
-  union state_data__
-  {
-    state_share_t share;
-    state_lock_t lock;
-    state_deleg_t deleg;
-    state_layout_t layout;
-  } state_data;
-  u_int32_t seqid;                                       /**< The NFSv4 Sequence id                      */
-  char stateid_other[12];                                /**< "Other" part of state id, used as hash key */
-  state_open_owner_t *powner;                      /**< Open Owner related to this state           */
-  struct state_state__ *next;                      /**< Next entry in the state list               */
-  struct state_state__ *prev;                      /**< Prev entry in the state list               */
-  struct cache_entry__ *pentry;                          /**< Related pentry                             */
-} state_t;
+typedef struct state_t state_t;
 
-typedef union state_data__ state_data_t;
+typedef union state_data_t
+{
+  state_share_t  share;
+  state_lock_t   lock;
+  state_deleg_t  deleg;
+  state_layout_t layout;
+} state_data_t;
+
+struct state_t
+{
+  state_type_t         state_type;
+  state_data_t         state_data;
+  u_int32_t            seqid;               /**< The NFSv4 Sequence id                      */
+  char                 stateid_other[12];   /**< "Other" part of state id, used as hash key */
+  state_open_owner_t   *powner;             /**< Open Owner related to this state           */
+  state_t              *next;               /**< Next entry in the state list               */
+  state_t              *prev;               /**< Prev entry in the state list               */
+  cache_entry_t        *pentry;             /**< Related pentry                             */
+};
 
 /*
  * Possible errors 

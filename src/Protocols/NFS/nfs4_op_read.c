@@ -45,25 +45,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
-#include "cache_content.h"
+#include "sal_functions.h"
 #include "cache_content_policy.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
 #include "nfs_proto_functions.h"
-#include "nfs_tools.h"
-#include "nfs_file_handle.h"
+#include "nfs_proto_tools.h"
 
 /**
  * nfs4_op_read: The NFS4_OP_READ operation
@@ -88,20 +80,21 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_read";
 
-  fsal_seek_t seek_descriptor;
-  fsal_size_t size;
-  fsal_size_t read_size;
-  fsal_off_t offset;
-  fsal_boolean_t eof_met;
-  caddr_t bufferdata;
-  cache_inode_status_t cache_status;
-  cache_inode_state_t *pstate_found = NULL;
-  cache_content_status_t content_status;
-  fsal_attrib_list_t attr;
-  cache_entry_t *entry = NULL;
-  cache_inode_state_t *pstate_iterate = NULL;
-  cache_inode_state_t *pstate_previous_iterate = NULL;
-  int rc = 0;
+  fsal_seek_t              seek_descriptor;
+  fsal_size_t              size;
+  fsal_size_t              read_size;
+  fsal_off_t               offset;
+  fsal_boolean_t           eof_met;
+  caddr_t                  bufferdata;
+  cache_inode_status_t     cache_status;
+  state_status_t           state_status;
+  state_t                * pstate_found = NULL;
+  cache_content_status_t   content_status;
+  fsal_attrib_list_t       attr;
+  cache_entry_t          * entry = NULL;
+  state_t                * pstate_iterate = NULL;
+  state_t                * pstate_previous_iterate = NULL;
+  int                      rc = 0;
 
   cache_content_policy_data_t datapol;
 
@@ -170,10 +163,11 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     {
 
       /* Get the related state */
-      if(cache_inode_get_state(arg_READ4.stateid.other,
-                               &pstate_found,
-                               data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+      if(state_get(arg_READ4.stateid.other,
+                   &pstate_found,
+                   data->pclient, &state_status) != STATE_SUCCESS)
         {
+          cache_status = state_status_to_cache_inode_status(state_status);
           res_READ4.status = nfs4_Errno(cache_status);
           return res_READ4.status;
         }
@@ -218,14 +212,17 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   pstate_previous_iterate = NULL;
   do
     {
-      cache_inode_state_iterate(data->current_entry,
-                                &pstate_iterate,
-                                pstate_previous_iterate,
-                                data->pclient, data->pcontext, &cache_status);
-      if(cache_status == CACHE_INODE_STATE_ERROR)
+      state_iterate(data->current_entry,
+                    &pstate_iterate,
+                    pstate_previous_iterate,
+                    data->pclient, data->pcontext, &state_status);
+
+      cache_status = state_status_to_cache_inode_status(state_status);
+
+      if(state_status == STATE_STATE_ERROR)
         break;                  /* Get out of the loop */
 
-      if(cache_status == CACHE_INODE_INVALID_ARGUMENT)
+      if(state_status == STATE_INVALID_ARGUMENT)
         {
           res_READ4.status = NFS4ERR_INVAL;
           return res_READ4.status;
@@ -235,7 +232,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         {
           switch (pstate_iterate->state_type)
             {
-            case CACHE_INODE_STATE_SHARE:
+            case STATE_TYPE_SHARE:
               if(pstate_found != pstate_iterate)
                 {
                   if(pstate_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_READ)
