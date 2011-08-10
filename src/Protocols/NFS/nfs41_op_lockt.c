@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -45,36 +45,27 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
-#include "cache_content.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
+#include "sal_functions.h"
 #include "nfs_proto_functions.h"
-#include "nfs_file_handle.h"
-#include "nfs_tools.h"
 
 /**
- * 
- * nfs41_op_lockt: The NFS4_OP_LOCKT operation. 
+ *
+ * nfs41_op_lockt: The NFS4_OP_LOCKT operation.
  *
  * This function implements the NFS4_OP_LOCKT operation.
  *
  * @param op    [IN]    pointer to nfs4_op arguments
  * @param data  [INOUT] Pointer to the compound request's data
  * @param resp  [IN]    Pointer to nfs4_op results
- * 
- * @return NFS4_OK if successfull, other values show an error. 
+ *
+ * @return NFS4_OK if successfull, other values show an error.
  *
  * @see all the nfs41_op_<*> function
  * @see nfs4_Compound
@@ -88,10 +79,10 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_lockt";
 
-  cache_inode_status_t cache_status;
-  cache_inode_state_t *pstate_found = NULL;
-  uint64_t a, b, a1, b1;
-  unsigned int overlap = FALSE;
+  state_status_t    state_status;
+  state_t         * pstate_found = NULL;
+  uint64_t          a, b, a1, b1;
+  unsigned int      overlap = FALSE;
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_LOCKT;
@@ -146,11 +137,11 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_LOCKT4.status;
     }
 
-  /* Check for range overflow 
+  /* Check for range overflow
    * Remember that a length with all bits set to 1 means "lock until the end of file" (RFC3530, page 157) */
   if(arg_LOCKT4.length != 0xffffffffffffffffLL)
     {
-      /* Comparing beyond 2^64 is not possible int 64 bits precision, 
+      /* Comparing beyond 2^64 is not possible int 64 bits precision,
        * but off+len > 2^64 is equivalent to len > 2^64 - off */
       if(arg_LOCKT4.length > (0xffffffffffffffffLL - arg_LOCKT4.offset))
         {
@@ -163,12 +154,12 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   pstate_found = NULL;
   do
     {
-      cache_inode_state_iterate(data->current_entry,
-                                &pstate_found,
-                                pstate_found,
-                                data->pclient, data->pcontext, &cache_status);
-      if((cache_status == CACHE_INODE_STATE_ERROR)
-         || (cache_status == CACHE_INODE_INVALID_ARGUMENT))
+      state_iterate(data->current_entry,
+                    &pstate_found,
+                    pstate_found,
+                    data->pclient, data->pcontext, &state_status);
+      if((state_status == STATE_STATE_ERROR)
+         || (state_status == STATE_INVALID_ARGUMENT))
         {
           res_LOCKT4.status = NFS4ERR_INVAL;
           return res_LOCKT4.status;
@@ -176,7 +167,7 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
       if(pstate_found != NULL)
         {
-          if(pstate_found->state_type == CACHE_INODE_STATE_LOCK)
+          if(pstate_found->state_type == STATE_TYPE_LOCK)
             {
 
               /* We found a lock, check is they overlap */
@@ -251,13 +242,13 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
 /**
  * nfs41_op_lockt_Free: frees what was allocared to handle nfs41_op_lockt.
- * 
+ *
  * Frees what was allocared to handle nfs41_op_lockt.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs41_op_lockt_Free(LOCKT4res * resp)
 {

@@ -326,3 +326,426 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
            fsal_status.major, __LINE__);
   return STATE_FSAL_ERROR;
 }                               /* state_error_convert */
+
+/* Error conversion routines */
+/**
+ * 
+ * nfs4_Errno: Converts a cache_inode status to a nfsv4 status.
+ * 
+ *  Converts a cache_inode status to a nfsv4 status.
+ *
+ * @param error  [IN] Input cache inode ewrror.
+ * 
+ * @return the converted NFSv4 status.
+ *
+ */
+nfsstat4 nfs4_Errno_state(state_status_t error)
+{
+  nfsstat4 nfserror= NFS4ERR_INVAL;
+
+  switch (error)
+    {
+    case STATE_SUCCESS:
+      nfserror = NFS4_OK;
+      break;
+
+    case STATE_MALLOC_ERROR:
+    case STATE_POOL_MUTEX_INIT_ERROR:
+    case STATE_GET_NEW_LRU_ENTRY:
+    case STATE_INIT_ENTRY_FAILED:
+    case STATE_CACHE_CONTENT_EXISTS:
+    case STATE_CACHE_CONTENT_EMPTY:
+      nfserror = NFS4ERR_SERVERFAULT;
+      break;
+
+    case STATE_UNAPPROPRIATED_KEY:
+      nfserror = NFS4ERR_BADHANDLE;
+      break;
+
+    case STATE_BAD_TYPE:
+      nfserror = NFS4ERR_INVAL;
+      break;
+
+    case STATE_INVALID_ARGUMENT:
+      nfserror = NFS4ERR_PERM;
+      break;
+
+    case STATE_NOT_A_DIRECTORY:
+      nfserror = NFS4ERR_NOTDIR;
+      break;
+
+    case STATE_ENTRY_EXISTS:
+      nfserror = NFS4ERR_EXIST;
+      break;
+
+    case STATE_DIR_NOT_EMPTY:
+      nfserror = NFS4ERR_NOTEMPTY;
+      break;
+
+    case STATE_NOT_FOUND:
+      nfserror = NFS4ERR_NOENT;
+      break;
+
+    case STATE_FSAL_ERROR:
+    case STATE_INSERT_ERROR:
+    case STATE_LRU_ERROR:
+    case STATE_HASH_SET_ERROR:
+      nfserror = NFS4ERR_IO;
+      break;
+
+    case STATE_FSAL_EACCESS:
+      nfserror = NFS4ERR_ACCESS;
+      break;
+
+    case STATE_FSAL_EPERM:
+    case STATE_FSAL_ERR_SEC:
+      nfserror = NFS4ERR_PERM;
+      break;
+
+    case STATE_NO_SPACE_LEFT:
+      nfserror = NFS4ERR_NOSPC;
+      break;
+
+    case STATE_IS_A_DIRECTORY:
+      nfserror = NFS4ERR_ISDIR;
+      break;
+
+    case STATE_READ_ONLY_FS:
+      nfserror = NFS4ERR_ROFS;
+      break;
+
+    case STATE_IO_ERROR:
+      nfserror = NFS4ERR_IO;
+      break;
+
+     case STATE_NAME_TOO_LONG:
+      nfserror = NFS4ERR_NAMETOOLONG;
+      break;
+
+    case STATE_DEAD_ENTRY:
+    case STATE_FSAL_ESTALE:
+      nfserror = NFS4ERR_STALE;
+      break;
+
+    case STATE_STATE_CONFLICT:
+      nfserror = NFS4ERR_PERM;
+      break;
+
+    case STATE_QUOTA_EXCEEDED:
+      nfserror = NFS4ERR_DQUOT;
+      break;
+
+    case STATE_NOT_SUPPORTED:
+      nfserror = NFS4ERR_NOTSUPP;
+      break;
+
+    case STATE_FSAL_DELAY:
+      nfserror = NFS4ERR_DELAY;
+      break;
+
+    case STATE_FILE_BIG:
+      nfserror = NFS4ERR_FBIG;
+      break;
+
+    case STATE_LOCK_DEADLOCK:
+      nfserror = NFS4ERR_DEADLOCK;
+      break;
+
+    case STATE_LOCK_BLOCKED:
+    case STATE_LOCK_CONFLICT:
+      nfserror = NFS4ERR_DENIED;
+      break;
+
+    case STATE_STATE_ERROR:
+      nfserror = NFS4ERR_BAD_STATEID;
+      break;
+
+    case STATE_BAD_COOKIE:
+      nfserror = NFS4ERR_BAD_COOKIE;
+      break;
+
+    case STATE_GRACE_PERIOD:
+      nfserror = NFS4ERR_GRACE;
+      break;
+
+    case STATE_INCONSISTENT_ENTRY:
+    case STATE_HASH_TABLE_ERROR:
+    case STATE_CACHE_CONTENT_ERROR:
+    case STATE_ASYNC_POST_ERROR:
+      /* Should not occur */
+      nfserror = NFS4ERR_INVAL;
+      break;
+    }
+
+  return nfserror;
+}                               /* nfs4_Errno_state */
+
+/**
+ * 
+ * nfs3_Errno_state: Converts a cache_inode status to a nfsv3 status.
+ * 
+ *  Converts a cache_inode status to a nfsv3 status.
+ *
+ * @param error  [IN] Input cache inode ewrror.
+ * 
+ * @return the converted NFSv3 status.
+ *
+ */
+nfsstat3 nfs3_Errno_state(state_status_t error)
+{
+  nfsstat3 nfserror= NFS3ERR_INVAL;
+
+  switch (error)
+    {
+    case STATE_SUCCESS:
+      nfserror = NFS3_OK;
+      break;
+
+    case STATE_MALLOC_ERROR:
+    case STATE_POOL_MUTEX_INIT_ERROR:
+    case STATE_GET_NEW_LRU_ENTRY:
+    case STATE_UNAPPROPRIATED_KEY:
+    case STATE_INIT_ENTRY_FAILED:
+    case STATE_CACHE_CONTENT_EXISTS:
+    case STATE_CACHE_CONTENT_EMPTY:
+    case STATE_INSERT_ERROR:
+    case STATE_LRU_ERROR:
+    case STATE_HASH_SET_ERROR:
+      LogCrit(COMPONENT_NFSPROTO,
+              "Error %u converted to NFS3ERR_IO but was set non-retryable",
+              error);
+      nfserror = NFS3ERR_IO;
+      break;
+
+    case STATE_INVALID_ARGUMENT:
+      nfserror = NFS3ERR_INVAL;
+      break;
+
+    case STATE_FSAL_ERROR:
+    case STATE_CACHE_CONTENT_ERROR:
+                                         /** @todo: Check if this works by making stress tests */
+      LogCrit(COMPONENT_NFSPROTO,
+              "Error STATE_FSAL_ERROR converted to NFS3ERR_IO but was set non-retryable");
+      nfserror = NFS3ERR_IO;
+      break;
+
+    case STATE_NOT_A_DIRECTORY:
+      nfserror = NFS3ERR_NOTDIR;
+      break;
+
+    case STATE_ENTRY_EXISTS:
+      nfserror = NFS3ERR_EXIST;
+      break;
+
+    case STATE_DIR_NOT_EMPTY:
+      nfserror = NFS3ERR_NOTEMPTY;
+      break;
+
+    case STATE_NOT_FOUND:
+      nfserror = NFS3ERR_NOENT;
+      break;
+
+    case STATE_FSAL_EACCESS:
+      nfserror = NFS3ERR_ACCES;
+      break;
+
+    case STATE_FSAL_EPERM:
+    case STATE_FSAL_ERR_SEC:
+      nfserror = NFS3ERR_PERM;
+      break;
+
+    case STATE_NO_SPACE_LEFT:
+      nfserror = NFS3ERR_NOSPC;
+      break;
+
+    case STATE_IS_A_DIRECTORY:
+      nfserror = NFS3ERR_ISDIR;
+      break;
+
+    case STATE_READ_ONLY_FS:
+      nfserror = NFS3ERR_ROFS;
+      break;
+
+    case STATE_DEAD_ENTRY:
+    case STATE_FSAL_ESTALE:
+      nfserror = NFS3ERR_STALE;
+      break;
+
+    case STATE_QUOTA_EXCEEDED:
+      nfserror = NFS3ERR_DQUOT;
+      break;
+
+    case STATE_BAD_TYPE:
+      nfserror = NFS3ERR_BADTYPE;
+      break;
+
+    case STATE_NOT_SUPPORTED:
+      nfserror = NFS3ERR_NOTSUPP;
+      break;
+
+    case STATE_FSAL_DELAY:
+      nfserror = NFS3ERR_JUKEBOX;
+      break;
+
+    case STATE_IO_ERROR:
+        LogCrit(COMPONENT_NFSPROTO,
+                "Error STATE_IO_ERROR converted to NFS3ERR_IO but was set non-retryable");
+      nfserror = NFS3ERR_IO;
+      break;
+
+    case STATE_NAME_TOO_LONG:
+      nfserror = NFS3ERR_NAMETOOLONG;
+      break;
+
+    case STATE_FILE_BIG:
+      nfserror = NFS3ERR_FBIG;
+      break;
+
+    case STATE_BAD_COOKIE:
+      nfserror = NFS3ERR_BAD_COOKIE;
+      break;
+
+    case STATE_INCONSISTENT_ENTRY:
+    case STATE_HASH_TABLE_ERROR:
+    case STATE_STATE_CONFLICT:
+    case STATE_ASYNC_POST_ERROR:
+    case STATE_STATE_ERROR:
+    case STATE_LOCK_CONFLICT:
+    case STATE_LOCK_BLOCKED:
+    case STATE_LOCK_DEADLOCK:
+    case STATE_GRACE_PERIOD:
+        /* Should not occur */
+        LogDebug(COMPONENT_NFSPROTO,
+                 "Line %u should never be reached in nfs3_Errno_state for cache_status=%u",
+                 __LINE__, error);
+      nfserror = NFS3ERR_INVAL;
+      break;
+    }
+
+  return nfserror;
+}                               /* nfs3_Errno_state */
+
+/**
+ * 
+ * nfs2_Errno_state: Converts a cache_inode status to a nfsv2 status.
+ * 
+ *  Converts a cache_inode status to a nfsv2 status.
+ *
+ * @param error  [IN] Input cache inode ewrror.
+ * 
+ * @return the converted NFSv2 status.
+ *
+ */
+nfsstat2 nfs2_Errno_state(state_status_t error)
+{
+  nfsstat2 nfserror= NFSERR_IO;
+
+  switch (error)
+    {
+    case STATE_SUCCESS:
+      nfserror = NFS_OK;
+      break;
+
+    case STATE_MALLOC_ERROR:
+    case STATE_POOL_MUTEX_INIT_ERROR:
+    case STATE_GET_NEW_LRU_ENTRY:
+    case STATE_UNAPPROPRIATED_KEY:
+    case STATE_INIT_ENTRY_FAILED:
+    case STATE_BAD_TYPE:
+    case STATE_CACHE_CONTENT_EXISTS:
+    case STATE_CACHE_CONTENT_EMPTY:
+    case STATE_INSERT_ERROR:
+    case STATE_LRU_ERROR:
+    case STATE_HASH_SET_ERROR:
+    case STATE_INVALID_ARGUMENT:
+      LogCrit(COMPONENT_NFSPROTO,
+              "Error %u converted to NFSERR_IO but was set non-retryable",
+              error);
+      nfserror = NFSERR_IO;
+      break;
+
+    case STATE_NOT_A_DIRECTORY:
+      nfserror = NFSERR_NOTDIR;
+      break;
+
+    case STATE_ENTRY_EXISTS:
+      nfserror = NFSERR_EXIST;
+      break;
+
+    case STATE_FSAL_ERROR:
+    case STATE_CACHE_CONTENT_ERROR:
+      LogCrit(COMPONENT_NFSPROTO,
+              "Error STATE_FSAL_ERROR converted to NFSERR_IO but was set non-retryable");
+      nfserror = NFSERR_IO;
+      break;
+
+    case STATE_DIR_NOT_EMPTY:
+      nfserror = NFSERR_NOTEMPTY;
+      break;
+
+    case STATE_NOT_FOUND:
+      nfserror = NFSERR_NOENT;
+      break;
+
+    case STATE_FSAL_EACCESS:
+      nfserror = NFSERR_ACCES;
+      break;
+
+    case STATE_NO_SPACE_LEFT:
+      nfserror = NFSERR_NOSPC;
+      break;
+
+    case STATE_FSAL_EPERM:
+    case STATE_FSAL_ERR_SEC:
+      nfserror = NFSERR_PERM;
+      break;
+
+    case STATE_IS_A_DIRECTORY:
+      nfserror = NFSERR_ISDIR;
+      break;
+
+    case STATE_READ_ONLY_FS:
+      nfserror = NFSERR_ROFS;
+      break;
+
+    case STATE_DEAD_ENTRY:
+    case STATE_FSAL_ESTALE:
+      nfserror = NFSERR_STALE;
+      break;
+
+    case STATE_QUOTA_EXCEEDED:
+      nfserror = NFSERR_DQUOT;
+      break;
+
+    case STATE_IO_ERROR:
+      LogCrit(COMPONENT_NFSPROTO,
+              "Error STATE_IO_ERROR converted to NFSERR_IO but was set non-retryable");
+      nfserror = NFSERR_IO;
+      break;
+
+    case STATE_NAME_TOO_LONG:
+      nfserror = NFSERR_NAMETOOLONG;
+      break;
+
+    case STATE_INCONSISTENT_ENTRY:
+    case STATE_HASH_TABLE_ERROR:
+    case STATE_STATE_CONFLICT:
+    case STATE_ASYNC_POST_ERROR:
+    case STATE_STATE_ERROR:
+    case STATE_LOCK_CONFLICT:
+    case STATE_LOCK_BLOCKED:
+    case STATE_LOCK_DEADLOCK:
+    case STATE_NOT_SUPPORTED:
+    case STATE_FSAL_DELAY:
+    case STATE_BAD_COOKIE:
+    case STATE_FILE_BIG:
+    case STATE_GRACE_PERIOD:
+        /* Should not occur */
+      LogDebug(COMPONENT_NFSPROTO,
+               "Line %u should never be reached in nfs2_Errno_state", __LINE__);
+      nfserror = NFSERR_IO;
+      break;
+    }
+
+  return nfserror;
+}                               /* nfs2_Errno_state */

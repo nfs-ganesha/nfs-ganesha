@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -56,16 +56,16 @@
 #include "nfs_proto_functions.h"
 
 /**
- * 
- * nfs41_op_lock: The NFS4_OP_LOCK operation. 
+ *
+ * nfs41_op_lock: The NFS4_OP_LOCK operation.
  *
  * This function implements the NFS4_OP_LOCK operation.
  *
  * @param op    [IN]    pointer to nfs4_op arguments
  * @param data  [INOUT] Pointer to the compound request's data
  * @param resp  [IN]    Pointer to nfs4_op results
- * 
- * @return NFS4_OK if successfull, other values show an error. 
+ *
+ * @return NFS4_OK if successfull, other values show an error.
  *
  * @see all the nfs41_op_<*> function
  * @see nfs4_Compound
@@ -82,29 +82,29 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_lock";
 
-  cache_inode_status_t cache_status;
-  cache_inode_state_data_t candidate_data;
-  cache_inode_state_type_t candidate_type;
-  int rc = 0;
-  cache_inode_state_t *file_state = NULL;
-  cache_inode_state_t *pstate_exists = NULL;
-  cache_inode_state_t *pstate_open = NULL;
-  cache_inode_state_t *pstate_found = NULL;
-  cache_inode_state_t *pstate_previous_iterate = NULL;
-  cache_inode_state_t *pstate_found_iterate = NULL;
-  cache_inode_open_owner_t *powner = NULL;
-  cache_inode_open_owner_t *popen_owner = NULL;
-  cache_inode_open_owner_t *powner_exists = NULL;
-  cache_inode_open_owner_name_t *powner_name = NULL;
-  uint64_t a, b, a1, b1;
-  unsigned int overlap = FALSE;
-  cache_inode_open_owner_name_t owner_name;
+  state_status_t            state_status;
+  state_data_t              candidate_data;
+  state_type_t              candidate_type;
+  int                       rc = 0;
+  state_t                 * file_state = NULL;
+  state_t                 * pstate_exists = NULL;
+  state_t                 * pstate_open = NULL;
+  state_t                 * pstate_found = NULL;
+  state_t                 * pstate_previous_iterate = NULL;
+  state_t                 * pstate_found_iterate = NULL;
+  state_open_owner_t      * powner = NULL;
+  state_open_owner_t      * popen_owner = NULL;
+  state_open_owner_t      * powner_exists = NULL;
+  state_open_owner_name_t * powner_name = NULL;
+  uint64_t                  a, b, a1, b1;
+  unsigned int              overlap = FALSE;
+  state_open_owner_name_t   owner_name;
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_LOCK;
-  res_LOCK4.status = NFS4ERR_LOCK_NOTSUPP;
 
 #ifdef _WITH_NO_NFSV41_LOCKS
+  res_LOCK4.status = NFS4ERR_LOCK_NOTSUPP;
   return res_LOCK4.status;
 #else
 
@@ -152,7 +152,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_LOCK4.status;
     }
 
-  /* Check for range overflow 
+  /* Check for range overflow
    * Remember that a length with all bits set to 1 means "lock until the end of file" (RFC3530, page 157) */
   if(arg_LOCK4.length != 0xffffffffffffffffLL)
     {
@@ -167,9 +167,9 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   switch (arg_LOCK4.locker.new_lock_owner)
     {
     case TRUE:
-      if(cache_inode_get_state(arg_LOCK4.locker.locker4_u.open_owner.open_stateid.other,
-                               &pstate_open,
-                               data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+      if(state_get(arg_LOCK4.locker.locker4_u.open_owner.open_stateid.other,
+                   &pstate_open,
+                   data->pclient, &state_status) != STATE_SUCCESS)
         {
           res_LOCK4.status = NFS4ERR_STALE_STATEID;
           return res_LOCK4.status;
@@ -180,9 +180,9 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       break;
 
     case FALSE:
-      if(cache_inode_get_state(arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.other,
-                               &pstate_exists,
-                               data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+      if(state_get(arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.other,
+                   &pstate_exists,
+                   data->pclient, &state_status) != STATE_SUCCESS)
         {
           /* Handle the case where all-0 stateid is used */
           if(!
@@ -191,7 +191,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.other, 12)
               && arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.seqid == 0))
             {
-              if(cache_status == CACHE_INODE_NOT_FOUND)
+              if(state_status == STATE_NOT_FOUND)
                 res_LOCK4.status = NFS4ERR_STALE_STATEID;
               else
                 res_LOCK4.status = NFS4ERR_INVAL;
@@ -220,12 +220,12 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   pstate_previous_iterate = pstate_found;
   do
     {
-      cache_inode_state_iterate(data->current_entry,
-                                &pstate_found_iterate,
-                                pstate_previous_iterate,
-                                data->pclient, data->pcontext, &cache_status);
-      if((cache_status == CACHE_INODE_STATE_ERROR)
-         || (cache_status == CACHE_INODE_INVALID_ARGUMENT))
+      state_iterate(data->current_entry,
+                    &pstate_found_iterate,
+                    pstate_previous_iterate,
+                    data->pclient, data->pcontext, &state_status);
+      if((state_status == STATE_STATE_ERROR)
+         || (state_status == STATE_INVALID_ARGUMENT))
         {
           res_LOCK4.status = NFS4ERR_INVAL;
           return res_LOCK4.status;
@@ -233,7 +233,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
       if(pstate_found_iterate != NULL)
         {
-          if(pstate_found_iterate->state_type == CACHE_INODE_STATE_LOCK)
+          if(pstate_found_iterate->state_type == STATE_TYPE_LOCK)
             {
               /* Check lock upgrade/downgrade */
               if(pstate_exists != NULL)
@@ -309,8 +309,8 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       }
                   }
             }
-          /* if( ... == CACHE_INODE_STATE_LOCK */
-          if(pstate_found_iterate->state_type == CACHE_INODE_STATE_SHARE)
+          /* if( ... == STATE_TYPE_LOCK */
+          if(pstate_found_iterate->state_type == STATE_TYPE_SHARE)
             {
               /* In a correct POSIX behavior, a write lock should not be allowed on a read-mode file */
               if((pstate_found_iterate->state_data.share.
@@ -348,7 +348,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
       /* An open state has been found. Check its type */
-      if(pstate_open->state_type != CACHE_INODE_STATE_SHARE)
+      if(pstate_open->state_type != STATE_TYPE_SHARE)
         {
           res_LOCK4.status = NFS4ERR_BAD_STATEID;
           return res_LOCK4.status;
@@ -371,12 +371,11 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
       /* This open owner is not known yet, allocated and set up a new one */
-      GetFromPool(powner, &data->pclient->pool_open_owner, cache_inode_open_owner_t);
+      GetFromPool(powner, &data->pclient->pool_open_owner, state_open_owner_t);
 
-      GetFromPool(powner_name, &data->pclient->pool_open_owner_name, cache_inode_open_owner_name_t);
+      GetFromPool(powner_name, &data->pclient->pool_open_owner_name, state_open_owner_name_t);
 
-      memcpy((char *)powner_name, (char *)&owner_name,
-             sizeof(cache_inode_open_owner_name_t));
+      memcpy(powner_name, &owner_name, sizeof(state_open_owner_name_t));
 
       /* set up the content of the open_owner */
       powner->confirmed = FALSE;
@@ -399,20 +398,20 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
       /* Prepare state management structure */
-      candidate_type = CACHE_INODE_STATE_LOCK;
+      candidate_type = STATE_TYPE_LOCK;
       candidate_data.lock.lock_type = arg_LOCK4.locktype;
       candidate_data.lock.offset = arg_LOCK4.offset;
       candidate_data.lock.length = arg_LOCK4.length;
       candidate_data.lock.popenstate = (void *)pstate_open;
 
       /* Add the lock state to the lock table */
-      if(cache_inode_add_state(data->current_entry,
-                               candidate_type,
-                               &candidate_data,
-                               powner,
-                               data->pclient,
-                               data->pcontext,
-                               &file_state, &cache_status) != CACHE_INODE_SUCCESS)
+      if(state_add(data->current_entry,
+                   candidate_type,
+                   &candidate_data,
+                   powner,
+                   data->pclient,
+                   data->pcontext,
+                   &file_state, &state_status) != STATE_SUCCESS)
         {
           res_LOCK4.status = NFS4ERR_STALE_STATEID;
           return res_LOCK4.status;
@@ -431,16 +430,16 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     case FALSE:
       /* The owner already exists, use the provided owner to create a new state */
       /* Get the former state */
-      if(cache_inode_get_state(arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.other,
-                               &pstate_found,
-                               data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+      if(state_get(arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.other,
+                   &pstate_found,
+                   data->pclient, &state_status) != STATE_SUCCESS)
         {
           res_LOCK4.status = NFS4ERR_STALE_STATEID;
           return res_LOCK4.status;
         }
 
       /* An lock state has been found. Check its type */
-      if(pstate_found->state_type != CACHE_INODE_STATE_LOCK)
+      if(pstate_found->state_type != STATE_TYPE_LOCK)
         {
           res_LOCK4.status = NFS4ERR_BAD_STATEID;
           return res_LOCK4.status;
@@ -466,13 +465,13 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
 /**
  * nfs41_op_lock_Free: frees what was allocared to handle nfs41_op_lock.
- * 
+ *
  * Frees what was allocared to handle nfs41_op_lock.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs41_op_lock_Free(LOCK4res * resp)
 {

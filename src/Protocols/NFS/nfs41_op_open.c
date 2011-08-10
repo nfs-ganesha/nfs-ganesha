@@ -324,16 +324,17 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
       /* Status of parent directory before the operation */
-      if((cache_status = cache_inode_getattr(pentry_parent,
-                                             &attr_parent,
-                                             data->ht,
-                                             data->pclient,
-                                             data->pcontext,
-                                             &cache_status)) != CACHE_INODE_SUCCESS)
+      if(cache_inode_getattr(pentry_parent,
+                             &attr_parent,
+                             data->ht,
+                             data->pclient,
+                             data->pcontext,
+                             &cache_status) != CACHE_INODE_SUCCESS)
         {
           res_OPEN4.status = nfs4_Errno(cache_status);
           return res_OPEN4.status;
         }
+
       memset(&(res_OPEN4.OPEN4res_u.resok4.cinfo.before), 0, sizeof(changeid4));
       res_OPEN4.OPEN4res_u.resok4.cinfo.before =
           (changeid4) pentry_parent->internal_md.mod_time;
@@ -352,10 +353,10 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                             createhow4_u.createattrs));
 
               if(convrc != NFS4_OK)
-              	{
+                {
                   res_OPEN4.status = convrc;
                   return res_OPEN4.status;
-              	}
+                }
 
               AttrProvided = TRUE;
             }
@@ -417,13 +418,12 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
                   if(AttrProvided == TRUE)      /* Set the attribute if provided */
                     {
-                      if((cache_status = cache_inode_setattr(pentry_lookup,
-                                                             &sattr,
-                                                             data->ht,
-                                                             data->pclient,
-                                                             data->pcontext,
-                                                             &cache_status)) !=
-                         CACHE_INODE_SUCCESS)
+                      if(cache_inode_setattr(pentry_lookup,
+                                             &sattr,
+                                             data->ht,
+                                             data->pclient,
+                                             data->pcontext,
+                                             &cache_status) != CACHE_INODE_SUCCESS)
                         {
                           res_OPEN4.status = nfs4_Errno(cache_status);
                           return res_OPEN4.status;
@@ -459,14 +459,14 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                   candidate_data.share.share_deny = arg_OPEN4.share_deny;
                   candidate_data.share.share_access = arg_OPEN4.share_access;
 
-                  if(cache_inode_add_state(pentry_lookup,
-                                           candidate_type,
-                                           &candidate_data,
-                                           powner,
-                                           data->pclient,
-                                           data->pcontext,
-                                           &pfile_state,
-                                           &cache_status) != CACHE_INODE_SUCCESS)
+                  if(state_add(pentry_lookup,
+                               candidate_type,
+                               &candidate_data,
+                               powner,
+                               data->pclient,
+                               data->pcontext,
+                               &pfile_state,
+                               &state_status) != STATE_SUCCESS)
                     {
                       /* Seqid has to be incremented even in this case */
                       P(powner->lock);
@@ -565,18 +565,18 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
                       do
                         {
-                          cache_inode_state_iterate(pentry_lookup,
-                                                    &pstate_found_iterate,
-                                                    pstate_previous_iterate,
-                                                    data->pclient,
-                                                    data->pcontext, &cache_status);
-                          if(cache_status == CACHE_INODE_STATE_ERROR)
-                            {
-                              cache_status = CACHE_INODE_STATE_ERROR;
-                              break;
-                            }
+                          state_iterate(pentry_lookup,
+                                        &pstate_found_iterate,
+                                        pstate_previous_iterate,
+                                        data->pclient,
+                                        data->pcontext, &state_status);
 
-                          if(cache_status == CACHE_INODE_INVALID_ARGUMENT)
+                          cache_status = state_status_to_cache_inode_status(state_status);
+
+                          if(state_status == STATE_STATE_ERROR)
+                            break;
+
+                          if(state_status == STATE_INVALID_ARGUMENT)
                             {
                               /* Seqid has to be incremented even in this case */
                               P(powner->lock);
@@ -722,13 +722,13 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       NFS4_VERIFIER_SIZE);
             }
 
-          if(cache_inode_add_state(pentry_newfile,
-                                   candidate_type,
-                                   &candidate_data,
-                                   powner,
-                                   data->pclient,
-                                   data->pcontext,
-                                   &pfile_state, &cache_status) != CACHE_INODE_SUCCESS)
+          if(state_add(pentry_newfile,
+                       candidate_type,
+                       &candidate_data,
+                       powner,
+                       data->pclient,
+                       data->pcontext,
+                       &pfile_state, &state_status) != STATE_SUCCESS)
             {
               /* Seqid has to be incremented even in this case */
               P(powner->lock);
@@ -738,6 +738,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
               res_OPEN4.status = NFS4ERR_SHARE_DENIED;
               return res_OPEN4.status;
             }
+
+          cache_status = CACHE_INODE_SUCCESS;
 
           if(AttrProvided == TRUE)      /* Set the attribute if provided */
             {
@@ -875,17 +877,17 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           pstate_previous_iterate = NULL;
           do
             {
-              cache_inode_state_iterate(pentry_newfile,
-                                        &pstate_found_iterate,
-                                        pstate_previous_iterate,
-                                        data->pclient, data->pcontext, &cache_status);
-              if(cache_status == CACHE_INODE_STATE_ERROR)
-                {
-                  cache_status = CACHE_INODE_STATE_ERROR;
-                  break;          /* Get out of the loop */
-                }
+              state_iterate(pentry_newfile,
+                            &pstate_found_iterate,
+                            pstate_previous_iterate,
+                            data->pclient, data->pcontext, &state_status);
 
-              if(cache_status == CACHE_INODE_INVALID_ARGUMENT)
+              cache_status = state_status_to_cache_inode_status(state_status);
+
+              if(state_status == STATE_STATE_ERROR)
+                break;          /* Get out of the loop */
+
+              if(state_status == STATE_INVALID_ARGUMENT)
                 {
                   res_OPEN4.status = NFS4ERR_INVAL;
                   return res_OPEN4.status;
@@ -993,14 +995,14 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
               candidate_data.share.share_deny = arg_OPEN4.share_deny;
               candidate_data.share.share_access = arg_OPEN4.share_access;
 
-              if(cache_inode_add_state(pentry_newfile,
-                                       candidate_type,
-                                       &candidate_data,
-                                       powner,
-                                       data->pclient,
-                                       data->pcontext,
-                                       &pfile_state,
-                                       &cache_status) != CACHE_INODE_SUCCESS)
+              if(state_add(pentry_newfile,
+                           candidate_type,
+                           &candidate_data,
+                           powner,
+                           data->pclient,
+                           data->pcontext,
+                           &pfile_state,
+                           &state_status) != STATE_SUCCESS)
                 {
                   /* Seqid has to be incremented even in this case */
                   P(powner->lock);

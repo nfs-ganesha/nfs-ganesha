@@ -56,6 +56,10 @@ cache_inode_status_t state_status_to_cache_inode_status(state_status_t status);
 
 state_status_t cache_inode_status_to_state_status(cache_inode_status_t status);
 
+nfsstat4 nfs4_Errno_state(state_status_t error);
+nfsstat3 nfs3_Errno_state(state_status_t error);
+nfsstat2 nfs2_Errno_state(state_status_t error);
+
 /******************************************************************************
  *
  * NLM State functions

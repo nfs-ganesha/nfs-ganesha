@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -58,15 +58,15 @@
 
 /**
  * nfs4_op_write: The NFS4_OP_WRITE operation
- * 
+ *
  * This functions handles the NFS4_OP_WRITE operation in NFSv4. This function can be called only from nfs4_Compound.
  *
  * @param op    [IN]    pointer to nfs4_op arguments
  * @param data  [INOUT] Pointer to the compound request's data
  * @param resp  [IN]    Pointer to nfs4_op results
  *
- * @return NFS4_OK if successfull, other values show an error.  
- * 
+ * @return NFS4_OK if successfull, other values show an error.
+ *
  */
 
 extern verifier4 NFS4_write_verifier;   /* NFS V4 write verifier from nfs_Main.c     */
@@ -146,7 +146,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   if(!memcmp((char *)all_zero, arg_WRITE4.stateid.other, 12) &&
      arg_WRITE4.stateid.seqid == 0)
     {
-      /* "All 0 stateid special case", see RFC3530 page 220-221 for details 
+      /* "All 0 stateid special case", see RFC3530 page 220-221 for details
        * This will be treated as a client that held no lock at all,
        * I set pstate_found to NULL to remember this situation later */
       pstate_found = NULL;
@@ -154,7 +154,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   else if(!memcmp((char *)all_one, arg_WRITE4.stateid.other, 12) &&
           arg_WRITE4.stateid.seqid == 0xFFFFFFFF)
     {
-      /* "All 1 stateid special case", see RFC3530 page 220-221 for details 
+      /* "All 1 stateid special case", see RFC3530 page 220-221 for details
        * This will be treated as a client that held no lock at all,
        * I set pstate_found to NULL to remember this situation later */
       pstate_found = NULL;
@@ -168,8 +168,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                    &pstate_found,
                    data->pclient, &state_status) != STATE_SUCCESS)
         {
-          cache_status = state_status_to_cache_inode_status(state_status);
-          res_WRITE4.status = nfs4_Errno(cache_status);
+          res_WRITE4.status = nfs4_Errno_state(state_status);
           return res_WRITE4.status;
         }
 
@@ -261,14 +260,14 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         return res_WRITE4.status;
       }
 
-  /* The size to be written should not be greater than FATTR4_MAXWRITESIZE because this value is asked 
+  /* The size to be written should not be greater than FATTR4_MAXWRITESIZE because this value is asked
    * by the client at mount time, but we check this by security */
   if((data->pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE &&
      size > data->pexport->MaxWrite)
     {
       /*
        * The client asked for too much data, we
-       * must restrict him 
+       * must restrict him
        */
       size = data->pexport->MaxWrite;
     }
@@ -303,7 +302,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     {
       /* Entry is not in datacache, but should be in, cache it .
        * Several threads may call this function at the first time and a race condition can occur here
-       * in order to avoid this, cache_inode_add_data_cache is "mutex protected" 
+       * in order to avoid this, cache_inode_add_data_cache is "mutex protected"
        * The first call will create the file content cache entry, the further will return
        * with error CACHE_INODE_CACHE_CONTENT_EXISTS which is not a pathological thing here */
 
@@ -370,13 +369,13 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
 /**
  * nfs4_op_write_Free: frees what was allocared to handle nfs4_op_write.
- * 
+ *
  * Frees what was allocared to handle nfs4_op_write.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs4_op_write_Free(WRITE4res * resp)
 {

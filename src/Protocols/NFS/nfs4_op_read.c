@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -59,15 +59,15 @@
 
 /**
  * nfs4_op_read: The NFS4_OP_READ operation
- * 
+ *
  * This functions handles the NFS4_OP_READ operation in NFSv4. This function can be called only from nfs4_Compound.
  *
  * @param op    [IN]    pointer to nfs4_op arguments
  * @param data  [INOUT] Pointer to the compound request's data
  * @param resp  [IN]    Pointer to nfs4_op results
  *
- * @return NFS4_OK if successfull, other values show an error.  
- * 
+ * @return NFS4_OK if successfull, other values show an error.
+ *
  */
 
 #define arg_READ4 op->nfs_argop4_u.opread
@@ -152,7 +152,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           arg_READ4.stateid.seqid == 0xFFFFFFFF)
     {
       /* "All 1 stateid special case" */
-      /* This will be treated as a client that held no lock at all, but may goes through locks 
+      /* This will be treated as a client that held no lock at all, but may goes through locks
        * I set pstate_found to 1 to remember this situation later */
       pstate_found = NULL;
     }
@@ -282,8 +282,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   if((data->pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD &&
      size > data->pexport->MaxRead)
     {
-      /* the client asked for too much data, 
-       * this should normally not happen because 
+      /* the client asked for too much data,
+       * this should normally not happen because
        * client will get FATTR4_MAXREAD value at mount time */
       size = data->pexport->MaxRead;
     }
@@ -304,7 +304,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     {
       /* Entry is not in datacache, but should be in, cache it .
        * Several threads may call this function at the first time and a race condition can occur here
-       * in order to avoid this, cache_inode_add_data_cache is "mutex protected" 
+       * in order to avoid this, cache_inode_add_data_cache is "mutex protected"
        * The first call will create the file content cache entry, the further will return
        * with error CACHE_INODE_CACHE_CONTENT_EXISTS which is not a pathological thing here */
 
@@ -381,13 +381,13 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
 /**
  * nfs4_op_read_Free: frees what was allocared to handle nfs4_op_read.
- * 
+ *
  * Frees what was allocared to handle nfs4_op_read.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs4_op_read_Free(READ4res * resp)
 {

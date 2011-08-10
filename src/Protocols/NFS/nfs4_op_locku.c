@@ -164,7 +164,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       if(state_status == STATE_NOT_FOUND)
         res_LOCKU4.status = NFS4ERR_LOCK_RANGE;
       else
-        res_LOCKU4.status = nfs4_Errno(state_status);
+        res_LOCKU4.status = nfs4_Errno_state(state_status);
 
       return res_LOCKU4.status;
     }
@@ -212,7 +212,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   if(state_del(pstate_found,
                data->pclient, &state_status) != STATE_SUCCESS)
     {
-      res_LOCKU4.status = nfs4_Errno(state_status);
+      res_LOCKU4.status = nfs4_Errno_state(state_status);
       return res_LOCKU4.status;
     }
 

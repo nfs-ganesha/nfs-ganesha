@@ -39,26 +39,12 @@
 #include "solaris_port.h"
 #endif
 
-#include <stdio.h>
-#include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include "HashData.h"
-#include "HashTable.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
-#include "nfs_core.h"
-#include "cache_inode.h"
-#include "cache_content.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
+#include "sal_functions.h"
 #include "nfs_proto_functions.h"
-#include "nfs_tools.h"
-#include "nfs_file_handle.h"
 
 /**
  *
@@ -80,9 +66,9 @@
 int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_close";
-  cache_inode_state_t *pstate_found = NULL;
-
-  cache_inode_status_t cache_status;
+  state_t              * pstate_found = NULL;
+  cache_inode_status_t   cache_status;
+  state_status_t         state_status;
 
   memset(&res_CLOSE4, 0, sizeof(res_CLOSE4));
   resp->resop = NFS4_OP_CLOSE;
@@ -130,11 +116,11 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* Get the related state */
-  if(cache_inode_get_state(arg_CLOSE4.open_stateid.other,
-                           &pstate_found,
-                           data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+  if(state_get(arg_CLOSE4.open_stateid.other,
+               &pstate_found,
+               data->pclient, &state_status) != STATE_SUCCESS)
     {
-      if(cache_status == CACHE_INODE_NOT_FOUND)
+      if(state_status == STATE_NOT_FOUND)
         res_CLOSE4.status = NFS4ERR_BAD_STATEID;
       else
         res_CLOSE4.status = NFS4ERR_INVAL;
@@ -172,10 +158,10 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   V_w(&data->current_entry->lock);
 
   /* File is closed, release the corresponding state */
-  if(cache_inode_del_state_by_key(arg_CLOSE4.open_stateid.other,
-                                  data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+  if(state_del_by_key(arg_CLOSE4.open_stateid.other,
+                      data->pclient, &state_status) != STATE_SUCCESS)
     {
-      res_CLOSE4.status = nfs4_Errno(cache_status);
+      res_CLOSE4.status = nfs4_Errno_state(state_status);
       return res_CLOSE4.status;
     }
 
