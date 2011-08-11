@@ -328,7 +328,7 @@ GA_ENABLE_FLAG(  [debug-symbols],	 [include debug symbols to binaries (-g option
 GA_ENABLE_FLAG( [profiling], [turn on code profiling (-g and -pg)], [-g -pg] )
 
 # enable code profiling
-GA_ENABLE_FLAG( [strict-compile], [turn on strict compiler flags], [-Werror -Wimplicit -Wformat -Wmissing-braces] )
+GA_ENABLE_FLAG( [strict-compile], [turn on strict compiler flags], [-Wall -Werror -Wimplicit -Wformat -Wmissing-braces  -Wno-pointer-sign] )
 
 # NFSv4 ACL
 GA_ENABLE_AM_CONDITION([nfs4-acl],[disable NFSv4 ACL support],[USE_NO_NFS4_ACL])
