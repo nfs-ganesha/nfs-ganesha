@@ -64,7 +64,6 @@ typedef struct _9p_conn__
   fd_set          fidset ; /* fd_set is used to keep track of which fid is set or not */
   pthread_mutex_t lock ; 
   long int        sockfd ;
-  int             lowest_fid ;
 } _9p_conn_t ;
 
 typedef struct _9p_hash_fid_key__
@@ -77,8 +76,8 @@ typedef struct _9p_hash_fid_key__
 typedef struct _9p_fid__
 {
   u32   fid ;
-  uid_t uid ;
-  fsal_handle_t handle ;
+  fsal_cred_t   creds ;
+  cache_entry_t * pentry ;
 } _9p_fid_t ;
 
 typedef struct _9p_request_data__
@@ -348,11 +347,11 @@ struct _9p_str {
  * See Also://plan9.bell-labs.com/magic/man2html/2/stat
  */
 
-struct _9p_qid {
+typedef struct _9p_qid {
 	u8 type;
 	u32 version;
 	u64 path;
-};
+} _9p_qid_t;
 
 /* Bit values for getattr valid field.
  */
@@ -402,6 +401,7 @@ struct _9p_qid {
 /* service functions */
 int _9p_read_conf( config_file_t   in_config,
                    _9p_parameter_t *pparam ) ;
+int _9p_init( _9p_parameter_t * pparam ) ;
 
 /* Protocol functions */
 int _9p_attach( _9p_request_data_t * preq9p, u32 * plenout, char * preply) ;
@@ -415,5 +415,12 @@ unsigned long int _9p_hash_fid_rbt_hash_func(hash_parameter_t * p_hparam,
 int _9p_compare_key(hash_buffer_t * buff1, hash_buffer_t * buff2) ;
 int display_9p_hash_fid_key(hash_buffer_t * pbuff, char *str) ; 
 int display_9p_hash_fid_val(hash_buffer_t * pbuff, char *str) ;
+
+int _9p_hash_fid_init( _9p_parameter_t * pparam ) ;
+int _9p_hash_fid_update( _9p_conn_t * pconn, 
+                         _9p_fid_t  * pfid ) ;
+int _9p_hash_fid_del( _9p_conn_t * pconn, 
+                      u32 fid,
+                      struct prealloc_pool * pfidpool ) ;
 
 #endif /* _9P_H */

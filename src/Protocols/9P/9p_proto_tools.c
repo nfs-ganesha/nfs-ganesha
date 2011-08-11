@@ -47,3 +47,7 @@
 #include "log_macros.h"
 #include "9p.h"
 
+int _9p_init(  _9p_parameter_t * pparam ) 
+{
+  return _9p_hash_fid_init( pparam ) ;
+} /* _9p_init */

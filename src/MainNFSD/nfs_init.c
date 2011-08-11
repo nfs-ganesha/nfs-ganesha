@@ -1983,6 +1983,18 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
           "NFSv4 ACL cache successfully initialized");
 #endif                          /* _USE_NFS4_ACL */
 
+#ifdef _USE_9P
+  LogDebug(COMPONENT_INIT, "Now building 9P resources");
+  if( _9p_init( &nfs_param._9p_param ) )
+    {
+      LogCrit(COMPONENT_INIT,
+              "Error while initializing 9P Resources");
+      exit(1);
+    }
+  LogInfo(COMPONENT_INIT,
+          "9P resources successfully initialized");
+#endif /* _USE_9P */
+
   /* Create the root entries for each exported FS */
   if((rc = nfs_export_create_root_entry(nfs_param.pexportlist, ht)) != TRUE)
     {
