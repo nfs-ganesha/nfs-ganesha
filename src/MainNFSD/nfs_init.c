@@ -1616,6 +1616,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   hash_table_t *ht = NULL;      /* Cache inode main hash table */
 
   cache_inode_status_t cache_status;
+  state_status_t state_status;
   fsal_status_t fsal_status;
   unsigned int i = 0;
   int rc = 0;
@@ -1675,21 +1676,21 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       cache_inode_init(nfs_param.cache_layers_param.cache_param, &cache_status)) == NULL)
     {
       LogFatal(COMPONENT_INIT,
-               "Cache Inode Layer could not be initialized, cache_status=%d",
-               cache_status);
+               "Cache Inode Layer could not be initialized, status=%s",
+               cache_inode_err_str(cache_status));
     }
 
 #ifdef _USE_NLM
-  if(cache_inode_lock_init(&cache_status,
-                           nfs_param.cache_layers_param.cache_param.cookie_param)
+  if(state_lock_init(&state_status,
+                     nfs_param.cache_layers_param.cache_param.cookie_param)
 #else
-  if(cache_inode_lock_init(&cache_status)
+  if(state_inode_lock_init(&state_status)
 #endif
-     != CACHE_INODE_SUCCESS)
+     != STATE_SUCCESS)
     {
       LogFatal(COMPONENT_INIT,
-               "Cache Inode Layer could not be initialized, cache_status=%d",
-               cache_status);
+               "Cache Inode Layer could not be initialized, status=%s",
+               state_err_str(state_status));
     }
   LogInfo(COMPONENT_INIT, "Cache Inode library successfully initialized");
 

@@ -31,6 +31,7 @@
 #include "nlm_list.h"
 #include "nlm_util.h"
 #include "nlm4.h"
+#include "sal_data.h"
 #include "cache_inode.h"
 
 extern pthread_mutex_t                nlm_async_resp_mutex;
@@ -46,7 +47,7 @@ struct nlm_async_queue_t
 {
   struct glist_head          nlm_async_glist;
   nlm_callback_func        * nlm_async_func;
-  cache_inode_nlm_client_t * nlm_async_host;
+  state_nlm_client_t       * nlm_async_host;
   void                     * nlm_async_key;
   union
     {
@@ -58,13 +59,13 @@ struct nlm_async_queue_t
 int nlm_async_callback(nlm_async_queue_t *arg);
 int nlm_async_callback_init();
 
-int nlm_send_async_res_nlm4(cache_inode_nlm_client_t * host,
-                            nlm_callback_func          func,
-                            nfs_res_t                * pres);
+int nlm_send_async_res_nlm4(state_nlm_client_t * host,
+                            nlm_callback_func    func,
+                            nfs_res_t          * pres);
 
-int nlm_send_async_res_nlm4test(cache_inode_nlm_client_t * host,
-                                nlm_callback_func          func,
-                                nfs_res_t                * pres);
+int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
+                                nlm_callback_func    func,
+                                nfs_res_t          * pres);
 
 typedef struct
 {
@@ -73,10 +74,10 @@ typedef struct
 } nlm_reply_proc_t;
 
 /* Client routine  to send the asynchrnous response, key is used to wait for a response */
-int nlm_send_async(int                        proc,
-                   cache_inode_nlm_client_t * host,
-                   void                     * inarg,
-                   void                     * key);
+int nlm_send_async(int                  proc,
+                   state_nlm_client_t * host,
+                   void               * inarg,
+                   void               * key);
 
 void nlm_signal_async_resp(void *key);
 

@@ -241,7 +241,7 @@ state_status_t state_release_grant(fsal_op_context_t    * pcontext,
  * lock holder being returned.
  */
  
-void release_lock_owner_s(state_lock_owner_t *powner);
+void state_release_lock_owner(state_lock_owner_t *powner);
 
 state_status_t state_test(cache_entry_t        * pentry,
                           fsal_op_context_t    * pcontext,

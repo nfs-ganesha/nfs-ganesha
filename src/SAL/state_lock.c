@@ -439,7 +439,7 @@ void dump_all_locks(void)
  * Functions to manage lock entries and lock list
  *
  ******************************************************************************/
-void release_lock_owner(state_lock_owner_t *powner)
+void state_release_lock_owner(state_lock_owner_t *powner)
 {
   switch(powner->slo_type)
     {
@@ -630,7 +630,7 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
         }
 #endif
 
-      release_lock_owner(lock_entry->sle_owner);
+      state_release_lock_owner(lock_entry->sle_owner);
     }
 
   glist_del(&lock_entry->sle_list);
@@ -1501,7 +1501,7 @@ state_status_t state_release_grant(fsal_op_context_t     * pcontext,
                  state_err_str(*pstatus));
 
       /* Release the lock owner reference */
-      release_lock_owner(powner);
+      state_release_lock_owner(powner);
 
       /* Check to see if we can grant any blocked locks. */
       grant_blocked_locks(pentry, pcontext, pclient);

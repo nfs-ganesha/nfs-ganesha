@@ -184,9 +184,9 @@ int nlm4_Cancel_Message(nfs_arg_t            * parg     /* IN     */ ,
                         struct svc_req       * preq     /* IN     */ ,
                         nfs_res_t            * pres     /* OUT    */ )
 {
-  cache_inode_nlm_client_t * nlm_client;
-  nlm4_cancargs            * arg = &parg->arg_nlm4_cancel;
-  int                        rc = NFS_REQ_OK;
+  state_nlm_client_t * nlm_client;
+  nlm4_cancargs      * arg = &parg->arg_nlm4_cancel;
+  int                  rc = NFS_REQ_OK;
 
   LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Cancel_Message");
 

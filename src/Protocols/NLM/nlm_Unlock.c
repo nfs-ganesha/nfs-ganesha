@@ -61,14 +61,14 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
                 struct svc_req *preq /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ )
 {
-  nlm4_unlockargs          * arg = &parg->arg_nlm4_unlock;
-  cache_entry_t            * pentry;
-  cache_inode_status_t       cache_status = CACHE_INODE_SUCCESS;
-  char                       buffer[MAXNETOBJ_SZ * 2];
-  cache_inode_nlm_client_t * nlm_client;
-  cache_lock_owner_t       * nlm_owner;
-  cache_lock_desc_t          lock;
-  int                        rc;
+  nlm4_unlockargs    * arg = &parg->arg_nlm4_unlock;
+  cache_entry_t      * pentry;
+  state_status_t       state_status = CACHE_INODE_SUCCESS;
+  char                 buffer[MAXNETOBJ_SZ * 2];
+  state_nlm_client_t * nlm_client;
+  state_lock_owner_t * nlm_owner;
+  state_lock_desc_t    lock;
+  int                  rc;
 
   netobj_to_string(&arg->cookie, buffer, sizeof(buffer));
   LogDebug(COMPONENT_NLM,
@@ -117,18 +117,18 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
       return NFS_REQ_OK;
     }
 
-  if(cache_inode_unlock(pentry,
-                        pcontext,
-                        nlm_owner,
-                        &lock,
-                        pclient,
-                        &cache_status) != CACHE_INODE_SUCCESS)
+  if(state_unlock(pentry,
+                  pcontext,
+                  nlm_owner,
+                  &lock,
+                  pclient,
+                  &state_status) != STATE_SUCCESS)
     {
       /* Unlock could fail in the FSAL and make a bit of a mess, especially if
        * we are in out of memory situation. Such an error is logged by
        * Cache Inode.
        */
-      pres->res_nlm4test.test_stat.stat = nlm_convert_cache_inode_error(cache_status);
+      pres->res_nlm4test.test_stat.stat = nlm_convert_state_error(state_status);
     }
   else
     {
@@ -183,9 +183,9 @@ int nlm4_Unlock_Message(nfs_arg_t * parg /* IN     */ ,
                         struct svc_req *preq /* IN     */ ,
                         nfs_res_t * pres /* OUT    */ )
 {
-  cache_inode_nlm_client_t * nlm_client;
-  nlm4_unlockargs          * arg = &parg->arg_nlm4_unlock;
-  int                        rc = NFS_REQ_OK;
+  state_nlm_client_t * nlm_client;
+  nlm4_unlockargs    * arg = &parg->arg_nlm4_unlock;
+  int                  rc = NFS_REQ_OK;
 
   LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Unlock_Message");
 

@@ -36,6 +36,7 @@
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nlm4.h"
+#include "sal_data.h"
 #include "cache_inode.h"
 #include "nlm_util.h"
 #include "nlm_async.h"
@@ -62,8 +63,8 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
 {
   nlm4_res             * arg = &parg->arg_nlm4_res;
   char                   buffer[1024];
-  cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
-  cache_cookie_entry_t * cookie_entry;
+  state_status_t         state_status = STATE_SUCCESS;
+  state_cookie_entry_t * cookie_entry;
   fsal_op_context_t      context, * pcontext = &context;
 
   netobj_to_string(&arg->cookie, buffer, 1024);
@@ -71,10 +72,10 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
            "REQUEST PROCESSING: Calling nlm_Granted_Res cookie=%s",
            buffer);
 
-  if(cache_inode_find_grant(arg->cookie.n_bytes,
-                            arg->cookie.n_len,
-                            &cookie_entry,
-                            &cache_status) != CACHE_INODE_SUCCESS)
+  if(state_find_grant(arg->cookie.n_bytes,
+                      arg->cookie.n_len,
+                      &cookie_entry,
+                      &state_status) != STATE_SUCCESS)
     {
       /* This must be an old NLM_GRANTED_RES */
       LogFullDebug(COMPONENT_NLM,
@@ -83,30 +84,30 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
       return NFS_REQ_OK;
     }
 
-  P(cookie_entry->lce_pentry->object.file.lock_list_mutex);
+  P(cookie_entry->sce_pentry->object.file.lock_list_mutex);
 
-  if(cookie_entry->lce_lock_entry->cle_block_data == NULL ||
-     !nlm_block_data_to_fsal_context(&cookie_entry->lce_lock_entry->cle_block_data->cbd_block_data.cbd_nlm_block_data,
+  if(cookie_entry->sce_lock_entry->sle_block_data == NULL ||
+     !nlm_block_data_to_fsal_context(&cookie_entry->sce_lock_entry->sle_block_data->sbd_block_data.sbd_nlm_block_data,
                                      pcontext))
     {
       /* This must be an old NLM_GRANTED_RES */
-      V(cookie_entry->lce_pentry->object.file.lock_list_mutex);
+      V(cookie_entry->sce_pentry->object.file.lock_list_mutex);
       LogFullDebug(COMPONENT_NLM,
                    "nlm_Granted_Res could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
                    buffer);
       return NFS_REQ_OK;
     }
 
-  V(cookie_entry->lce_pentry->object.file.lock_list_mutex);
+  V(cookie_entry->sce_pentry->object.file.lock_list_mutex);
 
   if(arg->stat.stat != NLM4_GRANTED)
     {
       LogMajor(COMPONENT_NLM,
                "Granted call failed due to client error, releasing lock");
-      if(cache_inode_release_grant(pcontext,
-                                   cookie_entry,
-                                   pclient,
-                                   &cache_status) != CACHE_INODE_SUCCESS)
+      if(state_release_grant(pcontext,
+                             cookie_entry,
+                             pclient,
+                             &state_status) != STATE_SUCCESS)
         {
           LogDebug(COMPONENT_NLM,
                    "cache_inode_release_grant failed");
@@ -114,7 +115,7 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
     }
   else
     {
-      cache_inode_complete_grant(pcontext, cookie_entry, pclient);
+      state_complete_grant(pcontext, cookie_entry, pclient);
       nlm_signal_async_resp(cookie_entry);
     }
 

@@ -63,7 +63,7 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
 {
   nlm4_lockargs        * arg = &parg->arg_nlm4_lock;
   cache_entry_t        * pentry;
-  cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
+  state_status_t         state_status = CACHE_INODE_SUCCESS;
   char                   buffer[MAXNETOBJ_SZ * 2];
   state_nlm_client_t   * nlm_client;
   state_lock_owner_t   * nlm_owner, * holder;
@@ -125,20 +125,20 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
       return NFS_REQ_OK;
     }
 
-  if(state_inode_lock(pentry,
-                      pcontext,
-                      nlm_owner,
-                      arg->block,
-                      pblock_data,
-                      &lock,
-                      &holder,
-                      &conflict,
-                      pclient,
-                      &cache_status) != CACHE_INODE_SUCCESS)
+  if(state_lock(pentry,
+                pcontext,
+                nlm_owner,
+                arg->block,
+                pblock_data,
+                &lock,
+                &holder,
+                &conflict,
+                pclient,
+                &state_status) != STATE_SUCCESS)
     {
-      pres->res_nlm4test.test_stat.stat = nlm_convert_cache_inode_error(cache_status);
+      pres->res_nlm4test.test_stat.stat = nlm_convert_state_error(state_status);
 
-      if(cache_status == CACHE_INODE_LOCK_CONFLICT)
+      if(state_status == STATE_LOCK_CONFLICT)
         {
           nlm_process_conflict(&pres->res_nlm4test.test_stat.nlm4_testrply_u.holder,
                                holder,
@@ -146,7 +146,7 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
         }
 
       /* If we didn't block, release the block data */
-      if(cache_status != CACHE_INODE_LOCK_BLOCKED && pblock_data != NULL)
+      if(state_status != STATE_LOCK_BLOCKED && pblock_data != NULL)
         Mem_Free(pblock_data);
     }
   else
@@ -202,9 +202,9 @@ int nlm4_Lock_Message(nfs_arg_t * parg /* IN     */ ,
                       struct svc_req *preq /* IN     */ ,
                       nfs_res_t * pres /* OUT    */ )
 {
-  cache_inode_nlm_client_t * nlm_client;
-  nlm4_lockargs            * arg = &parg->arg_nlm4_lock;
-  int                        rc = NFS_REQ_OK;
+  state_nlm_client_t * nlm_client;
+  nlm4_lockargs      * arg = &parg->arg_nlm4_lock;
+  int                  rc = NFS_REQ_OK;
 
   LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Lock_Message");
 

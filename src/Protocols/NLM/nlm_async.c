@@ -33,7 +33,7 @@
 #include <pthread.h>
 
 #include "stuff_alloc.h"
-#include "cache_inode.h"
+#include "sal_functions.h"
 #include "nlm4.h"
 #include "nlm_util.h"
 #include "nlm_async.h"
@@ -47,9 +47,9 @@ pthread_cond_t                 nlm_async_resp_cond   = PTHREAD_COND_INITIALIZER;
 cache_inode_client_parameter_t nlm_async_cache_inode_client_param;
 cache_inode_client_t           nlm_async_cache_inode_client;
 
-int nlm_send_async_res_nlm4(cache_inode_nlm_client_t * host,
-                            nlm_callback_func          func,
-                            nfs_res_t                * pres)
+int nlm_send_async_res_nlm4(state_nlm_client_t * host,
+                            nlm_callback_func    func,
+                            nfs_res_t          * pres)
 {
   nlm_async_queue_t *arg = (nlm_async_queue_t *) Mem_Alloc(sizeof(*arg));
   if(arg != NULL)
@@ -89,9 +89,9 @@ int nlm_send_async_res_nlm4(cache_inode_nlm_client_t * host,
   return arg != NULL ? NFS_REQ_OK : NFS_REQ_DROP;
 }
 
-int nlm_send_async_res_nlm4test(cache_inode_nlm_client_t * host,
-                                nlm_callback_func          func,
-                                nfs_res_t                * pres)
+int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
+                                nlm_callback_func    func,
+                                nfs_res_t          * pres)
 {
   nlm_async_queue_t *arg = (nlm_async_queue_t *) Mem_Alloc(sizeof(*arg));
   if(arg != NULL)
@@ -303,10 +303,10 @@ nlm_reply_proc_t nlm_reply_proc[] = {
 static void *resp_key;
 
 /* Client routine  to send the asynchrnous response, key is used to wait for a response */
-int nlm_send_async(int                        proc,
-                   cache_inode_nlm_client_t * host,
-                   void                     * inarg,
-                   void                     * key)
+int nlm_send_async(int                  proc,
+                   state_nlm_client_t * host,
+                   void               * inarg,
+                   void               * key)
 {
   CLIENT *clnt;
   struct timeval tout = { 0, 10 };
@@ -317,13 +317,13 @@ int nlm_send_async(int                        proc,
 
   LogFullDebug(COMPONENT_NLM,
                "nlm_send_async Clnt_create %s",
-               host->clc_nlm_caller_name);
-  clnt = Clnt_create(host->clc_nlm_caller_name, NLMPROG, NLM4_VERS, "tcp");
+               host->slc_nlm_caller_name);
+  clnt = Clnt_create(host->slc_nlm_caller_name, NLMPROG, NLM4_VERS, "tcp");
   if(!clnt)
     {
       LogMajor(COMPONENT_NLM,
                "nlm_send_async: Cannot create connection to %s client",
-               host->clc_nlm_caller_name);
+               host->slc_nlm_caller_name);
       return -1;
     }
   inproc = nlm_reply_proc[proc].inproc;

@@ -23,13 +23,13 @@
  */
 
 /**
- * \file    cache_inode_state.c
+ * \file    nfs4_state.c
  * \author  $Author: deniel $
  * \date    $Date$
  * \version $Revision$
  * \brief   This file contains functions used in state management.
  *
- * cache_inode_state.c : This file contains functions used in state management.
+ * nfs4_state.c : This file contains functions used in state management.
  *
  *
  */
@@ -59,7 +59,7 @@
 
 /**
  *
- * cache_inode_state_conflict : checks for a conflict between an existing state and a candidate state.
+ * state_conflict : checks for a conflict between an existing state and a candidate state.
  *
  * Checks for a conflict between an existing state and a candidate state.
  *
@@ -70,51 +70,44 @@
  * @return TRUE if there is a conflict, FALSE if no conflict has been found
  *
  */
-int cache_inode_state_conflict(state_t      * pstate,
-                               state_type_t   state_type,
-                               state_data_t * pstate_data)
+int state_conflict(state_t      * pstate,
+                   state_type_t   state_type,
+                   state_data_t * pstate_data)
 {
-  int rc = FALSE;
-
   if(pstate == NULL || pstate_data == NULL)
     return TRUE;
 
   switch (state_type)
     {
     case STATE_TYPE_NONE:
-      rc = FALSE;               /* STATE_NONE conflicts with nobody */
-      break;
+      return FALSE;               /* STATE_NONE conflicts with nobody */
 
     case STATE_TYPE_SHARE:
       if(pstate->state_type == STATE_TYPE_SHARE)
         {
           if((pstate->state_data.share.share_access & pstate_data->share.share_deny) ||
              (pstate->state_data.share.share_deny & pstate_data->share.share_access))
-            rc = TRUE;
+            return TRUE;
         }
+      return FALSE;
 
     case STATE_TYPE_LOCK:
-      rc = FALSE;
-      break;                    /* lock conflict is managed in the NFS request */
+      return FALSE;              /* lock conflict is managed in the NFS request */
 
     case STATE_TYPE_LAYOUT:
-      rc = FALSE;  /** @todo No conflict management on layout for now */
-      break;
+      return FALSE;              /** @todo No conflict management on layout for now */
 
     case STATE_TYPE_DELEG:
-    default:
-      /* Not yet implemented for now, answer TRUE to
-       * avoid weird behavior */
-      rc = TRUE;
-      break;
+      /* Not yet implemented for now, answer TRUE to avoid weird behavior */
+      return TRUE;
     }
 
-  return rc;
-}                               /* cache_inode_state_conflict */
+  return TRUE;
+}                               /* state_conflict */
 
 /**
  *
- * cache_inode_add_state: adds a new state to a file pentry
+ * state_add: adds a new state to a file pentry
  *
  * Adds a new state to a file pentry
  *
@@ -130,14 +123,14 @@ int cache_inode_state_conflict(state_t      * pstate,
  * @return the same as *pstatus
  *
  */
-cache_inode_status_t cache_inode_add_state(cache_entry_t         * pentry,
-                                           state_type_t            state_type,
-                                           state_data_t          * pstate_data,
-                                           state_open_owner_t    * powner_input,
-                                           cache_inode_client_t  * pclient,
-                                           fsal_op_context_t     * pcontext,
-                                           state_t              ** ppstate,
-                                           cache_inode_status_t  * pstatus)
+state_status_t state_add(cache_entry_t         * pentry,
+                         state_type_t            state_type,
+                         state_data_t          * pstate_data,
+                         state_open_owner_t    * powner_input,
+                         cache_inode_client_t  * pclient,
+                         fsal_op_context_t     * pcontext,
+                         state_t              ** ppstate,
+                         state_status_t        * pstatus)
 {
   state_t            * pnew_state = NULL;
   state_t            * piter_state = NULL;
@@ -148,19 +141,19 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t         * pentry,
 
   /* Sanity Check */
   if(pstatus == NULL)
-    return CACHE_INODE_INVALID_ARGUMENT;
+    return STATE_INVALID_ARGUMENT;
 
   if(pentry == NULL || pstate_data == NULL || pclient == NULL || pcontext == NULL
      || powner_input == NULL || ppstate == NULL)
     {
-      *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+      *pstatus = STATE_INVALID_ARGUMENT;
       return *pstatus;
     }
 
   /* entry has to be a file */
   if(pentry->internal_md.type != REGULAR_FILE)
     {
-      *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+      *pstatus = STATE_INVALID_ARGUMENT;
       return *pstatus;
     }
 
@@ -171,9 +164,9 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t         * pentry,
 
   if(pnew_state == NULL)
     {
-      LogDebug(COMPONENT_CACHE_INODE,
+      LogDebug(COMPONENT_STATE,
                "Can't allocate a new file state from cache pool");
-      *pstatus = CACHE_INODE_MALLOC_ERROR;
+      *pstatus = STATE_MALLOC_ERROR;
 
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
@@ -194,9 +187,9 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t         * pentry,
       if(!nfs4_BuildStateId_Other(pentry,
                                   pcontext, powner_input, pnew_state->stateid_other))
         {
-          LogDebug(COMPONENT_CACHE_INODE,
+          LogDebug(COMPONENT_STATE,
                    "Can't create a new state id for the pentry %p (A)", pentry);
-          *pstatus = CACHE_INODE_STATE_ERROR;
+          *pstatus = STATE_STATE_ERROR;
 
           /* stat */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
@@ -222,7 +215,7 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t         * pentry,
       for(piter_state = pentry->object.file.pstate_head; piter_state != NULL;
           piter_saved = piter_state, piter_state = piter_state->next)
         {
-          if(cache_inode_state_conflict(piter_state, state_type, pstate_data))
+          if(state_conflict(piter_state, state_type, pstate_data))
             {
               conflict_found = TRUE;
               break;
@@ -232,10 +225,10 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t         * pentry,
       /* An error is to be returned if a conflict is found */
       if(conflict_found == TRUE)
         {
-          LogDebug(COMPONENT_CACHE_INODE,
+          LogDebug(COMPONENT_STATE,
                    "new state conflicts with another state for pentry %p",
                    pentry);
-          *pstatus = CACHE_INODE_STATE_CONFLICT;
+          *pstatus = STATE_STATE_CONFLICT;
 
           /* stat */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
@@ -254,9 +247,9 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t         * pentry,
       if(!nfs4_BuildStateId_Other
          (pentry, pcontext, powner_input, pnew_state->stateid_other))
         {
-          LogDebug(COMPONENT_CACHE_INODE,
+          LogDebug(COMPONENT_STATE,
                    "Can't create a new state id for the pentry %p (E)", pentry);
-          *pstatus = CACHE_INODE_STATE_ERROR;
+          *pstatus = STATE_STATE_ERROR;
 
           /* stat */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
@@ -280,9 +273,9 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t         * pentry,
   /* Add the state to the related hashtable */
   if(!nfs4_State_Set(pnew_state->stateid_other, pnew_state))
     {
-      LogDebug(COMPONENT_CACHE_INODE,
+      LogDebug(COMPONENT_STATE,
                "Can't create a new state id for the pentry %p (F)", pentry);
-      *pstatus = CACHE_INODE_STATE_ERROR;
+      *pstatus = STATE_STATE_ERROR;
 
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
@@ -296,21 +289,22 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t         * pentry,
   *ppstate = pnew_state;
 
   /* Regular exit */
-  *pstatus = CACHE_INODE_SUCCESS;
+  *pstatus = STATE_SUCCESS;
 
-  if (isFullDebug(COMPONENT_STATES)) {
-    sprint_mem(debug_str, (char *)pnew_state->stateid_other, 12);
-    LogDebug(COMPONENT_STATES,
-             "cache_inode_add_state : %s", debug_str);
-  }
+  if (isFullDebug(COMPONENT_STATE))
+    {
+      sprint_mem(debug_str, (char *)pnew_state->stateid_other, 12);
+      LogDebug(COMPONENT_STATE,
+               "Add State: %s", debug_str);
+    }
   V_w(&pentry->lock);
 
   return *pstatus;
-}                               /* cache_inode_add_state */
+}                               /* state_add */
 
 /**
  *
- * cache_inode_get_state: gets a state from the hash's state
+ * state_get: gets a state from the hash's state
  *
  * Gets a state from the hash's state
  *
@@ -322,23 +316,23 @@ cache_inode_status_t cache_inode_add_state(cache_entry_t         * pentry,
  * @return the same as *pstatus
  *
  */
-cache_inode_status_t cache_inode_get_state(char                    other[12],
-                                           state_t              ** ppstate,
-                                           cache_inode_client_t *  pclient,
-                                           cache_inode_status_t *  pstatus)
+state_status_t state_get(char                    other[12],
+                         state_t              ** ppstate,
+                         cache_inode_client_t *  pclient,
+                         state_status_t       *  pstatus)
 {
   if(pstatus == NULL)
-    return CACHE_INODE_INVALID_ARGUMENT;
+    return STATE_INVALID_ARGUMENT;
 
   if(ppstate == NULL || pclient == NULL)
     {
-      *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+      *pstatus = STATE_INVALID_ARGUMENT;
       return *pstatus;
     }
 
   if(!nfs4_State_Get_Pointer(other, ppstate))
     {
-      *pstatus = CACHE_INODE_NOT_FOUND;
+      *pstatus = STATE_NOT_FOUND;
 
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET_STATE] += 1;
@@ -348,16 +342,16 @@ cache_inode_status_t cache_inode_get_state(char                    other[12],
 
   /* Sanity check, mostly for debug */
   if(memcmp(other, (*ppstate)->stateid_other, 12))
-    LogDebug(COMPONENT_STATES,
+    LogDebug(COMPONENT_STATE,
              "-------------> Warning !!!! Stateid(other) differs !!!!!!");
 
-  *pstatus = CACHE_INODE_SUCCESS;
+  *pstatus = STATE_SUCCESS;
   return *pstatus;
 }                               /* cache_inode_get_state */
 
 /**
  *
- * cache_inode_update_state: update a state from the hash's state
+ * state_update_state: update a state from the hash's state
  *
  * Updates a state from the hash's state
  *
@@ -368,22 +362,22 @@ cache_inode_status_t cache_inode_get_state(char                    other[12],
  * @return the same as *pstatus
  *
  */
-cache_inode_status_t cache_inode_update_state(state_t              * pstate,
-                                              cache_inode_client_t * pclient,
-                                              cache_inode_status_t * pstatus)
+state_status_t state_update(state_t              * pstate,
+                            cache_inode_client_t * pclient,
+                            state_status_t       * pstatus)
 {
   if(pstatus == NULL)
-    return CACHE_INODE_INVALID_ARGUMENT;
+    return STATE_INVALID_ARGUMENT;
 
   if(pstate == NULL || pclient == NULL)
     {
-      *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+      *pstatus = STATE_INVALID_ARGUMENT;
       return *pstatus;
     }
 
   if(!nfs4_State_Update(pstate->stateid_other, pstate))
     {
-      *pstatus = CACHE_INODE_STATE_ERROR;
+      *pstatus = STATE_STATE_ERROR;
 
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_UPDATE_STATE] += 1;
@@ -391,13 +385,13 @@ cache_inode_status_t cache_inode_update_state(state_t              * pstate,
       return *pstatus;
     }
 
-  *pstatus = CACHE_INODE_SUCCESS;
+  *pstatus = STATE_SUCCESS;
   return *pstatus;
-}                               /* cache_inode_set_state */
+}                               /* state_set */
 
 /**
  *
- * cache_inode_del_state_by_key: deletes a state from the hash's state associated with a given stateid
+ * state_del_by_key: deletes a state from the hash's state associated with a given stateid
  *
  * Deletes a state from the hash's state
  *
@@ -409,26 +403,26 @@ cache_inode_status_t cache_inode_update_state(state_t              * pstate,
  * @return the same as *pstatus
  *
  */
-cache_inode_status_t cache_inode_del_state_by_key(char other[12],
-                                                  cache_inode_client_t * pclient,
-                                                  cache_inode_status_t * pstatus)
+state_status_t state_del_by_key(char                   other[12],
+                                cache_inode_client_t * pclient,
+                                state_status_t       * pstatus)
 {
   state_t       * pstate = NULL;
   cache_entry_t * pentry = NULL;
 
   if(pstatus == NULL)
-    return CACHE_INODE_INVALID_ARGUMENT;
+    return STATE_INVALID_ARGUMENT;
 
   if(pstatus == NULL || pclient == NULL)
     {
-      *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+      *pstatus = STATE_INVALID_ARGUMENT;
       return *pstatus;
     }
 
   /* Does this state exists ? */
   if(!nfs4_State_Get_Pointer(other, &pstate))
     {
-      *pstatus = CACHE_INODE_NOT_FOUND;
+      *pstatus = STATE_NOT_FOUND;
 
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_DEL_STATE] += 1;
@@ -469,7 +463,7 @@ cache_inode_status_t cache_inode_del_state_by_key(char other[12],
       /* Remove the entry from the HashTable */
       if(!nfs4_State_Del(pstate->stateid_other))
         {
-          *pstatus = CACHE_INODE_STATE_ERROR;
+          *pstatus = STATE_STATE_ERROR;
 
           /* stat */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_DEL_STATE] += 1;
@@ -489,16 +483,16 @@ cache_inode_status_t cache_inode_del_state_by_key(char other[12],
       ReleaseToPool(pstate, &pclient->pool_state_v4);
     }
 
-  *pstatus = CACHE_INODE_SUCCESS;
+  *pstatus = STATE_SUCCESS;
 
   V_w(&pentry->lock);
 
   return *pstatus;
-}                               /* cache_inode_del_state_by_key */
+}                               /* state_del_by_key */
 
 /**
  *
- * cache_inode_del_state: deletes a state from the hash's state
+ * state_del: deletes a state from the hash's state
  *
  * Deletes a state from the hash's state
  *
@@ -509,31 +503,33 @@ cache_inode_status_t cache_inode_del_state_by_key(char other[12],
  * @return the same as *pstatus
  *
  */
-cache_inode_status_t cache_inode_del_state(state_t              * pstate,
-                                           cache_inode_client_t * pclient,
-                                           cache_inode_status_t * pstatus)
+state_status_t state_del(state_t              * pstate,
+                         cache_inode_client_t * pclient,
+                         state_status_t       * pstatus)
 {
-  state_t *ptest_state = NULL;
-  cache_entry_t *pentry = NULL;
-  char str[25];
+  state_t       * ptest_state = NULL;
+  cache_entry_t * pentry = NULL;
+  char            str[25];
+
   if(pstatus == NULL)
-    return CACHE_INODE_INVALID_ARGUMENT;
+    return STATE_INVALID_ARGUMENT;
 
   if(pstate == NULL || pclient == NULL)
     {
-      *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+      *pstatus = STATE_INVALID_ARGUMENT;
       return *pstatus;
     }
 
-  if (isFullDebug(COMPONENT_STATES)) {
-    sprint_mem(str, (char *)pstate->stateid_other, 12);
-    LogDebug(COMPONENT_STATES, "cache_inode_del_state : %s", str);
-  }
+  if (isFullDebug(COMPONENT_STATE))
+    {
+      sprint_mem(str, (char *)pstate->stateid_other, 12);
+      LogDebug(COMPONENT_STATE, "Delete State: %s", str);
+    }
 
   /* Does this state exists ? */
   if(!nfs4_State_Get_Pointer(pstate->stateid_other, &ptest_state))
     {
-      *pstatus = CACHE_INODE_NOT_FOUND;
+      *pstatus = STATE_NOT_FOUND;
 
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_DEL_STATE] += 1;
@@ -572,7 +568,7 @@ cache_inode_status_t cache_inode_del_state(state_t              * pstate,
   /* Remove the entry from the HashTable */
   if(!nfs4_State_Del(pstate->stateid_other))
     {
-      *pstatus = CACHE_INODE_STATE_ERROR;
+      *pstatus = STATE_STATE_ERROR;
 
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_DEL_STATE] += 1;
@@ -591,16 +587,16 @@ cache_inode_status_t cache_inode_del_state(state_t              * pstate,
 
   ReleaseToPool(pstate, &pclient->pool_state_v4);
 
-  *pstatus = CACHE_INODE_SUCCESS;
+  *pstatus = STATE_SUCCESS;
 
   V_w(&pentry->lock);
 
   return *pstatus;
-}                               /* cache_inode_del_state */
+}                               /* state_del */
 
 /**
  *
- * cache_inode_state_iterate: iterates on the states's loop
+ * state_iterate: iterates on the states's loop
  *
  * Iterates on the states's loop
  *
@@ -614,22 +610,22 @@ cache_inode_status_t cache_inode_del_state(state_t              * pstate,
  * @return the same as *pstatus
  *
  */
-cache_inode_status_t cache_inode_state_iterate(cache_entry_t         * pentry,
-                                               state_t              ** ppstate,
-                                               state_t               * previous_pstate,
-                                               cache_inode_client_t  * pclient,
-                                               fsal_op_context_t     * pcontext,
-                                               cache_inode_status_t  * pstatus)
+state_status_t state_iterate(cache_entry_t         * pentry,
+                             state_t              ** ppstate,
+                             state_t               * previous_pstate,
+                             cache_inode_client_t  * pclient,
+                             fsal_op_context_t     * pcontext,
+                             state_status_t        * pstatus)
 {
   state_t  * piter_state = NULL;
   uint64_t   fileid_digest = 0;
 
   if(pstatus == NULL)
-    return CACHE_INODE_INVALID_ARGUMENT;
+    return STATE_INVALID_ARGUMENT;
 
   if(pentry == NULL || ppstate == NULL || pclient == NULL || pcontext == NULL)
     {
-      *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+      *pstatus = STATE_INVALID_ARGUMENT;
       return *pstatus;
     }
 
@@ -639,9 +635,9 @@ cache_inode_status_t cache_inode_state_iterate(cache_entry_t         * pentry,
                                      &(pentry->object.file.handle),
                                      (caddr_t) & fileid_digest)))
     {
-      LogDebug(COMPONENT_CACHE_INODE,
+      LogDebug(COMPONENT_STATE,
                "Can't create a new state id for the pentry %p (F)", pentry);
-      *pstatus = CACHE_INODE_STATE_ERROR;
+      *pstatus = STATE_STATE_ERROR;
 
       return *pstatus;
     }
@@ -659,11 +655,11 @@ cache_inode_status_t cache_inode_state_iterate(cache_entry_t         * pentry,
       /* Sanity check: make sure that this state is related to this pentry */
       if(previous_pstate->pentry != pentry)
         {
-          LogDebug(COMPONENT_CACHE_INODE,
+          LogDebug(COMPONENT_STATE,
                    "Bad previous pstate: related to pentry %p, not to %p",
                    previous_pstate->pentry, pentry);
 
-          *pstatus = CACHE_INODE_STATE_ERROR;
+          *pstatus = STATE_STATE_ERROR;
 
           V_r(&pentry->lock);
 
@@ -678,4 +674,4 @@ cache_inode_status_t cache_inode_state_iterate(cache_entry_t         * pentry,
   V_r(&pentry->lock);
 
   return *pstatus;
-}                               /* cache_inode_state_iterate */
+}                               /* state_iterate */

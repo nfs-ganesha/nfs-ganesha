@@ -321,7 +321,7 @@ typedef struct state_block_data_t
       state_nlm_block_data_t   sbd_nlm_block_data;
 #endif
       void                   * sbd_v4_block_data;
-    } cbd_block_data;
+    } sbd_block_data;
 } state_block_data_t;
 
 struct state_lock_entry_t
