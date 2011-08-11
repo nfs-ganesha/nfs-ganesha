@@ -66,7 +66,10 @@
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
 #endif                          /* _USE_NFS4_1 */
-#include "sal_data.h"
+
+/* forward references */
+typedef struct cache_entry_t        cache_entry_t;
+typedef struct cache_inode_client_t cache_inode_client_t;
 
 /* Some habits concerning mutex management */
 #ifndef P
@@ -289,7 +292,6 @@ struct cache_entry_t
       void *pentry_content;                                          /**< Entry in file content cache (NULL if not cached)     */
       void *pstate_head;                                             /**< Pointer used for the head of the state chain         */
       void *pstate_tail;                                             /**< Current pointer for the state chain                  */
-      fsal_lock_support_t fsal_lock_support;                         /**< Type of lock support FSAL provides for this file     */
       struct glist_head lock_list;                                   /**< Pointers for lock list                               */
       pthread_mutex_t lock_list_mutex;                               /**< Mutex to protect lock list                           */
       cache_inode_unstable_data_t unstable_data;                     /**< Unstable data, for use with WRITE/COMMIT             */

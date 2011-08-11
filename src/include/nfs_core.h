@@ -50,6 +50,7 @@
 #include "mfsl.h"
 #endif
 #include "cache_inode.h"
+#include "sal_data.h"
 #include "cache_content.h"
 #include "nfs_stat.h"
 #include "external_tools.h"

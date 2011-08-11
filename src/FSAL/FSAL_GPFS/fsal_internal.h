@@ -315,12 +315,13 @@ fsal_status_t GPFSFSAL_lookupJunction(gpfsfsal_handle_t * p_junction_handle,    
                                      fsal_attrib_list_t *
                                      p_fsroot_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t GPFSFSAL_lock_op_no_owner( gpfsfsal_file_t       * p_file_descriptor,   /* IN */
-                                         gpfsfsal_handle_t     * p_filehandle,        /* IN */
-                                         fsal_op_context_t     * p_context,           /* IN */
-                                         fsal_lock_op_t          lock_op,             /* IN */
-                                         fsal_lock_param_t             request_lock,        /* IN */
-                                         fsal_lock_param_t           * conflicting_lock    /* OUT */ );
+fsal_status_t GPFSFSAL_lock_op( gpfsfsal_file_t       * p_file_descriptor,   /* IN */
+                                gpfsfsal_handle_t     * p_filehandle,        /* IN */
+                                fsal_op_context_t     * p_context,           /* IN */
+                                void                  * p_owner,             /* IN */
+                                fsal_lock_op_t          lock_op,             /* IN */
+                                fsal_lock_param_t       request_lock,        /* IN */
+                                fsal_lock_param_t     * conflicting_lock     /* OUT */ );
 
 fsal_status_t GPFSFSAL_lock(gpfsfsal_file_t * obj_handle,
                            gpfsfsal_lockdesc_t * ldesc, fsal_boolean_t blocking);

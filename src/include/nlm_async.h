@@ -31,8 +31,8 @@
 #include "nlm_list.h"
 #include "nlm_util.h"
 #include "nlm4.h"
-#include "sal_data.h"
 #include "cache_inode.h"
+#include "sal_data.h"
 
 extern pthread_mutex_t                nlm_async_resp_mutex;
 extern pthread_cond_t                 nlm_async_resp_cond;

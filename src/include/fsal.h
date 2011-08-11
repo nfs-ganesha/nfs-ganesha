@@ -657,26 +657,14 @@ fsal_status_t FSAL_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
                                  fsal_rcpflag_t transfer_opt    /* IN */
     );
 
-fsal_lock_support_t FSAL_get_lock_support( fsal_op_context_t * p_context,     /* IN */
-                                           fsal_handle_t * p_objecthandle     /* IN */
-    );
-
-fsal_status_t FSAL_lock_op_no_owner( fsal_file_t       * p_file_descriptor,   /* IN */
-                                     fsal_handle_t     * p_filehandle,        /* IN */
-                                     fsal_op_context_t * p_context,           /* IN */
-                                     fsal_lock_op_t      lock_op,             /* IN */
-                                     fsal_lock_param_t   request_lock,        /* IN */
-                                     fsal_lock_param_t * conflicting_lock     /* OUT */
-                                     );
-
-fsal_status_t FSAL_lock_op_owner( fsal_file_t       * p_file_descriptor,   /* IN */
-                                  fsal_handle_t     * p_filehandle,        /* IN */
-                                  fsal_op_context_t * p_context,           /* IN */
-                                  void              * p_owner,             /* IN (opaque to FSAL) */
-                                  fsal_lock_op_t      lock_op,             /* IN */
-                                  fsal_lock_param_t   request_lock,        /* IN */
-                                  fsal_lock_param_t * conflicting_lock     /* OUT */
-                                  );
+fsal_status_t FSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
+                            fsal_handle_t     * p_filehandle,        /* IN */
+                            fsal_op_context_t * p_context,           /* IN */
+                            void              * p_owner,             /* IN (opaque to FSAL) */
+                            fsal_lock_op_t      lock_op,             /* IN */
+                            fsal_lock_param_t   request_lock,        /* IN */
+                            fsal_lock_param_t * conflicting_lock     /* OUT */
+                            );
 
 /* To be called before exiting */
 fsal_status_t FSAL_terminate();
@@ -1377,23 +1365,13 @@ typedef struct fsal_functions__
                                      fsal_op_context_t * p_context,        /* IN */
                                      fsal_extattrib_list_t * p_object_attributes /* OUT */ ) ;
 
-  fsal_lock_support_t (*fsal_get_lock_support)( fsal_op_context_t * p_context,     /* IN */
-                                                fsal_handle_t * p_objecthandle     /* IN */ );
-
-  fsal_status_t (*fsal_lock_op_no_owner)( fsal_file_t       * p_file_descriptor,   /* IN */
-                                          fsal_handle_t     * p_filehandle,        /* IN */
-                                          fsal_op_context_t * p_context,           /* IN */
-                                          fsal_lock_op_t      lock_op,             /* IN */
-                                          fsal_lock_param_t         request_lock,        /* IN */
-                                          fsal_lock_param_t       * conflicting_lock     /* OUT */ );
-
-  fsal_status_t (*fsal_lock_op_owner)( fsal_file_t       * p_file_descriptor,   /* IN */
-                                       fsal_handle_t     * p_filehandle,        /* IN */
-                                       fsal_op_context_t * p_context,           /* IN */
-                                       void              * p_owner,             /* IN (opaque to FSAL) */
-                                       fsal_lock_op_t      lock_op,             /* IN */
-                                       fsal_lock_param_t         request_lock,        /* IN */
-                                       fsal_lock_param_t       * conflicting_lock     /* OUT */ );
+  fsal_status_t (*fsal_lock_op)( fsal_file_t             * p_file_descriptor,   /* IN */
+                                 fsal_handle_t           * p_filehandle,        /* IN */
+                                 fsal_op_context_t       * p_context,           /* IN */
+                                 void                    * p_owner,             /* IN (opaque to FSAL) */
+                                 fsal_lock_op_t            lock_op,             /* IN */
+                                 fsal_lock_param_t         request_lock,        /* IN */
+                                 fsal_lock_param_t       * conflicting_lock     /* OUT */ );
 
   /* get fileno */
   unsigned int (*fsal_getfileno) (fsal_file_t *);

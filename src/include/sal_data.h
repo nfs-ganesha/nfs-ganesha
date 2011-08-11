@@ -44,7 +44,7 @@
 #include <time.h>
 #include <pthread.h>
 
-
+#include "cache_inode.h"
 #include "stuff_alloc.h"
 #include "RW_Lock.h"
 #include "LRU_List.h"
@@ -63,10 +63,6 @@
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
 #endif                          /* _USE_NFS4_1 */
-
-/* forward references from cache_inode.h */
-typedef struct cache_entry_t        cache_entry_t;
-typedef struct cache_inode_client_t cache_inode_client_t;
 
 /* Some habits concerning mutex management */
 #ifndef P

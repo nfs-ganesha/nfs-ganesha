@@ -31,7 +31,7 @@
 #include "fsal_convert.h"
 
 /**
- * FSAL_lock_op_no_owner:
+ * GPFSFSAL_lock_op:
  * Lock/unlock/test an owner independent (anonymous) lock for a region in a file.
  *
  * \param p_file_descriptor (input):
@@ -40,6 +40,8 @@
  *        File handle of the file to lock.
  * \param p_context (input):
  *        Context
+ * \param p_owner (input):
+ *        Owner for the requested lock
  * \param lock_op (input):
  *        Can be either FSAL_OP_LOCKT, FSAL_OP_LOCK, FSAL_OP_UNLOCK.
  *        The operations are test if a file region is locked, lock a file region, unlock a
@@ -57,12 +59,13 @@
  *      - ERR_FSAL_FAULT: One of the in put parameters is NULL.
  *      - ERR_FSAL_PERM: lock_op was FSAL_OP_LOCKT and the result was that the operation would not be possible.
  */
-fsal_status_t GPFSFSAL_lock_op_no_owner( gpfsfsal_file_t       * p_file_descriptor,   /* IN */
-                                         gpfsfsal_handle_t     * p_filehandle,        /* IN */
-                                         fsal_op_context_t     * p_context,           /* IN */
-                                         fsal_lock_op_t          lock_op,             /* IN */
-                                         fsal_lock_param_t       request_lock,        /* IN */
-                                         fsal_lock_param_t     * conflicting_lock)    /* OUT */
+fsal_status_t GPFSFSAL_lock_op( gpfsfsal_file_t   * p_file_descriptor,   /* IN */
+                                gpfsfsal_handle_t * p_filehandle,        /* IN */
+                                fsal_op_context_t * p_context,           /* IN */
+                                void              * p_owner,             /* IN (opaque to FSAL) */
+                                fsal_lock_op_t      lock_op,             /* IN */
+                                fsal_lock_param_t   request_lock,        /* IN */
+                                fsal_lock_param_t * conflicting_lock)    /* OUT */
 {
   int retval;
   struct flock lock_args;
@@ -76,14 +79,17 @@ fsal_status_t GPFSFSAL_lock_op_no_owner( gpfsfsal_file_t       * p_file_descript
         LogDebug(COMPONENT_FSAL, "GPFSFSAL_lock_op_no_owner: p_filehandle argument is NULL.");
       if(p_context == NULL)
         LogDebug(COMPONENT_FSAL, "GPFSFSAL_lock_op_no_owner: p_context argument is NULL.");
-      Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op_no_owner);
+      Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op);
     }
+
+  if(p_owner != NULL)
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op);
 
   if(conflicting_lock == NULL && lock_op == FSAL_OP_LOCKT)
     {
       LogDebug(COMPONENT_FSAL, "GPFSFSAL_lock_op_no_owner: conflicting_lock argument can't"
                " be NULL with lock_op  = LOCKT");
-      Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op_no_owner);
+      Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op);
     }
 
   LogFullDebug(COMPONENT_FSAL, "Locking: op:%d type:%d start:%llu length:%llu ", lock_op,
@@ -96,7 +102,7 @@ fsal_status_t GPFSFSAL_lock_op_no_owner( gpfsfsal_file_t       * p_file_descript
   else
     {
       LogDebug(COMPONENT_FSAL, "ERROR: Lock operation requested was not TEST, READ, or WRITE.");
-      Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op_no_owner);      
+      Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op);      
     }
 
   if(request_lock.lock_type == FSAL_LOCK_R)
@@ -106,7 +112,7 @@ fsal_status_t GPFSFSAL_lock_op_no_owner( gpfsfsal_file_t       * p_file_descript
   else
     {
       LogDebug(COMPONENT_FSAL, "ERROR: The requested lock type was not read or write.");
-      Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op_no_owner);
+      Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op);
     }
 
   if(lock_op == FSAL_OP_UNLOCK)
@@ -128,7 +134,7 @@ fsal_status_t GPFSFSAL_lock_op_no_owner( gpfsfsal_file_t       * p_file_descript
             {
               LogCrit(COMPONENT_FSAL, "After failing a lock request, I couldn't even"
                       " get the details of who owns the lock.");
-              Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock_op_no_owner);
+              Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock_op);
             }
           if(conflicting_lock != NULL)
             {
@@ -138,7 +144,7 @@ fsal_status_t GPFSFSAL_lock_op_no_owner( gpfsfsal_file_t       * p_file_descript
               conflicting_lock->lock_type = lock_args.l_type;
             }
         }
-      Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock_op_no_owner);
+      Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock_op);
     }
 
   /* F_UNLCK is returned then the tested operation would be possible. */
@@ -160,7 +166,7 @@ fsal_status_t GPFSFSAL_lock_op_no_owner( gpfsfsal_file_t       * p_file_descript
         }
     }
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lock_op_no_owner);
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lock_op);
 }
 
 static int do_blocking_lock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)

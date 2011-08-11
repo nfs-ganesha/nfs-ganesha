@@ -464,7 +464,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       pentry->object.file.pentry_content = NULL;        /* Not yet a File Content entry associated with this entry */
       pentry->object.file.pstate_head = NULL;   /* No associated client yet                                */
       pentry->object.file.pstate_tail = NULL;   /* No associated client yet                                */
-      pentry->object.file.fsal_lock_support = FSAL_get_lock_support(pcontext, &pentry->object.file.handle);
       init_glist(&pentry->object.file.lock_list);  /* No associated locks yet */
       if(pthread_mutex_init(&pentry->object.file.lock_list_mutex, NULL) != 0)
         {

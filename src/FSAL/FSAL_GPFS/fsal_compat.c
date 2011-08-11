@@ -370,16 +370,17 @@ fsal_status_t WRAP_GPFSFSAL_changelock(fsal_lockdesc_t * lock_descriptor,       
   return GPFSFSAL_changelock((gpfsfsal_lockdesc_t *) lock_descriptor, lock_info);
 }
 
-fsal_status_t WRAP_GPFSFSAL_lock_op_no_owner( fsal_file_t       * p_file_descriptor,   /* IN */
-                                              fsal_handle_t     * p_filehandle,        /* IN */
-                                              fsal_op_context_t * p_context,           /* IN */
-                                              fsal_lock_op_t      lock_op,             /* IN */
-                                              fsal_lock_param_t         request_lock,        /* IN */
-                                              fsal_lock_param_t       * conflicting_lock)    /* OUT */
+fsal_status_t WRAP_GPFSFSAL_lock_op( fsal_file_t             * p_file_descriptor,   /* IN */
+                                     fsal_handle_t           * p_filehandle,        /* IN */
+                                     fsal_op_context_t       * p_context,           /* IN */
+                                     void                    * p_owner,             /* IN (opaque to FSAL) */
+                                     fsal_lock_op_t            lock_op,             /* IN */
+                                     fsal_lock_param_t         request_lock,        /* IN */
+                                     fsal_lock_param_t       * conflicting_lock)    /* OUT */
 {
-  return GPFSFSAL_lock_op_no_owner((gpfsfsal_file_t *) p_file_descriptor,
-                                   (gpfsfsal_handle_t *) p_filehandle,
-                                   p_context, lock_op, request_lock, conflicting_lock);
+  return GPFSFSAL_lock_op((gpfsfsal_file_t *) p_file_descriptor,
+                          (gpfsfsal_handle_t *) p_filehandle,
+                          p_context, p_owner, lock_op, request_lock, conflicting_lock);
 }
 fsal_status_t WRAP_GPFSFSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
@@ -726,8 +727,7 @@ fsal_functions_t fsal_gpfs_functions = {
   .fsal_lookupjunction = WRAP_GPFSFSAL_lookupJunction,
   .fsal_lock = WRAP_GPFSFSAL_lock,
   .fsal_changelock = WRAP_GPFSFSAL_changelock,
-  .fsal_lock_op_no_owner = WRAP_GPFSFSAL_lock_op_no_owner,
-  .fsal_lock_op_owner = NULL,
+  .fsal_lock_op = WRAP_GPFSFSAL_lock_op,
   .fsal_unlock = WRAP_GPFSFSAL_unlock,
   .fsal_getlock = WRAP_GPFSFSAL_getlock,
   .fsal_cleanobjectresources = WRAP_GPFSFSAL_CleanObjectResources,

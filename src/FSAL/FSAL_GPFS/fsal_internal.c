@@ -77,7 +77,9 @@ static fsal_staticfsinfo_t default_gpfs_info = {
   FSAL_EXPTYPE_PERSISTENT,      /* FH expire type */
   TRUE,                         /* hard link support */
   TRUE,                         /* symlink support */
-  FALSE,                        /* lock management */
+  TRUE,                         /* lock management */
+  FALSE,                        /* lock owners */
+  FALSE,                        /* async blocking locks */
   TRUE,                         /* named attributes */
   TRUE,                         /* handles are unique and persistent */
   {10, 0},                      /* Duration of lease at FS in seconds */
@@ -453,6 +455,12 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                    "  lock_support  = %d  ",
                    default_gpfs_info.lock_support);
       LogFullDebug(COMPONENT_FSAL,
+                   "  lock_support_owner  = %d  ",
+                   default_gpfs_info.lock_support_owner);
+      LogFullDebug(COMPONENT_FSAL,
+                   "  lock_support_async_block  = %d  ",
+                   default_gpfs_info.lock_support_async_block);
+      LogFullDebug(COMPONENT_FSAL,
                    "  named_attr  = %d  ",
                    default_gpfs_info.named_attr);
       LogFullDebug(COMPONENT_FSAL,
@@ -500,6 +508,8 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support);
+  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_owner);
+  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_async_block);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
 
   SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);

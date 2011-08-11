@@ -130,9 +130,7 @@ typedef unsigned long long int u_int64_t;
 #define INDEX_FSAL_getextattrs          51
 #define INDEX_FSAL_sync                 52
 #define INDEX_FSAL_getattrs_descriptor  53
-#define INDEX_FSAL_get_lock_support     54
-#define INDEX_FSAL_lock_op_no_owner     55
-#define INDEX_FSAL_lock_op_owner        56
+#define INDEX_FSAL_lock_op              54
 
 /* number of FSAL functions */
 #define FSAL_NB_FUNC  56
@@ -739,7 +737,9 @@ typedef struct fsal_staticfsinfo__
   fsal_fhexptype_t fh_expire_type;  /**< handle persistency indicator   */
   fsal_boolean_t link_support;      /**< FS supports hardlinks ?        */
   fsal_boolean_t symlink_support;   /**< FS supports symlinks  ?        */
-  fsal_boolean_t lock_support;      /**< FS supports file locking ?     */
+  fsal_boolean_t lock_support;             /**< FS supports file locking ?     */
+  fsal_boolean_t lock_support_owner;       /**< FS supports lock owners ?    */
+  fsal_boolean_t lock_support_async_block; /**< FS supports async blocking locks ? */
   fsal_boolean_t named_attr;        /**< FS supports named attributes.  */
   fsal_boolean_t unique_handles;    /**< Handles are unique and persistent.*/
   fsal_time_t lease_time;           /**< Duration of lease at FS in seconds */
@@ -813,6 +813,7 @@ typedef struct fs_common_initinfo__
         maxfilesize, maxlink, maxnamelen, maxpathlen,
         no_trunc, chown_restricted, case_insensitive,
         case_preserving, fh_expire_type, link_support, symlink_support, lock_support,
+        lock_support_owner, lock_support_async_block,
         named_attr, unique_handles, lease_time, acl_support, cansettime,
         homogenous, supported_attrs, maxread, maxwrite, umask,
         auth_exportpath_xdev, xattr_access_rights;
@@ -934,13 +935,6 @@ typedef enum fsal_digesttype_t
       , FSAL_DIGEST_NODETYPE
 #endif
 } fsal_digesttype_t;
-
-typedef enum fsal_lock_support_t
-{
-  FSAL_NO_LOCKS,
-  FSAL_LOCKS_NO_OWNER,
-  FSAL_LOCKS_OWNER
-} fsal_lock_support_t;
 
 typedef enum fsal_lock_op_t
 {
