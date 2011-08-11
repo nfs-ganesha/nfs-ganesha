@@ -605,8 +605,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                                         data->pclient,
                                         data->pcontext, &state_status);
 
-                          cache_status = state_status_to_cache_inode_status(state_status);
-
                           if(state_status == STATE_STATE_ERROR)
                             break;
 
@@ -620,6 +618,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                               res_OPEN4.status = NFS4ERR_INVAL;
                               return res_OPEN4.status;
                             }
+
+                          cache_status = CACHE_INODE_SUCCESS;
 
                           /* Check is open_owner is the same */
                           if(pstate_found_iterate != NULL)
@@ -937,8 +937,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                             pstate_previous_iterate,
                             data->pclient, data->pcontext, &state_status);
 
-              cache_status = state_status_to_cache_inode_status(state_status);
-
               if(state_status == STATE_STATE_ERROR)
                 break;          /* Get out of the loop */
 
@@ -947,6 +945,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   res_OPEN4.status = NFS4ERR_INVAL;
                   return res_OPEN4.status;
                 }
+
+              cache_status = CACHE_INODE_SUCCESS;
 
               /* Check is open_owner is the same */
               if(pstate_found_iterate != NULL)

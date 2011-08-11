@@ -168,8 +168,6 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                     pstate_previous_iterate,
                     data->pclient, data->pcontext, &state_status);
 
-      cache_status = state_status_to_cache_inode_status(state_status);
-
       if(state_status == STATE_STATE_ERROR)
         break;                  /* Get out of the loop */
 
@@ -178,6 +176,8 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           res_READ4.status = NFS4ERR_INVAL;
           return res_READ4.status;
         }
+
+      cache_status = CACHE_INODE_SUCCESS;
 
       if(pstate_iterate != NULL)
         {

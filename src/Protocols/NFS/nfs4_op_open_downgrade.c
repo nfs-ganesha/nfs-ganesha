@@ -76,9 +76,8 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_downgrade";
 
-  state_t              * pstate_found = NULL;
-  cache_inode_status_t   cache_status;
-  state_status_t         state_status;
+  state_t        * pstate_found = NULL;
+  state_status_t   state_status;
 
   resp->resop = NFS4_OP_OPEN_DOWNGRADE;
   res_OPEN_DOWNGRADE4.status = NFS4_OK;
@@ -116,8 +115,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
                &pstate_found,
                data->pclient, &state_status) != STATE_SUCCESS)
     {
-      cache_status = state_status_to_cache_inode_status(state_status);
-      res_OPEN_DOWNGRADE4.status = nfs4_Errno(cache_status);
+      res_OPEN_DOWNGRADE4.status = nfs4_Errno_state(state_status);
       return res_OPEN_DOWNGRADE4.status;
     }
 

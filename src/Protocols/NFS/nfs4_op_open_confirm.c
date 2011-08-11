@@ -75,10 +75,9 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_confirm";
-  int                    rc = 0;
-  state_t              * pstate_found = NULL;
-  cache_inode_status_t   cache_status;
-  state_status_t         state_status;
+  int              rc = 0;
+  state_t        * pstate_found = NULL;
+  state_status_t   state_status;
 
   resp->resop = NFS4_OP_OPEN_CONFIRM;
   res_OPEN_CONFIRM4.status = NFS4_OK;
@@ -136,8 +135,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
                &pstate_found,
                data->pclient, &state_status) != STATE_SUCCESS)
     {
-      cache_status = state_status_to_cache_inode_status(state_status);
-      res_OPEN_CONFIRM4.status = nfs4_Errno(cache_status);
+      res_OPEN_CONFIRM4.status = nfs4_Errno_state(state_status);
       return res_OPEN_CONFIRM4.status;
     }
 
@@ -170,8 +168,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   if(state_update(pstate_found,
                   data->pclient, &state_status) != STATE_SUCCESS)
     {
-      cache_status = state_status_to_cache_inode_status(state_status);
-      res_OPEN_CONFIRM4.status = nfs4_Errno(cache_status);
+      res_OPEN_CONFIRM4.status = nfs4_Errno_state(state_status);
       return res_OPEN_CONFIRM4.status;
     }
 

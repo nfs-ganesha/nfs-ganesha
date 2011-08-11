@@ -167,8 +167,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                    &pstate_found,
                    data->pclient, &state_status) != STATE_SUCCESS)
         {
-          cache_status = state_status_to_cache_inode_status(state_status);
-          res_READ4.status = nfs4_Errno(cache_status);
+          res_READ4.status = nfs4_Errno_state(state_status);
           return res_READ4.status;
         }
 
@@ -217,8 +216,6 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                     pstate_previous_iterate,
                     data->pclient, data->pcontext, &state_status);
 
-      cache_status = state_status_to_cache_inode_status(state_status);
-
       if(state_status == STATE_STATE_ERROR)
         break;                  /* Get out of the loop */
 
@@ -227,6 +224,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           res_READ4.status = NFS4ERR_INVAL;
           return res_READ4.status;
         }
+
+      cache_status = CACHE_INODE_SUCCESS;
 
       if(pstate_iterate != NULL)
         {
