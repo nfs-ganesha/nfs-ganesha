@@ -146,12 +146,8 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
       case CACHE_INODE_STATE_ERROR:           return STATE_STATE_ERROR;
       case CACHE_INODE_FSAL_DELAY:            return STATE_FSAL_DELAY;
       case CACHE_INODE_NAME_TOO_LONG:         return STATE_NAME_TOO_LONG;
-      case CACHE_INODE_LOCK_CONFLICT:         return STATE_LOCK_CONFLICT;
-      case CACHE_INODE_LOCK_BLOCKED:          return STATE_LOCK_BLOCKED;
-      case CACHE_INODE_LOCK_DEADLOCK:         return STATE_LOCK_DEADLOCK;
       case CACHE_INODE_BAD_COOKIE:            return STATE_BAD_COOKIE;
       case CACHE_INODE_FILE_BIG:              return STATE_FILE_BIG;
-      case CACHE_INODE_GRACE_PERIOD:          return STATE_GRACE_PERIOD;
     }
   return STATE_CACHE_INODE_ERR;
 }

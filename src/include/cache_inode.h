@@ -491,12 +491,8 @@ typedef enum cache_inode_status_t
   CACHE_INODE_STATE_ERROR           = 34,
   CACHE_INODE_FSAL_DELAY            = 35,
   CACHE_INODE_NAME_TOO_LONG         = 36,
-  CACHE_INODE_LOCK_CONFLICT         = 37,
-  CACHE_INODE_LOCK_BLOCKED          = 38,
-  CACHE_INODE_LOCK_DEADLOCK         = 39,
   CACHE_INODE_BAD_COOKIE            = 40,
   CACHE_INODE_FILE_BIG              = 41,
-  CACHE_INODE_GRACE_PERIOD          = 42,
 } cache_inode_status_t;
 
 const char *cache_inode_err_str(cache_inode_status_t err);

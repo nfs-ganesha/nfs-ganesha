@@ -135,12 +135,8 @@ const char *cache_inode_err_str(cache_inode_status_t err)
       case CACHE_INODE_STATE_ERROR:           return "CACHE_INODE_STATE_ERROR";
       case CACHE_INODE_FSAL_DELAY:            return "CACHE_INODE_FSAL_DELAY";
       case CACHE_INODE_NAME_TOO_LONG:         return "CACHE_INODE_NAME_TOO_LONG";
-      case CACHE_INODE_LOCK_CONFLICT:         return "CACHE_INODE_LOCK_CONFLICT";
-      case CACHE_INODE_LOCK_BLOCKED:          return "CACHE_INODE_LOCK_BLOCKED";
-      case CACHE_INODE_LOCK_DEADLOCK:         return "CACHE_INODE_LOCK_DEADLOCK";
       case CACHE_INODE_BAD_COOKIE:            return "CACHE_INODE_BAD_COOKIE";
       case CACHE_INODE_FILE_BIG:              return "CACHE_INODE_FILE_BIG";
-      case CACHE_INODE_GRACE_PERIOD:          return "CACHE_INODE_GRACE_PERIOD";
     }
   return "unknown";
 }
@@ -927,9 +923,6 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
     case ERR_FSAL_NOMEM:
       return CACHE_INODE_MALLOC_ERROR;
 
-    case ERR_FSAL_DEADLOCK:
-      return CACHE_INODE_LOCK_DEADLOCK;
-
     case ERR_FSAL_BADCOOKIE:
       return CACHE_INODE_BAD_COOKIE;
 
@@ -946,9 +939,8 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
     case ERR_FSAL_FBIG:
       return CACHE_INODE_FILE_BIG;
 
+    case ERR_FSAL_DEADLOCK:
     case ERR_FSAL_BLOCKED:
-      return CACHE_INODE_LOCK_BLOCKED;
-
     case ERR_FSAL_INTERRUPT:
     case ERR_FSAL_FAULT:
     case ERR_FSAL_NOT_INIT:

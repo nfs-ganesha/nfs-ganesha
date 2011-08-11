@@ -423,12 +423,8 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_DEAD_ENTRY:
     case CACHE_INODE_ASYNC_POST_ERROR:
     case CACHE_INODE_STATE_ERROR:
-    case CACHE_INODE_LOCK_CONFLICT:
-    case CACHE_INODE_LOCK_BLOCKED:
-    case CACHE_INODE_LOCK_DEADLOCK:
     case CACHE_INODE_BAD_COOKIE:
     case CACHE_INODE_FILE_BIG:
-    case CACHE_INODE_GRACE_PERIOD:
       /* Non retryable error, return error to client */
       return FALSE;
       break;
@@ -3743,25 +3739,12 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       nfserror = NFS4ERR_FBIG;
       break;
 
-    case CACHE_INODE_LOCK_DEADLOCK:
-      nfserror = NFS4ERR_DEADLOCK;
-      break;
-
-    case CACHE_INODE_LOCK_BLOCKED:
-    case CACHE_INODE_LOCK_CONFLICT:
-      nfserror = NFS4ERR_DENIED;
-      break;
-
     case CACHE_INODE_STATE_ERROR:
       nfserror = NFS4ERR_BAD_STATEID;
       break;
 
     case CACHE_INODE_BAD_COOKIE:
       nfserror = NFS4ERR_BAD_COOKIE;
-      break;
-
-    case CACHE_INODE_GRACE_PERIOD:
-      nfserror = NFS4ERR_GRACE;
       break;
 
     case CACHE_INODE_INCONSISTENT_ENTRY:
@@ -3906,10 +3889,6 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
     case CACHE_INODE_STATE_CONFLICT:
     case CACHE_INODE_ASYNC_POST_ERROR:
     case CACHE_INODE_STATE_ERROR:
-    case CACHE_INODE_LOCK_CONFLICT:
-    case CACHE_INODE_LOCK_BLOCKED:
-    case CACHE_INODE_LOCK_DEADLOCK:
-    case CACHE_INODE_GRACE_PERIOD:
         /* Should not occur */
         LogDebug(COMPONENT_NFSPROTO,
                  "Line %u should never be reached in nfs3_Errno for cache_status=%u",
@@ -4028,14 +4007,10 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
     case CACHE_INODE_STATE_CONFLICT:
     case CACHE_INODE_ASYNC_POST_ERROR:
     case CACHE_INODE_STATE_ERROR:
-    case CACHE_INODE_LOCK_CONFLICT:
-    case CACHE_INODE_LOCK_BLOCKED:
-    case CACHE_INODE_LOCK_DEADLOCK:
     case CACHE_INODE_NOT_SUPPORTED:
     case CACHE_INODE_FSAL_DELAY:
     case CACHE_INODE_BAD_COOKIE:
     case CACHE_INODE_FILE_BIG:
-    case CACHE_INODE_GRACE_PERIOD:
         /* Should not occur */
       LogDebug(COMPONENT_NFSPROTO,
                "Line %u should never be reached in nfs2_Errno", __LINE__);
