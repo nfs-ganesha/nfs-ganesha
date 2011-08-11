@@ -1272,8 +1272,6 @@ int nfs_get_fsalpathlib_conf(char *configPath, path_str_t * PathLib, unsigned in
   config_item_t block;
   unsigned int found = FALSE;
   config_file_t config_struct;
- 
-  unsigned int lenmax=*plen ;
   unsigned int index=0 ;
 
   /* Is the config tree initialized ? */

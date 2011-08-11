@@ -184,9 +184,8 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
       if(pstate_iterate != NULL)
         {
-          switch (pstate_iterate->state_type)
+          if(pstate_iterate->state_type == STATE_TYPE_SHARE)
             {
-            case STATE_TYPE_SHARE:
               if(pstate_found != pstate_iterate)
                 {
                   if(pstate_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE)
@@ -196,7 +195,6 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                       return res_WRITE4.status;
                     }
                 }
-              break;
             }
         }
       pstate_previous_iterate = pstate_iterate;

@@ -136,7 +136,6 @@ int FSAL_param_load_fsal_split( char * param, int * pfsalid, char * pathlib )
   int foundcolon = 0 ;
 
   char strwork[MAXPATHLEN] ;
-  char str1[MAXNAMLEN] ;
 
   if( !param || !pfsalid || !pathlib )
     return -1 ;

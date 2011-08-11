@@ -974,9 +974,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                                 pstate_found_iterate->powner->owner_val,
                                 pstate_found_iterate->powner->owner_len))
                         {
-                          switch (pstate_found_iterate->state_type)
+                          if(pstate_found_iterate->state_type == STATE_TYPE_SHARE)
                             {
-                            case STATE_TYPE_SHARE:
                               if((pstate_found_iterate->state_data.share.
                                   share_access & OPEN4_SHARE_ACCESS_WRITE)
                                  && (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE))
@@ -984,8 +983,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                                   res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                                   return res_OPEN4.status;
                                 }
-
-                              break;
                             }
                         }
 

@@ -565,14 +565,6 @@ static int DisplayLogSyslog_valist(log_components_t component, char * function, 
   return 1 ;
 } /* DisplayLogSyslog_valist */
 
-static int DisplayLogFd_valist(int fd, char * function, log_components_t component, char *format, va_list arguments)
-{
-  char tampon[STR_LEN_TXT];
-
-  DisplayLogString_valist(tampon, function, component, format, arguments);
-  return write(fd, tampon, strlen(tampon));
-}                               /* DisplayLogFd_valist */
-
 static int DisplayLogFlux_valist(FILE * flux, char * function, log_components_t component, char *format, va_list arguments)
 {
   char tampon[STR_LEN_TXT];

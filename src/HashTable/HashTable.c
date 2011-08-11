@@ -546,7 +546,7 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
                            hash_buffer_t * buffval, hashtable_set_how_t how)
 {
   unsigned int hashval = 0;
-  int rbt_value = 0;
+  unsigned int rbt_value = 0;
   struct rbt_head *tete_rbt = NULL;
   struct rbt_node *qn = NULL;
   struct rbt_node *pn = NULL;
@@ -684,7 +684,7 @@ int HashTable_GetRef(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t *
   struct rbt_node *pn;
   struct rbt_head *tete_rbt;
   hash_data_t *pdata = NULL;
-  int rbt_value = 0;
+  unsigned int rbt_value = 0;
   int rc = 0;
 
   /* Sanity check */
@@ -834,7 +834,7 @@ int HashTable_DelRef(hash_table_t * ht, hash_buffer_t * buffkey,
 {
   unsigned int hashval;
   struct rbt_node *pn;
-  int rbt_value = 0;
+  unsigned int rbt_value = 0;
   struct rbt_head *tete_rbt;
   hash_data_t *pdata = NULL;
   int rc = 0;

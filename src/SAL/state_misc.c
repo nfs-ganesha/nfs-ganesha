@@ -402,6 +402,7 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
       nfserror = NFS4ERR_GRACE;
       break;
 
+    case STATE_CACHE_INODE_ERR:
     case STATE_INCONSISTENT_ENTRY:
     case STATE_HASH_TABLE_ERROR:
     case STATE_CACHE_CONTENT_ERROR:
@@ -537,6 +538,7 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
       nfserror = NFS3ERR_BAD_COOKIE;
       break;
 
+    case STATE_CACHE_INODE_ERR:
     case STATE_INCONSISTENT_ENTRY:
     case STATE_HASH_TABLE_ERROR:
     case STATE_STATE_CONFLICT:
@@ -657,6 +659,7 @@ nfsstat2 nfs2_Errno_state(state_status_t error)
       nfserror = NFSERR_NAMETOOLONG;
       break;
 
+    case STATE_CACHE_INODE_ERR:
     case STATE_INCONSISTENT_ENTRY:
     case STATE_HASH_TABLE_ERROR:
     case STATE_STATE_CONFLICT:
