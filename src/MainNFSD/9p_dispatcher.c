@@ -215,9 +215,12 @@ void * _9p_socket_thread( void * Arg )
 
   /* Init the _9p_conn_t structure */
   _9p_conn.sockfd = tcp_sock ;
-  _9p_conn.lowest_fid = -1 ;
   pthread_mutex_init( &_9p_conn.lock, NULL ) ;
-  FD_ZERO( &_9p_conn.fidset ) ;
+ 
+  /* Be careful : in fidset, bit==1 means that the fid is available, 0 means that this fid is busy 
+   * this is the opposite of the way 'select' works on fd_set. Because of this, all bits in the fd_set
+   * are initialised to 1, so each byte to 0xF */
+  memset( (char *)&_9p_conn.fidset, 0xF, sizeof( _9p_conn.fidset ) ) ;
 
 #ifndef _NO_BUDDY_SYSTEM
   if((rc = BuddyInit(&nfs_param.buddy_param_tcp_mgr)) != BUDDY_SUCCESS)

@@ -159,8 +159,6 @@ int _9p_hash_fid_del( _9p_conn_t * pconn,
 } /* 9p_hash_fid_del */
 
 
-
-
 int _9p_hash_fid_init( _9p_parameter_t * pparam )
 {
    if((ht_fid = HashTable_Init(pparam->hash_param)) == NULL)
@@ -170,5 +168,80 @@ int _9p_hash_fid_init( _9p_parameter_t * pparam )
     }
 
   return 0 ;
-}
+} /* _9p_hash_fid_init */
+
+
+int _9p_find_fid( _9p_conn_t * pconn, 
+                  u32        * pfid )
+{
+  int bit = 0 ;
+  long mask = 0 ;
+  long *maskp = NULL;
+  int iter = 0 ;
+  unsigned int found = FALSE ;
+
+  if( !pconn || !pfid )
+   return -1 ;
+  
+  P( pconn->lock ) ; 
+  /* portable access to fds_bits field */
+  maskp = __FDS_BITS( &pconn->fidset );
+
+  /* Find the first fid not set */
+
+  /* Be careful : in fidset, bit==1 means that the fid is available, 0 means that this fid is busy 
+   * this is the opposite of the way 'select' works on fd_set */
+  for( iter = 0; iter < FD_SETSIZE; iter += NFDBITS)
+    {
+      for(mask = *maskp++; (bit = ffs(mask)); mask ^= (1 << (bit - 1)))
+        {
+          /* first position set to 1 is iter+bit-1 */
+          found = TRUE ;
+          break ;
+	} 
+    } 
+
+  /* A valid FID was found */
+  if( found == TRUE )
+   {
+     /* Compute fid value */
+     *pfid =  iter + bit - 1 ;
+   }
+ 
+  V( pconn->lock ) ;
+
+  if( found == FALSE )
+    return -1 ;
+
+  return 0 ; 
+} /* _9p_find_fid */
+
+int _9p_take_fid( _9p_conn_t * pconn, 
+                   u32        * pfid )
+{
+
+  if( !pconn || !pfid )
+   return -1 ;
+
+  /* Set the fid as used, this mean set the bit to zero in the fd_set */
+  P( pconn->lock ) ;
+  FD_CLR( *pfid,  &pconn->fidset ) ;
+  V( pconn->lock ) ;
+
+  return 0 ; 
+} /* _9p_take_fid */
+
+int _9p_release_fid( _9p_conn_t * pconn, 
+                     u32        * pfid )
+{
+  if( !pconn || !pfid )
+   return -1 ;
+
+  /* Set the fid as available, this mean set the bit to one in the fd_set */
+  P( pconn->lock ) ;
+  FD_SET( *pfid,  &pconn->fidset ) ;
+  V( pconn->lock ) ;
+  
+  return 0 ;
+} /* _9p_release_fid */
 
