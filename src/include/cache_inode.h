@@ -945,12 +945,4 @@ int display_key(hash_buffer_t * pbuff, char *str);
 int display_not_implemented(hash_buffer_t * pbuff, char *str);
 int display_value(hash_buffer_t * pbuff, char *str);
 
-int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
-int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);
-int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
-unsigned long lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
-                                          hash_buffer_t * buffclef);
-unsigned long lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
-                                        hash_buffer_t * buffclef);
-
 #endif                          /*  _CACHE_INODE_H */

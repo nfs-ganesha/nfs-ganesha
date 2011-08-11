@@ -338,4 +338,12 @@ state_status_t state_del_by_key(char                   other[12],
                                 cache_inode_client_t * pclient,
                                 state_status_t       * pstatus);
 
+int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
+int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);
+int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
+unsigned long lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
+                                          hash_buffer_t * buffclef);
+unsigned long lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
+                                        hash_buffer_t * buffclef);
+
 #endif                          /*  _SAL_FUNCTIONS_H */
