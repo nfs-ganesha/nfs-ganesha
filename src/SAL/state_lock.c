@@ -1557,19 +1557,6 @@ inline const char *fsal_lock_op_str(fsal_lock_op_t op)
   return "unknown";
 }
 
-state_status_t convert_fsal_lock_status(fsal_status_t fsal_status)
-{
-  state_status_t status;
-
-  /* Convert STATE_FSAL_DELAY and STATE_FSAL_EACCESS: EACCESS
-   * to STATE_LOCK_CONFLICT for FSAL lock status.
-   */
-  status = state_error_convert(fsal_status);
-  if(status == STATE_FSAL_DELAY || status == STATE_FSAL_EACCESS)
-    status = STATE_LOCK_CONFLICT;
-  return status;
-}
-
 /**
  *
  * FSAL_unlock_no_owner: Handle FSAL unlock when owner is not supported.
@@ -1656,7 +1643,7 @@ state_status_t FSAL_unlock_no_owner(cache_entry_t        * pentry,
                                           lock_params,
                                           NULL);
 
-      t_status = convert_fsal_lock_status(fsal_status);
+      t_status = state_error_convert(fsal_status);
       if(t_status != STATE_SUCCESS)
         status = t_status;
 
@@ -1708,7 +1695,7 @@ state_status_t FSAL_LockOp(cache_entry_t        * pentry,
                                                 lock_op,
                                                 lock_params,
                                                &conflicting_lock);
-            status = convert_fsal_lock_status(fsal_status);
+            status = state_error_convert(fsal_status);
           }
         break;
 
@@ -1727,7 +1714,7 @@ state_status_t FSAL_LockOp(cache_entry_t        * pentry,
                                          lock_params,
                                          &conflicting_lock);
 
-        status = convert_fsal_lock_status(fsal_status);
+        status = state_error_convert(fsal_status);
         break;
     }
 

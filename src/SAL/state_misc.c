@@ -177,11 +177,12 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
     case ERR_FSAL_NOENT:
       return STATE_NOT_FOUND;
 
-    case ERR_FSAL_EXIST:
-      return STATE_ENTRY_EXISTS;
-
+    case ERR_FSAL_DELAY:
     case ERR_FSAL_ACCESS:
-      return STATE_FSAL_EACCESS;
+      /* EDELAY and EACCESS are documented by fcntl as
+       * indicating lock conflict
+       */
+      return STATE_LOCK_CONFLICT;
 
     case ERR_FSAL_PERM:
       return STATE_FSAL_EPERM;
@@ -189,14 +190,8 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
     case ERR_FSAL_NOSPC:
       return STATE_NO_SPACE_LEFT;
 
-    case ERR_FSAL_NOTEMPTY:
-      return STATE_DIR_NOT_EMPTY;
-
     case ERR_FSAL_ROFS:
       return STATE_READ_ONLY_FS;
-
-    case ERR_FSAL_NOTDIR:
-      return STATE_NOT_A_DIRECTORY;
 
     case ERR_FSAL_IO:
     case ERR_FSAL_NXIO:
@@ -211,21 +206,12 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
     case ERR_FSAL_OVERFLOW:
       return STATE_INVALID_ARGUMENT;
 
-    case ERR_FSAL_DQUOT:
-      return STATE_QUOTA_EXCEEDED;
-
     case ERR_FSAL_SEC:
       return STATE_FSAL_ERR_SEC;
 
     case ERR_FSAL_NOTSUPP:
     case ERR_FSAL_ATTRNOTSUPP:
       return STATE_NOT_SUPPORTED;
-
-    case ERR_FSAL_DELAY:
-      return STATE_FSAL_DELAY;
-
-    case ERR_FSAL_NAMETOOLONG:
-      return STATE_NAME_TOO_LONG;
 
     case ERR_FSAL_NOMEM:
       return STATE_MALLOC_ERROR;
@@ -252,6 +238,11 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
     case ERR_FSAL_BLOCKED:
       return STATE_LOCK_BLOCKED;
 
+    case ERR_FSAL_DQUOT:
+    case ERR_FSAL_NAMETOOLONG:
+    case ERR_FSAL_EXIST:
+    case ERR_FSAL_NOTEMPTY:
+    case ERR_FSAL_NOTDIR:
     case ERR_FSAL_INTERRUPT:
     case ERR_FSAL_FAULT:
     case ERR_FSAL_NOT_INIT:
@@ -262,7 +253,7 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
     case ERR_FSAL_MLINK:
     case ERR_FSAL_TOOSMALL:
     case ERR_FSAL_SERVERFAULT:
-      /* These errors should be handled inside Cache Inode (or should never be seen by Cache Inode) */
+      /* These errors should be handled inside state (or should never be seen by state) */
       LogDebug(COMPONENT_STATE,
                "Conversion of FSAL error %d,%d to STATE_FSAL_ERROR",
                fsal_status.major, fsal_status.minor);
