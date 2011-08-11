@@ -347,7 +347,7 @@ state_status_t state_get(char                    other[12],
 
   *pstatus = STATE_SUCCESS;
   return *pstatus;
-}                               /* cache_inode_get_state */
+}                               /* state_get */
 
 /**
  *

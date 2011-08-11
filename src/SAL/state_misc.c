@@ -22,13 +22,13 @@
  *
  * ---------------------------------------
  *
- * \File    cache_inode_misc.c
+ * \File    state_misc.c
  * \author  $Author: deniel $
  * \date    $Date: 2006/01/05 15:14:51 $
  * \version $Revision: 1.63 $
- * \brief   Some routines for management of the cache_inode layer, shared by other calls.
+ * \brief   Some routines for management of the state abstraction layer, shared by other calls.
  *
- * HashTable.c : Some routines for management of the cache_inode layer, shared by other calls.
+ * state_misc.c : Some routines for management of the state abstraction layer, shared by other calls.
  *
  *
  */
@@ -330,11 +330,9 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 /* Error conversion routines */
 /**
  * 
- * nfs4_Errno: Converts a cache_inode status to a nfsv4 status.
+ * nfs4_Errno: Converts a state status to a nfsv4 status.
  * 
- *  Converts a cache_inode status to a nfsv4 status.
- *
- * @param error  [IN] Input cache inode ewrror.
+ * @param error  [IN] Input state error.
  * 
  * @return the converted NFSv4 status.
  *
@@ -482,11 +480,9 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
 
 /**
  * 
- * nfs3_Errno_state: Converts a cache_inode status to a nfsv3 status.
- * 
- *  Converts a cache_inode status to a nfsv3 status.
+ * nfs3_Errno_state: Converts a state status to a nfsv3 status.
  *
- * @param error  [IN] Input cache inode ewrror.
+ * @param error  [IN] Input state error.
  * 
  * @return the converted NFSv3 status.
  *
@@ -616,8 +612,8 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
     case STATE_GRACE_PERIOD:
         /* Should not occur */
         LogDebug(COMPONENT_NFSPROTO,
-                 "Line %u should never be reached in nfs3_Errno_state for cache_status=%u",
-                 __LINE__, error);
+                 "Line %u should never be reached in nfs3_Errno_state for status=%s",
+                 __LINE__, state_err_str(error));
       nfserror = NFS3ERR_INVAL;
       break;
     }
@@ -627,11 +623,9 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 
 /**
  * 
- * nfs2_Errno_state: Converts a cache_inode status to a nfsv2 status.
- * 
- *  Converts a cache_inode status to a nfsv2 status.
+ * nfs2_Errno_state: Converts a state status to a nfsv2 status.
  *
- * @param error  [IN] Input cache inode ewrror.
+ * @param error  [IN] Input state error.
  * 
  * @return the converted NFSv2 status.
  *
@@ -741,8 +735,9 @@ nfsstat2 nfs2_Errno_state(state_status_t error)
     case STATE_FILE_BIG:
     case STATE_GRACE_PERIOD:
         /* Should not occur */
-      LogDebug(COMPONENT_NFSPROTO,
-               "Line %u should never be reached in nfs2_Errno_state", __LINE__);
+        LogDebug(COMPONENT_NFSPROTO,
+                 "Line %u should never be reached in nfs2_Errno_state for status=%s",
+                 __LINE__, state_err_str(error));
       nfserror = NFSERR_IO;
       break;
     }

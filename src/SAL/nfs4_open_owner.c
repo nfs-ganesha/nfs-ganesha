@@ -37,34 +37,13 @@
 #include "solaris_port.h"
 #endif
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <ctype.h>              /* for having isalnum */
-#include <stdlib.h>             /* for having atoi */
-#include <dirent.h>             /* for having MAXNAMLEN */
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include <pwd.h>
-#include <grp.h>
-#include <pthread.h>
-#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"
-#include "nfs_core.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "fsal.h"
-#include "nfs_tools.h"
-#include "nfs_exports.h"
-#include "nfs_file_handle.h"
-#include "cache_inode.h"
+#include "sal_functions.h"
 
 size_t strnlen(const char *s, size_t maxlen);
 
