@@ -1021,11 +1021,6 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_OPEN_OWNER_HASH,   "COMPONENT_OPEN_OWNER_HASH", "OPEN OWNER HASH",
-    NIV_EVENT,
-    SYSLOG,
-    "SYSLOG"
-  },
   { COMPONENT_SESSIONS,          "COMPONENT_SESSIONS", "SESSIONS",
     NIV_EVENT,
     SYSLOG,

@@ -80,14 +80,14 @@ int display_nlm_client_val(hash_buffer_t * pbuff, char *str)
 int compare_nlm_client(state_nlm_client_t *pclient1,
                        state_nlm_client_t *pclient2)
 {
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str1[HASHTABLE_DISPLAY_STRLEN];
       char str2[HASHTABLE_DISPLAY_STRLEN];
 
       display_nlm_client(pclient1, str1);
       display_nlm_client(pclient2, str2);
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "compare_nlm_clients => {%s}|{%s}", str1, str2);
     }
 
@@ -127,7 +127,7 @@ unsigned long nlm_client_value_hash_func(hash_parameter_t * p_hparam,
   res = (unsigned long) sum +
         (unsigned long) pkey->slc_nlm_caller_name_len;
 
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "---> rbt_hash_val = %lu", res % p_hparam->index_size);
 
   return (unsigned long)(res % p_hparam->index_size);
@@ -149,7 +149,7 @@ unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
   res = (unsigned long) sum +
         (unsigned long) pkey->slc_nlm_caller_name_len;
 
-  LogFullDebug(COMPONENT_NLM, "---> rbt_hash_func = %lu", res);
+  LogFullDebug(COMPONENT_STATE, "---> rbt_hash_func = %lu", res);
 
   return res;
 }                               /* state_id_rbt_hash_func */
@@ -189,14 +189,14 @@ int display_nlm_owner_val(hash_buffer_t * pbuff, char *str)
 int compare_nlm_owner(state_lock_owner_t *powner1,
                       state_lock_owner_t *powner2)
 {
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str1[HASHTABLE_DISPLAY_STRLEN];
       char str2[HASHTABLE_DISPLAY_STRLEN];
 
       display_nlm_owner(powner1, str1);
       display_nlm_owner(powner2, str2);
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "compare_nlm_owners => {%s}|{%s}", str1, str2);
     }
 
@@ -251,7 +251,7 @@ unsigned long nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
         (unsigned long) sum +
         (unsigned long) pkey->slo_owner.slo_nlm_owner.slo_nlm_oh_len;
 
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "---> rbt_hash_val = %lu", res % p_hparam->index_size);
 
   return (unsigned long)(res % p_hparam->index_size);
@@ -274,7 +274,7 @@ unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
         (unsigned long) sum +
         (unsigned long) pkey->slo_owner.slo_nlm_owner.slo_nlm_oh_len;
 
-  LogFullDebug(COMPONENT_NLM, "---> rbt_hash_func = %lu", res);
+  LogFullDebug(COMPONENT_STATE, "---> rbt_hash_func = %lu", res);
 
   return res;
 }                               /* state_id_rbt_hash_func */
@@ -295,14 +295,14 @@ int Init_nlm_hash(hash_parameter_t client_param, hash_parameter_t owner_param)
 
   if((ht_nlm_client = HashTable_Init(client_param)) == NULL)
     {
-      LogCrit(COMPONENT_NLM,
+      LogCrit(COMPONENT_STATE,
               "Cannot init NLM Client cache");
       return -1;
     }
 
   if((ht_nlm_owner = HashTable_Init(owner_param)) == NULL)
     {
-      LogCrit(COMPONENT_NLM,
+      LogCrit(COMPONENT_STATE,
               "Cannot init NLM Owner cache");
       return -1;
     }
@@ -325,7 +325,7 @@ int nlm_client_Set(state_nlm_client_t * pkey,
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
 
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
@@ -333,7 +333,7 @@ int nlm_client_Set(state_nlm_client_t * pkey,
       buffkey.len = sizeof(*pkey);
 
       display_nlm_client_key(&buffkey, str);
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "nlm_client_Set => KEY {%s}", str);
     }
 
@@ -412,7 +412,7 @@ void dec_nlm_client_ref(state_nlm_client_t *pclient)
 
           default:
             /* some problem occurred */
-            LogFullDebug(COMPONENT_NLM,
+            LogFullDebug(COMPONENT_STATE,
                          "HashTable_Del failed");
             break;
         }
@@ -440,18 +440,18 @@ int nlm_client_Get_Pointer(state_nlm_client_t * pkey,
   buffkey.pdata = (caddr_t) pkey;
   buffkey.len = sizeof(*pkey);
 
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
       display_nlm_client_key(&buffkey, str);
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "nlm_client_Get_Pointer => KEY {%s}", str);
     }
 
   if(HashTable_GetRef(ht_nlm_client, &buffkey, &buffval, Hash_inc_client_ref) != HASHTABLE_SUCCESS)
     {
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "nlm_client_Get_Pointer => NOTFOUND");
       *pclient = NULL;
       return 0;
@@ -459,7 +459,7 @@ int nlm_client_Get_Pointer(state_nlm_client_t * pkey,
 
   *pclient = (state_nlm_client_t *) buffval.pdata;
 
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "nlm_client_Get_Pointer => FOUND");
 
   return 1;
@@ -476,14 +476,14 @@ int nlm_client_Get_Pointer(state_nlm_client_t * pkey,
 
 void nlm_client_PrintAll(void)
 {
-  HashTable_Log(COMPONENT_NLM, ht_nlm_client);
+  HashTable_Log(COMPONENT_STATE, ht_nlm_client);
 }                               /* nlm_client_PrintAll */
 
 state_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
 {
   state_nlm_client_t *pkey, *pclient;
 
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "get_nlm_client %s", caller_name);
 
   if(caller_name == NULL)
@@ -504,12 +504,12 @@ state_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
          pkey->slc_nlm_caller_name_len);
   pkey->slc_nlm_caller_name[pkey->slc_nlm_caller_name_len] = '\0';
   
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
       display_nlm_client(pkey, str);
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "get_nlm_client pkey=%s", str);
     }
 
@@ -519,12 +519,12 @@ state_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
       /* Discard the key we created and return the found NLM Client */
       Mem_Free(pkey);
 
-      if(isFullDebug(COMPONENT_NLM))
+      if(isFullDebug(COMPONENT_STATE))
         {
           char str[HASHTABLE_DISPLAY_STRLEN];
 
           display_nlm_client(pclient, str);
-          LogFullDebug(COMPONENT_NLM,
+          LogFullDebug(COMPONENT_STATE,
                        "get_nlm_client found pclient=%s", str);
         }
 
@@ -542,12 +542,12 @@ state_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
   *pclient = *pkey;
   init_glist(&pclient->slc_lock_list);
 
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
       display_nlm_client(pclient, str);
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "get_nlm_client new pclient=%s", str);
     }
 
@@ -582,7 +582,7 @@ int nlm_owner_Set(state_lock_owner_t * pkey,
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
 
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
@@ -590,7 +590,7 @@ int nlm_owner_Set(state_lock_owner_t * pkey,
       buffkey.len = sizeof(*pkey);
 
       display_nlm_owner_key(&buffkey, str);
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "nlm_owner_Set => KEY {%s}", str);
     }
 
@@ -670,7 +670,7 @@ void dec_nlm_owner_ref(state_lock_owner_t *powner)
 
           default:
             /* some problem occurred */
-            LogFullDebug(COMPONENT_NLM,
+            LogFullDebug(COMPONENT_STATE,
                          "HashTable_Del failed");
             break;
         }
@@ -698,25 +698,25 @@ int nlm_owner_Get_Pointer(state_lock_owner_t * pkey,
   buffkey.pdata = (caddr_t) pkey;
   buffkey.len = sizeof(*pkey);
 
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
       display_nlm_owner_key(&buffkey, str);
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "nlm_owner_Get_Pointer => KEY {%s}", str);
     }
 
   if(HashTable_GetRef(ht_nlm_owner, &buffkey, &buffval, Hash_inc_owner_ref) != HASHTABLE_SUCCESS)
     {
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "nlm_owner_Get_Pointer => NOTFOUND");
       return 0;
     }
 
   *powner = (state_lock_owner_t *) buffval.pdata;
 
-  LogFullDebug(COMPONENT_NLM,
+  LogFullDebug(COMPONENT_STATE,
                "nlm_owner_Get_Pointer => FOUND");
 
   return 1;
@@ -733,7 +733,7 @@ int nlm_owner_Get_Pointer(state_lock_owner_t * pkey,
 
 void nlm_owner_PrintAll(void)
 {
-  HashTable_Log(COMPONENT_NLM, ht_nlm_owner);
+  HashTable_Log(COMPONENT_STATE, ht_nlm_owner);
 }                               /* nlm_owner_PrintAll */
 
 state_lock_owner_t *get_nlm_owner(bool_t               care,
@@ -754,12 +754,12 @@ state_lock_owner_t *get_nlm_owner(bool_t               care,
 
   inc_nlm_client_ref(pclient);
 
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
       display_nlm_client(pclient, str);
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "get_nlm_owner pclient=%s", str);
     }
 
@@ -772,12 +772,12 @@ state_lock_owner_t *get_nlm_owner(bool_t               care,
          oh->n_bytes,
          oh->n_len);
 
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
       display_nlm_owner(pkey, str);
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "get_nlm_owner pkey=%s", str);
     }
 
@@ -787,12 +787,12 @@ state_lock_owner_t *get_nlm_owner(bool_t               care,
       /* Discard the key we created and return the found NLM Owner */
       Mem_Free(pkey);
 
-      if(isFullDebug(COMPONENT_NLM))
+      if(isFullDebug(COMPONENT_STATE))
         {
           char str[HASHTABLE_DISPLAY_STRLEN];
 
           display_nlm_owner(powner, str);
-          LogFullDebug(COMPONENT_NLM,
+          LogFullDebug(COMPONENT_STATE,
                        "get_nlm_owner new powner=%s", str);
         }
 
@@ -818,12 +818,12 @@ state_lock_owner_t *get_nlm_owner(bool_t               care,
       return NULL;
     }
 
-  if(isFullDebug(COMPONENT_NLM))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
       display_nlm_owner(powner, str);
-      LogFullDebug(COMPONENT_NLM,
+      LogFullDebug(COMPONENT_STATE,
                    "get_nlm_owner new powner=%s", str);
     }
 
