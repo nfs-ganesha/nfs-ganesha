@@ -611,7 +611,7 @@ void *nfs_file_content_flush_thread(void *flush_data_arg);
 #ifdef _USE_9P
 void * _9p_dispatcher_thread(void *arg);
 void DispatchWork9P(request_data_t *pnfsreq, unsigned int worker_index);
-void _9p_process_request( _9p_request_data_t * preq9p ) ;
+void _9p_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data ) ;
 #endif
 
 void nfs_operate_on_sigusr1() ;

@@ -2001,7 +2001,8 @@ enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
  *
  * Executes 9P request
  *
- * @param pnfsreq [INOUT] pointer to 9p request
+ * @param pnfsreq      [INOUT] pointer to 9p request
+ * @param pworker_data [INOUT] pointer to worker's specific data
  *
  * @return nothing (void function)
  *
@@ -2009,7 +2010,7 @@ enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
 static void _9p_execute( _9p_request_data_t * preq9p, 
                           nfs_worker_data_t * pworker_data)
 {
-  _9p_process_request( preq9p ) ;
+  _9p_process_request( preq9p, pworker_data ) ;
   return ;
 } /* _9p_execute */
 #endif

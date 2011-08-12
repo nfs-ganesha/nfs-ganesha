@@ -33,7 +33,6 @@
 #include "cache_inode.h"
 #include "cache_content.h"
 
-
 typedef uint8_t   u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
@@ -87,6 +86,18 @@ typedef struct _9p_request_data__
   char         _9pmsg[_9P_MSG_SIZE] ;
   _9p_conn_t * pconn ; 
 } _9p_request_data_t ;
+
+typedef int (*_9p_function_t) (_9p_request_data_t * preq9p, 
+                               cache_inode_client_t * pclient,
+                               hash_table_t * ht,
+                               u32 * plenout, char * preply) ;
+
+typedef struct _9p_function_desc__
+{
+  _9p_function_t service_function;
+  char *funcname;
+} _9p_function_desc_t;
+
 
 #define _9p_getptr( cursor, pvar, type ) \
 do                                       \
@@ -408,9 +419,25 @@ int _9p_take_fid( _9p_conn_t * pconn,
 int _9p_release_fid( _9p_conn_t * pconn, 
                      u32        * pfid ) ;
 
+
 /* Protocol functions */
-int _9p_attach( _9p_request_data_t * preq9p, u32 * plenout, char * preply) ;
-int _9p_version( _9p_request_data_t * preq9p, u32 * plenout, char * preply) ;
+int _9p_dummy( _9p_request_data_t * preq9p, 
+               cache_inode_client_t * pclient,
+               hash_table_t * ht,
+               u32 * plenout, 
+               char * preply) ;
+
+int _9p_version( _9p_request_data_t * preq9p, 
+                 cache_inode_client_t * pclient,
+                 hash_table_t * ht,
+                 u32 * plenout, char * preply) ;
+
+int _9p_attach( _9p_request_data_t * preq9p, 
+                cache_inode_client_t * pclient,
+                hash_table_t * ht,
+                u32 * plenout, 
+                char * preply) ;
+
 int _9p_rerror( _9p_request_data_t * preq9p,
                 u16 * msgtag,
                 u32 * err, 

@@ -46,11 +46,16 @@
 #include "nfs_core.h"
 #include "stuff_alloc.h"
 #include "log_macros.h"
+#include "cache_inode.h"
+#include "fsal.h"
 #include "9p.h"
 
 static char version_9p200l[] = "9P2000.L" ;
 
-int _9p_version( _9p_request_data_t * preq9p, u32 * plenout, char * preply)
+int _9p_version( _9p_request_data_t * preq9p, 
+                 cache_inode_client_t * pclient,
+                 hash_table_t * ht,
+                 u32 * plenout, char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
 
