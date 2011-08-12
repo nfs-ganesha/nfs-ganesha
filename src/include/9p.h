@@ -64,12 +64,14 @@ typedef struct _9p_conn__
   fd_set          fidset ; /* fd_set is used to keep track of which fid is set or not */
   pthread_mutex_t lock ; 
   long int        sockfd ;
+  struct timeval  birth;  /* This is useful if same sockfd is reused on socket's close/open  */
 } _9p_conn_t ;
 
 typedef struct _9p_hash_fid_key__
 {
   u32      fid ;
   long int sockfd ;
+  struct timeval  birth; /* This is useful if same sockfd is reused on socket's close/open  */
 } _9p_hash_fid_key_t ;
 
  
@@ -403,8 +405,6 @@ int _9p_take_fid( _9p_conn_t * pconn,
                    u32        * pfid ) ;
 int _9p_release_fid( _9p_conn_t * pconn, 
                      u32        * pfid ) ;
-int _9p_find_fid( _9p_conn_t * pconn, 
-                  u32        * pfid ) ;
 
 /* Protocol functions */
 int _9p_attach( _9p_request_data_t * preq9p, u32 * plenout, char * preply) ;

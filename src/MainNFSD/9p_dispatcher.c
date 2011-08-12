@@ -220,7 +220,10 @@ void * _9p_socket_thread( void * Arg )
   /* Be careful : in fidset, bit==1 means that the fid is available, 0 means that this fid is busy 
    * this is the opposite of the way 'select' works on fd_set. Because of this, all bits in the fd_set
    * are initialised to 1, so each byte to 0xF */
-  memset( (char *)&_9p_conn.fidset, 0xF, sizeof( _9p_conn.fidset ) ) ;
+  FD_ZERO( &_9p_conn.fidset ) ;
+
+  if( gettimeofday( &_9p_conn.birth, NULL ) == -1 )
+   LogFatal( COMPONENT_9P, "Can get connection's time of birth" ) ;
 
 #ifndef _NO_BUDDY_SYSTEM
   if((rc = BuddyInit(&nfs_param.buddy_param_tcp_mgr)) != BUDDY_SUCCESS)
