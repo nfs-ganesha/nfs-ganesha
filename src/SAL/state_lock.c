@@ -484,6 +484,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
                                                    fsal_op_context_t  * pcontext,
                                                    state_blocking_t     blocked,
                                                    state_lock_owner_t * powner,
+                                                   state_t            * pstate,
                                                    state_lock_desc_t  * plock,
                                                    state_block_data_t * block_data)
 {
@@ -507,6 +508,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
   new_entry->sle_pentry     = pentry;
   new_entry->sle_blocked    = blocked;
   new_entry->sle_owner      = powner;
+  new_entry->sle_state      = pstate;
   new_entry->sle_block_data = block_data;
   new_entry->sle_lock       = *plock;
 
@@ -550,6 +552,7 @@ inline state_lock_entry_t *state_lock_entry_t_dup(fsal_op_context_t  * pcontext,
                                  pcontext,
                                  orig_entry->sle_blocked,
                                  orig_entry->sle_owner,
+                                 orig_entry->sle_state,
                                  &orig_entry->sle_lock,
                                  orig_entry->sle_block_data);
 }
@@ -1596,6 +1599,7 @@ state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
                                          pcontext,
                                          STATE_NON_BLOCKING,
                                          &unknown_owner, /* no real owner */
+                                         NULL, /* no real state */
                                          plock,
                                          NULL);
 
@@ -1803,6 +1807,7 @@ state_status_t state_test(cache_entry_t        * pentry,
 state_status_t state_lock(cache_entry_t         * pentry,
                           fsal_op_context_t     * pcontext,
                           state_lock_owner_t    * powner,
+                          state_t               * pstate,
                           state_blocking_t        blocking,
                           state_block_data_t    * block_data,
                           state_lock_desc_t     * plock,
@@ -1959,6 +1964,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
                                         pcontext,
                                         blocked,
                                         powner,
+                                        pstate,
                                         plock,
                                         block_data);
   if(!found_entry)
@@ -2009,6 +2015,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
 state_status_t state_unlock(cache_entry_t        * pentry,
                             fsal_op_context_t    * pcontext,
                             state_lock_owner_t   * powner,
+                            state_t              * pstate,
                             state_lock_desc_t    * plock,
                             cache_inode_client_t * pclient,
                             state_status_t       * pstatus)
@@ -2194,6 +2201,7 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
       if(state_unlock(pentry,
                       pcontext,
                       &owner,
+                      NULL,
                       &lock,
                       pclient,
                       pstatus) != STATE_SUCCESS)
@@ -2211,6 +2219,7 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
 
 state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
                                       state_lock_owner_t   * powner,
+                                      state_t              * pstate,
                                       cache_inode_client_t * pclient,
                                       state_status_t       * pstatus)
 {
@@ -2257,6 +2266,7 @@ state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
       if(state_unlock(pentry,
                       pcontext,
                       powner,
+                      pstate,
                       &lock,
                       pclient,
                       pstatus) != STATE_SUCCESS)

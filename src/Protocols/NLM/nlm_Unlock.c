@@ -120,6 +120,7 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
   if(state_unlock(pentry,
                   pcontext,
                   nlm_owner,
+                  NULL,
                   &lock,
                   pclient,
                   &state_status) != STATE_SUCCESS)

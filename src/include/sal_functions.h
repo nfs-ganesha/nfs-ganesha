@@ -253,6 +253,7 @@ state_status_t state_test(cache_entry_t        * pentry,
 state_status_t state_lock(cache_entry_t         * pentry,
                           fsal_op_context_t     * pcontext,
                           state_lock_owner_t    * powner,
+                          state_t               * pstate,
                           state_blocking_t        blocking,
                           state_block_data_t    * block_data,
                           state_lock_desc_t     * plock,
@@ -264,6 +265,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
 state_status_t state_unlock(cache_entry_t        * pentry,
                             fsal_op_context_t    * pcontext,
                             state_lock_owner_t   * powner,
+                            state_t              * pstate,
                             state_lock_desc_t    * plock,
                             cache_inode_client_t * pclient,
                             state_status_t       * pstatus);
@@ -284,6 +286,7 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
 
 state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
                                       state_lock_owner_t   * powner,
+                                      state_t              * pstate,
                                       cache_inode_client_t * pclient,
                                       state_status_t       * pstatus);
 

@@ -187,8 +187,6 @@ typedef struct state_lock_owner_t
   } slo_owner;
 } state_lock_owner_t;
 
-typedef struct state_t state_t;
-
 typedef union state_data_t
 {
   state_share_t  share;
@@ -196,6 +194,8 @@ typedef union state_data_t
   state_deleg_t  deleg;
   state_layout_t layout;
 } state_data_t;
+
+typedef struct state_t state_t;
 
 struct state_t
 {
@@ -336,6 +336,7 @@ struct state_lock_entry_t
   state_blocking_t              sle_blocked;
   state_block_data_t          * sle_block_data;
   state_lock_owner_t          * sle_owner;
+  state_t                     * sle_state;
   state_lock_desc_t             sle_lock;
   pthread_mutex_t               sle_mutex;
 };
