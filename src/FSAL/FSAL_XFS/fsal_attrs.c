@@ -60,8 +60,8 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t XFSFSAL_getattrs(xfsfsal_handle_t * p_filehandle, /* IN */
-                               xfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t XFSFSAL_getattrs(fsal_handle_t * p_filehandle, /* IN */
+                               fsal_op_context_t * p_context,        /* IN */
                                fsal_attrib_list_t * p_object_attributes /* IN/OUT */
     )
 {
@@ -136,8 +136,8 @@ fsal_status_t XFSFSAL_getattrs(xfsfsal_handle_t * p_filehandle, /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t XFSFSAL_setattrs(xfsfsal_handle_t * p_filehandle, /* IN */
-                               xfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t XFSFSAL_setattrs(fsal_handle_t * p_filehandle, /* IN */
+                               fsal_op_context_t * p_context,        /* IN */
                                fsal_attrib_list_t * p_attrib_set,       /* IN */
                                fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */
     )
@@ -150,6 +150,8 @@ fsal_status_t XFSFSAL_setattrs(xfsfsal_handle_t * p_filehandle, /* IN */
 
   int fd;
   struct stat buffstat;
+  uid_t userid = ((xfsfsal_op_context_t *)p_context)->credential.user;
+  gid_t groupid = ((xfsfsal_op_context_t *)p_context)->credential.group;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -161,7 +163,7 @@ fsal_status_t XFSFSAL_setattrs(xfsfsal_handle_t * p_filehandle, /* IN */
   attrs = *p_attrib_set;
 
   /* It does not make sense to setattr on a symlink */
-  if(p_filehandle->data.type == DT_LNK)
+  if(((xfsfsal_handle_t *)p_filehandle)->data.type == DT_LNK)
     return fsal_internal_setattrs_symlink(p_filehandle, p_context, p_attrib_set,
                                           p_object_attributes);
 
@@ -221,13 +223,13 @@ fsal_status_t XFSFSAL_setattrs(xfsfsal_handle_t * p_filehandle, /* IN */
         {
 
           /* For modifying mode, user must be root or the owner */
-          if((p_context->credential.user != 0)
-             && (p_context->credential.user != buffstat.st_uid))
+          if((userid != 0)
+             && (userid != buffstat.st_uid))
             {
 
               LogFullDebug(COMPONENT_FSAL, 
                                 "Permission denied for CHMOD opeartion: current owner=%d, credential=%d",
-                                buffstat.st_uid, p_context->credential.user);
+                                buffstat.st_uid, userid);
 
               close(fd);
               Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
@@ -257,14 +259,14 @@ fsal_status_t XFSFSAL_setattrs(xfsfsal_handle_t * p_filehandle, /* IN */
     {
 
       /* For modifying owner, user must be root or current owner==wanted==client */
-      if((p_context->credential.user != 0) &&
-         ((p_context->credential.user != buffstat.st_uid) ||
-          (p_context->credential.user != attrs.owner)))
+      if((userid != 0) &&
+         ((userid != buffstat.st_uid) ||
+          (userid != attrs.owner)))
         {
 
           LogFullDebug(COMPONENT_FSAL,
                             "Permission denied for CHOWN opeartion: current owner=%d, credential=%d, new owner=%d",
-                            buffstat.st_uid, p_context->credential.user, attrs.owner);
+                            buffstat.st_uid, userid, attrs.owner);
 
           close(fd);
           Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
@@ -275,8 +277,8 @@ fsal_status_t XFSFSAL_setattrs(xfsfsal_handle_t * p_filehandle, /* IN */
     {
 
       /* For modifying group, user must be root or current owner */
-      if((p_context->credential.user != 0)
-         && (p_context->credential.user != buffstat.st_uid))
+      if((userid != 0)
+         && (userid != buffstat.st_uid))
         {
           close(fd);
           Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
@@ -284,22 +286,22 @@ fsal_status_t XFSFSAL_setattrs(xfsfsal_handle_t * p_filehandle, /* IN */
 
       int in_grp = 0;
       /* set in_grp */
-      if(p_context->credential.group == attrs.group)
+      if(groupid == attrs.group)
         in_grp = 1;
       else
-        for(i = 0; i < p_context->credential.nbgroups; i++)
+        for(i = 0; i < ((xfsfsal_op_context_t *)p_context)->credential.nbgroups; i++)
           {
-            if((in_grp = (attrs.group == p_context->credential.alt_groups[i])))
+            if((in_grp = (attrs.group == ((xfsfsal_op_context_t *)p_context)->credential.alt_groups[i])))
               break;
           }
 
       /* it must also be in target group */
-      if(p_context->credential.user != 0 && !in_grp)
+      if(userid != 0 && !in_grp)
         {
 
           LogFullDebug(COMPONENT_FSAL,
                             "Permission denied for CHOWN operation: current group=%d, credential=%d, new group=%d",
-                            buffstat.st_gid, p_context->credential.group, attrs.group);
+                            buffstat.st_gid, groupid, attrs.group);
 
           close(fd);
           Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
@@ -336,8 +338,8 @@ fsal_status_t XFSFSAL_setattrs(xfsfsal_handle_t * p_filehandle, /* IN */
 
   /* user must be the owner or have read access to modify 'atime' */
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME)
-     && (p_context->credential.user != 0)
-     && (p_context->credential.user != buffstat.st_uid)
+     && (userid != 0)
+     && (userid != buffstat.st_uid)
      && ((status = fsal_internal_testAccess(p_context, FSAL_R_OK, &buffstat, NULL)).major
          != ERR_FSAL_NO_ERROR))
     {
@@ -346,8 +348,8 @@ fsal_status_t XFSFSAL_setattrs(xfsfsal_handle_t * p_filehandle, /* IN */
     }
   /* user must be the owner or have write access to modify 'mtime' */
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME)
-     && (p_context->credential.user != 0)
-     && (p_context->credential.user != buffstat.st_uid)
+     && (userid != 0)
+     && (userid != buffstat.st_uid)
      && ((status = fsal_internal_testAccess(p_context, FSAL_W_OK, &buffstat, NULL)).major
          != ERR_FSAL_NO_ERROR))
     {
@@ -423,8 +425,8 @@ fsal_status_t XFSFSAL_setattrs(xfsfsal_handle_t * p_filehandle, /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t XFSFSAL_getextattrs(xfsfsal_handle_t * p_filehandle, /* IN */
-                                  xfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t XFSFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
+                                  fsal_op_context_t * p_context,        /* IN */
                                   fsal_extattrib_list_t * p_object_attributes /* OUT */
     )
 {
@@ -450,7 +452,7 @@ fsal_status_t XFSFSAL_getextattrs(xfsfsal_handle_t * p_filehandle, /* IN */
   if( p_object_attributes->asked_attributes & FSAL_ATTR_GENERATION )
    {
      /* get file metadata */
-     xfs_ino = p_filehandle->data.inode ;
+     xfs_ino = ((xfsfsal_handle_t *)p_filehandle)->data.inode ;
      TakeTokenFSCall();
      if(fsal_internal_get_bulkstat_by_inode(fd, &xfs_ino, &bstat) < 0)
       {

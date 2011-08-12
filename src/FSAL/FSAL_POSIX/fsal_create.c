@@ -47,15 +47,19 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occurred.
  */
-fsal_status_t POSIXFSAL_create(posixfsal_handle_t * p_parent_directory_handle,  /* IN */
+fsal_status_t POSIXFSAL_create(fsal_handle_t * parent_directory_handle,  /* IN */
                                fsal_name_t * p_filename,        /* IN */
-                               posixfsal_op_context_t * p_context,      /* IN */
+                               fsal_op_context_t * context,      /* IN */
                                fsal_accessmode_t accessmode,    /* IN */
-                               posixfsal_handle_t * p_object_handle,    /* OUT */
+                               fsal_handle_t * object_handle,    /* OUT */
                                fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */
     )
 {
 
+  posixfsal_handle_t * p_parent_directory_handle
+    = (posixfsal_handle_t *) parent_directory_handle;
+  posixfsal_op_context_t * p_context = (posixfsal_op_context_t *) context;
+  posixfsal_handle_t * p_object_handle = (posixfsal_handle_t *) p_object_handle;
   int rc, fd, errsv;
   int setgid_bit = 0;
   fsal_status_t status;
@@ -136,7 +140,9 @@ fsal_status_t POSIXFSAL_create(posixfsal_handle_t * p_parent_directory_handle,  
   if(p_context->credential.user != geteuid())
     {
       TakeTokenFSCall();
-      /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
+      /* if the setgid_bit was set on the parent directory,
+       * do not change the group of the created file,
+       * because it's already the parentdir's group */
       rc = lchown(fsalpath.path, p_context->credential.user,
                   setgid_bit ? -1 : (int)p_context->credential.group);
       errsv = errno;
@@ -198,15 +204,19 @@ fsal_status_t POSIXFSAL_create(posixfsal_handle_t * p_parent_directory_handle,  
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t POSIXFSAL_mkdir(posixfsal_handle_t * p_parent_directory_handle,   /* IN */
+fsal_status_t POSIXFSAL_mkdir(fsal_handle_t * parent_directory_handle,   /* IN */
                               fsal_name_t * p_dirname,  /* IN */
-                              posixfsal_op_context_t * p_context,       /* IN */
+                              fsal_op_context_t * context,       /* IN */
                               fsal_accessmode_t accessmode,     /* IN */
-                              posixfsal_handle_t * p_object_handle,     /* OUT */
+                              fsal_handle_t * object_handle,     /* OUT */
                               fsal_attrib_list_t * p_object_attributes  /* [ IN/OUT ] */
     )
 {
 
+  posixfsal_handle_t * p_parent_directory_handle
+    = (posixfsal_handle_t *) parent_directory_handle;
+  posixfsal_op_context_t * p_context = (posixfsal_op_context_t *) context;
+  posixfsal_handle_t * p_object_handle = (posixfsal_handle_t *) object_handle;
   int rc, errsv;
   int setgid_bit = 0;
   struct stat buffstat;
@@ -336,14 +346,17 @@ fsal_status_t POSIXFSAL_mkdir(posixfsal_handle_t * p_parent_directory_handle,   
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t POSIXFSAL_link(posixfsal_handle_t * p_target_handle,      /* IN */
-                             posixfsal_handle_t * p_dir_handle, /* IN */
+fsal_status_t POSIXFSAL_link(fsal_handle_t * target_handle,      /* IN */
+                             fsal_handle_t * dir_handle, /* IN */
                              fsal_name_t * p_link_name, /* IN */
-                             posixfsal_op_context_t * p_context,        /* IN */
+                             fsal_op_context_t * context,        /* IN */
                              fsal_attrib_list_t * p_attributes  /* [ IN/OUT ] */
     )
 {
 
+  posixfsal_handle_t * p_target_handle = (posixfsal_handle_t *) target_handle;
+  posixfsal_handle_t * p_dir_handle = (posixfsal_handle_t *) dir_handle;
+  posixfsal_op_context_t * p_context = (posixfsal_op_context_t *) context;
   int rc, errsv;
   fsal_status_t status;
   fsal_path_t fsalpath_old, fsalpath_new;
@@ -450,16 +463,19 @@ fsal_status_t POSIXFSAL_link(posixfsal_handle_t * p_target_handle,      /* IN */
  *
  * \return ERR_FSAL_NOTSUPP.
  */
-fsal_status_t POSIXFSAL_mknode(posixfsal_handle_t * parentdir_handle,   /* IN */
+fsal_status_t POSIXFSAL_mknode(fsal_handle_t * parentdir_hdl,   /* IN */
                                fsal_name_t * p_node_name,       /* IN */
-                               posixfsal_op_context_t * p_context,      /* IN */
+                               fsal_op_context_t * context,      /* IN */
                                fsal_accessmode_t accessmode,    /* IN */
                                fsal_nodetype_t nodetype,        /* IN */
                                fsal_dev_t * dev,        /* IN */
-                               posixfsal_handle_t * p_object_handle,    /* OUT (handle to the created node) */
+                               fsal_handle_t * object_handle,    /* OUT (handle to the created node) */
                                fsal_attrib_list_t * node_attributes     /* [ IN/OUT ] */
     )
 {
+  posixfsal_handle_t * parentdir_handle = (posixfsal_handle_t *) parentdir_hdl;
+  posixfsal_op_context_t * p_context = (posixfsal_op_context_t *) context;
+  posixfsal_handle_t * p_object_handle = (posixfsal_handle_t *) object_handle;
   int rc, errsv;
   int setgid_bit = 0;
   struct stat buffstat;

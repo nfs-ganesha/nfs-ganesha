@@ -94,7 +94,8 @@ my_bool my_init(void);
 fsal_status_t POSIXFSAL_Init(fsal_parameter_t * init_info       /* IN */
     )
 {
-
+  posixfs_specific_initinfo_t * posix_init
+    = (posixfs_specific_initinfo_t *)&init_info->fs_specific_info;
   fsal_status_t status;
   int rc;
 
@@ -115,9 +116,9 @@ fsal_status_t POSIXFSAL_Init(fsal_parameter_t * init_info       /* IN */
 
   /* Define the password file path used by PostgreSQL */
 #if defined(_USE_PGSQL)
-  if(!init_info->fs_specific_info.dbparams.passwdfile[0] == '\0')
+  if(!posix_init->dbparams.passwdfile[0] == '\0')
     {
-      rc = setenv("PGPASSFILE", init_info->fs_specific_info.dbparams.passwdfile, 1);
+      rc = setenv("PGPASSFILE", posix_init->dbparams.passwdfile, 1);
       if(rc != 0)
         LogMajor(COMPONENT_FSAL, "FSAL INIT: *** WARNING: Could not set POSTGRESQL keytab path.");
     }

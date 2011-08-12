@@ -65,10 +65,11 @@ char *XFSFSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int XFSFSAL_handlecmp(xfsfsal_handle_t * handle1, xfsfsal_handle_t * handle2,
+int XFSFSAL_handlecmp(fsal_handle_t * hdl1, fsal_handle_t * hdl2,
                       fsal_status_t * status)
 {
-
+  xfsfsal_handle_t * handle1 = (xfsfsal_handle_t *)hdl1;
+  xfsfsal_handle_t * handle2 = (xfsfsal_handle_t *)hdl2;
   *status = FSAL_STATUS_NO_ERROR;
 
   if(!handle1 || !handle2)
@@ -96,11 +97,12 @@ int XFSFSAL_handlecmp(xfsfsal_handle_t * handle1, xfsfsal_handle_t * handle2,
  *
  * \return The hash value
  */
-unsigned int XFSFSAL_Handle_to_HashIndex(xfsfsal_handle_t * p_handle,
+unsigned int XFSFSAL_Handle_to_HashIndex(fsal_handle_t * handle,
                                          unsigned int cookie,
                                          unsigned int alphabet_len,
                                          unsigned int index_size)
 {
+  xfsfsal_handle_t * p_handle = (xfsfsal_handle_t *)handle;
   unsigned int cpt = 0;
   unsigned int sum = 0;
   unsigned int extract = 0;
@@ -146,8 +148,9 @@ unsigned int XFSFSAL_Handle_to_HashIndex(xfsfsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int XFSFSAL_Handle_to_RBTIndex(xfsfsal_handle_t * p_handle, unsigned int cookie)
+unsigned int XFSFSAL_Handle_to_RBTIndex(fsal_handle_t * handle, unsigned int cookie)
 {
+  xfsfsal_handle_t * p_handle = (xfsfsal_handle_t *)handle;
   unsigned int h = 0;
   unsigned int cpt = 0;
   unsigned int extract = 0;
@@ -198,12 +201,13 @@ unsigned int XFSFSAL_Handle_to_RBTIndex(xfsfsal_handle_t * p_handle, unsigned in
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t XFSFSAL_DigestHandle(xfsfsal_export_context_t * p_expcontext,     /* IN */
+fsal_status_t XFSFSAL_DigestHandle(fsal_export_context_t * p_expcontext,     /* IN */
                                    fsal_digesttype_t output_type,       /* IN */
-                                   xfsfsal_handle_t * p_in_fsal_handle, /* IN */
+                                   fsal_handle_t * handle, /* IN */
                                    caddr_t out_buff     /* OUT */
     )
 {
+  xfsfsal_handle_t * p_in_fsal_handle = (xfsfsal_handle_t *)handle;
   unsigned int ino32;
 
   /* sanity checks */
@@ -291,10 +295,10 @@ fsal_status_t XFSFSAL_DigestHandle(xfsfsal_export_context_t * p_expcontext,     
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t XFSFSAL_ExpandHandle(xfsfsal_export_context_t * p_expcontext,     /* IN */
+fsal_status_t XFSFSAL_ExpandHandle(fsal_export_context_t * p_expcontext,     /* IN */
                                    fsal_digesttype_t in_type,   /* IN */
                                    caddr_t in_buff,     /* IN */
-                                   xfsfsal_handle_t * p_out_fsal_handle /* OUT */
+                                   fsal_handle_t * p_out_fsal_handle /* OUT */
     )
 {
   /* sanity checks */

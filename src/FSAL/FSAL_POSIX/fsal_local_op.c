@@ -72,13 +72,14 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t POSIXFSAL_test_access(posixfsal_op_context_t * p_context, /* IN */
+fsal_status_t POSIXFSAL_test_access(fsal_op_context_t * p_context, /* IN */
                                     fsal_accessflags_t access_type,     /* IN */
                                     fsal_attrib_list_t * p_object_attributes    /* IN */
     )
 {
   fsal_status_t status;
-  status = fsal_internal_testAccess(p_context, access_type, NULL, p_object_attributes);
+  status = fsal_internal_testAccess((posixfsal_op_context_t *)p_context,
+				    access_type, NULL, p_object_attributes);
   Return(status.major, status.minor, INDEX_FSAL_test_access);
 }
 
@@ -106,7 +107,7 @@ fsal_status_t POSIXFSAL_test_access(posixfsal_op_context_t * p_context, /* IN */
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t POSIXFSAL_setattr_access(posixfsal_op_context_t * p_context,      /* IN */
+fsal_status_t POSIXFSAL_setattr_access(fsal_op_context_t * p_context,      /* IN */
                                        fsal_attrib_list_t * candidate_attributes,       /* IN */
                                        fsal_attrib_list_t * object_attributes   /* IN */
     )
@@ -131,7 +132,7 @@ fsal_status_t POSIXFSAL_setattr_access(posixfsal_op_context_t * p_context,      
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t POSIXFSAL_rename_access(posixfsal_op_context_t * pcontext,        /* IN */
+fsal_status_t POSIXFSAL_rename_access(fsal_op_context_t * pcontext,        /* IN */
                                       fsal_attrib_list_t * pattrsrc,    /* IN */
                                       fsal_attrib_list_t * pattrdest)   /* IN */
 {
@@ -163,7 +164,7 @@ fsal_status_t POSIXFSAL_rename_access(posixfsal_op_context_t * pcontext,        
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t POSIXFSAL_create_access(posixfsal_op_context_t * pcontext,        /* IN */
+fsal_status_t POSIXFSAL_create_access(fsal_op_context_t * pcontext,        /* IN */
                                       fsal_attrib_list_t * pattr)       /* IN */
 {
   fsal_status_t fsal_status;
@@ -190,7 +191,7 @@ fsal_status_t POSIXFSAL_create_access(posixfsal_op_context_t * pcontext,        
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t POSIXFSAL_unlink_access(posixfsal_op_context_t * pcontext,        /* IN */
+fsal_status_t POSIXFSAL_unlink_access(fsal_op_context_t * pcontext,        /* IN */
                                       fsal_attrib_list_t * pattr)       /* IN */
 {
   fsal_status_t fsal_status;
@@ -219,7 +220,7 @@ fsal_status_t POSIXFSAL_unlink_access(posixfsal_op_context_t * pcontext,        
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t POSIXFSAL_link_access(posixfsal_op_context_t * pcontext,  /* IN */
+fsal_status_t POSIXFSAL_link_access(fsal_op_context_t * pcontext,  /* IN */
                                     fsal_attrib_list_t * pattr) /* IN */
 {
   fsal_status_t fsal_status;
@@ -254,7 +255,7 @@ fsal_status_t POSIXFSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
   if(pinit_attr == NULL || pnew_attr == NULL || presult_attr == NULL)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_merge_attrs);
 
-  /* The basis for the result attr is the fist argument */
+  /* The basis for the result attr is the first argument */
   *presult_attr = *pinit_attr;
 
   /* Now deal with the attributes to be merged in this set of attributes */

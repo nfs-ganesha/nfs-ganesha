@@ -42,13 +42,15 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t POSIXFSAL_unlink(posixfsal_handle_t * p_parent_directory_handle,  /* IN */
+fsal_status_t POSIXFSAL_unlink(fsal_handle_t * parent_directory_handle,  /* IN */
                                fsal_name_t * p_object_name,     /* IN */
-                               posixfsal_op_context_t * p_context,      /* IN */
+                               fsal_op_context_t * context,      /* IN */
                                fsal_attrib_list_t * p_parent_directory_attributes       /* [IN/OUT ] */
     )
 {
-
+  posixfsal_handle_t * p_parent_directory_handle
+    = (posixfsal_handle_t *) parent_directory_handle;
+  posixfsal_op_context_t * p_context = (posixfsal_op_context_t *) context;
   fsal_status_t status;
   fsal_posixdb_status_t statusdb;
   int rc, errsv;

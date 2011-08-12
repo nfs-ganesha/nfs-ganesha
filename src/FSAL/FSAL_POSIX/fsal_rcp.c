@@ -48,13 +48,14 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t POSIXFSAL_rcp(posixfsal_handle_t * filehandle,    /* IN */
-                            posixfsal_op_context_t * p_context, /* IN */
+fsal_status_t POSIXFSAL_rcp(fsal_handle_t * filehdl,    /* IN */
+                            fsal_op_context_t * context, /* IN */
                             fsal_path_t * p_local_path, /* IN */
                             fsal_rcpflag_t transfer_opt /* IN */
     )
 {
-
+  posixfsal_handle_t * filehandle = (posixfsal_handle_t *) filehdl;
+  posixfsal_op_context_t * p_context = (posixfsal_op_context_t *) context;
   int local_fd;
   int local_flags;
   int errsv;
@@ -300,9 +301,9 @@ fsal_status_t POSIXFSAL_rcp(posixfsal_handle_t * filehandle,    /* IN */
 
 }
 
-fsal_status_t POSIXFSAL_rcp_by_fileid(posixfsal_handle_t * filehandle,  /* IN */
+fsal_status_t POSIXFSAL_rcp_by_fileid(fsal_handle_t * filehandle,  /* IN */
                                       fsal_u64_t fileid,        /* IN */
-                                      posixfsal_op_context_t * p_context,       /* IN */
+                                      fsal_op_context_t * p_context,       /* IN */
                                       fsal_path_t * p_local_path,       /* IN */
                                       fsal_rcpflag_t transfer_opt /* IN */ )
 {

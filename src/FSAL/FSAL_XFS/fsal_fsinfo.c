@@ -38,8 +38,8 @@
  *      - ERR_FSAL_FAULT: NULL pointer passed as input parameter.
  *      - ERR_FSAL_SERVERFAULT: Unexpected error.
  */
-fsal_status_t XFSFSAL_static_fsinfo(xfsfsal_handle_t * p_filehandle,    /* IN */
-                                    xfsfsal_op_context_t * p_context,   /* IN */
+fsal_status_t XFSFSAL_static_fsinfo(fsal_handle_t * p_filehandle,    /* IN */
+                                    fsal_op_context_t * p_context,   /* IN */
                                     fsal_staticfsinfo_t * p_staticinfo  /* OUT */
     )
 {
@@ -72,8 +72,8 @@ fsal_status_t XFSFSAL_static_fsinfo(xfsfsal_handle_t * p_filehandle,    /* IN */
  *      - ERR_FSAL_FAULT: NULL pointer passed as input parameter.
  *      - ERR_FSAL_SERVERFAULT: Unexpected error.
  */
-fsal_status_t XFSFSAL_dynamic_fsinfo(xfsfsal_handle_t * p_filehandle,   /* IN */
-                                     xfsfsal_op_context_t * p_context,  /* IN */
+fsal_status_t XFSFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle,   /* IN */
+                                     fsal_op_context_t * p_context,  /* IN */
                                      fsal_dynamicfsinfo_t * p_dynamicinfo       /* OUT */
     )
 {
@@ -86,7 +86,7 @@ fsal_status_t XFSFSAL_dynamic_fsinfo(xfsfsal_handle_t * p_filehandle,   /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo);
 
   TakeTokenFSCall();
-  rc = statvfs(p_context->export_context->mount_point, &buffstatvfs);
+  rc = statvfs(((xfsfsal_op_context_t *)p_context)->export_context->mount_point, &buffstatvfs);
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)
