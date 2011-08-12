@@ -2,7 +2,6 @@
 #include "config.h"
 #endif
 #include <string.h>
-#include "fsal_types.h"
 #include "posixdb_internal.h"
 
 fsal_posixdb_status_t fsal_posixdb_getInfoFromName(fsal_posixdb_conn * p_conn,  /* IN */

@@ -82,7 +82,7 @@ static int Getsubopt(char **optionp, const char *const *tokens, char **valuep)
  * Parse FS specific option string
  * to build the export entry option.
  */
-fsal_status_t POSIXFSAL_BuildExportContext(posixfsal_export_context_t * p_export_context,       /* OUT */
+fsal_status_t POSIXFSAL_BuildExportContext(fsal_export_context_t * p_export_context,       /* OUT */
                                            fsal_path_t * p_export_path, /* IN */
                                            char *fs_specific_options    /* IN */
     )
@@ -100,14 +100,14 @@ fsal_status_t POSIXFSAL_BuildExportContext(posixfsal_export_context_t * p_export
  * \param p_export_context (in, gpfsfsal_export_context_t)
  */
 
-fsal_status_t POSIXFSAL_CleanUpExportContext(posixfsal_export_context_t * p_export_context)
+fsal_status_t POSIXFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context)
 {
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
 }
 
-fsal_status_t POSIXFSAL_InitClientContext(posixfsal_op_context_t * p_thr_context)
+fsal_status_t POSIXFSAL_InitClientContext(fsal_op_context_t * thr_context)
 {
-
+  posixfsal_op_context_t * p_thr_context = (posixfsal_op_context_t *) thr_context;
   fsal_posixdb_status_t st;
 
   /* sanity check */
@@ -172,15 +172,17 @@ fsal_status_t POSIXFSAL_InitClientContext(posixfsal_op_context_t * p_thr_context
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t POSIXFSAL_GetClientContext(posixfsal_op_context_t * p_thr_context,        /* IN/OUT  */
-                                         posixfsal_export_context_t * p_export_context, /* IN */
+fsal_status_t POSIXFSAL_GetClientContext(fsal_op_context_t * thr_context,     /* IN/OUT  */
+                                         fsal_export_context_t * export_context, /* IN */
                                          fsal_uid_t uid,        /* IN */
                                          fsal_gid_t gid,        /* IN */
                                          fsal_gid_t * alt_groups,       /* IN */
                                          fsal_count_t nb_alt_groups     /* IN */
     )
 {
-
+  posixfsal_op_context_t * p_thr_context = (posixfsal_op_context_t *)thr_context;
+  posixfsal_export_context_t * p_export_context
+    = (posixfsal_export_context_t *)export_context;
   fsal_count_t ng = nb_alt_groups;
   unsigned int i;
 

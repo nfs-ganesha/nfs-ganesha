@@ -72,7 +72,7 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t VFSFSAL_test_access(vfsfsal_op_context_t * p_context,   /* IN */
+fsal_status_t VFSFSAL_test_access(fsal_op_context_t * p_context,   /* IN */
                                fsal_accessflags_t access_type,  /* IN */
                                fsal_attrib_list_t * p_object_attributes /* IN */
     )
@@ -106,7 +106,7 @@ fsal_status_t VFSFSAL_test_access(vfsfsal_op_context_t * p_context,   /* IN */
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t VFSFSAL_setattr_access(vfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t VFSFSAL_setattr_access(fsal_op_context_t * p_context,        /* IN */
                                   fsal_attrib_list_t * candidate_attributes,    /* IN */
                                   fsal_attrib_list_t * object_attributes        /* IN */
     )
@@ -131,7 +131,7 @@ fsal_status_t VFSFSAL_setattr_access(vfsfsal_op_context_t * p_context,        /*
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t VFSFSAL_rename_access(vfsfsal_op_context_t * pcontext,  /* IN */
+fsal_status_t VFSFSAL_rename_access(fsal_op_context_t * pcontext,  /* IN */
                                  fsal_attrib_list_t * pattrsrc, /* IN */
                                  fsal_attrib_list_t * pattrdest)        /* IN */
 {
@@ -163,7 +163,7 @@ fsal_status_t VFSFSAL_rename_access(vfsfsal_op_context_t * pcontext,  /* IN */
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t VFSFSAL_create_access(vfsfsal_op_context_t * pcontext,  /* IN */
+fsal_status_t VFSFSAL_create_access(fsal_op_context_t * pcontext,  /* IN */
                                  fsal_attrib_list_t * pattr)    /* IN */
 {
   fsal_status_t fsal_status;
@@ -190,7 +190,7 @@ fsal_status_t VFSFSAL_create_access(vfsfsal_op_context_t * pcontext,  /* IN */
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t VFSFSAL_unlink_access(vfsfsal_op_context_t * pcontext,  /* IN */
+fsal_status_t VFSFSAL_unlink_access(fsal_op_context_t * pcontext,  /* IN */
                                  fsal_attrib_list_t * pattr)    /* IN */
 {
   fsal_status_t fsal_status;
@@ -219,7 +219,7 @@ fsal_status_t VFSFSAL_unlink_access(vfsfsal_op_context_t * pcontext,  /* IN */
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t VFSFSAL_link_access(vfsfsal_op_context_t * pcontext,    /* IN */
+fsal_status_t VFSFSAL_link_access(fsal_op_context_t * pcontext,    /* IN */
                                fsal_attrib_list_t * pattr)      /* IN */
 {
   fsal_status_t fsal_status;

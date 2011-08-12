@@ -48,13 +48,7 @@
 #include "err_fsal.h"
 
   /* In this section, you must define your own FSAL internal types.
-   * Here are some template types :
    */
-# define FSAL_MAX_NAME_LEN  256
-# define FSAL_MAX_PATH_LEN  1024
-
-/* prefered readdir size */
-#define FSAL_READDIR_SIZE 2048
 
 /** object name.  */
 
@@ -71,9 +65,6 @@ typedef struct fsal_path__
   char path[FSAL_MAX_PATH_LEN];
   unsigned int len;
 } fsal_path_t;
-
-# define FSAL_NAME_INITIALIZER {"",0}
-# define FSAL_PATH_INITIALIZER {"",0}
 
 static fsal_name_t FSAL_DOT = { ".", 1 };
 static fsal_name_t FSAL_DOT_DOT = { "..", 2 };

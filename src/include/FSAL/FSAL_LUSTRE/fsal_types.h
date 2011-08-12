@@ -80,8 +80,6 @@
  * ------------------------------------------- */
 #include "fsal_glue_const.h"
 
-#define FSAL_NGROUPS_MAX  32
-
 #define fsal_handle_t lustrefsal_handle_t
 #define fsal_op_context_t lustrefsal_op_context_t
 #define fsal_file_t lustrefsal_file_t
@@ -107,7 +105,7 @@ typedef union {
 
 /** Authentification context.    */
 
-typedef struct lustrefsal_cred__
+typedef struct
 {
   uid_t user;
   gid_t group;
@@ -135,7 +133,7 @@ typedef struct
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
-typedef struct lustrefs_specific_initinfo__
+typedef struct
 {
   int dummy;
 } lustrefs_specific_initinfo_t;
@@ -158,7 +156,7 @@ typedef void *lustrefsal_lockdesc_t;   /**< not implemented for now */
 
 /* Directory stream descriptor. */
 
-typedef struct lustrefsal_dir__
+typedef struct
 {
   DIR *p_dir;
   lustrefsal_op_context_t context;      /* credential for accessing the directory */
@@ -166,7 +164,7 @@ typedef struct lustrefsal_dir__
   lustrefsal_handle_t handle;
 } lustrefsal_dir_t;
 
-typedef struct lustrefsal_file__
+typedef struct
 {
   int fd;
   int ro;                       /* read only file ? */

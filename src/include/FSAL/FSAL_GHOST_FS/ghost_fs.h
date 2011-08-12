@@ -38,12 +38,11 @@
 #define _GHOST_FS_H
 
 #include "err_ghost_fs.h"
-#include <sys/types.h>
 #include "RW_Lock.h"
 
 /* Maximum name lengths */
-#define GHOSTFS_MAX_FILENAME    256
-#define GHOSTFS_MAX_PATH        1024
+#define GHOSTFS_MAX_FILENAME    FSAL_MAX_NAME_LEN
+#define GHOSTFS_MAX_PATH        FSAL_MAX_PATH_LEN
 
 /* types */
 

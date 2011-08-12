@@ -66,11 +66,11 @@ static int linkat2(int srcfd, int dirdestfd, char *destname)
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occurred.
  */
-fsal_status_t XFSFSAL_create(xfsfsal_handle_t * p_parent_directory_handle,      /* IN */
+fsal_status_t XFSFSAL_create(fsal_handle_t * p_parent_directory_handle,      /* IN */
                              fsal_name_t * p_filename,  /* IN */
-                             xfsfsal_op_context_t * p_context,  /* IN */
+                             fsal_op_context_t * p_context,  /* IN */
                              fsal_accessmode_t accessmode,      /* IN */
-                             xfsfsal_handle_t * p_object_handle,        /* OUT */
+                             fsal_handle_t * p_object_handle,        /* OUT */
                              fsal_attrib_list_t * p_object_attributes   /* [ IN/OUT ] */
     )
 {
@@ -157,12 +157,12 @@ fsal_status_t XFSFSAL_create(xfsfsal_handle_t * p_parent_directory_handle,      
   /* the file has been created */
   /* chown the file to the current user */
 
-  if(p_context->credential.user != geteuid())
+  if(((xfsfsal_op_context_t *)p_context)->credential.user != geteuid())
     {
       TakeTokenFSCall();
       /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      rc = fchown(newfd, p_context->credential.user,
-                  setgid_bit ? -1 : (int)p_context->credential.group);
+      rc = fchown(newfd, ((xfsfsal_op_context_t *)p_context)->credential.user,
+                  setgid_bit ? -1 : (int)((xfsfsal_op_context_t *)p_context)->credential.group);
       errsv = errno;
       ReleaseTokenFSCall();
       if(rc)
@@ -224,11 +224,11 @@ fsal_status_t XFSFSAL_create(xfsfsal_handle_t * p_parent_directory_handle,      
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t XFSFSAL_mkdir(xfsfsal_handle_t * p_parent_directory_handle,       /* IN */
+fsal_status_t XFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,       /* IN */
                             fsal_name_t * p_dirname,    /* IN */
-                            xfsfsal_op_context_t * p_context,   /* IN */
+                            fsal_op_context_t * p_context,   /* IN */
                             fsal_accessmode_t accessmode,       /* IN */
-                            xfsfsal_handle_t * p_object_handle, /* OUT */
+                            fsal_handle_t * p_object_handle, /* OUT */
                             fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */
     )
 {
@@ -322,12 +322,12 @@ fsal_status_t XFSFSAL_mkdir(xfsfsal_handle_t * p_parent_directory_handle,       
   /* the directory has been created */
   /* chown the file to the current user/group */
 
-  if(p_context->credential.user != geteuid())
+  if(((xfsfsal_op_context_t *)p_context)->credential.user != geteuid())
     {
       TakeTokenFSCall();
       /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      rc = fchown(newfd, p_context->credential.user,
-                  setgid_bit ? -1 : (int)p_context->credential.group);
+      rc = fchown(newfd, ((xfsfsal_op_context_t *)p_context)->credential.user,
+                  setgid_bit ? -1 : (int)((xfsfsal_op_context_t *)p_context)->credential.group);
       errsv = errno;
       ReleaseTokenFSCall();
       if(rc)
@@ -389,10 +389,10 @@ fsal_status_t XFSFSAL_mkdir(xfsfsal_handle_t * p_parent_directory_handle,       
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t XFSFSAL_link(xfsfsal_handle_t * p_target_handle,  /* IN */
-                           xfsfsal_handle_t * p_dir_handle,     /* IN */
+fsal_status_t XFSFSAL_link(fsal_handle_t * p_target_handle,  /* IN */
+                           fsal_handle_t * p_dir_handle,     /* IN */
                            fsal_name_t * p_link_name,   /* IN */
-                           xfsfsal_op_context_t * p_context,    /* IN */
+                           fsal_op_context_t * p_context,    /* IN */
                            fsal_attrib_list_t * p_attributes    /* [ IN/OUT ] */
     )
 {
@@ -496,13 +496,13 @@ fsal_status_t XFSFSAL_link(xfsfsal_handle_t * p_target_handle,  /* IN */
  *
  * \return ERR_FSAL_NOTSUPP.
  */
-fsal_status_t XFSFSAL_mknode(xfsfsal_handle_t * parentdir_handle,       /* IN */
+fsal_status_t XFSFSAL_mknode(fsal_handle_t * parentdir_handle,       /* IN */
                              fsal_name_t * p_node_name, /* IN */
-                             xfsfsal_op_context_t * p_context,  /* IN */
+                             fsal_op_context_t * p_context,  /* IN */
                              fsal_accessmode_t accessmode,      /* IN */
                              fsal_nodetype_t nodetype,  /* IN */
                              fsal_dev_t * dev,  /* IN */
-                             xfsfsal_handle_t * p_object_handle,        /* OUT (handle to the created node) */
+                             fsal_handle_t * p_object_handle, /* OUT (handle to the created node) */
                              fsal_attrib_list_t * node_attributes       /* [ IN/OUT ] */
     )
 {
@@ -622,13 +622,13 @@ fsal_status_t XFSFSAL_mknode(xfsfsal_handle_t * parentdir_handle,       /* IN */
   /* the node has been created */
   /* chown the file to the current user/group */
 
-  if(p_context->credential.user != geteuid())
+  if(((xfsfsal_op_context_t *)p_context)->credential.user != geteuid())
     {
       TakeTokenFSCall();
 
       /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      rc = fchown(newfd, p_context->credential.user,
-                  setgid_bit ? -1 : (int)p_context->credential.group);
+      rc = fchown(newfd, ((xfsfsal_op_context_t *)p_context)->credential.user,
+                  setgid_bit ? -1 : (int)((xfsfsal_op_context_t *)p_context)->credential.group);
       errsv = errno;
 
       ReleaseTokenFSCall();
