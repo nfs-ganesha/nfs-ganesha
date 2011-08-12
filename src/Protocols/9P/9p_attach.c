@@ -63,6 +63,9 @@ int _9p_attach( _9p_request_data_t * preq9p, u32 * plenout, char * preply)
   char * aname_str = NULL ;
   u32 * n_aname = NULL ;
 
+  int rc = 0 ;
+  u32 err = 0 ;
+ 
   struct _9p_qid qid ;
 
   if ( !preq9p || !plenout || !preply )
@@ -78,6 +81,15 @@ int _9p_attach( _9p_request_data_t * preq9p, u32 * plenout, char * preply)
 
   LogDebug( COMPONENT_9P, "TATTACH: tag=%ufid=%u afid=%d uname='%.*s' aname='%.*s' n_uname=%d", 
             (u32)*msgtag, *fid, *afid, (int)*uname_len, uname_str, (int)*aname_len, aname_str, *n_aname ) ;
+
+  /* Try to attach */
+  if( _9p_take_fid( preq9p->pconn, fid ) )
+    {
+      err = EINVAL ;
+      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+      return rc ;
+    }
+ 
 
   /* Compute the qid */
   qid.type = _9P_QTDIR ;

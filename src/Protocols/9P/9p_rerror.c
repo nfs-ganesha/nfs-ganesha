@@ -24,10 +24,10 @@
  */
 
 /**
- * \file    9p_version.c
+ * \file    9p_rerror.c
  * \brief   9P version
  *
- * 9p_version.c : _9P_interpretor, request VERSION
+ * 9p_rerror.c : _9P_interpretor, request RERROR
  *
  *
  */
@@ -48,43 +48,31 @@
 #include "log_macros.h"
 #include "9p.h"
 
-static char version_9p200l[] = "9P2000.L" ;
 
-int _9p_version( _9p_request_data_t * preq9p, u32 * plenout, char * preply)
+
+int _9p_rerror( _9p_request_data_t * preq9p,
+                u16 * msgtag,
+                u32 * err, 
+                char * strerr, /* Null terminated string */
+	        u32 * plenout, 
+                char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-
-  u16 * msgtag = NULL ;
-  u32 * msize = NULL ;
-  u16 * version_len = NULL ;
-  char * version_str = NULL ;
 
   if ( !preq9p || !plenout || !preply )
    return -1 ;
 
-  /* Get data */
-  _9p_getptr( cursor, msgtag, u16 ) ; 
-  _9p_getptr( cursor, msize,  u32 ) ;
-  _9p_getstr( cursor, version_len, version_str ) ;
-
-  LogDebug( COMPONENT_9P, "TVERSION: tag=%u msize=%u version='%.*s'", (u32)*msgtag, *msize, (int)*version_len, version_str ) ;
-
-  if( strncmp( version_str, version_9p200l, *version_len ) )
-   {
-      LogEvent( COMPONENT_9P, "RVERSION: BAD VERSION" ) ;
-      return -1 ;
-   } 
-
-  /* Good version, build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RVERSION ) ;
+  /* Build the reply */
+  _9p_setinitptr( cursor, preply, _9P_RERROR ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
 
-  _9p_setptr( cursor, msize,  u32 ) ;
-  _9p_setstr( cursor, *version_len, version_str ) ;
+  _9p_setstr( cursor, strlen( strerr ), strerr ) ;
+  _9p_setptr( cursor, err, u32 ) ;
+
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  LogDebug( COMPONENT_9P, "RVERSION: msize=%u version='%.*s'", *msize, (int)*version_len, version_str ) ;
+  LogDebug( COMPONENT_9P, "RERROR: err=(%u|%s)", *err, strerr ) ;
 
   return 1 ;
 }

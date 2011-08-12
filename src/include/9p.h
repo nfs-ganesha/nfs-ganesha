@@ -103,6 +103,7 @@ do                                     \
   str = cursor ;                       \
   cursor += *len ;                     \
 } while( 0 )                           
+
 #define _9p_setptr( cursor, pvar, type ) \
 do                                       \
 {                                        \
@@ -110,13 +111,14 @@ do                                       \
   cursor += sizeof( type ) ;             \
 } while( 0 ) 
 
+/* Insert a non-null terminated string */
 #define _9p_setstr( cursor, len, str ) \
 do                                     \
 {                                      \
-  *((u16 *)cursor) = *len ;            \
+  *((u16 *)cursor) = len ;            \
   cursor += sizeof( u16 ) ;            \
-  memcpy( cursor, str, *len ) ;        \
-  cursor += *len ;                     \
+  memcpy( cursor, str, len ) ;        \
+  cursor += len ;                     \
 } while( 0 )
 
 #define _9p_setinitptr( cursor, start, reqtype ) \
@@ -409,6 +411,12 @@ int _9p_release_fid( _9p_conn_t * pconn,
 /* Protocol functions */
 int _9p_attach( _9p_request_data_t * preq9p, u32 * plenout, char * preply) ;
 int _9p_version( _9p_request_data_t * preq9p, u32 * plenout, char * preply) ;
+int _9p_rerror( _9p_request_data_t * preq9p,
+                u16 * msgtag,
+                u32 * err, 
+                char * strerr,
+	        u32 * plenout, 
+                char * preply) ;
 
 /* hash functions */
 unsigned long int _9p_hash_fid_key_value_hash_func(hash_parameter_t * p_hparam,

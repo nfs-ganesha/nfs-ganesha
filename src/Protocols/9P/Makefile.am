@@ -9,6 +9,7 @@ lib9p_la_SOURCES = 9p_interpretor.c  \
                    9p_read_conf.c    \
                    9p_attach.c       \
                    9p_version.c      \
+                   9p_rerror.c       \
                   ../../include/9p.h
 
 EXTRA_DIST = 9P_Structures.txt 
