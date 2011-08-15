@@ -231,37 +231,6 @@ int nfs_open_owner_Set(state_open_owner_name_t * pname,
 
 /**
  *
- * nfs_open_owner_Get
- *
- * This routine gets open owner from the openowner's hashtable.
- *
- * @param pstate      [IN] pointer to the stateid to be checked.
- * @param pstate_data [OUT] found state
- *
- * @return 1 if ok, 0 otherwise.
- *
- */
-int nfs_open_owner_Get(state_open_owner_name_t * pname,
-                       state_open_owner_t      * powner)
-{
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
-
-  buffkey.pdata = (caddr_t) pname;
-  buffkey.len = sizeof(state_open_owner_name_t);
-
-  if(HashTable_Get(ht_open_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
-    {
-      return 0;
-    }
-
-  memcpy((char *)powner, buffval.pdata, sizeof(state_open_owner_t));
-
-  return 1;
-}                               /* nfs_open_owner_Get */
-
-/**
- *
  * nfs_open_owner_Get_Pointer
  *
  * This routine gets a pointer to an open owner from the open owners's hashtable.
@@ -307,37 +276,6 @@ int nfs_open_owner_Get_Pointer(state_open_owner_name_t  * pname,
 
   return 1;
 }                               /* nfs_open_owner_Get_Pointer */
-
-/**
- * 
- * nfs_open_owner_Update
- *
- * This routine updates a open owner from the open owners's hashtable.
- *
- * @param pstate      [IN] pointer to the stateid to be checked.
- * @param pstate_data [IN] new state
- *
- * @return 1 if ok, 0 otherwise.
- * 
- */
-int nfs_open_owner_Update(state_open_owner_name_t * pname,
-                          state_open_owner_t      * powner)
-{
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
-
-  buffkey.pdata = (caddr_t) pname;
-  buffkey.len = sizeof(state_open_owner_name_t);
-
-  if(HashTable_Get(ht_open_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
-    {
-      return 0;
-    }
-
-  memcpy(buffval.pdata, powner, sizeof(state_open_owner_t));
-
-  return 1;
-}                               /* nfs_open_owner_Update */
 
 /**
  *

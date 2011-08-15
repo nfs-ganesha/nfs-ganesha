@@ -166,7 +166,7 @@ typedef struct state_open_owner__
   char owner_val[NFS4_OPAQUE_LIMIT];
   unsigned int confirmed;
   unsigned int seqid;
-  pthread_mutex_t lock;                       //TODO FSF: remove this and use clo_lock
+  pthread_mutex_t lock;
   uint32_t counter;                           /** < Counter is used to build unique stateids */
   struct state_open_owner__ *related_owner;
 } state_open_owner_t;

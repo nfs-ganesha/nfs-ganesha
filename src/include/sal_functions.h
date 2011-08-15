@@ -157,14 +157,8 @@ int nfs_convert_open_owner(open_owner4 * pnfsowoner,
 void nfs_open_owner_PrintAll(void);
 int nfs_open_owner_Del(state_open_owner_name_t * pname);
 
-int nfs_open_owner_Update(state_open_owner_name_t * pname,
-                          state_open_owner_t      * popen_owner);
-
 int nfs_open_owner_Get_Pointer(state_open_owner_name_t  * pname,
                                state_open_owner_t      ** popen_owner);
-
-int nfs_open_owner_Get(state_open_owner_name_t * pname,
-                       state_open_owner_t      * popen_owner);
 
 int nfs_open_owner_Set(state_open_owner_name_t * pname,
                        state_open_owner_t      * popen_owner);
