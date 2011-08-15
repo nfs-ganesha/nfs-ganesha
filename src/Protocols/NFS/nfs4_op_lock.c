@@ -344,9 +344,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                             /* Increment seqid */
                             if(pstate_exists != NULL)
                               {
-                                P(pstate_exists->powner->so_owner.so_nfs4_owner.so_mutex);
+                                P(pstate_exists->powner->so_mutex);
                                 pstate_exists->powner->so_owner.so_nfs4_owner.so_seqid += 1;
-                                V(pstate_exists->powner->so_owner.so_nfs4_owner.so_mutex);
+                                V(pstate_exists->powner->so_mutex);
                               }
 
                             /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
@@ -380,9 +380,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   if(pstate_exists != NULL)
                     {
                       /* Increment seqid */
-                      P(pstate_exists->powner->so_owner.so_nfs4_owner.so_mutex);
+                      P(pstate_exists->powner->so_mutex);
                       pstate_exists->powner->so_owner.so_nfs4_owner.so_seqid += 1;
-                      V(pstate_exists->powner->so_owner.so_nfs4_owner.so_mutex);
+                      V(pstate_exists->powner->so_mutex);
                     }
 
                   /* A conflicting open state, return NFS4ERR_OPENMODE
@@ -517,9 +517,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
              12);
 
       /* increment the open state */
-      P(pstate_open->powner->so_owner.so_nfs4_owner.so_mutex);
+      P(pstate_open->powner->so_mutex);
       pstate_open->powner->so_owner.so_nfs4_owner.so_seqid += 1;
-      V(pstate_open->powner->so_owner.so_nfs4_owner.so_mutex);
+      V(pstate_open->powner->so_mutex);
 
       /* update the lock counter in the related open-stateid */
       pstate_open->state_data.share.lockheld += 1;
@@ -585,9 +585,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       /* Increment the related seqid for the related popen_owner */
       if(pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner != NULL)
         {
-          P(pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_mutex);
+          P(pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
           pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_seqid += 1;
-          V(pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_mutex);
+          V(pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
         }
       else
         LogDebug(COMPONENT_NFS_V4_LOCK,

@@ -382,7 +382,7 @@ state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
 
   powner->so_owner.so_nfs4_owner.so_owner_val[powner->so_owner.so_nfs4_owner.so_owner_len] = '\0';
 
-  if(pthread_mutex_init(&powner->so_owner.so_nfs4_owner.so_mutex, NULL) == -1)
+  if(pthread_mutex_init(&powner->so_mutex, NULL) == -1)
     {
       ReleaseToPool(powner, &pclient->pool_state_owner);
       ReleaseToPool(powner_name, &pclient->pool_nfs4_owner_name);

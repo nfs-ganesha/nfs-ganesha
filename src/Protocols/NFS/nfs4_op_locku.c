@@ -199,14 +199,14 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   res_LOCKU4.LOCKU4res_u.lock_stateid.seqid = pstate_found->seqid;
   memcpy(res_LOCKU4.LOCKU4res_u.lock_stateid.other, pstate_found->stateid_other, 12);
 
-  P(pstate_found->powner->so_owner.so_nfs4_owner.so_mutex);
+  P(pstate_found->powner->so_mutex);
   pstate_found->powner->so_owner.so_nfs4_owner.so_seqid += 1;
-  V(pstate_found->powner->so_owner.so_nfs4_owner.so_mutex);
+  V(pstate_found->powner->so_mutex);
 
   /* Increment the seqid for the related open_owner */
-  P(pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_mutex);
+  P(pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
   pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_seqid += 1;
-  V(pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_mutex);
+  V(pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
 
   /* Remove the state associated with the lock */
   if(state_del(pstate_found,

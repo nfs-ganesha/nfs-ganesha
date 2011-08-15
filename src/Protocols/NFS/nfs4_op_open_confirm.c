@@ -140,10 +140,10 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
     }
 
   /* If opened file is already confirmed, retrun NFS4ERR_BAD_STATEID */
-  P(pstate_found->powner->so_owner.so_nfs4_owner.so_mutex);
+  P(pstate_found->powner->so_mutex);
   if(pstate_found->powner->so_owner.so_nfs4_owner.so_confirmed == TRUE)
     {
-      V(pstate_found->powner->so_owner.so_nfs4_owner.so_mutex);
+      V(pstate_found->powner->so_mutex);
       res_OPEN_CONFIRM4.status = NFS4ERR_BAD_STATEID;
       return res_OPEN_CONFIRM4.status;
     }
@@ -152,7 +152,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
     {
       if(pstate_found->powner->so_owner.so_nfs4_owner.so_seqid + 1 != arg_OPEN_CONFIRM4.seqid)
         {
-          V(pstate_found->powner->so_owner.so_nfs4_owner.so_mutex);
+          V(pstate_found->powner->so_mutex);
           res_OPEN_CONFIRM4.status = NFS4ERR_BAD_SEQID;
           return res_OPEN_CONFIRM4.status;
         }
@@ -161,7 +161,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   /* Set the state as confirmed */
   pstate_found->powner->so_owner.so_nfs4_owner.so_confirmed = TRUE;
   pstate_found->powner->so_owner.so_nfs4_owner.so_seqid += 1;
-  V(pstate_found->powner->so_owner.so_nfs4_owner.so_mutex);
+  V(pstate_found->powner->so_mutex);
 
   /* Update the state */
   pstate_found->seqid += 1;

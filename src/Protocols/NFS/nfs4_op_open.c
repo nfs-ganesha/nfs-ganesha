@@ -471,9 +471,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                                &state_status) != STATE_SUCCESS)
                     {
                       /* Seqid has to be incremented even in this case */
-                      P(powner->so_owner.so_nfs4_owner.so_mutex);
+                      P(powner->so_mutex);
                       powner->so_owner.so_nfs4_owner.so_seqid += 1;
-                      V(powner->so_owner.so_nfs4_owner.so_mutex);
+                      V(powner->so_mutex);
 
                       res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                       return res_OPEN4.status;
@@ -489,9 +489,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                                               &cache_status) != CACHE_INODE_SUCCESS)
                     {
                       /* Seqid has to be incremented even in this case */
-                      P(powner->so_owner.so_nfs4_owner.so_mutex);
+                      P(powner->so_mutex);
                       powner->so_owner.so_nfs4_owner.so_seqid += 1;
-                      V(powner->so_owner.so_nfs4_owner.so_mutex);
+                      V(powner->so_mutex);
 
                       res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                       res_OPEN4.status = NFS4ERR_ACCESS;
@@ -522,7 +522,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                       OPEN_DELEGATE_NONE;
 
                   /* If server use OPEN_CONFIRM4, set the correct flag */
-                  P(powner->so_owner.so_nfs4_owner.so_mutex);
+                  P(powner->so_mutex);
                   if(powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
                     {
                       if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
@@ -531,7 +531,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                       else
                         res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
                     }
-                  V(powner->so_owner.so_nfs4_owner.so_mutex);
+                  V(powner->so_mutex);
 
                   /* Now produce the filehandle to this file */
                   if((pnewfsal_handle =
@@ -590,9 +590,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                           if(state_status == STATE_INVALID_ARGUMENT)
                             {
                               /* Seqid has to be incremented even in this case */
-                              P(powner->so_owner.so_nfs4_owner.so_mutex);
+                              P(powner->so_mutex);
                               powner->so_owner.so_nfs4_owner.so_seqid += 1;
-                              V(powner->so_owner.so_nfs4_owner.so_mutex);
+                              V(powner->so_mutex);
 
                               res_OPEN4.status = NFS4ERR_INVAL;
                               return res_OPEN4.status;
@@ -639,7 +639,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                                       OPEN_DELEGATE_NONE;
 
                                   /* If server use OPEN_CONFIRM4, set the correct flag */
-                                  P(powner->so_owner.so_nfs4_owner.so_mutex);
+                                  P(powner->so_mutex);
                                   if(powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
                                     {
                                       if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
@@ -650,7 +650,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                                         res_OPEN4.OPEN4res_u.resok4.rflags =
                                             OPEN4_RESULT_LOCKTYPE_POSIX;
                                     }
-                                  V(powner->so_owner.so_nfs4_owner.so_mutex);
+                                  V(powner->so_mutex);
 
                                   /* Now produce the filehandle to this file */
                                   if((pnewfsal_handle =
@@ -757,9 +757,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                        &pfile_state, &state_status) != STATE_SUCCESS)
             {
               /* Seqid has to be incremented even in this case */
-              P(powner->so_owner.so_nfs4_owner.so_mutex);
+              P(powner->so_mutex);
               powner->so_owner.so_nfs4_owner.so_seqid += 1;
-              V(powner->so_owner.so_nfs4_owner.so_mutex);
+              V(powner->so_mutex);
 
               res_OPEN4.status = NFS4ERR_SHARE_DENIED;
               return res_OPEN4.status;
@@ -803,9 +803,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                                       &cache_status) != CACHE_INODE_SUCCESS)
             {
               /* Seqid has to be incremented even in this case */
-              P(powner->so_owner.so_nfs4_owner.so_mutex);
+              P(powner->so_mutex);
               powner->so_owner.so_nfs4_owner.so_seqid += 1;
-              V(powner->so_owner.so_nfs4_owner.so_mutex);
+              V(powner->so_mutex);
 
               res_OPEN4.status = NFS4ERR_ACCESS;
               return res_OPEN4.status;
@@ -977,9 +977,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                          && (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ))
                         {
                           /* Seqid has to be incremented even in this case */
-                          P(powner->so_owner.so_nfs4_owner.so_mutex);
+                          P(powner->so_mutex);
                           powner->so_owner.so_nfs4_owner.so_seqid += 1;
-                          V(powner->so_owner.so_nfs4_owner.so_mutex);
+                          V(powner->so_mutex);
 
                           powner->so_owner.so_nfs4_owner.so_seqid += 1;
                           res_OPEN4.status = NFS4ERR_SHARE_DENIED;
@@ -992,9 +992,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                          && (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE))
                         {
                           /* Seqid has to be incremented even in this case */
-                          P(powner->so_owner.so_nfs4_owner.so_mutex);
+                          P(powner->so_mutex);
                           powner->so_owner.so_nfs4_owner.so_seqid += 1;
-                          V(powner->so_owner.so_nfs4_owner.so_mutex);
+                          V(powner->so_mutex);
 
                           res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                           return res_OPEN4.status;
@@ -1032,9 +1032,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                            &state_status) != STATE_SUCCESS)
                 {
                   /* Seqid has to be incremented even in this case */
-                  P(powner->so_owner.so_nfs4_owner.so_mutex);
+                  P(powner->so_mutex);
                   powner->so_owner.so_nfs4_owner.so_seqid += 1;
-                  V(powner->so_owner.so_nfs4_owner.so_mutex);
+                  V(powner->so_mutex);
 
                   res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                   return res_OPEN4.status;
@@ -1051,9 +1051,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                                       &cache_status) != CACHE_INODE_SUCCESS)
             {
               /* Seqid has to be incremented even in this case */
-              P(powner->so_owner.so_nfs4_owner.so_mutex);
+              P(powner->so_mutex);
               powner->so_owner.so_nfs4_owner.so_seqid += 1;
-              V(powner->so_owner.so_nfs4_owner.so_mutex);
+              V(powner->so_mutex);
 
               res_OPEN4.status = NFS4ERR_ACCESS;
               return res_OPEN4.status;
@@ -1064,9 +1064,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           /* Seqid has to be incremented even in this case */
           if(powner != NULL)
             {
-              P(powner->so_owner.so_nfs4_owner.so_mutex);
+              P(powner->so_mutex);
               powner->so_owner.so_nfs4_owner.so_seqid += 1;
-              V(powner->so_owner.so_nfs4_owner.so_mutex);
+              V(powner->so_mutex);
             }
 
           res_OPEN4.status = NFS4ERR_INVAL;
@@ -1083,9 +1083,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       /* Seqid has to be incremented even in this case */
       if(powner != NULL)
         {
-          P(powner->so_owner.so_nfs4_owner.so_mutex);
+          P(powner->so_mutex);
           powner->so_owner.so_nfs4_owner.so_seqid += 1;
-          V(powner->so_owner.so_nfs4_owner.so_mutex);
+          V(powner->so_mutex);
         }
 
       res_OPEN4.status = NFS4ERR_INVAL;

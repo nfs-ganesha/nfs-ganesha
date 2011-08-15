@@ -169,7 +169,6 @@ struct state_nfs4_owner_t
   char                so_owner_val[NFS4_OPAQUE_LIMIT];
   unsigned int        so_confirmed;
   unsigned int        so_seqid;
-  pthread_mutex_t     so_mutex;
   uint32_t            so_counter;       /** < Counter is used to build unique stateids */
   state_owner_t     * so_related_owner;
 };
