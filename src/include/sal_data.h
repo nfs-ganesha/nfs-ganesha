@@ -159,7 +159,9 @@ typedef struct state_nlm_owner_t
 } state_nlm_owner_t;
 #endif
 
-typedef struct state_open_owner__
+typedef struct state_nfs4_owner_t state_nfs4_owner_t;
+
+struct state_nfs4_owner_t
 {
   clientid4 clientid;
   unsigned int owner_len;
@@ -168,8 +170,8 @@ typedef struct state_open_owner__
   unsigned int seqid;
   pthread_mutex_t lock;
   uint32_t counter;                           /** < Counter is used to build unique stateids */
-  struct state_open_owner__ *related_owner;
-} state_open_owner_t;
+  state_nfs4_owner_t *related_owner;
+};
 
 /* Undistinguished lock owner type */
 typedef struct state_owner_t
@@ -180,7 +182,7 @@ typedef struct state_owner_t
   int                     so_refcount;
   union
   {
-    state_open_owner_t    so_open_owner;
+    state_nfs4_owner_t    so_open_owner;
 #ifdef _USE_NLM
     state_nlm_owner_t     so_nlm_owner;
 #endif
@@ -203,7 +205,7 @@ struct state_t
   state_data_t         state_data;
   u_int32_t            seqid;               /**< The NFSv4 Sequence id                      */
   char                 stateid_other[12];   /**< "Other" part of state id, used as hash key */
-  state_open_owner_t   *powner;             /**< Open Owner related to this state           */
+  state_nfs4_owner_t   *powner;             /**< Open Owner related to this state           */
   state_t              *next;               /**< Next entry in the state list               */
   state_t              *prev;               /**< Prev entry in the state list               */
   cache_entry_t        *pentry;             /**< Related pentry                             */

@@ -104,7 +104,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   state_t                 * pstate_found_same_owner = NULL;
   state_open_owner_name_t   owner_name;
   state_open_owner_name_t * powner_name = NULL;
-  state_open_owner_t      * powner = NULL;
+  state_nfs4_owner_t      * powner = NULL;
 
   fsal_accessflags_t write_access = FSAL_MODE_MASK_SET(FSAL_W_OK) |
                                     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA |
@@ -295,7 +295,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       if(!nfs_open_owner_Get_Pointer(&owner_name, &powner))
         {
           /* This open owner is not known yet, allocated and set up a new one */
-          GetFromPool(powner, &data->pclient->pool_open_owner, state_open_owner_t);
+          GetFromPool(powner, &data->pclient->pool_open_owner, state_nfs4_owner_t);
 
           GetFromPool(powner_name, &data->pclient->pool_open_owner_name, state_open_owner_name_t);
 

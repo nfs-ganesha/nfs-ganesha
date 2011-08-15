@@ -100,9 +100,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   state_t                 * pstate_found = NULL;
   state_t                 * pstate_previous_iterate = NULL;
   state_t                 * pstate_found_iterate = NULL;
-  state_open_owner_t      * powner = NULL;
-  state_open_owner_t      * popen_owner = NULL;
-  state_open_owner_t      * powner_exists = NULL;
+  state_nfs4_owner_t      * powner = NULL;
+  state_nfs4_owner_t      * popen_owner = NULL;
+  state_nfs4_owner_t      * powner_exists = NULL;
   state_open_owner_name_t * powner_name = NULL;
   uint64_t                  a, b, a1, b1;
   unsigned int              overlap = FALSE;
@@ -480,7 +480,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
 
       /* This lock owner is not known yet, allocated and set up a new one */
-      GetFromPool(powner, &data->pclient->pool_open_owner, state_open_owner_t);
+      GetFromPool(powner, &data->pclient->pool_open_owner, state_nfs4_owner_t);
 
       if(powner == NULL)
         {

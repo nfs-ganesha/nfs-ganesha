@@ -121,7 +121,7 @@ int Init_nlm_hash(hash_parameter_t client_param, hash_parameter_t owner_param);
 
 int nfs4_BuildStateId_Other(cache_entry_t      * pentry,
                             fsal_op_context_t  * pcontext,
-                            state_open_owner_t * popen_owner,
+                            state_nfs4_owner_t * popen_owner,
                             char               * other);
 
 int nfs4_Check_Stateid(struct stateid4 * pstate,
@@ -158,10 +158,10 @@ void nfs_open_owner_PrintAll(void);
 int nfs_open_owner_Del(state_open_owner_name_t * pname);
 
 int nfs_open_owner_Get_Pointer(state_open_owner_name_t  * pname,
-                               state_open_owner_t      ** popen_owner);
+                               state_nfs4_owner_t      ** popen_owner);
 
 int nfs_open_owner_Set(state_open_owner_name_t * pname,
-                       state_open_owner_t      * popen_owner);
+                       state_nfs4_owner_t      * popen_owner);
 
 int nfs4_Init_open_owner(nfs_open_owner_parameter_t param);
 
@@ -291,7 +291,7 @@ int state_conflict(state_t      * pstate,
 state_status_t state_add(cache_entry_t         * pentry,
                          state_type_t            state_type,
                          state_data_t          * pstate_data,
-                         state_open_owner_t    * powner_input,
+                         state_nfs4_owner_t    * powner_input,
                          cache_inode_client_t  * pclient,
                          fsal_op_context_t     * pcontext,
                          state_t              ** ppstate,

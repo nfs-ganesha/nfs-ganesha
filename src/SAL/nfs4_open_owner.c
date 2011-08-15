@@ -71,7 +71,7 @@ int display_open_owner_val(hash_buffer_t * pbuff, char *str)
   char strtmp[NFS4_OPAQUE_LIMIT * 2 + 1];
   unsigned int i = 0;
 
-  state_open_owner_t *powner = (state_open_owner_t *) (pbuff->pdata);
+  state_nfs4_owner_t *powner = (state_nfs4_owner_t *) (pbuff->pdata);
 
   for(i = 0; i < powner->owner_len; i++)
     sprintf(&(strtmp[i * 2]), "%02x", (unsigned char)powner->owner_val[i]);
@@ -193,7 +193,7 @@ int nfs4_Init_open_owner(nfs_open_owner_parameter_t param)
  *
  */
 int nfs_open_owner_Set(state_open_owner_name_t * pname,
-                       state_open_owner_t      * powner)
+                       state_nfs4_owner_t      * powner)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -214,7 +214,7 @@ int nfs_open_owner_Set(state_open_owner_name_t * pname,
   buffkey.len = sizeof(state_open_owner_name_t);
 
   buffval.pdata = (caddr_t) powner;
-  buffval.len = sizeof(state_open_owner_t);
+  buffval.len = sizeof(state_nfs4_owner_t);
 
   P(open_owner_counter_lock);
   open_owner_counter += 1;
@@ -242,7 +242,7 @@ int nfs_open_owner_Set(state_open_owner_name_t * pname,
  *
  */
 int nfs_open_owner_Get_Pointer(state_open_owner_name_t  * pname,
-                               state_open_owner_t      ** powner)
+                               state_nfs4_owner_t      ** powner)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -269,7 +269,7 @@ int nfs_open_owner_Get_Pointer(state_open_owner_name_t  * pname,
       return 0;
     }
 
-  *powner = (state_open_owner_t *) buffval.pdata;
+  *powner = (state_nfs4_owner_t *) buffval.pdata;
 
   LogFullDebug(COMPONENT_STATE,
                "nfs_open_owner_Get_Pointer => FOUND");

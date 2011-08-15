@@ -207,7 +207,7 @@ int nfs4_Init_state_id(nfs_state_id_parameter_t param)
 
 int nfs4_BuildStateId_Other(cache_entry_t      * pentry,
                             fsal_op_context_t  * pcontext,
-                            state_open_owner_t * popen_owner,
+                            state_nfs4_owner_t * popen_owner,
                             char               * other)
 {
   uint64_t fileid_digest = 0;
