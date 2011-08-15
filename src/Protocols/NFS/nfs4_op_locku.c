@@ -170,16 +170,16 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Check the seqid */
-  if((arg_LOCKU4.seqid != pstate_found->powner->so_owner.so_nfs4_owner.so_seqid) &&
-     (arg_LOCKU4.seqid != pstate_found->powner->so_owner.so_nfs4_owner.so_seqid + 1))
+  if((arg_LOCKU4.seqid != pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid) &&
+     (arg_LOCKU4.seqid != pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid + 1))
     {
       res_LOCKU4.status = NFS4ERR_BAD_SEQID;
       return res_LOCKU4.status;
     }
 
   /* Check the seqid for the lock */
-  if((arg_LOCKU4.lock_stateid.seqid != pstate_found->seqid) &&
-     (arg_LOCKU4.lock_stateid.seqid != pstate_found->seqid + 1))
+  if((arg_LOCKU4.lock_stateid.seqid != pstate_found->state_seqid) &&
+     (arg_LOCKU4.lock_stateid.seqid != pstate_found->state_seqid + 1))
     {
       res_LOCKU4.status = NFS4ERR_BAD_SEQID;
       return res_LOCKU4.status;
@@ -189,24 +189,24 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   pstate_open = (state_t *) (pstate_found->state_data.lock.popenstate);
   if(pstate_open != NULL)
     {
-      pstate_open->seqid += 1;    /** @todo BUGAZOMEU may not be useful */
+      pstate_open->state_seqid += 1;    /** @todo BUGAZOMEU may not be useful */
       if(pstate_open->state_data.share.lockheld > 0)
         pstate_open->state_data.share.lockheld -= 1;
     }
 
   /* Increment the seqid */
-  pstate_found->seqid += 1;
-  res_LOCKU4.LOCKU4res_u.lock_stateid.seqid = pstate_found->seqid;
+  pstate_found->state_seqid += 1;
+  res_LOCKU4.LOCKU4res_u.lock_stateid.seqid = pstate_found->state_seqid;
   memcpy(res_LOCKU4.LOCKU4res_u.lock_stateid.other, pstate_found->stateid_other, 12);
 
-  P(pstate_found->powner->so_mutex);
-  pstate_found->powner->so_owner.so_nfs4_owner.so_seqid += 1;
-  V(pstate_found->powner->so_mutex);
+  P(pstate_found->state_powner->so_mutex);
+  pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid += 1;
+  V(pstate_found->state_powner->so_mutex);
 
   /* Increment the seqid for the related open_owner */
-  P(pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
-  pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_seqid += 1;
-  V(pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
+  P(pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
+  pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_seqid += 1;
+  V(pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
 
   /* Remove the state associated with the lock */
   if(state_del(pstate_found,

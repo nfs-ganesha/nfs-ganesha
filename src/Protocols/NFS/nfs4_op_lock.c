@@ -212,7 +212,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           return res_LOCK4.status;
         }
 
-      popen_owner = pstate_open->powner;
+      popen_owner = pstate_open->state_powner;
 
       break;
 
@@ -245,9 +245,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         {
           /* Get the old lockowner. We can do the following 'cast', in NFSv4 lock_owner4 and open_owner4
            * are different types but with the same definition*/
-          powner        = pstate_exists->powner;
-          powner_exists = pstate_exists->powner;
-          popen_owner   = pstate_exists->powner->so_owner.so_nfs4_owner.so_related_owner;
+          powner        = pstate_exists->state_powner;
+          powner_exists = pstate_exists->state_powner;
+          popen_owner   = pstate_exists->state_powner->so_owner.so_nfs4_owner.so_related_owner;
         }
 
       break;
@@ -329,12 +329,12 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                         /* Overlapping lock is found, if owner is different than the calling owner, return NFS4ERR_DENIED */
                         if((pstate_exists != NULL) &&   /* all-O/all-1 stateid is considered a different owner */
                            ((powner_exists->so_owner.so_nfs4_owner.so_owner_len ==
-                             pstate_found_iterate->powner->so_owner.so_nfs4_owner.so_owner_len)
+                             pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_len)
                             &&
                             (!memcmp
                              (powner_exists->so_owner.so_nfs4_owner.so_owner_val,
-                              pstate_found_iterate->powner->so_owner.so_nfs4_owner.so_owner_val,
-                              pstate_found_iterate->powner->so_owner.so_nfs4_owner.so_owner_len))))
+                              pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_val,
+                              pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_len))))
                           {
                             /* The calling state owner is the same. There is a discussion on this case at page 161 of RFC3530. I choose to ignore this
                              * lock and continue iterating on the other states */
@@ -344,9 +344,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                             /* Increment seqid */
                             if(pstate_exists != NULL)
                               {
-                                P(pstate_exists->powner->so_mutex);
-                                pstate_exists->powner->so_owner.so_nfs4_owner.so_seqid += 1;
-                                V(pstate_exists->powner->so_mutex);
+                                P(pstate_exists->state_powner->so_mutex);
+                                pstate_exists->state_powner->so_owner.so_nfs4_owner.so_seqid += 1;
+                                V(pstate_exists->state_powner->so_mutex);
                               }
 
                             /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
@@ -357,9 +357,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                             res_LOCK4.LOCK4res_u.denied.locktype =
                                 pstate_found_iterate->state_data.lock.lock_type;
                             res_LOCK4.LOCK4res_u.denied.owner.owner.owner_len =
-                                pstate_found_iterate->powner->so_owner.so_nfs4_owner.so_owner_len;
+                                pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_len;
                             res_LOCK4.LOCK4res_u.denied.owner.owner.owner_val =
-                                pstate_found_iterate->powner->so_owner.so_nfs4_owner.so_owner_val;
+                                pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_val;
                             res_LOCK4.status = NFS4ERR_DENIED;
                             return res_LOCK4.status;
                           }
@@ -380,9 +380,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   if(pstate_exists != NULL)
                     {
                       /* Increment seqid */
-                      P(pstate_exists->powner->so_mutex);
-                      pstate_exists->powner->so_owner.so_nfs4_owner.so_seqid += 1;
-                      V(pstate_exists->powner->so_mutex);
+                      P(pstate_exists->state_powner->so_mutex);
+                      pstate_exists->state_powner->so_owner.so_nfs4_owner.so_seqid += 1;
+                      V(pstate_exists->state_powner->so_mutex);
                     }
 
                   /* A conflicting open state, return NFS4ERR_OPENMODE
@@ -438,10 +438,10 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
       LogFullDebug(COMPONENT_NFS_V4_LOCK, "=== New Owner ===> %u %u %u",
              arg_LOCK4.locker.locker4_u.open_owner.open_stateid.seqid,
-             arg_LOCK4.locker.locker4_u.open_owner.open_seqid, pstate_found->seqid);
+             arg_LOCK4.locker.locker4_u.open_owner.open_seqid, pstate_found->state_seqid);
 
       /* check the stateid */
-      if(arg_LOCK4.locker.locker4_u.open_owner.open_stateid.seqid < pstate_open->seqid)
+      if(arg_LOCK4.locker.locker4_u.open_owner.open_stateid.seqid < pstate_open->state_seqid)
         {
           res_LOCK4.status = NFS4ERR_OLD_STATEID;
           return res_LOCK4.status;
@@ -456,7 +456,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
 
       /* Sanity check : Is this the right file ? */
-      if(pstate_open->pentry != data->current_entry)
+      if(pstate_open->state_pentry != data->current_entry)
         {
           res_LOCK4.status = NFS4ERR_BAD_STATEID;
           return res_LOCK4.status;
@@ -482,7 +482,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       powner = create_nfs4_owner(data->pclient,
                                  &owner_name,
                                  (open_owner4 *) &arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
-                                 pstate_open->powner,
+                                 pstate_open->state_powner,
                                  0);
 
       if(powner == NULL)
@@ -512,14 +512,14 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
 
         /** @todo BUGAZOMEU: Manage the case if lock conflicts */
-      res_LOCK4.LOCK4res_u.resok4.lock_stateid.seqid = file_state->seqid;
+      res_LOCK4.LOCK4res_u.resok4.lock_stateid.seqid = file_state->state_seqid;
       memcpy(res_LOCK4.LOCK4res_u.resok4.lock_stateid.other, file_state->stateid_other,
              12);
 
       /* increment the open state */
-      P(pstate_open->powner->so_mutex);
-      pstate_open->powner->so_owner.so_nfs4_owner.so_seqid += 1;
-      V(pstate_open->powner->so_mutex);
+      P(pstate_open->state_powner->so_mutex);
+      pstate_open->state_powner->so_owner.so_nfs4_owner.so_seqid += 1;
+      V(pstate_open->state_powner->so_mutex);
 
       /* update the lock counter in the related open-stateid */
       pstate_open->state_data.share.lockheld += 1;
@@ -545,18 +545,18 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
       LogFullDebug(COMPONENT_NFS_V4_LOCK, "=== Konwn LockOwner ===> %u %u %u",
              arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.seqid,
-             arg_LOCK4.locker.locker4_u.lock_owner.lock_seqid, pstate_found->seqid);
+             arg_LOCK4.locker.locker4_u.lock_owner.lock_seqid, pstate_found->state_seqid);
 
       /* Check if stateid is not too old */
-      if(arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.seqid < pstate_found->seqid)
+      if(arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.seqid < pstate_found->state_seqid)
         {
           res_LOCK4.status = NFS4ERR_OLD_STATEID;
           return res_LOCK4.status;
         }
 
       /* Check validity of the desired seqid */
-      if((arg_LOCK4.locker.locker4_u.lock_owner.lock_seqid != pstate_found->seqid) &&
-         (arg_LOCK4.locker.locker4_u.lock_owner.lock_seqid != pstate_found->seqid + 1))
+      if((arg_LOCK4.locker.locker4_u.lock_owner.lock_seqid != pstate_found->state_seqid) &&
+         (arg_LOCK4.locker.locker4_u.lock_owner.lock_seqid != pstate_found->state_seqid + 1))
         {
           res_LOCK4.status = NFS4ERR_BAD_SEQID;
           return res_LOCK4.status;
@@ -570,28 +570,29 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
 #endif
       /* Sanity check : Is this the right file ? */
-      if(pstate_found->pentry != data->current_entry)
+      if(pstate_found->state_pentry != data->current_entry)
         {
           res_LOCK4.status = NFS4ERR_BAD_STATEID;
           return res_LOCK4.status;
         }
 
       /* Increment the seqid */
-      pstate_found->seqid += 1;
-      res_LOCK4.LOCK4res_u.resok4.lock_stateid.seqid = pstate_found->seqid;
-      memcpy(res_LOCK4.LOCK4res_u.resok4.lock_stateid.other, pstate_found->stateid_other,
+      pstate_found->state_seqid += 1;
+      res_LOCK4.LOCK4res_u.resok4.lock_stateid.seqid = pstate_found->state_seqid;
+      memcpy(res_LOCK4.LOCK4res_u.resok4.lock_stateid.other,
+             pstate_found->stateid_other,
              12);
 
       /* Increment the related seqid for the related popen_owner */
-      if(pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner != NULL)
+      if(pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner != NULL)
         {
-          P(pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
-          pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_seqid += 1;
-          V(pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
+          P(pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
+          pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_seqid += 1;
+          V(pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
         }
       else
         LogDebug(COMPONENT_NFS_V4_LOCK,
-            "/!\\ : IMPLEMENTATION ERROR File=%s Line=%u pstate_found->powner->so_owner.so_nfs4_owner.so_related_owner should not be NULL",
+            "/!\\ : IMPLEMENTATION ERROR File=%s Line=%u pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner should not be NULL",
              __FILE__, __LINE__);
 
       break;

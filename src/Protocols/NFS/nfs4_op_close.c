@@ -147,12 +147,12 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Update the seqid for the open_owner */
-  P(pstate_found->powner->so_mutex);
-  pstate_found->powner->so_owner.so_nfs4_owner.so_seqid += 1;
-  V(pstate_found->powner->so_mutex);
+  P(pstate_found->state_powner->so_mutex);
+  pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid += 1;
+  V(pstate_found->state_powner->so_mutex);
 
   /* Prepare the result */
-  res_CLOSE4.CLOSE4res_u.open_stateid.seqid = pstate_found->seqid + 1;
+  res_CLOSE4.CLOSE4res_u.open_stateid.seqid = pstate_found->state_seqid + 1;
 
   /* File is closed, release the corresponding state */
   if(state_del_by_key(arg_CLOSE4.open_stateid.other,

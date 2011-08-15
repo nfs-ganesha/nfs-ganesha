@@ -88,8 +88,12 @@ int display_state_id_val(hash_buffer_t * pbuff, char *str)
 
   return sprintf(str,
                  "state %p is associated with pentry=%p type=%u seqid=%u prev=%p next=%p",
-                 pstate, pstate->pentry, pstate->state_type, pstate->seqid, pstate->prev,
-                 pstate->next);
+                 pstate,
+                 pstate->state_pentry,
+                 pstate->state_type,
+                 pstate->state_seqid,
+                 pstate->state_prev,
+                 pstate->state_next);
 }                               /* display_state_id_val */
 
 int compare_state_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
@@ -486,7 +490,7 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
    * with NFSv4.0, the clientid is related to the stateid itself */
   if(clientid == 0LL)
     {
-      if(nfs_client_id_get(pstate2->powner->so_owner.so_nfs4_owner.so_clientid,
+      if(nfs_client_id_get(pstate2->state_powner->so_owner.so_nfs4_owner.so_clientid,
          &nfs_clientid) != CLIENT_ID_SUCCESS)
         {
           if(nfs_param.nfsv4_param.return_bad_stateid == TRUE)  /* Dirty work-around for HPC environment */

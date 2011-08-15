@@ -180,8 +180,8 @@ state_status_t state_add(cache_entry_t         * pentry,
   if(pentry->object.file.pstate_head == NULL)
     {
       /* The file has no state for now, accept this new state */
-      pnew_state->next = NULL;
-      pnew_state->prev = NULL;
+      pnew_state->state_next = NULL;
+      pnew_state->state_prev = NULL;
 
       /* Add the stateid.other, this will increment pentry->object.file.state_current_counter */
       if(!nfs4_BuildStateId_Other(pentry,
@@ -202,9 +202,9 @@ state_status_t state_add(cache_entry_t         * pentry,
       /* Set the type and data for this state */
       pnew_state->state_type = state_type;
       memcpy(&(pnew_state->state_data), pstate_data, sizeof(state_data_t));
-      pnew_state->seqid = 0;
-      pnew_state->pentry = pentry;
-      pnew_state->powner = powner;
+      pnew_state->state_seqid = 0;
+      pnew_state->state_pentry = pentry;
+      pnew_state->state_powner = powner;
 
       /* Set the head state id */
       pentry->object.file.pstate_head = (void *)pnew_state;
@@ -213,7 +213,7 @@ state_status_t state_add(cache_entry_t         * pentry,
     {
       /* Brwose the state's list */
       for(piter_state = pentry->object.file.pstate_head; piter_state != NULL;
-          piter_saved = piter_state, piter_state = piter_state->next)
+          piter_saved = piter_state, piter_state = piter_state->state_next)
         {
           if(state_conflict(piter_state, state_type, pstate_data))
             {
@@ -239,9 +239,9 @@ state_status_t state_add(cache_entry_t         * pentry,
         }
 
       /* If this point is reached, then the state is to be added to the state list and piter_saved is the tail of the list  */
-      pnew_state->next = NULL;
-      pnew_state->prev = piter_saved;
-      piter_saved->next = pnew_state;
+      pnew_state->state_next = NULL;
+      pnew_state->state_prev = piter_saved;
+      piter_saved->state_next = pnew_state;
 
       /* Add the stateid.other, this will increment pentry->object.file.state_current_counter */
       if(!nfs4_BuildStateId_Other
@@ -262,9 +262,9 @@ state_status_t state_add(cache_entry_t         * pentry,
       /* Set the type and data for this state */
       pnew_state->state_type = state_type;
       memcpy(&(pnew_state->state_data), pstate_data, sizeof(state_data_t));
-      pnew_state->seqid = 0;
-      pnew_state->pentry = pentry;
-      pnew_state->powner = powner;
+      pnew_state->state_seqid = 0;
+      pnew_state->state_pentry = pentry;
+      pnew_state->state_powner = powner;
 
       /* Set the head state id */
       pentry->object.file.pstate_tail = (void *)pnew_state;
@@ -431,7 +431,7 @@ state_status_t state_del_by_key(char                   other[12],
     }
 
   /* The state exists, locks the related pentry before operating on it */
-  pentry = pstate->pentry;
+  pentry = pstate->state_pentry;
 
   P_w(&pentry->lock);
 
@@ -439,7 +439,7 @@ state_status_t state_del_by_key(char                   other[12],
   if(pstate == pentry->object.file.pstate_head)
     {
       /* This is the first state managed */
-      if(pstate->next == NULL)
+      if(pstate->state_next == NULL)
         {
           /* I am the only remaining state, set the head counter to 0 in the pentry */
           pentry->object.file.pstate_head = NULL;
@@ -447,16 +447,16 @@ state_status_t state_del_by_key(char                   other[12],
       else
         {
           /* The state that is next to me become the new head */
-          pentry->object.file.pstate_head = (void *)pstate->next;
+          pentry->object.file.pstate_head = (void *)pstate->state_next;
         }
     }
 
   /* redo the double chained list */
-  if(pstate->next != NULL)
-    pstate->next->prev = pstate->prev;
+  if(pstate->state_next != NULL)
+    pstate->state_next->state_prev = pstate->state_prev;
 
-  if(pstate->prev != NULL)
-    pstate->prev->next = pstate->next;
+  if(pstate->state_prev != NULL)
+    pstate->state_prev->state_next = pstate->state_next;
 
   if(!memcmp((char *)pstate->stateid_other, other, 12))
     {
@@ -475,10 +475,10 @@ state_status_t state_del_by_key(char                   other[12],
 
       /* reset the pstate field to avoid later mistakes */
       memset((char *)pstate->stateid_other, 0, 12);
-      pstate->state_type = STATE_TYPE_NONE;
-      pstate->next = NULL;
-      pstate->prev = NULL;
-      pstate->pentry = NULL;
+      pstate->state_type   = STATE_TYPE_NONE;
+      pstate->state_next   = NULL;
+      pstate->state_prev   = NULL;
+      pstate->state_pentry = NULL;
 
       ReleaseToPool(pstate, &pclient->pool_state_v4);
     }
@@ -538,7 +538,7 @@ state_status_t state_del(state_t              * pstate,
     }
 
   /* The state exists, locks the related pentry before operating on it */
-  pentry = pstate->pentry;
+  pentry = pstate->state_pentry;
 
   P_w(&pentry->lock);
 
@@ -546,7 +546,7 @@ state_status_t state_del(state_t              * pstate,
   if(pstate == pentry->object.file.pstate_head)
     {
       /* This is the first state managed */
-      if(pstate->next == NULL)
+      if(pstate->state_next == NULL)
         {
           /* I am the only remaining state, set the head counter to 0 in the pentry */
           pentry->object.file.pstate_head = NULL;
@@ -554,16 +554,16 @@ state_status_t state_del(state_t              * pstate,
       else
         {
           /* The state that is next to me become the new head */
-          pentry->object.file.pstate_head = (void *)pstate->next;
+          pentry->object.file.pstate_head = (void *)pstate->state_next;
         }
     }
 
   /* redo the double chained list */
-  if(pstate->next != NULL)
-    pstate->next->prev = pstate->prev;
+  if(pstate->state_next != NULL)
+    pstate->state_next->state_prev = pstate->state_prev;
 
-  if(pstate->prev != NULL)
-    pstate->prev->next = pstate->next;
+  if(pstate->state_prev != NULL)
+    pstate->state_prev->state_next = pstate->state_next;
 
   /* Remove the entry from the HashTable */
   if(!nfs4_State_Del(pstate->stateid_other))
@@ -580,10 +580,10 @@ state_status_t state_del(state_t              * pstate,
 
   /* reset the pstate field to avoid later mistakes */
   memset((char *)pstate->stateid_other, 0, 12);
-  pstate->state_type = STATE_TYPE_NONE;
-  pstate->next = NULL;
-  pstate->prev = NULL;
-  pstate->pentry = NULL;
+  pstate->state_type   = STATE_TYPE_NONE;
+  pstate->state_next   = NULL;
+  pstate->state_prev   = NULL;
+  pstate->state_pentry = NULL;
 
   ReleaseToPool(pstate, &pclient->pool_state_v4);
 
@@ -653,11 +653,11 @@ state_status_t state_iterate(cache_entry_t         * pentry,
   else
     {
       /* Sanity check: make sure that this state is related to this pentry */
-      if(previous_pstate->pentry != pentry)
+      if(previous_pstate->state_pentry != pentry)
         {
           LogDebug(COMPONENT_STATE,
                    "Bad previous pstate: related to pentry %p, not to %p",
-                   previous_pstate->pentry, pentry);
+                   previous_pstate->state_pentry, pentry);
 
           *pstatus = STATE_STATE_ERROR;
 
@@ -666,7 +666,7 @@ state_status_t state_iterate(cache_entry_t         * pentry,
           return *pstatus;
         }
 
-      piter_state = previous_pstate->next;
+      piter_state = previous_pstate->state_next;
     }
 
   *ppstate = piter_state;
