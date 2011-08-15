@@ -347,50 +347,6 @@ int nfs4_State_Get_Pointer(char other[12], state_t * *pstate_data)
 }                               /* nfs4_State_Get_Pointer */
 
 /**
- * 
- * nfs4_State_Update
- *
- * This routine updates a state from the states's hashtable.
- *
- * @param pstate      [IN] pointer to the stateid to be checked.
- * @param pstate_data [IN] new state
- *
- * @return 1 if ok, 0 otherwise.
- * 
- */
-int nfs4_State_Update(char other[12], state_t * pstate_data)
-{
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
-
-  if(isFullDebug(COMPONENT_STATES))
-    {
-      char str[25];
-
-      sprint_mem(str, (char *)other, 12);
-      LogFullDebug(COMPONENT_STATES,
-                   "         ----- UpdateStateid : %s", str);
-    }
-
-  buffkey.pdata = (caddr_t) other;
-  buffkey.len = 12;
-
-  if(HashTable_Get(ht_state_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
-    {
-      LogFullDebug(COMPONENT_STATES,
-                   "---> nfs4_State_Update  NOT FOUND !!!!!!");
-      return 0;
-    }
-
-  memcpy(buffval.pdata, pstate_data, sizeof(state_t));
-
-  LogFullDebug(COMPONENT_STATES,
-               "---> nfs4_State_Update Found :-)");
-
-  return 1;
-}                               /* nfs4_State_Update */
-
-/**
  *
  * nfs4_State_Del
  *

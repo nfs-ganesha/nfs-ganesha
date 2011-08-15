@@ -351,46 +351,6 @@ state_status_t state_get(char                    other[12],
 
 /**
  *
- * state_update_state: update a state from the hash's state
- *
- * Updates a state from the hash's state
- *
- * @param pstate   [OUT]   pointer to the new state
- * @param pclient  [INOUT] related cache inode client
- * @param pstatus  [OUT]   returned status
- *
- * @return the same as *pstatus
- *
- */
-state_status_t state_update(state_t              * pstate,
-                            cache_inode_client_t * pclient,
-                            state_status_t       * pstatus)
-{
-  if(pstatus == NULL)
-    return STATE_INVALID_ARGUMENT;
-
-  if(pstate == NULL || pclient == NULL)
-    {
-      *pstatus = STATE_INVALID_ARGUMENT;
-      return *pstatus;
-    }
-
-  if(!nfs4_State_Update(pstate->stateid_other, pstate))
-    {
-      *pstatus = STATE_STATE_ERROR;
-
-      /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_UPDATE_STATE] += 1;
-
-      return *pstatus;
-    }
-
-  *pstatus = STATE_SUCCESS;
-  return *pstatus;
-}                               /* state_set */
-
-/**
- *
  * state_del_by_key: deletes a state from the hash's state associated with a given stateid
  *
  * Deletes a state from the hash's state

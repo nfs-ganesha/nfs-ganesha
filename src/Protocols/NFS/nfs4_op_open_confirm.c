@@ -165,12 +165,6 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
 
   /* Update the state */
   pstate_found->state_seqid += 1;
-  if(state_update(pstate_found,
-                  data->pclient, &state_status) != STATE_SUCCESS)
-    {
-      res_OPEN_CONFIRM4.status = nfs4_Errno_state(state_status);
-      return res_OPEN_CONFIRM4.status;
-    }
 
   /* Return the stateid to the client */
   res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid.seqid =

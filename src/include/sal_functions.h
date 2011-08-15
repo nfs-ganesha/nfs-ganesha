@@ -132,7 +132,6 @@ int nfs4_Init_state_id(nfs_state_id_parameter_t param);
 int nfs4_State_Set(char other[12], state_t * pstate_data);
 int nfs4_State_Get_Pointer(char other[12], state_t * *pstate_data);
 int nfs4_State_Del(char other[12]);
-int nfs4_State_Update(char other[12], state_t * pstate_data);
 void nfs_State_PrintAll(void);
 
 int nfs4_is_lease_expired(cache_entry_t * pentry);
@@ -307,10 +306,6 @@ state_status_t state_get(char                    other[12],
 state_status_t state_set(state_t              * pstate,
                          cache_inode_client_t * pclient,
                          state_status_t       * pstatus);
-
-state_status_t state_update(state_t              * pstate,
-                            cache_inode_client_t * pclient,
-                            state_status_t       * pstatus);
 
 state_status_t state_del(state_t              * pstate,
                          cache_inode_client_t * pclient,
