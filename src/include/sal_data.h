@@ -163,14 +163,14 @@ typedef struct state_nfs4_owner_t state_nfs4_owner_t;
 
 struct state_nfs4_owner_t
 {
-  clientid4 clientid;
-  unsigned int owner_len;
-  char owner_val[NFS4_OPAQUE_LIMIT];
-  unsigned int confirmed;
-  unsigned int seqid;
-  pthread_mutex_t lock;
-  uint32_t counter;                           /** < Counter is used to build unique stateids */
-  state_nfs4_owner_t *related_owner;
+  clientid4           so_clientid;
+  unsigned int        so_owner_len;
+  char                so_owner_val[NFS4_OPAQUE_LIMIT];
+  unsigned int        so_confirmed;
+  unsigned int        so_seqid;
+  pthread_mutex_t     so_mutex;
+  uint32_t            so_counter;       /** < Counter is used to build unique stateids */
+  state_nfs4_owner_t *so_related_owner;
 };
 
 /* Undistinguished lock owner type */

@@ -206,7 +206,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
            * are different types but with the same definition*/
           powner = pstate_exists->powner;
           powner_exists = pstate_exists->powner;
-          popen_owner = pstate_exists->powner->related_owner;
+          popen_owner = pstate_exists->powner->so_related_owner;
         }
 
       break;
@@ -279,13 +279,13 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       {
                         /* Overlapping lock is found, if owner is different than the calling owner, return NFS4ERR_DENIED */
                         if((pstate_exists != NULL) &&   /* all-O/all-1 stateid is considered a different owner */
-                           ((powner_exists->owner_len ==
-                             pstate_found_iterate->powner->owner_len)
+                           ((powner_exists->so_owner_len ==
+                             pstate_found_iterate->powner->so_owner_len)
                             &&
                             (!memcmp
-                             (powner_exists->owner_val,
-                              pstate_found_iterate->powner->owner_val,
-                              pstate_found_iterate->powner->owner_len))))
+                             (powner_exists->so_owner_val,
+                              pstate_found_iterate->powner->so_owner_val,
+                              pstate_found_iterate->powner->so_owner_len))))
                           {
                             /* The calling state owner is the same. There is a discussion on this case at page 161 of RFC3530. I choose to ignore this
                              * lock and continue iterating on the other states */
@@ -300,9 +300,9 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                             res_LOCK4.LOCK4res_u.denied.locktype =
                                 pstate_found_iterate->state_data.lock.lock_type;
                             res_LOCK4.LOCK4res_u.denied.owner.owner.owner_len =
-                                pstate_found_iterate->powner->owner_len;
+                                pstate_found_iterate->powner->so_owner_len;
                             res_LOCK4.LOCK4res_u.denied.owner.owner.owner_val =
-                                pstate_found_iterate->powner->owner_val;
+                                pstate_found_iterate->powner->so_owner_val;
                             res_LOCK4.status = NFS4ERR_DENIED;
                             return res_LOCK4.status;
                           }
@@ -378,18 +378,17 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       memcpy(powner_name, &owner_name, sizeof(state_open_owner_name_t));
 
       /* set up the content of the open_owner */
-      powner->confirmed = FALSE;
-      powner->seqid = 0;
-      powner->related_owner = pstate_open->powner;
-      powner->clientid = arg_LOCK4.locker.locker4_u.open_owner.lock_owner.clientid;
-      powner->owner_len =
-          arg_LOCK4.locker.locker4_u.open_owner.lock_owner.owner.owner_len;
-      memcpy((char *)powner->owner_val,
+      powner->so_confirmed     = FALSE;
+      powner->so_seqid         = 0;
+      powner->so_related_owner = pstate_open->powner;
+      powner->so_clientid      = arg_LOCK4.locker.locker4_u.open_owner.lock_owner.clientid;
+      powner->so_owner_len     = arg_LOCK4.locker.locker4_u.open_owner.lock_owner.owner.owner_len;
+      memcpy((char *)powner->so_owner_val,
              (char *)arg_LOCK4.locker.locker4_u.open_owner.lock_owner.owner.owner_val,
              arg_LOCK4.locker.locker4_u.open_owner.lock_owner.owner.owner_len);
-      powner->owner_val[powner->owner_len] = '\0';
+      powner->so_owner_val[powner->so_owner_len] = '\0';
 
-      pthread_mutex_init(&powner->lock, NULL);
+      pthread_mutex_init(&powner->so_mutex, NULL);
 
       if(!nfs_open_owner_Set(powner_name, powner))
         {

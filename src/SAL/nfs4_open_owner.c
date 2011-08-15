@@ -73,12 +73,12 @@ int display_open_owner_val(hash_buffer_t * pbuff, char *str)
 
   state_nfs4_owner_t *powner = (state_nfs4_owner_t *) (pbuff->pdata);
 
-  for(i = 0; i < powner->owner_len; i++)
-    sprintf(&(strtmp[i * 2]), "%02x", (unsigned char)powner->owner_val[i]);
+  for(i = 0; i < powner->so_owner_len; i++)
+    sprintf(&(strtmp[i * 2]), "%02x", (unsigned char)powner->so_owner_val[i]);
 
   return sprintf(str, "clientid=%llu owner=(%u|%s) confirmed=%u seqid=%u",
-                       (unsigned long long)powner->clientid, powner->owner_len, strtmp,
-                       powner->confirmed, powner->seqid);
+                       (unsigned long long)powner->so_clientid, powner->so_owner_len, strtmp,
+                       powner->so_confirmed, powner->so_seqid);
 }                               /* display_state_id_val */
 
 int compare_open_owner(hash_buffer_t * buff1, hash_buffer_t * buff2)
@@ -218,7 +218,7 @@ int nfs_open_owner_Set(state_open_owner_name_t * pname,
 
   P(open_owner_counter_lock);
   open_owner_counter += 1;
-  powner->counter = open_owner_counter;
+  powner->so_counter = open_owner_counter;
   V(open_owner_counter_lock);
 
   if(HashTable_Test_And_Set

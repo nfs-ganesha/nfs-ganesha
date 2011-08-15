@@ -147,9 +147,9 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Update the seqid for the open_owner */
-  P(pstate_found->powner->lock);
-  pstate_found->powner->seqid += 1;
-  V(pstate_found->powner->lock);
+  P(pstate_found->powner->so_mutex);
+  pstate_found->powner->so_seqid += 1;
+  V(pstate_found->powner->so_mutex);
 
   /* Prepare the result */
   res_CLOSE4.CLOSE4res_u.open_stateid.seqid = pstate_found->seqid + 1;

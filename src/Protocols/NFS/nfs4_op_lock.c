@@ -248,7 +248,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
            * are different types but with the same definition*/
           powner        = pstate_exists->powner;
           powner_exists = pstate_exists->powner;
-          popen_owner   = pstate_exists->powner->related_owner;
+          popen_owner   = pstate_exists->powner->so_related_owner;
         }
 
       break;
@@ -329,13 +329,13 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                       {
                         /* Overlapping lock is found, if owner is different than the calling owner, return NFS4ERR_DENIED */
                         if((pstate_exists != NULL) &&   /* all-O/all-1 stateid is considered a different owner */
-                           ((powner_exists->owner_len ==
-                             pstate_found_iterate->powner->owner_len)
+                           ((powner_exists->so_owner_len ==
+                             pstate_found_iterate->powner->so_owner_len)
                             &&
                             (!memcmp
-                             (powner_exists->owner_val,
-                              pstate_found_iterate->powner->owner_val,
-                              pstate_found_iterate->powner->owner_len))))
+                             (powner_exists->so_owner_val,
+                              pstate_found_iterate->powner->so_owner_val,
+                              pstate_found_iterate->powner->so_owner_len))))
                           {
                             /* The calling state owner is the same. There is a discussion on this case at page 161 of RFC3530. I choose to ignore this
                              * lock and continue iterating on the other states */
@@ -345,9 +345,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                             /* Increment seqid */
                             if(pstate_exists != NULL)
                               {
-                                P(pstate_exists->powner->lock);
-                                pstate_exists->powner->seqid += 1;
-                                V(pstate_exists->powner->lock);
+                                P(pstate_exists->powner->so_mutex);
+                                pstate_exists->powner->so_seqid += 1;
+                                V(pstate_exists->powner->so_mutex);
                               }
 
                             /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
@@ -358,9 +358,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                             res_LOCK4.LOCK4res_u.denied.locktype =
                                 pstate_found_iterate->state_data.lock.lock_type;
                             res_LOCK4.LOCK4res_u.denied.owner.owner.owner_len =
-                                pstate_found_iterate->powner->owner_len;
+                                pstate_found_iterate->powner->so_owner_len;
                             res_LOCK4.LOCK4res_u.denied.owner.owner.owner_val =
-                                pstate_found_iterate->powner->owner_val;
+                                pstate_found_iterate->powner->so_owner_val;
                             res_LOCK4.status = NFS4ERR_DENIED;
                             return res_LOCK4.status;
                           }
@@ -381,9 +381,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   if(pstate_exists != NULL)
                     {
                       /* Increment seqid */
-                      P(pstate_exists->powner->lock);
-                      pstate_exists->powner->seqid += 1;
-                      V(pstate_exists->powner->lock);
+                      P(pstate_exists->powner->so_mutex);
+                      pstate_exists->powner->so_seqid += 1;
+                      V(pstate_exists->powner->so_mutex);
                     }
 
                   /* A conflicting open state, return NFS4ERR_OPENMODE
@@ -449,8 +449,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
 
       /* Check validity of the seqid */
-      if((arg_LOCK4.locker.locker4_u.open_owner.open_seqid < popen_owner->seqid) ||
-         (arg_LOCK4.locker.locker4_u.open_owner.open_seqid > popen_owner->seqid + 2))
+      if((arg_LOCK4.locker.locker4_u.open_owner.open_seqid < popen_owner->so_seqid) ||
+         (arg_LOCK4.locker.locker4_u.open_owner.open_seqid > popen_owner->so_seqid + 2))
         {
           res_LOCK4.status = NFS4ERR_BAD_SEQID;
           return res_LOCK4.status;
@@ -500,18 +500,17 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       memcpy(powner_name, &owner_name, sizeof(state_open_owner_name_t));
 
       /* set up the content of the open_owner */
-      powner->confirmed = FALSE;
-      powner->seqid = 0;
-      powner->related_owner = pstate_open->powner;
-      powner->clientid = arg_LOCK4.locker.locker4_u.open_owner.lock_owner.clientid;
-      powner->owner_len =
-          arg_LOCK4.locker.locker4_u.open_owner.lock_owner.owner.owner_len;
-      memcpy((char *)powner->owner_val,
+      powner->so_confirmed     = FALSE;
+      powner->so_seqid         = 0;
+      powner->so_related_owner = pstate_open->powner;
+      powner->so_clientid      = arg_LOCK4.locker.locker4_u.open_owner.lock_owner.clientid;
+      powner->so_owner_len     = arg_LOCK4.locker.locker4_u.open_owner.lock_owner.owner.owner_len;
+      memcpy((char *)powner->so_owner_val,
              (char *)arg_LOCK4.locker.locker4_u.open_owner.lock_owner.owner.owner_val,
              arg_LOCK4.locker.locker4_u.open_owner.lock_owner.owner.owner_len);
-      powner->owner_val[powner->owner_len] = '\0';
+      powner->so_owner_val[powner->so_owner_len] = '\0';
 
-      pthread_mutex_init(&powner->lock, NULL);
+      pthread_mutex_init(&powner->so_mutex, NULL);
 
       if(!nfs_open_owner_Set(powner_name, powner))
         {
@@ -547,9 +546,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
              12);
 
       /* increment the open state */
-      P(pstate_open->powner->lock);
-      pstate_open->powner->seqid += 1;
-      V(pstate_open->powner->lock);
+      P(pstate_open->powner->so_mutex);
+      pstate_open->powner->so_seqid += 1;
+      V(pstate_open->powner->so_mutex);
 
       /* update the lock counter in the related open-stateid */
       pstate_open->state_data.share.lockheld += 1;
@@ -613,15 +612,15 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
              12);
 
       /* Increment the related seqid for the related popen_owner */
-      if(pstate_found->powner->related_owner != NULL)
+      if(pstate_found->powner->so_related_owner != NULL)
         {
-          P(pstate_found->powner->related_owner->lock);
-          pstate_found->powner->related_owner->seqid += 1;
-          V(pstate_found->powner->related_owner->lock);
+          P(pstate_found->powner->so_related_owner->so_mutex);
+          pstate_found->powner->so_related_owner->so_seqid += 1;
+          V(pstate_found->powner->so_related_owner->so_mutex);
         }
       else
         LogDebug(COMPONENT_NFS_V4_LOCK,
-            "/!\\ : IMPLEMENTATION ERROR File=%s Line=%u pstate_found->powner->related_owner should not be NULL",
+            "/!\\ : IMPLEMENTATION ERROR File=%s Line=%u pstate_found->powner->so_related_owner should not be NULL",
              __FILE__, __LINE__);
 
       break;
