@@ -69,16 +69,16 @@ int nlm_process_parameters(struct svc_req        * preq,
                            cache_inode_client_t  * pclient,
                            bool_t                  care,
                            state_nlm_client_t   ** ppnlm_client,
-                           state_lock_owner_t   ** ppowner,
+                           state_owner_t        ** ppowner,
                            state_block_data_t   ** ppblock_data);
 
-void nlm_process_conflict(nlm4_holder        * nlm_holder,
-                          state_lock_owner_t * holder,
-                          state_lock_desc_t  * conflict);
+void nlm_process_conflict(nlm4_holder       * nlm_holder,
+                          state_owner_t     * holder,
+                          state_lock_desc_t * conflict);
 
 nlm4_stats nlm_convert_state_error(state_status_t status);
 
-state_status_t nlm_granted_callback(cache_entry_t              * pentry,
+state_status_t nlm_granted_callback(cache_entry_t        * pentry,
                                     state_lock_entry_t   * lock_entry,
                                     cache_inode_client_t * pclient,
                                     state_status_t       * pstatus);

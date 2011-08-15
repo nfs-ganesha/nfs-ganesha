@@ -309,7 +309,7 @@ int nlm_process_parameters(struct svc_req        * preq,
                            cache_inode_client_t  * pclient,
                            bool_t                  care,
                            state_nlm_client_t   ** ppnlm_client,
-                           state_lock_owner_t   ** ppowner,
+                           state_owner_t        ** ppowner,
                            state_block_data_t   ** ppblock_data)
 {
   cache_inode_fsal_data_t fsal_data;
@@ -414,9 +414,9 @@ int nlm_process_parameters(struct svc_req        * preq,
   return -1;
 }
 
-void nlm_process_conflict(nlm4_holder        * nlm_holder,
-                          state_lock_owner_t * holder,
-                          state_lock_desc_t  * conflict)
+void nlm_process_conflict(nlm4_holder       * nlm_holder,
+                          state_owner_t     * holder,
+                          state_lock_desc_t * conflict)
 {
   if(conflict != NULL)
     {
@@ -435,12 +435,12 @@ void nlm_process_conflict(nlm4_holder        * nlm_holder,
       nlm_holder->l_len     = 0;
     }
 
-  if(holder != NULL && holder->slo_type == STATE_LOCK_OWNER_NLM)
+  if(holder != NULL && holder->so_type == STATE_LOCK_OWNER_NLM)
     {
-      nlm_holder->svid = holder->slo_owner.slo_nlm_owner.slo_nlm_svid;
+      nlm_holder->svid = holder->so_owner.so_nlm_owner.so_nlm_svid;
       fill_netobj(&nlm_holder->oh,
-                  holder->slo_owner.slo_nlm_owner.slo_nlm_oh,
-                  holder->slo_owner.slo_nlm_owner.slo_nlm_oh_len);
+                  holder->so_owner.so_nlm_owner.so_nlm_oh,
+                  holder->so_owner.so_nlm_owner.so_nlm_oh_len);
     }
   else
     {
@@ -551,8 +551,8 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
   state_cookie_entry_t   * cookie_entry;
   nlm_async_queue_t      * arg;
   nlm4_testargs          * inarg;
-  state_nlm_owner_t      * nlm_grant_owner  = &lock_entry->sle_owner->slo_owner.slo_nlm_owner;
-  state_nlm_client_t     * nlm_grant_client = nlm_grant_owner->slo_client;
+  state_nlm_owner_t      * nlm_grant_owner  = &lock_entry->sle_owner->so_owner.so_nlm_owner;
+  state_nlm_client_t     * nlm_grant_client = nlm_grant_owner->so_client;
   granted_cookie_t         nlm_grant_cookie;
 
   if(nlm_block_data_to_fsal_context(nlm_block_data, &fsal_context) != TRUE)
@@ -604,8 +604,8 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
     goto grant_fail;
 
   if(!fill_netobj(&inarg->alock.oh,
-                  nlm_grant_owner->slo_nlm_oh,
-                  nlm_grant_owner->slo_nlm_oh_len))
+                  nlm_grant_owner->so_nlm_oh,
+                  nlm_grant_owner->so_nlm_oh_len))
     goto grant_fail;
 
   if(!fill_netobj(&inarg->cookie,
@@ -618,7 +618,7 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
     goto grant_fail;
 
   inarg->exclusive      = lock_entry->sle_lock.sld_type == STATE_LOCK_W;
-  inarg->alock.svid     = nlm_grant_owner->slo_nlm_svid;
+  inarg->alock.svid     = nlm_grant_owner->so_nlm_svid;
   inarg->alock.l_offset = lock_entry->sle_lock.sld_offset;
   inarg->alock.l_len    = lock_entry->sle_lock.sld_length;
   if(isDebug(COMPONENT_NLM))

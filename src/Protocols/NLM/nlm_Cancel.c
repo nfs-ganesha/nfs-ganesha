@@ -61,14 +61,14 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
                 struct svc_req *preq /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ )
 {
-  nlm4_cancargs            * arg = &parg->arg_nlm4_cancel;
-  cache_entry_t            * pentry;
-  state_status_t             state_status = STATE_SUCCESS;
-  char                       buffer[MAXNETOBJ_SZ * 2];
-  state_nlm_client_t       * nlm_client;
-  state_lock_owner_t       * nlm_owner;
-  state_lock_desc_t          lock;
-  int                        rc;
+  nlm4_cancargs       * arg = &parg->arg_nlm4_cancel;
+  cache_entry_t       * pentry;
+  state_status_t        state_status = STATE_SUCCESS;
+  char                  buffer[MAXNETOBJ_SZ * 2];
+  state_nlm_client_t  * nlm_client;
+  state_owner_t       * nlm_owner;
+  state_lock_desc_t     lock;
+  int                   rc;
 
   netobj_to_string(&arg->cookie, buffer, 1024);
   LogDebug(COMPONENT_NLM,

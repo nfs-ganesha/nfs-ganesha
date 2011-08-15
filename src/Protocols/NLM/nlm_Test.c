@@ -66,7 +66,7 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
   state_status_t       state_status = CACHE_INODE_SUCCESS;
   char                 buffer[MAXNETOBJ_SZ * 2];
   state_nlm_client_t * nlm_client;
-  state_lock_owner_t * nlm_owner, * holder;
+  state_owner_t      * nlm_owner, * holder;
   state_lock_desc_t    lock, conflict;
   int                  rc;
 

@@ -61,15 +61,15 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
               struct svc_req       * preq     /* IN     */ ,
               nfs_res_t            * pres     /* OUT    */ )
 {
-  nlm4_lockargs        * arg = &parg->arg_nlm4_lock;
-  cache_entry_t        * pentry;
-  state_status_t         state_status = CACHE_INODE_SUCCESS;
-  char                   buffer[MAXNETOBJ_SZ * 2];
-  state_nlm_client_t   * nlm_client;
-  state_lock_owner_t   * nlm_owner, * holder;
-  state_lock_desc_t      lock, conflict;
-  int                    rc;
-  state_block_data_t   * pblock_data;
+  nlm4_lockargs      * arg = &parg->arg_nlm4_lock;
+  cache_entry_t      * pentry;
+  state_status_t       state_status = CACHE_INODE_SUCCESS;
+  char                 buffer[MAXNETOBJ_SZ * 2];
+  state_nlm_client_t * nlm_client;
+  state_owner_t      * nlm_owner, * holder;
+  state_lock_desc_t    lock, conflict;
+  int                  rc;
+  state_block_data_t * pblock_data;
 
   netobj_to_string(&arg->cookie, buffer, 1024);
   LogDebug(COMPONENT_NLM,

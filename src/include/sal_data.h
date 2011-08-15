@@ -131,14 +131,14 @@ typedef struct state_open_owner_name__
   char owner_val[MAXNAMLEN];
 } state_open_owner_name_t;
 
-typedef enum state_lock_owner_type_t
+typedef enum state_owner_type_t
 {
   STATE_LOCK_OWNER_UNKNOWN,
 #ifdef _USE_NLM
   STATE_LOCK_OWNER_NLM,
 #endif
   STATE_LOCK_OWNER_NFSV4
-} state_lock_owner_type_t;
+} state_owner_type_t;
 
 #ifdef _USE_NLM
 typedef struct state_nlm_client_t
@@ -152,10 +152,10 @@ typedef struct state_nlm_client_t
 
 typedef struct state_nlm_owner_t
 {
-  state_nlm_client_t * slo_client;
-  int32_t              slo_nlm_svid;
-  int                  slo_nlm_oh_len;
-  char                 slo_nlm_oh[MAX_NETOBJ_SZ];
+  state_nlm_client_t * so_client;
+  int32_t              so_nlm_svid;
+  int                  so_nlm_oh_len;
+  char                 so_nlm_oh[MAX_NETOBJ_SZ];
 } state_nlm_owner_t;
 #endif
 
@@ -172,20 +172,20 @@ typedef struct state_open_owner__
 } state_open_owner_t;
 
 /* Undistinguished lock owner type */
-typedef struct state_lock_owner_t
+typedef struct state_owner_t
 {
-  state_lock_owner_type_t slo_type;
-  struct glist_head       slo_lock_list;
-  pthread_mutex_t         slo_mutex;
-  int                     slo_refcount;
+  state_owner_type_t      so_type;
+  struct glist_head       so_lock_list;
+  pthread_mutex_t         so_mutex;
+  int                     so_refcount;
   union
   {
-    state_open_owner_t    slo_open_owner;
+    state_open_owner_t    so_open_owner;
 #ifdef _USE_NLM
-    state_nlm_owner_t     slo_nlm_owner;
+    state_nlm_owner_t     so_nlm_owner;
 #endif
-  } slo_owner;
-} state_lock_owner_t;
+  } so_owner;
+} state_owner_t;
 
 typedef union state_data_t
 {
@@ -322,23 +322,23 @@ typedef struct state_block_data_t
 
 struct state_lock_entry_t
 {
-  struct glist_head             sle_list;
-  struct glist_head             sle_owner_locks;
+  struct glist_head      sle_list;
+  struct glist_head      sle_owner_locks;
 #ifdef _USE_NLM
-  struct glist_head             sle_client_locks;
+  struct glist_head      sle_client_locks;
 #endif
 #ifdef _DEBUG_MEMLEAKS
-  struct glist_head             sle_all_locks;
+  struct glist_head      sle_all_locks;
 #endif
-  int                           sle_ref_count;
-  unsigned long long            sle_fileid;
-  cache_entry_t               * sle_pentry;
-  state_blocking_t              sle_blocked;
-  state_block_data_t          * sle_block_data;
-  state_lock_owner_t          * sle_owner;
-  state_t                     * sle_state;
-  state_lock_desc_t             sle_lock;
-  pthread_mutex_t               sle_mutex;
+  int                    sle_ref_count;
+  unsigned long long     sle_fileid;
+  cache_entry_t        * sle_pentry;
+  state_blocking_t       sle_blocked;
+  state_block_data_t   * sle_block_data;
+  state_owner_t        * sle_owner;
+  state_t              * sle_state;
+  state_lock_desc_t      sle_lock;
+  pthread_mutex_t        sle_mutex;
 };
 
 #ifdef _USE_NLM

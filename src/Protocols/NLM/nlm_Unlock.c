@@ -66,7 +66,7 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
   state_status_t       state_status = CACHE_INODE_SUCCESS;
   char                 buffer[MAXNETOBJ_SZ * 2];
   state_nlm_client_t * nlm_client;
-  state_lock_owner_t * nlm_owner;
+  state_owner_t      * nlm_owner;
   state_lock_desc_t    lock;
   int                  rc;
 

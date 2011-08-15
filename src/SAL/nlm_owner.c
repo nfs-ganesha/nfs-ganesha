@@ -132,7 +132,7 @@ unsigned long nlm_client_value_hash_func(hash_parameter_t * p_hparam,
 
   return (unsigned long)(res % p_hparam->index_size);
 
-}                               /* nlm_slo_nlm_ohue_hash_func */
+}                               /* nlm_so_nlm_ohue_hash_func */
 
 unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
                                       hash_buffer_t * buffclef)
@@ -154,7 +154,7 @@ unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
   return res;
 }                               /* state_id_rbt_hash_func */
 
-int display_nlm_owner(state_lock_owner_t *pkey, char *str)
+int display_nlm_owner(state_owner_t *pkey, char *str)
 {
   unsigned int i = 0;
   char *strtmp = str;
@@ -162,32 +162,32 @@ int display_nlm_owner(state_lock_owner_t *pkey, char *str)
   if(pkey == NULL)
     return sprintf(str, "<NULL>");
 
-  strtmp += display_nlm_client(pkey->slo_owner.slo_nlm_owner.slo_client, str);
+  strtmp += display_nlm_client(pkey->so_owner.so_nlm_owner.so_client, str);
 
-  strtmp += sprintf(strtmp, " oh=(%u|", pkey->slo_owner.slo_nlm_owner.slo_nlm_oh_len);
+  strtmp += sprintf(strtmp, " oh=(%u|", pkey->so_owner.so_nlm_owner.so_nlm_oh_len);
 
-  for(i = 0; i < pkey->slo_owner.slo_nlm_owner.slo_nlm_oh_len; i++)
+  for(i = 0; i < pkey->so_owner.so_nlm_owner.so_nlm_oh_len; i++)
     {
-      sprintf(strtmp, "%02x", (unsigned char)pkey->slo_owner.slo_nlm_owner.slo_nlm_oh[i]);
+      sprintf(strtmp, "%02x", (unsigned char)pkey->so_owner.so_nlm_owner.so_nlm_oh[i]);
       strtmp += 2;
     }
 
-  strtmp += sprintf(strtmp, ") svid=%d", pkey->slo_owner.slo_nlm_owner.slo_nlm_svid);
+  strtmp += sprintf(strtmp, ") svid=%d", pkey->so_owner.so_nlm_owner.so_nlm_svid);
   return strlen(str);
 }
 
 int display_nlm_owner_key(hash_buffer_t * pbuff, char *str)
 {
-  return display_nlm_owner((state_lock_owner_t *)pbuff->pdata, str);
+  return display_nlm_owner((state_owner_t *)pbuff->pdata, str);
 }
 
 int display_nlm_owner_val(hash_buffer_t * pbuff, char *str)
 {
-  return display_nlm_owner((state_lock_owner_t *)pbuff->pdata, str);
+  return display_nlm_owner((state_owner_t *)pbuff->pdata, str);
 }
 
-int compare_nlm_owner(state_lock_owner_t *powner1,
-                      state_lock_owner_t *powner2)
+int compare_nlm_owner(state_owner_t *powner1,
+                      state_owner_t *powner2)
 {
   if(isFullDebug(COMPONENT_STATE))
     {
@@ -206,32 +206,32 @@ int compare_nlm_owner(state_lock_owner_t *powner1,
   if(powner1 == powner2)
     return 0;
 
-  if(compare_nlm_client(powner1->slo_owner.slo_nlm_owner.slo_client,
-                        powner2->slo_owner.slo_nlm_owner.slo_client) != 0)
+  if(compare_nlm_client(powner1->so_owner.so_nlm_owner.so_client,
+                        powner2->so_owner.so_nlm_owner.so_client) != 0)
     return 1;
 
   /* Handle special owner that matches any lock owner with the same nlm client */
-  if(powner1->slo_owner.slo_nlm_owner.slo_nlm_oh_len == -1 ||
-     powner2->slo_owner.slo_nlm_owner.slo_nlm_oh_len == -1)
+  if(powner1->so_owner.so_nlm_owner.so_nlm_oh_len == -1 ||
+     powner2->so_owner.so_nlm_owner.so_nlm_oh_len == -1)
     return 0;
 
-  if(powner1->slo_owner.slo_nlm_owner.slo_nlm_svid !=
-     powner2->slo_owner.slo_nlm_owner.slo_nlm_svid)
+  if(powner1->so_owner.so_nlm_owner.so_nlm_svid !=
+     powner2->so_owner.so_nlm_owner.so_nlm_svid)
     return 1;
 
-  if(powner1->slo_owner.slo_nlm_owner.slo_nlm_oh_len !=
-     powner2->slo_owner.slo_nlm_owner.slo_nlm_oh_len)
+  if(powner1->so_owner.so_nlm_owner.so_nlm_oh_len !=
+     powner2->so_owner.so_nlm_owner.so_nlm_oh_len)
     return 1;
 
-  return memcmp(powner1->slo_owner.slo_nlm_owner.slo_nlm_oh,
-                powner2->slo_owner.slo_nlm_owner.slo_nlm_oh,
-                powner1->slo_owner.slo_nlm_owner.slo_nlm_oh_len);
+  return memcmp(powner1->so_owner.so_nlm_owner.so_nlm_oh,
+                powner2->so_owner.so_nlm_owner.so_nlm_oh,
+                powner1->so_owner.so_nlm_owner.so_nlm_oh_len);
 }
 
 int compare_nlm_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  return compare_nlm_owner((state_lock_owner_t *)buff1->pdata,
-                           (state_lock_owner_t *)buff2->pdata);
+  return compare_nlm_owner((state_owner_t *)buff1->pdata,
+                           (state_owner_t *)buff2->pdata);
 
 }                               /* compare_nlm_owner */
 
@@ -241,22 +241,22 @@ unsigned long nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  state_lock_owner_t *pkey = (state_lock_owner_t *)buffclef->pdata;
+  state_owner_t *pkey = (state_owner_t *)buffclef->pdata;
 
   /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->slo_owner.slo_nlm_owner.slo_nlm_oh_len; i++)
-    sum += (unsigned char)pkey->slo_owner.slo_nlm_owner.slo_nlm_oh[i];
+  for(i = 0; i < pkey->so_owner.so_nlm_owner.so_nlm_oh_len; i++)
+    sum += (unsigned char)pkey->so_owner.so_nlm_owner.so_nlm_oh[i];
 
-  res = (unsigned long) (pkey->slo_owner.slo_nlm_owner.slo_nlm_svid) +
+  res = (unsigned long) (pkey->so_owner.so_nlm_owner.so_nlm_svid) +
         (unsigned long) sum +
-        (unsigned long) pkey->slo_owner.slo_nlm_owner.slo_nlm_oh_len;
+        (unsigned long) pkey->so_owner.so_nlm_owner.so_nlm_oh_len;
 
   LogFullDebug(COMPONENT_STATE,
                "---> rbt_hash_val = %lu", res % p_hparam->index_size);
 
   return (unsigned long)(res % p_hparam->index_size);
 
-}                               /* nlm_slo_nlm_ohue_hash_func */
+}                               /* nlm_so_nlm_ohue_hash_func */
 
 unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                       hash_buffer_t * buffclef)
@@ -264,15 +264,15 @@ unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
   unsigned int sum = 0;
   unsigned int i;
   unsigned long res;
-  state_lock_owner_t *pkey = (state_lock_owner_t *)buffclef->pdata;
+  state_owner_t *pkey = (state_owner_t *)buffclef->pdata;
 
   /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->slo_owner.slo_nlm_owner.slo_nlm_oh_len; i++)
-    sum += (unsigned char)pkey->slo_owner.slo_nlm_owner.slo_nlm_oh[i];
+  for(i = 0; i < pkey->so_owner.so_nlm_owner.so_nlm_oh_len; i++)
+    sum += (unsigned char)pkey->so_owner.so_nlm_owner.so_nlm_oh[i];
 
-  res = (unsigned long) (pkey->slo_owner.slo_nlm_owner.slo_nlm_svid) +
+  res = (unsigned long) (pkey->so_owner.so_nlm_owner.so_nlm_svid) +
         (unsigned long) sum +
-        (unsigned long) pkey->slo_owner.slo_nlm_owner.slo_nlm_oh_len;
+        (unsigned long) pkey->so_owner.so_nlm_owner.so_nlm_oh_len;
 
   LogFullDebug(COMPONENT_STATE, "---> rbt_hash_func = %lu", res);
 
@@ -576,8 +576,8 @@ state_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name)
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nlm_owner_Set(state_lock_owner_t * pkey,
-                  state_lock_owner_t * powner)
+int nlm_owner_Set(state_owner_t * pkey,
+                  state_owner_t * powner)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -611,44 +611,44 @@ int nlm_owner_Set(state_lock_owner_t * pkey,
 static int Hash_del_nlm_owner_ref(hash_buffer_t *buffval)
 {
   int rc;
-  state_lock_owner_t *powner = (state_lock_owner_t *)(buffval->pdata);
+  state_owner_t *powner = (state_owner_t *)(buffval->pdata);
 
-  P(powner->slo_mutex);
+  P(powner->so_mutex);
 
-  powner->slo_refcount--;
-  rc = powner->slo_refcount;
+  powner->so_refcount--;
+  rc = powner->so_refcount;
 
-  V(powner->slo_mutex);  
+  V(powner->so_mutex);  
 
   return rc;
 }
 
 static void Hash_inc_owner_ref(hash_buffer_t *buffval)
 {
-  state_lock_owner_t *powner = (state_lock_owner_t *)(buffval->pdata);
+  state_owner_t *powner = (state_owner_t *)(buffval->pdata);
 
-  P(powner->slo_mutex);
-  powner->slo_refcount++;
-  V(powner->slo_mutex);  
+  P(powner->so_mutex);
+  powner->so_refcount++;
+  V(powner->so_mutex);  
 }
 
-void inc_nlm_owner_ref(state_lock_owner_t *powner)
+void inc_nlm_owner_ref(state_owner_t *powner)
 {
-  P(powner->slo_mutex);
-  powner->slo_refcount++;
-  V(powner->slo_mutex);
+  P(powner->so_mutex);
+  powner->so_refcount++;
+  V(powner->so_mutex);
 }
 
-void dec_nlm_owner_ref(state_lock_owner_t *powner)
+void dec_nlm_owner_ref(state_owner_t *powner)
 {
   bool_t remove = FALSE;
 
-  P(powner->slo_mutex);
-  if(powner->slo_refcount > 1)
-    powner->slo_refcount--;
+  P(powner->so_mutex);
+  if(powner->so_refcount > 1)
+    powner->so_refcount--;
   else
     remove = TRUE;
-  V(powner->slo_mutex);
+  V(powner->so_mutex);
   if(remove)
     {
       hash_buffer_t buffkey, old_key, old_value;
@@ -659,7 +659,7 @@ void dec_nlm_owner_ref(state_lock_owner_t *powner)
       switch(HashTable_DelRef(ht_nlm_owner, &buffkey, &old_key, &old_value, Hash_del_nlm_owner_ref))
         {
           case HASHTABLE_SUCCESS:
-            dec_nlm_client_ref(powner->slo_owner.slo_nlm_owner.slo_client);
+            dec_nlm_client_ref(powner->so_owner.so_nlm_owner.so_client);
             Mem_Free(old_key.pdata);
             Mem_Free(old_value.pdata);
             break;
@@ -689,8 +689,8 @@ void dec_nlm_owner_ref(state_lock_owner_t *powner)
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nlm_owner_Get_Pointer(state_lock_owner_t * pkey,
-                          state_lock_owner_t * *powner)
+int nlm_owner_Get_Pointer(state_owner_t  * pkey,
+                          state_owner_t ** powner)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -714,7 +714,7 @@ int nlm_owner_Get_Pointer(state_lock_owner_t * pkey,
       return 0;
     }
 
-  *powner = (state_lock_owner_t *) buffval.pdata;
+  *powner = (state_owner_t *) buffval.pdata;
 
   LogFullDebug(COMPONENT_STATE,
                "nlm_owner_Get_Pointer => FOUND");
@@ -736,17 +736,17 @@ void nlm_owner_PrintAll(void)
   HashTable_Log(COMPONENT_STATE, ht_nlm_owner);
 }                               /* nlm_owner_PrintAll */
 
-state_lock_owner_t *get_nlm_owner(bool_t               care,
-                                  state_nlm_client_t * pclient, 
-                                  netobj             * oh,
-                                  uint32_t             svid)
+state_owner_t *get_nlm_owner(bool_t               care,
+                             state_nlm_client_t * pclient, 
+                             netobj             * oh,
+                             uint32_t             svid)
 {
-  state_lock_owner_t *pkey, *powner;
+  state_owner_t *pkey, *powner;
 
   if(pclient == NULL || oh == NULL || oh->n_len > MAX_NETOBJ_SZ)
     return NULL;
 
-  pkey = (state_lock_owner_t *)Mem_Alloc(sizeof(*pkey));
+  pkey = (state_owner_t *)Mem_Alloc(sizeof(*pkey));
   if(pkey == NULL)
     return NULL;
 
@@ -763,12 +763,12 @@ state_lock_owner_t *get_nlm_owner(bool_t               care,
                    "get_nlm_owner pclient=%s", str);
     }
 
-  pkey->slo_type     = STATE_LOCK_OWNER_NLM;
-  pkey->slo_refcount = 1;
-  pkey->slo_owner.slo_nlm_owner.slo_client     = pclient;
-  pkey->slo_owner.slo_nlm_owner.slo_nlm_svid   = svid;
-  pkey->slo_owner.slo_nlm_owner.slo_nlm_oh_len = oh->n_len;
-  memcpy(pkey->slo_owner.slo_nlm_owner.slo_nlm_oh,
+  pkey->so_type     = STATE_LOCK_OWNER_NLM;
+  pkey->so_refcount = 1;
+  pkey->so_owner.so_nlm_owner.so_client     = pclient;
+  pkey->so_owner.so_nlm_owner.so_nlm_svid   = svid;
+  pkey->so_owner.so_nlm_owner.so_nlm_oh_len = oh->n_len;
+  memcpy(pkey->so_owner.so_nlm_owner.so_nlm_oh,
          oh->n_bytes,
          oh->n_len);
 
@@ -799,7 +799,7 @@ state_lock_owner_t *get_nlm_owner(bool_t               care,
       return powner;
     }
     
-  powner = (state_lock_owner_t *)Mem_Alloc(sizeof(*pkey));
+  powner = (state_owner_t *)Mem_Alloc(sizeof(*pkey));
   if(powner == NULL)
     {
       Mem_Free(pkey);
@@ -808,9 +808,9 @@ state_lock_owner_t *get_nlm_owner(bool_t               care,
 
   /* Copy everything over */
   *powner = *pkey;
-  init_glist(&powner->slo_lock_list);
+  init_glist(&powner->so_lock_list);
 
-  if(pthread_mutex_init(&powner->slo_mutex, NULL) == -1)
+  if(pthread_mutex_init(&powner->so_mutex, NULL) == -1)
     {
       /* Mutex initialization failed, free the key and created owner */
       Mem_Free(pkey);
@@ -838,7 +838,7 @@ state_lock_owner_t *get_nlm_owner(bool_t               care,
 }
 
 void make_nlm_special_owner(state_nlm_client_t * pclient,
-                            state_lock_owner_t * pnlm_owner)
+                            state_owner_t      * pnlm_owner)
 {
   if(pnlm_owner == NULL)
     return;
@@ -847,8 +847,8 @@ void make_nlm_special_owner(state_nlm_client_t * pclient,
 
   inc_nlm_client_ref(pclient);
 
-  pnlm_owner->slo_type     = STATE_LOCK_OWNER_NLM;
-  pnlm_owner->slo_refcount = 1;
-  pnlm_owner->slo_owner.slo_nlm_owner.slo_client     = pclient;
-  pnlm_owner->slo_owner.slo_nlm_owner.slo_nlm_oh_len = -1;
+  pnlm_owner->so_type     = STATE_LOCK_OWNER_NLM;
+  pnlm_owner->so_refcount = 1;
+  pnlm_owner->so_owner.so_nlm_owner.so_client     = pclient;
+  pnlm_owner->so_owner.so_nlm_owner.so_nlm_oh_len = -1;
 }

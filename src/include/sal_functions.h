@@ -84,14 +84,14 @@ unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
 state_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name);
 void nlm_client_PrintAll(void);
 
-void inc_nlm_owner_ref(state_lock_owner_t * powner);
-void dec_nlm_owner_ref(state_lock_owner_t * powner);
-int display_nlm_owner(state_lock_owner_t * pkey, char * str);
+void inc_nlm_owner_ref(state_owner_t * powner);
+void dec_nlm_owner_ref(state_owner_t * powner);
+int display_nlm_owner(state_owner_t * pkey, char * str);
 int display_nlm_owner_val(hash_buffer_t * pbuff, char * str);
 int display_nlm_owner_key(hash_buffer_t * pbuff, char * str);
 
-int compare_nlm_owner(state_lock_owner_t * pkey1,
-                      state_lock_owner_t * pkey2);
+int compare_nlm_owner(state_owner_t * pkey1,
+                      state_owner_t * pkey2);
 
 int compare_nlm_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
@@ -102,12 +102,12 @@ unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                       hash_buffer_t    * buffclef);
 
 void make_nlm_special_owner(state_nlm_client_t * pclient,
-                            state_lock_owner_t * pnlm_owner);
+                            state_owner_t      * pnlm_owner);
 
-state_lock_owner_t *get_nlm_owner(bool_t               care,
-                                  state_nlm_client_t * pclient, 
-                                  netobj             * oh,
-                                  uint32_t             svid);
+state_owner_t *get_nlm_owner(bool_t               care,
+                             state_nlm_client_t * pclient, 
+                             netobj             * oh,
+                             uint32_t             svid);
 void nlm_owner_PrintAll(void);
 
 int Init_nlm_hash(hash_parameter_t client_param, hash_parameter_t owner_param);
@@ -233,32 +233,32 @@ state_status_t state_release_grant(fsal_op_context_t    * pcontext,
  * lock holder being returned.
  */
  
-void state_release_lock_owner(state_lock_owner_t *powner);
+void state_release_lock_owner(state_owner_t *powner);
 
 state_status_t state_test(cache_entry_t        * pentry,
                           fsal_op_context_t    * pcontext,
-                          state_lock_owner_t   * powner,
+                          state_owner_t        * powner,
                           state_lock_desc_t    * plock,
-                          state_lock_owner_t  ** holder,   /* owner that holds conflicting lock */
+                          state_owner_t       ** holder,   /* owner that holds conflicting lock */
                           state_lock_desc_t    * conflict, /* description of conflicting lock */
                           cache_inode_client_t * pclient,
                           state_status_t       * pstatus);
 
 state_status_t state_lock(cache_entry_t         * pentry,
                           fsal_op_context_t     * pcontext,
-                          state_lock_owner_t    * powner,
+                          state_owner_t         * powner,
                           state_t               * pstate,
                           state_blocking_t        blocking,
                           state_block_data_t    * block_data,
                           state_lock_desc_t     * plock,
-                          state_lock_owner_t   ** holder,   /* owner that holds conflicting lock */
+                          state_owner_t        ** holder,   /* owner that holds conflicting lock */
                           state_lock_desc_t     * conflict, /* description of conflicting lock */
                           cache_inode_client_t  * pclient,
                           state_status_t        * pstatus);
 
 state_status_t state_unlock(cache_entry_t        * pentry,
                             fsal_op_context_t    * pcontext,
-                            state_lock_owner_t   * powner,
+                            state_owner_t        * powner,
                             state_t              * pstate,
                             state_lock_desc_t    * plock,
                             cache_inode_client_t * pclient,
@@ -266,7 +266,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
 
 state_status_t state_cancel(cache_entry_t        * pentry,
                             fsal_op_context_t    * pcontext,
-                            state_lock_owner_t   * powner,
+                            state_owner_t        * powner,
                             state_lock_desc_t    * plock,
                             cache_inode_client_t * pclient,
                             state_status_t       * pstatus);
@@ -279,7 +279,7 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
 #endif
 
 state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
-                                      state_lock_owner_t   * powner,
+                                      state_owner_t        * powner,
                                       state_t              * pstate,
                                       cache_inode_client_t * pclient,
                                       state_status_t       * pstatus);

@@ -80,7 +80,7 @@ static struct glist_head state_all_locks;
 pthread_mutex_t all_locks_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
-state_lock_owner_t unknown_owner;
+state_owner_t unknown_owner;
 
 #ifdef _USE_NLM
 hash_table_t *ht_lock_cookies;
@@ -96,11 +96,11 @@ state_status_t state_lock_init(state_status_t * pstatus)
   *pstatus = STATE_SUCCESS;
 
   memset(&unknown_owner, 0, sizeof(unknown_owner));
-  unknown_owner.slo_type     = STATE_LOCK_OWNER_UNKNOWN;
-  unknown_owner.slo_refcount = 1;
-  init_glist(&unknown_owner.slo_lock_list);
+  unknown_owner.so_type     = STATE_LOCK_OWNER_UNKNOWN;
+  unknown_owner.so_refcount = 1;
+  init_glist(&unknown_owner.so_lock_list);
 
-  if(pthread_mutex_init(&unknown_owner.slo_mutex, NULL) == -1)
+  if(pthread_mutex_init(&unknown_owner.so_mutex, NULL) == -1)
     {
       *pstatus = STATE_INIT_ENTRY_FAILED;
       return *pstatus;
@@ -126,9 +126,9 @@ state_status_t state_lock_init(state_status_t * pstatus)
 state_status_t do_lock_op(cache_entry_t        * pentry,
                           fsal_op_context_t    * pcontext,
                           fsal_lock_op_t         lock_op,
-                          state_lock_owner_t   * powner,
+                          state_owner_t        * powner,
                           state_lock_desc_t    * plock,
-                          state_lock_owner_t  ** holder,    /* owner that holds conflicting lock */
+                          state_owner_t       ** holder,    /* owner that holds conflicting lock */
                           state_lock_desc_t    * conflict,  /* description of conflicting lock */
                           bool_t                 overlap);  /* hint that requested lock overlaps existing */
 
@@ -137,12 +137,12 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
  * Functions to display various aspects of a lock
  *
  ******************************************************************************/
-int DisplayOwner(state_lock_owner_t *powner, char *buf)
+int DisplayOwner(state_owner_t *powner, char *buf)
 {
   char *tmp = buf;
 
   if(powner != NULL)
-    switch(powner->slo_type)
+    switch(powner->so_type)
       {
 #ifdef _USE_NLM
         case STATE_LOCK_OWNER_NLM:
@@ -234,16 +234,16 @@ int display_lock_cookie(const char *cookie, int len, char *str)
  ******************************************************************************/
 
 /* This is not complete, it doesn't check the owner's IP address...*/
-static inline int different_owners(state_lock_owner_t *powner1, state_lock_owner_t *powner2)
+static inline int different_owners(state_owner_t *powner1, state_owner_t *powner2)
 {
   /* Shortcut in case we actually are pointing to the same owner structure */
   if(powner1 == powner2)
     return 0;
 
-  if(powner1->slo_type != powner2->slo_type)
+  if(powner1->so_type != powner2->so_type)
     return 1;
 
-  switch(powner1->slo_type)
+  switch(powner1->so_type)
     {
 #ifdef _USE_NLM
       case STATE_LOCK_OWNER_NLM:
@@ -320,11 +320,11 @@ static void LogList(const char        * reason,
     }
 }
 
-static void LogLock(const char         *reason, 
-                    cache_entry_t      *pentry,
-                    fsal_op_context_t  *pcontext,
-                    state_lock_owner_t *powner,
-                    state_lock_desc_t  *plock)
+static void LogLock(const char         * reason, 
+                    cache_entry_t      * pentry,
+                    fsal_op_context_t  * pcontext,
+                    state_owner_t      * powner,
+                    state_lock_desc_t  * plock)
 {
   if(isFullDebug(COMPONENT_STATE))
     {
@@ -440,9 +440,9 @@ void dump_all_locks(void)
  * Functions to manage lock entries and lock list
  *
  ******************************************************************************/
-void state_release_lock_owner(state_lock_owner_t *powner)
+void state_release_lock_owner(state_owner_t *powner)
 {
-  switch(powner->slo_type)
+  switch(powner->so_type)
     {
 #ifdef _USE_NLM
       case STATE_LOCK_OWNER_NLM:
@@ -453,16 +453,16 @@ void state_release_lock_owner(state_lock_owner_t *powner)
       case STATE_LOCK_OWNER_NFSV4:
         // TODO FSF: will eventually call dec_open_owner_ref
       case STATE_LOCK_OWNER_UNKNOWN:
-        P(powner->slo_mutex);
-        powner->slo_refcount--;
-        V(powner->slo_mutex);
+        P(powner->so_mutex);
+        powner->so_refcount--;
+        V(powner->so_mutex);
         break;
     }
 }
 
-void get_lock_owner(state_lock_owner_t *powner)
+void get_lock_owner(state_owner_t *powner)
 {
-  switch(powner->slo_type)
+  switch(powner->so_type)
     {
 #ifdef _USE_NLM
       case STATE_LOCK_OWNER_NLM:
@@ -473,9 +473,9 @@ void get_lock_owner(state_lock_owner_t *powner)
       case STATE_LOCK_OWNER_NFSV4:
         // TODO FSF: will eventually call inc_open_owner_ref
       case STATE_LOCK_OWNER_UNKNOWN:
-        P(powner->slo_mutex);
-        powner->slo_refcount++;
-        V(powner->slo_mutex);
+        P(powner->so_mutex);
+        powner->so_refcount++;
+        V(powner->so_mutex);
         break;
     }
 }
@@ -483,7 +483,7 @@ void get_lock_owner(state_lock_owner_t *powner)
 static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
                                                    fsal_op_context_t  * pcontext,
                                                    state_blocking_t     blocked,
-                                                   state_lock_owner_t * powner,
+                                                   state_owner_t      * powner,
                                                    state_t            * pstate,
                                                    state_lock_desc_t  * plock,
                                                    state_block_data_t * block_data)
@@ -520,19 +520,19 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
   new_entry->sle_fileid = (unsigned long long) fileid;
 
   /* Add to list of locks owned by powner */
-  P(powner->slo_mutex);
-  powner->slo_refcount++;
-  glist_add_tail(&powner->slo_lock_list, &new_entry->sle_owner_locks);
-  V(powner->slo_mutex);
+  P(powner->so_mutex);
+  powner->so_refcount++;
+  glist_add_tail(&powner->so_lock_list, &new_entry->sle_owner_locks);
+  V(powner->so_mutex);
 
 #ifdef _USE_NLM
   /* Add to list of locks owner by NLM Client */
-  if(powner->slo_type == STATE_LOCK_OWNER_NLM)
+  if(powner->so_type == STATE_LOCK_OWNER_NLM)
     {
-      P(powner->slo_owner.slo_nlm_owner.slo_client->slc_mutex);
-      powner->slo_owner.slo_nlm_owner.slo_client->slc_refcount++;
-      glist_add_tail(&powner->slo_owner.slo_nlm_owner.slo_client->slc_lock_list, &new_entry->sle_client_locks);
-      V(powner->slo_owner.slo_nlm_owner.slo_client->slc_mutex);
+      P(powner->so_owner.so_nlm_owner.so_client->slc_mutex);
+      powner->so_owner.so_nlm_owner.so_client->slc_refcount++;
+      glist_add_tail(&powner->so_owner.so_nlm_owner.so_client->slc_lock_list, &new_entry->sle_client_locks);
+      V(powner->so_owner.so_nlm_owner.so_client->slc_mutex);
     }
 #endif
     
@@ -621,16 +621,16 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
    */
   if(lock_entry->sle_owner != NULL)
     {
-      P(lock_entry->sle_owner->slo_mutex);
+      P(lock_entry->sle_owner->so_mutex);
       glist_del(&lock_entry->sle_owner_locks);
-      V(lock_entry->sle_owner->slo_mutex);
+      V(lock_entry->sle_owner->so_mutex);
 
 #ifdef _USE_NLM
-      if(lock_entry->sle_owner->slo_type == STATE_LOCK_OWNER_NLM)
+      if(lock_entry->sle_owner->so_type == STATE_LOCK_OWNER_NLM)
         {
-          P(lock_entry->sle_owner->slo_owner.slo_nlm_owner.slo_client->slc_mutex);
+          P(lock_entry->sle_owner->so_owner.so_nlm_owner.so_client->slc_mutex);
           glist_del(&lock_entry->sle_client_locks);
-          V(lock_entry->sle_owner->slo_owner.slo_nlm_owner.slo_client->slc_mutex);
+          V(lock_entry->sle_owner->so_owner.so_nlm_owner.so_client->slc_mutex);
         }
 #endif
 
@@ -641,10 +641,10 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
   lock_entry_dec_ref(lock_entry);
 }
 
-static state_lock_entry_t *get_overlapping_entry(cache_entry_t        * pentry,
-                                                 fsal_op_context_t    * pcontext,
-                                                 state_lock_owner_t   * powner,
-                                                 state_lock_desc_t    * plock)
+static state_lock_entry_t *get_overlapping_entry(cache_entry_t     * pentry,
+                                                 fsal_op_context_t * pcontext,
+                                                 state_owner_t     * powner,
+                                                 state_lock_desc_t * plock)
 {
   struct glist_head *glist;
   state_lock_entry_t *found_entry = NULL;
@@ -837,7 +837,7 @@ complete_remove:
 /* Subtract a lock from a list of locks, possibly splitting entries in the list. */
 static bool_t subtract_lock_from_list(cache_entry_t      * pentry,
                                       fsal_op_context_t  * pcontext,
-                                      state_lock_owner_t * powner,
+                                      state_owner_t      * powner,
                                       state_lock_desc_t  * plock,
                                       state_status_t     * pstatus,
                                       struct glist_head  * list)
@@ -1427,7 +1427,7 @@ void cancel_blocked_lock(cache_entry_t        * pentry,
  */
 void cancel_blocked_locks_range(cache_entry_t        * pentry,
                                 fsal_op_context_t    * pcontext,
-                                state_lock_owner_t   * powner,
+                                state_owner_t        * powner,
                                 state_lock_desc_t    * plock,
                                 cache_inode_client_t * pclient)
 {
@@ -1468,7 +1468,7 @@ state_status_t state_release_grant(fsal_op_context_t     * pcontext,
 {
   state_lock_entry_t   * lock_entry;
   cache_entry_t        * pentry;
-  state_lock_owner_t   * powner;
+  state_owner_t        * powner;
   state_lock_desc_t      lock;
 
   *pstatus = STATE_SUCCESS;
@@ -1662,14 +1662,14 @@ state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
   return status;
 }
 
-state_status_t do_lock_op(cache_entry_t        * pentry,
-                          fsal_op_context_t    * pcontext,
-                          fsal_lock_op_t         lock_op,
-                          state_lock_owner_t   * powner,
-                          state_lock_desc_t    * plock,
-                          state_lock_owner_t  ** holder,   /* owner that holds conflicting lock */
-                          state_lock_desc_t    * conflict, /* description of conflicting lock */
-                          bool_t                 overlap)  /* hint that lock overlaps */
+state_status_t do_lock_op(cache_entry_t      * pentry,
+                          fsal_op_context_t  * pcontext,
+                          fsal_lock_op_t       lock_op,
+                          state_owner_t      * powner,
+                          state_lock_desc_t  * plock,
+                          state_owner_t     ** holder,   /* owner that holds conflicting lock */
+                          state_lock_desc_t  * conflict, /* description of conflicting lock */
+                          bool_t               overlap)  /* hint that lock overlaps */
 {
   fsal_status_t        fsal_status;
   state_status_t       status = STATE_SUCCESS;
@@ -1744,9 +1744,9 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
   return status;
 }
 
-void copy_conflict(state_lock_entry_t   * found_entry,
-                   state_lock_owner_t  ** holder,   /* owner that holds conflicting lock */
-                   state_lock_desc_t    * conflict) /* description of conflicting lock */
+void copy_conflict(state_lock_entry_t  * found_entry,
+                   state_owner_t      ** holder,   /* owner that holds conflicting lock */
+                   state_lock_desc_t   * conflict) /* description of conflicting lock */
 {
   if(found_entry == NULL)
     return;
@@ -1767,9 +1767,9 @@ void copy_conflict(state_lock_entry_t   * found_entry,
  ******************************************************************************/
 state_status_t state_test(cache_entry_t        * pentry,
                           fsal_op_context_t    * pcontext,
-                          state_lock_owner_t   * powner,
+                          state_owner_t        * powner,
                           state_lock_desc_t    * plock,
-                          state_lock_owner_t  ** holder,   /* owner that holds conflicting lock */
+                          state_owner_t       ** holder,   /* owner that holds conflicting lock */
                           state_lock_desc_t    * conflict, /* description of conflicting lock */
                           cache_inode_client_t * pclient,
                           state_status_t       * pstatus)
@@ -1806,12 +1806,12 @@ state_status_t state_test(cache_entry_t        * pentry,
 
 state_status_t state_lock(cache_entry_t         * pentry,
                           fsal_op_context_t     * pcontext,
-                          state_lock_owner_t    * powner,
+                          state_owner_t         * powner,
                           state_t               * pstate,
                           state_blocking_t        blocking,
                           state_block_data_t    * block_data,
                           state_lock_desc_t     * plock,
-                          state_lock_owner_t   ** holder,   /* owner that holds conflicting lock */
+                          state_owner_t        ** holder,   /* owner that holds conflicting lock */
                           state_lock_desc_t     * conflict, /* description of conflicting lock */
                           cache_inode_client_t  * pclient,
                           state_status_t        * pstatus)
@@ -2014,7 +2014,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
 
 state_status_t state_unlock(cache_entry_t        * pentry,
                             fsal_op_context_t    * pcontext,
-                            state_lock_owner_t   * powner,
+                            state_owner_t        * powner,
                             state_t              * pstate,
                             state_lock_desc_t    * plock,
                             cache_inode_client_t * pclient,
@@ -2092,7 +2092,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
 
 state_status_t state_cancel(cache_entry_t        * pentry,
                             fsal_op_context_t    * pcontext,
-                            state_lock_owner_t   * powner,
+                            state_owner_t        * powner,
                             state_lock_desc_t    * plock,
                             cache_inode_client_t * pclient,
                             state_status_t       * pstatus)
@@ -2159,7 +2159,7 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
                                 cache_inode_client_t * pclient,
                                 state_status_t       * pstatus)
 {
-  state_lock_owner_t   owner;
+  state_owner_t        owner;
   state_lock_entry_t * found_entry;
   state_lock_desc_t    lock;
   cache_entry_t      * pentry;
@@ -2218,7 +2218,7 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
 #endif
 
 state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
-                                      state_lock_owner_t   * powner,
+                                      state_owner_t        * powner,
                                       state_t              * pstate,
                                       cache_inode_client_t * pclient,
                                       state_status_t       * pstatus)
@@ -2230,19 +2230,19 @@ state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
 
   while(errcnt < 100)
     {
-      P(powner->slo_mutex);
+      P(powner->so_mutex);
 
       /* We just need to find any file this client has locks on.
        * We pick the first lock the client holds, and use it's file.
        */
-      found_entry = glist_first_entry(&powner->slo_lock_list, state_lock_entry_t, sle_owner_locks);
+      found_entry = glist_first_entry(&powner->so_lock_list, state_lock_entry_t, sle_owner_locks);
       lock_entry_inc_ref(found_entry);
 
       /* Move this entry to the end of the list (this will help if errors occur) */
       glist_del(&found_entry->sle_owner_locks);
-      glist_add_tail(&powner->slo_lock_list, &found_entry->sle_owner_locks);
+      glist_add_tail(&powner->so_lock_list, &found_entry->sle_owner_locks);
 
-      V(powner->slo_mutex);
+      V(powner->so_mutex);
 
       /* If we don't find any entries, then we are done. */
       if(found_entry == NULL)
