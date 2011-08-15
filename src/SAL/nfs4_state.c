@@ -126,7 +126,7 @@ int state_conflict(state_t      * pstate,
 state_status_t state_add(cache_entry_t         * pentry,
                          state_type_t            state_type,
                          state_data_t          * pstate_data,
-                         state_nfs4_owner_t    * powner_input,
+                         state_owner_t         * powner_input,
                          cache_inode_client_t  * pclient,
                          fsal_op_context_t     * pcontext,
                          state_t              ** ppstate,
@@ -135,7 +135,7 @@ state_status_t state_add(cache_entry_t         * pentry,
   state_t            * pnew_state = NULL;
   state_t            * piter_state = NULL;
   state_t            * piter_saved = NULL;
-  state_nfs4_owner_t * powner = powner_input;
+  state_owner_t      * powner = powner_input;
   char                 debug_str[25];
   bool_t               conflict_found = FALSE;
 

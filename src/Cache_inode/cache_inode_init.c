@@ -174,9 +174,9 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
     }
 
   /* TODO: warning - entries in this pool are never released! */
-  MakePool(&pclient->pool_open_owner, pclient->nb_pre_state_v4, state_nfs4_owner_t, NULL, NULL);
-  NamePool(&pclient->pool_open_owner, "%s Open Owner Pool", name);
-  if(!IsPoolPreallocated(&pclient->pool_open_owner))
+  MakePool(&pclient->pool_state_owner, pclient->nb_pre_state_v4, state_owner_t, NULL, NULL);
+  NamePool(&pclient->pool_state_owner, "%s Open Owner Pool", name);
+  if(!IsPoolPreallocated(&pclient->pool_state_owner))
     {
       LogCrit(COMPONENT_CACHE_INODE,
               "Can't init %s Open Owner Pool", name);

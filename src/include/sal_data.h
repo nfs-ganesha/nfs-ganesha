@@ -160,6 +160,7 @@ typedef struct state_nlm_owner_t
 #endif
 
 typedef struct state_nfs4_owner_t state_nfs4_owner_t;
+typedef struct state_owner_t      state_owner_t;
 
 struct state_nfs4_owner_t
 {
@@ -170,11 +171,11 @@ struct state_nfs4_owner_t
   unsigned int        so_seqid;
   pthread_mutex_t     so_mutex;
   uint32_t            so_counter;       /** < Counter is used to build unique stateids */
-  state_nfs4_owner_t *so_related_owner;
+  state_owner_t     * so_related_owner;
 };
 
 /* Undistinguished lock owner type */
-typedef struct state_owner_t
+struct state_owner_t
 {
   state_owner_type_t      so_type;
   struct glist_head       so_lock_list;
@@ -182,12 +183,12 @@ typedef struct state_owner_t
   int                     so_refcount;
   union
   {
-    state_nfs4_owner_t    so_open_owner;
+    state_nfs4_owner_t    so_nfs4_owner;
 #ifdef _USE_NLM
     state_nlm_owner_t     so_nlm_owner;
 #endif
   } so_owner;
-} state_owner_t;
+};
 
 typedef union state_data_t
 {
@@ -201,14 +202,14 @@ typedef struct state_t state_t;
 
 struct state_t
 {
-  state_type_t         state_type;
-  state_data_t         state_data;
-  u_int32_t            seqid;               /**< The NFSv4 Sequence id                      */
-  char                 stateid_other[12];   /**< "Other" part of state id, used as hash key */
-  state_nfs4_owner_t   *powner;             /**< Open Owner related to this state           */
-  state_t              *next;               /**< Next entry in the state list               */
-  state_t              *prev;               /**< Prev entry in the state list               */
-  cache_entry_t        *pentry;             /**< Related pentry                             */
+  state_type_t    state_type;
+  state_data_t    state_data;
+  u_int32_t       seqid;              /**< The NFSv4 Sequence id                      */
+  char            stateid_other[12];  /**< "Other" part of state id, used as hash key */
+  state_owner_t * powner;             /**< Open Owner related to this state           */
+  state_t       * next;               /**< Next entry in the state list               */
+  state_t       * prev;               /**< Prev entry in the state list               */
+  cache_entry_t * pentry;             /**< Related pentry                             */
 };
 
 /*

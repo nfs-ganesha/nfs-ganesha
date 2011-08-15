@@ -205,10 +205,10 @@ int nfs4_Init_state_id(nfs_state_id_parameter_t param)
  *
  */
 
-int nfs4_BuildStateId_Other(cache_entry_t      * pentry,
-                            fsal_op_context_t  * pcontext,
-                            state_nfs4_owner_t * popen_owner,
-                            char               * other)
+int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
+                            fsal_op_context_t * pcontext,
+                            state_owner_t     * popen_owner,
+                            char              * other)
 {
   uint64_t fileid_digest = 0;
   u_int16_t srvboot_digest = 0;
@@ -231,7 +231,9 @@ int nfs4_BuildStateId_Other(cache_entry_t      * pentry,
 
   LogFullDebug(COMPONENT_STATES,
                "----  nfs4_BuildStateId_Other : pentry=%p popen_owner=%u|%s",
-               pentry, popen_owner->so_owner_len, popen_owner->so_owner_val);
+               pentry,
+               popen_owner->so_owner.so_nfs4_owner.so_owner_len,
+               popen_owner->so_owner.so_nfs4_owner.so_owner_val);
 
   /* Get several digests to build the stateid : the server boot time, the fileid and a monotonic counter */
   if(FSAL_IS_ERROR(FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
@@ -241,7 +243,7 @@ int nfs4_BuildStateId_Other(cache_entry_t      * pentry,
     return 0;
 
   srvboot_digest = (u_int16_t) (ServerBootTime & 0x0000FFFF);;
-  open_owner_digest = popen_owner->so_counter;
+  open_owner_digest = popen_owner->so_owner.so_nfs4_owner.so_counter;
 
   LogFullDebug(COMPONENT_STATES,
                "----  nfs4_BuildStateId_Other : pentry=%p fileid=%"PRIu64" open_owner_digest=%u",
@@ -528,7 +530,8 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
    * with NFSv4.0, the clientid is related to the stateid itself */
   if(clientid == 0LL)
     {
-      if(nfs_client_id_get(state.powner->so_clientid, &nfs_clientid) != CLIENT_ID_SUCCESS)
+      if(nfs_client_id_get(state.powner->so_owner.so_nfs4_owner.so_clientid,
+         &nfs_clientid) != CLIENT_ID_SUCCESS)
         {
           if(nfs_param.nfsv4_param.return_bad_stateid == TRUE)  /* Dirty work-around for HPC environment */
             return NFS4ERR_BAD_STATEID; /* Refers to a non-existing client... */
