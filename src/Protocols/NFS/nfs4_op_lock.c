@@ -103,10 +103,10 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   state_owner_t           * powner = NULL;
   state_owner_t           * popen_owner = NULL;
   state_owner_t           * powner_exists = NULL;
-  state_open_owner_name_t * powner_name = NULL;
+  state_nfs4_owner_name_t * powner_name = NULL;
   uint64_t                  a, b, a1, b1;
   unsigned int              overlap = FALSE;
-  state_open_owner_name_t   owner_name;
+  state_nfs4_owner_name_t   owner_name;
   nfs_client_id_t           nfs_client_id;
   state_lock_desc_t         lock_desc;
   state_blocking_t          blocking;
@@ -488,7 +488,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           return res_LOCK4.status;
         }
 
-      GetFromPool(powner_name, &data->pclient->pool_open_owner_name, state_open_owner_name_t);
+      GetFromPool(powner_name, &data->pclient->pool_nfs4_owner_name, state_nfs4_owner_name_t);
 
       if(powner_name == NULL)
         {
@@ -497,7 +497,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           return res_LOCK4.status;
         }
 
-      memcpy(powner_name, &owner_name, sizeof(state_open_owner_name_t));
+      memcpy(powner_name, &owner_name, sizeof(state_nfs4_owner_name_t));
 
       /* set up the content of the open_owner */
       powner->so_owner.so_nfs4_owner.so_confirmed     = FALSE;
@@ -515,7 +515,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       if(!nfs_open_owner_Set(powner_name, powner))
         {
           ReleaseToPool(powner, &data->pclient->pool_state_owner);
-          ReleaseToPool(powner_name, &data->pclient->pool_open_owner_name);
+          ReleaseToPool(powner_name, &data->pclient->pool_nfs4_owner_name);
           res_LOCK4.status = NFS4ERR_SERVERFAULT;
           return res_LOCK4.status;
         }

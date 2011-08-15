@@ -124,12 +124,12 @@ typedef struct state_layout__
 #endif
 } state_layout_t;
 
-typedef struct state_open_owner_name__
+typedef struct state_nfs4_owner_name_t
 {
-  clientid4 clientid;
-  unsigned int owner_len;
-  char owner_val[MAXNAMLEN];
-} state_open_owner_name_t;
+  clientid4    son_clientid;
+  unsigned int son_owner_len;
+  char         son_owner_val[MAXNAMLEN];
+} state_nfs4_owner_name_t;
 
 typedef enum state_owner_type_t
 {

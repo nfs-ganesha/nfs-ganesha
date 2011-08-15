@@ -57,13 +57,16 @@ int display_open_owner_key(hash_buffer_t * pbuff, char *str)
   char strtmp[NFS4_OPAQUE_LIMIT * 2 + 1];
   unsigned int i = 0;
 
-  state_open_owner_name_t *pname = (state_open_owner_name_t *) pbuff->pdata;
+  state_nfs4_owner_name_t *pname = (state_nfs4_owner_name_t *) pbuff->pdata;
 
-  for(i = 0; i < pname->owner_len; i++)
-    sprintf(&(strtmp[i * 2]), "%02x", (unsigned char)pname->owner_val[i]);
+  for(i = 0; i < pname->son_owner_len; i++)
+    sprintf(&(strtmp[i * 2]), "%02x", (unsigned char)pname->son_owner_val[i]);
 
-  return sprintf(str, "clientid=%llu owner=(%u|%s)",
-                 (unsigned long long)pname->clientid, pname->owner_len, strtmp);
+  return sprintf(str,
+                 "clientid=%llu owner=(%u|%s)",
+                 (unsigned long long)pname->son_clientid,
+                 pname->son_owner_len,
+                 strtmp);
 }                               /* display_state_id_val */
 
 int display_open_owner_val(hash_buffer_t * pbuff, char *str)
@@ -98,19 +101,19 @@ int compare_open_owner(hash_buffer_t * buff1, hash_buffer_t * buff2)
                    "compare_open_owner => {%s}|{%s}", str1, str2);
     }
 
-  state_open_owner_name_t *pname1 = (state_open_owner_name_t *) buff1->pdata;
-  state_open_owner_name_t *pname2 = (state_open_owner_name_t *) buff2->pdata;
+  state_nfs4_owner_name_t *pname1 = (state_nfs4_owner_name_t *) buff1->pdata;
+  state_nfs4_owner_name_t *pname2 = (state_nfs4_owner_name_t *) buff2->pdata;
 
   if(pname1 == NULL || pname2 == NULL)
     return 1;
 
-  if(pname1->clientid != pname2->clientid)
+  if(pname1->son_clientid != pname2->son_clientid)
     return 1;
 
-  if(pname1->owner_len != pname2->owner_len)
+  if(pname1->son_owner_len != pname2->son_owner_len)
     return 1;
 
-  return memcmp((char *)pname1->owner_val, (char *)pname2->owner_val, pname1->owner_len);
+  return memcmp(pname1->son_owner_val, pname2->son_owner_val, pname1->son_owner_len);
 }                               /* compare_open_owner */
 
 unsigned long open_owner_value_hash_func(hash_parameter_t * p_hparam,
@@ -121,16 +124,16 @@ unsigned long open_owner_value_hash_func(hash_parameter_t * p_hparam,
   unsigned char c = 0;
   unsigned long res = 0;
 
-  state_open_owner_name_t *pname = (state_open_owner_name_t *) buffclef->pdata;
+  state_nfs4_owner_name_t *pname = (state_nfs4_owner_name_t *) buffclef->pdata;
 
   /* Compute the sum of all the characters */
-  for(i = 0; i < pname->owner_len; i++)
+  for(i = 0; i < pname->son_owner_len; i++)
     {
-      c = ((char *)pname->owner_val)[i];
+      c = ((char *)pname->son_owner_val)[i];
       sum += c;
     }
 
-  res = (unsigned long)(pname->clientid) + (unsigned long)sum + pname->owner_len;
+  res = (unsigned long)(pname->son_clientid) + (unsigned long)sum + pname->son_owner_len;
 
   LogFullDebug(COMPONENT_STATE,
                "---> rbt_hash_val = %lu", res % p_hparam->index_size);
@@ -142,7 +145,7 @@ unsigned long open_owner_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long open_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t * buffclef)
 {
-  state_open_owner_name_t *pname = (state_open_owner_name_t *) buffclef->pdata;
+  state_nfs4_owner_name_t *pname = (state_nfs4_owner_name_t *) buffclef->pdata;
 
   unsigned int sum = 0;
   unsigned int i = 0;
@@ -150,13 +153,13 @@ unsigned long open_owner_rbt_hash_func(hash_parameter_t * p_hparam,
   unsigned long res = 0;
 
   /* Compute the sum of all the characters */
-  for(i = 0; i < pname->owner_len; i++)
+  for(i = 0; i < pname->son_owner_len; i++)
     {
-      c = ((char *)pname->owner_val)[i];
+      c = ((char *)pname->son_owner_val)[i];
       sum += c;
     }
 
-  res = (unsigned long)(pname->clientid) + (unsigned long)sum + pname->owner_len;
+  res = (unsigned long)(pname->son_clientid) + (unsigned long)sum + pname->son_owner_len;
 
   LogFullDebug(COMPONENT_STATE, "---> rbt_hash_func = %lu", res);
 
@@ -196,7 +199,7 @@ int nfs4_Init_open_owner(nfs_open_owner_parameter_t param)
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs_open_owner_Set(state_open_owner_name_t * pname,
+int nfs_open_owner_Set(state_nfs4_owner_name_t * pname,
                        state_owner_t           * powner)
 {
   hash_buffer_t buffkey;
@@ -207,7 +210,7 @@ int nfs_open_owner_Set(state_open_owner_name_t * pname,
       char str[HASHTABLE_DISPLAY_STRLEN];
 
       buffkey.pdata = (caddr_t) pname;
-      buffkey.len = sizeof(state_open_owner_name_t);
+      buffkey.len = sizeof(state_nfs4_owner_name_t);
 
       display_open_owner_key(&buffkey, str);
       LogFullDebug(COMPONENT_STATE,
@@ -215,7 +218,7 @@ int nfs_open_owner_Set(state_open_owner_name_t * pname,
     }
 
   buffkey.pdata = (caddr_t) pname;
-  buffkey.len = sizeof(state_open_owner_name_t);
+  buffkey.len = sizeof(state_nfs4_owner_name_t);
 
   buffval.pdata = (caddr_t) powner;
   buffval.len = sizeof(state_owner_t);
@@ -245,7 +248,7 @@ int nfs_open_owner_Set(state_open_owner_name_t * pname,
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs_open_owner_Get_Pointer(state_open_owner_name_t  * pname,
+int nfs_open_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
                                state_owner_t           ** powner)
 {
   hash_buffer_t buffkey;
@@ -256,7 +259,7 @@ int nfs_open_owner_Get_Pointer(state_open_owner_name_t  * pname,
       char str[HASHTABLE_DISPLAY_STRLEN];
 
       buffkey.pdata = (caddr_t) pname;
-      buffkey.len = sizeof(state_open_owner_name_t);
+      buffkey.len = sizeof(state_nfs4_owner_name_t);
 
       display_open_owner_key(&buffkey, str);
       LogFullDebug(COMPONENT_STATE,
@@ -264,7 +267,7 @@ int nfs_open_owner_Get_Pointer(state_open_owner_name_t  * pname,
     }
 
   buffkey.pdata = (caddr_t) pname;
-  buffkey.len = sizeof(state_open_owner_name_t);
+  buffkey.len = sizeof(state_nfs4_owner_name_t);
 
   if(HashTable_Get(ht_open_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
@@ -292,12 +295,12 @@ int nfs_open_owner_Get_Pointer(state_open_owner_name_t  * pname,
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs_open_owner_Del(state_open_owner_name_t * pname)
+int nfs_open_owner_Del(state_nfs4_owner_name_t * pname)
 {
   hash_buffer_t buffkey, old_key, old_value;
 
   buffkey.pdata = (caddr_t) pname;
-  buffkey.len = sizeof(state_open_owner_name_t);
+  buffkey.len = sizeof(state_nfs4_owner_name_t);
 
   if(HashTable_Del(ht_open_owner, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
     {
@@ -327,14 +330,15 @@ void nfs_open_owner_PrintAll(void)
 }                               /* nfs_open_owner_PrintAll */
 
 int nfs_convert_open_owner(open_owner4             * pnfsowner,
-                           state_open_owner_name_t * pname_owner)
+                           state_nfs4_owner_name_t * pname_owner)
 {
   if(pnfsowner == NULL || pname_owner == NULL)
     return 0;
 
-  pname_owner->clientid = pnfsowner->clientid;
-  pname_owner->owner_len = pnfsowner->owner.owner_len;
-  memcpy((char *)pname_owner->owner_val, (char *)pnfsowner->owner.owner_val,
+  pname_owner->son_clientid = pnfsowner->clientid;
+  pname_owner->son_owner_len = pnfsowner->owner.owner_len;
+  memcpy(pname_owner->son_owner_val,
+         pnfsowner->owner.owner_val,
          pnfsowner->owner.owner_len);
 
   return 1;

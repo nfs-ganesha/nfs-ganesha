@@ -152,15 +152,15 @@ unsigned long open_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t    * buffclef);
 
 int nfs_convert_open_owner(open_owner4 * pnfsowoner,
-                           state_open_owner_name_t * pname_owner);
+                           state_nfs4_owner_name_t * pname_owner);
 
 void nfs_open_owner_PrintAll(void);
-int nfs_open_owner_Del(state_open_owner_name_t * pname);
+int nfs_open_owner_Del(state_nfs4_owner_name_t * pname);
 
-int nfs_open_owner_Get_Pointer(state_open_owner_name_t  * pname,
+int nfs_open_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
                                state_owner_t           ** popen_owner);
 
-int nfs_open_owner_Set(state_open_owner_name_t * pname,
+int nfs_open_owner_Set(state_nfs4_owner_name_t * pname,
                        state_owner_t           * popen_owner);
 
 int nfs4_Init_open_owner(nfs_open_owner_parameter_t param);
