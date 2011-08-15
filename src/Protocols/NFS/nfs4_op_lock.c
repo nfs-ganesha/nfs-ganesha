@@ -471,7 +471,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
 
       /* Is this lock_owner known ? */
-      if(!nfs_convert_open_owner
+      if(!convert_nfs4_owner
          ((open_owner4 *) & arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
           &owner_name))
         {
@@ -512,7 +512,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
       pthread_mutex_init(&powner->so_owner.so_nfs4_owner.so_mutex, NULL);
 
-      if(!nfs_open_owner_Set(powner_name, powner))
+      if(!nfs4_owner_Set(powner_name, powner))
         {
           ReleaseToPool(powner, &data->pclient->pool_state_owner);
           ReleaseToPool(powner_name, &data->pclient->pool_nfs4_owner_name);

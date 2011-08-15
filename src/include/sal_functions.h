@@ -141,29 +141,29 @@ int nfs4_is_lease_expired(cache_entry_t * pentry);
 int display_state_id_val(hash_buffer_t * pbuff, char *str);
 int display_state_id_key(hash_buffer_t * pbuff, char *str);
 
-int display_open_owner_val(hash_buffer_t * pbuff, char *str);
-int display_open_owner_key(hash_buffer_t * pbuff, char *str);
-int compare_open_owner(hash_buffer_t * buff1, hash_buffer_t * buff2);
+int display_nfs4_owner_val(hash_buffer_t * pbuff, char *str);
+int display_nfs4_owner_key(hash_buffer_t * pbuff, char *str);
+int compare_nfs4_owner(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
-unsigned long open_owner_value_hash_func(hash_parameter_t * p_hparam,
+unsigned long nfs4_owner_value_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t    * buffclef);
 
-unsigned long open_owner_rbt_hash_func(hash_parameter_t * p_hparam,
+unsigned long nfs4_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t    * buffclef);
 
-int nfs_convert_open_owner(open_owner4 * pnfsowoner,
-                           state_nfs4_owner_name_t * pname_owner);
+int convert_nfs4_owner(open_owner4 * pnfsowoner,
+                       state_nfs4_owner_name_t * pname_owner);
 
-void nfs_open_owner_PrintAll(void);
-int nfs_open_owner_Del(state_nfs4_owner_name_t * pname);
+void nfs4_owner_PrintAll(void);
+int nfs4_owner_Del(state_nfs4_owner_name_t * pname);
 
-int nfs_open_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
-                               state_owner_t           ** popen_owner);
+int nfs4_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
+                           state_owner_t           ** powner);
 
-int nfs_open_owner_Set(state_nfs4_owner_name_t * pname,
-                       state_owner_t           * popen_owner);
+int nfs4_owner_Set(state_nfs4_owner_name_t * pname,
+                   state_owner_t           * powner);
 
-int nfs4_Init_open_owner(nfs_open_owner_parameter_t param);
+int Init_nfs4_owner(nfs4_owner_parameter_t param);
 
 /******************************************************************************
  *

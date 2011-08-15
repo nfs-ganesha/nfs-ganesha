@@ -526,15 +526,15 @@ void nfs_set_param_default()
 #endif                          /* _USE_NFS4_1 */
 
   /* NFSv4 Open Owner hash */
-  nfs_param.open_owner_param.hash_param.index_size = PRIME_STATE_ID;
-  nfs_param.open_owner_param.hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
-  nfs_param.open_owner_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
-  nfs_param.open_owner_param.hash_param.hash_func_key = open_owner_value_hash_func;
-  nfs_param.open_owner_param.hash_param.hash_func_rbt = open_owner_rbt_hash_func;
-  nfs_param.open_owner_param.hash_param.compare_key = compare_open_owner;
-  nfs_param.open_owner_param.hash_param.key_to_str = display_open_owner_key;
-  nfs_param.open_owner_param.hash_param.val_to_str = display_open_owner_val;
-  nfs_param.open_owner_param.hash_param.name = "Open Owner";
+  nfs_param.nfs4_owner_param.hash_param.index_size = PRIME_STATE_ID;
+  nfs_param.nfs4_owner_param.hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
+  nfs_param.nfs4_owner_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
+  nfs_param.nfs4_owner_param.hash_param.hash_func_key = nfs4_owner_value_hash_func;
+  nfs_param.nfs4_owner_param.hash_param.hash_func_rbt = nfs4_owner_rbt_hash_func;
+  nfs_param.nfs4_owner_param.hash_param.compare_key = compare_nfs4_owner;
+  nfs_param.nfs4_owner_param.hash_param.key_to_str = display_nfs4_owner_key;
+  nfs_param.nfs4_owner_param.hash_param.val_to_str = display_nfs4_owner_val;
+  nfs_param.nfs4_owner_param.hash_param.name = "NFS4 Owner";
 
 #ifdef _USE_NLM
   /* NLM Client hash */
@@ -1969,11 +1969,11 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
           "NFSv4 State Id cache successfully initialized");
 
   /* Init The NFSv4 Open Owner cache */
-  LogDebug(COMPONENT_INIT, "Now building NFSv4 Open Owner cache");
-  if(nfs4_Init_open_owner(nfs_param.open_owner_param) != 0)
+  LogDebug(COMPONENT_INIT, "Now building NFSv4 Owner cache");
+  if(Init_nfs4_owner(nfs_param.nfs4_owner_param) != 0)
     {
       LogFatal(COMPONENT_INIT,
-               "Error while initializing NFSv4 Open Owner cache");
+               "Error while initializing NFSv4 Owner cache");
     }
   LogInfo(COMPONENT_INIT,
           "NFSv4 Open Owner cache successfully initialized");

@@ -47,12 +47,12 @@
 
 size_t strnlen(const char *s, size_t maxlen);
 
-hash_table_t *ht_open_owner;
+hash_table_t *ht_nfs4_owner;
 
-uint32_t open_owner_counter = 0;
-pthread_mutex_t open_owner_counter_lock = PTHREAD_MUTEX_INITIALIZER;
+uint32_t nfs4_owner_counter = 0;
+pthread_mutex_t nfs4_owner_counter_lock = PTHREAD_MUTEX_INITIALIZER;
 
-int display_open_owner_key(hash_buffer_t * pbuff, char *str)
+int display_nfs4_owner_key(hash_buffer_t * pbuff, char *str)
 {
   char strtmp[NFS4_OPAQUE_LIMIT * 2 + 1];
   unsigned int i = 0;
@@ -69,7 +69,7 @@ int display_open_owner_key(hash_buffer_t * pbuff, char *str)
                  strtmp);
 }                               /* display_state_id_val */
 
-int display_open_owner_val(hash_buffer_t * pbuff, char *str)
+int display_nfs4_owner_val(hash_buffer_t * pbuff, char *str)
 {
   char strtmp[NFS4_OPAQUE_LIMIT * 2 + 1];
   unsigned int i = 0;
@@ -88,17 +88,17 @@ int display_open_owner_val(hash_buffer_t * pbuff, char *str)
                        powner->so_owner.so_nfs4_owner.so_seqid);
 }                               /* display_state_id_val */
 
-int compare_open_owner(hash_buffer_t * buff1, hash_buffer_t * buff2)
+int compare_nfs4_owner(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
   if(isFullDebug(COMPONENT_STATE))
     {
       char str1[HASHTABLE_DISPLAY_STRLEN];
       char str2[HASHTABLE_DISPLAY_STRLEN];
 
-      display_open_owner_key(buff1, str1);
-      display_open_owner_key(buff2, str2);
+      display_nfs4_owner_key(buff1, str1);
+      display_nfs4_owner_key(buff2, str2);
       LogFullDebug(COMPONENT_STATE,
-                   "compare_open_owner => {%s}|{%s}", str1, str2);
+                   "compare_nfs4_owner => {%s}|{%s}", str1, str2);
     }
 
   state_nfs4_owner_name_t *pname1 = (state_nfs4_owner_name_t *) buff1->pdata;
@@ -114,9 +114,9 @@ int compare_open_owner(hash_buffer_t * buff1, hash_buffer_t * buff2)
     return 1;
 
   return memcmp(pname1->son_owner_val, pname2->son_owner_val, pname1->son_owner_len);
-}                               /* compare_open_owner */
+}                               /* compare_nfs4_owner */
 
-unsigned long open_owner_value_hash_func(hash_parameter_t * p_hparam,
+unsigned long nfs4_owner_value_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t * buffclef)
 {
   unsigned int sum = 0;
@@ -140,9 +140,9 @@ unsigned long open_owner_value_hash_func(hash_parameter_t * p_hparam,
 
   return (unsigned long)(res % p_hparam->index_size);
 
-}                               /* open_owner_value_hash_func */
+}                               /* nfs4_owner_value_hash_func */
 
-unsigned long open_owner_rbt_hash_func(hash_parameter_t * p_hparam,
+unsigned long nfs4_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t * buffclef)
 {
   state_nfs4_owner_name_t *pname = (state_nfs4_owner_name_t *) buffclef->pdata;
@@ -168,7 +168,7 @@ unsigned long open_owner_rbt_hash_func(hash_parameter_t * p_hparam,
 
 /**
  *
- * nfs4_Init_open_owner: Init the hashtable for NFS Open Owner cache.
+ * nfs4_Init_nfs4_owner: Init the hashtable for NFS Open Owner cache.
  *
  * Perform all the required initialization for hashtable State Id cache
  * 
@@ -177,10 +177,10 @@ unsigned long open_owner_rbt_hash_func(hash_parameter_t * p_hparam,
  * @return 0 if successful, -1 otherwise
  *
  */
-int nfs4_Init_open_owner(nfs_open_owner_parameter_t param)
+int Init_nfs4_owner(nfs4_owner_parameter_t param)
 {
 
-  if((ht_open_owner = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_nfs4_owner = HashTable_Init(param.hash_param)) == NULL)
     {
       LogCrit(COMPONENT_STATE,
               "NFS STATE_ID: Cannot init NFS Open Owner cache");
@@ -188,10 +188,10 @@ int nfs4_Init_open_owner(nfs_open_owner_parameter_t param)
     }
 
   return 0;
-}                               /* nfs4_Init_open_owner */
+}                               /* nfs4_Init_nfs4_owner */
 
 /**
- * nfs_open_owner_Set
+ * nfs4_owner_Set
  * 
  *
  * This routine sets a open owner into the related hashtable
@@ -199,8 +199,8 @@ int nfs4_Init_open_owner(nfs_open_owner_parameter_t param)
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs_open_owner_Set(state_nfs4_owner_name_t * pname,
-                       state_owner_t           * powner)
+int nfs4_owner_Set(state_nfs4_owner_name_t * pname,
+                   state_owner_t           * powner)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -212,9 +212,9 @@ int nfs_open_owner_Set(state_nfs4_owner_name_t * pname,
       buffkey.pdata = (caddr_t) pname;
       buffkey.len = sizeof(state_nfs4_owner_name_t);
 
-      display_open_owner_key(&buffkey, str);
+      display_nfs4_owner_key(&buffkey, str);
       LogFullDebug(COMPONENT_STATE,
-                   "nfs_open_owner_Set => KEY {%s}", str);
+                   "nfs4_owner_Set => KEY {%s}", str);
     }
 
   buffkey.pdata = (caddr_t) pname;
@@ -223,22 +223,22 @@ int nfs_open_owner_Set(state_nfs4_owner_name_t * pname,
   buffval.pdata = (caddr_t) powner;
   buffval.len = sizeof(state_owner_t);
 
-  P(open_owner_counter_lock);
-  open_owner_counter += 1;
-  powner->so_owner.so_nfs4_owner.so_counter = open_owner_counter;
-  V(open_owner_counter_lock);
+  P(nfs4_owner_counter_lock);
+  nfs4_owner_counter += 1;
+  powner->so_owner.so_nfs4_owner.so_counter = nfs4_owner_counter;
+  V(nfs4_owner_counter_lock);
 
   if(HashTable_Test_And_Set
-     (ht_open_owner, &buffkey, &buffval,
+     (ht_nfs4_owner, &buffkey, &buffval,
       HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS)
     return 0;
 
   return 1;
-}                               /* nfs_open_owner_Set */
+}                               /* nfs4_owner_Set */
 
 /**
  *
- * nfs_open_owner_Get_Pointer
+ * nfs4_owner_Get_Pointer
  *
  * This routine gets a pointer to an open owner from the open owners's hashtable.
  *
@@ -248,8 +248,8 @@ int nfs_open_owner_Set(state_nfs4_owner_name_t * pname,
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs_open_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
-                               state_owner_t           ** powner)
+int nfs4_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
+                           state_owner_t           ** powner)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -261,48 +261,48 @@ int nfs_open_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
       buffkey.pdata = (caddr_t) pname;
       buffkey.len = sizeof(state_nfs4_owner_name_t);
 
-      display_open_owner_key(&buffkey, str);
+      display_nfs4_owner_key(&buffkey, str);
       LogFullDebug(COMPONENT_STATE,
-                   "nfs_open_owner_Get_Pointer => KEY {%s}", str);
+                   "nfs4_owner_Get_Pointer => KEY {%s}", str);
     }
 
   buffkey.pdata = (caddr_t) pname;
   buffkey.len = sizeof(state_nfs4_owner_name_t);
 
-  if(HashTable_Get(ht_open_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht_nfs4_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
       LogFullDebug(COMPONENT_STATE,
-                   "nfs_open_owner_Get_Pointer => NOTFOUND");
+                   "nfs4_owner_Get_Pointer => NOTFOUND");
       return 0;
     }
 
   *powner = (state_owner_t *) buffval.pdata;
 
   LogFullDebug(COMPONENT_STATE,
-               "nfs_open_owner_Get_Pointer => FOUND");
+               "nfs4_owner_Get_Pointer => FOUND");
 
   return 1;
-}                               /* nfs_open_owner_Get_Pointer */
+}                               /* nfs4_owner_Get_Pointer */
 
 /**
  *
- * nfs_open_owner_Del
+ * nfs4_owner_Del
  *
- * This routine removes a open owner from the open_owner's hashtable.
+ * This routine removes a open owner from the nfs4_owner's hashtable.
  *
  * @param other [IN] stateid'other field, used as a hash key
  *
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs_open_owner_Del(state_nfs4_owner_name_t * pname)
+int nfs4_owner_Del(state_nfs4_owner_name_t * pname)
 {
   hash_buffer_t buffkey, old_key, old_value;
 
   buffkey.pdata = (caddr_t) pname;
   buffkey.len = sizeof(state_nfs4_owner_name_t);
 
-  if(HashTable_Del(ht_open_owner, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
+  if(HashTable_Del(ht_nfs4_owner, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
     {
       /* free the key that was stored in hash table */
       Mem_Free((void *)old_key.pdata);
@@ -313,24 +313,24 @@ int nfs_open_owner_Del(state_nfs4_owner_name_t * pname)
     }
   else
     return 0;
-}                               /* nfs_open_owner_Del */
+}                               /* nfs4_owner_Del */
 
 /**
  * 
- *  nfs_open_owner_PrintAll
+ *  nfs4_owner_PrintAll
  *  
  * This routine displays the content of the hashtable used to store the open owners. 
  * 
  * @return nothing (void function)
  */
 
-void nfs_open_owner_PrintAll(void)
+void nfs4_owner_PrintAll(void)
 {
-  HashTable_Log(COMPONENT_STATE, ht_open_owner);
-}                               /* nfs_open_owner_PrintAll */
+  HashTable_Log(COMPONENT_STATE, ht_nfs4_owner);
+}                               /* nfs4_owner_PrintAll */
 
-int nfs_convert_open_owner(open_owner4             * pnfsowner,
-                           state_nfs4_owner_name_t * pname_owner)
+int convert_nfs4_owner(open_owner4             * pnfsowner,
+                       state_nfs4_owner_name_t * pname_owner)
 {
   if(pnfsowner == NULL || pname_owner == NULL)
     return 0;
@@ -342,4 +342,4 @@ int nfs_convert_open_owner(open_owner4             * pnfsowner,
          pnfsowner->owner.owner_len);
 
   return 1;
-}                               /* nfs_convert_open_owner */
+}                               /* convert_nfs4_owner */

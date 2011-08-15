@@ -358,7 +358,7 @@ typedef struct nfs_param__
   pnfs_parameter_t pnfs_param;
 #endif                          /* _USE_PNFS */
 #endif                          /* _USE_NFS4_1 */
-  nfs_open_owner_parameter_t open_owner_param;
+  nfs4_owner_parameter_t nfs4_owner_param;
 #ifdef _USE_NLM
   hash_parameter_t nlm_client_hash_param;
   hash_parameter_t nlm_owner_hash_param;

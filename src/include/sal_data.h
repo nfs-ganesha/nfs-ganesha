@@ -80,10 +80,10 @@ typedef struct nfs_state_id_param__
   hash_parameter_t hash_param;
 } nfs_state_id_parameter_t;
 
-typedef struct nfs_open_owner_param__
+typedef struct nfs4_owner_parameter_t
 {
   hash_parameter_t hash_param;
-} nfs_open_owner_parameter_t;
+} nfs4_owner_parameter_t;
 
 typedef enum state_type_t
 {
