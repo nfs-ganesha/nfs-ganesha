@@ -22,7 +22,7 @@
  * 
  * ---------------------------------------
  *
- * nfs_open_owner.c : The management of the open owner cache.
+ * nfs_owner.c : The management of the NFS4 Owner cache.
  *
  * $Header$
  *

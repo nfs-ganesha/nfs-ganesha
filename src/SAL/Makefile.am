@@ -10,7 +10,7 @@ libsal_la_SOURCES = state_lock.c                     \
                     state_misc.c                     \
                     nfs4_state.c                     \
                     nfs4_state_id.c                  \
-                    nfs4_open_owner.c                \
+                    nfs4_owner.c                     \
                     nfs4_lease.c                     \
                     nlm_owner.c                      \
                     ../include/state_data.h          \
