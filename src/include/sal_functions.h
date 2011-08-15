@@ -130,7 +130,6 @@ int nfs4_Check_Stateid(struct stateid4 * pstate,
 
 int nfs4_Init_state_id(nfs_state_id_parameter_t param);
 int nfs4_State_Set(char other[12], state_t * pstate_data);
-int nfs4_State_Get(char other[12], state_t * pstate_data);
 int nfs4_State_Get_Pointer(char other[12], state_t * *pstate_data);
 int nfs4_State_Del(char other[12]);
 int nfs4_State_Update(char other[12], state_t * pstate_data);

@@ -300,50 +300,6 @@ int nfs4_State_Set(char other[12], state_t * pstate_data)
 
 /**
  *
- * nfs4_State_Get
- *
- * This routine gets a state from the states's hashtable.
- *
- * @param pstate      [IN] pointer to the stateid to be checked.
- * @param pstate_data [OUT] found state
- *
- * @return 1 if ok, 0 otherwise.
- *
- */
-int nfs4_State_Get(char other[12], state_t * pstate_data)
-{
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
-
-  if(isFullDebug(COMPONENT_STATES))
-    {
-      char str[25];
-
-      sprint_mem(str, (char *)other, 12);
-      LogFullDebug(COMPONENT_STATES,
-                   "         ----- GetStateid : %s", str);
-    }
-
-  buffkey.pdata = (caddr_t) other;
-  buffkey.len = 12;
-
-  if(HashTable_Get(ht_state_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
-    {
-      LogFullDebug(COMPONENT_STATES,
-                   "---> nfs4_State_Get  NOT FOUND !!!!!!");
-      return 0;
-    }
-
-  memcpy(pstate_data, buffval.pdata, sizeof(state_t));
-
-  LogFullDebug(COMPONENT_STATES,
-               "---> nfs4_State_Get Found :-)");
-
-  return 1;
-}                               /* nfs4_State_Get */
-
-/**
- *
  * nfs4_State_Get_Pointer
  *
  * This routine gets a pointer to a state from the states's hashtable.
@@ -484,9 +440,9 @@ int nfs4_State_Del(char other[12])
 int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
                        clientid4 clientid)
 {
-  u_int16_t       time_digest = 0;
-  state_t         state;
-  nfs_client_id_t nfs_clientid;
+  u_int16_t         time_digest = 0;
+  state_t         * pstate2;
+  nfs_client_id_t   nfs_clientid;
 
   if(isFullDebug(COMPONENT_STATES))
     {
@@ -507,7 +463,7 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
     return NFS4ERR_SERVERFAULT;
 
   /* Try to get the related state */
-  if(!nfs4_State_Get(pstate->other, &state))
+  if(!nfs4_State_Get_Pointer(pstate->other, &pstate2))
     {
       /* State not found : return NFS4ERR_BAD_STATEID, RFC3530 page 129 */
       if(nfs_param.nfsv4_param.return_bad_stateid == TRUE)      /* Dirty work-around for HPC environment */
@@ -530,7 +486,7 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
    * with NFSv4.0, the clientid is related to the stateid itself */
   if(clientid == 0LL)
     {
-      if(nfs_client_id_get(state.powner->so_owner.so_nfs4_owner.so_clientid,
+      if(nfs_client_id_get(pstate2->powner->so_owner.so_nfs4_owner.so_clientid,
          &nfs_clientid) != CLIENT_ID_SUCCESS)
         {
           if(nfs_param.nfsv4_param.return_bad_stateid == TRUE)  /* Dirty work-around for HPC environment */
