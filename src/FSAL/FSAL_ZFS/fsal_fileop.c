@@ -63,6 +63,7 @@ fsal_status_t ZFSFSAL_open(zfsfsal_handle_t * filehandle,     /* IN */
     )
 {
   int rc;
+  creden_t cred;
 
   /* sanity checks.
    * note : file_attributes is optional.
@@ -89,12 +90,14 @@ fsal_status_t ZFSFSAL_open(zfsfsal_handle_t * filehandle,     /* IN */
   rc = fsal2posix_openflags(openflags, &posix_flags);
   if(rc)
     Return(rc, 0, INDEX_FSAL_open);
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
 
   TakeTokenFSCall();
 
   /* >> call your FS open function << */
   libzfswrap_vnode_t *p_vnode;
-  rc = libzfswrap_open(p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_open(p_vfs, &cred,
                        filehandle->data.zfs_handle, posix_flags, &p_vnode);
 
   ReleaseTokenFSCall();
@@ -109,7 +112,7 @@ fsal_status_t ZFSFSAL_open(zfsfsal_handle_t * filehandle,     /* IN */
   file_descriptor->current_offset = 0;
   file_descriptor->p_vnode = p_vnode;
   file_descriptor->handle = *filehandle;
-  file_descriptor->cred = p_context->user_credential.cred;
+  file_descriptor->cred = cred;
   file_descriptor->is_closed = 0;
 
   if(file_attributes)

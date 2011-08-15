@@ -66,6 +66,7 @@ fsal_status_t ZFSFSAL_create(zfsfsal_handle_t * parent_directory_handle,      /*
 {
 
   int rc;
+  creden_t cred;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -79,11 +80,13 @@ fsal_status_t ZFSFSAL_create(zfsfsal_handle_t * parent_directory_handle,      /*
     LogDebug(COMPONENT_FSAL, "Trying to create a file inside a snapshot");
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_create);
   }
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
 
   TakeTokenFSCall();
 
   inogen_t object;
-  rc = libzfswrap_create(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_create(p_context->export_context->p_vfs, &cred,
                          parent_directory_handle->data.zfs_handle, p_filename->name,
                          fsal2unix_mode(accessmode), &object);
 
@@ -163,6 +166,7 @@ fsal_status_t ZFSFSAL_mkdir(zfsfsal_handle_t * parent_directory_handle,       /*
 
   int rc;
   mode_t unix_mode;
+  creden_t cred;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -181,14 +185,16 @@ fsal_status_t ZFSFSAL_mkdir(zfsfsal_handle_t * parent_directory_handle,       /*
   unix_mode = fsal2unix_mode(accessmode);
 
 
-   /* Applying FSAL umask */
-   unix_mode = unix_mode & ~global_fs_info.umask;
+  /* Applying FSAL umask */
+  unix_mode = unix_mode & ~global_fs_info.umask;
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
 
   TakeTokenFSCall();
 
   /* Create the directory */
   inogen_t object;
-  rc = libzfswrap_mkdir(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_mkdir(p_context->export_context->p_vfs, &cred,
                         parent_directory_handle->data.zfs_handle, p_dirname->name, unix_mode, &object);
 
   ReleaseTokenFSCall();
@@ -267,6 +273,7 @@ fsal_status_t ZFSFSAL_link(zfsfsal_handle_t * target_handle,  /* IN */
 {
 
   int rc;
+  creden_t cred;
 
   /* sanity checks.
    * note : attributes is optional.
@@ -284,10 +291,12 @@ fsal_status_t ZFSFSAL_link(zfsfsal_handle_t * target_handle,  /* IN */
   /* Tests if hardlinking is allowed by configuration. */
   if(!global_fs_info.link_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
 
   TakeTokenFSCall();
 
-  rc = libzfswrap_link(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_link(p_context->export_context->p_vfs, &cred,
                        dir_handle->data.zfs_handle, target_handle->data.zfs_handle, p_link_name->name);
 
   ReleaseTokenFSCall();

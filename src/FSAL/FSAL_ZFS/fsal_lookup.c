@@ -185,12 +185,17 @@ fsal_status_t ZFSFSAL_lookup(zfsfsal_handle_t * parent_directory_handle,      /*
         /* Get the right VFS */
         ZFSFSAL_VFS_RDLock();
         libzfswrap_vfs_t *p_vfs = ZFSFSAL_GetVFS(parent_directory_handle);
-        if(!p_vfs)
+        if(!p_vfs) {
           rc = ENOENT;
-        else
-          rc = libzfswrap_lookup(p_vfs, &p_context->user_credential.cred,
+        } else {
+	  creden_t cred;
+
+	  cred.uid = p_context->credential.user;
+	  cred.gid = p_context->credential.group;
+          rc = libzfswrap_lookup(p_vfs, &cred,
                                  parent_directory_handle->data.zfs_handle, p_filename->name,
                                  &object, &type);
+	}
         ZFSFSAL_VFS_Unlock();
 
         //FIXME!!! Hook to remove the i_snap bit when going up from the .zfs directory

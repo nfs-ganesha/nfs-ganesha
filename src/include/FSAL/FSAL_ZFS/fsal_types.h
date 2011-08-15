@@ -84,14 +84,6 @@ typedef union
 
 typedef struct
 {
-  creden_t cred;
-  int ticket_handle;
-  time_t ticket_renewal_time;
-
-} zfsfsal_cred_t;
-
-typedef struct
-{
   fsal_handle_t root_handle;
   libzfswrap_vfs_t *p_vfs;
 
@@ -102,7 +94,7 @@ typedef struct
 typedef struct
 {
   fsal_export_context_t *export_context; /* Must be the first member of this structure */
-  fsal_cred_t user_credential;
+  struct user_credentials credential;
   int thread_connect_array[32];
 
 } zfsfsal_op_context_t;

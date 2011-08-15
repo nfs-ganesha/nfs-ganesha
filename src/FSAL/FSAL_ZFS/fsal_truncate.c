@@ -54,6 +54,7 @@ fsal_status_t ZFSFSAL_truncate(zfsfsal_handle_t * filehandle, /* IN */
     )
 {
   int rc;
+  creden_t cred;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -72,9 +73,12 @@ fsal_status_t ZFSFSAL_truncate(zfsfsal_handle_t * filehandle, /* IN */
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_truncate);
   }
 
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
+
   TakeTokenFSCall();
 
-  rc = libzfswrap_truncate(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_truncate(p_context->export_context->p_vfs, &cred,
                            filehandle->data.zfs_handle, length);
 
   ReleaseTokenFSCall();
@@ -83,7 +87,7 @@ fsal_status_t ZFSFSAL_truncate(zfsfsal_handle_t * filehandle, /* IN */
   if(rc)
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_truncate);
 
-  /* >> Optionnaly retrieve post op attributes
+  /* >> Optionaly retrieve post op attributes
    * If your filesystem truncate call can't return them,
    * you can proceed like this : <<
    */

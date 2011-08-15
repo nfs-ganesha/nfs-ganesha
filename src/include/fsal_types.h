@@ -192,6 +192,13 @@ typedef enum fsal_nodetype__
 
 /** object name.  */
 
+struct user_credentials {
+	uid_t user;
+	gid_t group;
+	int nbgroups;
+	gid_t alt_groups[FSAL_NGROUPS_MAX];
+};
+
 typedef struct fsal_name__
 {
   char name[FSAL_MAX_NAME_LEN];

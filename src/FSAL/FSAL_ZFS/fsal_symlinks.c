@@ -58,6 +58,7 @@ fsal_status_t ZFSFSAL_readlink(zfsfsal_handle_t * linkhandle, /* IN */
   int rc;
   fsal_status_t st;
   char link_content_out[FSAL_MAX_PATH_LEN];
+  creden_t cred;
 
   /* sanity checks.
    * note : link_attributes is optional.
@@ -65,10 +66,14 @@ fsal_status_t ZFSFSAL_readlink(zfsfsal_handle_t * linkhandle, /* IN */
   if(!linkhandle || !p_context || !p_link_content)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readlink);
 
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
+
   TakeTokenFSCall();
 
-  rc = libzfswrap_readlink(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                           linkhandle->data.zfs_handle, link_content_out, sizeof(link_content_out));
+  rc = libzfswrap_readlink(p_context->export_context->p_vfs, &cred,
+                           linkhandle->data.zfs_handle, link_content_out,
+			   sizeof(link_content_out));
 
   ReleaseTokenFSCall();
 
@@ -150,6 +155,7 @@ fsal_status_t ZFSFSAL_symlink(zfsfsal_handle_t * parent_directory_handle,     /*
 {
 
   int rc;
+  creden_t cred;
 
   /* sanity checks.
    * note : link_attributes is optional.
@@ -169,10 +175,13 @@ fsal_status_t ZFSFSAL_symlink(zfsfsal_handle_t * parent_directory_handle,     /*
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_symlink);
   }
 
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
+
   TakeTokenFSCall();
 
   inogen_t object;
-  rc = libzfswrap_symlink(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_symlink(p_context->export_context->p_vfs, &cred,
                           parent_directory_handle->data.zfs_handle, p_linkname->name,
                           p_linkcontent->path, &object);
 

@@ -51,6 +51,7 @@ fsal_status_t ZFSFSAL_getattrs(zfsfsal_handle_t * filehandle, /* IN */
 {
   int rc, type;
   struct stat fstat;
+  creden_t cred;
 
   /* sanity checks.
    * note : object_attributes is mandatory in ZFSFSAL_getattrs.
@@ -58,6 +59,8 @@ fsal_status_t ZFSFSAL_getattrs(zfsfsal_handle_t * filehandle, /* IN */
   if(!filehandle || !p_context || !object_attributes)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
   TakeTokenFSCall();
 
   if(filehandle->data.zfs_handle.inode == ZFS_SNAP_DIR_INODE &&
@@ -80,7 +83,7 @@ fsal_status_t ZFSFSAL_getattrs(zfsfsal_handle_t * filehandle, /* IN */
     if(!p_vfs)
       rc = ENOENT;
     else
-      rc = libzfswrap_getattr(p_vfs, &p_context->user_credential.cred,
+      rc = libzfswrap_getattr(p_vfs, &cred,
                               filehandle->data.zfs_handle, &fstat, &type);
     ZFSFSAL_VFS_Unlock();
   }
@@ -149,6 +152,7 @@ fsal_status_t ZFSFSAL_setattrs(zfsfsal_handle_t * filehandle, /* IN */
   int rc;
   fsal_status_t status;
   fsal_attrib_list_t attrs;
+  creden_t cred;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -218,11 +222,14 @@ fsal_status_t ZFSFSAL_setattrs(zfsfsal_handle_t * filehandle, /* IN */
     stats.st_mtime = attrs.mtime.seconds;
   }
 
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
+
   TakeTokenFSCall();
 
   struct stat new_stat = { 0 };
   /**@TODO: use the new_stat info ! */
-  rc = libzfswrap_setattr(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_setattr(p_context->export_context->p_vfs, &cred,
                           filehandle->data.zfs_handle, &stats, flags, &new_stat);
 
   ReleaseTokenFSCall();

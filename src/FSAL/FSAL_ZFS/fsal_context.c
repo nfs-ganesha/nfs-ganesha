@@ -229,8 +229,10 @@ fsal_status_t ZFSFSAL_GetClientContext(zfsfsal_op_context_t * p_thr_context,  /*
 
   /* set the specific export context */
   p_thr_context->export_context = p_export_context;
-  p_thr_context->user_credential.cred.uid = uid;
-  p_thr_context->user_credential.cred.gid = gid;
+  p_thr_context->credential.user = uid;
+  p_thr_context->credential.group = gid;
+  p_thr_context->credential.nbgroups = 0;
+  p_thr_context->credential.alt_groups[0] = gid; /* safety, ignore alts for now*/
 
 
   /* >> you can manage user's authentication and adjust thread specific

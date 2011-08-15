@@ -56,6 +56,7 @@ fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
     )
 {
   int rc;
+  creden_t cred;
 
   /* sanity checks
    * note : dir_attributes is optionnal.
@@ -75,6 +76,8 @@ fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
     ZFSFSAL_VFS_Unlock();
     Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_opendir);
   }
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
 
   /* Hook for the zfs snapshot directory */
   if(dir_handle->data.zfs_handle.inode == ZFS_SNAP_DIR_INODE)
@@ -86,7 +89,7 @@ fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
   else
   {
     TakeTokenFSCall();
-    rc = libzfswrap_opendir(p_vfs, &p_context->user_credential.cred,
+    rc = libzfswrap_opendir(p_vfs, &cred,
                             dir_handle->data.zfs_handle, &p_vnode);
     ReleaseTokenFSCall();
   }
@@ -95,7 +98,7 @@ fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
   if(rc)
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_opendir);
 
-  dir_descriptor->cred = p_context->user_credential.cred;
+  dir_descriptor->cred = cred;
   dir_descriptor->handle = *dir_handle;
   dir_descriptor->p_vnode = p_vnode;
 

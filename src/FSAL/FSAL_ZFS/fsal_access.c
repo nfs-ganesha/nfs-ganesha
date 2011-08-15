@@ -60,6 +60,8 @@ fsal_status_t ZFSFSAL_access(zfsfsal_handle_t * object_handle,        /* IN */
                              fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
+  creden_t cred;
+
   /* sanity checks.
    * note : object_attributes is optional in FSAL_access.
    */
@@ -77,9 +79,10 @@ fsal_status_t ZFSFSAL_access(zfsfsal_handle_t * object_handle,        /* IN */
 
   /* >> convert your fsal access type to your FS access type << */
   int mask = fsal2posix_testperm(access_type);
-
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
   TakeTokenFSCall();
-  int rc = libzfswrap_access(p_vfs, &p_context->user_credential.cred,
+  int rc = libzfswrap_access(p_vfs, &cred,
                              object_handle->data.zfs_handle, mask);
   ReleaseTokenFSCall();
   ZFSFSAL_VFS_Unlock();
