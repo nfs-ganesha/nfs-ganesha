@@ -103,7 +103,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   state_owner_t           * powner = NULL;
   state_owner_t           * popen_owner = NULL;
   state_owner_t           * powner_exists = NULL;
-  state_nfs4_owner_name_t * powner_name = NULL;
   uint64_t                  a, b, a1, b1;
   unsigned int              overlap = FALSE;
   state_nfs4_owner_name_t   owner_name;
@@ -480,42 +479,14 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
 
       /* This lock owner is not known yet, allocated and set up a new one */
-      GetFromPool(powner, &data->pclient->pool_state_owner, state_owner_t);
+      powner = create_nfs4_owner(data->pclient,
+                                 &owner_name,
+                                 (open_owner4 *) &arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
+                                 pstate_open->powner,
+                                 0);
 
       if(powner == NULL)
         {
-          res_LOCK4.status = NFS4ERR_SERVERFAULT;
-          return res_LOCK4.status;
-        }
-
-      GetFromPool(powner_name, &data->pclient->pool_nfs4_owner_name, state_nfs4_owner_name_t);
-
-      if(powner_name == NULL)
-        {
-          ReleaseToPool(powner, &data->pclient->pool_state_owner);
-          res_LOCK4.status = NFS4ERR_SERVERFAULT;
-          return res_LOCK4.status;
-        }
-
-      memcpy(powner_name, &owner_name, sizeof(state_nfs4_owner_name_t));
-
-      /* set up the content of the open_owner */
-      powner->so_owner.so_nfs4_owner.so_confirmed     = FALSE;
-      powner->so_owner.so_nfs4_owner.so_seqid         = 0;
-      powner->so_owner.so_nfs4_owner.so_related_owner = pstate_open->powner;
-      powner->so_owner.so_nfs4_owner.so_clientid      = arg_LOCK4.locker.locker4_u.open_owner.lock_owner.clientid;
-      powner->so_owner.so_nfs4_owner.so_owner_len     = arg_LOCK4.locker.locker4_u.open_owner.lock_owner.owner.owner_len;
-      memcpy((char *)powner->so_owner.so_nfs4_owner.so_owner_val,
-             (char *)arg_LOCK4.locker.locker4_u.open_owner.lock_owner.owner.owner_val,
-             arg_LOCK4.locker.locker4_u.open_owner.lock_owner.owner.owner_len);
-      powner->so_owner.so_nfs4_owner.so_owner_val[powner->so_owner.so_nfs4_owner.so_owner_len] = '\0';
-
-      pthread_mutex_init(&powner->so_owner.so_nfs4_owner.so_mutex, NULL);
-
-      if(!nfs4_owner_Set(powner_name, powner))
-        {
-          ReleaseToPool(powner, &data->pclient->pool_state_owner);
-          ReleaseToPool(powner_name, &data->pclient->pool_nfs4_owner_name);
           res_LOCK4.status = NFS4ERR_SERVERFAULT;
           return res_LOCK4.status;
         }

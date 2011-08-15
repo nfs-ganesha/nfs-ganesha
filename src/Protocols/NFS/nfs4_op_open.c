@@ -103,7 +103,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   state_t                 * pstate_previous_iterate = NULL;
   state_t                 * pstate_found_same_owner = NULL;
   state_nfs4_owner_name_t   owner_name;
-  state_nfs4_owner_name_t * powner_name = NULL;
   state_owner_t           * powner = NULL;
 
   fsal_accessflags_t write_access = FSAL_MODE_MASK_SET(FSAL_W_OK) |
@@ -295,37 +294,17 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       if(!nfs4_owner_Get_Pointer(&owner_name, &powner))
         {
           /* This open owner is not known yet, allocated and set up a new one */
-          GetFromPool(powner, &data->pclient->pool_state_owner, state_owner_t);
+          powner = create_nfs4_owner(data->pclient,
+                                     &owner_name,
+                                     &arg_OPEN4.owner,
+                                     NULL,
+                                     0);
 
-          GetFromPool(powner_name, &data->pclient->pool_nfs4_owner_name, state_nfs4_owner_name_t);
-
-          if(powner == NULL || powner_name == NULL)
+          if(powner == NULL)
             {
               res_OPEN4.status = NFS4ERR_SERVERFAULT;
               return res_OPEN4.status;
             }
-
-          memcpy((char *)powner_name, (char *)&owner_name,
-                 sizeof(state_nfs4_owner_name_t));
-
-          /* set up the content of the open_owner */
-          powner->so_owner.so_nfs4_owner.so_confirmed     = FALSE;
-          powner->so_owner.so_nfs4_owner.so_seqid         = 0;
-          powner->so_owner.so_nfs4_owner.so_related_owner = NULL;
-          powner->so_owner.so_nfs4_owner.so_clientid      = arg_OPEN4.owner.clientid;
-          powner->so_owner.so_nfs4_owner.so_owner_len     = arg_OPEN4.owner.owner.owner_len;
-          memcpy((char *)powner->so_owner.so_nfs4_owner.so_owner_val, (char *)arg_OPEN4.owner.owner.owner_val,
-                 arg_OPEN4.owner.owner.owner_len);
-          powner->so_owner.so_nfs4_owner.so_owner_val[powner->so_owner.so_nfs4_owner.so_owner_len] = '\0';
-
-          pthread_mutex_init(&powner->so_owner.so_nfs4_owner.so_mutex, NULL);
-
-          if(!nfs4_owner_Set(powner_name, powner))
-            {
-              res_OPEN4.status = NFS4ERR_SERVERFAULT;
-              return res_OPEN4.status;
-            }
-
         }
       else
         {

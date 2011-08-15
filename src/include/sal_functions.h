@@ -151,7 +151,7 @@ unsigned long nfs4_owner_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long nfs4_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t    * buffclef);
 
-int convert_nfs4_owner(open_owner4 * pnfsowoner,
+int convert_nfs4_owner(open_owner4             * pnfsowoner,
                        state_nfs4_owner_name_t * pname_owner);
 
 void nfs4_owner_PrintAll(void);
@@ -160,8 +160,11 @@ int nfs4_owner_Del(state_nfs4_owner_name_t * pname);
 int nfs4_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
                            state_owner_t           ** powner);
 
-int nfs4_owner_Set(state_nfs4_owner_name_t * pname,
-                   state_owner_t           * powner);
+state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
+                                 state_nfs4_owner_name_t * pname,
+                                 open_owner4             * arg_owner,
+                                 state_owner_t           * related_owner,
+                                 unsigned int              init_seqid);
 
 int Init_nfs4_owner(nfs4_owner_parameter_t param);
 

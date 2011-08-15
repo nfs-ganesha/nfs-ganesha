@@ -343,3 +343,58 @@ int convert_nfs4_owner(open_owner4             * pnfsowner,
 
   return 1;
 }                               /* convert_nfs4_owner */
+
+state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
+                                 state_nfs4_owner_name_t * pname,
+                                 open_owner4             * arg_owner,
+                                 state_owner_t           * related_owner,
+                                 unsigned int              init_seqid)
+{
+  state_owner_t           * powner;
+  state_nfs4_owner_name_t * powner_name;
+
+  /* This lock owner is not known yet, allocated and set up a new one */
+  GetFromPool(powner, &pclient->pool_state_owner, state_owner_t);
+
+  if(powner == NULL)
+    return NULL;
+
+  GetFromPool(powner_name, &pclient->pool_nfs4_owner_name, state_nfs4_owner_name_t);
+
+  if(powner_name == NULL)
+    {
+      ReleaseToPool(powner, &pclient->pool_state_owner);
+      return NULL;
+    }
+
+  *powner_name = *pname;
+
+  /* set up the content of the open_owner */
+  powner->so_owner.so_nfs4_owner.so_confirmed     = FALSE;
+  powner->so_owner.so_nfs4_owner.so_seqid         = init_seqid;
+  powner->so_owner.so_nfs4_owner.so_related_owner = related_owner;
+  powner->so_owner.so_nfs4_owner.so_clientid      = arg_owner->clientid;
+  powner->so_owner.so_nfs4_owner.so_owner_len     = arg_owner->owner.owner_len;
+
+  memcpy(powner->so_owner.so_nfs4_owner.so_owner_val,
+         arg_owner->owner.owner_val,
+         arg_owner->owner.owner_len);
+
+  powner->so_owner.so_nfs4_owner.so_owner_val[powner->so_owner.so_nfs4_owner.so_owner_len] = '\0';
+
+  if(pthread_mutex_init(&powner->so_owner.so_nfs4_owner.so_mutex, NULL) == -1)
+    {
+      ReleaseToPool(powner, &pclient->pool_state_owner);
+      ReleaseToPool(powner_name, &pclient->pool_nfs4_owner_name);
+      return NULL;
+    }
+
+  if(!nfs4_owner_Set(powner_name, powner))
+    {
+      ReleaseToPool(powner, &pclient->pool_state_owner);
+      ReleaseToPool(powner_name, &pclient->pool_nfs4_owner_name);
+      return NULL;
+    }
+
+  return powner;
+}
