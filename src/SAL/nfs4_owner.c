@@ -76,14 +76,14 @@ int display_nfs4_owner_val(hash_buffer_t * pbuff, char *str)
 
   state_owner_t *powner = (state_owner_t *) (pbuff->pdata);
 
-  for(i = 0; i < powner->so_owner.so_nfs4_owner.so_owner_len; i++)
+  for(i = 0; i < powner->so_owner_len; i++)
     sprintf(&(strtmp[i * 2]),
             "%02x",
-            (unsigned char)powner->so_owner.so_nfs4_owner.so_owner_val[i]);
+            (unsigned char)powner->so_owner_val[i]);
 
   return sprintf(str, "clientid=%llu owner=(%u|%s) confirmed=%u seqid=%u",
                        (unsigned long long)powner->so_owner.so_nfs4_owner.so_clientid,
-                       powner->so_owner.so_nfs4_owner.so_owner_len, strtmp,
+                       powner->so_owner_len, strtmp,
                        powner->so_owner.so_nfs4_owner.so_confirmed,
                        powner->so_owner.so_nfs4_owner.so_seqid);
 }                               /* display_state_id_val */
@@ -374,13 +374,13 @@ state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
   powner->so_owner.so_nfs4_owner.so_seqid         = init_seqid;
   powner->so_owner.so_nfs4_owner.so_related_owner = related_owner;
   powner->so_owner.so_nfs4_owner.so_clientid      = arg_owner->clientid;
-  powner->so_owner.so_nfs4_owner.so_owner_len     = arg_owner->owner.owner_len;
+  powner->so_owner_len                            = arg_owner->owner.owner_len;
 
-  memcpy(powner->so_owner.so_nfs4_owner.so_owner_val,
+  memcpy(powner->so_owner_val,
          arg_owner->owner.owner_val,
          arg_owner->owner.owner_len);
 
-  powner->so_owner.so_nfs4_owner.so_owner_val[powner->so_owner.so_nfs4_owner.so_owner_len] = '\0';
+  powner->so_owner_val[powner->so_owner_len] = '\0';
 
   if(pthread_mutex_init(&powner->so_mutex, NULL) == -1)
     {

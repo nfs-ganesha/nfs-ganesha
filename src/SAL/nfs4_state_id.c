@@ -236,8 +236,8 @@ int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
   LogFullDebug(COMPONENT_STATES,
                "----  nfs4_BuildStateId_Other : pentry=%p popen_owner=%u|%s",
                pentry,
-               popen_owner->so_owner.so_nfs4_owner.so_owner_len,
-               popen_owner->so_owner.so_nfs4_owner.so_owner_val);
+               popen_owner->so_owner_len,
+               popen_owner->so_owner_val);
 
   /* Get several digests to build the stateid : the server boot time, the fileid and a monotonic counter */
   if(FSAL_IS_ERROR(FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),

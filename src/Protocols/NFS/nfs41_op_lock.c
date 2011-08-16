@@ -278,13 +278,13 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       {
                         /* Overlapping lock is found, if owner is different than the calling owner, return NFS4ERR_DENIED */
                         if((pstate_exists != NULL) &&   /* all-O/all-1 stateid is considered a different owner */
-                           ((powner_exists->so_owner.so_nfs4_owner.so_owner_len ==
-                             pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_len)
+                           ((powner_exists->so_owner_len ==
+                             pstate_found_iterate->state_powner->so_owner_len)
                             &&
                             (!memcmp
-                             (powner_exists->so_owner.so_nfs4_owner.so_owner_val,
-                              pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_val,
-                              pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_len))))
+                             (powner_exists->so_owner_val,
+                              pstate_found_iterate->state_powner->so_owner_val,
+                              pstate_found_iterate->state_powner->so_owner_len))))
                           {
                             /* The calling state owner is the same. There is a discussion on this case at page 161 of RFC3530. I choose to ignore this
                              * lock and continue iterating on the other states */
@@ -299,9 +299,9 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                             res_LOCK4.LOCK4res_u.denied.locktype =
                                 pstate_found_iterate->state_data.lock.lock_type;
                             res_LOCK4.LOCK4res_u.denied.owner.owner.owner_len =
-                                pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_len;
+                                pstate_found_iterate->state_powner->so_owner_len;
                             res_LOCK4.LOCK4res_u.denied.owner.owner.owner_val =
-                                pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_val;
+                                pstate_found_iterate->state_powner->so_owner_val;
                             res_LOCK4.status = NFS4ERR_DENIED;
                             return res_LOCK4.status;
                           }

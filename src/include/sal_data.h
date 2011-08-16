@@ -154,8 +154,6 @@ typedef struct state_nlm_owner_t
 {
   state_nlm_client_t * so_client;
   int32_t              so_nlm_svid;
-  int                  so_nlm_oh_len;
-  char                 so_nlm_oh[MAX_NETOBJ_SZ];
 } state_nlm_owner_t;
 #endif
 
@@ -165,8 +163,6 @@ typedef struct state_owner_t      state_owner_t;
 struct state_nfs4_owner_t
 {
   clientid4           so_clientid;
-  unsigned int        so_owner_len;
-  char                so_owner_val[NFS4_OPAQUE_LIMIT];
   unsigned int        so_confirmed;
   unsigned int        so_seqid;
   uint32_t            so_counter;       /** < Counter is used to build unique stateids */
@@ -180,6 +176,8 @@ struct state_owner_t
   struct glist_head       so_lock_list;
   pthread_mutex_t         so_mutex;
   int                     so_refcount;
+  int                     so_owner_len;
+  char                    so_owner_val[NFS4_OPAQUE_LIMIT]; /* big enough for all owners */
   union
   {
     state_nfs4_owner_t    so_nfs4_owner;
@@ -188,6 +186,8 @@ struct state_owner_t
 #endif
   } so_owner;
 };
+
+extern state_owner_t unknown_owner;
 
 typedef union state_data_t
 {

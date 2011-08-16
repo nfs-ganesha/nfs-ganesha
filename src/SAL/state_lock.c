@@ -96,8 +96,11 @@ state_status_t state_lock_init(state_status_t * pstatus)
   *pstatus = STATE_SUCCESS;
 
   memset(&unknown_owner, 0, sizeof(unknown_owner));
-  unknown_owner.so_type     = STATE_LOCK_OWNER_UNKNOWN;
-  unknown_owner.so_refcount = 1;
+  strcpy(unknown_owner.so_owner_val, "ganesha_unknown_owner");
+  unknown_owner.so_type      = STATE_LOCK_OWNER_UNKNOWN;
+  unknown_owner.so_refcount  = 1;
+  unknown_owner.so_owner_len = strlen(unknown_owner.so_owner_val);
+
   init_glist(&unknown_owner.so_lock_list);
 
   if(pthread_mutex_init(&unknown_owner.so_mutex, NULL) == -1)

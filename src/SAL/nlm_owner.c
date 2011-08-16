@@ -132,7 +132,7 @@ unsigned long nlm_client_value_hash_func(hash_parameter_t * p_hparam,
 
   return (unsigned long)(res % p_hparam->index_size);
 
-}                               /* nlm_so_nlm_ohue_hash_func */
+}                               /* nlm_client_value_hash_func */
 
 unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
                                       hash_buffer_t * buffclef)
@@ -164,11 +164,11 @@ int display_nlm_owner(state_owner_t *pkey, char *str)
 
   strtmp += display_nlm_client(pkey->so_owner.so_nlm_owner.so_client, str);
 
-  strtmp += sprintf(strtmp, " oh=(%u|", pkey->so_owner.so_nlm_owner.so_nlm_oh_len);
+  strtmp += sprintf(strtmp, " oh=(%u|", pkey->so_owner_len);
 
-  for(i = 0; i < pkey->so_owner.so_nlm_owner.so_nlm_oh_len; i++)
+  for(i = 0; i < pkey->so_owner_len; i++)
     {
-      sprintf(strtmp, "%02x", (unsigned char)pkey->so_owner.so_nlm_owner.so_nlm_oh[i]);
+      sprintf(strtmp, "%02x", (unsigned char)pkey->so_owner_val[i]);
       strtmp += 2;
     }
 
@@ -211,21 +211,21 @@ int compare_nlm_owner(state_owner_t *powner1,
     return 1;
 
   /* Handle special owner that matches any lock owner with the same nlm client */
-  if(powner1->so_owner.so_nlm_owner.so_nlm_oh_len == -1 ||
-     powner2->so_owner.so_nlm_owner.so_nlm_oh_len == -1)
+  if(powner1->so_owner_len == -1 ||
+     powner2->so_owner_len == -1)
     return 0;
 
   if(powner1->so_owner.so_nlm_owner.so_nlm_svid !=
      powner2->so_owner.so_nlm_owner.so_nlm_svid)
     return 1;
 
-  if(powner1->so_owner.so_nlm_owner.so_nlm_oh_len !=
-     powner2->so_owner.so_nlm_owner.so_nlm_oh_len)
+  if(powner1->so_owner_len !=
+     powner2->so_owner_len)
     return 1;
 
-  return memcmp(powner1->so_owner.so_nlm_owner.so_nlm_oh,
-                powner2->so_owner.so_nlm_owner.so_nlm_oh,
-                powner1->so_owner.so_nlm_owner.so_nlm_oh_len);
+  return memcmp(powner1->so_owner_val,
+                powner2->so_owner_val,
+                powner1->so_owner_len);
 }
 
 int compare_nlm_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
@@ -244,12 +244,12 @@ unsigned long nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
   state_owner_t *pkey = (state_owner_t *)buffclef->pdata;
 
   /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->so_owner.so_nlm_owner.so_nlm_oh_len; i++)
-    sum += (unsigned char)pkey->so_owner.so_nlm_owner.so_nlm_oh[i];
+  for(i = 0; i < pkey->so_owner_len; i++)
+    sum += (unsigned char)pkey->so_owner_val[i];
 
   res = (unsigned long) (pkey->so_owner.so_nlm_owner.so_nlm_svid) +
         (unsigned long) sum +
-        (unsigned long) pkey->so_owner.so_nlm_owner.so_nlm_oh_len;
+        (unsigned long) pkey->so_owner_len;
 
   LogFullDebug(COMPONENT_STATE,
                "---> rbt_hash_val = %lu", res % p_hparam->index_size);
@@ -267,12 +267,12 @@ unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
   state_owner_t *pkey = (state_owner_t *)buffclef->pdata;
 
   /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->so_owner.so_nlm_owner.so_nlm_oh_len; i++)
-    sum += (unsigned char)pkey->so_owner.so_nlm_owner.so_nlm_oh[i];
+  for(i = 0; i < pkey->so_owner_len; i++)
+    sum += (unsigned char)pkey->so_owner_val[i];
 
   res = (unsigned long) (pkey->so_owner.so_nlm_owner.so_nlm_svid) +
         (unsigned long) sum +
-        (unsigned long) pkey->so_owner.so_nlm_owner.so_nlm_oh_len;
+        (unsigned long) pkey->so_owner_len;
 
   LogFullDebug(COMPONENT_STATE, "---> rbt_hash_func = %lu", res);
 
@@ -767,10 +767,8 @@ state_owner_t *get_nlm_owner(bool_t               care,
   pkey->so_refcount = 1;
   pkey->so_owner.so_nlm_owner.so_client     = pclient;
   pkey->so_owner.so_nlm_owner.so_nlm_svid   = svid;
-  pkey->so_owner.so_nlm_owner.so_nlm_oh_len = oh->n_len;
-  memcpy(pkey->so_owner.so_nlm_owner.so_nlm_oh,
-         oh->n_bytes,
-         oh->n_len);
+  pkey->so_owner_len                        = oh->n_len;
+  memcpy(pkey->so_owner_val, oh->n_bytes, oh->n_len);
 
   if(isFullDebug(COMPONENT_STATE))
     {
@@ -850,5 +848,5 @@ void make_nlm_special_owner(state_nlm_client_t * pclient,
   pnlm_owner->so_type     = STATE_LOCK_OWNER_NLM;
   pnlm_owner->so_refcount = 1;
   pnlm_owner->so_owner.so_nlm_owner.so_client     = pclient;
-  pnlm_owner->so_owner.so_nlm_owner.so_nlm_oh_len = -1;
+  pnlm_owner->so_owner_len                        = -1;
 }

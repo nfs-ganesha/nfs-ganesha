@@ -435,19 +435,23 @@ void nlm_process_conflict(nlm4_holder       * nlm_holder,
       nlm_holder->l_len     = 0;
     }
 
-  if(holder != NULL && holder->so_type == STATE_LOCK_OWNER_NLM)
+  if(holder != NULL)
     {
-      nlm_holder->svid = holder->so_owner.so_nlm_owner.so_nlm_svid;
+      if(holder->so_type == STATE_LOCK_OWNER_NLM)
+        nlm_holder->svid = holder->so_owner.so_nlm_owner.so_nlm_svid;
+      else
+        nlm_holder->svid = 0;
       fill_netobj(&nlm_holder->oh,
-                  holder->so_owner.so_nlm_owner.so_nlm_oh,
-                  holder->so_owner.so_nlm_owner.so_nlm_oh_len);
+                  holder->so_owner_val,
+                  holder->so_owner_len);
     }
   else
     {
       /* If we don't have an NLM owner, not much we can do. */
       nlm_holder->svid       = 0;
-      nlm_holder->oh.n_len   = 0;
-      nlm_holder->oh.n_bytes = NULL;
+      fill_netobj(&nlm_holder->oh,
+                  unknown_owner.so_owner_val,
+                  unknown_owner.so_owner_len);
     }
 
   /* Release any lock owner reference passed back from cache inode */
@@ -604,8 +608,8 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
     goto grant_fail;
 
   if(!fill_netobj(&inarg->alock.oh,
-                  nlm_grant_owner->so_nlm_oh,
-                  nlm_grant_owner->so_nlm_oh_len))
+                  lock_entry->sle_owner->so_owner_val,
+                  lock_entry->sle_owner->so_owner_len))
     goto grant_fail;
 
   if(!fill_netobj(&inarg->cookie,

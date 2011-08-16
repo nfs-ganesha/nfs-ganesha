@@ -572,8 +572,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                               if((pstate_found_iterate->state_type ==
                                   STATE_TYPE_SHARE)
                                  && !memcmp(arg_OPEN4.owner.owner.owner_val,
-                                            pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_val,
-                                            pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_len)
+                                            pstate_found_iterate->state_powner->so_owner_val,
+                                            pstate_found_iterate->state_powner->so_owner_len)
                                  && !memcmp(pstate_found_iterate->state_data.share.
                                             oexcl_verifier,
                                             arg_OPEN4.openhow.openflag4_u.how.
@@ -878,13 +878,13 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                   if((pstate_found_iterate->state_type == STATE_TYPE_SHARE) &&
                      (pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_clientid == arg_OPEN4.owner.clientid)
                      &&
-                     ((pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_len ==
+                     ((pstate_found_iterate->state_powner->so_owner_len ==
                        arg_OPEN4.owner.owner.owner_len)
                       &&
                       (!memcmp
                        (arg_OPEN4.owner.owner.owner_val,
-                        pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_val,
-                        pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_len))))
+                        pstate_found_iterate->state_powner->so_owner_val,
+                        pstate_found_iterate->state_powner->so_owner_len))))
                     {
                       /* We'll be re-using the found state */
                       pstate_found_same_owner = pstate_found_iterate;
@@ -895,8 +895,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       /* This is a different owner, check for possible conflicts */
 
                       if(memcmp(arg_OPEN4.owner.owner.owner_val,
-                                pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_val,
-                                pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_owner_len))
+                                pstate_found_iterate->state_powner->so_owner_val,
+                                pstate_found_iterate->state_powner->so_owner_len))
                         {
                           if(pstate_found_iterate->state_type == STATE_TYPE_SHARE)
                             {
