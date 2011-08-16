@@ -94,13 +94,6 @@ typedef union {
 
 /** Authentification context.    */
 
-typedef struct
-{
-  uid_t user;
-  gid_t group;
-  fsal_count_t nbgroups;
-  gid_t alt_groups[FSAL_NGROUPS_MAX];
-} vfsfsal_cred_t;
 
 typedef struct
 {
@@ -116,7 +109,7 @@ typedef struct
 typedef struct
 {
   vfsfsal_export_context_t *export_context;     /* Must be the first entry in this structure */
-  vfsfsal_cred_t credential;
+  struct user_credentials credential;
 } vfsfsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
