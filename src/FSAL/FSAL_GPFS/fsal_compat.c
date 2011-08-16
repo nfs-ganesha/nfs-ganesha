@@ -762,7 +762,7 @@ fsal_const_t fsal_gpfs_consts = {
   .fsal_file_t_size = sizeof(gpfsfsal_file_t),
   .fsal_cookie_t_size = sizeof(gpfsfsal_cookie_t),
   .fsal_lockdesc_t_size = sizeof(gpfsfsal_lockdesc_t),
-  .fsal_cred_t_size = sizeof(gpfsfsal_cred_t),
+  .fsal_cred_t_size = sizeof(struct user_credentials),
   .fs_specific_initinfo_t_size = sizeof(gpfsfs_specific_initinfo_t),
   .fsal_dir_t_size = sizeof(gpfsfsal_dir_t)
 };
