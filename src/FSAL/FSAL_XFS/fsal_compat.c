@@ -102,7 +102,7 @@ fsal_const_t fsal_xfs_consts = {
   .fsal_file_t_size = sizeof(xfsfsal_file_t),
   .fsal_cookie_t_size = sizeof(xfsfsal_cookie_t),
   .fsal_lockdesc_t_size = sizeof(xfsfsal_lockdesc_t),
-  .fsal_cred_t_size = sizeof(xfsfsal_cred_t),
+  .fsal_cred_t_size = sizeof(struct user_credentials),
   .fs_specific_initinfo_t_size = sizeof(xfsfs_specific_initinfo_t),
   .fsal_dir_t_size = sizeof(xfsfsal_dir_t)
 };
