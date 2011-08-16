@@ -101,14 +101,6 @@ typedef union {
 
 typedef struct
 {
-  fsal_uid_t user;
-  fsal_gid_t group;
-  fsal_count_t nbgroups;
-  fsal_gid_t alt_groups[FSAL_NGROUPS_MAX];
-} proxyfsal_cred_t;
-
-typedef struct
-{
   proxyfsal_handle_t root_handle;
 } proxyfsal_export_context_t;
 
@@ -117,7 +109,7 @@ typedef struct
 typedef struct
 {
   proxyfsal_export_context_t *export_context;   /* Must be the first entry in this structure */
-  proxyfsal_cred_t user_credential;
+  struct user_credentials credential;
 
   unsigned int retry_sleeptime;
   unsigned int srv_prognum;
@@ -137,8 +129,8 @@ typedef struct
   uint64_t file_counter;
 } proxyfsal_op_context_t;
 
-#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->user_credential.user )
-#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->user_credential.group )
+#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
+#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
 typedef struct
 {
