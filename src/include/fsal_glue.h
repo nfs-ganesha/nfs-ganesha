@@ -48,10 +48,17 @@ typedef struct
 
 typedef fsal_handle_t fsal_handle_storage_t ;
 
+/* NOTE: this structure is very dangerous as noted by the comments
+ * in the individual fsal_types.h files.  It harkens back to the
+ * days of fortran commons...  We let it go for now as we
+ * refactor.  The first 2 elements must be identical throughout!
+ */
+
 typedef struct
 {
   void *export_context;
-  char data[FSAL_OP_CONTEXT_T_SIZE];
+  struct user_credentials credential;
+  char data[FSAL_OP_CONTEXT_T_SIZE]; /* slightly bigger (for now) */
 } fsal_op_context_t;
 
 typedef struct
