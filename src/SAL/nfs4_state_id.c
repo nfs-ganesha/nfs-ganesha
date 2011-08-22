@@ -115,7 +115,7 @@ unsigned long state_id_value_hash_func(hash_parameter_t * p_hparam,
       sum += c;
     }
 
-  LogFullDebug(COMPONENT_STATES, "---> state_id_value_hash_func=%lu",
+  LogFullDebug(COMPONENT_STATE, "---> state_id_value_hash_func=%lu",
                (unsigned long)(sum % p_hparam->index_size));
 
   return (unsigned long)(sum % p_hparam->index_size);
@@ -129,12 +129,12 @@ unsigned long state_id_rbt_hash_func(hash_parameter_t * p_hparam,
   u_int32_t i2 = 0;
   u_int32_t i3 = 0;
 
-  if(isFullDebug(COMPONENT_STATES))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str[25];
 
       sprint_mem(str, (char *)buffclef->pdata, 12);
-      LogFullDebug(COMPONENT_STATES,
+      LogFullDebug(COMPONENT_STATE,
                    "         ----- state_id_rbt_hash_func : %s", str);
     }
 
@@ -142,7 +142,7 @@ unsigned long state_id_rbt_hash_func(hash_parameter_t * p_hparam,
   memcpy(&i2, &(buffclef->pdata[4]), sizeof(u_int32_t));
   memcpy(&i3, &(buffclef->pdata[8]), sizeof(u_int32_t));
 
-  LogFullDebug(COMPONENT_STATES,
+  LogFullDebug(COMPONENT_STATE,
                "--->  state_id_rbt_hash_func=%lu",
                (unsigned long)(i1 ^ i2 ^ i3));
 
@@ -186,7 +186,7 @@ int nfs4_Init_state_id(nfs_state_id_parameter_t param)
 
   if((ht_state_id = HashTable_Init(param.hash_param)) == NULL)
     {
-      LogCrit(COMPONENT_STATES, "NFS STATE_ID: Cannot init State Id cache");
+      LogCrit(COMPONENT_STATE, "NFS STATE_ID: Cannot init State Id cache");
       return -1;
     }
 
@@ -233,7 +233,7 @@ int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
   if(other == NULL)
     return 0;
 
-  LogFullDebug(COMPONENT_STATES,
+  LogFullDebug(COMPONENT_STATE,
                "----  nfs4_BuildStateId_Other : pentry=%p popen_owner=%u|%s",
                pentry,
                popen_owner->so_owner_len,
@@ -249,7 +249,7 @@ int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
   srvboot_digest = (u_int16_t) (ServerBootTime & 0x0000FFFF);;
   open_owner_digest = popen_owner->so_owner.so_nfs4_owner.so_counter;
 
-  LogFullDebug(COMPONENT_STATES,
+  LogFullDebug(COMPONENT_STATE,
                "----  nfs4_BuildStateId_Other : pentry=%p fileid=%"PRIu64" open_owner_digest=%u",
                pentry, fileid_digest, open_owner_digest);
 
@@ -277,12 +277,12 @@ int nfs4_State_Set(char other[12], state_t * pstate_data)
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
 
-  if(isFullDebug(COMPONENT_STATES))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str[25];
 
       sprint_mem(str, (char *)other, 12);
-      LogFullDebug(COMPONENT_STATES,
+      LogFullDebug(COMPONENT_STATE,
                    "         ----- SetStateid : %s", str);
     }
 
@@ -319,12 +319,12 @@ int nfs4_State_Get_Pointer(char other[12], state_t * *pstate_data)
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
 
-  if(isFullDebug(COMPONENT_STATES))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str[25];
 
       sprint_mem(str, (char *)other, 12);
-      LogFullDebug(COMPONENT_STATES,
+      LogFullDebug(COMPONENT_STATE,
                    "         ----- Get_PointerStateid : %s", str);
     }
 
@@ -333,14 +333,14 @@ int nfs4_State_Get_Pointer(char other[12], state_t * *pstate_data)
 
   if(HashTable_Get(ht_state_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
-      LogFullDebug(COMPONENT_STATES,
+      LogFullDebug(COMPONENT_STATE,
                    "---> nfs4_State_Get_Pointer  NOT FOUND !!!!!!");
       return 0;
     }
 
   *pstate_data = (state_t *) buffval.pdata;
 
-  LogFullDebug(COMPONENT_STATES,
+  LogFullDebug(COMPONENT_STATE,
                "---> nfs4_State_Get_Pointer Found :-)");
 
   return 1;
@@ -361,12 +361,12 @@ int nfs4_State_Del(char other[12])
 {
   hash_buffer_t buffkey, old_key, old_value;
 
-  if(isFullDebug(COMPONENT_STATES))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str[25];
 
       sprint_mem(str, (char *)other, 12);
-      LogFullDebug(COMPONENT_STATES,
+      LogFullDebug(COMPONENT_STATE,
                    "         ----- DelStateid : %s", str);
     }
 
@@ -404,12 +404,12 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
   state_t         * pstate2;
   nfs_client_id_t   nfs_clientid;
 
-  if(isFullDebug(COMPONENT_STATES))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str[25];
 
       sprint_mem(str, (char *)pstate->other, 12);
-      LogFullDebug(COMPONENT_STATES,
+      LogFullDebug(COMPONENT_STATE,
                    "         ----- CheckStateid : %s", str);
     }
 
@@ -432,12 +432,12 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
         return NFS4_OK;
     }
 
-  if(isFullDebug(COMPONENT_STATES))
+  if(isFullDebug(COMPONENT_STATE))
     {
       char str[25];
 
       sprint_mem(str, (char *)pstate->other, 12);
-      LogFullDebug(COMPONENT_STATES,
+      LogFullDebug(COMPONENT_STATE,
                    "         ----- CheckStateid state found: %s", str);
     }
 
@@ -476,6 +476,6 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
 
 void nfs_State_PrintAll(void)
 {
-  if(isFullDebug(COMPONENT_STATES))
-    HashTable_Log(COMPONENT_STATES, ht_state_id);
+  if(isFullDebug(COMPONENT_STATE))
+    HashTable_Log(COMPONENT_STATE, ht_state_id);
 }                               /* nfs_State_PrintAll */

@@ -883,11 +883,6 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_STATES,            "COMPONENT_STATES", "STATES",
-    NIV_EVENT,
-    SYSLOG,
-    "SYSLOG"
-  },
   { COMPONENT_MEMLEAKS,          "COMPONENT_MEMLEAKS", "MEM LEAKS",
 #ifdef _DEBUG_MEMLEAKS
     NIV_FULL_DEBUG,
