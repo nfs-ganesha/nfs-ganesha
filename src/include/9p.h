@@ -432,9 +432,10 @@ int _9p_dummy( _9p_request_data_t * preq9p,
                u32 * plenout, 
                char * preply) ;
 
-int _9p_version( _9p_request_data_t * preq9p, 
-                void * pworker_data,
-                 u32 * plenout, char * preply) ;
+int _9p_clunk( _9p_request_data_t * preq9p, 
+               void * pworker_data,
+               u32 * plenout,
+               char * preply) ;
 
 int _9p_attach( _9p_request_data_t * preq9p, 
                 void * pworker_data,
@@ -444,6 +445,11 @@ int _9p_attach( _9p_request_data_t * preq9p,
 int _9p_getattr( _9p_request_data_t * preq9p, 
                  void * pworker_data,
                  u32 * plenout, 
+                 char * preply) ;
+
+int _9p_version( _9p_request_data_t * preq9p, 
+                 void * pworker_data,
+                 u32 * plenout,
                  char * preply) ;
 
 int _9p_rerror( _9p_request_data_t * preq9p,
@@ -467,7 +473,7 @@ int _9p_hash_fid_update( _9p_conn_t * pconn,
                          _9p_fid_t  * pfid ) ;
 int _9p_hash_fid_del( _9p_conn_t * pconn, 
                       u32 fid,
-                      struct prealloc_pool * pfidpool ) ;
+                      _9p_fid_t ** ppoldfid ) ;
 _9p_fid_t * _9p_hash_fid_get( _9p_conn_t * pconn, 
                               u32 fid,
                               int * prc ) ;

@@ -169,10 +169,12 @@ int _9p_hash_fid_update( _9p_conn_t * pconn,
 
 int _9p_hash_fid_del( _9p_conn_t * pconn, 
                       u32 fid,
-                      struct prealloc_pool * pfidpool )
+                      _9p_fid_t ** ppoldfid ) 
 {
    _9p_hash_fid_key_t key ;
   hash_buffer_t buffkey;
+  hash_buffer_t old_key, old_value;
+
   int rc = 0 ; 
 
   if( !pconn ) 
@@ -186,8 +188,11 @@ int _9p_hash_fid_del( _9p_conn_t * pconn,
   buffkey.pdata = (caddr_t)&key ;
   buffkey.len = sizeof(_9p_hash_fid_key_t);
 
-  if( (rc = HashTable_Del( ht_fid, &buffkey, NULL, NULL)) != HASHTABLE_SUCCESS )
+  if( (rc = HashTable_Del( ht_fid, &buffkey, &old_key, &old_value)) != HASHTABLE_SUCCESS )
    return -rc ;
+
+  if( ppoldfid != NULL )
+    *ppoldfid = (_9p_fid_t *)old_value.pdata ;
 
   return 0 ;
 } /* 9p_hash_fid_del */

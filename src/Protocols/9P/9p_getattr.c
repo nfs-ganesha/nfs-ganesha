@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/stat.h>
 #include "nfs_core.h"
 #include "stuff_alloc.h"
 #include "log_macros.h"
@@ -71,7 +72,10 @@ int _9p_getattr( _9p_request_data_t * preq9p,
   u64 zero64 = 0LL ;
 
   u64 * valid = NULL ;
-  u32 * mode  = NULL ;
+
+  u32 dmode = 0LL ;
+  u32 * mode  = &dmode ;
+
   u32 * uid   = NULL ;
   u32 * gid   = NULL ;
 
@@ -131,7 +135,17 @@ int _9p_getattr( _9p_request_data_t * preq9p,
   /* Attach point is found, build the requested attributes */
   
   valid = request_mask ; /* FSAL covers all 9P attributes */
-  mode  = (*request_mask && _9P_GETATTR_MODE)?&pfid->attr.mode:&zero32 ;
+
+  if( *request_mask && _9P_GETATTR_MODE )
+   {
+     dmode = pfid->attr.mode ;
+     if( pfid->qid.type == _9P_QTDIR )     dmode |= __S_IFDIR ;
+     if( pfid->qid.type == _9P_QTFILE )    dmode |= __S_IFREG ;
+     if( pfid->qid.type == _9P_QTSYMLINK ) dmode |= __S_IFLNK ;
+   }
+  else
+    mode = &zero32 ;
+
   uid   = (*request_mask && _9P_GETATTR_UID)?&pfid->attr.owner:&zero32 ;
   gid   = (*request_mask && _9P_GETATTR_GID)?&pfid->attr.group:&zero32 ;
   
@@ -194,7 +208,7 @@ int _9p_getattr( _9p_request_data_t * preq9p,
   data_version = &zero64 ;
 
    /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RATTACH ) ;
+  _9p_setinitptr( cursor, preply, _9P_RGETATTR ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
 
   _9p_setptr( cursor, valid,               u64 ) ;
