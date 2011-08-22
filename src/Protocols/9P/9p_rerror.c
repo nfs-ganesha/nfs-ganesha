@@ -49,7 +49,6 @@
 #include "9p.h"
 
 
-
 int _9p_rerror( _9p_request_data_t * preq9p,
                 u16 * msgtag,
                 u32 * err, 

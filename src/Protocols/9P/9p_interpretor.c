@@ -46,8 +46,8 @@
 
 
 #include "stuff_alloc.h"
-#include "9p.h"
 #include "nfs_core.h"
+#include "9p.h"
 #include "cache_inode.h"
 #include "cache_content.h"
 #include "fsal.h"
@@ -92,7 +92,7 @@ const _9p_function_desc_t _9pfuncdesc[] = {
         { _9p_dummy, "_9P_TMKNOD" },
         { _9p_dummy, "_9P_TRENAME" },
         { _9p_dummy, "_9P_TREADLINK" },
-        { _9p_dummy, "_9P_TGETATTR"},
+        { _9p_getattr, "_9P_TGETATTR"},
         { _9p_dummy, "_9P_TSETATTR" },
         { _9p_dummy, "_9P_TXATTRWALK" },
         { _9p_dummy, "_9P_TXATTRCREATE" },
@@ -122,8 +122,7 @@ const _9p_function_desc_t _9pfuncdesc[] = {
 
 /* Will disappear when all work will have been done */
 int _9p_dummy( _9p_request_data_t * preq9p, 
-               cache_inode_client_t * pclient,
-               hash_table_t * ht,
+               void * pworker_data,
                u32 * plenout, 
                char * preply)
 {
@@ -145,9 +144,6 @@ void _9p_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pwork
   u8 * pmsgtype = NULL ;
   u32 outdatalen = 0 ;
   int rc = 0 ; 
-
-  cache_inode_client_t * pclient = &(pworker_data->cache_inode_client) ; ;
-  hash_table_t * ht = pworker_data->ht ;
 
   char replydata[_9P_MSG_SIZE] ;
 
@@ -171,8 +167,7 @@ void _9p_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pwork
 
   /* Call the 9P service function */  
   if(  ( ( rc = _9pfuncdesc[_9ptabindex[*pmsgtype]].service_function( preq9p, 
-                                                                      pclient, 
-                                                                      ht, 
+                                                                      (void *)pworker_data,
                                                                       &outdatalen, 
                                                                       replydata ) ) < 0 )  ||
              ( send( preq9p->pconn->sockfd, replydata, outdatalen, 0 ) != outdatalen ) )

@@ -1859,6 +1859,11 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   if(pthread_mutex_init(&(pdata->request_pool_mutex), NULL) != 0)
     return -1;
 
+#ifdef _USE_9P
+  if(pthread_mutex_init(&(pdata->_9pfid_pool_mutex), NULL) != 0)
+    return -1;
+#endif
+
   if(pthread_cond_init(&(pdata->req_condvar), NULL) != 0)
     return -1;
 

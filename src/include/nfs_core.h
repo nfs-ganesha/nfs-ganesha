@@ -492,6 +492,10 @@ typedef struct nfs_worker_data__
   struct prealloc_pool dupreq_pool;
   struct prealloc_pool ip_stats_pool;
   struct prealloc_pool clientid_pool;
+#ifdef _USE_9P
+  struct prealloc_pool _9pfid_pool;
+  pthread_mutex_t _9pfid_pool_mutex;
+#endif
   cache_inode_client_t cache_inode_client;
   cache_content_client_t cache_content_client;
   hash_table_t *ht;

@@ -281,6 +281,7 @@ void nfs_set_param_default()
 #endif
 #ifdef _USE_9P
   nfs_param._9p_param._9p_port = _9P_PORT ;
+  nfs_param._9p_param.prealloc_fid = NB_PREALLOC_FID_9P ;
   nfs_param._9p_param.hash_param.index_size = PRIME_9P ;
   nfs_param._9p_param.hash_param.alphabet_length = 10;    /* Xid is a numerical decimal value */
   nfs_param._9p_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_9P;
@@ -1847,6 +1848,15 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                nfs_param.worker_param.nb_client_id_prealloc,
                nfs_client_id_t, NULL, NULL);
       NamePool(&workers_data[i].clientid_pool, "Client ID Pool %d", i);
+
+#ifdef _USE_9P
+      /* Initialize, but do not pre-alloc client-id pool */
+      InitPool(&workers_data[i]._9pfid_pool,
+               nfs_param._9p_param.prealloc_fid,
+               _9p_fid_t, NULL, NULL);
+      NamePool(&workers_data[i]._9pfid_pool, "9P FID Pool %d", i);
+
+#endif
 
       LogDebug(COMPONENT_INIT, "worker data #%d successfully initialized", i);
     }                           /* for i */

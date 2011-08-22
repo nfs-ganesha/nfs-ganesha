@@ -39,6 +39,7 @@ typedef uint32_t u32;
 typedef uint64_t u64;
 
 #define NB_PREALLOC_HASH_9P 100
+#define NB_PREALLOC_FID_9P  100
 #define PRIME_9P 17 
 
 #define _9P_PORT 564
@@ -51,110 +52,6 @@ typedef uint64_t u64;
 #define _9P_HDR_SIZE  4
 #define _9P_TYPE_SIZE 1
 #define _9P_TAG_SIZE  2
-
-typedef struct _9p_param__
-{
-  unsigned short _9p_port ;
-  hash_parameter_t hash_param;
-} _9p_parameter_t ;
-
-typedef struct _9p_conn__
-{
-  fd_set          fidset ; /* fd_set is used to keep track of which fid is set or not */
-  pthread_mutex_t lock ; 
-  long int        sockfd ;
-  struct timeval  birth;  /* This is useful if same sockfd is reused on socket's close/open  */
-} _9p_conn_t ;
-
-typedef struct _9p_hash_fid_key__
-{
-  u32      fid ;
-  long int sockfd ;
-  struct timeval  birth; /* This is useful if same sockfd is reused on socket's close/open  */
-} _9p_hash_fid_key_t ;
-
- 
-typedef struct _9p_fid__
-{
-  u32   fid ;
-  fsal_cred_t   creds ;
-  cache_entry_t * pentry ;
-} _9p_fid_t ;
-
-typedef struct _9p_request_data__
-{
-  char         _9pmsg[_9P_MSG_SIZE] ;
-  _9p_conn_t * pconn ; 
-} _9p_request_data_t ;
-
-typedef int (*_9p_function_t) (_9p_request_data_t * preq9p, 
-                               cache_inode_client_t * pclient,
-                               hash_table_t * ht,
-                               u32 * plenout, char * preply) ;
-
-typedef struct _9p_function_desc__
-{
-  _9p_function_t service_function;
-  char *funcname;
-} _9p_function_desc_t;
-
-
-#define _9p_getptr( cursor, pvar, type ) \
-do                                       \
-{                                        \
-  pvar=(type *)cursor ;                  \
-  cursor += sizeof( type ) ;             \
-} while( 0 ) 
-
-#define _9p_getstr( cursor, len, str ) \
-do                                     \
-{                                      \
-  len = (u16 *)cursor ;                \
-  cursor += sizeof( u16 ) ;            \
-  str = cursor ;                       \
-  cursor += *len ;                     \
-} while( 0 )                           
-
-#define _9p_setptr( cursor, pvar, type ) \
-do                                       \
-{                                        \
-  *((type *)cursor) = *pvar ;            \
-  cursor += sizeof( type ) ;             \
-} while( 0 ) 
-
-/* Insert a non-null terminated string */
-#define _9p_setstr( cursor, len, str ) \
-do                                     \
-{                                      \
-  *((u16 *)cursor) = len ;            \
-  cursor += sizeof( u16 ) ;            \
-  memcpy( cursor, str, len ) ;        \
-  cursor += len ;                     \
-} while( 0 )
-
-#define _9p_setinitptr( cursor, start, reqtype ) \
-do                                               \
-{                                                \
-  cursor = start + _9P_HDR_SIZE;                 \
-  *((u8 *)cursor) = reqtype ;                    \
-  cursor += sizeof( u8 ) ;                       \
-} while( 0 ) 
-
-#define _9p_setendptr( cursor, start )       \
-do                                           \
-{                                            \
-  *((u32 *)start) =  (u32)(cursor - start) ; \
-} while( 0 ) 
-
-#define _9p_checkbound( cursor, start, maxlen ) \
-do                                              \
-{                                               \
-if( (u32)( cursor - start ) > *maxlen )         \
-  return -1 ;                                   \
-else                                            \
-   *maxlen = (u32)( cursor - start )  ;         \
-} while( 0 ) 
-
 
 /**
  * enum _9p_msg_t - 9P message types
@@ -365,6 +262,110 @@ typedef struct _9p_qid {
 	u64 path;
 } _9p_qid_t;
 
+typedef struct _9p_param__
+{
+  unsigned short _9p_port ;
+  unsigned int   prealloc_fid ;
+  hash_parameter_t hash_param;
+} _9p_parameter_t ;
+
+typedef struct _9p_conn__
+{
+  fd_set          fidset ; /* fd_set is used to keep track of which fid is set or not */
+  pthread_mutex_t lock ; 
+  long int        sockfd ;
+  struct timeval  birth;  /* This is useful if same sockfd is reused on socket's close/open  */
+} _9p_conn_t ;
+
+typedef struct _9p_hash_fid_key__
+{
+  u32      fid ;
+  long int sockfd ;
+  struct timeval  birth; /* This is useful if same sockfd is reused on socket's close/open  */
+} _9p_hash_fid_key_t ;
+
+typedef struct _9p_fid__
+{
+  u32                  fid ;
+  fsal_op_context_t    fsal_op_context ;
+  exportlist_t       * pexport ;
+  fsal_attrib_list_t   attr ; 
+  cache_entry_t      * pentry ;
+  _9p_qid_t            qid ;
+} _9p_fid_t ;
+
+typedef struct _9p_request_data__
+{
+  char         _9pmsg[_9P_MSG_SIZE] ;
+  _9p_conn_t * pconn ; 
+} _9p_request_data_t ;
+
+typedef int (*_9p_function_t) (_9p_request_data_t * preq9p, 
+                               void * pworker_data,
+                               u32 * plenout, char * preply) ;
+
+typedef struct _9p_function_desc__
+{
+  _9p_function_t service_function;
+  char *funcname;
+} _9p_function_desc_t;
+
+
+#define _9p_getptr( cursor, pvar, type ) \
+do                                       \
+{                                        \
+  pvar=(type *)cursor ;                  \
+  cursor += sizeof( type ) ;             \
+} while( 0 ) 
+
+#define _9p_getstr( cursor, len, str ) \
+do                                     \
+{                                      \
+  len = (u16 *)cursor ;                \
+  cursor += sizeof( u16 ) ;            \
+  str = cursor ;                       \
+  cursor += *len ;                     \
+} while( 0 )                           
+
+#define _9p_setptr( cursor, pvar, type ) \
+do                                       \
+{                                        \
+  *((type *)cursor) = *pvar ;            \
+  cursor += sizeof( type ) ;             \
+} while( 0 ) 
+
+/* Insert a non-null terminated string */
+#define _9p_setstr( cursor, len, str ) \
+do                                     \
+{                                      \
+  *((u16 *)cursor) = len ;            \
+  cursor += sizeof( u16 ) ;            \
+  memcpy( cursor, str, len ) ;        \
+  cursor += len ;                     \
+} while( 0 )
+
+#define _9p_setinitptr( cursor, start, reqtype ) \
+do                                               \
+{                                                \
+  cursor = start + _9P_HDR_SIZE;                 \
+  *((u8 *)cursor) = reqtype ;                    \
+  cursor += sizeof( u8 ) ;                       \
+} while( 0 ) 
+
+#define _9p_setendptr( cursor, start )       \
+do                                           \
+{                                            \
+  *((u32 *)start) =  (u32)(cursor - start) ; \
+} while( 0 ) 
+
+#define _9p_checkbound( cursor, start, maxlen ) \
+do                                              \
+{                                               \
+if( (u32)( cursor - start ) > *maxlen )         \
+  return -1 ;                                   \
+else                                            \
+   *maxlen = (u32)( cursor - start )  ;         \
+} while( 0 ) 
 /* Bit values for getattr valid field.
  */
 #define _9P_GETATTR_MODE	0x00000001ULL
@@ -418,25 +419,32 @@ int _9p_take_fid( _9p_conn_t * pconn,
                    u32        * pfid ) ;
 int _9p_release_fid( _9p_conn_t * pconn, 
                      u32        * pfid ) ;
+int _9p_test_fid( _9p_conn_t * pconn, 
+                  u32        * pfid ) ;
 
+/* Tools functions */
+int _9p_tools_get_fsal_op_context( int uname_len, char * uname_str, _9p_fid_t * pfid ) ;
+int _9p_tools_errno( cache_inode_status_t cache_status ) ;
 
 /* Protocol functions */
 int _9p_dummy( _9p_request_data_t * preq9p, 
-               cache_inode_client_t * pclient,
-               hash_table_t * ht,
+               void * pworker_data,
                u32 * plenout, 
                char * preply) ;
 
 int _9p_version( _9p_request_data_t * preq9p, 
-                 cache_inode_client_t * pclient,
-                 hash_table_t * ht,
+                void * pworker_data,
                  u32 * plenout, char * preply) ;
 
 int _9p_attach( _9p_request_data_t * preq9p, 
-                cache_inode_client_t * pclient,
-                hash_table_t * ht,
+                void * pworker_data,
                 u32 * plenout, 
                 char * preply) ;
+
+int _9p_getattr( _9p_request_data_t * preq9p, 
+                 void * pworker_data,
+                 u32 * plenout, 
+                 char * preply) ;
 
 int _9p_rerror( _9p_request_data_t * preq9p,
                 u16 * msgtag,
@@ -460,5 +468,9 @@ int _9p_hash_fid_update( _9p_conn_t * pconn,
 int _9p_hash_fid_del( _9p_conn_t * pconn, 
                       u32 fid,
                       struct prealloc_pool * pfidpool ) ;
+_9p_fid_t * _9p_hash_fid_get( _9p_conn_t * pconn, 
+                              u32 fid,
+                              int * prc ) ;
+
 
 #endif /* _9P_H */

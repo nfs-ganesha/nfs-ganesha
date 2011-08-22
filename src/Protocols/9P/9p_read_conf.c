@@ -103,6 +103,10 @@ int _9p_read_conf( config_file_t   in_config,
               return -1 ;
             }
         }
+      else if(!strcasecmp(key_name, "Prealloc_FID"))
+        {
+          pparam->prealloc_fid = atoi(key_value) ;
+        }
       else if(!strcasecmp(key_name, "LogFile"))
         {
           LogFile = key_value;

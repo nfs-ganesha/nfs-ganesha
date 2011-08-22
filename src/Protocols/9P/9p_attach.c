@@ -51,14 +51,13 @@
 #include "9p.h"
 
 
-
 int _9p_attach( _9p_request_data_t * preq9p, 
-                cache_inode_client_t * pclient,
-                hash_table_t * ht,
+                void  * pworker_data,
                 u32 * plenout, 
                 char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
+  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
 
   u16 * msgtag = NULL ;
   u32 * fid = NULL ;
@@ -72,9 +71,14 @@ int _9p_attach( _9p_request_data_t * preq9p,
   int rc = 0 ;
   u32 err = 0 ;
  
-  struct _9p_qid qid ;
+  _9p_fid_t * pfid = NULL ;
 
-  if ( !preq9p || !plenout || !preply )
+  exportlist_t * pexport = NULL;
+  unsigned int found = FALSE;
+  cache_inode_status_t cache_status ;
+  cache_inode_fsal_data_t fsdata ;
+
+  if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
 
   /* Get data */
@@ -85,7 +89,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
   _9p_getstr( cursor, aname_len, aname_str ) ;
   _9p_getptr( cursor, n_aname, u32 ) ; 
 
-  LogDebug( COMPONENT_9P, "TATTACH: tag=%ufid=%u afid=%d uname='%.*s' aname='%.*s' n_uname=%d", 
+  LogDebug( COMPONENT_9P, "TATTACH: tag=%u fid=%u afid=%d uname='%.*s' aname='%.*s' n_uname=%d", 
             (u32)*msgtag, *fid, *afid, (int)*uname_len, uname_str, (int)*aname_len, aname_str, *n_aname ) ;
 
   /* Try to attach */
@@ -95,26 +99,130 @@ int _9p_attach( _9p_request_data_t * preq9p,
       rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
       return rc ;
     }
+
+  /*
+   * Find the export for the aname (using as well Path or Tag ) 
+   */
+  for( pexport = nfs_param.pexportlist; pexport != NULL;
+       pexport = pexport->next)
+    {
+      if(aname_str[0] != '/')
+        {
+          /* The input value may be a "Tag" */
+          if(!strncmp(aname_str, pexport->FS_tag, strlen( pexport->FS_tag ) ) )
+            {
+	      found = TRUE ;
+              break;
+            }
+        }
+      else
+        {
+          if(!strncmp(aname_str, pexport->fullpath, strlen( pexport->fullpath ) ) )
+           {
+	      found = TRUE ;
+              break;
+           }
+        }
+    } /* for */
+
+  /* Did we find something ? */
+  if( found == FALSE )
+    {
+      err = ENOENT ;
+      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+      return rc ;
+    }
+
+
+  /* Get a FID from the pool */
+  P( pwkrdata->_9pfid_pool_mutex ) ;
+  GetFromPool( pfid, &pwkrdata->_9pfid_pool, _9p_fid_t ) ;
+  V( pwkrdata->_9pfid_pool_mutex ) ;
+  if( pfid == NULL )
+    {
+      err = ENOMEM ;
+      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+      return rc ;
+    }
+
+  /* Set pexport in fid */
+  pfid->pexport = pexport ;
  
+#ifdef _USE_SHARED_FSAL
+  /* At this step, the export entry is known and it's required to use the right fsalid */
+  FSAL_SetId( pexport->fsalid ) ;
+
+  memcpy( &pfid->fsal_op_context, &pwkrdata->thread_fsal_context[pexport->fsalid], sizeof( fsal_op_context_t ) ) ;
+#else
+  memcpy( &pfid->fsal_op_context, &pwkrdata->thread_fsal_context, sizeof( fsal_op_context_t ) ) ;
+#endif
+
+  /* Build the fid creds */
+  if( ( err = _9p_tools_get_fsal_op_context( *uname_len, uname_str, pfid ) ) !=  0 )
+   {
+     P( pwkrdata->_9pfid_pool_mutex ) ;
+     ReleaseToPool( pfid, &pwkrdata->_9pfid_pool ) ;
+     V( pwkrdata->_9pfid_pool_mutex ) ;
+   
+     err = -err ; /* The returned value from 9p service functions is always negative is case of errors */
+     rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+     return rc ;
+   }
+
+  /* Get the related pentry */
+  memcpy( (char *)&fsdata.handle, (char *)pexport->proot_handle, sizeof( fsal_handle_t ) ) ;
+  fsdata.cookie = 0;
+
+  pfid->pentry = cache_inode_get( &fsdata,
+                                  &pfid->attr,
+                                  pwkrdata->ht,
+                                  &pwkrdata->cache_inode_client,
+                                  &pfid->fsal_op_context, 
+                                  &cache_status ) ;
+
+  if( pfid->pentry == NULL )
+   {
+     P( pwkrdata->_9pfid_pool_mutex ) ;
+     ReleaseToPool( pfid, &pwkrdata->_9pfid_pool ) ;
+     V( pwkrdata->_9pfid_pool_mutex ) ;
+
+     err = _9p_tools_errno( cache_status ) ; ;
+     rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+     return rc ;
+   }
+
 
   /* Compute the qid */
-  qid.type = _9P_QTDIR ;
-  qid.version = 0 ;
-  qid.path = 0LL ; /* use the fileid here */
+  pfid->qid.type = _9P_QTDIR ;
+  pfid->qid.version = 0 ; /* No cache, we want the client to stay synchronous with the server */
+  pfid->qid.path = pfid->attr.fileid ;
+
+
+  /* Had the new fid to the hash */
+  if( ( err = _9p_hash_fid_update( preq9p->pconn, pfid ) ) != 0 )
+   {
+     P( pwkrdata->_9pfid_pool_mutex ) ;
+     ReleaseToPool( pfid, &pwkrdata->_9pfid_pool ) ;
+     V( pwkrdata->_9pfid_pool_mutex ) ;
+
+     rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+     return rc ;
+   }
+ 
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RATTACH ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
 
-  _9p_setptr( cursor, &qid.type,      u8 ) ;
-  _9p_setptr( cursor, &qid.version,  u32 ) ;
-  _9p_setptr( cursor, &qid.path,     u64 ) ;
+  _9p_setptr( cursor, &pfid->qid.type,      u8 ) ;
+  _9p_setptr( cursor, &pfid->qid.version,  u32 ) ;
+  _9p_setptr( cursor, &pfid->qid.path,     u64 ) ;
 
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  LogDebug( COMPONENT_9P, "RATTACH: qid=(type=%u,version=%u,path=%llu)", 
-            (u32)qid.type, qid.version, (unsigned long long)qid.path ) ;
+  LogDebug( COMPONENT_9P, "RATTACH: tag=%u qid=(type=%u,version=%u,path=%llu)", 
+            *msgtag, (u32)pfid->qid.type, pfid->qid.version, (unsigned long long)pfid->qid.path ) ;
 
   return 1 ;
 }
