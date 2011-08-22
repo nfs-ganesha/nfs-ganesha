@@ -86,18 +86,16 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   state_data_t              candidate_data;
   state_type_t              candidate_type;
   int                       rc = 0;
-  state_t                 * file_state = NULL;
-  state_t                 * pstate_exists = NULL;
-  state_t                 * pstate_open = NULL;
-  state_t                 * pstate_found = NULL;
-  state_t                 * pstate_previous_iterate = NULL;
-  state_t                 * pstate_found_iterate = NULL;
-  state_owner_t           * powner = NULL;
-  state_owner_t           * popen_owner = NULL;
-  state_owner_t           * powner_exists = NULL;
-  uint64_t                  a, b, a1, b1;
-  unsigned int              overlap = FALSE;
+  state_t                 * plock_state;    /* state for the lock */
+  state_t                 * pstate_open;    /* state for the open owner */
+  state_t                 * pstate_previous_iterate;
+  state_t                 * pstate_iterate;
+  state_owner_t           * plock_owner;
+  state_owner_t           * popen_owner;
+  state_owner_t           * conflict_owner = NULL;
   state_nfs4_owner_name_t   owner_name;
+  state_lock_desc_t         lock_desc, conflict_desc;
+  state_blocking_t          blocking = STATE_NON_BLOCKING;
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_LOCK;
@@ -151,21 +149,52 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_LOCK4.status;
     }
 
-  /* Check for range overflow
-   * Remember that a length with all bits set to 1 means "lock until the end of file" (RFC3530, page 157) */
-  if(arg_LOCK4.length != 0xffffffffffffffffLL)
+  /* Convert lock parameters to internal types */
+  switch(arg_LOCK4.locktype)
     {
-      /* Comparing beyond 2^64 is not possible int 64 bits precision, but off+len > 2^64 is equivalent to len > 2^64 - off */
-      if(arg_LOCK4.length > (0xffffffffffffffffLL - arg_LOCK4.offset))
-        {
-          res_LOCK4.status = NFS4ERR_INVAL;
-          return res_LOCK4.status;
-        }
+      case READ_LT:
+        lock_desc.sld_type = STATE_LOCK_R;
+        blocking           = STATE_NON_BLOCKING;
+        break;
+
+      case WRITE_LT:
+        lock_desc.sld_type = STATE_LOCK_W;
+        blocking           = STATE_NON_BLOCKING;
+        break;
+
+      case READW_LT:
+        lock_desc.sld_type = STATE_LOCK_R;
+        blocking           = STATE_NFSV4_BLOCKING;
+        break;
+
+      case WRITEW_LT:
+        lock_desc.sld_type = STATE_LOCK_W;
+        blocking           = STATE_NFSV4_BLOCKING;
+        break;
     }
 
-  switch (arg_LOCK4.locker.new_lock_owner)
+  lock_desc.sld_offset = arg_LOCK4.offset;
+
+  if(arg_LOCK4.length != STATE_LOCK_OFFSET_EOF)
+    lock_desc.sld_length = arg_LOCK4.length;
+  else
+    lock_desc.sld_length = 0;
+
+  /* Check for range overflow.
+   * Comparing beyond 2^64 is not possible int 64 bits precision,
+   * but off+len > 2^64-1 is equivalent to len > 2^64-1 - off
+   */
+  if(lock_desc.sld_length > (STATE_LOCK_OFFSET_EOF - lock_desc.sld_offset))
     {
-    case TRUE:
+      res_LOCK4.status = NFS4ERR_INVAL;
+      return res_LOCK4.status;
+    }
+
+  if(arg_LOCK4.locker.new_lock_owner)
+    {
+      /* New lock owner
+       * Find the open owner
+       */
       if(state_get(arg_LOCK4.locker.locker4_u.open_owner.open_stateid.other,
                    &pstate_open,
                    data->pclient, &state_status) != STATE_SUCCESS)
@@ -175,19 +204,24 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
       popen_owner = pstate_open->state_powner;
-
-      break;
-
-    case FALSE:
+      plock_state = NULL;
+      plock_owner = NULL;
+    }
+  else
+    {
+      /* Existing lock owner
+       * Find the lock stateid
+       * From that, get the open_owner
+       */
       if(state_get(arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.other,
-                   &pstate_exists,
+                   &plock_state,
                    data->pclient, &state_status) != STATE_SUCCESS)
         {
           /* Handle the case where all-0 stateid is used */
           if(!
-             (!memcmp
-              ((char *)all_zero,
-               arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.other, 12)
+             (!memcmp((char *)all_zero,
+                      arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.other,
+                      12)
               && arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.seqid == 0))
             {
               if(state_status == STATE_NOT_FOUND)
@@ -199,28 +233,39 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
             }
         }
 
-      if(pstate_exists != NULL)
+      if(plock_state != NULL)
         {
           /* Get the old lockowner. We can do the following 'cast', in NFSv4 lock_owner4 and open_owner4
            * are different types but with the same definition*/
-          powner = pstate_exists->state_powner;
-          powner_exists = pstate_exists->state_powner;
-          popen_owner = pstate_exists->state_powner->so_owner.so_nfs4_owner.so_related_owner;
+          plock_owner = plock_state->state_powner;
+          popen_owner = plock_owner->so_owner.so_nfs4_owner.so_related_owner;
         }
-
-      break;
-    }                           /* switch( arg_LOCK4.locker.new_lock_owner ) */
+      else
+        {
+          /* TODO FSF: this is an odd case, not sure we're using it yet... */
+          plock_owner = NULL;
+          popen_owner = NULL;
+        }
+    }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
 
   /* Check for conflicts with previously obtained states */
-  /* At this step of the code, if pstate_exists == NULL, then all-0 or all-1 stateid is used */
+  /* At this step of the code, if plock_state == NULL, then all-0 or all-1 stateid is used */
+
+  /* TODO FSF:
+   * This will eventually all go into the function of state_lock()
+   * For now, we will keep checking against SHARE
+   * Check against LOCK will be removed
+   * We eventually need to handle special stateids, I don't think we'll ever see them on a real lock
+   * call, but read and write need to get temporary lock, whether read/write is from NFS v2/3 or NFS v4.x
+   */
 
   /* loop into the states related to this pentry to find the related lock */
-  pstate_found_iterate = NULL;
-  pstate_previous_iterate = pstate_found;
+  pstate_iterate = NULL;
+  pstate_previous_iterate = NULL;
   do
     {
       state_iterate(data->current_entry,
-                    &pstate_found_iterate,
+                    &pstate_iterate,
                     pstate_previous_iterate,
                     data->pclient, data->pcontext, &state_status);
       if((state_status == STATE_STATE_ERROR)
@@ -230,93 +275,17 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           return res_LOCK4.status;
         }
 
-      if(pstate_found_iterate != NULL)
+      if(pstate_iterate != NULL)
         {
-          if(pstate_found_iterate->state_type == STATE_TYPE_LOCK)
-            {
-              /* Check lock upgrade/downgrade */
-              if(pstate_exists != NULL)
-                {
-                  if((pstate_exists == pstate_found_iterate) &&
-                     (pstate_exists->state_data.lock.lock_type != arg_LOCK4.locktype))
-                    LogCrit(COMPONENT_NFS_V4,
-                        "&&&&&&&& CAS FOIREUX !!!!!!!!!!!!!!!!!!");
-                }
-
-              a = pstate_found_iterate->state_data.lock.offset;
-              b = pstate_found_iterate->state_data.lock.offset +
-                  pstate_found_iterate->state_data.lock.length;
-              a1 = arg_LOCK4.offset;
-              b1 = arg_LOCK4.offset + arg_LOCK4.length;
-
-              /* Locks overlap is a <= a1 < b or a < b1 <= b */
-              overlap = FALSE;
-              if(a <= a1)
-                {
-                  if(a1 < b)
-                    overlap = TRUE;
-                }
-              else
-                {
-                  if(a < b1)
-                    {
-                      if(b1 <= b)
-                        overlap = TRUE;
-                    }
-                }
-
-              if(overlap == TRUE)
-
-                /* Locks overlap is a < a1 < b or a < b1 < b */
-                if(overlap == TRUE)
-                  {
-                    /* Locks are overlapping */
-
-                    /* If both lock are READ, this is not a case of error  */
-                    if((arg_LOCK4.locktype != READ_LT)
-                       || (pstate_found_iterate->state_data.lock.lock_type != READ_LT))
-                      {
-                        /* Overlapping lock is found, if owner is different than the calling owner, return NFS4ERR_DENIED */
-                        if((pstate_exists != NULL) &&   /* all-O/all-1 stateid is considered a different owner */
-                           ((powner_exists->so_owner_len ==
-                             pstate_found_iterate->state_powner->so_owner_len)
-                            &&
-                            (!memcmp
-                             (powner_exists->so_owner_val,
-                              pstate_found_iterate->state_powner->so_owner_val,
-                              pstate_found_iterate->state_powner->so_owner_len))))
-                          {
-                            /* The calling state owner is the same. There is a discussion on this case at page 161 of RFC3530. I choose to ignore this
-                             * lock and continue iterating on the other states */
-                          }
-                        else
-                          {
-                            /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
-                            res_LOCK4.LOCK4res_u.denied.offset =
-                                pstate_found_iterate->state_data.lock.offset;
-                            res_LOCK4.LOCK4res_u.denied.length =
-                                pstate_found_iterate->state_data.lock.length;
-                            res_LOCK4.LOCK4res_u.denied.locktype =
-                                pstate_found_iterate->state_data.lock.lock_type;
-                            res_LOCK4.LOCK4res_u.denied.owner.owner.owner_len =
-                                pstate_found_iterate->state_powner->so_owner_len;
-                            res_LOCK4.LOCK4res_u.denied.owner.owner.owner_val =
-                                pstate_found_iterate->state_powner->so_owner_val;
-                            res_LOCK4.status = NFS4ERR_DENIED;
-                            return res_LOCK4.status;
-                          }
-                      }
-                  }
-            }
-          /* if( ... == STATE_TYPE_LOCK */
-          if(pstate_found_iterate->state_type == STATE_TYPE_SHARE)
+          /* For now still check conflicts with SHARE here */
+          if(pstate_iterate->state_type == STATE_TYPE_SHARE)
             {
               /* In a correct POSIX behavior, a write lock should not be allowed on a read-mode file */
-              if((pstate_found_iterate->state_data.share.
-                  share_deny & OPEN4_SHARE_DENY_WRITE)
-                 && !(pstate_found_iterate->state_data.share.
-                      share_access & OPEN4_SHARE_ACCESS_WRITE)
-                 && (arg_LOCK4.locktype == WRITE_LT))
+              if((pstate_iterate->state_data.share.share_deny &
+                   OPEN4_SHARE_DENY_WRITE) &&
+                 !(pstate_iterate->state_data.share.share_access &
+                   OPEN4_SHARE_ACCESS_WRITE) &&
+                 (arg_LOCK4.locktype == WRITE_LT))
                 {
                   /* A conflicting open state, return NFS4ERR_OPENMODE
                    * This behavior is implemented to comply with newpynfs's test LOCK4 */
@@ -326,14 +295,20 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                 }
             }
 
-        }                       /* if( pstate_found_iterate != NULL ) */
-      pstate_previous_iterate = pstate_found_iterate;
+        }                       /* if( pstate_iterate != NULL ) */
+      pstate_previous_iterate = pstate_iterate;
     }
-  while(pstate_found_iterate != NULL);
+  while(pstate_iterate != NULL);
 
-  switch (arg_LOCK4.locker.new_lock_owner)
+  /* TODO FSF:
+   * Ok from here on out, stuff is broken...
+   * For new lock owner, need to create a new stateid
+   * And then call state_lock()
+   * If that fails, need to back out any stateid changes
+   * If that succeeds, need to increment seqids
+   */
+  if(arg_LOCK4.locker.new_lock_owner)
     {
-    case TRUE:
       /* A lock owner is always associated with a previously made open
        * which has itself a previously made stateid */
 
@@ -360,7 +335,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           return res_LOCK4.status;
         }
 
-      /* Is this open_owner known ? */
+      /* Is this lock_owner known ? */
       if(!convert_nfs4_owner
          ((open_owner4 *) & arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
           &owner_name))
@@ -369,14 +344,14 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           return res_LOCK4.status;
         }
 
-      /* This open owner is not known yet, allocated and set up a new one */
-      powner = create_nfs4_owner(data->pclient,
-                                 &owner_name,
-                                 (open_owner4 *) &arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
-                                 pstate_open->state_powner,
-                                 0);
+      /* This lock owner is not known yet, allocated and set up a new one */
+      plock_owner = create_nfs4_owner(data->pclient,
+                                      &owner_name,
+                                      (open_owner4 *) &arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
+                                      popen_owner,
+                                      0);
 
-      if(powner == NULL)
+      if(plock_owner == NULL)
         {
           res_LOCK4.status = NFS4ERR_SERVERFAULT;
           return res_LOCK4.status;
@@ -384,19 +359,16 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
       /* Prepare state management structure */
       candidate_type = STATE_TYPE_LOCK;
-      candidate_data.lock.lock_type = arg_LOCK4.locktype;
-      candidate_data.lock.offset = arg_LOCK4.offset;
-      candidate_data.lock.length = arg_LOCK4.length;
       candidate_data.lock.popenstate = (void *)pstate_open;
 
       /* Add the lock state to the lock table */
       if(state_add(data->current_entry,
                    candidate_type,
                    &candidate_data,
-                   powner,
+                   plock_owner,
                    data->pclient,
                    data->pcontext,
-                   &file_state, &state_status) != STATE_SUCCESS)
+                   &plock_state, &state_status) != STATE_SUCCESS)
         {
           res_LOCK4.status = NFS4ERR_STALE_STATEID;
           return res_LOCK4.status;
@@ -404,19 +376,19 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
         /** @todo BUGAZOMEU: Manage the case if lock conflicts */
       res_LOCK4.LOCK4res_u.resok4.lock_stateid.seqid = 0;
-      memcpy(res_LOCK4.LOCK4res_u.resok4.lock_stateid.other, file_state->stateid_other,
+      memcpy(res_LOCK4.LOCK4res_u.resok4.lock_stateid.other,
+             plock_state->stateid_other,
              12);
 
       /* update the lock counter in the related open-stateid */
       pstate_open->state_data.share.lockheld += 1;
-
-      break;
-
-    case FALSE:
+    }
+  else
+    {
       /* The owner already exists, use the provided owner to create a new state */
       /* Get the former state */
       if(state_get(arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.other,
-                   &pstate_found,
+                   &plock_state,
                    data->pclient, &state_status) != STATE_SUCCESS)
         {
           res_LOCK4.status = NFS4ERR_STALE_STATEID;
@@ -424,25 +396,68 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
       /* An lock state has been found. Check its type */
-      if(pstate_found->state_type != STATE_TYPE_LOCK)
+      if(plock_state->state_type != STATE_TYPE_LOCK)
         {
           res_LOCK4.status = NFS4ERR_BAD_STATEID;
           return res_LOCK4.status;
         }
 
       /* Sanity check : Is this the right file ? */
-      if(pstate_found->state_pentry != data->current_entry)
+      if(plock_state->state_pentry != data->current_entry)
         {
           res_LOCK4.status = NFS4ERR_BAD_STATEID;
           return res_LOCK4.status;
         }
 
-      memcpy(res_LOCK4.LOCK4res_u.resok4.lock_stateid.other, pstate_found->stateid_other,
+      memcpy(res_LOCK4.LOCK4res_u.resok4.lock_stateid.other,
+             plock_state->stateid_other,
              12);
+    }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
 
-      break;
-    }                           /* switch( arg_LOCK4.locker.new_lock_owner ) */
+  /* Now we have a lock owner and a stateid.
+   * Go ahead and push lock into SAL (and FSAL).
+   */
+  if(state_lock(data->current_entry,
+                data->pcontext,
+                plock_owner,
+                plock_state,
+                blocking,
+                NULL,     /* No block data for now */
+                &lock_desc,
+                &conflict_owner,
+                &conflict_desc,
+                data->pclient,
+                &state_status) != STATE_SUCCESS)
+    {
+      if(state_status == STATE_LOCK_CONFLICT)
+        {
+          /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
+          res_LOCK4.LOCK4res_u.denied.offset = conflict_desc.sld_offset;
+          res_LOCK4.LOCK4res_u.denied.length = conflict_desc.sld_length;
 
+          if(conflict_desc.sld_type == STATE_LOCK_R)
+            res_LOCK4.LOCK4res_u.denied.locktype = READ_LT;
+          else
+            res_LOCK4.LOCK4res_u.denied.locktype = WRITE_LT;
+
+          res_LOCK4.LOCK4res_u.denied.owner.owner.owner_len =
+            conflict_owner->so_owner_len;
+
+          memcpy(res_LOCK4.LOCK4res_u.denied.owner.owner.owner_val,
+                 conflict_owner->so_owner_val,
+                 conflict_owner->so_owner_len);
+
+          if(conflict_owner->so_type == STATE_LOCK_OWNER_NFSV4)
+            res_LOCK4.LOCK4res_u.denied.owner.clientid =
+              conflict_owner->so_owner.so_nfs4_owner.so_clientid;
+          else
+            res_LOCK4.LOCK4res_u.denied.owner.clientid = 0;
+        }
+
+      res_LOCK4.status = nfs4_Errno_state(state_status);
+      return res_LOCK4.status;
+    }
+                
   res_LOCK4.status = NFS4_OK;
   return res_LOCK4.status;
 #endif

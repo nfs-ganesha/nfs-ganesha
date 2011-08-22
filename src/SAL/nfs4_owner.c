@@ -376,6 +376,8 @@ state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
   powner->so_owner.so_nfs4_owner.so_clientid      = arg_owner->clientid;
   powner->so_owner_len                            = arg_owner->owner.owner_len;
 
+  init_glist(&powner->so_lock_list);
+
   memcpy(powner->so_owner_val,
          arg_owner->owner.owner_val,
          arg_owner->owner.owner_len);

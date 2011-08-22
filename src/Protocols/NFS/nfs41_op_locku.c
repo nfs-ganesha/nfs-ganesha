@@ -78,10 +78,11 @@
 int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_locku";
-  state_status_t   state_status;
-  state_t        * pstate_found = NULL;
-  state_t        * pstate_open = NULL;
-  unsigned int     rc = 0;
+  state_status_t      state_status;
+  state_t           * pstate_found = NULL;
+  state_t           * pstate_open = NULL;
+  state_lock_desc_t   lock_desc;
+  unsigned int        rc = 0;
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_LOCKU;
@@ -112,7 +113,7 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_LOCKU4.status;
     }
 
-  /* Commit is done only on a file */
+  /* LOCKU is done only on a file */
   if(data->current_filetype != REGULAR_FILE)
     {
       /* Type of the entry is not correct */
@@ -135,21 +136,39 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_LOCKU4.status;
     }
 
+  /* Convert lock parameters to internal types */
+  switch(arg_LOCKU4.locktype)
+    {
+      case READ_LT:
+      case READW_LT:
+        lock_desc.sld_type = STATE_LOCK_R;
+        break;
+
+      case WRITE_LT:
+      case WRITEW_LT:
+        lock_desc.sld_type = STATE_LOCK_W;
+        break;
+    }
+
+  lock_desc.sld_offset = arg_LOCKU4.offset;
+
+  if(arg_LOCKU4.length != STATE_LOCK_OFFSET_EOF)
+    lock_desc.sld_length = arg_LOCKU4.length;
+  else
+    lock_desc.sld_length = 0;
+
   /* Check for range overflow
    * Remember that a length with all bits set to 1 means "lock until the end of file" (RFC3530, page 157) */
-  if(arg_LOCKU4.length != 0xffffffffffffffffLL)
+  if(lock_desc.sld_length > (STATE_LOCK_OFFSET_EOF - lock_desc.sld_offset))
     {
-      /* Comparing beyond 2^64 is not possible int 64 bits precision, but off+len > 2^64 is equivalent to len > 2^64 - off */
-      if(arg_LOCKU4.length > (0xffffffffffffffffLL - arg_LOCKU4.offset))
-        {
-          res_LOCKU4.status = NFS4ERR_INVAL;
-          return res_LOCKU4.status;
-        }
+      res_LOCKU4.status = NFS4ERR_INVAL;
+      return res_LOCKU4.status;
     }
 
   /* Check for correctness of the provided stateid */
   if((rc = nfs4_Check_Stateid(&arg_LOCKU4.lock_stateid,
-                              data->current_entry, data->psession->clientid)) != NFS4_OK)
+                              data->current_entry,
+                              data->psession->clientid)) != NFS4_OK)
     {
       res_LOCKU4.status = rc;
       return res_LOCKU4.status;
@@ -169,19 +188,39 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   pstate_open = (state_t *) (pstate_found->state_data.lock.popenstate);
+  if(pstate_open != NULL)
+    {
+      /* update the lock counter in the related open-stateid */
+      // TODO FSF: this count is probably wrong...
+      if(pstate_open->state_data.share.lockheld > 0)
+        pstate_open->state_data.share.lockheld -= 1;
+    }
+
   memcpy(res_LOCKU4.LOCKU4res_u.lock_stateid.other, pstate_found->stateid_other, 12);
 
-  /* update the lock counter in the related open-stateid */
-  pstate_open->state_data.share.lockheld -= 1;
+  /* Now we have a lock owner and a stateid.
+   * Go ahead and push unlock into SAL (and FSAL).
+   */
+  if(state_unlock(data->current_entry,
+                  data->pcontext,
+                  pstate_found->state_powner,
+                  pstate_found,
+                  &lock_desc,
+                  data->pclient,
+                  &state_status) != STATE_SUCCESS)
+    {
+      res_LOCKU4.status = nfs4_Errno_state(state_status);
+      return res_LOCKU4.status;
+    }
 
   /* Remove the state associated with the lock */
+  // TODO FSF: this is not right, we need to keep the stateid, but we need to figure out right time to free it
   if(state_del(pstate_found,
                data->pclient, &state_status) != STATE_SUCCESS)
     {
       res_LOCKU4.status = nfs4_Errno_state(state_status);
       return res_LOCKU4.status;
     }
-
 
   /* Successful exit */
   res_LOCKU4.status = NFS4_OK;
