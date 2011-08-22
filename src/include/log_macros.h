@@ -80,6 +80,7 @@ typedef enum log_components
   COMPONENT_NFS_V4_ACL,
   COMPONENT_STATE,
 
+  LOG_MESSAGE_VERBOSITY,
   COMPONENT_COUNT
 } log_components_t;
 

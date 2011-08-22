@@ -47,7 +47,6 @@ fsal_status_t VFSFSAL_BuildExportContext(vfsfsal_export_context_t * p_export_con
 
   FILE *fp;
   struct mntent *p_mnt;
-  struct stat pathstat;
 
   char rpath[MAXPATHLEN];
   char mntdir[MAXPATHLEN];
@@ -59,9 +58,6 @@ fsal_status_t VFSFSAL_BuildExportContext(vfsfsal_export_context_t * p_export_con
   size_t pathlen, outlen;
   int rc;
   int mnt_id = 0 ;
-
-  char *handle;
-  size_t handle_len = 0;
 
   /* sanity check */
   if(p_export_context == NULL)
@@ -136,7 +132,7 @@ fsal_status_t VFSFSAL_BuildExportContext(vfsfsal_export_context_t * p_export_con
         }
     }
 
-  /* save file descriptor to root of GPFS share */
+  /* save file descriptor to root of VFS export */
   if( ( p_export_context->mount_root_fd = open(mntdir, O_RDONLY | O_DIRECTORY) ) < 0 )
     {
       close( p_export_context->mount_root_fd );
@@ -162,15 +158,17 @@ fsal_status_t VFSFSAL_BuildExportContext(vfsfsal_export_context_t * p_export_con
                         &mnt_id ) )   
 	 Return(posix2fsal_error(errno), errno, INDEX_FSAL_BuildExportContext) ;
 
-#if 0 
-  {
-     char str[1024] ;
+#ifdef TODO
+  if(isFullDebug(COMPONENT_FSAL))
+    {
+      char str[1024] ;
 
-     sprint_mem( str, p_export_context->root_handle.handle ,p_export_context->root_handle.handle_bytes ) ;
-     printf( "=====> root Handle: type=%u bytes=%u|%s\n",  
-             p_export_context->root_handle.handle_type,  p_export_context->root_handle.handle_bytes, str ) ;
+      sprint_mem( str, p_export_context->root_handle.handle ,p_export_context->root_handle.handle_bytes ) ;
+      LogFullDebug(COMPONENT_FSAL,
+                   "=====> root Handle: type=%u bytes=%u|%s\n",  
+                   p_export_context->root_handle.handle_type,  p_export_context->root_handle.handle_bytes, str ) ;
 
-  }
+    }
 #endif
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
@@ -181,7 +179,7 @@ fsal_status_t VFSFSAL_BuildExportContext(vfsfsal_export_context_t * p_export_con
  * this will clean up and state in an export that was created during
  * the BuildExportContext phase.  For many FSALs this may be a noop.
  *
- * \param p_export_context (in, gpfsfsal_export_context_t)
+ * \param p_export_context (in, vfsfsal_export_context_t)
  */
 
 fsal_status_t VFSFSAL_CleanUpExportContext(vfsfsal_export_context_t * p_export_context)
@@ -245,7 +243,6 @@ fsal_status_t VFSFSAL_GetClientContext(vfsfsal_op_context_t * p_thr_context,    
   /* set the export specific context */
   p_thr_context->export_context = p_export_context;
 
-  /* Extracted from  /opt/hpss/src/nfs/nfsd/nfs_Dispatch.c */
   p_thr_context->credential.user = uid;
   p_thr_context->credential.group = gid;
 

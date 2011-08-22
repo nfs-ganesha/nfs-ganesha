@@ -141,14 +141,14 @@ struct linux_dirent
 
 #define BUF_SIZE 1024
 
-fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
-                           gpfsfsal_cookie_t start_position,        /* IN */
-                           fsal_attrib_mask_t get_attr_mask,    /* IN */
-                           fsal_mdsize_t buffersize,    /* IN */
-                           fsal_dirent_t * p_pdirent,   /* OUT */
-                           gpfsfsal_cookie_t * p_end_position,      /* OUT */
-                           fsal_count_t * p_nb_entries, /* OUT */
-                           fsal_boolean_t * p_end_of_dir        /* OUT */
+fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,  /* IN */
+                               gpfsfsal_cookie_t start_position,   /* IN */
+                               fsal_attrib_mask_t get_attr_mask,   /* IN */
+                               fsal_mdsize_t buffersize,           /* IN */
+                               fsal_dirent_t * p_pdirent,          /* OUT */
+                               gpfsfsal_cookie_t * p_end_position, /* OUT */
+                               fsal_count_t * p_nb_entries,        /* OUT */
+                               fsal_boolean_t * p_end_of_dir       /* OUT */
     )
 {
   fsal_status_t st;
@@ -231,7 +231,8 @@ fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
           bpos += dp->d_reclen;
 
           /* LogFullDebug(COMPONENT_FSAL,
-                          "\tino=%8ld|%8lx off=%d|%x reclen=%d|%x name=%s|%d", dp->d_ino, dp->d_ino, (int)dp->d_off, (int)dp->d_off, 
+                          "\tino=%8ld|%8lx off=%d|%x reclen=%d|%x name=%s|%d",
+                          dp->d_ino, dp->d_ino, (int)dp->d_off, (int)dp->d_off, 
                           dp->d_reclen, dp->d_reclen, dp->d_name, (int)dp->d_name[0]  ) ; */
 
           if(!(*p_nb_entries < max_dir_entries))

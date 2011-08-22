@@ -533,6 +533,7 @@ static void DisplayLogString_valist(char *buff_dest, char * function, log_compon
   char texte[STR_LEN_TXT];
   struct tm the_date;
   time_t tm;
+  const char *threadname = Log_GetThreadFunction(component != COMPONENT_LOG_EMERG);
 
   tm = time(NULL);
   Localtime_r(&tm, &the_date);
@@ -540,17 +541,26 @@ static void DisplayLogString_valist(char *buff_dest, char * function, log_compon
   /* Ecriture sur le fichier choisi */
   log_vsnprintf(texte, STR_LEN_TXT, format, arguments);
 
-  snprintf(buff_dest, STR_LEN_TXT,
-           "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :%s\n",
-           the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
-           the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, nom_host,
-           nom_programme, getpid(), function,
-           texte);
+  if(LogComponents[component].comp_log_level < LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level)
+    snprintf(buff_dest, STR_LEN_TXT,
+             "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :%s\n",
+             the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
+             the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, nom_host,
+             nom_programme, getpid(), threadname,
+             texte);
+  else
+    snprintf(buff_dest, STR_LEN_TXT,
+             "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :%s :%s\n",
+             the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
+             the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, nom_host,
+             nom_programme, getpid(), threadname, function,
+             texte);
 }                               /* DisplayLogString_valist */
 
 static int DisplayLogSyslog_valist(log_components_t component, char * function, int level, char * format, va_list arguments)
 {
   char texte[STR_LEN_TXT];
+  const char *threadname = Log_GetThreadFunction(component != COMPONENT_LOG_EMERG);
 
   if( !syslog_opened )
    {
@@ -561,7 +571,11 @@ static int DisplayLogSyslog_valist(log_components_t component, char * function, 
   /* Ecriture sur le fichier choisi */
   log_vsnprintf(texte, STR_LEN_TXT, format, arguments);
 
-  syslog(tabLogLevel[level].syslog_level, "[%s] :%s", function, texte);
+  if(LogComponents[component].comp_log_level < LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level)
+    syslog(tabLogLevel[level].syslog_level, "[%s] :%s", threadname, texte);
+  else
+    syslog(tabLogLevel[level].syslog_level, "[%s] :%s :%s", threadname, function, texte);
+
   return 1 ;
 } /* DisplayLogSyslog_valist */
 
@@ -1060,6 +1074,11 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
   },
   { COMPONENT_STATE,             "COMPONENT_STATE", "STATE",
     NIV_EVENT,
+    SYSLOG,
+    "SYSLOG"
+  },
+  { LOG_MESSAGE_VERBOSITY,        "LOG_MESSAGE_VERBOSITY", "LOG MESSAGE VERBOSITY",
+    NIV_NULL,
     SYSLOG,
     "SYSLOG"
   },

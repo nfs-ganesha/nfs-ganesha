@@ -76,10 +76,7 @@ fsal_status_t VFSFSAL_lookup(vfsfsal_handle_t * p_parent_directory_handle,      
   int rc, errsv;
   fsal_status_t status;
   struct stat buffstat;
-  fsal_path_t pathfsal;
-
   int parentfd;
-  int errsrv;
 
   /* sanity checks
    * note : object_attributes is optionnal
@@ -126,7 +123,7 @@ fsal_status_t VFSFSAL_lookup(vfsfsal_handle_t * p_parent_directory_handle,      
   /* get directory metadata */
   TakeTokenFSCall();
   rc = fstat(parentfd, &buffstat);
-  errsrv = errno;
+  errsv = errno;
   ReleaseTokenFSCall();
 
   if(rc)
@@ -177,10 +174,10 @@ fsal_status_t VFSFSAL_lookup(vfsfsal_handle_t * p_parent_directory_handle,      
   p_object_handle->data.vfs_handle.handle_bytes = VFS_HANDLE_LEN ;
   if( vfs_name_by_handle_at( parentfd,  p_filename->name, &p_object_handle->data.vfs_handle ) != 0 )
    {
-      errsrv = errno;
+      errsv = errno;
       ReleaseTokenFSCall();
       close( parentfd ) ;
-      Return(posix2fsal_error(errsrv), errsrv, INDEX_FSAL_lookup);
+      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_lookup);
    }
 
   ReleaseTokenFSCall();
@@ -295,7 +292,7 @@ fsal_status_t VFSFSAL_lookupJunction(vfsfsal_handle_t * p_junction_handle,      
                                      fsal_attrib_list_t * p_fsroot_attributes   /* [ IN/OUT ] */
     )
 {
-  //hpss_Attrs_t    root_attr;
+  //vfs_Attrs_t    root_attr;
 
   /* sanity checks
    * note : p_fsroot_attributes is optionnal
@@ -309,14 +306,14 @@ fsal_status_t VFSFSAL_lookupJunction(vfsfsal_handle_t * p_junction_handle,      
      Return(ERR_FSAL_INVAL ,0 , INDEX_FSAL_lookupJunction);
    */
 
-  /* call to HPSS client api */
-  /* We use hpss_GetRawAttrHandle for chasing junctions. */
+  /* call to VFS client api */
+  /* We use vfs_GetRawAttrHandle for chasing junctions. */
 
   /* TakeTokenFSCall(); */
 
-  //rc = HPSSFSAL_GetRawAttrHandle( &(p_junction_handle->ns_handle),
+  //rc = VFS FSAL_GetRawAttrHandle( &(p_junction_handle->ns_handle),
   //                                NULL,
-  //                                &p_p_context->hpss_userp_context,
+  //                                &p_p_context->vfs_userp_context,
   //                                TRUE,     /* do traverse junctions !!! */
   //                                NULL,
   //                                NULL,
@@ -324,21 +321,21 @@ fsal_status_t VFSFSAL_lookupJunction(vfsfsal_handle_t * p_junction_handle,      
 
   /* ReleaseTokenFSCall(); */
 
-  //if (rc) Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_lookupJunction);
+  //if (rc) Return(vfs2fsal_error(rc), -rc, INDEX_FSAL_lookupJunction);
 
   /* set output handle */
   /*
-     p_fsoot_handle->obj_type  = hpss2fsal_type( root_attr.FilesetHandle.Type );
+     p_fsoot_handle->obj_type  = vfs2fsal_type( root_attr.FilesetHandle.Type );
      p_fsoot_handle->ns_handle = root_attr.FilesetHandle;
    */
 
   if(p_fsroot_attributes)
     {
 
-      /* convert hpss attributes to fsal attributes */
+      /* convert vfs attributes to fsal attributes */
 
       /*
-         status=hpss2fsal_attributes(
+         status=vfs2fsal_attributes(
          &root_attr.FilesetHandle,
          &root_attr,
          p_fsroot_attributes );

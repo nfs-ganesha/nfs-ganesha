@@ -49,7 +49,7 @@
 #include <sys/types.h>
 #include <mntent.h>
 
-/* Add missing prototype in vfs/*.h */
+/* Add missing prototype in vfs.h */
 int fd_to_handle(int fd, void **hanp, size_t * hlen);
 
 /* credential lifetime (1h) */
@@ -61,7 +61,7 @@ fsal_uint_t CredentialLifetime = 3600;
  */
 fsal_staticfsinfo_t global_fs_info;
 
-/* filesystem info for HPSS */
+/* filesystem info for VFS */
 static fsal_staticfsinfo_t default_posix_info = {
   0xFFFFFFFFFFFFFFFFLL,         /* max file size (64bits) */
   _POSIX_LINK_MAX,              /* max links */
@@ -266,7 +266,7 @@ void ReleaseTokenFSCall()
 
 }
 
-#define SET_INTEGER_PARAM( cfg, p_init_info, _field )             \
+#define VFS_SET_INTEGER_PARAM( cfg, p_init_info, _field )         \
     switch( (p_init_info)->behaviors._field ){                    \
     case FSAL_INIT_FORCE_VALUE :                                  \
       /* force the value in any case */                           \
@@ -288,7 +288,7 @@ void ReleaseTokenFSCall()
         break;                                                    \
     }
 
-#define SET_BITMAP_PARAM( cfg, p_init_info, _field )              \
+#define VFS_SET_BITMAP_PARAM( cfg, p_init_info, _field )          \
     switch( (p_init_info)->behaviors._field ){                    \
     case FSAL_INIT_FORCE_VALUE :                                  \
         /* force the value in any case */                         \
@@ -308,7 +308,7 @@ void ReleaseTokenFSCall()
         break;                                                    \
     }
 
-#define SET_BOOLEAN_PARAM( cfg, p_init_info, _field )             \
+#define VFS_SET_BOOLEAN_PARAM( cfg, p_init_info, _field )         \
     switch( (p_init_info)->behaviors._field ){                    \
     case FSAL_INIT_FORCE_VALUE :                                  \
         /* force the value in any case */                         \
@@ -429,21 +429,21 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
      (fs_common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT))
     ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_owner);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_async_block);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_owner);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_async_block);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
 
-  SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);
-  SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxwrite);
+  VFS_SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);
+  VFS_SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxwrite);
 
-  SET_BITMAP_PARAM(global_fs_info, fs_common_info, umask);
+  VFS_SET_BITMAP_PARAM(global_fs_info, fs_common_info, umask);
 
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, auth_exportpath_xdev);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, auth_exportpath_xdev);
 
-  SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
+  VFS_SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
 
   LogFullDebug(COMPONENT_FSAL,
                     "Supported attributes constant = 0x%llX.",
@@ -464,7 +464,7 @@ fsal_status_t fsal_internal_handle2fd(vfsfsal_op_context_t * p_context,
                                       vfsfsal_handle_t * phandle, int *pfd, int oflags)
 {
   int rc = 0;
-  int errsv = 0;
+  int errsv;
 
 
   if(!phandle || !pfd || !p_context)
@@ -499,14 +499,18 @@ fsal_status_t fsal_internal_fd2handle( vfsfsal_op_context_t * p_context,
                                        int fd,
 				       vfsfsal_handle_t * phandle)
 {
-  int rc = 0 ;
-  int errsv = 0 ;
-  int mnt_id = 0 ;
+  int rc = 0;
+  int errsv; 
+  int mnt_id = 0;
 
+  memset(phandle, 0, sizeof(vfsfsal_handle_t));
 
   phandle->data.vfs_handle.handle_bytes = VFS_HANDLE_LEN ;
   if( ( rc = vfs_fd_to_handle( fd, &phandle->data.vfs_handle, &mnt_id ) ) )
-   ReturnCode(posix2fsal_error(errsv), errsv);
+    {
+      errsv = errno;
+      ReturnCode(posix2fsal_error(errsv), errsv);
+    }
 
 #if 0
   {
@@ -529,8 +533,6 @@ fsal_status_t fsal_internal_Path2Handle(vfsfsal_op_context_t * p_context,       
 
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
-
-  memset(p_handle, 0, sizeof(vfsfsal_handle_t));
 
   LogFullDebug(COMPONENT_FSAL, "Lookup handle for %s", p_fsalpath->path);
 
@@ -562,7 +564,6 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
                                           fsal_handle_t * p_handle      /* OUT
                                                                          */ )
 {
-  fsal_status_t st;
   int errsrv = 0 ;
 
   if( !p_fsalname || !p_handle )
