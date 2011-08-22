@@ -75,8 +75,6 @@ if ERROR_INJECTION
 libsupport_la_SOURCES += err_inject.c
 endif
 
-libsupport_la_DEPENDENCIES = $(libsupport_la_SOURCES) $(libsupport_la_LIBADD)
-
 
 new: clean all 
 

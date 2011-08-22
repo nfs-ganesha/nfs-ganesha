@@ -92,7 +92,7 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
   exportlist_t *pexport;
   char function_name[MAXNAMLEN];
 #ifdef _USE_XFS
-  fsal_export_context_t export_context ;
+  xfsfsal_export_context_t export_context ;
   fsal_path_t export_path ;
 #endif
 
@@ -149,12 +149,16 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
             LogError(COMPONENT_MAIN, ERR_FSAL, fsal_status.major, fsal_status.minor);
 
 #ifdef _USE_XFS
+	  /* This is badly, badly broken. rework export struct defs and api because
+	   * this breaks dynamic multi-fsal support */
+
           /* Export Context is required for FSAL_XFS to work properly (it set the XFS fshandle) */
           fsal_status = FSAL_str2path( pexport->dirname, strlen( pexport->dirname )   , &export_path ) ;
           if(FSAL_IS_ERROR(fsal_status))
             LogError(COMPONENT_MAIN, ERR_FSAL, fsal_status.major, fsal_status.minor);
 
-          strncpy( export_context.mount_point, pexport->dirname, FSAL_MAX_PATH_LEN -1 ) ;
+          strncpy( export_context.mount_point,
+		   pexport->dirname, FSAL_MAX_PATH_LEN -1 ) ;
           fsal_status = FSAL_BuildExportContext( &export_context, &export_path, NULL ) ;
           if(FSAL_IS_ERROR(fsal_status))
             LogError(COMPONENT_MAIN, ERR_FSAL, fsal_status.major, fsal_status.minor);

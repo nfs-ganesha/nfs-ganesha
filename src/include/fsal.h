@@ -41,10 +41,6 @@
 #include "config.h"
 #endif                          /* HAVE_CONFIG_H */
 
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
-
 /* fsal_types contains constants and type definitions for FSAL */
 #include "fsal_types.h"
 #include "common_utils.h"

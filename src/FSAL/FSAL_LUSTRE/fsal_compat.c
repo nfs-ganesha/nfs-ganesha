@@ -11,8 +11,6 @@
 #include "config.h"
 #endif
 
-#include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_glue.h"
 #include "fsal_internal.h"
 

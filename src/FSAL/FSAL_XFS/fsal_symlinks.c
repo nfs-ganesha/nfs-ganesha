@@ -64,13 +64,13 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t XFSFSAL_readlink(xfsfsal_handle_t * p_linkhandle, /* IN */
-                               xfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t XFSFSAL_readlink(fsal_handle_t * linkhandle, /* IN */
+                               fsal_op_context_t * p_context,        /* IN */
                                fsal_path_t * p_link_content,    /* OUT */
                                fsal_attrib_list_t * p_link_attributes   /* [ IN/OUT ] */
     )
 {
-
+  xfsfsal_handle_t * p_linkhandle = (xfsfsal_handle_t *)linkhandle;
   int rc, errsv;
   fsal_status_t status;
   char link_content_out[FSAL_MAX_PATH_LEN];
@@ -152,12 +152,12 @@ fsal_status_t XFSFSAL_readlink(xfsfsal_handle_t * p_linkhandle, /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t XFSFSAL_symlink(xfsfsal_handle_t * p_parent_directory_handle,     /* IN */
+fsal_status_t XFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,     /* IN */
                               fsal_name_t * p_linkname, /* IN */
                               fsal_path_t * p_linkcontent,      /* IN */
-                              xfsfsal_op_context_t * p_context, /* IN */
+                              fsal_op_context_t * p_context, /* IN */
                               fsal_accessmode_t accessmode,     /* IN (ignored) */
-                              xfsfsal_handle_t * p_link_handle, /* OUT */
+                              fsal_handle_t * p_link_handle, /* OUT */
                               fsal_attrib_list_t * p_link_attributes    /* [ IN/OUT ] */
     )
 {
@@ -227,8 +227,8 @@ fsal_status_t XFSFSAL_symlink(xfsfsal_handle_t * p_parent_directory_handle,     
   /* chown the symlink to the current user/group */
 
   TakeTokenFSCall();
-  rc = fchownat(fd, p_linkname->name, p_context->credential.user,
-                setgid_bit ? -1 : p_context->credential.group, AT_SYMLINK_NOFOLLOW);
+  rc = fchownat(fd, p_linkname->name, ((xfsfsal_op_context_t*)p_context)->credential.user,
+                setgid_bit ? -1 : ((xfsfsal_op_context_t*)p_context)->credential.group, AT_SYMLINK_NOFOLLOW);
   errsv = errno;
   ReleaseTokenFSCall();
 

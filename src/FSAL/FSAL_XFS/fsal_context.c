@@ -36,7 +36,7 @@
 /**
  * build the export entry
  */
-fsal_status_t XFSFSAL_BuildExportContext(xfsfsal_export_context_t * p_export_context,   /* OUT */
+fsal_status_t XFSFSAL_BuildExportContext(fsal_export_context_t *export_context,   /* OUT */
                                          fsal_path_t * p_export_path,   /* IN */
                                          char *fs_specific_options      /* IN */
     )
@@ -61,6 +61,7 @@ fsal_status_t XFSFSAL_BuildExportContext(xfsfsal_export_context_t * p_export_con
 
   char *handle;
   size_t handle_len = 0;
+  xfsfsal_export_context_t *p_export_context = (xfsfsal_export_context_t *)export_context;
 
   /* sanity check */
   if(p_export_context == NULL)
@@ -166,12 +167,12 @@ fsal_status_t XFSFSAL_BuildExportContext(xfsfsal_export_context_t * p_export_con
  * \param p_export_context (in, gpfsfsal_export_context_t)
  */
 
-fsal_status_t XFSFSAL_CleanUpExportContext(xfsfsal_export_context_t * p_export_context)
+fsal_status_t XFSFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context)
 {
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
 }
 
-fsal_status_t XFSFSAL_InitClientContext(xfsfsal_op_context_t * p_thr_context)
+fsal_status_t XFSFSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 {
 
   /* sanity check */
@@ -179,7 +180,7 @@ fsal_status_t XFSFSAL_InitClientContext(xfsfsal_op_context_t * p_thr_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
 
   /* initialy set the export entry to none */
-  p_thr_context->export_context = NULL;
+  ((xfsfsal_op_context_t *)p_thr_context)->export_context = NULL;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
 
@@ -208,8 +209,8 @@ fsal_status_t XFSFSAL_InitClientContext(xfsfsal_op_context_t * p_thr_context)
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t XFSFSAL_GetClientContext(xfsfsal_op_context_t * p_thr_context,    /* IN/OUT  */
-                                       xfsfsal_export_context_t * p_export_context,     /* IN */
+fsal_status_t XFSFSAL_GetClientContext(fsal_op_context_t *thr_context,    /* IN/OUT  */
+                                       fsal_export_context_t * p_export_context, /* IN */
                                        fsal_uid_t uid,  /* IN */
                                        fsal_gid_t gid,  /* IN */
                                        fsal_gid_t * alt_groups, /* IN */
@@ -219,13 +220,14 @@ fsal_status_t XFSFSAL_GetClientContext(xfsfsal_op_context_t * p_thr_context,    
 
   fsal_count_t ng = nb_alt_groups;
   unsigned int i;
+  xfsfsal_op_context_t * p_thr_context = (xfsfsal_op_context_t *)thr_context;
 
   /* sanity check */
   if(!p_thr_context || !p_export_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
 
   /* set the export specific context */
-  p_thr_context->export_context = p_export_context;
+  p_thr_context->export_context = (xfsfsal_export_context_t *)p_export_context;
 
   /* Extracted from  /opt/hpss/src/nfs/nfsd/nfs_Dispatch.c */
   p_thr_context->credential.user = uid;
