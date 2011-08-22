@@ -196,16 +196,22 @@ typedef union state_data_t
 
 typedef struct state_t state_t;
 
+/* The value 12 is fixed by RFC3530 */
+#define OTHERSIZE 12
+
+extern char all_zero[OTHERSIZE];
+extern char all_one[OTHERSIZE];
+
 struct state_t
 {
   state_type_t    state_type;
   state_data_t    state_data;
-  u_int32_t       state_seqid;        /**< The NFSv4 Sequence id                      */
-  char            stateid_other[12];  /**< "Other" part of state id, used as hash key */
-  state_owner_t * state_powner;       /**< Open Owner related to this state           */
-  state_t       * state_next;         /**< Next entry in the state list               */
-  state_t       * state_prev;         /**< Prev entry in the state list               */
-  cache_entry_t * state_pentry;       /**< Related pentry                             */
+  u_int32_t       state_seqid;               /**< The NFSv4 Sequence id                      */
+  char            stateid_other[OTHERSIZE];  /**< "Other" part of state id, used as hash key */
+  state_owner_t * state_powner;              /**< Open Owner related to this state           */
+  state_t       * state_next;                /**< Next entry in the state list               */
+  state_t       * state_prev;                /**< Prev entry in the state list               */
+  cache_entry_t * state_pentry;              /**< Related pentry                             */
 };
 
 /*

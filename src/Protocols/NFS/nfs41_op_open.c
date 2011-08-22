@@ -492,7 +492,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
                   res_OPEN4.OPEN4res_u.resok4.stateid.seqid = pfile_state->state_seqid;
                   memcpy(res_OPEN4.OPEN4res_u.resok4.stateid.other,
-                         pfile_state->stateid_other, 12);
+                         pfile_state->stateid_other, OTHERSIZE);
 
                   /* No delegation */
                   res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type =
@@ -584,7 +584,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                   res_OPEN4.OPEN4res_u.resok4.stateid.seqid =
                                       pstate_found_iterate->state_seqid;
                                   memcpy(res_OPEN4.OPEN4res_u.resok4.stateid.other,
-                                         pstate_found_iterate->stateid_other, 12);
+                                         pstate_found_iterate->stateid_other, OTHERSIZE);
 
                                   memset(&(res_OPEN4.OPEN4res_u.resok4.cinfo.after), 0,
                                          sizeof(changeid4));
@@ -1111,7 +1111,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE;
 
   res_OPEN4.OPEN4res_u.resok4.stateid.seqid = powner->so_owner.so_nfs4_owner.so_seqid;
-  memcpy(res_OPEN4.OPEN4res_u.resok4.stateid.other, pfile_state->stateid_other, 12);
+  memcpy(res_OPEN4.OPEN4res_u.resok4.stateid.other, pfile_state->stateid_other, OTHERSIZE);
 
   /* No delegation */
   res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE;

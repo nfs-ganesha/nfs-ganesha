@@ -680,11 +680,11 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
 int HashTable_GetRef(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * buffval,
                      void (*get_ref)(hash_buffer_t *) )
 {
-  unsigned int hashval;
+  unsigned long hashval;
   struct rbt_node *pn;
   struct rbt_head *tete_rbt;
   hash_data_t *pdata = NULL;
-  unsigned int rbt_value = 0;
+  unsigned long rbt_value = 0;
   int rc = 0;
 
   /* Sanity check */
@@ -694,12 +694,17 @@ int HashTable_GetRef(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t *
   /* Compute values to locate into the hashtable */
   if( ht->parameter.hash_func_both != NULL )
    {
-      if( (*(ht->parameter.hash_func_both))( &ht->parameter, buffkey, &hashval, &rbt_value ) == 0 ) 
+     uint32_t hashval32, rbt_value32;
+
+     if((*(ht->parameter.hash_func_both))( &ht->parameter, buffkey, &hashval32, &rbt_value32) == 0) 
        return HASHTABLE_ERROR_INVALID_ARGUMENT;
+
+     hashval   = (unsigned long) hashval32;
+     rbt_value = (unsigned long) rbt_value32;
    }
   else
    {
-    hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
+    hashval   = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
     rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
    }
 

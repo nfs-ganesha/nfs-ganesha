@@ -323,25 +323,29 @@ static void LogList(const char        * reason,
     }
 }
 
-static void LogLock(const char         * reason, 
-                    cache_entry_t      * pentry,
-                    fsal_op_context_t  * pcontext,
-                    state_owner_t      * powner,
-                    state_lock_desc_t  * plock)
+void LogLock(log_components_t     component,
+             const char         * reason, 
+             cache_entry_t      * pentry,
+             fsal_op_context_t  * pcontext,
+             state_owner_t      * powner,
+             state_lock_desc_t  * plock)
 {
-  if(isFullDebug(COMPONENT_STATE))
+  if(isFullDebug(component))
     {
       char owner[HASHTABLE_DISPLAY_STRLEN];
       uint64_t fileid_digest = 0;
 
-      DisplayOwner(powner, owner);
+      if(powner != NULL)
+        DisplayOwner(powner, owner);
+      else
+        sprintf(owner, "NONE");
 
       FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                         FSAL_DIGEST_FILEID3,
                         &(pentry->object.file.handle),
                         (caddr_t) &fileid_digest);
 
-      LogFullDebug(COMPONENT_STATE,
+      LogFullDebug(component,
                    "%s Lock: fileid=%llu, owner=%s, type=%s, start=0x%llx, end=0x%llx",
                    reason, (unsigned long long) fileid_digest,
                    owner, str_lockt(plock->sld_type),
@@ -1616,7 +1620,9 @@ state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
 
   LogFullDebug(COMPONENT_STATE,
                "----------------------------------------------------------------------");
-  LogLock("FSAL_unlock_no_owner Generating FSAL Unlock List", pentry, pcontext, NULL, plock);
+  LogLock(COMPONENT_STATE,
+          "FSAL_unlock_no_owner Generating FSAL Unlock List",
+          pentry, pcontext, NULL, plock);
 
   LogFullDebug(COMPONENT_STATE,
                "----------------------------------------------------------------------");
@@ -1696,7 +1702,8 @@ state_status_t do_lock_op(cache_entry_t      * pentry,
      (!lock_support_owner && overlap))
     return STATE_SUCCESS;
 
-  LogLock(fsal_lock_op_str(lock_op), pentry, pcontext, powner, plock);
+  LogLock(COMPONENT_STATE,
+          fsal_lock_op_str(lock_op), pentry, pcontext, powner, plock);
   LogFullDebug(COMPONENT_STATE,
                "Lock type %d", (int) fsal_lock_type(plock));
 
@@ -2033,7 +2040,9 @@ state_status_t state_unlock(cache_entry_t        * pentry,
 
   LogFullDebug(COMPONENT_STATE,
                "----------------------------------------------------------------------");
-  LogLock("state_unlock Subtracting", pentry, pcontext, powner, plock);
+  LogLock(COMPONENT_STATE,
+          "state_unlock Subtracting",
+          pentry, pcontext, powner, plock);
   LogFullDebug(COMPONENT_STATE,
                "----------------------------------------------------------------------");
 
@@ -2082,7 +2091,8 @@ state_status_t state_unlock(cache_entry_t        * pentry,
 
   LogFullDebug(COMPONENT_STATE,
                "----------------------------------------------------------------------");
-  LogLock("state_unlock Done", pentry, pcontext, powner, plock);
+  LogLock(COMPONENT_STATE,
+          "state_unlock Done", pentry, pcontext, powner, plock);
   LogFullDebug(COMPONENT_STATE,
                "----------------------------------------------------------------------");
 

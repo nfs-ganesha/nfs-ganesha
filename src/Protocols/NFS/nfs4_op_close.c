@@ -162,7 +162,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_CLOSE4.status;
     }
 
-  memcpy(res_CLOSE4.CLOSE4res_u.open_stateid.other, arg_CLOSE4.open_stateid.other, 12);;
+  memcpy(res_CLOSE4.CLOSE4res_u.open_stateid.other, arg_CLOSE4.open_stateid.other, OTHERSIZE);;
 
   /* Close the file in FSAL through the cache inode */
   P_w(&data->current_entry->lock);

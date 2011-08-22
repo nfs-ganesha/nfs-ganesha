@@ -127,7 +127,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
   res_OPEN_DOWNGRADE4.OPEN_DOWNGRADE4res_u.resok4.open_stateid.seqid =
       pstate_found->state_seqid;
   memcpy(res_OPEN_DOWNGRADE4.OPEN_DOWNGRADE4res_u.resok4.open_stateid.other,
-         pstate_found->stateid_other, 12);
+         pstate_found->stateid_other, OTHERSIZE);
 
   return res_OPEN_DOWNGRADE4.status;
 }                               /* nfs4_op_opendowngrade */

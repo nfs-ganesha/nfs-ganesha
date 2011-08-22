@@ -218,7 +218,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* Increment the seqid */
   pstate_found->state_seqid += 1;
   res_LOCKU4.LOCKU4res_u.lock_stateid.seqid = pstate_found->state_seqid;
-  memcpy(res_LOCKU4.LOCKU4res_u.lock_stateid.other, pstate_found->stateid_other, 12);
+  memcpy(res_LOCKU4.LOCKU4res_u.lock_stateid.other, pstate_found->stateid_other, OTHERSIZE);
 
   P(pstate_found->state_powner->so_mutex);
   pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid += 1;
@@ -228,6 +228,13 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   P(pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
   pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_seqid += 1;
   V(pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
+
+  LogLock(COMPONENT_NFS_V4_LOCK,
+          "LOCKU",
+          data->current_entry,
+          data->pcontext,
+          pstate_found->state_powner,
+          &lock_desc);
 
   /* Now we have a lock owner and a stateid.
    * Go ahead and push unlock into SAL (and FSAL).

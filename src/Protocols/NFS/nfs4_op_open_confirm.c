@@ -170,7 +170,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid.seqid =
       arg_OPEN_CONFIRM4.seqid;
   memcpy(res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid.other,
-         pstate_found->stateid_other, 12);
+         pstate_found->stateid_other, OTHERSIZE);
 
   return res_OPEN_CONFIRM4.status;
 }                               /* nfs4_op_open_confirm */

@@ -129,9 +129,9 @@ int nfs4_Check_Stateid(struct stateid4 * pstate,
                        clientid4         clientid);
 
 int nfs4_Init_state_id(nfs_state_id_parameter_t param);
-int nfs4_State_Set(char other[12], state_t * pstate_data);
-int nfs4_State_Get_Pointer(char other[12], state_t * *pstate_data);
-int nfs4_State_Del(char other[12]);
+int nfs4_State_Set(char other[OTHERSIZE], state_t * pstate_data);
+int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t * *pstate_data);
+int nfs4_State_Del(char other[OTHERSIZE]);
 void nfs_State_PrintAll(void);
 
 int nfs4_is_lease_expired(cache_entry_t * pentry);
@@ -178,6 +178,13 @@ state_status_t state_lock_init(state_status_t   * pstatus,
 #else
 state_status_t state_lock_init(state_status_t * pstatus);
 #endif
+
+void LogLock(log_components_t     component,
+             const char         * reason, 
+             cache_entry_t      * pentry,
+             fsal_op_context_t  * pcontext,
+             state_owner_t      * powner,
+             state_lock_desc_t  * plock);
 
 #ifdef _USE_NLM
 /**
@@ -298,7 +305,7 @@ state_status_t state_add(cache_entry_t         * pentry,
                          state_t              ** ppstate,
                          state_status_t        * pstatus);
 
-state_status_t state_get(char                    other[12],
+state_status_t state_get(char                    other[OTHERSIZE],
                          state_t              ** ppstate,
                          cache_inode_client_t  * pclient,
                          state_status_t        * pstatus);
@@ -326,7 +333,7 @@ state_status_t state_iterate(cache_entry_t        * pentry,
                              fsal_op_context_t    * pcontext,
                              state_status_t       * pstatus);
 
-state_status_t state_del_by_key(char                   other[12],
+state_status_t state_del_by_key(char                   other[OTHERSIZE],
                                 cache_inode_client_t * pclient,
                                 state_status_t       * pstatus);
 

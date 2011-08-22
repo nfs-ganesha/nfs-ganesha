@@ -136,7 +136,7 @@ state_status_t state_add(cache_entry_t         * pentry,
   state_t            * piter_state = NULL;
   state_t            * piter_saved = NULL;
   state_owner_t      * powner = powner_input;
-  char                 debug_str[25];
+  char                 debug_str[OTHERSIZE * 2 + 1];
   bool_t               conflict_found = FALSE;
 
   /* Sanity Check */
@@ -199,13 +199,6 @@ state_status_t state_add(cache_entry_t         * pentry,
           return *pstatus;
         }
 
-      /* Set the type and data for this state */
-      pnew_state->state_type = state_type;
-      memcpy(&(pnew_state->state_data), pstate_data, sizeof(state_data_t));
-      pnew_state->state_seqid = 0;
-      pnew_state->state_pentry = pentry;
-      pnew_state->state_powner = powner;
-
       /* Set the head state id */
       pentry->object.file.pstate_head = (void *)pnew_state;
     }
@@ -259,22 +252,26 @@ state_status_t state_add(cache_entry_t         * pentry,
           return *pstatus;
         }
 
-      /* Set the type and data for this state */
-      pnew_state->state_type = state_type;
-      memcpy(&(pnew_state->state_data), pstate_data, sizeof(state_data_t));
-      pnew_state->state_seqid = 0;
-      pnew_state->state_pentry = pentry;
-      pnew_state->state_powner = powner;
-
-      /* Set the head state id */
+      /* Set the tail state id */
       pentry->object.file.pstate_tail = (void *)pnew_state;
     }                           /* else */
+
+  /* Set the type and data for this state */
+  pnew_state->state_type = state_type;
+  memcpy(&(pnew_state->state_data), pstate_data, sizeof(state_data_t));
+  pnew_state->state_seqid = 0;
+  pnew_state->state_pentry = pentry;
+  pnew_state->state_powner = powner;
+
+  if (isDebug(COMPONENT_STATE))
+    sprint_mem(debug_str, (char *)pnew_state->stateid_other, OTHERSIZE);
 
   /* Add the state to the related hashtable */
   if(!nfs4_State_Set(pnew_state->stateid_other, pnew_state))
     {
       LogDebug(COMPONENT_STATE,
-               "Can't create a new state id for the pentry %p (F)", pentry);
+               "Can't create a new state id %s for the pentry %p (F)",
+               debug_str, pentry);
       *pstatus = STATE_STATE_ERROR;
 
       /* stat */
@@ -291,12 +288,9 @@ state_status_t state_add(cache_entry_t         * pentry,
   /* Regular exit */
   *pstatus = STATE_SUCCESS;
 
-  if (isFullDebug(COMPONENT_STATE))
-    {
-      sprint_mem(debug_str, (char *)pnew_state->stateid_other, 12);
-      LogDebug(COMPONENT_STATE,
+  LogFullDebug(COMPONENT_STATE,
                "Add State: %s", debug_str);
-    }
+
   V_w(&pentry->lock);
 
   return *pstatus;
@@ -316,11 +310,13 @@ state_status_t state_add(cache_entry_t         * pentry,
  * @return the same as *pstatus
  *
  */
-state_status_t state_get(char                    other[12],
+state_status_t state_get(char                    other[OTHERSIZE],
                          state_t              ** ppstate,
                          cache_inode_client_t *  pclient,
                          state_status_t       *  pstatus)
 {
+  char debug_str[OTHERSIZE * 2 + 1];
+
   if(pstatus == NULL)
     return STATE_INVALID_ARGUMENT;
 
@@ -330,6 +326,9 @@ state_status_t state_get(char                    other[12],
       return *pstatus;
     }
 
+  if (isDebug(COMPONENT_STATE))
+    sprint_mem(debug_str, other, OTHERSIZE);
+
   if(!nfs4_State_Get_Pointer(other, ppstate))
     {
       *pstatus = STATE_NOT_FOUND;
@@ -337,13 +336,17 @@ state_status_t state_get(char                    other[12],
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET_STATE] += 1;
 
+      LogDebug(COMPONENT_STATE, "Could not get state %s", debug_str);
+
       return *pstatus;
     }
 
   /* Sanity check, mostly for debug */
-  if(memcmp(other, (*ppstate)->stateid_other, 12))
+  if(memcmp(other, (*ppstate)->stateid_other, OTHERSIZE))
     LogDebug(COMPONENT_STATE,
              "-------------> Warning !!!! Stateid(other) differs !!!!!!");
+
+  LogFullDebug(COMPONENT_STATE, "Found state %s", debug_str);
 
   *pstatus = STATE_SUCCESS;
   return *pstatus;
@@ -363,12 +366,13 @@ state_status_t state_get(char                    other[12],
  * @return the same as *pstatus
  *
  */
-state_status_t state_del_by_key(char                   other[12],
+state_status_t state_del_by_key(char                   other[OTHERSIZE],
                                 cache_inode_client_t * pclient,
                                 state_status_t       * pstatus)
 {
   state_t       * pstate = NULL;
   cache_entry_t * pentry = NULL;
+  char            debug_str[OTHERSIZE * 2 + 1];
 
   if(pstatus == NULL)
     return STATE_INVALID_ARGUMENT;
@@ -379,6 +383,9 @@ state_status_t state_del_by_key(char                   other[12],
       return *pstatus;
     }
 
+  if (isDebug(COMPONENT_STATE))
+    sprint_mem(debug_str, other, OTHERSIZE);
+
   /* Does this state exists ? */
   if(!nfs4_State_Get_Pointer(other, &pstate))
     {
@@ -386,6 +393,8 @@ state_status_t state_del_by_key(char                   other[12],
 
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_DEL_STATE] += 1;
+
+      LogDebug(COMPONENT_STATE, "Could not find state %s to delete", debug_str);
 
       return *pstatus;
     }
@@ -418,7 +427,7 @@ state_status_t state_del_by_key(char                   other[12],
   if(pstate->state_prev != NULL)
     pstate->state_prev->state_next = pstate->state_next;
 
-  if(!memcmp((char *)pstate->stateid_other, other, 12))
+  if(!memcmp((char *)pstate->stateid_other, other, OTHERSIZE))
     {
       /* Remove the entry from the HashTable */
       if(!nfs4_State_Del(pstate->stateid_other))
@@ -428,19 +437,27 @@ state_status_t state_del_by_key(char                   other[12],
           /* stat */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_DEL_STATE] += 1;
 
+          LogDebug(COMPONENT_STATE, "Could not delete state %s", debug_str);
+
           V_w(&pentry->lock);
 
           return *pstatus;
         }
 
       /* reset the pstate field to avoid later mistakes */
-      memset((char *)pstate->stateid_other, 0, 12);
+      memset((char *)pstate->stateid_other, 0, OTHERSIZE);
       pstate->state_type   = STATE_TYPE_NONE;
       pstate->state_next   = NULL;
       pstate->state_prev   = NULL;
       pstate->state_pentry = NULL;
 
+      LogFullDebug(COMPONENT_STATE, "Deleted state %s", debug_str);
+
       ReleaseToPool(pstate, &pclient->pool_state_v4);
+    }
+  else
+    {
+      LogDebug(COMPONENT_STATE, "Something odd happened while deleting state %s", debug_str);
     }
 
   *pstatus = STATE_SUCCESS;
@@ -469,7 +486,7 @@ state_status_t state_del(state_t              * pstate,
 {
   state_t       * ptest_state = NULL;
   cache_entry_t * pentry = NULL;
-  char            str[25];
+  char            debug_str[OTHERSIZE * 2 + 1];
 
   if(pstatus == NULL)
     return STATE_INVALID_ARGUMENT;
@@ -480,11 +497,8 @@ state_status_t state_del(state_t              * pstate,
       return *pstatus;
     }
 
-  if (isFullDebug(COMPONENT_STATE))
-    {
-      sprint_mem(str, (char *)pstate->stateid_other, 12);
-      LogDebug(COMPONENT_STATE, "Delete State: %s", str);
-    }
+  if (isDebug(COMPONENT_STATE))
+    sprint_mem(debug_str, (char *)pstate->stateid_other, OTHERSIZE);
 
   /* Does this state exists ? */
   if(!nfs4_State_Get_Pointer(pstate->stateid_other, &ptest_state))
@@ -493,6 +507,8 @@ state_status_t state_del(state_t              * pstate,
 
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_DEL_STATE] += 1;
+
+      LogDebug(COMPONENT_STATE, "Could not find state %s to delete", debug_str);
 
       return *pstatus;
     }
@@ -533,19 +549,23 @@ state_status_t state_del(state_t              * pstate,
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_DEL_STATE] += 1;
 
+      LogDebug(COMPONENT_STATE, "Could not delete state %s", debug_str);
+
       V_w(&pentry->lock);
 
       return *pstatus;
     }
 
   /* reset the pstate field to avoid later mistakes */
-  memset((char *)pstate->stateid_other, 0, 12);
+  memset((char *)pstate->stateid_other, 0, OTHERSIZE);
   pstate->state_type   = STATE_TYPE_NONE;
   pstate->state_next   = NULL;
   pstate->state_prev   = NULL;
   pstate->state_pentry = NULL;
 
   ReleaseToPool(pstate, &pclient->pool_state_v4);
+
+  LogFullDebug(COMPONENT_STATE, "Deleted state %s", debug_str);
 
   *pstatus = STATE_SUCCESS;
 

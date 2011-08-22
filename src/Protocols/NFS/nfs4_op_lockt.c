@@ -203,6 +203,8 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
       if(plock_owner == NULL)
         {
+          LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                       "LOCKT unable to create lockowner");
           res_LOCKT4.status = NFS4ERR_SERVERFAULT;
           return res_LOCKT4.status;
         }
@@ -210,10 +212,17 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   else
     {
       LogFullDebug(COMPONENT_NFS_V4_LOCK,
-                   "A previously known lock_owner is used :#%s# seqid=%u",
+                   "LOCKT A previously known lock_owner is used :#%s# seqid=%u",
                    plock_owner->so_owner_val,
                    plock_owner->so_owner.so_nfs4_owner.so_seqid);
     }
+
+  LogLock(COMPONENT_NFS_V4_LOCK,
+          "LOCKT",
+          data->current_entry,
+          data->pcontext,
+          plock_owner,
+          &lock_desc);
 
   /* Now we have a lock owner and a stateid.
    * Go ahead and test the lock in SAL (and FSAL).

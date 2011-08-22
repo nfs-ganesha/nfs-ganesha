@@ -165,7 +165,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_CLOSE4.status;
     }
 
-  memcpy(res_CLOSE4.CLOSE4res_u.open_stateid.other, arg_CLOSE4.open_stateid.other, 12);;
+  memcpy(res_CLOSE4.CLOSE4res_u.open_stateid.other, arg_CLOSE4.open_stateid.other, OTHERSIZE);;
 
   res_CLOSE4.status = NFS4_OK;
 

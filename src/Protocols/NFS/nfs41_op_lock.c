@@ -75,9 +75,6 @@
 #define arg_LOCK4 op->nfs_argop4_u.oplock
 #define res_LOCK4 resp->nfs_resop4_u.oplock
 
-extern char all_zero[];
-extern char all_one[12];
-
 int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_lock";
@@ -221,7 +218,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           if(!
              (!memcmp((char *)all_zero,
                       arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.other,
-                      12)
+                      OTHERSIZE)
               && arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.seqid == 0))
             {
               if(state_status == STATE_NOT_FOUND)
@@ -378,7 +375,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       res_LOCK4.LOCK4res_u.resok4.lock_stateid.seqid = 0;
       memcpy(res_LOCK4.LOCK4res_u.resok4.lock_stateid.other,
              plock_state->stateid_other,
-             12);
+             OTHERSIZE);
 
       /* update the lock counter in the related open-stateid */
       pstate_open->state_data.share.lockheld += 1;
@@ -411,7 +408,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
       memcpy(res_LOCK4.LOCK4res_u.resok4.lock_stateid.other,
              plock_state->stateid_other,
-             12);
+             OTHERSIZE);
     }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
 
   /* Now we have a lock owner and a stateid.

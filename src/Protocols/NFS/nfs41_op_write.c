@@ -74,9 +74,6 @@ extern verifier4 NFS4_write_verifier;   /* NFS V4 write verifier from nfs_Main.c
 #define arg_WRITE4 op->nfs_argop4_u.opwrite
 #define res_WRITE4 resp->nfs_resop4_u.opwrite
 
-extern char all_zero[];
-extern char all_one[12];
-
 int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_write";
@@ -142,7 +139,7 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   entry = data->current_entry;
 
   /* Check for special stateid */
-  if(!memcmp((char *)all_zero, arg_WRITE4.stateid.other, 12) &&
+  if(!memcmp((char *)all_zero, arg_WRITE4.stateid.other, OTHERSIZE) &&
      arg_WRITE4.stateid.seqid == 0)
     {
       /* "All 0 stateid special case", see RFC3530 page 220-221 for details
@@ -150,7 +147,7 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
        * I set pstate_found to NULL to remember this situation later */
       pstate_found = NULL;
     }
-  else if(!memcmp((char *)all_one, arg_WRITE4.stateid.other, 12) &&
+  else if(!memcmp((char *)all_one, arg_WRITE4.stateid.other, OTHERSIZE) &&
           arg_WRITE4.stateid.seqid == 0xFFFFFFFF)
     {
       /* "All 1 stateid special case", see RFC3530 page 220-221 for details

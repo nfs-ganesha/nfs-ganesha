@@ -196,7 +196,7 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
         pstate_open->state_data.share.lockheld -= 1;
     }
 
-  memcpy(res_LOCKU4.LOCKU4res_u.lock_stateid.other, pstate_found->stateid_other, 12);
+  memcpy(res_LOCKU4.LOCKU4res_u.lock_stateid.other, pstate_found->stateid_other, OTHERSIZE);
 
   /* Now we have a lock owner and a stateid.
    * Go ahead and push unlock into SAL (and FSAL).
