@@ -106,20 +106,6 @@ struct file_handle
 
 /** end of open by handle structures */
 
-#ifndef _USE_SHARED_FSAL
-
-#define fsal_handle_t gpfsfsal_handle_t
-#define fsal_op_context_t gpfsfsal_op_context_t
-#define fsal_file_t gpfsfsal_file_t
-#define fsal_dir_t gpfsfsal_dir_t
-#define fsal_export_context_t gpfsfsal_export_context_t
-#define fsal_lockdesc_t gpfsfsal_lockdesc_t
-#define fsal_cookie_t gpfsfsal_cookie_t
-#define fs_specific_initinfo_t gpfsfs_specific_initinfo_t
-#define fsal_cred_t gpfsfsal_cred_t
-
-#endif
-
 typedef struct
 {
   struct
@@ -137,7 +123,7 @@ typedef struct
   char mount_point[FSAL_MAX_PATH_LEN];
 
   int mount_root_fd;
-  fsal_handle_t mount_root_handle;
+  gpfsfsal_handle_t mount_root_handle;
   unsigned int fsid[2];
 } gpfsfsal_export_context_t;
 
@@ -145,7 +131,7 @@ typedef struct
 
 typedef struct
 {
-  fsal_export_context_t *export_context;        /* Must be the first entry in this structure */
+  gpfsfsal_export_context_t *export_context;        /* Must be the first entry in this structure */
   struct user_credentials credential;
 } gpfsfsal_op_context_t;
 

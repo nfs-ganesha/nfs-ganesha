@@ -78,11 +78,11 @@
  *        ERR_FSAL_IO, ...
  */
 
-fsal_status_t GPFSFSAL_open_by_name(gpfsfsal_handle_t * dirhandle,      /* IN */
+fsal_status_t GPFSFSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
                                 fsal_name_t * filename, /* IN */
-                                gpfsfsal_op_context_t * p_context,  /* IN */
+                                fsal_op_context_t * p_context,  /* IN */
                                 fsal_openflags_t openflags,     /* IN */
-                                gpfsfsal_file_t * file_descriptor,  /* OUT */
+                                fsal_file_t * file_descriptor,  /* OUT */
                                 fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
   fsal_status_t fsal_status;
@@ -128,10 +128,10 @@ fsal_status_t GPFSFSAL_open_by_name(gpfsfsal_handle_t * dirhandle,      /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_open(gpfsfsal_handle_t * p_filehandle,   /* IN */
-                        gpfsfsal_op_context_t * p_context,  /* IN */
+fsal_status_t GPFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
+                        fsal_op_context_t * p_context,  /* IN */
                         fsal_openflags_t openflags,     /* IN */
-                        gpfsfsal_file_t * p_file_descriptor,        /* OUT */
+                        fsal_file_t * file_desc,        /* OUT */
                         fsal_attrib_list_t * p_file_attributes  /* [ IN/OUT ] */
     )
 {
@@ -143,6 +143,7 @@ fsal_status_t GPFSFSAL_open(gpfsfsal_handle_t * p_filehandle,   /* IN */
   int posix_flags = 0;
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t file_attrs;
+  gpfsfsal_file_t * p_file_descriptor = (gpfsfsal_file_t *)file_desc;
 
   /* sanity checks.
    * note : file_attributes is optional.
@@ -229,7 +230,7 @@ fsal_status_t GPFSFSAL_open(gpfsfsal_handle_t * p_filehandle,   /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_read(gpfsfsal_file_t * p_file_descriptor,        /* IN */
+fsal_status_t GPFSFSAL_read(fsal_file_t * file_desc,        /* IN */
                         fsal_seek_t * p_seek_descriptor,        /* [IN] */
                         fsal_size_t buffer_size,        /* IN */
                         caddr_t buffer, /* OUT */
@@ -242,6 +243,7 @@ fsal_status_t GPFSFSAL_read(gpfsfsal_file_t * p_file_descriptor,        /* IN */
   ssize_t nb_read;
   int rc = 0, errsv = 0;
   int pcall = FALSE;
+  gpfsfsal_file_t * p_file_descriptor = (gpfsfsal_file_t *)file_desc;
 
   /* sanity checks. */
 
@@ -345,7 +347,7 @@ fsal_status_t GPFSFSAL_read(gpfsfsal_file_t * p_file_descriptor,        /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_write(gpfsfsal_file_t * p_file_descriptor,       /* IN */
+fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
                          fsal_seek_t * p_seek_descriptor,       /* IN */
                          fsal_size_t buffer_size,       /* IN */
                          caddr_t buffer,        /* IN */
@@ -357,6 +359,7 @@ fsal_status_t GPFSFSAL_write(gpfsfsal_file_t * p_file_descriptor,       /* IN */
   size_t i_size;
   int rc = 0, errsv = 0;
   int pcall = FALSE;
+  gpfsfsal_file_t * p_file_descriptor = (gpfsfsal_file_t *)file_desc;
 
   /* sanity checks. */
   if(!p_file_descriptor || !buffer || !p_write_amount)
@@ -483,7 +486,7 @@ fsal_status_t GPFSFSAL_write(gpfsfsal_file_t * p_file_descriptor,       /* IN */
  *      - Another error code if an error occured during this call.
  */
 
-fsal_status_t GPFSFSAL_close(gpfsfsal_file_t * p_file_descriptor        /* IN */
+fsal_status_t GPFSFSAL_close(fsal_file_t * p_file_descriptor        /* IN */
     )
 {
 
@@ -497,7 +500,7 @@ fsal_status_t GPFSFSAL_close(gpfsfsal_file_t * p_file_descriptor        /* IN */
 
   TakeTokenFSCall();
 
-  rc = close(p_file_descriptor->fd);
+  rc = close(((gpfsfsal_file_t *)p_file_descriptor)->fd);
   errsv = errno;
 
   ReleaseTokenFSCall();
@@ -510,17 +513,17 @@ fsal_status_t GPFSFSAL_close(gpfsfsal_file_t * p_file_descriptor        /* IN */
 }
 
 /* Some unsupported calls used in FSAL_PROXY, just for permit the ganeshell to compile */
-fsal_status_t GPFSFSAL_open_by_fileid(gpfsfsal_handle_t * filehandle,   /* IN */
+fsal_status_t GPFSFSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
                                   fsal_u64_t fileid,    /* IN */
-                                  gpfsfsal_op_context_t * p_context,        /* IN */
+                                  fsal_op_context_t * p_context,        /* IN */
                                   fsal_openflags_t openflags,   /* IN */
-                                  gpfsfsal_file_t * file_descriptor,        /* OUT */
+                                  fsal_file_t * file_descriptor,        /* OUT */
                                   fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
 
-fsal_status_t GPFSFSAL_close_by_fileid(gpfsfsal_file_t * file_descriptor /* IN */ ,
+fsal_status_t GPFSFSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
                                    fsal_u64_t fileid)
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
@@ -528,7 +531,7 @@ fsal_status_t GPFSFSAL_close_by_fileid(gpfsfsal_file_t * file_descriptor /* IN *
 
 unsigned int GPFSFSAL_GetFileno(fsal_file_t * pfile)
 {
-  return pfile->fd;
+	return ((gpfsfsal_file_t *)pfile)->fd;
 }
 
 /**
@@ -544,7 +547,7 @@ unsigned int GPFSFSAL_GetFileno(fsal_file_t * pfile)
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t GPFSFSAL_sync(gpfsfsal_file_t * p_file_descriptor       /* IN */)
+fsal_status_t GPFSFSAL_sync(fsal_file_t * p_file_descriptor       /* IN */)
 {
   int rc, errsv;
 
@@ -554,7 +557,7 @@ fsal_status_t GPFSFSAL_sync(gpfsfsal_file_t * p_file_descriptor       /* IN */)
 
   /* Flush data. */
   TakeTokenFSCall();
-  rc = fsync(p_file_descriptor->fd);
+  rc = fsync(((gpfsfsal_file_t *)p_file_descriptor)->fd);
   errsv = errno;
   ReleaseTokenFSCall();
 

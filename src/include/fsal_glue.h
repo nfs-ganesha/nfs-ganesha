@@ -39,7 +39,8 @@
 #if defined(_USE_SHARED_FSAL) || \
 	defined(_USE_POSIX) || \
 	defined(_USE_VFS) || \
-        defined(_USE_XFS)
+        defined(_USE_XFS) || \
+	defined(_USE_GPFS)
 
 typedef struct
 {
