@@ -157,16 +157,35 @@ int _9p_attach( _9p_request_data_t * preq9p,
   memcpy( &pfid->fsal_op_context, &pwkrdata->thread_fsal_context, sizeof( fsal_op_context_t ) ) ;
 #endif
 
-  /* Build the fid creds */
-  if( ( err = _9p_tools_get_fsal_op_context( *uname_len, uname_str, pfid ) ) !=  0 )
+  /* Is user name provided as a string or as an uid ? */
+  if( *uname_len != 0 )
    {
-     P( pwkrdata->_9pfid_pool_mutex ) ;
-     ReleaseToPool( pfid, &pwkrdata->_9pfid_pool ) ;
-     V( pwkrdata->_9pfid_pool_mutex ) ;
+     /* Build the fid creds */
+    if( ( err = _9p_tools_get_fsal_op_context_by_name( *uname_len, uname_str, pfid ) ) !=  0 )
+     {
+       P( pwkrdata->_9pfid_pool_mutex ) ;
+       ReleaseToPool( pfid, &pwkrdata->_9pfid_pool ) ;
+       V( pwkrdata->_9pfid_pool_mutex ) ;
    
-     err = -err ; /* The returned value from 9p service functions is always negative is case of errors */
-     rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
-     return rc ;
+       err = -err ; /* The returned value from 9p service functions is always negative is case of errors */
+       rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+       return rc ;
+     }
+   }
+  else
+   {
+    /* Build the fid creds */
+    if( ( err = _9p_tools_get_fsal_op_context_by_uid( *n_aname, pfid ) ) !=  0 )
+     {
+       P( pwkrdata->_9pfid_pool_mutex ) ;
+       ReleaseToPool( pfid, &pwkrdata->_9pfid_pool ) ;
+       V( pwkrdata->_9pfid_pool_mutex ) ;
+   
+       err = -err ; /* The returned value from 9p service functions is always negative is case of errors */
+       rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+       return rc ;
+     }
+
    }
 
   /* Get the related pentry */

@@ -423,7 +423,8 @@ int _9p_test_fid( _9p_conn_t * pconn,
                   u32        * pfid ) ;
 
 /* Tools functions */
-int _9p_tools_get_fsal_op_context( int uname_len, char * uname_str, _9p_fid_t * pfid ) ;
+int _9p_tools_get_fsal_op_context_by_uid( u32 uid, _9p_fid_t * pfid ) ;
+int _9p_tools_get_fsal_op_context_by_name( int uname_len, char * uname_str, _9p_fid_t * pfid ) ;
 int _9p_tools_errno( cache_inode_status_t cache_status ) ;
 
 /* Protocol functions */
