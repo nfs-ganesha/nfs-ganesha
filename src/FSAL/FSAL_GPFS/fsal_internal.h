@@ -166,15 +166,6 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t * p_export_conte
 
 fsal_status_t GPFSFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context);
 
-fsal_status_t GPFSFSAL_InitClientContext(fsal_op_context_t * p_thr_context);
-
-fsal_status_t GPFSFSAL_GetClientContext(fsal_op_context_t * p_thr_context,    /* IN/OUT  */
-                                       fsal_export_context_t * p_export_context,     /* IN */
-                                       fsal_uid_t uid,  /* IN */
-                                       fsal_gid_t gid,  /* IN */
-                                       fsal_gid_t * alt_groups, /* IN */
-                                       fsal_count_t nb_alt_groups /* IN */ );
-
 fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,      /* IN */
                              fsal_name_t * p_filename,  /* IN */
                              fsal_op_context_t * p_context,  /* IN */
