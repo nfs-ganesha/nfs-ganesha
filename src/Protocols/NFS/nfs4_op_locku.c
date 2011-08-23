@@ -220,7 +220,6 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   pstate_open = pstate_found->state_data.lock.popenstate;
   if(pstate_open != NULL)
     {
-      pstate_open->state_seqid += 1;    /** @todo BUGAZOMEU may not be useful */
       /* update the lock counter in the related open-stateid */
       // TODO FSF: this count is probably wrong...
       LogFullDebug(COMPONENT_NFS_V4_LOCK,
