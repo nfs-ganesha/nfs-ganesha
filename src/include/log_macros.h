@@ -212,9 +212,17 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 #define LogFullDebug(component, format, args...) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_FULL_DEBUG) \
-      DisplayLogComponentLevel(component, (char *)__FUNCTION__,  NIV_FULL_DEBUG, \
+      DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_FULL_DEBUG, \
                                "%s: FULLDEBUG: " format, \
                                LogComponents[component].comp_str, ## args ); \
+  } while (0)
+
+#define LogAtLevel(component, level, format, args...) \
+  do { \
+    if (LogComponents[component].comp_log_level >= level) \
+      DisplayLogComponentLevel(component, (char *)__FUNCTION__, level, \
+                               "%s: %s: " format, \
+                               LogComponents[component].comp_str, tabLogLevel[level].short_str, ## args ); \
   } while (0)
 
 #define LogError( component, a, b, c ) \
@@ -222,6 +230,9 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
     if (LogComponents[component].comp_log_level >= NIV_CRIT) \
       DisplayErrorComponentLogLine( component,(char *)__FUNCTION__, a, b, c, __LINE__ ); \
   } while (0)
+
+#define isLevel(component, level) \
+  (LogComponents[component].comp_log_level >= level)
 
 #define isInfo(component) \
   (LogComponents[component].comp_log_level >= NIV_INFO)

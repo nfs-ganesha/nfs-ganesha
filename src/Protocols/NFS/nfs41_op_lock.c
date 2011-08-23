@@ -356,7 +356,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
       /* Prepare state management structure */
       candidate_type = STATE_TYPE_LOCK;
-      candidate_data.lock.popenstate = (void *)pstate_open;
+      candidate_data.lock.popenstate = pstate_open;
 
       /* Add the lock state to the lock table */
       if(state_add(data->current_entry,
@@ -371,7 +371,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           return res_LOCK4.status;
         }
 
-        /** @todo BUGAZOMEU: Manage the case if lock conflicts */
+      /** @todo BUGAZOMEU: Manage the case if lock conflicts */
       res_LOCK4.LOCK4res_u.resok4.lock_stateid.seqid = 0;
       memcpy(res_LOCK4.LOCK4res_u.resok4.lock_stateid.other,
              plock_state->stateid_other,

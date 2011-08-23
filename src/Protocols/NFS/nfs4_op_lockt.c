@@ -217,7 +217,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                    plock_owner->so_owner.so_nfs4_owner.so_seqid);
     }
 
-  LogLock(COMPONENT_NFS_V4_LOCK,
+  LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
           "LOCKT",
           data->current_entry,
           data->pcontext,

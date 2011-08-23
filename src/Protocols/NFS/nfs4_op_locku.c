@@ -90,6 +90,9 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   state_lock_desc_t   lock_desc;
   unsigned int        rc = 0;
 
+  LogDebug(COMPONENT_NFS_V4_LOCK,
+           "Entering NFS v4 LOCKU handler -----------------------------------------------------");
+
   /* Initialize to sane default */
   resp->resop = NFS4_OP_LOCKU;
 
@@ -188,6 +191,15 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_LOCKU4.status;
     }
 
+  LogFullDebug(COMPONENT_NFS_V4_LOCK,
+               "LOCKU seqid = %u, so_seqid = %u, state_powner = %p, lock_stateid.seqid = %u, state_seqid = %u, pstate_found = %p",
+               arg_LOCKU4.seqid,
+               pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid,
+               pstate_found->state_powner,
+               arg_LOCKU4.lock_stateid.seqid,
+               pstate_found->state_seqid,
+               pstate_found);
+
   /* Check the seqid */
   if((arg_LOCKU4.seqid != pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid) &&
      (arg_LOCKU4.seqid != pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid + 1))
@@ -205,12 +217,15 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Increment the seqid for the open-stateid related to this lock */
-  pstate_open = (state_t *) (pstate_found->state_data.lock.popenstate);
+  pstate_open = pstate_found->state_data.lock.popenstate;
   if(pstate_open != NULL)
     {
       pstate_open->state_seqid += 1;    /** @todo BUGAZOMEU may not be useful */
       /* update the lock counter in the related open-stateid */
       // TODO FSF: this count is probably wrong...
+      LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                   "LOCKU incremented state_seqid to %u, pstate_open = %p",
+                   pstate_open->state_seqid, pstate_open);
       if(pstate_open->state_data.share.lockheld > 0)
         pstate_open->state_data.share.lockheld -= 1;
     }
@@ -219,17 +234,28 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   pstate_found->state_seqid += 1;
   res_LOCKU4.LOCKU4res_u.lock_stateid.seqid = pstate_found->state_seqid;
   memcpy(res_LOCKU4.LOCKU4res_u.lock_stateid.other, pstate_found->stateid_other, OTHERSIZE);
+  LogFullDebug(COMPONENT_NFS_V4_LOCK,
+               "LOCKU incremented state_seqid to %u, pstate_found = %p",
+               pstate_found->state_seqid, pstate_found);
 
   P(pstate_found->state_powner->so_mutex);
   pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid += 1;
   V(pstate_found->state_powner->so_mutex);
+  LogFullDebug(COMPONENT_NFS_V4_LOCK,
+               "LOCKU incremented so_seqid to %u, pstate_found->state_powner = %p",
+               pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid,
+               pstate_found->state_powner);
 
   /* Increment the seqid for the related open_owner */
   P(pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
   pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_seqid += 1;
   V(pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
+  LogFullDebug(COMPONENT_NFS_V4_LOCK,
+               "LOCKU incremented so_seqid to %u, pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner = %p",
+               pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_seqid,
+               pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner);
 
-  LogLock(COMPONENT_NFS_V4_LOCK,
+  LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
           "LOCKU",
           data->current_entry,
           data->pcontext,

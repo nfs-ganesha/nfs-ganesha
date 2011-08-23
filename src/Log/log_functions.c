@@ -57,15 +57,15 @@
 
 log_level_t tabLogLevel[NB_LOG_LEVEL] =
 {
-  {NIV_NULL,       "NIV_NULL",       LOG_NOTICE},
-  {NIV_FATAL,      "NIV_FATAL",      LOG_CRIT},
-  {NIV_MAJ,        "NIV_MAJ",        LOG_CRIT},
-  {NIV_CRIT,       "NIV_CRIT",       LOG_ERR},
-  {NIV_WARN,       "NIV_WARN",       LOG_WARNING},
-  {NIV_EVENT,      "NIV_EVENT",      LOG_NOTICE},
-  {NIV_INFO,       "NIV_INFO",       LOG_INFO},
-  {NIV_DEBUG,      "NIV_DEBUG",      LOG_DEBUG},
-  {NIV_FULL_DEBUG, "NIV_FULL_DEBUG", LOG_DEBUG}
+  {NIV_NULL,       "NIV_NULL",       "NULL",       LOG_NOTICE},
+  {NIV_FATAL,      "NIV_FATAL",      "FATAL",      LOG_CRIT},
+  {NIV_MAJ,        "NIV_MAJ",        "MAJ",        LOG_CRIT},
+  {NIV_CRIT,       "NIV_CRIT",       "CRIT",       LOG_ERR},
+  {NIV_WARN,       "NIV_WARN",       "WARN",       LOG_WARNING},
+  {NIV_EVENT,      "NIV_EVENT",      "EVENT",      LOG_NOTICE},
+  {NIV_INFO,       "NIV_INFO",       "INFO",       LOG_INFO},
+  {NIV_DEBUG,      "NIV_DEBUG",      "DEBUG",      LOG_DEBUG},
+  {NIV_FULL_DEBUG, "NIV_FULL_DEBUG", "FULL_DEBUG", LOG_DEBUG}
 };
 
 /* les code d'error */

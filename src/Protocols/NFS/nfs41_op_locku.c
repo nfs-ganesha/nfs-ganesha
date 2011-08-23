@@ -187,7 +187,7 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_LOCKU4.status;
     }
 
-  pstate_open = (state_t *) (pstate_found->state_data.lock.popenstate);
+  pstate_open = pstate_found->state_data.lock.popenstate;
   if(pstate_open != NULL)
     {
       /* update the lock counter in the related open-stateid */

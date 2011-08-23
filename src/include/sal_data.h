@@ -102,9 +102,11 @@ typedef struct state_share__
   unsigned int lockheld;                                                 /**< How many locks did I open ?                          */
 } state_share_t;
 
+typedef struct state_t state_t;
+
 typedef struct state_lock_t
 {
-  void *popenstate;                                 /**< The related open-stateid                             */
+  state_t *popenstate;                                 /**< The related open-stateid                             */
 } state_lock_t;
 
 typedef struct state_deleg__
@@ -193,8 +195,6 @@ typedef union state_data_t
   state_deleg_t  deleg;
   state_layout_t layout;
 } state_data_t;
-
-typedef struct state_t state_t;
 
 /* The value 12 is fixed by RFC3530 */
 #define OTHERSIZE 12

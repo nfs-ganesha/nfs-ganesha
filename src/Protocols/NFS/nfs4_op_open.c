@@ -474,6 +474,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                       P(powner->so_mutex);
                       powner->so_owner.so_nfs4_owner.so_seqid += 1;
                       V(powner->so_mutex);
+                      LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                                   "OPEN incremented so_seqid to %u, powner = %p",
+                                   powner->so_owner.so_nfs4_owner.so_seqid,
+                                   powner);
 
                       res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                       return res_OPEN4.status;
@@ -492,6 +496,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                       P(powner->so_mutex);
                       powner->so_owner.so_nfs4_owner.so_seqid += 1;
                       V(powner->so_mutex);
+                      LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                                   "OPEN incremented so_seqid to %u, powner = %p",
+                                   powner->so_owner.so_nfs4_owner.so_seqid,
+                                   powner);
 
                       res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                       res_OPEN4.status = NFS4ERR_ACCESS;
@@ -593,6 +601,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                               P(powner->so_mutex);
                               powner->so_owner.so_nfs4_owner.so_seqid += 1;
                               V(powner->so_mutex);
+                              LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                                           "OPEN incremented so_seqid to %u, powner = %p",
+                                           powner->so_owner.so_nfs4_owner.so_seqid,
+                                           powner);
 
                               res_OPEN4.status = NFS4ERR_INVAL;
                               return res_OPEN4.status;
@@ -760,6 +772,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
               P(powner->so_mutex);
               powner->so_owner.so_nfs4_owner.so_seqid += 1;
               V(powner->so_mutex);
+              LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                           "OPEN incremented so_seqid to %u, powner = %p",
+                           powner->so_owner.so_nfs4_owner.so_seqid,
+                           powner);
 
               res_OPEN4.status = NFS4ERR_SHARE_DENIED;
               return res_OPEN4.status;
@@ -806,6 +822,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
               P(powner->so_mutex);
               powner->so_owner.so_nfs4_owner.so_seqid += 1;
               V(powner->so_mutex);
+              LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                           "OPEN incremented so_seqid to %u, powner = %p",
+                           powner->so_owner.so_nfs4_owner.so_seqid,
+                           powner);
 
               res_OPEN4.status = NFS4ERR_ACCESS;
               return res_OPEN4.status;
@@ -980,8 +1000,16 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                           P(powner->so_mutex);
                           powner->so_owner.so_nfs4_owner.so_seqid += 1;
                           V(powner->so_mutex);
+                          LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                                       "OPEN incremented so_seqid to %u, powner = %p",
+                                       powner->so_owner.so_nfs4_owner.so_seqid,
+                                       powner);
 
                           powner->so_owner.so_nfs4_owner.so_seqid += 1;
+                          LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                                       "OPEN incremented so_seqid to %u, powner = %p (double increment?)",
+                                       powner->so_owner.so_nfs4_owner.so_seqid,
+                                       powner);
                           res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                           return res_OPEN4.status;
                         }
@@ -995,6 +1023,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                           P(powner->so_mutex);
                           powner->so_owner.so_nfs4_owner.so_seqid += 1;
                           V(powner->so_mutex);
+                          LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                                       "OPEN incremented so_seqid to %u, powner = %p",
+                                       powner->so_owner.so_nfs4_owner.so_seqid,
+                                       powner);
 
                           res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                           return res_OPEN4.status;
@@ -1012,6 +1044,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
             {
               pfile_state = pstate_found_same_owner;
               pfile_state->state_seqid += 1;
+              LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                           "OPEN incremented state_seqid to %u, pfile_state = %p",
+                           pfile_state->state_seqid,
+                           pfile_state);
             }
           else
             {
@@ -1035,6 +1071,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   P(powner->so_mutex);
                   powner->so_owner.so_nfs4_owner.so_seqid += 1;
                   V(powner->so_mutex);
+                  LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                               "OPEN incremented so_seqid to %u, powner = %p",
+                               powner->so_owner.so_nfs4_owner.so_seqid,
+                               powner);
 
                   res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                   return res_OPEN4.status;
@@ -1054,6 +1094,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
               P(powner->so_mutex);
               powner->so_owner.so_nfs4_owner.so_seqid += 1;
               V(powner->so_mutex);
+              LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                           "OPEN incremented so_seqid to %u, powner = %p",
+                           powner->so_owner.so_nfs4_owner.so_seqid,
+                           powner);
 
               res_OPEN4.status = NFS4ERR_ACCESS;
               return res_OPEN4.status;
@@ -1067,6 +1111,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
               P(powner->so_mutex);
               powner->so_owner.so_nfs4_owner.so_seqid += 1;
               V(powner->so_mutex);
+              LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                           "OPEN incremented so_seqid to %u, powner = %p",
+                           powner->so_owner.so_nfs4_owner.so_seqid,
+                           powner);
             }
 
           res_OPEN4.status = NFS4ERR_INVAL;
@@ -1086,6 +1134,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           P(powner->so_mutex);
           powner->so_owner.so_nfs4_owner.so_seqid += 1;
           V(powner->so_mutex);
+          LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                       "OPEN incremented so_seqid to %u, powner = %p",
+                       powner->so_owner.so_nfs4_owner.so_seqid,
+                       powner);
         }
 
       res_OPEN4.status = NFS4ERR_INVAL;

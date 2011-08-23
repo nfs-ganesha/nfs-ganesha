@@ -486,7 +486,7 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
 
   for(i = 0; i < hparam.index_size; i++)
     {
-      LogFullDebug(COMPONENT_HASHTABLE,
+      LogFullDebug(COMPONENT_MEMALLOC,
                    "HASH TABLE PREALLOC: Allocating %d new nodes",
                    hparam.nb_node_prealloc);
 
@@ -612,7 +612,7 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
       pdata = RBT_OPAQ(qn);
 
       LogFullDebug(COMPONENT_HASHTABLE,
-                   "Ecrasement d'une ancienne entree (k=%p,v=%p)",
+                   "Entry already exists (k=%p,v=%p)",
                    buffkey->pdata, buffval->pdata);
 
     }
@@ -652,7 +652,7 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
       RBT_INSERT(tete_rbt, qn, pn);
 
       LogFullDebug(COMPONENT_HASHTABLE,
-                   "Creation d'une nouvelle entree (k=%p,v=%p), qn=%p, pdata=%p",
+                   "Create new entry (k=%p,v=%p), qn=%p, pdata=%p",
                    buffkey->pdata, buffval->pdata, qn, RBT_OPAQ(qn));
     }
 

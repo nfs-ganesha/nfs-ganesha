@@ -180,6 +180,7 @@ state_status_t state_lock_init(state_status_t * pstatus);
 #endif
 
 void LogLock(log_components_t     component,
+             log_levels_t         debug,
              const char         * reason, 
              cache_entry_t      * pentry,
              fsal_op_context_t  * pcontext,
