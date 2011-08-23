@@ -311,7 +311,7 @@ unsigned int rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef
  *
  */
 static int Key_Locate(hash_table_t * ht, hash_buffer_t * buffkey, unsigned int hashval,
-                      int rbt_value, struct rbt_node **ppnode)
+                      unsigned int rbt_value, struct rbt_node **ppnode)
 {
   struct rbt_head *tete_rbt;
   hash_data_t *pdata = NULL;
@@ -320,7 +320,11 @@ static int Key_Locate(hash_table_t * ht, hash_buffer_t * buffkey, unsigned int h
 
   /* Sanity check */
   if(ht == NULL || buffkey == NULL || ppnode == NULL)
-    return HASHTABLE_ERROR_INVALID_ARGUMENT;
+    {
+      LogFullDebug(COMPONENT_HASHTABLE,
+                   "Returning HASHTABLE_ERROR_INVALID_ARGUMENT");
+      return HASHTABLE_ERROR_INVALID_ARGUMENT;
+    }
 
   /* Find the head of the rbt */
   tete_rbt = &(ht->array_rbt[hashval]);
@@ -330,7 +334,11 @@ static int Key_Locate(hash_table_t * ht, hash_buffer_t * buffkey, unsigned int h
 
   /* Find was successfull ? */
   if(pn == NULL)
-    return HASHTABLE_ERROR_NO_SUCH_KEY;
+    {
+      LogFullDebug(COMPONENT_HASHTABLE,
+                   "Returning HASHTABLE_ERROR_NO_SUCH_KEY because pn == NULL, rbtval = %u", rbt_value);
+      return HASHTABLE_ERROR_NO_SUCH_KEY;
+    }
 
   /* For each entry with this value, compare the key value */
   while((pn != 0) && (RBT_VALUE(pn) == rbt_value))
@@ -347,7 +355,11 @@ static int Key_Locate(hash_table_t * ht, hash_buffer_t * buffkey, unsigned int h
 
   /* We didn't find anything */
   if(!found)
-    return HASHTABLE_ERROR_NO_SUCH_KEY;
+    {
+      LogFullDebug(COMPONENT_HASHTABLE,
+                   "Returning HASHTABLE_ERROR_NO_SUCH_KEY because not found");
+      return HASHTABLE_ERROR_NO_SUCH_KEY;
+    }
 
   /* Key was found */
   *ppnode = pn;
@@ -574,7 +586,7 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
 
   tete_rbt = &(ht->array_rbt[hashval]);
   LogFullDebug(COMPONENT_HASHTABLE,
-               "Key = %p   Value = %p  hashval = %u  rbt_value = %x",
+               "Key = %p   Value = %p  hashval = %u  rbt_value = %u",
                buffkey->pdata, buffval->pdata, hashval, rbt_value);
 
   /* acquire mutex for protection */
