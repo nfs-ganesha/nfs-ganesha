@@ -133,3 +133,12 @@ void _9p_tools_fsal_attr2stat( fsal_attrib_list_t * pfsalattr, struct stat * pst
   pstat->st_ctime   = pfsalattr->ctime.seconds ;
 
 } /* _9p_tools_fsal_attr2stat */
+
+void _9p_tools_acess2fsal( u32 * paccessin, fsal_accessflags_t * pfsalaccess )
+{
+  memset( (char *)pfsalaccess, 0 , sizeof( fsal_accessflags_t ) ) ;
+
+  if( *paccessin & O_WRONLY ) *pfsalaccess |= FSAL_W_OK ;
+  if( *paccessin & O_RDONLY ) *pfsalaccess |= FSAL_R_OK ;
+  if( *paccessin & O_RDWR )   *pfsalaccess |= FSAL_R_OK|FSAL_W_OK ; 
+} /* _9p_tools_acess2fsal */

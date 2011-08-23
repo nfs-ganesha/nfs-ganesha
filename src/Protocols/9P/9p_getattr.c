@@ -116,19 +116,19 @@ int _9p_getattr( _9p_request_data_t * preq9p,
   
   valid = request_mask ; /* FSAL covers all 9P attributes */
 
-  mode       = (*request_mask && _9P_GETATTR_RDEV)?(u32 *)&pfid->attr.st_mode:&zero32 ;
-  uid        = (*request_mask && _9P_GETATTR_UID)?(u32 *)&pfid->attr.st_uid:&zero32 ;
-  gid        = (*request_mask && _9P_GETATTR_GID)?(u32 *)&pfid->attr.st_gid:&zero32 ;
-  nlink      = (*request_mask && _9P_GETATTR_NLINK)?(u64 *)&pfid->attr.st_nlink:&zero64 ;  
-  rdev       = (*request_mask && _9P_GETATTR_RDEV)?(u64 *)&pfid->attr.st_rdev:&zero64 ; 
-  size       = (*request_mask && _9P_GETATTR_SIZE)?(u64 *)&pfid->attr.st_size:&zero64 ; 
-  blksize    = (*request_mask && _9P_GETATTR_BLOCKS)?(u64 *)&pfid->attr.st_blksize:&zero64 ; 
-  blocks     = (*request_mask && _9P_GETATTR_BLOCKS)?(u64 *)&pfid->attr.st_blocks:&zero64 ; 
-  atime_sec  = (*request_mask && _9P_GETATTR_ATIME )?(u64 *)&pfid->attr.st_atime:&zero64 ;
+  mode       = (*request_mask & _9P_GETATTR_RDEV)?(u32 *)&pfid->attr.st_mode:&zero32 ;
+  uid        = (*request_mask & _9P_GETATTR_UID)?(u32 *)&pfid->attr.st_uid:&zero32 ;
+  gid        = (*request_mask & _9P_GETATTR_GID)?(u32 *)&pfid->attr.st_gid:&zero32 ;
+  nlink      = (*request_mask & _9P_GETATTR_NLINK)?(u64 *)&pfid->attr.st_nlink:&zero64 ;  
+  rdev       = (*request_mask & _9P_GETATTR_RDEV)?(u64 *)&pfid->attr.st_rdev:&zero64 ; 
+  size       = (*request_mask & _9P_GETATTR_SIZE)?(u64 *)&pfid->attr.st_size:&zero64 ; 
+  blksize    = (*request_mask & _9P_GETATTR_BLOCKS)?(u64 *)&pfid->attr.st_blksize:&zero64 ; 
+  blocks     = (*request_mask & _9P_GETATTR_BLOCKS)?(u64 *)&pfid->attr.st_blocks:&zero64 ; 
+  atime_sec  = (*request_mask & _9P_GETATTR_ATIME )?(u64 *)&pfid->attr.st_atime:&zero64 ;
   atime_nsec = &zero64 ;
-  mtime_sec  = (*request_mask && _9P_GETATTR_MTIME )?(u64 *)&pfid->attr.st_mtime:&zero64 ;
+  mtime_sec  = (*request_mask & _9P_GETATTR_MTIME )?(u64 *)&pfid->attr.st_mtime:&zero64 ;
   mtime_nsec = &zero64 ;
-  ctime_sec  = (*request_mask && _9P_GETATTR_CTIME )?(u64 *)&pfid->attr.st_ctime:&zero64 ;
+  ctime_sec  = (*request_mask & _9P_GETATTR_CTIME )?(u64 *)&pfid->attr.st_ctime:&zero64 ;
   ctime_nsec = &zero64 ;
 
   /* Not yet supported attributes */

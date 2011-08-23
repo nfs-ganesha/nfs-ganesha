@@ -60,10 +60,14 @@ int _9p_lopen( _9p_request_data_t * preq9p,
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
   int rc = 0 ;
   u32 err = 0 ;
+  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
 
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
   u32 * mode   = NULL ;
+
+  fsal_accessflags_t fsalaccess ;
+  cache_inode_status_t cache_status ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
@@ -83,6 +87,21 @@ int _9p_lopen( _9p_request_data_t * preq9p,
                                   &rc ) ) == NULL )
    {
      err = ENOENT ;
+     rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+     return rc ;
+   }
+
+  _9p_tools_acess2fsal( mode, &fsalaccess ) ;
+
+  /* Perform the 'access' call */
+  if(cache_inode_access( pfid->pentry,
+                         fsalaccess,
+                         pwkrdata->ht,
+                         &pwkrdata->cache_inode_client,
+                         &pfid->fsal_op_context, 
+                         &cache_status ) != CACHE_INODE_SUCCESS )
+   {
+     err = EPERM ;
      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
      return rc ;
    }
