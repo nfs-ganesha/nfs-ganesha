@@ -58,8 +58,8 @@
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
 
-fsal_status_t ZFSFSAL_rcp(zfsfsal_handle_t * filehandle,      /* IN */
-                       zfsfsal_op_context_t * p_context,   /* IN */
+fsal_status_t ZFSFSAL_rcp(fsal_handle_t * filehandle,      /* IN */
+                       fsal_op_context_t * p_context,   /* IN */
                        fsal_path_t * p_local_path,      /* IN */
                        fsal_rcpflag_t transfer_opt      /* IN */
     )
@@ -318,9 +318,9 @@ fsal_status_t ZFSFSAL_rcp(zfsfsal_handle_t * filehandle,      /* IN */
 
 }
 
-fsal_status_t ZFSFSAL_rcp_by_fileid(zfsfsal_handle_t * filehandle,    /* IN */
+fsal_status_t ZFSFSAL_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
                                  fsal_u64_t fileid,     /* IN */
-                                 zfsfsal_op_context_t * p_context, /* IN */
+                                 fsal_op_context_t * p_context, /* IN */
                                  fsal_path_t * p_local_path,    /* IN */
                                  fsal_rcpflag_t transfer_opt /* IN */ )
 {

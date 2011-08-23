@@ -49,14 +49,16 @@ extern time_t ServerBootTime;
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
-                           zfsfsal_op_context_t * p_context,       /* IN */
-                           zfsfsal_dir_t * dir_descriptor, /* OUT */
+fsal_status_t ZFSFSAL_opendir(fsal_handle_t * dir_hdl,  /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
+                           fsal_dir_t * dir_desc, /* OUT */
                            fsal_attrib_list_t * dir_attributes  /* [ IN/OUT ] */
     )
 {
   int rc;
   creden_t cred;
+  zfsfsal_handle_t * dir_handle = (zfsfsal_handle_t *)dir_hdl;
+  zfsfsal_dir_t * dir_descriptor = (zfsfsal_dir_t *)dir_desc;
 
   /* sanity checks
    * note : dir_attributes is optionnal.
@@ -140,18 +142,23 @@ fsal_status_t ZFSFSAL_opendir(zfsfsal_handle_t * dir_handle,  /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
-                           zfsfsal_cookie_t start_position,        /* IN */
+fsal_status_t ZFSFSAL_readdir(fsal_dir_t * dir_desc, /* IN */
+                           fsal_cookie_t start_pos,        /* IN */
                            fsal_attrib_mask_t get_attr_mask,    /* IN */
                            fsal_mdsize_t buffersize,    /* IN */
-                           fsal_dirent_t * p_dirent,     /* OUT */
-                           zfsfsal_cookie_t * end_position,        /* OUT */
+                           fsal_dirent_t * p_dirent,    /* OUT */
+                           fsal_cookie_t * end_pos,     /* OUT */
                            fsal_count_t * nb_entries,   /* OUT */
                            fsal_boolean_t * end_of_dir  /* OUT */
     )
 {
   int rc;
   fsal_count_t max_dir_entries = buffersize / sizeof(fsal_dirent_t);
+  zfsfsal_dir_t * dir_descriptor = (zfsfsal_dir_t *)dir_desc;
+  zfsfsal_cookie_t start_position;
+  zfsfsal_cookie_t * end_position = (zfsfsal_cookie_t *)end_pos;
+  zfsfsal_handle_t *entry_hdl;
+
   /* sanity checks */
 
   if(!dir_descriptor || !p_dirent || !end_position || !nb_entries || !end_of_dir)
@@ -171,19 +178,22 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
     fstat.st_atime = ServerBootTime;
     fstat.st_mtime = ServerBootTime;
 
+    start_position.data.cookie = (off_t)start_pos.data;
     ZFSFSAL_VFS_RDLock();
     for(i = 0; i < max_dir_entries && i < i_snapshots; i++)
     {
+      entry_hdl = (zfsfsal_handle_t *) &p_dirent[i].handle;
+
       libzfswrap_getroot(p_snapshots[i + start_position.data.cookie + 1].p_vfs,
-                         &p_dirent[i].handle.data.zfs_handle);
-      p_dirent[i].handle.data.i_snap = i + start_position.data.cookie + 1;
-      p_dirent[i].handle.data.type = FSAL_TYPE_DIR;
+                         &entry_hdl->data.zfs_handle);
+      entry_hdl->data.i_snap = i + start_position.data.cookie + 1;
+      entry_hdl->data.type = FSAL_TYPE_DIR;
       strncpy(p_dirent[i].name.name, p_snapshots[i + start_position.data.cookie + 1].psz_name,
               FSAL_MAX_NAME_LEN);
       p_dirent[i].name.len = strlen(p_snapshots[i + start_position.data.cookie + 1].psz_name);
 
       fstat.st_dev = i + start_position.data.cookie + 1;
-      fstat.st_ino = p_dirent[i].handle.data.zfs_handle.inode;
+      fstat.st_ino = entry_hdl->data.zfs_handle.inode;
       p_dirent[i].attributes.asked_attributes = get_attr_mask;
       posix2fsal_attributes(&fstat, &p_dirent[i].attributes);
 
@@ -233,6 +243,8 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
   int index = 0;
   while(index < max_dir_entries)
   {
+    entry_hdl = (zfsfsal_handle_t *) &p_dirent[*nb_entries].handle;
+
     /* If psz_filename is NULL, that's the end of the list */
     if(entries[index].psz_filename[0] == '\0')
       break;
@@ -244,9 +256,9 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
       continue;
     }
 
-    p_dirent[*nb_entries].handle.data.zfs_handle = entries[index].object;
-    p_dirent[*nb_entries].handle.data.type = posix2fsal_type(entries[index].type);
-    p_dirent[*nb_entries].handle.data.i_snap = dir_descriptor->handle.data.i_snap;
+    entry_hdl->data.zfs_handle = entries[index].object;
+    entry_hdl->data.type = posix2fsal_type(entries[index].type);
+    entry_hdl->data.i_snap = dir_descriptor->handle.data.i_snap;
     entries[index].stats.st_dev = dir_descriptor->handle.data.i_snap;
     FSAL_str2name(entries[index].psz_filename, FSAL_MAX_NAME_LEN, &(p_dirent[*nb_entries].name));
 
@@ -291,11 +303,12 @@ fsal_status_t ZFSFSAL_readdir(zfsfsal_dir_t * dir_descriptor, /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t ZFSFSAL_closedir(zfsfsal_dir_t * dir_descriptor /* IN */
+fsal_status_t ZFSFSAL_closedir(fsal_dir_t * dir_desc /* IN */
     )
 {
 
   int rc;
+  zfsfsal_dir_t * dir_descriptor = (zfsfsal_dir_t *)dir_desc;
 
   /* sanity checks */
   if(!dir_descriptor)

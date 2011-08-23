@@ -48,9 +48,9 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t ZFSFSAL_unlink(zfsfsal_handle_t * parentdir_handle,     /* IN */
+fsal_status_t ZFSFSAL_unlink(fsal_handle_t * parentdir_handle,     /* IN */
                           fsal_name_t * p_object_name,  /* IN */
-                          zfsfsal_op_context_t * p_context,        /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
                           fsal_attrib_list_t * parentdir_attributes     /* [IN/OUT ] */
     )
 {
@@ -69,7 +69,7 @@ fsal_status_t ZFSFSAL_unlink(zfsfsal_handle_t * parentdir_handle,     /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_unlink);
 
   /* Hook to prevent removing anything from snapshots */
-  if(parentdir_handle->data.i_snap != 0)
+  if(((zfsfsal_handle_t *)parentdir_handle)->data.i_snap != 0)
   {
     LogDebug(COMPONENT_FSAL, "Trying to remove an object from a snapshot");
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_unlink);
@@ -80,16 +80,16 @@ fsal_status_t ZFSFSAL_unlink(zfsfsal_handle_t * parentdir_handle,     /* IN */
 
   TakeTokenFSCall();
 
-  if(!(rc = libzfswrap_lookup(p_context->export_context->p_vfs, &cred,
-                              parentdir_handle->data.zfs_handle,
+  if(!(rc = libzfswrap_lookup(((zfsfsal_op_context_t *)p_context)->export_context->p_vfs, &cred,
+                              ((zfsfsal_handle_t *)parentdir_handle)->data.zfs_handle,
 			      p_object_name->name, &object, &type)))
   {
     if(type == S_IFDIR)
-      rc = libzfswrap_rmdir(p_context->export_context->p_vfs, &cred,
-                            parentdir_handle->data.zfs_handle, p_object_name->name);
+      rc = libzfswrap_rmdir(((zfsfsal_op_context_t *)p_context)->export_context->p_vfs, &cred,
+			    ((zfsfsal_handle_t *)parentdir_handle)->data.zfs_handle, p_object_name->name);
     else
-      rc = libzfswrap_unlink(p_context->export_context->p_vfs, &cred,
-                             parentdir_handle->data.zfs_handle, p_object_name->name);
+      rc = libzfswrap_unlink(((zfsfsal_op_context_t *)p_context)->export_context->p_vfs, &cred,
+			     ((zfsfsal_handle_t *)parentdir_handle)->data.zfs_handle, p_object_name->name);
   }
 
   ReleaseTokenFSCall();

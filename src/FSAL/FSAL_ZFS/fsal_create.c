@@ -56,17 +56,20 @@
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t ZFSFSAL_create(zfsfsal_handle_t * parent_directory_handle,      /* IN */
+fsal_status_t ZFSFSAL_create(fsal_handle_t * parent_hdl,      /* IN */
                              fsal_name_t * p_filename,     /* IN */
-                             zfsfsal_op_context_t * p_context,        /* IN */
+                             fsal_op_context_t *context,        /* IN */
                              fsal_accessmode_t accessmode, /* IN */
-                             zfsfsal_handle_t * object_handle,        /* OUT */
+                             fsal_handle_t * obj_handle,        /* OUT */
                              fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
 
   int rc;
   creden_t cred;
+  zfsfsal_handle_t * parent_directory_handle = (zfsfsal_handle_t *)parent_hdl;
+  zfsfsal_op_context_t * p_context = (zfsfsal_op_context_t * )context;
+  zfsfsal_handle_t * object_handle = (zfsfsal_handle_t *)obj_handle;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -103,7 +106,7 @@ fsal_status_t ZFSFSAL_create(zfsfsal_handle_t * parent_directory_handle,      /*
 
   if(object_attributes)
     {
-      fsal_status_t status = ZFSFSAL_getattrs(object_handle, p_context, object_attributes);
+      fsal_status_t status = ZFSFSAL_getattrs(obj_handle, context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -155,11 +158,11 @@ fsal_status_t ZFSFSAL_create(zfsfsal_handle_t * parent_directory_handle,      /*
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t ZFSFSAL_mkdir(zfsfsal_handle_t * parent_directory_handle,       /* IN */
+fsal_status_t ZFSFSAL_mkdir(fsal_handle_t * parent_hdl,       /* IN */
                             fsal_name_t * p_dirname,       /* IN */
-                            zfsfsal_op_context_t * p_context, /* IN */
+                            fsal_op_context_t *context, /* IN */
                             fsal_accessmode_t accessmode,  /* IN */
-                            zfsfsal_handle_t * object_handle, /* OUT */
+                            fsal_handle_t * obj_handle, /* OUT */
                             fsal_attrib_list_t * object_attributes /* [ IN/OUT ] */
     )
 {
@@ -167,6 +170,9 @@ fsal_status_t ZFSFSAL_mkdir(zfsfsal_handle_t * parent_directory_handle,       /*
   int rc;
   mode_t unix_mode;
   creden_t cred;
+  zfsfsal_handle_t * parent_directory_handle = (zfsfsal_handle_t *)parent_hdl;
+  zfsfsal_op_context_t * p_context = (zfsfsal_op_context_t *)context;
+  zfsfsal_handle_t * object_handle = (zfsfsal_handle_t *)obj_handle;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -211,7 +217,7 @@ fsal_status_t ZFSFSAL_mkdir(zfsfsal_handle_t * parent_directory_handle,       /*
   if(object_attributes)
     {
       /**@TODO: skip this => libzfswrap_mkdir might return attributes */
-      fsal_status_t status = ZFSFSAL_getattrs(object_handle, p_context, object_attributes);
+      fsal_status_t status = ZFSFSAL_getattrs(obj_handle, context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -264,16 +270,19 @@ fsal_status_t ZFSFSAL_mkdir(zfsfsal_handle_t * parent_directory_handle,       /*
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the attributes->asked_attributes field.
  */
-fsal_status_t ZFSFSAL_link(zfsfsal_handle_t * target_handle,  /* IN */
-                           zfsfsal_handle_t * dir_handle,     /* IN */
+fsal_status_t ZFSFSAL_link(fsal_handle_t * target_hdl,  /* IN */
+                           fsal_handle_t * dir_hdl,     /* IN */
                            fsal_name_t * p_link_name,      /* IN */
-                           zfsfsal_op_context_t * p_context,  /* IN */
+                           fsal_op_context_t * context,  /* IN */
                            fsal_attrib_list_t * attributes /* [ IN/OUT ] */
     )
 {
 
   int rc;
   creden_t cred;
+  zfsfsal_handle_t * target_handle = (zfsfsal_handle_t *)target_hdl;
+  zfsfsal_handle_t * dir_handle = (zfsfsal_handle_t *)dir_hdl;
+  zfsfsal_op_context_t * p_context = (zfsfsal_op_context_t *)context;
 
   /* sanity checks.
    * note : attributes is optional.
@@ -307,7 +316,7 @@ fsal_status_t ZFSFSAL_link(zfsfsal_handle_t * target_handle,  /* IN */
 
   if(attributes)
     {
-      fsal_status_t status = ZFSFSAL_getattrs(target_handle, p_context, attributes);
+      fsal_status_t status = ZFSFSAL_getattrs(target_hdl, context, attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -330,13 +339,13 @@ fsal_status_t ZFSFSAL_link(zfsfsal_handle_t * target_handle,  /* IN */
  *
  * \return ERR_FSAL_NOTSUPP.
  */
-fsal_status_t ZFSFSAL_mknode(zfsfsal_handle_t * parentdir_handle,     /* IN */
+fsal_status_t ZFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
                           fsal_name_t * p_node_name,    /* IN */
-                          zfsfsal_op_context_t * p_context,        /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
                           fsal_accessmode_t accessmode, /* IN */
                           fsal_nodetype_t nodetype,     /* IN */
                           fsal_dev_t * dev,     /* IN */
-                          zfsfsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
+                          fsal_handle_t * p_object_handle, /* OUT (handle to the created node) */
                           fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */
     )
 {

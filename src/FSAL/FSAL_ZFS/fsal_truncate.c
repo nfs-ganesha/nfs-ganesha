@@ -46,10 +46,10 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t ZFSFSAL_truncate(zfsfsal_handle_t * filehandle, /* IN */
-                            zfsfsal_op_context_t * p_context,      /* IN */
+fsal_status_t ZFSFSAL_truncate(fsal_handle_t * filehandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
                             fsal_size_t length, /* IN */
-                            zfsfsal_file_t * file_descriptor,      /* Unused in this FSAL */
+                            fsal_file_t * file_descriptor,      /* Unused in this FSAL */
                             fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
 {
@@ -63,11 +63,11 @@ fsal_status_t ZFSFSAL_truncate(zfsfsal_handle_t * filehandle, /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
   /* >> check object type if it's stored into the filehandle << */
-  if(filehandle->data.type != FSAL_TYPE_FILE)
+  if(((zfsfsal_handle_t *)filehandle)->data.type != FSAL_TYPE_FILE)
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_truncate);
 
   /* Hook to prevent any modification in a snapshot */
-  if(filehandle->data.i_snap != 0)
+  if(((zfsfsal_handle_t *)filehandle)->data.i_snap != 0)
   {
     LogDebug(COMPONENT_FSAL, "Trying to truncate a file inside a snapshot");
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_truncate);
@@ -78,8 +78,9 @@ fsal_status_t ZFSFSAL_truncate(zfsfsal_handle_t * filehandle, /* IN */
 
   TakeTokenFSCall();
 
-  rc = libzfswrap_truncate(p_context->export_context->p_vfs, &cred,
-                           filehandle->data.zfs_handle, length);
+  rc = libzfswrap_truncate(((zfsfsal_op_context_t *)p_context)->export_context->p_vfs,
+			   &cred,
+                           ((zfsfsal_handle_t *)filehandle)->data.zfs_handle, length);
 
   ReleaseTokenFSCall();
 

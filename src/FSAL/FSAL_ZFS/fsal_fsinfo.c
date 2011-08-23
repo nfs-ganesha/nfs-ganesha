@@ -38,8 +38,8 @@
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t ZFSFSAL_static_fsinfo(zfsfsal_handle_t * filehandle,    /* IN */
-                                 zfsfsal_op_context_t * p_context, /* IN */
+fsal_status_t ZFSFSAL_static_fsinfo(fsal_handle_t * filehandle,    /* IN */
+                                 fsal_op_context_t * p_context, /* IN */
                                  fsal_staticfsinfo_t * staticinfo       /* OUT */
     )
 {
@@ -74,8 +74,8 @@ fsal_status_t ZFSFSAL_static_fsinfo(zfsfsal_handle_t * filehandle,    /* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t ZFSFSAL_dynamic_fsinfo(zfsfsal_handle_t * filehandle,   /* IN */
-                                  zfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t ZFSFSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
+                                  fsal_op_context_t * p_context,        /* IN */
                                   fsal_dynamicfsinfo_t * dynamicinfo    /* OUT */
     )
 {
@@ -87,7 +87,8 @@ fsal_status_t ZFSFSAL_dynamic_fsinfo(zfsfsal_handle_t * filehandle,   /* IN */
   TakeTokenFSCall();
 
   struct statvfs statfs;
-  int rc = libzfswrap_statfs(p_context->export_context->p_vfs, &statfs);
+  int rc = libzfswrap_statfs(((zfsfsal_op_context_t *)p_context)->export_context->p_vfs,
+			     &statfs);
 
   ReleaseTokenFSCall();
 
