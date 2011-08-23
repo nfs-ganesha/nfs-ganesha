@@ -57,7 +57,7 @@ unsigned long int _9p_hash_fid_key_value_hash_func(hash_parameter_t * p_hparam,
 {
   _9p_hash_fid_key_t * p9pkey = (_9p_hash_fid_key_t *)buffclef->pdata;
 
-  return (unsigned long int)( (p9pkey->sockfd+1 + p9pkey->fid+1) % p_hparam->index_size ) ;
+  return (unsigned long int)( (p9pkey->sockfd+1 + p9pkey->fid+1 + p9pkey->birth.tv_sec + p9pkey->birth.tv_usec) % p_hparam->index_size ) ;
 } /* _9p_hash_fid_key_value_hash_func */
 
 
@@ -75,13 +75,19 @@ int _9p_compare_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
   _9p_hash_fid_key_t * p9pkey1 = (_9p_hash_fid_key_t *)buff1->pdata;
   _9p_hash_fid_key_t * p9pkey2 = (_9p_hash_fid_key_t *)buff2->pdata;
 
-  if( p9pkey1 == NULL || p9pkey2 == NULL)
+  if( p9pkey1 == NULL || p9pkey2 == NULL )
     return 1;
 
-  if( p9pkey1->sockfd != p9pkey2->sockfd)
+  if( p9pkey1->sockfd != p9pkey2->sockfd )
     return 1;
 
-  if( p9pkey1->fid != p9pkey2->fid)
+  if( p9pkey1->fid != p9pkey2->fid )
+    return 1;
+
+  if( p9pkey1->birth.tv_sec != p9pkey2->birth.tv_sec )
+    return 1;
+
+  if( p9pkey1->birth.tv_usec != p9pkey2->birth.tv_usec )
     return 1;
 
   /* Keys are the same */
@@ -161,7 +167,7 @@ int _9p_hash_fid_update( _9p_conn_t * pconn,
   if( ( rc = HashTable_Test_And_Set( ht_fid, 
                                      &buffkey, 
                                      &buffdata, 
-                                     HASHTABLE_SET_HOW_SET_OVERWRITE ) ) != HASHTABLE_SUCCESS )
+                                     HASHTABLE_SET_HOW_SET_NO_OVERWRITE ) ) != HASHTABLE_SUCCESS )
     return -rc ;
 
   return 0 ;

@@ -145,8 +145,9 @@ int _9p_attach( _9p_request_data_t * preq9p,
       return rc ;
     }
 
-  /* Set pexport in fid */
+  /* Set pexport and fid id in fid */
   pfid->pexport = pexport ;
+  pfid->fid = *fid ;
  
 #ifdef _USE_SHARED_FSAL
   /* At this step, the export entry is known and it's required to use the right fsalid */

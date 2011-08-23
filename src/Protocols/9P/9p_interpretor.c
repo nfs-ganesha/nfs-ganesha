@@ -108,7 +108,7 @@ const _9p_function_desc_t _9pfuncdesc[] = {
         { _9p_dummy, "_9P_TAUTH" },
         { _9p_attach, "_9P_TATTACH" },
         { _9p_dummy, "_9P_TFLUSH" },
-        { _9p_dummy, "_9P_TWALK" },
+        { _9p_walk, "_9P_TWALK" },
         { _9p_dummy, "_9P_TOPEN" },
         { _9p_dummy, "_9P_TCREATE" },
         { _9p_dummy, "_9P_TREAD" },
