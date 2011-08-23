@@ -166,6 +166,12 @@ state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
 
 int Init_nfs4_owner(nfs4_owner_parameter_t param);
 
+void Process_nfs4_conflict(LOCK4denied       * denied,    /* NFS v4 LOck4denied structure to fill in */
+                           state_owner_t     * holder,    /* owner that holds conflicting lock */
+                           state_lock_desc_t * conflict); /* description of conflicting lock */
+
+void Release_nfs4_denied(LOCK4denied * denied);
+
 /******************************************************************************
  *
  * Lock functions

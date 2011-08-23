@@ -400,3 +400,52 @@ state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
 
   return powner;
 }
+
+void Process_nfs4_conflict(LOCK4denied       * denied,    /* NFS v4 LOck4denied structure to fill in */
+                           state_owner_t     * holder,    /* owner that holds conflicting lock */
+                           state_lock_desc_t * conflict)  /* description of conflicting lock */
+{
+  /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
+  denied->offset = conflict->sld_offset;
+  denied->length = conflict->sld_length;
+
+  if(conflict->sld_type == STATE_LOCK_R)
+    denied->locktype = READ_LT;
+  else
+    denied->locktype = WRITE_LT;
+
+  if(holder != NULL && holder->so_owner_len != 0)
+    denied->owner.owner.owner_val = Mem_Alloc(holder->so_owner_len);
+  else
+    denied->owner.owner.owner_val = NULL;
+
+  if(denied->owner.owner.owner_val != NULL)
+    {
+      denied->owner.owner.owner_len = holder->so_owner_len;
+
+      memcpy(denied->owner.owner.owner_val,
+             holder->so_owner_val,
+             holder->so_owner_len);
+    }
+  else
+    {
+      denied->owner.owner.owner_len = unknown_owner.so_owner_len;
+      denied->owner.owner.owner_val = unknown_owner.so_owner_val;
+    }
+
+  if(holder->so_type == STATE_LOCK_OWNER_NFSV4)
+    denied->owner.clientid = holder->so_owner.so_nfs4_owner.so_clientid;
+  else
+    denied->owner.clientid = 0;
+
+  /* Release any lock owner reference passed back from SAL */
+  if(holder != NULL)
+    state_release_lock_owner(holder);
+}
+
+void Release_nfs4_denied(LOCK4denied * denied)
+{
+  if(denied->owner.owner.owner_val != unknown_owner.so_owner_val &&
+     denied->owner.owner.owner_val != NULL)
+    Mem_Free(denied->owner.owner.owner_val);
+}

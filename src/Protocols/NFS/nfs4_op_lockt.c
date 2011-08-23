@@ -239,26 +239,9 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       if(state_status == STATE_LOCK_CONFLICT)
         {
           /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
-          res_LOCKT4.LOCKT4res_u.denied.offset = conflict_desc.sld_offset;
-          res_LOCKT4.LOCKT4res_u.denied.length = conflict_desc.sld_length;
-
-          if(conflict_desc.sld_type == STATE_LOCK_R)
-            res_LOCKT4.LOCKT4res_u.denied.locktype = READ_LT;
-          else
-            res_LOCKT4.LOCKT4res_u.denied.locktype = WRITE_LT;
-
-          res_LOCKT4.LOCKT4res_u.denied.owner.owner.owner_len =
-            conflict_owner->so_owner_len;
-
-          memcpy(res_LOCKT4.LOCKT4res_u.denied.owner.owner.owner_val,
-                 conflict_owner->so_owner_val,
-                 conflict_owner->so_owner_len);
-
-          if(conflict_owner->so_type == STATE_LOCK_OWNER_NFSV4)
-            res_LOCKT4.LOCKT4res_u.denied.owner.clientid =
-              conflict_owner->so_owner.so_nfs4_owner.so_clientid;
-          else
-            res_LOCKT4.LOCKT4res_u.denied.owner.clientid = 0;
+          Process_nfs4_conflict(&res_LOCKT4.LOCKT4res_u.denied,
+                                conflict_owner,
+                                &conflict_desc);
         }
 
       res_LOCKT4.status = nfs4_Errno_state(state_status);
@@ -284,6 +267,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
  */
 void nfs4_op_lockt_Free(LOCKT4res * resp)
 {
-  /* Nothing to Mem_Free */
+  if(resp->status == NFS4ERR_DENIED)
+    Release_nfs4_denied(&resp->LOCKT4res_u.denied);
   return;
 }                               /* nfs4_op_lockt_Free */

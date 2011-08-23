@@ -454,7 +454,7 @@ void nlm_process_conflict(nlm4_holder       * nlm_holder,
                   unknown_owner.so_owner_len);
     }
 
-  /* Release any lock owner reference passed back from cache inode */
+  /* Release any lock owner reference passed back from SAL */
   if(holder != NULL)
     state_release_lock_owner(holder);
 }
