@@ -119,8 +119,8 @@ int _9p_lopen( _9p_request_data_t * preq9p,
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  LogDebug( COMPONENT_9P, "RLOPEN: tag=%u",
-            (u32)*msgtag  ) ;
+  LogDebug( COMPONENT_9P, "RLOPEN: tag=%u fid=%u qid=(type=%u,version=%u,path=%llu) iounit=%u", 
+            *msgtag, *fid, (u32)pfid->qid.type, pfid->qid.version, (unsigned long long)pfid->qid.path, pfid->specdata.iounit ) ;
 
   return 1 ;
 }

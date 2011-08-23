@@ -476,6 +476,11 @@ int _9p_lopen( _9p_request_data_t * preq9p,
                u32 * plenout, 
                char * preply) ;
 
+int _9p_readdir( _9p_request_data_t * preq9p, 
+                 void * pworker_data,
+                 u32 * plenout, 
+                 char * preply) ;
+
 int _9p_version( _9p_request_data_t * preq9p, 
                  void * pworker_data,
                  u32 * plenout,
