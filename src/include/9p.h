@@ -28,6 +28,9 @@
 
 #ifndef _9P_H
 #define _9P_H
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <sys/select.h>
 #include "fsal.h"
 #include "cache_inode.h"
@@ -289,9 +292,13 @@ typedef struct _9p_fid__
   u32                  fid ;
   fsal_op_context_t    fsal_op_context ;
   exportlist_t       * pexport ;
-  fsal_attrib_list_t   attr ; 
+  struct stat          attr ; 
   cache_entry_t      * pentry ;
   _9p_qid_t            qid ;
+  union 
+    { 
+       u32 iounit ;
+    } specdata ;
 } _9p_fid_t ;
 
 typedef struct _9p_request_data__
@@ -311,61 +318,75 @@ typedef struct _9p_function_desc__
 } _9p_function_desc_t;
 
 
-#define _9p_getptr( cursor, pvar, type ) \
-do                                       \
-{                                        \
-  pvar=(type *)cursor ;                  \
-  cursor += sizeof( type ) ;             \
+#define _9p_getptr( __cursor, __pvar, __type ) \
+do                                             \
+{                                              \
+  __pvar=(__type *)__cursor ;                  \
+  __cursor += sizeof( __type ) ;               \
 } while( 0 ) 
 
-#define _9p_getstr( cursor, len, str ) \
-do                                     \
-{                                      \
-  len = (u16 *)cursor ;                \
-  cursor += sizeof( u16 ) ;            \
-  str = cursor ;                       \
-  cursor += *len ;                     \
-} while( 0 )                           
-
-#define _9p_setptr( cursor, pvar, type ) \
-do                                       \
-{                                        \
-  *((type *)cursor) = *pvar ;            \
-  cursor += sizeof( type ) ;             \
-} while( 0 ) 
-
-/* Insert a non-null terminated string */
-#define _9p_setstr( cursor, len, str ) \
-do                                     \
-{                                      \
-  *((u16 *)cursor) = len ;            \
-  cursor += sizeof( u16 ) ;            \
-  memcpy( cursor, str, len ) ;        \
-  cursor += len ;                     \
-} while( 0 )
-
-#define _9p_setinitptr( cursor, start, reqtype ) \
-do                                               \
-{                                                \
-  cursor = start + _9P_HDR_SIZE;                 \
-  *((u8 *)cursor) = reqtype ;                    \
-  cursor += sizeof( u8 ) ;                       \
-} while( 0 ) 
-
-#define _9p_setendptr( cursor, start )       \
+#define _9p_getstr( __cursor, __len, __str ) \
 do                                           \
 {                                            \
-  *((u32 *)start) =  (u32)(cursor - start) ; \
+  __len = (u16 *)__cursor ;                  \
+  __cursor += sizeof( u16 ) ;                \
+  __str = __cursor ;                         \
+  __cursor += *__len ;                       \
+} while( 0 )                           
+
+#define _9p_setptr( __cursor, __pvar, __type ) \
+do                                             \
+{                                              \
+  *((__type *)__cursor) = *__pvar ;              \
+  __cursor += sizeof( __type ) ;               \
 } while( 0 ) 
 
-#define _9p_checkbound( cursor, start, maxlen ) \
-do                                              \
-{                                               \
-if( (u32)( cursor - start ) > *maxlen )         \
-  return -1 ;                                   \
-else                                            \
-   *maxlen = (u32)( cursor - start )  ;         \
+/* Insert a qid */
+#define _9p_setqid( __cursor, __qid )  \
+do                                     \
+{                                      \
+  *((u8 *)__cursor) = __qid.type ;     \
+  __cursor += sizeof( u8 ) ;           \
+  *((u32 *)__cursor) = __qid.version ; \
+  __cursor += sizeof( u32 ) ;          \
+  *((u64 *)__cursor) = __qid.path ;    \
+  __cursor += sizeof( u64 ) ;          \
 } while( 0 ) 
+
+
+/* Insert a non-null terminated string */
+#define _9p_setstr( __cursor, __len, __str ) \
+do                                           \
+{                                            \
+  *((u16 *)__cursor) = __len ;               \
+  __cursor += sizeof( u16 ) ;                \
+  memcpy( __cursor, __str, __len ) ;         \
+  __cursor += __len ;                        \
+} while( 0 )
+
+#define _9p_setinitptr( __cursor, __start, __reqtype ) \
+do                                                     \
+{                                                      \
+  __cursor = __start + _9P_HDR_SIZE;                   \
+  *((u8 *)__cursor) = __reqtype ;                      \
+  __cursor += sizeof( u8 ) ;                           \
+} while( 0 ) 
+
+#define _9p_setendptr( __cursor, __start )         \
+do                                                 \
+{                                                  \
+  *((u32 *)__start) =  (u32)(__cursor - __start) ; \
+} while( 0 ) 
+
+#define _9p_checkbound( __cursor, __start, __maxlen ) \
+do                                                    \
+{                                                     \
+if( (u32)( __cursor - __start ) > *__maxlen )         \
+  return -1 ;                                         \
+else                                                  \
+   *__maxlen = (u32)( __cursor - __start )  ;         \
+} while( 0 ) 
+
 /* Bit values for getattr valid field.
  */
 #define _9P_GETATTR_MODE	0x00000001ULL
@@ -426,6 +447,7 @@ int _9p_test_fid( _9p_conn_t * pconn,
 int _9p_tools_get_fsal_op_context_by_uid( u32 uid, _9p_fid_t * pfid ) ;
 int _9p_tools_get_fsal_op_context_by_name( int uname_len, char * uname_str, _9p_fid_t * pfid ) ;
 int _9p_tools_errno( cache_inode_status_t cache_status ) ;
+void _9p_tools_fsal_attr2stat( fsal_attrib_list_t * pfsalattr, struct stat * pstat ) ;
 
 /* Protocol functions */
 int _9p_dummy( _9p_request_data_t * preq9p, 

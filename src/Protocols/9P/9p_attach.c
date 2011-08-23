@@ -68,6 +68,8 @@ int _9p_attach( _9p_request_data_t * preq9p,
   char * aname_str = NULL ;
   u32 * n_aname = NULL ;
 
+  fsal_attrib_list_t fsalattr ;
+
   int rc = 0 ;
   u32 err = 0 ;
  
@@ -194,7 +196,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
   fsdata.cookie = 0;
 
   pfid->pentry = cache_inode_get( &fsdata,
-                                  &pfid->attr,
+                                  &fsalattr, 
                                   pwkrdata->ht,
                                   &pwkrdata->cache_inode_client,
                                   &pfid->fsal_op_context, 
@@ -215,8 +217,10 @@ int _9p_attach( _9p_request_data_t * preq9p,
   /* Compute the qid */
   pfid->qid.type = _9P_QTDIR ;
   pfid->qid.version = 0 ; /* No cache, we want the client to stay synchronous with the server */
-  pfid->qid.path = pfid->attr.fileid ;
+  pfid->qid.path = fsalattr.fileid ;
 
+  /* Cache the attr */
+  _9p_tools_fsal_attr2stat( &fsalattr, &pfid->attr ) ;
 
   /* Had the new fid to the hash */
   if( ( err = _9p_hash_fid_update( preq9p->pconn, pfid ) ) != 0 )
@@ -234,9 +238,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
   _9p_setinitptr( cursor, preply, _9P_RATTACH ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
 
-  _9p_setptr( cursor, &pfid->qid.type,      u8 ) ;
-  _9p_setptr( cursor, &pfid->qid.version,  u32 ) ;
-  _9p_setptr( cursor, &pfid->qid.path,     u64 ) ;
+  _9p_setqid( cursor, pfid->qid ) ;
 
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;

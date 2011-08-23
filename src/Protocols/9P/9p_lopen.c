@@ -58,24 +58,45 @@ int _9p_lopen( _9p_request_data_t * preq9p,
                   char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  //nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
+  int rc = 0 ;
+  u32 err = 0 ;
 
   u16 * msgtag = NULL ;
+  u32 * fid    = NULL ;
+  u32 * mode   = NULL ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
 
+  _9p_fid_t * pfid = NULL ;
+
   /* Get data */
   _9p_getptr( cursor, msgtag, u16 ) ; 
+  _9p_getptr( cursor, fid,    u32 ) ; 
+  _9p_getptr( cursor, mode,   u32 ) ; 
   
-  LogDebug( COMPONENT_9P, "TLOPEN: tag=%u",
-            (u32)*msgtag  ) ;
+  LogDebug( COMPONENT_9P, "TLOPEN: tag=%u fid=%u mode=0x%x",
+            (u32)*msgtag, *fid, *mode  ) ;
+
+   if( ( pfid = _9p_hash_fid_get( preq9p->pconn, 
+                                  *fid,
+                                  &rc ) ) == NULL )
+   {
+     err = ENOENT ;
+     rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+     return rc ;
+   }
+
+   /* iounit = 0 by default */
+   pfid->specdata.iounit = 0 ;
 
    /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RLOPEN ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
 
-  
+  _9p_setqid( cursor, pfid->qid ) ;
+  _9p_setptr( cursor, &pfid->specdata.iounit, u32 ) ; 
+   
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 

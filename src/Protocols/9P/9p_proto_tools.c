@@ -98,45 +98,38 @@ int _9p_tools_get_fsal_op_context_by_name( int uname_len, char * uname_str, _9p_
   return _9p_tools_get_fsal_op_context_by_uid( uid, pfid ) ; 
 } /* _9p_tools_get_fsal_cred */
 
-int PPP_9p_tools_get_fsal_op_context( int uname_len, char * uname_str, _9p_fid_t * pfid ) 
-{
-  char name[1024] ;
-  char buff[1024];
-  struct passwd p;
-  struct passwd *pp;
-  uid_t uid ;
-  gid_t gid ;
-  fsal_status_t fsal_status ;
-
-  strncpy( name, uname_str, uname_len) ;
-
-  if(name2uid(name, &uid) )
-    {
-      LogFullDebug(COMPONENT_IDMAPPER, "uidmap_get mapped %s to uid= %d",
-                   name, uid);
-    }
-  else
-    return -ENOENT ;
-
-  if((getpwuid_r( uid, &p, buff, MAXPATHLEN, &pp) != 0) || (pp == NULL))
-    {
-      LogFullDebug(COMPONENT_IDMAPPER, "getpwuid_r %d failed", uid ) ;
-      return -ENOENT;
-    }
-  else
-   gid = p.pw_gid ;
-  
-
-  fsal_status = FSAL_GetClientContext( &pfid->fsal_op_context,
-                                       &pfid->pexport->FS_export_context,
-                                       uid, gid, NULL, 0 ) ;
-  if( FSAL_IS_ERROR( fsal_status ) )
-   return -fsal_status.major ; 
-
-  return 0 ;
-} /* _9p_tools_get_fsal_cred */
 
 int _9p_tools_errno( cache_inode_status_t cache_status )
 {
   return (int)cache_status ; /** @todo put a more sophisticated stuff here */
 } /* _9p_tools_errno */
+
+void _9p_tools_fsal_attr2stat( fsal_attrib_list_t * pfsalattr, struct stat * pstat )
+{
+  /* zero output structure */
+  memset( (char *)pstat, 0, sizeof( struct stat ) ) ;
+
+  pstat->st_dev   = 0 ; /* Omitted in 9P */
+  pstat->st_ino   = pfsalattr->fileid ;
+
+  pstat->st_mode  = pfsalattr->mode ;
+  if( pfsalattr->type == FSAL_TYPE_DIR ) pstat->st_mode  |= __S_IFDIR  ;
+  if( pfsalattr->type == FSAL_TYPE_FILE ) pstat->st_mode |= __S_IFREG  ;
+  if( pfsalattr->type == FSAL_TYPE_LNK ) pstat->st_mode  |= __S_IFLNK  ;
+  if( pfsalattr->type == FSAL_TYPE_SOCK ) pstat->st_mode |= __S_IFSOCK ;
+  if( pfsalattr->type == FSAL_TYPE_BLK ) pstat->st_mode  |= __S_IFBLK  ;
+  if( pfsalattr->type == FSAL_TYPE_CHR ) pstat->st_mode  |= __S_IFCHR  ;
+  if( pfsalattr->type == FSAL_TYPE_FIFO ) pstat->st_mode |= __S_IFIFO  ;
+
+  pstat->st_nlink   = (u32)pfsalattr->numlinks ;
+  pstat->st_uid     = pfsalattr->owner ;
+  pstat->st_gid     = pfsalattr->group ;
+  pstat->st_rdev    = pfsalattr->rawdev.major ;
+  pstat->st_size    = pfsalattr->filesize ;
+  pstat->st_blksize = 4096 ;
+  pstat->st_blocks  = (pfsalattr->filesize/4096) + 1 ; 
+  pstat->st_atime   = pfsalattr->atime.seconds ;
+  pstat->st_mtime   = pfsalattr->mtime.seconds ;
+  pstat->st_ctime   = pfsalattr->ctime.seconds ;
+
+} /* _9p_tools_fsal_attr2stat */
