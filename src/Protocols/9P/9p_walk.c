@@ -90,11 +90,15 @@ int _9p_walk( _9p_request_data_t * preq9p,
   _9p_getptr( cursor, newfid, u32 ) ; 
   _9p_getptr( cursor, nwname, u16 ) ; 
 
-  for( i = 0 ; i < *nwname ; i++ )
-    _9p_getstr( cursor, wnames_len[i], wnames_str[i] ) ;
-
   LogDebug( COMPONENT_9P, "TWALK: tag=%u fid=%u newfid=%u nwname=%u",
             (u32)*msgtag, *fid, *newfid, *nwname ) ;
+
+  for( i = 0 ; i < *nwname ; i++ )
+   {
+     _9p_getstr( cursor, wnames_len[i], wnames_str[i] ) ;
+      LogDebug( COMPONENT_9P, "TWALK (component): tag=%u fid=%u newfid=%u nwnames=%.*s",
+                (u32)*msgtag, *fid, *newfid, *(wnames_len[i]), wnames_str[i] ) ;
+   }
 
   if( ( pfid = _9p_hash_fid_get( preq9p->pconn, 
                                  *fid,
@@ -138,7 +142,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
         {
            snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *(wnames_len[i]), wnames_str[i] ) ;
            LogDebug( COMPONENT_9P, "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u:%s)",
-            (u32)*msgtag, *fid, *newfid, i, *nwname, name.name ) ;
+            (u32)*msgtag, *fid, *newfid, i+1, *nwname, name.name ) ;
 
            if( ( pnewfid->pentry = cache_inode_lookup( pentry,
                                                        &name,
