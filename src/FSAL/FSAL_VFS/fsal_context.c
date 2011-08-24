@@ -102,7 +102,7 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
                               rpath, p_mnt->mnt_type, p_mnt->mnt_fsname);
               outlen = pathlen;
               strncpy(mntdir, p_mnt->mnt_dir, MAXPATHLEN);
-              strncpy(type, p_mnt->mnt_type, 256);
+              strncpy(type, p_mnt->mnt_type, MAXNAMLEN);
               strncpy(fs_spec, p_mnt->mnt_fsname, MAXPATHLEN);
             }
           /* in other cases, the filesystem must be <mountpoint>/<smthg> or <mountpoint>\0 */
@@ -115,7 +115,7 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
 
               outlen = pathlen;
               strncpy(mntdir, p_mnt->mnt_dir, MAXPATHLEN);
-              strncpy(type, p_mnt->mnt_type, 256);
+              strncpy(type, p_mnt->mnt_type, MAXNAMLEN);
               strncpy(fs_spec, p_mnt->mnt_fsname, MAXPATHLEN);
             }
         }
