@@ -97,7 +97,7 @@ fsal_status_t SNMPFSAL_test_access(snmpfsal_op_context_t * p_context,   /* IN */
 
   /* test root access */
 
-  if(p_context->user_credential.user == 0)
+  if(p_context->credential.user == 0)
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
 
   /* unsatisfied permissions */
@@ -106,7 +106,7 @@ fsal_status_t SNMPFSAL_test_access(snmpfsal_op_context_t * p_context,   /* IN */
 
   /* Test if file belongs to user. */
 
-  if(p_context->user_credential.user == object_attributes->owner)
+  if(p_context->credential.user == object_attributes->owner)
     {
 
       if(object_attributes->mode & FSAL_MODE_RUSR)
@@ -129,7 +129,7 @@ fsal_status_t SNMPFSAL_test_access(snmpfsal_op_context_t * p_context,   /* IN */
 
   /* Test if the file belongs to user's group. */
 
-  is_grp = (p_context->user_credential.group == object_attributes->group);
+  is_grp = (p_context->credential.group == object_attributes->group);
 
   if(!is_grp)
     {

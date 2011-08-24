@@ -142,9 +142,9 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
                mntdir, errno);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
-  
+
   /* Keep fstype in export_context */
-  strncpy(  p_export_context->fstype, type, MAXNAMLEN ) ; 
+  strncpy(  p_export_context->fstype, type, MAXNAMLEN ) ;
 
   if( !strncmp( type, "xfs", MAXNAMLEN ) )
    {
@@ -154,9 +154,9 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
    }
 
   p_export_context->root_handle.handle_bytes = VFS_HANDLE_LEN ;
-  if( vfs_fd_to_handle( p_export_context->mount_root_fd, 
-			&p_export_context->root_handle,  
-                        &mnt_id ) )   
+  if( vfs_fd_to_handle( p_export_context->mount_root_fd,
+			&p_export_context->root_handle,
+                        &mnt_id ) )
 	 Return(posix2fsal_error(errno), errno, INDEX_FSAL_BuildExportContext) ;
 
 #ifdef TODO
@@ -166,7 +166,7 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
 
       sprint_mem( str, p_export_context->root_handle.handle ,p_export_context->root_handle.handle_bytes ) ;
       LogFullDebug(COMPONENT_FSAL,
-                   "=====> root Handle: type=%u bytes=%u|%s\n",  
+                   "=====> root Handle: type=%u bytes=%u|%s\n",
                    p_export_context->root_handle.handle_type,  p_export_context->root_handle.handle_bytes, str ) ;
 
     }

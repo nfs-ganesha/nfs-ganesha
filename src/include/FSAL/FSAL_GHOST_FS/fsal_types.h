@@ -53,14 +53,6 @@
 
 typedef GHOSTFS_handle_t fsal_handle_t;    /**< FS object handle.            */
 
-/** Authentification context.    */
-
-typedef struct fsal_cred__
-{
-  GHOSTFS_user_t user;
-  GHOSTFS_group_t group;
-} fsal_cred_t;
-
 /** fs specific init info */
 
 typedef struct ghostfs_dir_def__
@@ -101,7 +93,7 @@ typedef void *fsal_export_context_t;
 typedef struct
 {
   fsal_export_context_t *export_context;        /* Must be the first entry in this structure */
-  fsal_cred_t credential;
+  struct user_credentials credential;
 } fsal_op_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(*pexport_context)

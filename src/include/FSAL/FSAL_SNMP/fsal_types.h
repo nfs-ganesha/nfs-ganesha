@@ -96,16 +96,6 @@ typedef union {
 
 typedef struct
 {
-  fsal_uid_t user;
-  fsal_gid_t group;
-  /*
-     int    ticket_handle;
-     time_t ticket_renewal_time;
-   */
-} snmpfsal_cred_t;
-
-typedef struct
-{
   snmpfsal_handle_t root_handle;
   struct tree *root_mib_tree;
   fsal_path_t root_path;
@@ -120,7 +110,7 @@ typedef struct
   snmpfsal_export_context_t *export_context;    /* Must be the first entry in this structure */
 
   /* user authentication info */
-  snmpfsal_cred_t user_credential;
+  struct user_credentials credential;
 
   /* SNMP session and the associated info  */
   netsnmp_session *snmp_session;

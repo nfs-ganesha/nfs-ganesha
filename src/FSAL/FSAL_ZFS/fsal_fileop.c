@@ -55,14 +55,17 @@
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t ZFSFSAL_open(zfsfsal_handle_t * filehandle,     /* IN */
-                        zfsfsal_op_context_t * p_context,  /* IN */
+fsal_status_t ZFSFSAL_open(fsal_handle_t * file_hdl,     /* IN */
+                        fsal_op_context_t * p_context,  /* IN */
                         fsal_openflags_t openflags,     /* IN */
-                        zfsfsal_file_t * file_descriptor,  /* OUT */
+                        fsal_file_t * file_desc,  /* OUT */
                         fsal_attrib_list_t * file_attributes    /* [ IN/OUT ] */
     )
 {
   int rc;
+  creden_t cred;
+  zfsfsal_handle_t * filehandle = (zfsfsal_handle_t *)file_hdl;
+  zfsfsal_file_t * file_descriptor = ( zfsfsal_file_t *)file_desc;
 
   /* sanity checks.
    * note : file_attributes is optional.
@@ -89,12 +92,14 @@ fsal_status_t ZFSFSAL_open(zfsfsal_handle_t * filehandle,     /* IN */
   rc = fsal2posix_openflags(openflags, &posix_flags);
   if(rc)
     Return(rc, 0, INDEX_FSAL_open);
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
 
   TakeTokenFSCall();
 
   /* >> call your FS open function << */
   libzfswrap_vnode_t *p_vnode;
-  rc = libzfswrap_open(p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_open(p_vfs, &cred,
                        filehandle->data.zfs_handle, posix_flags, &p_vnode);
 
   ReleaseTokenFSCall();
@@ -109,12 +114,12 @@ fsal_status_t ZFSFSAL_open(zfsfsal_handle_t * filehandle,     /* IN */
   file_descriptor->current_offset = 0;
   file_descriptor->p_vnode = p_vnode;
   file_descriptor->handle = *filehandle;
-  file_descriptor->cred = p_context->user_credential.cred;
+  file_descriptor->cred = cred;
   file_descriptor->is_closed = 0;
 
   if(file_attributes)
   {
-      fsal_status_t status = ZFSFSAL_getattrs(filehandle, p_context, file_attributes);
+      fsal_status_t status = ZFSFSAL_getattrs(file_hdl, p_context, file_attributes);
       /* On error, we set a flag in the returned attributes */
       if(FSAL_IS_ERROR(status))
       {
@@ -165,15 +170,15 @@ fsal_status_t ZFSFSAL_open(zfsfsal_handle_t * filehandle,     /* IN */
  *        ERR_FSAL_IO, ...
  */
 
-fsal_status_t ZFSFSAL_open_by_name(zfsfsal_handle_t * dirhandle,      /* IN */
+fsal_status_t ZFSFSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
                                 fsal_name_t * filename, /* IN */
-                                zfsfsal_op_context_t * p_context,  /* IN */
+                                fsal_op_context_t * p_context,  /* IN */
                                 fsal_openflags_t openflags,     /* IN */
-                                zfsfsal_file_t * file_descriptor,  /* OUT */
+                                fsal_file_t * file_descriptor,  /* OUT */
                                 fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
   fsal_status_t fsal_status;
-  zfsfsal_handle_t filehandle;
+  fsal_handle_t filehandle;
 
   if(!dirhandle || !filename || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
@@ -213,7 +218,7 @@ fsal_status_t ZFSFSAL_open_by_name(zfsfsal_handle_t * dirhandle,      /* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t ZFSFSAL_read(zfsfsal_file_t * file_descriptor,  /* IN */
+fsal_status_t ZFSFSAL_read(fsal_file_t * file_desc,  /* IN */
                         fsal_seek_t * seek_descriptor,  /* [IN] */
                         fsal_size_t buffer_size,        /* IN */
                         caddr_t buffer, /* OUT */
@@ -224,6 +229,7 @@ fsal_status_t ZFSFSAL_read(zfsfsal_file_t * file_descriptor,  /* IN */
   off_t offset = 0;
   int rc;
   int behind = 0;
+  zfsfsal_file_t * file_descriptor = (zfsfsal_file_t *)file_desc;
 
   /* sanity checks. */
 
@@ -300,7 +306,7 @@ fsal_status_t ZFSFSAL_read(zfsfsal_file_t * file_descriptor,  /* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
-fsal_status_t ZFSFSAL_write(zfsfsal_file_t * file_descriptor, /* IN */
+fsal_status_t ZFSFSAL_write(fsal_file_t * file_desc, /* IN */
                          fsal_seek_t * seek_descriptor, /* IN */
                          fsal_size_t buffer_size,       /* IN */
                          caddr_t buffer,        /* IN */
@@ -309,6 +315,7 @@ fsal_status_t ZFSFSAL_write(zfsfsal_file_t * file_descriptor, /* IN */
 {
   int rc, behind = 0;
   off_t offset;
+  zfsfsal_file_t * file_descriptor = (zfsfsal_file_t *)file_desc;
 
   /* sanity checks. */
   if(!file_descriptor || !buffer || !write_amount)
@@ -380,10 +387,11 @@ fsal_status_t ZFSFSAL_write(zfsfsal_file_t * file_descriptor, /* IN */
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t ZFSFSAL_close(zfsfsal_file_t * file_descriptor  /* IN */
+fsal_status_t ZFSFSAL_close(fsal_file_t * file_desc  /* IN */
     )
 {
   int rc = 0;
+  zfsfsal_file_t * file_descriptor = (zfsfsal_file_t *)file_desc;
 
   /* sanity checks. */
   if(!file_descriptor)
@@ -419,17 +427,17 @@ fsal_status_t ZFSFSAL_close(zfsfsal_file_t * file_descriptor  /* IN */
 }
 
 /* Some unsupported calls used in FSAL_PROXY, just for permit the ganeshell to compile */
-fsal_status_t ZFSFSAL_open_by_fileid(zfsfsal_handle_t * filehandle,   /* IN */
+fsal_status_t ZFSFSAL_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
                                   fsal_u64_t fileid,    /* IN */
-                                  zfsfsal_op_context_t * p_context,        /* IN */
+                                  fsal_op_context_t * p_context,        /* IN */
                                   fsal_openflags_t openflags,   /* IN */
-                                  zfsfsal_file_t * file_descriptor,        /* OUT */
+                                  fsal_file_t * file_descriptor,        /* OUT */
                                   fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
 
-fsal_status_t ZFSFSAL_close_by_fileid(zfsfsal_file_t * file_descriptor /* IN */ ,
+fsal_status_t ZFSFSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
                                    fsal_u64_t fileid)
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
@@ -453,7 +461,7 @@ unsigned int ZFSFSAL_GetFileno(fsal_file_t * pfile)
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t ZFSFSAL_sync(zfsfsal_file_t * p_file_descriptor /* IN */)
+fsal_status_t ZFSFSAL_sync(fsal_file_t * p_file_descriptor /* IN */)
 {
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync);
 }

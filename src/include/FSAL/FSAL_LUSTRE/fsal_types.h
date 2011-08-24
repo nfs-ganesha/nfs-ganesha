@@ -105,14 +105,6 @@ typedef union {
 
 /** Authentification context.    */
 
-typedef struct
-{
-  uid_t user;
-  gid_t group;
-  fsal_count_t nbgroups;
-  gid_t alt_groups[FSAL_NGROUPS_MAX];
-} lustrefsal_cred_t;
-
 #define MAX_LUSTRE_FSNAME 128
 typedef struct lustrefsal_export_context_t
 {
@@ -127,7 +119,7 @@ typedef struct lustrefsal_export_context_t
 typedef struct
 {
   lustrefsal_export_context_t *export_context;  /* Must be the first entry in this structure */
-  lustrefsal_cred_t credential;
+  struct user_credentials credential;
 } lustrefsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )

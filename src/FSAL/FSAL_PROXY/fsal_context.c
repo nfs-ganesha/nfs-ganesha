@@ -394,18 +394,18 @@ fsal_status_t PROXYFSAL_GetClientContext(proxyfsal_op_context_t * p_thr_context,
   p_thr_context->export_context = p_export_context;
 
   /* Extracted from  /opt/hpss/src/nfs/nfsd/nfs_Dispatch.c */
-  p_thr_context->user_credential.user = uid;
-  p_thr_context->user_credential.group = gid;
+  p_thr_context->credential.user = uid;
+  p_thr_context->credential.group = gid;
 
   if(nb_alt_groups > FSAL_NGROUPS_MAX)
     nb_alt_groups = FSAL_NGROUPS_MAX;
   if((nb_alt_groups > 0) && (alt_groups == NULL))
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetClientContext);
 
-  p_thr_context->user_credential.nbgroups = nb_alt_groups;
+  p_thr_context->credential.nbgroups = nb_alt_groups;
 
   for(i = 0; i < nb_alt_groups; i++)
-    p_thr_context->user_credential.alt_groups[i] = alt_groups[i];
+    p_thr_context->credential.alt_groups[i] = alt_groups[i];
 
   if(isFullDebug(COMPONENT_FSAL))
     {
@@ -413,12 +413,12 @@ fsal_status_t PROXYFSAL_GetClientContext(proxyfsal_op_context_t * p_thr_context,
       
       LogFullDebug(COMPONENT_FSAL, "credential modified:");
       LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
-                   p_thr_context->user_credential.user,
-                   p_thr_context->user_credential.group);
+                   p_thr_context->credential.user,
+                   p_thr_context->credential.group);
       
-      for(i = 0; i < p_thr_context->user_credential.nbgroups; i++)
+      for(i = 0; i < p_thr_context->credential.nbgroups; i++)
         LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
-                     p_thr_context->user_credential.alt_groups[i]);
+                     p_thr_context->credential.alt_groups[i]);
     }
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);

@@ -743,7 +743,7 @@ int fsal_internal_get_bulkstat_by_inode(int fd, xfs_ino_t * p_ino, xfs_bstat_t *
 {
   xfs_fsop_bulkreq_t bulkreq;
 
-  bulkreq.lastip = p_ino;
+  bulkreq.lastip = (__u64 *)p_ino;
   bulkreq.icount = 1;
   bulkreq.ubuffer = pxfs_bstat;
   bulkreq.ocount = NULL;

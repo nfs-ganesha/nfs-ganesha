@@ -273,6 +273,8 @@ void ReleaseTokenFSCall()
       cfg._field |= (p_init_info)->values._field ;                \
       break;                                                      \
     /* In the other cases, we keep the default value. */          \
+    default:                                                      \
+	    break;                                                \
     }
 
 #define SET_BOOLEAN_PARAM( cfg, p_init_info, _field )             \
@@ -290,6 +292,8 @@ void ReleaseTokenFSCall()
       cfg._field = cfg._field && (p_init_info)->values._field ;   \
       break;                                                      \
     /* In the other cases, we keep the default value. */          \
+    default:                                                      \
+	    break;                                                \
     }
 
 /*
@@ -297,7 +301,7 @@ void ReleaseTokenFSCall()
  */
 fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                                         fs_common_initinfo_t * fs_common_info,
-                                        zfsfs_specific_initinfo_t * fs_specific_info)
+                                        fs_specific_initinfo_t * fs_specific_info)
 {
 
   /* sanity check */

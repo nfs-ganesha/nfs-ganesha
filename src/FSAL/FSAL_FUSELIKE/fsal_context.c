@@ -91,6 +91,7 @@ fsal_status_t FUSEFSAL_InitClientContext(fusefsal_op_context_t * p_thr_context)
   /* set credential info */
   p_thr_context->credential.user = 0;
   p_thr_context->credential.group = 0;
+  p_thr_context->credential.nbgroups = 0;
 
   /* build fuse context */
   p_thr_context->ganefuse_context.ganefuse = NULL;
@@ -147,6 +148,7 @@ fsal_status_t FUSEFSAL_GetClientContext(fusefsal_op_context_t * p_thr_context,  
   /* set credential info */
   p_thr_context->credential.user = uid;
   p_thr_context->credential.group = gid;
+  p_thr_context->credential.nbgroups = 0; /* no alt groups at present */
 
   /* build fuse context */
   p_thr_context->ganefuse_context.ganefuse = NULL;

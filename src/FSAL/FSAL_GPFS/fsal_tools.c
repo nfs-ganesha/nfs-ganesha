@@ -65,9 +65,11 @@ char *GPFSFSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int GPFSFSAL_handlecmp(gpfsfsal_handle_t * handle1, gpfsfsal_handle_t * handle2,
+int GPFSFSAL_handlecmp(fsal_handle_t * handle_1, fsal_handle_t * handle_2,
                    fsal_status_t * status)
 {
+  gpfsfsal_handle_t *handle1 = (gpfsfsal_handle_t *)handle_1;
+  gpfsfsal_handle_t *handle2 = (gpfsfsal_handle_t *)handle_2;
 
   *status = FSAL_STATUS_NO_ERROR;
 
@@ -102,7 +104,7 @@ int GPFSFSAL_handlecmp(gpfsfsal_handle_t * handle1, gpfsfsal_handle_t * handle2,
  *
  * \return The hash value
  */
-unsigned int GPFSFSAL_Handle_to_HashIndex(gpfsfsal_handle_t * p_handle,
+unsigned int GPFSFSAL_Handle_to_HashIndex(fsal_handle_t * handle,
                                       unsigned int cookie,
                                       unsigned int alphabet_len, unsigned int index_size)
 {
@@ -110,6 +112,7 @@ unsigned int GPFSFSAL_Handle_to_HashIndex(gpfsfsal_handle_t * p_handle,
   unsigned int sum = 0;
   unsigned int extract = 0;
   unsigned int mod;
+  gpfsfsal_handle_t *p_handle = (gpfsfsal_handle_t *)handle;
 
   /* XXX If the handle is not 32 bits-aligned, the last loop will get uninitialized
    * chars after the end of the handle. We must avoid this by skipping the last loop
@@ -152,12 +155,13 @@ unsigned int GPFSFSAL_Handle_to_HashIndex(gpfsfsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int GPFSFSAL_Handle_to_RBTIndex(gpfsfsal_handle_t * p_handle, unsigned int cookie)
+unsigned int GPFSFSAL_Handle_to_RBTIndex(fsal_handle_t * handle, unsigned int cookie)
 {
   unsigned int h = 0;
   unsigned int cpt = 0;
   unsigned int extract = 0;
   unsigned int mod;
+  gpfsfsal_handle_t * p_handle = (gpfsfsal_handle_t *)handle;
 
   h = cookie;
 
@@ -205,12 +209,15 @@ unsigned int GPFSFSAL_Handle_to_RBTIndex(gpfsfsal_handle_t * p_handle, unsigned 
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t GPFSFSAL_DigestHandle(gpfsfsal_export_context_t * p_expcontext,   /* IN */
+fsal_status_t GPFSFSAL_DigestHandle(fsal_export_context_t *exp_context,   /* IN */
                                 fsal_digesttype_t output_type,  /* IN */
-                                gpfsfsal_handle_t * p_in_fsal_handle,       /* IN */
+                                fsal_handle_t * in_handle,       /* IN */
                                 caddr_t out_buff        /* OUT */
     )
 {
+  gpfsfsal_export_context_t * p_expcontext = (gpfsfsal_export_context_t *)exp_context;
+  gpfsfsal_handle_t * p_in_fsal_handle = (gpfsfsal_handle_t *)in_handle;
+
   /* sanity checks */
   if(!p_in_fsal_handle || !out_buff || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -294,12 +301,14 @@ fsal_status_t GPFSFSAL_DigestHandle(gpfsfsal_export_context_t * p_expcontext,   
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t GPFSFSAL_ExpandHandle(gpfsfsal_export_context_t * p_expcontext,   /* IN */
+fsal_status_t GPFSFSAL_ExpandHandle(fsal_export_context_t *exp_context,   /* IN */
                                 fsal_digesttype_t in_type,      /* IN */
                                 caddr_t in_buff,        /* IN */
-                                gpfsfsal_handle_t * p_out_fsal_handle       /* OUT */
+                                fsal_handle_t *out_handle       /* OUT */
     )
 {
+  gpfsfsal_export_context_t * p_expcontext = (gpfsfsal_export_context_t *)exp_context;
+  gpfsfsal_handle_t * p_out_fsal_handle = (gpfsfsal_handle_t *)out_handle;
 
   /* sanity checks */
   if(!p_out_fsal_handle || !in_buff || !p_expcontext)
@@ -773,6 +782,8 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
   char *key_name;
   char *key_value;
   config_item_t block;
+  gpfsfs_specific_initinfo_t *initinfo
+	  = (gpfsfs_specific_initinfo_t *) &out_parameter->fs_specific_info;
 
   block = config_FindItemByName(in_config, CONF_LABEL_FS_SPECIFIC);
 
@@ -811,7 +822,7 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
       /* does the variable exists ? */
       if(!STRCMP(key_name, "OpenByHandleDeviceFile"))
         {
-          strncpy(out_parameter->fs_specific_info.open_by_handle_dev_file, key_value,
+          strncpy(initinfo->open_by_handle_dev_file, key_value,
                   MAXPATHLEN);
         }
       else if(!STRCMP(key_name, "Use_Kernel_Module_Interface"))
@@ -824,7 +835,7 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
-          out_parameter->fs_specific_info.use_kernel_module_interface = bool;
+          initinfo->use_kernel_module_interface = bool;
         }
       else
         {
@@ -835,7 +846,7 @@ fsal_status_t GPFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
         }
     }
 
-  if(out_parameter->fs_specific_info.use_kernel_module_interface && out_parameter->fs_specific_info.open_by_handle_dev_file[0] == '\0')
+  if(initinfo->use_kernel_module_interface && initinfo->open_by_handle_dev_file[0] == '\0')
     {
       LogCrit(COMPONENT_CONFIG,
               "FSAL LOAD PARAMETER: OpenByHandleDeviceFile MUST be specified in the configuration file (item %s)",

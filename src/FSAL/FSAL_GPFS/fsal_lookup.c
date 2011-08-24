@@ -67,10 +67,10 @@
  *         - Another error code else.
  *          
  */
-fsal_status_t GPFSFSAL_lookup(gpfsfsal_handle_t * p_parent_directory_handle,    /* IN */
+fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* IN */
                           fsal_name_t * p_filename,     /* IN */
-                          gpfsfsal_op_context_t * p_context,        /* IN */
-                          gpfsfsal_handle_t * p_object_handle,      /* OUT */
+                          fsal_op_context_t * p_context,        /* IN */
+                          fsal_handle_t * object_handle,      /* OUT */
                           fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
     )
 {
@@ -80,9 +80,10 @@ fsal_status_t GPFSFSAL_lookup(gpfsfsal_handle_t * p_parent_directory_handle,    
   int objectfd;
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t parent_dir_attrs;
+  gpfsfsal_handle_t *p_object_handle = (gpfsfsal_handle_t *)object_handle;
 
   /* sanity checks
-   * note : object_attributes is optionnal
+   * note : object_attributes is optional
    *        parent_directory_handle may be null for getting FS root.
    */
   if(!p_object_handle || !p_context)
@@ -96,12 +97,13 @@ fsal_status_t GPFSFSAL_lookup(gpfsfsal_handle_t * p_parent_directory_handle,    
   /* get information about root */
   if(!p_parent_directory_handle)
     {
+      gpfsfsal_handle_t *root_handle = &((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_handle;
+
       /* get handle for the mount point  */
       memcpy(p_object_handle->data.handle.f_handle,
-             p_context->export_context->mount_root_handle.data.handle.f_handle,
-             sizeof(p_context->export_context->mount_root_handle.data.handle.handle_size));
-      p_object_handle->data.handle.handle_size =
-          p_context->export_context->mount_root_handle.data.handle.handle_size;
+	     root_handle->data.handle.f_handle,
+             sizeof(root_handle->data.handle.handle_size));
+      p_object_handle->data.handle.handle_size = root_handle->data.handle.handle_size;
 
       /* get attributes, if asked */
       if(p_object_attributes)
@@ -227,8 +229,8 @@ fsal_status_t GPFSFSAL_lookup(gpfsfsal_handle_t * p_parent_directory_handle,    
  */
 
 fsal_status_t GPFSFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
-                              gpfsfsal_op_context_t * p_context,    /* IN */
-                              gpfsfsal_handle_t * object_handle,    /* OUT */
+                              fsal_op_context_t * p_context,    /* IN */
+                              fsal_handle_t * object_handle,    /* OUT */
                               fsal_attrib_list_t * p_object_attributes  /* [ IN/OUT ] */
     )
 {
@@ -290,65 +292,11 @@ fsal_status_t GPFSFSAL_lookupPath(fsal_path_t * p_path,     /* IN */
  *         - Another error code else.
  *          
  */
-fsal_status_t GPFSFSAL_lookupJunction(gpfsfsal_handle_t * p_junction_handle,    /* IN */
-                                  gpfsfsal_op_context_t * p_context,        /* IN */
-                                  gpfsfsal_handle_t * p_fsoot_handle,       /* OUT */
+fsal_status_t GPFSFSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
+                                  fsal_op_context_t * p_context,        /* IN */
+                                  fsal_handle_t * p_fsoot_handle,       /* OUT */
                                   fsal_attrib_list_t * p_fsroot_attributes      /* [ IN/OUT ] */
     )
 {
-  //hpss_Attrs_t    root_attr;
-
-  /* sanity checks
-   * note : p_fsroot_attributes is optionnal
-   */
-  /*
-     if (!p_junction_handle || !p_fsoot_handle || !p_p_context )
-     Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_lookupJunction);
-   */
-  /*
-     if ( p_junction_handle->obj_type != FSAL_TYPE_JUNCTION )
-     Return(ERR_FSAL_INVAL ,0 , INDEX_FSAL_lookupJunction);
-   */
-
-  /* call to HPSS client api */
-  /* We use hpss_GetRawAttrHandle for chasing junctions. */
-
-  /* TakeTokenFSCall(); */
-
-  //rc = HPSSFSAL_GetRawAttrHandle( &(p_junction_handle->ns_handle),
-  //                                NULL,
-  //                                &p_p_context->hpss_userp_context,
-  //                                TRUE,     /* do traverse junctions !!! */
-  //                                NULL,
-  //                                NULL,
-  //                                &root_attr );
-
-  /* ReleaseTokenFSCall(); */
-
-  //if (rc) Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_lookupJunction);
-
-  /* set output handle */
-  /*
-     p_fsoot_handle->obj_type  = hpss2fsal_type( root_attr.FilesetHandle.Type );
-     p_fsoot_handle->ns_handle = root_attr.FilesetHandle;
-   */
-
-  if(p_fsroot_attributes)
-    {
-
-      /* convert hpss attributes to fsal attributes */
-
-      /*
-         status=hpss2fsal_attributes(
-         &root_attr.FilesetHandle,
-         &root_attr,
-         p_fsroot_attributes );
-
-         if (FSAL_IS_ERROR(status))
-         Return(status.major,status.minor,INDEX_FSAL_lookupJunction);
-       */
-    }
-
-  /* lookup complete ! */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookupJunction);
 }
