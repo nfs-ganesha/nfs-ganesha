@@ -57,7 +57,7 @@ int _9p_clunk( _9p_request_data_t * preq9p,
                char * preply)
 {
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
-  nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
+  //nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
 
   u16 * msgtag = NULL ;
   u32 * fid    = NULL ;
@@ -82,10 +82,11 @@ int _9p_clunk( _9p_request_data_t * preq9p,
       {
         /* Put fid back to pool */
         memset( (char *)pfid, 0, sizeof( _9p_fid_t ) ) ;
-
+#if 0
         P( pwkrdata->_9pfid_pool_mutex ) ;
         ReleaseToPool( pfid, &pwkrdata->_9pfid_pool ) ;
         V( pwkrdata->_9pfid_pool_mutex ) ;
+#endif
       }
    }
   else

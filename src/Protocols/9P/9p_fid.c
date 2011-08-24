@@ -121,6 +121,8 @@ _9p_fid_t * _9p_hash_fid_get( _9p_conn_t * pconn,
   if( !pconn || !prc ) 
     return NULL ;
 
+  HashTable_Print( ht_fid ) ;
+
   /* Prepare struct to be inserted to the Hash */
   key.sockfd = pconn->sockfd ;
   key.birth = pconn->birth ;
@@ -152,6 +154,8 @@ int _9p_hash_fid_update( _9p_conn_t * pconn,
   if( !pconn || !pfid ) 
     return -1 ;
 
+  HashTable_Print( ht_fid ) ;
+
   /* Prepare struct to be inserted to the Hash */
   key.sockfd = pconn->sockfd ;
   key.birth = pconn->birth ;
@@ -169,6 +173,8 @@ int _9p_hash_fid_update( _9p_conn_t * pconn,
                                      &buffdata, 
                                      HASHTABLE_SET_HOW_SET_NO_OVERWRITE ) ) != HASHTABLE_SUCCESS )
     return -rc ;
+
+  HashTable_Print( ht_fid ) ;
 
   return 0 ;
 } /* _9p_hash_fid_add */
@@ -194,11 +200,15 @@ int _9p_hash_fid_del( _9p_conn_t * pconn,
   buffkey.pdata = (caddr_t)&key ;
   buffkey.len = sizeof(_9p_hash_fid_key_t);
 
+  HashTable_Print( ht_fid ) ;
+
   if( (rc = HashTable_Del( ht_fid, &buffkey, &old_key, &old_value)) != HASHTABLE_SUCCESS )
    return -rc ;
 
   if( ppoldfid != NULL )
     *ppoldfid = (_9p_fid_t *)old_value.pdata ;
+
+  HashTable_Print( ht_fid ) ;
 
   return 0 ;
 } /* 9p_hash_fid_del */

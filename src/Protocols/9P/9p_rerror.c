@@ -73,7 +73,6 @@ int _9p_rerror( _9p_request_data_t * preq9p,
 
   LogDebug( COMPONENT_9P, "RERROR: err=(%u|%s)", *err, strerr ) ;
  
-  abort() ;
   return 1 ;
 }
 
