@@ -76,6 +76,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
   fsal_name_t name ; 
   fsal_attrib_list_t fsalattr ;
   cache_inode_status_t cache_status ;
+  cache_entry_t * pentry = NULL ;
 
   _9p_fid_t * pfid = NULL ;
   _9p_fid_t * pnewfid = NULL ;
@@ -130,20 +131,29 @@ int _9p_walk( _9p_request_data_t * preq9p,
       pnewfid->fid = *newfid ;
       pnewfid->fsal_op_context = pfid->fsal_op_context ;
       pnewfid->pexport = pfid->pexport ;
+
       /* the walk is in fact a lookup */
-      snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *(wnames_len[i]), wnames_str[i] ) ;
-      if( ( pnewfid->pentry = cache_inode_lookup( pfid->pentry,
-                                                  &name,
-                                                  &fsalattr,
-                                                  pwkrdata->ht,
-                                                  &pwkrdata->cache_inode_client,
-                                                  &pfid->fsal_op_context, 
-                                                  &cache_status ) ) == NULL )
-      {
-        err = _9p_tools_errno( cache_status ) ; ;
-        rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
-        return rc ;
-      }
+      pentry = pfid->pentry ;
+      for( i = 0 ; i <  *nwname ; i ++ )
+        {
+           snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *(wnames_len[i]), wnames_str[i] ) ;
+           LogDebug( COMPONENT_9P, "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u:%s)",
+            (u32)*msgtag, *fid, *newfid, i, *nwname, name.name ) ;
+
+           if( ( pnewfid->pentry = cache_inode_lookup( pentry,
+                                                       &name,
+                                                       &fsalattr,
+                                                       pwkrdata->ht,
+                                                       &pwkrdata->cache_inode_client,
+                                                       &pfid->fsal_op_context, 
+                                                       &cache_status ) ) == NULL )
+            {
+              err = _9p_tools_errno( cache_status ) ; ;
+              rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+             return rc ;
+            }
+           pentry =  pnewfid->pentry ;
+        }
 
      _9p_tools_fsal_attr2stat( &fsalattr, &pnewfid->attr ) ;
 
