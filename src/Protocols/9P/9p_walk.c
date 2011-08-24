@@ -130,7 +130,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
       /* Set the new fid id */
       pnewfid->fid = *newfid ;
    }
-  else if( *nwname == 1 )
+  else 
    {
       pnewfid->fid = *newfid ;
       pnewfid->fsal_op_context = pfid->fsal_op_context ;
@@ -204,11 +204,6 @@ int _9p_walk( _9p_request_data_t * preq9p,
           break ;
       }
 
-   }
-  else
-   {
-     /* Not yet implement */
-     LogCrit( COMPONENT_9P, "============> NOT YET IMPLEMENTED !!!!!!!!\n" ) ;
    }
 
   /* Had the new fid to the hash */

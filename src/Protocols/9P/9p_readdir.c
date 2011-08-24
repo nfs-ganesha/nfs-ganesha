@@ -223,7 +223,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      _9p_setptr( cursor, qid_path, u64 ) ;
      
      /* offset */
-     _9p_setvalue( cursor, i, u64 ) ;   
+     _9p_setvalue( cursor, i+*offset, u64 ) ;   
 
      /* Type (again ?) */
      _9p_setptr( cursor, qid_type, u8 ) ;
@@ -231,8 +231,8 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      /* name */
      _9p_setstr( cursor, name_len, name_str ) ;
   
-     LogDebug( COMPONENT_9P, "RREADDIR dentry: tag=%u fid=%u dentry={ off=%llu,qid=(type=%u,version=%u,path=%llu),type=%u,name=%s",
-              (u32)*msgtag, *fid , (unsigned long long)i, *qid_type, 0, (unsigned long long)*qid_path, *qid_type, name_str) ;
+     LogDebug( COMPONENT_9P, "RREADDIR dentry: tag=%u fid=%u recsize=%u dentry={ off=%llu,qid=(type=%u,version=%u,path=%llu),type=%u,name=%s",
+              (u32)*msgtag, *fid , recsize, (unsigned long long)i, *qid_type, 0, (unsigned long long)*qid_path, *qid_type, name_str) ;
    } /* for( i = 0 , ... ) */
 
   /* Set buffsize in previously saved position */

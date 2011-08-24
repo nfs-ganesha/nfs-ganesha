@@ -188,6 +188,8 @@ static unsigned int select_worker_queue()
  * @return NULL 
  *
  */
+
+
 void * _9p_socket_thread( void * Arg )
 {
   long int tcp_sock = (long int)Arg;
@@ -201,10 +203,10 @@ void * _9p_socket_thread( void * Arg )
   request_data_t *preq = NULL;
   unsigned int worker_index;
 
-  _9p_conn_t _9p_conn ;
-
   char * _9pmsg ;
   uint32_t * p_9pmsglen = NULL ;
+
+  _9p_conn_t _9p_conn ;
 
   int readlen = 0  ;
 

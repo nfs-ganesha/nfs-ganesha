@@ -72,7 +72,8 @@ int _9p_rerror( _9p_request_data_t * preq9p,
   _9p_checkbound( cursor, preply, plenout ) ;
 
   LogDebug( COMPONENT_9P, "RERROR: err=(%u|%s)", *err, strerr ) ;
-
+ 
+  abort() ;
   return 1 ;
 }
 

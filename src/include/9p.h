@@ -52,7 +52,7 @@ typedef uint64_t u64;
 
 #define CONF_LABEL_9P "_9P"
 
-#define _9P_MSG_SIZE 65560 
+#define _9P_MSG_SIZE 70000 
 #define _9P_HDR_SIZE  4
 #define _9P_TYPE_SIZE 1
 #define _9P_TAG_SIZE  2

@@ -1084,10 +1084,70 @@ void HashTable_Log(log_components_t component, hash_table_t * ht)
  * @return none (returns void).
  *
  */
-void HashTable_Print(hash_table_t * ht)
+void HashTable_Print( hash_table_t * ht)
 {
-  HashTable_Log(COMPONENT_STDOUT, ht);
+  struct rbt_node *it;
+  struct rbt_head *tete_rbt;
+  hash_data_t *pdata = NULL;
+  char dispkey[HASHTABLE_DISPLAY_STRLEN];
+  char dispval[HASHTABLE_DISPLAY_STRLEN];
+  unsigned int i = 0;
+  int nb_entries = 0;
+
+  unsigned long rbtval;
+  unsigned long hashval;
+
+  /* Sanity check */
+  if(ht == NULL)
+    return;
+
+  fprintf(stderr, 
+          "The hash has %d nodes (this number MUST be a prime integer for performance's issues)\n",
+          ht->parameter.index_size);
+
+  for(i = 0; i < ht->parameter.index_size; i++)
+    nb_entries += ht->stat_dynamic[i].nb_entries;
+
+  fprintf(stderr,"The hash contains %d entries\n", nb_entries);
+
+  for(i = 0; i < ht->parameter.index_size; i++)
+    {
+      tete_rbt = &((ht->array_rbt)[i]);
+      fprintf(stderr,
+              "The node in position %d contains:  %d entries \n",
+              i, tete_rbt->rbt_num_node);
+      RBT_LOOP(tete_rbt, it)
+      {
+        pdata = (hash_data_t *) it->rbt_opaq;
+
+        ht->parameter.key_to_str(&(pdata->buffkey), dispkey);
+        ht->parameter.val_to_str(&(pdata->buffval), dispval);
+
+        /* Compute values to locate into the hashtable */
+        if( ht->parameter.hash_func_both != NULL )
+         {
+           if( (*(ht->parameter.hash_func_both))( &ht->parameter, &(pdata->buffkey), (uint32_t *)&hashval, (uint32_t *)&rbtval ) == 0 ) 
+	     {
+               LogCrit(COMPONENT_HASHTABLE,
+                       "Possible implementation error at line %u file %s",
+                       __LINE__, __FILE__ ) ;
+               hashval = 0 ;
+               rbtval = 0 ;
+             }
+          }
+        else
+          {
+            hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, &(pdata->buffkey));
+            rbtval = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, &(pdata->buffkey));
+          }
+
+        fprintf(stderr, "%s => %s; hashval=%lu rbtval=%lu ",
+                dispkey, dispval, hashval, rbtval);
+        RBT_INCREMENT(it);
+      }
+    }
 }                               /* HashTable_Print */
+
 
 /* @} */
 
