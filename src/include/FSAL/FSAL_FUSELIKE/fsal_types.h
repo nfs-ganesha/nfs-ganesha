@@ -76,12 +76,6 @@ typedef union {
 
 typedef struct
 {
-  uid_t user;
-  gid_t group;
-} fusefsal_cred_t;
-
-typedef struct
-{
   fusefsal_handle_t root_handle;
   fsal_path_t root_full_path;   /* not expected to change when filesystem is mounted ! */
   struct ganefuse *ganefuse;
@@ -92,7 +86,7 @@ typedef struct
 typedef struct
 {
   fusefsal_export_context_t *export_context;    /* Must be the first entry in this structure */
-  fusefsal_cred_t credential;
+  struct user_credentials credential;
   struct ganefuse_context ganefuse_context;
 } fusefsal_op_context_t;
 

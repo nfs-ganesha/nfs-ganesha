@@ -100,14 +100,6 @@ typedef union {
 
 typedef struct
 {
-  uid_t user;
-  gid_t group;
-  fsal_count_t nbgroups;
-  gid_t alt_groups[FSAL_NGROUPS_MAX];
-} xfsfsal_cred_t;
-
-typedef struct
-{
   char mount_point[FSAL_MAX_PATH_LEN];
   char mnt_handle_val[FSAL_XFS_HANDLE_LEN];
   char mnt_fshandle_val[FSAL_XFS_FSHANDLE_LEN];
@@ -124,7 +116,7 @@ typedef struct
 typedef struct
 {
   xfsfsal_export_context_t *export_context;     /* Must be the first entry in this structure */
-  xfsfsal_cred_t credential;
+  struct user_credentials credential;
 } xfsfsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )

@@ -149,9 +149,9 @@ fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_context)
 
   TakeTokenFSCall();
 
-  p_context->user_credential.user = 0;
-  p_context->user_credential.group = 0;
-  p_context->user_credential.nbgroups = 0;
+  p_context->credential.user = 0;
+  p_context->credential.group = 0;
+  p_context->credential.nbgroups = 0;
 
   /* Call the NFSv4 function */
   rc = COMPOUNDV4_EXECUTE_SIMPLE(p_context, argnfs4, resnfs4);

@@ -41,15 +41,16 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_opendir(gpfsfsal_handle_t * p_dir_handle,        /* IN */
-                           gpfsfsal_op_context_t * p_context,       /* IN */
-                           gpfsfsal_dir_t * p_dir_descriptor,       /* OUT */
+fsal_status_t GPFSFSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
+                           fsal_dir_t * dir_desc,       /* OUT */
                            fsal_attrib_list_t * p_dir_attributes        /* [ IN/OUT ] */
     )
 {
   fsal_status_t status;
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t dir_attrs;
+  gpfsfsal_dir_t *p_dir_descriptor = (gpfsfsal_dir_t *)dir_desc;
 
   /* sanity checks
    * note : dir_attributes is optionnal.
@@ -60,7 +61,8 @@ fsal_status_t GPFSFSAL_opendir(gpfsfsal_handle_t * p_dir_handle,        /* IN */
   /* get the path of the directory */
   TakeTokenFSCall();
   status =
-      fsal_internal_handle2fd(p_context, p_dir_handle, &p_dir_descriptor->fd,
+      fsal_internal_handle2fd(p_context, p_dir_handle,
+			      &p_dir_descriptor->fd,
                               O_RDONLY | O_DIRECTORY);
   ReleaseTokenFSCall();
 
@@ -141,12 +143,12 @@ struct linux_dirent
 
 #define BUF_SIZE 1024
 
-fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
-                           gpfsfsal_cookie_t start_position,        /* IN */
+fsal_status_t GPFSFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
+                           fsal_cookie_t startposition,        /* IN */
                            fsal_attrib_mask_t get_attr_mask,    /* IN */
                            fsal_mdsize_t buffersize,    /* IN */
                            fsal_dirent_t * p_pdirent,   /* OUT */
-                           gpfsfsal_cookie_t * p_end_position,      /* OUT */
+                           fsal_cookie_t * end_position,      /* OUT */
                            fsal_count_t * p_nb_entries, /* OUT */
                            fsal_boolean_t * p_end_of_dir        /* OUT */
     )
@@ -158,6 +160,9 @@ fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
   struct linux_dirent *dp = NULL;
   int bpos = 0;
   int tmpfd = 0;
+  gpfsfsal_dir_t *p_dir_descriptor = (gpfsfsal_dir_t *)dir_desc;
+  gpfsfsal_cookie_t start_position;
+  gpfsfsal_cookie_t *p_end_position = (gpfsfsal_cookie_t *)end_position;
 
   char d_type;
   struct stat buffstat;
@@ -179,6 +184,7 @@ fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
   /***************************/
   /* seek into the directory */
   /***************************/
+  start_position.data.cookie = (off_t)startposition.data;
   errno = 0;
   if(start_position.data.cookie == 0)
     {
@@ -316,7 +322,7 @@ fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
               p_pdirent[*p_nb_entries].attributes.asked_attributes = get_attr_mask;
 
               st = GPFSFSAL_getattrs(&(p_pdirent[*p_nb_entries].handle),
-                                 &p_dir_descriptor->context,
+				     (fsal_op_context_t *)&p_dir_descriptor->context,
                                  &p_pdirent[*p_nb_entries].attributes);
               if(FSAL_IS_ERROR(st))
                 {
@@ -325,12 +331,13 @@ fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
                                 FSAL_ATTR_RDATTR_ERR);
                 }
             }
-          p_pdirent[*p_nb_entries].cookie.data.cookie = dp->d_off;
+          ((gpfsfsal_cookie_t *)(&p_pdirent[*p_nb_entries].cookie))->data.cookie = dp->d_off;
           p_pdirent[*p_nb_entries].nextentry = NULL;
           if(*p_nb_entries)
             p_pdirent[*p_nb_entries - 1].nextentry = &(p_pdirent[*p_nb_entries]);
 
-          (*p_end_position) = p_pdirent[*p_nb_entries].cookie;
+	  memcpy((char *)p_end_position, (char *)&p_pdirent[*p_nb_entries].cookie,
+                 sizeof(gpfsfsal_cookie_t));
           (*p_nb_entries)++;
 
         }                       /* for */
@@ -351,7 +358,7 @@ fsal_status_t GPFSFSAL_readdir(gpfsfsal_dir_t * p_dir_descriptor,       /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_closedir(gpfsfsal_dir_t * p_dir_descriptor       /* IN */
+fsal_status_t GPFSFSAL_closedir(fsal_dir_t * p_dir_descriptor       /* IN */
     )
 {
 
@@ -361,12 +368,12 @@ fsal_status_t GPFSFSAL_closedir(gpfsfsal_dir_t * p_dir_descriptor       /* IN */
   if(!p_dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_closedir);
 
-  rc = close(p_dir_descriptor->fd);
+  rc = close(((gpfsfsal_dir_t *)p_dir_descriptor)->fd);
   if(rc != 0)
     Return(posix2fsal_error(errno), errno, INDEX_FSAL_closedir);
 
   /* fill dir_descriptor with zeros */
-  memset(p_dir_descriptor, 0, sizeof(fsal_dir_t));
+  memset(p_dir_descriptor, 0, sizeof(gpfsfsal_dir_t));
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_closedir);
 

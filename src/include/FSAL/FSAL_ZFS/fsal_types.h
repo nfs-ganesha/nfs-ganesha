@@ -58,17 +58,6 @@
 
 #include "fsal_glue_const.h"
 
-#define fsal_handle_t zfsfsal_handle_t
-#define fsal_op_context_t zfsfsal_op_context_t
-#define fsal_file_t zfsfsal_file_t
-#define fsal_dir_t zfsfsal_dir_t
-#define fsal_export_context_t zfsfsal_export_context_t
-#define fsal_lockdesc_t zfsfsal_lockdesc_t
-#define fsal_cookie_t zfsfsal_cookie_t
-#define fs_specific_initinfo_t zfsfs_specific_initinfo_t
-#define fsal_cred_t zfsfsal_cred_t
-
-
 typedef union
 {
   struct
@@ -84,15 +73,7 @@ typedef union
 
 typedef struct
 {
-  creden_t cred;
-  int ticket_handle;
-  time_t ticket_renewal_time;
-
-} zfsfsal_cred_t;
-
-typedef struct
-{
-  fsal_handle_t root_handle;
+  zfsfsal_handle_t root_handle;
   libzfswrap_vfs_t *p_vfs;
 
 } zfsfsal_export_context_t;
@@ -101,14 +82,14 @@ typedef struct
 
 typedef struct
 {
-  fsal_export_context_t *export_context; /* Must be the first member of this structure */
-  fsal_cred_t user_credential;
+  zfsfsal_export_context_t *export_context; /* Must be the first member of this structure */
+  struct user_credentials credential;
   int thread_connect_array[32];
 
 } zfsfsal_op_context_t;
 
-#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.cred.uid )
-#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.cred.gid )
+#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
+#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
 typedef struct
 {
@@ -158,6 +139,6 @@ typedef struct
 
 } zfsfs_specific_initinfo_t;
 
-typedef void *fsal_lockdesc_t;
+typedef void *zfsfsal_lockdesc_t;
 
 #endif                          /* _FSAL_TYPES_SPECIFIC_H */

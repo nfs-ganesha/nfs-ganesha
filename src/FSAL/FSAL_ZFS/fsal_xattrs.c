@@ -265,8 +265,8 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
  * \param xattr_cookie xattr's cookie (as returned by listxattrs).
  * \param p_attrs xattr's attributes.
  */
-fsal_status_t ZFSFSAL_GetXAttrAttrs(zfsfsal_handle_t * p_objecthandle,        /* IN */
-                                    zfsfsal_op_context_t * p_context, /* IN */
+fsal_status_t ZFSFSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
+                                    fsal_op_context_t * p_context, /* IN */
                                     unsigned int xattr_id, /* IN */
                                     fsal_attrib_list_t * p_attrs
                                           /**< IN/OUT xattr attributes (if supported) */
@@ -327,9 +327,9 @@ fsal_status_t ZFSFSAL_GetXAttrAttrs(zfsfsal_handle_t * p_objecthandle,        /*
  * \param p_nb_returned the number of xattr entries actually stored in xattrs_tab.
  * \param end_of_list this boolean indicates that the end of xattrs list has been reached.
  */
-fsal_status_t ZFSFSAL_ListXAttrs(zfsfsal_handle_t * p_objecthandle,   /* IN */
+fsal_status_t ZFSFSAL_ListXAttrs(fsal_handle_t * obj_handle,   /* IN */
                               unsigned int cookie,      /* IN */
-                              zfsfsal_op_context_t * p_context,    /* IN */
+                              fsal_op_context_t * p_context,    /* IN */
                               fsal_xattrent_t * xattrs_tab,     /* IN/OUT */
                               unsigned int xattrs_tabsize,      /* IN */
                               unsigned int *p_nb_returned,      /* OUT */
@@ -341,6 +341,8 @@ fsal_status_t ZFSFSAL_ListXAttrs(zfsfsal_handle_t * p_objecthandle,   /* IN */
   fsal_status_t st;
   fsal_attrib_list_t file_attrs;
   int rc;
+  creden_t cred;
+  zfsfsal_handle_t *p_objecthandle = (zfsfsal_handle_t *)obj_handle;
 
   /* sanity checks */
   if(!p_objecthandle || !p_context || !xattrs_tab || !p_nb_returned || !end_of_list)
@@ -354,7 +356,7 @@ fsal_status_t ZFSFSAL_ListXAttrs(zfsfsal_handle_t * p_objecthandle,   /* IN */
   /* don't retrieve unsuipported attributes */
   file_attrs.asked_attributes &= global_fs_info.supported_attrs;
 
-  st = ZFSFSAL_getattrs(p_objecthandle, p_context, &file_attrs);
+  st = ZFSFSAL_getattrs(obj_handle, p_context, &file_attrs);
 
   if(FSAL_IS_ERROR(st))
     Return(st.major, st.minor, INDEX_FSAL_ListXAttrs);
@@ -408,8 +410,12 @@ fsal_status_t ZFSFSAL_ListXAttrs(zfsfsal_handle_t * p_objecthandle,   /* IN */
   /* List the extended attributes */
   char *psz_buffer;
   size_t i_size;
+
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
+
   TakeTokenFSCall();
-  rc = libzfswrap_listxattr(p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_listxattr(p_vfs, &cred,
                             p_objecthandle->data.zfs_handle, &psz_buffer, &i_size);
   ReleaseTokenFSCall();
   ZFSFSAL_VFS_Unlock();
@@ -478,16 +484,19 @@ static int xattr_id_to_name(libzfswrap_vfs_t *p_vfs, zfsfsal_op_context_t *p_con
   size_t i_size;
   size_t len;
   int rc;
+  creden_t cred;
 
   if(xattr_id < XATTR_COUNT)
     return ERR_FSAL_INVAL;
 
   index = xattr_id - XATTR_COUNT;
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
 
   /* get xattrs */
 
   TakeTokenFSCall();
-  rc = libzfswrap_listxattr(p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_listxattr(p_vfs, &cred,
                             p_objecthandle->data.zfs_handle, &psz_buffer, &i_size);
   ReleaseTokenFSCall();
 
@@ -517,10 +526,14 @@ static int xattr_name_to_id(libzfswrap_vfs_t *p_vfs, zfsfsal_op_context_t *p_con
   unsigned int i;
   char *psz_buffer, *ptr;
   size_t i_size;
+  creden_t cred;
+
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
 
   /* get xattrs */
   TakeTokenFSCall();
-  int rc = libzfswrap_listxattr(p_vfs, &p_context->user_credential.cred,
+  int rc = libzfswrap_listxattr(p_vfs, &cred,
                                 p_objecthandle->data.zfs_handle, &psz_buffer, &i_size);
   ReleaseTokenFSCall();
 
@@ -550,9 +563,9 @@ static int xattr_name_to_id(libzfswrap_vfs_t *p_vfs, zfsfsal_op_context_t *p_con
  * \param buffer_size size of the buffer where the xattr value is to be stored.
  * \param p_output_size size of the data actually stored into the buffer.
  */
-fsal_status_t ZFSFSAL_GetXAttrValueById(zfsfsal_handle_t * p_objecthandle,    /* IN */
+fsal_status_t ZFSFSAL_GetXAttrValueById(fsal_handle_t * obj_handle,    /* IN */
                                      unsigned int xattr_id,     /* IN */
-                                     zfsfsal_op_context_t * p_context,     /* IN */
+                                     fsal_op_context_t * context,     /* IN */
                                      caddr_t buffer_addr,       /* IN/OUT */
                                      size_t buffer_size,        /* IN */
                                      size_t * p_output_size     /* OUT */
@@ -560,6 +573,8 @@ fsal_status_t ZFSFSAL_GetXAttrValueById(zfsfsal_handle_t * p_objecthandle,    /*
 {
   int rc;
   char buff[MAXNAMLEN];
+  zfsfsal_handle_t *p_objecthandle = (zfsfsal_handle_t *)obj_handle;
+  zfsfsal_op_context_t *p_context = (zfsfsal_op_context_t *)context;
 
   /* sanity checks */
   if(!p_objecthandle || !p_context || !p_output_size || !buffer_addr)
@@ -585,14 +600,17 @@ fsal_status_t ZFSFSAL_GetXAttrValueById(zfsfsal_handle_t * p_objecthandle,    /*
   {
     char psz_attr_name[MAXPATHLEN];
     char *psz_value;
+    creden_t cred;
 
     if((rc = xattr_id_to_name(p_vfs, p_context, p_objecthandle, xattr_id, psz_attr_name)))
     {
       ZFSFSAL_VFS_Unlock();
       Return(rc, errno, INDEX_FSAL_GetXAttrValue);
     }
+    cred.uid = p_context->credential.user;
+    cred.gid = p_context->credential.group;
 
-    if((rc = libzfswrap_getxattr(p_vfs, &p_context->user_credential.cred,
+    if((rc = libzfswrap_getxattr(p_vfs, &cred,
                                  p_objecthandle->data.zfs_handle, psz_attr_name, &psz_value)))
     {
       ZFSFSAL_VFS_Unlock();
@@ -635,15 +653,17 @@ fsal_status_t ZFSFSAL_GetXAttrValueById(zfsfsal_handle_t * p_objecthandle,    /*
  *   
  *   \return ERR_FSAL_NO_ERROR if xattr_name exists, ERR_FSAL_NOENT otherwise
  */
-fsal_status_t ZFSFSAL_GetXAttrIdByName(zfsfsal_handle_t * p_objecthandle,     /* IN */
+fsal_status_t ZFSFSAL_GetXAttrIdByName(fsal_handle_t * obj_handle,     /* IN */
                                     const fsal_name_t * xattr_name,     /* IN */
-                                    zfsfsal_op_context_t * p_context,      /* IN */
+                                    fsal_op_context_t * context,      /* IN */
                                     unsigned int *pxattr_id     /* OUT */
     )
 {
   unsigned int index;
   int rc;
   int found = FALSE;
+  zfsfsal_handle_t *p_objecthandle = (zfsfsal_handle_t *)obj_handle;
+  zfsfsal_op_context_t *p_context = (zfsfsal_op_context_t *)context;
 
   /* sanity checks */
   if(!p_objecthandle || !xattr_name)
@@ -697,9 +717,9 @@ fsal_status_t ZFSFSAL_GetXAttrIdByName(zfsfsal_handle_t * p_objecthandle,     /*
  * \param buffer_size size of the buffer where the xattr value is to be stored.
  * \param p_output_size size of the data actually stored into the buffer.
  */
-fsal_status_t ZFSFSAL_GetXAttrValueByName(zfsfsal_handle_t * p_objecthandle,  /* IN */
+fsal_status_t ZFSFSAL_GetXAttrValueByName(fsal_handle_t * obj_handle,  /* IN */
                                           const fsal_name_t * xattr_name,  /* IN */
-                                          zfsfsal_op_context_t * p_context,   /* IN */
+                                          fsal_op_context_t * p_context,   /* IN */
                                           caddr_t buffer_addr,     /* IN/OUT */
                                           size_t buffer_size,      /* IN */
                                           size_t * p_output_size   /* OUT */
@@ -708,6 +728,8 @@ fsal_status_t ZFSFSAL_GetXAttrValueByName(zfsfsal_handle_t * p_objecthandle,  /*
   unsigned int index;
   char *psz_value;
   int rc;
+  creden_t cred;
+  zfsfsal_handle_t *p_objecthandle = (zfsfsal_handle_t *)obj_handle;
 
   /* sanity checks */
   if(!p_objecthandle || !p_context || !p_output_size || !buffer_addr || !xattr_name)
@@ -720,7 +742,7 @@ fsal_status_t ZFSFSAL_GetXAttrValueByName(zfsfsal_handle_t * p_objecthandle,  /*
          && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
         {
 
-          return ZFSFSAL_GetXAttrValueById(p_objecthandle, index, p_context, buffer_addr,
+          return ZFSFSAL_GetXAttrValueById((fsal_handle_t *)p_objecthandle, index, p_context, buffer_addr,
                                            buffer_size, p_output_size);
         }
     }
@@ -732,9 +754,11 @@ fsal_status_t ZFSFSAL_GetXAttrValueByName(zfsfsal_handle_t * p_objecthandle,  /*
     ZFSFSAL_VFS_Unlock();
     Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_GetXAttrValue);
   }
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
 
   TakeTokenFSCall();
-  if((rc = libzfswrap_getxattr(p_vfs, &p_context->user_credential.cred,
+  if((rc = libzfswrap_getxattr(p_vfs, &cred,
                                p_objecthandle->data.zfs_handle, xattr_name->name, &psz_value)))
   {
     ZFSFSAL_VFS_Unlock();
@@ -767,9 +791,9 @@ static void chomp_attr_value(char *str, size_t size)
     str[len - 1] = '\0';
 }
 
-fsal_status_t ZFSFSAL_SetXAttrValue(zfsfsal_handle_t * p_objecthandle,        /* IN */
+fsal_status_t ZFSFSAL_SetXAttrValue(fsal_handle_t * obj_handle,        /* IN */
                                  const fsal_name_t * xattr_name,        /* IN */
-                                 zfsfsal_op_context_t * p_context, /* IN */
+                                 fsal_op_context_t * p_context, /* IN */
                                  caddr_t buffer_addr,   /* IN */
                                  size_t buffer_size,    /* IN */
                                  int create     /* IN */
@@ -777,6 +801,8 @@ fsal_status_t ZFSFSAL_SetXAttrValue(zfsfsal_handle_t * p_objecthandle,        /*
 {
   //@TODO: use the create parameter ?
   int rc;
+  creden_t cred;
+  zfsfsal_handle_t * p_objecthandle = (zfsfsal_handle_t *)obj_handle;
 
   /* Hook to prevent any modification in the snapshots */
   if(p_objecthandle->data.i_snap != 0)
@@ -784,9 +810,11 @@ fsal_status_t ZFSFSAL_SetXAttrValue(zfsfsal_handle_t * p_objecthandle,        /*
 
   /* Remove trailing '\n', if any */
   chomp_attr_value((char*)buffer_addr, buffer_size);
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
 
   TakeTokenFSCall();
-  rc = libzfswrap_setxattr(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_setxattr(((zfsfsal_op_context_t *)p_context)->export_context->p_vfs, &cred,
                            p_objecthandle->data.zfs_handle, xattr_name->name, (char*)buffer_addr);
   ReleaseTokenFSCall();
 
@@ -796,9 +824,9 @@ fsal_status_t ZFSFSAL_SetXAttrValue(zfsfsal_handle_t * p_objecthandle,        /*
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_SetXAttrValue);
 }
 
-fsal_status_t ZFSFSAL_SetXAttrValueById(zfsfsal_handle_t * p_objecthandle,    /* IN */
+fsal_status_t ZFSFSAL_SetXAttrValueById(fsal_handle_t * obj_handle,    /* IN */
                                      unsigned int xattr_id,     /* IN */
-                                     zfsfsal_op_context_t * p_context,     /* IN */
+                                     fsal_op_context_t * context,     /* IN */
                                      caddr_t buffer_addr,       /* IN */
                                      size_t buffer_size /* IN */
     )
@@ -806,6 +834,8 @@ fsal_status_t ZFSFSAL_SetXAttrValueById(zfsfsal_handle_t * p_objecthandle,    /*
   int rc;
   char psz_name[FSAL_MAX_NAME_LEN];
   fsal_name_t attr_name;
+  zfsfsal_handle_t * p_objecthandle = (zfsfsal_handle_t *)obj_handle;
+  zfsfsal_op_context_t *p_context = (zfsfsal_op_context_t *)context;
 
   /* Hook to prevent any modification in the snapshots */
   if(p_objecthandle->data.i_snap != 0)
@@ -822,7 +852,7 @@ fsal_status_t ZFSFSAL_SetXAttrValueById(zfsfsal_handle_t * p_objecthandle,    /*
 
   FSAL_str2name(psz_name, FSAL_MAX_NAME_LEN, &attr_name);
 
-  return ZFSFSAL_SetXAttrValue(p_objecthandle, &attr_name, p_context,
+  return ZFSFSAL_SetXAttrValue(obj_handle, &attr_name, context,
                                buffer_addr, buffer_size, FALSE);
 }
 
@@ -833,12 +863,15 @@ fsal_status_t ZFSFSAL_SetXAttrValueById(zfsfsal_handle_t * p_objecthandle,    /*
  * \param p_context pointer to the current security context.
  * \param xattr_id xattr's id
  */
-fsal_status_t ZFSFSAL_RemoveXAttrById(zfsfsal_handle_t * p_objecthandle,      /* IN */
-                                   zfsfsal_op_context_t * p_context,       /* IN */
+fsal_status_t ZFSFSAL_RemoveXAttrById(fsal_handle_t * obj_handle,      /* IN */
+                                   fsal_op_context_t * context,       /* IN */
                                    unsigned int xattr_id)       /* IN */
 {
   int rc;
+  creden_t cred;
   char psz_name[FSAL_MAX_NAME_LEN];
+  zfsfsal_handle_t * p_objecthandle = (zfsfsal_handle_t *)obj_handle;
+  zfsfsal_op_context_t *p_context = (zfsfsal_op_context_t *)context;
 
   /* Hook to prevent any modification in the snapshots */
   if(p_objecthandle->data.i_snap != 0)
@@ -848,8 +881,11 @@ fsal_status_t ZFSFSAL_RemoveXAttrById(zfsfsal_handle_t * p_objecthandle,      /*
                             xattr_id, psz_name)))
     Return(rc, 0, INDEX_FSAL_SetXAttrValue);
 
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
+
   TakeTokenFSCall();
-  rc = libzfswrap_removexattr(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_removexattr(p_context->export_context->p_vfs, &cred,
                               p_objecthandle->data.zfs_handle, psz_name);
   ReleaseTokenFSCall();
 
@@ -865,18 +901,22 @@ fsal_status_t ZFSFSAL_RemoveXAttrById(zfsfsal_handle_t * p_objecthandle,      /*
  * \param p_context pointer to the current security context.
  * \param xattr_name xattr's name
  */
-fsal_status_t ZFSFSAL_RemoveXAttrByName(zfsfsal_handle_t * p_objecthandle,    /* IN */
-                                     zfsfsal_op_context_t * p_context,     /* IN */
+fsal_status_t ZFSFSAL_RemoveXAttrByName(fsal_handle_t * obj_handle,    /* IN */
+                                     fsal_op_context_t * p_context,     /* IN */
                                      const fsal_name_t * xattr_name)    /* IN */
 {
   int rc;
+  creden_t cred;
+  zfsfsal_handle_t * p_objecthandle = (zfsfsal_handle_t *)obj_handle;
 
   /* Hook to prevent any modification in the snapshots */
   if(p_objecthandle->data.i_snap != 0)
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_SetXAttrValue);
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
 
   TakeTokenFSCall();
-  rc = libzfswrap_removexattr(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_removexattr(((zfsfsal_op_context_t *)p_context)->export_context->p_vfs, &cred,
                               p_objecthandle->data.zfs_handle, xattr_name->name);
   ReleaseTokenFSCall();
 

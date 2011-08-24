@@ -78,15 +78,6 @@ typedef struct fsal_handle__
 
 } fsal_handle_t;
 
-typedef struct fsal_cred__
-{
-  int user;
-  int group;
-  int ticket_handle;
-  time_t ticket_renewal_time;
-
-} fsal_cred_t;
-
 typedef struct fsal_export_context__
 {
   int filesystem_id;
@@ -102,7 +93,7 @@ typedef struct fsal_op_context__
 {
   fsal_export_context_t *export_context;        /* Must be the first entry in this structure */
 
-  fsal_cred_t user_credential;
+  struct user_credentials credential;
   int thread_connect_array[32];
 
 } fsal_op_context_t;

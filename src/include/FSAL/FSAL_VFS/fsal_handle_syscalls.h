@@ -35,7 +35,7 @@
 #ifdef LINUX
 #ifndef MAX_HANDLE_SZ
 
-/* syscalls introduced in 2.6.39 and enabled in glibc 2.14 
+/* syscalls introduced in 2.6.39 and enabled in glibc 2.14
  * if we are not building against 2.14, create our own versions
  * as inlines. Glibc versions are externs to glibc...
  */
