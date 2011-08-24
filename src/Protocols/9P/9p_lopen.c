@@ -82,7 +82,7 @@ int _9p_lopen( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "TLOPEN: tag=%u fid=%u mode=0x%x",
             (u32)*msgtag, *fid, *mode  ) ;
 
-   if( ( pfid = _9p_hash_fid_get( preq9p->pconn, 
+   if( ( pfid = _9p_hash_fid_get( &preq9p->conn, 
                                   *fid,
                                   &rc ) ) == NULL )
    {

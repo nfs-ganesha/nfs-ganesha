@@ -275,8 +275,6 @@ typedef struct _9p_param__
 
 typedef struct _9p_conn__
 {
-  fd_set          fidset ; /* fd_set is used to keep track of which fid is set or not */
-  pthread_mutex_t lock ; 
   long int        sockfd ;
   struct timeval  birth;  /* This is useful if same sockfd is reused on socket's close/open  */
 } _9p_conn_t ;
@@ -305,7 +303,7 @@ typedef struct _9p_fid__
 typedef struct _9p_request_data__
 {
   char         _9pmsg[_9P_MSG_SIZE] ;
-  _9p_conn_t * pconn ; 
+  _9p_conn_t   conn ; 
 } _9p_request_data_t ;
 
 typedef int (*_9p_function_t) (_9p_request_data_t * preq9p, 
@@ -450,12 +448,6 @@ else                                                  \
 int _9p_read_conf( config_file_t   in_config,
                    _9p_parameter_t *pparam ) ;
 int _9p_init( _9p_parameter_t * pparam ) ;
-int _9p_take_fid( _9p_conn_t * pconn, 
-                   u32        * pfid ) ;
-int _9p_release_fid( _9p_conn_t * pconn, 
-                     u32        * pfid ) ;
-int _9p_test_fid( _9p_conn_t * pconn, 
-                  u32        * pfid ) ;
 
 /* Tools functions */
 int _9p_tools_get_fsal_op_context_by_uid( u32 uid, _9p_fid_t * pfid ) ;

@@ -94,14 +94,6 @@ int _9p_attach( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "TATTACH: tag=%u fid=%u afid=%d uname='%.*s' aname='%.*s' n_uname=%d", 
             (u32)*msgtag, *fid, *afid, (int)*uname_len, uname_str, (int)*aname_len, aname_str, *n_aname ) ;
 
-  /* Try to attach */
-  if( _9p_take_fid( preq9p->pconn, fid ) )
-    {
-      err = EINVAL ;
-      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
-      return rc ;
-    }
-
   /*
    * Find the export for the aname (using as well Path or Tag ) 
    */
@@ -223,7 +215,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
   _9p_tools_fsal_attr2stat( &fsalattr, &pfid->attr ) ;
 
   /* Had the new fid to the hash */
-  if( ( err = _9p_hash_fid_update( preq9p->pconn, pfid ) ) != 0 )
+  if( ( err = _9p_hash_fid_update( &preq9p->conn, pfid ) ) != 0 )
    {
      P( pwkrdata->_9pfid_pool_mutex ) ;
      ReleaseToPool( pfid, &pwkrdata->_9pfid_pool ) ;

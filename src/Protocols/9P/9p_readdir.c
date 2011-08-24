@@ -106,7 +106,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "TREADDIR: tag=%u fid=%u offset=%llu count=%u",
             (u32)*msgtag, *fid, (unsigned long long)*offset, *count  ) ;
 
-   if( ( pfid = _9p_hash_fid_get( preq9p->pconn, 
+   if( ( pfid = _9p_hash_fid_get( &preq9p->conn, 
                                   *fid,
                                   &rc ) ) == NULL )
    {

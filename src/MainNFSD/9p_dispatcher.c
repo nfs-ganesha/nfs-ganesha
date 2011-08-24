@@ -77,7 +77,7 @@ void DispatchWork9P( request_data_t *preq, unsigned int worker_index)
 
   LogDebug(COMPONENT_DISPATCH,
            "Awaking Worker Thread #%u for 9P request %p, tcpsock=%lu",
-           worker_index, preq, preq->rcontent._9p.pconn->sockfd);
+           worker_index, preq, preq->rcontent._9p.conn.sockfd);
 
   P(workers_data[worker_index].request_mutex);
   P(workers_data[worker_index].request_pool_mutex);
@@ -217,13 +217,7 @@ void * _9p_socket_thread( void * Arg )
 
   /* Init the _9p_conn_t structure */
   _9p_conn.sockfd = tcp_sock ;
-  pthread_mutex_init( &_9p_conn.lock, NULL ) ;
  
-  /* Be careful : in fidset, bit==1 means that the fid is available, 0 means that this fid is busy 
-   * this is the opposite of the way 'select' works on fd_set. Because of this, all bits in the fd_set
-   * are initialised to 1, so each byte to 0xF */
-  FD_ZERO( &_9p_conn.fidset ) ;
-
   if( gettimeofday( &_9p_conn.birth, NULL ) == -1 )
    LogFatal( COMPONENT_9P, "Can get connection's time of birth" ) ;
 
@@ -311,7 +305,7 @@ void * _9p_socket_thread( void * Arg )
         /* Prepare to read the message */
         preq->rtype = _9P_REQUEST ;
         _9pmsg = preq->rcontent._9p._9pmsg ;
-        preq->rcontent._9p.pconn = &_9p_conn ;
+        memcpy( (char *)&preq->rcontent._9p.conn, (char *)&_9p_conn, sizeof( _9p_conn_t ) ) ;
 
         /* An incoming 9P request: the msg has a 4 bytes header showing the size of the msg including the header */
         if( (readlen = recv( fds[0].fd, _9pmsg ,_9P_HDR_SIZE, 0) == _9P_HDR_SIZE ) )

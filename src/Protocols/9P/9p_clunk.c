@@ -76,7 +76,7 @@ int _9p_clunk( _9p_request_data_t * preq9p,
 
   LogDebug( COMPONENT_9P, "TCLUNK: tag=%u fid=%u", (u32)*msgtag, *fid ) ;
 
-  if( !_9p_hash_fid_del( preq9p->pconn, *fid, &pfid ) )
+  if( !_9p_hash_fid_del( &preq9p->conn, *fid, &pfid ) )
    {
      if( pfid != NULL )
       {
@@ -90,13 +90,11 @@ int _9p_clunk( _9p_request_data_t * preq9p,
       }
    }
   else
-   LogEvent( COMPONENT_9P, "TCLUNK: Impossible to delete fid=%u", *fid ) ;
-
-  if( _9p_release_fid( preq9p->pconn, fid ) == -1 )
    {
-     err = EINVAL ;
-     rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
-     return rc ;
+      LogEvent( COMPONENT_9P, "TCLUNK: Impossible to delete fid=%u", *fid ) ;
+      err = EINVAL ;
+      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+      return rc ;
    }
 
   /* Build the reply */

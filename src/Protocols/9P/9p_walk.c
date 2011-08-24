@@ -100,7 +100,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
                 (u32)*msgtag, *fid, *newfid, *(wnames_len[i]), wnames_str[i] ) ;
    }
 
-  if( ( pfid = _9p_hash_fid_get( preq9p->pconn, 
+  if( ( pfid = _9p_hash_fid_get( &preq9p->conn, 
                                  *fid,
                                  &rc ) ) == NULL )
    {
@@ -207,7 +207,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
    }
 
   /* Had the new fid to the hash */
-  if( ( err = _9p_hash_fid_update( preq9p->pconn, pnewfid ) ) != 0 )
+  if( ( err = _9p_hash_fid_update( &preq9p->conn, pnewfid ) ) != 0 )
    {
      P( pwkrdata->_9pfid_pool_mutex ) ;
      ReleaseToPool( pnewfid, &pwkrdata->_9pfid_pool ) ;

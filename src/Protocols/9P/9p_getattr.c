@@ -103,7 +103,7 @@ int _9p_getattr( _9p_request_data_t * preq9p,
             (u32)*msgtag, *fid, (unsigned long long)*request_mask ) ;
 
 
-  if( ( pfid = _9p_hash_fid_get( preq9p->pconn, 
+  if( ( pfid = _9p_hash_fid_get( &preq9p->conn, 
                                  *fid,
                                  &rc ) ) == NULL )
    {

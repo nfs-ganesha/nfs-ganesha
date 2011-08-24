@@ -185,7 +185,7 @@ int _9p_hash_fid_del( _9p_conn_t * pconn,
 {
    _9p_hash_fid_key_t key ;
   hash_buffer_t buffkey;
-  hash_buffer_t old_key, old_value;
+  //hash_buffer_t old_key, old_value;
 
   int rc = 0 ; 
 
@@ -202,11 +202,12 @@ int _9p_hash_fid_del( _9p_conn_t * pconn,
 
   HashTable_Print( ht_fid ) ;
 
-  if( (rc = HashTable_Del( ht_fid, &buffkey, &old_key, &old_value)) != HASHTABLE_SUCCESS )
+  //if( (rc = HashTable_Del( ht_fid, &buffkey, &old_key, &old_value)) != HASHTABLE_SUCCESS )
+  if( (rc = HashTable_Del( ht_fid, &buffkey, NULL, NULL )) != HASHTABLE_SUCCESS )
    return -rc ;
 
-  if( ppoldfid != NULL )
-    *ppoldfid = (_9p_fid_t *)old_value.pdata ;
+  //if( ppoldfid != NULL )
+    //*ppoldfid = (_9p_fid_t *)old_value.pdata ;
 
   HashTable_Print( ht_fid ) ;
 
@@ -225,49 +226,4 @@ int _9p_hash_fid_init( _9p_parameter_t * pparam )
   return 0 ;
 } /* _9p_hash_fid_init */
 
-int _9p_take_fid( _9p_conn_t * pconn, 
-                   u32        * pfid )
-{
-
-  if( !pconn || !pfid )
-   return -1 ;
-
-  /* Set the fid as used */
-  P( pconn->lock ) ;
-  FD_SET( *pfid,  &pconn->fidset ) ;
-  V( pconn->lock ) ;
-
-  return 0 ; 
-} /* _9p_take_fid */
-
-int _9p_test_fid(  _9p_conn_t * pconn, 
-                   u32        * pfid )
-{
-  int rc = 0 ;
-
-  if( !pconn || !pfid )
-   return -1 ;
-
-  /* Set the fid as used */
-  P( pconn->lock ) ;
-  rc = FD_SET( *pfid,  &pconn->fidset ) ;
-  V( pconn->lock ) ;
-
-  return rc ; 
-} /* _9p_test_fid */
-
-
-int _9p_release_fid( _9p_conn_t * pconn, 
-                     u32        * pfid )
-{
-  if( !pconn || !pfid )
-   return -1 ;
-
-  /* Set the fid as available */
-  P( pconn->lock ) ;
-  FD_CLR( *pfid,  &pconn->fidset ) ;
-  V( pconn->lock ) ;
-  
-  return 0 ;
-} /* _9p_release_fid */
 
