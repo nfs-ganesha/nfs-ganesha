@@ -48,6 +48,7 @@ typedef uint64_t u64;
 #define _9P_PORT 564
 #define _9P_SEND_BUFFER_SIZE 65560
 #define _9P_RECV_BUFFER_SIZE 65560
+#define _9P_MAXDIRCOUNT 2000 /* Must be bigger than _9P_SEND_BUFFER_SIZE / 40 */
 
 #define CONF_LABEL_9P "_9P"
 
@@ -341,6 +342,20 @@ do                                             \
   __cursor += sizeof( __type ) ;               \
 } while( 0 ) 
 
+#define _9p_setvalue( __cursor, __var, __type ) \
+do                                             \
+{                                              \
+  *((__type *)__cursor) = __var ;              \
+  __cursor += sizeof( __type ) ;               \
+} while( 0 ) 
+
+#define _9p_savepos( __cursor, __savedpos, __type ) \
+do                                                  \
+{                                                   \
+  __savedpos = __cursor ;                           \
+  __cursor += sizeof( __type ) ;                    \
+} while ( 0 ) 
+
 /* Insert a qid */
 #define _9p_setqid( __cursor, __qid )  \
 do                                     \
@@ -352,7 +367,6 @@ do                                     \
   *((u64 *)__cursor) = __qid.path ;    \
   __cursor += sizeof( u64 ) ;          \
 } while( 0 ) 
-
 
 /* Insert a non-null terminated string */
 #define _9p_setstr( __cursor, __len, __str ) \
