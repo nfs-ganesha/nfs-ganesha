@@ -73,6 +73,10 @@ int _9p_walk( _9p_request_data_t * preq9p,
   int rc = 0 ;
   u32 err = 0 ;
 
+  fsal_name_t name ; 
+  fsal_attrib_list_t fsalattr ;
+  cache_inode_status_t cache_status ;
+
   _9p_fid_t * pfid = NULL ;
   _9p_fid_t * pnewfid = NULL ;
 
@@ -121,10 +125,76 @@ int _9p_walk( _9p_request_data_t * preq9p,
       /* Set the new fid id */
       pnewfid->fid = *newfid ;
    }
+  else if( *nwname == 1 )
+   {
+      pnewfid->fid = *newfid ;
+      pnewfid->fsal_op_context = pfid->fsal_op_context ;
+      pnewfid->pexport = pfid->pexport ;
+      /* the walk is in fact a lookup */
+      snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *(wnames_len[i]), wnames_str[i] ) ;
+      if( ( pnewfid->pentry = cache_inode_lookup( pfid->pentry,
+                                                  &name,
+                                                  &fsalattr,
+                                                  pwkrdata->ht,
+                                                  &pwkrdata->cache_inode_client,
+                                                  &pfid->fsal_op_context, 
+                                                  &cache_status ) ) == NULL )
+      {
+        err = _9p_tools_errno( cache_status ) ; ;
+        rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+        return rc ;
+      }
+
+     _9p_tools_fsal_attr2stat( &fsalattr, &pnewfid->attr ) ;
+
+     /* Build the qid */
+     pnewfid->qid.version = 0 ; /* No cache, we want the client to stay synchronous with the server */
+     switch( pfid->pentry->internal_md.type )
+      {
+        case REGULAR_FILE:
+          pnewfid->qid.path = (u64)pnewfid->pentry->object.file.attributes.fileid ;
+          pnewfid->qid.type = _9P_QTFILE ;
+	  break ;
+
+        case CHARACTER_FILE:
+        case BLOCK_FILE:
+        case SOCKET_FILE:
+        case FIFO_FILE:
+          pnewfid->qid.path = (u64)pnewfid->pentry->object.special_obj.attributes.fileid ;
+          pnewfid->qid.type = _9P_QTFILE ;
+	  break ;
+
+        case SYMBOLIC_LINK:
+          pnewfid->qid.path = (u64)pnewfid->pentry->object.symlink.attributes.fileid ;
+          pnewfid->qid.type = _9P_QTSYMLINK ;
+	  break ;
+
+        case DIR_CONTINUE:
+          pnewfid->qid.path = (u64)pnewfid->pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes.fileid ;
+          pnewfid->qid.type = _9P_QTDIR ;
+	  break ;
+
+        case DIR_BEGINNING:
+        case FS_JUNCTION:
+          pnewfid->qid.path = (u64)pnewfid->pentry->object.dir_begin.attributes.fileid ;
+          pnewfid->qid.type = _9P_QTDIR ;
+	  break ;
+
+        case UNASSIGNED:
+        case RECYCLED:
+        default:
+          LogMajor( COMPONENT_9P, "implementation error, you should not see this message !!!!!!" ) ;
+          err = EINVAL ;
+          rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+          return rc ;
+          break ;
+      }
+
+   }
   else
    {
- 	/* Not yet implement */
-     printf( "============> NOT YET IMPLEMENTED !!!!!!!!\n" ) ;
+     /* Not yet implement */
+     LogCrit( COMPONENT_9P, "============> NOT YET IMPLEMENTED !!!!!!!!\n" ) ;
    }
 
   /* Had the new fid to the hash */
@@ -148,8 +218,8 @@ int _9p_walk( _9p_request_data_t * preq9p,
   
   _9p_setptr( cursor, nwqid, u16 ) ;
   for( i = 0 ; i < *nwqid ; i++ )
-    {
-      /* Des choses a faire ici */
+    { 
+      _9p_setqid( cursor, pnewfid->qid ) ;
     }
 
   _9p_setendptr( cursor, preply ) ;

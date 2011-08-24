@@ -206,7 +206,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
 
      /* Get dirent name information */
      name_str = dirent_array[i].name.name ;
-     name_len = strnlen( name_str, MAXPATHLEN ) ;
+     name_len = dirent_array[i].name.len ;
  
      /* Add 13 bytes in recsize for qid + 8 bytes for offset + 1 for type + 2 for strlen = 24 bytes*/
      recsize = 24 + name_len  ;
@@ -232,7 +232,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      _9p_setstr( cursor, name_len, name_str ) ;
   
      LogDebug( COMPONENT_9P, "RREADDIR dentry: tag=%u fid=%u dentry={ off=%llu,qid=(type=%u,version=%u,path=%llu),type=%u,name=%s",
-              (u32)*msgtag, *fid ,i, *qid_type, 0, (unsigned long long)*qid_path, *qid_type, name_str) ;
+              (u32)*msgtag, *fid , (unsigned long long)i, *qid_type, 0, (unsigned long long)*qid_path, *qid_type, name_str) ;
    } /* for( i = 0 , ... ) */
 
   /* Set buffsize in previously saved position */
