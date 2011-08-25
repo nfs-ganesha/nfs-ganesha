@@ -124,9 +124,11 @@ int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
                             state_owner_t     * popen_owner,
                             char              * other);
 
-int nfs4_Check_Stateid(struct stateid4 * pstate,
-                       cache_entry_t   * pentry,
-                       clientid4         clientid);
+int nfs4_Check_Stateid(stateid4              * pstate,
+                       cache_entry_t         * pentry,
+                       clientid4               clientid,
+                       state_t              ** ppstate,
+                       cache_inode_client_t *  pclient);
 
 int nfs4_Init_state_id(nfs_state_id_parameter_t param);
 int nfs4_State_Set(char other[OTHERSIZE], state_t * pstate_data);
@@ -312,11 +314,6 @@ state_status_t state_add(cache_entry_t         * pentry,
                          cache_inode_client_t  * pclient,
                          fsal_op_context_t     * pcontext,
                          state_t              ** ppstate,
-                         state_status_t        * pstatus);
-
-state_status_t state_get(char                    other[OTHERSIZE],
-                         state_t              ** ppstate,
-                         cache_inode_client_t  * pclient,
                          state_status_t        * pstatus);
 
 state_status_t state_set(state_t              * pstate,

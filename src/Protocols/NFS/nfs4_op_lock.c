@@ -150,6 +150,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           res_LOCK4.status = NFS4ERR_INVAL;
           break;
         }
+      LogDebug(COMPONENT_NFS_V4_LOCK,
+               "LOCK failed wrong file type");
+      return res_LOCK4.status;
     }
 
   /* Lock length should not be 0 */
@@ -206,20 +209,18 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   if(arg_LOCK4.locker.new_lock_owner)
     {
-      /* New lock owner
-       * Find the open owner
-       */
-      if(state_get(arg_LOCK4.locker.locker4_u.open_owner.open_stateid.other,
-                   &pstate_open,
-                   data->pclient, &state_status) != STATE_SUCCESS)
+      /* New lock owner, Find the open owner */
+
+      /* Check stateid correctness and get pointer to state */
+      if((rc = nfs4_Check_Stateid(&arg_LOCK4.locker.locker4_u.open_owner.open_stateid,
+                                  data->current_entry,
+                                  0LL,
+                                  &pstate_open,
+                                  data->pclient)) != NFS4_OK)
         {
-          LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
-                  "LOCK failed New lock owner from open owner failed",
-                  data->current_entry,
-                  data->pcontext,
-                  NULL,
-                  &lock_desc);
-          res_LOCK4.status = NFS4ERR_STALE_STATEID;
+          res_LOCK4.status = rc;
+          LogDebug(COMPONENT_NFS_V4_LOCK,
+                   "LOCK failed nfs4_Check_Stateid for open owner");
           return res_LOCK4.status;
         }
 
@@ -233,17 +234,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
               data->pcontext,
               popen_owner,
               &lock_desc);
-
-      /* Check stateid correctness */
-      if((rc = nfs4_Check_Stateid(&arg_LOCK4.locker.locker4_u.open_owner.open_stateid,
-                                  data->current_entry,
-                                  0LL)) != NFS4_OK)
-        {
-          res_LOCK4.status = rc;
-          LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCK failed nfs4_Check_Stateid");
-          return res_LOCK4.status;
-        }
 
       /* Check is the clientid is known or not */
       if(nfs_client_id_get(arg_LOCK4.locker.locker4_u.open_owner.lock_owner.clientid,
@@ -295,15 +285,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           return res_LOCK4.status;
         }
 
-      /* Sanity check : Is this the right file ? */
-      if(pstate_open->state_pentry != data->current_entry)
-        {
-          res_LOCK4.status = NFS4ERR_BAD_STATEID;
-          LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCK failed open stateid has wrong file");
-          return res_LOCK4.status;
-        }
-
       /* Lock seqid (seqid wanted for new lock) should be 0 (see newpynfs test LOCK8c)  */
       if(arg_LOCK4.locker.locker4_u.open_owner.lock_seqid != 0)
         {
@@ -330,22 +311,23 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
        * Find the lock stateid
        * From that, get the open_owner
        */
-      if(state_get(arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.other,
-                   &plock_state,
-                   data->pclient, &state_status) != STATE_SUCCESS)
-        {
-          /* There was code here before to handle all-0 stateid, but that
-           * really doesn't apply - when we handle temporary locks for
-           * I/O operations (which is where we will see all-0 or all-1
-           * stateid, those will not come in through nfs4_op_lock.
-           */
-          if(state_status == STATE_NOT_FOUND)
-            res_LOCK4.status = NFS4ERR_STALE_STATEID;
-          else
-            res_LOCK4.status = NFS4ERR_INVAL;
 
+      /* There was code here before to handle all-0 stateid, but that
+       * really doesn't apply - when we handle temporary locks for
+       * I/O operations (which is where we will see all-0 or all-1
+       * stateid, those will not come in through nfs4_op_lock.
+       */
+
+      /* Check stateid correctness and get pointer to state */
+      if((rc = nfs4_Check_Stateid(&arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid,
+                                  data->current_entry,
+                                  0LL,
+                                  &plock_state,
+                                  data->pclient)) != NFS4_OK)
+        {
+          res_LOCK4.status = rc;
           LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCK failed existing lock owner, failed to get state");
+                   "LOCK failed nfs4_Check_Stateid for existing lock owner");
           return res_LOCK4.status;
         }
 
@@ -481,7 +463,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   return res_LOCK4.status;
                 }
             }
-
         }                       /* if( pstate_iterate != NULL ) */
       pstate_previous_iterate = pstate_iterate;
     }
@@ -548,7 +529,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
           return res_LOCK4.status;
         }
-    }
+    }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
 
   /* Now we have a lock owner and a stateid.
    * Go ahead and push lock into SAL (and FSAL).
@@ -576,6 +557,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       LogDebug(COMPONENT_NFS_V4_LOCK,
                "LOCK failed with status %s",
                state_err_str(state_status));
+
       res_LOCK4.status = nfs4_Errno_state(state_status);
 
       if(arg_LOCK4.locker.new_lock_owner)

@@ -69,6 +69,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   state_t              * pstate_found = NULL;
   cache_inode_status_t   cache_status;
   state_status_t         state_status;
+  int                    rc;
 
   memset(&res_CLOSE4, 0, sizeof(res_CLOSE4));
   resp->resop = NFS4_OP_CLOSE;
@@ -115,16 +116,16 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_CLOSE4.status;
     }
 
-  /* Get the related state */
-  if(state_get(arg_CLOSE4.open_stateid.other,
-               &pstate_found,
-               data->pclient, &state_status) != STATE_SUCCESS)
+  /* Check stateid correctness and get pointer to state */
+  if((rc = nfs4_Check_Stateid(&arg_CLOSE4.open_stateid,
+                              data->current_entry,
+                              0LL,
+                              &pstate_found,
+                              data->pclient)) != NFS4_OK)
     {
-      if(state_status == STATE_NOT_FOUND)
-        res_CLOSE4.status = NFS4ERR_BAD_STATEID;
-      else
-        res_CLOSE4.status = NFS4ERR_INVAL;
-
+      res_CLOSE4.status = rc;
+      LogDebug(COMPONENT_STATE,
+               "CLOSE failed nfs4_Check_Stateid");
       return res_CLOSE4.status;
     }
 
@@ -148,7 +149,8 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Close the file in FSAL through the cache inode */
   P_w(&data->current_entry->lock);
   if(cache_inode_close(data->current_entry,
-                       data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+                       data->pclient,
+                       &cache_status) != CACHE_INODE_SUCCESS)
     {
       V_w(&data->current_entry->lock);
 
@@ -159,7 +161,8 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   /* File is closed, release the corresponding state */
   if(state_del_by_key(arg_CLOSE4.open_stateid.other,
-                      data->pclient, &state_status) != STATE_SUCCESS)
+                      data->pclient,
+                      &state_status) != STATE_SUCCESS)
     {
       res_CLOSE4.status = nfs4_Errno_state(state_status);
       return res_CLOSE4.status;

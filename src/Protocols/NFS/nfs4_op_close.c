@@ -118,24 +118,15 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_CLOSE4.status;
     }
 
-  /* Does the stateid match ? */
+  /* Check stateid correctness and get pointer to state */
   if((rc =
-      nfs4_Check_Stateid(&arg_CLOSE4.open_stateid, data->current_entry, 0LL)) != NFS4_OK)
+      nfs4_Check_Stateid(&arg_CLOSE4.open_stateid,
+                         data->current_entry,
+                         0LL,
+                         &pstate_found,
+                         data->pclient)) != NFS4_OK)
     {
       res_CLOSE4.status = rc;
-      return res_CLOSE4.status;
-    }
-
-  /* Get the related state */
-  if(state_get(arg_CLOSE4.open_stateid.other,
-               &pstate_found,
-               data->pclient, &state_status) != STATE_SUCCESS)
-    {
-      if(state_status == STATE_NOT_FOUND)
-        res_CLOSE4.status = NFS4ERR_BAD_STATEID;
-      else
-        res_CLOSE4.status = NFS4ERR_INVAL;
-
       return res_CLOSE4.status;
     }
 

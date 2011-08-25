@@ -380,23 +380,25 @@ int nfs4_State_Del(char other[OTHERSIZE])
  *
  * nfs4_Check_Stateid
  *
- * This routine checks the availability of the stateid
+ * This routine checks the availability of the stateid and returns a pointer to it
  *
  * @param pstate [IN] pointer to the stateid to be checked.
  *
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
-                       clientid4 clientid)
+int nfs4_Check_Stateid(stateid4              * pstate,
+                       cache_entry_t         * pentry,
+                       clientid4               clientid,
+                       state_t              ** ppstate,
+                       cache_inode_client_t *  pclient)
 {
   u_int16_t         time_digest = 0;
   state_t         * pstate2;
   nfs_client_id_t   nfs_clientid;
   char              str[OTHERSIZE * 2 + 1];
 
-  if(isDebug(COMPONENT_STATE))
-    sprint_mem(str, (char *)pstate->other, OTHERSIZE);
+  *ppstate = NULL;
 
   if(pstate == NULL)
     return NFS4ERR_SERVERFAULT;
@@ -407,9 +409,25 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
   if(pentry->internal_md.type != REGULAR_FILE)
     return NFS4ERR_SERVERFAULT;
 
+  if(isDebug(COMPONENT_STATE))
+    sprint_mem(str, (char *)pstate->other, OTHERSIZE);
+
+  /* Check if stateid was made from this server instance */
+  memcpy((char *)&time_digest, pstate->other, 2);
+
+  if((u_int16_t) (ServerBootTime & 0x0000FFFF) != time_digest)
+    {
+      LogDebug(COMPONENT_STATE,
+               "Check found stale stateid %s", str);
+      return NFS4ERR_STALE_STATEID;
+    }
+
   /* Try to get the related state */
   if(!nfs4_State_Get_Pointer(pstate->other, &pstate2))
     {
+      /* stat */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET_STATE] += 1;
+
       /* State not found : return NFS4ERR_BAD_STATEID, RFC3530 page 129 */
       LogDebug(COMPONENT_STATE,
                "Check could not find state %s", str);
@@ -425,7 +443,7 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
   if(clientid == 0LL)
     {
       if(nfs_client_id_get(pstate2->state_powner->so_owner.so_nfs4_owner.so_clientid,
-         &nfs_clientid) != CLIENT_ID_SUCCESS)
+                           &nfs_clientid) != CLIENT_ID_SUCCESS)
         {
           LogDebug(COMPONENT_STATE,
                    "Check could not find clientid for state %s", str);
@@ -436,19 +454,18 @@ int nfs4_Check_Stateid(struct stateid4 *pstate, cache_entry_t * pentry,
         }
     }
 
-  /* Check if stateid was made from this server instance */
-  memcpy((char *)&time_digest, pstate->other, 2);
-
-  if((u_int16_t) (ServerBootTime & 0x0000FFFF) != time_digest)
+  /* Sanity check : Is this the right file ? */
+  if(pstate2->state_pentry != pentry)
     {
-      LogDebug(COMPONENT_STATE,
-               "Check found stale stateid %s", str);
-      return NFS4ERR_STALE_STATEID;
+      LogDebug(COMPONENT_NFS_V4_LOCK,
+               "Check found stateid %s has wrong file", str);
+      return NFS4ERR_BAD_STATEID;
     }
 
   LogFullDebug(COMPONENT_STATE,
-               "Check found valid stateid %s", str);
+               "Check found valid stateid %s - %p", str, pstate2);
 
+  *ppstate = pstate2;
   return NFS4_OK;
 }                               /* nfs4_Check_Stateid */
 

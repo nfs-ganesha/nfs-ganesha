@@ -156,20 +156,14 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
        * I set pstate_found to NULL to remember this situation later */
       pstate_found = NULL;
     }
-  /* Check for correctness of the provided stateid */
-  else if((rc = nfs4_Check_Stateid(&arg_WRITE4.stateid, data->current_entry, 0LL)) ==
-          NFS4_OK)
+  /* Check stateid correctness and get pointer to state */
+  else if((rc = nfs4_Check_Stateid(&arg_WRITE4.stateid,
+                                   data->current_entry,
+                                   0LL,
+                                   &pstate_found,
+                                   data->pclient)) == NFS4_OK)
     {
-      /* Get the related state */
-      if(state_get(arg_WRITE4.stateid.other,
-                   &pstate_found,
-                   data->pclient, &state_status) != STATE_SUCCESS)
-        {
-          res_WRITE4.status = nfs4_Errno_state(state_status);
-          return res_WRITE4.status;
-        }
-
-      /* This is a read operation, this means that the file MUST have been opened for reading */
+      /* This is a write operation, this means that the file MUST have been opened for writing */
       if((pstate_found->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE) &&
          !(pstate_found->state_data.share.share_access & OPEN4_SHARE_ACCESS_WRITE))
         {

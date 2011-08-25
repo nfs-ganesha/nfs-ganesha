@@ -77,7 +77,6 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_confirm";
   int              rc = 0;
   state_t        * pstate_found = NULL;
-  state_status_t   state_status;
 
   resp->resop = NFS4_OP_OPEN_CONFIRM;
   res_OPEN_CONFIRM4.status = NFS4_OK;
@@ -121,21 +120,14 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
         }
     }
 
-  /* Does the stateid match ? */
-  if((rc =
-      nfs4_Check_Stateid(&arg_OPEN_CONFIRM4.open_stateid, data->current_entry,
-                         0LL)) != NFS4_OK)
+  /* Check stateid correctness and get pointer to state */
+  if((rc = nfs4_Check_Stateid(&arg_OPEN_CONFIRM4.open_stateid,
+                              data->current_entry,
+                              0LL,
+                              &pstate_found,
+                              data->pclient)) != NFS4_OK)
     {
       res_OPEN_CONFIRM4.status = rc;
-      return res_OPEN_CONFIRM4.status;
-    }
-
-  /* Get the related state */
-  if(state_get(arg_OPEN_CONFIRM4.open_stateid.other,
-               &pstate_found,
-               data->pclient, &state_status) != STATE_SUCCESS)
-    {
-      res_OPEN_CONFIRM4.status = nfs4_Errno_state(state_status);
       return res_OPEN_CONFIRM4.status;
     }
 

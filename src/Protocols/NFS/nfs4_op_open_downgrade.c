@@ -77,7 +77,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_downgrade";
 
   state_t        * pstate_found = NULL;
-  state_status_t   state_status;
+  int              rc;
 
   resp->resop = NFS4_OP_OPEN_DOWNGRADE;
   res_OPEN_DOWNGRADE4.status = NFS4_OK;
@@ -110,12 +110,16 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
       return res_OPEN_DOWNGRADE4.status;
     }
 
-  /* Get the state */
-  if(state_get(arg_OPEN_DOWNGRADE4.open_stateid.other,
-               &pstate_found,
-               data->pclient, &state_status) != STATE_SUCCESS)
+  /* Check stateid correctness and get pointer to state */
+  if((rc = nfs4_Check_Stateid(&arg_OPEN_DOWNGRADE4.open_stateid,
+                              data->current_entry,
+                              0LL,
+                              &pstate_found,
+                              data->pclient)) != NFS4_OK)
     {
-      res_OPEN_DOWNGRADE4.status = nfs4_Errno_state(state_status);
+      res_OPEN_DOWNGRADE4.status = rc;
+      LogDebug(COMPONENT_STATE,
+               "OPEN_DOWNGRADE failed nfs4_Check_Stateid");
       return res_OPEN_DOWNGRADE4.status;
     }
 

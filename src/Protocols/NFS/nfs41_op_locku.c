@@ -165,25 +165,14 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_LOCKU4.status;
     }
 
-  /* Check for correctness of the provided stateid */
+  /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_LOCKU4.lock_stateid,
                               data->current_entry,
-                              data->psession->clientid)) != NFS4_OK)
+                              data->psession->clientid,
+                              &pstate_found,
+                              data->pclient)) != NFS4_OK)
     {
       res_LOCKU4.status = rc;
-      return res_LOCKU4.status;
-    }
-
-  /* Get the related state */
-  if(state_get(arg_LOCKU4.lock_stateid.other,
-               &pstate_found,
-               data->pclient, &state_status) != STATE_SUCCESS)
-    {
-      if(state_status == STATE_NOT_FOUND)
-        res_LOCKU4.status = NFS4ERR_LOCK_RANGE;
-      else
-        res_LOCKU4.status = nfs4_Errno_state(state_status);
-
       return res_LOCKU4.status;
     }
 

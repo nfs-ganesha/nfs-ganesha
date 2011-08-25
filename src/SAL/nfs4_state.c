@@ -298,62 +298,6 @@ state_status_t state_add(cache_entry_t         * pentry,
 
 /**
  *
- * state_get: gets a state from the hash's state
- *
- * Gets a state from the hash's state
- *
- * @param other     [IN]    stateid.other used as hash key
- * @param ppstate   [OUT]   pointer to the pointer to the new state
- * @param pclient   [INOUT] related cache inode client
- * @param pstatus   [OUT]   returned status
- *
- * @return the same as *pstatus
- *
- */
-state_status_t state_get(char                    other[OTHERSIZE],
-                         state_t              ** ppstate,
-                         cache_inode_client_t *  pclient,
-                         state_status_t       *  pstatus)
-{
-  char debug_str[OTHERSIZE * 2 + 1];
-
-  if(pstatus == NULL)
-    return STATE_INVALID_ARGUMENT;
-
-  if(ppstate == NULL || pclient == NULL)
-    {
-      *pstatus = STATE_INVALID_ARGUMENT;
-      return *pstatus;
-    }
-
-  if (isDebug(COMPONENT_STATE))
-    sprint_mem(debug_str, other, OTHERSIZE);
-
-  if(!nfs4_State_Get_Pointer(other, ppstate))
-    {
-      *pstatus = STATE_NOT_FOUND;
-
-      /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET_STATE] += 1;
-
-      LogDebug(COMPONENT_STATE, "Could not get state %s", debug_str);
-
-      return *pstatus;
-    }
-
-  /* Sanity check, mostly for debug */
-  if(memcmp(other, (*ppstate)->stateid_other, OTHERSIZE))
-    LogDebug(COMPONENT_STATE,
-             "-------------> Warning !!!! Stateid(other) differs !!!!!!");
-
-  LogFullDebug(COMPONENT_STATE, "Found state %s", debug_str);
-
-  *pstatus = STATE_SUCCESS;
-  return *pstatus;
-}                               /* state_get */
-
-/**
- *
  * state_del_by_key: deletes a state from the hash's state associated with a given stateid
  *
  * Deletes a state from the hash's state
