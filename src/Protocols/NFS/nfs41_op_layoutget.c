@@ -198,9 +198,9 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
     }                           /* switch( arg_LAYOUTGET4.loga_layout_type ) */
 
   /* Get the related powner (from a previously made call to OPEN) */
-  if(cache_inode_get_state(arg_LAYOUTGET4.loga_stateid.other,
-                           &pstate_exists,
-                           data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+  if(state_get(arg_LAYOUTGET4.loga_stateid.other,
+               &pstate_exists,
+               data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
     {
       if(cache_status == CACHE_INODE_NOT_FOUND)
         res_LAYOUTGET4.logr_status = NFS4ERR_STALE_STATEID;
