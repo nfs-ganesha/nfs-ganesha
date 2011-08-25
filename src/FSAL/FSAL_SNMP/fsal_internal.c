@@ -461,7 +461,7 @@ fsal_boolean_t fsal_do_log(fsal_status_t status)
 /**
  * for saving global SNMP configuration
  */
-void set_snmp_global_config(snmpfs_specific_initinfo_t * p_config)
+void set_snmp_global_config(fs_specific_initinfo_t * p_config)
 {
-  snmp_glob_config = *p_config;
+	snmp_glob_config = *(snmpfs_specific_initinfo_t *)p_config;
 }

@@ -36,7 +36,7 @@
  * Parse FS specific option string
  * to build the export entry option.
  */
-fsal_status_t SNMPFSAL_BuildExportContext(snmpfsal_export_context_t * p_export_context, /* OUT */
+fsal_status_t SNMPFSAL_BuildExportContext(fsal_export_context_t *exp_context, /* OUT */
                                           fsal_path_t * p_export_path,  /* IN */
                                           char *fs_specific_options     /* IN */
     )
@@ -44,6 +44,7 @@ fsal_status_t SNMPFSAL_BuildExportContext(snmpfsal_export_context_t * p_export_c
   struct tree *tree_head, *sub_tree;
   char snmp_path[FSAL_MAX_PATH_LEN];
   int rc;
+  snmpfsal_export_context_t * p_export_context = (snmpfsal_export_context_t *)exp_context;
 
   /* sanity check */
   if(!p_export_context)
@@ -141,16 +142,17 @@ fsal_status_t SNMPFSAL_BuildExportContext(snmpfsal_export_context_t * p_export_c
  * \param p_export_context (in, gpfsfsal_export_context_t)
  */
 
-fsal_status_t SNMPFSAL_CleanUpExportContext(snmpfsal_export_context_t * p_export_context) 
+fsal_status_t SNMPFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context) 
 {
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
 }
 
-fsal_status_t SNMPFSAL_InitClientContext(snmpfsal_op_context_t * p_thr_context)
+fsal_status_t SNMPFSAL_InitClientContext(fsal_op_context_t *thr_context)
 {
 
   int rc, i;
   netsnmp_session session;
+  snmpfsal_op_context_t * p_thr_context = (snmpfsal_op_context_t *)thr_context;
 
   /* sanity check */
   if(!p_thr_context)
@@ -267,8 +269,8 @@ fsal_status_t SNMPFSAL_InitClientContext(snmpfsal_op_context_t * p_thr_context)
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t SNMPFSAL_GetClientContext(snmpfsal_op_context_t * p_thr_context,  /* IN/OUT  */
-                                        snmpfsal_export_context_t * p_export_context,   /* IN */
+fsal_status_t SNMPFSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OUT  */
+                                        fsal_export_context_t * p_export_context,   /* IN */
                                         fsal_uid_t uid, /* IN */
                                         fsal_gid_t gid, /* IN */
                                         fsal_gid_t * alt_groups,        /* IN */

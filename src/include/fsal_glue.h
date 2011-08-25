@@ -41,7 +41,8 @@
 	defined(_USE_VFS) || \
         defined(_USE_XFS) || \
 	defined(_USE_GPFS) || \
-	defined(_USE_ZFS)
+	defined(_USE_ZFS) || \
+	defined(_USE_SNMP)
 
 typedef struct
 {
