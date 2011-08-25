@@ -1803,8 +1803,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       /* Allocation of the nfs request pool */
       MakePool(&workers_data[i].request_pool,
                nfs_param.worker_param.nb_pending_prealloc,
-               nfs_request_data_t,
-               constructor_nfs_request_data_t, NULL);
+               request_data_t,
+               constructor_request_data_t, NULL);
       NamePool(&workers_data[i].request_pool, "Request Data Pool %d", i);
                
       if(!IsPoolPreallocated(&workers_data[i].request_pool))

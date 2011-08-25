@@ -1238,3 +1238,22 @@ void constructor_nfs_request_data_t(void *ptr)
   memset(pdata, 0, sizeof(*pdata));
   pdata->xprt_copy = Svcxprt_copycreate();
 }
+
+/**
+ * constructor_request_data_t: Constructor for a request_data_t structure
+ *
+ * This function is used to init the request_data for a worker. These data are used by the
+ * worker for RPC processing.
+ *
+ * @param ptr void pointer to the structure to be managed
+ *
+ * @return nothing (void function) will exit the program if failed.
+ *
+ */
+
+void constructor_request_data_t(void *ptr)
+{
+  request_data_t * pdata = (request_data_t *) ptr;
+
+  constructor_nfs_request_data_t( &(pdata->rcontent.nfs) ) ;
+}

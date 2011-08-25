@@ -628,6 +628,7 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata);
 int nfs_Init_request_data(nfs_request_data_t * pdata);
 int nfs_Init_gc_counter(void);
 void constructor_nfs_request_data_t(void *ptr);
+void constructor_request_data_t(void *ptr);
 
 /* Config parsing routines */
 int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t * out_parameter);
