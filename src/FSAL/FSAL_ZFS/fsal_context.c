@@ -105,7 +105,7 @@ static int Getsubopt(char **optionp, const char *const *tokens, char **valuep)
  * Parse FS specific option string
  * to build the export entry option.
  */
-fsal_status_t ZFSFSAL_BuildExportContext(zfsfsal_export_context_t * p_export_context, /* OUT */
+fsal_status_t ZFSFSAL_BuildExportContext(fsal_export_context_t * exp_context, /* OUT */
                                          fsal_path_t * p_export_path,      /* IN */
                                          char *fs_specific_options /* IN */
     )
@@ -113,6 +113,7 @@ fsal_status_t ZFSFSAL_BuildExportContext(zfsfsal_export_context_t * p_export_con
   char subopts[256];
   char *p_subop;
   char *value;
+  zfsfsal_export_context_t * p_export_context = (zfsfsal_export_context_t *)exp_context;
 
   /* sanity check */
   if(!p_export_context)
@@ -170,74 +171,9 @@ fsal_status_t ZFSFSAL_BuildExportContext(zfsfsal_export_context_t * p_export_con
  * \param p_export_context
  */
 
-fsal_status_t ZFSFSAL_CleanUpExportContext(zfsfsal_export_context_t * p_export_context)
+fsal_status_t ZFSFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context)
 {
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
-}
-
-fsal_status_t ZFSFSAL_InitClientContext(zfsfsal_op_context_t * p_thr_context)
-{
-
-  /* sanity check */
-  if(!p_thr_context)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
-
-  /* initialy set the export entry to none */
-  p_thr_context->export_context = NULL;
-
-  /* >> initialize thread specific structures here << */
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
-
-}
-
- /**
- * FSAL_GetClientContext :
- * Get a user credential from its uid.
- * 
- * \param p_cred (in out, zfsfsal_cred_t *)
- *        Initialized credential to be changed
- *        for representing user.
- * \param uid (in, fsal_uid_t)
- *        user identifier.
- * \param gid (in, fsal_gid_t)
- *        group identifier.
- * \param alt_groups (in, fsal_gid_t *)
- *        list of alternative groups.
- * \param nb_alt_groups (in, fsal_count_t)
- *        number of alternative groups.
- *
- * \return major codes :
- *      - ERR_FSAL_PERM : the current user cannot
- *                        get credentials for this uid.
- *      - ERR_FSAL_FAULT : Bad adress parameter.
- *      - ERR_FSAL_SERVERFAULT : unexpected error.
- */
-
-fsal_status_t ZFSFSAL_GetClientContext(zfsfsal_op_context_t * p_thr_context,  /* IN/OUT  */
-                                       zfsfsal_export_context_t * p_export_context,   /* IN */
-                                       fsal_uid_t uid,     /* IN */
-                                       fsal_gid_t gid,     /* IN */
-                                       fsal_gid_t * alt_groups,    /* IN */
-                                       fsal_count_t nb_alt_groups  /* IN */
-    )
-{
-
-  /* sanity check */
-  if(!p_thr_context || !p_export_context)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
-
-  /* set the specific export context */
-  p_thr_context->export_context = p_export_context;
-  p_thr_context->user_credential.cred.uid = uid;
-  p_thr_context->user_credential.cred.gid = gid;
-
-
-  /* >> you can manage user's authentication and adjust thread specific
-   * stuff you need for the subsequent request << */
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
-
 }
 
 /* @} */

@@ -95,9 +95,9 @@ static struct {
 
 /**
  *
- * nfs_FhandleToCache: Gets a cache entry using a file handle (v2 or v3) as input.
+ * nfs_FhandleToStr: Converts a file handle to a string representation.
  * 
- * Gets a cache entry using a file handle (v2 or v3) as input.
+ * Converts a file handle to a string representation.
  *
  * @param rq_vers  [IN]    version of the NFS protocol to be used 
  * @param pfh2     [IN]    NFSv2 file handle or NULL 
@@ -131,9 +131,9 @@ void nfs_FhandleToStr(u_long     rq_vers,
 
 /**
  *
- * nfs_FhandleToCache: Gets a cache entry using a file handle (v2 or v3) as input.
+ * nfs_FhandleToCache: Gets a cache entry using a file handle (v2/3/4) as input.
  * 
- * Gets a cache entry using a file handle (v2 or v3) as input.
+ * Gets a cache entry using a file handle (v2/3/4) as input.
  *
  * @param rq_vers  [IN]    version of the NFS protocol to be used 
  * @param pfh2     [IN]    NFSv2 file handle or NULL 
@@ -172,6 +172,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
   /* Default behaviour */
   *prc = NFS_REQ_OK;
 
+  memset( (char *)&fsal_data, 0, sizeof( fsal_data ) ) ;
   switch (rq_vers)
     {
     case NFS_V4:

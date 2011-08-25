@@ -12,7 +12,6 @@
 #endif
 
 #include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_glue.h"
 #include "fsal_internal.h"
 
@@ -753,7 +752,7 @@ fsal_const_t fsal_snmp_consts = {
   .fsal_file_t_size = sizeof(snmpfsal_file_t),
   .fsal_cookie_t_size = sizeof(snmpfsal_cookie_t),
   .fsal_lockdesc_t_size = sizeof(snmpfsal_lockdesc_t),
-  .fsal_cred_t_size = sizeof(snmpfsal_cred_t),
+  .fsal_cred_t_size = sizeof(struct user_credentials),
   .fs_specific_initinfo_t_size = sizeof(snmpfs_specific_initinfo_t),
   .fsal_dir_t_size = sizeof(snmpfsal_dir_t)
 };

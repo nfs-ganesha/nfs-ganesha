@@ -77,14 +77,6 @@
  *      POSIX FS dependant definitions
  * ------------------------------------------- */
 
-#define FSAL_MAX_NAME_LEN   NAME_MAX
-#define FSAL_MAX_PATH_LEN   PATH_MAX
-
-#define FSAL_NGROUPS_MAX  32
-
-#define FSAL_NAME_INITIALIZER {"",0}
-#define FSAL_PATH_INITIALIZER {"",0}
-
 #define FSAL_GPFS_HANDLE_LEN 64
 #define FSAL_GPFS_FSHANDLE_LEN 64
 
@@ -115,20 +107,6 @@ struct file_handle
 
 /** end of open by handle structures */
 
-#ifndef _USE_SHARED_FSAL
-
-#define fsal_handle_t gpfsfsal_handle_t
-#define fsal_op_context_t gpfsfsal_op_context_t
-#define fsal_file_t gpfsfsal_file_t
-#define fsal_dir_t gpfsfsal_dir_t
-#define fsal_export_context_t gpfsfsal_export_context_t
-#define fsal_lockdesc_t gpfsfsal_lockdesc_t
-#define fsal_cookie_t gpfsfsal_cookie_t
-#define fs_specific_initinfo_t gpfsfs_specific_initinfo_t
-#define fsal_cred_t gpfsfsal_cred_t
-
-#endif
-
 typedef struct
 {
   struct
@@ -140,21 +118,13 @@ typedef struct
 
 /** Authentification context.    */
 
-typedef struct 
-{
-  uid_t user;
-  gid_t group;
-  fsal_count_t nbgroups;
-  gid_t alt_groups[FSAL_NGROUPS_MAX];
-} gpfsfsal_cred_t;
-
 typedef struct
 {
   /* Warning: This string is not currently filled in or used. */
   char mount_point[FSAL_MAX_PATH_LEN];
 
   int mount_root_fd;
-  fsal_handle_t mount_root_handle;
+  gpfsfsal_handle_t mount_root_handle;
   unsigned int fsid[2];
 } gpfsfsal_export_context_t;
 
@@ -162,8 +132,8 @@ typedef struct
 
 typedef struct
 {
-  fsal_export_context_t *export_context;        /* Must be the first entry in this structure */
-  fsal_cred_t credential;
+  gpfsfsal_export_context_t *export_context;        /* Must be the first entry in this structure */
+  struct user_credentials credential;
 } gpfsfsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
@@ -204,7 +174,7 @@ typedef struct
   gpfsfsal_handle_t handle;
 } gpfsfsal_dir_t;
 
-typedef struct fsal_file__
+typedef struct
 {
   int fd;
   int ro;                       /* read only file ? */

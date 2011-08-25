@@ -567,7 +567,7 @@ fsal_status_t fsal_internal_handle2fd(fsal_op_context_t * p_context,
   if(!phandle || !pfd || !p_context || !p_context->export_context)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  dirfd = p_context->export_context->mount_root_fd;
+  dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
 
   status = fsal_internal_handle2fd_at(dirfd, phandle, pfd, oflags);
 
@@ -603,7 +603,7 @@ fsal_status_t fsal_internal_handle2fd_at(int dirfd,
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   oarg.mountdirfd = dirfd;
-  oarg.handle = &phandle->data.handle;
+  oarg.handle = &((gpfsfsal_handle_t *)phandle)->data.handle;
   oarg.flags = oflags;
 
   rc = gpfs_ganesha(OPENHANDLE_OPEN_BY_HANDLE, &oarg);
@@ -640,7 +640,7 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   memset(p_handle, 0, sizeof(*p_handle));
-  harg.handle = &p_handle->data.handle;
+  harg.handle = &((gpfsfsal_handle_t *)p_handle)->data.handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.name = p_fsalpath->path;
   harg.dfd = AT_FDCWD;
@@ -684,7 +684,7 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   memset(p_handle, 0, sizeof(*p_handle));
-  harg.handle = &p_handle->data.handle;
+  harg.handle = &((gpfsfsal_handle_t *)p_handle)->data.handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.name = p_fsalname->name;
   harg.dfd = dfd;
@@ -713,10 +713,11 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
  *
  * \return status of operation
  */
-fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * p_handle)
+fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * handle)
 {
   int rc;
   struct name_handle_arg harg;
+  gpfsfsal_handle_t * p_handle = (gpfsfsal_handle_t *)handle;
 
   if(!p_handle || !&p_handle->data.handle)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -868,11 +869,11 @@ fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
   if(!p_handle || !p_context || !p_context->export_context)
       ReturnCode(ERR_FSAL_FAULT, 0);
 
-  dirfd = p_context->export_context->mount_root_fd;
+  dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
 
   statarg.mountdirfd = dirfd;
 
-  statarg.handle = &p_handle->data.handle;
+  statarg.handle = &((gpfsfsal_handle_t *)p_handle)->data.handle;
   statarg.buf = buf;
 
   rc = gpfs_ganesha(OPENHANDLE_STAT_BY_HANDLE, &statarg);
@@ -900,7 +901,7 @@ fsal_status_t fsal_get_xstat_by_handle(fsal_op_context_t * p_context,
 
   memset(p_buffxstat, 0, sizeof(gpfsfsal_xstat_t));
 
-  dirfd = p_context->export_context->mount_root_fd;
+  dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
 
 #ifdef _USE_NFS4_ACL
   /* Initialize acl header so that GPFS knows what we want. */
@@ -917,7 +918,7 @@ fsal_status_t fsal_get_xstat_by_handle(fsal_op_context_t * p_context,
 xstatarg.attr_valid = XATTR_STAT;
 #endif
   xstatarg.mountdirfd = dirfd;
-  xstatarg.handle = &p_handle->data.handle;
+  xstatarg.handle = &((gpfsfsal_handle_t *)p_handle)->data.handle;
 #ifdef _USE_NFS4_ACL
   xstatarg.acl = pacl_gpfs;
 #else
@@ -948,11 +949,11 @@ fsal_status_t fsal_set_xstat_by_handle(fsal_op_context_t * p_context,
   if(!p_handle || !p_context || !p_context->export_context || !p_buffxstat)
       ReturnCode(ERR_FSAL_FAULT, 0);
 
-  dirfd = p_context->export_context->mount_root_fd;
+  dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
 
   xstatarg.attr_valid = attr_valid;
   xstatarg.mountdirfd = dirfd;
-  xstatarg.handle = &p_handle->data.handle;
+  xstatarg.handle = &((gpfsfsal_handle_t *)p_handle)->data.handle;
   xstatarg.acl = (gpfs_acl_t *) p_buffxstat->buffacl;
   xstatarg.attr_changed = attr_changed;
   xstatarg.buf = &p_buffxstat->buffstat;

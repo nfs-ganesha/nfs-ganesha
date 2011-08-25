@@ -57,7 +57,6 @@
 #include "cache_inode.h"
 #include "cache_content.h"
 #include "nfs_ip_stats.h"
-#include "fsal_types.h"
 
 /*
  * Export List structure 

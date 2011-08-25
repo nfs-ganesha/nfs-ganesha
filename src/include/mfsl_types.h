@@ -49,7 +49,6 @@
 #include <dirent.h>             /* for MAXNAMLEN */
 #include "config_parsing.h"
 #include "fsal.h"
-#include "fsal_types.h"
 #include "err_fsal.h"
 #include "err_mfsl.h"
 

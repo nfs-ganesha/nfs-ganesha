@@ -71,8 +71,8 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_access(gpfsfsal_handle_t * p_object_handle,      /* IN */
-                          gpfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t GPFSFSAL_access(fsal_handle_t * p_object_handle,      /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
                           fsal_accessflags_t access_type,       /* IN */
                           fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
     )

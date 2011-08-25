@@ -56,16 +56,20 @@
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t ZFSFSAL_create(zfsfsal_handle_t * parent_directory_handle,      /* IN */
+fsal_status_t ZFSFSAL_create(fsal_handle_t * parent_hdl,      /* IN */
                              fsal_name_t * p_filename,     /* IN */
-                             zfsfsal_op_context_t * p_context,        /* IN */
+                             fsal_op_context_t *context,        /* IN */
                              fsal_accessmode_t accessmode, /* IN */
-                             zfsfsal_handle_t * object_handle,        /* OUT */
+                             fsal_handle_t * obj_handle,        /* OUT */
                              fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
 
   int rc;
+  creden_t cred;
+  zfsfsal_handle_t * parent_directory_handle = (zfsfsal_handle_t *)parent_hdl;
+  zfsfsal_op_context_t * p_context = (zfsfsal_op_context_t * )context;
+  zfsfsal_handle_t * object_handle = (zfsfsal_handle_t *)obj_handle;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -79,11 +83,13 @@ fsal_status_t ZFSFSAL_create(zfsfsal_handle_t * parent_directory_handle,      /*
     LogDebug(COMPONENT_FSAL, "Trying to create a file inside a snapshot");
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_create);
   }
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
 
   TakeTokenFSCall();
 
   inogen_t object;
-  rc = libzfswrap_create(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_create(p_context->export_context->p_vfs, &cred,
                          parent_directory_handle->data.zfs_handle, p_filename->name,
                          fsal2unix_mode(accessmode), &object);
 
@@ -100,7 +106,7 @@ fsal_status_t ZFSFSAL_create(zfsfsal_handle_t * parent_directory_handle,      /*
 
   if(object_attributes)
     {
-      fsal_status_t status = ZFSFSAL_getattrs(object_handle, p_context, object_attributes);
+      fsal_status_t status = ZFSFSAL_getattrs(obj_handle, context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -152,17 +158,21 @@ fsal_status_t ZFSFSAL_create(zfsfsal_handle_t * parent_directory_handle,      /*
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t ZFSFSAL_mkdir(zfsfsal_handle_t * parent_directory_handle,       /* IN */
+fsal_status_t ZFSFSAL_mkdir(fsal_handle_t * parent_hdl,       /* IN */
                             fsal_name_t * p_dirname,       /* IN */
-                            zfsfsal_op_context_t * p_context, /* IN */
+                            fsal_op_context_t *context, /* IN */
                             fsal_accessmode_t accessmode,  /* IN */
-                            zfsfsal_handle_t * object_handle, /* OUT */
+                            fsal_handle_t * obj_handle, /* OUT */
                             fsal_attrib_list_t * object_attributes /* [ IN/OUT ] */
     )
 {
 
   int rc;
   mode_t unix_mode;
+  creden_t cred;
+  zfsfsal_handle_t * parent_directory_handle = (zfsfsal_handle_t *)parent_hdl;
+  zfsfsal_op_context_t * p_context = (zfsfsal_op_context_t *)context;
+  zfsfsal_handle_t * object_handle = (zfsfsal_handle_t *)obj_handle;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -181,14 +191,16 @@ fsal_status_t ZFSFSAL_mkdir(zfsfsal_handle_t * parent_directory_handle,       /*
   unix_mode = fsal2unix_mode(accessmode);
 
 
-   /* Applying FSAL umask */
-   unix_mode = unix_mode & ~global_fs_info.umask;
+  /* Applying FSAL umask */
+  unix_mode = unix_mode & ~global_fs_info.umask;
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
 
   TakeTokenFSCall();
 
   /* Create the directory */
   inogen_t object;
-  rc = libzfswrap_mkdir(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_mkdir(p_context->export_context->p_vfs, &cred,
                         parent_directory_handle->data.zfs_handle, p_dirname->name, unix_mode, &object);
 
   ReleaseTokenFSCall();
@@ -205,7 +217,7 @@ fsal_status_t ZFSFSAL_mkdir(zfsfsal_handle_t * parent_directory_handle,       /*
   if(object_attributes)
     {
       /**@TODO: skip this => libzfswrap_mkdir might return attributes */
-      fsal_status_t status = ZFSFSAL_getattrs(object_handle, p_context, object_attributes);
+      fsal_status_t status = ZFSFSAL_getattrs(obj_handle, context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -258,15 +270,19 @@ fsal_status_t ZFSFSAL_mkdir(zfsfsal_handle_t * parent_directory_handle,       /*
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the attributes->asked_attributes field.
  */
-fsal_status_t ZFSFSAL_link(zfsfsal_handle_t * target_handle,  /* IN */
-                           zfsfsal_handle_t * dir_handle,     /* IN */
+fsal_status_t ZFSFSAL_link(fsal_handle_t * target_hdl,  /* IN */
+                           fsal_handle_t * dir_hdl,     /* IN */
                            fsal_name_t * p_link_name,      /* IN */
-                           zfsfsal_op_context_t * p_context,  /* IN */
+                           fsal_op_context_t * context,  /* IN */
                            fsal_attrib_list_t * attributes /* [ IN/OUT ] */
     )
 {
 
   int rc;
+  creden_t cred;
+  zfsfsal_handle_t * target_handle = (zfsfsal_handle_t *)target_hdl;
+  zfsfsal_handle_t * dir_handle = (zfsfsal_handle_t *)dir_hdl;
+  zfsfsal_op_context_t * p_context = (zfsfsal_op_context_t *)context;
 
   /* sanity checks.
    * note : attributes is optional.
@@ -284,10 +300,12 @@ fsal_status_t ZFSFSAL_link(zfsfsal_handle_t * target_handle,  /* IN */
   /* Tests if hardlinking is allowed by configuration. */
   if(!global_fs_info.link_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_link);
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
 
   TakeTokenFSCall();
 
-  rc = libzfswrap_link(p_context->export_context->p_vfs, &p_context->user_credential.cred,
+  rc = libzfswrap_link(p_context->export_context->p_vfs, &cred,
                        dir_handle->data.zfs_handle, target_handle->data.zfs_handle, p_link_name->name);
 
   ReleaseTokenFSCall();
@@ -298,7 +316,7 @@ fsal_status_t ZFSFSAL_link(zfsfsal_handle_t * target_handle,  /* IN */
 
   if(attributes)
     {
-      fsal_status_t status = ZFSFSAL_getattrs(target_handle, p_context, attributes);
+      fsal_status_t status = ZFSFSAL_getattrs(target_hdl, context, attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -321,13 +339,13 @@ fsal_status_t ZFSFSAL_link(zfsfsal_handle_t * target_handle,  /* IN */
  *
  * \return ERR_FSAL_NOTSUPP.
  */
-fsal_status_t ZFSFSAL_mknode(zfsfsal_handle_t * parentdir_handle,     /* IN */
+fsal_status_t ZFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
                           fsal_name_t * p_node_name,    /* IN */
-                          zfsfsal_op_context_t * p_context,        /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
                           fsal_accessmode_t accessmode, /* IN */
                           fsal_nodetype_t nodetype,     /* IN */
                           fsal_dev_t * dev,     /* IN */
-                          zfsfsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
+                          fsal_handle_t * p_object_handle, /* OUT (handle to the created node) */
                           fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */
     )
 {

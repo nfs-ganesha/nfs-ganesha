@@ -74,11 +74,11 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t VFSFSAL_rename(vfsfsal_handle_t * p_old_parentdir_handle,       /* IN */
+fsal_status_t VFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
                           fsal_name_t * p_old_name,     /* IN */
-                          vfsfsal_handle_t * p_new_parentdir_handle,       /* IN */
+                          fsal_handle_t * p_new_parentdir_handle,       /* IN */
                           fsal_name_t * p_new_name,     /* IN */
-                          vfsfsal_op_context_t * p_context,        /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
                           fsal_attrib_list_t * p_src_dir_attributes,    /* [ IN/OUT ] */
                           fsal_attrib_list_t * p_tgt_dir_attributes     /* [ IN/OUT ] */
     )
@@ -89,6 +89,7 @@ fsal_status_t VFSFSAL_rename(vfsfsal_handle_t * p_old_parentdir_handle,       /*
   struct stat old_parent_buffstat, new_parent_buffstat, buffstat;
   int old_parent_fd, new_parent_fd;
   int src_equal_tgt = FALSE;
+  uid_t user = ((vfsfsal_op_context_t *)p_context)->credential.user;
 
   /* sanity checks.
    * note : src/tgt_dir_attributes are optional.
@@ -202,8 +203,8 @@ fsal_status_t VFSFSAL_rename(vfsfsal_handle_t * p_old_parentdir_handle,       /*
 
   /* Sticky bit on the source directory => the user who wants to delete the file must own it or its parent dir */
   if((old_parent_buffstat.st_mode & S_ISVTX) &&
-     old_parent_buffstat.st_uid != p_context->credential.user &&
-     buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0) {
+     old_parent_buffstat.st_uid != user &&
+     buffstat.st_uid != user && user != 0) {
     close(old_parent_fd);
     if (!src_equal_tgt)
       close(new_parent_fd);
@@ -231,9 +232,9 @@ fsal_status_t VFSFSAL_rename(vfsfsal_handle_t * p_old_parentdir_handle,       /*
       else
         {
 
-          if(new_parent_buffstat.st_uid != p_context->credential.user
-             && buffstat.st_uid != p_context->credential.user
-             && p_context->credential.user != 0)
+          if(new_parent_buffstat.st_uid != user
+             && buffstat.st_uid != user
+             && user != 0)
             {
               close(old_parent_fd);
               if (!src_equal_tgt)

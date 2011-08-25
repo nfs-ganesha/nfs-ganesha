@@ -66,15 +66,6 @@
 
 #define CONF_LABEL_FS_SPECIFIC   "NFSv4_Proxy"
 
-#define FSAL_NGROUPS_MAX  32
-
-/* prefered readdir size */
-/* #define FSAL_READDIR_SIZE 2048  */
-/* #define FSAL_READDIR_SIZE 3072 */
-
-# define FSAL_NAME_INITIALIZER {"",0}
-# define FSAL_PATH_INITIALIZER {"",0}
-
 #define FSAL_PROXY_FILEHANDLE_MAX_LEN 128
 #define FSAL_PROXY_SEND_BUFFER_SIZE   32768
 #define FSAL_PROXY_RECV_BUFFER_SIZE   32768
@@ -108,25 +99,17 @@ typedef union {
 #endif
 }  proxyfsal_handle_t;
 
-typedef struct fsal_cred__
-{
-  fsal_uid_t user;
-  fsal_gid_t group;
-  fsal_count_t nbgroups;
-  fsal_gid_t alt_groups[FSAL_NGROUPS_MAX];
-} proxyfsal_cred_t;
-
-typedef struct fsal_export_context__ 
+typedef struct
 {
   proxyfsal_handle_t root_handle;
 } proxyfsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(pexport_context->root_handle.fileid4)
 
-typedef struct fsal_op_context__
+typedef struct
 {
   proxyfsal_export_context_t *export_context;   /* Must be the first entry in this structure */
-  proxyfsal_cred_t user_credential;
+  struct user_credentials credential;
 
   unsigned int retry_sleeptime;
   unsigned int srv_prognum;
@@ -146,17 +129,17 @@ typedef struct fsal_op_context__
   uint64_t file_counter;
 } proxyfsal_op_context_t;
 
-#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->user_credential.user )
-#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->user_credential.group )
+#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
+#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
-typedef struct fsal_dir__
+typedef struct
 {
   proxyfsal_handle_t fhandle;
   verifier4 verifier;
   proxyfsal_op_context_t *pcontext;
 } proxyfsal_dir_t;
 
-typedef struct fsal_file__
+typedef struct
 {
   proxyfsal_handle_t fhandle;
   unsigned int openflags;
@@ -177,7 +160,7 @@ typedef union {
 
 #define FSAL_READDIR_FROM_BEGINNING 0
 
-typedef struct fs_specific_initinfo__
+typedef struct
 {
   unsigned int retry_sleeptime;
   unsigned int srv_addr;

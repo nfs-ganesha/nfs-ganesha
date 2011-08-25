@@ -136,6 +136,8 @@ cache_inode_status_t cache_inode_clean_internal(cache_entry_t * to_remove_entry,
   cache_inode_status_t status;
   hash_buffer_t key, old_key, old_value;
   int rc;
+ 
+  memset( (char *)&fsaldata, 0, sizeof( fsaldata ) ) ;
 
   if((pfsal_handle_remove =
       cache_inode_get_fsal_handle(to_remove_entry, &status)) == NULL)
@@ -321,7 +323,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       *pstatus = CACHE_INODE_BAD_TYPE;
       return *pstatus;
     }
-
+  
   LogDebug(COMPONENT_CACHE_INODE,
            "---> Cache_inode_remove : %s", pnode_name->name);
 

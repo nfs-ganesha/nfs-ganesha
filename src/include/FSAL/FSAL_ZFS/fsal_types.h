@@ -58,17 +58,6 @@
 
 #include "fsal_glue_const.h"
 
-#define fsal_handle_t zfsfsal_handle_t
-#define fsal_op_context_t zfsfsal_op_context_t
-#define fsal_file_t zfsfsal_file_t
-#define fsal_dir_t zfsfsal_dir_t
-#define fsal_export_context_t zfsfsal_export_context_t
-#define fsal_lockdesc_t zfsfsal_lockdesc_t
-#define fsal_cookie_t zfsfsal_cookie_t
-#define fs_specific_initinfo_t zfsfs_specific_initinfo_t
-#define fsal_cred_t zfsfsal_cred_t
-
-
 typedef union
 {
   struct
@@ -82,35 +71,27 @@ typedef union
 #endif
 } zfsfsal_handle_t;
 
-typedef struct fsal_cred__
+typedef struct
 {
-  creden_t cred;
-  int ticket_handle;
-  time_t ticket_renewal_time;
-
-} zfsfsal_cred_t;
-
-typedef struct fsal_export_context__
-{
-  fsal_handle_t root_handle;
+  zfsfsal_handle_t root_handle;
   libzfswrap_vfs_t *p_vfs;
 
 } zfsfsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(FSAL_Handle_to_RBTIndex( &(pexport_context->root_handle), 0 ) )
 
-typedef struct fsal_op_context__
+typedef struct
 {
-  fsal_export_context_t *export_context; /* Must be the first member of this structure */
-  fsal_cred_t user_credential;
+  zfsfsal_export_context_t *export_context; /* Must be the first member of this structure */
+  struct user_credentials credential;
   int thread_connect_array[32];
 
 } zfsfsal_op_context_t;
 
-#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.cred.uid )
-#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.cred.gid )
+#define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
+#define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
-typedef struct fsal_dir__
+typedef struct
 {
   creden_t cred;
   libzfswrap_vnode_t *p_vnode;
@@ -118,7 +99,7 @@ typedef struct fsal_dir__
 
 } zfsfsal_dir_t;
 
-typedef struct fsal_file__
+typedef struct
 {
   creden_t cred;
   zfsfsal_handle_t handle;
@@ -142,7 +123,7 @@ typedef union
 
 #define FSAL_READDIR_FROM_BEGINNING 0
 
-typedef struct fs_specific_initinfo__
+typedef struct
 {
   char psz_zpool[FSAL_MAX_NAME_LEN];
 
@@ -158,6 +139,6 @@ typedef struct fs_specific_initinfo__
 
 } zfsfs_specific_initinfo_t;
 
-typedef void *fsal_lockdesc_t;
+typedef void *zfsfsal_lockdesc_t;
 
 #endif                          /* _FSAL_TYPES_SPECIFIC_H */

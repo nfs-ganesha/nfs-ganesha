@@ -462,8 +462,8 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t fsal_internal_handle2fd(xfsfsal_op_context_t * p_context,
-                                      xfsfsal_handle_t * phandle, int *pfd, int oflags)
+fsal_status_t fsal_internal_handle2fd(fsal_op_context_t * p_context,
+                                      fsal_handle_t * phandle, int *pfd, int oflags)
 {
   int rc = 0;
   int errsv = 0;
@@ -471,7 +471,9 @@ fsal_status_t fsal_internal_handle2fd(xfsfsal_op_context_t * p_context,
   if(!phandle || !pfd || !p_context)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  rc = open_by_handle(phandle->data.handle_val, phandle->data.handle_len, oflags);
+  rc = open_by_handle(((xfsfsal_handle_t *)phandle)->data.handle_val,
+		      ((xfsfsal_handle_t *)phandle)->data.handle_len,
+		      oflags);
   if(rc == -1)
     {
       errsv = errno;
@@ -479,7 +481,9 @@ fsal_status_t fsal_internal_handle2fd(xfsfsal_op_context_t * p_context,
       if(errsv == EISDIR)
         {
           if((rc =
-              open_by_handle(phandle->data.handle_val, phandle->data.handle_len, O_DIRECTORY) < 0))
+              open_by_handle(((xfsfsal_handle_t *)phandle)->data.handle_val,
+			     ((xfsfsal_handle_t *)phandle)->data.handle_len,
+			     O_DIRECTORY) < 0))
             ReturnCode(posix2fsal_error(errsv), errsv);
         }
       else
@@ -491,9 +495,10 @@ fsal_status_t fsal_internal_handle2fd(xfsfsal_op_context_t * p_context,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* fsal_internal_handle2fd */
 
-fsal_status_t fsal_internal_fd2handle(xfsfsal_op_context_t * p_context,
-                                      int fd, xfsfsal_handle_t * phandle)
+fsal_status_t fsal_internal_fd2handle(fsal_op_context_t * p_context,
+                                      int fd, fsal_handle_t * handle)
 {
+  xfsfsal_handle_t *phandle = (xfsfsal_handle_t *)handle;
   int rc = 0;
   struct stat ino;
 
@@ -549,7 +554,7 @@ fsal_status_t fsal_internal_Path2Handle(xfsfsal_op_context_t * p_context,       
    Check the access from an existing fsal_attrib_list_t or struct stat
 */
 /* XXX : ACL */
-fsal_status_t fsal_internal_testAccess(xfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,        /* IN */
                                        fsal_accessflags_t access_type,  /* IN */
                                        struct stat * p_buffstat,        /* IN */
                                        fsal_attrib_list_t * p_object_attributes /* IN */ )
@@ -572,12 +577,12 @@ fsal_status_t fsal_internal_testAccess(xfsfsal_op_context_t * p_context,        
 
   /* test root access */
 
-  if(p_context->credential.user == 0)
+  if(((xfsfsal_op_context_t *)p_context)->credential.user == 0)
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
   /* unsatisfied flags */
 
-  missing_access = access_type;
+  missing_access = FSAL_MODE_MASK(access_type); /* only modes, no ACLs here */
 
   if(p_object_attributes)
     {
@@ -594,7 +599,7 @@ fsal_status_t fsal_internal_testAccess(xfsfsal_op_context_t * p_context,        
 
   /* Test if file belongs to user. */
 
-  if(p_context->credential.user == uid)
+  if(((xfsfsal_op_context_t *)p_context)->credential.user == uid)
     {
 
       LogFullDebug(COMPONENT_FSAL, "File belongs to user %d", uid);
@@ -607,6 +612,9 @@ fsal_status_t fsal_internal_testAccess(xfsfsal_op_context_t * p_context,        
 
       if(mode & FSAL_MODE_XUSR)
         missing_access &= ~FSAL_X_OK;
+
+      if((missing_access & FSAL_OWNER_OK) != 0)
+        missing_access = 0;
 
       if(missing_access == 0)
         ReturnCode(ERR_FSAL_NO_ERROR, 0);
@@ -622,25 +630,25 @@ fsal_status_t fsal_internal_testAccess(xfsfsal_op_context_t * p_context,        
 
   /* Test if the file belongs to user's group. */
 
-  is_grp = (p_context->credential.group == gid);
+  is_grp = (((xfsfsal_op_context_t *)p_context)->credential.group == gid);
 
   if(is_grp)
     LogFullDebug(COMPONENT_FSAL, "File belongs to user's group %d",
-                      p_context->credential.group);
+		 ((xfsfsal_op_context_t *)p_context)->credential.group);
 
 
   /* Test if file belongs to alt user's groups */
 
   if(!is_grp)
     {
-      for(i = 0; i < p_context->credential.nbgroups; i++)
+      for(i = 0; i < ((xfsfsal_op_context_t *)p_context)->credential.nbgroups; i++)
         {
-          is_grp = (p_context->credential.alt_groups[i] == gid);
+          is_grp = (((xfsfsal_op_context_t *)p_context)->credential.alt_groups[i] == gid);
 
           if(is_grp)
             LogFullDebug(COMPONENT_FSAL,
                               "File belongs to user's alt group %d",
-                              p_context->credential.alt_groups[i]);
+			 ((xfsfsal_op_context_t *)p_context)->credential.alt_groups[i]);
 
           // exits loop if found
           if(is_grp)
@@ -688,8 +696,8 @@ fsal_status_t fsal_internal_testAccess(xfsfsal_op_context_t * p_context,        
 
 }
 
-fsal_status_t fsal_internal_setattrs_symlink(xfsfsal_handle_t * p_filehandle,   /* IN */
-                                             xfsfsal_op_context_t * p_context,  /* IN */
+fsal_status_t fsal_internal_setattrs_symlink(fsal_handle_t * p_filehandle,   /* IN */
+                                             fsal_op_context_t * p_context,  /* IN */
                                              fsal_attrib_list_t * p_attrib_set, /* IN */
                                              fsal_attrib_list_t * p_object_attributes)
 {
@@ -743,16 +751,18 @@ int fsal_internal_get_bulkstat_by_inode(int fd, xfs_ino_t * p_ino, xfs_bstat_t *
 {
   xfs_fsop_bulkreq_t bulkreq;
 
-  bulkreq.lastip = p_ino;
+  bulkreq.lastip = (__u64 *)p_ino;
   bulkreq.icount = 1;
   bulkreq.ubuffer = pxfs_bstat;
   bulkreq.ocount = NULL;
   return ioctl(fd, XFS_IOC_FSBULKSTAT_SINGLE, &bulkreq);
 }                               /* get_bulkstat_by_inode */
 
-fsal_status_t fsal_internal_inum2handle(xfsfsal_op_context_t * p_context,
-                                        ino_t inum, xfsfsal_handle_t * phandle)
+fsal_status_t fsal_internal_inum2handle(fsal_op_context_t * context,
+                                        ino_t inum, fsal_handle_t * handle)
 {
+  xfsfsal_op_context_t * p_context = (xfsfsal_op_context_t *)context;
+  xfsfsal_handle_t * phandle = (xfsfsal_handle_t *)handle;
   int fd = 0;
 
   xfs_ino_t xfs_ino;

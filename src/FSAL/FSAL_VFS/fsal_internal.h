@@ -86,18 +86,16 @@ void ReleaseTokenFSCall();
 /**
  * Gets a fd from a handle 
  */
-fsal_status_t fsal_internal_handle2fd(vfsfsal_op_context_t * p_context,
-                                      vfsfsal_handle_t * phandle, int *pfd, int oflags);
+fsal_status_t fsal_internal_handle2fd(fsal_op_context_t * p_context,
+                                      fsal_handle_t * phandle, int *pfd, int oflags);
 
 fsal_status_t fsal_internal_handle2fd_at(int dirfd,
-                                         vfsfsal_handle_t * phandle, int *pfd, int oflags);
+                                         fsal_handle_t * phandle, int *pfd, int oflags);
 
-fsal_status_t fsal_internal_Path2Handle(vfsfsal_op_context_t * p_context,       /* IN */
+fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,       /* IN */
                                         fsal_path_t * p_fsalpath,       /* IN */
-                                        vfsfsal_handle_t * p_handle /* OUT */ ) ;
+                                        fsal_handle_t * p_handle /* OUT */ ) ;
 
-fsal_status_t fsal_internal_get_handle_at(int dfd, fsal_name_t * p_fsalname,    /* IN */
-                                          vfsfsal_handle_t * p_handle /* OUT */ );
 /**
  * Access a link by a file handle.
  */
@@ -107,16 +105,16 @@ fsal_status_t fsal_readlink_by_handle(fsal_op_context_t * p_context,
 /**
  * Get the handle for a path (posix or fid path)
  */
-fsal_status_t fsal_internal_get_handle(vfsfsal_op_context_t * p_context,   /* IN */
+fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
                                        fsal_path_t * p_fsalpath,        /* IN */
-                                       vfsfsal_handle_t * p_handle /* OUT */ );
+                                       fsal_handle_t * p_handle /* OUT */ );
 
-fsal_status_t fsal_internal_get_handle_at(int dfd, fsal_name_t * p_fsalname,    /* IN */
-                                          vfsfsal_handle_t * p_handle /* OUT */ );
+fsal_status_t fsal_internal_get_handle_at(int dfd, const char *name,    /* IN */
+                                          fsal_handle_t * p_handle /* OUT */ );
 
-fsal_status_t fsal_internal_fd2handle(  vfsfsal_op_context_t * p_context,
+fsal_status_t fsal_internal_fd2handle(  fsal_op_context_t * p_context,
 					int fd,   /* IN */
-                                        vfsfsal_handle_t * p_handle  /* OUT */
+                                        fsal_handle_t * p_handle  /* OUT */
     );
 
 fsal_status_t fsal_internal_link_at(int srcfd, int dfd, char *name);
@@ -136,192 +134,183 @@ fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
 
 
 /* All the call to FSAL to be wrapped */
-fsal_status_t VFSFSAL_access(vfsfsal_handle_t * p_object_handle,        /* IN */
-                             vfsfsal_op_context_t * p_context,  /* IN */
+fsal_status_t VFSFSAL_access(fsal_handle_t * p_object_handle,        /* IN */
+                             fsal_op_context_t * p_context,  /* IN */
                              fsal_accessflags_t access_type,    /* IN */
                              fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t VFSFSAL_getattrs(vfsfsal_handle_t * p_filehandle, /* IN */
-                               vfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t VFSFSAL_getattrs(fsal_handle_t * p_filehandle, /* IN */
+                               fsal_op_context_t * p_context,        /* IN */
                                fsal_attrib_list_t * p_object_attributes /* IN/OUT */ );
 
-fsal_status_t VFSFSAL_getattrs_descriptor(vfsfsal_file_t * p_file_descriptor,     /* IN */
-                                           vfsfsal_handle_t * p_filehandle,        /* IN */
-                                           vfsfsal_op_context_t * p_context,       /* IN */
+fsal_status_t VFSFSAL_getattrs_descriptor(fsal_file_t * p_file_descriptor,     /* IN */
+                                           fsal_handle_t * p_filehandle,        /* IN */
+                                           fsal_op_context_t * p_context,       /* IN */
                                            fsal_attrib_list_t * p_object_attributes /* IN/OUT */ );
 
-fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle, /* IN */
-                               vfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t VFSFSAL_setattrs(fsal_handle_t * p_filehandle, /* IN */
+                               fsal_op_context_t * p_context,        /* IN */
                                fsal_attrib_list_t * p_attrib_set,       /* IN */
                                fsal_attrib_list_t *
                                p_object_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t VFSFSAL_BuildExportContext(vfsfsal_export_context_t * p_export_context,   /* OUT */
+fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * p_export_context,   /* OUT */
                                          fsal_path_t * p_export_path,   /* IN */
                                          char *fs_specific_options /* IN */ );
 
-fsal_status_t VFSFSAL_CleanUpExportContext(vfsfsal_export_context_t * p_export_context);
+fsal_status_t VFSFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context);
 
-fsal_status_t VFSFSAL_InitClientContext(vfsfsal_op_context_t * p_thr_context);
-
-fsal_status_t VFSFSAL_GetClientContext(vfsfsal_op_context_t * p_thr_context,    /* IN/OUT  */
-                                       vfsfsal_export_context_t * p_export_context,     /* IN */
-                                       fsal_uid_t uid,  /* IN */
-                                       fsal_gid_t gid,  /* IN */
-                                       fsal_gid_t * alt_groups, /* IN */
-                                       fsal_count_t nb_alt_groups /* IN */ );
-
-fsal_status_t VFSFSAL_create(vfsfsal_handle_t * p_parent_directory_handle,      /* IN */
+fsal_status_t VFSFSAL_create(fsal_handle_t * p_parent_directory_handle,      /* IN */
                              fsal_name_t * p_filename,  /* IN */
-                             vfsfsal_op_context_t * p_context,  /* IN */
+                             fsal_op_context_t * p_context,  /* IN */
                              fsal_accessmode_t accessmode,      /* IN */
-                             vfsfsal_handle_t * p_object_handle,        /* OUT */
+                             fsal_handle_t * p_object_handle,        /* OUT */
                              fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t VFSFSAL_mkdir(vfsfsal_handle_t * p_parent_directory_handle,       /* IN */
+fsal_status_t VFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,       /* IN */
                             fsal_name_t * p_dirname,    /* IN */
-                            vfsfsal_op_context_t * p_context,   /* IN */
+                            fsal_op_context_t * p_context,   /* IN */
                             fsal_accessmode_t accessmode,       /* IN */
-                            vfsfsal_handle_t * p_object_handle, /* OUT */
+                            fsal_handle_t * p_object_handle, /* OUT */
                             fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t VFSFSAL_link(vfsfsal_handle_t * p_target_handle,  /* IN */
-                           vfsfsal_handle_t * p_dir_handle,     /* IN */
+fsal_status_t VFSFSAL_link(fsal_handle_t * p_target_handle,  /* IN */
+                           fsal_handle_t * p_dir_handle,     /* IN */
                            fsal_name_t * p_link_name,   /* IN */
-                           vfsfsal_op_context_t * p_context,    /* IN */
+                           fsal_op_context_t * p_context,    /* IN */
                            fsal_attrib_list_t * p_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t VFSFSAL_mknode(vfsfsal_handle_t * parentdir_handle,       /* IN */
+fsal_status_t VFSFSAL_mknode(fsal_handle_t * parentdir_handle,       /* IN */
                              fsal_name_t * p_node_name, /* IN */
-                             vfsfsal_op_context_t * p_context,  /* IN */
+                             fsal_op_context_t * p_context,  /* IN */
                              fsal_accessmode_t accessmode,      /* IN */
                              fsal_nodetype_t nodetype,  /* IN */
                              fsal_dev_t * dev,  /* IN */
-                             vfsfsal_handle_t * p_object_handle,        /* OUT (handle to the created node) */
+                             fsal_handle_t * p_object_handle,        /* OUT (handle to the created node) */
                              fsal_attrib_list_t * node_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t VFSFSAL_opendir(vfsfsal_handle_t * p_dir_handle,  /* IN */
-                              vfsfsal_op_context_t * p_context, /* IN */
-                              vfsfsal_dir_t * p_dir_descriptor, /* OUT */
+fsal_status_t VFSFSAL_opendir(fsal_handle_t * p_dir_handle,  /* IN */
+                              fsal_op_context_t * p_context, /* IN */
+                              fsal_dir_t * p_dir_descriptor, /* OUT */
                               fsal_attrib_list_t * p_dir_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t VFSFSAL_readdir(vfsfsal_dir_t * p_dir_descriptor, /* IN */
-                              vfsfsal_cookie_t start_position,  /* IN */
+fsal_status_t VFSFSAL_readdir(fsal_dir_t * p_dir_descriptor, /* IN */
+                              fsal_cookie_t start_position,  /* IN */
                               fsal_attrib_mask_t get_attr_mask, /* IN */
                               fsal_mdsize_t buffersize, /* IN */
                               fsal_dirent_t * p_pdirent,        /* OUT */
-                              vfsfsal_cookie_t * p_end_position,        /* OUT */
+                              fsal_cookie_t * p_end_position,        /* OUT */
                               fsal_count_t * p_nb_entries,      /* OUT */
                               fsal_boolean_t * p_end_of_dir /* OUT */ );
 
-fsal_status_t VFSFSAL_closedir(vfsfsal_dir_t * p_dir_descriptor /* IN */ );
+fsal_status_t VFSFSAL_closedir(fsal_dir_t * p_dir_descriptor /* IN */ );
 
-fsal_status_t VFSFSAL_open_by_name(vfsfsal_handle_t * dirhandle,        /* IN */
+fsal_status_t VFSFSAL_open_by_name(fsal_handle_t * dirhandle,        /* IN */
                                    fsal_name_t * filename,      /* IN */
-                                   vfsfsal_op_context_t * p_context,    /* IN */
+                                   fsal_op_context_t * p_context,    /* IN */
                                    fsal_openflags_t openflags,  /* IN */
-                                   vfsfsal_file_t * file_descriptor,    /* OUT */
+                                   fsal_file_t * file_descriptor,    /* OUT */
                                    fsal_attrib_list_t *
                                    file_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t VFSFSAL_open(vfsfsal_handle_t * p_filehandle,     /* IN */
-                           vfsfsal_op_context_t * p_context,    /* IN */
+fsal_status_t VFSFSAL_open(fsal_handle_t * p_filehandle,     /* IN */
+                           fsal_op_context_t * p_context,    /* IN */
                            fsal_openflags_t openflags,  /* IN */
-                           vfsfsal_file_t * p_file_descriptor,  /* OUT */
+                           fsal_file_t * p_file_descriptor,  /* OUT */
                            fsal_attrib_list_t * p_file_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t VFSFSAL_read(vfsfsal_file_t * p_file_descriptor,  /* IN */
+fsal_status_t VFSFSAL_read(fsal_file_t * p_file_descriptor,  /* IN */
                            fsal_seek_t * p_seek_descriptor,     /* [IN] */
                            fsal_size_t buffer_size,     /* IN */
                            caddr_t buffer,      /* OUT */
                            fsal_size_t * p_read_amount, /* OUT */
                            fsal_boolean_t * p_end_of_file /* OUT */ );
 
-fsal_status_t VFSFSAL_write(vfsfsal_file_t * p_file_descriptor, /* IN */
+fsal_status_t VFSFSAL_write(fsal_file_t * p_file_descriptor, /* IN */
                             fsal_seek_t * p_seek_descriptor,    /* IN */
                             fsal_size_t buffer_size,    /* IN */
                             caddr_t buffer,     /* IN */
                             fsal_size_t * p_write_amount /* OUT */ );
 
-fsal_status_t VFSFSAL_close(vfsfsal_file_t * p_file_descriptor /* IN */ );
+fsal_status_t VFSFSAL_close(fsal_file_t * p_file_descriptor /* IN */ );
 
-fsal_status_t VFSFSAL_open_by_fileid(vfsfsal_handle_t * filehandle,     /* IN */
+fsal_status_t VFSFSAL_open_by_fileid(fsal_handle_t * filehandle,     /* IN */
                                      fsal_u64_t fileid, /* IN */
-                                     vfsfsal_op_context_t * p_context,  /* IN */
+                                     fsal_op_context_t * p_context,  /* IN */
                                      fsal_openflags_t openflags,        /* IN */
-                                     vfsfsal_file_t * file_descriptor,  /* OUT */
+                                     fsal_file_t * file_descriptor,  /* OUT */
                                      fsal_attrib_list_t *
                                      file_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t VFSFSAL_close_by_fileid(vfsfsal_file_t * file_descriptor /* IN */ ,
+fsal_status_t VFSFSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
                                       fsal_u64_t fileid);
 
-fsal_status_t VFSFSAL_static_fsinfo(vfsfsal_handle_t * p_filehandle,    /* IN */
-                                    vfsfsal_op_context_t * p_context,   /* IN */
+fsal_status_t VFSFSAL_static_fsinfo(fsal_handle_t * p_filehandle,    /* IN */
+                                    fsal_op_context_t * p_context,   /* IN */
                                     fsal_staticfsinfo_t * p_staticinfo /* OUT */ );
 
-fsal_status_t VFSFSAL_dynamic_fsinfo(vfsfsal_handle_t * p_filehandle,   /* IN */
-                                     vfsfsal_op_context_t * p_context,  /* IN */
+fsal_status_t VFSFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle,   /* IN */
+                                     fsal_op_context_t * p_context,  /* IN */
                                      fsal_dynamicfsinfo_t * p_dynamicinfo /* OUT */ );
 
 fsal_status_t VFSFSAL_Init(fsal_parameter_t * init_info /* IN */ );
 
 fsal_status_t VFSFSAL_terminate();
 
-fsal_status_t VFSFSAL_test_access(vfsfsal_op_context_t * p_context,     /* IN */
+fsal_status_t VFSFSAL_test_access(fsal_op_context_t * p_context,     /* IN */
                                   fsal_accessflags_t access_type,       /* IN */
                                   fsal_attrib_list_t * p_object_attributes /* IN */ );
 
-fsal_status_t VFSFSAL_setattr_access(vfsfsal_op_context_t * p_context,  /* IN */
+fsal_status_t VFSFSAL_setattr_access(fsal_op_context_t * p_context,  /* IN */
                                      fsal_attrib_list_t * candidate_attributes, /* IN */
                                      fsal_attrib_list_t * object_attributes /* IN */ );
 
-fsal_status_t VFSFSAL_rename_access(vfsfsal_op_context_t * pcontext,    /* IN */
+fsal_status_t VFSFSAL_rename_access(fsal_op_context_t * pcontext,    /* IN */
                                     fsal_attrib_list_t * pattrsrc,      /* IN */
                                     fsal_attrib_list_t * pattrdest) /* IN */ ;
 
-fsal_status_t VFSFSAL_create_access(vfsfsal_op_context_t * pcontext,    /* IN */
+fsal_status_t VFSFSAL_create_access(fsal_op_context_t * pcontext,    /* IN */
                                     fsal_attrib_list_t * pattr) /* IN */ ;
 
-fsal_status_t VFSFSAL_unlink_access(vfsfsal_op_context_t * pcontext,    /* IN */
+fsal_status_t VFSFSAL_unlink_access(fsal_op_context_t * pcontext,    /* IN */
                                     fsal_attrib_list_t * pattr) /* IN */ ;
 
-fsal_status_t VFSFSAL_link_access(vfsfsal_op_context_t * pcontext,      /* IN */
+fsal_status_t VFSFSAL_link_access(fsal_op_context_t * pcontext,      /* IN */
                                   fsal_attrib_list_t * pattr) /* IN */ ;
 
 fsal_status_t VFSFSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
                                   fsal_attrib_list_t * pnew_attr,
                                   fsal_attrib_list_t * presult_attr);
 
-fsal_status_t VFSFSAL_lookup(vfsfsal_handle_t * p_parent_directory_handle,      /* IN */
+fsal_status_t VFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,      /* IN */
                              fsal_name_t * p_filename,  /* IN */
-                             vfsfsal_op_context_t * p_context,  /* IN */
-                             vfsfsal_handle_t * p_object_handle,        /* OUT */
+                             fsal_op_context_t * p_context,  /* IN */
+                             fsal_handle_t * p_object_handle,        /* OUT */
                              fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */ );
 
 fsal_status_t VFSFSAL_lookupPath(fsal_path_t * p_path,  /* IN */
-                                 vfsfsal_op_context_t * p_context,      /* IN */
-                                 vfsfsal_handle_t * object_handle,      /* OUT */
+                                 fsal_op_context_t * p_context,      /* IN */
+                                 fsal_handle_t * object_handle,      /* OUT */
                                  fsal_attrib_list_t *
                                  p_object_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t VFSFSAL_lookupJunction(vfsfsal_handle_t * p_junction_handle,      /* IN */
-                                     vfsfsal_op_context_t * p_context,  /* IN */
-                                     vfsfsal_handle_t * p_fsoot_handle, /* OUT */
+fsal_status_t VFSFSAL_lookupJunction(fsal_handle_t * p_junction_handle,      /* IN */
+                                     fsal_op_context_t * p_context,  /* IN */
+                                     fsal_handle_t * p_fsoot_handle, /* OUT */
                                      fsal_attrib_list_t *
                                      p_fsroot_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t VFSFSAL_lock(vfsfsal_file_t * obj_handle,
-                           vfsfsal_lockdesc_t * ldesc, fsal_boolean_t blocking);
+fsal_status_t VFSFSAL_lock(fsal_file_t * obj_handle,
+                           fsal_lockdesc_t * ldesc, fsal_boolean_t blocking);
 
-fsal_status_t VFSFSAL_changelock(vfsfsal_lockdesc_t * lock_descriptor,  /* IN / OUT */
+fsal_status_t VFSFSAL_changelock(fsal_lockdesc_t * lock_descriptor,  /* IN / OUT */
                                  fsal_lockparam_t * lock_info /* IN */ );
 
-fsal_status_t VFSFSAL_unlock(vfsfsal_file_t * obj_handle, vfsfsal_lockdesc_t * ldesc);
+fsal_status_t VFSFSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc);
 
-fsal_status_t VFSFSAL_getlock(vfsfsal_file_t * obj_handle, vfsfsal_lockdesc_t * ldesc);
+fsal_status_t VFSFSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc);
 
-fsal_status_t VFSFSAL_CleanObjectResources(vfsfsal_handle_t * in_fsal_handle);
+fsal_status_t VFSFSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle);
 
 fsal_status_t VFSFSAL_set_quota(fsal_path_t * pfsal_path,       /* IN */
                                 int quota_type, /* IN */
@@ -334,60 +323,60 @@ fsal_status_t VFSFSAL_get_quota(fsal_path_t * pfsal_path,       /* IN */
                                 fsal_uid_t fsal_uid,    /* IN */
                                 fsal_quota_t * pquota); /* OUT */
 
-fsal_status_t VFSFSAL_rcp(vfsfsal_handle_t * filehandle,        /* IN */
-                          vfsfsal_op_context_t * p_context,     /* IN */
+fsal_status_t VFSFSAL_rcp(fsal_handle_t * filehandle,        /* IN */
+                          fsal_op_context_t * p_context,     /* IN */
                           fsal_path_t * p_local_path,   /* IN */
                           fsal_rcpflag_t transfer_opt /* IN */ );
 
-fsal_status_t VFSFSAL_rcp_by_fileid(vfsfsal_handle_t * filehandle,      /* IN */
+fsal_status_t VFSFSAL_rcp_by_fileid(fsal_handle_t * filehandle,      /* IN */
                                     fsal_u64_t fileid,  /* IN */
-                                    vfsfsal_op_context_t * p_context,   /* IN */
+                                    fsal_op_context_t * p_context,   /* IN */
                                     fsal_path_t * p_local_path, /* IN */
                                     fsal_rcpflag_t transfer_opt /* IN */ );
 
-fsal_status_t VFSFSAL_rename(vfsfsal_handle_t * p_old_parentdir_handle, /* IN */
+fsal_status_t VFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle, /* IN */
                              fsal_name_t * p_old_name,  /* IN */
-                             vfsfsal_handle_t * p_new_parentdir_handle, /* IN */
+                             fsal_handle_t * p_new_parentdir_handle, /* IN */
                              fsal_name_t * p_new_name,  /* IN */
-                             vfsfsal_op_context_t * p_context,  /* IN */
+                             fsal_op_context_t * p_context,  /* IN */
                              fsal_attrib_list_t * p_src_dir_attributes, /* [ IN/OUT ] */
                              fsal_attrib_list_t * p_tgt_dir_attributes /* [ IN/OUT ] */ );
 
 void VFSFSAL_get_stats(fsal_statistics_t * stats,       /* OUT */
                        fsal_boolean_t reset /* IN */ );
 
-fsal_status_t VFSFSAL_readlink(vfsfsal_handle_t * p_linkhandle, /* IN */
-                               vfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t VFSFSAL_readlink(fsal_handle_t * p_linkhandle, /* IN */
+                               fsal_op_context_t * p_context,        /* IN */
                                fsal_path_t * p_link_content,    /* OUT */
                                fsal_attrib_list_t * p_link_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t VFSFSAL_symlink(vfsfsal_handle_t * p_parent_directory_handle,     /* IN */
+fsal_status_t VFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,     /* IN */
                               fsal_name_t * p_linkname, /* IN */
                               fsal_path_t * p_linkcontent,      /* IN */
-                              vfsfsal_op_context_t * p_context, /* IN */
+                              fsal_op_context_t * p_context, /* IN */
                               fsal_accessmode_t accessmode,     /* IN (ignored) */
-                              vfsfsal_handle_t * p_link_handle, /* OUT */
+                              fsal_handle_t * p_link_handle, /* OUT */
                               fsal_attrib_list_t * p_link_attributes /* [ IN/OUT ] */ );
 
-int VFSFSAL_handlecmp(vfsfsal_handle_t * handle1, vfsfsal_handle_t * handle2,
+int VFSFSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
                       fsal_status_t * status);
 
-unsigned int VFSFSAL_Handle_to_HashIndex(vfsfsal_handle_t * p_handle,
+unsigned int VFSFSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
                                          unsigned int cookie,
                                          unsigned int alphabet_len,
                                          unsigned int index_size);
 
-unsigned int VFSFSAL_Handle_to_RBTIndex(vfsfsal_handle_t * p_handle, unsigned int cookie);
+unsigned int VFSFSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie);
 
-fsal_status_t VFSFSAL_DigestHandle(vfsfsal_export_context_t * p_expcontext,     /* IN */
+fsal_status_t VFSFSAL_DigestHandle(fsal_export_context_t * p_expcontext,     /* IN */
                                    fsal_digesttype_t output_type,       /* IN */
-                                   vfsfsal_handle_t * p_in_fsal_handle, /* IN */
+                                   fsal_handle_t * p_in_fsal_handle, /* IN */
                                    caddr_t out_buff /* OUT */ );
 
-fsal_status_t VFSFSAL_ExpandHandle(vfsfsal_export_context_t * p_expcontext,     /* IN */
+fsal_status_t VFSFSAL_ExpandHandle(fsal_export_context_t * p_expcontext,     /* IN */
                                    fsal_digesttype_t in_type,   /* IN */
                                    caddr_t in_buff,     /* IN */
-                                   vfsfsal_handle_t * p_out_fsal_handle /* OUT */ );
+                                   fsal_handle_t * p_out_fsal_handle /* OUT */ );
 
 fsal_status_t VFSFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter);
 
@@ -406,72 +395,72 @@ fsal_status_t VFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_conf
                                                            fsal_parameter_t *
                                                            out_parameter);
 
-fsal_status_t VFSFSAL_truncate(vfsfsal_handle_t * p_filehandle, /* IN */
-                               vfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t VFSFSAL_truncate(fsal_handle_t * p_filehandle, /* IN */
+                               fsal_op_context_t * p_context,        /* IN */
                                fsal_size_t length,      /* IN */
-                               vfsfsal_file_t * file_descriptor,        /* Unused in this FSAL */
+                               fsal_file_t * file_descriptor,        /* Unused in this FSAL */
                                fsal_attrib_list_t *
                                p_object_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t VFSFSAL_unlink(vfsfsal_handle_t * p_parent_directory_handle,      /* IN */
+fsal_status_t VFSFSAL_unlink(fsal_handle_t * p_parent_directory_handle,      /* IN */
                              fsal_name_t * p_object_name,       /* IN */
-                             vfsfsal_op_context_t * p_context,  /* IN */
+                             fsal_op_context_t * p_context,  /* IN */
                              fsal_attrib_list_t *
                              p_parent_directory_attributes /* [IN/OUT ] */ );
 
 char *VFSFSAL_GetFSName();
 
-fsal_status_t VFSFSAL_GetXAttrAttrs(vfsfsal_handle_t * p_objecthandle,  /* IN */
-                                    vfsfsal_op_context_t * p_context,   /* IN */
+fsal_status_t VFSFSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,  /* IN */
+                                    fsal_op_context_t * p_context,   /* IN */
                                     unsigned int xattr_id,      /* IN */
                                     fsal_attrib_list_t * p_attrs);
 
-fsal_status_t VFSFSAL_ListXAttrs(vfsfsal_handle_t * p_objecthandle,     /* IN */
+fsal_status_t VFSFSAL_ListXAttrs(fsal_handle_t * p_objecthandle,     /* IN */
                                  unsigned int cookie,   /* IN */
-                                 vfsfsal_op_context_t * p_context,      /* IN */
+                                 fsal_op_context_t * p_context,      /* IN */
                                  fsal_xattrent_t * xattrs_tab,  /* IN/OUT */
                                  unsigned int xattrs_tabsize,   /* IN */
                                  unsigned int *p_nb_returned,   /* OUT */
                                  int *end_of_list /* OUT */ );
 
-fsal_status_t VFSFSAL_GetXAttrValueById(vfsfsal_handle_t * p_objecthandle,      /* IN */
+fsal_status_t VFSFSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,      /* IN */
                                         unsigned int xattr_id,  /* IN */
-                                        vfsfsal_op_context_t * p_context,       /* IN */
+                                        fsal_op_context_t * p_context,       /* IN */
                                         caddr_t buffer_addr,    /* IN/OUT */
                                         size_t buffer_size,     /* IN */
                                         size_t * p_output_size /* OUT */ );
 
-fsal_status_t VFSFSAL_GetXAttrIdByName(vfsfsal_handle_t * p_objecthandle,       /* IN */
+fsal_status_t VFSFSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,       /* IN */
                                        const fsal_name_t * xattr_name,  /* IN */
-                                       vfsfsal_op_context_t * p_context,        /* IN */
+                                       fsal_op_context_t * p_context,        /* IN */
                                        unsigned int *pxattr_id /* OUT */ );
 
-fsal_status_t VFSFSAL_GetXAttrValueByName(vfsfsal_handle_t * p_objecthandle,    /* IN */
+fsal_status_t VFSFSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,    /* IN */
                                           const fsal_name_t * xattr_name,       /* IN */
-                                          vfsfsal_op_context_t * p_context,     /* IN */
+                                          fsal_op_context_t * p_context,     /* IN */
                                           caddr_t buffer_addr,  /* IN/OUT */
                                           size_t buffer_size,   /* IN */
                                           size_t * p_output_size /* OUT */ );
 
-fsal_status_t VFSFSAL_SetXAttrValue(vfsfsal_handle_t * p_objecthandle,  /* IN */
+fsal_status_t VFSFSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,  /* IN */
                                     const fsal_name_t * xattr_name,     /* IN */
-                                    vfsfsal_op_context_t * p_context,   /* IN */
+                                    fsal_op_context_t * p_context,   /* IN */
                                     caddr_t buffer_addr,        /* IN */
                                     size_t buffer_size, /* IN */
                                     int create /* IN */ );
 
-fsal_status_t VFSFSAL_SetXAttrValueById(vfsfsal_handle_t * p_objecthandle,      /* IN */
+fsal_status_t VFSFSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,      /* IN */
                                         unsigned int xattr_id,  /* IN */
-                                        vfsfsal_op_context_t * p_context,       /* IN */
+                                        fsal_op_context_t * p_context,       /* IN */
                                         caddr_t buffer_addr,    /* IN */
                                         size_t buffer_size /* IN */ );
 
-fsal_status_t VFSFSAL_RemoveXAttrById(vfsfsal_handle_t * p_objecthandle,        /* IN */
-                                      vfsfsal_op_context_t * p_context, /* IN */
+fsal_status_t VFSFSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,        /* IN */
+                                      fsal_op_context_t * p_context, /* IN */
                                       unsigned int xattr_id) /* IN */ ;
 
-fsal_status_t VFSFSAL_RemoveXAttrByName(vfsfsal_handle_t * p_objecthandle,      /* IN */
-                                        vfsfsal_op_context_t * p_context,       /* IN */
+fsal_status_t VFSFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,      /* IN */
+                                        fsal_op_context_t * p_context,       /* IN */
                                         const fsal_name_t * xattr_name) /* IN */ ;
 
 unsigned int VFSFSAL_GetFileno(fsal_file_t * pfile);
@@ -480,4 +469,4 @@ fsal_status_t VFSFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
                                    fsal_op_context_t * p_context,        /* IN */
                                    fsal_extattrib_list_t * p_object_attributes /* OUT */) ;
 
-fsal_status_t VFSFSAL_sync(vfsfsal_file_t * p_file_descriptor /* IN */);
+fsal_status_t VFSFSAL_sync(fsal_file_t * p_file_descriptor /* IN */);

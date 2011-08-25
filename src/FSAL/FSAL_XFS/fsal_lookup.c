@@ -66,13 +66,16 @@
  *         - Another error code else.
  *          
  */
-fsal_status_t XFSFSAL_lookup(xfsfsal_handle_t * p_parent_directory_handle,      /* IN */
+fsal_status_t XFSFSAL_lookup(fsal_handle_t * parent_handle,      /* IN */
                              fsal_name_t * p_filename,  /* IN */
-                             xfsfsal_op_context_t * p_context,  /* IN */
-                             xfsfsal_handle_t * p_object_handle,        /* OUT */
+                             fsal_op_context_t * context,  /* IN */
+                             fsal_handle_t * object_handle,        /* OUT */
                              fsal_attrib_list_t * p_object_attributes   /* [ IN/OUT ] */
     )
 {
+  xfsfsal_handle_t * p_parent_directory_handle = (xfsfsal_handle_t *)parent_handle;
+  xfsfsal_op_context_t * p_context = (xfsfsal_op_context_t *)context;
+  xfsfsal_handle_t * p_object_handle = (xfsfsal_handle_t *)object_handle;
   int rc, errsv;
   fsal_status_t status;
   struct stat buffstat;
@@ -119,7 +122,7 @@ fsal_status_t XFSFSAL_lookup(xfsfsal_handle_t * p_parent_directory_handle,      
   /* retrieve directory attributes */
   TakeTokenFSCall();
   status =
-      fsal_internal_handle2fd(p_context, p_parent_directory_handle, &parentfd, O_RDONLY);
+      fsal_internal_handle2fd(context, parent_handle, &parentfd, O_RDONLY);
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_lookup);
@@ -168,7 +171,7 @@ fsal_status_t XFSFSAL_lookup(xfsfsal_handle_t * p_parent_directory_handle,      
           p_filename->name);
 
   /* check rights to enter into the directory */
-  status = fsal_internal_testAccess(p_context, FSAL_X_OK, &buffstat, NULL);
+  status = fsal_internal_testAccess(context, FSAL_X_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_lookup);
 
@@ -184,7 +187,7 @@ fsal_status_t XFSFSAL_lookup(xfsfsal_handle_t * p_parent_directory_handle,      
       Return(posix2fsal_error(errsrv), errsrv, INDEX_FSAL_lookup);
     }
 
-  status = fsal_internal_fd2handle(p_context, objectfd, p_object_handle);
+  status = fsal_internal_fd2handle(context, objectfd, object_handle);
   close(parentfd);
   close(objectfd);
 
@@ -230,8 +233,8 @@ fsal_status_t XFSFSAL_lookup(xfsfsal_handle_t * p_parent_directory_handle,      
  */
 
 fsal_status_t XFSFSAL_lookupPath(fsal_path_t * p_path,  /* IN */
-                                 xfsfsal_op_context_t * p_context,      /* IN */
-                                 xfsfsal_handle_t * object_handle,      /* OUT */
+                                 fsal_op_context_t * p_context,      /* IN */
+                                 fsal_handle_t * object_handle,      /* OUT */
                                  fsal_attrib_list_t * p_object_attributes       /* [ IN/OUT ] */
     )
 {
@@ -293,65 +296,11 @@ fsal_status_t XFSFSAL_lookupPath(fsal_path_t * p_path,  /* IN */
  *         - Another error code else.
  *          
  */
-fsal_status_t XFSFSAL_lookupJunction(xfsfsal_handle_t * p_junction_handle,      /* IN */
-                                     xfsfsal_op_context_t * p_context,  /* IN */
-                                     xfsfsal_handle_t * p_fsoot_handle, /* OUT */
+fsal_status_t XFSFSAL_lookupJunction(fsal_handle_t * p_junction_handle,      /* IN */
+                                     fsal_op_context_t * p_context,  /* IN */
+                                     fsal_handle_t * p_fsoot_handle, /* OUT */
                                      fsal_attrib_list_t * p_fsroot_attributes   /* [ IN/OUT ] */
     )
 {
-  //hpss_Attrs_t    root_attr;
-
-  /* sanity checks
-   * note : p_fsroot_attributes is optionnal
-   */
-  /*
-     if (!p_junction_handle || !p_fsoot_handle || !p_p_context )
-     Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_lookupJunction);
-   */
-  /*
-     if ( p_junction_handle->obj_type != FSAL_TYPE_JUNCTION )
-     Return(ERR_FSAL_INVAL ,0 , INDEX_FSAL_lookupJunction);
-   */
-
-  /* call to HPSS client api */
-  /* We use hpss_GetRawAttrHandle for chasing junctions. */
-
-  /* TakeTokenFSCall(); */
-
-  //rc = HPSSFSAL_GetRawAttrHandle( &(p_junction_handle->ns_handle),
-  //                                NULL,
-  //                                &p_p_context->hpss_userp_context,
-  //                                TRUE,     /* do traverse junctions !!! */
-  //                                NULL,
-  //                                NULL,
-  //                                &root_attr );
-
-  /* ReleaseTokenFSCall(); */
-
-  //if (rc) Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_lookupJunction);
-
-  /* set output handle */
-  /*
-     p_fsoot_handle->obj_type  = hpss2fsal_type( root_attr.FilesetHandle.Type );
-     p_fsoot_handle->ns_handle = root_attr.FilesetHandle;
-   */
-
-  if(p_fsroot_attributes)
-    {
-
-      /* convert hpss attributes to fsal attributes */
-
-      /*
-         status=hpss2fsal_attributes(
-         &root_attr.FilesetHandle,
-         &root_attr,
-         p_fsroot_attributes );
-
-         if (FSAL_IS_ERROR(status))
-         Return(status.major,status.minor,INDEX_FSAL_lookupJunction);
-       */
-    }
-
-  /* lookup complete ! */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookupJunction);
 }

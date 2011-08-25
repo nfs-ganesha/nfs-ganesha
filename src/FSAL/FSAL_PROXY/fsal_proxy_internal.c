@@ -37,8 +37,6 @@
 #include "fsal_nfsv4_macros.h"
 
 #include "stuff_alloc.h"
-#include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
@@ -1501,15 +1499,12 @@ void *FSAL_proxy_change_user(proxyfsal_op_context_t * p_thr_context)
         }
       auth_destroy(p_thr_context->rpc_client->cl_auth);
 
-      p_thr_context->rpc_client->cl_auth = authunix_create(hostname,
-                                                           p_thr_context->user_credential.
-                                                           user,
-                                                           p_thr_context->user_credential.
-                                                           group,
-                                                           p_thr_context->user_credential.
-                                                           nbgroups,
-                                                           p_thr_context->user_credential.
-                                                           alt_groups);
+      p_thr_context->rpc_client->cl_auth =
+	      authunix_create(hostname,
+			      p_thr_context->credential.user,
+			      p_thr_context->credential.group,
+			      p_thr_context->credential.nbgroups,
+			      p_thr_context->credential.alt_groups);
       break;
 #ifdef _USE_GSSRPC
     case RPCSEC_GSS:
