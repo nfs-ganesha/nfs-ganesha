@@ -204,21 +204,19 @@ int nfs4_owner_Set(state_nfs4_owner_name_t * pname,
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
+  int rc;
+
+  buffkey.pdata = (caddr_t) pname;
+  buffkey.len = sizeof(state_nfs4_owner_name_t);
 
   if(isFullDebug(COMPONENT_STATE))
     {
       char str[HASHTABLE_DISPLAY_STRLEN];
 
-      buffkey.pdata = (caddr_t) pname;
-      buffkey.len = sizeof(state_nfs4_owner_name_t);
-
       display_nfs4_owner_key(&buffkey, str);
       LogFullDebug(COMPONENT_STATE,
                    "nfs4_owner_Set => KEY {%s}", str);
     }
-
-  buffkey.pdata = (caddr_t) pname;
-  buffkey.len = sizeof(state_nfs4_owner_name_t);
 
   buffval.pdata = (caddr_t) powner;
   buffval.len = sizeof(state_owner_t);
@@ -228,10 +226,15 @@ int nfs4_owner_Set(state_nfs4_owner_name_t * pname,
   powner->so_owner.so_nfs4_owner.so_counter = nfs4_owner_counter;
   V(nfs4_owner_counter_lock);
 
-  if(HashTable_Test_And_Set
+  rc = HashTable_Test_And_Set
      (ht_nfs4_owner, &buffkey, &buffval,
-      HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS)
-    return 0;
+      HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
+  if(rc != HASHTABLE_SUCCESS)
+    {
+      LogDebug(COMPONENT_STATE,
+               "Failed to insert nfs4 owner into hash table rc = %d", rc);
+      return 0;
+    }
 
   return 1;
 }                               /* nfs4_owner_Set */
@@ -283,37 +286,6 @@ int nfs4_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
 
   return 1;
 }                               /* nfs4_owner_Get_Pointer */
-
-/**
- *
- * nfs4_owner_Del
- *
- * This routine removes a open owner from the nfs4_owner's hashtable.
- *
- * @param other [IN] stateid'other field, used as a hash key
- *
- * @return 1 if ok, 0 otherwise.
- *
- */
-int nfs4_owner_Del(state_nfs4_owner_name_t * pname)
-{
-  hash_buffer_t buffkey, old_key, old_value;
-
-  buffkey.pdata = (caddr_t) pname;
-  buffkey.len = sizeof(state_nfs4_owner_name_t);
-
-  if(HashTable_Del(ht_nfs4_owner, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
-    {
-      /* free the key that was stored in hash table */
-      Mem_Free((void *)old_key.pdata);
-
-      /* State is managed in stuff alloc, no fre is needed for old_value.pdata */
-
-      return 1;
-    }
-  else
-    return 0;
-}                               /* nfs4_owner_Del */
 
 /**
  * 
@@ -399,6 +371,36 @@ state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
     }
 
   return powner;
+}
+
+state_status_t destroy_nfs4_owner(cache_inode_client_t    * pclient,
+                                  state_nfs4_owner_name_t * pname)
+{
+  hash_buffer_t buffkey, old_key, old_value;
+
+  buffkey.pdata = (caddr_t) pname;
+  buffkey.len = sizeof(state_nfs4_owner_name_t);
+
+  if(isFullDebug(COMPONENT_STATE))
+    {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      display_nfs4_owner_key(&buffkey, str);
+      LogFullDebug(COMPONENT_STATE,
+                   "destroy_nfs4_owner => KEY {%s}", str);
+    }
+
+  if(HashTable_Del(ht_nfs4_owner, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
+    {
+      /* Release the owner_name (key) and owner (data) back to appropriate pools */
+      ReleaseToPool(old_value.pdata, &pclient->pool_state_owner);
+      ReleaseToPool(old_key.pdata, &pclient->pool_nfs4_owner_name);
+      LogFullDebug(COMPONENT_STATE,
+                   "Destroyed nfs4 owner");
+      return STATE_SUCCESS;
+    }
+  else
+    return STATE_HASH_TABLE_ERROR;
 }
 
 void Process_nfs4_conflict(LOCK4denied       * denied,    /* NFS v4 LOck4denied structure to fill in */

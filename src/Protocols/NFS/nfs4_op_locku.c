@@ -220,6 +220,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   pstate_open = pstate_found->state_data.lock.popenstate;
   if(pstate_open != NULL)
     {
+      pstate_open->state_seqid += 1;
       /* update the lock counter in the related open-stateid */
       // TODO FSF: this count is probably wrong...
       LogFullDebug(COMPONENT_NFS_V4_LOCK,
@@ -278,12 +279,14 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* Remove the state associated with the lock */
   // TODO FSF: this is not right, we need to keep the stateid, but we need to figure out right time to free it
+#if 0
   if(state_del(pstate_found,
                data->pclient, &state_status) != STATE_SUCCESS)
     {
       res_LOCKU4.status = nfs4_Errno_state(state_status);
       return res_LOCKU4.status;
     }
+#endif
 
   /* Successful exit */
   res_LOCKU4.status = NFS4_OK;
