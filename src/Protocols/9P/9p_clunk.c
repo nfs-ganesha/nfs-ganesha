@@ -76,26 +76,20 @@ int _9p_clunk( _9p_request_data_t * preq9p,
 
   LogDebug( COMPONENT_9P, "TCLUNK: tag=%u fid=%u", (u32)*msgtag, *fid ) ;
 
-  if( !_9p_hash_fid_del( &preq9p->conn, *fid, &pfid ) )
+  /* The clunk here does nothing but cleaning info in the fid. We just keep the fid in the table because it probably will be reused 
+   * soon by the client with the same fid. It faster and more efficient to Add an HashTable entry (allowing overwrite)
+   * scratching a formerly written entry */ 
+  if( ( pfid = _9p_hash_fid_get( &preq9p->conn, 
+                                 *fid,
+                                 &rc ) ) == NULL )
    {
-     if( pfid != NULL )
-      {
-        /* Put fid back to pool */
-        memset( (char *)pfid, 0, sizeof( _9p_fid_t ) ) ;
-#if 0
-        P( pwkrdata->_9pfid_pool_mutex ) ;
-        ReleaseToPool( pfid, &pwkrdata->_9pfid_pool ) ;
-        V( pwkrdata->_9pfid_pool_mutex ) ;
-#endif
-      }
+     err = ENOENT ;
+     rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+     return rc ;
    }
-  else
-   {
-      LogEvent( COMPONENT_9P, "TCLUNK: Impossible to delete fid=%u", *fid ) ;
-      err = EINVAL ;
-      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
-      return rc ;
-   }
+
+  /* Clean the fid */
+  memset( (char *)pfid, 0, sizeof( _9p_fid_t ) ) ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RCLUNK ) ;

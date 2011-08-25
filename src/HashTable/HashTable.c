@@ -1141,7 +1141,7 @@ void HashTable_Print( hash_table_t * ht)
             rbtval = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, &(pdata->buffkey));
           }
 
-        fprintf(stderr, "%s => %s; hashval=%lu rbtval=%lu ",
+        fprintf(stderr, "%s => %s; hashval=%lu rbtval=%lu\n ",
                 dispkey, dispval, hashval, rbtval);
         RBT_INCREMENT(it);
       }

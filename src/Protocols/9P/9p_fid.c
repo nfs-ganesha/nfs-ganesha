@@ -169,7 +169,7 @@ int _9p_hash_fid_update( _9p_conn_t * pconn,
   if( ( rc = HashTable_Test_And_Set( ht_fid, 
                                      &buffkey, 
                                      &buffdata, 
-                                     HASHTABLE_SET_HOW_SET_NO_OVERWRITE ) ) != HASHTABLE_SUCCESS )
+                                     HASHTABLE_SET_HOW_SET_OVERWRITE ) ) != HASHTABLE_SUCCESS )
     return -rc ;
 
   return 0 ;
