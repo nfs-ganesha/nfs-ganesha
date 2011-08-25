@@ -24,7 +24,7 @@
 /**
  * FSAL_opendir :
  *     Opens a directory for reading its content.
- *     
+ *
  * \param dir_handle (input)
  *         the handle of the directory to be opened.
  * \param cred (input)
@@ -36,7 +36,7 @@
  *         On successfull completion,the structure pointed
  *         by dir_attributes receives the new directory attributes.
  *         May be NULL.
- * 
+ *
  * \return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
@@ -102,7 +102,7 @@ fsal_status_t GPFSFSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
 /**
  * FSAL_readdir :
  *     Read the entries of an opened directory.
- *     
+ *
  * \param dir_descriptor (input):
  *        Pointer to the directory descriptor filled by FSAL_opendir.
  * \param start_position (input):
@@ -127,7 +127,7 @@ fsal_status_t GPFSFSAL_opendir(fsal_handle_t * p_dir_handle,        /* IN */
  * \param end_of_dir (output)
  *        Pointer to a boolean that indicates if the end of dir
  *        has been reached during the call.
- * 
+ *
  * \return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
@@ -237,7 +237,8 @@ fsal_status_t GPFSFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
           bpos += dp->d_reclen;
 
           /* LogFullDebug(COMPONENT_FSAL,
-                          "\tino=%8ld|%8lx off=%d|%x reclen=%d|%x name=%s|%d", dp->d_ino, dp->d_ino, (int)dp->d_off, (int)dp->d_off, 
+                          "\tino=%8ld|%8lx off=%d|%x reclen=%d|%x name=%s|%d",
+                          dp->d_ino, dp->d_ino, (int)dp->d_off, (int)dp->d_off,
                           dp->d_reclen, dp->d_reclen, dp->d_name, (int)dp->d_name[0]  ) ; */
 
           if(!(*p_nb_entries < max_dir_entries))
@@ -350,10 +351,10 @@ fsal_status_t GPFSFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
 /**
  * FSAL_closedir :
  * Free the resources allocated for reading directory entries.
- *     
+ *
  * \param dir_descriptor (input):
  *        Pointer to a directory descriptor filled by FSAL_opendir.
- * 
+ *
  * \return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.

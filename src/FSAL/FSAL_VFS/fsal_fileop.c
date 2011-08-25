@@ -253,7 +253,7 @@ fsal_status_t VFSFSAL_read(fsal_file_t * file_desc,        /* IN */
   vfsfsal_file_t * p_file_descriptor = (vfsfsal_file_t *) file_desc;
   size_t i_size;
   ssize_t nb_read;
-  int rc, errsv;
+  int rc = 0, errsv = 0;
   int pcall = FALSE;
 
   /* sanity checks. */
@@ -268,7 +268,6 @@ fsal_status_t VFSFSAL_read(fsal_file_t * file_desc,        /* IN */
 
   if(p_seek_descriptor)
     {
-
       switch (p_seek_descriptor->whence)
         {
         case FSAL_SEEK_CUR:
@@ -284,6 +283,7 @@ fsal_status_t VFSFSAL_read(fsal_file_t * file_desc,        /* IN */
           /* use pread/pwrite call */
           pcall = TRUE;
           rc = 0;
+          errsv = 0;
           break;
 
         case FSAL_SEEK_END:
@@ -294,7 +294,6 @@ fsal_status_t VFSFSAL_read(fsal_file_t * file_desc,        /* IN */
           rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_END);
           errsv = errno;
           ReleaseTokenFSCall();
-
           break;
         }
 
@@ -368,7 +367,7 @@ fsal_status_t VFSFSAL_write(fsal_file_t * file_desc,       /* IN */
   vfsfsal_file_t * p_file_descriptor = (vfsfsal_file_t *) file_desc;
   ssize_t nb_written;
   size_t i_size;
-  int rc, errsv;
+  int rc = 0, errsv = 0;
   int pcall = FALSE;
 
   /* sanity checks. */
@@ -404,6 +403,7 @@ fsal_status_t VFSFSAL_write(fsal_file_t * file_desc,       /* IN */
           /* set absolute position to offset */
           pcall = TRUE;
           rc = 0;
+          errsv = 0;
           break;
 
         case FSAL_SEEK_END:
@@ -414,7 +414,6 @@ fsal_status_t VFSFSAL_write(fsal_file_t * file_desc,       /* IN */
           rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_END);
           errsv = errno;
           ReleaseTokenFSCall();
-
           break;
         }
 

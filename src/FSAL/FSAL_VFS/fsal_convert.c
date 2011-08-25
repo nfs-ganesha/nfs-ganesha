@@ -8,7 +8,7 @@
  * \author  $Author: leibovic $
  * \date    $Date: 2006/01/17 15:53:39 $
  * \version $Revision: 1.31 $
- * \brief   HPSS-FSAL type translation functions.
+ * \brief   VFS-FSAL type translation functions.
  *
  *
  */
@@ -170,11 +170,11 @@ int posix2fsal_error(int posix_errorcode)
  *
  * \param fsal_flags (input):
  *        The FSAL open flags to be translated.
- * \param p_hpss_flags (output):
+ * \param p_posix_flags (output):
  *        Pointer to the POSIX open flags.
  *
  * \return - ERR_FSAL_NO_ERROR (no error).
- *         - ERR_FSAL_FAULT    (p_hpss_flags is a NULL pointer).
+ *         - ERR_FSAL_FAULT    (p_posix_flags is a NULL pointer).
  *         - ERR_FSAL_INVAL    (invalid or incompatible input flags).
  */
 int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
@@ -331,7 +331,7 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
      if ( FSAL_TEST_MASK(p_fsalattr_out->asked_attributes,
      FSAL_ATTR_MOUNTFILEID )){
      p_fsalattr_out->mounted_on_fileid = 
-     hpss2fsal_64( p_hpss_attr_in->FilesetRootId );
+     vfs2fsal_64( p_vfs_attr_in->FilesetRootId );
      }
    */
 
@@ -442,7 +442,7 @@ fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
        if ( FSAL_TEST_MASK(p_fsalattr_out->asked_attributes,
        FSAL_ATTR_MOUNTFILEID )){
        p_fsalattr_out->mounted_on_fileid =
-       hpss2fsal_64( p_hpss_attr_in->FilesetRootId );
+       vfs2fsal_64( p_vfs_attr_in->FilesetRootId );
        }
     */
 

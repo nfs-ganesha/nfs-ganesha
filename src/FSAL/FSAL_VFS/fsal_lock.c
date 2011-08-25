@@ -49,7 +49,6 @@ fsal_status_t VFSFSAL_lock(fsal_file_t * obj_handle,
                         fsal_lockdesc_t * lockdesc, fsal_boolean_t blocking)
 {
   vfsfsal_lockdesc_t *ldesc = (vfsfsal_lockdesc_t *)lockdesc;
-  int cmd;
   int retval;
   int fd = FSAL_FILENO(obj_handle);
 

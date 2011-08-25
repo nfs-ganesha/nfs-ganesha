@@ -38,7 +38,7 @@
 /* convert error codes */
 int posix2fsal_error(int posix_errorcode);
 
-/** converts an fsal open flag to an hpss open flag. */
+/** converts an fsal open flag to an vfs open flag. */
 int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags);
 
 /** converts an FSAL permission test to a Posix permission test. */
@@ -56,7 +56,7 @@ mode_t fsal2unix_mode(fsal_accessmode_t fsal_mode);
 /** converts unix access mode to fsal mode. */
 fsal_accessmode_t unix2fsal_mode(mode_t unix_mode);
 
-/** converts hpss object type to fsal object type. */
+/** converts vfs object type to fsal object type. */
 fsal_nodetype_t posix2fsal_type(mode_t posix_type_in);
 
 /** converts posix fsid to fsal FSid. */

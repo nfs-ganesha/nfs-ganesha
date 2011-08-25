@@ -39,55 +39,6 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 
-/* Macros for analysing parameters. */
-#define SET_BITMAP_PARAM( api_cfg, p_init_info, _field )      \
-    switch( (p_init_info)->behaviors._field ){                \
-      case FSAL_INIT_FORCE_VALUE :                            \
-        /* force the value in any case */                     \
-        api_cfg._field = (p_init_info)->hpss_config._field;   \
-        break;                                                \
-      case FSAL_INIT_MAX_LIMIT :                              \
-        /* remove the flags not specified by user (AND) */    \
-        api_cfg._field &= (p_init_info)->hpss_config._field;  \
-        break;                                                \
-      case FSAL_INIT_MIN_LIMIT :                              \
-        /* add the flags specified by user (OR) */            \
-        api_cfg._field |= (p_init_info)->hpss_config._field;  \
-        break;                                                \
-    /* In the other cases, we keep the default value. */      \
-    }                                                         \
-
-
-#define SET_INTEGER_PARAM( api_cfg, p_init_info, _field )         \
-    switch( (p_init_info)->behaviors._field ){                    \
-    case FSAL_INIT_FORCE_VALUE :                                  \
-        /* force the value in any case */                         \
-        api_cfg._field = (p_init_info)->hpss_config._field;       \
-        break;                                                \
-    case FSAL_INIT_MAX_LIMIT :                                    \
-      /* check the higher limit */                                \
-      if ( api_cfg._field > (p_init_info)->hpss_config._field )   \
-        api_cfg._field = (p_init_info)->hpss_config._field ;      \
-        break;                                                \
-    case FSAL_INIT_MIN_LIMIT :                                    \
-      /* check the lower limit */                                 \
-      if ( api_cfg._field < (p_init_info)->hpss_config._field )   \
-        api_cfg._field = (p_init_info)->hpss_config._field ;      \
-        break;                                                \
-    /* In the other cases, we keep the default value. */          \
-    }                                                             \
-
-
-#define SET_STRING_PARAM( api_cfg, p_init_info, _field )          \
-    switch( (p_init_info)->behaviors._field ){                    \
-    case FSAL_INIT_FORCE_VALUE :                                  \
-      /* force the value in any case */                           \
-      strcpy(api_cfg._field,(p_init_info)->hpss_config._field);   \
-      break;                                                \
-    /* In the other cases, we keep the default value. */          \
-    }                                                             \
-
-
 /**
  * FSAL_Init : Initializes the FileSystem Abstraction Layer.
  *
@@ -122,8 +73,7 @@ fsal_status_t VFSFSAL_Init(fsal_parameter_t * init_info /* IN */
 
   status = fsal_internal_init_global(&(init_info->fsal_info),
                                      &(init_info->fs_common_info),
-                                     (vfsfs_specific_initinfo_t *) & (init_info->
-                                                                      fs_specific_info));
+                                     & (init_info->fs_specific_info));
 
   if(FSAL_IS_ERROR(status))
     Return(status.major, status.minor, INDEX_FSAL_Init);

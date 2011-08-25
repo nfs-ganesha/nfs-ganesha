@@ -70,7 +70,7 @@ fsal_status_t VFSFSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
 {
   fsal_status_t st;
   int rc = 0 ;
-  int errsv = 0 ;
+  int errsv;
   struct stat buffstat;
 
   /* sanity checks.
@@ -83,7 +83,7 @@ fsal_status_t VFSFSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
   rc = vfs_stat_by_handle( ((vfsfsal_op_context_t *)p_context)->export_context->mount_root_fd,
                            &((vfsfsal_handle_t *)p_filehandle)->data.vfs_handle,
                            &buffstat ) ;
-  errsv = errno ;
+  errsv = errno;
   ReleaseTokenFSCall();
 
   if( rc == -1 )

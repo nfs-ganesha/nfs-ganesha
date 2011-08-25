@@ -100,6 +100,7 @@ struct file_handle
 {
   int handle_size;
   int handle_type;
+  int handle_key_size;
   /* file identifier */
   unsigned char f_handle[OPENHANDLE_HANDLE_LEN];
 };

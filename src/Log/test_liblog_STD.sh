@@ -2,7 +2,7 @@
 ##
 ## test_liblog_STD.sh
 ## test log functions
-## 
+##
 ## Made by Frank Filz
 ##
 
@@ -86,7 +86,7 @@ echo $DATE >> $FILE
 echo /var/log/messages > $MSGFILE
 echo $DATE >> $MSGFILE
 run >$OUTFILE 2>$ERRFILE
-run 
+run
 RC=$?
 
 if [ $RC -ne 0 ]
@@ -125,7 +125,7 @@ test_stdout "The family which was added is Family Dummy"
 test_stdout "Test log_snprintf$"
 # test_stdout "CONFIG: Error ERR_MALLOC : malloc impossible : status 22 : Invalid argument : Line"
 test_stdout "This should appear if environment is set properly"
-test_stdout "localhost : test_liblog-[1-9][0-9]*\[Test1\] :NFS STARTUP: Starting Log Tests$"
+test_stdout "localhost : test_liblog-[1-9][0-9]*\[monothread\] :Test1 :NFS STARTUP: Starting Log Tests$"
 
 test_stdout "DISPATCH: EVENT: This should go to stdout"
 test_stderr "DISPATCH: EVENT: This should go to stderr"

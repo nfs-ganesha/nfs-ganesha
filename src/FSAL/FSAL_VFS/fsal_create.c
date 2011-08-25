@@ -246,7 +246,7 @@ fsal_status_t VFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,       /* 
   if(!p_parent_directory_handle || !p_context || !p_object_handle || !p_dirname)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mkdir);
 
-  /* convert FSAL mode to HPSS mode. */
+  /* convert FSAL mode to VFS mode. */
   unix_mode = fsal2unix_mode(accessmode);
 
   /* Apply umask */
@@ -492,9 +492,6 @@ fsal_status_t VFSFSAL_link(fsal_handle_t * p_target_handle,  /* IN */
 /**
  * FSAL_mknode:
  * Create a special object in the filesystem.
- * Not supported upon HPSS.
- *
- * \return ERR_FSAL_NOTSUPP.
  */
 fsal_status_t VFSFSAL_mknode(fsal_handle_t * parentdir_handle,       /* IN */
                              fsal_name_t * p_node_name, /* IN */

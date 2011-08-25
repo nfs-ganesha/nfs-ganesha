@@ -551,6 +551,7 @@ static void DisplayLogString_valist(char *buff_dest, char * function, log_compon
   char texte[STR_LEN_TXT];
   struct tm the_date;
   time_t tm;
+  const char *threadname = Log_GetThreadFunction(component != COMPONENT_LOG_EMERG);
 
   tm = time(NULL);
   Localtime_r(&tm, &the_date);
@@ -558,17 +559,26 @@ static void DisplayLogString_valist(char *buff_dest, char * function, log_compon
   /* Ecriture sur le fichier choisi */
   log_vsnprintf(texte, STR_LEN_TXT, format, arguments);
 
-  snprintf(buff_dest, STR_LEN_TXT,
-           "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :%s\n",
-           the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
-           the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, nom_host,
-           nom_programme, getpid(), function,
-           texte);
+  if(LogComponents[component].comp_log_level < LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level)
+    snprintf(buff_dest, STR_LEN_TXT,
+             "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :%s\n",
+             the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
+             the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, nom_host,
+             nom_programme, getpid(), threadname,
+             texte);
+  else
+    snprintf(buff_dest, STR_LEN_TXT,
+             "%.2d/%.2d/%.4d %.2d:%.2d:%.2d epoch=%ld : %s : %s-%d[%s] :%s :%s\n",
+             the_date.tm_mday, the_date.tm_mon + 1, 1900 + the_date.tm_year,
+             the_date.tm_hour, the_date.tm_min, the_date.tm_sec, tm, nom_host,
+             nom_programme, getpid(), threadname, function,
+             texte);
 }                               /* DisplayLogString_valist */
 
 static int DisplayLogSyslog_valist(log_components_t component, char * function, int level, char * format, va_list arguments)
 {
   char texte[STR_LEN_TXT];
+  const char *threadname = Log_GetThreadFunction(component != COMPONENT_LOG_EMERG);
 
   if( !syslog_opened )
    {
@@ -579,7 +589,11 @@ static int DisplayLogSyslog_valist(log_components_t component, char * function, 
   /* Ecriture sur le fichier choisi */
   log_vsnprintf(texte, STR_LEN_TXT, format, arguments);
 
-  syslog(tabLogLevel[level].syslog_level, "[%s] :%s", function, texte);
+  if(LogComponents[component].comp_log_level < LogComponents[LOG_MESSAGE_VERBOSITY].comp_log_level)
+    syslog(tabLogLevel[level].syslog_level, "[%s] :%s", threadname, texte);
+  else
+    syslog(tabLogLevel[level].syslog_level, "[%s] :%s :%s", threadname, function, texte);
+
   return 1 ;
 } /* DisplayLogSyslog_valist */
 
@@ -654,13 +668,13 @@ static int DisplayLogPath_valist(char *path, char * function, log_components_t c
 #else
       if((fd = open(path, O_WRONLY | O_NONBLOCK | O_APPEND | O_CREAT, masque_log)) != -1)
         {
-          if(write(fd, tampon, strlen(tampon)) < strlen(tampon)) 
+          if(write(fd, tampon, strlen(tampon)) < strlen(tampon))
           {
             fprintf(stderr, "Error: couldn't complete write to the log file, ensure disk has not filled up");
-            close(fd); 
+            close(fd);
             return ERR_FICHIER_LOG;
           }
-          
+
           /* fermeture du fichier */
           close(fd);
           return SUCCES;
@@ -838,615 +852,10 @@ int MakeLogError(char *buffer, int num_family, int num_error, int status,
 
 int log_vsnprintf(char *out, size_t taille, char *format, va_list arguments)
 {
-  char *iterformat = NULL;
-  char subformat[MAX_STR_TOK];
-  char tmpout[MAX_STR_TOK];
-  int type = NO_TYPE;
-  int typelg = NO_LONG;
-  int type_ext = 0;
-  char *ptrsub = NULL;
-  char *endofstr = NULL;
-  int len = 0;
-  int precision_in_valist = 0;
-  int retval = 0;
-
-  int err_family = ERR_POSIX;
-  int ctx_family = ERR_SYS;
-  int numero;
-  char *label;
-  char *msg;
-
-  int tmpnumero;
-  char *tmplabel;
-  char *tmpmsg;
-  family_error_t *tab_err;
-  family_error_t the_error;
-
-  /* Phase d'init */
-  out[0] = '\0';
-  iterformat = format;
-  ptrsub = subformat;
-
-  do
-    {
-      /* reinit var length for each %<smthg> */
-      type = NO_TYPE;
-      typelg = NO_LONG;
-
-      ptrsub = iterformat;
-      endofstr = iterformat;
-      len = 0;
-
-      /* On affiche d'abord tout ce qui est avant un % */
-      while(*iterformat != '\0' && *iterformat != '%')
-        {
-          ONE_STEP;
-        }
-
-      if(*iterformat == '\0')
-        break;
-      else
-        endofstr = iterformat;
-
-      /* Je vire le premier caractere (qui est forcement un '%') */
-      ONE_STEP;
-
-      /*
-       * Accept "#-0 +'I" qualifiers, there can be any number in any order
-       * but they must immediately follow the %
-       */
-      /* TODO: Ganesha special formats do not work with any of these */
-      while (*iterformat == '#' || *iterformat == '-' || *iterformat == '0' ||
-             *iterformat == ' ' || *iterformat == '+' || *iterformat == 'I' ||
-             *iterformat == '\'')
-        {
-          ONE_STEP;
-        }
-
-      /* On traite les arguments positionnels */
-      while(isdigit(*iterformat) || *iterformat == '$')
-        {
-          ONE_STEP;
-        }
-
-      /* La taille du champ */
-      if(*iterformat == '*')
-        {
-          /* On garde le '*' */
-          ONE_STEP;
-
-          /* on lit la precision dans les arguments */
-          precision_in_valist += 1;
-
-          /* On garde la taille du champs */
-          while(isdigit(*iterformat) || *iterformat == '$')
-            {
-              ONE_STEP;
-            }
-        }
-
-      /* La precision */
-      if(*iterformat == '.')
-        {
-          /* On garde le '.' */
-          ONE_STEP;
-
-          if(*iterformat == '*')
-            {
-              /* On garde le '*' */
-              ONE_STEP;
-
-              /* on lit la precision dans les arguments */
-              precision_in_valist += 1;
-
-              /* On garde la taille du champs */
-              while(isdigit(*iterformat) || *iterformat == '$')
-                {
-                  ONE_STEP;
-                }
-            }
-          else
-            {
-              if(isdigit(*iterformat))
-                {
-
-                  while(isdigit(*iterformat) || *iterformat == '$')
-                    {
-                      ONE_STEP;
-                    }
-                }               /*  if( isdigit( *iterformat ) */
-              else
-                {
-                  /* Le cas %.? est traite comme %.0? */
-                  ONE_STEP;
-                }
-
-            }                   /* if( *iterformat == '.' )  */
-        }
-
-      /* On s'occupe a present des doubles quantificateurs, types ll */
-      switch (*iterformat)
-        {
-        case 'h':
-          /* ce sont des short ints ou bien des char */
-          if (iterformat[1] == 'h' || iterformat[1] == 'd' ||
-              iterformat[1] == 'i' || iterformat[1] == 'u' ||
-              iterformat[1] == 'x' || iterformat[1] == 'X' ||
-              iterformat[1] == 'o')
-            {
-              typelg = SHORT_LG;
-              ONE_STEP;
-              if(*iterformat == 'h')
-                {
-                  ONE_STEP;
-                  type = CHAR_TYPE;
-                  typelg = NO_LONG;
-                }
-            }
-          break;
-        case 'L':
-          /* long doubles et long ints */
-          typelg = LONG_LONG_LG;
-          ONE_STEP;
-          break;
-        case 'q':
-          /* long long */
-          typelg = LONG_LONG_LG;
-          ONE_STEP;
-          break;
-        case 'z':
-        case 'Z':
-        case 't':
-        case 'j':
-#          if __WORDSIZE == 64
-          typelg = LONG_LG;
-#          else
-          typelg = LONG_LONG_LG;
-#          endif
-          ONE_STEP;
-          break;
-        case 'l':
-          /* long int, peut etre double */
-          ONE_STEP;
-          typelg = LONG_LG;
-          if(*iterformat == 'l')
-            {
-              ONE_STEP;
-              typelg = LONG_LONG_LG;
-            }
-          break;
-        default:
-          break;
-        }
-
-      /* A present, l'identificateur de type */
-      type = NO_TYPE;
-
-      switch (*iterformat)
-        {
-        case 'i':
-        case 'd':
-        case 'u':
-        case 'o':
-        case 'x':
-        case 'X':
-          /* Des entiers */
-          type = INT_TYPE;
-          ONE_STEP;
-          break;
-        case 'e':
-        case 'E':
-        case 'f':
-        case 'F':
-        case 'g':
-        case 'G':
-        case 'a':
-        case 'A':
-          /* Des flottants */
-          type = DOUBLE_TYPE;
-          ONE_STEP;
-          break;
-        case 'c':
-        case 'C':
-          /* Des caracteres */
-          type = CHAR_TYPE;
-          ONE_STEP;
-          break;
-        case 's':
-        case 'S':
-          /* Des chaines de caracteres a zero terminal */
-          type = STRING_TYPE;
-          ONE_STEP;
-          break;
-        case 'p':
-          /* La chose en un pointeur */
-          type = POINTEUR_TYPE;
-          ONE_STEP;
-          break;
-#if 0
-// we can't support %n due to security considerations
-        case 'n':
-          /* Le monstrueux passage de pointeur, trou beant pour les shellcodes, je ne le gere pas volontairement */
-          type = POINTEUR_TYPE;
-          ONE_STEP;
-          break;
-#endif
-        case '%':
-          /* le caractere %, tout simplement */
-          type = NO_TYPE;
-          ONE_STEP;
-          break;
-        case 'b':
-          /* Un status, dans sa version courte */
-          type = EXTENDED_TYPE;
-          type_ext = STATUS_SHORT;
-          ONE_STEP;
-          break;
-        case 'B':
-          /* Un status, dans sa version longue */
-          type = EXTENDED_TYPE;
-          type_ext = STATUS_LONG;
-          ONE_STEP;
-          break;
-        case 'h':
-          /* Un contexte, dans sa version courte */
-          type = EXTENDED_TYPE;
-          type_ext = CONTEXTE_SHORT;
-          ONE_STEP;
-          break;
-        case 'H':
-          /* Un contexte, dans sa version longue */
-          type = EXTENDED_TYPE;
-          type_ext = CONTEXTE_LONG;
-          ONE_STEP;
-          break;
-        case 'y':
-          /* Une log_error, en version courte */
-          type = EXTENDED_TYPE;
-          type_ext = ERREUR_SHORT;
-          ONE_STEP;
-          break;
-        case 'Y':
-          /* Une log_error, en version longue */
-          type = EXTENDED_TYPE;
-          type_ext = ERREUR_LONG;
-          ONE_STEP;
-          break;
-        case 'r':
-          /* Un  numero d'erreur, en version courte */
-          type = EXTENDED_TYPE;
-          type_ext = ERRNUM_SHORT;
-          ONE_STEP;
-          break;
-        case 'R':
-          /* Un  numero d'erreur, en version longue */
-          type = EXTENDED_TYPE;
-          type_ext = ERRNUM_LONG;
-          ONE_STEP;
-          break;
-        case 'v':
-          /* Un contexte d'erreur, en version courte */
-          type = EXTENDED_TYPE;
-          type_ext = ERRCTX_SHORT;
-          ONE_STEP;
-          break;
-        case 'V':
-          /* Un contexte d'erreur, en version longue */
-          type = EXTENDED_TYPE;
-          type_ext = ERRCTX_LONG;
-          ONE_STEP;
-          break;
-        case 'J':
-          /* Changement de family par defaut, pour les erreurs */
-          type = EXTENDED_TYPE;
-          type_ext = CHANGE_ERR_FAMILY;
-          ONE_STEP;
-          break;
-        case 'K':
-          /* Changement de family par defaut, pour les contexte */
-          type = EXTENDED_TYPE;
-          type_ext = CHANGE_CTX_FAMILY;
-          ONE_STEP;
-          break;
-        case 'w':
-          /* An errno, short */
-          type = EXTENDED_TYPE;
-          type_ext = ERRNO_SHORT;
-          ONE_STEP;
-          break;
-        case 'W':
-          /* An errno, long */
-          type = EXTENDED_TYPE;
-          type_ext = ERRNO_LONG;
-          ONE_STEP;
-          break;
-        case 'm':
-          type = NO_TYPE;
-          ONE_STEP;
-          break;
-        default:
-          type = NO_TYPE;
-          ONE_STEP;
-          break;
-        }
-
-      strncpy(subformat, ptrsub, len);
-      subformat[len] = '\0';
-
-      if(type != EXTENDED_TYPE)
-        {
-          va_list tmp_args;
-
-          /* vsnprintf may modify arguments */
-          va_copy(tmp_args, arguments);
-
-          /* Composition de la sortie avec vsprintf */
-          retval += vsnprintf(tmpout, taille, subformat, tmp_args);
-
-          /* free this temporary copy */
-          va_end(tmp_args);
-
-          /*
-           * Si un truc genre %*.*d est utilise, on doit consommer un entier qui contient la precision pour chaque "*"
-           */
-          while(precision_in_valist != 0)
-            {
-              va_arg(arguments, int);
-              precision_in_valist -= 1;
-            }
-
-          /* Je vais prendre un argument dans la va_list selon le format */
-          switch (typelg)
-            {
-            case SHORT_LG:
-              va_arg(arguments, int);
-              break;
-
-            case NO_LONG:
-              switch (type)
-                {
-                case INT_TYPE:
-                  va_arg(arguments, int);
-                  break;
-
-                case LONG_TYPE:
-                  va_arg(arguments, long);
-                  break;
-
-                case FLOAT_TYPE:
-                  /* float is promoted to double when passed through "..." */
-                  va_arg(arguments, double);
-                  break;
-
-                case DOUBLE_TYPE:
-                  va_arg(arguments, double);
-                  break;
-
-                case CHAR_TYPE:
-                  /* char is promoted to int when passed through "..." */
-                  va_arg(arguments, int);
-                  break;
-
-                case POINTEUR_TYPE:
-                  va_arg(arguments, void *);
-                  break;
-
-                case STRING_TYPE:
-                  va_arg(arguments, char *);
-                  break;
-
-		default:
-		  /* Should not occurr */
-                  continue ;
-                }
-
-              break;
-
-            case LONG_LG:
-              switch (type)
-                {
-                case INT_TYPE:
-                  va_arg(arguments, long int);
-                  break;
-
-                case LONG_TYPE:
-                  va_arg(arguments, long long int);
-                  break;
-
-                case FLOAT_TYPE:
-                  va_arg(arguments, double);
-                  break;
-
-                case DOUBLE_TYPE:
-                  va_arg(arguments, long double);
-                  break;
-
-		default:
-		  /* Should not occurr */
-                  continue ;
-                }
-              break;
-
-            case LONG_LONG_LG:
-              switch (type)
-                {
-                case INT_TYPE:
-                case LONG_TYPE:
-                  va_arg(arguments, long long int);
-                  break;
-
-                case FLOAT_TYPE:
-                case DOUBLE_TYPE:
-                  va_arg(arguments, long double);
-                  break;
-
-		default:
-		  /* Should not occurr */
-                  continue ;
-                }
-
-              break;
-
-	    default:
-              /* Should not occurr */
-              continue ;
-            }
-        }                       /* if( type != EXTENDED_TYPE ) */
-      else
-        {
-          /* Cette macro (un peu crade), extrait une family_error_t des arguments variables */
-#define VA_ARG_ERREUR_T numero = va_arg( arguments, long ) ; label  = va_arg( arguments, char * ) ; msg    = va_arg( arguments, char *)
-
-          /* si le subformat est de type "toto titi tutu %X",
-           * on ajoute le "toto titi tutu " dans la chaine de sortie */
-          if(strlen(subformat) > 2)
-            strncat(out, subformat, strlen(subformat) - 2);
-
-          switch (type_ext)
-            {
-            case STATUS_SHORT:
-            case CONTEXTE_SHORT:
-              VA_ARG_ERREUR_T;
-              snprintf(tmpout, MAX_STR_TOK, "%s(%d)", label, numero);
-              break;
-
-            case STATUS_LONG:
-            case CONTEXTE_LONG:
-              VA_ARG_ERREUR_T;
-              snprintf(tmpout, MAX_STR_TOK, "%s(%d) : '%s'", label, numero, msg);
-              break;
-
-            case ERREUR_SHORT:
-              VA_ARG_ERREUR_T;
-              tmpnumero = numero;
-              tmplabel = label;
-              tmpmsg = msg;
-              VA_ARG_ERREUR_T;
-              snprintf(tmpout, MAX_STR_TOK, "%s %s(%d)", tmplabel, label, numero);
-              break;
-
-            case ERREUR_LONG:
-              VA_ARG_ERREUR_T;
-              tmpnumero = numero;
-              tmplabel = label;
-              tmpmsg = msg;
-              VA_ARG_ERREUR_T;
-              snprintf(tmpout, MAX_STR_TOK, "%s(%d) : '%s' -> %s(%d) : '%s'",
-                       tmplabel, tmpnumero, tmpmsg, label, numero, msg);
-              break;
-
-            case CHANGE_ERR_FAMILY:
-              /* On assigne un nouvelle family d'erreur */
-              err_family = va_arg(arguments, int);
-              tmpout[0] = '\0'; /* Chaine vide */
-              break;
-
-            case CHANGE_CTX_FAMILY:
-              /* On assigne une nouvelle family de contexte */
-              ctx_family = va_arg(arguments, int);
-              tmpout[0] = '\0';
-              break;
-
-            case ERRNUM_SHORT:
-              /* Un numero d'erreur dans la family courante (ERR_POSIX par defaut) */
-              if((tab_err = TrouveTabErr(err_family)) == NULL)
-                {
-                  snprintf(tmpout, MAX_STR_TOK, "?");
-                  break;
-                }
-              numero = va_arg(arguments, int);
-              the_error = TrouveErr(tab_err, numero);
-              snprintf(tmpout, MAX_STR_TOK, "%s(%d)", the_error.label, the_error.numero);
-              break;
-
-            case ERRNUM_LONG:
-              /* Un numero d'erreur dans la family courante (ERR_POSIX par defaut) */
-              if((tab_err = TrouveTabErr(err_family)) == NULL)
-                {
-                  snprintf(tmpout, MAX_STR_TOK, "?");
-                  break;
-                }
-              numero = va_arg(arguments, int);
-              the_error = TrouveErr(tab_err, numero);
-              snprintf(tmpout, MAX_STR_TOK, "%s(%d) : '%s'", the_error.label,
-                       the_error.numero, the_error.msg);
-              break;
-
-            case ERRNO_SHORT:
-              /* Un numero d'erreur dans la family courante (ERR_POSIX par defaut) */
-              if((tab_err = TrouveTabErr(ERR_POSIX)) == NULL)
-                {
-                  snprintf(tmpout, MAX_STR_TOK, "?");
-                  break;
-                }
-              numero = va_arg(arguments, int);
-              the_error = TrouveErr(tab_err, numero);
-              snprintf(tmpout, MAX_STR_TOK, "%s(%d)", the_error.label, the_error.numero);
-              break;
-
-            case ERRNO_LONG:
-              /* Un numero d'erreur dans la family courante (ERR_POSIX par defaut) */
-              if((tab_err = TrouveTabErr(ERR_POSIX)) == NULL)
-                {
-                  snprintf(tmpout, MAX_STR_TOK, "?");
-                  break;
-                }
-              {
-                char tempstr[1024];
-                char *errstr;
-
-                numero = va_arg(arguments, int);
-                errstr = strerror_r(numero, tempstr, 1024);
-                the_error = TrouveErr(tab_err, numero);
-                snprintf(tmpout, MAX_STR_TOK, "%s(%d) : '%s'", the_error.label,
-                         the_error.numero, errstr);
-              }
-              break;
-
-            case ERRCTX_SHORT:
-              /* Un numero de contexte dans la family courante (ERR_SYS par defaut) */
-              if((tab_err = TrouveTabErr(ctx_family)) == NULL)
-                {
-                  snprintf(tmpout, MAX_STR_TOK, "?");
-                  break;
-                }
-              numero = va_arg(arguments, int);
-              the_error = TrouveErr(tab_err, numero);
-              snprintf(tmpout, MAX_STR_TOK, "%s(%d)", the_error.label, the_error.numero);
-              break;
-
-            case ERRCTX_LONG:
-              /* Un numero de contexte dans la family courante (ERR_SYS par defaut) */
-              if((tab_err = TrouveTabErr(ctx_family)) == NULL)
-                {
-                  snprintf(tmpout, MAX_STR_TOK, "?");
-                  break;
-                }
-              numero = va_arg(arguments, int);
-              the_error = TrouveErr(tab_err, numero);
-              snprintf(tmpout, MAX_STR_TOK, "%s(%d) : '%s'", the_error.label, numero,
-                       the_error.msg);
-              break;
-
-	    default:
-	      /* Should not occur */
-              continue ;
-
-            }                   /* switch */
-
-        }                       /* else */
-
-      strncat(out, tmpout, taille);
-    }
-  while(*iterformat != '\0');
-
-  /* Le pas oublie la fin du format, qui est tout a la queue */
-  if(*endofstr == '%')
-    ptrsub = iterformat;        /* Pour clore l'iteration */
-  strncat(out, ptrsub, taille);
-
-  return retval;
-}                               /* mon_vsprintf */
+  /* TODO: eventually remove this entirely, but this makes the code
+   * work for now */
+  return vsnprintf(out, taille, format, arguments);
+}
 
 int log_snprintf(char *out, size_t n, char *format, ...)
 {
@@ -1688,6 +1097,11 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
+  { LOG_MESSAGE_VERBOSITY,        "LOG_MESSAGE_VERBOSITY", "LOG MESSAGE VERBOSITY",
+    NIV_NULL,
+    SYSLOG,
+    "SYSLOG"
+  },
 };
 
 int DisplayLogComponentLevel(log_components_t component,
@@ -1797,7 +1211,7 @@ static int isValidLogPath(char *pathname)
       LogCrit(COMPONENT_LOG,
               "%s points outside your accessible address space.",
               directory_name);
-      break; 
+      break;
 
     default:
 	break ;

@@ -221,7 +221,7 @@ fsal_status_t GPFSFSAL_rcp(fsal_handle_t * filehandle,      /* IN */
       /* initialize error code */
       st = FSAL_STATUS_NO_ERROR;
 
-      
+      LogFullDebug(COMPONENT_FSAL, "Read a block from source");
 
       /* read */
 
@@ -258,7 +258,6 @@ fsal_status_t GPFSFSAL_rcp(fsal_handle_t * filehandle,      /* IN */
               LogFullDebug(COMPONENT_FSAL,
                            "End of file on local file system");
             }
-
         }
       else                      /* from FSAL filesystem */
         {
@@ -269,6 +268,7 @@ fsal_status_t GPFSFSAL_rcp(fsal_handle_t * filehandle,      /* IN */
 
           if(FSAL_IS_ERROR(st))
             break;              /* exit loop */
+
           if(fs_size > 0)
             {
               LogFullDebug(COMPONENT_FSAL,

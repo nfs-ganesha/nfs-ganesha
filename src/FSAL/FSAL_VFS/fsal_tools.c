@@ -211,8 +211,9 @@ fsal_status_t VFSFSAL_DigestHandle(fsal_export_context_t * p_expcontext,     /* 
                                    caddr_t out_buff     /* OUT */
     )
 {
+ uint32_t ino32;
+ uint64_t ino64;
   vfsfsal_handle_t * p_in_fsal_handle = (vfsfsal_handle_t *)in_fsal_handle;
-  unsigned int ino32;
 
   /* sanity checks */
   if(!p_in_fsal_handle || !out_buff || !p_expcontext)
@@ -250,7 +251,9 @@ fsal_status_t VFSFSAL_DigestHandle(fsal_export_context_t * p_expcontext,     /* 
       break;
   
    case FSAL_DIGEST_FILEID2:
-      ReturnCode(ERR_FSAL_NOTSUPP, 0);
+      memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID2);
+      memcpy(out_buff, p_in_fsal_handle->data.vfs_handle.handle, FSAL_DIGEST_SIZE_FILEID2);
+      break;
 
    case FSAL_DIGEST_FILEID3:
       /* Extracting FileId from VFS handle requires internal knowledge on the handle's structure 
@@ -287,13 +290,17 @@ fsal_status_t VFSFSAL_DigestHandle(fsal_export_context_t * p_expcontext,     /* 
 	u64 parent_root_objectid;
       } __attribute__ ((packed));*/
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
-      memcpy(out_buff, p_in_fsal_handle->data.vfs_handle.handle, FSAL_DIGEST_SIZE_FILEID3);
+      memcpy(&ino32, p_in_fsal_handle->data.vfs_handle.handle, sizeof(ino32));
+      ino64 = ino32;
+      memcpy(out_buff, &ino64, FSAL_DIGEST_SIZE_FILEID3);
       break;
 
 
    case FSAL_DIGEST_FILEID4:
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID4);
-      memcpy(out_buff, p_in_fsal_handle->data.vfs_handle.handle, FSAL_DIGEST_SIZE_FILEID4);
+      memcpy(&ino32, p_in_fsal_handle->data.vfs_handle.handle, sizeof(ino32));
+      ino64 = ino32;
+      memcpy(out_buff, &ino64, FSAL_DIGEST_SIZE_FILEID4);
       break;
 
     default:

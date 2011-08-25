@@ -48,7 +48,6 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
   vfsfsal_export_context_t * p_export_context = (vfsfsal_export_context_t *) context;
   FILE *fp;
   struct mntent *p_mnt;
-  struct stat pathstat;
 
   char rpath[MAXPATHLEN];
   char mntdir[MAXPATHLEN];
@@ -60,9 +59,6 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
   size_t pathlen, outlen;
   int rc;
   int mnt_id = 0 ;
-
-  char *handle;
-  size_t handle_len = 0;
 
   /* sanity check */
   if(p_export_context == NULL)
@@ -106,7 +102,7 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
                               rpath, p_mnt->mnt_type, p_mnt->mnt_fsname);
               outlen = pathlen;
               strncpy(mntdir, p_mnt->mnt_dir, MAXPATHLEN);
-              strncpy(type, p_mnt->mnt_type, 256);
+              strncpy(type, p_mnt->mnt_type, MAXNAMLEN);
               strncpy(fs_spec, p_mnt->mnt_fsname, MAXPATHLEN);
             }
           /* in other cases, the filesystem must be <mountpoint>/<smthg> or <mountpoint>\0 */
@@ -119,7 +115,7 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
 
               outlen = pathlen;
               strncpy(mntdir, p_mnt->mnt_dir, MAXPATHLEN);
-              strncpy(type, p_mnt->mnt_type, 256);
+              strncpy(type, p_mnt->mnt_type, MAXNAMLEN);
               strncpy(fs_spec, p_mnt->mnt_fsname, MAXPATHLEN);
             }
         }
@@ -137,7 +133,7 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
         }
     }
 
-  /* save file descriptor to root of GPFS share */
+  /* save file descriptor to root of VFS export */
   if( ( p_export_context->mount_root_fd = open(mntdir, O_RDONLY | O_DIRECTORY) ) < 0 )
     {
       close( p_export_context->mount_root_fd );
@@ -146,9 +142,9 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
                mntdir, errno);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
-  
+
   /* Keep fstype in export_context */
-  strncpy(  p_export_context->fstype, type, MAXNAMLEN ) ; 
+  strncpy(  p_export_context->fstype, type, MAXNAMLEN ) ;
 
   if( !strncmp( type, "xfs", MAXNAMLEN ) )
    {
@@ -158,20 +154,22 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
    }
 
   p_export_context->root_handle.handle_bytes = VFS_HANDLE_LEN ;
-  if( vfs_fd_to_handle( p_export_context->mount_root_fd, 
-			&p_export_context->root_handle,  
-                        &mnt_id ) )   
+  if( vfs_fd_to_handle( p_export_context->mount_root_fd,
+			&p_export_context->root_handle,
+                        &mnt_id ) )
 	 Return(posix2fsal_error(errno), errno, INDEX_FSAL_BuildExportContext) ;
 
-#if 0 
-  {
-     char str[1024] ;
+#ifdef TODO
+  if(isFullDebug(COMPONENT_FSAL))
+    {
+      char str[1024] ;
 
-     sprint_mem( str, p_export_context->root_handle.handle ,p_export_context->root_handle.handle_bytes ) ;
-     printf( "=====> root Handle: type=%u bytes=%u|%s\n",  
-             p_export_context->root_handle.handle_type,  p_export_context->root_handle.handle_bytes, str ) ;
+      sprint_mem( str, p_export_context->root_handle.handle ,p_export_context->root_handle.handle_bytes ) ;
+      LogFullDebug(COMPONENT_FSAL,
+                   "=====> root Handle: type=%u bytes=%u|%s\n",
+                   p_export_context->root_handle.handle_type,  p_export_context->root_handle.handle_bytes, str ) ;
 
-  }
+    }
 #endif
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
@@ -182,12 +180,100 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
  * this will clean up and state in an export that was created during
  * the BuildExportContext phase.  For many FSALs this may be a noop.
  *
- * \param p_export_context (in, gpfsfsal_export_context_t)
+ * \param p_export_context (in, vfsfsal_export_context_t)
  */
 
 fsal_status_t VFSFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context)
 {
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
+}
+
+fsal_status_t VFSFSAL_InitClientContext(fsal_op_context_t * p_context)
+{
+  vfsfsal_op_context_t * p_thr_context = (vfsfsal_op_context_t *)p_context;
+  /* sanity check */
+  if(!p_thr_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
+
+  /* initialy set the export entry to none */
+  p_thr_context->export_context = NULL;
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
+
+}
+
+ /**
+ * FSAL_GetUserCred :
+ * Get a user credential from its uid.
+ *
+ * \param p_cred (in out, fsal_cred_t *)
+ *        Initialized credential to be changed
+ *        for representing user.
+ * \param uid (in, fsal_uid_t)
+ *        user identifier.
+ * \param gid (in, fsal_gid_t)
+ *        group identifier.
+ * \param alt_groups (in, fsal_gid_t *)
+ *        list of alternative groups.
+ * \param nb_alt_groups (in, fsal_count_t)
+ *        number of alternative groups.
+ *
+ * \return major codes :
+ *      - ERR_FSAL_PERM : the current user cannot
+ *                        get credentials for this uid.
+ *      - ERR_FSAL_FAULT : Bad adress parameter.
+ *      - ERR_FSAL_SERVERFAULT : unexpected error.
+ */
+
+fsal_status_t VFSFSAL_GetClientContext(fsal_op_context_t * thr_context,    /* IN/OUT  */
+                                       fsal_export_context_t * p_export_context,     /* IN */
+                                       fsal_uid_t uid,  /* IN */
+                                       fsal_gid_t gid,  /* IN */
+                                       fsal_gid_t * alt_groups, /* IN */
+                                       fsal_count_t nb_alt_groups       /* IN */
+    )
+{
+  vfsfsal_op_context_t * p_thr_context = (vfsfsal_op_context_t *) thr_context;
+  fsal_count_t ng = nb_alt_groups;
+  unsigned int i;
+
+  /* sanity check */
+  if(!p_thr_context || !p_export_context)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
+
+  /* set the export specific context */
+  p_thr_context->export_context = (vfsfsal_export_context_t *)p_export_context;
+
+  p_thr_context->credential.user = uid;
+  p_thr_context->credential.group = gid;
+
+  if(ng > FSAL_NGROUPS_MAX)
+    ng = FSAL_NGROUPS_MAX;
+  if((ng > 0) && (alt_groups == NULL))
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
+
+  p_thr_context->credential.nbgroups = ng;
+
+  for(i = 0; i < ng; i++)
+    p_thr_context->credential.alt_groups[i] = alt_groups[i];
+
+  if(isFullDebug(COMPONENT_FSAL))
+    {
+      /* traces: prints p_credential structure */
+
+      LogFullDebug(COMPONENT_FSAL, "credential modified:");
+      LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
+                        p_thr_context->credential.user, p_thr_context->credential.group);
+
+      if (isFullDebug(COMPONENT_FSAL))
+        {
+          for(i = 0; i < p_thr_context->credential.nbgroups; i++)
+            LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
+                         p_thr_context->credential.alt_groups[i]);
+        }
+   }
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
 }
 
 /* @} */

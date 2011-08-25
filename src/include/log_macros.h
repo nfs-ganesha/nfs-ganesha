@@ -79,6 +79,7 @@ typedef enum log_components
   COMPONENT_RPC,
   COMPONENT_THREAD,
   COMPONENT_NFS_V4_ACL,
+  LOG_MESSAGE_VERBOSITY,
 
   COMPONENT_COUNT
 } log_components_t;
