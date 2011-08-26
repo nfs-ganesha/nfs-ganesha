@@ -1276,6 +1276,7 @@ void nfs2_Writecache_Free(nfs_res_t * pres);
 void nfs2_Readdir_Free(nfs_res_t * resp);
 void nfs3_Read_Free(nfs_res_t * resp);
 void nfs2_Readlink_Free(nfs_res_t * resp);
+void nfs4_Compound_FreeOne(nfs_resop4 * pres);
 void nfs4_Compound_Free(nfs_res_t * pres);
 
 void nfs4_op_access_Free(ACCESS4res * resp);
