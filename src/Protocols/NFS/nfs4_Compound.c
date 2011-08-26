@@ -703,6 +703,7 @@ void nfs4_Compound_FreeOne(nfs_resop4 * pres)
       case NFS4_OP_DESTROY_CLIENTID:
       case NFS4_OP_RECLAIM_COMPLETE:
         nfs41_op_reclaim_complete_Free(&(pres->nfs_resop4_u.opreclaim_complete));
+        break;
 #endif
 
       case NFS4_OP_ILLEGAL:
@@ -773,6 +774,151 @@ void compound_data_Free(compound_data_t * data)
     Mem_Free((char *)data->mounted_on_FH.nfs_fh4_val);
 
 }                               /* compound_data_Free */
+
+/**
+ * 
+ * nfs4_Compound_CopyResOne: Copy the result for one NFS4_OP
+ *
+ */
+void nfs4_Compound_CopyResOne(nfs_resop4 * pres_dst, nfs_resop4 * pres_src)
+{
+  /* Copy base data structure */
+  memcpy(pres_dst, pres_src, sizeof(*pres_dst));
+
+  /* Do deep copy where necessary */
+  switch (pres_src->resop)
+    {
+      case NFS4_OP_ACCESS:
+        break;
+
+      case NFS4_OP_CLOSE:
+        nfs4_op_close_CopyRes(&(pres_dst->nfs_resop4_u.opclose),
+                              &(pres_src->nfs_resop4_u.opclose));
+        return;
+
+      case NFS4_OP_COMMIT:
+      case NFS4_OP_CREATE:
+      case NFS4_OP_DELEGPURGE:
+      case NFS4_OP_DELEGRETURN:
+      case NFS4_OP_GETATTR:
+      case NFS4_OP_GETFH:
+      case NFS4_OP_LINK:
+        break;
+
+      case NFS4_OP_LOCK:
+        nfs4_op_lock_CopyRes(&(pres_dst->nfs_resop4_u.oplock),
+                             &(pres_src->nfs_resop4_u.oplock));
+        return;
+
+      case NFS4_OP_LOCKT:
+        break;
+
+      case NFS4_OP_LOCKU:
+        nfs4_op_locku_CopyRes(&(pres_dst->nfs_resop4_u.oplocku),
+                              &(pres_src->nfs_resop4_u.oplocku));
+        return;
+
+      case NFS4_OP_LOOKUP:
+      case NFS4_OP_LOOKUPP:
+      case NFS4_OP_NVERIFY:
+        break;
+
+      case NFS4_OP_OPEN:
+        nfs4_op_open_CopyRes(&(pres_dst->nfs_resop4_u.opopen),
+                             &(pres_src->nfs_resop4_u.opopen));
+        return;
+
+      case NFS4_OP_OPENATTR:
+        break;
+
+      case NFS4_OP_OPEN_CONFIRM:
+        nfs4_op_open_confirm_CopyRes(&(pres_dst->nfs_resop4_u.opopen_confirm),
+                                     &(pres_src->nfs_resop4_u.opopen_confirm));
+        return;
+
+      case NFS4_OP_OPEN_DOWNGRADE:
+        nfs4_op_open_downgrade_CopyRes(&(pres_dst->nfs_resop4_u.opopen_downgrade),
+                                       &(pres_src->nfs_resop4_u.opopen_downgrade));
+        return;
+
+      case NFS4_OP_PUTFH:
+      case NFS4_OP_PUTPUBFH:
+      case NFS4_OP_PUTROOTFH:
+      case NFS4_OP_READ:
+      case NFS4_OP_READDIR:
+      case NFS4_OP_READLINK:
+      case NFS4_OP_REMOVE:
+      case NFS4_OP_RENAME:
+      case NFS4_OP_RENEW:
+      case NFS4_OP_RESTOREFH:
+      case NFS4_OP_SAVEFH:
+      case NFS4_OP_SECINFO:
+      case NFS4_OP_SETATTR:
+      case NFS4_OP_SETCLIENTID:
+      case NFS4_OP_SETCLIENTID_CONFIRM:
+      case NFS4_OP_VERIFY:
+      case NFS4_OP_WRITE:
+      case NFS4_OP_RELEASE_LOCKOWNER:
+        break;
+
+#ifdef _USE_NFS4_1
+      case NFS4_OP_EXCHANGE_ID:
+      case NFS4_OP_CREATE_SESSION:
+      case NFS4_OP_SEQUENCE:
+      case NFS4_OP_GETDEVICEINFO:
+      case NFS4_OP_GETDEVICELIST:
+      case NFS4_OP_BACKCHANNEL_CTL:
+      case NFS4_OP_BIND_CONN_TO_SESSION:
+      case NFS4_OP_DESTROY_SESSION:
+      case NFS4_OP_FREE_STATEID:
+      case NFS4_OP_GET_DIR_DELEGATION:
+      case NFS4_OP_LAYOUTCOMMIT:
+      case NFS4_OP_LAYOUTGET:
+      case NFS4_OP_LAYOUTRETURN:
+      case NFS4_OP_SECINFO_NO_NAME:
+      case NFS4_OP_SET_SSV:
+      case NFS4_OP_TEST_STATEID:
+      case NFS4_OP_WANT_DELEGATION:
+      case NFS4_OP_DESTROY_CLIENTID:
+      case NFS4_OP_RECLAIM_COMPLETE:
+        break;
+#endif
+
+      case NFS4_OP_ILLEGAL:
+        break;
+    }                       /* switch */
+
+  LogFatal(COMPONENT_NFS_V4,
+           "nfs4_Compound_CopyResOne not implemented for %d",
+           pres_src->resop);
+}
+
+/**
+ * 
+ * nfs4_Compound_CopyRes: Copy the result for NFS4PROC_COMPOUND
+ *
+ * Copy the result for NFS4PROC_COMPOUND.
+ *
+ * @param resp pointer to be Mem_Freed
+ * 
+ * @return nothing (void function).
+ *
+ * @see nfs4_op_getfh
+ *
+ */
+void nfs4_Compound_CopyRes(nfs_res_t * pres_dst, nfs_res_t * pres_src)
+{
+  unsigned int i = 0;
+
+  LogFullDebug(COMPONENT_NFS_V4,
+               "nfs4_Compound_CopyRes of %p to %p (resarraylen : %i)",
+               pres_src, pres_dst,
+               pres_src->res_compound4.resarray.resarray_len);
+
+  for(i = 0; i < pres_src->res_compound4.resarray.resarray_len; i++)
+    nfs4_Compound_CopyResOne(&pres_dst->res_compound4.resarray.resarray_val[i],
+                             &pres_src->res_compound4.resarray.resarray_val[i]);
+}
 
 /**
  *    

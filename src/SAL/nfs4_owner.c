@@ -44,6 +44,7 @@
 #include "HashTable.h"
 #include "nfs4.h"
 #include "sal_functions.h"
+#include "nfs_proto_functions.h"
 
 size_t strnlen(const char *s, size_t maxlen);
 
@@ -301,19 +302,14 @@ void nfs4_owner_PrintAll(void)
   HashTable_Log(COMPONENT_STATE, ht_nfs4_owner);
 }                               /* nfs4_owner_PrintAll */
 
-int convert_nfs4_owner(open_owner4             * pnfsowner,
-                       state_nfs4_owner_name_t * pname_owner)
+void convert_nfs4_owner(open_owner4             * pnfsowner,
+                        state_nfs4_owner_name_t * pname_owner)
 {
-  if(pnfsowner == NULL || pname_owner == NULL)
-    return 0;
-
   pname_owner->son_clientid = pnfsowner->clientid;
   pname_owner->son_owner_len = pnfsowner->owner.owner_len;
   memcpy(pname_owner->son_owner_val,
          pnfsowner->owner.owner_val,
          pnfsowner->owner.owner_len);
-
-  return 1;
 }                               /* convert_nfs4_owner */
 
 state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
@@ -347,6 +343,8 @@ state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
   powner->so_owner.so_nfs4_owner.so_related_owner = related_owner;
   powner->so_owner.so_nfs4_owner.so_clientid      = arg_owner->clientid;
   powner->so_owner_len                            = arg_owner->owner.owner_len;
+  powner->so_owner.so_nfs4_owner.so_resp.resop    = NFS4_OP_ILLEGAL;
+  powner->so_owner.so_nfs4_owner.so_args.argop    = NFS4_OP_ILLEGAL;
 
   init_glist(&powner->so_lock_list);
 
@@ -392,7 +390,10 @@ state_status_t destroy_nfs4_owner(cache_inode_client_t    * pclient,
 
   if(HashTable_Del(ht_nfs4_owner, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
     {
+      state_owner_t *powner = (state_owner_t *) old_value.pdata;
+
       /* Release the owner_name (key) and owner (data) back to appropriate pools */
+      nfs4_Compound_FreeOne(&powner->so_owner.so_nfs4_owner.so_resp);
       ReleaseToPool(old_value.pdata, &pclient->pool_state_owner);
       ReleaseToPool(old_key.pdata, &pclient->pool_nfs4_owner_name);
       LogFullDebug(COMPONENT_STATE,
@@ -450,4 +451,48 @@ void Release_nfs4_denied(LOCK4denied * denied)
   if(denied->owner.owner.owner_val != unknown_owner.so_owner_val &&
      denied->owner.owner.owner_val != NULL)
     Mem_Free(denied->owner.owner.owner_val);
+}
+
+void Copy_nfs4_denied(LOCK4denied * denied_dst, LOCK4denied * denied_src)
+{
+  memcpy(denied_dst, denied_src, sizeof(*denied_dst));
+
+  if(denied_src->owner.owner.owner_val != unknown_owner.so_owner_val &&
+     denied_src->owner.owner.owner_val != NULL)
+    {
+      denied_dst->owner.owner.owner_val = Mem_Alloc(denied_src->owner.owner.owner_len);
+    }
+
+  if(denied_dst->owner.owner.owner_val == NULL)
+    {
+      denied_dst->owner.owner.owner_len = unknown_owner.so_owner_len;
+      denied_dst->owner.owner.owner_val = unknown_owner.so_owner_val;
+    }
+}
+
+void Copy_nfs4_state_req(state_owner_t * powner, seqid4 seqid, nfs_argop4 * args, nfs_resop4 *resp)
+{
+  /* Free previous response */
+  nfs4_Compound_FreeOne(&powner->so_owner.so_nfs4_owner.so_resp);
+
+  /* Copy new response */
+  nfs4_Compound_CopyResOne(&powner->so_owner.so_nfs4_owner.so_resp, resp);
+
+  /* Deep free OPEN args? */
+  if(powner->so_owner.so_nfs4_owner.so_args.argop == NFS4_OP_OPEN)
+    {
+    }
+
+  /* Copy bnew args */
+  memcpy(&powner->so_owner.so_nfs4_owner.so_args,
+         args,
+         sizeof(powner->so_owner.so_nfs4_owner.so_args));
+
+  /* Deep copy OPEN args? */
+  if(args->argop == NFS4_OP_OPEN)
+    {
+    }
+
+  /* Store new seqid */
+  powner->so_owner.so_nfs4_owner.so_seqid = seqid;
 }

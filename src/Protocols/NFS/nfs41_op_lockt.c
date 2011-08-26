@@ -170,11 +170,7 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* Is this lock_owner known ? */
-  if(!convert_nfs4_owner(&arg_LOCKT4.owner, &owner_name))
-    {
-      res_LOCKT4.status = NFS4ERR_SERVERFAULT;
-      return res_LOCKT4.status;
-    }
+  convert_nfs4_owner(&arg_LOCKT4.owner, &owner_name);
 
   if(!nfs4_owner_Get_Pointer(&owner_name, &plock_owner))
     {

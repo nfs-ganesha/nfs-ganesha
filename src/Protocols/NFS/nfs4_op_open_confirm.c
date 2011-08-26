@@ -77,6 +77,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_confirm";
   int              rc = 0;
   state_t        * pstate_found = NULL;
+  state_owner_t  * popen_owner;
 
   resp->resop = NFS4_OP_OPEN_CONFIRM;
   res_OPEN_CONFIRM4.status = NFS4_OK;
@@ -131,29 +132,31 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
       return res_OPEN_CONFIRM4.status;
     }
 
+  popen_owner = pstate_found->state_powner;
+
   /* If opened file is already confirmed, retrun NFS4ERR_BAD_STATEID */
-  P(pstate_found->state_powner->so_mutex);
-  if(pstate_found->state_powner->so_owner.so_nfs4_owner.so_confirmed == TRUE)
+  P(popen_owner->so_mutex);
+  if(popen_owner->so_owner.so_nfs4_owner.so_confirmed == TRUE)
     {
-      V(pstate_found->state_powner->so_mutex);
+      V(popen_owner->so_mutex);
       res_OPEN_CONFIRM4.status = NFS4ERR_BAD_STATEID;
       return res_OPEN_CONFIRM4.status;
     }
 
-  if(pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid != arg_OPEN_CONFIRM4.seqid)
+  if(popen_owner->so_owner.so_nfs4_owner.so_seqid != arg_OPEN_CONFIRM4.seqid)
     {
-      if(pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid + 1 != arg_OPEN_CONFIRM4.seqid)
+      if(popen_owner->so_owner.so_nfs4_owner.so_seqid + 1 != arg_OPEN_CONFIRM4.seqid)
         {
-          V(pstate_found->state_powner->so_mutex);
+          V(popen_owner->so_mutex);
           res_OPEN_CONFIRM4.status = NFS4ERR_BAD_SEQID;
           return res_OPEN_CONFIRM4.status;
         }
     }
 
   /* Set the state as confirmed */
-  pstate_found->state_powner->so_owner.so_nfs4_owner.so_confirmed = TRUE;
-  pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid += 1;
-  V(pstate_found->state_powner->so_mutex);
+  popen_owner->so_owner.so_nfs4_owner.so_confirmed = TRUE;
+  popen_owner->so_owner.so_nfs4_owner.so_seqid += 1;
+  V(popen_owner->so_mutex);
 
   /* Update the state */
   pstate_found->state_seqid += 1;
@@ -164,6 +167,9 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   memcpy(res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid.other,
          pstate_found->stateid_other, OTHERSIZE);
 
+  /* Save the response in the open owner */
+  Copy_nfs4_state_req(popen_owner, arg_OPEN_CONFIRM4.seqid, op, resp);
+                
   return res_OPEN_CONFIRM4.status;
 }                               /* nfs4_op_open_confirm */
 
@@ -182,3 +188,9 @@ void nfs4_op_open_confirm_Free(OPEN_CONFIRM4res * resp)
   /* Nothing to be done */
   return;
 }                               /* nfs4_op_open_confirm_Free */
+
+void nfs4_op_open_confirm_CopyRes(OPEN_CONFIRM4res * resp_dst, OPEN_CONFIRM4res * resp_src)
+{
+  /* Nothing to be done */
+  return;
+}

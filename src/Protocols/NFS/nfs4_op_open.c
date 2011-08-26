@@ -285,11 +285,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
 
       /* Is this open_owner known ? */
-      if(!convert_nfs4_owner(&arg_OPEN4.owner, &owner_name))
-        {
-          res_OPEN4.status = NFS4ERR_SERVERFAULT;
-          return res_OPEN4.status;
-        }
+      convert_nfs4_owner(&arg_OPEN4.owner, &owner_name);
 
       if(!nfs4_owner_Get_Pointer(&owner_name, &powner))
         {
@@ -512,6 +508,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                                              bitmap4_len * sizeof(uint32_t))) == NULL)
                     {
                       res_OPEN4.status = NFS4ERR_SERVERFAULT;
+                      res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0;
                       return res_OPEN4.status;
                     }
 
@@ -1195,6 +1192,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                              sizeof(uint32_t))) == NULL)
     {
       res_OPEN4.status = NFS4ERR_SERVERFAULT;
+      res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0;
       return res_OPEN4.status;
     }
   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[0] = 0;       /* No Attributes set */
@@ -1246,8 +1244,20 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
  */
 void nfs4_op_open_Free(OPEN4res * resp)
 {
-  Mem_Free((char *)resp->OPEN4res_u.resok4.attrset.bitmap4_val);
+  if(resp->OPEN4res_u.resok4.attrset.bitmap4_val != NULL)
+    Mem_Free(resp->OPEN4res_u.resok4.attrset.bitmap4_val);
   resp->OPEN4res_u.resok4.attrset.bitmap4_len = 0;
-
-  return;
 }                               /* nfs4_op_open_Free */
+
+void nfs4_op_open_CopyRes(OPEN4res * resp_dst, OPEN4res * resp_src)
+{
+  if(resp_src->OPEN4res_u.resok4.attrset.bitmap4_val != NULL)
+    {
+      if((resp_dst->OPEN4res_u.resok4.attrset.bitmap4_val =
+          (uint32_t *) Mem_Alloc(resp_dst->OPEN4res_u.resok4.attrset.bitmap4_len *
+                                 sizeof(uint32_t))) == NULL)
+        {
+          resp_dst->OPEN4res_u.resok4.attrset.bitmap4_len = 0;
+        }
+    }
+}

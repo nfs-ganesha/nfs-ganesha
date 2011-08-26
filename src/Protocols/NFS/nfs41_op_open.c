@@ -280,11 +280,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                (long long unsigned int)arg_OPEN4.owner.clientid);
 
       /* Is this open_owner known ? */
-      if(!convert_nfs4_owner(&arg_OPEN4.owner, &owner_name))
-        {
-          res_OPEN4.status = NFS4ERR_SERVERFAULT;
-          return res_OPEN4.status;
-        }
+      convert_nfs4_owner(&arg_OPEN4.owner, &owner_name);
 
       if(!nfs4_owner_Get_Pointer(&owner_name, &powner))
         {

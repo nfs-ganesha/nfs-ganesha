@@ -151,8 +151,8 @@ unsigned long nfs4_owner_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long nfs4_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t    * buffclef);
 
-int convert_nfs4_owner(open_owner4             * pnfsowoner,
-                       state_nfs4_owner_name_t * pname_owner);
+void convert_nfs4_owner(open_owner4             * pnfsowoner,
+                        state_nfs4_owner_name_t * pname_owner);
 
 void nfs4_owner_PrintAll(void);
 
@@ -175,6 +175,8 @@ void Process_nfs4_conflict(LOCK4denied       * denied,    /* NFS v4 LOck4denied 
                            state_lock_desc_t * conflict); /* description of conflicting lock */
 
 void Release_nfs4_denied(LOCK4denied * denied);
+void Copy_nfs4_denied(LOCK4denied * denied_dst, LOCK4denied * denied_src);
+void Copy_nfs4_state_req(state_owner_t * powner, seqid4 seqid, nfs_argop4 * args, nfs_resop4 *resp);
 
 /******************************************************************************
  *

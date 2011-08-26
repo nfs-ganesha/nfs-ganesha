@@ -238,15 +238,8 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
       /* Is this lock_owner known ? */
-      if(!convert_nfs4_owner
-         ((open_owner4 *) & arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
-          &owner_name))
-        {
-          res_LOCK4.status = NFS4ERR_SERVERFAULT;
-          LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCK failed lock owner issue");
-          return res_LOCK4.status;
-        }
+      convert_nfs4_owner((open_owner4 *) & arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
+                         &owner_name);
     }
   else
     {

@@ -133,6 +133,9 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
   memcpy(res_OPEN_DOWNGRADE4.OPEN_DOWNGRADE4res_u.resok4.open_stateid.other,
          pstate_found->stateid_other, OTHERSIZE);
 
+  /* Save the response in the open owner */
+  Copy_nfs4_state_req(pstate_found->state_powner, arg_OPEN_DOWNGRADE4.seqid, op, resp);
+                
   return res_OPEN_DOWNGRADE4.status;
 }                               /* nfs4_op_opendowngrade */
 
@@ -151,3 +154,9 @@ void nfs4_op_open_downgrade_Free(OPEN_DOWNGRADE4res * resp)
   /* Nothing to be done */
   return;
 }                               /* nfs4_op_open_downgrade_Free */
+
+void nfs4_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res * resp_dst, OPEN_DOWNGRADE4res * resp_src)
+{
+  /* Nothing to be done */
+  return;
+}

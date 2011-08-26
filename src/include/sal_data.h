@@ -159,12 +159,29 @@ typedef struct state_nlm_owner_t
 typedef struct state_nfs4_owner_t state_nfs4_owner_t;
 typedef struct state_owner_t      state_owner_t;
 
+struct nfs_argop4_state
+{
+  nfs_opnum4 argop;
+  union
+  {
+    CLOSE4args opclose;
+    LOCK4args oplock;
+    LOCKU4args oplocku;
+    OPEN4args opopen;
+    OPEN_CONFIRM4args opopen_confirm;
+    OPEN_DOWNGRADE4args opopen_downgrade;
+  } nfs_argop4_u;
+};
+typedef struct nfs_argop4_state nfs_argop4_state;
+
 struct state_nfs4_owner_t
 {
   clientid4           so_clientid;
   unsigned int        so_confirmed;
-  unsigned int        so_seqid;
+  seqid4              so_seqid;
   uint32_t            so_counter;       /** < Counter is used to build unique stateids */
+  nfs_argop4_state    so_args;          /** < Saved args                               */
+  nfs_resop4          so_resp;          /** < Saved response                           */
   state_owner_t     * so_related_owner;
 };
 

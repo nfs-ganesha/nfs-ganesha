@@ -190,3 +190,9 @@ void nfs41_op_close_Free(CLOSE4res * resp)
   /* Nothing to be done */
   return;
 }                               /* nfs41_op_close_Free */
+
+void nfs4_op_close_CopyRes(CLOSE4res * resp_dst, CLOSE4res * resp_src)
+{
+  /* Nothing to be done */
+  return;
+}

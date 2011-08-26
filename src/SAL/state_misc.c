@@ -284,6 +284,9 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
       break;
 
     case STATE_MALLOC_ERROR:
+      nfserror = NFS4ERR_RESOURCE;
+      break;
+
     case STATE_POOL_MUTEX_INIT_ERROR:
     case STATE_GET_NEW_LRU_ENTRY:
     case STATE_INIT_ENTRY_FAILED:

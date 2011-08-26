@@ -91,12 +91,14 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   state_data_t              candidate_data;
   state_type_t              candidate_type;
   int                       rc = 0;
+  seqid4                    seqid;
   state_t                 * plock_state;    /* state for the lock */
   state_t                 * pstate_open;    /* state for the open owner */
   state_t                 * pstate_previous_iterate;
   state_t                 * pstate_iterate;
   state_owner_t           * plock_owner;
   state_owner_t           * popen_owner;
+  state_owner_t           * presp_owner;    /* Owner to store response in */
   state_owner_t           * conflict_owner = NULL;
   state_nfs4_owner_name_t   owner_name;
   nfs_client_id_t           nfs_client_id;
@@ -136,7 +138,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       return res_LOCK4.status;
     }
 
-  /* Commit is done only on a file */
+  /* Lock is done only on a file */
   if(data->current_filetype != REGULAR_FILE)
     {
       /* Type of the entry is not correct */
@@ -152,15 +154,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
       LogDebug(COMPONENT_NFS_V4_LOCK,
                "LOCK failed wrong file type");
-      return res_LOCK4.status;
-    }
-
-  /* Lock length should not be 0 */
-  if(arg_LOCK4.length == 0LL)
-    {
-      res_LOCK4.status = NFS4ERR_INVAL;
-      LogDebug(COMPONENT_NFS_V4_LOCK,
-               "LOCK failed length == 0");
       return res_LOCK4.status;
     }
 
@@ -195,18 +188,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   else
     lock_desc.sld_length = 0;
 
-  /* Check for range overflow.
-   * Comparing beyond 2^64 is not possible int 64 bits precision,
-   * but off+len > 2^64-1 is equivalent to len > 2^64-1 - off
-   */
-  if(lock_desc.sld_length > (STATE_LOCK_OFFSET_EOF - lock_desc.sld_offset))
-    {
-      res_LOCK4.status = NFS4ERR_INVAL;
-      LogDebug(COMPONENT_NFS_V4_LOCK,
-               "LOCK failed length overflow");
-      return res_LOCK4.status;
-    }
-
   if(arg_LOCK4.locker.new_lock_owner)
     {
       /* New lock owner, Find the open owner */
@@ -227,6 +208,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       popen_owner = pstate_open->state_powner;
       plock_state = NULL;
       plock_owner = NULL;
+      presp_owner = popen_owner;
+      seqid       = popen_owner->so_owner.so_nfs4_owner.so_seqid;
 
       LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
               "LOCK New lock owner from open owner",
@@ -295,15 +278,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
 
       /* Is this lock_owner known ? */
-      if(!convert_nfs4_owner
-         ((open_owner4 *) & arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
-          &owner_name))
-        {
-          res_LOCK4.status = NFS4ERR_SERVERFAULT;
-          LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCK failed lock owner issue");
-          return res_LOCK4.status;
-        }
+      convert_nfs4_owner((open_owner4 *)&arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
+                         &owner_name);
     }
   else
     {
@@ -345,6 +321,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       plock_owner = plock_state->state_powner;
       popen_owner = plock_owner->so_owner.so_nfs4_owner.so_related_owner;
       pstate_open = plock_state->state_data.lock.popenstate;
+      presp_owner = plock_owner;
+      seqid       = arg_LOCK4.locker.locker4_u.lock_owner.lock_seqid;
 
       LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
               "LOCK Existing lock owner",
@@ -388,15 +366,36 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           return res_LOCK4.status;
         }
 #endif
-      /* Sanity check : Is this the right file ? */
-      if(plock_state->state_pentry != data->current_entry)
-        {
-          res_LOCK4.status = NFS4ERR_BAD_STATEID;
-          LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCK failed existing lock owner, files not the same");
-          return res_LOCK4.status;
-        }
     }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
+
+  /* Lock length should not be 0 */
+  if(arg_LOCK4.length == 0LL)
+    {
+      res_LOCK4.status = NFS4ERR_INVAL;
+      LogDebug(COMPONENT_NFS_V4_LOCK,
+               "LOCK failed length == 0");
+
+      /* Save the response in the lock or open owner */
+      Copy_nfs4_state_req(presp_owner, seqid, op, resp);
+
+      return res_LOCK4.status;
+    }
+
+  /* Check for range overflow.
+   * Comparing beyond 2^64 is not possible int 64 bits precision,
+   * but off+len > 2^64-1 is equivalent to len > 2^64-1 - off
+   */
+  if(lock_desc.sld_length > (STATE_LOCK_OFFSET_EOF - lock_desc.sld_offset))
+    {
+      res_LOCK4.status = NFS4ERR_INVAL;
+      LogDebug(COMPONENT_NFS_V4_LOCK,
+               "LOCK failed length overflow");
+
+      /* Save the response in the lock or open owner */
+      Copy_nfs4_state_req(presp_owner, seqid, op, resp);
+
+      return res_LOCK4.status;
+    }
 
   /* Check for conflicts with previously obtained states */
 
@@ -422,6 +421,10 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           res_LOCK4.status = NFS4ERR_INVAL;
           LogDebug(COMPONENT_NFS_V4_LOCK,
                    "LOCK failed state_iterate");
+
+          /* Save the response in the lock or open owner */
+          Copy_nfs4_state_req(presp_owner, seqid, op, resp);
+
           return res_LOCK4.status;
         }
 
@@ -460,6 +463,10 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                           &lock_desc);
 
                   res_LOCK4.status = NFS4ERR_OPENMODE;
+
+                  /* Save the response in the lock or open owner */
+                  Copy_nfs4_state_req(presp_owner, seqid, op, resp);
+
                   return res_LOCK4.status;
                 }
             }
@@ -489,7 +496,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
       if(plock_owner == NULL)
         {
-          res_LOCK4.status = NFS4ERR_SERVERFAULT;
+          res_LOCK4.status = NFS4ERR_RESOURCE;
 
           LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
                   "LOCK failed to create new lock owner",
@@ -497,7 +504,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   data->pcontext,
                   popen_owner,
                   &lock_desc);
-
           return res_LOCK4.status;
         }
 
@@ -514,7 +520,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                    data->pcontext,
                    &plock_state, &state_status) != STATE_SUCCESS)
         {
-          res_LOCK4.status = NFS4ERR_STALE_STATEID;
+          res_LOCK4.status = NFS4ERR_RESOURCE;
 
           LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
                   "LOCK failed to add new stateid",
@@ -573,7 +579,13 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           if(destroy_nfs4_owner(data->pclient, &owner_name) != STATE_SUCCESS)
             LogDebug(COMPONENT_NFS_V4_LOCK,
                      "destroy_nfs4_owner failed");
+
         }
+
+      /* Save the response in the lock or open owner */
+      if(res_LOCK4.status != NFS4ERR_RESOURCE &&
+         res_LOCK4.status != NFS4ERR_BAD_STATEID)
+        Copy_nfs4_state_req(presp_owner, seqid, op, resp);
 
       return res_LOCK4.status;
     }
@@ -607,6 +619,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   /* update the lock counter in the related open-stateid */
   pstate_open->state_data.share.lockheld += 1;
+
+  /* Save the response in the lock or open owner */
+  Copy_nfs4_state_req(presp_owner, seqid, op, resp);
                 
   LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
           "LOCK applied",
@@ -633,5 +648,11 @@ void nfs4_op_lock_Free(LOCK4res * resp)
 {
   if(resp->status == NFS4ERR_DENIED)
     Release_nfs4_denied(&resp->LOCK4res_u.denied);
-  return;
 }                               /* nfs4_op_lock_Free */
+
+void nfs4_op_lock_CopyRes(LOCK4res * resp_dst, LOCK4res * resp_src)
+{
+  if(resp_src->status == NFS4ERR_DENIED)
+    Copy_nfs4_denied(&resp_dst->LOCK4res_u.denied,
+                     &resp_src->LOCK4res_u.denied);
+}

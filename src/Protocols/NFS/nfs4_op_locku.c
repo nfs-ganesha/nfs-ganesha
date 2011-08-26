@@ -87,6 +87,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   state_status_t      state_status;
   state_t           * pstate_found = NULL;
   state_t           * pstate_open = NULL;
+  state_owner_t     * plock_owner;
   state_lock_desc_t   lock_desc;
   unsigned int        rc = 0;
 
@@ -126,18 +127,11 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         case DIR_BEGINNING:
         case DIR_CONTINUE:
           res_LOCKU4.status = NFS4ERR_ISDIR;
-          break;
+          return res_LOCKU4.status;
         default:
           res_LOCKU4.status = NFS4ERR_INVAL;
-          break;
+          return res_LOCKU4.status;
         }
-    }
-
-  /* Lock length should not be 0 */
-  if(arg_LOCKU4.length == 0LL)
-    {
-      res_LOCKU4.status = NFS4ERR_INVAL;
-      return res_LOCKU4.status;
     }
 
   /* Convert lock parameters to internal types */
@@ -161,14 +155,6 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   else
     lock_desc.sld_length = 0;
 
-  /* Check for range overflow
-   * Remember that a length with all bits set to 1 means "lock until the end of file" (RFC3530, page 157) */
-  if(lock_desc.sld_length > (STATE_LOCK_OFFSET_EOF - lock_desc.sld_offset))
-    {
-      res_LOCKU4.status = NFS4ERR_INVAL;
-      return res_LOCKU4.status;
-    }
-
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_LOCKU4.lock_stateid,
                               data->current_entry,
@@ -180,18 +166,43 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_LOCKU4.status;
     }
 
+  plock_owner = pstate_found->state_powner;
+
+  /* Lock length should not be 0 */
+  if(arg_LOCKU4.length == 0LL)
+    {
+      res_LOCKU4.status = NFS4ERR_INVAL;
+
+      /* Save the response in the lock owner */
+      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, resp);
+
+      return res_LOCKU4.status;
+    }
+
+  /* Check for range overflow
+   * Remember that a length with all bits set to 1 means "lock until the end of file" (RFC3530, page 157) */
+  if(lock_desc.sld_length > (STATE_LOCK_OFFSET_EOF - lock_desc.sld_offset))
+    {
+      res_LOCKU4.status = NFS4ERR_INVAL;
+      return res_LOCKU4.status;
+
+      /* Save the response in the lock owner */
+      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, resp);
+
+    }
+
   LogFullDebug(COMPONENT_NFS_V4_LOCK,
                "LOCKU seqid = %u, so_seqid = %u, state_powner = %p, lock_stateid.seqid = %u, state_seqid = %u, pstate_found = %p",
                arg_LOCKU4.seqid,
-               pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid,
-               pstate_found->state_powner,
+               plock_owner->so_owner.so_nfs4_owner.so_seqid,
+               plock_owner,
                arg_LOCKU4.lock_stateid.seqid,
                pstate_found->state_seqid,
                pstate_found);
 
   /* Check the seqid */
-  if((arg_LOCKU4.seqid != pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid) &&
-     (arg_LOCKU4.seqid != pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid + 1))
+  if((arg_LOCKU4.seqid != plock_owner->so_owner.so_nfs4_owner.so_seqid) &&
+     (arg_LOCKU4.seqid != plock_owner->so_owner.so_nfs4_owner.so_seqid + 1))
     {
       res_LOCKU4.status = NFS4ERR_BAD_SEQID;
       return res_LOCKU4.status;
@@ -227,28 +238,28 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                "LOCKU incremented state_seqid to %u, pstate_found = %p",
                pstate_found->state_seqid, pstate_found);
 
-  P(pstate_found->state_powner->so_mutex);
-  pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid += 1;
-  V(pstate_found->state_powner->so_mutex);
+  P(plock_owner->so_mutex);
+  plock_owner->so_owner.so_nfs4_owner.so_seqid += 1;
+  V(plock_owner->so_mutex);
   LogFullDebug(COMPONENT_NFS_V4_LOCK,
-               "LOCKU incremented so_seqid to %u, pstate_found->state_powner = %p",
-               pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid,
-               pstate_found->state_powner);
+               "LOCKU incremented so_seqid to %u, plock_owner = %p",
+               plock_owner->so_owner.so_nfs4_owner.so_seqid,
+               plock_owner);
 
   /* Increment the seqid for the related open_owner */
-  P(pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
-  pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_seqid += 1;
-  V(pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
+  P(plock_owner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
+  plock_owner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_seqid += 1;
+  V(plock_owner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
   LogFullDebug(COMPONENT_NFS_V4_LOCK,
-               "LOCKU incremented so_seqid to %u, pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner = %p",
-               pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_seqid,
-               pstate_found->state_powner->so_owner.so_nfs4_owner.so_related_owner);
+               "LOCKU incremented so_seqid to %u, plock_owner->so_owner.so_nfs4_owner.so_related_owner = %p",
+               plock_owner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_seqid,
+               plock_owner->so_owner.so_nfs4_owner.so_related_owner);
 
   LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
           "LOCKU",
           data->current_entry,
           data->pcontext,
-          pstate_found->state_powner,
+          plock_owner,
           &lock_desc);
 
   /* Now we have a lock owner and a stateid.
@@ -256,13 +267,17 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
    */
   if(state_unlock(data->current_entry,
                   data->pcontext,
-                  pstate_found->state_powner,
+                  plock_owner,
                   pstate_found,
                   &lock_desc,
                   data->pclient,
                   &state_status) != STATE_SUCCESS)
     {
       res_LOCKU4.status = nfs4_Errno_state(state_status);
+
+      /* Save the response in the lock owner */
+      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, resp);
+
       return res_LOCKU4.status;
     }
 
@@ -279,6 +294,10 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* Successful exit */
   res_LOCKU4.status = NFS4_OK;
+
+  /* Save the response in the lock owner */
+  Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, resp);
+
   return res_LOCKU4.status;
 #endif
 }                               /* nfs4_op_locku */
@@ -298,3 +317,9 @@ void nfs4_op_locku_Free(LOCKU4res * resp)
   /* Nothing to Mem_Free */
   return;
 }                               /* nfs4_op_locku_Free */
+
+void nfs4_op_locku_CopyRes(LOCKU4res * resp_dst, LOCKU4res * resp_src)
+{
+  /* Nothing to deep copy */
+  return;
+}
