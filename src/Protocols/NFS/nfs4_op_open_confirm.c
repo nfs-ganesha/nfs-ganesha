@@ -168,7 +168,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
          pstate_found->stateid_other, OTHERSIZE);
 
   /* Save the response in the open owner */
-  Copy_nfs4_state_req(popen_owner, arg_OPEN_CONFIRM4.seqid, op, resp);
+  Copy_nfs4_state_req(popen_owner, arg_OPEN_CONFIRM4.seqid, op, data, resp);
                 
   return res_OPEN_CONFIRM4.status;
 }                               /* nfs4_op_open_confirm */

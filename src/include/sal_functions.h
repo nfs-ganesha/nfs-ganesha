@@ -40,7 +40,7 @@
 
 #include "sal_data.h"
 #include "cache_inode.h"
-
+#include "nfs_exports.h"
 
 /******************************************************************************
  *
@@ -176,7 +176,18 @@ void Process_nfs4_conflict(LOCK4denied       * denied,    /* NFS v4 LOck4denied 
 
 void Release_nfs4_denied(LOCK4denied * denied);
 void Copy_nfs4_denied(LOCK4denied * denied_dst, LOCK4denied * denied_src);
-void Copy_nfs4_state_req(state_owner_t * powner, seqid4 seqid, nfs_argop4 * args, nfs_resop4 *resp);
+
+void Copy_nfs4_state_req(state_owner_t   * powner,
+                         seqid4            seqid,
+                         nfs_argop4      * args,
+                         compound_data_t * data,
+                         nfs_resop4      * resp);
+
+bool_t Check_nfs4_seqid(state_owner_t   * powner,
+                        seqid4            seqid,
+                        nfs_argop4      * args,
+                        compound_data_t * data,
+                        nfs_resop4      * resp);
 
 /******************************************************************************
  *

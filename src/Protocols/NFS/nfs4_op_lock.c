@@ -376,7 +376,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                "LOCK failed length == 0");
 
       /* Save the response in the lock or open owner */
-      Copy_nfs4_state_req(presp_owner, seqid, op, resp);
+      Copy_nfs4_state_req(presp_owner, seqid, op, data, resp);
 
       return res_LOCK4.status;
     }
@@ -392,7 +392,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                "LOCK failed length overflow");
 
       /* Save the response in the lock or open owner */
-      Copy_nfs4_state_req(presp_owner, seqid, op, resp);
+      Copy_nfs4_state_req(presp_owner, seqid, op, data, resp);
 
       return res_LOCK4.status;
     }
@@ -423,7 +423,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                    "LOCK failed state_iterate");
 
           /* Save the response in the lock or open owner */
-          Copy_nfs4_state_req(presp_owner, seqid, op, resp);
+          Copy_nfs4_state_req(presp_owner, seqid, op, data, resp);
 
           return res_LOCK4.status;
         }
@@ -465,7 +465,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   res_LOCK4.status = NFS4ERR_OPENMODE;
 
                   /* Save the response in the lock or open owner */
-                  Copy_nfs4_state_req(presp_owner, seqid, op, resp);
+                  Copy_nfs4_state_req(presp_owner, seqid, op, data, resp);
 
                   return res_LOCK4.status;
                 }
@@ -585,7 +585,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       /* Save the response in the lock or open owner */
       if(res_LOCK4.status != NFS4ERR_RESOURCE &&
          res_LOCK4.status != NFS4ERR_BAD_STATEID)
-        Copy_nfs4_state_req(presp_owner, seqid, op, resp);
+        Copy_nfs4_state_req(presp_owner, seqid, op, data, resp);
 
       return res_LOCK4.status;
     }
@@ -621,7 +621,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   pstate_open->state_data.share.lockheld += 1;
 
   /* Save the response in the lock or open owner */
-  Copy_nfs4_state_req(presp_owner, seqid, op, resp);
+  Copy_nfs4_state_req(presp_owner, seqid, op, data, resp);
                 
   LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
           "LOCK applied",

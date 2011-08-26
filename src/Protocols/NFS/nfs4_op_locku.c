@@ -174,7 +174,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       res_LOCKU4.status = NFS4ERR_INVAL;
 
       /* Save the response in the lock owner */
-      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, resp);
+      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp);
 
       return res_LOCKU4.status;
     }
@@ -187,7 +187,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_LOCKU4.status;
 
       /* Save the response in the lock owner */
-      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, resp);
+      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp);
 
     }
 
@@ -276,7 +276,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       res_LOCKU4.status = nfs4_Errno_state(state_status);
 
       /* Save the response in the lock owner */
-      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, resp);
+      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp);
 
       return res_LOCKU4.status;
     }
@@ -296,7 +296,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   res_LOCKU4.status = NFS4_OK;
 
   /* Save the response in the lock owner */
-  Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, resp);
+  Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp);
 
   return res_LOCKU4.status;
 #endif

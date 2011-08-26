@@ -345,6 +345,7 @@ state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
   powner->so_owner_len                            = arg_owner->owner.owner_len;
   powner->so_owner.so_nfs4_owner.so_resp.resop    = NFS4_OP_ILLEGAL;
   powner->so_owner.so_nfs4_owner.so_args.argop    = NFS4_OP_ILLEGAL;
+  powner->so_owner.so_nfs4_owner.so_last_pentry   = NULL;
 
   init_glist(&powner->so_lock_list);
 
@@ -470,7 +471,11 @@ void Copy_nfs4_denied(LOCK4denied * denied_dst, LOCK4denied * denied_src)
     }
 }
 
-void Copy_nfs4_state_req(state_owner_t * powner, seqid4 seqid, nfs_argop4 * args, nfs_resop4 *resp)
+void Copy_nfs4_state_req(state_owner_t   * powner,
+                         seqid4            seqid,
+                         nfs_argop4      * args,
+                         compound_data_t * data,
+                         nfs_resop4      * resp)
 {
   /* Free previous response */
   nfs4_Compound_FreeOne(&powner->so_owner.so_nfs4_owner.so_resp);
@@ -488,6 +493,9 @@ void Copy_nfs4_state_req(state_owner_t * powner, seqid4 seqid, nfs_argop4 * args
          args,
          sizeof(powner->so_owner.so_nfs4_owner.so_args));
 
+  /* Copy new file */
+  powner->so_owner.so_nfs4_owner.so_last_pentry = data->current_entry;
+
   /* Deep copy OPEN args? */
   if(args->argop == NFS4_OP_OPEN)
     {
@@ -495,4 +503,72 @@ void Copy_nfs4_state_req(state_owner_t * powner, seqid4 seqid, nfs_argop4 * args
 
   /* Store new seqid */
   powner->so_owner.so_nfs4_owner.so_seqid = seqid;
+}
+
+/**
+ *
+ * Check_nfs4_seqid: Check NFS4 request for valid seqid for replay, next request, or BAD_SEQID.
+ *
+ * Returns TRUE if the request is the next seqid.
+ * If the request is a replay, copies the saved response and returns FALSE.
+ * Otherwise, sets status to NFS4ERR_BAD_SEQID and returns FALSE.
+ *
+ * In either case, on a FALSE return, the caller should send the resulting response back to the client.
+ *
+ */
+bool_t Check_nfs4_seqid(state_owner_t   * powner,
+                        seqid4            seqid,
+                        nfs_argop4      * args,
+                        compound_data_t * data,
+                        nfs_resop4      * resp)
+{
+  seqid4 next = powner->so_owner.so_nfs4_owner.so_seqid + 1;
+
+  /* Check for valid next seqid */
+  if(seqid == next)
+    return TRUE;
+
+  /* If this is a new state owner, client may start with any seqid */
+  if(powner->so_owner.so_nfs4_owner.so_last_pentry == NULL)
+    return TRUE;
+
+  /* All NFS4 responses have the status in the same place, so use any to set NFS4ERR_BAD_SEQID */
+  resp->nfs_resop4_u.oplock.status = NFS4ERR_BAD_SEQID;
+
+  /* Now check for valid replay */
+  if(powner->so_owner.so_nfs4_owner.so_seqid != seqid)
+    {
+      LogDebug(COMPONENT_STATE,
+               "Invalid seqid in request %u (not replay), expected seqid %u, returning NFS4ERR_BAD_SEQID",
+               seqid,
+               powner->so_owner.so_nfs4_owner.so_seqid);
+      return FALSE;
+    }
+
+  if(args->argop != powner->so_owner.so_nfs4_owner.so_args.argop)
+    {
+      LogDebug(COMPONENT_STATE,
+               "Invalid seqid in request %u (not replay - not same op), returning NFS4ERR_BAD_SEQID",
+               seqid);
+      return FALSE;
+    }
+
+  if(powner->so_owner.so_nfs4_owner.so_last_pentry != data->current_entry)
+    {
+      LogDebug(COMPONENT_STATE,
+               "Invalid seqid in request %u (not replay - wrong file), returning NFS4ERR_BAD_SEQID",
+               seqid);
+      return FALSE;
+    }
+
+  // TODO FSF: add more checks here...
+
+  LogDebug(COMPONENT_STATE,
+           "Copying saved response for seqid %u",
+           seqid);
+
+  /* Copy the saved response and tell caller to use it */
+  nfs4_Compound_CopyResOne(resp, &powner->so_owner.so_nfs4_owner.so_resp);
+
+  return FALSE;
 }

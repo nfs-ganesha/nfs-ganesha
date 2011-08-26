@@ -179,9 +179,10 @@ struct state_nfs4_owner_t
   clientid4           so_clientid;
   unsigned int        so_confirmed;
   seqid4              so_seqid;
-  uint32_t            so_counter;       /** < Counter is used to build unique stateids */
-  nfs_argop4_state    so_args;          /** < Saved args                               */
-  nfs_resop4          so_resp;          /** < Saved response                           */
+  uint32_t            so_counter;       /** < Counter is used to build unique stateids  */
+  nfs_argop4_state    so_args;          /** < Saved args                                */
+  cache_entry_t     * so_last_pentry;   /** < Last file operated on by this state owner */
+  nfs_resop4          so_resp;          /** < Saved response                            */
   state_owner_t     * so_related_owner;
 };
 

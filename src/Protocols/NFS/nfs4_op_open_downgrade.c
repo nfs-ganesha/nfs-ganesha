@@ -134,7 +134,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
          pstate_found->stateid_other, OTHERSIZE);
 
   /* Save the response in the open owner */
-  Copy_nfs4_state_req(pstate_found->state_powner, arg_OPEN_DOWNGRADE4.seqid, op, resp);
+  Copy_nfs4_state_req(pstate_found->state_powner, arg_OPEN_DOWNGRADE4.seqid, op, data, resp);
                 
   return res_OPEN_DOWNGRADE4.status;
 }                               /* nfs4_op_opendowngrade */
