@@ -74,16 +74,6 @@
 
 #include "fsal_glue_const.h"
 
-#define fsal_handle_t proxyfsal_handle_t
-#define fsal_op_context_t proxyfsal_op_context_t
-#define fsal_file_t proxyfsal_file_t
-#define fsal_dir_t proxyfsal_dir_t
-#define fsal_export_context_t proxyfsal_export_context_t
-#define fsal_lockdesc_t proxyfsal_lockdesc_t
-#define fsal_cookie_t proxyfsal_cookie_t
-#define fs_specific_initinfo_t proxyfs_specific_initinfo_t
-#define fsal_cred_t proxyfsal_cred_t
-
   /* some void types for this template... */
 typedef union {
  struct 

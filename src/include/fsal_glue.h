@@ -42,7 +42,8 @@
         defined(_USE_XFS) || \
 	defined(_USE_GPFS) || \
 	defined(_USE_ZFS) || \
-	defined(_USE_SNMP)
+	defined(_USE_SNMP) || \
+	defined(_USE_PROXY)
 
 typedef struct
 {
