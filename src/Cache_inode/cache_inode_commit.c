@@ -140,6 +140,11 @@ cache_inode_commit(cache_entry_t * pentry,
                  "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
                  fsal_status.major);
 
+      /* Close the fd that we just opened before the FSAL_sync(). We are already
+       * replying with an error. No need to catch an additional error form 
+       * a close? */
+         cache_inode_close(pentry, pclient, &status);
+
         V_w(&pentry->lock);
 
         /* stats */
@@ -150,7 +155,7 @@ cache_inode_commit(cache_entry_t * pentry,
       }
       *pstatus = CACHE_INODE_SUCCESS;
 
-#if 0
+      /* Close the fd that we just opened before the FSAL_sync() */
       if(cache_inode_close(pentry, pclient, pstatus) != CACHE_INODE_SUCCESS)
         {
           LogEvent(COMPONENT_CACHE_INODE,
@@ -164,7 +169,6 @@ cache_inode_commit(cache_entry_t * pentry,
           
           return *pstatus;
         }
-#endif
 
       V_w(&pentry->lock);      
       return *pstatus;
