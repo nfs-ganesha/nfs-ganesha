@@ -180,13 +180,8 @@ int in_nlm_grace_period(void)
   return 0;
 }
 
-int nlm_init(void)
+void nlm_init(void)
 {
-  if(nlm_async_callback_init() == -1)
-    return -1;
-
-  nsm_unmonitor_all();
-
   /* start NLM grace period */
   gettimeofday(&nlm_grace_tv, NULL);
 
@@ -194,8 +189,18 @@ int nlm_init(void)
   granted_cookie.gc_seconds      = (unsigned long) nlm_grace_tv.tv_sec;
   granted_cookie.gc_microseconds = (unsigned long) nlm_grace_tv.tv_usec;
   granted_cookie.gc_cookie       = 0;
+}
 
-  return 0;
+void nlm_startup(void)
+{
+  if(nlm_async_callback_init() == -1)
+    LogFatal(COMPONENT_INIT,
+             "Could not start NLM async thread");
+}
+
+void nlm_run(void)
+{
+  nsm_unmonitor_all();
 }
 
 int nlm_monitor_host(char *name)

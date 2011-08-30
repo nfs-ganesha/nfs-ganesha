@@ -184,7 +184,9 @@ extern "C"
     char priv[SM_PRIV_SZ];
   };
   typedef struct nlm4_sm_notifyargs nlm4_sm_notifyargs;
-  extern int nlm_init(void);
+  extern void nlm_init(void);
+  extern void nlm_startup(void);
+  extern void nlm_run(void);
 
 #define NLMPROG 100021
 #define NLM4_VERS 4

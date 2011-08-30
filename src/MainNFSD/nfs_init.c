@@ -1473,7 +1473,7 @@ void nfs_reset_stats(void)
 
 }                               /* void nfs_reset_stats( void ) */
 
-static void nfs_Start_threads()
+static void nfs_Start_threads(bool_t flush_datacache_mode)
 {
   int rc = 0;
   pthread_attr_t attr_thr;
@@ -1526,6 +1526,12 @@ static void nfs_Start_threads()
   LogEvent(COMPONENT_THREAD,
            "%d worker threads were started successfully",
 	   nfs_param.core_param.nb_worker);
+
+#ifdef _USE_NLM
+  /* Start NLM threads */
+  if(!flush_datacache_mode)
+    nlm_startup();
+#endif
 
   /* Starting the rpc dispatcher thread */
   if((rc =
@@ -1988,6 +1994,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
     }
   LogInfo(COMPONENT_INIT,
           "NLM Owner cache successfully initialized");
+  nlm_init();
 #endif
 
 #ifdef _USE_NFS4_1
@@ -2246,7 +2253,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
   nfs_Init(p_start_info);
 
   /* Spawns service threads */
-  nfs_Start_threads();
+  nfs_Start_threads(p_start_info->flush_datacache_mode);
 
   if(p_start_info->flush_datacache_mode)
     {
@@ -2323,14 +2330,10 @@ void nfs_start(nfs_start_info_t * p_start_info)
     {
 #ifdef _USE_NLM
       /*
-       * initialize nlm only in actual server mode.
+       * run nlm only in actual server mode.
        * Don't do this in flusher mode
        */
-      if(nlm_init() == -1)
-        {
-          LogFatal(COMPONENT_INIT,
-                   "Could not initialize NLM");
-        }
+      nlm_run();
 #endif
 
       /* Populate the ID_MAPPER file with mapping file if needed */
