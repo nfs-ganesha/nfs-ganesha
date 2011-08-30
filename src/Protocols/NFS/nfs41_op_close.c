@@ -121,7 +121,9 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                               data->current_entry,
                               0LL,
                               &pstate_found,
-                              data->pclient)) != NFS4_OK)
+                              data,
+                              STATEID_SPECIAL_FOR_LOCK,
+                              "CLOSE")) != NFS4_OK)
     {
       res_CLOSE4.status = rc;
       LogDebug(COMPONENT_STATE,

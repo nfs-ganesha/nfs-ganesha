@@ -72,6 +72,8 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   state_t              * pstate_found = NULL;
   cache_inode_status_t   cache_status;
   state_status_t         state_status;
+  state_owner_t        * popen_owner;
+  const char           * tag = "CLOSE";
 
   memset(&res_CLOSE4, 0, sizeof(res_CLOSE4));
   resp->resop = NFS4_OP_CLOSE;
@@ -119,41 +121,42 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Check stateid correctness and get pointer to state */
-  if((rc =
-      nfs4_Check_Stateid(&arg_CLOSE4.open_stateid,
-                         data->current_entry,
-                         0LL,
-                         &pstate_found,
-                         data->pclient)) != NFS4_OK)
+  if((rc = nfs4_Check_Stateid(&arg_CLOSE4.open_stateid,
+                              data->current_entry,
+                              0LL,
+                              &pstate_found,
+                              data,
+                              STATEID_SPECIAL_FOR_LOCK,
+                              "CLOSE")) != NFS4_OK)
     {
       res_CLOSE4.status = rc;
       return res_CLOSE4.status;
     }
 
+  popen_owner = pstate_found->state_powner;
+
+  P(popen_owner->so_mutex);
+
+  /* Check seqid */
+  if(!Check_nfs4_seqid(popen_owner, arg_CLOSE4.seqid, op, data, resp, tag))
+    {
+      /* Response is all setup for us and LogDebug told what was wrong */
+      V(popen_owner->so_mutex);
+      return res_CLOSE4.status;
+    }
+
+  V(popen_owner->so_mutex);
+
   /* Check is held locks remain */
   if(pstate_found->state_data.share.lockheld > 0)
     {
       res_CLOSE4.status = NFS4ERR_LOCKS_HELD;
+
+      /* Save the response in the open owner */
+      Copy_nfs4_state_req(popen_owner, arg_CLOSE4.seqid, op, data, resp, tag);
+
       return res_CLOSE4.status;
     }
-
-  /* Update the seqid for the open_owner */
-  P(pstate_found->state_powner->so_mutex);
-  pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid += 1;
-  V(pstate_found->state_powner->so_mutex);
-
-  /* Prepare the result */
-  res_CLOSE4.CLOSE4res_u.open_stateid.seqid = pstate_found->state_seqid + 1;
-
-  /* File is closed, release the corresponding state */
-  if(state_del_by_key(arg_CLOSE4.open_stateid.other,
-                      data->pclient, &state_status) != STATE_SUCCESS)
-    {
-      res_CLOSE4.status = nfs4_Errno(cache_status);
-      return res_CLOSE4.status;
-    }
-
-  memcpy(res_CLOSE4.CLOSE4res_u.open_stateid.other, arg_CLOSE4.open_stateid.other, OTHERSIZE);;
 
   /* Close the file in FSAL through the cache inode */
   P_w(&data->current_entry->lock);
@@ -163,11 +166,34 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       V_w(&data->current_entry->lock);
 
       res_CLOSE4.status = nfs4_Errno(cache_status);
+
+      /* Save the response in the open owner */
+      Copy_nfs4_state_req(popen_owner, arg_CLOSE4.seqid, op, data, resp, tag);
+
       return res_CLOSE4.status;
     }
   V_w(&data->current_entry->lock);
 
   res_CLOSE4.status = NFS4_OK;
+
+  /* Handle stateid/seqid for success */
+  update_stateid(pstate_found,
+                 &res_CLOSE4.CLOSE4res_u.open_stateid,
+                 data,
+                 tag);
+
+  /* Save the response in the open owner */
+  Copy_nfs4_state_req(popen_owner, arg_CLOSE4.seqid, op, data, resp, tag);
+                
+  /* File is closed, release the corresponding state */
+  if(state_del_by_key(arg_CLOSE4.open_stateid.other,
+                      data->pclient,
+                      &state_status) != STATE_SUCCESS)
+    {
+      LogDebug(COMPONENT_STATE,
+               "CLOSE failed to release stateid error %s",
+               state_err_str(state_status));
+    }
 
   return NFS4_OK;
 }                               /* nfs4_op_close */

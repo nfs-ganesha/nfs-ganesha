@@ -76,8 +76,9 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_downgrade";
 
-  state_t        * pstate_found = NULL;
-  int              rc;
+  state_t    * pstate_found = NULL;
+  int          rc;
+  const char * tag = "OPEN_DOWNGRADE";
 
   resp->resop = NFS4_OP_OPEN_DOWNGRADE;
   res_OPEN_DOWNGRADE4.status = NFS4_OK;
@@ -115,7 +116,9 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
                               data->current_entry,
                               0LL,
                               &pstate_found,
-                              data->pclient)) != NFS4_OK)
+                              data,
+                              STATEID_SPECIAL_FOR_LOCK,
+                              tag)) != NFS4_OK)
     {
       res_OPEN_DOWNGRADE4.status = rc;
       LogDebug(COMPONENT_STATE,
@@ -134,7 +137,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
          pstate_found->stateid_other, OTHERSIZE);
 
   /* Save the response in the open owner */
-  Copy_nfs4_state_req(pstate_found->state_powner, arg_OPEN_DOWNGRADE4.seqid, op, data, resp);
+  Copy_nfs4_state_req(pstate_found->state_powner, arg_OPEN_DOWNGRADE4.seqid, op, data, resp, tag);
                 
   return res_OPEN_DOWNGRADE4.status;
 }                               /* nfs4_op_opendowngrade */

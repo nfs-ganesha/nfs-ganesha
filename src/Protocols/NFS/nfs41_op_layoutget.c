@@ -181,7 +181,9 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
                               data->current_entry,
                               data->psession->clientid,
                               &pstate_exists,
-                              data->pclient)) != NFS4_OK)
+                              data,
+                              STATEID_SPECIAL_FOR_LOCK,
+                              "LAYOUTGET")) != NFS4_OK)
     {
       res_LAYOUTGET4.logr_status = rc;
       return res_LAYOUTGET4.logr_status;

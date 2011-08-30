@@ -170,7 +170,9 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                               data->current_entry,
                               data->psession->clientid,
                               &pstate_found,
-                              data->pclient)) != NFS4_OK)
+                              data,
+                              STATEID_SPECIAL_FOR_LOCK,
+                              "UNLOCK")) != NFS4_OK)
     {
       res_LOCKU4.status = rc;
       return res_LOCKU4.status;

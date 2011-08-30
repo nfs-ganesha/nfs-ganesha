@@ -209,7 +209,9 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                   data->current_entry,
                                   data->psession->clientid,
                                   &pstate_open,
-                                  data->pclient)) != NFS4_OK)
+                                  data,
+                                  STATEID_SPECIAL_FOR_LOCK,
+                                  "LOCK (new owner)")) != NFS4_OK)
         {
           res_LOCK4.status = rc;
           LogDebug(COMPONENT_NFS_V4_LOCK,
@@ -259,7 +261,9 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                   data->current_entry,
                                   data->psession->clientid,
                                   &plock_state,
-                                  data->pclient)) != NFS4_OK)
+                                  data,
+                                  STATEID_SPECIAL_FOR_LOCK,
+                                  "LOCK (old owner)")) != NFS4_OK)
         {
           res_LOCK4.status = rc;
           LogDebug(COMPONENT_NFS_V4_LOCK,

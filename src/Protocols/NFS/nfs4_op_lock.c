@@ -104,6 +104,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   nfs_client_id_t           nfs_client_id;
   state_lock_desc_t         lock_desc, conflict_desc;
   state_blocking_t          blocking = STATE_NON_BLOCKING;
+  const char              * tag = "LOCK";
 
   LogDebug(COMPONENT_NFS_V4_LOCK,
            "Entering NFS v4 LOCK handler -----------------------------------------------------");
@@ -191,17 +192,18 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   if(arg_LOCK4.locker.new_lock_owner)
     {
       /* New lock owner, Find the open owner */
+      tag = "LOCK (new owner)";
 
       /* Check stateid correctness and get pointer to state */
       if((rc = nfs4_Check_Stateid(&arg_LOCK4.locker.locker4_u.open_owner.open_stateid,
                                   data->current_entry,
                                   0LL,
                                   &pstate_open,
-                                  data->pclient)) != NFS4_OK)
+                                  data,
+                                  STATEID_SPECIAL_FOR_LOCK,
+                                  tag)) != NFS4_OK)
         {
           res_LOCK4.status = rc;
-          LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCK failed nfs4_Check_Stateid for open owner");
           return res_LOCK4.status;
         }
 
@@ -209,7 +211,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       plock_state = NULL;
       plock_owner = NULL;
       presp_owner = popen_owner;
-      seqid       = popen_owner->so_owner.so_nfs4_owner.so_seqid;
+      seqid       = arg_LOCK4.locker.locker4_u.open_owner.open_seqid;
 
       LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
               "LOCK New lock owner from open owner",
@@ -239,41 +241,12 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           return res_LOCK4.status;
         }
 
-      LogFullDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCK new owner open_stateid.seqid = %u, state_seqid = %u, pstate_open = %p, open_seqid = %u, so_seqid = %u, popen_owner = %p, lock_seqid = %u",
-                   arg_LOCK4.locker.locker4_u.open_owner.open_stateid.seqid,
-                   pstate_open->state_seqid,
-                   pstate_open,
-                   arg_LOCK4.locker.locker4_u.open_owner.open_seqid,
-                   popen_owner->so_owner.so_nfs4_owner.so_seqid,
-                   popen_owner,
-                   arg_LOCK4.locker.locker4_u.open_owner.lock_seqid);
-
-      /* check the stateid */
-      if(arg_LOCK4.locker.locker4_u.open_owner.open_stateid.seqid < pstate_open->state_seqid)
-        {
-          res_LOCK4.status = NFS4ERR_OLD_STATEID;
-          LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCK failed open stateid seqid old");
-          return res_LOCK4.status;
-        }
-
-      /* Check validity of the seqid */
-      if((arg_LOCK4.locker.locker4_u.open_owner.open_seqid < popen_owner->so_owner.so_nfs4_owner.so_seqid) ||
-         (arg_LOCK4.locker.locker4_u.open_owner.open_seqid > popen_owner->so_owner.so_nfs4_owner.so_seqid + 2))
-        {
-          res_LOCK4.status = NFS4ERR_BAD_SEQID;
-          LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCK failed open stateid seqid bad");
-          return res_LOCK4.status;
-        }
-
       /* Lock seqid (seqid wanted for new lock) should be 0 (see newpynfs test LOCK8c)  */
       if(arg_LOCK4.locker.locker4_u.open_owner.lock_seqid != 0)
         {
           res_LOCK4.status = NFS4ERR_BAD_SEQID;
           LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCK failed lock stateid is not 0");
+                   "LOCK failed new lock stateid is not 0");
           return res_LOCK4.status;
         }
 
@@ -287,6 +260,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
        * Find the lock stateid
        * From that, get the open_owner
        */
+      tag = "LOCK (existing owner)";
 
       /* There was code here before to handle all-0 stateid, but that
        * really doesn't apply - when we handle temporary locks for
@@ -299,7 +273,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                                   data->current_entry,
                                   0LL,
                                   &plock_state,
-                                  data->pclient)) != NFS4_OK)
+                                  data,
+                                  STATEID_SPECIAL_FOR_LOCK,
+                                  tag)) != NFS4_OK)
         {
           res_LOCK4.status = rc;
           LogDebug(COMPONENT_NFS_V4_LOCK,
@@ -331,31 +307,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
               plock_owner,
               &lock_desc);
 
-      LogFullDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCK known owner lock_stateid.seqid = %u, lock_seqid = %u, state_seqid = %u, plock_state = %p",
-                   arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.seqid,
-                   arg_LOCK4.locker.locker4_u.lock_owner.lock_seqid,
-                   plock_state->state_seqid,
-                   plock_state);
-
-      /* Check if stateid is not too old */
-      if(arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid.seqid < plock_state->state_seqid)
-        {
-          res_LOCK4.status = NFS4ERR_OLD_STATEID;
-          LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCK failed existing lock owner, old stateid");
-          return res_LOCK4.status;
-        }
-
-      /* Check validity of the desired seqid */
-      if((arg_LOCK4.locker.locker4_u.lock_owner.lock_seqid != plock_state->state_seqid) &&
-         (arg_LOCK4.locker.locker4_u.lock_owner.lock_seqid != plock_state->state_seqid + 1))
-        {
-          res_LOCK4.status = NFS4ERR_BAD_SEQID;
-          LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCK failed existing lock owner, bad seqid");
-          return res_LOCK4.status;
-        }
 #ifdef _CONFORM_TO_TEST_LOCK8c
       /* Check validity of the seqid */
       if(arg_LOCK4.locker.locker4_u.lock_owner.lock_seqid != 0)
@@ -368,6 +319,13 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 #endif
     }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
 
+  /* Check seqid (lock_seqid or open_seqid) */
+  if(!Check_nfs4_seqid(presp_owner, seqid, op, data, resp, tag))
+    {
+      /* Response is all setup for us and LogDebug told what was wrong */
+      return res_LOCK4.status;
+    }
+
   /* Lock length should not be 0 */
   if(arg_LOCK4.length == 0LL)
     {
@@ -376,7 +334,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                "LOCK failed length == 0");
 
       /* Save the response in the lock or open owner */
-      Copy_nfs4_state_req(presp_owner, seqid, op, data, resp);
+      Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
 
       return res_LOCK4.status;
     }
@@ -392,7 +350,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                "LOCK failed length overflow");
 
       /* Save the response in the lock or open owner */
-      Copy_nfs4_state_req(presp_owner, seqid, op, data, resp);
+      Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
 
       return res_LOCK4.status;
     }
@@ -423,7 +381,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                    "LOCK failed state_iterate");
 
           /* Save the response in the lock or open owner */
-          Copy_nfs4_state_req(presp_owner, seqid, op, data, resp);
+          Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
 
           return res_LOCK4.status;
         }
@@ -440,19 +398,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                    OPEN4_SHARE_ACCESS_WRITE) &&
                  (arg_LOCK4.locktype == WRITE_LT))
                 {
-                  if(plock_state != NULL)
-                    {
-                      /* Increment seqid */
-                      // TODO FSF: I'm not sure this is appropriate
-                      P(plock_owner->so_mutex);
-                      plock_owner->so_owner.so_nfs4_owner.so_seqid += 1;
-                      V(plock_owner->so_mutex);
-                      LogFullDebug(COMPONENT_NFS_V4_LOCK,
-                                   "LOCK incremented so_seqid to %u, plock_owner = %p",
-                                   plock_owner->so_owner.so_nfs4_owner.so_seqid,
-                                   plock_owner);
-                    }
-
                   /* A conflicting open state, return NFS4ERR_OPENMODE
                    * This behavior is implemented to comply with newpynfs's test LOCK4 */
                   LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
@@ -465,7 +410,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   res_LOCK4.status = NFS4ERR_OPENMODE;
 
                   /* Save the response in the lock or open owner */
-                  Copy_nfs4_state_req(presp_owner, seqid, op, data, resp);
+                  Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
 
                   return res_LOCK4.status;
                 }
@@ -585,43 +530,29 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       /* Save the response in the lock or open owner */
       if(res_LOCK4.status != NFS4ERR_RESOURCE &&
          res_LOCK4.status != NFS4ERR_BAD_STATEID)
-        Copy_nfs4_state_req(presp_owner, seqid, op, data, resp);
+        Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
 
       return res_LOCK4.status;
     }
 
-  /* Handle stateid/seqid for success */
-  if(!arg_LOCK4.locker.new_lock_owner)
-    {
-      /* Increment the seqid for existing lock owner */
-      plock_state->state_seqid += 1;
-    }
-
   res_LOCK4.status = NFS4_OK;
-  res_LOCK4.LOCK4res_u.resok4.lock_stateid.seqid = plock_state->state_seqid;
-  memcpy(res_LOCK4.LOCK4res_u.resok4.lock_stateid.other,
-         plock_state->stateid_other,
-         OTHERSIZE);
+
+  /* Handle stateid/seqid for success */
+  update_stateid(plock_state,
+                 &res_LOCK4.LOCK4res_u.resok4.lock_stateid,
+                 data,
+                 tag);
 
   LogFullDebug(COMPONENT_NFS_V4_LOCK,
                "LOCK state_seqid = %u, plock_state = %p",
                plock_state->state_seqid,
                plock_state);
 
-  /* increment the open state */
-  P(popen_owner->so_mutex);
-  popen_owner->so_owner.so_nfs4_owner.so_seqid += 1;
-  V(popen_owner->so_mutex);
-  LogFullDebug(COMPONENT_NFS_V4_LOCK,
-               "LOCK incremented so_seqid to %u, popen_owner = %p",
-               popen_owner->so_owner.so_nfs4_owner.so_seqid,
-               popen_owner);
-
   /* update the lock counter in the related open-stateid */
   pstate_open->state_data.share.lockheld += 1;
 
   /* Save the response in the lock or open owner */
-  Copy_nfs4_state_req(presp_owner, seqid, op, data, resp);
+  Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
                 
   LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
           "LOCK applied",

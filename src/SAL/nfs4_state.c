@@ -259,7 +259,7 @@ state_status_t state_add(cache_entry_t         * pentry,
   /* Set the type and data for this state */
   pnew_state->state_type = state_type;
   memcpy(&(pnew_state->state_data), pstate_data, sizeof(state_data_t));
-  pnew_state->state_seqid = 0;
+  pnew_state->state_seqid = 0; /* will be incremented to 1 later */
   pnew_state->state_pentry = pentry;
   pnew_state->state_powner = powner;
 

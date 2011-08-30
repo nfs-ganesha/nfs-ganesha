@@ -161,7 +161,9 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                    data->current_entry,
                                    0LL,
                                    &pstate_found,
-                                   data->pclient)) == NFS4_OK)
+                                   data,
+                                   STATEID_SPECIAL_ANY,
+                                   "WRITE")) == NFS4_OK)
     {
       /* This is a write operation, this means that the file MUST have been opened for writing */
       if((pstate_found->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE) &&

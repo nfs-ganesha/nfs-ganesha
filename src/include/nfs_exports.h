@@ -314,6 +314,8 @@ typedef struct compoud_data
   nfs_fh4 savedFH;                                    /**< Saved filehandle                                              */
   nfs_fh4 publicFH;                                   /**< Public filehandle                                             */
   nfs_fh4 mounted_on_FH;                              /**< File handle to "mounted on" File System                       */
+  stateid4 current_stateid;                           /**< Current stateid                                               */
+  bool_t   current_stateid_valid;                     /**< Current stateid is valid                                      */
   unsigned int minorversion;                          /**< NFSv4 minor version                                           */
   cache_entry_t *current_entry;                       /**< cache entry related to current filehandle                     */
   cache_entry_t *saved_entry;                         /**< cache entry related to saved filehandle                       */

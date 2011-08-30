@@ -86,10 +86,10 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_locku";
   state_status_t      state_status;
   state_t           * pstate_found = NULL;
-  state_t           * pstate_open = NULL;
   state_owner_t     * plock_owner;
   state_lock_desc_t   lock_desc;
   unsigned int        rc = 0;
+  const char        * tag = "LOCKU";
 
   LogDebug(COMPONENT_NFS_V4_LOCK,
            "Entering NFS v4 LOCKU handler -----------------------------------------------------");
@@ -160,7 +160,9 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                               data->current_entry,
                               0LL,
                               &pstate_found,
-                              data->pclient)) != NFS4_OK)
+                              data,
+                              STATEID_SPECIAL_FOR_LOCK,
+                              tag)) != NFS4_OK)
     {
       res_LOCKU4.status = rc;
       return res_LOCKU4.status;
@@ -168,13 +170,25 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   plock_owner = pstate_found->state_powner;
 
+  /* Check seqid (lock_seqid or open_seqid) */
+  if(!Check_nfs4_seqid(plock_owner,
+                       arg_LOCKU4.seqid,
+                       op,
+                       data,
+                       resp,
+                       tag))
+    {
+      /* Response is all setup for us and LogDebug told what was wrong */
+      return res_LOCKU4.status;
+    }
+
   /* Lock length should not be 0 */
   if(arg_LOCKU4.length == 0LL)
     {
       res_LOCKU4.status = NFS4ERR_INVAL;
 
       /* Save the response in the lock owner */
-      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp);
+      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp, tag);
 
       return res_LOCKU4.status;
     }
@@ -184,79 +198,15 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   if(lock_desc.sld_length > (STATE_LOCK_OFFSET_EOF - lock_desc.sld_offset))
     {
       res_LOCKU4.status = NFS4ERR_INVAL;
-      return res_LOCKU4.status;
 
       /* Save the response in the lock owner */
-      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp);
+      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp, tag);
 
-    }
-
-  LogFullDebug(COMPONENT_NFS_V4_LOCK,
-               "LOCKU seqid = %u, so_seqid = %u, state_powner = %p, lock_stateid.seqid = %u, state_seqid = %u, pstate_found = %p",
-               arg_LOCKU4.seqid,
-               plock_owner->so_owner.so_nfs4_owner.so_seqid,
-               plock_owner,
-               arg_LOCKU4.lock_stateid.seqid,
-               pstate_found->state_seqid,
-               pstate_found);
-
-  /* Check the seqid */
-  if((arg_LOCKU4.seqid != plock_owner->so_owner.so_nfs4_owner.so_seqid) &&
-     (arg_LOCKU4.seqid != plock_owner->so_owner.so_nfs4_owner.so_seqid + 1))
-    {
-      res_LOCKU4.status = NFS4ERR_BAD_SEQID;
       return res_LOCKU4.status;
     }
-
-  /* Check the seqid for the lock */
-  if((arg_LOCKU4.lock_stateid.seqid != pstate_found->state_seqid) &&
-     (arg_LOCKU4.lock_stateid.seqid != pstate_found->state_seqid + 1))
-    {
-      res_LOCKU4.status = NFS4ERR_BAD_SEQID;
-      return res_LOCKU4.status;
-    }
-
-  /* Increment the seqid for the open-stateid related to this lock */
-  pstate_open = pstate_found->state_data.lock.popenstate;
-  if(pstate_open != NULL)
-    {
-      pstate_open->state_seqid += 1;
-      /* update the lock counter in the related open-stateid */
-      // TODO FSF: this count is probably wrong...
-      LogFullDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCKU incremented state_seqid to %u, pstate_open = %p",
-                   pstate_open->state_seqid, pstate_open);
-      if(pstate_open->state_data.share.lockheld > 0)
-        pstate_open->state_data.share.lockheld -= 1;
-    }
-
-  /* Increment the seqid */
-  pstate_found->state_seqid += 1;
-  res_LOCKU4.LOCKU4res_u.lock_stateid.seqid = pstate_found->state_seqid;
-  memcpy(res_LOCKU4.LOCKU4res_u.lock_stateid.other, pstate_found->stateid_other, OTHERSIZE);
-  LogFullDebug(COMPONENT_NFS_V4_LOCK,
-               "LOCKU incremented state_seqid to %u, pstate_found = %p",
-               pstate_found->state_seqid, pstate_found);
-
-  P(plock_owner->so_mutex);
-  plock_owner->so_owner.so_nfs4_owner.so_seqid += 1;
-  V(plock_owner->so_mutex);
-  LogFullDebug(COMPONENT_NFS_V4_LOCK,
-               "LOCKU incremented so_seqid to %u, plock_owner = %p",
-               plock_owner->so_owner.so_nfs4_owner.so_seqid,
-               plock_owner);
-
-  /* Increment the seqid for the related open_owner */
-  P(plock_owner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
-  plock_owner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_seqid += 1;
-  V(plock_owner->so_owner.so_nfs4_owner.so_related_owner->so_mutex);
-  LogFullDebug(COMPONENT_NFS_V4_LOCK,
-               "LOCKU incremented so_seqid to %u, plock_owner->so_owner.so_nfs4_owner.so_related_owner = %p",
-               plock_owner->so_owner.so_nfs4_owner.so_related_owner->so_owner.so_nfs4_owner.so_seqid,
-               plock_owner->so_owner.so_nfs4_owner.so_related_owner);
 
   LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
-          "LOCKU",
+          tag,
           data->current_entry,
           data->pcontext,
           plock_owner,
@@ -276,7 +226,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       res_LOCKU4.status = nfs4_Errno_state(state_status);
 
       /* Save the response in the lock owner */
-      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp);
+      Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp, tag);
 
       return res_LOCKU4.status;
     }
@@ -295,8 +245,17 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* Successful exit */
   res_LOCKU4.status = NFS4_OK;
 
+  /* Handle stateid/seqid for success */
+  update_stateid(pstate_found,
+                 &res_LOCKU4.LOCKU4res_u.lock_stateid,
+                 data,
+                 "LOCK");
+
+  /* update the lock counter in the related open-stateid */
+  pstate_found->state_data.share.lockheld -= 1;
+
   /* Save the response in the lock owner */
-  Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp);
+  Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp, tag);
 
   return res_LOCKU4.status;
 #endif

@@ -58,12 +58,12 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "nfs_core.h"
-#include "nfs23.h"
 #include "nfs4.h"
 #include "fsal.h"
 #include "nfs_tools.h"
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
+#include "sal_functions.h"
 
 size_t strnlen(const char *s, size_t maxlen);
 
@@ -387,18 +387,22 @@ int nfs4_State_Del(char other[OTHERSIZE])
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs4_Check_Stateid(stateid4              * pstate,
-                       cache_entry_t         * pentry,
-                       clientid4               clientid,
-                       state_t              ** ppstate,
-                       cache_inode_client_t *  pclient)
+int nfs4_Check_Stateid(stateid4        * pstate,
+                       cache_entry_t   * pentry,
+                       clientid4         clientid,
+                       state_t        ** ppstate,
+                       compound_data_t * data,
+                       char              flags,
+                       const char      * tag)
 {
   u_int16_t         time_digest = 0;
   state_t         * pstate2;
   nfs_client_id_t   nfs_clientid;
-  char              str[OTHERSIZE * 2 + 1];
+  char              str[OTHERSIZE * 2 + 1 + 6];
+  int32_t           diff;
 
   *ppstate = NULL;
+  data->current_stateid_valid = FALSE;
 
   if(pstate == NULL)
     return NFS4ERR_SERVERFAULT;
@@ -410,7 +414,51 @@ int nfs4_Check_Stateid(stateid4              * pstate,
     return NFS4ERR_SERVERFAULT;
 
   if(isDebug(COMPONENT_STATE))
-    sprint_mem(str, (char *)pstate->other, OTHERSIZE);
+    {
+      sprint_mem(str, (char *)pstate->other, OTHERSIZE);
+      sprintf(str + OTHERSIZE * 2, ":%u", (unsigned int) pstate->seqid);
+    }
+
+  if((flags & STATEID_SPECIAL_ALL_0) != 0)
+    {
+      if(memcmp(pstate->other, all_zero, OTHERSIZE) == 0 && pstate->seqid == 0)
+        {
+          /* All 0 stateid */
+          LogDebug(COMPONENT_STATE,
+                   "Check %s stateid found special all 0 stateid", tag);
+          /* TODO FSF: eventually this may want to return an actual state for
+           * use in temporary locks for I/O.
+           */
+          return NFS4_OK;
+        }
+    }
+
+  if((flags & STATEID_SPECIAL_ALL_1) != 0)
+    {
+      if(memcmp(pstate->other, all_zero, OTHERSIZE) == 0 &&
+         pstate->seqid == 0xFFFFFFFF)
+        {
+          /* All 1 stateid */
+          LogDebug(COMPONENT_STATE,
+                   "Check %s stateid found special all 1 stateid", tag);
+          /* TODO FSF: eventually this may want to return an actual state for
+           * use in temporary locks for I/O.
+           */
+          return NFS4_OK;
+        }
+    }
+
+  if((flags & STATEID_SPECIAL_CURRENT) != 0)
+    {
+      if(memcmp(pstate->other, all_zero, OTHERSIZE) == 0 && pstate->seqid == 1)
+        {
+          /* All 0 stateid */
+          LogDebug(COMPONENT_STATE,
+                   "Check %s stateid found special 'current' stateid", tag);
+          /* Copy current stateid in and proceed to checks */
+          *pstate = data->current_stateid;
+        }
+    }
 
   /* Check if stateid was made from this server instance */
   memcpy((char *)&time_digest, pstate->other, 2);
@@ -418,7 +466,7 @@ int nfs4_Check_Stateid(stateid4              * pstate,
   if((u_int16_t) (ServerBootTime & 0x0000FFFF) != time_digest)
     {
       LogDebug(COMPONENT_STATE,
-               "Check found stale stateid %s", str);
+               "Check %s stateid found stale stateid %s", tag, str);
       return NFS4ERR_STALE_STATEID;
     }
 
@@ -426,11 +474,11 @@ int nfs4_Check_Stateid(stateid4              * pstate,
   if(!nfs4_State_Get_Pointer(pstate->other, &pstate2))
     {
       /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET_STATE] += 1;
+      data->pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET_STATE] += 1;
 
       /* State not found : return NFS4ERR_BAD_STATEID, RFC3530 page 129 */
       LogDebug(COMPONENT_STATE,
-               "Check could not find state %s", str);
+               "Check %s stateid could not find state %s", tag, str);
       if(nfs_param.nfsv4_param.return_bad_stateid == TRUE)      /* Dirty work-around for HPC environment */
         return NFS4ERR_BAD_STATEID;
       else
@@ -446,7 +494,8 @@ int nfs4_Check_Stateid(stateid4              * pstate,
                            &nfs_clientid) != CLIENT_ID_SUCCESS)
         {
           LogDebug(COMPONENT_STATE,
-                   "Check could not find clientid for state %s", str);
+                   "Check %s stateid could not find clientid for state %s",
+                   tag, str);
           if(nfs_param.nfsv4_param.return_bad_stateid == TRUE)  /* Dirty work-around for HPC environment */
             return NFS4ERR_BAD_STATEID; /* Refers to a non-existing client... */
           else
@@ -457,13 +506,42 @@ int nfs4_Check_Stateid(stateid4              * pstate,
   /* Sanity check : Is this the right file ? */
   if(pstate2->state_pentry != pentry)
     {
-      LogDebug(COMPONENT_NFS_V4_LOCK,
-               "Check found stateid %s has wrong file", str);
+      LogDebug(COMPONENT_STATE,
+               "Check %s stateid found stateid %s has wrong file", tag, str);
       return NFS4ERR_BAD_STATEID;
     }
 
+  /* Test for seqid = 0 if allowed */
+  if((flags & STATEID_SPECIAL_SEQID_0) == 0 || pstate->seqid != 0)
+    {
+      /* Check seqid in stateid */
+      diff = pstate->seqid - pstate2->state_seqid;
+      if(diff < 0)
+        {
+          /* OLD_STATEID */
+          LogDebug(COMPONENT_STATE,
+                   "Check %s stateid found OLD stateid %s, expected seqid %u",
+                   tag, str, (unsigned int) pstate2->state_seqid);
+          return NFS4ERR_OLD_STATEID;
+        }
+      else if(diff > 0)
+        {
+          /* BAD_STATEID */
+          LogDebug(COMPONENT_STATE,
+                   "Check %s stateid found BAD stateid %s, expected seqid %u",
+                   tag, str, (unsigned int) pstate2->state_seqid);
+          return NFS4ERR_BAD_STATEID;
+        }
+    }
+
   LogFullDebug(COMPONENT_STATE,
-               "Check found valid stateid %s - %p", str, pstate2);
+               "Check %s stateid found valid stateid %s - %p",
+               tag, str, pstate2);
+
+  /* Copy stateid into current for later use */
+  data->current_stateid       = *pstate;
+  data->current_stateid.seqid = pstate2->state_seqid;
+  data->current_stateid_valid = TRUE;
 
   *ppstate = pstate2;
   return NFS4_OK;
@@ -483,3 +561,33 @@ void nfs_State_PrintAll(void)
   if(isFullDebug(COMPONENT_STATE))
     HashTable_Log(COMPONENT_STATE, ht_state_id);
 }                               /* nfs_State_PrintAll */
+
+void update_stateid(state_t         * pstate,
+                    stateid4        * presp,
+                    compound_data_t * data,
+                    const char      * tag)
+{
+  /* Increment state_seqid, handling wraparound */
+  pstate->state_seqid += 1;
+  if(pstate->state_seqid == 0)
+    pstate->state_seqid = 1;
+
+  /* Copy stateid into current for later use */
+  data->current_stateid.seqid = pstate->state_seqid;
+  memcpy(data->current_stateid.other, pstate->stateid_other, OTHERSIZE);
+  data->current_stateid_valid = TRUE;
+
+  /* Copy stateid into response */
+  presp->seqid = pstate->state_seqid;
+  memcpy(presp->other, pstate->stateid_other, OTHERSIZE);
+
+  if(isFullDebug(COMPONENT_STATE))
+    {
+      char str[OTHERSIZE * 2 + 1 + 6];
+      sprint_mem(str, (char *)pstate->stateid_other, OTHERSIZE);
+      sprintf(str + OTHERSIZE * 2, ":%u", (unsigned int) pstate->state_seqid);
+      LogDebug(COMPONENT_STATE,
+               "Update %s stateid to %s for response",
+               tag, str);
+    }
+}

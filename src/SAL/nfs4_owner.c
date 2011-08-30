@@ -275,6 +275,7 @@ int nfs4_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
 
   if(HashTable_Get(ht_nfs4_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
+      *powner = NULL;
       LogFullDebug(COMPONENT_STATE,
                    "nfs4_owner_Get_Pointer => NOTFOUND");
       return 0;
@@ -338,14 +339,13 @@ state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
   *powner_name = *pname;
 
   /* set up the content of the open_owner */
-  powner->so_owner.so_nfs4_owner.so_confirmed     = FALSE;
+  memset(powner, 0, sizeof(*powner));
   powner->so_owner.so_nfs4_owner.so_seqid         = init_seqid;
   powner->so_owner.so_nfs4_owner.so_related_owner = related_owner;
   powner->so_owner.so_nfs4_owner.so_clientid      = arg_owner->clientid;
   powner->so_owner_len                            = arg_owner->owner.owner_len;
   powner->so_owner.so_nfs4_owner.so_resp.resop    = NFS4_OP_ILLEGAL;
   powner->so_owner.so_nfs4_owner.so_args.argop    = NFS4_OP_ILLEGAL;
-  powner->so_owner.so_nfs4_owner.so_last_pentry   = NULL;
 
   init_glist(&powner->so_lock_list);
 
@@ -475,8 +475,19 @@ void Copy_nfs4_state_req(state_owner_t   * powner,
                          seqid4            seqid,
                          nfs_argop4      * args,
                          compound_data_t * data,
-                         nfs_resop4      * resp)
+                         nfs_resop4      * resp,
+                         const char      * tag)
 {
+  /* Simplify use of this function when we may not be keeping any data for the
+   * state owner
+   */
+  if(powner == NULL)
+    return;
+
+  LogFullDebug(COMPONENT_STATE,
+               "%s: Check powner %p so_seqid %u new seqid %u",
+               tag, powner, powner->so_owner.so_nfs4_owner.so_seqid, seqid);
+
   /* Free previous response */
   nfs4_Compound_FreeOne(&powner->so_owner.so_nfs4_owner.so_resp);
 
@@ -520,16 +531,37 @@ bool_t Check_nfs4_seqid(state_owner_t   * powner,
                         seqid4            seqid,
                         nfs_argop4      * args,
                         compound_data_t * data,
-                        nfs_resop4      * resp)
+                        nfs_resop4      * resp,
+                        const char      * tag)
 {
-  seqid4 next = powner->so_owner.so_nfs4_owner.so_seqid + 1;
+  seqid4 next;
 
-  /* Check for valid next seqid */
-  if(seqid == next)
-    return TRUE;
+  /* Check if any owner to verify seqid against */
+  if(powner == NULL)
+    {
+      LogFullDebug(COMPONENT_STATE,
+               "%s: Unknown owner doesn't have saved seqid, req seqid %u",
+               tag, seqid);
+      return TRUE;
+    }
 
   /* If this is a new state owner, client may start with any seqid */
   if(powner->so_owner.so_nfs4_owner.so_last_pentry == NULL)
+    {
+      LogFullDebug(COMPONENT_STATE,
+               "%s: New owner %p doesn't have saved seqid, req seqid %u",
+               tag, powner, seqid);
+      return TRUE;
+    }
+
+  /* Check for valid next seqid */
+  next = powner->so_owner.so_nfs4_owner.so_seqid + 1;
+
+  LogFullDebug(COMPONENT_STATE,
+               "%s: Check powner %p so_seqid %u next %u req seqid %u",
+               tag, powner, powner->so_owner.so_nfs4_owner.so_seqid, next, seqid);
+
+  if(seqid == next)
     return TRUE;
 
   /* All NFS4 responses have the status in the same place, so use any to set NFS4ERR_BAD_SEQID */
@@ -539,33 +571,32 @@ bool_t Check_nfs4_seqid(state_owner_t   * powner,
   if(powner->so_owner.so_nfs4_owner.so_seqid != seqid)
     {
       LogDebug(COMPONENT_STATE,
-               "Invalid seqid in request %u (not replay), expected seqid %u, returning NFS4ERR_BAD_SEQID",
-               seqid,
-               powner->so_owner.so_nfs4_owner.so_seqid);
+               "%s: Invalid seqid %u in request (not replay), expected seqid %u, returning NFS4ERR_BAD_SEQID",
+               tag, seqid, powner->so_owner.so_nfs4_owner.so_seqid);
       return FALSE;
     }
 
   if(args->argop != powner->so_owner.so_nfs4_owner.so_args.argop)
     {
       LogDebug(COMPONENT_STATE,
-               "Invalid seqid in request %u (not replay - not same op), returning NFS4ERR_BAD_SEQID",
-               seqid);
+               "%s: Invalid seqid in request %u (not replay - not same op), returning NFS4ERR_BAD_SEQID",
+               tag, seqid);
       return FALSE;
     }
 
   if(powner->so_owner.so_nfs4_owner.so_last_pentry != data->current_entry)
     {
       LogDebug(COMPONENT_STATE,
-               "Invalid seqid in request %u (not replay - wrong file), returning NFS4ERR_BAD_SEQID",
-               seqid);
+               "%s: Invalid seqid in request %u (not replay - wrong file), returning NFS4ERR_BAD_SEQID",
+               tag, seqid);
       return FALSE;
     }
 
   // TODO FSF: add more checks here...
 
   LogDebug(COMPONENT_STATE,
-           "Copying saved response for seqid %u",
-           seqid);
+           "%s: Copying saved response for seqid %u",
+           tag, seqid);
 
   /* Copy the saved response and tell caller to use it */
   nfs4_Compound_CopyResOne(resp, &powner->so_owner.so_nfs4_owner.so_resp);

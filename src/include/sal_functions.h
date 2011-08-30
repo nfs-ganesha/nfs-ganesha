@@ -124,11 +124,26 @@ int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
                             state_owner_t     * popen_owner,
                             char              * other);
 
-int nfs4_Check_Stateid(stateid4              * pstate,
-                       cache_entry_t         * pentry,
-                       clientid4               clientid,
-                       state_t              ** ppstate,
-                       cache_inode_client_t *  pclient);
+#define STATEID_NO_SPECIAL 0
+#define STATEID_SPECIAL_SEQID_0    1
+#define STATEID_SPECIAL_ALL_0      2
+#define STATEID_SPECIAL_ALL_1      4
+#define STATEID_SPECIAL_CURRENT    8
+#define STATEID_SPECIAL_ANY        0xFF
+#define STATEID_SPECIAL_FOR_LOCK   (STATEID_SPECIAL_SEQID_0 | STATEID_SPECIAL_CURRENT)
+
+int nfs4_Check_Stateid(stateid4        * pstate,
+                       cache_entry_t   * pentry,
+                       clientid4         clientid,
+                       state_t        ** ppstate,
+                       compound_data_t * data,
+                       char              flags,
+                       const char      * tag);
+
+void update_stateid(state_t         * pstate,
+                    stateid4        * presp,
+                    compound_data_t * data,
+                    const char      * tag);
 
 int nfs4_Init_state_id(nfs_state_id_parameter_t param);
 int nfs4_State_Set(char other[OTHERSIZE], state_t * pstate_data);
@@ -181,13 +196,15 @@ void Copy_nfs4_state_req(state_owner_t   * powner,
                          seqid4            seqid,
                          nfs_argop4      * args,
                          compound_data_t * data,
-                         nfs_resop4      * resp);
+                         nfs_resop4      * resp,
+                         const char      * tag);
 
 bool_t Check_nfs4_seqid(state_owner_t   * powner,
                         seqid4            seqid,
                         nfs_argop4      * args,
                         compound_data_t * data,
-                        nfs_resop4      * resp);
+                        nfs_resop4      * resp,
+                        const char      * tag);
 
 /******************************************************************************
  *

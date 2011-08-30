@@ -280,36 +280,19 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
       return NFS_REQ_OK;
     }
 
+  /* Initialisation of the compound request internal's data */
+  memset(&data, 0, sizeof(data));
+
   /* Minor version related stuff */
   data.minorversion = parg->arg_compound4.minorversion;
   /** @todo BUGAZOMEU: Reminder: Stats on NFSv4 operations are to be set here */
 
-  /* Initialisation of the compound request internal's data */
-  data.currentFH.nfs_fh4_len = 0;
-  data.currentFH.nfs_fh4_val = NULL;
-  data.rootFH.nfs_fh4_len = 0;
-  data.rootFH.nfs_fh4_val = NULL;
-  data.publicFH.nfs_fh4_len = 0;
-  data.publicFH.nfs_fh4_val = NULL;
-  data.savedFH.nfs_fh4_len = 0;
-  data.savedFH.nfs_fh4_val = NULL;
-  data.mounted_on_FH.nfs_fh4_len = 0;
-  data.mounted_on_FH.nfs_fh4_val = NULL;
-
-  data.current_entry = NULL;
-  data.saved_entry = NULL;
-  data.pexport = NULL;
   data.pfullexportlist = pexport;       /* Full export list is provided in input */
   data.pcontext = pcontext;     /* Get the fsal credentials from the worker thread */
   data.pseudofs = nfs4_GetPseudoFs();
   data.reqp = preq;
   data.ht = ht;
   data.pclient = pclient;
-#ifdef _USE_NFS4_1
-  data.pcached_res = NULL;
-  data.use_drc = FALSE;
-  data.psession = NULL;
-#endif                          /* _USE_NFS4_1 */
 
   strcpy(data.MntPath, "/");
 

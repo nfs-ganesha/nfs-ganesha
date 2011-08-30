@@ -159,7 +159,9 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                                    data->current_entry,
                                    0LL,
                                    &pstate_found,
-                                   data->pclient)) == NFS4_OK)
+                                   data,
+                                   STATEID_SPECIAL_ANY,
+                                   "READ")) == NFS4_OK)
     {
       /* This is a read operation, this means that the file MUST have been opened for reading */
       if(!(pstate_found->state_data.share.share_access & OPEN4_SHARE_ACCESS_READ))

@@ -78,6 +78,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   int              rc = 0;
   state_t        * pstate_found = NULL;
   state_owner_t  * popen_owner;
+  const char     * tag = "OPEN_CONFIRM";
 
   resp->resop = NFS4_OP_OPEN_CONFIRM;
   res_OPEN_CONFIRM4.status = NFS4_OK;
@@ -126,7 +127,9 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
                               data->current_entry,
                               0LL,
                               &pstate_found,
-                              data->pclient)) != NFS4_OK)
+                              data,
+                              STATEID_SPECIAL_FOR_LOCK,
+                              tag)) != NFS4_OK)
     {
       res_OPEN_CONFIRM4.status = rc;
       return res_OPEN_CONFIRM4.status;
@@ -134,8 +137,17 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
 
   popen_owner = pstate_found->state_powner;
 
-  /* If opened file is already confirmed, retrun NFS4ERR_BAD_STATEID */
   P(popen_owner->so_mutex);
+
+  /* Check seqid */
+  if(!Check_nfs4_seqid(popen_owner, arg_OPEN_CONFIRM4.seqid, op, data, resp, tag))
+    {
+      /* Response is all setup for us and LogDebug told what was wrong */
+      V(popen_owner->so_mutex);
+      return res_OPEN_CONFIRM4.status;
+    }
+
+  /* If opened file is already confirmed, retrun NFS4ERR_BAD_STATEID */
   if(popen_owner->so_owner.so_nfs4_owner.so_confirmed == TRUE)
     {
       V(popen_owner->so_mutex);
@@ -143,32 +155,18 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
       return res_OPEN_CONFIRM4.status;
     }
 
-  if(popen_owner->so_owner.so_nfs4_owner.so_seqid != arg_OPEN_CONFIRM4.seqid)
-    {
-      if(popen_owner->so_owner.so_nfs4_owner.so_seqid + 1 != arg_OPEN_CONFIRM4.seqid)
-        {
-          V(popen_owner->so_mutex);
-          res_OPEN_CONFIRM4.status = NFS4ERR_BAD_SEQID;
-          return res_OPEN_CONFIRM4.status;
-        }
-    }
-
   /* Set the state as confirmed */
   popen_owner->so_owner.so_nfs4_owner.so_confirmed = TRUE;
-  popen_owner->so_owner.so_nfs4_owner.so_seqid += 1;
   V(popen_owner->so_mutex);
 
-  /* Update the state */
-  pstate_found->state_seqid += 1;
-
-  /* Return the stateid to the client */
-  res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid.seqid =
-      arg_OPEN_CONFIRM4.seqid;
-  memcpy(res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid.other,
-         pstate_found->stateid_other, OTHERSIZE);
+  /* Handle stateid/seqid for success */
+  update_stateid(pstate_found,
+                 &res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid,
+                 data,
+                 tag);
 
   /* Save the response in the open owner */
-  Copy_nfs4_state_req(popen_owner, arg_OPEN_CONFIRM4.seqid, op, data, resp);
+  Copy_nfs4_state_req(popen_owner, arg_OPEN_CONFIRM4.seqid, op, data, resp, tag);
                 
   return res_OPEN_CONFIRM4.status;
 }                               /* nfs4_op_open_confirm */
