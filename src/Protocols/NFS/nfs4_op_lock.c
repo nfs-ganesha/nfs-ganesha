@@ -431,25 +431,41 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     {
       /* A lock owner is always associated with a previously made open
        * which has itself a previously made stateid */
-
-      /* This lock owner is not known yet, allocated and set up a new one */
-      plock_owner = create_nfs4_owner(data->pclient,
-                                      &owner_name,
-                                      (open_owner4 *) &arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
-                                      popen_owner,
-                                      0);
-
-      if(plock_owner == NULL)
+      if(nfs4_owner_Get_Pointer(&owner_name, &plock_owner))
         {
-          res_LOCK4.status = NFS4ERR_RESOURCE;
+          /* Lock owner already existsc, check lock_seqid */
+          if(!Check_nfs4_seqid(plock_owner,
+                               arg_LOCK4.locker.locker4_u.open_owner.lock_seqid,
+                               op,
+                               data,
+                               resp,
+                               "LOCK (new owner but owner exists)"))
+            {
+              /* Response is all setup for us and LogDebug told what was wrong */
+              return res_LOCK4.status;
+            }
+        }
+      else
+        {
+          /* This lock owner is not known yet, allocated and set up a new one */
+          plock_owner = create_nfs4_owner(data->pclient,
+                                          &owner_name,
+                                          (open_owner4 *) &arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
+                                          popen_owner,
+                                          0);
 
-          LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
-                  "LOCK failed to create new lock owner",
-                  data->current_entry,
-                  data->pcontext,
-                  popen_owner,
-                  &lock_desc);
-          return res_LOCK4.status;
+          if(plock_owner == NULL)
+            {
+              res_LOCK4.status = NFS4ERR_RESOURCE;
+
+              LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+                      "LOCK failed to create new lock owner",
+                      data->current_entry,
+                      data->pcontext,
+                      popen_owner,
+                      &lock_desc);
+              return res_LOCK4.status;
+            }
         }
 
       /* Prepare state management structure */
@@ -553,7 +569,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   /* Save the response in the lock or open owner */
   Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
-                
+
   LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
           "LOCK applied",
           data->current_entry,

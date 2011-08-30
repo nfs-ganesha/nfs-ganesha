@@ -88,6 +88,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   stable_how4              stable_how;
   cache_content_status_t   content_status;
   state_t                * pstate_found = NULL;
+  state_t                * pstate_open = NULL;
   cache_inode_status_t     cache_status;
   state_status_t           state_status;
   fsal_attrib_list_t       attr;
@@ -136,51 +137,76 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_WRITE4.status;
     }
 
+  /* Only files can be written */
+  if(data->current_filetype != REGULAR_FILE)
+    {
+      /* If the destination is no file, return EISDIR if it is a directory and EINAVL otherwise */
+      if(data->current_filetype == DIR_BEGINNING
+         || data->current_filetype == DIR_CONTINUE)
+        res_WRITE4.status = NFS4ERR_ISDIR;
+      else
+        res_WRITE4.status = NFS4ERR_INVAL;
+
+      return res_WRITE4.status;
+    }
+
   /* vnode to manage is the current one */
   entry = data->current_entry;
 
-  /* Check for special stateid */
-  if(!memcmp((char *)all_zero, arg_WRITE4.stateid.other, OTHERSIZE) &&
-     arg_WRITE4.stateid.seqid == 0)
-    {
-      /* "All 0 stateid special case", see RFC3530 page 220-221 for details
-       * This will be treated as a client that held no lock at all,
-       * I set pstate_found to NULL to remember this situation later */
-      pstate_found = NULL;
-    }
-  else if(!memcmp((char *)all_one, arg_WRITE4.stateid.other, OTHERSIZE) &&
-          arg_WRITE4.stateid.seqid == 0xFFFFFFFF)
-    {
-      /* "All 1 stateid special case", see RFC3530 page 220-221 for details
-       * This will be treated as a client that held no lock at all,
-       * I set pstate_found to NULL to remember this situation later */
-      pstate_found = NULL;
-    }
-  /* Check stateid correctness and get pointer to state */
-  else if((rc = nfs4_Check_Stateid(&arg_WRITE4.stateid,
-                                   data->current_entry,
-                                   0LL,
-                                   &pstate_found,
-                                   data,
-                                   STATEID_SPECIAL_ANY,
-                                   "WRITE")) == NFS4_OK)
-    {
-      /* This is a write operation, this means that the file MUST have been opened for writing */
-      if((pstate_found->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE) &&
-         !(pstate_found->state_data.share.share_access & OPEN4_SHARE_ACCESS_WRITE))
-        {
-          /* Bad open mode, return NFS4ERR_OPENMODE */
-          res_WRITE4.status = NFS4ERR_OPENMODE;
-          return res_WRITE4.status;
-        }
-    }                           /* else if( ( rc = nfs4_Check_Stateid( &arg_WRITE4.stateid, data->current_entry ) ) == NFS4_OK ) */
-  else
+  /* Check stateid correctness and get pointer to state
+   * (also checks for special stateids)
+   */
+  if((rc = nfs4_Check_Stateid(&arg_WRITE4.stateid,
+                              data->current_entry,
+                              0LL,
+                              &pstate_found,
+                              data,
+                              STATEID_SPECIAL_ANY,
+                              "WRITE")) != NFS4_OK)
     {
       res_WRITE4.status = rc;
       return res_WRITE4.status;
     }
 
   /* NB: After this points, if pstate_found == NULL, then the stateid is all-0 or all-1 */
+
+  if(pstate_found != NULL)
+    {
+      switch(pstate_found->state_type)
+        {
+          case STATE_TYPE_SHARE:
+            pstate_open = pstate_found;
+            break;
+
+          case STATE_TYPE_LOCK:
+            pstate_open = pstate_found->state_data.lock.popenstate;
+            break;
+
+          case STATE_TYPE_DELEG:
+            pstate_open = NULL;
+            break;
+
+          default:
+            res_WRITE4.status = NFS4ERR_BAD_STATEID;
+            LogDebug(COMPONENT_NFS_V4_LOCK,
+                     "READ with invalid statid of type %d",
+                     (int) pstate_found->state_type);
+            return res_WRITE4.status;
+        }
+
+      /* This is a write operation, this means that the file MUST have been opened for writing */
+      if(pstate_open != NULL &&
+         (pstate_open->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE) != 0 &&
+         (pstate_open->state_data.share.share_access & OPEN4_SHARE_ACCESS_WRITE) == 0)
+        {
+          /* Bad open mode, return NFS4ERR_OPENMODE */
+          res_WRITE4.status = NFS4ERR_OPENMODE;
+          LogDebug(COMPONENT_NFS_V4_LOCK,
+                   "WRITE state %p doesn't have OPEN4_SHARE_ACCESS_WRITE",
+                   pstate_found);
+          return res_WRITE4.status;
+        }
+    }
 
   /* Iterate through file's state to look for conflicts */
   pstate_iterate = NULL;
@@ -190,7 +216,9 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       state_iterate(data->current_entry,
                     &pstate_iterate,
                     pstate_previous_iterate,
-                    data->pclient, data->pcontext, &state_status);
+                    data->pclient,
+                    data->pcontext,
+                    &state_status);
 
       if(state_status == STATE_STATE_ERROR)
         break;                  /* Get out of the loop */
@@ -213,6 +241,9 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                     {
                       /* Writing to this file if prohibited, file is write-denied */
                       res_WRITE4.status = NFS4ERR_LOCKED;
+                      LogDebug(COMPONENT_NFS_V4_LOCK,
+                               "WRITE is denied by state %p",
+                               pstate_iterate);
                       return res_WRITE4.status;
                     }
                 }
@@ -221,19 +252,6 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       pstate_previous_iterate = pstate_iterate;
     }
   while(pstate_iterate != NULL);
-
-  /* Only files can be written */
-  if(data->current_filetype != REGULAR_FILE)
-    {
-      /* If the destination is no file, return EISDIR if it is a directory and EINAVL otherwise */
-      if(data->current_filetype == DIR_BEGINNING
-         || data->current_filetype == DIR_CONTINUE)
-        res_WRITE4.status = NFS4ERR_ISDIR;
-      else
-        res_WRITE4.status = NFS4ERR_INVAL;
-
-      return res_WRITE4.status;
-    }
 
   /* Get the characteristics of the I/O to be made */
   offset = arg_WRITE4.offset;

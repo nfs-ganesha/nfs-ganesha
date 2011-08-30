@@ -86,6 +86,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   cache_inode_status_t     cache_status;
   state_status_t           state_status;
   state_t                * pstate_found = NULL;
+  state_t                * pstate_open = NULL;
   cache_content_status_t   content_status;
   fsal_attrib_list_t       attr;
   cache_entry_t          * entry = NULL;
@@ -122,9 +123,6 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       return res_READ4.status;
     }
 
-  /* vnode to manage is the current one */
-  entry = data->current_entry;
-
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_read_xattr(op, data, resp);
@@ -136,67 +134,85 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       return res_READ4.status;
     }
 
-  /* Check for special stateid */
-  if(!memcmp((char *)all_zero, arg_READ4.stateid.other, OTHERSIZE) &&
-     arg_READ4.stateid.seqid == 0)
+  /* Only files can be read */
+  if(data->current_filetype != REGULAR_FILE)
     {
-      /* "All 0 stateid special case" */
-      /* This will be treated as a client that held no lock at all,
-       * I set pstate_found to NULL to remember this situation later */
-      pstate_found = NULL;
-    }
-  else if(!memcmp((char *)all_one, arg_READ4.stateid.other, OTHERSIZE) &&
-          arg_READ4.stateid.seqid == 0xFFFFFFFF)
-    {
-      /* "All 1 stateid special case" */
-      /* This will be treated as a client that held no lock at all, but may goes through locks
-       * I set pstate_found to 1 to remember this situation later */
-      pstate_found = NULL;
+      /* If the source is no file, return EISDIR if it is a directory and EINAVL otherwise */
+      if(data->current_filetype == DIR_BEGINNING
+         || data->current_filetype == DIR_CONTINUE)
+        res_READ4.status = NFS4ERR_ISDIR;
+      else
+        res_READ4.status = NFS4ERR_INVAL;
+
+      return res_READ4.status;
     }
 
-  /* Check stateid correctness and get pointer to state */
-  else if((rc = nfs4_Check_Stateid(&arg_READ4.stateid,
-                                   data->current_entry,
-                                   0LL,
-                                   &pstate_found,
-                                   data,
-                                   STATEID_SPECIAL_ANY,
-                                   "READ")) == NFS4_OK)
-    {
-      /* This is a read operation, this means that the file MUST have been opened for reading */
-      if(!(pstate_found->state_data.share.share_access & OPEN4_SHARE_ACCESS_READ))
-        {
-          /* Bad open mode, return NFS4ERR_OPENMODE */
-          res_READ4.status = NFS4ERR_OPENMODE;
-          return res_READ4.status;
-        }
-#ifdef TOTO
-      /* Check the seqid */
-      if((arg_READ4.stateid.seqid != pstate_found->powner->seqid) &&
-         (arg_READ4.stateid.seqid != pstate_found->powner->seqid + 1))
-        {
-          res_READ4.status = NFS4ERR_BAD_SEQID;
-          return res_READ4.status;
-        }
+  /* vnode to manage is the current one */
+  entry = data->current_entry;
 
-      /* If NFSv4::Use_OPEN_CONFIRM is set to TRUE in the configuration file, check is state is confirmed */
-      if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
-        {
-          if(pstate_found->powner->confirmed == FALSE)
-            {
-              res_READ4.status = NFS4ERR_BAD_STATEID;
-              return res_READ4.status;
-            }
-        }
-#endif
-    }                           /* else if( ( rc = nfs4_Check_Stateid( &arg_READ4.stateid, data->current_entry ) ) == NFS4_OK ) */
-  else
+  /* Check stateid correctness and get pointer to state
+   * (also checks for special stateids)
+   */
+  if((rc = nfs4_Check_Stateid(&arg_READ4.stateid,
+                              data->current_entry,
+                              0LL,
+                              &pstate_found,
+                              data,
+                              STATEID_SPECIAL_ANY,
+                              "READ")) != NFS4_OK)
     {
       res_READ4.status = rc;
       return res_READ4.status;
     }
 
   /* NB: After this points, if pstate_found == NULL, then the stateid is all-0 or all-1 */
+
+  if(pstate_found != NULL)
+    {
+      switch(pstate_found->state_type)
+        {
+          case STATE_TYPE_SHARE:
+            pstate_open = pstate_found;
+            break;
+
+          case STATE_TYPE_LOCK:
+            pstate_open = pstate_found->state_data.lock.popenstate;
+            break;
+
+          case STATE_TYPE_DELEG:
+            pstate_open = NULL;
+            break;
+
+          default:
+            res_READ4.status = NFS4ERR_BAD_STATEID;
+            LogDebug(COMPONENT_NFS_V4_LOCK,
+                     "READ with invalid statid of type %d",
+                     (int) pstate_found->state_type);
+            return res_READ4.status;
+        }
+
+      /* This is a read operation, this means that the file MUST have been opened for reading */
+      if(pstate_open != NULL &&
+         (pstate_open->state_data.share.share_access & OPEN4_SHARE_ACCESS_READ) == 0)
+        {
+          /* Bad open mode, return NFS4ERR_OPENMODE */
+          res_READ4.status = NFS4ERR_OPENMODE;
+          LogDebug(COMPONENT_NFS_V4_LOCK,
+                   "READ state %p doesn't have OPEN4_SHARE_ACCESS_READ",
+                   pstate_found);
+          return res_READ4.status;
+        }
+
+      /* If NFSv4::Use_OPEN_CONFIRM is set to TRUE in the configuration file, check is state is confirmed */
+      if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
+        {
+          if(pstate_found->state_powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
+            {
+              res_READ4.status = NFS4ERR_BAD_STATEID;
+              return res_READ4.status;
+            }
+        }
+    }
 
   /* Iterate through file's state to look for conflicts */
   pstate_iterate = NULL;
@@ -206,7 +222,9 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       state_iterate(data->current_entry,
                     &pstate_iterate,
                     pstate_previous_iterate,
-                    data->pclient, data->pcontext, &state_status);
+                    data->pclient,
+                    data->pcontext,
+                    &state_status);
 
       if(state_status == STATE_STATE_ERROR)
         break;                  /* Get out of the loop */
@@ -223,11 +241,15 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         {
           if(pstate_iterate->state_type == STATE_TYPE_SHARE)
             {
-              if(pstate_found != pstate_iterate)
+              if(pstate_found != pstate_iterate &&
+                 pstate_open != pstate_iterate)
                 {
                   if(pstate_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_READ)
                     {
                       /* Writing to this file if prohibited, file is write-denied */
+                      LogDebug(COMPONENT_NFS_V4_LOCK,
+                               "READ is denied by state %p",
+                               pstate_iterate);
                       res_READ4.status = NFS4ERR_LOCKED;
                       return res_READ4.status;
                     }
@@ -237,19 +259,6 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       pstate_previous_iterate = pstate_iterate;
     }
   while(pstate_iterate != NULL);
-
-  /* Only files can be read */
-  if(data->current_filetype != REGULAR_FILE)
-    {
-      /* If the source is no file, return EISDIR if it is a directory and EINAVL otherwise */
-      if(data->current_filetype == DIR_BEGINNING
-         || data->current_filetype == DIR_CONTINUE)
-        res_READ4.status = NFS4ERR_ISDIR;
-      else
-        res_READ4.status = NFS4ERR_INVAL;
-
-      return res_READ4.status;
-    }
 
   /* Get the size and offset of the read operation */
   offset = arg_READ4.offset;
