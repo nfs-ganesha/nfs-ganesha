@@ -43,7 +43,8 @@
 	defined(_USE_GPFS) || \
 	defined(_USE_ZFS) || \
 	defined(_USE_SNMP) || \
-	defined(_USE_PROXY)
+	defined(_USE_PROXY) || \
+	defined(_USE_LUSTRE)
 
 typedef struct
 {

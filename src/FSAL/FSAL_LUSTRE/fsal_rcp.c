@@ -49,8 +49,8 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t LUSTREFSAL_rcp(lustrefsal_handle_t * filehandle,  /* IN */
-                             lustrefsal_op_context_t * p_context,       /* IN */
+fsal_status_t LUSTREFSAL_rcp(fsal_handle_t * filehandle,  /* IN */
+                             fsal_op_context_t * p_context,       /* IN */
                              fsal_path_t * p_local_path,        /* IN */
                              fsal_rcpflag_t transfer_opt        /* IN */
     )
@@ -60,7 +60,7 @@ fsal_status_t LUSTREFSAL_rcp(lustrefsal_handle_t * filehandle,  /* IN */
   int local_flags;
   int errsv;
 
-  lustrefsal_file_t fs_fd;
+  fsal_file_t fs_fd;
   fsal_openflags_t fs_flags;
 
   fsal_status_t st = FSAL_STATUS_NO_ERROR;
@@ -305,9 +305,9 @@ fsal_status_t LUSTREFSAL_rcp(lustrefsal_handle_t * filehandle,  /* IN */
 
 }
 
-fsal_status_t LUSTREFSAL_rcp_by_fileid(lustrefsal_handle_t * filehandle,        /* IN */
+fsal_status_t LUSTREFSAL_rcp_by_fileid(fsal_handle_t * filehandle,        /* IN */
                                        fsal_u64_t fileid,       /* IN */
-                                       lustrefsal_op_context_t * p_context,     /* IN */
+                                       fsal_op_context_t * p_context,     /* IN */
                                        fsal_path_t * p_local_path,      /* IN */
                                        fsal_rcpflag_t transfer_opt /* IN */ )
 {

@@ -36,7 +36,7 @@
 /**
  * build the export entry
  */
-fsal_status_t LUSTREFSAL_BuildExportContext(lustrefsal_export_context_t * p_export_context,     /* OUT */
+fsal_status_t LUSTREFSAL_BuildExportContext(fsal_export_context_t *exp_context,     /* OUT */
                                             fsal_path_t * p_export_path,        /* IN */
                                             char *fs_specific_options   /* IN */
     )
@@ -48,6 +48,7 @@ fsal_status_t LUSTREFSAL_BuildExportContext(lustrefsal_export_context_t * p_expo
   FILE *fp;
   struct mntent *p_mnt;
   struct stat pathstat;
+  lustrefsal_export_context_t * p_export_context = (lustrefsal_export_context_t *)exp_context;
 
   char rpath[MAXPATHLEN];
   char mntdir[MAXPATHLEN];
@@ -180,12 +181,12 @@ fsal_status_t LUSTREFSAL_BuildExportContext(lustrefsal_export_context_t * p_expo
  * \param p_export_context (in, gpfsfsal_export_context_t)
  */
 
-fsal_status_t LUSTREFSAL_CleanUpExportContext(lustrefsal_export_context_t * p_export_context) 
+fsal_status_t LUSTREFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context) 
 {
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
 }
 
-fsal_status_t LUSTREFSAL_InitClientContext(lustrefsal_op_context_t * p_thr_context)
+fsal_status_t LUSTREFSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 {
 
   /* sanity check */
@@ -222,8 +223,8 @@ fsal_status_t LUSTREFSAL_InitClientContext(lustrefsal_op_context_t * p_thr_conte
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t LUSTREFSAL_GetClientContext(lustrefsal_op_context_t * p_thr_context,      /* IN/OUT  */
-                                          lustrefsal_export_context_t * p_export_context,       /* IN */
+fsal_status_t LUSTREFSAL_GetClientContext(fsal_op_context_t * p_thr_context,      /* IN/OUT  */
+                                          fsal_export_context_t * p_export_context,       /* IN */
                                           fsal_uid_t uid,       /* IN */
                                           fsal_gid_t gid,       /* IN */
                                           fsal_gid_t * alt_groups,      /* IN */

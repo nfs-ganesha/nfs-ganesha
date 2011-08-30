@@ -43,9 +43,9 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t LUSTREFSAL_unlink(lustrefsal_handle_t * p_parent_directory_handle,        /* IN */
+fsal_status_t LUSTREFSAL_unlink(fsal_handle_t * p_parent_directory_handle,        /* IN */
                                 fsal_name_t * p_object_name,    /* IN */
-                                lustrefsal_op_context_t * p_context,    /* IN */
+                                fsal_op_context_t * p_context,    /* IN */
                                 fsal_attrib_list_t * p_parent_directory_attributes      /* [IN/OUT ] */
     )
 {
