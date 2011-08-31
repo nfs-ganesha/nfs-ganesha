@@ -893,7 +893,7 @@ int HashTable_DelRef(hash_table_t * ht, hash_buffer_t * buffkey,
     *p_usedbuffdata = pdata->buffval;
 
   if(put_ref != NULL)
-    if(put_ref(&pdata->buffval) == 0)
+    if(put_ref(&pdata->buffval) != 0)
       {
         V_w(&(ht->array_lock[hashval]));
         return HASHTABLE_NOT_DELETED;

@@ -86,7 +86,8 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
 
   P(cookie_entry->sce_pentry->object.file.lock_list_mutex);
 
-  if(cookie_entry->sce_lock_entry->sle_block_data == NULL ||
+  if(cookie_entry->sce_lock_entry == NULL ||
+     cookie_entry->sce_lock_entry->sle_block_data == NULL ||
      !nlm_block_data_to_fsal_context(&cookie_entry->sce_lock_entry->sle_block_data->sbd_block_data.sbd_nlm_block_data,
                                      pcontext))
     {

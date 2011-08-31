@@ -110,7 +110,7 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
                               &pentry,
                               pcontext,
                               pclient,
-                              TRUE,
+                              CARE_NO_MONITOR,
                               &nlm_client,
                               &nlm_owner,
                               NULL);
@@ -147,11 +147,15 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
       pres->res_nlm4.stat.stat = NLM4_GRANTED;
     }
 
+  LogFullDebug(COMPONENT_NLM,
+               "Back from state_test");
+
   /* Release the NLM Client and NLM Owner references we have */
   dec_nlm_client_ref(nlm_client);
   dec_nlm_owner_ref(nlm_owner);
 
-  LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Test %s",
+  LogDebug(COMPONENT_NLM,
+           "REQUEST RESULT: nlm4_Test %s",
            lock_result_str(pres->res_nlm4.stat.stat));
   return NFS_REQ_OK;
 }

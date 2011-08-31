@@ -69,6 +69,7 @@
 #include <string.h>
 #include <signal.h>
 #include "nlm_util.h"
+#include "nsm.h"
 
 /* global information exported to all layers (as extern vars) */
 
@@ -2329,11 +2330,8 @@ void nfs_start(nfs_start_info_t * p_start_info)
   else
     {
 #ifdef _USE_NLM
-      /*
-       * run nlm only in actual server mode.
-       * Don't do this in flusher mode
-       */
-      nlm_run();
+      /* NSM Unmonitor all */
+      nsm_unmonitor_all();
 #endif
 
       /* Populate the ID_MAPPER file with mapping file if needed */

@@ -64,7 +64,9 @@ nfsstat2 nfs2_Errno_state(state_status_t error);
  *
  ******************************************************************************/
 
+void inc_nlm_client_ref_locked(state_nlm_client_t * pclient);
 void inc_nlm_client_ref(state_nlm_client_t * pclient);
+void dec_nlm_client_ref_locked(state_nlm_client_t * pclient);
 void dec_nlm_client_ref(state_nlm_client_t * pclient);
 int display_nlm_client(state_nlm_client_t * pkey, char * str);
 int display_nlm_client_val(hash_buffer_t * pbuff, char * str);
@@ -81,10 +83,12 @@ unsigned long nlm_client_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t    * buffclef);
 
-state_nlm_client_t *get_nlm_client(bool_t care, const char * caller_name);
+state_nlm_client_t *get_nlm_client(care_t care, const char * caller_name);
 void nlm_client_PrintAll(void);
 
+void inc_nlm_owner_ref_locked(state_owner_t * powner);
 void inc_nlm_owner_ref(state_owner_t * powner);
+void dec_nlm_owner_ref_locked(state_owner_t * powner);
 void dec_nlm_owner_ref(state_owner_t * powner);
 int display_nlm_owner(state_owner_t * pkey, char * str);
 int display_nlm_owner_val(hash_buffer_t * pbuff, char * str);
@@ -104,7 +108,7 @@ unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
 void make_nlm_special_owner(state_nlm_client_t * pclient,
                             state_owner_t      * pnlm_owner);
 
-state_owner_t *get_nlm_owner(bool_t               care,
+state_owner_t *get_nlm_owner(care_t               care,
                              state_nlm_client_t * pclient, 
                              netobj             * oh,
                              uint32_t             svid);

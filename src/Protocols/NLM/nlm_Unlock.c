@@ -103,7 +103,7 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
                               &pentry,
                               pcontext,
                               pclient,
-                              FALSE, /* unlock doesn't care if owner is found */
+                              CARE_NOT, /* unlock doesn't care if owner is found */
                               &nlm_client,
                               &nlm_owner,
                               NULL);

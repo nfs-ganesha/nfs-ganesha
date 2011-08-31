@@ -28,134 +28,196 @@
 #include "nlm4.h"
 #include "log_macros.h"
 
-int nsm_monitor(char *host)
+pthread_mutex_t nsm_mutex = PTHREAD_MUTEX_INITIALIZER;
+CLIENT *nsm_clnt;
+unsigned long nsm_count;
+
+bool_t nsm_connect()
 {
+  if(nsm_clnt == NULL)
+    nsm_clnt = Clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
 
-  CLIENT *clnt;
-  enum clnt_stat ret;
-  struct mon nsm_mon;
+  return nsm_clnt != NULL;
+}
+
+void nsm_disconnect()
+{
+  if(nsm_count == 0)
+    {
+      Clnt_destroy(nsm_clnt);
+      nsm_clnt = NULL;
+    }
+}
+
+bool_t nsm_monitor(state_nlm_client_t *host)
+{
+  enum clnt_stat     ret;
+  struct mon         nsm_mon;
   struct sm_stat_res res;
-  struct timeval tout = { 5, 0 };
+  struct timeval     tout = { 5, 0 };
 
-  nsm_mon.mon_id.mon_name = strdup(host);
-  nsm_mon.mon_id.my_id.my_name = strdup("localhost");
+  if(host == NULL)
+    return TRUE;
+
+  if(host->slc_monitored)
+    return TRUE;
+
+  nsm_mon.mon_id.mon_name      = host->slc_nlm_caller_name;
+  nsm_mon.mon_id.my_id.my_name = "localhost";
   nsm_mon.mon_id.my_id.my_prog = NLMPROG;
   nsm_mon.mon_id.my_id.my_vers = NLM4_VERS;
   nsm_mon.mon_id.my_id.my_proc = NLMPROC4_SM_NOTIFY;
   /* nothing to put in the private data */
+  LogDebug(COMPONENT_NLM,
+           "Monitor %s",
+           host->slc_nlm_caller_name);
+
+  P(nsm_mutex);
 
   /* create a connection to nsm on the localhost */
-  clnt = Clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
-  if(!clnt)
+  if(!nsm_connect())
     {
       LogDebug(COMPONENT_NLM,
                "nsm_monitor can not monitor %s clnt_create returned NULL",
-               host);
-      free(nsm_mon.mon_id.mon_name);
-      free(nsm_mon.mon_id.my_id.my_name);
-      return -1;
+               nsm_mon.mon_id.mon_name);
+      V(nsm_mutex);
+      return FALSE;
     }
 
-  ret = clnt_call(clnt, SM_MON,
-                  (xdrproc_t) xdr_mon, (caddr_t) & nsm_mon,
-                  (xdrproc_t) xdr_sm_stat_res, (caddr_t) & res, tout);
+  ret = clnt_call(nsm_clnt,
+                  SM_MON,
+                  (xdrproc_t) xdr_mon,
+                  (caddr_t) & nsm_mon,
+                  (xdrproc_t) xdr_sm_stat_res,
+                  (caddr_t) & res,
+                  tout);
+
   if(ret != RPC_SUCCESS)
     {
       LogDebug(COMPONENT_NLM,
                "nsm_monitor can not monitor %s SM_MON ret %d",
-               host, ret);
-      free(nsm_mon.mon_id.mon_name);
-      free(nsm_mon.mon_id.my_id.my_name);
-      Clnt_destroy(clnt);
-      return -1;
+               nsm_mon.mon_id.mon_name, ret);
+      nsm_disconnect();
+      V(nsm_mutex);
+      return FALSE;
     }
+
   if(res.res_stat != STAT_SUCC)
     {
       LogDebug(COMPONENT_NLM,
                "nsm_monitor can not monitor %s SM_MON status %d",
-               host, res.res_stat);
-      free(nsm_mon.mon_id.mon_name);
-      free(nsm_mon.mon_id.my_id.my_name);
-      Clnt_destroy(clnt);
-      return -1;
+               nsm_mon.mon_id.mon_name, res.res_stat);
+      nsm_disconnect();
+      V(nsm_mutex);
+      return FALSE;
     }
-  free(nsm_mon.mon_id.mon_name);
-  free(nsm_mon.mon_id.my_id.my_name);
-  Clnt_destroy(clnt);
-  return 0;
+
+  nsm_count++;
+  host->slc_monitored = TRUE;
+  LogDebug(COMPONENT_NLM,
+           "Monitored %s", nsm_mon.mon_id.mon_name);
+
+  V(nsm_mutex);
+  return TRUE;
 }
 
-int nsm_unmonitor(char *host)
+bool_t nsm_unmonitor(state_nlm_client_t *host)
 {
-
-  CLIENT *clnt;
   enum clnt_stat ret;
   struct sm_stat res;
-  struct mon_id nsm_mon_id;
+  struct mon_id  nsm_mon_id;
   struct timeval tout = { 5, 0 };
 
-  nsm_mon_id.mon_name = strdup(host);
-  nsm_mon_id.my_id.my_name = strdup("localhost");
+  if(host == NULL)
+    return TRUE;
+
+  if(!host->slc_monitored)
+    return TRUE;
+
+  nsm_mon_id.mon_name      = host->slc_nlm_caller_name;
+  nsm_mon_id.my_id.my_name = "localhost";
   nsm_mon_id.my_id.my_prog = NLMPROG;
   nsm_mon_id.my_id.my_vers = NLM4_VERS;
   nsm_mon_id.my_id.my_proc = NLMPROC4_SM_NOTIFY;
 
+  P(nsm_mutex);
+
   /* create a connection to nsm on the localhost */
-  clnt = Clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
-  if(!clnt)
+  if(!nsm_connect())
     {
-      free(nsm_mon_id.mon_name);
-      free(nsm_mon_id.my_id.my_name);
-      return -1;
+      LogDebug(COMPONENT_NLM,
+               "nsm_monitor can not unmonitor %s clnt_create returned NULL",
+               nsm_mon_id.mon_name);
+      V(nsm_mutex);
+      return FALSE;
     }
 
-  ret = clnt_call(clnt, SM_UNMON,
-                  (xdrproc_t) xdr_mon_id, (caddr_t) & nsm_mon_id,
-                  (xdrproc_t) xdr_sm_stat, (caddr_t) & res, tout);
+  ret = clnt_call(nsm_clnt,
+                  SM_UNMON,
+                  (xdrproc_t) xdr_mon_id,
+                  (caddr_t) & nsm_mon_id,
+                  (xdrproc_t) xdr_sm_stat,
+                  (caddr_t) & res,
+                  tout);
+
   if(ret != RPC_SUCCESS)
     {
-      free(nsm_mon_id.mon_name);
-      free(nsm_mon_id.my_id.my_name);
-      Clnt_destroy(clnt);
-      return -1;
+      LogDebug(COMPONENT_NLM,
+               "nsm_monitor can not unmonitor %s SM_MON ret %d",
+               nsm_mon_id.mon_name, ret);
+      nsm_disconnect();
+      V(nsm_mutex);
+      return FALSE;
     }
-  free(nsm_mon_id.mon_name);
-  free(nsm_mon_id.my_id.my_name);
-  Clnt_destroy(clnt);
-  return 0;
+
+  host->slc_monitored = FALSE;
+  nsm_count--;
+  nsm_disconnect();
+  LogDebug(COMPONENT_NLM,
+           "Unonitored %s", nsm_mon_id.mon_name);
+
+  V(nsm_mutex);
+  return TRUE;
 }
 
-int nsm_unmonitor_all(void)
+void nsm_unmonitor_all(void)
 {
-  CLIENT *clnt;
   enum clnt_stat ret;
   struct sm_stat res;
-  struct my_id nsm_id;
+  struct my_id   nsm_id;
   struct timeval tout = { 5, 0 };
 
-  nsm_id.my_name = strdup("localhost");
+  nsm_id.my_name = "localhost";
   nsm_id.my_prog = NLMPROG;
   nsm_id.my_vers = NLM4_VERS;
   nsm_id.my_proc = NLMPROC4_SM_NOTIFY;
 
+  P(nsm_mutex);
+
   /* create a connection to nsm on the localhost */
-  clnt = Clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
-  if(!clnt)
+  if(!nsm_connect())
     {
-      free(nsm_id.my_name);
-      return -1;
+      LogDebug(COMPONENT_NLM,
+               "nsm_monitor can not unmonitor all clnt_create returned NULL");
+      V(nsm_mutex);
+      return;
     }
 
-  ret = clnt_call(clnt, SM_UNMON_ALL,
-                  (xdrproc_t) xdr_my_id, (caddr_t) & nsm_id,
-                  (xdrproc_t) xdr_sm_stat, (caddr_t) & res, tout);
+  ret = clnt_call(nsm_clnt,
+                  SM_UNMON_ALL,
+                  (xdrproc_t) xdr_my_id,
+                  (caddr_t) & nsm_id,
+                  (xdrproc_t) xdr_sm_stat,
+                  (caddr_t) & res,
+                  tout);
+
   if(ret != RPC_SUCCESS)
     {
-      free(nsm_id.my_name);
-      Clnt_destroy(clnt);
-      return -1;
+      LogDebug(COMPONENT_NLM,
+               "nsm_monitor can not unmonitor all ret %d",
+               ret);
     }
-  free(nsm_id.my_name);
-  Clnt_destroy(clnt);
-  return 0;
+
+  nsm_disconnect();
+  V(nsm_mutex);
 }

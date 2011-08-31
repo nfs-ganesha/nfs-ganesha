@@ -527,22 +527,35 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
 
   new_entry->sle_fileid = (unsigned long long) fileid;
 
-  /* Add to list of locks owned by powner */
-  P(powner->so_mutex);
-  powner->so_refcount++;
-  glist_add_tail(&powner->so_lock_list, &new_entry->sle_owner_locks);
-  V(powner->so_mutex);
-
-#ifdef _USE_NLM
-  /* Add to list of locks owner by NLM Client */
-  if(powner->so_type == STATE_LOCK_OWNER_NLM)
+  switch(powner->so_type)
     {
-      P(powner->so_owner.so_nlm_owner.so_client->slc_mutex);
-      powner->so_owner.so_nlm_owner.so_client->slc_refcount++;
-      glist_add_tail(&powner->so_owner.so_nlm_owner.so_client->slc_lock_list, &new_entry->sle_client_locks);
-      V(powner->so_owner.so_nlm_owner.so_client->slc_mutex);
-    }
+#ifdef _USE_NLM
+      case STATE_LOCK_OWNER_NLM:
+        P(powner->so_owner.so_nlm_owner.so_client->slc_mutex);
+
+        /* Add to list of locks owned by client that powner belongs to */
+        glist_add_tail(&powner->so_owner.so_nlm_owner.so_client->slc_lock_list, &new_entry->sle_client_locks);
+        inc_nlm_client_ref_locked(powner->so_owner.so_nlm_owner.so_client);
+
+        P(powner->so_mutex);
+
+        /* Add to list of locks owned by powner */
+        glist_add_tail(&powner->so_lock_list, &new_entry->sle_owner_locks);
+        inc_nlm_owner_ref_locked(powner);
+        break;
 #endif
+      case STATE_LOCK_OWNER_NFSV4:
+        // TODO FSF: will eventually call inc_open_owner_ref_locked
+      case STATE_LOCK_OWNER_UNKNOWN:
+        P(powner->so_mutex);
+
+        /* Add to list of locks owned by powner */
+        glist_add_tail(&powner->so_lock_list, &new_entry->sle_owner_locks);
+        powner->so_refcount++;
+
+        V(powner->so_mutex);
+        break;
+    }
     
 #ifdef _DEBUG_MEMLEAKS
     P(all_locks_mutex);
@@ -623,26 +636,40 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 
 static void remove_from_locklist(state_lock_entry_t *lock_entry)
 {
+  state_owner_t * powner = lock_entry->sle_owner;
+
   /*
    * If some other thread is holding a reference to this nlm_lock_entry
    * don't free the structure. But drop from the lock list
    */
-  if(lock_entry->sle_owner != NULL)
+  if(powner != NULL)
     {
-      P(lock_entry->sle_owner->so_mutex);
-      glist_del(&lock_entry->sle_owner_locks);
-      V(lock_entry->sle_owner->so_mutex);
-
-#ifdef _USE_NLM
-      if(lock_entry->sle_owner->so_type == STATE_LOCK_OWNER_NLM)
+      switch(powner->so_type)
         {
-          P(lock_entry->sle_owner->so_owner.so_nlm_owner.so_client->slc_mutex);
-          glist_del(&lock_entry->sle_client_locks);
-          V(lock_entry->sle_owner->so_owner.so_nlm_owner.so_client->slc_mutex);
-        }
-#endif
+#ifdef _USE_NLM
+          case STATE_LOCK_OWNER_NLM:
+            P(powner->so_owner.so_nlm_owner.so_client->slc_mutex);
 
-      state_release_lock_owner(lock_entry->sle_owner);
+            glist_del(&lock_entry->sle_client_locks);
+            dec_nlm_client_ref_locked(powner->so_owner.so_nlm_owner.so_client);
+
+            P(powner->so_mutex);
+
+            glist_del(&lock_entry->sle_owner_locks);
+            dec_nlm_owner_ref_locked(powner);
+            break;
+#endif
+          case STATE_LOCK_OWNER_NFSV4:
+            // TODO FSF: will eventually call dec_open_owner_ref_locked
+          case STATE_LOCK_OWNER_UNKNOWN:
+            P(powner->so_mutex);
+
+            glist_del(&lock_entry->sle_owner_locks);
+            powner->so_refcount--;
+
+            V(powner->so_mutex);
+            break;
+        }
     }
 
   glist_del(&lock_entry->sle_list);
@@ -1792,7 +1819,7 @@ state_status_t state_test(cache_entry_t        * pentry,
     {
       *pstatus = cache_inode_status_to_state_status(cache_status);
       LogFullDebug(COMPONENT_STATE,
-                   "state_test could not close file");
+                   "Could not open file");
       return *pstatus;
     }
 
@@ -1803,12 +1830,16 @@ state_status_t state_test(cache_entry_t        * pentry,
   if(found_entry != NULL)
     {
       /* found a conflicting lock, return it */
-      LogEntry("state_test found conflict", found_entry);
+      LogEntry("Found conflict", found_entry);
       copy_conflict(found_entry, holder, conflict);
       *pstatus = STATE_LOCK_CONFLICT;
     }
   else
-    *pstatus = STATE_SUCCESS;
+    {
+      LogFullDebug(COMPONENT_STATE,
+                   "No Conflict");
+      *pstatus = STATE_SUCCESS;
+    }
 
   V(pentry->object.file.lock_list_mutex);
 
@@ -1841,7 +1872,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
     {
       *pstatus = cache_inode_status_to_state_status(cache_status);
       LogFullDebug(COMPONENT_STATE,
-                   "state_lock could not close file");
+                   "state_lock could not open file");
       return *pstatus;
     }
 

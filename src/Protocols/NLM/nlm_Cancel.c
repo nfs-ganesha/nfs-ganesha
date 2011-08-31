@@ -102,7 +102,7 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
                               &pentry,
                               pcontext,
                               pclient,
-                              FALSE, /* cancel doesn't care if owner is found */
+                              CARE_NOT, /* cancel doesn't care if owner is found */
                               &nlm_client,
                               &nlm_owner,
                               NULL);

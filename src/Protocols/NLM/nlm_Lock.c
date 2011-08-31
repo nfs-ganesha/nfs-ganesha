@@ -111,7 +111,7 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
                               &pentry,
                               pcontext,
                               pclient,
-                              TRUE,
+                              CARE_MONITOR,
                               &nlm_client,
                               &nlm_owner,
                               &pblock_data);

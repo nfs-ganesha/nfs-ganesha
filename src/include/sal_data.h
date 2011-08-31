@@ -140,6 +140,13 @@ typedef enum state_owner_type_t
 } state_owner_type_t;
 
 #ifdef _USE_NLM
+typedef enum care_t
+{
+  CARE_NOT,
+  CARE_NO_MONITOR,
+  CARE_MONITOR
+} care_t;
+
 typedef struct state_nlm_client_t
 {
   pthread_mutex_t         slc_mutex;
@@ -147,6 +154,7 @@ typedef struct state_nlm_client_t
   int                     slc_refcount;
   int                     slc_nlm_caller_name_len;
   char                    slc_nlm_caller_name[LM_MAXSTRLEN+1];
+  bool_t                  slc_monitored;
 } state_nlm_client_t;
 
 typedef struct state_nlm_owner_t

@@ -198,25 +198,6 @@ void nlm_startup(void)
              "Could not start NLM async thread");
 }
 
-void nlm_run(void)
-{
-  nsm_unmonitor_all();
-}
-
-int nlm_monitor_host(char *name)
-{
-  /* TODO FSF: this needs to be integrated with NLM Client structure */
-  LogFullDebug(COMPONENT_NLM, "Monitoring host %s", name);
-  return nsm_monitor(name);
-}
-
-int nlm_unmonitor_host(char *name)
-{
-  /* TODO FSF: this needs to be integrated with NLM Client structure */
-  LogFullDebug(COMPONENT_NLM, "Unmonitoring host %s", name);
-  return nsm_unmonitor(name);
-}
-
 void free_grant_arg(nlm_async_queue_t *arg)
 {
   netobj_free(&arg->nlm_async_args.nlm_async_grant.cookie);
@@ -312,7 +293,7 @@ int nlm_process_parameters(struct svc_req        * preq,
                            cache_entry_t        ** ppentry,
                            fsal_op_context_t     * pcontext,
                            cache_inode_client_t  * pclient,
-                           bool_t                  care,
+                           care_t                  care,
                            state_nlm_client_t   ** ppnlm_client,
                            state_owner_t        ** ppowner,
                            state_block_data_t   ** ppblock_data)
@@ -354,7 +335,7 @@ int nlm_process_parameters(struct svc_req        * preq,
        * just return GRANTED (the unlock must succeed, there can't be
        * any locks).
        */
-      if(care)
+      if(care != CARE_NOT)
         return NLM4_DENIED_NOLOCKS;
       else
         return NLM4_GRANTED;
@@ -363,6 +344,8 @@ int nlm_process_parameters(struct svc_req        * preq,
   *ppowner = get_nlm_owner(care, *ppnlm_client, &alock->oh, alock->svid);
   if(*ppowner == NULL)
     {
+      LogDebug(COMPONENT_NLM,
+               "Could not get NLM Owner");
       dec_nlm_client_ref(*ppnlm_client);
       *ppnlm_client = NULL;
 
@@ -415,6 +398,9 @@ int nlm_process_parameters(struct svc_req        * preq,
   plock->sld_type   = exclusive ? STATE_LOCK_W : STATE_LOCK_R;
   plock->sld_offset = alock->l_offset;
   plock->sld_length = alock->l_len;
+
+  LogFullDebug(COMPONENT_NLM,
+               "Parameters Processed");
 
   return -1;
 }
