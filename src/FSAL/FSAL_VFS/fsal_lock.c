@@ -30,7 +30,7 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 
-static int do_blocking_lock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
+static int do_blocking_lock(fsal_file_t * obj_handle, vfsfsal_lockdesc_t * ldesc)
 {
   /*
    * Linux client have this grant hack of pooling for
@@ -45,9 +45,10 @@ static int do_blocking_lock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 /**
  * FSAL_lock:
  */
-fsal_status_t VFSFSAL_lock(vfsfsal_file_t * obj_handle,
-                        vfsfsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
+fsal_status_t VFSFSAL_lock(fsal_file_t * obj_handle,
+                        fsal_lockdesc_t * lockdesc, fsal_boolean_t blocking)
 {
+  vfsfsal_lockdesc_t *ldesc = (vfsfsal_lockdesc_t *)lockdesc;
   int retval;
   int fd = FSAL_FILENO(obj_handle);
 
@@ -77,7 +78,7 @@ fsal_status_t VFSFSAL_lock(vfsfsal_file_t * obj_handle,
  * FSAL_changelock:
  * Not implemented.
  */
-fsal_status_t VFSFSAL_changelock(vfsfsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
+fsal_status_t VFSFSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
                               fsal_lockparam_t * lock_info      /* IN */
     )
 {
@@ -94,8 +95,9 @@ fsal_status_t VFSFSAL_changelock(vfsfsal_lockdesc_t * lock_descriptor,        /*
  * FSAL_unlock:
  *
  */
-fsal_status_t VFSFSAL_unlock(vfsfsal_file_t * obj_handle, vfsfsal_lockdesc_t * ldesc)
+fsal_status_t VFSFSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * lockdesc)
 {
+  vfsfsal_lockdesc_t * ldesc = (vfsfsal_lockdesc_t *)lockdesc;
   int retval;
   int fd = FSAL_FILENO(obj_handle);
 
@@ -108,8 +110,9 @@ fsal_status_t VFSFSAL_unlock(vfsfsal_file_t * obj_handle, vfsfsal_lockdesc_t * l
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_unlock);
 }
 
-fsal_status_t VFSFSAL_getlock(vfsfsal_file_t * obj_handle, vfsfsal_lockdesc_t * ldesc)
+fsal_status_t VFSFSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * lockdesc)
 {
+  vfsfsal_lockdesc_t * ldesc = (vfsfsal_lockdesc_t *)lockdesc;
   int retval;
   int fd = FSAL_FILENO(obj_handle);
 

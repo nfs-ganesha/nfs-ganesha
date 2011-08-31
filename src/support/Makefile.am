@@ -75,20 +75,6 @@ if ERROR_INJECTION
 libsupport_la_SOURCES += err_inject.c
 endif
 
-libsupport_la_DEPENDENCIES = $(libsupport_la_SOURCES) $(libsupport_la_LIBADD)
-
-#TESTS =
-
-#check_SCRIPTS = test_libsupport_nlm.sh
-
-#test_support_SOURCES    = test_support.c
-#test_support_LDADD    	= libsupport.la \
-#                          ../Log/liblog.la\
-#                          ../Protocols/NFS/libnfsproto.la\
-#                          $(BUDDY_LIB_FLAGS)\
-#                          ../XDR/libnfs_mnt_xdr.la \
-#                          ../HashTable/libhashtable.la \
-#                          ../RW_Lock/librwlock.la
 
 new: clean all 
 

@@ -64,9 +64,9 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t XFSFSAL_unlink(xfsfsal_handle_t * p_parent_directory_handle,      /* IN */
+fsal_status_t XFSFSAL_unlink(fsal_handle_t * p_parent_directory_handle,      /* IN */
                              fsal_name_t * p_object_name,       /* IN */
-                             xfsfsal_op_context_t * p_context,  /* IN */
+                             fsal_op_context_t * p_context,  /* IN */
                              fsal_attrib_list_t * p_parent_directory_attributes /* [IN/OUT ] */
     )
 {
@@ -120,8 +120,9 @@ fsal_status_t XFSFSAL_unlink(xfsfsal_handle_t * p_parent_directory_handle,      
 
   /* Sticky bit on the directory => the user who wants to delete the file must own it or its parent dir */
   if((buffstat_parent.st_mode & S_ISVTX)
-     && buffstat_parent.st_uid != p_context->credential.user
-     && buffstat.st_uid != p_context->credential.user && p_context->credential.user != 0)
+     && buffstat_parent.st_uid != ((xfsfsal_op_context_t *)p_context)->credential.user
+     && buffstat.st_uid != ((xfsfsal_op_context_t *)p_context)->credential.user
+     && ((xfsfsal_op_context_t *)p_context)->credential.user != 0)
     {
       close(fd);
       Return(ERR_FSAL_ACCESS, 0, INDEX_FSAL_unlink);

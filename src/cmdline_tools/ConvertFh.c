@@ -298,7 +298,11 @@ int main(int argc, char *argv[])
   if(!flag_i)
     {
 
+#ifdef _USE_SHARED_FSAL
+      fsal_status = FSAL_Init(&nfs_param.fsal_param[0]);
+#else
       fsal_status = FSAL_Init(&nfs_param.fsal_param);
+#endif
       if(FSAL_IS_ERROR(fsal_status))
         {
           /* Failed init */

@@ -107,6 +107,8 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
 {
   static int is_initialized = 0;
   fsal_status_t status;
+  zfsfs_specific_initinfo_t *spec_info =
+	  (zfsfs_specific_initinfo_t *) &init_info->fs_specific_info;
 
   /* sanity check.  */
   if(is_initialized)
@@ -136,7 +138,7 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
   }
 
   /* Mount the zpool */
-  libzfswrap_vfs_t *p_vfs = libzfswrap_mount(init_info->fs_specific_info.psz_zpool, "/tank", "");
+  libzfswrap_vfs_t *p_vfs = libzfswrap_mount(spec_info->psz_zpool, "/tank", "");
   if(!p_vfs)
   {
     libzfswrap_exit(p_zhd);
@@ -147,7 +149,7 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
   /* List the snapshots of the given zpool and mount them */
   const char *psz_error;
   char **ppsz_snapshots;
-  i_snapshots = libzfswrap_zfs_get_list_snapshots(p_zhd, init_info->fs_specific_info.psz_zpool,
+  i_snapshots = libzfswrap_zfs_get_list_snapshots(p_zhd, spec_info->psz_zpool,
                                                   &ppsz_snapshots, &psz_error);
 
   if(i_snapshots > 0)
@@ -190,11 +192,11 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
   pthread_rwlock_init(&vfs_lock, NULL);
 
   /* Create a thread to handle snapshot creation */
-  if(init_info->fs_specific_info.auto_snapshots)
+  if(spec_info->auto_snapshots)
   {
     LogDebug(COMPONENT_FSAL, "FSAL INIT: Creating the auto-snapshot thread");
-    fs_specific_initinfo_t *fs_configuration = malloc(sizeof(*fs_configuration));
-    *fs_configuration = init_info->fs_specific_info;
+    zfsfs_specific_initinfo_t *fs_configuration = malloc(sizeof(*fs_configuration));
+    *fs_configuration = *spec_info;
 #if 0
     if(pthread_create(&snapshot_thread, NULL, SnapshotThread, fs_configuration))
     {
@@ -333,7 +335,7 @@ static void RemoveOldSnapshots(const char *psz_prefix, int number)
 /* Thread that handle snapshots */
 static void *SnapshotThread(void *data)
 {
-  fs_specific_initinfo_t *fs_info = (fs_specific_initinfo_t*)data;
+  zfsfs_specific_initinfo_t *fs_info = (zfsfs_specific_initinfo_t*)data;
 
   while(1)
   {

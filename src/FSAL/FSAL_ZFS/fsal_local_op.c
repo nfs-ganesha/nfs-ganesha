@@ -75,7 +75,7 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Another error code if an error occured.
  */
-fsal_status_t ZFSFSAL_test_access(zfsfsal_op_context_t * p_context,   /* IN */
+fsal_status_t ZFSFSAL_test_access(fsal_op_context_t * p_context,   /* IN */
                                fsal_accessflags_t access_type,  /* IN */
                                fsal_attrib_list_t * object_attributes   /* IN */
     )
@@ -97,7 +97,7 @@ fsal_status_t ZFSFSAL_test_access(zfsfsal_op_context_t * p_context,   /* IN */
 
   /* test root access */
 
-  if(p_context->user_credential.cred.uid == 0)
+  if(p_context->credential.user == 0)
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
 
   /* unsatisfied permissions */
@@ -106,7 +106,7 @@ fsal_status_t ZFSFSAL_test_access(zfsfsal_op_context_t * p_context,   /* IN */
 
   /* Test if file belongs to user. */
 
-  if(p_context->user_credential.cred.uid == object_attributes->owner)
+  if(p_context->credential.user == object_attributes->owner)
     {
 
       if(object_attributes->mode & FSAL_MODE_RUSR)
@@ -127,7 +127,7 @@ fsal_status_t ZFSFSAL_test_access(zfsfsal_op_context_t * p_context,   /* IN */
 
   /* Test if the file belongs to user's group. */
 
-  is_grp = (p_context->user_credential.cred.gid == object_attributes->group);
+  is_grp = (p_context->credential.group == object_attributes->group);
 
   if(!is_grp)
     {
@@ -198,7 +198,7 @@ fsal_status_t ZFSFSAL_test_access(zfsfsal_op_context_t * p_context,   /* IN */
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t ZFSFSAL_setattr_access(zfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t ZFSFSAL_setattr_access(fsal_op_context_t * p_context,        /* IN */
                                   fsal_attrib_list_t * candidate_attributes,    /* IN */
                                   fsal_attrib_list_t * object_attributes        /* IN */
     )
@@ -223,7 +223,7 @@ fsal_status_t ZFSFSAL_setattr_access(zfsfsal_op_context_t * p_context,        /*
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t ZFSFSAL_rename_access(zfsfsal_op_context_t * pcontext,  /* IN */
+fsal_status_t ZFSFSAL_rename_access(fsal_op_context_t * pcontext,  /* IN */
                                  fsal_attrib_list_t * pattrsrc, /* IN */
                                  fsal_attrib_list_t * pattrdest)        /* IN */
 {
@@ -244,7 +244,7 @@ fsal_status_t ZFSFSAL_rename_access(zfsfsal_op_context_t * pcontext,  /* IN */
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t ZFSFSAL_create_access(zfsfsal_op_context_t * pcontext,  /* IN */
+fsal_status_t ZFSFSAL_create_access(fsal_op_context_t * pcontext,  /* IN */
                                  fsal_attrib_list_t * pattr)    /* IN */
 {
   fsal_status_t fsal_status;
@@ -271,7 +271,7 @@ fsal_status_t ZFSFSAL_create_access(zfsfsal_op_context_t * pcontext,  /* IN */
  *        - ERR_FSAL_INVAL        (missing attributes : mode, group, user,...)
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
-fsal_status_t ZFSFSAL_unlink_access(zfsfsal_op_context_t * pcontext,  /* IN */
+fsal_status_t ZFSFSAL_unlink_access(fsal_op_context_t * pcontext,  /* IN */
                                  fsal_attrib_list_t * pattr)    /* IN */
 {
   fsal_status_t fsal_status;
@@ -300,7 +300,7 @@ fsal_status_t ZFSFSAL_unlink_access(zfsfsal_op_context_t * pcontext,  /* IN */
  *        - ERR_FSAL_SERVERFAULT  (unexpected error)
  */
 
-fsal_status_t ZFSFSAL_link_access(zfsfsal_op_context_t * pcontext,      /* IN */
+fsal_status_t ZFSFSAL_link_access(fsal_op_context_t * pcontext,      /* IN */
                                   fsal_attrib_list_t * pattr)   /* IN */
 {
   fsal_status_t fsal_status;

@@ -69,11 +69,6 @@
    * Here are some template types :
    */
 
-/* prefered readdir size */
-
-//# define FSAL_MAX_NAME_LEN  MAXLABEL
-//# define FSAL_MAX_PATH_LEN  SNMP_MAXPATH
-
 #define FSAL_MAX_PROTO_LEN  16
 #define FSAL_MAX_USERNAME_LEN   256
 #define FSAL_MAX_PHRASE_LEN   USM_AUTH_KU_LEN
@@ -99,17 +94,7 @@ typedef union {
 #endif
 } snmpfsal_handle_t;
 
-typedef struct fsal_cred__
-{
-  fsal_uid_t user;
-  fsal_gid_t group;
-  /*
-     int    ticket_handle;
-     time_t ticket_renewal_time;
-   */
-} snmpfsal_cred_t;
-
-typedef struct fsal_export_context__
+typedef struct
 {
   snmpfsal_handle_t root_handle;
   struct tree *root_mib_tree;
@@ -119,13 +104,13 @@ typedef struct fsal_export_context__
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(FSAL_Handle_to_RBTIndex( &(pexport_context->root_handle), 0 ) )
 
-typedef struct fsal_op_context__
+typedef struct
 {
   /* the export context for the next request */
   snmpfsal_export_context_t *export_context;    /* Must be the first entry in this structure */
 
   /* user authentication info */
-  snmpfsal_cred_t user_credential;
+  struct user_credentials credential;
 
   /* SNMP session and the associated info  */
   netsnmp_session *snmp_session;
@@ -138,13 +123,13 @@ typedef struct fsal_op_context__
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
-typedef struct fsal_dir__
+typedef struct
 {
   snmpfsal_handle_t node_handle;
   snmpfsal_op_context_t *p_context;
 } snmpfsal_dir_t;
 
-typedef struct fsal_file__
+typedef struct
 {
   snmpfsal_handle_t file_handle;
   snmpfsal_op_context_t *p_context;
@@ -160,7 +145,7 @@ typedef struct fsal_file__
 //# define FSAL_FILENO(_f) (0)
 
 typedef union {
-  struct fsal_cookie__
+  struct
   {
     /* in SNMP the cookie is the last listed entry */
     oid oid_tab[MAX_OID_LEN];
@@ -173,7 +158,7 @@ typedef union {
 
 //static snmpfsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { {0,}, 0 };
 
-typedef struct fs_specific_initinfo__
+typedef struct
 {
   long snmp_version;
   char snmp_server[HOST_NAME_MAX];

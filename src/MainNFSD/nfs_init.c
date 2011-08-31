@@ -716,6 +716,7 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
   unsigned int i = 0 ;
   unsigned int saved_fsalid = 0 ;
   unsigned int fsalid = 0 ;
+  unsigned int i = 0 ;
 #endif
 
   /* First, parse the configuration file */

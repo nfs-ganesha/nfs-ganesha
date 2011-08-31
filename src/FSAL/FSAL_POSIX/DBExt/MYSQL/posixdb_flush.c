@@ -4,7 +4,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "fsal_types.h"
 #include "posixdb_internal.h"
 
 fsal_posixdb_status_t fsal_posixdb_flush(fsal_posixdb_conn * p_conn)

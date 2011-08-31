@@ -48,8 +48,8 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  * */
 
-fsal_status_t ZFSFSAL_readlink(zfsfsal_handle_t * linkhandle, /* IN */
-                            zfsfsal_op_context_t * p_context,      /* IN */
+fsal_status_t ZFSFSAL_readlink(fsal_handle_t * linkhandle, /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
                             fsal_path_t * p_link_content,       /* OUT */
                             fsal_attrib_list_t * link_attributes        /* [ IN/OUT ] */
     )
@@ -58,6 +58,7 @@ fsal_status_t ZFSFSAL_readlink(zfsfsal_handle_t * linkhandle, /* IN */
   int rc;
   fsal_status_t st;
   char link_content_out[FSAL_MAX_PATH_LEN];
+  creden_t cred;
 
   /* sanity checks.
    * note : link_attributes is optional.
@@ -65,10 +66,16 @@ fsal_status_t ZFSFSAL_readlink(zfsfsal_handle_t * linkhandle, /* IN */
   if(!linkhandle || !p_context || !p_link_content)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readlink);
 
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
+
   TakeTokenFSCall();
 
-  rc = libzfswrap_readlink(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                           linkhandle->data.zfs_handle, link_content_out, sizeof(link_content_out));
+  rc = libzfswrap_readlink(((zfsfsal_op_context_t *)p_context)->export_context->p_vfs,
+			   &cred,
+			   ((zfsfsal_handle_t *)linkhandle)->data.zfs_handle,
+			   link_content_out,
+			   sizeof(link_content_out));
 
   ReleaseTokenFSCall();
 
@@ -139,17 +146,18 @@ fsal_status_t ZFSFSAL_readlink(zfsfsal_handle_t * linkhandle, /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t ZFSFSAL_symlink(zfsfsal_handle_t * parent_directory_handle,     /* IN */
+fsal_status_t ZFSFSAL_symlink(fsal_handle_t * parent_directory_handle,     /* IN */
                            fsal_name_t * p_linkname,    /* IN */
                            fsal_path_t * p_linkcontent, /* IN */
-                           zfsfsal_op_context_t * p_context,       /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
                            fsal_accessmode_t accessmode,        /* IN (ignored) */
-                           zfsfsal_handle_t * link_handle, /* OUT */
+                           fsal_handle_t * link_handle, /* OUT */
                            fsal_attrib_list_t * link_attributes /* [ IN/OUT ] */
     )
 {
 
   int rc;
+  creden_t cred;
 
   /* sanity checks.
    * note : link_attributes is optional.
@@ -163,17 +171,22 @@ fsal_status_t ZFSFSAL_symlink(zfsfsal_handle_t * parent_directory_handle,     /*
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_symlink);
 
   /* Hook to prevent creation of anything inside the snapshot */
-  if(parent_directory_handle->data.i_snap != 0)
+  if(((zfsfsal_handle_t *)parent_directory_handle)->data.i_snap != 0)
   {
     LogDebug(COMPONENT_FSAL, "Trying to create a symlink inside a snapshot");
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_symlink);
   }
 
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
+
   TakeTokenFSCall();
 
   inogen_t object;
-  rc = libzfswrap_symlink(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                          parent_directory_handle->data.zfs_handle, p_linkname->name,
+  rc = libzfswrap_symlink(((zfsfsal_op_context_t *)p_context)->export_context->p_vfs,
+			  &cred,
+                          ((zfsfsal_handle_t *)parent_directory_handle)->data.zfs_handle,
+			  p_linkname->name,
                           p_linkcontent->path, &object);
 
   ReleaseTokenFSCall();
@@ -181,9 +194,9 @@ fsal_status_t ZFSFSAL_symlink(zfsfsal_handle_t * parent_directory_handle,     /*
   /* >> convert status and return on error <<  */
 
   /* >> set output handle << */
-  link_handle->data.zfs_handle = object;
-  link_handle->data.type = FSAL_TYPE_LNK;
-  link_handle->data.i_snap = 0;
+  ((zfsfsal_handle_t *)link_handle)->data.zfs_handle = object;
+  ((zfsfsal_handle_t *)link_handle)->data.type = FSAL_TYPE_LNK;
+  ((zfsfsal_handle_t *)link_handle)->data.i_snap = 0;
 
   if(link_attributes)
     {

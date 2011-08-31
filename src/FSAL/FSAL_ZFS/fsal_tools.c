@@ -46,7 +46,7 @@ char *ZFSFSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int ZFSFSAL_handlecmp(zfsfsal_handle_t * handle1, zfsfsal_handle_t * handle2,
+int ZFSFSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
                    fsal_status_t * status)
 {
 
@@ -58,7 +58,7 @@ int ZFSFSAL_handlecmp(zfsfsal_handle_t * handle1, zfsfsal_handle_t * handle2,
       return -1;
     }
 
-  return memcmp(handle1, handle2, sizeof(*handle1));
+  return memcmp(handle1, handle2, sizeof(zfsfsal_handle_t));
 }
 
 /**
@@ -75,10 +75,11 @@ int ZFSFSAL_handlecmp(zfsfsal_handle_t * handle1, zfsfsal_handle_t * handle2,
  * \return The hash value
  */
 
-unsigned int ZFSFSAL_Handle_to_HashIndex(zfsfsal_handle_t * p_handle,
+unsigned int ZFSFSAL_Handle_to_HashIndex(fsal_handle_t * handle,
                                       unsigned int cookie,
                                       unsigned int alphabet_len, unsigned int index_size)
 {
+  zfsfsal_handle_t * p_handle = (zfsfsal_handle_t *)handle;
 
   /* >> here must be your implementation of your zfsfsal_handle_t hashing */
   return (3 * (unsigned int)(p_handle->data.zfs_handle.inode*p_handle->data.zfs_handle.generation*(p_handle->data.i_snap+1)) + 1999 + cookie) % index_size;
@@ -97,8 +98,10 @@ unsigned int ZFSFSAL_Handle_to_HashIndex(zfsfsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int ZFSFSAL_Handle_to_RBTIndex(zfsfsal_handle_t * p_handle, unsigned int cookie)
+unsigned int ZFSFSAL_Handle_to_RBTIndex(fsal_handle_t * handle, unsigned int cookie)
 {
+  zfsfsal_handle_t * p_handle = (zfsfsal_handle_t *)handle;
+
   /* >> here must be your implementation of your zfsfsal_handle_t hashing << */
   return (unsigned int)(0xABCD1234 ^ (p_handle->data.zfs_handle.inode*p_handle->data.zfs_handle.generation*(p_handle->data.i_snap+1)) ^ cookie);
 
@@ -121,13 +124,14 @@ unsigned int ZFSFSAL_Handle_to_RBTIndex(zfsfsal_handle_t * p_handle, unsigned in
  *         Else, it is a non null value.
  */
 
-fsal_status_t ZFSFSAL_DigestHandle(zfsfsal_export_context_t * p_expcontext,   /* IN */
+fsal_status_t ZFSFSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
                                 fsal_digesttype_t output_type,  /* IN */
-                                zfsfsal_handle_t * in_fsal_handle, /* IN */
+                                fsal_handle_t * in_handle, /* IN */
                                 caddr_t out_buff        /* OUT */
     )
 {
   uint32_t ino32;
+  zfsfsal_handle_t * in_fsal_handle = (zfsfsal_handle_t *)in_handle;
 
   /* sanity checks */
   if(!in_fsal_handle || !out_buff || !p_expcontext)
@@ -203,12 +207,13 @@ fsal_status_t ZFSFSAL_DigestHandle(zfsfsal_export_context_t * p_expcontext,   /*
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t ZFSFSAL_ExpandHandle(zfsfsal_export_context_t * p_expcontext,   /* IN */
+fsal_status_t ZFSFSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
                                 fsal_digesttype_t in_type,      /* IN */
                                 caddr_t in_buff,        /* IN */
-                                zfsfsal_handle_t * out_fsal_handle /* OUT */
+                                fsal_handle_t * out_handle /* OUT */
     )
 {
+  zfsfsal_handle_t * out_fsal_handle = (zfsfsal_handle_t *)out_handle;
 
   /* sanity checks */
   if(!out_fsal_handle || !in_buff || !p_expcontext)
@@ -656,6 +661,8 @@ fsal_status_t ZFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_conf
   char *key_name;
   char *key_value;
   config_item_t block;
+  zfsfs_specific_initinfo_t *specific_info =
+	  (zfsfs_specific_initinfo_t *) &out_parameter->fs_specific_info;
 
   block = config_FindItemByName(in_config, CONF_LABEL_FS_SPECIFIC);
 
@@ -695,21 +702,21 @@ fsal_status_t ZFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_conf
       /* what parameter is it ? */
 
       if(!STRCMP(key_name, "zpool"))
-          strncpy(out_parameter->fs_specific_info.psz_zpool, key_value, 256);
+          strncpy(specific_info->psz_zpool, key_value, 256);
       else if(!STRCMP(key_name, "auto_snapshots"))
-          out_parameter->fs_specific_info.auto_snapshots = !STRCMP(key_value, "TRUE");
+          specific_info->auto_snapshots = !STRCMP(key_value, "TRUE");
       else if(!STRCMP(key_name, "snap_hourly_prefix"))
-          strncpy(out_parameter->fs_specific_info.psz_snap_hourly_prefix, key_value, 256);
+          strncpy(specific_info->psz_snap_hourly_prefix, key_value, 256);
       else if(!STRCMP(key_name, "snap_hourly_time"))
-          out_parameter->fs_specific_info.snap_hourly_time = atoi(key_value);
+          specific_info->snap_hourly_time = atoi(key_value);
       else if(!STRCMP(key_name, "snap_hourly_number"))
-          out_parameter->fs_specific_info.snap_hourly_number = atoi(key_value);
+          specific_info->snap_hourly_number = atoi(key_value);
       else if(!STRCMP(key_name, "snap_daily_prefix"))
-          strncpy(out_parameter->fs_specific_info.psz_snap_daily_prefix, key_value, 256);
+          strncpy(specific_info->psz_snap_daily_prefix, key_value, 256);
       else if(!STRCMP(key_name, "snap_daily_time"))
-          out_parameter->fs_specific_info.snap_daily_time = atoi(key_value);
+          specific_info->snap_daily_time = atoi(key_value);
       else if(!STRCMP(key_name, "snap_daily_number"))
-          out_parameter->fs_specific_info.snap_daily_number = atoi(key_value);
+          specific_info->snap_daily_number = atoi(key_value);
       else
         {
           LogCrit(COMPONENT_FSAL,

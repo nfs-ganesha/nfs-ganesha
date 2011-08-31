@@ -83,16 +83,6 @@
 
 #include "fsal_glue_const.h"
 
-#define fsal_handle_t xfsfsal_handle_t
-#define fsal_op_context_t xfsfsal_op_context_t
-#define fsal_file_t xfsfsal_file_t
-#define fsal_dir_t xfsfsal_dir_t
-#define fsal_export_context_t xfsfsal_export_context_t
-#define fsal_lockdesc_t xfsfsal_lockdesc_t
-#define fsal_cookie_t xfsfsal_cookie_t
-#define fs_specific_initinfo_t xfsfs_specific_initinfo_t
-#define fsal_cred_t xfsfsal_cred_t
-
 typedef union {
  struct
   {
@@ -107,14 +97,6 @@ typedef union {
 } xfsfsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */
-
-typedef struct
-{
-  uid_t user;
-  gid_t group;
-  fsal_count_t nbgroups;
-  gid_t alt_groups[FSAL_NGROUPS_MAX];
-} xfsfsal_cred_t;
 
 typedef struct
 {
@@ -134,7 +116,7 @@ typedef struct
 typedef struct
 {
   xfsfsal_export_context_t *export_context;     /* Must be the first entry in this structure */
-  xfsfsal_cred_t credential;
+  struct user_credentials credential;
 } xfsfsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
@@ -174,7 +156,7 @@ typedef struct
   xfsfsal_handle_t handle;
 } xfsfsal_dir_t;
 
-typedef struct fsal_file__
+typedef struct
 {
   int fd;
   int ro;                       /* read only file ? */

@@ -38,8 +38,8 @@
  *      - ERR_FSAL_FAULT: NULL pointer passed as input parameter.
  *      - ERR_FSAL_SERVERFAULT: Unexpected error.
  */
-fsal_status_t POSIXFSAL_static_fsinfo(posixfsal_handle_t * p_filehandle,        /* IN */
-                                      posixfsal_op_context_t * p_context,       /* IN */
+fsal_status_t POSIXFSAL_static_fsinfo(fsal_handle_t * p_filehandle,        /* IN */
+                                      fsal_op_context_t * p_context,       /* IN */
                                       fsal_staticfsinfo_t * p_staticinfo        /* OUT */
     )
 {
@@ -48,7 +48,7 @@ fsal_status_t POSIXFSAL_static_fsinfo(posixfsal_handle_t * p_filehandle,        
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_static_fsinfo);
 
   /* returning static info about the filesystem */
-  (*p_staticinfo) = global_fs_info;
+  (*p_staticinfo) = global_fs_info;  /* ??? this may break w/ multiple modules!!?? */
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_static_fsinfo);
 
@@ -72,15 +72,18 @@ fsal_status_t POSIXFSAL_static_fsinfo(posixfsal_handle_t * p_filehandle,        
  *      - ERR_FSAL_FAULT: NULL pointer passed as input parameter.
  *      - ERR_FSAL_SERVERFAULT: Unexpected error.
  */
-fsal_status_t POSIXFSAL_dynamic_fsinfo(posixfsal_handle_t * p_filehandle,       /* IN */
-                                       posixfsal_op_context_t * p_context,      /* IN */
+fsal_status_t POSIXFSAL_dynamic_fsinfo(fsal_handle_t * filehandle,       /* IN */
+                                       fsal_op_context_t * context,      /* IN */
                                        fsal_dynamicfsinfo_t * p_dynamicinfo     /* OUT */
     )
 {
+  posixfsal_handle_t * p_filehandle = (posixfsal_handle_t *) filehandle;
+  posixfsal_op_context_t * p_context = (posixfsal_op_context_t *) context;
   fsal_path_t pathfsal;
   fsal_status_t status;
   struct statvfs buffstatvfs;
   int rc, errsv;
+
   /* sanity checks. */
   if(!p_filehandle || !p_dynamicinfo || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo);

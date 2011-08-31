@@ -11,8 +11,6 @@
 #include "config.h"
 #endif
 
-#include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_glue.h"
 #include "fsal_internal.h"
 
@@ -766,7 +764,7 @@ fsal_const_t fsal_lustre_consts = {
   .fsal_file_t_size = sizeof(lustrefsal_file_t),
   .fsal_cookie_t_size = sizeof(lustrefsal_cookie_t),
   .fsal_lockdesc_t_size = sizeof(lustrefsal_lockdesc_t),
-  .fsal_cred_t_size = sizeof(lustrefsal_cred_t),
+  .fsal_cred_t_size = sizeof(struct user_credentials),
   .fs_specific_initinfo_t_size = sizeof(lustrefs_specific_initinfo_t),
   .fsal_dir_t_size = sizeof(lustrefsal_dir_t)
 };

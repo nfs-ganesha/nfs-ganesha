@@ -66,10 +66,10 @@
  *        - Another error code if an error occurred.
  */
 
-fsal_status_t XFSFSAL_truncate(xfsfsal_handle_t * p_filehandle, /* IN */
-                               xfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t XFSFSAL_truncate(fsal_handle_t * p_filehandle, /* IN */
+                               fsal_op_context_t * p_context,        /* IN */
                                fsal_size_t length,      /* IN */
-                               xfsfsal_file_t * file_descriptor,        /* Unused in this FSAL */
+                               fsal_file_t * file_descriptor,        /* Unused in this FSAL */
                                fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */
     )
 {

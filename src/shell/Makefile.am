@@ -88,6 +88,7 @@ shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
                   ../File_Content_Policy/libcache_content_policy.la  \
                   ../IdMapper/libidmap.la                            \
                   ../support/libsupport.la                           \
+		  ../RPCAL/librpcal.la				     \
                   ../NodeList/libNodeList.la                         \
                   ../HashTable/libhashtable.la                       \
                   ../LRU/liblru.la                                   \

@@ -328,7 +328,13 @@ GA_ENABLE_FLAG(  [debug-symbols],	 [include debug symbols to binaries (-g option
 GA_ENABLE_FLAG( [profiling], [turn on code profiling (-g and -pg)], [-g -pg] )
 
 # enable code profiling
+<<<<<<< HEAD
 GA_ENABLE_FLAG( [strict-compile], [turn on strict compiler flags], [-Wall -Werror -Wimplicit -Wformat -Wmissing-braces  -Wno-pointer-sign] )
+||||||| merged common ancestors
+GA_ENABLE_FLAG( [strict-compile], [turn on strict compiler flags], [-Werror -Wimplicit -Wformat -Wmissing-braces] )
+=======
+GA_ENABLE_FLAG( [strict-compile], [turn on strict compiler flags], [-Werror -Wimplicit -Wformat -Wmissing-braces -Wreturn-type -Wunused-variable -Wuninitialized] )
+>>>>>>> 862cd77b6c611cb53ca598694960dae39dc65734
 
 # NFSv4 ACL
 GA_ENABLE_AM_CONDITION([nfs4-acl],[disable NFSv4 ACL support],[USE_NO_NFS4_ACL])
@@ -627,20 +633,6 @@ case $FSAL in
                 FSAL_LDFLAGS=""
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_VFS/libfsalvfs.la"
 		FS_NAME="vfs"
-		# Check for kernel version (should be at least 2.6.39)
-                if test `uname -r |cut -d. -f1` -gt 2 ; then
-                   AC_MSG_RESULT(Kernel 3.0 found, life is good)
-                else
-		  if test `uname -r |cut -d. -f1` -lt 2 ; then
-		   AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
-                  fi
-		  if test `uname -r |cut -d. -f2` -lt 6 ; then 
-		   AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
-		  fi
-		  if test `uname -r |cut -d. -f3 | cut -d- -f1` -lt 39 ; then
-		   AC_MSG_ERROR(Kernel is too old to handle open_by_handle)
-		  fi
-                fi
 		;;
         ZFS)
                 AC_DEFINE([_USE_ZFS], 1, [GANESHA exports ZFS Filesystem])
@@ -688,9 +680,9 @@ case $FSAL in
 				"7."*)
 					AC_DEFINE([_USE_PGSQL], 1, [Using PostgreSQL database])
 					;;
-				"8."*)
+				"8."*|"9."*)
 					AC_DEFINE([_USE_PGSQL], 1, [Using PostgreSQL database])
-					AC_DEFINE([_PGSQL8], 1, [Using PostgreSQL version 8.x])
+					AC_DEFINE([_PGSQL8], 1, [Using PostgreSQL version >= 8.x])
 					;;
 				*)
 					AC_MSG_ERROR("Unsupported PostgreSQL version: $PGSQL_VERSION")

@@ -2,7 +2,7 @@
 ##
 ## test_liblog_STD.sh
 ## test log functions
-## 
+##
 ## Made by Frank Filz
 ##
 
@@ -86,7 +86,7 @@ echo $DATE >> $FILE
 echo /var/log/messages > $MSGFILE
 echo $DATE >> $MSGFILE
 run >$OUTFILE 2>$ERRFILE
-run 
+run
 RC=$?
 
 if [ $RC -ne 0 ]

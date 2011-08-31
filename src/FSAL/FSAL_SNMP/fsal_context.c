@@ -159,8 +159,9 @@ fsal_status_t SNMPFSAL_InitClientContext(snmpfsal_op_context_t * p_thr_context)
   /* initialy set the export entry to none */
   p_thr_context->export_context = NULL;
 
-  p_thr_context->user_credential.user = 0;
-  p_thr_context->user_credential.group = 0;
+  p_thr_context->credential.user = 0;
+  p_thr_context->credential.group = 0;
+  p_thr_context->credential.nbgroups = 0;
 
   /* initialize the SNMP session  */
 
@@ -287,8 +288,9 @@ fsal_status_t SNMPFSAL_GetClientContext(snmpfsal_op_context_t * p_thr_context,  
   /* @todo for the moment, we only set uid and gid,
    * but they are not really used for authentication.
    */
-  p_thr_context->user_credential.user = uid;
-  p_thr_context->user_credential.group = gid;
+  p_thr_context->credential.user = uid;
+  p_thr_context->credential.group = gid;
+  p_thr_context->credential.nbgroups = 0;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
 

@@ -22,8 +22,8 @@
  * FSAL_lock:
  * Lock an entry in the filesystem.
  */
-fsal_status_t ZFSFSAL_lock(zfsfsal_file_t * obj_handle,
-                        zfsfsal_lockdesc_t * ldesc,
+fsal_status_t ZFSFSAL_lock(fsal_file_t * obj_handle,
+                        fsal_lockdesc_t * ldesc,
                         fsal_boolean_t blocking)
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock);
@@ -33,7 +33,7 @@ fsal_status_t ZFSFSAL_lock(zfsfsal_file_t * obj_handle,
  * FSAL_changelock:
  * Not implemented.
  */
-fsal_status_t ZFSFSAL_changelock(zfsfsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
+fsal_status_t ZFSFSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
                               fsal_lockparam_t * lock_info      /* IN */
     )
 {
@@ -50,12 +50,12 @@ fsal_status_t ZFSFSAL_changelock(zfsfsal_lockdesc_t * lock_descriptor,        /*
  * FSAL_unlock:
  * Not implemented.
  */
-fsal_status_t ZFSFSAL_unlock(zfsfsal_file_t * obj_handle, zfsfsal_lockdesc_t *ldesc)
+fsal_status_t ZFSFSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t *ldesc)
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlock);
 }
 
-fsal_status_t ZFSFSAL_getlock(zfsfsal_file_t * obj_handle, zfsfsal_lockdesc_t *ldesc)
+fsal_status_t ZFSFSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t *ldesc)
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlock);
 }
