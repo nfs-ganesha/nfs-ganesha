@@ -59,8 +59,8 @@
  *      - ERR_FSAL_FAULT: One of the in put parameters is NULL.
  *      - ERR_FSAL_PERM: lock_op was FSAL_OP_LOCKT and the result was that the operation would not be possible.
  */
-fsal_status_t GPFSFSAL_lock_op( gpfsfsal_file_t   * p_file_descriptor,   /* IN */
-                                gpfsfsal_handle_t * p_filehandle,        /* IN */
+fsal_status_t GPFSFSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
+                                fsal_handle_t     * p_filehandle,        /* IN */
                                 fsal_op_context_t * p_context,           /* IN */
                                 void              * p_owner,             /* IN (opaque to FSAL) */
                                 fsal_lock_op_t      lock_op,             /* IN */
@@ -70,6 +70,7 @@ fsal_status_t GPFSFSAL_lock_op( gpfsfsal_file_t   * p_file_descriptor,   /* IN *
   int retval;
   struct flock lock_args;
   int fcntl_comm;
+  gpfsfsal_file_t * pfd = (gpfsfsal_file_t *) p_file_descriptor;
 
   if(p_file_descriptor == NULL || p_filehandle == NULL || p_context == NULL)
     {
@@ -123,13 +124,13 @@ fsal_status_t GPFSFSAL_lock_op( gpfsfsal_file_t   * p_file_descriptor,   /* IN *
   lock_args.l_whence = SEEK_SET;
 
   errno = 0;
-  retval = fcntl(p_file_descriptor->fd, fcntl_comm, &lock_args);
+  retval = fcntl(pfd->fd, fcntl_comm, &lock_args);
   if(retval && lock_op == FSAL_OP_LOCK)
     {
       if(conflicting_lock != NULL)
         {
           fcntl_comm = F_GETLK;
-          retval = fcntl(p_file_descriptor->fd, fcntl_comm, &lock_args);
+          retval = fcntl(pfd->fd, fcntl_comm, &lock_args);
           if(retval)
             {
               LogCrit(COMPONENT_FSAL, "After failing a lock request, I couldn't even"
