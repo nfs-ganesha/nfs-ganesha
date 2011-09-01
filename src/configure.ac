@@ -584,7 +584,7 @@ case $FSAL in
                 #include <fcntl.h>
                 ])
 
-                AC_CHECK_DECL([struct file_handle], [
+                AC_CHECK_MEMBER([struct file_handle.f_handle], [
                                         AC_DEFINE([_GPFS_DECLARES_HANDLE], 1, [GPFS declares the handle structure])
                                       ],
                                       [],
