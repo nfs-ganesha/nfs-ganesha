@@ -300,6 +300,14 @@ fsal_status_t VFSFSAL_lookupJunction(fsal_handle_t * p_junction_handle,      /* 
                                      fsal_attrib_list_t *
                                      p_fsroot_attributes /* [ IN/OUT ] */ );
 
+fsal_status_t VFSFSAL_lock_op( fsal_file_t           * p_file_descriptor,   /* IN */
+                               fsal_handle_t         * p_filehandle,        /* IN */
+                               fsal_op_context_t     * p_context,           /* IN */
+                               void                  * p_owner,             /* IN */
+                               fsal_lock_op_t          lock_op,             /* IN */
+                               fsal_lock_param_t       request_lock,        /* IN */
+                               fsal_lock_param_t     * conflicting_lock     /* OUT */ );
+
 fsal_status_t VFSFSAL_lock(fsal_file_t * obj_handle,
                            fsal_lockdesc_t * ldesc, fsal_boolean_t blocking);
 

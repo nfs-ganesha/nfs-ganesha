@@ -53,6 +53,7 @@ fsal_functions_t fsal_vfs_functions = {
   .fsal_lookup = VFSFSAL_lookup,
   .fsal_lookuppath = VFSFSAL_lookupPath,
   .fsal_lookupjunction = VFSFSAL_lookupJunction,
+  .fsal_lock_op = VFSFSAL_lock_op,
   .fsal_lock = VFSFSAL_lock,
   .fsal_changelock = VFSFSAL_changelock,
   .fsal_unlock = VFSFSAL_unlock,
