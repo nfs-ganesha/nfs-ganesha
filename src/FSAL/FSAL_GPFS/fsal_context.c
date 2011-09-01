@@ -114,7 +114,7 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context,
   // op_context.credential = ???
   status = fsal_internal_get_handle(&op_context,
                                     p_export_path,
-                                    (struct fsal_handle_t *)(&(p_export_context->mount_root_handle)));
+                                    (fsal_handle_t *)(&(p_export_context->mount_root_handle)));
   if(FSAL_IS_ERROR(status))
     {
       close(p_export_context->mount_root_fd);
