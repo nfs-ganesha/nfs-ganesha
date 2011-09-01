@@ -579,9 +579,20 @@ case $FSAL in
 
 		AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
 
+
 		AC_CHECK_HEADERS([gpfs_nfs.h], [], [AC_MSG_ERROR(missing gpfs include files)], [
                 #include <fcntl.h>
                 ])
+
+                AC_CHECK_DECL([struct file_handle], [
+                                        AC_DEFINE([_GPFS_DECLARES_HANDLE], 1, [GPFS declares the handle structure])
+                                      ],
+                                      [],
+                                      [
+                                        #include <fcntl.h>
+                                        #include <gpfs_nfs.h>
+                                      ])
+
 		AC_CHECK_DECL([gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs_ganesha function)], [
                   #include <fcntl.h>
                   #include <gpfs_nfs.h>
