@@ -1836,9 +1836,30 @@ state_status_t state_test(cache_entry_t        * pentry,
     }
   else
     {
-      LogFullDebug(COMPONENT_STATE,
-                   "No Conflict");
-      *pstatus = STATE_SUCCESS;
+      /* Prepare to make call to FSAL for this lock */
+      *pstatus = do_lock_op(pentry,
+                            pcontext,
+                            FSAL_OP_LOCKT,
+                            powner,
+                            plock,
+                            holder,
+                            conflict,
+                            FALSE);
+
+      if(*pstatus != STATE_SUCCESS &&
+         *pstatus != STATE_LOCK_CONFLICT)
+        {
+          LogMajor(COMPONENT_STATE,
+                   "Got error from FSAL, error=%s",
+                   state_err_str(*pstatus));
+        }
+      if(*pstatus == STATE_SUCCESS)
+        LogFullDebug(COMPONENT_STATE,
+                     "No Conflict");
+      else
+        LogLock(COMPONENT_STATE, NIV_FULL_DEBUG,
+                "Conflict from FSAL",
+                pentry, pcontext, *holder, conflict);
     }
 
   V(pentry->object.file.lock_list_mutex);
