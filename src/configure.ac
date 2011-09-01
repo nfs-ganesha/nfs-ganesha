@@ -578,13 +578,20 @@ case $FSAL in
                 LDFLAGS="$LDFLAGS -L/usr/lpp/mmfs/lib"
 
 		AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
-		AC_CHECK_HEADERS([gpfs_nfs.h], [], [AC_MSG_ERROR(missing gpfs include files)])
-		AC_CHECK_DECL([gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs_ganesha function)], [[#include <gpfs_nfs.h>]])
-		AC_CHECK_DECLS([OPENHANDLE_NAME_TO_HANDLE, 
+
+		AC_CHECK_HEADERS([gpfs_nfs.h], [], [AC_MSG_ERROR(missing gpfs include files)], [
+                #include <fcntl.h>
+                ])
+		AC_CHECK_DECL([gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs_ganesha function)], [
+                  #include <fcntl.h>
+                  #include <gpfs_nfs.h>
+                ])
+
+		AC_CHECK_DECLS([OPENHANDLE_NAME_TO_HANDLE,
                                 OPENHANDLE_OPEN_BY_HANDLE,
                                 OPENHANDLE_LINK_BY_FD,
 		                OPENHANDLE_READLINK_BY_FD,
-                                OPENHANDLE_STAT_BY_HANDLE, 
+                                OPENHANDLE_STAT_BY_HANDLE,
                                 XATTR_STAT,
                                 XATTR_MODE,
                                 XATTR_UID,
@@ -595,13 +602,20 @@ case $FSAL in
                                 ],
 		               [],
 		               [AC_MSG_ERROR(GPFS < 3.5.0 found, you must upgrade GPFS to use this feature)],
-		               [[#include <gpfs_nfs.h>]])
+		               [
+                                 #include <fcntl.h>
+                                 #include <gpfs_nfs.h>
+                               ])
+
 		if [[  $PNFS != "NONE" ]] ; then
 			AC_CHECK_DECLS([OPENHANDLE_LAYOUT_TYPE, OPENHANDLE_GET_DEVICEINFO, OPENHANDLE_GET_DEVICEITER,
 			                OPENHANDLE_LAYOUT_GET, OPENHANDLE_LAYOUT_RETURN],
 			               [],
 			               [AC_MSG_ERROR(missing Layout function)],
-			               [[#include <gpfs_nfs.h>]])
+			               [
+                                         #include <fcntl.h>
+                                         #include <gpfs_nfs.h>
+                                       ])
 		fi
 		AC_CHECK_LIB([gpfs], [gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs library)])
 		FSAL_CFLAGS=
