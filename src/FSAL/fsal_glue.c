@@ -18,6 +18,8 @@
 
 #include <string.h> /* For strncpy */
 
+#define fsal_increment_nbcall( _f_,_struct_status_ )
+
 #include "fsal.h"
 #include "fsal_glue.h"
 
