@@ -152,7 +152,7 @@ static void nlm4_unlock_message_resp(nlm_async_queue_t *arg)
       char buffer[1024];
       netobj_to_string(&arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie, buffer, 1024);
       LogFullDebug(COMPONENT_NLM,
-                   "nlm4_unlock_message_resp calling nlm_send_async cookie=%s status=%s",
+                   "Calling nlm_send_async cookie=%s status=%s",
                    buffer, lock_result_str(arg->nlm_async_args.nlm_async_res.res_nlm4.stat.stat));
     }
   nlm_send_async(NLMPROC4_UNLOCK_RES,

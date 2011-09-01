@@ -78,7 +78,7 @@ bool_t nsm_monitor(state_nlm_client_t *host)
   if(!nsm_connect())
     {
       LogDebug(COMPONENT_NLM,
-               "nsm_monitor can not monitor %s clnt_create returned NULL",
+               "Can not monitor %s clnt_create returned NULL",
                nsm_mon.mon_id.mon_name);
       V(nsm_mutex);
       return FALSE;
@@ -95,7 +95,7 @@ bool_t nsm_monitor(state_nlm_client_t *host)
   if(ret != RPC_SUCCESS)
     {
       LogDebug(COMPONENT_NLM,
-               "nsm_monitor can not monitor %s SM_MON ret %d",
+               "Can not monitor %s SM_MON ret %d",
                nsm_mon.mon_id.mon_name, ret);
       nsm_disconnect();
       V(nsm_mutex);
@@ -105,7 +105,7 @@ bool_t nsm_monitor(state_nlm_client_t *host)
   if(res.res_stat != STAT_SUCC)
     {
       LogDebug(COMPONENT_NLM,
-               "nsm_monitor can not monitor %s SM_MON status %d",
+               "Can not monitor %s SM_MON status %d",
                nsm_mon.mon_id.mon_name, res.res_stat);
       nsm_disconnect();
       V(nsm_mutex);
@@ -146,7 +146,7 @@ bool_t nsm_unmonitor(state_nlm_client_t *host)
   if(!nsm_connect())
     {
       LogDebug(COMPONENT_NLM,
-               "nsm_monitor can not unmonitor %s clnt_create returned NULL",
+               "Can not unmonitor %s clnt_create returned NULL",
                nsm_mon_id.mon_name);
       V(nsm_mutex);
       return FALSE;
@@ -163,7 +163,7 @@ bool_t nsm_unmonitor(state_nlm_client_t *host)
   if(ret != RPC_SUCCESS)
     {
       LogDebug(COMPONENT_NLM,
-               "nsm_monitor can not unmonitor %s SM_MON ret %d",
+               "Can not unmonitor %s SM_MON ret %d",
                nsm_mon_id.mon_name, ret);
       nsm_disconnect();
       V(nsm_mutex);
@@ -198,7 +198,7 @@ void nsm_unmonitor_all(void)
   if(!nsm_connect())
     {
       LogDebug(COMPONENT_NLM,
-               "nsm_monitor can not unmonitor all clnt_create returned NULL");
+               "Can not unmonitor all clnt_create returned NULL");
       V(nsm_mutex);
       return;
     }
@@ -214,7 +214,7 @@ void nsm_unmonitor_all(void)
   if(ret != RPC_SUCCESS)
     {
       LogDebug(COMPONENT_NLM,
-               "nsm_monitor can not unmonitor all ret %d",
+               "Can not unmonitor all ret %d",
                ret);
     }
 
