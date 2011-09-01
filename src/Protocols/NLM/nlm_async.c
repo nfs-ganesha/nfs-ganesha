@@ -181,9 +181,7 @@ void *nlm_async_thread(void *argp)
           gettimeofday(&now, NULL);
           timeout.tv_sec = 10 + now.tv_sec;
           timeout.tv_nsec = 0;
-          LogFullDebug(COMPONENT_NLM, "nlm_async_thread waiting...");
           pthread_cond_timedwait(&nlm_async_queue_cond, &nlm_async_queue_mutex, &timeout);
-          LogFullDebug(COMPONENT_NLM, "nlm_async_thread woke up");
         }
       init_glist(&nlm_async_tmp_queue);
       /* Collect all the work items and add it to the temp
@@ -213,7 +211,7 @@ int nlm_async_callback(nlm_async_queue_t *arg)
 {
   int rc;
 
-  LogFullDebug(COMPONENT_NLM, "nlm_async_callback %p", arg);
+  LogFullDebug(COMPONENT_NLM, "Callback %p", arg);
 
   P(nlm_async_queue_mutex);
   glist_add_tail(&nlm_async_queue, &arg->nlm_async_glist);
@@ -316,13 +314,13 @@ int nlm_send_async(int                  proc,
   struct timespec timeout;
 
   LogFullDebug(COMPONENT_NLM,
-               "nlm_send_async Clnt_create %s",
+               "Clnt_create %s",
                host->slc_nlm_caller_name);
   clnt = Clnt_create(host->slc_nlm_caller_name, NLMPROG, NLM4_VERS, "tcp");
   if(!clnt)
     {
       LogMajor(COMPONENT_NLM,
-               "nlm_send_async: Cannot create connection to %s client",
+               "Cannot create NLM async connection to client %s",
                host->slc_nlm_caller_name);
       return -1;
     }
@@ -333,16 +331,16 @@ int nlm_send_async(int                  proc,
   resp_key = key;
   pthread_mutex_unlock(&nlm_async_resp_mutex);
 
-  LogFullDebug(COMPONENT_NLM, "nlm_send_async about to make clnt_call");
+  LogFullDebug(COMPONENT_NLM, "About to make clnt_call");
   retval = clnt_call(clnt, proc, inproc, inarg, outproc, NULL, tout);
-  LogFullDebug(COMPONENT_NLM, "nlm_send_async done with clnt_call");
+  LogFullDebug(COMPONENT_NLM, "Done with clnt_call");
 
   if(retval == RPC_TIMEDOUT)
     retval = RPC_SUCCESS;
   else if(retval != RPC_SUCCESS)
     {
       LogMajor(COMPONENT_NLM,
-               "%s: Client procedure call %d failed with return code %d",
+               "%s: NLM async Client procedure call %d failed with return code %d",
                __func__, proc, retval);
       pthread_mutex_lock(&nlm_async_resp_mutex);
       resp_key = NULL;
@@ -358,7 +356,7 @@ int nlm_send_async(int                  proc,
       timeout.tv_sec = 5 + start.tv_sec;
       timeout.tv_nsec = 0;
       LogFullDebug(COMPONENT_NLM,
-                   "nlm_send_async about to wait for signal for key %p",
+                   "About to wait for signal for key %p",
                    resp_key);
       while(resp_key != NULL && now.tv_sec < (start.tv_sec + 5))
         {
@@ -367,7 +365,7 @@ int nlm_send_async(int                  proc,
                        "pthread_cond_timedwait returned %d", rc);
           gettimeofday(&now, NULL);
         }
-      LogFullDebug(COMPONENT_NLM, "nlm_send_async done waiting");
+      LogFullDebug(COMPONENT_NLM, "Done waiting");
     }
   pthread_mutex_unlock(&nlm_async_resp_mutex);
 
@@ -383,12 +381,12 @@ void nlm_signal_async_resp(void *key)
       resp_key = NULL;
       pthread_cond_signal(&nlm_async_resp_cond);
       LogFullDebug(COMPONENT_NLM,
-                   "nlm_signal_async_resp signaled condition variable");
+                   "Signaled condition variable");
     }
   else
     {
       LogFullDebug(COMPONENT_NLM,
-                   "nlm_signal_async_resp didn't signal condition variable");
+                   "Didn't signal condition variable");
     }
   pthread_mutex_unlock(&nlm_async_resp_mutex);
 }

@@ -258,7 +258,7 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 
   /* We should never reach this line, this may produce a warning with certain compiler */
   LogCrit(COMPONENT_STATE,
-          "state_error_convert: default conversion to STATE_FSAL_ERROR for error %d, line %u should never be reached",
+          "Default conversion to STATE_FSAL_ERROR for error %d, line %u should never be reached",
            fsal_status.major, __LINE__);
   return STATE_FSAL_ERROR;
 }                               /* state_error_convert */
@@ -553,8 +553,8 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
     case STATE_GRACE_PERIOD:
         /* Should not occur */
         LogDebug(COMPONENT_NFSPROTO,
-                 "Line %u should never be reached in nfs3_Errno_state for status=%s",
-                 __LINE__, state_err_str(error));
+                 "Unexpected status for conversion = %s",
+                 state_err_str(error));
       nfserror = NFS3ERR_INVAL;
       break;
     }
@@ -678,8 +678,8 @@ nfsstat2 nfs2_Errno_state(state_status_t error)
     case STATE_GRACE_PERIOD:
         /* Should not occur */
         LogDebug(COMPONENT_NFSPROTO,
-                 "Line %u should never be reached in nfs2_Errno_state for status=%s",
-                 __LINE__, state_err_str(error));
+                 "Unexpected conversion for status = %s",
+                 state_err_str(error));
       nfserror = NFSERR_IO;
       break;
     }

@@ -228,7 +228,7 @@ static void nlm4_send_grant_msg(nlm_async_queue_t *arg)
                        buffer, sizeof(buffer));
 
       LogDebug(COMPONENT_NLM,
-               "nlm4_send_grant_msg Sending GRANTED for arg=%p svid=%d start=%llx len=%llx cookie=%s",
+               "Sending GRANTED for arg=%p svid=%d start=%llx len=%llx cookie=%s",
                arg, arg->nlm_async_args.nlm_async_grant.alock.svid,
                (unsigned long long) arg->nlm_async_args.nlm_async_grant.alock.l_offset,
                (unsigned long long) arg->nlm_async_args.nlm_async_grant.alock.l_len,
@@ -261,7 +261,7 @@ static void nlm4_send_grant_msg(nlm_async_queue_t *arg)
     {
       /* This must be an old NLM_GRANTED_RES */
       LogFullDebug(COMPONENT_NLM,
-                   "nlm4_send_grant_msg could not find cookie=%s",
+                   "Could not find cookie=%s",
                    buffer);
       return;
     }
@@ -275,7 +275,7 @@ static void nlm4_send_grant_msg(nlm_async_queue_t *arg)
       /* Wow, we're not doing well... */
       V(cookie_entry->sce_pentry->object.file.lock_list_mutex);
       LogFullDebug(COMPONENT_NLM,
-                   "nlm4_send_grant_msg could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
+                   "Could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
                    buffer);
       return;
     }
@@ -623,7 +623,7 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
       netobj_to_string(&inarg->cookie, buffer, sizeof(buffer));
 
       LogDebug(COMPONENT_NLM,
-               "nlm_granted_callback Sending GRANTED for arg=%p svid=%d start=%llx len=%llx cookie=%s",
+               "Sending GRANTED for arg=%p svid=%d start=%llx len=%llx cookie=%s",
                arg, inarg->alock.svid,
                (unsigned long long) inarg->alock.l_offset, (unsigned long long) inarg->alock.l_len,
                buffer);
@@ -651,7 +651,7 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
     {
       /* Not much we can do other than log that something bad happened. */
       LogCrit(COMPONENT_NLM,
-              "nlm_granted_callback was unable to clean up lock");
+              "Unable to clean up GRANTED lock after error");
     }
 
   *pstatus = STATE_MALLOC_ERROR;

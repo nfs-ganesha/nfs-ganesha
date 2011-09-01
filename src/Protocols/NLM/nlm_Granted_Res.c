@@ -79,7 +79,7 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
     {
       /* This must be an old NLM_GRANTED_RES */
       LogFullDebug(COMPONENT_NLM,
-                   "nlm_Granted_Res could not find cookie=%s (must be an old NLM_GRANTED_RES)",
+                   "Could not find cookie=%s (must be an old NLM_GRANTED_RES)",
                    buffer);
       return NFS_REQ_OK;
     }
@@ -94,7 +94,7 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
       /* This must be an old NLM_GRANTED_RES */
       V(cookie_entry->sce_pentry->object.file.lock_list_mutex);
       LogFullDebug(COMPONENT_NLM,
-                   "nlm_Granted_Res could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
+                   "Could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
                    buffer);
       return NFS_REQ_OK;
     }
