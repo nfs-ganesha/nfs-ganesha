@@ -82,7 +82,7 @@ pthread_mutex_t all_locks_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 state_owner_t unknown_owner;
 
-#ifdef _USE_NLM
+#ifdef _USE_BLOCKING_LOCKS
 hash_table_t *ht_lock_cookies;
 
 void cookie_entry_dec_ref(state_cookie_entry_t * p_cookie_entry);
@@ -109,7 +109,7 @@ state_status_t state_lock_init(state_status_t * pstatus)
       return *pstatus;
     }
 
-#ifdef _USE_NLM
+#ifdef _USE_BLOCKING_LOCKS
   ht_lock_cookies = HashTable_Init(cookie_param);
   if(ht_lock_cookies == NULL)
     {
@@ -606,10 +606,13 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 
   if(to_free)
     {
+#ifdef _USE_BLOCKING_LOCKS
       state_cookie_entry_t *pcookie = NULL;
+#endif
 
       LogEntry("Freeing", lock_entry);
 
+#ifdef _USE_BLOCKING_LOCKS
       /* Release block data if present */
       if(lock_entry->sle_block_data != NULL)
         {
@@ -624,6 +627,7 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
           pcookie->sce_lock_entry = NULL;
           cookie_entry_dec_ref(pcookie);
         }
+#endif
 
 #ifdef _DEBUG_MEMLEAKS
       P(all_locks_mutex);
@@ -975,7 +979,7 @@ static state_status_t subtract_list_from_list(cache_entry_t     * pentry,
  *
  ******************************************************************************/
 
-#ifdef _USE_NLM
+#ifdef _USE_BLOCKING_LOCKS
 int display_lock_cookie_key(hash_buffer_t * pbuff, char *str)
 {
   return display_lock_cookie((char *)pbuff->pdata, pbuff->len, str);
@@ -1299,7 +1303,6 @@ state_status_t state_find_grant(void                  * pcookie,
   *pstatus = STATE_SUCCESS;
   return *pstatus;
 }
-#endif
 
 void grant_blocked_lock(cache_entry_t      *pentry,
                         fsal_op_context_t  *pcontext,
@@ -1327,7 +1330,6 @@ void grant_blocked_lock(cache_entry_t      *pentry,
   LogEntry("Granted entry", lock_entry);
 }
 
-#ifdef _USE_NLM
 void state_complete_grant(fsal_op_context_t     * pcontext,
                           state_cookie_entry_t  * cookie_entry,
                           cache_inode_client_t  * pclient)
@@ -1356,7 +1358,6 @@ void state_complete_grant(fsal_op_context_t     * pcontext,
 
   V(pentry->object.file.lock_list_mutex);
 }
-#endif
 
 static void grant_blocked_locks(cache_entry_t        * pentry,
                                 fsal_op_context_t    * pcontext,
@@ -1495,7 +1496,6 @@ void cancel_blocked_locks_range(cache_entry_t        * pentry,
     }
 }
 
-#ifdef _USE_NLM
 state_status_t state_release_grant(fsal_op_context_t     * pcontext,
                                    state_cookie_entry_t  * cookie_entry,
                                    cache_inode_client_t  * pclient,
@@ -1897,6 +1897,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
       return *pstatus;
     }
 
+#ifdef _USE_BLOCKING_LOCKS
   P(pentry->object.file.lock_list_mutex);
   if(blocking != STATE_NON_BLOCKING)
     {
@@ -1928,6 +1929,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
           return *pstatus;
         }
     }
+#endif
 
   glist_for_each(glist, &pentry->object.file.lock_list)
     {
@@ -1969,7 +1971,8 @@ state_status_t state_lock(cache_entry_t         * pentry,
            */
           if(!different_owners(found_entry->sle_owner, powner))
             {
-              /* The lock actually has the same owner, we're done */
+ #ifdef _USE_BLOCKING_LOCKS
+             /* The lock actually has the same owner, we're done */
               if(found_entry->sle_blocked == STATE_GRANTING)
                 {
                   /* Need to handle completion of granting of this lock */
@@ -1977,7 +1980,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
                                      pcontext,
                                      found_entry);
                 }
-
+#endif
               V(pentry->object.file.lock_list_mutex);
               LogEntry("Found existing", found_entry);
               *pstatus = STATE_SUCCESS;
@@ -2099,12 +2102,14 @@ state_status_t state_unlock(cache_entry_t        * pentry,
   LogFullDebug(COMPONENT_STATE,
                "----------------------------------------------------------------------");
 
+#ifdef _USE_BLOCKING_LOCKS
   /* First cancel any blocking locks that might overlap the unlocked range. */
   cancel_blocked_locks_range(pentry,
                              pcontext,
                              powner,
                              plock,
                              pclient);
+#endif
 
   /* Release the lock from cache inode lock list for pentry */
   gotsome = subtract_lock_from_list(pentry,
@@ -2151,11 +2156,14 @@ state_status_t state_unlock(cache_entry_t        * pentry,
 
   V(pentry->object.file.lock_list_mutex);
 
+#ifdef _USE_BLOCKING_LOCKS
   grant_blocked_locks(pentry, pcontext, pclient);
+#endif
 
   return *pstatus;
 }
 
+#ifdef _USE_BLOCKING_LOCKS
 state_status_t state_cancel(cache_entry_t        * pentry,
                             fsal_op_context_t    * pcontext,
                             state_owner_t        * powner,
@@ -2218,6 +2226,7 @@ state_status_t state_cancel(cache_entry_t        * pentry,
 
   return *pstatus;
 }
+#endif
 
 #ifdef _USE_NLM
 state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,

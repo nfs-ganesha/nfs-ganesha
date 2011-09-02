@@ -64,6 +64,7 @@ nfsstat2 nfs2_Errno_state(state_status_t error);
  *
  ******************************************************************************/
 
+#ifdef _USE_NLM
 void inc_nlm_client_ref_locked(state_nlm_client_t * pclient);
 void inc_nlm_client_ref(state_nlm_client_t * pclient);
 void dec_nlm_client_ref_locked(state_nlm_client_t * pclient);
@@ -115,6 +116,7 @@ state_owner_t *get_nlm_owner(care_t               care,
 void nlm_owner_PrintAll(void);
 
 int Init_nlm_hash(hash_parameter_t client_param, hash_parameter_t owner_param);
+#endif
 
 
 /******************************************************************************
@@ -231,7 +233,7 @@ void LogLock(log_components_t     component,
              state_owner_t      * powner,
              state_lock_desc_t  * plock);
 
-#ifdef _USE_NLM
+#ifdef _USE_BLOCKING_LOCKS
 /**
  *
  * state_add_grant_cookie: Add a grant cookie to a blocked lock that is
@@ -317,12 +319,14 @@ state_status_t state_unlock(cache_entry_t        * pentry,
                             cache_inode_client_t * pclient,
                             state_status_t       * pstatus);
 
+#ifdef _USE_BLOCKING_LOCKS
 state_status_t state_cancel(cache_entry_t        * pentry,
                             fsal_op_context_t    * pcontext,
                             state_owner_t        * powner,
                             state_lock_desc_t    * plock,
                             cache_inode_client_t * pclient,
                             state_status_t       * pstatus);
+#endif
 
 #ifdef _USE_NLM
 state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,

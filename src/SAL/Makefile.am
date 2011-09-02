@@ -12,7 +12,6 @@ libsal_la_SOURCES = state_lock.c                     \
                     nfs4_state_id.c                  \
                     nfs4_owner.c                     \
                     nfs4_lease.c                     \
-                    nlm_owner.c                      \
                     ../include/BuddyMalloc.h         \
                     ../include/HashData.h            \
                     ../include/HashTable.h           \
@@ -37,6 +36,10 @@ libsal_la_SOURCES = state_lock.c                     \
                     ../include/sal_data.h            \
                     ../include/sal_functions.h       \
                     ../include/stuff_alloc.h
+
+if USE_NLM
+libsal_la_SOURCES += nlm_owner.c
+endif
 
 new: clean all
 

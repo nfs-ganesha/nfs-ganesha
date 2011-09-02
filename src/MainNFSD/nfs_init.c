@@ -68,8 +68,11 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+#ifdef _USE_NLM
 #include "nlm_util.h"
 #include "nsm.h"
+#endif
+#include "sal_functions.h"
 
 /* global information exported to all layers (as extern vars) */
 
@@ -1688,11 +1691,11 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                cache_inode_err_str(cache_status));
     }
 
-#ifdef _USE_NLM
+#ifdef _USE_BLOCKING_LOCKS
   if(state_lock_init(&state_status,
                      nfs_param.cache_layers_param.cache_param.cookie_param)
 #else
-  if(state_inode_lock_init(&state_status)
+  if(state_lock_init(&state_status)
 #endif
      != STATE_SUCCESS)
     {

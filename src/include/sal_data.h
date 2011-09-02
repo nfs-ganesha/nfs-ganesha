@@ -64,6 +64,14 @@
 #include "nfs41_session.h"
 #endif                          /* _USE_NFS4_1 */
 
+/* Indicate if state code must support blocking locks
+ * NLM supports blocking locks
+ * Eventually NFS v4.1 will support blocking locks
+ */
+#ifdef _USE_NLM
+#define _USE_BLOCKING_LOCKS
+#endif
+
 /* Some habits concerning mutex management */
 #ifndef P
 #define P( a ) pthread_mutex_lock( &a )
@@ -315,17 +323,22 @@ typedef struct state_lock_desc_t
 } state_lock_desc_t;
 
 typedef struct state_lock_entry_t   state_lock_entry_t;
+
+#ifdef _USE_BLOCKING_LOCKS
 typedef struct state_cookie_entry_t state_cookie_entry_t;
+#endif
 
 /* The granted call back is responsible for acquiring a reference to
  * the lock entry if needed.
+ *
+ * NB: this is always defined to avoid conditional function prototype
  */
 typedef state_status_t (*granted_callback_t)(cache_entry_t        * pentry,
                                              state_lock_entry_t   * lock_entry,
                                              cache_inode_client_t * pclient,
                                              state_status_t       * pstatus);
 
-#ifdef _USE_NLM
+#ifdef _USE_BLOCKING_LOCKS
 typedef struct state_nlm_block_data_t
 {
   sockaddr_t                 sbd_nlm_hostaddr;
@@ -336,7 +349,6 @@ typedef struct state_nlm_block_data_t
   unsigned int               sbd_nlm_caller_glen;
   gid_t                      sbd_nlm_caller_garray[NGRPS];
 } state_nlm_block_data_t;
-#endif
 
 typedef struct state_block_data_t
 {
@@ -350,6 +362,9 @@ typedef struct state_block_data_t
       void                   * sbd_v4_block_data;
     } sbd_block_data;
 } state_block_data_t;
+#else
+typedef void state_block_data_t;
+#endif
 
 struct state_lock_entry_t
 {
@@ -372,7 +387,7 @@ struct state_lock_entry_t
   pthread_mutex_t        sle_mutex;
 };
 
-#ifdef _USE_NLM
+#ifdef _USE_BLOCKING_LOCKS
 /*
  * Management of lce_refcount:
  *
@@ -398,6 +413,5 @@ struct state_cookie_entry_t
   state_lock_entry_t *sce_lock_entry;
 };
 #endif
-
 
 #endif                          /*  _SAL_DATA_H */
