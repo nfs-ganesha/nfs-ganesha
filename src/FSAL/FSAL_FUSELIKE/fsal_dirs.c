@@ -45,14 +45,16 @@
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FUSEFSAL_opendir(fusefsal_handle_t * dir_handle,  /* IN */
-                               fusefsal_op_context_t * p_context,       /* IN */
-                               fsal_dir_t * dir_descriptor,     /* OUT */
+fsal_status_t FUSEFSAL_opendir(fsal_handle_t * dir_hdl,  /* IN */
+                               fsal_op_context_t * p_context,       /* IN */
+                               fsal_dir_t * dir_desc,     /* OUT */
                                fsal_attrib_list_t * dir_attributes      /* [ IN/OUT ] */
     )
 {
   int rc;
   char object_path[FSAL_MAX_PATH_LEN];
+  fusefsal_dir_t * dir_descriptor = (fusefsal_dir_t *)dir_desc;
+  fusefsal_handle_t * dir_handle = (fusefsal_handle_t *)dir_hdl;
 
   /* sanity checks
    * note : dir_attributes is optionnal.
@@ -92,14 +94,14 @@ fsal_status_t FUSEFSAL_opendir(fusefsal_handle_t * dir_handle,  /* IN */
   dir_descriptor->dir_handle = *dir_handle;
 
   /* backup context */
-  dir_descriptor->context = *p_context;
+  dir_descriptor->context = *(fusefsal_op_context_t *)p_context;
 
   /* optionaly get attributes */
   if(dir_attributes)
     {
       fsal_status_t status;
 
-      status = FUSEFSAL_getattrs(dir_handle, p_context, dir_attributes);
+      status = FUSEFSAL_getattrs(dir_hdl, p_context, dir_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -136,6 +138,7 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
   fsal_status_t status;
   struct stat tmp_statbuff;
   int err = FALSE;
+  fusefsal_handle_t *fill_handle = (fusefsal_handle_t *) &to_be_filled->handle;
 
   if(stbuf)
     {
@@ -145,10 +148,10 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
                    "WARNING in fill_dirent: Filesystem doesn't provide inode numbers !!!");
         }
 
-      to_be_filled->handle.data.inode = stbuf->st_ino;
-      to_be_filled->handle.data.device = stbuf->st_dev;
+      fill_handle->data.inode = stbuf->st_ino;
+      fill_handle->data.device = stbuf->st_dev;
       FSAL_str2name(name, strlen(name) + 1, &(to_be_filled->name));
-      to_be_filled->cookie.data = off;
+      ((fusefsal_cookie_t *) &to_be_filled->cookie)->data = off;
 
       /* local copy for non "const" calls */
       tmp_statbuff = *stbuf;
@@ -186,9 +189,9 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
       FSAL_CLEAR_MASK(to_be_filled->attributes.asked_attributes);
       /* we only known entry name, we tag it for a later lookup.
        */
-      to_be_filled->handle.data.inode = INODE_TO_BE_COMPLETED;
+      fill_handle->data.inode = INODE_TO_BE_COMPLETED;
       FSAL_str2name(name, strlen(name) + 1, &(to_be_filled->name));
-      to_be_filled->cookie.data = off;
+      ((fusefsal_cookie_t *) &to_be_filled->cookie)->data = off;
     }
 
 }                               /* fill_dirent */
@@ -303,12 +306,12 @@ static int ganefuse_dirfil_old(ganefuse_dirh_t h, const char *name, int type, in
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor,     /* IN */
-                               fusefsal_cookie_t start_position,        /* IN */
+fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_desc,     /* IN */
+                               fsal_cookie_t start_position,        /* IN */
                                fsal_attrib_mask_t get_attr_mask,        /* IN */
                                fsal_mdsize_t buffersize,        /* IN */
                                fsal_dirent_t * pdirent, /* OUT */
-                               fusefsal_cookie_t * end_position,        /* OUT */
+                               fsal_cookie_t * end_position,        /* OUT */
                                fsal_count_t * nb_entries,       /* OUT */
                                fsal_boolean_t * end_of_dir      /* OUT */
     )
@@ -318,6 +321,7 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor,     /* IN */
   fsal_dirbuff_t reqbuff;
   unsigned int i;
   fsal_status_t st;
+  fusefsal_dir_t * dir_descriptor = (fusefsal_dir_t *)dir_desc;
 
   /* sanity checks */
 
@@ -335,7 +339,7 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor,     /* IN */
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_readdir);
 
   /* set context so it can be retrieved by FS */
-  fsal_set_thread_context(&dir_descriptor->context);
+  fsal_set_thread_context((fsal_op_context_t *) &dir_descriptor->context);
 
   /* prepare reaadir structure */
 
@@ -345,14 +349,14 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor,     /* IN */
   reqbuff.p_entries = pdirent;
   reqbuff.status.major = 0;
   reqbuff.status.minor = 0;
-  reqbuff.begin_off = start_position.data;
+  reqbuff.begin_off = (off_t)start_position.data;
   reqbuff.curr_off = 0 ;
 
   TakeTokenFSCall();
 
   if(p_fs_ops->readdir)
     rc = p_fs_ops->readdir(dir_path, (void *)&reqbuff, ganefuse_fill_dir,
-                           start_position.data, &dir_descriptor->dir_info);
+                           (off_t)start_position.data, &dir_descriptor->dir_info);
   else
     rc = p_fs_ops->getdir(dir_path, (ganefuse_dirh_t) & reqbuff, ganefuse_dirfil_old);
 
@@ -399,7 +403,7 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor,     /* IN */
 
       /* 2) check weither the filesystem provided stat buff */
 
-      if(pdirent[i].handle.data.inode == INODE_TO_BE_COMPLETED)
+      if(((fusefsal_handle_t *) &pdirent[i].handle)->data.inode == INODE_TO_BE_COMPLETED)
         {
           /* If not, make a lookup operation for this entry.
            * (this with automatically add it to namespace) */
@@ -408,9 +412,9 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor,     /* IN */
 
           LogFullDebug(COMPONENT_FSAL, "Inode to be completed");
 
-          st = FUSEFSAL_lookup(&dir_descriptor->dir_handle,
+          st = FUSEFSAL_lookup((fsal_handle_t *) &dir_descriptor->dir_handle,
                                &pdirent[i].name,
-                               &dir_descriptor->context,
+                               (fsal_op_context_t *) &dir_descriptor->context,
                                &pdirent[i].handle, &pdirent[i].attributes);
 
           if(FSAL_IS_ERROR(st))
@@ -425,17 +429,18 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor,     /* IN */
           if(strcmp(pdirent[i].name.name, ".") && strcmp(pdirent[i].name.name, ".."))
             {
               LogFullDebug(COMPONENT_FSAL, "adding entry to namespace: %lX.%ld %s",
-                     pdirent[i].handle.data.device,
-                     pdirent[i].handle.data.inode, pdirent[i].name.name);
+                     ((fusefsal_handle_t *) &pdirent[i].handle)->data.device,
+                     ((fusefsal_handle_t *) &pdirent[i].handle)->data.inode, pdirent[i].name.name);
 
-              pdirent[i].handle.data.validator = pdirent[i].attributes.ctime.seconds;
+              ((fusefsal_handle_t *) &pdirent[i].handle)->data.validator = pdirent[i].attributes.ctime.seconds;
 
               NamespaceAdd(dir_descriptor->dir_handle.data.inode,
                            dir_descriptor->dir_handle.data.device,
                            dir_descriptor->dir_handle.data.validator,
                            pdirent[i].name.name,
-                           pdirent[i].handle.data.inode,
-                           pdirent[i].handle.data.device, &(pdirent[i].handle.data.validator));
+                           ((fusefsal_handle_t *) &pdirent[i].handle)->data.inode,
+                           ((fusefsal_handle_t *) &pdirent[i].handle)->data.device,
+			   &(((fusefsal_handle_t *) &pdirent[i].handle)->data.validator));
             }
         }
 
@@ -464,12 +469,13 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_descriptor,     /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t FUSEFSAL_closedir(fsal_dir_t * dir_descriptor     /* IN */
+fsal_status_t FUSEFSAL_closedir(fsal_dir_t * dir_desc     /* IN */
     )
 {
 
   int rc;
   char dir_path[FSAL_MAX_PATH_LEN];
+  fusefsal_dir_t * dir_descriptor = (fusefsal_dir_t *)dir_desc;
 
   /* sanity checks */
   if(!dir_descriptor)
@@ -487,7 +493,7 @@ fsal_status_t FUSEFSAL_closedir(fsal_dir_t * dir_descriptor     /* IN */
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_closedir);
 
   /* set context so it can be retrieved by FS */
-  fsal_set_thread_context(&dir_descriptor->context);
+  fsal_set_thread_context((fsal_op_context_t *) &dir_descriptor->context);
 
   /* release the resources used for reading directory */
 

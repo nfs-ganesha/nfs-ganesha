@@ -45,12 +45,12 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Another error code if an error occured.
  */
-fsal_status_t FUSEFSAL_getattrs(fusefsal_handle_t * filehandle, /* IN */
-                                fusefsal_op_context_t * p_context,      /* IN */
+fsal_status_t FUSEFSAL_getattrs(fsal_handle_t *handle, /* IN */
+                                fsal_op_context_t * p_context,      /* IN */
                                 fsal_attrib_list_t * object_attributes  /* IN/OUT */
     )
 {
-
+  fusefsal_handle_t * filehandle = (fusefsal_handle_t *)handle;
   int rc;
   fsal_status_t status;
   struct stat obj_stat;
@@ -155,13 +155,13 @@ fsal_status_t FUSEFSAL_getattrs(fusefsal_handle_t * filehandle, /* IN */
  *        the object_attributes->asked_attributes field.
  */
 
-fsal_status_t FUSEFSAL_setattrs(fusefsal_handle_t * filehandle, /* IN */
-                                fusefsal_op_context_t * p_context,      /* IN */
+fsal_status_t FUSEFSAL_setattrs(fsal_handle_t *handle, /* IN */
+                                fsal_op_context_t * p_context,      /* IN */
                                 fsal_attrib_list_t * attrib_set,        /* IN */
                                 fsal_attrib_list_t * object_attributes  /* [ IN/OUT ] */
     )
 {
-
+  fusefsal_handle_t * filehandle = (fusefsal_handle_t *)handle;
   int rc;
   fsal_status_t status;
   fsal_attrib_list_t attrs;
@@ -425,8 +425,8 @@ fsal_status_t FUSEFSAL_setattrs(fusefsal_handle_t * filehandle, /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t FUSEFSAL_getextattrs(fusefsal_handle_t * p_filehandle, /* IN */
-                                   fusefsal_op_context_t * p_context,        /* IN */
+fsal_status_t FUSEFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
+                                   fsal_op_context_t * p_context,        /* IN */
                                    fsal_extattrib_list_t * p_object_attributes /* OUT */
     )
 {

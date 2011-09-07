@@ -58,8 +58,8 @@
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
 
-fsal_status_t FUSEFSAL_rcp(fusefsal_handle_t * filehandle,      /* IN */
-                           fusefsal_op_context_t * p_context,   /* IN */
+fsal_status_t FUSEFSAL_rcp(fsal_handle_t * filehandle,      /* IN */
+                           fsal_op_context_t * p_context,   /* IN */
                            fsal_path_t * p_local_path,  /* IN */
                            fsal_rcpflag_t transfer_opt  /* IN */
     )
@@ -313,9 +313,9 @@ fsal_status_t FUSEFSAL_rcp(fusefsal_handle_t * filehandle,      /* IN */
 
 }
 
-fsal_status_t FUSEFSAL_rcp_by_fileid(fusefsal_handle_t * filehandle,    /* IN */
+fsal_status_t FUSEFSAL_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
                                      fsal_u64_t fileid, /* IN */
-                                     fusefsal_op_context_t * p_context, /* IN */
+                                     fsal_op_context_t * p_context, /* IN */
                                      fsal_path_t * p_local_path,        /* IN */
                                      fsal_rcpflag_t transfer_opt /* IN */ )
 {

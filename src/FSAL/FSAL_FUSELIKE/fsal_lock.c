@@ -31,8 +31,8 @@
  * \param lock_descriptor (output):
  *        The returned lock descriptor
  */
-fsal_status_t FUSEFSAL_lock(fusefsal_file_t * obj_handle,       /* IN */
-                            fusefsal_lockdesc_t * ldesc,        /*IN/OUT */
+fsal_status_t FUSEFSAL_lock(fsal_file_t * obj_handle,       /* IN */
+                            fsal_lockdesc_t * ldesc,        /*IN/OUT */
                             fsal_boolean_t callback     /* IN */
     )
 {
@@ -48,7 +48,7 @@ fsal_status_t FUSEFSAL_lock(fusefsal_file_t * obj_handle,       /* IN */
  * FSAL_changelock:
  * Not implemented.
  */
-fsal_status_t FUSEFSAL_changelock(fusefsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
+fsal_status_t FUSEFSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
                                   fsal_lockparam_t * lock_info  /* IN */
     )
 {
@@ -65,8 +65,8 @@ fsal_status_t FUSEFSAL_changelock(fusefsal_lockdesc_t * lock_descriptor,        
  * FSAL_unlock:
  * Not implemented.
  */
-fsal_status_t FUSEFSAL_unlock(fusefsal_file_t * obj_handle,     /* IN */
-                              fusefsal_lockdesc_t * ldesc       /*IN/OUT */
+fsal_status_t FUSEFSAL_unlock(fsal_file_t * obj_handle,     /* IN */
+                              fsal_lockdesc_t * ldesc       /*IN/OUT */
     )
 {
 
@@ -82,7 +82,7 @@ fsal_status_t FUSEFSAL_unlock(fusefsal_file_t * obj_handle,     /* IN */
  * FSAL_unlock:
  * Not implemented.
  */
-fsal_status_t FUSEFSAL_getlock(fusefsal_file_t * obj_handle, fusefsal_lockdesc_t * ldesc)
+fsal_status_t FUSEFSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
 {
 
   /* sanity checks. */
