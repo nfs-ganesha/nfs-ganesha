@@ -126,6 +126,15 @@ state_status_t state_lock_init(state_status_t * pstatus)
   return *pstatus;
 }
 
+bool_t lock_owner_is_nlm(state_lock_entry_t * lock_entry)
+{
+#ifdef _USE_NLM
+  return lock_entry->sle_owner->so_type == STATE_LOCK_OWNER_NLM;
+#else
+  return FALSE;
+#endif
+}
+
 state_status_t do_lock_op(cache_entry_t        * pentry,
                           fsal_op_context_t    * pcontext,
                           fsal_lock_op_t         lock_op,
@@ -877,6 +886,7 @@ complete_remove:
 static bool_t subtract_lock_from_list(cache_entry_t      * pentry,
                                       fsal_op_context_t  * pcontext,
                                       state_owner_t      * powner,
+                                      state_t            * pstate,
                                       state_lock_desc_t  * plock,
                                       state_status_t     * pstatus,
                                       struct glist_head  * list)
@@ -894,7 +904,17 @@ static bool_t subtract_lock_from_list(cache_entry_t      * pentry,
       found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
       if(powner != NULL && different_owners(found_entry->sle_owner, powner))
-          continue;
+        continue;
+
+      /* Skip locks owned by this NLM state.
+       * This protects NLM locks from the current iteration of an NLM
+       * client from being released by SM_NOTIFY.
+       */
+      if(pstate != NULL &&
+         lock_owner_is_nlm(found_entry) &&
+         found_entry->sle_state == pstate)
+        continue;
+
       /*
        * We have matched owner.
        * Even though we are taking a reference to found_entry, we
@@ -962,6 +982,7 @@ static state_status_t subtract_list_from_list(cache_entry_t     * pentry,
 
       subtract_lock_from_list(pentry,
                               pcontext,
+                              NULL,
                               NULL,
                               &found_entry->sle_lock,
                               pstatus,
@@ -1464,6 +1485,7 @@ void cancel_blocked_lock(cache_entry_t        * pentry,
 void cancel_blocked_locks_range(cache_entry_t        * pentry,
                                 fsal_op_context_t    * pcontext,
                                 state_owner_t        * powner,
+                                state_t              * pstate,
                                 state_lock_desc_t    * plock,
                                 cache_inode_client_t * pclient)
 {
@@ -1477,11 +1499,20 @@ void cancel_blocked_locks_range(cache_entry_t        * pentry,
 
       /* Skip locks not owned by owner */
       if(powner != NULL && different_owners(found_entry->sle_owner, powner))
-          continue;
+        continue;
+
+      /* Skip locks owned by this NLM state.
+       * This protects NLM locks from the current iteration of an NLM
+       * client from being released by SM_NOTIFY.
+       */
+      if(pstate != NULL &&
+         lock_owner_is_nlm(found_entry) &&
+         found_entry->sle_state == pstate)
+        continue;
 
       /* Skip granted locks */
       if(found_entry->sle_blocked == STATE_NON_BLOCKING)
-          continue;
+        continue;
 
       LogEntry("Checking", found_entry);
 
@@ -2107,6 +2138,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
   cancel_blocked_locks_range(pentry,
                              pcontext,
                              powner,
+                             pstate,
                              plock,
                              pclient);
 #endif
@@ -2115,6 +2147,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
   gotsome = subtract_lock_from_list(pentry,
                                     pcontext,
                                     powner,
+                                    pstate,
                                     plock,
                                     pstatus,
                                     &pentry->object.file.lock_list);
@@ -2231,6 +2264,7 @@ state_status_t state_cancel(cache_entry_t        * pentry,
 #ifdef _USE_NLM
 state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
                                 state_nlm_client_t   * pnlmclient,
+                                state_t              * pstate,
                                 cache_inode_client_t * pclient,
                                 state_status_t       * pstatus)
 {
@@ -2239,6 +2273,9 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
   state_lock_desc_t    lock;
   cache_entry_t      * pentry;
   int                  errcnt = 0;
+  struct glist_head    newlocks;
+
+  init_glist(&newlocks);
 
   while(errcnt < 100)
     {
@@ -2250,9 +2287,19 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
       found_entry = glist_first_entry(&pnlmclient->slc_lock_list, state_lock_entry_t, sle_client_locks);
       lock_entry_inc_ref(found_entry);
 
-      /* Move this entry to the end of the list (this will help if errors occur) */
+      /* Remove from the client lock list */
       glist_del(&found_entry->sle_client_locks);
-      glist_add_tail(&pnlmclient->slc_lock_list, &found_entry->sle_client_locks);
+      if(found_entry->sle_state == pstate)
+        {
+          /* This is a new lock acquired since the client rebooted, retain it. */
+          glist_add_tail(&newlocks, &found_entry->sle_client_locks);
+          lock_entry_dec_ref(found_entry);
+        }
+      else
+        {
+          /* Move this entry to the end of the list (this will help if errors occur) */
+          glist_add_tail(&pnlmclient->slc_lock_list, &found_entry->sle_client_locks);
+        }
 
       V(pnlmclient->slc_mutex);
 
@@ -2276,7 +2323,7 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
       if(state_unlock(pentry,
                       pcontext,
                       &owner,
-                      NULL,
+                      pstate,
                       &lock,
                       pclient,
                       pstatus) != STATE_SUCCESS)
@@ -2287,6 +2334,9 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
           errcnt++;
         }
     }
+
+  /* Put locks from current client incarnation onto end of list */
+  glist_add_list_tail(&pnlmclient->slc_lock_list, &newlocks);
 
   return *pstatus;
 }

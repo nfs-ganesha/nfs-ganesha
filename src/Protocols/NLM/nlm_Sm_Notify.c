@@ -72,8 +72,13 @@ int nlm4_Sm_Notify(nfs_arg_t * parg /* IN     */ ,
   nlm_client = get_nlm_client(TRUE, arg->name);
   if(nlm_client != NULL)
     {
+      /* Cast the state number into a state pointer to protect
+       * locks from a client that has rebooted from being released
+       * by this SM_NOTIFY.
+       */
       if(state_nlm_notify(pcontext,
                           nlm_client,
+                          (void *) (ptrdiff_t) arg->state,
                           pclient,
                           &state_status) != STATE_SUCCESS)
         {

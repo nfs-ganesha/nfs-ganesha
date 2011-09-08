@@ -125,10 +125,14 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
       return NFS_REQ_OK;
     }
 
+  /* Cast the state number into a state pointer to protect
+   * locks from a client that has rebooted from the SM_NOTIFY
+   * that will release old locks
+   */
   if(state_lock(pentry,
                 pcontext,
                 nlm_owner,
-                NULL,
+                (void *) (ptrdiff_t) arg->state,
                 arg->block,
                 pblock_data,
                 &lock,
