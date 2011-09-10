@@ -368,6 +368,7 @@ int nlm_process_parameters(struct svc_req        * preq,
        */
       if(*ppblock_data != NULL)
         {
+          memset(*ppblock_data, 0, sizeof(**ppblock_data));
           if(copy_xprt_addr(&(*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_hostaddr, ptr_svc) == 0)
             {
               LogFullDebug(COMPONENT_NLM,
@@ -377,7 +378,6 @@ int nlm_process_parameters(struct svc_req        * preq,
               *ppblock_data = NULL;
               return NLM4_FAILED;
             }
-          memset(*ppblock_data, 0, sizeof(**ppblock_data));
           (*ppblock_data)->sbd_granted_callback = nlm_granted_callback;
           (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh.n_bytes =
             (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh_buf;
