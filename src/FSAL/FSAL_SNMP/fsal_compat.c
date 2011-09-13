@@ -14,6 +14,7 @@
 #include "fsal.h"
 #include "fsal_glue.h"
 #include "fsal_internal.h"
+#include "FSAL/common_methods.h"
 
 fsal_functions_t fsal_snmp_functions = {
   .fsal_access = SNMPFSAL_access,
@@ -22,7 +23,7 @@ fsal_functions_t fsal_snmp_functions = {
   .fsal_buildexportcontext = SNMPFSAL_BuildExportContext,
   .fsal_cleanupexportcontext = SNMPFSAL_CleanUpExportContext,
   .fsal_initclientcontext = SNMPFSAL_InitClientContext,
-  .fsal_getclientcontext = NULL,
+  .fsal_getclientcontext = COMMON_GetClientContext,
   .fsal_create = SNMPFSAL_create,
   .fsal_mkdir = SNMPFSAL_mkdir,
   .fsal_link = SNMPFSAL_link,

@@ -14,7 +14,7 @@
 #include "fsal.h"
 #include "fsal_glue.h"
 #include "fsal_internal.h"
-
+#include "FSAL/common_methods.h"
 
 fsal_functions_t fsal_gpfs_functions = {
   .fsal_access = GPFSFSAL_access,
@@ -23,8 +23,8 @@ fsal_functions_t fsal_gpfs_functions = {
   .fsal_setattrs = GPFSFSAL_setattrs,
   .fsal_buildexportcontext = GPFSFSAL_BuildExportContext,
   .fsal_cleanupexportcontext = GPFSFSAL_CleanUpExportContext,
-  .fsal_initclientcontext = NULL,
-  .fsal_getclientcontext = NULL,
+  .fsal_initclientcontext = COMMON_InitClientContext,
+  .fsal_getclientcontext = COMMON_GetClientContext,
   .fsal_create = GPFSFSAL_create,
   .fsal_mkdir = GPFSFSAL_mkdir,
   .fsal_link = GPFSFSAL_link,

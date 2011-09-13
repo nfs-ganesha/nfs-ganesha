@@ -14,6 +14,7 @@
 #include "fsal.h"
 #include "fsal_glue.h"
 #include "fsal_internal.h"
+#include "FSAL/common_methods.h"
 
 fsal_functions_t fsal_vfs_functions = {
   .fsal_access = VFSFSAL_access,
@@ -22,8 +23,8 @@ fsal_functions_t fsal_vfs_functions = {
   .fsal_setattrs = VFSFSAL_setattrs,
   .fsal_buildexportcontext = VFSFSAL_BuildExportContext,
   .fsal_cleanupexportcontext = VFSFSAL_CleanUpExportContext,
-  .fsal_initclientcontext = NULL,
-  .fsal_getclientcontext = NULL,
+  .fsal_initclientcontext = COMMON_InitClientContext,
+  .fsal_getclientcontext = COMMON_GetClientContext,
   .fsal_create = VFSFSAL_create,
   .fsal_mkdir = VFSFSAL_mkdir,
   .fsal_link = VFSFSAL_link,

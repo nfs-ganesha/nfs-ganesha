@@ -14,6 +14,7 @@
 #include "fsal_types.h"
 #include "fsal_glue.h"
 #include "fsal_internal.h"
+#include "FSAL/common_methods.h"
 
 fsal_functions_t fsal_proxy_functions = {
   .fsal_access = PROXYFSAL_access,
@@ -22,7 +23,7 @@ fsal_functions_t fsal_proxy_functions = {
   .fsal_buildexportcontext = PROXYFSAL_BuildExportContext,
   .fsal_cleanupexportcontext = PROXYFSAL_CleanUpExportContext,
   .fsal_initclientcontext = PROXYFSAL_InitClientContext,
-  .fsal_getclientcontext = NULL,
+  .fsal_getclientcontext = COMMON_GetClientContext,
   .fsal_create = PROXYFSAL_create,
   .fsal_mkdir = PROXYFSAL_mkdir,
   .fsal_link = PROXYFSAL_link,

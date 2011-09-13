@@ -14,6 +14,7 @@
 #include "fsal_types.h"
 #include "fsal_glue.h"
 #include "fsal_internal.h"
+#include "FSAL/common_methods.h"
 
 fsal_functions_t fsal_lustre_functions = {
   .fsal_access = LUSTREFSAL_access,
@@ -21,8 +22,8 @@ fsal_functions_t fsal_lustre_functions = {
   .fsal_setattrs = LUSTREFSAL_setattrs,
   .fsal_buildexportcontext = LUSTREFSAL_BuildExportContext,
   .fsal_cleanupexportcontext = LUSTREFSAL_CleanUpExportContext,
-  .fsal_initclientcontext = NULL,
-  .fsal_getclientcontext = NULL,
+  .fsal_initclientcontext = COMMON_InitClientContext,
+  .fsal_getclientcontext = COMMON_GetClientContext,
   .fsal_create = LUSTREFSAL_create,
   .fsal_mkdir = LUSTREFSAL_mkdir,
   .fsal_link = LUSTREFSAL_link,

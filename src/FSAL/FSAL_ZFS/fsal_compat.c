@@ -15,6 +15,7 @@
 #include "fsal.h"
 #include "fsal_glue.h"
 #include "fsal_internal.h"
+#include "FSAL/common_methods.h"
 
 fsal_functions_t fsal_zfs_functions = {
   .fsal_access = ZFSFSAL_access,
@@ -22,8 +23,8 @@ fsal_functions_t fsal_zfs_functions = {
   .fsal_setattrs = ZFSFSAL_setattrs,
   .fsal_buildexportcontext = ZFSFSAL_BuildExportContext,
   .fsal_cleanupexportcontext = ZFSFSAL_CleanUpExportContext,
-  .fsal_initclientcontext = NULL,
-  .fsal_getclientcontext = NULL,
+  .fsal_initclientcontext = COMMON_InitClientContext,
+  .fsal_getclientcontext = COMMON_GetClientContext,
   .fsal_create = ZFSFSAL_create,
   .fsal_mkdir = ZFSFSAL_mkdir,
   .fsal_link = ZFSFSAL_link,
