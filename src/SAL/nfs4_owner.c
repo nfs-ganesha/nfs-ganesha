@@ -68,26 +68,29 @@ int display_nfs4_owner_key(hash_buffer_t * pbuff, char *str)
                  (unsigned long long)pname->son_clientid,
                  pname->son_owner_len,
                  strtmp);
-}                               /* display_state_id_val */
+}
 
-int display_nfs4_owner_val(hash_buffer_t * pbuff, char *str)
+int display_nfs4_owner(state_owner_t *powner, char *str)
 {
   char strtmp[NFS4_OPAQUE_LIMIT * 2 + 1];
   unsigned int i = 0;
-
-  state_owner_t *powner = (state_owner_t *) (pbuff->pdata);
 
   for(i = 0; i < powner->so_owner_len; i++)
     sprintf(&(strtmp[i * 2]),
             "%02x",
             (unsigned char)powner->so_owner_val[i]);
 
-  return sprintf(str, "clientid=%llu owner=(%u|%s) confirmed=%u seqid=%u",
+  return sprintf(str, "clientid=%llu owner=(%u:%s) confirmed=%u seqid=%u",
                        (unsigned long long)powner->so_owner.so_nfs4_owner.so_clientid,
                        powner->so_owner_len, strtmp,
                        powner->so_owner.so_nfs4_owner.so_confirmed,
                        powner->so_owner.so_nfs4_owner.so_seqid);
-}                               /* display_state_id_val */
+}
+
+int display_nfs4_owner_val(hash_buffer_t * pbuff, char *str)
+{
+  return display_nfs4_owner((state_owner_t *) (pbuff->pdata), str);
+}
 
 int compare_nfs4_owner(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
@@ -340,6 +343,7 @@ state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
 
   /* set up the content of the open_owner */
   memset(powner, 0, sizeof(*powner));
+  powner->so_type = STATE_LOCK_OWNER_NFSV4;
   powner->so_owner.so_nfs4_owner.so_seqid         = init_seqid;
   powner->so_owner.so_nfs4_owner.so_related_owner = related_owner;
   powner->so_owner.so_nfs4_owner.so_clientid      = arg_owner->clientid;

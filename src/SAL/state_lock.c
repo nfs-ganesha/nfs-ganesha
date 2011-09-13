@@ -165,7 +165,7 @@ int DisplayOwner(state_owner_t *powner, char *buf)
 
         case STATE_LOCK_OWNER_NFSV4:
           tmp += sprintf(buf, "STATE_LOCK_OWNER_NFSV4: ");
-          return (tmp-buf) + sprintf(buf, "undecoded");
+          return (tmp-buf) + display_nfs4_owner(powner, tmp);
           break;
 
         case STATE_LOCK_OWNER_UNKNOWN:
@@ -1846,6 +1846,10 @@ state_status_t state_test(cache_entry_t        * pentry,
   state_lock_entry_t   * found_entry;
   cache_inode_status_t   cache_status;
 
+  LogLock(COMPONENT_STATE, NIV_FULL_DEBUG,
+          "TEST",
+          pentry, pcontext, powner, plock);
+
   if(cache_inode_open(pentry, pclient, FSAL_O_RDWR, pcontext, &cache_status) != CACHE_INODE_SUCCESS)
     {
       *pstatus = cache_inode_status_to_state_status(cache_status);
@@ -1891,6 +1895,17 @@ state_status_t state_test(cache_entry_t        * pentry,
         LogLock(COMPONENT_STATE, NIV_FULL_DEBUG,
                 "Conflict from FSAL",
                 pentry, pcontext, *holder, conflict);
+    }
+
+  if(isFullDebug(COMPONENT_STATE))
+    {
+      struct glist_head * glist;
+      glist_for_each(glist, &pentry->object.file.lock_list)
+        {
+          found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
+
+          LogEntry("Lock List", found_entry);
+        }
     }
 
   V(pentry->object.file.lock_list_mutex);
@@ -2188,6 +2203,20 @@ state_status_t state_unlock(cache_entry_t        * pentry,
                "----------------------------------------------------------------------");
 
   V(pentry->object.file.lock_list_mutex);
+
+  if(isFullDebug(COMPONENT_STATE) &&
+     plock->sld_offset == 0 && plock->sld_length == 0)
+    {
+      struct glist_head  * glist;
+      state_lock_entry_t * found_entry;
+
+      glist_for_each(glist, &pentry->object.file.lock_list)
+        {
+          found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
+
+          LogEntry("Lock List", found_entry);
+        }
+    }
 
 #ifdef _USE_BLOCKING_LOCKS
   grant_blocked_locks(pentry, pcontext, pclient);

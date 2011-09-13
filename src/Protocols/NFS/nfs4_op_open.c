@@ -209,9 +209,16 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
       else
         {
-          LogFullDebug(COMPONENT_NFS_V4_LOCK,
-                       "A previously known open_owner is used :#%s# seqid=%u arg_OPEN4.seqid=%u",
-                       powner->so_owner_val, powner->so_owner.so_nfs4_owner.so_seqid, arg_OPEN4.seqid);
+          if(isFullDebug(COMPONENT_NFS_V4_LOCK))
+            {
+              char str[HASHTABLE_DISPLAY_STRLEN];
+
+              display_nfs4_owner(powner, str);
+
+              LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                           "A previously known open_owner is used:%p %s arg_OPEN4.seqid=%u",
+                           powner, str, arg_OPEN4.seqid);
+            }
 
           if(arg_OPEN4.seqid == 0)
             {

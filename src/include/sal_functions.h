@@ -162,6 +162,7 @@ int nfs4_is_lease_expired(cache_entry_t * pentry);
 int display_state_id_val(hash_buffer_t * pbuff, char *str);
 int display_state_id_key(hash_buffer_t * pbuff, char *str);
 
+int display_nfs4_owner(state_owner_t *powner, char *str);
 int display_nfs4_owner_val(hash_buffer_t * pbuff, char *str);
 int display_nfs4_owner_key(hash_buffer_t * pbuff, char *str);
 int compare_nfs4_owner(hash_buffer_t * buff1, hash_buffer_t * buff2);
