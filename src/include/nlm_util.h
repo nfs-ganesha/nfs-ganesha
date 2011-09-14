@@ -70,9 +70,10 @@ int nlm_process_parameters(struct svc_req        * preq,
                            state_owner_t        ** ppowner,
                            state_block_data_t   ** ppblock_data);
 
-void nlm_process_conflict(nlm4_holder       * nlm_holder,
-                          state_owner_t     * holder,
-                          state_lock_desc_t * conflict);
+void nlm_process_conflict(nlm4_holder          * nlm_holder,
+                          state_owner_t        * holder,
+                          state_lock_desc_t    * conflict,
+                          cache_inode_client_t * pclient);
 
 nlm4_stats nlm_convert_state_error(state_status_t status);
 

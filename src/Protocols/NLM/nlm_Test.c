@@ -139,7 +139,8 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
         {
           nlm_process_conflict(&pres->res_nlm4test.test_stat.nlm4_testrply_u.holder,
                                holder,
-                               &conflict);
+                               &conflict,
+                               pclient);
         }
     }
   else
@@ -152,7 +153,7 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
 
   /* Release the NLM Client and NLM Owner references we have */
   dec_nlm_client_ref(nlm_client);
-  dec_nlm_owner_ref(nlm_owner);
+  dec_state_owner_ref(nlm_owner, pclient);
 
   LogDebug(COMPONENT_NLM,
            "REQUEST RESULT: nlm4_Test %s",

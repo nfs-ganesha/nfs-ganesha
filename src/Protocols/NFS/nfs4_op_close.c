@@ -186,9 +186,9 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   Copy_nfs4_state_req(popen_owner, arg_CLOSE4.seqid, op, data, resp, tag);
                 
   /* File is closed, release the corresponding state */
-  if(state_del_by_key(arg_CLOSE4.open_stateid.other,
-                      data->pclient,
-                      &state_status) != STATE_SUCCESS)
+  if(state_del(pstate_found,
+               data->pclient,
+               &state_status) != STATE_SUCCESS)
     {
       LogDebug(COMPONENT_STATE,
                "CLOSE failed to release stateid error %s",

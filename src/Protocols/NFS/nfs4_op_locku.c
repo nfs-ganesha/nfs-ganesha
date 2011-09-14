@@ -231,17 +231,6 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_LOCKU4.status;
     }
 
-  /* Remove the state associated with the lock */
-  // TODO FSF: this is not right, we need to keep the stateid, but we need to figure out right time to free it
-#if 0
-  if(state_del(pstate_found,
-               data->pclient, &state_status) != STATE_SUCCESS)
-    {
-      res_LOCKU4.status = nfs4_Errno_state(state_status);
-      return res_LOCKU4.status;
-    }
-#endif
-
   /* Successful exit */
   res_LOCKU4.status = NFS4_OK;
 

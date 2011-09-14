@@ -711,137 +711,40 @@ int nlm_owner_Set(state_owner_t * pkey,
   return 1;
 }                               /* nlm_owner_Set */
 
-static int Hash_del_nlm_owner_ref(hash_buffer_t *buffval)
+void remove_nlm_owner(cache_inode_client_t * pclient,
+                      state_owner_t        * powner,
+                      const char           * str)
 {
-  int rc;
-  state_owner_t *powner = (state_owner_t *)(buffval->pdata);
+  hash_buffer_t buffkey, old_key, old_value;
 
-  P(powner->so_mutex);
+  buffkey.pdata = (caddr_t) powner;
+  buffkey.len = sizeof(*powner);
 
-  powner->so_refcount--;
-
-  if(isFullDebug(COMPONENT_STATE))
+  switch(HashTable_DelRef(ht_nlm_owner, &buffkey, &old_key, &old_value, Hash_del_state_owner_ref))
     {
-      char str[HASHTABLE_DISPLAY_STRLEN];
+      case HASHTABLE_SUCCESS:
+        LogFullDebug(COMPONENT_STATE,
+                     "Free %s",
+                     str);
+        dec_nlm_client_ref(powner->so_owner.so_nlm_owner.so_client);
+        Mem_Free(old_key.pdata);
+        Mem_Free(old_value.pdata);
+        break;
 
-      display_nlm_owner(powner, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "Decrement refcount for NLM Owner powner=%p {%s}, refcount = %d",
-                   powner, str, powner->so_refcount);
+      case HASHTABLE_NOT_DELETED:
+        /* ref count didn't end up at 0, don't free. */
+        LogDebug(COMPONENT_STATE,
+                 "HashTable_DelRef didn't reduce refcount to 0 for %s",
+                  str);
+        break;
+
+      default:
+        /* some problem occurred */
+        LogDebug(COMPONENT_STATE,
+                 "HashTable_DelRef failed for %s",
+                  str);
+        break;
     }
-
-  rc = powner->so_refcount;
-
-  V(powner->so_mutex);  
-
-  return rc;
-}
-
-static void Hash_inc_owner_ref(hash_buffer_t *buffval)
-{
-  state_owner_t *powner = (state_owner_t *)(buffval->pdata);
-
-  P(powner->so_mutex);
-  powner->so_refcount++;
-
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nlm_owner(powner, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "Increment refcount for NLM Owner powner=%p {%s}, refcount = %d",
-                   powner, str, powner->so_refcount);
-    }
-
-  V(powner->so_mutex);  
-}
-
-void inc_nlm_owner_ref_locked(state_owner_t *powner)
-{
-  powner->so_refcount++;
-
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[HASHTABLE_DISPLAY_STRLEN];
-
-      display_nlm_owner(powner, str);
-      LogFullDebug(COMPONENT_STATE,
-                   "Increment refcount for NLM Owner powner=%p {%s}, refcount = %d",
-                   powner, str, powner->so_refcount);
-    }
-
-  V(powner->so_mutex);
-}
-
-void inc_nlm_owner_ref(state_owner_t *powner)
-{
-  P(powner->so_mutex);
-
-  inc_nlm_owner_ref_locked(powner);
-}
-
-void dec_nlm_owner_ref_locked(state_owner_t *powner)
-{
-  bool_t remove = FALSE;
-  char   str[HASHTABLE_DISPLAY_STRLEN];
-
-  if(isFullDebug(COMPONENT_STATE))
-    display_nlm_owner(powner, str);
-
-  if(powner->so_refcount > 1)
-    {
-      powner->so_refcount--;
-
-      LogFullDebug(COMPONENT_STATE,
-                   "Decrement refcount for NLM Owner powner=%p {%s}, refcount = %d",
-                   powner, str, powner->so_refcount);
-    }
-  else
-    remove = TRUE;
-
-  V(powner->so_mutex);
-
-  if(remove)
-    {
-      hash_buffer_t buffkey, old_key, old_value;
-
-      buffkey.pdata = (caddr_t) powner;
-      buffkey.len = sizeof(*powner);
-
-      switch(HashTable_DelRef(ht_nlm_owner, &buffkey, &old_key, &old_value, Hash_del_nlm_owner_ref))
-        {
-          case HASHTABLE_SUCCESS:
-            LogFullDebug(COMPONENT_STATE,
-                         "Free NLM Owner powner=%p {%s}, refcount = %d",
-                         powner, str, powner->so_refcount);
-            dec_nlm_client_ref(powner->so_owner.so_nlm_owner.so_client);
-            Mem_Free(old_key.pdata);
-            Mem_Free(old_value.pdata);
-            break;
-
-          case HASHTABLE_NOT_DELETED:
-            /* ref count didn't end up at 0, don't free. */
-            LogDebug(COMPONENT_STATE,
-                     "HashTable_DelRef didn't reduce refcount to 0 for powner=%p {%s}, refcount = %d",
-                      powner, str, powner->so_refcount);
-            break;
-
-          default:
-            /* some problem occurred */
-            LogDebug(COMPONENT_STATE,
-                     "HashTable_DelRef failed for powner=%p {%s}",
-                      powner, str);
-            break;
-        }
-    }
-}
-
-void dec_nlm_owner_ref(state_owner_t *powner)
-{
-  P(powner->so_mutex);
-
-  dec_nlm_owner_ref_locked(powner);
 }
 
 /**
@@ -874,7 +777,10 @@ int nlm_owner_Get_Pointer(state_owner_t  * pkey,
                    "KEY {%s}", str);
     }
 
-  if(HashTable_GetRef(ht_nlm_owner, &buffkey, &buffval, Hash_inc_owner_ref) != HASHTABLE_SUCCESS)
+  if(HashTable_GetRef(ht_nlm_owner,
+                      &buffkey,
+                      &buffval,
+                      Hash_inc_state_owner_ref) != HASHTABLE_SUCCESS)
     {
       LogFullDebug(COMPONENT_STATE,
                    "NOTFOUND");

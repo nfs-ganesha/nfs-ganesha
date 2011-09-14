@@ -83,6 +83,16 @@
 
 #define STATE_LOCK_OFFSET_EOF 0xFFFFFFFFFFFFFFFFLL
 
+/* Forward references to types */
+typedef struct state_nfs4_owner_t   state_nfs4_owner_t;
+typedef struct state_owner_t        state_owner_t;
+typedef struct state_t              state_t;
+typedef struct nfs_argop4_state     nfs_argop4_state;
+typedef struct state_lock_entry_t   state_lock_entry_t;
+#ifdef _USE_BLOCKING_LOCKS
+typedef struct state_cookie_entry_t state_cookie_entry_t;
+#endif
+
 typedef struct nfs_state_id_param__
 {
   hash_parameter_t hash_param;
@@ -104,17 +114,16 @@ typedef enum state_type_t
 
 typedef struct state_share__
 {
-  char oexcl_verifier[8];                                                /**< Verifier to use when opening a file as EXCLUSIVE4    */
-  unsigned int share_access;                                             /**< The NFSv4 Share Access state                         */
-  unsigned int share_deny;                                               /**< The NFSv4 Share Deny state                           */
-  unsigned int lockheld;                                                 /**< How many locks did I open ?                          */
+  char           oexcl_verifier[8]; /**< Verifier to use when opening a file as EXCLUSIVE4     */
+  unsigned int   share_access;      /**< The NFSv4 Share Access state                          */
+  unsigned int   share_deny;        /**< The NFSv4 Share Deny state                            */
+  state_t      * share_lockstate;   /**< The latest lock state associated with this open state */
+  unsigned int   lockheld;          /**< How many locks did I open ?                           */
 } state_share_t;
-
-typedef struct state_t state_t;
 
 typedef struct state_lock_t
 {
-  state_t *popenstate;                                 /**< The related open-stateid                             */
+  state_t * popenstate;        /**< The related open-stateid */
 } state_lock_t;
 
 typedef struct state_deleg__
@@ -130,6 +139,32 @@ typedef struct state_layout__
   int nothing;
 #endif
 } state_layout_t;
+
+typedef union state_data_t
+{
+  state_share_t  share;
+  state_lock_t   lock;
+  state_deleg_t  deleg;
+  state_layout_t layout;
+} state_data_t;
+
+/* The value 12 is fixed by RFC3530 */
+#define OTHERSIZE 12
+
+extern char all_zero[OTHERSIZE];
+extern char all_one[OTHERSIZE];
+
+struct state_t
+{
+  state_type_t    state_type;
+  state_data_t    state_data;
+  u_int32_t       state_seqid;               /**< The NFSv4 Sequence id                      */
+  char            stateid_other[OTHERSIZE];  /**< "Other" part of state id, used as hash key */
+  state_owner_t * state_powner;              /**< State Owner related to this state           */
+  state_t       * state_next;                /**< Next entry in the state list               */
+  state_t       * state_prev;                /**< Prev entry in the state list               */
+  cache_entry_t * state_pentry;              /**< Related pentry                             */
+};
 
 typedef struct state_nfs4_owner_name_t
 {
@@ -172,9 +207,6 @@ typedef struct state_nlm_owner_t
 } state_nlm_owner_t;
 #endif
 
-typedef struct state_nfs4_owner_t state_nfs4_owner_t;
-typedef struct state_owner_t      state_owner_t;
-
 struct nfs_argop4_state
 {
   nfs_opnum4 argop;
@@ -188,7 +220,6 @@ struct nfs_argop4_state
     OPEN_DOWNGRADE4args opopen_downgrade;
   } nfs_argop4_u;
 };
-typedef struct nfs_argop4_state nfs_argop4_state;
 
 struct state_nfs4_owner_t
 {
@@ -221,32 +252,6 @@ struct state_owner_t
 };
 
 extern state_owner_t unknown_owner;
-
-typedef union state_data_t
-{
-  state_share_t  share;
-  state_lock_t   lock;
-  state_deleg_t  deleg;
-  state_layout_t layout;
-} state_data_t;
-
-/* The value 12 is fixed by RFC3530 */
-#define OTHERSIZE 12
-
-extern char all_zero[OTHERSIZE];
-extern char all_one[OTHERSIZE];
-
-struct state_t
-{
-  state_type_t    state_type;
-  state_data_t    state_data;
-  u_int32_t       state_seqid;               /**< The NFSv4 Sequence id                      */
-  char            stateid_other[OTHERSIZE];  /**< "Other" part of state id, used as hash key */
-  state_owner_t * state_powner;              /**< State Owner related to this state           */
-  state_t       * state_next;                /**< Next entry in the state list               */
-  state_t       * state_prev;                /**< Prev entry in the state list               */
-  cache_entry_t * state_pentry;              /**< Related pentry                             */
-};
 
 /*
  * Possible errors 
@@ -321,12 +326,6 @@ typedef struct state_lock_desc_t
   uint64_t          sld_offset;
   uint64_t          sld_length;
 } state_lock_desc_t;
-
-typedef struct state_lock_entry_t   state_lock_entry_t;
-
-#ifdef _USE_BLOCKING_LOCKS
-typedef struct state_cookie_entry_t state_cookie_entry_t;
-#endif
 
 /* The granted call back is responsible for acquiring a reference to
  * the lock entry if needed.

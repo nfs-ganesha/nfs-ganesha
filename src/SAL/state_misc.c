@@ -686,3 +686,156 @@ nfsstat2 nfs2_Errno_state(state_status_t error)
 
   return nfserror;
 }                               /* nfs2_Errno_state */
+
+int DisplayOwner(state_owner_t *powner, char *buf)
+{
+  char *tmp = buf;
+
+  if(powner != NULL)
+    switch(powner->so_type)
+      {
+#ifdef _USE_NLM
+        case STATE_LOCK_OWNER_NLM:
+          tmp += sprintf(buf, "STATE_LOCK_OWNER_NLM %p: ", powner);
+          return (tmp-buf) + display_nlm_owner(powner, tmp);
+          break;
+#endif
+
+        case STATE_LOCK_OWNER_NFSV4:
+          tmp += sprintf(buf, "STATE_LOCK_OWNER_NFSV4 %p: ", powner);
+          return (tmp-buf) + display_nfs4_owner(powner, tmp);
+          break;
+
+        case STATE_LOCK_OWNER_UNKNOWN:
+          return sprintf(buf,
+                         "STATE_LOCK_OWNER_UNKNOWN %p: refcount = %d",
+                         powner, powner->so_refcount);
+          break;
+    }
+
+  return sprintf(buf, "N/A");
+}
+
+int Hash_del_state_owner_ref(hash_buffer_t *buffval)
+{
+  int rc;
+  state_owner_t *powner = (state_owner_t *)(buffval->pdata);
+
+  P(powner->so_mutex);
+
+  powner->so_refcount--;
+
+  if(isFullDebug(COMPONENT_STATE))
+    {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      DisplayOwner(powner, str);
+      LogFullDebug(COMPONENT_STATE,
+                   "Decrement refcount for %s",
+                   str);
+    }
+
+  rc = powner->so_refcount;
+
+  V(powner->so_mutex);  
+
+  return rc;
+}
+
+void Hash_inc_state_owner_ref(hash_buffer_t *buffval)
+{
+  state_owner_t *powner = (state_owner_t *)(buffval->pdata);
+
+  P(powner->so_mutex);
+  powner->so_refcount++;
+
+  if(isFullDebug(COMPONENT_STATE))
+    {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      DisplayOwner(powner, str);
+      LogFullDebug(COMPONENT_STATE,
+                   "Increment refcount for %s",
+                   str);
+    }
+
+  V(powner->so_mutex);  
+}
+
+void inc_state_owner_ref_locked(state_owner_t *powner)
+{
+  powner->so_refcount++;
+
+  if(isFullDebug(COMPONENT_STATE))
+    {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      DisplayOwner(powner, str);
+      LogFullDebug(COMPONENT_STATE,
+                   "Increment refcount for %s",
+                   str);
+    }
+
+  V(powner->so_mutex);
+}
+
+void inc_state_owner_ref(state_owner_t *powner)
+{
+  P(powner->so_mutex);
+
+  inc_state_owner_ref_locked(powner);
+}
+
+void dec_state_owner_ref_locked(state_owner_t        * powner,
+                                cache_inode_client_t * pclient)
+{
+  bool_t remove = FALSE;
+  char   str[HASHTABLE_DISPLAY_STRLEN];
+
+  if(isDebug(COMPONENT_STATE))
+    DisplayOwner(powner, str);
+
+  if(powner->so_refcount > 1)
+    {
+      powner->so_refcount--;
+
+      LogFullDebug(COMPONENT_STATE,
+                   "Decrement refcount for %s",
+                   str);
+    }
+  else
+    remove = TRUE;
+
+  V(powner->so_mutex);
+
+  if(remove)
+    {
+      switch(powner->so_type)
+        {
+#ifdef _USE_NLM
+          case STATE_LOCK_OWNER_NLM:
+            remove_nlm_owner(pclient, powner, str);
+            break;
+#endif
+
+          case STATE_LOCK_OWNER_NFSV4:
+            remove_nfs4_owner(pclient, powner, str);
+            break;
+
+          case STATE_LOCK_OWNER_UNKNOWN:
+            LogDebug(COMPONENT_STATE,
+                     "Unexpected removal of %s",
+                     str);
+            break;
+        }
+    }
+}
+
+void dec_state_owner_ref(state_owner_t        * powner,
+                         cache_inode_client_t * pclient)
+{
+  P(powner->so_mutex);
+
+  dec_state_owner_ref_locked(powner, pclient);
+}
+

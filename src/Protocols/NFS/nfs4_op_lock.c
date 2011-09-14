@@ -433,7 +433,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
        * which has itself a previously made stateid */
       if(nfs4_owner_Get_Pointer(&owner_name, &plock_owner))
         {
-          /* Lock owner already existsc, check lock_seqid */
+          /* Lock owner already existsc, check lock_seqid if it's not 0 */
           if(!Check_nfs4_seqid(plock_owner,
                                arg_LOCK4.locker.locker4_u.open_owner.lock_seqid,
                                op,
@@ -496,6 +496,15 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
           return res_LOCK4.status;
         }
+
+      if(pstate_open->state_data.share.share_lockstate != NULL)
+        LogDebug(COMPONENT_STATE,
+                 "Open state %p has non-NULL Lock state %p replacing with %p",
+                 pstate_open,
+                 pstate_open->state_data.share.share_lockstate,
+                 plock_state);
+
+      pstate_open->state_data.share.share_lockstate = plock_state;
     }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
 
   /* Now we have a lock owner and a stateid.
@@ -518,7 +527,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
           Process_nfs4_conflict(&res_LOCK4.LOCK4res_u.denied,
                                 conflict_owner,
-                                &conflict_desc);
+                                &conflict_desc,
+                                data->pclient);
         }
 
       LogDebug(COMPONENT_NFS_V4_LOCK,
@@ -541,6 +551,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
             LogDebug(COMPONENT_NFS_V4_LOCK,
                      "destroy_nfs4_owner failed");
 
+          pstate_open->state_data.share.share_lockstate = NULL;
         }
 
       /* Save the response in the lock or open owner */

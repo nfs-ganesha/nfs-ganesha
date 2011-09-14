@@ -58,6 +58,18 @@ nfsstat4 nfs4_Errno_state(state_status_t error);
 nfsstat3 nfs3_Errno_state(state_status_t error);
 nfsstat2 nfs2_Errno_state(state_status_t error);
 
+int DisplayOwner(state_owner_t *powner, char *buf);
+void Hash_inc_state_owner_ref(hash_buffer_t *buffval);
+int Hash_del_state_owner_ref(hash_buffer_t *buffval);
+void inc_state_owner_ref_locked(state_owner_t *powner);
+void inc_state_owner_ref(state_owner_t *powner);
+
+void dec_state_owner_ref_locked(state_owner_t        * powner,
+                                cache_inode_client_t * pclient);
+
+void dec_state_owner_ref(state_owner_t        * powner,
+                         cache_inode_client_t * pclient);
+
 /******************************************************************************
  *
  * NLM State functions
@@ -87,10 +99,10 @@ unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
 state_nlm_client_t *get_nlm_client(care_t care, const char * caller_name);
 void nlm_client_PrintAll(void);
 
-void inc_nlm_owner_ref_locked(state_owner_t * powner);
-void inc_nlm_owner_ref(state_owner_t * powner);
-void dec_nlm_owner_ref_locked(state_owner_t * powner);
-void dec_nlm_owner_ref(state_owner_t * powner);
+void remove_nlm_owner(cache_inode_client_t * pclient,
+                      state_owner_t        * powner,
+                      const char           * str);
+
 int display_nlm_owner(state_owner_t * pkey, char * str);
 int display_nlm_owner_val(hash_buffer_t * pbuff, char * str);
 int display_nlm_owner_key(hash_buffer_t * pbuff, char * str);
@@ -162,6 +174,10 @@ int nfs4_is_lease_expired(cache_entry_t * pentry);
 int display_state_id_val(hash_buffer_t * pbuff, char *str);
 int display_state_id_key(hash_buffer_t * pbuff, char *str);
 
+void remove_nfs4_owner(cache_inode_client_t * pclient,
+                       state_owner_t        * powner,
+                       const char           * str);
+
 int display_nfs4_owner(state_owner_t *powner, char *str);
 int display_nfs4_owner_val(hash_buffer_t * pbuff, char *str);
 int display_nfs4_owner_key(hash_buffer_t * pbuff, char *str);
@@ -192,9 +208,10 @@ state_status_t destroy_nfs4_owner(cache_inode_client_t    * pclient,
 
 int Init_nfs4_owner(nfs4_owner_parameter_t param);
 
-void Process_nfs4_conflict(LOCK4denied       * denied,    /* NFS v4 LOck4denied structure to fill in */
-                           state_owner_t     * holder,    /* owner that holds conflicting lock */
-                           state_lock_desc_t * conflict); /* description of conflicting lock */
+void Process_nfs4_conflict(LOCK4denied          * denied,    /* NFS v4 LOck4denied structure to fill in */
+                           state_owner_t        * holder,    /* owner that holds conflicting lock */
+                           state_lock_desc_t    * conflict,  /* description of conflicting lock */
+                           cache_inode_client_t * pclient);
 
 void Release_nfs4_denied(LOCK4denied * denied);
 void Copy_nfs4_denied(LOCK4denied * denied_dst, LOCK4denied * denied_src);
@@ -262,6 +279,7 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
 state_status_t state_find_grant(void                  * pcookie,
                                 int                     cookie_size,
                                 state_cookie_entry_t ** ppcookie_entry,
+                                cache_inode_client_t  * pclient,
                                 state_status_t        * pstatus);
 
 void state_complete_grant(fsal_op_context_t    * pcontext,
@@ -284,12 +302,6 @@ state_status_t state_release_grant(fsal_op_context_t    * pcontext,
                                    cache_inode_client_t * pclient,
                                    state_status_t       * pstatus);
 #endif
-
-/* Call this to release the lock owner reference resulting from a conflicting
- * lock holder being returned.
- */
- 
-void state_release_lock_owner(state_owner_t *powner);
 
 state_status_t state_test(cache_entry_t        * pentry,
                           fsal_op_context_t    * pcontext,

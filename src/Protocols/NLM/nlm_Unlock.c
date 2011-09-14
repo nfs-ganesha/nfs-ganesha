@@ -138,7 +138,7 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
 
   /* Release the NLM Client and NLM Owner references we have */
   dec_nlm_client_ref(nlm_client);
-  dec_nlm_owner_ref(nlm_owner);
+  dec_state_owner_ref(nlm_owner, pclient);
 
   LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
            lock_result_str(pres->res_nlm4.stat.stat));

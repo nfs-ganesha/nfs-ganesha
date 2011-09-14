@@ -170,6 +170,47 @@ unsigned long nfs4_owner_rbt_hash_func(hash_parameter_t * p_hparam,
   return res;
 }                               /* state_id_rbt_hash_func */
 
+void remove_nfs4_owner(cache_inode_client_t * pclient,
+                       state_owner_t        * powner,
+                       const char           * str)
+{
+  hash_buffer_t buffkey, old_key, old_value;
+
+  buffkey.pdata = (caddr_t) powner;
+  buffkey.len   = sizeof(*powner);
+
+  switch(HashTable_DelRef(ht_nfs4_owner, &buffkey, &old_key, &old_value, Hash_del_state_owner_ref))
+    {
+      case HASHTABLE_SUCCESS:
+        LogFullDebug(COMPONENT_STATE,
+                     "Free %s",
+                     str);
+
+        if(powner->so_owner.so_nfs4_owner.so_related_owner != NULL)
+          dec_state_owner_ref(powner->so_owner.so_nfs4_owner.so_related_owner, pclient);
+
+        /* Release the owner_name (key) and owner (data) back to appropriate pools */
+        nfs4_Compound_FreeOne(&powner->so_owner.so_nfs4_owner.so_resp);
+        ReleaseToPool(old_value.pdata, &pclient->pool_state_owner);
+        ReleaseToPool(old_key.pdata, &pclient->pool_nfs4_owner_name);
+        break;
+
+      case HASHTABLE_NOT_DELETED:
+        /* ref count didn't end up at 0, don't free. */
+        LogDebug(COMPONENT_STATE,
+                 "HashTable_DelRef didn't reduce refcount to 0 for %s",
+                  str);
+        break;
+
+      default:
+        /* some problem occurred */
+        LogDebug(COMPONENT_STATE,
+                 "HashTable_DelRef failed for %s",
+                  str);
+        break;
+    }
+}
+
 /**
  *
  * nfs4_Init_nfs4_owner: Init the hashtable for NFS Open Owner cache.
@@ -276,7 +317,10 @@ int nfs4_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
   buffkey.pdata = (caddr_t) pname;
   buffkey.len = sizeof(state_nfs4_owner_name_t);
 
-  if(HashTable_Get(ht_nfs4_owner, &buffkey, &buffval) != HASHTABLE_SUCCESS)
+  if(HashTable_GetRef(ht_nfs4_owner,
+                      &buffkey,
+                      &buffval,
+                      Hash_inc_state_owner_ref) != HASHTABLE_SUCCESS)
     {
       *powner = NULL;
       LogFullDebug(COMPONENT_STATE,
@@ -409,9 +453,10 @@ state_status_t destroy_nfs4_owner(cache_inode_client_t    * pclient,
     return STATE_HASH_TABLE_ERROR;
 }
 
-void Process_nfs4_conflict(LOCK4denied       * denied,    /* NFS v4 LOck4denied structure to fill in */
-                           state_owner_t     * holder,    /* owner that holds conflicting lock */
-                           state_lock_desc_t * conflict)  /* description of conflicting lock */
+void Process_nfs4_conflict(LOCK4denied          * denied,    /* NFS v4 LOck4denied structure to fill in */
+                           state_owner_t        * holder,    /* owner that holds conflicting lock */
+                           state_lock_desc_t    * conflict,  /* description of conflicting lock */
+                           cache_inode_client_t * pclient)
 {
   /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
   denied->offset = conflict->sld_offset;
@@ -448,7 +493,7 @@ void Process_nfs4_conflict(LOCK4denied       * denied,    /* NFS v4 LOck4denied 
 
   /* Release any lock owner reference passed back from SAL */
   if(holder != NULL)
-    state_release_lock_owner(holder);
+    dec_state_owner_ref(holder, pclient);
 }
 
 void Release_nfs4_denied(LOCK4denied * denied)

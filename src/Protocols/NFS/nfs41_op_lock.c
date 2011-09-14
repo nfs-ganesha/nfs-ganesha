@@ -434,7 +434,8 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
           Process_nfs4_conflict(&res_LOCK4.LOCK4res_u.denied,
                                 conflict_owner,
-                                &conflict_desc);
+                                &conflict_desc,
+                                data->pclient);
         }
 
       LogDebug(COMPONENT_NFS_V4_LOCK,

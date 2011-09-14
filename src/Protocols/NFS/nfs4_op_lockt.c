@@ -237,7 +237,8 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
           Process_nfs4_conflict(&res_LOCKT4.LOCKT4res_u.denied,
                                 conflict_owner,
-                                &conflict_desc);
+                                &conflict_desc,
+                                data->pclient);
         }
 
       res_LOCKT4.status = nfs4_Errno_state(state_status);

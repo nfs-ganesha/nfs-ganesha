@@ -75,6 +75,7 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
   if(state_find_grant(arg->cookie.n_bytes,
                       arg->cookie.n_len,
                       &cookie_entry,
+                      pclient,
                       &state_status) != STATE_SUCCESS)
     {
       /* This must be an old NLM_GRANTED_RES */

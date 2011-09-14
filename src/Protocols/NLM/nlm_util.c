@@ -257,6 +257,7 @@ static void nlm4_send_grant_msg(nlm_async_queue_t *arg)
   if(state_find_grant(arg->nlm_async_args.nlm_async_grant.cookie.n_bytes,
                       arg->nlm_async_args.nlm_async_grant.cookie.n_len,
                       &cookie_entry,
+                      &nlm_async_cache_inode_client,
                       &state_status) != STATE_SUCCESS)
     {
       /* This must be an old NLM_GRANTED_RES */
@@ -405,9 +406,10 @@ int nlm_process_parameters(struct svc_req        * preq,
   return -1;
 }
 
-void nlm_process_conflict(nlm4_holder       * nlm_holder,
-                          state_owner_t     * holder,
-                          state_lock_desc_t * conflict)
+void nlm_process_conflict(nlm4_holder          * nlm_holder,
+                          state_owner_t        * holder,
+                          state_lock_desc_t    * conflict,
+                          cache_inode_client_t * pclient)
 {
   if(conflict != NULL)
     {
@@ -447,7 +449,7 @@ void nlm_process_conflict(nlm4_holder       * nlm_holder,
 
   /* Release any lock owner reference passed back from SAL */
   if(holder != NULL)
-    state_release_lock_owner(holder);
+    dec_state_owner_ref(holder, pclient);
 }
 
 nlm4_stats nlm_convert_state_error(state_status_t status)
