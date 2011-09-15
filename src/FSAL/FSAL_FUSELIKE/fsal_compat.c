@@ -16,6 +16,7 @@
 #include "fsal.h"
 #include "fsal_glue.h"
 #include "fsal_internal.h"
+#include "FSAL/common_methods.h"
 
 fsal_functions_t fsal_fuse_functions = {
   .fsal_access = FUSEFSAL_access,
@@ -44,12 +45,12 @@ fsal_functions_t fsal_fuse_functions = {
   .fsal_init = FUSEFSAL_Init,
   .fsal_terminate = FUSEFSAL_terminate,
   .fsal_test_access = FUSEFSAL_test_access,
-  .fsal_setattr_access = FUSEFSAL_setattr_access,
-  .fsal_rename_access = FUSEFSAL_rename_access,
-  .fsal_create_access = FUSEFSAL_create_access,
-  .fsal_unlink_access = FUSEFSAL_unlink_access,
-  .fsal_link_access = FUSEFSAL_link_access,
-  .fsal_merge_attrs = FUSEFSAL_merge_attrs,
+  .fsal_setattr_access = COMMON_setattr_access_notsupp,
+  .fsal_rename_access = COMMON_rename_access,
+  .fsal_create_access = COMMON_create_access,
+  .fsal_unlink_access = COMMON_unlink_access,
+  .fsal_link_access = COMMON_link_access,
+  .fsal_merge_attrs = COMMON_merge_attrs,
   .fsal_lookup = FUSEFSAL_lookup,
   .fsal_lookuppath = FUSEFSAL_lookupPath,
   .fsal_lookupjunction = FUSEFSAL_lookupJunction,
