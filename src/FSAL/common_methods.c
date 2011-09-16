@@ -539,3 +539,51 @@ fsal_status_t COMMON_getlock_notsupp(fsal_file_t * obj_handle, fsal_lockdesc_t *
 {
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlock);
 }
+
+/* Object Resources
+ */
+
+/**
+ * FSAL_CleanObjectResources:
+ * This function cleans remanent internal resources
+ * that are kept for a given FSAL handle.
+ *
+ * \param in_fsal_handle (input):
+ *        The handle whose the resources are to be cleaned.
+ */
+
+fsal_status_t COMMON_CleanObjectResources(fsal_handle_t * in_fsal_handle)
+{
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanObjectResources);
+
+}
+
+/* operation by file id.  PROXY specific.
+ */
+
+fsal_status_t COMMON_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
+                                  fsal_u64_t fileid,    /* IN */
+                                  fsal_op_context_t * p_context,        /* IN */
+                                  fsal_openflags_t openflags,   /* IN */
+                                  fsal_file_t * file_descriptor,        /* OUT */
+                                  fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
+{
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
+}
+
+fsal_status_t COMMON_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
+                                   fsal_u64_t fileid)
+{
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
+}
+
+fsal_status_t COMMON_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
+                                 fsal_u64_t fileid,     /* IN */
+                                 fsal_op_context_t * p_context, /* IN */
+                                 fsal_path_t * p_local_path,    /* IN */
+                                 fsal_rcpflag_t transfer_opt /* IN */ )
+{
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
+}
+

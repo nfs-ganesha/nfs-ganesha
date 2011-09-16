@@ -68,3 +68,21 @@ fsal_status_t COMMON_changelock_notsupp(fsal_lockdesc_t * lock_descriptor,      
 fsal_status_t COMMON_unlock_notsupp(fsal_file_t * obj_handle, fsal_lockdesc_t *ldesc);
 
 fsal_status_t COMMON_getlock_notsupp(fsal_file_t * obj_handle, fsal_lockdesc_t *ldesc);
+
+fsal_status_t COMMON_CleanObjectResources(fsal_handle_t * in_fsal_handle);
+
+fsal_status_t COMMON_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
+				    fsal_u64_t fileid,    /* IN */
+				    fsal_op_context_t * p_context,        /* IN */
+				    fsal_openflags_t openflags,   /* IN */
+				    fsal_file_t * file_descriptor,        /* OUT */
+				    fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ );
+
+fsal_status_t COMMON_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
+				     fsal_u64_t fileid);
+
+fsal_status_t COMMON_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
+				   fsal_u64_t fileid,     /* IN */
+				   fsal_op_context_t * p_context, /* IN */
+				   fsal_path_t * p_local_path,    /* IN */
+				   fsal_rcpflag_t transfer_opt /* IN */ );
