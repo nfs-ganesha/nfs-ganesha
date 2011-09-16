@@ -232,18 +232,6 @@ fsal_status_t LUSTREFSAL_lookupJunction(fsal_handle_t * p_junction_handle,      
                                         fsal_attrib_list_t *
                                         p_fsroot_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t LUSTREFSAL_lock(fsal_file_t * obj_handle,
-                              fsal_lockdesc_t * ldesc, fsal_boolean_t blocking);
-
-fsal_status_t LUSTREFSAL_changelock(fsal_lockdesc_t * lock_descriptor,    /* IN / OUT */
-                                    fsal_lockparam_t * lock_info /* IN */ );
-
-fsal_status_t LUSTREFSAL_unlock(fsal_file_t * obj_handle,
-                                fsal_lockdesc_t * ldesc);
-
-fsal_status_t LUSTREFSAL_getlock(fsal_file_t * obj_handle,
-                                 fsal_lockdesc_t * ldesc);
-
 fsal_status_t LUSTREFSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle);
 
 fsal_status_t LUSTREFSAL_rcp(fsal_handle_t * filehandle,  /* IN */

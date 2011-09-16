@@ -244,16 +244,6 @@ fsal_status_t FUSEFSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* I
                                       fsal_attrib_list_t *
                                       p_fsroot_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t FUSEFSAL_lock(fsal_file_t * obj_handle,
-                            fsal_lockdesc_t * ldesc, fsal_boolean_t blocking);
-
-fsal_status_t FUSEFSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-                                  fsal_lockparam_t * lock_info /* IN */ );
-
-fsal_status_t FUSEFSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc);
-
-fsal_status_t FUSEFSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc);
-
 fsal_status_t FUSEFSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle);
 
 fsal_status_t FUSEFSAL_rcp(fsal_handle_t * filehandle,      /* IN */

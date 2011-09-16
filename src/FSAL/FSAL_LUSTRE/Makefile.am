@@ -16,7 +16,6 @@ libfsallustre_la_SOURCES = fsal_access.c      \
                           fsal_compat.c      \
                           fsal_dirs.c        \
                           fsal_fsinfo.c      \
-                          fsal_lock.c        \
                           fsal_rcp.c         \
                           fsal_truncate.c    \
 			  fsal_attrs.c       \
