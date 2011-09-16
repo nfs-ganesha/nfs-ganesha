@@ -30,7 +30,6 @@ libfsalzfs_la_SOURCES = fsal_access.c   \
                         fsal_lock.c     \
                         fsal_lookup.c   \
                         fsal_objectres.c\
-                        fsal_quota.c    \
                         fsal_rcp.c      \
                         fsal_rename.c   \
                         fsal_stats.c    \

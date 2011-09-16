@@ -213,27 +213,6 @@ fsal_status_t LUSTREFSAL_test_access(fsal_op_context_t * p_context,       /* IN 
                                      fsal_accessflags_t access_type,    /* IN */
                                      fsal_attrib_list_t * p_object_attributes /* IN */ );
 
-fsal_status_t LUSTREFSAL_setattr_access(fsal_op_context_t * p_context,    /* IN */
-                                        fsal_attrib_list_t * candidate_attributes,      /* IN */
-                                        fsal_attrib_list_t * object_attributes /* IN */ );
-
-fsal_status_t LUSTREFSAL_rename_access(fsal_op_context_t * pcontext,      /* IN */
-                                       fsal_attrib_list_t * pattrsrc,   /* IN */
-                                       fsal_attrib_list_t * pattrdest) /* IN */ ;
-
-fsal_status_t LUSTREFSAL_create_access(fsal_op_context_t * pcontext,      /* IN */
-                                       fsal_attrib_list_t * pattr) /* IN */ ;
-
-fsal_status_t LUSTREFSAL_unlink_access(fsal_op_context_t * pcontext,      /* IN */
-                                       fsal_attrib_list_t * pattr) /* IN */ ;
-
-fsal_status_t LUSTREFSAL_link_access(fsal_op_context_t * pcontext,        /* IN */
-                                     fsal_attrib_list_t * pattr) /* IN */ ;
-
-fsal_status_t LUSTREFSAL_merge_attrs(fsal_attrib_list_t * pinit_attr,
-                                     fsal_attrib_list_t * pnew_attr,
-                                     fsal_attrib_list_t * presult_attr);
-
 fsal_status_t LUSTREFSAL_lookup(fsal_handle_t * p_parent_directory_handle,        /* IN */
                                 fsal_name_t * p_filename,       /* IN */
                                 fsal_op_context_t * p_context,    /* IN */
@@ -266,17 +245,6 @@ fsal_status_t LUSTREFSAL_getlock(fsal_file_t * obj_handle,
                                  fsal_lockdesc_t * ldesc);
 
 fsal_status_t LUSTREFSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle);
-
-fsal_status_t LUSTREFSAL_set_quota(fsal_path_t * pfsal_path,    /* IN */
-                                   int quota_type,      /* IN */
-                                   fsal_uid_t fsal_uid, /* IN */
-                                   fsal_quota_t * pquota,       /* IN */
-                                   fsal_quota_t * presquota);   /* OUT */
-
-fsal_status_t LUSTREFSAL_get_quota(fsal_path_t * pfsal_path,    /* IN */
-                                   int quota_type,      /* IN */
-                                   fsal_uid_t fsal_uid, /* IN */
-                                   fsal_quota_t * pquota);      /* OUT */
 
 fsal_status_t LUSTREFSAL_rcp(fsal_handle_t * filehandle,  /* IN */
                              fsal_op_context_t * p_context,       /* IN */

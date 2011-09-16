@@ -36,3 +36,24 @@ fsal_status_t COMMON_merge_attrs(fsal_attrib_list_t * pinit_attr,
 				 fsal_attrib_list_t * pnew_attr,
 				 fsal_attrib_list_t * presult_attr);
 
+#if 0
+fsal_status_t COMMON_get_quota(fsal_path_t * pfsal_path,       /* IN */
+			       int quota_type, /* IN */
+			       fsal_uid_t fsal_uid,    /* IN */
+			       fsal_quota_t * pquota);  /* OUT */
+
+fsal_status_t COMMON_set_quota(fsal_path_t * pfsal_path,       /* IN */
+			       int quota_type, /* IN */
+			       fsal_uid_t fsal_uid,    /* IN */
+			       fsal_quota_t * pquota,  /* IN */
+			       fsal_quota_t * presquota);       /* OUT */
+#endif
+
+fsal_status_t COMMON_get_quota_noquota(fsal_path_t * pfsal_path,  /* IN */
+				       int quota_type, fsal_uid_t fsal_uid,
+				       fsal_quota_t * pquota); /* OUT */
+
+fsal_status_t COMMON_set_quota_noquota(fsal_path_t * pfsal_path,  /* IN */
+				       int quota_type, fsal_uid_t fsal_uid, /* IN */
+				       fsal_quota_t * pquot,      /* IN */
+				       fsal_quota_t * presquot);   /* OUT */
