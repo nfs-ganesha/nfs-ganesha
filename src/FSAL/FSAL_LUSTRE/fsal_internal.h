@@ -232,8 +232,6 @@ fsal_status_t LUSTREFSAL_lookupJunction(fsal_handle_t * p_junction_handle,      
                                         fsal_attrib_list_t *
                                         p_fsroot_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t LUSTREFSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle);
-
 fsal_status_t LUSTREFSAL_rcp(fsal_handle_t * filehandle,  /* IN */
                              fsal_op_context_t * p_context,       /* IN */
                              fsal_path_t * p_local_path,        /* IN */

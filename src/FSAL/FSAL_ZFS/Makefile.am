@@ -28,7 +28,6 @@ libfsalzfs_la_SOURCES = fsal_access.c   \
                         fsal_internal.h \
                         fsal_local_op.c \
                         fsal_lookup.c   \
-                        fsal_objectres.c\
                         fsal_rcp.c      \
                         fsal_rename.c   \
                         fsal_stats.c    \

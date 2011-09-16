@@ -18,7 +18,7 @@ libfsalfuse_la_SOURCES = fsal_access.c  fsal_context.c  fsal_dirs.c    fsal_fsin
 			 fsal_attrs.c   fsal_convert.c  fsal_init.c      fsal_lookup.c \
 			 fsal_rename.c  fsal_symlinks.c  fsal_unlink.c fsal_local_op.c \
 			 fsal_common.c  fsal_create.c   fsal_fileop.c  fsal_internal.c \
-			 fsal_objectres.c  fsal_stats.c   fsal_tools.c     fsal_xattrs.c \
+			 fsal_stats.c   fsal_tools.c     fsal_xattrs.c \
                          fsal_common.h  fsal_convert.h  fsal_internal.h \
 			 fsal_fuse_helper.c namespace.c namespace.h \
 			 ../../include/fsal.h ../../include/fsal_types.h \

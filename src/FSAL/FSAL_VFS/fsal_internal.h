@@ -289,8 +289,6 @@ fsal_status_t VFSFSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc);
 
 fsal_status_t VFSFSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc);
 
-fsal_status_t VFSFSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle);
-
 fsal_status_t VFSFSAL_rcp(fsal_handle_t * filehandle,        /* IN */
                           fsal_op_context_t * p_context,     /* IN */
                           fsal_path_t * p_local_path,   /* IN */

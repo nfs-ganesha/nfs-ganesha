@@ -295,8 +295,6 @@ fsal_status_t XFSFSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc);
 
 fsal_status_t XFSFSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc);
 
-fsal_status_t XFSFSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle);
-
 fsal_status_t XFSFSAL_set_quota(fsal_path_t * pfsal_path,       /* IN */
                                 int quota_type, /* IN */
                                 fsal_uid_t fsal_uid,    /* IN */
