@@ -170,14 +170,13 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* Is this lock_owner known ? */
-  convert_nfs4_owner(&arg_LOCKT4.owner, &owner_name);
+  convert_nfs4_open_owner(&arg_LOCKT4.owner, &owner_name);
 
   if(!nfs4_owner_Get_Pointer(&owner_name, &plock_owner))
     {
       /* This open owner is not known yet, allocated and set up a new one */
       plock_owner = create_nfs4_owner(data->pclient,
                                       &owner_name,
-                                      &arg_LOCKT4.owner,
                                       NULL,
                                       0);
 

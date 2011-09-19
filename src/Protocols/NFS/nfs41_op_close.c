@@ -70,6 +70,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   cache_inode_status_t   cache_status;
   state_status_t         state_status;
   int                    rc;
+  struct glist_head    * glist, * glistn;
 
   memset(&res_CLOSE4, 0, sizeof(res_CLOSE4));
   resp->resop = NFS4_OP_CLOSE;
@@ -131,14 +132,26 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_CLOSE4.status;
     }
 
-#ifdef _TOTO
   /* Check is held locks remain */
-  if(pstate_found->state_data.share.lockheld > 0)
+  glist_for_each(glist, &pstate_found->state_data.share.share_lockstates)
     {
-      res_CLOSE4.status = NFS4ERR_LOCKS_HELD;
-      return res_CLOSE4.status;
+      state_t * plock_state = glist_entry(glist,
+                                          state_t,
+                                          state_data.lock.state_sharelist);
+
+      if(!glist_empty(&plock_state->state_data.lock.state_locklist))
+        {
+          res_CLOSE4.status = NFS4ERR_LOCKS_HELD;
+
+          LogDebug(COMPONENT_STATE,
+                   "NFS4 Close with existing locks");
+
+          /* Save the response in the open owner */
+          //Copy_nfs4_state_req(popen_owner, arg_CLOSE4.seqid, op, data, resp, tag);
+
+          return res_CLOSE4.status;
+        }
     }
-#endif
 
   /* Update the seqid for the open_owner */
   P(pstate_found->state_powner->so_mutex);
@@ -161,13 +174,31 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
   V_w(&data->current_entry->lock);
 
-  /* File is closed, release the corresponding state */
-  if(state_del_by_key(arg_CLOSE4.open_stateid.other,
-                      data->pclient,
-                      &state_status) != STATE_SUCCESS)
+  /* File is closed, release the corresponding lock states */
+  glist_for_each_safe(glist, glistn, &pstate_found->state_data.share.share_lockstates)
     {
-      res_CLOSE4.status = nfs4_Errno_state(state_status);
-      return res_CLOSE4.status;
+      state_t * plock_state = glist_entry(glist,
+                                          state_t,
+                                          state_data.lock.state_sharelist);
+
+      if(state_del(plock_state,
+                   data->pclient,
+                   &state_status) != STATE_SUCCESS)
+        {
+          LogDebug(COMPONENT_STATE,
+                   "CLOSE failed to release lock stateid error %s",
+                   state_err_str(state_status));
+        }
+    }
+
+  /* File is closed, release the corresponding state */
+  if(state_del(pstate_found,
+               data->pclient,
+               &state_status) != STATE_SUCCESS)
+    {
+      LogDebug(COMPONENT_STATE,
+               "CLOSE failed to release stateid error %s",
+               state_err_str(state_status));
     }
 
   memcpy(res_CLOSE4.CLOSE4res_u.open_stateid.other, arg_CLOSE4.open_stateid.other, OTHERSIZE);;

@@ -74,6 +74,10 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   state_status_t         state_status;
   state_owner_t        * popen_owner;
   const char           * tag = "CLOSE";
+  struct glist_head    * glist, * glistn;
+
+  LogDebug(COMPONENT_STATE,
+           "Entering NFS v4 CLOSE handler -----------------------------------------------------");
 
   memset(&res_CLOSE4, 0, sizeof(res_CLOSE4));
   resp->resop = NFS4_OP_CLOSE;
@@ -127,7 +131,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                               &pstate_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,
-                              "CLOSE")) != NFS4_OK)
+                              tag)) != NFS4_OK)
     {
       res_CLOSE4.status = rc;
       return res_CLOSE4.status;
@@ -148,20 +152,31 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   V(popen_owner->so_mutex);
 
   /* Check is held locks remain */
-  if(pstate_found->state_data.share.lockheld > 0)
+  glist_for_each(glist, &pstate_found->state_data.share.share_lockstates)
     {
-      res_CLOSE4.status = NFS4ERR_LOCKS_HELD;
+      state_t * plock_state = glist_entry(glist,
+                                          state_t,
+                                          state_data.lock.state_sharelist);
 
-      /* Save the response in the open owner */
-      Copy_nfs4_state_req(popen_owner, arg_CLOSE4.seqid, op, data, resp, tag);
+      if(!glist_empty(&plock_state->state_data.lock.state_locklist))
+        {
+          res_CLOSE4.status = NFS4ERR_LOCKS_HELD;
 
-      return res_CLOSE4.status;
+          LogDebug(COMPONENT_STATE,
+                   "NFS4 Close with existing locks");
+
+          /* Save the response in the open owner */
+          Copy_nfs4_state_req(popen_owner, arg_CLOSE4.seqid, op, data, resp, tag);
+
+          return res_CLOSE4.status;
+        }
     }
 
   /* Close the file in FSAL through the cache inode */
   P_w(&data->current_entry->lock);
   if(cache_inode_close(data->current_entry,
-                       data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+                       data->pclient,
+                       &cache_status) != CACHE_INODE_SUCCESS)
     {
       V_w(&data->current_entry->lock);
 
@@ -184,7 +199,24 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* Save the response in the open owner */
   Copy_nfs4_state_req(popen_owner, arg_CLOSE4.seqid, op, data, resp, tag);
-                
+
+  /* File is closed, release the corresponding lock states */
+  glist_for_each_safe(glist, glistn, &pstate_found->state_data.share.share_lockstates)
+    {
+      state_t * plock_state = glist_entry(glist,
+                                          state_t,
+                                          state_data.lock.state_sharelist);
+
+      if(state_del(plock_state,
+                   data->pclient,
+                   &state_status) != STATE_SUCCESS)
+        {
+          LogDebug(COMPONENT_STATE,
+                   "CLOSE failed to release lock stateid error %s",
+                   state_err_str(state_status));
+        }
+    }
+
   /* File is closed, release the corresponding state */
   if(state_del(pstate_found,
                data->pclient,

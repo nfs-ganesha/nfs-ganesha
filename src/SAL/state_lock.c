@@ -482,9 +482,14 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
       inc_nlm_client_ref_locked(powner->so_owner.so_nlm_owner.so_client);
     }
 #endif
-
   /* Add to list of locks owned by powner */
   P(powner->so_mutex);
+
+  if(powner->so_type == STATE_LOCK_OWNER_NFSV4 && pstate != NULL)
+    {
+      glist_add_tail(&pstate->state_data.lock.state_locklist,
+                     &new_entry->sle_state_locks);
+    }
 
   glist_add_tail(&powner->so_lock_list, &new_entry->sle_owner_locks);
 
@@ -598,6 +603,11 @@ static void remove_from_locklist(state_lock_entry_t   * lock_entry,
 
       /* Remove from list of locks owned by powner */
       P(powner->so_mutex);
+
+      if(powner->so_type == STATE_LOCK_OWNER_NFSV4)
+        {
+          glist_del(&lock_entry->sle_state_locks);
+        }
       
       glist_del(&lock_entry->sle_owner_locks);
       

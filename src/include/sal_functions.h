@@ -133,7 +133,7 @@ int Init_nlm_hash(hash_parameter_t client_param, hash_parameter_t owner_param);
 
 /******************************************************************************
  *
- * NFSv4 State functions
+ * NFSv4 Stateid functions
  *
  ******************************************************************************/
 
@@ -174,6 +174,12 @@ int nfs4_is_lease_expired(cache_entry_t * pentry);
 int display_state_id_val(hash_buffer_t * pbuff, char *str);
 int display_state_id_key(hash_buffer_t * pbuff, char *str);
 
+/******************************************************************************
+ *
+ * NFSv4 Owner functions
+ *
+ ******************************************************************************/
+
 void remove_nfs4_owner(cache_inode_client_t * pclient,
                        state_owner_t        * powner,
                        const char           * str);
@@ -189,8 +195,11 @@ unsigned long nfs4_owner_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long nfs4_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t    * buffclef);
 
-void convert_nfs4_owner(open_owner4             * pnfsowoner,
-                        state_nfs4_owner_name_t * pname_owner);
+void convert_nfs4_open_owner(open_owner4             * pnfsowoner,
+                             state_nfs4_owner_name_t * pname_owner);
+
+void convert_nfs4_lock_owner(lock_owner4             * pnfsowoner,
+                             state_nfs4_owner_name_t * pname_owner);
 
 void nfs4_owner_PrintAll(void);
 
@@ -199,12 +208,8 @@ int nfs4_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
 
 state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
                                  state_nfs4_owner_name_t * pname,
-                                 open_owner4             * arg_owner,
                                  state_owner_t           * related_owner,
                                  unsigned int              init_seqid);
-
-state_status_t destroy_nfs4_owner(cache_inode_client_t    * pclient,
-                                  state_nfs4_owner_name_t * pname);
 
 int Init_nfs4_owner(nfs4_owner_parameter_t param);
 
@@ -376,24 +381,12 @@ state_status_t state_del(state_t              * pstate,
                          cache_inode_client_t * pclient,
                          state_status_t       * pstatus);
 
-state_status_t state_find_by_owner(cache_entry_t         * pentry,
-                                   open_owner4           * powner,
-                                   state_t              ** ppstate,
-                                   state_t               * previous_pstate,
-                                   cache_inode_client_t  * pclient,
-                                   fsal_op_context_t     * pcontext,
-                                   state_status_t        * pstatus);
-
 state_status_t state_iterate(cache_entry_t        * pentry,
                              state_t              * *ppstate,
                              state_t              * previous_pstate,
                              cache_inode_client_t * pclient,
                              fsal_op_context_t    * pcontext,
                              state_status_t       * pstatus);
-
-state_status_t state_del_by_key(char                   other[OTHERSIZE],
-                                cache_inode_client_t * pclient,
-                                state_status_t       * pstatus);
 
 int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
 int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);

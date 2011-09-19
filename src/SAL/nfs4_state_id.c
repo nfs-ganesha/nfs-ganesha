@@ -105,9 +105,10 @@ int compare_state_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
       sprint_mem(str1, buff1->pdata, OTHERSIZE);
       sprint_mem(str2, buff2->pdata, OTHERSIZE);
 
-      LogFullDebug(COMPONENT_STATE,
-                   "Compare states %s and %s",
-                   str1, str2);
+      if(isDebug(COMPONENT_HASHTABLE))
+        LogFullDebug(COMPONENT_STATE,
+                     "%s vs %s",
+                     str1, str2);
     }
 
   return memcmp(buff1->pdata, buff2->pdata, OTHERSIZE);
@@ -127,8 +128,9 @@ unsigned long state_id_value_hash_func(hash_parameter_t * p_hparam,
       sum += c;
     }
 
-  LogFullDebug(COMPONENT_STATE, "---> state_id_value_hash_func=%lu",
-               (unsigned long)(sum % p_hparam->index_size));
+  if(isDebug(COMPONENT_HASHTABLE))
+    LogFullDebug(COMPONENT_STATE, "value = %lu",
+                 (unsigned long)(sum % p_hparam->index_size));
 
   return (unsigned long)(sum % p_hparam->index_size);
 }                               /*  client_id_reverse_value_hash_func */
@@ -141,22 +143,14 @@ unsigned long state_id_rbt_hash_func(hash_parameter_t * p_hparam,
   u_int32_t i2 = 0;
   u_int32_t i3 = 0;
 
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      char str[OTHERSIZE * 2 + 1];
-
-      sprint_mem(str, (char *)buffclef->pdata, OTHERSIZE);
-      LogFullDebug(COMPONENT_STATE,
-                   "         ----- state_id_rbt_hash_func : %s", str);
-    }
-
   memcpy(&i1, &(buffclef->pdata[0]), sizeof(u_int32_t));
   memcpy(&i2, &(buffclef->pdata[4]), sizeof(u_int32_t));
   memcpy(&i3, &(buffclef->pdata[8]), sizeof(u_int32_t));
 
-  LogFullDebug(COMPONENT_STATE,
-               "--->  state_id_rbt_hash_func=%lu",
-               (unsigned long)(i1 ^ i2 ^ i3));
+  if(isDebug(COMPONENT_HASHTABLE))
+    LogFullDebug(COMPONENT_STATE,
+                 "rbt = %lu",
+                 (unsigned long)(i1 ^ i2 ^ i3));
 
   return (unsigned long)(i1 ^ i2 ^ i3);
 }                               /* state_id_rbt_hash_func */
@@ -175,9 +169,10 @@ unsigned int state_id_hash_both( hash_parameter_t * p_hparam,
     *phashval = h1 ;
     *prbtval = h2 ; 
 
-  LogFullDebug(COMPONENT_STATE,
-               "stateid hash both %lu %lu",
-               (unsigned long) h1, (unsigned long) h2);
+  if(isDebug(COMPONENT_HASHTABLE))
+    LogFullDebug(COMPONENT_STATE,
+                 "value = %lu rbt = %lu",
+                 (unsigned long) h1, (unsigned long) h2);
 
    /* Success */
    return 1 ;
@@ -203,7 +198,7 @@ int nfs4_Init_state_id(nfs_state_id_parameter_t param)
 
   if((ht_state_id = HashTable_Init(param.hash_param)) == NULL)
     {
-      LogCrit(COMPONENT_STATE, "NFS STATE_ID: Cannot init State Id cache");
+      LogCrit(COMPONENT_STATE, "Cannot init State Id cache");
       return -1;
     }
 
@@ -251,7 +246,7 @@ int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
     return 0;
 
   LogFullDebug(COMPONENT_STATE,
-               "----  nfs4_BuildStateId_Other : pentry=%p popen_owner=%u|%s",
+               "pentry=%p popen_owner=%u|%s",
                pentry,
                popen_owner->so_owner_len,
                popen_owner->so_owner_val);
@@ -267,7 +262,7 @@ int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
   open_owner_digest = popen_owner->so_owner.so_nfs4_owner.so_counter;
 
   LogFullDebug(COMPONENT_STATE,
-               "----  nfs4_BuildStateId_Other : pentry=%p fileid=%"PRIu64" open_owner_digest=%u",
+               "pentry=%p fileid=%"PRIu64" open_owner_digest=%u",
                pentry, fileid_digest, open_owner_digest);
 
   /* Now, let's do the time's warp again.... Well, in fact we'll just build the stateid.other field */

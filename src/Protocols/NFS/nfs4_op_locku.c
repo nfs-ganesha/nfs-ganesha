@@ -238,7 +238,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   update_stateid(pstate_found,
                  &res_LOCKU4.LOCKU4res_u.lock_stateid,
                  data,
-                 "LOCK");
+                 tag);
 
   /* update the lock counter in the related open-stateid */
   pstate_found->state_data.share.lockheld -= 1;

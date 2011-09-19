@@ -280,14 +280,13 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                (long long unsigned int)arg_OPEN4.owner.clientid);
 
       /* Is this open_owner known ? */
-      convert_nfs4_owner(&arg_OPEN4.owner, &owner_name);
+      convert_nfs4_open_owner(&arg_OPEN4.owner, &owner_name);
 
       if(!nfs4_owner_Get_Pointer(&owner_name, &powner))
         {
           /* This open owner is not known yet, allocated and set up a new one */
           powner = create_nfs4_owner(data->pclient,
                                      &owner_name,
-                                     &arg_OPEN4.owner,
                                      NULL,
                                      1); /* NFSv4.1 specific, initial seqid is 1 */
 
@@ -451,6 +450,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       res_OPEN4.status = NFS4ERR_SHARE_DENIED;
                       return res_OPEN4.status;
                     }
+
+                  init_glist(&pfile_state->state_data.share.share_lockstates);
 
                   /* Open the file */
                   if(cache_inode_open_by_name(pentry_parent,

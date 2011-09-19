@@ -240,8 +240,8 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
       /* Is this lock_owner known ? */
-      convert_nfs4_owner((open_owner4 *) & arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
-                         &owner_name);
+      convert_nfs4_lock_owner(&arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
+                              &owner_name);
     }
   else
     {
@@ -366,7 +366,6 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       /* This lock owner is not known yet, allocated and set up a new one */
       plock_owner = create_nfs4_owner(data->pclient,
                                       &owner_name,
-                                      (open_owner4 *) &arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
                                       popen_owner,
                                       0);
 
@@ -406,9 +405,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                   plock_owner,
                   &lock_desc);
 
-          if(destroy_nfs4_owner(data->pclient, &owner_name) != STATE_SUCCESS)
-            LogDebug(COMPONENT_NFS_V4_LOCK,
-                     "destroy_nfs4_owner failed");
+          dec_state_owner_ref(plock_owner, data->pclient);
 
           return res_LOCK4.status;
         }
@@ -453,10 +450,6 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
             LogDebug(COMPONENT_NFS_V4_LOCK,
                      "state_del failed with status %s",
                      state_err_str(state_status));
-
-          if(destroy_nfs4_owner(data->pclient, &owner_name) != STATE_SUCCESS)
-            LogDebug(COMPONENT_NFS_V4_LOCK,
-                     "destroy_nfs4_owner failed");
         }
 
       return res_LOCK4.status;

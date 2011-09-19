@@ -114,16 +114,18 @@ typedef enum state_type_t
 
 typedef struct state_share__
 {
-  char           oexcl_verifier[8]; /**< Verifier to use when opening a file as EXCLUSIVE4     */
-  unsigned int   share_access;      /**< The NFSv4 Share Access state                          */
-  unsigned int   share_deny;        /**< The NFSv4 Share Deny state                            */
-  state_t      * share_lockstate;   /**< The latest lock state associated with this open state */
-  unsigned int   lockheld;          /**< How many locks did I open ?                           */
+  char              oexcl_verifier[8]; /**< Verifier to use when opening a file as EXCLUSIVE4       */
+  unsigned int      share_access;      /**< The NFSv4 Share Access state                            */
+  unsigned int      share_deny;        /**< The NFSv4 Share Deny state                              */
+  struct glist_head share_lockstates;  /**< The list of lock states associated with this open state */
+  unsigned int      lockheld;          /**< How many locks did I open ?                             */
 } state_share_t;
 
 typedef struct state_lock_t
 {
-  state_t * popenstate;        /**< The related open-stateid */
+  state_t           * popenstate;      /**< The related open-stateid            */
+  struct glist_head   state_locklist;  /**< List of locks owned by this stateid */
+  struct glist_head   state_sharelist; /**< List of states related to a share          */
 } state_lock_t;
 
 typedef struct state_deleg__
@@ -171,6 +173,7 @@ typedef struct state_nfs4_owner_name_t
   clientid4    son_clientid;
   unsigned int son_owner_len;
   char         son_owner_val[MAXNAMLEN];
+  bool_t       son_islock;
 } state_nfs4_owner_name_t;
 
 typedef enum state_owner_type_t
@@ -369,9 +372,7 @@ struct state_lock_entry_t
 {
   struct glist_head      sle_list;
   struct glist_head      sle_owner_locks;
-#ifdef _USE_NLM
-  struct glist_head      sle_client_locks;
-#endif
+  struct glist_head      sle_locks;
 #ifdef _DEBUG_MEMLEAKS
   struct glist_head      sle_all_locks;
 #endif
@@ -385,6 +386,11 @@ struct state_lock_entry_t
   state_lock_desc_t      sle_lock;
   pthread_mutex_t        sle_mutex;
 };
+
+#ifdef _USE_NLM
+#define sle_client_locks sle_locks
+#endif
+#define sle_state_locks  sle_locks
 
 #ifdef _USE_BLOCKING_LOCKS
 /*
