@@ -337,6 +337,8 @@ state_status_t state_del(state_t              * pstate,
   if (isDebug(COMPONENT_STATE))
     sprint_mem(debug_str, (char *)pstate->stateid_other, OTHERSIZE);
 
+  LogFullDebug(COMPONENT_STATE, "Deleting state %s", debug_str);
+
   /* Locks the related pentry before operating on it */
   pentry = pstate->state_pentry;
 

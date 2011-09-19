@@ -227,6 +227,12 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                state_err_str(state_status));
     }
 
+  if(isFullDebug(COMPONENT_STATE))
+    {
+      nfs_State_PrintAll();
+      nfs4_owner_PrintAll();
+    }
+
   return NFS4_OK;
 }                               /* nfs4_op_close */
 

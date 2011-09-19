@@ -177,6 +177,7 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       /* This open owner is not known yet, allocated and set up a new one */
       plock_owner = create_nfs4_owner(data->pclient,
                                       &owner_name,
+                                      STATE_OPEN_OWNER_NFSV4,
                                       NULL,
                                       0);
 

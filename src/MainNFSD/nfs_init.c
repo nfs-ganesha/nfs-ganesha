@@ -535,7 +535,7 @@ void nfs_set_param_default()
   nfs_param.nfs4_owner_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
   nfs_param.nfs4_owner_param.hash_param.hash_func_key = nfs4_owner_value_hash_func;
   nfs_param.nfs4_owner_param.hash_param.hash_func_rbt = nfs4_owner_rbt_hash_func;
-  nfs_param.nfs4_owner_param.hash_param.compare_key = compare_nfs4_owner;
+  nfs_param.nfs4_owner_param.hash_param.compare_key = compare_nfs4_owner_key;
   nfs_param.nfs4_owner_param.hash_param.key_to_str = display_nfs4_owner_key;
   nfs_param.nfs4_owner_param.hash_param.val_to_str = display_nfs4_owner_val;
   nfs_param.nfs4_owner_param.hash_param.name = "NFS4 Owner";

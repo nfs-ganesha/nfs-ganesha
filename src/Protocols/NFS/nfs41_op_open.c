@@ -287,6 +287,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           /* This open owner is not known yet, allocated and set up a new one */
           powner = create_nfs4_owner(data->pclient,
                                      &owner_name,
+                                     STATE_OPEN_OWNER_NFSV4,
                                      NULL,
                                      1); /* NFSv4.1 specific, initial seqid is 1 */
 

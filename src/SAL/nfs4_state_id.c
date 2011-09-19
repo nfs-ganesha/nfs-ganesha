@@ -292,6 +292,9 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t * pstate_data)
   if((buffkey.pdata = (caddr_t) Mem_Alloc_Label(OTHERSIZE, "nfs4_State_Set")) == NULL)
     return 0;
 
+  LogFullDebug(COMPONENT_STATE,
+               "Allocating stateid key %p", buffkey.pdata);
+
   memcpy(buffkey.pdata, other, OTHERSIZE);
   buffkey.len = OTHERSIZE;
 
@@ -301,7 +304,13 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t * pstate_data)
   if(HashTable_Test_And_Set
      (ht_state_id, &buffkey, &buffval,
       HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
-    return 0;
+    {
+      LogDebug(COMPONENT_STATE,
+               "HashTable_Test_And_Set failed for key %p",
+               buffkey.pdata);
+      Mem_Free(buffkey.pdata);
+      return 0;
+    }
 
   return 1;
 }                               /* nfs4_State_Set */
@@ -361,6 +370,8 @@ int nfs4_State_Del(char other[OTHERSIZE])
   if(HashTable_Del(ht_state_id, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
     {
       /* free the key that was stored in hash table */
+      LogFullDebug(COMPONENT_STATE,
+                   "Freeing stateid key %p", old_key.pdata);
       Mem_Free((void *)old_key.pdata);
 
       /* State is managed in stuff alloc, no fre is needed for old_value.pdata */

@@ -265,11 +265,11 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 
 /* Error conversion routines */
 /**
- * 
+ *
  * nfs4_Errno: Converts a state status to a nfsv4 status.
- * 
+ *
  * @param error  [IN] Input state error.
- * 
+ *
  * @return the converted NFSv4 status.
  *
  */
@@ -419,11 +419,11 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
 }                               /* nfs4_Errno_state */
 
 /**
- * 
+ *
  * nfs3_Errno_state: Converts a state status to a nfsv3 status.
  *
  * @param error  [IN] Input state error.
- * 
+ *
  * @return the converted NFSv3 status.
  *
  */
@@ -563,11 +563,11 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 }                               /* nfs3_Errno_state */
 
 /**
- * 
+ *
  * nfs2_Errno_state: Converts a state status to a nfsv2 status.
  *
  * @param error  [IN] Input state error.
- * 
+ *
  * @return the converted NFSv2 status.
  *
  */
@@ -687,33 +687,74 @@ nfsstat2 nfs2_Errno_state(state_status_t error)
   return nfserror;
 }                               /* nfs2_Errno_state */
 
+const char * invalid_state_owner_type = "INVALID STATE OWNER TYPE";
+
+const char * state_owner_type_to_str(state_owner_type_t type)
+{
+  switch(type)
+    {
+      case STATE_LOCK_OWNER_UNKNOWN: return "STATE_LOCK_OWNER_UNKNOWN";
+#ifdef _USE_NLM
+      case STATE_LOCK_OWNER_NLM:     return "STATE_LOCK_OWNER_NLM";
+#endif
+      case STATE_OPEN_OWNER_NFSV4:   return "STATE_OPEN_OWNER_NFSV4";
+      case STATE_LOCK_OWNER_NFSV4:   return "STATE_LOCK_OWNER_NFSV4";
+    }
+  return invalid_state_owner_type;
+}
+
+int different_owners(state_owner_t *powner1, state_owner_t *powner2)
+{
+  /* Shortcut in case we actually are pointing to the same owner structure */
+  if(powner1 == powner2)
+    return 0;
+
+  if(powner1->so_type != powner2->so_type)
+    return 1;
+
+  switch(powner1->so_type)
+    {
+#ifdef _USE_NLM
+      case STATE_LOCK_OWNER_NLM:
+         if(powner2->so_type != STATE_LOCK_OWNER_NLM)
+           return 1;
+        return compare_nlm_owner(powner1, powner2);
+#endif
+      case STATE_OPEN_OWNER_NFSV4:
+      case STATE_LOCK_OWNER_NFSV4:
+         if(powner2->so_type != STATE_OPEN_OWNER_NFSV4 &&
+            powner2->so_type != STATE_LOCK_OWNER_NFSV4)
+           return 1;
+        return compare_nfs4_owner(powner1, powner2);
+
+      case STATE_LOCK_OWNER_UNKNOWN:
+        break;
+    }
+
+  return 1;
+}
+
 int DisplayOwner(state_owner_t *powner, char *buf)
 {
-  char *tmp = buf;
-
   if(powner != NULL)
     switch(powner->so_type)
       {
 #ifdef _USE_NLM
         case STATE_LOCK_OWNER_NLM:
-          tmp += sprintf(buf, "STATE_LOCK_OWNER_NLM %p: ", powner);
-          return (tmp-buf) + display_nlm_owner(powner, tmp);
-          break;
+          return display_nlm_owner(powner, buf);
 #endif
 
+        case STATE_OPEN_OWNER_NFSV4:
         case STATE_LOCK_OWNER_NFSV4:
-          tmp += sprintf(buf, "STATE_LOCK_OWNER_NFSV4 %p: ", powner);
-          return (tmp-buf) + display_nfs4_owner(powner, tmp);
-          break;
+          return display_nfs4_owner(powner, buf);
 
         case STATE_LOCK_OWNER_UNKNOWN:
           return sprintf(buf,
-                         "STATE_LOCK_OWNER_UNKNOWN %p: refcount = %d",
-                         powner, powner->so_refcount);
-          break;
+                         "%s powner=%p: refcount = %d",
+                         state_owner_type_to_str(powner->so_type), powner, powner->so_refcount);
     }
 
-  return sprintf(buf, "N/A");
+  return sprintf(buf, "%s", invalid_state_owner_type);
 }
 
 int Hash_del_state_owner_ref(hash_buffer_t *buffval)
@@ -737,7 +778,7 @@ int Hash_del_state_owner_ref(hash_buffer_t *buffval)
 
   rc = powner->so_refcount;
 
-  V(powner->so_mutex);  
+  V(powner->so_mutex);
 
   return rc;
 }
@@ -759,7 +800,7 @@ void Hash_inc_state_owner_ref(hash_buffer_t *buffval)
                    str);
     }
 
-  V(powner->so_mutex);  
+  V(powner->so_mutex);
 }
 
 void inc_state_owner_ref_locked(state_owner_t *powner)
@@ -804,7 +845,12 @@ void dec_state_owner_ref_locked(state_owner_t        * powner,
                    str);
     }
   else
-    remove = TRUE;
+    {
+      LogFullDebug(COMPONENT_STATE,
+                   "Refcount for %s is 1",
+                   str);
+      remove = TRUE;
+    }
 
   V(powner->so_mutex);
 
@@ -818,14 +864,15 @@ void dec_state_owner_ref_locked(state_owner_t        * powner,
             break;
 #endif
 
+          case STATE_OPEN_OWNER_NFSV4:
           case STATE_LOCK_OWNER_NFSV4:
             remove_nfs4_owner(pclient, powner, str);
             break;
 
           case STATE_LOCK_OWNER_UNKNOWN:
             LogDebug(COMPONENT_STATE,
-                     "Unexpected removal of %s",
-                     str);
+                     "Unexpected removal of powner=%p: %s",
+                     powner, str);
             break;
         }
     }

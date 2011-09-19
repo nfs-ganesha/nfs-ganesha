@@ -182,6 +182,7 @@ typedef enum state_owner_type_t
 #ifdef _USE_NLM
   STATE_LOCK_OWNER_NLM,
 #endif
+  STATE_OPEN_OWNER_NFSV4,
   STATE_LOCK_OWNER_NFSV4
 } state_owner_type_t;
 

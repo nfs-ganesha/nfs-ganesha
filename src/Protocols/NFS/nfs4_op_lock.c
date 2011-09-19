@@ -426,6 +426,10 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       /* A lock owner is always associated with a previously made open
        * which has itself a previously made stateid
        */
+
+      /* Get reference to open owner */
+      inc_state_owner_ref(popen_owner);
+
       if(nfs4_owner_Get_Pointer(&owner_name, &plock_owner))
         {
           /* Lock owner already existsc, check lock_seqid if it's not 0 */
@@ -445,6 +449,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           /* This lock owner is not known yet, allocated and set up a new one */
           plock_owner = create_nfs4_owner(data->pclient,
                                           &owner_name,
+                                          STATE_LOCK_OWNER_NFSV4,
                                           popen_owner,
                                           0);
 
@@ -527,6 +532,11 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
       res_LOCK4.status = nfs4_Errno_state(state_status);
 
+      /* Save the response in the lock or open owner */
+      if(res_LOCK4.status != NFS4ERR_RESOURCE &&
+         res_LOCK4.status != NFS4ERR_BAD_STATEID)
+        Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
+
       if(arg_LOCK4.locker.new_lock_owner)
         {
           /* Need to destroy lock owner and state */
@@ -537,11 +547,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                      "state_del failed with status %s",
                      state_err_str(state_status));
         }
-
-      /* Save the response in the lock or open owner */
-      if(res_LOCK4.status != NFS4ERR_RESOURCE &&
-         res_LOCK4.status != NFS4ERR_BAD_STATEID)
-        Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
 
       return res_LOCK4.status;
     }

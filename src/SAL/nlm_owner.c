@@ -61,7 +61,7 @@ int display_nlm_client(state_nlm_client_t *pkey, char *str)
   if(pkey == NULL)
     return sprintf(str, "<NULL>");
 
-  strtmp += sprintf(strtmp, "caller_name=");
+  strtmp += sprintf(strtmp, "pclient=%p: caller_name=", pkey);
   strncpy(strtmp, pkey->slc_nlm_caller_name, pkey->slc_nlm_caller_name_len);
   strtmp += pkey->slc_nlm_caller_name_len;
   *strtmp = '\0';
@@ -165,6 +165,8 @@ int display_nlm_owner(state_owner_t *pkey, char *str)
 
   if(pkey == NULL)
     return sprintf(str, "<NULL>");
+
+  strtmp += sprintf(strtmp, "STATE_LOCK_OWNER_NLM powner=%p: ", pkey);
 
   strtmp += display_nlm_client(pkey->so_owner.so_nlm_owner.so_client, str);
 

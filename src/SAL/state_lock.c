@@ -220,27 +220,6 @@ int display_lock_cookie(const char *cookie, int len, char *str)
  ******************************************************************************/
 
 /* This is not complete, it doesn't check the owner's IP address...*/
-static inline int different_owners(state_owner_t *powner1, state_owner_t *powner2)
-{
-  /* Shortcut in case we actually are pointing to the same owner structure */
-  if(powner1 == powner2)
-    return 0;
-
-  if(powner1->so_type != powner2->so_type)
-    return 1;
-
-  switch(powner1->so_type)
-    {
-#ifdef _USE_NLM
-      case STATE_LOCK_OWNER_NLM:
-        return compare_nlm_owner(powner1, powner2);
-#endif
-      case STATE_LOCK_OWNER_NFSV4:
-      default:
-        return powner1 != powner2;
-    }
-}
-
 static inline int different_lock(state_lock_desc_t *lock1, state_lock_desc_t *lock2)
 {
   return (lock1->sld_type   != lock2->sld_type  ) ||
@@ -446,6 +425,9 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
                                                      "state_lock_entry_t");
   if(!new_entry)
       return NULL;
+
+  LogFullDebug(COMPONENT_STATE,
+               "new_entry = %p", new_entry);
 
   memset(new_entry, 0, sizeof(*new_entry));
 

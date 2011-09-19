@@ -58,6 +58,8 @@ nfsstat4 nfs4_Errno_state(state_status_t error);
 nfsstat3 nfs3_Errno_state(state_status_t error);
 nfsstat2 nfs2_Errno_state(state_status_t error);
 
+const char * state_owner_type_to_str(state_owner_type_t type);
+int different_owners(state_owner_t *powner1, state_owner_t *powner2);
 int DisplayOwner(state_owner_t *powner, char *buf);
 void Hash_inc_state_owner_ref(hash_buffer_t *buffval);
 int Hash_del_state_owner_ref(hash_buffer_t *buffval);
@@ -85,8 +87,8 @@ int display_nlm_client(state_nlm_client_t * pkey, char * str);
 int display_nlm_client_val(hash_buffer_t * pbuff, char * str);
 int display_nlm_client_key(hash_buffer_t * pbuff, char * str);
 
-int compare_nlm_client(state_nlm_client_t * pkey1,
-                       state_nlm_client_t * pkey2);
+int compare_nlm_client(state_nlm_client_t * pclient1,
+                       state_nlm_client_t * pclient2);
 
 int compare_nlm_client_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
@@ -107,8 +109,8 @@ int display_nlm_owner(state_owner_t * pkey, char * str);
 int display_nlm_owner_val(hash_buffer_t * pbuff, char * str);
 int display_nlm_owner_key(hash_buffer_t * pbuff, char * str);
 
-int compare_nlm_owner(state_owner_t * pkey1,
-                      state_owner_t * pkey2);
+int compare_nlm_owner(state_owner_t * powner1,
+                      state_owner_t * powner2);
 
 int compare_nlm_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
@@ -187,7 +189,11 @@ void remove_nfs4_owner(cache_inode_client_t * pclient,
 int display_nfs4_owner(state_owner_t *powner, char *str);
 int display_nfs4_owner_val(hash_buffer_t * pbuff, char *str);
 int display_nfs4_owner_key(hash_buffer_t * pbuff, char *str);
-int compare_nfs4_owner(hash_buffer_t * buff1, hash_buffer_t * buff2);
+
+int compare_nfs4_owner(state_owner_t * powner1,
+                       state_owner_t * powner2);
+
+int compare_nfs4_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
 unsigned long nfs4_owner_value_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t    * buffclef);
@@ -208,6 +214,7 @@ int nfs4_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
 
 state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
                                  state_nfs4_owner_name_t * pname,
+                                 state_owner_type_t        type,
                                  state_owner_t           * related_owner,
                                  unsigned int              init_seqid);
 
