@@ -439,8 +439,3 @@ fsal_status_t POSIXFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,  /* IN
                                           const fsal_name_t * xattr_name) /* IN */ ;
 
 unsigned int POSIXFSAL_GetFileno(fsal_file_t * pfile);
-
-fsal_status_t POSIXFSAL_getextattrs(fsal_handle_t * filehandle, /* IN */
-                                    fsal_op_context_t * context,        /* IN */
-                                    fsal_extattrib_list_t * p_object_attributes /* OUT */) ;
-

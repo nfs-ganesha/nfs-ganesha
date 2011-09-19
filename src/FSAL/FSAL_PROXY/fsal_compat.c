@@ -88,7 +88,7 @@ fsal_functions_t fsal_proxy_functions = {
   .fsal_setxattrvaluebyid = PROXYFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = PROXYFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = PROXYFSAL_RemoveXAttrByName,
-  .fsal_getextattrs = PROXYFSAL_getextattrs,
+  .fsal_getextattrs = COMMON_getextattrs_notsupp,
   .fsal_getfileno = PROXYFSAL_GetFileno
 };
 

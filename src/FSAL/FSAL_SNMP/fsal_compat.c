@@ -87,7 +87,7 @@ fsal_functions_t fsal_snmp_functions = {
   .fsal_setxattrvaluebyid = SNMPFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = SNMPFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = SNMPFSAL_RemoveXAttrByName,
-  .fsal_getextattrs = SNMPFSAL_getextattrs,
+  .fsal_getextattrs = COMMON_getextattrs_notsupp,
   .fsal_getfileno = SNMPFSAL_GetFileno
 };
 

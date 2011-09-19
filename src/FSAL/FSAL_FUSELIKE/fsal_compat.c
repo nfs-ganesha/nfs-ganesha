@@ -89,7 +89,7 @@ fsal_functions_t fsal_fuse_functions = {
   .fsal_setxattrvaluebyid = FUSEFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = FUSEFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = FUSEFSAL_RemoveXAttrByName,
-  .fsal_getextattrs = FUSEFSAL_getextattrs,
+  .fsal_getextattrs = COMMON_getextattrs_notsupp,
   .fsal_getfileno = FUSEFSAL_GetFileno
 };
 

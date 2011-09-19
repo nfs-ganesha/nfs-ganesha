@@ -357,8 +357,3 @@ fsal_status_t LUSTREFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,      
                                            const fsal_name_t * xattr_name) /* IN */ ;
 
 unsigned int LUSTREFSAL_GetFileno(fsal_file_t * pfile);
-
-fsal_status_t LUSTREFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
-                                     fsal_op_context_t * p_context,        /* IN */
-                                     fsal_extattrib_list_t * p_object_attributes /* OUT */) ;
-

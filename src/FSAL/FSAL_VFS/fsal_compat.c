@@ -89,7 +89,7 @@ fsal_functions_t fsal_vfs_functions = {
   .fsal_setxattrvaluebyid = VFSFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = VFSFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = VFSFSAL_RemoveXAttrByName,
-  .fsal_getextattrs = VFSFSAL_getextattrs,
+  .fsal_getextattrs = COMMON_getextattrs_notsupp,
   .fsal_getfileno = VFSFSAL_GetFileno
 };
 

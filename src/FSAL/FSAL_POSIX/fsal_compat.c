@@ -91,7 +91,7 @@ fsal_functions_t fsal_xfs_functions = {
   .fsal_setxattrvaluebyid = POSIXFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = POSIXFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = POSIXFSAL_RemoveXAttrByName,
-  .fsal_getextattrs = POSIXFSAL_getextattrs,
+  .fsal_getextattrs = COMMON_getextattrs_notsupp,
   .fsal_getfileno = POSIXFSAL_GetFileno
 };
 
