@@ -202,6 +202,22 @@
  *@{
  */
 
+const char *hash_table_err_to_str(int err)
+{
+  switch(err)
+    {
+      case HASHTABLE_SUCCESS:                  return "HASHTABLE_SUCCESS";
+      case HASHTABLE_UNKNOWN_HASH_TYPE:        return "HASHTABLE_UNKNOWN_HASH_TYPE";
+      case HASHTABLE_INSERT_MALLOC_ERROR:      return "HASHTABLE_INSERT_MALLOC_ERROR";
+      case HASHTABLE_ERROR_NO_SUCH_KEY:        return "HASHTABLE_ERROR_NO_SUCH_KEY";
+      case HASHTABLE_ERROR_KEY_ALREADY_EXISTS: return "HASHTABLE_ERROR_KEY_ALREADY_EXISTS";
+      case HASHTABLE_ERROR_INVALID_ARGUMENT:   return "HASHTABLE_ERROR_INVALID_ARGUMENT";
+      case HASHTABLE_ERROR_DELALL_FAIL:        return "HASHTABLE_ERROR_DELALL_FAIL";
+      case HASHTABLE_NOT_DELETED:              return "HASHTABLE_NOT_DELETED";
+    }
+  return "UNKNOWN HASH TABLE ERROR";
+}
+
 /**
  * 
  * simple_hash_func: A template hash function, which considers the hash key as a polynom

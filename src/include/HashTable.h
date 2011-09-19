@@ -136,6 +136,7 @@ typedef enum hashtable_set_how__
 #define HASHTABLE_ERROR_DELALL_FAIL        6
 #define HASHTABLE_NOT_DELETED              7
 
+const char *hash_table_err_to_str(int err);
 unsigned long double_hash_func(hash_parameter_t * hc, hash_buffer_t * buffclef);
 hash_table_t *HashTable_Init(hash_parameter_t hc);
 int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
