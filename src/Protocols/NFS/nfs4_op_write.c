@@ -358,6 +358,9 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       data->pclient,
                       data->pcontext, stable_flag, &cache_status) != CACHE_INODE_SUCCESS)
     {
+      LogDebug(COMPONENT_NFS_V4,
+               "cache_inode_rdwr returned %s",
+               cache_inode_err_str(cache_status));
       res_WRITE4.status = nfs4_Errno(cache_status);
       return res_WRITE4.status;
     }

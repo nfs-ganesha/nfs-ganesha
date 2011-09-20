@@ -528,7 +528,9 @@ static int nfs4_encode_acl_group_name(fsal_gid_t gid, char *attrvalsBuffer,
   u_int deltalen = 0;
 
   rc = gid2name(name, &gid);
-  LogDebug(COMPONENT_NFS_V4, "encode gid2name = %s, strlen = %llu", name, (long long unsigned int)strlen(name));
+  LogFullDebug(COMPONENT_NFS_V4,
+               "encode gid2name = %s, strlen = %llu",
+               name, (long long unsigned int)strlen(name));
   if(rc == 0)  /* Failure. */
     {
       /* Encode gid itself without @. */
@@ -576,7 +578,9 @@ static int nfs4_encode_acl_user_name(int whotype, fsal_uid_t uid,
 
   /* Encode normal user or previous user we failed to encode as special user. */
   rc = uid2name(name, &uid);
-  LogDebug(COMPONENT_NFS_V4, "econde uid2name = %s, strlen = %llu", name, (long long unsigned int)strlen(name));
+  LogFullDebug(COMPONENT_NFS_V4,
+               "econde uid2name = %s, strlen = %llu",
+               name, (long long unsigned int)strlen(name));
   if(rc == 0)  /* Failure. */
     {
       /* Encode uid itself without @. */
@@ -613,8 +617,9 @@ static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_i
 
   if(pattr->acl)
     {
-      LogDebug(COMPONENT_NFS_V4, "        GATTR: Number of ACEs = %u",
-               pattr->acl->naces);
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "GATTR: Number of ACEs = %u",
+                   pattr->acl->naces);
 
       /* Encode number of ACEs. */
       naces = htonl(pattr->acl->naces);
@@ -624,8 +629,9 @@ static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_i
       /* Encode ACEs. */
       for(pace = pattr->acl->aces; pace < pattr->acl->aces + pattr->acl->naces; pace++)
         {
-          LogDebug(COMPONENT_NFS_V4, "        GATTR: type=0X%x, flag=0X%x, "
-                   "perm=0X%x", pace->type, pace->flag, pace->perm);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "GATTR: type=0X%x, flag=0X%x, perm=0X%x",
+                       pace->type, pace->flag, pace->perm);
 
           type = htonl(pace->type);
           flag = htonl(pace->flag);
@@ -657,16 +663,18 @@ static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_i
               rc = nfs4_encode_acl_user_name(whotype, pace->who.uid, attrvalsBuffer, LastOffset);
             }
 
-          LogDebug(COMPONENT_NFS_V4, "        GATTR: special = %u, %s = %u",
-                   IS_FSAL_ACE_SPECIAL_ID(*pace),
-                   IS_FSAL_ACE_GROUP_ID(*pace) ? "gid" : "uid",
-                   IS_FSAL_ACE_GROUP_ID(*pace) ? pace->who.gid : pace->who.uid);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "GATTR: special = %u, %s = %u",
+                       IS_FSAL_ACE_SPECIAL_ID(*pace),
+                       IS_FSAL_ACE_GROUP_ID(*pace) ? "gid" : "uid",
+                       IS_FSAL_ACE_GROUP_ID(*pace) ? pace->who.gid : pace->who.uid);
 
         }
     }
   else
     {
-      LogDebug(COMPONENT_NFS_V4, "nfs4_encode_acl: no acl available");
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "nfs4_encode_acl: no acl available");
 
       fattr4_acl acl;
       acl.fattr4_acl_len = htonl(0);
@@ -3087,14 +3095,17 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
   /* Decode number of ACEs. */
   memcpy(&(acldata.naces), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(u_int));
   acldata.naces = ntohl(acldata.naces);
-  LogDebug(COMPONENT_NFS_V4, "        SATTR: Number of ACEs = %u", acldata.naces);
+  LogFullDebug(COMPONENT_NFS_V4,
+               "SATTR: Number of ACEs = %u",
+               acldata.naces);
   *LastOffset += sizeof(u_int);
 
   /* Allocate memory for ACEs. */
   acldata.aces = (fsal_ace_t *)nfs4_ace_alloc(acldata.naces);
   if(acldata.aces == NULL)
     {
-      LogCrit(COMPONENT_NFS_V4, "        SATTR: Failed to allocate ACEs");
+      LogCrit(COMPONENT_NFS_V4,
+              "SATTR: Failed to allocate ACEs");
       return NFS4ERR_SERVERFAULT;
     }
   else
@@ -3105,17 +3116,23 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
     {
       memcpy(&(pace->type), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(fsal_acetype_t));
       pace->type = ntohl(pace->type);
-      LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE type = 0x%x", pace->type);
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "SATTR: ACE type = 0x%x",
+                   pace->type);
       *LastOffset += sizeof(fsal_acetype_t);
 
       memcpy(&(pace->flag), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(fsal_aceflag_t));
       pace->flag = ntohl(pace->flag);
-      LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE flag = 0x%x", pace->flag);
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "SATTR: ACE flag = 0x%x",
+                   pace->flag);
       *LastOffset += sizeof(fsal_aceflag_t);
 
       memcpy(&(pace->perm), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(fsal_aceperm_t));
       pace->perm = ntohl(pace->perm);
-      LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE perm = 0x%x", pace->perm);
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "SATTR: ACE perm = 0x%x",
+                   pace->perm);
       *LastOffset += sizeof(fsal_aceperm_t);
 
       /* Find out who type */
@@ -3135,8 +3152,10 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
       *LastOffset += len;
 
       /* Decode users. */
-      LogDebug(COMPONENT_NFS_V4, "        SATTR: owner = %s, len = %d, type = %s", buffer, len,
-               GET_FSAL_ACE_WHO_TYPE(*pace));
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "SATTR: owner = %s, len = %d, type = %s",
+                   buffer, len,
+                   GET_FSAL_ACE_WHO_TYPE(*pace));
 
       utf8buffer.utf8string_val = buffer;
       utf8buffer.utf8string_len = strlen(buffer);
@@ -3147,19 +3166,25 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
           pace->flag &= ~(FSAL_ACE_FLAG_GROUP_ID);
           pace->iflag |= FSAL_ACE_IFLAG_SPECIAL_ID;
           pace->who.uid = who;
-          LogDebug(COMPONENT_NFS_V4, "		  SATTR: ACE special who.uid = 0x%x", pace->who.uid);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "SATTR: ACE special who.uid = 0x%x",
+                       pace->who.uid);
         }
       else
         {
           if(pace->flag == FSAL_ACE_FLAG_GROUP_ID)  /* Decode group. */
             {
               utf82gid(&utf8buffer, &(pace->who.gid));
-              LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE who.gid = 0x%x", pace->who.gid);
+              LogFullDebug(COMPONENT_NFS_V4,
+                           "SATTR: ACE who.gid = 0x%x",
+                           pace->who.gid);
             }
           else  /* Decode user. */
             {
               utf82uid(&utf8buffer, &(pace->who.uid));
-              LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE who.uid = 0x%x", pace->who.uid);
+              LogFullDebug(COMPONENT_NFS_V4,
+                           "SATTR: ACE who.uid = 0x%x",
+                           pace->who.uid);
             }
         }
 
@@ -3167,7 +3192,8 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
        * and bubble up NFS4ERR_BADOWNER. */
       if((pace->flag == FSAL_ACE_FLAG_GROUP_ID ? pace->who.gid : pace->who.uid) == -1)
         {
-          LogDebug(COMPONENT_NFS_V4, "		  SATTR: bad owner");
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "SATTR: bad owner");
           nfs4_ace_free(acldata.aces);
           return NFS4ERR_BADOWNER;
         }
@@ -3176,15 +3202,20 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
   pacl = nfs4_acl_new_entry(&acldata, &status);
   if(pacl == NULL)
     {
-      LogCrit(COMPONENT_NFS_V4, "        SATTR: Failed to create a new entry for ACL");
+      LogCrit(COMPONENT_NFS_V4,
+              "SATTR: Failed to create a new entry for ACL");
       return NFS4ERR_SERVERFAULT;
     }
   else
-     LogDebug(COMPONENT_NFS_V4, "        SATTR: Successfully created a new entry for ACL, status = %u", status);
+     LogFullDebug(COMPONENT_NFS_V4,
+                  "SATTR: Successfully created a new entry for ACL, status = %u",
+                  status);
 
   /* Set new ACL */
   pFSAL_attr->acl = pacl;
-  LogDebug(COMPONENT_NFS_V4, "        SATTR: new acl = %p", pacl);
+  LogFullDebug(COMPONENT_NFS_V4,
+               "SATTR: new acl = %p",
+               pacl);
 
   return NFS4_OK;
 }

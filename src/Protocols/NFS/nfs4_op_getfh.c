@@ -71,12 +71,10 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 {
   int error;
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getfh";
-  char fhstr[LEN_FH_STR];
 
   resp->resop = NFS4_OP_GETFH;
 
-  nfs4_sprint_fhandle(&data->currentFH, fhstr);
-  LogDebug(COMPONENT_NFS_V4, "NFS4 GETFH BEFORE: %s", fhstr);
+  LogHandleNFS4("NFS4 GETFH BEFORE: %s", &data->currentFH);
 
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))
@@ -122,9 +120,7 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   memcpy(resp->nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val,
          data->currentFH.nfs_fh4_val, data->currentFH.nfs_fh4_len);
 
-  /* Test */
-  nfs4_sprint_fhandle(&resp->nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object, fhstr);
-  LogDebug(COMPONENT_NFS_V4, "NFS4 GETFH AFTER: %s", fhstr);
+  LogHandleNFS4("NFS4 GETFH AFTER: %s", &resp->nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object);
 
   return NFS4_OK;
 }                               /* nfs4_op_getfh */

@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -31,7 +31,7 @@
  * \brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * nfs4_Compound.c : Routines used for managing the NFS4 COMPOUND functions.
- * 
+ *
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -201,15 +201,15 @@ nfs4_op_desc_t *optabvers[] = { (nfs4_op_desc_t *) optab4v0 };
 
 /**
  * nfs4_COMPOUND: The NFS PROC4 COMPOUND
- * 
+ *
  * Implements the NFS PROC4 COMPOUND.
- * This routine processes the content of the nfsv4 operation list and composes the result. 
+ * This routine processes the content of the nfsv4 operation list and composes the result.
  * On this aspect it is a little similar to a dispatch routine.
  * Operation and functions necessary to process them are defined in array optab4 .
  *
- * 
+ *
  *  @param parg        [IN]  generic nfs arguments
- *  @param pexportlist [IN]  the full export list 
+ *  @param pexportlist [IN]  the full export list
  *  @param pcontex     [IN]  context for the FSAL (unused but kept for nfs functions prototype homogeneity)
  *  @param pclient     [INOUT] client resource for request management
  *  @param ht          [INOUT] cache inode hash table
@@ -218,7 +218,7 @@ nfs4_op_desc_t *optabvers[] = { (nfs4_op_desc_t *) optab4v0 };
  *
  *  @see   nfs4_op_<*> functions
  *  @see   nfs4_GetPseudoFs
- * 
+ *
  */
 
 int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
@@ -235,23 +235,22 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   char __attribute__ ((__unused__)) funcname[] = "nfs4_Compound";
   compound_data_t data;
   int opindex;
+  #define TAGLEN 64
+  char tagstr[TAGLEN + 1 + 5];
 
   /* A "local" #define to avoid typo with nfs (too) long structure names */
 #define COMPOUND4_ARRAY parg->arg_compound4.argarray
-
-  LogFullDebug(COMPONENT_NFS_V4,
-               "NFS v4 COMPOUND REQUEST: %d operation(s)",
-               COMPOUND4_ARRAY.argarray_len);
+#define COMPOUND4_MINOR parg->arg_compound4.minorversion
 
 #ifdef _USE_NFS4_1
-  if(parg->arg_compound4.minorversion > 1)
+  if(COMPOUND4_MINOR > 1)
 #else
-  if(parg->arg_compound4.minorversion != 0)
+  if(COMPOUND4_MINOR != 0)
 #endif
     {
       LogCrit(COMPONENT_NFS_V4,
-              "NFS V4 COMPOUND: Bad Minor Version %d",
-              parg->arg_compound4.minorversion);
+              "Bad Minor Version %d",
+              COMPOUND4_MINOR);
 
       pres->res_compound4.status = NFS4ERR_MINOR_VERS_MISMATCH;
       pres->res_compound4.resarray.resarray_len = 0;
@@ -262,7 +261,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   if(COMPOUND4_ARRAY.argarray_len == 0)
     {
       LogMajor(COMPONENT_NFS_V4,
-               "NFS V4 COMPOUND: an empty COMPOUND (no operation in it) was received !!");
+               "An empty COMPOUND (no operation in it) was received");
 
       pres->res_compound4.status = NFS4_OK;
       pres->res_compound4.resarray.resarray_len = 0;
@@ -273,7 +272,8 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   if(COMPOUND4_ARRAY.argarray_len > 30)
     {
       LogMajor(COMPONENT_NFS_V4,
-               "NFS V4 COMPOUND: an empty COMPOUND (no operation in it) was received !!");
+               "A COMPOUND with too many operations (%d) was received",
+               COMPOUND4_ARRAY.argarray_len);
 
       pres->res_compound4.status = NFS4ERR_RESOURCE;
       pres->res_compound4.resarray.resarray_len = 0;
@@ -284,7 +284,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   memset(&data, 0, sizeof(data));
 
   /* Minor version related stuff */
-  data.minorversion = parg->arg_compound4.minorversion;
+  data.minorversion = COMPOUND4_MINOR;
   /** @todo BUGAZOMEU: Reminder: Stats on NFSv4 operations are to be set here */
 
   data.pfullexportlist = pexport;       /* Full export list is provided in input */
@@ -303,6 +303,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   /* Keeping the same tag as in the arguments */
   memcpy(&(pres->res_compound4.tag), &(parg->arg_compound4.tag),
          sizeof(parg->arg_compound4.tag));
+
   if(utf8dup(&(pres->res_compound4.tag), &(parg->arg_compound4.tag)) == -1)
     {
       LogCrit(COMPONENT_NFS_V4, "Unable to duplicate tag into response");
@@ -317,15 +318,20 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
       return NFS_REQ_DROP;
     }
 
-  /* Managing the operation list */
-  LogFullDebug(COMPONENT_NFS_V4,
-               "NFS V4 COMPOUND: There are %d operations",
-               COMPOUND4_ARRAY.argarray_len);
+  if(isDebug(COMPONENT_NFS_V4) && pres->res_compound4.tag.utf8string_len > 0)
+    {
+      sprintf(tagstr, " TAG=");
+      utf82str(tagstr+5, TAGLEN, &(pres->res_compound4.tag));
+    }
+  else
+    {
+      tagstr[0] = '\0';
+    }
 
-  // TODO: this needs to be revisited
-  for(i = 0; i < COMPOUND4_ARRAY.argarray_len; i++)
-    LogFullDebug(COMPONENT_NFS_V4, "%s ",
-                 optabvers[parg->arg_compound4.minorversion][optab4index[COMPOUND4_ARRAY.argarray_val[i].argop]].name);
+  /* Managing the operation list */
+  LogDebug(COMPONENT_NFS_V4,
+           "COMPOUND: There are %d operations%s",
+           COMPOUND4_ARRAY.argarray_len, tagstr);
 
 #ifdef _USE_NFS4_1
   /* Manage error NFS4ERR_NOT_ONLY_OP */
@@ -353,7 +359,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
 #ifdef _USE_NFS4_1
       data.oppos = i;           /* Useful to check if OP_SEQUENCE is used as the first operation */
 
-      if(parg->arg_compound4.minorversion == 1)
+      if(COMPOUND4_MINOR == 1)
         {
           if(data.psession != NULL)
             {
@@ -370,11 +376,11 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
             }
         }
 
-      /* if( parg->arg_compound4.minorversion == 1 ) */
+      /* if( COMPOUND4_MINOR == 1 ) */
       if((COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RELEASE_LOCKOWNER
-          && parg->arg_compound4.minorversion == 0)
+          && COMPOUND4_MINOR == 0)
          || (COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RECLAIM_COMPLETE
-             && parg->arg_compound4.minorversion == 1))
+             && COMPOUND4_MINOR == 1))
 #else
       if(COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RELEASE_LOCKOWNER)
 #endif
@@ -383,37 +389,21 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
         opindex = optab4index[POS_ILLEGAL];     /* = NFS4_OP_ILLEGAL a value to big for argop means an illegal value */
 
       LogDebug(COMPONENT_NFS_V4,
-               "NFS V4 COMPOUND: Request #%d is %d = %s, entry #%d in the op array",
+               "Request %d is %d = %s, entry %d in the op array%s",
                i,
-               optabvers[parg->arg_compound4.minorversion][opindex].val,
-               optabvers[parg->arg_compound4.minorversion][opindex].name,
-               opindex);
+               optabvers[COMPOUND4_MINOR][opindex].val,
+               optabvers[COMPOUND4_MINOR][opindex].name,
+               opindex,
+               tagstr);
 
       memset(&res, 0, sizeof(res));
-      status =
-          (optabvers[parg->arg_compound4.minorversion][opindex].funct) (&
-                                                                        (COMPOUND4_ARRAY.argarray_val
-                                                                         [i]), &data,
-                                                                        &res);
+      status = (optabvers[COMPOUND4_MINOR][opindex].funct) (&(COMPOUND4_ARRAY.argarray_val[i]),
+                                                            &data,
+                                                            &res);
 
       memcpy(&(pres->res_compound4.resarray.resarray_val[i]), &res, sizeof(res));
 
-      if(isDebug(COMPONENT_NFS_V4))
-        {
-          char tmpstr[1024];
-          tmpstr[0] = '\0';
-          utf82str(tmpstr, sizeof(tmpstr), &(pres->res_compound4.tag));          
-          LogDebug(COMPONENT_NFS_V4,
-                   "--> COMPOUND REQUEST TAG is #%s#", tmpstr);
-        }
-
-      // print_compound_fh(&data);    Very very very verbose if NFSv4 is used.... 
-
-      LogDebug(COMPONENT_NFS_V4,
-               "NFS V4 COMPOUND:Status of %s in position %d = %d",
-               optabvers[parg->arg_compound4.minorversion][opindex].name,
-               i,
-               status);
+      LogCompoundFH(&data);
 
       /* All the operation, like NFS4_OP_ACESS, have a first replyied field called .status */
       pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opaccess.status = status;
@@ -421,9 +411,12 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
       if(status != NFS4_OK)
         {
           /* An error occured, we do not manage the other requests in the COMPOUND, this may be a regular behaviour */
-	  LogDebug(COMPONENT_NFS_V4,
-                   "NFS V4 COMPOUND: Error met, stop request with status =%d",
-                   status);
+          LogDebug(COMPONENT_NFS_V4,
+                   "Status of %s in position %d = %s%s",
+                   optabvers[COMPOUND4_MINOR][opindex].name,
+                   i,
+                   nfsstat4_to_str(status),
+                   tagstr);
 
           pres->res_compound4.resarray.resarray_len = i + 1;
 
@@ -433,7 +426,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
       /* Check Req size */
 
       /* NFS_V4.1 specific stuff */
-      if(parg->arg_compound4.minorversion == 1)
+      if(COMPOUND4_MINOR == 1)
         {
           if(i == 0)            /* OP_SEQUENCE is always the first operation within the request */
             {
@@ -462,7 +455,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
 
 #ifdef _USE_NFS4_1
   /* Manage session's DRC : keep NFS4.1 replay for later use */
-  if(parg->arg_compound4.minorversion == 1)
+  if(COMPOUND4_MINOR == 1)
     {
       if(data.pcached_res != NULL)      /* Pointer has been set by nfs41_op_sequence and points to cached zone */
         {
@@ -472,11 +465,10 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
     }
 #endif
 
-  LogDebug(COMPONENT_NFS_V4,               
-           "NFS V4 COMPOUND: end status = %d|%d  lastindex = %d",
-           status, pres->res_compound4.status, i ) ;
-  LogDebug(COMPONENT_NFS_V4,
-           "===============================================================");
+  if(status != NFS4_OK)
+    LogDebug(COMPONENT_NFS_V4,
+             "End status = %s lastindex = %d%s",
+             nfsstat4_to_str(status), i, tagstr);
 
   compound_data_Free(&data);
 
@@ -484,11 +476,11 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
 }                               /* nfs4_Compound */
 
 /**
- * 
+ *
  * nfs4_Compound_FreeOne: Mem_Free the result for one NFS4_OP
  *
  * @param resp pointer to be Mem_Freed
- * 
+ *
  * @return nothing (void function).
  *
  * @see nfs4_op_getfh
@@ -498,7 +490,7 @@ void nfs4_Compound_FreeOne(nfs_resop4 * pres)
 {
   /* LogFullDebug(COMPONENT_NFS_V4,
                   "nfs4_Compound_Free sur op=%s",
-                  optabvers[parg->arg_compound4.minorversion][optab4index[pres->resop]].name);
+                  optabvers[COMPOUND4_MINOR][optab4index[pres->resop]].name);
   */
   switch (pres->resop)
     {
@@ -696,13 +688,13 @@ void nfs4_Compound_FreeOne(nfs_resop4 * pres)
 }
 
 /**
- * 
+ *
  * nfs4_Compound_Free: Mem_Free the result for NFS4PROC_COMPOUND
  *
  * Mem_Free the result for NFS4PROC_COMPOUND.
  *
  * @param resp pointer to be Mem_Freed
- * 
+ *
  * @return nothing (void function).
  *
  * @see nfs4_op_getfh
@@ -727,7 +719,7 @@ void nfs4_Compound_Free(nfs_res_t * pres)
 }                               /* nfs4_Compound_Free */
 
 /**
- * 
+ *
  * compound_data_Free: Mem_Frees the compound data structure.
  *
  * Mem_Frees the compound data structure..
@@ -759,7 +751,7 @@ void compound_data_Free(compound_data_t * data)
 }                               /* compound_data_Free */
 
 /**
- * 
+ *
  * nfs4_Compound_CopyResOne: Copy the result for one NFS4_OP
  *
  */
@@ -877,13 +869,13 @@ void nfs4_Compound_CopyResOne(nfs_resop4 * pres_dst, nfs_resop4 * pres_src)
 }
 
 /**
- * 
+ *
  * nfs4_Compound_CopyRes: Copy the result for NFS4PROC_COMPOUND
  *
  * Copy the result for NFS4PROC_COMPOUND.
  *
  * @param resp pointer to be Mem_Freed
- * 
+ *
  * @return nothing (void function).
  *
  * @see nfs4_op_getfh
@@ -904,16 +896,16 @@ void nfs4_Compound_CopyRes(nfs_res_t * pres_dst, nfs_res_t * pres_src)
 }
 
 /**
- *    
+ *
  *  nfs4_op_stat_update: updates the NFSv4 operations specific statistics for a COMPOUND4 requests (either v4.0 or v4.1).
  *
  *  Updates the NFSv4 operations specific statistics for a COMPOUND4 requests (either v4.0 or v4.1).
- * 
+ *
  *  @param parg argument for the COMPOUND4 request
  *  @param pres result for the COMPOUND4 request
  *  @param pstat_req pointer to the worker's structure for NFSv4 stats
- * 
- * @return -1 if failed 0 otherwise 
+ *
+ * @return -1 if failed 0 otherwise
  *
  */
 
@@ -923,7 +915,7 @@ int nfs4_op_stat_update(nfs_arg_t * parg /* IN     */ ,
 {
   int i = 0;
 
-  switch (parg->arg_compound4.minorversion)
+  switch (COMPOUND4_MINOR)
     {
     case 0:
       for(i = 0; i < pres->res_compound4.resarray.resarray_len; i++)

@@ -817,22 +817,24 @@ void sprint_mem(char *str, char *buff, int len)
  * @return nothing (void function).
  *
  */
-void print_compound_fh(log_components_t component, compound_data_t * data)
+void LogCompoundFH(compound_data_t * data)
 {
-  char str[LEN_FH_STR];
-
-  
-  sprint_fhandle4(str, &data->currentFH);
-  LogFullDebug(component, "Current FH  %s", str);
-
-  sprint_fhandle4(str, &data->savedFH);
-  LogFullDebug(component, "Saved FH    %s", str);
-
-  sprint_fhandle4(str, &data->publicFH);
-  LogFullDebug(component, "Public FH   %s", str);
-
-  sprint_fhandle4(str, &data->rootFH);
-  LogFullDebug(component, "Root FH     %s", str);
+  if(isFullDebug(COMPONENT_FILEHANDLE))
+    {
+      char str[LEN_FH_STR];
+      
+      sprint_fhandle4(str, &data->currentFH);
+      LogFullDebug(COMPONENT_FILEHANDLE, "Current FH  %s", str);
+      
+      sprint_fhandle4(str, &data->savedFH);
+      LogFullDebug(COMPONENT_FILEHANDLE, "Saved FH    %s", str);
+      
+      sprint_fhandle4(str, &data->publicFH);
+      LogFullDebug(COMPONENT_FILEHANDLE, "Public FH   %s", str);
+      
+      sprint_fhandle4(str, &data->rootFH);
+      LogFullDebug(COMPONENT_FILEHANDLE, "Root FH     %s", str);
+    }
 }                               /* print_compoud_fh */
 
 /**

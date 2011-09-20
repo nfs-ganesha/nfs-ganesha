@@ -132,7 +132,7 @@ void print_fhandle3(log_components_t component, nfs_fh3 *fh);
 void print_fhandle4(log_components_t component, nfs_fh4 *fh);
 void print_fhandle_nlm(log_components_t component, netobj *fh);
 void print_buff(log_components_t component, char *buff, int len);
-void print_compound_fh(log_components_t component, compound_data_t * data);
+void LogCompoundFH(compound_data_t * data);
 
 void sprint_fhandle2(char *str, fhandle2 *fh);
 void sprint_fhandle3(char *str, nfs_fh3 *fh);
@@ -142,5 +142,15 @@ void sprint_buff(char *str, char *buff, int len);
 void sprint_mem(char *str, char *buff, int len);
 
 void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr) ;
+
+#define LogHandleNFS4( label, fh4p )                        \
+  do {                                                      \
+    if(isFullDebug(COMPONENT_NFS_V4))                       \
+      {                                                     \
+        char str[LEN_FH_STR];                               \
+        sprint_fhandle4(str, fh4p);                         \
+        LogFullDebug(COMPONENT_NFS_V4, "%s%s", label, str); \
+      }                                                     \
+  } while (0)
 
 #endif                          /* _NFS_FILE_HANDLE_H */
