@@ -221,6 +221,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
     case CLAIM_NULL:
       cause = "CLAIM_NULL";
+
       /* Is this open_owner known? If so, get it so we can use replay cache */
       convert_nfs4_open_owner(&arg_OPEN4.owner, &owner_name);
 
@@ -319,6 +320,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
             res_OPEN4.status = NFS4ERR_SYMLINK;
           else
             res_OPEN4.status = NFS4ERR_NOTDIR;
+
           cause2 = " (parent not directory)";
           goto out;
         }
@@ -333,8 +335,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
       /* It this a known client id ? */
       LogDebug(COMPONENT_STATE,
-               "OPEN Client id = %"PRIx64,
-               arg_OPEN4.owner.clientid);
+               "OPEN Client id = %llx",
+               (unsigned long long)arg_OPEN4.owner.clientid);
       if(nfs_client_id_get(arg_OPEN4.owner.clientid, &nfs_clientid) != CLIENT_ID_SUCCESS)
         {
           res_OPEN4.status = NFS4ERR_STALE_CLIENTID;
@@ -507,10 +509,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   /* Set the state for the related file */
 
                   /* Prepare state management structure */
-                  candidate_type = STATE_TYPE_SHARE;
-                  candidate_data.share.share_deny = arg_OPEN4.share_deny;
+                  candidate_type                    = STATE_TYPE_SHARE;
+                  candidate_data.share.share_deny   = arg_OPEN4.share_deny;
                   candidate_data.share.share_access = arg_OPEN4.share_access;
-                  candidate_data.share.lockheld = 0;
+                  candidate_data.share.lockheld     = 0;
 
                   if(state_add(pentry_lookup,
                                candidate_type,
@@ -598,9 +600,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   data->currentFH.nfs_fh4_len = newfh4.nfs_fh4_len;
                   memcpy(data->currentFH.nfs_fh4_val, newfh4.nfs_fh4_val,
                          newfh4.nfs_fh4_len);
-
-                  /* No do not need newfh any more */
-                  Mem_Free((char *)newfh4.nfs_fh4_val);
 
                   data->current_entry = pentry_lookup;
                   data->current_filetype = REGULAR_FILE;
@@ -766,10 +765,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
             }
 
           /* Prepare state management structure */
-          candidate_type = STATE_TYPE_SHARE;
-          candidate_data.share.share_deny = arg_OPEN4.share_deny;
+          candidate_type                    = STATE_TYPE_SHARE;
+          candidate_data.share.share_deny   = arg_OPEN4.share_deny;
           candidate_data.share.share_access = arg_OPEN4.share_access;
-          candidate_data.share.lockheld = 0;
+          candidate_data.share.lockheld     = 0;
 
           /* If file is opened under mode EXCLUSIVE4, open verifier should be kept to detect non vicious double open */
           if(arg_OPEN4.openhow.openflag4_u.how.mode == EXCLUSIVE4)
@@ -842,6 +841,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         case OPEN4_NOCREATE:
           /* It was not a creation, but a regular open */
           cause = "OPEN4_NOCREATE";
+
           /* The filehandle to the new file replaces the current filehandle */
           if(pentry_newfile == NULL)
             {
@@ -1036,10 +1036,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
             {
               /* Set the state for the related file */
               /* Prepare state management structure */
-              candidate_type = STATE_TYPE_SHARE;
-              candidate_data.share.share_deny = arg_OPEN4.share_deny;
+              candidate_type                    = STATE_TYPE_SHARE;
+              candidate_data.share.share_deny   = arg_OPEN4.share_deny;
               candidate_data.share.share_access = arg_OPEN4.share_access;
-              candidate_data.share.lockheld = 0;
+              candidate_data.share.lockheld     = 0;
 
               if(state_add(pentry_newfile,
                            candidate_type,
