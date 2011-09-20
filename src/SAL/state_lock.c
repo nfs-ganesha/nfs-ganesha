@@ -1826,7 +1826,7 @@ state_status_t state_test(cache_entry_t        * pentry,
                 pentry, pcontext, *holder, conflict);
     }
 
-  if(isFullDebug(COMPONENT_STATE))
+  if(isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS))
     {
       struct glist_head * glist;
       glist_for_each(glist, &pentry->object.file.lock_list)
@@ -2139,6 +2139,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
   V(pentry->object.file.lock_list_mutex);
 
   if(isFullDebug(COMPONENT_STATE) &&
+     isFullDebug(COMPONENT_MEMLEAKS) &&
      plock->sld_offset == 0 && plock->sld_length == 0)
     {
       struct glist_head  * glist;

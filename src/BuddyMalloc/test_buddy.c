@@ -1003,7 +1003,7 @@ void *TEST9(void *arg)
   BuddyDumpMem(stdout);
 
   LogTest("_DEBUG_MEMLEAKS enabled");
-  BuddyLabelsSummary();
+  BuddyLabelsSummary(COMPONENT_MEMLEAKS);
 
   LogTest("Number of blocks with the label %s: %d", labels[0],
          BuddyCountDebugLabel(labels[0]));

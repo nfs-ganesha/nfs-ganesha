@@ -46,6 +46,7 @@
 #include <string.h>
 
 #include "config_parsing.h"
+#include "log_macros.h"
 
 #ifndef TRUE
 #define TRUE 1
@@ -309,7 +310,7 @@ int BuddyCountDebugLabel(char *label);
  *  Displays a summary of all allocated blocks
  *  with their labels
  */
-void BuddyLabelsSummary();
+void BuddyLabelsSummary(log_components_t component);
 
 /**
  * Display allocation map, and fragmentation info.

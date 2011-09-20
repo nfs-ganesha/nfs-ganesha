@@ -2583,7 +2583,8 @@ static void hash_label_free(label_info_list_t * label_hash[], unsigned int hash_
     }
 }
 
-static void hash_label_display(label_info_list_t * label_hash[], unsigned int hash_sz)
+static void hash_label_display(label_info_list_t * label_hash[],
+                               unsigned int        hash_sz)
 {
   unsigned int i, max_file, max_func, max_descr;
   label_info_list_t *p_curr;
@@ -2607,24 +2608,21 @@ static void hash_label_display(label_info_list_t * label_hash[], unsigned int ha
         }
     }
 
-  if(isFullDebug(COMPONENT_FSAL))
-    {
-      LogFullDebug(COMPONENT_MEMLEAKS,
-                   "%-*s | %-*s | %5s | %-*s | %s",
-                   max_file, "file",
-                   max_func, "function",
-                   "line", max_descr, "description", "count");
+  LogFullDebug(COMPONENT_MEMLEAKS,
+               "%-*s | %-*s | %5s | %-*s | %s",
+               max_file, "file",
+               max_func, "function",
+               "line", max_descr, "description", "count");
 
-      for(i = 0; i < hash_sz; i++)
+  for(i = 0; i < hash_sz; i++)
+    {
+      for(p_curr = label_hash[i]; p_curr != NULL; p_curr = p_curr->next)
         {
-          for(p_curr = label_hash[i]; p_curr != NULL; p_curr = p_curr->next)
-            {
-              LogFullDebug(COMPONENT_MEMLEAKS,
-                           "%-*s | %-*s | %5u | %-*s | %u",
-                           max_file, p_curr->file, max_func,
-                           p_curr->func, p_curr->line, max_descr, p_curr->user_label,
-                           p_curr->count);
-            }
+          LogFullDebug(COMPONENT_MEMLEAKS,
+                       "%-*s | %-*s | %5u | %-*s | %u",
+                       max_file, p_curr->file, max_func,
+                       p_curr->func, p_curr->line, max_descr, p_curr->user_label,
+                       p_curr->count);
         }
     }
 }
@@ -2633,13 +2631,16 @@ static void hash_label_display(label_info_list_t * label_hash[], unsigned int ha
  *  Displays a summary of all allocated blocks
  *  with their labels
  */
-void BuddyLabelsSummary()
+void BuddyLabelsSummary(log_components_t component)
 {
 #define LBL_HASH_SZ 127
   label_info_list_t *label_hash[LBL_HASH_SZ];
   BuddyThreadContext_t *context;
   BuddyBlockPtr_t p_curr_block;
   unsigned int i;
+
+  if(!isFullDebug(component) || !isFullDebug(COMPONENT_MEMLEAKS))
+    return;
 
   context = GetThreadContext();
 
@@ -2665,7 +2666,6 @@ void BuddyLabelsSummary()
 
   hash_label_display(label_hash, LBL_HASH_SZ);
   hash_label_free(label_hash, LBL_HASH_SZ);
-
 }
 
 void BuddyDumpPools(FILE *output)

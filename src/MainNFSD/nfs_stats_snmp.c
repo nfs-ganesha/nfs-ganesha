@@ -764,7 +764,7 @@ static int set_buddy(const snmp_adm_type_union * param, void *opt_arg)
           }
         BuddyDumpAll(output);
         rc = fclose(output);
-        LogDebug(COMPONENT_MEMLEAKS,
+        LogEvent(COMPONENT_MEMLEAKS,
                  "Dumped buddy memory to %s, rc=%d", param->string, rc);
       }
       break;
@@ -781,7 +781,7 @@ static int set_buddy(const snmp_adm_type_union * param, void *opt_arg)
           }
         BuddyDumpPools(output);
         rc = fclose(output);
-        LogDebug(COMPONENT_MEMLEAKS,
+        LogEvent(COMPONENT_MEMLEAKS,
                  "Dumped buddy pools to %s, rc=%d", param->string, rc);
       }
       break;

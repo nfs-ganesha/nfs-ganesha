@@ -92,17 +92,20 @@ void nfs_debug_debug_label_info()
 {
   buddy_stats_t bstats;
 
-  BuddyLabelsSummary();
+  if(isFullDebug(COMPONENT_MEMLEAKS) && isFullDebug(COMPONENT_DISPATCH))
+    {
+      BuddyLabelsSummary(COMPONENT_DISPATCH);
 
-  BuddyGetStats(&bstats);
-  LogFullDebug(COMPONENT_MEMLEAKS,
-               "------- TOTAL SPACE USED FOR WORKER THREAD: %12lu (on %2u pages)",
-               (unsigned long)bstats.StdUsedSpace, bstats.NbStdUsed);
+      BuddyGetStats(&bstats);
+      LogFullDebug(COMPONENT_MEMLEAKS,
+                   "------- TOTAL SPACE USED FOR WORKER THREAD: %12lu (on %2u pages)",
+                   (unsigned long)bstats.StdUsedSpace, bstats.NbStdUsed);
 
-  /* DisplayMemoryMap(); */
+      /* DisplayMemoryMap(); */
 
-  LogFullDebug(COMPONENT_MEMLEAKS,
-               "--------------------------------------------------");
+      LogFullDebug(COMPONENT_MEMLEAKS,
+                   "--------------------------------------------------");
+    }
 
 }                               /* nfs_debug_debug_label_info */
 
@@ -110,15 +113,18 @@ void nfs_debug_buddy_info()
 {
   buddy_stats_t bstats;
 
-  BuddyLabelsSummary();
+  if(isFullDebug(COMPONENT_MEMLEAKS) && isFullDebug(COMPONENT_DISPATCH))
+    {
+      BuddyLabelsSummary(COMPONENT_DISPATCH);
 
-  BuddyGetStats(&bstats);
-  LogFullDebug(COMPONENT_MEMLEAKS,
-               "------- TOTAL SPACE USED FOR DISPATCHER THREAD: %12lu (on %2u pages)",
-               (unsigned long)bstats.StdUsedSpace, bstats.NbStdUsed);
+      BuddyGetStats(&bstats);
+      LogFullDebug(COMPONENT_MEMLEAKS,
+                   "------- TOTAL SPACE USED FOR DISPATCHER THREAD: %12lu (on %2u pages)",
+                   (unsigned long)bstats.StdUsedSpace, bstats.NbStdUsed);
 
-  LogFullDebug(COMPONENT_MEMLEAKS,
-               "--------------------------------------------------");
+      LogFullDebug(COMPONENT_MEMLEAKS,
+                   "--------------------------------------------------");
+    }
 }
 
 #endif
@@ -695,7 +701,7 @@ static unsigned int select_worker_queue()
             }
           else if(rc == WORKER_EXIT)
             {
-            } 
+            }
         }
 
   if(worker_index == NO_VALUE_CHOOSEN)
