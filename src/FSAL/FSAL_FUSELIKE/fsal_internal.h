@@ -113,9 +113,6 @@ fsal_status_t FUSEFSAL_BuildExportContext(fsal_export_context_t * p_export_conte
                                           fsal_path_t * p_export_path,  /* IN */
                                           char *fs_specific_options /* IN */ );
 
-fsal_status_t FUSEFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context);
-
-
 fsal_status_t FUSEFSAL_InitClientContext(fsal_op_context_t * p_thr_context);
 
 fsal_status_t FUSEFSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OUT  */

@@ -154,10 +154,6 @@ fsal_status_t POSIXFSAL_BuildExportContext(fsal_export_context_t * p_export_cont
                                            fsal_path_t * p_export_path, /* IN */
                                            char *fs_specific_options /* IN */ );
 
-
-fsal_status_t POSIXFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context);
-
-
 fsal_status_t POSIXFSAL_InitClientContext(fsal_op_context_t * p_thr_context);
 
 fsal_status_t POSIXFSAL_create(fsal_handle_t * parent_directory_handle,  /* IN */

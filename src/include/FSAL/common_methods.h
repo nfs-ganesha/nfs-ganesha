@@ -2,6 +2,8 @@
  * Common FSAL methods
  */
 
+fsal_status_t COMMON_CleanUpExportContext_noerror(fsal_export_context_t * p_export_context);
+
 fsal_status_t COMMON_InitClientContext(fsal_op_context_t * p_thr_context);
 
 fsal_status_t COMMON_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OUT  */

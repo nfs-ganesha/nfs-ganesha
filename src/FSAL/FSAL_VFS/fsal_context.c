@@ -178,19 +178,6 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }
 
-/**
- * FSAL_CleanUpExportContext :
- * this will clean up and state in an export that was created during
- * the BuildExportContext phase.  For many FSALs this may be a noop.
- *
- * \param p_export_context (in, vfsfsal_export_context_t)
- */
-
-fsal_status_t VFSFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context)
-{
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
-}
-
 fsal_status_t VFSFSAL_InitClientContext(fsal_op_context_t * p_context)
 {
   vfsfsal_op_context_t * p_thr_context = (vfsfsal_op_context_t *)p_context;
