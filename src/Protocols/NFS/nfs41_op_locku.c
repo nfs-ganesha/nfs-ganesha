@@ -80,14 +80,19 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_locku";
   state_status_t      state_status;
   state_t           * pstate_found = NULL;
-  state_t           * pstate_open = NULL;
+  state_owner_t     * plock_owner;
   state_lock_desc_t   lock_desc;
   unsigned int        rc = 0;
+  const char        * tag = "LOCKU";
 
-  /* Lock are not supported */
+  LogDebug(COMPONENT_NFS_V4_LOCK,
+           "Entering NFS v4.1 LOCKU handler -----------------------------------------------------");
+
+  /* Initialize to sane default */
   resp->resop = NFS4_OP_LOCKU;
 
 #ifdef _WITH_NO_NFSV4_LOCKS
+  /* Lock are not supported */
   res_LOCKU4.status = NFS4ERR_LOCK_NOTSUPP;
   return res_LOCKU4.status;
 #else
@@ -122,18 +127,12 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
         case DIR_BEGINNING:
         case DIR_CONTINUE:
           res_LOCKU4.status = NFS4ERR_ISDIR;
-          break;
+          return res_LOCKU4.status;
+
         default:
           res_LOCKU4.status = NFS4ERR_INVAL;
-          break;
+          return res_LOCKU4.status;
         }
-    }
-
-  /* Lock length should not be 0 */
-  if(arg_LOCKU4.length == 0LL)
-    {
-      res_LOCKU4.status = NFS4ERR_INVAL;
-      return res_LOCKU4.status;
     }
 
   /* Convert lock parameters to internal types */
@@ -157,6 +156,28 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   else
     lock_desc.sld_length = 0;
 
+  /* Check stateid correctness and get pointer to state */
+  if((rc = nfs4_Check_Stateid(&arg_LOCKU4.lock_stateid,
+                              data->current_entry,
+                              data->psession->clientid,
+                              &pstate_found,
+                              data,
+                              STATEID_SPECIAL_FOR_LOCK,
+                              tag)) != NFS4_OK)
+    {
+      res_LOCKU4.status = rc;
+      return res_LOCKU4.status;
+    }
+
+  plock_owner = pstate_found->state_powner;
+
+  /* Lock length should not be 0 */
+  if(arg_LOCKU4.length == 0LL)
+    {
+      res_LOCKU4.status = NFS4ERR_INVAL;
+      return res_LOCKU4.status;
+    }
+
   /* Check for range overflow
    * Remember that a length with all bits set to 1 means "lock until the end of file" (RFC3530, page 157) */
   if(lock_desc.sld_length > (STATE_LOCK_OFFSET_EOF - lock_desc.sld_offset))
@@ -165,36 +186,19 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_LOCKU4.status;
     }
 
-  /* Check stateid correctness and get pointer to state */
-  if((rc = nfs4_Check_Stateid(&arg_LOCKU4.lock_stateid,
-                              data->current_entry,
-                              data->psession->clientid,
-                              &pstate_found,
-                              data,
-                              STATEID_SPECIAL_FOR_LOCK,
-                              "UNLOCK")) != NFS4_OK)
-    {
-      res_LOCKU4.status = rc;
-      return res_LOCKU4.status;
-    }
-
-  pstate_open = pstate_found->state_data.lock.popenstate;
-  if(pstate_open != NULL)
-    {
-      /* update the lock counter in the related open-stateid */
-      // TODO FSF: this count is probably wrong...
-      if(pstate_open->state_data.share.lockheld > 0)
-        pstate_open->state_data.share.lockheld -= 1;
-    }
-
-  memcpy(res_LOCKU4.LOCKU4res_u.lock_stateid.other, pstate_found->stateid_other, OTHERSIZE);
+  LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
+          tag,
+          data->current_entry,
+          data->pcontext,
+          plock_owner,
+          &lock_desc);
 
   /* Now we have a lock owner and a stateid.
    * Go ahead and push unlock into SAL (and FSAL).
    */
   if(state_unlock(data->current_entry,
                   data->pcontext,
-                  pstate_found->state_powner,
+                  plock_owner,
                   pstate_found,
                   &lock_desc,
                   data->pclient,
@@ -204,17 +208,18 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_LOCKU4.status;
     }
 
-  /* Remove the state associated with the lock */
-  // TODO FSF: this is not right, we need to keep the stateid, but we need to figure out right time to free it
-  if(state_del(pstate_found,
-               data->pclient, &state_status) != STATE_SUCCESS)
-    {
-      res_LOCKU4.status = nfs4_Errno_state(state_status);
-      return res_LOCKU4.status;
-    }
-
   /* Successful exit */
   res_LOCKU4.status = NFS4_OK;
+
+  /* Handle stateid/seqid for success */
+  update_stateid(pstate_found,
+                 &res_LOCKU4.LOCKU4res_u.lock_stateid,
+                 data,
+                 tag);
+
+  /* update the lock counter in the related open-stateid */
+  pstate_found->state_data.share.lockheld -= 1;
+
   return res_LOCKU4.status;
 #endif
 }                               /* nfs41_op_locku */

@@ -128,6 +128,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         case DIR_CONTINUE:
           res_LOCKU4.status = NFS4ERR_ISDIR;
           return res_LOCKU4.status;
+
         default:
           res_LOCKU4.status = NFS4ERR_INVAL;
           return res_LOCKU4.status;
