@@ -297,8 +297,8 @@ int ganefuse_main(int argc, char *argv[],
 
   /* set filesystem relative info */
 
-  nfs_param.fsal_param.fs_specific_info.fs_ops = &ops;
-  nfs_param.fsal_param.fs_specific_info.user_data = user_data;
+  ((fusefs_specific_initinfo_t *) &nfs_param.fsal_param.fs_specific_info)->fs_ops = &ops;
+  ((fusefs_specific_initinfo_t *) &nfs_param.fsal_param.fs_specific_info)->user_data = user_data;
 
 #ifdef _SNMP_ADM_ACTIVE
   if(!nfs_param.extern_param.snmp_adm.snmp_log_file[0])

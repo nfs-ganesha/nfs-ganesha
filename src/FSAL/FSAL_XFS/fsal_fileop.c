@@ -527,24 +527,6 @@ fsal_status_t XFSFSAL_close(fsal_file_t * p_file_descriptor  /* IN */
 
 }
 
-/* Some unsupported calls used in FSAL_PROXY, just for permit the ganeshell to compile */
-fsal_status_t XFSFSAL_open_by_fileid(fsal_handle_t * filehandle,     /* IN */
-                                     fsal_u64_t fileid, /* IN */
-                                     fsal_op_context_t * p_context,  /* IN */
-                                     fsal_openflags_t openflags,        /* IN */
-                                     fsal_file_t * file_descriptor,  /* OUT */
-                                     fsal_attrib_list_t *
-                                     file_attributes /* [ IN/OUT ] */ )
-{
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
-}
-
-fsal_status_t XFSFSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
-                                      fsal_u64_t fileid)
-{
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
-}
-
 unsigned int XFSFSAL_GetFileno(fsal_file_t * pfile)
 {
   return ((xfsfsal_file_t *) pfile)->fd;

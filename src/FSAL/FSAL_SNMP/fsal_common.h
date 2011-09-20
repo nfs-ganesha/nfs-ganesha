@@ -41,12 +41,12 @@ typedef struct fsal_request_desc__
 /* usefull functions for accessing SNMP  */
 
 /* builds the root handle  */
-void BuildRootHandle(fsal_handle_t * p_hdl);
+void BuildRootHandle(snmpfsal_handle_t * p_hdl);
 
 /* converts a path to an oid.
  * @todo : use SNMP error codes ?
  */
-int ParseSNMPPath(char *in_path, fsal_handle_t * out_handle);
+int ParseSNMPPath(char *in_path, snmpfsal_handle_t * out_handle);
 
 /**
  * proceed a SNMP request
@@ -58,7 +58,7 @@ int ParseSNMPPath(char *in_path, fsal_handle_t * out_handle);
  *         or a SNMP error code if an error occurred.
  *         In case of an internal error, SNMPERR_MAX-1 is returned.
  */
-int IssueSNMPQuery(fsal_op_context_t * p_context, oid * oid_tab, int oid_len,
+int IssueSNMPQuery(snmpfsal_op_context_t * p_context, oid * oid_tab, int oid_len,
                    fsal_request_desc_t * p_req_desc);
 
 /**
@@ -75,7 +75,7 @@ struct tree *FSAL_GetTree(oid * objid, int objidlen, struct tree *subtree,
  * @return a MIB subtree whose the root node is the resquested node
  *         if it exists, NULL else.
  */
-struct tree *GetMIBNode(fsal_op_context_t * p_context, fsal_handle_t * p_handle,
+struct tree *GetMIBNode(snmpfsal_op_context_t * p_context, snmpfsal_handle_t * p_handle,
                         int return_nearest_parent);
 
 /**
@@ -84,7 +84,7 @@ struct tree *GetMIBNode(fsal_op_context_t * p_context, fsal_handle_t * p_handle,
  * @param p_handle    the SNMP oid for the MIB child list we want 
  * @return a pointer to the first child if it exists, NULL else.
  */
-struct tree *GetMIBChildList(fsal_op_context_t * p_context, fsal_handle_t * p_handle);
+struct tree *GetMIBChildList(snmpfsal_op_context_t * p_context, snmpfsal_handle_t * p_handle);
 
 /* test is a given oid is in the subtree whose parent_oid is the root */
 int IsSNMPChild(oid * parent_oid, int parent_oid_len, oid * child_oid, int child_oid_len);
@@ -93,13 +93,13 @@ int IsSNMPChild(oid * parent_oid, int parent_oid_len, oid * child_oid, int child
  * NB: the object_type_reminder handle's field is not used in this call.
  * @return 0 if it is not a parent node, 1 if it is, -1 on SNMP error.
  */
-int HasSNMPChilds(fsal_op_context_t * p_context, fsal_handle_t * p_handle);
+int HasSNMPChilds(snmpfsal_op_context_t * p_context, snmpfsal_handle_t * p_handle);
 
 /**
  * get the next response for a GETBULK response sequence.
  * @param p_context the current request context.
  */
-netsnmp_variable_list *GetNextResponse(fsal_op_context_t * p_context);
+netsnmp_variable_list *GetNextResponse(snmpfsal_op_context_t * p_context);
 
 /**
  * this macro copy a full or partial oid (for a FSAL handle or cookie)

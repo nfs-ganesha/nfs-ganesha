@@ -1945,7 +1945,7 @@ void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr);
 
 void cache_inode_print_srvhandle(char *comment, cache_entry_t * pentry)
 {
-  fsal_handle_t *pfsal_handle;
+  proxyfsal_handle_t *pfsal_handle;
   nfs_fh4 nfsfh;
   char tag[30];
   char outstr[1024];

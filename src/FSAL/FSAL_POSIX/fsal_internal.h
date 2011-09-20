@@ -237,17 +237,6 @@ fsal_status_t POSIXFSAL_sync(fsal_file_t * p_file_descriptor     /* IN */);
 
 fsal_status_t POSIXFSAL_close(fsal_file_t * p_file_descriptor /* IN */ );
 
-fsal_status_t POSIXFSAL_open_by_fileid(fsal_handle_t * filehandle, /* IN */
-                                       fsal_u64_t fileid,       /* IN */
-                                       fsal_op_context_t * p_context,      /* IN */
-                                       fsal_openflags_t openflags,      /* IN */
-                                       fsal_file_t * file_descriptor,      /* OUT */
-                                       fsal_attrib_list_t *
-                                       file_attributes /* [ IN/OUT ] */ );
-
-fsal_status_t POSIXFSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
-                                        fsal_u64_t fileid);
-
 fsal_status_t POSIXFSAL_static_fsinfo(fsal_handle_t * p_filehandle,        /* IN */
                                       fsal_op_context_t * p_context,       /* IN */
                                       fsal_staticfsinfo_t * p_staticinfo /* OUT */ );
@@ -316,8 +305,6 @@ fsal_status_t POSIXFSAL_unlock(fsal_file_t * obj_handle,
 fsal_status_t POSIXFSAL_getlock(fsal_file_t * obj_handle,
                                 fsal_lockdesc_t * ldesc);
 
-fsal_status_t POSIXFSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle);
-
 fsal_status_t POSIXFSAL_set_quota(fsal_path_t * pfsal_path,     /* IN */
                                   int quota_type,       /* IN */
                                   fsal_uid_t fsal_uid,  /* IN */
@@ -333,12 +320,6 @@ fsal_status_t POSIXFSAL_rcp(fsal_handle_t * filehandle,    /* IN */
                             fsal_op_context_t * p_context, /* IN */
                             fsal_path_t * p_local_path, /* IN */
                             fsal_rcpflag_t transfer_opt /* IN */ );
-
-fsal_status_t POSIXFSAL_rcp_by_fileid(fsal_handle_t * filehandle,  /* IN */
-                                      fsal_u64_t fileid,        /* IN */
-                                      fsal_op_context_t * p_context,       /* IN */
-                                      fsal_path_t * p_local_path,       /* IN */
-                                      fsal_rcpflag_t transfer_opt /* IN */ );
 
 fsal_status_t POSIXFSAL_rename(fsal_handle_t * p_old_parentdir_handle,     /* IN */
                                fsal_name_t * p_old_name,        /* IN */

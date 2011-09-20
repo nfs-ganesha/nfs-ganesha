@@ -62,16 +62,17 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
   */
 
-fsal_status_t FUSEFSAL_rename(fusefsal_handle_t * old_parentdir_handle, /* IN */
+fsal_status_t FUSEFSAL_rename(fsal_handle_t * old_parent, /* IN */
                               fsal_name_t * p_old_name, /* IN */
-                              fusefsal_handle_t * new_parentdir_handle, /* IN */
+                              fsal_handle_t * new_parent, /* IN */
                               fsal_name_t * p_new_name, /* IN */
-                              fusefsal_op_context_t * p_context,        /* IN */
+                              fsal_op_context_t * p_context,        /* IN */
                               fsal_attrib_list_t * src_dir_attributes,  /* [ IN/OUT ] */
                               fsal_attrib_list_t * tgt_dir_attributes   /* [ IN/OUT ] */
     )
 {
-
+  fusefsal_handle_t * old_parentdir_handle = (fusefsal_handle_t *)old_parent;
+  fusefsal_handle_t * new_parentdir_handle = (fusefsal_handle_t *)new_parent;
   int rc = 0;
   char src_dir_path[FSAL_MAX_PATH_LEN];
   char tgt_dir_path[FSAL_MAX_PATH_LEN];

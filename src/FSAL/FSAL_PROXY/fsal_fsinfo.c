@@ -56,8 +56,8 @@
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t PROXYFSAL_static_fsinfo(proxyfsal_handle_t * filehandle,  /* IN */
-                                      proxyfsal_op_context_t * p_context,       /* IN */
+fsal_status_t PROXYFSAL_static_fsinfo(fsal_handle_t * filehandle,  /* IN */
+                                      fsal_op_context_t * p_context,       /* IN */
                                       fsal_staticfsinfo_t * staticinfo  /* OUT */
     )
 {
@@ -92,8 +92,8 @@ fsal_status_t PROXYFSAL_static_fsinfo(proxyfsal_handle_t * filehandle,  /* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t PROXYFSAL_dynamic_fsinfo(proxyfsal_handle_t * filehandle, /* IN */
-                                       proxyfsal_op_context_t * p_context,      /* IN */
+fsal_status_t PROXYFSAL_dynamic_fsinfo(fsal_handle_t * filehandle, /* IN */
+                                       fsal_op_context_t * context,      /* IN */
                                        fsal_dynamicfsinfo_t * dynamicinfo       /* OUT */
     )
 {
@@ -106,6 +106,7 @@ fsal_status_t PROXYFSAL_dynamic_fsinfo(proxyfsal_handle_t * filehandle, /* IN */
   bitmap4 bitmap;
   uint32_t bitmap_val[2];
   uint32_t bitmap_res[2];
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
 #define FSAL_FSINFO_NB_OP_ALLOC 2
   nfs_argop4 argoparray[FSAL_FSINFO_NB_OP_ALLOC];
