@@ -577,3 +577,13 @@ fsal_status_t COMMON_getextattrs_notsupp(fsal_handle_t * p_filehandle, /* IN */
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_getextattrs);
 }
 
+/*
+ * init/terminate
+ */
+
+
+/* To be called before exiting */
+fsal_status_t COMMON_terminate_noerror()
+{
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}

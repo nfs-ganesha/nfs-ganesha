@@ -81,9 +81,3 @@ fsal_status_t POSIXFSAL_Init(fsal_parameter_t * init_info       /* IN */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_Init);
 
 }
-
-/* To be called before exiting */
-fsal_status_t POSIXFSAL_terminate()
-{
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}

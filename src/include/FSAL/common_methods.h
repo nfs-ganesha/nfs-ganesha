@@ -79,3 +79,5 @@ fsal_status_t COMMON_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
 fsal_status_t COMMON_getextattrs_notsupp(fsal_handle_t * p_filehandle, /* IN */
 				 fsal_op_context_t * p_context,        /* IN */
 				 fsal_extattrib_list_t * p_object_attributes /* OUT */ );
+
+fsal_status_t COMMON_terminate_noerror();
