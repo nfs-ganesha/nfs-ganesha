@@ -1082,20 +1082,20 @@ void HashTable_Log(log_components_t component, hash_table_t * ht)
   if(ht == NULL)
     return;
 
-  LogFullDebug(COMPONENT_HASHTABLE,
+  LogFullDebug(component,
                "The hash has %d nodes (this number MUST be a prime integer for performance's issues)",
                 ht->parameter.index_size);
 
   for(i = 0; i < ht->parameter.index_size; i++)
     nb_entries += ht->stat_dynamic[i].nb_entries;
 
-  LogFullDebug(COMPONENT_HASHTABLE,"The hash contains %d entries", nb_entries);
+  LogFullDebug(component, "The hash contains %d entries", nb_entries);
 
   for(i = 0; i < ht->parameter.index_size; i++)
     {
       tete_rbt = &((ht->array_rbt)[i]);
-      LogFullDebug(COMPONENT_HASHTABLE,
-                   "The node in position %d contains:  %d entries ",
+      LogFullDebug(component,
+                   "The node in position %d contains: %d entries",
                    i, tete_rbt->rbt_num_node);
       RBT_LOOP(tete_rbt, it)
       {
@@ -1105,24 +1105,31 @@ void HashTable_Log(log_components_t component, hash_table_t * ht)
         ht->parameter.val_to_str(&(pdata->buffval), dispval);
 
         /* Compute values to locate into the hashtable */
-        if( ht->parameter.hash_func_both != NULL )
+        if(ht->parameter.hash_func_both != NULL)
          {
-           if( (*(ht->parameter.hash_func_both))( &ht->parameter, &(pdata->buffkey), (uint32_t *)&hashval, (uint32_t *)&rbtval ) == 0 ) 
+           uint32_t rbtval32;
+           uint32_t hashval32;
+           if((*(ht->parameter.hash_func_both))(&ht->parameter, &(pdata->buffkey), &hashval32, &rbtval32) == 0) 
 	     {
-               LogCrit(COMPONENT_HASHTABLE,
-                       "Possible implementation error at line %u file %s",
-                       __LINE__, __FILE__ ) ;
-               hashval = 0 ;
-               rbtval = 0 ;
+               LogCrit(component,
+                       "Possible implementation error in hash_func_both");
+               hashval = 0;
+               rbtval  = 0;
+             }
+           else
+             {
+               hashval = rbtval32;
+               rbtval  = hashval32;
              }
           }
         else
           {
             hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, &(pdata->buffkey));
-            rbtval = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, &(pdata->buffkey));
+            rbtval  = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, &(pdata->buffkey));
           }
 
-        LogFullDebug(component, "%s => %s; hashval=%lu rbtval=%lu ",
+        LogFullDebug(component,
+                     "%s => %s; hashval=%lu rbtval=%lu",
                      dispkey, dispval, hashval, rbtval);
         RBT_INCREMENT(it);
       }

@@ -428,7 +428,10 @@ state_status_t state_iterate(cache_entry_t         * pentry,
   uint64_t   fileid_digest = 0;
 
   if(pstatus == NULL)
-    return STATE_INVALID_ARGUMENT;
+    {
+      *pstatus = STATE_INVALID_ARGUMENT;
+      return *pstatus;
+    }
 
   if(pentry == NULL || ppstate == NULL || pclient == NULL || pcontext == NULL)
     {
@@ -477,6 +480,7 @@ state_status_t state_iterate(cache_entry_t         * pentry,
     }
 
   *ppstate = piter_state;
+  *pstatus = STATE_SUCCESS;
 
   V_r(&pentry->lock);
 
