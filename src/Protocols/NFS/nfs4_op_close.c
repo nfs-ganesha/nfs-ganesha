@@ -134,6 +134,8 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                               tag)) != NFS4_OK)
     {
       res_CLOSE4.status = rc;
+      LogDebug(COMPONENT_STATE,
+               "CLOSE failed nfs4_Check_Stateid");
       return res_CLOSE4.status;
     }
 
@@ -251,3 +253,9 @@ void nfs4_op_close_Free(CLOSE4res * resp)
   /* Nothing to be done */
   return;
 }                               /* nfs4_op_close_Free */
+
+void nfs4_op_close_CopyRes(CLOSE4res * resp_dst, CLOSE4res * resp_src)
+{
+  /* Nothing to be done */
+  return;
+}

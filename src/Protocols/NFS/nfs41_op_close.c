@@ -66,11 +66,16 @@
 int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_close";
+  int                    rc = 0;
   state_t              * pstate_found = NULL;
   cache_inode_status_t   cache_status;
   state_status_t         state_status;
-  int                    rc;
+  state_owner_t        * popen_owner;
+  const char           * tag = "CLOSE";
   struct glist_head    * glist, * glistn;
+
+  LogDebug(COMPONENT_STATE,
+           "Entering NFS v4.1 CLOSE handler -----------------------------------------------------");
 
   memset(&res_CLOSE4, 0, sizeof(res_CLOSE4));
   resp->resop = NFS4_OP_CLOSE;
@@ -124,13 +129,15 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                               &pstate_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,
-                              "CLOSE")) != NFS4_OK)
+                              tag)) != NFS4_OK)
     {
       res_CLOSE4.status = rc;
       LogDebug(COMPONENT_STATE,
                "CLOSE failed nfs4_Check_Stateid");
       return res_CLOSE4.status;
     }
+
+  popen_owner = pstate_found->state_powner;
 
   /* Check is held locks remain */
   glist_for_each(glist, &pstate_found->state_data.share.share_lockstates)
@@ -146,20 +153,9 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
           LogDebug(COMPONENT_STATE,
                    "NFS4 Close with existing locks");
 
-          /* Save the response in the open owner */
-          //Copy_nfs4_state_req(popen_owner, arg_CLOSE4.seqid, op, data, resp, tag);
-
           return res_CLOSE4.status;
         }
     }
-
-  /* Update the seqid for the open_owner */
-  P(pstate_found->state_powner->so_mutex);
-  pstate_found->state_powner->so_owner.so_nfs4_owner.so_seqid += 1;
-  V(pstate_found->state_powner->so_mutex);
-
-  /* Prepare the result */
-  res_CLOSE4.CLOSE4res_u.open_stateid.seqid = pstate_found->state_seqid + 1;
 
   /* Close the file in FSAL through the cache inode */
   P_w(&data->current_entry->lock);
@@ -173,6 +169,14 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_CLOSE4.status;
     }
   V_w(&data->current_entry->lock);
+
+  res_CLOSE4.status = NFS4_OK;
+
+  /* Handle stateid/seqid for success */
+  update_stateid(pstate_found,
+                 &res_CLOSE4.CLOSE4res_u.open_stateid,
+                 data,
+                 tag);
 
   /* File is closed, release the corresponding lock states */
   glist_for_each_safe(glist, glistn, &pstate_found->state_data.share.share_lockstates)
@@ -201,9 +205,11 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                state_err_str(state_status));
     }
 
-  memcpy(res_CLOSE4.CLOSE4res_u.open_stateid.other, arg_CLOSE4.open_stateid.other, OTHERSIZE);;
-
-  res_CLOSE4.status = NFS4_OK;
+  if(isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS))
+    {
+      nfs_State_PrintAll();
+      nfs4_owner_PrintAll();
+    }
 
   return NFS4_OK;
 }                               /* nfs41_op_close */
@@ -223,9 +229,3 @@ void nfs41_op_close_Free(CLOSE4res * resp)
   /* Nothing to be done */
   return;
 }                               /* nfs41_op_close_Free */
-
-void nfs4_op_close_CopyRes(CLOSE4res * resp_dst, CLOSE4res * resp_src)
-{
-  /* Nothing to be done */
-  return;
-}
