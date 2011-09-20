@@ -62,10 +62,12 @@ char *PROXYFSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int PROXYFSAL_handlecmp(proxyfsal_handle_t * handle1, proxyfsal_handle_t * handle2,
+int PROXYFSAL_handlecmp(fsal_handle_t * handle_1, fsal_handle_t * handle_2,
                         fsal_status_t * status)
 {
   *status = FSAL_STATUS_NO_ERROR;
+  proxyfsal_handle_t * handle1 = (proxyfsal_handle_t *)handle_1;
+  proxyfsal_handle_t * handle2 = (proxyfsal_handle_t *)handle_2;
 
   if(!handle1 || !handle2)
     {
@@ -103,7 +105,7 @@ int PROXYFSAL_handlecmp(proxyfsal_handle_t * handle1, proxyfsal_handle_t * handl
  * \return The hash value
  */
 
-unsigned int PROXYFSAL_Handle_to_HashIndex(proxyfsal_handle_t * p_handle,
+unsigned int PROXYFSAL_Handle_to_HashIndex(fsal_handle_t *handle,
                                            unsigned int cookie,
                                            unsigned int alphabet_len,
                                            unsigned int index_size)
@@ -112,6 +114,7 @@ unsigned int PROXYFSAL_Handle_to_HashIndex(proxyfsal_handle_t * p_handle,
   unsigned int sum = 0;
   unsigned int extract = 0;
   unsigned int mod;
+  proxyfsal_handle_t * p_handle = (proxyfsal_handle_t *)handle;
 
   /* XXX If the handle is not 32 bits-aligned, the last loop will get uninitialized
    * chars after the end of the handle. We must avoid this by skipping the last loop
@@ -153,13 +156,14 @@ unsigned int PROXYFSAL_Handle_to_HashIndex(proxyfsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int PROXYFSAL_Handle_to_RBTIndex(proxyfsal_handle_t * p_handle,
+unsigned int PROXYFSAL_Handle_to_RBTIndex(fsal_handle_t *handle,
                                           unsigned int cookie)
 {
   unsigned int h = 0;
   unsigned int cpt = 0;
   unsigned int extract = 0;
   unsigned int mod;
+  proxyfsal_handle_t * p_handle = (proxyfsal_handle_t *)handle;
 
   h = cookie;
 
@@ -209,15 +213,17 @@ unsigned int PROXYFSAL_Handle_to_RBTIndex(proxyfsal_handle_t * p_handle,
 
 #define NFSV4_FH_OPAQUE_SIZE 108 /* Take care of coherency with size of file_handle_v4_t::fsopaque */
 
-fsal_status_t PROXYFSAL_DigestHandle(proxyfsal_export_context_t * p_expcontext, /* IN */
+fsal_status_t PROXYFSAL_DigestHandle(fsal_export_context_t * exp_context, /* IN */
                                      fsal_digesttype_t output_type,     /* IN */
-                                     proxyfsal_handle_t * in_fsal_handle,       /* IN */
+                                     fsal_handle_t * in_handle,       /* IN */
                                      caddr_t out_buff   /* OUT */
     )
 {
 #ifdef _HANDLE_MAPPING
   nfs23_map_handle_t map_hdl;
 #endif
+  proxyfsal_export_context_t * p_expcontext = (proxyfsal_export_context_t *)exp_context;
+  proxyfsal_handle_t * in_fsal_handle = (proxyfsal_handle_t *)in_handle;
 
   /* sanity checks */
   if(!in_fsal_handle || !out_buff || !p_expcontext)
@@ -336,10 +342,10 @@ fsal_status_t PROXYFSAL_DigestHandle(proxyfsal_export_context_t * p_expcontext, 
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t PROXYFSAL_ExpandHandle(proxyfsal_export_context_t * p_expcontext, /* IN */
+fsal_status_t PROXYFSAL_ExpandHandle(fsal_export_context_t * p_expcontext, /* IN */
                                      fsal_digesttype_t in_type, /* IN */
                                      caddr_t in_buff,   /* IN */
-                                     proxyfsal_handle_t * out_fsal_handle       /* OUT */
+                                     fsal_handle_t * out_fsal_handle       /* OUT */
     )
 {
   fsal_nodetype_t nodetype;
@@ -493,6 +499,8 @@ fsal_status_t PROXYFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_pa
 
 fsal_status_t PROXYFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
 {
+  proxyfs_specific_initinfo_t *init_info;
+
   /* defensive programming... */
   if(out_parameter == NULL)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -500,33 +508,35 @@ fsal_status_t PROXYFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_
   /* >> set your default FS configuration into the
      out_parameter->fs_specific_info structure << */
 
-  out_parameter->fs_specific_info.retry_sleeptime = FSAL_PROXY_RETRY_SLEEPTIME; /* Time to sleep when retrying */
-  out_parameter->fs_specific_info.srv_addr = htonl(0x7F000001); /* 127.0.0.1 aka localhost     */
-  out_parameter->fs_specific_info.srv_prognum = 100003; /* Default NFS prognum         */
-  out_parameter->fs_specific_info.srv_port = htons(2049);       /* Default NFS port            */
-  out_parameter->fs_specific_info.srv_timeout = 2;     /* RPC Client timeout          */
-  out_parameter->fs_specific_info.srv_sendsize = FSAL_PROXY_SEND_BUFFER_SIZE;   /* Default Buffer Send Size    */
-  out_parameter->fs_specific_info.srv_recvsize = FSAL_PROXY_RECV_BUFFER_SIZE;   /* Default Buffer Send Size    */
-  out_parameter->fs_specific_info.use_privileged_client_port = FALSE;   /* No privileged port by default */
+  init_info = (proxyfs_specific_initinfo_t *) &(out_parameter->fs_specific_info);
 
-  out_parameter->fs_specific_info.active_krb5 = FALSE;  /* No RPCSEC_GSS by default */
-  strncpy(out_parameter->fs_specific_info.local_principal, "(no principal set)", MAXNAMLEN);    /* Principal is nfs@<host>  */
-  strncpy(out_parameter->fs_specific_info.remote_principal, "(no principal set)", MAXNAMLEN);   /* Principal is nfs@<host>  */
-  strncpy(out_parameter->fs_specific_info.keytab, "etc/krb5.keytab", MAXPATHLEN);       /* Path to krb5 keytab file */
-  out_parameter->fs_specific_info.cred_lifetime = 86400;        /* 24h is a good default    */
-  out_parameter->fs_specific_info.sec_type = 0;
+  init_info->retry_sleeptime = FSAL_PROXY_RETRY_SLEEPTIME; /* Time to sleep when retrying */
+  init_info->srv_addr = htonl(0x7F000001); /* 127.0.0.1 aka localhost     */
+  init_info->srv_prognum = 100003; /* Default NFS prognum         */
+  init_info->srv_port = htons(2049);       /* Default NFS port            */
+  init_info->srv_timeout = 2;     /* RPC Client timeout          */
+  init_info->srv_sendsize = FSAL_PROXY_SEND_BUFFER_SIZE;   /* Default Buffer Send Size    */
+  init_info->srv_recvsize = FSAL_PROXY_RECV_BUFFER_SIZE;   /* Default Buffer Send Size    */
+  init_info->use_privileged_client_port = FALSE;   /* No privileged port by default */
 
-  strcpy(out_parameter->fs_specific_info.srv_proto, "tcp");
-  strncpy(out_parameter->fs_specific_info.openfh_wd, "/.hl_dir", MAXPATHLEN);
+  init_info->active_krb5 = FALSE;  /* No RPCSEC_GSS by default */
+  strncpy(init_info->local_principal, "(no principal set)", MAXNAMLEN);    /* Principal is nfs@<host>  */
+  strncpy(init_info->remote_principal, "(no principal set)", MAXNAMLEN);   /* Principal is nfs@<host>  */
+  strncpy(init_info->keytab, "etc/krb5.keytab", MAXPATHLEN);       /* Path to krb5 keytab file */
+  init_info->cred_lifetime = 86400;        /* 24h is a good default    */
+  init_info->sec_type = 0;
+
+  strcpy(init_info->srv_proto, "tcp");
+  strncpy(init_info->openfh_wd, "/.hl_dir", MAXPATHLEN);
 
 #ifdef _HANDLE_MAPPING
-  out_parameter->fs_specific_info.enable_handle_mapping = FALSE;
-  strcpy(out_parameter->fs_specific_info.hdlmap_dbdir, "/var/ganesha/handlemap");
-  strcpy(out_parameter->fs_specific_info.hdlmap_tmpdir, "/var/ganesha/tmp");
-  out_parameter->fs_specific_info.hdlmap_dbcount = 8;
-  out_parameter->fs_specific_info.hdlmap_hashsize = 103;
-  out_parameter->fs_specific_info.hdlmap_nb_entry_prealloc = 16384;
-  out_parameter->fs_specific_info.hdlmap_nb_db_op_prealloc = 1024;
+  init_info->enable_handle_mapping = FALSE;
+  strcpy(init_info->hdlmap_dbdir, "/var/ganesha/handlemap");
+  strcpy(init_info->hdlmap_tmpdir, "/var/ganesha/tmp");
+  init_info->hdlmap_dbcount = 8;
+  init_info->hdlmap_hashsize = 103;
+  init_info->hdlmap_nb_entry_prealloc = 16384;
+  init_info->hdlmap_nb_db_op_prealloc = 1024;
 #endif
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
@@ -880,6 +890,16 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
   char *key_value;
   struct hostent *hp = NULL;
   config_item_t block;
+  proxyfs_specific_initinfo_t *init_info;
+
+  /* defensive programming... */
+  if(out_parameter == NULL)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  /* >> set your default FS configuration into the
+     out_parameter->fs_specific_info structure << */
+
+  init_info = (proxyfs_specific_initinfo_t *) &(out_parameter->fs_specific_info);
 
   block = config_FindItemByName(in_config, CONF_LABEL_FS_SPECIFIC);
 
@@ -923,7 +943,7 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
           if(isdigit(key_value[0]))
             {
               /* Address begin with a digit, it is a address in the dotted form, translate it */
-              out_parameter->fs_specific_info.srv_addr = inet_addr(key_value);
+              init_info->srv_addr = inet_addr(key_value);
             }
           else
             {
@@ -934,33 +954,33 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
                           key_name);
                   ReturnCode(ERR_FSAL_INVAL, 0);
                 }
-              memcpy(&out_parameter->fs_specific_info.srv_addr, hp->h_addr, hp->h_length);
+              memcpy(&init_info->srv_addr, hp->h_addr, hp->h_length);
             }
         }
       else if(!STRCMP(key_name, "NFS_Port"))
         {
-          out_parameter->fs_specific_info.srv_port =
+          init_info->srv_port =
               htons((unsigned short)atoi(key_value));
         }
       else if(!STRCMP(key_name, "NFS_Service"))
         {
-          out_parameter->fs_specific_info.srv_prognum = (unsigned int)atoi(key_value);
+          init_info->srv_prognum = (unsigned int)atoi(key_value);
         }
       else if(!STRCMP(key_name, "NFS_SendSize"))
         {
-          out_parameter->fs_specific_info.srv_sendsize = (unsigned int)atoi(key_value);
+          init_info->srv_sendsize = (unsigned int)atoi(key_value);
         }
       else if(!STRCMP(key_name, "NFS_RecvSize"))
         {
-          out_parameter->fs_specific_info.srv_recvsize = (unsigned int)atoi(key_value);
+          init_info->srv_recvsize = (unsigned int)atoi(key_value);
         }
       else if(!STRCMP(key_name, "Use_Privileged_Client_Port"))
         {
-           out_parameter->fs_specific_info.use_privileged_client_port = StrToBoolean( key_value ) ;
+           init_info->use_privileged_client_port = StrToBoolean( key_value ) ;
         }
       else if(!STRCMP(key_name, "Retry_SleepTime"))
         {
-          out_parameter->fs_specific_info.retry_sleeptime = (unsigned int)atoi(key_value);
+          init_info->retry_sleeptime = (unsigned int)atoi(key_value);
         }
 ///#ifdef _ALLOW_NFS_PROTO_CHOICE
       else if(!STRCMP(key_name, "NFS_Proto"))
@@ -973,38 +993,38 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
                       key_name, key_value);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
-          strncpy(out_parameter->fs_specific_info.srv_proto, key_value, MAXNAMLEN);
+          strncpy(init_info->srv_proto, key_value, MAXNAMLEN);
         }
 ///#endif
       else if(!STRCMP(key_name, "Active_krb5"))
         {
-          out_parameter->fs_specific_info.active_krb5 = StrToBoolean(key_value);
+          init_info->active_krb5 = StrToBoolean(key_value);
         }
       else if(!STRCMP(key_name, "Local_PrincipalName"))
         {
-          strncpy(out_parameter->fs_specific_info.local_principal, key_value, MAXNAMLEN);
+          strncpy(init_info->local_principal, key_value, MAXNAMLEN);
         }
       else if(!STRCMP(key_name, "Remote_PrincipalName"))
         {
-          strncpy(out_parameter->fs_specific_info.remote_principal, key_value, MAXNAMLEN);
+          strncpy(init_info->remote_principal, key_value, MAXNAMLEN);
         }
       else if(!STRCMP(key_name, "KeytabPath"))
         {
-          strncpy(out_parameter->fs_specific_info.keytab, key_value, MAXPATHLEN);
+          strncpy(init_info->keytab, key_value, MAXPATHLEN);
         }
       else if(!STRCMP(key_name, "Credential_LifeTime"))
         {
-          out_parameter->fs_specific_info.cred_lifetime = (unsigned int)atoi(key_value);
+          init_info->cred_lifetime = (unsigned int)atoi(key_value);
         }
       else if(!STRCMP(key_name, "Sec_Type"))
         {
 #ifdef _USE_GSSRPC
           if(!STRCMP(key_value, "krb5"))
-            out_parameter->fs_specific_info.sec_type = RPCSEC_GSS_SVC_NONE;
+            init_info->sec_type = RPCSEC_GSS_SVC_NONE;
           else if(!STRCMP(key_value, "krb5i"))
-            out_parameter->fs_specific_info.sec_type = RPCSEC_GSS_SVC_INTEGRITY;
+            init_info->sec_type = RPCSEC_GSS_SVC_INTEGRITY;
           else if(!STRCMP(key_value, "krb5p"))
-            out_parameter->fs_specific_info.sec_type = RPCSEC_GSS_SVC_PRIVACY;
+            init_info->sec_type = RPCSEC_GSS_SVC_PRIVACY;
           else
             {
               LogCrit(COMPONENT_CONFIG, "FSAL LOAD PARAMETER: bad value %s for parameter %s", key_value,
@@ -1015,14 +1035,14 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
         }
       else if(!STRCMP(key_name, "Open_by_FH_Working_Dir"))
         {
-          strncpy(out_parameter->fs_specific_info.openfh_wd, key_value, MAXPATHLEN);
+          strncpy(init_info->openfh_wd, key_value, MAXPATHLEN);
         }
 
       else if(!STRCMP(key_name, "Enable_Handle_Mapping"))
         {
-          out_parameter->fs_specific_info.enable_handle_mapping = StrToBoolean(key_value);
+          init_info->enable_handle_mapping = StrToBoolean(key_value);
 
-          if(out_parameter->fs_specific_info.enable_handle_mapping == -1)
+          if(init_info->enable_handle_mapping == -1)
             {
               LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s --> %s (boolean expected)",
@@ -1032,39 +1052,39 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
         }
       else if(!STRCMP(key_name, "HandleMap_DB_Dir"))
         {
-          strncpy(out_parameter->fs_specific_info.hdlmap_dbdir, key_value, MAXPATHLEN);
+          strncpy(init_info->hdlmap_dbdir, key_value, MAXPATHLEN);
         }
       else if(!STRCMP(key_name, "HandleMap_Tmp_Dir"))
         {
-          strncpy(out_parameter->fs_specific_info.hdlmap_tmpdir, key_value, MAXPATHLEN);
+          strncpy(init_info->hdlmap_tmpdir, key_value, MAXPATHLEN);
         }
       else if(!STRCMP(key_name, "HandleMap_DB_Count"))
         {
-          out_parameter->fs_specific_info.hdlmap_dbcount = (unsigned int)atoi(key_value);
+          init_info->hdlmap_dbcount = (unsigned int)atoi(key_value);
         }
       else if(!STRCMP(key_name, "HandleMap_HashTable_Size"))
         {
-          out_parameter->fs_specific_info.hdlmap_hashsize = (unsigned int)atoi(key_value);
+          init_info->hdlmap_hashsize = (unsigned int)atoi(key_value);
         }
       else if(!STRCMP(key_name, "HandleMap_Nb_Entries_Prealloc"))
         {
-          out_parameter->fs_specific_info.hdlmap_nb_entry_prealloc =
+          init_info->hdlmap_nb_entry_prealloc =
               (unsigned int)atoi(key_value);
         }
       else if(!STRCMP(key_name, "HandleMap_Nb_DB_Operations_Prealloc"))
         {
-          out_parameter->fs_specific_info.hdlmap_nb_db_op_prealloc =
+          init_info->hdlmap_nb_db_op_prealloc =
               (unsigned int)atoi(key_value);
         }
       else if(!STRCMP(key_name, "Open_by_FH_Working_Dir"))
         {
-          strncpy(out_parameter->fs_specific_info.openfh_wd, key_value, MAXPATHLEN);
+          strncpy(init_info->openfh_wd, key_value, MAXPATHLEN);
         }
       else if(!STRCMP(key_name, "Enable_Handle_Mapping"))
         {
-          out_parameter->fs_specific_info.enable_handle_mapping = StrToBoolean(key_value);
+          init_info->enable_handle_mapping = StrToBoolean(key_value);
 
-          if(out_parameter->fs_specific_info.enable_handle_mapping == -1)
+          if(init_info->enable_handle_mapping == -1)
             {
               LogCrit(COMPONENT_CONFIG,
                       "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s --> %s (boolean expected)",
@@ -1074,28 +1094,28 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
         }
       else if(!STRCMP(key_name, "HandleMap_DB_Dir"))
         {
-          strncpy(out_parameter->fs_specific_info.hdlmap_dbdir, key_value, MAXPATHLEN);
+          strncpy(init_info->hdlmap_dbdir, key_value, MAXPATHLEN);
         }
       else if(!STRCMP(key_name, "HandleMap_Tmp_Dir"))
         {
-          strncpy(out_parameter->fs_specific_info.hdlmap_tmpdir, key_value, MAXPATHLEN);
+          strncpy(init_info->hdlmap_tmpdir, key_value, MAXPATHLEN);
         }
       else if(!STRCMP(key_name, "HandleMap_DB_Count"))
         {
-          out_parameter->fs_specific_info.hdlmap_dbcount = (unsigned int)atoi(key_value);
+          init_info->hdlmap_dbcount = (unsigned int)atoi(key_value);
         }
       else if(!STRCMP(key_name, "HandleMap_HashTable_Size"))
         {
-          out_parameter->fs_specific_info.hdlmap_hashsize = (unsigned int)atoi(key_value);
+          init_info->hdlmap_hashsize = (unsigned int)atoi(key_value);
         }
       else if(!STRCMP(key_name, "HandleMap_Nb_Entries_Prealloc"))
         {
-          out_parameter->fs_specific_info.hdlmap_nb_entry_prealloc =
+          init_info->hdlmap_nb_entry_prealloc =
               (unsigned int)atoi(key_value);
         }
       else if(!STRCMP(key_name, "HandleMap_Nb_DB_Operations_Prealloc"))
         {
-          out_parameter->fs_specific_info.hdlmap_nb_db_op_prealloc =
+          init_info->hdlmap_nb_db_op_prealloc =
               (unsigned int)atoi(key_value);
         }
 

@@ -72,8 +72,8 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes when something anormal occurs.
  */
-fsal_status_t PROXYFSAL_access(proxyfsal_handle_t * object_handle,      /* IN */
-                               proxyfsal_op_context_t * p_context,      /* IN */
+fsal_status_t PROXYFSAL_access(fsal_handle_t * object_handle,      /* IN */
+                               fsal_op_context_t *context,      /* IN */
                                fsal_accessflags_t access_type,  /* IN */
                                fsal_attrib_list_t * object_attributes   /* [ IN/OUT ] */
     )
@@ -86,6 +86,7 @@ fsal_status_t PROXYFSAL_access(proxyfsal_handle_t * object_handle,      /* IN */
   uint32_t bitmap_val[2];
   uint32_t bitmap_res[2];
   uint32_t accessflag = 0;
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
   fsal_proxy_internal_fattr_t fattr_internal;
 

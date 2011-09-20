@@ -17,4 +17,9 @@ Compiling NFS-GANESHA for a "FUSE-like" binding
 	
 Note: if no '--with-fsal=' is provided, the PROXY FSAL will be used.
 
+/!\ : If you got the source tree via git (git clone for example), you do not have the autotools specific stuff. You have to install 
+those from your machine. This is done by running "autoreconf --install" from src/ . This will as well generate the related ./configure
+script.
+
+
 

@@ -49,11 +49,11 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occurred.
  */
-fsal_status_t LUSTREFSAL_create(lustrefsal_handle_t * p_parent_directory_handle,        /* IN */
+fsal_status_t LUSTREFSAL_create(fsal_handle_t * p_parent_directory_handle,        /* IN */
                                 fsal_name_t * p_filename,       /* IN */
-                                lustrefsal_op_context_t * p_context,    /* IN */
+                                fsal_op_context_t * p_context,    /* IN */
                                 fsal_accessmode_t accessmode,   /* IN */
-                                lustrefsal_handle_t * p_object_handle,  /* OUT */
+                                fsal_handle_t * p_object_handle,  /* OUT */
                                 fsal_attrib_list_t * p_object_attributes        /* [ IN/OUT ] */
     )
 {
@@ -205,11 +205,11 @@ fsal_status_t LUSTREFSAL_create(lustrefsal_handle_t * p_parent_directory_handle,
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t LUSTREFSAL_mkdir(lustrefsal_handle_t * p_parent_directory_handle, /* IN */
+fsal_status_t LUSTREFSAL_mkdir(fsal_handle_t * p_parent_directory_handle, /* IN */
                                fsal_name_t * p_dirname, /* IN */
-                               lustrefsal_op_context_t * p_context,     /* IN */
+                               fsal_op_context_t * p_context,     /* IN */
                                fsal_accessmode_t accessmode,    /* IN */
-                               lustrefsal_handle_t * p_object_handle,   /* OUT */
+                               fsal_handle_t * p_object_handle,   /* OUT */
                                fsal_attrib_list_t * p_object_attributes /* [ IN/OUT ] */
     )
 {
@@ -347,10 +347,10 @@ fsal_status_t LUSTREFSAL_mkdir(lustrefsal_handle_t * p_parent_directory_handle, 
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t LUSTREFSAL_link(lustrefsal_handle_t * p_target_handle,    /* IN */
-                              lustrefsal_handle_t * p_dir_handle,       /* IN */
+fsal_status_t LUSTREFSAL_link(fsal_handle_t * p_target_handle,    /* IN */
+                              fsal_handle_t * p_dir_handle,       /* IN */
                               fsal_name_t * p_link_name,        /* IN */
-                              lustrefsal_op_context_t * p_context,      /* IN */
+                              fsal_op_context_t * p_context,      /* IN */
                               fsal_attrib_list_t * p_attributes /* [ IN/OUT ] */
     )
 {
@@ -444,13 +444,13 @@ fsal_status_t LUSTREFSAL_link(lustrefsal_handle_t * p_target_handle,    /* IN */
  *
  * \return ERR_FSAL_NOTSUPP.
  */
-fsal_status_t LUSTREFSAL_mknode(lustrefsal_handle_t * parentdir_handle, /* IN */
+fsal_status_t LUSTREFSAL_mknode(fsal_handle_t * parentdir_handle, /* IN */
                                 fsal_name_t * p_node_name,      /* IN */
-                                lustrefsal_op_context_t * p_context,    /* IN */
+                                fsal_op_context_t * p_context,    /* IN */
                                 fsal_accessmode_t accessmode,   /* IN */
                                 fsal_nodetype_t nodetype,       /* IN */
                                 fsal_dev_t * dev,       /* IN */
-                                lustrefsal_handle_t * p_object_handle,  /* OUT (handle to the created node) */
+                                fsal_handle_t * p_object_handle,  /* OUT (handle to the created node) */
                                 fsal_attrib_list_t * node_attributes    /* [ IN/OUT ] */
     )
 {

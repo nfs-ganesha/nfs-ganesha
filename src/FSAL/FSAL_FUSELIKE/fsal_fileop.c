@@ -56,10 +56,10 @@
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FUSEFSAL_open(fusefsal_handle_t * filehandle,     /* IN */
-                            fusefsal_op_context_t * p_context,  /* IN */
+fsal_status_t FUSEFSAL_open(fsal_handle_t * file_hdl,     /* IN */
+                            fsal_op_context_t * p_context,  /* IN */
                             fsal_openflags_t openflags, /* IN */
-                            fusefsal_file_t * file_descriptor,  /* OUT */
+                            fsal_file_t * file_desc,  /* OUT */
                             fsal_attrib_list_t * file_attributes        /* [ IN/OUT ] */
     )
 {
@@ -67,6 +67,8 @@ fsal_status_t FUSEFSAL_open(fusefsal_handle_t * filehandle,     /* IN */
   int rc = 0;
   char object_path[FSAL_MAX_PATH_LEN];
   int file_info_provided = FALSE;
+  fusefsal_handle_t * filehandle = (fusefsal_handle_t *)file_hdl;
+  fusefsal_file_t * file_descriptor = (fusefsal_file_t *)file_desc;
 
   /* sanity checks.
    * note : file_attributes is optional.
@@ -180,7 +182,7 @@ fsal_status_t FUSEFSAL_open(fusefsal_handle_t * filehandle,     /* IN */
   file_descriptor->file_handle = *filehandle;
 
   /* backup context */
-  file_descriptor->context = *p_context;
+  file_descriptor->context = *(fusefsal_op_context_t *)p_context;
 
   if(file_info_provided)
     LogFullDebug(COMPONENT_FSAL, "FSAL_open: FH=%"PRId64, file_descriptor->file_info.fh);
@@ -189,7 +191,7 @@ fsal_status_t FUSEFSAL_open(fusefsal_handle_t * filehandle,     /* IN */
     {
       fsal_status_t status;
 
-      status = FUSEFSAL_getattrs(filehandle, p_context, file_attributes);
+      status = FUSEFSAL_getattrs((fsal_handle_t *)filehandle, p_context, file_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -242,16 +244,16 @@ fsal_status_t FUSEFSAL_open(fusefsal_handle_t * filehandle,     /* IN */
  *        ERR_FSAL_IO, ...
  */
 
-fsal_status_t FUSEFSAL_open_by_name(fusefsal_handle_t * dirhandle,      /* IN */
+fsal_status_t FUSEFSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
                                     fsal_name_t * filename,     /* IN */
-                                    fusefsal_op_context_t * p_context,  /* IN */
+                                    fsal_op_context_t * p_context,  /* IN */
                                     fsal_openflags_t openflags, /* IN */
-                                    fusefsal_file_t * file_descriptor,  /* OUT */
+                                    fsal_file_t * file_descriptor,  /* OUT */
                                     fsal_attrib_list_t *
                                     file_attributes /* [ IN/OUT ] */ )
 {
   fsal_status_t fsal_status;
-  fusefsal_handle_t filehandle;
+  fsal_handle_t filehandle;
 
   if(!dirhandle || !filename || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
@@ -293,7 +295,7 @@ fsal_status_t FUSEFSAL_open_by_name(fusefsal_handle_t * dirhandle,      /* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FUSEFSAL_read(fusefsal_file_t * file_descriptor,  /* IN */
+fsal_status_t FUSEFSAL_read(fsal_file_t * file_desc,  /* IN */
                             fsal_seek_t * seek_descriptor,      /* [IN] */
                             fsal_size_t buffer_size,    /* IN */
                             caddr_t buffer,     /* OUT */
@@ -307,6 +309,7 @@ fsal_status_t FUSEFSAL_read(fusefsal_file_t * file_descriptor,  /* IN */
   off_t seekoffset = 0;
   struct stat stbuf;
   char object_path[FSAL_MAX_PATH_LEN];
+  fusefsal_file_t * file_descriptor = (fusefsal_file_t *)file_desc;
 
   /* sanity checks. */
 
@@ -331,7 +334,7 @@ fsal_status_t FUSEFSAL_read(fusefsal_file_t * file_descriptor,  /* IN */
     Return(ERR_FSAL_STALE, rc, INDEX_FSAL_read);
 
   /* set context so it can be retrieved by FS */
-  fsal_set_thread_context(&file_descriptor->context);
+  fsal_set_thread_context((fsal_op_context_t *) &file_descriptor->context);
 
   LogFullDebug(COMPONENT_FSAL, "FSAL_read: FH=%"PRId64, file_descriptor->file_info.fh);
 
@@ -428,7 +431,7 @@ fsal_status_t FUSEFSAL_read(fusefsal_file_t * file_descriptor,  /* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
-fsal_status_t FUSEFSAL_write(fusefsal_file_t * file_descriptor, /* IN */
+fsal_status_t FUSEFSAL_write(fsal_file_t * file_desc, /* IN */
                              fsal_seek_t * seek_descriptor,     /* IN */
                              fsal_size_t buffer_size,   /* IN */
                              caddr_t buffer,    /* IN */
@@ -440,6 +443,7 @@ fsal_status_t FUSEFSAL_write(fusefsal_file_t * file_descriptor, /* IN */
   off_t seekoffset = 0;
   struct stat stbuf;
   char object_path[FSAL_MAX_PATH_LEN];
+  fusefsal_file_t * file_descriptor = (fusefsal_file_t *)file_desc;
 
   /* sanity checks. */
   if(!file_descriptor || !buffer || !write_amount)
@@ -455,7 +459,7 @@ fsal_status_t FUSEFSAL_write(fusefsal_file_t * file_descriptor, /* IN */
   req_size = (size_t) buffer_size;
 
   /* set context so it can be retrieved by FS */
-  fsal_set_thread_context(&file_descriptor->context);
+  fsal_set_thread_context((fsal_op_context_t *) &file_descriptor->context);
 
   LogFullDebug(COMPONENT_FSAL, "FSAL_write: FH=%"PRId64, file_descriptor->file_info.fh);
 
@@ -541,12 +545,13 @@ fsal_status_t FUSEFSAL_write(fusefsal_file_t * file_descriptor, /* IN */
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t FUSEFSAL_close(fusefsal_file_t * file_descriptor  /* IN */
+fsal_status_t FUSEFSAL_close(fsal_file_t * file_desc  /* IN */
     )
 {
 
   int rc;
   char file_path[FSAL_MAX_PATH_LEN];
+  fusefsal_file_t * file_descriptor = (fusefsal_file_t *)file_desc;
 
   /* sanity checks. */
   if(!file_descriptor)
@@ -564,7 +569,7 @@ fsal_status_t FUSEFSAL_close(fusefsal_file_t * file_descriptor  /* IN */
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
 
   /* set context so it can be retrieved by FS */
-  fsal_set_thread_context(&file_descriptor->context);
+  fsal_set_thread_context((fsal_op_context_t *) &file_descriptor->context);
 
   LogFullDebug(COMPONENT_FSAL, "FSAL_close: FH=%"PRId64, file_descriptor->file_info.fh);
 
@@ -594,7 +599,7 @@ fsal_status_t FUSEFSAL_close(fusefsal_file_t * file_descriptor  /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t FUSEFSAL_sync(fusefsal_file_t * p_file_descriptor       /* IN */)
+fsal_status_t FUSEFSAL_sync(fsal_file_t * p_file_descriptor       /* IN */)
 {
   int rc, errsv;
 
@@ -605,27 +610,7 @@ fsal_status_t FUSEFSAL_sync(fusefsal_file_t * p_file_descriptor       /* IN */)
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync);
 }
 
-
-/* Some unsupported calls used in FSAL_PROXY, just for permit the ganeshell to compile */
-fsal_status_t FUSEFSAL_open_by_fileid(fusefsal_handle_t * filehandle,   /* IN */
-                                      fsal_u64_t fileid,        /* IN */
-                                      fusefsal_op_context_t * p_context,        /* IN */
-                                      fsal_openflags_t openflags,       /* IN */
-                                      fusefsal_file_t * file_descriptor,        /* OUT */
-                                      fsal_attrib_list_t *
-                                      file_attributes /* [ IN/OUT ] */ )
+unsigned int FUSEFSAL_GetFileno(fsal_file_t * pfile)
 {
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
-}
-
-
-fsal_status_t FUSEFSAL_close_by_fileid(fusefsal_file_t * file_descriptor /* IN */ ,
-                                       fsal_u64_t fileid)
-{
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
-}
-
-unsigned int FUSEFSAL_GetFileno(fusefsal_file_t * pfile)
-{
-  return pfile->file_info.fh;
+	return ((fusefsal_file_t *)pfile)->file_info.fh;
 }

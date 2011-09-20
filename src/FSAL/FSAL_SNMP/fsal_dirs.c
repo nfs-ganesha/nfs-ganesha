@@ -45,9 +45,9 @@
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t SNMPFSAL_opendir(snmpfsal_handle_t * dir_handle,  /* IN */
-                               snmpfsal_op_context_t * p_context,       /* IN */
-                               snmpfsal_dir_t * dir_descriptor, /* OUT */
+fsal_status_t SNMPFSAL_opendir(fsal_handle_t * dir_handle,  /* IN */
+                               fsal_op_context_t * p_context,       /* IN */
+                               fsal_dir_t * dir_descriptor, /* OUT */
                                fsal_attrib_list_t * dir_attributes      /* [ IN/OUT ] */
     )
 {
@@ -60,13 +60,14 @@ fsal_status_t SNMPFSAL_opendir(snmpfsal_handle_t * dir_handle,  /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_opendir);
 
   /* check it is a node... */
-  if(dir_handle->data.object_type_reminder == FSAL_NODETYPE_LEAF)
+  if(((snmpfsal_handle_t *)dir_handle)->data.object_type_reminder == FSAL_NODETYPE_LEAF)
     Return(ERR_FSAL_NOTDIR, 0, INDEX_FSAL_opendir);
 
   /* save request info to the dir_dircriptor */
 
-  memcpy(&dir_descriptor->node_handle, dir_handle, sizeof(snmpfsal_handle_t));
-  dir_descriptor->p_context = p_context;
+  memcpy(&((snmpfsal_dir_t *)dir_descriptor)->node_handle,
+	 (snmpfsal_handle_t *)dir_handle, sizeof(snmpfsal_handle_t));
+  ((snmpfsal_dir_t *)dir_descriptor)->p_context = (snmpfsal_op_context_t *)p_context;
 
   if(dir_attributes && dir_attributes->asked_attributes)
     {
@@ -117,12 +118,12 @@ fsal_status_t SNMPFSAL_opendir(snmpfsal_handle_t * dir_handle,  /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
-                               snmpfsal_cookie_t start_position,        /* IN */
+fsal_status_t SNMPFSAL_readdir(fsal_dir_t * dir_desc, /* IN */
+                               fsal_cookie_t start_pos,        /* IN */
                                fsal_attrib_mask_t get_attr_mask,        /* IN */
                                fsal_mdsize_t buffersize,        /* IN */
                                fsal_dirent_t * pdirent, /* OUT */
-                               snmpfsal_cookie_t * end_position,        /* OUT */
+                               fsal_cookie_t * end_pos,        /* OUT */
                                fsal_count_t * nb_entries,       /* OUT */
                                fsal_boolean_t * end_of_dir      /* OUT */
     )
@@ -137,6 +138,9 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
   struct tree *cur_node;
   struct tree *nearest_node;
   int rc;
+  snmpfsal_dir_t * dir_descriptor = (snmpfsal_dir_t *)dir_desc;
+  snmpfsal_cookie_t start_position;
+  snmpfsal_cookie_t * end_position = (snmpfsal_cookie_t *)end_pos;
 
   /* sanity checks */
 
@@ -153,6 +157,7 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
 
   /* initial cookie  */
 
+  memcpy(&start_position.data, &start_pos.data, sizeof(snmpfsal_cookie_t));
   if(start_position.data.oid_len == 0)       /* readdir from begginning  */
     {
       FSAL_OID_DUP(&last_listed, dir_descriptor->node_handle.data.oid_tab,
@@ -180,6 +185,9 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
 
   while(!bool_eod && cur_nb_entries < max_dir_entries)
     {
+      snmpfsal_handle_t *dir_entry = (snmpfsal_handle_t *) &pdirent[cur_nb_entries].handle;
+      snmpfsal_cookie_t *dir_cookie = (snmpfsal_cookie_t *) &pdirent[cur_nb_entries].cookie;
+
       /* First, we proceed a GET request  */
       req_opt.request_type = SNMP_MSG_GET;
 
@@ -208,21 +216,21 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
              && p_curr_var->type != SNMP_NOSUCHINSTANCE
              && p_curr_var->type != SNMP_ENDOFMIBVIEW)
             {
-              FSAL_OID_DUP(&pdirent[cur_nb_entries].handle, p_curr_var->name,
+              FSAL_OID_DUP(dir_entry, p_curr_var->name,
                            p_curr_var->name_length);
-              pdirent[cur_nb_entries].handle.data.object_type_reminder = FSAL_NODETYPE_LEAF;
+              dir_entry->data.object_type_reminder = FSAL_NODETYPE_LEAF;
 
               /* object cookie is the hypothetic next object at the same level */
-              FSAL_OID_DUP(&pdirent[cur_nb_entries].cookie, p_curr_var->name,
+              FSAL_OID_DUP(dir_cookie, p_curr_var->name,
                            p_curr_var->name_length);
-              FSAL_OID_INC(&pdirent[cur_nb_entries].cookie);
+              FSAL_OID_INC(dir_cookie);
 
               cur_node =
-                  GetMIBNode(dir_descriptor->p_context, &pdirent[cur_nb_entries].handle,
+                  GetMIBNode(dir_descriptor->p_context, dir_entry,
                              FALSE);
 
               /* build the label */
-              rc = snmp_object2name(p_curr_var, cur_node, &pdirent[cur_nb_entries].handle,
+              rc = snmp_object2name(p_curr_var, cur_node, dir_entry,
                                     &pdirent[cur_nb_entries].name);
 
               if(rc)
@@ -231,7 +239,7 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
               /* when a node does not exist, we take its nearest parent's rights */
               if(cur_node == NULL)
                 nearest_node =
-                    GetMIBNode(dir_descriptor->p_context, &pdirent[cur_nb_entries].handle,
+                    GetMIBNode(dir_descriptor->p_context, dir_entry,
                                TRUE);
               else
                 nearest_node = cur_node;
@@ -252,7 +260,7 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
               if(get_attr_mask)
                 {
                   pdirent[cur_nb_entries].attributes.asked_attributes = get_attr_mask;
-                  rc = snmp2fsal_attributes(&pdirent[cur_nb_entries].handle, p_curr_var,
+                  rc = snmp2fsal_attributes(dir_entry, p_curr_var,
                                             nearest_node,
                                             &pdirent[cur_nb_entries].attributes);
 
@@ -271,8 +279,8 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
                 pdirent[cur_nb_entries - 1].nextentry = &pdirent[cur_nb_entries];
 
               /* copy hypothetic next entry to cookie and increment nb_entries  */
-              FSAL_OID_DUP(&last_listed, pdirent[cur_nb_entries].cookie.data.oid_tab,
-                           pdirent[cur_nb_entries].cookie.data.oid_len);
+              FSAL_OID_DUP(&last_listed, dir_cookie->data.oid_tab,
+                           dir_cookie->data.oid_len);
               cur_nb_entries++;
 
               /* restart a sequence from GET request  */
@@ -323,21 +331,21 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
           /* if the object is exactly 1 level under the dir, we insert it in the list */
           if(p_curr_var->name_length == dir_descriptor->node_handle.data.oid_len + 1)
             {
-              FSAL_OID_DUP(&pdirent[cur_nb_entries].handle, p_curr_var->name,
+              FSAL_OID_DUP(dir_entry, p_curr_var->name,
                            p_curr_var->name_length);
-              pdirent[cur_nb_entries].handle.data.object_type_reminder = FSAL_NODETYPE_LEAF;
+              dir_entry->data.object_type_reminder = FSAL_NODETYPE_LEAF;
 
               /* object cookie is the hypothetic next object */
-              FSAL_OID_DUP(&pdirent[cur_nb_entries].cookie, p_curr_var->name,
+              FSAL_OID_DUP(dir_cookie, p_curr_var->name,
                            p_curr_var->name_length);
-              FSAL_OID_INC(&pdirent[cur_nb_entries].cookie);
+              FSAL_OID_INC(dir_cookie);
 
               cur_node =
-                  GetMIBNode(dir_descriptor->p_context, &pdirent[cur_nb_entries].handle,
+                  GetMIBNode(dir_descriptor->p_context, dir_entry,
                              FALSE);
 
               /* build the label */
-              rc = snmp_object2name(p_curr_var, cur_node, &pdirent[cur_nb_entries].handle,
+              rc = snmp_object2name(p_curr_var, cur_node, dir_entry,
                                     &pdirent[cur_nb_entries].name);
 
               if(rc)
@@ -346,7 +354,7 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
               /* when a node does not exist, we take its nearest parent's rights */
               if(cur_node == NULL)
                 nearest_node =
-                    GetMIBNode(dir_descriptor->p_context, &pdirent[cur_nb_entries].handle,
+                    GetMIBNode(dir_descriptor->p_context, dir_entry,
                                TRUE);
               else
                 nearest_node = cur_node;
@@ -367,7 +375,7 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
               if(get_attr_mask)
                 {
                   pdirent[cur_nb_entries].attributes.asked_attributes = get_attr_mask;
-                  rc = snmp2fsal_attributes(&pdirent[cur_nb_entries].handle, p_curr_var,
+                  rc = snmp2fsal_attributes(dir_entry, p_curr_var,
                                             nearest_node,
                                             &pdirent[cur_nb_entries].attributes);
 
@@ -386,8 +394,8 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
                 pdirent[cur_nb_entries - 1].nextentry = &pdirent[cur_nb_entries];
 
               /* copy hypothetic next entry to cookie and increment nb_entries  */
-              FSAL_OID_DUP(&last_listed, pdirent[cur_nb_entries].cookie.data.oid_tab,
-                           pdirent[cur_nb_entries].cookie.data.oid_len);
+              FSAL_OID_DUP(&last_listed, dir_cookie->data.oid_tab,
+                           dir_cookie->data.oid_len);
               cur_nb_entries++;
 
               /* restart a sequence from GET request  */
@@ -408,23 +416,23 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
 
               /* we found a new subsirectory */
 
-              FSAL_OID_DUP(&pdirent[cur_nb_entries].handle, p_curr_var->name,
+              FSAL_OID_DUP(dir_entry, p_curr_var->name,
                            dir_descriptor->node_handle.data.oid_len + 1);
-              pdirent[cur_nb_entries].handle.data.object_type_reminder = FSAL_NODETYPE_NODE;
+              dir_entry->data.object_type_reminder = FSAL_NODETYPE_NODE;
 
               /* object cookie is the next potentiel object at this level */
-              FSAL_OID_DUP(&pdirent[cur_nb_entries].cookie,
-                           pdirent[cur_nb_entries].handle.data.oid_tab,
-                           pdirent[cur_nb_entries].handle.data.oid_len);
-              FSAL_OID_INC(&pdirent[cur_nb_entries].cookie);
+              FSAL_OID_DUP(dir_cookie,
+                           dir_entry->data.oid_tab,
+                           dir_entry->data.oid_len);
+              FSAL_OID_INC(dir_cookie);
 
               /* try to get the associated MIB node  */
               cur_node =
-                  GetMIBNode(dir_descriptor->p_context, &pdirent[cur_nb_entries].handle,
+                  GetMIBNode(dir_descriptor->p_context, dir_entry,
                              FALSE);
 
               /* build the label */
-              rc = snmp_object2name(NULL, cur_node, &pdirent[cur_nb_entries].handle,
+              rc = snmp_object2name(NULL, cur_node, dir_entry,
                                     &pdirent[cur_nb_entries].name);
 
               if(rc)
@@ -433,21 +441,21 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
               /* when a node does not exist, we take its nearest parent's rights */
               if(cur_node == NULL)
                 nearest_node =
-                    GetMIBNode(dir_descriptor->p_context, &pdirent[cur_nb_entries].handle,
+                    GetMIBNode(dir_descriptor->p_context, dir_entry,
                                TRUE);
               else
                 nearest_node = cur_node;
 
               LogFullDebug(COMPONENT_FSAL, "FOUND A NEW SUBDIR = %s (%ld) (cookie->%ld)",
                            pdirent[cur_nb_entries].name.name,
-                           pdirent[cur_nb_entries].handle.data.oid_tab[dir_descriptor->node_handle.data.oid_len],
-                           pdirent[cur_nb_entries].cookie.data.oid_tab[pdirent[cur_nb_entries].cookie.data.oid_len - 1]);
+                           dir_entry->data.oid_tab[dir_descriptor->node_handle.data.oid_len],
+                           dir_cookie->data.oid_tab[dir_cookie->data.oid_len - 1]);
 
               /* set entry attributes  */
               if(get_attr_mask)
                 {
                   pdirent[cur_nb_entries].attributes.asked_attributes = get_attr_mask;
-                  rc = snmp2fsal_attributes(&pdirent[cur_nb_entries].handle, NULL,
+                  rc = snmp2fsal_attributes(dir_entry, NULL,
                                             nearest_node,
                                             &pdirent[cur_nb_entries].attributes);
 
@@ -466,8 +474,8 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
                 pdirent[cur_nb_entries - 1].nextentry = &pdirent[cur_nb_entries];
 
               /* copy last listed item to cookie and increment nb_entries  */
-              FSAL_OID_DUP(&last_listed, pdirent[cur_nb_entries].cookie.data.oid_tab,
-                           pdirent[cur_nb_entries].cookie.data.oid_len);
+              FSAL_OID_DUP(&last_listed, dir_cookie->data.oid_tab,
+                           dir_cookie->data.oid_len);
               cur_nb_entries++;
 
               /* end of subdir processing */
@@ -511,7 +519,7 @@ fsal_status_t SNMPFSAL_readdir(snmpfsal_dir_t * dir_descriptor, /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t SNMPFSAL_closedir(snmpfsal_dir_t * dir_descriptor /* IN */
+fsal_status_t SNMPFSAL_closedir(fsal_dir_t * dir_descriptor /* IN */
     )
 {
 

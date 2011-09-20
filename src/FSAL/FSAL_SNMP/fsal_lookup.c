@@ -54,16 +54,19 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  *          
  */
-fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      /* IN */
+fsal_status_t SNMPFSAL_lookup(fsal_handle_t * parent_handle,      /* IN */
                               fsal_name_t * p_filename, /* IN */
-                              snmpfsal_op_context_t * p_context,        /* IN */
-                              snmpfsal_handle_t * object_handle,        /* OUT */
+                              fsal_op_context_t * context,        /* IN */
+                              fsal_handle_t * obj_handle,        /* OUT */
                               fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
 
   int rc;
   fsal_status_t status;
+  snmpfsal_handle_t * parent_directory_handle = (snmpfsal_handle_t *)parent_handle;
+  snmpfsal_handle_t * object_handle = (snmpfsal_handle_t *) obj_handle;
+  snmpfsal_op_context_t * p_context = (snmpfsal_op_context_t * )context;
 
   /* sanity checks
    * note : object_attributes is optionnal
@@ -95,7 +98,7 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
         {
           fsal_status_t status;
 
-          status = SNMPFSAL_getattrs(object_handle, p_context, object_attributes);
+          status = SNMPFSAL_getattrs(obj_handle, context, object_attributes);
 
           /* On error, we set a flag in the returned attributes */
 
@@ -364,9 +367,9 @@ fsal_status_t SNMPFSAL_lookup(snmpfsal_handle_t * parent_directory_handle,      
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  *          
  */
-fsal_status_t SNMPFSAL_lookupJunction(snmpfsal_handle_t * p_junction_handle,    /* IN */
-                                      snmpfsal_op_context_t * p_context,        /* IN */
-                                      snmpfsal_handle_t * p_fsoot_handle,       /* OUT */
+fsal_status_t SNMPFSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
+                                      fsal_op_context_t * p_context,        /* IN */
+                                      fsal_handle_t * p_fsoot_handle,       /* OUT */
                                       fsal_attrib_list_t * p_fsroot_attributes  /* [ IN/OUT ] */
     )
 {
@@ -419,8 +422,8 @@ fsal_status_t SNMPFSAL_lookupJunction(snmpfsal_handle_t * p_junction_handle,    
  */
 
 fsal_status_t SNMPFSAL_lookupPath(fsal_path_t * p_path, /* IN */
-                                  snmpfsal_op_context_t * p_context,    /* IN */
-                                  snmpfsal_handle_t * object_handle,    /* OUT */
+                                  fsal_op_context_t * context,    /* IN */
+                                  fsal_handle_t * obj_handle,    /* OUT */
                                   fsal_attrib_list_t * object_attributes        /* [ IN/OUT ] */
     )
 {
@@ -430,6 +433,8 @@ fsal_status_t SNMPFSAL_lookupPath(fsal_path_t * p_path, /* IN */
   fsal_status_t status;
   int b_is_last = FALSE;        /* is it the last lookup ? */
   int rc;
+  snmpfsal_op_context_t * p_context = (snmpfsal_op_context_t *)context;
+  snmpfsal_handle_t * object_handle = (snmpfsal_handle_t *)obj_handle;
 
   /* sanity checks
    * note : object_attributes is optionnal.

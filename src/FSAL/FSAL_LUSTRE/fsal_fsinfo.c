@@ -38,8 +38,8 @@
  *      - ERR_FSAL_FAULT: NULL pointer passed as input parameter.
  *      - ERR_FSAL_SERVERFAULT: Unexpected error.
  */
-fsal_status_t LUSTREFSAL_static_fsinfo(lustrefsal_handle_t * p_filehandle,      /* IN */
-                                       lustrefsal_op_context_t * p_context,     /* IN */
+fsal_status_t LUSTREFSAL_static_fsinfo(fsal_handle_t * p_filehandle,      /* IN */
+                                       fsal_op_context_t * p_context,     /* IN */
                                        fsal_staticfsinfo_t * p_staticinfo       /* OUT */
     )
 {
@@ -72,8 +72,8 @@ fsal_status_t LUSTREFSAL_static_fsinfo(lustrefsal_handle_t * p_filehandle,      
  *      - ERR_FSAL_FAULT: NULL pointer passed as input parameter.
  *      - ERR_FSAL_SERVERFAULT: Unexpected error.
  */
-fsal_status_t LUSTREFSAL_dynamic_fsinfo(lustrefsal_handle_t * p_filehandle,     /* IN */
-                                        lustrefsal_op_context_t * p_context,    /* IN */
+fsal_status_t LUSTREFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle,     /* IN */
+                                        fsal_op_context_t * p_context,    /* IN */
                                         fsal_dynamicfsinfo_t * p_dynamicinfo    /* OUT */
     )
 {
