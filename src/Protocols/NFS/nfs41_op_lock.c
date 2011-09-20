@@ -54,6 +54,7 @@
 #include "nfs_core.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
+#include "nlm_list.h"
 
 /**
  *
@@ -89,10 +90,12 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   state_t                 * pstate_iterate;
   state_owner_t           * plock_owner;
   state_owner_t           * popen_owner;
+  state_owner_t           * presp_owner;    /* Owner to store response in */
   state_owner_t           * conflict_owner = NULL;
   state_nfs4_owner_name_t   owner_name;
   state_lock_desc_t         lock_desc, conflict_desc;
   state_blocking_t          blocking = STATE_NON_BLOCKING;
+  const char              * tag = "LOCK";
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_LOCK;
@@ -129,7 +132,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_LOCK4.status;
     }
 
-  /* Commit is done only on a file */
+  /* Lock is done only on a file */
   if(data->current_filetype != REGULAR_FILE)
     {
       /* Type of the entry is not correct */
@@ -145,15 +148,6 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
       LogDebug(COMPONENT_NFS_V4_LOCK,
                "LOCK failed wrong file type");
-      return res_LOCK4.status;
-    }
-
-  /* Lock length should not be 0 */
-  if(arg_LOCK4.length == 0LL)
-    {
-      res_LOCK4.status = NFS4ERR_INVAL;
-      LogDebug(COMPONENT_NFS_V4_LOCK,
-               "LOCK failed length == 0");
       return res_LOCK4.status;
     }
 
@@ -188,21 +182,10 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   else
     lock_desc.sld_length = 0;
 
-  /* Check for range overflow.
-   * Comparing beyond 2^64 is not possible int 64 bits precision,
-   * but off+len > 2^64-1 is equivalent to len > 2^64-1 - off
-   */
-  if(lock_desc.sld_length > (STATE_LOCK_OFFSET_EOF - lock_desc.sld_offset))
-    {
-      res_LOCK4.status = NFS4ERR_INVAL;
-      LogDebug(COMPONENT_NFS_V4_LOCK,
-               "LOCK failed length overflow");
-      return res_LOCK4.status;
-    }
-
   if(arg_LOCK4.locker.new_lock_owner)
     {
       /* New lock owner, Find the open owner */
+      tag = "LOCK (new owner)";
 
       /* Check stateid correctness and get pointer to state */
       if((rc = nfs4_Check_Stateid(&arg_LOCK4.locker.locker4_u.open_owner.open_stateid,
@@ -211,7 +194,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                   &pstate_open,
                                   data,
                                   STATEID_SPECIAL_FOR_LOCK,
-                                  "LOCK (new owner)")) != NFS4_OK)
+                                  tag)) != NFS4_OK)
         {
           res_LOCK4.status = rc;
           LogDebug(COMPONENT_NFS_V4_LOCK,
@@ -222,6 +205,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       popen_owner = pstate_open->state_powner;
       plock_state = NULL;
       plock_owner = NULL;
+      presp_owner = popen_owner;
 
       LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
               "LOCK New lock owner from open owner",
@@ -249,6 +233,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
        * Find the lock stateid
        * From that, get the open_owner
        */
+      tag = "LOCK (existing owner)";
 
       /* There was code here before to handle all-0 stateid, but that
        * really doesn't apply - when we handle temporary locks for
@@ -263,7 +248,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                   &plock_state,
                                   data,
                                   STATEID_SPECIAL_FOR_LOCK,
-                                  "LOCK (old owner)")) != NFS4_OK)
+                                  tag)) != NFS4_OK)
         {
           res_LOCK4.status = rc;
           LogDebug(COMPONENT_NFS_V4_LOCK,
@@ -285,6 +270,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       plock_owner = plock_state->state_powner;
       popen_owner = plock_owner->so_owner.so_nfs4_owner.so_related_owner;
       pstate_open = plock_state->state_data.lock.popenstate;
+      presp_owner = plock_owner;
 
       LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
               "LOCK Existing lock owner",
@@ -293,6 +279,29 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
               plock_owner,
               &lock_desc);
     }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
+
+  /* Lock length should not be 0 */
+  if(arg_LOCK4.length == 0LL)
+    {
+      res_LOCK4.status = NFS4ERR_INVAL;
+      LogDebug(COMPONENT_NFS_V4_LOCK,
+               "LOCK failed length == 0");
+
+      return res_LOCK4.status;
+    }
+
+  /* Check for range overflow.
+   * Comparing beyond 2^64 is not possible int 64 bits precision,
+   * but off+len > 2^64-1 is equivalent to len > 2^64-1 - off
+   */
+  if(lock_desc.sld_length > (STATE_LOCK_OFFSET_EOF - lock_desc.sld_offset))
+    {
+      res_LOCK4.status = NFS4ERR_INVAL;
+      LogDebug(COMPONENT_NFS_V4_LOCK,
+               "LOCK failed length overflow");
+
+      return res_LOCK4.status;
+    }
 
   /* Check for conflicts with previously obtained states */
 
@@ -351,40 +360,41 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
   while(pstate_iterate != NULL);
 
-  /* TODO FSF:
-   * Ok from here on out, stuff is broken...
-   * For new lock owner, need to create a new stateid
-   * And then call state_lock()
-   * If that fails, need to back out any stateid changes
-   * If that succeeds, need to increment seqids
-   */
   if(arg_LOCK4.locker.new_lock_owner)
     {
       /* A lock owner is always associated with a previously made open
-       * which has itself a previously made stateid */
+       * which has itself a previously made stateid
+       */
 
-      /* This lock owner is not known yet, allocated and set up a new one */
-      plock_owner = create_nfs4_owner(data->pclient,
-                                      &owner_name,
-                                      STATE_LOCK_OWNER_NFSV4,
-                                      popen_owner,
-                                      0);
+      /* Get reference to open owner */
+      inc_state_owner_ref(popen_owner);
 
-      if(plock_owner == NULL)
+      if(!nfs4_owner_Get_Pointer(&owner_name, &plock_owner))
         {
-          res_LOCK4.status = NFS4ERR_SERVERFAULT;
+          /* This lock owner is not known yet, allocated and set up a new one */
+          plock_owner = create_nfs4_owner(data->pclient,
+                                          &owner_name,
+                                          STATE_LOCK_OWNER_NFSV4,
+                                          popen_owner,
+                                          0);
 
-          LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
-                  "LOCK failed to create new lock owner",
-                  data->current_entry,
-                  data->pcontext,
-                  popen_owner,
-                  &lock_desc);
+          if(plock_owner == NULL)
+            {
+              res_LOCK4.status = NFS4ERR_RESOURCE;
 
-          return res_LOCK4.status;
+              LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+                      "LOCK failed to create new lock owner",
+                      data->current_entry,
+                      data->pcontext,
+                      popen_owner,
+                      &lock_desc);
+
+              return res_LOCK4.status;
+            }
         }
 
       /* Prepare state management structure */
+      memset(&candidate_type, 0, sizeof(candidate_type));
       candidate_type = STATE_TYPE_LOCK;
       candidate_data.lock.popenstate = pstate_open;
 
@@ -397,7 +407,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                    data->pcontext,
                    &plock_state, &state_status) != STATE_SUCCESS)
         {
-          res_LOCK4.status = NFS4ERR_STALE_STATEID;
+          res_LOCK4.status = NFS4ERR_RESOURCE;
 
           LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
                   "LOCK failed to add new stateid",
@@ -410,6 +420,12 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
           return res_LOCK4.status;
         }
+
+      init_glist(&plock_state->state_data.lock.state_locklist);
+
+      /* Add lock state to the list of lock states belonging to the open state */
+      glist_add_tail(&pstate_open->state_data.share.share_lockstates,
+                     &plock_state->state_data.lock.state_sharelist);
     }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
 
   /* Now we have a lock owner and a stateid.
@@ -458,9 +474,20 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   res_LOCK4.status = NFS4_OK;
 
+  /* Handle stateid/seqid for success */
+  update_stateid(plock_state,
+                 &res_LOCK4.LOCK4res_u.resok4.lock_stateid,
+                 data,
+                 tag);
+
+  LogFullDebug(COMPONENT_NFS_V4_LOCK,
+               "LOCK state_seqid = %u, plock_state = %p",
+               plock_state->state_seqid,
+               plock_state);
+
   /* update the lock counter in the related open-stateid */
   pstate_open->state_data.share.lockheld += 1;
-                
+
   LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
           "LOCK applied",
           data->current_entry,

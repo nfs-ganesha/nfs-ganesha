@@ -205,6 +205,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                                   tag)) != NFS4_OK)
         {
           res_LOCK4.status = rc;
+          LogDebug(COMPONENT_NFS_V4_LOCK,
+                   "LOCK failed nfs4_Check_Stateid for open owner");
           return res_LOCK4.status;
         }
 
@@ -463,6 +465,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                       data->pcontext,
                       popen_owner,
                       &lock_desc);
+
               return res_LOCK4.status;
             }
         }
