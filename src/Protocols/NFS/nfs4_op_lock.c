@@ -567,9 +567,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                plock_state->state_seqid,
                plock_state);
 
-  /* update the lock counter in the related open-stateid */
-  pstate_open->state_data.share.lockheld += 1;
-
   /* Save the response in the lock or open owner */
   Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
 

@@ -485,9 +485,6 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                plock_state->state_seqid,
                plock_state);
 
-  /* update the lock counter in the related open-stateid */
-  pstate_open->state_data.share.lockheld += 1;
-
   LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
           "LOCK applied",
           data->current_entry,

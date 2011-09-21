@@ -217,9 +217,6 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                  data,
                  tag);
 
-  /* update the lock counter in the related open-stateid */
-  pstate_found->state_data.share.lockheld -= 1;
-
   return res_LOCKU4.status;
 #endif
 }                               /* nfs41_op_locku */

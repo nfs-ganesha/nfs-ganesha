@@ -118,7 +118,6 @@ typedef struct state_share__
   unsigned int      share_access;      /**< The NFSv4 Share Access state                            */
   unsigned int      share_deny;        /**< The NFSv4 Share Deny state                              */
   struct glist_head share_lockstates;  /**< The list of lock states associated with this open state */
-  unsigned int      lockheld;          /**< How many locks did I open ?                             */
 } state_share_t;
 
 typedef struct state_lock_t
