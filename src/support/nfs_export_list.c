@@ -161,8 +161,8 @@ exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exp
  *
  */
 int get_req_uid_gid(struct svc_req *ptr_req,
-                    exportlist_client_entry_t * pexport_client,
-                    exportlist_t * pexport, struct user_cred *user_credentials)
+                    exportlist_t * pexport,
+                    struct user_cred *user_credentials)
 {
   struct authunix_parms *punix_creds = NULL;
   unsigned int rpcxid = 0;
@@ -338,8 +338,8 @@ int nfs_check_anon(exportlist_client_entry_t * pexport_client,
  *
  */
 int nfs_build_fsal_context(struct svc_req *ptr_req,
-                           exportlist_client_entry_t * pexport_client,
-                           exportlist_t * pexport, fsal_op_context_t * pcontext,
+                           exportlist_t * pexport,
+                           fsal_op_context_t * pcontext,
                            struct user_cred *user_credentials)
 {
   fsal_status_t fsal_status;

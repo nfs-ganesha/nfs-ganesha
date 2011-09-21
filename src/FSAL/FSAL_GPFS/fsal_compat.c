@@ -54,6 +54,7 @@ fsal_functions_t fsal_gpfs_functions = {
   .fsal_lookup = GPFSFSAL_lookup,
   .fsal_lookuppath = GPFSFSAL_lookupPath,
   .fsal_lookupjunction = GPFSFSAL_lookupJunction,
+  .fsal_lock_op = GPFSFSAL_lock_op,
   .fsal_lock = GPFSFSAL_lock,
   .fsal_changelock = GPFSFSAL_changelock,
   .fsal_unlock = GPFSFSAL_unlock,

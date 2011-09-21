@@ -1,5 +1,11 @@
 AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
+if USE_BUDDY_SYSTEM
+BUDDY_LIB_FLAGS = $(top_srcdir)/BuddyMalloc/libBuddyMalloc.la
+else
+BUDDY_LIB_FLAGS =
+endif
+
 SUBDIRS	= DBExt
 
 if BUILD_SHARED_FSAL
@@ -61,7 +67,7 @@ libfsalposix_la_SOURCES = fsal_access.c      \
 
 bin_PROGRAMS                               = posix.ganesha.fsal_posixdb_tool
 posix_ganesha_fsal_posixdb_tool_SOURCES    = fsal_posixdb_tool.c 
-posix_ganesha_fsal_posixdb_tool_LDADD      = ../../BuddyMalloc/libBuddyMalloc.la                  \
+posix_ganesha_fsal_posixdb_tool_LDADD      = $(BUDDY_LIB_FLAGS)                                   \
                                              $(FSAL_LIB)                                          \
                                              $(FSAL_LDFLAGS)                                      \
                                              ../../Log/liblog.la                                  \

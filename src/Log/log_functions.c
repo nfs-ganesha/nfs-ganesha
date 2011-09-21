@@ -57,15 +57,15 @@
 
 log_level_t tabLogLevel[NB_LOG_LEVEL] =
 {
-  {NIV_NULL,       "NIV_NULL",       LOG_NOTICE},
-  {NIV_FATAL,      "NIV_FATAL",      LOG_CRIT},
-  {NIV_MAJ,        "NIV_MAJ",        LOG_CRIT},
-  {NIV_CRIT,       "NIV_CRIT",       LOG_ERR},
-  {NIV_WARN,       "NIV_WARN",       LOG_WARNING},
-  {NIV_EVENT,      "NIV_EVENT",      LOG_NOTICE},
-  {NIV_INFO,       "NIV_INFO",       LOG_INFO},
-  {NIV_DEBUG,      "NIV_DEBUG",      LOG_DEBUG},
-  {NIV_FULL_DEBUG, "NIV_FULL_DEBUG", LOG_DEBUG}
+  {NIV_NULL,       "NIV_NULL",       "NULL",       LOG_NOTICE},
+  {NIV_FATAL,      "NIV_FATAL",      "FATAL",      LOG_CRIT},
+  {NIV_MAJ,        "NIV_MAJ",        "MAJ",        LOG_CRIT},
+  {NIV_CRIT,       "NIV_CRIT",       "CRIT",       LOG_ERR},
+  {NIV_WARN,       "NIV_WARN",       "WARN",       LOG_WARNING},
+  {NIV_EVENT,      "NIV_EVENT",      "EVENT",      LOG_NOTICE},
+  {NIV_INFO,       "NIV_INFO",       "INFO",       LOG_INFO},
+  {NIV_DEBUG,      "NIV_DEBUG",      "DEBUG",      LOG_DEBUG},
+  {NIV_FULL_DEBUG, "NIV_FULL_DEBUG", "FULL_DEBUG", LOG_DEBUG}
 };
 
 /* Function names for logging and SNMP stats etc. */
@@ -83,7 +83,7 @@ const char *fsal_function_names[] = {
   "FSAL_ListXAttrs", "FSAL_GetXAttrValue", "FSAL_SetXAttrValue", "FSAL_GetXAttrAttrs",
   "FSAL_close_by_fileid", "FSAL_setattr_access", "FSAL_merge_attrs", "FSAL_rename_access",
   "FSAL_unlink_access", "FSAL_link_access", "FSAL_create_access", "FSAL_getlock", "FSAL_CleanUpExportContext",
-  "FSAL_getextattrs", "FSAL_sync"
+  "FSAL_getextattrs", "FSAL_sync", "FSAL_lock_op"
 };
 
 /* les code d'error */
@@ -903,11 +903,6 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_STATES,            "COMPONENT_STATES", "STATES",
-    NIV_EVENT,
-    SYSLOG,
-    "SYSLOG"
-  },
   { COMPONENT_MEMLEAKS,          "COMPONENT_MEMLEAKS", "MEM LEAKS",
 #ifdef _DEBUG_MEMLEAKS
     NIV_FULL_DEBUG,
@@ -1047,11 +1042,6 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_OPEN_OWNER_HASH,   "COMPONENT_OPEN_OWNER_HASH", "OPEN OWNER HASH",
-    NIV_EVENT,
-    SYSLOG,
-    "SYSLOG"
-  },
   { COMPONENT_SESSIONS,          "COMPONENT_SESSIONS", "SESSIONS",
     NIV_EVENT,
     SYSLOG,
@@ -1093,6 +1083,11 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     "SYSLOG"
   },
   { COMPONENT_NFS_V4_ACL,        "COMPONENT_NFS_V4_ACL", "NFS V4 ACL",
+    NIV_EVENT,
+    SYSLOG,
+    "SYSLOG"
+  },
+  { COMPONENT_STATE,             "COMPONENT_STATE", "STATE",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"

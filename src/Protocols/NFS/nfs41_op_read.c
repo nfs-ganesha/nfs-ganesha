@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -45,62 +45,52 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
-#include "cache_content.h"
+#include "sal_functions.h"
 #include "cache_content_policy.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
 #include "nfs_proto_functions.h"
-#include "nfs_tools.h"
-#include "nfs_file_handle.h"
+#include "nfs_proto_tools.h"
 
 /**
  * nfs41_op_read: The NFS4_OP_READ operation
- * 
+ *
  * This functions handles the NFS4_OP_READ operation in NFSv4. This function can be called only from nfs4_Compound.
  *
  * @param op    [IN]    pointer to nfs41_op arguments
  * @param data  [INOUT] Pointer to the compound request's data
  * @param resp  [IN]    Pointer to nfs41_op results
  *
- * @return NFS4_OK if successfull, other values show an error.  
- * 
+ * @return NFS4_OK if successfull, other values show an error.
+ *
  */
 
 #define arg_READ4 op->nfs_argop4_u.opread
 #define res_READ4 resp->nfs_resop4_u.opread
 
-extern char all_zero[];
-extern char all_one[12];
-
 int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_read";
 
-  fsal_seek_t seek_descriptor;
-  fsal_size_t size;
-  fsal_size_t read_size;
-  fsal_off_t offset;
-  fsal_boolean_t eof_met;
-  caddr_t bufferdata;
-  cache_inode_status_t cache_status;
-  cache_inode_state_t *pstate_found = NULL;
-  cache_content_status_t content_status;
-  fsal_attrib_list_t attr;
-  cache_entry_t *entry = NULL;
-  cache_inode_state_t *pstate_iterate = NULL;
-  cache_inode_state_t *pstate_previous_iterate = NULL;
+  fsal_seek_t              seek_descriptor;
+  fsal_size_t              size;
+  fsal_size_t              read_size;
+  fsal_off_t               offset;
+  fsal_boolean_t           eof_met;
+  caddr_t                  bufferdata;
+  cache_inode_status_t     cache_status;
+  state_status_t           state_status;
+  state_t                * pstate_found = NULL;
+  cache_content_status_t   content_status;
+  fsal_attrib_list_t       attr;
+  cache_entry_t          * entry = NULL;
+  state_t                * pstate_iterate = NULL;
+  state_t                * pstate_previous_iterate = NULL;
 
   cache_content_policy_data_t datapol;
 
@@ -146,7 +136,7 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Check for special stateid */
-  if(!memcmp((char *)all_zero, arg_READ4.stateid.other, 12) &&
+  if(!memcmp((char *)all_zero, arg_READ4.stateid.other, OTHERSIZE) &&
      arg_READ4.stateid.seqid == 0)
     {
       /* "All 0 stateid special case" */
@@ -154,11 +144,11 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
        * I set pstate_found to NULL to remember this situation later */
       pstate_found = NULL;
     }
-  else if(!memcmp((char *)all_one, arg_READ4.stateid.other, 12) &&
+  else if(!memcmp((char *)all_one, arg_READ4.stateid.other, OTHERSIZE) &&
           arg_READ4.stateid.seqid == 0xFFFFFFFF)
     {
       /* "All 1 stateid special case" */
-      /* This will be treated as a client that held no lock at all, but may goes through locks 
+      /* This will be treated as a client that held no lock at all, but may goes through locks
        * I set pstate_found to 1 to remember this situation later */
       pstate_found = NULL;
     }
@@ -170,24 +160,26 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   pstate_previous_iterate = NULL;
   do
     {
-      cache_inode_state_iterate(data->current_entry,
-                                &pstate_iterate,
-                                pstate_previous_iterate,
-                                data->pclient, data->pcontext, &cache_status);
-      if(cache_status == CACHE_INODE_STATE_ERROR)
+      state_iterate(data->current_entry,
+                    &pstate_iterate,
+                    pstate_previous_iterate,
+                    data->pclient, data->pcontext, &state_status);
+
+      if(state_status == STATE_STATE_ERROR)
         break;                  /* Get out of the loop */
 
-      if(cache_status == CACHE_INODE_INVALID_ARGUMENT)
+      if(state_status == STATE_INVALID_ARGUMENT)
         {
           res_READ4.status = NFS4ERR_INVAL;
           return res_READ4.status;
         }
 
+      cache_status = CACHE_INODE_SUCCESS;
+
       if(pstate_iterate != NULL)
         {
-          switch (pstate_iterate->state_type)
+          if(pstate_iterate->state_type == STATE_TYPE_SHARE)
             {
-            case CACHE_INODE_STATE_SHARE:
               if(pstate_found != pstate_iterate)
                 {
                   if(pstate_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_READ)
@@ -197,7 +189,6 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       return res_READ4.status;
                     }
                 }
-              break;
             }
         }
       pstate_previous_iterate = pstate_iterate;
@@ -237,8 +228,8 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   if(((data->pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD) &&
      size > data->pexport->MaxRead)
     {
-      /* the client asked for too much data, 
-       * this should normally not happen because 
+      /* the client asked for too much data,
+       * this should normally not happen because
        * client will get FATTR4_MAXREAD value at mount time */
       size = data->pexport->MaxRead;
     }
@@ -259,7 +250,7 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     {
       /* Entry is not in datacache, but should be in, cache it .
        * Several threads may call this function at the first time and a race condition can occur here
-       * in order to avoid this, cache_inode_add_data_cache is "mutex protected" 
+       * in order to avoid this, cache_inode_add_data_cache is "mutex protected"
        * The first call will create the file content cache entry, the further will return
        * with error CACHE_INODE_CACHE_CONTENT_EXISTS which is not a pathological thing here */
 
@@ -336,13 +327,13 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
 /**
  * nfs41_op_read_Free: frees what was allocared to handle nfs41_op_read.
- * 
+ *
  * Frees what was allocared to handle nfs41_op_read.
  *
  * @param resp  [INOUT]    Pointer to nfs41_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs41_op_read_Free(READ4res * resp)
 {

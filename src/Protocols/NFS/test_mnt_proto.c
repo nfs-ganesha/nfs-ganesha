@@ -117,7 +117,6 @@ int test_mnt_Export()
 
   int rc, i;
   int error = 0;
-  struct addrinfo *p_tab;
   exportlist_t export_entries[NB_EXPORT_ENTRIES];
   nfs_res_t result;
   int mysock;

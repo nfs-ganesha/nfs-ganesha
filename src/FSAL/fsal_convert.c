@@ -186,12 +186,12 @@ fsal_nodetype_t posix2fsal_type(mode_t posix_type_in)
 
 }
 
-fsal_time_t posix2fsal_time(time_t tsec)
+fsal_time_t posix2fsal_time(time_t tsec, time_t nsec)
 {
   fsal_time_t fsaltime;
 
   fsaltime.seconds = (fsal_uint_t) tsec;
-  fsaltime.nseconds = 0;
+  fsaltime.nseconds = (fsal_uint_t) nsec;
 
   return fsaltime;
 }

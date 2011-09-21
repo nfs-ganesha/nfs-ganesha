@@ -8,6 +8,7 @@
 
 #include "config.h"
 #include "rpc.h"
+#include "sal_data.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -63,9 +64,9 @@ extern "C"
     char priv[16];
   };
   typedef struct mon mon;
-  extern int nsm_monitor(char *host);
-  extern int nsm_unmonitor(char *host);
-  extern int nsm_unmonitor_all(void);
+  extern bool_t nsm_monitor(state_nlm_client_t *host);
+  extern bool_t nsm_unmonitor(state_nlm_client_t *host);
+  extern void nsm_unmonitor_all(void);
 
 /* the xdr functions */
 

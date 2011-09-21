@@ -32,22 +32,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include "HashData.h"
-#include "HashTable.h"
 #include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "nfs_core.h"
-#include "cache_inode.h"
-#include "cache_content.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_tools.h"
-#include "mount.h"
+#include "nlm4.h"
+#include "sal_functions.h"
 #include "nfs_proto_functions.h"
 #include "nlm_util.h"
 
@@ -72,11 +61,31 @@ int nlm4_Sm_Notify(nfs_arg_t * parg /* IN     */ ,
                    struct svc_req *preq /* IN     */ ,
                    nfs_res_t * pres /* OUT    */ )
 {
-  nlm4_sm_notifyargs *arg;
-  LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm4_sm_notify");
+  nlm4_sm_notifyargs * arg = &parg->arg_nlm4_sm_notify;
+  state_status_t       state_status = CACHE_INODE_SUCCESS;
+  state_nlm_client_t * nlm_client;
 
-  arg = &parg->arg_nlm4_sm_notify;
-  nlm_node_recovery(arg->name, pcontext, pclient, ht);
+  LogDebug(COMPONENT_NLM,
+           "REQUEST PROCESSING: Calling nlm4_sm_notify for %s",
+           arg->name);
+
+  nlm_client = get_nlm_client(TRUE, arg->name);
+  if(nlm_client != NULL)
+    {
+      /* Cast the state number into a state pointer to protect
+       * locks from a client that has rebooted from being released
+       * by this SM_NOTIFY.
+       */
+      if(state_nlm_notify(pcontext,
+                          nlm_client,
+                          (void *) (ptrdiff_t) arg->state,
+                          pclient,
+                          &state_status) != STATE_SUCCESS)
+        {
+          /* TODO FSF: Deal with error */
+        }
+    }
+
   return NFS_REQ_OK;
 }
 

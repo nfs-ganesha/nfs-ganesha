@@ -409,15 +409,11 @@ int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res)
   hash_buffer_t buffval;
   int status;
   nfs_client_id_t *pnfs_client_id = NULL;
-  clientid4 *pclientid = NULL;
+  clientid4 *pclientid = &clientid;
 
   if(client_id_res == NULL)
     return CLIENT_ID_INVALID_ARGUMENT;
 
-  if((pclientid = (clientid4 *) Mem_Alloc(sizeof(clientid4))) == NULL)
-    return CLIENT_ID_INSERT_MALLOC_ERROR;
-
-  *pclientid = clientid;
   buffkey.pdata = (caddr_t) pclientid;
   buffkey.len = sizeof(clientid4);
 
@@ -442,9 +438,6 @@ int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res)
       status = CLIENT_ID_NOT_FOUND;
     }
 
-  /* free the allocated key */
-  Mem_Free(pclientid);
-
   return status;
 }                               /* nfs_client_id_get */
 
@@ -453,15 +446,11 @@ int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
   int status;
-  clientid4 *pclientid = NULL;
+  clientid4 *pclientid = &clientid;
 
   if(ppclient_id_res == NULL)
     return CLIENT_ID_INVALID_ARGUMENT;
 
-  if((pclientid = (clientid4 *) Mem_Alloc(sizeof(clientid4))) == NULL)
-    return CLIENT_ID_INSERT_MALLOC_ERROR;
-
-  *pclientid = clientid;
   buffkey.pdata = (caddr_t) pclientid;
   buffkey.len = sizeof(clientid4);
 
@@ -484,9 +473,6 @@ int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id
     {
       status = CLIENT_ID_NOT_FOUND;
     }
-
-  /* free the allocated key */
-  Mem_Free(pclientid);
 
   return status;
 }                               /* nfs_client_id_Get_Pointer */

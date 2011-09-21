@@ -49,6 +49,8 @@ static fsal_staticfsinfo_t default_posix_info = {
   TRUE,                         /* hard link support */
   TRUE,                         /* symlink support */
   FALSE,                        /* lock management */
+  FALSE,                        /* lock owners */
+  FALSE,                        /* async blocking locks */
   TRUE,                         /* named attributes */
   TRUE,                         /* handles are unique and persistent */
   {10, 0},                      /* Duration of lease at FS in seconds */
@@ -360,45 +362,49 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
     {
       LogDebug(COMPONENT_FSAL, "{");
       LogDebug(COMPONENT_FSAL, "  maxfilesize  = %llX    ",
-                    default_posix_info.maxfilesize);
+               default_posix_info.maxfilesize);
       LogDebug(COMPONENT_FSAL, "  maxlink  = %lu   ",
-                    default_posix_info.maxlink);
+               default_posix_info.maxlink);
       LogDebug(COMPONENT_FSAL, "  maxnamelen  = %lu  ",
-                    default_posix_info.maxnamelen);
+               default_posix_info.maxnamelen);
       LogDebug(COMPONENT_FSAL, "  maxpathlen  = %lu  ",
-                    default_posix_info.maxpathlen);
+               default_posix_info.maxpathlen);
       LogDebug(COMPONENT_FSAL, "  no_trunc  = %d ",
-                    default_posix_info.no_trunc);
+               default_posix_info.no_trunc);
       LogDebug(COMPONENT_FSAL, "  chown_restricted  = %d ",
-                    default_posix_info.chown_restricted);
+               default_posix_info.chown_restricted);
       LogDebug(COMPONENT_FSAL, "  case_insensitive  = %d ",
-                    default_posix_info.case_insensitive);
+               default_posix_info.case_insensitive);
       LogDebug(COMPONENT_FSAL, "  case_preserving  = %d ",
-                    default_posix_info.case_preserving);
+               default_posix_info.case_preserving);
       LogDebug(COMPONENT_FSAL, "  fh_expire_type  = %hu ",
-                    default_posix_info.fh_expire_type);
+               default_posix_info.fh_expire_type);
       LogDebug(COMPONENT_FSAL, "  link_support  = %d  ",
-                    default_posix_info.link_support);
+               default_posix_info.link_support);
       LogDebug(COMPONENT_FSAL, "  symlink_support  = %d  ",
-                    default_posix_info.symlink_support);
+               default_posix_info.symlink_support);
       LogDebug(COMPONENT_FSAL, "  lock_support  = %d  ",
-                    default_posix_info.lock_support);
+               default_posix_info.lock_support);
+      LogDebug(COMPONENT_FSAL, "  lock_support_owner  = %d  ",
+               default_posix_info.lock_support_owner);
+      LogDebug(COMPONENT_FSAL, "  lock_support_async_block  = %d  ",
+               default_posix_info.lock_support_async_block);
       LogDebug(COMPONENT_FSAL, "  named_attr  = %d  ",
-                    default_posix_info.named_attr);
+               default_posix_info.named_attr);
       LogDebug(COMPONENT_FSAL, "  unique_handles  = %d  ",
-                    default_posix_info.unique_handles);
+               default_posix_info.unique_handles);
       LogDebug(COMPONENT_FSAL, "  acl_support  = %hu  ",
-                    default_posix_info.acl_support);
+               default_posix_info.acl_support);
       LogDebug(COMPONENT_FSAL, "  cansettime  = %d  ",
-                    default_posix_info.cansettime);
+               default_posix_info.cansettime);
       LogDebug(COMPONENT_FSAL, "  homogenous  = %d  ",
-                    default_posix_info.homogenous);
+               default_posix_info.homogenous);
       LogDebug(COMPONENT_FSAL, "  supported_attrs  = %llX  ",
-                    default_posix_info.supported_attrs);
+               default_posix_info.supported_attrs);
       LogDebug(COMPONENT_FSAL, "  maxread  = %llX     ",
-                    default_posix_info.maxread);
+               default_posix_info.maxread);
       LogDebug(COMPONENT_FSAL, "  maxwrite  = %llX     ",
-                    default_posix_info.maxwrite);
+               default_posix_info.maxwrite);
       LogDebug(COMPONENT_FSAL, "  umask  = %X ", default_posix_info.umask);
       LogDebug(COMPONENT_FSAL, "}");
     }
@@ -421,6 +427,8 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support);
+  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_owner);
+  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_async_block);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
 
   SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);

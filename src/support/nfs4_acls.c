@@ -432,7 +432,7 @@ static void nfs4_acls_test()
 int nfs4_acls_init()
 {
   LogDebug(COMPONENT_NFS_V4_ACL, "Initialize NFSv4 ACLs");
-  LogDebug(COMPONENT_NFS_V4_ACL, "sizeof(fsal_ace_t)=%lu, sizeof(fsal_acl_t)=%lu", sizeof(fsal_ace_t), sizeof(fsal_acl_t));
+  LogDebug(COMPONENT_NFS_V4_ACL, "sizeof(fsal_ace_t)=%lu, sizeof(fsal_acl_t)=%lu", (long unsigned int)sizeof(fsal_ace_t), (long unsigned int)sizeof(fsal_acl_t));
 
   /* Initialize memory pool of ACLs. */
   MakePool(&fsal_acl_pool, nb_pool_prealloc, fsal_acl_t, NULL, NULL);

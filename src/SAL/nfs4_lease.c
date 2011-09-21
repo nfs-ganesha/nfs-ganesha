@@ -24,13 +24,13 @@
  */
 
 /**
- * \file    nfs4_tools.c
+ * \file    nfs4_lease.c
  * \author  $Author: leibovic $
  * \date    $Date: 2006/01/20 07:39:22 $
  * \version $Revision: 1.43 $
  * \brief   Some tools very usefull in the nfs4 protocol implementation.
  *
- * nfs_tools.c : Some tools very usefull in the nfs protocol implementation
+ * nfs4_lease.c : Some functions to manage NFSv4 leases
  *
  * $Header: /cea/home/cvs/cvs/SHERPA/BaseCvs/GANESHA/src/MainNFSD/nfs_tools.c,v 1.43 2006/01/20 07:39:22 leibovic Exp $
  *
@@ -45,32 +45,11 @@
 #include "solaris_port.h"
 #endif
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <ctype.h>              /* for having isalnum */
-#include <stdlib.h>             /* for having atoi */
-#include <dirent.h>             /* for having MAXNAMLEN */
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include <pwd.h>
-#include <grp.h>
-#include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
-#include "HashData.h"
-#include "HashTable.h"
 #include "nfs_core.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "fsal.h"
-#include "nfs_tools.h"
-#include "nfs_exports.h"
-#include "nfs_file_handle.h"
+#include "sal_functions.h"
 
 /**
  *

@@ -173,8 +173,8 @@ void *TEST1(void *arg)
   for(i = 0; i < NB_STR; i++)
     {
       if(isFullDebug(COMPONENT_MEMALLOC))
-        LogTest("%d>%d:%d:%s",
-                th, strings[i].len, strlen(strings[i].str), strings[i].str);
+        LogTest("%ld>%ld:%d:%s",
+                (long int) th, (long int) strings[i].len, (int) strlen(strings[i].str), strings[i].str);
       if(strings[i].len - 1 != (int)strlen(strings[i].str))
         LogTest("************ INTEGRITY ERROR !!! ************");
 
@@ -534,7 +534,7 @@ void *TEST5(void *arg)
     {
       if(isFullDebug(COMPONENT_MEMALLOC))
         LogTest("%d>%d:%d:%s",
-                th, strings[i].len, strlen(strings[i].str), strings[i].str);
+                th, strings[i].len, (int) strlen(strings[i].str), strings[i].str);
       if(strings[i].len - 1 != (int)strlen(strings[i].str))
         LogTest("************ INTEGRITY ERROR !!! ************");
 
@@ -562,8 +562,8 @@ void *TEST5(void *arg)
 
       if(!strings[i].str)
         {
-          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %d : %d *****",
-                  th, len, BuddyErrno);
+          LogTest("%d:**** NOT ENOUGH MEMORY TO ALLOCATE %ld : %d *****",
+                  th, (long int) len, BuddyErrno);
           strings[i].len = 0;
           continue;
         }
@@ -597,8 +597,8 @@ void *TEST5(void *arg)
   for(i = 0; i < NB_STR; i++)
     {
       if(isFullDebug(COMPONENT_MEMALLOC))
-        LogTest("%d>%d:%d:%s",
-                th, strings[i].len, strlen(strings[i].str), strings[i].str);
+        LogTest("%ld>%ld:%d:%s",
+                (long int) th, (long int) strings[i].len, (int) strlen(strings[i].str), strings[i].str);
       if(strings[i].len - 1 != (int)strlen(strings[i].str))
         LogTest("************ INTEGRITY ERROR !!! ************");
 
@@ -975,7 +975,6 @@ void *TEST9(void *arg)
 
   for(i = 0; i < NB_STR; i++)
     {
-      int j;
       int len;
 
       len = (unsigned long)my_rand() % 100;
@@ -1020,7 +1019,7 @@ void *TEST9(void *arg)
     }
 
   /* destroy thread resources */
-  if(rc = BuddyDestroy())
+  if((rc = BuddyDestroy()))
     {
       LogTest("ERROR in BuddyDestroy: %d", rc);
     }

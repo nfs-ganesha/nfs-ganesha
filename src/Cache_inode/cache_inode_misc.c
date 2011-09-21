@@ -94,7 +94,7 @@ char *cache_inode_function_names[] = {
   "cache_inode_commit"
 };
 
-const char *cache_inode_err_str(int err)
+const char *cache_inode_err_str(cache_inode_status_t err)
 {
   switch(err)
     {
@@ -135,8 +135,10 @@ const char *cache_inode_err_str(int err)
       case CACHE_INODE_STATE_ERROR:           return "CACHE_INODE_STATE_ERROR";
       case CACHE_INODE_FSAL_DELAY:            return "CACHE_INODE_FSAL_DELAY";
       case CACHE_INODE_NAME_TOO_LONG:         return "CACHE_INODE_NAME_TOO_LONG";
-      default: return "unknown";
+      case CACHE_INODE_BAD_COOKIE:            return "CACHE_INODE_BAD_COOKIE";
+      case CACHE_INODE_FILE_BIG:              return "CACHE_INODE_FILE_BIG";
     }
+  return "unknown";
 }
 
 #ifdef _USE_PROXY
@@ -462,6 +464,21 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       pentry->object.file.pentry_content = NULL;        /* Not yet a File Content entry associated with this entry */
       pentry->object.file.pstate_head = NULL;   /* No associated client yet                                */
       pentry->object.file.pstate_tail = NULL;   /* No associated client yet                                */
+      init_glist(&pentry->object.file.lock_list);  /* No associated locks yet */
+      if(pthread_mutex_init(&pentry->object.file.lock_list_mutex, NULL) != 0)
+        {
+          ReleaseToPool(pentry, &pclient->pool_entry);
+
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "cache_inode_new_entry: pthread_mutex_init of lock_list_mutex returned %d (%s)",
+                  errno, strerror(errno));
+
+          *pstatus = CACHE_INODE_INIT_ENTRY_FAILED;
+
+          /* stat */
+          pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_NEW_ENTRY] += 1;
+          return NULL;
+        }
       pentry->object.file.open_fd.fileno = 0;
       pentry->object.file.open_fd.last_op = 0;
       pentry->object.file.open_fd.openflags = 0;
@@ -848,85 +865,96 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
     {
     case ERR_FSAL_NO_ERROR:
       return CACHE_INODE_SUCCESS;
-      break;
 
     case ERR_FSAL_NOENT:
       return CACHE_INODE_NOT_FOUND;
-      break;
 
     case ERR_FSAL_EXIST:
       return CACHE_INODE_ENTRY_EXISTS;
-      break;
 
     case ERR_FSAL_ACCESS:
       return CACHE_INODE_FSAL_EACCESS;
-      break;
 
     case ERR_FSAL_PERM:
       return CACHE_INODE_FSAL_EPERM;
-      break;
 
     case ERR_FSAL_NOSPC:
       return CACHE_INODE_NO_SPACE_LEFT;
-      break;
 
     case ERR_FSAL_NOTEMPTY:
       return CACHE_INODE_DIR_NOT_EMPTY;
-      break;
 
     case ERR_FSAL_ROFS:
       return CACHE_INODE_READ_ONLY_FS;
-      break;
 
     case ERR_FSAL_NOTDIR:
       return CACHE_INODE_NOT_A_DIRECTORY;
-      break;
 
     case ERR_FSAL_IO:
+    case ERR_FSAL_NXIO:
       return CACHE_INODE_IO_ERROR;
-      break;
 
     case ERR_FSAL_STALE:
+    case ERR_FSAL_BADHANDLE:
+    case ERR_FSAL_FHEXPIRED:
       return CACHE_INODE_FSAL_ESTALE;
-      break;
 
     case ERR_FSAL_INVAL:
+    case ERR_FSAL_OVERFLOW:
       return CACHE_INODE_INVALID_ARGUMENT;
-      break;
 
     case ERR_FSAL_DQUOT:
       return CACHE_INODE_QUOTA_EXCEEDED;
-      break;
 
     case ERR_FSAL_SEC:
       return CACHE_INODE_FSAL_ERR_SEC;
-      break;
 
     case ERR_FSAL_NOTSUPP:
+    case ERR_FSAL_ATTRNOTSUPP:
       return CACHE_INODE_NOT_SUPPORTED;
-      break;
 
     case ERR_FSAL_DELAY:
       return CACHE_INODE_FSAL_DELAY;
-      break;
-
-    case ERR_FSAL_NOT_OPENED:
-      LogDebug(COMPONENT_CACHE_INODE,
-               "cache_inode_error_convert conversion of ERR_FSAL_NOT_OPENED to CACHE_INODE_FSAL_ERROR");
-      return CACHE_INODE_FSAL_ERROR;
-      break;
 
     case ERR_FSAL_NAMETOOLONG:
       return CACHE_INODE_NAME_TOO_LONG;
-      break;
 
-    default:
-      /* generic FSAL error */
-      LogWarn(COMPONENT_CACHE_INODE,
-              "cache_inode_error_convert: default conversion to CACHE_INODE_FSAL_ERROR for error %d,%d",
-              fsal_status.major, fsal_status.minor);
+    case ERR_FSAL_NOMEM:
+      return CACHE_INODE_MALLOC_ERROR;
+
+    case ERR_FSAL_BADCOOKIE:
+      return CACHE_INODE_BAD_COOKIE;
+
+    case ERR_FSAL_NOT_OPENED:
+      LogDebug(COMPONENT_CACHE_INODE,
+               "Conversion of ERR_FSAL_NOT_OPENED to CACHE_INODE_FSAL_ERROR");
       return CACHE_INODE_FSAL_ERROR;
-      break;
+
+    case ERR_FSAL_SYMLINK:
+    case ERR_FSAL_ISDIR:
+    case ERR_FSAL_BADTYPE:
+      return CACHE_INODE_BAD_TYPE;
+
+    case ERR_FSAL_FBIG:
+      return CACHE_INODE_FILE_BIG;
+
+    case ERR_FSAL_DEADLOCK:
+    case ERR_FSAL_BLOCKED:
+    case ERR_FSAL_INTERRUPT:
+    case ERR_FSAL_FAULT:
+    case ERR_FSAL_NOT_INIT:
+    case ERR_FSAL_ALREADY_INIT:
+    case ERR_FSAL_BAD_INIT:
+    case ERR_FSAL_NO_QUOTA:
+    case ERR_FSAL_XDEV:
+    case ERR_FSAL_MLINK:
+    case ERR_FSAL_TOOSMALL:
+    case ERR_FSAL_SERVERFAULT:
+      /* These errors should be handled inside Cache Inode (or should never be seen by Cache Inode) */
+      LogDebug(COMPONENT_CACHE_INODE,
+               "Conversion of FSAL error %d,%d to CACHE_INODE_FSAL_ERROR",
+               fsal_status.major, fsal_status.minor);
+      return CACHE_INODE_FSAL_ERROR;
     }
 
   /* We should never reach this line, this may produce a warning with certain compiler */

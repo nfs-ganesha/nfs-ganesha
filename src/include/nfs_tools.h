@@ -66,6 +66,7 @@ void nfs_Print_MountList(void);
 
 char *nfsstat2_to_str(nfsstat2 code);
 char *nfsstat3_to_str(nfsstat3 code);
+char *nfsstat4_to_str(nfsstat4 code);
 char *nfstype2_to_str(ftype2 code);
 char *nfstype3_to_str(ftype3 code);
 
