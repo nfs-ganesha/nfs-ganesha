@@ -612,7 +612,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                             pstate_found_iterate->state_powner->so_owner_val,
                                             pstate_found_iterate->state_powner->so_owner_len)
                                  && !memcmp(pstate_found_iterate->state_data.share.
-                                            oexcl_verifier,
+                                            share_oexcl_verifier,
                                             arg_OPEN4.openhow.openflag4_u.how.
                                             createhow4_u.createverf, NFS4_VERIFIER_SIZE))
                                 {
@@ -725,7 +725,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           /* If file is opened under mode EXCLUSIVE4, open verifier should be kept to detect non vicious double open */
           if(arg_OPEN4.openhow.openflag4_u.how.mode == EXCLUSIVE4)
             {
-              strncpy(candidate_data.share.oexcl_verifier,
+              strncpy(candidate_data.share.share_oexcl_verifier,
                       arg_OPEN4.openhow.openflag4_u.how.createhow4_u.createverf,
                       NFS4_VERIFIER_SIZE);
             }
