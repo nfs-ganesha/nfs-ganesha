@@ -81,14 +81,18 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   state_status_t            state_status;
   state_nfs4_owner_name_t   owner_name;
-  state_owner_t           * plock_owner;
+  state_owner_t           * popen_owner;
   state_owner_t           * conflict_owner = NULL;
   state_lock_desc_t         lock_desc, conflict_desc;
 
-  /* Lock are not supported */
+  LogDebug(COMPONENT_NFS_V4_LOCK,
+           "Entering NFS v4.1 LOCKT handler -----------------------------------------------------");
+
+  /* Initialize to sane default */
   resp->resop = NFS4_OP_LOCKT;
 
 #ifdef _WITH_NO_NFSV41_LOCKS
+  /* Lock are not supported */
   res_LOCKT4.status = NFS4ERR_LOCK_NOTSUPP;
   return res_LOCKT4.status;
 #else
@@ -172,72 +176,65 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Is this lock_owner known ? */
   convert_nfs4_open_owner(&arg_LOCKT4.owner, &owner_name);
 
-  if(!nfs4_owner_Get_Pointer(&owner_name, &plock_owner))
+  if(!nfs4_owner_Get_Pointer(&owner_name, &popen_owner))
     {
       /* This open owner is not known yet, allocated and set up a new one */
-      plock_owner = create_nfs4_owner(data->pclient,
+      popen_owner = create_nfs4_owner(data->pclient,
                                       &owner_name,
                                       STATE_OPEN_OWNER_NFSV4,
                                       NULL,
                                       0);
 
-      if(plock_owner == NULL)
+      if(popen_owner == NULL)
         {
+          LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                       "LOCKT unable to create open owner");
           res_LOCKT4.status = NFS4ERR_SERVERFAULT;
           return res_LOCKT4.status;
         }
     }
-  else
+  else if(isFullDebug(COMPONENT_NFS_V4_LOCK))
     {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      DisplayOwner(popen_owner, str);
+      
       LogFullDebug(COMPONENT_NFS_V4_LOCK,
-                   "A previously known lock_owner is used :#%s# seqid=%u",
-                   plock_owner->so_owner_val,
-                   plock_owner->so_owner.so_nfs4_owner.so_seqid);
+                   "LOCKT A previously known owner is used %s",
+                   str);
     }
 
+  LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
+          "LOCKT",
+          data->current_entry,
+          data->pcontext,
+          popen_owner,
+          &lock_desc);
+
   /* Now we have a lock owner and a stateid.
-   * Go ahead and push lock into SAL (and FSAL).
+   * Go ahead and test the lock in SAL (and FSAL).
    */
   if(state_test(data->current_entry,
                 data->pcontext,
-                plock_owner,
+                popen_owner,
                 &lock_desc,
                 &conflict_owner,
                 &conflict_desc,
                 data->pclient,
-                &state_status) != STATE_SUCCESS)
+                &state_status) == STATE_LOCK_CONFLICT)
     {
-      if(state_status == STATE_LOCK_CONFLICT)
-        {
-          /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
-          res_LOCKT4.LOCKT4res_u.denied.offset = conflict_desc.sld_offset;
-          res_LOCKT4.LOCKT4res_u.denied.length = conflict_desc.sld_length;
-
-          if(conflict_desc.sld_type == STATE_LOCK_R)
-            res_LOCKT4.LOCKT4res_u.denied.locktype = READ_LT;
-          else
-            res_LOCKT4.LOCKT4res_u.denied.locktype = WRITE_LT;
-
-          res_LOCKT4.LOCKT4res_u.denied.owner.owner.owner_len =
-            conflict_owner->so_owner_len;
-
-          memcpy(res_LOCKT4.LOCKT4res_u.denied.owner.owner.owner_val,
-                 conflict_owner->so_owner_val,
-                 conflict_owner->so_owner_len);
-
-          if(conflict_owner->so_type == STATE_LOCK_OWNER_NFSV4)
-            res_LOCKT4.LOCKT4res_u.denied.owner.clientid =
-              conflict_owner->so_owner.so_nfs4_owner.so_clientid;
-          else
-            res_LOCKT4.LOCKT4res_u.denied.owner.clientid = 0;
-        }
-
-      res_LOCKT4.status = nfs4_Errno_state(state_status);
-      return res_LOCKT4.status;
+      /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
+      Process_nfs4_conflict(&res_LOCKT4.LOCKT4res_u.denied,
+                            conflict_owner,
+                            &conflict_desc,
+                            data->pclient);
     }
-                
-  /* Succssful exit, no conflicting lock were found */
-  res_LOCKT4.status = NFS4_OK;
+
+  /* Release NFS4 Open Owner reference */
+  dec_state_owner_ref(popen_owner, data->pclient);
+
+  /* Return result */
+  res_LOCKT4.status = nfs4_Errno_state(state_status);
   return res_LOCKT4.status;
 
 #endif
@@ -255,6 +252,6 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
  */
 void nfs41_op_lockt_Free(LOCKT4res * resp)
 {
-  /* Nothing to Mem_Free */
-  return;
+  if(resp->status == NFS4ERR_DENIED)
+    Release_nfs4_denied(&resp->LOCKT4res_u.denied);
 }                               /* nfs41_op_lockt_Free */

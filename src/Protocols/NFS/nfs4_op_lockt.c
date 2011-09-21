@@ -269,5 +269,4 @@ void nfs4_op_lockt_Free(LOCKT4res * resp)
 {
   if(resp->status == NFS4ERR_DENIED)
     Release_nfs4_denied(&resp->LOCKT4res_u.denied);
-  return;
 }                               /* nfs4_op_lockt_Free */
