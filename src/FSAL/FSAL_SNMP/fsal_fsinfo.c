@@ -38,8 +38,8 @@
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t SNMPFSAL_static_fsinfo(snmpfsal_handle_t * filehandle,    /* IN */
-                                     snmpfsal_op_context_t * p_context, /* IN */
+fsal_status_t SNMPFSAL_static_fsinfo(fsal_handle_t * filehandle,    /* IN */
+                                     fsal_op_context_t * p_context, /* IN */
                                      fsal_staticfsinfo_t * staticinfo   /* OUT */
     )
 {
@@ -74,8 +74,8 @@ fsal_status_t SNMPFSAL_static_fsinfo(snmpfsal_handle_t * filehandle,    /* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t SNMPFSAL_dynamic_fsinfo(snmpfsal_handle_t * filehandle,   /* IN */
-                                      snmpfsal_op_context_t * p_context,        /* IN */
+fsal_status_t SNMPFSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
+                                      fsal_op_context_t * p_context,        /* IN */
                                       fsal_dynamicfsinfo_t * dynamicinfo        /* OUT */
     )
 {

@@ -81,7 +81,7 @@ __FS_NAME__ganeshell_SOURCES    = Getopt.c                            \
                                   ../include/nfs_tools.h              \
                                   ../include/stuff_alloc.h
 
-		
+
 shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
                   ../$(CACHE_INODE_DIR)/libcache_inode.la            \
                   ../File_Content/libcache_content.la                \
@@ -97,6 +97,7 @@ shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
                   $(FSAL_LIB)                                        \
                   $(MFSL_LIB)                                        \
                   $(PNFS_LIB)                                        \
+		  ../FSAL/common_methods.lo			     \
                   ../SemN/libSemN.la                                 \
                   ../RW_Lock/librwlock.la                            \
                   ../Log/liblog.la                                   \

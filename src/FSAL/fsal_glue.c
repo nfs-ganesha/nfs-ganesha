@@ -223,18 +223,7 @@ fsal_status_t FSAL_CleanUpExportContext(fsal_export_context_t * p_export_context
 
 fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
 {
-  /* sanity check */
-  if(!p_thr_context)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
-
-  if(fsal_functions.fsal_initclientcontext == NULL) {
-	  /* initialy set the export entry to none */
-	  p_thr_context->export_context = NULL;
-
-	  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
-  } else {
-	  return fsal_functions.fsal_initclientcontext(p_thr_context);
-  }
+  return fsal_functions.fsal_initclientcontext(p_thr_context);
 }
 
 fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OUT  */
@@ -244,43 +233,9 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
                                     fsal_gid_t * alt_groups,    /* IN */
                                     fsal_count_t nb_alt_groups /* IN */ )
 {
-  fsal_count_t ng = nb_alt_groups;
-  unsigned int i;
-
-  /* sanity check */
-  if(!p_thr_context || !p_export_context ||
-     ((ng > 0) && (alt_groups == NULL)))
-	  Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
-
-  if(fsal_functions.fsal_getclientcontext == NULL) {
-	  /* set the export specific context */
-	  p_thr_context->export_context = p_export_context;
-	  p_thr_context->credential.user = uid;
-	  p_thr_context->credential.group = gid;
-
-	  if(ng > FSAL_NGROUPS_MAX) /* this artificially truncates the group list ! */
-		  ng = FSAL_NGROUPS_MAX;
-	  p_thr_context->credential.nbgroups = ng;
-
-	  for(i = 0; i < ng; i++)
-		  p_thr_context->credential.alt_groups[i] = alt_groups[i];
-
-	  if(isFullDebug(COMPONENT_FSAL)) {
-		  /* traces: prints p_credential structure */
-
-		  LogFullDebug(COMPONENT_FSAL, "credential modified:\tuid = %d, gid = %d",
-			       p_thr_context->credential.user,
-			       p_thr_context->credential.group);
-		  for(i = 0; i < p_thr_context->credential.nbgroups; i++)
-			  LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
-				       p_thr_context->credential.alt_groups[i]);
-	  }
-	  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
-  } else {
-	  return fsal_functions.fsal_getclientcontext(p_thr_context, p_export_context,
-						      uid, gid,
-						      alt_groups, nb_alt_groups);
-  }
+  return fsal_functions.fsal_getclientcontext(p_thr_context, p_export_context,
+					      uid, gid,
+					      alt_groups, nb_alt_groups);
 }
 
 fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */

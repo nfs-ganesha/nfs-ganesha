@@ -41,8 +41,8 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument) 
  *        - Another error code if an error occured.
  */
-fsal_status_t SNMPFSAL_getattrs(snmpfsal_handle_t * filehandle, /* IN */
-                                snmpfsal_op_context_t * p_context,      /* IN */
+fsal_status_t SNMPFSAL_getattrs(fsal_handle_t * file_hdl, /* IN */
+                                fsal_op_context_t * context,      /* IN */
                                 fsal_attrib_list_t * object_attributes  /* IN/OUT */
     )
 {
@@ -52,6 +52,8 @@ fsal_status_t SNMPFSAL_getattrs(snmpfsal_handle_t * filehandle, /* IN */
   fsal_request_desc_t query_desc;
   struct tree *mib_node;
   netsnmp_variable_list *p_convert_var = NULL;
+  snmpfsal_handle_t * filehandle = (snmpfsal_handle_t *)file_hdl;
+  snmpfsal_op_context_t * p_context = (snmpfsal_op_context_t *)context;
 
   /* sanity checks.
    * note : object_attributes is mandatory in FSAL_getattrs.
@@ -142,8 +144,8 @@ fsal_status_t SNMPFSAL_getattrs(snmpfsal_handle_t * filehandle, /* IN */
  *        the object_attributes->asked_attributes field.
  */
 
-fsal_status_t SNMPFSAL_setattrs(snmpfsal_handle_t * filehandle, /* IN */
-                                snmpfsal_op_context_t * p_context,      /* IN */
+fsal_status_t SNMPFSAL_setattrs(fsal_handle_t * filehandle, /* IN */
+                                fsal_op_context_t * p_context,      /* IN */
                                 fsal_attrib_list_t * attrib_set,        /* IN */
                                 fsal_attrib_list_t * object_attributes  /* [ IN/OUT ] */
     )
@@ -202,8 +204,8 @@ fsal_status_t SNMPFSAL_setattrs(snmpfsal_handle_t * filehandle, /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t SNMPFSAL_getextattrs(snmpfsal_handle_t * p_filehandle, /* IN */
-                                   snmpfsal_op_context_t * p_context,        /* IN */
+fsal_status_t SNMPFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
+                                   fsal_op_context_t * p_context,        /* IN */
                                    fsal_extattrib_list_t * p_object_attributes /* OUT */
     )
 {

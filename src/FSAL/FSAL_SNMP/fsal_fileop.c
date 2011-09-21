@@ -58,16 +58,16 @@
  *        ERR_FSAL_IO, ...
  */
 
-fsal_status_t SNMPFSAL_open_by_name(snmpfsal_handle_t * dirhandle,      /* IN */
+fsal_status_t SNMPFSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
                                     fsal_name_t * filename,     /* IN */
-                                    snmpfsal_op_context_t * p_context,  /* IN */
+                                    fsal_op_context_t * p_context,  /* IN */
                                     fsal_openflags_t openflags, /* IN */
-                                    snmpfsal_file_t * file_descriptor,  /* OUT */
+                                    fsal_file_t * file_descriptor,  /* OUT */
                                     fsal_attrib_list_t *
                                     file_attributes /* [ IN/OUT ] */ )
 {
   fsal_status_t fsal_status;
-  snmpfsal_handle_t filehandle;
+  fsal_handle_t filehandle;
 
   if(!dirhandle || !filename || !p_context || !file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
@@ -117,15 +117,17 @@ fsal_status_t SNMPFSAL_open_by_name(snmpfsal_handle_t * dirhandle,      /* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t SNMPFSAL_open(snmpfsal_handle_t * filehandle,     /* IN */
-                            snmpfsal_op_context_t * p_context,  /* IN */
+fsal_status_t SNMPFSAL_open(fsal_handle_t * file_hdl,     /* IN */
+                            fsal_op_context_t * p_context,  /* IN */
                             fsal_openflags_t openflags, /* IN */
-                            snmpfsal_file_t * file_descriptor,  /* OUT */
+                            fsal_file_t * file_desc,  /* OUT */
                             fsal_attrib_list_t * file_attributes        /* [ IN/OUT ] */
     )
 {
 
   int rc;
+  snmpfsal_handle_t * filehandle = (snmpfsal_handle_t *)file_hdl;
+  snmpfsal_file_t * file_descriptor = (snmpfsal_file_t *)file_desc;
 
   /* sanity checks.
    * note : file_attributes is optional.
@@ -165,7 +167,7 @@ fsal_status_t SNMPFSAL_open(snmpfsal_handle_t * filehandle,     /* IN */
   /* save data to filedesc */
 
   file_descriptor->file_handle = *filehandle;
-  file_descriptor->p_context = p_context;
+  file_descriptor->p_context = (snmpfsal_op_context_t *)p_context;
 
   if(openflags & FSAL_O_RDONLY)
     file_descriptor->rw_mode = FSAL_MODE_READ;
@@ -178,7 +180,7 @@ fsal_status_t SNMPFSAL_open(snmpfsal_handle_t * filehandle,     /* IN */
     {
       fsal_status_t status;
 
-      status = SNMPFSAL_getattrs(filehandle, p_context, file_attributes);
+      status = SNMPFSAL_getattrs((fsal_handle_t *)filehandle, p_context, file_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -220,7 +222,7 @@ fsal_status_t SNMPFSAL_open(snmpfsal_handle_t * filehandle,     /* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t SNMPFSAL_read(snmpfsal_file_t * file_descriptor,  /* IN */
+fsal_status_t SNMPFSAL_read(fsal_file_t * file_desc,  /* IN */
                             fsal_seek_t * seek_descriptor,      /* [IN] */
                             fsal_size_t buffer_size,    /* IN */
                             caddr_t buffer,     /* OUT */
@@ -231,6 +233,7 @@ fsal_status_t SNMPFSAL_read(snmpfsal_file_t * file_descriptor,  /* IN */
   int rc;
   fsal_request_desc_t query_desc;
   size_t sz = buffer_size;
+  snmpfsal_file_t * file_descriptor = (snmpfsal_file_t *)file_desc;
 
   /* sanity checks. */
 
@@ -313,7 +316,7 @@ fsal_status_t SNMPFSAL_read(snmpfsal_file_t * file_descriptor,  /* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
-fsal_status_t SNMPFSAL_write(snmpfsal_file_t * file_descriptor, /* IN */
+fsal_status_t SNMPFSAL_write(fsal_file_t * file_desc, /* IN */
                              fsal_seek_t * seek_descriptor,     /* IN */
                              fsal_size_t buffer_size,   /* IN */
                              caddr_t buffer,    /* IN */
@@ -324,7 +327,7 @@ fsal_status_t SNMPFSAL_write(snmpfsal_file_t * file_descriptor, /* IN */
   fsal_request_desc_t query_desc;
   size_t sz = buffer_size;
   char tmp_buf[FSALSNMP_MAX_FILESIZE];
-
+  snmpfsal_file_t * file_descriptor = (snmpfsal_file_t *)file_desc;
   netsnmp_variable_list *p_var;
 
   /* sanity checks. */
@@ -430,7 +433,7 @@ fsal_status_t SNMPFSAL_write(snmpfsal_file_t * file_descriptor, /* IN */
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t SNMPFSAL_close(snmpfsal_file_t * file_descriptor  /* IN */
+fsal_status_t SNMPFSAL_close(fsal_file_t * file_descriptor  /* IN */
     )
 {
 
@@ -448,25 +451,7 @@ fsal_status_t SNMPFSAL_close(snmpfsal_file_t * file_descriptor  /* IN */
 
 }
 
-/* Some unsupported calls used in FSAL_PROXY, just for permit the ganeshell to compile */
-fsal_status_t SNMPFSAL_open_by_fileid(snmpfsal_handle_t * filehandle,   /* IN */
-                                      fsal_u64_t fileid,        /* IN */
-                                      snmpfsal_op_context_t * p_context,        /* IN */
-                                      fsal_openflags_t openflags,       /* IN */
-                                      snmpfsal_file_t * file_descriptor,        /* OUT */
-                                      fsal_attrib_list_t *
-                                      file_attributes /* [ IN/OUT ] */ )
-{
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
-}
-
-fsal_status_t SNMPFSAL_close_by_fileid(snmpfsal_file_t * file_descriptor /* IN */ ,
-                                       fsal_u64_t fileid)
-{
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
-}
-
-unsigned int SNMPFSAL_GetFileno(snmpfsal_file_t * pfile)
+unsigned int SNMPFSAL_GetFileno(fsal_file_t * pfile)
 {
   return 0;
 }
@@ -484,7 +469,7 @@ unsigned int SNMPFSAL_GetFileno(snmpfsal_file_t * pfile)
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t SNMPFSAL_sync(snmpfsal_file_t * p_file_descriptor     /* IN */)
+fsal_status_t SNMPFSAL_sync(fsal_file_t * p_file_descriptor     /* IN */)
 {
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync);
 }

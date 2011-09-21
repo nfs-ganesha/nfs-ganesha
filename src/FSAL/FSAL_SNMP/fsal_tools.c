@@ -46,11 +46,13 @@ char *SNMPFSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int SNMPFSAL_handlecmp(snmpfsal_handle_t * handle1, snmpfsal_handle_t * handle2,
+int SNMPFSAL_handlecmp(fsal_handle_t * handle_1, fsal_handle_t * handle_2,
                        fsal_status_t * status)
 {
 
   fsal_u64_t fileid1, fileid2;
+  snmpfsal_handle_t * handle1 = (snmpfsal_handle_t *)handle_1;
+  snmpfsal_handle_t * handle2 = (snmpfsal_handle_t *)handle_2;
 
   *status = FSAL_STATUS_NO_ERROR;
 
@@ -80,13 +82,14 @@ int SNMPFSAL_handlecmp(snmpfsal_handle_t * handle1, snmpfsal_handle_t * handle2,
  * \return The hash value
  */
 
-unsigned int SNMPFSAL_Handle_to_HashIndex(snmpfsal_handle_t * p_handle,
+unsigned int SNMPFSAL_Handle_to_HashIndex(fsal_handle_t *handle,
                                           unsigned int cookie,
                                           unsigned int alphabet_len,
                                           unsigned int index_size)
 {
   unsigned int i;
   unsigned int h = 1 + cookie;
+  snmpfsal_handle_t * p_handle = (snmpfsal_handle_t *)handle;
 
   for(i = 0; i < p_handle->data.oid_len; i++)
     h = (691 * h ^ (unsigned int)p_handle->data.oid_tab[i]) % 479001599;
@@ -106,11 +109,12 @@ unsigned int SNMPFSAL_Handle_to_HashIndex(snmpfsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int SNMPFSAL_Handle_to_RBTIndex(snmpfsal_handle_t * p_handle,
+unsigned int SNMPFSAL_Handle_to_RBTIndex(fsal_handle_t *handle,
                                          unsigned int cookie)
 {
   unsigned int i;
   unsigned int h = 1 + cookie;
+  snmpfsal_handle_t * p_handle = (snmpfsal_handle_t *)handle;
 
   for(i = 0; i < p_handle->data.oid_len; i++)
     h = (857 * h ^ (unsigned int)p_handle->data.oid_tab[i]) % 715827883;
@@ -166,9 +170,9 @@ typedef struct fsal_digest__
 
 } fsal_digest_t;
 
-fsal_status_t SNMPFSAL_DigestHandle(snmpfsal_export_context_t * p_expcontext,   /* IN */
+fsal_status_t SNMPFSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
                                     fsal_digesttype_t output_type,      /* IN */
-                                    snmpfsal_handle_t * in_fsal_handle, /* IN */
+                                    fsal_handle_t * in_handle, /* IN */
                                     caddr_t out_buff    /* OUT */
     )
 {
@@ -186,6 +190,7 @@ fsal_status_t SNMPFSAL_DigestHandle(snmpfsal_export_context_t * p_expcontext,   
   int int_tab_indexes[32];
 
   unsigned char *curr_addr;
+  snmpfsal_handle_t * in_fsal_handle = (snmpfsal_handle_t *)in_handle;
 
   /* sanity checks */
   if(!in_fsal_handle || !out_buff || !p_expcontext)
@@ -225,7 +230,7 @@ fsal_status_t SNMPFSAL_DigestHandle(snmpfsal_export_context_t * p_expcontext,   
         }
 
       /* for lighter code  */
-      root_len = p_expcontext->root_handle.data.oid_len;
+      root_len = ((snmpfsal_export_context_t *)p_expcontext)->root_handle.data.oid_len;
 
       /* then set the relative oid tab len */
       nb_oids = in_fsal_handle->data.oid_len - root_len;
@@ -369,10 +374,10 @@ fsal_status_t SNMPFSAL_DigestHandle(snmpfsal_export_context_t * p_expcontext,   
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t SNMPFSAL_ExpandHandle(snmpfsal_export_context_t * p_expcontext,   /* IN */
+fsal_status_t SNMPFSAL_ExpandHandle(fsal_export_context_t *exp_context,   /* IN */
                                     fsal_digesttype_t in_type,  /* IN */
                                     caddr_t in_buff,    /* IN */
-                                    snmpfsal_handle_t * out_fsal_handle /* OUT */
+                                    fsal_handle_t * out_handle /* OUT */
     )
 {
   fsal_digest_t *p_digest;
@@ -390,6 +395,8 @@ fsal_status_t SNMPFSAL_ExpandHandle(snmpfsal_export_context_t * p_expcontext,   
 
   unsigned int *curr_short_idx;
   unsigned int *curr_int_idx;
+  snmpfsal_handle_t * out_fsal_handle = (snmpfsal_handle_t *)out_handle;
+  snmpfsal_export_context_t * p_expcontext = (snmpfsal_export_context_t *)exp_context;
 
   /* sanity checks */
   if(!out_fsal_handle || !in_buff || !p_expcontext)
@@ -561,27 +568,30 @@ fsal_status_t SNMPFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_par
 
 fsal_status_t SNMPFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter)
 {
+  snmpfs_specific_initinfo_t *spec_info;
+
   /* defensive programming... */
   if(out_parameter == NULL)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  out_parameter->fs_specific_info.snmp_version = SNMP_VERSION_2c;
-  strcpy(out_parameter->fs_specific_info.snmp_server, "localhost");
-  strcpy(out_parameter->fs_specific_info.community, "public");
-  out_parameter->fs_specific_info.nb_retries = SNMP_DEFAULT_RETRIES;
-  out_parameter->fs_specific_info.microsec_timeout = SNMP_DEFAULT_TIMEOUT;
-  out_parameter->fs_specific_info.enable_descriptions = FALSE;
-  strcpy(out_parameter->fs_specific_info.client_name, "GANESHA");
-  out_parameter->fs_specific_info.getbulk_count = 64;
+  spec_info = (snmpfs_specific_initinfo_t *) &out_parameter->fs_specific_info;
+  spec_info->snmp_version = SNMP_VERSION_2c;
+  strcpy(spec_info->snmp_server, "localhost");
+  strcpy(spec_info->community, "public");
+  spec_info->nb_retries = SNMP_DEFAULT_RETRIES;
+  spec_info->microsec_timeout = SNMP_DEFAULT_TIMEOUT;
+  spec_info->enable_descriptions = FALSE;
+  strcpy(spec_info->client_name, "GANESHA");
+  spec_info->getbulk_count = 64;
   /* we fill the snmpv3 part of the structure even if we have set v2.
      The purpose is to have a complete structure if user chooses v3 and forgets some
      parameters.
    */
-  strcpy(out_parameter->fs_specific_info.auth_proto, "MD5");
-  strcpy(out_parameter->fs_specific_info.enc_proto, "DES");
-  strcpy(out_parameter->fs_specific_info.username, "snmpadm");
-  strcpy(out_parameter->fs_specific_info.auth_phrase, "password");
-  strcpy(out_parameter->fs_specific_info.enc_phrase, "password");
+  strcpy(spec_info->auth_proto, "MD5");
+  strcpy(spec_info->enc_proto, "DES");
+  strcpy(spec_info->username, "snmpadm");
+  strcpy(spec_info->auth_phrase, "password");
+  strcpy(spec_info->enc_phrase, "password");
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
@@ -934,6 +944,13 @@ fsal_status_t SNMPFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
   char *key_name;
   char *key_value;
   config_item_t block;
+  snmpfs_specific_initinfo_t *spec_info;
+
+  /* defensive programming... */
+  if(out_parameter == NULL)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  spec_info = (snmpfs_specific_initinfo_t *) &out_parameter->fs_specific_info;
 
   block = config_FindItemByName(in_config, CONF_LABEL_FS_SPECIFIC);
 
@@ -983,16 +1000,16 @@ fsal_status_t SNMPFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
-          out_parameter->fs_specific_info.snmp_version = version;
+          spec_info->snmp_version = version;
 
         }
       else if(!STRCMP(key_name, "snmp_server"))
         {
-          strncpy(out_parameter->fs_specific_info.snmp_server, key_value, HOST_NAME_MAX);
+          strncpy(spec_info->snmp_server, key_value, HOST_NAME_MAX);
         }
       else if(!STRCMP(key_name, "community"))
         {
-          strncpy(out_parameter->fs_specific_info.community, key_value,
+          strncpy(spec_info->community, key_value,
                   COMMUNITY_MAX_LEN);
         }
       else if(!STRCMP(key_name, "nb_retries"))
@@ -1006,7 +1023,7 @@ fsal_status_t SNMPFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
-          out_parameter->fs_specific_info.nb_retries = retries;
+          spec_info->nb_retries = retries;
 
         }
       else if(!STRCMP(key_name, "microsec_timeout"))
@@ -1020,7 +1037,7 @@ fsal_status_t SNMPFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
-          out_parameter->fs_specific_info.microsec_timeout = timeout;
+          spec_info->microsec_timeout = timeout;
 
         }
       else if(!STRCMP(key_name, "enable_descriptions"))
@@ -1034,12 +1051,12 @@ fsal_status_t SNMPFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
-          out_parameter->fs_specific_info.enable_descriptions = bool;
+          spec_info->enable_descriptions = bool;
 
         }
       else if(!STRCMP(key_name, "client_name"))
         {
-          strncpy(out_parameter->fs_specific_info.client_name, key_value, 256);
+          strncpy(spec_info->client_name, key_value, 256);
         }
       else if(!STRCMP(key_name, "snmp_getbulk_count"))
         {
@@ -1052,32 +1069,32 @@ fsal_status_t SNMPFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
                       key_name);
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
-          out_parameter->fs_specific_info.getbulk_count = count;
+          spec_info->getbulk_count = count;
 
         }
       else if(!STRCMP(key_name, "auth_proto"))
         {
-          strncpy(out_parameter->fs_specific_info.auth_proto, key_value,
+          strncpy(spec_info->auth_proto, key_value,
                   FSAL_MAX_PROTO_LEN);
         }
       else if(!STRCMP(key_name, "enc_proto"))
         {
-          strncpy(out_parameter->fs_specific_info.enc_proto, key_value,
+          strncpy(spec_info->enc_proto, key_value,
                   FSAL_MAX_PROTO_LEN);
         }
       else if(!STRCMP(key_name, "username"))
         {
-          strncpy(out_parameter->fs_specific_info.username, key_value,
+          strncpy(spec_info->username, key_value,
                   FSAL_MAX_USERNAME_LEN);
         }
       else if(!STRCMP(key_name, "auth_phrase"))
         {
-          strncpy(out_parameter->fs_specific_info.auth_phrase, key_value,
+          strncpy(spec_info->auth_phrase, key_value,
                   FSAL_MAX_PHRASE_LEN);
         }
       else if(!STRCMP(key_name, "enc_phrase"))
         {
-          strncpy(out_parameter->fs_specific_info.enc_phrase, key_value,
+          strncpy(spec_info->enc_phrase, key_value,
                   FSAL_MAX_PHRASE_LEN);
         }
       else

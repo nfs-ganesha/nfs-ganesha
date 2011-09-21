@@ -41,9 +41,9 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t LUSTREFSAL_opendir(lustrefsal_handle_t * p_dir_handle,    /* IN */
-                                 lustrefsal_op_context_t * p_context,   /* IN */
-                                 lustrefsal_dir_t * p_dir_descriptor,   /* OUT */
+fsal_status_t LUSTREFSAL_opendir(fsal_handle_t * p_dir_handle,    /* IN */
+                                 fsal_op_context_t * p_context,   /* IN */
+                                 fsal_dir_t *dir_desc,   /* OUT */
                                  fsal_attrib_list_t * p_dir_attributes  /* [ IN/OUT ] */
     )
 {
@@ -52,6 +52,7 @@ fsal_status_t LUSTREFSAL_opendir(lustrefsal_handle_t * p_dir_handle,    /* IN */
 
   fsal_path_t fsalpath;
   struct stat buffstat;
+  lustrefsal_dir_t *p_dir_descriptor = (lustrefsal_dir_t *)dir_desc;
 
   /* sanity checks
    * note : dir_attributes is optionnal.
@@ -142,12 +143,12 @@ fsal_status_t LUSTREFSAL_opendir(lustrefsal_handle_t * p_dir_handle,    /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t LUSTREFSAL_readdir(lustrefsal_dir_t * p_dir_descriptor,   /* IN */
-                                 lustrefsal_cookie_t start_position,    /* IN */
+fsal_status_t LUSTREFSAL_readdir(fsal_dir_t *dir_desc,   /* IN */
+                                 fsal_cookie_t start_pos,    /* IN */
                                  fsal_attrib_mask_t get_attr_mask,      /* IN */
                                  fsal_mdsize_t buffersize,      /* IN */
                                  fsal_dirent_t * p_pdirent,     /* OUT */
-                                 lustrefsal_cookie_t * p_end_position,  /* OUT */
+                                 fsal_cookie_t * p_end_position,  /* OUT */
                                  fsal_count_t * p_nb_entries,   /* OUT */
                                  fsal_boolean_t * p_end_of_dir  /* OUT */
     )
@@ -158,6 +159,8 @@ fsal_status_t LUSTREFSAL_readdir(lustrefsal_dir_t * p_dir_descriptor,   /* IN */
   struct dirent dpe;
   fsal_path_t fsalpath;
   int rc;
+  lustrefsal_dir_t * p_dir_descriptor = (lustrefsal_dir_t *)dir_desc;
+  lustrefsal_cookie_t start_position;
 
   /*****************/
   /* sanity checks */
@@ -167,6 +170,7 @@ fsal_status_t LUSTREFSAL_readdir(lustrefsal_dir_t * p_dir_descriptor,   /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
   max_dir_entries = (buffersize / sizeof(fsal_dirent_t));
+  start_position.data.cookie = (off_t)start_pos.data;
 
   /***************************/
   /* seek into the directory */
@@ -232,7 +236,7 @@ fsal_status_t LUSTREFSAL_readdir(lustrefsal_dir_t * p_dir_descriptor,   /* IN */
 
       /* get object handle */
       TakeTokenFSCall();
-      st = fsal_internal_Path2Handle(&p_dir_descriptor->context, &fsalpath,
+      st = fsal_internal_Path2Handle((fsal_op_context_t *) &p_dir_descriptor->context, &fsalpath,
                                      &(p_pdirent[*p_nb_entries].handle));
       ReleaseTokenFSCall();
 
@@ -245,7 +249,7 @@ fsal_status_t LUSTREFSAL_readdir(lustrefsal_dir_t * p_dir_descriptor,   /* IN */
       p_pdirent[*p_nb_entries].attributes.asked_attributes = get_attr_mask;
 
       st = LUSTREFSAL_getattrs(&(p_pdirent[*p_nb_entries].handle),
-                               &p_dir_descriptor->context,
+                               (fsal_op_context_t *) &p_dir_descriptor->context,
                                &p_pdirent[*p_nb_entries].attributes);
       if(FSAL_IS_ERROR(st))
         {
@@ -254,12 +258,13 @@ fsal_status_t LUSTREFSAL_readdir(lustrefsal_dir_t * p_dir_descriptor,   /* IN */
                         FSAL_ATTR_RDATTR_ERR);
         }
 
-      p_pdirent[*p_nb_entries].cookie.data.cookie = telldir(p_dir_descriptor->p_dir);
+      ((lustrefsal_cookie_t *) (&p_pdirent[*p_nb_entries].cookie))->data.cookie = telldir(p_dir_descriptor->p_dir);
       p_pdirent[*p_nb_entries].nextentry = NULL;
       if(*p_nb_entries)
         p_pdirent[*p_nb_entries - 1].nextentry = &(p_pdirent[*p_nb_entries]);
 
-      (*p_end_position) = p_pdirent[*p_nb_entries].cookie;
+      memcpy((char *)p_end_position, (char *)&p_pdirent[*p_nb_entries].cookie,
+	     sizeof(lustrefsal_cookie_t));
       (*p_nb_entries)++;
     }
 
@@ -278,7 +283,7 @@ fsal_status_t LUSTREFSAL_readdir(lustrefsal_dir_t * p_dir_descriptor,   /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t LUSTREFSAL_closedir(lustrefsal_dir_t * p_dir_descriptor   /* IN */
+fsal_status_t LUSTREFSAL_closedir(fsal_dir_t * p_dir_descriptor   /* IN */
     )
 {
 
@@ -289,11 +294,11 @@ fsal_status_t LUSTREFSAL_closedir(lustrefsal_dir_t * p_dir_descriptor   /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_closedir);
 
 #ifdef _USE_POSIXDB_READDIR_BLOCK
-  if(p_dir_descriptor->p_dbentries)
+  if(((lustrefsal_dir_t *)p_dir_descriptor)->p_dbentries)
     Mem_Free(p_dir_descriptor->p_dbentries);
 #endif
 
-  rc = closedir(p_dir_descriptor->p_dir);
+  rc = closedir(((lustrefsal_dir_t *)p_dir_descriptor)->p_dir);
   if(rc != 0)
     Return(posix2fsal_error(errno), errno, INDEX_FSAL_closedir);
 

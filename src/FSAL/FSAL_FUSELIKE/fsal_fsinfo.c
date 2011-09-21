@@ -48,8 +48,8 @@
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FUSEFSAL_static_fsinfo(fusefsal_handle_t * filehandle,    /* IN */
-                                     fusefsal_op_context_t * p_context, /* IN */
+fsal_status_t FUSEFSAL_static_fsinfo(fsal_handle_t * filehandle,    /* IN */
+                                     fsal_op_context_t * p_context, /* IN */
                                      fsal_staticfsinfo_t * staticinfo   /* OUT */
     )
 {
@@ -84,8 +84,8 @@ fsal_status_t FUSEFSAL_static_fsinfo(fusefsal_handle_t * filehandle,    /* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t FUSEFSAL_dynamic_fsinfo(fusefsal_handle_t * filehandle,   /* IN */
-                                      fusefsal_op_context_t * p_context,        /* IN */
+fsal_status_t FUSEFSAL_dynamic_fsinfo(fsal_handle_t *handle,   /* IN */
+                                      fsal_op_context_t * p_context,        /* IN */
                                       fsal_dynamicfsinfo_t * dynamicinfo        /* OUT */
     )
 {
@@ -93,6 +93,7 @@ fsal_status_t FUSEFSAL_dynamic_fsinfo(fusefsal_handle_t * filehandle,   /* IN */
   int rc;
   struct statvfs stbuff;
   char object_path[FSAL_MAX_PATH_LEN];
+  fusefsal_handle_t *filehandle = (fusefsal_handle_t *)handle;
 
   /* sanity checks. */
   if(!filehandle || !dynamicinfo || !p_context)

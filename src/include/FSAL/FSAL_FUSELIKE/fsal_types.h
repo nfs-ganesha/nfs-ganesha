@@ -46,16 +46,6 @@
 
 #include "fsal_glue_const.h"
 
-#define fsal_handle_t fusefsal_handle_t
-#define fsal_op_context_t fusefsal_op_context_t
-#define fsal_file_t fusefsal_file_t
-#define fsal_dir_t fusefsal_dir_t
-#define fsal_export_context_t fusefsal_export_context_t
-#define fsal_lockdesc_t fusefsal_lockdesc_t
-#define fsal_cookie_t fusefsal_cookie_t
-#define fs_specific_initinfo_t fusefs_specific_initinfo_t
-#define fsal_cred_t fusefsal_cred_t
-
   /* In this section, you must define your own FSAL internal types.
    * Here are some template types :
    */

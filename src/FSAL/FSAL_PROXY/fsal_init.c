@@ -249,7 +249,7 @@ fsal_status_t PROXYFSAL_Init(fsal_parameter_t * init_info       /* IN */
 
   /* >> You can also initialize some filesystem stuff << */
 
-  if(rc = FS_Specific_Init(&init_info->fs_specific_info))
+  if(rc = FS_Specific_Init((proxyfs_specific_initinfo_t *) &init_info->fs_specific_info))
     Return(ERR_FSAL_BAD_INIT, -rc, INDEX_FSAL_Init);
 
   /* Everything went OK. */
