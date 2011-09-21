@@ -132,29 +132,10 @@ state_status_t state_add(cache_entry_t         * pentry,
                          state_t              ** ppstate,
                          state_status_t        * pstatus)
 {
-  state_t * pnew_state = NULL;
-  state_t * piter_state = NULL;
-  state_t * piter_saved = NULL;
-  char      debug_str[OTHERSIZE * 2 + 1];
-  bool_t    conflict_found = FALSE;
-
-  /* Sanity Check */
-  if(pstatus == NULL)
-    return STATE_INVALID_ARGUMENT;
-
-  if(pentry == NULL || pstate_data == NULL || pclient == NULL || pcontext == NULL
-     || powner_input == NULL || ppstate == NULL)
-    {
-      *pstatus = STATE_INVALID_ARGUMENT;
-      return *pstatus;
-    }
-
-  /* entry has to be a file */
-  if(pentry->internal_md.type != REGULAR_FILE)
-    {
-      *pstatus = STATE_INVALID_ARGUMENT;
-      return *pstatus;
-    }
+  state_t           * pnew_state  = NULL;
+  state_t           * piter_state = NULL;
+  char                debug_str[OTHERSIZE * 2 + 1];
+  struct glist_head * glist;
 
   /* Acquire lock to enter critical section on this entry */
   P_w(&pentry->lock);
@@ -165,108 +146,65 @@ state_status_t state_add(cache_entry_t         * pentry,
     {
       LogDebug(COMPONENT_STATE,
                "Can't allocate a new file state from cache pool");
-      *pstatus = STATE_MALLOC_ERROR;
 
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
 
       V_w(&pentry->lock);
 
+      *pstatus = STATE_MALLOC_ERROR;
       return *pstatus;
     }
 
   memset(pnew_state, 0, sizeof(*pnew_state));
 
-  /* If there already a state or not ? */
-  if(pentry->object.file.pstate_head == NULL)
+  /* Brwose the state's list */
+  glist_for_each(glist, &pentry->object.file.state_list)
     {
-      /* The file has no state for now, accept this new state */
-      pnew_state->state_next = NULL;
-      pnew_state->state_prev = NULL;
+      piter_state = glist_entry(glist, state_t, state_list);
 
-      /* Add the stateid.other, this will increment pentry->object.file.state_current_counter */
-      if(!nfs4_BuildStateId_Other(pentry,
-                                  pcontext, powner_input, pnew_state->stateid_other))
-        {
-          LogDebug(COMPONENT_STATE,
-                   "Can't create a new state id for the pentry %p (A)", pentry);
-          *pstatus = STATE_STATE_ERROR;
-
-          /* stat */
-          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
-
-          ReleaseToPool(pnew_state, &pclient->pool_state_v4);
-
-          V_w(&pentry->lock);
-
-          return *pstatus;
-        }
-
-      /* Set the head state id */
-      pentry->object.file.pstate_head = (void *)pnew_state;
-    }
-  else
-    {
-      /* Brwose the state's list */
-      for(piter_state = pentry->object.file.pstate_head; piter_state != NULL;
-          piter_saved = piter_state, piter_state = piter_state->state_next)
-        {
-          if(state_conflict(piter_state, state_type, pstate_data))
-            {
-              conflict_found = TRUE;
-              break;
-            }
-        }
-
-      /* An error is to be returned if a conflict is found */
-      if(conflict_found == TRUE)
+      if(state_conflict(piter_state, state_type, pstate_data))
         {
           LogDebug(COMPONENT_STATE,
                    "new state conflicts with another state for pentry %p",
                    pentry);
+
+          /* stat */
+          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
+
+          ReleaseToPool(pnew_state, &pclient->pool_state_v4);
+
+          V_w(&pentry->lock);
+
           *pstatus = STATE_STATE_CONFLICT;
-
-          /* stat */
-          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
-
-          ReleaseToPool(pnew_state, &pclient->pool_state_v4);
-
-          V_w(&pentry->lock);
-
           return *pstatus;
         }
+    }
 
-      /* If this point is reached, then the state is to be added to the state list and piter_saved is the tail of the list  */
-      pnew_state->state_next = NULL;
-      pnew_state->state_prev = piter_saved;
-      piter_saved->state_next = pnew_state;
+  /* Add the stateid.other, this will increment pentry->object.file.state_current_counter */
+  if(!nfs4_BuildStateId_Other(pentry,
+                              pcontext,
+                              powner_input,
+                              pnew_state->stateid_other))
+    {
+      LogDebug(COMPONENT_STATE,
+               "Can't create a new state id for the pentry %p (E)", pentry);
 
-      /* Add the stateid.other, this will increment pentry->object.file.state_current_counter */
-      if(!nfs4_BuildStateId_Other
-         (pentry, pcontext, powner_input, pnew_state->stateid_other))
-        {
-          LogDebug(COMPONENT_STATE,
-                   "Can't create a new state id for the pentry %p (E)", pentry);
-          *pstatus = STATE_STATE_ERROR;
+      /* stat */
+      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
 
-          /* stat */
-          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
+      ReleaseToPool(pnew_state, &pclient->pool_state_v4);
 
-          ReleaseToPool(pnew_state, &pclient->pool_state_v4);
+      V_w(&pentry->lock);
 
-          V_w(&pentry->lock);
-
-          return *pstatus;
-        }
-
-      /* Set the tail state id */
-      pentry->object.file.pstate_tail = (void *)pnew_state;
-    }                           /* else */
+      *pstatus = STATE_STATE_ERROR;
+      return *pstatus;
+    }
 
   /* Set the type and data for this state */
-  pnew_state->state_type = state_type;
   memcpy(&(pnew_state->state_data), pstate_data, sizeof(state_data_t));
-  pnew_state->state_seqid = 0; /* will be incremented to 1 later */
+  pnew_state->state_type   = state_type;
+  pnew_state->state_seqid  = 0; /* will be incremented to 1 later */
   pnew_state->state_pentry = pentry;
   pnew_state->state_powner = powner_input;
 
@@ -279,7 +217,6 @@ state_status_t state_add(cache_entry_t         * pentry,
       LogDebug(COMPONENT_STATE,
                "Can't create a new state id %s for the pentry %p (F)",
                debug_str, pentry);
-      *pstatus = STATE_STATE_ERROR;
 
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
@@ -288,20 +225,26 @@ state_status_t state_add(cache_entry_t         * pentry,
 
       V_w(&pentry->lock);
 
+      /* Return STATE_MALLOC_ERROR since most likely the nfs4_State_Set failed
+       * to allocate memory.
+       */
+      *pstatus = STATE_MALLOC_ERROR;
       return *pstatus;
     }
 
+  /* Add state to list for cache entry */
+  glist_add_tail(&pentry->object.file.state_list, &pnew_state->state_list);
+
   /* Copy the result */
   *ppstate = pnew_state;
-
-  /* Regular exit */
-  *pstatus = STATE_SUCCESS;
 
   LogFullDebug(COMPONENT_STATE,
                "Add State: %s", debug_str);
 
   V_w(&pentry->lock);
 
+  /* Regular exit */
+  *pstatus = STATE_SUCCESS;
   return *pstatus;
 }                               /* state_add */
 
@@ -325,15 +268,6 @@ state_status_t state_del(state_t              * pstate,
   cache_entry_t * pentry = NULL;
   char            debug_str[OTHERSIZE * 2 + 1];
 
-  if(pstatus == NULL)
-    return STATE_INVALID_ARGUMENT;
-
-  if(pstate == NULL || pclient == NULL)
-    {
-      *pstatus = STATE_INVALID_ARGUMENT;
-      return *pstatus;
-    }
-
   if (isDebug(COMPONENT_STATE))
     sprint_mem(debug_str, (char *)pstate->stateid_other, OTHERSIZE);
 
@@ -342,53 +276,30 @@ state_status_t state_del(state_t              * pstate,
   /* Locks the related pentry before operating on it */
   pentry = pstate->state_pentry;
 
-  /* Release the state owner reference */
-  if(pstate->state_powner != NULL)
-    dec_state_owner_ref(pstate->state_powner, pclient);
-
-  P_w(&pentry->lock);
-
-  /* Set the head counter */
-  if(pstate == pentry->object.file.pstate_head)
-    {
-      /* This is the first state managed */
-      if(pstate->state_next == NULL)
-        {
-          /* I am the only remaining state, set the head counter to 0 in the pentry */
-          pentry->object.file.pstate_head = NULL;
-        }
-      else
-        {
-          /* The state that is next to me become the new head */
-          pentry->object.file.pstate_head = (void *)pstate->state_next;
-        }
-    }
-
-  /* redo the double chained list */
-  if(pstate->state_next != NULL)
-    pstate->state_next->state_prev = pstate->state_prev;
-
-  if(pstate->state_prev != NULL)
-    pstate->state_prev->state_next = pstate->state_next;
-
-  /* Remove from the list of lock states for a particular open state */
-  if(pstate->state_type == STATE_TYPE_LOCK)
-    glist_del(&pstate->state_data.lock.state_sharelist);
-
   /* Remove the entry from the HashTable */
   if(!nfs4_State_Del(pstate->stateid_other))
     {
-      *pstatus = STATE_STATE_ERROR;
-
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_DEL_STATE] += 1;
 
       LogDebug(COMPONENT_STATE, "Could not delete state %s", debug_str);
 
-      V_w(&pentry->lock);
-
+      *pstatus = STATE_STATE_ERROR;
       return *pstatus;
     }
+
+  P_w(&pentry->lock);
+
+  /* Release the state owner reference */
+  if(pstate->state_powner != NULL)
+    dec_state_owner_ref(pstate->state_powner, pclient);
+
+  /* Remove from the list of states for a particular cache entry */
+  glist_del(&pstate->state_list);
+
+  /* Remove from the list of lock states for a particular open state */
+  if(pstate->state_type == STATE_TYPE_LOCK)
+    glist_del(&pstate->state_data.lock.state_sharelist);
 
   ReleaseToPool(pstate, &pclient->pool_state_v4);
 
@@ -400,89 +311,3 @@ state_status_t state_del(state_t              * pstate,
 
   return *pstatus;
 }                               /* state_del */
-
-/**
- *
- * state_iterate: iterates on the states's loop
- *
- * Iterates on the states's loop
- *
- * @param other           [IN]    stateid.other used as hash key
- * @param ppstate         [OUT]   pointer to a pointer of state that will point to the result
- * @param previous_pstate [IN]    a pointer to be used to start search. Should be NULL at first call
- * @param pclient         [INOUT] related cache inode client
- * @param pcontext        [IN]    related FSAL operation context
- * @pstatus               [OUT]   status for the operation
- *
- * @return the same as *pstatus
- *
- */
-state_status_t state_iterate(cache_entry_t         * pentry,
-                             state_t              ** ppstate,
-                             state_t               * previous_pstate,
-                             cache_inode_client_t  * pclient,
-                             fsal_op_context_t     * pcontext,
-                             state_status_t        * pstatus)
-{
-  state_t  * piter_state = NULL;
-  uint64_t   fileid_digest = 0;
-
-  if(pstatus == NULL)
-    {
-      *pstatus = STATE_INVALID_ARGUMENT;
-      return *pstatus;
-    }
-
-  if(pentry == NULL || ppstate == NULL || pclient == NULL || pcontext == NULL)
-    {
-      *pstatus = STATE_INVALID_ARGUMENT;
-      return *pstatus;
-    }
-
-  /* Here, we need to know the file id */
-  if(FSAL_IS_ERROR(FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
-                                     FSAL_DIGEST_FILEID4,
-                                     &(pentry->object.file.handle),
-                                     (caddr_t) & fileid_digest)))
-    {
-      LogDebug(COMPONENT_STATE,
-               "Can't create a new state id for the pentry %p (F)", pentry);
-      *pstatus = STATE_STATE_ERROR;
-
-      return *pstatus;
-    }
-
-  P_r(&pentry->lock);
-
-  /* if this is the first call, used the data stored in pentry to get the state's chain head */
-  if(previous_pstate == NULL)
-    {
-      /* The file already have at least one state, browse all of them, starting with the first state */
-      piter_state = pentry->object.file.pstate_head;
-    }
-  else
-    {
-      /* Sanity check: make sure that this state is related to this pentry */
-      if(previous_pstate->state_pentry != pentry)
-        {
-          LogDebug(COMPONENT_STATE,
-                   "Bad previous pstate: related to pentry %p, not to %p",
-                   previous_pstate->state_pentry, pentry);
-
-          *pstatus = STATE_STATE_ERROR;
-
-          V_r(&pentry->lock);
-
-          return *pstatus;
-        }
-
-      piter_state = previous_pstate->state_next;
-    }
-
-  *ppstate = piter_state;
-  *pstatus = STATE_SUCCESS;
-
-  V_r(&pentry->lock);
-
-  return *pstatus;
-}                               /* state_iterate */

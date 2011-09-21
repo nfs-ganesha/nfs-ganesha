@@ -86,8 +86,6 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   int                       rc = 0;
   state_t                 * plock_state;    /* state for the lock */
   state_t                 * pstate_open;    /* state for the open owner */
-  state_t                 * pstate_previous_iterate;
-  state_t                 * pstate_iterate;
   state_owner_t           * plock_owner;
   state_owner_t           * popen_owner;
   state_owner_t           * presp_owner;    /* Owner to store response in */
@@ -303,62 +301,26 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_LOCK4.status;
     }
 
-  /* Check for conflicts with previously obtained states */
-
-  /* TODO FSF:
-   * This will eventually all go into the function of state_lock()
-   * For now, we will keep checking against SHARE
-   * Check against LOCK will be removed
-   * We eventually need to handle special stateids, but not here.
+  /* check if open state has correct access for type of lock.
+   * Don't need to check for conflicting states since this open
+   * state assures there are no conflicting states.
    */
-
-  /* loop into the states related to this pentry to find the related lock */
-  pstate_iterate = NULL;
-  pstate_previous_iterate = NULL;
-  do
+  if(((arg_LOCK4.locktype == WRITE_LT || arg_LOCK4.locktype == WRITEW_LT) &&
+      ((pstate_open->state_data.share.share_access & OPEN4_SHARE_ACCESS_WRITE) == 0)) ||
+     ((arg_LOCK4.locktype == READ_LT || arg_LOCK4.locktype == READW_LT) &&
+      ((pstate_open->state_data.share.share_access & OPEN4_SHARE_ACCESS_READ) == 0)))
     {
-      state_iterate(data->current_entry,
-                    &pstate_iterate,
-                    pstate_previous_iterate,
-                    data->pclient, data->pcontext, &state_status);
-      if((state_status == STATE_STATE_ERROR)
-         || (state_status == STATE_INVALID_ARGUMENT))
-        {
-          res_LOCK4.status = NFS4ERR_INVAL;
-          LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCK failed state_iterate");
-          return res_LOCK4.status;
-        }
+      /* The open state doesn't allow access based on the type of lock */
+      LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+              "LOCK failed, SHARE doesn't allow access",
+              data->current_entry,
+              data->pcontext,
+              plock_owner,
+              &lock_desc);
 
-      if(pstate_iterate != NULL)
-        {
-          /* For now still check conflicts with SHARE here */
-          if(pstate_iterate->state_type == STATE_TYPE_SHARE)
-            {
-              /* In a correct POSIX behavior, a write lock should not be allowed on a read-mode file */
-              if((pstate_iterate->state_data.share.share_deny &
-                   OPEN4_SHARE_DENY_WRITE) &&
-                 !(pstate_iterate->state_data.share.share_access &
-                   OPEN4_SHARE_ACCESS_WRITE) &&
-                 (arg_LOCK4.locktype == WRITE_LT))
-                {
-                  /* A conflicting open state, return NFS4ERR_OPENMODE
-                   * This behavior is implemented to comply with newpynfs's test LOCK4 */
-                  LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
-                          "LOCK failed conflicts with SHARE",
-                          data->current_entry,
-                          data->pcontext,
-                          plock_owner,
-                          &lock_desc);
-
-                  res_LOCK4.status = NFS4ERR_OPENMODE;
-                  return res_LOCK4.status;
-                }
-            }
-        }                       /* if( pstate_iterate != NULL ) */
-      pstate_previous_iterate = pstate_iterate;
+      res_LOCK4.status = NFS4ERR_OPENMODE;
+      return res_LOCK4.status;
     }
-  while(pstate_iterate != NULL);
 
   if(arg_LOCK4.locker.new_lock_owner)
     {

@@ -88,14 +88,13 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   stable_how4              stable_how;
   cache_content_status_t   content_status;
   state_t                * pstate_found = NULL;
-  state_t                * pstate_open = NULL;
+  state_t                * pstate_open ;
+  state_t                * pstate_iterate;
   cache_inode_status_t     cache_status;
-  state_status_t           state_status;
   fsal_attrib_list_t       attr;
-  cache_entry_t          * entry = NULL;
-  state_t                * pstate_iterate = NULL;
-  state_t                * pstate_previous_iterate = NULL;
+  cache_entry_t          * pentry = NULL;
   int                      rc = 0;
+  struct glist_head      * glist;
 
   cache_content_policy_data_t datapol;
 
@@ -151,13 +150,13 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* vnode to manage is the current one */
-  entry = data->current_entry;
+  pentry = data->current_entry;
 
   /* Check stateid correctness and get pointer to state
    * (also checks for special stateids)
    */
   if((rc = nfs4_Check_Stateid(&arg_WRITE4.stateid,
-                              data->current_entry,
+                              pentry,
                               data->psession->clientid,
                               &pstate_found,
                               data,
@@ -176,15 +175,18 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
         {
           case STATE_TYPE_SHARE:
             pstate_open = pstate_found;
+            // TODO FSF: need to check against existing locks
             break;
 
           case STATE_TYPE_LOCK:
             pstate_open = pstate_found->state_data.lock.popenstate;
+            // TODO FSF: should check that write is in range of an exclusive lock...
             break;
 
           case STATE_TYPE_DELEG:
           case STATE_TYPE_LAYOUT:
             pstate_open = NULL;
+            // TODO FSF: should check that this is a write delegation or layout?
             break;
 
           default:
@@ -197,7 +199,6 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
       /* This is a write operation, this means that the file MUST have been opened for writing */
       if(pstate_open != NULL &&
-         (pstate_open->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE) != 0 &&
          (pstate_open->state_data.share.share_access & OPEN4_SHARE_ACCESS_WRITE) == 0)
         {
           /* Bad open mode, return NFS4ERR_OPENMODE */
@@ -208,51 +209,53 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
           return res_WRITE4.status;
         }
     }
-
-  /* Iterate through file's state to look for conflicts */
-  pstate_iterate = NULL;
-  pstate_previous_iterate = NULL;
-  do
+  else
     {
-      state_iterate(data->current_entry,
-                    &pstate_iterate,
-                    pstate_previous_iterate,
-                    data->pclient,
-                    data->pcontext,
-                    &state_status);
+      /* Special stateid, no open state, check to see if any share conflicts */
+      pstate_open = NULL;
 
-      if(state_status == STATE_STATE_ERROR)
-        break;                  /* Get out of the loop */
+      /* Acquire lock to enter critical section on this entry */
+      P_r(&pentry->lock);
 
-      if(state_status == STATE_INVALID_ARGUMENT)
+      /* Iterate through file's state to look for conflicts */
+      glist_for_each(glist, &pentry->object.file.state_list)
         {
-          res_WRITE4.status = NFS4ERR_INVAL;
-          return res_WRITE4.status;
-        }
+          pstate_iterate = glist_entry(glist, state_t, state_list);
 
-      cache_status = CACHE_INODE_SUCCESS;
-
-      if(pstate_iterate != NULL)
-        {
-          if(pstate_iterate->state_type == STATE_TYPE_SHARE)
+          switch(pstate_iterate->state_type)
             {
-              if(pstate_found != pstate_iterate)
-                {
-                  if(pstate_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE)
-                    {
-                      /* Writing to this file if prohibited, file is write-denied */
-                      res_WRITE4.status = NFS4ERR_LOCKED;
-                      LogDebug(COMPONENT_NFS_V4_LOCK,
-                               "WRITE is denied by state %p",
-                               pstate_iterate);
-                      return res_WRITE4.status;
-                    }
-                }
+              case STATE_TYPE_SHARE:
+                if(pstate_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE)
+                  {
+                    /* Writing to this file is prohibited, file is write-denied */
+                    V_r(&pentry->lock);
+                    res_WRITE4.status = NFS4ERR_LOCKED;
+                    LogDebug(COMPONENT_NFS_V4_LOCK,
+                             "WRITE is denied by state %p",
+                             pstate_iterate);
+                    return res_WRITE4.status;
+                  }
+                break;
+
+              case STATE_TYPE_LOCK:
+                /* Skip, will check for conflicting locks later */
+                break;
+
+              case STATE_TYPE_DELEG:
+                // TODO FSF: should check for conflicting delegations, may need to recall
+                break;
+
+              case STATE_TYPE_LAYOUT:
+                // TODO FSF: should check for conflicting layouts, may need to recall
+                break;
+
+              case STATE_TYPE_NONE:
+                break;
             }
         }
-      pstate_previous_iterate = pstate_iterate;
+      // TODO FSF: need to check against existing locks
+      V_r(&pentry->lock);
     }
-  while(pstate_iterate != NULL);
 
   /* Get the characteristics of the I/O to be made */
   offset = arg_WRITE4.offset;
@@ -303,12 +306,12 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   if((data->pexport->options & EXPORT_OPTION_USE_DATACACHE) &&
-     (cache_content_cache_behaviour(entry,
+     (cache_content_cache_behaviour(pentry,
                                     &datapol,
                                     (cache_content_client_t *) (data->pclient->
                                                                 pcontent_client),
                                     &content_status) == CACHE_CONTENT_FULLY_CACHED)
-     && (entry->object.file.pentry_content == NULL))
+     && (pentry->object.file.pentry_content == NULL))
     {
       /* Entry is not in datacache, but should be in, cache it .
        * Several threads may call this function at the first time and a race condition can occur here
@@ -320,7 +323,7 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       datapol.MaxCacheSize = data->pexport->MaxCacheSize;
 
       /* Status is set in last argument */
-      cache_inode_add_data_cache(entry, data->ht, data->pclient, data->pcontext,
+      cache_inode_add_data_cache(pentry, data->ht, data->pclient, data->pcontext,
                                  &cache_status);
 
       if((cache_status != CACHE_INODE_SUCCESS) &&
@@ -347,7 +350,7 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   seek_descriptor.whence = FSAL_SEEK_SET;
   seek_descriptor.offset = offset;
 
-  if(cache_inode_rdwr(entry,
+  if(cache_inode_rdwr(pentry,
                       CACHE_CONTENT_WRITE,
                       &seek_descriptor,
                       size,

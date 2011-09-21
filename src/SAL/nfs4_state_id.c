@@ -87,13 +87,11 @@ int display_state_id_val(hash_buffer_t * pbuff, char *str)
   state_t *pstate = (state_t *) (pbuff->pdata);
 
   return sprintf(str,
-                 "state %p is associated with pentry=%p type=%u seqid=%u prev=%p next=%p",
+                 "state %p is associated with pentry=%p type=%u seqid=%u",
                  pstate,
                  pstate->state_pentry,
                  pstate->state_type,
-                 pstate->state_seqid,
-                 pstate->state_prev,
-                 pstate->state_next);
+                 pstate->state_seqid);
 }                               /* display_state_id_val */
 
 int compare_state_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
@@ -230,21 +228,6 @@ int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
   u_int16_t srvboot_digest = 0;
   uint32_t open_owner_digest = 0;
 
-  if(pcontext == NULL)
-    return 0;
-
-  if(pentry == NULL)
-    return 0;
-
-  if(popen_owner == NULL)
-    return 0;
-
-  if(pentry->internal_md.type != REGULAR_FILE)
-    return 0;
-
-  if(other == NULL)
-    return 0;
-
   LogFullDebug(COMPONENT_STATE,
                "pentry=%p popen_owner=%u|%s",
                pentry,
@@ -301,9 +284,10 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t * pstate_data)
   buffval.pdata = (caddr_t) pstate_data;
   buffval.len = sizeof(state_t);
 
-  if(HashTable_Test_And_Set
-     (ht_state_id, &buffkey, &buffval,
-      HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
+  if(HashTable_Test_And_Set(ht_state_id,
+                            &buffkey,
+                            &buffval,
+                            HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
     {
       LogDebug(COMPONENT_STATE,
                "HashTable_Test_And_Set failed for key %p",

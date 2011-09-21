@@ -289,8 +289,7 @@ struct cache_entry_t
 #endif                          /* _USE_PROXY */
       fsal_attrib_list_t attributes;                                 /**< The FSAL Attributes                                  */
       void *pentry_content;                                          /**< Entry in file content cache (NULL if not cached)     */
-      void *pstate_head;                                             /**< Pointer used for the head of the state chain         */
-      void *pstate_tail;                                             /**< Current pointer for the state chain                  */
+      struct glist_head state_list;                                  /**< Pointers for state list                              */
       struct glist_head lock_list;                                   /**< Pointers for lock list                               */
       pthread_mutex_t lock_list_mutex;                               /**< Mutex to protect lock list                           */
       cache_inode_unstable_data_t unstable_data;                     /**< Unstable data, for use with WRITE/COMMIT             */

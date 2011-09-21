@@ -99,13 +99,13 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   state_data_t              candidate_data;
   state_type_t              candidate_type;
   state_t                 * pfile_state = NULL;
-  state_t                 * pstate_found_iterate = NULL;
-  state_t                 * pstate_previous_iterate = NULL;
+  state_t                 * pstate_iterate;
   state_nfs4_owner_name_t   owner_name;
   state_owner_t           * powner = NULL;
   const char              * tag = "OPEN";
   const char              * cause = "OOPS";
   const char              * cause2 = "";
+  struct glist_head       * glist;
 
   LogDebug(COMPONENT_STATE,
            "Entering NFS v4 OPEN handler -----------------------------------------------------");
@@ -613,112 +613,93 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   if((pentry_lookup != NULL)
                      && (pentry_lookup->internal_md.type == REGULAR_FILE))
                     {
-                      pstate_found_iterate = NULL;
-                      pstate_previous_iterate = NULL;
+                      /* Acquire lock to enter critical section on this entry */
+                      P_r(&pentry_lookup->lock);
 
-                      do
+                      glist_for_each(glist, &pentry_lookup->object.file.state_list)
                         {
-                          state_iterate(pentry_lookup,
-                                        &pstate_found_iterate,
-                                        pstate_previous_iterate,
-                                        data->pclient,
-                                        data->pcontext, &state_status);
-
-                          if(state_status == STATE_STATE_ERROR)
-                            break;
-
-                          if(state_status == STATE_INVALID_ARGUMENT)
-                            {
-                              res_OPEN4.status = NFS4ERR_INVAL;
-                              cause2 = " state_iterate failed";
-                              goto out;
-                            }
-
-                          cache_status = CACHE_INODE_SUCCESS;
+                          pstate_iterate = glist_entry(glist, state_t, state_list);
 
                           /* Check is open_owner is the same */
-                          if(pstate_found_iterate != NULL)
+                          if((pstate_iterate->state_type == STATE_TYPE_SHARE)
+                             && !memcmp(arg_OPEN4.owner.owner.owner_val,
+                                        pstate_iterate->state_powner->so_owner_val,
+                                        pstate_iterate->state_powner->so_owner_len)
+                             && !memcmp(pstate_iterate->state_data.share.
+                                        share_oexcl_verifier,
+                                        arg_OPEN4.openhow.openflag4_u.how.
+                                        createhow4_u.createverf, NFS4_VERIFIER_SIZE))
                             {
-                              if((pstate_found_iterate->state_type ==
-                                  STATE_TYPE_SHARE)
-                                 && !memcmp(arg_OPEN4.owner.owner.owner_val,
-                                            pstate_found_iterate->state_powner->so_owner_val,
-                                            pstate_found_iterate->state_powner->so_owner_len)
-                                 && !memcmp(pstate_found_iterate->state_data.share.
-                                            share_oexcl_verifier,
-                                            arg_OPEN4.openhow.openflag4_u.how.
-                                            createhow4_u.createverf, NFS4_VERIFIER_SIZE))
+
+                              /* A former open EXCLUSIVE with same owner and verifier was found, resend it */
+
+                              // res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0 ; /* No attributes set */
+                              //if( ( res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val = 
+                              //    (uint32_t *)Mem_Alloc( res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len  * sizeof( uint32_t ) ) ) == NULL )
+                              // {
+                              //          res_OPEN4.status = NFS4ERR_SERVERFAULT ;
+                              //          return res_OPEN4.status ;
+                              //       }
+
+                              memset(&(res_OPEN4.OPEN4res_u.resok4.cinfo.after), 0,
+                                     sizeof(changeid4));
+                              res_OPEN4.OPEN4res_u.resok4.cinfo.after =
+                                  (changeid4) pentry_parent->internal_md.mod_time;
+                              res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE;
+
+                              /* No delegation */
+                              res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type =
+                                  OPEN_DELEGATE_NONE;
+
+                              /* If server use OPEN_CONFIRM4, set the correct flag */
+                              P(powner->so_mutex);
+                              if(powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
                                 {
+                                  if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
+                                    res_OPEN4.OPEN4res_u.resok4.rflags =
+                                        OPEN4_RESULT_CONFIRM +
+                                        OPEN4_RESULT_LOCKTYPE_POSIX;
+                                  else
+                                    res_OPEN4.OPEN4res_u.resok4.rflags =
+                                        OPEN4_RESULT_LOCKTYPE_POSIX;
+                                }
+                              V(powner->so_mutex);
 
-                                  /* A former open EXCLUSIVE with same owner and verifier was found, resend it */
-
-                                  // res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0 ; /* No attributes set */
-                                  //if( ( res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val = 
-                                  //    (uint32_t *)Mem_Alloc( res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len  * sizeof( uint32_t ) ) ) == NULL )
-                                  // {
-                                  //          res_OPEN4.status = NFS4ERR_SERVERFAULT ;
-                                  //          return res_OPEN4.status ;
-                                  //       }
-
-                                  memset(&(res_OPEN4.OPEN4res_u.resok4.cinfo.after), 0,
-                                         sizeof(changeid4));
-                                  res_OPEN4.OPEN4res_u.resok4.cinfo.after =
-                                      (changeid4) pentry_parent->internal_md.mod_time;
-                                  res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE;
-
-                                  /* No delegation */
-                                  res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type =
-                                      OPEN_DELEGATE_NONE;
-
-                                  /* If server use OPEN_CONFIRM4, set the correct flag */
-                                  P(powner->so_mutex);
-                                  if(powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
-                                    {
-                                      if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
-                                        res_OPEN4.OPEN4res_u.resok4.rflags =
-                                            OPEN4_RESULT_CONFIRM +
-                                            OPEN4_RESULT_LOCKTYPE_POSIX;
-                                      else
-                                        res_OPEN4.OPEN4res_u.resok4.rflags =
-                                            OPEN4_RESULT_LOCKTYPE_POSIX;
-                                    }
-                                  V(powner->so_mutex);
-
-                                  /* Now produce the filehandle to this file */
-                                  if((pnewfsal_handle =
-                                      cache_inode_get_fsal_handle(pentry_lookup,
-                                                                  &cache_status)) == NULL)
-                                    {
-                                      res_OPEN4.status = nfs4_Errno(cache_status);
-                                      cause2 = " cache_inode_get_fsal_handle";
-                                      goto out;
-                                    }
-
-                                  /* Building a new fh */
-                                  if(!nfs4_FSALToFhandle(&newfh4, pnewfsal_handle, data))
-                                    {
-                                      res_OPEN4.status = NFS4ERR_SERVERFAULT;
-                                      cause2 = " nfs4_FSALToFhandle failed";
-                                      goto out;
-                                    }
-
-                                  /* This new fh replaces the current FH */
-                                  data->currentFH.nfs_fh4_len = newfh4.nfs_fh4_len;
-                                  memcpy(data->currentFH.nfs_fh4_val, newfh4.nfs_fh4_val,
-                                         newfh4.nfs_fh4_len);
-
-                                  data->current_entry = pentry_lookup;
-                                  data->current_filetype = REGULAR_FILE;
-
-                                  /* regular exit */
-                                  goto out_success;
+                              /* Now produce the filehandle to this file */
+                              if((pnewfsal_handle =
+                                  cache_inode_get_fsal_handle(pentry_lookup,
+                                                              &cache_status)) == NULL)
+                                {
+                                  V_r(&pentry_lookup->lock);
+                                  res_OPEN4.status = nfs4_Errno(cache_status);
+                                  cause2 = " cache_inode_get_fsal_handle";
+                                  goto out;
                                 }
 
+                              /* Building a new fh */
+                              if(!nfs4_FSALToFhandle(&newfh4, pnewfsal_handle, data))
+                                {
+                                  V_r(&pentry_lookup->lock);
+                                  res_OPEN4.status = NFS4ERR_SERVERFAULT;
+                                  cause2 = " nfs4_FSALToFhandle failed";
+                                  goto out;
+                                }
+
+                              /* This new fh replaces the current FH */
+                              data->currentFH.nfs_fh4_len = newfh4.nfs_fh4_len;
+                              memcpy(data->currentFH.nfs_fh4_val, newfh4.nfs_fh4_val,
+                                     newfh4.nfs_fh4_len);
+
+                              data->current_entry = pentry_lookup;
+                              data->current_filetype = REGULAR_FILE;
+
+                              /* regular exit */
+                              V_r(&pentry_lookup->lock);
+                              goto out_success;
                             }
-                          /* if( pstate_found_iterate != NULL ) */
-                          pstate_previous_iterate = pstate_found_iterate;
                         }
-                      while(pstate_found_iterate != NULL);
+
+                      V_r(&pentry_lookup->lock);
                     }
                 }
 
@@ -937,98 +918,68 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
             }
 #endif
 
+          /* Acquire lock to enter critical section on this entry */
+          P_r(&pentry_newfile->lock);
+
           /* Try to find if the same open_owner already has acquired a stateid for this file */
-          pstate_found_iterate = NULL;
-          pstate_previous_iterate = NULL;
-          pfile_state = NULL;
-          do
+          glist_for_each(glist, &pentry_newfile->object.file.state_list)
             {
-              state_iterate(pentry_newfile,
-                            &pstate_found_iterate,
-                            pstate_previous_iterate,
-                            data->pclient, data->pcontext, &state_status);
+              pstate_iterate = glist_entry(glist, state_t, state_list);
 
-              if(state_status == STATE_STATE_ERROR)
-                break;          /* Get out of the loop */
+              // TODO FSF: currently only care about share types
+              if(pstate_iterate->state_type != STATE_TYPE_SHARE)
+                continue;
 
-              if(state_status == STATE_INVALID_ARGUMENT)
+              /* Check is open_owner is the same */
+              if((pstate_iterate->state_powner->so_owner.so_nfs4_owner.so_clientid == arg_OPEN4.owner.clientid) &&
+                 ((pstate_iterate->state_powner->so_owner_len == arg_OPEN4.owner.owner.owner_len) &&
+                  (!memcmp(arg_OPEN4.owner.owner.owner_val,
+                           pstate_iterate->state_powner->so_owner_val,
+                           pstate_iterate->state_powner->so_owner_len))))
                 {
-                  res_OPEN4.status = NFS4ERR_INVAL;
-                  cause2 = " (state_iterate failed)";
+                  /* We'll be re-using the found state */
+                  pfile_state = pstate_iterate;
+                  ReuseState  = TRUE;
+                }
+              else
+                {
+                  /* This is a different owner, check for possible conflicts */
+                  if((pstate_iterate->state_data.share.share_access & OPEN4_SHARE_ACCESS_WRITE)
+                     && (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE))
+                    {
+                      V_r(&pentry_newfile->lock);
+                      res_OPEN4.status = NFS4ERR_SHARE_DENIED;
+                      cause2 = " (OPEN4_SHARE_DENY_WRITE)";
+                      goto out;
+                    }
+                }
+
+              /* In all cases opening in read access a read denied file or write access to a write denied file 
+               * should fail, even if the owner is the same, see discussion in 14.2.16 and 8.9
+               */
+
+              /* deny read access on read denied file */
+              if((pstate_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_READ)
+                 && (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ))
+                {
+                  V_r(&pentry_newfile->lock);
+                  res_OPEN4.status = NFS4ERR_SHARE_DENIED;
+                  cause2 = " (OPEN4_SHARE_ACCESS_READ)";
                   goto out;
                 }
 
-              cache_status = CACHE_INODE_SUCCESS;
-
-              /* Check is open_owner is the same */
-              if(pstate_found_iterate != NULL)
+              /* deny write access on write denied file */
+              if((pstate_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE)
+                 && (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE))
                 {
-                  if((pstate_found_iterate->state_type == STATE_TYPE_SHARE) &&
-                     (pstate_found_iterate->state_powner->so_owner.so_nfs4_owner.so_clientid == arg_OPEN4.owner.clientid)
-                     &&
-                     ((pstate_found_iterate->state_powner->so_owner_len ==
-                       arg_OPEN4.owner.owner.owner_len)
-                      &&
-                      (!memcmp
-                       (arg_OPEN4.owner.owner.owner_val,
-                        pstate_found_iterate->state_powner->so_owner_val,
-                        pstate_found_iterate->state_powner->so_owner_len))))
-                    {
-                      /* We'll be re-using the found state */
-                      pfile_state = pstate_found_iterate;
-                      ReuseState = TRUE;
-                    }
-                  else
-                    {
-                      /* This is a different owner, check for possible conflicts */
-
-                      if(memcmp(arg_OPEN4.owner.owner.owner_val,
-                                pstate_found_iterate->state_powner->so_owner_val,
-                                pstate_found_iterate->state_powner->so_owner_len))
-                        {
-                          if(pstate_found_iterate->state_type == STATE_TYPE_SHARE)
-                            {
-                              if((pstate_found_iterate->state_data.share.
-                                  share_access & OPEN4_SHARE_ACCESS_WRITE)
-                                 && (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE))
-                                {
-                                  res_OPEN4.status = NFS4ERR_SHARE_DENIED;
-                                  cause2 = " (OPEN4_SHARE_DENY_WRITE)";
-                                  goto out;
-                                }
-                            }
-                        }
-                    }
-
-                  /* In all cases opening in read access a read denied file or write access to a write denied file 
-                   * should fail, even if the owner is the same, see discussion in 14.2.16 and 8.9 */
-                  if(pstate_found_iterate->state_type == STATE_TYPE_SHARE)
-                    {
-                      /* deny read access on read denied file */
-                      if((pstate_found_iterate->state_data.share.
-                          share_deny & OPEN4_SHARE_DENY_READ)
-                         && (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ))
-                        {
-                          res_OPEN4.status = NFS4ERR_SHARE_DENIED;
-                          cause2 = " (OPEN4_SHARE_ACCESS_READ)";
-                          goto out;
-                        }
-
-                      /* deny write access on write denied file */
-                      if((pstate_found_iterate->state_data.share.
-                          share_deny & OPEN4_SHARE_DENY_WRITE)
-                         && (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE))
-                        {
-                          res_OPEN4.status = NFS4ERR_SHARE_DENIED;
-                          cause2 = " (OPEN4_SHARE_DENY_WRITE)";
-                          goto out;
-                        }
-                    }
+                  V_r(&pentry_newfile->lock);
+                  res_OPEN4.status = NFS4ERR_SHARE_DENIED;
+                  cause2 = " (OPEN4_SHARE_ACCESS_WRITE)";
+                  goto out;
                 }
-              /*  if( pstate_found_iterate != NULL ) */
-              pstate_previous_iterate = pstate_found_iterate;
             }
-          while(pstate_found_iterate != NULL);
+
+          V_r(&pentry_newfile->lock);
 
           if(pfile_state == NULL)
             {

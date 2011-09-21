@@ -388,13 +388,6 @@ state_status_t state_del(state_t              * pstate,
                          cache_inode_client_t * pclient,
                          state_status_t       * pstatus);
 
-state_status_t state_iterate(cache_entry_t        * pentry,
-                             state_t              * *ppstate,
-                             state_t              * previous_pstate,
-                             cache_inode_client_t * pclient,
-                             fsal_op_context_t    * pcontext,
-                             state_status_t       * pstatus);
-
 int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
 int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);
 int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
