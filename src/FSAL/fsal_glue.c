@@ -18,6 +18,8 @@
 
 #include <string.h> /* For strncpy */
 
+#define fsal_increment_nbcall( _f_,_struct_status_ )
+
 #include "fsal.h"
 #include "fsal_glue.h"
 
@@ -683,9 +685,9 @@ unsigned int FSAL_Handle_to_Hash_both(fsal_handle_t * p_handle, unsigned int coo
   else
     {
         if( phashval == NULL || prbtval == NULL )
-	   return 0 ;
+           return 0 ;
 
-	*phashval = fsal_functions.fsal_handle_to_hashindex( p_handle, cookie, alphabet_len, index_size ) ;
+        *phashval = fsal_functions.fsal_handle_to_hashindex( p_handle, cookie, alphabet_len, index_size ) ;
         *prbtval = fsal_functions.fsal_handle_to_rbtindex( p_handle, cookie);
 
         return 1 ;
@@ -870,6 +872,26 @@ fsal_status_t FSAL_getextattrs( fsal_handle_t * p_filehandle, /* IN */
                                 fsal_extattrib_list_t * p_object_attributes /* OUT */)
 {
    return fsal_functions.fsal_getextattrs( p_filehandle, p_context, p_object_attributes ) ;
+}
+
+fsal_status_t FSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
+                            fsal_handle_t     * p_filehandle,        /* IN */
+                            fsal_op_context_t * p_context,           /* IN */
+                            void              * p_owner,             /* IN (opaque to FSAL) */
+                            fsal_lock_op_t      lock_op,             /* IN */
+                            fsal_lock_param_t   request_lock,        /* IN */
+                            fsal_lock_param_t * conflicting_lock)    /* OUT */
+{
+  if(fsal_functions.fsal_lock_op != NULL)
+    return fsal_functions.fsal_lock_op(p_file_descriptor,
+                                       p_filehandle,
+                                       p_context,
+                                       p_owner,
+                                       lock_op,
+                                       request_lock,
+                                       conflicting_lock);
+
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op);
 }
 
 #ifdef _USE_SHARED_FSAL

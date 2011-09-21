@@ -68,6 +68,11 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+#ifdef _USE_NLM
+#include "nlm_util.h"
+#include "nsm.h"
+#endif
+#include "sal_functions.h"
 
 /* global information exported to all layers (as extern vars) */
 
@@ -305,6 +310,9 @@ void nfs_set_param_default()
   nfs_param.core_param.dump_stats_per_client = 0;
   strncpy(nfs_param.core_param.stats_per_client_directory, "/tmp", MAXPATHLEN);
 
+  nfs_param.core_param.max_send_buffer_size = NFS_DEFAULT_SEND_BUFFER_SIZE;
+  nfs_param.core_param.max_recv_buffer_size = NFS_DEFAULT_RECV_BUFFER_SIZE;
+
   /* Worker parameters : LRU */
   nfs_param.worker_param.lru_param.nb_entry_prealloc = NB_PREALLOC_LRU_WORKER;
   nfs_param.worker_param.lru_param.clean_entry = clean_pending_request;
@@ -522,15 +530,39 @@ void nfs_set_param_default()
 #endif                          /* _USE_NFS4_1 */
 
   /* NFSv4 Open Owner hash */
-  nfs_param.open_owner_param.hash_param.index_size = PRIME_STATE_ID;
-  nfs_param.open_owner_param.hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
-  nfs_param.open_owner_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
-  nfs_param.open_owner_param.hash_param.hash_func_key = open_owner_value_hash_func;
-  nfs_param.open_owner_param.hash_param.hash_func_rbt = open_owner_rbt_hash_func;
-  nfs_param.open_owner_param.hash_param.compare_key = compare_open_owner;
-  nfs_param.open_owner_param.hash_param.key_to_str = display_open_owner_key;
-  nfs_param.open_owner_param.hash_param.val_to_str = display_open_owner_val;
-  nfs_param.open_owner_param.hash_param.name = "Open Owner";
+  nfs_param.nfs4_owner_param.hash_param.index_size = PRIME_STATE_ID;
+  nfs_param.nfs4_owner_param.hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
+  nfs_param.nfs4_owner_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
+  nfs_param.nfs4_owner_param.hash_param.hash_func_key = nfs4_owner_value_hash_func;
+  nfs_param.nfs4_owner_param.hash_param.hash_func_rbt = nfs4_owner_rbt_hash_func;
+  nfs_param.nfs4_owner_param.hash_param.compare_key = compare_nfs4_owner_key;
+  nfs_param.nfs4_owner_param.hash_param.key_to_str = display_nfs4_owner_key;
+  nfs_param.nfs4_owner_param.hash_param.val_to_str = display_nfs4_owner_val;
+  nfs_param.nfs4_owner_param.hash_param.name = "NFS4 Owner";
+
+#ifdef _USE_NLM
+  /* NLM Client hash */
+  nfs_param.nlm_client_hash_param.index_size = PRIME_STATE_ID;
+  nfs_param.nlm_client_hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
+  nfs_param.nlm_client_hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
+  nfs_param.nlm_client_hash_param.hash_func_key = nlm_client_value_hash_func;
+  nfs_param.nlm_client_hash_param.hash_func_rbt = nlm_client_rbt_hash_func;
+  nfs_param.nlm_client_hash_param.compare_key = compare_nlm_client_key;
+  nfs_param.nlm_client_hash_param.key_to_str = display_nlm_client_key;
+  nfs_param.nlm_client_hash_param.val_to_str = display_nlm_client_val;
+  nfs_param.nlm_client_hash_param.name = "NLM Client";
+
+  /* NLM Owner hash */
+  nfs_param.nlm_owner_hash_param.index_size = PRIME_STATE_ID;
+  nfs_param.nlm_owner_hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
+  nfs_param.nlm_owner_hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
+  nfs_param.nlm_owner_hash_param.hash_func_key = nlm_owner_value_hash_func;
+  nfs_param.nlm_owner_hash_param.hash_func_rbt = nlm_owner_rbt_hash_func;
+  nfs_param.nlm_owner_hash_param.compare_key = compare_nlm_owner_key;
+  nfs_param.nlm_owner_hash_param.key_to_str = display_nlm_owner_key;
+  nfs_param.nlm_owner_hash_param.val_to_str = display_nlm_owner_val;
+  nfs_param.nlm_owner_hash_param.name = "NLM Owner";
+#endif
 
   /* Cache inode parameters : hash table */
   nfs_param.cache_layers_param.cache_param.hparam.index_size = PRIME_CACHE_INODE;
@@ -546,6 +578,19 @@ void nfs_set_param_default()
   nfs_param.cache_layers_param.cache_param.hparam.key_to_str = display_cache;
   nfs_param.cache_layers_param.cache_param.hparam.val_to_str = display_cache;
   nfs_param.cache_layers_param.cache_param.hparam.name = "Cache Inode";
+
+#ifdef _USE_NLM
+  /* Cache inode parameters : cookie hash table */
+  nfs_param.cache_layers_param.cache_param.cookie_param.index_size = PRIME_STATE_ID;
+  nfs_param.cache_layers_param.cache_param.cookie_param.alphabet_length = 10;      /* Buffer seen as a decimal polynom */
+  nfs_param.cache_layers_param.cache_param.cookie_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
+  nfs_param.cache_layers_param.cache_param.cookie_param.hash_func_key = lock_cookie_value_hash_func ;
+  nfs_param.cache_layers_param.cache_param.cookie_param.hash_func_rbt = lock_cookie_rbt_hash_func ;
+  nfs_param.cache_layers_param.cache_param.cookie_param.compare_key = compare_lock_cookie_key;
+  nfs_param.cache_layers_param.cache_param.cookie_param.key_to_str = display_lock_cookie_key;
+  nfs_param.cache_layers_param.cache_param.cookie_param.val_to_str = display_lock_cookie_val;
+  nfs_param.cache_layers_param.cache_param.cookie_param.name = "Lock Cookie";
+#endif
 
   /* Cache inode parameters : Garbage collection policy */
   nfs_param.cache_layers_param.gcpol.file_expiration_delay = -1;     /* No gc */
@@ -1433,7 +1478,7 @@ void nfs_reset_stats(void)
 
 }                               /* void nfs_reset_stats( void ) */
 
-static void nfs_Start_threads()
+static void nfs_Start_threads(bool_t flush_datacache_mode)
 {
   int rc = 0;
   pthread_attr_t attr_thr;
@@ -1486,6 +1531,12 @@ static void nfs_Start_threads()
   LogEvent(COMPONENT_THREAD,
            "%d worker threads were started successfully",
 	   nfs_param.core_param.nb_worker);
+
+#ifdef _USE_NLM
+  /* Start NLM threads */
+  if(!flush_datacache_mode)
+    nlm_startup();
+#endif
 
   /* Starting the rpc dispatcher thread */
   if((rc =
@@ -1576,6 +1627,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   hash_table_t *ht = NULL;      /* Cache inode main hash table */
 
   cache_inode_status_t cache_status;
+  state_status_t state_status;
   fsal_status_t fsal_status;
   unsigned int i = 0;
   int rc = 0;
@@ -1635,8 +1687,21 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       cache_inode_init(nfs_param.cache_layers_param.cache_param, &cache_status)) == NULL)
     {
       LogFatal(COMPONENT_INIT,
-               "Cache Inode Layer could not be initialized, cache_status=%d",
-               cache_status);
+               "Cache Inode Layer could not be initialized, status=%s",
+               cache_inode_err_str(cache_status));
+    }
+
+#ifdef _USE_BLOCKING_LOCKS
+  if(state_lock_init(&state_status,
+                     nfs_param.cache_layers_param.cache_param.cookie_param)
+#else
+  if(state_lock_init(&state_status)
+#endif
+     != STATE_SUCCESS)
+    {
+      LogFatal(COMPONENT_INIT,
+               "Cache Inode Layer could not be initialized, status=%s",
+               state_err_str(state_status));
     }
   LogInfo(COMPONENT_INIT, "Cache Inode library successfully initialized");
 
@@ -1915,14 +1980,27 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
           "NFSv4 State Id cache successfully initialized");
 
   /* Init The NFSv4 Open Owner cache */
-  LogDebug(COMPONENT_INIT, "Now building NFSv4 Open Owner cache");
-  if(nfs4_Init_open_owner(nfs_param.open_owner_param) != 0)
+  LogDebug(COMPONENT_INIT, "Now building NFSv4 Owner cache");
+  if(Init_nfs4_owner(nfs_param.nfs4_owner_param) != 0)
     {
       LogFatal(COMPONENT_INIT,
-               "Error while initializing NFSv4 Open Owner cache");
+               "Error while initializing NFSv4 Owner cache");
     }
   LogInfo(COMPONENT_INIT,
           "NFSv4 Open Owner cache successfully initialized");
+
+#ifdef _USE_NLM
+  /* Init The NLM Owner cache */
+  LogDebug(COMPONENT_INIT, "Now building NLM Owner cache");
+  if(Init_nlm_hash(nfs_param.nlm_client_hash_param, nfs_param.nlm_owner_hash_param) != 0)
+    {
+      LogFatal(COMPONENT_INIT,
+               "Error while initializing NLM Owner cache");
+    }
+  LogInfo(COMPONENT_INIT,
+          "NLM Owner cache successfully initialized");
+  nlm_init();
+#endif
 
 #ifdef _USE_NFS4_1
   LogDebug(COMPONENT_INIT, "Now building NFSv4 Session Id cache");
@@ -2180,7 +2258,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
   nfs_Init(p_start_info);
 
   /* Spawns service threads */
-  nfs_Start_threads();
+  nfs_Start_threads(p_start_info->flush_datacache_mode);
 
   if(p_start_info->flush_datacache_mode)
     {
@@ -2256,11 +2334,8 @@ void nfs_start(nfs_start_info_t * p_start_info)
   else
     {
 #ifdef _USE_NLM
-      /*
-       * initialize nlm only in actual server mode.
-       * Don't do this in flusher mode
-       */
-      nlm_init();
+      /* NSM Unmonitor all */
+      nsm_unmonitor_all();
 #endif
 
       /* Populate the ID_MAPPER file with mapping file if needed */

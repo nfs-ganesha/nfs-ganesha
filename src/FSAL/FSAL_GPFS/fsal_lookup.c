@@ -108,7 +108,7 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
       /* get attributes, if asked */
       if(p_object_attributes)
         {
-          status = GPFSFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+          status = GPFSFSAL_getattrs(object_handle, p_context, p_object_attributes);
           if(FSAL_IS_ERROR(status))
             {
               FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
@@ -183,7 +183,7 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
     }
 
   /* This might be a race, but it's the best we can currently do */
-  status = fsal_internal_get_handle_at(parentfd, p_filename, p_object_handle);
+  status = fsal_internal_get_handle_at(parentfd, p_filename, object_handle);
   close(parentfd);
   close(objectfd);
 
@@ -193,7 +193,7 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
   /* get object attributes */
   if(p_object_attributes)
     {
-      status = GPFSFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+      status = GPFSFSAL_getattrs(object_handle, p_context, p_object_attributes);
       if(FSAL_IS_ERROR(status))
         {
           FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);

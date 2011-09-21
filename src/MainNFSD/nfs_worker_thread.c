@@ -74,7 +74,7 @@
 #include "pnfs_service.h"
 #endif
 
-#ifdef _DEBUG_MEMLEAKS
+#if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
 void nfs_debug_debug_label_info();
 #endif
 
@@ -95,7 +95,7 @@ const nfs_function_desc_t nfs2_func_desc[] = {
   {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void, "nfs_Null",
    NOTHING_SPECIAL},
   {nfs_Getattr, nfs_Getattr_Free, (xdrproc_t) xdr_fhandle2, (xdrproc_t) xdr_ATTR2res,
-   "nfs_Getattr", NEEDS_CRED},
+   "nfs_Getattr", NEEDS_CRED | SUPPORTS_GSS},
   {nfs_Setattr, nfs_Setattr_Free, (xdrproc_t) xdr_SETATTR2args, (xdrproc_t) xdr_ATTR2res,
    "nfs_Setattr", MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS},
   {nfs2_Root, nfs2_Root_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void, "nfs2_Root",
@@ -127,7 +127,7 @@ const nfs_function_desc_t nfs2_func_desc[] = {
   {nfs_Readdir, nfs2_Readdir_Free, (xdrproc_t) xdr_READDIR2args,
    (xdrproc_t) xdr_READDIR2res, "nfs_Readdir", NEEDS_CRED | SUPPORTS_GSS},
   {nfs_Fsstat, nfs_Fsstat_Free, (xdrproc_t) xdr_fhandle2, (xdrproc_t) xdr_STATFS2res,
-   "nfs_Fsstat", NEEDS_CRED}
+   "nfs_Fsstat", NEEDS_CRED | SUPPORTS_GSS}
 };
 
 const nfs_function_desc_t nfs3_func_desc[] = {
@@ -184,7 +184,8 @@ const nfs_function_desc_t nfs4_func_desc[] = {
   {nfs_Null, nfs_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void, "nfs_Null",
    NOTHING_SPECIAL},
   {nfs4_Compound, nfs4_Compound_Free, (xdrproc_t) xdr_COMPOUND4args,
-   (xdrproc_t) xdr_COMPOUND4res, "nfs4_Compound", NEEDS_CRED | SUPPORTS_GSS}
+   (xdrproc_t) xdr_COMPOUND4res, "nfs4_Compound", NEEDS_CRED }
+   /* SUPPORTS_GSS is missing from this list because while NFS v4 does indeed support GSS, we won't check it yet */
 };
 
 const nfs_function_desc_t mnt1_func_desc[] = {
@@ -293,15 +294,15 @@ const nfs_function_desc_t nlm4_func_desc[] = {
   [NLMPROC4_SHARE] {
                     nlm4_Unsupported, nlm4_Unsupported_Free,
                     (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
-                    "nlm4_Share", NOTHING_SPECIAL},
+                    "nlm4_Share", NEEDS_CRED},
   [NLMPROC4_UNSHARE] = {
                         nlm4_Unsupported, nlm4_Unsupported_Free,
                         (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
-                        "nlm4_Unshare", NOTHING_SPECIAL},
+                        "nlm4_Unshare", NEEDS_CRED},
   [NLMPROC4_NM_LOCK] = {
                         nlm4_Unsupported, nlm4_Unsupported_Free,
                         (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
-                        "nlm4_Nm_lock", NOTHING_SPECIAL},
+                        "nlm4_Nm_lock", NEEDS_CRED},
   [NLMPROC4_FREE_ALL] = {
                          nlm4_Unsupported, nlm4_Unsupported_Free,
                          (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
@@ -935,6 +936,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
           break;
 
+        case NFS_V4:
+          /* NFSv4 requires entire export list */
+          pexport = nfs_param.pexportlist;
+          break;
+
         default:
           /* NFSv4 or invalid version (which should never get here) */
           pexport = nfs_param.pexportlist;
@@ -944,14 +950,258 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 #ifdef _USE_NLM
   else if(ptr_req->rq_prog == nfs_param.core_param.program[P_NLM])
     {
-      /* Always use the whole export list for NLM protocol (FIXME !! Verify) */
-      pexport = nfs_param.pexportlist;
+      netobj *pfh3 = NULL;
+
+      switch(ptr_req->rq_proc)
+        {
+          case NLMPROC4_NULL:
+          case NLMPROC4_TEST_RES:
+          case NLMPROC4_LOCK_RES:
+          case NLMPROC4_CANCEL_RES:
+          case NLMPROC4_UNLOCK_RES:
+          case NLMPROC4_GRANTED_RES:
+          case NLMPROC4_SM_NOTIFY:
+          case NLMPROC4_FREE_ALL:
+            break;
+
+          case NLMPROC4_TEST:
+          case NLMPROC4_TEST_MSG:
+          case NLMPROC4_GRANTED:
+          case NLMPROC4_GRANTED_MSG:
+            pfh3 = &parg_nfs->arg_nlm4_test.alock.fh;
+            break;
+
+          case NLMPROC4_LOCK:
+          case NLMPROC4_LOCK_MSG:
+          case NLMPROC4_NM_LOCK:
+            pfh3 = &parg_nfs->arg_nlm4_lock.alock.fh;
+            break;
+
+          case NLMPROC4_CANCEL:
+          case NLMPROC4_CANCEL_MSG:
+            pfh3 = &parg_nfs->arg_nlm4_cancel.alock.fh;
+            break;
+
+          case NLMPROC4_UNLOCK:
+          case NLMPROC4_UNLOCK_MSG:
+            pfh3 = &parg_nfs->arg_nlm4_unlock.alock.fh;
+            break;
+
+          case NLMPROC4_SHARE:
+          case NLMPROC4_UNSHARE:
+            /* Not supported... */
+            break;
+        }
+      if(pfh3 != NULL)
+        {
+          exportid = nlm4_FhandleToExportId(pfh3);
+
+          if(exportid < 0 ||
+             (pexport = nfs_Get_export_by_id(nfs_param.pexportlist,
+                                             exportid)) == NULL ||
+             (pexport->options & EXPORT_OPTION_NFSV3) == 0)
+            {
+              /* Reject the request for authentication reason (incompatible file handle) */
+              if(isInfo(COMPONENT_DISPATCH))
+                {
+                  char dumpfh[1024];
+                  char *reason;
+                  char addrbuf[SOCK_NAME_MAX];
+                  sprint_sockaddr(&hostaddr, addrbuf, sizeof(addrbuf));
+                  if(exportid < 0)
+                    reason = "has badly formed handle";
+                  else if(pexport == NULL)
+                    reason = "has invalid export";
+                  else
+                    reason = "V3 not allowed on this export";
+                  sprint_fhandle_nlm(dumpfh, pfh3);
+                  LogMajor(COMPONENT_DISPATCH,
+                           "NLM4 Request from host %s %s, proc=%d, FH=%s",
+                           addrbuf, reason,
+                           (int)ptr_req->rq_proc, dumpfh);
+                }
+              /* Bad argument */
+              svcerr_auth(ptr_svc, AUTH_FAILED);
+              if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                                    &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+                {
+                  LogCrit(COMPONENT_DISPATCH,
+                          "Attempt to delete duplicate request failed on line %d",
+                          __LINE__);
+                }
+              return;
+            }
+
+          LogFullDebug(COMPONENT_DISPATCH,
+                       "Found export entry for dirname=%s as exportid=%d",
+                       pexport->dirname, pexport->id);
+        }
+      else
+        pexport = nfs_param.pexportlist;
     }
 #endif                          /* _USE_NLM */
   else
     {
       /* All other protocols use the whole export list */
       pexport = nfs_param.pexportlist;
+    }
+
+  if(pworker_data->pfuncdesc->dispatch_behaviour & SUPPORTS_GSS)
+    {
+      /* Test if export allows the authentication provided */
+      switch (ptr_req->rq_cred.oa_flavor)
+        {
+          case AUTH_NONE:
+            if((pexport->options & EXPORT_OPTION_AUTH_NONE) == 0)
+              {
+                LogInfo(COMPONENT_DISPATCH,
+                        "Export %s does not support AUTH_NONE",
+                        pexport->dirname);
+                svcerr_auth(ptr_svc, AUTH_TOOWEAK);
+                if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                                      &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+                  {
+                    LogCrit(COMPONENT_DISPATCH,
+                            "Attempt to delete duplicate request failed on line %d",
+                            __LINE__);
+                  }
+                return;
+              }
+            break;
+
+          case AUTH_UNIX:
+            if((pexport->options & EXPORT_OPTION_AUTH_UNIX) == 0)
+              {
+                LogInfo(COMPONENT_DISPATCH,
+                        "Export %s does not support AUTH_UNIX",
+                        pexport->dirname);
+                svcerr_auth(ptr_svc, AUTH_TOOWEAK);
+                if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                                      &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+                  {
+                    LogCrit(COMPONENT_DISPATCH,
+                            "Attempt to delete duplicate request failed on line %d",
+                            __LINE__);
+                  }
+                return;
+              }
+            break;
+
+#ifdef _HAVE_GSSAPI
+          case RPCSEC_GSS:
+            if((pexport->options &
+                 (EXPORT_OPTION_RPCSEC_GSS_NONE |
+                  EXPORT_OPTION_RPCSEC_GSS_INTG |
+                  EXPORT_OPTION_RPCSEC_GSS_PRIV)) == 0)
+              {
+                LogInfo(COMPONENT_DISPATCH,
+                        "Export %s does not support RPCSEC_GSS",
+                        pexport->dirname);
+                if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                                      &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+                  {
+                    LogCrit(COMPONENT_DISPATCH,
+                            "Attempt to delete duplicate request failed on line %d",
+                            __LINE__);
+                  }
+                return;
+                svcerr_auth(ptr_svc, AUTH_TOOWEAK);
+              }
+            else
+              {
+                struct svc_rpc_gss_data *gd;
+                rpc_gss_svc_t svc;
+                gd = SVCAUTH_PRIVATE(ptr_req->rq_xprt->xp_auth);
+                svc = gd->sec.svc;
+                LogFullDebug(COMPONENT_DISPATCH,
+                             "Testing svc %d", (int) svc);
+                switch(svc)
+                  {
+                    case RPCSEC_GSS_SVC_NONE:
+                      if((pexport->options & EXPORT_OPTION_RPCSEC_GSS_NONE) == 0)
+                        {
+                          LogInfo(COMPONENT_DISPATCH,
+                                  "Export %s does not support RPCSEC_GSS_SVC_NONE",
+                                  pexport->dirname);
+                          svcerr_auth(ptr_svc, AUTH_TOOWEAK);
+                          if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                                                &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+                            {
+                              LogCrit(COMPONENT_DISPATCH,
+                                      "Attempt to delete duplicate request failed on line %d",
+                                      __LINE__);
+                            }
+                          return;
+                        }
+                      break;
+
+                    case RPCSEC_GSS_SVC_INTEGRITY:
+                      if((pexport->options & EXPORT_OPTION_RPCSEC_GSS_INTG) == 0)
+                        {
+                          LogInfo(COMPONENT_DISPATCH,
+                                  "Export %s does not support RPCSEC_GSS_SVC_INTEGRITY",
+                                  pexport->dirname);
+                          svcerr_auth(ptr_svc, AUTH_TOOWEAK);
+                          if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                                                &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+                            {
+                              LogCrit(COMPONENT_DISPATCH,
+                                      "Attempt to delete duplicate request failed on line %d",
+                                      __LINE__);
+                            }
+                          return;
+                        }
+                      break;
+
+                    case RPCSEC_GSS_SVC_PRIVACY:
+                      if((pexport->options & EXPORT_OPTION_RPCSEC_GSS_PRIV) == 0)
+                        {
+                          LogInfo(COMPONENT_DISPATCH,
+                                  "Export %s does not support RPCSEC_GSS_SVC_PRIVACY",
+                                  pexport->dirname);
+                          svcerr_auth(ptr_svc, AUTH_TOOWEAK);
+                          if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                                                &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+                            {
+                              LogCrit(COMPONENT_DISPATCH,
+                                      "Attempt to delete duplicate request failed on line %d",
+                                      __LINE__);
+                            }
+                          return;
+                        }
+                      break;
+
+                    default:
+                      LogInfo(COMPONENT_DISPATCH,
+                              "Export %s does not support unknown RPCSEC_GSS_SVC %d",
+                              pexport->dirname, (int) svc);
+                      svcerr_auth(ptr_svc, AUTH_TOOWEAK);
+                      if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                                            &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+                        {
+                          LogCrit(COMPONENT_DISPATCH,
+                                  "Attempt to delete duplicate request failed on line %d",
+                                  __LINE__);
+                        }
+                      return;
+                  }
+              }
+            break;
+#endif
+          default:
+            LogInfo(COMPONENT_DISPATCH,
+                    "Export %s does not support unknown oa_flavor %d",
+                    pexport->dirname, (int) ptr_req->rq_cred.oa_flavor);
+            svcerr_auth(ptr_svc, AUTH_TOOWEAK);
+            if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
+                                  &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
+              {
+                LogCrit(COMPONENT_DISPATCH,
+                        "Attempt to delete duplicate request failed on line %d",
+                        __LINE__);
+              }
+            return;
+        }
     }
 
   /* Zero out timers prior to starting processing */
@@ -989,8 +1239,10 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
   if(pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
     {
-      if(get_req_uid_gid(ptr_req, &related_client, pexport, &user_credentials) == FALSE)
+      if(get_req_uid_gid(ptr_req, pexport, &user_credentials) == FALSE)
         {
+          LogInfo(COMPONENT_DISPATCH,
+                  "could not get uid and gid, rejecting client");
           svcerr_auth(ptr_svc, AUTH_TOOWEAK);
           pworker_data->current_xid = 0;    /* No more xid managed */
 
@@ -1090,11 +1342,13 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 	  /* Swap the anonymous uid/gid if the user should be anonymous */
           if(nfs_check_anon(&related_client, pexport, &user_credentials) == FALSE
 	     || nfs_build_fsal_context(ptr_req,
-                                       &related_client, pexport,
+                                       pexport,
 				       &pworker_data->thread_fsal_context,
                                        &user_credentials) == FALSE)
 #endif
             {
+              LogInfo(COMPONENT_DISPATCH,
+                      "authentication failed, rejecting client");
               svcerr_auth(ptr_svc, AUTH_TOOWEAK);
               pworker_data->current_xid = 0;    /* No more xid managed */
 
@@ -1282,8 +1536,11 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   if(nb_iter_memleaks > 1000)
     {
       nb_iter_memleaks = 0;
+
+#ifndef _NO_BUDDY_SYSTEM
       /* BuddyDumpMem( stdout ) ; */
       nfs_debug_debug_label_info();
+#endif
 
       LogFullDebug(COMPONENT_MEMLEAKS,
                    "Stats for thread: total mnt1=%u mnt3=%u nfsv2=%u nfsv3=%u nfsv4=%u",
@@ -1530,7 +1787,7 @@ pause_rc wait_for_workers_to_awaken()
 
   V(active_workers_mutex);
 
-  return rc;  
+  return rc;
 }
 
 /**
@@ -1575,7 +1832,7 @@ void mark_thread_done(nfs_worker_data_t *pmydata)
     }
 
   num_existing_workers--;
-  
+
   pthread_cond_signal(&active_workers_cond);
   LogDebug(COMPONENT_THREAD,
            "Worker thread #%u exiting",
@@ -1673,7 +1930,7 @@ void notify_threads_of_new_state()
  */
 pause_rc pause_workers(pause_reason_t reason)
 {
-  pause_rc rc = PAUSE_OK; 
+  pause_rc rc = PAUSE_OK;
   bool_t new_state = FALSE;
   bool_t wait = TRUE;
 
@@ -1769,7 +2026,7 @@ pause_rc pause_workers(pause_reason_t reason)
  */
 pause_rc wake_workers(awaken_reason_t reason)
 {
-  pause_rc rc; 
+  pause_rc rc;
   bool_t new_state = FALSE;
   bool_t wait = TRUE;
 
@@ -2207,7 +2464,7 @@ void *worker_thread(void *IndexArg)
 
                /* Go back and check new state. */
                continue;
-               
+
              case STATE_AWAKE:
              case STATE_PAUSED:
                /* Wait for something to do */

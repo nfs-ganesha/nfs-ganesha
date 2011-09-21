@@ -129,9 +129,11 @@ typedef unsigned long long int u_int64_t;
 #define INDEX_FSAL_CleanUpExportContext 50
 #define INDEX_FSAL_getextattrs          51
 #define INDEX_FSAL_sync                 52
+#define INDEX_FSAL_getattrs_descriptor  53
+#define INDEX_FSAL_lock_op              54
 
 /* number of FSAL functions */
-#define FSAL_NB_FUNC  52
+#define FSAL_NB_FUNC  56
 
 extern const char *fsal_function_names[];
 
@@ -742,7 +744,9 @@ typedef struct fsal_staticfsinfo__
   fsal_fhexptype_t fh_expire_type;  /**< handle persistency indicator   */
   fsal_boolean_t link_support;      /**< FS supports hardlinks ?        */
   fsal_boolean_t symlink_support;   /**< FS supports symlinks  ?        */
-  fsal_boolean_t lock_support;      /**< FS supports file locking ?     */
+  fsal_boolean_t lock_support;             /**< FS supports file locking ?     */
+  fsal_boolean_t lock_support_owner;       /**< FS supports lock owners ?    */
+  fsal_boolean_t lock_support_async_block; /**< FS supports async blocking locks ? */
   fsal_boolean_t named_attr;        /**< FS supports named attributes.  */
   fsal_boolean_t unique_handles;    /**< Handles are unique and persistent.*/
   fsal_time_t lease_time;           /**< Duration of lease at FS in seconds */
@@ -816,6 +820,7 @@ typedef struct fs_common_initinfo__
         maxfilesize, maxlink, maxnamelen, maxpathlen,
         no_trunc, chown_restricted, case_insensitive,
         case_preserving, fh_expire_type, link_support, symlink_support, lock_support,
+        lock_support_owner, lock_support_async_block,
         named_attr, unique_handles, lease_time, acl_support, cansettime,
         homogenous, supported_attrs, maxread, maxwrite, umask,
         auth_exportpath_xdev, xattr_access_rights;
@@ -862,8 +867,8 @@ typedef struct fsal_statistics__
 
 typedef struct fsal_status__
 {
-  int major;    /**< major error code */
-  int minor;    /**< minor error code */
+  fsal_errors_t major;    /**< major error code */
+  int           minor;    /**< minor error code */
 } fsal_status_t;
 
 /* No error constant */
@@ -937,5 +942,30 @@ typedef enum fsal_digesttype_t
       , FSAL_DIGEST_NODETYPE
 #endif
 } fsal_digesttype_t;
+
+typedef enum fsal_lock_op_t
+{
+  FSAL_OP_LOCKT,  /* test if this lock may be applied      */
+  FSAL_OP_LOCK,   /* request a non-blocking lock           */
+  FSAL_OP_LOCKB,  /* request a blocking lock         (NEW) */
+  FSAL_OP_UNLOCK, /* release a lock                        */
+  FSAL_OP_CANCEL  /* cancel a blocking lock          (NEW) */
+
+} fsal_lock_op_t;
+
+typedef enum fsal_lock_t
+{
+  FSAL_LOCK_R,
+  FSAL_LOCK_W,
+  FSAL_NO_LOCK
+} fsal_lock_t;
+
+typedef struct fsal_lock_param_t
+{
+  fsal_lock_t         lock_type;
+  fsal_size_t         lock_start;
+  fsal_size_t         lock_length;
+  pid_t               lock_owner;
+} fsal_lock_param_t;
 
 #endif                          /* _FSAL_TYPES_H */

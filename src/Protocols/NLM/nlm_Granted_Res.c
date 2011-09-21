@@ -32,25 +32,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include "HashData.h"
-#include "HashTable.h"
 #include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "nfs_core.h"
-#include "cache_inode.h"
-#include "cache_content.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_tools.h"
-#include "mount.h"
-#include "nfs_proto_functions.h"
-#include "nlm_util.h"
 #include "nlm4.h"
+#include "sal_data.h"
+#include "cache_inode.h"
+#include "nlm_util.h"
 #include "nlm_async.h"
 
 /**
@@ -66,45 +54,73 @@
  *
  */
 int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
-                     exportlist_t * pexport /* IN     */ ,
-                     fsal_op_context_t * pcontext /* IN     */ ,
+                     exportlist_t * dummy_pexport /* IN     */ ,
+                     fsal_op_context_t * dummy_pcontext /* IN     */ ,
                      cache_inode_client_t * pclient /* INOUT  */ ,
                      hash_table_t * ht /* INOUT  */ ,
                      struct svc_req *preq /* IN     */ ,
                      nfs_res_t * pres /* OUT    */ )
 {
-  nlm4_res *arg = &parg->arg_nlm4_res;
-  nlm_lock_entry_t *nlm_entry;
-  char buffer[1024];
+  nlm4_res             * arg = &parg->arg_nlm4_res;
+  char                   buffer[1024];
+  state_status_t         state_status = STATE_SUCCESS;
+  state_cookie_entry_t * cookie_entry;
+  fsal_op_context_t      context, * pcontext = &context;
 
   netobj_to_string(&arg->cookie, buffer, 1024);
   LogDebug(COMPONENT_NLM,
-           "REQUEST PROCESSING: Calling nlm_Granted_Res cookie=%s", buffer);
+           "REQUEST PROCESSING: Calling nlm_Granted_Res cookie=%s",
+           buffer);
 
-  nlm_entry = nlm_find_lock_entry_by_cookie(&arg->cookie);
-  LogDebug(COMPONENT_NLM, "nlm4_Granted_Res found lock entry %p", nlm_entry);
-  if(!nlm_entry)
-    return NFS_REQ_OK;
+  if(state_find_grant(arg->cookie.n_bytes,
+                      arg->cookie.n_len,
+                      &cookie_entry,
+                      pclient,
+                      &state_status) != STATE_SUCCESS)
+    {
+      /* This must be an old NLM_GRANTED_RES */
+      LogFullDebug(COMPONENT_NLM,
+                   "Could not find cookie=%s (must be an old NLM_GRANTED_RES)",
+                   buffer);
+      return NFS_REQ_OK;
+    }
 
-  if(arg->stat.stat == NLM4_DENIED_GRACE_PERIOD)
+  P(cookie_entry->sce_pentry->object.file.lock_list_mutex);
+
+  if(cookie_entry->sce_lock_entry == NULL ||
+     cookie_entry->sce_lock_entry->sle_block_data == NULL ||
+     !nlm_block_data_to_fsal_context(&cookie_entry->sce_lock_entry->sle_block_data->sbd_block_data.sbd_nlm_block_data,
+                                     pcontext))
+    {
+      /* This must be an old NLM_GRANTED_RES */
+      V(cookie_entry->sce_pentry->object.file.lock_list_mutex);
+      LogFullDebug(COMPONENT_NLM,
+                   "Could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
+                   buffer);
+      return NFS_REQ_OK;
+    }
+
+  V(cookie_entry->sce_pentry->object.file.lock_list_mutex);
+
+  if(arg->stat.stat != NLM4_GRANTED)
     {
       LogMajor(COMPONENT_NLM,
-               "Granted call failed due to client grace period, Retrying...");
-
-      /*
-       * nlm_resend_grant_msg will drop the lock entry ref count
-       */
-      nlm_async_callback(nlm_resend_grant_msg, (void *)nlm_entry);
+               "Granted call failed due to client error, releasing lock");
+      if(state_release_grant(pcontext,
+                             cookie_entry,
+                             pclient,
+                             &state_status) != STATE_SUCCESS)
+        {
+          LogDebug(COMPONENT_NLM,
+                   "cache_inode_release_grant failed");
+        }
     }
   else
     {
-      nlm_signal_async_resp(nlm_entry);
-      nlm_lock_entry_dec_ref(nlm_entry);
+      state_complete_grant(pcontext, cookie_entry, pclient);
+      nlm_signal_async_resp(cookie_entry);
     }
-  /*
-   * Consider all other return status as success
-   * nlm_entry is already marked NLM4_GRANTED
-   */
+
   return NFS_REQ_OK;
 }
 

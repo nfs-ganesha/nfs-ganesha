@@ -67,7 +67,7 @@ fsal_fsid_t posix2fsal_fsid(dev_t posix_devid);
  * Convert POSIX time structure (time_t)
  * to FSAL time type (fsal_time_t).
  */
-fsal_time_t posix2fsal_time(time_t tsec);
+fsal_time_t posix2fsal_time(time_t tsec, time_t nsec);
 
 /**
  * fsal2posix_time:

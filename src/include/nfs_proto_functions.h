@@ -1276,7 +1276,10 @@ void nfs2_Writecache_Free(nfs_res_t * pres);
 void nfs2_Readdir_Free(nfs_res_t * resp);
 void nfs3_Read_Free(nfs_res_t * resp);
 void nfs2_Readlink_Free(nfs_res_t * resp);
+void nfs4_Compound_FreeOne(nfs_resop4 * pres);
 void nfs4_Compound_Free(nfs_res_t * pres);
+void nfs4_Compound_CopyResOne(nfs_resop4 * pres_dst, nfs_resop4 * pres_src);
+void nfs4_Compound_CopyRes(nfs_res_t * pres_dst, nfs_res_t * pres_src);
 
 void nfs4_op_access_Free(ACCESS4res * resp);
 void nfs4_op_close_Free(CLOSE4res * resp);
@@ -1318,6 +1321,13 @@ void nfs4_op_setclientid_confirm_Free(SETCLIENTID_CONFIRM4res * resp);
 void nfs4_op_verify_Free(VERIFY4res * resp);
 void nfs4_op_write_Free(WRITE4res * resp);
 
+void nfs4_op_close_CopyRes(CLOSE4res * resp_dst, CLOSE4res * resp_src);
+void nfs4_op_lock_CopyRes(LOCK4res * resp_dst, LOCK4res * resp_src);
+void nfs4_op_locku_CopyRes(LOCKU4res * resp_dst, LOCKU4res * resp_src);
+void nfs4_op_open_CopyRes(OPEN4res * resp_dst, OPEN4res * resp_src);
+void nfs4_op_open_confirm_CopyRes(OPEN_CONFIRM4res * resp_dst, OPEN_CONFIRM4res * resp_src);
+void nfs4_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res * resp_dst, OPEN_DOWNGRADE4res * resp_src);
+
 #ifdef _USE_NFS4_1
 void nfs41_op_exchange_id_Free(EXCHANGE_ID4res * resp);
 void nfs41_op_close_Free(CLOSE4res * resp);
@@ -1333,6 +1343,13 @@ void nfs41_op_sequence_Free(SEQUENCE4res * resp);
 void nfs41_op_set_ssv_Free(SET_SSV4res * resp);
 void nfs41_op_write_Free(WRITE4res * resp);
 void nfs41_op_reclaim_complete_Free(RECLAIM_COMPLETE4res * resp);
+
+void nfs41_op_close_CopyRes(CLOSE4res * resp_dst, CLOSE4res * resp_src);
+void nfs41_op_lock_CopyRes(LOCK4res * resp_dst, LOCK4res * resp_src);
+void nfs41_op_locku_CopyRes(LOCKU4res * resp_dst, LOCKU4res * resp_src);
+void nfs41_op_open_CopyRes(OPEN4res * resp_dst, OPEN4res * resp_src);
+void nfs41_op_open_confirm_CopyRes(OPEN_CONFIRM4res * resp_dst, OPEN_CONFIRM4res * resp_src);
+void nfs41_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res * resp_dst, OPEN_DOWNGRADE4res * resp_src);
 #endif                          /* _USE_NFS4_1 */
 
 void compound_data_Free(compound_data_t * data);

@@ -407,6 +407,8 @@ fsal_status_t VFSFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_para
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, link_support);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, symlink_support);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, lock_support);
+  FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, lock_support_owner);
+  FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, lock_support_async_block);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, named_attr);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, unique_handles);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, lease_time);

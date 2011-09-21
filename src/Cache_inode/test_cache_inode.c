@@ -41,7 +41,6 @@
 #include <strings.h>
 #include <sys/types.h>
 
-#include "BuddyMalloc.h"
 #include "fsal.h"
 #include "cache_inode.h"
 #include "LRU_List.h"

@@ -311,10 +311,31 @@ int main(int argc, char *argv[])
     root_user, uid, operation, export_check_result,
     predicted_result, nonroot, accesstype,
     return_status=0;
-  char *ip = "192.0.2.10";
-  //  char *match_str = "192.0.2.10";
+  char *ip = "127.0.0.1";
   char *match_str = "*";
-  char *hostname = "hostname";
+  char *hostname = "localhost";
+
+  /*
+  int rc;
+  sockaddr_t pipaddr;
+  char hostname[MAXHOSTNAMELEN];
+  rc = ipstring_to_sockaddr(ip, &pipaddr);
+  if (rc != 0)
+    {
+      printf("FAIL: Could not create sockaddr from ip %s\n", ip);
+      perror ("getaddrinfo");
+      return 1;
+    }
+  rc = getnameinfo((struct sockaddr *)&pipaddr, sizeof(pipaddr),
+                   hostname, sizeof(hostname),
+                   NULL, 0, 0);
+  if(rc != 0)
+    {
+       printf("FAIL: Cannot resolve address %s, error %s", ip, gai_strerror(rc));
+       return 1;
+    }
+  */
+  printf("Using IP=%s and Hostname=%s\n", ip, hostname);
 
   SetDefaultLogging("TEST");
   SetNamePgm("test_mnt_proto");

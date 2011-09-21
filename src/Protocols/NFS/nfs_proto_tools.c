@@ -420,16 +420,15 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_QUOTA_EXCEEDED:
     case CACHE_INODE_NOT_SUPPORTED:
     case CACHE_INODE_NAME_TOO_LONG:
+    case CACHE_INODE_STATE_CONFLICT:
+    case CACHE_INODE_DEAD_ENTRY:
+    case CACHE_INODE_ASYNC_POST_ERROR:
+    case CACHE_INODE_STATE_ERROR:
+    case CACHE_INODE_BAD_COOKIE:
+    case CACHE_INODE_FILE_BIG:
       /* Non retryable error, return error to client */
       return FALSE;
       break;
-
-    default:
-      /* Management of this value was forgotten */
-      LogDebug(COMPONENT_NFSPROTO,
-               "cache_inode_status=%u not managed properly in nfs_RetryableError, not retryable",
-               cache_status);
-      return FALSE;
     }
 
   /* Should never reach this */
@@ -938,7 +937,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
               file_type = htonl(NF4FIFO);       /* Special File - fifo */
               break;
 
-            default:           /* For wanting of a better solution */
+            case FSAL_TYPE_JUNCTION:
+              /* For wanting of a better solution */
               file_type = 0;
               op_attr_success = 0;      /* This was no success */
               break;
@@ -2006,7 +2006,8 @@ int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
       /** @todo mode mask ? */
       break;
 
-    default:
+    case FSAL_TYPE_XATTR:
+    case FSAL_TYPE_JUNCTION:
       pFattr->type = NFBAD;
     }
 
@@ -2499,7 +2500,8 @@ int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
       Fattr->type = NF3SOCK;
       break;
 
-    default:                   /* Should not occur */
+    case FSAL_TYPE_JUNCTION:
+      /* Should not occur */
       LogFullDebug(COMPONENT_NFSPROTO,
                    "nfs3_FSALattr_To_Fattr: FSAL_attr->type = %d",
                    FSAL_attr->type);
@@ -3306,7 +3308,8 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
               pFSAL_attr->type = FSAL_TYPE_FIFO;
               break;
 
-            default:           /* For wanting of a better solution */
+            case FSAL_TYPE_JUNCTION:
+              /* For wanting of a better solution */
               pFSAL_attr->type = 0;
               break;
             }                   /* switch( pattr->type ) */
@@ -3631,7 +3634,7 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
  */
 nfsstat4 nfs4_Errno(cache_inode_status_t error)
 {
-  nfsstat4 nfserror;
+  nfsstat4 nfserror= NFS4ERR_INVAL;
 
   switch (error)
     {
@@ -3688,6 +3691,7 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       break;
 
     case CACHE_INODE_FSAL_EPERM:
+    case CACHE_INODE_FSAL_ERR_SEC:
       nfserror = NFS4ERR_PERM;
       break;
 
@@ -3732,7 +3736,23 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       nfserror = NFS4ERR_DELAY;
       break;
 
-    default:                   /* Should not occur */
+    case CACHE_INODE_FILE_BIG:
+      nfserror = NFS4ERR_FBIG;
+      break;
+
+    case CACHE_INODE_STATE_ERROR:
+      nfserror = NFS4ERR_BAD_STATEID;
+      break;
+
+    case CACHE_INODE_BAD_COOKIE:
+      nfserror = NFS4ERR_BAD_COOKIE;
+      break;
+
+    case CACHE_INODE_INCONSISTENT_ENTRY:
+    case CACHE_INODE_HASH_TABLE_ERROR:
+    case CACHE_INODE_CACHE_CONTENT_ERROR:
+    case CACHE_INODE_ASYNC_POST_ERROR:
+      /* Should not occur */
       nfserror = NFS4ERR_INVAL;
       break;
     }
@@ -3753,7 +3773,7 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
  */
 nfsstat3 nfs3_Errno(cache_inode_status_t error)
 {
-  nfsstat3 nfserror;
+  nfsstat3 nfserror= NFS3ERR_INVAL;
 
   switch (error)
     {
@@ -3857,7 +3877,20 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
       nfserror = NFS3ERR_NAMETOOLONG;
       break;
 
-    default:                   /* Should not occur */
+    case CACHE_INODE_FILE_BIG:
+      nfserror = NFS3ERR_FBIG;
+      break;
+
+    case CACHE_INODE_BAD_COOKIE:
+      nfserror = NFS3ERR_BAD_COOKIE;
+      break;
+
+    case CACHE_INODE_INCONSISTENT_ENTRY:
+    case CACHE_INODE_HASH_TABLE_ERROR:
+    case CACHE_INODE_STATE_CONFLICT:
+    case CACHE_INODE_ASYNC_POST_ERROR:
+    case CACHE_INODE_STATE_ERROR:
+        /* Should not occur */
         LogDebug(COMPONENT_NFSPROTO,
                  "Line %u should never be reached in nfs3_Errno for cache_status=%u",
                  __LINE__, error);
@@ -3881,7 +3914,7 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
  */
 nfsstat2 nfs2_Errno(cache_inode_status_t error)
 {
-  nfsstat2 nfserror;
+  nfsstat2 nfserror= NFSERR_IO;
 
   switch (error)
     {
@@ -3916,6 +3949,7 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
       break;
 
     case CACHE_INODE_FSAL_ERROR:
+    case CACHE_INODE_CACHE_CONTENT_ERROR:
       LogCrit(COMPONENT_NFSPROTO,
               "Error CACHE_INODE_FSAL_ERROR converted to NFSERR_IO but was set non-retryable");
       nfserror = NFSERR_IO;
@@ -3938,6 +3972,7 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
       break;
 
     case CACHE_INODE_FSAL_EPERM:
+    case CACHE_INODE_FSAL_ERR_SEC:
       nfserror = NFSERR_PERM;
       break;
 
@@ -3968,7 +4003,16 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
       nfserror = NFSERR_NAMETOOLONG;
       break;
 
-    default:                   /* Should not occur */
+    case CACHE_INODE_INCONSISTENT_ENTRY:
+    case CACHE_INODE_HASH_TABLE_ERROR:
+    case CACHE_INODE_STATE_CONFLICT:
+    case CACHE_INODE_ASYNC_POST_ERROR:
+    case CACHE_INODE_STATE_ERROR:
+    case CACHE_INODE_NOT_SUPPORTED:
+    case CACHE_INODE_FSAL_DELAY:
+    case CACHE_INODE_BAD_COOKIE:
+    case CACHE_INODE_FILE_BIG:
+        /* Should not occur */
       LogDebug(COMPONENT_NFSPROTO,
                "Line %u should never be reached in nfs2_Errno", __LINE__);
       nfserror = NFSERR_IO;
@@ -4029,9 +4073,9 @@ int nfs4_MakeCred(compound_data_t * data)
 
   pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
-  if (get_req_uid_gid(data->reqp, &related_client,
-                      data->pexport, &user_credentials)
-      == FALSE)
+  if (get_req_uid_gid(data->reqp,
+                      data->pexport,
+                      &user_credentials) == FALSE)
     return NFS4ERR_WRONGSEC;
 
   LogFullDebug(COMPONENT_DISPATCH,
@@ -4049,9 +4093,10 @@ int nfs4_MakeCred(compound_data_t * data)
      == FALSE)
     return NFS4ERR_WRONGSEC;
 
-  if(nfs_build_fsal_context(data->reqp, &related_client, 
-                            data->pexport, data->pcontext, &user_credentials)
-     == FALSE)
+  if(nfs_build_fsal_context(data->reqp,
+                            data->pexport,
+                            data->pcontext,
+                            &user_credentials) == FALSE)
     return NFS4ERR_WRONGSEC;
 
   return NFS4_OK;

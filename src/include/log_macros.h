@@ -42,7 +42,6 @@ typedef enum log_components
   COMPONENT_LOG,                   /* Keep this first, some code depends on it being the first component */
   COMPONENT_LOG_EMERG,             /* Component for logging emergency log messages - avoid infinite recursion */
   COMPONENT_MEMALLOC,
-  COMPONENT_STATES,
   COMPONENT_MEMLEAKS,
   COMPONENT_FSAL,
   COMPONENT_NFSPROTO,
@@ -69,7 +68,6 @@ typedef enum log_components
   COMPONENT_CONFIG,
   COMPONENT_CLIENT_ID_COMPUTE,
   COMPONENT_STDOUT,
-  COMPONENT_OPEN_OWNER_HASH,
   COMPONENT_SESSIONS,
   COMPONENT_PNFS,
   COMPONENT_RPC_CACHE,
@@ -79,8 +77,9 @@ typedef enum log_components
   COMPONENT_RPC,
   COMPONENT_THREAD,
   COMPONENT_NFS_V4_ACL,
-  LOG_MESSAGE_VERBOSITY,
+  COMPONENT_STATE,
 
+  LOG_MESSAGE_VERBOSITY,
   COMPONENT_COUNT
 } log_components_t;
 
@@ -213,9 +212,17 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 #define LogFullDebug(component, format, args...) \
   do { \
     if (LogComponents[component].comp_log_level >= NIV_FULL_DEBUG) \
-      DisplayLogComponentLevel(component, (char *)__FUNCTION__,  NIV_FULL_DEBUG, \
+      DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_FULL_DEBUG, \
                                "%s: FULLDEBUG: " format, \
                                LogComponents[component].comp_str, ## args ); \
+  } while (0)
+
+#define LogAtLevel(component, level, format, args...) \
+  do { \
+    if (LogComponents[component].comp_log_level >= level) \
+      DisplayLogComponentLevel(component, (char *)__FUNCTION__, level, \
+                               "%s: %s: " format, \
+                               LogComponents[component].comp_str, tabLogLevel[level].short_str, ## args ); \
   } while (0)
 
 #define LogError( component, a, b, c ) \
@@ -223,6 +230,9 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
     if (LogComponents[component].comp_log_level >= NIV_CRIT) \
       DisplayErrorComponentLogLine( component,(char *)__FUNCTION__, a, b, c, __LINE__ ); \
   } while (0)
+
+#define isLevel(component, level) \
+  (LogComponents[component].comp_log_level >= level)
 
 #define isInfo(component) \
   (LogComponents[component].comp_log_level >= NIV_INFO)

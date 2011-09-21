@@ -42,8 +42,9 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context,
                                       char *fs_specific_options /* IN */
     )
 {
-  int rc, fd;
-
+  int rc, fd, mntexists;
+  FILE *fp;
+  struct mntent *p_mnt;
   struct statfs stat_buf;
 
   fsal_status_t status;
@@ -56,6 +57,34 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context,
       LogCrit(COMPONENT_FSAL,
               "NULL mandatory argument passed to %s()", __FUNCTION__);
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
+    }
+
+  /* open mnt file */
+  fp = setmntent(MOUNTED, "r");
+
+  if(fp == NULL)
+    {
+      rc = errno;
+      LogCrit(COMPONENT_FSAL, "Error %d in setmntent(%s): %s", rc, MOUNTED,
+                      strerror(rc));
+      Return(posix2fsal_error(rc), rc, INDEX_FSAL_BuildExportContext);
+    }
+
+  /* Check if mount point is really a gpfs share. If not, we can't continue.*/
+  mntexists = 0;
+  while((p_mnt = getmntent(fp)) != NULL)
+    if(p_mnt->mnt_dir != NULL  && p_mnt->mnt_type != NULL)
+      /* There is probably a macro for "gpfs" type ... not sure where it is. */
+      if (strncmp(p_mnt->mnt_type, "gpfs", 4) == 0)
+        if (strncmp(p_mnt->mnt_dir, p_export_path->path, strlen(p_mnt->mnt_dir)) == 0)
+          mntexists = 1;
+  
+  if (mntexists == 0)
+    {
+      LogMajor(COMPONENT_FSAL,
+               "FSAL BUILD EXPORT CONTEXT: ERROR: Could not open GPFS mount point %s does not exist.",
+               p_export_path->path);
+      ReturnCode(ERR_FSAL_INVAL, 0);
     }
 
   /* save file descriptor to root of GPFS share */
@@ -85,7 +114,7 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context,
   // op_context.credential = ???
   status = fsal_internal_get_handle(&op_context,
                                     p_export_path,
-                                    &(p_export_context->mount_root_handle));
+                                    (fsal_handle_t *)(&(p_export_context->mount_root_handle)));
   if(FSAL_IS_ERROR(status))
     {
       close(p_export_context->mount_root_fd);
