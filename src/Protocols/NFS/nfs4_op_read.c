@@ -265,8 +265,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   size = arg_READ4.count;
 
   LogFullDebug(COMPONENT_NFS_V4,
-               "   NFS4_OP_READ: offset = %"PRIu64" length = %llu",
-               offset, size);
+               "NFS4_OP_READ: offset = %llu  length = %llu",
+               (unsigned long long)offset, size);
 
   if((data->pexport->options & EXPORT_OPTION_MAXOFFSETREAD) ==
      EXPORT_OPTION_MAXOFFSETREAD)
@@ -362,8 +362,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   res_READ4.READ4res_u.resok4.data.data_val = bufferdata;
 
   LogFullDebug(COMPONENT_NFS_V4,
-               "   NFS4_OP_READ: offset = %"PRIu64"  read length = %llu eof=%u",
-               offset, read_size, eof_met);
+               "NFS4_OP_READ: offset = %llu  read length = %llu eof=%u",
+               (unsigned long long)offset, read_size, eof_met);
 
   /* Is EOF met or not ? */
   if(eof_met == TRUE)
