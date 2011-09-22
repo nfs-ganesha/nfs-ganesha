@@ -870,7 +870,8 @@ fsal_status_t fsal_internal_testAccess(posixfsal_op_context_t * p_context,      
 
   /* unsatisfied flags */
 
-  missing_access = access_type;
+  missing_access = FSAL_MODE_MASK(access_type); /* only modes, no ACLs here */
+
 
   if(p_object_attributes)
     {
