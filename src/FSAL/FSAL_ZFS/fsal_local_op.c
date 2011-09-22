@@ -102,7 +102,8 @@ fsal_status_t ZFSFSAL_test_access(zfsfsal_op_context_t * p_context,   /* IN */
 
   /* unsatisfied permissions */
 
-  missing_access = access_type;
+  missing_access = FSAL_MODE_MASK(access_type); /* only modes, no ACLs here */
+
 
   /* Test if file belongs to user. */
 
