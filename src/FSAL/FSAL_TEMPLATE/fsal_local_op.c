@@ -104,7 +104,7 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
   /* unsatisfied permissions */
 
-  missing_access = access_type;
+  missing_access = FSAL_MODE_MASK(access_type); /* only modes, no ACLs here */
 
   /* Test if file belongs to user. */
 
