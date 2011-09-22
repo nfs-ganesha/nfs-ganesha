@@ -114,6 +114,18 @@ const char *str_af(int af)
   return buf;
 }
 
+const char *xprt_type_to_str(xprt_type_t type)
+{
+  switch(type)
+    {
+      case XPRT_UNKNOWN:    return "UNKNOWN";
+      case XPRT_UDP:        return "UDP";
+      case XPRT_TCP:        return "TCP";
+      case XPRT_RENDEZVOUS: return "RENDEZVOUS";
+    }
+  return "INVALID";
+}
+
 /**
  *
  * copy_xprt_addr: copies and transport address into an address field.
@@ -123,7 +135,7 @@ const char *str_af(int af)
  * @param addr [OUT] address field to fill in.
  * @param xprt [IN]  transport to get address from.
  *
- * @return 0 if ok, other values mean an error.
+ * @return 1 if ok, 0 if failure.
  *
  */
 int copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)

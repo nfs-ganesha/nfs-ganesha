@@ -170,7 +170,19 @@ extern int sprint_sockip(sockaddr_t *addr, char *buf, int len);
 extern SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig);
 extern SVCXPRT *Svcxprt_copycreate();
 
-typedef enum _ignore_port {
+typedef enum xprt_type_t
+{
+  XPRT_UNKNOWN,
+  XPRT_UDP,
+  XPRT_TCP,
+  XPRT_RENDEZVOUS,
+} xprt_type_t;
+
+extern xprt_type_t get_xprt_type(SVCXPRT *xprt);
+extern const char *xprt_type_to_str(xprt_type_t type);
+
+typedef enum _ignore_port
+{
 	IGNORE_PORT,
 	CHECK_PORT
 } ignore_port_t;

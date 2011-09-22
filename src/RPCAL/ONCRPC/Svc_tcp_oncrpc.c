@@ -190,6 +190,17 @@ static SVCXPRT *Makefd_xprt(int fd, u_int sendsize, u_int recvsize)
   return (xprt);
 }
 
+xprt_type_t get_xprt_type(SVCXPRT *xprt)
+{
+  if(xprt->xp_ops == &Svcudp_op)
+    return XPRT_UDP;
+  else if (xprt->xp_ops == &Svctcp_op)
+    return XPRT_TCP;
+  else if (xprt->xp_ops == &Svctcp_rendezvous_op)
+    return XPRT_RENDEZVOUS;
+  return XPRT_UNKNOWN;
+}
+
 void FreeXprt(SVCXPRT *xprt)
 {
   if(!xprt)

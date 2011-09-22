@@ -196,6 +196,7 @@ typedef struct state_nlm_client_t
 {
   pthread_mutex_t         slc_mutex;
   struct glist_head       slc_lock_list;
+  sockaddr_t              slc_client_addr;
   int                     slc_refcount;
   int                     slc_nlm_caller_name_len;
   char                    slc_nlm_caller_name[LM_MAXSTRLEN+1];
