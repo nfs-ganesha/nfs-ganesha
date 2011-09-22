@@ -329,7 +329,7 @@ int nlm_process_parameters(struct svc_req        * preq,
       return NLM4_STALE_FH;
     }
 
-  *ppnlm_client = get_nlm_client(care, alock->caller_name);
+  *ppnlm_client = get_nlm_client(care, ptr_svc, alock->caller_name);
   if(*ppnlm_client == NULL)
     {
       /* If client is not found, and we don't care (such as unlock),

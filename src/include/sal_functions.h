@@ -98,7 +98,9 @@ unsigned long nlm_client_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t    * buffclef);
 
-state_nlm_client_t *get_nlm_client(care_t care, const char * caller_name);
+state_nlm_client_t *get_nlm_client(care_t       care,
+                                   SVCXPRT    * xprt,
+                                   const char * caller_name);
 void nlm_client_PrintAll(void);
 
 void remove_nlm_owner(cache_inode_client_t * pclient,

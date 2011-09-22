@@ -69,7 +69,7 @@ int nlm4_Sm_Notify(nfs_arg_t * parg /* IN     */ ,
            "REQUEST PROCESSING: Calling nlm4_sm_notify for %s",
            arg->name);
 
-  nlm_client = get_nlm_client(TRUE, arg->name);
+  nlm_client = get_nlm_client(TRUE, preq->rq_xprt, arg->name);
   if(nlm_client != NULL)
     {
       /* Cast the state number into a state pointer to protect

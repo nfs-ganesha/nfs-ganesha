@@ -190,7 +190,7 @@ int nlm4_Unlock_Message(nfs_arg_t * parg /* IN     */ ,
 
   LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Unlock_Message");
 
-  nlm_client = get_nlm_client(TRUE, arg->alock.caller_name);
+  nlm_client = get_nlm_client(TRUE, preq->rq_xprt, arg->alock.caller_name);
   if(nlm_client == NULL)
     rc = NFS_REQ_DROP;
   else

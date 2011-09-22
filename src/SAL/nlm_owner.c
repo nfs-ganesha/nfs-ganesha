@@ -48,6 +48,7 @@
 #include "nlm4.h"
 #include "sal_functions.h"
 #include "nsm.h"
+#include "rpc.h"
 
 //TODO FSF: check if can optimize by using same reference as key and value
 
@@ -64,7 +65,12 @@ int display_nlm_client(state_nlm_client_t *pkey, char *str)
   strtmp += sprintf(strtmp, "pclient=%p: caller_name=", pkey);
   strncpy(strtmp, pkey->slc_nlm_caller_name, pkey->slc_nlm_caller_name_len);
   strtmp += pkey->slc_nlm_caller_name_len;
-  *strtmp = '\0';
+  strtmp += sprintf(strtmp, " addr=");
+  sprint_sockip(&pkey->slc_client_addr, strtmp, SOCK_NAME_MAX);
+  strtmp += strlen(strtmp);
+  strtmp += sprintf(strtmp, " type=");
+  strcpy(strtmp, xprt_type_to_str(pkey->slc_client_type));
+  strtmp += strlen(strtmp);
 
   return strlen(str);
 }
@@ -99,7 +105,13 @@ int compare_nlm_client(state_nlm_client_t *pclient1,
   if(pclient1 == pclient2)
     return 0;
 
+  if(pclient1->slc_client_type != pclient2->slc_client_type)
+    return 1;
+
   if(pclient1->slc_nlm_caller_name_len != pclient2->slc_nlm_caller_name_len)
+    return 1;
+
+  if(cmp_sockaddr(&pclient1->slc_client_addr, &pclient2->slc_client_addr, IGNORE_PORT) == 0)
     return 1;
 
   return memcmp(pclient1->slc_nlm_caller_name,
@@ -117,45 +129,17 @@ int compare_nlm_client_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
 unsigned long nlm_client_value_hash_func(hash_parameter_t * p_hparam,
                                         hash_buffer_t * buffclef)
 {
-  unsigned int sum = 0;
-  unsigned int i;
-  unsigned long res;
   state_nlm_client_t *pkey = (state_nlm_client_t *)buffclef->pdata;
 
-  /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->slc_nlm_caller_name_len; i++)
-    sum +=(unsigned char) pkey->slc_nlm_caller_name[i];
-
-  res = (unsigned long) sum +
-        (unsigned long) pkey->slc_nlm_caller_name_len;
-
-  if(isDebug(COMPONENT_HASHTABLE))
-    LogFullDebug(COMPONENT_STATE,
-                 "value = %lu", res % p_hparam->index_size);
-
-  return (unsigned long)(res % p_hparam->index_size);
-
+  return hash_sockaddr(&pkey->slc_client_addr, IGNORE_PORT) % p_hparam->index_size;
 }                               /* nlm_client_value_hash_func */
 
 unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
                                       hash_buffer_t * buffclef)
 {
-  unsigned int sum = 0;
-  unsigned int i;
-  unsigned long res;
   state_nlm_client_t *pkey = (state_nlm_client_t *)buffclef->pdata;
 
-  /* Compute the sum of all the characters */
-  for(i = 0; i < pkey->slc_nlm_caller_name_len; i++)
-    sum +=(unsigned char) pkey->slc_nlm_caller_name[i];
-
-  res = (unsigned long) sum +
-        (unsigned long) pkey->slc_nlm_caller_name_len;
-
-  if(isDebug(COMPONENT_HASHTABLE))
-    LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
-
-  return res;
+  return hash_sockaddr(&pkey->slc_client_addr, IGNORE_PORT);
 }                               /* state_id_rbt_hash_func */
 
 int display_nlm_owner(state_owner_t *pkey, char *str)
@@ -562,7 +546,10 @@ void nlm_client_PrintAll(void)
   HashTable_Log(COMPONENT_STATE, ht_nlm_client);
 }                               /* nlm_client_PrintAll */
 
-state_nlm_client_t *get_nlm_client(care_t care, const char * caller_name)
+
+state_nlm_client_t *get_nlm_client(care_t       care,
+                                   SVCXPRT    * xprt,
+                                   const char * caller_name)
 {
   state_nlm_client_t *pkey, *pclient;
 
@@ -576,9 +563,20 @@ state_nlm_client_t *get_nlm_client(care_t care, const char * caller_name)
   memset(pkey, 0, sizeof(*pkey));
   pkey->slc_refcount            = 1;
   pkey->slc_nlm_caller_name_len = strlen(caller_name);
+  pkey->slc_client_type         = get_xprt_type(xprt);
+  if(copy_xprt_addr(&pkey->slc_client_addr, xprt) == 0)
+    {
+      /* Discard the key we created */
+      Mem_Free(pkey);
+      return NULL;
+    }
 
   if(pkey->slc_nlm_caller_name_len > LM_MAXSTRLEN)
-    return NULL;
+    {
+      /* Discard the key we created */
+      Mem_Free(pkey);
+      return NULL;
+    }
 
   memcpy(pkey->slc_nlm_caller_name,
          caller_name,
