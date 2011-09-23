@@ -4,6 +4,7 @@ EXTRA_DIST = hosts.ganesha uidgid_mapfile.ganesha snmp.conf \
 	     proxy.ganesha.nfsd.conf \
 	     snmp.ganesha.nfsd.conf \
 	     lustre.ganesha.nfsd.conf \
+	     shook.ganesha.nfsd.conf \
 	     xfs.ganesha.nfsd.conf \
 	     gpfs.ganesha.nfsd.conf \
 	     gpfs.ganesha.main.conf \

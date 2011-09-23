@@ -268,15 +268,19 @@ static struct hostent *nfs_LookupHostAddr(char *host)
   struct sockaddr_in6 *paddrv6 = (struct sockaddr_in6 *)&addrv6;
 #endif
 
-  /* First try gethhostbyname */
-  if((output = gethostbyname(host)) == NULL)
-    {
-      /* Convert from dotted notation to adddress format */
-      hostaddr = inet_addr(host);
-
-      /* gethostbyname was of no help, try gethostaddr */
+  hostaddr = inet_addr(host);
+  /* is it a dotted IP? */
+  if (hostaddr == INADDR_NONE)
+  {
+     /* Nope. Try to resolve name */
+     output = gethostbyname(host);
+  }
+  else
+  {
+      /* yes, this is an IP, try to get hostent */
       output = gethostbyaddr((char *)&hostaddr, length, AF_INET);
-    }
+  }
+
 #ifdef _USE_TIRPC_IPV6
   /* if output == NULL it may be an IPv6 address */
   if(output == NULL)
@@ -497,7 +501,7 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
               LogDebug(COMPONENT_CONFIG,
                        "----------------- %s to client %s = %d.%d.%d.%d",
                        (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
-                       client_hostname,
+                       client_hostname, 
                        (unsigned int)(p_clients[i].client.hostif.clientaddr >> 24),
                        (unsigned int)((p_clients[i].client.hostif.clientaddr >> 16) & 0xFF),
                        (unsigned int)((p_clients[i].client.hostif.clientaddr >> 8) & 0xFF),
@@ -721,6 +725,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   memset(p_entry, 0, sizeof(exportlist_t));
 
   /** @todo set default values here */
+  memset(p_entry, 0, sizeof(exportlist_t));
 
   p_entry->status = EXPORTLIST_OK;
   p_entry->access_type = ACCESSTYPE_RW;
@@ -751,6 +756,11 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
   strcpy(p_entry->FS_specific, "");
   strcpy(p_entry->FS_tag, "");
+  strcpy(p_entry->fullpath, "/");
+  strcpy(p_entry->dirname, "/");
+  strcpy(p_entry->fsname, "");
+  strcpy(p_entry->pseudopath, "/");
+  strcpy(p_entry->referral, "");
 
   unsigned int fsalid_is_set= FALSE ;
 
@@ -2270,7 +2280,6 @@ int export_client_match(sockaddr_t *hostaddr,
       switch (clients->clientarray[i].type)
         {
         case HOSTIF_CLIENT:
-
           if(clients->clientarray[i].client.hostif.clientaddr == addr)
             {
               LogFullDebug(COMPONENT_DISPATCH, "This matches host address");
@@ -2280,6 +2289,9 @@ int export_client_match(sockaddr_t *hostaddr,
           break;
 
         case NETWORK_CLIENT:
+          LogDebug( COMPONENT_DISPATCH, "test NETWORK_CLIENT: addr=%#.08X, netmask=%#.08X, match with %#.08X\n",
+                    clients->clientarray[i].client.network.netaddr,
+                    clients->clientarray[i].client.network.netmask, ntohl(addr));
           LogFullDebug(COMPONENT_DISPATCH,
                        "Test net %d.%d.%d.%d in %d.%d.%d.%d ??",
                        (unsigned int)(clients->clientarray[i].client.network.netaddr >> 24),
@@ -2291,7 +2303,7 @@ int export_client_match(sockaddr_t *hostaddr,
                        (unsigned int)(addr >> 8) & 0xFF,
                        (unsigned int)(addr & 0xFF));
 
-          if((clients->clientarray[i].client.network.netmask & addr) ==
+          if((clients->clientarray[i].client.network.netmask & ntohl(addr)) ==
              clients->clientarray[i].client.network.netaddr)
             {
               LogFullDebug(COMPONENT_DISPATCH, "This matches network address");

@@ -170,6 +170,7 @@ EXTRA_DIST=nfs-ganesha.spec           \
            KNOWN_BUGS                 \
            nfs-ganesha.posix.init     \
            nfs-ganesha.lustre.init    \
+           nfs-ganesha.shook.init     \
            nfs-ganesha.xfs.init       \
            nfs-ganesha.gpfs.init      \
            nfs-ganesha.vfs.init       \

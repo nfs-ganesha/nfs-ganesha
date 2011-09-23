@@ -289,6 +289,10 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           pparam->drop_inval_errors = StrToBoolean(key_value);
         }
+      else if(!strcasecmp(key_name, "Drop_Delay_Errors"))
+        {
+          pparam->drop_delay_errors = StrToBoolean(key_value);
+        }
       else if(!strcasecmp(key_name, "NFS_Port"))
         {
           pparam->port[P_NFS] = (unsigned short)atoi(key_value);
