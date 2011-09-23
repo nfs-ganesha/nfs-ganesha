@@ -159,8 +159,9 @@ int main(int argc, char *argv[])
   unsigned int nfs_version = 3;
   path_str_t fsal_path_lib[NB_AVAILABLE_FSAL];
 #ifdef _USE_SHARED_FSAL
-  int lentab = NB_AVAILABLE_FSAL;
+  int lentab = NB_AVAILABLE_FSAL ;
 #endif
+
   short cache_content_hash;
   char entry_path[MAXPATHLEN];
   int i, nb_char;
