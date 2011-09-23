@@ -94,6 +94,14 @@ typedef union {
 
 /** Authentification context.    */
 
+typedef struct lustrefsal_cred__
+{
+  uid_t user;
+  gid_t group;
+  fsal_count_t nbgroups;
+  gid_t alt_groups[FSAL_NGROUPS_MAX];
+} lustrefsal_cred_t;
+
 #define MAX_LUSTRE_FSNAME 128
 typedef struct lustrefsal_export_context_t
 {
