@@ -721,6 +721,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   memset(p_entry, 0, sizeof(exportlist_t));
 
   /** @todo set default values here */
+  memset(p_entry, 0, sizeof(exportlist_t));
 
   p_entry->status = EXPORTLIST_OK;
   p_entry->access_type = ACCESSTYPE_RW;
@@ -751,6 +752,11 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
   strcpy(p_entry->FS_specific, "");
   strcpy(p_entry->FS_tag, "");
+  strcpy(p_entry->fullpath, "/");
+  strcpy(p_entry->dirname, "/");
+  strcpy(p_entry->fsname, "");
+  strcpy(p_entry->pseudopath, "/");
+  strcpy(p_entry->referral, "");
 
   unsigned int fsalid_is_set= FALSE ;
 
