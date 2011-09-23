@@ -52,6 +52,7 @@ fsal_status_t LUSTREFSAL_BuildExportContext(lustrefsal_export_context_t * p_expo
   char rpath[MAXPATHLEN];
   char mntdir[MAXPATHLEN];
   char fs_spec[MAXPATHLEN];
+  char *ptr;
 
   char type[256];
 
@@ -157,6 +158,12 @@ fsal_status_t LUSTREFSAL_BuildExportContext(lustrefsal_export_context_t * p_expo
   /* all checks are OK, fill export context */
   strncpy(p_export_context->mount_point, mntdir, FSAL_MAX_PATH_LEN);
   p_export_context->mnt_len = strlen(mntdir);
+  ptr = strrchr(fs_spec, '/');
+  if (ptr) {
+      ptr++;
+      LogDebug(COMPONENT_FSAL, "Lustre fsname for %s is '%s'", mntdir, ptr);
+      strncpy(p_export_context->fsname, ptr, MAX_LUSTRE_FSNAME);
+  }
   p_export_context->dev_id = pathstat.st_dev;
 
   endmntent(fp);
