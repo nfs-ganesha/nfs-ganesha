@@ -157,20 +157,6 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
         }
     }
 
-  /* Close the file in FSAL through the cache inode */
-  P_w(&data->current_entry->lock);
-  if(cache_inode_close(data->current_entry,
-                       data->pclient,
-                       &cache_status) != CACHE_INODE_SUCCESS)
-    {
-      V_w(&data->current_entry->lock);
-
-      res_CLOSE4.status = nfs4_Errno(cache_status);
-      return res_CLOSE4.status;
-    }
-  V_w(&data->current_entry->lock);
-
-  res_CLOSE4.status = NFS4_OK;
 
   /* Handle stateid/seqid for success */
   update_stateid(pstate_found,
@@ -204,6 +190,21 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                "CLOSE failed to release stateid error %s",
                state_err_str(state_status));
     }
+
+  /* Close the file in FSAL through the cache inode */
+  P_w(&data->current_entry->lock);
+  if(cache_inode_close(data->current_entry,
+                       data->pclient,
+                       &cache_status) != CACHE_INODE_SUCCESS)
+    {
+      V_w(&data->current_entry->lock);
+
+      res_CLOSE4.status = nfs4_Errno(cache_status);
+      return res_CLOSE4.status;
+    }
+  V_w(&data->current_entry->lock);
+
+  res_CLOSE4.status = NFS4_OK;
 
   if(isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS))
     {
