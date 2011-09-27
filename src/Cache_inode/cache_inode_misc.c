@@ -56,6 +56,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <string.h>
+#include <assert.h>
 
 char *cache_inode_function_names[] = {
   "cache_inode_access",
@@ -575,18 +576,26 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
       LogDebug(COMPONENT_CACHE_INODE,
                "cache_inode_new_entry: Adding a SYMBOLIC_LINK pentry = %p",
                pentry);
-
-      pentry->object.symlink.handle = pfsdata->handle;
+      GetFromPool(pentry->object.symlink, &pclient->pool_entry_symlink,
+                  cache_inode_symlink_t);
+      if(pentry->object.symlink == NULL)
+        {
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "Can't allocate entry symlink from symlink pool");
+          break;
+        }
+      pentry->object.symlink->handle = pfsdata->handle;
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.symlink.handle;
+      pentry->mobject.handle = pentry->object.symlink->handle;
 #endif
       fsal_status =
-          FSAL_pathcpy(&pentry->object.symlink.content, &pcreate_arg->link_content);
+          FSAL_pathcpy(&pentry->object.symlink->content, &pcreate_arg->link_content);
       if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: FSAL_pathcpy failed");
+          cache_inode_release_symlink(pentry, &pclient->pool_entry_symlink);
           ReleaseToPool(pentry, &pclient->pool_entry);
         }
 
@@ -721,6 +730,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
                              HASHTABLE_SET_HOW_SET_NO_OVERWRITE)) != HASHTABLE_SUCCESS)
     {
       /* Put the entry back in its pool */
+      if (pentry->object.symlink)
+         cache_inode_release_symlink(pentry, &pclient->pool_entry_symlink);
       ReleaseToPool(pentry, &pclient->pool_entry);
       LogWarn(COMPONENT_CACHE_INODE,
               "cache_inode_new_entry: entry could not be added to hash, rc=%d",
@@ -1008,6 +1019,8 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
     {
       if(LRU_invalidate(pentry->gc_lru, pentry->gc_lru_entry) != LRU_LIST_SUCCESS)
         {
+          if (pentry->object.symlink)
+            cache_inode_release_symlink(pentry, &pclient->pool_entry_symlink);
           ReleaseToPool(pentry, &pclient->pool_entry);
           return CACHE_INODE_LRU_ERROR;
         }
@@ -1015,6 +1028,8 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
 
   if((plru_entry = LRU_new_entry(pclient->lru_gc, &lru_status)) == NULL)
     {
+      if (pentry->object.symlink)
+        cache_inode_release_symlink(pentry, &pclient->pool_entry_symlink);
       ReleaseToPool(pentry, &pclient->pool_entry);
       return CACHE_INODE_LRU_ERROR;
     }
@@ -1147,7 +1162,8 @@ void cache_inode_get_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
       break;
 
     case SYMBOLIC_LINK:
-      *pattr = pentry->object.symlink.attributes;
+      assert(pentry->object.symlink);
+      *pattr = pentry->object.symlink->attributes;
       break;
 
     case FS_JUNCTION:
@@ -1200,7 +1216,8 @@ static void cache_inode_init_attributes(cache_entry_t *pentry, fsal_attrib_list_
       break;
 
     case SYMBOLIC_LINK:
-      pentry->object.symlink.attributes = *pattr;
+      assert(pentry->object.symlink);
+      pentry->object.symlink->attributes = *pattr;
       break;
 
     case FS_JUNCTION:
@@ -1264,10 +1281,11 @@ void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
       break;
 
     case SYMBOLIC_LINK:
+      assert(pentry->object.symlink);
 #ifdef _USE_NFS4_ACL
-      p_oldacl = pentry->object.symlink.attributes.acl;
+      p_oldacl = pentry->object.symlink->attributes.acl;
 #endif                          /* _USE_NFS4_ACL */
-      pentry->object.symlink.attributes = *pattr;
+      pentry->object.symlink->attributes = *pattr;
       break;
 
     case FS_JUNCTION:
@@ -1426,7 +1444,8 @@ fsal_handle_t *cache_inode_get_fsal_handle(cache_entry_t * pentry,
           break;
 
         case SYMBOLIC_LINK:
-          preturned_handle = &pentry->object.symlink.handle;
+          assert(pentry->object.symlink);
+          preturned_handle = &pentry->object.symlink->handle;
           *pstatus = CACHE_INODE_SUCCESS;
           break;
 
@@ -1967,6 +1986,30 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
   return *pstatus;
 }                               /* cache_inode_kill_entry */
 
+/**
+ *
+ * cache_inode_release_symlink: release an entry's symlink component, if
+ * present
+ *
+ * releases an allocated symlink component, if any
+ *
+ * @param pool [INOUT] pool which owns pentry
+ * @param pentry [INOUT] entry to be released
+ *
+ * @return  (void)
+ *
+ */
+void cache_inode_release_symlink(cache_entry_t * pentry,
+                                 struct prealloc_pool *pool)
+{
+    assert(pentry);
+    assert(pentry->internal_md.type == SYMBOLIC_LINK);
+    if (pentry->object.symlink) {
+        ReleaseToPool(pentry->object.symlink, pool);
+        pentry->object.symlink = NULL;
+    }
+}
+
 #ifdef _USE_PROXY
 void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr);
 
@@ -1989,7 +2032,7 @@ void cache_inode_print_srvhandle(char *comment, cache_entry_t * pentry)
 
     case SYMBOLIC_LINK:
       strcpy(tag, "link");
-      pfsal_handle = &(pentry->object.symlink.handle);
+      pfsal_handle = &(pentry->object.symlink->handle);
       break;
 
     case DIR_BEGINNING:

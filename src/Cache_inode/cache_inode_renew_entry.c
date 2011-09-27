@@ -55,6 +55,7 @@
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
+#include <assert.h>
 
 /**
  *
@@ -456,7 +457,8 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
           break;
 
         case SYMBOLIC_LINK:
-          pfsal_handle = &pentry->object.symlink.handle;
+          assert(pentry->object.symlink);
+          pfsal_handle = &pentry->object.symlink->handle;
           break;
 
         case SOCKET_FILE:
@@ -538,7 +540,8 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
      pclient->expire_type_link != CACHE_INODE_EXPIRE_NEVER &&
      (current_time - entry_time >= pclient->grace_period_link))
     {
-      pfsal_handle = &pentry->object.symlink.handle;
+      assert(pentry->object.symlink);
+      pfsal_handle = &pentry->object.symlink->handle;
 
       /* Log */
       LogDebug(COMPONENT_CACHE_INODE,
@@ -581,7 +584,8 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
         }
       else
         {
-          fsal_status = FSAL_pathcpy(&pentry->object.symlink.content, &link_content);
+	  assert(pentry->object.symlink);
+          fsal_status = FSAL_pathcpy(&pentry->object.symlink->content, &link_content); /* copy ctor? */
           if(FSAL_IS_ERROR(fsal_status))
             {
               *pstatus = cache_inode_error_convert(fsal_status);

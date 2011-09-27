@@ -295,7 +295,7 @@ struct cache_entry_t
       cache_inode_unstable_data_t unstable_data;                     /**< Unstable data, for use with WRITE/COMMIT             */
     } file;                                   /**< file related filed     */
 
-    struct cache_inode_symlink__ symlink;     /**< symlink related field  */
+    struct cache_inode_symlink__ *symlink;     /**< symlink related field  */
 
     struct cache_inode_dir_begin__
     {
@@ -380,6 +380,7 @@ struct cache_inode_client_t
 {
   LRU_list_t *lru_gc;                                              /**< Pointer to the worker's LRU used for Garbagge collection */
   struct prealloc_pool pool_entry;                                 /**< Worker's preallocad cache entries pool                   */
+  struct prealloc_pool pool_entry_symlink;                         /**< Symlink data for cache entries of type symlink           */
   struct prealloc_pool pool_dir_data;                              /**< Worker's preallocad cache directory data pool            */
   struct prealloc_pool pool_parent;                                /**< Pool of pointers to the parent entries                   */
   struct prealloc_pool pool_key;                                   /**< Pool for building hash's keys                            */
@@ -515,6 +516,9 @@ int cache_inode_fsaldata_2_key(hash_buffer_t * pkey, cache_inode_fsal_data_t * p
 
 void cache_inode_release_fsaldata_key(hash_buffer_t * pkey,
                                       cache_inode_client_t * pclient);
+
+void cache_inode_release_symlink(cache_entry_t * pentry,
+                                 struct prealloc_pool *pool);
 
 hash_table_t *cache_inode_init(cache_inode_parameter_t param,
                                cache_inode_status_t * pstatus);

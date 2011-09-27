@@ -302,6 +302,14 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
     }
 
   *pstatus = CACHE_INODE_SUCCESS;
+  
+  if (pentry->object.symlink != NULL) {
+  	int stop_here;
+	stop_here = 1;
+	if (stop_here) {
+		stop_here = 2;
+	}
+  }
 
   /* valid the found entry, if this is not feasable, returns nothing to the client */
   if( plocation != NULL )

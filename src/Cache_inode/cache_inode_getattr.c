@@ -55,6 +55,7 @@
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
+#include <assert.h>
 
 /**
  *
@@ -132,7 +133,8 @@ cache_inode_getattr(cache_entry_t * pentry,
                     break;
 
                 case SYMBOLIC_LINK:
-                    pfsal_handle = &pentry->object.symlink.handle;
+                    assert(pentry->object.symlink);
+                    pfsal_handle = &pentry->object.symlink->handle;
                     break;
 
                 case DIR_BEGINNING:
