@@ -278,6 +278,7 @@ typedef struct nfs_core_param__
   int nb_max_fd;
   unsigned int drop_io_errors;
   unsigned int drop_inval_errors;
+  unsigned int drop_delay_errors;
   unsigned int use_nfs_commit;
   time_t expiration_dupreq;
   unsigned int stats_update_delay;

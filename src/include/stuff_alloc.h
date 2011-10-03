@@ -209,6 +209,7 @@ do {                                                         \
   (pool)->pa_size        = sizeof(type);                     \
   size = (pool)->pa_size + size_prealloc_header64;           \
   (pool)->pa_num         = GetPreferedPool(num_alloc, size); \
+  (pool)->pa_allocated   = 0;                                \
 } while (0)
 
 /**

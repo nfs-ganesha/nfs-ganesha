@@ -102,7 +102,8 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
   if(p_context->credential.user == 0)
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_test_access);
 
-  missing_access = access_type;
+  missing_access = FSAL_MODE_MASK(access_type); /* only modes, no ACLs here */
+
 
   /* owner permissions ? */
 

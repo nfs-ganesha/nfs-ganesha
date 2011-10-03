@@ -166,6 +166,21 @@ name-spaces. This package provides support for GANESHA using the LUSTRE
 interface.
 %endif
 
+%if %{?_with_shook:1}%{!?_with_shook:0}
+%package shook
+Summary: The NFS-GANESHA server compiled for exporting Lustre filesystem with shook HSM binding system.
+Group: Applications/System
+BuildRequires: libattr-devel
+Requires: %{name}-common = %{version}-%{release}
+
+%description shook
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for GANESHA using the LUSTRE
+interface and the shook HSM binding system.
+%endif
+
+
 %if %{?_with_dynfsal:1}%{!?_with_dynfsal:0}
 %package dynfsal
 Summary: The NFS-GANESHA server compiled in a FSAL-les way
@@ -275,7 +290,7 @@ chmod +x %{our_find_requires}
 
 %build
 
-%configure @ac_configure_args@ 'CC=gcc -g' 'CFLAGS=-g' 'CXXFLAGS=-g'
+%configure @ac_configure_args@ 'CC=gcc -g' "CFLAGS=$CFLAGS -g" 'CXXFLAGS=-g'
 
 # try 1 recovery when there is a // make error, then use simple make at 2nd error
 make %{?_smp_mflags}  || make %{?_smp_mflags}  || make
@@ -395,6 +410,15 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/lustre.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-lustre
 %config(noreplace) %{_sysconfdir}/ganesha/lustre.ganesha*
+%endif
+
+%if %{?_with_shook:1}%{!?_with_shook:0}
+%files shook
+%defattr(-,root,root,-)
+%{_bindir}/shook.ganesha.*
+%{_bindir}/shook.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha-shook
+%config(noreplace) %{_sysconfdir}/ganesha/shook.ganesha*
 %endif
 
 %if %{?_with_dynfsal:1}%{!?_with_dynfsal:0}

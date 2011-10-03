@@ -467,4 +467,4 @@
        - Bug Fix: Badly formed fsal_op_context_t in FSAL_ZFS (issue when using as shared object)
        - Bug Fix: bad modes/ACLs management in several FSALs (produced EPERM errors)
        - FSAL code has been reorganized a lot
-
+       - Bug Fix: badly managed access_type in nfs3_Access
