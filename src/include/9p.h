@@ -494,7 +494,6 @@ int _9p_walk( _9p_request_data_t * preq9p,
 int _9p_rerror( _9p_request_data_t * preq9p,
                 u16 * msgtag,
                 u32 * err, 
-                char * strerr,
 	        u32 * plenout, 
                 char * preply) ;
 

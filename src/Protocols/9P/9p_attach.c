@@ -123,14 +123,14 @@ int _9p_attach( _9p_request_data_t * preq9p,
   if( found == FALSE )
     {
       err = ENOENT ;
-      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
       return rc ;
     }
 
   if( *fid >= _9P_FID_PER_CONN )
     {
       err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
       return rc ;
     }
  
@@ -155,7 +155,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
     if( ( err = _9p_tools_get_fsal_op_context_by_name( *uname_len, uname_str, pfid ) ) !=  0 )
      {
        err = -err ; /* The returned value from 9p service functions is always negative is case of errors */
-       rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
        return rc ;
      }
    }
@@ -165,7 +165,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
     if( ( err = _9p_tools_get_fsal_op_context_by_uid( *n_aname, pfid ) ) !=  0 )
      {
        err = -err ; /* The returned value from 9p service functions is always negative is case of errors */
-       rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
        return rc ;
      }
 
@@ -185,7 +185,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
   if( pfid->pentry == NULL )
    {
      err = _9p_tools_errno( cache_status ) ; ;
-     rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+     rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
      return rc ;
    }
 

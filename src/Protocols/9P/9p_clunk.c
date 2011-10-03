@@ -79,7 +79,7 @@ int _9p_clunk( _9p_request_data_t * preq9p,
   if( *fid >= _9P_FID_PER_CONN )
     {
       err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
       return rc ;
     }
 

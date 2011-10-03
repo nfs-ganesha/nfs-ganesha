@@ -103,11 +103,20 @@ int _9p_walk( _9p_request_data_t * preq9p,
   if( *fid >= _9P_FID_PER_CONN )
     {
       err = ERANGE ;
-      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
       return rc ;
     }
+ 
+  if( *newfid >= _9P_FID_PER_CONN )
+       {
+         err = ERANGE ;
+         rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+         return rc ;
+       }
+
 
   pfid = &preq9p->pconn->fids[*fid] ;
+  pnewfid = &preq9p->pconn->fids[*newfid] ;
 
   /* Is this a lookup or a fid cloning operation ? */
   if( *nwname == 0 )
@@ -120,15 +129,6 @@ int _9p_walk( _9p_request_data_t * preq9p,
    }
   else 
    {
-      if( *newfid >= _9P_FID_PER_CONN )
-       {
-         err = ERANGE ;
-         rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
-         return rc ;
-       }
-
-      pnewfid = &preq9p->pconn->fids[*newfid] ;
-
       pnewfid->fid = *newfid ;
       pnewfid->fsal_op_context = pfid->fsal_op_context ;
       pnewfid->pexport = pfid->pexport ;
@@ -150,7 +150,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
                                                        &cache_status ) ) == NULL )
             {
               err = _9p_tools_errno( cache_status ) ; ;
-              rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+              rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
              return rc ;
             }
            pentry =  pnewfid->pentry ;
@@ -196,7 +196,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
         default:
           LogMajor( COMPONENT_9P, "implementation error, you should not see this message !!!!!!" ) ;
           err = EINVAL ;
-          rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+          rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
           return rc ;
           break ;
       }
