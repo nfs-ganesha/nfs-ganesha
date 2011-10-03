@@ -101,7 +101,104 @@ int _9p_tools_get_fsal_op_context_by_name( int uname_len, char * uname_str, _9p_
 
 int _9p_tools_errno( cache_inode_status_t cache_status )
 {
-  return (int)cache_status ; /** @todo put a more sophisticated stuff here */
+  int rc = 0 ;
+
+  switch( cache_status )
+   {
+     case CACHE_INODE_SUCCESS:
+	rc = 0 ;
+        break ;
+
+     case CACHE_INODE_MALLOC_ERROR:
+        rc = ENOMEM ;
+        break ;
+
+     case CACHE_INODE_NOT_A_DIRECTORY:
+        rc = ENOTDIR ;
+        break ;
+
+     case CACHE_INODE_ENTRY_EXISTS:
+	rc = EEXIST ;
+        break ;
+
+     case CACHE_INODE_DIR_NOT_EMPTY:
+	rc = ENOTEMPTY ;
+        break ;
+
+     case CACHE_INODE_NOT_FOUND:
+	rc = ENOENT ;
+	break ;
+
+     case CACHE_INODE_IS_A_DIRECTORY:
+	rc = EISDIR ;
+	break ;
+
+     case CACHE_INODE_FSAL_EPERM:
+     case CACHE_INODE_FSAL_ERR_SEC:
+	rc = EPERM ;
+	break ;
+
+     case CACHE_INODE_INVALID_ARGUMENT:
+     case CACHE_INODE_NAME_TOO_LONG:
+     case CACHE_INODE_UNAPPROPRIATED_KEY:
+     case CACHE_INODE_INCONSISTENT_ENTRY:
+     case CACHE_INODE_FSAL_ERROR:
+     case CACHE_INODE_BAD_TYPE: 
+     case CACHE_INODE_STATE_CONFLICT:
+     case CACHE_INODE_STATE_ERROR:
+     case CACHE_INODE_POOL_MUTEX_INIT_ERROR:
+     case CACHE_INODE_INIT_ENTRY_FAILED:
+	rc = EINVAL ;
+        break ;
+
+     case CACHE_INODE_NO_SPACE_LEFT:
+	rc = ENOSPC ;
+        break ;
+
+     case CACHE_INODE_READ_ONLY_FS: 
+	rc = EROFS ;
+	break ;
+
+     case CACHE_INODE_FSAL_ESTALE:
+     case CACHE_INODE_DEAD_ENTRY:
+	rc = ESTALE ;
+        break ;
+
+     case CACHE_INODE_QUOTA_EXCEEDED:
+	rc = EDQUOT ;
+        break ; 
+
+     case CACHE_INODE_CACHE_CONTENT_ERROR:
+     case CACHE_INODE_CACHE_CONTENT_EXISTS:
+     case CACHE_INODE_CACHE_CONTENT_EMPTY:
+     case CACHE_INODE_IO_ERROR:
+     case CACHE_INODE_ASYNC_POST_ERROR:
+     case CACHE_INODE_GET_NEW_LRU_ENTRY:
+     case CACHE_INODE_LRU_ERROR:
+     case CACHE_INODE_HASH_SET_ERROR:
+     case CACHE_INODE_INSERT_ERROR:
+     case CACHE_INODE_HASH_TABLE_ERROR:
+	rc = EIO ;
+        break ;
+
+     case CACHE_INODE_NOT_SUPPORTED:
+	rc = ENOTSUP ;
+        break ;
+
+     case CACHE_INODE_FSAL_EACCESS:
+	rc = EACCES ;
+	break ;
+
+     case CACHE_INODE_FSAL_DELAY:
+	rc = EAGAIN ;
+        break ;
+
+     default:
+	rc = EIO ;
+	break ; 
+   }
+
+  return rc ;
 } /* _9p_tools_errno */
 
 void _9p_tools_fsal_attr2stat( fsal_attrib_list_t * pfsalattr, struct stat * pstat )
