@@ -127,7 +127,13 @@ int _9p_attach( _9p_request_data_t * preq9p,
       return rc ;
     }
 
-
+  if( *fid >= _9P_FID_PER_CONN )
+    {
+      err = ERANGE ;
+      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+      return rc ;
+    }
+ 
   /* Set pexport and fid id in fid */
   pfid= &preq9p->pconn->fids[*fid] ;
   pfid->pexport = pexport ;

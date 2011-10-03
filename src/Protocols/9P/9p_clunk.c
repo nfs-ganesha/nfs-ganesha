@@ -76,9 +76,13 @@ int _9p_clunk( _9p_request_data_t * preq9p,
 
   LogDebug( COMPONENT_9P, "TCLUNK: tag=%u fid=%u", (u32)*msgtag, *fid ) ;
 
-  /* The clunk here does nothing but cleaning info in the fid. We just keep the fid in the table because it probably will be reused 
-   * soon by the client with the same fid. It faster and more efficient to Add an HashTable entry (allowing overwrite)
-   * scratching a formerly written entry */ 
+  if( *fid >= _9P_FID_PER_CONN )
+    {
+      err = ERANGE ;
+      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+      return rc ;
+    }
+
   pfid =  &preq9p->pconn->fids[*fid] ;
 
   /* Clean the fid */

@@ -100,6 +100,13 @@ int _9p_walk( _9p_request_data_t * preq9p,
                 (u32)*msgtag, *fid, *newfid, *(wnames_len[i]), wnames_str[i] ) ;
    }
 
+  if( *fid >= _9P_FID_PER_CONN )
+    {
+      err = ERANGE ;
+      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+      return rc ;
+    }
+
   pfid = &preq9p->pconn->fids[*fid] ;
 
   /* Is this a lookup or a fid cloning operation ? */
@@ -113,6 +120,13 @@ int _9p_walk( _9p_request_data_t * preq9p,
    }
   else 
    {
+      if( *newfid >= _9P_FID_PER_CONN )
+       {
+         err = ERANGE ;
+         rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+         return rc ;
+       }
+
       pnewfid = &preq9p->pconn->fids[*newfid] ;
 
       pnewfid->fid = *newfid ;

@@ -106,6 +106,13 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "TREADDIR: tag=%u fid=%u offset=%llu count=%u",
             (u32)*msgtag, *fid, (unsigned long long)*offset, *count  ) ;
 
+  if( *fid >= _9P_FID_PER_CONN )
+    {
+      err = ERANGE ;
+      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+      return rc ;
+    }
+
    pfid = &preq9p->pconn->fids[*fid] ;
 
   /* Use Cache Inode to read the directory's content */

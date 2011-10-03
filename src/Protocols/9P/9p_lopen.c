@@ -81,6 +81,13 @@ int _9p_lopen( _9p_request_data_t * preq9p,
   
   LogDebug( COMPONENT_9P, "TLOPEN: tag=%u fid=%u mode=0x%x",
             (u32)*msgtag, *fid, *mode  ) ;
+
+   if( *fid >= _9P_FID_PER_CONN )
+    {
+      err = ERANGE ;
+      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
+      return rc ;
+    }
  
    pfid =  &preq9p->pconn->fids[*fid] ;
 
