@@ -223,7 +223,8 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      _9p_setptr( cursor, qid_path, u64 ) ;
      
      /* offset */
-     _9p_setvalue( cursor, i+*offset, u64 ) ;   
+     _9p_setvalue( cursor, i+cookie+1, u64 ) ;   
+
 
      /* Type (again ?) */
      _9p_setptr( cursor, qid_type, u8 ) ;
