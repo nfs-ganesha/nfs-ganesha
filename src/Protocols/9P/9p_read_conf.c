@@ -103,27 +103,10 @@ int _9p_read_conf( config_file_t   in_config,
               return -1 ;
             }
         }
-      else if(!strcasecmp(key_name, "Prealloc_FID"))
-        {
-          pparam->prealloc_fid = atoi(key_value) ;
-        }
       else if(!strcasecmp(key_name, "LogFile"))
         {
           LogFile = key_value;
         }
-      else if(!strcasecmp(key_name, "Index_Size"))
-        {
-          pparam->hash_param.index_size = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Alphabet_Length"))
-        {
-          pparam->hash_param.alphabet_length = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
-        {
-          pparam->hash_param.nb_node_prealloc = atoi(key_value);
-        }
-
       else
         {
           fprintf(stderr,

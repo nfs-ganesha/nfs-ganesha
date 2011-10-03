@@ -224,6 +224,7 @@ enum _9p_qid_t {
 
 /* Room for readdir header */
 #define _9P_READDIRHDRSZ	24
+#define _9P_FID_PER_CONN        32
 
 /**
  * struct _9p_str - length prefixed string type
@@ -269,22 +270,7 @@ typedef struct _9p_qid {
 typedef struct _9p_param__
 {
   unsigned short _9p_port ;
-  unsigned int   prealloc_fid ;
-  hash_parameter_t hash_param;
 } _9p_parameter_t ;
-
-typedef struct _9p_conn__
-{
-  long int        sockfd ;
-  struct timeval  birth;  /* This is useful if same sockfd is reused on socket's close/open  */
-} _9p_conn_t ;
-
-typedef struct _9p_hash_fid_key__
-{
-  u32      fid ;
-  long int sockfd ;
-  struct timeval  birth; /* This is useful if same sockfd is reused on socket's close/open  */
-} _9p_hash_fid_key_t ;
 
 typedef struct _9p_fid__
 {
@@ -300,10 +286,18 @@ typedef struct _9p_fid__
     } specdata ;
 } _9p_fid_t ;
 
+
+typedef struct _9p_conn__
+{
+  long int        sockfd ;
+  struct timeval  birth;  /* This is useful if same sockfd is reused on socket's close/open  */
+  _9p_fid_t       fids[_9P_FID_PER_CONN] ;
+} _9p_conn_t ;
+
 typedef struct _9p_request_data__
 {
   char         _9pmsg[_9P_MSG_SIZE] ;
-  _9p_conn_t   conn ; 
+  _9p_conn_t  *  pconn ; 
 } _9p_request_data_t ;
 
 typedef int (*_9p_function_t) (_9p_request_data_t * preq9p, 
@@ -503,25 +497,6 @@ int _9p_rerror( _9p_request_data_t * preq9p,
                 char * strerr,
 	        u32 * plenout, 
                 char * preply) ;
-
-/* hash functions */
-unsigned long int _9p_hash_fid_key_value_hash_func(hash_parameter_t * p_hparam,
-                                                   hash_buffer_t * buffclef) ;
-unsigned long int _9p_hash_fid_rbt_hash_func(hash_parameter_t * p_hparam,
-                                              hash_buffer_t * buffclef) ;
-int _9p_compare_key(hash_buffer_t * buff1, hash_buffer_t * buff2) ;
-int display_9p_hash_fid_key(hash_buffer_t * pbuff, char *str) ; 
-int display_9p_hash_fid_val(hash_buffer_t * pbuff, char *str) ;
-
-int _9p_hash_fid_init( _9p_parameter_t * pparam ) ;
-int _9p_hash_fid_update( _9p_conn_t * pconn, 
-                         _9p_fid_t  * pfid ) ;
-int _9p_hash_fid_del( _9p_conn_t * pconn, 
-                      u32 fid,
-                      _9p_fid_t ** ppoldfid ) ;
-_9p_fid_t * _9p_hash_fid_get( _9p_conn_t * pconn, 
-                              u32 fid,
-                              int * prc ) ;
 
 
 #endif /* _9P_H */

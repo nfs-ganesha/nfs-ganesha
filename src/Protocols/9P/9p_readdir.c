@@ -106,14 +106,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   LogDebug( COMPONENT_9P, "TREADDIR: tag=%u fid=%u offset=%llu count=%u",
             (u32)*msgtag, *fid, (unsigned long long)*offset, *count  ) ;
 
-   if( ( pfid = _9p_hash_fid_get( &preq9p->conn, 
-                                  *fid,
-                                  &rc ) ) == NULL )
-   {
-     err = ENOENT ;
-     rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
-     return rc ;
-   }
+   pfid = &preq9p->pconn->fids[*fid] ;
 
   /* Use Cache Inode to read the directory's content */
   cookie = (unsigned int)*offset ;

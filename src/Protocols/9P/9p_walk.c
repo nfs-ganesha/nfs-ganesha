@@ -100,26 +100,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
                 (u32)*msgtag, *fid, *newfid, *(wnames_len[i]), wnames_str[i] ) ;
    }
 
-  if( ( pfid = _9p_hash_fid_get( &preq9p->conn, 
-                                 *fid,
-                                 &rc ) ) == NULL )
-   {
-     err = ENOENT ;
-     rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
-     return rc ;
-   }
-
- /* Get a new FID from the pool */
-  P( pwkrdata->_9pfid_pool_mutex ) ;
-  GetFromPool( pnewfid, &pwkrdata->_9pfid_pool, _9p_fid_t ) ;
-  V( pwkrdata->_9pfid_pool_mutex ) ;
-
-  if( pnewfid == NULL )
-    {
-      err = ENOMEM ;
-      rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
-      return rc ;
-    }
+  pfid = &preq9p->pconn->fids[*fid] ;
 
   /* Is this a lookup or a fid cloning operation ? */
   if( *nwname == 0 )
@@ -132,6 +113,8 @@ int _9p_walk( _9p_request_data_t * preq9p,
    }
   else 
    {
+      pnewfid = &preq9p->pconn->fids[*newfid] ;
+
       pnewfid->fid = *newfid ;
       pnewfid->fsal_op_context = pfid->fsal_op_context ;
       pnewfid->pexport = pfid->pexport ;
@@ -204,17 +187,6 @@ int _9p_walk( _9p_request_data_t * preq9p,
           break ;
       }
 
-   }
-
-  /* Had the new fid to the hash */
-  if( ( err = _9p_hash_fid_update( &preq9p->conn, pnewfid ) ) != 0 )
-   {
-     P( pwkrdata->_9pfid_pool_mutex ) ;
-     ReleaseToPool( pnewfid, &pwkrdata->_9pfid_pool ) ;
-     V( pwkrdata->_9pfid_pool_mutex ) ;
-
-     rc = _9p_rerror( preq9p, msgtag, &err, strerror( err ), plenout, preply ) ;
-     return rc ;
    }
 
   /* As much qid as requested fid */

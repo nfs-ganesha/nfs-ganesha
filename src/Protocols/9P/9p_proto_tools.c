@@ -51,7 +51,7 @@
 
 int _9p_init(  _9p_parameter_t * pparam ) 
 {
-  return _9p_hash_fid_init( pparam ) ;
+  return 0 ;
 } /* _9p_init */
 
 int _9p_tools_get_fsal_op_context_by_uid( u32 uid, _9p_fid_t * pfid ) 

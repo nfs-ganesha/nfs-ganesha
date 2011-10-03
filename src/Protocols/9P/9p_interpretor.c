@@ -170,7 +170,7 @@ void _9p_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pwork
                                                                       (void *)pworker_data,
                                                                       &outdatalen, 
                                                                       replydata ) ) < 0 )  ||
-             ( send( preq9p->conn.sockfd, replydata, outdatalen, 0 ) != outdatalen ) )
+             ( send( preq9p->pconn->sockfd, replydata, outdatalen, 0 ) != outdatalen ) )
      {
            printf( "%s: Error \n", _9pfuncdesc[_9ptabindex[*pmsgtype]].funcname ) ;
      }
