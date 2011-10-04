@@ -466,6 +466,11 @@ int _9p_attach( _9p_request_data_t * preq9p,
                 u32 * plenout, 
                 char * preply) ;
 
+int _9p_create( _9p_request_data_t * preq9p, 
+                void * pworker_data,
+                u32 * plenout, 
+                char * preply) ;
+
 int _9p_getattr( _9p_request_data_t * preq9p, 
                  void * pworker_data,
                  u32 * plenout, 
