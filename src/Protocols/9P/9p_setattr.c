@@ -24,10 +24,10 @@
  */
 
 /**
- * \file    9p_mkdir.c
+ * \file    9p_setattr.c
  * \brief   9P version
  *
- * 9p_mkdir.c : _9P_interpretor, request MKDIR
+ * 9p_setattr.c : _9P_interpretor, request SETATTR
  *
  *
  */
@@ -51,7 +51,7 @@
 #include "fsal.h"
 #include "9p.h"
 
-int _9p_mkdir( _9p_request_data_t * preq9p, 
+int _9p_setattr( _9p_request_data_t * preq9p, 
                   void  * pworker_data,
                   u32 * plenout, 
                   char * preply)
@@ -59,18 +59,21 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
   char * cursor = preq9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE ;
   nfs_worker_data_t * pwkrdata = (nfs_worker_data_t *)pworker_data ;
 
-  u16 * msgtag = NULL ;
-  u32 * fid    = NULL ;
-  u32  * mode  = NULL ;
-  u32  * gid   = NULL ;
-  u16  * name_len = NULL ;
-  char * name_str = NULL ;
+  u16  * msgtag     = NULL ;
+  u32  * fid        = NULL ;
+  u32  * valid      = NULL ;
+  u32  * mode       = NULL ;
+  u32  * uid        = NULL ;
+  u32  * gid        = NULL ;
+  u64  * size       = NULL ;
+  u64  * atime_sec  = NULL ;
+  u64  * atime_nsec = NULL ;
+  u64  * mtime_sec  = NULL ;
+  u64  * mtime_nsec = NULL ;
+
 
   _9p_fid_t * pfid = NULL ;
-  _9p_qid_t qid_newdir ;
 
-  cache_entry_t       * pentry_newdir = NULL ;
-  fsal_name_t           dir_name ; 
   fsal_attrib_list_t    fsalattr ;
   cache_inode_status_t  cache_status ;
 
@@ -83,13 +86,19 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
   /* Get data */
   _9p_getptr( cursor, msgtag, u16 ) ; 
 
-  _9p_getptr( cursor, fid,    u32 ) ; 
-  _9p_getstr( cursor, name_len, name_str ) ;
-  _9p_getptr( cursor, mode,   u32 ) ;
-  _9p_getptr( cursor, gid,    u32 ) ;
+  _9p_getptr( cursor, fid,        u32 ) ; 
+  _9p_getptr( cursor, valid,      u32 ) ;
+  _9p_getptr( cursor, mode,       u32 ) ;
+  _9p_getptr( cursor, uid,        u32 ) ;
+  _9p_getptr( cursor, gid,        u32 ) ;
+  _9p_getptr( cursor, size,       u64 ) ;
+  _9p_getptr( cursor, atime_sec,  u64 ) ;
+  _9p_getptr( cursor, atime_nsec, u64 ) ;
+  _9p_getptr( cursor, mtime_sec,  u64 ) ;
+  _9p_getptr( cursor, mtime_nsec, u64 ) ;
 
-  LogDebug( COMPONENT_9P, "TMKDIR: tag=%u fid=%u name=%.*s mode=0%o gid=%u",
-            (u32)*msgtag, *fid, *name_len, name_str, *mode, *gid ) ;
+  LogDebug( COMPONENT_9P, "TSETATTR: tag=%u fid=%u mode=0%o uid=%u gid=%u size=%llu atime=(%llu|%llu) mtime=(%llu|%llu)",
+            (u32)*msgtag, *fid, *mode, *uid, *gid, *size, *atime_sec, *atime_nsec, *mtime_sec, *mtime_nsec  ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
     {
@@ -100,44 +109,12 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
 
    pfid = &preq9p->pconn->fids[*fid] ;
 
-  snprintf( dir_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
-
-   /* Create the directory */
-
-   /* BUGAZOMEU: @todo : the gid parameter is not used yet */
-   if( ( pentry_newdir = cache_inode_create( pfid->pentry,
-                                             &dir_name,
-                                             DIR_BEGINNING,
-                                             *mode,
-                                             NULL,
-                                             &fsalattr,
-                                             pwkrdata->ht,
-                                             &pwkrdata->cache_inode_client, 
-                                             &pfid->fsal_op_context, 
-     					     &cache_status)) == NULL)
-   {
-      err = _9p_tools_errno( cache_status ) ; ;
-      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-      return rc ;
-   }
-
-   /* Build the qid */
-   qid_newdir.type    = _9P_QTDIR ;
-   qid_newdir.version = 0 ;
-   qid_newdir.path    = fsalattr.fileid ;
-
    /* Build the reply */
-  _9p_setinitptr( cursor, preply, _9P_RMKDIR ) ;
+  _9p_setinitptr( cursor, preply, _9P_RSETATTR ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
-
-  _9p_setqid( cursor, qid_newdir ) ;
 
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
-
-  LogDebug( COMPONENT_9P, 
-            "RMKDIR: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu)",
-            (u32)*msgtag, *fid, *name_len, name_str, qid_newdir.type, qid_newdir.version, (unsigned long long)qid_newdir.path ) ;
 
   return 1 ;
 }
