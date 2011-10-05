@@ -100,7 +100,7 @@ const _9p_function_desc_t _9pfuncdesc[] = {
         { _9p_dummy, "_9P_TFSYNC" },
         { _9p_dummy, "_9P_TLOCK" },
         { _9p_dummy, "_9P_TGETLOCK" },
-        { _9p_dummy, "_9P_TLINK" },
+        { _9p_link, "_9P_TLINK" },
         { _9p_mkdir, "_9P_TMKDIR" },
         { _9p_dummy, "_9P_TRENAMEAT" },
         { _9p_dummy, "_9P_TUNLINKAT" },
