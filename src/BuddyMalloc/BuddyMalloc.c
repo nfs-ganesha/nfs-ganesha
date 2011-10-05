@@ -594,7 +594,7 @@ int isBadMagicNumber(const char *tag, BuddyThreadContext_t *context, BuddyBlock_
 #endif
         }
       LogMajor(COMPONENT_MEMALLOC,
-               "%s %s block %p has been overwritten or is not a buddy block (Magic number %08X<>%08X)",
+               "%s %s block %p has been overwritten or is not a buddy block (Magic number %08x<>%08x)",
                tag, _label, block, block->Header.MagicNumber, MagicNumber);
       log_bad_block(tag, context, block, do_guilt, do_guilt);
       return 1;
@@ -704,7 +704,7 @@ static BuddyBlock_t *Get_BuddyBlock(BuddyThreadContext_t * context,
   Offset_buddy = Offset_block ^ (1 << k);
 
   LogFullDebug(COMPONENT_MEMALLOC,
-               "buddy(%08tx,%u,%08X)=%08tx",
+               "buddy(%08tx,%u,%08x)=%08tx",
                Offset_block, k, 1 << k, Offset_buddy);
 
   return (BuddyBlock_t *) (Offset_buddy + BaseAddr);
@@ -1616,11 +1616,11 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
   /* update stats to remember we use this amount of memory */
   UpdateStats_UseStdMemSpace(context, allocation);
 
-  LogFullDebug(COMPONENT_MEMALLOC,
-               "%p:BuddyMalloc(%llu) => %p",
-               (BUDDY_ADDR_T) pthread_self(),
-               (unsigned long long)Size,
-               p_block->Content.UserSpace);
+  LogDebug(COMPONENT_MEMALLOC,
+           "BuddyMalloc(%llu) block=%p => %p",
+           (unsigned long long)Size,
+           p_block,
+           p_block->Content.UserSpace);
 
 
   /* returns the userspace aligned on 64 bits */
