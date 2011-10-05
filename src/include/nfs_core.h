@@ -288,6 +288,9 @@ typedef struct nfs_core_param__
   unsigned int core_options;
   unsigned int max_send_buffer_size; /* Size of RPC send buffer */
   unsigned int max_recv_buffer_size; /* Size of RPC recv buffer */
+#ifdef _USE_NLM
+  bool_t nsm_use_caller_name;
+#endif
 } nfs_core_parameter_t;
 
 typedef struct nfs_ip_name_param__
@@ -360,6 +363,7 @@ typedef struct nfs_param__
 #endif                          /* _USE_NFS4_1 */
   nfs4_owner_parameter_t nfs4_owner_param;
 #ifdef _USE_NLM
+  hash_parameter_t nsm_client_hash_param;
   hash_parameter_t nlm_client_hash_param;
   hash_parameter_t nlm_owner_hash_param;
 #endif
