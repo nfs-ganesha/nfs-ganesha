@@ -71,11 +71,12 @@ int _9p_setattr( _9p_request_data_t * preq9p,
   u64  * mtime_sec  = NULL ;
   u64  * mtime_nsec = NULL ;
 
-
   _9p_fid_t * pfid = NULL ;
 
   fsal_attrib_list_t    fsalattr ;
   cache_inode_status_t  cache_status ;
+
+  struct timeval t;
 
   int rc = 0 ; 
   int err = 0 ;
@@ -107,7 +108,95 @@ int _9p_setattr( _9p_request_data_t * preq9p,
       return rc ;
     }
 
-   pfid = &preq9p->pconn->fids[*fid] ;
+  pfid = &preq9p->pconn->fids[*fid] ;
+
+  /* If a "time" change is required, but not with the "_set" suffix, use gettimeofday */
+  if( *valid & (_9P_SETATTR_ATIME|_9P_SETATTR_CTIME|_9P_SETATTR_MTIME) )
+   {
+     if( gettimeofday( &t, NULL ) == -1 )
+       {
+         LogMajor( COMPONENT_9P, "TSETATTR: tag=%u fid=%u ERROR !! gettimeofday returned -1 with errno=%u",
+                   (u32)*msgtag, *fid, errno ) ;
+
+         err = errno ;
+         rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+         return rc ;
+       }
+   }
+
+  /* Let's do the job */
+  memset( (char *)&fsalattr, 0, sizeof( fsalattr ) ) ;
+  if( *valid & _9P_SETATTR_MODE )
+   {
+      fsalattr.asked_attributes |= FSAL_ATTR_MODE ;
+      fsalattr.mode = *mode ;
+   }
+
+  if( *valid & _9P_SETATTR_UID )
+   {
+      fsalattr.asked_attributes |= FSAL_ATTR_OWNER ;
+      fsalattr.owner = *uid ;
+   }
+
+  if( *valid & _9P_SETATTR_GID )
+   {
+      fsalattr.asked_attributes |= FSAL_ATTR_GROUP ;
+      fsalattr.group = *gid ;
+   }
+
+  if( *valid & _9P_SETATTR_SIZE )
+   {
+      fsalattr.asked_attributes |= FSAL_ATTR_SIZE ;
+      fsalattr.filesize = *size ;
+   }
+
+  if( *valid & _9P_SETATTR_ATIME )
+   {
+      fsalattr.asked_attributes |= FSAL_ATTR_ATIME ;
+      fsalattr.atime.seconds  = t.tv_sec ;
+      fsalattr.atime.nseconds = t.tv_usec * 1000 ;
+   }
+
+  if( *valid & _9P_SETATTR_MTIME )
+   {
+      fsalattr.asked_attributes |= FSAL_ATTR_MTIME ;
+      fsalattr.mtime.seconds  = t.tv_sec ;
+      fsalattr.mtime.nseconds = t.tv_usec * 1000 ;
+   }
+
+  if( *valid & _9P_SETATTR_CTIME )
+   {
+      fsalattr.asked_attributes |= FSAL_ATTR_CTIME ;
+      fsalattr.ctime.seconds  = t.tv_sec ;
+      fsalattr.ctime.nseconds = t.tv_usec * 1000 ;
+   }
+
+  if( *valid & _9P_SETATTR_ATIME_SET )
+   {
+      fsalattr.asked_attributes |= FSAL_ATTR_ATIME ;
+      fsalattr.atime.seconds  = *atime_sec ;
+      fsalattr.atime.nseconds = *atime_nsec ;
+   }
+
+  if( *valid & _9P_SETATTR_MTIME_SET )
+   {
+      fsalattr.asked_attributes |= FSAL_ATTR_MTIME ;
+      fsalattr.mtime.seconds  = *mtime_sec ;
+      fsalattr.mtime.nseconds = *mtime_nsec ;
+   }
+
+  /* Now set the attr */ 
+  if( cache_inode_setattr( pfid->pentry,
+			   &fsalattr,
+                           pwkrdata->ht,
+			   &pwkrdata->cache_inode_client,
+			   &pfid->fsal_op_context,
+                           &cache_status ) != CACHE_INODE_SUCCESS )
+    {
+      err = _9p_tools_errno( cache_status ) ; ;
+      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+      return rc ;
+    }
 
    /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RSETATTR ) ;
