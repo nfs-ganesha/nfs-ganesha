@@ -511,7 +511,7 @@ int _9p_symlink( _9p_request_data_t * preq9p,
                  u32 * plenout, 
                  char * preply) ;
 
-int _9p_unlink( _9p_request_data_t * preq9p, 
+int _9p_remove( _9p_request_data_t * preq9p, 
                 void * pworker_data,
                 u32 * plenout, 
                 char * preply) ;
