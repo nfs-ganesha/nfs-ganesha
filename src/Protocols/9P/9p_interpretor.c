@@ -91,7 +91,7 @@ const _9p_function_desc_t _9pfuncdesc[] = {
         { _9p_symlink, "_9P_TSYMLINK" },
         { _9p_dummy, "_9P_TMKNOD" },
         { _9p_dummy, "_9P_TRENAME" },
-        { _9p_dummy, "_9P_TREADLINK" },
+        { _9p_readlink, "_9P_TREADLINK" },
         { _9p_getattr, "_9P_TGETATTR"},
         { _9p_setattr, "_9P_TSETATTR" },
         { _9p_dummy, "_9P_TXATTRWALK" },
