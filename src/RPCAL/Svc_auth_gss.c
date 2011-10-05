@@ -376,7 +376,7 @@ int sprint_ctx(char *buff, unsigned char *ctx, int len)
     len = 16;
 
   for(i = 0; i < len; i++)
-    sprintf(buff + i * 2, "%02X", ctx[i]);
+    sprintf(buff + i * 2, "%02x", ctx[i]);
 
   return len * 2;
 }

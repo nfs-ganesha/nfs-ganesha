@@ -119,9 +119,9 @@ const char *xprt_type_to_str(xprt_type_t type)
   switch(type)
     {
       case XPRT_UNKNOWN:    return "UNKNOWN";
-      case XPRT_UDP:        return "UDP";
-      case XPRT_TCP:        return "TCP";
-      case XPRT_RENDEZVOUS: return "RENDEZVOUS";
+      case XPRT_UDP:        return "udp";
+      case XPRT_TCP:        return "tcp";
+      case XPRT_RENDEZVOUS: return "rendezvous";
     }
   return "INVALID";
 }
@@ -471,7 +471,7 @@ CLIENT *Clnt_create(char *host,
   if(clnt == NULL)
     {
       const char *err = clnt_spcreateerror("clnt_create failed");
-      LogFullDebug(COMPONENT_RPC, "%s", err);
+      LogDebug(COMPONENT_RPC, "%s", err);
     }
   pthread_mutex_unlock(&clnt_create_mutex);
   return clnt;

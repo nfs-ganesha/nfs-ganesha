@@ -803,7 +803,7 @@ void sprint_mem(char *str, char *buff, int len)
   if(buff == NULL)
     sprintf(str, "<null>");
   else for(i = 0; i < len; i++)
-    sprintf(str + i * 2, "%02X", (unsigned char)buff[i]);
+    sprintf(str + i * 2, "%02x", (unsigned char)buff[i]);
 }
 
 /**
