@@ -128,10 +128,14 @@ int _9p_dummy( _9p_request_data_t * preq9p,
 {
   char * msgdata = preq9p->_9pmsg + _9P_HDR_SIZE ;
   u8 * pmsgtype = NULL ;
+  u16 msgtag = 0 ;
+  int err = ENOTSUP ;
 
   /* Get message's type */
   pmsgtype = (u8 *)msgdata ;
-  LogEvent( COMPONENT_9P,  "(%u|%s) not implemented yet", *pmsgtype,  _9pfuncdesc[_9ptabindex[*pmsgtype]].funcname  ) ;
+  LogEvent( COMPONENT_9P,  "(%u|%s) not implemented yet, returning ENOTSUP", *pmsgtype,  _9pfuncdesc[_9ptabindex[*pmsgtype]].funcname  ) ;
+
+  _9p_rerror( preq9p, &msgtag, &err, plenout, preply ) ;
 
   return -1 ;
 } /* _9p_dummy */

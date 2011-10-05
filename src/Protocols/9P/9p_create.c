@@ -102,7 +102,7 @@ int _9p_create( _9p_request_data_t * preq9p,
 
    pfid = &preq9p->pconn->fids[*fid] ;
 
-  snprintf( file_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
+   snprintf( file_name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
 
    /* Create the file */
 
