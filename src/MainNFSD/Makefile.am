@@ -112,6 +112,7 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/cache_inode.h             \
                              ../include/cache_content.h           \
                              ../include/config_parsing.h          \
+                             ../include/fsal_cb.h                 \
                              ../include/SemN.h                    \
                              ../include/external_tools.h          \
                              ../include/err_inject.h              \
@@ -144,6 +145,7 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       ../Protocols/XDR/libnfs_mnt_xdr.la                \
                                       ../SemN/libSemN.la                                \
                                       ../RW_Lock/librwlock.la                           \
+                                      ../FSAL_CB/libfsalcb.la                           \
                                       ../Common/libcommon_utils.la
 
 libMainServices_la_DEPENDENCIES = $(libMainServices_la_SOURCES) $(libMainServices_la_LIBADD)

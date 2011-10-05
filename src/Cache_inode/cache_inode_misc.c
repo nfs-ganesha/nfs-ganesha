@@ -948,6 +948,7 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
     case ERR_FSAL_XDEV:
     case ERR_FSAL_MLINK:
     case ERR_FSAL_TOOSMALL:
+    case ERR_FSAL_TIMEOUT:
     case ERR_FSAL_SERVERFAULT:
       /* These errors should be handled inside Cache Inode (or should never be seen by Cache Inode) */
       LogDebug(COMPONENT_CACHE_INODE,

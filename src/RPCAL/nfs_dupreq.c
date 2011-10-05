@@ -718,7 +718,8 @@ nfs_res_t nfs_dupreq_get(long xid, struct svc_req *ptr_req, SVCXPRT *xprt, int *
 
       *pstatus = DUPREQ_SUCCESS;
       res_nfs = pdupreq->res_nfs;
-      LogDupReq("Hit in the dupreq cache for", &pdupreq->addr, pdupreq->xid, pdupreq->rq_prog);
+      LogDupReq(" dupreq_get: Hit in the dupreq cache for", &pdupreq->addr,
+		pdupreq->xid, pdupreq->rq_prog);
     }
   else
     {

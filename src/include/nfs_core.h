@@ -65,6 +65,9 @@
 #include "err_LRU_List.h"
 #include "err_HashTable.h"
 
+#include "cache_inode.h"
+#include "fsal_cb.h"
+
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
 #ifdef _USE_PNFS
@@ -321,6 +324,13 @@ typedef struct nfs_session_id_param__
 } nfs_session_id_parameter_t;
 #endif
 
+typedef struct nfs_fsal_cb_param__
+{
+  struct prealloc_pool event_pool;
+  unsigned int nb_event_data_prealloc;
+  hash_table_t *ht; /* cache inode hashtable */
+} nfs_fsal_cb_parameter_t;
+
 typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
 
 typedef struct nfs_version4_parameter__
@@ -346,6 +356,7 @@ typedef struct nfs_param__
   nfs_idmap_cache_parameter_t gnamemap_cache_param;
   nfs_idmap_cache_parameter_t uidgidmap_cache_param;
   nfs_ip_stats_parameter_t ip_stats_param;
+  nfs_fsal_cb_parameter_t fsal_cb_param;
 #ifdef _HAVE_GSSAPI
   nfs_krb5_parameter_t krb5_param;
 #endif  
@@ -380,6 +391,7 @@ typedef struct nfs_param__
   buddy_parameter_t buddy_param_worker;
   buddy_parameter_t buddy_param_admin;
   buddy_parameter_t buddy_param_tcp_mgr;
+  buddy_parameter_t buddy_param_fsal_cb;
 #endif
 
 #ifdef _USE_MFSL
@@ -804,5 +816,8 @@ int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param);
 extern const nfs_function_desc_t *INVALID_FUNCDESC;
 const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs);
 int nfs_rpc_get_args(nfs_request_data_t * preqnfs, const nfs_function_desc_t *pfuncdesc);
+
+void create_fsal_cb_threads();
+void nfs_Init_FSAL_CB();
 
 #endif                          /* _NFS_CORE_H */

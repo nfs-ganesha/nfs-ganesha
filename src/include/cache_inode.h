@@ -223,7 +223,8 @@ typedef enum cache_inode_endofdir__
 
 typedef enum cache_inode_entry_valid_state__
 { VALID = 1,
-  INVALID = 2
+  INVALID = 2,
+  STALE = 3
 } cache_inode_entry_valid_state_t;
 
 typedef enum cache_inode_op__
@@ -371,7 +372,6 @@ typedef struct cache_inode_fsal_data__
   fsal_handle_t handle;                         /**< FSAL handle           */
   unsigned int cookie;                          /**< Cache inode cookie    */
 } cache_inode_fsal_data_t;
-
 
 #define SMALL_CLIENT_INDEX 0x20000000
 #define NLM_THREAD_INDEX   0x40000000

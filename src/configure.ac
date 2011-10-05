@@ -930,6 +930,8 @@ AC_CONFIG_FILES([include/Makefile
                  HashTable/Makefile
                  Cache_inode/Makefile
                  SAL/Makefile
+		 FSAL_CB/Makefile
+		 FSAL_CB/DUMB/Makefile
                  File_Content/Makefile
                  File_Content_Policy/Makefile
 		 Protocols/Makefile
