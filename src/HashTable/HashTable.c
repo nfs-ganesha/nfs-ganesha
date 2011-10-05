@@ -772,6 +772,100 @@ int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * bu
 
 /**
  * 
+ * HashTable_Get_and_Del: Try to retrieve the value associated with a key and remove from the hash table if found.
+ *
+ * Try to retrieve the value associated with a key. The structure buffval will point to the object found if successfull.
+ *
+ * @param ht the hashtable to be used.
+ * @param buffkey a pointeur to an object of type hash_buffer_t which describe the key location in memory.
+ * @param buffval a pointeur to an object of type hash_buffer_t which describe the value location in memory.
+ *
+ * @return HASHTABLE_SUCCESS if successfull.
+ * @return HASHTABLE_ERROR_NO_SUCH_KEY is the key was not found.
+ *
+ * @see HashTable_Set
+ * @see HashTable_Init
+ * @see HashTable_Del
+ */
+
+int HashTable_Get_and_Del(hash_table_t  * ht,
+                          hash_buffer_t * buffkey,
+                          hash_buffer_t * buffval,
+                          hash_buffer_t * buff_used_key)
+{
+  unsigned long hashval;
+  struct rbt_node *pn;
+  struct rbt_head *tete_rbt;
+  hash_data_t *pdata = NULL;
+  unsigned long rbt_value = 0;
+  int rc = 0;
+
+  /* Sanity check */
+  if(ht == NULL || buffkey == NULL || buffval == NULL)
+    return HASHTABLE_ERROR_INVALID_ARGUMENT;
+
+  /* Compute values to locate into the hashtable */
+  if( ht->parameter.hash_func_both != NULL )
+   {
+     uint32_t hashval32, rbt_value32;
+
+     if((*(ht->parameter.hash_func_both))( &ht->parameter, buffkey, &hashval32, &rbt_value32) == 0) 
+       return HASHTABLE_ERROR_INVALID_ARGUMENT;
+
+     hashval   = (unsigned long) hashval32;
+     rbt_value = (unsigned long) rbt_value32;
+   }
+  else
+   {
+    hashval   = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
+    rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
+   }
+
+  tete_rbt = &(ht->array_rbt[hashval]);
+
+  /* Acquire mutex */
+  P_w(&(ht->array_lock[hashval]));
+
+  /* I get the node with this value that is located on the left (first with this value in the rbtree) */
+  if((rc = Key_Locate(ht, buffkey, hashval, rbt_value, &pn)) != HASHTABLE_SUCCESS)
+    {
+      ht->stat_dynamic[hashval].notfound.nb_get += 1;
+      V_w(&(ht->array_lock[hashval]));
+      return rc;
+    }
+
+  /* Key was found */
+  pdata = (hash_data_t *) RBT_OPAQ(pn);
+  *buffval = pdata->buffval;
+
+  /* Return the key buffer back to the end user if pusedbuffkey isn't NULL */
+  if(buff_used_key != NULL)
+    *buff_used_key = pdata->buffkey;
+
+  ht->stat_dynamic[hashval].ok.nb_get += 1;
+
+  /* Now remove the entry */
+  RBT_UNLINK(tete_rbt, pn);
+
+  /* the key was located, the deletion is done */
+  ht->stat_dynamic[hashval].nb_entries -= 1;
+
+  /* put back the pdata buffer to pool */
+  ReleaseToPool(pdata, &ht->pdata_prealloc[hashval]);
+
+  /* Put the node back in the table of preallocated nodes (it could be reused) */
+  ReleaseToPool(pn, &ht->node_prealloc[hashval]);
+
+  ht->stat_dynamic[hashval].ok.nb_del += 1;
+
+  /* Release mutex */
+  V_w(&(ht->array_lock[hashval]));
+
+  return HASHTABLE_SUCCESS;
+}                               /* HashTable_Get */
+
+/**
+ * 
  * HashTable_Delall: Remove and free all (key,val) couples from the hashtable.
  *
  * Remove all (key,val) couples from the hashtable and free the stored data

@@ -152,6 +152,14 @@ void HashTable_Log(log_components_t component, hash_table_t * ht);
 void HashTable_Print(hash_table_t * ht);
 unsigned int HashTable_GetSize(hash_table_t * ht);
 
+/* The following function allows an atomic fetch hash only once,
+ * If the entry is found, it is removed.
+ */
+int HashTable_Get_and_Del(hash_table_t  * ht,
+                          hash_buffer_t * buffkey,
+                          hash_buffer_t * buffval,
+                          hash_buffer_t * buff_used_key);
+
 /*
  * The following two functions provide reference counting management while the
  * hash list mutex is held. put_ref should return 0 if the ref count was
