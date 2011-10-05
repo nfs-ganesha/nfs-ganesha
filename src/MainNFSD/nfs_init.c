@@ -313,6 +313,10 @@ void nfs_set_param_default()
   nfs_param.core_param.max_send_buffer_size = NFS_DEFAULT_SEND_BUFFER_SIZE;
   nfs_param.core_param.max_recv_buffer_size = NFS_DEFAULT_RECV_BUFFER_SIZE;
 
+#ifdef _USE_NLM
+  nfs_param.core_param.nsm_use_caller_name = FALSE;
+#endif
+
   /* Worker parameters : LRU */
   nfs_param.worker_param.lru_param.nb_entry_prealloc = NB_PREALLOC_LRU_WORKER;
   nfs_param.worker_param.lru_param.clean_entry = clean_pending_request;
@@ -541,6 +545,17 @@ void nfs_set_param_default()
   nfs_param.nfs4_owner_param.hash_param.name = "NFS4 Owner";
 
 #ifdef _USE_NLM
+  /* NSM Client hash */
+  nfs_param.nsm_client_hash_param.index_size = PRIME_STATE_ID;
+  nfs_param.nsm_client_hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
+  nfs_param.nsm_client_hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
+  nfs_param.nsm_client_hash_param.hash_func_key = nsm_client_value_hash_func;
+  nfs_param.nsm_client_hash_param.hash_func_rbt = nsm_client_rbt_hash_func;
+  nfs_param.nsm_client_hash_param.compare_key = compare_nsm_client_key;
+  nfs_param.nsm_client_hash_param.key_to_str = display_nsm_client_key;
+  nfs_param.nsm_client_hash_param.val_to_str = display_nsm_client_val;
+  nfs_param.nsm_client_hash_param.name = "NSM Client";
+
   /* NLM Client hash */
   nfs_param.nlm_client_hash_param.index_size = PRIME_STATE_ID;
   nfs_param.nlm_client_hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
@@ -1992,7 +2007,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #ifdef _USE_NLM
   /* Init The NLM Owner cache */
   LogDebug(COMPONENT_INIT, "Now building NLM Owner cache");
-  if(Init_nlm_hash(nfs_param.nlm_client_hash_param, nfs_param.nlm_owner_hash_param) != 0)
+  if(Init_nlm_hash() != 0)
     {
       LogFatal(COMPONENT_INIT,
                "Error while initializing NLM Owner cache");

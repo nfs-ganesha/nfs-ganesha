@@ -62,7 +62,7 @@ const char * state_owner_type_to_str(state_owner_type_t type);
 int different_owners(state_owner_t *powner1, state_owner_t *powner2);
 int DisplayOwner(state_owner_t *powner, char *buf);
 void Hash_inc_state_owner_ref(hash_buffer_t *buffval);
-int Hash_del_state_owner_ref(hash_buffer_t *buffval);
+int Hash_dec_state_owner_ref(hash_buffer_t *buffval);
 void inc_state_owner_ref_locked(state_owner_t *powner);
 void inc_state_owner_ref(state_owner_t *powner);
 
@@ -79,6 +79,30 @@ void dec_state_owner_ref(state_owner_t        * powner,
  ******************************************************************************/
 
 #ifdef _USE_NLM
+void inc_nsm_client_ref_locked(state_nsm_client_t * pclient);
+void inc_nsm_client_ref(state_nsm_client_t * pclient);
+void dec_nsm_client_ref_locked(state_nsm_client_t * pclient);
+void dec_nsm_client_ref(state_nsm_client_t * pclient);
+int display_nsm_client(state_nsm_client_t * pkey, char * str);
+int display_nsm_client_val(hash_buffer_t * pbuff, char * str);
+int display_nsm_client_key(hash_buffer_t * pbuff, char * str);
+
+int compare_nsm_client(state_nsm_client_t * pclient1,
+                       state_nsm_client_t * pclient2);
+
+int compare_nsm_client_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
+
+unsigned long nsm_client_value_hash_func(hash_parameter_t * p_hparam,
+                                         hash_buffer_t    * buffclef);
+
+unsigned long nsm_client_rbt_hash_func(hash_parameter_t * p_hparam,
+                                       hash_buffer_t    * buffclef);
+
+state_nsm_client_t *get_nsm_client(care_t       care,
+                                   SVCXPRT    * xprt,
+                                   const char * caller_name);
+void nsm_client_PrintAll(void);
+
 void inc_nlm_client_ref_locked(state_nlm_client_t * pclient);
 void inc_nlm_client_ref(state_nlm_client_t * pclient);
 void dec_nlm_client_ref_locked(state_nlm_client_t * pclient);
@@ -98,9 +122,10 @@ unsigned long nlm_client_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t    * buffclef);
 
-state_nlm_client_t *get_nlm_client(care_t       care,
-                                   SVCXPRT    * xprt,
-                                   const char * caller_name);
+state_nlm_client_t *get_nlm_client(care_t               care,
+                                   SVCXPRT            * xprt,
+                                   state_nsm_client_t * pnsm_client,
+                                   const char         * caller_name);
 void nlm_client_PrintAll(void);
 
 void remove_nlm_owner(cache_inode_client_t * pclient,
@@ -122,7 +147,8 @@ unsigned long nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                       hash_buffer_t    * buffclef);
 
-void make_nlm_special_owner(state_nlm_client_t * pclient,
+void make_nlm_special_owner(state_nsm_client_t * pnsm_client,
+                            state_nlm_client_t * pnlm_client,
                             state_owner_t      * pnlm_owner);
 
 state_owner_t *get_nlm_owner(care_t               care,
@@ -131,7 +157,7 @@ state_owner_t *get_nlm_owner(care_t               care,
                              uint32_t             svid);
 void nlm_owner_PrintAll(void);
 
-int Init_nlm_hash(hash_parameter_t client_param, hash_parameter_t owner_param);
+int Init_nlm_hash(void);
 #endif
 
 
@@ -357,7 +383,7 @@ state_status_t state_cancel(cache_entry_t        * pentry,
 
 #ifdef _USE_NLM
 state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
-                                state_nlm_client_t   * pnlmclient,
+                                state_nsm_client_t   * pnsmclient,
                                 state_t              * pstate,
                                 cache_inode_client_t * pclient,
                                 state_status_t       * pstatus);

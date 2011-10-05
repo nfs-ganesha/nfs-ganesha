@@ -192,16 +192,26 @@ typedef enum care_t
   CARE_MONITOR
 } care_t;
 
+typedef struct state_nsm_client_t
+{
+  pthread_mutex_t         ssc_mutex;
+  struct glist_head       ssc_lock_list;
+  sockaddr_t              ssc_client_addr;
+  int                     ssc_refcount;
+  bool_t                  ssc_monitored;
+  int                     ssc_nlm_caller_name_len;
+  char                  * ssc_nlm_caller_name;
+} state_nsm_client_t;
+
 typedef struct state_nlm_client_t
 {
   pthread_mutex_t         slc_mutex;
-  struct glist_head       slc_lock_list;
-  sockaddr_t              slc_client_addr;
+  state_nsm_client_t    * slc_nsm_client;
   xprt_type_t             slc_client_type;
   int                     slc_refcount;
   int                     slc_nlm_caller_name_len;
   char                    slc_nlm_caller_name[LM_MAXSTRLEN+1];
-  bool_t                  slc_monitored;
+  CLIENT                * slc_callback_clnt;
 } state_nlm_client_t;
 
 typedef struct state_nlm_owner_t
@@ -347,10 +357,7 @@ typedef struct state_nlm_block_data_t
   sockaddr_t                 sbd_nlm_hostaddr;
   netobj                     sbd_nlm_fh;
   char                       sbd_nlm_fh_buf[MAX_NETOBJ_SZ];
-  uid_t                      sbd_nlm_caller_uid;
-  gid_t                      sbd_nlm_caller_gid;
-  unsigned int               sbd_nlm_caller_glen;
-  gid_t                      sbd_nlm_caller_garray[NGRPS];
+  struct user_credentials    sbd_credential;
 } state_nlm_block_data_t;
 
 typedef struct state_block_data_t
@@ -413,10 +420,10 @@ struct state_lock_entry_t
  */
 struct state_cookie_entry_t
 {
-  pthread_mutex_t     sce_mutex;
-  int                 sce_refcount;
-  cache_entry_t      *sce_pentry;
-  state_lock_entry_t *sce_lock_entry;
+  cache_entry_t      * sce_pentry;
+  state_lock_entry_t * sce_lock_entry;
+  void               * sce_pcookie;
+  int                  sce_cookie_size;
 };
 #endif
 

@@ -63,21 +63,21 @@ int nlm4_Sm_Notify(nfs_arg_t * parg /* IN     */ ,
 {
   nlm4_sm_notifyargs * arg = &parg->arg_nlm4_sm_notify;
   state_status_t       state_status = CACHE_INODE_SUCCESS;
-  state_nlm_client_t * nlm_client;
+  state_nsm_client_t * nsm_client;
 
   LogDebug(COMPONENT_NLM,
            "REQUEST PROCESSING: Calling nlm4_sm_notify for %s",
            arg->name);
 
-  nlm_client = get_nlm_client(TRUE, preq->rq_xprt, arg->name);
-  if(nlm_client != NULL)
+  nsm_client = get_nsm_client(TRUE, preq->rq_xprt, arg->name);
+  if(nsm_client != NULL)
     {
       /* Cast the state number into a state pointer to protect
        * locks from a client that has rebooted from being released
        * by this SM_NOTIFY.
        */
       if(state_nlm_notify(pcontext,
-                          nlm_client,
+                          nsm_client,
                           (void *) (ptrdiff_t) arg->state,
                           pclient,
                           &state_status) != STATE_SUCCESS)
@@ -85,6 +85,8 @@ int nlm4_Sm_Notify(nfs_arg_t * parg /* IN     */ ,
           /* TODO FSF: Deal with error */
         }
     }
+
+  dec_nsm_client_ref(nsm_client);
 
   return NFS_REQ_OK;
 }

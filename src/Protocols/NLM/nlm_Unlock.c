@@ -65,6 +65,7 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
   cache_entry_t      * pentry;
   state_status_t       state_status = CACHE_INODE_SUCCESS;
   char                 buffer[MAXNETOBJ_SZ * 2];
+  state_nsm_client_t * nsm_client;
   state_nlm_client_t * nlm_client;
   state_owner_t      * nlm_owner;
   state_lock_desc_t    lock;
@@ -104,6 +105,7 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
                               pcontext,
                               pclient,
                               CARE_NOT, /* unlock doesn't care if owner is found */
+                              &nsm_client,
                               &nlm_client,
                               &nlm_owner,
                               NULL);
@@ -137,6 +139,7 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
     }
 
   /* Release the NLM Client and NLM Owner references we have */
+  dec_nsm_client_ref(nsm_client);
   dec_nlm_client_ref(nlm_client);
   dec_state_owner_ref(nlm_owner, pclient);
 
@@ -160,6 +163,7 @@ static void nlm4_unlock_message_resp(nlm_async_queue_t *arg)
                  &(arg->nlm_async_args.nlm_async_res),
                  NULL);
   nlm4_Unlock_Free(&arg->nlm_async_args.nlm_async_res);
+  dec_nsm_client_ref(arg->nlm_async_host->slc_nsm_client);
   dec_nlm_client_ref(arg->nlm_async_host);
   Mem_Free(arg);
 }
@@ -184,13 +188,18 @@ int nlm4_Unlock_Message(nfs_arg_t * parg /* IN     */ ,
                         struct svc_req *preq /* IN     */ ,
                         nfs_res_t * pres /* OUT    */ )
 {
-  state_nlm_client_t * nlm_client;
+  state_nlm_client_t * nlm_client = NULL;
+  state_nsm_client_t * nsm_client;
   nlm4_unlockargs    * arg = &parg->arg_nlm4_unlock;
   int                  rc = NFS_REQ_OK;
 
   LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Unlock_Message");
 
-  nlm_client = get_nlm_client(TRUE, preq->rq_xprt, arg->alock.caller_name);
+  nsm_client = get_nsm_client(CARE_NO_MONITOR, preq->rq_xprt, arg->alock.caller_name);
+
+  if(nsm_client != NULL)
+    nlm_client = get_nlm_client(CARE_NO_MONITOR, preq->rq_xprt, nsm_client, arg->alock.caller_name);
+
   if(nlm_client == NULL)
     rc = NFS_REQ_DROP;
   else
@@ -201,6 +210,8 @@ int nlm4_Unlock_Message(nfs_arg_t * parg /* IN     */ ,
 
   if(rc == NFS_REQ_DROP)
     {
+      if(nsm_client != NULL)
+        dec_nsm_client_ref(nsm_client);
       if(nlm_client != NULL)
         dec_nlm_client_ref(nlm_client);
       LogCrit(COMPONENT_NLM,

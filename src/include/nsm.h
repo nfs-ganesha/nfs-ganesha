@@ -64,8 +64,8 @@ extern "C"
     char priv[16];
   };
   typedef struct mon mon;
-  extern bool_t nsm_monitor(state_nlm_client_t *host);
-  extern bool_t nsm_unmonitor(state_nlm_client_t *host);
+  extern bool_t nsm_monitor(state_nsm_client_t *host);
+  extern bool_t nsm_unmonitor(state_nsm_client_t *host);
   extern void nsm_unmonitor_all(void);
 
 /* the xdr functions */

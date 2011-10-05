@@ -27,6 +27,7 @@
 #include "nsm.h"
 #include "nlm4.h"
 #include "log_macros.h"
+#include "nfs_core.h"
 
 pthread_mutex_t nsm_mutex = PTHREAD_MUTEX_INITIALIZER;
 CLIENT *nsm_clnt;
@@ -49,7 +50,7 @@ void nsm_disconnect()
     }
 }
 
-bool_t nsm_monitor(state_nlm_client_t *host)
+bool_t nsm_monitor(state_nsm_client_t *host)
 {
   enum clnt_stat     ret;
   struct mon         nsm_mon;
@@ -59,10 +60,10 @@ bool_t nsm_monitor(state_nlm_client_t *host)
   if(host == NULL)
     return TRUE;
 
-  if(host->slc_monitored)
+  if(host->ssc_monitored)
     return TRUE;
 
-  nsm_mon.mon_id.mon_name      = host->slc_nlm_caller_name;
+  nsm_mon.mon_id.mon_name      = host->ssc_nlm_caller_name;
   nsm_mon.mon_id.my_id.my_name = "localhost";
   nsm_mon.mon_id.my_id.my_prog = NLMPROG;
   nsm_mon.mon_id.my_id.my_vers = NLM4_VERS;
@@ -70,7 +71,7 @@ bool_t nsm_monitor(state_nlm_client_t *host)
   /* nothing to put in the private data */
   LogDebug(COMPONENT_NLM,
            "Monitor %s",
-           host->slc_nlm_caller_name);
+           host->ssc_nlm_caller_name);
 
   P(nsm_mutex);
 
@@ -113,7 +114,7 @@ bool_t nsm_monitor(state_nlm_client_t *host)
     }
 
   nsm_count++;
-  host->slc_monitored = TRUE;
+  host->ssc_monitored = TRUE;
   LogDebug(COMPONENT_NLM,
            "Monitored %s", nsm_mon.mon_id.mon_name);
 
@@ -121,7 +122,7 @@ bool_t nsm_monitor(state_nlm_client_t *host)
   return TRUE;
 }
 
-bool_t nsm_unmonitor(state_nlm_client_t *host)
+bool_t nsm_unmonitor(state_nsm_client_t *host)
 {
   enum clnt_stat ret;
   struct sm_stat res;
@@ -131,10 +132,10 @@ bool_t nsm_unmonitor(state_nlm_client_t *host)
   if(host == NULL)
     return TRUE;
 
-  if(!host->slc_monitored)
+  if(!host->ssc_monitored)
     return TRUE;
 
-  nsm_mon_id.mon_name      = host->slc_nlm_caller_name;
+  nsm_mon_id.mon_name      = host->ssc_nlm_caller_name;
   nsm_mon_id.my_id.my_name = "localhost";
   nsm_mon_id.my_id.my_prog = NLMPROG;
   nsm_mon_id.my_id.my_vers = NLM4_VERS;
@@ -170,7 +171,7 @@ bool_t nsm_unmonitor(state_nlm_client_t *host)
       return FALSE;
     }
 
-  host->slc_monitored = FALSE;
+  host->ssc_monitored = FALSE;
   nsm_count--;
   nsm_disconnect();
   LogDebug(COMPONENT_NLM,

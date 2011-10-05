@@ -306,24 +306,33 @@ int nlm_send_async(int                  proc,
                    void               * inarg,
                    void               * key)
 {
-  CLIENT *clnt;
   struct timeval tout = { 0, 10 };
   xdrproc_t inproc = NULL, outproc = NULL;
   int retval;
   struct timeval start, now;
   struct timespec timeout;
 
-  LogFullDebug(COMPONENT_NLM,
-               "Clnt_create %s",
-               host->slc_nlm_caller_name);
-  clnt = Clnt_create(host->slc_nlm_caller_name, NLMPROG, NLM4_VERS, "tcp");
-  if(!clnt)
+  if(host->slc_callback_clnt == NULL)
     {
-      LogMajor(COMPONENT_NLM,
-               "Cannot create NLM async connection to client %s",
-               host->slc_nlm_caller_name);
-      return -1;
+      LogFullDebug(COMPONENT_NLM,
+                   "Clnt_create %s",
+                   host->slc_nsm_client->ssc_nlm_caller_name);
+
+      host->slc_callback_clnt = Clnt_create(host->slc_nsm_client->ssc_nlm_caller_name,
+                                            NLMPROG,
+                                            NLM4_VERS,
+                                            (char *)xprt_type_to_str(host->slc_client_type));
+
+      if(host->slc_callback_clnt == NULL)
+        {
+          LogMajor(COMPONENT_NLM,
+                   "Cannot create NLM async %s connection to client %s",
+                   xprt_type_to_str(host->slc_client_type),
+                   host->slc_nsm_client->ssc_nlm_caller_name);
+          return -1;
+        }
     }
+
   inproc = nlm_reply_proc[proc].inproc;
   outproc = nlm_reply_proc[proc].outproc;
 
@@ -332,7 +341,7 @@ int nlm_send_async(int                  proc,
   pthread_mutex_unlock(&nlm_async_resp_mutex);
 
   LogFullDebug(COMPONENT_NLM, "About to make clnt_call");
-  retval = clnt_call(clnt, proc, inproc, inarg, outproc, NULL, tout);
+  retval = clnt_call(host->slc_callback_clnt, proc, inproc, inarg, outproc, NULL, tout);
   LogFullDebug(COMPONENT_NLM, "Done with clnt_call");
 
   if(retval == RPC_TIMEDOUT)
@@ -369,7 +378,6 @@ int nlm_send_async(int                  proc,
     }
   pthread_mutex_unlock(&nlm_async_resp_mutex);
 
-  Clnt_destroy(clnt);
   return retval;
 }
 

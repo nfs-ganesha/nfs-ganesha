@@ -87,7 +87,7 @@ int display_nfs4_owner(state_owner_t *powner, char *str)
             (unsigned char)powner->so_owner_val[i]);
 
   return sprintf(str, 
-                 "%s powner=%p: clientid=%llu owner=(%u:%s) confirmed=%u counter=%u seqid=%u refcount=%d",
+                 "%s %p: clientid=%llu owner=(%u:%s) confirmed=%u counter=%u seqid=%u refcount=%d",
                  state_owner_type_to_str(powner->so_type),
                  powner,
                  (unsigned long long)powner->so_owner.so_nfs4_owner.so_clientid,
@@ -253,7 +253,7 @@ void remove_nfs4_owner(cache_inode_client_t * pclient,
                         &buffkey,
                         &old_key,
                         &old_value,
-                        Hash_del_state_owner_ref);
+                        Hash_dec_state_owner_ref);
 
   switch(rc)
     {

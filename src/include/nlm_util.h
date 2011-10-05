@@ -66,6 +66,7 @@ int nlm_process_parameters(struct svc_req        * preq,
                            fsal_op_context_t     * pcontext,
                            cache_inode_client_t  * pclient,
                            care_t                  care,
+                           state_nsm_client_t   ** ppnsm_client,
                            state_nlm_client_t   ** ppnlm_client,
                            state_owner_t        ** ppowner,
                            state_block_data_t   ** ppblock_data);

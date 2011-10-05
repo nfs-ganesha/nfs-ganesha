@@ -152,7 +152,7 @@ void netobj_to_string(netobj *obj, char *buffer, int maxlen)
   left -= 9;
   while(left > 2 && pos < obj->n_len)
     {
-      buf += sprintf(buf, "%02x", obj->n_bytes[pos]);
+      buf += sprintf(buf, "%02x", (unsigned char) obj->n_bytes[pos]);
       left -= 2;
       pos++;
     }
@@ -262,8 +262,8 @@ static void nlm4_send_grant_msg(nlm_async_queue_t *arg)
     {
       /* This must be an old NLM_GRANTED_RES */
       LogFullDebug(COMPONENT_NLM,
-                   "Could not find cookie=%s",
-                   buffer);
+                   "Could not find cookie=%s status=%s",
+                   buffer, state_err_str(state_status));
       return;
     }
 
@@ -283,7 +283,16 @@ static void nlm4_send_grant_msg(nlm_async_queue_t *arg)
 
   V(cookie_entry->sce_pentry->object.file.lock_list_mutex);
 
-  state_complete_grant(pcontext, cookie_entry, &nlm_async_cache_inode_client);
+  if(state_release_grant(pcontext,
+                         cookie_entry,
+                         &nlm_async_cache_inode_client,
+                         &state_status) != STATE_SUCCESS)
+    {
+      /* Huh? */
+      LogFullDebug(COMPONENT_NLM,
+                   "Could not release cookie=%s status=%s",
+                   buffer, state_err_str(state_status));
+    }
 }
 
 int nlm_process_parameters(struct svc_req        * preq,
@@ -295,6 +304,7 @@ int nlm_process_parameters(struct svc_req        * preq,
                            fsal_op_context_t     * pcontext,
                            cache_inode_client_t  * pclient,
                            care_t                  care,
+                           state_nsm_client_t   ** ppnsm_client,
                            state_nlm_client_t   ** ppnlm_client,
                            state_owner_t        ** ppowner,
                            state_block_data_t   ** ppblock_data)
@@ -304,6 +314,7 @@ int nlm_process_parameters(struct svc_req        * preq,
   cache_inode_status_t    cache_status;
   SVCXPRT                *ptr_svc = preq->rq_xprt;
 
+  *ppnsm_client = NULL;
   *ppnlm_client = NULL;
   *ppowner      = NULL;
 
@@ -329,10 +340,11 @@ int nlm_process_parameters(struct svc_req        * preq,
       return NLM4_STALE_FH;
     }
 
-  *ppnlm_client = get_nlm_client(care, ptr_svc, alock->caller_name);
-  if(*ppnlm_client == NULL)
+  *ppnsm_client = get_nsm_client(care, ptr_svc, alock->caller_name);
+
+  if(*ppnsm_client == NULL)
     {
-      /* If client is not found, and we don't care (such as unlock),
+      /* If NSM Client is not found, and we don't care (such as unlock),
        * just return GRANTED (the unlock must succeed, there can't be
        * any locks).
        */
@@ -342,11 +354,29 @@ int nlm_process_parameters(struct svc_req        * preq,
         return NLM4_GRANTED;
     }
 
+  *ppnlm_client = get_nlm_client(care, ptr_svc, *ppnsm_client, alock->caller_name);
+
+  if(*ppnlm_client == NULL)
+    {
+      /* If NLM Client is not found, and we don't care (such as unlock),
+       * just return GRANTED (the unlock must succeed, there can't be
+       * any locks).
+       */
+      dec_nsm_client_ref(*ppnsm_client);
+
+      if(care != CARE_NOT)
+        return NLM4_DENIED_NOLOCKS;
+      else
+        return NLM4_GRANTED;
+    }
+
   *ppowner = get_nlm_owner(care, *ppnlm_client, &alock->oh, alock->svid);
+
   if(*ppowner == NULL)
     {
       LogDebug(COMPONENT_NLM,
                "Could not get NLM Owner");
+      dec_nsm_client_ref(*ppnsm_client);
       dec_nlm_client_ref(*ppnlm_client);
       *ppnlm_client = NULL;
 
@@ -386,13 +416,9 @@ int nlm_process_parameters(struct svc_req        * preq,
           memcpy((*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh_buf,
                  alock->fh.n_bytes,
                  alock->fh.n_len);
-          /* TODO FSF: Fill in credential information with dummy information */
-          (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_caller_uid  = 0;
-          (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_caller_gid  = 0;
-          (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_caller_glen = 0;
-          memset((*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_caller_garray,
-                 0,
-                 sizeof((*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_caller_garray));
+          /* FSF TODO: Ultimately I think the following will go away, we won't need the context, just the export */
+          /* Copy credentials from pcontext */
+          (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_credential = pcontext->credential;
         }
     }
   /* Fill in plock */
@@ -515,24 +541,25 @@ bool_t nlm_block_data_to_fsal_context(state_nlm_block_data_t * nlm_block_data,
   /* Build the credentials */
   fsal_status = FSAL_GetClientContext(fsal_context,
                                       &pexport->FS_export_context,
-                                      nlm_block_data->sbd_nlm_caller_uid,
-                                      nlm_block_data->sbd_nlm_caller_gid,
-                                      nlm_block_data->sbd_nlm_caller_garray,
-                                      nlm_block_data->sbd_nlm_caller_glen);
+                                      nlm_block_data->sbd_credential.user,
+                                      nlm_block_data->sbd_credential.group,
+                                      nlm_block_data->sbd_credential.alt_groups,
+                                      nlm_block_data->sbd_credential.nbgroups);
 
   if(FSAL_IS_ERROR(fsal_status))
     {
       LogEvent(COMPONENT_NLM,
                "Could not get credentials for (uid=%d,gid=%d), fsal error=(%d,%d)",
-               nlm_block_data->sbd_nlm_caller_uid,
-               nlm_block_data->sbd_nlm_caller_gid,
+               nlm_block_data->sbd_credential.user,
+               nlm_block_data->sbd_credential.group,
                fsal_status.major, fsal_status.minor);
       return FALSE;
     }
   else
     LogDebug(COMPONENT_NLM,
              "FSAL Cred acquired for (uid=%d,gid=%d)",
-             nlm_block_data->sbd_nlm_caller_uid, nlm_block_data->sbd_nlm_caller_gid);
+             nlm_block_data->sbd_credential.user,
+             nlm_block_data->sbd_credential.group);
 
   return TRUE;
 }

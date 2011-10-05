@@ -85,8 +85,6 @@ state_owner_t unknown_owner;
 #ifdef _USE_BLOCKING_LOCKS
 hash_table_t *ht_lock_cookies;
 
-void cookie_entry_dec_ref(state_cookie_entry_t * p_cookie_entry);
-
 state_status_t state_lock_init(state_status_t   * pstatus,
                                hash_parameter_t   cookie_param)
 #else
@@ -204,18 +202,17 @@ int display_lock_cookie(const char *cookie, int len, char *str)
   if(cookie == NULL)
     return sprintf(str, "<NULL>");
 
-  for(i = 0; i < len; i++)
-    {
-      sprintf(strtmp, "%02x", (unsigned char)cookie[i]);
-      strtmp += 2;
-    }
+  strtmp += sprintf(strtmp, "%d:", len);
 
-  return len * 2;
+  for(i = 0; i < len; i++)
+    strtmp += sprintf(strtmp, "%02x", (unsigned char)cookie[i]);
+
+  return strtmp - str;
 }
 
 /******************************************************************************
  *
- * Functions to compare lock owners and lock parameters
+ * Function to compare lock parameters
  *
  ******************************************************************************/
 
@@ -227,29 +224,12 @@ static inline int different_lock(state_lock_desc_t *lock1, state_lock_desc_t *lo
          (lock1->sld_length != lock2->sld_length);
 }
 
-bool_t same_cookie(char * pcookie1,
-                   int    cookie_size1,
-                   char * pcookie2,
-                   int    cookie_size2)
-{
-  if(pcookie1 == pcookie2)
-    return TRUE;
-
-  if(cookie_size1 != cookie_size2)
-    return FALSE;
-
-  if(pcookie1 == NULL || pcookie2 == NULL)
-    return FALSE;
-
-  return memcmp(pcookie1, pcookie2, cookie_size1) == 0;
-}
-
 /******************************************************************************
  *
  * Functions to log locks in various ways
  *
  ******************************************************************************/
-static void LogEntry(const char         *reason, 
+static void LogEntry(const char         *reason,
                      state_lock_entry_t *ple)
 {
   if(isFullDebug(COMPONENT_STATE))
@@ -259,23 +239,40 @@ static void LogEntry(const char         *reason,
       DisplayOwner(ple->sle_owner, owner);
 
       LogFullDebug(COMPONENT_STATE,
-                   "%s Entry: %p fileid=%llu, owner=%s, type=%s, start=0x%llx, end=0x%llx, blocked=%s, refcount=%d",
-                   reason, ple, ple->sle_fileid,
+                   "%s Entry: %p pentry=%p, fileid=%llu, owner={%s}, type=%s, start=0x%llx, end=0x%llx, blocked=%s/%p, state=%p, refcount=%d",
+                   reason, ple, ple->sle_pentry, ple->sle_fileid,
                    owner, str_lockt(ple->sle_lock.sld_type),
                    (unsigned long long) ple->sle_lock.sld_offset,
                    (unsigned long long) lock_end(&ple->sle_lock),
                    str_blocked(ple->sle_blocked),
+                   ple->sle_block_data,
+                   ple->sle_state,
                    ple->sle_ref_count);
     }
 }
 
-static void LogList(const char        * reason,
-                    struct glist_head * list)
+static bool_t LogList(const char        * reason,
+                      cache_entry_t     * pentry,
+                      struct glist_head * list)
 {
   if(isFullDebug(COMPONENT_STATE))
     {
       struct glist_head  * glist;
       state_lock_entry_t * found_entry;
+
+      if(glist_empty(&pentry->object.file.lock_list))
+        {
+          if(pentry != NULL)
+            LogFullDebug(COMPONENT_STATE,
+                         "%s for %p is empty",
+                         reason, pentry);
+          else
+            LogFullDebug(COMPONENT_STATE,
+                         "%s is empty",
+                         reason);
+          return TRUE;
+        }
+
 
       glist_for_each(glist, list)
         {
@@ -283,11 +280,13 @@ static void LogList(const char        * reason,
           LogEntry(reason, found_entry);
         }
     }
+
+  return FALSE;
 }
 
 void LogLock(log_components_t     component,
              log_levels_t         debug,
-             const char         * reason, 
+             const char         * reason,
              cache_entry_t      * pentry,
              fsal_op_context_t  * pcontext,
              state_owner_t      * powner,
@@ -317,6 +316,7 @@ void LogLock(log_components_t     component,
     }
 }
 
+/*
 void LogUnlock(cache_entry_t      *pentry,
                fsal_op_context_t  *pcontext,
                state_lock_entry_t *ple)
@@ -338,72 +338,30 @@ void LogUnlock(cache_entry_t      *pentry,
                    (unsigned long long) lock_end(&ple->sle_lock));
     }
 }
-
-#if 0
-void dump_entry(state_lock_entry_t *entry)
-{
-  char fh_buff[1024], oh_buff[1024];
-  struct nlm4_lockargs *arg = &entry->arg;
-  struct nlm4_lock *nlm_lock = &arg->alock;
-
-  netobj_to_string(&nlm_lock->oh, oh_buff, 1023);
-  netobj_to_string(&nlm_lock->fh, fh_buff, 1023);
-  LogTest("Entry: %p caller=%s, fh=%s, oh=%s, svid=%d, start=0x%llx, end=0x%llx, exclusive=%d, state=%s, ref_count=%d",
-          entry, nlm_lock->caller_name, fh_buff,
-          oh_buff, nlm_lock->svid,
-          (unsigned long long) nlm_lock->sle_lock.sld_offset,
-          (unsigned long long) lock_end(nlm_lock->sle_lock.sld_offset, nlm_lock->sle_lock.sld_length),
-          arg->exclusive, lock_result_str(entry->state), entry->sle_ref_count);
-}
-#endif
-
-#if 0
-void dump_lock_list(void)
-{
-  struct glist_head *glist;
-  state_lock_entry_t *entry = NULL;
-  int count = 0;
-
-  LogTest("\nLOCK LIST");
-  glist_for_each(glist, &pentry->object.file.lock_list)
-    {
-      entry = glist_entry(glist, state_lock_entry_t, sle_list);
-
-      count++;
-      dump_entry(entry);
-    }
-  if(count)
-    LogTest("\n");
-  else
-    LogTest("(empty)\n");
-}
+*/
 
 void dump_all_locks(void)
 {
 #ifdef _DEBUG_MEMLEAKS
   struct glist_head *glist;
-  state_lock_entry_t *entry = NULL;
-  int count = 0;
 
   P(all_locks_mutex);
-  LogTest("\nALL LOCKS");
-  glist_for_each(glist, &state_all_locks)
-    {
-      entry = glist_entry(glist, state_lock_entry_t, sle_all_locks);
 
-      count++;
-      dump_entry(entry);
+  if(glist_empty(&state_all_locks))
+    {
+      LogFullDebug(COMPONENT_STATE, "All Locks are freed");
+      V(all_locks_mutex);
+      return;
     }
-  if(count)
-    LogTest("\n");
-  else
-    LogTest("(empty)\n");
+
+  glist_for_each(glist, &state_all_locks)
+    LogEntry("All Locks", glist_entry(glist, state_lock_entry_t, sle_all_locks));
+
   V(all_locks_mutex);
 #else
   return;
 #endif
 }
-#endif
 
 /******************************************************************************
  *
@@ -437,7 +395,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
       return NULL;
     }
 
-  new_entry->sle_ref_count  = 0;
+  new_entry->sle_ref_count  = 1;
   new_entry->sle_pentry     = pentry;
   new_entry->sle_blocked    = blocked;
   new_entry->sle_owner      = powner;
@@ -458,7 +416,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
       /* Add to list of locks owned by client that powner belongs to */
       P(powner->so_owner.so_nlm_owner.so_client->slc_mutex);
 
-      glist_add_tail(&powner->so_owner.so_nlm_owner.so_client->slc_lock_list,
+      glist_add_tail(&powner->so_owner.so_nlm_owner.so_client->slc_nsm_client->ssc_lock_list,
                      &new_entry->sle_client_locks);
 
       inc_nlm_client_ref_locked(powner->so_owner.so_nlm_owner.so_client);
@@ -476,7 +434,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
   glist_add_tail(&powner->so_lock_list, &new_entry->sle_owner_locks);
 
   inc_state_owner_ref_locked(powner);
-    
+
 #ifdef _DEBUG_MEMLEAKS
   P(all_locks_mutex);
 
@@ -504,6 +462,7 @@ void lock_entry_inc_ref(state_lock_entry_t *lock_entry)
 {
     P(lock_entry->sle_mutex);
     lock_entry->sle_ref_count++;
+    LogEntry("Increment refcount", lock_entry);
     V(lock_entry->sle_mutex);
 }
 
@@ -514,6 +473,8 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
   P(lock_entry->sle_mutex);
 
   lock_entry->sle_ref_count--;
+
+    LogEntry("Decrement refcount", lock_entry);
 
   if(!lock_entry->sle_ref_count)
     {
@@ -528,26 +489,14 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 
   if(to_free)
     {
-#ifdef _USE_BLOCKING_LOCKS
-      state_cookie_entry_t *pcookie = NULL;
-#endif
-
       LogEntry("Freeing", lock_entry);
 
 #ifdef _USE_BLOCKING_LOCKS
       /* Release block data if present */
       if(lock_entry->sle_block_data != NULL)
         {
-          pcookie = lock_entry->sle_block_data->sbd_blocked_cookie;
+          memset(lock_entry->sle_block_data, 0, sizeof(*(lock_entry->sle_block_data)));
           Mem_Free(lock_entry->sle_block_data);
-          lock_entry->sle_block_data = NULL;
-        }
-
-      /* Don't need reference to cookie entry any more */
-      if(pcookie != NULL)
-        {
-          pcookie->sce_lock_entry = NULL;
-          cookie_entry_dec_ref(pcookie);
         }
 #endif
 
@@ -556,6 +505,8 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
       glist_del(&lock_entry->sle_all_locks);
       V(all_locks_mutex);
 #endif
+
+      memset(lock_entry, 0, sizeof(*lock_entry));
       Mem_Free(lock_entry);
     }
 }
@@ -564,6 +515,8 @@ static void remove_from_locklist(state_lock_entry_t   * lock_entry,
                                  cache_inode_client_t * pclient)
 {
   state_owner_t * powner = lock_entry->sle_owner;
+
+  LogEntry("Removing", lock_entry);
 
   /*
    * If some other thread is holding a reference to this nlm_lock_entry
@@ -576,9 +529,9 @@ static void remove_from_locklist(state_lock_entry_t   * lock_entry,
         {
           /* Remove from list of locks owned by client that powner belongs to */
           P(powner->so_owner.so_nlm_owner.so_client->slc_mutex);
-      
+
           glist_del(&lock_entry->sle_client_locks);
-      
+
           dec_nlm_client_ref_locked(powner->so_owner.so_nlm_owner.so_client);
         }
 #endif
@@ -590,12 +543,13 @@ static void remove_from_locklist(state_lock_entry_t   * lock_entry,
         {
           glist_del(&lock_entry->sle_state_locks);
         }
-      
+
       glist_del(&lock_entry->sle_owner_locks);
-      
+
       dec_state_owner_ref_locked(powner, pclient);
     }
 
+  lock_entry->sle_owner = NULL;
   glist_del(&lock_entry->sle_list);
   lock_entry_dec_ref(lock_entry);
 }
@@ -625,7 +579,7 @@ static state_lock_entry_t *get_overlapping_entry(cache_entry_t     * pentry,
       if((found_entry_end >= plock->sld_offset) &&
          (found_entry->sle_lock.sld_offset <= plock_end))
         {
-          /* lock overlaps see if we can allow 
+          /* lock overlaps see if we can allow
            * allow if neither lock is exclusive or the owner is the same
            */
           if((found_entry->sle_lock.sld_type == STATE_LOCK_W ||
@@ -821,6 +775,7 @@ static bool_t subtract_lock_from_list(cache_entry_t        * pentry,
       if(powner != NULL && different_owners(found_entry->sle_owner, powner))
         continue;
 
+#ifdef _USE_NLM
       /* Skip locks owned by this NLM state.
        * This protects NLM locks from the current iteration of an NLM
        * client from being released by SM_NOTIFY.
@@ -829,6 +784,7 @@ static bool_t subtract_lock_from_list(cache_entry_t        * pentry,
          lock_owner_is_nlm(found_entry) &&
          found_entry->sle_state == pstate)
         continue;
+#endif
 
       /*
        * We have matched owner.
@@ -924,31 +880,63 @@ int display_lock_cookie_key(hash_buffer_t * pbuff, char *str)
   return display_lock_cookie((char *)pbuff->pdata, pbuff->len, str);
 }
 
-int display_lock_cookie_val(hash_buffer_t * pbuff, char *str)
+int display_lock_cookie_entry(state_cookie_entry_t * he, char * str)
 {
-  state_cookie_entry_t *he = (state_cookie_entry_t *)pbuff->pdata;
   char *tmp = str;
 
-  tmp += sprintf(tmp, "Entry: %p fileid=%llu, owner=",
-                 he->sce_pentry, he->sce_lock_entry->sle_fileid);
+  tmp += sprintf(tmp, "%p: cookie {", he);
+  tmp += display_lock_cookie(he->sce_pcookie, he->sce_cookie_size, tmp);
+  tmp += sprintf(tmp, "} entry {%p fileid=%llu} lock {",
+                 he->sce_pentry,
+                 he->sce_lock_entry->sle_fileid);
+  if(he->sce_lock_entry != NULL)
+    {
+      tmp += sprintf(tmp, "%p owner {", he->sce_lock_entry);
 
-  tmp += DisplayOwner(he->sce_lock_entry->sle_owner, tmp);
+      tmp += DisplayOwner(he->sce_lock_entry->sle_owner, tmp);
 
-  tmp += sprintf(tmp, ", type=%s, start=0x%llx, end=0x%llx, blocked=%s",
-                 str_lockt(he->sce_lock_entry->sle_lock.sld_type),
-                 (unsigned long long) he->sce_lock_entry->sle_lock.sld_offset,
-                 (unsigned long long) lock_end(&he->sce_lock_entry->sle_lock),
-                 str_blocked(he->sce_lock_entry->sle_blocked));
+      tmp += sprintf(tmp, "} type=%s start=0x%llx end=0x%llx blocked=%s}",
+                     str_lockt(he->sce_lock_entry->sle_lock.sld_type),
+                     (unsigned long long) he->sce_lock_entry->sle_lock.sld_offset,
+                     (unsigned long long) lock_end(&he->sce_lock_entry->sle_lock),
+                     str_blocked(he->sce_lock_entry->sle_blocked));
+    }
+  else
+    {
+      tmp += sprintf(tmp, "<NULL>}");
+    }
 
   return tmp - str;
 }
 
+int display_lock_cookie_val(hash_buffer_t * pbuff, char *str)
+{
+  return display_lock_cookie_entry((state_cookie_entry_t *)pbuff->pdata, str);
+}
+
 int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  return same_cookie((char *)buff1->pdata,
-                     buff1->len,
-                     (char *)buff2->pdata,
-                     buff2->len) ? 0 : 1;
+  if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
+    {
+      char str1[HASHTABLE_DISPLAY_STRLEN];
+      char str2[HASHTABLE_DISPLAY_STRLEN];
+
+      display_lock_cookie_key(buff1, str1);
+      display_lock_cookie_key(buff2, str2);
+      LogFullDebug(COMPONENT_STATE,
+                   "{%s} vs {%s}", str1, str2);
+    }
+
+  if(buff1->pdata == buff2->pdata)
+    return 0;
+
+  if(buff1->len != buff2->len)
+    return 1;
+
+  if(buff1->pdata == NULL || buff2->pdata == NULL)
+    return 1;
+
+  return memcmp(buff1->pdata, buff2->pdata, buff1->len);
 }
 
 unsigned long lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
@@ -966,8 +954,9 @@ unsigned long lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
   res = (unsigned long) sum +
         (unsigned long) buffclef->len;
 
-  LogFullDebug(COMPONENT_STATE,
-               "value = %lu", res % p_hparam->index_size);
+  if(isDebug(COMPONENT_HASHTABLE))
+    LogFullDebug(COMPONENT_STATE,
+                 "value = %lu", res % p_hparam->index_size);
 
   return (unsigned long)(res % p_hparam->index_size);
 }
@@ -987,74 +976,41 @@ unsigned long lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
   res = (unsigned long) sum +
         (unsigned long) buffclef->len;
 
-  LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
+  if(isDebug(COMPONENT_HASHTABLE))
+    LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
 
   return res;
 }
 
-static int Hash_del_cookie_entry_ref(hash_buffer_t *buffval)
+void free_cookie(state_cookie_entry_t * p_cookie_entry,
+                 bool_t                 unblock)
 {
-  int rc;
-  state_cookie_entry_t *p_cookie_entry = (state_cookie_entry_t *)(buffval->pdata);
+  char   str[HASHTABLE_DISPLAY_STRLEN];
+  void * pcookie = p_cookie_entry->sce_pcookie;
 
-  P(p_cookie_entry->sce_mutex);
+  if(isFullDebug(COMPONENT_STATE))
+    display_lock_cookie_entry(p_cookie_entry, str);
 
-  p_cookie_entry->sce_refcount--;
-  rc = p_cookie_entry->sce_refcount;
+  /* Since the cookie is not in the hash table, we can just free the memory */
+  LogFullDebug(COMPONENT_STATE,
+               "Free Lock Cookie {%s}",
+               str);
 
-  V(p_cookie_entry->sce_mutex);  
-
-  return rc;
-}
-
-static void Hash_inc_client_ref(hash_buffer_t *buffval)
-{
-  state_cookie_entry_t *p_cookie_entry = (state_cookie_entry_t *)(buffval->pdata);
-
-  P(p_cookie_entry->sce_mutex);
-  p_cookie_entry->sce_refcount++;
-  V(p_cookie_entry->sce_mutex);  
-}
-
-void cookie_entry_dec_ref(state_cookie_entry_t * p_cookie_entry)
-{
-  bool_t remove = FALSE;
-
-  P(p_cookie_entry->sce_mutex);
-  if(p_cookie_entry->sce_refcount > 1)
-    p_cookie_entry->sce_refcount--;
-  else
-    remove = TRUE;
-  V(p_cookie_entry->sce_mutex);
-
-  if(remove)
+  /* If block data is still attached to lock entry, remove it */
+  if(p_cookie_entry->sce_lock_entry != NULL && unblock)
     {
-      hash_buffer_t buffkey, old_key, old_value;
+      if(p_cookie_entry->sce_lock_entry->sle_block_data != NULL)
+        p_cookie_entry->sce_lock_entry->sle_block_data->sbd_blocked_cookie = NULL;
 
-      buffkey.pdata = (caddr_t) p_cookie_entry;
-      buffkey.len = sizeof(*p_cookie_entry);
-
-      switch(HashTable_DelRef(ht_lock_cookies, &buffkey, &old_key, &old_value, Hash_del_cookie_entry_ref))
-        {
-          case HASHTABLE_SUCCESS:
-            /* Removed from hash table, don't need reference to lock entry any more */
-            if(p_cookie_entry->sce_lock_entry != NULL)
-              lock_entry_dec_ref(p_cookie_entry->sce_lock_entry);
-            Mem_Free(old_key.pdata);
-            Mem_Free(old_value.pdata);
-            break;
-
-          case HASHTABLE_NOT_DELETED:
-            /* ref count didn't end up at 0, don't free. */
-            break;
-
-          default:
-            /* some problem occurred */
-            LogFullDebug(COMPONENT_STATE,
-                         "HashTable_Del failed");
-            break;
-        }
+      lock_entry_dec_ref(p_cookie_entry->sce_lock_entry);
     }
+
+  /* Free the memory for the cookie and the cookie entry */
+  memset(pcookie, 0, p_cookie_entry->sce_cookie_size);
+  memset(p_cookie_entry, 0, sizeof(*p_cookie_entry));
+
+  Mem_Free(pcookie);
+  Mem_Free(p_cookie_entry);
 }
 
 state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
@@ -1105,24 +1061,19 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
       return *pstatus;
     }
 
-  if(pthread_mutex_init(&hash_entry->sce_mutex, NULL) == -1)
-    {
-      Mem_Free(hash_entry);
-      LogFullDebug(COMPONENT_STATE,
-                   "KEY {%s} COULD NOT INIT MUTEX",
-                   str);
-      *pstatus = STATE_POOL_MUTEX_INIT_ERROR;
-      return *pstatus;
-    }
-
-  hash_entry->sce_refcount   = 1;
-  hash_entry->sce_pentry     = pentry;
-  hash_entry->sce_lock_entry = lock_entry;
+  hash_entry->sce_pentry      = pentry;
+  hash_entry->sce_lock_entry  = lock_entry;
+  hash_entry->sce_pcookie     = buffkey.pdata;
+  hash_entry->sce_cookie_size = cookie_size;
 
   memcpy(buffkey.pdata, pcookie, cookie_size);
   buffkey.len   = cookie_size;
   buffval.pdata = (void *)hash_entry;
   buffval.len   = sizeof(*hash_entry);
+
+  if(isFullDebug(COMPONENT_STATE))
+    display_lock_cookie_entry(hash_entry, str);
+
 
   if(HashTable_Test_And_Set
      (ht_lock_cookies, &buffkey, &buffval,
@@ -1130,18 +1081,18 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
     {
       Mem_Free(hash_entry);
       LogFullDebug(COMPONENT_STATE,
-                   "KEY {%s} HASH TABLE ERROR",
+                   "Lock Cookie {%s} HASH TABLE ERROR",
                    str);
       *pstatus = STATE_HASH_TABLE_ERROR;
       return *pstatus;
     }
 
-  /* Increment lock entry reference count and link to lock_entry */
+  /* Increment lock entry reference count and link it to the cookie */
   lock_entry_inc_ref(lock_entry);
   lock_entry->sle_block_data->sbd_blocked_cookie = hash_entry;
 
   LogFullDebug(COMPONENT_STATE,
-               "KEY {%s} SUCCESS",
+               "Lock Cookie {%s} Added",
                str);
 
   /* Now that we are sure we can continue, acquire the FSAL lock */
@@ -1165,11 +1116,10 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
                "Unable to lock FSAL for GRANTED lock, error=%s",
                state_err_str(*pstatus));
 
-      /* Remove the cookie from the block data */
-      hash_entry->sce_lock_entry->sle_block_data->sbd_blocked_cookie = NULL;
-
-      /* And release the cookie */
-      cookie_entry_dec_ref(hash_entry);
+      /* And release the cookie without unblocking the lock.
+       * grant_blocked_locks() will decide whether to keep or free the block.
+       */
+      free_cookie(hash_entry, FALSE);
 
       return *pstatus;
     }
@@ -1183,9 +1133,6 @@ state_status_t state_cancel_grant(fsal_op_context_t    * pcontext,
                                   cache_inode_client_t * pclient,
                                   state_status_t       * pstatus)
 {
-  /* Remove the cookie from the block data */
-  cookie_entry->sce_lock_entry->sle_block_data->sbd_blocked_cookie = NULL;
-
   /* We had acquired an FSAL lock, need to release it. */
   *pstatus = do_lock_op(cookie_entry->sce_pentry,
                         pcontext,
@@ -1202,8 +1149,8 @@ state_status_t state_cancel_grant(fsal_op_context_t    * pcontext,
              "Unable to unlock FSAL for canceled GRANTED lock, error=%s",
              state_err_str(*pstatus));
 
-  /* And release the cookie */
-  cookie_entry_dec_ref(cookie_entry);
+  /* And release the cookie and unblock lock (because lock will be removed) */
+  free_cookie(cookie_entry, TRUE);
 
   return *pstatus;
 }
@@ -1214,63 +1161,90 @@ state_status_t state_find_grant(void                  * pcookie,
                                 cache_inode_client_t  * pclient,
                                 state_status_t        * pstatus)
 {
-  hash_buffer_t          buffkey;
-  hash_buffer_t          buffval;
-  char                   str[HASHTABLE_DISPLAY_STRLEN];
+  hash_buffer_t buffkey;
+  hash_buffer_t buffval;
+  hash_buffer_t buffused_key;
+  char          str[HASHTABLE_DISPLAY_STRLEN];
 
   buffkey.pdata = (caddr_t) pcookie;
   buffkey.len   = cookie_size;
 
-  if(isFullDebug(COMPONENT_STATE))
-    display_lock_cookie_key(&buffkey, str);
+  if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
+    {
+      display_lock_cookie_key(&buffkey, str);
+      LogFullDebug(COMPONENT_STATE,
+                   "KEY {%s}", str);
+    }
 
-  LogFullDebug(COMPONENT_STATE,
-               "KEY {%s}", str);
-
-  if(HashTable_GetRef(ht_lock_cookies, &buffkey, &buffval, Hash_inc_client_ref) != HASHTABLE_SUCCESS)
+  if(HashTable_Get_and_Del(ht_lock_cookies, &buffkey, &buffval, &buffused_key) != HASHTABLE_SUCCESS)
     {
       LogFullDebug(COMPONENT_STATE,
-                   "KEY {%s} NOTFOUND",
-                   str);
+                   "KEY {%s} NOTFOUND", str);
       *pstatus = STATE_BAD_COOKIE;
       return *pstatus;
     }
 
   *ppcookie_entry = (state_cookie_entry_t *) buffval.pdata;
 
-  LogFullDebug(COMPONENT_STATE,
-               "KEY {%s} FOUND",
-               str);
+  if(isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE))
+    {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      display_lock_cookie_entry(*ppcookie_entry, str);
+      LogFullDebug(COMPONENT_STATE,
+                   "Found Lock Cookie {%s}", str);
+    }
 
   *pstatus = STATE_SUCCESS;
   return *pstatus;
 }
 
-void grant_blocked_lock(cache_entry_t         * pentry,
-                        fsal_op_context_t     * pcontext,
-                        state_lock_entry_t    * lock_entry,
-                        cache_inode_client_t  * pclient)
+void grant_blocked_lock_immediate(cache_entry_t         * pentry,
+                                  fsal_op_context_t     * pcontext,
+                                  state_lock_entry_t    * lock_entry,
+                                  cache_inode_client_t  * pclient)
 {
-  state_cookie_entry_t *pcookie = NULL;
+  state_cookie_entry_t * pcookie = NULL;
+  state_status_t         state_status;
 
-  /* Mark lock as granted and detach cookie and granted call back */
-  lock_entry->sle_blocked = STATE_NON_BLOCKING;
-
-  /* Release block data */
+  /* Try to clean up blocked lock. */
   if(lock_entry->sle_block_data != NULL)
     {
-      pcookie = lock_entry->sle_block_data->sbd_blocked_cookie;
-      Mem_Free(lock_entry->sle_block_data);
-      lock_entry->sle_block_data = NULL;
+      if(lock_entry->sle_block_data->sbd_blocked_cookie != NULL)
+        {
+          /* Cookie is attached, try to get it */
+          pcookie = lock_entry->sle_block_data->sbd_blocked_cookie;
+
+          if(state_find_grant(pcookie->sce_pcookie,
+                              pcookie->sce_cookie_size,
+                              &pcookie,
+                              pclient,
+                              &state_status) == STATE_SUCCESS)
+            {
+              /* We've got the cookie, free the cookie and the blocked lock */
+              free_cookie(pcookie, TRUE);
+            }
+          else
+            {
+              /* Otherwise, another thread has the cookie, let it do it's business. */
+              return;
+            }
+        }
+      else
+        {
+          /* We have block data but no cookie, so we can just free the block data */
+          memset(lock_entry->sle_block_data, 0, sizeof(*lock_entry->sle_block_data));
+          Mem_Free(lock_entry->sle_block_data);
+          lock_entry->sle_block_data = NULL;
+        }
     }
 
-  /* Don't need reference to cookie entry any more */
-  if(pcookie != NULL)
-    cookie_entry_dec_ref(pcookie);
+  /* Mark lock as granted */
+  lock_entry->sle_blocked = STATE_NON_BLOCKING;
 
   /* Merge any touching or overlapping locks into this one. */
   merge_lock_entry(pentry, pcontext, lock_entry, pclient);
-  LogEntry("Granted entry", lock_entry);
+  LogEntry("Immediate Granted entry", lock_entry);
 }
 
 void state_complete_grant(fsal_op_context_t     * pcontext,
@@ -1285,20 +1259,23 @@ void state_complete_grant(fsal_op_context_t     * pcontext,
 
   P(pentry->object.file.lock_list_mutex);
 
-  /* We need to make sure lock is only "granted" once...
-   * It's (remotely) possible that due to latency, we might end up processing
-   * two GRANTED_RSP calls at the same time.
-   */
+  /* We need to make sure lock is ready to be granted */
   if(lock_entry->sle_blocked == STATE_GRANTING)
     {
-      /* Handle the actual guts of releasing the blocked lock */
-      grant_blocked_lock(cookie_entry->sce_pentry,
-                         pcontext,
-                         cookie_entry->sce_lock_entry,
-                         pclient);
+      /* Mark lock as granted */
+      lock_entry->sle_blocked = STATE_NON_BLOCKING;
+
+      /* Merge any touching or overlapping locks into this one. */
+      merge_lock_entry(pentry, pcontext, lock_entry, pclient);
+
+      LogEntry("Granted entry", lock_entry);
     }
 
-  cookie_entry_dec_ref(cookie_entry);
+  /* Free cookie and unblock lock.
+   * If somehow the lock was unlocked/canceled while the GRANT
+   * was in progress, this will completely clean up the lock.
+   */
+  free_cookie(cookie_entry, TRUE);
 
   V(pentry->object.file.lock_list_mutex);
 }
@@ -1343,7 +1320,7 @@ static void grant_blocked_locks(cache_entry_t        * pentry,
 
           if(status == STATE_LOCK_BLOCKED)
             {
-              /* The lock is still blocked, trestore it's type and leave it in the list */
+              /* The lock is still blocked, restore it's type and leave it in the list */
               found_entry->sle_blocked = blocked;
               continue;
             }
@@ -1364,26 +1341,39 @@ void cancel_blocked_lock(cache_entry_t        * pentry,
                          state_lock_entry_t   * lock_entry,
                          cache_inode_client_t * pclient)
 {
-  state_cookie_entry_t *pcookie = NULL;
+  state_cookie_entry_t * pcookie = NULL;
+  state_status_t         state_status;
+
+  /* Mark lock as canceled */
+  lock_entry->sle_blocked = STATE_CANCELED;
+
+  /* Try to clean up blocked lock if a cookie is present */
+  if(lock_entry->sle_block_data != NULL &&
+     lock_entry->sle_block_data->sbd_blocked_cookie != NULL)
+    {
+      /* Cookie is attached, try to get it */
+      pcookie = lock_entry->sle_block_data->sbd_blocked_cookie;
+
+      if(state_find_grant(pcookie->sce_pcookie,
+                          pcookie->sce_cookie_size,
+                          &pcookie,
+                          pclient,
+                          &state_status) == STATE_SUCCESS)
+        {
+          /* We've got the cookie, free the cookie and the blocked lock */
+          free_cookie(pcookie, TRUE);
+        }
+      /* otherwise, another thread has the cookie, let it do it's business,
+       * which won't be much, since we've already marked the lock CANCELED.
+       */
+    }
+  /* Otherwise, if block data is present, it will be freed when the lock
+   * entry is freed.
+   */
 
   /* Remove the lock from the lock list*/
   LogEntry("Removing", lock_entry);
   remove_from_locklist(lock_entry, pclient);
-  
-  /* Mark lock as granted and detach cookie and granted call back */
-  lock_entry->sle_blocked          = STATE_CANCELED;
-
-  /* Release block data */
-  if(lock_entry->sle_block_data != NULL)
-    {
-      pcookie = lock_entry->sle_block_data->sbd_blocked_cookie;
-      Mem_Free(lock_entry->sle_block_data);
-      lock_entry->sle_block_data = NULL;
-    }
-
-  /* Don't need reference to cookie entry any more */
-  if(pcookie != NULL)
-    cookie_entry_dec_ref(pcookie);
 }
 
 /**
@@ -1458,8 +1448,6 @@ state_status_t state_release_grant(fsal_op_context_t     * pcontext,
 {
   state_lock_entry_t   * lock_entry;
   cache_entry_t        * pentry;
-  state_owner_t        * powner;
-  state_lock_desc_t      lock;
 
   *pstatus = STATE_SUCCESS;
 
@@ -1474,20 +1462,21 @@ state_status_t state_release_grant(fsal_op_context_t     * pcontext,
    */
   if(lock_entry->sle_blocked == STATE_GRANTING)
     {
-      /* Get a reference to the lock owner and duplicate the lock */
-      powner = lock_entry->sle_owner;
-      inc_state_owner_ref(powner);
-      lock = lock_entry->sle_lock;
-      
-      /* Handle the actual guts of canceling the blocked lock */
-      cancel_blocked_lock(pentry, pcontext, lock_entry, pclient);
+      /* Mark lock as canceled */
+      lock_entry->sle_blocked = STATE_CANCELED;
+
+      /* Remove the lock from the lock list.
+       * Will not free yet because of cookie reference to lock entry.
+       */
+      LogEntry("Release Grant Removing", lock_entry);
+      remove_from_locklist(lock_entry, pclient);
 
       /* We had acquired an FSAL lock, need to release it. */
       *pstatus = do_lock_op(pentry,
                             pcontext,
                             FSAL_OP_UNLOCK,
-                            powner,
-                            &lock,
+                            lock_entry->sle_owner,
+                            &lock_entry->sle_lock,
                             NULL,   /* no conflict expected */
                             NULL,
                             FALSE,
@@ -1497,15 +1486,16 @@ state_status_t state_release_grant(fsal_op_context_t     * pcontext,
         LogMajor(COMPONENT_STATE,
                  "Unable to unlock FSAL for released GRANTED lock, error=%s",
                  state_err_str(*pstatus));
-
-      /* Release the lock owner reference */
-      dec_state_owner_ref(powner, pclient);
-
-      /* Check to see if we can grant any blocked locks. */
-      grant_blocked_locks(pentry, pcontext, pclient);
     }
 
-  cookie_entry_dec_ref(cookie_entry);
+  /* Free the cookie and unblock the lock.
+   * This will release our final reference on the lock entry and should free it.
+   * (Unless another thread has a reference for some reason.
+   */
+  free_cookie(cookie_entry, TRUE);
+
+  /* Check to see if we can grant any blocked locks. */
+  grant_blocked_locks(pentry, pcontext, pclient);
 
   V(pentry->object.file.lock_list_mutex);
 
@@ -1579,13 +1569,14 @@ state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
                                   state_lock_desc_t    * plock,
                                   cache_inode_client_t * pclient)
 {
-  state_lock_entry_t *unlock_entry;
-  struct glist_head fsal_unlock_list;
-  struct glist_head *glist, *glistn;
-  state_lock_entry_t *found_entry;
-  fsal_status_t fsal_status;
-  state_status_t status = STATE_SUCCESS, t_status;
-  fsal_lock_param_t lock_params;
+  state_lock_entry_t * unlock_entry;
+  struct glist_head    fsal_unlock_list;
+  struct glist_head  * glist, *glistn;
+  state_lock_entry_t * found_entry;
+  fsal_status_t        fsal_status;
+  state_status_t       status = STATE_SUCCESS, t_status;
+  fsal_lock_param_t    lock_params;
+  state_lock_desc_t  * punlock;
 
   unlock_entry = create_state_lock_entry(pentry,
                                          pcontext,
@@ -1600,17 +1591,9 @@ state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
 
   init_glist(&fsal_unlock_list);
 
-  unlock_entry->sle_ref_count = 1;
   glist_add_tail(&fsal_unlock_list, &unlock_entry->sle_list);
 
-  LogFullDebug(COMPONENT_STATE,
-               "----------------------------------------------------------------------");
-  LogLock(COMPONENT_STATE, NIV_FULL_DEBUG,
-          "Generating FSAL Unlock List",
-          pentry, pcontext, NULL, plock);
-
-  LogFullDebug(COMPONENT_STATE,
-               "----------------------------------------------------------------------");
+  LogEntry("Generating FSAL Unlock List", unlock_entry);
 
   if(subtract_list_from_list(pentry,
                              pcontext,
@@ -1631,12 +1614,13 @@ state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
   glist_for_each_safe(glist, glistn, &fsal_unlock_list)
     {
       found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
+      punlock     = &found_entry->sle_lock;
 
-      LogUnlock(pentry, pcontext, found_entry);
+      LogEntry("FSAL Unlock", found_entry);
 
-      lock_params.lock_type   = fsal_lock_type(plock);
-      lock_params.lock_start  = plock->sld_offset;
-      lock_params.lock_length = plock->sld_length;
+      lock_params.lock_type   = fsal_lock_type(punlock);
+      lock_params.lock_start  = punlock->sld_offset;
+      lock_params.lock_length = punlock->sld_length;
       lock_params.lock_owner  = 0;
 
       fsal_status = FSAL_lock_op(cache_inode_fd(pentry),
@@ -1649,7 +1633,13 @@ state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
 
       t_status = state_error_convert(fsal_status);
       if(t_status != STATE_SUCCESS)
-        status = t_status;
+        {
+          // TODO FSF: what do we do now?
+          LogMajor(COMPONENT_STATE,
+                   "Error %s while trying to do FSAL Unlock",
+                   state_err_str(status));
+          status = t_status;
+        }
 
       remove_from_locklist(found_entry, pclient);
     }
@@ -1702,7 +1692,7 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
       lock_params.lock_start  = plock->sld_offset;
       lock_params.lock_length = plock->sld_length;
       lock_params.lock_owner  = 0;
- 
+
       if(lock_op == FSAL_OP_LOCKB && !lock_support_async_block)
         lock_op = FSAL_OP_LOCK;
 
@@ -1827,15 +1817,7 @@ state_status_t state_test(cache_entry_t        * pentry,
     }
 
   if(isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS))
-    {
-      struct glist_head * glist;
-      glist_for_each(glist, &pentry->object.file.lock_list)
-        {
-          found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
-
-          LogEntry("Lock List", found_entry);
-        }
-    }
+    LogList("Lock List", pentry, &pentry->object.file.lock_list);
 
   V(pentry->object.file.lock_list_mutex);
 
@@ -1861,6 +1843,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
   uint64_t               found_entry_end;
   uint64_t               plock_end = lock_end(plock);
   cache_inode_status_t   cache_status;
+  state_block_data_t   * pass_block_data = NULL;
 
   /* TODO FSF: add support for async blocking lock */
 
@@ -1884,16 +1867,16 @@ state_status_t state_lock(cache_entry_t         * pentry,
       glist_for_each(glist, &pentry->object.file.lock_list)
         {
           found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
-      
+
           if(different_owners(found_entry->sle_owner, powner))
             continue;
-      
+
           if(found_entry->sle_blocked != blocking)
             continue;
-      
+
           if(different_lock(&found_entry->sle_lock, plock))
             continue;
-      
+
           /*
            * We have matched all atribute of the existing lock.
            * Just return with blocked status. Client may be polling.
@@ -1917,7 +1900,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
       if((found_entry_end >= plock->sld_offset) &&
          (found_entry->sle_lock.sld_offset <= plock_end))
         {
-          /* lock overlaps see if we can allow 
+          /* lock overlaps see if we can allow
            * allow if neither lock is exclusive or the owner is the same
            */
           if((found_entry->sle_lock.sld_type == STATE_LOCK_W ||
@@ -1939,7 +1922,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
          (found_entry->sle_blocked == STATE_NON_BLOCKING ||
           found_entry->sle_blocked == STATE_GRANTING))
         {
-          /* Found an entry that entirely overlaps the new entry 
+          /* Found an entry that entirely overlaps the new entry
            * (and due to the preceding test does not prevent
            * granting this lock - therefore there can't be any
            * other locks that would prevent granting this lock
@@ -1947,14 +1930,22 @@ state_status_t state_lock(cache_entry_t         * pentry,
           if(!different_owners(found_entry->sle_owner, powner))
             {
  #ifdef _USE_BLOCKING_LOCKS
-             /* The lock actually has the same owner, we're done */
+             /* The lock actually has the same owner, we're done,
+              * other than dealing with a lock in GRANTING state.
+              */
               if(found_entry->sle_blocked == STATE_GRANTING)
                 {
-                  /* Need to handle completion of granting of this lock */
-                  grant_blocked_lock(pentry,
-                                     pcontext,
-                                     found_entry,
-                                     pclient);
+                  /* Need to handle completion of granting of this lock
+                   * because a GRANT was in progress.
+                   * This could be a client retrying a blocked lock
+                   * due to mis-trust of server. If the client
+                   * also accepts the GRANT_MSG with a GRANT_RESP,
+                   * that will be just fine.
+                   */
+                  grant_blocked_lock_immediate(pentry,
+                                               pcontext,
+                                               found_entry,
+                                               pclient);
                 }
 #endif
               V(pentry->object.file.lock_list_mutex);
@@ -1975,11 +1966,11 @@ state_status_t state_lock(cache_entry_t         * pentry,
     {
       blocked = STATE_NON_BLOCKING;
     }
-  else 
+  else
     {
       /* TODO FSF: need to call FSAL in case blocking locks are supported */
       LogEntry("Conflicts with", found_entry);
-      LogList("Locks", &pentry->object.file.lock_list);
+      LogList("Locks", pentry, &pentry->object.file.lock_list);
       if(blocking == STATE_NON_BLOCKING   ||
          blocking == STATE_NFSV4_BLOCKING || /* TODO FSF: look into support of NFS v4 blocking locks */
          block_data == NULL)                 /* Can't support blocking locks right now without call back */
@@ -1989,6 +1980,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
           *pstatus = STATE_LOCK_CONFLICT;
           return *pstatus;
         }
+      pass_block_data = block_data;
     }
 
   /* We have already returned if:
@@ -2008,7 +2000,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
                                         powner,
                                         pstate,
                                         plock,
-                                        block_data);
+                                        pass_block_data);
   if(!found_entry)
     {
       V(pentry->object.file.lock_list_mutex);
@@ -2034,7 +2026,6 @@ state_status_t state_lock(cache_entry_t         * pentry,
           LogMajor(COMPONENT_STATE,
                    "Unable to lock FSAL, error=%s",
                    state_err_str(*pstatus));
-          lock_entry_inc_ref(found_entry);
           remove_from_locklist(found_entry, pclient);
           V(pentry->object.file.lock_list_mutex);
           return *pstatus;
@@ -2064,7 +2055,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
                             cache_inode_client_t * pclient,
                             state_status_t       * pstatus)
 {
-  bool_t gotsome;
+  bool_t gotsome, empty = FALSE;
 
   /* We need to iterate over the full lock list and remove
    * any mapping entry. And sle_lock.sld_offset = 0 and sle_lock.sld_length = 0 nlm_lock
@@ -2136,26 +2127,22 @@ state_status_t state_unlock(cache_entry_t        * pentry,
   LogFullDebug(COMPONENT_STATE,
                "----------------------------------------------------------------------");
 
-  V(pentry->object.file.lock_list_mutex);
-
   if(isFullDebug(COMPONENT_STATE) &&
      isFullDebug(COMPONENT_MEMLEAKS) &&
      plock->sld_offset == 0 && plock->sld_length == 0)
-    {
-      struct glist_head  * glist;
-      state_lock_entry_t * found_entry;
-
-      glist_for_each(glist, &pentry->object.file.lock_list)
-        {
-          found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
-
-          LogEntry("Lock List", found_entry);
-        }
-    }
+    empty = LogList("Lock List", pentry, &pentry->object.file.lock_list);
 
 #ifdef _USE_BLOCKING_LOCKS
   grant_blocked_locks(pentry, pcontext, pclient);
 #endif
+
+  V(pentry->object.file.lock_list_mutex);
+
+  if(isFullDebug(COMPONENT_STATE) &&
+     isFullDebug(COMPONENT_MEMLEAKS) &&
+     plock->sld_offset == 0 && plock->sld_length == 0 &&
+    empty)
+    dump_all_locks();
 
   return *pstatus;
 }
@@ -2228,12 +2215,13 @@ state_status_t state_cancel(cache_entry_t        * pentry,
 
 #ifdef _USE_NLM
 state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
-                                state_nlm_client_t   * pnlmclient,
+                                state_nsm_client_t   * pnsmclient,
                                 state_t              * pstate,
                                 cache_inode_client_t * pclient,
                                 state_status_t       * pstatus)
 {
   state_owner_t        owner;
+  state_nlm_client_t   client;
   state_lock_entry_t * found_entry;
   state_lock_desc_t    lock;
   cache_entry_t      * pentry;
@@ -2244,12 +2232,14 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
 
   while(errcnt < 100)
     {
-      P(pnlmclient->slc_mutex);
+      P(pnsmclient->ssc_mutex);
 
       /* We just need to find any file this client has locks on.
        * We pick the first lock the client holds, and use it's file.
        */
-      found_entry = glist_first_entry(&pnlmclient->slc_lock_list, state_lock_entry_t, sle_client_locks);
+      found_entry = glist_first_entry(&pnsmclient->ssc_lock_list, state_lock_entry_t, sle_client_locks);
+
+      /* Get a reference so the lock entry will still be valid when we release the ssc_mutex */
       lock_entry_inc_ref(found_entry);
 
       /* Remove from the client lock list */
@@ -2258,15 +2248,14 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
         {
           /* This is a new lock acquired since the client rebooted, retain it. */
           glist_add_tail(&newlocks, &found_entry->sle_client_locks);
-          lock_entry_dec_ref(found_entry);
         }
       else
         {
           /* Move this entry to the end of the list (this will help if errors occur) */
-          glist_add_tail(&pnlmclient->slc_lock_list, &found_entry->sle_client_locks);
+          glist_add_tail(&pnsmclient->ssc_lock_list, &found_entry->sle_client_locks);
         }
 
-      V(pnlmclient->slc_mutex);
+      V(pnsmclient->ssc_mutex);
 
       /* If we don't find any entries, then we are done. */
       if(found_entry == NULL)
@@ -2274,15 +2263,20 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
 
       /* Extract the cache inode entry from the lock entry and release the lock entry */
       pentry = found_entry->sle_pentry;
+
+      P(pentry->object.file.lock_list_mutex);
+
       lock_entry_dec_ref(found_entry);
+
+      V(pentry->object.file.lock_list_mutex);
 
       /* Make lock that covers the whole file - type doesn't matter for unlock */
       lock.sld_type   = STATE_LOCK_R;
       lock.sld_offset = 0;
       lock.sld_length = 0;
 
-      /* Make special NLM Owner that matches all owners from NLM Client */
-      make_nlm_special_owner(pnlmclient, &owner);
+      /* Make special NLM Client/Owner that matches all clients/owners from NSM Client */
+      make_nlm_special_owner(pnsmclient, &client, &owner);
 
       /* Remove all locks held by this NLM Client on the file */
       if(state_unlock(pentry,
@@ -2298,10 +2292,12 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
            */
           errcnt++;
         }
+
+      dec_nsm_client_ref(pnsmclient);
     }
 
   /* Put locks from current client incarnation onto end of list */
-  glist_add_list_tail(&pnlmclient->slc_lock_list, &newlocks);
+  glist_add_list_tail(&pnsmclient->ssc_lock_list, &newlocks);
 
   return *pstatus;
 }
@@ -2322,8 +2318,8 @@ state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
     {
       P(powner->so_mutex);
 
-      /* We just need to find any file this client has locks on.
-       * We pick the first lock the client holds, and use it's file.
+      /* We just need to find any file this owner has locks on.
+       * We pick the first lock the owner holds, and use it's file.
        */
       found_entry = glist_first_entry(&powner->so_lock_list, state_lock_entry_t, sle_owner_locks);
       lock_entry_inc_ref(found_entry);

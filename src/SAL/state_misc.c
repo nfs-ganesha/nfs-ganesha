@@ -705,6 +705,9 @@ const char * state_owner_type_to_str(state_owner_type_t type)
 
 int different_owners(state_owner_t *powner1, state_owner_t *powner2)
 {
+  if(powner1 == NULL || powner2 == NULL)
+    return 1;
+
   /* Shortcut in case we actually are pointing to the same owner structure */
   if(powner1 == powner2)
     return 0;
@@ -750,14 +753,14 @@ int DisplayOwner(state_owner_t *powner, char *buf)
 
         case STATE_LOCK_OWNER_UNKNOWN:
           return sprintf(buf,
-                         "%s powner=%p: refcount = %d",
+                         "%s powner=%p: refcount=%d",
                          state_owner_type_to_str(powner->so_type), powner, powner->so_refcount);
     }
 
   return sprintf(buf, "%s", invalid_state_owner_type);
 }
 
-int Hash_del_state_owner_ref(hash_buffer_t *buffval)
+int Hash_dec_state_owner_ref(hash_buffer_t *buffval)
 {
   int rc;
   state_owner_t *powner = (state_owner_t *)(buffval->pdata);
@@ -772,7 +775,7 @@ int Hash_del_state_owner_ref(hash_buffer_t *buffval)
 
       DisplayOwner(powner, str);
       LogFullDebug(COMPONENT_STATE,
-                   "Decrement refcount for %s",
+                   "Decrement refcount for {%s}",
                    str);
     }
 
@@ -796,7 +799,7 @@ void Hash_inc_state_owner_ref(hash_buffer_t *buffval)
 
       DisplayOwner(powner, str);
       LogFullDebug(COMPONENT_STATE,
-                   "Increment refcount for %s",
+                   "Increment refcount for {%s}",
                    str);
     }
 
@@ -813,7 +816,7 @@ void inc_state_owner_ref_locked(state_owner_t *powner)
 
       DisplayOwner(powner, str);
       LogFullDebug(COMPONENT_STATE,
-                   "Increment refcount for %s",
+                   "Increment refcount for {%s}",
                    str);
     }
 
@@ -841,13 +844,13 @@ void dec_state_owner_ref_locked(state_owner_t        * powner,
       powner->so_refcount--;
 
       LogFullDebug(COMPONENT_STATE,
-                   "Decrement refcount for %s",
+                   "Decrement refcount for {%s}",
                    str);
     }
   else
     {
       LogFullDebug(COMPONENT_STATE,
-                   "Refcount for %s is 1",
+                   "Refcount for {%s} is 1",
                    str);
       remove = TRUE;
     }
