@@ -88,7 +88,7 @@ const _9p_function_desc_t _9pfuncdesc[] = {
         { _9p_dummy, "_9P_TSTATFS"  },
         { _9p_lopen, "_9P_TLOPEN" },
         { _9p_create, "_9P_TLCREATE" },
-        { _9p_dummy, "_9P_TSYMLINK" },
+        { _9p_symlink, "_9P_TSYMLINK" },
         { _9p_dummy, "_9P_TMKNOD" },
         { _9p_dummy, "_9P_TRENAME" },
         { _9p_dummy, "_9P_TREADLINK" },
