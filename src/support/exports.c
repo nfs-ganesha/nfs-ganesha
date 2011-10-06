@@ -257,6 +257,7 @@ int nfs_ParseConfLine(char *Argv[],
  * @see gethostbyaddr
  *
  */
+#if 0
 static struct hostent *nfs_LookupHostAddr(char *host)
 {
   struct hostent *output;
@@ -299,6 +300,7 @@ static struct hostent *nfs_LookupHostAddr(char *host)
 
   return output;
 }                               /* nfs_LookupHostAddr */
+#endif
 
 /**
  *
