@@ -1027,7 +1027,12 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
   pentry->gc_lru_entry = plru_entry;
 
   /* Update internal md */
-  pentry->internal_md.valid_state = VALID;
+  /*
+   * If the cache invalidate code has marked this entry as STALE,
+   * don't overwrite it with VALID.
+   */
+  if (pentry->internal_md.valid_state != STALE)
+    pentry->internal_md.valid_state = VALID;
 
   if(op == CACHE_INODE_OP_GET)
     pentry->internal_md.read_time = time(NULL);

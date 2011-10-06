@@ -377,11 +377,9 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
        * in any case we need to get rid of stale so we only go through here
        * once.
        */
-      /*
-	if ( pentry->internal_md.valid_state == STALE )
-	pentry->internal_md.valid_state = VALID;
-      */
-      
+      if ( pentry->internal_md.valid_state == STALE )
+         pentry->internal_md.valid_state = VALID;
+
       /* stat */
       pclient->stat.func_stats.nb_call[CACHE_INODE_RENEW_ENTRY] += 1;
 
