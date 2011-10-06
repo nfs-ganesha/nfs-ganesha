@@ -16,6 +16,8 @@ lib9p_la_SOURCES = 9p_interpretor.c  \
                    9p_mkdir.c        \
                    9p_readdir.c      \
                    9p_readlink.c     \
+                   9p_remove.c       \
+                   9p_unlinkat.c     \
                    9p_setattr.c      \
                    9p_symlink.c      \
                    9p_version.c      \
