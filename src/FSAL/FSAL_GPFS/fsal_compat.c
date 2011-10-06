@@ -95,7 +95,10 @@ fsal_functions_t fsal_gpfs_functions = {
   .fsal_removexattrbyid = GPFSFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = GPFSFSAL_RemoveXAttrByName,
   .fsal_getextattrs = GPFSFSAL_getextattrs,
-  .fsal_getfileno = GPFSFSAL_GetFileno
+  .fsal_getfileno = GPFSFSAL_GetFileno,
+  .fsal_cb_init = GPFSFSAL_CB_Init,
+  .fsal_cb_addfilter = GPFSFSAL_CB_AddFilter,
+  .fsal_cb_getevents = GPFSFSAL_CB_GetEvents
 };
 
 fsal_const_t fsal_gpfs_consts = {

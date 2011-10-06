@@ -85,6 +85,7 @@
 #define AT_FDCWD   -100
 
 #define OPENHANDLE_HANDLE_LEN 40
+#define OPENHANDLE_KEY_LEN 28
 #define OPENHANDLE_DRIVER_MAGIC     'O'
 #define OPENHANDLE_OFFSET_OF_FILEID (2 * sizeof(int))
 
@@ -110,6 +111,9 @@ struct file_handle
 
 /** end of open by handle structures */
 
+/* Allow aliasing of fsal_handle_t since FSALs will be
+ * casting between pointer types
+ */
 typedef struct
 {
   struct
@@ -117,7 +121,7 @@ typedef struct
     //  unsigned int fsid[2];
     struct file_handle handle;
   } data ;
-} gpfsfsal_handle_t;  /**< FS object handle */
+} __attribute__((__may_alias__)) gpfsfsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */
 
