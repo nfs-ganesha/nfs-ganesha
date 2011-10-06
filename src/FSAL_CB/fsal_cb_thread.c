@@ -385,6 +385,13 @@ void *fsal_cb_thread(void *Arg)
                        "failed");
         }
 
+      LogDebug(COMPONENT_FSAL_CB, "Received %d events to process for filesystem"
+      	       " id %llu.%llu export id %u.",
+	       event_nb,
+	       fsal_cb_args->export_entry->filesystem_id.major,
+	       fsal_cb_args->export_entry->filesystem_id.minor,
+	       fsal_cb_args->export_entry->id);
+      
       /* process the list of events */
       for(event = pevent_head; event != NULL;)
         {
@@ -402,6 +409,12 @@ void *fsal_cb_thread(void *Arg)
           ReleaseToPool(tmpevent, &nfs_param.fsal_cb_param.event_pool);
           event_nb--;
         }
+
+      LogDebug(COMPONENT_FSAL_CB, "Processed %d events for filesystem %llu.%llu "
+      	       "export id %u", event_nb,
+	       fsal_cb_args->export_entry->filesystem_id.major,
+	       fsal_cb_args->export_entry->filesystem_id.minor,
+	       fsal_cb_args->export_entry->id);
     }
 
   return NULL;
