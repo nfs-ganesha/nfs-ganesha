@@ -118,6 +118,10 @@ cache_content_client_t recover_datacache_client;
 #define CONF_EXPORT_PNFS               "Use_pNFS"
 #define CONF_EXPORT_USE_COMMIT                  "Use_NFS_Commit"
 #define CONF_EXPORT_USE_GANESHA_WRITE_BUFFER    "Use_Ganesha_Write_Buffer"
+#define CONF_EXPORT_USE_FSAL_CB        "Use_FSAL_CB"
+#define CONF_EXPORT_FSAL_CB_FILTERS    "FSAL_CB_Filters"
+#define CONF_EXPORT_FSAL_CB_TIMEOUT    "FSAL_CB_Timeout"
+#define CONF_EXPORT_FSAL_CB_TYPE       "FSAL_CB_Type"
 
 /** @todo : add encrypt handles option */
 
@@ -734,6 +738,17 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->anonymous_gid = (gid_t) ANON_GID;
   p_entry->use_commit = TRUE;
 
+  /* Defaults for FSAL_CB. It is ok to leave the filter list NULL
+   * even if we enable the FSAL_CB. */
+  p_entry->use_fsal_cb = FALSE;
+  p_entry->fsal_cb_filter_list = NULL;
+  p_entry->fsal_cb_timeout.seconds = 30;
+  p_entry->fsal_cb_timeout.nseconds = 0;
+  strncpy(p_entry->fsal_cb_type,"DUMB", 4);
+  /* We don't create the thread until all exports are parsed. */
+  memset(&p_entry->fsal_cb_thr, 0, sizeof(pthread_t));
+  
+
   /* by default, we support auth_none and auth_sys */
   p_entry->options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
 
@@ -823,7 +838,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           /* set export_id */
 
           p_entry->id = (unsigned short)export_id;
-
           set_options |= FLAG_EXPORT_ID;
 
         }
@@ -1961,6 +1975,49 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               {
                 LogCrit(COMPONENT_CONFIG,
                         "NFS READ_EXPORT: ERROR: Invalid value for %s (%s): TRUE or FALSE expected.",
+                        var_name, var_value);
+                err_flag = TRUE;
+                continue;
+              }
+            }
+        }
+      else if(!STRCMP(var_name, CONF_EXPORT_FSAL_CB_TYPE))
+	{
+          strncpy(p_entry->fsal_cb_type,var_value,sizeof(var_value));
+	}
+      else if(!STRCMP(var_name, CONF_EXPORT_FSAL_CB_TIMEOUT))
+        {
+	  /* Right now we are expecting seconds ... we should support
+	   * nseconds as well! */
+          p_entry->fsal_cb_timeout.seconds = atoi(var_value);
+          if (p_entry->fsal_cb_timeout.seconds < 0
+	      || p_entry->fsal_cb_timeout.nseconds < 0)
+	    {
+	      p_entry->fsal_cb_timeout.seconds = 0;
+	      p_entry->fsal_cb_timeout.nseconds = 0;
+	    }
+        }
+      else if(!STRCMP(var_name, CONF_EXPORT_FSAL_CB_FILTERS))
+        {
+          /* TODO: Parse the strings and form a list.
+           * Later each name will match a predefined filter
+           * in the FSAL CB interface. */
+          p_entry->fsal_cb_filter_list = NULL;
+        }
+      else if(!STRCMP(var_name, CONF_EXPORT_USE_FSAL_CB))
+        {
+          switch (StrToBoolean(var_value))
+            {
+            case 1:
+              p_entry->use_fsal_cb = TRUE;
+              break;
+            case 0:
+              p_entry->use_fsal_cb = FALSE;
+              break;
+            default:           /* error */
+              {
+                LogCrit(COMPONENT_CONFIG,
+                        "USR_FSAL_CB: ERROR: Invalid value for %s (%s): TRUE or FALSE expected.",
                         var_name, var_value);
                 err_flag = TRUE;
                 continue;
