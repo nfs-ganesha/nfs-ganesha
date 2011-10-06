@@ -109,7 +109,6 @@ fsal_status_t HPSSFSAL_test_access(hpssfsal_op_context_t * p_context,   /* IN */
 
   missing_access = FSAL_MODE_MASK(access_type); /* only modes, no ACLs here */
 
-
   /** @todo: test that needed attributes are in the structure */
 
   /* Test if file belongs to user. */

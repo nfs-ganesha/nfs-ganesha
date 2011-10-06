@@ -349,8 +349,8 @@ if test "${with_extra_includedir+set}" == "set"; then
 fi
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|DYNFSAL|SHOOK (default=PROXY)],[specify the type of filesystem to be exported] ),
-	     FSAL="$withval", FSAL="PROXY")
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|DYNFSAL|SHOOK (default=PROXY)],
+             [specify the type of filesystem to be exported] ), FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
 AM_CONDITIONAL(USE_FSAL_HPSS,     test "$FSAL" = "HPSS")
@@ -360,7 +360,7 @@ AM_CONDITIONAL(USE_FSAL_PROXY,    test "$FSAL" = "PROXY")
 AM_CONDITIONAL(USE_FSAL_SNMP,     test "$FSAL" = "SNMP")
 AM_CONDITIONAL(USE_FSAL_FUSE,     test "$FSAL" = "FUSE")
 AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
-AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "SHOOK") # variant of Lustre FSAL
+AM_CONDITIONAL(USE_FSAL_SHOOK,    test "$FSAL" = "SHOOK") # variant of Lustre FSAL
 AM_CONDITIONAL(USE_FSAL_XFS,      test "$FSAL" = "XFS")
 AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
@@ -562,7 +562,7 @@ case $FSAL in
 		AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
         FSAL_CFLAGS=
         FSAL_LDFLAGS="-lshooksvr -llustreapi"
-        FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
+        FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsalshook.la"
 		FS_NAME="shook"
         ;;
 
