@@ -521,6 +521,16 @@ int _9p_remove( _9p_request_data_t * preq9p,
                 u32 * plenout, 
                 char * preply) ;
 
+int _9p_rename( _9p_request_data_t * preq9p, 
+                void * pworker_data,
+                u32 * plenout, 
+                char * preply) ;
+
+int _9p_renameat( _9p_request_data_t * preq9p, 
+                  void * pworker_data,
+                  u32 * plenout, 
+                  char * preply) ;
+
 int _9p_unlinkat( _9p_request_data_t * preq9p, 
                   void * pworker_data,
                   u32 * plenout, 
