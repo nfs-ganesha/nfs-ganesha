@@ -48,10 +48,10 @@ fsal_status_t GPFSFSAL_CB_AddFilter( fsal_cb_event_bus_filter_t * pcbebfilter,  
 }
 
 fsal_status_t GPFSFSAL_CB_GetEvents( fsal_cb_event_t ** pevents,                  /* OUT */
-				     fsal_count_t * event_nb,                     /* IN */
-				     fsal_time_t timeout,                         /* IN */
-				     fsal_count_t * peventfound,                  /* OUT */
-				     fsal_cb_event_bus_context_t * pcbebcontext   /* IN */ )
+                                     fsal_count_t * event_nb,                     /* IN */
+                                     fsal_time_t timeout,                         /* IN */
+                                     fsal_count_t * peventfound,                  /* OUT */
+                                     fsal_cb_event_bus_context_t * pcbebcontext   /* IN */ )
 {
   int rc = 0;
   struct stat64 buf;
@@ -65,7 +65,7 @@ fsal_status_t GPFSFSAL_CB_GetEvents( fsal_cb_event_t ** pevents,                
   if (pcbebcontext == NULL || event_nb == NULL)
     {
       LogDebug(COMPONENT_FSAL, "Error: GPFSFSAL_CB_GetEvents() received"
-	       " unexpectedly NULL arguments.");
+               " unexpectedly NULL arguments.");
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_cb_getevents);
     }
 
@@ -99,9 +99,9 @@ fsal_status_t GPFSFSAL_CB_GetEvents( fsal_cb_event_t ** pevents,                
   if (*pevents == NULL)
     GetFromPool(*pevents, pcbebcontext->event_pool, fsal_cb_event_t);
   memset(&(*pevents)->event_data.event_context.fsal_data, 0,
-	 sizeof(cache_inode_fsal_data_t));
+         sizeof(cache_inode_fsal_data_t));
   memcpy(&(*pevents)->event_data.event_context.fsal_data, &pfsal_data,
-	 sizeof(cache_inode_fsal_data_t));
+         sizeof(cache_inode_fsal_data_t));
 
   if (reason == INODE_LOCK_GRANTED) /* Lock Event */
     {
@@ -109,10 +109,10 @@ fsal_status_t GPFSFSAL_CB_GetEvents( fsal_cb_event_t ** pevents,                
                "inode update: lock pid %d type %d start %lld len %lld",
                fl.l_pid, fl.l_type, (long long) fl.l_start,
                (long long) fl.l_len);
-      (*pevents)->event_data.lock.lock_param.lock_owner = fl.l_pid;
-      (*pevents)->event_data.lock.lock_param.lock_length = fl.l_len;
-      (*pevents)->event_data.lock.lock_param.lock_start = fl.l_start;
-      (*pevents)->event_data.lock.lock_param.lock_type = fl.l_type;
+      (*pevents)->event_data.type.lock.lock_param.lock_owner = fl.l_pid;
+      (*pevents)->event_data.type.lock.lock_param.lock_length = fl.l_len;
+      (*pevents)->event_data.type.lock.lock_param.lock_start = fl.l_start;
+      (*pevents)->event_data.type.lock.lock_param.lock_type = fl.l_type;
       (*pevents)->event_type = FSAL_CB_EVENT_LOCK;
     }
   else /* Invalidate Event - Default */

@@ -124,21 +124,22 @@ typedef struct fsal_cb_event_data_invalidate_
 {
 } fsal_cb_event_data_invalidate_t;
 
-typedef union fsal_cb_event_data__
+typedef struct fsal_cb_event_data__
 {
-  fsal_cb_event_data_create_t create;
-  fsal_cb_event_data_unlink_t unlink;
-  fsal_cb_event_data_rename_t rename;
-  fsal_cb_event_data_commit_t commit;
-  fsal_cb_event_data_write_t write;
-  fsal_cb_event_data_link_t link;
-  fsal_cb_event_data_lock_t lock;
-  fsal_cb_event_data_locku_t locku;
-  fsal_cb_event_data_open_t open;
-  fsal_cb_event_data_close_t close;
-  fsal_cb_event_data_setattr_t setattr;
-  fsal_cb_event_data_invalidate_t invalidate;
-
+  union {
+    fsal_cb_event_data_create_t create;
+    fsal_cb_event_data_unlink_t unlink;
+    fsal_cb_event_data_rename_t rename;
+    fsal_cb_event_data_commit_t commit;
+    fsal_cb_event_data_write_t write;
+    fsal_cb_event_data_link_t link;
+    fsal_cb_event_data_lock_t lock;
+    fsal_cb_event_data_locku_t locku;
+    fsal_cb_event_data_open_t open;
+    fsal_cb_event_data_close_t close;
+    fsal_cb_event_data_setattr_t setattr;
+    fsal_cb_event_data_invalidate_t invalidate;
+  } type;
   /* Common data most functions will need. */
   fsal_cb_event_data_context_t event_context;
 } fsal_cb_event_data_t;

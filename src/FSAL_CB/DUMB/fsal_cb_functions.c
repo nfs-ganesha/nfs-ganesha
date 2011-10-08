@@ -54,14 +54,14 @@ fsal_status_t dumb_fsal_cb_invalidate(fsal_cb_event_data_t * pevdata)
   /* Avoid dir cont check in cache_inode_get() */
   pevdata->event_context.fsal_data.cookie = DIR_START; 
       LogDebug(COMPONENT_FSAL_CB,
-	       "FSAL_CB_DUMB: calling cache_inode_get()");
+               "FSAL_CB_DUMB: calling cache_inode_get()");
   pentry = cache_inode_get(&pevdata->event_context.fsal_data,
-			   &attr, pevdata->event_context.ht, NULL, NULL,
-			   &cache_status);
+                           &attr, pevdata->event_context.ht, NULL, NULL,
+                           &cache_status);
   if(pentry == NULL)
     {
       LogDebug(COMPONENT_FSAL_CB,
-	       "FSAL_CB_DUMB: cache inode get failed.");
+               "FSAL_CB_DUMB: cache inode get failed.");
       /* Not an error. Expecting some nodes will not have it in cache in
        * a cluster. */
       ReturnCode(ERR_FSAL_NO_ERROR, 0);
@@ -74,7 +74,7 @@ fsal_status_t dumb_fsal_cb_invalidate(fsal_cb_event_data_t * pevdata)
   /* Lock the entry */
   P_w(&pentry->lock);
       LogDebug(COMPONENT_FSAL_CB,
-	       "FSAL_CB_DUMB: setting state to STALE");
+               "FSAL_CB_DUMB: setting state to STALE");
   pentry->internal_md.valid_state = STALE;
   if(pentry->internal_md.type == DIR_BEGINNING)
     {
@@ -87,7 +87,7 @@ fsal_status_t dumb_fsal_cb_invalidate(fsal_cb_event_data_t * pevdata)
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-#define INVALIDATE_STUB {		      \
+#define INVALIDATE_STUB {                     \
     return dumb_fsal_cb_invalidate(pevdata);  \
   } while(0);
 

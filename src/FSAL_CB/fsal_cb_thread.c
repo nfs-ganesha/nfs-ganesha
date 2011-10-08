@@ -68,49 +68,51 @@ void create_fsal_cb_threads()
       pcurrent = pcurrent->next)
     {
       if (pcurrent->use_fsal_cb == FALSE)
-	continue;
+        continue;
 
       /* Make sure there are not multiple fsal_cb_threads handling multiple
        * exports on the same filesystem. This could potentially cause issues. */
       LogEvent(COMPONENT_INIT, "Checking if export id %d with filesystem "
-	       "id %llu.%llu already has an assigned FSAL_CB thread.",
-	       pcurrent->fsalid, pcurrent->filesystem_id.major,
-	       pcurrent->filesystem_id.minor);
+               "id %llu.%llu already has an assigned FSAL_CB thread.",
+               pcurrent->fsalid, pcurrent->filesystem_id.major,
+               pcurrent->filesystem_id.minor);
       
-      if ((id = fsal_cb_thread_exists(pcurrent)) > 0)
-	{
-	  LogEvent(COMPONENT_INIT, "Filesystem %llu.%llu already has an "
-		   "assigned FSAL_CB with export id %d so export w/ id %d"
-		   " is not being assigned a new FSAL_CB thread.",
-		   pcurrent->filesystem_id.major,
-		   pcurrent->filesystem_id.minor, id, pcurrent->id);
-	  continue;
-	}
+      id = fsal_cb_thread_exists(pcurrent);
+      if (id)
+        {
+          LogEvent(COMPONENT_INIT, "Filesystem %llu.%llu already has an "
+                   "assigned FSAL_CB with export id %d so export w/ id %d"
+                   " is not being assigned a new FSAL_CB thread.",
+                   pcurrent->filesystem_id.major,
+                   pcurrent->filesystem_id.minor, id, pcurrent->id);
+          continue;
+        }
       else
-	{
-	  LogEvent(COMPONENT_INIT, "Filesystem %llu.%llu export id %d does not"
-		   " have an FSAL_CB thread yet, creating a thread now.",
-		   pcurrent->filesystem_id.major, pcurrent->filesystem_id.minor,
-		   pcurrent->id);
+        {
+          LogEvent(COMPONENT_INIT, "Filesystem %llu.%llu export id %d does not"
+                   " have an FSAL_CB thread yet, creating a thread now.",
+                   pcurrent->filesystem_id.major, pcurrent->filesystem_id.minor,
+                   pcurrent->id);
 
-	  if((fsal_cb_args =
-	      (fsal_cb_arg_t *) Mem_Alloc(sizeof(fsal_cb_arg_t))) == NULL)
-	    {
-	      LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-	      Fatal();
-	    }
-	  
-	  fsal_cb_args->export_entry = pcurrent;
-	  
-	  if( ( rc = pthread_create( &pcurrent->fsal_cb_thr, &attr_thr,
-				     fsal_cb_thread,(void *)fsal_cb_args)) != 0)
-	    {
-	      LogFatal(COMPONENT_THREAD,
-		       "Could not create fsal_cb_thread, error = %d (%s)",
-		       errno, strerror(errno));
-	      Mem_Free(fsal_cb_args);
-	    }
-	}	  
+          if((fsal_cb_args =
+              (fsal_cb_arg_t *) Mem_Alloc(sizeof(fsal_cb_arg_t))) == NULL)
+            {
+              LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
+              Fatal();
+            }
+          
+          fsal_cb_args->export_entry = pcurrent;
+          
+          if( ( rc = pthread_create( &pcurrent->fsal_cb_thr, &attr_thr,
+                                     fsal_cb_thread,(void *)fsal_cb_args)) != 0)
+            {
+              Mem_Free(fsal_cb_args);
+              LogFatal(COMPONENT_THREAD,
+                       "Could not create fsal_cb_thread, error = %d (%s)",
+                       errno, strerror(errno));
+              Fatal();
+            }
+        }          
     }
 }
 
@@ -128,10 +130,10 @@ void nfs_Init_FSAL_CB()
 
   /* DEBUGGING */
   LogDebug(COMPONENT_INIT,
-	   "FSAL_CB: Initializing FSAL CB data pool");  
+           "FSAL_CB: Initializing FSAL CB data pool");  
   /* Allocation of the FSAL CB pool */
   MakePool(&nfs_param.fsal_cb_param.event_pool,
-	   nfs_param.fsal_cb_param.nb_event_data_prealloc,
+           nfs_param.fsal_cb_param.nb_event_data_prealloc,
            fsal_cb_event_t,
            constructor_fsal_cb_event_t, NULL);
   NamePool(&nfs_param.fsal_cb_param.event_pool, "FSAL CB Data Pool");
@@ -221,7 +223,9 @@ fsal_status_t process_event(fsal_cb_event_t *event, fsal_cb_event_functions_t *e
 static int fsal_cb_thread_exists(exportlist_t *entry)
 {
   exportlist_t *pcurrent;
-
+  pthread_t zeros;
+  memset(&zeros, 0, sizeof(zeros));
+  
   /* Loop through all export entries and if any have the same
    * filesystem id, assume they really do export a directory
    * from the same filesystem. In this case, check if there is
@@ -232,10 +236,10 @@ static int fsal_cb_thread_exists(exportlist_t *entry)
       pcurrent = pcurrent->next)
     {
       if (pcurrent == entry)
-	continue;
+        continue;
 
       if (pcurrent->use_fsal_cb == FALSE)
-	continue;
+        continue;
 
       /* Should I check if major as well as minor are different? */
       if (((pcurrent->filesystem_id.major != entry->filesystem_id.major)
@@ -243,10 +247,10 @@ static int fsal_cb_thread_exists(exportlist_t *entry)
         continue;
 
       /* Is this the right wayt to check if a pthread reference is valid? */
-      if (pcurrent->fsal_cb_thr != 0)
+      if (memcmp(&pcurrent->fsal_cb_thr, &zeros, sizeof(pthread_t)) != 0)
         return pcurrent->id; /* Meaning a thread exists, so exit this thread.*/
       else
-        entry->fsal_cb_thr = pthread_self();
+        continue;
     }  
  return 0; /* Meaning no there weren't other threads and we set ours. */
 }
@@ -295,14 +299,15 @@ void *fsal_cb_thread(void *Arg)
     {
       /* Failed init */
       LogFatal(COMPONENT_FSAL_CB,
-	       "FSAL_CB: Memory manager could not be initialized");
+               "FSAL_CB: Memory manager could not be initialized");
+      Fatal();
     }
   LogInfo(COMPONENT_FSAL_CB,
-	  "FSAL_CB: Memory manager for filesystem %llu.%llu export id %d"
-	  " successfully initialized",
-	  fsal_cb_args->export_entry->filesystem_id.major,
-	  fsal_cb_args->export_entry->filesystem_id.minor,
-	  fsal_cb_args->export_entry->id);
+          "FSAL_CB: Memory manager for filesystem %llu.%llu export id %d"
+          " successfully initialized",
+          fsal_cb_args->export_entry->filesystem_id.major,
+          fsal_cb_args->export_entry->filesystem_id.minor,
+          fsal_cb_args->export_entry->id);
 #endif
   
   /* Set the FSAL CB functions that will be used to process events. */
@@ -319,8 +324,8 @@ void *fsal_cb_thread(void *Arg)
   /* It is expected that the export entry and event_pool will be referenced
    * in the returned callback context structure. */
   memcpy(&fsal_cb_context.FS_export_context,
-	 &fsal_cb_args->export_entry->FS_export_context,
-	 sizeof(fsal_export_context_t));
+         &fsal_cb_args->export_entry->FS_export_context,
+         sizeof(fsal_export_context_t));
 
   fsal_cb_context.event_pool = &nfs_param.fsal_cb_param.event_pool;
 
@@ -373,54 +378,64 @@ void *fsal_cb_thread(void *Arg)
       pevent_head = NULL;
       LogDebug(COMPONENT_FSAL_CB, "Requesting event from FSAL Callback interface.");
       status = FSAL_CB_GetEvents(&pevent_head,     /* out */
-                                    &event_nb,        /* out */
-                                    timeout,          /* in */
-                                    &nb_events_found, /* out */
-                                    &fsal_cb_context);/* in */
+                                 &event_nb,        /* in/out */
+                                 timeout,          /* in */
+                                 &nb_events_found, /* out */
+                                 &fsal_cb_context);/* in */
       if (FSAL_IS_ERROR(status))
         {
           if (status.major == ERR_FSAL_TIMEOUT)
             LogDebug(COMPONENT_FSAL_CB, "FSAL_CB_EB_GetEvents() hit the timeout"
                      " limit of %u.%u seconds for filesystem id %llu.%llu export id"
-		     " %d.", timeout.seconds, timeout.nseconds,
+                     " %d.", timeout.seconds, timeout.nseconds,
                      fsal_cb_args->export_entry->filesystem_id.major,
                      fsal_cb_args->export_entry->filesystem_id.minor,
                      fsal_cb_args->export_entry->id);
-            else
-              LogDebug(COMPONENT_FSAL_CB, "Error: FSAL_CB_EB_GetEvents() "
-                       "failed");
+          else if (status.major == ERR_FSAL_NOTSUPP)
+            {
+              LogCrit(COMPONENT_FSAL_CB, "Exiting FSAL CB Thread for filesystem"
+                      " id %llu.%llu export id %u because the FSAL Callback"
+                      " Interface is not supported for this FSAL type.",
+                      fsal_cb_args->export_entry->filesystem_id.major,
+                      fsal_cb_args->export_entry->filesystem_id.minor,
+                      fsal_cb_args->export_entry->id);
+              return NULL;
+            }
+          else
+            LogDebug(COMPONENT_FSAL_CB, "Error: FSAL_CB_EB_GetEvents() "
+                     "failed");
         }
 
       LogDebug(COMPONENT_FSAL_CB, "Received %lu events to process for filesystem"
-      	       " id %llu.%llu export id %u.",
-	       event_nb,
-	       fsal_cb_args->export_entry->filesystem_id.major,
-	       fsal_cb_args->export_entry->filesystem_id.minor,
-	       fsal_cb_args->export_entry->id);
+                     " id %llu.%llu export id %u.",
+               event_nb,
+               fsal_cb_args->export_entry->filesystem_id.major,
+               fsal_cb_args->export_entry->filesystem_id.minor,
+               fsal_cb_args->export_entry->id);
       
       /* process the list of events */
       for(event = pevent_head; event != NULL;)
         {
           status = process_event(event, event_func);
           if (FSAL_IS_ERROR(status))
-	    {
-	      LogDebug(COMPONENT_FSAL_CB, "Error: Event could not be processed "
-		       "for filesystem %llu.%llu export id %u.",
-		       fsal_cb_args->export_entry->filesystem_id.major,
-		       fsal_cb_args->export_entry->filesystem_id.minor,
-		       fsal_cb_args->export_entry->id);
-	    }
+            {
+              LogDebug(COMPONENT_FSAL_CB, "Error: Event could not be processed "
+                       "for filesystem %llu.%llu export id %u.",
+                       fsal_cb_args->export_entry->filesystem_id.major,
+                       fsal_cb_args->export_entry->filesystem_id.minor,
+                       fsal_cb_args->export_entry->id);
+            }
           tmpevent = event;
           event = event->next_event;
           ReleaseToPool(tmpevent, &nfs_param.fsal_cb_param.event_pool);
           event_nb--;
         }
 
-      LogDebug(COMPONENT_FSAL_CB, "Processed %lu events for filesystem %llu.%llu "
-      	       "export id %u", event_nb,
-	       fsal_cb_args->export_entry->filesystem_id.major,
-	       fsal_cb_args->export_entry->filesystem_id.minor,
-	       fsal_cb_args->export_entry->id);
+      LogDebug(COMPONENT_FSAL_CB, "%lu events not found for filesystem"
+               " %llu.%llu export id %u", event_nb,
+               fsal_cb_args->export_entry->filesystem_id.major,
+               fsal_cb_args->export_entry->filesystem_id.minor,
+               fsal_cb_args->export_entry->id);
     }
 
   Mem_Free(Arg);
