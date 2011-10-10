@@ -112,7 +112,7 @@ const _9p_function_desc_t _9pfuncdesc[] = {
         { _9p_dummy, "_9P_TOPEN" },
         { _9p_dummy, "_9P_TCREATE" },
         { _9p_dummy, "_9P_TREAD" },
-        { _9p_dummy, "_9P_TWRITE" },
+        { _9p_write, "_9P_TWRITE" },
         { _9p_clunk, "_9P_TCLUNK" },
         { _9p_remove, "_9P_TREMOVE" },
         { _9p_dummy, "_9P_TSTAT" },

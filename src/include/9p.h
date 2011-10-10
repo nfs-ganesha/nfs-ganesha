@@ -501,6 +501,11 @@ int _9p_mknod( _9p_request_data_t * preq9p,
                u32 * plenout, 
                char * preply) ;
 
+int _9p_read( _9p_request_data_t * preq9p, 
+              void * pworker_data,
+              u32 * plenout, 
+              char * preply) ;
+
 int _9p_readdir( _9p_request_data_t * preq9p, 
                  void * pworker_data,
                  u32 * plenout, 
@@ -555,6 +560,11 @@ int _9p_walk( _9p_request_data_t * preq9p,
               void * pworker_data,
               u32 * plenout,
               char * preply) ;
+
+int _9p_write( _9p_request_data_t * preq9p, 
+               void * pworker_data,
+               u32 * plenout,
+               char * preply) ;
 
 int _9p_rerror( _9p_request_data_t * preq9p,
                 u16 * msgtag,
