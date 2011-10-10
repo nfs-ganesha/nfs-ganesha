@@ -48,6 +48,7 @@ typedef uint64_t u64;
 #define _9P_PORT 564
 #define _9P_SEND_BUFFER_SIZE 65560
 #define _9P_RECV_BUFFER_SIZE 65560
+#define _9p_READ_BUFFER_SIZE _9P_SEND_BUFFER_SIZE
 #define _9P_MAXDIRCOUNT 2000 /* Must be bigger than _9P_SEND_BUFFER_SIZE / 40 */
 
 #define CONF_LABEL_9P "_9P"
@@ -367,6 +368,15 @@ do                                           \
   *((u16 *)__cursor) = __len ;               \
   __cursor += sizeof( u16 ) ;                \
   memcpy( __cursor, __str, __len ) ;         \
+  __cursor += __len ;                        \
+} while( 0 )
+
+#define _9p_setbuffer( __cursor, __len, __buffer ) \
+do                                           \
+{                                            \
+  *((u32 *)__cursor) = __len ;               \
+  __cursor += sizeof( u32 ) ;                \
+  memcpy( __cursor, __buffer, __len ) ;         \
   __cursor += __len ;                        \
 } while( 0 )
 

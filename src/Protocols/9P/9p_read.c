@@ -51,6 +51,8 @@
 #include "fsal.h"
 #include "9p.h"
 
+char __thread databuffer[_9p_READ_BUFFER_SIZE] ;
+
 int _9p_read( _9p_request_data_t * preq9p, 
               void  * pworker_data,
               u32 * plenout, 
@@ -66,8 +68,17 @@ int _9p_read( _9p_request_data_t * preq9p,
   u32 * fid    = NULL ;
   u64 * offset = NULL ;
   u32 * count  = NULL ;
+  u32 outcount = 0 ;
 
   _9p_fid_t * pfid = NULL ;
+
+  fsal_seek_t seek_descriptor;
+  fsal_size_t size;
+  fsal_size_t read_size = 0;
+  fsal_attrib_list_t attr;
+  fsal_boolean_t eof_met;
+  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+  uint64_t stable_flag = FSAL_SAFE_WRITE_TO_FS;
 
   /* Get data */
   _9p_getptr( cursor, msgtag, u16 ) ; 
@@ -85,12 +96,40 @@ int _9p_read( _9p_request_data_t * preq9p,
       return rc ;
     }
 
-   pfid = &preq9p->pconn->fids[*fid] ;
+  pfid = &preq9p->pconn->fids[*fid] ;
+
+  /* Do the job */
+  seek_descriptor.whence = FSAL_SEEK_SET ;
+  seek_descriptor.offset = *offset;
+
+  size = *count ;
+   
+  if(cache_inode_rdwr( pfid->pentry,
+                       CACHE_INODE_READ,
+                       &seek_descriptor,
+                       size,
+                       &read_size,
+                       &attr,
+                       databuffer,
+                       &eof_met,
+                       pwkrdata->ht,
+                       &pwkrdata->cache_inode_client,
+                       &pfid->fsal_op_context,
+                       stable_flag,
+                       &cache_status ) != CACHE_INODE_SUCCESS )
+    {
+      err = _9p_tools_errno( cache_status ) ; ;
+      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+      return rc ;
+    }
+
+  outcount = (u32)read_size ;
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RREAD ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
 
+  _9p_setbuffer( cursor, outcount, databuffer ) ;
 
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
