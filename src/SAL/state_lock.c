@@ -1663,7 +1663,8 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
   fsal_lock_param_t    conflicting_lock;
   /* TODO FSF: need    the real code for these flags */
   bool_t               lock_support             = TRUE;
-  bool_t               lock_support_owner       = FALSE;
+  /* TODO: Plug into fsal-id code when it is ready. Until then leave it TRUE. */
+  bool_t               lock_support_owner       = TRUE;
   bool_t               lock_support_async_block = FALSE;
 
   /* Quick exit if:
