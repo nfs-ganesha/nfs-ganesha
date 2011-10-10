@@ -122,13 +122,18 @@ int _9p_create( _9p_request_data_t * preq9p,
       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
       return rc ;
    }
-
+   
    /* Build the qid */
    qid_newfile.type    = _9P_QTFILE ;
    qid_newfile.version = 0 ;
    qid_newfile.path    = fsalattr.fileid ;
 
    iounit = 0 ; /* default value */
+
+   /* The fid will represent the new file now */
+   pfid->pentry = pentry_newfile ;
+   _9p_tools_fsal_attr2stat( &fsalattr, &pfid->attr ) ;
+   pfid->qid = qid_newfile ;
 
    /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RCREATE ) ;
