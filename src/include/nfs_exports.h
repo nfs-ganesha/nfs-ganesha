@@ -147,7 +147,9 @@ typedef struct exportlist_client__
 
 /* fsal cb filter list is needed in exportlist.
  * Inluding fsal_cb.h would cause header file issues however. */
+#ifdef _USE_FSAL_CB
 struct fsal_cb_filter_list_t_;
+#endif
 
 typedef struct exportlist__
 {
@@ -198,11 +200,13 @@ typedef struct exportlist__
   struct exportlist__ *next;    /* next entry                                        */
   unsigned int fsalid ;
 
+#ifdef _USE_FSAL_CB
   bool_t use_fsal_cb;
   char fsal_cb_type[MAXPATHLEN];
   fsal_time_t fsal_cb_timeout;
   pthread_t fsal_cb_thr; /* This value may be modified later to point to an FSAL CB thread. */
   struct fsal_cb_filter_list_t_ *fsal_cb_filter_list; /* List of filters to apply through FSAL CB interface. */
+#endif /* _USE_FSAL_CB */
 } exportlist_t;
 
 /* Used to record the uid and gid of the client that made a request. */

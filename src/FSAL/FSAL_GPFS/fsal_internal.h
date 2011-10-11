@@ -435,6 +435,7 @@ fsal_status_t GPFSFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
 
 fsal_status_t GPFSFSAL_sync(fsal_file_t * p_file_descriptor /* IN */);
 
+#ifdef _USE_FSAL_CB
 fsal_status_t GPFSFSAL_CB_Init( fsal_cb_event_bus_parameter_t * pebparam,      /* IN */
 				fsal_cb_event_bus_context_t * pcbebcontext     /* OUT */);
 fsal_status_t GPFSFSAL_CB_AddFilter( fsal_cb_event_bus_filter_t * pcbebfilter,  /* IN */
@@ -444,3 +445,4 @@ fsal_status_t GPFSFSAL_CB_GetEvents( fsal_cb_event_t ** pevents,                
 				     fsal_time_t timeout,                         /* IN */
 				     fsal_count_t * peventfound,                  /* OUT */
 				     fsal_cb_event_bus_context_t * pcbebcontext   /* IN */ );
+#endif /* _USE_FSAL_CB */

@@ -12,6 +12,12 @@ else
 BUDDY_LIB_FLAGS =
 endif
 
+if USE_FSAL_CB
+FSAL_CB_LIB_FLAGS = ../FSAL_CB/libfsalcb.la
+else
+FSAL_CB_LIB_FLAGS =
+endif
+
 if USE_GSSRPC
 SEC_LIB_FLAGS =
 SVC_FLAGS =
@@ -145,7 +151,7 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       ../Protocols/XDR/libnfs_mnt_xdr.la                \
                                       ../SemN/libSemN.la                                \
                                       ../RW_Lock/librwlock.la                           \
-                                      ../FSAL_CB/libfsalcb.la                           \
+                                      $(FSAL_CB_LIB_FLAGS)                              \
                                       ../Common/libcommon_utils.la
 
 libMainServices_la_DEPENDENCIES = $(libMainServices_la_SOURCES) $(libMainServices_la_LIBADD)

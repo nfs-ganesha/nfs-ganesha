@@ -896,6 +896,7 @@ fsal_status_t FSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
 }
 
 /* FSAL_CB functions */
+#ifdef _USE_FSAL_CB
 fsal_status_t FSAL_CB_Init( fsal_cb_event_bus_parameter_t * pebparam,      /* IN */
                                fsal_cb_event_bus_context_t * pcbebcontext     /* OUT */)
 {
@@ -926,6 +927,7 @@ fsal_status_t FSAL_CB_GetEvents( fsal_cb_event_t ** pevents,            /* OUT *
     return fsal_functions.fsal_cb_getevents(pevents, event_nb, timeout,
 					    peventfound, pcbebcontext);
 }
+#endif /* _USE_FSAL_CB */
 
 #ifdef _USE_SHARED_FSAL
 int FSAL_LoadLibrary(char *path)

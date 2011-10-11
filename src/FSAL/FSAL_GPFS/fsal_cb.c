@@ -35,6 +35,8 @@
 #include <utime.h>
 #include <sys/time.h>
 
+#ifdef _USE_FSAL_CB
+
 fsal_status_t GPFSFSAL_CB_Init( fsal_cb_event_bus_parameter_t * pebparam,      /* IN */
                                    fsal_cb_event_bus_context_t * pcbebcontext     /* OUT */)
 {
@@ -127,3 +129,5 @@ fsal_status_t GPFSFSAL_CB_GetEvents( fsal_cb_event_t ** pevents,                
    * allocated by different threads ... is that a memory leak? */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_cb_getevents);
 }
+
+#endif /* _USE_FSAL_CB */

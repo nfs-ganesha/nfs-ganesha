@@ -676,6 +676,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
   /* Defaults for FSAL_CB. It is ok to leave the filter list NULL
    * even if we enable the FSAL_CB. */
+  #ifdef _USE_FSAL_CB
   p_entry->use_fsal_cb = FALSE;
   p_entry->fsal_cb_filter_list = NULL;
   p_entry->fsal_cb_timeout.seconds = 30;
@@ -683,7 +684,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   strncpy(p_entry->fsal_cb_type,"DUMB", 4);
   /* We don't create the thread until all exports are parsed. */
   memset(&p_entry->fsal_cb_thr, 0, sizeof(pthread_t));
-  
+#endif /* _USE_FSAL_CB */
 
   /* by default, we support auth_none and auth_sys */
   p_entry->options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
@@ -1917,6 +1918,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               }
             }
         }
+#ifdef _USE_FSAL_CB
       else if(!STRCMP(var_name, CONF_EXPORT_FSAL_CB_TYPE))
 	{
           strncpy(p_entry->fsal_cb_type,var_value,sizeof(var_value));
@@ -1960,6 +1962,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               }
             }
         }
+#endif /* _USE_FSAL_CB */
       else if(!STRCMP(var_name, CONF_EXPORT_FSALID))
         {
            if( ( p_entry->fsalid = FSAL_name2fsalid( var_value ) ) == -1 )

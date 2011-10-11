@@ -24,6 +24,8 @@
 #ifndef _FSAL_CB_H
 #define _FSAL_CB_H
 
+#ifdef _USE_FSAL_CB
+
 #include "fsal_types.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
@@ -170,4 +172,5 @@ typedef struct fsal_cb_event_functions__
 #define FSAL_CB_DUMB_TYPE "DUMB"
 fsal_cb_event_functions_t *get_fsal_cb_dumb_functions();
 
-#endif                          /* _FSAL_CB_H */
+#endif /* _USE_FSAL_CB */
+#endif /* _FSAL_CB_H */
