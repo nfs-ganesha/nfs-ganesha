@@ -578,6 +578,20 @@ chkconfig --add nfs-ganesha-zfs
 
 
 %changelog
+* Fri Apr 11 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.1.1-1
+- Bug Fix: padded size for FSAL-less daemon were too short and not aligned on 64 bits
+- Bug Fix: Badly formed fsal_op_context_t in FSAL_ZFS (issue when using as shared object)
+- Bug Fix: bad modes/ACLs management in several FSALs (produced EPERM errors)
+- Bug Fix: badly managed access_type in nfs3_Access
+- Bug Fix:  Call cache_inode_close after deleting share state
+- Added support for ERR_FSAL_DELAY in upper layer
+- FSAL code has been reorganized a lot
+- New SAL (State Abstraction Layer) to manage locks (NFSv4/NLM) and share reservations
+- NFSv4.0 are now activated by default
+- Symbolic Links are managed via a pool to save memory in Cache_Inode
+- Early 9P support
+- Lustre FSAL: exporting several Lustre fuilesystem with the same server instance
+
 * Wed Apr  7 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.1.0-1
 - Bug Fix: Bad memset in FSAL_HPSS::HPSSFSAL_lookup. Result was a segfault at init.
 - Code reorganization : subdirectory RPCAL has been added
