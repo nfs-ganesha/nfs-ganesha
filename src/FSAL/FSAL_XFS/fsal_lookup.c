@@ -76,10 +76,9 @@ fsal_status_t XFSFSAL_lookup(fsal_handle_t * parent_handle,      /* IN */
   xfsfsal_handle_t * p_parent_directory_handle = (xfsfsal_handle_t *)parent_handle;
   xfsfsal_op_context_t * p_context = (xfsfsal_op_context_t *)context;
   xfsfsal_handle_t * p_object_handle = (xfsfsal_handle_t *)object_handle;
-  int rc, errsv;
+  int rc = 0 , errsv = 0 ;
   fsal_status_t status;
   struct stat buffstat;
-  fsal_path_t pathfsal;
 
   int parentfd;
   int objectfd;

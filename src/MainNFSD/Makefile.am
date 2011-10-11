@@ -54,6 +54,14 @@ else
 NLM_LIB =
 endif
 
+if USE_9P
+DISPATCH_9P_FILES = 9p_dispatcher.c 
+_9P_LIB = ../Protocols/9P/lib9p.la
+else
+DISPATCH_9P_FILES = 
+_9P_LIB = 
+endif
+
 if USE_FSAL_FUSE
 noinst_LTLIBRARIES           = libMainServices.la
 lib_LTLIBRARIES              = libganeshaNFS.la
@@ -82,6 +90,7 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              nfs_worker_thread.c                  \
                              nfs_file_content_gc_thread.c         \
                              nfs_rpc_dispatcher_thread.c          \
+                             $(DISPATCH_9P_FILES)                 \
                              nfs_file_content_flush_thread.c      \
                              nfs_rpc_tcp_socket_manager_thread.c  \
                              nfs_init.c                           \
@@ -141,6 +150,7 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       ../Log/liblog.la                                  \
                                       ../ConfigParsing/libConfigParsing.la              \
                                       ../RPCAL/librpcal.la                              \
+                                      $(_9P_LIB)                                        \
                                       ../Protocols/XDR/libnfs_mnt_xdr.la                \
                                       ../SemN/libSemN.la                                \
                                       ../RW_Lock/librwlock.la                           \

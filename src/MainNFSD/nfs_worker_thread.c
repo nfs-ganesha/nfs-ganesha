@@ -2147,11 +2147,11 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   return 0;
 }                               /* nfs_Init_worker_data */
 
-void DispatchWork(nfs_request_data_t *pnfsreq, unsigned int worker_index)
+void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index)
 {
   LRU_entry_t *pentry = NULL;
   LRU_status_t status;
-  struct svc_req *ptr_req = &pnfsreq->req;
+  struct svc_req *ptr_req = &pnfsreq->rcontent.nfs.req;
   unsigned int rpcxid = get_rpc_xid(ptr_req);
 
   LogDebug(COMPONENT_DISPATCH,
@@ -2252,6 +2252,26 @@ enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
   return AUTH_OK;
 }
 
+#ifdef _USE_9P
+/**
+ * _9p_execute: execute a 9p request.
+ *
+ * Executes 9P request
+ *
+ * @param pnfsreq      [INOUT] pointer to 9p request
+ * @param pworker_data [INOUT] pointer to worker's specific data
+ *
+ * @return nothing (void function)
+ *
+ */
+static void _9p_execute( _9p_request_data_t * preq9p, 
+                          nfs_worker_data_t * pworker_data)
+{
+  _9p_process_request( preq9p, pworker_data ) ;
+  return ;
+} /* _9p_execute */
+#endif
+
 /**
  * worker_thread: The main function for a worker thread
  *
@@ -2267,7 +2287,7 @@ enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
 void *worker_thread(void *IndexArg)
 {
   nfs_worker_data_t *pmydata;
-  nfs_request_data_t *pnfsreq;
+  request_data_t *pnfsreq;
   LRU_entry_t *pentry;
   struct svc_req *preq;
   unsigned long worker_index;
@@ -2506,35 +2526,50 @@ void *worker_thread(void *IndexArg)
           continue;             /* return to main loop */
         }
 
-      pnfsreq = (nfs_request_data_t *) (pentry->buffdata.pdata);
+      pnfsreq = (request_data_t *) (pentry->buffdata.pdata);
 
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "I have some work to do, pnfsreq=%p, length=%d, invalid=%d, xid=%lu",
-                   pnfsreq,
-                   pmydata->pending_request->nb_entry,
-                   pmydata->pending_request->nb_invalid,
-                   (unsigned long) pnfsreq->msg.rm_xid);
+     
+      switch( pnfsreq->rtype )
+       {
+          case NFS_REQUEST:
+           LogFullDebug(COMPONENT_DISPATCH,
+                        "I have some work to do, pnfsreq=%p, length=%d, invalid=%d, xid=%lu",
+                        pnfsreq,
+                        pmydata->pending_request->nb_entry,
+                        pmydata->pending_request->nb_invalid,
+                        (unsigned long) pnfsreq->rcontent.nfs.msg.rm_xid);
 
-      if(pnfsreq->xprt->XP_SOCK == 0)
-      {
-        LogFullDebug(COMPONENT_DISPATCH,
-                     "No RPC management, xp_sock==0");
-      }
-      else
-        {
-          /* Set pointers */
-          preq = &(pnfsreq->req);
+           if(pnfsreq->rcontent.nfs.xprt->XP_SOCK == 0)
+            {
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "No RPC management, xp_sock==0");
+            }
+           else
+            {
+              /* Set pointers */
+              preq = &(pnfsreq->rcontent.nfs.req);
 
-          /* Validate the rpc request as being a valid program, version, and proc. If not, report the error.
-           * Otherwise, execute the funtion.
-           */
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "About to execute Prog = %d, vers = %d, proc = %d xprt=%p",
-                       (int)preq->rq_prog, (int)preq->rq_vers,
-                       (int)preq->rq_proc, preq->rq_xprt);
-          if(is_rpc_call_valid(preq->rq_xprt, preq) == TRUE)
-            nfs_rpc_execute(pnfsreq, pmydata);
-        }
+              /* Validate the rpc request as being a valid program, version, and proc. If not, report the error.
+               * Otherwise, execute the funtion.
+               */
+              LogFullDebug(COMPONENT_DISPATCH,
+                           "About to execute Prog = %d, vers = %d, proc = %d xprt=%p",
+                           (int)preq->rq_prog, (int)preq->rq_vers,
+                           (int)preq->rq_proc, preq->rq_xprt);
+
+              if(is_rpc_call_valid(preq->rq_xprt, preq) == TRUE)
+                  nfs_rpc_execute(&pnfsreq->rcontent.nfs, pmydata);
+            }
+           break ;
+
+	  case _9P_REQUEST:
+#ifdef _USE_9P
+	     _9p_execute( &pnfsreq->rcontent._9p, pmydata ) ;
+#else
+	     LogCrit(COMPONENT_DISPATCH, "Implementation error, 9P message when 9P support is disabled" ) ; 
+#endif
+	    break ;
+         }
 
       /* Free the req by releasing the entry */
       LogFullDebug(COMPONENT_DISPATCH,

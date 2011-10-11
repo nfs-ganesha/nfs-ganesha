@@ -388,9 +388,15 @@ AM_CONDITIONAL(USE_TIRPC,  test "$RPCAL" = "TIRPC" )
 AM_CONDITIONAL(HAVE_GSSAPI, test "$RPCAL" = "TIRPC" )
 AM_CONDITIONAL(USE_ONCRPC, test "$RPCAL" = "ONCRPC" )
 
+# Enable 9P Support
+GA_ENABLE_AM_CONDITION([9p],[enable 9P support], [USE_9P])
+if test "$enable_9p" == "yes"; then
+	AC_DEFINE(_USE_9P, 1, [enable 9P support])
+fi
+
+
 # IPv6
 GA_ENABLE_AM_CONDITION([ipv6],[enable IPv6 support (via IPv6)], [USE_TIRPC_IPV6])
-
 if test "$enable_ipv6" == "yes"; then
 	AC_DEFINE(_USE_TIRPC_IPV6,1,[enable IPv6 support via TIRPC])
 	if test "$RPCAL" != "TIRPC" ; then

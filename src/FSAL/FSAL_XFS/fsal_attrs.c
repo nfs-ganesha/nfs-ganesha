@@ -433,7 +433,6 @@ fsal_status_t XFSFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
   fsal_status_t st ;
   xfs_bstat_t bstat;
   xfs_ino_t xfs_ino;
-  struct stat buffstat;
   int fd = 0 ;
 
   /* sanity checks.

@@ -47,7 +47,6 @@ fsal_status_t XFSFSAL_BuildExportContext(fsal_export_context_t *export_context, 
 
   FILE *fp;
   struct mntent *p_mnt;
-  struct stat pathstat;
 
   char rpath[MAXPATHLEN];
   char mntdir[MAXPATHLEN];

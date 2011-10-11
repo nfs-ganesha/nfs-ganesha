@@ -74,7 +74,6 @@ fsal_status_t XFSFSAL_readlink(fsal_handle_t * linkhandle, /* IN */
   int rc, errsv;
   fsal_status_t status;
   char link_content_out[FSAL_MAX_PATH_LEN];
-  fsal_path_t fsalpath;
 
   /* sanity checks.
    * note : link_attributes is optional.

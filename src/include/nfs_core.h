@@ -72,6 +72,10 @@
 #endif                          /* _USE_PNFS */
 #endif
 
+#ifdef _USE_9P
+#include "9p.h"
+#endif
+
 #ifdef _ERROR_INJECTION
 #include "err_inject.h"
 #endif
@@ -349,6 +353,9 @@ typedef struct nfs_param__
   nfs_idmap_cache_parameter_t gnamemap_cache_param;
   nfs_idmap_cache_parameter_t uidgidmap_cache_param;
   nfs_ip_stats_parameter_t ip_stats_param;
+#ifdef _USE_9P
+  _9p_parameter_t _9p_param ;
+#endif
 #ifdef _HAVE_GSSAPI
   nfs_krb5_parameter_t krb5_param;
 #endif  
@@ -423,6 +430,24 @@ typedef struct nfs_request_data__
   nfs_res_t res_nfs;
   nfs_arg_t arg_nfs;
 } nfs_request_data_t;
+
+typedef enum request_type__
+{
+  NFS_REQUEST,
+  _9P_REQUEST
+} request_type_t ;
+
+typedef struct request_data__
+{
+  request_type_t rtype ;
+  union request_content__
+   {
+      nfs_request_data_t nfs ;
+#ifdef _USE_9P
+      _9p_request_data_t _9p ;
+#endif
+   } rcontent ;
+} request_data_t ;
 
 typedef struct nfs_client_id__
 {
@@ -573,7 +598,7 @@ worker_available_rc worker_available(unsigned long index, unsigned int avg_numbe
 pause_rc pause_workers(pause_reason_t reason);
 pause_rc wake_workers(awaken_reason_t reason);
 pause_rc wait_for_workers_to_awaken();
-void DispatchWork(nfs_request_data_t *pnfsreq, unsigned int worker_index);
+void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index);
 void *worker_thread(void *IndexArg);
 process_status_t process_rpc_request(SVCXPRT *xprt);
 void *rpc_dispatcher_thread(void *arg);
@@ -585,6 +610,12 @@ int stats_snmp(nfs_worker_data_t * workers_data_local);
 void *file_content_gc_thread(void *IndexArg);
 void *nfs_file_content_flush_thread(void *flush_data_arg);
 
+#ifdef _USE_9P
+void * _9p_dispatcher_thread(void *arg);
+void DispatchWork9P(request_data_t *pnfsreq, unsigned int worker_index);
+void _9p_process_request( _9p_request_data_t * preq9p, nfs_worker_data_t * pworker_data ) ;
+#endif
+
 void nfs_operate_on_sigusr1() ;
 void nfs_operate_on_sigterm() ;
 void nfs_operate_on_sighup() ;
@@ -595,6 +626,7 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata);
 int nfs_Init_request_data(nfs_request_data_t * pdata);
 int nfs_Init_gc_counter(void);
 void constructor_nfs_request_data_t(void *ptr);
+void constructor_request_data_t(void *ptr);
 
 /* Config parsing routines */
 int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t * out_parameter);

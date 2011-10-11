@@ -98,6 +98,10 @@ pthread_t admin_thrid;
 pthread_t fcc_gc_thrid;
 pthread_t sigmgr_thrid;
 
+#ifdef _USE_9P
+pthread_t _9p_dispatcher_thrid;
+#endif
+
 char config_path[MAXPATHLEN];
 
 /**
@@ -285,6 +289,9 @@ void nfs_set_param_default()
 #ifdef _USE_NLM
   nfs_param.core_param.program[P_NLM] = NLMPROG;
   nfs_param.core_param.port[P_NLM] = 0;
+#endif
+#ifdef _USE_9P
+  nfs_param._9p_param._9p_port = _9P_PORT ;
 #endif
 #ifdef _USE_QUOTA
   nfs_param.core_param.program[P_RQUOTA] = RQUOTAPROG;
@@ -1164,6 +1171,22 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
                  "NFSv4 specific configuration read from config file");
     }
 
+#ifdef _USE_9P
+  if( ( rc = _9p_read_conf( config_struct,
+                            &nfs_param._9p_param ) ) < 0 )
+    {
+        if( rc == -2 )
+          LogDebug(COMPONENT_INIT,
+                   "No 9P configuration found, using default");
+        else
+          {
+	     LogCrit( COMPONENT_INIT,
+	   	      "Error while parsing 9P configuration" ) ;
+             return -1 ;
+          }
+    }
+#endif
+
   /* Cache inode parameters : hash table */
   if((cache_inode_status =
       cache_inode_read_conf_hash_parameter(config_struct,
@@ -1564,6 +1587,17 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
     }
   LogEvent(COMPONENT_THREAD, "rpc dispatcher thread was started successfully");
 
+#ifdef _USE_9P
+  /* Starting the 9p dispatcher thread */
+  if((rc = pthread_create(&_9p_dispatcher_thrid, &attr_thr, _9p_dispatcher_thread, NULL ) ) != 0 )     
+    {
+      LogFatal(COMPONENT_THREAD,
+               "Could not create  9p dispatcher_thread, error = %d (%s)",
+               errno, strerror(errno));
+    }
+  LogEvent(COMPONENT_THREAD, "9p dispatcher thread was started successfully");
+#endif
+
   /* Starting the admin thread */
   if((rc = pthread_create(&admin_thrid, &attr_thr, admin_thread, NULL)) != 0)
     {
@@ -1846,8 +1880,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       /* Allocation of the nfs request pool */
       MakePool(&workers_data[i].request_pool,
                nfs_param.worker_param.nb_pending_prealloc,
-               nfs_request_data_t,
-               constructor_nfs_request_data_t, NULL);
+               request_data_t,
+               constructor_request_data_t, NULL);
       NamePool(&workers_data[i].request_pool, "Request Data Pool %d", i);
                
       if(!IsPoolPreallocated(&workers_data[i].request_pool))
@@ -2039,6 +2073,18 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   LogInfo(COMPONENT_INIT,
           "NFSv4 ACL cache successfully initialized");
 #endif                          /* _USE_NFS4_ACL */
+
+#ifdef _USE_9P
+  LogDebug(COMPONENT_INIT, "Now building 9P resources");
+  if( _9p_init( &nfs_param._9p_param ) )
+    {
+      LogCrit(COMPONENT_INIT,
+              "Error while initializing 9P Resources");
+      exit(1);
+    }
+  LogInfo(COMPONENT_INIT,
+          "9P resources successfully initialized");
+#endif /* _USE_9P */
 
   /* Create the root entries for each exported FS */
   if((rc = nfs_export_create_root_entry(nfs_param.pexportlist, ht)) != TRUE)

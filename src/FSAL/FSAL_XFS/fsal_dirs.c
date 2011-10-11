@@ -48,7 +48,7 @@ fsal_status_t XFSFSAL_opendir(fsal_handle_t * p_dir_handle,  /* IN */
     )
 {
   xfsfsal_dir_t * p_dir_descriptor = (xfsfsal_dir_t *) dir_desc;
-  int rc, errsv;
+  int rc = 0 , errsv = 0 ;
   fsal_status_t status;
 
   struct stat buffstat;

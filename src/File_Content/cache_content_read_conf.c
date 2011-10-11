@@ -75,8 +75,7 @@ int fcc_debug_level = -1;
  *
  */
 cache_content_status_t cache_content_read_conf_client_parameter(config_file_t in_config,
-                                                                cache_content_client_parameter_t
-                                                                * pparam)
+                                                                cache_content_client_parameter_t * pparam)
 {
   int var_max;
   int var_index;
