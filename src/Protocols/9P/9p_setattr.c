@@ -99,7 +99,8 @@ int _9p_setattr( _9p_request_data_t * preq9p,
   _9p_getptr( cursor, mtime_nsec, u64 ) ;
 
   LogDebug( COMPONENT_9P, "TSETATTR: tag=%u fid=%u mode=0%o uid=%u gid=%u size=%llu atime=(%llu|%llu) mtime=(%llu|%llu)",
-            (u32)*msgtag, *fid, *mode, *uid, *gid, *size, *atime_sec, *atime_nsec, *mtime_sec, *mtime_nsec  ) ;
+            (u32)*msgtag, *fid, *mode, *uid, *gid, *size,  (unsigned long long)*atime_sec, (unsigned long long)*atime_nsec, 
+            (unsigned long long)*mtime_sec, (unsigned long long)*mtime_nsec  ) ;
 
   if( *fid >= _9P_FID_PER_CONN )
     {

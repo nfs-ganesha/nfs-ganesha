@@ -180,7 +180,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
 	  break ;
 
         case SYMBOLIC_LINK:
-          qid_path = (u64 *)&dirent_array[i].pentry->object.symlink.attributes.fileid ;
+          qid_path = (u64 *)&dirent_array[i].pentry->object.symlink->attributes.fileid ;
           qid_type = &qid_type_symlink;
 	  break ;
 

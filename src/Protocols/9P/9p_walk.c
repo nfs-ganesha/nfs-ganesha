@@ -176,7 +176,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
 	  break ;
 
         case SYMBOLIC_LINK:
-          pnewfid->qid.path = (u64)pnewfid->pentry->object.symlink.attributes.fileid ;
+          pnewfid->qid.path = (u64)pnewfid->pentry->object.symlink->attributes.fileid ;
           pnewfid->qid.type = _9P_QTSYMLINK ;
 	  break ;
 
