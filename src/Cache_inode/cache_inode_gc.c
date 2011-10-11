@@ -759,7 +759,7 @@ static void cache_inode_gc_acl(cache_entry_t * pentry)
       break;
 
     case SYMBOLIC_LINK:
-      pacl = pentry->object.symlink.attributes.acl;
+      pacl = pentry->object.symlink->attributes.acl;
       break;
 
     case FS_JUNCTION:
