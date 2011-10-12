@@ -22,6 +22,7 @@
 
 #include "fsal.h"
 #include "fsal_glue.h"
+#include "fsal_cb.h"
 
 int __thread my_fsalid = -1 ;
 
@@ -893,6 +894,40 @@ fsal_status_t FSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op);
 }
+
+/* FSAL_CB functions */
+#ifdef _USE_FSAL_CB
+fsal_status_t FSAL_CB_Init( fsal_cb_event_bus_parameter_t * pebparam,      /* IN */
+                               fsal_cb_event_bus_context_t * pcbebcontext     /* OUT */)
+{
+  if (fsal_functions.fsal_cb_init == NULL)
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_cb_init);
+  else
+    return fsal_functions.fsal_cb_init(pebparam, pcbebcontext);
+}
+
+fsal_status_t FSAL_CB_AddFilter( fsal_cb_event_bus_filter_t * pcbebfilter,  /* IN */
+                                    fsal_cb_event_bus_context_t * pcbebcontext /* INOUT */ )
+{
+  if (fsal_functions.fsal_cb_addfilter == NULL)
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_cb_addfilter);
+  else
+    return fsal_functions.fsal_cb_addfilter(pcbebfilter, pcbebcontext);
+}
+
+fsal_status_t FSAL_CB_GetEvents( fsal_cb_event_t ** pevents,            /* OUT */
+				 fsal_count_t * event_nb,          /* IN */
+				 fsal_time_t timeout,                       /* IN */
+				 fsal_count_t * peventfound,                /* OUT */
+				 fsal_cb_event_bus_context_t * pcbebcontext /* IN */ )
+{
+  if (fsal_functions.fsal_cb_getevents == NULL)
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_cb_getevents);
+  else
+    return fsal_functions.fsal_cb_getevents(pevents, event_nb, timeout,
+					    peventfound, pcbebcontext);
+}
+#endif /* _USE_FSAL_CB */
 
 #ifdef _USE_SHARED_FSAL
 int FSAL_LoadLibrary(char *path)

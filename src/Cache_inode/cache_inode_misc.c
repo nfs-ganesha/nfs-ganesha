@@ -959,6 +959,7 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
     case ERR_FSAL_XDEV:
     case ERR_FSAL_MLINK:
     case ERR_FSAL_TOOSMALL:
+    case ERR_FSAL_TIMEOUT:
     case ERR_FSAL_SERVERFAULT:
       /* These errors should be handled inside Cache Inode (or should never be seen by Cache Inode) */
       LogDebug(COMPONENT_CACHE_INODE,
@@ -1041,7 +1042,12 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
   pentry->gc_lru_entry = plru_entry;
 
   /* Update internal md */
-  pentry->internal_md.valid_state = VALID;
+  /*
+   * If the cache invalidate code has marked this entry as STALE,
+   * don't overwrite it with VALID.
+   */
+  if (pentry->internal_md.valid_state != STALE)
+    pentry->internal_md.valid_state = VALID;
 
   if(op == CACHE_INODE_OP_GET)
     pentry->internal_md.read_time = time(NULL);

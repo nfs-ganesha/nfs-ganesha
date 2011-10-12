@@ -82,6 +82,7 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
   cache_entry_t *pdir_chain = NULL;
   cache_entry_t *pentry = NULL;
   fsal_status_t fsal_status;
+  LRU_List_state_t vstate;
   int i = 0;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
@@ -115,13 +116,18 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
                            internal_md.valid_state, pname->name,
                            pdir_chain->object.dir_begin.pdir_data->dir_entries[i].name.name);
 
+              vstate = pdir_chain->object.dir_begin.pdir_data->dir_entries[i].pentry->internal_md.valid_state;
+
               if(pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active == VALID
-                 && pdir_chain->object.dir_begin.pdir_data->dir_entries[i].pentry->
-                 internal_md.valid_state == VALID
+                 && (vstate == VALID || vstate == STALE)
                  && !FSAL_namecmp(pname,
                                   &(pdir_chain->object.dir_begin.pdir_data->
                                     dir_entries[i].name)))
                 {
+                  if (vstate == STALE)
+                    LogDebug(COMPONENT_NFS_READDIR,
+                             "DIR_BEGINNING: found STALE cache entry");
+
                   /* Entry was found */
                   pentry = pdir_chain->object.dir_begin.pdir_data->dir_entries[i].pentry;
                   *pstatus = CACHE_INODE_SUCCESS;
@@ -156,13 +162,18 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
                  name.name,
                  pdir_chain->object.dir_cont.pdir_data->dir_entries[i].name.name ) ; */
 
-              if(pdir_chain->object.dir_cont.pdir_data->dir_entries[i].active == VALID &&
-                 pdir_chain->object.dir_cont.pdir_data->dir_entries[i].pentry->
-                 internal_md.valid_state == VALID
+              vstate = pdir_chain->object.dir_cont.pdir_data->dir_entries[i].pentry->internal_md.valid_state;
+
+              if(pdir_chain->object.dir_cont.pdir_data->dir_entries[i].active == VALID
+                 && (vstate == VALID || vstate == STALE)
                  && !FSAL_namecmp(pname,
                                   &(pdir_chain->object.dir_cont.pdir_data->
                                     dir_entries[i].name)))
                 {
+                  if (vstate == STALE)
+                    LogDebug(COMPONENT_NFS_READDIR,
+                             "DIR_CONTINUE: found STALE cache entry");
+
                   /* Entry was found */
                   pentry = pdir_chain->object.dir_cont.pdir_data->dir_entries[i].pentry;
                   *pstatus = CACHE_INODE_SUCCESS;

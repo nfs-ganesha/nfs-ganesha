@@ -80,6 +80,7 @@ typedef enum log_components
   COMPONENT_STATE,
   COMPONENT_9P,
   COMPONENT_9P_DISPATCH,
+  COMPONENT_FSAL_CB,
   LOG_MESSAGE_VERBOSITY,
   COMPONENT_COUNT
 } log_components_t;
