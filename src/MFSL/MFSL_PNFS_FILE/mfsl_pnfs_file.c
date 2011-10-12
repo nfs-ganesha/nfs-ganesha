@@ -425,16 +425,19 @@ fsal_status_t MFSL_open_by_name(mfsl_object_t * dirhandle,      /* IN */
   fsal_status_t   fsal_status ;
   int             pnfs_status;
   pnfs_fileloc_t  pnfs_location ;
+  fsal_handle_t   objhandle ;
 
   fsal_status = FSAL_open_by_name(&dirhandle->handle,
                                   filename,
                                   p_context, openflags, &file_descriptor->fsal_file, file_attributes);
-
   if( FSAL_IS_ERROR( fsal_status ) ) 
     return fsal_status ;
 
-  if(! pnfs_get_location( &p_mfsl_context->pnfsclient, &file_descriptor->fsal_file.handle,
-                          NULL,  &pnfs_location ) )
+  fsal_status = FSAL_lookup( &dirhandle->handle, filename, p_context, &objhandle, &file_attributes ) ;
+  if( FSAL_IS_ERROR( fsal_status ) ) 
+    return fsal_status ;
+
+  if(! pnfs_get_location( &p_mfsl_context->pnfsclient, &objhandle, NULL,  &pnfs_location ) )
     {
        LogDebug(COMPONENT_MFSL, "LOOKUP PNFS support : can't build pnfs_location" ) ;
 
