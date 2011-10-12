@@ -104,6 +104,7 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
 	     root_handle->data.handle.f_handle,
              sizeof(root_handle->data.handle.handle_size));
       p_object_handle->data.handle.handle_size = root_handle->data.handle.handle_size;
+      p_object_handle->data.handle.handle_key_size = root_handle->data.handle.handle_key_size;
 
       /* get attributes, if asked */
       if(p_object_attributes)

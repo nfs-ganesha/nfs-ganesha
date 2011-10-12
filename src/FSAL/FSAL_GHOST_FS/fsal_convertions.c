@@ -323,6 +323,7 @@ int ghost2fsal_attrs(fsal_attrib_list_t * p_fsal_attrs, GHOSTFS_Attrs_t * p_ghos
     {
       p_fsal_attrs->chgtime.seconds = p_ghost_attrs->ctime;
       p_fsal_attrs->chgtime.nseconds = 0;
+      p_fsal_attrs->change = (uint64_t) p_fsal_attrs->chgtime.seconds;
     }
 
   return 0;

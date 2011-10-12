@@ -27,14 +27,6 @@
 #include <sys/vfs.h>            /* for fsid */
 
 /**
- * @defgroup FSALCredFunctions Credential handling functions.
- *
- * Those functions handle security contexts (credentials).
- * 
- * @{
- */
-
-/**
  * build the export entry
  */
 fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context, /* OUT */
@@ -97,7 +89,7 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context,
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
   p_export_context->mount_root_fd = fd;
-
+  LogMajor(COMPONENT_FSAL, "GPFSFSAL_BuildExportContext: %d", p_export_context->mount_root_fd);
   /* save filesystem ID */
   rc = statfs(p_export_path->path, &stat_buf);
   if(rc)
