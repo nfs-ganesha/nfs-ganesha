@@ -172,21 +172,9 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
     ReturnStatus(status, INDEX_FSAL_lookup);
 
   /* get file handle, it it exists */
-  TakeTokenFSCall();
-  objectfd = openat(parentfd, p_filename->name, O_RDONLY, 0600);
-  errsv = errno;
-  ReleaseTokenFSCall();
-
-  if(objectfd < 0)
-    {
-      close(parentfd);
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_lookup);
-    }
-
   /* This might be a race, but it's the best we can currently do */
   status = fsal_internal_get_handle_at(parentfd, p_filename, object_handle);
   close(parentfd);
-  close(objectfd);
 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_lookup);
