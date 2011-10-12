@@ -1087,17 +1087,17 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
+  { COMPONENT_STATE,             "COMPONENT_STATE", "STATE",
+    NIV_EVENT,
+    SYSLOG,
+    "SYSLOG"
+  },
   { COMPONENT_9P,                "COMPONENT_9P", "9P",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
   },
   { COMPONENT_9P_DISPATCH,       "COMPONENT_9P_DISPATCH", "9P DISPATCH",
-    NIV_EVENT,
-    SYSLOG,
-    "SYSLOG"
-  },
-  { COMPONENT_STATE,             "COMPONENT_STATE", "STATE",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"
