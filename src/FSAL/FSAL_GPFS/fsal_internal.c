@@ -642,6 +642,7 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
   memset(p_handle, 0, sizeof(*p_handle));
   harg.handle = &((gpfsfsal_handle_t *)p_handle)->data.handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
+  harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
   harg.name = p_fsalpath->path;
   harg.dfd = AT_FDCWD;
   harg.flag = 0;
@@ -686,6 +687,7 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
   memset(p_handle, 0, sizeof(*p_handle));
   harg.handle = &((gpfsfsal_handle_t *)p_handle)->data.handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
+  harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
   harg.name = p_fsalname->name;
   harg.dfd = dfd;
   harg.flag = 0;
@@ -727,6 +729,7 @@ fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * handle)
 
   memset(p_handle, 0, sizeof(*p_handle));
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
+  harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
   harg.name = NULL;
   harg.dfd = fd;
   harg.flag = 0;

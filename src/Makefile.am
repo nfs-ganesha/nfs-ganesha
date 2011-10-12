@@ -24,6 +24,7 @@ SUBDIRS = include             \
           RPCAL               \
           Protocols           \
           RPCAL               \
+	  FSAL_CB	      \
           support             \
           FSAL                \
           MFSL                \

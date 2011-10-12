@@ -47,10 +47,13 @@
 	defined(_USE_LUSTRE) || \
 	defined(_USE_FUSE)
 
+/* Allow aliasing of fsal_handle_t since FSALs will be
+ * casting between pointer types
+ */
 typedef struct
 {
   char data[FSAL_HANDLE_T_SIZE];
-} fsal_handle_t;
+} __attribute__((__may_alias__)) fsal_handle_t;
 
 typedef fsal_handle_t fsal_handle_storage_t ;
 

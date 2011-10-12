@@ -131,9 +131,12 @@ typedef unsigned long long int u_int64_t;
 #define INDEX_FSAL_sync                 52
 #define INDEX_FSAL_getattrs_descriptor  53
 #define INDEX_FSAL_lock_op              54
+#define INDEX_FSAL_cb_init              55
+#define INDEX_FSAL_cb_addfilter         56
+#define INDEX_FSAL_cb_getevents         57
 
 /* number of FSAL functions */
-#define FSAL_NB_FUNC  56
+#define FSAL_NB_FUNC  59
 
 extern const char *fsal_function_names[];
 
