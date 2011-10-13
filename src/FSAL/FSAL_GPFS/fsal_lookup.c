@@ -74,10 +74,8 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
                           fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
     )
 {
-  int errsv;
   fsal_status_t status;
   int parentfd;
-  int objectfd;
   fsal_accessflags_t access_mask = 0;
   fsal_attrib_list_t parent_dir_attrs;
   gpfsfsal_handle_t *p_object_handle = (gpfsfsal_handle_t *)object_handle;
