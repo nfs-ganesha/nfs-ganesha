@@ -4,7 +4,7 @@
 AC_PREREQ(2.59)
 AC_INIT( [nfs-ganesha], [1.1.1], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
-AC_SUBST(RELEASE, [0])
+AC_SUBST(RELEASE, [1])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
@@ -323,7 +323,7 @@ GA_ENABLE_FLAG(  [debug-nfsshell],       [enable extended debug traces for ganes
 GA_ENABLE_FLAG(  [pl-pgsql],		 [enable PGSQL stored procedures (POSIX FSAL)],		          [-D_WITH_PLPGSQL])
 GA_ENABLE_FLAG(  [cache-path],		 [Enable entry path caching in POSIX FSAL],	                  [-D_ENABLE_CACHE_PATH])
 GA_ENABLE_FLAG(  [handle-mapping],	 [enable NFSv2/3 handle mapping for PROXY FSAL],	          [-D_HANDLE_MAPPING])
-GA_DISABLE_FLAG(  [nfs4-locks],	         [enable NFSv4 locks],                                            [-D_WITH_NFSV4_LOCKS])
+GA_ENABLE_FLAG(  [nfs4-locks],	         [enable NFSv4 locks],                                            [-D_WITH_NFSV4_LOCKS])
 GA_DISABLE_FLAG( [nfs41-locks],          [disable NFSv4 locks],                                           [-D_WITH_NO_NFSV41_LOCKS])
 
 
