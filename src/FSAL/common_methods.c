@@ -497,51 +497,6 @@ fsal_status_t COMMON_set_quota_noquota(fsal_path_t * pfsal_path,  /* IN */
   ReturnCode(ERR_FSAL_NO_QUOTA, 0);
 }                               /*  FSAL_set_quota */
 
-/*
- * Locking support
- */
-
-
-
-/* Not supported version
- */
-
-/**
- * FSAL_lock:
- * Lock an entry in the filesystem.
- */
-fsal_status_t COMMON_lock_notsupp(fsal_file_t * obj_handle,
-                        fsal_lockdesc_t * ldesc,
-                        fsal_boolean_t blocking)
-{
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock);
-}
-
-/**
- * FSAL_changelock:
- * Not implemented.
- */
-fsal_status_t COMMON_changelock_notsupp(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-                              fsal_lockparam_t * lock_info      /* IN */
-    )
-{
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_changelock);
-}
-
-/**
- * FSAL_unlock:
- * Not implemented.
- */
-fsal_status_t COMMON_unlock_notsupp(fsal_file_t * obj_handle, fsal_lockdesc_t *ldesc)
-{
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlock);
-}
-
-fsal_status_t COMMON_getlock_notsupp(fsal_file_t * obj_handle, fsal_lockdesc_t *ldesc)
-{
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_unlock);
-}
-
 /* Object Resources
  */
 

@@ -58,17 +58,6 @@ fsal_status_t COMMON_set_quota_noquota(fsal_path_t * pfsal_path,  /* IN */
 				       fsal_quota_t * pquot,      /* IN */
 				       fsal_quota_t * presquot);   /* OUT */
 
-fsal_status_t COMMON_lock_notsupp(fsal_file_t * obj_handle,
-			  fsal_lockdesc_t * ldesc,
-			  fsal_boolean_t blocking);
-
-fsal_status_t COMMON_changelock_notsupp(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-				fsal_lockparam_t * lock_info);      /* IN */
-
-fsal_status_t COMMON_unlock_notsupp(fsal_file_t * obj_handle, fsal_lockdesc_t *ldesc);
-
-fsal_status_t COMMON_getlock_notsupp(fsal_file_t * obj_handle, fsal_lockdesc_t *ldesc);
-
 fsal_status_t COMMON_CleanObjectResources(fsal_handle_t * in_fsal_handle);
 
 fsal_status_t COMMON_open_by_fileid(fsal_handle_t * filehandle,   /* IN */
