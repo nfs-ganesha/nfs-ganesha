@@ -101,9 +101,9 @@ typedef unsigned long long int u_int64_t;
 #define INDEX_FSAL_rcp                  22
 #define INDEX_FSAL_Init                 23
 #define INDEX_FSAL_get_stats            24
-#define INDEX_FSAL_lock                 25
-#define INDEX_FSAL_changelock           26
-#define INDEX_FSAL_unlock               27
+#define INDEX_FSAL_unused_25            25
+#define INDEX_FSAL_unused_26            26
+#define INDEX_FSAL_unused_27            27
 #define INDEX_FSAL_BuildExportContext   28
 #define INDEX_FSAL_InitClientContext    29
 #define INDEX_FSAL_GetClientContext     30
@@ -125,7 +125,7 @@ typedef unsigned long long int u_int64_t;
 #define INDEX_FSAL_unlink_access        46
 #define INDEX_FSAL_link_access          47
 #define INDEX_FSAL_create_access        48
-#define INDEX_FSAL_getlock	        49
+#define INDEX_FSAL_unused_49	        49
 #define INDEX_FSAL_CleanUpExportContext 50
 #define INDEX_FSAL_getextattrs          51
 #define INDEX_FSAL_sync                 52
@@ -134,6 +134,7 @@ typedef unsigned long long int u_int64_t;
 #define INDEX_FSAL_cb_init              55
 #define INDEX_FSAL_cb_addfilter         56
 #define INDEX_FSAL_cb_getevents         57
+#define INDEX_FSAL_unused_58            58
 
 /* number of FSAL functions */
 #define FSAL_NB_FUNC  59
