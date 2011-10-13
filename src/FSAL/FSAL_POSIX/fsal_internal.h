@@ -293,18 +293,6 @@ fsal_status_t POSIXFSAL_lookupJunction(fsal_handle_t * p_junction_handle,  /* IN
                                        fsal_attrib_list_t *
                                        p_fsroot_attributes /* [ IN/OUT ] */ );
 
-fsal_status_t POSIXFSAL_lock(fsal_file_t * obj_handle,
-                             fsal_lockdesc_t * ldesc, fsal_boolean_t blocking);
-
-fsal_status_t POSIXFSAL_changelock(fsal_lockdesc_t * lock_descriptor,      /* IN / OUT */
-                                   fsal_lockparam_t * lock_info /* IN */ );
-
-fsal_status_t POSIXFSAL_unlock(fsal_file_t * obj_handle,
-                               fsal_lockdesc_t * ldesc);
-
-fsal_status_t POSIXFSAL_getlock(fsal_file_t * obj_handle,
-                                fsal_lockdesc_t * ldesc);
-
 fsal_status_t POSIXFSAL_set_quota(fsal_path_t * pfsal_path,     /* IN */
                                   int quota_type,       /* IN */
                                   fsal_uid_t fsal_uid,  /* IN */
