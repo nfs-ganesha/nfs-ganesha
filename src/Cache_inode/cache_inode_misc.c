@@ -82,17 +82,11 @@ char *cache_inode_function_names[] = {
   "cache_inode_add_data_cache",
   "cache_inode_release_data_cache",
   "cache_inode_renew_entry",
-  "cache_inode_lock_create",
-  "cache_inode_lock",
-  "cache_inode_locku",
-  "cache_inode_lockt",
+  "cache_inode_commit"
   "cache_inode_add_state",
   "cache_inode_add_state",
   "cache_inode_get_state",
   "cache_inode_set_state",
-  "cache_inode_update_state",
-  "cache_inode_state_del_all",
-  "cache_inode_commit"
 };
 
 const char *cache_inode_err_str(cache_inode_status_t err)

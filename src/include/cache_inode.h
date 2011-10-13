@@ -123,19 +123,13 @@ extern char *cache_inode_function_names[];
 #define CACHE_INODE_ADD_DATA_CACHE      20
 #define CACHE_INODE_RELEASE_DATA_CACHE  21
 #define CACHE_INODE_RENEW_ENTRY         22
-#define CACHE_INODE_LOCK_CREATE         23
-#define CACHE_INODE_LOCK                24
-#define CACHE_INODE_LOCKU               25
-#define CACHE_INODE_LOCKT               26
-#define CACHE_INODE_ADD_STATE           27
-#define CACHE_INODE_DEL_STATE           28
-#define CACHE_INODE_GET_STATE           29
-#define CACHE_INODE_SET_STATE           30
-#define CACHE_INODE_UPDATE_STATE        31
-#define CACHE_INODE_DEL_ALL_STATE       32
-#define CACHE_INODE_COMMIT              33
+#define CACHE_INODE_COMMIT              23
+#define CACHE_INODE_ADD_STATE           24
+#define CACHE_INODE_DEL_STATE           25
+#define CACHE_INODE_GET_STATE           26
+#define CACHE_INODE_SET_STATE           27
 
-#define CACHE_INODE_NB_COMMAND      34
+#define CACHE_INODE_NB_COMMAND      28
 
 typedef enum cache_inode_expire_type__
 { CACHE_INODE_EXPIRE = 0,
