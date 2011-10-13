@@ -679,34 +679,6 @@ typedef struct fsal_seek__
   fsal_off_t offset;
 } fsal_seek_t;
 
-/** File locking info */
-
-typedef enum fsal_locktype_t
-{
-  FSAL_TEST_SHARED,             /* test if a lock would conflict with this shared lock */
-  FSAL_TEST_EXCLUSIVE,          /* test if a lock would conflict with this exclusive lock */
-
-  FSAL_TRY_LOCK_SHARED,         /* try to get a shared lock (non-blocking)     */
-  FSAL_TRY_LOCK_EXCLUSIVE,      /* try to get an exclusive lock (non-blocking) */
-
-  FSAL_LOCK_SHARED,             /* get a shared lock (blocking)     */
-  FSAL_LOCK_EXCLUSIVE,          /* get an exclusive lock (blocking) */
-
-} fsal_locktype_t;
-
-typedef struct fsal_lockparam_t
-{
-
-  fsal_locktype_t lock_type;
-
-  fsal_off_t range_start;
-  fsal_size_t range_length;
-
-  /* for getting back a lock during lease time after a server's crash */
-  int reclaim;
-
-} fsal_lockparam_t;
-
 /** FH expire type (mask). */
 
 typedef fsal_ushort_t fsal_fhexptype_t;

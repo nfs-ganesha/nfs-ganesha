@@ -100,7 +100,6 @@ fsal_const_t fsal_fuse_consts = {
   .fsal_export_context_t_size = sizeof(fusefsal_export_context_t),
   .fsal_file_t_size = sizeof(fusefsal_file_t),
   .fsal_cookie_t_size = sizeof(fusefsal_cookie_t),
-  .fsal_lockdesc_t_size = sizeof(fusefsal_lockdesc_t),
   .fsal_cred_t_size = sizeof(struct user_credentials),
   .fs_specific_initinfo_t_size = sizeof(fusefs_specific_initinfo_t),
   .fsal_dir_t_size = sizeof(fusefsal_dir_t)

@@ -438,13 +438,6 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info /* IN */ )
                fsal_consts.fsal_file_t_size, sizeof(fsal_file_t));
     }
 
-  if(fsal_consts.fsal_lockdesc_t_size != sizeof(fsal_lockdesc_t))
-    {
-      LogFatal(COMPONENT_FSAL,
-               "Implementation Error, local and specific fsal_lockdesc_t do not match: %u |%u !!!!",
-               fsal_consts.fsal_lockdesc_t_size, sizeof(fsal_lockdesc_t));
-    }
-
   if(fsal_consts.fsal_cred_t_size != sizeof(fsal_cred_t))
     {
       LogFatal(COMPONENT_FSAL,

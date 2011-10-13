@@ -102,7 +102,6 @@ fsal_const_t fsal_xfs_consts = {
   .fsal_export_context_t_size = sizeof(posixfsal_export_context_t),
   .fsal_file_t_size = sizeof(posixfsal_file_t),
   .fsal_cookie_t_size = sizeof(posixfsal_cookie_t),
-  .fsal_lockdesc_t_size = sizeof(posixfsal_lockdesc_t),
   .fsal_cred_t_size = sizeof(struct user_credentials),
   .fs_specific_initinfo_t_size = sizeof(posixfs_specific_initinfo_t),
   .fsal_dir_t_size = sizeof(posixfsal_dir_t)

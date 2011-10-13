@@ -72,7 +72,6 @@
 #define fsal_file_t hpssfsal_file_t
 #define fsal_dir_t hpssfsal_dir_t
 #define fsal_export_context_t hpssfsal_export_context_t
-#define fsal_lockdesc_t hpssfsal_lockdesc_t
 #define fsal_cookie_t hpssfsal_cookie_t
 #define fs_specific_initinfo_t hpssfs_specific_initinfo_t
 #define fsal_cred_t hpssfsal_cred_t
@@ -246,8 +245,6 @@ typedef union {
 } hpssfsal_cookie_t;
 
 //#define FSAL_READDIR_FROM_BEGINNING  (cast64(0))
-
-typedef void *hpssfsal_lockdesc_t;   /**< not implemented in hpss */
 
 #if HPSS_LEVEL >= 730
 #define HAVE_XATTR_CREATE 1

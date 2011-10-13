@@ -139,6 +139,4 @@ typedef struct
 
 } zfsfs_specific_initinfo_t;
 
-typedef void *zfsfsal_lockdesc_t;
-
 #endif                          /* _FSAL_TYPES_SPECIFIC_H */

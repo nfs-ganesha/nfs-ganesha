@@ -181,6 +181,4 @@ typedef struct
   unsigned int hdlmap_nb_db_op_prealloc;
 } proxyfs_specific_initinfo_t;
 
-typedef unsigned int proxyfsal_lockdesc_t;
-
 #endif

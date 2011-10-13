@@ -165,11 +165,6 @@ typedef union {
 
 // static const fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
 
-typedef struct
-{
-  struct flock flock;
-} gpfsfsal_lockdesc_t;
-
 /* Directory stream descriptor. */
 
 typedef struct

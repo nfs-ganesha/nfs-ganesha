@@ -87,7 +87,6 @@ typedef struct fsal_cookie__
 
 static fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { (GHOSTFS_cookie_t) NULL };
 
-typedef void *fsal_lockdesc_t;   /**< not implemented in ghostfs */
 typedef void *fsal_export_context_t;
 
 typedef struct

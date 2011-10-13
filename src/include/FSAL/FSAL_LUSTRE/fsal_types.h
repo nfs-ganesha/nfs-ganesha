@@ -141,8 +141,6 @@ typedef union
 
 //static const lustrefsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
 
-typedef void *lustrefsal_lockdesc_t;   /**< not implemented for now */
-
 /* Directory stream descriptor. */
 
 typedef struct

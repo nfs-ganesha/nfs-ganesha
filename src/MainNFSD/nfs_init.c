@@ -2179,7 +2179,6 @@ void nfs_start(nfs_start_info_t * p_start_info)
   printf("---> fsal_op_context_t:%u\n", sizeof(proxyfsal_op_context_t));
   printf("---> fsal_file_t:%u\n", sizeof(proxyfsal_file_t));
   printf("---> fsal_dir_t:%u\n", sizeof(proxyfsal_dir_t));
-  printf("---> fsal_lockdesc_t:%u\n", sizeof(proxyfsal_lockdesc_t));
   printf("---> fsal_export_context_t:%u\n", sizeof(proxyfsal_export_context_t));
   printf("---> fsal_cookie_t:%u\n", sizeof(proxyfsal_cookie_t));
   printf("---> fs_specific_initinfo_t:%u\n", sizeof(proxyfs_specific_initinfo_t));
@@ -2191,7 +2190,6 @@ void nfs_start(nfs_start_info_t * p_start_info)
   printf("---> fsal_op_context_t:%u\n", sizeof(xfsfsal_op_context_t));
   printf("---> fsal_file_t:%u\n", sizeof(xfsfsal_file_t));
   printf("---> fsal_dir_t:%u\n", sizeof(xfsfsal_dir_t));
-  printf("---> fsal_lockdesc_t:%u\n", sizeof(xfsfsal_lockdesc_t));
   printf("---> fsal_export_context_t:%u\n", sizeof(xfsfsal_export_context_t));
   printf("---> fsal_cookie_t:%u\n", sizeof(xfsfsal_cookie_t));
   printf("---> fs_specific_initinfo_t:%u\n", sizeof(xfsfs_specific_initinfo_t));
@@ -2203,7 +2201,6 @@ void nfs_start(nfs_start_info_t * p_start_info)
   printf("---> fsal_op_context_t:%u\n", sizeof(zfsfsal_op_context_t));
   printf("---> fsal_file_t:%u\n", sizeof(zfsfsal_file_t));
   printf("---> fsal_dir_t:%u\n", sizeof(zfsfsal_dir_t));
-  printf("---> fsal_lockdesc_t:%u\n", sizeof(zfsfsal_lockdesc_t));
   printf("---> fsal_export_context_t:%u\n", sizeof(zfsfsal_export_context_t));
   printf("---> fsal_cookie_t:%u\n", sizeof(zfsfsal_cookie_t));
   printf("---> fs_specific_initinfo_t:%u\n", sizeof(zfsfs_specific_initinfo_t));
@@ -2215,7 +2212,6 @@ void nfs_start(nfs_start_info_t * p_start_info)
   printf("---> fsal_op_context_t:%lu\n", sizeof(lustrefsal_op_context_t));
   printf("---> fsal_file_t:%lu\n", sizeof(lustrefsal_file_t));
   printf("---> fsal_dir_t:%lu\n", sizeof(lustrefsal_dir_t));
-  printf("---> fsal_lockdesc_t:%lu\n", sizeof(lustrefsal_lockdesc_t));
   printf("---> fsal_export_context_t:%lu\n", sizeof(lustrefsal_export_context_t));
   printf("---> fsal_cookie_t:%lu\n", sizeof(lustrefsal_cookie_t));
   printf("---> fs_specific_initinfo_t:%lu\n", sizeof(lustrefs_specific_initinfo_t));
@@ -2227,7 +2223,6 @@ void nfs_start(nfs_start_info_t * p_start_info)
   printf("---> fsal_op_context_t:%lu\n", sizeof(hpssfsal_op_context_t));
   printf("---> fsal_file_t:%lu\n", sizeof(hpssfsal_file_t));
   printf("---> fsal_dir_t:%lu\n", sizeof(hpssfsal_dir_t));
-  printf("---> fsal_lockdesc_t:%lu\n", sizeof(hpssfsal_lockdesc_t));
   printf("---> fsal_export_context_t:%lu\n", sizeof(hpssfsal_export_context_t));
   printf("---> fsal_cookie_t:%lu\n", sizeof(hpssfsal_cookie_t));
   printf("---> fs_specific_initinfo_t:%lu\n", sizeof(hpssfs_specific_initinfo_t));
@@ -2239,7 +2234,6 @@ void nfs_start(nfs_start_info_t * p_start_info)
   printf("---> fsal_op_context_t:%lu\n", sizeof(snmpfsal_op_context_t));
   printf("---> fsal_file_t:%lu\n", sizeof(snmpfsal_file_t));
   printf("---> fsal_dir_t:%lu\n", sizeof(snmpfsal_dir_t));
-  printf("---> fsal_lockdesc_t:%lu\n", sizeof(snmpfsal_lockdesc_t));
   printf("---> fsal_export_context_t:%lu\n", sizeof(snmpfsal_export_context_t));
   printf("---> fsal_cookie_t:%lu\n", sizeof(snmpfsal_cookie_t));
   printf("---> fs_specific_initinfo_t:%lu\n", sizeof(snmpfs_specific_initinfo_t));

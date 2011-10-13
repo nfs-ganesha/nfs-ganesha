@@ -92,11 +92,6 @@ typedef struct
 
 typedef struct
 {
-  char data[FSAL_LOCKDESC_T_SIZE];
-} fsal_lockdesc_t;
-
-typedef struct
-{
   char data[FSAL_CRED_T_SIZE];
 } fsal_cred_t;
 

@@ -164,7 +164,4 @@ typedef struct
   char enc_phrase[FSAL_MAX_PHRASE_LEN];
 } snmpfs_specific_initinfo_t;
 
-typedef void *snmpfsal_lockdesc_t;
-
-
 #endif                          /* _FSAL_TYPES_SPECIFIC_H */

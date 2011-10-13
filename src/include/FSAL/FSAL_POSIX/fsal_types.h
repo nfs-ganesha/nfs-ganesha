@@ -138,11 +138,6 @@ typedef union {
 #endif
 } posixfsal_cookie_t;
 
-typedef struct
-{
-  struct flock flock;
-} posixfsal_lockdesc_t;
-
 /* Directory stream descriptor. */
 
 typedef struct

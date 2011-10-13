@@ -116,11 +116,4 @@ typedef struct
 
 } fusefs_specific_initinfo_t;
 
-typedef struct
-{
-  struct ganefuse_file_info file_info;
-  struct flock file_lock;
-} fusefsal_lockdesc_t;
-
-
 #endif                          /* _FSAL_TYPES_SPECIFIC_H */
