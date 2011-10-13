@@ -347,29 +347,6 @@ fsal_status_t WRAP_HPSSFSAL_lookupJunction(fsal_handle_t * p_junction_handle,   
                                  p_fsroot_attributes);
 }
 
-fsal_status_t WRAP_HPSSFSAL_lock(fsal_file_t * obj_handle,
-                                 fsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
-{
-  return HPSSFSAL_lock((hpssfsal_file_t *) obj_handle, (hpssfsal_lockdesc_t *) ldesc,
-                       blocking);
-}
-
-fsal_status_t WRAP_HPSSFSAL_changelock(fsal_lockdesc_t * lock_descriptor,       /* IN / OUT */
-                                       fsal_lockparam_t * lock_info /* IN */ )
-{
-  return HPSSFSAL_changelock((hpssfsal_lockdesc_t *) lock_descriptor, lock_info);
-}
-
-fsal_status_t WRAP_HPSSFSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
-{
-  return HPSSFSAL_unlock((hpssfsal_file_t *) obj_handle, (hpssfsal_lockdesc_t *) ldesc);
-}
-
-fsal_status_t WRAP_HPSSFSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
-{
-  return HPSSFSAL_getlock((hpssfsal_file_t *) obj_handle, (hpssfsal_lockdesc_t *) ldesc);
-}
-
 fsal_status_t WRAP_HPSSFSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle)
 {
   return HPSSFSAL_CleanObjectResources((hpssfsal_handle_t *) in_fsal_handle);
@@ -708,10 +685,6 @@ fsal_functions_t fsal_hpss_functions = {
   .fsal_lookup = WRAP_HPSSFSAL_lookup,
   .fsal_lookuppath = WRAP_HPSSFSAL_lookupPath,
   .fsal_lookupjunction = WRAP_HPSSFSAL_lookupJunction,
-  .fsal_lock = WRAP_HPSSFSAL_lock,
-  .fsal_changelock = WRAP_HPSSFSAL_changelock,
-  .fsal_unlock = WRAP_HPSSFSAL_unlock,
-  .fsal_getlock = WRAP_HPSSFSAL_getlock,
   .fsal_cleanobjectresources = WRAP_HPSSFSAL_CleanObjectResources,
   .fsal_set_quota = WRAP_HPSSFSAL_set_quota,
   .fsal_get_quota = WRAP_HPSSFSAL_get_quota,
