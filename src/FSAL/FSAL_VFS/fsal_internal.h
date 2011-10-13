@@ -276,16 +276,6 @@ fsal_status_t VFSFSAL_lock_op( fsal_file_t           * p_file_descriptor,   /* I
                                fsal_lock_param_t       request_lock,        /* IN */
                                fsal_lock_param_t     * conflicting_lock     /* OUT */ );
 
-fsal_status_t VFSFSAL_lock(fsal_file_t * obj_handle,
-                           fsal_lockdesc_t * ldesc, fsal_boolean_t blocking);
-
-fsal_status_t VFSFSAL_changelock(fsal_lockdesc_t * lock_descriptor,  /* IN / OUT */
-                                 fsal_lockparam_t * lock_info /* IN */ );
-
-fsal_status_t VFSFSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc);
-
-fsal_status_t VFSFSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc);
-
 fsal_status_t VFSFSAL_rcp(fsal_handle_t * filehandle,        /* IN */
                           fsal_op_context_t * p_context,     /* IN */
                           fsal_path_t * p_local_path,   /* IN */
