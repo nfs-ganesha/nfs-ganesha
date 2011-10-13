@@ -691,27 +691,6 @@ fsal_status_t FSAL_terminate();
 #ifndef _USE_SWIG
 
 /******************************************************
- *                FSAL locks management.
- ******************************************************/
-
-fsal_status_t FSAL_lock(fsal_file_t * obj_handle,       /* IN */
-                        fsal_lockdesc_t * ldesc,        /*IN/OUT */
-                        fsal_boolean_t callback /* IN */
-    );
-
-fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-                              fsal_lockparam_t * lock_info      /* IN */
-    );
-
-fsal_status_t FSAL_unlock(fsal_file_t * obj_handle,     /* IN */
-                          fsal_lockdesc_t * ldesc       /*IN/OUT */
-    );
-
-fsal_status_t FSAL_getlock(fsal_file_t * obj_handle,    /* IN */
-                           fsal_lockdesc_t * ldesc      /*IN/OUT */
-    );
-
-/******************************************************
  *          FSAL extended attributes management.
  ******************************************************/
 

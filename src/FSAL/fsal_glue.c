@@ -555,28 +555,6 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
                                             p_fsroot_attributes);
 }
 
-fsal_status_t FSAL_lock(fsal_file_t * obj_handle,
-                        fsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
-{
-  return fsal_functions.fsal_lock(obj_handle, ldesc, blocking);
-}
-
-fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-                              fsal_lockparam_t * lock_info /* IN */ )
-{
-  return fsal_functions.fsal_changelock(lock_descriptor, lock_info);
-}
-
-fsal_status_t FSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
-{
-  return fsal_functions.fsal_unlock(obj_handle, ldesc);
-}
-
-fsal_status_t FSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
-{
-  return fsal_functions.fsal_getlock(obj_handle, ldesc);
-}
-
 fsal_status_t FSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle)
 {
   return fsal_functions.fsal_cleanobjectresources(in_fsal_handle);
