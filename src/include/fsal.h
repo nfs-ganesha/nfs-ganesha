@@ -1151,20 +1151,6 @@ typedef struct fsal_functions__
                                        fsal_handle_t * p_fsoot_handle,  /* OUT */
                                        fsal_attrib_list_t *
                                        p_fsroot_attributes /* [ IN/OUT ] */ );
-  /* FSAL_lock */
-  fsal_status_t(*fsal_lock) (fsal_file_t * obj_handle,
-                             fsal_lockdesc_t * ldesc, fsal_boolean_t blocking);
-
-  /* FSAL_changelock */
-  fsal_status_t(*fsal_changelock) (fsal_lockdesc_t * lock_descriptor,   /* IN / OUT */
-                                   fsal_lockparam_t * lock_info /* IN */ );
-
-  /* FSAL_unlock */
-  fsal_status_t(*fsal_unlock) (fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc);
-
-  /* FSAL_getlock */
-  fsal_status_t(*fsal_getlock) (fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc);
-
   /* FSAL_CleanObjectResources */
   fsal_status_t(*fsal_cleanobjectresources) (fsal_handle_t * in_fsal_handle);
 
