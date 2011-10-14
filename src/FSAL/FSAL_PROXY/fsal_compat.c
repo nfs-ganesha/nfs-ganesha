@@ -39,7 +39,6 @@ fsal_functions_t fsal_proxy_functions = {
   .fsal_close = PROXYFSAL_close,
   .fsal_open_by_fileid = PROXYFSAL_open_by_fileid,
   .fsal_close_by_fileid = PROXYFSAL_close_by_fileid,
-  .fsal_static_fsinfo = PROXYFSAL_static_fsinfo,
   .fsal_dynamic_fsinfo = PROXYFSAL_dynamic_fsinfo,
   .fsal_init = PROXYFSAL_Init,
   .fsal_terminate = PROXYFSAL_terminate,

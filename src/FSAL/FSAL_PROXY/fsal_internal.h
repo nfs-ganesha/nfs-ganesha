@@ -251,10 +251,6 @@ fsal_status_t PROXYFSAL_open_by_fileid(fsal_handle_t * filehandle, /* IN */
 fsal_status_t PROXYFSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
                                         fsal_u64_t fileid);
 
-fsal_status_t PROXYFSAL_static_fsinfo(fsal_handle_t * p_filehandle,        /* IN */
-                                      fsal_op_context_t * p_context,       /* IN */
-                                      fsal_staticfsinfo_t * p_staticinfo /* OUT */ );
-
 fsal_status_t PROXYFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle,       /* IN */
                                        fsal_op_context_t * p_context,      /* IN */
                                        fsal_dynamicfsinfo_t * p_dynamicinfo /* OUT */ );
