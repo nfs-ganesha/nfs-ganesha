@@ -811,7 +811,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   cache_inode_status_t cache_status;
 
   int statfscalled = 0;
-  fsal_staticfsinfo_t staticinfo;
   fsal_staticfsinfo_t * pstaticinfo = data->pcontext->export_context->fe_static_fs_info;
   fsal_dynamicfsinfo_t dynamicinfo;
 #ifdef _USE_NFS4_ACL
@@ -1176,7 +1175,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
                                                     &dynamicinfo,
                                                     data->pcontext,
                                                     &cache_status)) !=
@@ -1199,7 +1197,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
                                                     &dynamicinfo,
                                                     data->pcontext,
                                                     &cache_status)) !=
@@ -1222,7 +1219,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
                                                     &dynamicinfo,
                                                     data->pcontext,
                                                     &cache_status)) !=
@@ -1455,7 +1451,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
                                                     &dynamicinfo,
                                                     data->pcontext,
                                                     &cache_status)) !=
@@ -1478,7 +1473,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
                                                     &dynamicinfo,
                                                     data->pcontext,
                                                     &cache_status)) !=
@@ -1501,7 +1495,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
                                                     &dynamicinfo,
                                                     data->pcontext,
                                                     &cache_status)) !=

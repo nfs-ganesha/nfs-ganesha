@@ -67,7 +67,6 @@
  * ASSUMPTION: DIR_CONT entries are always garbabbaged before their related DIR_BEGINNG 
  */
 cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
-                                        fsal_staticfsinfo_t * pstaticinfo,
                                         fsal_dynamicfsinfo_t * pdynamicinfo,
                                         fsal_op_context_t * pcontext,
                                         cache_inode_status_t * pstatus)
@@ -76,7 +75,7 @@ cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
   fsal_status_t fsal_status;
 
   /* Sanity check */
-  if(!pentry || !pstaticinfo || !pdynamicinfo || !pstatus)      /* pcontext is not used: it is not tested */
+  if(!pentry || !pcontext || !pdynamicinfo || !pstatus)
     {
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return *pstatus;
@@ -89,14 +88,7 @@ cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
   if((pfsal_handle = cache_inode_get_fsal_handle(pentry, pstatus)) == NULL)
     return *pstatus;
 
-  /* Get FSAL to get static and dynamic info */
-  if(FSAL_IS_ERROR
-     ((fsal_status = FSAL_static_fsinfo(pfsal_handle, pcontext, pstaticinfo))))
-    {
-      *pstatus = cache_inode_error_convert(fsal_status);
-      return *pstatus;
-    }
-
+  /* Get FSAL to get dynamic info */
   if(FSAL_IS_ERROR
      ((fsal_status = FSAL_dynamic_fsinfo(pfsal_handle, pcontext, pdynamicinfo))))
     {

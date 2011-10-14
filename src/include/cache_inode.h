@@ -874,7 +874,6 @@ fsal_handle_t *cache_inode_get_fsal_handle(cache_entry_t * pentry,
                                            cache_inode_status_t * pstatus);
 
 cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
-                                        fsal_staticfsinfo_t * pstaticinfo,
                                         fsal_dynamicfsinfo_t * dynamicinfo,
                                         fsal_op_context_t * pcontext,
                                         cache_inode_status_t * pstatus);

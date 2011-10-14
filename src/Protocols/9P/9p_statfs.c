@@ -81,7 +81,6 @@ int _9p_statfs( _9p_request_data_t * preq9p,
   int rc = 0 ; 
   int err = 0 ;
 
-  fsal_staticfsinfo_t staticinfo;
   fsal_dynamicfsinfo_t dynamicinfo;
   cache_inode_status_t cache_status;
 
@@ -105,7 +104,6 @@ int _9p_statfs( _9p_request_data_t * preq9p,
 
   /* Get the FS's stats */
   if( cache_inode_statfs( pfid->pentry,
-			  &staticinfo,
                           &dynamicinfo,
                           &pfid->fsal_op_context, 
                           &cache_status ) != CACHE_INODE_SUCCESS )
