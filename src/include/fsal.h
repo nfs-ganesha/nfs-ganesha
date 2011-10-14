@@ -623,11 +623,6 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
                           fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */
     );
 
-fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,    /* IN */
-                                 fsal_op_context_t * p_context, /* IN */
-                                 fsal_staticfsinfo_t * staticinfo       /* OUT */
-    );
-
 fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
                                   fsal_op_context_t * p_context,        /* IN */
                                   fsal_dynamicfsinfo_t * dynamicinfo    /* OUT */
@@ -1083,10 +1078,6 @@ typedef struct fsal_functions__
   fsal_status_t(*fsal_close_by_fileid) (fsal_file_t * file_descriptor /* IN */ ,
                                         fsal_u64_t fileid);
 
-  /* FSAL_static_fsinfo */
-  fsal_status_t(*fsal_static_fsinfo) (fsal_handle_t * p_filehandle,     /* IN */
-                                      fsal_op_context_t * p_context,    /* IN */
-                                      fsal_staticfsinfo_t * p_staticinfo /* OUT */ );
   /* FSAL_dynamic_fsinfo */
   fsal_status_t(*fsal_dynamic_fsinfo) (fsal_handle_t * p_filehandle,    /* IN */
                                        fsal_op_context_t * p_context,   /* IN */

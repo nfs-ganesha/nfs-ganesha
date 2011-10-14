@@ -99,7 +99,7 @@ typedef struct fsal_staticfsinfo_t fsal_staticfsinfo_t;
 #define INDEX_FSAL_rename               17
 #define INDEX_FSAL_unlink               18
 #define INDEX_FSAL_mknode               19
-#define INDEX_FSAL_static_fsinfo        20
+#define INDEX_FSAL_unused_20            20
 #define INDEX_FSAL_dynamic_fsinfo       21
 #define INDEX_FSAL_rcp                  22
 #define INDEX_FSAL_Init                 23

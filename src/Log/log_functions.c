@@ -75,7 +75,7 @@ const char *fsal_function_names[] = {
   "FSAL_getattrs", "FSAL_setattrs", "FSAL_link", "FSAL_opendir", "FSAL_readdir",
   "FSAL_closedir", "FSAL_open", "FSAL_read", "FSAL_write", "FSAL_close",
   "FSAL_readlink", "FSAL_symlink", "FSAL_rename", "FSAL_unlink", "FSAL_mknode",
-  "FSAL_static_fsinfo", "FSAL_dynamic_fsinfo", "FSAL_rcp", "FSAL_Init",
+  "FSAL_unused_20", "FSAL_dynamic_fsinfo", "FSAL_rcp", "FSAL_Init",
   "FSAL_get_stats", "FSAL_unused_25", "FSAL_unused_26", "FSAL_unused_27",
   "FSAL_BuildExportContext", "FSAL_InitClientContext", "FSAL_GetClientContext",
   "FSAL_lookupPath", "FSAL_lookupJunction", "FSAL_test_access",
