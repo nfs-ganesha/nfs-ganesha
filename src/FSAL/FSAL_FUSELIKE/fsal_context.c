@@ -56,6 +56,9 @@ fsal_status_t FUSEFSAL_BuildExportContext(fsal_export_context_t * p_export_conte
   /* unused */
   memset(p_export_context, 0, sizeof(fusefsal_export_context_t));
 
+  /* Save pointer to fsal_staticfsinfo_t in export context */
+  p_export_context->fe_static_fs_info = &global_fs_info;
+
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 
 }

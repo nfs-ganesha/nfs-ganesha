@@ -133,6 +133,9 @@ fsal_status_t PROXYFSAL_BuildExportContext(fsal_export_context_t * p_export_cont
   if(!p_export_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
 
+  /* Save pointer to fsal_staticfsinfo_t in export context */
+  p_export_context->fe_static_fs_info = &global_fs_info;
+
   if((fs_specific_options != NULL) && (fs_specific_options[0] != '\0'))
     {
 

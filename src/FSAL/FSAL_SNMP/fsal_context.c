@@ -110,6 +110,9 @@ fsal_status_t SNMPFSAL_BuildExportContext(fsal_export_context_t *exp_context, /*
 
     }
 
+  /* Save pointer to fsal_staticfsinfo_t in export context */
+  p_export_context->fe_static_fs_info = &global_fs_info;
+
   /* save the root path (for lookupPath checks)  */
   if(p_export_path != NULL)
     p_export_context->root_path = *p_export_path;

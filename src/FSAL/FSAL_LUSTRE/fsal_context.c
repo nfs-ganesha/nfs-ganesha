@@ -167,6 +167,9 @@ fsal_status_t LUSTREFSAL_BuildExportContext(fsal_export_context_t *exp_context, 
   }
   p_export_context->dev_id = pathstat.st_dev;
 
+  /* Save pointer to fsal_staticfsinfo_t in export context */
+  p_export_context->fe_static_fs_info = &global_fs_info;
+
   endmntent(fp);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);

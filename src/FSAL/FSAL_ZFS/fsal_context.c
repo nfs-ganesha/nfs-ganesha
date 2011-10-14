@@ -158,6 +158,9 @@ fsal_status_t ZFSFSAL_BuildExportContext(fsal_export_context_t * exp_context, /*
 
     }
 
+  /* Save pointer to fsal_staticfsinfo_t in export context */
+  p_export_context->fe_static_fs_info = &global_fs_info;
+
   /* Initialize the libzfs library here */
   p_export_context->p_vfs = p_snapshots[0].p_vfs;
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);

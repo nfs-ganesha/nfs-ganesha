@@ -87,6 +87,9 @@ fsal_status_t POSIXFSAL_BuildExportContext(fsal_export_context_t * p_export_cont
                                            char *fs_specific_options    /* IN */
     )
 {
+  /* Save pointer to fsal_staticfsinfo_t in export context */
+  p_export_context->fe_static_fs_info = &global_fs_info;
+
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }
 

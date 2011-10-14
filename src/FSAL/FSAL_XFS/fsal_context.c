@@ -138,6 +138,9 @@ fsal_status_t XFSFSAL_BuildExportContext(fsal_export_context_t *export_context, 
         }
     }
 
+  /* Save pointer to fsal_staticfsinfo_t in export context */
+  p_export_context->fe_static_fs_info = &global_fs_info;
+
   /* Do the path_to_fshandle call to init the xfs's libhandle */
   strncpy(p_export_context->mount_point, mntdir, MAXPATHLEN);
 

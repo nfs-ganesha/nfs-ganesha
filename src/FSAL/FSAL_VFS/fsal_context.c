@@ -133,6 +133,9 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
         }
     }
 
+  /* Save pointer to fsal_staticfsinfo_t in export context */
+  p_export_context->fe_static_fs_info = &global_fs_info;
+
   /* save file descriptor to root of VFS export */
   if( ( p_export_context->mount_root_fd = open(mntdir, O_RDONLY | O_DIRECTORY) ) < 0 )
     {

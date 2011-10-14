@@ -90,6 +90,10 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context,
     }
   p_export_context->mount_root_fd = fd;
   LogMajor(COMPONENT_FSAL, "GPFSFSAL_BuildExportContext: %d", p_export_context->mount_root_fd);
+
+  /* Save pointer to fsal_staticfsinfo_t in export context */
+  p_export_context->fe_static_fs_info = &global_fs_info;
+
   /* save filesystem ID */
   rc = statfs(p_export_path->path, &stat_buf);
   if(rc)
