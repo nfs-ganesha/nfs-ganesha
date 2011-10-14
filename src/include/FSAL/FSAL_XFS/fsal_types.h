@@ -100,6 +100,8 @@ typedef union {
 
 typedef struct
 {
+  fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
+
   char mount_point[FSAL_MAX_PATH_LEN];
   char mnt_handle_val[FSAL_XFS_HANDLE_LEN];
   char mnt_fshandle_val[FSAL_XFS_FSHANDLE_LEN];

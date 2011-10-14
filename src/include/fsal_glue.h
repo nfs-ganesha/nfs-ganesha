@@ -33,6 +33,7 @@
 #ifndef _FSAL_GLUE_H
 #define _FSAL_GLUE_H
 
+#include "fsal_types.h"
 #include "fsal_glue_const.h"
 
 /* In the "static" case, original types are used, this is safer */
@@ -60,12 +61,25 @@ typedef fsal_handle_t fsal_handle_storage_t ;
 /* NOTE: this structure is very dangerous as noted by the comments
  * in the individual fsal_types.h files.  It harkens back to the
  * days of fortran commons...  We let it go for now as we
+ * refactor.  The first element must be identical throughout!
+ */
+
+typedef struct
+{
+  fsal_staticfsinfo_t * fe_static_fs_info;
+
+  char                  fe_data[FSAL_EXPORT_CONTEXT_T_SIZE];
+} fsal_export_context_t;
+
+/* NOTE: this structure is very dangerous as noted by the comments
+ * in the individual fsal_types.h files.  It harkens back to the
+ * days of fortran commons...  We let it go for now as we
  * refactor.  The first 2 elements must be identical throughout!
  */
 
 typedef struct
 {
-  void *export_context;
+  fsal_export_context_t *export_context;
   struct user_credentials credential;
   char data[FSAL_OP_CONTEXT_T_SIZE]; /* slightly bigger (for now) */
 } fsal_op_context_t;
@@ -74,11 +88,6 @@ typedef struct
 {
   char data[FSAL_DIR_T_SIZE];
 } fsal_dir_t;
-
-typedef struct
-{
-  char data[FSAL_EXPORT_CONTEXT_T_SIZE];
-} fsal_export_context_t;
 
 typedef struct
 {

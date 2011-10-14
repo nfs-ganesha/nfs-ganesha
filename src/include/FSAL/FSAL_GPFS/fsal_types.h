@@ -127,6 +127,8 @@ typedef struct
 
 typedef struct
 {
+  fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
+
   /* Warning: This string is not currently filled in or used. */
   char mount_point[FSAL_MAX_PATH_LEN];
 

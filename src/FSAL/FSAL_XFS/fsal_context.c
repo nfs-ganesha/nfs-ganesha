@@ -60,7 +60,7 @@ fsal_status_t XFSFSAL_BuildExportContext(fsal_export_context_t *export_context, 
 
   char *handle;
   size_t handle_len = 0;
-  xfsfsal_export_context_t *p_export_context = (xfsfsal_export_context_t *)export_context;
+  xfsfsal_export_context_t *p_export_context = export_context;
 
   /* sanity check */
   if(p_export_context == NULL)

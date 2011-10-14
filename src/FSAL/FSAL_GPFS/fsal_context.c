@@ -102,7 +102,7 @@ fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context,
   p_export_context->fsid[1] = stat_buf.f_fsid.__val[1];
 
   /* save file handle to root of GPFS share */
-  op_context.export_context = p_export_context;
+  op_context.export_context = export_context;
   // op_context.credential = ???
   status = fsal_internal_get_handle(&op_context,
                                     p_export_path,

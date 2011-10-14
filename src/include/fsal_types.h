@@ -74,6 +74,9 @@ typedef unsigned long long int u_int64_t;
 #include "err_fsal.h"
 #include "RW_Lock.h"
 
+/* Forward declarations */
+typedef struct fsal_staticfsinfo_t fsal_staticfsinfo_t;
+
 /* FSAL function indexes, and names */
 
 #define INDEX_FSAL_lookup                0
@@ -706,7 +709,7 @@ typedef fsal_ushort_t fsal_fhexptype_t;
 
 /** File system static info. */
 
-typedef struct fsal_staticfsinfo__
+struct fsal_staticfsinfo_t
 {
 
   fsal_size_t maxfilesize;          /**< maximum allowed filesize     */
@@ -751,7 +754,7 @@ typedef struct fsal_staticfsinfo__
                                            *   to read/modify xattrs value.
                                            */
 
-} fsal_staticfsinfo_t;
+};
 
 /** File system dynamic info. */
 

@@ -85,6 +85,8 @@ typedef union {
 
 typedef struct
 {
+  fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
+
   snmpfsal_handle_t root_handle;
   struct tree *root_mib_tree;
   fsal_path_t root_path;

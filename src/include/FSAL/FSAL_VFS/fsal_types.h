@@ -97,6 +97,8 @@ typedef union {
 
 typedef struct
 {
+  fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
+
   char              fstype[MAXNAMLEN] ;
   int               mount_root_fd ;
   vfs_file_handle_t root_handle ;

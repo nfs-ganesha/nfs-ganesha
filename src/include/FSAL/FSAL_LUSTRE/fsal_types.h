@@ -105,6 +105,8 @@ typedef struct lustrefsal_cred__
 #define MAX_LUSTRE_FSNAME 128
 typedef struct lustrefsal_export_context_t
 {
+  fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
+
   char mount_point[FSAL_MAX_PATH_LEN];
   unsigned int mnt_len;         /* for optimizing concatenation */
   char fsname[MAX_LUSTRE_FSNAME];

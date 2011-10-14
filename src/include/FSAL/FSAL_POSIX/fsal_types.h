@@ -107,6 +107,8 @@ typedef union {
 //typedef void *fsal_export_context_t;
 typedef struct
 {
+  fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
+
   void *data;
 } posixfsal_export_context_t;
 
