@@ -38,7 +38,6 @@ fsal_functions_t fsal_xfs_functions = {
   .fsal_close = XFSFSAL_close,
   .fsal_open_by_fileid = COMMON_open_by_fileid,
   .fsal_close_by_fileid = COMMON_close_by_fileid,
-  .fsal_static_fsinfo = XFSFSAL_static_fsinfo,
   .fsal_dynamic_fsinfo = XFSFSAL_dynamic_fsinfo,
   .fsal_init = XFSFSAL_Init,
   .fsal_terminate = XFSFSAL_terminate,
