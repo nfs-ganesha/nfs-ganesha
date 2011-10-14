@@ -150,8 +150,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
   if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_SIZE))
     {
       /* Setting the size of a directory is prohibited */
-      if(data->current_filetype == DIR_BEGINNING
-         || data->current_filetype == DIR_CONTINUE)
+      if(data->current_filetype == DIRECTORY)
         {
           res_SETATTR4.status = NFS4ERR_ISDIR;
           return res_SETATTR4.status;

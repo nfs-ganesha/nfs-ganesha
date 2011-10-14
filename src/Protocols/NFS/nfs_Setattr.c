@@ -238,8 +238,7 @@ int nfs_Setattr(nfs_arg_t * parg,
   if(do_trunc)
     {
       /* Should not be done on a directory */
-      if(pentry->internal_md.type == DIR_BEGINNING
-         || pentry->internal_md.type == DIR_CONTINUE)
+      if(pentry->internal_md.type == DIRECTORY)
         cache_status = CACHE_INODE_IS_A_DIRECTORY;
       else
         {

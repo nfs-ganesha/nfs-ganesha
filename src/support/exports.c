@@ -2872,7 +2872,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       small_client_param.lru_param.entry_to_str = local_lru_inode_entry_to_str;
       small_client_param.lru_param.clean_entry = local_lru_inode_clean_entry;
       small_client_param.nb_prealloc_entry = 10;
-      small_client_param.nb_pre_dir_data = 10;
       small_client_param.nb_pre_parent = 10;
       small_client_param.nb_pre_state_v4 = 10;
       small_client_param.grace_period_link = 0;
@@ -3062,9 +3061,9 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
           if(strcmp(pcurrent->referral, ""))
             {
               /* Set the cache_entry object as a referral by setting the 'referral' field */
-              pentry->object.dir_begin.referral = pcurrent->referral;
+              pentry->object.dir.referral = pcurrent->referral;
               LogInfo(COMPONENT_INIT, "A referral is set : %s",
-                      pentry->object.dir_begin.referral);
+                      pentry->object.dir.referral);
             }
 #ifdef _CRASH_RECOVERY_AT_STARTUP
           /* Recover the datacache from a previous crah */

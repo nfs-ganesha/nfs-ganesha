@@ -153,7 +153,7 @@ int FSAL_Is_Loaded( int fsalid )
   return (fsal_functions_array[fsalid].fsal_access == NULL)?FALSE:TRUE ;
 }
 
-void FSAL_SetId( int fsalid ) 
+void FSAL_SetId( int fsalid )
 {
   my_fsalid = fsalid ;
 }
@@ -219,6 +219,75 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
 fsal_status_t FSAL_CleanUpExportContext(fsal_export_context_t * p_export_context) /* IN */
 {
   return fsal_functions.fsal_cleanupexportcontext(p_export_context);
+}
+
+fsal_status_t FSAL_cookie_to_uint64(fsal_handle_t * handle,
+                                    fsal_op_context_t * context,
+                                    fsal_cookie_t * cookie,
+                                    uint64_t *data)
+{
+  if (fsal_functions.fsal_cookie_to_uint64)
+    {
+      return fsal_functions.fsal_cookie_to_uint64(handle,
+                                                  cookie,
+                                                  data);
+    }
+  else
+    {
+      memcpy(data, cookie, sizeof(uint64_t));
+      ReturnCode(ERR_FSAL_NO_ERROR, 0);
+    }
+}
+
+fsal_status_t FSAL_uint64_to_cookie(fsal_handle_t *handle,
+                                    fsal_op_context_t *context,
+                                    uint64_t *data,
+                                    fsal_cookie_t *cookie)
+{
+  if (fsal_functions.fsal_uint64_to_cookie)
+    {
+      return fsal_functions.fsal_uint64_to_cookie(handle,
+                                                  data,
+                                                  cookie);
+    }
+  else
+    {
+      memset(cookie, 0, sizeof(fsal_cookie_t));
+      memcpy(cookie, data, sizeof(uint64_t));
+      ReturnCode(ERR_FSAL_NO_ERROR, 0);
+    }
+}
+
+fsal_status_t FSAL_get_cookieverf(fsal_handle_t * handle,
+                                  fsal_op_context_t * context,
+                                  uint64_t * verf)
+{
+  if (fsal_functions.fsal_get_cookieverf)
+    {
+      return fsal_functions.fsal_get_cookieverf(handle,
+                                                verf);
+    }
+  else
+    {
+      fsal_attrib_list_t attributes;
+      fsal_status_t status;
+
+      memset(&attributes, 0, sizeof(fsal_attrib_list_t));
+      attributes.asked_attributes = FSAL_ATTR_MTIME;
+      status = FSAL_getattrs(handle,
+                             context,
+                             &attributes);
+      if (FSAL_IS_ERROR(status))
+        {
+          return status;
+        }
+      else
+        {
+          memcpy(verf, &attributes.mtime, sizeof(uint64_t));
+          ReturnCode(ERR_FSAL_NO_ERROR, 0);
+        }
+    }
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
 

@@ -97,9 +97,19 @@
 #endif
 
 #include <stdlib.h>
+#include <string.h>
 #include "LRU_List.h"
 #include "stuff_alloc.h"
 #include "log_macros.h"
+
+#ifndef TRUE /* XXX need base header for such defines (curr. BuddyMalloc.h) */
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
 
 /* ------ This group contains all the functions used to manipulate the LRU from outside this module ----- */
 

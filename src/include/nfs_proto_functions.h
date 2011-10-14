@@ -1502,6 +1502,8 @@ int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry);
 int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,    /* Out: File attributes  */
                             fattr4 * pFattr);   /* In: File attributes   */
 
+int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask);
+
 int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                            fsal_attrib_list_t * pattr,
                            fattr4 * Fattr,

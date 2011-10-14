@@ -90,6 +90,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
   fsal_handle_t handle_src;
   fsal_handle_t handle_dest;
   fsal_attrib_list_t link_attributes;
+  cache_inode_dir_entry_t *new_dir_entry;
 #ifdef _USE_MFSL
   fsal_attrib_list_t dirdest_attributes;
 #endif
@@ -114,8 +115,7 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
   pclient->stat.func_stats.nb_call[CACHE_INODE_LINK] += 1;
 
   /* Is the destination a directory ? */
-  if(pentry_dir_dest->internal_md.type != DIR_BEGINNING &&
-     pentry_dir_dest->internal_md.type != DIR_CONTINUE)
+  if(pentry_dir_dest->internal_md.type != DIRECTORY)
     {
       /* Bad type .... */
       *pstatus = CACHE_INODE_BAD_TYPE;
@@ -153,9 +153,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       return *pstatus;
     }
 
-  /* The pentry to be hardlinked can't be a DIR_BEGINNING or a DIR_CONTINUE */
-  if(pentry_src->internal_md.type == DIR_BEGINNING ||
-     pentry_src->internal_md.type == DIR_CONTINUE)
+  /* The pentry to be hardlinked can't be a DIRECTORY */
+  if(pentry_src->internal_md.type == DIRECTORY)
     {
       /* Bad type .... */
       *pstatus = CACHE_INODE_BAD_TYPE;
@@ -191,16 +190,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       break;
 
     case FS_JUNCTION:
-    case DIR_BEGINNING:
-      handle_src = pentry_src->object.dir_begin.handle;
-      break;
-
-    case DIR_CONTINUE:
-      /* lock the related dir_begin (dir begin are garbagge collected AFTER their related dir_cont)
-       * this means that if a DIR_CONTINUE exists, its pdir pointer is not endless */
-      P_r(&pentry_src->object.dir_cont.pdir_begin->lock);
-      handle_src = pentry_src->object.dir_cont.pdir_begin->object.dir_begin.handle;
-      V_r(&pentry_src->object.dir_cont.pdir_begin->lock);
+    case DIRECTORY:
+      handle_src = pentry_src->object.dir.handle;
       break;
 
     case CHARACTER_FILE:
@@ -223,16 +214,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
   switch (pentry_dir_dest->internal_md.type)
     {
     case FS_JUNCTION:
-    case DIR_BEGINNING:
-      handle_dest = pentry_dir_dest->object.dir_begin.handle;
-      break;
-
-    case DIR_CONTINUE:
-      /* lock the related dir_begin (dir begin are garbagge collected AFTER their related dir_cont)
-       * this means that if a DIR_CONTINUE exists, its pdir pointer is not endless */
-      P_r(&pentry_dir_dest->object.dir_cont.pdir_begin->lock);
-      handle_dest = pentry_src->object.dir_cont.pdir_begin->object.dir_begin.handle;
-      V_r(&pentry_dir_dest->object.dir_cont.pdir_begin->lock);
+    case DIRECTORY:
+      handle_dest = pentry_dir_dest->object.dir.handle;
       break;
 
     default:
@@ -331,8 +314,11 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
   if(cache_inode_add_cached_dirent(pentry_dir_dest,
                                    plink_name,
                                    pentry_src,
-                                   NULL,
-                                   ht, pclient, pcontext, &status) != CACHE_INODE_SUCCESS)
+                                   ht,
+				   &new_dir_entry,
+                                   pclient,
+                                   pcontext,
+                                   &status) != CACHE_INODE_SUCCESS)
     {
       V_w(&pentry_dir_dest->lock);
       V_w(&pentry_src->lock);

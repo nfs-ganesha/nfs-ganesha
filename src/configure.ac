@@ -225,6 +225,10 @@ if test "$enable_fsal_cb" == "yes"; then
 fi
 AM_CONDITIONAL(USE_FSAL_CB, test "$enable_fsal_cb" = "yes")
 
+# LIBTREE
+AC_DEFINE(_USE_LIBTREE,1,[enable LIBTREE support])
+GA_PROG_LIBTREE
+
 # PNFS/DS
 GA_ENABLE_AM_CONDITION([ds],[enable pNFS DS support],[USE_DS])
 
@@ -232,8 +236,6 @@ if test "$enable_ds" == "yes"; then
         AC_DEFINE(_USE_DS,1,[enable pNFS DS support])
 fi
 AM_CONDITIONAL(USE_DS, test "$enable_ds" = "yes")
-
-
 
 # TI-RPC
 GA_ENABLE_AM_CONDITION([tirpc],[enable TIRPC support],[USE_TIRPC])
@@ -354,6 +356,15 @@ AC_ARG_WITH( [extra-includedir], AS_HELP_STRING([--with-extra-includedir=<path>]
 
 if test "${with_extra_includedir+set}" == "set"; then
 	CFLAGS="$CFLAGS -I$EXTRA_INCLUDE_DIR"
+fi
+
+# CUnit
+AC_ARG_WITH( [cunit], AS_HELP_STRING([--with-cunit=<path>], [Path to CUnit] ),
+		CUNIT="$withval" )
+
+if test "${with_cunit+set}" == "set"; then
+	CFLAGS="$CFLAGS -I$CUNIT/include"
+	LDFLAGS="-L$CUNIT/lib $LDFLAGS -lcunit"
 fi
 
 # FSAL switch argument (default is PROXY)

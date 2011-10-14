@@ -161,7 +161,7 @@ int nfs_Rmdir(nfs_arg_t * parg /* IN  */ ,
    * Sanity checks: new directory name must be non-null; parent must be
    * a directory. 
    */
-  if(filetype != DIR_BEGINNING && filetype != DIR_CONTINUE)
+  if(filetype != DIRECTORY)
     {
       switch (preq->rq_vers)
         {
@@ -216,7 +216,7 @@ int nfs_Rmdir(nfs_arg_t * parg /* IN  */ ,
               /*
                * Sanity check: make sure we are about to remove a directory 
                */
-              if(childtype != DIR_BEGINNING && childtype != DIR_CONTINUE)
+              if(childtype != DIRECTORY)
                 {
                   switch (preq->rq_vers)
                     {

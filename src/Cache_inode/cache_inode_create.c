@@ -91,6 +91,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
                    cache_inode_status_t * pstatus)
 {
     cache_entry_t *pentry = NULL;
+    cache_inode_dir_entry_t *new_dir_entry;
     fsal_status_t fsal_status;
 #ifdef _USE_MFSL
     mfsl_object_t object_handle;
@@ -102,7 +103,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
     fsal_handle_t dir_handle;
     cache_inode_fsal_data_t fsal_data;
     cache_inode_status_t status;
-    struct cache_inode_dir_begin__ *dir_begin;
+    struct cache_inode_dir__ *pdir = NULL;
 #ifdef _USE_PNFS
 
 #ifdef _USE_PNFS_SPNFS_LIKE  /** @todo : do the thing in a cleaner way here */
@@ -126,7 +127,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
      * Check if the required type is correct, with this
      * function, we manage file, dir and symlink
      */
-    if(type != REGULAR_FILE && type != DIR_BEGINNING && type != SYMBOLIC_LINK &&
+    if(type != REGULAR_FILE && type != DIRECTORY && type != SYMBOLIC_LINK &&
        type != SOCKET_FILE && type != FIFO_FILE && type != CHARACTER_FILE &&
        type != BLOCK_FILE)
         {
@@ -187,21 +188,12 @@ cache_inode_create(cache_entry_t * pentry_parent,
         }
     /*
      * At this point, the entry was not found, this means
-     * that is doesn't exist is FSAL, we can create it
+     * that it doesn't exist in FSAL, we can create it
      */
     /* Get the lock for the parent */
     P_w(&pentry_parent->lock);
-
-    if(pentry_parent->internal_md.type == DIR_BEGINNING)
-        dir_handle = pentry_parent->object.dir_begin.handle;
-
-    if(pentry_parent->internal_md.type == DIR_CONTINUE)
-        {
-            P_r(&pentry_parent->object.dir_cont.pdir_begin->lock);
-            dir_handle = pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.handle;
-            V_r(&pentry_parent->object.dir_cont.pdir_begin->lock);
-        }
-
+    pdir = &pentry_parent->object.dir;   
+    dir_handle = pdir->handle;
     object_attributes.asked_attributes = pclient->attrmask;
     switch (type)
         {
@@ -225,7 +217,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
 #endif
             break;
 
-        case DIR_BEGINNING:
+        case DIRECTORY:
 #ifdef _USE_MFSL
             cache_inode_get_attributes(pentry_parent, &parent_attributes);
             fsal_status = MFSL_mkdir(&pentry_parent->mobject,
@@ -385,8 +377,10 @@ cache_inode_create(cache_entry_t * pentry_parent,
             /* Add this entry to the directory */
             status = cache_inode_add_cached_dirent(pentry_parent,
                                                    pname, pentry,
-                                                   NULL, ht,
-                                                   pclient, pcontext,
+                                                   ht,
+						   &new_dir_entry,
+                                                   pclient,
+						   pcontext,
                                                    pstatus);
             if (status != CACHE_INODE_SUCCESS)
                 {
@@ -405,21 +399,16 @@ cache_inode_create(cache_entry_t * pentry_parent,
           memcpy( (char *)&pentry->object.file.pnfs_file, (char *)&pnfs_file, sizeof( pnfs_file_t ) ) ;
 #endif
        /* Update the parent cached attributes */
-       if(pentry_parent->internal_md.type == DIR_BEGINNING)
-           dir_begin = &pentry_parent->object.dir_begin;
-       else
-           dir_begin = &pentry_parent->object.dir_cont.pdir_begin->object.dir_begin;
-
-       dir_begin->attributes.mtime.seconds = time(NULL);
-       dir_begin->attributes.mtime.nseconds = 0;
-       dir_begin->attributes.ctime = dir_begin->attributes.mtime;
+       pdir->attributes.mtime.seconds = time(NULL);
+       pdir->attributes.mtime.nseconds = 0;
+       pdir->attributes.ctime = pdir->attributes.mtime;
        /*
         * if the created object is a directory, it contains a link
         * to its parent : '..'. Thus the numlink attr must be increased.
         */
-       if(type == DIR_BEGINNING)
+       if(type == DIRECTORY)
            {
-               dir_begin->attributes.numlinks++;
+               pdir->attributes.numlinks++;
            }
        /* Get the attributes in return */
        *pattr = object_attributes;

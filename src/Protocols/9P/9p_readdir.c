@@ -184,14 +184,9 @@ int _9p_readdir( _9p_request_data_t * preq9p,
           qid_type = &qid_type_symlink;
 	  break ;
 
-        case DIR_CONTINUE:
-          qid_path = (u64 *)&dirent_array[i].pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes.fileid ;
-          qid_type = &qid_type_dir ;
-	  break ;
-
-        case DIR_BEGINNING:
+        case DIRECTORY:
         case FS_JUNCTION:
-          qid_path = (u64 *)&dirent_array[i].pentry->object.dir_begin.attributes.fileid ;
+          qid_path = (u64 *)&dirent_array[i].pentry->object.dir.attributes.fileid ;
           qid_type = &qid_type_dir ;
 	  break ;
 

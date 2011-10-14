@@ -76,9 +76,9 @@ fsal_status_t dumb_fsal_cb_invalidate(fsal_cb_event_data_t * pevdata)
       LogDebug(COMPONENT_FSAL_CB,
                "FSAL_CB_DUMB: setting state to STALE");
   pentry->internal_md.valid_state = STALE;
-  if(pentry->internal_md.type == DIR_BEGINNING)
+  if(pentry->internal_md.type == DIRECTORY)
     {
-      pentry->object.dir_begin.has_been_readdir = CACHE_INODE_RENEW_NEEDED;
+      pentry->object.dir.has_been_readdir = CACHE_INODE_RENEW_NEEDED;
       LogDebug(COMPONENT_FSAL_CB,
               "FSAL_CB_DUMB: Invalidate reset directory.");
     }
