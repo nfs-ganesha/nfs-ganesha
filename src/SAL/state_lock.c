@@ -1657,14 +1657,11 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
                           bool_t                 overlap,  /* hint that lock overlaps */
                           cache_inode_client_t * pclient)
 {
-  fsal_status_t        fsal_status;
-  state_status_t       status = STATE_SUCCESS;
-  fsal_lock_param_t    lock_params;
-  fsal_lock_param_t    conflicting_lock;
-  /* TODO FSF: need    the real code for these flags */
-  bool_t               lock_support             = TRUE;
-  bool_t               lock_support_owner       = FALSE;
-  bool_t               lock_support_async_block = FALSE;
+  fsal_status_t         fsal_status;
+  state_status_t        status = STATE_SUCCESS;
+  fsal_lock_param_t     lock_params;
+  fsal_lock_param_t     conflicting_lock;
+  fsal_staticfsinfo_t * pstatic = pcontext->export_context->fe_static_fs_info;
 
   /* Quick exit if:
    * Locks are not supported by FSAL
@@ -1673,10 +1670,10 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
    * Lock owners are not supported and hint tells us that lock fully overlaps a
    *   lock we already have (no need to make another FSAL call in that case)
    */
-  if(!lock_support ||
-     (!lock_support_async_block && lock_op == FSAL_OP_CANCEL) ||
-     (!lock_support_async_block && overlap) ||
-     (!lock_support_owner && overlap))
+  if(!pstatic->lock_support ||
+     (!pstatic->lock_support_async_block && lock_op == FSAL_OP_CANCEL) ||
+     (!pstatic->lock_support_async_block && overlap) ||
+     (!pstatic->lock_support_owner && overlap))
     return STATE_SUCCESS;
 
   LogLock(COMPONENT_STATE, NIV_FULL_DEBUG,
@@ -1686,20 +1683,20 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
 
   memset(&conflicting_lock, 0, sizeof(conflicting_lock));
 
-  if(lock_support_owner || lock_op != FSAL_OP_UNLOCK)
+  if(pstatic->lock_support_owner || lock_op != FSAL_OP_UNLOCK)
     {
       lock_params.lock_type   = fsal_lock_type(plock);
       lock_params.lock_start  = plock->sld_offset;
       lock_params.lock_length = plock->sld_length;
       lock_params.lock_owner  = 0;
 
-      if(lock_op == FSAL_OP_LOCKB && !lock_support_async_block)
+      if(lock_op == FSAL_OP_LOCKB && !pstatic->lock_support_async_block)
         lock_op = FSAL_OP_LOCK;
 
       fsal_status = FSAL_lock_op(cache_inode_fd(pentry),
                                  &pentry->object.file.handle,
                                  pcontext,
-                                 lock_support_owner ? powner : NULL,
+                                 pstatic->lock_support_owner ? powner : NULL,
                                  lock_op,
                                  lock_params,
                                  &conflicting_lock);
