@@ -194,7 +194,6 @@ typedef struct exportlist__
   fsal_off_t MaxOffsetWrite;    /* Maximum Offset allowed for write                  */
   fsal_off_t MaxOffsetRead;     /* Maximum Offset allowed for read                   */
   fsal_off_t MaxCacheSize;      /* Maximum Cache Size allowed                        */
-  fsal_staticfsinfo_t *fs_static_info;  /* Static FSAL Info                                  */
   unsigned int UseCookieVerifier;       /* Is Cookie verifier to be used ?                   */
   exportlist_client_t clients;  /* allowed clients                                   */
   struct exportlist__ *next;    /* next entry                                        */

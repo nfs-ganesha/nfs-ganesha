@@ -2857,7 +2857,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       fsal_path_t exportpath_fsal;
       fsal_mdsize_t strsize = MNTPATHLEN + 1;
       cache_entry_t *pentry = NULL;
-      fsal_staticfsinfo_t *pstaticinfo = NULL;
 
 #ifdef _USE_SHARED_FSAL
       unsigned int i = 0 ;
@@ -3043,21 +3042,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
                     "Added root entry for path %s on export_id=%d",
                     pcurrent->fullpath, pcurrent->id);
 
-          /* Get FSAL specific info for this entry */
-          if((pstaticinfo =
-              (fsal_staticfsinfo_t *) Mem_Alloc((sizeof(fsal_staticfsinfo_t)))) == NULL)
-            return FALSE;
-
-#ifdef _USE_SHARED_FSAL
-          if( FSAL_IS_ERROR((fsal_status = FSAL_static_fsinfo(&fsal_handle, &context[pcurrent->fsalid], pstaticinfo))))
-#else
-          if( FSAL_IS_ERROR((fsal_status = FSAL_static_fsinfo(&fsal_handle, &context, pstaticinfo))))
-#endif
-            return FALSE;
-
-          /* Attach to the exportlist entry */
-          pcurrent->fs_static_info = pstaticinfo;
-
           /* Set the pentry as a referral if needed */
           if(strcmp(pcurrent->referral, ""))
             {
@@ -3112,10 +3096,6 @@ exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
     return NULL;
 
   next = exportEntry->next;
-
-
-  if (exportEntry->fs_static_info != NULL)
-    Mem_Free(exportEntry->fs_static_info);
 
   if (exportEntry->proot_handle != NULL)
     Mem_Free(exportEntry->proot_handle);
