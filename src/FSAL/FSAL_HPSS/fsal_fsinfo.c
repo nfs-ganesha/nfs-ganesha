@@ -25,42 +25,6 @@
 #endif
 
 /**
- * FSAL_static_fsinfo:
- * Return static filesystem info such as
- * behavior, configuration, supported operations...
- *
- * \param filehandle (input):
- *        Handle of an object in the filesystem
- *        whom info is to be retrieved.
- * \param cred (input):
- *        Authentication context for the operation (user,...).
- * \param staticinfo (output):
- *        Pointer to the static info of the filesystem.
- *
- * \return Major error codes:
- *      - ERR_FSAL_NO_ERROR     (no error)
- *      - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
- *      - Other error codes can be returned :
- *        ERR_FSAL_IO, ...
- */
-fsal_status_t HPSSFSAL_static_fsinfo(hpssfsal_handle_t * filehandle,    /* IN */
-                                     hpssfsal_op_context_t * p_context, /* IN */
-                                     fsal_staticfsinfo_t * staticinfo   /* OUT */
-    )
-{
-  /* sanity checks. */
-  /* for HPSS, handle and credential are not used. */
-  if(!staticinfo)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_static_fsinfo);
-
-  /* returning static info about the filesystem */
-  (*staticinfo) = global_fs_info;
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_static_fsinfo);
-
-}
-
-/**
  * FSAL_dynamic_fsinfo:
  * Return dynamic filesystem info such as
  * used size, free size, number of objects...

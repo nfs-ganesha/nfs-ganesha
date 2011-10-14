@@ -236,14 +236,6 @@ fsal_status_t WRAP_HPSSFSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN 
   return HPSSFSAL_close_by_fileid((hpssfsal_file_t *) file_descriptor, fileid);
 }
 
-fsal_status_t WRAP_HPSSFSAL_static_fsinfo(fsal_handle_t * p_filehandle, /* IN */
-                                          fsal_op_context_t * p_context,        /* IN */
-                                          fsal_staticfsinfo_t * p_staticinfo /* OUT */ )
-{
-  return HPSSFSAL_static_fsinfo((hpssfsal_handle_t *) p_filehandle,
-                                (hpssfsal_op_context_t *) p_context, p_staticinfo);
-}
-
 fsal_status_t WRAP_HPSSFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle,        /* IN */
                                            fsal_op_context_t * p_context,       /* IN */
                                            fsal_dynamicfsinfo_t *
@@ -671,7 +663,6 @@ fsal_functions_t fsal_hpss_functions = {
   .fsal_close = WRAP_HPSSFSAL_close,
   .fsal_open_by_fileid = WRAP_HPSSFSAL_open_by_fileid,
   .fsal_close_by_fileid = WRAP_HPSSFSAL_close_by_fileid,
-  .fsal_static_fsinfo = WRAP_HPSSFSAL_static_fsinfo,
   .fsal_dynamic_fsinfo = WRAP_HPSSFSAL_dynamic_fsinfo,
   .fsal_init = WRAP_HPSSFSAL_Init,
   .fsal_terminate = WRAP_HPSSFSAL_terminate,

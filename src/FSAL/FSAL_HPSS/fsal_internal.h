@@ -197,10 +197,6 @@ fsal_status_t HPSSFSAL_open_by_fileid(hpssfsal_handle_t * filehandle,   /* IN */
 fsal_status_t HPSSFSAL_close_by_fileid(hpssfsal_file_t * file_descriptor /* IN */ ,
                                        fsal_u64_t fileid);
 
-fsal_status_t HPSSFSAL_static_fsinfo(hpssfsal_handle_t * p_filehandle,  /* IN */
-                                     hpssfsal_op_context_t * p_context, /* IN */
-                                     fsal_staticfsinfo_t * p_staticinfo /* OUT */ );
-
 fsal_status_t HPSSFSAL_dynamic_fsinfo(hpssfsal_handle_t * p_filehandle, /* IN */
                                       hpssfsal_op_context_t * p_context,        /* IN */
                                       fsal_dynamicfsinfo_t * p_dynamicinfo /* OUT */ );
