@@ -237,10 +237,6 @@ fsal_status_t POSIXFSAL_sync(fsal_file_t * p_file_descriptor     /* IN */);
 
 fsal_status_t POSIXFSAL_close(fsal_file_t * p_file_descriptor /* IN */ );
 
-fsal_status_t POSIXFSAL_static_fsinfo(fsal_handle_t * p_filehandle,        /* IN */
-                                      fsal_op_context_t * p_context,       /* IN */
-                                      fsal_staticfsinfo_t * p_staticinfo /* OUT */ );
-
 fsal_status_t POSIXFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle,       /* IN */
                                        fsal_op_context_t * p_context,      /* IN */
                                        fsal_dynamicfsinfo_t * p_dynamicinfo /* OUT */ );
