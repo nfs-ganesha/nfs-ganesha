@@ -381,13 +381,6 @@ fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
   return fsal_functions.fsal_close_by_fileid(file_descriptor, fileid);
 }
 
-fsal_status_t FSAL_static_fsinfo(fsal_handle_t * p_filehandle,  /* IN */
-                                 fsal_op_context_t * p_context, /* IN */
-                                 fsal_staticfsinfo_t * p_staticinfo /* OUT */ )
-{
-  return fsal_functions.fsal_static_fsinfo(p_filehandle, p_context, p_staticinfo);
-}
-
 fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle, /* IN */
                                   fsal_op_context_t * p_context,        /* IN */
                                   fsal_dynamicfsinfo_t * p_dynamicinfo /* OUT */ )
