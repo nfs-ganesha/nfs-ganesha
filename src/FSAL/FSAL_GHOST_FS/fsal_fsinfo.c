@@ -18,26 +18,6 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 
-fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,    /* IN */
-                                 fsal_op_context_t * p_context, /* IN */
-                                 fsal_staticfsinfo_t * staticinfo       /* OUT */
-    )
-{
-
-  /* For logging */
-  SetFuncID(INDEX_FSAL_static_fsinfo);
-
-  /* sanity checks. */
-  if(!filehandle || !staticinfo || !p_context)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_static_fsinfo);
-
-  /* returning static info about the filesystem */
-  (*staticinfo) = global_fs_info;
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_static_fsinfo);
-
-}
-
 fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
                                   fsal_op_context_t * p_context,        /* IN */
                                   fsal_dynamicfsinfo_t * dynamicinfo    /* OUT */
