@@ -245,7 +245,7 @@ fsal_status_t VFSFSAL_GetClientContext(fsal_op_context_t * thr_context,    /* IN
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
 
   /* set the export specific context */
-  p_thr_context->export_context = p_export_context;
+  p_thr_context->export_context = (vfsfsal_export_context_t *) p_export_context;
 
   p_thr_context->credential.user = uid;
   p_thr_context->credential.group = gid;
