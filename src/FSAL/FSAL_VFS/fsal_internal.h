@@ -119,16 +119,6 @@ fsal_status_t fsal_internal_fd2handle(  fsal_op_context_t * p_context,
 
 fsal_status_t fsal_internal_link_at(int srcfd, int dfd, char *name);
 
-/**
- *  test the access to a file from its POSIX attributes (struct stat) OR its FSAL attributes (fsal_attrib_list_t).
- *
- */
-fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
-                                       fsal_accessflags_t access_type,  /* IN */
-                                       struct stat *p_buffstat, /* IN, optional */
-                                       fsal_attrib_list_t *
-                                       p_object_attributes /* IN, optional */ );
-
 fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
                                   fsal_handle_t * p_handle, struct stat64 *buf);
 

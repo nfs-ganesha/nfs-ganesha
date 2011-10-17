@@ -35,6 +35,7 @@
 
 #include "fsal.h"
 #include "fsal_internal.h"
+#include "FSAL/access_check.h"
 #include "fsal_convert.h"
 #include <sys/types.h>
 #include <unistd.h>
@@ -385,7 +386,7 @@ fsal_status_t VFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME)
      && (vfs_context->credential.user != 0)
      && (vfs_context->credential.user != buffstat.st_uid)
-     && ((status = fsal_internal_testAccess(p_context, FSAL_R_OK, &buffstat, NULL)).major
+     && ((status = fsal_check_access(p_context, FSAL_R_OK, &buffstat, NULL)).major
          != ERR_FSAL_NO_ERROR))
     {
       close(fd);
@@ -395,7 +396,7 @@ fsal_status_t VFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME)
      && (vfs_context->credential.user != 0)
      && (vfs_context->credential.user != buffstat.st_uid)
-     && ((status = fsal_internal_testAccess(p_context, FSAL_W_OK, &buffstat, NULL)).major
+     && ((status = fsal_check_access(p_context, FSAL_W_OK, &buffstat, NULL)).major
          != ERR_FSAL_NO_ERROR))
     {
       close(fd);
