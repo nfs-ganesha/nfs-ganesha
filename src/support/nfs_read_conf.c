@@ -466,7 +466,7 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
       else if(!strcasecmp( key_name, "NSM_Use_Caller_Name" ) )
         {
           pparam->nsm_use_caller_name = StrToBoolean(key_value);
-        }      
+        }
 #endif
       else
         {

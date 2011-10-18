@@ -44,7 +44,7 @@
  *        Owner for the requested lock; Opaque to FSAL.
  * \param lock_op (input):
  *        Can be either FSAL_OP_LOCKT, FSAL_OP_LOCK, FSAL_OP_UNLOCK.
- *        The operations are test if a file region is locked, lock a 
+ *        The operations are test if a file region is locked, lock a
  *        file region, unlock a file region.
  * \param lock_type (input):
  *        Can be either FSAL_LOCK_R, FSAL_LOCK_W.
@@ -74,7 +74,7 @@ fsal_status_t GPFSFSAL_lock_op( fsal_file_t       * p_file_descriptor, /* IN */
   gpfsfsal_op_context_t *gpfs_op_cxt = (gpfsfsal_op_context_t *)p_context;
   gpfsfsal_file_t * pfd = (gpfsfsal_file_t *) p_file_descriptor;
 
-  if(p_file_descriptor == NULL) 
+  if(p_file_descriptor == NULL)
     {
       LogDebug(COMPONENT_FSAL, "p_file_descriptor arg is NULL.");
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op);
@@ -145,7 +145,7 @@ fsal_status_t GPFSFSAL_lock_op( fsal_file_t       * p_file_descriptor, /* IN */
 
   errno = 0;
 
-  retval = gpfs_ganesha(lock_op == FSAL_OP_LOCKT ? 
+  retval = gpfs_ganesha(lock_op == FSAL_OP_LOCKT ?
       OPENHANDLE_GET_LOCK : OPENHANDLE_SET_LOCK, &gpfs_sg_arg);
 
   if(retval && lock_op == FSAL_OP_LOCK)
