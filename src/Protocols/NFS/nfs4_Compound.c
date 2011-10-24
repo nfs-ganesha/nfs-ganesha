@@ -269,7 +269,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
     }
 
   /* Check if this export supports NFSv4 */
-  if( pexport->options & EXPORT_OPTION_NFSV4 )
+  if( ( pexport->options & EXPORT_OPTION_NFSV4 ) == 0 )
    {
       LogMajor( COMPONENT_NFS_V4,
                 "The export(id=%u) does not support NFSv4... rejecting it" ) ;
