@@ -20,7 +20,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
- * ---------------------------------------
+ * -------------------N--------------------
  */
 
 /**
@@ -63,6 +63,8 @@
 #include "nfs_proto_functions.h"
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
+#include "sal_data.h"
+#include "sal_functions.h"
 
 #ifdef _USE_PNFS
 #include "pnfs.h"
@@ -93,11 +95,11 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
                        struct nfs_resop4 *resp)
 {
 #ifdef _USE_PNFS
-  cache_inode_state_data_t candidate_data;
-  cache_inode_state_type_t candidate_type;
-  cache_inode_state_t *file_state = NULL;
+  state_data_t candidate_data;
+  state_type_t candidate_type;
+  state_t *file_state = NULL;
   cache_inode_status_t cache_status;
-  cache_inode_state_t *pstate_exists = NULL;
+  state_t *pstate_exists = NULL;
   int rc;
 #endif
 
@@ -203,20 +205,13 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
     }                           /* switch( arg_LAYOUTGET4.loga_layout_type ) */
 
   /* Add a pstate */
-  candidate_type = CACHE_INODE_STATE_LAYOUT;
-#if 0
-  candidate_data.layout.layout_type = arg_LAYOUTGET4.loga_layout_type;
-  candidate_data.layout.iomode = arg_LAYOUTGET4.loga_iomode;
-  candidate_data.layout.offset = arg_LAYOUTGET4.loga_offset;
-  candidate_data.layout.length = arg_LAYOUTGET4.loga_length;
-  candidate_data.layout.minlength = arg_LAYOUTGET4.loga_minlength;
-#endif
+  candidate_type = STATE_TYPE_LAYOUT;
 
   /* Add the layout state to the table */
   if(state_add(data->current_entry,
                 candidate_type,
                 &candidate_data,
-                pstate_exists->powner,
+                STATE_LOCK_OWNER_UNKNOWN, /* pstate_exists->powner,  ASK FRANK ON THIS */
                 data->pclient,
                 data->pcontext,
                 &file_state, &cache_status) != CACHE_INODE_SUCCESS)
