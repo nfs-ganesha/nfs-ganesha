@@ -66,7 +66,7 @@
 #include "err_HashTable.h"
 
 #include "cache_inode.h"
-#include "fsal_cb.h"
+#include "fsal_up.h"
 
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
@@ -331,12 +331,12 @@ typedef struct nfs_session_id_param__
 } nfs_session_id_parameter_t;
 #endif
 
-typedef struct nfs_fsal_cb_param__
+typedef struct nfs_fsal_up_param__
 {
   struct prealloc_pool event_pool;
   unsigned int nb_event_data_prealloc;
   hash_table_t *ht; /* cache inode hashtable */
-} nfs_fsal_cb_parameter_t;
+} nfs_fsal_up_parameter_t;
 
 typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
 
@@ -366,8 +366,8 @@ typedef struct nfs_param__
 #ifdef _USE_9P
   _9p_parameter_t _9p_param ;
 #endif
-#ifdef _USE_FSAL_CB
-  nfs_fsal_cb_parameter_t fsal_cb_param;
+#ifdef _USE_FSAL_UP
+  nfs_fsal_up_parameter_t fsal_up_param;
 #endif
 #ifdef _HAVE_GSSAPI
   nfs_krb5_parameter_t krb5_param;
@@ -404,7 +404,7 @@ typedef struct nfs_param__
   buddy_parameter_t buddy_param_worker;
   buddy_parameter_t buddy_param_admin;
   buddy_parameter_t buddy_param_tcp_mgr;
-  buddy_parameter_t buddy_param_fsal_cb;
+  buddy_parameter_t buddy_param_fsal_up;
 #endif
 
 #ifdef _USE_MFSL
@@ -855,7 +855,7 @@ extern const nfs_function_desc_t *INVALID_FUNCDESC;
 const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t * preqnfs);
 int nfs_rpc_get_args(nfs_request_data_t * preqnfs, const nfs_function_desc_t *pfuncdesc);
 
-void create_fsal_cb_threads();
-void nfs_Init_FSAL_CB();
+void create_fsal_up_threads();
+void nfs_Init_FSAL_UP();
 
 #endif                          /* _NFS_CORE_H */

@@ -18,8 +18,8 @@
 
 /**
  *
- * \file    fsal_attrs.c
- * \brief   Attributes functions.
+ * \file    fsal_up.c
+ * \brief   FSAL Upcall Interface
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -27,7 +27,7 @@
 #endif
 
 #include "fsal.h"
-#include "fsal_cb.h"
+#include "fsal_up.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include <sys/types.h>
@@ -35,25 +35,25 @@
 #include <utime.h>
 #include <sys/time.h>
 
-#ifdef _USE_FSAL_CB
+#ifdef _USE_FSAL_UP
 
-fsal_status_t GPFSFSAL_CB_Init( fsal_cb_event_bus_parameter_t * pebparam,      /* IN */
-                                   fsal_cb_event_bus_context_t * pcbebcontext     /* OUT */)
+fsal_status_t GPFSFSAL_UP_Init( fsal_up_event_bus_parameter_t * pebparam,      /* IN */
+                                   fsal_up_event_bus_context_t * pupebcontext     /* OUT */)
 {
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_cb_init);
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_UP_init);
 }
 
-fsal_status_t GPFSFSAL_CB_AddFilter( fsal_cb_event_bus_filter_t * pcbebfilter,  /* IN */
-                                        fsal_cb_event_bus_context_t * pcbebcontext /* INOUT */ )
+fsal_status_t GPFSFSAL_UP_AddFilter( fsal_up_event_bus_filter_t * pupebfilter,  /* IN */
+                                        fsal_up_event_bus_context_t * pupebcontext /* INOUT */ )
 {
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_cb_addfilter);
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_UP_addfilter);
 }
 
-fsal_status_t GPFSFSAL_CB_GetEvents( fsal_cb_event_t ** pevents,                  /* OUT */
+fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                  /* OUT */
                                      fsal_count_t * event_nb,                     /* IN */
                                      fsal_time_t timeout,                         /* IN */
                                      fsal_count_t * peventfound,                  /* OUT */
-                                     fsal_cb_event_bus_context_t * pcbebcontext   /* IN */ )
+                                     fsal_up_event_bus_context_t * pupebcontext   /* IN */ )
 {
   int rc = 0;
   struct stat64 buf;
@@ -64,15 +64,15 @@ fsal_status_t GPFSFSAL_CB_GetEvents( fsal_cb_event_t ** pevents,                
   int reason = 0;
   unsigned int *fhP;
 
-  if (pcbebcontext == NULL || event_nb == NULL)
+  if (pupebcontext == NULL || event_nb == NULL)
     {
-      LogDebug(COMPONENT_FSAL, "Error: GPFSFSAL_CB_GetEvents() received"
+      LogDebug(COMPONENT_FSAL, "Error: GPFSFSAL_UP_GetEvents() received"
                " unexpectedly NULL arguments.");
-      Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_cb_getevents);
+      Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_up_getevents);
     }
 
   gpfsfsal_export_context_t *p_export_context =
-    (gpfsfsal_export_context_t *)&pcbebcontext->FS_export_context;
+    (gpfsfsal_export_context_t *)&pupebcontext->FS_export_context;
 
   pfsal_data.cookie = 0;
   phandle->data.handle.handle_size = OPENHANDLE_HANDLE_LEN;
@@ -95,11 +95,11 @@ fsal_status_t GPFSFSAL_CB_GetEvents( fsal_cb_event_t ** pevents,                
   LogDebug(COMPONENT_FSAL,
            " inode update: handle %08x %08x %08x %08x %08x %08x %08x\n",
            fhP[0],fhP[1],fhP[2],fhP[3],fhP[4],fhP[5],fhP[6]);
-  
+
   /* Here is where we decide what type of event this is
-   * ... open,close,read,...,invalidate? */  
+   * ... open,close,read,...,invalidate? */
   if (*pevents == NULL)
-    GetFromPool(*pevents, pcbebcontext->event_pool, fsal_cb_event_t);
+    GetFromPool(*pevents, pupebcontext->event_pool, fsal_up_event_t);
   memset(&(*pevents)->event_data.event_context.fsal_data, 0,
          sizeof(cache_inode_fsal_data_t));
   memcpy(&(*pevents)->event_data.event_context.fsal_data, &pfsal_data,
@@ -115,11 +115,11 @@ fsal_status_t GPFSFSAL_CB_GetEvents( fsal_cb_event_t ** pevents,                
       (*pevents)->event_data.type.lock.lock_param.lock_length = fl.l_len;
       (*pevents)->event_data.type.lock.lock_param.lock_start = fl.l_start;
       (*pevents)->event_data.type.lock.lock_param.lock_type = fl.l_type;
-      (*pevents)->event_type = FSAL_CB_EVENT_LOCK;
+      (*pevents)->event_type = FSAL_UP_EVENT_LOCK;
     }
   else /* Invalidate Event - Default */
     {
-      (*pevents)->event_type = FSAL_CB_EVENT_INVALIDATE;
+      (*pevents)->event_type = FSAL_UP_EVENT_INVALIDATE;
     }
 
   /* Increment the numebr of events we are returning.*/
@@ -127,7 +127,7 @@ fsal_status_t GPFSFSAL_CB_GetEvents( fsal_cb_event_t ** pevents,                
 
   /* Return() will increment statistics ... but that object is
    * allocated by different threads ... is that a memory leak? */
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_cb_getevents);
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_UP_getevents);
 }
 
-#endif /* _USE_FSAL_CB */
+#endif /* _USE_FSAL_UP */

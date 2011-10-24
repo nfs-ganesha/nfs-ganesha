@@ -12,10 +12,10 @@ else
 BUDDY_LIB_FLAGS =
 endif
 
-if USE_FSAL_CB
-FSAL_CB_LIB_FLAGS = ../FSAL_CB/libfsalcb.la
+if USE_FSAL_UP
+FSAL_UP_LIB_FLAGS = ../FSAL_UP/libfsalup.la
 else
-FSAL_CB_LIB_FLAGS =
+FSAL_UP_LIB_FLAGS =
 endif
 
 if USE_GSSRPC
@@ -127,7 +127,7 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/cache_inode.h             \
                              ../include/cache_content.h           \
                              ../include/config_parsing.h          \
-                             ../include/fsal_cb.h                 \
+                             ../include/fsal_up.h                 \
                              ../include/SemN.h                    \
                              ../include/external_tools.h          \
                              ../include/err_inject.h              \
@@ -161,7 +161,7 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       ../Protocols/XDR/libnfs_mnt_xdr.la                \
                                       ../SemN/libSemN.la                                \
                                       ../RW_Lock/librwlock.la                           \
-                                      $(FSAL_CB_LIB_FLAGS)                              \
+                                      $(FSAL_UP_LIB_FLAGS)                              \
                                       ../Common/libcommon_utils.la
 
 libMainServices_la_DEPENDENCIES = $(libMainServices_la_SOURCES) $(libMainServices_la_LIBADD)

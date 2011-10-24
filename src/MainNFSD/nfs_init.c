@@ -703,9 +703,9 @@ void nfs_set_param_default()
   Buddy_set_default_parameter(&nfs_param.buddy_param_admin);
   Buddy_set_default_parameter(&nfs_param.buddy_param_worker);
   Buddy_set_default_parameter(&nfs_param.buddy_param_tcp_mgr);
-#ifdef _USE_FSAL_CB
-  Buddy_set_default_parameter(&nfs_param.buddy_param_fsal_cb);
-#endif /* _USE_FSAL_CB */
+#ifdef _USE_FSAL_UP
+  Buddy_set_default_parameter(&nfs_param.buddy_param_fsal_up);
+#endif /* _USE_FSAL_UP */
 #endif /* _NO_BUDDY_SYSTEM */
 
   nfs_param.pexportlist = NULL;
@@ -2095,14 +2095,14 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                "Error initializing Cache Inode root entries");
     }
 
-  /* Creation of FSAL_CB threads */
+  /* Creation of FSAL_UP threads */
   /* This thread depends on ALL parts of Ganesha being initialized. 
    * So initialize Callback interface after everything else. */
-#ifdef _USE_FSAL_CB
-  nfs_param.fsal_cb_param.ht = ht;
-  nfs_Init_FSAL_CB(); /* initalizes an event pool */
-  create_fsal_cb_threads();
-#endif /* _USE_FSAL_CB */
+#ifdef _USE_FSAL_UP
+  nfs_param.fsal_up_param.ht = ht;
+  nfs_Init_FSAL_UP(); /* initalizes an event pool */
+  create_fsal_up_threads();
+#endif /* _USE_FSAL_UP */
 
   LogInfo(COMPONENT_INIT,
           "Cache Inode root entries successfully created");

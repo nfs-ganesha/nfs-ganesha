@@ -217,13 +217,13 @@ fi
 AM_CONDITIONAL(USE_QUOTA, test "$enable_quota" = "yes")
 
 
-# FSAL_CB
-GA_ENABLE_AM_CONDITION([fsal-cb],[enable FSAL Callback Interface support],[USE_FSAL_CB])
+# FSAL_UP
+GA_ENABLE_AM_CONDITION([fsal-up],[enable FSAL Upcall Interface support],[USE_FSAL_UP])
 
-if test "$enable_fsal_cb" == "yes"; then
-        AC_DEFINE(_USE_FSAL_CB,1,[enable FSAL Callback Interface support])
+if test "$enable_fsal_up" == "yes"; then
+        AC_DEFINE(_USE_FSAL_UP,1,[enable FSAL Upcall Interface support])
 fi
-AM_CONDITIONAL(USE_FSAL_CB, test "$enable_fsal_cb" = "yes")
+AM_CONDITIONAL(USE_FSAL_UP, test "$enable_fsal_up" = "yes")
 
 # PNFS/DS
 GA_ENABLE_AM_CONDITION([ds],[enable pNFS DS support],[USE_DS])
@@ -929,8 +929,8 @@ AC_CONFIG_FILES([include/Makefile
                  HashTable/Makefile
                  Cache_inode/Makefile
                  SAL/Makefile
-		 FSAL_CB/Makefile
-		 FSAL_CB/DUMB/Makefile
+		 FSAL_UP/Makefile
+		 FSAL_UP/DUMB/Makefile
                  File_Content/Makefile
                  File_Content_Policy/Makefile
 		 Protocols/Makefile

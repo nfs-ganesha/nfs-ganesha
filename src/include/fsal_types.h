@@ -134,9 +134,9 @@ typedef struct fsal_staticfsinfo_t fsal_staticfsinfo_t;
 #define INDEX_FSAL_sync                 52
 #define INDEX_FSAL_getattrs_descriptor  53
 #define INDEX_FSAL_lock_op              54
-#define INDEX_FSAL_cb_init              55
-#define INDEX_FSAL_cb_addfilter         56
-#define INDEX_FSAL_cb_getevents         57
+#define INDEX_FSAL_UP_init              55
+#define INDEX_FSAL_UP_addfilter         56
+#define INDEX_FSAL_UP_getevents         57
 #define INDEX_FSAL_unused_58            58
 
 /* number of FSAL functions */

@@ -91,11 +91,11 @@ fsal_functions_t fsal_gpfs_functions = {
   .fsal_removexattrbyname = GPFSFSAL_RemoveXAttrByName,
   .fsal_getextattrs = GPFSFSAL_getextattrs,
   .fsal_getfileno = GPFSFSAL_GetFileno,
-#ifdef _USE_FSAL_CB
-  .fsal_cb_init = GPFSFSAL_CB_Init,
-  .fsal_cb_addfilter = GPFSFSAL_CB_AddFilter,
-  .fsal_cb_getevents = GPFSFSAL_CB_GetEvents
-#endif /* _USE_FSAL_CB */
+#ifdef _USE_FSAL_UP
+  .fsal_up_init = GPFSFSAL_UP_Init,
+  .fsal_up_addfilter = GPFSFSAL_UP_AddFilter,
+  .fsal_up_getevents = GPFSFSAL_UP_GetEvents
+#endif /* _USE_FSAL_UP */
 };
 
 fsal_const_t fsal_gpfs_consts = {

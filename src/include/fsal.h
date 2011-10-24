@@ -657,28 +657,28 @@ fsal_status_t FSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
                             fsal_lock_param_t * conflicting_lock     /* OUT */
                             );
 
-/* FSAL_CB functions */
-/* These structs are defined here because including fsal_cb.h causes
+/* FSAL_UP functions */
+/* These structs are defined here because including fsal_up.h causes
  * preprocessor issues. */
-#ifdef _USE_FSAL_CB
-struct fsal_cb_event_bus_filter_t_;
-struct fsal_cb_event_t_;
-struct fsal_cb_event_bus_parameter_t_;
-struct fsal_cb_event_bus_context_t_;
-fsal_status_t FSAL_CB_Init(struct fsal_cb_event_bus_parameter_t_ * pebparam,      /* IN */
-                              struct fsal_cb_event_bus_context_t_ * pcbebcontext     /* OUT */
-                              );
+#ifdef _USE_FSAL_UP
+struct fsal_up_event_bus_filter_t_;
+struct fsal_up_event_t_;
+struct fsal_up_event_bus_parameter_t_;
+struct fsal_up_event_bus_context_t_;
+fsal_status_t FSAL_UP_Init(struct fsal_up_event_bus_parameter_t_ * pebparam,      /* IN */
+                           struct fsal_up_event_bus_context_t_ * pupebcontext     /* OUT */
+                           );
 
-fsal_status_t FSAL_CB_AddFilter(struct fsal_cb_event_bus_filter_t_ * pcbebfilter,  /* IN */
-                                   struct fsal_cb_event_bus_context_t_ * pcbebcontext /* INOUT */
+fsal_status_t FSAL_UP_AddFilter(struct fsal_up_event_bus_filter_t_ * pupebfilter,  /* IN */
+                                struct fsal_up_event_bus_context_t_ * pupebcontext /* INOUT */
                                    );
-fsal_status_t FSAL_CB_GetEvents(struct fsal_cb_event_t_ ** pevents,                /* OUT */
-                                   fsal_count_t * event_nb,                   /* IN */
-                                   fsal_time_t timeout,                       /* IN */
-                                   fsal_count_t * peventfound,                /* OUT */
-                                   struct fsal_cb_event_bus_context_t_ * pcbebcontext /* IN */
-                                   );
-#endif /* _USE_FSAL_CB */
+fsal_status_t FSAL_UP_GetEvents(struct fsal_up_event_t_ ** pevents,                /* OUT */
+                                fsal_count_t * event_nb,                   /* IN */
+                                fsal_time_t timeout,                       /* IN */
+                                fsal_count_t * peventfound,                /* OUT */
+                                struct fsal_up_event_bus_context_t_ * pupebcontext /* IN */
+                                );
+#endif /* _USE_FSAL_UP */
 
 /* To be called before exiting */
 fsal_status_t FSAL_terminate();
@@ -1353,18 +1353,18 @@ typedef struct fsal_functions__
 
   fsal_status_t(*fsal_sync) (fsal_file_t * p_file_descriptor  /* IN */);
 
-  /* FSAL_CB functions */
-#ifdef _USE_FSAL_CB
-  fsal_status_t(*fsal_cb_init) (struct fsal_cb_event_bus_parameter_t_ * pebparam,      /* IN */
-				struct fsal_cb_event_bus_context_t_ * pcbebcontext     /* OUT */ );
-  fsal_status_t(*fsal_cb_addfilter)(struct fsal_cb_event_bus_filter_t_ * pcbebfilter,  /* IN */
-                                  struct fsal_cb_event_bus_context_t_ * pcbebcontext /* INOUT */ );
-  fsal_status_t(*fsal_cb_getevents)(struct fsal_cb_event_t_ ** pevents,                /* OUT */
+  /* FSAL_UP functions */
+#ifdef _USE_FSAL_UP
+  fsal_status_t(*fsal_up_init) (struct fsal_up_event_bus_parameter_t_ * pebparam,      /* IN */
+				struct fsal_up_event_bus_context_t_ * pupebcontext     /* OUT */ );
+  fsal_status_t(*fsal_up_addfilter)(struct fsal_up_event_bus_filter_t_ * pupebfilter,  /* IN */
+                                  struct fsal_up_event_bus_context_t_ * pupebcontext /* INOUT */ );
+  fsal_status_t(*fsal_up_getevents)(struct fsal_up_event_t_ ** pevents,                /* OUT */
                                   fsal_count_t * event_nb,                   /* IN */
                                   fsal_time_t timeout,                       /* IN */
 				    fsal_count_t * peventfound,                 /* OUT */
-                                  struct fsal_cb_event_bus_context_t_ * pcbebcontext /* IN */ );
-#endif /* _USE_FSAL_CB */
+                                  struct fsal_up_event_bus_context_t_ * pupebcontext /* IN */ );
+#endif /* _USE_FSAL_UP */
 } fsal_functions_t;
 
 /* Structure allow assignement, char[<n>] do not */
