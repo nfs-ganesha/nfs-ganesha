@@ -12,11 +12,6 @@ SUBDIRS =  PARALLEL_FS
 libpnfs_la_LIBADD =  PARALLEL_FS/libpnfslayoutfile.la
 endif 
 
-if USE_PNFS_SPNFS_LIKE
-SUBDIRS = SPNFS_LIKE
-libpnfs_la_LIBADD =  SPNFS_LIKE/libpnfslayoutfile.la
-endif
- 
 if USE_PNFS_OSD
 SUBDIRS = OSD
 libpnfs_la_LIBADD =  OSD/libpnfslayoutfile.la

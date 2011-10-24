@@ -425,19 +425,16 @@ fi
 AM_CONDITIONAL(USE_BUDDY_SYSTEM, test "$enable_BuddyMalloc" == "yes")
 
 # PNFS switch argument (default is nothing)
-AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|SPNFS_LIKE|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
+AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
 	PNFS="$withval", PNFS="NONE" )
 
 AM_CONDITIONAL(USE_PNFS_NONE, 		test "$PNFS" = "NONE" )
 AM_CONDITIONAL(USE_PNFS_PARALLEL_FS,	test "$PNFS" = "PARALLEL_FS" )
-AM_CONDITIONAL(USE_PNFS_SPNFS_LIKE, 	test "$PNFS" = "SPNFS_LIKE" )
 AM_CONDITIONAL(USE_PNFS_OSD, 	        test "$PNFS" = "OSD" )
 AM_CONDITIONAL(USE_PNFS_BLOCK, 	        test "$PNFS" = "BLOCK" )
 
 AM_CONDITIONAL(USE_PNFS,                 test "$PNFS" != "NONE" )
 
-AM_CONDITIONAL(USE_MFSL_PNFS_FILE, test "$PNFS" = "SPNFS_LIKE")
-AM_CONDITIONAL(USE_MFSL,           test "$PNFS" = "SPNFS_LIKE")
 
 # MFSL switch argument (default is NULL )
 AC_ARG_WITH( [mfsl], AS_HELP_STRING([--with-mfsl=NONE|NULL|ASYNC|AIO|MIRROR|PROXY_RPCSECGSS (default=NULL)],[specify the type of intermediate FSAL module to be used] ),
@@ -450,12 +447,6 @@ AM_CONDITIONAL(USE_MFSL_ASYNC,           test "$MFSL" = "ASYNC")
 AM_CONDITIONAL(USE_MFSL_PROXY_RPCSECGSS, test "$MFSL" = "PROXY_RPCSECGSS")
 
 AM_CONDITIONAL(USE_MFSL,                 test "$MFSL" != "NONE" )
-
-# If "spnfsd-like" pNFS layout requires MFS_PNFS_FILE
-if test "$PNFS" = "SPNFS_LIKE" ; then
-    	MFSL="PNFS_FILE"
-	AM_CONDITIONAL(USE_MFSL,           test "$PNFS" = "SPNFS_LIKE")
-fi
 
 # Database switch (for POSIX FSAL)
 AC_ARG_WITH( [db], AS_HELP_STRING([--with-db=MYSQL|PGSQL (default=MYSQL)],[specify the database engine for POSIX FSAL] ),
@@ -834,19 +825,14 @@ case $PNFS in
 		AC_DEFINE(_USE_PNFS_PARALLEL_FS,1,[enable NFSv4.1/pNFS support for parallel file system ])
 		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
-	"SPNFS_LIKE")
-		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable spnfsd-like NFSv4.1/pNFS support])
-		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
-		;;
 	"OSD")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable OSD based NFSv4.1/pNFS support])
+		AC_DEFINE(_USE_PNFS_OSD,1,[enable OSD based NFSv4.1/pNFS support])
 		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
 	"BLOCK")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable Block Device based NFSv4.1/pNFS support])
+		AC_DEFINE(_USE_PNFS_BLOCK,1,[enable Block Device based NFSv4.1/pNFS support])
 		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
 	*)
@@ -927,7 +913,6 @@ AC_CONFIG_FILES([include/Makefile
                  include/MFSL/MFSL_PNFS_FILE/Makefile
                  include/MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  include/PNFS/Makefile
-		 include/PNFS/SPNFS_LIKE/Makefile
 		 include/PNFS/PARALLEL_FS/Makefile
 		 include/PNFS/OSD/Makefile
 		 include/PNFS/BLOCK/Makefile
@@ -953,7 +938,6 @@ AC_CONFIG_FILES([include/Makefile
 		 Protocols/NFS/Makefile
 		 Protocols/NLM/Makefile
 		 Protocols/PNFS/Makefile
-		 Protocols/PNFS/SPNFS_LIKE/Makefile
 		 Protocols/PNFS/PARALLEL_FS/Makefile
 		 Protocols/PNFS/OSD/Makefile
 		 Protocols/PNFS/BLOCK/Makefile

@@ -47,41 +47,6 @@
 #include "pnfs.h" 
 #include "pnfs_service.h" 
 
-#ifdef _USE_PNFS_SPNFS_LIKE
-
-nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args * pargs,  compound_data_t * data, GETDEVICELIST4res * pres ) 
-{
-   return pnfs_spnfs_getdevicelist( pargs, data, pres ) ;
-}
-
-nfsstat4 pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs, compound_data_t * data, GETDEVICEINFO4res * pres ) 
-{
-   return pnfs_spnfs_getdeviceinfo( pargs, data, pres ) ;
-}
-
-nfsstat4 pnfs_layoutget( LAYOUTGET4args   * pargs,
-	                 compound_data_t  * data, 
-			 LAYOUTGET4res    * pres ) 
-{
-   return pnfs_spnfs_layoutget( pargs, data, pres ) ;
-}
-
-nfsstat4 pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs, 
-                            compound_data_t   * data,
-                            LAYOUTCOMMIT4res  * pres ) 
-{
-   return pnfs_spnfs_layoutcommit( pargs, data, pres ) ;
-}
-
-nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args * pargs, 
-                            compound_data_t   * data, 
-                            LAYOUTRETURN4res  * pres ) 
-{
-   return pnfs_spnfs_layoutreturn( pargs, data, pres ) ;
-}
-
-#endif
-
 #ifdef _USE_PNFS_PARALLEL_FS
 nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args * pargs,  compound_data_t * data, GETDEVICELIST4res * pres ) 
 {
