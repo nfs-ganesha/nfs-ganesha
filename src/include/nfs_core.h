@@ -499,6 +499,14 @@ typedef enum pause_state
   STATE_EXIT
 } pause_state_t;
   
+typedef struct nfs_thread_control_block__
+{
+  pthread_cond_t tcb_condvar;
+  pthread_mutex_t tcb_mutex;
+  int tcb_ready;
+  pause_state_t tcb_state;
+} nfs_tcb_t;
+
 typedef struct nfs_worker_data__
 {
   unsigned int worker_index;
@@ -513,16 +521,11 @@ typedef struct nfs_worker_data__
   hash_table_t *ht;
   hash_table_t *ht_ip_stats;
   pthread_mutex_t request_pool_mutex;
-
-  /* Used for blocking when request queue is empty. */
-  pthread_cond_t req_condvar;
-  pthread_mutex_t request_mutex;
+  nfs_tcb_t wcb; /* Worker control block */
 
   nfs_worker_stat_t stats;
   unsigned int passcounter;
   sockaddr_t hostaddr;
-  int is_ready;
-  pause_state_t pause_state;
   unsigned int gc_in_progress;
   unsigned int current_xid;
 #ifdef _USE_SHARED_FSAL

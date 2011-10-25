@@ -1601,13 +1601,13 @@ const char *pause_rc_str[] =
 worker_available_rc worker_available(unsigned long worker_index, unsigned int avg_number_pending)
 {
   worker_available_rc rc = WORKER_AVAILABLE;
-  P(workers_data[worker_index].request_mutex);
-  switch(workers_data[worker_index].pause_state)
+  P(workers_data[worker_index].wcb.tcb_mutex);
+  switch(workers_data[worker_index].wcb.tcb_state)
     {
       case STATE_AWAKE:
       case STATE_AWAKEN:
         /* Choose only fully initialized workers and that does not gc. */
-        if(workers_data[worker_index].is_ready == FALSE)
+        if(workers_data[worker_index].wcb.tcb_ready == FALSE)
           {
             LogFullDebug(COMPONENT_THREAD,
                          "worker thread #%lu is not ready", worker_index);
@@ -1635,7 +1635,7 @@ worker_available_rc worker_available(unsigned long worker_index, unsigned int av
         rc = WORKER_EXIT;
         break;
     }
-  V(workers_data[worker_index].request_mutex);
+  V(workers_data[worker_index].wcb.tcb_mutex);
 
   return rc;
 }
@@ -1797,13 +1797,13 @@ pause_rc wait_for_workers_to_awaken()
 void mark_thread_asleep(nfs_worker_data_t *pmydata)
 {
   P(active_workers_mutex);
-  P(pmydata->request_mutex);
+  P(pmydata->wcb.tcb_mutex);
 
-  if(pmydata->pause_state == STATE_PAUSE)
+  if(pmydata->wcb.tcb_state == STATE_PAUSE)
     {
-      pmydata->pause_state = STATE_PAUSED;
+      pmydata->wcb.tcb_state = STATE_PAUSED;
       num_active_workers--;
-      pmydata->is_ready = FALSE;
+      pmydata->wcb.tcb_ready = FALSE;
     }
 
   pthread_cond_signal(&active_workers_cond);
@@ -1812,7 +1812,7 @@ void mark_thread_asleep(nfs_worker_data_t *pmydata)
            pmydata->worker_index);
 
 
-  V(pmydata->request_mutex);
+  V(pmydata->wcb.tcb_mutex);
   V(active_workers_mutex);
 }
 
@@ -1823,12 +1823,12 @@ void mark_thread_asleep(nfs_worker_data_t *pmydata)
 void mark_thread_done(nfs_worker_data_t *pmydata)
 {
   P(active_workers_mutex);
-  P(pmydata->request_mutex);
+  P(pmydata->wcb.tcb_mutex);
 
-  if(pmydata->is_ready)
+  if(pmydata->wcb.tcb_ready)
     {
       num_active_workers--;
-      pmydata->is_ready = FALSE;
+      pmydata->wcb.tcb_ready = FALSE;
     }
 
   num_existing_workers--;
@@ -1839,7 +1839,7 @@ void mark_thread_done(nfs_worker_data_t *pmydata)
            pmydata->worker_index);
 
 
-  V(pmydata->request_mutex);
+  V(pmydata->wcb.tcb_mutex);
   V(active_workers_mutex);
 }
 
@@ -1852,7 +1852,7 @@ pause_rc mark_thread_existing(nfs_worker_data_t *pmydata)
   pause_rc rc;
 
   P(active_workers_mutex);
-  P(pmydata->request_mutex);
+  P(pmydata->wcb.tcb_mutex);
 
   /* Increment count of existing (even if we are about to die,
    * mark_thread_done will be called in that case).
@@ -1869,7 +1869,7 @@ pause_rc mark_thread_existing(nfs_worker_data_t *pmydata)
            "Worker thread #%u exists",
            pmydata->worker_index);
 
-  V(pmydata->request_mutex);
+  V(pmydata->wcb.tcb_mutex);
   V(active_workers_mutex);
 
   return rc;
@@ -1882,13 +1882,13 @@ pause_rc mark_thread_existing(nfs_worker_data_t *pmydata)
 void mark_thread_awake(nfs_worker_data_t *pmydata)
 {
   P(active_workers_mutex);
-  P(pmydata->request_mutex);
+  P(pmydata->wcb.tcb_mutex);
 
-  if(pmydata->pause_state == STATE_STARTUP || pmydata->pause_state == STATE_AWAKEN)
+  if(pmydata->wcb.tcb_state == STATE_STARTUP || pmydata->wcb.tcb_state == STATE_AWAKEN)
     {
-      pmydata->pause_state = STATE_AWAKE;
+      pmydata->wcb.tcb_state = STATE_AWAKE;
       num_active_workers++;
-      pmydata->is_ready = TRUE;
+      pmydata->wcb.tcb_ready = TRUE;
     }
 
   pthread_cond_signal(&active_workers_cond);
@@ -1896,7 +1896,7 @@ void mark_thread_awake(nfs_worker_data_t *pmydata)
            "Worker thread #%u active",
            pmydata->worker_index);
 
-  V(pmydata->request_mutex);
+  V(pmydata->wcb.tcb_mutex);
   V(active_workers_mutex);
 }
 
@@ -1905,22 +1905,22 @@ void notify_threads_of_new_state()
   unsigned int worker_index;
   for(worker_index = 0; worker_index  < nfs_param.core_param.nb_worker; worker_index++)
     {
-      P(workers_data[worker_index].request_mutex);
+      P(workers_data[worker_index].wcb.tcb_mutex);
       LogDebug(COMPONENT_THREAD,
                "Changing state of thread #%u from %s to %s",
                worker_index,
-               pause_state_str[workers_data[worker_index].pause_state],
+               pause_state_str[workers_data[worker_index].wcb.tcb_state],
                pause_state_str[pause_state]);
-      workers_data[worker_index].pause_state = pause_state;
-      if(pthread_cond_signal(&(workers_data[worker_index].req_condvar)) == -1)
+      workers_data[worker_index].wcb.tcb_state = pause_state;
+      if(pthread_cond_signal(&(workers_data[worker_index].wcb.tcb_condvar)) == -1)
         {
-          V(workers_data[worker_index].request_mutex);
+          V(workers_data[worker_index].wcb.tcb_mutex);
           LogMajor(COMPONENT_THREAD,
                    "Error %d (%s) while signalling Worker Thread #%u... Exiting",
                    errno, strerror(errno), worker_index);
           Fatal();
         }
-      V(workers_data[worker_index].request_mutex);
+      V(workers_data[worker_index].wcb.tcb_mutex);
     }
 }
 
@@ -2110,13 +2110,13 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   LRU_status_t status = LRU_LIST_SUCCESS;
   char name[256];
 
-  if(pthread_mutex_init(&(pdata->request_mutex), NULL) != 0)
+  if(pthread_mutex_init(&(pdata->wcb.tcb_mutex), NULL) != 0)
     return -1;
 
   if(pthread_mutex_init(&(pdata->request_pool_mutex), NULL) != 0)
     return -1;
 
-  if(pthread_cond_init(&(pdata->req_condvar), NULL) != 0)
+  if(pthread_cond_init(&(pdata->wcb.tcb_condvar), NULL) != 0)
     return -1;
 
   sprintf(name, "Worker Thread #%u Pending Request", pdata->worker_index);
@@ -2140,7 +2140,7 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
     }
 
   pdata->passcounter = 0;
-  pdata->is_ready = FALSE;
+  pdata->wcb.tcb_ready = FALSE;
   pdata->gc_in_progress = FALSE;
   pdata->pfuncdesc = INVALID_FUNCDESC;
 
@@ -2158,7 +2158,7 @@ void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index)
            "Awaking Worker Thread #%u for request %p, xid=%u",
            worker_index, pnfsreq, rpcxid);
 
-  P(workers_data[worker_index].request_mutex);
+  P(workers_data[worker_index].wcb.tcb_mutex);
   P(workers_data[worker_index].request_pool_mutex);
 
   pentry = LRU_new_entry(workers_data[worker_index].pending_request, &status);
@@ -2166,7 +2166,7 @@ void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index)
   if(pentry == NULL)
     {
       V(workers_data[worker_index].request_pool_mutex);
-      V(workers_data[worker_index].request_mutex);
+      V(workers_data[worker_index].wcb.tcb_mutex);
       LogMajor(COMPONENT_DISPATCH,
                "Error while inserting pending request to Worker Thread #%u... Exiting",
                worker_index);
@@ -2176,17 +2176,17 @@ void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index)
   pentry->buffdata.pdata = (caddr_t) pnfsreq;
   pentry->buffdata.len = sizeof(*pnfsreq);
 
-  if(pthread_cond_signal(&(workers_data[worker_index].req_condvar)) == -1)
+  if(pthread_cond_signal(&(workers_data[worker_index].wcb.tcb_condvar)) == -1)
     {
       V(workers_data[worker_index].request_pool_mutex);
-      V(workers_data[worker_index].request_mutex);
+      V(workers_data[worker_index].wcb.tcb_mutex);
       LogMajor(COMPONENT_THREAD,
                "Error %d (%s) while signalling Worker Thread #%u... Exiting",
                errno, strerror(errno), worker_index);
       Fatal();
     }
   V(workers_data[worker_index].request_pool_mutex);
-  V(workers_data[worker_index].request_mutex);
+  V(workers_data[worker_index].wcb.tcb_mutex);
 }
 
 enum auth_stat AuthenticateRequest(nfs_request_data_t *pnfsreq,
@@ -2449,38 +2449,38 @@ void *worker_thread(void *IndexArg)
                    pmydata->pending_request->nb_entry,
                    pmydata->pending_request->nb_invalid);
 
-      P(pmydata->request_mutex);
+      P(pmydata->wcb.tcb_mutex);
       while(1)
        {
-         if(pmydata->pause_state == STATE_AWAKE &&
+         if(pmydata->wcb.tcb_state == STATE_AWAKE &&
             pmydata->pending_request->nb_entry != pmydata->pending_request->nb_invalid)
            {
              /* We have something to do, and we don't need to pause. */
              LogFullDebug(COMPONENT_DISPATCH,
                           "Have work, pause_state: %s, nb_entry=%u, nb_invalid=%u",
-                          pause_state_str[pmydata->pause_state],
+                          pause_state_str[pmydata->wcb.tcb_state],
                           pmydata->pending_request->nb_entry,
                           pmydata->pending_request->nb_invalid);
              break;
            }
 
-         switch(pmydata->pause_state)
+         switch(pmydata->wcb.tcb_state)
            {
              case STATE_STARTUP:
              case STATE_AWAKEN:
                /* Mark thread as awake */
-               V(pmydata->request_mutex);
+               V(pmydata->wcb.tcb_mutex);
                mark_thread_awake(pmydata);
-               P(pmydata->request_mutex);
+               P(pmydata->wcb.tcb_mutex);
 
                /* Go back and check new state. */
                continue;
 
              case STATE_PAUSE:
                /* Mark thread as asleep */
-               V(pmydata->request_mutex);
+               V(pmydata->wcb.tcb_mutex);
                mark_thread_asleep(pmydata);
-               P(pmydata->request_mutex);
+               P(pmydata->wcb.tcb_mutex);
 
                /* Go back and check new state. */
                continue;
@@ -2488,12 +2488,12 @@ void *worker_thread(void *IndexArg)
              case STATE_AWAKE:
              case STATE_PAUSED:
                /* Wait for something to do */
-               pthread_cond_wait(&(pmydata->req_condvar), &(pmydata->request_mutex));
+               pthread_cond_wait(&(pmydata->wcb.tcb_condvar), &(pmydata->wcb.tcb_mutex));
                break;
 
              case STATE_EXIT:
                /* Need to exit worker thread. */
-               V(pmydata->request_mutex);
+               V(pmydata->wcb.tcb_mutex);
                mark_thread_done(pmydata);
                LogDebug(COMPONENT_DISPATCH,
                         "Worker exiting as requested");
@@ -2503,7 +2503,7 @@ void *worker_thread(void *IndexArg)
 
       LogFullDebug(COMPONENT_DISPATCH,
                    "Processing a new request");
-      V(pmydata->request_mutex);
+      V(pmydata->wcb.tcb_mutex);
 
       found = FALSE;
       P(pmydata->request_pool_mutex);
@@ -2652,11 +2652,11 @@ void *worker_thread(void *IndexArg)
         gc_allowed = FALSE;
       V(lock_nb_current_gc_workers);
 
-      P(pmydata->request_mutex);
-      if(gc_allowed == TRUE && pmydata->pause_state == STATE_AWAKE)
+      P(pmydata->wcb.tcb_mutex);
+      if(gc_allowed == TRUE && pmydata->wcb.tcb_state == STATE_AWAKE)
         {
           pmydata->gc_in_progress = TRUE;
-          V(pmydata->request_mutex);
+          V(pmydata->wcb.tcb_mutex);
           LogFullDebug(COMPONENT_DISPATCH,
                        "There are %d concurrent garbage collection",
                        nb_current_gc_workers);
@@ -2673,13 +2673,13 @@ void *worker_thread(void *IndexArg)
           nb_current_gc_workers -= 1;
           V(lock_nb_current_gc_workers);
 
-          P(pmydata->request_mutex);
+          P(pmydata->wcb.tcb_mutex);
           pmydata->gc_in_progress = FALSE;
         }
 #ifdef _USE_MFSL
       /* As MFSL context are refresh, and because this could be a time consuming operation, the worker is
        * set as "making garbagge collection" to avoid new requests to come in its pending queue */
-      if(pmydata->pause_state == STATE_AWAKE)
+      if(pmydata->wcb.tcb_state == STATE_AWAKE)
         {
           pmydata->gc_in_progress = TRUE;
 
@@ -2693,7 +2693,7 @@ void *worker_thread(void *IndexArg)
           if(FSAL_IS_ERROR(fsal_status))
             {
               /* Failed init */
-              V(pmydata->request_mutex);
+              V(pmydata->wcb.tcb_mutex);
               LogFatal(COMPONENT_DISPATCH, "Error regreshing MFSL context");
             }
 
@@ -2701,7 +2701,7 @@ void *worker_thread(void *IndexArg)
         }
 
 #endif
-      V(pmydata->request_mutex);
+      V(pmydata->wcb.tcb_mutex);
 
     }                           /* while( 1 ) */
   return NULL;
