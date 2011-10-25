@@ -139,7 +139,6 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
   /* save file descriptor to root of VFS export */
   if( ( p_export_context->mount_root_fd = open(mntdir, O_RDONLY | O_DIRECTORY) ) < 0 )
     {
-      close( p_export_context->mount_root_fd );
       LogMajor(COMPONENT_FSAL,
                "FSAL BUILD EXPORT CONTEXT: ERROR: Could not open VFS mount point %s: rc = %d",
                mntdir, errno);
@@ -159,8 +158,13 @@ fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * context,   /* O
   p_export_context->root_handle.handle_bytes = VFS_HANDLE_LEN ;
   if( vfs_fd_to_handle( p_export_context->mount_root_fd,
 			&p_export_context->root_handle,
-                        &mnt_id ) )
+                        &mnt_id ) ) {
+	  LogMajor(COMPONENT_FSAL,
+		   "vfs_fd_to_handle: root_path: %s, root_fd=%d, errno=(%d) %s",
+		   mntdir, p_export_context->mount_root_fd,
+		   errno, strerror(errno));
 	 Return(posix2fsal_error(errno), errno, INDEX_FSAL_BuildExportContext) ;
+  }
 
 #ifdef TODO
   if(isFullDebug(COMPONENT_FSAL))
