@@ -68,7 +68,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
     {
       LogDebug(COMPONENT_FSAL, "Error: GPFSFSAL_UP_GetEvents() received"
                " unexpectedly NULL arguments.");
-      Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_up_getevents);
+      Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_UP_getevents);
     }
 
   gpfsfsal_export_context_t *p_export_context =
