@@ -505,6 +505,7 @@ typedef struct nfs_thread_control_block__
   pthread_mutex_t tcb_mutex;
   int tcb_ready;
   pause_state_t tcb_state;
+  struct glist_head tcb_list;
 } nfs_tcb_t;
 
 typedef struct nfs_worker_data__

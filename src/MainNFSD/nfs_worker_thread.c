@@ -67,6 +67,7 @@
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
 #include "nfs_stat.h"
+#include "nfs_tcb.h"
 #include "SemN.h"
 
 #ifdef _USE_PNFS
@@ -1841,6 +1842,7 @@ void mark_thread_done(nfs_worker_data_t *pmydata)
 
   V(pmydata->wcb.tcb_mutex);
   V(active_workers_mutex);
+  tcb_remove(&pmydata->wcb);
 }
 
 /**
@@ -2118,6 +2120,8 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
 
   if(pthread_cond_init(&(pdata->wcb.tcb_condvar), NULL) != 0)
     return -1;
+
+  tcb_insert(&(pdata->wcb));
 
   sprintf(name, "Worker Thread #%u Pending Request", pdata->worker_index);
   nfs_param.worker_param.lru_param.name = Str_Dup(name);
@@ -2704,5 +2708,6 @@ void *worker_thread(void *IndexArg)
       V(pmydata->wcb.tcb_mutex);
 
     }                           /* while( 1 ) */
+  tcb_remove(&pmydata->wcb);
   return NULL;
 }                               /* worker_thread */

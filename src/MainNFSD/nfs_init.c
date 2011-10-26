@@ -73,6 +73,7 @@
 #include "nsm.h"
 #endif
 #include "sal_functions.h"
+#include "nfs_tcb.h"
 
 /* global information exported to all layers (as extern vars) */
 
@@ -1755,6 +1756,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                state_err_str(state_status));
     }
   LogInfo(COMPONENT_INIT, "Cache Inode library successfully initialized");
+  /* Initialize thread control block */
+  tcb_head_init();
 
   /* Set the cache inode GC policy */
   cache_inode_set_gc_policy(nfs_param.cache_layers_param.gcpol);

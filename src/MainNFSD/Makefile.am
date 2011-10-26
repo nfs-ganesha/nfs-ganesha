@@ -94,6 +94,7 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              nfs_stats_thread.c                   \
                              $(STAT_EXPORTER_FILE)                \
                              nfs_worker_thread.c                  \
+                             nfs_tcb.c                  \
                              nfs_file_content_gc_thread.c         \
                              nfs_rpc_dispatcher_thread.c          \
                              $(DISPATCH_9P_FILES)                 \
@@ -103,6 +104,7 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              nfs_tools.c                          \
                              nfs_init.h                           \
                              ../include/LRU_List.h                \
+                             ../include/nfs_tcb.h                 \
                              ../include/HashTable.h               \
                              ../include/HashData.h                \
                              ../include/rbt_node.h                \
