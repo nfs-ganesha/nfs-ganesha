@@ -297,10 +297,6 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
           else
             entry_nfs_array[i].cookie = end_cookie + 2;
 
-          
-          LogFullDebug(COMPONENT_NFS_V4,
-                       " === nfs4_op_readdir ===>   i=%d name=%s cookie=%llu",
-                       i, dirent_array[i].name.name, (unsigned long long)entry_nfs_array[i].cookie);
 
           /* Get the pentry for the object's attributes and filehandle */
           if((pentry = cache_inode_lookup(dir_pentry,
@@ -357,23 +353,22 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
             }
 
           /* Update the siwe of the output buffer */
-          outbuffsize += sizeof( nfs_cookie4 ) ; /* nfs_cookie4 */
-          outbuffsize += sizeof( u_int ) ;       /* pathname4::utf8strings_len */
-          outbuffsize +=  entry_nfs_array[i].name.utf8string_len ; 
-          outbuffsize += sizeof( u_int ) ; /* bitmap4_len */
-          outbuffsize +=   entry_nfs_array[i].attrs.attrmask.bitmap4_len ;
-          outbuffsize += sizeof( u_int ) ; /* attrlist4_len */
-          outbuffsize +=   entry_nfs_array[i].attrs.attr_vals.attrlist4_len ;
-          outbuffsize += sizeof( caddr_t ) ;
+          outbuffsize += sizeof( nfs_cookie4 )                              /* nfs_cookie4 */
+                      +  sizeof( u_int )                        /* pathname4::utf8strings_len */
+                      +  entry_nfs_array[i].name.utf8string_len  
+                      +  sizeof( u_int )                                    /* bitmap4_len */
+                      +  entry_nfs_array[i].attrs.attrmask.bitmap4_len 
+                      +  sizeof( u_int )                                    /* attrlist4_len */
+                      +  entry_nfs_array[i].attrs.attr_vals.attrlist4_len 
+                      +  sizeof( caddr_t ) ;
 
-          printf( 
-                       " === nfs4_op_readdir ===>   i=%u name=%s cookie=%llu buffsize=%u\n",
+          
+          LogFullDebug(COMPONENT_NFS_V4,
+                       " === nfs4_op_readdir ===>   i=%d name=%s cookie=%llu buffsize=%u",
                        i, dirent_array[i].name.name, (unsigned long long)entry_nfs_array[i].cookie, outbuffsize);
 
           if( outbuffsize > maxcount )
-           {
-             printf( "---- Input Buffer is too small, breaking the loop ---\n" ) ;
-           }
+             LogFullDebug( COMPONENT_NFS_V4, "---- Input Buffer is too small, breaking the loop ---" ) ;
 
           /* Chain the entries together */
           entry_nfs_array[i].nextentry = NULL;
@@ -397,10 +392,6 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
                  NFS4_VERIFIER_SIZE);
         }
      
-      printf( "--- MaxCount=%u  OutBuffSize=%u ---\n", maxcount, outbuffsize ) ;
-      printf( "------ EOF=%u------------\n", res_READDIR4.READDIR4res_u.resok4.reply.eof  ) ;
-
-
       /* Put the entry's list in the READDIR reply */
       res_READDIR4.READDIR4res_u.resok4.reply.entries = entry_nfs_array;
     }
