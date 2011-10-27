@@ -424,6 +424,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           /* Does a file with this name already exist ? */
           pentry_lookup = cache_inode_lookup(pentry_parent,
                                              &filename,
+                                             data->pexport->cache_inode_policy,
                                              &attr_newfile,
                                              data->ht,
                                              data->pclient,
@@ -722,6 +723,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           if((pentry_newfile = cache_inode_create(pentry_parent,
                                                   &filename,
                                                   REGULAR_FILE,
+                                                  data->pexport->cache_inode_policy,
                                                   mode,
                                                   NULL,
                                                   &attr_newfile,
@@ -826,6 +828,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
             {
               if((pentry_newfile = cache_inode_lookup(pentry_parent,
                                                       &filename,
+                                                      data->pexport->cache_inode_policy,
                                                       &attr_newfile,
                                                       data->ht,
                                                       data->pclient,

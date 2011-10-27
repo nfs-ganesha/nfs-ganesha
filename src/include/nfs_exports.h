@@ -199,6 +199,7 @@ typedef struct exportlist__
   struct exportlist__ *next;    /* next entry                                        */
   unsigned int fsalid ;
 
+  cache_inode_policy_t cache_inode_policy ;
 #ifdef _USE_FSAL_CB
   bool_t use_fsal_cb;
   char fsal_cb_type[MAXPATHLEN];

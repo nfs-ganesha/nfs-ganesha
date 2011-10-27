@@ -223,10 +223,14 @@ int nfs_Mkdir(nfs_arg_t * parg,
            * Lookup file to see if it exists.  If so, use it.  Otherwise
            * create a new one.  
            */
-          dir_pentry = cache_inode_lookup(parent_pentry,
-                                          &dir_name,
-                                          &attr,
-                                          ht, pclient, pcontext, &cache_status_lookup);
+          dir_pentry = cache_inode_lookup( parent_pentry,
+                                           &dir_name,
+                                           pexport->cache_inode_policy,
+                                           &attr,
+                                           ht, 
+                                           pclient, 
+                                           pcontext, 
+                                           &cache_status_lookup);
 
           if(cache_status_lookup == CACHE_INODE_NOT_FOUND)
             {
@@ -234,6 +238,7 @@ int nfs_Mkdir(nfs_arg_t * parg,
               if((dir_pentry = cache_inode_create(parent_pentry,
                                                   &dir_name,
                                                   DIR_BEGINNING,
+                                                  pexport->cache_inode_policy,
                                                   mode,
                                                   NULL,
                                                   &attr,
