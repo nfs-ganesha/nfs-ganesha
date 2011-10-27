@@ -272,7 +272,8 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   if( ( pexport->options & EXPORT_OPTION_NFSV4 ) == 0 )
    {
       LogMajor( COMPONENT_NFS_V4,
-                "The export(id=%u) does not support NFSv4... rejecting it" ) ;
+                "The export(id=%u) does not support NFSv4... rejecting it",
+                pexport->id ) ;
       pres->res_compound4.status = NFS4ERR_PERM ;
       pres->res_compound4.resarray.resarray_val[0].nfs_resop4_u.opaccess.status = NFS4ERR_PERM ;
       return NFS_REQ_OK ;
