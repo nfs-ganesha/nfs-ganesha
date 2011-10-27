@@ -8,15 +8,15 @@
 void tcb_insert(nfs_tcb_t *element);
 void tcb_remove(nfs_tcb_t *element);
 void tcb_head_init(void);
-pause_rc wake_workers(awaken_reason_t reason);
-pause_rc pause_workers(pause_reason_t reason);
+pause_rc wake_threads(awaken_reason_t reason);
+pause_rc pause_threads(pause_reason_t reason);
 void notify_threads_of_new_state(void);
-void mark_thread_awake(nfs_worker_data_t *pmydata);
-pause_rc mark_thread_existing(nfs_worker_data_t *pmydata);
-void mark_thread_done(nfs_worker_data_t *pmydata);
-void mark_thread_asleep(nfs_worker_data_t *pmydata);
-pause_rc wait_for_workers_to_awaken(void);
-void wait_for_workers_to_exit(void);
-pause_rc wait_for_workers_to_pause(void);
+void mark_thread_awake(nfs_tcb_t *wcb);
+pause_rc mark_thread_existing(nfs_tcb_t *wcb);
+void mark_thread_done(nfs_tcb_t *wcb);
+void mark_thread_asleep(nfs_tcb_t *wcb);
+pause_rc wait_for_threads_to_awaken(void);
+void wait_for_threads_to_exit(void);
+pause_rc _wait_for_threads_to_pause(void);
 #endif
 

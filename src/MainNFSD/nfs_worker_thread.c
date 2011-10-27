@@ -69,7 +69,6 @@
 #include "nfs_stat.h"
 #include "nfs_tcb.h"
 #include "SemN.h"
-#include "nfs_tcb.h"
 
 #ifdef _USE_PNFS
 #include "pnfs.h"
@@ -365,6 +364,8 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 };
 
 #endif
+
+extern const char *pause_state_str[];
 
 /**
  * nfs_Init_gc_counter: Init the worker's gc counters.
@@ -1562,7 +1563,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   return;
 }                               /* nfs_rpc_execute */
 
-
 worker_available_rc worker_available(unsigned long worker_index, unsigned int avg_number_pending)
 {
   worker_available_rc rc = WORKER_AVAILABLE;
@@ -1605,7 +1605,6 @@ worker_available_rc worker_available(unsigned long worker_index, unsigned int av
   return rc;
 }
 
-
 /**
  * nfs_Init_worker_data: Init the data associated with a worker instance.
  *
@@ -1632,6 +1631,8 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
 
   if(pthread_cond_init(&(pdata->wcb.tcb_condvar), NULL) != 0)
     return -1;
+
+  sprintf(pdata->wcb.tcb_name, "Worker Thread #%u", pdata->worker_index);
 
   tcb_insert(&(pdata->wcb));
 
@@ -1827,10 +1828,10 @@ void *worker_thread(void *IndexArg)
   snprintf(thr_name, sizeof(thr_name), "Worker Thread #%lu", worker_index);
   SetNameFunction(thr_name);
 
-  if(mark_thread_existing(pmydata) == PAUSE_EXIT)
+  if(mark_thread_existing(&(pmydata->wcb)) == PAUSE_EXIT)
     {
       /* Oops, that didn't last long... exit. */
-      mark_thread_done(pmydata);
+      mark_thread_done(&(pmydata->wcb));
       LogDebug(COMPONENT_DISPATCH,
                "Worker exiting before initialization");
       return NULL;
@@ -1972,13 +1973,13 @@ void *worker_thread(void *IndexArg)
             pmydata->pending_request->nb_entry != pmydata->pending_request->nb_invalid)
            {
              /* We have something to do, and we don't need to pause. */
-/*
+
              LogFullDebug(COMPONENT_DISPATCH,
                           "Have work, pause_state: %s, nb_entry=%u, nb_invalid=%u",
                           pause_state_str[pmydata->wcb.tcb_state],
                           pmydata->pending_request->nb_entry,
                           pmydata->pending_request->nb_invalid);
-*/
+
              break;
            }
 
@@ -1988,7 +1989,7 @@ void *worker_thread(void *IndexArg)
              case STATE_AWAKEN:
                /* Mark thread as awake */
                V(pmydata->wcb.tcb_mutex);
-               mark_thread_awake(pmydata);
+               mark_thread_awake(&(pmydata->wcb));
                P(pmydata->wcb.tcb_mutex);
 
                /* Go back and check new state. */
@@ -1997,7 +1998,7 @@ void *worker_thread(void *IndexArg)
              case STATE_PAUSE:
                /* Mark thread as asleep */
                V(pmydata->wcb.tcb_mutex);
-               mark_thread_asleep(pmydata);
+               mark_thread_asleep(&(pmydata->wcb));
                P(pmydata->wcb.tcb_mutex);
 
                /* Go back and check new state. */
@@ -2012,7 +2013,7 @@ void *worker_thread(void *IndexArg)
              case STATE_EXIT:
                /* Need to exit worker thread. */
                V(pmydata->wcb.tcb_mutex);
-               mark_thread_done(pmydata);
+               mark_thread_done(&(pmydata->wcb));
                LogDebug(COMPONENT_DISPATCH,
                         "Worker exiting as requested");
                return NULL;

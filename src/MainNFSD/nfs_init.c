@@ -144,9 +144,9 @@ void *sigmgr_thread( void * arg )
   LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
   LogDebug(COMPONENT_THREAD, "Stopping worker threads");
 
-  if(pause_workers(PAUSE_SHUTDOWN) != PAUSE_EXIT)
+  if(pause_threads(PAUSE_SHUTDOWN) != PAUSE_EXIT)
     LogDebug(COMPONENT_THREAD,
-             "Unexpected return code from pause_workers");
+             "Unexpected return code from pause_threads");
   else
     LogDebug(COMPONENT_THREAD,
              "Done waiting for worker threads to exit");
@@ -2449,7 +2449,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
         }
 
       /* Wait for the threads to complete their init step */
-      if(wait_for_workers_to_awaken() != PAUSE_OK)
+      if(wait_for_threads_to_awaken() != PAUSE_OK)
         {
           /* Not quite sure what to do here... */
         }

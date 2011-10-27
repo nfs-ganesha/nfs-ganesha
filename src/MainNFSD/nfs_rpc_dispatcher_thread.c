@@ -694,7 +694,7 @@ static unsigned int select_worker_queue()
           else if(rc == WORKER_ALL_PAUSED)
             {
               /* Wait for the threads to awaken */
-              rc = wait_for_workers_to_awaken();
+              rc = wait_for_threads_to_awaken();
               /*              if(rc == PAUSE_EXIT)
                 {
                 }

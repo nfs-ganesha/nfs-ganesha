@@ -192,10 +192,10 @@ void *admin_thread(void *Arg)
           continue;
         }
 
-      if(pause_workers(PAUSE_RELOAD_EXPORTS) == PAUSE_EXIT)
+      if(pause_threads(PAUSE_RELOAD_EXPORTS) == PAUSE_EXIT)
         {
           LogDebug(COMPONENT_MAIN,
-                   "Export reload interrupted by shutdown while pausing workers");
+                   "Export reload interrupted by shutdown while pausing threads");
           /* Be helpfull and exit
            * (other termination will just blow us away, and that's ok...
            */
@@ -221,10 +221,10 @@ void *admin_thread(void *Arg)
       /* wake_workers could return PAUSE_PAUSE, but we don't have to do
        * anything special in that case.
        */
-      if(wake_workers(AWAKEN_RELOAD_EXPORTS) == PAUSE_EXIT)
+      if(wake_threads(AWAKEN_RELOAD_EXPORTS) == PAUSE_EXIT)
         {
           LogDebug(COMPONENT_MAIN,
-                   "Export reload interrupted by shutdown while waking workers");
+                   "Export reload interrupted by shutdown while waking threads");
           /* Be helpfull and exit
            * (other termination will just blow us away, and that's ok...
            */
