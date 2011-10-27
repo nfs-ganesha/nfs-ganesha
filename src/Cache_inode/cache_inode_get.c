@@ -73,14 +73,15 @@
  * @return the pointer to the entry is successfull, NULL otherwise.
  *
  */
-cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
-                               fsal_attrib_list_t * pattr,
-                               hash_table_t * ht,
-                               cache_inode_client_t * pclient,
-                               fsal_op_context_t * pcontext,
-                               cache_inode_status_t * pstatus)
+cache_entry_t *cache_inode_get( cache_inode_fsal_data_t * pfsdata,
+                                cache_inode_policy_t policy,
+                                fsal_attrib_list_t * pattr,
+                                hash_table_t * ht,
+                                cache_inode_client_t * pclient,
+                                fsal_op_context_t * pcontext,
+                                cache_inode_status_t * pstatus )
 {
-  return cache_inode_get_located( pfsdata, NULL, pattr, ht, pclient, pcontext, pstatus ) ;
+  return cache_inode_get_located( pfsdata, NULL, policy, pattr, ht, pclient, pcontext, pstatus ) ;
 } /* cache_inode_get */
 
 /**
@@ -107,6 +108,7 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
 
 cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
                                        cache_entry_t * plocation, 
+                                       cache_inode_policy_t policy,
                                        fsal_attrib_list_t * pattr,
                                        hash_table_t * ht,
                                        cache_inode_client_t * pclient,
@@ -187,7 +189,7 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
           cache_inode_release_fsaldata_key(&key, pclient);
 
           /* redo the call */
-          return cache_inode_get(pfsdata, pattr, ht, pclient, pcontext, pstatus);
+          return cache_inode_get(pfsdata, policy, pattr, ht, pclient, pcontext, pstatus);
         }
 
       /* First, call FSAL to know what the object is */
@@ -282,9 +284,17 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
       if ( type == 1)
 	LogCrit(COMPONENT_CACHE_INODE,"inode get");
 
-      if((pentry = cache_inode_new_entry(pfsdata, &fsal_attributes, type, &create_arg, NULL,    /* never used to add a new DIR_CONTINUE within the scope of this function */
-                                         ht, pclient, pcontext, FALSE,  /* This is a population, not a creation */
-                                         pstatus)) == NULL)
+      if((pentry = cache_inode_new_entry( pfsdata,
+                                          &fsal_attributes, 
+                                          type,
+                                          policy, 
+                                          &create_arg, 
+                                          NULL,    /* never used to add a new DIR_CONTINUE within this function */
+                                          ht, 
+                                          pclient, 
+                                          pcontext, 
+                                          FALSE,  /* This is a population, not a creation */
+                                          pstatus ) ) == NULL )
         {
           /* stats */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;

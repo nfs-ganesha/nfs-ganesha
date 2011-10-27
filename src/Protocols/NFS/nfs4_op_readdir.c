@@ -301,6 +301,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
           /* Get the pentry for the object's attributes and filehandle */
           if((pentry = cache_inode_lookup(dir_pentry,
                                           &dirent_array[i].name,
+                                          data->pexport->cache_inode_policy,
                                           &attrlookup,
                                           data->ht,
                                           data->pclient,

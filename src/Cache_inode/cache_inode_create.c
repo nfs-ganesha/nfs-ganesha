@@ -82,6 +82,7 @@ cache_entry_t *
 cache_inode_create(cache_entry_t * pentry_parent,
                    fsal_name_t * pname,
                    cache_inode_file_type_t type,
+                   cache_inode_policy_t policy,
                    fsal_accessmode_t mode,
                    cache_inode_create_arg_t * pcreate_arg,
                    fsal_attrib_list_t * pattr,
@@ -158,9 +159,14 @@ cache_inode_create(cache_entry_t * pentry_parent,
     /*
      * Check if an entry of the same name exists
      */
-    pentry = cache_inode_lookup(pentry_parent,
-                                pname, &object_attributes,
-                                ht, pclient, pcontext, pstatus);
+    pentry = cache_inode_lookup( pentry_parent,
+                                 pname, 
+                                 policy,
+                                 &object_attributes,
+                                 ht, 
+                                 pclient, 
+                                 pcontext, 
+                                 pstatus);
     if (pentry != NULL)
         {
             *pstatus = CACHE_INODE_ENTRY_EXISTS;
@@ -362,11 +368,16 @@ cache_inode_create(cache_entry_t * pentry_parent,
 #endif
             fsal_data.cookie = DIR_START;
 
-            pentry = cache_inode_new_entry(&fsal_data, &object_attributes,
-                                           type, pcreate_arg, NULL,
-                                           ht, pclient, pcontext,
-                                           TRUE, /* This is a creation and not a population */
-                                           pstatus);
+            pentry = cache_inode_new_entry( &fsal_data, 
+                                            &object_attributes,
+                                            type,
+                                            policy,
+                                            pcreate_arg, NULL,
+                                            ht, 
+                                            pclient, 
+                                            pcontext,
+                                            TRUE, /* This is a creation and not a population */
+                                            pstatus);
             if (pentry == NULL)
                 {
                     *pstatus = CACHE_INODE_INSERT_ERROR;

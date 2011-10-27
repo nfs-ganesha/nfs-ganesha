@@ -110,6 +110,7 @@ cache_content_client_t recover_datacache_client;
 #define CONF_EXPORT_USE_DATACACHE      "Cache_Data"
 #define CONF_EXPORT_FS_SPECIFIC        "FS_Specific"
 #define CONF_EXPORT_FS_TAG             "Tag"
+#define CONF_EXPORT_CACHE_POLICY       "Cache_Inode_Policy"
 #define CONF_EXPORT_MAX_OFF_WRITE      "MaxOffsetWrite"
 #define CONF_EXPORT_MAX_OFF_READ       "MaxOffsetRead"
 #define CONF_EXPORT_MAX_CACHE_SIZE     "MaxCacheSize"
@@ -772,6 +773,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->PrefWrite = (fsal_size_t) 16384;
   p_entry->PrefRead = (fsal_size_t) 16384;
   p_entry->PrefReaddir = (fsal_size_t) 16384;
+  p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_THROUGH ;
 
   strcpy(p_entry->FS_specific, "");
   strcpy(p_entry->FS_tag, "");
@@ -1864,6 +1866,13 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           set_options |= FLAG_EXPORT_FS_TAG;
 
+        }
+      else if( !STRCMP(var_name, CONF_EXPORT_CACHE_POLICY ))
+        {
+          if( !STRCMP( var_value, "WriteThrough" ) )          p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_THROUGH ; 
+          if( !STRCMP( var_value, "WriteBack" ) )             p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_BACK ; 
+          if( !STRCMP( var_value, "AttrsOnlyWriteThrough" ) ) p_entry->cache_inode_policy = CACHE_INODE_POLICY_ATTRS_ONLY_WRITE_THROUGH ; 
+          if( !STRCMP( var_value, "NoCache" ) )               p_entry->cache_inode_policy = CACHE_INODE_POLICY_NO_CACHE ; 
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_OFF_WRITE))
         {
@@ -3023,6 +3032,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
           fsdata.cookie = 0;
 
           if((pentry = cache_inode_make_root(&fsdata,
+                                             pcurrent->cache_inode_policy,
                                              ht,
                                              &small_client,
 #ifdef _USE_SHARED_FSAL

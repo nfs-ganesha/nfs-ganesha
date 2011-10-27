@@ -143,6 +143,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
 
            if( ( pnewfid->pentry = cache_inode_lookup( pentry,
                                                        &name,
+                                                       pfid->pexport->cache_inode_policy,
                                                        &fsalattr,
                                                        pwkrdata->ht,
                                                        &pwkrdata->cache_inode_client,

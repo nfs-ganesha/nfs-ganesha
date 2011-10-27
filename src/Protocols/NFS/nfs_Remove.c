@@ -211,6 +211,7 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
            */
           if((pentry_child = cache_inode_lookup(parent_pentry,
                                                 &name,
+                                                pexport->cache_inode_policy,
                                                 &pentry_child_attr,
                                                 ht,
                                                 pclient,

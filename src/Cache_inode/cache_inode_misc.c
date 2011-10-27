@@ -273,16 +273,17 @@ void cache_inode_release_fsaldata_key(hash_buffer_t * pkey,
  * @return the same as *pstatus
  *
  */
-cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
-                                     fsal_attrib_list_t * pfsal_attr,
-                                     cache_inode_file_type_t type,
-                                     cache_inode_create_arg_t * pcreate_arg,
-                                     cache_entry_t * pentry_dir_prev,
-                                     hash_table_t * ht,
-                                     cache_inode_client_t * pclient,
-                                     fsal_op_context_t * pcontext,
-                                     unsigned int create_flag,
-                                     cache_inode_status_t * pstatus)
+cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
+                                     fsal_attrib_list_t        * pfsal_attr,
+                                     cache_inode_file_type_t     type,
+                                     cache_inode_policy_t        policy,
+                                     cache_inode_create_arg_t  * pcreate_arg,
+                                     cache_entry_t             * pentry_dir_prev,
+                                     hash_table_t              * ht,
+                                     cache_inode_client_t      * pclient,
+                                     fsal_op_context_t         * pcontext,
+                                     unsigned int                create_flag,
+                                     cache_inode_status_t      * pstatus)
 {
   cache_entry_t *pentry = NULL;
   cache_inode_dir_data_t *pdir_data = NULL;
@@ -438,6 +439,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 
   pentry->gc_lru_entry = NULL;
   pentry->gc_lru = NULL;
+
+  pentry->policy = policy ;
 
   /* No parent for now, it will be added in cache_inode_add_cached_dirent */
   pentry->parent_list = NULL;

@@ -118,8 +118,13 @@ int nfs3_Access(nfs_arg_t * parg,
   fsal_data.cookie = DIR_START;
 
   /* Get the entry in the cache_inode */
-  if((pentry = cache_inode_get(&fsal_data,
-                               &attr, ht, pclient, pcontext, &cache_status)) == NULL)
+  if((pentry = cache_inode_get( &fsal_data,
+                                pexport->cache_inode_policy,
+                                &attr, 
+                                ht, 
+                                pclient, 
+                                pcontext, 
+                                &cache_status)) == NULL)
     {
       if(nfs_RetryableError(cache_status))
         {
