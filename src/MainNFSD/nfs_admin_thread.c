@@ -49,6 +49,7 @@
 #include "nfs_core.h"
 #include "stuff_alloc.h"
 #include "log_macros.h"
+#include "nfs_tcb.h"
 
 exportlist_t *temp_pexportlist;
 pthread_cond_t admin_condvar = PTHREAD_COND_INITIALIZER;

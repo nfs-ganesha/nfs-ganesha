@@ -69,6 +69,7 @@
 #include "nfs_file_handle.h"
 #include "nfs_stat.h"
 #include "SemN.h"
+#include "nfs_tcb.h"
 
 #ifndef _USE_TIRPC_IPV6
   #define P_FAMILY AF_INET
