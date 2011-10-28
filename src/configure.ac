@@ -9,7 +9,7 @@ AC_SUBST(RELEASE, [1])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/PROXY/HPSS/FUSELIKE/LUSTRE/XFS/GPFS/ZFS/VFS .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod),  Early pNFS (alpha) ])
+AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/PROXY/HPSS/FUSELIKE/LUSTRE/XFS/GPFS/ZFS/VFS/CEPH .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod),  Early pNFS (alpha) ])
 
 # Init Automake
 #AM_INIT_AUTOMAKE([-Wall -Werror foreign])
@@ -373,7 +373,7 @@ if test "${with_cunit+set}" == "set"; then
 fi
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|DYNFSAL|SHOOK (default=PROXY)],
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|CEPH|DYNFSAL|SHOOK (default=PROXY)],
              [specify the type of filesystem to be exported] ), FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
@@ -385,6 +385,7 @@ AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
 AM_CONDITIONAL(USE_FSAL_SHOOK,    test "$FSAL" = "SHOOK") # variant of Lustre FSAL
 AM_CONDITIONAL(USE_FSAL_XFS,      test "$FSAL" = "XFS")
 AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
+AM_CONDITIONAL(USE_FSAL_CEPH,     test "$FSAL" = "CEPH")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
 AM_CONDITIONAL(SHARED_FSAL,       test "$FSAL" = "DYNFSAL")
 AM_CONDITIONAL(USE_FSAL_ZFS,      test "$FSAL" = "ZFS")
@@ -437,6 +438,11 @@ else
 	AC_DEFINE(_NO_BUDDY_SYSTEM, 1, [disable GANESHA's memory allocator, for debug purpose only])
 fi
 AM_CONDITIONAL(USE_BUDDY_SYSTEM, test "$enable_BuddyMalloc" == "yes")
+
+# explicit Ceph path
+AC_ARG_WITH([ceph-prefix], AS_HELP_STRING([--with-ceph-prefix=<path>], [Path to Ceph installation] ),
+		CEPH_PREFIX="$withval" )
+
 
 # PNFS switch argument (default is nothing)
 AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
@@ -552,7 +558,6 @@ case $FSAL in
         FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
 		FS_NAME="lustre"
 		;;
-
     SHOOK)
         # Lustre FSAL compiled with special compilation directives
         AC_CHECK_LIB([shooksvr], [shook_restore],, AC_MSG_ERROR([libshooksvr not found]))
@@ -580,6 +585,26 @@ case $FSAL in
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_XFS/libfsalxfs.la"
 		FS_NAME="xfs"
 		;;
+
+	CEPH)
+		AC_DEFINE([_USE_CEPH], 1, [GANESHA exports CEPH Filesystem])
+                dnl AC_CHECK_HEADERS([cephfs/libcephfs.h], [], [AC_MSG_ERROR( missing ceph include files)])
+		# nfs_duprec.c (etc) are including Ceph's internal
+		# fsal_types.h, leaking Ceph types and file-offset bits
+		# reqt to other units
+		CFLAGS="-I${CEPH_PREFIX}/include -D_FILE_OFFSET_BITS=64 ${CFLAGS}"
+		if test "${with_ceph_prefix+set}" == "set"; then
+		   FSAL_CFLAGS="-D_FILE_OFFSET_BITS=64"
+		   LDFLAGS="-L${CEPH_PREFIX}/lib"
+		else
+		   FSAL_CFLAGS="-D_FILE_OFFSET_BITS=64"
+		fi
+
+                FSAL_LDFLAGS=-lcephfs
+                FSAL_LIB="\$(top_builddir)/FSAL/FSAL_CEPH/libfsalceph.la"
+                FS_NAME="ceph"
+                ;;
+
         DYNFSAL)
                	AC_DEFINE( _USE_SHARED_FSAL, 1, [enable shared FSAL] )
 		AM_CONDITIONAL( SHARED_FSAL, test "$FSAL" = "DYNFSAL" )
@@ -890,6 +915,7 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_ZFS/Makefile
                  include/FSAL/FSAL_VFS/Makefile
                  include/FSAL/FSAL_TEMPLATE/Makefile
+                 include/FSAL/FSAL_CEPH/Makefile
                  include/MFSL/Makefile
                  include/MFSL/MFSL_NULL/Makefile
                  include/MFSL/MFSL_AIO/Makefile
@@ -936,6 +962,7 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_POSIX/DBExt/MYSQL/Makefile
 		 FSAL/FSAL_PROXY/Makefile
 		 FSAL/FSAL_PROXY/handle_mapping/Makefile
+		 FSAL/FSAL_CEPH/Makefile
 		 FSAL/FSAL_FUSELIKE/Makefile
 		 FSAL/FSAL_LUSTRE/Makefile
 		 FSAL/FSAL_LUSTRE/PNFS/Makefile
