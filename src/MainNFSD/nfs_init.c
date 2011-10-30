@@ -99,6 +99,7 @@ pthread_t stat_exporter_thrid;
 pthread_t admin_thrid;
 pthread_t fcc_gc_thrid;
 pthread_t sigmgr_thrid;
+nfs_tcb_t gccb;
 
 #ifdef _USE_9P
 pthread_t _9p_dispatcher_thrid;
@@ -1649,6 +1650,7 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
 
   if(nfs_param.cache_layers_param.dcgcpol.run_interval != 0)
     {
+      tcb_new(&gccb, "NFS FILE CONTENT GARBAGE COLLECTION Thread"); 
       /* Starting the nfs file content gc thread  */
       if((rc =
           pthread_create(&fcc_gc_thrid, &attr_thr, file_content_gc_thread,

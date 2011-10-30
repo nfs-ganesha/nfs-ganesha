@@ -1623,18 +1623,12 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   LRU_status_t status = LRU_LIST_SUCCESS;
   char name[256];
 
-  if(pthread_mutex_init(&(pdata->wcb.tcb_mutex), NULL) != 0)
-    return -1;
-
   if(pthread_mutex_init(&(pdata->request_pool_mutex), NULL) != 0)
     return -1;
 
-  if(pthread_cond_init(&(pdata->wcb.tcb_condvar), NULL) != 0)
+  sprintf(name, "Worker Thread #%u", (int)pdata->worker_index);
+  if(tcb_new(&(pdata->wcb), name) != 0)
     return -1;
-
-  sprintf(pdata->wcb.tcb_name, "Worker Thread #%u", pdata->worker_index);
-
-  tcb_insert(&(pdata->wcb));
 
   sprintf(name, "Worker Thread #%u Pending Request", pdata->worker_index);
   nfs_param.worker_param.lru_param.name = Str_Dup(name);

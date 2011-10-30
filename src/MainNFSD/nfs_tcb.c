@@ -105,6 +105,25 @@ void tcb_remove(nfs_tcb_t *element)
 }
 
 /**
+ * tcb_new: Initialize and insert the new tcb element
+ * If no inext to prefix with the name, pass -1.
+ */
+int tcb_new(nfs_tcb_t *element, char *name)
+{
+  if(pthread_mutex_init(&(element->tcb_mutex), NULL) != 0)
+    return -1;
+  if(pthread_cond_init(&(element->tcb_condvar), NULL) != 0)
+    return -1;
+  sprintf(element->tcb_name, "%s", name);
+
+  element->tcb_state = STATE_STARTUP;
+
+  tcb_insert(element);
+
+  return 0;
+}
+
+/**
  * wait_for_threads_to_exit: Wait for threads to exit
  *
  */

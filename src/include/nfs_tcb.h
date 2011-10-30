@@ -18,5 +18,6 @@ void mark_thread_asleep(nfs_tcb_t *wcb);
 pause_rc wait_for_threads_to_awaken(void);
 void wait_for_threads_to_exit(void);
 pause_rc _wait_for_threads_to_pause(void);
+int tcb_new(nfs_tcb_t *element, char *name);
 #endif
 
