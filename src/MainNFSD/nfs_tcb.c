@@ -41,7 +41,6 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include "nfs_core.h"
 #include "nfs_tcb.h"
 #include "nlm_list.h"
 
@@ -168,8 +167,8 @@ pause_rc _wait_for_threads_to_pause()
           t2 = time(NULL);
           LogInfo(COMPONENT_THREAD,
                   "%u threads asleep of %u after %d seconds before interruption for shutdown",
-                  nfs_param.core_param.nb_worker - num_active_threads,
-                  nfs_param.core_param.nb_worker,
+                  num_existing_threads - num_active_threads,
+                  num_existing_threads,
                   t2 - t1);
           return PAUSE_EXIT;
         }
@@ -180,8 +179,8 @@ pause_rc _wait_for_threads_to_pause()
     }
   t2 = time(NULL);
   LogInfo(COMPONENT_THREAD, "%u threads asleep out of %u after %d seconds",
-          nfs_param.core_param.nb_worker - num_active_threads,
-          nfs_param.core_param.nb_worker, t2 - t1);
+          num_existing_threads - num_active_threads,
+          num_existing_threads, t2 - t1);
   return PAUSE_OK;
 }
 
@@ -207,7 +206,7 @@ pause_rc _wait_for_threads_to_awaken()
 
   LogDebug(COMPONENT_THREAD, "Waiting for threads to awaken");
   t1 = time(NULL);
-  while(num_active_threads < nfs_param.core_param.nb_worker)
+  while(num_active_threads < num_existing_threads)
     {
       /* If trying to exit, don't bother waiting */
       if(pause_state == STATE_EXIT)
@@ -216,7 +215,7 @@ pause_rc _wait_for_threads_to_awaken()
           LogInfo(COMPONENT_THREAD,
                   "%u threads awake of %u after %d seconds before interruption for shutdown",
                   num_active_threads,
-                  nfs_param.core_param.nb_worker,
+                  num_existing_threads,
                   t2 - t1);
           return PAUSE_EXIT;
         }
@@ -227,7 +226,7 @@ pause_rc _wait_for_threads_to_awaken()
           t2 = time(NULL);
           LogInfo(COMPONENT_THREAD,
                   "%u threads awake of %u after %d seconds before interruption for pause",
-                  num_active_threads, nfs_param.core_param.nb_worker, t2 - t1);
+                  num_active_threads, num_existing_threads, t2 - t1);
           return PAUSE_PAUSE;
         }
 
@@ -238,7 +237,7 @@ pause_rc _wait_for_threads_to_awaken()
   t2 = time(NULL);
   LogInfo(COMPONENT_THREAD,
           "%u threads awake out of %u after %d seconds",
-          num_active_threads, nfs_param.core_param.nb_worker, t2 - t1);
+          num_active_threads, num_existing_threads, t2 - t1);
   return PAUSE_OK;
 }
 
@@ -325,7 +324,7 @@ pause_rc mark_thread_existing(nfs_tcb_t *wcb)
     rc = PAUSE_OK;
 
   pthread_cond_signal(&active_threads_cond);
-  LogDebug(COMPONENT_THREAD, "%s exits", wcb->tcb_name);
+  LogDebug(COMPONENT_THREAD, "%s exists", wcb->tcb_name);
 
   V(wcb->tcb_mutex);
   V(gtcb_mutex);
@@ -542,4 +541,42 @@ pause_rc wake_threads(awaken_reason_t reason)
   V(gtcb_mutex);
 
   return rc;
+}
+
+thread_sm_t thread_sm_locked(nfs_tcb_t *tcbp)
+{
+  switch(tcbp->tcb_state)
+  {
+    case STATE_AWAKE:
+      return THREAD_SM_BREAK;
+
+    case STATE_STARTUP:
+    case STATE_AWAKEN:
+      V(tcbp->tcb_mutex);
+      mark_thread_awake(tcbp);
+      P(tcbp->tcb_mutex);
+      return THREAD_SM_RECHECK;
+
+    case STATE_PAUSE:
+      V(tcbp->tcb_mutex);
+      mark_thread_asleep(tcbp);
+      P(tcbp->tcb_mutex);
+      return THREAD_SM_RECHECK;
+
+    case STATE_PAUSED:
+      pthread_cond_wait(&(tcbp->tcb_condvar), &(tcbp->tcb_mutex));
+      return THREAD_SM_RECHECK;
+
+    case STATE_EXIT:
+      V(tcbp->tcb_mutex);
+      mark_thread_done(tcbp);
+      P(tcbp->tcb_mutex);
+      return THREAD_SM_EXIT;
+  }
+  LogCrit(COMPONENT_THREAD, "Thread %s has unknown state: %d \n",
+          tcbp->tcb_name, tcbp->tcb_state);
+  V(tcbp->tcb_mutex);
+  mark_thread_done(tcbp);
+  P(tcbp->tcb_mutex);
+  return THREAD_SM_EXIT;
 }

@@ -1967,49 +1967,31 @@ void *worker_thread(void *IndexArg)
             pmydata->pending_request->nb_entry != pmydata->pending_request->nb_invalid)
            {
              /* We have something to do, and we don't need to pause. */
-
              LogFullDebug(COMPONENT_DISPATCH,
                           "Have work, pause_state: %s, nb_entry=%u, nb_invalid=%u",
                           pause_state_str[pmydata->wcb.tcb_state],
                           pmydata->pending_request->nb_entry,
                           pmydata->pending_request->nb_invalid);
-
              break;
            }
 
-         switch(pmydata->wcb.tcb_state)
+         switch(thread_sm_locked(&pmydata->wcb))
            {
-             case STATE_STARTUP:
-             case STATE_AWAKEN:
-               /* Mark thread as awake */
-               V(pmydata->wcb.tcb_mutex);
-               mark_thread_awake(&(pmydata->wcb));
-               P(pmydata->wcb.tcb_mutex);
-
-               /* Go back and check new state. */
+             case THREAD_SM_RECHECK:
                continue;
 
-             case STATE_PAUSE:
-               /* Mark thread as asleep */
-               V(pmydata->wcb.tcb_mutex);
-               mark_thread_asleep(&(pmydata->wcb));
-               P(pmydata->wcb.tcb_mutex);
+             case THREAD_SM_BREAK:
+               if(pmydata->pending_request->nb_entry == pmydata->pending_request->nb_invalid)
+                 {
+                   /* No work; wait */
+                   pthread_cond_wait(&(pmydata->wcb.tcb_condvar), &(pmydata->wcb.tcb_mutex));
+                   continue;
+                 }
 
-               /* Go back and check new state. */
-               continue;
-
-             case STATE_AWAKE:
-             case STATE_PAUSED:
-               /* Wait for something to do */
-               pthread_cond_wait(&(pmydata->wcb.tcb_condvar), &(pmydata->wcb.tcb_mutex));
-               break;
-
-             case STATE_EXIT:
-               /* Need to exit worker thread. */
-               V(pmydata->wcb.tcb_mutex);
-               mark_thread_done(&(pmydata->wcb));
+             case THREAD_SM_EXIT:
                LogDebug(COMPONENT_DISPATCH,
                         "Worker exiting as requested");
+               V(pmydata->wcb.tcb_mutex);
                return NULL;
            }
        }

@@ -180,32 +180,16 @@ void *file_content_gc_thread(void *IndexArg)
         {
           if(gccb.tcb_state == STATE_AWAKE)
             break;
-
-          switch(gccb.tcb_state)
+          switch(thread_sm_locked(&gccb))
             {
-              case STATE_AWAKE:
-                break;
-
-              case STATE_STARTUP:
-              case STATE_AWAKEN:
-                V(gccb.tcb_mutex);
-                mark_thread_awake(&gccb);
-                P(gccb.tcb_mutex);
+              case THREAD_SM_RECHECK:
                 continue;
 
-              case STATE_PAUSE:
-                V(gccb.tcb_mutex);
-                mark_thread_asleep(&gccb);
-                P(gccb.tcb_mutex);
-                continue;
-
-              case STATE_PAUSED:
-                pthread_cond_wait(&(gccb.tcb_condvar), &(gccb.tcb_mutex));
+              case THREAD_SM_BREAK:
                 break;
 
-              case STATE_EXIT:
+              case THREAD_SM_EXIT:
                 V(gccb.tcb_mutex);
-                mark_thread_done(&gccb);
                 return NULL;
             }
         }

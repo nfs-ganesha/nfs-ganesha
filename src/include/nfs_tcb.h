@@ -5,6 +5,13 @@
 #include "nlm_list.h"
 #include <pthread.h>
 
+typedef enum thread_sm
+{
+  THREAD_SM_RECHECK,
+  THREAD_SM_BREAK,
+  THREAD_SM_EXIT,
+} thread_sm_t;
+
 void tcb_insert(nfs_tcb_t *element);
 void tcb_remove(nfs_tcb_t *element);
 void tcb_head_init(void);
@@ -19,5 +26,7 @@ pause_rc wait_for_threads_to_awaken(void);
 void wait_for_threads_to_exit(void);
 pause_rc _wait_for_threads_to_pause(void);
 int tcb_new(nfs_tcb_t *element, char *name);
+thread_sm_t thread_sm_locked(nfs_tcb_t *tcbp);
+
 #endif
 
