@@ -216,6 +216,14 @@ if test "$enable_quota" == "yes"; then
 fi
 AM_CONDITIONAL(USE_QUOTA, test "$enable_quota" = "yes")
 
+# Invalidation simulator (to be removed when FSAL_UP will be completed)
+GA_ENABLE_AM_CONDITION([upcall-simulator],[enable FSAL upcalls simulator thread],[USE_UPCALL_SIMULATOR])
+
+if test "$enable_upcall_simulator" == "yes"; then
+        AC_DEFINE(_USE_UPCALL_SIMULATOR,1,[enable Upcall simulator thread])
+fi
+AM_CONDITIONAL(USE_UPCALL_SIMULATOR, test "$enable_upcall_simulator" = "yes")
+
 
 # FSAL_CB
 GA_ENABLE_AM_CONDITION([fsal-cb],[enable FSAL Callback Interface support],[USE_FSAL_CB])

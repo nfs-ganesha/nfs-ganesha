@@ -102,6 +102,10 @@ pthread_t sigmgr_thrid;
 pthread_t _9p_dispatcher_thrid;
 #endif
 
+#ifdef _USE_UPCALL_SIMULATOR
+pthread_t upcall_simulator_thrid;
+#endif
+
 char config_path[MAXPATHLEN];
 
 /**
@@ -1618,6 +1622,19 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
                errno, strerror(errno));
     }
   LogEvent(COMPONENT_THREAD, "statistics thread was started successfully");
+
+#ifdef _USE_UPCALL_SIMULATOR
+  /* Starts the thread that mimics upcalls from the FSAL */
+   /* Starting the stats thread */
+  if((rc =
+      pthread_create(&upcall_simulator_thrid, &attr_thr, upcall_simulator_thread, (void *)workers_data)) != 0)
+    {
+      LogFatal(COMPONENT_THREAD,
+               "Could not create upcall_simulator_thread, error = %d (%s)",
+               errno, strerror(errno));
+    }
+  LogEvent(COMPONENT_THREAD, "upcall_simulator thread was started successfully");
+#endif
 
 #ifdef _USE_STAT_EXPORTER
 
