@@ -159,6 +159,7 @@ cache_content_client_t recover_datacache_client;
 #define FLAG_EXPORT_ANON_GROUP      0x10000000
 #define FLAG_EXPORT_ALL_ANON        0x20000000
 #define FLAG_EXPORT_ANON_USER       0x40000000
+#define FLAG_EXPORT_CACHE_POLICY    0x80000000
 
 /* limites for nfs_ParseConfLine */
 /* Used in BuildExportEntry() */
@@ -1869,10 +1870,19 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if( !STRCMP(var_name, CONF_EXPORT_CACHE_POLICY ))
         {
+          /* check if it has not already been set */
+          if((set_options & FLAG_EXPORT_CACHE_POLICY) == FLAG_EXPORT_CACHE_POLICY)
+            {
+              DEFINED_TWICE_WARNING(CONF_EXPORT_CACHE_POLICY);
+              continue;
+            }
+
           if( !STRCMP( var_value, "WriteThrough" ) )          p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_THROUGH ; 
           if( !STRCMP( var_value, "WriteBack" ) )             p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_BACK ; 
           if( !STRCMP( var_value, "AttrsOnlyWriteThrough" ) ) p_entry->cache_inode_policy = CACHE_INODE_POLICY_ATTRS_ONLY_WRITE_THROUGH ; 
           if( !STRCMP( var_value, "NoCache" ) )               p_entry->cache_inode_policy = CACHE_INODE_POLICY_NO_CACHE ; 
+
+          set_options |=  FLAG_EXPORT_CACHE_POLICY ;
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_OFF_WRITE))
         {
