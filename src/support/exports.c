@@ -723,7 +723,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
   unsigned int set_options = 0;
 
-  int err_flag = FALSE;
+  int err_flag   = FALSE;
+  int err_policy = FALSE;
 
   /* allocates export entry */
   p_entry = (exportlist_t *) Mem_Alloc(sizeof(exportlist_t));
@@ -1876,11 +1877,36 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               DEFINED_TWICE_WARNING(CONF_EXPORT_CACHE_POLICY);
               continue;
             }
+          else if( !STRCMP( var_value, "WriteThrough" ) )
+           {
+              p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_THROUGH ; 
+              err_policy = FALSE  ;
+           } 
+          else if( !STRCMP( var_value, "WriteBack" ) )         
+           {
+              p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_BACK ; 
+              err_policy = FALSE  ;
+           } 
+          else if( !STRCMP( var_value, "AttrsOnlyWriteThrough" ) )
+           {
+              p_entry->cache_inode_policy = CACHE_INODE_POLICY_ATTRS_ONLY_WRITE_THROUGH ; 
+              err_policy = FALSE  ;
+           } 
+          else if( !STRCMP( var_value, "NoCache" ) )             
+           {
+              p_entry->cache_inode_policy = CACHE_INODE_POLICY_NO_CACHE ; 
+              err_policy = FALSE  ;
+           } 
+          else
+             err_policy = TRUE ;
 
-          if( !STRCMP( var_value, "WriteThrough" ) )          p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_THROUGH ; 
-          if( !STRCMP( var_value, "WriteBack" ) )             p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_BACK ; 
-          if( !STRCMP( var_value, "AttrsOnlyWriteThrough" ) ) p_entry->cache_inode_policy = CACHE_INODE_POLICY_ATTRS_ONLY_WRITE_THROUGH ; 
-          if( !STRCMP( var_value, "NoCache" ) )               p_entry->cache_inode_policy = CACHE_INODE_POLICY_NO_CACHE ; 
+        
+          if( err_policy == TRUE ) 
+           {
+             err_flag = TRUE ;
+             
+             LogCrit(COMPONENT_CONFIG, "Invalid Cache_Inode_Policy value : %s", var_value ) ;
+           }
 
           set_options |=  FLAG_EXPORT_CACHE_POLICY ;
         }
