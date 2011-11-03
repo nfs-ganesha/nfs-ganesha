@@ -462,7 +462,7 @@
         - NFSv4 ACLs support
         - GPFS ACLs support (to be used with NFSv4 ACL support)
 
-1.1.1  - 
+1.1.1  - Fri 11 Nov 2011
        - Bug Fix: padded size for FSAL-less daemon were too short and not aligned on 64 bits
        - Bug Fix: Badly formed fsal_op_context_t in FSAL_ZFS (issue when using as shared object)
        - Bug Fix: badly managed access_type in nfs3_Access
