@@ -804,6 +804,10 @@ int nfs41_op_getdevicelist(struct nfs_argop4 *op,       /* [IN] NFS4 OP argument
                            compound_data_t * data,      /* [IN] current data for the compound request */
                            struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
 
+int nfs41_op_free_stateid(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
+                          compound_data_t * data,      /* [IN] current data for the compound request */
+                          struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+
 int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
                            compound_data_t * data,      /* [IN] current data for the compound request */
                            struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
@@ -855,6 +859,10 @@ int nfs41_op_read(struct nfs_argop4 *op,        /* [IN] NFS4 OP arguments */
 int nfs41_op_set_ssv(struct nfs_argop4 *op,     /* [IN] NFS4 OP arguments */
                      compound_data_t * data,    /* [IN] current data for the compound request */
                      struct nfs_resop4 *resp);  /* [OUT] NFS4 OP results */
+
+int nfs41_op_test_stateid(struct nfs_argop4 *op,     /* [IN] NFS4 OP arguments */
+                          compound_data_t * data,    /* [IN] current data for the compound request */
+                          struct nfs_resop4 *resp);  /* [OUT] NFS4 OP results */
 
 int nfs41_op_write(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
                    compound_data_t * data,      /* [IN] current data for the compound request */
@@ -1334,6 +1342,7 @@ void nfs41_op_close_Free(CLOSE4res * resp);
 void nfs41_op_create_session_Free(CREATE_SESSION4res * resp);
 void nfs41_op_getdevicelist_Free(GETDEVICELIST4res * resp);
 void nfs41_op_getdeviceinfo_Free(GETDEVICEINFO4res * resp);
+void nfs41_op_free_stateid_Free(FREE_STATEID4res * resp);
 void nfs41_op_destroy_session_Free(DESTROY_SESSION4res * resp);
 void nfs41_op_lock_Free(LOCK4res * resp);
 void nfs41_op_lockt_Free(LOCKT4res * resp);
@@ -1341,6 +1350,7 @@ void nfs41_op_locku_Free(LOCKU4res * resp);
 void nfs41_op_read_Free(READ4res * resp);
 void nfs41_op_sequence_Free(SEQUENCE4res * resp);
 void nfs41_op_set_ssv_Free(SET_SSV4res * resp);
+void nfs41_op_test_stateid_Free(TEST_STATEID4res * resp);
 void nfs41_op_write_Free(WRITE4res * resp);
 void nfs41_op_reclaim_complete_Free(RECLAIM_COMPLETE4res * resp);
 

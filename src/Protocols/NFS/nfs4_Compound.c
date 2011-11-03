@@ -174,7 +174,7 @@ static const nfs4_op_desc_t optab4v1[] = {
   {"OP_EXCHANGE_ID", NFS4_OP_EXCHANGE_ID, nfs41_op_exchange_id},
   {"OP_CREATE_SESSION", NFS4_OP_CREATE_SESSION, nfs41_op_create_session},
   {"OP_DESTROY_SESSION", NFS4_OP_DESTROY_SESSION, nfs41_op_destroy_session},
-  {"OP_FREE_STATEID", NFS4_OP_FREE_STATEID, nfs4_op_illegal},   /* tbd */
+  {"OP_FREE_STATEID", NFS4_OP_FREE_STATEID, nfs41_op_free_stateid},   
   {"OP_GET_DIR_DELEGATION", NFS4_OP_GET_DIR_DELEGATION, nfs4_op_illegal},       /* tbd */
   {"OP_GETDEVICEINFO", NFS4_OP_GETDEVICEINFO, nfs41_op_getdeviceinfo},
   {"OP_GETDEVICELIST", NFS4_OP_GETDEVICELIST, nfs41_op_getdevicelist},
@@ -184,7 +184,7 @@ static const nfs4_op_desc_t optab4v1[] = {
   {"OP_SECINFO_NO_NAME", NFS4_OP_SECINFO_NO_NAME, nfs4_op_illegal},     /* tbd */
   {"OP_SEQUENCE", NFS4_OP_SEQUENCE, nfs41_op_sequence},
   {"OP_SET_SSV", NFS4_OP_SET_SSV, nfs41_op_set_ssv},
-  {"OP_TEST_STATEID", NFS4_OP_TEST_STATEID, nfs4_op_illegal},   /* tbd */
+  {"OP_TEST_STATEID", NFS4_OP_TEST_STATEID, nfs41_op_test_stateid}, 
   {"OP_WANT_DELEGATION", NFS4_OP_WANT_DELEGATION, nfs4_op_illegal},     /* tbd */
   {"OP_DESTROY_CLIENTID", NFS4_OP_DESTROY_CLIENTID, nfs4_op_illegal},   /* tbd */
   {"OP_RECLAIM_COMPLETE", NFS4_OP_RECLAIM_COMPLETE, nfs41_op_reclaim_complete},
@@ -673,17 +673,23 @@ void nfs4_Compound_FreeOne(nfs_resop4 * pres)
         nfs41_op_getdevicelist_Free(&(pres->nfs_resop4_u.opgetdevicelist));
         break;
 
+      case NFS4_OP_TEST_STATEID:
+        nfs41_op_test_stateid_Free(&(pres->nfs_resop4_u.optest_stateid));
+        break;
+
+      case NFS4_OP_FREE_STATEID:
+        nfs41_op_free_stateid_Free(&(pres->nfs_resop4_u.opfree_stateid));
+        break;
+
       case NFS4_OP_BACKCHANNEL_CTL:
       case NFS4_OP_BIND_CONN_TO_SESSION:
       case NFS4_OP_DESTROY_SESSION:
-      case NFS4_OP_FREE_STATEID:
       case NFS4_OP_GET_DIR_DELEGATION:
       case NFS4_OP_LAYOUTCOMMIT:
       case NFS4_OP_LAYOUTGET:
       case NFS4_OP_LAYOUTRETURN:
       case NFS4_OP_SECINFO_NO_NAME:
       case NFS4_OP_SET_SSV:
-      case NFS4_OP_TEST_STATEID:
       case NFS4_OP_WANT_DELEGATION:
       case NFS4_OP_DESTROY_CLIENTID:
       case NFS4_OP_RECLAIM_COMPLETE:
