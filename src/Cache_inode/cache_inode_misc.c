@@ -1709,13 +1709,11 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
  * sets the related directory entries as invalid. /!\ the parent entry is supposed to be locked.
  *
  * @param pentry [INOUT] entry to be managed
- * @param pclient [IN] related pclient
  *
  * @return  LRU_LIST_SET_INVALID if ok,  LRU_LIST_DO_NOT_SET_INVALID otherwise
  *
  */
-static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
-                                                  cache_inode_client_t * pclient)
+static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry )
 {
   cache_inode_parent_entry_t *parent_iter = NULL;
 
@@ -1893,7 +1891,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
     }
 
   /* Clean parent entries */
-  cache_inode_invalidate_related_dirent(pentry, pclient);
+  cache_inode_invalidate_related_dirent(pentry);
 
   /* use the key to delete the entry */
   if((rc = HashTable_Del(ht, &key, &old_key, &old_value)) != HASHTABLE_SUCCESS)
