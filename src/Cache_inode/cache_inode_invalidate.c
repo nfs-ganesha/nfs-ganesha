@@ -63,21 +63,23 @@
  *
  * This function invalidates the related cache entry correponding to a FSAL handle. It is designed to be called as a FSAL upcall is triggered.
  *
- * @param pentry_parent [IN] entry for the parent directory to be managed.
- * @param pattr [OUT] renewed attributes for the entry that we have found.
- * @param pclient [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext [IN] FSAL credentials
+ * @param pfsal_handle [IN] FSAL handle for the entry to be invalidated
+ * @param pattr [OUT] the attributes for the entry (if found) in the cache just before it was invalidated
+ * @param pclient [INOUT] Cache Inode client (useful for having pools in which entry releasing invalidated records)
  * @param pstatus [OUT] returned status.
  *
  * @return CACHE_INODE_SUCCESS if operation is a success \n
  * @return CACHE_INODE_INVALID_ARGUMENT bad parameter(s) as input \n
-   @return Other errors shows a FSAL error.
+ * @return CACHE_INODE_NOT_FOUND if entry is not cached \n
+ * @return CACHE_INODE_STATE_CONFLICT if invalidating this entry would result is state conflict \n
+ * @return CACHE_INODE_INCONSISTENT_ENTRY if entry is not consistent \n
+ * @return Other errors shows a FSAL error.
  *
  */
-cache_inode_status_t cache_inode_invalidate( fsal_handle_t * pfsal_handle,
-                                             hash_table_t * ht,
+cache_inode_status_t cache_inode_invalidate( fsal_handle_t        * pfsal_handle,
+                                             fsal_attrib_list_t   * pattr,
+                                             hash_table_t         * ht,
                                              cache_inode_client_t * pclient,
-                                             fsal_op_context_t * pcontext,
                                              cache_inode_status_t * pstatus)
 {
   if( *pstatus == NULL ) 
