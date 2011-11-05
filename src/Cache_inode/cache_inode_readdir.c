@@ -193,8 +193,8 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
     }
 
   if (*pstatus == CACHE_INODE_SUCCESS) {
-      /* As noted, if an operation succeeded, we must invalidate cached
-       * readdirs and cookies. */
+      /* As noted, if a mutating operation was performed, we must
+       * invalidate cached cookies. */
       cache_inode_release_dirents(
           pentry_parent, pclient, CACHE_INODE_AVL_COOKIES);
 

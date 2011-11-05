@@ -1956,10 +1956,24 @@ void cache_inode_release_dirents(cache_entry_t *pentry,
 
     switch (which) {
     case CACHE_INODE_AVL_COOKIES:
-	tree = &pentry->object.dir.cookies;
+        /* omit O(N) operation */
+        avltree_init(&pentry->object.dir.cookies, ci_avl_dir_ck_cmp,
+                     0 /* flags */);
 	break;
     case CACHE_INODE_AVL_NAMES:
 	tree = &pentry->object.dir.dentries;
+	dirent_node = avltree_first(tree);
+	while (dirent_node) {
+	    next_dirent_node = avltree_next(dirent_node);
+            dirent = avltree_container_of(
+                dirent_node,
+                cache_inode_dir_entry_t,
+                node_n);
+            avltree_remove(dirent_node, tree);
+            ReleaseToPool(dirent, &pclient->pool_dir_entry);
+	    dirent_node = next_dirent_node;
+	}
+        pentry->object.dir.nbactive = 0;
 	break;
     case CACHE_INODE_AVL_BOTH:
 	cache_inode_release_dirents(pentry, pclient, CACHE_INODE_AVL_COOKIES);
@@ -1969,36 +1983,6 @@ void cache_inode_release_dirents(cache_entry_t *pentry,
     default:
 	/* tree == NULL */
 	break;
-    }
-
-    if (tree) {
-	dirent_node = avltree_first(tree);
-	while (dirent_node) {
-	    next_dirent_node = avltree_next(dirent_node);
-	    switch (which) {
-	    case CACHE_INODE_AVL_COOKIES:
-		avltree_remove(dirent_node, tree);
-		break;
-	    case CACHE_INODE_AVL_NAMES:
-		dirent = avltree_container_of(dirent_node,
-					      cache_inode_dir_entry_t,
-					      node_n);
-		avltree_remove(dirent_node, tree);
-		ReleaseToPool(dirent, &pclient->pool_dir_entry);		
-		break;
-	    default:
-		break;
-	    }
-	    dirent_node = next_dirent_node;
-	}
-    }
-
-    switch (which) {
-    case CACHE_INODE_AVL_NAMES:
-        pentry->object.dir.nbactive = 0;
-        break;
-    default:
-        break;
     }
 
     return;
