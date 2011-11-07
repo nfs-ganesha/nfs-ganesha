@@ -1893,6 +1893,43 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
   /* Clean parent entries */
   cache_inode_invalidate_related_dirent(pentry);
 
+  /* If entry is datacached, remove it from the cache */
+  if(pentry->internal_md.type == REGULAR_FILE)
+    {
+      cache_content_status_t cache_content_status;
+
+      if(pentry->object.file.pentry_content != NULL)
+        if(cache_content_release_entry
+           ((cache_content_entry_t *) pentry->object.file.pentry_content,
+            (cache_content_client_t *) pclient->pcontent_client,
+            &cache_content_status) != CACHE_CONTENT_SUCCESS)
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "Could not removed datacached entry for pentry %p", pentry); /** @todo : something is missing here */
+    }
+
+  /* If entry is a DIR_CONTINUE or a DIR_BEGINNING, release pdir_data */
+  if(pentry->internal_md.type == DIR_BEGINNING)
+    {
+      for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+        {
+          pentry->object.dir_begin.pdir_data->dir_entries[i].active = INVALID;
+          pentry->object.dir_begin.pdir_data->dir_entries[i].pentry = NULL;
+        }
+      /* Put the pentry back to the pool */
+      ReleaseToPool(pentry->object.dir_begin.pdir_data, &pclient->pool_dir_data);
+    }
+
+  if(pentry->internal_md.type == DIR_CONTINUE)
+    {
+      for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+        {
+          pentry->object.dir_cont.pdir_data->dir_entries[i].active = INVALID;
+          pentry->object.dir_cont.pdir_data->dir_entries[i].pentry = NULL;
+        }
+      /* Put the pentry back to the pool */
+      ReleaseToPool(pentry->object.dir_cont.pdir_data, &pclient->pool_dir_data);
+    }
+
   /* use the key to delete the entry */
   if((rc = HashTable_Del(ht, &key, &old_key, &old_value)) != HASHTABLE_SUCCESS)
     {
@@ -1938,43 +1975,6 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
       ReleaseToPool(parent_iter, &pclient->pool_parent);
 
       parent_iter = parent_iter_next;
-    }
-
-  /* If entry is datacached, remove it from the cache */
-  if(pentry->internal_md.type == REGULAR_FILE)
-    {
-      cache_content_status_t cache_content_status;
-
-      if(pentry->object.file.pentry_content != NULL)
-        if(cache_content_release_entry
-           ((cache_content_entry_t *) pentry->object.file.pentry_content,
-            (cache_content_client_t *) pclient->pcontent_client,
-            &cache_content_status) != CACHE_CONTENT_SUCCESS)
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "Could not removed datacached entry for pentry %p", pentry);
-    }
-
-  /* If entry is a DIR_CONTINUE or a DIR_BEGINNING, release pdir_data */
-  if(pentry->internal_md.type == DIR_BEGINNING)
-    {
-      for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
-        {
-          pentry->object.dir_begin.pdir_data->dir_entries[i].active = INVALID;
-          pentry->object.dir_begin.pdir_data->dir_entries[i].pentry = NULL;
-        }
-      /* Put the pentry back to the pool */
-      ReleaseToPool(pentry->object.dir_begin.pdir_data, &pclient->pool_dir_data);
-    }
-
-  if(pentry->internal_md.type == DIR_CONTINUE)
-    {
-      for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
-        {
-          pentry->object.dir_cont.pdir_data->dir_entries[i].active = INVALID;
-          pentry->object.dir_cont.pdir_data->dir_entries[i].pentry = NULL;
-        }
-      /* Put the pentry back to the pool */
-      ReleaseToPool(pentry->object.dir_cont.pdir_data, &pclient->pool_dir_data);
     }
 
   /* Destroy the mutex associated with the pentry */

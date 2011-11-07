@@ -124,7 +124,5 @@ cache_inode_status_t cache_inode_invalidate( fsal_handle_t        * pfsal_handle
   cache_inode_get_attributes(pentry, pattr);
 
   /* Call cache_inode_kill_entry, return status is stored in pstatus */
-  cache_inode_kill_entry( pentry, ht, pclient, pstatus ) ;
-
-  return *pstatus;
+  return cache_inode_kill_entry( pentry, ht, pclient, pstatus ) ;
 }                               /* cache_inode_invalidate */
