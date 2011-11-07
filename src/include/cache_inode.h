@@ -917,6 +917,12 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
                                             cache_inode_client_t * pclient,
                                             cache_inode_status_t * pstatus);
 
+cache_inode_status_t cache_inode_invalidate( fsal_handle_t        * pfsal_handle,
+                                             fsal_attrib_list_t   * pattr,
+                                             hash_table_t         * ht,
+                                             cache_inode_client_t * pclient,
+                                             cache_inode_status_t * pstatus) ;
+
 int cache_inode_gc_suppress_directory(cache_entry_t * pentry,
                                       cache_inode_param_gc_t * pgcparam);
 int cache_inode_gc_suppress_file(cache_entry_t * pentry,

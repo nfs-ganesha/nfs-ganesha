@@ -76,15 +76,14 @@
 
 nfs_worker_data_t mydata ;
 
-#define INVALIDATE_HIT 10
-
 static cache_entry_t * choose_pentry( hash_table_t * ht)
 {
   struct rbt_node *it;
   struct rbt_head *tete_rbt;
   cache_entry_t * pentry = NULL ;
   unsigned int i = 0;
-  int nb_entries = 0;
+  hash_data_t *pdata = NULL;
+
 
   unsigned int counter = 0 ;
 
@@ -93,19 +92,18 @@ static cache_entry_t * choose_pentry( hash_table_t * ht)
     return NULL ;
 
   for(i = 0; i < ht->parameter.index_size; i++)
-    nb_entries += ht->stat_dynamic[i].nb_entries;
-
-  for(i = 0; i < ht->parameter.index_size; i++)
     {
-      counter += 1 ;
+      
 
       tete_rbt = &((ht->array_rbt)[i]);
       RBT_LOOP(tete_rbt, it)
       {
-        pentry = (cache_entry_t *) it->rbt_opaq;
+        counter += 1 ;
+        pdata = (hash_data_t *) it->rbt_opaq;
+        pentry = (cache_entry_t *) (pdata->buffval.pdata) ;
 
-        if( counter == INVALIDATE_HIT )
-           return pentry ;
+        if( counter == 10 )
+         return pentry ;
 
         RBT_INCREMENT(it);
       }
@@ -121,6 +119,9 @@ void *upcall_simulator_thread(void *UnusedArgument)
   char thr_name[32];
   int rc = 0 ;
   cache_entry_t * pentry = NULL ;
+  fsal_handle_t * pfsal_handle_invalidate = NULL ;
+  fsal_attrib_list_t attr ;
+  cache_inode_status_t cache_status ;
 
 #ifdef _USE_MFSL
   fsal_status_t fsal_status ;
@@ -130,10 +131,6 @@ void *upcall_simulator_thread(void *UnusedArgument)
   unsigned int i = 0 ;
   unsigned int fsalid = 0 ;
 #endif
-
-  /* Use worker#0's context */
-  memcpy( (char *)&mydata, &workers_data[0], sizeof( nfs_worker_data_t ) ) ;
-
 
   snprintf(thr_name, sizeof(thr_name), "Upcall Simulator Thread" );
   SetNameFunction(thr_name);
@@ -204,6 +201,8 @@ void *upcall_simulator_thread(void *UnusedArgument)
     }
 #endif
 
+  mydata.ht = workers_data[0].ht ;
+
   LogFullDebug(COMPONENT_CACHE_INODE,
                "Cache Content client successfully initialized");
 
@@ -214,8 +213,26 @@ void *upcall_simulator_thread(void *UnusedArgument)
     {
         sleep( 1 ) ;
         if( ( pentry = choose_pentry( mydata.ht) ) != NULL )
-          LogCrit( COMPONENT_CACHE_INODE, "About to invalidate entry %p", pentry ) ;
+         {
+           LogCrit( COMPONENT_CACHE_INODE, "About to invalidate entry %p type=%u", pentry, pentry->internal_md.type ) ;
 
-    }                           /* while( 1 ) */
+           if((pfsal_handle_invalidate =
+               cache_inode_get_fsal_handle(pentry, &cache_status)) == NULL)
+            {
+              LogCrit( COMPONENT_CACHE_INODE, "Unable to get handle for entry %p to be invalidated", pentry ) ;
+            }
+           else if( cache_inode_invalidate( pfsal_handle_invalidate,
+                                       &attr,
+                                       mydata.ht,
+                                       &mydata.cache_inode_client,
+                                       &cache_status ) != CACHE_INODE_SUCCESS )
+             {
+                   LogCrit( COMPONENT_CACHE_INODE, "Could not invalidate entry %p, status=%u", pentry, cache_status ) ;
+             }
+           else
+                LogInfo( COMPONENT_CACHE_INODE, "Entry %p has been invalidated", pentry ) ;
+         }                           /* while( 1 ) */
+    } /* while( 1 ) */
+
   return NULL;
 }                               /* worker_thread */
