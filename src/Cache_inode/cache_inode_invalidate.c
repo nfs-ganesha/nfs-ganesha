@@ -82,8 +82,49 @@ cache_inode_status_t cache_inode_invalidate( fsal_handle_t        * pfsal_handle
                                              cache_inode_client_t * pclient,
                                              cache_inode_status_t * pstatus)
 {
-  if( *pstatus == NULL ) 
+  cache_entry_t * pentry = NULL ;
+
+  cache_inode_fsal_data_t fsal_data; 
+  hash_buffer_t key, value;
+  int rc = 0 ; 
+
+  if( pstatus == NULL || pattr == NULL || pclient == NULL || ht == NULL || pfsal_handle == NULL ) 
     return CACHE_INODE_INVALID_ARGUMENT ;
+
+  /* Locate the entry in the cache */
+  fsal_data.handle = *pfsal_handle ;
+  fsal_data.cookie = 0;  /* No DIR_CONTINUE is managed here */
+
+  /* Turn the input to a hash key */
+  if(cache_inode_fsaldata_2_key(&key, &fsal_data, pclient))
+   {
+      *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+      return *pstatus ;
+   }
+
+  /* Search the cache for an entry with the related fsal_handle */
+  if( ( rc = HashTable_Get(ht, &key, &value) ) == HASHTABLE_ERROR_NO_SUCH_KEY )
+   {
+      /* Entry is not cached */
+      *pstatus = CACHE_INODE_NOT_FOUND ;
+      return *pstatus ;
+   }
+  else if ( rc != HASHTABLE_SUCCESS )
+   {
+       LogCrit( COMPONENT_CACHE_INODE, "Unexpected error %u while calling HashTable_Get", rc ) ;
+       
+       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+       return *pstatus ;
+   }
+
+  /* At this point, we are sure that an entry has been found */
+  pentry = (cache_entry_t *)value.pdata;
+
+  /* return attributes additionally (may be useful to be caller, at least for debugging purpose */
+  cache_inode_get_attributes(pentry, pattr);
+
+  /* Call cache_inode_kill_entry, return status is stored in pstatus */
+  cache_inode_kill_entry( pentry, ht, pclient, pstatus ) ;
 
   return *pstatus;
 }                               /* cache_inode_invalidate */
