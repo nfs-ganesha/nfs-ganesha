@@ -475,3 +475,5 @@
        - Symbolic Links are managed via a pool to save memory in Cache_Inode
        - Early 9P support
        - Lustre FSAL: exporting several Lustre filesystem with the same server instance
+       - A bug was found and fix in OP4_READDIRPLUS (leading to missing
+         directory's entries)
