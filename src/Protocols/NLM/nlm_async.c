@@ -37,15 +37,15 @@
 #include "nlm4.h"
 #include "nlm_util.h"
 #include "nlm_async.h"
+#include "nfs_tcb.h"
 
 static pthread_t               nlm_async_thread_id;
 static struct glist_head       nlm_async_queue;
-static pthread_mutex_t         nlm_async_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t          nlm_async_queue_cond  = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t                nlm_async_resp_mutex  = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t                 nlm_async_resp_cond   = PTHREAD_COND_INITIALIZER;
 cache_inode_client_parameter_t nlm_async_cache_inode_client_param;
 cache_inode_client_t           nlm_async_cache_inode_client;
+extern nfs_tcb_t               nlmtcb;
 
 int nlm_send_async_res_nlm4(state_nlm_client_t * host,
                             nlm_callback_func    func,
@@ -73,9 +73,9 @@ int nlm_send_async_res_nlm4(state_nlm_client_t * host,
       return NFS_REQ_DROP;
    }
 
-  P(nlm_async_queue_mutex);
+  P(nlmtcb.tcb_mutex);
   glist_add_tail(&nlm_async_queue, &arg->nlm_async_glist);
-  if(pthread_cond_signal(&nlm_async_queue_cond) == -1)
+  if(pthread_cond_signal(&nlmtcb.tcb_condvar) == -1)
     {
       LogFullDebug(COMPONENT_NLM,
                    "Unable to signal nlm_asyn_thread");
@@ -84,7 +84,7 @@ int nlm_send_async_res_nlm4(state_nlm_client_t * host,
       Mem_Free(arg);
       arg = NULL;
     }
-  V(nlm_async_queue_mutex);
+  V(nlmtcb.tcb_mutex);
 
   return arg != NULL ? NFS_REQ_OK : NFS_REQ_DROP;
 }
@@ -127,9 +127,9 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
       return NFS_REQ_DROP;
    }
 
-  P(nlm_async_queue_mutex);
+  P(nlmtcb.tcb_mutex);
   glist_add_tail(&nlm_async_queue, &arg->nlm_async_glist);
-  if(pthread_cond_signal(&nlm_async_queue_cond) == -1)
+  if(pthread_cond_signal(&nlmtcb.tcb_condvar) == -1)
     {
       LogFullDebug(COMPONENT_NLM,
                    "Unable to signal nlm_asyn_thread");
@@ -140,7 +140,7 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
       Mem_Free(arg);
       arg = NULL;
     }
-  V(nlm_async_queue_mutex);
+  V(nlmtcb.tcb_mutex);
 
   return arg != NULL ? NFS_REQ_OK : NFS_REQ_DROP;
 }
@@ -169,24 +169,63 @@ void *nlm_async_thread(void *argp)
   LogInfo(COMPONENT_NLM,
           "NLM async thread: Memory manager successfully initialized");
 #endif
+  if(mark_thread_existing(&nlmtcb) == PAUSE_EXIT)
+    {
+      /* Oops, that didn't last long... exit. */
+      mark_thread_done(&nlmtcb);
+      LogDebug(COMPONENT_NLM,
+               "NLM async thread: exiting before initialization");
+      return NULL;
+    }
   LogFullDebug(COMPONENT_NLM,
                "NLM async thread: my pthread id is %p",
                (caddr_t) pthread_self());
 
   while(1)
     {
-      pthread_mutex_lock(&nlm_async_queue_mutex);
-      while(glist_empty(&nlm_async_queue))
+      /* Check without tcb lock*/
+      if((nlmtcb.tcb_state != STATE_AWAKE) || glist_empty(&nlm_async_queue))
         {
-          gettimeofday(&now, NULL);
-          timeout.tv_sec = 10 + now.tv_sec;
-          timeout.tv_nsec = 0;
-          pthread_cond_timedwait(&nlm_async_queue_cond, &nlm_async_queue_mutex, &timeout);
+          while(1)
+            {
+              P(nlmtcb.tcb_mutex);
+              if((nlmtcb.tcb_state == STATE_AWAKE) &&
+                  !glist_empty(&nlm_async_queue))
+                {
+                  V(nlmtcb.tcb_mutex);
+                  break;
+                }
+              switch(thread_sm_locked(&nlmtcb))
+                {
+                  case THREAD_SM_RECHECK:
+                    V(nlmtcb.tcb_mutex);
+                    continue;
+
+                  case THREAD_SM_BREAK:
+                    if(glist_empty(&nlm_async_queue))
+                      {
+                        gettimeofday(&now, NULL);
+                        timeout.tv_sec = 10 + now.tv_sec;
+                        timeout.tv_nsec = 0;
+                        pthread_cond_timedwait(&nlmtcb.tcb_condvar,
+                                               &nlmtcb.tcb_mutex,
+                                               &timeout);
+                      }
+                    V(nlmtcb.tcb_mutex);
+                    continue;
+
+                  case THREAD_SM_EXIT:
+                    V(nlmtcb.tcb_mutex);
+                    return NULL;
+                }
+            }
         }
+
+      P(nlmtcb.tcb_mutex);
       init_glist(&nlm_async_tmp_queue);
       /* Collect all the work items and add it to the temp
        * list. Later we iterate over tmp list without holding
-       * the nlm_async_queue_mutex
+       * the nlmtcb.tcb_mutex.
        */
       glist_for_each_safe(glist, glistn, &nlm_async_queue)
       {
@@ -195,7 +234,7 @@ void *nlm_async_thread(void *argp)
         glist_add(&nlm_async_tmp_queue, glist);
 
       }
-      pthread_mutex_unlock(&nlm_async_queue_mutex);
+      V(nlmtcb.tcb_mutex);
       glist_for_each_safe(glist, glistn, &nlm_async_tmp_queue)
       {
         entry = glist_entry(glist, nlm_async_queue_t, nlm_async_glist);
@@ -203,7 +242,7 @@ void *nlm_async_thread(void *argp)
         entry->nlm_async_func(entry);
       }
     }
-
+  tcb_remove(&nlmtcb);
 }
 
 /* Insert 'func' to async queue */
@@ -213,12 +252,12 @@ int nlm_async_callback(nlm_async_queue_t *arg)
 
   LogFullDebug(COMPONENT_NLM, "Callback %p", arg);
 
-  P(nlm_async_queue_mutex);
+  P(nlmtcb.tcb_mutex);
   glist_add_tail(&nlm_async_queue, &arg->nlm_async_glist);
-  rc = pthread_cond_signal(&nlm_async_queue_cond);
+  rc = pthread_cond_signal(&nlmtcb.tcb_condvar);
   if(rc == -1)
     glist_del(&arg->nlm_async_glist);
-  V(nlm_async_queue_mutex);
+  V(nlmtcb.tcb_mutex);
 
   return rc;
 }
