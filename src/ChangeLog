@@ -474,4 +474,4 @@
        - NFSv4.0 are now activated by default
        - Symbolic Links are managed via a pool to save memory in Cache_Inode
        - Early 9P support
-       - Lustre FSAL: exporting several Lustre fuilesystem with the same server instance
+       - Lustre FSAL: exporting several Lustre filesystem with the same server instance
