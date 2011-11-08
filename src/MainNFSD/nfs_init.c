@@ -1864,13 +1864,13 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
     {
       char name[256];
 
+      /* Set the index (mostly used for debug purpose */
+      workers_data[i].worker_index = i;
+
       /* Fill in workers fields (semaphores and other stangenesses */
       if(nfs_Init_worker_data(&(workers_data[i])) != 0)
         LogFatal(COMPONENT_INIT,
                  "Error while initializing worker data #%d", i);
-
-      /* Set the index (mostly used for debug purpose */
-      workers_data[i].worker_index = i;
 
       /* Set the pointer for the Cache inode hash table */
       workers_data[i].ht = ht;

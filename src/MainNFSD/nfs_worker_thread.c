@@ -1960,45 +1960,53 @@ void *worker_thread(void *IndexArg)
                    pmydata->pending_request->nb_entry,
                    pmydata->pending_request->nb_invalid);
 
-      P(pmydata->wcb.tcb_mutex);
-      while(1)
-       {
-         if(pmydata->wcb.tcb_state == STATE_AWAKE &&
-            pmydata->pending_request->nb_entry != pmydata->pending_request->nb_invalid)
-           {
-             /* We have something to do, and we don't need to pause. */
-             LogFullDebug(COMPONENT_DISPATCH,
-                          "Have work, pause_state: %s, nb_entry=%u, nb_invalid=%u",
-                          pause_state_str[pmydata->wcb.tcb_state],
-                          pmydata->pending_request->nb_entry,
-                          pmydata->pending_request->nb_invalid);
-             break;
-           }
+      /* Get the state without lock first, if things are fine
+       * don't bother to check under lock.
+       */
+      if((pmydata->wcb.tcb_state != STATE_AWAKE) ||
+          (pmydata->pending_request->nb_entry ==
+           pmydata->pending_request->nb_invalid))
+        {
+          while(1)
+            {
+              P(pmydata->wcb.tcb_mutex);
+              if(pmydata->wcb.tcb_state == STATE_AWAKE &&
+                 (pmydata->pending_request->nb_entry !=
+                  pmydata->pending_request->nb_invalid))
+                {
+                  V(pmydata->wcb.tcb_mutex);
+                  break;
+                }
+              switch(thread_sm_locked(&pmydata->wcb))
+                {
+                  case THREAD_SM_RECHECK:
+                    V(pmydata->wcb.tcb_mutex);
+                    continue;
 
-         switch(thread_sm_locked(&pmydata->wcb))
-           {
-             case THREAD_SM_RECHECK:
-               continue;
+                  case THREAD_SM_BREAK:
+                    if(pmydata->pending_request->nb_entry ==
+                        pmydata->pending_request->nb_invalid)
+                      {
+                        /* No work; wait */
+                        pthread_cond_wait(&(pmydata->wcb.tcb_condvar),
+                                          &(pmydata->wcb.tcb_mutex));
+                        V(pmydata->wcb.tcb_mutex);
+                        continue;
+                      }
 
-             case THREAD_SM_BREAK:
-               if(pmydata->pending_request->nb_entry == pmydata->pending_request->nb_invalid)
-                 {
-                   /* No work; wait */
-                   pthread_cond_wait(&(pmydata->wcb.tcb_condvar), &(pmydata->wcb.tcb_mutex));
-                   continue;
-                 }
-
-             case THREAD_SM_EXIT:
-               LogDebug(COMPONENT_DISPATCH,
-                        "Worker exiting as requested");
-               V(pmydata->wcb.tcb_mutex);
-               return NULL;
-           }
-       }
+                  case THREAD_SM_EXIT:
+                    LogDebug(COMPONENT_DISPATCH, "Worker exiting as requested");
+                    V(pmydata->wcb.tcb_mutex);
+                    return NULL;
+                }
+            }
+        }
 
       LogFullDebug(COMPONENT_DISPATCH,
-                   "Processing a new request");
-      V(pmydata->wcb.tcb_mutex);
+                   "Processing a new request, pause_state: %s, nb_entry=%u, nb_invalid=%u",
+                   pause_state_str[pmydata->wcb.tcb_state],
+                   pmydata->pending_request->nb_entry,
+                   pmydata->pending_request->nb_invalid);
 
       found = FALSE;
       P(pmydata->request_pool_mutex);

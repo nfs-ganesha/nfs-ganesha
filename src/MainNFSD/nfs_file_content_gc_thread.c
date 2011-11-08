@@ -175,25 +175,32 @@ void *file_content_gc_thread(void *IndexArg)
       /* Sleep until some work is to be done */
       sleep(nfs_param.cache_layers_param.dcgcpol.run_interval);
 
-      P(gccb.tcb_mutex);
-      while(1)
+      if(gccb.tcb_state != STATE_AWAKE)
         {
-          if(gccb.tcb_state == STATE_AWAKE)
-            break;
-          switch(thread_sm_locked(&gccb))
+          while(1)
             {
-              case THREAD_SM_RECHECK:
-                continue;
+              P(gccb.tcb_mutex);
+              if(gccb.tcb_state == STATE_AWAKE)
+                {
+                  V(gccb.tcb_mutex);
+                  break;
+                }
+              switch(thread_sm_locked(&gccb))
+                {
+                  case THREAD_SM_RECHECK:
+                    V(gccb.tcb_mutex);
+                    continue;
 
-              case THREAD_SM_BREAK:
-                break;
+                  case THREAD_SM_BREAK:
+                    V(gccb.tcb_mutex);
+                    break;
 
-              case THREAD_SM_EXIT:
-                V(gccb.tcb_mutex);
-                return NULL;
+                  case THREAD_SM_EXIT:
+                    V(gccb.tcb_mutex);
+                    return NULL;
+                }
             }
         }
-      V(gccb.tcb_mutex);
 
       LogEvent(COMPONENT_MAIN,
                "NFS FILE CONTENT GARBAGE COLLECTION : processing...");
