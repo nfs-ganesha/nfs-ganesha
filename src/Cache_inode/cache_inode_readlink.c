@@ -61,6 +61,7 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
                                           cache_inode_status_t * pstatus)
 {
   fsal_status_t fsal_status;
+  fsal_attrib_list_t attr ;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -104,7 +105,16 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
 
     case SYMBOLIC_LINK:
       assert(pentry->object.symlink);
-      fsal_status = FSAL_pathcpy(plink_content, &(pentry->object.symlink->content)); /* need copy ctor? */
+      if( CACHE_INODE_KEEP_CONTENT( pentry->policy ) )
+        {
+          fsal_status = FSAL_pathcpy(plink_content, &(pentry->object.symlink->content)); /* need copy ctor? */
+        }
+      else
+        {
+           /* Content is not cached, call FSAL_readlink here */
+           fsal_status = FSAL_readlink( &pentry->object.symlink->handle, pcontext, plink_content, &attr ) ; 
+        }
+
       if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);

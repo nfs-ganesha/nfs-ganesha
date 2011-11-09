@@ -243,11 +243,20 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
 
       if(type == SYMBOLIC_LINK)
         {
-          FSAL_CLEAR_MASK(fsal_attributes.asked_attributes);
-          FSAL_SET_MASK(fsal_attributes.asked_attributes, pclient->attrmask);
-          fsal_status =
-              FSAL_readlink(&pfsdata->handle, pcontext, &create_arg.link_content,
-                            &fsal_attributes);
+          if( CACHE_INODE_KEEP_CONTENT( policy ) )
+           {
+             FSAL_CLEAR_MASK(fsal_attributes.asked_attributes);
+             FSAL_SET_MASK(fsal_attributes.asked_attributes, pclient->attrmask);
+             fsal_status =
+                FSAL_readlink(&pfsdata->handle, pcontext, &create_arg.link_content,
+                              &fsal_attributes);
+            }
+          else
+            { 
+               fsal_status.major = ERR_FSAL_NO_ERROR ;
+               fsal_status.minor = 0 ;
+            }
+
           if(FSAL_IS_ERROR(fsal_status))
             {
               *pstatus = cache_inode_error_convert(fsal_status);

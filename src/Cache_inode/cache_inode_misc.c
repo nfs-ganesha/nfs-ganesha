@@ -449,8 +449,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
     {
     case REGULAR_FILE:
       LogDebug(COMPONENT_CACHE_INODE,
-               "cache_inode_new_entry: Adding a REGULAR_FILE pentry = %p",
-               pentry);
+               "cache_inode_new_entry: Adding a REGULAR_FILE pentry=%p policy=%u",
+               pentry, policy );
 
       pentry->object.file.handle = pfsdata->handle;
 #ifdef _USE_MFSL
@@ -499,8 +499,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 
     case DIR_BEGINNING:
       LogDebug(COMPONENT_CACHE_INODE,
-               "cache_inode_new_entry: Adding a DIR_BEGINNING pentry = %p",
-               pentry);
+               "cache_inode_new_entry: Adding a DIR_BEGINNING pentry=%p policy=%u",
+               pentry, policy);
 
       pentry->object.dir_begin.handle = pfsdata->handle;
 #ifdef _USE_MFSL
@@ -526,8 +526,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 
     case DIR_CONTINUE:
       LogDebug(COMPONENT_CACHE_INODE,
-               "cache_inode_new_entry: Adding a DIR_CONTINUE pentry = %p",
-               pentry);
+               "cache_inode_new_entry: Adding a DIR_CONTINUE pentry=%p policy=%u",
+               pentry, policy);
 
       pentry->object.dir_cont.end_of_dir = END_OF_DIR;
       pentry->object.dir_cont.pdir_cont = NULL; /* The last entry has no next entry */
@@ -571,8 +571,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 
     case SYMBOLIC_LINK:
       LogDebug(COMPONENT_CACHE_INODE,
-               "cache_inode_new_entry: Adding a SYMBOLIC_LINK pentry = %p",
-               pentry);
+               "cache_inode_new_entry: Adding a SYMBOLIC_LINK pentry=%p policy=%u",
+               pentry, policy);
       GetFromPool(pentry->object.symlink, &pclient->pool_entry_symlink,
                   cache_inode_symlink_t);
       if(pentry->object.symlink == NULL)
@@ -585,23 +585,26 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 #ifdef _USE_MFSL
       pentry->mobject.handle = pentry->object.symlink->handle;
 #endif
-      fsal_status =
-          FSAL_pathcpy(&pentry->object.symlink->content, &pcreate_arg->link_content);
-      if(FSAL_IS_ERROR(fsal_status))
-        {
-          *pstatus = cache_inode_error_convert(fsal_status);
-          LogDebug(COMPONENT_CACHE_INODE,
-                   "cache_inode_new_entry: FSAL_pathcpy failed");
-          cache_inode_release_symlink(pentry, &pclient->pool_entry_symlink);
-          ReleaseToPool(pentry, &pclient->pool_entry);
-        }
 
+     if( CACHE_INODE_KEEP_CONTENT( policy ) )
+      {  
+        fsal_status =
+            FSAL_pathcpy(&pentry->object.symlink->content, &pcreate_arg->link_content);
+        if(FSAL_IS_ERROR(fsal_status))
+         {
+             *pstatus = cache_inode_error_convert(fsal_status);
+             LogDebug(COMPONENT_CACHE_INODE,
+                      "cache_inode_new_entry: FSAL_pathcpy failed");
+             cache_inode_release_symlink(pentry, &pclient->pool_entry_symlink);
+             ReleaseToPool(pentry, &pclient->pool_entry);
+         }
+       }
       break;
 
     case SOCKET_FILE:
       LogDebug(COMPONENT_CACHE_INODE,
-               "cache_inode_new_entry: Adding a SOCKET_FILE pentry = %p",
-               pentry);
+               "cache_inode_new_entry: Adding a SOCKET_FILE pentry=%p policy=%u",
+               pentry, policy);
 
       pentry->object.special_obj.handle = pfsdata->handle;
 #ifdef _USE_MFSL
@@ -611,8 +614,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 
     case FIFO_FILE:
       LogDebug(COMPONENT_CACHE_INODE,
-               "cache_inode_new_entry: Adding a FIFO_FILE pentry = %p",
-               pentry);
+               "cache_inode_new_entry: Adding a FIFO_FILE pentry=%p policy=%u",
+               pentry, policy);
 
       pentry->object.special_obj.handle = pfsdata->handle;
 #ifdef _USE_MFSL
@@ -622,8 +625,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 
     case BLOCK_FILE:
       LogDebug(COMPONENT_CACHE_INODE,
-               "cache_inode_new_entry: Adding a BLOCK_FILE pentry = %p",
-               pentry);
+               "cache_inode_new_entry: Adding a BLOCK_FILE pentry=%p policy=%u",
+               pentry, policy);
 
       pentry->object.special_obj.handle = pfsdata->handle;
 #ifdef _USE_MFSL
@@ -633,8 +636,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 
     case CHARACTER_FILE:
       LogDebug(COMPONENT_CACHE_INODE,
-               "cache_inode_new_entry: Adding a CHARACTER_FILE pentry = %p",
-               pentry);
+               "cache_inode_new_entry: Adding a CHARACTER_FILE pentry=%p policy=%u",
+               pentry, policy);
 
       pentry->object.special_obj.handle = pfsdata->handle;
 #ifdef _USE_MFSL
@@ -644,8 +647,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 
     case FS_JUNCTION:
         LogDebug(COMPONENT_CACHE_INODE,
-                 "cache_inode_new_entry: Adding a FS_JUNCTION pentry = %p",
-                 pentry);
+                 "cache_inode_new_entry: Adding a FS_JUNCTION pentry=%p policy=%u",
+                 pentry, policy);
 
         fsal_status = FSAL_lookupJunction( &pfsdata->handle, pcontext, &pentry->object.dir_begin.handle, NULL);
         if( FSAL_IS_ERROR( fsal_status ) )
@@ -1990,7 +1993,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
 /**
  *
  * cache_inode_release_symlink: release an entry's symlink component, if
- * present
+ * present.
  *
  * releases an allocated symlink component, if any
  *

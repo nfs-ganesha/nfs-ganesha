@@ -893,17 +893,26 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
 #endif
               /* Let's read the link for caching its value */
               object_attributes.asked_attributes = pclient->attrmask;
+              if( CACHE_INODE_KEEP_CONTENT( pentry_dir->policy ) )
+                {
 #ifdef _USE_MFSL
-              tmp_mfsl.handle = array_dirent[iter].handle;
-              fsal_status = MFSL_readlink(&tmp_mfsl,
-                                          pcontext,
-                                          &pclient->mfsl_context,
-                                          &create_arg.link_content, &object_attributes, NULL);
+                  tmp_mfsl.handle = array_dirent[iter].handle;
+                  fsal_status = MFSL_readlink(&tmp_mfsl,
+                                              pcontext,
+                                              &pclient->mfsl_context,
+                                              &create_arg.link_content, &object_attributes, NULL);
 #else
-              fsal_status = FSAL_readlink(&array_dirent[iter].handle,
-                                          pcontext,
-                                          &create_arg.link_content, &object_attributes);
+                  fsal_status = FSAL_readlink(&array_dirent[iter].handle,
+                                              pcontext,
+                                              &create_arg.link_content, &object_attributes);
 #endif
+                }
+              else
+                {
+                   fsal_status.major = ERR_FSAL_NO_ERROR ;
+                   fsal_status.minor = 0 ;
+                }
+
               if(FSAL_IS_ERROR(fsal_status))
                 {
                   *pstatus = cache_inode_error_convert(fsal_status);
@@ -936,7 +945,7 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
           if((pentry = cache_inode_new_entry( &new_entry_fsdata, 
                                               &array_dirent[iter].attributes, 
                                               type, 
-                                              CACHE_INODE_POLICY_FULL_WRITE_THROUGH,
+                                              pentry_dir->policy, /* inherits parents policy */
                                               &create_arg, 
                                               NULL, 
                                               ht, 

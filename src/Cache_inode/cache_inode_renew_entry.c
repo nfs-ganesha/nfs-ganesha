@@ -585,6 +585,8 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
       FSAL_CLEAR_MASK(object_attributes.asked_attributes);
       FSAL_SET_MASK(object_attributes.asked_attributes, pclient->attrmask);
 
+      if( CACHE_INODE_KEEP_CONTENT( pentry->policy ) )
+       {
 #ifdef _USE_MFSL
       fsal_status =
           MFSL_readlink(&pentry->mobject, pcontext, &pclient->mfsl_context, &link_content,
@@ -593,6 +595,13 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
       fsal_status =
           FSAL_readlink(pfsal_handle, pcontext, &link_content, &object_attributes);
 #endif
+        }
+      else
+        { 
+          fsal_status.major = ERR_FSAL_NO_ERROR ;
+          fsal_status.minor = 0 ;
+        }
+
       if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
