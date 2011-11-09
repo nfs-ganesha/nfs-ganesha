@@ -136,6 +136,8 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
    * We ask back all standard attributes, in case they have been modified
    * by another program (pftp, rcpd...)
    */
+
+  memset(&result_attributes, 0, sizeof(fsal_attrib_list_t));
   result_attributes.asked_attributes = pclient->attrmask;
   /* end of mod */
 
@@ -144,8 +146,6 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
       MFSL_setattrs(&pentry->mobject, pcontext, &pclient->mfsl_context, pattr,
                     &result_attributes, NULL);
 #else
-  cache_inode_get_attributes(pentry, &result_attributes);
-
   fsal_status = FSAL_setattrs(pfsal_handle, pcontext, pattr, &result_attributes);
 #endif
   if(FSAL_IS_ERROR(fsal_status))
