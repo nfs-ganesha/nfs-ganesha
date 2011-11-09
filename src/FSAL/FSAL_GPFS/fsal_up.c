@@ -78,7 +78,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
   phandle->data.handle.handle_size = OPENHANDLE_HANDLE_LEN;
   phandle->data.handle.handle_key_size = 0;
   callback.mountdirfd = p_export_context->mount_root_fd;
-  callback.handle = &phandle->data.handle;
+  callback.handle = (struct gpfs_file_handle *) &phandle->data.handle;
   callback.reason = &reason;
   callback.buf = &buf;
   callback.fl = (struct glock *) &fl;
