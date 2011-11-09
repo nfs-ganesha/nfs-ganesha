@@ -107,7 +107,7 @@ int _9p_mkdir( _9p_request_data_t * preq9p,
    /* BUGAZOMEU: @todo : the gid parameter is not used yet */
    if( ( pentry_newdir = cache_inode_create( pfid->pentry,
                                              &dir_name,
-                                             DIR_BEGINNING,
+                                             DIRECTORY,
                                              *mode,
                                              NULL,
                                              &fsalattr,

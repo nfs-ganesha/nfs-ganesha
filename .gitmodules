@@ -1,0 +1,3 @@
+[submodule "contrib/libtree"]
+	path = contrib/libtree
+	url = https://github.com/linuxbox2/libtree

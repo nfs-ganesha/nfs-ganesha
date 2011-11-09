@@ -136,7 +136,7 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   /* The operation delete object named arg_REMOVE4.target in directory pointed bt cuurentFH */
   /* Make sur the currentFH is pointed a directory */
-  if(data->current_filetype != DIR_BEGINNING && data->current_filetype != DIR_CONTINUE)
+  if(data->current_filetype != DIRECTORY)
     {
       res_REMOVE4.status = NFS4ERR_NOTDIR;
       return res_REMOVE4.status;

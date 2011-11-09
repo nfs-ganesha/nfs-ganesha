@@ -78,7 +78,7 @@
 void nfs_debug_debug_label_info();
 #endif
 
-nfs_worker_data_t *workers_data;
+extern nfs_worker_data_t *workers_data;
 
 /* These two variables keep state of the thread that gc at this time */
 unsigned int nb_current_gc_workers;

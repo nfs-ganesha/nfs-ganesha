@@ -109,8 +109,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
     {
       switch (data->current_entry->internal_md.type)
         {
-        case DIR_BEGINNING:
-        case DIR_CONTINUE:
+        case DIRECTORY:
           res_OPEN_CONFIRM4.status = NFS4ERR_ISDIR;
           return res_OPEN_CONFIRM4.status;
           break;

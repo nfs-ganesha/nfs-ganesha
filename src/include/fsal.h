@@ -398,6 +398,63 @@ fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
 fsal_status_t FSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle);        /* IN */
 
 /******************************************************
+ *              FSAL directory cookies
+ ******************************************************/
+
+/**
+ * FSAL_cookie_to_uint64
+ *
+ * This function converts an fsal_cookie_t to a uint64_t value that
+ * can be supplied to NFS readdir routines.
+ *
+ * \param [in]  handle	 The handle of the directory to which the
+ *                       cookie pertains
+ * \param [in]  context  The FSAL operation context
+ * \param [in]  cookie	 The directory entry cookie
+ * \param [out] data     The uint64_t value corresponding to the
+ *                       cookie
+ */
+
+fsal_status_t FSAL_cookie_to_uint64(fsal_handle_t * handle,
+                                    fsal_op_context_t * context,
+                                    fsal_cookie_t * cookie,
+                                    uint64_t *data);
+/**
+ * FSAL_uint64_to_cookie
+ *
+ * This function converts a uint64_t value supplied by the NFS caller
+ * to the FSAL's cookie type.
+ *
+ * \param [in]  handle	 The handle of the directory to which the
+ *                       cookie pertains
+ * \param [in]  context  The FSAL operation context
+ * \param [in]  uint64   The uint64_t value corresponding to the
+ *                       cookie
+ * \param [out] cookie	 The directory entry cookie
+ */
+
+fsal_status_t FSAL_uint64_to_cookie(fsal_handle_t * handle,
+                                    fsal_op_context_t * context,
+                                    uint64_t * uint64,
+                                    fsal_cookie_t * cookie);
+
+/**
+ * FSAL_get_cookieverf
+ *
+ * This function retrieves a cookie verifier from the FSAL for a given
+ * directory.
+ *
+ * \param [in]  handle	 The handle of the directory to which the
+ *                       verifier pertains
+ * \param [in]  context  The FSAL operation context
+ * \param [out] verf     The directory entry cookie
+ */
+
+fsal_status_t FSAL_get_cookieverf(fsal_handle_t * handle,
+                                  fsal_op_context_t * context,
+                                  uint64_t * verf);
+
+/******************************************************
  *              FSAL context management.
  ******************************************************/
 
@@ -1145,6 +1202,19 @@ typedef struct fsal_functions__
   /* FSAL_CleanObjectResources */
   fsal_status_t(*fsal_cleanobjectresources) (fsal_handle_t * in_fsal_handle);
 
+  /* FSAL_cookie_to_uint64 */
+  fsal_status_t(*fsal_cookie_to_uint64) (fsal_handle_t * handle,
+                                         fsal_cookie_t * cookie,
+                                         uint64_t * uint64);
+
+  /* FSAL_uint64_to_cookie */
+  fsal_status_t(*fsal_uint64_to_cookie) (fsal_handle_t * handle,
+                                         uint64_t * uint64,
+                                         fsal_cookie_t * cookie);
+
+  /* FSAL_get_cookieverf */
+  fsal_status_t(*fsal_get_cookieverf)(fsal_handle_t * handle,
+                                      uint64_t * cookie);
   /* FSAL_set_quota */
   fsal_status_t(*fsal_set_quota) (fsal_path_t * pfsal_path,     /* IN */
                                   int quota_type,       /* IN */

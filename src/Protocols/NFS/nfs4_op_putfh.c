@@ -151,7 +151,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     {
       data->current_entry = NULL;
-      data->current_filetype = DIR_BEGINNING;
+      data->current_filetype = DIRECTORY;
       data->pexport = NULL;     /* No exportlist is related to pseudo fs */
     }
   else

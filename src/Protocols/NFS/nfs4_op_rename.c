@@ -238,7 +238,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* destination must be a directory */
   dst_entry = data->current_entry;
 
-  if(data->current_filetype != DIR_BEGINNING && data->current_filetype != DIR_CONTINUE)
+  if(data->current_filetype != DIRECTORY)
     {
       res_RENAME4.status = NFS4ERR_NOTDIR;
       return res_RENAME4.status;
@@ -248,7 +248,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   src_entry = data->saved_entry;
 
   /* Source must be a directory */
-  if(data->saved_filetype != DIR_BEGINNING && data->saved_filetype != DIR_CONTINUE)
+  if(data->saved_filetype != DIRECTORY)
     {
       res_RENAME4.status = NFS4ERR_NOTDIR;
       return res_RENAME4.status;
@@ -322,12 +322,9 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* Renaming dir into existing file should return NFS4ERR_EXIST */
-  if(((tst_entry_src->internal_md.type == DIR_BEGINNING)
-      || (tst_entry_src->internal_md.type == DIR_CONTINUE)) && ((tst_entry_dst != NULL)
-                                                                &&
-                                                                (tst_entry_dst->
-                                                                 internal_md.type ==
-                                                                 REGULAR_FILE)))
+  if ((tst_entry_src->internal_md.type == DIRECTORY) &&
+      ((tst_entry_dst != NULL) &&
+       (tst_entry_dst-> internal_md.type == REGULAR_FILE)))
     {
       res_RENAME4.status = NFS4ERR_EXIST;
       return res_RENAME4.status;
@@ -338,8 +335,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     {
       if(tst_entry_dst != NULL)
         {
-          if((tst_entry_dst->internal_md.type == DIR_BEGINNING)
-             || (tst_entry_dst->internal_md.type == DIR_CONTINUE))
+	  if(tst_entry_dst->internal_md.type == DIRECTORY)
             {
               res_RENAME4.status = NFS4ERR_EXIST;
               return res_RENAME4.status;
@@ -351,14 +347,12 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
    * Renaming file into existing, nonempty dir should return NFS4ERR_EXIST */
   if(tst_entry_dst != NULL)
     {
-      if(((tst_entry_dst->internal_md.type == DIR_BEGINNING)
-          || (tst_entry_dst->internal_md.type == DIR_CONTINUE))
-         && ((tst_entry_src->internal_md.type == DIR_BEGINNING)
-             || (tst_entry_src->internal_md.type == DIR_CONTINUE)
-             || (tst_entry_src->internal_md.type == REGULAR_FILE)))
+	if((tst_entry_dst->internal_md.type == DIRECTORY)
+	   && (tst_entry_src->internal_md.type == DIRECTORY)
+	   || (tst_entry_src->internal_md.type == REGULAR_FILE))
         {
           if(cache_inode_is_dir_empty_WithLock(tst_entry_dst) ==
-             CACHE_INODE_DIR_NOT_EMPTY)
+	     CACHE_INODE_DIR_NOT_EMPTY)
             {
               res_RENAME4.status = NFS4ERR_EXIST;
               return res_RENAME4.status;

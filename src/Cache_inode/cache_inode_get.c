@@ -61,7 +61,6 @@
  * cache_inode_get: Gets an entry by using its fsdata as a key and caches it if needed.
  * 
  * Gets an entry by using its fsdata as a key and caches it if needed.
- * ASSUMPTION: DIR_CONT entries are always garbabbaged before their related DIR_BEGINNG 
  *
  * @param fsdata [IN] file system data
  * @param pattr [OUT] pointer to the attributes for the result. 
@@ -91,7 +90,6 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
  * The reason to this call is cross-junction management : you can go through a directory that it its own parent from a 
  * FSAL point of view. This could lead to hang (same P_w taken twice on the same entry). To deal this, a check feature is 
  * added through the plocation argument.
- * ASSUMPTION: DIR_CONT entries are always garbabbaged before their related DIR_BEGINNG 
  *
  * @param fsdata [IN] file system data
  * @param plocation [IN] pentry used as "location form where the call is done". Usually a son of a parent entry
@@ -170,9 +168,7 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
       }
       /* Cache miss, allocate a new entry */
 
-      /* If we ask for a dir cont (in this case pfsdata.cookie != FSAL_DIR_BEGINNING, we have 
-       * a client who performs a readdir in the middle of a directory, when the direcctories
-       * have been garbbage. we must search for the DIR_BEGIN related to this DIR_CONT */
+      /* XXX I do not think this can happen with avl dirent cache */
       if(pfsdata->cookie != DIR_START)
         {
           /* added for sanity check */

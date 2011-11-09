@@ -109,16 +109,8 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
       break;
 
     case FS_JUNCTION:
-    case DIR_BEGINNING:
-      pfsal_handle = &pentry->object.dir_begin.handle;
-      break;
-
-    case DIR_CONTINUE:
-      /* lock the related dir_begin (dir begin are garbagge collected AFTER their related dir_cont)
-       * this means that if a DIR_CONTINUE exists, its pdir pointer is not endless */
-      P_r(&pentry->object.dir_cont.pdir_begin->lock);
-      pfsal_handle = &pentry->object.dir_cont.pdir_begin->object.dir_begin.handle;
-      V_r(&pentry->object.dir_cont.pdir_begin->lock);
+    case DIRECTORY:
+      pfsal_handle = &pentry->object.dir.handle;
       break;
 
     case CHARACTER_FILE:
@@ -233,17 +225,8 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
       break;
 
     case FS_JUNCTION:
-    case DIR_BEGINNING:
-      p_object_attributes = &(pentry->object.dir_begin.attributes);
-      break;
-
-    case DIR_CONTINUE:
-      /* lock the related dir_begin (dir begin are garbagge collected AFTER their related dir_cont)
-       * this means that if a DIR_CONTINUE exists, its pdir pointer is not endless */
-      P_r(&pentry->object.dir_cont.pdir_begin->lock);
-      p_object_attributes =
-          &(pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes);
-      V_r(&pentry->object.dir_cont.pdir_begin->lock);
+    case DIRECTORY:
+      p_object_attributes = &(pentry->object.dir.attributes);
       break;
 
     case CHARACTER_FILE:

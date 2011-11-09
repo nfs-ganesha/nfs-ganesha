@@ -225,6 +225,11 @@ if test "$enable_fsal_up" == "yes"; then
 fi
 AM_CONDITIONAL(USE_FSAL_UP, test "$enable_fsal_up" = "yes")
 
+# LIBTREE
+AC_DEFINE(_USE_LIBTREE,1,[enable LIBTREE support])
+AC_CHECK_LIB([tree], [avltree_init], [AC_DEFINE( _HAVE_LIBTREE,1, [enable LIBTREE support] ) ], [AC_MSG_ERROR( [LIBTREE could not be found...] ) ] )
+GA_PROG_LIBTREE
+
 # PNFS/DS
 GA_ENABLE_AM_CONDITION([ds],[enable pNFS DS support],[USE_DS])
 
@@ -232,8 +237,6 @@ if test "$enable_ds" == "yes"; then
         AC_DEFINE(_USE_DS,1,[enable pNFS DS support])
 fi
 AM_CONDITIONAL(USE_DS, test "$enable_ds" = "yes")
-
-
 
 # TI-RPC
 GA_ENABLE_AM_CONDITION([tirpc],[enable TIRPC support],[USE_TIRPC])
@@ -312,7 +315,7 @@ AC_SUBST(EFENCE)
 
 # Debugging options
 #GA_DISABLE_FLAG( [concurrent-memalloc],  [a thread is not allowed to free a block allocated by another thread], [-D_MONOTHREAD_MEMALLOC] )
-GA_DISABLE_FLAG( [prealloc],             [disable GANESHA's memory preallocator, for debug purpose only], [-D_NO_BLOCK_PREALLOC] )
+GA_DISABLE_FLAG( [prealloc],             [disable memory preallocator, for debug purpose only], [-D_NO_BLOCK_PREALLOC] )
 GA_DISABLE_FLAG( [tcp-register], 	 [disable registration of tcp services on portmapper], 		  [-D_NO_TCP_REGISTER] )
 GA_DISABLE_FLAG( [portmapper], 	         [disable registration on portmapper], 				  [-D_NO_PORTMAPPER] )
 GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and files support],               [-D_NO_XATTRD])
@@ -354,6 +357,15 @@ AC_ARG_WITH( [extra-includedir], AS_HELP_STRING([--with-extra-includedir=<path>]
 
 if test "${with_extra_includedir+set}" == "set"; then
 	CFLAGS="$CFLAGS -I$EXTRA_INCLUDE_DIR"
+fi
+
+# CUnit
+AC_ARG_WITH( [cunit], AS_HELP_STRING([--with-cunit=<path>], [Path to CUnit] ),
+		CUNIT="$withval" )
+
+if test "${with_cunit+set}" == "set"; then
+	CFLAGS="$CFLAGS -I$CUNIT/include"
+	LDFLAGS="-L$CUNIT/lib $LDFLAGS -lcunit"
 fi
 
 # FSAL switch argument (default is PROXY)

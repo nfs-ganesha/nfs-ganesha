@@ -242,7 +242,6 @@ int nlm_async_callback_init()
   nlm_async_cache_inode_client_param.lru_param.entry_to_str = local_lru_inode_entry_to_str;
   nlm_async_cache_inode_client_param.lru_param.clean_entry = local_lru_inode_clean_entry;
   nlm_async_cache_inode_client_param.nb_prealloc_entry = 0;
-  nlm_async_cache_inode_client_param.nb_pre_dir_data = 0;
   nlm_async_cache_inode_client_param.nb_pre_parent = 0;
   nlm_async_cache_inode_client_param.nb_pre_state_v4 = 0;
   nlm_async_cache_inode_client_param.grace_period_link = 0;

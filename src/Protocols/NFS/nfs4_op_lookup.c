@@ -180,8 +180,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   dir_pentry = data->current_entry;
 
   /* Sanity check: dir_pentry should be ACTUALLY a directory */
-  if(dir_pentry->internal_md.type != DIR_BEGINNING
-     && dir_pentry->internal_md.type != DIR_CONTINUE)
+  if(dir_pentry->internal_md.type != DIRECTORY)
     {
       /* This is not a directory */
       if(dir_pentry->internal_md.type == SYMBOLIC_LINK)
@@ -257,8 +256,8 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
         res_LOOKUP4.status = nfs4_fh_to_xattrfh(&(data->currentFH), &(data->currentFH));
 #endif
 
-      if((data->current_entry->internal_md.type == DIR_BEGINNING) &&
-         (data->current_entry->object.dir_begin.referral != NULL))
+      if((data->current_entry->internal_md.type == DIRECTORY) &&
+         (data->current_entry->object.dir.referral != NULL))
         {
           if(!nfs4_Set_Fh_Referral(&(data->currentFH)))
             {

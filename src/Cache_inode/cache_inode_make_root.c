@@ -85,10 +85,13 @@ cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* BUGAZOMEU: gestion de junctions, : peut etre pas correct de faire pointer root sur lui meme */
-  if((pentry = cache_inode_new_entry(pfsdata, NULL, DIR_BEGINNING, NULL, NULL, ht, pclient, pcontext, FALSE,    /* This is a population, not a creation */
+  if((pentry = cache_inode_new_entry(pfsdata, NULL, DIRECTORY, NULL,
+				     NULL, ht, pclient, pcontext,
+				     FALSE, /* population, not creation */
                                      pstatus)) != NULL)
     {
-      GetFromPool(next_parent_entry, &pclient->pool_parent, cache_inode_parent_entry_t);
+      GetFromPool(next_parent_entry, &pclient->pool_parent,
+		  cache_inode_parent_entry_t);
 
       if(next_parent_entry == NULL)
         {
@@ -102,7 +105,6 @@ cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
       /* /!\ root is it own ".." */
       pentry->parent_list->parent = pentry;
       pentry->parent_list->next_parent = NULL;
-      pentry->parent_list->subdirpos = 0;
     }
 
   return pentry;

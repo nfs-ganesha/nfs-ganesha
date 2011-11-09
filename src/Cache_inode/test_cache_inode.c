@@ -477,43 +477,6 @@ main(int argc, char *argv[])
   /* Print the Hash Table */
   HashTable_Log(COMPONENT_STDOUT, ht);
 
-#ifdef _ADDITIONAL_TEST
-  /* Trying to lookup from a DIR_CONTINUE */
-  fsdata.handle = cache_entry_root->object.dir_begin.handle;
-  fsdata.cookie = 3 * CHILDREN_ARRAY_SIZE;
-
-  LogTest("Input key: (Handle=%p, Cookie=%d)", fsdata.handle, fsdata.cookie);
-
-  /* Turn the input to a hash key */
-  if(cache_inode_fsaldata_2_key(&key, &fsdata, NULL))
-    {
-      LogTest( "Impossible to allocate a key to that value");
-      exit(1);
-    }
-
-  if(HashTable_Get(ht, &key, &value) != HASHTABLE_SUCCESS)
-    {
-      LogTest( "Key could not be found");
-      exit(1);
-    }
-
-  /* pentry for the dir cont */
-  cache_entry_dircont = (cache_entry_t *) value.pdata;
-
-  /* Test readdir */
-  if(cache_inode_readdir(cache_entry_dircont,
-                         fsdata.cookie,
-                         100,
-                         &nbfound,
-                         &eod_met,
-                         dirent_array,
-                         ht, &client, &cred, &cache_status) != CACHE_INODE_SUCCESS)
-    {
-      LogTest( "Error: cache_inode_readdir failed");
-      exit(1);
-    }
-#endif
-
   LogTest( "Readdir nbfound=%d, eod_met=%d", nbfound, eod_met);
   for(i = 0; i < nbfound; i++)
     LogTest( "dirent_array[%d] ==> %s | %p ", i,

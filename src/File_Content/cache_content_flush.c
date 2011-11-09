@@ -130,10 +130,10 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
     }
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
   fsal_status =
-      FSAL_rcp_by_name(&
-                       (pentry_inode->object.file.pentry_parent_open->object.dir_begin.
-                        handle), pentry_inode->object.file.pname, pcontext, &local_path,
-                       FSAL_RCP_LOCAL_TO_FS);
+      FSAL_rcp_by_name(
+          &(pentry_inode->object.file.pentry_parent_open->object.dir.handle),
+          pentry_inode->object.file.pname, pcontext, &local_path,
+          FSAL_RCP_LOCAL_TO_FS);
 #else
   /* Write the data from the local data file to the fs file */
   fsal_status = FSAL_rcp(pfsal_handle, pcontext, &local_path, FSAL_RCP_LOCAL_TO_FS);
@@ -309,13 +309,15 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
     {
 #if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
       fsal_status =
-          FSAL_rcp_by_name(&
-                           (pentry_inode->object.file.pentry_parent_open->object.
-                            dir_begin.handle), pentry_inode->object.file.pname, pcontext,
-                           &local_path, FSAL_RCP_FS_TO_LOCAL);
+          FSAL_rcp_by_name(
+             &(pentry_inode->object.file.pentry_parent_open->object.dir.handle),
+              pentry_inode->object.file.pname, pcontext,
+              &local_path,
+              FSAL_RCP_FS_TO_LOCAL);
 #else
       /* Write the data from the local data file to the fs file */
-      fsal_status = FSAL_rcp(pfsal_handle, pcontext, &local_path, FSAL_RCP_FS_TO_LOCAL);
+      fsal_status = FSAL_rcp(pfsal_handle, pcontext, &local_path,
+                             FSAL_RCP_FS_TO_LOCAL);
 #endif
       if(FSAL_IS_ERROR(fsal_status))
         {
