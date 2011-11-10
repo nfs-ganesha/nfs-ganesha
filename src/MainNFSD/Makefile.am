@@ -107,6 +107,7 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/HashData.h                \
                              ../include/rbt_node.h                \
                              ../include/rbt_tree.h                \
+                             ../include/avltree.h                 \
                              ../include/log_functions.h           \
                              ../include/nfs_core.h                \
                              ../include/err_rpc.h                 \
@@ -145,6 +146,7 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       ../IdMapper/libidmap.la                           \
                                       ../support/libsupport.la                          \
                                       ../NodeList/libNodeList.la                        \
+                                      ../avl/libavltree.la                              \
                                       ../$(CACHE_INODE_DIR)/libcache_inode.la           \
                                       ../SAL/libsal.la                                  \
                                       ../File_Content/libcache_content.la               \

@@ -16,6 +16,7 @@ SUBDIRS = include             \
           SemN                \
           test                \
           LRU                 \
+          avl                 \
           HashTable           \
 	  NodeList	      \
           Cache_inode         \

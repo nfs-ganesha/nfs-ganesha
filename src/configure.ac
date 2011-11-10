@@ -225,14 +225,6 @@ if test "$enable_fsal_up" == "yes"; then
 fi
 AM_CONDITIONAL(USE_FSAL_UP, test "$enable_fsal_up" = "yes")
 
-# LIBTREE
-AC_DEFINE(_USE_LIBTREE,1,[enable LIBTREE support])
-AC_CHECK_LIB([tree], [avltree_init], [AC_DEFINE( _HAVE_LIBTREE,1, [enable LIBTREE support] ) ], [AC_MSG_ERROR( [LIBTREE could not be found...] ) ] )
-# GA_PROG_LIBTREE
-LDFLAGS=" -ltree $LDFLAGS"
-
-
-
 # PNFS/DS
 GA_ENABLE_AM_CONDITION([ds],[enable pNFS DS support],[USE_DS])
 
@@ -941,6 +933,7 @@ AC_CONFIG_FILES([include/Makefile
                  RW_Lock/Makefile
                  SemN/Makefile
                  LRU/Makefile
+                 avl/Makefile
                  HashTable/Makefile
                  Cache_inode/Makefile
                  SAL/Makefile
