@@ -27,27 +27,21 @@
 #include <sys/vfs.h>            /* for fsid */
 
 /**
- * @defgroup FSALCredFunctions Credential handling functions.
- *
- * Those functions handle security contexts (credentials).
- * 
- * @{
- */
-
-/**
  * build the export entry
  */
-fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_context, /* OUT */
+fsal_status_t GPFSFSAL_BuildExportContext(fsal_export_context_t *export_context, /* OUT */
                                       fsal_path_t * p_export_path,      /* IN */
                                       char *fs_specific_options /* IN */
     )
 {
-  int rc, fd;
-
+  int rc, fd, mntexists;
+  FILE *fp;
+  struct mntent *p_mnt;
   struct statfs stat_buf;
 
   fsal_status_t status;
   fsal_op_context_t op_context;
+  gpfsfsal_export_context_t *p_export_context = (gpfsfsal_export_context_t *)export_context;
 
   /* sanity check */
   if((p_export_context == NULL) || (p_export_path == NULL))
@@ -55,6 +49,34 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
       LogCrit(COMPONENT_FSAL,
               "NULL mandatory argument passed to %s()", __FUNCTION__);
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
+    }
+
+  /* open mnt file */
+  fp = setmntent(MOUNTED, "r");
+
+  if(fp == NULL)
+    {
+      rc = errno;
+      LogCrit(COMPONENT_FSAL, "Error %d in setmntent(%s): %s", rc, MOUNTED,
+                      strerror(rc));
+      Return(posix2fsal_error(rc), rc, INDEX_FSAL_BuildExportContext);
+    }
+
+  /* Check if mount point is really a gpfs share. If not, we can't continue.*/
+  mntexists = 0;
+  while((p_mnt = getmntent(fp)) != NULL)
+    if(p_mnt->mnt_dir != NULL  && p_mnt->mnt_type != NULL)
+      /* There is probably a macro for "gpfs" type ... not sure where it is. */
+      if (strncmp(p_mnt->mnt_type, "gpfs", 4) == 0)
+        if (strncmp(p_mnt->mnt_dir, p_export_path->path, strlen(p_mnt->mnt_dir)) == 0)
+          mntexists = 1;
+  
+  if (mntexists == 0)
+    {
+      LogMajor(COMPONENT_FSAL,
+               "FSAL BUILD EXPORT CONTEXT: ERROR: Could not open GPFS mount point %s does not exist.",
+               p_export_path->path);
+      ReturnCode(ERR_FSAL_INVAL, 0);
     }
 
   /* save file descriptor to root of GPFS share */
@@ -67,6 +89,10 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
   p_export_context->mount_root_fd = fd;
+  LogFullDebug(COMPONENT_FSAL, "GPFSFSAL_BuildExportContext: %d", p_export_context->mount_root_fd);
+
+  /* Save pointer to fsal_staticfsinfo_t in export context */
+  p_export_context->fe_static_fs_info = &global_fs_info;
 
   /* save filesystem ID */
   rc = statfs(p_export_path->path, &stat_buf);
@@ -80,11 +106,11 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
   p_export_context->fsid[1] = stat_buf.f_fsid.__val[1];
 
   /* save file handle to root of GPFS share */
-  op_context.export_context = p_export_context;
+  op_context.export_context = export_context;
   // op_context.credential = ???
   status = fsal_internal_get_handle(&op_context,
                                     p_export_path,
-                                    &(p_export_context->mount_root_handle));
+                                    (fsal_handle_t *)(&(p_export_context->mount_root_handle)));
   if(FSAL_IS_ERROR(status))
     {
       close(p_export_context->mount_root_fd);
@@ -97,20 +123,6 @@ fsal_status_t GPFSFSAL_BuildExportContext(gpfsfsal_export_context_t * p_export_c
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }
 
-fsal_status_t GPFSFSAL_InitClientContext(gpfsfsal_op_context_t * p_thr_context)
-{
-
-  /* sanity check */
-  if(!p_thr_context)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
-
-  /* initialy set the export entry to none */
-  p_thr_context->export_context = NULL;
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
-
-}
-
 /**
  * FSAL_CleanUpExportContext :
  * this will clean up and state in an export that was created during
@@ -119,7 +131,7 @@ fsal_status_t GPFSFSAL_InitClientContext(gpfsfsal_op_context_t * p_thr_context)
  * \param p_export_context (in, gpfsfsal_export_context_t)
  */
 
-fsal_status_t GPFSFSAL_CleanUpExportContext(gpfsfsal_export_context_t * p_export_context) 
+fsal_status_t GPFSFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context) 
 {
   if(p_export_context == NULL) 
   {
@@ -128,82 +140,9 @@ fsal_status_t GPFSFSAL_CleanUpExportContext(gpfsfsal_export_context_t * p_export
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_CleanUpExportContext);
   }
   
-  close(p_export_context->mount_root_fd);
+  close(((gpfsfsal_export_context_t *)p_export_context)->mount_root_fd);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
-}
-
- /**
- * FSAL_GetUserCred :
- * Get a user credential from its uid.
- * 
- * \param p_cred (in out, fsal_cred_t *)
- *        Initialized credential to be changed
- *        for representing user.
- * \param uid (in, fsal_uid_t)
- *        user identifier.
- * \param gid (in, fsal_gid_t)
- *        group identifier.
- * \param alt_groups (in, fsal_gid_t *)
- *        list of alternative groups.
- * \param nb_alt_groups (in, fsal_count_t)
- *        number of alternative groups.
- *
- * \return major codes :
- *      - ERR_FSAL_PERM : the current user cannot
- *                        get credentials for this uid.
- *      - ERR_FSAL_FAULT : Bad adress parameter.
- *      - ERR_FSAL_SERVERFAULT : unexpected error.
- */
-
-fsal_status_t GPFSFSAL_GetClientContext(gpfsfsal_op_context_t * p_thr_context,  /* IN/OUT  */
-                                    gpfsfsal_export_context_t * p_export_context,   /* IN */
-                                    fsal_uid_t uid,     /* IN */
-                                    fsal_gid_t gid,     /* IN */
-                                    fsal_gid_t * alt_groups,    /* IN */
-                                    fsal_count_t nb_alt_groups  /* IN */
-    )
-{
-
-  fsal_count_t ng = nb_alt_groups;
-  unsigned int i;
-
-  /* sanity check */
-  if(!p_thr_context || !p_export_context)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
-
-  /* set the export specific context */
-  p_thr_context->export_context = p_export_context;
-
-  /* Extracted from  /opt/hpss/src/nfs/nfsd/nfs_Dispatch.c */
-  p_thr_context->credential.user = uid;
-  p_thr_context->credential.group = gid;
-
-  if(ng > FSAL_NGROUPS_MAX)
-    ng = FSAL_NGROUPS_MAX;
-  if((ng > 0) && (alt_groups == NULL))
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
-
-  p_thr_context->credential.nbgroups = ng;
-
-  for(i = 0; i < ng; i++)
-    p_thr_context->credential.alt_groups[i] = alt_groups[i];
-
-  if(isFullDebug(COMPONENT_FSAL))
-    {
-      /* traces: prints p_credential structure */
-      LogFullDebug(COMPONENT_FSAL, "credential modified:");
-      LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
-                   p_thr_context->credential.user,
-                   p_thr_context->credential.group);
-
-      for(i = 0; i < p_thr_context->credential.nbgroups; i++)
-        LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
-                     p_thr_context->credential.alt_groups[i]);
-    }
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
-
 }
 
 /* @} */

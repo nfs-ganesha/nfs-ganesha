@@ -184,13 +184,9 @@ int main(int argc, char *argv[])
   hash_buffer_t buffkey2;
   hash_stat_t statistiques;
   int i;
-  int val;
   int rc;
-  int res;
   struct Temps debut, fin;
   char tmpstr[10];
-  char tmpstr2[10];
-  char tmpstr3[10];
   char strtab[MAXTEST][10];
   int critere_recherche = 0;
   int random_val = 0;

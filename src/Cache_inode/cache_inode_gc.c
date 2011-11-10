@@ -215,6 +215,10 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
   cache_inode_gc_acl(pentry);
 #endif                          /* _USE_NFS4_ACL */
 
+  /* Release symlink, if applicable */
+  if (pentry->internal_md.type == SYMBOLIC_LINK)
+    cache_inode_release_symlink(pentry, &pgcparam->pclient->pool_entry_symlink);
+
   /* Free and Destroy the mutex associated with the pentry */
   V_w(&pentry->lock);
 
@@ -755,7 +759,7 @@ static void cache_inode_gc_acl(cache_entry_t * pentry)
       break;
 
     case SYMBOLIC_LINK:
-      pacl = pentry->object.symlink.attributes.acl;
+      pacl = pentry->object.symlink->attributes.acl;
       break;
 
     case FS_JUNCTION:

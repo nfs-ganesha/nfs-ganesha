@@ -56,6 +56,8 @@ static fsal_staticfsinfo_t default_hpss_info = {
   TRUE,                         /* hard link support */
   TRUE,                         /* symlink support */
   FALSE,                        /* lock support */
+  FALSE,                        /* lock owners */
+  FALSE,                        /* async blocking locks */
   TRUE,                         /* named attributes */
   TRUE,                         /* handles are unique and persistent */
   {10, 0},                      /* Duration of lease at FS in seconds */
@@ -360,6 +362,8 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support);
+  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_owner_support);
+  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_async_block);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
 
   SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);
@@ -394,6 +398,10 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
            global_fs_info.symlink_support);
   LogDebug(COMPONENT_FSAL, "  lock_support  = %d  ",
            global_fs_info.lock_support);
+  LogDebug(COMPONENT_FSAL, "  lock_support_owner  = %d  ",
+           global_fs_info.lock_support_owner);
+  LogDebug(COMPONENT_FSAL, "  lock_support_async_block  = %d  ",
+           global_fs_info.lock_support_async_block);
   LogDebug(COMPONENT_FSAL, "  named_attr  = %d  ",
            global_fs_info.named_attr);
   LogDebug(COMPONENT_FSAL, "  unique_handles  = %d  ",
@@ -484,7 +492,7 @@ static void init_ctx_key(void)
  * The structure pointed by p_ctx must stay allocated and kept unchanged
  * during the FS call.
  */
-int fsal_set_thread_context(fusefsal_op_context_t * p_ctx)
+int fsal_set_thread_context(fsal_op_context_t * p_ctx)
 {
   /* first, we init the key if this is the first time */
   if(pthread_once(&once_ctx, init_ctx_key) != 0)
@@ -500,7 +508,7 @@ int fsal_set_thread_context(fusefsal_op_context_t * p_ctx)
 /**
  * This function retrieves the last context associated to a thread.
  */
-fusefsal_op_context_t *fsal_get_thread_context()
+fsal_op_context_t *fsal_get_thread_context()
 {
   return pthread_getspecific(key_ctx);
 }

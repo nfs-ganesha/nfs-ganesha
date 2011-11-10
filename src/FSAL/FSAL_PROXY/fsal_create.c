@@ -30,8 +30,6 @@
 #include "nfs4.h"
 
 #include "stuff_alloc.h"
-#include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
@@ -79,11 +77,11 @@
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t PROXYFSAL_create(proxyfsal_handle_t * parent_directory_handle,    /* IN */
+fsal_status_t PROXYFSAL_create(fsal_handle_t * parent_directory_handle,    /* IN */
                                fsal_name_t * p_filename,        /* IN */
-                               proxyfsal_op_context_t * p_context,      /* IN */
+                               fsal_op_context_t *context,      /* IN */
                                fsal_accessmode_t accessmode,    /* IN */
-                               proxyfsal_handle_t * object_handle,      /* OUT */
+                               fsal_handle_t * object_handle,      /* OUT */
                                fsal_attrib_list_t * object_attributes   /* [ IN/OUT ] */
     )
 {
@@ -104,6 +102,7 @@ fsal_status_t PROXYFSAL_create(proxyfsal_handle_t * parent_directory_handle,    
   char padfilehandle[FSAL_PROXY_FILEHANDLE_MAX_LEN];
   fsal_status_t fsal_status;
   proxyfsal_file_t fd;
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
 #define FSAL_CREATE_NB_OP_ALLOC 4
 #define FSAL_CREATE_VAL_BUFFER  1024
@@ -293,7 +292,7 @@ fsal_status_t PROXYFSAL_create(proxyfsal_handle_t * parent_directory_handle,    
     }
 
   /* The created file is still opened, to preserve the correct seqid for later use, we close it */
-  fsal_status = FSAL_close(&fd);
+  fsal_status = FSAL_close((fsal_file_t *) &fd);
   if(FSAL_IS_ERROR(fsal_status))
     Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_create);
 
@@ -338,11 +337,11 @@ fsal_status_t PROXYFSAL_create(proxyfsal_handle_t * parent_directory_handle,    
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t PROXYFSAL_mkdir(proxyfsal_handle_t * parent_directory_handle,     /* IN */
+fsal_status_t PROXYFSAL_mkdir(fsal_handle_t * parent_directory_handle,     /* IN */
                               fsal_name_t * p_dirname,  /* IN */
-                              proxyfsal_op_context_t * p_context,       /* IN */
+                              fsal_op_context_t *context,       /* IN */
                               fsal_accessmode_t accessmode,     /* IN */
-                              proxyfsal_handle_t * object_handle,       /* OUT */
+                              fsal_handle_t * object_handle,       /* OUT */
                               fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
@@ -363,6 +362,7 @@ fsal_status_t PROXYFSAL_mkdir(proxyfsal_handle_t * parent_directory_handle,     
   component4 name;
   char nameval[MAXNAMLEN];
   char padfilehandle[FSAL_PROXY_FILEHANDLE_MAX_LEN];
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
   fsal_proxy_internal_fattr_t fattr_internal;
   fsal_attrib_list_t create_mode_attr;
@@ -545,10 +545,10 @@ fsal_status_t PROXYFSAL_mkdir(proxyfsal_handle_t * parent_directory_handle,     
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the attributes->asked_attributes field.
  */
-fsal_status_t PROXYFSAL_link(proxyfsal_handle_t * target_handle,        /* IN */
-                             proxyfsal_handle_t * dir_handle,   /* IN */
+fsal_status_t PROXYFSAL_link(fsal_handle_t * target_handle,        /* IN */
+                             fsal_handle_t * dir_handle,   /* IN */
                              fsal_name_t * p_link_name, /* IN */
-                             proxyfsal_op_context_t * p_context,        /* IN */
+                             fsal_op_context_t *context,        /* IN */
                              fsal_attrib_list_t * attributes    /* [ IN/OUT ] */
     )
 {
@@ -563,6 +563,7 @@ fsal_status_t PROXYFSAL_link(proxyfsal_handle_t * target_handle,        /* IN */
   uint32_t bitmap_res[2];
   component4 name;
   char nameval[MAXNAMLEN];
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
   fsal_proxy_internal_fattr_t fattr_internal;
 
@@ -676,13 +677,13 @@ fsal_status_t PROXYFSAL_link(proxyfsal_handle_t * target_handle,        /* IN */
  *
  * \return ERR_FSAL_NOTSUPP.
  */
-fsal_status_t PROXYFSAL_mknode(proxyfsal_handle_t * parentdir_handle,   /* IN */
+fsal_status_t PROXYFSAL_mknode(fsal_handle_t * parentdir_handle,   /* IN */
                                fsal_name_t * p_node_name,       /* IN */
-                               proxyfsal_op_context_t * p_context,      /* IN */
+                               fsal_op_context_t * p_context,      /* IN */
                                fsal_accessmode_t accessmode,    /* IN */
                                fsal_nodetype_t nodetype,        /* IN */
                                fsal_dev_t * dev,        /* IN */
-                               proxyfsal_handle_t * p_object_handle,    /* OUT (handle to the created node) */
+                               fsal_handle_t * p_object_handle,    /* OUT (handle to the created node) */
                                fsal_attrib_list_t * node_attributes     /* [ IN/OUT ] */
     )
 {

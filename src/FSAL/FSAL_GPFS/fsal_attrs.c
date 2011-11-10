@@ -70,8 +70,8 @@ extern fsal_status_t fsal_acl_2_gpfs_acl(fsal_acl_t *p_fsalacl, gpfsfsal_xstat_t
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_getattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
-                            gpfsfsal_op_context_t * p_context,      /* IN */
+fsal_status_t GPFSFSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
                             fsal_attrib_list_t * p_object_attributes    /* IN/OUT */
     )
 {
@@ -145,9 +145,9 @@ fsal_status_t GPFSFSAL_getattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_getattrs_descriptor(gpfsfsal_file_t * p_file_descriptor,     /* IN */
-                                           gpfsfsal_handle_t * p_filehandle,        /* IN */
-                                           gpfsfsal_op_context_t * p_context,       /* IN */
+fsal_status_t GPFSFSAL_getattrs_descriptor(fsal_file_t * p_file_descriptor,     /* IN */
+                                           fsal_handle_t * p_filehandle,        /* IN */
+                                           fsal_op_context_t * p_context,       /* IN */
                                            fsal_attrib_list_t * p_object_attributes /* IN/OUT */
     )
 {
@@ -178,8 +178,8 @@ fsal_status_t GPFSFSAL_getattrs_descriptor(gpfsfsal_file_t * p_file_descriptor, 
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
-                            gpfsfsal_op_context_t * p_context,      /* IN */
+fsal_status_t GPFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
                             fsal_attrib_list_t * p_attrib_set,  /* IN */
                             fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */
     )
@@ -443,12 +443,11 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
   if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME | FSAL_ATTR_MTIME))
     {
       attr_valid |= XATTR_STAT;
-      attr_changed |= FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME) ?
-                      XATTR_ATIME_SET : XATTR_MTIME_SET;
 
       /* Fill wanted atime. */
       if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_ATIME))
         {
+          attr_changed |= XATTR_ATIME;
           buffxstat.buffstat.st_atime = (time_t) wanted_attrs.atime.seconds;
           LogDebug(COMPONENT_FSAL,
                    "current atime = %lu, new atime = %lu",
@@ -458,6 +457,7 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
       /* Fill wanted mtime. */
       if(FSAL_TEST_MASK(wanted_attrs.asked_attributes, FSAL_ATTR_MTIME))
         {
+          attr_changed |= XATTR_CTIME;
           buffxstat.buffstat.st_mtime = (time_t) wanted_attrs.mtime.seconds;
           LogDebug(COMPONENT_FSAL,
                    "current mtime = %lu, new mtime = %lu",
@@ -549,8 +549,8 @@ fsal_status_t GPFSFSAL_setattrs(gpfsfsal_handle_t * p_filehandle,       /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t GPFSFSAL_getextattrs(gpfsfsal_handle_t * p_filehandle, /* IN */
-                                   gpfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t GPFSFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
+                                   fsal_op_context_t * p_context,        /* IN */
                                    fsal_extattrib_list_t * p_object_attributes /* OUT */
     )
 {

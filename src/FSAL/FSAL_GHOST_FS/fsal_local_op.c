@@ -104,7 +104,6 @@ fsal_status_t FSAL_test_access(fsal_op_context_t * p_context,   /* IN */
 
   missing_access = FSAL_MODE_MASK(access_type); /* only modes, no ACLs here */
 
-
   /* owner permissions ? */
 
   if(p_context->credential.user == object_attributes->owner)

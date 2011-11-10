@@ -49,8 +49,8 @@
  *        - Another error code if an error occured.
  */
 
-fsal_status_t GPFSFSAL_rcp(gpfsfsal_handle_t * filehandle,      /* IN */
-                       gpfsfsal_op_context_t * p_context,   /* IN */
+fsal_status_t GPFSFSAL_rcp(fsal_handle_t * filehandle,      /* IN */
+                       fsal_op_context_t * p_context,   /* IN */
                        fsal_path_t * p_local_path,      /* IN */
                        fsal_rcpflag_t transfer_opt      /* IN */
     )
@@ -221,7 +221,7 @@ fsal_status_t GPFSFSAL_rcp(gpfsfsal_handle_t * filehandle,      /* IN */
       /* initialize error code */
       st = FSAL_STATUS_NO_ERROR;
 
-      
+      LogFullDebug(COMPONENT_FSAL, "Read a block from source");
 
       /* read */
 
@@ -258,7 +258,6 @@ fsal_status_t GPFSFSAL_rcp(gpfsfsal_handle_t * filehandle,      /* IN */
               LogFullDebug(COMPONENT_FSAL,
                            "End of file on local file system");
             }
-
         }
       else                      /* from FSAL filesystem */
         {
@@ -269,6 +268,7 @@ fsal_status_t GPFSFSAL_rcp(gpfsfsal_handle_t * filehandle,      /* IN */
 
           if(FSAL_IS_ERROR(st))
             break;              /* exit loop */
+
           if(fs_size > 0)
             {
               LogFullDebug(COMPONENT_FSAL,
@@ -306,13 +306,4 @@ fsal_status_t GPFSFSAL_rcp(gpfsfsal_handle_t * filehandle,      /* IN */
 
   Return(st.major, st.minor, INDEX_FSAL_rcp);
 
-}
-
-fsal_status_t GPFSFSAL_rcp_by_fileid(gpfsfsal_handle_t * filehandle,    /* IN */
-                                 fsal_u64_t fileid,     /* IN */
-                                 gpfsfsal_op_context_t * p_context, /* IN */
-                                 fsal_path_t * p_local_path,    /* IN */
-                                 fsal_rcpflag_t transfer_opt /* IN */ )
-{
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }

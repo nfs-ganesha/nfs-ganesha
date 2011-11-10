@@ -126,8 +126,11 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* stats */
-  pclient->stat.nb_call_total += 1;
-  pclient->stat.func_stats.nb_call[CACHE_INODE_GET] += 1;
+  /* cache_invalidate calls this with no context or client */
+  if (pclient) {
+    pclient->stat.nb_call_total += 1;
+    pclient->stat.func_stats.nb_call[CACHE_INODE_GET] += 1;
+  }
 
   /* Turn the input to a hash key */
   if(cache_inode_fsaldata_2_key(&key, pfsdata, pclient))
@@ -135,11 +138,12 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
       *pstatus = CACHE_INODE_UNAPPROPRIATED_KEY;
 
       /* stats */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;
-
-      ppoolfsdata = (cache_inode_fsal_data_t *) key.pdata;
-      ReleaseToPool(ppoolfsdata, &pclient->pool_key);
-
+      /* cache_invalidate calls this with no context or client */
+      if (pclient) {
+	pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;
+	ppoolfsdata = (cache_inode_fsal_data_t *) key.pdata;
+	ReleaseToPool(ppoolfsdata, &pclient->pool_key);
+      }
       return NULL;
     }
 
@@ -152,9 +156,18 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
       /* return attributes additionally */
       cache_inode_get_attributes(pentry, pattr);
 
+      if ( !pclient ) {
+	/* invalidate. Just return it to mark it stale and go on. */
+	return( pentry );
+      }
+
       break;
 
     case HASHTABLE_ERROR_NO_SUCH_KEY:
+      if ( !pclient ) {
+	/* invalidate. Just return */
+	return( NULL );
+      }
       /* Cache miss, allocate a new entry */
 
       /* If we ask for a dir cont (in this case pfsdata.cookie != FSAL_DIR_BEGINNING, we have 
@@ -266,6 +279,9 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
         }
 
       /* Add the entry to the cache */
+      if ( type == 1)
+	LogCrit(COMPONENT_CACHE_INODE,"inode get");
+
       if((pentry = cache_inode_new_entry(pfsdata, &fsal_attributes, type, &create_arg, NULL,    /* never used to add a new DIR_CONTINUE within the scope of this function */
                                          ht, pclient, pcontext, FALSE,  /* This is a population, not a creation */
                                          pstatus)) == NULL)
@@ -291,6 +307,11 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
       LogCrit(COMPONENT_CACHE_INODE,
               "cache_inode_get returning CACHE_INODE_INVALID_ARGUMENT - this should not have happened");
 
+      if ( !pclient ) {
+        /* invalidate. Just return */
+        return( NULL );
+      }
+
       /* stats */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;
 
@@ -301,7 +322,16 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
       break;
     }
 
+  /* Want to ASSERT pclient at this point */
   *pstatus = CACHE_INODE_SUCCESS;
+  
+  if (pentry->object.symlink != NULL) {
+  	int stop_here;
+	stop_here = 1;
+	if (stop_here) {
+		stop_here = 2;
+	}
+  }
 
   /* valid the found entry, if this is not feasable, returns nothing to the client */
   if( plocation != NULL )

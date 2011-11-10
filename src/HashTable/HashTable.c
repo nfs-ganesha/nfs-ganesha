@@ -175,7 +175,6 @@
 #include <string.h>
 #include <pthread.h>
 #include "RW_Lock.h"
-#include "BuddyMalloc.h"
 #include "HashTable.h"
 #include "stuff_alloc.h"
 #include "log_macros.h"
@@ -202,6 +201,22 @@
  * @defgroup HashTableInternalFunctions
  *@{
  */
+
+const char *hash_table_err_to_str(int err)
+{
+  switch(err)
+    {
+      case HASHTABLE_SUCCESS:                  return "HASHTABLE_SUCCESS";
+      case HASHTABLE_UNKNOWN_HASH_TYPE:        return "HASHTABLE_UNKNOWN_HASH_TYPE";
+      case HASHTABLE_INSERT_MALLOC_ERROR:      return "HASHTABLE_INSERT_MALLOC_ERROR";
+      case HASHTABLE_ERROR_NO_SUCH_KEY:        return "HASHTABLE_ERROR_NO_SUCH_KEY";
+      case HASHTABLE_ERROR_KEY_ALREADY_EXISTS: return "HASHTABLE_ERROR_KEY_ALREADY_EXISTS";
+      case HASHTABLE_ERROR_INVALID_ARGUMENT:   return "HASHTABLE_ERROR_INVALID_ARGUMENT";
+      case HASHTABLE_ERROR_DELALL_FAIL:        return "HASHTABLE_ERROR_DELALL_FAIL";
+      case HASHTABLE_NOT_DELETED:              return "HASHTABLE_NOT_DELETED";
+    }
+  return "UNKNOWN HASH TABLE ERROR";
+}
 
 /**
  * 
@@ -312,7 +327,7 @@ unsigned int rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef
  *
  */
 static int Key_Locate(hash_table_t * ht, hash_buffer_t * buffkey, unsigned int hashval,
-                      int rbt_value, struct rbt_node **ppnode)
+                      unsigned int rbt_value, struct rbt_node **ppnode)
 {
   struct rbt_head *tete_rbt;
   hash_data_t *pdata = NULL;
@@ -321,7 +336,11 @@ static int Key_Locate(hash_table_t * ht, hash_buffer_t * buffkey, unsigned int h
 
   /* Sanity check */
   if(ht == NULL || buffkey == NULL || ppnode == NULL)
-    return HASHTABLE_ERROR_INVALID_ARGUMENT;
+    {
+      LogFullDebug(COMPONENT_HASHTABLE,
+                   "Returning HASHTABLE_ERROR_INVALID_ARGUMENT");
+      return HASHTABLE_ERROR_INVALID_ARGUMENT;
+    }
 
   /* Find the head of the rbt */
   tete_rbt = &(ht->array_rbt[hashval]);
@@ -331,7 +350,11 @@ static int Key_Locate(hash_table_t * ht, hash_buffer_t * buffkey, unsigned int h
 
   /* Find was successfull ? */
   if(pn == NULL)
-    return HASHTABLE_ERROR_NO_SUCH_KEY;
+    {
+      LogFullDebug(COMPONENT_HASHTABLE,
+                   "Returning HASHTABLE_ERROR_NO_SUCH_KEY because pn == NULL, rbtval = %u", rbt_value);
+      return HASHTABLE_ERROR_NO_SUCH_KEY;
+    }
 
   /* For each entry with this value, compare the key value */
   while((pn != 0) && (RBT_VALUE(pn) == rbt_value))
@@ -348,7 +371,11 @@ static int Key_Locate(hash_table_t * ht, hash_buffer_t * buffkey, unsigned int h
 
   /* We didn't find anything */
   if(!found)
-    return HASHTABLE_ERROR_NO_SUCH_KEY;
+    {
+      LogFullDebug(COMPONENT_HASHTABLE,
+                   "Returning HASHTABLE_ERROR_NO_SUCH_KEY because not found");
+      return HASHTABLE_ERROR_NO_SUCH_KEY;
+    }
 
   /* Key was found */
   *ppnode = pn;
@@ -475,7 +502,7 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
 
   for(i = 0; i < hparam.index_size; i++)
     {
-      LogFullDebug(COMPONENT_HASHTABLE,
+      LogFullDebug(COMPONENT_MEMALLOC,
                    "HASH TABLE PREALLOC: Allocating %d new nodes",
                    hparam.nb_node_prealloc);
 
@@ -547,7 +574,7 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
                            hash_buffer_t * buffval, hashtable_set_how_t how)
 {
   unsigned int hashval = 0;
-  int rbt_value = 0;
+  unsigned int rbt_value = 0;
   struct rbt_head *tete_rbt = NULL;
   struct rbt_node *qn = NULL;
   struct rbt_node *pn = NULL;
@@ -575,7 +602,7 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
 
   tete_rbt = &(ht->array_rbt[hashval]);
   LogFullDebug(COMPONENT_HASHTABLE,
-               "Key = %p   Value = %p  hashval = %u  rbt_value = %x",
+               "Key = %p   Value = %p  hashval = %u  rbt_value = %u",
                buffkey->pdata, buffval->pdata, hashval, rbt_value);
 
   /* acquire mutex for protection */
@@ -601,7 +628,7 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
       pdata = RBT_OPAQ(qn);
 
       LogFullDebug(COMPONENT_HASHTABLE,
-                   "Ecrasement d'une ancienne entree (k=%p,v=%p)",
+                   "Entry already exists (k=%p,v=%p)",
                    buffkey->pdata, buffval->pdata);
 
     }
@@ -641,7 +668,7 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
       RBT_INSERT(tete_rbt, qn, pn);
 
       LogFullDebug(COMPONENT_HASHTABLE,
-                   "Creation d'une nouvelle entree (k=%p,v=%p), qn=%p, pdata=%p",
+                   "Create new entry (k=%p,v=%p), qn=%p, pdata=%p",
                    buffkey->pdata, buffval->pdata, qn, RBT_OPAQ(qn));
     }
 
@@ -678,13 +705,14 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
  * @see HashTable_Del
  */
 
-int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * buffval)
+int HashTable_GetRef(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * buffval,
+                     void (*get_ref)(hash_buffer_t *) )
 {
-  unsigned int hashval;
+  unsigned long hashval;
   struct rbt_node *pn;
   struct rbt_head *tete_rbt;
   hash_data_t *pdata = NULL;
-  int rbt_value = 0;
+  unsigned long rbt_value = 0;
   int rc = 0;
 
   /* Sanity check */
@@ -694,12 +722,17 @@ int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * bu
   /* Compute values to locate into the hashtable */
   if( ht->parameter.hash_func_both != NULL )
    {
-      if( (*(ht->parameter.hash_func_both))( &ht->parameter, buffkey, &hashval, &rbt_value ) == 0 ) 
+     uint32_t hashval32, rbt_value32;
+
+     if((*(ht->parameter.hash_func_both))( &ht->parameter, buffkey, &hashval32, &rbt_value32) == 0) 
        return HASHTABLE_ERROR_INVALID_ARGUMENT;
+
+     hashval   = (unsigned long) hashval32;
+     rbt_value = (unsigned long) rbt_value32;
    }
   else
    {
-    hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
+    hashval   = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
     rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
    }
 
@@ -723,8 +756,110 @@ int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * bu
 
   ht->stat_dynamic[hashval].ok.nb_get += 1;
 
+  if(get_ref != NULL)
+    get_ref(buffval);
+
   /* Release mutex */
   V_r(&(ht->array_lock[hashval]));
+
+  return HASHTABLE_SUCCESS;
+}                               /* HashTable_Get */
+
+int HashTable_Get(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * buffval)
+{
+  return HashTable_GetRef(ht, buffkey, buffval, NULL);
+}                               /* HashTable_Get */
+
+/**
+ * 
+ * HashTable_Get_and_Del: Try to retrieve the value associated with a key and remove from the hash table if found.
+ *
+ * Try to retrieve the value associated with a key. The structure buffval will point to the object found if successfull.
+ *
+ * @param ht the hashtable to be used.
+ * @param buffkey a pointeur to an object of type hash_buffer_t which describe the key location in memory.
+ * @param buffval a pointeur to an object of type hash_buffer_t which describe the value location in memory.
+ *
+ * @return HASHTABLE_SUCCESS if successfull.
+ * @return HASHTABLE_ERROR_NO_SUCH_KEY is the key was not found.
+ *
+ * @see HashTable_Set
+ * @see HashTable_Init
+ * @see HashTable_Del
+ */
+
+int HashTable_Get_and_Del(hash_table_t  * ht,
+                          hash_buffer_t * buffkey,
+                          hash_buffer_t * buffval,
+                          hash_buffer_t * buff_used_key)
+{
+  unsigned long hashval;
+  struct rbt_node *pn;
+  struct rbt_head *tete_rbt;
+  hash_data_t *pdata = NULL;
+  unsigned long rbt_value = 0;
+  int rc = 0;
+
+  /* Sanity check */
+  if(ht == NULL || buffkey == NULL || buffval == NULL)
+    return HASHTABLE_ERROR_INVALID_ARGUMENT;
+
+  /* Compute values to locate into the hashtable */
+  if( ht->parameter.hash_func_both != NULL )
+   {
+     uint32_t hashval32, rbt_value32;
+
+     if((*(ht->parameter.hash_func_both))( &ht->parameter, buffkey, &hashval32, &rbt_value32) == 0) 
+       return HASHTABLE_ERROR_INVALID_ARGUMENT;
+
+     hashval   = (unsigned long) hashval32;
+     rbt_value = (unsigned long) rbt_value32;
+   }
+  else
+   {
+    hashval   = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
+    rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
+   }
+
+  tete_rbt = &(ht->array_rbt[hashval]);
+
+  /* Acquire mutex */
+  P_w(&(ht->array_lock[hashval]));
+
+  /* I get the node with this value that is located on the left (first with this value in the rbtree) */
+  if((rc = Key_Locate(ht, buffkey, hashval, rbt_value, &pn)) != HASHTABLE_SUCCESS)
+    {
+      ht->stat_dynamic[hashval].notfound.nb_get += 1;
+      V_w(&(ht->array_lock[hashval]));
+      return rc;
+    }
+
+  /* Key was found */
+  pdata = (hash_data_t *) RBT_OPAQ(pn);
+  *buffval = pdata->buffval;
+
+  /* Return the key buffer back to the end user if pusedbuffkey isn't NULL */
+  if(buff_used_key != NULL)
+    *buff_used_key = pdata->buffkey;
+
+  ht->stat_dynamic[hashval].ok.nb_get += 1;
+
+  /* Now remove the entry */
+  RBT_UNLINK(tete_rbt, pn);
+
+  /* the key was located, the deletion is done */
+  ht->stat_dynamic[hashval].nb_entries -= 1;
+
+  /* put back the pdata buffer to pool */
+  ReleaseToPool(pdata, &ht->pdata_prealloc[hashval]);
+
+  /* Put the node back in the table of preallocated nodes (it could be reused) */
+  ReleaseToPool(pn, &ht->node_prealloc[hashval]);
+
+  ht->stat_dynamic[hashval].ok.nb_del += 1;
+
+  /* Release mutex */
+  V_w(&(ht->array_lock[hashval]));
 
   return HASHTABLE_SUCCESS;
 }                               /* HashTable_Get */
@@ -820,12 +955,13 @@ int HashTable_Delall(hash_table_t * ht, int (*free_func)(hash_buffer_t, hash_buf
  * @see HashTable_Init
  * @see HashTable_Get
  */
-int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
-                  hash_buffer_t * p_usedbuffkey, hash_buffer_t * p_usedbuffdata)
+int HashTable_DelRef(hash_table_t * ht, hash_buffer_t * buffkey,
+                     hash_buffer_t * p_usedbuffkey, hash_buffer_t * p_usedbuffdata,
+                     int (*put_ref)(hash_buffer_t *) )
 {
   unsigned int hashval;
   struct rbt_node *pn;
-  int rbt_value = 0;
+  unsigned int rbt_value = 0;
   struct rbt_head *tete_rbt;
   hash_data_t *pdata = NULL;
   int rc = 0;
@@ -866,6 +1002,13 @@ int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
   if(p_usedbuffdata != NULL)
     *p_usedbuffdata = pdata->buffval;
 
+  if(put_ref != NULL)
+    if(put_ref(&pdata->buffval) != 0)
+      {
+        V_w(&(ht->array_lock[hashval]));
+        return HASHTABLE_NOT_DELETED;
+      }
+
   /* Key was found */
   tete_rbt = &(ht->array_rbt[hashval]);
   RBT_UNLINK(tete_rbt, pn);
@@ -886,6 +1029,12 @@ int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
 
   return HASHTABLE_SUCCESS;
 }                               /*  HashTable_Del */
+
+int HashTable_Del(hash_table_t * ht, hash_buffer_t * buffkey,
+                  hash_buffer_t * p_usedbuffkey, hash_buffer_t * p_usedbuffdata)
+{
+  return HashTable_DelRef(ht, buffkey, p_usedbuffkey, p_usedbuffdata, NULL);
+}
 
 /**
  * 
@@ -1027,21 +1176,102 @@ void HashTable_Log(log_components_t component, hash_table_t * ht)
   if(ht == NULL)
     return;
 
-  LogFullDebug(COMPONENT_HASHTABLE,
+  LogFullDebug(component,
                "The hash has %d nodes (this number MUST be a prime integer for performance's issues)",
                 ht->parameter.index_size);
 
   for(i = 0; i < ht->parameter.index_size; i++)
     nb_entries += ht->stat_dynamic[i].nb_entries;
 
-  LogFullDebug(COMPONENT_HASHTABLE,"The hash contains %d entries", nb_entries);
+  LogFullDebug(component, "The hash contains %d entries", nb_entries);
 
   for(i = 0; i < ht->parameter.index_size; i++)
     {
       tete_rbt = &((ht->array_rbt)[i]);
-      LogFullDebug(COMPONENT_HASHTABLE,
-                   "The node in position %d contains:  %d entries ",
+      LogFullDebug(component,
+                   "The node in position %d contains: %d entries",
                    i, tete_rbt->rbt_num_node);
+      RBT_LOOP(tete_rbt, it)
+      {
+        pdata = (hash_data_t *) it->rbt_opaq;
+
+        ht->parameter.key_to_str(&(pdata->buffkey), dispkey);
+        ht->parameter.val_to_str(&(pdata->buffval), dispval);
+
+        /* Compute values to locate into the hashtable */
+        if(ht->parameter.hash_func_both != NULL)
+         {
+           uint32_t rbtval32;
+           uint32_t hashval32;
+           if((*(ht->parameter.hash_func_both))(&ht->parameter, &(pdata->buffkey), &hashval32, &rbtval32) == 0) 
+	     {
+               LogCrit(component,
+                       "Possible implementation error in hash_func_both");
+               hashval = 0;
+               rbtval  = 0;
+             }
+           else
+             {
+               hashval = rbtval32;
+               rbtval  = hashval32;
+             }
+          }
+        else
+          {
+            hashval = (*(ht->parameter.hash_func_key)) (&ht->parameter, &(pdata->buffkey));
+            rbtval  = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, &(pdata->buffkey));
+          }
+
+        LogFullDebug(component,
+                     "%s => %s; hashval=%lu rbtval=%lu",
+                     dispkey, dispval, hashval, rbtval);
+        RBT_INCREMENT(it);
+      }
+    }
+}                               /* HashTable_Print */
+
+/**
+ * 
+ * HashTable_Print: Print information about the hashtable (mostly for debugging purpose).
+ *
+ * Print information about the hashtable (mostly for debugging purpose).
+ *
+ * @param ht the hashtable to be used.
+ * @return none (returns void).
+ *
+ */
+void HashTable_Print( hash_table_t * ht)
+{
+  struct rbt_node *it;
+  struct rbt_head *tete_rbt;
+  hash_data_t *pdata = NULL;
+  char dispkey[HASHTABLE_DISPLAY_STRLEN];
+  char dispval[HASHTABLE_DISPLAY_STRLEN];
+  unsigned int i = 0;
+  int nb_entries = 0;
+
+  unsigned long rbtval;
+  unsigned long hashval;
+
+  /* Sanity check */
+  if(ht == NULL)
+    return;
+
+  fprintf(stderr, 
+          "The hash has %d nodes (this number MUST be a prime integer for performance's issues)\n",
+          ht->parameter.index_size);
+
+  for(i = 0; i < ht->parameter.index_size; i++)
+    nb_entries += ht->stat_dynamic[i].nb_entries;
+
+  fprintf(stderr,"The hash contains %d entries\n", nb_entries);
+
+  for(i = 0; i < ht->parameter.index_size; i++)
+    {
+      tete_rbt = &((ht->array_rbt)[i]);
+      fprintf(stderr,
+              "The node in position %d contains:  %d entries \n",
+              i, tete_rbt->rbt_num_node);
       RBT_LOOP(tete_rbt, it)
       {
         pdata = (hash_data_t *) it->rbt_opaq;
@@ -1067,27 +1297,13 @@ void HashTable_Log(log_components_t component, hash_table_t * ht)
             rbtval = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, &(pdata->buffkey));
           }
 
-        LogFullDebug(component, "%s => %s; hashval=%lu rbtval=%lu ",
-                     dispkey, dispval, hashval, rbtval);
+        fprintf(stderr, "%s => %s; hashval=%lu rbtval=%lu\n ",
+                dispkey, dispval, hashval, rbtval);
         RBT_INCREMENT(it);
       }
     }
 }                               /* HashTable_Print */
 
-/**
- * 
- * HashTable_Print: Print information about the hashtable (mostly for debugging purpose).
- *
- * Print information about the hashtable (mostly for debugging purpose).
- *
- * @param ht the hashtable to be used.
- * @return none (returns void).
- *
- */
-void HashTable_Print(hash_table_t * ht)
-{
-  HashTable_Log(COMPONENT_STDOUT, ht);
-}                               /* HashTable_Print */
 
 /* @} */
 

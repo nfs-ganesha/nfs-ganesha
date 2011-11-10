@@ -53,6 +53,7 @@
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
+#include <assert.h>
 
 cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * plink_content, hash_table_t * ht,       /* Unused, kept for protototype's homogeneity */
                                           cache_inode_client_t * pclient,
@@ -102,7 +103,8 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
       break;
 
     case SYMBOLIC_LINK:
-      fsal_status = FSAL_pathcpy(plink_content, &(pentry->object.symlink.content));
+      assert(pentry->object.symlink);
+      fsal_status = FSAL_pathcpy(plink_content, &(pentry->object.symlink->content)); /* need copy ctor? */
       if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);

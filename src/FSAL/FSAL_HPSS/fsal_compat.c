@@ -12,7 +12,6 @@
 #endif
 
 #include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_glue.h"
 #include "fsal_internal.h"
 
@@ -237,14 +236,6 @@ fsal_status_t WRAP_HPSSFSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN 
   return HPSSFSAL_close_by_fileid((hpssfsal_file_t *) file_descriptor, fileid);
 }
 
-fsal_status_t WRAP_HPSSFSAL_static_fsinfo(fsal_handle_t * p_filehandle, /* IN */
-                                          fsal_op_context_t * p_context,        /* IN */
-                                          fsal_staticfsinfo_t * p_staticinfo /* OUT */ )
-{
-  return HPSSFSAL_static_fsinfo((hpssfsal_handle_t *) p_filehandle,
-                                (hpssfsal_op_context_t *) p_context, p_staticinfo);
-}
-
 fsal_status_t WRAP_HPSSFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle,        /* IN */
                                            fsal_op_context_t * p_context,       /* IN */
                                            fsal_dynamicfsinfo_t *
@@ -346,29 +337,6 @@ fsal_status_t WRAP_HPSSFSAL_lookupJunction(fsal_handle_t * p_junction_handle,   
                                  (hpssfsal_op_context_t *) p_context,
                                  (hpssfsal_handle_t *) p_fsoot_handle,
                                  p_fsroot_attributes);
-}
-
-fsal_status_t WRAP_HPSSFSAL_lock(fsal_file_t * obj_handle,
-                                 fsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
-{
-  return HPSSFSAL_lock((hpssfsal_file_t *) obj_handle, (hpssfsal_lockdesc_t *) ldesc,
-                       blocking);
-}
-
-fsal_status_t WRAP_HPSSFSAL_changelock(fsal_lockdesc_t * lock_descriptor,       /* IN / OUT */
-                                       fsal_lockparam_t * lock_info /* IN */ )
-{
-  return HPSSFSAL_changelock((hpssfsal_lockdesc_t *) lock_descriptor, lock_info);
-}
-
-fsal_status_t WRAP_HPSSFSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
-{
-  return HPSSFSAL_unlock((hpssfsal_file_t *) obj_handle, (hpssfsal_lockdesc_t *) ldesc);
-}
-
-fsal_status_t WRAP_HPSSFSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
-{
-  return HPSSFSAL_getlock((hpssfsal_file_t *) obj_handle, (hpssfsal_lockdesc_t *) ldesc);
 }
 
 fsal_status_t WRAP_HPSSFSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle)
@@ -695,7 +663,6 @@ fsal_functions_t fsal_hpss_functions = {
   .fsal_close = WRAP_HPSSFSAL_close,
   .fsal_open_by_fileid = WRAP_HPSSFSAL_open_by_fileid,
   .fsal_close_by_fileid = WRAP_HPSSFSAL_close_by_fileid,
-  .fsal_static_fsinfo = WRAP_HPSSFSAL_static_fsinfo,
   .fsal_dynamic_fsinfo = WRAP_HPSSFSAL_dynamic_fsinfo,
   .fsal_init = WRAP_HPSSFSAL_Init,
   .fsal_terminate = WRAP_HPSSFSAL_terminate,
@@ -709,10 +676,6 @@ fsal_functions_t fsal_hpss_functions = {
   .fsal_lookup = WRAP_HPSSFSAL_lookup,
   .fsal_lookuppath = WRAP_HPSSFSAL_lookupPath,
   .fsal_lookupjunction = WRAP_HPSSFSAL_lookupJunction,
-  .fsal_lock = WRAP_HPSSFSAL_lock,
-  .fsal_changelock = WRAP_HPSSFSAL_changelock,
-  .fsal_unlock = WRAP_HPSSFSAL_unlock,
-  .fsal_getlock = WRAP_HPSSFSAL_getlock,
   .fsal_cleanobjectresources = WRAP_HPSSFSAL_CleanObjectResources,
   .fsal_set_quota = WRAP_HPSSFSAL_set_quota,
   .fsal_get_quota = WRAP_HPSSFSAL_get_quota,
@@ -759,7 +722,6 @@ fsal_const_t fsal_hpss_consts = {
   .fsal_export_context_t_size = sizeof(hpssfsal_export_context_t),
   .fsal_file_t_size = sizeof(hpssfsal_file_t),
   .fsal_cookie_t_size = sizeof(hpssfsal_cookie_t),
-  .fsal_lockdesc_t_size = sizeof(hpssfsal_lockdesc_t),
   .fsal_cred_t_size = sizeof(hpssfsal_cred_t),
   .fs_specific_initinfo_t_size = sizeof(hpssfs_specific_initinfo_t),
   .fsal_dir_t_size = sizeof(hpssfsal_dir_t)

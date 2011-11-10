@@ -74,6 +74,9 @@ typedef unsigned long long int u_int64_t;
 #include "err_fsal.h"
 #include "RW_Lock.h"
 
+/* Forward declarations */
+typedef struct fsal_staticfsinfo_t fsal_staticfsinfo_t;
+
 /* FSAL function indexes, and names */
 
 #define INDEX_FSAL_lookup                0
@@ -96,14 +99,14 @@ typedef unsigned long long int u_int64_t;
 #define INDEX_FSAL_rename               17
 #define INDEX_FSAL_unlink               18
 #define INDEX_FSAL_mknode               19
-#define INDEX_FSAL_static_fsinfo        20
+#define INDEX_FSAL_unused_20            20
 #define INDEX_FSAL_dynamic_fsinfo       21
 #define INDEX_FSAL_rcp                  22
 #define INDEX_FSAL_Init                 23
 #define INDEX_FSAL_get_stats            24
-#define INDEX_FSAL_lock                 25
-#define INDEX_FSAL_changelock           26
-#define INDEX_FSAL_unlock               27
+#define INDEX_FSAL_unused_25            25
+#define INDEX_FSAL_unused_26            26
+#define INDEX_FSAL_unused_27            27
 #define INDEX_FSAL_BuildExportContext   28
 #define INDEX_FSAL_InitClientContext    29
 #define INDEX_FSAL_GetClientContext     30
@@ -125,13 +128,19 @@ typedef unsigned long long int u_int64_t;
 #define INDEX_FSAL_unlink_access        46
 #define INDEX_FSAL_link_access          47
 #define INDEX_FSAL_create_access        48
-#define INDEX_FSAL_getlock	        49
+#define INDEX_FSAL_unused_49	        49
 #define INDEX_FSAL_CleanUpExportContext 50
 #define INDEX_FSAL_getextattrs          51
 #define INDEX_FSAL_sync                 52
+#define INDEX_FSAL_getattrs_descriptor  53
+#define INDEX_FSAL_lock_op              54
+#define INDEX_FSAL_UP_init              55
+#define INDEX_FSAL_UP_addfilter         56
+#define INDEX_FSAL_UP_getevents         57
+#define INDEX_FSAL_unused_58            58
 
 /* number of FSAL functions */
-#define FSAL_NB_FUNC  52
+#define FSAL_NB_FUNC  59
 
 extern const char *fsal_function_names[];
 
@@ -191,6 +200,13 @@ typedef enum fsal_nodetype__
 #define FSAL_NGROUPS_MAX  32
 
 /** object name.  */
+
+struct user_credentials {
+	uid_t user;
+	gid_t group;
+	int nbgroups;
+	gid_t alt_groups[FSAL_NGROUPS_MAX];
+};
 
 typedef struct fsal_name__
 {
@@ -666,34 +682,6 @@ typedef struct fsal_seek__
   fsal_off_t offset;
 } fsal_seek_t;
 
-/** File locking info */
-
-typedef enum fsal_locktype_t
-{
-  FSAL_TEST_SHARED,             /* test if a lock would conflict with this shared lock */
-  FSAL_TEST_EXCLUSIVE,          /* test if a lock would conflict with this exclusive lock */
-
-  FSAL_TRY_LOCK_SHARED,         /* try to get a shared lock (non-blocking)     */
-  FSAL_TRY_LOCK_EXCLUSIVE,      /* try to get an exclusive lock (non-blocking) */
-
-  FSAL_LOCK_SHARED,             /* get a shared lock (blocking)     */
-  FSAL_LOCK_EXCLUSIVE,          /* get an exclusive lock (blocking) */
-
-} fsal_locktype_t;
-
-typedef struct fsal_lockparam_t
-{
-
-  fsal_locktype_t lock_type;
-
-  fsal_off_t range_start;
-  fsal_size_t range_length;
-
-  /* for getting back a lock during lease time after a server's crash */
-  int reclaim;
-
-} fsal_lockparam_t;
-
 /** FH expire type (mask). */
 
 typedef fsal_ushort_t fsal_fhexptype_t;
@@ -721,7 +709,7 @@ typedef fsal_ushort_t fsal_fhexptype_t;
 
 /** File system static info. */
 
-typedef struct fsal_staticfsinfo__
+struct fsal_staticfsinfo_t
 {
 
   fsal_size_t maxfilesize;          /**< maximum allowed filesize     */
@@ -735,7 +723,9 @@ typedef struct fsal_staticfsinfo__
   fsal_fhexptype_t fh_expire_type;  /**< handle persistency indicator   */
   fsal_boolean_t link_support;      /**< FS supports hardlinks ?        */
   fsal_boolean_t symlink_support;   /**< FS supports symlinks  ?        */
-  fsal_boolean_t lock_support;      /**< FS supports file locking ?     */
+  fsal_boolean_t lock_support;             /**< FS supports file locking ?     */
+  fsal_boolean_t lock_support_owner;       /**< FS supports lock owners ?    */
+  fsal_boolean_t lock_support_async_block; /**< FS supports async blocking locks ? */
   fsal_boolean_t named_attr;        /**< FS supports named attributes.  */
   fsal_boolean_t unique_handles;    /**< Handles are unique and persistent.*/
   fsal_time_t lease_time;           /**< Duration of lease at FS in seconds */
@@ -764,7 +754,7 @@ typedef struct fsal_staticfsinfo__
                                            *   to read/modify xattrs value.
                                            */
 
-} fsal_staticfsinfo_t;
+};
 
 /** File system dynamic info. */
 
@@ -809,6 +799,7 @@ typedef struct fs_common_initinfo__
         maxfilesize, maxlink, maxnamelen, maxpathlen,
         no_trunc, chown_restricted, case_insensitive,
         case_preserving, fh_expire_type, link_support, symlink_support, lock_support,
+        lock_support_owner, lock_support_async_block,
         named_attr, unique_handles, lease_time, acl_support, cansettime,
         homogenous, supported_attrs, maxread, maxwrite, umask,
         auth_exportpath_xdev, xattr_access_rights;
@@ -855,8 +846,8 @@ typedef struct fsal_statistics__
 
 typedef struct fsal_status__
 {
-  int major;    /**< major error code */
-  int minor;    /**< minor error code */
+  fsal_errors_t major;    /**< major error code */
+  int           minor;    /**< minor error code */
 } fsal_status_t;
 
 /* No error constant */
@@ -930,5 +921,30 @@ typedef enum fsal_digesttype_t
       , FSAL_DIGEST_NODETYPE
 #endif
 } fsal_digesttype_t;
+
+typedef enum fsal_lock_op_t
+{
+  FSAL_OP_LOCKT,  /* test if this lock may be applied      */
+  FSAL_OP_LOCK,   /* request a non-blocking lock           */
+  FSAL_OP_LOCKB,  /* request a blocking lock         (NEW) */
+  FSAL_OP_UNLOCK, /* release a lock                        */
+  FSAL_OP_CANCEL  /* cancel a blocking lock          (NEW) */
+
+} fsal_lock_op_t;
+
+typedef enum fsal_lock_t
+{
+  FSAL_LOCK_R,
+  FSAL_LOCK_W,
+  FSAL_NO_LOCK
+} fsal_lock_t;
+
+typedef struct fsal_lock_param_t
+{
+  fsal_lock_t         lock_type;
+  fsal_size_t         lock_start;
+  fsal_size_t         lock_length;
+  pid_t               lock_owner;
+} fsal_lock_param_t;
 
 #endif                          /* _FSAL_TYPES_H */

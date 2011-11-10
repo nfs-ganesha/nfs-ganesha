@@ -75,6 +75,7 @@ typedef struct loglev
 {
   log_levels_t value;
   char *str;
+  char *short_str;
   int syslog_level;
 } log_level_t;
 

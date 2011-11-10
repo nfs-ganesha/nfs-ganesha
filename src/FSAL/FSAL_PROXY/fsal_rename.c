@@ -30,8 +30,6 @@
 #include "nfs4.h"
 
 #include "stuff_alloc.h"
-#include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
@@ -80,11 +78,11 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
   */
 
-fsal_status_t PROXYFSAL_rename(proxyfsal_handle_t * old_parentdir_handle,       /* IN */
+fsal_status_t PROXYFSAL_rename(fsal_handle_t * old_parent,       /* IN */
                                fsal_name_t * p_old_name,        /* IN */
-                               proxyfsal_handle_t * new_parentdir_handle,       /* IN */
+                               fsal_handle_t * new_parent,       /* IN */
                                fsal_name_t * p_new_name,        /* IN */
-                               proxyfsal_op_context_t * p_context,      /* IN */
+                               fsal_op_context_t *context,      /* IN */
                                fsal_attrib_list_t * src_dir_attributes, /* [ IN/OUT ] */
                                fsal_attrib_list_t * tgt_dir_attributes  /* [ IN/OUT ] */
     )
@@ -104,6 +102,9 @@ fsal_status_t PROXYFSAL_rename(proxyfsal_handle_t * old_parentdir_handle,       
   char oldnameval[MAXNAMLEN];
   component4 newname;
   char newnameval[MAXNAMLEN];
+  proxyfsal_handle_t * old_parentdir_handle = (proxyfsal_handle_t *)old_parent;
+  proxyfsal_handle_t * new_parentdir_handle = (proxyfsal_handle_t *)new_parent;
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
 #define FSAL_RENAME_NB_OP_ALLOC 7
   nfs_argop4 argoparray[FSAL_RENAME_NB_OP_ALLOC];
@@ -139,7 +140,7 @@ fsal_status_t PROXYFSAL_rename(proxyfsal_handle_t * old_parentdir_handle,       
 
   fsal_internal_proxy_create_fattr_bitmap(&bitmap_old);
 
-  if(fsal_internal_proxy_extract_fh(&nfs4fh_old, old_parentdir_handle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh_old, old_parent) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_rename);
 
   memset((char *)&oldname, 0, sizeof(component4));
@@ -151,7 +152,7 @@ fsal_status_t PROXYFSAL_rename(proxyfsal_handle_t * old_parentdir_handle,       
   bitmap_new.bitmap4_len = 2;
   fsal_internal_proxy_create_fattr_bitmap(&bitmap_new);
 
-  if(fsal_internal_proxy_extract_fh(&nfs4fh_new, new_parentdir_handle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh_new, new_parent) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_rename);
 
   memset((char *)&newname, 0, sizeof(component4));

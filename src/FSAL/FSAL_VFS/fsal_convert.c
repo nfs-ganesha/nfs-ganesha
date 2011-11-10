@@ -8,7 +8,7 @@
  * \author  $Author: leibovic $
  * \date    $Date: 2006/01/17 15:53:39 $
  * \version $Revision: 1.31 $
- * \brief   HPSS-FSAL type translation functions.
+ * \brief   VFS-FSAL type translation functions.
  *
  *
  */
@@ -90,6 +90,7 @@ int posix2fsal_error(int posix_errorcode)
       return ERR_FSAL_NOT_OPENED;
 
     case ENOMEM:
+    case ENOLCK:
       return ERR_FSAL_NOMEM;
 
     case EACCES:
@@ -154,6 +155,15 @@ int posix2fsal_error(int posix_errorcode)
     case ENOTSUP:
       return ERR_FSAL_NOTSUPP;
 
+    case EOVERFLOW:
+      return ERR_FSAL_OVERFLOW;
+
+    case EDEADLK:
+      return ERR_FSAL_DEADLOCK;
+
+    case EINTR:
+      return ERR_FSAL_INTERRUPT;
+
     default:
 
       /* other unexpected errors */
@@ -170,11 +180,11 @@ int posix2fsal_error(int posix_errorcode)
  *
  * \param fsal_flags (input):
  *        The FSAL open flags to be translated.
- * \param p_hpss_flags (output):
+ * \param p_posix_flags (output):
  *        Pointer to the POSIX open flags.
  *
  * \return - ERR_FSAL_NO_ERROR (no error).
- *         - ERR_FSAL_FAULT    (p_hpss_flags is a NULL pointer).
+ *         - ERR_FSAL_FAULT    (p_posix_flags is a NULL pointer).
  *         - ERR_FSAL_INVAL    (invalid or incompatible input flags).
  */
 int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
@@ -331,7 +341,7 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
      if ( FSAL_TEST_MASK(p_fsalattr_out->asked_attributes,
      FSAL_ATTR_MOUNTFILEID )){
      p_fsalattr_out->mounted_on_fileid = 
-     hpss2fsal_64( p_hpss_attr_in->FilesetRootId );
+     vfs2fsal_64( p_vfs_attr_in->FilesetRootId );
      }
    */
 
@@ -427,6 +437,7 @@ fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
         {
             p_fsalattr_out->chgtime
                 = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime));
+            p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
@@ -442,7 +453,7 @@ fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
        if ( FSAL_TEST_MASK(p_fsalattr_out->asked_attributes,
        FSAL_ATTR_MOUNTFILEID )){
        p_fsalattr_out->mounted_on_fileid =
-       hpss2fsal_64( p_hpss_attr_in->FilesetRootId );
+       vfs2fsal_64( p_vfs_attr_in->FilesetRootId );
        }
     */
 

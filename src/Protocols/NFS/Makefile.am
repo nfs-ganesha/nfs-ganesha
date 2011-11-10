@@ -97,26 +97,12 @@ libnfsproto_la_SOURCES = mnt_Export.c	      		     \
                          ../../include/err_inject.h          \
                          ../../include/nfs_file_handle.h
 
-if USE_NLM
-libnfsproto_la_SOURCES += nlm_Unlock.c	  	\
-                          nlm_Cancel.c	  	\
-                          nlm_Lock.c	  	\
-                          nlm_Test.c	  	\
-                          nlm_Null.c	  	\
-                          nlm_Sm_Notify.c 	\
-                          nlm_Granted_Res.c \
-			../../include/nlm4.h  \
-			../../include/nlm_async.h \
-			../../include/nlm_list.h \
-			../../include/nlm_util.h
-endif
-
 if USE_QUOTA
 libnfsproto_la_SOURCES += rquota_Null.c            \
                           rquota_getquota.c        \
                           rquota_getactivequota.c  \
                           rquota_setquota.c        \
-                          rquota_setactivequota.c 
+                          rquota_setactivequota.c
 
 endif
 
@@ -128,6 +114,7 @@ libnfsproto_la_SOURCES += nfs41_op_exchange_id.c      \
                           nfs41_op_getdeviceinfo.c    \
                           nfs41_op_create_session.c   \
                           nfs41_op_destroy_session.c  \
+                          nfs41_op_free_stateid.c     \
                           nfs41_op_open.c             \
                           nfs41_op_layoutget.c        \
                           nfs41_op_layoutcommit.c     \
@@ -139,13 +126,14 @@ libnfsproto_la_SOURCES += nfs41_op_exchange_id.c      \
                           nfs41_op_reclaim_complete.c \
                           nfs41_op_sequence.c         \
                           nfs41_op_set_ssv.c          \
-                          nfs41_op_write.c            
+                          nfs41_op_test_stateid.c     \
+                          nfs41_op_write.c
 endif
 
 
 test_mnt_proto_SOURCES       = test_mnt_proto.c
 
-test_mnt_proto_LDADD = libnfsproto.la ../BuddyMalloc/libBuddyMalloc.la ../Log/liblog.la
+test_mnt_proto_LDADD = libnfsproto.la ../../BuddyMalloc/libBuddyMalloc.la ../../Log/liblog.la
 
 new: clean all
 

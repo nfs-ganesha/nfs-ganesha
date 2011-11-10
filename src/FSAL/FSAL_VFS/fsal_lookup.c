@@ -66,20 +66,19 @@
  *         - Another error code else.
  *          
  */
-fsal_status_t VFSFSAL_lookup(vfsfsal_handle_t * p_parent_directory_handle,      /* IN */
+fsal_status_t VFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,      /* IN */
                              fsal_name_t * p_filename,  /* IN */
-                             vfsfsal_op_context_t * p_context,  /* IN */
-                             vfsfsal_handle_t * p_object_handle,        /* OUT */
+                             fsal_op_context_t * p_context,  /* IN */
+                             fsal_handle_t * p_object_handle,        /* OUT */
                              fsal_attrib_list_t * p_object_attributes   /* [ IN/OUT ] */
     )
 {
+  vfsfsal_handle_t * vfs_handle = (vfsfsal_handle_t *)p_object_handle;
+  vfsfsal_op_context_t *vfs_context = (vfsfsal_op_context_t *)p_context;
   int rc, errsv;
   fsal_status_t status;
   struct stat buffstat;
-  fsal_path_t pathfsal;
-
   int parentfd;
-  int errsrv;
 
   /* sanity checks
    * note : object_attributes is optionnal
@@ -97,8 +96,8 @@ fsal_status_t VFSFSAL_lookup(vfsfsal_handle_t * p_parent_directory_handle,      
   if(!p_parent_directory_handle)
     {
       /* Copy the root handle */
-      memcpy( (char *)&p_object_handle->data.vfs_handle, 
-	      (char *)&p_context->export_context->root_handle,
+      memcpy( (char *)&vfs_handle->data.vfs_handle,
+	     (char *)&vfs_context->export_context->root_handle,
 	      sizeof( vfs_file_handle_t ) ) ;
        
       /* get attributes, if asked */
@@ -126,7 +125,7 @@ fsal_status_t VFSFSAL_lookup(vfsfsal_handle_t * p_parent_directory_handle,      
   /* get directory metadata */
   TakeTokenFSCall();
   rc = fstat(parentfd, &buffstat);
-  errsrv = errno;
+  errsv = errno;
   ReleaseTokenFSCall();
 
   if(rc)
@@ -174,13 +173,14 @@ fsal_status_t VFSFSAL_lookup(vfsfsal_handle_t * p_parent_directory_handle,      
    /* get file handle, it it exists */
   TakeTokenFSCall();
 
-  p_object_handle->data.vfs_handle.handle_bytes = VFS_HANDLE_LEN ;
-  if( vfs_name_by_handle_at( parentfd,  p_filename->name, &p_object_handle->data.vfs_handle ) != 0 )
+  vfs_handle->data.vfs_handle.handle_bytes = VFS_HANDLE_LEN ;
+  if( vfs_name_by_handle_at( parentfd,  p_filename->name,
+			     &vfs_handle->data.vfs_handle) != 0 )
    {
-      errsrv = errno;
+      errsv = errno;
       ReleaseTokenFSCall();
       close( parentfd ) ;
-      Return(posix2fsal_error(errsrv), errsrv, INDEX_FSAL_lookup);
+      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_lookup);
    }
 
   ReleaseTokenFSCall();
@@ -226,15 +226,15 @@ fsal_status_t VFSFSAL_lookup(vfsfsal_handle_t * p_parent_directory_handle,      
  */
 
 fsal_status_t VFSFSAL_lookupPath(fsal_path_t * p_path,  /* IN */
-                                 vfsfsal_op_context_t * p_context,      /* IN */
-                                 vfsfsal_handle_t * object_handle,      /* OUT */
+                                 fsal_op_context_t * p_context,      /* IN */
+                                 fsal_handle_t * object_handle,      /* OUT */
                                  fsal_attrib_list_t * p_object_attributes       /* [ IN/OUT ] */
     )
 {
   fsal_status_t status;
 
   /* sanity checks
-   * note : object_attributes is optionnal.
+   * note : object_attributes is optional.
    */
 
   if(!object_handle || !p_context || !p_path)
@@ -289,65 +289,11 @@ fsal_status_t VFSFSAL_lookupPath(fsal_path_t * p_path,  /* IN */
  *         - Another error code else.
  *          
  */
-fsal_status_t VFSFSAL_lookupJunction(vfsfsal_handle_t * p_junction_handle,      /* IN */
-                                     vfsfsal_op_context_t * p_context,  /* IN */
-                                     vfsfsal_handle_t * p_fsoot_handle, /* OUT */
+fsal_status_t VFSFSAL_lookupJunction(fsal_handle_t * p_junction_handle,      /* IN */
+                                     fsal_op_context_t * p_context,  /* IN */
+                                     fsal_handle_t * p_fsoot_handle, /* OUT */
                                      fsal_attrib_list_t * p_fsroot_attributes   /* [ IN/OUT ] */
     )
 {
-  //hpss_Attrs_t    root_attr;
-
-  /* sanity checks
-   * note : p_fsroot_attributes is optionnal
-   */
-  /*
-     if (!p_junction_handle || !p_fsoot_handle || !p_p_context )
-     Return(ERR_FSAL_FAULT ,0 , INDEX_FSAL_lookupJunction);
-   */
-  /*
-     if ( p_junction_handle->obj_type != FSAL_TYPE_JUNCTION )
-     Return(ERR_FSAL_INVAL ,0 , INDEX_FSAL_lookupJunction);
-   */
-
-  /* call to HPSS client api */
-  /* We use hpss_GetRawAttrHandle for chasing junctions. */
-
-  /* TakeTokenFSCall(); */
-
-  //rc = HPSSFSAL_GetRawAttrHandle( &(p_junction_handle->ns_handle),
-  //                                NULL,
-  //                                &p_p_context->hpss_userp_context,
-  //                                TRUE,     /* do traverse junctions !!! */
-  //                                NULL,
-  //                                NULL,
-  //                                &root_attr );
-
-  /* ReleaseTokenFSCall(); */
-
-  //if (rc) Return(hpss2fsal_error(rc), -rc, INDEX_FSAL_lookupJunction);
-
-  /* set output handle */
-  /*
-     p_fsoot_handle->obj_type  = hpss2fsal_type( root_attr.FilesetHandle.Type );
-     p_fsoot_handle->ns_handle = root_attr.FilesetHandle;
-   */
-
-  if(p_fsroot_attributes)
-    {
-
-      /* convert hpss attributes to fsal attributes */
-
-      /*
-         status=hpss2fsal_attributes(
-         &root_attr.FilesetHandle,
-         &root_attr,
-         p_fsroot_attributes );
-
-         if (FSAL_IS_ERROR(status))
-         Return(status.major,status.minor,INDEX_FSAL_lookupJunction);
-       */
-    }
-
-  /* lookup complete ! */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookupJunction);
 }

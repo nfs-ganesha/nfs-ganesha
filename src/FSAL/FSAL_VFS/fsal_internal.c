@@ -20,7 +20,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ------------- 
+ * -------------
  */
 
 /**
@@ -31,7 +31,7 @@
  * \version $Revision: 1.24 $
  * \brief   Defines the datas that are to be
  *          accessed as extern by the fsal modules
- * 
+ *
  */
 #define FSAL_INTERNAL_C
 #ifdef HAVE_CONFIG_H
@@ -49,7 +49,7 @@
 #include <sys/types.h>
 #include <mntent.h>
 
-/* Add missing prototype in vfs/*.h */
+/* Add missing prototype in vfs.h */
 int fd_to_handle(int fd, void **hanp, size_t * hlen);
 
 /* credential lifetime (1h) */
@@ -61,7 +61,7 @@ fsal_uint_t CredentialLifetime = 3600;
  */
 fsal_staticfsinfo_t global_fs_info;
 
-/* filesystem info for HPSS */
+/* filesystem info for VFS */
 static fsal_staticfsinfo_t default_posix_info = {
   0xFFFFFFFFFFFFFFFFLL,         /* max file size (64bits) */
   _POSIX_LINK_MAX,              /* max links */
@@ -74,7 +74,9 @@ static fsal_staticfsinfo_t default_posix_info = {
   FSAL_EXPTYPE_PERSISTENT,      /* FH expire type */
   TRUE,                         /* hard link support */
   TRUE,                         /* symlink support */
-  FALSE,                        /* lock management */
+  TRUE,                         /* lock management */
+  FALSE,                        /* lock owners */
+  FALSE,                        /* async blocking locks */
   TRUE,                         /* named attributes */
   TRUE,                         /* handles are unique and persistent */
   {10, 0},                      /* Duration of lease at FS in seconds */
@@ -264,7 +266,7 @@ void ReleaseTokenFSCall()
 
 }
 
-#define SET_INTEGER_PARAM( cfg, p_init_info, _field )             \
+#define VFS_SET_INTEGER_PARAM( cfg, p_init_info, _field )         \
     switch( (p_init_info)->behaviors._field ){                    \
     case FSAL_INIT_FORCE_VALUE :                                  \
       /* force the value in any case */                           \
@@ -286,7 +288,7 @@ void ReleaseTokenFSCall()
         break;                                                    \
     }
 
-#define SET_BITMAP_PARAM( cfg, p_init_info, _field )              \
+#define VFS_SET_BITMAP_PARAM( cfg, p_init_info, _field )          \
     switch( (p_init_info)->behaviors._field ){                    \
     case FSAL_INIT_FORCE_VALUE :                                  \
         /* force the value in any case */                         \
@@ -306,7 +308,7 @@ void ReleaseTokenFSCall()
         break;                                                    \
     }
 
-#define SET_BOOLEAN_PARAM( cfg, p_init_info, _field )             \
+#define VFS_SET_BOOLEAN_PARAM( cfg, p_init_info, _field )         \
     switch( (p_init_info)->behaviors._field ){                    \
     case FSAL_INIT_FORCE_VALUE :                                  \
         /* force the value in any case */                         \
@@ -331,7 +333,7 @@ void ReleaseTokenFSCall()
  */
 fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                                         fs_common_initinfo_t * fs_common_info,
-                                        vfsfs_specific_initinfo_t * fs_specific_info)
+                                        fs_specific_initinfo_t * fs_specific_info)
 {
 
   /* sanity check */
@@ -389,6 +391,10 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
            default_posix_info.symlink_support);
   LogDebug(COMPONENT_FSAL, "  lock_support  = %d  ",
            default_posix_info.lock_support);
+  LogDebug(COMPONENT_FSAL, "  lock_support_owner  = %d  ",
+           global_fs_info.lock_support_owner);
+  LogDebug(COMPONENT_FSAL, "  lock_support_async_block  = %d  ",
+           global_fs_info.lock_support_async_block);
   LogDebug(COMPONENT_FSAL, "  named_attr  = %d  ",
            default_posix_info.named_attr);
   LogDebug(COMPONENT_FSAL, "  unique_handles  = %d  ",
@@ -423,19 +429,21 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
      (fs_common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT))
     ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support);
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_owner);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_async_block);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
 
-  SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);
-  SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxwrite);
+  VFS_SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);
+  VFS_SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxwrite);
 
-  SET_BITMAP_PARAM(global_fs_info, fs_common_info, umask);
+  VFS_SET_BITMAP_PARAM(global_fs_info, fs_common_info, umask);
 
-  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, auth_exportpath_xdev);
+  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, auth_exportpath_xdev);
 
-  SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
+  VFS_SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
 
   LogFullDebug(COMPONENT_FSAL,
                     "Supported attributes constant = 0x%llX.",
@@ -452,28 +460,28 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t fsal_internal_handle2fd(vfsfsal_op_context_t * p_context,
-                                      vfsfsal_handle_t * phandle, int *pfd, int oflags)
+fsal_status_t fsal_internal_handle2fd(fsal_op_context_t * p_context,
+                                      fsal_handle_t * p_handle, int *pfd, int oflags)
 {
   int rc = 0;
-  int errsv = 0;
+  int errsv;
 
 
-  if(!phandle || !pfd || !p_context)
+  if(!p_handle || !pfd || !p_context)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
 #if 0
   {
   char str[1024] ;
   sprint_mem( str, phandle->data.vfs_handle.handle, phandle->data.vfs_handle.handle_bytes ) ;
-  printf( "=====> fsal_internal_handle2fd: type=%u bytes=%u|%s\n",  
+  printf( "=====> fsal_internal_handle2fd: type=%u bytes=%u|%s\n",
           phandle->data.vfs_handle.handle_type, phandle->data.vfs_handle.handle_bytes, str ) ;
   }
 #endif
 
 
-  rc =  vfs_open_by_handle( p_context->export_context->mount_root_fd,
-			    &phandle->data.vfs_handle, 
+  rc =  vfs_open_by_handle( ((vfsfsal_op_context_t *)p_context)->export_context->mount_root_fd,
+			    &((vfsfsal_handle_t *)p_handle)->data.vfs_handle,
                             oflags ) ;
   if(rc == -1)
     {
@@ -487,42 +495,46 @@ fsal_status_t fsal_internal_handle2fd(vfsfsal_op_context_t * p_context,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* fsal_internal_handle2fd */
 
-fsal_status_t fsal_internal_fd2handle( vfsfsal_op_context_t * p_context,
+fsal_status_t fsal_internal_fd2handle( fsal_op_context_t *p_context,
                                        int fd, 
-				       vfsfsal_handle_t * phandle)
+				       fsal_handle_t *p_handle)
 {
-  int rc = 0 ;
-  int errsv = 0 ; 
-  int mnt_id = 0 ;
+  int rc = 0;
+  int errsv; 
+  int mnt_id = 0;
 
+  memset(p_handle, 0, sizeof(vfsfsal_handle_t));
 
-  phandle->data.vfs_handle.handle_bytes = VFS_HANDLE_LEN ;
-  if( ( rc = vfs_fd_to_handle( fd, &phandle->data.vfs_handle, &mnt_id ) ) )
-   ReturnCode(posix2fsal_error(errsv), errsv);
+  ((vfsfsal_handle_t *)p_handle)->data.vfs_handle.handle_bytes = VFS_HANDLE_LEN ;
+  if( ( rc = vfs_fd_to_handle( fd,
+			       &((vfsfsal_handle_t *)p_handle)->data.vfs_handle,
+			       &mnt_id ) ) )
+    {
+      errsv = errno;
+      ReturnCode(posix2fsal_error(errsv), errsv);
+    }
 
-#if 0 
+#if 0
   {
     char str[1024] ;
-    sprint_mem( str, phandle->data.vfs_handle.handle, phandle->data.vfs_handle.handle_bytes ) ;
+    sprint_mem( str, p_handle->data.vfs_handle.handle, p_handle->data.vfs_handle.handle_bytes ) ;
     printf( "=====> fsal_internal_fd2handle: type=%u bytes=%u|%s\n",  
-            phandle->data.vfs_handle.handle_type, phandle->data.vfs_handle.handle_bytes, str ) ;
+            p_handle->data.vfs_handle.handle_type, p_handle->data.vfs_handle.handle_bytes, str ) ;
   }
 #endif
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* fsal_internal_fd2handle */
 
-fsal_status_t fsal_internal_Path2Handle(vfsfsal_op_context_t * p_context,       /* IN */
+fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,       /* IN */
                                         fsal_path_t * p_fsalpath,       /* IN */
-                                        vfsfsal_handle_t * p_handle /* OUT */ )
+                                        fsal_handle_t * p_handle /* OUT */ )
 {
   int objectfd;
   fsal_status_t st;
 
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
-
-  memset(p_handle, 0, sizeof(vfsfsal_handle_t));
 
   LogFullDebug(COMPONENT_FSAL, "Lookup handle for %s", p_fsalpath->path);
 
@@ -550,22 +562,21 @@ fsal_status_t fsal_internal_Path2Handle(vfsfsal_op_context_t * p_context,       
  */
 
 fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
-                                          fsal_name_t * p_fsalname,     /* IN */
-                                          fsal_handle_t * p_handle      /* OUT
+                                          const char *name,     /* IN */
+                                          fsal_handle_t *p_handle      /* OUT
                                                                          */ )
 {
-  fsal_status_t st;
   int errsrv = 0 ;
 
-  if( !p_fsalname || !p_handle )
+  if( !name || !p_handle )
     ReturnCode(ERR_FSAL_FAULT, 0);
- 
+
   memset(p_handle, 0, sizeof(vfsfsal_handle_t));
 
-  LogFullDebug(COMPONENT_FSAL, "get handle at for %s", p_fsalname->name);
+  LogFullDebug(COMPONENT_FSAL, "get handle at for %s", name);
 
-  p_handle->data.vfs_handle.handle_bytes = VFS_HANDLE_LEN ;
-  if( vfs_name_by_handle_at( dfd,  p_fsalname->name, &p_handle->data.vfs_handle ) != 0 )
+  ((vfsfsal_handle_t *)p_handle)->data.vfs_handle.handle_bytes = VFS_HANDLE_LEN ;
+  if( vfs_name_by_handle_at( dfd, name, &((vfsfsal_handle_t *)p_handle)->data.vfs_handle ) != 0 )
    {
       errsrv = errno;
       ReturnCode(posix2fsal_error(errsrv), errsrv);
@@ -579,7 +590,7 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
    Check the access from an existing fsal_attrib_list_t or struct stat
 */
 /* XXX : ACL */
-fsal_status_t fsal_internal_testAccess(vfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,        /* IN */
                                        fsal_accessflags_t access_type,  /* IN */
                                        struct stat * p_buffstat,        /* IN */
                                        fsal_attrib_list_t * p_object_attributes /* IN */ )
@@ -589,6 +600,8 @@ fsal_status_t fsal_internal_testAccess(vfsfsal_op_context_t * p_context,        
   fsal_uid_t uid;
   fsal_gid_t gid;
   fsal_accessmode_t mode;
+  fsal_uid_t userid = ((vfsfsal_op_context_t *)p_context)->credential.user;
+  fsal_uid_t groupid = ((vfsfsal_op_context_t *)p_context)->credential.group;
 
   /* sanity checks. */
 
@@ -602,7 +615,7 @@ fsal_status_t fsal_internal_testAccess(vfsfsal_op_context_t * p_context,        
 
   /* test root access */
 
-  if(p_context->credential.user == 0)
+  if(userid == 0)
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
   /* unsatisfied flags */
@@ -624,7 +637,7 @@ fsal_status_t fsal_internal_testAccess(vfsfsal_op_context_t * p_context,        
 
   /* Test if file belongs to user. */
 
-  if(p_context->credential.user == uid)
+  if(userid == uid)
     {
 
       LogFullDebug(COMPONENT_FSAL, "File belongs to user %d", uid);
@@ -638,6 +651,7 @@ fsal_status_t fsal_internal_testAccess(vfsfsal_op_context_t * p_context,        
       if(mode & FSAL_MODE_XUSR)
         missing_access &= ~FSAL_X_OK;
 
+      /* handle the creation of a new 500 file correctly */
       if((missing_access & FSAL_OWNER_OK) != 0)
         missing_access = 0;
 
@@ -653,27 +667,32 @@ fsal_status_t fsal_internal_testAccess(vfsfsal_op_context_t * p_context,        
 
     }
 
+  /* missing_access will be nonzero triggering a failure
+   * even though FSAL_OWNER_OK is not even a real posix file
+   * permission */
+  missing_access &= ~FSAL_OWNER_OK;
+
   /* Test if the file belongs to user's group. */
 
-  is_grp = (p_context->credential.group == gid);
+  is_grp = (groupid == gid);
 
   if(is_grp)
     LogFullDebug(COMPONENT_FSAL, "File belongs to user's group %d",
-                      p_context->credential.group);
+                      groupid);
 
 
   /* Test if file belongs to alt user's groups */
 
   if(!is_grp)
     {
-      for(i = 0; i < p_context->credential.nbgroups; i++)
+      for(i = 0; i < ((vfsfsal_op_context_t *)p_context)->credential.nbgroups; i++)
         {
-          is_grp = (p_context->credential.alt_groups[i] == gid);
+	  is_grp = (((vfsfsal_op_context_t *)p_context)->credential.alt_groups[i] == gid);
 
           if(is_grp)
             LogFullDebug(COMPONENT_FSAL,
-                              "File belongs to user's alt group %d",
-                              p_context->credential.alt_groups[i]);
+			 "File belongs to user's alt group %d",
+			 ((vfsfsal_op_context_t *)p_context)->credential.alt_groups[i]);
 
           // exits loop if found
           if(is_grp)
@@ -721,8 +740,8 @@ fsal_status_t fsal_internal_testAccess(vfsfsal_op_context_t * p_context,        
 
 }
 
-fsal_status_t fsal_internal_setattrs_symlink(vfsfsal_handle_t * p_filehandle,   /* IN */
-                                             vfsfsal_op_context_t * p_context,  /* IN */
+fsal_status_t fsal_internal_setattrs_symlink(fsal_handle_t * p_filehandle,   /* IN */
+                                             fsal_op_context_t * p_context,  /* IN */
                                              fsal_attrib_list_t * p_attrib_set, /* IN */
                                              fsal_attrib_list_t * p_object_attributes)
 {

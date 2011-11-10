@@ -18,25 +18,11 @@
 
 #include <string.h> /* For strncpy */
 
-#include "fsal.h"
-#include "fsal_types.h"
-#include "fsal_glue.h"
+#define fsal_increment_nbcall( _f_,_struct_status_ )
 
-const char *fsal_function_names[] = {
-  "FSAL_lookup", "FSAL_access", "FSAL_create", "FSAL_mkdir", "FSAL_truncate",
-  "FSAL_getattrs", "FSAL_setattrs", "FSAL_link", "FSAL_opendir", "FSAL_readdir",
-  "FSAL_closedir", "FSAL_open", "FSAL_read", "FSAL_write", "FSAL_close",
-  "FSAL_readlink", "FSAL_symlink", "FSAL_rename", "FSAL_unlink", "FSAL_mknode",
-  "FSAL_static_fsinfo", "FSAL_dynamic_fsinfo", "FSAL_rcp", "FSAL_Init",
-  "FSAL_get_stats", "FSAL_lock", "FSAL_changelock", "FSAL_unlock",
-  "FSAL_BuildExportContext", "FSAL_InitClientContext", "FSAL_GetClientContext",
-  "FSAL_lookupPath", "FSAL_lookupJunction", "FSAL_test_access",
-  "FSAL_rmdir", "FSAL_CleanObjectResources", "FSAL_open_by_name", "FSAL_open_by_fileid",
-  "FSAL_ListXAttrs", "FSAL_GetXAttrValue", "FSAL_SetXAttrValue", "FSAL_GetXAttrAttrs",
-  "FSAL_close_by_fileid", "FSAL_setattr_access", "FSAL_merge_attrs", "FSAL_rename_access",
-  "FSAL_unlink_access", "FSAL_link_access", "FSAL_create_access", "FSAL_getlock", "FSAL_CleanUpExportContext",
-  "FSAL_getextattrs", "FSAL_sync"
-};
+#include "fsal.h"
+#include "fsal_glue.h"
+#include "fsal_up.h"
 
 int __thread my_fsalid = -1 ;
 
@@ -248,8 +234,9 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
                                     fsal_gid_t * alt_groups,    /* IN */
                                     fsal_count_t nb_alt_groups /* IN */ )
 {
-  return fsal_functions.fsal_getclientcontext(p_thr_context, p_export_context, uid, gid,
-                                              alt_groups, nb_alt_groups);
+  return fsal_functions.fsal_getclientcontext(p_thr_context, p_export_context,
+					      uid, gid,
+					      alt_groups, nb_alt_groups);
 }
 
 fsal_status_t FSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
@@ -394,13 +381,6 @@ fsal_status_t FSAL_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
   return fsal_functions.fsal_close_by_fileid(file_descriptor, fileid);
 }
 
-fsal_status_t FSAL_static_fsinfo(fsal_handle_t * p_filehandle,  /* IN */
-                                 fsal_op_context_t * p_context, /* IN */
-                                 fsal_staticfsinfo_t * p_staticinfo /* OUT */ )
-{
-  return fsal_functions.fsal_static_fsinfo(p_filehandle, p_context, p_staticinfo);
-}
-
 fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle, /* IN */
                                   fsal_op_context_t * p_context,        /* IN */
                                   fsal_dynamicfsinfo_t * p_dynamicinfo /* OUT */ )
@@ -449,13 +429,6 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info /* IN */ )
       LogFatal(COMPONENT_FSAL,
                "Implementation Error, local and specific fsal_file_context_t do not match: %u |%u !!!!",
                fsal_consts.fsal_file_t_size, sizeof(fsal_file_t));
-    }
-
-  if(fsal_consts.fsal_lockdesc_t_size != sizeof(fsal_lockdesc_t))
-    {
-      LogFatal(COMPONENT_FSAL,
-               "Implementation Error, local and specific fsal_lockdesc_t do not match: %u |%u !!!!",
-               fsal_consts.fsal_lockdesc_t_size, sizeof(fsal_lockdesc_t));
     }
 
   if(fsal_consts.fsal_cred_t_size != sizeof(fsal_cred_t))
@@ -568,28 +541,6 @@ fsal_status_t FSAL_lookupJunction(fsal_handle_t * p_junction_handle,    /* IN */
                                             p_fsroot_attributes);
 }
 
-fsal_status_t FSAL_lock(fsal_file_t * obj_handle,
-                        fsal_lockdesc_t * ldesc, fsal_boolean_t blocking)
-{
-  return fsal_functions.fsal_lock(obj_handle, ldesc, blocking);
-}
-
-fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-                              fsal_lockparam_t * lock_info /* IN */ )
-{
-  return fsal_functions.fsal_changelock(lock_descriptor, lock_info);
-}
-
-fsal_status_t FSAL_unlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
-{
-  return fsal_functions.fsal_unlock(obj_handle, ldesc);
-}
-
-fsal_status_t FSAL_getlock(fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc)
-{
-  return fsal_functions.fsal_getlock(obj_handle, ldesc);
-}
-
 fsal_status_t FSAL_CleanObjectResources(fsal_handle_t * in_fsal_handle)
 {
   return fsal_functions.fsal_cleanobjectresources(in_fsal_handle);
@@ -699,9 +650,9 @@ unsigned int FSAL_Handle_to_Hash_both(fsal_handle_t * p_handle, unsigned int coo
   else
     {
         if( phashval == NULL || prbtval == NULL )
-	   return 0 ;
+           return 0 ;
 
-	*phashval = fsal_functions.fsal_handle_to_hashindex( p_handle, cookie, alphabet_len, index_size ) ;
+        *phashval = fsal_functions.fsal_handle_to_hashindex( p_handle, cookie, alphabet_len, index_size ) ;
         *prbtval = fsal_functions.fsal_handle_to_rbtindex( p_handle, cookie);
 
         return 1 ;
@@ -887,6 +838,60 @@ fsal_status_t FSAL_getextattrs( fsal_handle_t * p_filehandle, /* IN */
 {
    return fsal_functions.fsal_getextattrs( p_filehandle, p_context, p_object_attributes ) ;
 }
+
+fsal_status_t FSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
+                            fsal_handle_t     * p_filehandle,        /* IN */
+                            fsal_op_context_t * p_context,           /* IN */
+                            void              * p_owner,             /* IN (opaque to FSAL) */
+                            fsal_lock_op_t      lock_op,             /* IN */
+                            fsal_lock_param_t   request_lock,        /* IN */
+                            fsal_lock_param_t * conflicting_lock)    /* OUT */
+{
+  if(fsal_functions.fsal_lock_op != NULL)
+    return fsal_functions.fsal_lock_op(p_file_descriptor,
+                                       p_filehandle,
+                                       p_context,
+                                       p_owner,
+                                       lock_op,
+                                       request_lock,
+                                       conflicting_lock);
+
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op);
+}
+
+/* FSAL_UP functions */
+#ifdef _USE_FSAL_UP
+fsal_status_t FSAL_UP_Init( fsal_up_event_bus_parameter_t * pebparam,      /* IN */
+                               fsal_up_event_bus_context_t * pupebcontext     /* OUT */)
+{
+  if (fsal_functions.fsal_up_init == NULL)
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_UP_init);
+  else
+    return fsal_functions.fsal_up_init(pebparam, pupebcontext);
+}
+
+fsal_status_t FSAL_UP_AddFilter( fsal_up_event_bus_filter_t * pupebfilter,  /* IN */
+                                    fsal_up_event_bus_context_t * pupebcontext /* INOUT */ )
+{
+  if (fsal_functions.fsal_up_addfilter == NULL)
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_UP_addfilter);
+  else
+    return fsal_functions.fsal_up_addfilter(pupebfilter, pupebcontext);
+}
+
+fsal_status_t FSAL_UP_GetEvents( fsal_up_event_t ** pevents,            /* OUT */
+				 fsal_count_t * event_nb,          /* IN */
+				 fsal_time_t timeout,                       /* IN */
+				 fsal_count_t * peventfound,                /* OUT */
+				 fsal_up_event_bus_context_t * pupebcontext /* IN */ )
+{
+  if (fsal_functions.fsal_up_getevents == NULL)
+    Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_UP_getevents);
+  else
+    return fsal_functions.fsal_up_getevents(pevents, event_nb, timeout,
+					    peventfound, pupebcontext);
+}
+#endif /* _USE_FSAL_UP */
 
 #ifdef _USE_SHARED_FSAL
 int FSAL_LoadLibrary(char *path)

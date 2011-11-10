@@ -17,8 +17,6 @@
 #include "config.h"
 #endif
 
-#include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_internal.h"
 #include "stuff_alloc.h"
 #include "SemN.h"
@@ -51,6 +49,8 @@ static fsal_staticfsinfo_t default_posix_info = {
   TRUE,                         /* hard link support */
   TRUE,                         /* symlink support */
   FALSE,                        /* lock management */
+  FALSE,                        /* lock owners */
+  FALSE,                        /* async blocking locks */
   TRUE,                         /* named attributes */
   TRUE,                         /* handles are unique and persistent */
   {10, 0},                      /* Duration of lease at FS in seconds */
@@ -324,7 +324,7 @@ void ReleaseTokenFSCall()
  */
 fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                                         fs_common_initinfo_t * fs_common_info,
-                                        lustrefs_specific_initinfo_t * fs_specific_info)
+                                        fs_specific_initinfo_t * fs_specific_info)
 {
 
   /* sanity check */
@@ -362,45 +362,49 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
     {
       LogDebug(COMPONENT_FSAL, "{");
       LogDebug(COMPONENT_FSAL, "  maxfilesize  = %llX    ",
-                    default_posix_info.maxfilesize);
+               default_posix_info.maxfilesize);
       LogDebug(COMPONENT_FSAL, "  maxlink  = %lu   ",
-                    default_posix_info.maxlink);
+               default_posix_info.maxlink);
       LogDebug(COMPONENT_FSAL, "  maxnamelen  = %lu  ",
-                    default_posix_info.maxnamelen);
+               default_posix_info.maxnamelen);
       LogDebug(COMPONENT_FSAL, "  maxpathlen  = %lu  ",
-                    default_posix_info.maxpathlen);
+               default_posix_info.maxpathlen);
       LogDebug(COMPONENT_FSAL, "  no_trunc  = %d ",
-                    default_posix_info.no_trunc);
+               default_posix_info.no_trunc);
       LogDebug(COMPONENT_FSAL, "  chown_restricted  = %d ",
-                    default_posix_info.chown_restricted);
+               default_posix_info.chown_restricted);
       LogDebug(COMPONENT_FSAL, "  case_insensitive  = %d ",
-                    default_posix_info.case_insensitive);
+               default_posix_info.case_insensitive);
       LogDebug(COMPONENT_FSAL, "  case_preserving  = %d ",
-                    default_posix_info.case_preserving);
+               default_posix_info.case_preserving);
       LogDebug(COMPONENT_FSAL, "  fh_expire_type  = %hu ",
-                    default_posix_info.fh_expire_type);
+               default_posix_info.fh_expire_type);
       LogDebug(COMPONENT_FSAL, "  link_support  = %d  ",
-                    default_posix_info.link_support);
+               default_posix_info.link_support);
       LogDebug(COMPONENT_FSAL, "  symlink_support  = %d  ",
-                    default_posix_info.symlink_support);
+               default_posix_info.symlink_support);
       LogDebug(COMPONENT_FSAL, "  lock_support  = %d  ",
-                    default_posix_info.lock_support);
+               default_posix_info.lock_support);
+      LogDebug(COMPONENT_FSAL, "  lock_support_owner  = %d  ",
+               default_posix_info.lock_support_owner);
+      LogDebug(COMPONENT_FSAL, "  lock_support_async_block  = %d  ",
+               default_posix_info.lock_support_async_block);
       LogDebug(COMPONENT_FSAL, "  named_attr  = %d  ",
-                    default_posix_info.named_attr);
+               default_posix_info.named_attr);
       LogDebug(COMPONENT_FSAL, "  unique_handles  = %d  ",
-                    default_posix_info.unique_handles);
+               default_posix_info.unique_handles);
       LogDebug(COMPONENT_FSAL, "  acl_support  = %hu  ",
-                    default_posix_info.acl_support);
+               default_posix_info.acl_support);
       LogDebug(COMPONENT_FSAL, "  cansettime  = %d  ",
-                    default_posix_info.cansettime);
+               default_posix_info.cansettime);
       LogDebug(COMPONENT_FSAL, "  homogenous  = %d  ",
-                    default_posix_info.homogenous);
+               default_posix_info.homogenous);
       LogDebug(COMPONENT_FSAL, "  supported_attrs  = %llX  ",
-                    default_posix_info.supported_attrs);
+               default_posix_info.supported_attrs);
       LogDebug(COMPONENT_FSAL, "  maxread  = %llX     ",
-                    default_posix_info.maxread);
+               default_posix_info.maxread);
       LogDebug(COMPONENT_FSAL, "  maxwrite  = %llX     ",
-                    default_posix_info.maxwrite);
+               default_posix_info.maxwrite);
       LogDebug(COMPONENT_FSAL, "  umask  = %X ", default_posix_info.umask);
       LogDebug(COMPONENT_FSAL, "}");
     }
@@ -423,6 +427,8 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support);
+  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_owner);
+  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_async_block);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
 
   SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);
@@ -493,11 +499,12 @@ fsal_status_t fsal_internal_appendNameToPath(fsal_path_t * p_path,
 /**
  * Build .lustre/fid path associated to a handle.
  */
-fsal_status_t fsal_internal_Handle2FidPath(lustrefsal_op_context_t * p_context, /* IN */
+fsal_status_t fsal_internal_Handle2FidPath(fsal_op_context_t *context, /* IN */
                                            fsal_handle_t * p_handle,    /* IN */
                                            fsal_path_t * p_fsalpath /* OUT */ )
 {
   char *curr = p_fsalpath->path;
+  lustrefsal_op_context_t * p_context = (lustrefsal_op_context_t *)context;
 
   if(!p_context || !p_context->export_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -511,7 +518,7 @@ fsal_status_t fsal_internal_Handle2FidPath(lustrefsal_op_context_t * p_context, 
   curr += FIDDIRLEN + 2;
 
   /* add fid string */
-  curr += sprintf(curr, DFID_NOBRACE, PFID(&p_handle->data.fid));
+  curr += sprintf(curr, DFID_NOBRACE, PFID(&((lustrefsal_handle_t *)p_handle)->data.fid));
 
   p_fsalpath->len = (curr - p_fsalpath->path);
 
@@ -524,18 +531,19 @@ fsal_status_t fsal_internal_Handle2FidPath(lustrefsal_op_context_t * p_context, 
 /**
  * Get the handle for a path (posix or fid path)
  */
-fsal_status_t fsal_internal_Path2Handle(lustrefsal_op_context_t * p_context,    /* IN */
+fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,    /* IN */
                                         fsal_path_t * p_fsalpath,       /* IN */
-                                        fsal_handle_t * p_handle /* OUT */ )
+                                        fsal_handle_t *handle /* OUT */ )
 {
   int rc;
   struct stat ino;
   lustre_fid fid;
+  lustrefsal_handle_t * p_handle = (lustrefsal_handle_t *)handle;
 
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  memset(p_handle, 0, sizeof(fsal_handle_t));
+  memset(p_handle, 0, sizeof(lustrefsal_handle_t));
 
   LogFullDebug(COMPONENT_FSAL, "Lookup handle for %s", p_fsalpath->path);
 
@@ -567,7 +575,7 @@ fsal_status_t fsal_internal_Path2Handle(lustrefsal_op_context_t * p_context,    
    Check the access from an existing fsal_attrib_list_t or struct stat
 */
 /* XXX : ACL */
-fsal_status_t fsal_internal_testAccess(lustrefsal_op_context_t * p_context,     /* IN */
+fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,     /* IN */
                                        fsal_accessflags_t access_type,  /* IN */
                                        struct stat *p_buffstat, /* IN */
                                        fsal_attrib_list_t * p_object_attributes /* IN */ )

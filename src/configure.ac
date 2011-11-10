@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [1.1.1], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [1.2.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
 AC_SUBST(RELEASE, [1])
 
@@ -50,7 +50,7 @@ GA_PROG_DOXYGEN
 # define everything necessary for accessing large files (64bits offset)
 AC_SYS_LARGEFILE
 
-CFLAGS="$CFLAGS -D_REENTRANT"
+CFLAGS="$CFLAGS -D_REENTRANT -Wall -Wimplicit -Wformat -Wmissing-braces -Wno-pointer-sign"
 
 # Version number for shared object
 LIBVERSION=`echo $VERSION | sed -e 's/\./:/g'`
@@ -217,6 +217,14 @@ fi
 AM_CONDITIONAL(USE_QUOTA, test "$enable_quota" = "yes")
 
 
+# FSAL_UP
+GA_ENABLE_AM_CONDITION([fsal-up],[enable FSAL Upcall Interface support],[USE_FSAL_UP])
+
+if test "$enable_fsal_up" == "yes"; then
+        AC_DEFINE(_USE_FSAL_UP,1,[enable FSAL Upcall Interface support])
+fi
+AM_CONDITIONAL(USE_FSAL_UP, test "$enable_fsal_up" = "yes")
+
 # PNFS/DS
 GA_ENABLE_AM_CONDITION([ds],[enable pNFS DS support],[USE_DS])
 
@@ -304,19 +312,19 @@ AC_SUBST(EFENCE)
 
 # Debugging options
 #GA_DISABLE_FLAG( [concurrent-memalloc],  [a thread is not allowed to free a block allocated by another thread], [-D_MONOTHREAD_MEMALLOC] )
-GA_DISABLE_FLAG( [buddy-malloc],         [disable GANESHA's memory allocator, for debug purpose only],   [-D_NO_BUDDY_SYSTEM] )
-GA_DISABLE_FLAG( [tcp-register], 	 [disable registration of tcp services on portmapper], 		 [-D_NO_TCP_REGISTER] )
-GA_DISABLE_FLAG( [portmapper], 	         [disable registration on portmapper], 				 [-D_NO_PORTMAPPER] )
-GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and files support],              [-D_NO_XATTRD])
+GA_DISABLE_FLAG( [prealloc],             [disable GANESHA's memory preallocator, for debug purpose only], [-D_NO_BLOCK_PREALLOC] )
+GA_DISABLE_FLAG( [tcp-register], 	 [disable registration of tcp services on portmapper], 		  [-D_NO_TCP_REGISTER] )
+GA_DISABLE_FLAG( [portmapper], 	         [disable registration on portmapper], 				  [-D_NO_PORTMAPPER] )
+GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and files support],               [-D_NO_XATTRD])
 
-GA_ENABLE_FLAG(  [debug-memleaks],       [enable allocator features for tracking memory usage],          [-D_DEBUG_MEMLEAKS] )
-GA_ENABLE_FLAG(  [debug-nfsshell],       [enable extended debug traces for ganeshell utility],           [-D_DEBUG_NFS_SHELL] )
+GA_ENABLE_FLAG(  [debug-memleaks],       [enable allocator features for tracking memory usage],           [-D_DEBUG_MEMLEAKS] )
+GA_ENABLE_FLAG(  [debug-nfsshell],       [enable extended debug traces for ganeshell utility],            [-D_DEBUG_NFS_SHELL] )
 
-GA_ENABLE_FLAG(  [pl-pgsql],		 [enable PGSQL stored procedures (POSIX FSAL)],		         [-D_WITH_PLPGSQL])
-GA_ENABLE_FLAG(  [cache-path],		 [Enable entry path caching in POSIX FSAL],	                 [-D_ENABLE_CACHE_PATH])
-GA_ENABLE_FLAG(  [handle-mapping],	 [enable NFSv2/3 handle mapping for PROXY FSAL],	         [-D_HANDLE_MAPPING])
-GA_ENABLE_FLAG(  [nfs4-locks],	         [enable NFSv4 locks],                                           [-D_WITH_NFSV4_LOCKS])
-GA_DISABLE_FLAG( [nfs41-locks],          [disable NFSv4 locks],                                          [-D_WITH_NO_NFSV41_LOCKS])
+GA_ENABLE_FLAG(  [pl-pgsql],		 [enable PGSQL stored procedures (POSIX FSAL)],		          [-D_WITH_PLPGSQL])
+GA_ENABLE_FLAG(  [cache-path],		 [Enable entry path caching in POSIX FSAL],	                  [-D_ENABLE_CACHE_PATH])
+GA_ENABLE_FLAG(  [handle-mapping],	 [enable NFSv2/3 handle mapping for PROXY FSAL],	          [-D_HANDLE_MAPPING])
+GA_ENABLE_FLAG(  [nfs4-locks],	         [enable NFSv4 locks],                                            [-D_WITH_NFSV4_LOCKS])
+GA_DISABLE_FLAG( [nfs41-locks],          [disable NFSv4 locks],                                           [-D_WITH_NO_NFSV41_LOCKS])
 
 
 # for using it in makefiles
@@ -328,7 +336,7 @@ GA_ENABLE_FLAG(  [debug-symbols],	 [include debug symbols to binaries (-g option
 GA_ENABLE_FLAG( [profiling], [turn on code profiling (-g and -pg)], [-g -pg] )
 
 # enable code profiling
-GA_ENABLE_FLAG( [strict-compile], [turn on strict compiler flags], [-Werror -Wimplicit -Wformat -Wmissing-braces -Wreturn-type -Wunused-variable -Wuninitialized] )
+GA_ENABLE_FLAG( [strict-compile], [turn on strict compiler flags], [-Wall -Werror -Wimplicit -Wformat -Wmissing-braces -Wreturn-type -Wunused-variable -Wuninitialized -Wno-pointer-sign] )
 
 # NFSv4 ACL
 GA_ENABLE_AM_CONDITION([nfs4-acl],[disable NFSv4 ACL support],[USE_NO_NFS4_ACL])
@@ -360,7 +368,7 @@ AM_CONDITIONAL(USE_FSAL_PROXY,    test "$FSAL" = "PROXY")
 AM_CONDITIONAL(USE_FSAL_SNMP,     test "$FSAL" = "SNMP")
 AM_CONDITIONAL(USE_FSAL_FUSE,     test "$FSAL" = "FUSE")
 AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
-AM_CONDITIONAL(USE_FSAL_SHOOK,   test "$FSAL" = "SHOOK") # variant of Lustre FSAL
+AM_CONDITIONAL(USE_FSAL_SHOOK,    test "$FSAL" = "SHOOK") # variant of Lustre FSAL
 AM_CONDITIONAL(USE_FSAL_XFS,      test "$FSAL" = "XFS")
 AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
@@ -388,9 +396,15 @@ AM_CONDITIONAL(USE_TIRPC,  test "$RPCAL" = "TIRPC" )
 AM_CONDITIONAL(HAVE_GSSAPI, test "$RPCAL" = "TIRPC" )
 AM_CONDITIONAL(USE_ONCRPC, test "$RPCAL" = "ONCRPC" )
 
+# Enable 9P Support
+GA_ENABLE_AM_CONDITION([9p],[enable 9P support], [USE_9P])
+if test "$enable_9p" == "yes"; then
+	AC_DEFINE(_USE_9P, 1, [enable 9P support])
+fi
+
+
 # IPv6
 GA_ENABLE_AM_CONDITION([ipv6],[enable IPv6 support (via IPv6)], [USE_TIRPC_IPV6])
-
 if test "$enable_ipv6" == "yes"; then
 	AC_DEFINE(_USE_TIRPC_IPV6,1,[enable IPv6 support via TIRPC])
 	if test "$RPCAL" != "TIRPC" ; then
@@ -398,20 +412,29 @@ if test "$enable_ipv6" == "yes"; then
 	fi
 fi
 
+# BuddyMalloc
+GA_DISABLE_AM_CONDITION([BuddyMalloc], [disable GANESHA's memory allocator, for debug purpose only], [_NO_BUDDY_SYSTEM])
+
+echo "enable_BuddyMalloc=$enable_BuddyMalloc"
+
+if test "$enable_BuddyMalloc" == "yes"; then
+        AC_DEFINE(_BUDDY_SYSTEM, 1, [enable GANESHA's memory allocator])
+else
+	AC_DEFINE(_NO_BUDDY_SYSTEM, 1, [disable GANESHA's memory allocator, for debug purpose only])
+fi
+AM_CONDITIONAL(USE_BUDDY_SYSTEM, test "$enable_BuddyMalloc" == "yes")
+
 # PNFS switch argument (default is nothing)
-AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|SPNFS_LIKE|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
+AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
 	PNFS="$withval", PNFS="NONE" )
 
 AM_CONDITIONAL(USE_PNFS_NONE, 		test "$PNFS" = "NONE" )
 AM_CONDITIONAL(USE_PNFS_PARALLEL_FS,	test "$PNFS" = "PARALLEL_FS" )
-AM_CONDITIONAL(USE_PNFS_SPNFS_LIKE, 	test "$PNFS" = "SPNFS_LIKE" )
 AM_CONDITIONAL(USE_PNFS_OSD, 	        test "$PNFS" = "OSD" )
 AM_CONDITIONAL(USE_PNFS_BLOCK, 	        test "$PNFS" = "BLOCK" )
 
 AM_CONDITIONAL(USE_PNFS,                 test "$PNFS" != "NONE" )
 
-AM_CONDITIONAL(USE_MFSL_PNFS_FILE, test "$PNFS" = "SPNFS_LIKE")
-AM_CONDITIONAL(USE_MFSL,           test "$PNFS" = "SPNFS_LIKE")
 
 # MFSL switch argument (default is NULL )
 AC_ARG_WITH( [mfsl], AS_HELP_STRING([--with-mfsl=NONE|NULL|ASYNC|AIO|MIRROR|PROXY_RPCSECGSS (default=NULL)],[specify the type of intermediate FSAL module to be used] ),
@@ -424,12 +447,6 @@ AM_CONDITIONAL(USE_MFSL_ASYNC,           test "$MFSL" = "ASYNC")
 AM_CONDITIONAL(USE_MFSL_PROXY_RPCSECGSS, test "$MFSL" = "PROXY_RPCSECGSS")
 
 AM_CONDITIONAL(USE_MFSL,                 test "$MFSL" != "NONE" )
-
-# If "spnfsd-like" pNFS layout requires MFS_PNFS_FILE
-if test "$PNFS" = "SPNFS_LIKE" ; then
-    	MFSL="PNFS_FILE"
-	AM_CONDITIONAL(USE_MFSL,           test "$PNFS" = "SPNFS_LIKE")
-fi
 
 # Database switch (for POSIX FSAL)
 AC_ARG_WITH( [db], AS_HELP_STRING([--with-db=MYSQL|PGSQL (default=MYSQL)],[specify the database engine for POSIX FSAL] ),
@@ -578,19 +595,55 @@ case $FSAL in
                 LDFLAGS="$LDFLAGS -L/usr/lpp/mmfs/lib"
 
 		AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
-		AC_CHECK_HEADERS([gpfs_nfs.h], [], [AC_MSG_ERROR(missing gpfs include files)])
-		AC_CHECK_DECL([gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs_ganesha function)], [[#include <gpfs_nfs.h>]])
-		AC_CHECK_DECLS([OPENHANDLE_NAME_TO_HANDLE, OPENHANDLE_OPEN_BY_HANDLE, OPENHANDLE_LINK_BY_FD,
-		                OPENHANDLE_READLINK_BY_FD, OPENHANDLE_STAT_BY_HANDLE],
+
+
+		AC_CHECK_HEADERS([gpfs_nfs.h], [], [AC_MSG_ERROR(missing gpfs include files)], [
+                #include <fcntl.h>
+                ])
+
+                AC_CHECK_MEMBER([struct file_handle.f_handle], [
+                                        AC_DEFINE([_GPFS_DECLARES_HANDLE], 1, [GPFS declares the handle structure])
+                                      ],
+                                      [],
+                                      [
+                                        #include <fcntl.h>
+                                        #include <gpfs_nfs.h>
+                                      ])
+
+		AC_CHECK_DECL([gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs_ganesha function)], [
+                  #include <fcntl.h>
+                  #include <gpfs_nfs.h>
+                ])
+
+		AC_CHECK_DECLS([OPENHANDLE_NAME_TO_HANDLE,
+                                OPENHANDLE_OPEN_BY_HANDLE,
+                                OPENHANDLE_LINK_BY_FD,
+		                OPENHANDLE_READLINK_BY_FD,
+                                OPENHANDLE_STAT_BY_HANDLE,
+                                XATTR_STAT,
+                                XATTR_MODE,
+                                XATTR_UID,
+                                XATTR_GID,
+                                XATTR_ATIME_SET,
+                                XATTR_MTIME_SET,
+                                XATTR_ACL
+                                ],
 		               [],
-		               [AC_MSG_ERROR(missing Open By Handle function)],
-		               [[#include <gpfs_nfs.h>]])
+		               [AC_MSG_ERROR(GPFS < 3.5.0 found, you must upgrade GPFS to use this feature)],
+		               [
+                                 #include <fcntl.h>
+                                 #include <gpfs_nfs.h>
+                               ])
+
 		if [[  $PNFS != "NONE" ]] ; then
 			AC_CHECK_DECLS([OPENHANDLE_LAYOUT_TYPE, OPENHANDLE_GET_DEVICEINFO, OPENHANDLE_GET_DEVICEITER,
 			                OPENHANDLE_LAYOUT_GET, OPENHANDLE_LAYOUT_RETURN],
 			               [],
 			               [AC_MSG_ERROR(missing Layout function)],
-			               [[#include <gpfs_nfs.h>]])
+			               [
+                                         #include <fcntl.h>
+                                         #include <gpfs_nfs.h>
+                                       ])
 		fi
 		AC_CHECK_LIB([gpfs], [gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs library)])
 		FSAL_CFLAGS=
@@ -651,9 +704,9 @@ case $FSAL in
 				"7."*)
 					AC_DEFINE([_USE_PGSQL], 1, [Using PostgreSQL database])
 					;;
-				"8."*)
+				"8."*|"9."*)
 					AC_DEFINE([_USE_PGSQL], 1, [Using PostgreSQL database])
-					AC_DEFINE([_PGSQL8], 1, [Using PostgreSQL version 8.x])
+					AC_DEFINE([_PGSQL8], 1, [Using PostgreSQL version >= 8.x])
 					;;
 				*)
 					AC_MSG_ERROR("Unsupported PostgreSQL version: $PGSQL_VERSION")
@@ -772,19 +825,14 @@ case $PNFS in
 		AC_DEFINE(_USE_PNFS_PARALLEL_FS,1,[enable NFSv4.1/pNFS support for parallel file system ])
 		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
-	"SPNFS_LIKE")
-		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable spnfsd-like NFSv4.1/pNFS support])
-		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
-		;;
 	"OSD")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable OSD based NFSv4.1/pNFS support])
+		AC_DEFINE(_USE_PNFS_OSD,1,[enable OSD based NFSv4.1/pNFS support])
 		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
 	"BLOCK")
 		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-		AC_DEFINE(_USE_PNFS_SPNFS_LIKE,1,[enable Block Device based NFSv4.1/pNFS support])
+		AC_DEFINE(_USE_PNFS_BLOCK,1,[enable Block Device based NFSv4.1/pNFS support])
 		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
 		;;
 	*)
@@ -865,7 +913,6 @@ AC_CONFIG_FILES([include/Makefile
                  include/MFSL/MFSL_PNFS_FILE/Makefile
                  include/MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  include/PNFS/Makefile
-		 include/PNFS/SPNFS_LIKE/Makefile
 		 include/PNFS/PARALLEL_FS/Makefile
 		 include/PNFS/OSD/Makefile
 		 include/PNFS/BLOCK/Makefile
@@ -881,13 +928,16 @@ AC_CONFIG_FILES([include/Makefile
                  LRU/Makefile
                  HashTable/Makefile
                  Cache_inode/Makefile
+                 SAL/Makefile
+		 FSAL_UP/Makefile
+		 FSAL_UP/DUMB/Makefile
                  File_Content/Makefile
                  File_Content_Policy/Makefile
 		 Protocols/Makefile
                  Protocols/9P/Makefile
 		 Protocols/NFS/Makefile
+		 Protocols/NLM/Makefile
 		 Protocols/PNFS/Makefile
-		 Protocols/PNFS/SPNFS_LIKE/Makefile
 		 Protocols/PNFS/PARALLEL_FS/Makefile
 		 Protocols/PNFS/OSD/Makefile
 		 Protocols/PNFS/BLOCK/Makefile

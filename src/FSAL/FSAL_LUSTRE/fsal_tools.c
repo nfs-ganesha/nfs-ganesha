@@ -44,9 +44,11 @@ char *LUSTREFSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int LUSTREFSAL_handlecmp(lustrefsal_handle_t * handle1, lustrefsal_handle_t * handle2,
+int LUSTREFSAL_handlecmp(fsal_handle_t * handle_1, fsal_handle_t * handle_2,
                          fsal_status_t * status)
 {
+  lustrefsal_handle_t * handle1 = (lustrefsal_handle_t *)handle_1;
+  lustrefsal_handle_t * handle2 = (lustrefsal_handle_t *)handle_2;
 
   *status = FSAL_STATUS_NO_ERROR;
 
@@ -76,12 +78,13 @@ int LUSTREFSAL_handlecmp(lustrefsal_handle_t * handle1, lustrefsal_handle_t * ha
  * \return The hash value
  */
 
-unsigned int LUSTREFSAL_Handle_to_HashIndex(lustrefsal_handle_t * p_handle,
+unsigned int LUSTREFSAL_Handle_to_HashIndex(fsal_handle_t *handle,
                                             unsigned int cookie,
                                             unsigned int alphabet_len,
                                             unsigned int index_size)
 {
   unsigned long long lval;
+  lustrefsal_handle_t * p_handle = (lustrefsal_handle_t *)handle;
 
   /* polynom of prime numbers */
   lval = 3 * cookie * alphabet_len + 1873 * p_handle->data.fid.f_seq
@@ -102,10 +105,11 @@ unsigned int LUSTREFSAL_Handle_to_HashIndex(lustrefsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int LUSTREFSAL_Handle_to_RBTIndex(lustrefsal_handle_t * p_handle,
+unsigned int LUSTREFSAL_Handle_to_RBTIndex(fsal_handle_t *handle,
                                            unsigned int cookie)
 {
   unsigned long long lval;
+  lustrefsal_handle_t * p_handle = (lustrefsal_handle_t *)handle;
 
   /* polynom of prime numbers */
   lval = 2239 * cookie + 3559 * p_handle->data.fid.f_seq + 5 * p_handle->data.fid.f_oid
@@ -130,13 +134,15 @@ unsigned int LUSTREFSAL_Handle_to_RBTIndex(lustrefsal_handle_t * p_handle,
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t LUSTREFSAL_DigestHandle(lustrefsal_export_context_t * p_expcontext,       /* IN */
+fsal_status_t LUSTREFSAL_DigestHandle(fsal_export_context_t *exp_context,       /* IN */
                                       fsal_digesttype_t output_type,    /* IN */
-                                      lustrefsal_handle_t * p_in_fsal_handle,   /* IN */
+                                      fsal_handle_t *in_handle,   /* IN */
                                       caddr_t out_buff  /* OUT */
     )
 {
   unsigned int ino32;
+  lustrefsal_export_context_t * p_expcontext = (lustrefsal_export_context_t *)exp_context;
+  lustrefsal_handle_t * p_in_fsal_handle = (lustrefsal_handle_t *)in_handle;
 
   /* sanity checks */
   if(!p_in_fsal_handle || !out_buff || !p_expcontext)
@@ -223,12 +229,14 @@ fsal_status_t LUSTREFSAL_DigestHandle(lustrefsal_export_context_t * p_expcontext
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t LUSTREFSAL_ExpandHandle(lustrefsal_export_context_t * p_expcontext,       /* IN */
+fsal_status_t LUSTREFSAL_ExpandHandle(fsal_export_context_t *exp_context,       /* IN */
                                       fsal_digesttype_t in_type,        /* IN */
                                       caddr_t in_buff,  /* IN */
-                                      lustrefsal_handle_t * p_out_fsal_handle   /* OUT */
+                                      fsal_handle_t *out_handle   /* OUT */
     )
 {
+  lustrefsal_export_context_t * p_expcontext = (lustrefsal_export_context_t *)exp_context;
+  lustrefsal_handle_t * p_out_fsal_handle = (lustrefsal_handle_t *)out_handle;
 
   /* sanity checks */
   if(!p_out_fsal_handle || !in_buff || !p_expcontext)
@@ -304,6 +312,8 @@ fsal_status_t LUSTREFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_p
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, link_support);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, symlink_support);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, lock_support);
+  FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, lock_support_owner);
+  FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, lock_support_async_block);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, named_attr);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, unique_handles);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, lease_time);

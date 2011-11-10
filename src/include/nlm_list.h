@@ -24,6 +24,9 @@
  *
  */
 
+#ifndef _NLM_LIST_H
+#define _NLM_LIST_H
+
 #include <stddef.h>
 
 struct glist_head
@@ -104,9 +107,15 @@ static inline int glist_empty(struct glist_head *head)
 	const typeof( ((type *)0)->member ) *__mptr = (addr);	\
 	(type *)( (char *)__mptr - offsetof(type,member) );})
 
+#define glist_first_entry(head, type, member) \
+        ((head)->next != (head) ? \
+          container_of((head)->next, type, member) : NULL)
+
 #define glist_entry(node, type, member) \
 	container_of(node, type, member)
 
 #define glist_for_each_safe(node, noden, head)			    \
   for (node = (head)->next, noden = node->next; node != (head);	    \
        node = noden, noden = node->next)
+
+#endif                          /* _NLM_LIST_H */

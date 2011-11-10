@@ -32,6 +32,7 @@
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
+#include <assert.h>
 
 /**
  *
@@ -477,10 +478,11 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
           switch (to_remove_entry->internal_md.type)
             {
             case SYMBOLIC_LINK:
-              to_remove_entry->object.symlink.attributes.numlinks -= 1;
-              to_remove_entry->object.symlink.attributes.ctime.seconds = time(NULL);
-              to_remove_entry->object.symlink.attributes.ctime.nseconds = 0;
-              to_remove_numlinks = to_remove_entry->object.symlink.attributes.numlinks;
+              assert(to_remove_entry->object.symlink);
+              to_remove_entry->object.symlink->attributes.numlinks -= 1;
+              to_remove_entry->object.symlink->attributes.ctime.seconds = time(NULL);
+              to_remove_entry->object.symlink->attributes.ctime.nseconds = 0;
+              to_remove_numlinks = to_remove_entry->object.symlink->attributes.numlinks;
               break;
 
             case REGULAR_FILE:

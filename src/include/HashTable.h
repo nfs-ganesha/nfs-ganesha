@@ -54,6 +54,8 @@
 
 typedef struct hashparameter__ *p_hash_parameter_t;
 
+typedef int (*ref_func)(void *);
+
 typedef struct hashparameter__
 {
   unsigned int index_size;                                    /**< Number of rbtree managed, this MUST be a prime number. */
@@ -122,7 +124,7 @@ typedef enum hashtable_set_how__
 /* @} */
 
 /* How many character used to display a key or value */
-#define HASHTABLE_DISPLAY_STRLEN 1024
+#define HASHTABLE_DISPLAY_STRLEN 8192
 
 /* Possible errors */
 #define HASHTABLE_SUCCESS                  0
@@ -132,7 +134,9 @@ typedef enum hashtable_set_how__
 #define HASHTABLE_ERROR_KEY_ALREADY_EXISTS 4
 #define HASHTABLE_ERROR_INVALID_ARGUMENT   5
 #define HASHTABLE_ERROR_DELALL_FAIL        6
+#define HASHTABLE_NOT_DELETED              7
 
+const char *hash_table_err_to_str(int err);
 unsigned long double_hash_func(hash_parameter_t * hc, hash_buffer_t * buffclef);
 hash_table_t *HashTable_Init(hash_parameter_t hc);
 int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
@@ -147,5 +151,24 @@ void HashTable_GetStats(hash_table_t * ht, hash_stat_t * hstat);
 void HashTable_Log(log_components_t component, hash_table_t * ht);
 void HashTable_Print(hash_table_t * ht);
 unsigned int HashTable_GetSize(hash_table_t * ht);
+
+/* The following function allows an atomic fetch hash only once,
+ * If the entry is found, it is removed.
+ */
+int HashTable_Get_and_Del(hash_table_t  * ht,
+                          hash_buffer_t * buffkey,
+                          hash_buffer_t * buffval,
+                          hash_buffer_t * buff_used_key);
+
+/*
+ * The following two functions provide reference counting management while the
+ * hash list mutex is held. put_ref should return 0 if the ref count was
+ * decremented to 0 (otherwise it can return whatever).
+ */
+int HashTable_GetRef(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t * buffval,
+                     void (*get_ref)(hash_buffer_t *) );
+int HashTable_DelRef(hash_table_t * ht, hash_buffer_t * buffkey,
+                     hash_buffer_t * p_usedbuffkey, hash_buffer_t * p_usedbuffdata,
+                     int (*put_ref)(hash_buffer_t *) );
 
 #endif                          /* _HASHTABLE_H */

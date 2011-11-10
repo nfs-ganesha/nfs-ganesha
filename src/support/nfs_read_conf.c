@@ -454,6 +454,20 @@ int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam)
         {
           strncpy(pparam->fsal_shared_library, key_value, MAXPATHLEN);
         }
+      else if(!strcasecmp( key_name, "MaxRPCSendBufferSize" ) )
+        {
+          pparam->max_send_buffer_size = atoi(key_value);
+        }
+      else if(!strcasecmp( key_name, "MaxRPCRecvBufferSize" ) )
+        {
+          pparam->max_recv_buffer_size = atoi(key_value);
+        }
+#ifdef _USE_NLM
+      else if(!strcasecmp( key_name, "NSM_Use_Caller_Name" ) )
+        {
+          pparam->nsm_use_caller_name = StrToBoolean(key_value);
+        }
+#endif
       else
         {
           LogCrit(COMPONENT_CONFIG,
@@ -1264,8 +1278,7 @@ int nfs_get_fsalpathlib_conf(char *configPath, path_str_t * PathLib, unsigned in
   config_item_t block;
   unsigned int found = FALSE;
   config_file_t config_struct;
- 
-  unsigned int index=0 ;
+  unsigned int index = 0 ;
 
   /* Is the config tree initialized ? */
   if(configPath == NULL || PathLib == NULL)
@@ -1319,8 +1332,8 @@ int nfs_get_fsalpathlib_conf(char *configPath, path_str_t * PathLib, unsigned in
           found = TRUE;
 
           /* Do not exceed array size */
-          if( index == *plen ) 
-	     break ;
+          if( index == *plen )
+            break ;
         }
 
     }

@@ -92,8 +92,7 @@ int nfs3_Pathconf(nfs_arg_t * parg,
   cache_entry_t *pentry = NULL;
   cache_inode_fsal_data_t fsal_data;
   fsal_attrib_list_t attr;
-  fsal_staticfsinfo_t staticinfo;
-  fsal_dynamicfsinfo_t dynamicinfo;
+  fsal_staticfsinfo_t * pstaticinfo = pcontext->export_context->fe_static_fs_info;
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
@@ -122,25 +121,17 @@ int nfs3_Pathconf(nfs_arg_t * parg,
       return NFS_REQ_OK;
     }
 
-  /* Get the filesystem information */
-  if(cache_inode_statfs(pentry, &staticinfo, &dynamicinfo, pcontext, &cache_status) !=
-     CACHE_INODE_SUCCESS)
-    {
-      pres->res_pathconf3.status = nfs3_Errno(cache_status);
-      return NFS_REQ_OK;
-    }
-
   /* Build post op file attributes */
   nfs_SetPostOpAttr(pcontext, pexport,
                     pentry,
                     &attr, &(pres->res_pathconf3.PATHCONF3res_u.resok.obj_attributes));
 
-  pres->res_pathconf3.PATHCONF3res_u.resok.linkmax = staticinfo.maxlink;
-  pres->res_pathconf3.PATHCONF3res_u.resok.name_max = staticinfo.maxnamelen;
-  pres->res_pathconf3.PATHCONF3res_u.resok.no_trunc = staticinfo.no_trunc;
-  pres->res_pathconf3.PATHCONF3res_u.resok.chown_restricted = staticinfo.chown_restricted;
-  pres->res_pathconf3.PATHCONF3res_u.resok.case_insensitive = staticinfo.case_insensitive;
-  pres->res_pathconf3.PATHCONF3res_u.resok.case_preserving = staticinfo.case_preserving;
+  pres->res_pathconf3.PATHCONF3res_u.resok.linkmax = pstaticinfo->maxlink;
+  pres->res_pathconf3.PATHCONF3res_u.resok.name_max = pstaticinfo->maxnamelen;
+  pres->res_pathconf3.PATHCONF3res_u.resok.no_trunc = pstaticinfo->no_trunc;
+  pres->res_pathconf3.PATHCONF3res_u.resok.chown_restricted = pstaticinfo->chown_restricted;
+  pres->res_pathconf3.PATHCONF3res_u.resok.case_insensitive = pstaticinfo->case_insensitive;
+  pres->res_pathconf3.PATHCONF3res_u.resok.case_preserving = pstaticinfo->case_preserving;
 
   return NFS_REQ_OK;
 }                               /* nfs3_Pathconf */

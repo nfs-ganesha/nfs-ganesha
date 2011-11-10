@@ -159,7 +159,9 @@ static void ChangeoverExports()
 
 void *admin_thread(void *Arg)
 {
+#ifndef _NO_BUDDY_SYSTEM
   int rc = 0;
+#endif
 
   SetNameFunction("admin_thr");
 

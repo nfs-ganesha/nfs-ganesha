@@ -63,14 +63,14 @@ extern fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t VFSFSAL_getattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
-                            vfsfsal_op_context_t * p_context,      /* IN */
+fsal_status_t VFSFSAL_getattrs(fsal_handle_t * p_filehandle,       /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
                             fsal_attrib_list_t * p_object_attributes    /* IN/OUT */
     )
 {
   fsal_status_t st;
   int rc = 0 ;
-  int errsv = 0 ;
+  int errsv;
   struct stat buffstat;
 
   /* sanity checks.
@@ -80,10 +80,10 @@ fsal_status_t VFSFSAL_getattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
   TakeTokenFSCall();
-  rc = vfs_stat_by_handle( p_context->export_context->mount_root_fd,
-                           &p_filehandle->data.vfs_handle,
+  rc = vfs_stat_by_handle( ((vfsfsal_op_context_t *)p_context)->export_context->mount_root_fd,
+                           &((vfsfsal_handle_t *)p_filehandle)->data.vfs_handle,
                            &buffstat ) ;
-  errsv = errno ;
+  errsv = errno;
   ReleaseTokenFSCall();
 
   if( rc == -1 )
@@ -123,9 +123,9 @@ fsal_status_t VFSFSAL_getattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t VFSFSAL_getattrs_descriptor(vfsfsal_file_t * p_file_descriptor,     /* IN */
-                                           vfsfsal_handle_t * p_filehandle,        /* IN */
-                                           vfsfsal_op_context_t * p_context,       /* IN */
+fsal_status_t VFSFSAL_getattrs_descriptor(fsal_file_t * p_file_descriptor,     /* IN */
+                                           fsal_handle_t * p_filehandle,        /* IN */
+                                           fsal_op_context_t * p_context,       /* IN */
                                            fsal_attrib_list_t * p_object_attributes /* IN/OUT */
     )
 {
@@ -137,15 +137,15 @@ fsal_status_t VFSFSAL_getattrs_descriptor(vfsfsal_file_t * p_file_descriptor,   
    * note : object_attributes is mandatory in VFSFSAL_getattrs.
    */
   if(!p_file_descriptor || !p_filehandle || !p_context || !p_object_attributes)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs_descriptor);
 
   TakeTokenFSCall();
-  rc = fstat64(p_file_descriptor->fd, &buffstat);
+  rc = fstat64(((vfsfsal_file_t *)p_file_descriptor)->fd, &buffstat);
   errsv = errno;
   ReleaseTokenFSCall();
 
   if(rc == -1)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_getattrs);
+    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_getattrs_descriptor);
 
   /* convert attributes */
   st = posixstat64_2_fsal_attributes(&buffstat, p_object_attributes);
@@ -153,10 +153,10 @@ fsal_status_t VFSFSAL_getattrs_descriptor(vfsfsal_file_t * p_file_descriptor,   
     {
       FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
       FSAL_SET_MASK(p_object_attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
-      ReturnStatus(st, INDEX_FSAL_getattrs);
+      ReturnStatus(st, INDEX_FSAL_getattrs_descriptor);
     }
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getattrs);
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_getattrs_descriptor);
 
 }
 
@@ -184,13 +184,13 @@ fsal_status_t VFSFSAL_getattrs_descriptor(vfsfsal_file_t * p_file_descriptor,   
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
-                            vfsfsal_op_context_t * p_context,      /* IN */
+fsal_status_t VFSFSAL_setattrs(fsal_handle_t * p_filehandle,       /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
                             fsal_attrib_list_t * p_attrib_set,  /* IN */
                             fsal_attrib_list_t * p_object_attributes    /* [ IN/OUT ] */
     )
 {
-
+  vfsfsal_op_context_t * vfs_context = (vfsfsal_op_context_t *) p_context;
   int rc, errsv;
   unsigned int i;
   fsal_status_t status;
@@ -277,12 +277,12 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
         {
 
           /* For modifying mode, user must be root or the owner */
-          if((p_context->credential.user != 0)
-             && (p_context->credential.user != buffstat.st_uid))
+          if((vfs_context->credential.user != 0)
+             && (vfs_context->credential.user != buffstat.st_uid))
             {
               LogFullDebug(COMPONENT_FSAL,
                            "Permission denied for CHMOD opeartion: current owner=%d, credential=%d",
-                           buffstat.st_uid, p_context->credential.user);
+                           buffstat.st_uid, vfs_context->credential.user);
               close(fd);
               Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
             }
@@ -310,13 +310,13 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
     {
 
       /* For modifying owner, user must be root or current owner==wanted==client */
-      if((p_context->credential.user != 0) &&
-         ((p_context->credential.user != buffstat.st_uid) ||
-          (p_context->credential.user != attrs.owner)))
+      if((vfs_context->credential.user != 0) &&
+         ((vfs_context->credential.user != buffstat.st_uid) ||
+          (vfs_context->credential.user != attrs.owner)))
         {
           LogFullDebug(COMPONENT_FSAL,
                        "Permission denied for CHOWN opeartion: current owner=%d, credential=%d, new owner=%d",
-                       buffstat.st_uid, p_context->credential.user, attrs.owner);
+                       buffstat.st_uid, vfs_context->credential.user, attrs.owner);
           close(fd);
           Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
         }
@@ -326,8 +326,8 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
     {
 
       /* For modifying group, user must be root or current owner */
-      if((p_context->credential.user != 0)
-         && (p_context->credential.user != buffstat.st_uid))
+      if((vfs_context->credential.user != 0)
+         && (vfs_context->credential.user != buffstat.st_uid))
         {
           close(fd);
           Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
@@ -335,21 +335,21 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
 
       int in_grp = 0;
       /* set in_grp */
-      if(p_context->credential.group == attrs.group)
+      if(vfs_context->credential.group == attrs.group)
         in_grp = 1;
       else
-        for(i = 0; i < p_context->credential.nbgroups; i++)
+        for(i = 0; i < vfs_context->credential.nbgroups; i++)
           {
-            if((in_grp = (attrs.group == p_context->credential.alt_groups[i])))
+            if((in_grp = (attrs.group == vfs_context->credential.alt_groups[i])))
               break;
           }
 
       /* it must also be in target group */
-      if(p_context->credential.user != 0 && !in_grp)
+      if(vfs_context->credential.user != 0 && !in_grp)
         {
           LogFullDebug(COMPONENT_FSAL,
                        "Permission denied for CHOWN operation: current group=%d, credential=%d, new group=%d",
-                       buffstat.st_gid, p_context->credential.group, attrs.group);
+                       buffstat.st_gid, vfs_context->credential.group, attrs.group);
           close(fd);
           Return(ERR_FSAL_PERM, 0, INDEX_FSAL_setattrs);
         }
@@ -383,8 +383,8 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
 
   /* user must be the owner or have read access to modify 'atime' */
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME)
-     && (p_context->credential.user != 0)
-     && (p_context->credential.user != buffstat.st_uid)
+     && (vfs_context->credential.user != 0)
+     && (vfs_context->credential.user != buffstat.st_uid)
      && ((status = fsal_internal_testAccess(p_context, FSAL_R_OK, &buffstat, NULL)).major
          != ERR_FSAL_NO_ERROR))
     {
@@ -393,8 +393,8 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
     }
   /* user must be the owner or have write access to modify 'mtime' */
   if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME)
-     && (p_context->credential.user != 0)
-     && (p_context->credential.user != buffstat.st_uid)
+     && (vfs_context->credential.user != 0)
+     && (vfs_context->credential.user != buffstat.st_uid)
      && ((status = fsal_internal_testAccess(p_context, FSAL_W_OK, &buffstat, NULL)).major
          != ERR_FSAL_NO_ERROR))
     {
@@ -468,8 +468,8 @@ fsal_status_t VFSFSAL_setattrs(vfsfsal_handle_t * p_filehandle,       /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t VFSFSAL_getextattrs(vfsfsal_handle_t * p_filehandle, /* IN */
-                                   vfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t VFSFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
+                                   fsal_op_context_t * p_context,        /* IN */
                                    fsal_extattrib_list_t * p_object_attributes /* OUT */
     )
 {

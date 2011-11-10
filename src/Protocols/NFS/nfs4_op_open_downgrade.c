@@ -45,24 +45,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
-#include "cache_content.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
+#include "sal_functions.h"
 #include "nfs_proto_functions.h"
-#include "nfs_file_handle.h"
-#include "nfs_tools.h"
+#include "nfs_proto_tools.h"
 
 /**
  * nfs4_op_open_downgrade: The NFS4_OP_OPEN_DOWNGRADE
@@ -84,8 +76,9 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_downgrade";
 
-  cache_inode_state_t *pstate_found = NULL;
-  cache_inode_status_t cache_status;
+  state_t    * pstate_found = NULL;
+  int          rc;
+  const char * tag = "OPEN_DOWNGRADE";
 
   resp->resop = NFS4_OP_OPEN_DOWNGRADE;
   res_OPEN_DOWNGRADE4.status = NFS4_OK;
@@ -118,25 +111,34 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
       return res_OPEN_DOWNGRADE4.status;
     }
 
-  /* Get the state */
-  if(cache_inode_get_state(arg_OPEN_DOWNGRADE4.open_stateid.other,
-                           &pstate_found,
-                           data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
+  /* Check stateid correctness and get pointer to state */
+  if((rc = nfs4_Check_Stateid(&arg_OPEN_DOWNGRADE4.open_stateid,
+                              data->current_entry,
+                              0LL,
+                              &pstate_found,
+                              data,
+                              STATEID_SPECIAL_FOR_LOCK,
+                              tag)) != NFS4_OK)
     {
-      res_OPEN_DOWNGRADE4.status = nfs4_Errno(cache_status);
+      res_OPEN_DOWNGRADE4.status = rc;
+      LogDebug(COMPONENT_STATE,
+               "OPEN_DOWNGRADE failed nfs4_Check_Stateid");
       return res_OPEN_DOWNGRADE4.status;
     }
 
   /* Update the state */
-  pstate_found->seqid += 1;
+  pstate_found->state_seqid += 1;
 
   /* Successful exit */
   res_OPEN_DOWNGRADE4.status = NFS4_OK;
   res_OPEN_DOWNGRADE4.OPEN_DOWNGRADE4res_u.resok4.open_stateid.seqid =
-      pstate_found->seqid;
+      pstate_found->state_seqid;
   memcpy(res_OPEN_DOWNGRADE4.OPEN_DOWNGRADE4res_u.resok4.open_stateid.other,
-         pstate_found->stateid_other, 12);
+         pstate_found->stateid_other, OTHERSIZE);
 
+  /* Save the response in the open owner */
+  Copy_nfs4_state_req(pstate_found->state_powner, arg_OPEN_DOWNGRADE4.seqid, op, data, resp, tag);
+                
   return res_OPEN_DOWNGRADE4.status;
 }                               /* nfs4_op_opendowngrade */
 
@@ -155,3 +157,9 @@ void nfs4_op_open_downgrade_Free(OPEN_DOWNGRADE4res * resp)
   /* Nothing to be done */
   return;
 }                               /* nfs4_op_open_downgrade_Free */
+
+void nfs4_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res * resp_dst, OPEN_DOWNGRADE4res * resp_src)
+{
+  /* Nothing to be done */
+  return;
+}

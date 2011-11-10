@@ -41,10 +41,6 @@
 #include "config.h"
 #endif                          /* HAVE_CONFIG_H */
 
-#ifdef _SOLARIS
-#include "solaris_port.h"
-#endif                          /* _SOLARIS */
-
 /* fsal_types contains constants and type definitions for FSAL */
 #include "fsal_types.h"
 #include "common_utils.h"
@@ -627,11 +623,6 @@ fsal_status_t FSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
                           fsal_attrib_list_t * node_attributes  /* [ IN/OUT ] */
     );
 
-fsal_status_t FSAL_static_fsinfo(fsal_handle_t * filehandle,    /* IN */
-                                 fsal_op_context_t * p_context, /* IN */
-                                 fsal_staticfsinfo_t * staticinfo       /* OUT */
-    );
-
 fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * filehandle,   /* IN */
                                   fsal_op_context_t * p_context,        /* IN */
                                   fsal_dynamicfsinfo_t * dynamicinfo    /* OUT */
@@ -657,31 +648,42 @@ fsal_status_t FSAL_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
                                  fsal_rcpflag_t transfer_opt    /* IN */
     );
 
+fsal_status_t FSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
+                            fsal_handle_t     * p_filehandle,        /* IN */
+                            fsal_op_context_t * p_context,           /* IN */
+                            void              * p_owner,             /* IN (opaque to FSAL) */
+                            fsal_lock_op_t      lock_op,             /* IN */
+                            fsal_lock_param_t   request_lock,        /* IN */
+                            fsal_lock_param_t * conflicting_lock     /* OUT */
+                            );
+
+/* FSAL_UP functions */
+/* These structs are defined here because including fsal_up.h causes
+ * preprocessor issues. */
+#ifdef _USE_FSAL_UP
+struct fsal_up_event_bus_filter_t_;
+struct fsal_up_event_t_;
+struct fsal_up_event_bus_parameter_t_;
+struct fsal_up_event_bus_context_t_;
+fsal_status_t FSAL_UP_Init(struct fsal_up_event_bus_parameter_t_ * pebparam,      /* IN */
+                           struct fsal_up_event_bus_context_t_ * pupebcontext     /* OUT */
+                           );
+
+fsal_status_t FSAL_UP_AddFilter(struct fsal_up_event_bus_filter_t_ * pupebfilter,  /* IN */
+                                struct fsal_up_event_bus_context_t_ * pupebcontext /* INOUT */
+                                   );
+fsal_status_t FSAL_UP_GetEvents(struct fsal_up_event_t_ ** pevents,                /* OUT */
+                                fsal_count_t * event_nb,                   /* IN */
+                                fsal_time_t timeout,                       /* IN */
+                                fsal_count_t * peventfound,                /* OUT */
+                                struct fsal_up_event_bus_context_t_ * pupebcontext /* IN */
+                                );
+#endif /* _USE_FSAL_UP */
+
 /* To be called before exiting */
 fsal_status_t FSAL_terminate();
 
 #ifndef _USE_SWIG
-
-/******************************************************
- *                FSAL locks management.
- ******************************************************/
-
-fsal_status_t FSAL_lock(fsal_file_t * obj_handle,       /* IN */
-                        fsal_lockdesc_t * ldesc,        /*IN/OUT */
-                        fsal_boolean_t callback /* IN */
-    );
-
-fsal_status_t FSAL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-                              fsal_lockparam_t * lock_info      /* IN */
-    );
-
-fsal_status_t FSAL_unlock(fsal_file_t * obj_handle,     /* IN */
-                          fsal_lockdesc_t * ldesc       /*IN/OUT */
-    );
-
-fsal_status_t FSAL_getlock(fsal_file_t * obj_handle,    /* IN */
-                           fsal_lockdesc_t * ldesc      /*IN/OUT */
-    );
 
 /******************************************************
  *          FSAL extended attributes management.
@@ -1076,10 +1078,6 @@ typedef struct fsal_functions__
   fsal_status_t(*fsal_close_by_fileid) (fsal_file_t * file_descriptor /* IN */ ,
                                         fsal_u64_t fileid);
 
-  /* FSAL_static_fsinfo */
-  fsal_status_t(*fsal_static_fsinfo) (fsal_handle_t * p_filehandle,     /* IN */
-                                      fsal_op_context_t * p_context,    /* IN */
-                                      fsal_staticfsinfo_t * p_staticinfo /* OUT */ );
   /* FSAL_dynamic_fsinfo */
   fsal_status_t(*fsal_dynamic_fsinfo) (fsal_handle_t * p_filehandle,    /* IN */
                                        fsal_op_context_t * p_context,   /* IN */
@@ -1144,20 +1142,6 @@ typedef struct fsal_functions__
                                        fsal_handle_t * p_fsoot_handle,  /* OUT */
                                        fsal_attrib_list_t *
                                        p_fsroot_attributes /* [ IN/OUT ] */ );
-  /* FSAL_lock */
-  fsal_status_t(*fsal_lock) (fsal_file_t * obj_handle,
-                             fsal_lockdesc_t * ldesc, fsal_boolean_t blocking);
-
-  /* FSAL_changelock */
-  fsal_status_t(*fsal_changelock) (fsal_lockdesc_t * lock_descriptor,   /* IN / OUT */
-                                   fsal_lockparam_t * lock_info /* IN */ );
-
-  /* FSAL_unlock */
-  fsal_status_t(*fsal_unlock) (fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc);
-
-  /* FSAL_getlock */
-  fsal_status_t(*fsal_getlock) (fsal_file_t * obj_handle, fsal_lockdesc_t * ldesc);
-
   /* FSAL_CleanObjectResources */
   fsal_status_t(*fsal_cleanobjectresources) (fsal_handle_t * in_fsal_handle);
 
@@ -1356,11 +1340,31 @@ typedef struct fsal_functions__
                                      fsal_op_context_t * p_context,        /* IN */
                                      fsal_extattrib_list_t * p_object_attributes /* OUT */ ) ;
 
+  fsal_status_t (*fsal_lock_op)( fsal_file_t             * p_file_descriptor,   /* IN */
+                                 fsal_handle_t           * p_filehandle,        /* IN */
+                                 fsal_op_context_t       * p_context,           /* IN */
+                                 void                    * p_owner,             /* IN (opaque to FSAL) */
+                                 fsal_lock_op_t            lock_op,             /* IN */
+                                 fsal_lock_param_t         request_lock,        /* IN */
+                                 fsal_lock_param_t       * conflicting_lock     /* OUT */ );
+
   /* get fileno */
   unsigned int (*fsal_getfileno) (fsal_file_t *);
 
   fsal_status_t(*fsal_sync) (fsal_file_t * p_file_descriptor  /* IN */);
 
+  /* FSAL_UP functions */
+#ifdef _USE_FSAL_UP
+  fsal_status_t(*fsal_up_init) (struct fsal_up_event_bus_parameter_t_ * pebparam,      /* IN */
+				struct fsal_up_event_bus_context_t_ * pupebcontext     /* OUT */ );
+  fsal_status_t(*fsal_up_addfilter)(struct fsal_up_event_bus_filter_t_ * pupebfilter,  /* IN */
+                                  struct fsal_up_event_bus_context_t_ * pupebcontext /* INOUT */ );
+  fsal_status_t(*fsal_up_getevents)(struct fsal_up_event_t_ ** pevents,                /* OUT */
+                                  fsal_count_t * event_nb,                   /* IN */
+                                  fsal_time_t timeout,                       /* IN */
+				    fsal_count_t * peventfound,                 /* OUT */
+                                  struct fsal_up_event_bus_context_t_ * pupebcontext /* IN */ );
+#endif /* _USE_FSAL_UP */
 } fsal_functions_t;
 
 /* Structure allow assignement, char[<n>] do not */
@@ -1371,7 +1375,6 @@ typedef struct fsal_const__
   unsigned int fsal_export_context_t_size;
   unsigned int fsal_file_t_size;
   unsigned int fsal_cookie_t_size;
-  unsigned int fsal_lockdesc_t_size;
   unsigned int fsal_cred_t_size;
   unsigned int fs_specific_initinfo_t_size;
   unsigned int fsal_dir_t_size;

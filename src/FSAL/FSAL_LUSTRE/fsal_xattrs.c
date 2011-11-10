@@ -33,15 +33,15 @@
 
 /* function for getting an attribute value */
 
-typedef int (*xattr_getfunc_t) (lustrefsal_handle_t *,  /* object handle */
-                                lustrefsal_op_context_t *,      /* context */
+typedef int (*xattr_getfunc_t) (fsal_handle_t *,  /* object handle */
+                                fsal_op_context_t *,      /* context */
                                 caddr_t,        /* output buff */
                                 size_t, /* output buff size */
                                 size_t *,       /* output size */
                                 void *arg);     /* optionnal argument */
 
-typedef int (*xattr_setfunc_t) (lustrefsal_handle_t *,  /* object handle */
-                                lustrefsal_op_context_t *,      /* context */
+typedef int (*xattr_setfunc_t) (fsal_handle_t *,  /* object handle */
+                                fsal_op_context_t *,      /* context */
                                 caddr_t,        /* input buff */
                                 size_t, /* input size */
                                 int,    /* creation flag */
@@ -60,15 +60,15 @@ typedef struct fsal_xattr_def__
  * DEFINE GET/SET FUNCTIONS
  */
 
-int print_fid(lustrefsal_handle_t * p_objecthandle,     /* object handle */
-              lustrefsal_op_context_t * p_context,      /* IN */
+int print_fid(fsal_handle_t * p_objecthandle,     /* object handle */
+              fsal_op_context_t * p_context,      /* IN */
               caddr_t buffer_addr,      /* IN/OUT */
               size_t buffer_size,       /* IN */
               size_t * p_output_size,   /* OUT */
               void *arg)
 {
   *p_output_size = snprintf(buffer_addr, buffer_size, DFID_NOBRACE "\n",
-                            PFID(&p_objecthandle->data.fid));
+                            PFID(&((lustrefsal_handle_t *)p_objecthandle)->data.fid));
   return 0;
 }                               /* print_fid */
 
@@ -83,8 +83,8 @@ int print_fid(lustrefsal_handle_t * p_objecthandle,     /* object handle */
 #define ARG_HSM_ARCH_NUM ((long)2)
 #endif
 
-int print_stripe(lustrefsal_handle_t * p_objecthandle,  /* object handle */
-                 lustrefsal_op_context_t * p_context,   /* IN */
+int print_stripe(fsal_handle_t * p_objecthandle,  /* object handle */
+                 fsal_op_context_t * p_context,   /* IN */
                  caddr_t buffer_addr,   /* IN/OUT */
                  size_t buffer_size,    /* IN */
                  size_t * p_output_size,        /* OUT */
@@ -476,7 +476,10 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
     p_xattr_attrs->creation = file_attrs->creation;
 
   if(p_xattr_attrs->asked_attributes & FSAL_ATTR_CHGTIME)
-    p_xattr_attrs->chgtime = file_attrs->chgtime;
+    {
+      p_xattr_attrs->chgtime = file_attrs->chgtime;
+      p_xattr_attrs->change = (uint64_t) p_xattr_attrs->chgtime.seconds;
+    }
 
   if(p_xattr_attrs->asked_attributes & FSAL_ATTR_SIZE)
     p_xattr_attrs->filesize = DEV_BSIZE;
@@ -520,8 +523,8 @@ static int file_attributes_to_xattr_attrs(fsal_attrib_list_t * file_attrs,
  * \param xattr_cookie xattr's cookie (as returned by listxattrs).
  * \param p_attrs xattr's attributes.
  */
-fsal_status_t LUSTREFSAL_GetXAttrAttrs(lustrefsal_handle_t * p_objecthandle,    /* IN */
-                                       lustrefsal_op_context_t * p_context,     /* IN */
+fsal_status_t LUSTREFSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,    /* IN */
+                                       fsal_op_context_t * p_context,     /* IN */
                                        unsigned int xattr_id,   /* IN */
                                        fsal_attrib_list_t * p_attrs
                                           /**< IN/OUT xattr attributes (if supported) */
@@ -582,9 +585,9 @@ fsal_status_t LUSTREFSAL_GetXAttrAttrs(lustrefsal_handle_t * p_objecthandle,    
  * \param p_nb_returned the number of xattr entries actually stored in xattrs_tab.
  * \param end_of_list this boolean indicates that the end of xattrs list has been reached.
  */
-fsal_status_t LUSTREFSAL_ListXAttrs(lustrefsal_handle_t * p_objecthandle,       /* IN */
+fsal_status_t LUSTREFSAL_ListXAttrs(fsal_handle_t * p_objecthandle,       /* IN */
                                     unsigned int cookie,        /* IN */
-                                    lustrefsal_op_context_t * p_context,        /* IN */
+                                    fsal_op_context_t * p_context,        /* IN */
                                     fsal_xattrent_t * xattrs_tab,       /* IN/OUT */
                                     unsigned int xattrs_tabsize,        /* IN */
                                     unsigned int *p_nb_returned,        /* OUT */
@@ -880,9 +883,9 @@ static int xattr_format_value(caddr_t buffer, size_t * datalen, size_t maxlen)
  * \param buffer_size size of the buffer where the xattr value is to be stored.
  * \param p_output_size size of the data actually stored into the buffer.
  */
-fsal_status_t LUSTREFSAL_GetXAttrValueById(lustrefsal_handle_t * p_objecthandle,        /* IN */
+fsal_status_t LUSTREFSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,        /* IN */
                                            unsigned int xattr_id,       /* IN */
-                                           lustrefsal_op_context_t * p_context, /* IN */
+                                           fsal_op_context_t * p_context, /* IN */
                                            caddr_t buffer_addr, /* IN/OUT */
                                            size_t buffer_size,  /* IN */
                                            size_t * p_output_size       /* OUT */
@@ -939,7 +942,7 @@ fsal_status_t LUSTREFSAL_GetXAttrValueById(lustrefsal_handle_t * p_objecthandle,
   else                          /* built-in attr */
     {
       /* get the value */
-      rc = xattr_list[xattr_id].get_func(p_objecthandle, p_context,
+        rc = xattr_list[xattr_id].get_func(p_objecthandle, p_context,
                                          buffer_addr, buffer_size,
                                          p_output_size, xattr_list[xattr_id].arg);
       Return(rc, 0, INDEX_FSAL_GetXAttrValue);
@@ -957,9 +960,9 @@ fsal_status_t LUSTREFSAL_GetXAttrValueById(lustrefsal_handle_t * p_objecthandle,
  *   \return ERR_FSAL_NO_ERROR if xattr_name exists, ERR_FSAL_NOENT otherwise
  */
 
-fsal_status_t LUSTREFSAL_GetXAttrIdByName(lustrefsal_handle_t * p_objecthandle, /* IN */
+fsal_status_t LUSTREFSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle, /* IN */
                                           const fsal_name_t * xattr_name,       /* IN */
-                                          lustrefsal_op_context_t * p_context,  /* IN */
+                                          fsal_op_context_t * p_context,  /* IN */
                                           unsigned int *pxattr_id       /* OUT */
     )
 {
@@ -1020,9 +1023,9 @@ fsal_status_t LUSTREFSAL_GetXAttrIdByName(lustrefsal_handle_t * p_objecthandle, 
  * \param buffer_size size of the buffer where the xattr value is to be stored.
  * \param p_output_size size of the data actually stored into the buffer.
  */
-fsal_status_t LUSTREFSAL_GetXAttrValueByName(lustrefsal_handle_t * p_objecthandle,      /* IN */
+fsal_status_t LUSTREFSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,      /* IN */
                                              const fsal_name_t * xattr_name,    /* IN */
-                                             lustrefsal_op_context_t * p_context,       /* IN */
+                                             fsal_op_context_t * p_context,       /* IN */
                                              caddr_t buffer_addr,       /* IN/OUT */
                                              size_t buffer_size,        /* IN */
                                              size_t * p_output_size     /* OUT */
@@ -1092,9 +1095,9 @@ static void chomp_attr_value(char *str, size_t size)
     str[len - 1] = '\0';
 }
 
-fsal_status_t LUSTREFSAL_SetXAttrValue(lustrefsal_handle_t * p_objecthandle,    /* IN */
+fsal_status_t LUSTREFSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,    /* IN */
                                        const fsal_name_t * xattr_name,  /* IN */
-                                       lustrefsal_op_context_t * p_context,     /* IN */
+                                       fsal_op_context_t * p_context,     /* IN */
                                        caddr_t buffer_addr,     /* IN */
                                        size_t buffer_size,      /* IN */
                                        int create       /* IN */
@@ -1129,9 +1132,9 @@ fsal_status_t LUSTREFSAL_SetXAttrValue(lustrefsal_handle_t * p_objecthandle,    
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_SetXAttrValue);
 }
 
-fsal_status_t LUSTREFSAL_SetXAttrValueById(lustrefsal_handle_t * p_objecthandle,        /* IN */
+fsal_status_t LUSTREFSAL_SetXAttrValueById(fsal_handle_t * p_objecthandle,        /* IN */
                                            unsigned int xattr_id,       /* IN */
-                                           lustrefsal_op_context_t * p_context, /* IN */
+                                           fsal_op_context_t * p_context, /* IN */
                                            caddr_t buffer_addr, /* IN */
                                            size_t buffer_size   /* IN */
     )
@@ -1170,8 +1173,8 @@ fsal_status_t LUSTREFSAL_SetXAttrValueById(lustrefsal_handle_t * p_objecthandle,
  * \param p_context pointer to the current security context.
  * \param xattr_id xattr's id
  */
-fsal_status_t LUSTREFSAL_RemoveXAttrById(lustrefsal_handle_t * p_objecthandle,  /* IN */
-                                         lustrefsal_op_context_t * p_context,   /* IN */
+fsal_status_t LUSTREFSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,  /* IN */
+                                         fsal_op_context_t * p_context,   /* IN */
                                          unsigned int xattr_id) /* IN */
 {
   int rc;
@@ -1204,8 +1207,8 @@ fsal_status_t LUSTREFSAL_RemoveXAttrById(lustrefsal_handle_t * p_objecthandle,  
  * \param p_context pointer to the current security context.
  * \param xattr_name xattr's name
  */
-fsal_status_t LUSTREFSAL_RemoveXAttrByName(lustrefsal_handle_t * p_objecthandle,        /* IN */
-                                           lustrefsal_op_context_t * p_context, /* IN */
+fsal_status_t LUSTREFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,        /* IN */
+                                           fsal_op_context_t * p_context, /* IN */
                                            const fsal_name_t * xattr_name)      /* IN */
 {
   int rc;

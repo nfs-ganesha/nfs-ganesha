@@ -594,7 +594,7 @@ int isBadMagicNumber(const char *tag, BuddyThreadContext_t *context, BuddyBlock_
 #endif
         }
       LogMajor(COMPONENT_MEMALLOC,
-               "%s %s block %p has been overwritten or is not a buddy block (Magic number %08X<>%08X)",
+               "%s %s block %p has been overwritten or is not a buddy block (Magic number %08x<>%08x)",
                tag, _label, block, block->Header.MagicNumber, MagicNumber);
       log_bad_block(tag, context, block, do_guilt, do_guilt);
       return 1;
@@ -704,7 +704,7 @@ static BuddyBlock_t *Get_BuddyBlock(BuddyThreadContext_t * context,
   Offset_buddy = Offset_block ^ (1 << k);
 
   LogFullDebug(COMPONENT_MEMALLOC,
-               "buddy(%08tx,%u,%08X)=%08tx",
+               "buddy(%08tx,%u,%08x)=%08tx",
                Offset_block, k, 1 << k, Offset_buddy);
 
   return (BuddyBlock_t *) (Offset_buddy + BaseAddr);
@@ -1616,11 +1616,11 @@ static BUDDY_ADDR_T __BuddyMalloc(size_t Size, int do_exit_on_error)
   /* update stats to remember we use this amount of memory */
   UpdateStats_UseStdMemSpace(context, allocation);
 
-  LogFullDebug(COMPONENT_MEMALLOC,
-               "%p:BuddyMalloc(%llu) => %p",
-               (BUDDY_ADDR_T) pthread_self(),
-               (unsigned long long)Size,
-               p_block->Content.UserSpace);
+  LogDebug(COMPONENT_MEMALLOC,
+           "BuddyMalloc(%llu) block=%p => %p",
+           (unsigned long long)Size,
+           p_block,
+           p_block->Content.UserSpace);
 
 
   /* returns the userspace aligned on 64 bits */
@@ -2583,7 +2583,8 @@ static void hash_label_free(label_info_list_t * label_hash[], unsigned int hash_
     }
 }
 
-static void hash_label_display(label_info_list_t * label_hash[], unsigned int hash_sz)
+static void hash_label_display(label_info_list_t * label_hash[],
+                               unsigned int        hash_sz)
 {
   unsigned int i, max_file, max_func, max_descr;
   label_info_list_t *p_curr;
@@ -2607,24 +2608,21 @@ static void hash_label_display(label_info_list_t * label_hash[], unsigned int ha
         }
     }
 
-  if(isFullDebug(COMPONENT_FSAL))
-    {
-      LogFullDebug(COMPONENT_MEMLEAKS,
-                   "%-*s | %-*s | %5s | %-*s | %s",
-                   max_file, "file",
-                   max_func, "function",
-                   "line", max_descr, "description", "count");
+  LogFullDebug(COMPONENT_MEMLEAKS,
+               "%-*s | %-*s | %5s | %-*s | %s",
+               max_file, "file",
+               max_func, "function",
+               "line", max_descr, "description", "count");
 
-      for(i = 0; i < hash_sz; i++)
+  for(i = 0; i < hash_sz; i++)
+    {
+      for(p_curr = label_hash[i]; p_curr != NULL; p_curr = p_curr->next)
         {
-          for(p_curr = label_hash[i]; p_curr != NULL; p_curr = p_curr->next)
-            {
-              LogFullDebug(COMPONENT_MEMLEAKS,
-                           "%-*s | %-*s | %5u | %-*s | %u",
-                           max_file, p_curr->file, max_func,
-                           p_curr->func, p_curr->line, max_descr, p_curr->user_label,
-                           p_curr->count);
-            }
+          LogFullDebug(COMPONENT_MEMLEAKS,
+                       "%-*s | %-*s | %5u | %-*s | %u",
+                       max_file, p_curr->file, max_func,
+                       p_curr->func, p_curr->line, max_descr, p_curr->user_label,
+                       p_curr->count);
         }
     }
 }
@@ -2633,13 +2631,16 @@ static void hash_label_display(label_info_list_t * label_hash[], unsigned int ha
  *  Displays a summary of all allocated blocks
  *  with their labels
  */
-void BuddyLabelsSummary()
+void BuddyLabelsSummary(log_components_t component)
 {
 #define LBL_HASH_SZ 127
   label_info_list_t *label_hash[LBL_HASH_SZ];
   BuddyThreadContext_t *context;
   BuddyBlockPtr_t p_curr_block;
   unsigned int i;
+
+  if(!isFullDebug(component) || !isFullDebug(COMPONENT_MEMLEAKS))
+    return;
 
   context = GetThreadContext();
 
@@ -2665,7 +2666,6 @@ void BuddyLabelsSummary()
 
   hash_label_display(label_hash, LBL_HASH_SZ);
   hash_label_free(label_hash, LBL_HASH_SZ);
-
 }
 
 void BuddyDumpPools(FILE *output)

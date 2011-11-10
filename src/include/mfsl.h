@@ -38,7 +38,6 @@
 
 /* fsal_types contains constants and type definitions for FSAL */
 #include "fsal.h"
-#include "fsal_types.h"
 #include "mfsl_types.h"
 #include "common_utils.h"
 
@@ -349,29 +348,5 @@ fsal_status_t MFSL_rcp_by_fileid(mfsl_object_t * filehandle,    /* IN */
 
 /* To be called before exiting */
 fsal_status_t MFSL_terminate();
-
-#ifndef _USE_SWIG
-
-/******************************************************
- *                FSAL locks management.
- ******************************************************/
-fsal_status_t MSFL_lock(mfsl_file_t * obj_handle,       /* IN */
-                        fsal_lockdesc_t * ldesc,        /*IN/OUT */
-                        fsal_boolean_t callback /* IN */
-    );
-
-fsal_status_t MFSL_changelock(fsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-                              fsal_lockparam_t * lock_info      /* IN */
-    );
-
-fsal_status_t MFSL_unlock(mfsl_file_t * obj_handle,     /* IN */
-                          fsal_lockdesc_t * ldesc       /*IN/OUT */
-    );
-
-fsal_status_t MFSL_getlock(mfsl_file_t * obj_handle,    /* IN */
-                           fsal_lockdesc_t * ldesc      /*IN/OUT */
-    );
-
-#endif                          /* ! _USE_SWIG */
 
 #endif                          /* _MFSL_H */

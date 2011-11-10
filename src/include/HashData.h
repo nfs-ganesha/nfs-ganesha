@@ -42,7 +42,6 @@ typedef struct hashbuff__
 {
   caddr_t pdata;
   size_t len;
-  unsigned int type;
 } hash_buffer_t;
 
 typedef struct hash_data__

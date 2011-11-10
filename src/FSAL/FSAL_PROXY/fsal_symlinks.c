@@ -29,8 +29,6 @@
 #include "nfs4.h"
 
 #include "stuff_alloc.h"
-#include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
@@ -66,8 +64,8 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  * */
 
-fsal_status_t PROXYFSAL_readlink(proxyfsal_handle_t * linkhandle,       /* IN */
-                                 proxyfsal_op_context_t * p_context,    /* IN */
+fsal_status_t PROXYFSAL_readlink(fsal_handle_t * linkhandle,       /* IN */
+                                 fsal_op_context_t *context,    /* IN */
                                  fsal_path_t * p_link_content,  /* OUT */
                                  fsal_attrib_list_t * link_attributes   /* [ IN/OUT ] */
     )
@@ -81,6 +79,7 @@ fsal_status_t PROXYFSAL_readlink(proxyfsal_handle_t * linkhandle,       /* IN */
   bitmap4 bitmap;
   uint32_t bitmap_val[2];
   fsal_attrib_list_t attributes;
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
 #define FSAL_READLINK_NB_OP_ALLOC 4
   nfs_argop4 argoparray[FSAL_READLINK_NB_OP_ALLOC];
@@ -227,12 +226,12 @@ fsal_status_t PROXYFSAL_readlink(proxyfsal_handle_t * linkhandle,       /* IN */
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t PROXYFSAL_symlink(proxyfsal_handle_t * parent_directory_handle,   /* IN */
+fsal_status_t PROXYFSAL_symlink(fsal_handle_t * parent_directory_handle,   /* IN */
                                 fsal_name_t * p_linkname,       /* IN */
                                 fsal_path_t * p_linkcontent,    /* IN */
-                                proxyfsal_op_context_t * p_context,     /* IN */
+                                fsal_op_context_t *context,     /* IN */
                                 fsal_accessmode_t accessmode,   /* IN (ignored) */
-                                proxyfsal_handle_t * link_handle,       /* OUT */
+                                fsal_handle_t * link_handle,       /* OUT */
                                 fsal_attrib_list_t * link_attributes    /* [ IN/OUT ] */
     )
 {
@@ -259,6 +258,7 @@ fsal_status_t PROXYFSAL_symlink(proxyfsal_handle_t * parent_directory_handle,   
   fsal_proxy_internal_fattr_t fattr_internal;
   fsal_attrib_list_t create_mode_attr;
   fsal_attrib_list_t attributes;
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
 #define FSAL_SYMLINK_NB_OP_ALLOC 4
 #define FSAL_SYMLINK_VAL_BUFFER  1024

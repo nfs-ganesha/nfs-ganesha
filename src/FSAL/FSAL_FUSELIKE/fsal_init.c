@@ -188,7 +188,7 @@ fsal_status_t FUSEFSAL_Init(fsal_parameter_t * init_info        /* IN */
 
   /* initialize filesystem stuff */
 
-  if(rc = FS_Specific_Init(&init_info->fs_specific_info))
+  if(rc = FS_Specific_Init((fusefs_specific_initinfo_t *) &init_info->fs_specific_info))
     Return(ERR_FSAL_BAD_INIT, -rc, INDEX_FSAL_Init);
 
   /* Everything went OK. */

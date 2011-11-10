@@ -57,7 +57,6 @@
 #include "cache_inode.h"
 #include "cache_content.h"
 #include "nfs_ip_stats.h"
-#include "fsal_types.h"
 
 /*
  * Export List structure 
@@ -146,6 +145,12 @@ typedef struct exportlist_client__
   exportlist_client_entry_t clientarray[EXPORTS_NB_MAX_CLIENTS];        /* allowed clients    */
 } exportlist_client_t;
 
+/* fsal up filter list is needed in exportlist.
+ * Inluding fsal_up.h would cause header file issues however. */
+#ifdef _USE_FSAL_UP
+struct fsal_up_filter_list_t_;
+#endif
+
 typedef struct exportlist__
 {
   unsigned short id;            /* entry identifier   */
@@ -189,11 +194,18 @@ typedef struct exportlist__
   fsal_off_t MaxOffsetWrite;    /* Maximum Offset allowed for write                  */
   fsal_off_t MaxOffsetRead;     /* Maximum Offset allowed for read                   */
   fsal_off_t MaxCacheSize;      /* Maximum Cache Size allowed                        */
-  fsal_staticfsinfo_t *fs_static_info;  /* Static FSAL Info                                  */
   unsigned int UseCookieVerifier;       /* Is Cookie verifier to be used ?                   */
   exportlist_client_t clients;  /* allowed clients                                   */
   struct exportlist__ *next;    /* next entry                                        */
-   unsigned int fsalid ;
+  unsigned int fsalid ;
+
+#ifdef _USE_FSAL_UP
+  bool_t use_fsal_up;
+  char fsal_up_type[MAXPATHLEN];
+  fsal_time_t fsal_up_timeout;
+  pthread_t fsal_up_thr; /* This value may be modified later to point to an FSAL CB thread. */
+  struct fsal_up_filter_list_t_ *fsal_up_filter_list; /* List of filters to apply through FSAL CB interface. */
+#endif /* _USE_FSAL_UP */
 } exportlist_t;
 
 /* Used to record the uid and gid of the client that made a request. */
@@ -314,6 +326,8 @@ typedef struct compoud_data
   nfs_fh4 savedFH;                                    /**< Saved filehandle                                              */
   nfs_fh4 publicFH;                                   /**< Public filehandle                                             */
   nfs_fh4 mounted_on_FH;                              /**< File handle to "mounted on" File System                       */
+  stateid4 current_stateid;                           /**< Current stateid                                               */
+  bool_t   current_stateid_valid;                     /**< Current stateid is valid                                      */
   unsigned int minorversion;                          /**< NFSv4 minor version                                           */
   cache_entry_t *current_entry;                       /**< cache entry related to current filehandle                     */
   cache_entry_t *saved_entry;                         /**< cache entry related to saved filehandle                       */
@@ -343,12 +357,12 @@ int nfs_check_anon(exportlist_client_entry_t * pexport_client,
                     exportlist_t * pexport,
                     struct user_cred *user_credentials);
 int nfs_build_fsal_context(struct svc_req *ptr_req,
-                           exportlist_client_entry_t * pexport_client,
-                           exportlist_t * pexport, fsal_op_context_t * pcontext,
+                           exportlist_t * pexport,
+                           fsal_op_context_t * pcontext,
                            struct user_cred *user_credentials);
 int get_req_uid_gid(struct svc_req *ptr_req,
-                    exportlist_client_entry_t * pexport_client,
-                    exportlist_t * pexport, struct user_cred *user_credentials);
+                    exportlist_t * pexport,
+                    struct user_cred *user_credentials);
 
 
 int nfs_compare_clientcred(nfs_client_cred_t * pcred1, nfs_client_cred_t * pcred2);

@@ -88,7 +88,6 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   int rc;
   int error;
   fsal_attrib_list_t attr;
-  char outstr[1024];
 
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_putfh";
 
@@ -146,9 +145,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   memcpy(data->mounted_on_FH.nfs_fh4_val, arg_PUTFH4.object.nfs_fh4_val,
          arg_PUTFH4.object.nfs_fh4_len);
 
-  nfs4_sprint_fhandle(&arg_PUTFH4.object, outstr);
-  LogDebug(COMPONENT_NFS_V4,
-           "NFS4_OP_PUTFH CURRENTFH BEFORE: File handle = %s", outstr);
+  LogHandleNFS4("NFS4_OP_PUTFH CURRENT FH: ", &arg_PUTFH4.object);
 
   /* If the filehandle is not pseudo hs file handle, get the entry related to it, otherwise use fake values */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))

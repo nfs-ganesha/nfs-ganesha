@@ -20,7 +20,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
- * ---------------------------------------
+ * -------------------N--------------------
  */
 
 /**
@@ -63,6 +63,8 @@
 #include "nfs_proto_functions.h"
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
+#include "sal_data.h"
+#include "sal_functions.h"
 
 #ifdef _USE_PNFS
 #include "pnfs.h"
@@ -93,11 +95,11 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
                        struct nfs_resop4 *resp)
 {
 #ifdef _USE_PNFS
-  cache_inode_state_data_t candidate_data;
-  cache_inode_state_type_t candidate_type;
-  cache_inode_state_t *file_state = NULL;
+  state_data_t candidate_data;
+  state_type_t candidate_type;
+  state_t *file_state = NULL;
   cache_inode_status_t cache_status;
-  cache_inode_state_t *pstate_exists = NULL;
+  state_t *pstate_exists = NULL;
   int rc;
 #endif
 
@@ -176,9 +178,14 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
       return res_LAYOUTGET4.logr_status;
     }
 
-  /* Check stateid correctness */
+  /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_LAYOUTGET4.loga_stateid,
-                              data->current_entry, data->psession->clientid)) != NFS4_OK)
+                              data->current_entry,
+                              data->psession->clientid,
+                              &pstate_exists,
+                              data,
+                              STATEID_SPECIAL_FOR_LOCK,
+                              "LAYOUTGET")) != NFS4_OK)
     {
       res_LAYOUTGET4.logr_status = rc;
       return res_LAYOUTGET4.logr_status;
@@ -197,37 +204,17 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
       break;
     }                           /* switch( arg_LAYOUTGET4.loga_layout_type ) */
 
-  /* Get the related powner (from a previously made call to OPEN) */
-  if(cache_inode_get_state(arg_LAYOUTGET4.loga_stateid.other,
-                           &pstate_exists,
-                           data->pclient, &cache_status) != CACHE_INODE_SUCCESS)
-    {
-      if(cache_status == CACHE_INODE_NOT_FOUND)
-        res_LAYOUTGET4.logr_status = NFS4ERR_STALE_STATEID;
-      else
-        res_LAYOUTGET4.logr_status = NFS4ERR_INVAL;
-
-      return res_LAYOUTGET4.logr_status;
-    }
-
   /* Add a pstate */
-  candidate_type = CACHE_INODE_STATE_LAYOUT;
-#if 0
-  candidate_data.layout.layout_type = arg_LAYOUTGET4.loga_layout_type;
-  candidate_data.layout.iomode = arg_LAYOUTGET4.loga_iomode;
-  candidate_data.layout.offset = arg_LAYOUTGET4.loga_offset;
-  candidate_data.layout.length = arg_LAYOUTGET4.loga_length;
-  candidate_data.layout.minlength = arg_LAYOUTGET4.loga_minlength;
-#endif
+  candidate_type = STATE_TYPE_LAYOUT;
 
-  /* Add the lock state to the lock table */
-  if(cache_inode_add_state(data->current_entry,
-                           candidate_type,
-                           &candidate_data,
-                           pstate_exists->powner,
-                           data->pclient,
-                           data->pcontext,
-                           &file_state, &cache_status) != CACHE_INODE_SUCCESS)
+  /* Add the layout state to the table */
+  if(state_add(data->current_entry,
+                candidate_type,
+                &candidate_data,
+                STATE_LOCK_OWNER_UNKNOWN, /* pstate_exists->powner,  ASK FRANK ON THIS */
+                data->pclient,
+                data->pcontext,
+                &file_state, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_LAYOUTGET4.logr_status = NFS4ERR_STALE_STATEID;
       return res_LAYOUTGET4.logr_status;
@@ -241,8 +228,8 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
   /* Manages the stateid */
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_stateid.seqid = 1;
   memcpy(res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_stateid.other,
-         arg_LAYOUTGET4.loga_stateid.other, 12);
-  //file_state->stateid_other, 12);
+         arg_LAYOUTGET4.loga_stateid.other, OTHERSIZE);
+  //file_state->stateid_other, OTHERSIZE);
 
   /* Now the layout specific information */
   res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_len = 1;  /** @todo manages more than one segment */

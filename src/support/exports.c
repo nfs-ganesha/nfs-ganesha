@@ -118,6 +118,10 @@ cache_content_client_t recover_datacache_client;
 #define CONF_EXPORT_PNFS               "Use_pNFS"
 #define CONF_EXPORT_USE_COMMIT                  "Use_NFS_Commit"
 #define CONF_EXPORT_USE_GANESHA_WRITE_BUFFER    "Use_Ganesha_Write_Buffer"
+#define CONF_EXPORT_USE_FSAL_UP        "Use_FSAL_UP"
+#define CONF_EXPORT_FSAL_UP_FILTERS    "FSAL_UP_Filters"
+#define CONF_EXPORT_FSAL_UP_TIMEOUT    "FSAL_UP_Timeout"
+#define CONF_EXPORT_FSAL_UP_TYPE       "FSAL_UP_Type"
 
 /** @todo : add encrypt handles option */
 
@@ -160,12 +164,12 @@ cache_content_client_t recover_datacache_client;
 #define EXPORT_MAX_CLIENTS   EXPORTS_NB_MAX_CLIENTS     /* number of clients */
 #define EXPORT_MAX_CLIENTLEN 256        /* client name len */
 
-int local_lru_inode_entry_to_str(LRU_data_t data, char *str)
+static int local_lru_inode_entry_to_str(LRU_data_t data, char *str)
 {
   return sprintf(str, "N/A ");
 }                               /* local_lru_inode_entry_to_str */
 
-int local_lru_inode_clean_entry(LRU_entry_t * entry, void *adddata)
+static int local_lru_inode_clean_entry(LRU_entry_t * entry, void *adddata)
 {
   return 0;
 }                               /* lru_clean_entry */
@@ -257,6 +261,7 @@ int nfs_ParseConfLine(char *Argv[],
  * @see gethostbyaddr
  *
  */
+#if 0
 static struct hostent *nfs_LookupHostAddr(char *host)
 {
   struct hostent *output;
@@ -299,6 +304,7 @@ static struct hostent *nfs_LookupHostAddr(char *host)
 
   return output;
 }                               /* nfs_LookupHostAddr */
+#endif
 
 /**
  *
@@ -445,7 +451,7 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
   int j = 0;
   unsigned int l = 0;
   char *client_hostname;
-  struct hostent *hostEntry;
+  struct addrinfo *info;
   exportlist_client_entry_t *p_clients;
   int is_wildcarded_host = FALSE;
   unsigned long netMask;
@@ -488,16 +494,15 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
                    (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                    p_clients[i].client.netgroup.netgroupname);
         }
-      else if((hostEntry = nfs_LookupHostAddr(client_hostname)) != NULL)
+      else if( getaddrinfo(client_hostname, NULL, NULL, &info) == 0)
         {
-
           /* Entry is a hostif */
-          if(hostEntry->h_addrtype == AF_INET)
+          if(info->ai_family == AF_INET)
             {
-              memcpy(&(p_clients[i].client.hostif.clientaddr), hostEntry->h_addr,
-                     hostEntry->h_length);
+              struct in_addr infoaddr = ((struct sockaddr_in *)info->ai_addr)->sin_addr;
+              memcpy(&(p_clients[i].client.hostif.clientaddr), &infoaddr,
+                     sizeof(struct in_addr));
               p_clients[i].type = HOSTIF_CLIENT;
-
               LogDebug(COMPONENT_CONFIG,
                        "----------------- %s to client %s = %d.%d.%d.%d",
                        (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
@@ -507,13 +512,15 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
                        (unsigned int)((p_clients[i].client.hostif.clientaddr >> 8) & 0xFF),
                        (unsigned int)(p_clients[i].client.hostif.clientaddr & 0xFF));
             }
-          else
+          else /* AF_INET6 */
             {
+              struct in6_addr infoaddr = ((struct sockaddr_in6 *)info->ai_addr)->sin6_addr;
               /* IPv6 address */
-              memcpy(&(p_clients[i].client.hostif.clientaddr6), hostEntry->h_addr,
-                     hostEntry->h_length);
+              memcpy(&(p_clients[i].client.hostif.clientaddr6), &infoaddr,
+                     sizeof(struct in6_addr));
               p_clients[i].type = HOSTIF_CLIENT_V6;
             }
+          freeaddrinfo(info);
         }
       else if(((error = nfs_LookupNetworkAddr(client_hostname,
                                               (unsigned long *)&netAddr,
@@ -733,6 +740,18 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->anonymous_gid = (gid_t) ANON_GID;
   p_entry->use_commit = TRUE;
 
+  /* Defaults for FSAL_UP. It is ok to leave the filter list NULL
+   * even if we enable the FSAL_UP. */
+  #ifdef _USE_FSAL_UP
+  p_entry->use_fsal_up = FALSE;
+  p_entry->fsal_up_filter_list = NULL;
+  p_entry->fsal_up_timeout.seconds = 30;
+  p_entry->fsal_up_timeout.nseconds = 0;
+  strncpy(p_entry->fsal_up_type,"DUMB", 4);
+  /* We don't create the thread until all exports are parsed. */
+  memset(&p_entry->fsal_up_thr, 0, sizeof(pthread_t));
+#endif /* _USE_FSAL_UP */
+
   /* by default, we support auth_none and auth_sys */
   p_entry->options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
 
@@ -822,7 +841,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           /* set export_id */
 
           p_entry->id = (unsigned short)export_id;
-
           set_options |= FLAG_EXPORT_ID;
 
         }
@@ -1966,6 +1984,51 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               }
             }
         }
+#ifdef _USE_FSAL_UP
+      else if(!STRCMP(var_name, CONF_EXPORT_FSAL_UP_TYPE))
+	{
+          strncpy(p_entry->fsal_up_type,var_value,sizeof(var_value));
+	}
+      else if(!STRCMP(var_name, CONF_EXPORT_FSAL_UP_TIMEOUT))
+        {
+	  /* Right now we are expecting seconds ... we should support
+	   * nseconds as well! */
+          p_entry->fsal_up_timeout.seconds = atoi(var_value);
+          if (p_entry->fsal_up_timeout.seconds < 0
+	      || p_entry->fsal_up_timeout.nseconds < 0)
+	    {
+	      p_entry->fsal_up_timeout.seconds = 0;
+	      p_entry->fsal_up_timeout.nseconds = 0;
+	    }
+        }
+      else if(!STRCMP(var_name, CONF_EXPORT_FSAL_UP_FILTERS))
+        {
+          /* TODO: Parse the strings and form a list.
+           * Later each name will match a predefined filter
+           * in the FSAL UP interface. */
+          p_entry->fsal_up_filter_list = NULL;
+        }
+      else if(!STRCMP(var_name, CONF_EXPORT_USE_FSAL_UP))
+        {
+          switch (StrToBoolean(var_value))
+            {
+            case 1:
+              p_entry->use_fsal_up = TRUE;
+              break;
+            case 0:
+              p_entry->use_fsal_up = FALSE;
+              break;
+            default:           /* error */
+              {
+                LogCrit(COMPONENT_CONFIG,
+                        "USR_FSAL_UP: ERROR: Invalid value for %s (%s): TRUE or FALSE expected.",
+                        var_name, var_value);
+                err_flag = TRUE;
+                continue;
+              }
+            }
+        }
+#endif /* _USE_FSAL_UP */
       else if(!STRCMP(var_name, CONF_EXPORT_FSALID))
         {
            if( ( p_entry->fsalid = FSAL_name2fsalid( var_value ) ) == -1 )
@@ -2794,7 +2857,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       fsal_path_t exportpath_fsal;
       fsal_mdsize_t strsize = MNTPATHLEN + 1;
       cache_entry_t *pentry = NULL;
-      fsal_staticfsinfo_t *pstaticinfo = NULL;
 
 #ifdef _USE_SHARED_FSAL
       unsigned int i = 0 ;
@@ -2829,7 +2891,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 #endif
 
       /* creating the 'small_client' */
-      if(cache_inode_client_init(&small_client, small_client_param, 255, NULL))
+      if(cache_inode_client_init(&small_client, small_client_param, SMALL_CLIENT_INDEX, NULL))
         {
           LogFatal(COMPONENT_INIT,
                    "small cache inode client could not be allocated");
@@ -2980,21 +3042,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
                     "Added root entry for path %s on export_id=%d",
                     pcurrent->fullpath, pcurrent->id);
 
-          /* Get FSAL specific info for this entry */
-          if((pstaticinfo =
-              (fsal_staticfsinfo_t *) Mem_Alloc((sizeof(fsal_staticfsinfo_t)))) == NULL)
-            return FALSE;
-
-#ifdef _USE_SHARED_FSAL
-          if( FSAL_IS_ERROR((fsal_status = FSAL_static_fsinfo(&fsal_handle, &context[pcurrent->fsalid], pstaticinfo))))
-#else
-          if( FSAL_IS_ERROR((fsal_status = FSAL_static_fsinfo(&fsal_handle, &context, pstaticinfo))))
-#endif
-            return FALSE;
-
-          /* Attach to the exportlist entry */
-          pcurrent->fs_static_info = pstaticinfo;
-
           /* Set the pentry as a referral if needed */
           if(strcmp(pcurrent->referral, ""))
             {
@@ -3049,10 +3096,6 @@ exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
     return NULL;
 
   next = exportEntry->next;
-
-
-  if (exportEntry->fs_static_info != NULL)
-    Mem_Free(exportEntry->fs_static_info);
 
   if (exportEntry->proot_handle != NULL)
     Mem_Free(exportEntry->proot_handle);

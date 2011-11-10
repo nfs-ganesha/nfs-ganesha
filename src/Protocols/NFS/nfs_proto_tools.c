@@ -95,9 +95,9 @@ static struct {
 
 /**
  *
- * nfs_FhandleToCache: Gets a cache entry using a file handle (v2 or v3) as input.
+ * nfs_FhandleToStr: Converts a file handle to a string representation.
  * 
- * Gets a cache entry using a file handle (v2 or v3) as input.
+ * Converts a file handle to a string representation.
  *
  * @param rq_vers  [IN]    version of the NFS protocol to be used 
  * @param pfh2     [IN]    NFSv2 file handle or NULL 
@@ -131,9 +131,9 @@ void nfs_FhandleToStr(u_long     rq_vers,
 
 /**
  *
- * nfs_FhandleToCache: Gets a cache entry using a file handle (v2 or v3) as input.
+ * nfs_FhandleToCache: Gets a cache entry using a file handle (v2/3/4) as input.
  * 
- * Gets a cache entry using a file handle (v2 or v3) as input.
+ * Gets a cache entry using a file handle (v2/3/4) as input.
  *
  * @param rq_vers  [IN]    version of the NFS protocol to be used 
  * @param pfh2     [IN]    NFSv2 file handle or NULL 
@@ -432,16 +432,15 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_QUOTA_EXCEEDED:
     case CACHE_INODE_NOT_SUPPORTED:
     case CACHE_INODE_NAME_TOO_LONG:
+    case CACHE_INODE_STATE_CONFLICT:
+    case CACHE_INODE_DEAD_ENTRY:
+    case CACHE_INODE_ASYNC_POST_ERROR:
+    case CACHE_INODE_STATE_ERROR:
+    case CACHE_INODE_BAD_COOKIE:
+    case CACHE_INODE_FILE_BIG:
       /* Non retryable error, return error to client */
       return FALSE;
       break;
-
-    default:
-      /* Management of this value was forgotten */
-      LogDebug(COMPONENT_NFSPROTO,
-               "cache_inode_status=%u not managed properly in nfs_RetryableError, not retryable",
-               cache_status);
-      return FALSE;
     }
 
   /* Should never reach this */
@@ -541,7 +540,9 @@ static int nfs4_encode_acl_group_name(fsal_gid_t gid, char *attrvalsBuffer,
   u_int deltalen = 0;
 
   rc = gid2name(name, &gid);
-  LogDebug(COMPONENT_NFS_V4, "encode gid2name = %s, strlen = %llu", name, (long long unsigned int)strlen(name));
+  LogFullDebug(COMPONENT_NFS_V4,
+               "encode gid2name = %s, strlen = %llu",
+               name, (long long unsigned int)strlen(name));
   if(rc == 0)  /* Failure. */
     {
       /* Encode gid itself without @. */
@@ -589,7 +590,9 @@ static int nfs4_encode_acl_user_name(int whotype, fsal_uid_t uid,
 
   /* Encode normal user or previous user we failed to encode as special user. */
   rc = uid2name(name, &uid);
-  LogDebug(COMPONENT_NFS_V4, "econde uid2name = %s, strlen = %llu", name, (long long unsigned int)strlen(name));
+  LogFullDebug(COMPONENT_NFS_V4,
+               "econde uid2name = %s, strlen = %llu",
+               name, (long long unsigned int)strlen(name));
   if(rc == 0)  /* Failure. */
     {
       /* Encode uid itself without @. */
@@ -626,8 +629,9 @@ static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_i
 
   if(pattr->acl)
     {
-      LogDebug(COMPONENT_NFS_V4, "        GATTR: Number of ACEs = %u",
-               pattr->acl->naces);
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "GATTR: Number of ACEs = %u",
+                   pattr->acl->naces);
 
       /* Encode number of ACEs. */
       naces = htonl(pattr->acl->naces);
@@ -637,8 +641,9 @@ static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_i
       /* Encode ACEs. */
       for(pace = pattr->acl->aces; pace < pattr->acl->aces + pattr->acl->naces; pace++)
         {
-          LogDebug(COMPONENT_NFS_V4, "        GATTR: type=0X%x, flag=0X%x, "
-                   "perm=0X%x", pace->type, pace->flag, pace->perm);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "GATTR: type=0X%x, flag=0X%x, perm=0X%x",
+                       pace->type, pace->flag, pace->perm);
 
           type = htonl(pace->type);
           flag = htonl(pace->flag);
@@ -670,16 +675,18 @@ static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_i
               rc = nfs4_encode_acl_user_name(whotype, pace->who.uid, attrvalsBuffer, LastOffset);
             }
 
-          LogDebug(COMPONENT_NFS_V4, "        GATTR: special = %u, %s = %u",
-                   IS_FSAL_ACE_SPECIAL_ID(*pace),
-                   IS_FSAL_ACE_GROUP_ID(*pace) ? "gid" : "uid",
-                   IS_FSAL_ACE_GROUP_ID(*pace) ? pace->who.gid : pace->who.uid);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "GATTR: special = %u, %s = %u",
+                       IS_FSAL_ACE_SPECIAL_ID(*pace),
+                       IS_FSAL_ACE_GROUP_ID(*pace) ? "gid" : "uid",
+                       IS_FSAL_ACE_GROUP_ID(*pace) ? pace->who.gid : pace->who.uid);
 
         }
     }
   else
     {
-      LogDebug(COMPONENT_NFS_V4, "nfs4_encode_acl: no acl available");
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "nfs4_encode_acl: no acl available");
 
       fattr4_acl acl;
       acl.fattr4_acl_len = htonl(0);
@@ -804,7 +811,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   cache_inode_status_t cache_status;
 
   int statfscalled = 0;
-  fsal_staticfsinfo_t staticinfo;
+  fsal_staticfsinfo_t * pstaticinfo = data->pcontext->export_context->fe_static_fs_info;
   fsal_dynamicfsinfo_t dynamicinfo;
 #ifdef _USE_NFS4_ACL
   int rc;
@@ -950,7 +957,8 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
               file_type = htonl(NF4FIFO);       /* Special File - fifo */
               break;
 
-            default:           /* For wanting of a better solution */
+            case FSAL_TYPE_JUNCTION:
+              /* For wanting of a better solution */
               file_type = 0;
               op_attr_success = 0;      /* This was no success */
               break;
@@ -1046,22 +1054,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_LEASE_TIME:
-          if(!statfscalled)
-            {
-              if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
-                                                    &dynamicinfo,
-                                                    data->pcontext,
-                                                    &cache_status)) !=
-                 CACHE_INODE_SUCCESS)
-                {
-                  op_attr_success = 0;
-                  break;
-                }
-              else
-                statfscalled = 1;
-            }
-          /* lease_time = htonl( (fattr4_lease_time)staticinfo.lease_time.seconds ) ; */
+          /* lease_time = htonl( (fattr4_lease_time)pstaticinfo->lease_time.seconds ) ; */
           lease_time = htonl(nfs_param.nfsv4_param.lease_lifetime);
           memcpy((char *)(attrvalsBuffer + LastOffset), &lease_time,
                  sizeof(fattr4_lease_time));
@@ -1120,22 +1113,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_CASE_INSENSITIVE:
-          if(!statfscalled)
-            {
-              if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
-                                                    &dynamicinfo,
-                                                    data->pcontext,
-                                                    &cache_status)) !=
-                 CACHE_INODE_SUCCESS)
-                {
-                  op_attr_success = 0;
-                  break;
-                }
-              else
-                statfscalled = 1;
-            }
-          case_insensitive = htonl(staticinfo.case_insensitive);
+          case_insensitive = htonl(pstaticinfo->case_insensitive);
           memcpy((char *)(attrvalsBuffer + LastOffset), &case_insensitive,
                  sizeof(fattr4_case_insensitive));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
@@ -1143,23 +1121,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_CASE_PRESERVING:
-          /* HPSS is case preserving */
-          if(!statfscalled)
-            {
-              if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
-                                                    &dynamicinfo,
-                                                    data->pcontext,
-                                                    &cache_status)) !=
-                 CACHE_INODE_SUCCESS)
-                {
-                  op_attr_success = 0;
-                  break;
-                }
-              else
-                statfscalled = 1;
-            }
-          case_preserving = htonl(staticinfo.case_preserving);
+          case_preserving = htonl(pstaticinfo->case_preserving);
           memcpy((char *)(attrvalsBuffer + LastOffset), &case_preserving,
                  sizeof(fattr4_case_preserving));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
@@ -1168,22 +1130,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
         case FATTR4_CHOWN_RESTRICTED:
           /* chown is restricted to root */
-          if(!statfscalled)
-            {
-              if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
-                                                    &dynamicinfo,
-                                                    data->pcontext,
-                                                    &cache_status)) !=
-                 CACHE_INODE_SUCCESS)
-                {
-                  op_attr_success = 0;
-                  break;
-                }
-              else
-                statfscalled = 1;
-            }
-          chown_restricted = htonl(staticinfo.chown_restricted);
+          chown_restricted = htonl(pstaticinfo->chown_restricted);
           memcpy((char *)(attrvalsBuffer + LastOffset), &chown_restricted,
                  sizeof(fattr4_chown_restricted));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
@@ -1228,7 +1175,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
                                                     &dynamicinfo,
                                                     data->pcontext,
                                                     &cache_status)) !=
@@ -1251,7 +1197,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
                                                     &dynamicinfo,
                                                     data->pcontext,
                                                     &cache_status)) !=
@@ -1274,7 +1219,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
                                                     &dynamicinfo,
                                                     data->pcontext,
                                                     &cache_status)) !=
@@ -1338,88 +1282,28 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_MAXLINK:
-          if(!statfscalled)
-            {
-              if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
-                                                    &dynamicinfo,
-                                                    data->pcontext,
-                                                    &cache_status)) !=
-                 CACHE_INODE_SUCCESS)
-                {
-                  op_attr_success = 0;
-                  break;
-                }
-              else
-                statfscalled = 1;
-            }
-          maxlink = htonl(staticinfo.maxlink);
+          maxlink = htonl(pstaticinfo->maxlink);
           memcpy((char *)(attrvalsBuffer + LastOffset), &maxlink, sizeof(fattr4_maxlink));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
           break;
 
         case FATTR4_MAXNAME:
-          if(!statfscalled)
-            {
-              if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
-                                                    &dynamicinfo,
-                                                    data->pcontext,
-                                                    &cache_status)) !=
-                 CACHE_INODE_SUCCESS)
-                {
-                  op_attr_success = 0;
-                  break;
-                }
-              else
-                statfscalled = 1;
-            }
-          maxname = htonl((fattr4_maxname) staticinfo.maxnamelen);
+          maxname = htonl((fattr4_maxname) pstaticinfo->maxnamelen);
           memcpy((char *)(attrvalsBuffer + LastOffset), &maxname, sizeof(fattr4_maxname));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
           break;
 
         case FATTR4_MAXREAD:
-          if(!statfscalled)
-            {
-              if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
-                                                    &dynamicinfo,
-                                                    data->pcontext,
-                                                    &cache_status)) !=
-                 CACHE_INODE_SUCCESS)
-                {
-                  op_attr_success = 0;
-                  break;
-                }
-              else
-                statfscalled = 1;
-            }
-          maxread = nfs_htonl64((fattr4_maxread) staticinfo.maxread);
+          maxread = nfs_htonl64((fattr4_maxread) pstaticinfo->maxread);
           memcpy((char *)(attrvalsBuffer + LastOffset), &maxread, sizeof(fattr4_maxread));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
           break;
 
         case FATTR4_MAXWRITE:
-          if(!statfscalled)
-            {
-              if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
-                                                    &dynamicinfo,
-                                                    data->pcontext,
-                                                    &cache_status)) !=
-                 CACHE_INODE_SUCCESS)
-                {
-                  op_attr_success = 0;
-                  break;
-                }
-              else
-                statfscalled = 1;
-            }
-          maxwrite = nfs_htonl64((fattr4_maxwrite) staticinfo.maxwrite);
+          maxwrite = nfs_htonl64((fattr4_maxwrite) pstaticinfo->maxwrite);
           memcpy((char *)(attrvalsBuffer + LastOffset), &maxwrite,
                  sizeof(fattr4_maxwrite));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
@@ -1443,22 +1327,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
         case FATTR4_NO_TRUNC:
           /* File's names are not truncated, an error is returned is name is too long */
-          if(!statfscalled)
-            {
-              if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
-                                                    &dynamicinfo,
-                                                    data->pcontext,
-                                                    &cache_status)) !=
-                 CACHE_INODE_SUCCESS)
-                {
-                  op_attr_success = 0;
-                  break;
-                }
-              else
-                statfscalled = 1;
-            }
-          no_trunc = htonl(staticinfo.no_trunc);
+          no_trunc = htonl(pstaticinfo->no_trunc);
           memcpy((char *)(attrvalsBuffer + LastOffset), &no_trunc,
                  sizeof(fattr4_no_trunc));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
@@ -1582,7 +1451,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
                                                     &dynamicinfo,
                                                     data->pcontext,
                                                     &cache_status)) !=
@@ -1605,7 +1473,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
                                                     &dynamicinfo,
                                                     data->pcontext,
                                                     &cache_status)) !=
@@ -1628,7 +1495,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           if(!statfscalled)
             {
               if((cache_status = cache_inode_statfs(data->current_entry,
-                                                    &staticinfo,
                                                     &dynamicinfo,
                                                     data->pcontext,
                                                     &cache_status)) !=
@@ -2018,7 +1884,8 @@ int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
       /** @todo mode mask ? */
       break;
 
-    default:
+    case FSAL_TYPE_XATTR:
+    case FSAL_TYPE_JUNCTION:
       pFattr->type = NFBAD;
     }
 
@@ -2511,7 +2378,8 @@ int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
       Fattr->type = NF3SOCK;
       break;
 
-    default:                   /* Should not occur */
+    case FSAL_TYPE_JUNCTION:
+      /* Should not occur */
       LogFullDebug(COMPONENT_NFSPROTO,
                    "nfs3_FSALattr_To_Fattr: FSAL_attr->type = %d",
                    FSAL_attr->type);
@@ -3097,14 +2965,17 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
   /* Decode number of ACEs. */
   memcpy(&(acldata.naces), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(u_int));
   acldata.naces = ntohl(acldata.naces);
-  LogDebug(COMPONENT_NFS_V4, "        SATTR: Number of ACEs = %u", acldata.naces);
+  LogFullDebug(COMPONENT_NFS_V4,
+               "SATTR: Number of ACEs = %u",
+               acldata.naces);
   *LastOffset += sizeof(u_int);
 
   /* Allocate memory for ACEs. */
   acldata.aces = (fsal_ace_t *)nfs4_ace_alloc(acldata.naces);
   if(acldata.aces == NULL)
     {
-      LogCrit(COMPONENT_NFS_V4, "        SATTR: Failed to allocate ACEs");
+      LogCrit(COMPONENT_NFS_V4,
+              "SATTR: Failed to allocate ACEs");
       return NFS4ERR_SERVERFAULT;
     }
   else
@@ -3115,17 +2986,23 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
     {
       memcpy(&(pace->type), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(fsal_acetype_t));
       pace->type = ntohl(pace->type);
-      LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE type = 0x%x", pace->type);
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "SATTR: ACE type = 0x%x",
+                   pace->type);
       *LastOffset += sizeof(fsal_acetype_t);
 
       memcpy(&(pace->flag), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(fsal_aceflag_t));
       pace->flag = ntohl(pace->flag);
-      LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE flag = 0x%x", pace->flag);
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "SATTR: ACE flag = 0x%x",
+                   pace->flag);
       *LastOffset += sizeof(fsal_aceflag_t);
 
       memcpy(&(pace->perm), (char*)(Fattr->attr_vals.attrlist4_val + *LastOffset), sizeof(fsal_aceperm_t));
       pace->perm = ntohl(pace->perm);
-      LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE perm = 0x%x", pace->perm);
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "SATTR: ACE perm = 0x%x",
+                   pace->perm);
       *LastOffset += sizeof(fsal_aceperm_t);
 
       /* Find out who type */
@@ -3145,8 +3022,10 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
       *LastOffset += len;
 
       /* Decode users. */
-      LogDebug(COMPONENT_NFS_V4, "        SATTR: owner = %s, len = %d, type = %s", buffer, len,
-               GET_FSAL_ACE_WHO_TYPE(*pace));
+      LogFullDebug(COMPONENT_NFS_V4,
+                   "SATTR: owner = %s, len = %d, type = %s",
+                   buffer, len,
+                   GET_FSAL_ACE_WHO_TYPE(*pace));
 
       utf8buffer.utf8string_val = buffer;
       utf8buffer.utf8string_len = strlen(buffer);
@@ -3157,19 +3036,25 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
           pace->flag &= ~(FSAL_ACE_FLAG_GROUP_ID);
           pace->iflag |= FSAL_ACE_IFLAG_SPECIAL_ID;
           pace->who.uid = who;
-          LogDebug(COMPONENT_NFS_V4, "		  SATTR: ACE special who.uid = 0x%x", pace->who.uid);
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "SATTR: ACE special who.uid = 0x%x",
+                       pace->who.uid);
         }
       else
         {
           if(pace->flag == FSAL_ACE_FLAG_GROUP_ID)  /* Decode group. */
             {
               utf82gid(&utf8buffer, &(pace->who.gid));
-              LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE who.gid = 0x%x", pace->who.gid);
+              LogFullDebug(COMPONENT_NFS_V4,
+                           "SATTR: ACE who.gid = 0x%x",
+                           pace->who.gid);
             }
           else  /* Decode user. */
             {
               utf82uid(&utf8buffer, &(pace->who.uid));
-              LogDebug(COMPONENT_NFS_V4, "        SATTR: ACE who.uid = 0x%x", pace->who.uid);
+              LogFullDebug(COMPONENT_NFS_V4,
+                           "SATTR: ACE who.uid = 0x%x",
+                           pace->who.uid);
             }
         }
 
@@ -3177,7 +3062,8 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
        * and bubble up NFS4ERR_BADOWNER. */
       if((pace->flag == FSAL_ACE_FLAG_GROUP_ID ? pace->who.gid : pace->who.uid) == -1)
         {
-          LogDebug(COMPONENT_NFS_V4, "		  SATTR: bad owner");
+          LogFullDebug(COMPONENT_NFS_V4,
+                       "SATTR: bad owner");
           nfs4_ace_free(acldata.aces);
           return NFS4ERR_BADOWNER;
         }
@@ -3186,15 +3072,20 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
   pacl = nfs4_acl_new_entry(&acldata, &status);
   if(pacl == NULL)
     {
-      LogCrit(COMPONENT_NFS_V4, "        SATTR: Failed to create a new entry for ACL");
+      LogCrit(COMPONENT_NFS_V4,
+              "SATTR: Failed to create a new entry for ACL");
       return NFS4ERR_SERVERFAULT;
     }
   else
-     LogDebug(COMPONENT_NFS_V4, "        SATTR: Successfully created a new entry for ACL, status = %u", status);
+     LogFullDebug(COMPONENT_NFS_V4,
+                  "SATTR: Successfully created a new entry for ACL, status = %u",
+                  status);
 
   /* Set new ACL */
   pFSAL_attr->acl = pacl;
-  LogDebug(COMPONENT_NFS_V4, "        SATTR: new acl = %p", pacl);
+  LogFullDebug(COMPONENT_NFS_V4,
+               "SATTR: new acl = %p",
+               pacl);
 
   return NFS4_OK;
 }
@@ -3318,7 +3209,8 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
               pFSAL_attr->type = FSAL_TYPE_FIFO;
               break;
 
-            default:           /* For wanting of a better solution */
+            case FSAL_TYPE_JUNCTION:
+              /* For wanting of a better solution */
               pFSAL_attr->type = 0;
               break;
             }                   /* switch( pattr->type ) */
@@ -3643,7 +3535,7 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
  */
 nfsstat4 nfs4_Errno(cache_inode_status_t error)
 {
-  nfsstat4 nfserror;
+  nfsstat4 nfserror= NFS4ERR_INVAL;
 
   switch (error)
     {
@@ -3700,6 +3592,7 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       break;
 
     case CACHE_INODE_FSAL_EPERM:
+    case CACHE_INODE_FSAL_ERR_SEC:
       nfserror = NFS4ERR_PERM;
       break;
 
@@ -3744,7 +3637,23 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       nfserror = NFS4ERR_DELAY;
       break;
 
-    default:                   /* Should not occur */
+    case CACHE_INODE_FILE_BIG:
+      nfserror = NFS4ERR_FBIG;
+      break;
+
+    case CACHE_INODE_STATE_ERROR:
+      nfserror = NFS4ERR_BAD_STATEID;
+      break;
+
+    case CACHE_INODE_BAD_COOKIE:
+      nfserror = NFS4ERR_BAD_COOKIE;
+      break;
+
+    case CACHE_INODE_INCONSISTENT_ENTRY:
+    case CACHE_INODE_HASH_TABLE_ERROR:
+    case CACHE_INODE_CACHE_CONTENT_ERROR:
+    case CACHE_INODE_ASYNC_POST_ERROR:
+      /* Should not occur */
       nfserror = NFS4ERR_INVAL;
       break;
     }
@@ -3765,7 +3674,7 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
  */
 nfsstat3 nfs3_Errno(cache_inode_status_t error)
 {
-  nfsstat3 nfserror;
+  nfsstat3 nfserror= NFS3ERR_INVAL;
 
   switch (error)
     {
@@ -3869,7 +3778,20 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
       nfserror = NFS3ERR_NAMETOOLONG;
       break;
 
-    default:                   /* Should not occur */
+    case CACHE_INODE_FILE_BIG:
+      nfserror = NFS3ERR_FBIG;
+      break;
+
+    case CACHE_INODE_BAD_COOKIE:
+      nfserror = NFS3ERR_BAD_COOKIE;
+      break;
+
+    case CACHE_INODE_INCONSISTENT_ENTRY:
+    case CACHE_INODE_HASH_TABLE_ERROR:
+    case CACHE_INODE_STATE_CONFLICT:
+    case CACHE_INODE_ASYNC_POST_ERROR:
+    case CACHE_INODE_STATE_ERROR:
+        /* Should not occur */
         LogDebug(COMPONENT_NFSPROTO,
                  "Line %u should never be reached in nfs3_Errno for cache_status=%u",
                  __LINE__, error);
@@ -3893,7 +3815,7 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
  */
 nfsstat2 nfs2_Errno(cache_inode_status_t error)
 {
-  nfsstat2 nfserror;
+  nfsstat2 nfserror= NFSERR_IO;
 
   switch (error)
     {
@@ -3928,6 +3850,7 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
       break;
 
     case CACHE_INODE_FSAL_ERROR:
+    case CACHE_INODE_CACHE_CONTENT_ERROR:
       LogCrit(COMPONENT_NFSPROTO,
               "Error CACHE_INODE_FSAL_ERROR converted to NFSERR_IO but was set non-retryable");
       nfserror = NFSERR_IO;
@@ -3950,6 +3873,7 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
       break;
 
     case CACHE_INODE_FSAL_EPERM:
+    case CACHE_INODE_FSAL_ERR_SEC:
       nfserror = NFSERR_PERM;
       break;
 
@@ -3980,7 +3904,16 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
       nfserror = NFSERR_NAMETOOLONG;
       break;
 
-    default:                   /* Should not occur */
+    case CACHE_INODE_INCONSISTENT_ENTRY:
+    case CACHE_INODE_HASH_TABLE_ERROR:
+    case CACHE_INODE_STATE_CONFLICT:
+    case CACHE_INODE_ASYNC_POST_ERROR:
+    case CACHE_INODE_STATE_ERROR:
+    case CACHE_INODE_NOT_SUPPORTED:
+    case CACHE_INODE_FSAL_DELAY:
+    case CACHE_INODE_BAD_COOKIE:
+    case CACHE_INODE_FILE_BIG:
+        /* Should not occur */
       LogDebug(COMPONENT_NFSPROTO,
                "Line %u should never be reached in nfs2_Errno", __LINE__);
       nfserror = NFSERR_IO;
@@ -4041,9 +3974,9 @@ int nfs4_MakeCred(compound_data_t * data)
 
   pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
-  if (get_req_uid_gid(data->reqp, &related_client,
-                      data->pexport, &user_credentials)
-      == FALSE)
+  if (get_req_uid_gid(data->reqp,
+                      data->pexport,
+                      &user_credentials) == FALSE)
     return NFS4ERR_WRONGSEC;
 
   LogFullDebug(COMPONENT_DISPATCH,
@@ -4061,9 +3994,10 @@ int nfs4_MakeCred(compound_data_t * data)
      == FALSE)
     return NFS4ERR_WRONGSEC;
 
-  if(nfs_build_fsal_context(data->reqp, &related_client, 
-                            data->pexport, data->pcontext, &user_credentials)
-     == FALSE)
+  if(nfs_build_fsal_context(data->reqp,
+                            data->pexport,
+                            data->pcontext,
+                            &user_credentials) == FALSE)
     return NFS4ERR_WRONGSEC;
 
   return NFS4_OK;

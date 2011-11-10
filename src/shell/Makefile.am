@@ -6,6 +6,12 @@ endif
 
 AM_CFLAGS                     =   $(DLOPEN_FLAGS) $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
+if USE_BUDDY_SYSTEM
+BUDDY_LIB_FLAGS = ../BuddyMalloc/libBuddyMalloc.la
+else
+BUDDY_LIB_FLAGS =
+endif
+
 if USE_NFSIDMAP
 NFSIDMAP_LIB_FLAGS = -lnfsidmap
 else
@@ -75,21 +81,23 @@ __FS_NAME__ganeshell_SOURCES    = Getopt.c                            \
                                   ../include/nfs_tools.h              \
                                   ../include/stuff_alloc.h
 
-		
+
 shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
                   ../$(CACHE_INODE_DIR)/libcache_inode.la            \
                   ../File_Content/libcache_content.la                \
                   ../File_Content_Policy/libcache_content_policy.la  \
                   ../IdMapper/libidmap.la                            \
                   ../support/libsupport.la                           \
+		  ../RPCAL/librpcal.la				     \
                   ../NodeList/libNodeList.la                         \
                   ../HashTable/libhashtable.la                       \
                   ../LRU/liblru.la                                   \
-                  ../BuddyMalloc/libBuddyMalloc.la                   \
+                  $(BUDDY_LIB_FLAGS)                                 \
                   ../FSAL/libfsalcommon.la                           \
                   $(FSAL_LIB)                                        \
                   $(MFSL_LIB)                                        \
                   $(PNFS_LIB)                                        \
+		  ../FSAL/common_methods.lo			     \
                   ../SemN/libSemN.la                                 \
                   ../RW_Lock/librwlock.la                            \
                   ../Log/liblog.la                                   \

@@ -78,11 +78,11 @@
  *        ERR_FSAL_IO, ...
  */
 
-fsal_status_t VFSFSAL_open_by_name(vfsfsal_handle_t * dirhandle,      /* IN */
+fsal_status_t VFSFSAL_open_by_name(fsal_handle_t * dirhandle,      /* IN */
                                 fsal_name_t * filename, /* IN */
-                                vfsfsal_op_context_t * p_context,  /* IN */
+                                fsal_op_context_t * p_context,  /* IN */
                                 fsal_openflags_t openflags,     /* IN */
-                                vfsfsal_file_t * file_descriptor,  /* OUT */
+                                fsal_file_t * file_descriptor,  /* OUT */
                                 fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
 {
   fsal_status_t fsal_status;
@@ -128,10 +128,10 @@ fsal_status_t VFSFSAL_open_by_name(vfsfsal_handle_t * dirhandle,      /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t VFSFSAL_open(vfsfsal_handle_t * p_filehandle,   /* IN */
-                        vfsfsal_op_context_t * p_context,  /* IN */
+fsal_status_t VFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
+                        fsal_op_context_t * p_context,  /* IN */
                         fsal_openflags_t openflags,     /* IN */
-                        vfsfsal_file_t * p_file_descriptor,        /* OUT */
+                        fsal_file_t * p_file_descriptor,        /* OUT */
                         fsal_attrib_list_t * p_file_attributes  /* [ IN/OUT ] */
     )
 {
@@ -194,12 +194,12 @@ fsal_status_t VFSFSAL_open(vfsfsal_handle_t * p_filehandle,   /* IN */
     }
 
   TakeTokenFSCall();
-  p_file_descriptor->fd = fd;
+  ((vfsfsal_file_t *)p_file_descriptor)->fd = fd;
   errsv = errno;
   ReleaseTokenFSCall();
 
   /* set the read-only flag of the file descriptor */
-  p_file_descriptor->ro = openflags & FSAL_O_RDONLY;
+  ((vfsfsal_file_t *)p_file_descriptor)->ro = openflags & FSAL_O_RDONLY;
 
   /* output attributes */
   if(p_file_attributes)
@@ -242,7 +242,7 @@ fsal_status_t VFSFSAL_open(vfsfsal_handle_t * p_filehandle,   /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t VFSFSAL_read(vfsfsal_file_t * p_file_descriptor,        /* IN */
+fsal_status_t VFSFSAL_read(fsal_file_t * file_desc,        /* IN */
                         fsal_seek_t * p_seek_descriptor,        /* [IN] */
                         fsal_size_t buffer_size,        /* IN */
                         caddr_t buffer, /* OUT */
@@ -250,10 +250,10 @@ fsal_status_t VFSFSAL_read(vfsfsal_file_t * p_file_descriptor,        /* IN */
                         fsal_boolean_t * p_end_of_file  /* OUT */
     )
 {
-
+  vfsfsal_file_t * p_file_descriptor = (vfsfsal_file_t *) file_desc;
   size_t i_size;
   ssize_t nb_read;
-  int rc, errsv;
+  int rc = 0, errsv = 0;
   int pcall = FALSE;
 
   /* sanity checks. */
@@ -268,7 +268,6 @@ fsal_status_t VFSFSAL_read(vfsfsal_file_t * p_file_descriptor,        /* IN */
 
   if(p_seek_descriptor)
     {
-
       switch (p_seek_descriptor->whence)
         {
         case FSAL_SEEK_CUR:
@@ -284,6 +283,7 @@ fsal_status_t VFSFSAL_read(vfsfsal_file_t * p_file_descriptor,        /* IN */
           /* use pread/pwrite call */
           pcall = TRUE;
           rc = 0;
+          errsv = 0;
           break;
 
         case FSAL_SEEK_END:
@@ -294,7 +294,6 @@ fsal_status_t VFSFSAL_read(vfsfsal_file_t * p_file_descriptor,        /* IN */
           rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_END);
           errsv = errno;
           ReleaseTokenFSCall();
-
           break;
         }
 
@@ -358,17 +357,17 @@ fsal_status_t VFSFSAL_read(vfsfsal_file_t * p_file_descriptor,        /* IN */
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t VFSFSAL_write(vfsfsal_file_t * p_file_descriptor,       /* IN */
+fsal_status_t VFSFSAL_write(fsal_file_t * file_desc,       /* IN */
                          fsal_seek_t * p_seek_descriptor,       /* IN */
                          fsal_size_t buffer_size,       /* IN */
                          caddr_t buffer,        /* IN */
                          fsal_size_t * p_write_amount   /* OUT */
     )
 {
-
+  vfsfsal_file_t * p_file_descriptor = (vfsfsal_file_t *) file_desc;
   ssize_t nb_written;
   size_t i_size;
-  int rc, errsv;
+  int rc = 0, errsv = 0;
   int pcall = FALSE;
 
   /* sanity checks. */
@@ -404,6 +403,7 @@ fsal_status_t VFSFSAL_write(vfsfsal_file_t * p_file_descriptor,       /* IN */
           /* set absolute position to offset */
           pcall = TRUE;
           rc = 0;
+          errsv = 0;
           break;
 
         case FSAL_SEEK_END:
@@ -414,7 +414,6 @@ fsal_status_t VFSFSAL_write(vfsfsal_file_t * p_file_descriptor,       /* IN */
           rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_END);
           errsv = errno;
           ReleaseTokenFSCall();
-
           break;
         }
 
@@ -496,7 +495,7 @@ fsal_status_t VFSFSAL_write(vfsfsal_file_t * p_file_descriptor,       /* IN */
  *      - Another error code if an error occured during this call.
  */
 
-fsal_status_t VFSFSAL_close(vfsfsal_file_t * p_file_descriptor        /* IN */
+fsal_status_t VFSFSAL_close(fsal_file_t * p_file_descriptor        /* IN */
     )
 {
 
@@ -506,13 +505,13 @@ fsal_status_t VFSFSAL_close(vfsfsal_file_t * p_file_descriptor        /* IN */
   if(!p_file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
 
-  if(  p_file_descriptor->fd == 0 )
+  if(((vfsfsal_file_t *)p_file_descriptor)->fd == 0 )
        Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
 
   /* call to close */
   TakeTokenFSCall();
 
-  rc = close(p_file_descriptor->fd);
+  rc = close(((vfsfsal_file_t *)p_file_descriptor)->fd);
   errsv = errno;
 
   ReleaseTokenFSCall();
@@ -520,32 +519,15 @@ fsal_status_t VFSFSAL_close(vfsfsal_file_t * p_file_descriptor        /* IN */
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_close);
 
-  p_file_descriptor->fd = 0 ;
+  ((vfsfsal_file_t *)p_file_descriptor)->fd = 0 ;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
 
 }
 
-/* Some unsupported calls used in FSAL_PROXY, just for permit the ganeshell to compile */
-fsal_status_t VFSFSAL_open_by_fileid(vfsfsal_handle_t * filehandle,   /* IN */
-                                  fsal_u64_t fileid,    /* IN */
-                                  vfsfsal_op_context_t * p_context,        /* IN */
-                                  fsal_openflags_t openflags,   /* IN */
-                                  vfsfsal_file_t * file_descriptor,        /* OUT */
-                                  fsal_attrib_list_t * file_attributes /* [ IN/OUT ] */ )
-{
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
-}
-
-fsal_status_t VFSFSAL_close_by_fileid(vfsfsal_file_t * file_descriptor /* IN */ ,
-                                   fsal_u64_t fileid)
-{
-  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
-}
-
 unsigned int VFSFSAL_GetFileno(fsal_file_t * pfile)
 {
-  return pfile->fd;
+	return ((vfsfsal_file_t *)pfile)->fd;
 }
 
 /**
@@ -561,7 +543,7 @@ unsigned int VFSFSAL_GetFileno(fsal_file_t * pfile)
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t VFSFSAL_sync(vfsfsal_file_t * p_file_descriptor       /* IN */)
+fsal_status_t VFSFSAL_sync(fsal_file_t * p_file_descriptor       /* IN */)
 {
   int rc, errsv;
 
@@ -569,12 +551,12 @@ fsal_status_t VFSFSAL_sync(vfsfsal_file_t * p_file_descriptor       /* IN */)
   if(!p_file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_sync);
 
-  if( p_file_descriptor->fd == 0 )
+  if(((vfsfsal_file_t *)p_file_descriptor)->fd == 0 )
     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync); /* Nothing to sync, the fd is not opened */
 
   /* Flush data. */
   TakeTokenFSCall();
-  rc = fsync(p_file_descriptor->fd);
+  rc = fsync(((vfsfsal_file_t *)p_file_descriptor)->fd);
   errsv = errno;
   ReleaseTokenFSCall();
 

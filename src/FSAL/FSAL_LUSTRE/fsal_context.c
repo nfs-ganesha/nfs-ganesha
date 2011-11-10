@@ -36,7 +36,7 @@
 /**
  * build the export entry
  */
-fsal_status_t LUSTREFSAL_BuildExportContext(lustrefsal_export_context_t * p_export_context,     /* OUT */
+fsal_status_t LUSTREFSAL_BuildExportContext(fsal_export_context_t *exp_context,     /* OUT */
                                             fsal_path_t * p_export_path,        /* IN */
                                             char *fs_specific_options   /* IN */
     )
@@ -48,6 +48,7 @@ fsal_status_t LUSTREFSAL_BuildExportContext(lustrefsal_export_context_t * p_expo
   FILE *fp;
   struct mntent *p_mnt;
   struct stat pathstat;
+  lustrefsal_export_context_t * p_export_context = (lustrefsal_export_context_t *)exp_context;
 
   char rpath[MAXPATHLEN];
   char mntdir[MAXPATHLEN];
@@ -166,6 +167,9 @@ fsal_status_t LUSTREFSAL_BuildExportContext(lustrefsal_export_context_t * p_expo
   }
   p_export_context->dev_id = pathstat.st_dev;
 
+  /* Save pointer to fsal_staticfsinfo_t in export context */
+  p_export_context->fe_static_fs_info = &global_fs_info;
+
   endmntent(fp);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
@@ -180,96 +184,9 @@ fsal_status_t LUSTREFSAL_BuildExportContext(lustrefsal_export_context_t * p_expo
  * \param p_export_context (in, gpfsfsal_export_context_t)
  */
 
-fsal_status_t LUSTREFSAL_CleanUpExportContext(lustrefsal_export_context_t * p_export_context) 
+fsal_status_t LUSTREFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context) 
 {
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
-}
-
-fsal_status_t LUSTREFSAL_InitClientContext(lustrefsal_op_context_t * p_thr_context)
-{
-
-  /* sanity check */
-  if(!p_thr_context)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
-
-  /* initialy set the export entry to none */
-  p_thr_context->export_context = NULL;
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
-
-}
-
- /**
- * FSAL_GetUserCred :
- * Get a user credential from its uid.
- * 
- * \param p_cred (in out, lustrefsal_cred_t *)
- *        Initialized credential to be changed
- *        for representing user.
- * \param uid (in, fsal_uid_t)
- *        user identifier.
- * \param gid (in, fsal_gid_t)
- *        group identifier.
- * \param alt_groups (in, fsal_gid_t *)
- *        list of alternative groups.
- * \param nb_alt_groups (in, fsal_count_t)
- *        number of alternative groups.
- *
- * \return major codes :
- *      - ERR_FSAL_PERM : the current user cannot
- *                        get credentials for this uid.
- *      - ERR_FSAL_FAULT : Bad adress parameter.
- *      - ERR_FSAL_SERVERFAULT : unexpected error.
- */
-
-fsal_status_t LUSTREFSAL_GetClientContext(lustrefsal_op_context_t * p_thr_context,      /* IN/OUT  */
-                                          lustrefsal_export_context_t * p_export_context,       /* IN */
-                                          fsal_uid_t uid,       /* IN */
-                                          fsal_gid_t gid,       /* IN */
-                                          fsal_gid_t * alt_groups,      /* IN */
-                                          fsal_count_t nb_alt_groups    /* IN */
-    )
-{
-
-  fsal_count_t ng = nb_alt_groups;
-  unsigned int i;
-
-  /* sanity check */
-  if(!p_thr_context || !p_export_context)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
-
-  /* set the export specific context */
-  p_thr_context->export_context = p_export_context;
-
-  /* Extracted from  /opt/hpss/src/nfs/nfsd/nfs_Dispatch.c */
-  p_thr_context->credential.user = uid;
-  p_thr_context->credential.group = gid;
-
-  if(ng > FSAL_NGROUPS_MAX)
-    ng = FSAL_NGROUPS_MAX;
-  if((ng > 0) && (alt_groups == NULL))
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
-
-  p_thr_context->credential.nbgroups = ng;
-
-  for(i = 0; i < ng; i++)
-    p_thr_context->credential.alt_groups[i] = alt_groups[i];
-
-  /* traces: prints p_credential structure */
-
-  if (isFullDebug(COMPONENT_FSAL))
-    {
-      LogFullDebug(COMPONENT_FSAL, "credential modified:");
-      LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
-                    p_thr_context->credential.user, p_thr_context->credential.group);
-
-      for(i = 0; i < p_thr_context->credential.nbgroups; i++)
-	LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
-                      p_thr_context->credential.alt_groups[i]);
-    }
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
-
 }
 
 /* @} */

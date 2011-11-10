@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -31,7 +31,7 @@
  * \brief   Routines used for managing the NFS4 COMPOUND functions.
  *
  * nfs4_Compound.c : Routines used for managing the NFS4 COMPOUND functions.
- * 
+ *
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -174,7 +174,7 @@ static const nfs4_op_desc_t optab4v1[] = {
   {"OP_EXCHANGE_ID", NFS4_OP_EXCHANGE_ID, nfs41_op_exchange_id},
   {"OP_CREATE_SESSION", NFS4_OP_CREATE_SESSION, nfs41_op_create_session},
   {"OP_DESTROY_SESSION", NFS4_OP_DESTROY_SESSION, nfs41_op_destroy_session},
-  {"OP_FREE_STATEID", NFS4_OP_FREE_STATEID, nfs4_op_illegal},   /* tbd */
+  {"OP_FREE_STATEID", NFS4_OP_FREE_STATEID, nfs41_op_free_stateid},   
   {"OP_GET_DIR_DELEGATION", NFS4_OP_GET_DIR_DELEGATION, nfs4_op_illegal},       /* tbd */
   {"OP_GETDEVICEINFO", NFS4_OP_GETDEVICEINFO, nfs41_op_getdeviceinfo},
   {"OP_GETDEVICELIST", NFS4_OP_GETDEVICELIST, nfs41_op_getdevicelist},
@@ -184,7 +184,7 @@ static const nfs4_op_desc_t optab4v1[] = {
   {"OP_SECINFO_NO_NAME", NFS4_OP_SECINFO_NO_NAME, nfs4_op_illegal},     /* tbd */
   {"OP_SEQUENCE", NFS4_OP_SEQUENCE, nfs41_op_sequence},
   {"OP_SET_SSV", NFS4_OP_SET_SSV, nfs41_op_set_ssv},
-  {"OP_TEST_STATEID", NFS4_OP_TEST_STATEID, nfs4_op_illegal},   /* tbd */
+  {"OP_TEST_STATEID", NFS4_OP_TEST_STATEID, nfs41_op_test_stateid}, 
   {"OP_WANT_DELEGATION", NFS4_OP_WANT_DELEGATION, nfs4_op_illegal},     /* tbd */
   {"OP_DESTROY_CLIENTID", NFS4_OP_DESTROY_CLIENTID, nfs4_op_illegal},   /* tbd */
   {"OP_RECLAIM_COMPLETE", NFS4_OP_RECLAIM_COMPLETE, nfs41_op_reclaim_complete},
@@ -201,15 +201,15 @@ nfs4_op_desc_t *optabvers[] = { (nfs4_op_desc_t *) optab4v0 };
 
 /**
  * nfs4_COMPOUND: The NFS PROC4 COMPOUND
- * 
+ *
  * Implements the NFS PROC4 COMPOUND.
- * This routine processes the content of the nfsv4 operation list and composes the result. 
+ * This routine processes the content of the nfsv4 operation list and composes the result.
  * On this aspect it is a little similar to a dispatch routine.
  * Operation and functions necessary to process them are defined in array optab4 .
  *
- * 
+ *
  *  @param parg        [IN]  generic nfs arguments
- *  @param pexportlist [IN]  the full export list 
+ *  @param pexportlist [IN]  the full export list
  *  @param pcontex     [IN]  context for the FSAL (unused but kept for nfs functions prototype homogeneity)
  *  @param pclient     [INOUT] client resource for request management
  *  @param ht          [INOUT] cache inode hash table
@@ -218,7 +218,7 @@ nfs4_op_desc_t *optabvers[] = { (nfs4_op_desc_t *) optab4v0 };
  *
  *  @see   nfs4_op_<*> functions
  *  @see   nfs4_GetPseudoFs
- * 
+ *
  */
 
 int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
@@ -235,23 +235,22 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   char __attribute__ ((__unused__)) funcname[] = "nfs4_Compound";
   compound_data_t data;
   int opindex;
+  #define TAGLEN 64
+  char tagstr[TAGLEN + 1 + 5];
 
   /* A "local" #define to avoid typo with nfs (too) long structure names */
 #define COMPOUND4_ARRAY parg->arg_compound4.argarray
-
-  LogFullDebug(COMPONENT_NFS_V4,
-               "NFS v4 COMPOUND REQUEST: %d operation(s)",
-               COMPOUND4_ARRAY.argarray_len);
+#define COMPOUND4_MINOR parg->arg_compound4.minorversion
 
 #ifdef _USE_NFS4_1
-  if(parg->arg_compound4.minorversion > 1)
+  if(COMPOUND4_MINOR > 1)
 #else
-  if(parg->arg_compound4.minorversion != 0)
+  if(COMPOUND4_MINOR != 0)
 #endif
     {
       LogCrit(COMPONENT_NFS_V4,
-              "NFS V4 COMPOUND: Bad Minor Version %d",
-              parg->arg_compound4.minorversion);
+              "Bad Minor Version %d",
+              COMPOUND4_MINOR);
 
       pres->res_compound4.status = NFS4ERR_MINOR_VERS_MISMATCH;
       pres->res_compound4.resarray.resarray_len = 0;
@@ -262,54 +261,49 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   if(COMPOUND4_ARRAY.argarray_len == 0)
     {
       LogMajor(COMPONENT_NFS_V4,
-               "NFS V4 COMPOUND: an empty COMPOUND (no operation in it) was received !!");
+               "An empty COMPOUND (no operation in it) was received");
 
       pres->res_compound4.status = NFS4_OK;
       pres->res_compound4.resarray.resarray_len = 0;
       return NFS_REQ_OK;
     }
 
+  /* Check if this export supports NFSv4 */
+  if( ( pexport->options & EXPORT_OPTION_NFSV4 ) == 0 )
+   {
+      LogMajor( COMPONENT_NFS_V4,
+                "The export(id=%u) does not support NFSv4... rejecting it",
+                pexport->id ) ;
+      pres->res_compound4.status = NFS4ERR_PERM ;
+      pres->res_compound4.resarray.resarray_val[0].nfs_resop4_u.opaccess.status = NFS4ERR_PERM ;
+      return NFS_REQ_OK ;
+   }
+
   /* Check for too long request */
   if(COMPOUND4_ARRAY.argarray_len > 30)
     {
       LogMajor(COMPONENT_NFS_V4,
-               "NFS V4 COMPOUND: an empty COMPOUND (no operation in it) was received !!");
+               "A COMPOUND with too many operations (%d) was received",
+               COMPOUND4_ARRAY.argarray_len);
 
       pres->res_compound4.status = NFS4ERR_RESOURCE;
       pres->res_compound4.resarray.resarray_len = 0;
       return NFS_REQ_OK;
     }
 
+  /* Initialisation of the compound request internal's data */
+  memset(&data, 0, sizeof(data));
+
   /* Minor version related stuff */
-  data.minorversion = parg->arg_compound4.minorversion;
+  data.minorversion = COMPOUND4_MINOR;
   /** @todo BUGAZOMEU: Reminder: Stats on NFSv4 operations are to be set here */
 
-  /* Initialisation of the compound request internal's data */
-  data.currentFH.nfs_fh4_len = 0;
-  data.currentFH.nfs_fh4_val = NULL;
-  data.rootFH.nfs_fh4_len = 0;
-  data.rootFH.nfs_fh4_val = NULL;
-  data.publicFH.nfs_fh4_len = 0;
-  data.publicFH.nfs_fh4_val = NULL;
-  data.savedFH.nfs_fh4_len = 0;
-  data.savedFH.nfs_fh4_val = NULL;
-  data.mounted_on_FH.nfs_fh4_len = 0;
-  data.mounted_on_FH.nfs_fh4_val = NULL;
-
-  data.current_entry = NULL;
-  data.saved_entry = NULL;
-  data.pexport = NULL;
   data.pfullexportlist = pexport;       /* Full export list is provided in input */
   data.pcontext = pcontext;     /* Get the fsal credentials from the worker thread */
   data.pseudofs = nfs4_GetPseudoFs();
   data.reqp = preq;
   data.ht = ht;
   data.pclient = pclient;
-#ifdef _USE_NFS4_1
-  data.pcached_res = NULL;
-  data.use_drc = FALSE;
-  data.psession = NULL;
-#endif                          /* _USE_NFS4_1 */
 
   strcpy(data.MntPath, "/");
 
@@ -320,6 +314,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
   /* Keeping the same tag as in the arguments */
   memcpy(&(pres->res_compound4.tag), &(parg->arg_compound4.tag),
          sizeof(parg->arg_compound4.tag));
+
   if(utf8dup(&(pres->res_compound4.tag), &(parg->arg_compound4.tag)) == -1)
     {
       LogCrit(COMPONENT_NFS_V4, "Unable to duplicate tag into response");
@@ -334,15 +329,20 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
       return NFS_REQ_DROP;
     }
 
-  /* Managing the operation list */
-  LogFullDebug(COMPONENT_NFS_V4,
-               "NFS V4 COMPOUND: There are %d operations",
-               COMPOUND4_ARRAY.argarray_len);
+  if(isDebug(COMPONENT_NFS_V4) && pres->res_compound4.tag.utf8string_len > 0)
+    {
+      sprintf(tagstr, " TAG=");
+      utf82str(tagstr+5, TAGLEN, &(pres->res_compound4.tag));
+    }
+  else
+    {
+      tagstr[0] = '\0';
+    }
 
-  // TODO: this needs to be revisited
-  for(i = 0; i < COMPOUND4_ARRAY.argarray_len; i++)
-    LogFullDebug(COMPONENT_NFS_V4, "%s ",
-                 optabvers[parg->arg_compound4.minorversion][optab4index[COMPOUND4_ARRAY.argarray_val[i].argop]].name);
+  /* Managing the operation list */
+  LogDebug(COMPONENT_NFS_V4,
+           "COMPOUND: There are %d operations%s",
+           COMPOUND4_ARRAY.argarray_len, tagstr);
 
 #ifdef _USE_NFS4_1
   /* Manage error NFS4ERR_NOT_ONLY_OP */
@@ -370,7 +370,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
 #ifdef _USE_NFS4_1
       data.oppos = i;           /* Useful to check if OP_SEQUENCE is used as the first operation */
 
-      if(parg->arg_compound4.minorversion == 1)
+      if(COMPOUND4_MINOR == 1)
         {
           if(data.psession != NULL)
             {
@@ -387,11 +387,11 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
             }
         }
 
-      /* if( parg->arg_compound4.minorversion == 1 ) */
+      /* if( COMPOUND4_MINOR == 1 ) */
       if((COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RELEASE_LOCKOWNER
-          && parg->arg_compound4.minorversion == 0)
+          && COMPOUND4_MINOR == 0)
          || (COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RECLAIM_COMPLETE
-             && parg->arg_compound4.minorversion == 1))
+             && COMPOUND4_MINOR == 1))
 #else
       if(COMPOUND4_ARRAY.argarray_val[i].argop <= NFS4_OP_RELEASE_LOCKOWNER)
 #endif
@@ -400,37 +400,21 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
         opindex = optab4index[POS_ILLEGAL];     /* = NFS4_OP_ILLEGAL a value to big for argop means an illegal value */
 
       LogDebug(COMPONENT_NFS_V4,
-               "NFS V4 COMPOUND: Request #%d is %d = %s, entry #%d in the op array",
+               "Request %d is %d = %s, entry %d in the op array%s",
                i,
-               optabvers[parg->arg_compound4.minorversion][opindex].val,
-               optabvers[parg->arg_compound4.minorversion][opindex].name,
-               opindex);
+               optabvers[COMPOUND4_MINOR][opindex].val,
+               optabvers[COMPOUND4_MINOR][opindex].name,
+               opindex,
+               tagstr);
 
       memset(&res, 0, sizeof(res));
-      status =
-          (optabvers[parg->arg_compound4.minorversion][opindex].funct) (&
-                                                                        (COMPOUND4_ARRAY.argarray_val
-                                                                         [i]), &data,
-                                                                        &res);
+      status = (optabvers[COMPOUND4_MINOR][opindex].funct) (&(COMPOUND4_ARRAY.argarray_val[i]),
+                                                            &data,
+                                                            &res);
 
       memcpy(&(pres->res_compound4.resarray.resarray_val[i]), &res, sizeof(res));
 
-      if(isDebug(COMPONENT_NFS_V4))
-        {
-          char tmpstr[1024];
-          tmpstr[0] = '\0';
-          utf82str(tmpstr, sizeof(tmpstr), &(pres->res_compound4.tag));          
-          LogDebug(COMPONENT_NFS_V4,
-                   "--> COMPOUND REQUEST TAG is #%s#", tmpstr);
-        }
-
-      // print_compound_fh(&data);    Very very very verbose if NFSv4 is used.... 
-
-      LogDebug(COMPONENT_NFS_V4,
-               "NFS V4 COMPOUND:Status of %s in position %d = %d",
-               optabvers[parg->arg_compound4.minorversion][opindex].name,
-               i,
-               status);
+      LogCompoundFH(&data);
 
       /* All the operation, like NFS4_OP_ACESS, have a first replyied field called .status */
       pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.opaccess.status = status;
@@ -438,9 +422,12 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
       if(status != NFS4_OK)
         {
           /* An error occured, we do not manage the other requests in the COMPOUND, this may be a regular behaviour */
-	  LogDebug(COMPONENT_NFS_V4,
-                   "NFS V4 COMPOUND: Error met, stop request with status =%d",
-                   status);
+          LogDebug(COMPONENT_NFS_V4,
+                   "Status of %s in position %d = %s%s",
+                   optabvers[COMPOUND4_MINOR][opindex].name,
+                   i,
+                   nfsstat4_to_str(status),
+                   tagstr);
 
           pres->res_compound4.resarray.resarray_len = i + 1;
 
@@ -450,7 +437,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
       /* Check Req size */
 
       /* NFS_V4.1 specific stuff */
-      if(parg->arg_compound4.minorversion == 1)
+      if(COMPOUND4_MINOR == 1)
         {
           if(i == 0)            /* OP_SEQUENCE is always the first operation within the request */
             {
@@ -479,7 +466,7 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
 
 #ifdef _USE_NFS4_1
   /* Manage session's DRC : keep NFS4.1 replay for later use */
-  if(parg->arg_compound4.minorversion == 1)
+  if(COMPOUND4_MINOR == 1)
     {
       if(data.pcached_res != NULL)      /* Pointer has been set by nfs41_op_sequence and points to cached zone */
         {
@@ -489,11 +476,10 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
     }
 #endif
 
-  LogDebug(COMPONENT_NFS_V4,               
-           "NFS V4 COMPOUND: end status = %d|%d  lastindex = %d",
-           status, pres->res_compound4.status, i ) ;
-  LogDebug(COMPONENT_NFS_V4,
-           "===============================================================");
+  if(status != NFS4_OK)
+    LogDebug(COMPONENT_NFS_V4,
+             "End status = %s lastindex = %d%s",
+             nfsstat4_to_str(status), i, tagstr);
 
   compound_data_Free(&data);
 
@@ -501,13 +487,231 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
 }                               /* nfs4_Compound */
 
 /**
- * 
+ *
+ * nfs4_Compound_FreeOne: Mem_Free the result for one NFS4_OP
+ *
+ * @param resp pointer to be Mem_Freed
+ *
+ * @return nothing (void function).
+ *
+ * @see nfs4_op_getfh
+ *
+ */
+void nfs4_Compound_FreeOne(nfs_resop4 * pres)
+{
+  /* LogFullDebug(COMPONENT_NFS_V4,
+                  "nfs4_Compound_Free sur op=%s",
+                  optabvers[COMPOUND4_MINOR][optab4index[pres->resop]].name);
+  */
+  switch (pres->resop)
+    {
+      case NFS4_OP_ACCESS:
+        nfs4_op_access_Free(&(pres->nfs_resop4_u.opaccess));
+        break;
+
+      case NFS4_OP_CLOSE:
+        nfs4_op_close_Free(&(pres->nfs_resop4_u.opclose));
+        break;
+
+      case NFS4_OP_COMMIT:
+        nfs4_op_commit_Free(&(pres->nfs_resop4_u.opcommit));
+        break;
+
+      case NFS4_OP_CREATE:
+        nfs4_op_create_Free(&(pres->nfs_resop4_u.opcreate));
+        break;
+
+      case NFS4_OP_DELEGPURGE:
+        nfs4_op_delegpurge_Free(&(pres->nfs_resop4_u.opdelegpurge));
+        break;
+
+      case NFS4_OP_DELEGRETURN:
+        nfs4_op_delegreturn_Free(&(pres->nfs_resop4_u.opdelegreturn));
+        break;
+
+      case NFS4_OP_GETATTR:
+        nfs4_op_getattr_Free(&(pres->nfs_resop4_u.opgetattr));
+        break;
+
+      case NFS4_OP_GETFH:
+        nfs4_op_getfh_Free(&(pres->nfs_resop4_u.opgetfh));
+        break;
+
+      case NFS4_OP_LINK:
+        nfs4_op_link_Free(&(pres->nfs_resop4_u.oplink));
+        break;
+
+      case NFS4_OP_LOCK:
+        nfs4_op_lock_Free(&(pres->nfs_resop4_u.oplock));
+        break;
+
+      case NFS4_OP_LOCKT:
+        nfs4_op_lockt_Free(&(pres->nfs_resop4_u.oplockt));
+        break;
+
+      case NFS4_OP_LOCKU:
+        nfs4_op_locku_Free(&(pres->nfs_resop4_u.oplocku));
+        break;
+
+      case NFS4_OP_LOOKUP:
+        nfs4_op_lookup_Free(&(pres->nfs_resop4_u.oplookup));
+        break;
+
+      case NFS4_OP_LOOKUPP:
+        nfs4_op_lookupp_Free(&(pres->nfs_resop4_u.oplookupp));
+        break;
+
+      case NFS4_OP_NVERIFY:
+        nfs4_op_nverify_Free(&(pres->nfs_resop4_u.opnverify));
+        break;
+
+      case NFS4_OP_OPEN:
+        nfs4_op_open_Free(&(pres->nfs_resop4_u.opopen));
+        break;
+
+      case NFS4_OP_OPENATTR:
+        nfs4_op_openattr_Free(&(pres->nfs_resop4_u.opopenattr));
+        break;
+
+      case NFS4_OP_OPEN_CONFIRM:
+        nfs4_op_open_confirm_Free(&(pres->nfs_resop4_u.opopen_confirm));
+        break;
+
+      case NFS4_OP_OPEN_DOWNGRADE:
+        nfs4_op_open_downgrade_Free(&(pres->nfs_resop4_u.opopen_downgrade));
+        break;
+
+      case NFS4_OP_PUTFH:
+        nfs4_op_putfh_Free(&(pres->nfs_resop4_u.opputfh));
+        break;
+
+      case NFS4_OP_PUTPUBFH:
+        nfs4_op_putpubfh_Free(&(pres->nfs_resop4_u.opputpubfh));
+        break;
+
+      case NFS4_OP_PUTROOTFH:
+        nfs4_op_putrootfh_Free(&(pres->nfs_resop4_u.opputrootfh));
+        break;
+
+      case NFS4_OP_READ:
+        nfs4_op_read_Free(&(pres->nfs_resop4_u.opread));
+        break;
+
+      case NFS4_OP_READDIR:
+        nfs4_op_readdir_Free(&(pres->nfs_resop4_u.opreaddir));
+        break;
+
+      case NFS4_OP_READLINK:
+      	nfs4_op_readlink_Free(&(pres->nfs_resop4_u.opreadlink));
+        break;
+
+      case NFS4_OP_REMOVE:
+        nfs4_op_remove_Free(&(pres->nfs_resop4_u.opremove));
+        break;
+
+      case NFS4_OP_RENAME:
+        nfs4_op_rename_Free(&(pres->nfs_resop4_u.oprename));
+        break;
+
+      case NFS4_OP_RENEW:
+        nfs4_op_renew_Free(&(pres->nfs_resop4_u.oprenew));
+        break;
+
+      case NFS4_OP_RESTOREFH:
+        nfs4_op_restorefh_Free(&(pres->nfs_resop4_u.oprestorefh));
+        break;
+
+      case NFS4_OP_SAVEFH:
+        nfs4_op_savefh_Free(&(pres->nfs_resop4_u.opsavefh));
+        break;
+
+      case NFS4_OP_SECINFO:
+        nfs4_op_secinfo_Free(&(pres->nfs_resop4_u.opsecinfo));
+        break;
+
+      case NFS4_OP_SETATTR:
+        nfs4_op_setattr_Free(&(pres->nfs_resop4_u.opsetattr));
+        break;
+
+      case NFS4_OP_SETCLIENTID:
+        nfs4_op_setclientid_Free(&(pres->nfs_resop4_u.opsetclientid));
+        break;
+
+      case NFS4_OP_SETCLIENTID_CONFIRM:
+        nfs4_op_setclientid_confirm_Free(&(pres->nfs_resop4_u.opsetclientid_confirm));
+        break;
+
+      case NFS4_OP_VERIFY:
+        nfs4_op_verify_Free(&(pres->nfs_resop4_u.opverify));
+        break;
+
+      case NFS4_OP_WRITE:
+        nfs4_op_write_Free(&(pres->nfs_resop4_u.opwrite));
+        break;
+
+      case NFS4_OP_RELEASE_LOCKOWNER:
+        nfs4_op_release_lockowner_Free(&(pres->nfs_resop4_u.oprelease_lockowner));
+        break;
+
+#ifdef _USE_NFS4_1
+      case NFS4_OP_EXCHANGE_ID:
+        nfs41_op_exchange_id_Free(&(pres->nfs_resop4_u.opexchange_id));
+        break;
+
+      case NFS4_OP_CREATE_SESSION:
+        nfs41_op_create_session_Free(&(pres->nfs_resop4_u.opcreate_session));
+        break;
+
+      case NFS4_OP_SEQUENCE:
+        nfs41_op_sequence_Free(&(pres->nfs_resop4_u.opsequence));
+        break;
+
+      case NFS4_OP_GETDEVICEINFO:
+        nfs41_op_getdeviceinfo_Free(&(pres->nfs_resop4_u.opgetdeviceinfo));
+        break;
+
+      case NFS4_OP_GETDEVICELIST:
+        nfs41_op_getdevicelist_Free(&(pres->nfs_resop4_u.opgetdevicelist));
+        break;
+
+      case NFS4_OP_TEST_STATEID:
+        nfs41_op_test_stateid_Free(&(pres->nfs_resop4_u.optest_stateid));
+        break;
+
+      case NFS4_OP_FREE_STATEID:
+        nfs41_op_free_stateid_Free(&(pres->nfs_resop4_u.opfree_stateid));
+        break;
+
+      case NFS4_OP_BACKCHANNEL_CTL:
+      case NFS4_OP_BIND_CONN_TO_SESSION:
+      case NFS4_OP_DESTROY_SESSION:
+      case NFS4_OP_GET_DIR_DELEGATION:
+      case NFS4_OP_LAYOUTCOMMIT:
+      case NFS4_OP_LAYOUTGET:
+      case NFS4_OP_LAYOUTRETURN:
+      case NFS4_OP_SECINFO_NO_NAME:
+      case NFS4_OP_SET_SSV:
+      case NFS4_OP_WANT_DELEGATION:
+      case NFS4_OP_DESTROY_CLIENTID:
+      case NFS4_OP_RECLAIM_COMPLETE:
+        nfs41_op_reclaim_complete_Free(&(pres->nfs_resop4_u.opreclaim_complete));
+        break;
+#endif
+
+      case NFS4_OP_ILLEGAL:
+        nfs4_op_illegal_Free(&(pres->nfs_resop4_u.opillegal));
+        break;
+    }                       /* switch */
+}
+
+/**
+ *
  * nfs4_Compound_Free: Mem_Free the result for NFS4PROC_COMPOUND
  *
  * Mem_Free the result for NFS4PROC_COMPOUND.
  *
  * @param resp pointer to be Mem_Freed
- * 
+ *
  * @return nothing (void function).
  *
  * @see nfs4_op_getfh
@@ -523,292 +727,8 @@ void nfs4_Compound_Free(nfs_res_t * pres)
                pres->res_compound4.resarray.resarray_len);
 
   for(i = 0; i < pres->res_compound4.resarray.resarray_len; i++)
-    {
-      /* LogFullDebug(COMPONENT_NFS_V4,
-                      "nfs4_Compound_Free sur op=%s",
-                      optabvers[parg->arg_compound4.minorversion][optab4index[pres->res_compound4.resarray.resarray_val[i].resop]].name);
-      */
-      switch (pres->res_compound4.resarray.resarray_val[i].resop)
-        {
-        case NFS4_OP_ACCESS:
-          nfs4_op_access_Free(&
-                              (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                               opaccess));
-          break;
+    nfs4_Compound_FreeOne(&pres->res_compound4.resarray.resarray_val[i]);
 
-        case NFS4_OP_CLOSE:
-          nfs4_op_close_Free(&
-                             (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                              opclose));
-          break;
-
-        case NFS4_OP_COMMIT:
-          nfs4_op_commit_Free(&
-                              (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                               opcommit));
-          break;
-
-        case NFS4_OP_CREATE:
-          nfs4_op_create_Free(&
-                              (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                               opcreate));
-          break;
-
-        case NFS4_OP_DELEGPURGE:
-          nfs4_op_delegpurge_Free(&
-                                  (pres->res_compound4.resarray.resarray_val[i].
-                                   nfs_resop4_u.opdelegpurge));
-          break;
-
-        case NFS4_OP_DELEGRETURN:
-          nfs4_op_delegreturn_Free(&
-                                   (pres->res_compound4.resarray.resarray_val[i].
-                                    nfs_resop4_u.opdelegreturn));
-          break;
-
-        case NFS4_OP_GETATTR:
-          nfs4_op_getattr_Free(&
-                               (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                                opgetattr));
-          break;
-
-        case NFS4_OP_GETFH:
-          nfs4_op_getfh_Free(&
-                             (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                              opgetfh));
-          break;
-
-        case NFS4_OP_LINK:
-          nfs4_op_link_Free(&
-                            (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                             oplink));
-          break;
-
-        case NFS4_OP_LOCK:
-          nfs4_op_lock_Free(&
-                            (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                             oplock));
-          break;
-
-        case NFS4_OP_LOCKT:
-          nfs4_op_lockt_Free(&
-                             (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                              oplockt));
-          break;
-
-        case NFS4_OP_LOCKU:
-          nfs4_op_locku_Free(&
-                             (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                              oplocku));
-          break;
-
-        case NFS4_OP_LOOKUP:
-          nfs4_op_lookup_Free(&
-                              (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                               oplookup));
-          break;
-
-        case NFS4_OP_LOOKUPP:
-          nfs4_op_lookupp_Free(&
-                               (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                                oplookupp));
-          break;
-
-        case NFS4_OP_NVERIFY:
-          nfs4_op_nverify_Free(&
-                               (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                                opnverify));
-          break;
-
-        case NFS4_OP_OPEN:
-          nfs4_op_open_Free(&
-                            (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                             opopen));
-          break;
-
-        case NFS4_OP_OPENATTR:
-          nfs4_op_openattr_Free(&
-                                (pres->res_compound4.resarray.resarray_val[i].
-                                 nfs_resop4_u.opopenattr));
-          break;
-
-        case NFS4_OP_OPEN_CONFIRM:
-          nfs4_op_open_confirm_Free(&
-                                    (pres->res_compound4.resarray.resarray_val[i].
-                                     nfs_resop4_u.opopen_confirm));
-          break;
-
-        case NFS4_OP_OPEN_DOWNGRADE:
-          nfs4_op_open_downgrade_Free(&
-                                      (pres->res_compound4.resarray.resarray_val[i].
-                                       nfs_resop4_u.opopen_downgrade));
-          break;
-
-        case NFS4_OP_PUTFH:
-          nfs4_op_putfh_Free(&
-                             (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                              opputfh));
-          break;
-
-        case NFS4_OP_PUTPUBFH:
-          nfs4_op_putpubfh_Free(&
-                                (pres->res_compound4.resarray.resarray_val[i].
-                                 nfs_resop4_u.opputpubfh));
-          break;
-
-        case NFS4_OP_PUTROOTFH:
-          nfs4_op_putrootfh_Free(&
-                                 (pres->res_compound4.resarray.resarray_val[i].
-                                  nfs_resop4_u.opputrootfh));
-          break;
-
-        case NFS4_OP_READ:
-          nfs4_op_read_Free(&
-                            (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                             opread));
-          break;
-
-        case NFS4_OP_READDIR:
-          nfs4_op_readdir_Free(&
-                               (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                                opreaddir));
-          break;
-
-        case NFS4_OP_REMOVE:
-          nfs4_op_remove_Free(&
-                              (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                               opremove));
-          break;
-
-        case NFS4_OP_RENAME:
-          nfs4_op_rename_Free(&
-                              (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                               oprename));
-          break;
-
-        case NFS4_OP_RENEW:
-          nfs4_op_renew_Free(&
-                             (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                              oprenew));
-          break;
-
-        case NFS4_OP_RESTOREFH:
-          nfs4_op_restorefh_Free(&
-                                 (pres->res_compound4.resarray.resarray_val[i].
-                                  nfs_resop4_u.oprestorefh));
-          break;
-
-        case NFS4_OP_SAVEFH:
-          nfs4_op_savefh_Free(&
-                              (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                               opsavefh));
-          break;
-
-        case NFS4_OP_SECINFO:
-          nfs4_op_secinfo_Free(&
-                               (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                                opsecinfo));
-          break;
-
-        case NFS4_OP_SETATTR:
-          nfs4_op_setattr_Free(&
-                               (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                                opsetattr));
-          break;
-
-        case NFS4_OP_SETCLIENTID:
-          nfs4_op_setclientid_Free(&
-                                   (pres->res_compound4.resarray.resarray_val[i].
-                                    nfs_resop4_u.opsetclientid));
-          break;
-
-        case NFS4_OP_SETCLIENTID_CONFIRM:
-          nfs4_op_setclientid_confirm_Free(&
-                                           (pres->res_compound4.resarray.resarray_val[i].
-                                            nfs_resop4_u.opsetclientid_confirm));
-          break;
-
-        case NFS4_OP_VERIFY:
-          nfs4_op_verify_Free(&
-                              (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                               opverify));
-          break;
-
-        case NFS4_OP_WRITE:
-          nfs4_op_write_Free(&
-                             (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                              opwrite));
-          break;
-
-        case NFS4_OP_RELEASE_LOCKOWNER:
-          nfs4_op_release_lockowner_Free(&
-                                         (pres->res_compound4.resarray.resarray_val[i].
-                                          nfs_resop4_u.oprelease_lockowner));
-          break;
-
-#ifdef _USE_NFS4_1
-        case NFS4_OP_EXCHANGE_ID:
-          nfs41_op_exchange_id_Free(&
-                                    (pres->res_compound4.resarray.resarray_val[i].
-                                     nfs_resop4_u.opexchange_id));
-          break;
-
-        case NFS4_OP_CREATE_SESSION:
-          nfs41_op_create_session_Free(&
-                                       (pres->res_compound4.resarray.resarray_val[i].
-                                        nfs_resop4_u.opcreate_session));
-          break;
-
-        case NFS4_OP_SEQUENCE:
-          nfs41_op_sequence_Free(&
-                                 (pres->res_compound4.resarray.resarray_val[i].
-                                  nfs_resop4_u.opsequence));
-          break;
-
-        case NFS4_OP_GETDEVICEINFO:
-          nfs41_op_getdeviceinfo_Free(&
-                                      (pres->res_compound4.resarray.resarray_val[i].
-                                       nfs_resop4_u.opgetdeviceinfo));
-          break;
-
-        case NFS4_OP_GETDEVICELIST:
-          nfs41_op_getdevicelist_Free(&
-                                      (pres->res_compound4.resarray.resarray_val[i].
-                                       nfs_resop4_u.opgetdevicelist));
-          break;
-
-        case NFS4_OP_BACKCHANNEL_CTL:
-        case NFS4_OP_BIND_CONN_TO_SESSION:
-        case NFS4_OP_DESTROY_SESSION:
-        case NFS4_OP_FREE_STATEID:
-        case NFS4_OP_GET_DIR_DELEGATION:
-        case NFS4_OP_LAYOUTCOMMIT:
-        case NFS4_OP_LAYOUTGET:
-        case NFS4_OP_LAYOUTRETURN:
-        case NFS4_OP_SECINFO_NO_NAME:
-        case NFS4_OP_SET_SSV:
-        case NFS4_OP_TEST_STATEID:
-        case NFS4_OP_WANT_DELEGATION:
-        case NFS4_OP_DESTROY_CLIENTID:
-        case NFS4_OP_RECLAIM_COMPLETE:
-          nfs41_op_reclaim_complete_Free(&
-                                         (pres->res_compound4.resarray.resarray_val[i].
-                                          nfs_resop4_u.opreclaim_complete));
-#endif
-
-        case NFS4_OP_ILLEGAL:
-          nfs4_op_illegal_Free(&
-                               (pres->res_compound4.resarray.resarray_val[i].nfs_resop4_u.
-                                opillegal));
-          break;
-
-        default:
-          /* Should not happen */
-          /* BUGAZOMEU : Un nouveau message d'erreur */
-          break;
-        }                       /* switch */
-
-    }                           /* for i */
   Mem_Free((char *)pres->res_compound4.resarray.resarray_val);
   free_utf8(&pres->res_compound4.tag);
 
@@ -816,7 +736,7 @@ void nfs4_Compound_Free(nfs_res_t * pres)
 }                               /* nfs4_Compound_Free */
 
 /**
- * 
+ *
  * compound_data_Free: Mem_Frees the compound data structure.
  *
  * Mem_Frees the compound data structure..
@@ -848,16 +768,161 @@ void compound_data_Free(compound_data_t * data)
 }                               /* compound_data_Free */
 
 /**
- *    
+ *
+ * nfs4_Compound_CopyResOne: Copy the result for one NFS4_OP
+ *
+ */
+void nfs4_Compound_CopyResOne(nfs_resop4 * pres_dst, nfs_resop4 * pres_src)
+{
+  /* Copy base data structure */
+  memcpy(pres_dst, pres_src, sizeof(*pres_dst));
+
+  /* Do deep copy where necessary */
+  switch (pres_src->resop)
+    {
+      case NFS4_OP_ACCESS:
+        break;
+
+      case NFS4_OP_CLOSE:
+        nfs4_op_close_CopyRes(&(pres_dst->nfs_resop4_u.opclose),
+                              &(pres_src->nfs_resop4_u.opclose));
+        return;
+
+      case NFS4_OP_COMMIT:
+      case NFS4_OP_CREATE:
+      case NFS4_OP_DELEGPURGE:
+      case NFS4_OP_DELEGRETURN:
+      case NFS4_OP_GETATTR:
+      case NFS4_OP_GETFH:
+      case NFS4_OP_LINK:
+        break;
+
+      case NFS4_OP_LOCK:
+        nfs4_op_lock_CopyRes(&(pres_dst->nfs_resop4_u.oplock),
+                             &(pres_src->nfs_resop4_u.oplock));
+        return;
+
+      case NFS4_OP_LOCKT:
+        break;
+
+      case NFS4_OP_LOCKU:
+        nfs4_op_locku_CopyRes(&(pres_dst->nfs_resop4_u.oplocku),
+                              &(pres_src->nfs_resop4_u.oplocku));
+        return;
+
+      case NFS4_OP_LOOKUP:
+      case NFS4_OP_LOOKUPP:
+      case NFS4_OP_NVERIFY:
+        break;
+
+      case NFS4_OP_OPEN:
+        nfs4_op_open_CopyRes(&(pres_dst->nfs_resop4_u.opopen),
+                             &(pres_src->nfs_resop4_u.opopen));
+        return;
+
+      case NFS4_OP_OPENATTR:
+        break;
+
+      case NFS4_OP_OPEN_CONFIRM:
+        nfs4_op_open_confirm_CopyRes(&(pres_dst->nfs_resop4_u.opopen_confirm),
+                                     &(pres_src->nfs_resop4_u.opopen_confirm));
+        return;
+
+      case NFS4_OP_OPEN_DOWNGRADE:
+        nfs4_op_open_downgrade_CopyRes(&(pres_dst->nfs_resop4_u.opopen_downgrade),
+                                       &(pres_src->nfs_resop4_u.opopen_downgrade));
+        return;
+
+      case NFS4_OP_PUTFH:
+      case NFS4_OP_PUTPUBFH:
+      case NFS4_OP_PUTROOTFH:
+      case NFS4_OP_READ:
+      case NFS4_OP_READDIR:
+      case NFS4_OP_READLINK:
+      case NFS4_OP_REMOVE:
+      case NFS4_OP_RENAME:
+      case NFS4_OP_RENEW:
+      case NFS4_OP_RESTOREFH:
+      case NFS4_OP_SAVEFH:
+      case NFS4_OP_SECINFO:
+      case NFS4_OP_SETATTR:
+      case NFS4_OP_SETCLIENTID:
+      case NFS4_OP_SETCLIENTID_CONFIRM:
+      case NFS4_OP_VERIFY:
+      case NFS4_OP_WRITE:
+      case NFS4_OP_RELEASE_LOCKOWNER:
+        break;
+
+#ifdef _USE_NFS4_1
+      case NFS4_OP_EXCHANGE_ID:
+      case NFS4_OP_CREATE_SESSION:
+      case NFS4_OP_SEQUENCE:
+      case NFS4_OP_GETDEVICEINFO:
+      case NFS4_OP_GETDEVICELIST:
+      case NFS4_OP_BACKCHANNEL_CTL:
+      case NFS4_OP_BIND_CONN_TO_SESSION:
+      case NFS4_OP_DESTROY_SESSION:
+      case NFS4_OP_FREE_STATEID:
+      case NFS4_OP_GET_DIR_DELEGATION:
+      case NFS4_OP_LAYOUTCOMMIT:
+      case NFS4_OP_LAYOUTGET:
+      case NFS4_OP_LAYOUTRETURN:
+      case NFS4_OP_SECINFO_NO_NAME:
+      case NFS4_OP_SET_SSV:
+      case NFS4_OP_TEST_STATEID:
+      case NFS4_OP_WANT_DELEGATION:
+      case NFS4_OP_DESTROY_CLIENTID:
+      case NFS4_OP_RECLAIM_COMPLETE:
+        break;
+#endif
+
+      case NFS4_OP_ILLEGAL:
+        break;
+    }                       /* switch */
+
+  LogFatal(COMPONENT_NFS_V4,
+           "nfs4_Compound_CopyResOne not implemented for %d",
+           pres_src->resop);
+}
+
+/**
+ *
+ * nfs4_Compound_CopyRes: Copy the result for NFS4PROC_COMPOUND
+ *
+ * Copy the result for NFS4PROC_COMPOUND.
+ *
+ * @param resp pointer to be Mem_Freed
+ *
+ * @return nothing (void function).
+ *
+ * @see nfs4_op_getfh
+ *
+ */
+void nfs4_Compound_CopyRes(nfs_res_t * pres_dst, nfs_res_t * pres_src)
+{
+  unsigned int i = 0;
+
+  LogFullDebug(COMPONENT_NFS_V4,
+               "nfs4_Compound_CopyRes of %p to %p (resarraylen : %i)",
+               pres_src, pres_dst,
+               pres_src->res_compound4.resarray.resarray_len);
+
+  for(i = 0; i < pres_src->res_compound4.resarray.resarray_len; i++)
+    nfs4_Compound_CopyResOne(&pres_dst->res_compound4.resarray.resarray_val[i],
+                             &pres_src->res_compound4.resarray.resarray_val[i]);
+}
+
+/**
+ *
  *  nfs4_op_stat_update: updates the NFSv4 operations specific statistics for a COMPOUND4 requests (either v4.0 or v4.1).
  *
  *  Updates the NFSv4 operations specific statistics for a COMPOUND4 requests (either v4.0 or v4.1).
- * 
+ *
  *  @param parg argument for the COMPOUND4 request
  *  @param pres result for the COMPOUND4 request
  *  @param pstat_req pointer to the worker's structure for NFSv4 stats
- * 
- * @return -1 if failed 0 otherwise 
+ *
+ * @return -1 if failed 0 otherwise
  *
  */
 
@@ -867,7 +932,7 @@ int nfs4_op_stat_update(nfs_arg_t * parg /* IN     */ ,
 {
   int i = 0;
 
-  switch (parg->arg_compound4.minorversion)
+  switch (COMPOUND4_MINOR)
     {
     case 0:
       for(i = 0; i < pres->res_compound4.resarray.resarray_len; i++)

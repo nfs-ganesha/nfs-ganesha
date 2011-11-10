@@ -1,15 +1,22 @@
 AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
+if USE_BUDDY_SYSTEM
+BUDDY_LIB_FLAGS = ../BuddyMalloc/libBuddyMalloc.la
+else
+BUDDY_LIB_FLAGS =
+endif
+
+#check_PROGRAMS = test_nfs_ip_stats test_nfs_ip_name test_support
 check_PROGRAMS = test_nfs_ip_stats test_nfs_ip_name
 
 test_nfs_ip_stats_SOURCES = test_nfs_ip_stats.c
-test_nfs_ip_stats_LDADD = libsupport.la ../HashTable/libhashtable.la ../BuddyMalloc/libBuddyMalloc.la ../Log/liblog.la ../RW_Lock/librwlock.la
+test_nfs_ip_stats_LDADD = libsupport.la ../HashTable/libhashtable.la $(BUDDY_LIB_FLAGS) ../Log/liblog.la ../RW_Lock/librwlock.la
 
 test_nfs_ip_name_SOURCES = test_nfs_ip_name.c
-test_nfs_ip_name_LDADD = libsupport.la ../HashTable/libhashtable.la ../BuddyMalloc/libBuddyMalloc.la ../Log/liblog.la ../RW_Lock/librwlock.la ../ConfigParsing/libConfigParsing.la
+test_nfs_ip_name_LDADD = libsupport.la ../HashTable/libhashtable.la $(BUDDY_LIB_FLAGS) ../Log/liblog.la ../RW_Lock/librwlock.la ../ConfigParsing/libConfigParsing.la
 
 
-TESTS = test_nfs_ip_stats test_nfs_ip_name
+TESTS = test_nfs_ip_stats test_nfs_ip_name $(check_SCRIPTS)
 
 noinst_LTLIBRARIES            = libsupport.la
 
@@ -22,9 +29,6 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          nfs_ip_name.c                      \
                          nfs_ip_stats.c                     \
                          nfs_client_id.c                    \
-                         nfs_state_id.c                     \
-                         nfs_open_owner.c                   \
-                         nfs4_tools.c                       \
                          exports.c                          \
                          fridgethr.c                        \
                          lookup3.c                          \
@@ -59,10 +63,6 @@ if RESULT_IS_DAEMON
 libsupport_la_LIBADD         =   ../RPCAL/librpcal.la 
 endif
 
-if USE_NLM
-libsupport_la_SOURCES += nlm_util.c nlm_async.c nsm.c
-endif
-
 if USE_NFS4_ACL
 libsupport_la_SOURCES += nfs4_acls.c
 endif
@@ -75,12 +75,13 @@ if ERROR_INJECTION
 libsupport_la_SOURCES += err_inject.c
 endif
 
-libsupport_la_DEPENDENCIES = $(libsupport_la_SOURCES) $(libsupport_la_LIBADD)
-
 
 new: clean all 
 
 doc:
 	doxygen ./doxygen.conf
 	rep=`grep OUTPUT_DIRECTORY doxygen.conf | grep share  | awk -F '=' '{print $$2;}'` ; cd $$rep/latex ; make
+
+testrunner:  $(check_PROGRAMS)
+	../tools/maketest -x support -f ./maketest.conf > ../testres-xml/support.xml
 

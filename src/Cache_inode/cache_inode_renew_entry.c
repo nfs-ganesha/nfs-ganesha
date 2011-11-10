@@ -55,6 +55,7 @@
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
+#include <assert.h>
 
 /**
  *
@@ -178,11 +179,13 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
     }
 
   LogDebug(COMPONENT_CACHE_INODE,
-           "cache_inode_renew_entry use getattr/mtime checking %d, is dir beginning %d, has bit in mask %d, has been readdir %d",
+           "cache_inode_renew_entry use getattr/mtime checking %d, is dir "
+	   "beginning %d, has bit in mask %d, has been readdir %d state %d",
            pclient->getattr_dir_invalidation,
            pentry->internal_md.type == DIR_BEGINNING,
            (int) FSAL_TEST_MASK(pclient->attrmask, FSAL_ATTR_MTIME),
-           pentry->object.dir_begin.has_been_readdir);
+	   pentry->object.dir_begin.has_been_readdir,
+	   pentry->internal_md.valid_state);
   /* Do we use getattr/mtime checking */
   if(pclient->getattr_dir_invalidation &&
      pentry->internal_md.type == DIR_BEGINNING &&
@@ -270,19 +273,27 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
     }
 
   /* if( pclient->getattr_dir_invalidation && ... */
-  /* Check for dir content expiration */
+  /* Check for dir content expiration and/or staleness */
   if(pentry->internal_md.type == DIR_BEGINNING &&
      pclient->expire_type_dirent != CACHE_INODE_EXPIRE_NEVER &&
      pentry->object.dir_begin.has_been_readdir == CACHE_INODE_YES &&
-     (current_time - entry_time >= pclient->grace_period_dirent))
+     ((current_time - entry_time >= pclient->grace_period_dirent)
+      || (pentry->internal_md.valid_state == STALE)))
     {
+      /* Would be better if state was a flag that we could and/or the bits but
+       * in any case we need to get rid of stale so we only go through here
+       * once.
+       */
+      if ( pentry->internal_md.valid_state == STALE )
+	pentry->internal_md.valid_state = VALID;
+
       /* stat */
       pclient->stat.func_stats.nb_call[CACHE_INODE_RENEW_ENTRY] += 1;
 
       /* Log */
       LogDebug(COMPONENT_CACHE_INODE,
-               "cached directory entries for entry %p must be renewed (has been readdir)",
-               pentry);
+	       "Case 1: cached directory entries for entry %p must be renewed"
+	       " (has been readdir)", pentry);
 
       if(isFullDebug(COMPONENT_CACHE_INODE))
         {
@@ -361,14 +372,21 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
   else if(pentry->internal_md.type == DIR_BEGINNING &&
           pclient->expire_type_attr != CACHE_INODE_EXPIRE_NEVER &&
           pentry->object.dir_begin.has_been_readdir != CACHE_INODE_YES &&
-          (current_time - entry_time >= pclient->grace_period_attr))
+	  ((current_time - entry_time >= pclient->grace_period_attr) || (pentry->internal_md.valid_state == STALE)))
     {
+      /* Would be better if state was a flag that we could and/or the bits but
+       * in any case we need to get rid of stale so we only go through here
+       * once.
+       */
+      if ( pentry->internal_md.valid_state == STALE )
+         pentry->internal_md.valid_state = VALID;
+
       /* stat */
       pclient->stat.func_stats.nb_call[CACHE_INODE_RENEW_ENTRY] += 1;
 
       /* Log */
       LogDebug(COMPONENT_CACHE_INODE,
-               "cached directory entries for entry %p must be renewed (has not been readdir)",
+	       "Case 2: cached directory entries for entry %p must be renewed (has not been readdir)",
                pentry);
 
       if(isFullDebug(COMPONENT_CACHE_INODE))
@@ -440,8 +458,16 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
   else if(pentry->internal_md.type != DIR_CONTINUE &&
           pentry->internal_md.type != DIR_BEGINNING &&
           pclient->expire_type_attr != CACHE_INODE_EXPIRE_NEVER &&
-          (current_time - entry_time >= pclient->grace_period_attr))
+	  ((current_time - entry_time >= pclient->grace_period_attr)
+	   || (pentry->internal_md.valid_state == STALE)))
     {
+      /* Would be better if state was a flag that we could and/or the bits but
+       * in any case we need to get rid of stale so we only go through here
+       * once.
+       */
+      if ( pentry->internal_md.valid_state == STALE )
+	pentry->internal_md.valid_state = VALID;
+      
       /* stat */
       pclient->stat.func_stats.nb_call[CACHE_INODE_RENEW_ENTRY] += 1;
 
@@ -456,7 +482,8 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
           break;
 
         case SYMBOLIC_LINK:
-          pfsal_handle = &pentry->object.symlink.handle;
+          assert(pentry->object.symlink);
+          pfsal_handle = &pentry->object.symlink->handle;
           break;
 
         case SOCKET_FILE:
@@ -536,9 +563,20 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
   /* Check for link content expiration */
   if(pentry->internal_md.type == SYMBOLIC_LINK &&
      pclient->expire_type_link != CACHE_INODE_EXPIRE_NEVER &&
-     (current_time - entry_time >= pclient->grace_period_link))
+     ((current_time - entry_time >= pclient->grace_period_link)
+      || (pentry->internal_md.valid_state == STALE)))
     {
-      pfsal_handle = &pentry->object.symlink.handle;
+      assert(pentry->object.symlink);
+      pfsal_handle = &pentry->object.symlink->handle;
+      /* Would be better if state was a flag that we could and/or the bits but
+       * in any case we need to get rid of stale so we only go through here
+       * once.
+       */
+      if ( pentry->internal_md.valid_state == STALE )
+	pentry->internal_md.valid_state = VALID;
+
+      assert(pentry->object.symlink);
+      pfsal_handle = &pentry->object.symlink->handle;
 
       /* Log */
       LogDebug(COMPONENT_CACHE_INODE,
@@ -581,7 +619,8 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
         }
       else
         {
-          fsal_status = FSAL_pathcpy(&pentry->object.symlink.content, &link_content);
+	  assert(pentry->object.symlink);
+          fsal_status = FSAL_pathcpy(&pentry->object.symlink->content, &link_content); /* copy ctor? */
           if(FSAL_IS_ERROR(fsal_status))
             {
               *pstatus = cache_inode_error_convert(fsal_status);

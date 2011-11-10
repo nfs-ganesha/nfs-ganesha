@@ -60,7 +60,7 @@ extern void freenetconfigent(struct netconfig *);
 extern SVCXPRT *Svc_vc_create(int, u_int, u_int);
 extern SVCXPRT *Svc_dg_create(int, u_int, u_int);
 
-#ifdef _DEBUG_MEMLEAKS
+#if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
 extern int CheckXprt(SVCXPRT *xprt);
 #else
 #define CheckXprt(ptr)
@@ -170,7 +170,19 @@ extern int sprint_sockip(sockaddr_t *addr, char *buf, int len);
 extern SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig);
 extern SVCXPRT *Svcxprt_copycreate();
 
-typedef enum _ignore_port {
+typedef enum xprt_type_t
+{
+  XPRT_UNKNOWN,
+  XPRT_UDP,
+  XPRT_TCP,
+  XPRT_RENDEZVOUS,
+} xprt_type_t;
+
+extern xprt_type_t get_xprt_type(SVCXPRT *xprt);
+extern const char *xprt_type_to_str(xprt_type_t type);
+
+typedef enum _ignore_port
+{
 	IGNORE_PORT,
 	CHECK_PORT
 } ignore_port_t;

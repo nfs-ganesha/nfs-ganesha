@@ -29,8 +29,6 @@
 #include "nfs4.h"
 
 #include "stuff_alloc.h"
-#include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
@@ -75,10 +73,10 @@
  */
 extern struct timeval timeout;
 
-fsal_status_t PROXYFSAL_lookup(proxyfsal_handle_t * parent_directory_handle,    /* IN */
+fsal_status_t PROXYFSAL_lookup(fsal_handle_t * parent_directory_handle,    /* IN */
                                fsal_name_t * p_filename,        /* IN */
-                               proxyfsal_op_context_t * p_context,      /* IN */
-                               proxyfsal_handle_t * object_handle,      /* OUT */
+                               fsal_op_context_t * context,      /* IN */
+                               fsal_handle_t * object_handle,      /* OUT */
                                fsal_attrib_list_t * object_attributes   /* [ IN/OUT ] */
     )
 {
@@ -94,6 +92,7 @@ fsal_status_t PROXYFSAL_lookup(proxyfsal_handle_t * parent_directory_handle,    
   fsal_attrib_list_t attributes;
   unsigned int index_getfh = 0;
   unsigned int index_getattr = 0;
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
 #define FSAL_LOOKUP_NB_OP_ALLOC 4
   nfs_argop4 argoparray[FSAL_LOOKUP_NB_OP_ALLOC];
@@ -176,7 +175,7 @@ fsal_status_t PROXYFSAL_lookup(proxyfsal_handle_t * parent_directory_handle,    
        * You may check the parent type if it's sored into the handle <<
        */
 
-      switch (parent_directory_handle->data.object_type_reminder)
+      switch (((proxyfsal_handle_t *)parent_directory_handle)->data.object_type_reminder)
         {
         case FSAL_TYPE_DIR:
           /* OK */
@@ -392,9 +391,9 @@ fsal_status_t PROXYFSAL_lookup(proxyfsal_handle_t * parent_directory_handle,    
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  *          
  */
-fsal_status_t PROXYFSAL_lookupJunction(proxyfsal_handle_t * p_junction_handle,  /* IN */
-                                       proxyfsal_op_context_t * p_context,      /* IN */
-                                       proxyfsal_handle_t * p_fsoot_handle,     /* OUT */
+fsal_status_t PROXYFSAL_lookupJunction(fsal_handle_t * p_junction_handle,  /* IN */
+                                       fsal_op_context_t * p_context,      /* IN */
+                                       fsal_handle_t * p_fsoot_handle,     /* OUT */
                                        fsal_attrib_list_t * p_fsroot_attributes /* [ IN/OUT ] */
     )
 {
@@ -406,7 +405,7 @@ fsal_status_t PROXYFSAL_lookupJunction(proxyfsal_handle_t * p_junction_handle,  
 
   /* >> you can also check object type if it is in stored in the handle << */
 
-  if(p_junction_handle->data.object_type_reminder != FSAL_TYPE_JUNCTION)
+  if(((proxyfsal_handle_t *)p_junction_handle)->data.object_type_reminder != FSAL_TYPE_JUNCTION)
     Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_lookupJunction);
 
   TakeTokenFSCall();
@@ -465,8 +464,8 @@ fsal_status_t PROXYFSAL_lookupJunction(proxyfsal_handle_t * p_junction_handle,  
  */
 
 fsal_status_t PROXYFSAL_lookupPath(fsal_path_t * p_path,        /* IN */
-                                   proxyfsal_op_context_t * p_context,  /* IN */
-                                   proxyfsal_handle_t * object_handle,  /* OUT */
+                                   fsal_op_context_t * p_context,  /* IN */
+                                   fsal_handle_t * object_handle,  /* OUT */
                                    fsal_attrib_list_t * object_attributes       /* [ IN/OUT ] */
     )
 {
@@ -510,7 +509,7 @@ fsal_status_t PROXYFSAL_lookupPath(fsal_path_t * p_path,        /* IN */
   status = PROXYFSAL_lookup(NULL,       /* looking up for root */
                             NULL,       /* empty string to get root handle */
                             p_context,  /* user's credentials */
-                            &out_hdl,   /* output root handle */
+                            (fsal_handle_t *) &out_hdl,   /* output root handle */
                             /* retrieves attributes if this is the last lookup : */
                             (b_is_last ? object_attributes : NULL));
 
@@ -521,7 +520,7 @@ fsal_status_t PROXYFSAL_lookupPath(fsal_path_t * p_path,        /* IN */
 
   if(b_is_last)
     {
-      (*object_handle) = out_hdl;
+      (*(proxyfsal_handle_t *)object_handle) = out_hdl;
       Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookupPath);
     }
 
@@ -559,10 +558,10 @@ fsal_status_t PROXYFSAL_lookupPath(fsal_path_t * p_path,        /* IN */
         b_is_last = TRUE;
 
       /*call to PROXYFSAL_lookup */
-      status = PROXYFSAL_lookup(&in_hdl,        /* parent directory handle */
+      status = PROXYFSAL_lookup((fsal_handle_t *) &in_hdl,        /* parent directory handle */
                                 &obj_name,      /* object name */
                                 p_context,      /* user's credentials */
-                                &out_hdl,       /* output root handle */
+                                (fsal_handle_t *) &out_hdl,       /* output root handle */
                                 /* retrieves attributes if this is the last lookup : */
                                 (b_is_last ? object_attributes : NULL));
 
@@ -580,9 +579,9 @@ fsal_status_t PROXYFSAL_lookupPath(fsal_path_t * p_path,        /* IN */
           tmp_hdl = out_hdl;
 
           /*call to PROXYFSAL_lookup */
-          status = PROXYFSAL_lookupJunction(&tmp_hdl,   /* object handle */
+          status = PROXYFSAL_lookupJunction((fsal_handle_t *) &tmp_hdl,   /* object handle */
                                             p_context,  /* user's credentials */
-                                            &out_hdl,   /* output root handle */
+                                            (fsal_handle_t *) &out_hdl,   /* output root handle */
                                             /* retrieves attributes if this is the last lookup : */
                                             (b_is_last ? object_attributes : NULL));
 
@@ -591,7 +590,7 @@ fsal_status_t PROXYFSAL_lookupPath(fsal_path_t * p_path,        /* IN */
       /* ptr_str is ok, we are ready for next loop */
     }
 
-  (*object_handle) = out_hdl;
+  (*(proxyfsal_handle_t *)object_handle) = out_hdl;
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookupPath);
 
 }

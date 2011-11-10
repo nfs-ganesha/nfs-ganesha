@@ -27,6 +27,7 @@ void Fatal(void)
 }
 
 int DisplayLogComponentLevel(log_components_t component,
+                             char *function,
                              log_levels_t  level,
                              char *format, ...)
 {

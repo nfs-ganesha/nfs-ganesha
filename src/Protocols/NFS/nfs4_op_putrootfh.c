@@ -83,7 +83,6 @@ int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data)
 {
   pseudofs_entry_t psfsentry;
   int status = 0;
-  char fhstr[LEN_FH_STR];
 
   psfsentry = *(data->pseudofs->reverse_tab[0]);
 
@@ -91,13 +90,9 @@ int CreateROOTFH4(nfs_fh4 * fh, compound_data_t * data)
     return status;
 
   if(!nfs4_PseudoToFhandle(&(data->rootFH), &psfsentry))
-    {
-      return NFS4ERR_BADHANDLE;
-    }
+    return NFS4ERR_BADHANDLE;
 
-  /* Test */
-  nfs4_sprint_fhandle(&data->rootFH, fhstr);
-  LogDebug(COMPONENT_NFS_V4, "CREATE ROOTFH: %s", fhstr);
+  LogHandleNFS4("CREATE ROOT FH: ", &data->rootFH);
 
   return NFS4_OK;
 }                               /* CreateROOTFH4 */
@@ -127,7 +122,6 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
   int error;
 
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_putrootfh";
-  char fhstr[LEN_FH_STR];
 
   /* This NFS4 Operation has no argument, it just get then ROOTFH (replace MOUNTPROC3_MNT) */
 
@@ -185,11 +179,8 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
          data->rootFH.nfs_fh4_len);
   data->publicFH.nfs_fh4_len = data->rootFH.nfs_fh4_len;
 
-  /* Test */
-  nfs4_sprint_fhandle(&data->rootFH, fhstr);
-  LogDebug(COMPONENT_NFS_V4, "NFS4 PUTROOTFH: rootFH=%s", fhstr);
-  nfs4_sprint_fhandle(&data->currentFH, fhstr);
-  LogDebug(COMPONENT_NFS_V4, "NFS4 PUTROOTFH: currentFH=%s", fhstr);
+  LogHandleNFS4("NFS4 PUTROOTFH ROOT    FH: ", &data->rootFH);
+  LogHandleNFS4("NFS4 PUTROOTFH CURRENT FH: ", &data->currentFH);
 
   LogFullDebug(COMPONENT_NFS_V4,
                     "NFS4 PUTROOTFH: Ending on status %d",

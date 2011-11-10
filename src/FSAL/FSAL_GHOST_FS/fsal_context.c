@@ -39,6 +39,10 @@ fsal_status_t FSAL_BuildExportContext(fsal_export_context_t * p_export_context, 
   SetFuncID(INDEX_FSAL_BuildExportContext);
 
   memset(p_export_context, 0, sizeof(fsal_export_context_t));
+
+  /* Save pointer to fsal_staticfsinfo_t in export context */
+  p_export_context->fe_static_fs_info = &global_fs_info;
+
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }
 
@@ -56,6 +60,7 @@ fsal_status_t FSAL_InitClientContext(fsal_op_context_t * p_thr_context)
   /* root authentication */
   p_thr_context->credential.user = 0;
   p_thr_context->credential.group = 0;
+  p_thr_context->credential.nbgroups = 0;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
 
@@ -85,6 +90,7 @@ fsal_status_t FSAL_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OU
   /* filling cred */
   p_thr_context->credential.user = uid;
   p_thr_context->credential.group = gid;
+  p_thr_context->credential.nbgroups = 0;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
 

@@ -48,13 +48,7 @@
 #include "err_fsal.h"
 
   /* In this section, you must define your own FSAL internal types.
-   * Here are some template types :
    */
-# define FSAL_MAX_NAME_LEN  256
-# define FSAL_MAX_PATH_LEN  1024
-
-/* prefered readdir size */
-#define FSAL_READDIR_SIZE 2048
 
 /** object name.  */
 
@@ -72,9 +66,6 @@ typedef struct fsal_path__
   unsigned int len;
 } fsal_path_t;
 
-# define FSAL_NAME_INITIALIZER {"",0}
-# define FSAL_PATH_INITIALIZER {"",0}
-
 static fsal_name_t FSAL_DOT = { ".", 1 };
 static fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 
@@ -87,17 +78,10 @@ typedef struct fsal_handle__
 
 } fsal_handle_t;
 
-typedef struct fsal_cred__
-{
-  int user;
-  int group;
-  int ticket_handle;
-  time_t ticket_renewal_time;
-
-} fsal_cred_t;
-
 typedef struct fsal_export_context__
 {
+  fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
+
   int filesystem_id;
   fsal_handle_t root_handle;
   char server_name[256];
@@ -111,7 +95,7 @@ typedef struct fsal_op_context__
 {
   fsal_export_context_t *export_context;        /* Must be the first entry in this structure */
 
-  fsal_cred_t user_credential;
+  struct user_credentials credential;
   int thread_connect_array[32];
 
 } fsal_op_context_t;
@@ -135,7 +119,5 @@ typedef struct fs_specific_initinfo__
   int parameter3;
 
 } fs_specific_initinfo_t;
-
-typedef void *fsal_lockdesc_t;
 
 #endif                          /* _FSAL_TYPES_SPECIFIC_H */

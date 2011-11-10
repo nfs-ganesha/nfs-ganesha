@@ -355,6 +355,43 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                                                      pclient,
                                                      pcontext, &cache_status)) != NULL)
                 {
+                  /* If pentry is the same for source and target, then we are trying to rename
+                   * a hard link to another hard link with the same inode. This is a noop. */
+                  if (should_not_exists == should_exists)
+                    {
+                      switch (preq->rq_vers)
+                        {
+                        case NFS_V2:
+                          pres->res_stat2 = NFS_OK;
+                          break;
+                          
+                        case NFS_V3:
+                          /*
+                           * Build Weak Cache Coherency
+                           * data 
+                           */
+                          nfs_SetWccData(pcontext, pexport,
+                                         parent_pentry,
+                                         ppre_attr,
+                                         ppre_attr, /* Attributes before and after will be unchanged. */
+                                         &(pres->res_rename3.RENAME3res_u.resok.
+                                           fromdir_wcc));
+                          
+                          nfs_SetWccData(pcontext, pexport,
+                                         parent_pentry,
+                                         ppre_attr,
+                                         ppre_attr, /* Attributes before and after will be unchanged. */
+                                         &(pres->res_rename3.RENAME3res_u.resok.
+                                           todir_wcc));
+                          
+                          pres->res_rename3.status = NFS3_OK;
+                          break;
+                          
+                        }
+                      
+                      return NFS_REQ_OK;                      
+                    }
+                  
                   if(cache_inode_type_are_rename_compatible
                      (should_exists, should_not_exists))
                     {
@@ -378,7 +415,6 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                                                 pcontext,
                                                 &cache_status) == CACHE_INODE_SUCCESS)
                             {
-                              /* trying to rename a file to himself, this is allowed */
                               switch (preq->rq_vers)
                                 {
                                 case NFS_V2:

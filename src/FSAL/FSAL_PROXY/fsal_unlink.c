@@ -32,8 +32,6 @@
 #include "nfs4.h"
 
 #include "stuff_alloc.h"
-#include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
@@ -70,9 +68,9 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t PROXYFSAL_unlink(proxyfsal_handle_t * parentdir_handle,   /* IN */
+fsal_status_t PROXYFSAL_unlink(fsal_handle_t * parentdir_handle,   /* IN */
                                fsal_name_t * p_object_name,     /* IN */
-                               proxyfsal_op_context_t * p_context,      /* IN */
+                               fsal_op_context_t *context,      /* IN */
                                fsal_attrib_list_t * parentdir_attributes        /* [IN/OUT ] */
     )
 {
@@ -84,6 +82,7 @@ fsal_status_t PROXYFSAL_unlink(proxyfsal_handle_t * parentdir_handle,   /* IN */
   uint32_t bitmap_val[2];
   component4 name;
   char nameval[MAXNAMLEN];
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
 #define FSAL_UNLINK_NB_OP_ALLOC 3
   nfs_argop4 argoparray[FSAL_UNLINK_NB_OP_ALLOC];

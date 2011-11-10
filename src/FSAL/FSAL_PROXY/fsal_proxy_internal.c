@@ -37,8 +37,6 @@
 #include "fsal_nfsv4_macros.h"
 
 #include "stuff_alloc.h"
-#include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
@@ -393,8 +391,10 @@ fsal_status_t fsal_internal_proxy_error_convert(nfsstat4 nfsstatus, int indexfun
  */
 int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
                                   fsal_nodetype_t type,
-                                  fsal_u64_t fileid, proxyfsal_handle_t * pfsal_handle)
+                                  fsal_u64_t fileid, fsal_handle_t * fsal_handle)
 {
+  proxyfsal_handle_t * pfsal_handle = (proxyfsal_handle_t *) fsal_handle;
+
   if(pnfs4_handle == NULL || pfsal_handle == NULL)
     return FALSE;
 
@@ -451,8 +451,10 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
  *
  */
 int fsal_internal_proxy_extract_fh(nfs_fh4 * pnfs4_handle,
-                                   proxyfsal_handle_t * pfsal_handle)
+                                   fsal_handle_t * fsal_handle)
 {
+  proxyfsal_handle_t * pfsal_handle = (proxyfsal_handle_t *) fsal_handle;
+
   if(pnfs4_handle == NULL || pfsal_handle == NULL)
     return FALSE;
 
@@ -1124,7 +1126,7 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
            * is processed BEFORE the fileid. At this point, pFSAL_attr->fileid has not yet been set
            * and has the value 0. A flag is kept in variable compute_fh to add the fileid later */
           fsal_internal_proxy_create_fh(&nfshandle, pFSAL_attr->type, pFSAL_attr->fileid,
-                                        phandle);
+                                        (fsal_handle_t *)phandle);
 
           LastOffset += len;
           LogFullDebug(COMPONENT_NFS_V4, "SATTR: On a demande le filehandle len =%u\n", len);
@@ -1361,7 +1363,7 @@ int FSAL_proxy_set_hldir(proxyfsal_op_context_t * p_thr_context, char *hl_path)
     return -1;
 
   fsal_status = FSAL_lookupPath(&fsal_path,
-                                p_thr_context, &(p_thr_context->openfh_wd_handle), NULL);
+                                (fsal_op_context_t *)p_thr_context, (fsal_handle_t *) &(p_thr_context->openfh_wd_handle), NULL);
 
   if(FSAL_IS_ERROR(fsal_status))
     return -1;
@@ -1385,6 +1387,7 @@ fsal_status_t FSAL_proxy_open_confirm(proxyfsal_file_t * pfd)
 {
   fsal_status_t fsal_status;
   int rc;
+  
 
   COMPOUND4args argnfs4;
   COMPOUND4res resnfs4;
@@ -1414,7 +1417,7 @@ fsal_status_t FSAL_proxy_open_confirm(proxyfsal_file_t * pfd)
       return fsal_status;
     }
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, &pfd->fhandle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, (fsal_handle_t *) &pfd->fhandle) == FALSE)
     {
       fsal_status.major = ERR_FSAL_FAULT;
       fsal_status.minor = 0;
@@ -1501,15 +1504,12 @@ void *FSAL_proxy_change_user(proxyfsal_op_context_t * p_thr_context)
         }
       auth_destroy(p_thr_context->rpc_client->cl_auth);
 
-      p_thr_context->rpc_client->cl_auth = authunix_create(hostname,
-                                                           p_thr_context->user_credential.
-                                                           user,
-                                                           p_thr_context->user_credential.
-                                                           group,
-                                                           p_thr_context->user_credential.
-                                                           nbgroups,
-                                                           p_thr_context->user_credential.
-                                                           alt_groups);
+      p_thr_context->rpc_client->cl_auth =
+	      authunix_create(hostname,
+			      p_thr_context->credential.user,
+			      p_thr_context->credential.group,
+			      p_thr_context->credential.nbgroups,
+			      p_thr_context->credential.alt_groups);
       break;
 #ifdef _USE_GSSRPC
     case RPCSEC_GSS:

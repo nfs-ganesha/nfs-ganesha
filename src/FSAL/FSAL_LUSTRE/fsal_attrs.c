@@ -41,8 +41,8 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t LUSTREFSAL_getattrs(lustrefsal_handle_t * p_filehandle,   /* IN */
-                                  lustrefsal_op_context_t * p_context,  /* IN */
+fsal_status_t LUSTREFSAL_getattrs(fsal_handle_t * p_filehandle,   /* IN */
+                                  fsal_op_context_t * p_context,  /* IN */
                                   fsal_attrib_list_t * p_object_attributes      /* IN/OUT */
     )
 {
@@ -113,8 +113,8 @@ fsal_status_t LUSTREFSAL_getattrs(lustrefsal_handle_t * p_filehandle,   /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t LUSTREFSAL_setattrs(lustrefsal_handle_t * p_filehandle,   /* IN */
-                                  lustrefsal_op_context_t * p_context,  /* IN */
+fsal_status_t LUSTREFSAL_setattrs(fsal_handle_t * p_filehandle,   /* IN */
+                                  fsal_op_context_t * p_context,  /* IN */
                                   fsal_attrib_list_t * p_attrib_set,    /* IN */
                                   fsal_attrib_list_t * p_object_attributes      /* [ IN/OUT ] */
     )
@@ -360,8 +360,8 @@ fsal_status_t LUSTREFSAL_setattrs(lustrefsal_handle_t * p_filehandle,   /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t LUSTREFSAL_getextattrs(lustrefsal_handle_t * p_filehandle, /* IN */
-                                     lustrefsal_op_context_t * p_context,        /* IN */
+fsal_status_t LUSTREFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
+                                     fsal_op_context_t * p_context,        /* IN */
                                      fsal_extattrib_list_t * p_object_attributes /* OUT */
     )
 {

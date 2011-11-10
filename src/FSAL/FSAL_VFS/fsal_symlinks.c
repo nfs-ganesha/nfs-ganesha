@@ -64,8 +64,8 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t VFSFSAL_readlink(vfsfsal_handle_t * p_linkhandle,       /* IN */
-                            vfsfsal_op_context_t * p_context,      /* IN */
+fsal_status_t VFSFSAL_readlink(fsal_handle_t * p_linkhandle,       /* IN */
+                            fsal_op_context_t * p_context,      /* IN */
                             fsal_path_t * p_link_content,       /* OUT */
                             fsal_attrib_list_t * p_link_attributes      /* [ IN/OUT ] */
     )
@@ -74,7 +74,6 @@ fsal_status_t VFSFSAL_readlink(vfsfsal_handle_t * p_linkhandle,       /* IN */
   int rc, errsv;
   fsal_status_t status;
   char link_content_out[FSAL_MAX_PATH_LEN];
-  fsal_path_t fsalpath;
 
   /* sanity checks.
    * note : link_attributes is optional.
@@ -86,8 +85,8 @@ fsal_status_t VFSFSAL_readlink(vfsfsal_handle_t * p_linkhandle,       /* IN */
 
   /* Read the link on the filesystem */
   TakeTokenFSCall();
-  rc = vfs_readlink_by_handle( p_context->export_context->mount_root_fd,
-                               &p_linkhandle->data.vfs_handle,
+  rc = vfs_readlink_by_handle(((vfsfsal_op_context_t *)p_context)->export_context->mount_root_fd,
+			      &((vfsfsal_handle_t *)p_linkhandle)->data.vfs_handle,
                                link_content_out,
                                FSAL_MAX_PATH_LEN ) ;
   errsv = errno;
@@ -137,7 +136,7 @@ fsal_status_t VFSFSAL_readlink(vfsfsal_handle_t * p_linkhandle,       /* IN */
  *        Authentication context for the operation (user,...).
  * \param accessmode (ignored input):
  *        Mode of the link to be created.
- *        It has no sense in HPSS nor UNIX filesystems.
+ *        It has no sense in VFS nor UNIX filesystems.
  * \param link_handle (output):
  *        Pointer to the handle of the created symlink.
  * \param link_attributes (optionnal input/output): 
@@ -152,12 +151,12 @@ fsal_status_t VFSFSAL_readlink(vfsfsal_handle_t * p_linkhandle,       /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t VFSFSAL_symlink(vfsfsal_handle_t * p_parent_directory_handle,   /* IN */
+fsal_status_t VFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* IN */
                            fsal_name_t * p_linkname,    /* IN */
                            fsal_path_t * p_linkcontent, /* IN */
-                           vfsfsal_op_context_t * p_context,       /* IN */
+                           fsal_op_context_t * p_context,       /* IN */
                            fsal_accessmode_t accessmode,        /* IN (ignored) */
-                           vfsfsal_handle_t * p_link_handle,       /* OUT */
+                           fsal_handle_t * p_link_handle,       /* OUT */
                            fsal_attrib_list_t * p_link_attributes       /* [ IN/OUT ] */
     )
 {
@@ -229,7 +228,7 @@ fsal_status_t VFSFSAL_symlink(vfsfsal_handle_t * p_parent_directory_handle,   /*
 
   /* now get the associated handle, while there is a race, there is
      also a race lower down  */
-  status = fsal_internal_get_handle_at(fd, p_linkname, p_link_handle);
+  status = fsal_internal_get_handle_at(fd, p_linkname->name, p_link_handle);
 
   if(FSAL_IS_ERROR(status))
     {
@@ -239,8 +238,9 @@ fsal_status_t VFSFSAL_symlink(vfsfsal_handle_t * p_parent_directory_handle,   /*
 
   /* chown the symlink to the current user/group */
   TakeTokenFSCall();
-  rc = fchownat(fd, p_linkname->name, p_context->credential.user,
-                setgid_bit ? -1 : p_context->credential.group, AT_SYMLINK_NOFOLLOW);
+  rc = fchownat(fd, p_linkname->name, ((vfsfsal_op_context_t *)p_context)->credential.user,
+                setgid_bit ? -1 : ((vfsfsal_op_context_t *)p_context)->credential.group,
+		AT_SYMLINK_NOFOLLOW);
   errsv = errno;
   ReleaseTokenFSCall();
 

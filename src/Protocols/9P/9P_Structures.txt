@@ -1,0 +1,309 @@
+
+/* Structures for Protocol Operations */
+struct _9p_rlerror {
+	u32 ecode;
+};
+struct _9p_tstatfs {
+	u32 fid;
+};
+struct _9p_rstatfs {
+	u32 type;
+	u32 bsize;
+	u64 blocks;
+	u64 bfree;
+	u64 bavail;
+	u64 files;
+	u64 ffree;
+	u64 fsid;
+	u32 namelen;
+};
+struct _9p_tlopen {
+	u32 fid;
+	u32 flags;
+};
+struct _9p_rlopen {
+	struct _9p_qid qid;
+	u32 iounit;
+};
+struct _9p_tlcreate {
+	u32 fid;
+	struct _9p_str name;
+	u32 flags;
+	u32 mode;
+	u32 gid;
+};
+struct _9p_rlcreate {
+	struct _9p_qid qid;
+	u32 iounit;
+};
+struct _9p_tsymlink {
+	u32 fid;
+	struct _9p_str name;
+	struct _9p_str symtgt;
+	u32 gid;
+};
+struct _9p_rsymlink {
+	struct _9p_qid qid;
+};
+struct _9p_tmknod {
+	u32 fid;
+	struct _9p_str name;
+	u32 mode;
+	u32 major;
+	u32 minor;
+	u32 gid;
+};
+struct _9p_rmknod {
+	struct _9p_qid qid;
+};
+struct _9p_trename {
+	u32 fid;
+	u32 dfid;
+	struct _9p_str name;
+};
+struct _9p_rrename {
+};
+struct _9p_treadlink {
+	u32 fid;
+};
+struct _9p_rreadlink {
+	struct _9p_str target;
+};
+struct _9p_tgetattr {
+	u32 fid;
+	u64 request_mask;
+};
+struct _9p_rgetattr {
+	u64 valid;
+	struct _9p_qid qid;
+	u32 mode;
+	u32 uid;
+	u32 gid;
+	u64 nlink;
+	u64 rdev;
+	u64 size;
+	u64 blksize;
+	u64 blocks;
+	u64 atime_sec;
+	u64 atime_nsec;
+	u64 mtime_sec;
+	u64 mtime_nsec;
+	u64 ctime_sec;
+	u64 ctime_nsec;
+	u64 btime_sec;
+	u64 btime_nsec;
+	u64 gen;
+	u64 data_version;
+};
+struct _9p_tsetattr {
+	u32 fid;
+	u32 valid;
+	u32 mode;
+	u32 uid;
+	u32 gid;
+	u64 size;
+	u64 atime_sec;
+	u64 atime_nsec;
+	u64 mtime_sec;
+	u64 mtime_nsec;
+};
+struct _9p_rsetattr {
+};
+struct _9p_txattrwalk {
+	u32 fid;
+	u32 attrfid;
+	struct _9p_str name;
+};
+struct _9p_rxattrwalk {
+	u64 size;
+};
+struct _9p_txattrcreate {
+	u32 fid;
+	struct _9p_str name;
+	u64 size;
+	u32 flag;
+};
+struct _9p_rxattrcreate {
+};
+struct _9p_treaddir {
+	u32 fid;
+	u64 offset;
+	u32 count;
+};
+struct _9p_rreaddir {
+	u32 count;
+	u8 *data;
+};
+struct _9p_tfsync {
+	u32 fid;
+};
+struct _9p_rfsync {
+};
+struct _9p_tlock {
+	u32 fid;
+	u8 type;
+	u32 flags;
+	u64 start;
+	u64 length;
+	u32 proc_id;
+	struct _9p_str client_id;
+};
+struct _9p_rlock {
+	u8 status;
+};
+struct _9p_tgetlock {
+	u32 fid;
+	u8 type;
+	u64 start;
+	u64 length;
+	u32 proc_id;
+	struct _9p_str client_id;
+};
+struct _9p_rgetlock {
+	u8 type;
+	u64 start;
+	u64 length;
+	u32 proc_id;
+	struct _9p_str client_id;
+};
+struct _9p_tlink {
+	u32 dfid;
+	u32 fid;
+	struct _9p_str name;
+};
+struct _9p_rlink {
+};
+struct _9p_tmkdir {
+	u32 fid;
+	struct _9p_str name;
+	u32 mode;
+	u32 gid;
+};
+struct _9p_rmkdir {
+	struct _9p_qid qid;
+};
+struct _9p_trenameat {
+	u32 olddirfid;
+	struct _9p_str oldname;
+	u32 newdirfid;
+	struct _9p_str newname;
+};
+struct _9p_rrenameat {
+};
+struct _9p_tunlinkat {
+	u32 dirfid;
+	struct _9p_str name;
+	u32 flags;
+};
+struct _9p_runlinkat {
+};
+struct _9p_tawrite {
+	u32 fid;
+	u8 datacheck;
+	u64 offset;
+	u32 count;
+	u32 rsize;
+	u8 *data;
+	u32 check;
+};
+struct _9p_rawrite {
+	u32 count;
+};
+struct _9p_tversion {
+	u32  msize              ;
+	struct _9p_str version ;
+};
+struct _9p_rversion {
+	u32 msize;
+	struct _9p_str version;
+};
+struct _9p_tauth {
+	u32 afid;
+	struct _9p_str uname;
+	struct _9p_str aname;
+	u32 n_uname;		/* 9P2000.u extensions */
+};
+struct _9p_rauth {
+	struct _9p_qid qid;
+};
+struct _9p_rerror {
+	struct _9p_str error;
+	u32 errnum;		/* 9p2000.u extension */
+};
+struct _9p_tflush {
+	u16 oldtag;
+};
+struct _9p_rflush {
+};
+struct _9p_tattach {
+	u32 fid;
+	u32 afid;
+	struct _9p_str uname;
+	struct _9p_str aname;
+	u32 n_uname;		/* 9P2000.u extensions */
+};
+struct _9p_rattach {
+	struct _9p_qid qid;
+};
+struct _9p_twalk {
+	u32 fid;
+	u32 newfid;
+	u16 nwname;
+	struct _9p_str wnames[_9P_MAXWELEM];
+};
+struct _9p_rwalk {
+	u16 nwqid;
+	struct _9p_qid wqids[_9P_MAXWELEM];
+};
+struct _9p_topen {
+	u32 fid;
+	u8 mode;
+};
+struct _9p_ropen {
+	struct _9p_qid qid;
+	u32 iounit;
+};
+struct _9p_tcreate {
+	u32 fid;
+	struct _9p_str name;
+	u32 perm;
+	u8 mode;
+	struct _9p_str extension;
+};
+struct _9p_rcreate {
+	struct _9p_qid qid;
+	u32 iounit;
+};
+struct _9p_tread {
+	u32 fid;
+	u64 offset;
+	u32 count;
+};
+struct _9p_rread {
+	u32 count;
+	u8 *data;
+};
+struct _9p_twrite {
+	u32 fid;
+	u64 offset;
+	u32 count;
+	u8 *data;
+};
+struct _9p_rwrite {
+	u32 count;
+};
+struct _9p_tclunk {
+	u32 fid;
+};
+struct _9p_rclunk {
+};
+struct _9p_tremove {
+	u32 fid;
+};
+struct _9p_rremove {
+};
+
+union _9p_tmsg {
+} ;
+
+

@@ -29,8 +29,6 @@
 #include "nfs4.h"
 
 #include "stuff_alloc.h"
-#include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
@@ -80,11 +78,11 @@
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t PROXYFSAL_open_by_name(proxyfsal_handle_t * dirhandle,    /* IN */
+fsal_status_t PROXYFSAL_open_by_name(fsal_handle_t * dirhandle,    /* IN */
                                      fsal_name_t * filename,    /* IN */
-                                     proxyfsal_op_context_t * p_context,        /* IN */
+                                     fsal_op_context_t *context,        /* IN */
                                      fsal_openflags_t openflags,        /* IN */
-                                     proxyfsal_file_t * file_descriptor,        /* OUT */
+                                     fsal_file_t * file_desc,        /* OUT */
                                      fsal_attrib_list_t * file_attributes       /* [ IN/OUT ] */
     )
 {
@@ -103,6 +101,8 @@ fsal_status_t PROXYFSAL_open_by_name(proxyfsal_handle_t * dirhandle,    /* IN */
   char nameval[MAXNAMLEN];
   fattr4 input_attr;
   bitmap4 convert_bitmap;
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
+  proxyfsal_file_t * file_descriptor = (proxyfsal_file_t *)file_desc;
 
 #define FSAL_OPEN_NB_OP_ALLOC 4
 #define FSAL_OPEN_VAL_BUFFER  1024
@@ -126,7 +126,7 @@ fsal_status_t PROXYFSAL_open_by_name(proxyfsal_handle_t * dirhandle,    /* IN */
 
   PRINT_HANDLE("FSAL_open", dirhandle);
 
-  if(dirhandle->data.object_type_reminder != FSAL_TYPE_DIR)
+  if(((proxyfsal_handle_t *)dirhandle)->data.object_type_reminder != FSAL_TYPE_DIR)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open_by_name);
     }
@@ -172,14 +172,14 @@ fsal_status_t PROXYFSAL_open_by_name(proxyfsal_handle_t * dirhandle,    /* IN */
   fsal_internal_proxy_create_fattr_bitmap(&bitmap);
 
   share_access = 0;
-  if(openflags & FSAL_O_RDWR == FSAL_O_RDWR)
+  if((openflags & FSAL_O_RDWR) == FSAL_O_RDWR)
     share_access |= OPEN4_SHARE_ACCESS_BOTH;
 
-  if(openflags & FSAL_O_RDONLY == FSAL_O_RDONLY)
+  if((openflags & FSAL_O_RDONLY) == FSAL_O_RDONLY)
     share_access |= OPEN4_SHARE_ACCESS_READ;
 
-  if((openflags & FSAL_O_WRONLY == FSAL_O_WRONLY) ||
-     (openflags & FSAL_O_APPEND == FSAL_O_APPEND))
+  if(((openflags & FSAL_O_WRONLY) == FSAL_O_WRONLY) ||
+     ((openflags & FSAL_O_APPEND) == FSAL_O_APPEND))
     share_access |= OPEN4_SHARE_ACCESS_WRITE;
 
   /* >> you can check if this is a file if the information
@@ -255,7 +255,7 @@ fsal_status_t PROXYFSAL_open_by_name(proxyfsal_handle_t * dirhandle,    /* IN */
   if(fsal_internal_proxy_create_fh
      (&resnfs4.resarray.resarray_val[FSAL_OPEN_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
       GETFH4res_u.resok4.object, FSAL_TYPE_FILE, attributes.fileid,
-      &file_descriptor->fhandle) == FALSE)
+      (fsal_handle_t *) &file_descriptor->fhandle) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 
   file_descriptor->openflags = openflags;
@@ -310,10 +310,10 @@ fsal_status_t PROXYFSAL_open_by_name(proxyfsal_handle_t * dirhandle,    /* IN */
  *        ERR_FSAL_IO, ...
  */
 
-static fsal_status_t PROXYFSAL_open_stateless(proxyfsal_handle_t * filehandle,  /* IN */
-                                              proxyfsal_op_context_t * p_context,       /* IN */
+static fsal_status_t PROXYFSAL_open_stateless(fsal_handle_t * filehandle,  /* IN */
+                                              fsal_op_context_t *context,       /* IN */
                                               fsal_openflags_t openflags,       /* IN */
-                                              proxyfsal_file_t * file_descriptor,       /* OUT */
+                                              fsal_file_t * file_desc,       /* OUT */
                                               fsal_attrib_list_t * file_attributes      /* [ IN/OUT ] */
     )
 {
@@ -326,6 +326,8 @@ static fsal_status_t PROXYFSAL_open_stateless(proxyfsal_handle_t * filehandle,  
   uint32_t bitmap_open[2];
   uint32_t bitmap_getattr_res[2];
   uint32_t share_access;
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
+  proxyfsal_file_t * file_descriptor = (proxyfsal_file_t *)file_desc;
 
 #define FSAL_OPEN_STATELESS_NB_OP_ALLOC 2
 #define FSAL_OPEN_STATELESS_VAL_BUFFER  1024
@@ -346,7 +348,7 @@ static fsal_status_t PROXYFSAL_open_stateless(proxyfsal_handle_t * filehandle,  
 
   PRINT_HANDLE("FSAL_open_stateless", filehandle);
 
-  if(filehandle->data.object_type_reminder != FSAL_TYPE_FILE)
+  if(((proxyfsal_handle_t *)filehandle)->data.object_type_reminder != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
     }
@@ -371,14 +373,14 @@ static fsal_status_t PROXYFSAL_open_stateless(proxyfsal_handle_t * filehandle,  
   fsal_internal_proxy_create_fattr_bitmap(&bitmap);
 
   share_access = 0;
-  if(openflags & FSAL_O_RDWR == FSAL_O_RDWR)
+  if((openflags & FSAL_O_RDWR) == FSAL_O_RDWR)
     share_access |= OPEN4_SHARE_ACCESS_BOTH;
 
-  if(openflags & FSAL_O_RDONLY == FSAL_O_RDONLY)
+  if((openflags & FSAL_O_RDONLY) == FSAL_O_RDONLY)
     share_access |= OPEN4_SHARE_ACCESS_READ;
 
-  if((openflags & FSAL_O_WRONLY == FSAL_O_WRONLY) ||
-     (openflags & FSAL_O_APPEND == FSAL_O_APPEND))
+  if(((openflags & FSAL_O_WRONLY) == FSAL_O_WRONLY) ||
+     ((openflags & FSAL_O_APPEND) == FSAL_O_APPEND))
     share_access |= OPEN4_SHARE_ACCESS_WRITE;
 
   /* >> you can check if this is a file if the information
@@ -485,10 +487,10 @@ static fsal_status_t PROXYFSAL_open_stateless(proxyfsal_handle_t * filehandle,  
  *        ERR_FSAL_IO, ...
  */
 
-fsal_status_t PROXYFSAL_open(proxyfsal_handle_t * filehandle,   /* IN */
-                             proxyfsal_op_context_t * p_context,        /* IN */
+fsal_status_t PROXYFSAL_open(fsal_handle_t * filehandle,   /* IN */
+                             fsal_op_context_t * p_context,        /* IN */
                              fsal_openflags_t openflags,        /* IN */
-                             proxyfsal_file_t * file_descriptor,        /* OUT */
+                             fsal_file_t * file_descriptor,        /* OUT */
                              fsal_attrib_list_t * file_attributes       /* [ IN/OUT ] */
     )
 {
@@ -503,7 +505,7 @@ fsal_status_t PROXYFSAL_open(proxyfsal_handle_t * filehandle,   /* IN */
   /* >> you can check if this is a file if the information
    * is stored into the handle << */
 
-  if(filehandle->data.object_type_reminder != FSAL_TYPE_FILE)
+  if(((proxyfsal_handle_t *)filehandle)->data.object_type_reminder != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
     }
@@ -542,7 +544,7 @@ fsal_status_t PROXYFSAL_open(proxyfsal_handle_t * filehandle,   /* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t PROXYFSAL_read(proxyfsal_file_t * file_descriptor,        /* IN */
+fsal_status_t PROXYFSAL_read(fsal_file_t * file_desc,        /* IN */
                              fsal_seek_t * seek_descriptor,     /* IN */
                              fsal_size_t buffer_size,   /* IN */
                              caddr_t buffer,    /* OUT */
@@ -556,6 +558,7 @@ fsal_status_t PROXYFSAL_read(proxyfsal_file_t * file_descriptor,        /* IN */
   nfs_fh4 nfs4fh;
   fsal_off_t offset;
   struct timeval timeout = TIMEOUTRPC;
+  proxyfsal_file_t * file_descriptor = (proxyfsal_file_t *)file_desc;
 
 #define FSAL_READ_NB_OP_ALLOC 2
 
@@ -597,7 +600,7 @@ fsal_status_t PROXYFSAL_read(proxyfsal_file_t * file_descriptor,        /* IN */
   argnfs4.argarray.argarray_len = 0;
 
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, &(file_descriptor->fhandle)) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, (fsal_handle_t *) &(file_descriptor->fhandle)) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_read);
 
 #define FSAL_READ_IDX_OP_PUTFH   0
@@ -668,7 +671,7 @@ fsal_status_t PROXYFSAL_read(proxyfsal_file_t * file_descriptor,        /* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ERR_FSAL_NOSPC, ERR_FSAL_DQUOT...
  */
-fsal_status_t PROXYFSAL_write(proxyfsal_file_t * file_descriptor,       /* IN */
+fsal_status_t PROXYFSAL_write(fsal_file_t * file_desc,       /* IN */
                               fsal_seek_t * seek_descriptor,    /* IN */
                               fsal_size_t buffer_size,  /* IN */
                               caddr_t buffer,   /* IN */
@@ -679,6 +682,7 @@ fsal_status_t PROXYFSAL_write(proxyfsal_file_t * file_descriptor,       /* IN */
   COMPOUND4args argnfs4;
   COMPOUND4res resnfs4;
   nfs_fh4 nfs4fh;
+  proxyfsal_file_t * file_descriptor = (proxyfsal_file_t *)file_desc;
 
   fsal_off_t offset;
 
@@ -723,7 +727,7 @@ fsal_status_t PROXYFSAL_write(proxyfsal_file_t * file_descriptor,       /* IN */
   argnfs4.argarray.argarray_len = 0;
 
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, &(file_descriptor->fhandle)) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, (fsal_handle_t *) &(file_descriptor->fhandle)) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_write);
 
 #define FSAL_READ_IDX_OP_PUTFH    0
@@ -777,7 +781,7 @@ fsal_status_t PROXYFSAL_write(proxyfsal_file_t * file_descriptor,       /* IN */
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t PROXYFSAL_close(proxyfsal_file_t * file_descriptor        /* IN */
+fsal_status_t PROXYFSAL_close(fsal_file_t * file_desc        /* IN */
     )
 {
 #define FSAL_CLOSE_NB_OP_ALLOC 2
@@ -789,6 +793,7 @@ fsal_status_t PROXYFSAL_close(proxyfsal_file_t * file_descriptor        /* IN */
   struct timeval timeout = TIMEOUTRPC;
   char All_Zero[] = "\0\0\0\0\0\0\0\0\0\0\0\0"; /* 12 times \0 */
   nfs_fh4 nfs4fh;
+  proxyfsal_file_t * file_descriptor = (proxyfsal_file_t *)file_desc;
 
   /* Setup results structures */
   argnfs4.argarray.argarray_val = argoparray;
@@ -810,7 +815,7 @@ fsal_status_t PROXYFSAL_close(proxyfsal_file_t * file_descriptor        /* IN */
    }
 
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, &(file_descriptor->fhandle)) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, (fsal_handle_t *)&(file_descriptor->fhandle)) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
 
 #define FSAL_CLOSE_IDX_OP_PUTFH 0
@@ -855,7 +860,7 @@ fsal_status_t PROXYFSAL_close(proxyfsal_file_t * file_descriptor        /* IN */
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t PROXYFSAL_close_by_fileid(proxyfsal_file_t * file_descriptor /* IN */ ,
+fsal_status_t PROXYFSAL_close_by_fileid(fsal_file_t * file_desc /* IN */ ,
                                         fsal_u64_t fileid)
 #ifndef _USE_PROXY
 {
@@ -872,6 +877,7 @@ fsal_status_t PROXYFSAL_close_by_fileid(proxyfsal_file_t * file_descriptor /* IN
   char filename[MAXNAMLEN];
   fsal_status_t fsal_status;
   struct timeval timeout = TIMEOUTRPC;
+  proxyfsal_file_t * file_descriptor = (proxyfsal_file_t *)file_desc;
 
 #define FSAL_CLOSE_BY_FILEID_NB_OP 4
 
@@ -894,7 +900,7 @@ fsal_status_t PROXYFSAL_close_by_fileid(proxyfsal_file_t * file_descriptor /* IN
   /* Get NFSv4 File handle */
 
   if(fsal_internal_proxy_extract_fh
-     (&nfs4fh_hldir, &(file_descriptor->pcontext->openfh_wd_handle)) == FALSE)
+     (&nfs4fh_hldir, (fsal_handle_t *) &(file_descriptor->pcontext->openfh_wd_handle)) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close_by_fileid);
 
   snprintf(filename, MAXNAMLEN, ".ganesha.open_by_fid.%llu", fileid);
@@ -922,7 +928,7 @@ fsal_status_t PROXYFSAL_close_by_fileid(proxyfsal_file_t * file_descriptor /* IN
 
   ReleaseTokenFSCall();
 
-  fsal_status = FSAL_close(file_descriptor);
+  fsal_status = FSAL_close((fsal_file_t *)file_descriptor);
 
   Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_close_by_fileid);
 }
@@ -966,11 +972,11 @@ fsal_status_t PROXYFSAL_close_by_fileid(proxyfsal_file_t * file_descriptor /* IN
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t PROXYFSAL_open_by_fileid(proxyfsal_handle_t * filehandle, /* IN */
+fsal_status_t PROXYFSAL_open_by_fileid(fsal_handle_t * filehandle, /* IN */
                                        fsal_u64_t fileid,       /* IN */
-                                       proxyfsal_op_context_t * p_context,      /* IN */
+                                       fsal_op_context_t *context,      /* IN */
                                        fsal_openflags_t openflags,      /* IN */
-                                       proxyfsal_file_t * file_descriptor,      /* OUT */
+                                       fsal_file_t * file_desc,      /* OUT */
                                        fsal_attrib_list_t *
                                        file_attributes /* [ IN/OUT ] */ )
 #ifndef _USE_PROXY
@@ -997,6 +1003,8 @@ fsal_status_t PROXYFSAL_open_by_fileid(proxyfsal_handle_t * filehandle, /* IN */
   fattr4 input_attr;
   bitmap4 convert_bitmap;
   fsal_status_t fsal_status;
+  proxyfsal_file_t * file_descriptor = (proxyfsal_file_t *)file_desc;
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
 #define FSAL_OPEN_BY_FILEID_NB_OP_ALLOC 7
 #define FSAL_OPEN_VAL_BUFFER  1024
@@ -1019,16 +1027,16 @@ fsal_status_t PROXYFSAL_open_by_fileid(proxyfsal_handle_t * filehandle, /* IN */
 
   PRINT_HANDLE("FSAL_open_by_fileid", filehandle);
 
-  if(filehandle->data.object_type_reminder != FSAL_TYPE_FILE)
+  if(((proxyfsal_handle_t *)filehandle)->data.object_type_reminder != FSAL_TYPE_FILE)
     {
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open_by_fileid);
     }
 
   /* Create the owner */
   snprintf(owner_val, FSAL_PROXY_OWNER_LEN, "GANESHA/PROXY: pid=%u ctx=%p file=%llu",
-           getpid(), p_context, (unsigned long long int)p_context->file_counter);
+           getpid(), p_context, (unsigned long long int)((proxyfsal_op_context_t *)p_context)->file_counter);
   owner_len = strnlen(owner_val, FSAL_PROXY_OWNER_LEN);
-  p_context->file_counter += 1;
+  ((proxyfsal_op_context_t *)p_context)->file_counter += 1;
 
   /* Setup results structures */
   argnfs4.argarray.argarray_val = argoparray;
@@ -1062,7 +1070,7 @@ fsal_status_t PROXYFSAL_open_by_fileid(proxyfsal_handle_t * filehandle, /* IN */
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_fileid);
     }
 
-  if(fsal_internal_proxy_extract_fh(&nfs4fh_hldir, &(p_context->openfh_wd_handle)) ==
+  if(fsal_internal_proxy_extract_fh(&nfs4fh_hldir, (fsal_handle_t *) &(p_context->openfh_wd_handle)) ==
      FALSE)
     {
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_fileid);
@@ -1072,14 +1080,14 @@ fsal_status_t PROXYFSAL_open_by_fileid(proxyfsal_handle_t * filehandle, /* IN */
   fsal_internal_proxy_create_fattr_bitmap(&bitmap);
 
   share_access = 0;
-  if(openflags & FSAL_O_RDWR == FSAL_O_RDWR)
+  if((openflags & FSAL_O_RDWR) == FSAL_O_RDWR)
     share_access |= OPEN4_SHARE_ACCESS_BOTH;
 
-  if(openflags & FSAL_O_RDONLY == FSAL_O_RDONLY)
+  if((openflags & FSAL_O_RDONLY) == FSAL_O_RDONLY)
     share_access |= OPEN4_SHARE_ACCESS_READ;
 
-  if((openflags & FSAL_O_WRONLY == FSAL_O_WRONLY) ||
-     (openflags & FSAL_O_APPEND == FSAL_O_APPEND))
+  if(((openflags & FSAL_O_WRONLY) == FSAL_O_WRONLY) ||
+     ((openflags & FSAL_O_APPEND) == FSAL_O_APPEND))
     share_access |= OPEN4_SHARE_ACCESS_WRITE;
 
   /* >> you can check if this is a file if the information
@@ -1172,7 +1180,7 @@ fsal_status_t PROXYFSAL_open_by_fileid(proxyfsal_handle_t * filehandle, /* IN */
   if(fsal_internal_proxy_create_fh
      (&resnfs4.resarray.resarray_val[FSAL_OPEN_BYFID_IDX_OP_GETFH].nfs_resop4_u.opgetfh.
       GETFH4res_u.resok4.object, FSAL_TYPE_FILE, attributes.fileid,
-      &file_descriptor->fhandle) == FALSE)
+      (fsal_handle_t *) &file_descriptor->fhandle) == FALSE)
     {
       Mem_Free((char *)name.utf8string_val);
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_fileid);
@@ -1196,7 +1204,7 @@ fsal_status_t PROXYFSAL_open_by_fileid(proxyfsal_handle_t * filehandle, /* IN */
 }                               /* FSAL_open_by_fileid */
 #endif
 
-unsigned int PROXYFSAL_GetFileno(proxyfsal_file_t * pfile)
+unsigned int PROXYFSAL_GetFileno(fsal_file_t * pfile)
 {
   unsigned int intpfile;
 
@@ -1218,7 +1226,7 @@ unsigned int PROXYFSAL_GetFileno(proxyfsal_file_t * pfile)
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t PROXYFSAL_sync(proxyfsal_file_t * p_file_descriptor     /* IN */)
+fsal_status_t PROXYFSAL_sync(fsal_file_t * p_file_descriptor     /* IN */)
 {
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync);
 }

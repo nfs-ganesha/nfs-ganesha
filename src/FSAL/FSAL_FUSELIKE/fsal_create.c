@@ -59,11 +59,11 @@
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t FUSEFSAL_create(fusefsal_handle_t * parent_directory_handle,      /* IN */
+fsal_status_t FUSEFSAL_create(fsal_handle_t * parent_handle,      /* IN */
                               fsal_name_t * p_filename, /* IN */
-                              fusefsal_op_context_t * p_context,        /* IN */
+                              fsal_op_context_t * p_context,        /* IN */
                               fsal_accessmode_t accessmode,     /* IN */
-                              fusefsal_handle_t * object_handle,        /* OUT */
+                              fsal_handle_t * obj_handle,        /* OUT */
                               fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
 {
@@ -74,6 +74,8 @@ fsal_status_t FUSEFSAL_create(fusefsal_handle_t * parent_directory_handle,      
   struct stat buffstat;
   mode_t mode;
   struct fuse_file_info dummy;
+  fusefsal_handle_t * parent_directory_handle = (fusefsal_handle_t *)parent_handle;
+  fusefsal_handle_t * object_handle = (fusefsal_handle_t *)obj_handle;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -238,11 +240,11 @@ fsal_status_t FUSEFSAL_create(fusefsal_handle_t * parent_directory_handle,      
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the object_attributes->asked_attributes field.
  */
-fsal_status_t FUSEFSAL_mkdir(fusefsal_handle_t * parent_directory_handle,       /* IN */
+fsal_status_t FUSEFSAL_mkdir(fsal_handle_t * parent_handle,       /* IN */
                              fsal_name_t * p_dirname,   /* IN */
-                             fusefsal_op_context_t * p_context, /* IN */
+                             fsal_op_context_t * p_context, /* IN */
                              fsal_accessmode_t accessmode,      /* IN */
-                             fusefsal_handle_t * object_handle, /* OUT */
+                             fsal_handle_t * obj_handle, /* OUT */
                              fsal_attrib_list_t * object_attributes     /* [ IN/OUT ] */
     )
 {
@@ -252,6 +254,8 @@ fsal_status_t FUSEFSAL_mkdir(fusefsal_handle_t * parent_directory_handle,       
   char child_path[FSAL_MAX_PATH_LEN];
   struct stat buffstat;
   mode_t mode;
+  fusefsal_handle_t * parent_directory_handle = (fusefsal_handle_t *)parent_handle;
+  fusefsal_handle_t * object_handle = (fusefsal_handle_t *)obj_handle;
 
   /* sanity checks.
    * note : object_attributes is optional.
@@ -377,10 +381,10 @@ fsal_status_t FUSEFSAL_mkdir(fusefsal_handle_t * parent_directory_handle,       
  *        but the FSAL_ATTR_RDATTR_ERR bit is set in
  *        the attributes->asked_attributes field.
  */
-fsal_status_t FUSEFSAL_link(fusefsal_handle_t * target_handle,  /* IN */
-                            fusefsal_handle_t * dir_handle,     /* IN */
+fsal_status_t FUSEFSAL_link(fsal_handle_t * target,  /* IN */
+                            fsal_handle_t * dir_hdl,     /* IN */
                             fsal_name_t * p_link_name,  /* IN */
-                            fusefsal_op_context_t * p_context,  /* IN */
+                            fsal_op_context_t * p_context,  /* IN */
                             fsal_attrib_list_t * attributes     /* [ IN/OUT ] */
     )
 {
@@ -391,6 +395,8 @@ fsal_status_t FUSEFSAL_link(fusefsal_handle_t * target_handle,  /* IN */
   char target_path[FSAL_MAX_PATH_LEN];
   struct stat buffstat;
   unsigned int new_validator;
+  fusefsal_handle_t * dir_handle = (fusefsal_handle_t *)dir_hdl;
+  fusefsal_handle_t * target_handle = (fusefsal_handle_t *)target;
 
   /* sanity checks.
    * note : attributes is optional.
@@ -474,13 +480,13 @@ fsal_status_t FUSEFSAL_link(fusefsal_handle_t * target_handle,  /* IN */
  *
  * \return ERR_FSAL_NOTSUPP.
  */
-fsal_status_t FUSEFSAL_mknode(fusefsal_handle_t * parentdir_handle,     /* IN */
+fsal_status_t FUSEFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
                               fsal_name_t * p_node_name,        /* IN */
-                              fusefsal_op_context_t * p_context,        /* IN */
+                              fsal_op_context_t * p_context,        /* IN */
                               fsal_accessmode_t accessmode,     /* IN */
                               fsal_nodetype_t nodetype, /* IN */
                               fsal_dev_t * dev, /* IN */
-                              fusefsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
+                              fsal_handle_t * p_object_handle,      /* OUT (handle to the created node) */
                               fsal_attrib_list_t * node_attributes      /* [ IN/OUT ] */
     )
 {

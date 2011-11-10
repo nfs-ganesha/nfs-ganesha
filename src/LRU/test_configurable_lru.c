@@ -256,6 +256,5 @@ int main(int argc, char *argv[])
 
   LogTest("====================================================");
   LogTest("Test reussi : tous les tests sont passes avec succes");
-  exit(0);
-  return;
+  return 0;
 }                               /* main */

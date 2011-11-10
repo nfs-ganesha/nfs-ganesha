@@ -33,33 +33,61 @@
 #ifndef _FSAL_GLUE_H
 #define _FSAL_GLUE_H
 
+#include "fsal_types.h"
 #include "fsal_glue_const.h"
 
 /* In the "static" case, original types are used, this is safer */
-#ifdef _USE_SHARED_FSAL
+#if defined(_USE_SHARED_FSAL) || \
+	defined(_USE_POSIX) || \
+	defined(_USE_VFS) || \
+        defined(_USE_XFS) || \
+	defined(_USE_GPFS) || \
+	defined(_USE_ZFS) || \
+	defined(_USE_SNMP) || \
+	defined(_USE_PROXY) || \
+	defined(_USE_LUSTRE) || \
+	defined(_USE_FUSE)
 
+/* Allow aliasing of fsal_handle_t since FSALs will be
+ * casting between pointer types
+ */
 typedef struct
 {
   char data[FSAL_HANDLE_T_SIZE];
-} fsal_handle_t;
+} __attribute__((__may_alias__)) fsal_handle_t;
 
 typedef fsal_handle_t fsal_handle_storage_t ;
 
+/* NOTE: this structure is very dangerous as noted by the comments
+ * in the individual fsal_types.h files.  It harkens back to the
+ * days of fortran commons...  We let it go for now as we
+ * refactor.  The first element must be identical throughout!
+ */
+
 typedef struct
 {
-  void *export_context;
-  char data[FSAL_OP_CONTEXT_T_SIZE];
+  fsal_staticfsinfo_t * fe_static_fs_info;
+
+  char                  fe_data[FSAL_EXPORT_CONTEXT_T_SIZE];
+} fsal_export_context_t;
+
+/* NOTE: this structure is very dangerous as noted by the comments
+ * in the individual fsal_types.h files.  It harkens back to the
+ * days of fortran commons...  We let it go for now as we
+ * refactor.  The first 2 elements must be identical throughout!
+ */
+
+typedef struct
+{
+  fsal_export_context_t *export_context;
+  struct user_credentials credential;
+  char data[FSAL_OP_CONTEXT_T_SIZE]; /* slightly bigger (for now) */
 } fsal_op_context_t;
 
 typedef struct
 {
   char data[FSAL_DIR_T_SIZE];
 } fsal_dir_t;
-
-typedef struct
-{
-  char data[FSAL_EXPORT_CONTEXT_T_SIZE];
-} fsal_export_context_t;
 
 typedef struct
 {
@@ -70,11 +98,6 @@ typedef struct
 {
   char data[FSAL_COOKIE_T_SIZE];
 } fsal_cookie_t;
-
-typedef struct
-{
-  char data[FSAL_LOCKDESC_T_SIZE];
-} fsal_lockdesc_t;
 
 typedef struct
 {

@@ -30,8 +30,6 @@
 #include "nfs4.h"
 
 #include "stuff_alloc.h"
-#include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
@@ -63,14 +61,16 @@
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t PROXYFSAL_opendir(proxyfsal_handle_t * dir_handle,        /* IN */
-                                proxyfsal_op_context_t * p_context,     /* IN */
-                                proxyfsal_dir_t * dir_descriptor,       /* OUT */
+fsal_status_t PROXYFSAL_opendir(fsal_handle_t * dir_handle,        /* IN */
+                                fsal_op_context_t * p_context,     /* IN */
+                                fsal_dir_t * dir_desc,       /* OUT */
                                 fsal_attrib_list_t * dir_attributes     /* [ IN/OUT ] */
     )
 {
+  proxyfsal_dir_t * dir_descriptor = (proxyfsal_dir_t *)dir_desc;
+
   /* sanity checks
-   * note : dir_attributes is optionnal.
+   * note : dir_attributes is optional.
    */
   if(!dir_handle || !p_context || !dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_opendir);
@@ -80,7 +80,7 @@ fsal_status_t PROXYFSAL_opendir(proxyfsal_handle_t * dir_handle,        /* IN */
   /* Set the context */
   memcpy(&dir_descriptor->fhandle, dir_handle, sizeof(dir_descriptor->fhandle));
   memset(dir_descriptor->verifier, 0, NFS4_VERIFIER_SIZE);
-  dir_descriptor->pcontext = p_context;
+  dir_descriptor->pcontext = (proxyfsal_op_context_t *)p_context;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_opendir);
 
@@ -122,12 +122,12 @@ fsal_status_t PROXYFSAL_opendir(proxyfsal_handle_t * dir_handle,        /* IN */
  *          ERR_FSAL_IO, ...
  */
 
-fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
-                                proxyfsal_cookie_t start_position,      /* IN */
+fsal_status_t PROXYFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
+                                fsal_cookie_t start_pos,      /* IN */
                                 fsal_attrib_mask_t get_attr_mask,       /* IN */
                                 fsal_mdsize_t buffersize,       /* IN */
                                 fsal_dirent_t * pdirent,        /* OUT */
-                                proxyfsal_cookie_t * end_position,      /* OUT */
+                                fsal_cookie_t * end_position,      /* OUT */
                                 fsal_count_t * nb_entries,      /* OUT */
                                 fsal_boolean_t * end_of_dir     /* OUT */
     )
@@ -152,6 +152,8 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
   nfs_resop4 resoparray[FSAL_READDIR_NB_OP_ALLOC];
   COMPOUND4args argnfs4;
   COMPOUND4res resnfs4;
+  proxyfsal_dir_t * dir_descriptor = (proxyfsal_dir_t *)dir_desc;
+  proxyfsal_cookie_t start_position;
 
   /* sanity checks */
 
@@ -167,6 +169,8 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
      Mem_Free( tabentry4name ) ;
      Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
    }
+
+  start_position.data = (nfs_cookie4)start_pos.data;
 
   LogFullDebug(COMPONENT_FSAL, "---> Readdir Offset=%llu sizeof(entry4)=%lu sizeof(fsal_dirent_t)=%lu \n",
                (unsigned long long)start_position.data, sizeof(entry4), sizeof(fsal_dirent_t));
@@ -218,7 +222,7 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
       READDIR4res_u.resok4.reply.entries = (entry4 *) tabentry4;
 
   /* >> Call your filesystem lookup function here << */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, &dir_descriptor->fhandle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, (fsal_handle_t *) &dir_descriptor->fhandle) == FALSE)
    {
     Mem_Free( tabentry4attr ) ;
     Mem_Free( tabentry4name ) ;
@@ -267,7 +271,7 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
       piter_entry = piter_entry->nextentry)
     {
       if(proxy_Fattr_To_FSAL_attr(&pdirent[cpt].attributes,
-                                  &(pdirent[cpt].handle), &(piter_entry->attrs)) != 1)
+                                  (proxyfsal_handle_t *) &(pdirent[cpt].handle), &(piter_entry->attrs)) != 1)
         {
           FSAL_CLEAR_MASK(pdirent[cpt].attributes.asked_attributes);
           FSAL_SET_MASK(pdirent[cpt].attributes.asked_attributes, FSAL_ATTR_RDATTR_ERR);
@@ -291,7 +295,7 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
         pdirent[cpt - 1].nextentry = &pdirent[cpt];
 
       /* Set end position */
-      end_position->data = piter_entry->cookie;
+      ((proxyfsal_cookie_t *)end_position)->data = piter_entry->cookie;
 
       /* Get ready for next pdirent */
       cpt += 1;
@@ -322,7 +326,7 @@ fsal_status_t PROXYFSAL_readdir(proxyfsal_dir_t * dir_descriptor,       /* IN */
  *        - Other error codes can be returned :
  *          ERR_FSAL_IO, ...
  */
-fsal_status_t PROXYFSAL_closedir(proxyfsal_dir_t * dir_descriptor       /* IN */
+fsal_status_t PROXYFSAL_closedir(fsal_dir_t * dir_descriptor       /* IN */
     )
 {
 
@@ -330,7 +334,7 @@ fsal_status_t PROXYFSAL_closedir(proxyfsal_dir_t * dir_descriptor       /* IN */
   if(!dir_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_closedir);
 
-  dir_descriptor->pcontext = NULL;
+  ((proxyfsal_dir_t *)dir_descriptor)->pcontext = NULL;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_closedir);
 

@@ -61,17 +61,18 @@
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
   */
 
-fsal_status_t ZFSFSAL_rename(zfsfsal_handle_t * old_parentdir_handle, /* IN */
+fsal_status_t ZFSFSAL_rename(fsal_handle_t * old_parentdir_handle, /* IN */
                           fsal_name_t * p_old_name,     /* IN */
-                          zfsfsal_handle_t * new_parentdir_handle, /* IN */
+                          fsal_handle_t * new_parentdir_handle, /* IN */
                           fsal_name_t * p_new_name,     /* IN */
-                          zfsfsal_op_context_t * p_context,        /* IN */
+                          fsal_op_context_t * p_context,        /* IN */
                           fsal_attrib_list_t * src_dir_attributes,      /* [ IN/OUT ] */
                           fsal_attrib_list_t * tgt_dir_attributes       /* [ IN/OUT ] */
     )
 {
 
   int rc;
+  creden_t cred;
 
   /* sanity checks.
    * note : src/tgt_dir_attributes are optional.
@@ -81,17 +82,23 @@ fsal_status_t ZFSFSAL_rename(zfsfsal_handle_t * old_parentdir_handle, /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_rename);
 
   /* Hook to prenvet moving thing from or to a snapshot */
-  if(old_parentdir_handle->data.i_snap != 0 || new_parentdir_handle->data.i_snap != 0)
+  if(((zfsfsal_handle_t *)old_parentdir_handle)->data.i_snap != 0 ||
+     ((zfsfsal_handle_t *)new_parentdir_handle)->data.i_snap != 0)
   {
     LogDebug(COMPONENT_FSAL, "Trying to rename an object from/to a snapshot");
     Return(ERR_FSAL_ROFS, 0, INDEX_FSAL_rename);
   }
+  cred.uid = p_context->credential.user;
+  cred.gid = p_context->credential.group;
 
   TakeTokenFSCall();
 
-  rc = libzfswrap_rename(p_context->export_context->p_vfs, &p_context->user_credential.cred,
-                         old_parentdir_handle->data.zfs_handle, p_old_name->name,
-                         new_parentdir_handle->data.zfs_handle, p_new_name->name);
+  rc = libzfswrap_rename(((zfsfsal_op_context_t *)p_context)->export_context->p_vfs,
+			 &cred,
+                         ((zfsfsal_handle_t *)old_parentdir_handle)->data.zfs_handle,
+			 p_old_name->name,
+                         ((zfsfsal_handle_t *)new_parentdir_handle)->data.zfs_handle,
+			 p_new_name->name);
 
   ReleaseTokenFSCall();
 

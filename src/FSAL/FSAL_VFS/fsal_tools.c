@@ -65,9 +65,11 @@ char *VFSFSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int VFSFSAL_handlecmp(vfsfsal_handle_t * handle1, vfsfsal_handle_t * handle2,
+int VFSFSAL_handlecmp(fsal_handle_t * handle_1, fsal_handle_t * handle_2,
                    fsal_status_t * status)
 {
+  vfsfsal_handle_t * handle1 = (vfsfsal_handle_t *)handle_1;
+  vfsfsal_handle_t * handle2 = (vfsfsal_handle_t *)handle_2;
 
   *status = FSAL_STATUS_NO_ERROR;
 
@@ -99,10 +101,11 @@ int VFSFSAL_handlecmp(vfsfsal_handle_t * handle1, vfsfsal_handle_t * handle2,
  *
  * \return The hash value
  */
-unsigned int VFSFSAL_Handle_to_HashIndex(vfsfsal_handle_t * p_handle,
+unsigned int VFSFSAL_Handle_to_HashIndex(fsal_handle_t *handle,
                                       unsigned int cookie,
                                       unsigned int alphabet_len, unsigned int index_size)
 {
+  vfsfsal_handle_t * p_handle = (vfsfsal_handle_t *)handle;
   unsigned int cpt = 0;
   unsigned int sum = 0;
   unsigned int extract = 0;
@@ -148,8 +151,9 @@ unsigned int VFSFSAL_Handle_to_HashIndex(vfsfsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int VFSFSAL_Handle_to_RBTIndex(vfsfsal_handle_t * p_handle, unsigned int cookie)
+unsigned int VFSFSAL_Handle_to_RBTIndex(fsal_handle_t *handle, unsigned int cookie)
 {
+  vfsfsal_handle_t * p_handle = (vfsfsal_handle_t *)handle;
   unsigned int h = 0;
   unsigned int cpt = 0;
   unsigned int extract = 0;
@@ -201,13 +205,15 @@ unsigned int VFSFSAL_Handle_to_RBTIndex(vfsfsal_handle_t * p_handle, unsigned in
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t VFSFSAL_DigestHandle(vfsfsal_export_context_t * p_expcontext,     /* IN */
+fsal_status_t VFSFSAL_DigestHandle(fsal_export_context_t * p_expcontext,     /* IN */
                                    fsal_digesttype_t output_type,       /* IN */
-                                   vfsfsal_handle_t * p_in_fsal_handle, /* IN */
+                                   fsal_handle_t *in_fsal_handle, /* IN */
                                    caddr_t out_buff     /* OUT */
     )
 {
-  unsigned int ino32;
+ uint32_t ino32;
+ uint64_t ino64;
+  vfsfsal_handle_t * p_in_fsal_handle = (vfsfsal_handle_t *)in_fsal_handle;
 
   /* sanity checks */
   if(!p_in_fsal_handle || !out_buff || !p_expcontext)
@@ -245,7 +251,9 @@ fsal_status_t VFSFSAL_DigestHandle(vfsfsal_export_context_t * p_expcontext,     
       break;
   
    case FSAL_DIGEST_FILEID2:
-      ReturnCode(ERR_FSAL_NOTSUPP, 0);
+      memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID2);
+      memcpy(out_buff, p_in_fsal_handle->data.vfs_handle.handle, FSAL_DIGEST_SIZE_FILEID2);
+      break;
 
    case FSAL_DIGEST_FILEID3:
       /* Extracting FileId from VFS handle requires internal knowledge on the handle's structure 
@@ -282,13 +290,17 @@ fsal_status_t VFSFSAL_DigestHandle(vfsfsal_export_context_t * p_expcontext,     
 	u64 parent_root_objectid;
       } __attribute__ ((packed));*/
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
-      memcpy(out_buff, p_in_fsal_handle->data.vfs_handle.handle, FSAL_DIGEST_SIZE_FILEID3);
+      memcpy(&ino32, p_in_fsal_handle->data.vfs_handle.handle, sizeof(ino32));
+      ino64 = ino32;
+      memcpy(out_buff, &ino64, FSAL_DIGEST_SIZE_FILEID3);
       break;
 
 
    case FSAL_DIGEST_FILEID4:
       memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID4);
-      memcpy(out_buff, p_in_fsal_handle->data.vfs_handle.handle, FSAL_DIGEST_SIZE_FILEID4);
+      memcpy(&ino32, p_in_fsal_handle->data.vfs_handle.handle, sizeof(ino32));
+      ino64 = ino32;
+      memcpy(out_buff, &ino64, FSAL_DIGEST_SIZE_FILEID4);
       break;
 
     default:
@@ -315,12 +327,14 @@ fsal_status_t VFSFSAL_DigestHandle(vfsfsal_export_context_t * p_expcontext,     
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t VFSFSAL_ExpandHandle(vfsfsal_export_context_t * p_expcontext,     /* IN */
+fsal_status_t VFSFSAL_ExpandHandle(fsal_export_context_t * p_expcontext,     /* IN */
                                    fsal_digesttype_t in_type,   /* IN */
                                    caddr_t in_buff,     /* IN */
-                                   vfsfsal_handle_t * p_out_fsal_handle /* OUT */
+                                   fsal_handle_t * out_fsal_handle /* OUT */
     )
 {
+  vfsfsal_handle_t * p_out_fsal_handle = (vfsfsal_handle_t *)out_fsal_handle;
+
   /* sanity checks */
   if(!p_out_fsal_handle || !in_buff || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -393,6 +407,8 @@ fsal_status_t VFSFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_para
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, link_support);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, symlink_support);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, lock_support);
+  FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, lock_support_owner);
+  FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, lock_support_async_block);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, named_attr);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, unique_handles);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, lease_time);

@@ -72,7 +72,6 @@
 #define fsal_file_t hpssfsal_file_t
 #define fsal_dir_t hpssfsal_dir_t
 #define fsal_export_context_t hpssfsal_export_context_t
-#define fsal_lockdesc_t hpssfsal_lockdesc_t
 #define fsal_cookie_t hpssfsal_cookie_t
 #define fs_specific_initinfo_t hpssfs_specific_initinfo_t
 #define fsal_cred_t hpssfsal_cred_t
@@ -121,6 +120,7 @@ typedef struct
 
 typedef struct
 {
+  fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
 
   ns_ObjHandle_t fileset_root_handle;
   unsigned int default_cos;
@@ -144,7 +144,7 @@ typedef struct
 #endif
 
 /** directory stream descriptor */
-typedef struct fsal_dir__
+typedef struct
 {
   hpssfsal_op_context_t context;        /* credential for readdir operations */
   hpssfsal_handle_t dir_handle; /* directory handle */
@@ -155,7 +155,7 @@ typedef struct fsal_dir__
 
 #if (HPSS_MAJOR_VERSION == 5)
 
-typedef struct fsal_file__
+typedef struct
 {
   int filedes;                  /* file descriptor. */
   gss_token_t fileauthz;        /* data access credential. */
@@ -163,7 +163,7 @@ typedef struct fsal_file__
 
 #elif (HPSS_MAJOR_VERSION == 6)
 
-typedef struct fsal_file__
+typedef struct
 {
   int filedes;                  /* file descriptor. */
   hpss_authz_token_t fileauthz; /* data access credential. */
@@ -171,7 +171,7 @@ typedef struct fsal_file__
 
 #elif (HPSS_MAJOR_VERSION == 7)
 
-typedef struct fsal_file__
+typedef struct
 {
   int filedes;                  /* file descriptor. */
 } hpssfsal_file_t;
@@ -184,7 +184,7 @@ typedef struct fsal_file__
 
 #if (HPSS_MAJOR_VERSION == 5)
 
-typedef struct fs_specific_initinfo__
+typedef struct
 {
 
   /* specifies the behavior for each init value : */
@@ -209,7 +209,7 @@ typedef struct fs_specific_initinfo__
 
 #elif (HPSS_MAJOR_VERSION == 6) || (HPSS_MAJOR_VERSION == 7)
 
-typedef struct fs_specific_initinfo__
+typedef struct
 {
 
   /* specifies the behavior for each init value : */
@@ -246,8 +246,6 @@ typedef union {
 } hpssfsal_cookie_t;
 
 //#define FSAL_READDIR_FROM_BEGINNING  (cast64(0))
-
-typedef void *hpssfsal_lockdesc_t;   /**< not implemented in hpss */
 
 #if HPSS_LEVEL >= 730
 #define HAVE_XATTR_CREATE 1

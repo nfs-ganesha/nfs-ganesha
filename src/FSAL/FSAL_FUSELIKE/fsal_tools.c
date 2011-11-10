@@ -46,9 +46,11 @@ char *FUSEFSAL_GetFSName()
  *         - Segfault if status is a NULL pointer.
  */
 
-int FUSEFSAL_handlecmp(fusefsal_handle_t * handle1, fusefsal_handle_t * handle2,
+int FUSEFSAL_handlecmp(fsal_handle_t * handle_1, fsal_handle_t * handle_2,
                        fsal_status_t * status)
 {
+  fusefsal_handle_t * handle1 = (fusefsal_handle_t *)handle_1;
+  fusefsal_handle_t * handle2 = (fusefsal_handle_t *)handle_2;
 
   *status = FSAL_STATUS_NO_ERROR;
 
@@ -81,11 +83,12 @@ int FUSEFSAL_handlecmp(fusefsal_handle_t * handle1, fusefsal_handle_t * handle2,
  * \return The hash value
  */
 
-unsigned int FUSEFSAL_Handle_to_HashIndex(fusefsal_handle_t * p_handle,
+unsigned int FUSEFSAL_Handle_to_HashIndex(fsal_handle_t *handle,
                                           unsigned int cookie,
                                           unsigned int alphabet_len,
                                           unsigned int index_size)
 {
+  fusefsal_handle_t * p_handle = (fusefsal_handle_t *)handle;
 
   /* >> here must be your implementation of your fusefsal_handle_t hashing */
   return (3 * (unsigned int)p_handle->data.inode + 5 * (unsigned int)p_handle->data.device + 1999 +
@@ -105,9 +108,11 @@ unsigned int FUSEFSAL_Handle_to_HashIndex(fusefsal_handle_t * p_handle,
  * \return The hash value
  */
 
-unsigned int FUSEFSAL_Handle_to_RBTIndex(fusefsal_handle_t * p_handle,
+unsigned int FUSEFSAL_Handle_to_RBTIndex(fsal_handle_t *handle,
                                          unsigned int cookie)
 {
+  fusefsal_handle_t * p_handle = (fusefsal_handle_t *)handle;
+
   /* >> here must be your implementation of your fusefsal_handle_t hashing << */
   return (unsigned int)(0xABCD1234 ^ p_handle->data.inode ^ cookie ^ p_handle->data.device);
 
@@ -130,12 +135,13 @@ unsigned int FUSEFSAL_Handle_to_RBTIndex(fusefsal_handle_t * p_handle,
  *         Else, it is a non null value.
  */
 
-fsal_status_t FUSEFSAL_DigestHandle(fusefsal_export_context_t * p_expcontext,   /* IN */
+fsal_status_t FUSEFSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
                                     fsal_digesttype_t output_type,      /* IN */
-                                    fusefsal_handle_t * in_fsal_handle, /* IN */
+                                    fsal_handle_t * in_handle, /* IN */
                                     caddr_t out_buff    /* OUT */
     )
 {
+  fusefsal_handle_t * in_fsal_handle = (fusefsal_handle_t *)in_handle;
 
   /* sanity checks */
   if(!in_fsal_handle || !out_buff || !p_expcontext)
@@ -276,12 +282,13 @@ fsal_status_t FUSEFSAL_DigestHandle(fusefsal_export_context_t * p_expcontext,   
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t FUSEFSAL_ExpandHandle(fusefsal_export_context_t * p_expcontext,   /* IN */
+fsal_status_t FUSEFSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
                                     fsal_digesttype_t in_type,  /* IN */
                                     caddr_t in_buff,    /* IN */
-                                    fusefsal_handle_t * out_fsal_handle /* OUT */
+                                    fsal_handle_t * out_handle /* OUT */
     )
 {
+  fusefsal_handle_t * out_fsal_handle = (fusefsal_handle_t *)out_handle;
 
   /* sanity checks */
   if(!out_fsal_handle || !in_buff || !p_expcontext)

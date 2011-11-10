@@ -36,7 +36,7 @@
  * Parse FS specific option string
  * to build the export entry option.
  */
-fsal_status_t SNMPFSAL_BuildExportContext(snmpfsal_export_context_t * p_export_context, /* OUT */
+fsal_status_t SNMPFSAL_BuildExportContext(fsal_export_context_t *exp_context, /* OUT */
                                           fsal_path_t * p_export_path,  /* IN */
                                           char *fs_specific_options     /* IN */
     )
@@ -44,6 +44,7 @@ fsal_status_t SNMPFSAL_BuildExportContext(snmpfsal_export_context_t * p_export_c
   struct tree *tree_head, *sub_tree;
   char snmp_path[FSAL_MAX_PATH_LEN];
   int rc;
+  snmpfsal_export_context_t * p_export_context = (snmpfsal_export_context_t *)exp_context;
 
   /* sanity check */
   if(!p_export_context)
@@ -109,6 +110,9 @@ fsal_status_t SNMPFSAL_BuildExportContext(snmpfsal_export_context_t * p_export_c
 
     }
 
+  /* Save pointer to fsal_staticfsinfo_t in export context */
+  p_export_context->fe_static_fs_info = &global_fs_info;
+
   /* save the root path (for lookupPath checks)  */
   if(p_export_path != NULL)
     p_export_context->root_path = *p_export_path;
@@ -141,16 +145,17 @@ fsal_status_t SNMPFSAL_BuildExportContext(snmpfsal_export_context_t * p_export_c
  * \param p_export_context (in, gpfsfsal_export_context_t)
  */
 
-fsal_status_t SNMPFSAL_CleanUpExportContext(snmpfsal_export_context_t * p_export_context) 
+fsal_status_t SNMPFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context) 
 {
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
 }
 
-fsal_status_t SNMPFSAL_InitClientContext(snmpfsal_op_context_t * p_thr_context)
+fsal_status_t SNMPFSAL_InitClientContext(fsal_op_context_t *thr_context)
 {
 
   int rc, i;
   netsnmp_session session;
+  snmpfsal_op_context_t * p_thr_context = (snmpfsal_op_context_t *)thr_context;
 
   /* sanity check */
   if(!p_thr_context)
@@ -159,8 +164,9 @@ fsal_status_t SNMPFSAL_InitClientContext(snmpfsal_op_context_t * p_thr_context)
   /* initialy set the export entry to none */
   p_thr_context->export_context = NULL;
 
-  p_thr_context->user_credential.user = 0;
-  p_thr_context->user_credential.group = 0;
+  p_thr_context->credential.user = 0;
+  p_thr_context->credential.group = 0;
+  p_thr_context->credential.nbgroups = 0;
 
   /* initialize the SNMP session  */
 
@@ -240,57 +246,6 @@ fsal_status_t SNMPFSAL_InitClientContext(snmpfsal_op_context_t * p_thr_context)
   p_thr_context->current_response = NULL;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
-
-}
-
- /**
- * FSAL_GetClientContext :
- * Get a user credential from its uid.
- * 
- * \param p_cred (in out, snmpfsal_cred_t *)
- *        Initialized credential to be changed
- *        for representing user.
- * \param uid (in, fsal_uid_t)
- *        user identifier.
- * \param gid (in, fsal_gid_t)
- *        group identifier.
- * \param alt_groups (in, fsal_gid_t *)
- *        list of alternative groups.
- * \param nb_alt_groups (in, fsal_count_t)
- *        number of alternative groups.
- *
- * \return major codes :
- *      - ERR_FSAL_PERM : the current user cannot
- *                        get credentials for this uid.
- *      - ERR_FSAL_FAULT : Bad adress parameter.
- *      - ERR_FSAL_SERVERFAULT : unexpected error.
- */
-
-fsal_status_t SNMPFSAL_GetClientContext(snmpfsal_op_context_t * p_thr_context,  /* IN/OUT  */
-                                        snmpfsal_export_context_t * p_export_context,   /* IN */
-                                        fsal_uid_t uid, /* IN */
-                                        fsal_gid_t gid, /* IN */
-                                        fsal_gid_t * alt_groups,        /* IN */
-                                        fsal_count_t nb_alt_groups      /* IN */
-    )
-{
-
-  fsal_status_t st;
-
-  /* sanity check */
-  if(!p_thr_context || !p_export_context)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
-
-  /* set the specific export context */
-  p_thr_context->export_context = p_export_context;
-
-  /* @todo for the moment, we only set uid and gid,
-   * but they are not really used for authentication.
-   */
-  p_thr_context->user_credential.user = uid;
-  p_thr_context->user_credential.group = gid;
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
 
 }
 

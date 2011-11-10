@@ -30,8 +30,6 @@
 #include "nfs4.h"
 
 #include "stuff_alloc.h"
-#include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
@@ -39,8 +37,8 @@
 #include "nfs_proto_functions.h"
 #include "fsal_nfsv4_macros.h"
 
-fsal_status_t FSAL_proxy_truncate_stateless(proxyfsal_handle_t * filehandle,    /* IN */
-                                            proxyfsal_op_context_t * p_context, /* IN */
+fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * file_hdl,    /* IN */
+                                            fsal_op_context_t * context, /* IN */
                                             fsal_size_t length, /* IN */
                                             fsal_attrib_list_t * object_attributes      /* [ IN/OUT ] */
     )
@@ -58,6 +56,8 @@ fsal_status_t FSAL_proxy_truncate_stateless(proxyfsal_handle_t * filehandle,    
   uint32_t bitmap_res[2];
   uint32_t bitmap_set[2];
   uint32_t bitmap_conv_val[2];
+  proxyfsal_handle_t * filehandle = (proxyfsal_handle_t *)file_hdl;
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
 #define FSAL_TRUNCATE_STATELESS_NB_OP_ALLOC 3
   nfs_argop4 argoparray[FSAL_TRUNCATE_STATELESS_NB_OP_ALLOC];
@@ -90,7 +90,7 @@ fsal_status_t FSAL_proxy_truncate_stateless(proxyfsal_handle_t * filehandle,    
   argnfs4.argarray.argarray_len = 0;
 
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, filehandle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, file_hdl) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
   /* Get prepared for truncate */
@@ -210,8 +210,8 @@ fsal_status_t FSAL_proxy_truncate_stateless(proxyfsal_handle_t * filehandle,    
  *          ERR_FSAL_ACCESS, ERR_FSAL_IO, ...
  */
 
-fsal_status_t PROXYFSAL_truncate(proxyfsal_handle_t * filehandle,       /* IN */
-                                 proxyfsal_op_context_t * p_context,    /* IN */
+fsal_status_t PROXYFSAL_truncate(fsal_handle_t * file_hdl,       /* IN */
+                                 fsal_op_context_t * context,    /* IN */
                                  fsal_size_t length,    /* IN */
                                  fsal_file_t * file_descriptor, /* [IN|OUT] */
                                  fsal_attrib_list_t * object_attributes /* [ IN/OUT ] */
@@ -232,6 +232,8 @@ fsal_status_t PROXYFSAL_truncate(proxyfsal_handle_t * filehandle,       /* IN */
   uint32_t bitmap_res[2];
   uint32_t bitmap_set[2];
   uint32_t bitmap_conv_val[2];
+  proxyfsal_handle_t * filehandle = (proxyfsal_handle_t *)file_hdl;
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
 #define FSAL_TRUNCATE_NB_OP_ALLOC 3
   nfs_argop4 argoparray[FSAL_TRUNCATE_NB_OP_ALLOC];
@@ -256,14 +258,14 @@ fsal_status_t PROXYFSAL_truncate(proxyfsal_handle_t * filehandle,       /* IN */
   if(file_descriptor == NULL)
     {
       /* Use the stateless version */
-      fsal_status = FSAL_proxy_truncate_stateless(filehandle,
-                                                  p_context, length, object_attributes);
+      fsal_status = FSAL_proxy_truncate_stateless(file_hdl,
+                                                  context, length, object_attributes);
       Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_truncate);
     }
 
   /* First, we need to get the fileid on a filehandle base */
-  fsal_status = FSAL_DigestHandle(p_context->export_context,
-                                  FSAL_DIGEST_FILEID4, filehandle, (caddr_t) & fileid);
+  fsal_status = FSAL_DigestHandle(context->export_context,
+                                  FSAL_DIGEST_FILEID4, file_hdl, (caddr_t) & fileid);
   if(FSAL_IS_ERROR(fsal_status))
     {
       Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_truncate);
@@ -271,9 +273,9 @@ fsal_status_t PROXYFSAL_truncate(proxyfsal_handle_t * filehandle,       /* IN */
 
   /* Then we have of open the file by fileid */
   open_attrs.asked_attributes = FSAL_ATTRS_POSIX;
-  fsal_status = FSAL_open_by_fileid(filehandle,
+  fsal_status = FSAL_open_by_fileid(file_hdl,
                                     fileid,
-                                    p_context, FSAL_O_RDWR, file_descriptor, &open_attrs);
+                                    context, FSAL_O_RDWR, file_descriptor, &open_attrs);
   if(FSAL_IS_ERROR(fsal_status))
     {
       Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_truncate);
@@ -290,7 +292,7 @@ fsal_status_t PROXYFSAL_truncate(proxyfsal_handle_t * filehandle,       /* IN */
   argnfs4.argarray.argarray_len = 0;
 
   /* Get NFSv4 File handle */
-  if(fsal_internal_proxy_extract_fh(&nfs4fh, filehandle) == FALSE)
+  if(fsal_internal_proxy_extract_fh(&nfs4fh, file_hdl) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
   /* Get prepared for truncate */
@@ -321,9 +323,9 @@ fsal_status_t PROXYFSAL_truncate(proxyfsal_handle_t * filehandle,       /* IN */
 
   /* For ATTR_SIZE, stateid is needed */
   argnfs4.argarray.argarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].nfs_argop4_u.opsetattr.
-      stateid.seqid = file_descriptor->stateid.seqid;
+      stateid.seqid = ((proxyfsal_file_t *)file_descriptor)->stateid.seqid;
   memcpy(argnfs4.argarray.argarray_val[FSAL_TRUNCATE_IDX_OP_SETATTR].nfs_argop4_u.
-         opsetattr.stateid.other, file_descriptor->stateid.other, 12);
+         opsetattr.stateid.other, ((proxyfsal_file_t *)file_descriptor)->stateid.other, 12);
 
   resnfs4.resarray.resarray_val[FSAL_TRUNCATE_IDX_OP_GETATTR].nfs_resop4_u.opgetattr.
       GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val = bitmap_res;

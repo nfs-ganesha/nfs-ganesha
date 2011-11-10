@@ -37,7 +37,7 @@
  * Parse FS specific option string
  * to build the export entry option.
  */
-fsal_status_t FUSEFSAL_BuildExportContext(fusefsal_export_context_t * p_export_context, /* OUT */
+fsal_status_t FUSEFSAL_BuildExportContext(fsal_export_context_t * p_export_context, /* OUT */
                                           fsal_path_t * p_export_path,  /* IN */
                                           char *fs_specific_options     /* IN */
     )
@@ -56,6 +56,9 @@ fsal_status_t FUSEFSAL_BuildExportContext(fusefsal_export_context_t * p_export_c
   /* unused */
   memset(p_export_context, 0, sizeof(fusefsal_export_context_t));
 
+  /* Save pointer to fsal_staticfsinfo_t in export context */
+  p_export_context->fe_static_fs_info = &global_fs_info;
+
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 
 }
@@ -69,17 +72,18 @@ fsal_status_t FUSEFSAL_BuildExportContext(fusefsal_export_context_t * p_export_c
  * \param p_export_context (in, gpfsfsal_export_context_t)
  */
 
-fsal_status_t FUSEFSAL_CleanUpExportContext(fusefsal_export_context_t * p_export_context) 
+fsal_status_t FUSEFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context) 
 {
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
 }
 
 
 
-fsal_status_t FUSEFSAL_InitClientContext(fusefsal_op_context_t * p_thr_context)
+fsal_status_t FUSEFSAL_InitClientContext(fsal_op_context_t *context)
 {
 
   int rc, i;
+  fusefsal_op_context_t * p_thr_context = (fusefsal_op_context_t *)context;
 
   /* sanity check */
   if(!p_thr_context)
@@ -91,6 +95,7 @@ fsal_status_t FUSEFSAL_InitClientContext(fusefsal_op_context_t * p_thr_context)
   /* set credential info */
   p_thr_context->credential.user = 0;
   p_thr_context->credential.group = 0;
+  p_thr_context->credential.nbgroups = 0;
 
   /* build fuse context */
   p_thr_context->ganefuse_context.ganefuse = NULL;
@@ -126,8 +131,8 @@ fsal_status_t FUSEFSAL_InitClientContext(fusefsal_op_context_t * p_thr_context)
  *      - ERR_FSAL_SERVERFAULT : unexpected error.
  */
 
-fsal_status_t FUSEFSAL_GetClientContext(fusefsal_op_context_t * p_thr_context,  /* IN/OUT  */
-                                        fusefsal_export_context_t * p_export_context,   /* IN */
+fsal_status_t FUSEFSAL_GetClientContext(fsal_op_context_t *context,  /* IN/OUT  */
+                                        fsal_export_context_t * p_export_context,   /* IN */
                                         fsal_uid_t uid, /* IN */
                                         fsal_gid_t gid, /* IN */
                                         fsal_gid_t * alt_groups,        /* IN */
@@ -135,6 +140,7 @@ fsal_status_t FUSEFSAL_GetClientContext(fusefsal_op_context_t * p_thr_context,  
     )
 {
 
+  fusefsal_op_context_t * p_thr_context = (fusefsal_op_context_t *)context;
   fsal_status_t st;
 
   /* sanity check */
@@ -142,11 +148,12 @@ fsal_status_t FUSEFSAL_GetClientContext(fusefsal_op_context_t * p_thr_context,  
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
 
   /* set the specific export context */
-  p_thr_context->export_context = p_export_context;
+  p_thr_context->export_context = (fusefsal_export_context_t *) p_export_context;
 
   /* set credential info */
   p_thr_context->credential.user = uid;
   p_thr_context->credential.group = gid;
+  p_thr_context->credential.nbgroups = 0; /* no alt groups at present */
 
   /* build fuse context */
   p_thr_context->ganefuse_context.ganefuse = NULL;

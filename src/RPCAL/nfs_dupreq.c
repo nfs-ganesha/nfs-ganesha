@@ -534,6 +534,13 @@ int nfs_dupreq_add_not_finished(long xid,
   if(pdupreq == NULL)
     return DUPREQ_INSERT_MALLOC_ERROR;
 
+  memset(pdupreq, 0, sizeof(*pdupreq));
+  if(pthread_mutex_init(&pdupreq->dupreq_mutex, NULL) == -1)
+    {
+      ReleaseToPool(pdupreq, dupreq_pool);
+      return DUPREQ_INSERT_MALLOC_ERROR;
+    }
+
   if((pdupkey = (dupreq_key_t *) Mem_Alloc(sizeof(dupreq_key_t))) == NULL)
     {
       ReleaseToPool(pdupreq, dupreq_pool);
@@ -582,15 +589,14 @@ int nfs_dupreq_add_not_finished(long xid,
           P(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
           if ( ((dupreq_entry_t *)buffval.pdata)->processing == 1)
             {
-              V(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
               status = DUPREQ_BEING_PROCESSED;
             }
           else
             {
               *res_nfs = ((dupreq_entry_t *) buffval.pdata)->res_nfs;
-              V(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
               status = DUPREQ_ALREADY_EXISTS;
             }
+          V(((dupreq_entry_t *)buffval.pdata)->dupreq_mutex);
         }
       else
         status = DUPREQ_NOT_FOUND;
@@ -712,7 +718,8 @@ nfs_res_t nfs_dupreq_get(long xid, struct svc_req *ptr_req, SVCXPRT *xprt, int *
 
       *pstatus = DUPREQ_SUCCESS;
       res_nfs = pdupreq->res_nfs;
-      LogDupReq("Hit in the dupreq cache for", &pdupreq->addr, pdupreq->xid, pdupreq->rq_prog);
+      LogDupReq(" dupreq_get: Hit in the dupreq cache for", &pdupreq->addr,
+		pdupreq->xid, pdupreq->rq_prog);
     }
   else
     {

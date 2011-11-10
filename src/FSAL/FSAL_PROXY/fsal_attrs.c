@@ -30,8 +30,6 @@
 #include "nfs4.h"
 
 #include "stuff_alloc.h"
-#include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
@@ -62,8 +60,8 @@ extern fsal_staticfsinfo_t default_proxy_info;
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument) 
  *        - Another error code if an error occured.
  */
-fsal_status_t PROXYFSAL_getattrs(proxyfsal_handle_t * filehandle,       /* IN */
-                                 proxyfsal_op_context_t * p_context,    /* IN */
+fsal_status_t PROXYFSAL_getattrs(fsal_handle_t * filehandle,       /* IN */
+                                 fsal_op_context_t * context,    /* IN */
                                  fsal_attrib_list_t * object_attributes /* IN/OUT */
     )
 {
@@ -76,6 +74,7 @@ fsal_status_t PROXYFSAL_getattrs(proxyfsal_handle_t * filehandle,       /* IN */
   bitmap4 bitmap;
   uint32_t bitmap_val[2];
   uint32_t bitmap_res[2];
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
 #define FSAL_GETATTR_NB_OP_ALLOC 2
   nfs_argop4 argoparray[FSAL_GETATTR_NB_OP_ALLOC];
@@ -194,8 +193,8 @@ fsal_status_t PROXYFSAL_getattrs(proxyfsal_handle_t * filehandle,       /* IN */
  *        the object_attributes->asked_attributes field.
  */
 
-fsal_status_t PROXYFSAL_setattrs(proxyfsal_handle_t * filehandle,       /* IN */
-                                 proxyfsal_op_context_t * p_context,    /* IN */
+fsal_status_t PROXYFSAL_setattrs(fsal_handle_t * filehandle,       /* IN */
+                                 fsal_op_context_t * context,    /* IN */
                                  fsal_attrib_list_t * attrib_set,       /* IN */
                                  fsal_attrib_list_t * object_attributes /* [ IN/OUT ] */
     )
@@ -214,6 +213,7 @@ fsal_status_t PROXYFSAL_setattrs(proxyfsal_handle_t * filehandle,       /* IN */
   uint32_t bitmap_val_getattr[2];
   COMPOUND4res resnfs4;
   COMPOUND4args argnfs4;
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
   fsal_proxy_internal_fattr_t fattr_internal_getattr;
 
@@ -383,8 +383,8 @@ fsal_status_t PROXYFSAL_setattrs(proxyfsal_handle_t * filehandle,       /* IN */
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
-fsal_status_t PROXYFSAL_getextattrs(proxyfsal_handle_t * p_filehandle, /* IN */
-                                    proxyfsal_op_context_t * p_context,        /* IN */
+fsal_status_t PROXYFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
+                                    fsal_op_context_t * p_context,        /* IN */
                                     fsal_extattrib_list_t * p_object_attributes /* OUT */
     )
 {

@@ -6,10 +6,9 @@
 #endif
 #include <string.h>
 
+#include "fsal.h"
 #include "posixdb_internal.h"
 #include "stuff_alloc.h"
-#include "fsal_types.h"
-#include "fsal.h"
 
 /**
  * fsal_posixdb_getChildren:

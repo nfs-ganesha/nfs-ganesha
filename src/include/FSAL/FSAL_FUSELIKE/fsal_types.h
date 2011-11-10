@@ -46,16 +46,6 @@
 
 #include "fsal_glue_const.h"
 
-#define fsal_handle_t fusefsal_handle_t
-#define fsal_op_context_t fusefsal_op_context_t
-#define fsal_file_t fusefsal_file_t
-#define fsal_dir_t fusefsal_dir_t
-#define fsal_export_context_t fusefsal_export_context_t
-#define fsal_lockdesc_t fusefsal_lockdesc_t
-#define fsal_cookie_t fusefsal_cookie_t
-#define fs_specific_initinfo_t fusefs_specific_initinfo_t
-#define fsal_cred_t fusefsal_cred_t
-
   /* In this section, you must define your own FSAL internal types.
    * Here are some template types :
    */
@@ -74,14 +64,10 @@ typedef union {
 #endif
 } fusefsal_handle_t;
 
-typedef struct fsal_cred__
+typedef struct
 {
-  uid_t user;
-  gid_t group;
-} fusefsal_cred_t;
+  fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
 
-typedef struct fsal_export_context__
-{
   fusefsal_handle_t root_handle;
   fsal_path_t root_full_path;   /* not expected to change when filesystem is mounted ! */
   struct ganefuse *ganefuse;
@@ -89,24 +75,24 @@ typedef struct fsal_export_context__
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( pexport_context ) (uint64_t)(FSAL_Handle_to_RBTIndex( &(pexport_context->root_handle), 0 ) )
 
-typedef struct fsal_op_context__
+typedef struct
 {
   fusefsal_export_context_t *export_context;    /* Must be the first entry in this structure */
-  fusefsal_cred_t credential;
+  struct user_credentials credential;
   struct ganefuse_context ganefuse_context;
 } fusefsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
-typedef struct fsal_dir__
+typedef struct
 {
   fusefsal_handle_t dir_handle;
   fusefsal_op_context_t context;
   struct ganefuse_file_info dir_info;
 } fusefsal_dir_t;
 
-typedef struct fsal_file__
+typedef struct
 {
   fusefsal_handle_t file_handle;
   fusefsal_op_context_t context;
@@ -125,18 +111,11 @@ typedef union {
 
 //#define FSAL_READDIR_FROM_BEGINNING ((fusefsal_cookie_t)0)
 
-typedef struct fs_specific_initinfo__
+typedef struct
 {
   struct ganefuse_operations *fs_ops;
   void *user_data;
 
 } fusefs_specific_initinfo_t;
-
-typedef struct fsal_lockdesc__
-{
-  struct ganefuse_file_info file_info;
-  struct flock file_lock;
-} fusefsal_lockdesc_t;
-
 
 #endif                          /* _FSAL_TYPES_SPECIFIC_H */

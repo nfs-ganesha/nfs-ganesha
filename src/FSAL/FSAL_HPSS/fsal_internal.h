@@ -197,10 +197,6 @@ fsal_status_t HPSSFSAL_open_by_fileid(hpssfsal_handle_t * filehandle,   /* IN */
 fsal_status_t HPSSFSAL_close_by_fileid(hpssfsal_file_t * file_descriptor /* IN */ ,
                                        fsal_u64_t fileid);
 
-fsal_status_t HPSSFSAL_static_fsinfo(hpssfsal_handle_t * p_filehandle,  /* IN */
-                                     hpssfsal_op_context_t * p_context, /* IN */
-                                     fsal_staticfsinfo_t * p_staticinfo /* OUT */ );
-
 fsal_status_t HPSSFSAL_dynamic_fsinfo(hpssfsal_handle_t * p_filehandle, /* IN */
                                       hpssfsal_op_context_t * p_context,        /* IN */
                                       fsal_dynamicfsinfo_t * p_dynamicinfo /* OUT */ );
@@ -251,16 +247,6 @@ fsal_status_t HPSSFSAL_lookupJunction(hpssfsal_handle_t * p_junction_handle,    
                                       hpssfsal_handle_t * p_fsoot_handle,       /* OUT */
                                       fsal_attrib_list_t *
                                       p_fsroot_attributes /* [ IN/OUT ] */ );
-
-fsal_status_t HPSSFSAL_lock(hpssfsal_file_t * obj_handle,
-                            hpssfsal_lockdesc_t * ldesc, fsal_boolean_t blocking);
-
-fsal_status_t HPSSFSAL_changelock(hpssfsal_lockdesc_t * lock_descriptor,        /* IN / OUT */
-                                  fsal_lockparam_t * lock_info /* IN */ );
-
-fsal_status_t HPSSFSAL_unlock(hpssfsal_file_t * obj_handle, hpssfsal_lockdesc_t * ldesc);
-
-fsal_status_t HPSSFSAL_getlock(hpssfsal_file_t * obj_handle, hpssfsal_lockdesc_t * ldesc);
 
 fsal_status_t HPSSFSAL_CleanObjectResources(hpssfsal_handle_t * in_fsal_handle);
 

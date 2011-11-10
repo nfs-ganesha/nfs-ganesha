@@ -21,40 +21,6 @@
 #include <sys/statvfs.h>
 
 /**
- * FSAL_static_fsinfo:
- * Return static filesystem info such as
- * behavior, configuration, supported operations...
- *
- * \param filehandle (input):
- *        Handle of an object in the filesystem
- *        whom info is to be retrieved.
- * \param cred (input):
- *        Authentication context for the operation (user,...).
- * \param staticinfo (output):
- *        Pointer to the static info of the filesystem.
- *
- * \return Major error codes:
- *      - ERR_FSAL_NO_ERROR: no error.
- *      - ERR_FSAL_FAULT: NULL pointer passed as input parameter.
- *      - ERR_FSAL_SERVERFAULT: Unexpected error.
- */
-fsal_status_t VFSFSAL_static_fsinfo(vfsfsal_handle_t * p_filehandle,  /* IN */
-                                 vfsfsal_op_context_t * p_context, /* IN */
-                                 fsal_staticfsinfo_t * p_staticinfo     /* OUT */
-    )
-{
-  /* sanity checks. */
-  if(!p_staticinfo)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_static_fsinfo);
-
-  /* returning static info about the filesystem */
-  (*p_staticinfo) = global_fs_info;
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_static_fsinfo);
-
-}
-
-/**
  * FSAL_dynamic_fsinfo:
  * Return dynamic filesystem info such as
  * used size, free size, number of objects...
@@ -72,21 +38,21 @@ fsal_status_t VFSFSAL_static_fsinfo(vfsfsal_handle_t * p_filehandle,  /* IN */
  *      - ERR_FSAL_FAULT: NULL pointer passed as input parameter.
  *      - ERR_FSAL_SERVERFAULT: Unexpected error.
  */
-fsal_status_t VFSFSAL_dynamic_fsinfo(vfsfsal_handle_t * p_filehandle, /* IN */
-                                  vfsfsal_op_context_t * p_context,        /* IN */
+fsal_status_t VFSFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle, /* IN */
+                                  fsal_op_context_t *p_context,        /* IN */
                                   fsal_dynamicfsinfo_t * p_dynamicinfo  /* OUT */
     )
 {
-  fsal_path_t pathfsal;
-  fsal_status_t status;
   struct statvfs buffstatvfs;
   int rc, errsv;
+
   /* sanity checks. */
   if(!p_filehandle || !p_dynamicinfo || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_dynamic_fsinfo);
 
   TakeTokenFSCall();
-  rc = fstatvfs(p_context->export_context->mount_root_fd, &buffstatvfs);
+  rc = fstatvfs(((vfsfsal_op_context_t *)p_context)->export_context->mount_root_fd,
+		&buffstatvfs);
   errsv = errno;
   ReleaseTokenFSCall();
   if(rc)

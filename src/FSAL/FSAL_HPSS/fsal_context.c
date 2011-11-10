@@ -156,6 +156,9 @@ fsal_status_t HPSSFSAL_BuildExportContext(hpssfsal_export_context_t * p_export_c
 
   /* fills the export context structure */
 
+  /* Save pointer to fsal_staticfsinfo_t in export context */
+  p_export_context->fe_static_fs_info = &global_fs_info;
+
   p_export_context->default_cos = read_cos;
 
   rc = HPSSFSAL_GetFilesetRoot(filesetname, &p_export_context->fileset_root_handle);

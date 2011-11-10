@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -77,14 +77,6 @@
  *      POSIX FS dependant definitions
  * ------------------------------------------- */
 
-#define FSAL_MAX_NAME_LEN   NAME_MAX
-#define FSAL_MAX_PATH_LEN   PATH_MAX
-
-#define FSAL_NGROUPS_MAX  32
-
-#define FSAL_NAME_INITIALIZER {"",0}
-#define FSAL_PATH_INITIALIZER {"",0}
-
 #define FSAL_GPFS_HANDLE_LEN 64
 #define FSAL_GPFS_FSHANDLE_LEN 64
 
@@ -93,6 +85,7 @@
 #define AT_FDCWD   -100
 
 #define OPENHANDLE_HANDLE_LEN 40
+#define OPENHANDLE_KEY_LEN 28
 #define OPENHANDLE_DRIVER_MAGIC     'O'
 #define OPENHANDLE_OFFSET_OF_FILEID (2 * sizeof(int))
 
@@ -104,30 +97,23 @@
  *  does memory management.
  */
 
+/* some versions of GPFS don't have this in their headers */
+#ifndef _GPFS_DECLARES_HANDLE
 struct file_handle
 {
   int handle_size;
   int handle_type;
+  int handle_key_size;
   /* file identifier */
   unsigned char f_handle[OPENHANDLE_HANDLE_LEN];
 };
+#endif
 
 /** end of open by handle structures */
 
-#ifndef _USE_SHARED_FSAL
-
-#define fsal_handle_t gpfsfsal_handle_t
-#define fsal_op_context_t gpfsfsal_op_context_t
-#define fsal_file_t gpfsfsal_file_t
-#define fsal_dir_t gpfsfsal_dir_t
-#define fsal_export_context_t gpfsfsal_export_context_t
-#define fsal_lockdesc_t gpfsfsal_lockdesc_t
-#define fsal_cookie_t gpfsfsal_cookie_t
-#define fs_specific_initinfo_t gpfsfs_specific_initinfo_t
-#define fsal_cred_t gpfsfsal_cred_t
-
-#endif
-
+/* Allow aliasing of fsal_handle_t since FSALs will be
+ * casting between pointer types
+ */
 typedef struct
 {
   struct
@@ -135,25 +121,19 @@ typedef struct
     //  unsigned int fsid[2];
     struct file_handle handle;
   } data ;
-} gpfsfsal_handle_t;  /**< FS object handle */
+} __attribute__((__may_alias__)) gpfsfsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */
 
-typedef struct 
-{
-  uid_t user;
-  gid_t group;
-  fsal_count_t nbgroups;
-  gid_t alt_groups[FSAL_NGROUPS_MAX];
-} gpfsfsal_cred_t;
-
 typedef struct
 {
+  fsal_staticfsinfo_t * fe_static_fs_info;     /* Must be the first entry in this structure */
+
   /* Warning: This string is not currently filled in or used. */
   char mount_point[FSAL_MAX_PATH_LEN];
 
   int mount_root_fd;
-  fsal_handle_t mount_root_handle;
+  gpfsfsal_handle_t mount_root_handle;
   unsigned int fsid[2];
 } gpfsfsal_export_context_t;
 
@@ -161,14 +141,14 @@ typedef struct
 
 typedef struct
 {
-  fsal_export_context_t *export_context;        /* Must be the first entry in this structure */
-  fsal_cred_t credential;
+  gpfsfsal_export_context_t *export_context;        /* Must be the first entry in this structure */
+  struct user_credentials credential;
 } gpfsfsal_op_context_t;
 
 #define FSAL_OP_CONTEXT_TO_UID( pcontext ) ( pcontext->credential.user )
 #define FSAL_OP_CONTEXT_TO_GID( pcontext ) ( pcontext->credential.group )
 
-typedef struct 
+typedef struct
 {
   int  use_kernel_module_interface;
   char open_by_handle_dev_file[MAXPATHLEN];
@@ -187,11 +167,6 @@ typedef union {
 
 // static const fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
 
-typedef struct
-{
-  struct flock flock;
-} gpfsfsal_lockdesc_t;
-
 /* Directory stream descriptor. */
 
 typedef struct
@@ -203,7 +178,7 @@ typedef struct
   gpfsfsal_handle_t handle;
 } gpfsfsal_dir_t;
 
-typedef struct fsal_file__
+typedef struct
 {
   int fd;
   int ro;                       /* read only file ? */

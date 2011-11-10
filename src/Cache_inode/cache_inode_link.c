@@ -54,6 +54,7 @@
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
+#include <assert.h>
 
 /**
  *
@@ -185,7 +186,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       break;
 
     case SYMBOLIC_LINK:
-      handle_src = pentry_src->object.symlink.handle;
+      assert(pentry_src->object.symlink);
+      handle_src = pentry_src->object.symlink->handle;
       break;
 
     case FS_JUNCTION:

@@ -120,7 +120,7 @@ static int Getsubopt(char **optionp, const char *const *tokens, char **valuep)
  * Parse FS specific option string
  * to build the export entry option.
  */
-fsal_status_t PROXYFSAL_BuildExportContext(proxyfsal_export_context_t * p_export_context,       /* OUT */
+fsal_status_t PROXYFSAL_BuildExportContext(fsal_export_context_t * p_export_context,       /* OUT */
                                            fsal_path_t * p_export_path, /* IN */
                                            char *fs_specific_options    /* IN */
     )
@@ -132,6 +132,9 @@ fsal_status_t PROXYFSAL_BuildExportContext(proxyfsal_export_context_t * p_export
   /* sanity check */
   if(!p_export_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_BuildExportContext);
+
+  /* Save pointer to fsal_staticfsinfo_t in export context */
+  p_export_context->fe_static_fs_info = &global_fs_info;
 
   if((fs_specific_options != NULL) && (fs_specific_options[0] != '\0'))
     {
@@ -183,13 +186,13 @@ fsal_status_t PROXYFSAL_BuildExportContext(proxyfsal_export_context_t * p_export
  * \param p_export_context (in, gpfsfsal_export_context_t)
  */
 
-fsal_status_t PROXYFSAL_CleanUpExportContext(proxyfsal_export_context_t * p_export_context) 
+fsal_status_t PROXYFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context) 
 {
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
 }
 
 
-fsal_status_t PROXYFSAL_InitClientContext(proxyfsal_op_context_t * p_thr_context)
+fsal_status_t PROXYFSAL_InitClientContext(fsal_op_context_t *context)
 {
 
   int sock;
@@ -206,6 +209,7 @@ fsal_status_t PROXYFSAL_InitClientContext(proxyfsal_op_context_t * p_thr_context
   gss_buffer_desc mechgssbuff;
   OM_uint32 maj_stat, min_stat;
 #endif
+  proxyfsal_op_context_t * p_thr_context = (proxyfsal_op_context_t *)context;
 
   /* sanity check */
   if(!p_thr_context)
@@ -349,79 +353,6 @@ fsal_status_t PROXYFSAL_InitClientContext(proxyfsal_op_context_t * p_thr_context
 #endif
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
-
-}
-
- /**
- * PROXYFSAL_GetClientContext :
- * Get a user credential from its uid.
- * 
- * \param p_cred (in out, proxyproxyfsal_cred_t *)
- *        Initialized credential to be changed
- *        for representing user.
- * \param uid (in, fsal_uid_t)
- *        user identifier.
- * \param gid (in, fsal_gid_t)
- *        group identifier.
- * \param alt_groups (in, fsal_gid_t *)
- *        list of alternative groups.
- * \param nb_alt_groups (in, fsal_count_t)
- *        number of alternative groups.
- *
- * \return major codes :
- *      - ERR_FSAL_PERM : the current user cannot
- *                        get credentials for this uid.
- *      - ERR_FSAL_FAULT : Bad adress parameter.
- *      - ERR_FSAL_SERVERFAULT : unexpected error.
- */
-
-fsal_status_t PROXYFSAL_GetClientContext(proxyfsal_op_context_t * p_thr_context,        /* IN/OUT  */
-                                         proxyfsal_export_context_t * p_export_context, /* IN */
-                                         fsal_uid_t uid,        /* IN */
-                                         fsal_gid_t gid,        /* IN */
-                                         fsal_gid_t * alt_groups,       /* IN */
-                                         fsal_count_t nb_alt_groups     /* IN */
-    )
-{
-
-  unsigned int i = 0;
-
-  /* sanity check */
-  if(!p_thr_context || !p_export_context)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetClientContext);
-
-  /* set the specific export context */
-  p_thr_context->export_context = p_export_context;
-
-  /* Extracted from  /opt/hpss/src/nfs/nfsd/nfs_Dispatch.c */
-  p_thr_context->user_credential.user = uid;
-  p_thr_context->user_credential.group = gid;
-
-  if(nb_alt_groups > FSAL_NGROUPS_MAX)
-    nb_alt_groups = FSAL_NGROUPS_MAX;
-  if((nb_alt_groups > 0) && (alt_groups == NULL))
-    Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetClientContext);
-
-  p_thr_context->user_credential.nbgroups = nb_alt_groups;
-
-  for(i = 0; i < nb_alt_groups; i++)
-    p_thr_context->user_credential.alt_groups[i] = alt_groups[i];
-
-  if(isFullDebug(COMPONENT_FSAL))
-    {
-      /* traces: prints p_credential structure */
-      
-      LogFullDebug(COMPONENT_FSAL, "credential modified:");
-      LogFullDebug(COMPONENT_FSAL, "\tuid = %d, gid = %d",
-                   p_thr_context->user_credential.user,
-                   p_thr_context->user_credential.group);
-      
-      for(i = 0; i < p_thr_context->user_credential.nbgroups; i++)
-        LogFullDebug(COMPONENT_FSAL, "\tAlt grp: %d",
-                     p_thr_context->user_credential.alt_groups[i]);
-    }
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
 
 }
 

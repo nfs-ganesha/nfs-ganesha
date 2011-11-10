@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -45,36 +45,27 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
-#include "cache_content.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
+#include "sal_functions.h"
 #include "nfs_proto_functions.h"
-#include "nfs_file_handle.h"
-#include "nfs_tools.h"
 
 /**
- * 
- * nfs41_op_lockt: The NFS4_OP_LOCKT operation. 
+ *
+ * nfs41_op_lockt: The NFS4_OP_LOCKT operation.
  *
  * This function implements the NFS4_OP_LOCKT operation.
  *
  * @param op    [IN]    pointer to nfs4_op arguments
  * @param data  [INOUT] Pointer to the compound request's data
  * @param resp  [IN]    Pointer to nfs4_op results
- * 
- * @return NFS4_OK if successfull, other values show an error. 
+ *
+ * @return NFS4_OK if successfull, other values show an error.
  *
  * @see all the nfs41_op_<*> function
  * @see nfs4_Compound
@@ -88,15 +79,20 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_lockt";
 
-  cache_inode_status_t cache_status;
-  cache_inode_state_t *pstate_found = NULL;
-  uint64_t a, b, a1, b1;
-  unsigned int overlap = FALSE;
+  state_status_t            state_status;
+  state_nfs4_owner_name_t   owner_name;
+  state_owner_t           * popen_owner;
+  state_owner_t           * conflict_owner = NULL;
+  state_lock_desc_t         lock_desc, conflict_desc;
 
-  /* Lock are not supported */
+  LogDebug(COMPONENT_NFS_V4_LOCK,
+           "Entering NFS v4.1 LOCKT handler -----------------------------------------------------");
+
+  /* Initialize to sane default */
   resp->resop = NFS4_OP_LOCKT;
 
 #ifdef _WITH_NO_NFSV41_LOCKS
+  /* Lock are not supported */
   res_LOCKT4.status = NFS4ERR_LOCK_NOTSUPP;
   return res_LOCKT4.status;
 #else
@@ -122,7 +118,7 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_LOCKT4.status;
     }
 
-  /* Commit is done only on a file */
+  /* LOCKT is done only on a file */
   if(data->current_filetype != REGULAR_FILE)
     {
       /* Type of the entry is not correct */
@@ -146,104 +142,99 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_LOCKT4.status;
     }
 
-  /* Check for range overflow 
-   * Remember that a length with all bits set to 1 means "lock until the end of file" (RFC3530, page 157) */
-  if(arg_LOCKT4.length != 0xffffffffffffffffLL)
+  /* Convert lock parameters to internal types */
+  switch(arg_LOCKT4.locktype)
     {
-      /* Comparing beyond 2^64 is not possible int 64 bits precision, 
-       * but off+len > 2^64 is equivalent to len > 2^64 - off */
-      if(arg_LOCKT4.length > (0xffffffffffffffffLL - arg_LOCKT4.offset))
+      case READ_LT:
+      case READW_LT:
+        lock_desc.sld_type = STATE_LOCK_R;
+        break;
+
+      case WRITE_LT:
+      case WRITEW_LT:
+        lock_desc.sld_type = STATE_LOCK_W;
+        break;
+    }
+
+  lock_desc.sld_offset = arg_LOCKT4.offset;
+
+  if(arg_LOCKT4.length != STATE_LOCK_OFFSET_EOF)
+    lock_desc.sld_length = arg_LOCKT4.length;
+  else
+    lock_desc.sld_length = 0;
+
+  /* Check for range overflow.
+   * Comparing beyond 2^64 is not possible int 64 bits precision,
+   * but off+len > 2^64-1 is equivalent to len > 2^64-1 - off
+   */
+  if(lock_desc.sld_length > (STATE_LOCK_OFFSET_EOF - lock_desc.sld_offset))
+    {
+      res_LOCKT4.status = NFS4ERR_INVAL;
+      return res_LOCKT4.status;
+    }
+
+  /* Is this lock_owner known ? */
+  convert_nfs4_open_owner(&arg_LOCKT4.owner, &owner_name);
+
+  if(!nfs4_owner_Get_Pointer(&owner_name, &popen_owner))
+    {
+      /* This open owner is not known yet, allocated and set up a new one */
+      popen_owner = create_nfs4_owner(data->pclient,
+                                      &owner_name,
+                                      STATE_OPEN_OWNER_NFSV4,
+                                      NULL,
+                                      0);
+
+      if(popen_owner == NULL)
         {
-          res_LOCKT4.status = NFS4ERR_INVAL;
+          LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                       "LOCKT unable to create open owner");
+          res_LOCKT4.status = NFS4ERR_SERVERFAULT;
           return res_LOCKT4.status;
         }
     }
-
-  /* loop into the states related to this pentry to find the related lock */
-  pstate_found = NULL;
-  do
+  else if(isFullDebug(COMPONENT_NFS_V4_LOCK))
     {
-      cache_inode_state_iterate(data->current_entry,
-                                &pstate_found,
-                                pstate_found,
-                                data->pclient, data->pcontext, &cache_status);
-      if((cache_status == CACHE_INODE_STATE_ERROR)
-         || (cache_status == CACHE_INODE_INVALID_ARGUMENT))
-        {
-          res_LOCKT4.status = NFS4ERR_INVAL;
-          return res_LOCKT4.status;
-        }
+      char str[HASHTABLE_DISPLAY_STRLEN];
 
-      if(pstate_found != NULL)
-        {
-          if(pstate_found->state_type == CACHE_INODE_STATE_LOCK)
-            {
-
-              /* We found a lock, check is they overlap */
-              a = pstate_found->state_data.lock.offset;
-              b = pstate_found->state_data.lock.offset +
-                  pstate_found->state_data.lock.length;
-              a1 = arg_LOCKT4.offset;
-              b1 = arg_LOCKT4.offset + arg_LOCKT4.length;
-
-              /* Locks overlap is a <= a1 < b or a < b1 <= b */
-              overlap = FALSE;
-              if(a <= a1)
-                {
-                  if(a1 < b)
-                    overlap = TRUE;
-                }
-              else
-                {
-                  if(a < b1)
-                    {
-                      if(b1 <= b)
-                        overlap = TRUE;
-                    }
-                }
-
-              if(overlap == TRUE)
-                {
-                  if((arg_LOCKT4.locktype != READ_LT)
-                     || (pstate_found->state_data.lock.lock_type != READ_LT))
-                    {
-                      /* Overlapping lock is found, if owner is different than the calling owner, return NFS4ERR_DENIED */
-                      if((arg_LOCKT4.owner.owner.owner_len ==
-                          pstate_found->powner->owner_len)
-                         &&
-                         (!memcmp
-                          (arg_LOCKT4.owner.owner.owner_val,
-                           pstate_found->powner->owner_val,
-                           pstate_found->powner->owner_len)))
-                        {
-                          /* The calling state owner is the same. There is a discussion on this case at page 161 of RFC3530. I choose to ignore this
-                           * lock and continue iterating on the other states */
-                        }
-                      else
-                        {
-                          /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
-                          res_LOCKT4.LOCKT4res_u.denied.offset =
-                              pstate_found->state_data.lock.offset;
-                          res_LOCKT4.LOCKT4res_u.denied.length =
-                              pstate_found->state_data.lock.length;
-                          res_LOCKT4.LOCKT4res_u.denied.locktype =
-                              pstate_found->state_data.lock.lock_type;
-                          res_LOCKT4.LOCKT4res_u.denied.owner.owner.owner_len =
-                              pstate_found->powner->owner_len;
-                          res_LOCKT4.LOCKT4res_u.denied.owner.owner.owner_val =
-                              pstate_found->powner->owner_val;
-                          res_LOCKT4.status = NFS4ERR_DENIED;
-                          return res_LOCKT4.status;
-                        }
-                    }
-                }
-            }
-        }
+      DisplayOwner(popen_owner, str);
+      
+      LogFullDebug(COMPONENT_NFS_V4_LOCK,
+                   "LOCKT A previously known owner is used %s",
+                   str);
     }
-  while(pstate_found != NULL);
 
-  /* Succssful exit, no conflicting lock were found */
-  res_LOCKT4.status = NFS4_OK;
+  LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
+          "LOCKT",
+          data->current_entry,
+          data->pcontext,
+          popen_owner,
+          &lock_desc);
+
+  /* Now we have a lock owner and a stateid.
+   * Go ahead and test the lock in SAL (and FSAL).
+   */
+  if(state_test(data->current_entry,
+                data->pcontext,
+                popen_owner,
+                &lock_desc,
+                &conflict_owner,
+                &conflict_desc,
+                data->pclient,
+                &state_status) == STATE_LOCK_CONFLICT)
+    {
+      /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
+      Process_nfs4_conflict(&res_LOCKT4.LOCKT4res_u.denied,
+                            conflict_owner,
+                            &conflict_desc,
+                            data->pclient);
+    }
+
+  /* Release NFS4 Open Owner reference */
+  dec_state_owner_ref(popen_owner, data->pclient);
+
+  /* Return result */
+  res_LOCKT4.status = nfs4_Errno_state(state_status);
   return res_LOCKT4.status;
 
 #endif
@@ -251,16 +242,16 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
 /**
  * nfs41_op_lockt_Free: frees what was allocared to handle nfs41_op_lockt.
- * 
+ *
  * Frees what was allocared to handle nfs41_op_lockt.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs41_op_lockt_Free(LOCKT4res * resp)
 {
-  /* Nothing to Mem_Free */
-  return;
+  if(resp->status == NFS4ERR_DENIED)
+    Release_nfs4_denied(&resp->LOCKT4res_u.denied);
 }                               /* nfs41_op_lockt_Free */

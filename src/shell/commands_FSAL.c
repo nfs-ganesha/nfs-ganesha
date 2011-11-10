@@ -5411,7 +5411,7 @@ int fn_fsal_cat(int argc,       /* IN : number of args in argv */
             return st.major;
         }
 
-      fwrite((caddr_t) readbuff, (size_t) nb_read_once, 1, output);
+      if (fwrite((caddr_t) readbuff, (size_t) nb_read_once, 1, output));
 
       /* update stats */
       nb_read += nb_read_once;

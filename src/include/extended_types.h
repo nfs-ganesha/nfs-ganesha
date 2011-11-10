@@ -47,12 +47,15 @@ typedef unsigned long long u_longlong_t;
 typedef unsigned int uint_t;
 typedef unsigned int uint32_t;
 
-#if __WORDSIZE == 64
+# ifndef __int8_t_defined
+
+#if SIZEOF_LONG == 8
 typedef unsigned long int uint64_t;
 typedef long int int64_t;
 #else
 typedef unsigned long long int uint64_t;
 typedef long long int int64_t;
+#endif
 #endif
 
 #endif                          /* _EXTENDED_TYPES_H */

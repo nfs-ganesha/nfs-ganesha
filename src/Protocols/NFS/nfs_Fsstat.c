@@ -90,7 +90,6 @@ int nfs_Fsstat(nfs_arg_t * parg,
 {
   static char __attribute__ ((__unused__)) funcName[] = "nfs_Fsstat";
 
-  fsal_staticfsinfo_t staticinfo;
   fsal_dynamicfsinfo_t dynamicinfo;
   cache_inode_status_t cache_status;
   cache_entry_t *pentry = NULL;
@@ -132,7 +131,6 @@ int nfs_Fsstat(nfs_arg_t * parg,
   /* Get statistics and convert from cache */
 
   if((cache_status = cache_inode_statfs(pentry,
-                                        &staticinfo,
                                         &dynamicinfo,
                                         pcontext, &cache_status)) == CACHE_INODE_SUCCESS)
     {

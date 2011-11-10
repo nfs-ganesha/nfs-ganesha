@@ -93,7 +93,8 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
   unsigned int num_entries;
 
   unsigned int i = 0;
-
+  unsigned int outbuffsize = 0 ;
+ 
   bitmap4 RdAttrErrorBitmap = { 1, (uint32_t *) "\0\0\0\b" };   /* 0xB = 11 = FATTR4_RDATTR_ERROR */
   attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be seen here */
 
@@ -142,7 +143,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
 
   /* get the caracteristic value for readdir operation */
   dircount = arg_READDIR4.dircount;
-  maxcount = arg_READDIR4.maxcount;
+  maxcount = arg_READDIR4.maxcount*0.9;
   cookie = (unsigned int)arg_READDIR4.cookie;
   space_used = sizeof(entry4);
 
@@ -179,6 +180,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
     }
 
   /*
+
    * If cookie verifier is used, then an non-trivial value is
    * returned to the client         This value is the mtime of
    * the pentry. If verifier is unused (as in many NFS
@@ -195,6 +197,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
    *      1 - reserved for . on client handside
    *      2 - reserved for .. on client handside
    * Entries '.' and '..' are not returned also
+
    * For these reason, there will be an offset of 3 between NFS4 cookie and HPSS cookie */
 
   if((cookie != 0) && (data->pexport->UseCookieVerifier == 1))
@@ -228,7 +231,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
       res_READDIR4.status = NFS4ERR_SERVERFAULT;
       return res_READDIR4.status;
     }
-
+  
   /* Perform the readdir operation */
   if(cache_inode_readdir(dir_pentry,
                          cookie,
@@ -257,6 +260,9 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
     }
   else
     {
+      /* Start computing the outbuffsize */
+      outbuffsize = sizeof( bool_t) /* eof */ + NFS4_VERIFIER_SIZE /* cookie verifier */ ;
+
       /* Allocation of reply structures */
       if((entry_name_array =
           (entry_name_array_item_t *) Mem_Alloc(num_entries *
@@ -275,7 +281,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
           return res_READDIR4.status;
         }
 
-      for(i = 0; i < num_entries; i++)
+      for(i = 0; i < num_entries; i++) 
         {
           entry_nfs_array[i].name.utf8string_val = entry_name_array[i];
 
@@ -291,9 +297,6 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
           else
             entry_nfs_array[i].cookie = end_cookie + 2;
 
-          LogFullDebug(COMPONENT_NFS_V4,
-                       " === nfs4_op_readdir ===>   i=%d name=%s cookie=%"PRIu64,
-                       i, dirent_array[i].name.name, entry_nfs_array[i].cookie);
 
           /* Get the pentry for the object's attributes and filehandle */
           if((pentry = cache_inode_lookup(dir_pentry,
@@ -349,17 +352,36 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
               entry_nfs_array[i].attrs.attr_vals = RdAttrErrorVals;
             }
 
+          /* Update the siwe of the output buffer */
+          outbuffsize += sizeof( nfs_cookie4 )                              /* nfs_cookie4 */
+                      +  sizeof( u_int )                        /* pathname4::utf8strings_len */
+                      +  entry_nfs_array[i].name.utf8string_len  
+                      +  sizeof( u_int )                                    /* bitmap4_len */
+                      +  entry_nfs_array[i].attrs.attrmask.bitmap4_len 
+                      +  sizeof( u_int )                                    /* attrlist4_len */
+                      +  entry_nfs_array[i].attrs.attr_vals.attrlist4_len 
+                      +  sizeof( caddr_t ) ;
+
+          
+          LogFullDebug(COMPONENT_NFS_V4,
+                       " === nfs4_op_readdir ===>   i=%d name=%s cookie=%llu buffsize=%u",
+                       i, dirent_array[i].name.name, (unsigned long long)entry_nfs_array[i].cookie, outbuffsize);
+
+          if( outbuffsize > maxcount )
+             LogFullDebug( COMPONENT_NFS_V4, "---- Input Buffer is too small, breaking the loop ---" ) ;
+
           /* Chain the entries together */
           entry_nfs_array[i].nextentry = NULL;
-          if(i != 0)
-            entry_nfs_array[i - 1].nextentry = &(entry_nfs_array[i]);
-
-          /* This test is there to avoid going further than the buffer provided by the client 
-           * the factor "9/10" is there for safety. Its value could be change as beta tests will be done */
-          if((caddr_t)
-             ((caddr_t) (&entry_nfs_array[i]) - (caddr_t) (&entry_nfs_array[0])) >
-             (caddr_t) (maxcount * 9 / 10))
-            break;
+          if(i != 0)  
+           {
+              if( outbuffsize < maxcount )
+                entry_nfs_array[i - 1].nextentry = &(entry_nfs_array[i]);
+              else
+               {
+                 entry_nfs_array[i - 1].nextentry = NULL ;
+                 break ;
+               }
+           }
         }                       /* for i */
 
       if((eod_met == END_OF_DIR) && (i == num_entries))
@@ -369,7 +391,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
           memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
                  NFS4_VERIFIER_SIZE);
         }
-
+     
       /* Put the entry's list in the READDIR reply */
       res_READDIR4.READDIR4res_u.resok4.reply.entries = entry_nfs_array;
     }
@@ -384,7 +406,6 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
 
   return res_READDIR4.status;
 }                               /* nfs4_op_readdir */
-
 /**
  * nfs4_op_readdir_Free: frees what was allocared to handle nfs4_op_readdir.
  * 

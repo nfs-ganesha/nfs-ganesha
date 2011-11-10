@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 ##
 ## test_liblog_STD.sh
 ## test log functions
-## 
+##
 ## Made by Frank Filz
 ##
 
@@ -86,15 +86,16 @@ echo $DATE >> $FILE
 echo /var/log/messages > $MSGFILE
 echo $DATE >> $MSGFILE
 run >$OUTFILE 2>$ERRFILE
-
+run
 RC=$?
+
 if [ $RC -ne 0 ]
 then
 	echo "Test failed rc =" $RC
-	echo ***********************************
+	echo OUT ***********************************
 	echo $OUTFILE
 	cat $OUTFILE
-	echo ***********************************
+	echo OUT ***********************************
 	echo $ERRFILE
 	cat $ERRFILE
 	cleanup
@@ -118,17 +119,17 @@ test_stdout "LOG: Using environment variable to switch log level for COMPONENT_M
 test_stdout "AddFamilyError = 3"
 test_stdout "The family which was added is Family Dummy"
 
-test_stdout "A numerical error : error 5 = ERR_SIGACTION(5) : 'sigaction impossible', in ERR_DUMMY_2 ERR_DUMMY_2(1) : 'Second Dummy Error'"
-test_stdout "A numerical error : error 40 = ERR_OPEN(40) : 'open impossible', in ERR_DUMMY_1 ERR_DUMMY_1(0) : 'First Dummy Error'"
+# test_stdout "A numerical error : error 5 = ERR_SIGACTION(5) : 'sigaction impossible', in ERR_DUMMY_2 ERR_DUMMY_2(1) : 'Second Dummy Error'"
+# test_stdout "A numerical error : error 40 = ERR_OPEN(40) : 'open impossible', in ERR_DUMMY_1 ERR_DUMMY_1(0) : 'First Dummy Error'"
 
 test_stdout "Test log_snprintf$"
-test_stdout "CONFIG: Error ERR_MALLOC : malloc impossible : status 22 : Invalid argument : Line"
+# test_stdout "CONFIG: Error ERR_MALLOC : malloc impossible : status 22 : Invalid argument : Line"
 test_stdout "This should appear if environment is set properly"
-test_stdout "localhost : test_liblog-[1-9][0-9]*\[Test1\] :NFS STARTUP: Starting Log Tests$"
+test_stdout "localhost : test_liblog-[1-9][0-9]*\[monothread\] :Test1 :NFS STARTUP: Starting Log Tests$"
 
 test_stdout "DISPATCH: EVENT: This should go to stdout"
 test_stderr "DISPATCH: EVENT: This should go to stderr"
-test_syslog "DISPATCH: EVENT: This should go to syslog (verf = $DATE)"
+# test_syslog "DISPATCH: EVENT: This should go to syslog (verf = $DATE)"
 test_file   "DISPATCH: EVENT: This should go to $FILE" $FILE
 
 echo "PASSED!"

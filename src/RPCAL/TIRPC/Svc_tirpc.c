@@ -154,6 +154,17 @@ void __Xprt_unregister_unlocked(SVCXPRT * xprt)
   __Xprt_do_unregister(xprt, FALSE);
 }
 
+xprt_type_t get_xprt_type(SVCXPRT *xprt)
+{
+  if(xprt->xp_ops == &dg_ops)
+    return XPRT_UDP;
+  else if (xprt->xp_ops == &vc_ops)
+    return XPRT_TCP;
+  else if (xprt->xp_ops == &rendezvous_ops)
+    return XPRT_RENDEZVOUS;
+  return XPRT_UNKNOWN;
+}
+
 void FreeXprt(SVCXPRT *xprt)
 {
   if(!xprt)
@@ -339,9 +350,10 @@ SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
       xprt_copy->xp_rtaddr.buf = Mem_Alloc(sizeof(struct sockaddr_storage));
       if(!xprt_copy->xp_rtaddr.buf)
         goto fail;
-      xprt_copy->xp_rtaddr.maxlen = xprt_orig->xp_rtaddr.maxlen;
+      memset(xprt_copy->xp_rtaddr.buf, 0, sizeof(struct sockaddr_storage));
+      xprt_copy->xp_rtaddr.maxlen = sizeof(struct sockaddr_storage);
       xprt_copy->xp_rtaddr.len    = xprt_orig->xp_rtaddr.len;
-      memcpy(xprt_copy->xp_rtaddr.buf, xprt_orig->xp_rtaddr.buf, sizeof(struct sockaddr_storage));
+      memcpy(xprt_copy->xp_rtaddr.buf, xprt_orig->xp_rtaddr.buf, xprt_orig->xp_rtaddr.len);
     }
 
   if(xprt_orig->xp_ltaddr.buf)
@@ -369,7 +381,7 @@ SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
   return NULL;
 }
 
-#ifdef _DEBUG_MEMLEAKS
+#if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
 
 #define check(x, s)                  \
   if(x)                              \

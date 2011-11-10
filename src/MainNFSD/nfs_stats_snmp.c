@@ -764,7 +764,7 @@ static int set_buddy(const snmp_adm_type_union * param, void *opt_arg)
           }
         BuddyDumpAll(output);
         rc = fclose(output);
-        LogDebug(COMPONENT_MEMLEAKS,
+        LogEvent(COMPONENT_MEMLEAKS,
                  "Dumped buddy memory to %s, rc=%d", param->string, rc);
       }
       break;
@@ -781,7 +781,7 @@ static int set_buddy(const snmp_adm_type_union * param, void *opt_arg)
           }
         BuddyDumpPools(output);
         rc = fclose(output);
-        LogDebug(COMPONENT_MEMLEAKS,
+        LogEvent(COMPONENT_MEMLEAKS,
                  "Dumped buddy pools to %s, rc=%d", param->string, rc);
       }
       break;
@@ -1423,7 +1423,7 @@ static void create_dyn_log_control(register_get_set ** p_dyn_gs, int *p_dyn_gs_c
   long j;
 
   *p_dyn_gs_count = COMPONENT_COUNT;
-  *p_dyn_gs = (register_get_set *) Mem_Alloc((COMPONENT_COUNT - 1) * sizeof(register_get_set));
+  *p_dyn_gs = (register_get_set *) Mem_Alloc((COMPONENT_COUNT) * sizeof(register_get_set));
 
   for(j = 0; j < COMPONENT_COUNT; j ++)
     {

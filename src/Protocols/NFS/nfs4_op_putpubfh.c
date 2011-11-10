@@ -82,8 +82,6 @@ int CreatePUBFH4(nfs_fh4 * fh, compound_data_t * data)
 {
   pseudofs_entry_t psfsentry;
   int status = 0;
-  char fhstr[LEN_FH_STR];
-
 
   psfsentry = *(data->pseudofs->reverse_tab[0]);
 
@@ -91,13 +89,9 @@ int CreatePUBFH4(nfs_fh4 * fh, compound_data_t * data)
     return status;
 
   if(!nfs4_PseudoToFhandle(&(data->publicFH), &psfsentry))
-    {
-      return NFS4ERR_BADHANDLE;
-    }
+    return NFS4ERR_BADHANDLE;
 
-  /* Test */
-  nfs4_sprint_fhandle(&data->publicFH, fhstr);
-  LogDebug(COMPONENT_NFS_V4, "CREATE PUBFH: %s", fhstr);
+  LogHandleNFS4("CREATE PUB FH: ", &data->publicFH);
 
   return NFS4_OK;
 }                               /* CreatePUBFH4 */

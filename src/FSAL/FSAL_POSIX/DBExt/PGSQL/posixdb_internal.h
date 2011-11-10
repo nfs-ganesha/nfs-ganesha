@@ -1,3 +1,9 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; -*-
+ * vim:expandtab:shiftwidth=4:tabstop=4:
+ */
+
+#include "fsal_types.h"
+
 #ifndef _POSIXDB_INTERNAL_H
 #define _POSIXDB_INTERNAL_H
 
@@ -8,8 +14,6 @@
 #define MAX_CTIMESTR_SIZE 11
 #define MAX_NLINKSTR_SIZE 11
 #define MAX_FTYPESTR_SIZE 11
-
-#include "fsal_types.h"
 
 #define ReturnCodeDB( _code_, _minor_ ) do {                 \
                fsal_posixdb_status_t _struct_status_;        \

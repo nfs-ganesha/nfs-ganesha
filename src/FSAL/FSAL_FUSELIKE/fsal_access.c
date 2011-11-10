@@ -54,8 +54,8 @@
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Other error codes when something anormal occurs.
  */
-fsal_status_t FUSEFSAL_access(fusefsal_handle_t * object_handle,        /* IN */
-                              fusefsal_op_context_t * p_context,        /* IN */
+fsal_status_t FUSEFSAL_access(fsal_handle_t * obj_handle,        /* IN */
+                              fsal_op_context_t * p_context,        /* IN */
                               fsal_accessflags_t access_type,   /* IN */
                               fsal_attrib_list_t * object_attributes    /* [ IN/OUT ] */
     )
@@ -65,6 +65,7 @@ fsal_status_t FUSEFSAL_access(fusefsal_handle_t * object_handle,        /* IN */
   int mask, rc;
   char object_path[FSAL_MAX_PATH_LEN];
   fsal_attrib_list_t tmp_attrs;
+  fusefsal_handle_t * object_handle = (fusefsal_handle_t *)obj_handle;
 
   /* sanity checks.
    * note : object_attributes is optional in FSAL_access.
@@ -111,7 +112,7 @@ fsal_status_t FUSEFSAL_access(fusefsal_handle_t * object_handle,        /* IN */
       FSAL_SET_MASK(tmp_attrs.asked_attributes, FSAL_ATTR_OWNER);
       FSAL_SET_MASK(tmp_attrs.asked_attributes, FSAL_ATTR_GROUP);
 
-      status = FUSEFSAL_getattrs(object_handle, p_context, &tmp_attrs);
+      status = FUSEFSAL_getattrs(obj_handle, p_context, &tmp_attrs);
 
       if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_access);
@@ -132,7 +133,7 @@ fsal_status_t FUSEFSAL_access(fusefsal_handle_t * object_handle,        /* IN */
     {
       fsal_status_t status;
 
-      status = FUSEFSAL_getattrs(object_handle, p_context, object_attributes);
+      status = FUSEFSAL_getattrs(obj_handle, p_context, object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -178,7 +179,7 @@ fsal_status_t FUSEFSAL_access(fusefsal_handle_t * object_handle,        /* IN */
  *        - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *        - Another error code if an error occured.
  */
-fsal_status_t FUSEFSAL_test_access(fusefsal_op_context_t * p_context,   /* IN */
+fsal_status_t FUSEFSAL_test_access(fsal_op_context_t * p_context,   /* IN */
                                    fsal_accessflags_t access_type,      /* IN */
                                    fsal_attrib_list_t * object_attributes       /* IN */
     )
@@ -210,7 +211,6 @@ fsal_status_t FUSEFSAL_test_access(fusefsal_op_context_t * p_context,   /* IN */
   /* unsatisfied permissions */
 
   missing_access = FSAL_MODE_MASK(access_type); /* only modes, no ACLs here */
-
 
   /* Test if file belongs to user. */
 

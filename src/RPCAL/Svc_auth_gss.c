@@ -376,7 +376,7 @@ int sprint_ctx(char *buff, unsigned char *ctx, int len)
     len = 16;
 
   for(i = 0; i < len; i++)
-    sprintf(buff + i * 2, "%02X", ctx[i]);
+    sprintf(buff + i * 2, "%02x", ctx[i]);
 
   return len * 2;
 }
@@ -1180,7 +1180,7 @@ int copy_svc_authgss(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
   return 1;
 }
 
-#ifdef _DEBUG_MEMLEAKS
+#if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
 int CheckAuth(SVCAUTH *auth)
 {
   int rc;

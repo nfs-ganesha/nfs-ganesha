@@ -30,50 +30,12 @@
 #include "nfs4.h"
 
 #include "stuff_alloc.h"
-#include "fsal.h"
-#include "fsal_types.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
 
 #include "nfs_proto_functions.h"
 #include "fsal_nfsv4_macros.h"
-
-/**
- * FSAL_static_fsinfo:
- * Return static filesystem info such as
- * behavior, configuration, supported operations...
- *
- * \param filehandle (input):
- *        Handle of an object in the filesystem
- *        whom info is to be retrieved.
- * \param cred (input):
- *        Authentication context for the operation (user,...).
- * \param staticinfo (output):
- *        Pointer to the static info of the filesystem.
- *
- * \return Major error codes:
- *      - ERR_FSAL_NO_ERROR     (no error)
- *      - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
- *      - Other error codes can be returned :
- *        ERR_FSAL_IO, ...
- */
-fsal_status_t PROXYFSAL_static_fsinfo(proxyfsal_handle_t * filehandle,  /* IN */
-                                      proxyfsal_op_context_t * p_context,       /* IN */
-                                      fsal_staticfsinfo_t * staticinfo  /* OUT */
-    )
-{
-  /* sanity checks. */
-  /* for HPSS, handle and credential are not used. */
-  if(!staticinfo)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_static_fsinfo);
-
-  /* returning static info about the filesystem */
-  (*staticinfo) = global_fs_info;
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_static_fsinfo);
-
-}
 
 /**
  * FSAL_dynamic_fsinfo:
@@ -94,8 +56,8 @@ fsal_status_t PROXYFSAL_static_fsinfo(proxyfsal_handle_t * filehandle,  /* IN */
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-fsal_status_t PROXYFSAL_dynamic_fsinfo(proxyfsal_handle_t * filehandle, /* IN */
-                                       proxyfsal_op_context_t * p_context,      /* IN */
+fsal_status_t PROXYFSAL_dynamic_fsinfo(fsal_handle_t * filehandle, /* IN */
+                                       fsal_op_context_t * context,      /* IN */
                                        fsal_dynamicfsinfo_t * dynamicinfo       /* OUT */
     )
 {
@@ -108,6 +70,7 @@ fsal_status_t PROXYFSAL_dynamic_fsinfo(proxyfsal_handle_t * filehandle, /* IN */
   bitmap4 bitmap;
   uint32_t bitmap_val[2];
   uint32_t bitmap_res[2];
+  proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
 
 #define FSAL_FSINFO_NB_OP_ALLOC 2
   nfs_argop4 argoparray[FSAL_FSINFO_NB_OP_ALLOC];

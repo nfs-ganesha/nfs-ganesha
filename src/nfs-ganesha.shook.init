@@ -34,7 +34,7 @@ prog=shook.ganesha.nfsd
 PID_FILE=${PID_FILE:=/var/run/${prog}.pid}
 LOCK_FILE=${LOCK_FILE:=/var/lock/subsys/${prog}}
 
-[ -f /etc/sysconfig/nfs-ganesha.shook ] && . /etc/sysconfig/nfs-ganesha.shook 
+[ -f /etc/sysconfig/nfs-ganesha.shook ] && . /etc/sysconfig/nfs-ganesha.shook
 
 start() {
         echo -n $"Starting $prog: "
