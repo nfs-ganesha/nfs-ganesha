@@ -1146,21 +1146,6 @@ void cache_inode_get_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
       LogFullDebug(COMPONENT_CACHE_INODE,
                    "Unexpected UNNASIGNED or RECYLCED type in cache_inode_get_attributes");
     }
-
-  if (pattr) {
-#warning fix for real (still hunting for root cause)
-#define S_NSECS 1000000000UL	/* nsecs in 1s */
-      /* a carry into seconds appears clearly ruled out */
-      if (pattr->atime.nseconds > S_NSECS)
-          pattr->atime.nseconds = 0;
-
-      if (pattr->mtime.nseconds > S_NSECS)
-          pattr->mtime.nseconds = 0;
-
-      if (pattr->ctime.nseconds > S_NSECS)
-          pattr->ctime.nseconds = 0;
-  }
-
 }                               /* cache_inode_get_attributes */
 
 /**

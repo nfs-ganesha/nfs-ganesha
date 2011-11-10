@@ -90,6 +90,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
   unsigned long space_used;
   unsigned int estimated_num_entries;
   unsigned int num_entries;
+  unsigned int entrysize, outbuffsize = 0;
   int dir_pentry_unlock = FALSE;
 
   unsigned int i = 0;
@@ -149,11 +150,14 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
 
   /* dircount is considered meaningless by many nfsv4 client (like the CITI
    * one).  we use maxcount instead. */
+
+  /* the Linux 3.0, 3.1.0 clients vs. TCP Ganesha comes out 10x slower
+   * with 500 max entries */
 #if 0
+  /* takes 2s to return 2999 entries */
   estimated_num_entries = maxcount / sizeof(entry4);
 #else
-  /* the Linux 3.0, 3.1.0 clients vs. TCP Ganesha comes out 4x slower
-   * with 500 max entries */
+  /* takes 20s to return 2999 entries */
   estimated_num_entries = 50;
 #endif
 
@@ -299,12 +303,6 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
           /* Set the cookie value */
           entry_nfs_array[i].cookie = dirent_array[i]->cookie;
 
-          LogFullDebug(COMPONENT_NFS_V4,
-                       " === nfs4_op_readdir ===>   i=%d name=%s cookie=%"
-                       PRIu64, i,
-                       dirent_array[i]->name.name,
-                       entry_nfs_array[i].cookie);
-
           /* Get the pentry for the object's attributes and filehandle */
           if((pentry = cache_inode_lookup_no_mutex(dir_pentry,
                                                    &dirent_array[i]->name,
@@ -356,39 +354,47 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
               entry_nfs_array[i].attrs.attr_vals = RdAttrErrorVals;
             }
 
-          /* Update the siwe of the output buffer */
-          outbuffsize += sizeof( nfs_cookie4 )                              /* nfs_cookie4 */
-                      +  sizeof( u_int )                        /* pathname4::utf8strings_len */
-                      +  entry_nfs_array[i].name.utf8string_len  
-                      +  sizeof( u_int )                                    /* bitmap4_len */
-                      +  entry_nfs_array[i].attrs.attrmask.bitmap4_len 
-                      +  sizeof( u_int )                                    /* attrlist4_len */
-                      +  entry_nfs_array[i].attrs.attr_vals.attrlist4_len 
-                      +  sizeof( caddr_t ) ;
+          /* Update the size of the output buffer */
+          entrysize = sizeof( nfs_cookie4 ) ; /* nfs_cookie4 */
+          entrysize += sizeof( u_int ) ; /* pathname4::utf8strings_len */
+          entrysize +=  entry_nfs_array[i].name.utf8string_len ; 
+          entrysize += sizeof( u_int ) ; /* bitmap4_len */
+          entrysize +=  entry_nfs_array[i].attrs.attrmask.bitmap4_len ;
+          entrysize += sizeof( u_int ) ; /* attrlist4_len */
+          entrysize +=  entry_nfs_array[i].attrs.attr_vals.attrlist4_len ;
+          entrysize += sizeof( caddr_t ) ;
+          outbuffsize += entrysize;
 
-          
-          /** @todo : check this, dirent_array is a double pointer */
           LogFullDebug(COMPONENT_NFS_V4,
-                       " === nfs4_op_readdir ===>   i=%d name=%s cookie=%llu buffsize=%u",
-                       i, dirent_array[i]->name.name, (unsigned long long)entry_nfs_array[i].cookie, outbuffsize);
-
-          if( outbuffsize > maxcount )
-             LogFullDebug( COMPONENT_NFS_V4, "---- Input Buffer is too small, breaking the loop ---" ) ;
+                  " === nfs4_op_readdir ===>   i=%u name=%s cookie=%"PRIu64" "
+                  "entrysize=%u buffsize=%u",
+                  i, dirent_array[i]->name.name,
+                  (unsigned long long)entry_nfs_array[i].cookie,
+                  entrysize,
+                  outbuffsize);
 
           /* Chain the entries together */
           entry_nfs_array[i].nextentry = NULL;
           if(i != 0)
-            entry_nfs_array[i - 1].nextentry = &(entry_nfs_array[i]);
-
-          /* This test is there to avoid going further than the buffer provided
-           * by the client.  The factor "9/10" is there for safety. Its value
-           * could be change as beta tests will be done */
-          if((caddr_t)
-             ((caddr_t) (&entry_nfs_array[i]) - (caddr_t) (&entry_nfs_array[0])) >
-             (caddr_t) (maxcount * 9 / 10))
-            break;
+           {
+              if( outbuffsize < maxcount )
+                entry_nfs_array[i - 1].nextentry = &(entry_nfs_array[i]);
+              else
+               {
+                   LogFullDebug(COMPONENT_NFS_V4,
+                           "=== nfs4_op_readdir ===> "
+                           "maxcount reached at %u entries name=%s "
+                           "cookie=%llu "
+                           "buffsize=%u (return early)",
+                           i+1, 
+                           dirent_array[i]->name.name,
+                           (unsigned long long)entry_nfs_array[i].cookie,
+                           outbuffsize);
+                 entry_nfs_array[i - 1].nextentry = NULL ;
+                 break ;
+               }
+           }
         }                       /* for i */
-
 
       if((i == num_entries) && (eod_met == END_OF_DIR))
       {
