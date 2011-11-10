@@ -90,11 +90,11 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
   unsigned long space_used;
   unsigned int estimated_num_entries;
   unsigned int num_entries;
-  unsigned int entrysize, outbuffsize = 0;
   int dir_pentry_unlock = FALSE;
 
   unsigned int i = 0;
   unsigned int outbuffsize = 0 ;
+  unsigned int entrysize = 0 ;
  
   bitmap4 RdAttrErrorBitmap = { 1, (uint32_t *) "\0\0\0\b" };   /* 0xB = 11 = FATTR4_RDATTR_ERROR */
   attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be seen here */
