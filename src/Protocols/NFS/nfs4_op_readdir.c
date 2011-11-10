@@ -261,7 +261,9 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
   else
     {
       /* Start computing the outbuffsize */
-      outbuffsize = sizeof( bool_t) /* eof */ + NFS4_VERIFIER_SIZE /* cookie verifier */ ;
+      outbuffsize = sizeof( bool_t) /* eof */ 
+                  + sizeof( nfsstat4 ) /* READDIR4res::status */
+                  + NFS4_VERIFIER_SIZE /* cookie verifier */ ;
 
       /* Allocation of reply structures */
       if((entry_name_array =

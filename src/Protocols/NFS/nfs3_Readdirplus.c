@@ -100,6 +100,9 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
   cache_entry_t *pentry_dot_dot = NULL;
   unsigned long dircount;
   unsigned long maxcount;
+  unsigned long bytes_counter = 0 ;
+  unsigned int tmp_name_len = 0 ;
+  unsigned int tmp_data_len = 0 ;
   fsal_attrib_list_t dir_attr;
   fsal_attrib_list_t entry_attr;
   unsigned int begin_cookie;
@@ -163,6 +166,12 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
   /* Is this a xattr FH ? */
   if(nfs3_Is_Fh_Xattr(&(parg->arg_readdirplus3.dir)))
     return nfs3_Readdirplus_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
+
+  /* Start counting the bytes returned... */
+  bytes_counter = sizeof( nfsstat3 )     /* READDIRPLUS3res::status */
+		+ sizeof( post_op_attr ) /* READDIRPLUS3res::resok::dir_attributes */
+                + sizeof( cookieverf3 )  /* READDIRPLUS3res::resok::cookieverf */
+                + sizeof( bool_t ) ;     /* READDIRPLUS3res::resok::reply::eof */
 
   /* Convert file handle into a vnode */
   /* BUGAZOMEU : rajouter acces direct au DIR_CONTINUE */
@@ -514,6 +523,18 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
               else
                 RES_READDIRPLUS_REPLY.entries[delta].nextentry = NULL;
 
+              /* Update the bytes_counter */
+              tmp_name_len = strnlen( RES_READDIRPLUS_REPLY.entries[delta].name, MAXNAMLEN ) ;
+              tmp_data_len =  RES_READDIRPLUS_REPLY.entries[delta].name_handle.post_op_fh3_u.handle.data.data_len ;
+              bytes_counter += sizeof( fileid3 )                  /* entryplus3::fileid                      */
+			     + tmp_name_len+(4 -(tmp_name_len%4)) /* entryplus3::name (32 bits aligned)      */
+			     + sizeof( cookie3 )                  /* entryplus3::cookie                      */
+			     + sizeof( post_op_attr )             /* entryplus3::name_attributes             */
+                             + sizeof( bool_t )                   /* entryplus3::name_handle::handle_follows */
+                             + sizeof( u_int )                    /* nfs_fh3::data_len                       */
+			     + tmp_data_len+(4-(tmp_data_len%4))  /* nfs_fh3::data_val (32 bits aligned)     */
+			     + sizeof( uint64_t ) ;               /* entryplus3::nextentry                   */
+
               delta += 1;
             }
 
@@ -629,8 +650,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                                   entries[i].name_attributes));
 
               LogFullDebug(COMPONENT_NFS_READDIR,
-                           "Readdirplus3 -> i=%d num_entries=%d needed=%lu space_used=%lu maxcount=%lu Name=%s FileId=%016llx Cookie=%llu",
-                           i, num_entries, needed, space_used, maxcount,
+                           "Readdirplus3 -> i=%d, bytes_counter=%u  num_entries=%d needed=%lu space_used=%lu maxcount=%lu Name=%s FileId=%016llx Cookie=%llu",
+                           i, bytes_counter, num_entries, needed, space_used, maxcount,
                            dirent_array[i - delta].name.name,
                            RES_READDIRPLUS_REPLY.entries[i].fileid,
                            RES_READDIRPLUS_REPLY.entries[i].cookie);
@@ -639,11 +660,24 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
               if(i != 0)
                 RES_READDIRPLUS_REPLY.entries[i - 1].nextentry =
                     &(RES_READDIRPLUS_REPLY.entries[i]);
+
+              /* Update the bytes_counter */
+              tmp_name_len = strnlen( RES_READDIRPLUS_REPLY.entries[i].name, MAXNAMLEN ) ;
+              tmp_data_len =  RES_READDIRPLUS_REPLY.entries[i].name_handle.post_op_fh3_u.handle.data.data_len ;
+              bytes_counter += sizeof( fileid3 )                  /* entryplus3::fileid                      */
+			     + tmp_name_len+(4 -(tmp_name_len%4)) /* entryplus3::name (32 bits aligned)      */
+			     + sizeof( cookie3 )                  /* entryplus3::cookie                      */
+			     + sizeof( post_op_attr )             /* entryplus3::name_attributes             */
+                             + sizeof( bool_t )                   /* entryplus3::name_handle::handle_follows */
+                             + sizeof( u_int )                    /* nfs_fh3::data_len                       */
+			     + tmp_data_len+(4-(tmp_data_len%4))  /* nfs_fh3::data_val (32 bits aligned)     */
+			     + sizeof( uint64_t ) ;               /* entryplus3::nextentry                   */
+		
             }
 
           pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = FALSE;
         }
-
+       
       nfs_SetPostOpAttr(pcontext,
                         pexport,
                         dir_pentry,
