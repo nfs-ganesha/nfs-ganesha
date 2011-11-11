@@ -1553,6 +1553,10 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
     nlm_startup();
 #endif
 
+  /* Start State Async threads */
+  if(!flush_datacache_mode)
+    state_async_thread_start();
+
   /* Starting the rpc dispatcher thread */
   if((rc =
       pthread_create(&rpc_dispatcher_thrid, &attr_thr, rpc_dispatcher_thread,
@@ -1732,6 +1736,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                cache_inode_err_str(cache_status));
     }
 
+  /* Initialize thread control block */
+  tcb_head_init();
+
 #ifdef _USE_BLOCKING_LOCKS
   if(state_lock_init(&state_status,
                      nfs_param.cache_layers_param.cache_param.cookie_param)
@@ -1745,8 +1752,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                state_err_str(state_status));
     }
   LogInfo(COMPONENT_INIT, "Cache Inode library successfully initialized");
-  /* Initialize thread control block */
-  tcb_head_init();
 
   /* Set the cache inode GC policy */
   cache_inode_set_gc_policy(nfs_param.cache_layers_param.gcpol);

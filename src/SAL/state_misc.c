@@ -101,6 +101,7 @@ const char *state_err_str(state_status_t err)
       case STATE_FILE_BIG:              return "STATE_FILE_BIG";
       case STATE_GRACE_PERIOD:          return "STATE_GRACE_PERIOD";
       case STATE_CACHE_INODE_ERR:       return "STATE_CACHE_INODE_ERR";
+      case STATE_SIGNAL_ERROR:          return "STATE_SIGNAL_ERROR";
     }
   return "unknown";
 }
@@ -411,6 +412,7 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
     case STATE_HASH_TABLE_ERROR:
     case STATE_CACHE_CONTENT_ERROR:
     case STATE_ASYNC_POST_ERROR:
+    case STATE_SIGNAL_ERROR:
       /* Should not occur */
       nfserror = NFS4ERR_INVAL;
       break;
@@ -552,6 +554,7 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
     case STATE_LOCK_BLOCKED:
     case STATE_LOCK_DEADLOCK:
     case STATE_GRACE_PERIOD:
+    case STATE_SIGNAL_ERROR:
         /* Should not occur */
         LogDebug(COMPONENT_NFSPROTO,
                  "Unexpected status for conversion = %s",
@@ -677,6 +680,7 @@ nfsstat2 nfs2_Errno_state(state_status_t error)
     case STATE_BAD_COOKIE:
     case STATE_FILE_BIG:
     case STATE_GRACE_PERIOD:
+    case STATE_SIGNAL_ERROR:
         /* Should not occur */
         LogDebug(COMPONENT_NFSPROTO,
                  "Unexpected conversion for status = %s",

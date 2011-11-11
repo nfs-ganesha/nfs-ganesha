@@ -442,4 +442,16 @@ state_status_t state_lookup_layout_state(cache_entry_t * pentry,
                                          layouttype4     type,
                                          state_t      ** pstate);
 #endif                          /*  _USE_FSALMDS */
+/******************************************************************************
+ *
+ * Async functions
+ *
+ ******************************************************************************/
+
+/* Schedule Async Work */
+state_status_t state_async_schedule(state_async_queue_t *arg);
+
+state_status_t state_async_init();
+void state_async_thread_start();
+
 #endif                          /*  _SAL_FUNCTIONS_H */
