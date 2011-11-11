@@ -121,6 +121,8 @@ state_status_t state_lock_init(state_status_t * pstatus)
   init_glist(&state_all_locks);
 #endif
 
+  *pstatus = state_async_init();
+
   return *pstatus;
 }
 

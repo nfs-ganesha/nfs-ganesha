@@ -56,6 +56,7 @@
 #include "config_parsing.h"
 #include "nfs23.h"
 #include "nfs4.h"
+#include "nfs_proto_functions.h"
 #ifdef _USE_NLM
 #include "nlm4.h"
 #endif
@@ -92,6 +93,10 @@ typedef struct state_owner_t        state_owner_t;
 typedef struct state_t              state_t;
 typedef struct nfs_argop4_state     nfs_argop4_state;
 typedef struct state_lock_entry_t   state_lock_entry_t;
+typedef struct state_async_queue_t  state_async_queue_t;
+#ifdef _USE_NLM
+typedef struct state_nlm_client_t   state_nlm_client_t;
+#endif
 #ifdef _USE_BLOCKING_LOCKS
 typedef struct state_cookie_entry_t state_cookie_entry_t;
 #endif /* _USE_BLOCKING_LOCKS */
@@ -213,7 +218,7 @@ typedef struct state_nsm_client_t
   char                  * ssc_nlm_caller_name;
 } state_nsm_client_t;
 
-typedef struct state_nlm_client_t
+struct state_nlm_client_t
 {
   pthread_mutex_t         slc_mutex;
   state_nsm_client_t    * slc_nsm_client;
@@ -222,7 +227,7 @@ typedef struct state_nlm_client_t
   int                     slc_nlm_caller_name_len;
   char                    slc_nlm_caller_name[LM_MAXSTRLEN+1];
   CLIENT                * slc_callback_clnt;
-} state_nlm_client_t;
+};
 
 typedef struct state_nlm_owner_t
 {
@@ -328,6 +333,7 @@ typedef enum state_status_t
   STATE_FILE_BIG              = 41,
   STATE_GRACE_PERIOD          = 42,
   STATE_CACHE_INODE_ERR       = 43,
+  STATE_SIGNAL_ERROR          = 44,
 } state_status_t;
 
 typedef enum state_blocking_t
@@ -449,5 +455,50 @@ struct state_cookie_entry_t
   int                  sce_cookie_size;
 };
 #endif
+
+/*
+ * Structures for state async processing
+ *
+ */
+extern cache_inode_client_t state_async_cache_inode_client;
+
+typedef void (state_async_func) (state_async_queue_t * arg);
+
+#ifdef _USE_NLM
+typedef struct state_nlm_async_data_t
+{
+  state_nlm_client_t       * nlm_async_host;
+  void                     * nlm_async_key;
+  union
+    {
+      nfs_res_t              nlm_async_res;
+      nlm4_testargs          nlm_async_grant;
+    } nlm_async_args;
+} state_nlm_async_data_t;
+#endif
+
+#ifdef _USE_BLOCKING_LOCKS
+typedef struct state_async_block_data_t
+{
+  state_lock_entry_t * state_async_lock_entry;
+} state_async_block_data_t;
+#endif
+
+struct state_async_queue_t
+{
+  struct glist_head              state_async_glist;
+  state_async_func             * state_async_func;
+  union
+    {
+#ifdef _USE_NLM
+      state_nlm_async_data_t     state_nlm_async_data;
+#endif
+#ifdef _USE_BLOCKING_LOCKS
+      state_async_block_data_t   state_async_block_data;
+#endif
+      void                     * state_no_data;
+    } state_async_data;
+};
+
 
 #endif                          /*  _SAL_DATA_H */
