@@ -185,7 +185,6 @@ extern "C"
   };
   typedef struct nlm4_sm_notifyargs nlm4_sm_notifyargs;
   extern void nlm_init(void);
-  extern void nlm_startup(void);
 
 #define NLMPROG 100021
 #define NLM4_VERS 4
