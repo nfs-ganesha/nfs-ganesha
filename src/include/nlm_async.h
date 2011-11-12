@@ -60,11 +60,11 @@ int nlm_async_callback(nlm_async_queue_t *arg);
 int nlm_async_callback_init();
 
 int nlm_send_async_res_nlm4(state_nlm_client_t * host,
-                            nlm_callback_func    func,
+                            state_async_func     func,
                             nfs_res_t          * pres);
 
 int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
-                                nlm_callback_func    func,
+                                state_async_func     func,
                                 nfs_res_t          * pres);
 
 typedef struct
