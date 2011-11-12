@@ -43,7 +43,6 @@
 #include "nfs_core.h"
 #include "nfs_tcb.h"
 
-nfs_tcb_t  nlmtcb;
 /* nlm grace time tracking */
 static struct timeval nlm_grace_tv;
 #define NLM4_GRACE_PERIOD 10
@@ -191,14 +190,6 @@ void nlm_init(void)
   granted_cookie.gc_seconds      = (unsigned long) nlm_grace_tv.tv_sec;
   granted_cookie.gc_microseconds = (unsigned long) nlm_grace_tv.tv_usec;
   granted_cookie.gc_cookie       = 0;
-  tcb_new(&nlmtcb, "NLM async thread");
-}
-
-void nlm_startup(void)
-{
-  if(nlm_async_callback_init() == -1)
-    LogFatal(COMPONENT_INIT,
-             "Could not start NLM async thread");
 }
 
 void free_grant_arg(state_async_queue_t *arg)
