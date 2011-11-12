@@ -164,23 +164,25 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
   return NFS_REQ_OK;
 }
 
-static void nlm4_test_message_resp(nlm_async_queue_t *arg)
+static void nlm4_test_message_resp(state_async_queue_t *arg)
 {
+  state_nlm_async_data_t * nlm_arg = &arg->state_async_data.state_nlm_async_data;
+
   if(isFullDebug(COMPONENT_NLM))
     {
       char buffer[1024];
-      netobj_to_string(&arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie, buffer, 1024);
+      netobj_to_string(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie, buffer, 1024);
       LogFullDebug(COMPONENT_NLM,
                    "Calling nlm_send_async cookie=%s status=%s",
-                   buffer, lock_result_str(arg->nlm_async_args.nlm_async_res.res_nlm4test.test_stat.stat));
+                   buffer, lock_result_str(nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.test_stat.stat));
     }
   nlm_send_async(NLMPROC4_TEST_RES,
-                 arg->nlm_async_host,
-                 &(arg->nlm_async_args.nlm_async_res),
+                 nlm_arg->nlm_async_host,
+                 &(nlm_arg->nlm_async_args.nlm_async_res),
                  NULL);
-  nlm4_Test_Free(&arg->nlm_async_args.nlm_async_res);
-  dec_nsm_client_ref(arg->nlm_async_host->slc_nsm_client);
-  dec_nlm_client_ref(arg->nlm_async_host);
+  nlm4_Test_Free(&nlm_arg->nlm_async_args.nlm_async_res);
+  dec_nsm_client_ref(nlm_arg->nlm_async_host->slc_nsm_client);
+  dec_nlm_client_ref(nlm_arg->nlm_async_host);
   Mem_Free(arg);
 }
 
