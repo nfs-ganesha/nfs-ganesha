@@ -1547,12 +1547,6 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
            "%d worker threads were started successfully",
 	   nfs_param.core_param.nb_worker);
 
-#ifdef _USE_NLM
-  /* Start NLM threads */
-  if(!flush_datacache_mode)
-    nlm_startup();
-#endif
-
   /* Start State Async threads */
   if(!flush_datacache_mode)
     state_async_thread_start();
