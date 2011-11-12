@@ -201,13 +201,14 @@ void nlm_startup(void)
              "Could not start NLM async thread");
 }
 
-void free_grant_arg(nlm_async_queue_t *arg)
+void free_grant_arg(state_async_queue_t *arg)
 {
-  netobj_free(&arg->nlm_async_args.nlm_async_grant.cookie);
-  netobj_free(&arg->nlm_async_args.nlm_async_grant.alock.oh);
-  netobj_free(&arg->nlm_async_args.nlm_async_grant.alock.fh);
-  if(arg->nlm_async_args.nlm_async_grant.alock.caller_name != NULL)
-    Mem_Free(arg->nlm_async_args.nlm_async_grant.alock.caller_name);
+  state_nlm_async_data_t * nlm_arg = &arg->state_async_data.state_nlm_async_data;
+  netobj_free(&nlm_arg->nlm_async_args.nlm_async_grant.cookie);
+  netobj_free(&nlm_arg->nlm_async_args.nlm_async_grant.alock.oh);
+  netobj_free(&nlm_arg->nlm_async_args.nlm_async_grant.alock.fh);
+  if(nlm_arg->nlm_async_args.nlm_async_grant.alock.caller_name != NULL)
+    Mem_Free(nlm_arg->nlm_async_args.nlm_async_grant.alock.caller_name);
   Mem_Free(arg);
 }
 
@@ -217,31 +218,32 @@ void free_grant_arg(nlm_async_queue_t *arg)
  *
  * This runs in the nlm_asyn_thread context.
  */
-static void nlm4_send_grant_msg(nlm_async_queue_t *arg)
+static void nlm4_send_grant_msg(state_async_queue_t *arg)
 {
-  int                    retval;
-  char                   buffer[1024];
-  state_status_t         state_status = STATE_SUCCESS;
-  state_cookie_entry_t * cookie_entry;
-  fsal_op_context_t      context, * pcontext = &context;
+  int                      retval;
+  char                     buffer[1024];
+  state_status_t           state_status = STATE_SUCCESS;
+  state_cookie_entry_t   * cookie_entry;
+  fsal_op_context_t        context, * pcontext = &context;
+  state_nlm_async_data_t * nlm_arg = &arg->state_async_data.state_nlm_async_data;
 
   if(isDebug(COMPONENT_NLM))
     {
-      netobj_to_string(&arg->nlm_async_args.nlm_async_grant.cookie,
+      netobj_to_string(&nlm_arg->nlm_async_args.nlm_async_grant.cookie,
                        buffer, sizeof(buffer));
 
       LogDebug(COMPONENT_NLM,
                "Sending GRANTED for arg=%p svid=%d start=%llx len=%llx cookie=%s",
-               arg, arg->nlm_async_args.nlm_async_grant.alock.svid,
-               (unsigned long long) arg->nlm_async_args.nlm_async_grant.alock.l_offset,
-               (unsigned long long) arg->nlm_async_args.nlm_async_grant.alock.l_len,
+               arg, nlm_arg->nlm_async_args.nlm_async_grant.alock.svid,
+               (unsigned long long) nlm_arg->nlm_async_args.nlm_async_grant.alock.l_offset,
+               (unsigned long long) nlm_arg->nlm_async_args.nlm_async_grant.alock.l_len,
                buffer);
     }
 
   retval = nlm_send_async(NLMPROC4_GRANTED_MSG,
-                          arg->nlm_async_host,
-                          &(arg->nlm_async_args.nlm_async_grant),
-                          arg->nlm_async_key);
+                          nlm_arg->nlm_async_host,
+                          &(nlm_arg->nlm_async_args.nlm_async_grant),
+                          nlm_arg->nlm_async_key);
 
   free_grant_arg(arg);
 
@@ -257,10 +259,10 @@ static void nlm4_send_grant_msg(nlm_async_queue_t *arg)
            "GRANTED_MSG RPC call failed with return code %d. Removing the blocking lock",
            retval);
 
-  if(state_find_grant(arg->nlm_async_args.nlm_async_grant.cookie.n_bytes,
-                      arg->nlm_async_args.nlm_async_grant.cookie.n_len,
+  if(state_find_grant(nlm_arg->nlm_async_args.nlm_async_grant.cookie.n_bytes,
+                      nlm_arg->nlm_async_args.nlm_async_grant.cookie.n_len,
                       &cookie_entry,
-                      &nlm_async_cache_inode_client,
+                      &state_async_cache_inode_client,
                       &state_status) != STATE_SUCCESS)
     {
       /* This must be an old NLM_GRANTED_RES */
@@ -288,7 +290,7 @@ static void nlm4_send_grant_msg(nlm_async_queue_t *arg)
 
   if(state_release_grant(pcontext,
                          cookie_entry,
-                         &nlm_async_cache_inode_client,
+                         &state_async_cache_inode_client,
                          &state_status) != STATE_SUCCESS)
     {
       /* Huh? */
@@ -582,11 +584,12 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
   state_block_data_t     * block_data     = lock_entry->sle_block_data;
   state_nlm_block_data_t * nlm_block_data = &block_data->sbd_block_data.sbd_nlm_block_data;
   state_cookie_entry_t   * cookie_entry;
-  nlm_async_queue_t      * arg;
+  state_async_queue_t    * arg;
   nlm4_testargs          * inarg;
   state_nlm_owner_t      * nlm_grant_owner  = &lock_entry->sle_owner->so_owner.so_nlm_owner;
   state_nlm_client_t     * nlm_grant_client = nlm_grant_owner->so_client;
   granted_cookie_t         nlm_grant_cookie;
+  state_status_t           dummy_status;
 
   if(nlm_block_data_to_fsal_context(nlm_block_data, &fsal_context) != TRUE)
     {
@@ -594,7 +597,7 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
       return *pstatus;
     }
 
-  arg = (nlm_async_queue_t *) Mem_Alloc(sizeof(*arg));
+  arg = (state_async_queue_t *) Mem_Alloc(sizeof(*arg));
   if(arg == NULL)
     {
       /* If we fail allocation the best is to delete the block entry
@@ -628,27 +631,27 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
     }
 
   /* Fill in the arguments for the NLMPROC4_GRANTED_MSG call */
-  arg->nlm_async_func = nlm4_send_grant_msg;
-  arg->nlm_async_host = nlm_grant_client;
-  arg->nlm_async_key  = cookie_entry;
-  inarg = &arg->nlm_async_args.nlm_async_grant;
+  arg->state_async_func = nlm4_send_grant_msg;
+  arg->state_async_data.state_nlm_async_data.nlm_async_host = nlm_grant_client;
+  arg->state_async_data.state_nlm_async_data.nlm_async_key  = cookie_entry;
+  inarg = &arg->state_async_data.state_nlm_async_data.nlm_async_args.nlm_async_grant;
 
   if(!copy_netobj(&inarg->alock.fh, &nlm_block_data->sbd_nlm_fh))
-    goto grant_fail;
+    goto grant_fail_malloc;
 
   if(!fill_netobj(&inarg->alock.oh,
                   lock_entry->sle_owner->so_owner_val,
                   lock_entry->sle_owner->so_owner_len))
-    goto grant_fail;
+    goto grant_fail_malloc;
 
   if(!fill_netobj(&inarg->cookie,
                   (char *) &nlm_grant_cookie,
                   sizeof(nlm_grant_cookie)))
-    goto grant_fail;
+    goto grant_fail_malloc;
 
   inarg->alock.caller_name = Str_Dup(nlm_grant_client->slc_nlm_caller_name);
   if(!inarg->alock.caller_name)
-    goto grant_fail;
+    goto grant_fail_malloc;
 
   inarg->exclusive      = lock_entry->sle_lock.sld_type == STATE_LOCK_W;
   inarg->alock.svid     = nlm_grant_owner->so_nlm_svid;
@@ -668,11 +671,15 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
     }
 
   /* Now try to schedule NLMPROC4_GRANTED_MSG call */
-  if(nlm_async_callback(arg) == -1)
+  *pstatus = state_async_schedule(arg);
+
+  if(*pstatus != STATE_SUCCESS)
     goto grant_fail;
 
-  *pstatus = STATE_SUCCESS;
   return *pstatus;
+
+ grant_fail_malloc:
+  *pstatus = STATE_MALLOC_ERROR;
 
  grant_fail:
 
@@ -685,13 +692,12 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
   if(state_cancel_grant(pcontext,
                         cookie_entry,
                         pclient,
-                        pstatus) != STATE_SUCCESS)
+                        &dummy_status) != STATE_SUCCESS)
     {
       /* Not much we can do other than log that something bad happened. */
       LogCrit(COMPONENT_NLM,
               "Unable to clean up GRANTED lock after error");
     }
 
-  *pstatus = STATE_MALLOC_ERROR;
   return *pstatus;
 }
