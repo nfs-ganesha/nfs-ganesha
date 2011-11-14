@@ -200,8 +200,8 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
   /*
    * Sanity checks: we must manage directories
    */
-  if((parent_filetype != DIR_BEGINNING && parent_filetype != DIR_CONTINUE) ||
-     (new_parent_filetype != DIR_BEGINNING && new_parent_filetype != DIR_CONTINUE))
+  if((parent_filetype != DIRECTORY) ||
+     (new_parent_filetype != DIRECTORY))
     {
       switch (preq->rq_vers)
         {

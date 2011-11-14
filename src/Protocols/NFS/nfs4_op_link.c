@@ -203,14 +203,14 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   dir_pentry = data->current_entry;
 
   /* Destination FH (the currentFH) must be a directory */
-  if(data->current_filetype != DIR_BEGINNING && data->current_filetype != DIR_CONTINUE)
+  if(data->current_filetype != DIRECTORY)
     {
       res_LINK4.status = NFS4ERR_NOTDIR;
       return res_LINK4.status;
     }
 
   /* Target object (the savedFH) must not be a directory */
-  if(data->saved_filetype == DIR_BEGINNING || data->saved_filetype == DIR_CONTINUE)
+  if(data->saved_filetype == DIRECTORY)
     {
       res_LINK4.status = NFS4ERR_ISDIR;
       return res_LINK4.status;

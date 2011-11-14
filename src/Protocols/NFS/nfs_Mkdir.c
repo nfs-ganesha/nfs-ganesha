@@ -162,7 +162,7 @@ int nfs_Mkdir(nfs_arg_t * parg,
   /*
    * Sanity checks: 
    */
-  if(parent_filetype != DIR_BEGINNING && parent_filetype != DIR_CONTINUE)
+  if(parent_filetype != DIRECTORY)
     {
       switch (preq->rq_vers)
         {
@@ -237,7 +237,7 @@ int nfs_Mkdir(nfs_arg_t * parg,
               /* Create the directory */
               if((dir_pentry = cache_inode_create(parent_pentry,
                                                   &dir_name,
-                                                  DIR_BEGINNING,
+                                                  DIRECTORY,
                                                   pexport->cache_inode_policy,
                                                   mode,
                                                   NULL,

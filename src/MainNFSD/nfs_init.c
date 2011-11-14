@@ -634,7 +634,6 @@ void nfs_set_param_default()
   nfs_param.cache_layers_param.cache_inode_client_param.lru_param.clean_entry =
       lru_inode_clean_entry;
   nfs_param.cache_layers_param.cache_inode_client_param.nb_prealloc_entry = 1024;
-  nfs_param.cache_layers_param.cache_inode_client_param.nb_pre_dir_data = 256;
   nfs_param.cache_layers_param.cache_inode_client_param.nb_pre_parent = 2048;
   nfs_param.cache_layers_param.cache_inode_client_param.nb_pre_state_v4 = 512;
   nfs_param.cache_layers_param.cache_inode_client_param.grace_period_attr   = 0;

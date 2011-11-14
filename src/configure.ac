@@ -241,8 +241,6 @@ if test "$enable_ds" == "yes"; then
 fi
 AM_CONDITIONAL(USE_DS, test "$enable_ds" = "yes")
 
-
-
 # TI-RPC
 GA_ENABLE_AM_CONDITION([tirpc],[enable TIRPC support],[USE_TIRPC])
 
@@ -320,7 +318,7 @@ AC_SUBST(EFENCE)
 
 # Debugging options
 #GA_DISABLE_FLAG( [concurrent-memalloc],  [a thread is not allowed to free a block allocated by another thread], [-D_MONOTHREAD_MEMALLOC] )
-GA_DISABLE_FLAG( [prealloc],             [disable GANESHA's memory preallocator, for debug purpose only], [-D_NO_BLOCK_PREALLOC] )
+GA_DISABLE_FLAG( [prealloc],             [disable memory preallocator, for debug purpose only], [-D_NO_BLOCK_PREALLOC] )
 GA_DISABLE_FLAG( [tcp-register], 	 [disable registration of tcp services on portmapper], 		  [-D_NO_TCP_REGISTER] )
 GA_DISABLE_FLAG( [portmapper], 	         [disable registration on portmapper], 				  [-D_NO_PORTMAPPER] )
 GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and files support],               [-D_NO_XATTRD])
@@ -362,6 +360,15 @@ AC_ARG_WITH( [extra-includedir], AS_HELP_STRING([--with-extra-includedir=<path>]
 
 if test "${with_extra_includedir+set}" == "set"; then
 	CFLAGS="$CFLAGS -I$EXTRA_INCLUDE_DIR"
+fi
+
+# CUnit
+AC_ARG_WITH( [cunit], AS_HELP_STRING([--with-cunit=<path>], [Path to CUnit] ),
+		CUNIT="$withval" )
+
+if test "${with_cunit+set}" == "set"; then
+	CFLAGS="$CFLAGS -I$CUNIT/include"
+	LDFLAGS="-L$CUNIT/lib $LDFLAGS -lcunit"
 fi
 
 # FSAL switch argument (default is PROXY)
@@ -773,11 +780,6 @@ case $MFSL in
 		AC_DEFINE([_USE_MFSL_AIO], 1, [Use MFSL_AIO module with asynchronous FSAL read and write ])
 		MFSL_LIB="\$(top_builddir)/MFSL/MFSL_AIO/libmfslaio.la"
 		;;
-	PNFS_FILE)
-		AC_DEFINE([_USE_MFSL], 1, [Use MFSL module])
-		AC_DEFINE([_USE_MFSL_PNFS_FILE], 1, [Use MFSL_PNFS_FILE module with pNFS/Files model ])
-		MFSL_LIB="\$(top_builddir)/MFSL/MFSL_PNFS_FILE/libmfslpnfs_file.la"
-		;;
 	PROXY_RPCSECGSS)
 		AC_DEFINE([_USE_MFSL], 1, [Use MFSL module])
 		AC_DEFINE([_USE_MFSL_PROXY_RPCSECGSS], 1, [Use MFSL_PROXY_RPCSECGSS, wraps the FSAL call for RPCSECGSS client side in proxy])
@@ -918,7 +920,6 @@ AC_CONFIG_FILES([include/Makefile
                  include/MFSL/MFSL_NULL/Makefile
                  include/MFSL/MFSL_AIO/Makefile
                  include/MFSL/MFSL_ASYNC/Makefile
-                 include/MFSL/MFSL_PNFS_FILE/Makefile
                  include/MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  include/PNFS/Makefile
 		 include/PNFS/PARALLEL_FS/Makefile
@@ -934,6 +935,7 @@ AC_CONFIG_FILES([include/Makefile
                  RW_Lock/Makefile
                  SemN/Makefile
                  LRU/Makefile
+                 avl/Makefile
                  HashTable/Makefile
                  Cache_inode/Makefile
                  SAL/Makefile
@@ -974,7 +976,6 @@ AC_CONFIG_FILES([include/Makefile
 		 MFSL/MFSL_NULL/Makefile
 		 MFSL/MFSL_ASYNC/Makefile
 		 MFSL/MFSL_AIO/Makefile
-		 MFSL/MFSL_PNFS_FILE/Makefile
 		 MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  RPCAL/Makefile
                  RPCAL/ONCRPC/Makefile

@@ -172,7 +172,7 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
    * Sanity checks: new directory name must be non-null; parent must be
    * a directory. 
    */
-  if(parent_filetype != DIR_BEGINNING && parent_filetype != DIR_CONTINUE)
+  if(parent_filetype != DIRECTORY)
     {
       switch (preq->rq_vers)
         {

@@ -186,7 +186,7 @@ int nfs_Link(nfs_arg_t * parg,
   /*
    * Sanity checks: 
    */
-  if(parent_filetype != DIR_BEGINNING && parent_filetype != DIR_CONTINUE)
+  if(parent_filetype != DIRECTORY)
     {
       switch (preq->rq_vers)
         {

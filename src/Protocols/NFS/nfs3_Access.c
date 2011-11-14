@@ -159,7 +159,7 @@ int nfs3_Access(nfs_arg_t * parg,
   else if(parg->arg_access3.access & ACCESS3_LOOKUP)
     access_mode |= nfs_get_access_mask(ACCESS3_LOOKUP, &attr);
 
-  if(filetype == DIR_BEGINNING || filetype == DIR_CONTINUE)
+  if(filetype == DIRECTORY)
     {
       if(parg->arg_access3.access & ACCESS3_DELETE)
         access_mode |= nfs_get_access_mask(ACCESS3_DELETE, &attr);
@@ -176,7 +176,7 @@ int nfs3_Access(nfs_arg_t * parg,
 
       /* In Unix, delete permission only applies to directories */
 
-      if(filetype == DIR_BEGINNING || filetype == DIR_CONTINUE)
+      if(filetype == DIRECTORY)
         pres->res_access3.ACCESS3res_u.resok.access = parg->arg_access3.access;
       else
         pres->res_access3.ACCESS3res_u.resok.access =
@@ -236,7 +236,7 @@ int nfs3_Access(nfs_arg_t * parg,
             pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_LOOKUP;
         }
 
-      if(filetype == DIR_BEGINNING || filetype == DIR_CONTINUE)
+      if(filetype == DIRECTORY)
         {
           access_mode = nfs_get_access_mask(ACCESS3_DELETE, &attr);
           if(cache_inode_access(pentry,

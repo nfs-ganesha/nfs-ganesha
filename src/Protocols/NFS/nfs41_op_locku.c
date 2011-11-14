@@ -124,8 +124,7 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       /* Type of the entry is not correct */
       switch (data->current_filetype)
         {
-        case DIR_BEGINNING:
-        case DIR_CONTINUE:
+        case DIRECTORY:
           res_LOCKU4.status = NFS4ERR_ISDIR;
           return res_LOCKU4.status;
 

@@ -171,7 +171,7 @@ int nfs_Create(nfs_arg_t * parg,
    * Sanity checks: new file name must be non-null; parent must be a
    * directory. 
    */
-  if((parent_filetype != DIR_BEGINNING) && (parent_filetype != DIR_CONTINUE))
+  if(parent_filetype != DIRECTORY)
     {
       switch (preq->rq_vers)
         {

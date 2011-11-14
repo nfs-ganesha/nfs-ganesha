@@ -195,7 +195,7 @@ int nfs_Write(nfs_arg_t * parg,
           break;
 
         case NFS_V3:
-          if(filetype == DIR_BEGINNING || filetype == DIR_CONTINUE)
+          if(filetype == DIRECTORY)
             pres->res_write3.status = NFS3ERR_ISDIR;
           else
             pres->res_write3.status = NFS3ERR_INVAL;

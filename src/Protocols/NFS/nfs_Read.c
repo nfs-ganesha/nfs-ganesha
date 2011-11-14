@@ -177,7 +177,7 @@ int nfs_Read(nfs_arg_t * parg,
           break;
 
         case NFS_V3:
-          if(filetype == DIR_BEGINNING || filetype == DIR_CONTINUE)
+          if(filetype == DIRECTORY)
             pres->res_read3.status = NFS3ERR_ISDIR;
           else
             pres->res_read3.status = NFS3ERR_INVAL;

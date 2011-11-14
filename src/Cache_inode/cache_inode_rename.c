@@ -84,17 +84,17 @@ cache_inode_status_t cache_inode_rename_cached_dirent(cache_entry_t * pentry_par
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* Sanity check */
-  if(pentry_parent->internal_md.type != DIR_BEGINNING &&
-     pentry_parent->internal_md.type != DIR_CONTINUE)
+  if(pentry_parent->internal_md.type != DIRECTORY)
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
       return *pstatus;
     }
 
-  /* BUGAZOMEU: Ne pas oublier de jarter un dir_cont dont toutes les entrees sont inactives */
+  /* BUGAZOMEU: Ne pas oublier de jarter un dir dont toutes les entrees sont inactives */
   if((removed_pentry = cache_inode_operate_cached_dirent(pentry_parent,
                                                          oldname,
                                                          newname,
+                                                         pclient,
                                                          CACHE_INODE_DIRENT_OP_RENAME,
                                                          pstatus)) == NULL)
     return *pstatus;
@@ -137,6 +137,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
 {
   cache_inode_status_t status;
   fsal_status_t fsal_status;
+  cache_inode_dir_entry_t *new_dir_entry;
   cache_entry_t *pentry_lookup_src = NULL;
   cache_entry_t *pentry_lookup_dest = NULL;
   fsal_attrib_list_t attrlookup;
@@ -153,10 +154,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
   pclient->stat.func_stats.nb_call[CACHE_INODE_RENAME] += 1;
 
   /* Are we working on directories ? */
-  if((pentry_dirsrc->internal_md.type != DIR_BEGINNING
-      && pentry_dirsrc->internal_md.type != DIR_CONTINUE)
-     || (pentry_dirdest->internal_md.type != DIR_BEGINNING
-         && pentry_dirdest->internal_md.type != DIR_CONTINUE))
+  if((pentry_dirsrc->internal_md.type != DIRECTORY)
+     || (pentry_dirdest->internal_md.type != DIRECTORY))
     {
       /* Bad type .... */
       *pstatus = CACHE_INODE_BAD_TYPE;
@@ -237,8 +236,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
                pentry_dirsrc, poldname->name, pentry_dirdest, pnewname->name);
 
       /* If the already existing object is a directory, source object should ne a directory */
-      if(pentry_lookup_dest->internal_md.type == DIR_BEGINNING &&
-         pentry_lookup_src->internal_md.type != DIR_BEGINNING)
+      if(pentry_lookup_dest->internal_md.type == DIRECTORY &&
+         pentry_lookup_src->internal_md.type != DIRECTORY)
         {
           V_w(&pentry_dirsrc->lock);
           if(pentry_dirsrc != pentry_dirdest)
@@ -253,8 +252,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
           return *pstatus;
         }
 
-      if(pentry_lookup_dest->internal_md.type != DIR_BEGINNING &&
-         pentry_lookup_src->internal_md.type == DIR_BEGINNING)
+      if(pentry_lookup_dest->internal_md.type != DIRECTORY &&
+         pentry_lookup_src->internal_md.type == DIRECTORY)
         {
           /* Return ENOTDIR */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
@@ -293,7 +292,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
         }
 
       /* Entry with the newname exists, if it is a non-empty directory, operation cannot be performed */
-      if((pentry_lookup_dest->internal_md.type == DIR_BEGINNING) &&
+      if((pentry_lookup_dest->internal_md.type == DIRECTORY) &&
          (cache_inode_is_dir_empty(pentry_lookup_dest) != CACHE_INODE_SUCCESS))
         {
           /* The entry is a non-empty directory */
@@ -352,20 +351,10 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
 
   /* Get the handle for the dirsrc pentry */
 
-  if(pentry_dirsrc->internal_md.type == DIR_BEGINNING)
+  if(pentry_dirsrc->internal_md.type == DIRECTORY)
     {
-      phandle_dirsrc = &pentry_dirsrc->object.dir_begin.handle;
-      pattrsrc = &pentry_dirsrc->object.dir_begin.attributes;
-    }
-  else if(pentry_dirsrc->internal_md.type == DIR_CONTINUE)
-    {
-      P_r(&pentry_dirsrc->object.dir_cont.pdir_begin->lock);
-
-      phandle_dirsrc =
-          &pentry_dirsrc->object.dir_cont.pdir_begin->object.dir_begin.handle;
-      pattrsrc = &pentry_dirsrc->object.dir_cont.pdir_begin->object.dir_begin.attributes;
-
-      V_r(&pentry_dirsrc->object.dir_cont.pdir_begin->lock);
+      phandle_dirsrc = &pentry_dirsrc->object.dir.handle;
+      pattrsrc = &pentry_dirsrc->object.dir.attributes;
     }
   else
     {
@@ -383,21 +372,10 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
 
   /* Get the handle for the dirdest pentry */
 
-  if(pentry_dirdest->internal_md.type == DIR_BEGINNING)
+  if(pentry_dirdest->internal_md.type == DIRECTORY)
     {
-      phandle_dirdest = &pentry_dirdest->object.dir_begin.handle;
-      pattrdest = &pentry_dirdest->object.dir_begin.attributes;
-    }
-  else if(pentry_dirdest->internal_md.type == DIR_CONTINUE)
-    {
-      P_r(&pentry_dirdest->object.dir_cont.pdir_begin->lock);
-
-      phandle_dirdest =
-          &pentry_dirdest->object.dir_cont.pdir_begin->object.dir_begin.handle;
-      pattrdest =
-          &pentry_dirdest->object.dir_cont.pdir_begin->object.dir_begin.attributes;
-
-      V_r(&pentry_dirdest->object.dir_cont.pdir_begin->lock);
+      phandle_dirdest = &pentry_dirdest->object.dir.handle;
+      pattrdest = &pentry_dirdest->object.dir.attributes;
     }
   else
     {
@@ -536,7 +514,9 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
       status = cache_inode_add_cached_dirent(pentry_dirdest,
                                              pnewname,
                                              pentry_lookup_src,
-                                             NULL, ht, pclient, pcontext, pstatus);
+                                             ht, 
+					     &new_dir_entry,
+					     pclient, pcontext, pstatus);
       if(status != CACHE_INODE_SUCCESS)
         {
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_RENAME] += 1;
