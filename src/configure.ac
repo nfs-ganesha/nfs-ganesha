@@ -765,11 +765,6 @@ case $MFSL in
 		AC_DEFINE([_USE_MFSL_AIO], 1, [Use MFSL_AIO module with asynchronous FSAL read and write ])
 		MFSL_LIB="\$(top_builddir)/MFSL/MFSL_AIO/libmfslaio.la"
 		;;
-	PNFS_FILE)
-		AC_DEFINE([_USE_MFSL], 1, [Use MFSL module])
-		AC_DEFINE([_USE_MFSL_PNFS_FILE], 1, [Use MFSL_PNFS_FILE module with pNFS/Files model ])
-		MFSL_LIB="\$(top_builddir)/MFSL/MFSL_PNFS_FILE/libmfslpnfs_file.la"
-		;;
 	PROXY_RPCSECGSS)
 		AC_DEFINE([_USE_MFSL], 1, [Use MFSL module])
 		AC_DEFINE([_USE_MFSL_PROXY_RPCSECGSS], 1, [Use MFSL_PROXY_RPCSECGSS, wraps the FSAL call for RPCSECGSS client side in proxy])
@@ -910,7 +905,6 @@ AC_CONFIG_FILES([include/Makefile
                  include/MFSL/MFSL_NULL/Makefile
                  include/MFSL/MFSL_AIO/Makefile
                  include/MFSL/MFSL_ASYNC/Makefile
-                 include/MFSL/MFSL_PNFS_FILE/Makefile
                  include/MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  include/PNFS/Makefile
 		 include/PNFS/PARALLEL_FS/Makefile
@@ -966,7 +960,6 @@ AC_CONFIG_FILES([include/Makefile
 		 MFSL/MFSL_NULL/Makefile
 		 MFSL/MFSL_ASYNC/Makefile
 		 MFSL/MFSL_AIO/Makefile
-		 MFSL/MFSL_PNFS_FILE/Makefile
 		 MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  RPCAL/Makefile
                  RPCAL/ONCRPC/Makefile
