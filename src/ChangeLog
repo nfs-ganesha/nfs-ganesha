@@ -467,13 +467,16 @@
        - Bug Fix: Badly formed fsal_op_context_t in FSAL_ZFS (issue when using as shared object)
        - Bug Fix: bad modes/ACLs management in several FSALs (produced EPERM errors)
        - Bug Fix: badly managed access_type in nfs3_Access
+
+1.2.0  - 
        - Bug Fix:  Call cache_inode_close after deleting share state
        - Added support for ERR_FSAL_DELAY in upper layer
        - FSAL code has been reorganized a lot
        - New SAL (State Abstraction Layer) to manage locks (NFSv4/NLM) and share reservations
-       - NFSv4.0 are now activated by default
        - Symbolic Links are managed via a pool to save memory in Cache_Inode
        - Early 9P support
        - Lustre FSAL: exporting several Lustre filesystem with the same server instance
        - A bug was found and fix in OP4_READDIRPLUS (leading to missing
          directory's entries)
+       - Directory content cached is now managed as a tree. Formerly used
+         dir_chain were removed.
