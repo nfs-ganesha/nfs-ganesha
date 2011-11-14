@@ -39,6 +39,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "FSAL/access_check.h"
 
 /**
  * FSAL_access :
@@ -96,7 +97,7 @@ fsal_status_t XFSFSAL_access(fsal_handle_t * p_object_handle,        /* IN */
 
       FSAL_SET_MASK(p_object_attributes->asked_attributes,
                     FSAL_ATTR_OWNER | FSAL_ATTR_GROUP | FSAL_ATTR_ACL | FSAL_ATTR_MODE);
-      status = XFSFSAL_getattrs(p_object_handle, p_context, p_object_attributes);
+      status = FSAL_getattrs(p_object_handle, p_context, p_object_attributes);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
@@ -107,7 +108,7 @@ fsal_status_t XFSFSAL_access(fsal_handle_t * p_object_handle,        /* IN */
         }
 
       status =
-          fsal_internal_testAccess(p_context, access_type, NULL, p_object_attributes);
+          fsal_check_access(p_context, access_type, NULL, p_object_attributes);
 
     }
   else
@@ -118,13 +119,13 @@ fsal_status_t XFSFSAL_access(fsal_handle_t * p_object_handle,        /* IN */
       FSAL_SET_MASK(attrs.asked_attributes,
                     FSAL_ATTR_OWNER | FSAL_ATTR_GROUP | FSAL_ATTR_ACL | FSAL_ATTR_MODE);
 
-      status = XFSFSAL_getattrs(p_object_handle, p_context, &attrs);
+      status = FSAL_getattrs(p_object_handle, p_context, &attrs);
 
       /* on error, we set a special bit in the mask. */
       if(FSAL_IS_ERROR(status))
         Return(status.major, status.minor, INDEX_FSAL_access);
 
-      status = fsal_internal_testAccess(p_context, access_type, NULL, &attrs);
+      status = fsal_check_access(p_context, access_type, NULL, &attrs);
     }
 
   Return(status.major, status.minor, INDEX_FSAL_access);

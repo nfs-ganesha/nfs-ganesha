@@ -42,6 +42,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include "FSAL/access_check.h"
 
 /**
  * FSAL_test_access :
@@ -78,6 +79,6 @@ fsal_status_t XFSFSAL_test_access(fsal_op_context_t * p_context,     /* IN */
     )
 {
   fsal_status_t status;
-  status = fsal_internal_testAccess(p_context, access_type, NULL, p_object_attributes);
+  status = fsal_check_access(p_context, access_type, NULL, p_object_attributes);
   Return(status.major, status.minor, INDEX_FSAL_test_access);
 }
