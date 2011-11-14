@@ -1036,6 +1036,11 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
       return *pstatus;
     }
 
+  /* Force dir content invalidation if policy enforced no name cache */
+  if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) )
+    dir_pentry->object.dir.has_been_readdir = CACHE_INODE_RENEW_NEEDED ;
+  
+
   /* Is the directory fully cached (this is done if a readdir call is done on the directory) */
   if(dir_pentry->object.dir.has_been_readdir != CACHE_INODE_YES)
   {

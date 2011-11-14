@@ -194,17 +194,22 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
       /* This is a read operation, this means that the file MUST have been opened for reading */
-      if(pstate_open != NULL &&
+      if(pstate_open != NULL &&  /** @todo : PhD: Possible bug here, but hard to reproduce */
          (pstate_open->state_data.share.share_access & OPEN4_SHARE_ACCESS_READ) == 0)
         {
-          /* Bad open mode, return NFS4ERR_OPENMODE */
-          res_READ4.status = NFS4ERR_OPENMODE;
-          LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "READ state %p doesn't have OPEN4_SHARE_ACCESS_READ",
-                   pstate_found);
-          return res_READ4.status;
+          /* Even if file is open for write, the client may do accidently read operation (caching).
+           * Because of this, READ is allowed if not explicitely denied.
+           * See page 186 in RFC5661 for more details */
+          if( pstate_open->state_data.share.share_deny & OPEN4_SHARE_DENY_READ )
+           {
+             /* Bad open mode, return NFS4ERR_OPENMODE */
+             res_READ4.status = NFS4ERR_OPENMODE;
+             LogDebug(COMPONENT_NFS_V4_LOCK,
+                      "READ state %p doesn't have OPEN4_SHARE_ACCESS_READ",
+                       pstate_found);
+             return res_READ4.status;
+           }
         }
-
     }
   else
     {
