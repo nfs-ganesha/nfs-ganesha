@@ -75,6 +75,7 @@
  * parallel cancel/unlock won't endup freeing the datastructure. The last
  * release on the data structure ensure that it is freed.
  */
+
 #ifdef _DEBUG_MEMLEAKS
 static struct glist_head state_all_locks;
 pthread_mutex_t all_locks_mutex = PTHREAD_MUTEX_INITIALIZER;

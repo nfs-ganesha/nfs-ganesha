@@ -54,6 +54,7 @@
 #include "sal_functions.h"
 #include "nfs_tcb.h"
 
+#ifdef _USE_BLOCKING_LOCKS
 static pthread_t               state_async_thread_id;
 static struct glist_head       state_async_queue;
 cache_inode_client_parameter_t state_async_cache_inode_client_param;
@@ -69,8 +70,6 @@ void *state_async_thread(void *argp)
   state_async_queue_t * entry;
   struct timeval        now;
   struct timespec       timeout;
-  struct glist_head     state_async_tmp_queue;
-  struct glist_head   * glist, * glistn;
 
   SetNameFunction("state_async_thread");
 
@@ -99,7 +98,8 @@ void *state_async_thread(void *argp)
   while(1)
     {
       /* Check without tcb lock*/
-      if((state_async_tcb.tcb_state != STATE_AWAKE) || glist_empty(&state_async_queue))
+      if((state_async_tcb.tcb_state != STATE_AWAKE) ||
+          glist_empty(&state_async_queue))
         {
           while(1)
             {
@@ -136,26 +136,27 @@ void *state_async_thread(void *argp)
             }
         }
 
+      /* Process one request if available */
       P(state_async_tcb.tcb_mutex);
-      init_glist(&state_async_tmp_queue);
-      /* Collect all the work items and add it to the temp
-       * list. Later we iterate over tmp list without holding
-       * the state_async_tcb.tcb_mutex.
-       */
-      glist_for_each_safe(glist, glistn, &state_async_queue)
-      {
-        entry = glist_entry(glist, state_async_queue_t, state_async_glist);
-        glist_del(glist);
-        glist_add(&state_async_tmp_queue, glist);
 
-      }
+      entry = glist_first_entry(&state_async_queue,
+                                state_async_queue_t,
+                                state_async_glist);
+      if(entry != NULL)
+        {
+          /* Pull entry off list */
+          glist_del(&entry->state_async_glist);
+
+          /* Entry is off list, no need to hold mutex any more */
+          V(state_async_tcb.tcb_mutex);
+
+          /* Process async queue entry */
+          entry->state_async_func(entry);
+
+          continue;
+        }
+
       V(state_async_tcb.tcb_mutex);
-      glist_for_each_safe(glist, glistn, &state_async_tmp_queue)
-      {
-        entry = glist_entry(glist, state_async_queue_t, state_async_glist);
-        glist_del(&entry->state_async_glist);
-        entry->state_async_func(entry);
-      }
     }
   tcb_remove(&state_async_tcb);
 }
@@ -190,9 +191,11 @@ static int local_lru_inode_clean_entry(LRU_entry_t * entry, void *adddata)
 {
   return 0;
 }                               /* lru_clean_entry */
+#endif
 
 state_status_t state_async_init()
 {
+#ifdef _USE_BLOCKING_LOCKS
   init_glist(&state_async_queue);
 
   /* setting the 'state_async_cache_inode_client_param' structure */
@@ -224,12 +227,16 @@ state_status_t state_async_init()
     }
 
   tcb_new(&state_async_tcb, "State Async Thread");
-
+#endif
   return STATE_SUCCESS;
 }
 
 void state_async_thread_start()
 {
+#ifdef _USE_BLOCKING_LOCKS
   if(pthread_create(&state_async_thread_id, NULL, state_async_thread, NULL) != 0)
     LogFatal(COMPONENT_STATE, "Could not start State Async Thread");
+#else
+  return;
+#endif
 }
