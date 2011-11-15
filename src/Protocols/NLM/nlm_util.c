@@ -236,6 +236,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
                           &(nlm_arg->nlm_async_args.nlm_async_grant),
                           nlm_arg->nlm_async_key);
 
+  dec_nlm_client_ref(nlm_arg->nlm_async_host);
   free_grant_arg(arg);
 
   /* If success, we are done. */
@@ -622,6 +623,7 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
     }
 
   /* Fill in the arguments for the NLMPROC4_GRANTED_MSG call */
+  inc_nlm_client_ref(nlm_grant_client);
   arg->state_async_func = nlm4_send_grant_msg;
   arg->state_async_data.state_nlm_async_data.nlm_async_host = nlm_grant_client;
   arg->state_async_data.state_nlm_async_data.nlm_async_key  = cookie_entry;
@@ -675,6 +677,8 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
  grant_fail:
 
   /* Something went wrong after we added a grant cookie, need to clean up */
+
+  dec_nlm_client_ref(nlm_grant_client);
 
   /* Clean up NLMPROC4_GRANTED_MSG arguments */
   free_grant_arg(arg);
