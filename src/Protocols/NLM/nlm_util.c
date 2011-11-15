@@ -267,7 +267,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
   P(cookie_entry->sce_pentry->object.file.lock_list_mutex);
 
   if(cookie_entry->sce_lock_entry->sle_block_data == NULL ||
-     !nlm_block_data_to_fsal_context(&cookie_entry->sce_lock_entry->sle_block_data->sbd_block_data.sbd_nlm_block_data,
+     !nlm_block_data_to_fsal_context(cookie_entry->sce_lock_entry->sle_block_data,
                                      pcontext))
     {
       /* Wow, we're not doing well... */
@@ -408,6 +408,7 @@ int nlm_process_parameters(struct svc_req        * preq,
               return NLM4_FAILED;
             }
           (*ppblock_data)->sbd_granted_callback = nlm_granted_callback;
+          (*ppblock_data)->sbd_block_data_to_fsal_context = nlm_block_data_to_fsal_context;
           (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh.n_bytes =
             (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh_buf;
           (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh.n_len = alock->fh.n_len;
@@ -416,12 +417,7 @@ int nlm_process_parameters(struct svc_req        * preq,
                  alock->fh.n_len);
           /* FSF TODO: Ultimately I think the following will go away, we won't need the context, just the export */
           /* Copy credentials from pcontext */
-#ifdef _USE_HPSS
-          memcpy( &( (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_credential) , 
-                  &pcontext->credential, sizeof( hpssfsal_cred_t ) ) ;
-#else
-          (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_credential = pcontext->credential;
-#endif
+          (*ppblock_data)->sbd_credential = pcontext->credential;
         }
     }
   /* Fill in plock */
@@ -499,12 +495,13 @@ nlm4_stats nlm_convert_state_error(state_status_t status)
     }
 }
 
-bool_t nlm_block_data_to_fsal_context(state_nlm_block_data_t * nlm_block_data,
-                                      fsal_op_context_t      * fsal_context)
+bool_t nlm_block_data_to_fsal_context(state_block_data_t * block_data,
+                                      fsal_op_context_t  * fsal_context)
 {
-  exportlist_t                 * pexport = NULL;
-  short                          exportid;
-  fsal_status_t                  fsal_status;
+  exportlist_t           * pexport = NULL;
+  short                    exportid;
+  fsal_status_t            fsal_status;
+  state_nlm_block_data_t * nlm_block_data = &block_data->sbd_block_data.sbd_nlm_block_data;
 
   /* Get export ID from handle */
   exportid = nlm4_FhandleToExportId(&nlm_block_data->sbd_nlm_fh);
@@ -544,25 +541,25 @@ bool_t nlm_block_data_to_fsal_context(state_nlm_block_data_t * nlm_block_data,
   /* Build the credentials */
   fsal_status = FSAL_GetClientContext(fsal_context,
                                       &pexport->FS_export_context,
-                                      nlm_block_data->sbd_credential.user,
-                                      nlm_block_data->sbd_credential.group,
-                                      nlm_block_data->sbd_credential.alt_groups,
-                                      nlm_block_data->sbd_credential.nbgroups);
+                                      block_data->sbd_credential.user,
+                                      block_data->sbd_credential.group,
+                                      block_data->sbd_credential.alt_groups,
+                                      block_data->sbd_credential.nbgroups);
 
   if(FSAL_IS_ERROR(fsal_status))
     {
       LogEvent(COMPONENT_NLM,
                "Could not get credentials for (uid=%d,gid=%d), fsal error=(%d,%d)",
-               nlm_block_data->sbd_credential.user,
-               nlm_block_data->sbd_credential.group,
+               block_data->sbd_credential.user,
+               block_data->sbd_credential.group,
                fsal_status.major, fsal_status.minor);
       return FALSE;
     }
   else
     LogDebug(COMPONENT_NLM,
              "FSAL Cred acquired for (uid=%d,gid=%d)",
-             nlm_block_data->sbd_credential.user,
-             nlm_block_data->sbd_credential.group);
+             block_data->sbd_credential.user,
+             block_data->sbd_credential.group);
 
   return TRUE;
 }
@@ -583,7 +580,7 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
   granted_cookie_t         nlm_grant_cookie;
   state_status_t           dummy_status;
 
-  if(nlm_block_data_to_fsal_context(nlm_block_data, &fsal_context) != TRUE)
+  if(nlm_block_data_to_fsal_context(block_data, &fsal_context) != TRUE)
     {
       *pstatus = STATE_INCONSISTENT_ENTRY;
       return *pstatus;
