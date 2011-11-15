@@ -454,7 +454,6 @@ struct state_cookie_entry_t
   void               * sce_pcookie;
   int                  sce_cookie_size;
 };
-#endif
 
 /*
  * Structures for state async processing
@@ -477,12 +476,10 @@ typedef struct state_nlm_async_data_t
 } state_nlm_async_data_t;
 #endif
 
-#ifdef _USE_BLOCKING_LOCKS
 typedef struct state_async_block_data_t
 {
   state_lock_entry_t * state_async_lock_entry;
 } state_async_block_data_t;
-#endif
 
 struct state_async_queue_t
 {
@@ -493,12 +490,9 @@ struct state_async_queue_t
 #ifdef _USE_NLM
       state_nlm_async_data_t     state_nlm_async_data;
 #endif
-#ifdef _USE_BLOCKING_LOCKS
-      state_async_block_data_t   state_async_block_data;
-#endif
       void                     * state_no_data;
     } state_async_data;
 };
-
+#endif
 
 #endif                          /*  _SAL_DATA_H */
