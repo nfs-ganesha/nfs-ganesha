@@ -2245,7 +2245,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
   printf("---> fs_specific_initinfo_t:%lu\n", sizeof(hpssfs_specific_initinfo_t));
   printf("---> fsal_cred_t:%lu\n", sizeof(hpssfsal_cred_t));
 #endif
-#if 0
+#if 1
   /* Will remain as long as all FSAL are not yet in new format */
   printf("---> fsal_handle_t:%lu\n", sizeof(snmpfsal_handle_t));
   printf("---> fsal_op_context_t:%lu\n", sizeof(snmpfsal_op_context_t));
