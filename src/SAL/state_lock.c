@@ -81,6 +81,19 @@ static struct glist_head state_all_locks;
 pthread_mutex_t all_locks_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
+#ifdef _USE_BLOCKING_LOCKS
+
+/* List of all locks blocked in FSAL */
+struct glist_head state_blocked_locks;
+
+/* List of all async blocking locks notified by FSAL but not processed */
+struct glist_head state_notified_locks;
+
+/* Mutex to protect above lists */
+pthread_mutex_t blocked_locks_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+#endif
+
 state_owner_t unknown_owner;
 
 #ifdef _USE_BLOCKING_LOCKS
@@ -120,6 +133,11 @@ state_status_t state_lock_init(state_status_t * pstatus)
 #endif
 #ifdef _DEBUG_MEMLEAKS
   init_glist(&state_all_locks);
+#endif
+
+#ifdef _USE_BLOCKING_LOCKS
+  init_glist(&state_blocked_locks);
+  init_glist(&state_notified_locks);
 #endif
 
   *pstatus = state_async_init();
@@ -318,6 +336,22 @@ void LogLock(log_components_t     component,
                  (unsigned long long) lock_end(plock));
     }
 }
+
+void LogLockDesc(log_components_t     component,
+                 log_levels_t         debug,
+                 const char         * reason,
+                 void               * powner,
+                 state_lock_desc_t  * plock)
+{
+  LogAtLevel(component, debug,
+             "%s Lock: powner=%p, type=%s, start=0x%llx, end=0x%llx",
+             reason,
+             powner,
+             str_lockt(plock->sld_type),
+             (unsigned long long) plock->sld_offset,
+             (unsigned long long) lock_end(plock));
+}
+
 
 /*
 void LogUnlock(cache_entry_t      *pentry,

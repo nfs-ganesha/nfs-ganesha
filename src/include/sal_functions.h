@@ -448,10 +448,19 @@ state_status_t state_lookup_layout_state(cache_entry_t * pentry,
  *
  ******************************************************************************/
 
+#ifdef _USE_BLOCKING_LOCKS
+
 /* Schedule Async Work */
 state_status_t state_async_schedule(state_async_queue_t *arg);
 
+/* Signal Async Work */
+void signal_async_work();
+
 state_status_t state_async_init();
 void state_async_thread_start();
+
+void process_blocked_lock_upcall(state_block_data_t   * block_data,
+                                 cache_inode_client_t * pclient);
+#endif
 
 #endif                          /*  _SAL_FUNCTIONS_H */
