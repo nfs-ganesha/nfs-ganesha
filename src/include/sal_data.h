@@ -99,6 +99,7 @@ typedef struct state_nlm_client_t   state_nlm_client_t;
 #endif
 #ifdef _USE_BLOCKING_LOCKS
 typedef struct state_cookie_entry_t state_cookie_entry_t;
+typedef struct state_block_data_t   state_block_data_t;
 #endif /* _USE_BLOCKING_LOCKS */
 #ifdef _USE_FSALMDS
 typedef struct state_layout_segment_t state_layout_segment_t;
@@ -369,13 +370,15 @@ typedef state_status_t (*granted_callback_t)(cache_entry_t        * pentry,
                                              cache_inode_client_t * pclient,
                                              state_status_t       * pstatus);
 
+typedef bool_t (*block_data_to_fsal_context_t)(state_block_data_t * block_data,
+                                               fsal_op_context_t  * fsal_context);
+
 #ifdef _USE_BLOCKING_LOCKS
 typedef struct state_nlm_block_data_t
 {
   sockaddr_t                 sbd_nlm_hostaddr;
   netobj                     sbd_nlm_fh;
   char                       sbd_nlm_fh_buf[MAX_NETOBJ_SZ];
-  struct user_credentials    sbd_credential;
 } state_nlm_block_data_t;
 
 /* List of all locks blocked in FSAL */
@@ -395,21 +398,23 @@ typedef enum state_grant_type_t
   STATE_GRANT_FSAL_AVAILABLE
 } state_grant_type_t;
 
-typedef struct state_block_data_t
+struct state_block_data_t
 {
-  struct glist_head            sbd_list;
-  state_grant_type_t           sbd_grant_type;
-  granted_callback_t           sbd_granted_callback;
-  state_cookie_entry_t       * sbd_blocked_cookie;
-  state_lock_entry_t         * sbd_lock_entry;
+  struct glist_head              sbd_list;
+  state_grant_type_t             sbd_grant_type;
+  granted_callback_t             sbd_granted_callback;
+  state_cookie_entry_t         * sbd_blocked_cookie;
+  state_lock_entry_t           * sbd_lock_entry;
+  block_data_to_fsal_context_t   sbd_block_data_to_fsal_context;
+  struct user_credentials        sbd_credential;
   union
     {
 #ifdef _USE_NLM
-      state_nlm_block_data_t   sbd_nlm_block_data;
+      state_nlm_block_data_t     sbd_nlm_block_data;
 #endif
-      void                   * sbd_v4_block_data;
+      void                     * sbd_v4_block_data;
     } sbd_block_data;
-} state_block_data_t;
+};
 #else
 typedef void state_block_data_t;
 #endif
