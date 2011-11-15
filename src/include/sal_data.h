@@ -378,10 +378,30 @@ typedef struct state_nlm_block_data_t
   struct user_credentials    sbd_credential;
 } state_nlm_block_data_t;
 
+/* List of all locks blocked in FSAL */
+struct glist_head state_blocked_locks;
+
+/* List of all async blocking locks notified by FSAL but not processed */
+struct glist_head state_notified_locks;
+
+/* Mutex to protect above lists */
+pthread_mutex_t blocked_locks_mutex;
+
+typedef enum state_grant_type_t
+{
+  STATE_GRANT_NONE,
+  STATE_GRANT_INTERNAL,
+  STATE_GRANT_FSAL,
+  STATE_GRANT_FSAL_AVAILABLE
+} state_grant_type_t;
+
 typedef struct state_block_data_t
 {
+  struct glist_head            sbd_list;
+  state_grant_type_t           sbd_grant_type;
   granted_callback_t           sbd_granted_callback;
   state_cookie_entry_t       * sbd_blocked_cookie;
+  state_lock_entry_t         * sbd_lock_entry;
   union
     {
 #ifdef _USE_NLM
