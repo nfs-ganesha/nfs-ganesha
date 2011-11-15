@@ -70,6 +70,7 @@ void *state_async_thread(void *argp)
   state_async_queue_t * entry;
   struct timeval        now;
   struct timespec       timeout;
+  state_block_data_t  * pblock;
 
   SetNameFunction("state_async_thread");
 
@@ -99,13 +100,15 @@ void *state_async_thread(void *argp)
     {
       /* Check without tcb lock*/
       if((state_async_tcb.tcb_state != STATE_AWAKE) ||
-          glist_empty(&state_async_queue))
+          (glist_empty(&state_async_queue) &&
+           glist_empty(&state_notified_locks)))
         {
           while(1)
             {
               P(state_async_tcb.tcb_mutex);
               if((state_async_tcb.tcb_state == STATE_AWAKE) &&
-                  !glist_empty(&state_async_queue))
+                  (!glist_empty(&state_async_queue) ||
+                   !glist_empty(&state_notified_locks)))
                 {
                   V(state_async_tcb.tcb_mutex);
                   break;
@@ -135,6 +138,32 @@ void *state_async_thread(void *argp)
                 }
             }
         }
+
+      /* Check for async blocking lock notifications first */
+      P(blocked_locks_mutex);
+
+      /* Handle one async blocking lock notification and loop back */
+      pblock = glist_first_entry(&state_notified_locks,
+                                 state_block_data_t,
+                                 sbd_list);
+
+      if(pblock != NULL)
+        {
+          /* Pull block off list */
+          glist_del(&pblock->sbd_list);
+
+          /* Block is off list, no need to hold mutex any more */
+          V(blocked_locks_mutex);
+
+          /*
+          process_blocked_lock_upcall(pblock,
+                                      &state_async_cache_inode_client);
+          */
+
+          continue;
+        }
+
+      V(blocked_locks_mutex);
 
       /* Process one request if available */
       P(state_async_tcb.tcb_mutex);
@@ -169,17 +198,37 @@ state_status_t state_async_schedule(state_async_queue_t *arg)
   LogFullDebug(COMPONENT_STATE, "Schedule %p", arg);
 
   P(state_async_tcb.tcb_mutex);
+
   glist_add_tail(&state_async_queue, &arg->state_async_glist);
+
   rc = pthread_cond_signal(&state_async_tcb.tcb_condvar);
+
   if(rc == -1)
     {
       LogFullDebug(COMPONENT_STATE,
                    "Unable to signal State Async Thread");
       glist_del(&arg->state_async_glist);
     }
+
   V(state_async_tcb.tcb_mutex);
 
   return rc != -1 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
+}
+
+/* Signal Async Work */
+void signal_async_work()
+{
+  int rc;
+
+  P(state_async_tcb.tcb_mutex);
+
+  rc = pthread_cond_signal(&state_async_tcb.tcb_condvar);
+
+  if(rc == -1)
+    LogFatal(COMPONENT_STATE,
+             "Unable to signal State Async Thread");
+
+  V(state_async_tcb.tcb_mutex);
 }
 
 static int local_lru_inode_entry_to_str(LRU_data_t data, char *str)
