@@ -2200,7 +2200,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
   printf("---> fsal_cookie_t:%lu\n", sizeof(cephfsal_cookie_t));
   printf("---> fs_specific_initinfo_t:%lu\n", sizeof(cephfs_specific_initinfo_t));
 #endif
-#if 1
+#if 0
   /* Will remain as long as all FSAL are not yet in new format */
   printf("---> fsal_handle_t:%lu\n", sizeof(vfsfsal_handle_t));
   printf("---> fsal_op_context_t:%lu\n", sizeof(vfsfsal_op_context_t));
