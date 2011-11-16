@@ -266,68 +266,6 @@ void ReleaseTokenFSCall()
 
 }
 
-#define VFS_SET_INTEGER_PARAM( cfg, p_init_info, _field )         \
-    switch( (p_init_info)->behaviors._field ){                    \
-    case FSAL_INIT_FORCE_VALUE :                                  \
-      /* force the value in any case */                           \
-      cfg._field = (p_init_info)->values._field;                  \
-      break;                                                      \
-    case FSAL_INIT_MAX_LIMIT :                                    \
-      /* check the higher limit */                                \
-      if ( cfg._field > (p_init_info)->values._field )            \
-        cfg._field = (p_init_info)->values._field ;               \
-      break;                                                      \
-    case FSAL_INIT_MIN_LIMIT :                                    \
-      /* check the lower limit */                                 \
-      if ( cfg._field < (p_init_info)->values._field )            \
-        cfg._field = (p_init_info)->values._field ;               \
-      break;                                                      \
-    case FSAL_INIT_FS_DEFAULT:                                    \
-    default:                                                      \
-    /* In the other cases, we keep the default value. */          \
-        break;                                                    \
-    }
-
-#define VFS_SET_BITMAP_PARAM( cfg, p_init_info, _field )          \
-    switch( (p_init_info)->behaviors._field ){                    \
-    case FSAL_INIT_FORCE_VALUE :                                  \
-        /* force the value in any case */                         \
-        cfg._field = (p_init_info)->values._field;                \
-        break;                                                    \
-    case FSAL_INIT_MAX_LIMIT :                                    \
-      /* proceed a bit AND */                                     \
-      cfg._field &= (p_init_info)->values._field ;                \
-      break;                                                      \
-    case FSAL_INIT_MIN_LIMIT :                                    \
-      /* proceed a bit OR */                                      \
-      cfg._field |= (p_init_info)->values._field ;                \
-      break;                                                      \
-    case FSAL_INIT_FS_DEFAULT:                                    \
-    default:                                                      \
-    /* In the other cases, we keep the default value. */          \
-        break;                                                    \
-    }
-
-#define VFS_SET_BOOLEAN_PARAM( cfg, p_init_info, _field )         \
-    switch( (p_init_info)->behaviors._field ){                    \
-    case FSAL_INIT_FORCE_VALUE :                                  \
-        /* force the value in any case */                         \
-        cfg._field = (p_init_info)->values._field;                \
-        break;                                                    \
-    case FSAL_INIT_MAX_LIMIT :                                    \
-      /* proceed a boolean AND */                                 \
-      cfg._field = cfg._field && (p_init_info)->values._field ;   \
-      break;                                                      \
-    case FSAL_INIT_MIN_LIMIT :                                    \
-      /* proceed a boolean OR */                                  \
-      cfg._field = cfg._field && (p_init_info)->values._field ;   \
-      break;                                                      \
-    case FSAL_INIT_FS_DEFAULT:                                    \
-    default:                                                      \
-    /* In the other cases, we keep the default value. */          \
-        break;                                                    \
-    }
-
 /*
  *  This function initializes shared variables of the fsal.
  */
@@ -429,21 +367,21 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
      (fs_common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT))
     ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
-  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
-  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
-  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support);
-  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_owner);
-  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_async_block);
-  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
+  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
+  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
+  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support);
+  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_owner);
+  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_async_block);
+  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
 
-  VFS_SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);
-  VFS_SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxwrite);
+  SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);
+  SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxwrite);
 
-  VFS_SET_BITMAP_PARAM(global_fs_info, fs_common_info, umask);
+  SET_BITMAP_PARAM(global_fs_info, fs_common_info, umask);
 
-  VFS_SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, auth_exportpath_xdev);
+  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, auth_exportpath_xdev);
 
-  VFS_SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
+  SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
 
   LogFullDebug(COMPONENT_FSAL,
                     "Supported attributes constant = 0x%llX.",
@@ -584,161 +522,6 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 } /* fsal_internal_get_handle_at */
-
-
-/*
-   Check the access from an existing fsal_attrib_list_t or struct stat
-*/
-/* XXX : ACL */
-fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,        /* IN */
-                                       fsal_accessflags_t access_type,  /* IN */
-                                       struct stat * p_buffstat,        /* IN */
-                                       fsal_attrib_list_t * p_object_attributes /* IN */ )
-{
-  fsal_accessflags_t missing_access;
-  unsigned int is_grp, i;
-  fsal_uid_t uid;
-  fsal_gid_t gid;
-  fsal_accessmode_t mode;
-  fsal_uid_t userid = ((vfsfsal_op_context_t *)p_context)->credential.user;
-  fsal_uid_t groupid = ((vfsfsal_op_context_t *)p_context)->credential.group;
-
-  /* sanity checks. */
-
-  if((!p_object_attributes && !p_buffstat) || !p_context)
-    ReturnCode(ERR_FSAL_FAULT, 0);
-
-  /* If the FSAL_F_OK flag is set, returns ERR INVAL */
-
-  if(access_type & FSAL_F_OK)
-    ReturnCode(ERR_FSAL_INVAL, 0);
-
-  /* test root access */
-
-  if(userid == 0)
-    ReturnCode(ERR_FSAL_NO_ERROR, 0);
-
-  /* unsatisfied flags */
-
-  missing_access = FSAL_MODE_MASK(access_type); /* only modes, no ACLs here */
-
-  if(p_object_attributes)
-    {
-      uid = p_object_attributes->owner;
-      gid = p_object_attributes->group;
-      mode = p_object_attributes->mode;
-    }
-  else
-    {
-      uid = p_buffstat->st_uid;
-      gid = p_buffstat->st_gid;
-      mode = unix2fsal_mode(p_buffstat->st_mode);
-    }
-
-  /* Test if file belongs to user. */
-
-  if(userid == uid)
-    {
-
-      LogFullDebug(COMPONENT_FSAL, "File belongs to user %d", uid);
-
-      if(mode & FSAL_MODE_RUSR)
-        missing_access &= ~FSAL_R_OK;
-
-      if(mode & FSAL_MODE_WUSR)
-        missing_access &= ~FSAL_W_OK;
-
-      if(mode & FSAL_MODE_XUSR)
-        missing_access &= ~FSAL_X_OK;
-
-      /* handle the creation of a new 500 file correctly */
-      if((missing_access & FSAL_OWNER_OK) != 0)
-        missing_access = 0;
-
-      if(missing_access == 0)
-        ReturnCode(ERR_FSAL_NO_ERROR, 0);
-      else
-        {
-          LogFullDebug(COMPONENT_FSAL,
-                            "Mode=%#o, Access=%#o, Rights missing: %#o", mode,
-                            access_type, missing_access);
-          ReturnCode(ERR_FSAL_ACCESS, 0);
-        }
-
-    }
-
-  /* missing_access will be nonzero triggering a failure
-   * even though FSAL_OWNER_OK is not even a real posix file
-   * permission */
-  missing_access &= ~FSAL_OWNER_OK;
-
-  /* Test if the file belongs to user's group. */
-
-  is_grp = (groupid == gid);
-
-  if(is_grp)
-    LogFullDebug(COMPONENT_FSAL, "File belongs to user's group %d",
-                      groupid);
-
-
-  /* Test if file belongs to alt user's groups */
-
-  if(!is_grp)
-    {
-      for(i = 0; i < ((vfsfsal_op_context_t *)p_context)->credential.nbgroups; i++)
-        {
-	  is_grp = (((vfsfsal_op_context_t *)p_context)->credential.alt_groups[i] == gid);
-
-          if(is_grp)
-            LogFullDebug(COMPONENT_FSAL,
-			 "File belongs to user's alt group %d",
-			 ((vfsfsal_op_context_t *)p_context)->credential.alt_groups[i]);
-
-          // exits loop if found
-          if(is_grp)
-            break;
-        }
-    }
-
-  /* finally apply group rights */
-
-  if(is_grp)
-    {
-      if(mode & FSAL_MODE_RGRP)
-        missing_access &= ~FSAL_R_OK;
-
-      if(mode & FSAL_MODE_WGRP)
-        missing_access &= ~FSAL_W_OK;
-
-      if(mode & FSAL_MODE_XGRP)
-        missing_access &= ~FSAL_X_OK;
-
-      if(missing_access == 0)
-        ReturnCode(ERR_FSAL_NO_ERROR, 0);
-      else
-        ReturnCode(ERR_FSAL_ACCESS, 0);
-
-    }
-
-  /* test other perms */
-
-  if(mode & FSAL_MODE_ROTH)
-    missing_access &= ~FSAL_R_OK;
-
-  if(mode & FSAL_MODE_WOTH)
-    missing_access &= ~FSAL_W_OK;
-
-  if(mode & FSAL_MODE_XOTH)
-    missing_access &= ~FSAL_X_OK;
-
-  /* XXX ACLs. */
-
-  if(missing_access == 0)
-    ReturnCode(ERR_FSAL_NO_ERROR, 0);
-  else
-    ReturnCode(ERR_FSAL_ACCESS, 0);
-
-}
 
 fsal_status_t fsal_internal_setattrs_symlink(fsal_handle_t * p_filehandle,   /* IN */
                                              fsal_op_context_t * p_context,  /* IN */

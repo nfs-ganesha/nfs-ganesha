@@ -82,8 +82,6 @@ fsal_status_t SNMPFSAL_BuildExportContext(fsal_export_context_t * p_export_conte
                                           fsal_path_t * p_export_path,  /* IN */
                                           char *fs_specific_options /* IN */ );
 
-fsal_status_t SNMPFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context);
-
 fsal_status_t SNMPFSAL_InitClientContext(fsal_op_context_t * p_thr_context);
 
 fsal_status_t SNMPFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* IN */
@@ -165,8 +163,6 @@ fsal_status_t SNMPFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle, /* IN */
                                       fsal_dynamicfsinfo_t * p_dynamicinfo /* OUT */ );
 
 fsal_status_t SNMPFSAL_Init(fsal_parameter_t * init_info /* IN */ );
-
-fsal_status_t SNMPFSAL_terminate();
 
 fsal_status_t SNMPFSAL_test_access(fsal_op_context_t * p_context,   /* IN */
                                    fsal_accessflags_t access_type,      /* IN */
@@ -327,10 +323,6 @@ fsal_status_t SNMPFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* I
                                          const fsal_name_t * xattr_name) /* IN */ ;
 
 unsigned int SNMPFSAL_GetFileno(fsal_file_t * pfile);
-
-fsal_status_t SNMPFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
-                                   fsal_op_context_t * p_context,        /* IN */
-                                   fsal_extattrib_list_t * p_object_attributes /* OUT */) ;
 
 fsal_status_t SNMPFSAL_sync(fsal_file_t * p_file_descriptor     /* IN */);
 

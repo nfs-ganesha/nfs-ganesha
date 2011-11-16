@@ -22,7 +22,7 @@ fsal_functions_t fsal_xfs_functions = {
   .fsal_getattrs = POSIXFSAL_getattrs,
   .fsal_setattrs = POSIXFSAL_setattrs,
   .fsal_buildexportcontext = POSIXFSAL_BuildExportContext,
-  .fsal_cleanupexportcontext = POSIXFSAL_CleanUpExportContext,
+  .fsal_cleanupexportcontext = COMMON_CleanUpExportContext_noerror,
   .fsal_initclientcontext = POSIXFSAL_InitClientContext,
   .fsal_getclientcontext = COMMON_GetClientContext,
   .fsal_create = POSIXFSAL_create,
@@ -42,7 +42,7 @@ fsal_functions_t fsal_xfs_functions = {
   .fsal_close_by_fileid = COMMON_close_by_fileid,
   .fsal_dynamic_fsinfo = POSIXFSAL_dynamic_fsinfo,
   .fsal_init = POSIXFSAL_Init,
-  .fsal_terminate = POSIXFSAL_terminate,
+  .fsal_terminate = COMMON_terminate_noerror,
   .fsal_test_access = POSIXFSAL_test_access,
   .fsal_setattr_access = COMMON_setattr_access_notsupp,
   .fsal_rename_access = COMMON_rename_access,
@@ -91,7 +91,7 @@ fsal_functions_t fsal_xfs_functions = {
   .fsal_setxattrvaluebyid = POSIXFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = POSIXFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = POSIXFSAL_RemoveXAttrByName,
-  .fsal_getextattrs = POSIXFSAL_getextattrs,
+  .fsal_getextattrs = COMMON_getextattrs_notsupp,
   .fsal_getfileno = POSIXFSAL_GetFileno
 };
 

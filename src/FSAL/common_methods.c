@@ -26,6 +26,22 @@
  * method to handle common (base class) operations
  */
 
+/* Export context
+ */
+
+/**
+ * FSAL_CleanUpExportContext :
+ * this will clean up and state in an export that was created during
+ * the BuildExportContext phase.  For many FSALs this may be a noop.
+ *
+ * \param p_export_context
+ */
+
+fsal_status_t COMMON_CleanUpExportContext_noerror(fsal_export_context_t * p_export_context)
+{
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
+}
+
 /* Client context */
 
 fsal_status_t COMMON_InitClientContext(fsal_op_context_t * p_thr_context)
@@ -544,3 +560,46 @@ fsal_status_t COMMON_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
 
+/* File Attributes
+
+
+/* Not supported set
+*/
+
+/**
+ * FSAL_getetxattrs:
+ * Get attributes for the object specified by its filehandle.
+ *
+ * \param filehandle (input):
+ *        The handle of the object to get parameters.
+ * \param cred (input):
+ *        Authentication context for the operation (user,...).
+ * \param object_attributes (mandatory input/output):
+ *        The retrieved attributes for the object.
+ *        As input, it defines the attributes that the caller
+ *        wants to retrieve (by positioning flags into this structure)
+ *        and the output is built considering this input
+ *        (it fills the structure according to the flags it contains).
+ *
+ * \return Major error codes :
+ *        - ERR_FSAL_NO_ERROR     (no error)
+ *        - Another error code if an error occured.
+ */
+fsal_status_t COMMON_getextattrs_notsupp(fsal_handle_t * p_filehandle, /* IN */
+                                   fsal_op_context_t * p_context,        /* IN */
+                                   fsal_extattrib_list_t * p_object_attributes /* OUT */
+    )
+{
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_getextattrs);
+}
+
+/*
+ * init/terminate
+ */
+
+
+/* To be called before exiting */
+fsal_status_t COMMON_terminate_noerror()
+{
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}

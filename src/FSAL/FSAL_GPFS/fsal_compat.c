@@ -42,7 +42,7 @@ fsal_functions_t fsal_gpfs_functions = {
   .fsal_close_by_fileid = COMMON_close_by_fileid,
   .fsal_dynamic_fsinfo = GPFSFSAL_dynamic_fsinfo,
   .fsal_init = GPFSFSAL_Init,
-  .fsal_terminate = GPFSFSAL_terminate,
+  .fsal_terminate = COMMON_terminate_noerror,
   .fsal_test_access = GPFSFSAL_test_access,
   .fsal_setattr_access = COMMON_setattr_access_notsupp,
   .fsal_rename_access = COMMON_rename_access,
@@ -89,7 +89,7 @@ fsal_functions_t fsal_gpfs_functions = {
   .fsal_setxattrvaluebyid = GPFSFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = GPFSFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = GPFSFSAL_RemoveXAttrByName,
-  .fsal_getextattrs = GPFSFSAL_getextattrs,
+  .fsal_getextattrs = COMMON_getextattrs,
   .fsal_getfileno = GPFSFSAL_GetFileno,
 #ifdef _USE_FSAL_UP
   .fsal_up_init = GPFSFSAL_UP_Init,

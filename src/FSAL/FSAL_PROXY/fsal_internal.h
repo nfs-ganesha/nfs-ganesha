@@ -159,8 +159,6 @@ fsal_status_t PROXYFSAL_BuildExportContext(fsal_export_context_t * p_export_cont
                                            fsal_path_t * p_export_path, /* IN */
                                            char *fs_specific_options /* IN */ );
 
-fsal_status_t PROXYFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context);
-
 fsal_status_t PROXYFSAL_InitClientContext(fsal_op_context_t * p_thr_context);
 
 fsal_status_t PROXYFSAL_create(fsal_handle_t * p_parent_directory_handle,  /* IN */
@@ -431,9 +429,5 @@ fsal_status_t PROXYFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,  /* IN
                                           const fsal_name_t * xattr_name) /* IN */ ;
 
 unsigned int PROXYFSAL_GetFileno(fsal_file_t * pfile);
-
-fsal_status_t PROXYFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
-                                    fsal_op_context_t * p_context,        /* IN */
-                                    fsal_extattrib_list_t * p_object_attributes /* OUT */) ;
 
 #endif

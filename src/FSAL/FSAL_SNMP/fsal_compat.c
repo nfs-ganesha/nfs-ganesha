@@ -21,7 +21,7 @@ fsal_functions_t fsal_snmp_functions = {
   .fsal_getattrs = SNMPFSAL_getattrs,
   .fsal_setattrs = SNMPFSAL_setattrs,
   .fsal_buildexportcontext = SNMPFSAL_BuildExportContext,
-  .fsal_cleanupexportcontext = SNMPFSAL_CleanUpExportContext,
+  .fsal_cleanupexportcontext = COMMON_CleanUpExportContext_noerror,
   .fsal_initclientcontext = SNMPFSAL_InitClientContext,
   .fsal_getclientcontext = COMMON_GetClientContext,
   .fsal_create = SNMPFSAL_create,
@@ -40,7 +40,7 @@ fsal_functions_t fsal_snmp_functions = {
   .fsal_close_by_fileid = COMMON_close_by_fileid,
   .fsal_dynamic_fsinfo = SNMPFSAL_dynamic_fsinfo,
   .fsal_init = SNMPFSAL_Init,
-  .fsal_terminate = SNMPFSAL_terminate,
+  .fsal_terminate = COMMON_terminate_noerror,
   .fsal_test_access = SNMPFSAL_test_access,
   .fsal_setattr_access = COMMON_setattr_access_notsupp,
   .fsal_rename_access = COMMON_rename_access_notsupp,
@@ -87,7 +87,7 @@ fsal_functions_t fsal_snmp_functions = {
   .fsal_setxattrvaluebyid = SNMPFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = SNMPFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = SNMPFSAL_RemoveXAttrByName,
-  .fsal_getextattrs = SNMPFSAL_getextattrs,
+  .fsal_getextattrs = COMMON_getextattrs_notsupp,
   .fsal_getfileno = SNMPFSAL_GetFileno
 };
 

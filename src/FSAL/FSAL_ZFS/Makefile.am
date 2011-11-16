@@ -20,7 +20,6 @@ libfsalzfs_la_SOURCES = fsal_access.c   \
                         fsal_convert.c  \
                         fsal_create.c   \
                         fsal_dirs.c     \
-                        fsal_errors.c   \
                         fsal_fileop.c   \
                         fsal_fsinfo.c   \
                         fsal_init.c     \

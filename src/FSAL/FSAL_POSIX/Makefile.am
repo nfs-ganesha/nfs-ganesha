@@ -35,7 +35,6 @@ libfsalposix_la_SOURCES = fsal_access.c      \
                           fsal_truncate.c    \
 			  fsal_attrs.c       \
                           fsal_convert.c     \
-                          fsal_errors.c      \
                           fsal_init.c        \
                           fsal_lookup.c      \
                           fsal_rename.c      \
@@ -76,6 +75,7 @@ posix_ganesha_fsal_posixdb_tool_LDADD      = $(BUDDY_LIB_FLAGS)                 
                                              ../../RW_Lock/librwlock.la                           \
                                              ../fsal_strings.lo                                   \
                                              ../fsal_convert.lo                                   \
+					     ../fsal_errors.lo					  \
                                              ../../Common/libcommon_utils.la
 
 

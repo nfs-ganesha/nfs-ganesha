@@ -2,6 +2,8 @@
  * Common FSAL methods
  */
 
+fsal_status_t COMMON_CleanUpExportContext_noerror(fsal_export_context_t * p_export_context);
+
 fsal_status_t COMMON_InitClientContext(fsal_op_context_t * p_thr_context);
 
 fsal_status_t COMMON_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OUT  */
@@ -75,3 +77,9 @@ fsal_status_t COMMON_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
 				   fsal_op_context_t * p_context, /* IN */
 				   fsal_path_t * p_local_path,    /* IN */
 				   fsal_rcpflag_t transfer_opt /* IN */ );
+
+fsal_status_t COMMON_getextattrs_notsupp(fsal_handle_t * p_filehandle, /* IN */
+				 fsal_op_context_t * p_context,        /* IN */
+				 fsal_extattrib_list_t * p_object_attributes /* OUT */ );
+
+fsal_status_t COMMON_terminate_noerror();
