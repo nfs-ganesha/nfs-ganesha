@@ -8,6 +8,7 @@ endif
 
 SUBDIRS = include             \
           Log 		      \
+          $(LIBTREEDIR)       \
           $(BUDDYDIR)         \
           Common              \
           ConfigParsing       \
@@ -15,6 +16,7 @@ SUBDIRS = include             \
           SemN                \
           test                \
           LRU                 \
+          avl                 \
           HashTable           \
 	  NodeList	      \
           Cache_inode         \

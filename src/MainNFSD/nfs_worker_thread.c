@@ -78,7 +78,7 @@
 void nfs_debug_debug_label_info();
 #endif
 
-nfs_worker_data_t *workers_data;
+extern nfs_worker_data_t *workers_data;
 
 /* These two variables keep state of the thread that gc at this time */
 unsigned int nb_current_gc_workers;
@@ -2409,18 +2409,6 @@ void *worker_thread(void *IndexArg)
 
   /* Bind the data cache client to the inode cache client */
   pmydata->cache_inode_client.pcontent_client = (caddr_t) & pmydata->cache_content_client;
-
-#ifdef _USE_PNFS_SPNFS_LIKE
-  /* Init the pNFS engine for each worker */
-  if(pnfs_init(&pmydata->cache_inode_client.mfsl_context.pnfsclient, &nfs_param.pnfs_param.layoutfile))
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_DISPATCH,
-               "pNFS engine could not be initialized");
-    }
-  LogFullDebug(COMPONENT_DISPATCH,
-               "pNFS engine successfully initialized");
-#endif
 
   LogInfo(COMPONENT_DISPATCH, "Worker successfully initialized");
 

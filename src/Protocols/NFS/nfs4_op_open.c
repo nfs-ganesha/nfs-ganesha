@@ -312,8 +312,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       pentry_parent = data->current_entry;
 
       /* Parent must be a directory */
-      if((pentry_parent->internal_md.type != DIR_BEGINNING) &&
-         (pentry_parent->internal_md.type != DIR_CONTINUE))
+      if((pentry_parent->internal_md.type != DIRECTORY))
         {
           /* Parent object is not a directory... */
           if(pentry_parent->internal_md.type == SYMBOLIC_LINK)
@@ -424,6 +423,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           /* Does a file with this name already exist ? */
           pentry_lookup = cache_inode_lookup(pentry_parent,
                                              &filename,
+                                             data->pexport->cache_inode_policy,
                                              &attr_newfile,
                                              data->ht,
                                              data->pclient,
@@ -722,6 +722,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           if((pentry_newfile = cache_inode_create(pentry_parent,
                                                   &filename,
                                                   REGULAR_FILE,
+                                                  data->pexport->cache_inode_policy,
                                                   mode,
                                                   NULL,
                                                   &attr_newfile,
@@ -826,6 +827,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
             {
               if((pentry_newfile = cache_inode_lookup(pentry_parent,
                                                       &filename,
+                                                      data->pexport->cache_inode_policy,
                                                       &attr_newfile,
                                                       data->ht,
                                                       data->pclient,
@@ -841,8 +843,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           /* OPEN4 is to be done on a file */
           if(pentry_newfile->internal_md.type != REGULAR_FILE)
             {
-              if(pentry_newfile->internal_md.type == DIR_BEGINNING
-                 || pentry_newfile->internal_md.type == DIR_CONTINUE)
+              if(pentry_newfile->internal_md.type == DIRECTORY)
                 {
                   res_OPEN4.status = NFS4ERR_ISDIR;
                   goto out;

@@ -624,6 +624,10 @@ int stats_snmp(nfs_worker_data_t * workers_data_local);
 void *file_content_gc_thread(void *IndexArg);
 void *nfs_file_content_flush_thread(void *flush_data_arg);
 
+#ifdef _USE_UPCALL_SIMULATOR
+void * upcall_simulator_thread( void * UnusedArg ) ;
+#endif
+
 #ifdef _USE_9P
 void * _9p_dispatcher_thread(void *arg);
 void DispatchWork9P(request_data_t *pnfsreq, unsigned int worker_index);

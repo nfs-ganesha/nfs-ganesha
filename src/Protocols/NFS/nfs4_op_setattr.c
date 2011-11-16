@@ -150,8 +150,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
   if(FSAL_TEST_MASK(sattr.asked_attributes, FSAL_ATTR_SIZE))
     {
       /* Setting the size of a directory is prohibited */
-      if(data->current_filetype == DIR_BEGINNING
-         || data->current_filetype == DIR_CONTINUE)
+      if(data->current_filetype == DIRECTORY)
         {
           res_SETATTR4.status = NFS4ERR_ISDIR;
           return res_SETATTR4.status;
@@ -219,6 +218,18 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
           sattr.mtime.nseconds = t.tv_usec;
         }
 #endif
+
+#warning fix for real (still hunting for root cause)
+#define S_NSECS 1000000000UL	/* nsecs in 1s */
+      /* a carry into seconds appears clearly ruled out */
+      if (sattr.atime.nseconds > S_NSECS)
+          sattr.atime.nseconds = 0;
+
+      if (sattr.mtime.nseconds > S_NSECS)
+          sattr.mtime.nseconds = 0;
+
+      if (sattr.ctime.nseconds > S_NSECS)
+          sattr.ctime.nseconds = 0;
 
       if(cache_inode_setattr(data->current_entry,
                              &sattr,

@@ -174,71 +174,6 @@ int posix2fsal_error(int posix_errorcode)
 }
 
 
-/**
- * fsal2posix_openflags:
- * Convert FSAL open flags to Posix open flags.
- *
- * \param fsal_flags (input):
- *        The FSAL open flags to be translated.
- * \param p_posix_flags (output):
- *        Pointer to the POSIX open flags.
- *
- * \return - ERR_FSAL_NO_ERROR (no error).
- *         - ERR_FSAL_FAULT    (p_posix_flags is a NULL pointer).
- *         - ERR_FSAL_INVAL    (invalid or incompatible input flags).
- */
-int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
-{
-  int cpt;
-
-  if(!p_posix_flags)
-    return ERR_FSAL_FAULT;
-
-  /* check that all used flags exist */
-
-  if(fsal_flags &
-     ~(FSAL_O_RDONLY | FSAL_O_RDWR | FSAL_O_WRONLY | FSAL_O_APPEND | FSAL_O_TRUNC))
-    return ERR_FSAL_INVAL;
-
-  /* Check for flags compatibility */
-
-  /* O_RDONLY O_WRONLY O_RDWR cannot be used together */
-
-  cpt = 0;
-  if(fsal_flags & FSAL_O_RDONLY)
-    cpt++;
-  if(fsal_flags & FSAL_O_RDWR)
-    cpt++;
-  if(fsal_flags & FSAL_O_WRONLY)
-    cpt++;
-
-  if(cpt > 1)
-    return ERR_FSAL_INVAL;
-
-  /* FSAL_O_APPEND et FSAL_O_TRUNC cannot be used together */
-
-  if((fsal_flags & FSAL_O_APPEND) && (fsal_flags & FSAL_O_TRUNC))
-    return ERR_FSAL_INVAL;
-
-  /* FSAL_O_TRUNC without FSAL_O_WRONLY or FSAL_O_RDWR */
-
-  if((fsal_flags & FSAL_O_TRUNC) && !(fsal_flags & (FSAL_O_WRONLY | FSAL_O_RDWR)))
-    return ERR_FSAL_INVAL;
-
-  /* conversion */
-  *p_posix_flags = 0;
-
-  if(fsal_flags & FSAL_O_RDONLY)
-    *p_posix_flags |= O_RDONLY;
-  if(fsal_flags & FSAL_O_WRONLY)
-    *p_posix_flags |= O_WRONLY;
-  if(fsal_flags & FSAL_O_RDWR)
-    *p_posix_flags |= O_RDWR;
-
-  return ERR_FSAL_NO_ERROR;
-
-}
-
 fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
                                     fsal_attrib_list_t * p_fsalattr_out)
 {
@@ -308,23 +243,24 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
     }
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME))
     {
-      p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime);
-
+      p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime, 0);
     }
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CTIME))
     {
-      p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime);
+      p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime, 0);
     }
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
     {
-      p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime);
+      p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime,
+                                              0);
     }
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
     {
       p_fsalattr_out->chgtime
-          = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime));
+        = posix2fsal_time(MAX_2(p_buffstat->st_mtime,
+                                p_buffstat->st_ctime), 0);
       p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
     }
 
@@ -420,24 +356,29 @@ fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME))
         {
-            p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime);
+          p_fsalattr_out->atime =
+            posix2fsal_time(p_buffstat->st_atime, 0);
 
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CTIME))
         {
-            p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime);
+          p_fsalattr_out->ctime =
+            posix2fsal_time(p_buffstat->st_ctime, 0);
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
         {
-            p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime);
+          p_fsalattr_out->mtime =
+            posix2fsal_time(p_buffstat->st_mtime, 0);
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
         {
             p_fsalattr_out->chgtime
-                = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime));
-            p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
+              = posix2fsal_time(MAX_2(p_buffstat->st_mtime,
+                                      p_buffstat->st_ctime), 0);
+            p_fsalattr_out->change =
+              (uint64_t) p_fsalattr_out->chgtime.seconds ;
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
@@ -460,4 +401,66 @@ fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
     /* everything has been copied ! */
 
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
+int fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags)
+{
+  int cpt;
+
+  if(!p_posix_flags)
+    return ERR_FSAL_FAULT;
+
+  /* check that all used flags exist */
+
+  if(fsal_flags &
+     ~(FSAL_O_RDONLY | FSAL_O_RDWR | FSAL_O_WRONLY | FSAL_O_APPEND | FSAL_O_TRUNC))
+    return ERR_FSAL_INVAL;
+
+  /* Check for flags compatibility */
+
+  /* O_RDONLY O_WRONLY O_RDWR cannot be used together */
+
+  cpt = 0;
+  if(fsal_flags & FSAL_O_RDONLY)
+    cpt++;
+  if(fsal_flags & FSAL_O_RDWR)
+    cpt++;
+  if(fsal_flags & FSAL_O_WRONLY)
+    cpt++;
+
+  if(cpt > 1)
+    return ERR_FSAL_INVAL;
+
+  /* FSAL_O_APPEND et FSAL_O_TRUNC cannot be used together */
+
+  if((fsal_flags & FSAL_O_APPEND) && (fsal_flags & FSAL_O_TRUNC))
+    return ERR_FSAL_INVAL;
+
+  /* FSAL_O_TRUNC without FSAL_O_WRONLY or FSAL_O_RDWR */
+
+  if((fsal_flags & FSAL_O_TRUNC) && !(fsal_flags & (FSAL_O_WRONLY | FSAL_O_RDWR)))
+    return ERR_FSAL_INVAL;
+
+  /* conversion */
+  *p_posix_flags = 0;
+
+  if(fsal_flags & FSAL_O_RDONLY)
+    *p_posix_flags |= O_RDONLY;
+
+  if(fsal_flags & FSAL_O_RDWR)
+    *p_posix_flags |= O_RDWR;
+
+  if(fsal_flags & FSAL_O_WRONLY)
+    *p_posix_flags |= O_WRONLY;
+
+  if(fsal_flags & FSAL_O_APPEND)
+    *p_posix_flags |= O_APPEND;
+
+  if(fsal_flags & FSAL_O_TRUNC)
+    *p_posix_flags |= O_TRUNC;
+
+  if(fsal_flags & FSAL_O_CREATE)
+    *p_posix_flags |= O_CREAT;
+
+  return ERR_FSAL_NO_ERROR;
 }

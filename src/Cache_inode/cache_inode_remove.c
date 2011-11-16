@@ -40,56 +40,24 @@
  *
  * Checks if a directory is empty or not. No mutex management
  *
- * @param pentry [IN] entry to be checked (should be of type DIR_BEGINNING)
+ * @param pentry [IN] entry to be checked (should be of type DIRECTORY)
  *
  * @return CACHE_INODE_SUCCESS is directory is empty\n
- * @return CACHE_INODE_BAD_TYPE is pentry is not of type DIR_BEGINNING\n
- * @return CACHE_INODE_DIR_NOT_EMPTY if pentry is a non empty DIR_BEGINNING
+ * @return CACHE_INODE_BAD_TYPE is pentry is not of type DIRECTORY\n
+ * @return CACHE_INODE_DIR_NOT_EMPTY if pentry is not empty
  *
  */
 cache_inode_status_t cache_inode_is_dir_empty(cache_entry_t * pentry)
 {
   cache_inode_status_t status;
-  cache_entry_t *pentry_iter;
 
   /* Sanity check */
-  if(pentry->internal_md.type != DIR_BEGINNING)
+  if(pentry->internal_md.type != DIRECTORY)
     return CACHE_INODE_BAD_TYPE;
 
-  /* Initialisation */
-  status = CACHE_INODE_SUCCESS;
-  pentry_iter = pentry;
-
-  do
-    {
-      if(pentry_iter->internal_md.type == DIR_BEGINNING)
-        {
-          if(pentry_iter->object.dir_begin.nbactive != 0)
-            {
-              status = CACHE_INODE_DIR_NOT_EMPTY;
-              break;
-            }
-
-          if(pentry_iter->object.dir_begin.end_of_dir == END_OF_DIR)
-            break;
-
-          pentry_iter = pentry_iter->object.dir_begin.pdir_cont;
-        }
-      else
-        {
-          if(pentry_iter->object.dir_cont.nbactive != 0)
-            {
-              status = CACHE_INODE_DIR_NOT_EMPTY;
-              break;
-            }
-
-          if(pentry_iter->object.dir_cont.end_of_dir == END_OF_DIR)
-            break;
-
-          pentry_iter = pentry_iter->object.dir_cont.pdir_cont;
-        }
-    }
-  while(pentry_iter != NULL);
+  status = (pentry->object.dir.nbactive == 0) ?
+	CACHE_INODE_SUCCESS :
+	CACHE_INODE_DIR_NOT_EMPTY;
 
   return status;
 }                               /* cache_inode_is_dir_empty */
@@ -100,11 +68,11 @@ cache_inode_status_t cache_inode_is_dir_empty(cache_entry_t * pentry)
  *
  * Checks if a directory is empty or not, BUT has lock management.
  *
- * @param pentry [IN] entry to be checked (should be of type DIR_BEGINNING)
+ * @param pentry [IN] entry to be checked (should be of type DIRECTORY)
  *
  * @return CACHE_INODE_SUCCESS is directory is empty\n
- * @return CACHE_INODE_BAD_TYPE is pentry is not of type DIR_BEGINNING\n
- * @return CACHE_INODE_DIR_NOT_EMPTY if pentry is a non empty DIR_BEGINNING
+ * @return CACHE_INODE_BAD_TYPE is pentry is not of type DIRECTORY\n
+ * @return CACHE_INODE_DIR_NOT_EMPTY if pentry is not empty
  *
  */
 cache_inode_status_t cache_inode_is_dir_empty_WithLock(cache_entry_t * pentry)
@@ -158,10 +126,9 @@ cache_inode_status_t cache_inode_clean_internal(cache_entry_t * to_remove_entry,
 
   /* delete the entry from the cache */
   fsaldata.handle = *pfsal_handle_remove;
-  if(to_remove_entry->internal_md.type != DIR_CONTINUE)
-    fsaldata.cookie = DIR_START;
-  else
-    fsaldata.cookie = to_remove_entry->object.dir_cont.dir_cont_pos;
+
+  /* XXX always DIR_START */
+  fsaldata.cookie = DIR_START;
 
   if(cache_inode_fsaldata_2_key(&key, &fsaldata, pclient))
     {
@@ -211,27 +178,16 @@ cache_inode_status_t cache_inode_clean_internal(cache_entry_t * to_remove_entry,
       parent_iter = parent_iter_next;
     }
 
-  /* If entry is a DIR_CONTINUE or a DIR_BEGINNING, release pdir_data */
-  if(to_remove_entry->internal_md.type == DIR_BEGINNING)
-    {
-      /* Put the pentry back to the pool */
-      ReleaseToPool(to_remove_entry->object.dir_begin.pdir_data, &pclient->pool_dir_data);
-    }
-
-  if(to_remove_entry->internal_md.type == DIR_CONTINUE)
-    {
-      /* Put the pentry back to the pool */
-      ReleaseToPool(to_remove_entry->object.dir_cont.pdir_data, &pclient->pool_dir_data);
-    }
-
   return CACHE_INODE_SUCCESS;
 }                               /* cache_inode_clean_internal */
 
 /**
  *
- * cache_inode_remove_sw: removes a pentry addressed by its parent pentry and its FSAL name. Mutex management is switched.
+ * cache_inode_remove_sw: removes a pentry addressed by its parent pentry and
+ * its FSAL name.  Mutex management is switched.
  *
- * Removes a pentry addressed by its parent pentry and its FSAL name. Mutex management is switched.
+ * Removes a pentry addressed by its parent pentry and its FSAL name.  Mutex
+ * management is switched.
  *
  * @param pentry  [IN]     entry for the parent directory to be managed.
  * @param name    [IN]     name of the entry that we are looking for in the cache.
@@ -254,9 +210,6 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                                            cache_inode_status_t * pstatus, int use_mutex)
 {
   fsal_status_t fsal_status;
-  cache_entry_t *parent_entry;
-  cache_entry_t *pentry_iter;
-  cache_entry_t *pentry_next;
   cache_entry_t *to_remove_entry;
   fsal_handle_t fsal_handle_parent;
   fsal_attrib_list_t remove_attr;
@@ -267,8 +220,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
   fsal_accessflags_t access_mask = 0;
 
   /* stats */
-  pclient->stat.nb_call_total += 1;
-  pclient->stat.func_stats.nb_call[CACHE_INODE_REMOVE] += 1;
+  (pclient->stat.nb_call_total)++;
+  (pclient->stat.func_stats.nb_call[CACHE_INODE_REMOVE])++;
 
   /* pentry is a directory */
   if(use_mutex)
@@ -293,11 +246,15 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
     }
 
   /* Looks up for the entry to remove */
-  if((to_remove_entry = cache_inode_lookup_sw(pentry,
-                                              pnode_name,
-                                              &remove_attr,
-                                              ht,
-                                              pclient, pcontext, &status, FALSE)) == NULL)
+  if((to_remove_entry = cache_inode_lookup_sw( pentry,
+                                               pnode_name,
+                                               CACHE_INODE_JOKER_POLICY,
+                                               &remove_attr,
+                                               ht,
+                                               pclient, 
+                                               pcontext, 
+                                               &status, 
+                                               FALSE)) == NULL)
     {
       *pstatus = status;
 
@@ -312,8 +269,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
   if(use_mutex)
     P_w(&to_remove_entry->lock);
 
-  if(pentry->internal_md.type != DIR_BEGINNING
-     && pentry->internal_md.type != DIR_CONTINUE)
+  if(pentry->internal_md.type != DIRECTORY)
     {
       if(use_mutex)
         {
@@ -328,22 +284,9 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
   LogDebug(COMPONENT_CACHE_INODE,
            "---> Cache_inode_remove : %s", pnode_name->name);
 
-  /* Non-empty directories should not be removed. If entry is of type DIR_CONTINUE, then the directory is not empty */
-  if(to_remove_entry->internal_md.type == DIR_CONTINUE)
-    {
-      if(use_mutex)
-        {
-          V_w(&to_remove_entry->lock);
-          V_w(&pentry->lock);
-        }
-
-      *pstatus = CACHE_INODE_DIR_NOT_EMPTY;
-      return *pstatus;
-    }
-
-  /* A directory is empty if none of its pdir_chain items contains something */
-  if(to_remove_entry->internal_md.type == DIR_BEGINNING &&
-     to_remove_entry->object.dir_begin.has_been_readdir == CACHE_INODE_YES)
+  /* Non-empty directories should not be removed. */
+  if(to_remove_entry->internal_md.type == DIRECTORY &&
+     to_remove_entry->object.dir.has_been_readdir == CACHE_INODE_YES)
     {
       if(cache_inode_is_dir_empty(to_remove_entry) != CACHE_INODE_SUCCESS)
         {
@@ -357,26 +300,9 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
           return *pstatus;
         }
     }
-
-  /* We have to get parent's fsal handle */
-  parent_entry = pentry;
-
-  /* /!\ Possible deadlocks in this area: make sure to P(DIR_BEGIN)/P(DIR_CONT)/V(DIR_CONT)/V(DIR_BEGIN) */
-
-  if(pentry->internal_md.type == DIR_BEGINNING)
-    {
-      fsal_handle_parent = pentry->object.dir_begin.handle;
-    }
-  else if(pentry->internal_md.type == DIR_CONTINUE)
-    {
-      if(use_mutex)
-        P_r(&pentry->object.dir_cont.pdir_begin->lock);
-
-      fsal_handle_parent = pentry->object.dir_cont.pdir_begin->object.dir_begin.handle;
-
-      if(use_mutex)
-        V_r(&pentry->object.dir_cont.pdir_begin->lock);
-    }
+    
+  /* pentry->internal_md.type == DIRECTORY */
+  fsal_handle_parent = pentry->object.dir.handle;
 
   if(status == CACHE_INODE_SUCCESS)
     {
@@ -435,7 +361,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
             }
           return *pstatus;
         }
-    }
+    } /* CACHE_INODE_SUCCESS */
   else
     {
       if(use_mutex)
@@ -443,31 +369,18 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
           V_w(&to_remove_entry->lock);
           V_w(&pentry->lock);
         }
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_REMOVE] += 1;
+      (pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_REMOVE])++;
       return status;
     }
 
-  /* Remove the entry from parent dir_entries array */
+  /* Remove the entry from parent dir_entries avl */
   cache_inode_remove_cached_dirent(pentry, pnode_name, ht, pclient, &status);
 
   LogFullDebug(COMPONENT_CACHE_INODE,
                "cache_inode_remove_cached_dirent: status=%d", status);
 
   /* Update the cached attributes */
-  if(pentry->internal_md.type == DIR_BEGINNING)
-    {
-      pentry->object.dir_begin.attributes = after_attr;
-    }
-  else if(pentry->internal_md.type == DIR_CONTINUE)
-    {
-      if(use_mutex)
-        P_r(&pentry->object.dir_cont.pdir_begin->lock);
-
-      pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes = after_attr;
-
-      if(use_mutex)
-        V_r(&pentry->object.dir_cont.pdir_begin->lock);
-    }
+  pentry->object.dir.attributes = after_attr;
 
   /* Update the attributes for the removed entry */
 
@@ -521,7 +434,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       /* No hardlink counter to be decremented for a directory: hardlink are not allowed for them */
     }
 
-  /* Now, delete "to_remove_entry" from the cache inode and free its associated resources, but only if numlinks == 0 */
+  /* Now, delete "to_remove_entry" from the cache inode and free its associated resources, but only if
+   * numlinks == 0 */
   if(to_remove_numlinks == 0)
     {
 
@@ -543,52 +457,21 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                 }
             }
         }
+	
+      if((*pstatus =
+      	cache_inode_clean_internal(to_remove_entry, ht,
+					 pclient)) != CACHE_INODE_SUCCESS)
+    	{
+      	  if(use_mutex)
+	  {
+	    V_w(&pentry->lock);
+	    V_w(&to_remove_entry->lock);
+	  }
 
-      /* browse and clean all DIR_CONTINUEs */
-      pentry_iter = to_remove_entry;
-
-      while(pentry_iter)
-        {
-          /* remove current entry from hash, clear resources and invalidate LRUs */
-
-          if((*pstatus =
-              cache_inode_clean_internal(pentry_iter, ht,
-                                         pclient)) != CACHE_INODE_SUCCESS)
-            {
-              if(use_mutex)
-                {
-                  V_w(&pentry->lock);
-                  V_w(&to_remove_entry->lock);
-                }
-
-              LogCrit(COMPONENT_CACHE_INODE,
-                      "cache_inode_clean_internal ERROR %d", *pstatus);
-              return *pstatus;
-            }
-
-          if(pentry_iter->internal_md.type == DIR_BEGINNING)
-            {
-              /* next step : don't stop at end of dir,
-               * because it may stay dircont with inactive entries.
-               */
-              pentry_next = pentry_iter->object.dir_begin.pdir_cont;
-
-            }
-          else if(pentry_iter->internal_md.type == DIR_CONTINUE)
-            {
-              /* next step */
-              pentry_next = pentry_iter->object.dir_cont.pdir_cont;
-
-              /*  can destroy mutex and put back entry to memory pool */
-              cache_inode_mutex_destroy(pentry_iter);
-
-              ReleaseToPool(pentry_iter, &pclient->pool_entry);
-            }
-          else                  /* not a directory, exiting loop */
-            pentry_next = NULL;
-
-          pentry_iter = pentry_next;
-        }
+      	  LogCrit(COMPONENT_CACHE_INODE,
+	   	   "cache_inode_clean_internal ERROR %d", *pstatus);
+      	return *pstatus;
+      }
 
       /* Finally put the main pentry back to pool */
       if(use_mutex)
@@ -598,7 +481,8 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       cache_inode_mutex_destroy(to_remove_entry);
 
       ReleaseToPool(to_remove_entry, &pclient->pool_entry);
-    }
+
+    } /* to_remove->numlinks == 0 */
 
   /* Validate the entries */
   *pstatus = cache_inode_valid(pentry, CACHE_INODE_OP_SET, pclient);
@@ -613,9 +497,9 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
     }
 
   if(status == CACHE_INODE_SUCCESS)
-    pclient->stat.func_stats.nb_success[CACHE_INODE_REMOVE] += 1;
+      (pclient->stat.func_stats.nb_success[CACHE_INODE_REMOVE])++;
   else
-    pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_REMOVE] += 1;
+      (pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_REMOVE])++;
 
   return status;
 }                               /* cache_inode_remove */

@@ -478,3 +478,5 @@
        - Lustre FSAL: exporting several Lustre filesystem with the same server instance
        - A bug was found and fix in OP4_READDIRPLUS (leading to missing
          directory's entries)
+       - Directory content cached is now managed as a tree. Formerly used
+         dir_chain were removed.

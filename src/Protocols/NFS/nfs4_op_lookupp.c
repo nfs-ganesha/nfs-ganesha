@@ -181,6 +181,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   /* BUGAZOMEU: Faire la gestion des cross junction traverse */
   if((file_pentry = cache_inode_lookup(dir_pentry,
                                        &name,
+                                       data->pexport->cache_inode_policy,
                                        &attrlookup,
                                        data->ht,
                                        data->pclient,

@@ -1,7 +1,0 @@
- ./testserver.py pinatubo1:/users/test/leibovic --uid=0 --gid=0 -v all
- ./testserver.py pinatubo1:/users/test/leibovic --noinit --uid=0 --gid=0 --verbose --force readdir
-
-./testserver.py yack5:/posix_fs  --noinit --uid=0 --gid=0 --nocleanup LOOK1
-./testserver.py yack5:/posix_fs  --noinit --uid=0 --gid=0 --nocleanup --security=krb5  LOOK1
-
-

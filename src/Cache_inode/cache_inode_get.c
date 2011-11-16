@@ -61,7 +61,6 @@
  * cache_inode_get: Gets an entry by using its fsdata as a key and caches it if needed.
  * 
  * Gets an entry by using its fsdata as a key and caches it if needed.
- * ASSUMPTION: DIR_CONT entries are always garbabbaged before their related DIR_BEGINNG 
  *
  * @param fsdata [IN] file system data
  * @param pattr [OUT] pointer to the attributes for the result. 
@@ -73,14 +72,15 @@
  * @return the pointer to the entry is successfull, NULL otherwise.
  *
  */
-cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
-                               fsal_attrib_list_t * pattr,
-                               hash_table_t * ht,
-                               cache_inode_client_t * pclient,
-                               fsal_op_context_t * pcontext,
-                               cache_inode_status_t * pstatus)
+cache_entry_t *cache_inode_get( cache_inode_fsal_data_t * pfsdata,
+                                cache_inode_policy_t policy,
+                                fsal_attrib_list_t * pattr,
+                                hash_table_t * ht,
+                                cache_inode_client_t * pclient,
+                                fsal_op_context_t * pcontext,
+                                cache_inode_status_t * pstatus )
 {
-  return cache_inode_get_located( pfsdata, NULL, pattr, ht, pclient, pcontext, pstatus ) ;
+  return cache_inode_get_located( pfsdata, NULL, policy, pattr, ht, pclient, pcontext, pstatus ) ;
 } /* cache_inode_get */
 
 /**
@@ -91,7 +91,6 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
  * The reason to this call is cross-junction management : you can go through a directory that it its own parent from a 
  * FSAL point of view. This could lead to hang (same P_w taken twice on the same entry). To deal this, a check feature is 
  * added through the plocation argument.
- * ASSUMPTION: DIR_CONT entries are always garbabbaged before their related DIR_BEGINNG 
  *
  * @param fsdata [IN] file system data
  * @param plocation [IN] pentry used as "location form where the call is done". Usually a son of a parent entry
@@ -107,6 +106,7 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
 
 cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
                                        cache_entry_t * plocation, 
+                                       cache_inode_policy_t policy,
                                        fsal_attrib_list_t * pattr,
                                        hash_table_t * ht,
                                        cache_inode_client_t * pclient,
@@ -170,9 +170,7 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
       }
       /* Cache miss, allocate a new entry */
 
-      /* If we ask for a dir cont (in this case pfsdata.cookie != FSAL_DIR_BEGINNING, we have 
-       * a client who performs a readdir in the middle of a directory, when the direcctories
-       * have been garbbage. we must search for the DIR_BEGIN related to this DIR_CONT */
+      /* XXX I do not think this can happen with avl dirent cache */
       if(pfsdata->cookie != DIR_START)
         {
           /* added for sanity check */
@@ -187,7 +185,7 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
           cache_inode_release_fsaldata_key(&key, pclient);
 
           /* redo the call */
-          return cache_inode_get(pfsdata, pattr, ht, pclient, pcontext, pstatus);
+          return cache_inode_get(pfsdata, policy, pattr, ht, pclient, pcontext, pstatus);
         }
 
       /* First, call FSAL to know what the object is */
@@ -241,11 +239,20 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
 
       if(type == SYMBOLIC_LINK)
         {
-          FSAL_CLEAR_MASK(fsal_attributes.asked_attributes);
-          FSAL_SET_MASK(fsal_attributes.asked_attributes, pclient->attrmask);
-          fsal_status =
-              FSAL_readlink(&pfsdata->handle, pcontext, &create_arg.link_content,
-                            &fsal_attributes);
+          if( CACHE_INODE_KEEP_CONTENT( policy ) )
+           {
+             FSAL_CLEAR_MASK(fsal_attributes.asked_attributes);
+             FSAL_SET_MASK(fsal_attributes.asked_attributes, pclient->attrmask);
+             fsal_status =
+                FSAL_readlink(&pfsdata->handle, pcontext, &create_arg.link_content,
+                              &fsal_attributes);
+            }
+          else
+            { 
+               fsal_status.major = ERR_FSAL_NO_ERROR ;
+               fsal_status.minor = 0 ;
+            }
+
           if(FSAL_IS_ERROR(fsal_status))
             {
               *pstatus = cache_inode_error_convert(fsal_status);
@@ -282,9 +289,17 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
       if ( type == 1)
 	LogCrit(COMPONENT_CACHE_INODE,"inode get");
 
-      if((pentry = cache_inode_new_entry(pfsdata, &fsal_attributes, type, &create_arg, NULL,    /* never used to add a new DIR_CONTINUE within the scope of this function */
-                                         ht, pclient, pcontext, FALSE,  /* This is a population, not a creation */
-                                         pstatus)) == NULL)
+      if((pentry = cache_inode_new_entry( pfsdata,
+                                          &fsal_attributes, 
+                                          type,
+                                          policy, 
+                                          &create_arg, 
+                                          NULL,    /* never used to add a new DIR_CONTINUE within this function */
+                                          ht, 
+                                          pclient, 
+                                          pcontext, 
+                                          FALSE,  /* This is a population, not a creation */
+                                          pstatus ) ) == NULL )
         {
           /* stats */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;

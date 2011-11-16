@@ -54,6 +54,12 @@ else
 STAT_EXPORTER_FILE =
 endif
 
+if USE_UPCALL_SIMULATOR
+UPCALL_SIMULATOR_FILE = fsal_upcall_simulator_thread.c
+else
+UPCALL_SIMULATOR_FILE =
+endif
+
 if USE_NLM
 NLM_LIB = ../Protocols/NLM/libnlm.la
 else
@@ -93,6 +99,7 @@ endif
 libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              nfs_stats_thread.c                   \
                              $(STAT_EXPORTER_FILE)                \
+                             $(UPCALL_SIMULATOR_FILE)             \
                              nfs_worker_thread.c                  \
                              nfs_file_content_gc_thread.c         \
                              nfs_rpc_dispatcher_thread.c          \
@@ -107,6 +114,7 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/HashData.h                \
                              ../include/rbt_node.h                \
                              ../include/rbt_tree.h                \
+                             ../include/avltree.h                 \
                              ../include/log_functions.h           \
                              ../include/nfs_core.h                \
                              ../include/err_rpc.h                 \
@@ -145,6 +153,7 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       ../IdMapper/libidmap.la                           \
                                       ../support/libsupport.la                          \
                                       ../NodeList/libNodeList.la                        \
+                                      ../avl/libavltree.la                              \
                                       ../$(CACHE_INODE_DIR)/libcache_inode.la           \
                                       ../SAL/libsal.la                                  \
                                       ../File_Content/libcache_content.la               \

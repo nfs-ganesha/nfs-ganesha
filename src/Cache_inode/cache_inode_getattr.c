@@ -137,22 +137,9 @@ cache_inode_getattr(cache_entry_t * pentry,
                     pfsal_handle = &pentry->object.symlink->handle;
                     break;
 
-                case DIR_BEGINNING:
-                    pfsal_handle = &pentry->object.dir_begin.handle;
+                case DIRECTORY:
+                    pfsal_handle = &pentry->object.dir.handle;
                     break;
-
-                case DIR_CONTINUE:
-                    /*
-                     * lock the related dir_begin (dir begin are garbagge
-                     * collected AFTER their related dir_cont)
-                     * this means that if a DIR_CONTINUE exists,
-                     * its pdir pointer is not endless
-                     */
-                    P_r(&pentry->object.dir_cont.pdir_begin->lock);
-                    pfsal_handle = &pentry->object.dir_cont.pdir_begin->object.dir_begin.handle;
-                    V_r(&pentry->object.dir_cont.pdir_begin->lock);
-                    break;
-
                 case SOCKET_FILE:
                 case FIFO_FILE:
                 case BLOCK_FILE:

@@ -210,6 +210,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
   print_buff(COMPONENT_FILEHANDLE, (char *)&fsal_data.handle, sizeof(fsal_data.handle));
 
   if((pentry = cache_inode_get(&fsal_data,
+                               CACHE_INODE_JOKER_POLICY,
                                &attr, ht, pclient, pcontext, &cache_status)) == NULL)
     {
       switch (rq_vers)
@@ -1238,14 +1239,14 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_FS_LOCATIONS:
-          if(data->current_entry->internal_md.type != DIR_BEGINNING)
+          if(data->current_entry->internal_md.type != DIRECTORY)
             {
               op_attr_success = 0;
               break;
             }
 
           if(!nfs4_referral_str_To_Fattr_fs_location
-             (data->current_entry->object.dir_begin.referral, tmp_buff, &tmp_int))
+             (data->current_entry->object.dir.referral, tmp_buff, &tmp_int))
             {
               op_attr_success = 0;
               break;
@@ -3090,6 +3091,99 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
   return NFS4_OK;
 }
 #endif                          /* _USE_NFS4_ACL */
+
+/**
+ * 
+ * nfs4_attrmap_To_FSAL_attrmask: Converts NFSv4 attribute bitmap to
+ * FSAL attribute mask.
+ * 
+ * Converts NFSv4 attributes buffer to a FSAL attributes structure.
+ *
+ * @param attrmap  [IN]   pointer to NFSv4 attribute bitmap. 
+ * @param attrmask [OUT]  pointer to FSAL attribute mask.
+ * 
+ * @return NFS4_OK if successful, NFS4ERR codes if not.
+ *
+ */
+int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask)
+{
+  unsigned int offset = 0;
+  unsigned int i = 0;
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_FattrToSattr";
+
+  for(offset = 0; offset < attrmap.bitmap4_len; offset++)
+    {
+      for(i = 0; i < 32; i++)
+        {
+          if(attrmap.bitmap4_val[offset] & (1 << i)) {
+            uint32_t val = i + 32 * offset;
+            switch (val)
+              {
+              case FATTR4_TYPE:
+                *attrmask |= FSAL_ATTR_TYPE;
+                break;
+              case FATTR4_FILEID:
+                *attrmask |= FSAL_ATTR_FILEID;
+                break;
+              case FATTR4_FSID:
+                *attrmask |= FSAL_ATTR_FSID;
+                break;
+              case FATTR4_NUMLINKS:
+                *attrmask |= FSAL_ATTR_NUMLINKS;
+                break;
+              case FATTR4_SIZE:
+                *attrmask |= FSAL_ATTR_SIZE;
+                break;
+              case FATTR4_MODE:
+                *attrmask |= FSAL_ATTR_MODE;
+                break;
+              case FATTR4_OWNER:
+                *attrmask |= FSAL_ATTR_OWNER;
+                break;
+              case FATTR4_OWNER_GROUP:
+                *attrmask |= FSAL_ATTR_GROUP;
+                break;
+              case FATTR4_CHANGE:
+                *attrmask |= FSAL_ATTR_CHGTIME;
+                break;
+              case FATTR4_RAWDEV:
+                *attrmask |= FSAL_ATTR_RAWDEV;
+                break;
+              case FATTR4_SPACE_USED:
+                *attrmask |= FSAL_ATTR_SPACEUSED;
+                break;
+              case FATTR4_TIME_ACCESS:
+                *attrmask |= FSAL_ATTR_ATIME;
+                break;
+              case FATTR4_TIME_METADATA:
+                *attrmask |= FSAL_ATTR_CTIME;
+                break;
+              case FATTR4_TIME_MODIFY:
+                *attrmask |= FSAL_ATTR_MTIME;
+                break;
+              case FATTR4_TIME_ACCESS_SET:
+                *attrmask |= FSAL_ATTR_ATIME;
+                break;
+              case FATTR4_TIME_MODIFY_SET:
+                *attrmask |= FSAL_ATTR_MTIME;
+                break;
+              case FATTR4_FILEHANDLE:
+                LogFullDebug(COMPONENT_NFS_V4,
+                             "Filehandle attribute requested on readdir!");
+                /* pFSAL_attr->asked_attributes |= FSAL_ATTR_FILEHANDLE; */
+                break;
+#ifdef _USE_NFS4_ACL
+              case FATTR4_ACL:
+                *attrmask |= FSAL_ATTR_ACL;
+                break;
+#endif                          /* _USE_NFS4_ACL */
+              }
+          }
+        }
+    }
+  return NFS4_OK;
+}                               /* nfs4_Fattr_To_FSAL_attr */
+
 
 /**
  * 

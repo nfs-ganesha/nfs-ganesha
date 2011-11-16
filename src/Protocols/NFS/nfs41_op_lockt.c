@@ -1,3 +1,4 @@
+
 /*
  * vim:expandtab:shiftwidth=8:tabstop=8:
  *
@@ -124,8 +125,7 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       /* Type of the entry is not correct */
       switch (data->current_filetype)
         {
-        case DIR_BEGINNING:
-        case DIR_CONTINUE:
+        case DIRECTORY:
           res_LOCKT4.status = NFS4ERR_ISDIR;
           break;
         default:

@@ -58,32 +58,44 @@
 
 /**
  *
- * cache_inode_lookup_sw: looks up for a name in a directory indicated by a cached entry.
+ * cache_inode_lookup_sw: looks up for a name in a directory indicated by a
+ * cached entry.
  * 
- * Looks up for a name in a directory indicated by a cached entry. The directory should have been cached before.
+ * Looks up for a name in a directory indicated by a cached entry. The directory
+ * should have been cached before.
  *
  * @param pentry_parent [IN]    entry for the parent directory to be managed.
- * @param name          [IN]    name of the entry that we are looking for in the cache.
+ * @param name          [IN]    name of the entry that we are looking for in the
+ *        cache.
  * @param pattr         [OUT]   attributes for the entry that we have found.
- * @param ht            [IN]    hash table used for the cache, unused in this call.
- * @param pclient       [INOUT] ressource allocated by the client for the nfs management.
+ * @param ht            [IN]    hash table used for the cache, unused in this
+ *        call.
+ * @param pclient       [INOUT] ressource allocated by the client for the nfs
+ * management.
  * @param pcontext         [IN]    FSAL credentials 
  * @param pstatus       [OUT]   returned status.
- * @param use_mutex     [IN]    if TRUE, mutex management is done, not if equal to FALSE.
+ * @param use_mutex     [IN]    if TRUE, mutex management is done, not if equal
+ * to FALSE.
  * 
  * @return CACHE_INODE_SUCCESS if operation is a success \n
- * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
+ * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the
+ *  entry
  *
  */
-cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
-                                     fsal_name_t * pname,
-                                     fsal_attrib_list_t * pattr,
-                                     hash_table_t * ht,
+cache_entry_t *cache_inode_lookup_sw(cache_entry_t        * pentry_parent,
+                                     fsal_name_t          * pname,
+                                     cache_inode_policy_t   policy,
+                                     fsal_attrib_list_t   * pattr,
+                                     hash_table_t         * ht,
                                      cache_inode_client_t * pclient,
-                                     fsal_op_context_t * pcontext,
-                                     cache_inode_status_t * pstatus, int use_mutex)
+                                     fsal_op_context_t    * pcontext,
+                                     cache_inode_status_t * pstatus, 
+                                     int use_mutex)
 {
-  cache_entry_t *pdir_chain = NULL;
+
+  cache_inode_dir_entry_t dirent_key[1], *dirent;
+  struct avltree_node *dirent_node;
+  cache_inode_dir_entry_t *new_dir_entry;
   cache_entry_t *pentry = NULL;
   fsal_status_t fsal_status;
 #ifdef _USE_MFSL
@@ -98,7 +110,6 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
   cache_inode_status_t cache_status;
   cache_inode_fsal_data_t new_entry_fsdata;
   fsal_accessflags_t access_mask = 0;
-  int i = 0;
 
   memset( (char *)&new_entry_fsdata, 0, sizeof( new_entry_fsdata ) ) ; 
 
@@ -106,16 +117,19 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* stats */
-  pclient->stat.nb_call_total += 1;
-  pclient->stat.func_stats.nb_call[CACHE_INODE_LOOKUP] += 1;
+  (pclient->stat.nb_call_total)++;
+  (pclient->stat.func_stats.nb_call[CACHE_INODE_LOOKUP])++;
 
-  /* Get lock on the pentry */
-  if(use_mutex == TRUE)
-    P_w(&pentry_parent->lock);
+  /* We should not renew entries when !use_mutex (because unless we
+   * make the flag explicit (shared vs. exclusive), we don't know
+   * whether a mutating operation is safe--and, the caller should have
+   * already renewed the entry */
+  if(use_mutex == TRUE) {
+      P_w(&pentry_parent->lock);
 
-  cache_status = cache_inode_renew_entry(pentry_parent, pattr, ht,
-                                         pclient, pcontext, pstatus);
-  if(cache_status != CACHE_INODE_SUCCESS)
+      cache_status = cache_inode_renew_entry(pentry_parent, pattr, ht,
+                                             pclient, pcontext, pstatus);
+      if(cache_status != CACHE_INODE_SUCCESS)
       {
           V_w(&pentry_parent->lock);
           inc_func_err_retryable(pclient, CACHE_INODE_GETATTR);
@@ -125,18 +139,17 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
           return NULL;
       }
 
-  /* RW Lock goes for writer to reader */
-  if(use_mutex == TRUE)
-    rw_lock_downgrade(&pentry_parent->lock);
+      /* RW Lock goes for writer to reader */
+      rw_lock_downgrade(&pentry_parent->lock);
+  }
 
-  if(pentry_parent->internal_md.type != DIR_BEGINNING &&
-     pentry_parent->internal_md.type != DIR_CONTINUE)
+  if(pentry_parent->internal_md.type != DIRECTORY)
     {
       /* Parent is no directory base, return NULL */
       *pstatus = CACHE_INODE_NOT_A_DIRECTORY;
 
       /* stats */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUP] += 1;
+      (pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUP])++;
 
       if(use_mutex == TRUE)
         V_r(&pentry_parent->lock);
@@ -151,130 +164,66 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
     }
   else if(!FSAL_namecmp(pname, (fsal_name_t *) & FSAL_DOT_DOT))
     {
-      /* Directory do only have exactly one parent. This a limitation in all FS, which 
-       * implies that hard link are forbidden on directories (so that they exists only in one dir)
-       * Because of this, the parent list is always limited to one element for a dir.
-       * Clients SHOULD never 'lookup( .. )' in something that is no dir */
+      /* Directory do only have exactly one parent. This a limitation in all FS,
+       * which implies that hard link are forbidden on directories (so that
+       * they exists only in one dir).  Because of this, the parent list is
+       * always limited to one element for a dir.  Clients SHOULD never 
+       * 'lookup( .. )' in something that is no dir. */
       pentry =
-          cache_inode_lookupp_no_mutex(pentry_parent, ht, pclient, pcontext, pstatus);
+          cache_inode_lookupp_no_mutex(pentry_parent, ht, pclient, pcontext,
+                                       pstatus);
     }
   else
     {
       /* This is a "regular lookup" (not on "." or "..") */
 
-      /* Check is user (as specified by the credentials) is authorized to lookup the directory or not */
+      /* Check is user (as specified by the credentials) is authorized to 
+       * lookup the directory or not */
       access_mask = FSAL_MODE_MASK_SET(FSAL_X_OK) |
                     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR);
       if(cache_inode_access_no_mutex(pentry_parent,
                                      access_mask,
                                      ht,
-                                     pclient, pcontext, pstatus) != CACHE_INODE_SUCCESS)
+                                     pclient,
+                                     pcontext,
+                                     pstatus) != CACHE_INODE_SUCCESS)
         {
           if(use_mutex == TRUE)
             V_r(&pentry_parent->lock);
 
-          pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_GETATTR] += 1;
+          (pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_GETATTR])++;
           return NULL;
         }
 
-      /* Try to look into the dir and its dir_cont. At this point, it must be said than lock on dir_cont are
-       *  taken when a lock is previously acquired on the related dir_begin */
-      pdir_chain = pentry_parent;
+      /* We first try avltree_lookup by name.  If that fails, we dispatch to
+       * the fsal. */
 
-      do
-        {
-          /* Is this entry known ? */
-          if(pdir_chain->internal_md.type == DIR_BEGINNING)
-            {
-              for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
-                {
-                  if(pdir_chain->object.dir_begin.pdir_data->dir_entries[i].active ==
-                     VALID)
-                    if(!FSAL_namecmp
-                       (pname,
-                        &(pentry_parent->object.dir_begin.pdir_data->dir_entries[i].
-                          name)))
-                      {
-                        /* Entry was found */
-                        pentry =
-                            pentry_parent->object.dir_begin.pdir_data->dir_entries[i].
-                            pentry;
-                        LogFullDebug(COMPONENT_CACHE_INODE,
-                                     "Cache Hit detected (dir_begin)");
-                        break;
-                      }
-                }
+      FSAL_namecpy(&dirent_key->name, pname);
+      dirent_node = avltree_lookup(&dirent_key->node_n,
+				   &pentry_parent->object.dir.dentries);
+      if (dirent_node) {
+      	  dirent = avltree_container_of(dirent_node, cache_inode_dir_entry_t,
+					node_n);
+	  pentry = dirent->pentry;
+      }
 
-              /* Do we have to go on browsing the cache_inode ? */
-              if(pdir_chain->object.dir_begin.end_of_dir == END_OF_DIR)
-                {
-                  break;
-                }
-
-              /* Next step */
-              pdir_chain = pdir_chain->object.dir_begin.pdir_cont;
-            }
-          else
-            {
-              /* The element in the dir_chain is a DIR_CONTINUE */
-              for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
-                {
-                  if(pdir_chain->object.dir_cont.pdir_data->dir_entries[i].active ==
-                     VALID)
-                    if(!FSAL_namecmp
-                       (pname,
-                        &(pdir_chain->object.dir_cont.pdir_data->dir_entries[i].name)))
-                      {
-                        /* Entry was found */
-                        pentry =
-                            pdir_chain->object.dir_cont.pdir_data->dir_entries[i].pentry;
-                        LogFullDebug(COMPONENT_CACHE_INODE,
-                                     "Cache Hit detected (dir_cont)");
-                        break;
-                      }
-                }
-
-              /* Do we have to go on browsing the cache_inode ? */
-              if(pdir_chain->object.dir_cont.end_of_dir == END_OF_DIR)
-                {
-                  break;
-                }
-
-              /* Next step */
-              pdir_chain = pdir_chain->object.dir_cont.pdir_cont;
-            }
-
-        }
-      while(pentry == NULL);
-
-      /* At this point, if pentry == NULL, we are not looking for a known son, query fsal for lookup */
       if(pentry == NULL)
         {
           LogFullDebug(COMPONENT_CACHE_INODE, "Cache Miss detected");
 
-          if(pentry_parent->internal_md.type == DIR_BEGINNING)
-            dir_handle = pentry_parent->object.dir_begin.handle;
-
-          if(pentry_parent->internal_md.type == DIR_CONTINUE)
-            {
-              if(use_mutex == TRUE)
-                P_r(&pentry_parent->object.dir_cont.pdir_begin->lock);
-
-              dir_handle =
-                  pentry_parent->object.dir_cont.pdir_begin->object.dir_begin.handle;
-
-              if(use_mutex == TRUE)
-                V_r(&pentry_parent->object.dir_cont.pdir_begin->lock);
-            }
-
+          dir_handle = pentry_parent->object.dir.handle;
           object_attributes.asked_attributes = pclient->attrmask;
 #ifdef _USE_MFSL
 
 #ifdef _USE_MFSL_ASYNC
           if(!mfsl_async_is_object_asynchronous(&pentry_parent->mobject))
             {
-              /* If the parent is asynchronous, rely on the content of the cache inode parent entry 
-               *  /!\ If the fs behind the FSAL is touched in a non-nfs way, there will be huge incoherencies */
+              /* If the parent is asynchronous, rely on the content of the cache
+               * inode parent entry.
+               *
+               * /!\ If the fs behind the FSAL is touched in a non-nfs way,
+               * there will be huge incoherencies.
+               */
 #endif                          /* _USE_MFSL_ASYNC */
 
               fsal_status = MFSL_lookup(&pentry_parent->mobject,
@@ -326,7 +275,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                 }
 
               /* stats */
-              pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUP] += 1;
+              (pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUP])++;
 
               return NULL;
             }
@@ -336,14 +285,22 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
           /* If entry is a symlink, this value for be cached */
           if(type == SYMBOLIC_LINK)
             {
+              if( CACHE_INODE_KEEP_CONTENT( policy ) )
+               {
 #ifdef _USE_MFSL
-              fsal_status =
-                  MFSL_readlink(&object_handle, pcontext, &pclient->mfsl_context,
-                                &create_arg.link_content, &object_attributes, NULL);
+                fsal_status =
+                    MFSL_readlink(&object_handle, pcontext, &pclient->mfsl_context,
+                                  &create_arg.link_content, &object_attributes, NULL);
 #else
-              fsal_status =
-                  FSAL_readlink(&object_handle, pcontext, &create_arg.link_content,
-                                &object_attributes);
+                fsal_status =
+                    FSAL_readlink(&object_handle, pcontext, &create_arg.link_content,
+                                  &object_attributes);
+               }
+             else
+              { 
+                 fsal_status.major = ERR_FSAL_NO_ERROR ;
+                 fsal_status.minor = 0 ;
+              }
 #endif
               if(FSAL_IS_ERROR(fsal_status))
                 {
@@ -370,7 +327,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                     }
 
                   /* stats */
-                  pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUP] += 1;
+                  (pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUP])++;
 
                   return NULL;
                 }
@@ -384,24 +341,37 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
 #endif
           new_entry_fsdata.cookie = 0;
 
-          if((pentry = cache_inode_new_entry(&new_entry_fsdata, &object_attributes, type, &create_arg, NULL, ht, pclient, pcontext, FALSE,      /* This is a population and not a creation */
-                                             pstatus)) == NULL)
+          if((pentry = cache_inode_new_entry( &new_entry_fsdata, 
+                                              &object_attributes,
+                                              type, 
+                                              policy,
+                                              &create_arg, 
+                                              NULL, 
+                                              ht, 
+                                              pclient, 
+                                              pcontext, 
+                                              FALSE,      /* This is a population and not a creation */
+                                              pstatus ) ) == NULL )
             {
               if(use_mutex == TRUE)
                 V_r(&pentry_parent->lock);
 
               /* stats */
-              pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUP] += 1;
+              (pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUP])++;
 
               return NULL;
             }
 
-          /* Entry was found in the FSAL, add this entry to the parent directory */
+          /* Entry was found in the FSAL, add this entry to the parent
+           * directory */
           cache_status = cache_inode_add_cached_dirent(pentry_parent,
                                                        pname,
                                                        pentry,
-                                                       NULL,
-                                                       ht, pclient, pcontext, pstatus);
+                                                       ht,
+						       &new_dir_entry,
+						       pclient,
+						       pcontext,
+						       pstatus);
 
           if(cache_status != CACHE_INODE_SUCCESS
              && cache_status != CACHE_INODE_ENTRY_EXISTS)
@@ -410,12 +380,12 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
                 V_r(&pentry_parent->lock);
 
               /* stats */
-              pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUP] += 1;
+              (pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUP])++;
 
               return NULL;
             }
 
-        }
+        } /* cached lookup fail (try fsal) */
     }
 
   /* Return the attributes */
@@ -428,9 +398,9 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
 
   /* stat */
   if(*pstatus != CACHE_INODE_SUCCESS)
-    pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_LOOKUP] += 1;
+    (pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_LOOKUP])++;
   else
-    pclient->stat.func_stats.nb_success[CACHE_INODE_LOOKUP] += 1;
+    (pclient->stat.func_stats.nb_success[CACHE_INODE_LOOKUP])++;
 
   return pentry;
 }                               /* cache_inode_lookup_sw */
@@ -454,16 +424,24 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
  * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
  *
  */
-cache_entry_t *cache_inode_lookup_no_mutex(cache_entry_t * pentry_parent,
-                                           fsal_name_t * pname,
-                                           fsal_attrib_list_t * pattr,
-                                           hash_table_t * ht,
+cache_entry_t *cache_inode_lookup_no_mutex(cache_entry_t        * pentry_parent,
+                                           fsal_name_t          * pname,
+                                           cache_inode_policy_t   policy,
+                                           fsal_attrib_list_t   * pattr,
+                                           hash_table_t         * ht,
                                            cache_inode_client_t * pclient,
-                                           fsal_op_context_t * pcontext,
+                                           fsal_op_context_t    * pcontext,
                                            cache_inode_status_t * pstatus)
 {
-  return cache_inode_lookup_sw(pentry_parent,
-                               pname, pattr, ht, pclient, pcontext, pstatus, FALSE);
+  return cache_inode_lookup_sw( pentry_parent,
+                                pname, 
+                                policy,
+                                pattr, 
+                                ht, 
+                                pclient, 
+                                pcontext,  
+                                pstatus, 
+                                FALSE);
 }                               /* cache_inode_lookup_no_mutex */
 
 /**
@@ -486,12 +464,20 @@ cache_entry_t *cache_inode_lookup_no_mutex(cache_entry_t * pentry_parent,
  */
 cache_entry_t *cache_inode_lookup(cache_entry_t * pentry_parent,
                                   fsal_name_t * pname,
+                                  cache_inode_policy_t policy,
                                   fsal_attrib_list_t * pattr,
                                   hash_table_t * ht,
                                   cache_inode_client_t * pclient,
                                   fsal_op_context_t * pcontext,
                                   cache_inode_status_t * pstatus)
 {
-  return cache_inode_lookup_sw(pentry_parent,
-                               pname, pattr, ht, pclient, pcontext, pstatus, TRUE);
+  return cache_inode_lookup_sw( pentry_parent,
+                                pname, 
+                                policy,
+                                pattr, 
+                                ht, 
+                                pclient, 
+                                pcontext, 
+                                pstatus, 
+                                TRUE);
 }                               /* cache_inode_lookup */

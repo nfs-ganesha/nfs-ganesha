@@ -248,8 +248,7 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
      (pclient == NULL) || (pcontext == NULL) || (pstatus == NULL))
     return CACHE_INODE_INVALID_ARGUMENT;
 
-  if((pentry_dir->internal_md.type != DIR_BEGINNING)
-     && (pentry_dir->internal_md.type != DIR_CONTINUE))
+  if((pentry_dir->internal_md.type != DIRECTORY))
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
       return *pstatus;

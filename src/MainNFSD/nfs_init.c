@@ -102,6 +102,10 @@ pthread_t sigmgr_thrid;
 pthread_t _9p_dispatcher_thrid;
 #endif
 
+#ifdef _USE_UPCALL_SIMULATOR
+pthread_t upcall_simulator_thrid;
+#endif
+
 char config_path[MAXPATHLEN];
 
 /**
@@ -630,7 +634,6 @@ void nfs_set_param_default()
   nfs_param.cache_layers_param.cache_inode_client_param.lru_param.clean_entry =
       lru_inode_clean_entry;
   nfs_param.cache_layers_param.cache_inode_client_param.nb_prealloc_entry = 1024;
-  nfs_param.cache_layers_param.cache_inode_client_param.nb_pre_dir_data = 256;
   nfs_param.cache_layers_param.cache_inode_client_param.nb_pre_parent = 2048;
   nfs_param.cache_layers_param.cache_inode_client_param.nb_pre_state_v4 = 512;
   nfs_param.cache_layers_param.cache_inode_client_param.grace_period_attr   = 0;
@@ -1660,6 +1663,20 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
                "file content gc thread was started successfully");
     }
 
+#ifdef _USE_UPCALL_SIMULATOR
+  /* Starts the thread that mimics upcalls from the FSAL */
+   /* Starting the stats thread */
+  if((rc =
+      pthread_create(&upcall_simulator_thrid, &attr_thr, upcall_simulator_thread, (void *)workers_data)) != 0)
+    {
+      LogFatal(COMPONENT_THREAD,
+               "Could not create upcall_simulator_thread, error = %d (%s)",
+               errno, strerror(errno));
+    }
+  LogEvent(COMPONENT_THREAD, "upcall_simulator thread was started successfully");
+#endif
+
+
 }                               /* nfs_Start_threads */
 
 /**
@@ -2175,36 +2192,53 @@ void nfs_start(nfs_start_info_t * p_start_info)
 
 #if 0
   /* Will remain as long as all FSAL are not yet in new format */
-  printf("---> fsal_handle_t:%u\n", sizeof(proxyfsal_handle_t));
-  printf("---> fsal_op_context_t:%u\n", sizeof(proxyfsal_op_context_t));
-  printf("---> fsal_file_t:%u\n", sizeof(proxyfsal_file_t));
-  printf("---> fsal_dir_t:%u\n", sizeof(proxyfsal_dir_t));
-  printf("---> fsal_export_context_t:%u\n", sizeof(proxyfsal_export_context_t));
-  printf("---> fsal_cookie_t:%u\n", sizeof(proxyfsal_cookie_t));
-  printf("---> fs_specific_initinfo_t:%u\n", sizeof(proxyfs_specific_initinfo_t));
-  printf("---> fsal_cred_t:%u\n", sizeof(proxyfsal_cred_t));
+  printf("---> fsal_handle_t:%lu\n", sizeof(cephfsal_handle_t));
+  printf("---> fsal_op_context_t:%lu\n", sizeof(cephfsal_op_context_t));
+  printf("---> fsal_file_t:%lu\n", sizeof(cephfsal_file_t));
+  printf("---> fsal_dir_t:%lu\n", sizeof(cephfsal_dir_t));
+  printf("---> fsal_export_context_t:%lu\n", sizeof(cephfsal_export_context_t));
+  printf("---> fsal_cookie_t:%lu\n", sizeof(cephfsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(cephfs_specific_initinfo_t));
+#endif
+#if 1
+  /* Will remain as long as all FSAL are not yet in new format */
+  printf("---> fsal_handle_t:%lu\n", sizeof(vfsfsal_handle_t));
+  printf("---> fsal_op_context_t:%lu\n", sizeof(vfsfsal_op_context_t));
+  printf("---> fsal_file_t:%lu\n", sizeof(vfsfsal_file_t));
+  printf("---> fsal_dir_t:%lu\n", sizeof(vfsfsal_dir_t));
+  printf("---> fsal_export_context_t:%lu\n", sizeof(vfsfsal_export_context_t));
+  printf("---> fsal_cookie_t:%lu\n", sizeof(vfsfsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(vfsfs_specific_initinfo_t));
 #endif
 #if 0
   /* Will remain as long as all FSAL are not yet in new format */
-  printf("---> fsal_handle_t:%u\n", sizeof(xfsfsal_handle_t));
-  printf("---> fsal_op_context_t:%u\n", sizeof(xfsfsal_op_context_t));
-  printf("---> fsal_file_t:%u\n", sizeof(xfsfsal_file_t));
-  printf("---> fsal_dir_t:%u\n", sizeof(xfsfsal_dir_t));
-  printf("---> fsal_export_context_t:%u\n", sizeof(xfsfsal_export_context_t));
-  printf("---> fsal_cookie_t:%u\n", sizeof(xfsfsal_cookie_t));
-  printf("---> fs_specific_initinfo_t:%u\n", sizeof(xfsfs_specific_initinfo_t));
-  printf("---> fsal_cred_t:%u\n", sizeof(xfsfsal_cred_t));
+  printf("---> fsal_handle_t:%lu\n", sizeof(proxyfsal_handle_t));
+  printf("---> fsal_op_context_t:%lu\n", sizeof(proxyfsal_op_context_t));
+  printf("---> fsal_file_t:%lu\n", sizeof(proxyfsal_file_t));
+  printf("---> fsal_dir_t:%lu\n", sizeof(proxyfsal_dir_t));
+  printf("---> fsal_export_context_t:%lu\n", sizeof(proxyfsal_export_context_t));
+  printf("---> fsal_cookie_t:%lu\n", sizeof(proxyfsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(proxyfs_specific_initinfo_t));
 #endif
 #if 0
   /* Will remain as long as all FSAL are not yet in new format */
-  printf("---> fsal_handle_t:%u\n", sizeof(zfsfsal_handle_t));
-  printf("---> fsal_op_context_t:%u\n", sizeof(zfsfsal_op_context_t));
-  printf("---> fsal_file_t:%u\n", sizeof(zfsfsal_file_t));
-  printf("---> fsal_dir_t:%u\n", sizeof(zfsfsal_dir_t));
-  printf("---> fsal_export_context_t:%u\n", sizeof(zfsfsal_export_context_t));
-  printf("---> fsal_cookie_t:%u\n", sizeof(zfsfsal_cookie_t));
-  printf("---> fs_specific_initinfo_t:%u\n", sizeof(zfsfs_specific_initinfo_t));
-  printf("---> fsal_cred_t:%u\n", sizeof(zfsfsal_cred_t));
+  printf("---> fsal_handle_t:%lu\n", sizeof(xfsfsal_handle_t));
+  printf("---> fsal_op_context_t:%lu\n", sizeof(xfsfsal_op_context_t));
+  printf("---> fsal_file_t:%lu\n", sizeof(xfsfsal_file_t));
+  printf("---> fsal_dir_t:%lu\n", sizeof(xfsfsal_dir_t));
+  printf("---> fsal_export_context_t:%lu\n", sizeof(xfsfsal_export_context_t));
+  printf("---> fsal_cookie_t:%lu\n", sizeof(xfsfsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(xfsfs_specific_initinfo_t));
+#endif
+#if 0
+  /* Will remain as long as all FSAL are not yet in new format */
+  printf("---> fsal_handle_t:%lu\n", sizeof(zfsfsal_handle_t));
+  printf("---> fsal_op_context_t:%lu\n", sizeof(zfsfsal_op_context_t));
+  printf("---> fsal_file_t:%lu\n", sizeof(zfsfsal_file_t));
+  printf("---> fsal_dir_t:%lu\n", sizeof(zfsfsal_dir_t));
+  printf("---> fsal_export_context_t:%lu\n", sizeof(zfsfsal_export_context_t));
+  printf("---> fsal_cookie_t:%lu\n", sizeof(zfsfsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(zfsfs_specific_initinfo_t));
 #endif
 #if 0
   /* Will remain as long as all FSAL are not yet in new format */
@@ -2237,7 +2271,6 @@ void nfs_start(nfs_start_info_t * p_start_info)
   printf("---> fsal_export_context_t:%lu\n", sizeof(snmpfsal_export_context_t));
   printf("---> fsal_cookie_t:%lu\n", sizeof(snmpfsal_cookie_t));
   printf("---> fs_specific_initinfo_t:%lu\n", sizeof(snmpfs_specific_initinfo_t));
-  printf("---> fsal_cred_t:%lu\n", sizeof(snmpfsal_cred_t));
 #endif
 
   /* store the start info so it is available for all layers */

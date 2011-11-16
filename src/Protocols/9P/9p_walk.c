@@ -143,6 +143,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
 
            if( ( pnewfid->pentry = cache_inode_lookup( pentry,
                                                        &name,
+                                                       pfid->pexport->cache_inode_policy,
                                                        &fsalattr,
                                                        pwkrdata->ht,
                                                        &pwkrdata->cache_inode_client,
@@ -180,14 +181,9 @@ int _9p_walk( _9p_request_data_t * preq9p,
           pnewfid->qid.type = _9P_QTSYMLINK ;
 	  break ;
 
-        case DIR_CONTINUE:
-          pnewfid->qid.path = (u64)pnewfid->pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes.fileid ;
-          pnewfid->qid.type = _9P_QTDIR ;
-	  break ;
-
-        case DIR_BEGINNING:
+        case DIRECTORY:
         case FS_JUNCTION:
-          pnewfid->qid.path = (u64)pnewfid->pentry->object.dir_begin.attributes.fileid ;
+          pnewfid->qid.path = (u64)pnewfid->pentry->object.dir.attributes.fileid ;
           pnewfid->qid.type = _9P_QTDIR ;
 	  break ;
 

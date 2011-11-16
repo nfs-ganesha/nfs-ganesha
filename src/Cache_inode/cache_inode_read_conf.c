@@ -265,10 +265,6 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
         {
           pparam->nb_prealloc_entry = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "DirData_Prealloc_PoolSize"))
-        {
-          pparam->nb_pre_dir_data = atoi(key_value);
-        }
       else if(!strcasecmp(key_name, "ParentData_Prealloc_PoolSize"))
         {
           pparam->nb_pre_parent = atoi(key_value);
@@ -502,8 +498,6 @@ void cache_inode_print_conf_client_parameter(FILE * output,
           param.lru_param.nb_call_gc_invalid);
   fprintf(output, "CacheInode Client: Entry_Prealloc_PoolSize      = %d\n",
           param.nb_prealloc_entry);
-  fprintf(output, "CacheInode Client: DirData_Prealloc_PoolSize    = %d\n",
-          param.nb_pre_dir_data);
   fprintf(output, "CacheInode Client: ParentData_Prealloc_PoolSize = %d\n",
           param.nb_pre_parent);
   fprintf(output, "CacheInode Client: Attr_Expiration_Time         = %d\n",

@@ -329,6 +329,7 @@ int nlm_process_parameters(struct svc_req        * preq,
   /* Now get the cached inode attributes */
   fsal_data.cookie = DIR_START;
   *ppentry = cache_inode_get(&fsal_data,
+                             CACHE_INODE_JOKER_POLICY,
                              &attr,
                              ht,
                              pclient,

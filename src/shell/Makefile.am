@@ -60,6 +60,7 @@ __FS_NAME__ganeshell_SOURCES    = Getopt.c                            \
                                   shell_utils.h                       \
                                   shell_vars.h                        \
                                   ../include/BuddyMalloc.h            \
+                                  ../include/avltree.h                \
                                   ../include/LRU_List.h               \
                                   ../include/cache_content.h          \
                                   ../include/cache_inode.h            \
@@ -92,6 +93,7 @@ shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
                   ../NodeList/libNodeList.la                         \
                   ../HashTable/libhashtable.la                       \
                   ../LRU/liblru.la                                   \
+                  ../avl/libavltree.la                               \
                   $(BUDDY_LIB_FLAGS)                                 \
                   ../FSAL/libfsalcommon.la                           \
                   $(FSAL_LIB)                                        \
