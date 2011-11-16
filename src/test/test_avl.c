@@ -6,7 +6,8 @@
 #include "CUnit/Basic.h"
 
 #include <afs/afsint.h>
-#include "libtree.h"
+#include "avltree.h"
+
 
 #define DEBUG 1
 
