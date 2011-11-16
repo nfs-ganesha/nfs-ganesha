@@ -112,7 +112,9 @@ fsal_status_t GPFSFSAL_lock_op( fsal_file_t       * p_file_descriptor, /* IN */
   else if(lock_op == FSAL_OP_LOCK || lock_op == FSAL_OP_UNLOCK)
     glock_args.cmd = F_SETLK;
   else if(lock_op == FSAL_OP_LOCKB)
-    glock_args.cmd = F_SETLKW; /*TODO: Handle FSAL_OP_CANCEL */
+    glock_args.cmd = F_SETLKW;
+  else if(lock_op == FSAL_OP_CANCEL)
+    glock_args.cmd = 1029; // TODO FSF: hack - replace with GPFS_F_CANCELLK;
   else
     {
       LogDebug(COMPONENT_FSAL,
