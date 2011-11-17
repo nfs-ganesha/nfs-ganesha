@@ -559,7 +559,7 @@ fsal_status_t LUSTREFSAL_close(fsal_file_t * pfile_desc    /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_close);
 
   /* avoid double close errors */ 
-  if (p_file_descriptor->fd <= 0)
+  if (((lustrefsal_file_t *)p_file_descriptor)->fd <= 0)
      Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
 
   /* call to close */
@@ -573,7 +573,7 @@ fsal_status_t LUSTREFSAL_close(fsal_file_t * pfile_desc    /* IN */
   if(rc)
     Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_close);
 
-  p_file_descriptor->fd = -1;
+  ((lustrefsal_file_t *)p_file_descriptor)->fd = -1;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_close);
 
@@ -608,7 +608,7 @@ fsal_status_t LUSTREFSAL_sync(fsal_file_t * pfile_desc /* IN */)
   if(!p_file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_sync);
 
-  if (p_file_descriptor->fd <= 0)
+  if (((lustrefsal_file_t *)p_file_descriptor)->fd <= 0)
   {
      LogWarn(COMPONENT_FSAL, "sync on closed fd");
      Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync);
@@ -616,7 +616,7 @@ fsal_status_t LUSTREFSAL_sync(fsal_file_t * pfile_desc /* IN */)
 
   /* Flush data. */
   TakeTokenFSCall();
-  rc = fsync(p_file_descriptor->fd);
+  rc = fsync(((lustrefsal_file_t *)p_file_descriptor)->fd);
   errsv = errno;
   ReleaseTokenFSCall();
   

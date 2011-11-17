@@ -7,6 +7,7 @@
 #endif
 
 #include  "fsal.h"
+#include <sys/stat.h>
 #include "FSAL/access_check.h"
 
 

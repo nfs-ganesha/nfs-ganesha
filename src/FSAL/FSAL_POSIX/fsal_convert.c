@@ -361,17 +361,17 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
     }
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME))
     {
-      p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime, 0);
+      p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime, p_buffstat->st_atim.tv_nsec);
 
     }
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CTIME))
     {
-      p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime, 0);
+      p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime, p_buffstat->st_atim.tv_nsec);
     }
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
     {
-      p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime, 0);
+      p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime, p_buffstat->st_atim.tv_nsec);
     }
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
