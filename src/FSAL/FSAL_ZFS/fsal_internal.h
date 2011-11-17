@@ -10,6 +10,7 @@
  */
 
 #include  "fsal.h"
+#include "FSAL/common_functions.h"
 
 #include <libzfswrap.h>
 

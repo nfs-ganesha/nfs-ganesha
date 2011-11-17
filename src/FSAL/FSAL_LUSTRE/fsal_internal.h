@@ -11,6 +11,7 @@
 
 #include  "fsal.h"
 #include <sys/stat.h>
+#include "FSAL/common_functions.h"
 
 #if (defined(_USE_FSALMDS) || defined(_USE_FSALDS))
 #include "fsal_pnfs.h"

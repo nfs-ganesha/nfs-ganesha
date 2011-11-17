@@ -356,77 +356,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
   if(isFullDebug(COMPONENT_FSAL))
     {
-      LogFullDebug(COMPONENT_FSAL, "{");
-      LogFullDebug(COMPONENT_FSAL,
-                   "  maxfilesize  = %llX    ",
-                   default_gpfs_info.maxfilesize);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  maxlink  = %lu   ",
-                   default_gpfs_info.maxlink);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  maxnamelen  = %lu  ",
-                   default_gpfs_info.maxnamelen);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  maxpathlen  = %lu  ",
-                   default_gpfs_info.maxpathlen);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  no_trunc  = %d ",
-                   default_gpfs_info.no_trunc);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  chown_restricted  = %d ",
-                   default_gpfs_info.chown_restricted);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  case_insensitive  = %d ",
-                   default_gpfs_info.case_insensitive);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  case_preserving  = %d ",
-                   default_gpfs_info.case_preserving);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  fh_expire_type  = %hu ",
-                   default_gpfs_info.fh_expire_type);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  link_support  = %d  ",
-                   default_gpfs_info.link_support);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  symlink_support  = %d  ",
-                   default_gpfs_info.symlink_support);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  lock_support  = %d  ",
-                   default_gpfs_info.lock_support);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  lock_support_owner  = %d  ",
-                   default_gpfs_info.lock_support_owner);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  lock_support_async_block  = %d  ",
-                   default_gpfs_info.lock_support_async_block);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  named_attr  = %d  ",
-                   default_gpfs_info.named_attr);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  unique_handles  = %d  ",
-                   default_gpfs_info.unique_handles);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  acl_support  = %hu  ",
-                   default_gpfs_info.acl_support);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  cansettime  = %d  ",
-                   default_gpfs_info.cansettime);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  homogenous  = %d  ",
-                   default_gpfs_info.homogenous);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  supported_attrs  = %llX  ",
-                   default_gpfs_info.supported_attrs);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  maxread  = %llX     ",
-                   default_gpfs_info.maxread);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  maxwrite  = %llX     ",
-                   default_gpfs_info.maxwrite);
-      LogFullDebug(COMPONENT_FSAL,
-                   "  umask  = %X ",
-                   default_gpfs_info.umask);
-      LogFullDebug(COMPONENT_FSAL, "}");
+      display_fsinfo(&default_gpfs_info);
     }
 
   /* Analyzing fs_common_info struct */
