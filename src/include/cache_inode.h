@@ -221,6 +221,13 @@ typedef enum cache_inode_file_type__
   RECYCLED = 10
 } cache_inode_file_type_t;
 
+typedef enum cache_inode_lock_how__
+{
+  NO_LOCK = 0,
+  RD_LOCK  = 1,
+  WT_LOCK  = 2
+} cache_inode_lock_how_t ;
+
 typedef enum cache_inode_endofdir__
 { TO_BE_CONTINUED = 1,
   END_OF_DIR = 2,
@@ -922,10 +929,11 @@ cache_inode_status_t cache_inode_gc(hash_table_t * ht,
 cache_inode_status_t cache_inode_gc_fd(cache_inode_client_t * pclient,
                                        cache_inode_status_t * pstatus);
 
-cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
-                                            hash_table_t * ht,
-                                            cache_inode_client_t * pclient,
-                                            cache_inode_status_t * pstatus);
+cache_inode_status_t cache_inode_kill_entry( cache_entry_t * pentry,
+                                             cache_inode_lock_how_t lock_how, 
+                                             hash_table_t * ht,
+                                             cache_inode_client_t * pclient,
+                                             cache_inode_status_t * pstatus);
 
 cache_inode_status_t cache_inode_invalidate( fsal_handle_t        * pfsal_handle,
                                              fsal_attrib_list_t   * pattr,

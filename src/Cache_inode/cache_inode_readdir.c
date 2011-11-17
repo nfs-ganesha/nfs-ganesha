@@ -647,7 +647,7 @@ cache_inode_status_t cache_inode_readdir_populate(
                    "cache_inode_readdir: Stale FSAL File Handle detected for pentry = %p",
                    pentry_dir);
 
-          if(cache_inode_kill_entry(pentry_dir, ht, pclient, &kill_status) !=
+          if(cache_inode_kill_entry(pentry_dir, WT_LOCK, ht, pclient, &kill_status) !=
              CACHE_INODE_SUCCESS)
             LogCrit(COMPONENT_CACHE_INODE,
                     "cache_inode_readdir: Could not kill entry %p, status = %u",
@@ -744,7 +744,7 @@ cache_inode_status_t cache_inode_readdir_populate(
                                "cache_inode_readdir: Stale FSAL File Handle detected for pentry = %p",
                                pentry_dir);
 
-                      if(cache_inode_kill_entry(pentry_dir, ht, pclient, &kill_status) !=
+                      if(cache_inode_kill_entry(pentry_dir, WT_LOCK, ht, pclient, &kill_status) !=
                          CACHE_INODE_SUCCESS)
                         LogCrit(COMPONENT_CACHE_INODE,
                                 "cache_inode_readdir: Could not kill entry %p, status = %u",

@@ -433,7 +433,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                         "cache_inode_new_entry: Stale FSAL File Handle detected for pentry = %p",
                         pentry);
 
-                if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+                if(cache_inode_kill_entry(pentry, NO_LOCK, ht, pclient, &kill_status) !=
                    CACHE_INODE_SUCCESS)
                     LogCrit(COMPONENT_CACHE_INODE,
                             "cache_inode_new_entry: Could not kill entry %p, status = %u",
@@ -1738,6 +1738,7 @@ void cache_inode_invalidate_related_dirents(  cache_entry_t        * pentry,
  * Force removing an entry from the cache_inode. This is used in case of a 'stale' entry.
  *
  * @param pentry  [IN] the input pentry (supposed to be staled).
+ * @param locked  [IN] tells in the entry was previously locked and how it was locked
  * @param ht      [INOUT] the related hash table for the cache_inode cache.
  * @param pclient [INOUT] related cache_inode client.
  * @param pstatus [OUT] status for the operation.
@@ -1747,10 +1748,30 @@ void cache_inode_invalidate_related_dirents(  cache_entry_t        * pentry,
  * @return CACHE_INODE_SUCCESS if operation succeded.
  *
  */
-cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
-                                            hash_table_t * ht,
-                                            cache_inode_client_t * pclient,
-                                            cache_inode_status_t * pstatus)
+static void free_lock( cache_entry_t          * pentry,
+                       cache_inode_lock_how_t   lock_how )
+{
+  switch( lock_how )
+    {
+      case RD_LOCK:
+        V_r( &pentry->lock ) ;
+        break ;
+ 
+      case WT_LOCK:
+        V_w( &pentry->lock ) ;
+        break ;
+
+      case NO_LOCK:
+      default:
+        break ;
+    }
+}
+
+cache_inode_status_t cache_inode_kill_entry( cache_entry_t          * pentry,
+                                             cache_inode_lock_how_t   lock_how,  
+                                             hash_table_t           * ht,
+                                             cache_inode_client_t   * pclient,
+                                             cache_inode_status_t   * pstatus )
 {
   fsal_handle_t *pfsal_handle = NULL;
   cache_inode_fsal_data_t fsaldata;
@@ -1807,15 +1828,13 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
       return *pstatus;
     }
 
-  /* Clean parent entries */
-  cache_inode_invalidate_related_dirents(pentry, pclient);
-
   /* use the key to delete the entry */
   if((rc = HashTable_Del(ht, &key, &old_key, &old_value)) != HASHTABLE_SUCCESS)
     {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "cache_inode_kill_entry: entry could not be deleted, status = %d",
-              rc);
+      if( rc != HASHTABLE_ERROR_NO_SUCH_KEY) /* rc=3 => Entry was previously removed */
+        LogCrit( COMPONENT_CACHE_INODE,
+                 "cache_inode_kill_entry: entry could not be deleted, status = %d",
+                 rc);
 
       cache_inode_release_fsaldata_key(&key, pclient);
 
@@ -1823,7 +1842,7 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
       return *pstatus;
     }
 
-  /* Clean up the associated ressources in the FSAL */
+   /* Clean up the associated ressources in the FSAL */
   if(FSAL_IS_ERROR(fsal_status = FSAL_CleanObjectResources(pfsal_handle)))
     {
       LogCrit(COMPONENT_CACHE_INODE,
@@ -1876,6 +1895,8 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
     {
 	cache_inode_invalidate_related_dirents(pentry, pclient);
     }
+
+  // free_lock( pentry, lock_how ) ;
 
   /* Destroy the mutex associated with the pentry */
   cache_inode_mutex_destroy(pentry);

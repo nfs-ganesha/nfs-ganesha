@@ -265,7 +265,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t        * pentry_parent,
                            "cache_inode_lookup: Stale FSAL File Handle detected for pentry = %p",
                            pentry_parent);
 
-                  if(cache_inode_kill_entry(pentry_parent, ht, pclient, &kill_status) !=
+                  if(cache_inode_kill_entry(pentry_parent, NO_LOCK, ht, pclient, &kill_status) !=
                      CACHE_INODE_SUCCESS)
                     LogCrit(COMPONENT_CACHE_INODE,
                             "cache_inode_pentry_parent: Could not kill entry %p, status = %u",
@@ -317,7 +317,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t        * pentry_parent,
                                "cache_inode_lookup: Stale FSAL File Handle detected for pentry = %p",
                                pentry_parent);
 
-                      if(cache_inode_kill_entry(pentry_parent, ht, pclient, &kill_status)
+                      if(cache_inode_kill_entry(pentry_parent, NO_LOCK, ht, pclient, &kill_status)
                          != CACHE_INODE_SUCCESS)
                         LogCrit(COMPONENT_CACHE_INODE,
                                 "cache_inode_pentry_parent: Could not kill entry %p, status = %u",
