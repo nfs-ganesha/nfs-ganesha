@@ -10,6 +10,7 @@
  */
 
 #include  "fsal.h"
+#include "FSAL/common_functions.h"
 
 /* the following variables must not be defined in fsal_internal.c */
 #ifndef FSAL_INTERNAL_C

@@ -306,53 +306,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   /* setting default values. */
   global_fs_info = default_posix_info;
 
-  LogDebug(COMPONENT_FSAL, "{");
-  LogDebug(COMPONENT_FSAL, "  maxfilesize  = %llX    ",
-           default_posix_info.maxfilesize);
-  LogDebug(COMPONENT_FSAL, "  maxlink  = %lu   ",
-           default_posix_info.maxlink);
-  LogDebug(COMPONENT_FSAL, "  maxnamelen  = %lu  ",
-           default_posix_info.maxnamelen);
-  LogDebug(COMPONENT_FSAL, "  maxpathlen  = %lu  ",
-           default_posix_info.maxpathlen);
-  LogDebug(COMPONENT_FSAL, "  no_trunc  = %d ",
-           default_posix_info.no_trunc);
-  LogDebug(COMPONENT_FSAL, "  chown_restricted  = %d ",
-           default_posix_info.chown_restricted);
-  LogDebug(COMPONENT_FSAL, "  case_insensitive  = %d ",
-           default_posix_info.case_insensitive);
-  LogDebug(COMPONENT_FSAL, "  case_preserving  = %d ",
-           default_posix_info.case_preserving);
-  LogDebug(COMPONENT_FSAL, "  fh_expire_type  = %hu ",
-           default_posix_info.fh_expire_type);
-  LogDebug(COMPONENT_FSAL, "  link_support  = %d  ",
-           default_posix_info.link_support);
-  LogDebug(COMPONENT_FSAL, "  symlink_support  = %d  ",
-           default_posix_info.symlink_support);
-  LogDebug(COMPONENT_FSAL, "  lock_support  = %d  ",
-           default_posix_info.lock_support);
-  LogDebug(COMPONENT_FSAL, "  lock_support_owner  = %d  ",
-           global_fs_info.lock_support_owner);
-  LogDebug(COMPONENT_FSAL, "  lock_support_async_block  = %d  ",
-           global_fs_info.lock_support_async_block);
-  LogDebug(COMPONENT_FSAL, "  named_attr  = %d  ",
-           default_posix_info.named_attr);
-  LogDebug(COMPONENT_FSAL, "  unique_handles  = %d  ",
-           default_posix_info.unique_handles);
-  LogDebug(COMPONENT_FSAL, "  acl_support  = %hu  ",
-           default_posix_info.acl_support);
-  LogDebug(COMPONENT_FSAL, "  cansettime  = %d  ",
-           default_posix_info.cansettime);
-  LogDebug(COMPONENT_FSAL, "  homogenous  = %d  ",
-           default_posix_info.homogenous);
-  LogDebug(COMPONENT_FSAL, "  supported_attrs  = %llX  ",
-           default_posix_info.supported_attrs);
-  LogDebug(COMPONENT_FSAL, "  maxread  = %llX     ",
-           default_posix_info.maxread);
-  LogDebug(COMPONENT_FSAL, "  maxwrite  = %llX     ",
-           default_posix_info.maxwrite);
-  LogDebug(COMPONENT_FSAL, "  umask  = %X ", default_posix_info.umask);
-  LogDebug(COMPONENT_FSAL, "}");
+  display_fsinfo(&default_posix_info);
 
   /* Analyzing fs_common_info struct */
 

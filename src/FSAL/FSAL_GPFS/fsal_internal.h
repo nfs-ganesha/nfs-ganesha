@@ -35,6 +35,7 @@
 #include  "fsal.h"
 #include <sys/stat.h>
 #include "fsal_up.h"
+#include "FSAL/common_functions.h"
 
 /* defined the set of attributes supported with POSIX */
 #define GPFS_SUPPORTED_ATTRIBUTES (                                       \

@@ -311,57 +311,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
   SET_BITMAP_PARAM(global_fs_info, fs_common_info, xattr_access_rights);
 
-  LogDebug(COMPONENT_FSAL, "FileSystem info :");
-  LogDebug(COMPONENT_FSAL, "  maxfilesize  = %llX    ",
-           global_fs_info.maxfilesize);
-  LogDebug(COMPONENT_FSAL, "  maxlink  = %lu   ", global_fs_info.maxlink);
-  LogDebug(COMPONENT_FSAL, "  maxnamelen  = %lu  ",
-           global_fs_info.maxnamelen);
-  LogDebug(COMPONENT_FSAL, "  maxpathlen  = %lu  ",
-           global_fs_info.maxpathlen);
-  LogDebug(COMPONENT_FSAL, "  no_trunc  = %d ", global_fs_info.no_trunc);
-  LogDebug(COMPONENT_FSAL, "  chown_restricted  = %d ",
-           global_fs_info.chown_restricted);
-  LogDebug(COMPONENT_FSAL, "  case_insensitive  = %d ",
-           global_fs_info.case_insensitive);
-  LogDebug(COMPONENT_FSAL, "  case_preserving  = %d ",
-           global_fs_info.case_preserving);
-  LogDebug(COMPONENT_FSAL, "  fh_expire_type  = %hu ",
-           global_fs_info.fh_expire_type);
-  LogDebug(COMPONENT_FSAL, "  link_support  = %d  ",
-           global_fs_info.link_support);
-  LogDebug(COMPONENT_FSAL, "  symlink_support  = %d  ",
-           global_fs_info.symlink_support);
-  LogDebug(COMPONENT_FSAL, "  lock_support  = %d  ",
-           global_fs_info.lock_support);
-  LogDebug(COMPONENT_FSAL, "  lock_support_owner  = %d  ",
-           global_fs_info.lock_support_owner);
-  LogDebug(COMPONENT_FSAL, "  lock_support_async_block  = %d  ",
-           global_fs_info.lock_support_async_block);
-  LogDebug(COMPONENT_FSAL, "  named_attr  = %d  ",
-           global_fs_info.named_attr);
-  LogDebug(COMPONENT_FSAL, "  unique_handles  = %d  ",
-           global_fs_info.unique_handles);
-  LogDebug(COMPONENT_FSAL, "  lease_time  = %u.%u     ",
-           global_fs_info.lease_time.seconds,
-           global_fs_info.lease_time.nseconds);
-  LogDebug(COMPONENT_FSAL, "  acl_support  = %hu  ",
-           global_fs_info.acl_support);
-  LogDebug(COMPONENT_FSAL, "  cansettime  = %d  ",
-           global_fs_info.cansettime);
-  LogDebug(COMPONENT_FSAL, "  homogenous  = %d  ",
-           global_fs_info.homogenous);
-  LogDebug(COMPONENT_FSAL, "  supported_attrs  = %llX  ",
-           global_fs_info.supported_attrs);
-  LogDebug(COMPONENT_FSAL, "  maxread  = %llX     ",
-           global_fs_info.maxread);
-  LogDebug(COMPONENT_FSAL, "  maxwrite  = %llX     ",
-           global_fs_info.maxwrite);
-  LogDebug(COMPONENT_FSAL, "  umask  = %#o ", global_fs_info.umask);
-  LogDebug(COMPONENT_FSAL, "  auth_exportpath_xdev  = %d  ",
-           global_fs_info.auth_exportpath_xdev);
-  LogDebug(COMPONENT_FSAL, "  xattr_access_rights = %#o ",
-           global_fs_info.xattr_access_rights);
+  display_fsinfo(&global_fs_info);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

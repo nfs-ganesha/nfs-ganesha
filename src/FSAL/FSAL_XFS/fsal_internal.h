@@ -34,6 +34,7 @@
 
 #include  "fsal.h"
 #include <sys/stat.h>
+#include "FSAL/common_functions.h"
 
 /* defined the set of attributes supported with POSIX */
 #define POSIX_SUPPORTED_ATTRIBUTES (                                       \
