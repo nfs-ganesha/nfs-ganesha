@@ -155,10 +155,8 @@ void *state_async_thread(void *argp)
           /* Block is off list, no need to hold mutex any more */
           V(blocked_locks_mutex);
 
-          /*
           process_blocked_lock_upcall(pblock,
                                       &state_async_cache_inode_client);
-          */
 
           continue;
         }
