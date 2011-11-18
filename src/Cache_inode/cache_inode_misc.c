@@ -1787,11 +1787,47 @@ cache_inode_status_t cache_inode_kill_entry( cache_entry_t          * pentry,
   LogInfo(COMPONENT_CACHE_INODE,
           "Using cache_inode_kill_entry for entry %p", pentry);
 
+  /* Invalidation is not for junctions or special files */
+  if( ( pentry->internal_md.type == FS_JUNCTION )    ||
+      ( pentry->internal_md.type == SOCKET_FILE )    ||
+      ( pentry->internal_md.type == FIFO_FILE )      ||
+      ( pentry->internal_md.type == CHARACTER_FILE ) ||
+      ( pentry->internal_md.type == BLOCK_FILE ) )
+   {
+     free_lock( pentry, lock_how ) ; 
+
+     *pstatus = CACHE_INODE_SUCCESS;
+     return *pstatus;
+   }
+
+#if 0
+  /** @todo: BUGAZOMEU : directory invalidation seems quite tricky, temporarily avoid it */
+  if( pentry->internal_md.type == DIRECTORY )
+   {
+     free_lock( pentry, lock_how ) ; 
+
+     *pstatus = CACHE_INODE_SUCCESS;
+     return *pstatus;
+   }
+#endif
+
+  /** @todo: BUGAZOMEU : file invalidation seems quite tricky, temporarily avoid it */
+  /* We need to know how to manage how to deal with "files with states"  */
+  if( pentry->internal_md.type == REGULAR_FILE )
+   {
+     free_lock( pentry, lock_how ) ; 
+
+     *pstatus = CACHE_INODE_SUCCESS;
+     return *pstatus;
+   }
+
   if(pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
 
   if(pentry == NULL || pclient == NULL || ht == NULL)
     {
+      free_lock( pentry, lock_how ) ; 
+
       *pstatus = CACHE_INODE_INVALID_ARGUMENT;
       return *pstatus;
     }
@@ -1799,6 +1835,8 @@ cache_inode_status_t cache_inode_kill_entry( cache_entry_t          * pentry,
   /* Get the FSAL handle */
   if((pfsal_handle = cache_inode_get_fsal_handle(pentry, pstatus)) == NULL)
     {
+      free_lock( pentry, lock_how ) ; 
+
       LogCrit(COMPONENT_CACHE_INODE,
               "cache_inode_kill_entry: unable to retrieve pentry's specific filesystem info");
       return *pstatus;
@@ -1809,6 +1847,8 @@ cache_inode_status_t cache_inode_kill_entry( cache_entry_t          * pentry,
     {
       if(LRU_invalidate(pentry->gc_lru, pentry->gc_lru_entry) != LRU_LIST_SUCCESS)
         {
+          free_lock( pentry, lock_how ) ; 
+
           *pstatus = CACHE_INODE_LRU_ERROR;
           return *pstatus;
         }
@@ -1820,6 +1860,8 @@ cache_inode_status_t cache_inode_kill_entry( cache_entry_t          * pentry,
   /* Use the handle to build the key */
   if(cache_inode_fsaldata_2_key(&key, &fsaldata, pclient))
     {
+      free_lock( pentry, lock_how ) ; 
+
       LogCrit(COMPONENT_CACHE_INODE,
               "cache_inode_kill_entry: could not build hashtable key");
 
@@ -1896,7 +1938,7 @@ cache_inode_status_t cache_inode_kill_entry( cache_entry_t          * pentry,
 	cache_inode_invalidate_related_dirents(pentry, pclient);
     }
 
-  // free_lock( pentry, lock_how ) ;
+  // free_lock( pentry, lock_how ) ; /* Really needed ? The pentry is unaccessible now and will be destroyed */
 
   /* Destroy the mutex associated with the pentry */
   cache_inode_mutex_destroy(pentry);
