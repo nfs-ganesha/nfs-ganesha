@@ -459,6 +459,16 @@ void signal_async_work();
 state_status_t state_async_init();
 void state_async_thread_start();
 
+void grant_blocked_lock_upcall(cache_entry_t        * pentry,
+                               void                 * powner,
+                               state_lock_desc_t    * plock,
+                               cache_inode_client_t * pclient);
+
+void available_blocked_lock_upcall(cache_entry_t        * pentry,
+                                   void                 * powner,
+                                   state_lock_desc_t    * plock,
+                                   cache_inode_client_t * pclient);
+
 void process_blocked_lock_upcall(state_block_data_t   * block_data,
                                  cache_inode_client_t * pclient);
 #endif
