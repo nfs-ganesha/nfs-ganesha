@@ -572,7 +572,7 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
   fsal_op_context_t        fsal_context, *pcontext = &fsal_context;
   state_block_data_t     * block_data     = lock_entry->sle_block_data;
   state_nlm_block_data_t * nlm_block_data = &block_data->sbd_block_data.sbd_nlm_block_data;
-  state_cookie_entry_t   * cookie_entry;
+  state_cookie_entry_t   * cookie_entry = NULL;
   state_async_queue_t    * arg;
   nlm4_testargs          * inarg;
   state_nlm_owner_t      * nlm_grant_owner  = &lock_entry->sle_owner->so_owner.so_nlm_owner;

@@ -410,8 +410,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
                                                    state_blocking_t     blocked,
                                                    state_owner_t      * powner,
                                                    state_t            * pstate,
-                                                   state_lock_desc_t  * plock,
-                                                   state_block_data_t * block_data)
+                                                   state_lock_desc_t  * plock)
 {
   state_lock_entry_t *new_entry;
   uint64_t            fileid;
@@ -437,7 +436,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
   new_entry->sle_blocked    = blocked;
   new_entry->sle_owner      = powner;
   new_entry->sle_state      = pstate;
-  new_entry->sle_block_data = block_data;
+  new_entry->sle_block_data = NULL;   /* will be filled in later if necessary */
   new_entry->sle_lock       = *plock;
 
   FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
@@ -491,8 +490,7 @@ inline state_lock_entry_t *state_lock_entry_t_dup(fsal_op_context_t  * pcontext,
                                  orig_entry->sle_blocked,
                                  orig_entry->sle_owner,
                                  orig_entry->sle_state,
-                                 &orig_entry->sle_lock,
-                                 orig_entry->sle_block_data);
+                                 &orig_entry->sle_lock);
 }
 
 void lock_entry_inc_ref(state_lock_entry_t *lock_entry)
@@ -606,9 +604,10 @@ static state_lock_entry_t *get_overlapping_entry(cache_entry_t     * pentry,
 
       LogEntry("Checking", found_entry);
 
-      /* Skip blocked locks */
+      /* Skip blocked or cancelled locks */
       if(found_entry->sle_blocked == STATE_NLM_BLOCKING ||
-         found_entry->sle_blocked == STATE_NFSV4_BLOCKING)
+         found_entry->sle_blocked == STATE_NFSV4_BLOCKING ||
+         found_entry->sle_blocked == STATE_CANCELED)
           continue;
 
       found_entry_end = lock_end(&found_entry->sle_lock);
@@ -780,7 +779,7 @@ static bool_t subtract_lock_from_entry(cache_entry_t        * pentry,
 
 complete_remove:
 
-  /* Remove the clock from the list it's on and put it on the remove_list */
+  /* Remove the lock from the list it's on and put it on the remove_list */
   glist_del(&found_entry->sle_list);
   glist_add_tail(remove_list, &(found_entry->sle_list));
 
@@ -811,6 +810,11 @@ static bool_t subtract_lock_from_list(cache_entry_t        * pentry,
 
       if(powner != NULL && different_owners(found_entry->sle_owner, powner))
         continue;
+
+      /* Only care about granted locks */
+      if(found_entry->sle_blocked != STATE_NON_BLOCKING)
+        continue;
+
 
 #ifdef _USE_NLM
       /* Skip locks owned by this NLM state.
@@ -1132,26 +1136,64 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
                "Lock Cookie {%s} Added",
                str);
 
-  /* Now that we are sure we can continue, acquire the FSAL lock */
-  /* If we get STATE_LOCK_BLOCKED we need to return... */
-  *pstatus = do_lock_op(pentry,
-                        pcontext,
-                        FSAL_OP_LOCK,
-                        lock_entry->sle_owner,
-                        &lock_entry->sle_lock,
-                        NULL,
-                        NULL,
-                        FALSE,
-                        pclient);
+  switch(lock_entry->sle_block_data->sbd_grant_type)
+    {
+      case STATE_GRANT_NONE:
+        /* Shouldn't get here */
+        *pstatus = STATE_INCONSISTENT_ENTRY;
+        break;
+
+      case STATE_GRANT_FSAL_AVAILABLE:
+        /* Now that we are sure we can continue, try to acquire the FSAL lock */
+        /* If we get STATE_LOCK_BLOCKED we need to return... */
+        *pstatus = do_lock_op(pentry,
+                              pcontext,
+                              FSAL_OP_LOCKB,
+                              lock_entry->sle_owner,
+                              &lock_entry->sle_lock,
+                              NULL,
+                              NULL,
+                              FALSE,
+                              pclient);
+        break;
+
+      case STATE_GRANT_INTERNAL:
+        /* Now that we are sure we can continue, acquire the FSAL lock */
+        /* If we get STATE_LOCK_BLOCKED we need to return... */
+        *pstatus = do_lock_op(pentry,
+                              pcontext,
+                              FSAL_OP_LOCK,
+                              lock_entry->sle_owner,
+                              &lock_entry->sle_lock,
+                              NULL,
+                              NULL,
+                              FALSE,
+                              pclient);
+        break;
+
+      case STATE_GRANT_FSAL:
+        /* No need to go to FSAL for lock */
+        *pstatus = STATE_SUCCESS;
+        break;
+    }
 
   if(*pstatus != STATE_SUCCESS)
     {
       /* lock will be returned to right blocking type if it is still blocking
        * we could lose a block if we failed for any other reason
        */
-      LogMajor(COMPONENT_STATE,
-               "Unable to lock FSAL for GRANTED lock, error=%s",
-               state_err_str(*pstatus));
+      if(*pstatus == STATE_LOCK_BLOCKED)
+        LogDebug(COMPONENT_STATE,
+                 "Unable to lock FSAL for %s lock, error=%s",
+                 str_blocked(lock_entry->sle_blocked),
+                 state_err_str(*pstatus));
+      else
+        LogMajor(COMPONENT_STATE,
+                 "Unable to lock FSAL for %s lock, error=%s",
+                 str_blocked(lock_entry->sle_blocked),
+                 state_err_str(*pstatus));
+
+      LogEntry("Entry", lock_entry);
 
       /* And release the cookie without unblocking the lock.
        * grant_blocked_locks() will decide whether to keep or free the block.
@@ -1317,15 +1359,73 @@ void state_complete_grant(fsal_op_context_t     * pcontext,
   V(pentry->object.file.lock_list_mutex);
 }
 
+void try_to_grant_lock(state_lock_entry_t   * lock_entry,
+                       cache_inode_client_t * pclient)
+{
+  granted_callback_t     call_back;
+  state_blocking_t       blocked;
+  state_status_t         status;
+
+  /* Try to grant if not cancelled and has block data */
+  if(lock_entry->sle_blocked != STATE_CANCELED &&
+     lock_entry->sle_block_data != NULL)
+    {
+      call_back = lock_entry->sle_block_data->sbd_granted_callback;
+      /*
+       * Mark the lock_entry as provisionally granted and make the granted
+       * call back. The granted call back is responsible for acquiring a
+       * reference to the lock entry if needed.
+       */
+      blocked = lock_entry->sle_blocked;
+      lock_entry->sle_blocked = STATE_GRANTING;
+      if(lock_entry->sle_block_data->sbd_grant_type == STATE_GRANT_NONE)
+        lock_entry->sle_block_data->sbd_grant_type = STATE_GRANT_INTERNAL;
+
+      if(call_back(lock_entry->sle_pentry,
+                   lock_entry,
+                   pclient,
+                   &status) == STATE_LOCK_BLOCKED)
+        {
+          /* The lock is still blocked, restore it's type and leave it in the list */
+          lock_entry->sle_blocked = blocked;
+          return;
+        }
+
+      if(status == STATE_SUCCESS)
+        return;
+    }
+
+  /* There was no call back data, the call back failed, or the block was cancelled.
+   * Remove lock from list.
+   */
+  LogEntry("Removing blocked entry", lock_entry);
+  remove_from_locklist(lock_entry, pclient);
+}
+
+void process_blocked_lock_upcall(state_block_data_t   * block_data,
+                                 cache_inode_client_t * pclient)
+{
+  state_lock_entry_t * lock_entry = block_data->sbd_lock_entry;
+  cache_entry_t      * pentry = lock_entry->sle_pentry;
+
+  P(pentry->object.file.lock_list_mutex);
+
+  try_to_grant_lock(lock_entry, pclient);
+
+  V(pentry->object.file.lock_list_mutex);
+}
+
 static void grant_blocked_locks(cache_entry_t        * pentry,
                                 fsal_op_context_t    * pcontext,
                                 cache_inode_client_t * pclient)
 {
   state_lock_entry_t   * found_entry;
   struct glist_head    * glist, * glistn;
-  state_status_t         status;
-  granted_callback_t     call_back;
-  state_blocking_t       blocked;
+  fsal_staticfsinfo_t  * pstatic = pcontext->export_context->fe_static_fs_info;
+
+  /* If FSAL supports async blocking locks, allow it to grant blocked locks. */
+  if(pstatic->lock_support_async_block)
+    return;
 
   glist_for_each_safe(glist, glistn, &pentry->object.file.lock_list)
     {
@@ -1342,47 +1442,27 @@ static void grant_blocked_locks(cache_entry_t        * pentry,
                                &found_entry->sle_lock) != NULL)
         continue;
 
-      if(found_entry->sle_block_data != NULL)
-        {
-          call_back = found_entry->sle_block_data->sbd_granted_callback;
-          /*
-           * Mark the found_entry as granting and make the granted call back.
-           * The granted call back is responsible for acquiring a reference to
-           * the lock entry if needed.
-           */
-          blocked = found_entry->sle_blocked;
-          found_entry->sle_blocked = STATE_GRANTING;
-
-          status = call_back(pentry, found_entry, pclient, &status);
-
-          if(status == STATE_LOCK_BLOCKED)
-            {
-              /* The lock is still blocked, restore it's type and leave it in the list */
-              found_entry->sle_blocked = blocked;
-              continue;
-            }
-
-          /* Grant is still in progress, keep the lock in the list */
-          if(status == STATE_SUCCESS)
-            continue;
-        }
-
-      /* There was no call back data or the call back failed, remove lock from list */
-      remove_from_locklist(found_entry, pclient);
-
-    } /* glist_for_each_safe */
+      /* Found an entry that might work, try to grant it. */
+      try_to_grant_lock(found_entry, pclient);
+    }
 }
 
-void cancel_blocked_lock(cache_entry_t        * pentry,
-                         fsal_op_context_t    * pcontext,
-                         state_lock_entry_t   * lock_entry,
-                         cache_inode_client_t * pclient)
+state_status_t cancel_blocked_lock(cache_entry_t        * pentry,
+                                   fsal_op_context_t    * pcontext,
+                                   state_lock_entry_t   * lock_entry,
+                                   cache_inode_client_t * pclient)
 {
   state_cookie_entry_t * pcookie = NULL;
   state_status_t         state_status;
 
   /* Mark lock as canceled */
+  LogEntry("Cancelling blocked", lock_entry);
   lock_entry->sle_blocked = STATE_CANCELED;
+
+      /* Unlocking the entire region will remove any FSAL locks we held, whether
+       * from fully granted locks, or from blocking locks that were in the process
+       * of being granted.
+       */
 
   /* Try to clean up blocked lock if a cookie is present */
   if(lock_entry->sle_block_data != NULL &&
@@ -1404,13 +1484,40 @@ void cancel_blocked_lock(cache_entry_t        * pentry,
        * which won't be much, since we've already marked the lock CANCELED.
        */
     }
-  /* Otherwise, if block data is present, it will be freed when the lock
-   * entry is freed.
-   */
+  else
+    {
+      /* Otherwise, if block data is present, it will be freed when the lock
+       * entry is freed. If the cookie is held, the refcount it holds will
+       * prevent the lock entry from being released until the cookie is
+       * freed.
+       */
+
+      /* Since a cookie was not found, the lock must still be in a state
+       * of needing cancelling.
+       */
+      state_status = do_lock_op(pentry,
+                                pcontext,
+                                FSAL_OP_CANCEL,
+                                lock_entry->sle_owner,
+                                &lock_entry->sle_lock,
+                                NULL,   /* no conflict expected */
+                                NULL,
+                                FALSE,  /* overlap not relevant */
+                                pclient);
+
+      if(state_status != STATE_SUCCESS)
+        {
+          /* Unable to cancel, assume that granted upcall is on it's way. */
+          LogEntry("Unable to cancel (grant upcall expected)", lock_entry);
+          return STATE_SUCCESS;
+        }
+    }
 
   /* Remove the lock from the lock list*/
   LogEntry("Removing", lock_entry);
   remove_from_locklist(lock_entry, pclient);
+
+  return state_status;
 }
 
 /**
@@ -1473,7 +1580,7 @@ void cancel_blocked_locks_range(cache_entry_t        * pentry,
          (found_entry->sle_lock.sld_offset <= plock_end))
         {
           /* lock overlaps, cancel it. */
-          cancel_blocked_lock(pentry, pcontext, found_entry, pclient);
+          (void) cancel_blocked_lock(pentry, pcontext, found_entry, pclient);
         }
     }
 }
@@ -1620,8 +1727,7 @@ state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
                                          STATE_NON_BLOCKING,
                                          &unknown_owner, /* no real owner */
                                          NULL, /* no real state */
-                                         plock,
-                                         NULL);
+                                         plock);
 
   if(unlock_entry == NULL)
     return STATE_MALLOC_ERROR;
@@ -1739,6 +1845,14 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
                                  &conflicting_lock);
 
       status = state_error_convert(fsal_status);
+
+      if(status == STATE_LOCK_BLOCKED && lock_op != FSAL_OP_LOCKB)
+        {
+          /* This is an unexpected return code, make sure caller reports an error */
+          LogMajor(COMPONENT_STATE,
+                   "FSAL returned unexpected STATE_LOCK_BLOCKED result");
+          status = STATE_FSAL_ERROR;
+        }
     }
   else
     {
@@ -1786,6 +1900,12 @@ void copy_conflict(state_lock_entry_t  * found_entry,
  * Primary lock interface functions
  *
  ******************************************************************************/
+
+/**
+ *
+ * state_test: Test for lock availability
+ *
+ */
 state_status_t state_test(cache_entry_t        * pentry,
                           fsal_op_context_t    * pcontext,
                           state_owner_t        * powner,
@@ -1858,6 +1978,11 @@ state_status_t state_test(cache_entry_t        * pentry,
   return *pstatus;
 }
 
+/**
+ *
+ * state_lock: Attempt to acquire a lock
+ *
+ */
 state_status_t state_lock(cache_entry_t         * pentry,
                           fsal_op_context_t     * pcontext,
                           state_owner_t         * powner,
@@ -1873,13 +1998,11 @@ state_status_t state_lock(cache_entry_t         * pentry,
   bool_t                 allow = TRUE, overlap = FALSE;
   struct glist_head    * glist;
   state_lock_entry_t   * found_entry;
-  state_blocking_t       blocked = blocking;
   uint64_t               found_entry_end;
   uint64_t               plock_end = lock_end(plock);
   cache_inode_status_t   cache_status;
-  state_block_data_t   * pass_block_data = NULL;
-
-  /* TODO FSF: add support for async blocking lock */
+  fsal_staticfsinfo_t  * pstatic = pcontext->export_context->fe_static_fs_info;
+  fsal_lock_op_t         lock_op;
 
   if(cache_inode_open(pentry, pclient, FSAL_O_RDWR, pcontext, &cache_status) != CACHE_INODE_SUCCESS)
     {
@@ -1944,7 +2067,10 @@ state_status_t state_lock(cache_entry_t         * pentry,
               /* Found a conflicting lock, break out of loop.
                * Also indicate overlap hint.
                */
-              allow  = FALSE;
+              LogEntry("Conflicts with", found_entry);
+              LogList("Locks", pentry, &pentry->object.file.lock_list);
+              copy_conflict(found_entry, holder, conflict);
+              allow   = FALSE;
               overlap = TRUE;
               break;
             }
@@ -1996,45 +2122,83 @@ state_status_t state_lock(cache_entry_t         * pentry,
         }
     }
 
-  if(allow)
+  /* Decide how to proceed */
+  if(pstatic->lock_support_async_block && blocking == STATE_NLM_BLOCKING)
     {
-      blocked = STATE_NON_BLOCKING;
+      /* FSAL supports blocking locks, and this is an NLM blocking lock request,
+       * request blocking lock from FSAL.
+       */
+      lock_op = FSAL_OP_LOCKB;
+    }
+  else if(allow || blocking == STATE_NLM_BLOCKING)
+    {
+      /* No conflict found in Ganesha, or NLM blocking lock when FSAL doesn't
+       * support blocking locks. In either case, proceed with non-blocking
+       * request to FSAL.
+       */
+      lock_op = FSAL_OP_LOCK;
     }
   else
     {
-      /* TODO FSF: need to call FSAL in case blocking locks are supported */
-      LogEntry("Conflicts with", found_entry);
-      LogList("Locks", pentry, &pentry->object.file.lock_list);
-      if(blocking == STATE_NON_BLOCKING   ||
-         blocking == STATE_NFSV4_BLOCKING || /* TODO FSF: look into support of NFS v4 blocking locks */
-         block_data == NULL)                 /* Can't support blocking locks right now without call back */
-        {
-          V(pentry->object.file.lock_list_mutex);
-          copy_conflict(found_entry, holder, conflict);
-          *pstatus = STATE_LOCK_CONFLICT;
-          return *pstatus;
-        }
-      pass_block_data = block_data;
+      /* Can't do async blocking lock in FSAL and have a conflict.
+       * Return it.
+       */
+      V(pentry->object.file.lock_list_mutex);
+      *pstatus = STATE_LOCK_CONFLICT;
+      return *pstatus;
     }
 
   /* We have already returned if:
    * + we have found an identical blocking lock
    * + we have found an entirely overlapping lock with the same lock owner
-   * + this was not a blocking lock and we found a conflict
+   * + this was not a supported blocking lock and we found a conflict
    *
-   * So at this point, we are either going to:
-   *   allow == TRUE  grant a lock           (blocked == STATE_NON_BLOCKING)
-   *   allow == FALSE insert a blocking lock (blocked == blocking)
+   * So at this point, we are either going to do one of the following (all
+   * descriptions below assume no problems occur):
+   *
+   * (1) FSAL supports async blocking locks, we know there is a conflict, and
+   *     this is a supported blocking lock request
+   *
+   *     Make FSAL_OP_LOCKB call anyway, we will rely on FSAL to grant blocking
+   *     locks. We will return the conflict we know about rather than what the
+   *     FSAL returns. Insert blocking lock into queue.
+   *
+   * (2) FSAL supports async blocking locks, we don't know about any conflict,
+   *     and this is a supported blocking lock request
+   *
+   *     Make FSAL_OP_LOCKB call, if it indicates block, insert blocking lock
+   *     into queue, and return the conflict the FSAL indicates. If FSAL grants
+   *     lock, then return granted lock and insert into lock list, otherwise
+   *     insert blocking lock into queue.
+   *
+   * (3) FSAL doesn't support async blocking locks, this is a supported blocking
+   *     lock and we know there is a conflict
+   *
+   *     Insert blocking lock into queue, we will grant lock when possible.
+   *
+   * (4) FSAL doesn't support async blocking locks and we don't know about any
+   *     conflict
+   *
+   *     Make FSAL_OP_LOCK call, if it indicates conflict, return that. Even if
+   *     this is a supported blocking lock call, there is no way to block. If
+   *     lock is granted, return that and insert lock into list.
+   *
+   * (5) FSAL supports async blocking locks, we don't know about any conflict,
+   *     and this is not a supported blocking lock request
+   *
+   *     Make FSAL_OP_LOCK call, if it indicates conflict, return that. If
+   *     lock is granted, return that and insert lock into list.
    */
 
-  /* Create the new lock entry */
+  /* Create the new lock entry.
+   * Provisionally mark this lock as granted.
+   */
   found_entry = create_state_lock_entry(pentry,
                                         pcontext,
-                                        blocked,
+                                        STATE_NON_BLOCKING,
                                         powner,
                                         pstate,
-                                        plock,
-                                        pass_block_data);
+                                        plock);
   if(!found_entry)
     {
       V(pentry->object.file.lock_list_mutex);
@@ -2042,45 +2206,75 @@ state_status_t state_lock(cache_entry_t         * pentry,
       return *pstatus;
     }
 
-  if(allow)
+  /* If no conflict in lock list, or FSAL supports async blocking locks,
+   * make FSAL call. Don't ask for conflict if we know about a conflict.
+   */
+  if(allow || pstatic->lock_support_async_block)
     {
       /* Prepare to make call to FSAL for this lock */
       *pstatus = do_lock_op(pentry,
                             pcontext,
-                            FSAL_OP_LOCK,
+                            lock_op,
                             powner,
                             plock,
-                            holder,
-                            conflict,
+                            allow ? holder : NULL,
+                            allow ? conflict : NULL,
                             overlap,
                             pclient);
-
-      if(*pstatus != STATE_SUCCESS)
-        {
-          LogMajor(COMPONENT_STATE,
-                   "Unable to lock FSAL, error=%s",
-                   state_err_str(*pstatus));
-          remove_from_locklist(found_entry, pclient);
-          V(pentry->object.file.lock_list_mutex);
-          return *pstatus;
-        }
-
-      /* Merge any touching or overlapping locks into this one */
-      merge_lock_entry(pentry, pcontext, found_entry, pclient);
     }
-
-  LogEntry("New entry", found_entry);
-
-  glist_add_tail(&pentry->object.file.lock_list, &found_entry->sle_list);
-
-  V(pentry->object.file.lock_list_mutex);
-  if(blocked == STATE_NON_BLOCKING)
-    *pstatus = STATE_SUCCESS;
   else
     *pstatus = STATE_LOCK_BLOCKED;
+
+  if(*pstatus == STATE_SUCCESS)
+    {
+      /* Merge any touching or overlapping locks into this one */
+      LogEntry("FSAL lock acquired, merging locks for", found_entry);
+
+      merge_lock_entry(pentry, pcontext, found_entry, pclient);
+
+      /* Insert entry into lock list */
+      LogEntry("New entry", found_entry);
+
+      glist_add_tail(&pentry->object.file.lock_list, &found_entry->sle_list);
+    }
+  else if(*pstatus == STATE_LOCK_CONFLICT)
+    {
+      LogEntry("Conflict in FSAL for", found_entry);
+
+      /* Discard lock entry */
+      remove_from_locklist(found_entry, pclient);
+    }
+  else if(*pstatus == STATE_LOCK_BLOCKED)
+    {
+      /* Mark entry as blocking and attach block_data */
+      found_entry->sle_block_data = block_data;
+      found_entry->sle_blocked    = blocking;
+
+      /* Insert entry into lock list */
+      LogEntry("FSAL block for", found_entry);
+
+      glist_add_tail(&pentry->object.file.lock_list, &found_entry->sle_list);
+    }
+  else
+    {
+      LogMajor(COMPONENT_STATE,
+               "Unable to lock FSAL, error=%s",
+               state_err_str(*pstatus));
+
+      /* Discard lock entry */
+      remove_from_locklist(found_entry, pclient);
+    }
+
+  V(pentry->object.file.lock_list_mutex);
+
   return *pstatus;
 }
 
+/**
+ *
+ * state_unlock: Release a lock
+ *
+ */
 state_status_t state_unlock(cache_entry_t        * pentry,
                             fsal_op_context_t    * pcontext,
                             state_owner_t        * powner,
@@ -2182,6 +2376,12 @@ state_status_t state_unlock(cache_entry_t        * pentry,
 }
 
 #ifdef _USE_BLOCKING_LOCKS
+
+/**
+ *
+ * state_cancel: Cancel a blocking lock
+ *
+ */
 state_status_t state_cancel(cache_entry_t        * pentry,
                             fsal_op_context_t    * pcontext,
                             state_owner_t        * powner,
@@ -2203,37 +2403,15 @@ state_status_t state_cancel(cache_entry_t        * pentry,
       if(different_owners(found_entry->sle_owner, powner))
         continue;
 
+      /* Can not cancel a lock once it is granted */
       if(found_entry->sle_blocked == STATE_NON_BLOCKING)
         continue;
 
       if(different_lock(&found_entry->sle_lock, plock))
         continue;
 
-      /*
-       * We have matched all atribute of the existing lock.
-       * Remove it (even if we were granting it).
-       */
-      LogEntry("Cancelling blocked", found_entry);
-      cancel_blocked_lock(pentry, pcontext, found_entry, pclient);
-
-      /* Unlocking the entire region will remove any FSAL locks we held, whether
-       * from fully granted locks, or from blocking locks that were in the process
-       * of being granted.
-       */
-      *pstatus = do_lock_op(pentry,
-                            pcontext,
-                            FSAL_OP_UNLOCK,
-                            powner,
-                            plock,
-                            NULL,   /* no conflict expected */
-                            NULL,
-                            FALSE,
-                            pclient);
-
-      if(*pstatus != STATE_SUCCESS)
-        LogMajor(COMPONENT_STATE,
-                 "Unable to cancel FSAL, error=%s",
-                 state_err_str(*pstatus));
+      /* Cancel the blocked lock */
+      *pstatus = cancel_blocked_lock(pentry, pcontext, found_entry, pclient);
 
       /* Check to see if we can grant any blocked locks. */
       grant_blocked_locks(pentry, pcontext, pclient);
@@ -2248,6 +2426,12 @@ state_status_t state_cancel(cache_entry_t        * pentry,
 #endif
 
 #ifdef _USE_NLM
+
+/**
+ *
+ * state_nlm_notify: Handle an SM_NOTIFY from NLM
+ *
+ */
 state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
                                 state_nsm_client_t   * pnsmclient,
                                 state_t              * pstate,
@@ -2337,6 +2521,11 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
 }
 #endif
 
+/**
+ *
+ * state_owner_unlock_all: Release all locks held by a lock owner
+ *
+ */
 state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
                                       state_owner_t        * powner,
                                       state_t              * pstate,
@@ -2399,3 +2588,125 @@ state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
     }
   return *pstatus;
 }
+
+#ifdef _USE_BLOCKING_LOCKS
+
+/**
+ *
+ * grant_blocked_lock_upcall: Handle upcall for granted lock
+ *
+ */
+void grant_blocked_lock_upcall(cache_entry_t        * pentry,
+                               void                 * powner,
+                               state_lock_desc_t    * plock,
+                               cache_inode_client_t * pclient)
+{
+  state_lock_entry_t   * found_entry;
+  struct glist_head    * glist;
+  state_block_data_t   * pblock;
+
+  LogLockDesc(COMPONENT_STATE, NIV_DEBUG,
+              "Grant Upcall for", powner, plock);
+
+  P(blocked_locks_mutex);
+
+  glist_for_each(glist, &state_blocked_locks)
+    {
+      pblock = glist_entry(glist, state_block_data_t, sbd_list);
+
+      found_entry = pblock->sbd_lock_entry;
+
+      /* Check if for same file */
+      if(found_entry->sle_pentry != pentry)
+        continue;
+
+      /* Check if for same owner */
+      if(found_entry->sle_owner != powner)
+        continue;
+
+      /* Check if same lock */
+      if(different_lock(&found_entry->sle_lock, plock))
+        continue;
+
+      LogEntry("Blocked Lock found", found_entry);
+
+      /* Put lock on list of locks granted by FSAL */
+      glist_del(&pblock->sbd_list);
+      glist_add_tail(&state_notified_locks, &pblock->sbd_list);
+      pblock->sbd_grant_type = STATE_GRANT_FSAL;
+
+      V(blocked_locks_mutex);
+
+      signal_async_work();
+
+      return;
+    } /* glist_for_each_safe */
+
+  V(blocked_locks_mutex);
+
+  /* We must be out of sync with FSAL, this is fatal */
+  LogLockDesc(COMPONENT_STATE, NIV_MAJOR,
+              "Blocked Lock Not Found for", powner, plock);
+  LogFatal(COMPONENT_STATE, "Locks out of sync with FSAL");
+}
+
+/**
+ *
+ * available_blocked_lock_upcall: Handle upcall for available lock
+ *
+ */
+void available_blocked_lock_upcall(cache_entry_t        * pentry,
+                                   void                 * powner,
+                                   state_lock_desc_t    * plock,
+                                   cache_inode_client_t * pclient)
+{
+  state_lock_entry_t   * found_entry;
+  struct glist_head    * glist;
+  state_block_data_t   * pblock;
+
+  LogLockDesc(COMPONENT_STATE, NIV_DEBUG,
+              "Grant Upcall for", powner, plock);
+
+  P(blocked_locks_mutex);
+
+  glist_for_each(glist, &state_blocked_locks)
+    {
+      pblock = glist_entry(glist, state_block_data_t, sbd_list);
+
+      found_entry = pblock->sbd_lock_entry;
+
+      /* Check if for same file */
+      if(found_entry->sle_pentry != pentry)
+        continue;
+
+      /* Check if for same owner */
+      if(found_entry->sle_owner != powner)
+        continue;
+
+      /* Check if same lock */
+      if(different_lock(&found_entry->sle_lock, plock))
+        continue;
+
+      LogEntry("Blocked Lock found", found_entry);
+
+      /* Put lock on list of locks marked available by FSAL */
+      glist_del(&pblock->sbd_list);
+      glist_add_tail(&state_notified_locks, &pblock->sbd_list);
+      pblock->sbd_grant_type = STATE_GRANT_FSAL_AVAILABLE;
+
+      V(blocked_locks_mutex);
+
+      signal_async_work();
+
+      return;
+    } /* glist_for_each_safe */
+
+  V(blocked_locks_mutex);
+
+  /* We must be out of sync with FSAL, this is fatal */
+  LogLockDesc(COMPONENT_STATE, NIV_MAJOR,
+              "Blocked Lock Not Found for", powner, plock);
+  LogFatal(COMPONENT_STATE, "Locks out of sync with FSAL");
+}
+
+#endif
