@@ -374,7 +374,8 @@ int main(int argc, char *argv[])
   if(nfs_check_param_consistency())
     {
       LogFatal(COMPONENT_INIT,
-	       "Inconsistent parameters found, could have significant impact on the daemon behavior");
+	       "Inconsistent parameters found. Exiting..." ) ;
+      exit( 1 ) ;
     }
 
   /* Everything seems to be OK! We can now start service threads */
