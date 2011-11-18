@@ -85,4 +85,15 @@ fsal_status_t COMMON_getextattrs_notsupp(fsal_handle_t * p_filehandle, /* IN */
 				 fsal_extattrib_list_t * p_object_attributes /* OUT */ );
 
 fsal_status_t COMMON_terminate_noerror();
+
+fsal_status_t COMMON_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter);
+
+fsal_status_t COMMON_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter);
+
+fsal_status_t COMMON_load_FSAL_parameter_from_conf(config_file_t in_config,
+                                                    fsal_parameter_t * out_parameter);
+
+fsal_status_t COMMON_load_FS_common_parameter_from_conf(config_file_t in_config,
+                                                         fsal_parameter_t *
+                                                         out_parameter);
 #endif

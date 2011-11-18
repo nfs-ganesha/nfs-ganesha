@@ -343,19 +343,8 @@ fsal_status_t PROXYFSAL_ExpandHandle(fsal_export_context_t * p_expcontext, /* IN
                                      caddr_t in_buff,   /* IN */
                                      fsal_handle_t * p_out_fsal_handle /* OUT */ );
 
-fsal_status_t PROXYFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter);
-
-fsal_status_t PROXYFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter);
-
 fsal_status_t PROXYFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t *
                                                          out_parameter);
-
-fsal_status_t PROXYFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
-                                                      fsal_parameter_t * out_parameter);
-
-fsal_status_t PROXYFSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
-                                                           fsal_parameter_t *
-                                                           out_parameter);
 
 fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
                                                              fsal_parameter_t *
