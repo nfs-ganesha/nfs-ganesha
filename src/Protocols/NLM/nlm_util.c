@@ -295,7 +295,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 int nlm_process_parameters(struct svc_req        * preq,
                            bool_t                  exclusive,
                            nlm4_lock             * alock,
-                           state_lock_desc_t     * plock,
+                           fsal_lock_param_t     * plock,
                            hash_table_t          * ht,
                            cache_entry_t        ** ppentry,
                            fsal_op_context_t     * pcontext,
@@ -421,9 +421,9 @@ int nlm_process_parameters(struct svc_req        * preq,
         }
     }
   /* Fill in plock */
-  plock->sld_type   = exclusive ? STATE_LOCK_W : STATE_LOCK_R;
-  plock->sld_offset = alock->l_offset;
-  plock->sld_length = alock->l_len;
+  plock->lock_type   = exclusive ? FSAL_LOCK_W : FSAL_LOCK_R;
+  plock->lock_start  = alock->l_offset;
+  plock->lock_length = alock->l_len;
 
   LogFullDebug(COMPONENT_NLM,
                "Parameters Processed");
@@ -433,14 +433,14 @@ int nlm_process_parameters(struct svc_req        * preq,
 
 void nlm_process_conflict(nlm4_holder          * nlm_holder,
                           state_owner_t        * holder,
-                          state_lock_desc_t    * conflict,
+                          fsal_lock_param_t    * conflict,
                           cache_inode_client_t * pclient)
 {
   if(conflict != NULL)
     {
-      nlm_holder->exclusive = conflict->sld_type == STATE_LOCK_W;
-      nlm_holder->l_offset  = conflict->sld_offset;
-      nlm_holder->l_len     = conflict->sld_length;
+      nlm_holder->exclusive = conflict->lock_type == FSAL_LOCK_W;
+      nlm_holder->l_offset  = conflict->lock_start;
+      nlm_holder->l_len     = conflict->lock_length;
     }
   else
     {
@@ -643,10 +643,10 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
   if(!inarg->alock.caller_name)
     goto grant_fail_malloc;
 
-  inarg->exclusive      = lock_entry->sle_lock.sld_type == STATE_LOCK_W;
+  inarg->exclusive      = lock_entry->sle_lock.lock_type == FSAL_LOCK_W;
   inarg->alock.svid     = nlm_grant_owner->so_nlm_svid;
-  inarg->alock.l_offset = lock_entry->sle_lock.sld_offset;
-  inarg->alock.l_len    = lock_entry->sle_lock.sld_length;
+  inarg->alock.l_offset = lock_entry->sle_lock.lock_start;
+  inarg->alock.l_len    = lock_entry->sle_lock.lock_length;
   if(isDebug(COMPONENT_NLM))
     {
       char buffer[1024];

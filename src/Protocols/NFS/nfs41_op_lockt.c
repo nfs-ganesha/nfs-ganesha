@@ -84,7 +84,7 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   state_nfs4_owner_name_t   owner_name;
   state_owner_t           * popen_owner;
   state_owner_t           * conflict_owner = NULL;
-  state_lock_desc_t         lock_desc, conflict_desc;
+  fsal_lock_param_t         lock_desc, conflict_desc;
 
   LogDebug(COMPONENT_NFS_V4_LOCK,
            "Entering NFS v4.1 LOCKT handler -----------------------------------------------------");
@@ -147,27 +147,27 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     {
       case READ_LT:
       case READW_LT:
-        lock_desc.sld_type = STATE_LOCK_R;
+        lock_desc.lock_type = FSAL_LOCK_R;
         break;
 
       case WRITE_LT:
       case WRITEW_LT:
-        lock_desc.sld_type = STATE_LOCK_W;
+        lock_desc.lock_type = FSAL_LOCK_W;
         break;
     }
 
-  lock_desc.sld_offset = arg_LOCKT4.offset;
+  lock_desc.lock_start = arg_LOCKT4.offset;
 
   if(arg_LOCKT4.length != STATE_LOCK_OFFSET_EOF)
-    lock_desc.sld_length = arg_LOCKT4.length;
+    lock_desc.lock_length = arg_LOCKT4.length;
   else
-    lock_desc.sld_length = 0;
+    lock_desc.lock_length = 0;
 
   /* Check for range overflow.
    * Comparing beyond 2^64 is not possible int 64 bits precision,
    * but off+len > 2^64-1 is equivalent to len > 2^64-1 - off
    */
-  if(lock_desc.sld_length > (STATE_LOCK_OFFSET_EOF - lock_desc.sld_offset))
+  if(lock_desc.lock_length > (STATE_LOCK_OFFSET_EOF - lock_desc.lock_start))
     {
       res_LOCKT4.status = NFS4ERR_INVAL;
       return res_LOCKT4.status;

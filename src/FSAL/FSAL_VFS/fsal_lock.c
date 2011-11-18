@@ -139,7 +139,6 @@ fsal_status_t VFSFSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
             }
           if(conflicting_lock != NULL)
             {
-              conflicting_lock->lock_owner = lock_args.l_pid;
               conflicting_lock->lock_length = lock_args.l_len;
               conflicting_lock->lock_start = lock_args.l_start;
               conflicting_lock->lock_type = lock_args.l_type;
@@ -153,14 +152,12 @@ fsal_status_t VFSFSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
     {
       if(lock_op == FSAL_OP_LOCKT && lock_args.l_type != F_UNLCK)
         {
-          conflicting_lock->lock_owner = lock_args.l_pid;
           conflicting_lock->lock_length = lock_args.l_len;
           conflicting_lock->lock_start = lock_args.l_start;
           conflicting_lock->lock_type = lock_args.l_type;
         }
       else
         {
-          conflicting_lock->lock_owner = 0;
           conflicting_lock->lock_length = 0;
           conflicting_lock->lock_start = 0;
           conflicting_lock->lock_type = FSAL_NO_LOCK;
