@@ -90,7 +90,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   state_owner_t           * popen_owner;
   state_owner_t           * conflict_owner = NULL;
   state_nfs4_owner_name_t   owner_name;
-  state_lock_desc_t         lock_desc, conflict_desc;
+  fsal_lock_param_t         lock_desc, conflict_desc;
   state_blocking_t          blocking = STATE_NON_BLOCKING;
   const char              * tag = "LOCK";
 
@@ -151,32 +151,32 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   switch(arg_LOCK4.locktype)
     {
       case READ_LT:
-        lock_desc.sld_type = STATE_LOCK_R;
-        blocking           = STATE_NON_BLOCKING;
+        lock_desc.lock_type = FSAL_LOCK_R;
+        blocking            = STATE_NON_BLOCKING;
         break;
 
       case WRITE_LT:
-        lock_desc.sld_type = STATE_LOCK_W;
-        blocking           = STATE_NON_BLOCKING;
+        lock_desc.lock_type = FSAL_LOCK_W;
+        blocking            = STATE_NON_BLOCKING;
         break;
 
       case READW_LT:
-        lock_desc.sld_type = STATE_LOCK_R;
-        blocking           = STATE_NFSV4_BLOCKING;
+        lock_desc.lock_type = FSAL_LOCK_R;
+        blocking            = STATE_NFSV4_BLOCKING;
         break;
 
       case WRITEW_LT:
-        lock_desc.sld_type = STATE_LOCK_W;
-        blocking           = STATE_NFSV4_BLOCKING;
+        lock_desc.lock_type = FSAL_LOCK_W;
+        blocking            = STATE_NFSV4_BLOCKING;
         break;
     }
 
-  lock_desc.sld_offset = arg_LOCK4.offset;
+  lock_desc.lock_start = arg_LOCK4.offset;
 
   if(arg_LOCK4.length != STATE_LOCK_OFFSET_EOF)
-    lock_desc.sld_length = arg_LOCK4.length;
+    lock_desc.lock_length = arg_LOCK4.length;
   else
-    lock_desc.sld_length = 0;
+    lock_desc.lock_length = 0;
 
   if(arg_LOCK4.locker.new_lock_owner)
     {
@@ -288,7 +288,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
    * Comparing beyond 2^64 is not possible int 64 bits precision,
    * but off+len > 2^64-1 is equivalent to len > 2^64-1 - off
    */
-  if(lock_desc.sld_length > (STATE_LOCK_OFFSET_EOF - lock_desc.sld_offset))
+  if(lock_desc.lock_length > (STATE_LOCK_OFFSET_EOF - lock_desc.lock_start))
     {
       res_LOCK4.status = NFS4ERR_INVAL;
       LogDebug(COMPONENT_NFS_V4_LOCK,

@@ -597,14 +597,14 @@ state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
 
 void Process_nfs4_conflict(LOCK4denied          * denied,    /* NFS v4 LOck4denied structure to fill in */
                            state_owner_t        * holder,    /* owner that holds conflicting lock */
-                           state_lock_desc_t    * conflict,  /* description of conflicting lock */
+                           fsal_lock_param_t    * conflict,  /* description of conflicting lock */
                            cache_inode_client_t * pclient)
 {
   /* A  conflicting lock from a different lock_owner, returns NFS4ERR_DENIED */
-  denied->offset = conflict->sld_offset;
-  denied->length = conflict->sld_length;
+  denied->offset = conflict->lock_start;
+  denied->length = conflict->lock_length;
 
-  if(conflict->sld_type == STATE_LOCK_R)
+  if(conflict->lock_type == FSAL_LOCK_R)
     denied->locktype = READ_LT;
   else
     denied->locktype = WRITE_LT;

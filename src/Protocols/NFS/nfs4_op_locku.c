@@ -87,7 +87,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   state_status_t      state_status;
   state_t           * pstate_found = NULL;
   state_owner_t     * plock_owner;
-  state_lock_desc_t   lock_desc;
+  fsal_lock_param_t   lock_desc;
   unsigned int        rc = 0;
   const char        * tag = "LOCKU";
 
@@ -139,21 +139,21 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     {
       case READ_LT:
       case READW_LT:
-        lock_desc.sld_type = STATE_LOCK_R;
+        lock_desc.lock_type = FSAL_LOCK_R;
         break;
 
       case WRITE_LT:
       case WRITEW_LT:
-        lock_desc.sld_type = STATE_LOCK_W;
+        lock_desc.lock_type = FSAL_LOCK_W;
         break;
     }
 
-  lock_desc.sld_offset = arg_LOCKU4.offset;
+  lock_desc.lock_start = arg_LOCKU4.offset;
 
   if(arg_LOCKU4.length != STATE_LOCK_OFFSET_EOF)
-    lock_desc.sld_length = arg_LOCKU4.length;
+    lock_desc.lock_length = arg_LOCKU4.length;
   else
-    lock_desc.sld_length = 0;
+    lock_desc.lock_length = 0;
 
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_LOCKU4.lock_stateid,
@@ -195,7 +195,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* Check for range overflow
    * Remember that a length with all bits set to 1 means "lock until the end of file" (RFC3530, page 157) */
-  if(lock_desc.sld_length > (STATE_LOCK_OFFSET_EOF - lock_desc.sld_offset))
+  if(lock_desc.lock_length > (STATE_LOCK_OFFSET_EOF - lock_desc.lock_start))
     {
       res_LOCKU4.status = NFS4ERR_INVAL;
 

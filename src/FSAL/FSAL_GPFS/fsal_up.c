@@ -111,7 +111,6 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
                "inode update: lock pid %d type %d start %lld len %lld",
                fl.l_pid, fl.l_type, (long long) fl.l_start,
                (long long) fl.l_len);
-      (*pevents)->event_data.type.lock.lock_param.lock_owner = fl.l_pid;
       (*pevents)->event_data.type.lock.lock_param.lock_length = fl.l_len;
       (*pevents)->event_data.type.lock.lock_param.lock_start = fl.l_start;
       (*pevents)->event_data.type.lock.lock_param.lock_type = fl.l_type;
