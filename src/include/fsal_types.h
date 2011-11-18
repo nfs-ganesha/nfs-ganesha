@@ -1047,7 +1047,6 @@ typedef struct fsal_lock_param_t
   fsal_lock_t         lock_type;
   fsal_size_t         lock_start;
   fsal_size_t         lock_length;
-  pid_t               lock_owner;
 } fsal_lock_param_t;
 
 #endif                          /* _FSAL_TYPES_H */

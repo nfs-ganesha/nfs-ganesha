@@ -68,7 +68,7 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
   state_nsm_client_t * nsm_client;
   state_nlm_client_t * nlm_client;
   state_owner_t      * nlm_owner, * holder;
-  state_lock_desc_t    lock, conflict;
+  fsal_lock_param_t    lock, conflict;
   int                  rc;
   state_block_data_t * pblock_data;
 

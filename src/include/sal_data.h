@@ -346,20 +346,6 @@ typedef enum state_blocking_t
   STATE_CANCELED
 } state_blocking_t;
 
-typedef enum state_lock_type_t
-{
-  STATE_LOCK_R,   /* not exclusive */
-  STATE_LOCK_W,   /* exclusive */
-  STATE_NO_LOCK   /* used when test lock returns success */
-} state_lock_type_t;
-
-typedef struct state_lock_desc_t
-{
-  state_lock_type_t sld_type;
-  uint64_t          sld_offset;
-  uint64_t          sld_length;
-} state_lock_desc_t;
-
 /* The granted call back is responsible for acquiring a reference to
  * the lock entry if needed.
  *
@@ -434,7 +420,7 @@ struct state_lock_entry_t
   state_block_data_t   * sle_block_data;
   state_owner_t        * sle_owner;
   state_t              * sle_state;
-  state_lock_desc_t      sle_lock;
+  fsal_lock_param_t      sle_lock;
   pthread_mutex_t        sle_mutex;
 };
 
