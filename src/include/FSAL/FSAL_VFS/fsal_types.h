@@ -139,6 +139,7 @@ do                                                                       \
    ((vfsfsal_cookie_t *)__pfsal_cookie)->data.cookie = (off_t)__cookie ; \
 } while( 0 )
 
+
 //static const vfsfsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };
 
 /* Directory stream descriptor. */

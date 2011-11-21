@@ -112,6 +112,8 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
       return *pstatus;
     }
 
+ printf( "==========> No name cached\n" ) ;
+
   /* Open the directory */
   dir_attributes.asked_attributes = pclient->attrmask;
 #ifdef _USE_MFSL
@@ -189,6 +191,16 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
       entry_fsdata.handle = fsal_dirent_array[iter].handle;
       entry_fsdata.cookie = 0; /* XXX needed? */
 
+      /* Allocate a dirent to be returned to the client */
+      /** @todo Make sure this piece of memory once the data are used */
+      GetFromPool( dirent_array[iter], &pclient->pool_dir_entry, cache_inode_dir_entry_t);
+      if( dirent_array[iter] == NULL ) 
+       {
+         *pstatus = CACHE_INODE_MALLOC_ERROR;
+         return *pstatus;
+       }
+
+
       /* fills in the dirent_array */
       if( ( dirent_array[iter]->pentry= cache_inode_get( &entry_fsdata,
                                                          policy,
@@ -219,6 +231,18 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
     *peod_met = END_OF_DIR ;
   else
     *peod_met = TO_BE_CONTINUED ;
+
+    /* Close the directory */
+#ifdef _USE_MFSL
+  fsal_status = MFSL_closedir(&fsal_dirhandle, &pclient->mfsl_context, NULL);
+#else
+  fsal_status = FSAL_closedir(&fsal_dirhandle);
+#endif
+  if(FSAL_IS_ERROR(fsal_status))
+    {
+      *pstatus = cache_inode_error_convert(fsal_status);
+      return *pstatus;
+    }
 
   return CACHE_INODE_SUCCESS ;
 } /* cache_inode_readdir_nomanecache */

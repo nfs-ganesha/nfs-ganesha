@@ -80,7 +80,8 @@ static int cache_init = FALSE;
 static cache_inode_gc_policy_t gcpol;
 
 /** Global variable : the cache policy to be used */
-static cache_inode_policy_t cachepol = CACHE_INODE_POLICY_FULL_WRITE_THROUGH;
+//static cache_inode_policy_t cachepol = CACHE_INODE_POLICY_FULL_WRITE_THROUGH;
+static cache_inode_policy_t cachepol = CACHE_INODE_POLICY_ATTRS_ONLY_WRITE_THROUGH ;
 
 /** Global (exported) variable : init parameters for clients. */
 cache_inode_client_parameter_t cache_client_param;
@@ -1123,7 +1124,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
   uint64_t begin_cookie = 0;
   uint64_t end_cookie = 0;
   unsigned int nbfound;
-  cache_inode_dir_entry_t *dirent_array[CACHE_INODE_SHELL_READDIR_SIZE];
+  cache_inode_dir_entry_t * dirent_array[CACHE_INODE_SHELL_READDIR_SIZE] ;
   cache_inode_endofdir_t eod_met;
   unsigned int i;
   fsal_path_t symlink_path;
@@ -1391,6 +1392,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
 
   begin_cookie = 0;
   eod_met = UNASSIGNED_EOD;
+
   while(eod_met != END_OF_DIR)
     {
 
@@ -1399,6 +1401,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                 glob_path, begin_cookie);
 
       if(cache_inode_readdir(pentry_tmp,
+                             cachepol,
                              begin_cookie,
                              CACHE_INODE_SHELL_READDIR_SIZE,
                              &nbfound,
