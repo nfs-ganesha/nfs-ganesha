@@ -112,7 +112,8 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
       return *pstatus;
     }
 
- printf( "==========> No name cached\n" ) ;
+  printf( "==========> No name cached : begin cookie = %llu\n", (unsigned long long)cookie ) ;
+  sleep( 1 ) ;
 
   /* Open the directory */
   dir_attributes.asked_attributes = pclient->attrmask;
@@ -149,8 +150,7 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
     }
 
   /* Loop for readding the directory */
-  FSAL_SET_PCOOKIE_BY_OFFSET(&begin_cookie, cookie);
-  FSAL_SET_PCOOKIE_BY_OFFSET(&end_cookie, *pend_cookie);
+  FSAL_SET_PCOOKIE_BY_OFFSET( &begin_cookie, cookie );
   fsal_eod = FALSE;
 
 #ifdef _USE_MFSL
@@ -223,7 +223,7 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
                                     &fsal_dirent_array[iter].cookie,
                                     &dirent_array[iter]->fsal_cookie);
 
-       dirent_array[iter]->cookie = 0 ;
+       // dirent_array[iter]->cookie = 0 ;
 
    } /* for( iter = 0 ; iter < nbfound ; iter ++ ) */
 
@@ -232,7 +232,12 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
   else
     *peod_met = TO_BE_CONTINUED ;
 
-    /* Close the directory */
+  /* Do not forget to set returned end cookie */
+  FSAL_SET_OFFSET_BY_PCOOKIE( &end_cookie, *pend_cookie );
+  
+  printf( "==========> No name cached : end cookie = %llu\n", (unsigned long long)*pend_cookie ) ;
+
+  /* Close the directory */
 #ifdef _USE_MFSL
   fsal_status = MFSL_closedir(&fsal_dirhandle, &pclient->mfsl_context, NULL);
 #else

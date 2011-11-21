@@ -201,8 +201,9 @@ fsal_status_t XFSFSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
     }
   else
     {
-      //seekdir(p_dir_descriptor->p_dir, start_position.cookie);
-      rc = errno;
+     //rc = errno = 0;
+     //lseek(p_dir_descriptor->fd, start_position.data.cookie, SEEK_SET);
+     rc = errno;
     }
 
   if(rc)
