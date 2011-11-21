@@ -319,6 +319,7 @@ int nfs_Readdir(nfs_arg_t * parg,
 
   /* Call readdir */
   if(cache_inode_readdir(dir_pentry,
+                         pexport->cache_inode_policy,
                          cache_inode_cookie,
                          asked_num_entries,
                          &num_entries,

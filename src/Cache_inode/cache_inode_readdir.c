@@ -76,18 +76,19 @@
  * @return CACHE_INODE_SUCCESS if operation is a success \n
  *
  */
-cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pentry_dir,
-                                                      uint64_t cookie,
-                                                      unsigned int nbwanted,
-                                                      unsigned int *pnbfound,
-                                                      uint64_t *pend_cookie,
-                                                      cache_inode_endofdir_t *peod_met,
-                                                      cache_inode_dir_entry_t **dirent_array,
-                                                      hash_table_t *ht,
-                                                      int *unlock,
-                                                      cache_inode_client_t *pclient,
-                                                      fsal_op_context_t *pcontext,
-                                                      cache_inode_status_t *pstatus)
+static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pentry_dir,
+                                                             cache_inode_policy_t policy,
+                                                             uint64_t cookie,
+                                                             unsigned int nbwanted,
+                                                             unsigned int *pnbfound,
+                                                             uint64_t *pend_cookie,
+                                                             cache_inode_endofdir_t *peod_met,
+                                                             cache_inode_dir_entry_t **dirent_array,
+                                                             hash_table_t *ht,
+                                                             int *unlock,
+                                                             cache_inode_client_t *pclient,
+                                                             fsal_op_context_t *pcontext,
+                                                             cache_inode_status_t *pstatus)
 {
   fsal_dir_t fsal_dirhandle;
   fsal_status_t fsal_status;
@@ -190,7 +191,7 @@ cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pentry_dir
 
       /* fills in the dirent_array */
       if( ( dirent_array[iter]->pentry= cache_inode_get( &entry_fsdata,
-                                                         CACHE_INODE_POLICY_ATTRS_ONLY_WRITE_THROUGH,
+                                                         policy,
                                                          &fsal_dirent_array[iter].attributes,
                                                          ht,
                                                          pclient,
@@ -728,6 +729,7 @@ static void debug_print_dirents(cache_entry_t *dir_pentry)
  */
 cache_inode_status_t cache_inode_readdir_populate(
     cache_entry_t * pentry_dir,
+    cache_inode_policy_t policy,
     hash_table_t * ht,
     cache_inode_client_t * pclient,
     fsal_op_context_t * pcontext,
@@ -930,7 +932,7 @@ cache_inode_status_t cache_inode_readdir_populate(
           if((pentry = cache_inode_new_entry( &new_entry_fsdata,
 		                              &array_dirent[iter].attributes,
 		                              type, 
-                                              pentry_dir->policy,  /* inherits parents policy */
+                                              policy,
 		                              &create_arg,
 		                              NULL, 
 		                              ht, 
@@ -1101,6 +1103,7 @@ static void revalidate_cookie_cache(cache_entry_t *dir_pentry,
  *
  */
 cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
+                                         cache_inode_policy_t policy,
                                          uint64_t cookie,
                                          unsigned int nbwanted,
                                          unsigned int *pnbfound,
@@ -1165,6 +1168,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   /* Force dir content invalidation if policy enforced no name cache */
   if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) )
     return  cache_inode_readdir_nonamecache( dir_pentry,
+                                             policy,
                                              cookie, 
                                              nbwanted, 
                                              pnbfound, 
@@ -1223,6 +1227,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 
     /* populate the cache */
     if(cache_inode_readdir_populate(dir_pentry,
+                                    policy,
 		  		    ht,
 				    pclient,
 				    pcontext, pstatus) != CACHE_INODE_SUCCESS)
