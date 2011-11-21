@@ -375,7 +375,6 @@ int main(int argc, char *argv[])
     {
       LogFatal(COMPONENT_INIT,
 	       "Inconsistent parameters found. Exiting..." ) ;
-      exit( 1 ) ;
     }
 
   /* Everything seems to be OK! We can now start service threads */
