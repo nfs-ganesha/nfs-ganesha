@@ -1377,7 +1377,7 @@ int nfs_check_param_consistency()
   if( 2*nfs_param.core_param.nb_worker  >  nfs_param.cache_layers_param.cache_param.hparam.index_size )
     {
       LogCrit(COMPONENT_INIT,
-              "BAD PARAMETER: number of workers is to large compared to Cache_Inode's index size, it should be smaller than half of it",
+              "BAD PARAMETER: number of workers is too large compared to Cache_Inode's index size, it should be smaller than half of it",
               NB_MAX_WORKER_THREAD);
       return 1;
     }
