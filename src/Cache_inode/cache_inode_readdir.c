@@ -113,7 +113,6 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
     }
 
   printf( "==========> No name cached : begin cookie = %llu\n", (unsigned long long)cookie ) ;
-  sleep( 1 ) ;
 
   /* Open the directory */
   dir_attributes.asked_attributes = pclient->attrmask;

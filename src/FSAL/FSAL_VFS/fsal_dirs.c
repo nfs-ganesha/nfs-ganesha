@@ -203,6 +203,8 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
   if(rc)
     Return(posix2fsal_error(rc), rc, INDEX_FSAL_readdir);
 
+  printf( "==> BEGIN: offset=%lld\n", start_position.data.cookie ) ;
+
   /************************/
   /* browse the directory */
   /************************/
@@ -276,6 +278,7 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
 
           /* get object handle */
           TakeTokenFSCall();
+
           if(d_type != DT_LNK)
             {
               st = fsal_internal_fd2handle((fsal_op_context_t *)&(p_dir_descriptor->context),
@@ -347,6 +350,8 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
 
         }                       /* for */
     }                           /* While */
+
+  printf( "==> END: offset=%lld\n", p_end_position->data.cookie ) ;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
 

@@ -595,9 +595,28 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   /* retrieve lower layer info */
 
   /* Getting the root of the FS */
-#ifdef _USE_PROXY
+#if defined( _USE_PROXY )
   /*if( FSAL_IS_ERROR( status = FSAL_str2path( "/users/thomas/./", FSAL_MAX_PATH_LEN, &pathroot ) ) ) */
   if(FSAL_IS_ERROR(status = FSAL_str2path("/", FSAL_MAX_PATH_LEN, &pathroot)))
+    {
+      char buffer[LOG_MAX_STRLEN];
+
+      MakeLogError(buffer, ERR_FSAL, status.major, status.minor, __LINE__);
+      fprintf(output, "%s\n", buffer);
+      return 1;
+    }
+
+  if(FSAL_IS_ERROR
+     (status = FSAL_lookupPath(&pathroot, &context->context, &root_handle, NULL)))
+    {
+      char buffer[LOG_MAX_STRLEN];
+
+      MakeLogError(buffer, ERR_FSAL, status.major, status.minor, __LINE__);
+      fprintf(output, "%s\n", buffer);
+      return 1;
+    }
+#elif defined( _USE_VFS )
+if(FSAL_IS_ERROR(status = FSAL_str2path("/tmp", FSAL_MAX_PATH_LEN, &pathroot)))
     {
       char buffer[LOG_MAX_STRLEN];
 
