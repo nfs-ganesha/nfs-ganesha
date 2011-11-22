@@ -257,6 +257,20 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       V_r(&pentry->lock);
     }
 
+  if (pstate_open == NULL)
+    {
+      if(cache_inode_access(pentry,
+                            FSAL_WRITE_ACCESS,
+                            data->ht,
+                            data->pclient,
+                            data->pcontext,
+                            &cache_status) != CACHE_INODE_SUCCESS)
+        {
+          res_WRITE4.status = nfs4_Errno(cache_status);;
+          return res_WRITE4.status;
+        }
+    }
+
   /* Get the characteristics of the I/O to be made */
   offset = arg_WRITE4.offset;
   size = arg_WRITE4.data.data_len;
