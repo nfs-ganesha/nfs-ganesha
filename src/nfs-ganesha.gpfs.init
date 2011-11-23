@@ -23,6 +23,12 @@
 # source function library
 . /etc/init.d/functions
 
+# Source networking configuration.
+[ -f /etc/sysconfig/network ] &&  . /etc/sysconfig/network
+
+# Check for and source configuration file otherwise set defaults
+[ -f /etc/sysconfig/nfs ] && . /etc/sysconfig/nfs
+
 PATHPROG=/usr/bin/gpfs.ganesha.nfsd
 LOGFILE=/var/log/nfs-ganesha.log
 #LOGFILE=SYSLOG
