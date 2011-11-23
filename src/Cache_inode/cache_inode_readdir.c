@@ -222,7 +222,7 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
                                     &fsal_dirent_array[iter].cookie,
                                     &dirent_array[iter]->fsal_cookie);
 
-       // dirent_array[iter]->cookie = 0 ;
+       dirent_array[iter]->cookie = dirent_array[iter]->fsal_cookie ;
 
    } /* for( iter = 0 ; iter < nbfound ; iter ++ ) */
 
