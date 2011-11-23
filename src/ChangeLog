@@ -470,6 +470,7 @@
 
 1.2.0  - 
        - Bug Fix:  Call cache_inode_close after deleting share state
+       - Bug Fix: Bad management of PID_FILE is several init.d scripts
        - Added support for ERR_FSAL_DELAY in upper layer
        - FSAL code has been reorganized a lot
        - New SAL (State Abstraction Layer) to manage locks (NFSv4/NLM) and share reservations
