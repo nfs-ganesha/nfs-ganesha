@@ -276,6 +276,7 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
 
           /* get object handle */
           TakeTokenFSCall();
+
           if(d_type != DT_LNK)
             {
               st = fsal_internal_fd2handle((fsal_op_context_t *)&(p_dir_descriptor->context),

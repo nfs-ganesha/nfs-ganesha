@@ -123,7 +123,19 @@ typedef union
 #endif
 } zfsfsal_cookie_t;
 
-#define FSAL_READDIR_FROM_BEGINNING 0
+#define FSAL_SET_PCOOKIE_BY_OFFSET( __pfsal_cookie, __cookie )           \
+do                                                                       \
+{                                                                        \
+   ((zfsfsal_cookie_t *)__pfsal_cookie)->data.cookie = (off_t)__cookie ; \
+} while( 0 )
+
+#define FSAL_SET_OFFSET_BY_PCOOKIE( __pfsal_cookie, __cookie )           \
+do                                                                       \
+{                                                                        \
+   __cookie =  ((zfsfsal_cookie_t *)__pfsal_cookie)->data.cookie ;       \
+} while( 0 )
+
+//#define FSAL_READDIR_FROM_BEGINNING 0
 
 typedef struct
 {

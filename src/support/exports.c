@@ -2397,7 +2397,7 @@ int export_client_match(sockaddr_t *hostaddr,
           break;
 
         case NETWORK_CLIENT:
-          LogDebug( COMPONENT_DISPATCH, "test NETWORK_CLIENT: addr=%#.08X, netmask=%#.08X, match with %#.08X\n",
+          LogDebug( COMPONENT_DISPATCH, "test NETWORK_CLIENT: addr=%#.08X, netmask=%#.08X, match with %#.08X",
                     clients->clientarray[i].client.network.netaddr,
                     clients->clientarray[i].client.network.netmask, ntohl(addr));
           LogFullDebug(COMPONENT_DISPATCH,

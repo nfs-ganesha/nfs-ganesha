@@ -169,8 +169,6 @@ cache_inode_getattr(cache_entry_t * pentry,
                 {
                     *pstatus = cache_inode_error_convert(fsal_status);
                     
-                    V_r(&pentry->lock);
-
                     if(fsal_status.major == ERR_FSAL_STALE)
                         {
                             cache_inode_status_t kill_status;
@@ -179,8 +177,9 @@ cache_inode_getattr(cache_entry_t * pentry,
                                      "cache_inode_getattr: Stale FSAL File Handle detected for pentry = %p",
                                      pentry);
 
-                            cache_inode_kill_entry(pentry, ht,
-                                                   pclient, &kill_status);
+                            /* Locked flag is set to true to show entry has a read lock */
+                            cache_inode_kill_entry( pentry, WT_LOCK, ht,
+                                                    pclient, &kill_status);
                             if(kill_status != CACHE_INODE_SUCCESS)
                                 LogCrit(COMPONENT_CACHE_INODE,
                                         "cache_inode_getattr: Could not kill entry %p, status = %u",

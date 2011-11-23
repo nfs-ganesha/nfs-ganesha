@@ -80,7 +80,8 @@ static int cache_init = FALSE;
 static cache_inode_gc_policy_t gcpol;
 
 /** Global variable : the cache policy to be used */
-static cache_inode_policy_t cachepol = CACHE_INODE_POLICY_FULL_WRITE_THROUGH;
+//static cache_inode_policy_t cachepol = CACHE_INODE_POLICY_FULL_WRITE_THROUGH;
+static cache_inode_policy_t cachepol = CACHE_INODE_POLICY_ATTRS_ONLY_WRITE_THROUGH ;
 
 /** Global (exported) variable : init parameters for clients. */
 cache_inode_client_parameter_t cache_client_param;
@@ -594,9 +595,28 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   /* retrieve lower layer info */
 
   /* Getting the root of the FS */
-#ifdef _USE_PROXY
+#if defined( _USE_PROXY )
   /*if( FSAL_IS_ERROR( status = FSAL_str2path( "/users/thomas/./", FSAL_MAX_PATH_LEN, &pathroot ) ) ) */
   if(FSAL_IS_ERROR(status = FSAL_str2path("/", FSAL_MAX_PATH_LEN, &pathroot)))
+    {
+      char buffer[LOG_MAX_STRLEN];
+
+      MakeLogError(buffer, ERR_FSAL, status.major, status.minor, __LINE__);
+      fprintf(output, "%s\n", buffer);
+      return 1;
+    }
+
+  if(FSAL_IS_ERROR
+     (status = FSAL_lookupPath(&pathroot, &context->context, &root_handle, NULL)))
+    {
+      char buffer[LOG_MAX_STRLEN];
+
+      MakeLogError(buffer, ERR_FSAL, status.major, status.minor, __LINE__);
+      fprintf(output, "%s\n", buffer);
+      return 1;
+    }
+#elif defined( _USE_VFS )
+if(FSAL_IS_ERROR(status = FSAL_str2path("/tmp", FSAL_MAX_PATH_LEN, &pathroot)))
     {
       char buffer[LOG_MAX_STRLEN];
 
@@ -1123,7 +1143,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
   uint64_t begin_cookie = 0;
   uint64_t end_cookie = 0;
   unsigned int nbfound;
-  cache_inode_dir_entry_t *dirent_array[CACHE_INODE_SHELL_READDIR_SIZE];
+  cache_inode_dir_entry_t * dirent_array[CACHE_INODE_SHELL_READDIR_SIZE] ;
   cache_inode_endofdir_t eod_met;
   unsigned int i;
   fsal_path_t symlink_path;
@@ -1391,6 +1411,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
 
   begin_cookie = 0;
   eod_met = UNASSIGNED_EOD;
+
   while(eod_met != END_OF_DIR)
     {
 
@@ -1399,6 +1420,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                 glob_path, begin_cookie);
 
       if(cache_inode_readdir(pentry_tmp,
+                             cachepol,
                              begin_cookie,
                              CACHE_INODE_SHELL_READDIR_SIZE,
                              &nbfound,

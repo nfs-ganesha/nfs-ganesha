@@ -221,6 +221,13 @@ typedef enum cache_inode_file_type__
   RECYCLED = 10
 } cache_inode_file_type_t;
 
+typedef enum cache_inode_lock_how__
+{
+  NO_LOCK = 0,
+  RD_LOCK  = 1,
+  WT_LOCK  = 2
+} cache_inode_lock_how_t ;
+
 typedef enum cache_inode_endofdir__
 { TO_BE_CONTINUED = 1,
   END_OF_DIR = 2,
@@ -821,23 +828,25 @@ cache_inode_status_t cache_inode_commit(cache_entry_t * pentry,
                                         cache_inode_status_t * pstatus);
 
 cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
+                                                  cache_inode_policy_t policy,
                                                   hash_table_t * ht,
                                                   cache_inode_client_t * pclient,
                                                   fsal_op_context_t * pcontext,
                                                   cache_inode_status_t * pstatus);
 
-cache_inode_status_t cache_inode_readdir(cache_entry_t * pentry,
-                                         uint64_t cookie,
-                                         unsigned int nbwanted,
-                                         unsigned int *pnbfound,
-                                         uint64_t *pend_cookie,
-                                         cache_inode_endofdir_t *peod_met,
-                                         cache_inode_dir_entry_t **dirent_array,
-                                         hash_table_t *ht,
-                                         int *unlock,
-                                         cache_inode_client_t *pclient,
-                                         fsal_op_context_t *pcontext,
-                                         cache_inode_status_t *pstatus);
+cache_inode_status_t cache_inode_readdir( cache_entry_t * pentry,
+                                          cache_inode_policy_t policy,
+                                          uint64_t cookie,
+                                          unsigned int nbwanted,
+                                          unsigned int *pnbfound,
+                                          uint64_t *pend_cookie,
+                                          cache_inode_endofdir_t *peod_met,
+                                          cache_inode_dir_entry_t **dirent_array,
+                                          hash_table_t *ht,
+                                          int *unlock,
+                                          cache_inode_client_t *pclient,
+                                          fsal_op_context_t *pcontext,
+                                          cache_inode_status_t *pstatus);
 
 cache_inode_status_t cache_inode_cookieverf(cache_entry_t * pentry,
                                             fsal_op_context_t * pcontext,
@@ -859,6 +868,10 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pdir,
                                                    cache_inode_client_t * pclient,
                                                    fsal_op_context_t * pcontext,
                                                    cache_inode_status_t * pstatus);
+
+void cache_inode_release_dirent(  cache_inode_dir_entry_t **dirent_array,
+                                  unsigned int howmuch,
+                                  cache_inode_client_t *pclient ) ;
 
 cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
                                      cache_inode_policy_t policy,
@@ -922,10 +935,11 @@ cache_inode_status_t cache_inode_gc(hash_table_t * ht,
 cache_inode_status_t cache_inode_gc_fd(cache_inode_client_t * pclient,
                                        cache_inode_status_t * pstatus);
 
-cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
-                                            hash_table_t * ht,
-                                            cache_inode_client_t * pclient,
-                                            cache_inode_status_t * pstatus);
+cache_inode_status_t cache_inode_kill_entry( cache_entry_t * pentry,
+                                             cache_inode_lock_how_t lock_how, 
+                                             hash_table_t * ht,
+                                             cache_inode_client_t * pclient,
+                                             cache_inode_status_t * pstatus);
 
 cache_inode_status_t cache_inode_invalidate( fsal_handle_t        * pfsal_handle,
                                              fsal_attrib_list_t   * pattr,
