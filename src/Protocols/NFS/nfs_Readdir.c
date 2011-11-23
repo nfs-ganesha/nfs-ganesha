@@ -381,6 +381,8 @@ int nfs_Readdir(nfs_arg_t * parg,
                 if (dir_pentry_unlock)
                     V_r(&dir_pentry->lock);
 
+              if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) )
+                cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
               Mem_Free(dirent_array);
               return NFS_REQ_DROP;
             }
@@ -401,6 +403,8 @@ int nfs_Readdir(nfs_arg_t * parg,
                     if (dir_pentry_unlock)
                         V_r(&dir_pentry->lock);
 
+                  if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                    cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                   Mem_Free(dirent_array);
                   Mem_Free(entry_name_array);
                   return NFS_REQ_DROP;
@@ -423,6 +427,8 @@ int nfs_Readdir(nfs_arg_t * parg,
                             if (dir_pentry_unlock)
                                 V_r(&dir_pentry->lock);
 
+                          if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                            cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                           Mem_Free(dirent_array);
                           Mem_Free(entry_name_array);
 
@@ -474,6 +480,8 @@ int nfs_Readdir(nfs_arg_t * parg,
                             if (dir_pentry_unlock)
                                 V_r(&dir_pentry->lock);
 
+                          if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                            cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                           Mem_Free(dirent_array);
                           Mem_Free(entry_name_array);
 
@@ -492,6 +500,8 @@ int nfs_Readdir(nfs_arg_t * parg,
                             if (dir_pentry_unlock)
                                 V_r(&dir_pentry->lock);
 
+                          if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                            cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                           Mem_Free(dirent_array);
                           Mem_Free(entry_name_array);
 
@@ -546,6 +556,8 @@ int nfs_Readdir(nfs_arg_t * parg,
                           if (dir_pentry_unlock)
                               V_r(&dir_pentry->lock);
 
+                          if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                            cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                           Mem_Free(dirent_array);
                           Mem_Free(entry_name_array);
                           return NFS_REQ_OK;
@@ -600,6 +612,8 @@ int nfs_Readdir(nfs_arg_t * parg,
                     if (dir_pentry_unlock)
                         V_r(&dir_pentry->lock);
 
+                  if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) )
+                   cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                   Mem_Free(dirent_array);
                   Mem_Free(entry_name_array);
                   return NFS_REQ_DROP;
@@ -622,6 +636,8 @@ int nfs_Readdir(nfs_arg_t * parg,
                             if (dir_pentry_unlock)
                                 V_r(&dir_pentry->lock);
 
+                          if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) )
+                              cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                           Mem_Free(dirent_array);
                           Mem_Free(entry_name_array);
 
@@ -678,6 +694,8 @@ int nfs_Readdir(nfs_arg_t * parg,
                             if (dir_pentry_unlock)
                                 V_r(&dir_pentry->lock);
 
+                          if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                            cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                           Mem_Free(dirent_array);
                           Mem_Free(entry_name_array);
 
@@ -699,6 +717,8 @@ int nfs_Readdir(nfs_arg_t * parg,
                             if (dir_pentry_unlock)
                                 V_r(&dir_pentry->lock);
 
+                          if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                            cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                           Mem_Free(dirent_array);
                           Mem_Free(entry_name_array);
 
@@ -810,6 +830,8 @@ int nfs_Readdir(nfs_arg_t * parg,
           if (dir_pentry_unlock)
               V_r(&dir_pentry->lock);
 
+          if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) )
+           cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
           Mem_Free(dirent_array);
 
           if((eod_met == END_OF_DIR) && (i == num_entries + delta))
@@ -847,6 +869,8 @@ int nfs_Readdir(nfs_arg_t * parg,
   if (dir_pentry_unlock)
       V_r(&dir_pentry->lock);
 
+  if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+   cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
   Mem_Free(dirent_array);
 
   /* If we are here, there was an error */

@@ -869,6 +869,10 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pdir,
                                                    fsal_op_context_t * pcontext,
                                                    cache_inode_status_t * pstatus);
 
+void cache_inode_release_dirent(  cache_inode_dir_entry_t **dirent_array,
+                                  unsigned int howmuch,
+                                  cache_inode_client_t *pclient ) ;
+
 cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
                                      cache_inode_policy_t policy,
                                      hash_table_t * ht,

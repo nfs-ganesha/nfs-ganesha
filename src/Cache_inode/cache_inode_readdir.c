@@ -256,6 +256,34 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
   return CACHE_INODE_SUCCESS ;
 } /* cache_inode_readdir_nomanecache */
 
+
+/**
+ *
+ * cache_inode_release_dirent: releases dirents allocated by cache_inode_readdir_nonamecache.
+ *
+ * Releases dirents allocated by cache_inode_readdir_nonamecache. This is to be called only if the 
+ * related entry as a policy that prevents name to be cached.
+ *
+ * @param dirent_array [INOUT] array of pointers of dirents to be released
+ * @param howmuch [IN] size of dirent_array
+ * @param pclient [INOUT] resource allocated by the client for the nfs management.
+ *
+ * @ return nothing (void function)
+ *
+ */
+void cache_inode_release_dirent(  cache_inode_dir_entry_t ** dirent_array,
+                                  unsigned int howmuch,
+                                  cache_inode_client_t * pclient )
+{
+  unsigned int i = 0 ;
+
+  for( i = 0 ; i < howmuch ; i++ )
+   {
+      ReleaseToPool( dirent_array[i],  &pclient->pool_dir_entry ) ;
+   }
+
+} /* cache_inode_release_dirent */
+
 /**
  *
  * cache_inode_operate_cached_dirent: locates a dirent in the cached dirent,
@@ -269,8 +297,7 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
  * @param pentry_parent [IN] directory entry to be searched.
  * @param name [IN] name for the searched entry.
  * @param newname [IN] newname if function is used to rename a dirent
- * @param pclient [INOUT] resource allocated by the client for the nfs
-          management.
+ * @param pclient [INOUT] resource allocated by the client for the nfs management.
  * @param dirent_op [IN] operation (ADD, LOOKUP or REMOVE) to do on the dirent
  *        if found.
  * @pstatus [OUT] returned status.
