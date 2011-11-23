@@ -79,7 +79,7 @@ void DispatchWork9P( request_data_t *preq, unsigned int worker_index)
            "Awaking Worker Thread #%u for 9P request %p, tcpsock=%lu",
            worker_index, preq, preq->rcontent._9p.pconn->sockfd);
 
-  P(workers_data[worker_index].request_mutex);
+  P(workers_data[worker_index].wcb.tcb_mutex);
   P(workers_data[worker_index].request_pool_mutex);
 
   pentry = LRU_new_entry(workers_data[worker_index].pending_request, &status);
@@ -87,7 +87,7 @@ void DispatchWork9P( request_data_t *preq, unsigned int worker_index)
   if(pentry == NULL)
     {
       V(workers_data[worker_index].request_pool_mutex);
-      V(workers_data[worker_index].request_mutex);
+      V(workers_data[worker_index].wcb.tcb_mutex);
       LogMajor(COMPONENT_DISPATCH,
                "Error while inserting 9P pending request to Worker Thread #%u... Exiting",
                worker_index);
@@ -97,17 +97,17 @@ void DispatchWork9P( request_data_t *preq, unsigned int worker_index)
   pentry->buffdata.pdata = (caddr_t) preq;
   pentry->buffdata.len = sizeof(*preq);
 
-  if(pthread_cond_signal(&(workers_data[worker_index].req_condvar)) == -1)
+  if(pthread_cond_signal(&(workers_data[worker_index].wcb.tcb_condvar)) == -1)
     {
       V(workers_data[worker_index].request_pool_mutex);
-      V(workers_data[worker_index].request_mutex);
+      V(workers_data[worker_index].wcb.tcb_mutex);
       LogMajor(COMPONENT_THREAD,
                "Error %d (%s) while signalling Worker Thread #%u... Exiting",
                errno, strerror(errno), worker_index);
       Fatal();
     }
   V(workers_data[worker_index].request_pool_mutex);
-  V(workers_data[worker_index].request_mutex);
+  V(workers_data[worker_index].wcb.tcb_mutex);
 }
 
 

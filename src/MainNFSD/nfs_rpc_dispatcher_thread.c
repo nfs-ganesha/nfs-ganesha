@@ -69,6 +69,7 @@
 #include "nfs_file_handle.h"
 #include "nfs_stat.h"
 #include "SemN.h"
+#include "nfs_tcb.h"
 
 #ifndef _USE_TIRPC_IPV6
   #define P_FAMILY AF_INET
@@ -693,7 +694,7 @@ static unsigned int select_worker_queue()
           else if(rc == WORKER_ALL_PAUSED)
             {
               /* Wait for the threads to awaken */
-              rc = wait_for_workers_to_awaken();
+              rc = wait_for_threads_to_awaken();
               /*              if(rc == PAUSE_EXIT)
                 {
                 }

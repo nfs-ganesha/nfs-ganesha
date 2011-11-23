@@ -73,6 +73,8 @@
 #include "nsm.h"
 #endif
 #include "sal_functions.h"
+#include "nfs_tcb.h"
+#include "nfs_tcb.h"
 
 /* global information exported to all layers (as extern vars) */
 
@@ -97,6 +99,7 @@ pthread_t stat_exporter_thrid;
 pthread_t admin_thrid;
 pthread_t fcc_gc_thrid;
 pthread_t sigmgr_thrid;
+nfs_tcb_t gccb;
 
 #ifdef _USE_9P
 pthread_t _9p_dispatcher_thrid;
@@ -146,9 +149,9 @@ void *sigmgr_thread( void * arg )
   LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
   LogDebug(COMPONENT_THREAD, "Stopping worker threads");
 
-  if(pause_workers(PAUSE_SHUTDOWN) != PAUSE_EXIT)
+  if(pause_threads(PAUSE_SHUTDOWN) != PAUSE_EXIT)
     LogDebug(COMPONENT_THREAD,
-             "Unexpected return code from pause_workers");
+             "Unexpected return code from pause_threads");
   else
     LogDebug(COMPONENT_THREAD,
              "Done waiting for worker threads to exit");
@@ -1659,6 +1662,7 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
 
   if(nfs_param.cache_layers_param.dcgcpol.run_interval != 0)
     {
+      tcb_new(&gccb, "NFS FILE CONTENT GARBAGE COLLECTION Thread"); 
       /* Starting the nfs file content gc thread  */
       if((rc =
           pthread_create(&fcc_gc_thrid, &attr_thr, file_content_gc_thread,
@@ -1781,6 +1785,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                state_err_str(state_status));
     }
   LogInfo(COMPONENT_INIT, "Cache Inode library successfully initialized");
+  /* Initialize thread control block */
+  tcb_head_init();
 
   /* Set the cache inode GC policy */
   cache_inode_set_gc_policy(nfs_param.cache_layers_param.gcpol);
@@ -1884,13 +1890,13 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
     {
       char name[256];
 
+      /* Set the index (mostly used for debug purpose */
+      workers_data[i].worker_index = i;
+
       /* Fill in workers fields (semaphores and other stangenesses */
       if(nfs_Init_worker_data(&(workers_data[i])) != 0)
         LogFatal(COMPONENT_INIT,
                  "Error while initializing worker data #%d", i);
-
-      /* Set the index (mostly used for debug purpose */
-      workers_data[i].worker_index = i;
 
       /* Set the pointer for the Cache inode hash table */
       workers_data[i].ht = ht;
@@ -2487,7 +2493,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
         }
 
       /* Wait for the threads to complete their init step */
-      if(wait_for_workers_to_awaken() != PAUSE_OK)
+      if(wait_for_threads_to_awaken() != PAUSE_OK)
         {
           /* Not quite sure what to do here... */
         }
