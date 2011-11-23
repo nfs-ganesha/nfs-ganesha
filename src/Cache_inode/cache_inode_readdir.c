@@ -112,7 +112,9 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
       return *pstatus;
     }
 
-  printf( "==========> No name cached : begin cookie = %llu\n", (unsigned long long)cookie ) ;
+  LogFullDebug(COMPONENT_NFS_READDIR,
+               "About to readdir in  cache_inode_readdir_nonamecache: pentry=%p "
+	       "cookie=%"PRIu64, pentry_dir, cookie ) ;
 
   /* Open the directory */
   dir_attributes.asked_attributes = pclient->attrmask;
@@ -233,8 +235,11 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
 
   /* Do not forget to set returned end cookie */
   FSAL_SET_OFFSET_BY_PCOOKIE( &end_cookie, *pend_cookie );
-  
-  printf( "==========> No name cached : end cookie = %llu\n", (unsigned long long)*pend_cookie ) ;
+
+  LogFullDebug(COMPONENT_NFS_READDIR,
+               "End of readdir in  cache_inode_readdir_nonamecache: pentry=%p "
+	       "cookie=%"PRIu64, pentry_dir, *pend_cookie ) ;
+
 
   /* Close the directory */
 #ifdef _USE_MFSL
