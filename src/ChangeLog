@@ -480,3 +480,4 @@
          directory's entries)
        - Directory content cached is now managed as a tree. Formerly used
          dir_chain were removed.
+       - Lock support for FSAL_LUSTRE

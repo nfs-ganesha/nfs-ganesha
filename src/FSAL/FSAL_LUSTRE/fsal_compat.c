@@ -49,6 +49,7 @@ fsal_functions_t fsal_lustre_functions = {
   .fsal_unlink_access = COMMON_unlink_access,
   .fsal_link_access = COMMON_link_access,
   .fsal_merge_attrs = COMMON_merge_attrs,
+  .fsal_lock_op = LUSTREFSAL_lock_op,
   .fsal_lookup = LUSTREFSAL_lookup,
   .fsal_lookuppath = LUSTREFSAL_lookupPath,
   .fsal_lookupjunction = LUSTREFSAL_lookupJunction,
