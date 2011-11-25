@@ -48,8 +48,8 @@ static fsal_staticfsinfo_t default_posix_info = {
   FSAL_EXPTYPE_PERSISTENT,      /* FH expire type */
   TRUE,                         /* hard link support */
   TRUE,                         /* symlink support */
-  FALSE,                        /* lock management */
-  FALSE,                        /* lock owners */
+  TRUE,                         /* lock management */
+  TRUE,                        /* lock owners */
   FALSE,                        /* async blocking locks */
   TRUE,                         /* named attributes */
   TRUE,                         /* handles are unique and persistent */
