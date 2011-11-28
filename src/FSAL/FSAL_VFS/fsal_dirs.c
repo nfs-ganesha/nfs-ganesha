@@ -200,6 +200,9 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
   lseek(p_dir_descriptor->fd, start_position.data.cookie, SEEK_SET);
   rc = errno;
 
+  printf( "=====> FSAL_readdir Begin=%llu\n", 
+          start_position.data.cookie ) ;
+
   if(rc)
     Return(posix2fsal_error(rc), rc, INDEX_FSAL_readdir);
 
@@ -348,6 +351,9 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
 
         }                       /* for */
     }                           /* While */
+
+  printf( "=====> FSAL_readdir End=%llu\n", 
+          p_end_position->data.cookie ) ;
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
 

@@ -80,8 +80,8 @@ static int cache_init = FALSE;
 static cache_inode_gc_policy_t gcpol;
 
 /** Global variable : the cache policy to be used */
-static cache_inode_policy_t cachepol = CACHE_INODE_POLICY_FULL_WRITE_THROUGH;
-//static cache_inode_policy_t cachepol = CACHE_INODE_POLICY_ATTRS_ONLY_WRITE_THROUGH ;
+//static cache_inode_policy_t cachepol = CACHE_INODE_POLICY_FULL_WRITE_THROUGH;
+static cache_inode_policy_t cachepol = CACHE_INODE_POLICY_ATTRS_ONLY_WRITE_THROUGH ;
 
 /** Global (exported) variable : init parameters for clients. */
 cache_inode_client_parameter_t cache_client_param;
