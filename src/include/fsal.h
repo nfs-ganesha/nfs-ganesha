@@ -130,11 +130,11 @@ char * FSAL_fsalid2name( int fsalid ) ;
  *  BEWARE : this will probably bug with FSAL_SNMP and FSAL_CEPH 
  */
 #define FSAL_SET_COOKIE_BY_OFFSET( __cookie, __offset )  \
-    (void)FSAL_uint64_to_cookie( NULL, NULL, &__cookie, &__offset ) 
+   memcpy( (char *)&(__cookie.data), (char *)&__offset, sizeof( uint64_t ) ) 
     
 
 #define FSAL_SET_POFFSET_BY_COOKIE( __cookie, __poffset )  \
-    (void)FSAL_cookie_to_uint64( NULL, NULL, &__cookie, __poffset ) 
+    memcpy( (char *)__poffset, (char *)&(__cookie.data), sizeof( uint64_t ) ) 
 
 #define FSAL_GET_EXP_CTX( popctx ) (fsal_export_context_t *)(popctx->export_context)
 

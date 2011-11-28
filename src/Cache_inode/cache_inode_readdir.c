@@ -105,8 +105,6 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
 
-  printf( "===> Cache_Inode: Begin=%llu\n", begin_cookie ) ;
-
   /* Only DIRECTORY entries are concerned */
   if(pentry_dir->internal_md.type != DIRECTORY)
     {
@@ -153,7 +151,8 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
     }
 
   /* Loop for readding the directory */
-  FSAL_SET_COOKIE_BY_OFFSET( begin_cookie, cookie );
+  // memcpy( &(begin_cookie.data), &cookie, sizeof( uint64_t ) ) ;
+  FSAL_SET_COOKIE_BY_OFFSET( begin_cookie, cookie ) ;
   fsal_eod = FALSE;
 
 #ifdef _USE_MFSL
@@ -236,9 +235,8 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
     *peod_met = TO_BE_CONTINUED ;
 
   /* Do not forget to set returned end cookie */
-  FSAL_SET_POFFSET_BY_COOKIE( end_cookie, pend_cookie );
-
-  printf( "===> Cache_Inode: End=%llu\n", *pend_cookie ) ;
+  //memcpy( pend_cookie, &(end_cookie.data), sizeof( uint64_t ) ) ; 
+  FSAL_SET_POFFSET_BY_COOKIE( end_cookie, pend_cookie ) ;
 
   LogFullDebug(COMPONENT_NFS_READDIR,
                "End of readdir in  cache_inode_readdir_nonamecache: pentry=%p "
@@ -1411,7 +1409,6 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
       (pclient->stat.func_stats.nb_success[CACHE_INODE_READDIR])++;
       *unlock = TRUE;
   }
-
 
   return *pstatus;
 }                               /* cache_inode_readdir */
