@@ -4834,6 +4834,15 @@ int fn_Cache_inode_invalidate(int argc,      /* IN : number of args in argv */
       return 0;
     }
 
+  /* copy current absolute path to a local variable. */
+  strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
+  glob_path[FSAL_MAX_PATH_LEN - 1] = '\0';
+
+  /* retrieve handle to the file whose permissions are to be tested */
+  if((rc =
+     cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
+                     output)))
+    return rc;
 
   switch( obj_hdl->internal_md.type )
     {
@@ -4863,15 +4872,6 @@ int fn_Cache_inode_invalidate(int argc,      /* IN : number of args in argv */
       return -1 ;
       break;
     }
-  /* copy current absolute path to a local variable. */
-  strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
-  glob_path[FSAL_MAX_PATH_LEN - 1] = '\0';
-
-  /* retrieve handle to the file whose permissions are to be tested */
-  if((rc =
-     cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
-                     output)))
-    return rc;
 
   if( ( context->cache_status = cache_inode_invalidate( pfsal_handle,
                                                         &attr,

@@ -137,7 +137,6 @@ cache_inode_status_t cache_inode_kill_entry( cache_entry_t          * pentry,
      *pstatus = CACHE_INODE_SUCCESS;
      return *pstatus;
    }
-#endif
 
   /** @todo: BUGAZOMEU : file invalidation seems quite tricky, temporarily avoid it */
   /* We need to know how to manage how to deal with "files with states"  */
@@ -148,6 +147,7 @@ cache_inode_status_t cache_inode_kill_entry( cache_entry_t          * pentry,
      *pstatus = CACHE_INODE_SUCCESS;
      return *pstatus;
    }
+#endif
 
   if(pstatus == NULL)
     return CACHE_INODE_INVALID_ARGUMENT;
