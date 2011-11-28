@@ -234,6 +234,7 @@ fsal_status_t FSAL_cookie_to_uint64(fsal_handle_t * handle,
     }
   else
     {
+      *data = 0LL ;
       memcpy(data, cookie, sizeof(uint64_t));
       ReturnCode(ERR_FSAL_NO_ERROR, 0);
     }

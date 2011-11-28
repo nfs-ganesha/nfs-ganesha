@@ -151,7 +151,7 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
     }
 
   /* Loop for readding the directory */
-  FSAL_SET_PCOOKIE_BY_OFFSET( &begin_cookie, cookie );
+  FSAL_SET_COOKIE_BY_OFFSET( begin_cookie, cookie );
   fsal_eod = FALSE;
 
 #ifdef _USE_MFSL
@@ -234,7 +234,7 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
     *peod_met = TO_BE_CONTINUED ;
 
   /* Do not forget to set returned end cookie */
-  FSAL_SET_OFFSET_BY_PCOOKIE( &end_cookie, *pend_cookie );
+  FSAL_SET_POFFSET_BY_COOKIE( end_cookie, pend_cookie );
 
   LogFullDebug(COMPONENT_NFS_READDIR,
                "End of readdir in  cache_inode_readdir_nonamecache: pentry=%p "
@@ -279,7 +279,10 @@ void cache_inode_release_dirent(  cache_inode_dir_entry_t ** dirent_array,
 
   for( i = 0 ; i < howmuch ; i++ )
    {
-      ReleaseToPool( dirent_array[i],  &pclient->pool_dir_entry ) ;
+      if( dirent_array[i] != NULL )
+        ReleaseToPool( dirent_array[i],  &pclient->pool_dir_entry ) ;
+      else
+        break ;
    }
 
 } /* cache_inode_release_dirent */
