@@ -84,10 +84,8 @@ fsal_status_t LUSTREFSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op);
     }
 
-#if 0
   if(p_owner != NULL)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op);
-#endif
 
   if(conflicting_lock == NULL && lock_op == FSAL_OP_LOCKT)
     {
