@@ -49,7 +49,7 @@ static fsal_staticfsinfo_t default_posix_info = {
   TRUE,                         /* hard link support */
   TRUE,                         /* symlink support */
   TRUE,                         /* lock management */
-  TRUE,                        /* lock owners */
+  FALSE,                        /* lock owners */
   FALSE,                        /* async blocking locks */
   TRUE,                         /* named attributes */
   TRUE,                         /* handles are unique and persistent */
