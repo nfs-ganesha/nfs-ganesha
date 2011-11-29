@@ -1484,6 +1484,9 @@ typedef struct fsal_const__
   unsigned int fsal_dir_t_size;
 } fsal_const_t;
 
+/* old fsal interface
+ */
+
 int FSAL_LoadLibrary(char *path);
 
 fsal_functions_t FSAL_GetFunctions(void);
@@ -1491,6 +1494,12 @@ void FSAL_LoadFunctions(void);
 
 fsal_const_t FSAL_GetConsts(void);
 void FSAL_LoadConsts(void);
+
+/* new api to replace above
+ */
+
+#include "fsal_api.h"
+#include "FSAL/access_check.h" /* rethink where this should go */
 
 #endif                          /* ! _USE_SWIG */
 
