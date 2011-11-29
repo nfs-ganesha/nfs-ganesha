@@ -62,13 +62,6 @@ extern int open_by_handle_fd;
 #endif
 
 /**
- *  This function initializes shared variables of the FSAL.
- */
-fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
-                                        fs_common_initinfo_t * fs_common_info,
-                                        fs_specific_initinfo_t * fs_specific_info);
-
-/**
  *  Increments the number of calls for a function.
  */
 void fsal_increment_nbcall(int function_index, fsal_status_t status);
