@@ -35,6 +35,11 @@ struct glist_head
   struct glist_head *prev;
 };
 
+#define GLIST_HEAD_INIT(name) { &(name), &(name) }
+
+#define GLIST_HEAD(name) \
+        struct glist_head name = GLIST_HEAD_INIT(name)
+
 /*FIXME!!! grand hack due to mysql conflict name glist*/
 
 static inline void init_glist(struct glist_head *head)

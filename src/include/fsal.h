@@ -71,6 +71,7 @@ extern int __build_bug_on_failed;
         } while(0)
 #endif
 
+#include "nlm_list.h"
 /* fsal_types contains constants and type definitions for FSAL */
 #include "fsal_types.h"
 #include "common_utils.h"
