@@ -1,4 +1,4 @@
-AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
+AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS) -ldl
 
 noinst_LTLIBRARIES          = libfsalcommon.la
 
