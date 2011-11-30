@@ -24,9 +24,9 @@
 #include "fsal.h"
 #include "fsal_glue.h"
 #include "fsal_up.h"
-#ifdef _USE_FSALMDS
+#if defined(_USE_FSALMDS) || defined(_USE_FSALDS)
 #include "fsal_pnfs.h"
-#endif /* _USE_FSALMDS */
+#endif /* _USE_FSALMDS || _USE_FSALDS */
 
 int __thread my_fsalid = -1 ;
 
@@ -34,6 +34,7 @@ fsal_functions_t fsal_functions_array[NB_AVAILABLE_FSAL];
 fsal_const_t fsal_consts_array[NB_AVAILABLE_FSAL];
 
 #ifdef _USE_SHARED_FSAL
+
 #define fsal_functions fsal_functions_array[my_fsalid]
 #define fsal_consts fsal_consts_array[my_fsalid]
 #else
@@ -149,6 +150,9 @@ int FSAL_param_load_fsal_split( char * param, int * pfsalid, char * pathlib )
 
 #ifdef _USE_FSALMDS
 fsal_mdsfunctions_t fsal_mdsfunctions;
+#endif                                          /* _USE_FSALMDS */
+#ifdef _USE_FSALDS
+fsal_dsfunctions_t fsal_dsfunctions;
 #endif                                          /* _USE_FSALMDS */
 
 #ifdef _USE_SHARED_FSAL
@@ -1020,6 +1024,48 @@ nfsstat4 FSAL_getdevicelist(fsal_handle_t* handle,
 }
 #endif                                           /* _USE_FSALMDS */
 
+#ifdef _USE_FSALDS
+nfsstat4 FSAL_DS_read(fsal_handle_t *handle,
+                      fsal_op_context_t *context,
+                      offset4 offset,
+                      count4 requested_length,
+                      caddr_t buffer,
+                      count4 *supplied_length,
+                      fsal_boolean_t *end_of_file)
+{
+  return fsal_dsfunctions.fsal_DS_read(handle, context, offset,
+                                       requested_length, buffer,
+                                       supplied_length, end_of_file);
+}
+
+nfsstat4 FSAL_DS_write(fsal_handle_t *handle,
+                       fsal_op_context_t *context,
+                       offset4 offset,
+                       count4 write_length,
+                       caddr_t buffer,
+                       stable_how4 stability_wanted,
+                       count4 *written_length,
+                       verifier4 writeverf,
+                       stable_how4 *stability_got)
+{
+  return fsal_dsfunctions.fsal_DS_write(handle, context, offset,
+                                        write_length, buffer,
+                                        stability_wanted,
+                                        written_length, writeverf,
+                                        stability_got);
+}
+
+nfsstat4 FSAL_DS_commit(fsal_handle_t *handle,
+                        fsal_op_context_t *context,
+                        offset4 offset,
+                        count4 count,
+                        verifier4 writeverf)
+{
+  return fsal_dsfunctions.fsal_DS_commit(handle, context, offset,
+                                         count, writeverf);
+}
+
+#endif /* _USE_FSALDS */
 
 #ifdef _USE_SHARED_FSAL
 int FSAL_LoadLibrary(char *path)
@@ -1068,6 +1114,20 @@ void FSAL_LoadFunctions(void)
   fsal_functions = (*getfunctions) ();
 }
 
+#ifdef _USE_FSALMDS
+void FSAL_LoadMDSFunctions(void)
+{
+  fsal_mdsfunctions = (*getmdsfunctions) ();
+}
+#endif
+
+#ifdef _USE_FSALDS
+void FSAL_LoadDSFunctions(void)
+{
+  fsal_dsfunctions = (*getdsfunctions) ();
+}
+#endif
+
 void FSAL_LoadConsts(void)
 {
 
@@ -1096,5 +1156,12 @@ void FSAL_LoadMDSFunctions(void)
   fsal_mdsfunctions = FSAL_GetMDSFunctions();
 }
 #endif /* _USE_FSALMDS */
+
+#ifdef _USE_FSALDS
+void FSAL_LoadDSFunctions(void)
+{
+  fsal_dsfunctions = FSAL_GetDSFunctions();
+}
+#endif /* _USE_FSALDS */
 
 #endif /* _USE_SHARED_FSAL */

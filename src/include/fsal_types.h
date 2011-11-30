@@ -146,9 +146,12 @@ typedef struct fsal_staticfsinfo_t fsal_staticfsinfo_t;
 #define INDEX_FSAL_layoutcommit         61
 #define INDEX_FSAL_getdeviceinfo        62
 #define INDEX_FSAL_getdevicelist        63
+#define INDEX_FSAL_ds_read              64
+#define INDEX_FSAL_ds_write             65
+#define INDEX_FSAL_ds_commit            66
 
 /* number of FSAL functions */
-#define FSAL_NB_FUNC  64
+#define FSAL_NB_FUNC  67
 
 extern const char *fsal_function_names[];
 

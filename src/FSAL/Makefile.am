@@ -27,6 +27,10 @@ endif
 
 if USE_FSALMDS
 libfsalcommon_la_SOURCES += common_pnfs.c
+else
+if USE_FSALDS
+libfsalcommon_la_SOURCES += common_pnfs.c
+endif
 endif
 
 if USE_FSAL_HPSS

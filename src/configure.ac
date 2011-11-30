@@ -832,12 +832,20 @@ if [[  $PNFS != "NONE" ]] ; then
   fi
 fi
 
-# Sanity check for FSAL based MDS and DS support
+# Sanity check for FSAL based MDS support
 if test "$enable_fsal_mds" == "yes"; then
   if [[ x$NFS4_MINOR != "x1" ]] ; then
      AC_MSG_ERROR("You must activate NFSv4.1 support to enable FSAL meta-data server support" )
   fi
         AC_DEFINE(_USE_FSALMDS,1,[enable FSAL based pNFS MDS support])
+fi
+
+# Sanity check for FSAL based DS support
+if test "$enable_fsal_ds" == "yes"; then
+  if [[ x$NFS4_MINOR != "x1" ]] ; then
+     AC_MSG_ERROR("You must activate NFSv4.1 support to enable FSAL data server support" )
+  fi
+        AC_DEFINE(_USE_FSALDS,1,[enable FSAL based pNFS DS support])
 fi
 
 # MFSL_ASYNC should not be used with HPSS

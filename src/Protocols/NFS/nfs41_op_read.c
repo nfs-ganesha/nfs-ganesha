@@ -56,11 +56,21 @@
 #include "cache_content_policy.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
+#ifdef _USE_FSALDS
+#include "fsal_pnfs.h"
+#endif /* _USE_FSALDS */
+
+#ifdef _USE_FSALDS
+static int op_dsread(struct nfs_argop4 *op,
+                     compound_data_t * data,
+                     struct nfs_resop4 *resp);
+#endif /* _USE_FSALDS */
 
 /**
  * nfs41_op_read: The NFS4_OP_READ operation
  *
- * This functions handles the NFS4_OP_READ operation in NFSv4. This function can be called only from nfs4_Compound.
+ * This functions handles the NFS4_OP_READ operation in NFSv4. This
+ * function can be called only from nfs4_Compound.
  *
  * @param op    [IN]    pointer to nfs41_op arguments
  * @param data  [INOUT] Pointer to the compound request's data
@@ -125,6 +135,13 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_read_xattr(op, data, resp);
+
+#ifdef _USE_FSALDS
+  if(nfs4_Is_Fh_DSHandle(&data->currentFH))
+    {
+      return(op_dsread(op, data, resp));
+    }
+#endif /* _USE_FSALDS */
 
   /* Manage access type MDONLY */
   if(data->pexport->access_type == ACCESSTYPE_MDONLY)
@@ -391,3 +408,80 @@ void nfs41_op_read_Free(READ4res * resp)
       Mem_Free(resp->READ4res_u.resok4.data.data_val);
   return;
 }                               /* nfs41_op_read_Free */
+
+#ifdef _USE_FSALDS
+
+/**
+ * op_dsread: Calls down to pNFS data server
+ *
+ * @param op    [IN]    pointer to nfs41_op arguments
+ * @param data  [INOUT] Pointer to the compound request's data
+ * @param resp  [IN]    Pointer to nfs41_op results
+ *
+ * @return NFS4_OK if successfull, other values show an error.
+ *
+ */
+
+static int op_dsread(struct nfs_argop4 *op,
+                     compound_data_t * data,
+                     struct nfs_resop4 *resp)
+{
+  /* The FSAL file handle */
+  fsal_handle_t *handle;
+  /* Status frmo calling Cache_inode */
+  cache_inode_status_t cache_status = 0;
+  /* NFSv4 return code */
+  nfsstat4 nfs_status = 0;
+  /* Buffer into which data is to be read */
+  caddr_t buffer = NULL;
+
+  /* Don't bother calling the FSAL if the read length is 0. */
+
+  if(arg_READ4.count == 0)
+    {
+      res_READ4.READ4res_u.resok4.eof = FALSE;
+      res_READ4.READ4res_u.resok4.data.data_len = 0;
+      res_READ4.READ4res_u.resok4.data.data_val = NULL;
+      res_READ4.status = NFS4_OK;
+      return res_READ4.status;
+    }
+
+  /* Fetch the FSAL file handle */
+
+  handle = cache_inode_get_fsal_handle(data->current_entry,
+                                       &cache_status);
+
+  if (cache_status != CACHE_INODE_SUCCESS)
+    {
+      res_READ4.status = nfs4_Errno(cache_status);
+      return res_READ4.status;
+    }
+
+  if((buffer = (caddr_t) Mem_Alloc(arg_READ4.count)) == NULL)
+    {
+      res_READ4.status = NFS4ERR_SERVERFAULT;
+      return res_READ4.status;
+    }
+
+  memset(buffer, 0, arg_READ4.count);
+  res_READ4.READ4res_u.resok4.data.data_val = buffer;
+
+  if ((nfs_status = FSAL_DS_read(handle,
+                                 data->pcontext,
+                                 arg_READ4.offset,
+                                 arg_READ4.count,
+                                 res_READ4.READ4res_u.resok4.data.data_val,
+                                 &res_READ4.READ4res_u.resok4.data.data_len,
+                                 &res_READ4.READ4res_u.resok4.eof))
+      != NFS4_OK)
+    {
+      Mem_Free(buffer);
+    }
+
+
+  res_READ4.status = nfs_status;
+
+  return res_READ4.status;
+}
+
+#endif /* _USE_FSALDS */

@@ -48,6 +48,9 @@
 #include <pthread.h>
 #include <signal.h>             /* for sigaction */
 #include <errno.h>
+#if defined(_USE_FSALMDS) || (_USE_FSALDS)
+#include "fsal_pnfs.h"
+#endif /* _USE_FSALMDS || _USE_FSALDS */
 
 /* parameters for NFSd startup and default values */
 

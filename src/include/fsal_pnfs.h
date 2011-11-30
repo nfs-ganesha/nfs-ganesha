@@ -203,7 +203,7 @@ struct fsal_layoutreturn_res
  * In the case of a non-synthetic return, the offset and length of the
  * returned area are given in arg->offset and arg->length.
  *
- * @param handle   [IN]     The filehandle corresponding to the segment
+ * @param handle   [IN]     The handle corresponding to the segment
  *                          being returned
  * @param context  [IN]     The FSAL operation context
  * @param lrf_body [IN]     In the case of a non-synthetic return, this is
@@ -388,25 +388,70 @@ nfsstat4 FSAL_getdevicelist(fsal_handle_t *handle,
 
 #ifdef _USE_FSALDS
 
-fsal_status_t FSAL_ds_read(fsal_handle_t * filehandle,     /*  IN  */
-                           fsal_seek_t * seek_descriptor,  /* [IN] */
-                           fsal_size_t buffer_size,        /*  IN  */
-                           caddr_t buffer,                 /* OUT  */
-                           fsal_size_t * read_amount,      /* OUT  */
-                           fsal_boolean_t * end_of_file    /* OUT  */
-    );
+/**
+ *
+ * FSAL_DS_read: Read from a data-server filehandle.
+ *
+ * @param handle           [IN]  FSAL file handle
+ * @param context          [IN]  Operation context
+ * @param offset           [IN]  Offset at which to read
+ * @param requested_length [IN]  Length of read requested (and size of
+ *                               buffer)
+ * @param buffer           [OUT] Buffer to which read data is stored
+ * @param supplied_elngth  [OUT] Amount of data actually read
+ * @param end_of_file      [OUT] End of file was reached
+ */
 
-fsal_status_t FSAL_ds_write(fsal_handle_t * filehandle,      /* IN */
-                            fsal_seek_t * seek_descriptor,   /* IN */
-                            fsal_size_t buffer_size,         /* IN */
-                            caddr_t buffer,                  /* IN */
-                            fsal_size_t * write_amount,      /* OUT */
-                            fsal_boolean_t stable_flag       /* IN */
-    );
+nfsstat4 FSAL_DS_read(fsal_handle_t *handle,
+                      fsal_op_context_t *context,
+                      offset4 offset,
+                      count4 requested_length,
+                      caddr_t buffer,
+                      count4 *supplied_length,
+                      fsal_boolean_t *end_of_file);
 
-fsal_status_t FSAL_ds_commit(fsal_handle_t * filehandle,     /* IN */
-                             fsal_off_t offset,
-                             fsal_size_t length);
+/**
+ *
+ * FSAL_DS_write: Write to a data-server filehandle.
+ *
+ * @param handle           [IN]  FSAL file handle
+ * @param context          [IN]  Operation context
+ * @param offset           [IN]  Offset at which to read
+ * @param write_length     [IN]  Length of write data
+ * @param buffer           [OUT] Buffer from which written data is fetched
+ * @param stability_wanted [IN]  Stability of write requested
+ * @param written_length   [OUT] Amount of data actually written
+ * @param writeverf        [OUT] Write verifier
+ * @param stability_got    [OUT] Stability of write performed
+ */
+
+
+nfsstat4 FSAL_DS_write(fsal_handle_t *handle,
+                       fsal_op_context_t *context,
+                       offset4 offset,
+                       count4 write_length,
+                       caddr_t buffer,
+                       stable_how4 stability_wanted,
+                       count4 *written_length,
+                       verifier4 writeverf,
+                       stable_how4 *stability_got);
+
+/**
+ *
+ * FSAL_DS_commit: Commit a byte range
+ *
+ * @param handle         [IN]     FSAL file handle
+ * @param context        [IN]     Operation context
+ * @param offset         [IN]     Start of commit window
+ * @param count          [IN]     Number of bytes to commit
+ * @param writeverf      [OUT]    Write verifier
+ */
+
+nfsstat4 FSAL_DS_commit(fsal_handle_t *handle,
+                        fsal_op_context_t *context,
+                        offset4 offset,
+                        count4 count,
+                        verifier4 writeverf);
 
 #endif /* _USE_FSALDS */
 
@@ -443,26 +488,29 @@ typedef struct fsal_mdsfunctions__
 #ifdef _USE_FSALDS
 typedef struct fsal_dsfunctions__
 {
-  fsal_status_t (*fsal_ds_read)(fsal_handle_t * filehandle,     /*  IN  */
-                                fsal_seek_t * seek_descriptor,  /* [IN] */
-                                fsal_size_t buffer_size,        /*  IN  */
-                                caddr_t buffer,                 /* OUT  */
-                                fsal_size_t * read_amount,      /* OUT  */
-                                fsal_boolean_t * end_of_file    /* OUT  */
-      );
+  nfsstat4 (*fsal_DS_read)(fsal_handle_t *handle,
+                           fsal_op_context_t *context,
+                           offset4 offset,
+                           count4 requested_length,
+                           caddr_t buffer,
+                           count4 *supplied_length,
+                           fsal_boolean_t *end_of_file);
 
-  fsal_status_t (*fsal_ds_write)(fsal_handle_t * filehandle,      /* IN */
-                                 fsal_seek_t * seek_descriptor,   /* IN */
-                                 fsal_size_t buffer_size,         /* IN */
-                                 caddr_t buffer,                  /* IN */
-                                 fsal_size_t * write_amount,      /* OUT */
-                                 fsal_boolean_t stable_flag       /* IN */
-      );
+     nfsstat4 (*fsal_DS_write)(fsal_handle_t *handle,
+                               fsal_op_context_t *context,
+                               offset4 offset,
+                               count4 write_length,
+                               caddr_t buffer,
+                               stable_how4 stability_wanted,
+                               count4 *written_length,
+                               verifier4 writeverf,
+                               stable_how4 *stability_got);
 
-  fsal_status_t (*fsal_ds_commit)(fsal_handle_t * filehandle,     /* IN */
-                                  fsal_off_t offset,              /* IN */
-                                  fsal_size_t length              /* IN */
-      );
+  nfsstat4 (*fsal_DS_commit)(fsal_handle_t *handle,
+                             fsal_op_context_t *context,
+                             offset4 offset,
+                             count4 count,
+                             verifier4 writever4);
 } fsal_dsfunctions_t;
 #endif /* _USE_FSALDS */
 

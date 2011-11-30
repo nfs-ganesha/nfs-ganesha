@@ -794,6 +794,10 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op, /* [IN] NFS4 OP arguments */
                          compound_data_t * data,        /* [IN] current data for the compound request */
                          struct nfs_resop4 *resp);      /* [OUT] NFS4 OP results */
 
+int nfs41_op_commit(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
+                   compound_data_t * data,      /* [IN] current data for the compound request */
+                   struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+
 int nfs41_op_close(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
                    compound_data_t * data,      /* [IN] current data for the compound request */
                    struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */

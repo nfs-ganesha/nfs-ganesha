@@ -88,7 +88,7 @@ const char *fsal_function_names[] = {
   "FSAL_sync", "FSAL_lock_op", "FSAL_cb_init", "FSAL_cb_addfilter",
   "FSAL_cb_getevents", "FSAL_unused_58", "FSAL_layoutget",
   "FSAL_layoutreturn", "FSAL_layoutcommit", "FSAL_getdeviceinfo",
-  "FSAL_getdevicelist"
+  "FSAL_getdevicelist", "FSAL_ds_read", "FSAL_ds_write", "FSAL_ds_commit"
 };
 
 /* les code d'error */
