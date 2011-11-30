@@ -264,6 +264,19 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       V_r(&pentry->lock);
     }
 
+  if (pstate_open == NULL)
+    {
+      if(cache_inode_access(pentry,
+                            FSAL_READ_ACCESS,
+                            data->ht,
+                            data->pclient,
+                            data->pcontext,
+                            &cache_status) != CACHE_INODE_SUCCESS)
+        {
+          res_READ4.status = nfs4_Errno(cache_status);
+          return res_READ4.status;
+        }
+    }
   /* Get the size and offset of the read operation */
   offset = arg_READ4.offset;
   size = arg_READ4.count;
