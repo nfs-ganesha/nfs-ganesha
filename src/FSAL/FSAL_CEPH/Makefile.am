@@ -42,6 +42,10 @@ if USE_FSALMDS
 libfsalceph_la_SOURCES += fsal_mds.c
 endif
 
+if USE_FSALDS
+libfsalceph_la_SOURCES += fsal_ds.c
+endif
+
 new: clean all
 
 doc:

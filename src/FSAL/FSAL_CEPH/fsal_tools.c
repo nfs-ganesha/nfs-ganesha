@@ -261,7 +261,7 @@ fsal_status_t CEPHFSAL_ExpandHandle(fsal_export_context_t * extexport,
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
 
-  if (export)
+  if (handle->data.layout.fl_stripe_unit != 0)
     rc = ceph_ll_connectable_m(cmount, &VINODE(handle),
                                handle->data.parent_ino,
                                handle->data.parent_hash);

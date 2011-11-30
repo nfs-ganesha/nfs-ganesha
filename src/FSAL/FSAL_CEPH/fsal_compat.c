@@ -151,3 +151,18 @@ fsal_mdsfunctions_t FSAL_GetMDSFunctions(void)
   return fsal_ceph_mdsfunctions;
 }
 #endif /* _USE_FSALMDS */
+
+#ifdef _USE_FSALDS
+fsal_dsfunctions_t fsal_ceph_dsfunctions = {
+  .fsal_DS_read = CEPHFSAL_DS_read,
+  .fsal_DS_write = CEPHFSAL_DS_write,
+  .fsal_DS_commit = CEPHFSAL_DS_commit
+};
+#endif /* _USE_FSALDS */
+
+#ifdef _USE_FSALDS
+fsal_dsfunctions_t FSAL_GetDSFunctions(void)
+{
+  return fsal_ceph_dsfunctions;
+}
+#endif /* _USE_FSALDS */

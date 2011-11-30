@@ -38,10 +38,10 @@
 #include <cephfs/libcephfs.h>
 #include <string.h>
 
-#ifdef _USE_FSALMDS
+#if defined(_USE_FSALMDS) || (_USE_FSALDS)
 #include "fsal.h"
 #include "fsal_pnfs.h"
-#endif /* _USE_FSALMDS */
+#endif /* _USE_FSALMDS || _USE_FSALDS */
 
 /* the following variables must not be defined in fsal_internal.c */
 #ifndef FSAL_INTERNAL_C
@@ -402,3 +402,29 @@ nfsstat4 CEPHFSAL_getdevicelist(fsal_handle_t *handle,
                                 const struct fsal_getdevicelist_arg *arg,
                                 struct fsal_getdevicelist_res *res);
 #endif /* _USE_FSALMDS */
+
+#ifdef _USE_FSALDS
+nfsstat4 CEPHFSAL_DS_read(fsal_handle_t *handle,
+                          fsal_op_context_t *context,
+                          offset4 offset,
+                          count4 requested_length,
+                          caddr_t buffer,
+                          count4 *supplied_length,
+                          fsal_boolean_t *end_of_file);
+
+nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *handle,
+                           fsal_op_context_t *context,
+                           offset4 offset,
+                           count4 write_length,
+                           caddr_t buffer,
+                           stable_how4 stability_wanted,
+                           count4 *written_length,
+                           verifier4 writeverf,
+                           stable_how4 *stability_got);
+
+nfsstat4 CEPHFSAL_DS_commit(fsal_handle_t *handle,
+                            fsal_op_context_t *context,
+                            offset4 offset,
+                            count4 count,
+                            verifier4 writeverf);
+#endif /* _USE_FSALDS */
