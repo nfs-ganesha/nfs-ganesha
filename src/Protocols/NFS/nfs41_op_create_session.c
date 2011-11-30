@@ -85,9 +85,6 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   nfs_client_id_t *pnfs_clientid;
   nfs41_session_t *pnfs41_session = NULL;
   clientid4 clientid = 0;
-  nfs_worker_data_t *pworker = NULL;
-
-  pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
 #define arg_CREATE_SESSION4 op->nfs_argop4_u.opcreate_session
 #define res_CREATE_SESSION4 resp->nfs_resop4_u.opcreate_session
@@ -97,8 +94,8 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   clientid = arg_CREATE_SESSION4.csa_clientid;
 
   LogDebug(COMPONENT_NFS_V4,
-	   "CREATE_SESSION clientid=%lld csa_sequence=%lld clientid_cs_seq=%lld "
-	   "data_oppos=%d data_use_drc=%d\n",
+           "CREATE_SESSION clientid=%lld csa_sequence=%"PRIu32
+           " clientid_cs_seq=%" PRIu32" data_oppos=%d data_use_drc=%d\n",
 	   (long long unsigned int) clientid,
 	   arg_CREATE_SESSION4.csa_sequence,
 	   pnfs_clientid->create_session_sequence,

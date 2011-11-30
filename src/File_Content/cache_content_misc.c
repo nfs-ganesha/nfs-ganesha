@@ -573,7 +573,7 @@ cache_content_status_t cache_content_check_threshold(char *datacache_path,
 #else
   struct statfs info_fs;
 #endif
-  unsigned long total_user_blocs, dispo_hw, dispo_lw;
+  unsigned long total_user_blocs, dispo_hw __attribute__((unused)), dispo_lw;
   double tx_used, hw, lw;
 
   /* defensive checks */

@@ -174,7 +174,6 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
   cache_inode_status_t cache_status;
   cache_entry_t *pentry = NULL;
   fsal_attrib_list_t attr;
-  short exportid;
 
   /* Default behaviour */
   *prc = NFS_REQ_OK;
@@ -189,7 +188,6 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
           *pstatus4 = NFS4ERR_BADHANDLE;
           return NULL;
         }
-      exportid = nfs4_FhandleToExportId(pfh4);
       break;
 
     case NFS_V3:
@@ -199,7 +197,6 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
           *pstatus3 = NFS3ERR_BADHANDLE;
           return NULL;
         }
-      exportid = nfs3_FhandleToExportId(pfh3);
       break;
 
     case NFS_V2:
@@ -209,7 +206,6 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
           *pstatus2 = NFSERR_STALE;
           return NULL;
         }
-      exportid = nfs2_FhandleToExportId(pfh2);
       break;
     }
   fsal_data.cookie = DIR_START;

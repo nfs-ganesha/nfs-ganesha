@@ -300,7 +300,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
           return *pstatus;
         }
     }
-    
+
   /* pentry->internal_md.type == DIRECTORY */
   fsal_handle_parent = pentry->object.dir.handle;
 

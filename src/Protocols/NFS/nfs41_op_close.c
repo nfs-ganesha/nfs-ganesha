@@ -70,7 +70,6 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   state_t              * pstate_found = NULL;
   cache_inode_status_t   cache_status;
   state_status_t         state_status;
-  state_owner_t        * popen_owner;
   const char           * tag = "CLOSE";
   struct glist_head    * glist, * glistn;
 
@@ -135,8 +134,6 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                "CLOSE failed nfs4_Check_Stateid");
       return res_CLOSE4.status;
     }
-
-  popen_owner = pstate_found->state_powner;
 
   /* Check is held locks remain */
   glist_for_each(glist, &pstate_found->state_data.share.share_lockstates)

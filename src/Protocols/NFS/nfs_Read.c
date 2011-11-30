@@ -95,7 +95,6 @@ int nfs_Read(nfs_arg_t * parg,
   cache_entry_t *pentry;
   fsal_attrib_list_t attr;
   fsal_attrib_list_t pre_attr;
-  fsal_attrib_list_t *ppre_attr;
   int rc;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   cache_content_status_t content_status;

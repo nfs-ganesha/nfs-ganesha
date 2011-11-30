@@ -95,7 +95,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   nfs_fh4                   newfh4;
   char                      newfh4_val[NFS4_FHSIZE];
   nfs_client_id_t           nfs_clientid;
-  nfs_worker_data_t       * pworker = NULL;
   state_data_t              candidate_data;
   state_type_t              candidate_type;
   state_t                 * pfile_state = NULL;
@@ -121,8 +120,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   uint32_t tmp_attr[2];
   uint_t tmp_int = 2;
-
-  pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))

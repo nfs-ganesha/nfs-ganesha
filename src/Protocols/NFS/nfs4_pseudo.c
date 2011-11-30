@@ -354,7 +354,6 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
   fattr4_acl acl;
   fattr4_mimetype mimetype;
   fattr4_aclsupport aclsupport;
-  fattr4_fs_locations fs_locations;
   fattr4_quota_avail_hard quota_avail_hard;
   fattr4_quota_avail_soft quota_avail_soft;
   fattr4_quota_used quota_used;
@@ -798,8 +797,6 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                        "-----> Wanting FATTR4_FS_LOCATIONS");
 
-          fs_locations.fs_root.pathname4_len = 0;
-          fs_locations.locations.locations_len = 0;     /* No FS_LOCATIONS no now */
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
           break;

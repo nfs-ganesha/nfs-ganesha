@@ -2052,7 +2052,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
                             cache_inode_client_t * pclient,
                             state_status_t       * pstatus)
 {
-  bool_t gotsome, empty = FALSE;
+  bool_t empty = FALSE;
 
   /* We need to iterate over the full lock list and remove
    * any mapping entry. And sle_lock.sld_offset = 0 and sle_lock.sld_length = 0 nlm_lock
@@ -2079,14 +2079,14 @@ state_status_t state_unlock(cache_entry_t        * pentry,
 #endif
 
   /* Release the lock from cache inode lock list for pentry */
-  gotsome = subtract_lock_from_list(pentry,
-                                    pcontext,
-                                    powner,
-                                    pstate,
-                                    plock,
-                                    pstatus,
-                                    &pentry->object.file.lock_list,
-                                    pclient);
+  subtract_lock_from_list(pentry,
+                          pcontext,
+                          powner,
+                          pstate,
+                          plock,
+                          pstatus,
+                          &pentry->object.file.lock_list,
+                          pclient);
 
   if(*pstatus != STATE_SUCCESS)
     {
