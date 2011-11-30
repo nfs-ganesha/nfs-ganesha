@@ -69,12 +69,12 @@ fsal_functions_t fsal_gpfs_functions = {
   .fsal_handle_to_hash_both = NULL, 
   .fsal_digesthandle = GPFSFSAL_DigestHandle,
   .fsal_expandhandle = GPFSFSAL_ExpandHandle,
-  .fsal_setdefault_fsal_parameter = GPFSFSAL_SetDefault_FSAL_parameter,
-  .fsal_setdefault_fs_common_parameter = GPFSFSAL_SetDefault_FS_common_parameter,
+  .fsal_setdefault_fsal_parameter = COMMON_SetDefault_FSAL_parameter,
+  .fsal_setdefault_fs_common_parameter = COMMON_SetDefault_FS_common_parameter,
   .fsal_setdefault_fs_specific_parameter = GPFSFSAL_SetDefault_FS_specific_parameter,
-  .fsal_load_fsal_parameter_from_conf = GPFSFSAL_load_FSAL_parameter_from_conf,
+  .fsal_load_fsal_parameter_from_conf = COMMON_load_FSAL_parameter_from_conf,
   .fsal_load_fs_common_parameter_from_conf =
-      GPFSFSAL_load_FS_common_parameter_from_conf,
+      COMMON_load_FS_common_parameter_from_conf,
   .fsal_load_fs_specific_parameter_from_conf =
       GPFSFSAL_load_FS_specific_parameter_from_conf,
   .fsal_truncate = GPFSFSAL_truncate,
@@ -89,7 +89,7 @@ fsal_functions_t fsal_gpfs_functions = {
   .fsal_setxattrvaluebyid = GPFSFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = GPFSFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = GPFSFSAL_RemoveXAttrByName,
-  .fsal_getextattrs = COMMON_getextattrs,
+  .fsal_getextattrs = COMMON_getextattrs_notsupp,
   .fsal_getfileno = GPFSFSAL_GetFileno,
 #ifdef _USE_FSAL_UP
   .fsal_up_init = GPFSFSAL_UP_Init,

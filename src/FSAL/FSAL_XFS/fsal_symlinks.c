@@ -37,6 +37,7 @@
 
 #include "fsal.h"
 #include "fsal_internal.h"
+#include "FSAL/access_check.h"
 #include "fsal_convert.h"
 #include <string.h>
 #include <unistd.h>
@@ -206,7 +207,7 @@ fsal_status_t XFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,     /* 
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = TRUE;
 
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK, &buffstat, NULL);
+  status = fsal_check_access(p_context, FSAL_W_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_symlink);
 

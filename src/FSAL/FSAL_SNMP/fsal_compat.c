@@ -67,12 +67,12 @@ fsal_functions_t fsal_snmp_functions = {
   .fsal_handle_to_hash_both = NULL, 
   .fsal_digesthandle = SNMPFSAL_DigestHandle,
   .fsal_expandhandle = SNMPFSAL_ExpandHandle,
-  .fsal_setdefault_fsal_parameter = SNMPFSAL_SetDefault_FSAL_parameter,
-  .fsal_setdefault_fs_common_parameter = SNMPFSAL_SetDefault_FS_common_parameter,
+  .fsal_setdefault_fsal_parameter = COMMON_SetDefault_FSAL_parameter,
+  .fsal_setdefault_fs_common_parameter = COMMON_SetDefault_FS_common_parameter,
   .fsal_setdefault_fs_specific_parameter = SNMPFSAL_SetDefault_FS_specific_parameter,
-  .fsal_load_fsal_parameter_from_conf = SNMPFSAL_load_FSAL_parameter_from_conf,
+  .fsal_load_fsal_parameter_from_conf = COMMON_load_FSAL_parameter_from_conf,
   .fsal_load_fs_common_parameter_from_conf =
-      SNMPFSAL_load_FS_common_parameter_from_conf,
+      COMMON_load_FS_common_parameter_from_conf,
   .fsal_load_fs_specific_parameter_from_conf =
       SNMPFSAL_load_FS_specific_parameter_from_conf,
   .fsal_truncate = SNMPFSAL_truncate,

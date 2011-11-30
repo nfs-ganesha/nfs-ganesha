@@ -17,6 +17,7 @@
 
 #include "fsal.h"
 #include "fsal_internal.h"
+#include "FSAL/access_check.h"
 #include "fsal_convert.h"
 #include <unistd.h>
 #include <fcntl.h>
@@ -124,7 +125,7 @@ fsal_status_t XFSFSAL_create(fsal_handle_t * p_parent_directory_handle,      /* 
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
 
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
+  status = fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_create);
 
@@ -280,7 +281,7 @@ fsal_status_t XFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,       /* 
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
 
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
+  status = fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_mkdir);
 
@@ -451,7 +452,7 @@ fsal_status_t XFSFSAL_link(fsal_handle_t * p_target_handle,  /* IN */
 
   /* check permission on target directory */
   status =
-      fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_dir, NULL);
+      fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_dir, NULL);
   if(FSAL_IS_ERROR(status))
     {
       close(srcfd), close(dstfd);
@@ -584,7 +585,7 @@ fsal_status_t XFSFSAL_mknode(fsal_handle_t * parentdir_handle,       /* IN */
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
 
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
+  status = fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_mknode);
 

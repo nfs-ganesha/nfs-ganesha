@@ -38,6 +38,7 @@
 
 #include "fsal.h"
 #include "fsal_internal.h"
+#include "FSAL/access_check.h"
 #include "fsal_convert.h"
 
 /**
@@ -168,7 +169,7 @@ fsal_status_t XFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle, /* IN */
   /* check access rights */
 
   status =
-      fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &old_parent_buffstat,
+      fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &old_parent_buffstat,
                                NULL);
   if(FSAL_IS_ERROR(status))
    {
@@ -181,7 +182,7 @@ fsal_status_t XFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle, /* IN */
   if(!src_equal_tgt)
     {
       status =
-          fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &new_parent_buffstat,
+          fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &new_parent_buffstat,
                                    NULL);
       if(FSAL_IS_ERROR(status))
         {
