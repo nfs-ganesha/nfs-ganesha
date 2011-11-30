@@ -212,16 +212,16 @@ cache_inode_status_t cache_inode_kill_entry( cache_entry_t          * pentry,
       return *pstatus;
     }
 
-   /* Clean up the associated ressources in the FSAL */
+  /* Release the hash key data */
+  cache_inode_release_fsaldata_key(&old_key, pclient);
+
+  /* Clean up the associated ressources in the FSAL */
   if(FSAL_IS_ERROR(fsal_status = FSAL_CleanObjectResources(pfsal_handle)))
     {
       LogCrit(COMPONENT_CACHE_INODE,
-              "cache_inode_kill_entry: Could'nt free FSAL ressources fsal_status.major=%u",
+              "cache_inode_kill_entry: Couldn't free FSAL ressources fsal_status.major=%u",
               fsal_status.major);
     }
-
-  /* Release the hash key data */
-  cache_inode_release_fsaldata_key(&old_key, pclient);
 
   /* Sanity check: old_value.pdata is expected to be equal to pentry,
    * and is released later in this function */

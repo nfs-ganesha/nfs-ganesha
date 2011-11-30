@@ -103,7 +103,7 @@ static cache_entry_t * choose_pentry( hash_table_t * ht)
         pentry = (cache_entry_t *) (pdata->buffval.pdata) ;
 
         /* No file invalidation for the moment (file can handle state) */
-        if( ( counter >= 10 ) && ( pentry->internal_md.type != REGULAR_FILE ) )
+        if( ( counter >= 10 ) && ( pentry->internal_md.type == REGULAR_FILE ) )
          return pentry ;
 
         RBT_INCREMENT(it);
