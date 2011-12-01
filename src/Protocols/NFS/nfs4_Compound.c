@@ -76,7 +76,6 @@ const int optab4index[] =
   24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39
 };
 
-#define POS_ILLEGAL 40
 #else
 const int optab4index[] =
     { 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
@@ -86,8 +85,10 @@ const int optab4index[] =
   47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58
 };
 
-#define POS_ILLEGAL 59
 #endif
+
+#define POS_ILLEGAL_V40 40
+#define POS_ILLEGAL_V41 59
 
 static const nfs4_op_desc_t optab4v0[] = {
   {"OP_ACCESS", NFS4_OP_ACCESS, nfs4_op_access},
@@ -396,7 +397,11 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
 #endif
         opindex = optab4index[COMPOUND4_ARRAY.argarray_val[i].argop];
       else
-        opindex = optab4index[POS_ILLEGAL];     /* = NFS4_OP_ILLEGAL a value to big for argop means an illegal value */
+       {
+         /* Set optindex to op_illegal */
+         opindex = (COMPOUND4_MINOR==0)?optab4index[POS_ILLEGAL_V40]:optab4index[POS_ILLEGAL_V41];  
+         LogMajor( COMPONENT_NFS_V4, "Client is using Illegal operation #%u", COMPOUND4_ARRAY.argarray_val[i].argop ) ;
+       }
 
       LogDebug(COMPONENT_NFS_V4,
                "Request %d is %d = %s, entry %d in the op array%s",
