@@ -46,20 +46,17 @@
 #include "err_fsal.h"
 #include <cephfs/libcephfs.h>
 #include <pthread.h>
-
 #include "fsal_glue_const.h"
 
-  /* In this section, you must define your own FSAL internal types.
-   * Here are some template types :
-   */
-
 typedef union {
- struct
- {
-   vinodeno_t vi;
-   uint64_t parent_ino;
-   uint32_t parent_hash;
- } data;
+  struct
+  {
+    vinodeno_t vi;
+    struct ceph_file_layout layout;
+    uint64_t snapseq;
+    uint64_t parent_ino;
+    uint32_t parent_hash;
+  } data;
 #ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_HANDLE_T_SIZE];
 #endif

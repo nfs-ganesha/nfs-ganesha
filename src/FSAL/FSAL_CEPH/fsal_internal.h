@@ -32,12 +32,16 @@
  *
  */
 
-#include "fsal.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <cephfs/libcephfs.h>
 #include <string.h>
+
+#ifdef _USE_FSALMDS
+#include "fsal.h"
+#include "fsal_pnfs.h"
+#endif /* _USE_FSALMDS */
 
 /* the following variables must not be defined in fsal_internal.c */
 #ifndef FSAL_INTERNAL_C
@@ -373,3 +377,28 @@ fsal_status_t fsal_internal_testAccess(cephfsal_op_context_t* context,
                                        fsal_accessflags_t access_type,
                                        struct stat * st,
                                        fsal_attrib_list_t * object_attributes);
+#ifdef _USE_FSALMDS
+nfsstat4 CEPHFSAL_layoutget(fsal_handle_t *exhandle,
+                            fsal_op_context_t *excontext,
+                            XDR *loc_body,
+                            const struct fsal_layoutget_arg *arg,
+                            struct fsal_layoutget_res *res);
+nfsstat4 CEPHFSAL_layoutreturn(fsal_handle_t* handle,
+                               fsal_op_context_t* context,
+                               XDR *lrf_body,
+                               const struct fsal_layoutreturn_arg *arg,
+                               struct fsal_layoutreturn_res *res);
+nfsstat4 CEPHFSAL_layoutcommit(fsal_handle_t *handle,
+                               fsal_op_context_t *context,
+                               XDR *lou_body,
+                               const struct fsal_layoutcommit_arg *arg,
+                               struct fsal_layoutcommit_res *res);
+nfsstat4 CEPHFSAL_getdeviceinfo(fsal_op_context_t *context,
+                                XDR* da_addr_body,
+                                layouttype4 type,
+                                const fsal_deviceid_t *deviceid);
+nfsstat4 CEPHFSAL_getdevicelist(fsal_handle_t *handle,
+                                fsal_op_context_t *context,
+                                const struct fsal_getdevicelist_arg *arg,
+                                struct fsal_getdevicelist_res *res);
+#endif /* _USE_FSALMDS */

@@ -37,6 +37,11 @@ libfsalceph_la_SOURCES = fsal_access.c  \
                         ../../include/fsal_types.h      \
                         ../../include/err_fsal.h        \
                         ../../include/FSAL/FSAL_CEPH/fsal_types.h
+
+if USE_FSALMDS
+libfsalceph_la_SOURCES += fsal_mds.c
+endif
+
 new: clean all
 
 doc:

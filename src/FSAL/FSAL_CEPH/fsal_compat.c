@@ -35,6 +35,9 @@
 #include "fsal_glue.h"
 #include "fsal_internal.h"
 #include "FSAL/common_methods.h"
+#ifdef _USE_FSALMDS
+#include "fsal_pnfs.h"
+#endif /* _USE_FSALMDS */
 
 fsal_functions_t fsal_ceph_functions = {
   .fsal_access = CEPHFSAL_access,
@@ -133,3 +136,18 @@ fsal_const_t FSAL_GetConsts(void)
 {
   return fsal_ceph_consts;
 }                               /* FSAL_GetConsts */
+
+#ifdef _USE_FSALMDS
+fsal_mdsfunctions_t fsal_ceph_mdsfunctions = {
+  .fsal_layoutget = CEPHFSAL_layoutget,
+  .fsal_layoutreturn = CEPHFSAL_layoutreturn,
+  .fsal_layoutcommit = CEPHFSAL_layoutcommit,
+  .fsal_getdeviceinfo = CEPHFSAL_getdeviceinfo,
+  .fsal_getdevicelist = CEPHFSAL_getdevicelist
+};
+
+fsal_mdsfunctions_t FSAL_GetMDSFunctions(void)
+{
+  return fsal_ceph_mdsfunctions;
+}
+#endif /* _USE_FSALMDS */

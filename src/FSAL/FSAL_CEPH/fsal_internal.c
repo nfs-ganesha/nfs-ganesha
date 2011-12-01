@@ -40,6 +40,8 @@
 #include "fsal_internal.h"
 #include "stuff_alloc.h"
 #include "SemN.h"
+#include "nfs4.h"
+#include "HashTable.h"
 
 #include <pthread.h>
 
@@ -58,36 +60,42 @@ cephfs_specific_initinfo_t global_spec_info;
           FSAL_ATTR_CTIME    | FSAL_ATTR_MTIME    | FSAL_ATTR_SPACEUSED | \
           FSAL_ATTR_CHGTIME  )
 
-
+#ifdef _USE_FSALMDS
+static layouttype4 layout_type_list[] = {LAYOUT4_NFSV4_1_FILES};
+#endif /* _USE_FSALMDS */
 
 /* filesystem info for your filesystem */
-static fsal_staticfsinfo_t default_posix_info = {
-  0xFFFFFFFFFFFFFFFFLL,         /* max file size (64bits) */
-  1024,                         /* max links for an object of your filesystem */
-  FSAL_MAX_NAME_LEN,            /* max filename */
-  FSAL_MAX_PATH_LEN,            /* min filename */
-  TRUE,                         /* no_trunc */
-  TRUE,                         /* chown restricted */
-  FALSE,                        /* case insensitivity */
-  TRUE,                         /* case preserving */
-  FSAL_EXPTYPE_PERSISTENT,      /* FH expire type */
-  TRUE,                         /* hard link support */
-  TRUE,                         /* sym link support */
-  FALSE,                        /* lock management */
-  FALSE,                        /* lock owners */
-  FALSE,                        /* async blocking locks */
-  TRUE,                         /* named attributes */
-  TRUE,                         /* handles are unique and persistent */
-  {10, 0},                      /* Duration of lease at FS in seconds */
-  FSAL_ACLSUPPORT_DENY,        /* ACL support */
-  TRUE,                         /* can change times */
-  TRUE,                         /* homogenous */
-  SUPPORTED_ATTRIBUTES,         /* supported attributes */
-  0,                            /* maxread size */
-  0,                            /* maxwrite size */
-  0,                            /* default umask */
-  0,                            /* don't allow cross fileset export path */
-  0400                          /* default access rights for xattrs: root=RW, owner=R */
+static fsal_staticfsinfo_t default_ceph_info = {
+  .maxfilesize = UINT64_MAX,
+  .maxlink = 1024,
+  .maxnamelen = FSAL_MAX_NAME_LEN,
+  .maxpathlen = FSAL_MAX_PATH_LEN,
+  .no_trunc = TRUE,
+  .chown_restricted = TRUE,
+  .case_insensitive = FALSE,
+  .case_preserving = TRUE,
+  .fh_expire_type = FSAL_EXPTYPE_PERSISTENT,
+  .link_support = TRUE,
+  .symlink_support = TRUE,
+  .lock_support = FALSE,
+  .lock_support_owner = FALSE,
+  .lock_support_async_block = FALSE,
+  .named_attr = TRUE,
+  .unique_handles = TRUE,
+  .lease_time = {10, 0},
+  .acl_support = FSAL_ACLSUPPORT_DENY,
+  .cansettime = TRUE,
+  .homogenous = TRUE,
+  .supported_attrs = SUPPORTED_ATTRIBUTES,
+  .maxread = 0,
+  .maxwrite = 0,
+  .umask = 0,
+  .auth_exportpath_xdev = 0,
+  .xattr_access_rights = 0400,
+#ifdef _USE_FSALMDS
+  .pnfs_supported = TRUE,
+  .layout_blksize = 0x400000
+#endif /* _USE_FSALMDS */
 };
 
 /* variables for limiting the calls to the filesystem */
@@ -507,59 +515,81 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                         "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
     }
 
+#ifdef _USE_FSALMDS
+  default_ceph_info.fs_layout_types.fattr4_fs_layout_types_val
+    = layout_type_list;
+  default_ceph_info.fs_layout_types.fattr4_fs_layout_types_len
+    = 1;
+#endif /* _USE_FSALMDS */
+
   /* setting default values. */
-  global_fs_info = default_posix_info;
+  global_fs_info = default_ceph_info;
 
   LogDebug(COMPONENT_FSAL, "{");
   LogDebug(COMPONENT_FSAL, "  maxfilesize  = %llX    ",
-           default_posix_info.maxfilesize);
+           default_ceph_info.maxfilesize);
   LogDebug(COMPONENT_FSAL, "  maxlink  = %lu   ",
-           default_posix_info.maxlink);
+           default_ceph_info.maxlink);
   LogDebug(COMPONENT_FSAL, "  maxnamelen  = %lu  ",
-           default_posix_info.maxnamelen);
+           default_ceph_info.maxnamelen);
   LogDebug(COMPONENT_FSAL, "  maxpathlen  = %lu  ",
-           default_posix_info.maxpathlen);
+           default_ceph_info.maxpathlen);
   LogDebug(COMPONENT_FSAL, "  no_trunc  = %d ",
-           default_posix_info.no_trunc);
+           default_ceph_info.no_trunc);
   LogDebug(COMPONENT_FSAL, "  chown_restricted  = %d ",
-           default_posix_info.chown_restricted);
+           default_ceph_info.chown_restricted);
   LogDebug(COMPONENT_FSAL, "  case_insensitive  = %d ",
-           default_posix_info.case_insensitive);
+           default_ceph_info.case_insensitive);
   LogDebug(COMPONENT_FSAL, "  case_preserving  = %d ",
-           default_posix_info.case_preserving);
+           default_ceph_info.case_preserving);
   LogDebug(COMPONENT_FSAL, "  fh_expire_type  = %hu ",
-           default_posix_info.fh_expire_type);
+           default_ceph_info.fh_expire_type);
   LogDebug(COMPONENT_FSAL, "  link_support  = %d  ",
-           default_posix_info.link_support);
+           default_ceph_info.link_support);
   LogDebug(COMPONENT_FSAL, "  symlink_support  = %d  ",
-           default_posix_info.symlink_support);
+           default_ceph_info.symlink_support);
   LogDebug(COMPONENT_FSAL, "  lock_support  = %d  ",
-           default_posix_info.lock_support);
+           default_ceph_info.lock_support);
   LogDebug(COMPONENT_FSAL, "  lock_support_owner  = %d  ",
            global_fs_info.lock_support_owner);
   LogDebug(COMPONENT_FSAL, "  lock_support_async_block  = %d  ",
            global_fs_info.lock_support_async_block);
   LogDebug(COMPONENT_FSAL, "  named_attr  = %d  ",
-           default_posix_info.named_attr);
+           default_ceph_info.named_attr);
   LogDebug(COMPONENT_FSAL, "  unique_handles  = %d  ",
-           default_posix_info.unique_handles);
+           default_ceph_info.unique_handles);
   LogDebug(COMPONENT_FSAL, "  acl_support  = %hu  ",
-           default_posix_info.acl_support);
+           default_ceph_info.acl_support);
   LogDebug(COMPONENT_FSAL, "  cansettime  = %d  ",
-           default_posix_info.cansettime);
+           default_ceph_info.cansettime);
   LogDebug(COMPONENT_FSAL, "  homogenous  = %d  ",
-           default_posix_info.homogenous);
+           default_ceph_info.homogenous);
   LogDebug(COMPONENT_FSAL, "  supported_attrs  = %llX  ",
-           default_posix_info.supported_attrs);
+           default_ceph_info.supported_attrs);
   LogDebug(COMPONENT_FSAL, "  maxread  = %llX     ",
-           default_posix_info.maxread);
+           default_ceph_info.maxread);
   LogDebug(COMPONENT_FSAL, "  maxwrite  = %llX     ",
-           default_posix_info.maxwrite);
-  LogDebug(COMPONENT_FSAL, "  umask  = %X ", default_posix_info.umask);
+           default_ceph_info.maxwrite);
+  LogDebug(COMPONENT_FSAL, "  umask  = %X ", default_ceph_info.umask);
   LogDebug(COMPONENT_FSAL, "}");
 
   /* Analyzing fs_common_info struct */
 
+#ifdef _USE_FSALMDS
+  if((fs_common_info->behaviors.maxfilesize != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.maxlink != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.maxnamelen != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.maxpathlen != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.no_trunc != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.case_insensitive != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.case_preserving != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.named_attr != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.lease_time != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.supported_attrs != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.fs_layout_types != FSAL_INIT_FS_DEFAULT) ||
+     (fs_common_info->behaviors.layout_blksize != FSAL_INIT_FS_DEFAULT))
+#else
   if((fs_common_info->behaviors.maxfilesize != FSAL_INIT_FS_DEFAULT) ||
      (fs_common_info->behaviors.maxlink != FSAL_INIT_FS_DEFAULT) ||
      (fs_common_info->behaviors.maxnamelen != FSAL_INIT_FS_DEFAULT) ||
@@ -571,7 +601,10 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
      (fs_common_info->behaviors.lease_time != FSAL_INIT_FS_DEFAULT) ||
      (fs_common_info->behaviors.supported_attrs != FSAL_INIT_FS_DEFAULT) ||
      (fs_common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT))
-    ReturnCode(ERR_FSAL_NOTSUPP, 0);
+#endif /* _USE_FSALMDS */
+    {
+      ReturnCode(ERR_FSAL_NOTSUPP, 0);
+    }
 
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, symlink_support);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, link_support);
@@ -579,6 +612,9 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_owner);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_async_block);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
+#ifdef _USE_FSALMDS
+  SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, pnfs_supported);
+#endif /* _USE_FSALMDS */
 
   SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);
   SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxwrite);
@@ -595,7 +631,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
   LogFullDebug(COMPONENT_FSAL,
                "Supported attributes default = 0x%llX.",
-               default_posix_info.supported_attrs);
+               default_ceph_info.supported_attrs);
 
   LogDebug(COMPONENT_FSAL,
                     "FSAL INIT: Supported attributes mask = 0x%llX.",
