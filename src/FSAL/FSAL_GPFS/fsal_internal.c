@@ -872,8 +872,11 @@ xstatarg.attr_valid = XATTR_STAT;
   rc = gpfs_ganesha(OPENHANDLE_GET_XSTAT, &xstatarg);
   LogDebug(COMPONENT_FSAL, "gpfs_ganesha: GET_XSTAT returned, rc = %d", rc);
 
-  if(rc < 0)
+  if(rc < 0) {
+    LogFullDebug(COMPONENT_FSAL, "fsal_get_xstat_by_handle returned errno:%d -- %s",
+		 errno, strerror(errno));
     ReturnCode(posix2fsal_error(errno), errno);
+  }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
