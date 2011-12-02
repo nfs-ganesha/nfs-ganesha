@@ -196,12 +196,19 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       if(pstate_open != NULL &&
          (pstate_open->state_data.share.share_access & OPEN4_SHARE_ACCESS_READ) == 0)
         {
-          /* Bad open mode, return NFS4ERR_OPENMODE */
-          res_READ4.status = NFS4ERR_OPENMODE;
-          LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "READ state %p doesn't have OPEN4_SHARE_ACCESS_READ",
-                   pstate_found);
-          return res_READ4.status;
+         /* Even if file is open for write, the client may do accidently read operation (caching).
+          * Because of this, READ is allowed if not explicitely denied.
+          * See page 72 in RFC3530 for more details */
+ 
+          if( pstate_open->state_data.share.share_deny & OPEN4_SHARE_DENY_READ )
+           {
+             /* Bad open mode, return NFS4ERR_OPENMODE */
+             res_READ4.status = NFS4ERR_OPENMODE;
+             LogDebug(COMPONENT_NFS_V4_LOCK,
+                      "READ state %p doesn't have OPEN4_SHARE_ACCESS_READ",
+                       pstate_found);
+             return res_READ4.status;
+           }
         }
 
       /* If NFSv4::Use_OPEN_CONFIRM is set to TRUE in the configuration file, check is state is confirmed */
