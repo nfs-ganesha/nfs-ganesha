@@ -115,7 +115,7 @@ nfsstat4 CEPHFSAL_DS_read(fsal_handle_t *exthandle,
     }
   stripe = offset / stripe_width;
   block_start = stripe * stripe_width;
-  internal_offset = block_start - offset;
+  internal_offset = offset - block_start;
 
   if (local_OSD != ceph_ll_get_stripe_osd(cmount,
                                           VINODE(handle),
@@ -218,7 +218,7 @@ nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *exthandle,
     }
   stripe = offset / stripe_width;
   block_start = stripe * stripe_width;
-  internal_offset = block_start - offset;
+  internal_offset = offset - block_start;
 
   if (local_OSD != ceph_ll_get_stripe_osd(cmount,
                                           VINODE(handle),
@@ -229,7 +229,7 @@ nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *exthandle,
     }
 
   write_length = min((stripe_width - internal_offset),
-                     (write_length - internal_offset));
+                     write_length);
 
   /* If the client specifies FILE_SYNC4, then we have to connect the
      filehandle and use the MDS to update size and access time. */
