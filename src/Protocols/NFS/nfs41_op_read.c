@@ -427,7 +427,7 @@ static int op_dsread(struct nfs_argop4 *op,
                      struct nfs_resop4 *resp)
 {
   /* The FSAL file handle */
-  fsal_handle_t *handle;
+  fsal_handle_t handle;
   /* Status frmo calling Cache_inode */
   cache_inode_status_t cache_status = 0;
   /* NFSv4 return code */
@@ -446,14 +446,13 @@ static int op_dsread(struct nfs_argop4 *op,
       return res_READ4.status;
     }
 
-  /* Fetch the FSAL file handle */
+  /* Construct the FSAL file handle */
 
-  handle = cache_inode_get_fsal_handle(data->current_entry,
-                                       &cache_status);
-
-  if (cache_status != CACHE_INODE_SUCCESS)
+  if ((nfs4_FhandleToFSAL(&data->currentFH,
+                          &handle,
+                          data->pcontext)) == 0)
     {
-      res_READ4.status = nfs4_Errno(cache_status);
+      res_READ4.status = NFS4ERR_INVAL;
       return res_READ4.status;
     }
 
@@ -466,7 +465,7 @@ static int op_dsread(struct nfs_argop4 *op,
   memset(buffer, 0, arg_READ4.count);
   res_READ4.READ4res_u.resok4.data.data_val = buffer;
 
-  if ((nfs_status = FSAL_DS_read(handle,
+  if ((nfs_status = FSAL_DS_read(&handle,
                                  data->pcontext,
                                  arg_READ4.offset,
                                  arg_READ4.count,

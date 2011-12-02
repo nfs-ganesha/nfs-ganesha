@@ -432,24 +432,23 @@ static int op_dswrite(struct nfs_argop4 *op,
                       struct nfs_resop4 *resp)
 {
   /* FSAL file handle */
-  fsal_handle_t *handle;
+  fsal_handle_t handle;
   /* Return code from Cache_inode functions */
   cache_inode_status_t cache_status = 0;
   /* NFSv4 return code */
   nfsstat4 nfs_status = 0;
 
-  /* Fetch the FSAL file handle */
+  /* Construct the FSAL file handle */
 
-  handle = cache_inode_get_fsal_handle(data->current_entry,
-                                       &cache_status);
-
-  if (cache_status != CACHE_INODE_SUCCESS)
+  if ((nfs4_FhandleToFSAL(&data->currentFH,
+                          &handle,
+                          data->pcontext)) == 0)
     {
-      res_WRITE4.status = nfs4_Errno(cache_status);
+      res_WRITE4.status = NFS4ERR_INVAL;
       return res_WRITE4.status;
     }
 
-  nfs_status = FSAL_DS_write(handle,
+  nfs_status = FSAL_DS_write(&handle,
                              data->pcontext,
                              arg_WRITE4.offset,
                              arg_WRITE4.data.data_len,

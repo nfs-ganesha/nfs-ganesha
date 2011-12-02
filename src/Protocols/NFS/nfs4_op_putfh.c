@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -70,13 +70,13 @@
  *
  * nfs4_op_putfh: The NFS4_OP_PUTFH operation
  *
- * Sets the current FH with the value given in argument. 
+ * Sets the current FH with the value given in argument.
  *
  * @param op    [IN]    pointer to nfs4_op arguments
  * @param data  [INOUT] Pointer to the compound request's data
  * @param resp  [IN]    Pointer to nfs4_op results
- * 
- * @return NFS4_OK if successfull, other values show an error. 
+ *
+ * @return NFS4_OK if successfull, other values show an error.
  *
  * @see all the nfs4_op_<*> function
  * @see nfs4_Compound
@@ -147,7 +147,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   LogHandleNFS4("NFS4_OP_PUTFH CURRENT FH: ", &arg_PUTFH4.object);
 
-  /* If the filehandle is not pseudo hs file handle, get the entry related to it, otherwise use fake values */
+  /* If the filehandle is not pseudo hs file handle, get the entry
+     related to it, otherwise use fake values */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     {
       data->current_entry = NULL;
@@ -156,7 +157,8 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
   else
     {
-      /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
+      /* If data->exportp is null, a junction from pseudo fs was
+         traversed, credp and exportp have to be updated */
       if(data->pexport == NULL)
         {
           if((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
@@ -165,29 +167,43 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
               return res_PUTFH4.status;
             }
 #ifdef _USE_SHARED_FSAL
-	FSAL_SetId( data->pexport->fsalid ) ;
-#endif 
+          FSAL_SetId( data->pexport->fsalid ) ;
+#endif
         }
 
-      /* Build the pentry */
-      if((data->current_entry = nfs_FhandleToCache(NFS_V4,
-                                                   NULL,
-                                                   NULL,
-                                                   &(data->currentFH),
-                                                   NULL,
-                                                   NULL,
-                                                   &(res_PUTFH4.status),
-                                                   &attr,
-                                                   data->pcontext,
-                                                   data->pclient, data->ht, &rc)) == NULL)
+#ifdef _USE_FSALDS
+      /* The export and fsalid should be updated, but DS handles
+         don't support metdata operations.  Thus, we can't call into
+         Cache_inode to populate the metadata cache. */
+      if(nfs4_Is_Fh_DSHandle(&data->currentFH))
         {
-          res_PUTFH4.status = NFS4ERR_STALE;
-          return res_PUTFH4.status;
+          data->current_entry = NULL;
+          data->current_filetype = REGULAR_FILE;
         }
+      else
+#endif /* _USE_FSALDS */
+        {
+          /* Build the pentry */
+          if((data->current_entry = nfs_FhandleToCache(NFS_V4,
+                                                       NULL,
+                                                       NULL,
+                                                       &(data->currentFH),
+                                                       NULL,
+                                                       NULL,
+                                                       &(res_PUTFH4.status),
+                                                       &attr,
+                                                       data->pcontext,
+                                                       data->pclient,
+                                                       data->ht,
+                                                       &rc)) == NULL)
+            {
+              res_PUTFH4.status = NFS4ERR_BADHANDLE;
+              return res_PUTFH4.status;
+            }
 
-      /* Extract the filetype */
-      data->current_filetype = cache_inode_fsal_type_convert(attr.type);
-
+          /* Extract the filetype */
+          data->current_filetype = cache_inode_fsal_type_convert(attr.type);
+        }
     }
 
   return NFS4_OK;
@@ -195,13 +211,13 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
 /**
  * nfs4_op_create_Free: frees what was allocared to handle nfs4_op_create.
- * 
+ *
  * Frees what was allocared to handle nfs4_op_create.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs4_op_putfh_Free(PUTFH4res * resp)
 {

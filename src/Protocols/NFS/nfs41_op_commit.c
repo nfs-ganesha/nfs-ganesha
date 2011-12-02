@@ -219,26 +219,25 @@ static int op_dscommit(struct nfs_argop4 *op,
                        struct nfs_resop4 *resp)
 {
   /* FSAL file handle */
-  fsal_handle_t *handle = NULL;
+  fsal_handle_t handle;
   /* Status of Cache_inode operations */
   cache_inode_status_t cache_status = 0;
   /* NFSv4 status code */
   nfsstat4 nfs_status = 0;
 
-  /* Fetch the FSAL file handle */
+  /* Construct the FSAL file handle */
 
-  handle = cache_inode_get_fsal_handle(data->current_entry,
-                                       &cache_status);
-
-  if (cache_status != CACHE_INODE_SUCCESS)
+  if ((nfs4_FhandleToFSAL(&data->currentFH,
+                          &handle,
+                          data->pcontext)) == 0)
     {
-      res_COMMIT4.status = nfs4_Errno(cache_status);
+      res_COMMIT4.status = NFS4ERR_INVAL;
       return res_COMMIT4.status;
     }
 
   /* Call the commit operation */
 
-  nfs_status = FSAL_DS_commit(handle,
+  nfs_status = FSAL_DS_commit(&handle,
                               data->pcontext,
                               arg_COMMIT4.offset,
                               arg_COMMIT4.count,
