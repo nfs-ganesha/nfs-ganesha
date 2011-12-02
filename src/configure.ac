@@ -199,7 +199,6 @@ else
 fi
 AM_CONDITIONAL(BUILD_SHARED_FSAL, test "$enable_buildsharedfsal" = "yes")
 
-
 # NLMv4
 GA_ENABLE_AM_CONDITION([nlm],[enable NLMv4 support (Lock management for NFSv3)],[USE_NLM])
 
@@ -233,14 +232,6 @@ if test "$enable_fsal_up" == "yes"; then
         AC_DEFINE(_USE_FSAL_UP,1,[enable FSAL Upcall Interface support])
 fi
 AM_CONDITIONAL(USE_FSAL_UP, test "$enable_fsal_up" = "yes")
-
-# PNFS/DS
-GA_ENABLE_AM_CONDITION([ds],[enable pNFS DS support],[USE_DS])
-
-if test "$enable_ds" == "yes"; then
-        AC_DEFINE(_USE_DS,1,[enable pNFS DS support])
-fi
-AM_CONDITIONAL(USE_DS, test "$enable_ds" = "yes")
 
 # TI-RPC
 GA_ENABLE_AM_CONDITION([tirpc],[enable TIRPC support],[USE_TIRPC])
@@ -443,6 +434,9 @@ AM_CONDITIONAL(USE_BUDDY_SYSTEM, test "$enable_BuddyMalloc" == "yes")
 AC_ARG_WITH([ceph-prefix], AS_HELP_STRING([--with-ceph-prefix=<path>], [Path to Ceph installation] ),
 		CEPH_PREFIX="$withval" )
 
+# FSAL based pNFS MDS support (requires NFSv4.1, conflicts with pNFS)
+GA_ENABLE_AM_CONDITION([fsal-mds],[enable FSAL-based pNFS MDS support (NFSv4.1 support is mandatory)],[USE_FSALMDS])
+AM_CONDITIONAL(USE_FSALMDS, test "x$enable_fsal_mds" = "xyes")
 
 # PNFS switch argument (default is nothing)
 AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
@@ -455,6 +449,10 @@ AM_CONDITIONAL(USE_PNFS_BLOCK, 	        test "$PNFS" = "BLOCK" )
 
 AM_CONDITIONAL(USE_PNFS,                 test "$PNFS" != "NONE" )
 
+
+# FSAL based pNFS DS support (requires NFSv4.1, conflicts with DS)
+GA_ENABLE_AM_CONDITION([fsal-ds],[enable FSAL-based pNFS DS support (NFSv4.1 support is mandatory)],[USE_FSALDS])
+AM_CONDITIONAL(USE_FSALDS, test "x$enable_fsal_ds" = "xyes")
 
 # MFSL switch argument (default is NULL )
 AC_ARG_WITH( [mfsl], AS_HELP_STRING([--with-mfsl=NONE|NULL|ASYNC|AIO|MIRROR|PROXY_RPCSECGSS (default=NULL)],[specify the type of intermediate FSAL module to be used] ),
@@ -585,7 +583,6 @@ case $FSAL in
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_XFS/libfsalxfs.la"
 		FS_NAME="xfs"
 		;;
-
 	CEPH)
 		AC_DEFINE([_USE_CEPH], 1, [GANESHA exports CEPH Filesystem])
                 dnl AC_CHECK_HEADERS([cephfs/libcephfs.h], [], [AC_MSG_ERROR( missing ceph include files)])
@@ -599,7 +596,6 @@ case $FSAL in
 		else
 		   FSAL_CFLAGS="-D_FILE_OFFSET_BITS=64"
 		fi
-
                 FSAL_LDFLAGS=-lcephfs
                 FSAL_LIB="\$(top_builddir)/FSAL/FSAL_CEPH/libfsalceph.la"
                 FS_NAME="ceph"
@@ -659,16 +655,6 @@ case $FSAL in
                                  #include <gpfs_nfs.h>
                                ])
 
-		if [[  $PNFS != "NONE" ]] ; then
-			AC_CHECK_DECLS([OPENHANDLE_LAYOUT_TYPE, OPENHANDLE_GET_DEVICEINFO, OPENHANDLE_GET_DEVICEITER,
-			                OPENHANDLE_LAYOUT_GET, OPENHANDLE_LAYOUT_RETURN],
-			               [],
-			               [AC_MSG_ERROR(missing Layout function)],
-			               [
-                                         #include <fcntl.h>
-                                         #include <gpfs_nfs.h>
-                                       ])
-		fi
 		AC_CHECK_LIB([gpfs], [gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs library)])
 		FSAL_CFLAGS=
 		FSAL_LDFLAGS=""
@@ -828,28 +814,6 @@ case $RPCAL in
 
 esac
 
-case $PNFS in
-	"NONE")
-		;;
-	"PARALLEL_FS")
-		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-		AC_DEFINE(_USE_PNFS_PARALLEL_FS,1,[enable NFSv4.1/pNFS support for parallel file system ])
-		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
-		;;
-	"OSD")
-		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-		AC_DEFINE(_USE_PNFS_OSD,1,[enable OSD based NFSv4.1/pNFS support])
-		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
-		;;
-	"BLOCK")
-		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-		AC_DEFINE(_USE_PNFS_BLOCK,1,[enable Block Device based NFSv4.1/pNFS support])
-		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
-		;;
-	*)
-		AC_MSG_ERROR([This pNFS layout is not supported])
-esac
-
 case $NFS4_MINOR in
 	"0")
 		AC_DEFINE([_USE_NFS4_0],1, [Use NFSv4.0] )
@@ -868,13 +832,13 @@ if [[  $PNFS != "NONE" ]] ; then
   fi
 fi
 
-# Sanity check : no ds if NFS4_MINOR is not NFSv4.1
-if [[  $enable_ds == "yes" ]] ; then
-  if [[ $NFS4_MINOR == "0" ]] ; then
-     AC_MSG_ERROR("You must activate NFSv4.1 support to enable pnfs DS support" )
+# Sanity check for FSAL based MDS and DS support
+if test "$enable_fsal_mds" == "yes"; then
+  if [[ x$NFS4_MINOR != "x1" ]] ; then
+     AC_MSG_ERROR("You must activate NFSv4.1 support to enable FSAL meta-data server support" )
   fi
+        AC_DEFINE(_USE_FSALMDS,1,[enable FSAL based pNFS MDS support])
 fi
-
 
 # MFSL_ASYNC should not be used with HPSS
 if [[ $FSAL == "HPSS" ]] ; then
@@ -888,7 +852,6 @@ AC_SUBST(FSAL_CFLAGS)
 AC_SUBST(FSAL_LDFLAGS)
 AC_SUBST(FSAL_LIB)
 AC_SUBST(MFSL_LIB)
-AC_SUBST(PNFS_LIB)
 AC_SUBST(FS_NAME)
 AC_SUBST(SHARED_FSAL)
 AC_SUBST(SHARED_FSAL_PKG)
@@ -921,10 +884,6 @@ AC_CONFIG_FILES([include/Makefile
                  include/MFSL/MFSL_AIO/Makefile
                  include/MFSL/MFSL_ASYNC/Makefile
                  include/MFSL/MFSL_PROXY_RPCSECGSS/Makefile
-                 include/PNFS/Makefile
-		 include/PNFS/PARALLEL_FS/Makefile
-		 include/PNFS/OSD/Makefile
-		 include/PNFS/BLOCK/Makefile
                  BuddyMalloc/Makefile
                  Common/Makefile
                  support/Makefile
@@ -948,10 +907,6 @@ AC_CONFIG_FILES([include/Makefile
                  Protocols/9P/Makefile
 		 Protocols/NFS/Makefile
 		 Protocols/NLM/Makefile
-		 Protocols/PNFS/Makefile
-		 Protocols/PNFS/PARALLEL_FS/Makefile
-		 Protocols/PNFS/OSD/Makefile
-		 Protocols/PNFS/BLOCK/Makefile
                  Protocols/XDR/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile
@@ -965,7 +920,6 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_CEPH/Makefile
 		 FSAL/FSAL_FUSELIKE/Makefile
 		 FSAL/FSAL_LUSTRE/Makefile
-		 FSAL/FSAL_LUSTRE/PNFS/Makefile
 		 FSAL/FSAL_XFS/Makefile
 		 FSAL/FSAL_GPFS/Makefile
                  FSAL/FSAL_ZFS/Makefile

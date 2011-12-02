@@ -106,7 +106,6 @@ libnfsproto_la_SOURCES += rquota_Null.c            \
 
 endif
 
-
 if USE_NFS4_1
 libnfsproto_la_SOURCES += nfs41_op_exchange_id.c      \
                           nfs41_op_close.c            \

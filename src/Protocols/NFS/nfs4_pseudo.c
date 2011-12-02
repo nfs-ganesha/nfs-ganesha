@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -470,9 +470,9 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           memset(supported_attrs.bitmap4_val, 0, 3 * sizeof(uint32_t));
 #else
           if((supported_attrs.bitmap4_val =
-              (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
+              (uint32_t *) Mem_Alloc(3 * sizeof(uint32_t))) == NULL)
             return -1;
-          memset(supported_attrs.bitmap4_val, 0, 2 * sizeof(uint32_t));
+          memset(supported_attrs.bitmap4_val, 0, 3 * sizeof(uint32_t));
 #endif
 
           nfs4_list_to_bitmap4(&supported_attrs, &c, attrvalslist_supported);
@@ -1259,9 +1259,9 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 
   /* Set the bitmap for result */
   /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
-  if((Fattr->attrmask.bitmap4_val = (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
+  if((Fattr->attrmask.bitmap4_val = (uint32_t *) Mem_Alloc(3 * sizeof(uint32_t))) == NULL)
     return -1;
-  memset(Fattr->attrmask.bitmap4_val, 0, 2 * sizeof(uint32_t));
+  memset(Fattr->attrmask.bitmap4_val, 0, 3 * sizeof(uint32_t));
 
   nfs4_list_to_bitmap4(&(Fattr->attrmask), &j, attrvalslist);
 

@@ -54,6 +54,9 @@
 #include "nfs_tools.h"
 #include "nfs_creds.h"
 #include "nfs_file_handle.h"
+#ifdef _USE_FSALMDS
+#include "sal_data.h"
+#endif /* _USE_FSALMDS */
 
 /* type flag into mode field */
 #define NFS2_MODE_NFDIR 0040000
@@ -135,4 +138,22 @@ void nfs3_access_debug(char *label, uint32_t access);
 
 void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask);
 
+
+#ifdef _USE_FSALMDS
+nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
+                               cache_inode_client_t* pclient,
+                               fsal_op_context_t* context,
+                               fsal_boolean_t synthetic,
+                               state_t *layout_state,
+                               layoutiomode4 iomode,
+                               offset4 offset,
+                               length4 length,
+                               u_int body_len,
+                               const char* body_val,
+                               fsal_boolean_t* deleted);
+
+fsal_boolean_t nfs4_pnfs_supported(const exportlist_t *export);
+#endif /* _USE_FSALMDS */
+nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
+                              cache_inode_file_type_t required_type);
 #endif                          /* _NFS_PROTO_TOOLS_H */

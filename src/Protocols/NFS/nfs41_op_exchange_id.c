@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -80,7 +80,7 @@
  */
 
 #if 0
-static uint32_t all_eia_flags = 
+static uint32_t all_eia_flags =
     EXCHGID4_FLAG_SUPP_MOVED_MIGR |
     EXCHGID4_FLAG_BIND_PRINC_STATEID |
     EXCHGID4_FLAG_USE_NON_PNFS |
@@ -126,6 +126,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
       return res_EXCHANGE_ID4.eir_status;
     }
+
   LogDebug(COMPONENT_NFS_V4,
            "EXCHANGE_ID computed clientid4=%llux for name='%s'",
            (long long unsigned int)clientid, str_client);
@@ -137,7 +138,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       res_EXCHANGE_ID4.eir_status = NFS4ERR_INVAL;
       return res_EXCHANGE_ID4.eir_status;
     }
-#endif 
+#endif
 
   /* Does this id already exists ? */
   if(nfs_client_id_get(clientid, &nfs_clientid) == CLIENT_ID_SUCCESS)
@@ -170,7 +171,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
                   nfs_clientid.client_r_netid;
               res_EXCHANGE_ID4.EXCHANGE_ID4res_u.client_using.r_addr =
                   nfs_clientid.client_r_addr;
-#endif
+#endif /* _USE_NFS4_1 */
               return res_EXCHANGE_ID4.eir_status;
             }
           else
@@ -211,7 +212,8 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
               nfs_clientid.clientid = clientid;
               nfs_clientid.last_renew = 0;
 
-              if(nfs_client_id_set(clientid, nfs_clientid, &pworker->clientid_pool) !=
+              if(nfs_client_id_set(clientid, nfs_clientid,
+                                   &pworker->clientid_pool) !=
                  CLIENT_ID_SUCCESS)
                 {
                   res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
@@ -265,7 +267,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 
       snprintf( nfs_clientid.server_scope, MAXNAMLEN, "%s_NFS-Ganesha", nfs_clientid.server_owner ) ;
 
-      if(nfs_client_id_add(clientid, nfs_clientid, &pworker->clientid_pool) !=
+      if(nfs_client_id_add(clientid, nfs_clientid, data->pclient) !=
          CLIENT_ID_SUCCESS)
         {
           res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
@@ -276,20 +278,24 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_clientid = clientid;
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_sequenceid =
       nfs_clientid.create_session_sequence;
-#ifdef _USE_PNFS
+#if defined(_USE_FSALMDS) && defined(_USE_FSALDS)
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =
       EXCHGID4_FLAG_USE_PNFS_MDS | EXCHGID4_FLAG_USE_PNFS_DS |
       EXCHGID4_FLAG_SUPP_MOVED_REFER;
-#else
-#ifdef _USE_DS
+#elif defined(_USE_FSALMDS)
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =
+      EXCHGID4_FLAG_USE_PNFS_MDS | EXCHGID4_FLAG_SUPP_MOVED_REFER;
+#elif defined(_USE_FSALDS)
+  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =
+      EXCHGID4_FLAG_USE_PNFS_DS | EXCHGID4_FLAG_SUPP_MOVED_REFER;
+#elif defined(_USE_DS)
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =
       EXCHGID4_FLAG_USE_PNFS_MDS | EXCHGID4_FLAG_USE_PNFS_DS |
       EXCHGID4_FLAG_SUPP_MOVED_REFER;
 #else
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =
       EXCHGID4_FLAG_USE_NON_PNFS | EXCHGID4_FLAG_SUPP_MOVED_REFER;
-#endif                          /* USE_DS */
-#endif                          /* USE_PNFS */
+#endif
 
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_state_protect.spr_how = SP4_NONE;
 
@@ -323,13 +329,13 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
 
 /**
  * nfs4_op_setclientid_Free: frees what was allocared to handle nfs4_op_setclientid.
- * 
+ *
  * Frees what was allocared to handle nfs4_op_setclientid.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs41_op_exchange_id_Free(EXCHANGE_ID4res * resp)
 {

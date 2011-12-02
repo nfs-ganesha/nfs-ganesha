@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -346,17 +346,31 @@ int main(int argc, char *argv[])
      FSAL_LoadConsts();
    } /* for */
 
+#ifdef _USE_FSALMDS
+  FSAL_LoadMDSFunctions();
+#endif
+#ifdef _USE_FSALDS
+  FSAL_LoadDSFunctions();
+#endif
+
 #else
   /* Get the FSAL functions */
   FSAL_LoadFunctions();
 
   /* Get the FSAL consts */
   FSAL_LoadConsts();
+
+#ifdef _USE_FSALMDS
+  FSAL_LoadMDSFunctions();
+#endif
+#ifdef _USE_FSALDS
+  FSAL_LoadDSFunctions();
+#endif
 #endif                          /* _USE_SHARED_FSAL */
 
   LogEvent(COMPONENT_MAIN,
            ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
-	   FSAL_GetFSName());
+           FSAL_GetFSName());
 
   /* initialize default parameters */
 

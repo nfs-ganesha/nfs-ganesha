@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -221,7 +221,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       cause = "CLAIM_NULL";
 
       /* Is this open_owner known? If so, get it so we can use replay cache */
-      convert_nfs4_open_owner(&arg_OPEN4.owner, &owner_name);
+      convert_nfs4_open_owner(&arg_OPEN4.owner, &owner_name, 0LL);
 
       if(!nfs4_owner_Get_Pointer(&owner_name, &powner))
         {
@@ -543,7 +543,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                       goto out;
                     }
 
-                  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 2;
+                  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 3;
                   if((res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val =
                       (uint32_t *) Mem_Alloc(res_OPEN4.OPEN4res_u.resok4.attrset.
                                              bitmap4_len * sizeof(uint32_t))) == NULL)
@@ -1077,7 +1077,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       goto out;
     }
 
-  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 2;
+  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 3;
   if((res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val =
       (uint32_t *) Mem_Alloc(res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len *
                              sizeof(uint32_t))) == NULL)
@@ -1090,6 +1090,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[0] = 0;       /* No Attributes set */
   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[1] = 0;       /* No Attributes set */
+  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[2] = 0;       /* No Attributes set */
 
   if(arg_OPEN4.openhow.opentype == OPEN4_CREATE)
     {
@@ -1097,7 +1098,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       tmp_attr[0] = FATTR4_SIZE;
       tmp_attr[1] = FATTR4_MODE;
       nfs4_list_to_bitmap4(&(res_OPEN4.OPEN4res_u.resok4.attrset), &tmp_int, tmp_attr);
-      res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 2;
+      res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 3;
     }
 
   res_OPEN4.OPEN4res_u.resok4.cinfo.after =

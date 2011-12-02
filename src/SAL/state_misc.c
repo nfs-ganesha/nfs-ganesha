@@ -694,12 +694,13 @@ const char * state_owner_type_to_str(state_owner_type_t type)
 {
   switch(type)
     {
-      case STATE_LOCK_OWNER_UNKNOWN: return "STATE_LOCK_OWNER_UNKNOWN";
+      case STATE_LOCK_OWNER_UNKNOWN:     return "STATE_LOCK_OWNER_UNKNOWN";
 #ifdef _USE_NLM
-      case STATE_LOCK_OWNER_NLM:     return "STATE_LOCK_OWNER_NLM";
+      case STATE_LOCK_OWNER_NLM:         return "STATE_LOCK_OWNER_NLM";
 #endif
-      case STATE_OPEN_OWNER_NFSV4:   return "STATE_OPEN_OWNER_NFSV4";
-      case STATE_LOCK_OWNER_NFSV4:   return "STATE_LOCK_OWNER_NFSV4";
+      case STATE_OPEN_OWNER_NFSV4:       return "STATE_OPEN_OWNER_NFSV4";
+      case STATE_LOCK_OWNER_NFSV4:       return "STATE_LOCK_OWNER_NFSV4";
+      case STATE_CLIENTID_OWNER_NFSV4:   return "STATE_CLIENTID_OWNER_NFSV4";
     }
   return invalid_state_owner_type;
 }
@@ -720,15 +721,15 @@ int different_owners(state_owner_t *powner1, state_owner_t *powner2)
     {
 #ifdef _USE_NLM
       case STATE_LOCK_OWNER_NLM:
-         if(powner2->so_type != STATE_LOCK_OWNER_NLM)
+        if(powner2->so_type != STATE_LOCK_OWNER_NLM)
            return 1;
         return compare_nlm_owner(powner1, powner2);
 #endif
       case STATE_OPEN_OWNER_NFSV4:
       case STATE_LOCK_OWNER_NFSV4:
-         if(powner2->so_type != STATE_OPEN_OWNER_NFSV4 &&
-            powner2->so_type != STATE_LOCK_OWNER_NFSV4)
-           return 1;
+      case STATE_CLIENTID_OWNER_NFSV4:
+        if(powner1->so_type != powner2->so_type)
+          return 1;
         return compare_nfs4_owner(powner1, powner2);
 
       case STATE_LOCK_OWNER_UNKNOWN:
@@ -750,6 +751,7 @@ int DisplayOwner(state_owner_t *powner, char *buf)
 
         case STATE_OPEN_OWNER_NFSV4:
         case STATE_LOCK_OWNER_NFSV4:
+        case STATE_CLIENTID_OWNER_NFSV4:
           return display_nfs4_owner(powner, buf);
 
         case STATE_LOCK_OWNER_UNKNOWN:
@@ -870,6 +872,7 @@ void dec_state_owner_ref_locked(state_owner_t        * powner,
 
           case STATE_OPEN_OWNER_NFSV4:
           case STATE_LOCK_OWNER_NFSV4:
+          case STATE_CLIENTID_OWNER_NFSV4:
             remove_nfs4_owner(pclient, powner, str);
             break;
 

@@ -38,16 +38,16 @@
 
 /* In the "static" case, original types are used, this is safer */
 #if defined(_USE_SHARED_FSAL) || \
-   defined(_USE_POSIX)        || \
-   defined(_USE_VFS)          || \
-   defined(_USE_XFS)          || \
-   defined(_USE_GPFS)         || \
-   defined(_USE_ZFS)          || \
-   defined(_USE_SNMP)         || \
-   defined(_USE_PROXY)        || \
-   defined(_USE_LUSTRE)       || \
-   defined(_USE_FUSE)         || \
-   defined(_USE_CEPH)
+    defined(_USE_POSIX)        || \
+    defined(_USE_VFS)          || \
+    defined(_USE_XFS)          || \
+    defined(_USE_GPFS)         || \
+    defined(_USE_ZFS)          || \
+    defined(_USE_SNMP)         || \
+    defined(_USE_PROXY)        || \
+    defined(_USE_LUSTRE)       || \
+    defined(_USE_FUSE)         || \
+    defined(_USE_CEPH)
 
 /* Allow aliasing of fsal_handle_t since FSALs will be
  * casting between pointer types
@@ -109,6 +109,25 @@ typedef struct
 {
   char data[FSAL_FS_SPECIFIC_INITINFO_T];
 } fs_specific_initinfo_t;
+
+#ifdef _USE_FSALMDS
+
+typedef struct
+{
+  char data[FSAL_MULTIGET_MARK_T];
+} fsal_multiget_mark_t;
+
+typedef struct
+{
+  char data[FSAL_MULTICOMMIT_MARK_T];
+} fsal_multicommit_mark_t;
+
+typedef struct
+{
+  char data[FSAL_LAYOUT_SEGID_T];
+} fsal_layout_segid_t;
+
+#endif                          /* _USE_FSALMDS */
 
 #endif                          /* USE_SHARED_FSAL */
 

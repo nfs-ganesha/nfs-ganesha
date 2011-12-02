@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -70,9 +70,6 @@
 
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
-#ifdef _USE_PNFS
-#include "pnfs.h"
-#endif                          /* _USE_PNFS */
 #endif
 
 #ifdef _USE_9P
@@ -151,7 +148,7 @@
 /* NFS/RPC specific values */
 #define NFS_PORT             2049
 #define RQUOTA_PORT           875
-#define	RQCRED_SIZE	     400        /* this size is excessive */
+#define RQCRED_SIZE           400        /* this size is excessive */
 #define NFS_DEFAULT_SEND_BUFFER_SIZE 32768
 #define NFS_DEFAULT_RECV_BUFFER_SIZE 32768
 
@@ -162,13 +159,14 @@
 /* Other #define */
 #define TMP_STR_LEN 256
 #define AUTH_STR_LEN 30
-#define  PWENT_MAX_LEN 81       /* MUST be a multiple of 9 */
+#define PWENT_MAX_LEN 81       /* MUST be a multiple of 9 */
 
 /* IP/name cache error */
 #define CLIENT_ID_SUCCESS             0
 #define CLIENT_ID_INSERT_MALLOC_ERROR 1
 #define CLIENT_ID_NOT_FOUND           2
 #define CLIENT_ID_INVALID_ARGUMENT    3
+#define CLIENT_ID_STATE_ERROR         4
 
 /* Id Mapper cache error */
 #define ID_MAPPER_SUCCESS             0
@@ -196,7 +194,7 @@
 /* Flags for how the stable flag should be interpretted */
 #define FSAL_UNSAFE_WRITE_TO_FS_BUFFER 0
 #define FSAL_SAFE_WRITE_TO_FS 1
-#define FSAL_UNSAFE_WRITE_TO_GANESHA_BUFFER 2 
+#define FSAL_UNSAFE_WRITE_TO_GANESHA_BUFFER 2
 
 typedef enum nfs_clientid_confirm_state__
 { CONFIRMED_CLIENT_ID = 1,
@@ -377,9 +375,6 @@ typedef struct nfs_param__
   nfs_state_id_parameter_t state_id_param;
 #ifdef _USE_NFS4_1
   nfs_session_id_parameter_t session_id_param;
-#ifdef _USE_PNFS
-  pnfs_parameter_t pnfs_param;
-#endif                          /* _USE_PNFS */
 #endif                          /* _USE_NFS4_1 */
   nfs4_owner_parameter_t nfs4_owner_param;
 #ifdef _USE_NLM
@@ -482,6 +477,7 @@ typedef struct nfs_client_id__
   nfs41_session_slot_t create_session_slot;
   unsigned create_session_sequence;
 #endif
+  state_owner_t *clientid_owner;
 } nfs_client_id_t;
 
 typedef enum idmap_type__
@@ -669,9 +665,6 @@ int nfs_read_state_id_conf(config_file_t in_config, nfs_state_id_parameter_t * p
 #ifdef _USE_NFS4_1
 int nfs_read_session_id_conf(config_file_t in_config,
                              nfs_session_id_parameter_t * pparam);
-#ifdef _USE_PNFS
-int nfs_read_pnfs_conf(config_file_t in_config, pnfs_parameter_t * pparam);
-#endif                          /* _USE_PNFS */
 #endif                          /* _USE_NFS4_1 */
 
 int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht);
@@ -732,7 +725,7 @@ int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id
 
 int nfs_client_id_add(clientid4 clientid,
                       nfs_client_id_t client_record,
-                      struct prealloc_pool *clientid_pool);
+                      cache_inode_client_t *pclient);
 
 int nfs_client_id_set(clientid4 clientid,
                       nfs_client_id_t client_record,

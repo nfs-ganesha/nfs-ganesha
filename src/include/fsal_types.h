@@ -49,6 +49,9 @@
 #ifdef _USE_NFS4_ACL
 #include <openssl/md5.h>
 #endif                          /* _USE_NFS4_ACL */
+#ifdef _USE_FSALMDS
+#include "nfs4.h"
+#endif
 
 #ifdef _SOLARIS
 #ifndef MAXNAMLEN
@@ -128,7 +131,7 @@ typedef struct fsal_staticfsinfo_t fsal_staticfsinfo_t;
 #define INDEX_FSAL_unlink_access        46
 #define INDEX_FSAL_link_access          47
 #define INDEX_FSAL_create_access        48
-#define INDEX_FSAL_unused_49	        49
+#define INDEX_FSAL_unused_49            49
 #define INDEX_FSAL_CleanUpExportContext 50
 #define INDEX_FSAL_getextattrs          51
 #define INDEX_FSAL_sync                 52
@@ -138,9 +141,14 @@ typedef struct fsal_staticfsinfo_t fsal_staticfsinfo_t;
 #define INDEX_FSAL_UP_addfilter         56
 #define INDEX_FSAL_UP_getevents         57
 #define INDEX_FSAL_unused_58            58
+#define INDEX_FSAL_layoutget            59
+#define INDEX_FSAL_layoutreturn         60
+#define INDEX_FSAL_layoutcommit         61
+#define INDEX_FSAL_getdeviceinfo        62
+#define INDEX_FSAL_getdevicelist        63
 
 /* number of FSAL functions */
-#define FSAL_NB_FUNC  59
+#define FSAL_NB_FUNC  64
 
 extern const char *fsal_function_names[];
 
@@ -202,10 +210,10 @@ typedef enum fsal_nodetype__
 /** object name.  */
 
 struct user_credentials {
-	uid_t user;
-	gid_t group;
-	int nbgroups;
-	gid_t alt_groups[FSAL_NGROUPS_MAX];
+  uid_t user;
+  gid_t group;
+  int nbgroups;
+  gid_t alt_groups[FSAL_NGROUPS_MAX];
 };
 
 typedef struct fsal_name__
@@ -250,7 +258,6 @@ static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 #include "FSAL/FSAL_XFS/fsal_types.h"
 #elif defined ( _USE_GPFS )
 #include "FSAL/FSAL_GPFS/fsal_types.h"
-<<<<<<< HEAD
 #elif defined ( _USE_VFS )
 #include "FSAL/FSAL_VFS/fsal_types.h"
 #elif defined ( _USE_ZFS )
@@ -563,6 +570,7 @@ typedef fsal_u64_t fsal_attrib_mask_t;
                             FSAL_ATTR_ATIME | FSAL_ATTR_MTIME |   \
                             FSAL_ATTR_CTIME | FSAL_ATTR_SPACEUSED )
 
+
 /** A list of FS object's attributes. */
 
 typedef struct fsal_attrib_list__
@@ -612,11 +620,11 @@ typedef struct fsal_extattrib_list__
 
 typedef fsal_uint_t fsal_accessflags_t;
 
-#define	FSAL_OWNER_OK   0x08000000       /* Allow owner override */
-#define	FSAL_R_OK	0x04000000       /* Test for Read permission */
-#define	FSAL_W_OK	0x02000000       /* Test for Write permission */
-#define	FSAL_X_OK	0x01000000       /* Test for execute permission */
-#define	FSAL_F_OK	0x10000000       /* Test for existence of File */
+#define FSAL_OWNER_OK   0x08000000       /* Allow owner override */
+#define FSAL_R_OK       0x04000000       /* Test for Read permission */
+#define FSAL_W_OK       0x02000000       /* Test for Write permission */
+#define FSAL_X_OK       0x01000000       /* Test for execute permission */
+#define FSAL_F_OK       0x10000000       /* Test for existence of File */
 #define FSAL_ACCESS_OK  0x00000000       /* Allow */
 
 #define FSAL_ACCESS_FLAG_BIT_MASK  0x80000000
@@ -825,8 +833,16 @@ struct fsal_staticfsinfo_t
   fsal_accessmode_t xattr_access_rights;  /**< This indicates who is allowed
                                            *   to read/modify xattrs value.
                                            */
+#ifdef _USE_FSALMDS
+  fsal_boolean_t pnfs_supported; /**< Whether to support pNFS */
+  fattr4_fs_layout_types fs_layout_types;/**< The supported layout
+					      types */
 
+  fsal_size_t layout_blksize;             /**< Preferred blocksize for
+					       I/O on layouts*/
+#endif                                     /* _USE_FSALMDS */
 };
+
 
 /** File system dynamic info. */
 
@@ -867,6 +883,17 @@ typedef struct fs_common_initinfo__
   /* specifies the behavior for each init value. */
   struct _behavior_
   {
+#ifdef _USE_FSALMDS
+    fsal_initflag_t
+        maxfilesize, maxlink, maxnamelen, maxpathlen,
+        no_trunc, chown_restricted, case_insensitive,
+        case_preserving, fh_expire_type, link_support, symlink_support, lock_support,
+        lock_support_owner, lock_support_async_block,
+        named_attr, unique_handles, lease_time, acl_support, cansettime,
+        homogenous, supported_attrs, maxread, maxwrite, umask,
+      auth_exportpath_xdev, xattr_access_rights, pnfs_supported,
+      fs_layout_types, layout_blksize;
+#else
     fsal_initflag_t
         maxfilesize, maxlink, maxnamelen, maxpathlen,
         no_trunc, chown_restricted, case_insensitive,
@@ -875,6 +902,7 @@ typedef struct fs_common_initinfo__
         named_attr, unique_handles, lease_time, acl_support, cansettime,
         homogenous, supported_attrs, maxread, maxwrite, umask,
         auth_exportpath_xdev, xattr_access_rights;
+#endif /* _USE_FSALMDS */
   } behaviors;
 
   /* specifies the values to be set if behavior <> FSAL_INIT_FS_DEFAULT */
