@@ -691,7 +691,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                                      newfh4.nfs_fh4_len);
 
                               data->current_entry = pentry_lookup;
-                              data->current_filetype = REGULAR_FILE;
+                              data->current_filetype = REGULAR_FILE; 
+
+                              pfile_state = pstate_iterate ; /* Avoid segfault during test OPEN4 (pstate would be NULL) */
 
                               /* regular exit */
                               V_r(&pentry_lookup->lock);
