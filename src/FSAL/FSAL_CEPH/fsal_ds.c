@@ -108,6 +108,11 @@ nfsstat4 CEPHFSAL_DS_read(fsal_handle_t *exthandle,
      stripe. */
 
   stripe_width = handle->data.layout.fl_stripe_unit;
+  if (stripe_width == 0)
+    {
+      /* READ isn't actually allowed to return BADHANDLE */
+      return NFS4ERR_INVAL;
+    }
   stripe = offset / stripe_width;
   block_start = stripe * stripe_width;
   internal_offset = block_start - offset;
@@ -206,6 +211,11 @@ nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *exthandle,
      stripe. */
 
   stripe_width = handle->data.layout.fl_stripe_unit;
+  if (stripe_width == 0)
+    {
+      /* WRITE isn't actually allowed to return BADHANDLE */
+      return NFS4ERR_INVAL;
+    }
   stripe = offset / stripe_width;
   block_start = stripe * stripe_width;
   internal_offset = block_start - offset;
@@ -307,16 +317,24 @@ nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *exthandle,
  * @param writeverf      [OUT]    Write verifier
  */
 
-nfsstat4 CEPHFSAL_DS_commit(fsal_handle_t *handle,
+nfsstat4 CEPHFSAL_DS_commit(fsal_handle_t *exthandle,
                             fsal_op_context_t *context,
                             offset4 offset,
                             count4 count,
                             verifier4 writeverf)
 {
+  /* Our format for the file handle */
+  cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
+
   /* All of our DS writes have, at least, data synchrony, so this is a
      no-op, aside from zeroing the write verifier to prevent spurious
      rewrites. */
 
+  if (handle->data.layout.fl_stripe_unit == 0)
+    {
+      /* COMMIT isn't actually allowed to return BADHANDLE */
+      return NFS4ERR_INVAL;
+    }
   memset(writeverf, 0, NFS4_VERIFIER_SIZE);
 
   return NFS4_OK;
