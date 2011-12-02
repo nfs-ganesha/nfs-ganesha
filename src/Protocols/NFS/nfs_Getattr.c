@@ -190,9 +190,16 @@ int nfs_Getattr(nfs_arg_t * parg,
       return NFS_REQ_OK;
     }
 
+  LogFullDebug(COMPONENT_CACHE_INODE,"nfs_Getattr: cache_inode_get() "
+	       "returned cache status %d(%s)",
+	       cache_status, cache_inode_err_str(cache_status));
+
+  if (cache_status != CACHE_INODE_FSAL_ESTALE)
+    cache_status = CACHE_INODE_INVALID_ARGUMENT;
+
   nfs_SetFailedStatus(pcontext, pexport,
                       preq->rq_vers,
-                      CACHE_INODE_INVALID_ARGUMENT,
+                      cache_status,
                       &pres->res_attr2.status,
                       &pres->res_getattr3.status,
                       NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);

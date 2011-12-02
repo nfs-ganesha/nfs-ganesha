@@ -637,6 +637,15 @@ cache_entry_t *cache_inode_lookup( cache_entry_t * pentry_parent,
                                    fsal_op_context_t * pcontext,
                                    cache_inode_status_t * pstatus);
 
+cache_entry_t *cache_inode_valid_lookup(cache_entry_t * pentry_parent,
+                                        fsal_name_t * pname,
+                                        cache_inode_policy_t policy,
+                                        fsal_attrib_list_t * pattr,
+                                        hash_table_t * ht,
+                                        cache_inode_client_t * pclient,
+                                        fsal_op_context_t * pcontext,
+                                        cache_inode_status_t * pstatus);
+
 cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
                                       hash_table_t * ht,
                                       cache_inode_client_t * pclient,
