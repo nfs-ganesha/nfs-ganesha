@@ -1820,6 +1820,45 @@ void cache_inode_release_dirents( cache_entry_t           * pentry,
      }
 } 
 
+/**
+ *
+ *  cache_inode_file_holds_state : checks if a file entry holds state(s) or not.
+ *
+ * Checks if a file entry holds state(s) or not.
+ *
+ * @param pentry [IN] entry to be checked
+ *
+ * @return TRUE is state(s) are held, FALSE otherwise
+ *
+ */
+inline unsigned int cache_inode_file_holds_state( cache_entry_t * pentry )
+{
+  unsigned int found_state = FALSE ;
+
+  if( pentry == NULL )
+   return FALSE ;
+
+  if( pentry->internal_md.type != REGULAR_FILE )
+   return FALSE ;
+
+   /* if locks are held in the file, do not close */
+  P(pentry->object.file.lock_list_mutex);
+  if(!glist_empty(&pentry->object.file.lock_list))
+    {
+      found_state = TRUE ;
+    }
+  V(pentry->object.file.lock_list_mutex);
+  
+  if( found_state == TRUE ) 
+    return found_state ;
+
+  if(!glist_empty(&pentry->object.file.state_list))
+    return TRUE ;
+
+  /* if this place is reached, the file holds no state */
+  return FALSE ;
+} /* cache_inode_file_holds_state */
+
 #ifdef _USE_PROXY
 void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr);
 
