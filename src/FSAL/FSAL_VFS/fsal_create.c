@@ -588,7 +588,7 @@ fsal_status_t VFSFSAL_mknode(fsal_handle_t * parentdir_handle,       /* IN */
   /* creates the node, then stats it */
   TakeTokenFSCall();
   rc = mknodat(fd, p_node_name->name, unix_mode, unix_dev);
-  errsv = errno;
+  errsv = (rc == 0 )?0:errno;
 
   if(rc)
     {
@@ -598,7 +598,8 @@ fsal_status_t VFSFSAL_mknode(fsal_handle_t * parentdir_handle,       /* IN */
     }
 
   /* get the new object handle */
-  if((newfd = openat(fd, p_node_name->name, O_RDONLY, 0600)) < 0)
+  //if((newfd = openat(fd, p_node_name->name, O_RDONLY, 0600)) < 0)
+  if((newfd = openat(fd, p_node_name->name, O_RDONLY, unix_mode)) < 0)
     {
       errsv = errno;
       close(fd);
