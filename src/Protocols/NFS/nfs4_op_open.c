@@ -120,6 +120,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   resp->resop = NFS4_OP_OPEN;
   res_OPEN4.status = NFS4_OK;
+  res_OPEN4.OPEN4res_u.resok4.rflags = 0 ;
 
   uint32_t tmp_attr[2];
   uint_t tmp_int = 2;
@@ -571,10 +572,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   if(powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
                     {
                       if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
-                        res_OPEN4.OPEN4res_u.resok4.rflags =
-                            OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX;
+                        res_OPEN4.OPEN4res_u.resok4.rflags |=
+                            OPEN4_RESULT_CONFIRM | OPEN4_RESULT_LOCKTYPE_POSIX;
                       else
-                        res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
+                        res_OPEN4.OPEN4res_u.resok4.rflags |= OPEN4_RESULT_LOCKTYPE_POSIX;
                     }
                   V(powner->so_mutex);
 
@@ -656,12 +657,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                               if(powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
                                 {
                                   if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
-                                    res_OPEN4.OPEN4res_u.resok4.rflags =
-                                        OPEN4_RESULT_CONFIRM +
-                                        OPEN4_RESULT_LOCKTYPE_POSIX;
+                                    res_OPEN4.OPEN4res_u.resok4.rflags |= OPEN4_RESULT_CONFIRM | OPEN4_RESULT_LOCKTYPE_POSIX;
                                   else
-                                    res_OPEN4.OPEN4res_u.resok4.rflags =
-                                        OPEN4_RESULT_LOCKTYPE_POSIX;
+                                    res_OPEN4.OPEN4res_u.resok4.rflags |= OPEN4_RESULT_LOCKTYPE_POSIX;
                                 }
                               V(powner->so_mutex);
 
@@ -1110,16 +1108,16 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE;
 
   /* No delegation */
-  res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE;
+  res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type |= OPEN_DELEGATE_NONE;
 
   /* If server use OPEN_CONFIRM4, set the correct flag */
   if(powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
     {
       if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
-        res_OPEN4.OPEN4res_u.resok4.rflags =
-            OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX;
+        res_OPEN4.OPEN4res_u.resok4.rflags |=
+            OPEN4_RESULT_CONFIRM | OPEN4_RESULT_LOCKTYPE_POSIX;
       else
-        res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
+        res_OPEN4.OPEN4res_u.resok4.rflags |= OPEN4_RESULT_LOCKTYPE_POSIX;
     }
 
  out_success:
