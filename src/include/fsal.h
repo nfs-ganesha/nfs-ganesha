@@ -196,25 +196,23 @@ fsal_status_t FSAL_Init(fsal_parameter_t * init_info    /* IN */
  * with trace and function call increment.
  */
 
-#define Return( _code_, _minor_ , _f_ ) do {                              \
-               fsal_status_t _struct_status_ = FSAL_STATUS_NO_ERROR ;     \
-               (_struct_status_).major = (_code_) ;                       \
-               (_struct_status_).minor = (_minor_) ;                      \
-               fsal_increment_nbcall( _f_,_struct_status_ );              \
-               if(isDebug(COMPONENT_FSAL))                                \
-                 {                                                        \
-                   char _str_[256];                                       \
-                   log_snprintf( _str_, 256, "%J%r",ERR_FSAL, _code_ );   \
-                   if((_struct_status_).major != ERR_FSAL_NO_ERROR)       \
-                     LogDebug(COMPONENT_FSAL,                             \
-                       "%s returns ( %s, %d )",fsal_function_names[_f_],  \
-                       _str_, _minor_);                                   \
-                   else                                                   \
-                     LogFullDebug(COMPONENT_FSAL,                         \
-                       "%s returns ( %s, %d )",fsal_function_names[_f_],  \
-                       _str_, _minor_);                                   \
-                 }                                                        \
-               return (_struct_status_);                                  \
+#define Return( _code_, _minor_ , _f_ ) do {                                   \
+               fsal_status_t _struct_status_ = FSAL_STATUS_NO_ERROR ;          \
+               (_struct_status_).major = (_code_) ;                            \
+               (_struct_status_).minor = (_minor_) ;                           \
+               fsal_increment_nbcall( _f_,_struct_status_ );                   \
+               if(isDebug(COMPONENT_FSAL))                                     \
+                 {                                                             \
+                   if((_struct_status_).major != ERR_FSAL_NO_ERROR)            \
+                     LogDebug(COMPONENT_FSAL,                                  \
+                       "%s returns (%s, %s, %d)",fsal_function_names[_f_],     \
+                       label_fsal_err(_code_), msg_fsal_err(_code_), _minor_); \
+                   else                                                        \
+                     LogFullDebug(COMPONENT_FSAL,                              \
+                       "%s returns (%s, %s, %d)",fsal_function_names[_f_],     \
+                       label_fsal_err(_code_), msg_fsal_err(_code_), _minor_); \
+                 }                                                             \
+               return (_struct_status_);                                       \
               } while(0)
 
 #define ReturnStatus( _st_, _f_ )	Return( (_st_).major, (_st_).minor, _f_ )
