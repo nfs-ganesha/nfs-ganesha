@@ -80,7 +80,7 @@ static fsal_staticfsinfo_t default_gpfs_info = {
   TRUE,                         /* symlink support */
   TRUE,                         /* lock management */
   TRUE,                         /* lock owners */
-  FALSE,                        /* async blocking locks */
+  TRUE,                         /* async blocking locks */
   TRUE,                         /* named attributes */
   TRUE,                         /* handles are unique and persistent */
   {10, 0},                      /* Duration of lease at FS in seconds */
