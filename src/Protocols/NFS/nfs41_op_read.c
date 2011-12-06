@@ -428,8 +428,6 @@ static int op_dsread(struct nfs_argop4 *op,
 {
   /* The FSAL file handle */
   fsal_handle_t handle;
-  /* Status frmo calling Cache_inode */
-  cache_inode_status_t cache_status = 0;
   /* NFSv4 return code */
   nfsstat4 nfs_status = 0;
   /* Buffer into which data is to be read */

@@ -220,8 +220,6 @@ static int op_dscommit(struct nfs_argop4 *op,
 {
   /* FSAL file handle */
   fsal_handle_t handle;
-  /* Status of Cache_inode operations */
-  cache_inode_status_t cache_status = 0;
   /* NFSv4 status code */
   nfsstat4 nfs_status = 0;
 

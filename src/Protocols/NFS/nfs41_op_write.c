@@ -433,8 +433,6 @@ static int op_dswrite(struct nfs_argop4 *op,
 {
   /* FSAL file handle */
   fsal_handle_t handle;
-  /* Return code from Cache_inode functions */
-  cache_inode_status_t cache_status = 0;
   /* NFSv4 return code */
   nfsstat4 nfs_status = 0;
 
