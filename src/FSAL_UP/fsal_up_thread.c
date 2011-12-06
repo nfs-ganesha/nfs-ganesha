@@ -183,13 +183,13 @@ fsal_status_t process_event(fsal_up_event_t *event, fsal_up_event_functions_t *e
       LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process LINK event");
       status = event_func->fsal_up_link(&event->event_data);
       break;
-    case FSAL_UP_EVENT_LOCK:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process LOCK event");
-      status = event_func->fsal_up_lock(&event->event_data);
+    case FSAL_UP_EVENT_LOCK_GRANT:
+      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process LOCK GRANT event");
+      status = event_func->fsal_up_lock_grant(&event->event_data);
       break;
-    case FSAL_UP_EVENT_LOCKU:
-      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process LOCKU event");
-      status = event_func->fsal_up_locku(&event->event_data);
+    case FSAL_UP_EVENT_LOCK_AVAIL:
+      LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process LOCK AVAIL event");
+      status = event_func->fsal_up_lock_avail(&event->event_data);
       break;
     case FSAL_UP_EVENT_OPEN:
       LogDebug(COMPONENT_FSAL_UP, "FSAL_UP: Process OPEN event");
