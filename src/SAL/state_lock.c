@@ -260,15 +260,15 @@ static void LogEntry(const char         *reason,
       DisplayOwner(ple->sle_owner, owner);
 
       LogFullDebug(COMPONENT_STATE,
-                   "%s Entry: %p pentry=%p, fileid=%llu, owner={%s}, type=%s, start=0x%llx, end=0x%llx, blocked=%s/%p, state=%p, refcount=%d",
-                   reason, ple, ple->sle_pentry, ple->sle_fileid,
-                   owner, str_lockt(ple->sle_lock.lock_type),
+                   "%s Entry: %p pentry=%p, fileid=%llu, type=%s, start=0x%llx, end=0x%llx, blocked=%s/%p, state=%p, refcount=%d, owner={%s}",
+                   reason, ple, ple->sle_pentry, ple->sle_fileid, str_lockt(ple->sle_lock.lock_type),
                    (unsigned long long) ple->sle_lock.lock_start,
                    (unsigned long long) lock_end(&ple->sle_lock),
                    str_blocked(ple->sle_blocked),
                    ple->sle_block_data,
                    ple->sle_state,
-                   ple->sle_ref_count);
+                   ple->sle_ref_count,
+                   owner);
     }
 }
 
@@ -281,7 +281,7 @@ static bool_t LogList(const char        * reason,
       struct glist_head  * glist;
       state_lock_entry_t * found_entry;
 
-      if(glist_empty(&pentry->object.file.lock_list))
+      if(glist_empty(list))
         {
           if(pentry != NULL)
             LogFullDebug(COMPONENT_STATE,
@@ -299,6 +299,45 @@ static bool_t LogList(const char        * reason,
         {
           found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
           LogEntry(reason, found_entry);
+          if(found_entry->sle_pentry == NULL)
+            break;
+        }
+    }
+
+  return FALSE;
+}
+
+static bool_t LogBlockedList(const char        * reason,
+                             cache_entry_t     * pentry,
+                             struct glist_head * list)
+{
+  if(isFullDebug(COMPONENT_STATE))
+    {
+      struct glist_head  * glist;
+      state_lock_entry_t * found_entry;
+      state_block_data_t * block_entry;
+
+      if(glist_empty(list))
+        {
+          if(pentry != NULL)
+            LogFullDebug(COMPONENT_STATE,
+                         "%s for %p is empty",
+                         reason, pentry);
+          else
+            LogFullDebug(COMPONENT_STATE,
+                         "%s is empty",
+                         reason);
+          return TRUE;
+        }
+
+
+      glist_for_each(glist, list)
+        {
+          block_entry = glist_entry(glist, state_block_data_t, sbd_list);
+          found_entry = block_entry->sbd_lock_entry;
+          LogEntry(reason, found_entry);
+          if(found_entry->sle_pentry == NULL)
+            break;
         }
     }
 
@@ -329,53 +368,30 @@ void LogLock(log_components_t     component,
                         (caddr_t) &fileid_digest);
 
       LogAtLevel(component, debug,
-                 "%s Lock: fileid=%llu, owner=%s, type=%s, start=0x%llx, end=0x%llx",
-                 reason, (unsigned long long) fileid_digest,
-                 owner, str_lockt(plock->lock_type),
+                 "%s Lock: fileid=%llu, type=%s, start=0x%llx, end=0x%llx, owner={%s}",
+                 reason, (unsigned long long) fileid_digest, str_lockt(plock->lock_type),
                  (unsigned long long) plock->lock_start,
-                 (unsigned long long) lock_end(plock));
+                 (unsigned long long) lock_end(plock),
+                 owner);
     }
 }
 
 void LogLockDesc(log_components_t     component,
                  log_levels_t         debug,
                  const char         * reason,
+                 cache_entry_t      * pentry,
                  void               * powner,
                  fsal_lock_param_t  * plock)
 {
   LogAtLevel(component, debug,
-             "%s Lock: powner=%p, type=%s, start=0x%llx, end=0x%llx",
+             "%s Lock: pentry=%p, powner=%p, type=%s, start=0x%llx, end=0x%llx",
              reason,
+             pentry,
              powner,
              str_lockt(plock->lock_type),
              (unsigned long long) plock->lock_start,
              (unsigned long long) lock_end(plock));
 }
-
-
-/*
-void LogUnlock(cache_entry_t      *pentry,
-               fsal_op_context_t  *pcontext,
-               state_lock_entry_t *ple)
-{
-  if(isFullDebug(COMPONENT_STATE))
-    {
-      uint64_t fileid_digest = 0;
-
-      FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
-                        FSAL_DIGEST_FILEID3,
-                        &(pentry->object.file.handle),
-                        (caddr_t) &fileid_digest);
-
-      LogFullDebug(COMPONENT_STATE,
-                   "FSAL Unlock: %p fileid=%llu, type=%s, start=0x%llx, end=0x%llx",
-                   ple, ple->sle_fileid,
-                   str_lockt(ple->sle_lock.lock_type),
-                   (unsigned long long) ple->sle_lock.lock_start,
-                   (unsigned long long) lock_end(&ple->sle_lock));
-    }
-}
-*/
 
 void dump_all_locks(void)
 {
@@ -1745,6 +1761,11 @@ state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
                                  NULL);
 
       t_status = state_error_convert(fsal_status);
+
+      LogFullDebug(COMPONENT_STATE,
+                   "FSAL_lock_op returned %s",
+                   state_err_str(t_status));
+
       if(t_status != STATE_SUCCESS)
         {
           // TODO FSF: what do we do now?
@@ -1790,8 +1811,6 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
 
   LogLock(COMPONENT_STATE, NIV_FULL_DEBUG,
           fsal_lock_op_str(lock_op), pentry, pcontext, powner, plock);
-  LogFullDebug(COMPONENT_STATE,
-               "Lock type %d", (int) plock->lock_type);
 
   memset(&conflicting_lock, 0, sizeof(conflicting_lock));
 
@@ -1809,6 +1828,10 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
                                  &conflicting_lock);
 
       status = state_error_convert(fsal_status);
+
+      LogFullDebug(COMPONENT_STATE,
+                   "FSAL_lock_op returned %s",
+                   state_err_str(status));
 
       if(status == STATE_LOCK_BLOCKED && lock_op != FSAL_OP_LOCKB)
         {
@@ -2209,11 +2232,22 @@ state_status_t state_lock(cache_entry_t         * pentry,
       /* Mark entry as blocking and attach block_data */
       found_entry->sle_block_data = block_data;
       found_entry->sle_blocked    = blocking;
+      block_data->sbd_lock_entry  = found_entry;
 
       /* Insert entry into lock list */
       LogEntry("FSAL block for", found_entry);
 
       glist_add_tail(&pentry->object.file.lock_list, &found_entry->sle_list);
+
+      V(pentry->object.file.lock_list_mutex);
+
+      P(blocked_locks_mutex);
+
+      glist_add_tail(&state_blocked_locks, &block_data->sbd_list);
+
+      V(blocked_locks_mutex);
+
+      return *pstatus;
     }
   else
     {
@@ -2551,22 +2585,15 @@ state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
 
 #ifdef _USE_BLOCKING_LOCKS
 
-/**
- *
- * grant_blocked_lock_upcall: Handle upcall for granted lock
- *
- */
-void grant_blocked_lock_upcall(cache_entry_t        * pentry,
-                               void                 * powner,
-                               fsal_lock_param_t    * plock,
-                               cache_inode_client_t * pclient)
+void find_blocked_lock_upcall(cache_entry_t        * pentry,
+                              void                 * powner,
+                              fsal_lock_param_t    * plock,
+                              state_grant_type_t     grant_type)
 {
   state_lock_entry_t   * found_entry;
   struct glist_head    * glist;
   state_block_data_t   * pblock;
-
-  LogLockDesc(COMPONENT_STATE, NIV_DEBUG,
-              "Grant Upcall for", powner, plock);
+  bool_t                 empty = FALSE;
 
   P(blocked_locks_mutex);
 
@@ -2588,12 +2615,12 @@ void grant_blocked_lock_upcall(cache_entry_t        * pentry,
       if(different_lock(&found_entry->sle_lock, plock))
         continue;
 
-      LogEntry("Blocked Lock found", found_entry);
-
       /* Put lock on list of locks granted by FSAL */
       glist_del(&pblock->sbd_list);
       glist_add_tail(&state_notified_locks, &pblock->sbd_list);
-      pblock->sbd_grant_type = STATE_GRANT_FSAL;
+      pblock->sbd_grant_type = grant_type;
+
+      LogEntry("Blocked Lock found", found_entry);
 
       V(blocked_locks_mutex);
 
@@ -2602,12 +2629,40 @@ void grant_blocked_lock_upcall(cache_entry_t        * pentry,
       return;
     } /* glist_for_each_safe */
 
+  if(isFullDebug(COMPONENT_STATE) &&
+     isFullDebug(COMPONENT_MEMLEAKS))
+    empty = LogBlockedList("Blocked Lock List", NULL, &state_blocked_locks);
+
   V(blocked_locks_mutex);
+
+  P(pentry->object.file.lock_list_mutex);
+
+  if(isFullDebug(COMPONENT_STATE) &&
+     isFullDebug(COMPONENT_MEMLEAKS))
+    empty = LogList("File Lock List", pentry, &pentry->object.file.lock_list);
+
+  V(pentry->object.file.lock_list_mutex);
 
   /* We must be out of sync with FSAL, this is fatal */
   LogLockDesc(COMPONENT_STATE, NIV_MAJOR,
-              "Blocked Lock Not Found for", powner, plock);
+              "Blocked Lock Not Found for", pentry, powner, plock);
   LogFatal(COMPONENT_STATE, "Locks out of sync with FSAL");
+}
+
+/**
+ *
+ * grant_blocked_lock_upcall: Handle upcall for granted lock
+ *
+ */
+void grant_blocked_lock_upcall(cache_entry_t        * pentry,
+                               void                 * powner,
+                               fsal_lock_param_t    * plock,
+                               cache_inode_client_t * pclient)
+{
+  LogLockDesc(COMPONENT_STATE, NIV_DEBUG,
+              "Grant Upcall for", pentry, powner, plock);
+
+  find_blocked_lock_upcall(pentry, powner, plock, STATE_GRANT_FSAL);
 }
 
 /**
@@ -2620,53 +2675,10 @@ void available_blocked_lock_upcall(cache_entry_t        * pentry,
                                    fsal_lock_param_t    * plock,
                                    cache_inode_client_t * pclient)
 {
-  state_lock_entry_t   * found_entry;
-  struct glist_head    * glist;
-  state_block_data_t   * pblock;
-
   LogLockDesc(COMPONENT_STATE, NIV_DEBUG,
-              "Grant Upcall for", powner, plock);
+              "Available Upcall for", pentry, powner, plock);
 
-  P(blocked_locks_mutex);
-
-  glist_for_each(glist, &state_blocked_locks)
-    {
-      pblock = glist_entry(glist, state_block_data_t, sbd_list);
-
-      found_entry = pblock->sbd_lock_entry;
-
-      /* Check if for same file */
-      if(found_entry->sle_pentry != pentry)
-        continue;
-
-      /* Check if for same owner */
-      if(found_entry->sle_owner != powner)
-        continue;
-
-      /* Check if same lock */
-      if(different_lock(&found_entry->sle_lock, plock))
-        continue;
-
-      LogEntry("Blocked Lock found", found_entry);
-
-      /* Put lock on list of locks marked available by FSAL */
-      glist_del(&pblock->sbd_list);
-      glist_add_tail(&state_notified_locks, &pblock->sbd_list);
-      pblock->sbd_grant_type = STATE_GRANT_FSAL_AVAILABLE;
-
-      V(blocked_locks_mutex);
-
-      signal_async_work();
-
-      return;
-    } /* glist_for_each_safe */
-
-  V(blocked_locks_mutex);
-
-  /* We must be out of sync with FSAL, this is fatal */
-  LogLockDesc(COMPONENT_STATE, NIV_MAJOR,
-              "Blocked Lock Not Found for", powner, plock);
-  LogFatal(COMPONENT_STATE, "Locks out of sync with FSAL");
+  find_blocked_lock_upcall(pentry, powner, plock, STATE_GRANT_FSAL_AVAILABLE);
 }
 
 #endif
