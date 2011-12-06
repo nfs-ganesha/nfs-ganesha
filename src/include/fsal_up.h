@@ -39,8 +39,8 @@
 #define FSAL_UP_EVENT_COMMIT     4
 #define FSAL_UP_EVENT_WRITE      5
 #define FSAL_UP_EVENT_LINK       6
-#define FSAL_UP_EVENT_LOCK       7
-#define FSAL_UP_EVENT_LOCKU      8
+#define FSAL_UP_EVENT_LOCK_GRANT 7
+#define FSAL_UP_EVENT_LOCK_AVAIL 8
 #define FSAL_UP_EVENT_OPEN       9
 #define FSAL_UP_EVENT_CLOSE      10
 #define FSAL_UP_EVENT_SETATTR    11
@@ -101,14 +101,11 @@ typedef struct fsal_up_event_data_link_t_
 {
 } fsal_up_event_data_link_t;
 
-typedef struct fsal_up_event_data_lock_t_
+typedef struct fsal_up_event_data_lock_grant_t_
 {
-  fsal_lock_param_t lock_param;
-} fsal_up_event_data_lock_t;
-
-typedef struct fsal_up_event_data_locku_t_
-{
-} fsal_up_event_data_locku_t;
+  void              * lock_owner;
+  fsal_lock_param_t   lock_param;
+} fsal_up_event_data_lock_grant_t;
 
 typedef struct fsal_up_event_data_open_t_
 {
@@ -135,8 +132,7 @@ typedef struct fsal_up_event_data__
     fsal_up_event_data_commit_t commit;
     fsal_up_event_data_write_t write;
     fsal_up_event_data_link_t link;
-    fsal_up_event_data_lock_t lock;
-    fsal_up_event_data_locku_t locku;
+    fsal_up_event_data_lock_grant_t lock_grant;
     fsal_up_event_data_open_t open;
     fsal_up_event_data_close_t close;
     fsal_up_event_data_setattr_t setattr;
@@ -161,8 +157,8 @@ typedef struct fsal_up_event_functions__
   fsal_status_t (*fsal_up_commit) (fsal_up_event_data_t * pevdata );
   fsal_status_t (*fsal_up_write) (fsal_up_event_data_t * pevdata );
   fsal_status_t (*fsal_up_link) (fsal_up_event_data_t * pevdata );
-  fsal_status_t (*fsal_up_lock) (fsal_up_event_data_t * pevdata );
-  fsal_status_t (*fsal_up_locku) (fsal_up_event_data_t * pevdata );
+  fsal_status_t (*fsal_up_lock_grant) (fsal_up_event_data_t * pevdata );
+  fsal_status_t (*fsal_up_lock_avail) (fsal_up_event_data_t * pevdata );
   fsal_status_t (*fsal_up_open) (fsal_up_event_data_t * pevdata );
   fsal_status_t (*fsal_up_close) (fsal_up_event_data_t * pevdata );
   fsal_status_t (*fsal_up_setattr) (fsal_up_event_data_t * pevdata );
