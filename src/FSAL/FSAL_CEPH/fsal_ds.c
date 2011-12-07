@@ -93,7 +93,7 @@ nfsstat4 CEPHFSAL_DS_read(fsal_handle_t *exthandle,
   /* Internal offset within the stripe*/
   uint32_t internal_offset = 0;
   /* The amount actually read */
-  int32_t amount_read = 0;
+  int amount_read = 0;
 
   /* Find out what my OSD ID is, so we can avoid talking to other
      OSDs. */
@@ -191,8 +191,10 @@ nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *exthandle,
   uint32_t stripe = 0;
   /* Internal offset within the stripe*/
   uint32_t internal_offset = 0;
-  /* The amount actually read */
+  /* The amount actually written */
   int32_t amount_written = 0;
+  /* The adjusted write length, confined to one object */
+  uint32_t adjusted_write = 0;
   /* Return code from ceph calls */
   int ceph_status = 0;
 
@@ -228,8 +230,8 @@ nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *exthandle,
       return NFS4ERR_PNFS_IO_HOLE;
     }
 
-  write_length = min((stripe_width - internal_offset),
-                     write_length);
+  adjusted_write = min((stripe_width - internal_offset),
+                       write_length);
 
   /* If the client specifies FILE_SYNC4, then we have to connect the
      filehandle and use the MDS to update size and access time. */
@@ -258,7 +260,7 @@ nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *exthandle,
         = ceph_ll_write(cmount,
                         descriptor,
                         offset,
-                        write_length,
+                        adjusted_write,
                         buffer);
 
       if (amount_written < 0)
@@ -283,23 +285,22 @@ nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *exthandle,
   else
     {
       /* FILE_SYNC4 wasn't specified, so we don't have to bother with
-         the MDS.  At present, ceph_ll_write_block either writes all
-         the data or fails. */
+         the MDS. */
 
-      if ((ceph_status
+      if ((amount_written
            = ceph_ll_write_block(cmount,
                                  VINODE(handle),
                                  stripe,
                                  buffer,
                                  internal_offset,
-                                 write_length,
+                                 adjusted_write,
                                  &(handle->data.layout),
-                                 handle->data.snapseq)) != 0)
+                                 handle->data.snapseq)) < 0)
         {
-          return posix2nfs4_error(-ceph_status);
+          return posix2nfs4_error(-amount_written);
         }
 
-      *written_length = write_length;
+      *written_length = amount_written;
       *stability_got = DATA_SYNC4;
     }
 
