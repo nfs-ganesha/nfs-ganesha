@@ -437,7 +437,7 @@ cache_inode_status_t cache_inode_close(cache_entry_t * pentry,
     }
 
   /* if locks are held in the file, do not close */
-  if( cache_inode_holds_state( pentry ) )
+  if( cache_inode_file_holds_state( pentry ) )
     {
       *pstatus = CACHE_INODE_SUCCESS; /** @todo : PhD : May be CACHE_INODE_STATE_CONFLICTS would be better ? */
       return *pstatus;
