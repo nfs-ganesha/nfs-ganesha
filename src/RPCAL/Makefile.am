@@ -1,3 +1,5 @@
+AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
+
 noinst_LTLIBRARIES = librpcal.la
 check_PROGRAMS = test_rpctools
 
