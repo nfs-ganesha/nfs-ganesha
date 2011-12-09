@@ -286,12 +286,14 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t        * pentry_parent,
           if(type == SYMBOLIC_LINK)
             {
               if( CACHE_INODE_KEEP_CONTENT( policy ) )
-               {
 #ifdef _USE_MFSL
+               {
                 fsal_status =
                     MFSL_readlink(&object_handle, pcontext, &pclient->mfsl_context,
                                   &create_arg.link_content, &object_attributes, NULL);
+               }
 #else
+               {
                 fsal_status =
                     FSAL_readlink(&object_handle, pcontext, &create_arg.link_content,
                                   &object_attributes);
