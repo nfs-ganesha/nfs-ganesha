@@ -353,10 +353,6 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_READ4.status;
     }
 
-  /* What is the filesize ? */
-  if((offset + read_size) > attr.filesize)
-    res_READ4.READ4res_u.resok4.eof = TRUE;
-
   res_READ4.READ4res_u.resok4.data.data_len = read_size;
   res_READ4.READ4res_u.resok4.data.data_val = bufferdata;
 
@@ -365,10 +361,12 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                (unsigned long long)offset, read_size, eof_met);
 
   /* Is EOF met or not ? */
-  if(eof_met == TRUE)
+  if( ( eof_met == TRUE ) || 
+      ( (offset + read_size) >= attr.filesize) )
     res_READ4.READ4res_u.resok4.eof = TRUE;
   else
     res_READ4.READ4res_u.resok4.eof = FALSE;
+                                               
 
   /* Say it is ok */
   res_READ4.status = NFS4_OK;

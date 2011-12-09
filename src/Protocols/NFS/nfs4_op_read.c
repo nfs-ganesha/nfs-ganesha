@@ -196,12 +196,19 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       if(pstate_open != NULL &&
          (pstate_open->state_data.share.share_access & OPEN4_SHARE_ACCESS_READ) == 0)
         {
-          /* Bad open mode, return NFS4ERR_OPENMODE */
-          res_READ4.status = NFS4ERR_OPENMODE;
-          LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "READ state %p doesn't have OPEN4_SHARE_ACCESS_READ",
-                   pstate_found);
-          return res_READ4.status;
+         /* Even if file is open for write, the client may do accidently read operation (caching).
+          * Because of this, READ is allowed if not explicitely denied.
+          * See page 72 in RFC3530 for more details */
+ 
+          if( pstate_open->state_data.share.share_deny & OPEN4_SHARE_DENY_READ )
+           {
+             /* Bad open mode, return NFS4ERR_OPENMODE */
+             res_READ4.status = NFS4ERR_OPENMODE;
+             LogDebug(COMPONENT_NFS_V4_LOCK,
+                      "READ state %p doesn't have OPEN4_SHARE_ACCESS_READ",
+                       pstate_found);
+             return res_READ4.status;
+           }
         }
 
       /* If NFSv4::Use_OPEN_CONFIRM is set to TRUE in the configuration file, check is state is confirmed */
@@ -342,7 +349,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   seek_descriptor.offset = offset;
 
   if(cache_inode_rdwr(pentry,
-                      CACHE_CONTENT_READ,
+                      CACHE_INODE_READ,
                       &seek_descriptor,
                       size,
                       &read_size,
@@ -357,10 +364,6 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       return res_READ4.status;
     }
 
-  /* What is the filesize ? */
-  if((offset + read_size) > attr.filesize)
-    res_READ4.READ4res_u.resok4.eof = TRUE;
-
   res_READ4.READ4res_u.resok4.data.data_len = read_size;
   res_READ4.READ4res_u.resok4.data.data_val = bufferdata;
 
@@ -369,7 +372,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                (unsigned long long)offset, read_size, eof_met);
 
   /* Is EOF met or not ? */
-  if(eof_met == TRUE)
+  if( ( eof_met == TRUE ) || 
+      ( (offset + read_size) >= attr.filesize) )
     res_READ4.READ4res_u.resok4.eof = TRUE;
   else
     res_READ4.READ4res_u.resok4.eof = FALSE;

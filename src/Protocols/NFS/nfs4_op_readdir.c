@@ -236,6 +236,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
   
   /* Perform the readdir operation */
   if(cache_inode_readdir(dir_pentry,
+                         data->pexport->cache_inode_policy,
                          cookie,
                          estimated_num_entries,
                          &num_entries,
@@ -426,7 +427,12 @@ out:
       V_r(&dir_pentry->lock);
 
   if (dirent_array)
+   {
+      if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) )
+        cache_inode_release_dirent( dirent_array, num_entries, data->pclient ) ;
+
       Mem_Free((char *)dirent_array);
+   }
 
   return res_READDIR4.status;
 }                               /* nfs4_op_readdir */

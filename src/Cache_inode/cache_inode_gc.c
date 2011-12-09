@@ -424,6 +424,12 @@ int cache_inode_gc_function(LRU_entry_t * plru_entry, void *addparam)
                    "We still need %d entries to be garbaged",
                    pgcparam->nb_to_be_purged);
 
+      /* Check if the entry is not a file that holds state
+       *  Files with states are not to be gc-ed  */
+      if( ( pentry->internal_md.type == REGULAR_FILE ) && 
+           cache_inode_file_holds_state( pentry ) )
+         return LRU_LIST_DO_NOT_SET_INVALID ;
+
       /* Should we get ride of this entry ? */
       if((pentry->internal_md.type == DIRECTORY) &&
          (cache_inode_gc_policy.directory_expiration_delay > 0))

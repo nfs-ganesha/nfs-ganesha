@@ -102,7 +102,8 @@ static cache_entry_t * choose_pentry( hash_table_t * ht)
         pdata = (hash_data_t *) it->rbt_opaq;
         pentry = (cache_entry_t *) (pdata->buffval.pdata) ;
 
-        if( counter == 10 )
+        /* No file invalidation for the moment (file can handle state) */
+        if( counter >= 10 ) 
          return pentry ;
 
         RBT_INCREMENT(it);

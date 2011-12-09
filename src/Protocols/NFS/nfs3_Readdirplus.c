@@ -256,6 +256,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 
   /* Call readdir */
   if(cache_inode_readdir(dir_pentry,
+                         pexport->cache_inode_policy,
                          cache_inode_cookie,
                          asked_num_entries,
                          &num_entries,
@@ -309,7 +310,9 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                  * read locked */
                 if (dir_pentry_unlock)
                     V_r(&dir_pentry->lock);
-
+   
+              if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
               Mem_Free((char *)dirent_array);
               return NFS_REQ_DROP;
             }
@@ -325,6 +328,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                 if (dir_pentry_unlock)
                     V_r(&dir_pentry->lock);
 
+              if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+               cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
               Mem_Free((char *)dirent_array);
               Mem_Free((char *)entry_name_array);
               return NFS_REQ_DROP;
@@ -342,6 +347,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                 if (dir_pentry_unlock)
                     V_r(&dir_pentry->lock);
 
+              if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
               Mem_Free((char *)dirent_array);
               Mem_Free((char *)entry_name_array);
 
@@ -365,6 +372,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                         if (dir_pentry_unlock)
                             V_r(&dir_pentry->lock);
 
+                      if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                        cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                       Mem_Free((char *)dirent_array);
                       Mem_Free((char *)entry_name_array);
                       Mem_Free((char *)fh3_array);
@@ -397,6 +406,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                         if (dir_pentry_unlock)
                             V_r(&dir_pentry->lock);
 
+                      if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                        cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                       Mem_Free((char *)dirent_array);
                       Mem_Free((char *)entry_name_array);
                       Mem_Free((char *)fh3_array);
@@ -452,6 +463,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                         if (dir_pentry_unlock)
                             V_r(&dir_pentry->lock);
 
+                      if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                        cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                       Mem_Free((char *)dirent_array);
                       Mem_Free((char *)entry_name_array);
                       Mem_Free((char *)fh3_array);
@@ -469,6 +482,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                         if (dir_pentry_unlock)
                             V_r(&dir_pentry->lock);
 
+                      if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                        cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                       Mem_Free((char *)dirent_array);
                       Mem_Free((char *)entry_name_array);
                       Mem_Free((char *)fh3_array);
@@ -500,6 +515,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                         if (dir_pentry_unlock)
                             V_r(&dir_pentry->lock);
 
+                      if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                        cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                       Mem_Free((char *)dirent_array);
                       Mem_Free((char *)entry_name_array);
                       Mem_Free((char *)fh3_array);
@@ -586,6 +603,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                         if (dir_pentry_unlock)
                             V_r(&dir_pentry->lock);
 
+                      if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                        cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                       Mem_Free((char *)dirent_array);
                       Mem_Free((char *)entry_name_array);
                       Mem_Free((char *)fh3_array);
@@ -609,6 +628,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                     if (dir_pentry_unlock)
                         V_r(&dir_pentry->lock);
 
+                  if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                    cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                   Mem_Free((char *)dirent_array);
                   Mem_Free((char *)entry_name_array);
                   Mem_Free((char *)fh3_array);
@@ -657,6 +678,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                     if (dir_pentry_unlock)
                         V_r(&dir_pentry->lock);
 
+                  if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+                    cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
                   Mem_Free((char *)dirent_array);
                   Mem_Free((char *)entry_name_array);
                   Mem_Free((char *)fh3_array);
@@ -728,6 +751,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
           V_r(&dir_pentry->lock);
 
       /* Free the memory */
+      if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) ) 
+        cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
       Mem_Free((char *)dirent_array);
 
       return NFS_REQ_OK;
@@ -741,6 +766,8 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
       V_r(&dir_pentry->lock);
 
   /* Free the memory */
+  if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) )
+    cache_inode_release_dirent( dirent_array, num_entries, pclient ) ;
   Mem_Free((char *)dirent_array);
   Mem_Free((char *)entry_name_array);
   Mem_Free((char *)fh3_array);

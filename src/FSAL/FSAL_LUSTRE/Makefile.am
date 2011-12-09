@@ -5,7 +5,7 @@ if USE_FSAL_LUSTRE
 if BUILD_SHARED_FSAL
 lib_LTLIBRARIES = libfsallustre.la
 libfsallustre_la_LDFLAGS = -version-number @LIBVERSION@
-libfsallustre_la_LIBADD = ../../SemN/libSemN.la -llustreapi
+libfsallustre_la_LIBADD = ../../SemN/libSemN.la -llustreapi  ../libfsalcommon.la 
 else
 noinst_LTLIBRARIES          = libfsallustre.la
 endif
@@ -31,6 +31,7 @@ libfsallustre_la_SOURCES = fsal_access.c      \
                           fsal_tools.c       \
                           fsal_xattrs.c      \
                           fsal_local_op.c    \
+                          fsal_lock.c     \
 			  fsal_internal.h    \
                           fsal_convert.h     \
                           ../../include/fsal.h       \

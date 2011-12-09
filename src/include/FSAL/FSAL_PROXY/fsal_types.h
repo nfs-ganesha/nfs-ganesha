@@ -148,9 +148,22 @@ typedef union {
 #ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_COOKIE_T_SIZE];
 #endif
+
+#define FSAL_SET_PCOOKIE_BY_OFFSET( __pfsal_cookie, __cookie )           \
+do                                                                       \
+{                                                                        \
+   ((proxyfsal_cookie_t *)__pfsal_cookie)->data = (off_t)__cookie ; \
+} while( 0 )
+
+#define FSAL_SET_OFFSET_BY_PCOOKIE( __pfsal_cookie, __cookie )           \
+do                                                                       \
+{                                                                        \
+   __cookie =  ((proxyfsal_cookie_t *)__pfsal_cookie)->data ;       \
+} while( 0 )
+
 } proxyfsal_cookie_t;
 
-#define FSAL_READDIR_FROM_BEGINNING 0
+// #define FSAL_READDIR_FROM_BEGINNING 0
 
 typedef struct
 {

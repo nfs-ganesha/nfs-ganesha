@@ -1,3 +1,5 @@
+AM_CFLAGS = -Wimplicit $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS)
+
 noinst_LTLIBRARIES = librpcal.la
 check_PROGRAMS = test_rpctools
 

@@ -120,9 +120,18 @@ cache_inode_status_t cache_inode_invalidate( fsal_handle_t        * pfsal_handle
   /* At this point, we are sure that an entry has been found */
   pentry = (cache_entry_t *)value.pdata;
 
+  /* Never invalidate an entry that holds states */
+  if( cache_inode_file_holds_state( pentry ) )
+   {
+       *pstatus = CACHE_INODE_STATE_CONFLICT ;
+       return *pstatus ;
+   }
+
+
   /* return attributes additionally (may be useful to be caller, at least for debugging purpose */
   cache_inode_get_attributes(pentry, pattr);
 
-  /* Call cache_inode_kill_entry, return status is stored in pstatus */
-  return cache_inode_kill_entry( pentry, ht, pclient, pstatus ) ;
-}                               /* cache_inode_invalidate */
+  /* pentry is lock, I call cache_inode_kill_entry with 'locked' flag set */
+  P_w( &pentry->lock ) ; 
+  return cache_inode_kill_entry( pentry, WT_LOCK, ht, pclient, pstatus ) ;
+} /* cache_inode_invalidate */

@@ -433,7 +433,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                         "cache_inode_new_entry: Stale FSAL File Handle detected for pentry = %p",
                         pentry);
 
-                if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+                if(cache_inode_kill_entry(pentry, NO_LOCK, ht, pclient, &kill_status) !=
                    CACHE_INODE_SUCCESS)
                     LogCrit(COMPONENT_CACHE_INODE,
                             "cache_inode_new_entry: Could not kill entry %p, status = %u",
@@ -1733,162 +1733,6 @@ void cache_inode_invalidate_related_dirents(  cache_entry_t        * pentry,
 
 /**
  *
- * cache_inode_kill_entry: force removing an entry from the cache_inode. This is used in case of a 'stale' entry.
- *
- * Force removing an entry from the cache_inode. This is used in case of a 'stale' entry.
- *
- * @param pentry  [IN] the input pentry (supposed to be staled).
- * @param ht      [INOUT] the related hash table for the cache_inode cache.
- * @param pclient [INOUT] related cache_inode client.
- * @param pstatus [OUT] status for the operation.
- *
- * @return CACHE_INODE_BAD_TYPE if pentry is not related a REGULAR_FILE or
- * DIRECTORY
- * @return CACHE_INODE_SUCCESS if operation succeded.
- *
- */
-cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
-                                            hash_table_t * ht,
-                                            cache_inode_client_t * pclient,
-                                            cache_inode_status_t * pstatus)
-{
-  fsal_handle_t *pfsal_handle = NULL;
-  cache_inode_fsal_data_t fsaldata;
-  cache_inode_parent_entry_t *parent_iter = NULL;
-  cache_inode_parent_entry_t *parent_iter_next = NULL;
-  hash_buffer_t key, old_key;
-  hash_buffer_t old_value;
-  int rc;
-  fsal_status_t fsal_status;
-
-  memset( (char *)&fsaldata, 0, sizeof( fsaldata ) ) ;
-
-  LogInfo(COMPONENT_CACHE_INODE,
-          "Using cache_inode_kill_entry for entry %p", pentry);
-
-  if(pstatus == NULL)
-    return CACHE_INODE_INVALID_ARGUMENT;
-
-  if(pentry == NULL || pclient == NULL || ht == NULL)
-    {
-      *pstatus = CACHE_INODE_INVALID_ARGUMENT;
-      return *pstatus;
-    }
-
-  /* Get the FSAL handle */
-  if((pfsal_handle = cache_inode_get_fsal_handle(pentry, pstatus)) == NULL)
-    {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "cache_inode_kill_entry: unable to retrieve pentry's specific filesystem info");
-      return *pstatus;
-    }
-
-  /* Invalidate the related LRU gc entry (no more required) */
-  if(pentry->gc_lru_entry != NULL)
-    {
-      if(LRU_invalidate(pentry->gc_lru, pentry->gc_lru_entry) != LRU_LIST_SUCCESS)
-        {
-          *pstatus = CACHE_INODE_LRU_ERROR;
-          return *pstatus;
-        }
-    }
-
-  fsaldata.handle = *pfsal_handle;
-  fsaldata.cookie = DIR_START;
-
-  /* Use the handle to build the key */
-  if(cache_inode_fsaldata_2_key(&key, &fsaldata, pclient))
-    {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "cache_inode_kill_entry: could not build hashtable key");
-
-      cache_inode_release_fsaldata_key(&key, pclient);
-      *pstatus = CACHE_INODE_NOT_FOUND;
-      return *pstatus;
-    }
-
-  /* Clean parent entries */
-  cache_inode_invalidate_related_dirents(pentry, pclient);
-
-  /* use the key to delete the entry */
-  if((rc = HashTable_Del(ht, &key, &old_key, &old_value)) != HASHTABLE_SUCCESS)
-    {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "cache_inode_kill_entry: entry could not be deleted, status = %d",
-              rc);
-
-      cache_inode_release_fsaldata_key(&key, pclient);
-
-      *pstatus = CACHE_INODE_NOT_FOUND;
-      return *pstatus;
-    }
-
-  /* Clean up the associated ressources in the FSAL */
-  if(FSAL_IS_ERROR(fsal_status = FSAL_CleanObjectResources(pfsal_handle)))
-    {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "cache_inode_kill_entry: Could'nt free FSAL ressources fsal_status.major=%u",
-              fsal_status.major);
-    }
-
-  /* Release the hash key data */
-  cache_inode_release_fsaldata_key(&old_key, pclient);
-
-  /* Sanity check: old_value.pdata is expected to be equal to pentry,
-   * and is released later in this function */
-  if((cache_entry_t *) old_value.pdata != pentry)
-    {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "cache_inode_kill_entry: unexpected pdata %p from hash table (pentry=%p)",
-              old_value.pdata, pentry);
-    }
-
-  /* Release the current key */
-  cache_inode_release_fsaldata_key(&key, pclient);
-
-  /* Recover the parent list entries */
-  parent_iter = pentry->parent_list;
-  while(parent_iter != NULL)
-    {
-      parent_iter_next = parent_iter->next_parent;
-
-      ReleaseToPool(parent_iter, &pclient->pool_parent);
-
-      parent_iter = parent_iter_next;
-    }
-
-  /* If entry is datacached, remove it from the cache */
-  if(pentry->internal_md.type == REGULAR_FILE)
-    {
-      cache_content_status_t cache_content_status;
-
-      if(pentry->object.file.pentry_content != NULL)
-        if(cache_content_release_entry
-           ((cache_content_entry_t *) pentry->object.file.pentry_content,
-            (cache_content_client_t *) pclient->pcontent_client,
-            &cache_content_status) != CACHE_CONTENT_SUCCESS)
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "Could not removed datacached entry for pentry %p", pentry);
-    }
-
-  /* If entry is a DIRECTORY, invalidate dirents */
-  if(pentry->internal_md.type == DIRECTORY)
-    {
-	cache_inode_invalidate_related_dirents(pentry, pclient);
-    }
-
-  /* Destroy the mutex associated with the pentry */
-  cache_inode_mutex_destroy(pentry);
-
-  /* Put the pentry back to the pool */
-  ReleaseToPool(pentry, &pclient->pool_entry);
-
-  *pstatus = CACHE_INODE_SUCCESS;
-  return *pstatus;
-}                               /* cache_inode_kill_entry */
-
-/**
- *
  * cache_inode_release_symlink: release an entry's symlink component, if
  * present
  *
@@ -1975,6 +1819,45 @@ void cache_inode_release_dirents( cache_entry_t           * pentry,
 	break;
      }
 } 
+
+/**
+ *
+ *  cache_inode_file_holds_state : checks if a file entry holds state(s) or not.
+ *
+ * Checks if a file entry holds state(s) or not.
+ *
+ * @param pentry [IN] entry to be checked
+ *
+ * @return TRUE is state(s) are held, FALSE otherwise
+ *
+ */
+inline unsigned int cache_inode_file_holds_state( cache_entry_t * pentry )
+{
+  unsigned int found_state = FALSE ;
+
+  if( pentry == NULL )
+   return FALSE ;
+
+  if( pentry->internal_md.type != REGULAR_FILE )
+   return FALSE ;
+
+   /* if locks are held in the file, do not close */
+  P(pentry->object.file.lock_list_mutex);
+  if(!glist_empty(&pentry->object.file.lock_list))
+    {
+      found_state = TRUE ;
+    }
+  V(pentry->object.file.lock_list_mutex);
+  
+  if( found_state == TRUE ) 
+    return found_state ;
+
+  if(!glist_empty(&pentry->object.file.state_list))
+    return TRUE ;
+
+  /* if this place is reached, the file holds no state */
+  return FALSE ;
+} /* cache_inode_file_holds_state */
 
 #ifdef _USE_PROXY
 void nfs4_sprint_fhandle(nfs_fh4 * fh4p, char *outstr);
