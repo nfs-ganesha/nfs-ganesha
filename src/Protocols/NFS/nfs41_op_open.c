@@ -111,11 +111,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   newfh4.nfs_fh4_val = newfh4_val;
 
-  fsal_accessflags_t write_access = FSAL_MODE_MASK_SET(FSAL_W_OK) |
-                                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA |
-                                                       FSAL_ACE_PERM_APPEND_DATA);
-  fsal_accessflags_t read_access = FSAL_MODE_MASK_SET(FSAL_R_OK) |
-                                   FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_DATA);
+  fsal_accessflags_t write_access = FSAL_WRITE_ACCESS;
+  fsal_accessflags_t read_access = FSAL_READ_ACCESS;
 
   resp->resop = NFS4_OP_OPEN;
   res_OPEN4.status = NFS4_OK;

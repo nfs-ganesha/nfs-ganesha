@@ -157,6 +157,26 @@ int nfs_Read(nfs_arg_t * parg,
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_read3.file))))
     return nfs3_Read_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
 
+  if(cache_inode_access(pentry,
+                        FSAL_READ_ACCESS,
+                        ht,
+                        pclient,
+                        pcontext,
+                        &cache_status) != CACHE_INODE_SUCCESS)
+    {
+      switch (preq->rq_vers)
+        {
+        case NFS_V2:
+          pres->res_attr2.status = nfs2_Errno(cache_status);
+          break;
+
+        case NFS_V3:
+          pres->res_read3.status = nfs3_Errno(cache_status);
+          break;
+        }
+      return NFS_REQ_OK;
+    }
+
   /* get directory attributes before action (for V3 reply) */
   ppre_attr = &pre_attr;
 

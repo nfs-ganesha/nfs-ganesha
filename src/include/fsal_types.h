@@ -634,6 +634,13 @@ typedef fsal_uint_t fsal_accessflags_t;
 
 #define IS_FSAL_DIR(filetype)  (filetype == FSAL_TYPE_DIR)
 
+#define FSAL_WRITE_ACCESS (FSAL_MODE_MASK_SET(FSAL_W_OK) | \
+                           FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA | \
+                                              FSAL_ACE_PERM_APPEND_DATA))
+#define FSAL_READ_ACCESS (FSAL_MODE_MASK_SET(FSAL_R_OK) | \
+                          FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_DATA))
+
+
 /** directory entry */
 
 typedef struct fsal_dirent__
