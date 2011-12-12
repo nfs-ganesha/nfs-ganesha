@@ -7,7 +7,7 @@ nfs-ganesha (1.2.0-1) stable; urgency=low
  * Early 9P support
  * Lustre FSAL: exporting several Lustre fuilesystem with the same server
 
- -- Philippe Deniel <philippe.deniel@cea.fr>  Fri, 18 Apr 2011 11:11:11 +0200
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Mon, 12 Dec 2011 11:11:11 +0200
 
 nfs-ganesha (1.1.1-1) stable; urgency=low
  * Bug Fix: padded size for FSAL-less daemon were too short and not aligned on 64 bits
@@ -23,7 +23,7 @@ nfs-ganesha (1.1.1-1) stable; urgency=low
  * Early 9P support
  * Lustre FSAL: exporting several Lustre fuilesystem with the same server instance
 
- -- Philippe Deniel <philippe.deniel@cea.fr>  Fri, 11 Apr 2011 11:11:11 +0200
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Fri, 11 Nov 2011 11:11:11 +0200
 
 nfs-ganesha (1.0.1-1) stable; urgency=low
   * Bug Fix: Bad memset in FSAL_HPSS::HPSSFSAL_lookup. Result was a segfault at init.
