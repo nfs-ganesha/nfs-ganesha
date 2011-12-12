@@ -468,7 +468,7 @@
        - Bug Fix: bad modes/ACLs management in several FSALs (produced EPERM errors)
        - Bug Fix: badly managed access_type in nfs3_Access
 
-1.2.0  - 
+1.2.0  - Mon 12 Dec 2011
        - Bug Fix:  Call cache_inode_close after deleting share state
        - Added support for ERR_FSAL_DELAY in upper layer
        - FSAL code has been reorganized a lot
