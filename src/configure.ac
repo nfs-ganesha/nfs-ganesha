@@ -637,6 +637,8 @@ case $FSAL in
                                 OPENHANDLE_LINK_BY_FD,
 		                OPENHANDLE_READLINK_BY_FD,
                                 OPENHANDLE_STAT_BY_HANDLE,
+                                OPENHANDLE_GET_LOCK,
+                                OPENHANDLE_SET_LOCK,
                                 XATTR_STAT,
                                 XATTR_MODE,
                                 XATTR_UID,
