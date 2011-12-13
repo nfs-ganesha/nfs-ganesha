@@ -356,6 +356,14 @@ fsal_status_t LUSTREFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,      
                                            fsal_op_context_t * p_context, /* IN */
                                            const fsal_name_t * xattr_name) /* IN */ ;
 
+fsal_status_t LUSTREFSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
+                                  fsal_handle_t     * p_filehandle,        /* IN */
+                                  fsal_op_context_t * p_context,           /* IN */
+                                  void              * p_owner,             /* IN (opaque to FSAL) */
+                                  fsal_lock_op_t      lock_op,             /* IN */
+                                  fsal_lock_param_t   request_lock,        /* IN */
+                                  fsal_lock_param_t * conflicting_lock)    /* OUT */ ;
+
 unsigned int LUSTREFSAL_GetFileno(fsal_file_t * pfile);
 
 fsal_status_t LUSTREFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
