@@ -45,11 +45,6 @@
 #define FSAL_COOKIE_T_SIZE             16  /* Has to be a multiple of 8 for alignement reasons */
 #define FSAL_FS_SPECIFIC_INITINFO_T 17216  /* Has to be a multiple of 8 for alignement reasons */
 #define FSAL_CRED_T_SIZE              144  /* Has to be a multiple of 8 for alignement reasons */
-#ifdef _USE_FSALMDS
-#define FSAL_MULTIGET_MARK_T           64  /* Has to be a multiple of 8 for alignement reasons */
-#define FSAL_MULTICOMMIT_MARK_T        64  /* Has to be a multiple of 8 for alignement reasons */
-#define FSAL_LAYOUT_SEGID_T            16  /* Has to be a multiple of 8 for alignement reasons */
-#endif /* _USE_FSALMDS*/
 
 /* Const related to multiple FSAL support */
 #ifdef _USE_SHARED_FSAL

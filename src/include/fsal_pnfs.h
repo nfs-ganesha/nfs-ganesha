@@ -52,13 +52,13 @@
 
 typedef struct fsal_segment
 {
-  layoutiomode4 io_mode; /**< The IO mode (must be read or write) */
-  offset4 offset; /**< The offset of the segment */
-  length4 length; /**< The length of the segment */
-  fsal_layout_segid_t segid; /**< A value meaningful to the FSAL but
-                                  opaque to the rest of Ganesha that
-                                  will be supplied in future calls to
-                                  return or commit this segment. */
+  layoutiomode4 io_mode; /*< The IO mode (must be read or write) */
+  offset4 offset; /*< The offset of the segment */
+  length4 length; /*< The length of the segment */
+  void *fsal_data; /*< A pointer to memory allocated by the FSAL at
+                       LAYOUTGET time.  The FSAL must free this memory
+                       whenever it indicates a segment has been
+                       disposed of. */
 } fsal_segment_t;
 
 /**
@@ -67,12 +67,12 @@ typedef struct fsal_segment
 
 typedef struct fsal_deviceid
 {
-  uint64_t export_id; /**< Identifier for the given export.  Currently
-                           ganesha uses an unsigned short as the export
-                           identifier, but we want room for whatever
-                           the multi-FSAL work ends up needing. */
-  uint64_t devid; /**< Low quad of the deviceid, must be unique
-                       within a given export. */
+  uint64_t export_id; /*< Identifier for the given export.  Currently
+                          ganesha uses an unsigned short as the export
+                          identifier, but we want room for whatever
+                          the multi-FSAL work ends up needing. */
+  uint64_t devid; /*< Low quad of the deviceid, must be unique within
+                      a given export. */
 } fsal_deviceid_t;
 
 /******************************************************
@@ -86,13 +86,13 @@ typedef struct fsal_deviceid
 
 struct fsal_layoutget_arg
 {
-  layouttype4 type; /**< The type of layout being requested */
-  length4 minlength; /**< The minimum length that must be granted if
-                          a layout is to be granted at all. */
-  unsigned short export_id; /**< Ths FSAL must use this value (in
-                                 network byte order) as the high quad
-                                 of any deviceid4 it returns in the
-                                 loc_body. */
+  layouttype4 type; /*< The type of layout being requested */
+  length4 minlength; /*< The minimum length that must be granted if a
+                         layout is to be granted at all. */
+  unsigned short export_id; /*< Ths FSAL must use this value (in
+                                network byte order) as the high quad
+                                of any deviceid4 it returns in the
+                                loc_body. */
 };
 
 /**
@@ -102,24 +102,27 @@ struct fsal_layoutget_arg
 
 struct fsal_layoutget_res
 {
-  fsal_segment_t segment; /**< As input, the offset, length, and iomode
-                               requested by the caller.  As output, the
-                               offset, length, and iomode of a given
-                               segment granted by the FSAL. */
-  fsal_boolean_t return_on_close; /**< Whether the layout should be
-                                       returned on last close.  Note
-                                       that this flag being set on one
-                                       segment makes all layout
-                                       segments associated with the
-                                       same stateid
-                                       return_on_close. */
-  fsal_multiget_mark_t bookkeeper; /**< Pointer to FSAL-specified tracking data
-                                        used between calls
-                                        FSAL_layoutget that serve a
-                                        single operation. */
-  fsal_boolean_t last_segment; /***< The FSAL must set this to TRUE when
-                                     it has granted the last segment
-                                     to satisfy this operation. */
+  fsal_segment_t segment; /*< As input, the offset, length, and iomode
+                              requested by the caller.  As output, the
+                              offset, length, and iomode of a given
+                              segment granted by the FSAL. */
+  fsal_boolean_t return_on_close; /*< Whether the layout should be
+                                      returned on last close.  Note
+                                      that this flag being set on one
+                                      segment makes all layout
+                                      segments associated with the
+                                      same stateid
+                                      return_on_close. */
+  void *context; /*< This pointer is NULL on the first call
+                     FSAL_layoutget.  The FSAL may store a pointer to
+                     any data it wishes, and this pointer will be
+                     supplied to future calls to FSAL_layoutget that
+                     serve the same LAYOUTGET operation.  The FSAL
+                     must de-allocate any memory it allocated when it
+                     sets the last_segment flag */
+  fsal_boolean_t last_segment; /*< The FSAL must set this to TRUE when
+                                   it has granted the last segment to
+                                   satisfy this operation. */
 };
 
 /**
@@ -160,12 +163,12 @@ nfsstat4 FSAL_layoutget(fsal_handle_t *handle,
 
 struct fsal_layoutreturn_arg
 {
-  layouttype4 type; /**< The type of layout being returned */
-  offset4 offset; /**< The offset specified in the return operation */
-  length4 length; /**< The length specified in the return operation*/
-  fsal_boolean_t synthetic; /**< Whether this return was synthesized
-                                 a result of return_on_close or lease
-                                 expiration. */
+  layouttype4 type; /*< The type of layout being returned */
+  offset4 offset; /*< The offset specified in the return operation */
+  length4 length; /*< The length specified in the return operation*/
+  fsal_boolean_t synthetic; /*< Whether this return was synthesized a
+                                result of return_on_close or lease
+                                expiration. */
 };
 
 /**
@@ -175,11 +178,12 @@ struct fsal_layoutreturn_arg
 
 struct fsal_layoutreturn_res
 {
-  fsal_segment_t segment; /**< The current segment in the return iteration,
-                               may be modified (changing offset or length)
-                               to reflect a partial return. */
-  fsal_boolean_t disposed; /**< Set to true if the segment has been
-                                completely disposed. */
+  fsal_segment_t segment; /*< The current segment in the return
+                              iteration, may be modified (changing
+                              offset or length) to reflect a partial
+                              return. */
+  fsal_boolean_t disposed; /*< Set to true if the segment has been
+                               completely disposed. */
 };
 
 /**
@@ -230,18 +234,18 @@ nfsstat4 FSAL_layoutreturn(fsal_handle_t* handle,
 
 struct fsal_layoutcommit_arg
 {
-  layouttype4 type; /**< The type of the layout being committed */
-  fsal_segment_t segment; /**< The segment being committed on this call */
-  fsal_boolean_t reclaim; /**< True if this is a reclaim commit */
-  fsal_boolean_t new_offset; /**< True if the client has suggested a
-                                  new offset */
-  offset4 last_write; /**< The offset of the last byte written, if
-                           new_offset if set, otherwise undefined. */
-  fsal_boolean_t time_changed; /**< True if the client provided a new value
-                                    for mtime */
-  fsal_time_t new_time; /**< If new_time is true, the client-supplied
-                             modification tiem for the file.  otherwise,
-                             undefined. */
+  layouttype4 type; /*< The type of the layout being committed */
+  fsal_segment_t segment; /*< The segment being committed on this call */
+  fsal_boolean_t reclaim; /*< True if this is a reclaim commit */
+  fsal_boolean_t new_offset; /*< True if the client has suggested a
+                                 new offset */
+  offset4 last_write; /*< The offset of the last byte written, if
+                          new_offset if set, otherwise undefined. */
+  fsal_boolean_t time_changed; /*< True if the client provided a new
+                                   value for mtime */
+  fsal_time_t new_time; /*< If new_time is true, the client-supplied
+                            modification tiem for the file.
+                            otherwise, undefined. */
 };
 
 /**
@@ -251,16 +255,20 @@ struct fsal_layoutcommit_arg
 
 struct fsal_layoutcommit_res
 {
-  fsal_multicommit_mark_t bookmark; /**< State preserved between calls
-                                         to FSAL_layoutcommit. */
-  fsal_boolean_t size_supplied; /**< True if the FSAL is returning a
-                                     new filesize */
-  length4 new_size; /**< The new file size returned by the FSAL */
-  fsal_boolean_t commit_done; /**< The FSAL has completed the
-                                 LAYOUTCOMMIT operation and
-                                 FSAL_layoutcommit need not be
-                                 called again, even if more segments
-                                 are left in the layout. */
+  void *context; /*< A pointer, NULL on the first call to
+                     FSAL_layoutcommit.   The FSAL may store whatever
+                     it wishes in this filed and it will be supplied
+                     on all subsequent calls.  If the FSAL has
+                     allocated any memory, this memory must be freed
+                     if commit_done is set. */
+  fsal_boolean_t size_supplied; /*< True if the FSAL is returning a
+                                    new filesize */
+  length4 new_size; /*< The new file size returned by the FSAL */
+  fsal_boolean_t commit_done; /*< The FSAL has completed the
+                                  LAYOUTCOMMIT operation and
+                                  FSAL_layoutcommit need not be called
+                                  again, even if more segments are
+                                  left in the layout. */
 };
 
 /**
@@ -319,10 +327,10 @@ nfsstat4 FSAL_getdeviceinfo(fsal_op_context_t *context,
 
 struct fsal_getdevicelist_arg
 {
-  unsigned short export_id; /**< The ID of the export on which the
-                                 device list is requested */
-  layouttype4 type; /**< The type of layout for which a device list is
-                         being requested */
+  unsigned short export_id; /*< The ID of the export on which the
+                                device list is requested */
+  layouttype4 type; /*< The type of layout for which a device list is
+                        being requested */
 };
 
 /**
@@ -332,26 +340,26 @@ struct fsal_getdevicelist_arg
 
 struct fsal_getdevicelist_res
 {
-  nfs_cookie4 cookie; /**< Input, cookie indicating position in device
-                           list from which to begin.
-                           Output, cookie that may be supplied to get
-                           the entry after the alst one returned.
-                           Undefined if EOF is set. */
-  verifier4 cookieverf; /**< For any non-zero cookie, this must be the
-                             verifier returned from a previous call to
-                             getdevicelist.  The FSAL may use this
-                             value to verify that the cookie is not out
-                             of date. A cookie verifier may be supplied
-                             by the FSAL on output. */
-  fsal_boolean_t eof; /**< True if the last deviceid has been returned. */
-  unsigned int count; /**< Input, the number of devices requested (and
-                           the number of devices there is space for).
-                           Output, the number of devices supplied by
-                           the FSAL. */
-  uint64_t *devids; /**< An array of the low quads of deviceids.  The
-                         high quad will be supplied by
-                         nfs41_op_getdevicelist, derived from the
-                         export. */
+  nfs_cookie4 cookie; /*< Input, cookie indicating position in device
+                          list from which to begin.  Output, cookie
+                          that may be supplied to get the entry after
+                          the alst one returned.  Undefined if EOF is
+                          set. */
+  verifier4 cookieverf; /*< For any non-zero cookie, this must be the
+                            verifier returned from a previous call to
+                            getdevicelist.  The FSAL may use this
+                            value to verify that the cookie is not out
+                            of date. A cookie verifier may be supplied
+                            by the FSAL on output. */
+  fsal_boolean_t eof; /*< True if the last deviceid has been returned. */
+  unsigned int count; /*< Input, the number of devices requested (and
+                          the number of devices there is space for).
+                          Output, the number of devices supplied by
+                          the FSAL. */
+  uint64_t *devids; /*< An array of the low quads of deviceids.  The
+                        high quad will be supplied by
+                        nfs41_op_getdevicelist, derived from the
+                        export. */
 };
 
 /**

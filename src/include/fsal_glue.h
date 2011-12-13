@@ -110,25 +110,6 @@ typedef struct
   char data[FSAL_FS_SPECIFIC_INITINFO_T];
 } fs_specific_initinfo_t;
 
-#ifdef _USE_FSALMDS
-
-typedef struct
-{
-  char data[FSAL_MULTIGET_MARK_T];
-} fsal_multiget_mark_t;
-
-typedef struct
-{
-  char data[FSAL_MULTICOMMIT_MARK_T];
-} fsal_multicommit_mark_t;
-
-typedef struct
-{
-  char data[FSAL_LAYOUT_SEGID_T];
-} fsal_layout_segid_t;
-
-#endif                          /* _USE_FSALMDS */
-
 #endif                          /* USE_SHARED_FSAL */
 
 #endif                          /* _FSAL_GLUE_H */
