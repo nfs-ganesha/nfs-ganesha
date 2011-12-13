@@ -231,7 +231,6 @@ fsal_status_t CEPHFSAL_read(fsal_file_t * extdescriptor,
   struct ceph_mount_info *cmount = descriptor->ctx.export_context->cmount;
 
   int nb_read = 0;
-  int whence;
   fsal_off_t offset;
 
   /* sanity checks. */
@@ -241,30 +240,19 @@ fsal_status_t CEPHFSAL_read(fsal_file_t * extdescriptor,
 
   if (seek_descriptor)
     {
-      if (seek_descriptor->whence == FSAL_SEEK_SET)
-        whence = SEEK_SET;
-      else if (seek_descriptor->whence == FSAL_SEEK_CUR)
-        whence = SEEK_CUR;
-      else if (seek_descriptor->whence == FSAL_SEEK_END)
-        whence = SEEK_END;
-    }
-
-  TakeTokenFSCall();
-
-  if (seek_descriptor)
-    {
-        offset = ceph_ll_lseek(cmount, FH(descriptor), seek_descriptor->offset,
-                               whence);
+      if (seek_descriptor->whence != FSAL_SEEK_SET)
+        {
+          Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_write);
+        }
+      else
+        {
+          offset = seek_descriptor->offset;
+        }
     }
   else
     {
-        offset = ceph_ll_lseek(cmount, FH(descriptor), 0, SEEK_CUR);
+      offset = 0;
     }
-
-  ReleaseTokenFSCall();
-
-  if (offset < 0)
-    Return(posix2fsal_error(offset), 0, INDEX_FSAL_read);
 
   TakeTokenFSCall();
 
@@ -320,7 +308,6 @@ fsal_status_t CEPHFSAL_write(fsal_file_t * extdescriptor,
   struct ceph_mount_info *cmount = descriptor->ctx.export_context->cmount;
   int nb_written=0;
   fsal_off_t offset;
-  int whence;
 
   /* sanity checks. */
   if(!descriptor || !buffer || !write_amount)
@@ -328,46 +315,24 @@ fsal_status_t CEPHFSAL_write(fsal_file_t * extdescriptor,
 
   if (seek_descriptor)
     {
-      if (seek_descriptor->whence == FSAL_SEEK_SET)
-        whence = SEEK_SET;
-      else if (seek_descriptor->whence == FSAL_SEEK_CUR)
-        whence = SEEK_CUR;
-      else if (seek_descriptor->whence == FSAL_SEEK_END)
-        whence = SEEK_END;
-    }
-
-  TakeTokenFSCall();
-
-  if (seek_descriptor)
-    {
-        offset = ceph_ll_lseek(cmount, FH(descriptor), seek_descriptor->offset,
-                               whence);
+      if (seek_descriptor->whence != FSAL_SEEK_SET)
+        {
+          Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_write);
+        }
+      else
+        {
+          offset = seek_descriptor->offset;
+        }
     }
   else
     {
-        offset = ceph_ll_lseek(cmount, FH(descriptor), 0, SEEK_CUR);
+      offset = 0;
     }
-
-  ReleaseTokenFSCall();
-
-  if (offset < 0)
-    Return(posix2fsal_error(offset), 0, INDEX_FSAL_read);
 
   TakeTokenFSCall();
 
   nb_written = ceph_ll_write(cmount, FH(descriptor), offset, buffer_size,
                              buffer);
-
-  /* The cache layer buffers data in memory and calls the FSAL
-     specifically for writes to stable storage.  The second argument
-     to ceph_ll_fsync is a boolean, if it is true than only data is
-     swnc.  The cache layer does not propagate stable_how to the FSAL,
-     however, so we treat everything as if it were FILE_SYNC4 */
-
-  if (ceph_ll_fsync(cmount, FH(descriptor), 0) < 0)
-    {
-      Return(posix2fsal_error(nb_written), 0, INDEX_FSAL_write);
-    }
 
   ReleaseTokenFSCall();
 
@@ -429,4 +394,37 @@ unsigned int CEPHFSAL_GetFileno(fsal_file_t * pfile)
 {
   unsigned int mask=0xFFFFFFFF;
   return (mask & ((uintptr_t) FH((cephfsal_file_t*) pfile)));
+}
+
+/**
+ * FSAL_sync:
+ * This function is used for processing stable writes and COMMIT requests.
+ * Calling this function makes sure the changes to a specific file are
+ * written to disk rather than kept in memory.
+ *
+ * \param file_descriptor (input):
+ *        The file descriptor returned by FSAL_open.
+ *
+ * \return Major error codes:
+ *      - ERR_FSAL_NO_ERROR: no error.
+ *      - Another error code if an error occured during this call.
+ */
+fsal_status_t CEPHFSAL_sync(fsal_file_t *extdescriptor)
+{
+  cephfsal_file_t* descriptor = (cephfsal_file_t*) extdescriptor;
+  struct ceph_mount_info *cmount = descriptor->ctx.export_context->cmount;
+  int rc = 0;
+
+  /* sanity checks. */
+  if(!extdescriptor)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_sync);
+
+  TakeTokenFSCall();
+  if ((rc = ceph_ll_fsync(cmount, FH(descriptor), 0)) < 0)
+    {
+      Return(posix2fsal_error(rc), 0, INDEX_FSAL_sync);
+    }
+  ReleaseTokenFSCall();
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync);
 }

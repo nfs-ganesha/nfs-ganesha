@@ -207,6 +207,8 @@ fsal_status_t CEPHFSAL_close_by_fileid(fsal_file_t * file_descriptor,
 
 unsigned int CEPHFSAL_GetFileno(fsal_file_t * pfile);
 
+fsal_status_t CEPHFSAL_sync(fsal_file_t *extdescriptor);
+
 fsal_status_t CEPHFSAL_static_fsinfo(fsal_handle_t * exthandle,
                                      fsal_op_context_t * context,
                                      fsal_staticfsinfo_t * staticinfo);
