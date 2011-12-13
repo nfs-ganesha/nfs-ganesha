@@ -1338,7 +1338,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 	  /* Swap the anonymous uid/gid if the user should be anonymous */
           if(nfs_check_anon(&related_client, pexport, &user_credentials) == FALSE
 	     || nfs_build_fsal_context(ptr_req,
-                                       &related_client, pexport,
+                                       pexport,
 				       &pworker_data->thread_fsal_context[pexport->fsalid],
 				       &user_credentials) == FALSE)
 #else

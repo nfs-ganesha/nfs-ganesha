@@ -1,3 +1,5 @@
+#ifndef _COMMON_METHODS_H
+#define _COMMON_METHODS_H
 /*
  * Common FSAL methods
  */
@@ -83,3 +85,4 @@ fsal_status_t COMMON_getextattrs_notsupp(fsal_handle_t * p_filehandle, /* IN */
 				 fsal_extattrib_list_t * p_object_attributes /* OUT */ );
 
 fsal_status_t COMMON_terminate_noerror();
+#endif
