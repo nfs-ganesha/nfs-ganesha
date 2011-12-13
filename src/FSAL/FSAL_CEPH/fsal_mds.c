@@ -148,7 +148,7 @@ nfsstat4 CEPHFSAL_layoutget(fsal_handle_t *exthandle,
           return NFS4ERR_BADLAYOUT;
         }
       res->segment.offset = 0;
-      res->segment.offset = stripe_width * BIGGEST_PATTERN;
+      res->segment.length = stripe_width * BIGGEST_PATTERN;
       res->segment.io_mode = LAYOUTIOMODE4_RW;
     }
 
