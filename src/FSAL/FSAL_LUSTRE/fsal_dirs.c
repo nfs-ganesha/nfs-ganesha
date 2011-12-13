@@ -170,7 +170,7 @@ fsal_status_t LUSTREFSAL_readdir(fsal_dir_t *dir_desc,   /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
   max_dir_entries = (buffersize / sizeof(fsal_dirent_t));
-  start_position.data.cookie = (off_t)start_pos.data;
+  memcpy( (char *)& start_position.data.cookie, start_pos.data, sizeof( off_t ) ) ;
 
   /***************************/
   /* seek into the directory */

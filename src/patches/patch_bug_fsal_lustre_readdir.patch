@@ -1,0 +1,28 @@
+diff --git a/src/FSAL/FSAL_LUSTRE/fsal_dirs.c b/src/FSAL/FSAL_LUSTRE/fsal_dirs.c
+index 764d5d2..9b196d7 100644
+--- a/src/FSAL/FSAL_LUSTRE/fsal_dirs.c
++++ b/src/FSAL/FSAL_LUSTRE/fsal_dirs.c
+@@ -170,7 +170,7 @@ fsal_status_t LUSTREFSAL_readdir(fsal_dir_t *dir_desc,   /* IN */
+     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
+ 
+   max_dir_entries = (buffersize / sizeof(fsal_dirent_t));
+-  start_position.data.cookie = (off_t)start_pos.data;
++  memcpy( (char *)& start_position.data.cookie, start_pos.data, sizeof( off_t ) ) ;
+ 
+   /***************************/
+   /* seek into the directory */
+diff --git a/src/shell/commands_FSAL.c b/src/shell/commands_FSAL.c
+index cde902e..708d646 100644
+--- a/src/shell/commands_FSAL.c
++++ b/src/shell/commands_FSAL.c
+@@ -358,6 +358,10 @@ int Init_Thread_Context(FILE * output, cmdfsal_thr_info_t * context, int flag_v)
+   fsal_path_t local_path_fsal;
+   st = FSAL_str2path("/tmp", strlen("/tmp"), &local_path_fsal);
+   st = FSAL_BuildExportContext(&context->exp_context, &local_path_fsal, NULL);
++#elif defined( _USE_LUSTRE )
++  fsal_path_t local_path_fsal;
++  st = FSAL_str2path("/mnt/lustre", strlen("/mnt/lustre"), &local_path_fsal);
++  st = FSAL_BuildExportContext(&context->exp_context, &local_path_fsal, NULL);
+ #else
+   st = FSAL_BuildExportContext(&context->exp_context, NULL, NULL);
+ #endif
