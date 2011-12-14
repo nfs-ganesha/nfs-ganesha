@@ -178,7 +178,8 @@ fsal_status_t ZFSFSAL_readdir(fsal_dir_t * dir_desc, /* IN */
     fstat.st_atime = ServerBootTime;
     fstat.st_mtime = ServerBootTime;
 
-    start_position.data.cookie = (off_t)start_pos.data;
+    memcpy( (char *)&start_position.data.cookie, start_pos.data, sizeof( off_t ) ) ;
+
     ZFSFSAL_VFS_RDLock();
     for(i = 0; i < max_dir_entries && i < i_snapshots; i++)
     {
