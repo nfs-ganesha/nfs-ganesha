@@ -11,6 +11,7 @@ SUBDIRS = include             \
           $(BUDDYDIR)         \
           Common              \
           ConfigParsing       \
+          cidr                \
           RW_Lock             \
           SemN                \
           test                \
