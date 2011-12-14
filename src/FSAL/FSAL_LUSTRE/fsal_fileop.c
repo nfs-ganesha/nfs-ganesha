@@ -209,8 +209,8 @@ fsal_status_t LUSTREFSAL_open(fsal_handle_t * p_filehandle,       /* IN */
             if (rc == 0)
             {
                 /* use a short timeout of 2s */
-                rc = shook_server_call(SA_RESTORE_TRUNC, p_context->export_context->fsname,
-                                       &p_filehandle->data.fid, 2);
+                rc = shook_server_call(SA_RESTORE_TRUNC, ((lustrefsal_op_context_t *)p_context)->export_context->fsname,
+                                       &((lustrefsal_handle_t *)p_filehandle)->data.fid, 2);
                 if (rc)
                     Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
             }
@@ -226,8 +226,8 @@ fsal_status_t LUSTREFSAL_open(fsal_handle_t * p_filehandle,       /* IN */
         } else {
             /* trigger restore. Give it a chance to retrieve the file in less than a second.
              * Else, it returns ETIME that is converted in ERR_DELAY */
-            rc = shook_server_call(SA_RESTORE, p_context->export_context->fsname,
-                                   &p_filehandle->data.fid, 1);
+            rc = shook_server_call(SA_RESTORE, ((lustrefsal_op_context_t*)p_context)->export_context->fsname,
+                                   &((lustrefsal_handle_t *)p_filehandle)->data.fid, 1);
             if (rc)
                 Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
             /* if rc = 0, file can be opened */
@@ -341,7 +341,12 @@ fsal_status_t LUSTREFSAL_read(fsal_file_t *file_desc,    /* IN */
           rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_END);
           errsv = errno;
           ReleaseTokenFSCall();
+          break;
 
+        default:
+          LogCrit(COMPONENT_FSAL, "Unexpected value for whence parameter");
+          rc = -1;
+          errsv = EINVAL;
           break;
         }
 
@@ -464,6 +469,12 @@ fsal_status_t LUSTREFSAL_write(fsal_file_t *file_desc,   /* IN */
           errsv = errno;
           ReleaseTokenFSCall();
 
+          break;
+
+        default:
+          LogCrit(COMPONENT_FSAL, "Unexpected value for whence parameter");
+          rc = -1;
+          errsv = EINVAL;
           break;
         }
 

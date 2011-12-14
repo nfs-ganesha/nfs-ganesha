@@ -350,8 +350,8 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if(tst_entry_dst != NULL)
     {
 	if((tst_entry_dst->internal_md.type == DIRECTORY)
-	   && (tst_entry_src->internal_md.type == DIRECTORY)
-	   || (tst_entry_src->internal_md.type == REGULAR_FILE))
+	   && ((tst_entry_src->internal_md.type == DIRECTORY)
+                || (tst_entry_src->internal_md.type == REGULAR_FILE)))
         {
           if(cache_inode_is_dir_empty_WithLock(tst_entry_dst) ==
 	     CACHE_INODE_DIR_NOT_EMPTY)

@@ -74,7 +74,7 @@ fsal_status_t LUSTREFSAL_rcp(fsal_handle_t * filehandle,  /* IN */
 
   int eof = FALSE;
 
-  ssize_t local_size;
+  ssize_t local_size = -1;
   fsal_size_t fs_size;
 
   /* sanity checks. */

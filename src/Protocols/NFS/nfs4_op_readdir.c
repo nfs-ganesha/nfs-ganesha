@@ -370,7 +370,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
                   " === nfs4_op_readdir ===>   i=%u name=%s cookie=%"PRIu64" "
                   "entrysize=%u buffsize=%u",
                   i, dirent_array[i]->name.name,
-                  (unsigned long long)entry_nfs_array[i].cookie,
+                  entry_nfs_array[i].cookie,
                   entrysize,
                   outbuffsize);
 
