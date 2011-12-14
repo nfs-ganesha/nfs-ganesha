@@ -181,13 +181,13 @@ nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *exthandle,
   /* User ID and group ID for permissions */
   int uid = FSAL_OP_CONTEXT_TO_UID(context);
   int gid = FSAL_OP_CONTEXT_TO_GID(context);
-  /* The OSD number for this machine */
+  /* The OSD number for this host */
   int local_OSD = 0;
   /* Width of a stripe in the file */
   uint32_t stripe_width = 0;
   /* Beginning of a block */
   uint64_t block_start = 0;
-  /* Number of the stripe being read */
+  /* Number of the stripe being written */
   uint32_t stripe = 0;
   /* Internal offset within the stripe*/
   uint32_t internal_offset = 0;
@@ -244,6 +244,7 @@ nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *exthandle,
                                                handle->data.parent_hash))
           != 0)
         {
+          printf("Filehandle connection failed with: %d\n", ceph_status);
           return posix2nfs4_error(-ceph_status);
         }
       if ((ceph_status = ceph_ll_open(cmount,
@@ -253,6 +254,7 @@ nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *exthandle,
                                      uid,
                                       gid)) != 0)
         {
+          printf("Open failed with: %d\n", ceph_status);
           return posix2nfs4_error(-ceph_status);
         }
 
@@ -265,18 +267,21 @@ nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *exthandle,
 
       if (amount_written < 0)
         {
+          printf("Write failed with: %d\n", amount_written);
           ceph_ll_close(cmount, descriptor);
           return posix2nfs4_error(-amount_written);
         }
 
       if ((ceph_status = ceph_ll_fsync(cmount, descriptor, 0)) < 0)
         {
+          printf("fsync failed with: %d\n", ceph_status);
           ceph_ll_close(cmount, descriptor);
           return posix2nfs4_error(-ceph_status);
         }
 
       if ((ceph_status = ceph_ll_close(cmount, descriptor)) < 0)
         {
+          printf("close failed with: %d\n", ceph_status);
           return posix2nfs4_error(-ceph_status);
         }
       *written_length = amount_written;
@@ -295,13 +300,14 @@ nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *exthandle,
                                  internal_offset,
                                  adjusted_write,
                                  &(handle->data.layout),
-                                 handle->data.snapseq)) < 0)
+                                 handle->data.snapseq,
+                                 (stability_wanted == DATA_SYNC4))) < 0)
         {
           return posix2nfs4_error(-amount_written);
         }
 
       *written_length = amount_written;
-      *stability_got = DATA_SYNC4;
+      *stability_got = stability_wanted;
     }
 
   return NFS4_OK;
@@ -319,24 +325,59 @@ nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *exthandle,
  */
 
 nfsstat4 CEPHFSAL_DS_commit(fsal_handle_t *exthandle,
-                            fsal_op_context_t *context,
+                            fsal_op_context_t *extcontext,
                             offset4 offset,
                             count4 count,
                             verifier4 writeverf)
 {
   /* Our format for the file handle */
   cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
+  /* Our format for the operational context */
+  cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
+  /* Mount parameter specified for all calls to Ceph */
+  struct ceph_mount_info *cmount = context->export_context->cmount;
+  /* The OSD number for this host */
+  const int local_OSD = ceph_get_local_osd(cmount);
+  /* Width of a stripe in the file */
+  const uint32_t stripe_width = handle->data.layout.fl_stripe_unit;
+  /* The stripe we're committing */
+  uint32_t stripe = 0;
 
-  /* All of our DS writes have, at least, data synchrony, so this is a
-     no-op, aside from zeroing the write verifier to prevent spurious
-     rewrites. */
+  /* Find out what stripe we're writing to and where within the
+     stripe. */
 
-  if (handle->data.layout.fl_stripe_unit == 0)
+  if (stripe_width == 0)
     {
       /* COMMIT isn't actually allowed to return BADHANDLE */
       return NFS4ERR_INVAL;
     }
-  memset(writeverf, 0, NFS4_VERIFIER_SIZE);
+
+
+  for (stripe = offset / stripe_width;
+       stripe <= ((offset + count - 1) / stripe_width);
+       ++stripe)
+    {
+      if (local_OSD
+          == ceph_ll_get_stripe_osd(cmount,
+                                    VINODE(handle),
+                                    stripe,
+                                    &(handle->data.layout)))
+        {
+          printf("Committing %llu.%llu.\n",
+                 VINODE(handle).ino.val,
+                 stripe);
+          int rc = ceph_ll_commit_block(cmount,
+                                        VINODE(handle),
+                                        stripe);
+          if (rc < 0)
+            {
+              return posix2nfs4_error(rc);
+            }
+        }
+      printf("Committed %llu.%llu.\n",
+             VINODE(handle).ino.val,
+             stripe);
+    }
 
   return NFS4_OK;
 }
