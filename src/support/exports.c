@@ -44,6 +44,7 @@
 #define USHRT_MAX       6553
 #endif
 
+#include "cidr.h"
 #include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
@@ -331,119 +332,42 @@ static struct hostent *nfs_LookupHostAddr(char *host)
  * @see gethostbyaddr
  *
  */
+
+inline static int string_contains_slash( char* host )
+{
+  char * c ;
+
+  for( c = host ; *c != '\0' ; c++ ) 
+    if( *c == '/' ) 
+      return 1 ;
+
+  return 0 ;
+}
+
 int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
                           unsigned long *netAddr,       /* [OUT] return address       */
                           unsigned long *netMask)       /* [OUT] return address mask  */
 {
-  int error = 0;
-  int compute_mask = TRUE;
-  struct hostent *host_ent;
-  struct netent *net_ent;
-  in_addr_t net_addr;
-  unsigned long net_mask;
-  unsigned long class;
+  CIDR * pcidr = NULL ;
+  unsigned int i = 0 ;
 
-  /*
-   * Initialize local variables..
-   */
+  if( ( pcidr = cidr_from_str( host ) ) == NULL )
+    return 1 ;
 
-  net_mask = 0;
-  net_ent = NULL;
-  host_ent = NULL;
+  memcpy( netAddr, pcidr->addr, sizeof( unsigned long ) ) ;
+  memcpy( netMask, pcidr->mask, sizeof( unsigned long ) ) ; 
+  
+  /* BE CAREFUL !! The following lines are specific to IPv4. The libcidr support IPv6 as well */
+  memset( netAddr, 0, sizeof( unsigned long ) ) ;
+  memcpy( netAddr, &pcidr->addr[12], 4 ) ;
+  *netAddr = ntohl( *netAddr ) ;
 
-  /*
-   * Check for dotted address notation.
-   */
+  memset( netMask, 0, sizeof( unsigned long ) ) ;
+  memcpy( netMask, &pcidr->mask[12], 4 ) ;
+  *netMask = ntohl( *netMask ) ;
 
-  net_addr = inet_network(host);
-
-  if(net_addr == (in_addr_t) - 1)
-    {
-      /*
-       * Not a valid dotted IP address. Check for host name.
-       */
-
-      if((host_ent = gethostbyname(host)) != NULL)
-        {
-          /*
-           * A valid hostname. Just copy the hostent address.
-           */
-
-          memcpy(&net_addr, host_ent->h_addr, host_ent->h_length);
-          compute_mask = FALSE;
-        }
-      else
-        {
-
-          /*
-           * Not a valid hostname. Check for a network name.
-           */
-
-          net_ent = getnetbyname(host);
-          if(net_ent == NULL)
-            {
-              error = errno;
-              if(error == 0)
-                error = ENOENT;
-              endnetent();
-            }
-          else
-            {
-              net_addr = net_ent->n_net;
-              endnetent();
-            }
-        }
-    }
-  /*
-   * If no error and address is a network address, convert address to
-   * inaddr format by left justifying, determine the network address
-   * class, and compute the network mask.
-   */
-
-  if(error == 0 && compute_mask)
-    {
-
-      if((net_addr & 0xffffff00) == 0)
-        net_addr <<= 24;
-      else if((net_addr & 0xffff0000) == 0)
-        net_addr <<= 16;
-      else if((net_addr & 0xff000000) == 0)
-        net_addr <<= 8;
-      class = (net_addr & 0xc0000000) >> 30;
-      switch (class)
-        {
-        case 0:                /* class A address           */
-        case 1:
-          if((net_addr & 0x00ffffff) == 0)
-            net_mask = 0xff000000;
-          else if((net_addr & 0x0000ffff) == 0)
-            net_mask = 0xffff0000;
-          else if((net_addr & 0x000000ff) == 0)
-            net_mask = 0xffffff00;
-          break;
-        case 2:                /* class B address           */
-          if((net_addr & 0x0000ffff) == 0)
-            net_mask = 0xffff0000;
-          else if((net_addr & 0x000000ff) == 0)
-            net_mask = 0xffffff00;
-          break;
-        case 3:                /* class C address            */
-          if((net_addr & 0x000000ff) == 0)
-            net_mask = 0xffffff00;
-          break;
-        default:
-          break;
-        }
-    }
-  if(error == 0)
-    {
-      if(netAddr != (unsigned long *)NULL)
-        *netAddr = net_addr;
-      if(netMask != (unsigned long *)NULL)
-        *netMask = net_mask;
-    }
-  return (error);
-}                               /* nfs_LookupNetworkAddr */
+  return 0 ; 
+} /* nfs_LookupNetworkAddr */
 
 int nfs_AddClientsToClientArray(exportlist_client_t *clients,
 				int new_clients_number,
@@ -458,7 +382,6 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
   int is_wildcarded_host = FALSE;
   unsigned long netMask;
   unsigned long netAddr;
-  int error;
 
   /* How many clients are there already? */
   j = (*clients).num_clients;
@@ -496,11 +419,8 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
                    (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                    p_clients[i].client.netgroup.netgroupname);
         }
-      /** @todo LOOK AT ME: workaround here : getaddrinfo does not identify address specifying
-       * a range of netaddress. To identify such address, we prefix it witj '/'. This is a workaround
-       * netaddre should be handle via the CIDR format */ 
-      else if( (client_hostname[0] == '/' ) &&
-               ( nfs_LookupNetworkAddr( (char *)( client_hostname + 1 ),
+      else if( string_contains_slash( client_hostname ) &&
+               ( nfs_LookupNetworkAddr( (char *)( client_hostname ),
                                          (unsigned long *)&netAddr,
                                          (unsigned long *)&netMask) == 0 ) )
         {
@@ -511,13 +431,14 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
           p_clients[i].type = NETWORK_CLIENT;
 
           LogDebug(COMPONENT_CONFIG,
-                   "----------------- %s to network %s = %d.%d.%d.%d",
+                   "----------------- %s to network %s = %d.%d.%d.%d netmask=%x",
                    (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                    client_hostname,
                    (unsigned int)(p_clients[i].client.network.netaddr >> 24),
                    (unsigned int)((p_clients[i].client.network.netaddr >> 16) & 0xFF),
                    (unsigned int)((p_clients[i].client.network.netaddr >> 8) & 0xFF),
-                   (unsigned int)(p_clients[i].client.network.netaddr & 0xFF));
+                   (unsigned int)(p_clients[i].client.network.netaddr & 0xFF),
+                   (unsigned int)(p_clients[i].client.network.netmask));
         }
       else if( getaddrinfo(client_hostname, NULL, NULL, &info) == 0)
         {

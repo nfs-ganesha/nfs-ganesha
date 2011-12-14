@@ -13,7 +13,6 @@ libfsaltemplate_la_SOURCES = fsal_access.c \
                         fsal_truncate.c \
 			fsal_attrs.c    \
                         fsal_convert.c  \
-                        fsal_errors.c   \
                         fsal_init.c     \
                         fsal_lookup.c   \
                         fsal_rename.c   \

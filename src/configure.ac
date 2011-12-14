@@ -935,6 +935,7 @@ AC_CONFIG_FILES([include/Makefile
                  IdMapper/Makefile
                  RW_Lock/Makefile
                  SemN/Makefile
+                 cidr/Makefile
                  LRU/Makefile
                  avl/Makefile
                  HashTable/Makefile

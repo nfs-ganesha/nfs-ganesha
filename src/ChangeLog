@@ -468,7 +468,7 @@
        - Bug Fix: bad modes/ACLs management in several FSALs (produced EPERM errors)
        - Bug Fix: badly managed access_type in nfs3_Access
 
-1.2.0  - 
+1.2.0  - Mon 12 Dec 2011
        - Bug Fix:  Call cache_inode_close after deleting share state
        - Bug Fix: Bad management of PID_FILE is several init.d scripts
        - Added support for ERR_FSAL_DELAY in upper layer
@@ -476,9 +476,14 @@
        - New SAL (State Abstraction Layer) to manage locks (NFSv4/NLM) and share reservations
        - Symbolic Links are managed via a pool to save memory in Cache_Inode
        - Early 9P support
+
+1.3.0
        - Lustre FSAL: exporting several Lustre filesystem with the same server instance
        - A bug was found and fix in OP4_READDIRPLUS (leading to missing
          directory's entries)
        - Directory content cached is now managed as a tree. Formerly used
          dir_chain were removed.
        - Lock support for FSAL_LUSTRE
+       - Lustre FSAL: regression in readdir detected and fixed
+       - export list now support IP ranges using the CIDR format
+
