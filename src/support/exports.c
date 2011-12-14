@@ -496,6 +496,29 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
                    (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                    p_clients[i].client.netgroup.netgroupname);
         }
+      /** @todo LOOK AT ME: workaround here : getaddrinfo does not identify address specifying
+       * a range of netaddress. To identify such address, we prefix it witj '/'. This is a workaround
+       * netaddre should be handle via the CIDR format */ 
+      else if( (client_hostname[0] == '/' ) &&
+               ( nfs_LookupNetworkAddr( (char *)( client_hostname + 1 ),
+                                         (unsigned long *)&netAddr,
+                                         (unsigned long *)&netMask) == 0 ) )
+        {
+          /* Entry is a network definition */
+          p_clients[i].client.network.netaddr = netAddr;
+          p_clients[i].options |= EXPORT_OPTION_NETENT;
+          p_clients[i].client.network.netmask = netMask;
+          p_clients[i].type = NETWORK_CLIENT;
+
+          LogDebug(COMPONENT_CONFIG,
+                   "----------------- %s to network %s = %d.%d.%d.%d",
+                   (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
+                   client_hostname,
+                   (unsigned int)(p_clients[i].client.network.netaddr >> 24),
+                   (unsigned int)((p_clients[i].client.network.netaddr >> 16) & 0xFF),
+                   (unsigned int)((p_clients[i].client.network.netaddr >> 8) & 0xFF),
+                   (unsigned int)(p_clients[i].client.network.netaddr & 0xFF));
+        }
       else if( getaddrinfo(client_hostname, NULL, NULL, &info) == 0)
         {
           /* Entry is a hostif */
@@ -514,7 +537,7 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
                        (unsigned int)((p_clients[i].client.hostif.clientaddr >> 8) & 0xFF),
                        (unsigned int)(p_clients[i].client.hostif.clientaddr & 0xFF));
             }
-          else /* AF_INET6 */
+       else /* AF_INET6 */
             {
               struct in6_addr infoaddr = ((struct sockaddr_in6 *)info->ai_addr)->sin6_addr;
               /* IPv6 address */
@@ -524,26 +547,7 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
             }
           freeaddrinfo(info);
         }
-      else if(((error = nfs_LookupNetworkAddr(client_hostname,
-                                              (unsigned long *)&netAddr,
-                                              (unsigned long *)&netMask))) == 0)
-        {
-          /* Entry is a network definition */
-          p_clients[i].client.network.netaddr = netAddr;
-          p_clients[i].options |= EXPORT_OPTION_NETENT;
-          p_clients[i].client.network.netmask = netMask;
-          p_clients[i].type = NETWORK_CLIENT;
-
-          LogDebug(COMPONENT_CONFIG,
-                   "----------------- %s to network %s = %d.%d.%d.%d",
-                   (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
-                   client_hostname,
-                   (unsigned int)(p_clients[i].client.network.netaddr >> 24),
-                   (unsigned int)((p_clients[i].client.network.netaddr >> 16) & 0xFF),
-                   (unsigned int)((p_clients[i].client.network.netaddr >> 8) & 0xFF),
-                   (unsigned int)(p_clients[i].client.network.netaddr & 0xFF));
-        }
-      else
+     else
         {
           /* this may be  a wildcarded host */
           /* Lookup into the string to see if it contains '*' or '?' */
