@@ -947,6 +947,13 @@ cache_inode_status_t cache_inode_invalidate( fsal_handle_t        * pfsal_handle
                                              cache_inode_client_t * pclient,
                                              cache_inode_status_t * pstatus) ;
 
+void cache_inode_invalidate_related_dirent( cache_entry_t * pentry,
+                                            uint64_t cookie,
+                                            cache_inode_client_t * pclient );
+
+void cache_inode_invalidate_related_dirents(  cache_entry_t        * pentry,
+                                              cache_inode_client_t * pclient);
+
 int cache_inode_gc_suppress_directory(cache_entry_t * pentry,
                                       cache_inode_param_gc_t * pgcparam);
 int cache_inode_gc_suppress_file(cache_entry_t * pentry,

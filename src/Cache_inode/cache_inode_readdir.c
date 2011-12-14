@@ -1195,6 +1195,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
+  dirent = NULL;
 
   /* Set initial value of unlock */
   *unlock = FALSE;
@@ -1393,7 +1394,16 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   }
 
   if (*pnbfound > 0)
+  {
+      if (!dirent)
+      {
+         LogCrit(COMPONENT_CACHE_INODE, "cache_inode_readdir: "
+                 "UNEXPECTED CASE: dirent is NULL whereas nbfound>0");
+         *pstatus = CACHE_INODE_INCONSISTENT_ENTRY;
+         return CACHE_INODE_INCONSISTENT_ENTRY;
+      }
       *pend_cookie = dirent->cookie;
+  }
 
   if (! dirent_node)
       *peod_met = END_OF_DIR;

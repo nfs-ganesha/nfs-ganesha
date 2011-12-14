@@ -560,10 +560,10 @@ fsal_status_t COMMON_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
 
-/* File Attributes
+/* File Attributes */
 
-
-/* Not supported set
+/*
+* Not supported set
 */
 
 /**

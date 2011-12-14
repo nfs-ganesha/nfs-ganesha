@@ -22,7 +22,6 @@
 . /etc/rc.d/init.d/functions
 
 PATHPROG=/usr/bin/shook.ganesha.nfsd 
-PROG=shook.ganesha.nfsd
 
 # Default HPSS options
 LOGFILE=/var/log/shook.ganesha.nfsd.log
@@ -47,8 +46,7 @@ start() {
                 RETVAL=$?
                 if [ $RETVAL -eq 0 ]; then 
 		 touch $LOCK_FILE
-                 [ ! -f $PID_FILE ] &&
-                   /sbin/pidof $PROG > $PID_FILE
+                    [ ! -f $PID_FILE ] && /sbin/pidof $prog > $PID_FILE
 		else
 		  RETVAL=1
                 fi

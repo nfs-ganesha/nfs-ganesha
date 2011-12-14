@@ -5,7 +5,7 @@
 #
 # processname: /usr/bin/lustre.ganesha.nfsd
 # config: /etc/ganesha/lustre.ganesha.nfsd.conf
-# pidfile: /var/run/lustre.ganesha.nfsd.pid
+# pidfile: /var/run/nfs-ganesha.pid
 #
 ### BEGIN INIT INFO
 # Provides: nfs-ganesha.lustre
@@ -22,7 +22,6 @@
 . /etc/rc.d/init.d/functions
 
 PATHPROG=/usr/bin/lustre.ganesha.nfsd 
-PROG=lustre.ganesha.nfsd
 
 # Default HPSS options
 LOGFILE=/var/log/lustre.ganesha.nfsd.log
@@ -47,8 +46,7 @@ start() {
                 RETVAL=$?
                 if [ $RETVAL -eq 0 ]; then 
 		 touch $LOCK_FILE
-                 [ ! -f $PID_FILE ] &&
-                   /sbin/pidof $PROG > $PID_FILE
+                    [ ! -f $PID_FILE ] && /sbin/pidof $prog > $PID_FILE
 		else
 		  RETVAL=1
                 fi
