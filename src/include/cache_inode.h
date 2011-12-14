@@ -337,11 +337,19 @@ typedef struct cache_inode_dir_entry__
  * The lru field as its own mutex to protect it.
  */
 
+/* NOTES for cleanup:
+ * handle gets moved out of the union
+ * attributes gets moved to the fsal_obj_handle - simplifies apis
+ * deprecate internal_md.type for fsal_obj_handle has type.
+ * object.symlink->content moves to attributes to union with rawdev
+ * cache_entry and fsal_obj_handle are two parts of the same thing,
+ * a cached inode.  cache_entry holds the cache stuff and fsal_obj_handle
+ * holds the stuff the the fsal has to manage, i.e. filesystem bits.
+ */
+
 struct cache_entry_t
 {
-  fsal_handle_t handle; /*< The FSAL Handle */
-  struct fsal_handle_desc fh_desc; /*< Points to handle.  Adds size,
-                                       len for hash table etc. */
+  struct fsal_obj_handle *obj_handle; /**< The FSAL Handle     */
   gweakref_t weakref; /*< A weakref for this entry (pointer and generation
                           number.)  The generation number is the only
                           interesting part, but this way the weakref
@@ -375,16 +383,12 @@ struct cache_entry_t
   {
     struct cache_inode_file__
     {
-      cache_inode_opened_file_t open_fd;/*< Cached fsal_file_t for
-                                            optimized access */
       struct glist_head lock_list; /*< Pointers for lock list */
       cache_inode_unstable_data_t
         unstable_data; /*< Unstable data, for use with WRITE/COMMIT */
       cache_inode_share_t share_state; /*< Share reservation state for
                                            this file. */
     } file; /*< REGULAR_FILE data */
-
-    struct cache_inode_symlink__ *symlink; /*< SYMLINK data */
 
     struct cache_inode_dir__
     {
@@ -415,7 +419,9 @@ typedef union cache_inode_fsobj__ cache_inode_fsobj_t;
 
 typedef struct cache_inode_fsal_data__
 {
+  struct fsal_export *export; /** export owning this handle */
   struct fsal_handle_desc fh_desc;              /**< FSAL handle descriptor  */
+/*   uint64_t cookie;                              /\**< Cache inode cookie    *\/ */
 } cache_inode_fsal_data_t;
 
 static const int SMALL_CLIENT_INDEX = 0x20000000; /*< Index below which a thread
@@ -661,19 +667,19 @@ void cache_inode_put(cache_entry_t *entry,
 cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
                                            fsal_accessflags_t access_type,
                                            cache_inode_client_t * pclient,
-                                           fsal_op_context_t * pcontext,
+					   struct user_cred *creds,
                                            cache_inode_status_t *pstatus,
                                            bool_t use_mutex);
 cache_inode_status_t cache_inode_access_no_mutex(
     cache_entry_t *pentry,
     fsal_accessflags_t access_type,
     cache_inode_client_t *pclient,
-    fsal_op_context_t *pcontext,
+    struct user_cred *creds,
     cache_inode_status_t *pstatus);
 cache_inode_status_t cache_inode_access(cache_entry_t *pentry,
                                         fsal_accessflags_t access_type,
                                         cache_inode_client_t *pclient,
-                                        fsal_op_context_t *pcontext,
+					fsal_op_context_t *pcontext,
                                         cache_inode_status_t *pstatus);
 
 fsal_file_t *cache_inode_fd(cache_entry_t *pentry);
@@ -684,7 +690,7 @@ bool_t is_open_for_write(cache_entry_t *entry);
 cache_inode_status_t cache_inode_open(cache_entry_t *entry,
                                       cache_inode_client_t *client,
                                       fsal_openflags_t openflags,
-                                      fsal_op_context_t *context,
+                                      struct user_cred *creds,
                                       uint32_t flags,
                                       cache_inode_status_t *status);
 cache_inode_status_t cache_inode_close(cache_entry_t *entry,
@@ -1029,7 +1035,8 @@ cache_inode_fixup_md(cache_entry_t *entry)
  * @param contest [in,out] FSAL operation context
  * @param client [in] Client structure
  */
-
+/** @TODO possibly not really necessary?
+ */
 static inline cache_inode_status_t
 cache_inode_refresh_attrs(cache_entry_t *entry,
                           fsal_op_context_t *context,
@@ -1037,12 +1044,13 @@ cache_inode_refresh_attrs(cache_entry_t *entry,
 {
      fsal_status_t fsal_status = {ERR_FSAL_NO_ERROR, 0};
      cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+     fsal_attrib_list_t attributes;
 
 #ifdef _USE_NFS4_ACL
-     if (entry->attributes.acl) {
+     if (entry->obj_handle->attributes.acl) {
          fsal_acl_status_t acl_status = 0;
 
-         nfs4_acl_release_entry(entry->attributes.acl, &acl_status);
+         nfs4_acl_release_entry(entry->obj_handle->attributes.acl, &acl_status);
          if (acl_status != NFS_V4_ACL_SUCCESS) {
               LogEvent(COMPONENT_CACHE_INODE,
                        "Failed to release old acl, status=%d",
@@ -1052,21 +1060,13 @@ cache_inode_refresh_attrs(cache_entry_t *entry,
      }
 #endif /* _USE_NFS4_ACL */
 
-     memset(&entry->attributes, 0, sizeof(fsal_attrib_list_t));
-     entry->attributes.asked_attributes = client->attrmask;
+     memset(&attributes, 0, sizeof(fsal_attrib_list_t));
+     attributes.asked_attributes = client->attrmask;
 
      /* I assume this function will go away in the Lieb
         Rearchitecture. */
-     fsal_status = FSAL_getattrs_descriptor(cache_inode_fd(entry),
-                                            &entry->handle,
-                                            context,
-                                            &entry->attributes);
-     if (FSAL_IS_ERROR(fsal_status) &&
-         (fsal_status.major == ERR_FSAL_NOT_OPENED)) {
-          fsal_status = FSAL_getattrs(&entry->handle,
-                                      context,
-                                      &entry->attributes);
-     }
+     fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle,
+						    &attributes);
      if (FSAL_IS_ERROR(fsal_status)) {
           cache_inode_kill_entry(entry,
                                  client);
