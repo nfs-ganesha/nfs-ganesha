@@ -169,6 +169,8 @@ cache_inode_getattr(cache_entry_t * pentry,
                 {
                     *pstatus = cache_inode_error_convert(fsal_status);
                     
+                    V_r(&pentry->lock);
+
                     if(fsal_status.major == ERR_FSAL_STALE)
                         {
                             cache_inode_status_t kill_status;
