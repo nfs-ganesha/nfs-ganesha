@@ -213,8 +213,8 @@ fsal_dev_t posix2fsal_devt(dev_t posix_devid)
 
   fsal_dev_t dev;
 
-  dev.major = posix_devid >> 8;
-  dev.minor = posix_devid & 0xFF;
+  dev.major = major(posix_devid);
+  dev.minor = minor(posix_devid);
 
   return dev;
 }

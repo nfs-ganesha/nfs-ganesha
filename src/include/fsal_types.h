@@ -281,8 +281,8 @@ typedef struct fsal_fsid__
 
 typedef struct fsal_dev__
 {
-  fsal_uint_t major;
-  fsal_uint_t minor;
+  dev_t major;
+  dev_t minor;
 } fsal_dev_t;
 
 /* The maximum ACLs that a file can support */
