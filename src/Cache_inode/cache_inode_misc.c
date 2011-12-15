@@ -236,6 +236,35 @@ int cache_inode_compare_key_fsal(hash_buffer_t * buff1, hash_buffer_t * buff2)
   /* This line should never be reached */
 }                               /* cache_inode_compare_key_fsal */
 
+
+/**
+ *
+ * cache_inode_set_time_current: set the fsal_time in a pentry struct to the current time.
+ *
+ * Sets the fsal_time in a pentry struct to the current time. This function is using gettimeofday.
+ *
+ * @param ptime [OUT] pointer to time to be set 
+ *
+ * @return 0 if keys if successfully build, -1 otherwise
+ *
+ */ 
+int cache_inode_set_time_current( fsal_time_t * ptime )
+{
+  struct timeval t ;
+
+  if( ptime == NULL )
+    return -1 ;
+
+  if( gettimeofday( &t, NULL ) != 0 )
+    return -1 ;
+
+  ptime->seconds  = t.tv_sec ;
+  ptime->nseconds = 1000*t.tv_usec ;
+
+  return 0 ;
+} /* cache_inode_set_time_current */
+
+
 /**
  *
  * cache_inode_fsaldata_2_key: builds a key from the FSAL data.
@@ -248,6 +277,7 @@ int cache_inode_compare_key_fsal(hash_buffer_t * buff1, hash_buffer_t * buff2)
  * @param pfsdata [IN] FSAL data to be used to compute the key
  * @param pclient [INOUT] if NULL, pfsdata is used to build the key (that stay local), if not pool_key is used to
  * allocate a new key
+ *
  * @return 0 if keys if successfully build, 1 otherwise
  *
  */

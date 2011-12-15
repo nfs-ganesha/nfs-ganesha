@@ -393,15 +393,13 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
             case SYMBOLIC_LINK:
               assert(to_remove_entry->object.symlink);
               to_remove_entry->object.symlink->attributes.numlinks -= 1;
-              to_remove_entry->object.symlink->attributes.ctime.seconds = time(NULL);
-              to_remove_entry->object.symlink->attributes.ctime.nseconds = 0;
+              cache_inode_set_time_current( &to_remove_entry->object.symlink->attributes.ctime ) ;
               to_remove_numlinks = to_remove_entry->object.symlink->attributes.numlinks;
               break;
 
             case REGULAR_FILE:
               to_remove_entry->object.file.attributes.numlinks -= 1;
-              to_remove_entry->object.file.attributes.ctime.seconds = time(NULL);
-              to_remove_entry->object.file.attributes.ctime.nseconds = 0;
+              cache_inode_set_time_current( &to_remove_entry->object.file.attributes.ctime ) ;
               to_remove_numlinks = to_remove_entry->object.file.attributes.numlinks;
               break;
 
@@ -410,8 +408,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
             case SOCKET_FILE:
             case FIFO_FILE:
               to_remove_entry->object.special_obj.attributes.numlinks -= 1;
-              to_remove_entry->object.special_obj.attributes.ctime.seconds = time(NULL);
-              to_remove_entry->object.special_obj.attributes.ctime.nseconds = 0;
+              cache_inode_set_time_current( &to_remove_entry->object.special_obj.attributes.ctime ) ;
               to_remove_numlinks =
                   to_remove_entry->object.special_obj.attributes.numlinks;
               break;

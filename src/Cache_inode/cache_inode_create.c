@@ -410,8 +410,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
           memcpy( (char *)&pentry->object.file.pnfs_file, (char *)&pnfs_file, sizeof( pnfs_file_t ) ) ;
 #endif
        /* Update the parent cached attributes */
-       pdir->attributes.mtime.seconds = time(NULL);
-       pdir->attributes.mtime.nseconds = 0;
+       cache_inode_set_time_current( &pdir->attributes.mtime ) ;
        pdir->attributes.ctime = pdir->attributes.mtime;
        /*
         * if the created object is a directory, it contains a link

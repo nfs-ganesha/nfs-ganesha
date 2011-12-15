@@ -989,6 +989,8 @@ void cache_inode_expire_to_str(cache_inode_expire_type_t type, time_t value, cha
 
 inline unsigned int cache_inode_file_holds_state( cache_entry_t * pentry );
 
+inline int cache_inode_set_time_current( fsal_time_t * ptime ) ;
+
 /* Hash functions for hashtables and RBT */
 unsigned long cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t * buffclef);

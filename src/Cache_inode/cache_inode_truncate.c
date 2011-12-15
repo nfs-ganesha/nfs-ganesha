@@ -137,8 +137,7 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
         }
 
       /* Set the time stamp values too */
-      pentry->object.file.attributes.mtime.seconds = time(NULL);
-      pentry->object.file.attributes.mtime.nseconds = 0;
+      cache_inode_set_time_current( &pentry->object.file.attributes.mtime ) ;
       pentry->object.file.attributes.ctime = pentry->object.file.attributes.mtime;
     }
   else
