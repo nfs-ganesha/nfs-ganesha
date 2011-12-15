@@ -812,8 +812,12 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   cache_inode_status_t cache_status;
 
   int statfscalled = 0;
-  fsal_staticfsinfo_t * pstaticinfo = data->pcontext->export_context->fe_static_fs_info;
+  fsal_staticfsinfo_t * pstaticinfo = NULL ;
   fsal_dynamicfsinfo_t dynamicinfo;
+
+  if( data != NULL ) /* data can be NULL if called from FSAL_PROXY operating as a client */
+    pstaticinfo = data->pcontext->export_context->fe_static_fs_info;
+
 #ifdef _USE_NFS4_ACL
   int rc;
 #endif
