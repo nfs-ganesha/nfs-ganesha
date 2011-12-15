@@ -9,7 +9,7 @@ AC_SUBST(RELEASE, [1])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/PROXY/HPSS/FUSELIKE/LUSTRE/XFS/GPFS/ZFS/VFS .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod),  Early pNFS (alpha) ])
+AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE/XFS/GPFS/ZFS/VFS .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod),  Early pNFS (alpha) ])
 
 # Init Automake
 #AM_INIT_AUTOMAKE([-Wall -Werror foreign])
@@ -381,6 +381,7 @@ AM_CONDITIONAL(USE_FSAL_HPSS,     test "$FSAL" = "HPSS")
 AM_CONDITIONAL(USE_FSAL_GHOSTFS,  test "$FSAL" = "GHOSTFS")
 AM_CONDITIONAL(USE_FSAL_POSIX,    test "$FSAL" = "POSIX")
 AM_CONDITIONAL(USE_FSAL_PROXY,    test "$FSAL" = "PROXY")
+AM_CONDITIONAL(USE_FSAL_SNMP,     test "$FSAL" = "SNMP")
 AM_CONDITIONAL(USE_FSAL_FUSE,     test "$FSAL" = "FUSE")
 AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
 AM_CONDITIONAL(USE_FSAL_SHOOK,    test "$FSAL" = "SHOOK") # variant of Lustre FSAL
@@ -527,6 +528,21 @@ case $FSAL in
 		fi
                 FS_NAME="proxy"
                 ;;
+	SNMP)
+		AC_DEFINE([_USE_SNMP], 1, [GANESHA is compiled with SNMP FSAL])
+                AC_CHECK_HEADERS([net-snmp/net-snmp-config.h], [], [AC_MSG_ERROR(missing libsnmp include files)])
+                case "$MYOS" in
+			FREEBSD)
+				FSAL_CFLAGS=`$NETSNMP_CONFIG --cflags`
+				;;
+			*)
+				FSAL_CFLAGS=""
+				;;
+		esac
+                FSAL_LDFLAGS=`$NETSNMP_CONFIG --agent-libs`
+		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_SNMP/libfsalsnmp.la"
+		FS_NAME="snmp"
+		;;
 	FUSE)
 		AC_DEFINE([_USE_FUSE], 1, [GANESHA is compiled as a FUSE-like library])
 		FSAL_CFLAGS=
@@ -892,6 +908,7 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_HPSS/Makefile
                  include/FSAL/FSAL_POSIX/Makefile
                  include/FSAL/FSAL_PROXY/Makefile
+                 include/FSAL/FSAL_SNMP/Makefile
                  include/FSAL/FSAL_FUSELIKE/Makefile
                  include/FSAL/FSAL_LUSTRE/Makefile
                  include/FSAL/FSAL_XFS/Makefile
@@ -948,6 +965,7 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_POSIX/DBExt/MYSQL/Makefile
 		 FSAL/FSAL_PROXY/Makefile
 		 FSAL/FSAL_PROXY/handle_mapping/Makefile
+		 FSAL/FSAL_SNMP/Makefile
 		 FSAL/FSAL_FUSELIKE/Makefile
 		 FSAL/FSAL_LUSTRE/Makefile
 		 FSAL/FSAL_LUSTRE/PNFS/Makefile
