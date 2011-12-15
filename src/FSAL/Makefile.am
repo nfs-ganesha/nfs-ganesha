@@ -24,10 +24,6 @@ else
 SUBDIRS = 
 endif 
 
-if USE_FSAL_GHOSTFS
-SUBDIRS += FSAL_GHOST_FS
-endif
-
 if USE_FSAL_HPSS
 SUBDIRS += FSAL_HPSS
 endif

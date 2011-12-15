@@ -734,7 +734,7 @@ case $FSAL in
                 FS_NAME="posix"
                 ;;
 	*)
-		AC_MSG_ERROR([This FSAL is not supported])
+		AC_MSG_ERROR([This FSAL is not supported yet])
 esac
 
 case $MFSL in
