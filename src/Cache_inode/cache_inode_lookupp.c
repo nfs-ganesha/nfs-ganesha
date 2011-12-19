@@ -113,6 +113,15 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
           return entry;
      }
 
+     /* we have to be able to read or scan the dir to do this lookup */
+     fsal_status = pentry->obj_handle->ops->test_access(pentry->obj_handle,
+							creds,
+							FSAL_R_OK|FSAL_X_OK);
+     if(FSAL_IS_ERROR(fsal_status)) {
+	 *status = CACHE_INODE_FSAL_EACCESS;
+	 return NULL;
+     }
+
      /* Try the weakref to the parent first.  This increments the
         refcount. */
      parent = cache_inode_weakref_get(&entry->object.dir.parent,
@@ -129,15 +138,10 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
      }
 
      if (!parent) {
-          fsal_handle_t parent_handle;
-          memset(&parent_handle, 0, sizeof(fsal_handle_t));
+	  struct fsal_obj_handle *parent_handle;
 
-          memset(&object_attributes, 0, sizeof(fsal_attrib_list_t));
-          object_attributes.asked_attributes = client->attrmask;
-          fsal_status =
-               FSAL_lookup(&entry->handle, (fsal_name_t *) &FSAL_DOT_DOT,
-                           context, &parent_handle, &object_attributes);
-
+	  fsal_status = pentry->obj_handle->ops->lookup(pentry->obj_handle, "..",
+							&parent_handle);
           if(FSAL_IS_ERROR(fsal_status)) {
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(entry, client);
@@ -146,16 +150,11 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
                return NULL;
           }
 
-          /* Call cache_inode_get to populate the cache with the parent entry */
-          fsdata.fh_desc.start = (caddr_t) &parent_handle;
-          fsdata.fh_desc.len = 0;
-          FSAL_ExpandHandle(context->export_context,
-                            FSAL_DIGEST_SIZEOF,
-                            &fsdata.fh_desc);
-
-
           /* Call cache_inode_get to populate the cache with the
              parent entry.  This increments the refcount. */
+	  parent_handle->ops->handle_to_key(parent_handle, &fsdata.fh_desc);
+	  fsdata.export = parent_handle->export;
+
           if((parent = cache_inode_get(&fsdata,
                                        &object_attributes,
                                        client,
@@ -164,7 +163,9 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
                                        status)) == NULL) {
                return NULL;
           }
-
+/** @TODO  Danger Will Robinson!  cache_inode_get should consume the parent_handle
+ *  but this may be a leak!
+ */
           /* Link in a weak reference */
           entry->object.dir.parent = parent->weakref;
      }

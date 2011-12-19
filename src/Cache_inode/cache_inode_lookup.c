@@ -91,14 +91,15 @@ cache_entry_t *
 cache_inode_lookup_impl(cache_entry_t *pentry_parent,
                         fsal_name_t *pname,
                         cache_inode_client_t *pclient,
-                        fsal_op_context_t *pcontext,
+                        struct user_cred     * creds,
                         cache_inode_status_t *pstatus)
 {
      cache_inode_dir_entry_t dirent_key;
      cache_inode_dir_entry_t *dirent = NULL;
      cache_entry_t *pentry = NULL;
      fsal_status_t fsal_status = {0, 0};
-     fsal_handle_t object_handle;
+     struct fsal_obj_handle *object_handle;
+     struct fsal_obj_handle *dir_handle;
      fsal_attrib_list_t object_attributes;
      cache_inode_create_arg_t create_arg = {
           .newly_created_dir = FALSE
@@ -200,12 +201,12 @@ cache_inode_lookup_impl(cache_entry_t *pentry_parent,
           LogDebug(COMPONENT_CACHE_INODE, "Cache Miss detected");
      }
 
+     dir_handle = pentry_parent->obj_handle;
      memset(&object_attributes, 0, sizeof(fsal_attrib_list_t));
      object_attributes.asked_attributes = pclient->attrmask;
-     fsal_status =
-          FSAL_lookup(&pentry_parent->handle,
-                      pname, pcontext, &object_handle,
-                      &object_attributes);
+     fsal_status = dir_handle->ops->lookup(dir_handle,
+					   pname->name,
+					   &object_handle);
      if (FSAL_IS_ERROR(fsal_status)) {
           if (fsal_status.major == ERR_FSAL_STALE) {
                cache_inode_kill_entry(pentry_parent, pclient);
@@ -214,30 +215,8 @@ cache_inode_lookup_impl(cache_entry_t *pentry_parent,
           return NULL;
      }
 
-     type = cache_inode_fsal_type_convert(object_attributes.type);
-
-     /* If entry is a symlink, cache its target */
-     if(type == SYMBOLIC_LINK) {
-          fsal_status =
-               FSAL_readlink(&object_handle,
-                             pcontext,
-                             &create_arg.link_content,
-                             &object_attributes);
-
-          if(FSAL_IS_ERROR(fsal_status)) {
-               *pstatus = cache_inode_error_convert(fsal_status);
-               return NULL;
-          }
-     }
-
      /* Allocation of a new entry in the cache */
-     new_entry_fsdata.fh_desc.start = (caddr_t) &object_handle;
-     new_entry_fsdata.fh_desc.len = 0;
-     FSAL_ExpandHandle(pcontext->export_context,
-                       FSAL_DIGEST_SIZEOF,
-                       &new_entry_fsdata.fh_desc);
-
-     if((pentry = cache_inode_new_entry(&new_entry_fsdata,
+     if((pentry = cache_inode_new_entry(object_handle,
                                         &object_attributes,
                                         type,
                                         &create_arg,

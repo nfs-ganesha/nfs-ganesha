@@ -99,7 +99,8 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
      cache_inode_file_type_t type = UNASSIGNED;
      hash_error_t hrc = 0;
      fsal_attrib_list_t fsal_attributes;
-     fsal_handle_t *file_handle;
+     struct fsal_export *exp_hdl = NULL;
+     struct fsal_obj_handle *new_hdl;
      struct hash_latch latch;
 
      /* Set the return default to CACHE_INODE_SUCCESS */
@@ -156,44 +157,17 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
 
      if (!entry) {
           /* Cache miss, allocate a new entry */
-          file_handle = (fsal_handle_t *) fsdata->fh_desc.start;
-          /* First, call FSAL to know what the object is */
-          fsal_attributes.asked_attributes = client->attrmask;
-          fsal_status
-               = FSAL_getattrs(file_handle, context, &fsal_attributes);
-          if (FSAL_IS_ERROR(fsal_status)) {
-               *status = cache_inode_error_convert(fsal_status);
-               LogDebug(COMPONENT_CACHE_INODE,
-                        "cache_inode_get: cache_inode_status=%u "
-                        "fsal_status=%u,%u ", *status,
-                        fsal_status.major,
-                        fsal_status.minor);
-               return NULL;
-          }
+	  exp_hdl = pfsdata->export;
+	  fsal_status = exp_hdl->ops->create_handle(exp_hdl, &pfsdata->fh_desc, &new_hdl);
+	  if( FSAL_IS_ERROR( fsal_status )) {
+		  *pstatus = cache_inode_error_convert(fsal_status);
+		  LogDebug(COMPONENT_CACHE_INODE,
+			   "could not get create_handle object");
+		  return NULL;
+	  }
 
-          /* The type has to be set in the attributes */
-          if (!FSAL_TEST_MASK(fsal_attributes.supported_attributes,
-                              FSAL_ATTR_TYPE)) {
-               *status = CACHE_INODE_FSAL_ERROR;
-               return NULL;
-          }
-
-          /* Get the cache_inode file type */
-          type = cache_inode_fsal_type_convert(fsal_attributes.type);
-          if (type == SYMBOLIC_LINK) {
-               fsal_attributes.asked_attributes = client->attrmask;
-               fsal_status =
-                    FSAL_readlink(file_handle, context,
-                                  &create_arg.link_content,
-                                  &fsal_attributes);
-
-               if (FSAL_IS_ERROR(fsal_status)) {
-                    *status = cache_inode_error_convert(fsal_status);
-                    return NULL;
-               }
-          }
           if ((entry
-               = cache_inode_new_entry(fsdata,
+               = cache_inode_new_entry(new_hdl,
                                        &fsal_attributes,
                                        type,
                                        &create_arg,
@@ -245,7 +219,10 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
        {
          goto out_put;
        }
-     *attr = entry->attributes;
+/** @TODO bad code, bad code. for now, NULL kills this. later, zip from args */
+      if(attr != NULL)
+	      *attr = pentry->obj_handle->attributes;
+
      pthread_rwlock_unlock(&entry->attr_lock);
 
      return entry;

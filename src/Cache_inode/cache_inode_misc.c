@@ -197,9 +197,8 @@ int cache_inode_set_time_current(fsal_time_t *ptime)
  *
  */
 cache_entry_t *
-cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
+cache_inode_new_entry(struct fsal_obj_handle *new_obj,
                       fsal_attrib_list_t *attr,
-                      cache_inode_file_type_t type,
                       cache_inode_create_arg_t *create_arg,
                       cache_inode_client_t *client,
                       fsal_op_context_t *context,
@@ -217,11 +216,13 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
      bool_t latched = FALSE;
      struct hash_latch latch;
      hash_error_t hrc = 0;
+     struct fsal_handle_desc fh_desc;
 
      assert(attr);
 
-     key.pdata = fsdata->fh_desc.start;
-     key.len = fsdata->fh_desc.len;
+     new_obj->ops->handle_to_key(new_obj, &fh_desc);
+     key.pdata = fh_desc.start;
+     key.len = fh_desc.len;
 
      /* Check if the entry doesn't already exists */
      /* This is slightly ugly, since we make two tries in the event
@@ -241,7 +242,7 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Trying to add an already existing "
                    "entry. Found entry %p type: %d, New type: %d",
-                   entry, entry->type, type);
+                   entry, entry->type, new_obj->type);
           if (cache_inode_lru_ref(entry, client, LRU_FLAG_NONE) ==
               CACHE_INODE_SUCCESS) {
                /* Release the subtree hash table mutex acquired in
@@ -306,12 +307,8 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
         just returned. */
      lrurefed = TRUE;
 
-     memset(&entry->handle, 0, sizeof(entry->handle));
-     memcpy(&entry->handle,
-            fsdata->fh_desc.start,
-            fsdata->fh_desc.len);
-     entry->fh_desc.start = (caddr_t) &entry->handle;
-     entry->fh_desc.len = fsdata->fh_desc.len;
+     entry->obj_handle = new_obj;
+     new_obj = NULL; /* mark it as having a home */
 
      /* Enroll the object in the weakref table */
 
@@ -339,11 +336,11 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
 
      /* Initialize common fields */
 
-     entry->type = type;
+     entry->type = entry->obj_handle->type;
      entry->flags = 0;
      init_glist(&entry->state_list);
 
-     switch (type) {
+     switch (entry->type) {
      case REGULAR_FILE:
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Adding a REGULAR_FILE, entry=%p",
@@ -352,8 +349,6 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
           /* No locks, yet. */
           init_glist(&entry->object.file.lock_list);
 
-          entry->object.file.open_fd.openflags = FSAL_O_CLOSED;
-          memset(&(entry->object.file.open_fd.fd), 0, sizeof(fsal_file_t));
           memset(&(entry->object.file.unstable_data), 0,
                  sizeof(cache_inode_unstable_data_t));
           memset(&(entry->object.file.share_state), 0,
@@ -388,22 +383,6 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
           cache_inode_avl_init(entry);
           break;
      case SYMBOLIC_LINK:
-          LogDebug(COMPONENT_CACHE_INODE,
-                   "cache_inode_new_entry: Adding a SYMBOLIC_LINK pentry=%p ",
-                   entry);
-          GetFromPool(entry->object.symlink, &client->pool_entry_symlink,
-                      cache_inode_symlink_t);
-          if (entry->object.symlink == NULL) {
-               LogDebug(COMPONENT_CACHE_INODE,
-                        "Can't allocate entry symlink from symlink pool");
-
-               *status = CACHE_INODE_MALLOC_ERROR;
-               goto out;
-          }
-          FSAL_pathcpy(&entry->object.symlink->content,
-                       &create_arg->link_content);
-          break;
-
      case SOCKET_FILE:
      case FIFO_FILE:
      case BLOCK_FILE:
@@ -432,9 +411,7 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
      entry->attributes = *attr;
      cache_inode_fixup_md(entry);
 
-     /* Adding the entry in the hash table */
-     key.pdata = entry->fh_desc.start;
-     key.len = entry->fh_desc.len;
+     /* Adding the entry in the hash table using the key we started with */
 
      value.pdata = entry;
      value.len = sizeof(cache_entry_t);
@@ -459,17 +436,14 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
 out:
      if (*status != CACHE_INODE_SUCCESS) {
           /* Deconstruct the object */
-          if (typespec) {
-               switch (type) {
-               case SYMBOLIC_LINK:
-                    cache_inode_release_symlink(entry,
-                                                &client->pool_entry_symlink);
-                    break;
-
-               default:
-                    break;
-               }
-          }
+	  if(entry->obj_handle != NULL) {
+	      fsal_status = entry->obj_handle->ops->release(entry->obj_handle);
+	      if(FSAL_IS_ERROR(fsal_status)) {
+		  *status = cache_inode_error_convert(fsal_status);
+		  LogDebug(COMPONENT_CACHE_INODE,
+			   "failed to release obj_handle %p", new_obj);
+	      }
+	  }
           if (locksinited) {
                pthread_rwlock_destroy(&entry->attr_lock);
                pthread_rwlock_destroy(&entry->content_lock);
@@ -487,6 +461,17 @@ out:
           if (*status != CACHE_INODE_ENTRY_EXISTS) {
                entry = NULL;
           }
+     }
+
+/* must free new_obj if no new entry was created to reference it. */
+     if(new_obj != NULL) {
+	  fsal_status = new_obj->ops->release(new_obj);
+	  if( FSAL_IS_ERROR( fsal_status ) )
+	    {
+	      *pstatus = cache_inode_error_convert(fsal_status);
+	      LogDebug(COMPONENT_CACHE_INODE,
+		       "failed to release unused new_obj %p", new_obj);
+	      /* further recovery ?? */
      }
 
      return entry;
@@ -769,32 +754,6 @@ void cache_inode_print_dir(cache_entry_t * cache_entry_root)/* release internal 
 }                               /* cache_inode_print_dir */
 
 /**
- *
- * cache_inode_release_symlink: release an entry's symlink component, if
- * present
- *
- * releases an allocated symlink component, if any
- *
- * @param pool [INOUT] pool which owns pentry
- * @param pentry [INOUT] entry to be released
- *
- * @return  (void)
- *
- */
-void cache_inode_release_symlink(cache_entry_t * pentry,
-                                 struct prealloc_pool *pool)
-{
-    assert(pentry);
-    assert(pentry->type == SYMBOLIC_LINK);
-    if (pentry->object.symlink)
-     {
-        ReleaseToPool(pentry->object.symlink, pool);
-        pentry->object.symlink = NULL;
-     }
-}
-
-/**
- *
  * cache_inode_release_dirents: release cached dirents associated
  * with an entry.
  *
@@ -978,9 +937,7 @@ cache_inode_check_trust(cache_entry_t *entry,
           pthread_rwlock_wrlock(&entry->content_lock);
           pthread_rwlock_unlock(&entry->attr_lock);
 
-          assert(entry->object.symlink);
-
-          fsal_status = FSAL_readlink(&entry->handle,
+          fsal_status = entry->obj_handle->ops->readlink(&entry->obj_handle,
                                       context,
                                       &entry->object.symlink->content,
                                       NULL);

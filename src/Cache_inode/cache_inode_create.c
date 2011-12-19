@@ -87,15 +87,17 @@ cache_inode_create(cache_entry_t *parent,
                    cache_inode_create_arg_t *create_arg,
                    fsal_attrib_list_t *attr,
                    cache_inode_client_t *client,
-                   fsal_op_context_t *context,
+                   struct user_cred *creds,
                    cache_inode_status_t *status)
 {
      cache_entry_t *entry = NULL;
      fsal_status_t fsal_status = {0, 0};
-     fsal_handle_t object_handle;
+     struct fsal_obj_handle *object_handle;
      fsal_attrib_list_t object_attributes;
+     struct fsal_obj_handle *dir_handle;
      cache_inode_fsal_data_t fsal_data;
      cache_inode_create_arg_t zero_create_arg;
+     fsal_accessflags_t access_mask = 0;
 
      memset(&zero_create_arg, 0, sizeof(zero_create_arg));
      memset(&fsal_data, 0, sizeof(fsal_data));
@@ -118,12 +120,32 @@ cache_inode_create(cache_entry_t *parent,
           goto out;
         }
 
+    /*
+     * Check if caller is allowed to perform the operation
+     */
+    access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK) |
+                  FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE |
+                                     FSAL_ACE_PERM_ADD_SUBDIRECTORY);
+    status = cache_inode_access(parent,
+                                access_mask,
+                                pclient, creds, &status);
+    if (status != CACHE_INODE_SUCCESS)
+        {
+            *pstatus = status;
+
+            /* stats */
+            inc_func_err_unrecover(pclient, CACHE_INODE_CREATE);
+
+          entry = NULL;
+          goto out;
+        }
+
      /* Check if an entry of the same name exists */
      entry = cache_inode_lookup(parent,
                                 name,
-                                attr,
+                                &object_attributes,
                                 client,
-                                context,
+                                creds,
                                 status);
      if (entry != NULL) {
           *status = CACHE_INODE_ENTRY_EXISTS;
@@ -140,63 +162,79 @@ cache_inode_create(cache_entry_t *parent,
 
      /* The entry doesn't exist, so we can create it. */
 
-     object_attributes.asked_attributes = client->attrmask;
-     switch (type) {
-     case REGULAR_FILE:
-          fsal_status = FSAL_create(&parent->handle,
-                                    name, context, mode,
-                                    &object_handle, &object_attributes);
-          break;
+    dir_handle = pentry_parent->obj_handle;
+/* we pass in attributes to the create.  We will get them back below */
+    object_attributes.asked_attributes = client->attrmask;
+    object_attributes.owner = creds->caller_uid;
+    object_attributes.group = creds->caller_gid; /* be more selective? */
+    object_attributes.mode = mode;
 
-     case DIRECTORY:
-          fsal_status = FSAL_mkdir(&parent->handle,
-                                   name, context, mode,
-                                   &object_handle, &object_attributes);
-          break;
+    switch (type) {
+    case REGULAR_FILE:
+            fsal_status = dir_handle->ops->create(dir_handle,
+						  pname,
+						  &object_attributes,
+						  &object_handle);
+            break;
 
-     case SYMBOLIC_LINK:
-          fsal_status = FSAL_symlink(&parent->handle,
-                                     name, &create_arg->link_content,
-                                     context, mode, &object_handle,
-                                     &object_attributes);
-          break;
+    case DIRECTORY:
+            fsal_status = dir_handle->ops->mkdir(dir_handle,
+						 pname,
+						 &object_attributes,
+						 &object_handle);
+            break;
 
-     case SOCKET_FILE:
-          fsal_status = FSAL_mknode(&parent->handle, name, context,
-                                    mode, FSAL_TYPE_SOCK, NULL,
-                                    &object_handle, &object_attributes);
-          break;
+    case SYMBOLIC_LINK:
+            fsal_status = dir_handle->ops->symlink(dir_handle,
+						   pname,
+						   &pcreate_arg->link_content,
+						   &object_attributes,
+						   &object_handle);
+            break;
 
-     case FIFO_FILE:
-          fsal_status = FSAL_mknode(&parent->handle, name, context,
-                                    mode, FSAL_TYPE_FIFO, NULL,
-                                    &object_handle, &object_attributes);
-          break;
+    case SOCKET_FILE:
+            fsal_status = dir_handle->ops->mknode(dir_handle,
+						  pname,
+						  FSAL_TYPE_SOCK,
+						  NULL, /* no dev_t needed for socket file */
+						  &object_attributes,
+						  &object_handle);
+            break;
 
-     case BLOCK_FILE:
-          fsal_status = FSAL_mknode(&parent->handle,
-                                    name, context,
-                                    mode, FSAL_TYPE_BLK,
-                                    &create_arg->dev_spec,
-                                    &object_handle, &object_attributes);
-             break;
+    case FIFO_FILE:
+            fsal_status = dir_handle->ops->mknode(dir_handle,
+						  pname,
+						  FSAL_TYPE_FIFO,
+						  NULL, /* no dev_t needed for socket file */
+						  &object_attributes,
+						  &object_handle);
+            break;
 
-     case CHARACTER_FILE:
-          fsal_status = FSAL_mknode(&parent->handle,
-                                    name, context,
-                                    mode, FSAL_TYPE_CHR,
-                                    &create_arg->dev_spec,
-                                    &object_handle,
-                                    &object_attributes);
-          break;
+    case BLOCK_FILE:
+            fsal_status = dir_handle->ops->mknode(dir_handle,
+						  pname,
+						  FSAL_TYPE_BLK,
+						  &pcreate_arg->dev_spec,
+						  &object_attributes,
+						  &object_handle);
+            break;
 
-     default:
-          /* we should never go there */
-          *status = CACHE_INODE_INCONSISTENT_ENTRY;
-          entry = NULL;
-          goto out;
-          break;
-        }
+    case CHARACTER_FILE:
+            fsal_status = dir_handle->ops->mknode(dir_handle,
+						  pname,
+						  FSAL_TYPE_CHR,
+						  &pcreate_arg->dev_spec,
+						  &object_attributes,
+						  &object_handle);
+            break;
+
+    default:
+	    /* we should never go there */
+	    *status = CACHE_INODE_INCONSISTENT_ENTRY;
+	    entry = NULL;
+	    goto out;
+	    break;
+    }
 
      /* Check for the result */
      if (FSAL_IS_ERROR(fsal_status)) {
@@ -213,12 +251,8 @@ cache_inode_create(cache_entry_t *parent,
                        FSAL_DIGEST_SIZEOF,
                        &fsal_data.fh_desc);
 
-     entry = cache_inode_new_entry(&fsal_data,
-                                   &object_attributes,
-                                   type,
-                                   create_arg,
+     entry = cache_inode_new_entry(object_handle,
                                    client,
-                                   context,
                                    CACHE_INODE_FLAG_CREATE,
                                    status);
      if (entry == NULL) {
@@ -245,8 +279,8 @@ cache_inode_create(cache_entry_t *parent,
 
      pthread_rwlock_wrlock(&parent->attr_lock);
      /* Update the parent cached attributes */
-     cache_inode_set_time_current(&parent->attributes.mtime);
-     parent->attributes.ctime = parent->attributes.mtime;
+     cache_inode_set_time_current(&parent->object_hdl->attributes.mtime);
+     parent->attributes.ctime = parent->object_hdl->attributes.mtime;
      /* if the created object is a directory, it contains a link
         to its parent : '..'. Thus the numlink attr must be increased. */
      if (type == DIRECTORY) {
@@ -263,3 +297,5 @@ out:
 
      return entry;
 }
+
+#endif
