@@ -73,11 +73,11 @@ cache_inode_status_t
 cache_inode_truncate_impl(cache_entry_t *entry,
                           fsal_size_t length,
                           fsal_attrib_list_t *attr,
-                          fsal_op_context_t *context,
+			  struct user_cred *creds,
                           cache_inode_status_t *status)
 {
   fsal_status_t fsal_status;
-  fsal_file_t *fd;
+  struct fsal_obj_handle *obj_hdl = entry->obj_handle;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *status = CACHE_INODE_SUCCESS;
@@ -90,14 +90,9 @@ cache_inode_truncate_impl(cache_entry_t *entry,
     }
 
   /* Call FSAL to actually truncate */
-  entry->attributes.asked_attributes = cache_inode_params.attrmask;
-  if (entry->object.file.open_fd.openflags == FSAL_O_CLOSED)
-    fd = NULL;
-  else
-    fd = &(entry->object.file.open_fd.fd);
-  fsal_status = FSAL_truncate(&entry->handle, context, length,
-                              fd, /* used by FSAL_GPFS */
-                              &entry->attributes);
+  fsal_status = obj_hdl->ops->truncate(obj_hdl, length);
+  if( !FSAL_IS_ERROR(fsal_status))
+    fsal_status = obj_hdl->ops->getattrs(obj_hdl, pattr);
 
   if(FSAL_IS_ERROR(fsal_status))
     {
@@ -108,8 +103,10 @@ cache_inode_truncate_impl(cache_entry_t *entry,
       return *status;
     }
 
+/** @TODO  cleanup with purging of attribute copying 
+ */
   /* Returns the attributes */
-  *attr = entry->attributes;
+  *attr = obj_hdl->attributes;
 
   return *status;
 }                               /* cache_inode_truncate_sw */
@@ -133,14 +130,15 @@ cache_inode_status_t
 cache_inode_truncate(cache_entry_t *entry,
                      fsal_size_t length,
                      fsal_attrib_list_t *attr,
-                     fsal_op_context_t *context,
+		     struct user_cred *creds,
                      cache_inode_status_t *status)
 {
   cache_inode_status_t ret;
+
   pthread_rwlock_wrlock(&entry->attr_lock);
   pthread_rwlock_wrlock(&entry->content_lock);
   ret = cache_inode_truncate_impl(entry,
-                                  length, attr, context, status);
+                                  length, attr, creds, status);
   pthread_rwlock_unlock(&entry->attr_lock);
   pthread_rwlock_unlock(&entry->content_lock);
   return ret;

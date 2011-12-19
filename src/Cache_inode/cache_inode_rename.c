@@ -188,12 +188,14 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
                                         fsal_name_t *newname,
                                         fsal_attrib_list_t *attr_src,
                                         fsal_attrib_list_t *attr_dest,
-                                        fsal_op_context_t *context,
+                                        struct user_cred *creds,
                                         cache_inode_status_t *status)
 {
   fsal_status_t fsal_status = {0, 0};
   cache_entry_t *lookup_src = NULL;
   cache_entry_t *lookup_dest = NULL;
+  struct fsal_obj_handle *phandle_dirsrc = dir_src->obj_handle;
+  struct fsal_obj_handle *phandle_dirdest = dir_dest->obj_handle;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *status = CACHE_INODE_SUCCESS;
@@ -204,6 +206,22 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
     {
       /* Bad type .... */
       *status = CACHE_INODE_BAD_TYPE;
+      goto out;
+    }
+
+  /* we must be able to both scan and write to both directories before we can proceed
+   * sticky bit also applies to both files after looking them up.
+   */
+  fsal_status = phandle_dirsrc->ops->test_access(phandle_dirsrc,
+						 creds,
+						 FSAL_W_OK | FSAL_X_OK);
+  if( !FSAL_IS_ERROR(fsal_status))
+    fsal_status = phandle_dirdest->ops->test_access(phandle_dirdest,
+						    creds,
+						    FSAL_W_OK | FSAL_X_OK);
+  if(FSAL_IS_ERROR(fsal_status))
+    {
+      *pstatus = cache_inode_error_convert(fsal_status);
       goto out;
     }
 
@@ -233,14 +251,32 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
              dir_dest, newname->name);
     goto out;
   }
+  if( !sticky_dir_allows(phandle_dirsrc,
+			 pentry_lookup_src->obj_handle,
+			 creds))
+    {
+      src_dest_unlock(pentry_dirsrc, pentry_dirdest);
+      *pstatus = CACHE_INODE_FSAL_EPERM;
+      goto out;
+    }
 
   /* Check if an object with the new name exists in the destination
      directory */
   if((lookup_dest
       = cache_inode_lookup_impl(dir_dest,
                                 newname,
-                                context,
+                                creds,
                                 status)) != NULL)
+  if( !sticky_dir_allows(phandle_dirdest,
+			 lookup_dest != NULL) ?
+			 lookup_src->obj_handle : NULL,
+			 creds))
+    {
+      src_dest_unlock(dir_src, dir_dest);
+      *status = CACHE_INODE_FSAL_EPERM;
+      goto out;
+    }
+  if(lookup_dest  != NULL)
     {
       LogDebug(COMPONENT_CACHE_INODE,
                "Rename (%p,%s)->(%p,%s) : destination already exists",
@@ -302,7 +338,7 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
 
       cache_inode_remove_impl(dir_dest,
                               newname,
-                              context,
+                              creds,
                               status,
                               CACHE_INODE_FLAG_CONTENT_HAVE |
                               CACHE_INODE_FLAG_CONTENT_HOLD);
@@ -320,14 +356,21 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
       if(*status == CACHE_INODE_FSAL_ESTALE)
         {
           LogDebug(COMPONENT_CACHE_INODE,
-                   "Rename : stale destnation");
+                   "Rename : stale destination");
 
           src_dest_unlock(dir_src, dir_dest);
           goto out;
         }
     }
 
-  if(dir_src->type != DIRECTORY)
+  /* Get the handle for the dirsrc entry */
+
+  if(dir_src->type == DIRECTORY)
+    {
+      phandle_dirsrc = pentry_dirsrc->obj_handle;
+      pattrsrc = &pentry_dirsrc->obj_handle->attributes;
+    }
+  else
     {
       *status = CACHE_INODE_BAD_TYPE;
       src_dest_unlock(dir_src, dir_dest);
@@ -346,35 +389,34 @@ cache_inode_status_t cache_inode_rename(cache_entry_t *dir_src,
    * Indeed, if the FSAL_rename fails unexpectly,
    * the cache would be inconsistent!
    */
-  fsal_status = FSAL_rename(&dir_src->handle, oldname,
-                            &dir_dest->handle, newname,
-                            context,
-                            &dir_src->attributes,
-                            &dir_dest->attributes);
+  fsal_status = phandle_dirsrc->ops->rename(phandle_dirsrc,
+					    oldname,
+					    phandle_dirdest,
+					    newname);
+  if( !FSAL_IS_ERROR(fsal_status))
+	  fsal_status = phandle_dirsrc->ops->getattrs(phandle_dirsrc, pattrsrc);
+  if( !FSAL_IS_ERROR(fsal_status))
+	  fsal_status = phandle_dirdest->ops->getattrs(phandle_dirdest, pattrdest);
   if(FSAL_IS_ERROR(fsal_status))
     {
-      *status = cache_inode_error_convert(fsal_status);
-      if (fsal_status.major == ERR_FSAL_STALE)
-        {
-          fsal_attrib_list_t attrs;
-          attrs.asked_attributes = cache_inode_params.attrmask;
-          fsal_status = FSAL_getattrs(&dir_src->handle,
-                                      context,
-                                      &attrs);
-          if (fsal_status.major == ERR_FSAL_STALE)
-            {
-              cache_inode_kill_entry(dir_src);
-            }
-          attrs.asked_attributes = cache_inode_params.attrmask;
-          fsal_status = FSAL_getattrs(&dir_dest->handle,
-                                      context,
-                                      &attrs);
-          if (fsal_status.major == ERR_FSAL_STALE)
-            {
-              cache_inode_kill_entry(dir_dest);
-            }
-        }
-      src_dest_unlock(dir_src, dir_dest);
+      *pstatus = cache_inode_error_convert(fsal_status);
+      if (fsal_status.major == ERR_FSAL_STALE) {
+           fsal_attrib_list_t attrs;
+
+           attrs.asked_attributes = pclient->attrmask;
+	   fsal_status = phandle_dirsrc->ops->getattrs(phandle_dirsrc, &attrs);
+           if (fsal_status.major == ERR_FSAL_STALE) {
+                cache_inode_kill_entry(pentry_dirsrc,
+                                       pclient);
+           }
+           attrs.asked_attributes = pclient->attrmask;
+           fsal_status = phandle_dirdest->ops->getattrs(phandle_dirdest, &attrs);
+           if (fsal_status.major == ERR_FSAL_STALE) {
+                cache_inode_kill_entry(pentry_dirdest,
+                                       pclient);
+           }
+      }
+      src_dest_unlock(pentry_dirsrc, pentry_dirdest);
       goto out;
     }
 
