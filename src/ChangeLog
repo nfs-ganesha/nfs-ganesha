@@ -485,5 +485,5 @@
          dir_chain were removed.
        - Lock support for FSAL_LUSTRE
        - Lustre FSAL: regression in readdir detected and fixed
-       - export list now support IP ranges using the CIDR format
+       - export list now supports IP ranges using the CIDR format
 
