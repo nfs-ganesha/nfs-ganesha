@@ -85,14 +85,15 @@
 cache_entry_t *
 cache_inode_lookup_impl(cache_entry_t *parent,
                         fsal_name_t *name,
-                        fsal_op_context_t *context,
+                        struct user_cred     * creds,
                         cache_inode_status_t *status)
 {
      cache_inode_dir_entry_t dirent_key;
      cache_inode_dir_entry_t *dirent = NULL;
      cache_entry_t *entry = NULL;
      fsal_status_t fsal_status = {0, 0};
-     fsal_handle_t object_handle;
+     struct fsal_obj_handle *object_handle;
+     struct fsal_obj_handle *dir_handle;
      fsal_attrib_list_t object_attributes;
      cache_inode_create_arg_t create_arg = {
           .newly_created_dir = FALSE
@@ -190,12 +191,12 @@ cache_inode_lookup_impl(cache_entry_t *parent,
           LogDebug(COMPONENT_CACHE_INODE, "Cache Miss detected");
      }
 
+     dir_handle = pentry_parent->obj_handle;
      memset(&object_attributes, 0, sizeof(fsal_attrib_list_t));
-     object_attributes.asked_attributes = cache_inode_params.attrmask;
-     fsal_status =
-          FSAL_lookup(&parent->handle,
-                      name, context, &object_handle,
-                      &object_attributes);
+     object_attributes.asked_attributes = pclient->attrmask;
+     fsal_status = dir_handle->ops->lookup(dir_handle,
+					   pname->name,
+					   &object_handle);
      if (FSAL_IS_ERROR(fsal_status)) {
           if (fsal_status.major == ERR_FSAL_STALE) {
                cache_inode_kill_entry(parent);
@@ -204,34 +205,12 @@ cache_inode_lookup_impl(cache_entry_t *parent,
           return NULL;
      }
 
-     type = cache_inode_fsal_type_convert(object_attributes.type);
-
-     /* If entry is a symlink, cache its target */
-     if(type == SYMBOLIC_LINK) {
-          fsal_status =
-               FSAL_readlink(&object_handle,
-                             context,
-                             &create_arg.link_content,
-                             &object_attributes);
-
-          if(FSAL_IS_ERROR(fsal_status)) {
-               *status = cache_inode_error_convert(fsal_status);
-               return NULL;
-          }
-     }
-
      /* Allocation of a new entry in the cache */
-     new_entry_fsdata.fh_desc.start = (caddr_t) &object_handle;
-     new_entry_fsdata.fh_desc.len = 0;
-     FSAL_ExpandHandle(context->export_context,
-                       FSAL_DIGEST_SIZEOF,
-                       &new_entry_fsdata.fh_desc);
-
-     if((entry = cache_inode_new_entry(&new_entry_fsdata,
-                                       &object_attributes,
-                                       type,
-                                       &create_arg,
-                                       status)) == NULL) {
+     if((pentry = cache_inode_new_entry(object_handle,
+                                        &object_attributes,
+                                        &create_arg,
+                                        CACHE_INODE_FLAG_NONE,
+                                        pstatus)) == NULL) {
           return NULL;
      }
 
@@ -281,7 +260,7 @@ cache_entry_t *
 cache_inode_lookup(cache_entry_t *parent,
                    fsal_name_t *name,
                    fsal_attrib_list_t *attr,
-                   fsal_op_context_t *context,
+		   struct user_cred     * creds,
                    cache_inode_status_t *status)
 {
      cache_entry_t *entry = NULL;
@@ -291,7 +270,7 @@ cache_inode_lookup(cache_entry_t *parent,
 
      if (cache_inode_access(parent,
                             access_mask,
-                            context,
+                            creds,
                             status) !=
          CACHE_INODE_SUCCESS) {
           return NULL;
@@ -300,13 +279,12 @@ cache_inode_lookup(cache_entry_t *parent,
      pthread_rwlock_rdlock(&parent->content_lock);
      entry = cache_inode_lookup_impl(parent,
                                      name,
-                                     context,
+                                     creds,
                                      status);
      pthread_rwlock_unlock(&parent->content_lock);
 
      if (entry) {
-          *status = cache_inode_lock_trust_attrs(entry,
-                                                 context);
+          *status = cache_inode_lock_trust_attrs(entry);
           if(*status == CACHE_INODE_SUCCESS)
             {
               *attr = entry->attributes;
