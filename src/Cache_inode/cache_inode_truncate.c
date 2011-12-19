@@ -78,11 +78,11 @@ cache_inode_truncate_impl(cache_entry_t *pentry,
                           fsal_size_t length,
                           fsal_attrib_list_t *pattr,
                           cache_inode_client_t *pclient,
-                          fsal_op_context_t *pcontext,
+			  struct user_cred *creds,
                           cache_inode_status_t *pstatus)
 {
   fsal_status_t fsal_status;
-  fsal_file_t *fd;
+  struct fsal_obj_handle *obj_hdl = pentry->obj_handle;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -95,14 +95,17 @@ cache_inode_truncate_impl(cache_entry_t *pentry,
     }
 
   /* Call FSAL to actually truncate */
-  pentry->attributes.asked_attributes = pclient->attrmask;
-  if (pentry->object.file.open_fd.openflags == FSAL_O_CLOSED)
-    fd = NULL;
-  else
-    fd = &(pentry->object.file.open_fd.fd);
-  fsal_status = FSAL_truncate(&pentry->handle, pcontext, length,
-                              fd, /* used by FSAL_GPFS */
-                              &pentry->attributes);
+  obj_hdl->attributes.asked_attributes = pclient->attrmask;
+  fsal_status = obj_hdl->ops->truncate(obj_hdl, length);
+  if( !FSAL_IS_ERROR(fsal_status))
+    fsal_status = obj_hdl->ops->getattrs(obj_hdl, pattr);
+/*   if (pentry->object.file.open_fd.openflags == FSAL_O_CLOSED) */
+/*     fd = NULL; */
+/*   else */
+/*     fd = &(pentry->object.file.open_fd.fd); */
+/*   fsal_status = FSAL_truncate(&pentry->handle, pcontext, length, */
+/*                               fd, /\* used by FSAL_GPFS *\/ */
+/*                               &pentry->attributes); */
 
   if(FSAL_IS_ERROR(fsal_status))
     {
@@ -113,8 +116,10 @@ cache_inode_truncate_impl(cache_entry_t *pentry,
       return *pstatus;
     }
 
+/** @TODO  cleanup with purging of attribute copying 
+ */
   /* Returns the attributes */
-  *pattr = pentry->attributes;
+  *pattr = obj_hdl->attributes;
 
   return *pstatus;
 }                               /* cache_inode_truncate_sw */
@@ -129,7 +134,7 @@ cache_inode_truncate_impl(cache_entry_t *pentry,
  * @param length    [IN]    wanted length for the file.
  * @param pattr     [OUT]   attrtibutes for the file after the operation.
  * @param pclient   [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext     [IN]    FSAL credentials
+ * @param creds     [IN]    client user credentials 
  * @param pstatus   [OUT]   returned status.
  *
  * @return CACHE_INODE_SUCCESS if operation is a success \n
@@ -140,14 +145,15 @@ cache_inode_status_t cache_inode_truncate(cache_entry_t * pentry,
                                           fsal_size_t length,
                                           fsal_attrib_list_t * pattr,
                                           cache_inode_client_t * pclient,
-                                          fsal_op_context_t * pcontext,
+                                          struct user_cred *creds,
                                           cache_inode_status_t * pstatus)
 {
   cache_inode_status_t ret;
+
   pthread_rwlock_wrlock(&pentry->attr_lock);
   pthread_rwlock_wrlock(&pentry->content_lock);
   ret = cache_inode_truncate_impl(pentry,
-                                   length, pattr, pclient, pcontext, pstatus);
+                                   length, pattr, pclient, creds, pstatus);
   pthread_rwlock_unlock(&pentry->attr_lock);
   pthread_rwlock_unlock(&pentry->content_lock);
   return ret;

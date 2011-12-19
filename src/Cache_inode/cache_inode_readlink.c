@@ -104,21 +104,19 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t *entry,
           /* Make sure nobody updated the content while we were
              waiting. */
           if (!(entry->flags & CACHE_INODE_TRUST_CONTENT)) {
-               fsal_status
-                    = FSAL_readlink(&entry->handle,
-                                    context,
-                                    &entry->object.symlink->content,
-                                    NULL);
+               fsal_status = entry->obj_handle->ops->readlink(entry->obj_handle,
+							      link_content->path,
+							      FSAL_MAX_PATH_LEN) ; 
                if (!(FSAL_IS_ERROR(fsal_status))) {
                     atomic_set_int_bits(&entry->flags,
                                         CACHE_INODE_TRUST_CONTENT);
                }
           }
      }
-     if (!(FSAL_IS_ERROR(fsal_status))) {
-          FSAL_pathcpy(link_content,
-                       &(entry->object.symlink->content));
-     }
+/*      if (!(FSAL_IS_ERROR(fsal_status))) { */
+/*           FSAL_pathcpy(link_content, */
+/*                        &(entry->object.symlink->content)); */
+/*      } */
      pthread_rwlock_unlock(&entry->content_lock);
 
      if (FSAL_IS_ERROR(fsal_status)) {

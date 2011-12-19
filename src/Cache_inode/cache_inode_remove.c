@@ -103,13 +103,13 @@ cache_inode_clean_internal(cache_entry_t *entry,
                            cache_inode_client_t *client)
 {
      hash_buffer_t key, val;
+     struct fsal_handle_desc fh_desc;
      hash_error_t rc = 0;
 
-     if (entry->fh_desc.start == 0)
-         return CACHE_INODE_SUCCESS;
-
-     key.pdata = entry->fh_desc.start;
-     key.len = entry->fh_desc.len;
+     entry->obj_handle->ops->handle_to_key(entry->obj_handle,
+					   &fh_desc);
+     key.pdata = fh_desc.start;
+     key.len = fh_desc.len;
 
 
      val.pdata = entry;
@@ -129,14 +129,13 @@ cache_inode_clean_internal(cache_entry_t *entry,
           return CACHE_INODE_INCONSISTENT_ENTRY;
      }
 
+/* release the handle object too
+ */
+     entry->obj_handle->ops->release(entry->obj_handle);
+
      /* Delete from the weakref table */
      cache_inode_weakref_delete(&entry->weakref);
 
-     if (entry->type == SYMBOLIC_LINK) {
-          pthread_rwlock_wrlock(&entry->content_lock);
-          cache_inode_release_symlink(entry, &client->pool_entry_symlink);
-          pthread_rwlock_unlock(&entry->content_lock);
-     }
 
      return CACHE_INODE_SUCCESS;
 } /* cache_inode_clean_internal */
@@ -232,6 +231,7 @@ unlock_attr:
  *                               validating the entry
  *
  */
+
 cache_inode_status_t
 cache_inode_remove_impl(cache_entry_t *entry,
                         fsal_name_t *name,
@@ -271,6 +271,12 @@ cache_inode_remove_impl(cache_entry_t *entry,
           goto out;
      }
 
+     if( !sticky_dir_allows(pentry->obj_handle,
+			    to_remove_entry->obj_handle,
+			    creds)) {
+	 *status = CACHE_INODE_FSAL_EPERM;
+	 goto out;
+     }
      /* Lock the attributes (so we can decrement the link count) */
      pthread_rwlock_wrlock(&to_remove_entry->attr_lock);
 
@@ -281,10 +287,10 @@ cache_inode_remove_impl(cache_entry_t *entry,
 #ifdef _USE_NFS4_ACL
      saved_acl = entry->attributes.acl;
 #endif /* _USE_NFS4_ACL */
-     fsal_status = FSAL_unlink(&entry->handle,
-                               name,
-                               context,
-                               &entry->attributes);
+     fsal_status = entry->obj_handle->ops->unlink(entry->obj_handle, name);
+     if( !FSAL_IS_ERROR(fsal_status))
+	  fsal_status = entry->obj_handle->ops->getattrs(entry->obj_handle,
+							 &entry->attributes);
 
      if (FSAL_IS_ERROR(fsal_status)) {
           *status = cache_inode_error_convert(fsal_status);

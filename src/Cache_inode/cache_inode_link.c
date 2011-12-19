@@ -94,9 +94,10 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
                                       fsal_name_t * plink_name,
                                       fsal_attrib_list_t * pattr,
                                       cache_inode_client_t * pclient,
-                                      fsal_op_context_t * pcontext,
+                                      struct user_cred *creds,
                                       cache_inode_status_t * pstatus)
 {
+<<<<<<< HEAD
      fsal_status_t fsal_status = {0, 0};
      bool_t srcattrlock = FALSE;
      bool_t destattrlock = FALSE;
@@ -165,25 +166,23 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
 #ifdef _USE_NFS4_ACL
      saved_acl = pentry_src->attributes.acl;
 #endif /* _USE_NFS4_ACL */
-     fsal_status =
-          FSAL_link(&pentry_src->handle, &pentry_dir_dest->handle,
-                    plink_name, pcontext, &pentry_src->attributes);
+     fsal_status = pentry_src->obj_handle->ops->link(pentry_src->obj_handle,
+						     pentry_dir_dest->obj_handle,
+						     plink_name);
      if (FSAL_IS_ERROR(fsal_status)) {
           *pstatus = cache_inode_error_convert(fsal_status);
           if (fsal_status.major == ERR_FSAL_STALE) {
                fsal_attrib_list_t attrs;
                attrs.asked_attributes = pclient->attrmask;
-               fsal_status = FSAL_getattrs(&pentry_src->handle,
-                                           pcontext,
-                                           &attrs);
+	       fsal_status = pentry_src->obj_handle->ops->getattrs(pentry_src->obj_handle,
+								   &attrs);
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(pentry_src,
                                            pclient);
                }
                attrs.asked_attributes = pclient->attrmask;
-               fsal_status = FSAL_getattrs(&pentry_dir_dest->handle,
-                                           pcontext,
-                                           &attrs);
+	       fsal_status = pentry_dir_dest->obj_handle->ops->getattrs(pentry_dir_dest->obj_handle,
+									&attrs);
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(pentry_dir_dest,
                                            pclient);
