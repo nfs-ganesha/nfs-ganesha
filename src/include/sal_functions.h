@@ -41,6 +41,7 @@
 #include "sal_data.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
+#include "nfs_core.h"
 
 /******************************************************************************
  *
@@ -200,7 +201,7 @@ int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t * *pstate_data);
 int nfs4_State_Del(char other[OTHERSIZE]);
 void nfs_State_PrintAll(void);
 
-int nfs4_is_lease_expired(cache_entry_t * pentry);
+int nfs4_is_lease_expired(nfs_client_id_t * pentry);
 
 int display_state_id_val(hash_buffer_t * pbuff, char *str);
 int display_state_id_key(hash_buffer_t * pbuff, char *str);
@@ -472,5 +473,20 @@ void available_blocked_lock_upcall(cache_entry_t        * pentry,
 void process_blocked_lock_upcall(state_block_data_t   * block_data,
                                  cache_inode_client_t * pclient);
 #endif
+/*
+ *
+ * NFSv4 Recovery functions
+ *
+ */
+void nfs4_init_grace();
+void nfs4_start_grace();
+int nfs4_in_grace();
+void nfs4_create_clid_name(nfs_client_id_t *, struct svc_req *);
+void nfs4_add_clid(nfs_client_id_t *);
+void nfs4_rm_clid(char *);
+void nfs4_chk_clid(nfs_client_id_t *);
+void nfs4_load_recov_clids();
+void nfs4_clean_recov_dir();
+void nfs4_create_recov_dir();
 
 #endif                          /*  _SAL_FUNCTIONS_H */

@@ -469,6 +469,8 @@ typedef struct nfs_client_id__
   time_t last_renew;
   nfs_clientid_confirm_state_t confirmed;
   nfs_client_cred_t credential;
+  int allow_reclaim;
+  char *recov_dir;
 #ifdef _USE_NFS4_1
   char server_owner[MAXNAMLEN];
   char server_scope[MAXNAMLEN];

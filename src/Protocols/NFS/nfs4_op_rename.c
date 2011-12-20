@@ -166,6 +166,12 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_RENAME4.status;
     }
 
+  if (nfs4_in_grace())
+    {
+      res_RENAME4.status = NFS4ERR_GRACE;
+      return res_RENAME4.status;
+    }
+
   /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
   if(data->pexport == NULL)
     {
