@@ -2095,6 +2095,16 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   create_fsal_up_threads();
 #endif /* _USE_FSAL_UP */
 
+  /* Create stable storage directory, this should not be necessary */
+  nfs4_create_recov_dir();
+
+  /* initialize grace and read in the client IDs */
+  nfs4_init_grace();
+  nfs4_load_recov_clids();
+
+  /* Start grace period */
+  nfs4_start_grace();
+
   LogInfo(COMPONENT_INIT,
           "Cache Inode root entries successfully created");
 
@@ -2475,6 +2485,8 @@ void nfs_start(nfs_start_info_t * p_start_info)
   /* Regular exit */
   LogEvent(COMPONENT_MAIN,
            "NFS EXIT: regular exit");
+
+  nfs4_clean_recov_dir();
   Cleanup();
 
   /* let main return 0 to exit */

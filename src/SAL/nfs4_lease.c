@@ -55,43 +55,37 @@
  *
  * nfs4_is_leased_expired
  *
- * This routine checks the availability of a lease to a cache_entry
+ * This routine checks if the client's lease has expired.
  *
- * @param pstate [IN] pointer to the cache_entry to be checked.
+ * @param pclient [IN] pointer to the client to be checked.
  *
  * @return 1 if expired, 0 otherwise.
  *
  */
-int nfs4_is_lease_expired(cache_entry_t * pentry)
+int nfs4_is_lease_expired(nfs_client_id_t * clientp)
 {
-  nfs_client_id_t nfs_clientid = {
-    .last_renew = 0
-  };
-
-  if(pentry->internal_md.type != REGULAR_FILE)
-    return 0;
-
-#ifdef BUGAZOMEU
-  if(pentry->object.file.state_v4 == NULL)
-    return 0;
-
-  if(nfs_client_id_get(pentry->object.file.state_v4->clientid4, &nfs_clientid) !=
-     CLIENT_ID_SUCCESS)
-    return 0;                   /* No client id, manage it as non-expired */
-
   LogFullDebug(COMPONENT_NFS_V4,
-               "Lease on %p for client_name = %s id=%lld",
-               pentry, nfs_clientid.client_name, nfs_clientid.clientid);
+               "Check lease for client_name = %s id=%lld",
+               clientp->client_name, clientp->clientid);
 
   LogFullDebug(COMPONENT_NFS_V4,
                "--------- nfs4_is_lease_expired ---------> %u %u delta=%u lease=%u",
-               time(NULL), time(NULL), nfs_clientid.last_renew,
-               time(NULL) - nfs_clientid.last_renew, nfs_param.nfsv4_param.lease_lifetime);
-#endif
+               time(NULL), time(NULL), clientp->last_renew,
+               time(NULL) - clientp->last_renew, nfs_param.nfsv4_param.lease_lifetime);
 
   /* Check is lease is still valid */
-  if(time(NULL) - nfs_clientid.last_renew > (int)nfs_param.nfsv4_param.lease_lifetime)
+  if(time(NULL) - clientp->last_renew > (int)nfs_param.nfsv4_param.lease_lifetime)
     return 1;
   else
     return 0;
 }                               /* nfs4_is_lease_expired */
+
+void nfs4_update_lease(nfs_client_id_t * clientp)
+{
+  LogFullDebug(COMPONENT_NFS_V4,
+               "Update lease for client_name = %s id=%lld",
+               clientp->client_name, clientp->clientid);
+
+  clientp->last_renew = time(NULL);
+}
+

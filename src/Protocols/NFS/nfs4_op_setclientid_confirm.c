@@ -132,8 +132,15 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
           /* Regular situation, set the client id confirmed and returns */
           nfs_clientid.confirmed = CONFIRMED_CLIENT_ID;
 
+          /* add this clientID to stable storage */
+          nfs4_create_clid_name(&nfs_clientid, data->reqp);
+          nfs4_add_clid(&nfs_clientid);
+
           /* Set the time for the client id */
           nfs_clientid.last_renew = time(NULL);
+
+          /* check if the client can perform reclaims */
+          nfs4_chk_clid(&nfs_clientid);
 
           /* Set the new value */
           if(nfs_client_id_set(clientid, nfs_clientid, &pworker->clientid_pool) !=
