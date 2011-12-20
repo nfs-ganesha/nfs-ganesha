@@ -112,73 +112,6 @@ void DispatchWork9P( request_data_t *preq, unsigned int worker_index)
 
 
 /**
- * Selects the smallest request queue,
- * whome the worker is ready and is not garbagging.
- */
-static unsigned int select_worker_queue()
-{
-  #define NO_VALUE_CHOOSEN  1000000
-  unsigned int worker_index = NO_VALUE_CHOOSEN;
-  unsigned int avg_number_pending = NO_VALUE_CHOOSEN;
-  unsigned int total_number_pending = 0;
-
-  static unsigned int counter;
-
-  unsigned int i;
-  static unsigned int last;
-  unsigned int cpt = 0;
-  worker_available_rc rc;
-
-  counter++;
-
-  /* Calculate the average queue length if counter is bigger than configured value. */
-  if(counter > nfs_param.core_param.nb_call_before_queue_avg)
-    {
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        {
-          total_number_pending += workers_data[i].pending_request->nb_entry;
-        }
-      avg_number_pending = total_number_pending / nfs_param.core_param.nb_worker;
-      /* Reset counter. */
-      counter = 0;
-    }
-
-  /* Choose the queue whose length is smaller than average. */
-      for(i = (last + 1) % nfs_param.core_param.nb_worker, cpt = 0;
-          cpt < nfs_param.core_param.nb_worker;
-          cpt++, i = (i + 1) % nfs_param.core_param.nb_worker)
-        {
-          /* Choose only fully initialized workers and that does not gc. */
-          rc = worker_available(i, avg_number_pending);
-          if(rc == WORKER_AVAILABLE)
-            {
-              worker_index = i;
-              break;
-            }
-          else if(rc == WORKER_ALL_PAUSED)
-            {
-              /* Wait for the threads to awaken */
-              rc = wait_for_workers_to_awaken();
-              /*              if(rc == PAUSE_EXIT)
-                {
-                }
-              */
-            }
-          else if(rc == WORKER_EXIT)
-            {
-            } 
-        }
-
-  if(worker_index == NO_VALUE_CHOOSEN)
-    worker_index = (last + 1) % nfs_param.core_param.nb_worker;
-
-  last = worker_index;
-
-  return worker_index;
-
-}                               /* select_worker_queue */
-
-/**
  * _9p_socket_thread: 9p socket manager.
  *
  * This function is the main loop for the 9p socket manager. One such thread exists per connection.
@@ -292,7 +225,7 @@ void * _9p_socket_thread( void * Arg )
      if( fds[0].revents & (POLLIN|POLLRDNORM) )
       {
         /* choose a worker depending on its queue length */
-        worker_index = select_worker_queue();
+        worker_index = nfs_core_select_worker_queue();
 
         /* Get a preq from the worker's pool */
         P(workers_data[worker_index].request_pool_mutex);

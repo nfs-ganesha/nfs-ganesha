@@ -834,6 +834,8 @@ int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) 
 fridge_entry_t * fridgethr_freeze( ) ;
 int fridgethr_init() ;
 
+unsigned int nfs_core_select_worker_queue() ;
+
 #ifdef _USE_NFS4_1
 int display_session_id_key(hash_buffer_t * pbuff, char *str);
 int display_session_id_val(hash_buffer_t * pbuff, char *str);

@@ -105,7 +105,7 @@ const _9p_function_desc_t _9pfuncdesc[] = {
         { _9p_renameat, "_9P_TRENAMEAT" },
         { _9p_unlinkat, "_9P_TUNLINKAT" },
         { _9p_version, "_9P_TVERSION" },
-        { _9p_dummy, "_9P_TAUTH" },
+        { _9p_auth, "_9P_TAUTH" },
         { _9p_attach, "_9P_TATTACH" },
         { _9p_flush, "_9P_TFLUSH" },
         { _9p_walk, "_9P_TWALK" },
