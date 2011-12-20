@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [1.2.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [1.4.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
 AC_SUBST(RELEASE, [1])
 

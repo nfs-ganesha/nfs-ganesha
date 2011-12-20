@@ -487,3 +487,5 @@
        - FSAL_LUSTRE/FSAL_XFS/FSAL_FUSELIKE/FSAL_ZFS: regression in readdir detected and fixed
        - export list now supports IP ranges using the CIDR format
 
+1.4.0 -
+      -
