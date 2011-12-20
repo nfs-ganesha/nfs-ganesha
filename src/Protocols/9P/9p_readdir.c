@@ -153,10 +153,15 @@ int _9p_readdir( _9p_request_data_t * preq9p,
                           &pfid->fsal_op_context, 
                           &cache_status) != CACHE_INODE_SUCCESS)
     {
+      if( unlock ) V_r( &pfid->pentry->lock ) ;
+
       err = _9p_tools_errno( cache_status ) ; ;
       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
       return rc ;
     }
+
+  /* Unlock the directory if needed */
+  if( unlock ) V_r( &pfid->pentry->lock ) ;
 
   /* Never go behind _9P_MAXDIRCOUNT */
   if( num_entries > _9P_MAXDIRCOUNT ) num_entries = _9P_MAXDIRCOUNT ;
