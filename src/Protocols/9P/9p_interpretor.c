@@ -94,7 +94,7 @@ const _9p_function_desc_t _9pfuncdesc[] = {
         { _9p_readlink, "_9P_TREADLINK" },
         { _9p_getattr, "_9P_TGETATTR"},
         { _9p_setattr, "_9P_TSETATTR" },
-        { _9p_dummy, "_9P_TXATTRWALK" },
+        { _9p_xattrwalk, "_9P_TXATTRWALK" },
         { _9p_dummy, "_9P_TXATTRCREATE" },
         { _9p_readdir, "_9P_TREADDIR" },
         { _9p_dummy, "_9P_TFSYNC" },

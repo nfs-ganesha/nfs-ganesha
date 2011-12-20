@@ -28,6 +28,7 @@ lib9p_la_SOURCES = 9p_interpretor.c  \
                    9p_symlink.c      \
                    9p_version.c      \
                    9p_walk.c         \
+                   9p_xattrwalk.c    \
                    9p_write.c        \
                    9p_rerror.c       \
                   ../../include/9p.h
