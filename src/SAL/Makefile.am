@@ -13,6 +13,7 @@ libsal_la_SOURCES = state_async.c                    \
                     nfs4_state_id.c                  \
                     nfs4_owner.c                     \
                     nfs4_lease.c                     \
+                    nfs4_recovery.c                  \
                     ../include/BuddyMalloc.h         \
                     ../include/HashData.h            \
                     ../include/HashTable.h           \

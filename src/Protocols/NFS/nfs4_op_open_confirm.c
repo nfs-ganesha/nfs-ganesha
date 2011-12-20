@@ -163,6 +163,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
                  &res_OPEN_CONFIRM4.OPEN_CONFIRM4res_u.resok4.open_stateid,
                  data,
                  tag);
+
   /* Save the response in the open owner */
   Copy_nfs4_state_req(popen_owner, arg_OPEN_CONFIRM4.seqid, op, data, resp, tag);
                 

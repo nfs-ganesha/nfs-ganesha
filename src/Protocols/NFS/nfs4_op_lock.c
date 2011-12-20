@@ -100,7 +100,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   state_owner_t           * presp_owner;    /* Owner to store response in */
   state_owner_t           * conflict_owner = NULL;
   state_nfs4_owner_name_t   owner_name;
-  nfs_client_id_t           nfs_client_id;
+  nfs_client_id_t         * nfs_client_id;
   fsal_lock_param_t         lock_desc, conflict_desc;
   state_blocking_t          blocking = STATE_NON_BLOCKING;
   const char              * tag = "LOCK";
@@ -221,7 +221,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
               &lock_desc);
 
       /* Check is the clientid is known or not */
-      if(nfs_client_id_get(arg_LOCK4.locker.locker4_u.open_owner.lock_owner.clientid,
+      if(nfs_client_id_Get_Pointer(arg_LOCK4.locker.locker4_u.open_owner.lock_owner.clientid,
                            &nfs_client_id) == CLIENT_ID_NOT_FOUND)
         {
           res_LOCK4.status = NFS4ERR_STALE_CLIENTID;
@@ -229,6 +229,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                    "LOCK failed nfs_client_id_get");
           return res_LOCK4.status;
         }
+
+      nfs4_update_lease(nfs_client_id);
 
       /* The related stateid is already stored in pstate_open */
 
@@ -317,7 +319,20 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           return res_LOCK4.status;
         }
 #endif
+
+      /* get the client for this open owner */
+      if(nfs_client_id_Get_Pointer(popen_owner->so_owner.so_nfs4_owner.so_clientid,
+                           &nfs_client_id) == CLIENT_ID_NOT_FOUND)
+        {
+          res_LOCK4.status = NFS4ERR_STALE_CLIENTID;
+          LogDebug(COMPONENT_NFS_V4_LOCK,
+                   "LOCK failed nfs_client_id_get");
+          return res_LOCK4.status;
+        }
+
     }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
+
+  nfs4_update_lease(nfs_client_id);
 
   /* Check seqid (lock_seqid or open_seqid) */
   if(!Check_nfs4_seqid(presp_owner, seqid, op, data, resp, tag))
@@ -462,6 +477,25 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                      &plock_state->state_data.lock.state_sharelist);
     }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
 
+  /*
+   * do grace period checking
+   */
+  if (nfs4_in_grace() && !arg_LOCK4.reclaim)
+  {
+     res_LOCK4.status = NFS4ERR_GRACE;
+     goto out;
+  }
+  if (nfs4_in_grace() && arg_LOCK4.reclaim && !nfs_client_id->allow_reclaim)
+  {
+     res_LOCK4.status = NFS4ERR_NO_GRACE;
+     goto out;
+  }
+  if (!nfs4_in_grace() && arg_LOCK4.reclaim)
+  {
+     res_LOCK4.status = NFS4ERR_NO_GRACE;
+     goto out;
+  }
+
   /* Now we have a lock owner and a stateid.
    * Go ahead and push lock into SAL (and FSAL).
    */
@@ -533,6 +567,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           data->pcontext,
           plock_owner,
           &lock_desc);
+out:
 
   return res_LOCK4.status;
 #endif
