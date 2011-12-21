@@ -228,6 +228,7 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
          arg_LAYOUTCOMMIT4.loca_last_write_offset.no_newoffset ||
          res.size_supplied) {
           if (cache_inode_kill_entry(data->current_entry,
+                                     WT_LOCK,
                                      data->ht,
                                      data->pclient,
                                      &cache_status)

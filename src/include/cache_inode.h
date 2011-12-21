@@ -931,7 +931,7 @@ cache_inode_status_t cache_inode_gc_fd(cache_inode_client_t * pclient,
                                        cache_inode_status_t * pstatus);
 
 cache_inode_status_t cache_inode_kill_entry( cache_entry_t * pentry,
-                                             cache_inode_lock_how_t lock_how, 
+                                             cache_inode_lock_how_t lock_how,
                                              hash_table_t * ht,
                                              cache_inode_client_t * pclient,
                                              cache_inode_status_t * pstatus);
