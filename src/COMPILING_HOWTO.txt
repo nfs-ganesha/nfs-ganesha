@@ -21,5 +21,8 @@ Note: if no '--with-fsal=' is provided, the PROXY FSAL will be used.
 those from your machine. This is done by running "autoreconf --install" from src/ . This will as well generate the related ./configure
 script.
 
+NFS-Ganesha has been compiled and validated on F14 and RHEL5/CentOS5.
+Compilation on F15 and RHEL6 is OK too. Compilation/test must be made on a debian platform. FreeBSD should be validated
+as well. 
 
 

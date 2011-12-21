@@ -83,14 +83,14 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   char * dcount_pos = NULL ;
 
   cache_inode_status_t cache_status;
-  cache_inode_dir_entry_t dirent_array[_9P_MAXDIRCOUNT] ;
+  cache_inode_dir_entry_t **dirent_array = NULL;
   cache_inode_endofdir_t eod_met;
 
   unsigned int cookie = 0;
   unsigned int end_cookie = 0;
-  unsigned int cookie_array[_9P_MAXDIRCOUNT] ;
   unsigned int estimated_num_entries = 0 ;
   unsigned int num_entries = 0 ;
+  int unlock = FALSE ;
   u64 i = 0LL ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
@@ -129,15 +129,26 @@ int _9p_readdir( _9p_request_data_t * preq9p,
    * total   = ~40 bytes (average size) per dentry */ 
   estimated_num_entries = (unsigned int)( *count / 40 ) ;  
 
+  if((dirent_array = (cache_inode_dir_entry_t **) Mem_Alloc_Label(
+          estimated_num_entries * sizeof(cache_inode_dir_entry_t*),
+          "cache_inode_dir_entry_t in _9p_readdir")) == NULL)
+    {
+      err = EIO ;
+      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+      return rc ;
+    }
+
+
   if(cache_inode_readdir( pfid->pentry,
+                          pfid->pexport->cache_inode_policy,
                           cookie,
                           estimated_num_entries,
                           &num_entries,
-                          &end_cookie,
+                          (uint64_t *)&end_cookie,
                           &eod_met,
                           dirent_array,
-                          cookie_array,
                           pwkrdata->ht,
+                          &unlock,
                           &pwkrdata->cache_inode_client,
                           &pfid->fsal_op_context, 
                           &cache_status) != CACHE_INODE_SUCCESS)
@@ -164,10 +175,10 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      recsize = 0 ; 
 
      /* Build qid */
-     switch( dirent_array[i].pentry->internal_md.type )
+     switch( dirent_array[i]->pentry->internal_md.type )
       {
         case REGULAR_FILE:
-          qid_path = (u64 *)&dirent_array[i].pentry->object.file.attributes.fileid ;
+          qid_path = (u64 *)&dirent_array[i]->pentry->object.file.attributes.fileid ;
           qid_type = &qid_type_file ;
 	  break ;
 
@@ -175,23 +186,18 @@ int _9p_readdir( _9p_request_data_t * preq9p,
         case BLOCK_FILE:
         case SOCKET_FILE:
         case FIFO_FILE:
-          qid_path = (u64 *)&dirent_array[i].pentry->object.special_obj.attributes.fileid ;
+          qid_path = (u64 *)&dirent_array[i]->pentry->object.special_obj.attributes.fileid ;
           qid_type = &qid_type_file ;
 	  break ;
 
         case SYMBOLIC_LINK:
-          qid_path = (u64 *)&dirent_array[i].pentry->object.symlink->attributes.fileid ;
+          qid_path = (u64 *)&dirent_array[i]->pentry->object.symlink->attributes.fileid ;
           qid_type = &qid_type_symlink;
 	  break ;
 
-        case DIR_CONTINUE:
-          qid_path = (u64 *)&dirent_array[i].pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes.fileid ;
-          qid_type = &qid_type_dir ;
-	  break ;
-
-        case DIR_BEGINNING:
+        case DIRECTORY:
         case FS_JUNCTION:
-          qid_path = (u64 *)&dirent_array[i].pentry->object.dir_begin.attributes.fileid ;
+          qid_path = (u64 *)&dirent_array[i]->pentry->object.dir.attributes.fileid ;
           qid_type = &qid_type_dir ;
 	  break ;
 
@@ -206,8 +212,8 @@ int _9p_readdir( _9p_request_data_t * preq9p,
       }
 
      /* Get dirent name information */
-     name_str = dirent_array[i].name.name ;
-     name_len = dirent_array[i].name.len ;
+     name_str = dirent_array[i]->name.name ;
+     name_len = dirent_array[i]->name.len ;
  
      /* Add 13 bytes in recsize for qid + 8 bytes for offset + 1 for type + 2 for strlen = 24 bytes*/
      recsize = 24 + name_len  ;
@@ -237,6 +243,12 @@ int _9p_readdir( _9p_request_data_t * preq9p,
               (u32)*msgtag, *fid , recsize, (unsigned long long)i, *qid_type, 0, (unsigned long long)*qid_path, *qid_type, name_str) ;
    } /* for( i = 0 , ... ) */
 
+
+  if( !CACHE_INODE_KEEP_CONTENT( pfid->pentry->policy ) )
+    cache_inode_release_dirent( dirent_array, num_entries, &pwkrdata->cache_inode_client ) ;
+  Mem_Free((char *)dirent_array);
+
+  
   /* Set buffsize in previously saved position */
   _9p_setvalue( dcount_pos, dcount, u32 ) ; 
 

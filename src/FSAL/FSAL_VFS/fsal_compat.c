@@ -22,7 +22,7 @@ fsal_functions_t fsal_vfs_functions = {
   .fsal_getattrs_descriptor = VFSFSAL_getattrs_descriptor,
   .fsal_setattrs = VFSFSAL_setattrs,
   .fsal_buildexportcontext = VFSFSAL_BuildExportContext,
-  .fsal_cleanupexportcontext = VFSFSAL_CleanUpExportContext,
+  .fsal_cleanupexportcontext = COMMON_CleanUpExportContext_noerror,
   .fsal_initclientcontext = COMMON_InitClientContext,
   .fsal_getclientcontext = COMMON_GetClientContext,
   .fsal_create = VFSFSAL_create,
@@ -42,7 +42,7 @@ fsal_functions_t fsal_vfs_functions = {
   .fsal_close_by_fileid = COMMON_close_by_fileid,
   .fsal_dynamic_fsinfo = VFSFSAL_dynamic_fsinfo,
   .fsal_init = VFSFSAL_Init,
-  .fsal_terminate = VFSFSAL_terminate,
+  .fsal_terminate = COMMON_terminate_noerror,
   .fsal_test_access = VFSFSAL_test_access,
   .fsal_setattr_access = COMMON_setattr_access_notsupp,
   .fsal_rename_access = COMMON_rename_access,
@@ -89,7 +89,7 @@ fsal_functions_t fsal_vfs_functions = {
   .fsal_setxattrvaluebyid = VFSFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = VFSFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = VFSFSAL_RemoveXAttrByName,
-  .fsal_getextattrs = VFSFSAL_getextattrs,
+  .fsal_getextattrs = COMMON_getextattrs_notsupp,
   .fsal_getfileno = VFSFSAL_GetFileno
 };
 

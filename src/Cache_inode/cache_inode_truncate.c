@@ -137,8 +137,7 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
         }
 
       /* Set the time stamp values too */
-      pentry->object.file.attributes.mtime.seconds = time(NULL);
-      pentry->object.file.attributes.mtime.nseconds = 0;
+      cache_inode_set_time_current( &pentry->object.file.attributes.mtime ) ;
       pentry->object.file.attributes.ctime = pentry->object.file.attributes.mtime;
     }
   else
@@ -174,7 +173,7 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
                        "cache_inode_truncate: Stale FSAL File Handle detected for pentry = %p",
                        pentry);
 
-              if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+              if(cache_inode_kill_entry( pentry, NO_LOCK, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
                 LogCrit(COMPONENT_CACHE_INODE,
                         "cache_inode_truncate: Could not kill entry %p, status = %u",

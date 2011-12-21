@@ -1,0 +1,386 @@
+From 4d549d439b05b821493c82b90f61e4b103218950 Mon Sep 17 00:00:00 2001
+From: Thomas LEIBOVICI - CEA/DAM <thomas.leibovici@cea.fr>
+Date: Wed, 14 Dec 2011 12:52:03 +0100
+Subject: [PATCH 1/2] Fix compilation warnings
+To: philippe.deniel@cea.fr
+
+Signed-off-by: Thomas LEIBOVICI - CEA/DAM <thomas.leibovici@cea.fr>
+---
+ src/Cache_inode/cache_inode_fsal_hash.c |   14 +++++++-------
+ src/Cache_inode/cache_inode_get.c       |    2 +-
+ src/Cache_inode/cache_inode_readdir.c   |   10 ++++++++++
+ src/FSAL/FSAL_LUSTRE/Makefile.am        |    2 ++
+ src/FSAL/FSAL_LUSTRE/fsal_fileop.c      |   19 +++++++++++++++----
+ src/FSAL/FSAL_LUSTRE/fsal_rcp.c         |    2 +-
+ src/FSAL/FSAL_LUSTRE/fsal_truncate.c    |    8 ++++----
+ src/FSAL/FSAL_LUSTRE/fsal_xattrs.c      |    2 +-
+ src/FSAL/FSAL_TEMPLATE/Makefile.am      |    1 -
+ src/FSAL/common_methods.c               |    6 +++---
+ src/MainNFSD/nfs_init.c                 |    3 +--
+ src/Protocols/NFS/nfs4_op_readdir.c     |    2 +-
+ src/Protocols/NFS/nfs4_op_rename.c      |    4 ++--
+ src/nfs-ganesha.lustre.init             |    6 ++----
+ src/nfs-ganesha.shook.init              |    4 +---
+ 15 files changed, 51 insertions(+), 34 deletions(-)
+
+diff --git a/src/Cache_inode/cache_inode_fsal_hash.c b/src/Cache_inode/cache_inode_fsal_hash.c
+index ff811e9..8ea19d0 100644
+--- a/src/Cache_inode/cache_inode_fsal_hash.c
++++ b/src/Cache_inode/cache_inode_fsal_hash.c
+@@ -78,7 +78,7 @@ unsigned long cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
+         {
+             snprintHandle(printbuf, 512, &pfsdata->handle);
+             LogFullDebug(COMPONENT_HASHTABLE,
+-                         "hash_func key: buff = (Handle=%s, Cookie=%u), hash value=%lu",
++                         "hash_func key: buff = (Handle=%s, Cookie=%"PRIu64"), hash value=%lu",
+                          printbuf, pfsdata->cookie, h);
+         }
+ 
+@@ -115,7 +115,7 @@ unsigned long cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
+         {
+             snprintHandle(printbuf, 512, &pfsdata->handle);
+             LogFullDebug(COMPONENT_HASHTABLE,
+-                         "hash_func rbt: buff = (Handle=%s, Cookie=%u), value=%u",
++                         "hash_func rbt: buff = (Handle=%s, Cookie=%"PRIu64"), value=%u",
+                          printbuf, pfsdata->cookie, h);
+         }
+     return h;
+@@ -139,7 +139,7 @@ unsigned long __cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
+         {
+             snprintHandle(printbuf, 512, &pfsdata->handle);
+             LogFullDebug(COMPONENT_HASHTABLE,
+-                         "hash_func rbt: buff = (Handle=%s, Cookie=%u), value=%lu",
++                         "hash_func rbt: buff = (Handle=%s, Cookie=%"PRIu64"), value=%lu",
+                          printbuf, pfsdata->cookie, h);
+         }
+     return h;
+@@ -177,7 +177,7 @@ unsigned int cache_inode_fsal_rbt_both_on_fsal( hash_parameter_t * p_hparam,
+       {
+           snprintHandle(printbuf, 512, &pfsdata->handle);
+           LogMajor(COMPONENT_HASHTABLE,
+-                   "Unable to hash (Handle=%s, Cookie=%u)",
++                   "Unable to hash (Handle=%s, Cookie=%"PRIu64")",
+                    printbuf, pfsdata->cookie);
+           return 0 ;
+       }
+@@ -186,7 +186,7 @@ unsigned int cache_inode_fsal_rbt_both_on_fsal( hash_parameter_t * p_hparam,
+       {
+           snprintHandle(printbuf, 512, &pfsdata->handle);
+           LogFullDebug(COMPONENT_HASHTABLE,
+-                       "hash_func rbt both: buff = (Handle=%s, Cookie=%u), hashvalue=%u rbtvalue=%u",
++                       "hash_func rbt both: buff = (Handle=%s, Cookie=%"PRIu64"), hashvalue=%u rbtvalue=%u",
+                        printbuf, pfsdata->cookie, *phashval, *prbtval );
+       }
+ 
+@@ -216,7 +216,7 @@ unsigned int cache_inode_fsal_rbt_both_locally( hash_parameter_t * p_hparam,
+         {
+             snprintHandle(printbuf, 512, &pfsdata->handle);
+             LogFullDebug(COMPONENT_HASHTABLE,
+-                         "hash_func rbt both: buff = (Handle=%s, Cookie=%u), hashvalue=%u rbtvalue=%u",
++                         "hash_func rbt both: buff = (Handle=%s, Cookie=%"PRIu64"), hashvalue=%u rbtvalue=%u",
+                          printbuf, pfsdata->cookie, h1, h2 );
+         }
+ 
+@@ -247,7 +247,7 @@ int display_key(hash_buffer_t * pbuff, char *str)
+     snprintHandle(buffer, 128, &(pfsdata->handle));
+ 
+     return snprintf(str, HASHTABLE_DISPLAY_STRLEN,
+-                    "(Handle=%s, Cookie=%u)", buffer,
++                    "(Handle=%s, Cookie=%"PRIu64")", buffer,
+                     pfsdata->cookie);
+ }
+ 
+diff --git a/src/Cache_inode/cache_inode_get.c b/src/Cache_inode/cache_inode_get.c
+index 847c881..b3196ca 100644
+--- a/src/Cache_inode/cache_inode_get.c
++++ b/src/Cache_inode/cache_inode_get.c
+@@ -175,7 +175,7 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
+         {
+           /* added for sanity check */
+           LogFullDebug(COMPONENT_CACHE_INODE,
+-                       "cache_inode_get: pfsdata->cookie != DIR_START (=%u) on object whose type is %u",
++                       "cache_inode_get: pfsdata->cookie != DIR_START (=%"PRIu64") on object whose type is %u",
+                        pfsdata->cookie,
+                        cache_inode_fsal_type_convert(fsal_attributes.type));
+ 
+diff --git a/src/Cache_inode/cache_inode_readdir.c b/src/Cache_inode/cache_inode_readdir.c
+index 88612a0..bb26949 100644
+--- a/src/Cache_inode/cache_inode_readdir.c
++++ b/src/Cache_inode/cache_inode_readdir.c
+@@ -1195,6 +1195,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
+ 
+   /* Set the return default to CACHE_INODE_SUCCESS */
+   *pstatus = CACHE_INODE_SUCCESS;
++  dirent = NULL;
+ 
+   /* Set initial value of unlock */
+   *unlock = FALSE;
+@@ -1393,7 +1394,16 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
+   }
+ 
+   if (*pnbfound > 0)
++  {
++      if (!dirent)
++      {
++         LogCrit(COMPONENT_CACHE_INODE, "cache_inode_readdir: "
++                 "UNEXPECTED CASE: dirent is NULL whereas nbfound>0");
++         *pstatus = CACHE_INODE_INCONSISTENT_ENTRY;
++         return CACHE_INODE_INCONSISTENT_ENTRY;
++      }
+       *pend_cookie = dirent->cookie;
++  }
+ 
+   if (! dirent_node)
+       *peod_met = END_OF_DIR;
+diff --git a/src/FSAL/FSAL_LUSTRE/Makefile.am b/src/FSAL/FSAL_LUSTRE/Makefile.am
+index 1ea43c4..826494b 100644
+--- a/src/FSAL/FSAL_LUSTRE/Makefile.am
++++ b/src/FSAL/FSAL_LUSTRE/Makefile.am
+@@ -78,6 +78,7 @@ libfsalshook_la_SOURCES = fsal_access.c      \
+                           fsal_tools.c       \
+                           fsal_xattrs.c      \
+                           fsal_local_op.c    \
++                          fsal_lock.c     \
+ 			  fsal_internal.h    \
+                           fsal_convert.h     \
+                           ../../include/fsal.h       \
+@@ -85,6 +86,7 @@ libfsalshook_la_SOURCES = fsal_access.c      \
+                           ../../include/err_fsal.h   \
+                           ../../include/FSAL/FSAL_LUSTRE/fsal_types.h
+ 
++
+ if USE_PNFS
+ SUBDIRS = PNFS
+ libfsalshook_la_LIBADD = PNFS/libfsallustrepnfs.la
+diff --git a/src/FSAL/FSAL_LUSTRE/fsal_fileop.c b/src/FSAL/FSAL_LUSTRE/fsal_fileop.c
+index af43bbd..39a49fc 100644
+--- a/src/FSAL/FSAL_LUSTRE/fsal_fileop.c
++++ b/src/FSAL/FSAL_LUSTRE/fsal_fileop.c
+@@ -209,8 +209,8 @@ fsal_status_t LUSTREFSAL_open(fsal_handle_t * p_filehandle,       /* IN */
+             if (rc == 0)
+             {
+                 /* use a short timeout of 2s */
+-                rc = shook_server_call(SA_RESTORE_TRUNC, p_context->export_context->fsname,
+-                                       &p_filehandle->data.fid, 2);
++                rc = shook_server_call(SA_RESTORE_TRUNC, ((lustrefsal_op_context_t *)p_context)->export_context->fsname,
++                                       &((lustrefsal_handle_t *)p_filehandle)->data.fid, 2);
+                 if (rc)
+                     Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
+             }
+@@ -226,8 +226,8 @@ fsal_status_t LUSTREFSAL_open(fsal_handle_t * p_filehandle,       /* IN */
+         } else {
+             /* trigger restore. Give it a chance to retrieve the file in less than a second.
+              * Else, it returns ETIME that is converted in ERR_DELAY */
+-            rc = shook_server_call(SA_RESTORE, p_context->export_context->fsname,
+-                                   &p_filehandle->data.fid, 1);
++            rc = shook_server_call(SA_RESTORE, ((lustrefsal_op_context_t*)p_context)->export_context->fsname,
++                                   &((lustrefsal_handle_t *)p_filehandle)->data.fid, 1);
+             if (rc)
+                 Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
+             /* if rc = 0, file can be opened */
+@@ -341,7 +341,12 @@ fsal_status_t LUSTREFSAL_read(fsal_file_t *file_desc,    /* IN */
+           rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_END);
+           errsv = errno;
+           ReleaseTokenFSCall();
++          break;
+ 
++        default:
++          LogCrit(COMPONENT_FSAL, "Unexpected value for whence parameter");
++          rc = -1;
++          errsv = EINVAL;
+           break;
+         }
+ 
+@@ -465,6 +470,12 @@ fsal_status_t LUSTREFSAL_write(fsal_file_t *file_desc,   /* IN */
+           ReleaseTokenFSCall();
+ 
+           break;
++
++        default:
++          LogCrit(COMPONENT_FSAL, "Unexpected value for whence parameter");
++          rc = -1;
++          errsv = EINVAL;
++          break;
+         }
+ 
+       if(rc)
+diff --git a/src/FSAL/FSAL_LUSTRE/fsal_rcp.c b/src/FSAL/FSAL_LUSTRE/fsal_rcp.c
+index 2113c85..a8637e0 100644
+--- a/src/FSAL/FSAL_LUSTRE/fsal_rcp.c
++++ b/src/FSAL/FSAL_LUSTRE/fsal_rcp.c
+@@ -74,7 +74,7 @@ fsal_status_t LUSTREFSAL_rcp(fsal_handle_t * filehandle,  /* IN */
+ 
+   int eof = FALSE;
+ 
+-  ssize_t local_size;
++  ssize_t local_size = -1;
+   fsal_size_t fs_size;
+ 
+   /* sanity checks. */
+diff --git a/src/FSAL/FSAL_LUSTRE/fsal_truncate.c b/src/FSAL/FSAL_LUSTRE/fsal_truncate.c
+index 12e3d31..3f3e069 100644
+--- a/src/FSAL/FSAL_LUSTRE/fsal_truncate.c
++++ b/src/FSAL/FSAL_LUSTRE/fsal_truncate.c
+@@ -104,8 +104,8 @@ fsal_status_t LUSTREFSAL_truncate(fsal_handle_t * p_filehandle,   /* IN */
+             if (rc == 0)
+             {
+                 /* use a short timeout of 2s */
+-                rc = shook_server_call(SA_RESTORE_TRUNC, p_context->export_context->fsname,
+-                                       &p_filehandle->data.fid, 2);
++                rc = shook_server_call(SA_RESTORE_TRUNC, ((lustrefsal_op_context_t *)p_context)->export_context->fsname,
++                                       &((lustrefsal_handle_t *)p_filehandle)->data.fid, 2);
+                 if (rc)
+                     Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_truncate);
+                 /* file is already truncated, no need to truncate again */
+@@ -123,8 +123,8 @@ fsal_status_t LUSTREFSAL_truncate(fsal_handle_t * p_filehandle,   /* IN */
+         {
+             /* trigger restore. Give it a chance to retrieve the file in less than a second.
+              * Else, it returns ETIME that is converted in ERR_DELAY */
+-            rc = shook_server_call(SA_RESTORE, p_context->export_context->fsname,
+-                                   &p_filehandle->data.fid, 1);
++            rc = shook_server_call(SA_RESTORE, ((lustrefsal_op_context_t *)p_context)->export_context->fsname,
++                                   &((lustrefsal_handle_t *)p_filehandle)->data.fid, 1);
+             if (rc)
+                 Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_truncate);
+ 
+diff --git a/src/FSAL/FSAL_LUSTRE/fsal_xattrs.c b/src/FSAL/FSAL_LUSTRE/fsal_xattrs.c
+index 9faa77a..a55fe83 100644
+--- a/src/FSAL/FSAL_LUSTRE/fsal_xattrs.c
++++ b/src/FSAL/FSAL_LUSTRE/fsal_xattrs.c
+@@ -212,7 +212,7 @@ int print_stripe(fsal_handle_t * p_objecthandle,  /* object handle */
+   else
+     {
+         LogCrit(COMPONENT_FSAL, "Wrong Luster magic number for %s: %#X <> %#X",
+-                 entry_path, p_lum->lmm_magic, LOV_USER_MAGIC_V1);
++                 entry_path.path, p_lum->lmm_magic, LOV_USER_MAGIC_V1);
+       return ERR_FSAL_INVAL;
+     }
+ 
+diff --git a/src/FSAL/FSAL_TEMPLATE/Makefile.am b/src/FSAL/FSAL_TEMPLATE/Makefile.am
+index f654ee5..4b39496 100644
+--- a/src/FSAL/FSAL_TEMPLATE/Makefile.am
++++ b/src/FSAL/FSAL_TEMPLATE/Makefile.am
+@@ -13,7 +13,6 @@ libfsaltemplate_la_SOURCES = fsal_access.c \
+                         fsal_truncate.c \
+ 			fsal_attrs.c    \
+                         fsal_convert.c  \
+-                        fsal_errors.c   \
+                         fsal_init.c     \
+                         fsal_lookup.c   \
+                         fsal_rename.c   \
+diff --git a/src/FSAL/common_methods.c b/src/FSAL/common_methods.c
+index b2d59bc..d79652e 100644
+--- a/src/FSAL/common_methods.c
++++ b/src/FSAL/common_methods.c
+@@ -560,10 +560,10 @@ fsal_status_t COMMON_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
+   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
+ }
+ 
+-/* File Attributes
++/* File Attributes */
+ 
+-
+-/* Not supported set
++/*
++* Not supported set
+ */
+ 
+ /**
+diff --git a/src/MainNFSD/nfs_init.c b/src/MainNFSD/nfs_init.c
+index a846666..e5e5cd3 100644
+--- a/src/MainNFSD/nfs_init.c
++++ b/src/MainNFSD/nfs_init.c
+@@ -1379,8 +1379,7 @@ int nfs_check_param_consistency()
+   if( 2*nfs_param.core_param.nb_worker  >  nfs_param.cache_layers_param.cache_param.hparam.index_size )
+     {
+       LogCrit(COMPONENT_INIT,
+-              "BAD PARAMETER: number of workers is too large compared to Cache_Inode's index size, it should be smaller than half of it",
+-              NB_MAX_WORKER_THREAD);
++              "BAD PARAMETER: number of workers is too large compared to Cache_Inode's index size, it should be smaller than half of it");
+       return 1;
+     }
+ 
+diff --git a/src/Protocols/NFS/nfs4_op_readdir.c b/src/Protocols/NFS/nfs4_op_readdir.c
+index 5e6dab8..356a973 100644
+--- a/src/Protocols/NFS/nfs4_op_readdir.c
++++ b/src/Protocols/NFS/nfs4_op_readdir.c
+@@ -370,7 +370,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
+                   " === nfs4_op_readdir ===>   i=%u name=%s cookie=%"PRIu64" "
+                   "entrysize=%u buffsize=%u",
+                   i, dirent_array[i]->name.name,
+-                  (unsigned long long)entry_nfs_array[i].cookie,
++                  entry_nfs_array[i].cookie,
+                   entrysize,
+                   outbuffsize);
+ 
+diff --git a/src/Protocols/NFS/nfs4_op_rename.c b/src/Protocols/NFS/nfs4_op_rename.c
+index c9cf3ab..e30c3be 100644
+--- a/src/Protocols/NFS/nfs4_op_rename.c
++++ b/src/Protocols/NFS/nfs4_op_rename.c
+@@ -350,8 +350,8 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
+   if(tst_entry_dst != NULL)
+     {
+ 	if((tst_entry_dst->internal_md.type == DIRECTORY)
+-	   && (tst_entry_src->internal_md.type == DIRECTORY)
+-	   || (tst_entry_src->internal_md.type == REGULAR_FILE))
++	   && ((tst_entry_src->internal_md.type == DIRECTORY)
++                || (tst_entry_src->internal_md.type == REGULAR_FILE)))
+         {
+           if(cache_inode_is_dir_empty_WithLock(tst_entry_dst) ==
+ 	     CACHE_INODE_DIR_NOT_EMPTY)
+diff --git a/src/nfs-ganesha.lustre.init b/src/nfs-ganesha.lustre.init
+index 4705ea6..e4311fd 100644
+--- a/src/nfs-ganesha.lustre.init
++++ b/src/nfs-ganesha.lustre.init
+@@ -5,7 +5,7 @@
+ #
+ # processname: /usr/bin/lustre.ganesha.nfsd
+ # config: /etc/ganesha/lustre.ganesha.nfsd.conf
+-# pidfile: /var/run/lustre.ganesha.nfsd.pid
++# pidfile: /var/run/nfs-ganesha.pid
+ #
+ ### BEGIN INIT INFO
+ # Provides: nfs-ganesha.lustre
+@@ -22,7 +22,6 @@
+ . /etc/rc.d/init.d/functions
+ 
+ PATHPROG=/usr/bin/lustre.ganesha.nfsd 
+-PROG=lustre.ganesha.nfsd
+ 
+ # Default HPSS options
+ LOGFILE=/var/log/lustre.ganesha.nfsd.log
+@@ -47,8 +46,7 @@ start() {
+                 RETVAL=$?
+                 if [ $RETVAL -eq 0 ]; then 
+ 		 touch $LOCK_FILE
+-                 [ ! -f $PID_FILE ] &&
+-                   /sbin/pidof $PROG > $PID_FILE
++                    [ ! -f $PID_FILE ] && /sbin/pidof $prog > $PID_FILE
+ 		else
+ 		  RETVAL=1
+                 fi
+diff --git a/src/nfs-ganesha.shook.init b/src/nfs-ganesha.shook.init
+index 56dda84..102d418 100644
+--- a/src/nfs-ganesha.shook.init
++++ b/src/nfs-ganesha.shook.init
+@@ -22,7 +22,6 @@
+ . /etc/rc.d/init.d/functions
+ 
+ PATHPROG=/usr/bin/shook.ganesha.nfsd 
+-PROG=shook.ganesha.nfsd
+ 
+ # Default HPSS options
+ LOGFILE=/var/log/shook.ganesha.nfsd.log
+@@ -47,8 +46,7 @@ start() {
+                 RETVAL=$?
+                 if [ $RETVAL -eq 0 ]; then 
+ 		 touch $LOCK_FILE
+-                 [ ! -f $PID_FILE ] &&
+-                   /sbin/pidof $PROG > $PID_FILE
++                    [ ! -f $PID_FILE ] && /sbin/pidof $prog > $PID_FILE
+ 		else
+ 		  RETVAL=1
+                 fi
+-- 
+1.7.1
+

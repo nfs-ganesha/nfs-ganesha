@@ -86,8 +86,6 @@ fsal_status_t ZFSFSAL_BuildExportContext(fsal_export_context_t * p_export_contex
                                          fsal_path_t * p_export_path,   /* IN */
                                          char *fs_specific_options /* IN */ );
 
-fsal_status_t ZFSFSAL_CleanUpExportContext(fsal_export_context_t *p_export_context);
-
 fsal_status_t ZFSFSAL_create(fsal_handle_t * p_parent_directory_handle,      /* IN */
                              fsal_name_t * p_filename,  /* IN */
                              fsal_op_context_t * p_context,  /* IN */

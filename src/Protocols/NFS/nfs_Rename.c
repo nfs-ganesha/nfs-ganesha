@@ -200,8 +200,8 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
   /*
    * Sanity checks: we must manage directories
    */
-  if((parent_filetype != DIR_BEGINNING && parent_filetype != DIR_CONTINUE) ||
-     (new_parent_filetype != DIR_BEGINNING && new_parent_filetype != DIR_CONTINUE))
+  if((parent_filetype != DIRECTORY) ||
+     (new_parent_filetype != DIRECTORY))
     {
       switch (preq->rq_vers)
         {
@@ -249,6 +249,7 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
        */
       should_not_exists = cache_inode_lookup(new_parent_pentry,
                                              &new_entry_name,
+                                             pexport->cache_inode_policy,
                                              &tst_attr,
                                              ht, pclient, pcontext, &cache_status);
 
@@ -257,6 +258,7 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
           /* We need to lookup over the old entry also */
           should_exists = cache_inode_lookup(parent_pentry,
                                              &entry_name,
+                                             pexport->cache_inode_policy,
                                              &tst_attr,
                                              ht, pclient, pcontext, &cache_status);
 
@@ -350,6 +352,7 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
               /* We need to lookup over the old entry also */
               if((should_exists = cache_inode_lookup(parent_pentry,
                                                      &entry_name,
+                                                     pexport->cache_inode_policy,
                                                      &tst_attr,
                                                      ht,
                                                      pclient,

@@ -44,6 +44,7 @@
 #define USHRT_MAX       6553
 #endif
 
+#include "cidr.h"
 #include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
@@ -110,6 +111,7 @@ cache_content_client_t recover_datacache_client;
 #define CONF_EXPORT_USE_DATACACHE      "Cache_Data"
 #define CONF_EXPORT_FS_SPECIFIC        "FS_Specific"
 #define CONF_EXPORT_FS_TAG             "Tag"
+#define CONF_EXPORT_CACHE_POLICY       "Cache_Inode_Policy"
 #define CONF_EXPORT_MAX_OFF_WRITE      "MaxOffsetWrite"
 #define CONF_EXPORT_MAX_OFF_READ       "MaxOffsetRead"
 #define CONF_EXPORT_MAX_CACHE_SIZE     "MaxCacheSize"
@@ -158,6 +160,7 @@ cache_content_client_t recover_datacache_client;
 #define FLAG_EXPORT_ANON_GROUP      0x10000000
 #define FLAG_EXPORT_ALL_ANON        0x20000000
 #define FLAG_EXPORT_ANON_USER       0x40000000
+#define FLAG_EXPORT_CACHE_POLICY    0x80000000
 
 /* limites for nfs_ParseConfLine */
 /* Used in BuildExportEntry() */
@@ -329,119 +332,42 @@ static struct hostent *nfs_LookupHostAddr(char *host)
  * @see gethostbyaddr
  *
  */
+
+inline static int string_contains_slash( char* host )
+{
+  char * c ;
+
+  for( c = host ; *c != '\0' ; c++ ) 
+    if( *c == '/' ) 
+      return 1 ;
+
+  return 0 ;
+}
+
 int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
                           unsigned long *netAddr,       /* [OUT] return address       */
                           unsigned long *netMask)       /* [OUT] return address mask  */
 {
-  int error = 0;
-  int compute_mask = TRUE;
-  struct hostent *host_ent;
-  struct netent *net_ent;
-  in_addr_t net_addr;
-  unsigned long net_mask;
-  unsigned long class;
+  CIDR * pcidr = NULL ;
+  unsigned int i = 0 ;
 
-  /*
-   * Initialize local variables..
-   */
+  if( ( pcidr = cidr_from_str( host ) ) == NULL )
+    return 1 ;
 
-  net_mask = 0;
-  net_ent = NULL;
-  host_ent = NULL;
+  memcpy( netAddr, pcidr->addr, sizeof( unsigned long ) ) ;
+  memcpy( netMask, pcidr->mask, sizeof( unsigned long ) ) ; 
+  
+  /* BE CAREFUL !! The following lines are specific to IPv4. The libcidr support IPv6 as well */
+  memset( netAddr, 0, sizeof( unsigned long ) ) ;
+  memcpy( netAddr, &pcidr->addr[12], 4 ) ;
+  *netAddr = ntohl( *netAddr ) ;
 
-  /*
-   * Check for dotted address notation.
-   */
+  memset( netMask, 0, sizeof( unsigned long ) ) ;
+  memcpy( netMask, &pcidr->mask[12], 4 ) ;
+  *netMask = ntohl( *netMask ) ;
 
-  net_addr = inet_network(host);
-
-  if(net_addr == (in_addr_t) - 1)
-    {
-      /*
-       * Not a valid dotted IP address. Check for host name.
-       */
-
-      if((host_ent = gethostbyname(host)) != NULL)
-        {
-          /*
-           * A valid hostname. Just copy the hostent address.
-           */
-
-          memcpy(&net_addr, host_ent->h_addr, host_ent->h_length);
-          compute_mask = FALSE;
-        }
-      else
-        {
-
-          /*
-           * Not a valid hostname. Check for a network name.
-           */
-
-          net_ent = getnetbyname(host);
-          if(net_ent == NULL)
-            {
-              error = errno;
-              if(error == 0)
-                error = ENOENT;
-              endnetent();
-            }
-          else
-            {
-              net_addr = net_ent->n_net;
-              endnetent();
-            }
-        }
-    }
-  /*
-   * If no error and address is a network address, convert address to
-   * inaddr format by left justifying, determine the network address
-   * class, and compute the network mask.
-   */
-
-  if(error == 0 && compute_mask)
-    {
-
-      if((net_addr & 0xffffff00) == 0)
-        net_addr <<= 24;
-      else if((net_addr & 0xffff0000) == 0)
-        net_addr <<= 16;
-      else if((net_addr & 0xff000000) == 0)
-        net_addr <<= 8;
-      class = (net_addr & 0xc0000000) >> 30;
-      switch (class)
-        {
-        case 0:                /* class A address           */
-        case 1:
-          if((net_addr & 0x00ffffff) == 0)
-            net_mask = 0xff000000;
-          else if((net_addr & 0x0000ffff) == 0)
-            net_mask = 0xffff0000;
-          else if((net_addr & 0x000000ff) == 0)
-            net_mask = 0xffffff00;
-          break;
-        case 2:                /* class B address           */
-          if((net_addr & 0x0000ffff) == 0)
-            net_mask = 0xffff0000;
-          else if((net_addr & 0x000000ff) == 0)
-            net_mask = 0xffffff00;
-          break;
-        case 3:                /* class C address            */
-          if((net_addr & 0x000000ff) == 0)
-            net_mask = 0xffffff00;
-          break;
-        default:
-          break;
-        }
-    }
-  if(error == 0)
-    {
-      if(netAddr != (unsigned long *)NULL)
-        *netAddr = net_addr;
-      if(netMask != (unsigned long *)NULL)
-        *netMask = net_mask;
-    }
-  return (error);
-}                               /* nfs_LookupNetworkAddr */
+  return 0 ; 
+} /* nfs_LookupNetworkAddr */
 
 int nfs_AddClientsToClientArray(exportlist_client_t *clients,
 				int new_clients_number,
@@ -456,7 +382,6 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
   int is_wildcarded_host = FALSE;
   unsigned long netMask;
   unsigned long netAddr;
-  int error;
 
   /* How many clients are there already? */
   j = (*clients).num_clients;
@@ -494,6 +419,27 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
                    (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
                    p_clients[i].client.netgroup.netgroupname);
         }
+      else if( string_contains_slash( client_hostname ) &&
+               ( nfs_LookupNetworkAddr( (char *)( client_hostname ),
+                                         (unsigned long *)&netAddr,
+                                         (unsigned long *)&netMask) == 0 ) )
+        {
+          /* Entry is a network definition */
+          p_clients[i].client.network.netaddr = netAddr;
+          p_clients[i].options |= EXPORT_OPTION_NETENT;
+          p_clients[i].client.network.netmask = netMask;
+          p_clients[i].type = NETWORK_CLIENT;
+
+          LogDebug(COMPONENT_CONFIG,
+                   "----------------- %s to network %s = %d.%d.%d.%d netmask=%x",
+                   (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
+                   client_hostname,
+                   (unsigned int)(p_clients[i].client.network.netaddr >> 24),
+                   (unsigned int)((p_clients[i].client.network.netaddr >> 16) & 0xFF),
+                   (unsigned int)((p_clients[i].client.network.netaddr >> 8) & 0xFF),
+                   (unsigned int)(p_clients[i].client.network.netaddr & 0xFF),
+                   (unsigned int)(p_clients[i].client.network.netmask));
+        }
       else if( getaddrinfo(client_hostname, NULL, NULL, &info) == 0)
         {
           /* Entry is a hostif */
@@ -512,7 +458,7 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
                        (unsigned int)((p_clients[i].client.hostif.clientaddr >> 8) & 0xFF),
                        (unsigned int)(p_clients[i].client.hostif.clientaddr & 0xFF));
             }
-          else /* AF_INET6 */
+       else /* AF_INET6 */
             {
               struct in6_addr infoaddr = ((struct sockaddr_in6 *)info->ai_addr)->sin6_addr;
               /* IPv6 address */
@@ -522,26 +468,7 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
             }
           freeaddrinfo(info);
         }
-      else if(((error = nfs_LookupNetworkAddr(client_hostname,
-                                              (unsigned long *)&netAddr,
-                                              (unsigned long *)&netMask))) == 0)
-        {
-          /* Entry is a network definition */
-          p_clients[i].client.network.netaddr = netAddr;
-          p_clients[i].options |= EXPORT_OPTION_NETENT;
-          p_clients[i].client.network.netmask = netMask;
-          p_clients[i].type = NETWORK_CLIENT;
-
-          LogDebug(COMPONENT_CONFIG,
-                   "----------------- %s to network %s = %d.%d.%d.%d",
-                   (option == EXPORT_OPTION_ROOT ? "Root-access" : "Access"),
-                   client_hostname,
-                   (unsigned int)(p_clients[i].client.network.netaddr >> 24),
-                   (unsigned int)((p_clients[i].client.network.netaddr >> 16) & 0xFF),
-                   (unsigned int)((p_clients[i].client.network.netaddr >> 8) & 0xFF),
-                   (unsigned int)(p_clients[i].client.network.netaddr & 0xFF));
-        }
-      else
+     else
         {
           /* this may be  a wildcarded host */
           /* Lookup into the string to see if it contains '*' or '?' */
@@ -721,7 +648,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
   unsigned int set_options = 0;
 
-  int err_flag = FALSE;
+  int err_flag   = FALSE;
+  int err_policy = FALSE;
 
   /* allocates export entry */
   p_entry = (exportlist_t *) Mem_Alloc(sizeof(exportlist_t));
@@ -772,6 +700,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->PrefWrite = (fsal_size_t) 16384;
   p_entry->PrefRead = (fsal_size_t) 16384;
   p_entry->PrefReaddir = (fsal_size_t) 16384;
+  p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_THROUGH ;
 
   strcpy(p_entry->FS_specific, "");
   strcpy(p_entry->FS_tag, "");
@@ -1865,6 +1794,47 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_FS_TAG;
 
         }
+      else if( !STRCMP(var_name, CONF_EXPORT_CACHE_POLICY ))
+        {
+          /* check if it has not already been set */
+          if((set_options & FLAG_EXPORT_CACHE_POLICY) == FLAG_EXPORT_CACHE_POLICY)
+            {
+              DEFINED_TWICE_WARNING(CONF_EXPORT_CACHE_POLICY);
+              continue;
+            }
+          else if( !STRCMP( var_value, "WriteThrough" ) )
+           {
+              p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_THROUGH ; 
+              err_policy = FALSE  ;
+           } 
+          else if( !STRCMP( var_value, "WriteBack" ) )         
+           {
+              p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_BACK ; 
+              err_policy = FALSE  ;
+           } 
+          else if( !STRCMP( var_value, "AttrsOnlyWriteThrough" ) )
+           {
+              p_entry->cache_inode_policy = CACHE_INODE_POLICY_ATTRS_ONLY_WRITE_THROUGH ; 
+              err_policy = FALSE  ;
+           } 
+          else if( !STRCMP( var_value, "NoCache" ) )             
+           {
+              p_entry->cache_inode_policy = CACHE_INODE_POLICY_NO_CACHE ; 
+              err_policy = FALSE  ;
+           } 
+          else
+             err_policy = TRUE ;
+
+        
+          if( err_policy == TRUE ) 
+           {
+             err_flag = TRUE ;
+             
+             LogCrit(COMPONENT_CONFIG, "Invalid Cache_Inode_Policy value : %s", var_value ) ;
+           }
+
+          set_options |=  FLAG_EXPORT_CACHE_POLICY ;
+        }
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_OFF_WRITE))
         {
           long long int offset;
@@ -2352,7 +2322,7 @@ int export_client_match(sockaddr_t *hostaddr,
           break;
 
         case NETWORK_CLIENT:
-          LogDebug( COMPONENT_DISPATCH, "test NETWORK_CLIENT: addr=%#.08X, netmask=%#.08X, match with %#.08X\n",
+          LogDebug( COMPONENT_DISPATCH, "test NETWORK_CLIENT: addr=%#.08X, netmask=%#.08X, match with %#.08X",
                     clients->clientarray[i].client.network.netaddr,
                     clients->clientarray[i].client.network.netmask, ntohl(addr));
           LogFullDebug(COMPONENT_DISPATCH,
@@ -2871,7 +2841,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       small_client_param.lru_param.entry_to_str = local_lru_inode_entry_to_str;
       small_client_param.lru_param.clean_entry = local_lru_inode_clean_entry;
       small_client_param.nb_prealloc_entry = 10;
-      small_client_param.nb_pre_dir_data = 10;
       small_client_param.nb_pre_parent = 10;
       small_client_param.nb_pre_state_v4 = 10;
       small_client_param.grace_period_link = 0;
@@ -3023,6 +2992,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
           fsdata.cookie = 0;
 
           if((pentry = cache_inode_make_root(&fsdata,
+                                             pcurrent->cache_inode_policy,
                                              ht,
                                              &small_client,
 #ifdef _USE_SHARED_FSAL
@@ -3046,9 +3016,9 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
           if(strcmp(pcurrent->referral, ""))
             {
               /* Set the cache_entry object as a referral by setting the 'referral' field */
-              pentry->object.dir_begin.referral = pcurrent->referral;
+              pentry->object.dir.referral = pcurrent->referral;
               LogInfo(COMPONENT_INIT, "A referral is set : %s",
-                      pentry->object.dir_begin.referral);
+                      pentry->object.dir.referral);
             }
 #ifdef _CRASH_RECOVERY_AT_STARTUP
           /* Recover the datacache from a previous crah */

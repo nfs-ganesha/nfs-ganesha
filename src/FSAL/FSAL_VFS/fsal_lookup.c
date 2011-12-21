@@ -38,6 +38,7 @@
 #include <string.h>
 #include "fsal.h"
 #include "fsal_internal.h"
+#include "FSAL/access_check.h"
 #include "fsal_convert.h"
 
 /**
@@ -166,7 +167,7 @@ fsal_status_t VFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,      /* 
           p_filename->name);
 
   /* check rights to enter into the directory */
-  status = fsal_internal_testAccess(p_context, FSAL_X_OK, &buffstat, NULL);
+  status = fsal_check_access(p_context, FSAL_X_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_lookup);
 

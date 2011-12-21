@@ -79,21 +79,22 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
   unsigned long dircount;
   unsigned long maxcount;
   entry4 *entry_nfs_array;
-  cache_inode_dir_entry_t *dirent_array;
+  cache_inode_dir_entry_t **dirent_array = NULL;
   verifier4 cookie_verifier;
-  unsigned int cookie = 0;
-  unsigned int end_cookie = 0;
-  unsigned int *cookie_array;
+  uint64_t cookie = 0;
+  uint64_t end_cookie = 0;
   fsal_handle_t *entry_FSALhandle;
   nfs_fh4 entryFH;
   char val_fh[NFS4_FHSIZE];
-  entry_name_array_item_t *entry_name_array;
+  entry_name_array_item_t *entry_name_array = NULL;
   unsigned long space_used;
   unsigned int estimated_num_entries;
   unsigned int num_entries;
+  int dir_pentry_unlock = FALSE;
 
   unsigned int i = 0;
   unsigned int outbuffsize = 0 ;
+  unsigned int entrysize = 0 ;
  
   bitmap4 RdAttrErrorBitmap = { 1, (uint32_t *) "\0\0\0\b" };   /* 0xB = 11 = FATTR4_RDATTR_ERROR */
   attrlist4 RdAttrErrorVals = { 0, NULL };      /* Nothing to be seen here */
@@ -135,25 +136,36 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
 
   /* You can readdir only within a directory */
   dir_pentry = data->current_entry;
-  if(data->current_filetype != DIR_BEGINNING && data->current_filetype != DIR_CONTINUE)
+  if(data->current_filetype != DIRECTORY)
     {
       res_READDIR4.status = NFS4ERR_NOTDIR;
       return res_READDIR4.status;
     }
 
-  /* get the caracteristic value for readdir operation */
+  /* get the characteristic value for readdir operation */
   dircount = arg_READDIR4.dircount;
   maxcount = arg_READDIR4.maxcount*0.9;
   cookie = (unsigned int)arg_READDIR4.cookie;
   space_used = sizeof(entry4);
 
-  /* dircount is considered meaningless by many nfsv4 client (like the CITI one). we use maxcount instead */
-  estimated_num_entries = maxcount / sizeof(entry4);    /* Estimated_num_entries is probably far too big */
+  /* dircount is considered meaningless by many nfsv4 client (like the CITI
+   * one).  we use maxcount instead. */
+
+  /* the Linux 3.0, 3.1.0 clients vs. TCP Ganesha comes out 10x slower
+   * with 500 max entries */
+#if 0
+  /* takes 2s to return 2999 entries */
+  estimated_num_entries = maxcount / sizeof(entry4);
+#else
+  /* takes 20s to return 2999 entries */
+  estimated_num_entries = 50;
+#endif
 
   LogFullDebug(COMPONENT_NFS_V4,
                "--- nfs4_op_readdir ---> dircount=%lu maxcount=%lu arg_cookie=%"
-               PRIu64" cookie=%d estimated_num_entries=%u",
-               dircount, maxcount, arg_READDIR4.cookie, cookie, estimated_num_entries);
+               PRIu64" cookie=%"PRIu64" estimated_num_entries=%u",
+               dircount, maxcount, arg_READDIR4.cookie, cookie,
+               estimated_num_entries);
 
   /* Do not use a cookie of 1 or 2 (reserved values) */
   if(cookie == 1 || cookie == 2)
@@ -162,11 +174,9 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
       return res_READDIR4.status;
     }
 
-  if(cookie != 0)
-    cookie = cookie - 2;        /* 0,1 and 2 are reserved, there is a delta of '3' because of this */
-
   /* Get only attributes that are allowed to be read */
-  if(!nfs4_Fattr_Check_Access_Bitmap(&arg_READDIR4.attr_request, FATTR4_ATTR_READ))
+  if(!nfs4_Fattr_Check_Access_Bitmap(&arg_READDIR4.attr_request,
+                                     FATTR4_ATTR_READ))
     {
       res_READDIR4.status = NFS4ERR_INVAL;
       return res_READDIR4.status;
@@ -197,8 +207,8 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
    *      1 - reserved for . on client handside
    *      2 - reserved for .. on client handside
    * Entries '.' and '..' are not returned also
-
-   * For these reason, there will be an offset of 3 between NFS4 cookie and HPSS cookie */
+   * For these reason, there will be an offset of 3 between NFS4 cookie and
+   * HPSS cookie */
 
   if((cookie != 0) && (data->pexport->UseCookieVerifier == 1))
     {
@@ -210,46 +220,40 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
         }
     }
 
-  /* The default behaviour is to consider that eof is not reached, the returned values by cache_inode_readdir 
-   * will let us know if eod was reached or not */
+  /* The default behaviour is to consider that eof is not reached, the
+   * returned values by cache_inode_readdir will let us know if eod was
+   * reached or not */
   res_READDIR4.READDIR4res_u.resok4.reply.eof = FALSE;
 
   /* Get prepared for readdir */
   if((dirent_array =
-      (cache_inode_dir_entry_t *) Mem_Alloc(estimated_num_entries *
-                                            sizeof(cache_inode_dir_entry_t))) == NULL)
+      (cache_inode_dir_entry_t **) Mem_Alloc(
+          estimated_num_entries * sizeof(cache_inode_dir_entry_t*))) == NULL)
     {
       res_READDIR4.status = NFS4ERR_SERVERFAULT;
-      return res_READDIR4.status;
-    }
-
-  if((cookie_array =
-      (unsigned int *)Mem_Alloc(estimated_num_entries * sizeof(unsigned int))) == NULL)
-    {
-      Mem_Free((char *)dirent_array);
-
-      res_READDIR4.status = NFS4ERR_SERVERFAULT;
-      return res_READDIR4.status;
+      goto out;
     }
   
   /* Perform the readdir operation */
   if(cache_inode_readdir(dir_pentry,
+                         data->pexport->cache_inode_policy,
                          cookie,
                          estimated_num_entries,
                          &num_entries,
                          &end_cookie,
                          &eod_met,
                          dirent_array,
-                         cookie_array,
                          data->ht,
+                         &dir_pentry_unlock,
                          data->pclient,
                          data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_READDIR4.status = nfs4_Errno(cache_status);
-      return res_READDIR4.status;
+      goto out;
     }
 
-  /* For an empty directory, we will find only . and .., so reply af if the end if reached */
+  /* For an empty directory, we will find only . and .., so reply as if the
+   * end is reached */
   if(num_entries == 0)
     {
       /* only . and .. */
@@ -261,20 +265,25 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
   else
     {
       /* Start computing the outbuffsize */
-      outbuffsize = sizeof( bool_t) /* eof */ + NFS4_VERIFIER_SIZE /* cookie verifier */ ;
+      outbuffsize = sizeof( bool_t) /* eof */ 
+                  + sizeof( nfsstat4 ) /* READDIR4res::status */
+                  + NFS4_VERIFIER_SIZE /* cookie verifier */ ;
 
       /* Allocation of reply structures */
       if((entry_name_array =
           (entry_name_array_item_t *) Mem_Alloc(num_entries *
-                                                (FSAL_MAX_NAME_LEN + 1))) == NULL)
+                                                (FSAL_MAX_NAME_LEN + 1)))
+         == NULL)
         {
           LogError(COMPONENT_NFS_V4, ERR_SYS, ERR_MALLOC, errno);
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
           return res_READDIR4.status;
         }
-      memset((char *)entry_name_array, 0, num_entries * (FSAL_MAX_NAME_LEN + 1));
+      memset((char *)entry_name_array, 0,
+             num_entries * (FSAL_MAX_NAME_LEN + 1));
 
-      if((entry_nfs_array = (entry4 *) Mem_Alloc(num_entries * sizeof(entry4))) == NULL)
+      if((entry_nfs_array = (entry4 *) Mem_Alloc(num_entries * sizeof(entry4))) 
+         == NULL)
         {
           LogError(COMPONENT_NFS_V4, ERR_SYS, ERR_MALLOC, errno);
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
@@ -285,35 +294,32 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
         {
           entry_nfs_array[i].name.utf8string_val = entry_name_array[i];
 
-          if(str2utf8(dirent_array[i].name.name, &entry_nfs_array[i].name) == -1)
+          if(str2utf8(dirent_array[i]->name.name,
+                      &entry_nfs_array[i].name) == -1)
             {
               res_READDIR4.status = NFS4ERR_SERVERFAULT;
-              return res_READDIR4.status;
+              goto out;
             }
 
           /* Set the cookie value */
-          if(i != num_entries - 1)
-            entry_nfs_array[i].cookie = cookie_array[i + 1] + 2;        /* 0, 1 and 2 are reserved */
-          else
-            entry_nfs_array[i].cookie = end_cookie + 2;
-
+          entry_nfs_array[i].cookie = dirent_array[i]->cookie;
 
           /* Get the pentry for the object's attributes and filehandle */
-          if((pentry = cache_inode_lookup(dir_pentry,
-                                          &dirent_array[i].name,
-                                          &attrlookup,
-                                          data->ht,
-                                          data->pclient,
-                                          data->pcontext, &cache_status)) == NULL)
+          if( ( pentry = cache_inode_lookup_no_mutex( dir_pentry,
+                                                      &dirent_array[i]->name,
+                                                      data->pexport->cache_inode_policy,
+                                                      &attrlookup,
+                                                      data->ht,
+                                                      data->pclient,
+                                                      data->pcontext,
+                                                      &cache_status ) ) == NULL )
             {
               Mem_Free((char *)entry_nfs_array);
-              Mem_Free((char *)dirent_array);
-              Mem_Free((char *)cookie_array);
               /* Return the fattr4_rdattr_error , cf RFC3530, page 192 */
               entry_nfs_array[i].attrs.attrmask = RdAttrErrorBitmap;
               entry_nfs_array[i].attrs.attr_vals = RdAttrErrorVals;
               res_READDIR4.status = NFS4ERR_SERVERFAULT;
-              return res_READDIR4.status;
+              goto out;
             }
 
           /* If file handle is asked in the attributes, provide it */
@@ -321,24 +327,21 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
              && (arg_READDIR4.attr_request.bitmap4_val[0] & FATTR4_FILEHANDLE))
             {
               if((entry_FSALhandle =
-                  cache_inode_get_fsal_handle(pentry, &cache_status_attr)) == NULL)
+                  cache_inode_get_fsal_handle(pentry,
+                                              &cache_status_attr)) == NULL)
                 {
                   /* Faulty Handle or pentry */
                   Mem_Free((char *)entry_nfs_array);
-                  Mem_Free((char *)dirent_array);
-                  Mem_Free((char *)cookie_array);
                   res_READDIR4.status = NFS4ERR_SERVERFAULT;
-                  return res_READDIR4.status;
+                  goto out;
                 }
 
               if(!nfs4_FSALToFhandle(&entryFH, entry_FSALhandle, data))
                 {
                   /* Faulty type */
                   Mem_Free((char *)entry_nfs_array);
-                  Mem_Free((char *)dirent_array);
-                  Mem_Free((char *)cookie_array);
                   res_READDIR4.status = NFS4ERR_SERVERFAULT;
-                  return res_READDIR4.status;
+                  goto out;
                 }
             }
 
@@ -352,46 +355,62 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
               entry_nfs_array[i].attrs.attr_vals = RdAttrErrorVals;
             }
 
-          /* Update the siwe of the output buffer */
-          outbuffsize += sizeof( nfs_cookie4 )                              /* nfs_cookie4 */
-                      +  sizeof( u_int )                        /* pathname4::utf8strings_len */
-                      +  entry_nfs_array[i].name.utf8string_len  
-                      +  sizeof( u_int )                                    /* bitmap4_len */
-                      +  entry_nfs_array[i].attrs.attrmask.bitmap4_len 
-                      +  sizeof( u_int )                                    /* attrlist4_len */
-                      +  entry_nfs_array[i].attrs.attr_vals.attrlist4_len 
-                      +  sizeof( caddr_t ) ;
+          /* Update the size of the output buffer */
+          entrysize = sizeof( nfs_cookie4 ) ; /* nfs_cookie4 */
+          entrysize += sizeof( u_int ) ; /* pathname4::utf8strings_len */
+          entrysize +=  entry_nfs_array[i].name.utf8string_len ; 
+          entrysize += sizeof( u_int ) ; /* bitmap4_len */
+          entrysize +=  entry_nfs_array[i].attrs.attrmask.bitmap4_len ;
+          entrysize += sizeof( u_int ) ; /* attrlist4_len */
+          entrysize +=  entry_nfs_array[i].attrs.attr_vals.attrlist4_len ;
+          entrysize += sizeof( caddr_t ) ;
+          outbuffsize += entrysize;
 
-          
           LogFullDebug(COMPONENT_NFS_V4,
-                       " === nfs4_op_readdir ===>   i=%d name=%s cookie=%llu buffsize=%u",
-                       i, dirent_array[i].name.name, (unsigned long long)entry_nfs_array[i].cookie, outbuffsize);
-
-          if( outbuffsize > maxcount )
-             LogFullDebug( COMPONENT_NFS_V4, "---- Input Buffer is too small, breaking the loop ---" ) ;
+                  " === nfs4_op_readdir ===>   i=%u name=%s cookie=%"PRIu64" "
+                  "entrysize=%u buffsize=%u",
+                  i, dirent_array[i]->name.name,
+                  entry_nfs_array[i].cookie,
+                  entrysize,
+                  outbuffsize);
 
           /* Chain the entries together */
           entry_nfs_array[i].nextentry = NULL;
-          if(i != 0)  
+          if(i != 0)
            {
               if( outbuffsize < maxcount )
                 entry_nfs_array[i - 1].nextentry = &(entry_nfs_array[i]);
               else
                {
+                   LogFullDebug(COMPONENT_NFS_V4,
+                           "=== nfs4_op_readdir ===> "
+                           "maxcount reached at %u entries name=%s "
+                           "cookie=%llu "
+                           "buffsize=%u (return early)",
+                           i+1, 
+                           dirent_array[i]->name.name,
+                           (unsigned long long)entry_nfs_array[i].cookie,
+                           outbuffsize);
                  entry_nfs_array[i - 1].nextentry = NULL ;
                  break ;
                }
            }
         }                       /* for i */
 
-      if((eod_met == END_OF_DIR) && (i == num_entries))
-        {
+      if((i == num_entries) && (eod_met == END_OF_DIR))
+      {
+
+          LogFullDebug(COMPONENT_NFS_V4,
+                  "End of directory reached:  num_entries=%d i=%d",
+                  num_entries,
+                  i);
+
           /* This is the end of the directory */
           res_READDIR4.READDIR4res_u.resok4.reply.eof = TRUE;
-          memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
-                 NFS4_VERIFIER_SIZE);
-        }
-     
+          memcpy(res_READDIR4.READDIR4res_u.resok4.cookieverf,
+                 cookie_verifier, NFS4_VERIFIER_SIZE);
+      }
+
       /* Put the entry's list in the READDIR reply */
       res_READDIR4.READDIR4res_u.resok4.reply.entries = entry_nfs_array;
     }
@@ -400,9 +419,20 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
   memcpy((char *)res_READDIR4.READDIR4res_u.resok4.cookieverf, cookie_verifier,
          NFS4_VERIFIER_SIZE);
 
-  Mem_Free((char *)dirent_array);
-  Mem_Free((char *)cookie_array);
   res_READDIR4.status = NFS4_OK;
+
+out:
+  /* release read lock on dir_pentry, if requested */
+  if (dir_pentry_unlock)
+      V_r(&dir_pentry->lock);
+
+  if (dirent_array)
+   {
+      if( !CACHE_INODE_KEEP_CONTENT( dir_pentry->policy ) )
+        cache_inode_release_dirent( dirent_array, num_entries, data->pclient ) ;
+
+      Mem_Free((char *)dirent_array);
+   }
 
   return res_READDIR4.status;
 }                               /* nfs4_op_readdir */

@@ -159,8 +159,7 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
       /* Type of the entry is not correct */
       switch (data->current_filetype)
         {
-        case DIR_BEGINNING:
-        case DIR_CONTINUE:
+        case DIRECTORY:
           res_LAYOUTGET4.logr_status = NFS4ERR_ISDIR;
           break;
         default:

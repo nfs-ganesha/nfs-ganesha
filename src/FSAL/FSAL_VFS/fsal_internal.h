@@ -119,16 +119,6 @@ fsal_status_t fsal_internal_fd2handle(  fsal_op_context_t * p_context,
 
 fsal_status_t fsal_internal_link_at(int srcfd, int dfd, char *name);
 
-/**
- *  test the access to a file from its POSIX attributes (struct stat) OR its FSAL attributes (fsal_attrib_list_t).
- *
- */
-fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
-                                       fsal_accessflags_t access_type,  /* IN */
-                                       struct stat *p_buffstat, /* IN, optional */
-                                       fsal_attrib_list_t *
-                                       p_object_attributes /* IN, optional */ );
-
 fsal_status_t fsal_stat_by_handle(fsal_op_context_t * p_context,
                                   fsal_handle_t * p_handle, struct stat64 *buf);
 
@@ -157,8 +147,6 @@ fsal_status_t VFSFSAL_setattrs(fsal_handle_t * p_filehandle, /* IN */
 fsal_status_t VFSFSAL_BuildExportContext(fsal_export_context_t * p_export_context,   /* OUT */
                                          fsal_path_t * p_export_path,   /* IN */
                                          char *fs_specific_options /* IN */ );
-
-fsal_status_t VFSFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context);
 
 fsal_status_t VFSFSAL_create(fsal_handle_t * p_parent_directory_handle,      /* IN */
                              fsal_name_t * p_filename,  /* IN */
@@ -239,8 +227,6 @@ fsal_status_t VFSFSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle,   /* IN */
                                      fsal_dynamicfsinfo_t * p_dynamicinfo /* OUT */ );
 
 fsal_status_t VFSFSAL_Init(fsal_parameter_t * init_info /* IN */ );
-
-fsal_status_t VFSFSAL_terminate();
 
 fsal_status_t VFSFSAL_test_access(fsal_op_context_t * p_context,     /* IN */
                                   fsal_accessflags_t access_type,       /* IN */
@@ -407,9 +393,5 @@ fsal_status_t VFSFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,      /* 
                                         const fsal_name_t * xattr_name) /* IN */ ;
 
 unsigned int VFSFSAL_GetFileno(fsal_file_t * pfile);
-
-fsal_status_t VFSFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
-                                   fsal_op_context_t * p_context,        /* IN */
-                                   fsal_extattrib_list_t * p_object_attributes /* OUT */) ;
 
 fsal_status_t VFSFSAL_sync(fsal_file_t * p_file_descriptor /* IN */);

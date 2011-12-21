@@ -176,6 +176,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
   fsdata.cookie = 0;
 
   pfid->pentry = cache_inode_get( &fsdata,
+                                  pexport->cache_inode_policy,      
                                   &fsalattr, 
                                   pwkrdata->ht,
                                   &pwkrdata->cache_inode_client,

@@ -634,6 +634,13 @@ typedef fsal_uint_t fsal_accessflags_t;
 
 #define IS_FSAL_DIR(filetype)  (filetype == FSAL_TYPE_DIR)
 
+#define FSAL_WRITE_ACCESS (FSAL_MODE_MASK_SET(FSAL_W_OK) | \
+                           FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA | \
+                                              FSAL_ACE_PERM_APPEND_DATA))
+#define FSAL_READ_ACCESS (FSAL_MODE_MASK_SET(FSAL_R_OK) | \
+                          FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_DATA))
+
+
 /** directory entry */
 
 typedef struct fsal_dirent__
@@ -708,6 +715,68 @@ typedef fsal_ushort_t fsal_fhexptype_t;
 #define FSAL_EXPTYPE_RENAME       0x0010
 
 /** File system static info. */
+
+#define SET_INTEGER_PARAM( cfg, p_init_info, _field )             \
+    switch( (p_init_info)->behaviors._field ){                    \
+    case FSAL_INIT_FORCE_VALUE :                                  \
+      /* force the value in any case */                           \
+      cfg._field = (p_init_info)->values._field;                  \
+      break;                                                      \
+    case FSAL_INIT_MAX_LIMIT :                                    \
+      /* check the higher limit */                                \
+      if ( cfg._field > (p_init_info)->values._field )            \
+        cfg._field = (p_init_info)->values._field ;               \
+      break;                                                      \
+    case FSAL_INIT_MIN_LIMIT :                                    \
+      /* check the lower limit */                                 \
+      if ( cfg._field < (p_init_info)->values._field )            \
+        cfg._field = (p_init_info)->values._field ;               \
+      break;                                                      \
+    case FSAL_INIT_FS_DEFAULT:                                    \
+    default:                                                      \
+    /* In the other cases, we keep the default value. */          \
+        break;                                                    \
+    }
+
+#define SET_BITMAP_PARAM( cfg, p_init_info, _field )              \
+    switch( (p_init_info)->behaviors._field ){                    \
+    case FSAL_INIT_FORCE_VALUE :                                  \
+        /* force the value in any case */                         \
+        cfg._field = (p_init_info)->values._field;                \
+        break;                                                    \
+    case FSAL_INIT_MAX_LIMIT :                                    \
+      /* proceed a bit AND */                                     \
+      cfg._field &= (p_init_info)->values._field ;                \
+      break;                                                      \
+    case FSAL_INIT_MIN_LIMIT :                                    \
+      /* proceed a bit OR */                                      \
+      cfg._field |= (p_init_info)->values._field ;                \
+      break;                                                      \
+    case FSAL_INIT_FS_DEFAULT:                                    \
+    default:                                                      \
+    /* In the other cases, we keep the default value. */          \
+        break;                                                    \
+    }
+
+#define SET_BOOLEAN_PARAM( cfg, p_init_info, _field )             \
+    switch( (p_init_info)->behaviors._field ){                    \
+    case FSAL_INIT_FORCE_VALUE :                                  \
+        /* force the value in any case */                         \
+        cfg._field = (p_init_info)->values._field;                \
+        break;                                                    \
+    case FSAL_INIT_MAX_LIMIT :                                    \
+      /* proceed a boolean AND */                                 \
+      cfg._field = cfg._field && (p_init_info)->values._field ;   \
+      break;                                                      \
+    case FSAL_INIT_MIN_LIMIT :                                    \
+      /* proceed a boolean OR */                                  \
+      cfg._field = cfg._field && (p_init_info)->values._field ;   \
+      break;                                                      \
+    case FSAL_INIT_FS_DEFAULT:                                    \
+    default:                                                      \
+    /* In the other cases, we keep the default value. */          \
+        break;                                                    \
+    }
 
 struct fsal_staticfsinfo_t
 {

@@ -192,18 +192,10 @@ fsal_status_t XFSFSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   /***************************/
   /* seek into the directory */
   /***************************/
-  start_position.data.cookie = (off_t) startposition.data;
-  errno = 0;
-  if(start_position.data.cookie == 0)
-    {
-      //rewinddir(p_dir_descriptor->p_dir);
-      rc = errno;
-    }
-  else
-    {
-      //seekdir(p_dir_descriptor->p_dir, start_position.cookie);
-      rc = errno;
-    }
+  memcpy( (char *)&start_position.data.cookie, startposition.data, sizeof( off_t ) ) ;
+  rc = errno = 0;
+  lseek(p_dir_descriptor->fd, start_position.data.cookie, SEEK_SET);
+  rc = errno;
 
   if(rc)
     Return(posix2fsal_error(rc), rc, INDEX_FSAL_readdir);

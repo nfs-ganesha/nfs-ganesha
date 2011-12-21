@@ -115,7 +115,6 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 
   pclient->attrmask = param.attrmask;
   pclient->nb_prealloc = param.nb_prealloc_entry;
-  pclient->nb_pre_dir_data = param.nb_pre_dir_data;
   pclient->nb_pre_parent = param.nb_pre_parent;
   pclient->nb_pre_state_v4 = param.nb_pre_state_v4;
   pclient->expire_type_attr = param.expire_type_attr;
@@ -155,12 +154,12 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
       return 1;
     }
 
-  MakePool(&pclient->pool_dir_data, pclient->nb_pre_dir_data, cache_inode_dir_data_t, NULL, NULL);
-  NamePool(&pclient->pool_dir_data, "%s Dir Data Pool", name);
-  if(!IsPoolPreallocated(&pclient->pool_dir_data))
+  MakePool(&pclient->pool_dir_entry, pclient->nb_prealloc, cache_inode_dir_entry_t, NULL, NULL);
+  NamePool(&pclient->pool_dir_entry, "%s Dir Entry Pool", name);
+  if(!IsPoolPreallocated(&pclient->pool_dir_entry))
     {
       LogCrit(COMPONENT_CACHE_INODE,
-              "Can't init %s Dir Data Pool", name);
+              "Can't init %s Dir Entry Pool", name);
       return 1;
     }
 

@@ -350,7 +350,7 @@ int Init_Thread_Context(FILE * output, cmdfsal_thr_info_t * context, int flag_v)
   struct passwd *pw_struct;
 
   /* for the moment, create export context for root fileset */
-#ifdef _USE_XFS
+#if defined( _USE_XFS )
   fsal_path_t local_path_fsal;
   st = FSAL_str2path("/xfs", strlen("/xfs"), &local_path_fsal);
   st = FSAL_BuildExportContext(&context->exp_context, &local_path_fsal, NULL);
@@ -1562,7 +1562,8 @@ int fn_fsal_ls(int argc,        /* IN : number of args in argv */
   int err_flag = 0;
   char *str_name;
 
-#define READDIR_SIZE FSAL_READDIR_SIZE
+//#define READDIR_SIZE FSAL_READDIR_SIZE
+#define READDIR_SIZE 10
 
   fsal_attrib_mask_t mask_needed;
   fsal_handle_t obj_hdl;

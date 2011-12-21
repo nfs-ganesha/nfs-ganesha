@@ -122,42 +122,35 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
   int error;
 
   resp->resop = NFS4_OP_PUTPUBFH;
-  /* resp->nfs_resop4_u.opputpubfh.status =  NFS4_OK  ; */
+  res_PUTPUBFH4.status =  NFS4_OK  ; 
 
-  /* Unsupported for now, keep the rest of the code for a later version */
-  resp->nfs_resop4_u.opputpubfh.status = NFS4ERR_NOTSUPP;
-  return resp->nfs_resop4_u.opputpubfh.status;
-
-  /* For now, GANESHA makes no difference betzeen cwPUBLICFH and ROOTFH */
+  /* For now, GANESHA makes no difference betzeen PUBLICFH and ROOTFH */
   if((error = CreatePUBFH4(&(data->publicFH), data)) != NFS4_OK)
     {
       res_PUTPUBFH4.status = error;
       return res_PUTPUBFH4.status;
     }
 
-  /* First of all, set the reply to zero to make sure it contains no parasite information */
-  memset(resp, 0, sizeof(struct nfs_resop4));
-
   /* If there is no currentFH, teh  return an error */
   if(nfs4_Is_Fh_Empty(&(data->publicFH)))
     {
       /* There is no current FH, return NFS4ERR_NOFILEHANDLE */
-      resp->nfs_resop4_u.opputpubfh.status = NFS4ERR_NOFILEHANDLE;
-      return resp->nfs_resop4_u.opputpubfh.status;
+      res_PUTPUBFH4.status = NFS4ERR_NOFILEHANDLE;
+      return res_PUTPUBFH4.status;
     }
 
   /* If the filehandle is invalid */
   if(nfs4_Is_Fh_Invalid(&(data->publicFH)))
     {
-      resp->nfs_resop4_u.opputpubfh.status = NFS4ERR_BADHANDLE;
-      return resp->nfs_resop4_u.opputpubfh.status;
+      res_PUTPUBFH4.status = NFS4ERR_BADHANDLE;
+      return res_PUTPUBFH4.status;
     }
 
   /* Tests if teh Filehandle is expired (for volatile filehandle) */
   if(nfs4_Is_Fh_Expired(&(data->publicFH)))
     {
-      resp->nfs_resop4_u.opputpubfh.status = NFS4ERR_FHEXPIRED;
-      return resp->nfs_resop4_u.opputpubfh.status;
+      res_PUTPUBFH4.status = NFS4ERR_FHEXPIRED;
+      return res_PUTPUBFH4.status;
     }
 
   /* I copy the root FH to the currentFH and, if not already done, to the publicFH */
@@ -167,8 +160,8 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
     {
       if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
         {
-          resp->nfs_resop4_u.opputpubfh.status = error;
-          return error;
+          res_PUTPUBFH4.status = error;
+          return res_PUTPUBFH4.status;
         }
     }
 
@@ -176,7 +169,9 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op,
   memcpy((char *)(data->currentFH.nfs_fh4_val), (char *)(data->publicFH.nfs_fh4_val),
          data->publicFH.nfs_fh4_len);
 
-  return NFS4_OK;
+  res_PUTPUBFH4.status = NFS4_OK ;
+
+  return res_PUTPUBFH4.status;
 }                               /* nfs4_op_putpubfh */
 
 /**

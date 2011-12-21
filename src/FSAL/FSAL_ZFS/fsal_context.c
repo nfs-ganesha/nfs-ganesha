@@ -165,18 +165,3 @@ fsal_status_t ZFSFSAL_BuildExportContext(fsal_export_context_t * exp_context, /*
   p_export_context->p_vfs = p_snapshots[0].p_vfs;
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }
-
-/**
- * FSAL_CleanUpExportContext :
- * this will clean up and state in an export that was created during
- * the BuildExportContext phase.  For many FSALs this may be a noop.
- *
- * \param p_export_context
- */
-
-fsal_status_t ZFSFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context)
-{
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
-}
-
-/* @} */

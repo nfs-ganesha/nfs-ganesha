@@ -7,7 +7,9 @@ libfsalcommon_la_SOURCES = fsal_strings.c          \
                            fsal_convert.c          \
                            fsal_glue.c             \
 			   common_methods.c	   \
+			   access_check.c	   \
 			   ../include/FSAL/common_methods.h \
+			   ../include/FSAL/access_check.h \
                            ../include/fsal.h       \
                            ../include/fsal_types.h \
                            ../include/err_fsal.h   \
@@ -22,10 +24,6 @@ else
 SUBDIRS = 
 endif 
 
-if USE_FSAL_GHOSTFS
-SUBDIRS += FSAL_GHOST_FS
-endif
-
 if USE_FSAL_HPSS
 SUBDIRS += FSAL_HPSS
 endif
@@ -36,10 +34,6 @@ endif
 
 if USE_FSAL_PROXY
 SUBDIRS += FSAL_PROXY
-endif
-
-if USE_FSAL_SNMP
-SUBDIRS += FSAL_SNMP
 endif
 
 if USE_FSAL_FUSE

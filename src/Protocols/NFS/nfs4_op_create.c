@@ -204,7 +204,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   pentry_parent = data->current_entry;
 
   /* The currentFH must point to a directory (objects are always created within a directory) */
-  if(data->current_filetype != DIR_BEGINNING && data->current_filetype != DIR_CONTINUE)
+  if(data->current_filetype != DIRECTORY)
     {
       res_CREATE4.status = NFS4ERR_NOTDIR;
       return res_CREATE4.status;
@@ -265,6 +265,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if((pentry_new = cache_inode_create(pentry_parent,
                                           &name,
                                           SYMBOLIC_LINK,
+                                          data->pexport->cache_inode_policy,
                                           mode,
                                           &create_arg,
                                           &attr_new,
@@ -289,7 +290,8 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       /* do the symlink operation */
       if((pentry_new = cache_inode_create(pentry_parent,
                                           &name,
-                                          DIR_BEGINNING,
+                                          DIRECTORY,
+                                          data->pexport->cache_inode_policy,
                                           mode,
                                           &create_arg,
                                           &attr_new,
@@ -315,6 +317,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if((pentry_new = cache_inode_create(pentry_parent,
                                           &name,
                                           SOCKET_FILE,
+                                          data->pexport->cache_inode_policy,
                                           mode,
                                           NULL,
                                           &attr_new,
@@ -340,6 +343,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if((pentry_new = cache_inode_create(pentry_parent,
                                           &name,
                                           FIFO_FILE,
+                                          data->pexport->cache_inode_policy,
                                           mode,
                                           NULL,
                                           &attr_new,
@@ -368,6 +372,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if((pentry_new = cache_inode_create(pentry_parent,
                                           &name,
                                           CHARACTER_FILE,
+                                          data->pexport->cache_inode_policy,
                                           mode,
                                           &create_arg,
                                           &attr_new,
@@ -396,6 +401,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if((pentry_new = cache_inode_create(pentry_parent,
                                           &name,
                                           BLOCK_FILE,
+                                          data->pexport->cache_inode_policy,
                                           mode,
                                           &create_arg,
                                           &attr_new,

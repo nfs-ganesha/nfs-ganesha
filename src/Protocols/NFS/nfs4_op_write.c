@@ -140,8 +140,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   if(data->current_filetype != REGULAR_FILE)
     {
       /* If the destination is no file, return EISDIR if it is a directory and EINAVL otherwise */
-      if(data->current_filetype == DIR_BEGINNING
-         || data->current_filetype == DIR_CONTINUE)
+      if(data->current_filetype == DIRECTORY)
         res_WRITE4.status = NFS4ERR_ISDIR;
       else
         res_WRITE4.status = NFS4ERR_INVAL;
@@ -255,6 +254,20 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
       // TODO FSF: need to check against existing locks
       V_r(&pentry->lock);
+    }
+
+  if (pstate_open == NULL)
+    {
+      if(cache_inode_access(pentry,
+                            FSAL_WRITE_ACCESS,
+                            data->ht,
+                            data->pclient,
+                            data->pcontext,
+                            &cache_status) != CACHE_INODE_SUCCESS)
+        {
+          res_WRITE4.status = nfs4_Errno(cache_status);;
+          return res_WRITE4.status;
+        }
     }
 
   /* Get the characteristics of the I/O to be made */

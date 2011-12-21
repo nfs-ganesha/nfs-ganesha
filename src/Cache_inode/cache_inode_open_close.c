@@ -248,8 +248,7 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
      (pclient == NULL) || (pcontext == NULL) || (pstatus == NULL))
     return CACHE_INODE_INVALID_ARGUMENT;
 
-  if((pentry_dir->internal_md.type != DIR_BEGINNING)
-     && (pentry_dir->internal_md.type != DIR_CONTINUE))
+  if((pentry_dir->internal_md.type != DIRECTORY))
     {
       *pstatus = CACHE_INODE_BAD_TYPE;
       return *pstatus;
@@ -438,18 +437,9 @@ cache_inode_status_t cache_inode_close(cache_entry_t * pentry,
     }
 
   /* if locks are held in the file, do not close */
-  P(pentry->object.file.lock_list_mutex);
-  if(!glist_empty(&pentry->object.file.lock_list))
+  if( cache_inode_file_holds_state( pentry ) )
     {
-      V(pentry->object.file.lock_list_mutex);
-      *pstatus = CACHE_INODE_SUCCESS;
-      return *pstatus;
-    }
-  V(pentry->object.file.lock_list_mutex);
-
-  if(!glist_empty(&pentry->object.file.state_list))
-    {
-      *pstatus = CACHE_INODE_SUCCESS;
+      *pstatus = CACHE_INODE_SUCCESS; /** @todo : PhD : May be CACHE_INODE_STATE_CONFLICTS would be better ? */
       return *pstatus;
     }
 

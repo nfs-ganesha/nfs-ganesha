@@ -109,16 +109,8 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
       break;
 
     case FS_JUNCTION:
-    case DIR_BEGINNING:
-      pfsal_handle = &pentry->object.dir_begin.handle;
-      break;
-
-    case DIR_CONTINUE:
-      /* lock the related dir_begin (dir begin are garbagge collected AFTER their related dir_cont)
-       * this means that if a DIR_CONTINUE exists, its pdir pointer is not endless */
-      P_r(&pentry->object.dir_cont.pdir_begin->lock);
-      pfsal_handle = &pentry->object.dir_cont.pdir_begin->object.dir_begin.handle;
-      V_r(&pentry->object.dir_cont.pdir_begin->lock);
+    case DIRECTORY:
+      pfsal_handle = &pentry->object.dir.handle;
       break;
 
     case CHARACTER_FILE:
@@ -144,6 +136,8 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
    * We ask back all standard attributes, in case they have been modified
    * by another program (pftp, rcpd...)
    */
+
+  memset(&result_attributes, 0, sizeof(fsal_attrib_list_t));
   result_attributes.asked_attributes = pclient->attrmask;
   /* end of mod */
 
@@ -152,8 +146,6 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
       MFSL_setattrs(&pentry->mobject, pcontext, &pclient->mfsl_context, pattr,
                     &result_attributes, NULL);
 #else
-  cache_inode_get_attributes(pentry, &result_attributes);
-
   fsal_status = FSAL_setattrs(pfsal_handle, pcontext, pattr, &result_attributes);
 #endif
   if(FSAL_IS_ERROR(fsal_status))
@@ -172,7 +164,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
                    "cache_inode_setattr: Stale FSAL File Handle detected for pentry = %p",
                    pentry);
 
-          if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+          if(cache_inode_kill_entry(pentry, NO_LOCK, ht, pclient, &kill_status) !=
              CACHE_INODE_SUCCESS)
             LogCrit(COMPONENT_CACHE_INODE,
                     "cache_inode_setattr: Could not kill entry %p, status = %u",
@@ -206,7 +198,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
                        "cache_inode_setattr: Stale FSAL File Handle detected for pentry = %p",
                        pentry);
 
-              if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+              if(cache_inode_kill_entry(pentry, NO_LOCK, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
                 LogCrit(COMPONENT_CACHE_INODE,
                         "cache_inode_setattr: Could not kill entry %p, status = %u",
@@ -233,17 +225,8 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
       break;
 
     case FS_JUNCTION:
-    case DIR_BEGINNING:
-      p_object_attributes = &(pentry->object.dir_begin.attributes);
-      break;
-
-    case DIR_CONTINUE:
-      /* lock the related dir_begin (dir begin are garbagge collected AFTER their related dir_cont)
-       * this means that if a DIR_CONTINUE exists, its pdir pointer is not endless */
-      P_r(&pentry->object.dir_cont.pdir_begin->lock);
-      p_object_attributes =
-          &(pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes);
-      V_r(&pentry->object.dir_cont.pdir_begin->lock);
+    case DIRECTORY:
+      p_object_attributes = &(pentry->object.dir.attributes);
       break;
 
     case CHARACTER_FILE:

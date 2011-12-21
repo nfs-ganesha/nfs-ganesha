@@ -9,6 +9,8 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  HashData.h                      \
                  HashTable.h                     \
                  LRU_List.h                      \
+                 avltree.h                       \
+                 cidr.h                          \
                  MesureTemps.h                   \
                  RW_Lock.h                       \
                  SemN.h                          \

@@ -457,6 +457,15 @@ int fn_Cache_inode_access(int argc,     /* IN : number of args in argv */
                           char **argv,  /* IN : arg list               */
                           FILE * output /* IN : output stream          */ );
 
+/**
+ * perform an invalidate command.
+ * syntax: invalidate  <file>
+ * example: invalidate toto 
+ */
+int fn_Cache_inode_invalidate(int argc,      /* IN : number of args in argv */
+                              char **argv,   /* IN : arg list               */
+                              FILE * output  /* IN : output stream          */ ) ;
+
 /*----------------------------------*
  *      NFS commands prototypes.
  *----------------------------------*/
@@ -851,6 +860,8 @@ static command_def_t __attribute__ ((__unused__)) commands_Cache_inode[] =
   "hardlink", fn_Cache_inode_link, "create hard link"},
   {
   "init_cache", fn_Cache_inode_cache_init, "initialize filesystem"},
+  {
+  "invalidate", fn_Cache_inode_invalidate, "invalidate a cached entry"},
   {
   "ln", fn_Cache_inode_ln, "creates a new symbolic link"},
   {

@@ -6,7 +6,8 @@
 #
 # processname: /usr/bin/vfs.ganesha.nfsd
 # config: /etc/ganesha/vfs.ganesha.nfsd.conf
-# pidfile: /var/run/snmpd
+# pidfile: /var/run/vfs.ganesha.nfsd.pid
+#
 ### BEGIN INIT INFO
 # Provides: nfs-ganesha.vfs
 # Required-Start: $local_fs $network
@@ -24,6 +25,7 @@
 . /etc/init.d/functions
 
 PATHPROG=/usr/bin/vfs.ganesha.nfsd
+PROG=vfs.ganesha.nfsd 
 LOGFILE=/var/log/nfs-ganesha.log
 #LOGFILE=SYSLOG
 #LOGFILE=STDERR

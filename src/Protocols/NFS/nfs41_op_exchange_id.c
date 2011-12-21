@@ -261,7 +261,9 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
           res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
           return res_EXCHANGE_ID4.eir_status;
         }
-      strncpy(nfs_clientid.server_scope, nfs_clientid.server_owner, MAXNAMLEN);
+//      strncpy(nfs_clientid.server_scope, nfs_clientid.server_owner, MAXNAMLEN);
+
+      snprintf( nfs_clientid.server_scope, MAXNAMLEN, "%s_NFS-Ganesha", nfs_clientid.server_owner ) ;
 
       if(nfs_client_id_add(clientid, nfs_clientid, &pworker->clientid_pool) !=
          CLIENT_ID_SUCCESS)
@@ -304,8 +306,8 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_val =
       Mem_Alloc(strlen(nfs_clientid.server_scope));
   memcpy(res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.
-         eir_server_scope_val, nfs_clientid.server_owner,
-         strlen(nfs_clientid.server_owner));
+         eir_server_scope_val, nfs_clientid.server_scope,
+         strlen(nfs_clientid.server_scope));
 
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_impl_id.
       eir_server_impl_id_len = 0;

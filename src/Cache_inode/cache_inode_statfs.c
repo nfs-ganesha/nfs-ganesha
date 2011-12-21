@@ -63,9 +63,7 @@
 #include "nfs_tools.h"
 #include "nfs_proto_tools.h"
 
-/*
- * ASSUMPTION: DIR_CONT entries are always garbabbaged before their related DIR_BEGINNG 
- */
+
 cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
                                         fsal_dynamicfsinfo_t * pdynamicinfo,
                                         fsal_op_context_t * pcontext,

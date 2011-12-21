@@ -46,6 +46,7 @@ start() {
                 RETVAL=$?
                 if [ $RETVAL -eq 0 ]; then 
 		 touch $LOCK_FILE
+                    [ ! -f $PID_FILE ] && /sbin/pidof $prog > $PID_FILE
 		else
 		  RETVAL=1
                 fi

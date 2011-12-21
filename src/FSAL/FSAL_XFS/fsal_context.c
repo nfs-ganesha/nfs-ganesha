@@ -160,18 +160,3 @@ fsal_status_t XFSFSAL_BuildExportContext(fsal_export_context_t *export_context, 
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }
-
-/**
- * FSAL_CleanUpExportContext :
- * this will clean up and state in an export that was created during
- * the BuildExportContext phase.  For many FSALs this may be a noop.
- *
- * \param p_export_context (in, gpfsfsal_export_context_t)
- */
-
-fsal_status_t XFSFSAL_CleanUpExportContext(fsal_export_context_t * p_export_context)
-{
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_CleanUpExportContext);
-}
-
-/* @} */

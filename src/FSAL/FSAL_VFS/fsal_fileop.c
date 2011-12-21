@@ -37,6 +37,7 @@
 
 #include "fsal.h"
 #include "fsal_internal.h"
+#include "FSAL/access_check.h"
 #include "fsal_convert.h"
 
 /**
@@ -184,7 +185,7 @@ fsal_status_t VFSFSAL_open(fsal_handle_t * p_filehandle,   /* IN */
     }
 
   status =
-      fsal_internal_testAccess(p_context,
+      fsal_check_access(p_context,
                                (openflags & FSAL_O_RDONLY ? FSAL_R_OK : FSAL_W_OK) |
                                FSAL_OWNER_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))

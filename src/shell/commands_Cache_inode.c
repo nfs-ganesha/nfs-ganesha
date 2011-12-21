@@ -79,6 +79,10 @@ static int cache_init = FALSE;
 /** Global variable : the garbagge policy to be used */
 static cache_inode_gc_policy_t gcpol;
 
+/** Global variable : the cache policy to be used */
+//static cache_inode_policy_t cachepol = CACHE_INODE_POLICY_FULL_WRITE_THROUGH;
+static cache_inode_policy_t cachepol = CACHE_INODE_POLICY_ATTRS_ONLY_WRITE_THROUGH ;
+
 /** Global (exported) variable : init parameters for clients. */
 cache_inode_client_parameter_t cache_client_param;
 cache_content_client_parameter_t datacache_client_param;
@@ -384,6 +388,7 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
       /* Get the corresponding pentry */
       fsdata.cookie = 0;
       if((pentry_tmp = cache_inode_get(&fsdata,
+                                       cachepol,
                                        &attrlookup,
                                        ht,
                                        &context->client,
@@ -452,6 +457,7 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
 
       if((pentry_tmp = cache_inode_lookup(pentry_lookup,
                                           &name,
+                                          cachepol,
                                           &attrlookup,
                                           ht,
                                           &context->client,
@@ -589,9 +595,28 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   /* retrieve lower layer info */
 
   /* Getting the root of the FS */
-#ifdef _USE_PROXY
+#if defined( _USE_PROXY )
   /*if( FSAL_IS_ERROR( status = FSAL_str2path( "/users/thomas/./", FSAL_MAX_PATH_LEN, &pathroot ) ) ) */
   if(FSAL_IS_ERROR(status = FSAL_str2path("/", FSAL_MAX_PATH_LEN, &pathroot)))
+    {
+      char buffer[LOG_MAX_STRLEN];
+
+      MakeLogError(buffer, ERR_FSAL, status.major, status.minor, __LINE__);
+      fprintf(output, "%s\n", buffer);
+      return 1;
+    }
+
+  if(FSAL_IS_ERROR
+     (status = FSAL_lookupPath(&pathroot, &context->context, &root_handle, NULL)))
+    {
+      char buffer[LOG_MAX_STRLEN];
+
+      MakeLogError(buffer, ERR_FSAL, status.major, status.minor, __LINE__);
+      fprintf(output, "%s\n", buffer);
+      return 1;
+    }
+#elif defined( _USE_VFS )
+if(FSAL_IS_ERROR(status = FSAL_str2path("/tmp", FSAL_MAX_PATH_LEN, &pathroot)))
     {
       char buffer[LOG_MAX_STRLEN];
 
@@ -693,7 +718,7 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   cache_inode_async_init(cache_client_param);
 
   if(cache_inode_async_precreate_object
-     (&context->client, DIR_BEGINNING, &context->exp_context) == -1)
+     (&context->client, DIRECTORY, &context->exp_context) == -1)
     {
       fprintf(stderr, "NFS INIT: /!\\ Impossible to pre-create asynchronous direcory pool");
       exit(1);
@@ -716,7 +741,10 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   fsdata.cookie = 0;
   fsdata.handle = root_handle;
 
-  if((context->pentry = cache_inode_make_root(&fsdata, ht, &context->client,
+  if((context->pentry = cache_inode_make_root(&fsdata,
+                                              cachepol,
+                                              ht, 
+                                              &context->client,
                                               &context->context,
                                               &context->cache_status)) == NULL)
     {
@@ -894,7 +922,7 @@ int fn_Cache_inode_cd(int argc, /* IN : number of args in argv */
                       &new_pentry, output)) != 0)
     return rc;
 
-  if(new_pentry->internal_md.type != DIR_BEGINNING)
+  if(new_pentry->internal_md.type != DIRECTORY)
     {
       fprintf(output, "Error: %s is not a directory\n", glob_path);
       return ENOTDIR;
@@ -1112,11 +1140,10 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                       FILE * output)    /* IN : output stream          */
 {
 #define CACHE_INODE_SHELL_READDIR_SIZE 10
-  unsigned int begin_cookie = 0;
-  unsigned int end_cookie = 0;
+  uint64_t begin_cookie = 0;
+  uint64_t end_cookie = 0;
   unsigned int nbfound;
-  cache_inode_dir_entry_t dirent_array[CACHE_INODE_SHELL_READDIR_SIZE];
-  unsigned int cookie_array[CACHE_INODE_SHELL_READDIR_SIZE];
+  cache_inode_dir_entry_t * dirent_array[CACHE_INODE_SHELL_READDIR_SIZE] ;
   cache_inode_endofdir_t eod_met;
   unsigned int i;
   fsal_path_t symlink_path;
@@ -1124,6 +1151,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
   char *str_name = ".";
   char item_path[FSAL_MAX_PATH_LEN];
   cache_entry_t *pentry_tmp = NULL;
+  int dir_pentry_unlock = FALSE;
 
   int rc = 0;
   char glob_path[FSAL_MAX_PATH_LEN];
@@ -1291,7 +1319,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
    * if the object is a file or a directoy with the -d option specified,
    * we only show its info and exit.
    */
-  if((pentry_tmp->internal_md.type != DIR_BEGINNING) || flag_d)
+  if((pentry_tmp->internal_md.type != DIRECTORY) || flag_d)
     {
       if(pentry_tmp->internal_md.type == SYMBOLIC_LINK)
         {
@@ -1383,44 +1411,54 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
 
   begin_cookie = 0;
   eod_met = UNASSIGNED_EOD;
+
   while(eod_met != END_OF_DIR)
     {
 
       if(flag_v)
-        fprintf(output, "-->cache_inode_readdir(path=%s,cookie=%d)\n",
+        fprintf(output, "-->cache_inode_readdir(path=%s,cookie=%"PRIu64")\n",
                 glob_path, begin_cookie);
 
       if(cache_inode_readdir(pentry_tmp,
+                             cachepol,
                              begin_cookie,
                              CACHE_INODE_SHELL_READDIR_SIZE,
                              &nbfound,
                              &end_cookie,
                              &eod_met,
                              dirent_array,
-                             cookie_array,
                              ht,
+                             &dir_pentry_unlock,
                              &context->client,
                              &context->context,
                              &context->cache_status) != CACHE_INODE_SUCCESS)
         {
-          fprintf(output, "Error %d in cache_inode_readdir\n", context->cache_status);
+          fprintf(output, "Error %d in cache_inode_readdir\n",
+                  context->cache_status);
+          /* after successful cache_inode_readdir, pentry_tmp may be
+           * read locked */
+          if (dir_pentry_unlock)
+              V_r(&pentry_tmp->lock);
           return context->cache_status;
         }
+
+      if (dir_pentry_unlock)
+        V_r(&pentry_tmp->lock);
 
       for(i = 0; i < nbfound; i++)
         {
           if(!strcmp(str_name, "."))
-            strncpy(item_path, dirent_array[i].name.name, FSAL_MAX_PATH_LEN);
+            strncpy(item_path, dirent_array[i]->name.name, FSAL_MAX_PATH_LEN);
           else if(str_name[strlen(str_name) - 1] == '/')
             snprintf(item_path, FSAL_MAX_PATH_LEN, "%s%s", str_name,
-                     dirent_array[i].name.name);
+                     dirent_array[i]->name.name);
           else
             snprintf(item_path, FSAL_MAX_PATH_LEN, "%s/%s", str_name,
-                     dirent_array[i].name.name);
+                     dirent_array[i]->name.name);
 
-          if(dirent_array[i].pentry->internal_md.type == SYMBOLIC_LINK)
+          if(dirent_array[i]->pentry->internal_md.type == SYMBOLIC_LINK)
             {
-              if(cache_inode_readlink(dirent_array[i].pentry,
+              if(cache_inode_readlink(dirent_array[i]->pentry,
                                       &symlink_path,
                                       ht,
                                       &context->client,
@@ -1429,13 +1467,15 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                 {
                   log_fprintf(output, "Error executing cache_inode_readlink : %J%r\n",
                               ERR_CACHE_INODE, context->cache_status);
+                  /* after successful cache_inode_readdir, pentry_tmp may be
+                   * read locked */
                   return context->cache_status;
                 }
             }
 
           if(flag_l)
             {
-              if(cache_inode_getattr(dirent_array[i].pentry,
+              if(cache_inode_getattr(dirent_array[i]->pentry,
                                      &attrs,
                                      ht,
                                      &context->client,
@@ -1444,7 +1484,8 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                 {
                   log_fprintf(output, "Error executing cache_inode_getattr : %J%r\n",
                               ERR_CACHE_INODE, context->cache_status);
-
+                  /* after successful cache_inode_readdir, pentry_tmp may be
+                   * read locked */
                   return context->cache_status;
                 }
 
@@ -1453,7 +1494,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
           else if(flag_S)
             {
               fprintf(output, "%s :\n", item_path);
-              if(cache_inode_getattr(dirent_array[i].pentry,
+              if(cache_inode_getattr(dirent_array[i]->pentry,
                                      &attrs,
                                      ht,
                                      &context->client,
@@ -1462,6 +1503,8 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                 {
                   log_fprintf(output, "Error executing cache_inode_getattr : %J%r\n",
                               ERR_CACHE_INODE, context->cache_status);
+                  /* after successful cache_inode_readdir, pentry_tmp may be
+                   * read locked */
                   return context->cache_status;
                 }
               if(!flag_z)
@@ -1471,17 +1514,19 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
             {
               if(!flag_z)
                 {
-                  if(dirent_array[i].pentry->internal_md.type != REGULAR_FILE)
-                    fprintf(output, "%p N/A \t\t%s\n", dirent_array[i].pentry, item_path);
+                  if(dirent_array[i]->pentry->internal_md.type != REGULAR_FILE)
+                    fprintf(output, "%p N/A \t\t%s\n",
+                            dirent_array[i]->pentry, item_path);
                   else
                     {
-                      if(dirent_array[i].pentry->object.file.pentry_content == NULL)
-                        fprintf(output, "%p (not cached) \t%s\n", dirent_array[i].pentry,
+                      if(dirent_array[i]->pentry->object.file.pentry_content == NULL)
+                        fprintf(output, "%p (not cached) \t%s\n",
+                                dirent_array[i]->pentry,
                                 item_path);
                       else
                         fprintf(output, "%p %p \t%s\n",
-                                dirent_array[i].pentry,
-                                dirent_array[i].pentry->object.file.pentry_content,
+                                dirent_array[i]->pentry,
+                                dirent_array[i]->pentry->object.file.pentry_content,
                                 item_path);
                     }
                 }
@@ -1493,9 +1538,11 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                   char buff[128];
 
                   if((pfsal_handle =
-                      cache_inode_get_fsal_handle(dirent_array[i].pentry,
+                      cache_inode_get_fsal_handle(dirent_array[i]->pentry,
                                                   &context->cache_status)) == NULL)
                     {
+                        /* after successful cache_inode_readdir, pentry_tmp may be
+                         * read locked */
                       return 1;
                     }
                   snprintmem(buff, 128, (caddr_t) pfsal_handle, sizeof(fsal_handle_t));
@@ -1511,11 +1558,16 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
 
       /* Ready for next iteration */
       LogFullDebug(COMPONENT_CACHE_INODE,
-                   "--------------> begin_cookie = %d, nbfound=%d, last cookie=%d, end_cookie=%d, begin_cookie + nbfound =%d\n",
-                   begin_cookie, nbfound, cookie_array[nbfound - 1], end_cookie,
-                   begin_cookie + nbfound);
+                   "--------------> begin_cookie = %"PRIu64", nbfound=%d, "
+		   "last cookie=%"PRIu64", end_cookie=%"PRIu64", "
+		   "begin_cookie + nbfound =%"PRIu64"\n",
+                   begin_cookie, nbfound, dirent_array[nbfound - 1]->cookie,
+                   end_cookie, begin_cookie + nbfound);
       begin_cookie = end_cookie;
     }
+
+  /* after successful cache_inode_readdir, pentry_tmp may be
+   * read locked */
 
   return 0;
 }                               /* fn_Cache_inode_ls */
@@ -1752,7 +1804,8 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
 
   subdir_hdl = cache_inode_create(new_hdl,
                                   &objname,
-                                  DIR_BEGINNING,
+                                  DIRECTORY,
+                                  cachepol,
                                   fsalmode,
                                   NULL,
                                   &attrmkdir,
@@ -1762,7 +1815,7 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
 
   if((subdir_hdl == NULL) || (context->cache_status != 0))
     {
-      log_fprintf(output, "Error executing cache_inode_create(DIR_BEGINNING) : %J%r\n",
+      log_fprintf(output, "Error executing cache_inode_create(DIRECTORY) : %J%r\n",
                   ERR_CACHE_INODE, context->cache_status);
 
       return context->cache_status;
@@ -1904,6 +1957,7 @@ int fn_Cache_inode_link(int argc,       /* IN : number of args in argv */
   if(cache_inode_link(target_hdl,
                       dir_hdl,
                       &link_name,
+                      cachepol,
                       &attrlink,
                       ht,
                       &context->client,
@@ -2054,6 +2108,7 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
   if((subdir_hdl = cache_inode_create(new_hdl,
                                       &objname,
                                       SYMBOLIC_LINK,
+                                      cachepol,
                                       fsalmode,
                                       &create_arg,
                                       &attrsymlink,
@@ -2242,6 +2297,7 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
   if((subdir_hdl = cache_inode_create(new_hdl,
                                       &objname,
                                       REGULAR_FILE,
+                                      cachepol,
                                       fsalmode,
                                       NULL,
                                       &attrcreate,
@@ -2249,7 +2305,7 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
                                       &context->client,
                                       &context->context, &context->cache_status)) == NULL)
     {
-      log_fprintf(output, "Error executing cache_inode_create(DIR_BEGINNING) : %J%r\n",
+      log_fprintf(output, "Error executing cache_inode_create(DIRECTORY) : %J%r\n",
                   ERR_CACHE_INODE, context->cache_status);
 
       return context->cache_status;
@@ -4530,6 +4586,7 @@ int fn_Cache_inode_open_by_name(int argc,       /* IN : number of args in argv *
 
   if((pentry_file = cache_inode_lookup(context->pentry,
                                        &filename,
+                                       cachepol,
                                        &file_attr,
                                        ht,
                                        &context->client,
@@ -4580,6 +4637,7 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
   char *file = NULL;            /* the relative path to the object */
 
   cmdCacheInode_thr_info_t *context;
+
 
   /* is the fs initialized ? */
   if(!cache_init)
@@ -4679,3 +4737,156 @@ int fn_Cache_inode_close(int argc,      /* IN : number of args in argv */
 
   return 0;
 }                               /* fn_Cache_inode_close */
+
+/** Close an opened entry */
+int fn_Cache_inode_invalidate(int argc,      /* IN : number of args in argv */
+                              char **argv,   /* IN : arg list               */
+                              FILE * output /* IN : output stream          */ )
+{
+  char format[] = "hv";
+
+  const char help_invalidate[] =
+      "usage: invalidate [-h][-v]  <path>\n"
+      "\n" "   -h : print this help\n" "   -v : verbose mode\n";
+
+  char glob_path[FSAL_MAX_PATH_LEN];    /* absolute path of the object */
+  cache_entry_t *obj_hdl;       /* handle of the object        */
+
+  int rc, option;
+  int flag_v = 0;
+  int flag_h = 0;
+  int err_flag = 0;
+
+  char *file = NULL;            /* the relative path to the object */
+
+  cmdCacheInode_thr_info_t *context;
+
+  fsal_attrib_list_t attr ;
+  fsal_handle_t * pfsal_handle = NULL ;
+
+  /* is the fs initialized ? */
+  if(!cache_init)
+    {
+      fprintf(output, "Error: Cache is not initialized\n");
+      return -1;
+    }
+
+  context = RetrieveInitializedContext();
+
+  /* analysing options */
+
+  getopt_init();
+  while((option = Getopt(argc, argv, format)) != -1)
+    {
+      switch (option)
+        {
+        case 'v':
+          if(flag_v)
+            fprintf(output,
+                    "access: warning: option 'v' has been specified more than once.\n");
+          else
+            flag_v++;
+          break;
+
+        case 'h':
+          if(flag_h)
+            fprintf(output,
+                    "access: warning: option 'h' has been specified more than once.\n");
+          else
+            flag_h++;
+          break;
+
+        default:
+        case '?':
+          fprintf(output, "access: unknown option : %c\n", Optopt);
+          err_flag++;
+          break;
+        }
+    }
+
+  if(flag_h)
+    {
+      /* print usage */
+      fprintf(output, help_invalidate);
+      return 0;
+    }
+
+  /* Exactly 1 args expected */
+  if(Optind != (argc - 1))
+    {
+      err_flag++;
+    }
+  else
+    {
+      file = argv[Optind];
+    }
+
+  if(err_flag)
+    {
+      fprintf(output, help_invalidate);
+      return -1;
+    }
+
+  if(flag_h)
+    {
+      /* print usage */
+      fprintf(output, help_invalidate);
+      return 0;
+    }
+
+  /* copy current absolute path to a local variable. */
+  strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
+  glob_path[FSAL_MAX_PATH_LEN - 1] = '\0';
+
+  /* retrieve handle to the file whose permissions are to be tested */
+  if((rc =
+     cache_solvepath(glob_path, FSAL_MAX_PATH_LEN, file, context->pentry, &obj_hdl,
+                     output)))
+    return rc;
+
+  switch( obj_hdl->internal_md.type )
+    {
+    case REGULAR_FILE:
+      pfsal_handle = &obj_hdl->object.file.handle;
+      break;
+
+    case SYMBOLIC_LINK:
+      pfsal_handle = &obj_hdl->object.symlink->handle;
+      break;
+
+    case FS_JUNCTION:
+    case DIRECTORY:
+      pfsal_handle = &obj_hdl->object.dir.handle;
+      break;
+
+    case CHARACTER_FILE:
+    case BLOCK_FILE:
+    case SOCKET_FILE:
+    case FIFO_FILE:
+      pfsal_handle = &obj_hdl->object.special_obj.handle;
+      break;
+
+    case UNASSIGNED:
+    case RECYCLED:
+      fprintf(output, "invalidate: unknown pentry type : %u\n",  obj_hdl->internal_md.type );
+      return -1 ;
+      break;
+    }
+
+  if( ( context->cache_status = cache_inode_invalidate( pfsal_handle,
+                                                        &attr,
+                                                        ht,
+                                                        &context->client,
+                                                        &context->cache_status) ) != CACHE_INODE_SUCCESS )
+    {
+      fprintf(output, "Error executing cache_inode_invalidate: %d\n", context->cache_status);
+      return -1 ;
+    }
+
+  if(flag_v)
+    {
+      fprintf(output, "Entry %p has been invalidated\n", obj_hdl);
+    }
+
+  return 0;
+}                               /* fn_Cache_inode_invalidate */

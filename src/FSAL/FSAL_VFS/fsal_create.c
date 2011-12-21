@@ -17,6 +17,7 @@
 
 #include "fsal.h"
 #include "fsal_internal.h"
+#include "FSAL/access_check.h"
 #include "fsal_convert.h"
 #include <unistd.h>
 #include <fcntl.h>
@@ -124,7 +125,7 @@ fsal_status_t VFSFSAL_create(fsal_handle_t * p_parent_directory_handle,      /* 
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
 
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
+  status = fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_create);
 
@@ -280,7 +281,7 @@ fsal_status_t VFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,       /* 
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
 
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
+  status = fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_mkdir);
 
@@ -451,7 +452,7 @@ fsal_status_t VFSFSAL_link(fsal_handle_t * p_target_handle,  /* IN */
 
   /* check permission on target directory */
   status =
-      fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_dir, NULL);
+      fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_dir, NULL);
   if(FSAL_IS_ERROR(status))
     {
       close(srcfd), close(dstfd);
@@ -581,14 +582,14 @@ fsal_status_t VFSFSAL_mknode(fsal_handle_t * parentdir_handle,       /* IN */
   if(buffstat.st_mode & S_ISGID)
     setgid_bit = 1;
 
-  status = fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
+  status = fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_mknode);
 
   /* creates the node, then stats it */
   TakeTokenFSCall();
   rc = mknodat(fd, p_node_name->name, unix_mode, unix_dev);
-  errsv = errno;
+  errsv = (rc == 0 )?0:errno;
 
   if(rc)
     {
@@ -598,7 +599,8 @@ fsal_status_t VFSFSAL_mknode(fsal_handle_t * parentdir_handle,       /* IN */
     }
 
   /* get the new object handle */
-  if((newfd = openat(fd, p_node_name->name, O_RDONLY, 0600)) < 0)
+  //if((newfd = openat(fd, p_node_name->name, O_RDONLY, 0600)) < 0)
+  if((newfd = openat(fd, p_node_name->name, O_RDONLY, unix_mode)) < 0)
     {
       errsv = errno;
       close(fd);

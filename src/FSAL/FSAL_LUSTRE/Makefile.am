@@ -31,6 +31,7 @@ libfsallustre_la_SOURCES = fsal_access.c      \
                           fsal_tools.c       \
                           fsal_xattrs.c      \
                           fsal_local_op.c    \
+                          fsal_lock.c     \
 			  fsal_internal.h    \
                           fsal_convert.h     \
                           ../../include/fsal.h       \
@@ -77,12 +78,14 @@ libfsalshook_la_SOURCES = fsal_access.c      \
                           fsal_tools.c       \
                           fsal_xattrs.c      \
                           fsal_local_op.c    \
+                          fsal_lock.c     \
 			  fsal_internal.h    \
                           fsal_convert.h     \
                           ../../include/fsal.h       \
                           ../../include/fsal_types.h \
                           ../../include/err_fsal.h   \
                           ../../include/FSAL/FSAL_LUSTRE/fsal_types.h
+
 
 if USE_PNFS
 SUBDIRS = PNFS

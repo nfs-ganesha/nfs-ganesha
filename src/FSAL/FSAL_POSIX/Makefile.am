@@ -75,6 +75,7 @@ posix_ganesha_fsal_posixdb_tool_LDADD      = $(BUDDY_LIB_FLAGS)                 
                                              ../../RW_Lock/librwlock.la                           \
                                              ../fsal_strings.lo                                   \
                                              ../fsal_convert.lo                                   \
+					     ../fsal_errors.lo					  \
                                              ../../Common/libcommon_utils.la
 
 

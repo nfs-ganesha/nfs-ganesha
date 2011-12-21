@@ -21,7 +21,7 @@ fsal_functions_t fsal_proxy_functions = {
   .fsal_getattrs = PROXYFSAL_getattrs,
   .fsal_setattrs = PROXYFSAL_setattrs,
   .fsal_buildexportcontext = PROXYFSAL_BuildExportContext,
-  .fsal_cleanupexportcontext = PROXYFSAL_CleanUpExportContext,
+  .fsal_cleanupexportcontext = COMMON_CleanUpExportContext_noerror,
   .fsal_initclientcontext = PROXYFSAL_InitClientContext,
   .fsal_getclientcontext = COMMON_GetClientContext,
   .fsal_create = PROXYFSAL_create,
@@ -88,7 +88,7 @@ fsal_functions_t fsal_proxy_functions = {
   .fsal_setxattrvaluebyid = PROXYFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = PROXYFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = PROXYFSAL_RemoveXAttrByName,
-  .fsal_getextattrs = PROXYFSAL_getextattrs,
+  .fsal_getextattrs = COMMON_getextattrs_notsupp,
   .fsal_getfileno = PROXYFSAL_GetFileno
 };
 

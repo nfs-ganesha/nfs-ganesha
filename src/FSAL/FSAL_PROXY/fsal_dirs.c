@@ -170,7 +170,7 @@ fsal_status_t PROXYFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
      Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
    }
 
-  start_position.data = (nfs_cookie4)start_pos.data;
+  memcpy( (char *)&start_position.data, start_pos.data, sizeof( nfs_cookie4 ) ) ;
 
   LogFullDebug(COMPONENT_FSAL, "---> Readdir Offset=%llu sizeof(entry4)=%lu sizeof(fsal_dirent_t)=%lu \n",
                (unsigned long long)start_position.data, sizeof(entry4), sizeof(fsal_dirent_t));
