@@ -217,18 +217,18 @@ int uid2name(char *name, uid_t * puid)
  */
 int name2uid(char *name, uid_t * puid)
 {
-#ifndef _USE_NFSIDMAP
   struct passwd passwd;
   struct passwd *ppasswd;
   char buff[NFS4_MAX_DOMAIN_LEN];
-#endif
   uid_t uid;
 #ifdef _HAVE_GSSAPI
   gid_t gss_gid;
   uid_t gss_uid;
 #endif
+#ifdef _USE_NFSIDMAP
   char fqname[NFS4_MAX_DOMAIN_LEN];
   int rc;
+#endif
 
   /* NFsv4 specific features: RPCSEC_GSS will provide user like nfs/<host>
    * choice is made to map them to root */
