@@ -463,13 +463,15 @@ static int op_dsread(struct nfs_argop4 *op,
   memset(buffer, 0, arg_READ4.count);
   res_READ4.READ4res_u.resok4.data.data_val = buffer;
 
-  if ((nfs_status = FSAL_DS_read(&handle,
-                                 data->pcontext,
-                                 arg_READ4.offset,
-                                 arg_READ4.count,
-                                 res_READ4.READ4res_u.resok4.data.data_val,
-                                 &res_READ4.READ4res_u.resok4.data.data_len,
-                                 &res_READ4.READ4res_u.resok4.eof))
+  if ((nfs_status
+       = fsal_dsfunctions.DS_read(&handle,
+                                  data->pcontext,
+                                  &arg_READ4.stateid,
+                                  arg_READ4.offset,
+                                  arg_READ4.count,
+                                  res_READ4.READ4res_u.resok4.data.data_val,
+                                  &res_READ4.READ4res_u.resok4.data.data_len,
+                                  (bool *)&res_READ4.READ4res_u.resok4.eof))
       != NFS4_OK)
     {
       Mem_Free(buffer);

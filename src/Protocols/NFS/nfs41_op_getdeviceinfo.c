@@ -69,17 +69,17 @@
 
 /**
  *
- * nfs41_op_getdeviceinfo:  The NFS4_OP_GETDEVICEINFO operation.
+ * \brief The NFS4_OP_GETDEVICEINFO operation.
  *
  * Gets the list of pNFS devices
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * \param op    [IN]    pointer to nfs4_op arguments
+ * \param data  [INOUT] Pointer to the compound request's data
+ * \param resp  [IN]    Pointer to nfs4_op results
  *
- * @return NFS4_OK if successfull, other values show an error.
+ * \return NFS4_OK if successfull, other values show an error.
  *
- * @see nfs4_Compound
+ * \see nfs4_Compound
  *
  */
 
@@ -94,134 +94,137 @@
 int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdeviceinfo";
+     char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdeviceinfo";
 #ifdef _USE_FSALMDS
-  /* The separated deviceid passed to the FSAL */
-  fsal_deviceid_t deviceid = {0, 0};
-  /* NFS4 return code */
-  nfsstat4 nfs_status = 0;
-  /* XDR stream into which the FSAl shall encode the da_addr_body */
-  XDR da_addr_body;
-  /* The position before any bytes are sent to the stream */
-  size_t da_beginning = 0;
-  /* The total length of the XDR-encoded da_addr_body */
-  size_t da_length = 0;
-  /* Address of the buffer that backs the stream */
-  char* da_buffer = NULL;
-  /* The space necessary to hold one response */
-  const count4 mincount =
-    sizeof(uint32_t) /* Count for the empty bitmap */ +
-    sizeof(layouttype4) /* Type in the device_addr4 */ +
-    sizeof(uint32_t) /* Number of bytes in da_addr_body */ +
-    DA_ADDR_SIZE; /* The maximum size of the opaque in da_addr_body */
+     /* The separated deviceid passed to the FSAL */
+     struct pnfs_deviceid deviceid = {0, 0};
+     /* NFS4 return code */
+     nfsstat4 nfs_status = 0;
+     /* XDR stream into which the FSAl shall encode the da_addr_body */
+     XDR da_addr_body;
+     /* The position before any bytes are sent to the stream */
+     size_t da_beginning = 0;
+     /* The total length of the XDR-encoded da_addr_body */
+     size_t da_length = 0;
+     /* Address of the buffer that backs the stream */
+     char* da_buffer = NULL;
+     /* The space necessary to hold one response */
+     const count4 mincount =
+          sizeof(uint32_t) /* Count for the empty bitmap */ +
+          sizeof(layouttype4) /* Type in the device_addr4 */ +
+          sizeof(uint32_t) /* Number of bytes in da_addr_body */ +
+          DA_ADDR_SIZE; /* The maximum size of the opaque in da_addr_body */
 #endif /* _USE_FSALMDS */
 
-  resp->resop = NFS4_OP_GETDEVICEINFO;
+     resp->resop = NFS4_OP_GETDEVICEINFO;
 
 #ifdef _USE_FSALMDS
-  /* Check that we have space */
+     /* Check that we have space */
 
-  if (arg_GETDEVICEINFO4.gdia_maxcount < mincount)
-    {
-      nfs_status = NFS4ERR_TOOSMALL;
-      res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_mincount
-        = mincount;
-      goto out;
-    }
+     if (arg_GETDEVICEINFO4.gdia_maxcount < mincount) {
+          nfs_status = NFS4ERR_TOOSMALL;
+          res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_mincount
+               = mincount;
+          goto out;
+     }
 
-  /* Disassemble and fix byte order of the deviceid halves */
+     /* Disassemble and fix byte order of the deviceid halves */
 
-  deviceid.export_id =
-    nfs_ntohl64(*(uint64_t*)arg_GETDEVICEINFO4.gdia_device_id);
+     deviceid.export_id =
+          nfs_ntohl64(*(uint64_t*)arg_GETDEVICEINFO4.gdia_device_id);
 
-  deviceid.devid =
-    nfs_ntohl64(*(uint64_t*)(arg_GETDEVICEINFO4.gdia_device_id
-                             + sizeof(uint64_t)));
+     deviceid.devid =
+          nfs_ntohl64(*(uint64_t*)(arg_GETDEVICEINFO4.gdia_device_id
+                                   + sizeof(uint64_t)));
 
-  /* Set up the device_addr4 and get stream for FSAL to write into */
+     /* Set up the device_addr4 and get stream for FSAL to write into */
 
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4
-    .gdir_device_addr.da_layout_type
-    = arg_GETDEVICEINFO4.gdia_layout_type;
+     res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4
+          .gdir_device_addr.da_layout_type
+          = arg_GETDEVICEINFO4.gdia_layout_type;
 
-  if ((da_buffer = Mem_Alloc(DA_ADDR_SIZE)) == NULL)
-    {
-      nfs_status = NFS4ERR_SERVERFAULT;
-      goto out;
-    }
+     if ((da_buffer = Mem_Alloc(DA_ADDR_SIZE)) == NULL) {
+          nfs_status = NFS4ERR_SERVERFAULT;
+          goto out;
+     }
 
-  xdrmem_create(&da_addr_body,
-                da_buffer,
-                DA_ADDR_SIZE,
-                XDR_ENCODE);
-  da_beginning = xdr_getpos(&da_addr_body);
+     xdrmem_create(&da_addr_body,
+                   da_buffer,
+                   DA_ADDR_SIZE,
+                   XDR_ENCODE);
+     da_beginning = xdr_getpos(&da_addr_body);
 
-  /* Once we have multi-FSAL spport, we will need to dispatch to the
-     proper FSAL based on the export id in the high quad of the
-     deviceid. */
+     /*
+      * XXX This assumes a single FSAL and must be changed after the
+      * XXX Lieb Rearchitecture.  The MDS function structure must be
+      * XXX looked up, using the export_id stored in the high quad of
+      * XXX the deviceid.
+      */
 
-  nfs_status = FSAL_getdeviceinfo(data->pcontext,
-                                  &da_addr_body,
-                                  arg_GETDEVICEINFO4.gdia_layout_type,
-                                  &deviceid);
+     nfs_status
+          = (fsal_mdsfunctions
+             .getdeviceinfo)(data->pcontext,
+                             &da_addr_body,
+                             arg_GETDEVICEINFO4.gdia_layout_type,
+                             &deviceid);
 
-  da_length = xdr_getpos(&da_addr_body) - da_beginning;
-  xdr_destroy(&da_addr_body);
+     da_length = xdr_getpos(&da_addr_body) - da_beginning;
+     xdr_destroy(&da_addr_body);
 
-  if (nfs_status != NFS4_OK)
-    {
-      goto out;
-    }
+     if (nfs_status != NFS4_OK) {
+          goto out;
+     }
 
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4
-    .gdir_notification.bitmap4_len = 0;
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4
-    .gdir_notification.bitmap4_val = NULL;
+     res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4
+          .gdir_notification.bitmap4_len = 0;
+     res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4
+          .gdir_notification.bitmap4_val = NULL;
 
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4
-    .gdir_device_addr.da_addr_body.da_addr_body_len
-    = da_length;
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4
-    .gdir_device_addr.da_addr_body.da_addr_body_val
-    = da_buffer;
+     res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4
+          .gdir_device_addr.da_addr_body.da_addr_body_len
+          = da_length;
+     res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4
+          .gdir_device_addr.da_addr_body.da_addr_body_val
+          = da_buffer;
 
-  nfs_status = NFS4_OK;
+     nfs_status = NFS4_OK;
 
- out:
+out:
 
-  if ((nfs_status != NFS4_OK) &&
-       da_buffer)
-    {
-      Mem_Free(da_buffer);
-    }
+     if ((nfs_status != NFS4_OK) &&
+         da_buffer) {
+          Mem_Free(da_buffer);
+     }
 
-  res_GETDEVICEINFO4.gdir_status = nfs_status;
+     res_GETDEVICEINFO4.gdir_status = nfs_status;
 #else
-  res_GETDEVICEINFO4.gdir_status = NFS4ERR_NOTSUPP;
+     res_GETDEVICEINFO4.gdir_status = NFS4ERR_NOTSUPP;
 #endif /* _USE_FSALMDS */
 
-  return res_GETDEVICEINFO4.gdir_status;
+     return res_GETDEVICEINFO4.gdir_status;
 }                               /* nfs41_op_exchange_id */
 
 /**
- * nfs4_op_getdeviceinfo_Free: frees what was allocared to handle nfs4_op_getdeviceinfo.
+ * \brief frees what was allocared to handle nfs4_op_getdeviceinfo.
  *
  * Frees what was allocared to handle nfs4_op_getdeviceinfo.
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
+ * \param resp  [INOUT]    Pointer to nfs4_op results
  *
- * @return nothing (void function )
+ * \return nothing (void function )
  *
  */
 void nfs41_op_getdeviceinfo_Free(GETDEVICEINFO4res * resp)
 {
 #ifdef _USE_FSALMDS
-  if(resp->gdir_status == NFS4_OK)
-    if(resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
-       da_addr_body_val != NULL)
-      Mem_Free(resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
-               da_addr_body_val);
+     if (resp->gdir_status == NFS4_OK) {
+          if (resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr
+              .da_addr_body.da_addr_body_val != NULL) {
+               Mem_Free(resp->GETDEVICEINFO4res_u.gdir_resok4
+                        .gdir_device_addr.da_addr_body.da_addr_body_val);
+          }
+     }
 #endif
-  return;
+     return;
 }                               /* nfs41_op_getdeviceinfo_Free */
 

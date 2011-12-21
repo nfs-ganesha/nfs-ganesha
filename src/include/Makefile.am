@@ -1,7 +1,7 @@
 noinst_HEADERS = BuddyMalloc.h                   \
                  fsal.h                          \
                  fsal_pnfs.h                     \
-                 fsal_pnfs_common.h              \
+                 pnfs_common.h              \
                  fsal_pnfs_files.h               \
                  mfsl.h                          \
                  HashData.h                      \

@@ -412,7 +412,8 @@ struct state_layout_segment_t
 {
   struct glist_head      sls_state_segments;
   state_t              * sls_state;
-  fsal_segment_t         sls_segment;
+  struct pnfs_segment    sls_segment;
+  void                 * sls_fsal_data;
   pthread_mutex_t        sls_mutex;
 };
 #endif /* _USE_FSALMDS */

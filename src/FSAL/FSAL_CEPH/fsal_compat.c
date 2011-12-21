@@ -140,11 +140,11 @@ fsal_const_t FSAL_GetConsts(void)
 
 #ifdef _USE_FSALMDS
 fsal_mdsfunctions_t fsal_ceph_mdsfunctions = {
-  .fsal_layoutget = CEPHFSAL_layoutget,
-  .fsal_layoutreturn = CEPHFSAL_layoutreturn,
-  .fsal_layoutcommit = CEPHFSAL_layoutcommit,
-  .fsal_getdeviceinfo = CEPHFSAL_getdeviceinfo,
-  .fsal_getdevicelist = CEPHFSAL_getdevicelist
+  .layoutget = CEPHFSAL_layoutget,
+  .layoutreturn = CEPHFSAL_layoutreturn,
+  .layoutcommit = CEPHFSAL_layoutcommit,
+  .getdeviceinfo = CEPHFSAL_getdeviceinfo,
+  .getdevicelist = CEPHFSAL_getdevicelist
 };
 
 fsal_mdsfunctions_t FSAL_GetMDSFunctions(void)
@@ -155,9 +155,9 @@ fsal_mdsfunctions_t FSAL_GetMDSFunctions(void)
 
 #ifdef _USE_FSALDS
 fsal_dsfunctions_t fsal_ceph_dsfunctions = {
-  .fsal_DS_read = CEPHFSAL_DS_read,
-  .fsal_DS_write = CEPHFSAL_DS_write,
-  .fsal_DS_commit = CEPHFSAL_DS_commit
+  .DS_read = CEPHFSAL_DS_read,
+  .DS_write = CEPHFSAL_DS_write,
+  .DS_commit = CEPHFSAL_DS_commit
 };
 #endif /* _USE_FSALDS */
 

@@ -388,8 +388,7 @@ nfsstat4 CEPHFSAL_layoutget(fsal_handle_t *exhandle,
 nfsstat4 CEPHFSAL_layoutreturn(fsal_handle_t* handle,
                                fsal_op_context_t* context,
                                XDR *lrf_body,
-                               const struct fsal_layoutreturn_arg *arg,
-                               struct fsal_layoutreturn_res *res);
+                               const struct fsal_layoutreturn_arg *arg);
 nfsstat4 CEPHFSAL_layoutcommit(fsal_handle_t *handle,
                                fsal_op_context_t *context,
                                XDR *lou_body,
@@ -398,7 +397,7 @@ nfsstat4 CEPHFSAL_layoutcommit(fsal_handle_t *handle,
 nfsstat4 CEPHFSAL_getdeviceinfo(fsal_op_context_t *context,
                                 XDR* da_addr_body,
                                 layouttype4 type,
-                                const fsal_deviceid_t *deviceid);
+                                const struct pnfs_deviceid *deviceid);
 nfsstat4 CEPHFSAL_getdevicelist(fsal_handle_t *handle,
                                 fsal_op_context_t *context,
                                 const struct fsal_getdevicelist_arg *arg,
@@ -408,14 +407,16 @@ nfsstat4 CEPHFSAL_getdevicelist(fsal_handle_t *handle,
 #ifdef _USE_FSALDS
 nfsstat4 CEPHFSAL_DS_read(fsal_handle_t *handle,
                           fsal_op_context_t *context,
+                          const stateid4 *stateid,
                           offset4 offset,
                           count4 requested_length,
                           caddr_t buffer,
                           count4 *supplied_length,
-                          fsal_boolean_t *end_of_file);
+                          bool *end_of_file);
 
 nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *handle,
                            fsal_op_context_t *context,
+                           const stateid4 *stateid,
                            offset4 offset,
                            count4 write_length,
                            caddr_t buffer,

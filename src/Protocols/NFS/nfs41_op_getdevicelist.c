@@ -69,17 +69,17 @@
 
 /**
  *
- * nfs41_op_getdevicelist:  The NFS4_OP_GETDEVICELIST operation.
+ * \brief The NFS4_OP_GETDEVICELIST operation.
  *
  * Gets the list of pNFS devices
  *
- * @param op    [IN]    pointer to nfs4_op arguments
- * @param data  [INOUT] Pointer to the compound request's data
- * @param resp  [IN]    Pointer to nfs4_op results
+ * \param op    [IN]    pointer to nfs4_op arguments
+ * \param data  [INOUT] Pointer to the compound request's data
+ * \param resp  [IN]    Pointer to nfs4_op results
  *
- * @return NFS4_OK if successfull, other values show an error.
+ * \return NFS4_OK if successfull, other values show an error.
  *
- * @see nfs4_Compound
+ * \see nfs4_Compound
  *
  */
 #define arg_GETDEVICELIST4  op->nfs_argop4_u.opgetdevicelist
@@ -88,143 +88,144 @@
 int nfs41_op_getdevicelist(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdevicelist";
+     char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdevicelist";
 #ifdef _USE_FSALMDS
-  /* NFS4 return code */
-  nfsstat4 nfs_status = 0;
-  /* Return from cache_inode functions */
-  cache_inode_status_t cache_status = 0;
-  /* Input paramaters of FSAL function */
-  struct fsal_getdevicelist_arg arg;
-  /* Input/output and output parameters of FSAL function */
-  struct fsal_getdevicelist_res res;
-  /* FSAL file handle */
-  fsal_handle_t *handle = NULL;
-  /* Iterator for populating deviceid list */
-  size_t i = 0;
+     /* NFS4 return code */
+     nfsstat4 nfs_status = 0;
+     /* Return from cache_inode functions */
+     cache_inode_status_t cache_status = 0;
+     /* Input paramaters of FSAL function */
+     struct fsal_getdevicelist_arg arg;
+     /* Input/output and output parameters of FSAL function */
+     struct fsal_getdevicelist_res res;
+     /* FSAL file handle */
+     fsal_handle_t *handle = NULL;
+     /* Iterator for populating deviceid list */
+     size_t i = 0;
 #endif /* _USE_FSALMDS */
 
-  resp->resop = NFS4_OP_GETDEVICELIST;
+     resp->resop = NFS4_OP_GETDEVICELIST;
 
 #ifdef _USE_FSALMDS
-  if ((nfs_status = nfs4_sanity_check_FH(data, 0))
-      != NFS4_OK)
-    {
-      goto out;
-    }
+     if ((nfs_status = nfs4_sanity_check_FH(data, 0))
+         != NFS4_OK) {
+          goto out;
+     }
 
-  /* Filesystems that don't support pNFS have no deviceids. */
+     /* Filesystems that don't support pNFS have no deviceids. */
 
-  if (!nfs4_pnfs_supported(data->pexport))
-    {
-      nfs_status = NFS4_OK;
-      res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4.gdlr_cookie
-           = 0;
-      res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
-           .gdlr_deviceid_list.gdlr_deviceid_list_val = NULL;
-      res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
-           .gdlr_deviceid_list.gdlr_deviceid_list_len = 0;
-      res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4.gdlr_eof
-           = 1;
-      goto out;
-    }
+     if (!nfs4_pnfs_supported(data->pexport)) {
+          nfs_status = NFS4_OK;
+          res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4.gdlr_cookie
+               = 0;
+          res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
+               .gdlr_deviceid_list.gdlr_deviceid_list_val = NULL;
+          res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
+               .gdlr_deviceid_list.gdlr_deviceid_list_len = 0;
+          res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4.gdlr_eof
+               = 1;
+          goto out;
+     }
 
-  handle = cache_inode_get_fsal_handle(data->current_entry,
-                                       &cache_status);
+     handle = cache_inode_get_fsal_handle(data->current_entry,
+                                          &cache_status);
 
-  if (cache_status != CACHE_INODE_SUCCESS)
-    {
-      nfs_status = nfs4_Errno(cache_status);
-      goto out;
-    }
+     if (cache_status != CACHE_INODE_SUCCESS) {
+          nfs_status = nfs4_Errno(cache_status);
+          goto out;
+     }
 
-  memset(&arg, 0, sizeof(struct fsal_getdevicelist_arg));
-  memset(&res, 0, sizeof(struct fsal_getdevicelist_res));
+     memset(&arg, 0, sizeof(struct fsal_getdevicelist_arg));
+     memset(&res, 0, sizeof(struct fsal_getdevicelist_res));
 
-  arg.export_id = data->pexport->id;
-  arg.type = arg_GETDEVICELIST4.gdla_layout_type;
+     arg.export_id = data->pexport->id;
+     arg.type = arg_GETDEVICELIST4.gdla_layout_type;
 
-  res.cookie = arg_GETDEVICELIST4.gdla_cookie;
-  memcpy(&res.cookieverf, arg_GETDEVICELIST4.gdla_cookieverf,
-         NFS4_VERIFIER_SIZE);
-  res.count = arg_GETDEVICELIST4.gdla_maxdevices;
-  res.devids = (uint64_t*) Mem_Alloc(res.count * sizeof(uint64_t));
+     res.cookie = arg_GETDEVICELIST4.gdla_cookie;
+     memcpy(&res.cookieverf, arg_GETDEVICELIST4.gdla_cookieverf,
+            NFS4_VERIFIER_SIZE);
+     res.count = arg_GETDEVICELIST4.gdla_maxdevices;
+     res.devids = (uint64_t*) Mem_Alloc(res.count * sizeof(uint64_t));
 
-  if (res.devids == NULL)
-    {
-      nfs_status = NFS4ERR_SERVERFAULT;
-      goto out;
-    }
+     if (res.devids == NULL) {
+          nfs_status = NFS4ERR_SERVERFAULT;
+          goto out;
+     }
 
-  if ((nfs_status
-       = FSAL_getdevicelist(handle,
-                            data->pcontext,
-                            &arg,
-                            &res)) != NFS4_OK)
-    {
-      goto out;
-    }
+     /*
+      * XXX This assumes a single FSAL and must be changed after the
+      * XXX Lieb Rearchitecture.  The MDS function structure
+      * XXX associated with the current filehandle should be used.
+      */
 
-  res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4.gdlr_cookie
-    = res.cookie;
-  memcpy(res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4.gdlr_cookieverf,
-         res.cookieverf, NFS4_VERIFIER_SIZE);
+     if ((nfs_status
+          = fsal_mdsfunctions.getdevicelist(handle,
+                                            data->pcontext,
+                                            &arg,
+                                            &res))
+         != NFS4_OK) {
+          goto out;
+     }
 
-  if ((res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
-       .gdlr_deviceid_list.gdlr_deviceid_list_val
-       = (void*) Mem_Alloc(res.count * sizeof(deviceid4))) == NULL)
-    {
-      nfs_status = NFS4ERR_SERVERFAULT;
-      goto out;
-    }
+     res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4.gdlr_cookie
+          = res.cookie;
+     memcpy(res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4.gdlr_cookieverf,
+            res.cookieverf, NFS4_VERIFIER_SIZE);
 
-  for (i = 0; i < res.count; i++)
-    {
-      *(uint64_t*)
-        res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
-        .gdlr_deviceid_list.gdlr_deviceid_list_val[i]
-        = nfs_htonl64(data->pexport->id);
-      *(uint64_t*)
-        (res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
-         .gdlr_deviceid_list.gdlr_deviceid_list_val[i] +
-         sizeof(uint64_t))
-        = nfs_htonl64(res.devids[i]);
-    }
+     if ((res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
+          .gdlr_deviceid_list.gdlr_deviceid_list_val
+          = (void*) Mem_Alloc(res.count * sizeof(deviceid4))) == NULL) {
+          nfs_status = NFS4ERR_SERVERFAULT;
+          goto out;
+     }
 
-  res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
-    .gdlr_deviceid_list.gdlr_deviceid_list_len = res.count;
-  res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4.gdlr_eof
-    = res.eof;
+     for (i = 0; i < res.count; i++) {
+          *(uint64_t*)
+               res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
+               .gdlr_deviceid_list.gdlr_deviceid_list_val[i]
+               = nfs_htonl64(data->pexport->id);
+          *(uint64_t*)
+               (res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
+                .gdlr_deviceid_list.gdlr_deviceid_list_val[i] +
+                sizeof(uint64_t))
+               = nfs_htonl64(res.devids[i]);
+     }
 
-  nfs_status = NFS4_OK;
+     res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
+          .gdlr_deviceid_list.gdlr_deviceid_list_len = res.count;
+     res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4.gdlr_eof
+          = res.eof;
 
- out:
+     nfs_status = NFS4_OK;
 
-  Mem_Free(res.devids);
+out:
 
-  res_GETDEVICELIST4.gdlr_status = nfs_status;
+     Mem_Free(res.devids);
+
+     res_GETDEVICELIST4.gdlr_status = nfs_status;
 #else
-  res_GETDEVICELIST4.gdlr_status = NFS4ERR_NOTSUPP;
+     res_GETDEVICELIST4.gdlr_status = NFS4ERR_NOTSUPP;
 #endif                          /* _USE_PNFS */
-  return res_GETDEVICELIST4.gdlr_status;
+     return res_GETDEVICELIST4.gdlr_status;
 }                               /* nfs41_op_exchange_id */
 
 /**
- * nfs4_op_getdevicelist_Free: frees what was allocared to handle nfs4_op_getdevicelist.
+ * \brief frees what was allocared to handle nfs4_op_getdevicelist.
  *
  * Frees what was allocared to handle nfs4_op_getdevicelist.
  *
- * @param resp  [INOUT]    Pointer to nfs4_op results
+ * \param resp  [INOUT]    Pointer to nfs4_op results
  *
- * @return nothing (void function )
+ * \return nothing (void function )
  *
  */
 void nfs41_op_getdevicelist_Free(GETDEVICELIST4res * resp)
 {
 #ifdef _USE_FSALMDS
-  if (resp->gdlr_status == NFS4_OK)
-    Mem_Free(resp->GETDEVICELIST4res_u.gdlr_resok4
-             .gdlr_deviceid_list.gdlr_deviceid_list_val);
+     if (resp->gdlr_status == NFS4_OK) {
+          Mem_Free(resp->GETDEVICELIST4res_u.gdlr_resok4
+                   .gdlr_deviceid_list.gdlr_deviceid_list_val);
+     }
 #endif                          /* _USE_FSALMDS */
   return;
 }                               /* nfs41_op_exchange_id_Free */

@@ -40,6 +40,8 @@
 #endif
 
 #include <pthread.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs4.h"
@@ -75,7 +77,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
   const char           * tag = "CLOSE";
   struct glist_head    * glist, * glistn;
 #ifdef _USE_FSALMDS
-  bool_t                 last_close = TRUE;
+  bool                   last_close = TRUE;
 #endif /* _USE_FSALMDS */
 
   LogDebug(COMPONENT_STATE,
@@ -219,7 +221,12 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
                           &data->current_entry->object.file.state_list)
         {
           state_t *pstate = glist_entry(glist, state_t, state_list);
-          bool_t deleted = FALSE;
+          bool deleted = false;
+          struct pnfs_segment entire = {
+               .io_mode = LAYOUTIOMODE4_ANY,
+               .offset = 0,
+               .length = NFS4_UINT64_MAX
+          };
 
           if ((pstate->state_type == STATE_TYPE_LAYOUT) &&
               (pstate->state_powner->so_type == STATE_CLIENTID_OWNER_NFSV4) &&
@@ -230,11 +237,11 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
               nfs4_return_one_state(data->current_entry,
                                     data->pclient,
                                     data->pcontext,
-                                    TRUE,
+                                    true,
+                                    false,
+                                    0,
                                     pstate,
-                                    LAYOUTIOMODE4_ANY,
-                                    0LL,
-                                    NFS4_UINT64_MAX,
+                                    entire,
                                     0,
                                     NULL,
                                     &deleted);

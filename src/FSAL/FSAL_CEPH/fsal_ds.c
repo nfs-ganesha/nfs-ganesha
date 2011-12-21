@@ -46,338 +46,290 @@
 #include "stuff_alloc.h"
 #include "fsal_types.h"
 #include "fsal_pnfs.h"
-#include "fsal_pnfs_common.h"
+#include "pnfs_common.h"
 #include "fsal_pnfs_files.h"
 
 #define min(a,b)          \
-  ({ typeof (a) _a = (a); \
-    typeof (b) _b = (b);  \
-    _a < _b ? _a : _b; })
+     ({ typeof (a) _a = (a);                    \
+          typeof (b) _b = (b);                  \
+          _a < _b ? _a : _b; })
 
-/**
- *
- * FSAL_DS_read: Read from a data-server filehandle.
- *
- * @param handle           [IN]  FSAL file handle
- * @param context          [IN]  Operation context
- * @param offset           [IN]  Offset at which to read
- * @param requested_length [IN]  Length of read requested (and size of
- *                               buffer)
- * @param buffer           [OUT] Buffer to which read data is stored
- * @param supplied_elngth  [OUT] Amount of data actually read
- * @param end_of_file      [OUT] End of file was reached
- */
-
-nfsstat4 CEPHFSAL_DS_read(fsal_handle_t *exthandle,
-                          fsal_op_context_t *extcontext,
-                          offset4 offset,
-                          count4 requested_length,
-                          caddr_t buffer,
-                          count4 *supplied_length,
-                          fsal_boolean_t *end_of_file)
+nfsstat4
+CEPHFSAL_DS_read(fsal_handle_t *exthandle,
+                 fsal_op_context_t *extcontext,
+                 const stateid4 *stateid,
+                 offset4 offset,
+                 count4 requested_length,
+                 caddr_t buffer,
+                 count4 *supplied_length,
+                 bool *end_of_file)
 {
-  /* Our format for the file handle */
-  cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
-  /* Our format for the operational context */
-  cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
-  /* Mount parameter specified for all calls to Ceph */
-  struct ceph_mount_info *cmount = context->export_context->cmount;
-  /* The OSD number for this machine */
-  int local_OSD = 0;
-  /* Width of a stripe in the file */
-  uint32_t stripe_width = 0;
-  /* Beginning of a block */
-  uint64_t block_start = 0;
-  /* Number of the stripe being read */
-  uint32_t stripe = 0;
-  /* Internal offset within the stripe*/
-  uint32_t internal_offset = 0;
-  /* The amount actually read */
-  int amount_read = 0;
+     /* Our format for the file handle */
+     cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
+     /* Our format for the operational context */
+     cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
+     /* Mount parameter specified for all calls to Ceph */
+     struct ceph_mount_info *cmount = context->export_context->cmount;
+     /* The OSD number for this machine */
+     int local_OSD = 0;
+     /* Width of a stripe in the file */
+     uint32_t stripe_width = 0;
+     /* Beginning of a block */
+     uint64_t block_start = 0;
+     /* Number of the stripe being read */
+     uint32_t stripe = 0;
+     /* Internal offset within the stripe*/
+     uint32_t internal_offset = 0;
+     /* The amount actually read */
+     int amount_read = 0;
 
-  /* Find out what my OSD ID is, so we can avoid talking to other
-     OSDs. */
+     /* Find out what my OSD ID is, so we can avoid talking to other
+        OSDs. */
 
-  local_OSD = ceph_get_local_osd(cmount);
-  if (local_OSD < 0)
-    {
-      return posix2nfs4_error(-local_OSD);
-    }
+     local_OSD = ceph_get_local_osd(cmount);
+     if (local_OSD < 0) {
+          return posix2nfs4_error(-local_OSD);
+     }
 
-  /* Find out what stripe we're writing to and where within the
-     stripe. */
+     /* Find out what stripe we're writing to and where within the
+        stripe. */
 
-  stripe_width = handle->data.layout.fl_stripe_unit;
-  if (stripe_width == 0)
-    {
-      /* READ isn't actually allowed to return BADHANDLE */
-      return NFS4ERR_INVAL;
-    }
-  stripe = offset / stripe_width;
-  block_start = stripe * stripe_width;
-  internal_offset = offset - block_start;
+     stripe_width = handle->data.layout.fl_stripe_unit;
+     if (stripe_width == 0) {
+          /* READ isn't actually allowed to return BADHANDLE */
+          return NFS4ERR_INVAL;
+     }
+     stripe = offset / stripe_width;
+     block_start = stripe * stripe_width;
+     internal_offset = offset - block_start;
 
-  if (local_OSD != ceph_ll_get_stripe_osd(cmount,
-                                          VINODE(handle),
-                                          stripe,
-                                          &(handle->data.layout)))
-    {
-      return NFS4ERR_PNFS_IO_HOLE;
-    }
-
-  amount_read = ceph_ll_read_block(cmount,
+     if (local_OSD
+         != ceph_ll_get_stripe_osd(cmount,
                                    VINODE(handle),
                                    stripe,
-                                   buffer,
-                                   internal_offset,
-                                   min((stripe_width -
-                                        internal_offset),
-                                       requested_length),
-                                   &(handle->data.layout));
-  if (amount_read < 0)
-    {
-      return posix2nfs4_error(-amount_read);
-    }
+                                   &(handle->data.layout))) {
+          return NFS4ERR_PNFS_IO_HOLE;
+     }
 
-  *supplied_length = amount_read;
+     amount_read
+          = ceph_ll_read_block(cmount,
+                               VINODE(handle),
+                               stripe,
+                               buffer,
+                               internal_offset,
+                               min((stripe_width -
+                                    internal_offset),
+                                   requested_length),
+                               &(handle->data.layout));
+     if (amount_read < 0) {
+          return posix2nfs4_error(-amount_read);
+     }
 
-  *end_of_file = FALSE;
+     *supplied_length = amount_read;
 
-  return NFS4_OK;
+     *end_of_file = false;
+
+     return NFS4_OK;
 }
 
-/**
- *
- * FSAL_DS_write: Write to a data-server filehandle.
- *
- * @param handle           [IN]  FSAL file handle
- * @param context          [IN]  Operation context
- * @param offset           [IN]  Offset at which to read
- * @param write_length     [IN]  Length of write data
- * @param buffer           [OUT] Buffer from which written data is fetched
- * @param stability_wanted [IN]  Stability of write requested
- * @param written_length   [OUT] Amount of data actually written
- * @param writeverf        [OUT] Write verifier
- * @param stability_got    [OUT] Stability of write performed
- */
-
-
-nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *exthandle,
-                           fsal_op_context_t *extcontext,
-                           offset4 offset,
-                           count4 write_length,
-                           caddr_t buffer,
-                           stable_how4 stability_wanted,
-                           count4 *written_length,
-                           verifier4 writeverf,
-                           stable_how4 *stability_got)
+nfsstat4
+CEPHFSAL_DS_write(fsal_handle_t *exthandle,
+                  fsal_op_context_t *extcontext,
+                  const stateid4 *stateid,
+                  offset4 offset,
+                  count4 write_length,
+                  caddr_t buffer,
+                  stable_how4 stability_wanted,
+                  count4 *written_length,
+                  verifier4 writeverf,
+                  stable_how4 *stability_got)
 {
-  /* Our format for the file handle */
-  cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
-  /* Our format for the operational context */
-  cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
-  /* Mount parameter specified for all calls to Ceph */
-  struct ceph_mount_info *cmount = context->export_context->cmount;
-  /* User ID and group ID for permissions */
-  int uid = FSAL_OP_CONTEXT_TO_UID(context);
-  int gid = FSAL_OP_CONTEXT_TO_GID(context);
-  /* The OSD number for this host */
-  int local_OSD = 0;
-  /* Width of a stripe in the file */
-  uint32_t stripe_width = 0;
-  /* Beginning of a block */
-  uint64_t block_start = 0;
-  /* Number of the stripe being written */
-  uint32_t stripe = 0;
-  /* Internal offset within the stripe*/
-  uint32_t internal_offset = 0;
-  /* The amount actually written */
-  int32_t amount_written = 0;
-  /* The adjusted write length, confined to one object */
-  uint32_t adjusted_write = 0;
-  /* Return code from ceph calls */
-  int ceph_status = 0;
+     /* Our format for the file handle */
+     cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
+     /* Our format for the operational context */
+     cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
+     /* Mount parameter specified for all calls to Ceph */
+     struct ceph_mount_info *cmount = context->export_context->cmount;
+     /* User ID and group ID for permissions */
+     int uid = FSAL_OP_CONTEXT_TO_UID(context);
+     int gid = FSAL_OP_CONTEXT_TO_GID(context);
+     /* The OSD number for this host */
+     int local_OSD = 0;
+     /* Width of a stripe in the file */
+     uint32_t stripe_width = 0;
+     /* Beginning of a block */
+     uint64_t block_start = 0;
+     /* Number of the stripe being written */
+     uint32_t stripe = 0;
+     /* Internal offset within the stripe*/
+     uint32_t internal_offset = 0;
+     /* The amount actually written */
+     int32_t amount_written = 0;
+     /* The adjusted write length, confined to one object */
+     uint32_t adjusted_write = 0;
+     /* Return code from ceph calls */
+     int ceph_status = 0;
 
-  /* Zero the verifier.  All our DS writes are stable, so we don't
-     use it, but we do want to rpevent spurious junk from making it
-     look like there was a failure. */
+     /* Zero the verifier.  All our DS writes are stable, so we don't
+        use it, but we do want to rpevent spurious junk from making it
+        look like there was a failure. */
 
-  memset(writeverf, 0, NFS4_VERIFIER_SIZE);
+     memset(writeverf, 0, NFS4_VERIFIER_SIZE);
 
-  /* Find out what my OSD ID is, so we can avoid talking to other
-     OSDs. */
+     /* Find out what my OSD ID is, so we can avoid talking to other
+        OSDs. */
 
-  local_OSD = ceph_get_local_osd(cmount);
+     local_OSD = ceph_get_local_osd(cmount);
 
-  /* Find out what stripe we're writing to and where within the
-     stripe. */
+     /* Find out what stripe we're writing to and where within the
+        stripe. */
 
-  stripe_width = handle->data.layout.fl_stripe_unit;
-  if (stripe_width == 0)
-    {
-      /* WRITE isn't actually allowed to return BADHANDLE */
-      return NFS4ERR_INVAL;
-    }
-  stripe = offset / stripe_width;
-  block_start = stripe * stripe_width;
-  internal_offset = offset - block_start;
+     stripe_width = handle->data.layout.fl_stripe_unit;
+     if (stripe_width == 0) {
+          /* WRITE isn't actually allowed to return BADHANDLE */
+          return NFS4ERR_INVAL;
+     }
+     stripe = offset / stripe_width;
+     block_start = stripe * stripe_width;
+     internal_offset = offset - block_start;
 
-  if (local_OSD != ceph_ll_get_stripe_osd(cmount,
+     if (local_OSD
+         != ceph_ll_get_stripe_osd(cmount,
+                                   VINODE(handle),
+                                   stripe,
+                                   &(handle->data.layout))) {
+          return NFS4ERR_PNFS_IO_HOLE;
+     }
+
+     adjusted_write = min((stripe_width - internal_offset),
+                          write_length);
+
+     /* If the client specifies FILE_SYNC4, then we have to connect
+        the filehandle and use the MDS to update size and access
+        time. */
+     if (stability_wanted == FILE_SYNC4) {
+          Fh* descriptor = NULL;
+
+          if ((ceph_status = ceph_ll_connectable_m(cmount, &VINODE(handle),
+                                                   handle->data.parent_ino,
+                                                   handle->data.parent_hash))
+              != 0) {
+               printf("Filehandle connection failed with: %d\n", ceph_status);
+               return posix2nfs4_error(-ceph_status);
+          }
+          if ((ceph_status = ceph_ll_open(cmount,
                                           VINODE(handle),
-                                          stripe,
-                                          &(handle->data.layout)))
-    {
-      return NFS4ERR_PNFS_IO_HOLE;
-    }
+                                          O_WRONLY,
+                                          &descriptor,
+                                          uid,
+                                          gid)) != 0) {
+               printf("Open failed with: %d\n", ceph_status);
+               return posix2nfs4_error(-ceph_status);
+          }
 
-  adjusted_write = min((stripe_width - internal_offset),
-                       write_length);
+          amount_written
+               = ceph_ll_write(cmount,
+                               descriptor,
+                               offset,
+                               adjusted_write,
+                               buffer);
 
-  /* If the client specifies FILE_SYNC4, then we have to connect the
-     filehandle and use the MDS to update size and access time. */
-  if (stability_wanted == FILE_SYNC4)
-    {
-      Fh* descriptor = NULL;
+          if (amount_written < 0) {
+               printf("Write failed with: %d\n", amount_written);
+               ceph_ll_close(cmount, descriptor);
+               return posix2nfs4_error(-amount_written);
+          }
 
-      if ((ceph_status = ceph_ll_connectable_m(cmount, &VINODE(handle),
-                                              handle->data.parent_ino,
-                                               handle->data.parent_hash))
-          != 0)
-        {
-          printf("Filehandle connection failed with: %d\n", ceph_status);
-          return posix2nfs4_error(-ceph_status);
-        }
-      if ((ceph_status = ceph_ll_open(cmount,
-                                     VINODE(handle),
-                                     O_WRONLY,
-                                     &descriptor,
-                                     uid,
-                                      gid)) != 0)
-        {
-          printf("Open failed with: %d\n", ceph_status);
-          return posix2nfs4_error(-ceph_status);
-        }
+          if ((ceph_status = ceph_ll_fsync(cmount, descriptor, 0)) < 0) {
+               printf("fsync failed with: %d\n", ceph_status);
+               ceph_ll_close(cmount, descriptor);
+               return posix2nfs4_error(-ceph_status);
+          }
 
-      amount_written
-        = ceph_ll_write(cmount,
-                        descriptor,
-                        offset,
-                        adjusted_write,
-                        buffer);
-
-      if (amount_written < 0)
-        {
-          printf("Write failed with: %d\n", amount_written);
-          ceph_ll_close(cmount, descriptor);
-          return posix2nfs4_error(-amount_written);
-        }
-
-      if ((ceph_status = ceph_ll_fsync(cmount, descriptor, 0)) < 0)
-        {
-          printf("fsync failed with: %d\n", ceph_status);
-          ceph_ll_close(cmount, descriptor);
-          return posix2nfs4_error(-ceph_status);
-        }
-
-      if ((ceph_status = ceph_ll_close(cmount, descriptor)) < 0)
-        {
-          printf("close failed with: %d\n", ceph_status);
-          return posix2nfs4_error(-ceph_status);
-        }
+      if ((ceph_status = ceph_ll_close(cmount, descriptor)) < 0) {
+           printf("close failed with: %d\n", ceph_status);
+           return posix2nfs4_error(-ceph_status);
+      }
       *written_length = amount_written;
       *stability_got = FILE_SYNC4;
-    }
-  else
-    {
-      /* FILE_SYNC4 wasn't specified, so we don't have to bother with
-         the MDS. */
+     } else {
+          /* FILE_SYNC4 wasn't specified, so we don't have to bother with
+             the MDS. */
 
-      if ((amount_written
-           = ceph_ll_write_block(cmount,
-                                 VINODE(handle),
-                                 stripe,
-                                 buffer,
-                                 internal_offset,
-                                 adjusted_write,
-                                 &(handle->data.layout),
-                                 handle->data.snapseq,
-                                 (stability_wanted == DATA_SYNC4))) < 0)
-        {
-          return posix2nfs4_error(-amount_written);
-        }
+          if ((amount_written
+               = ceph_ll_write_block(cmount,
+                                     VINODE(handle),
+                                     stripe,
+                                     buffer,
+                                     internal_offset,
+                                     adjusted_write,
+                                     &(handle->data.layout),
+                                     handle->data.snapseq,
+                                     (stability_wanted
+                                      == DATA_SYNC4)))
+              < 0) {
+               return posix2nfs4_error(-amount_written);
+          }
 
-      *written_length = amount_written;
-      *stability_got = stability_wanted;
-    }
+          *written_length = amount_written;
+          *stability_got = stability_wanted;
+     }
 
-  return NFS4_OK;
+     return NFS4_OK;
 }
 
-/**
- *
- * FSAL_DS_commit: Commit a byte range
- *
- * @param handle         [IN]     FSAL file handle
- * @param context        [IN]     Operation context
- * @param offset         [IN]     Start of commit window
- * @param count          [IN]     Number of bytes to commit
- * @param writeverf      [OUT]    Write verifier
- */
-
-nfsstat4 CEPHFSAL_DS_commit(fsal_handle_t *exthandle,
-                            fsal_op_context_t *extcontext,
-                            offset4 offset,
-                            count4 count,
-                            verifier4 writeverf)
+nfsstat4
+CEPHFSAL_DS_commit(fsal_handle_t *exthandle,
+                   fsal_op_context_t *extcontext,
+                   offset4 offset,
+                   count4 count,
+                   verifier4 writeverf)
 {
-  /* Our format for the file handle */
-  cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
-  /* Our format for the operational context */
-  cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
-  /* Mount parameter specified for all calls to Ceph */
-  struct ceph_mount_info *cmount = context->export_context->cmount;
-  /* The OSD number for this host */
-  const int local_OSD = ceph_get_local_osd(cmount);
-  /* Width of a stripe in the file */
-  const uint32_t stripe_width = handle->data.layout.fl_stripe_unit;
-  /* The stripe we're committing */
-  uint32_t stripe = 0;
+     /* Our format for the file handle */
+     cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
+     /* Our format for the operational context */
+     cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
+     /* Mount parameter specified for all calls to Ceph */
+     struct ceph_mount_info *cmount = context->export_context->cmount;
+     /* The OSD number for this host */
+     const int local_OSD = ceph_get_local_osd(cmount);
+     /* Width of a stripe in the file */
+     const uint32_t stripe_width = handle->data.layout.fl_stripe_unit;
+     /* The stripe we're committing */
+     uint32_t stripe = 0;
 
-  /* Find out what stripe we're writing to and where within the
-     stripe. */
+     /* Find out what stripe we're writing to and where within the
+        stripe. */
 
-  if (stripe_width == 0)
-    {
-      /* COMMIT isn't actually allowed to return BADHANDLE */
-      return NFS4ERR_INVAL;
-    }
+     if (stripe_width == 0) {
+          /* COMMIT isn't actually allowed to return BADHANDLE */
+          return NFS4ERR_INVAL;
+     }
 
 
-  for (stripe = offset / stripe_width;
-       stripe <= ((offset + count - 1) / stripe_width);
-       ++stripe)
-    {
-      if (local_OSD
-          == ceph_ll_get_stripe_osd(cmount,
-                                    VINODE(handle),
-                                    stripe,
-                                    &(handle->data.layout)))
-        {
-          printf("Committing %llu.%llu.\n",
+     for (stripe = offset / stripe_width;
+          stripe <= ((offset + count - 1) / stripe_width);
+          ++stripe) {
+          if (local_OSD
+              == ceph_ll_get_stripe_osd(cmount,
+                                        VINODE(handle),
+                                        stripe,
+                                        &(handle->data.layout))) {
+               printf("Committing %"PRIu64".%"PRIu32".\n",
+                      VINODE(handle).ino.val,
+                      stripe);
+               int rc
+                    = ceph_ll_commit_block(cmount,
+                                           VINODE(handle),
+                                           stripe);
+               if (rc < 0) {
+                    return posix2nfs4_error(rc);
+               }
+          }
+          printf("Committed %"PRIu64".%"PRIu32".\n",
                  VINODE(handle).ino.val,
                  stripe);
-          int rc = ceph_ll_commit_block(cmount,
-                                        VINODE(handle),
-                                        stripe);
-          if (rc < 0)
-            {
-              return posix2nfs4_error(rc);
-            }
-        }
-      printf("Committed %llu.%llu.\n",
-             VINODE(handle).ino.val,
-             stripe);
-    }
+     }
 
-  return NFS4_OK;
+     return NFS4_OK;
 }

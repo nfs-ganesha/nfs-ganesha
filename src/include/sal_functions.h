@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -431,9 +431,10 @@ unsigned long lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
                                         hash_buffer_t * buffclef);
 
 #ifdef _USE_FSALMDS
-state_status_t state_add_segment(state_t        *pstate,
-                                 fsal_segment_t *psegment,
-                                 fsal_boolean_t  return_on_close);
+state_status_t state_add_segment(state_t             * pstate,
+                                 struct pnfs_segment * segment,
+                                void                * fsal_data,
+                                 bool                  return_on_close);
 
 state_status_t state_delete_segment(state_layout_segment_t *segment);
 state_status_t state_lookup_layout_state(cache_entry_t * pentry,
@@ -442,5 +443,3 @@ state_status_t state_lookup_layout_state(cache_entry_t * pentry,
                                          state_t      ** pstate);
 #endif                          /*  _USE_FSALMDS */
 #endif                          /*  _SAL_FUNCTIONS_H */
-
-

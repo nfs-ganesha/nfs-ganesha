@@ -49,6 +49,8 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
@@ -72,7 +74,7 @@
 #include "sal_functions.h"
 #include "fsal.h"
 #include "fsal_pnfs.h"
-#include "fsal_pnfs_common.h"
+#include "pnfs_common.h"
 #endif /* _USE_FSALMDS */
 
 #ifdef _USE_NFS4_ACL
@@ -4261,147 +4263,160 @@ void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask)
 nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
                                cache_inode_client_t* pclient,
                                fsal_op_context_t* context,
-                               fsal_boolean_t synthetic,
+                               bool synthetic,
+                               bool reclaim,
+                               layoutreturn_type4 return_type,
                                state_t *layout_state,
-                               layoutiomode4 iomode,
-                               offset4 offset,
-                               length4 length,
+                               struct pnfs_segment spec_segment,
                                u_int body_len,
                                const char* body_val,
-                               fsal_boolean_t* deleted)
+                               bool* deleted)
 {
-  /* Return from cache_inode calls */
-  cache_inode_status_t cache_status = 0;
-  /* Return from SAL calls */
-  state_status_t state_status = 0;
-  /* Return from this function */
-  nfsstat4 nfs_status = 0;
-  /* Iterator along linked list */
-  struct glist_head *glist = NULL;
-  /* Saved 'next' pointer for glist_for_each_safe */
-  struct glist_head *glistn = NULL;
-  /* Input arguments to FSAL_layoutreturn */
-  struct fsal_layoutreturn_arg arg;
-  /* Input/Output and Output arguments to FSAL_layoutreturn */
-  struct fsal_layoutreturn_res res;
-  /* The FSAL file handle */
-  fsal_handle_t *handle = NULL;
-  /* XDR stream holding the lrf_body opaque */
-  XDR lrf_body;
-  /* The beginning of the stream */
-  unsigned int beginning = 0;
-  /* The current segment in iteration */
-  state_layout_segment_t *segment = NULL;
-  /* If we have a lock on the segment */
-  fsal_boolean_t seg_locked = FALSE;
+     /* Return from cache_inode calls */
+     cache_inode_status_t cache_status = 0;
+     /* Return from SAL calls */
+     state_status_t state_status = 0;
+     /* Return from this function */
+     nfsstat4 nfs_status = 0;
+     /* Iterator along linked list */
+     struct glist_head *glist = NULL;
+     /* Saved 'next' pointer for glist_for_each_safe */
+     struct glist_head *glistn = NULL;
+     /* Input arguments to FSAL_layoutreturn */
+     struct fsal_layoutreturn_arg arg;
+     /* The FSAL file handle */
+     fsal_handle_t *handle = NULL;
+     /* XDR stream holding the lrf_body opaque */
+     XDR lrf_body;
+     /* The beginning of the stream */
+     unsigned int beginning = 0;
+     /* The current segment in iteration */
+     state_layout_segment_t *segment = NULL;
+     /* If we have a lock on the segment */
+     bool seg_locked = false;
 
-  if (body_val)
-    {
-      xdrmem_create(&lrf_body,
-                    (char*) body_val, /* Decoding won't modify this */
-                    body_len,
-                    XDR_DECODE);
-      beginning = xdr_getpos(&lrf_body);
-    }
+     if (body_val) {
+          xdrmem_create(&lrf_body,
+                        (char*) body_val, /* Decoding won't modify this */
+                        body_len,
+                        XDR_DECODE);
+          beginning = xdr_getpos(&lrf_body);
+     }
 
-  handle = cache_inode_get_fsal_handle(entry,
-                                       &cache_status);
+     handle = cache_inode_get_fsal_handle(entry,
+                                          &cache_status);
 
-  if (cache_status != CACHE_INODE_SUCCESS)
-    {
-      return nfs4_Errno(cache_status);
-    }
+     if (cache_status != CACHE_INODE_SUCCESS) {
+          return nfs4_Errno(cache_status);
+     }
 
-  memset(&arg, 0, sizeof(struct fsal_layoutreturn_arg));
-  memset(&res, 0, sizeof(struct fsal_layoutreturn_res));
+     memset(&arg, 0, sizeof(struct fsal_layoutreturn_arg));
 
-  arg.type = layout_state->state_data.layout.state_layout_type;
-  arg.offset = offset;
-  arg.length = length;
-  arg.synthetic = synthetic;
+     arg.reclaim = reclaim;
+     arg.lo_type = layout_state->state_data.layout.state_layout_type;
+     arg.return_type = return_type;
+     arg.spec_segment = spec_segment;
+     arg.synthetic = synthetic;
 
-  /* The _safe version of glist_for_each allows us to delete segments
-     while we iterate. */
-  glist_for_each_safe(glist,
-                      glistn,
-                      &layout_state->state_data.layout.state_segments)
-    {
-      segment = glist_entry(glist,
-                            state_layout_segment_t,
-                            sls_state_segments);
+     if (!reclaim) {
+          /* The _safe version of glist_for_each allows us to delete
+             segments while we iterate. */
+          glist_for_each_safe(glist,
+                              glistn,
+                              &layout_state->state_data.layout.state_segments) {
+               segment = glist_entry(glist,
+                                     state_layout_segment_t,
+                                     sls_state_segments);
 
-      pthread_mutex_lock(&segment->sls_mutex);
-      seg_locked = TRUE;
+               pthread_mutex_lock(&segment->sls_mutex);
+               seg_locked = true;
 
-      if ((segment->sls_segment.io_mode & iomode) &&
-          FSAL_range_overlaps(offset, length,
-                              segment->sls_segment.offset,
-                              segment->sls_segment.length))
-        {
-          res.segment = segment->sls_segment;
-          res.disposed = FALSE;
+               arg.cur_segment = segment->sls_segment;
+               arg.fsal_seg_data = segment->sls_fsal_data;
+               arg.last_segment = (glistn->next == glistn);
+
+               if (pnfs_segment_contains(spec_segment,
+                                         segment->sls_segment)) {
+                    arg.dispose = true;
+               } else if (pnfs_segments_overlap(spec_segment,
+                                                segment->sls_segment)) {
+                    arg.dispose = false;
+               } else {
+                    pthread_mutex_unlock(&segment->sls_mutex);
+                    continue;
+               }
+
+               nfs_status =
+                    fsal_mdsfunctions
+                    .layoutreturn(handle,
+                                  context,
+                                  (body_val ? &lrf_body : NULL),
+                                  &arg);
+
+               if (nfs_status != NFS4_OK) {
+                    goto out;
+               }
+
+               if (arg.dispose) {
+                    if (state_delete_segment(segment)
+                        != STATE_SUCCESS) {
+                         nfs_status = nfs4_Errno_state(state_status);
+                         goto out;
+                    }
+               } else {
+                    segment->sls_segment
+                         = pnfs_segment_difference(spec_segment,
+                                                   segment->sls_segment);
+                    pthread_mutex_unlock(&segment->sls_mutex);
+               }
+          }
+          seg_locked = false;
+
+          if (body_val) {
+               /* This really should work in all cases for an
+                  in-memory decode stream. */
+               xdr_setpos(&lrf_body, beginning);
+          }
+          if (glist_empty(&layout_state->state_data.layout.state_segments)) {
+               state_del(layout_state, pclient, &state_status);
+               *deleted = true;
+          } else {
+               *deleted = false;
+          }
+     } else {
+          /* For a reclaim return, there are no recorded segments in
+             state. */
+          arg.cur_segment.io_mode = 0;
+          arg.cur_segment.offset = 0;
+          arg.cur_segment.length = 0;
+          arg.fsal_seg_data = NULL;
+          arg.last_segment = false;
+          arg.dispose = false;
 
           nfs_status =
-            FSAL_layoutreturn(handle,
-                              context,
-                              (body_val ? &lrf_body : NULL),
-                              &arg,
-                              &res);
+               fsal_mdsfunctions
+               .layoutreturn(handle,
+                             context,
+                             (body_val ? &lrf_body : NULL),
+                             &arg);
 
-          if (nfs_status != NFS4_OK)
-            {
-              goto out;
-            }
+          if (nfs_status != NFS4_OK) {
+               goto out;
+          }
+          *deleted = true;
+     }
 
-          if (res.disposed)
-            {
-              if (state_delete_segment(segment)
-                  != STATE_SUCCESS)
-                {
-                  nfs_status = nfs4_Errno_state(state_status);
-                  goto out;
-                }
-            }
-          else
-            {
-              pthread_mutex_unlock(&segment->sls_mutex);
-              segment->sls_segment = res.segment;
-            }
-        }
+     nfs_status = NFS4_OK;
 
-      seg_locked = FALSE;
+out:
+     if (body_val) {
+          xdr_destroy(&lrf_body);
+     }
+     if (seg_locked) {
+          pthread_mutex_unlock(&segment->sls_mutex);
+     }
 
-      if (body_val)
-        {
-          /* This really should work in all cases for an in-memory
-             decode stream. */
-          xdr_setpos(&lrf_body, beginning);
-        }
-    }
-
-  if (glist_empty(&layout_state->state_data.layout.state_segments))
-    {
-      state_del(layout_state, pclient, &state_status);
-      *deleted = TRUE;
-    }
-  else
-    {
-      *deleted = FALSE;
-    }
-
-  nfs_status = NFS4_OK;
-
- out:
-  if (body_val)
-    {
-      xdr_destroy(&lrf_body);
-    }
-  if (seg_locked)
-    {
-      pthread_mutex_unlock(&segment->sls_mutex);
-    }
-
-  return nfs_status;
+     return nfs_status;
 }
 
 /**

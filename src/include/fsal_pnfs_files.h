@@ -1,7 +1,7 @@
 /*
  *
  * Copyright (C) 2011 Linux Box Corporation
- * Contributor: Adam C. Emerson
+ * Author: Adam C. Emerson
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -62,7 +62,7 @@ nfsstat4 FSAL_fh4_dshandle(fsal_handle_t *fsal_handle,
 
 nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
                                  fsal_op_context_t *context,
-                                 fsal_deviceid_t *deviceid,
+                                 const struct pnfs_deviceid *deviceid,
                                  nfl_util4 util,
                                  uint32_t first_idx,
                                  offset4 ptrn_ofst,
