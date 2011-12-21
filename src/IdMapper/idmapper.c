@@ -217,11 +217,9 @@ int uid2name(char *name, uid_t * puid)
  */
 int name2uid(char *name, uid_t * puid)
 {
-#ifndef _USE_NFSIDMAP
   struct passwd passwd;
   struct passwd *ppasswd;
   char buff[NFS4_MAX_DOMAIN_LEN];
-#endif
   uid_t uid;
 #ifdef _HAVE_GSSAPI
   gid_t gss_gid;
