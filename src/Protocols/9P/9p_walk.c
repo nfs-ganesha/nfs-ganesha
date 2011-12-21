@@ -138,7 +138,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
       for( i = 0 ; i <  *nwname ; i ++ )
         {
            snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *(wnames_len[i]), wnames_str[i] ) ;
-           LogDebug( COMPONENT_9P, "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u:%s)",
+           LogDebug( COMPONENT_9P, "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u :%s)",
             (u32)*msgtag, *fid, *newfid, i+1, *nwname, name.name ) ;
 
            if( ( pnewfid->pentry = cache_inode_lookup( pentry,
@@ -216,8 +216,8 @@ int _9p_walk( _9p_request_data_t * preq9p,
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  LogDebug( COMPONENT_9P, "RWALK: tag=%u fid=%u newfid=%u nwqid=%u",
-            (u32)*msgtag, *fid, *newfid, *nwqid ) ;
+  LogDebug( COMPONENT_9P, "RWALK: tag=%u fid=%u newfid=%u nwqid=%u fileid=%llu pentry=%p",
+            (u32)*msgtag, *fid, *newfid, *nwqid,  pnewfid->qid.path, pnewfid->pentry ) ;
 
   return 1 ;
 }

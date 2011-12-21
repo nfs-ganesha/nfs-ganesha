@@ -209,8 +209,6 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   /* Remember dcount position for later use */
   _9p_savepos( cursor, dcount_pos, u32 ) ;
 
-  printf( "===> READDIR : num_entries = %llu\n", num_entries ) ;
-
   /* fills in the dentry in 9P marshalling */
   for( i = 0 ; i < num_entries + delta ; i++ )
    {
@@ -280,11 +278,10 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      /* name */
      _9p_setstr( cursor, name_len, name_str ) ;
   
-     LogDebug( COMPONENT_9P, "RREADDIR dentry: recsize=%u dentry={ off=%llu,qid=(type=%u,version=%u,path=%llu),type=%u,name=%s",
-               recsize, (unsigned long long)i+cookie+1, *qid_type, 0, (unsigned long long)*qid_path, *qid_type, name_str) ;
+     LogDebug( COMPONENT_9P, "RREADDIR dentry: recsize=%u dentry={ off=%llu,qid=(type=%u,version=%u,path=%llu),type=%u,name=%s,pentry=%p",
+               recsize, (unsigned long long)i+cookie+1, *qid_type, 0, (unsigned long long)*qid_path, 
+               *qid_type, name_str, dirent_array[i]->pentry ) ;
    } /* for( i = 0 , ... ) */
-
-  printf( "===> end_cookie = %llu\n", end_cookie ) ;
 
   if( !CACHE_INODE_KEEP_CONTENT( pfid->pentry->policy ) )
     cache_inode_release_dirent( dirent_array, num_entries, &pwkrdata->cache_inode_client ) ;
