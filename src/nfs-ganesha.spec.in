@@ -586,7 +586,7 @@ chkconfig --add nfs-ganesha-zfs
 - FSAL_LUSTRE/FSAL_XFS/FSAL_FUSELIKE/FSAL_ZFS: regression in readdir detected and fixed
 - export list now support IP ranges using the CIDR format
 
-* Fri Apr 18 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.2.0-1
+* Fri Dec 12 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.2.0-1
 - Bug Fix:  Call cache_inode_close after deleting share state
 - Added support for ERR_FSAL_DELAY in upper layer
 - FSAL code has been reorganized a lot
