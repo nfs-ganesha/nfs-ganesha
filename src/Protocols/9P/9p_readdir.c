@@ -76,8 +76,6 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   u16  name_len    = 0 ;
   
   char * name_str = NULL ;
-  char name_dot[]     = "."  ;
-  char name_dot_dot[] = ".." ;
 
   u8  * qid_type    = NULL ;
   u64 * qid_path    = NULL ;
@@ -88,6 +86,9 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   cache_inode_dir_entry_t **dirent_array = NULL;
   cache_inode_endofdir_t eod_met;
   cache_entry_t * pentry_dot_dot = NULL ;
+
+  cache_inode_dir_entry_t dirent_dot     ;
+  cache_inode_dir_entry_t dirent_dot_dot ;
 
   unsigned int cookie = 0;
   unsigned int end_cookie = 0;
@@ -156,6 +157,19 @@ int _9p_readdir( _9p_request_data_t * preq9p,
            rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
            return rc ;
         }
+
+      /* Deal with "." and ".." */
+      dirent_dot.pentry = pfid->pentry ;
+      strcpy( dirent_dot.name.name, "." ) ;
+      dirent_dot.name.len = strlen( dirent_dot.name.name ) ;
+      dirent_array[0] = &dirent_dot ;
+
+      dirent_dot_dot.pentry = pentry_dot_dot ;
+      strcpy( dirent_dot_dot.name.name, ".." ) ;
+      dirent_dot_dot.name.len = strlen( dirent_dot_dot.name.name ) ;
+      dirent_array[1] = &dirent_dot_dot ;
+ 
+      delta = 2 ;
    }
   else
    delta = 0 ;
@@ -163,11 +177,11 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   if(cache_inode_readdir( pfid->pentry,
                           pfid->pexport->cache_inode_policy,
                           cookie,
-                          estimated_num_entries-delta,
+                          estimated_num_entries - delta,
                           &num_entries,
                           (uint64_t *)&end_cookie,
                           &eod_met,
-                          dirent_array,
+                          &dirent_array[delta],
                           pwkrdata->ht,
                           &unlock,
                           &pwkrdata->cache_inode_client,
@@ -187,6 +201,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   /* Never go behind _9P_MAXDIRCOUNT */
   if( num_entries > _9P_MAXDIRCOUNT ) num_entries = _9P_MAXDIRCOUNT ;
 
+
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RREADDIR ) ;
   _9p_setptr( cursor, msgtag, u16 ) ;
@@ -194,76 +209,10 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   /* Remember dcount position for later use */
   _9p_savepos( cursor, dcount_pos, u32 ) ;
 
-
-  if( *offset == 0 )
-   {
-      /* Deal with "." */
-      qid_path =  (u64 *)&pfid->pentry->object.dir.attributes.fileid ;
-      qid_type = &qid_type_dir ;
-
-     /* Get dirent name information */
-     name_str = name_dot ;
-     name_len = strlen( name_dot ) ;
- 
-     /* Add 13 bytes in recsize for qid + 8 bytes for offset + 1 for type + 2 for strlen = 24 bytes*/
-     recsize = 24 + name_len  ;
-     dcount += recsize ;
-
-     /* qid in 3 parts */
-     _9p_setptr( cursor, qid_type, u8 ) ;
-     _9p_setvalue( cursor, 0, u32 ) ; /* qid_version set to 0 to prevent the client from caching */
-     _9p_setptr( cursor, qid_path, u64 ) ;
-     
-     /* offset */
-     _9p_setvalue( cursor, 1, u64 ) ;   
-
-
-     /* Type (again ?) */
-     _9p_setptr( cursor, qid_type, u8 ) ;
-
-     /* name */
-     _9p_setstr( cursor, name_len, name_str ) ;
-  
-     LogDebug( COMPONENT_9P, "RREADDIR dentry: tag=%u fid=%u recsize=%u dentry={ off=%llu,qid=(type=%u,version=%u,path=%llu),type=%u,name=%s",
-              (u32)*msgtag, *fid , recsize, (unsigned long long)i, *qid_type, 0, (unsigned long long)*qid_path, *qid_type, name_str) ;
-
-
-     /* Deal with "." */
-     qid_path =  (u64 *)&pentry_dot_dot->object.dir.attributes.fileid ;
-     qid_type = &qid_type_dir ;
-
-     /* Get dirent name information */
-     name_str = name_dot_dot ;
-     name_len = strlen( name_dot_dot ) ;
- 
-     /* Add 13 bytes in recsize for qid + 8 bytes for offset + 1 for type + 2 for strlen = 24 bytes*/
-     recsize = 24 + name_len  ;
-     dcount += recsize ;
-
-     /* qid in 3 parts */
-     _9p_setptr( cursor, qid_type, u8 ) ;
-     _9p_setvalue( cursor, 0, u32 ) ; /* qid_version set to 0 to prevent the client from caching */
-     _9p_setptr( cursor, qid_path, u64 ) ;
-     
-     /* offset */
-     _9p_setvalue( cursor, 2, u64 ) ;   
-
-
-     /* Type (again ?) */
-     _9p_setptr( cursor, qid_type, u8 ) ;
-
-     /* name */
-     _9p_setstr( cursor, name_len, name_str ) ;
-  
-     LogDebug( COMPONENT_9P, "RREADDIR dentry: tag=%u fid=%u recsize=%u dentry={ off=%llu,qid=(type=%u,version=%u,path=%llu),type=%u,name=%s",
-              (u32)*msgtag, *fid , recsize, (unsigned long long)i, *qid_type, 0, (unsigned long long)*qid_path, *qid_type, name_str) ;
-
-
-    
-   }
+  printf( "===> READDIR : num_entries = %llu\n", num_entries ) ;
 
   /* fills in the dentry in 9P marshalling */
-  for( i = 0 ; i < num_entries ; i++ )
+  for( i = 0 ; i < num_entries + delta ; i++ )
    {
      recsize = 0 ; 
 
@@ -323,8 +272,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      _9p_setptr( cursor, qid_path, u64 ) ;
      
      /* offset */
-     _9p_setvalue( cursor, i+cookie+1+delta, u64 ) ;   
-
+     _9p_setvalue( cursor, i+cookie+1, u64 ) ;   
 
      /* Type (again ?) */
      _9p_setptr( cursor, qid_type, u8 ) ;
@@ -332,10 +280,11 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      /* name */
      _9p_setstr( cursor, name_len, name_str ) ;
   
-     LogDebug( COMPONENT_9P, "RREADDIR dentry: tag=%u fid=%u recsize=%u dentry={ off=%llu,qid=(type=%u,version=%u,path=%llu),type=%u,name=%s",
-              (u32)*msgtag, *fid , recsize, (unsigned long long)i, *qid_type, 0, (unsigned long long)*qid_path, *qid_type, name_str) ;
+     LogDebug( COMPONENT_9P, "RREADDIR dentry: recsize=%u dentry={ off=%llu,qid=(type=%u,version=%u,path=%llu),type=%u,name=%s",
+               recsize, (unsigned long long)i+cookie+1, *qid_type, 0, (unsigned long long)*qid_path, *qid_type, name_str) ;
    } /* for( i = 0 , ... ) */
 
+  printf( "===> end_cookie = %llu\n", end_cookie ) ;
 
   if( !CACHE_INODE_KEEP_CONTENT( pfid->pentry->policy ) )
     cache_inode_release_dirent( dirent_array, num_entries, &pwkrdata->cache_inode_client ) ;
