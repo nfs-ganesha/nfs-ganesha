@@ -4485,8 +4485,7 @@ nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
         {
           switch (data->current_filetype)
             {
-            case DIR_BEGINNING:
-            case DIR_CONTINUE:
+            case DIRECTORY:
               return NFS4ERR_ISDIR;
             default:
               return NFS4ERR_INVAL;

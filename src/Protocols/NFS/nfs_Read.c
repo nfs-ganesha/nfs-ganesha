@@ -176,9 +176,6 @@ int nfs_Read(nfs_arg_t * parg,
       return NFS_REQ_OK;
     }
 
-  /* get directory attributes before action (for V3 reply) */
-  ppre_attr = &pre_attr;
-
   /* Extract the filetype */
   filetype = cache_inode_fsal_type_convert(pre_attr.type);
 
