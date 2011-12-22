@@ -652,16 +652,16 @@ void nfs_set_param_default()
 #else
   nfs_param.cache_layers_param.cache_inode_client_param.attrmask = FSAL_ATTR_MASK_V2_V3;
 #endif
-  nfs_param.cache_layers_param.cache_inode_client_param.max_fd_per_thread = 20;
-  nfs_param.cache_layers_param.cache_inode_client_param.use_cache = 0;
+  nfs_param.cache_layers_param.cache_inode_client_param.max_fd = 20;
+  nfs_param.cache_layers_param.cache_inode_client_param.use_fd_cache = 0;
   nfs_param.cache_layers_param.cache_inode_client_param.use_fsal_hash = 1;
   nfs_param.cache_layers_param.cache_inode_client_param.retention = 60;
 
   /* Data cache client parameters */
   nfs_param.cache_layers_param.cache_content_client_param.nb_prealloc_entry = 128;
   nfs_param.cache_layers_param.cache_content_client_param.flush_force_fsal = 1;
-  nfs_param.cache_layers_param.cache_content_client_param.max_fd_per_thread = 20;
-  nfs_param.cache_layers_param.cache_content_client_param.use_cache = 0;
+  nfs_param.cache_layers_param.cache_content_client_param.max_fd = 20;
+  nfs_param.cache_layers_param.cache_content_client_param.use_fd_cache = 0;
   nfs_param.cache_layers_param.cache_content_client_param.retention = 60;
 
   strcpy(nfs_param.cache_layers_param.cache_content_client_param.cache_dir,

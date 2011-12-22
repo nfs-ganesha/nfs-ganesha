@@ -1053,14 +1053,14 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
 
   /* If open/close fd cache is used for FSAL, manage it here */
     LogFullDebug(COMPONENT_CACHE_INODE_GC,
-                 "--------> use_cache=%u fileno=%d last_op=%u time(NULL)=%u delta=%u retention=%u",
-                 pclient->use_cache, pentry->object.file.open_fd.fileno,
+                 "--------> use_fd_cache=%u fileno=%d last_op=%u time(NULL)=%u delta=%u retention=%u",
+                 pclient->use_fd_cache, pentry->object.file.open_fd.fileno,
                  (unsigned int)pentry->object.file.open_fd.last_op, (unsigned int)time(NULL),
                  (unsigned int)(time(NULL) - pentry->object.file.open_fd.last_op), (unsigned int)pclient->retention);
 
   if(pentry->internal_md.type == REGULAR_FILE)
     {
-      if(pclient->use_cache == 1)
+      if(pclient->use_fd_cache == 1)
         {
           if(pentry->object.file.open_fd.fileno != 0)
             {
@@ -1081,7 +1081,7 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
       pentry_content = (cache_content_entry_t *) pentry->object.file.pentry_content;
 
       if(pentry_content != NULL)
-        if(pclient_content->use_cache == 1)
+        if(pclient_content->use_fd_cache == 1)
           if(pentry_content->local_fs_entry.opened_file.local_fd > 0)
             if(time(NULL) - pentry_content->local_fs_entry.opened_file.last_op >
                pclient_content->retention)
