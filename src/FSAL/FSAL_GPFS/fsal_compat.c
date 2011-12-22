@@ -89,7 +89,7 @@ fsal_functions_t fsal_gpfs_functions = {
   .fsal_setxattrvaluebyid = GPFSFSAL_SetXAttrValueById,
   .fsal_removexattrbyid = GPFSFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = GPFSFSAL_RemoveXAttrByName,
-  .fsal_getextattrs = COMMON_getextattrsi_notsupp,
+  .fsal_getextattrs = COMMON_getextattrs_notsupp,
   .fsal_getfileno = GPFSFSAL_GetFileno,
 #ifdef _USE_FSAL_UP
   .fsal_up_init = GPFSFSAL_UP_Init,
