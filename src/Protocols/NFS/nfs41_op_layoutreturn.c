@@ -202,7 +202,7 @@ nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
      case LAYOUTRETURN4_FSID:
           if ((nfs_status
                = nfs4_sanity_check_FH(data,
-                                      REGULAR_FILE))
+                                      0))
               != NFS4_OK) {
                res_LAYOUTRETURN4.lorr_status = nfs_status;
                return res_LAYOUTRETURN4.lorr_status;
