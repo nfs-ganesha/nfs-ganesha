@@ -174,7 +174,17 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   else
    delta = 0 ;
 
-  if(cache_inode_readdir( pfid->pentry,
+  if( *offset == 2 )
+   {
+      /* offset == 2 as an input as one and only reason:
+       *   - a former call with offset=0 was made and the dir was empty
+       *   - '.' and '..' were returned and nothing else
+       *   - the client makes a new call, expecting it to have empty return
+       */
+      num_entries = 0 ; /* Empty return */
+      unlock = FALSE ;
+   }
+  else if(cache_inode_readdir( pfid->pentry,
                           pfid->pexport->cache_inode_policy,
                           cookie,
                           estimated_num_entries - delta,
