@@ -657,7 +657,7 @@ cache_inode_status_t cache_inode_gc_fd(cache_inode_client_t * pclient,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* nothing to do if there is no fd cache */
-  if(!pclient->use_cache)
+  if(!pclient->use_fd_cache)
     return *pstatus;
 
   /* do not garbage FD too frequently (wait at least for fd retention) */
@@ -666,7 +666,7 @@ cache_inode_status_t cache_inode_gc_fd(cache_inode_client_t * pclient,
 
   gcparam.ht = NULL;            /* not used */
   gcparam.pclient = pclient;
-  gcparam.nb_to_be_purged = pclient->max_fd_per_thread;
+  gcparam.nb_to_be_purged = pclient->max_fd;
 
   if(LRU_apply_function(pclient->lru_gc, cache_inode_gc_fd_func, (void *)&gcparam) !=
      LRU_LIST_SUCCESS)
@@ -677,7 +677,7 @@ cache_inode_status_t cache_inode_gc_fd(cache_inode_client_t * pclient,
 
   LogDebug(COMPONENT_CACHE_INODE_GC,
            "File descriptor GC: %u files closed",
-           pclient->max_fd_per_thread - gcparam.nb_to_be_purged);
+           pclient->max_fd - gcparam.nb_to_be_purged);
   pclient->time_of_last_gc_fd = time(NULL);
 
   *pstatus = CACHE_INODE_SUCCESS;

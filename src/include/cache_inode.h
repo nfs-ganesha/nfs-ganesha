@@ -190,9 +190,9 @@ typedef struct cache_inode_client_parameter__
   time_t grace_period_dirent;                          /**< Cached dirent grace period                       */
   unsigned int getattr_dir_invalidation;               /**< Use getattr as cookie for directory invalidation */
   unsigned int use_test_access;                        /**< Is FSAL_test_access to be used ?                 */
-  unsigned int max_fd_per_thread;                      /**< Max fd open per client                           */
+  unsigned int max_fd;                                 /**< Max fd open per client                           */
   time_t retention;                                    /**< Fd retention duration                            */
-  unsigned int use_cache;                              /** Do we cache fd or not ?                           */
+  unsigned int use_fd_cache;                           /** Do we cache fd or not ?                           */
   unsigned int use_fsal_hash ;                         /** Do we rely on FSAL to hash handle or not ?        */
 } cache_inode_client_parameter_t;
 
@@ -414,9 +414,9 @@ struct cache_inode_client_t
   time_t time_of_last_gc_fd;                                       /**< Epoch time for the last file descriptor gc               */
   caddr_t pcontent_client;                                         /**< Pointer to cache content client                          */
   void *pworker;                                                   /**< Pointer to the information on the worker I belong to     */
-  unsigned int max_fd_per_thread;                                  /**< Max fd open per client                                   */
+  unsigned int max_fd;                                             /**< Max fd open per client                                   */
   time_t retention;                                                /**< Fd retention duration                                    */
-  unsigned int use_cache;                                          /** Do we cache fd or not ?                                   */
+  unsigned int use_fd_cache;                                       /** Do we cache fd or not ?                                   */
   int fd_gc_needed;                                                /**< Should we perform fd gc ?                                */
 #ifdef _USE_MFSL
   mfsl_context_t mfsl_context;                                     /**< Context to be used for MFSL module                       */

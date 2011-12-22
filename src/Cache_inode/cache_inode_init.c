@@ -126,9 +126,9 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   pclient->use_test_access = param.use_test_access;
   pclient->getattr_dir_invalidation = param.getattr_dir_invalidation;
   pclient->pworker = pworker_data;
-  pclient->use_cache = param.use_cache;
+  pclient->use_fd_cache = param.use_fd_cache;
   pclient->retention = param.retention;
-  pclient->max_fd_per_thread = param.max_fd_per_thread;
+  pclient->max_fd = param.max_fd;
 
   /* introducing desynchronisation for GC */
   pclient->time_of_last_gc = time(NULL) + thread_index * 20;

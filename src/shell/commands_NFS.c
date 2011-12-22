@@ -413,8 +413,8 @@ int nfs_init(char *filename, int flag_v, FILE * output)
 
   nfs_param.cache_layers_param.cache_content_client_param.nb_prealloc_entry = 100;
   nfs_param.cache_layers_param.cache_content_client_param.flush_force_fsal = 1;
-  nfs_param.cache_layers_param.cache_content_client_param.max_fd_per_thread = 20;
-  nfs_param.cache_layers_param.cache_content_client_param.use_cache = 0;
+  nfs_param.cache_layers_param.cache_content_client_param.max_fd = 20;
+  nfs_param.cache_layers_param.cache_content_client_param.use_fd_cache = 0;
   nfs_param.cache_layers_param.cache_content_client_param.retention = 60;
   strcpy(nfs_param.cache_layers_param.cache_content_client_param.cache_dir,
          "/tmp/ganesha.datacache");
