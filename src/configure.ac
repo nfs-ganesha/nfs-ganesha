@@ -504,7 +504,7 @@ case $FSAL in
 
 		AC_DEFINE([_USE_HPSS], 1, [GANESHA is compiled with HPSS FSAL])
 		FSAL_CFLAGS="-I/opt/hpss/include"
-		FSAL_LDFLAGS="-L/opt/hpss/lib -Wl,-rpath,/opt/hpss/lib -lhpss"
+		FSAL_LDFLAGS="-L/opt/hpss/lib -Wl,-rpath,/opt/hpss/lib -lhpss -lhpsscs"
         	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_HPSS/libfsalhpss.la \$(top_builddir)/FSAL/FSAL_HPSS/HPSSclapiExt/libhpssapiext.la"
                	FS_NAME="hpss"
 
