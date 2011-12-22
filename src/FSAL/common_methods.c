@@ -56,6 +56,7 @@ fsal_status_t COMMON_InitClientContext(fsal_op_context_t * p_thr_context)
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
 }
 
+#ifndef _USE_HPSS
 fsal_status_t COMMON_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/OUT  */
                                     fsal_export_context_t * p_export_context,   /* IN */
                                     fsal_uid_t uid,     /* IN */
@@ -95,6 +96,7 @@ fsal_status_t COMMON_GetClientContext(fsal_op_context_t * p_thr_context,  /* IN/
   }
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetClientContext);
 }
+#endif
 
 /* Access controls
  */
