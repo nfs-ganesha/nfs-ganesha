@@ -43,7 +43,7 @@ static struct svc_callout
   void (*sc_dispatch) ();
 } *svc_head;
 
-static struct svc_callout *Svc_find();
+static struct svc_callout *Svc_find(u_long prog, u_long vers, struct svc_callout **prev);
 
 /* Un rajout pour voir */
 unsigned int mysvc_maxfd;
