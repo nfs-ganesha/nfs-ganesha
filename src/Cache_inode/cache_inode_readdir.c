@@ -571,7 +571,7 @@ cache_inode_status_t cache_inode_add_cached_dirent(
 
   *pnew_dir_entry = new_dir_entry;
 
-  /* we're going to succeed */
+  /* we're going to succeed */  
   pentry_parent->object.dir.nbactive++;  
   new_dir_entry->pentry = pentry_added;
 

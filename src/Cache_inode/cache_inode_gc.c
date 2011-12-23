@@ -273,7 +273,7 @@ static int cache_inode_gc_invalidate_related_dirents(
 
       /* Invalidate related */
       cache_inode_invalidate_related_dirent(
-	  parent_iter->parent, parent_iter->cookie, pgcparam->pclient);
+	  parent_iter->parent, pgcparam->pclient);
 
       V_w(&parent_iter->parent->lock);
     }
