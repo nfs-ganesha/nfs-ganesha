@@ -319,7 +319,7 @@ struct cache_entry_t
       cache_inode_flag_t has_been_readdir;      /**< True if a full readdir was performed on the directory   */
       char *referral;                           /**< NULL is not a referral, is not this a 'referral string' */
       struct avltree dentries;                  /**< Children */
-      struct avltree cookies;                   /**< sparse offset avl */
+      struct avltree cookies;                   /**< Readdir cookie avl (transient) */
     } dir;                                /**< DIR related field                               */
 
     /* Note that special data is in the rawdev field of FSAL attributes */
@@ -329,14 +329,19 @@ struct cache_entry_t
   rw_lock_t lock;                             /**< a reader-writter lock used to protect the data     */
   cache_inode_internal_md_t internal_md;      /**< My metadata (from this cache's point of view)      */
   LRU_entry_t *gc_lru_entry;                  /**< related LRU entry in the LRU list used for GC      */
-  LRU_list_t *gc_lru;                         /**< related LRU list for GC                            */
-
- /* List of parent cache entries of directory entries related by
-  * hard links */       
+  LRU_list_t *gc_lru;                         /**< related LRU list for GC                            */    
+  
+  /* XXX In the next step past asyncrhronous cache invalidates (i.e., invalidate
+   * upcalls), we may wish to support removal of specific links to an entry, updating
+   * related dentry caches in place.  It appears that an efficient way to support
+   * this would be to replace the current parent chain with a chain of link records,
+   * each containing a {parent_inode, name} pair. */
+   
+  /* List of parent cache entries of directory entries related by
+   * hard links */
   struct cache_inode_parent_entry__
   {
     cache_entry_t *parent;                           /**< Parent entry */
-    uint64_t cookie;                                 /**< Key in sparse avl */
     struct cache_inode_parent_entry__ *next_parent;  /**< Next parent */
   } *parent_list;
 #ifdef _USE_MFSL
@@ -904,10 +909,6 @@ void cache_inode_release_dirents(cache_entry_t *pentry,
 				 cache_inode_client_t *pclient,
 				 cache_inode_avl_which_t which);
 
-void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
-					   uint64_t cookie,
-					   cache_inode_client_t * pclient);
-
 cache_inode_status_t cache_inode_gc(hash_table_t * ht,
                                     cache_inode_client_t * pclient,
                                     cache_inode_status_t * pstatus);
@@ -928,7 +929,6 @@ cache_inode_status_t cache_inode_invalidate( fsal_handle_t        * pfsal_handle
                                              cache_inode_status_t * pstatus) ;
 
 void cache_inode_invalidate_related_dirent( cache_entry_t * pentry,
-                                            uint64_t cookie,
                                             cache_inode_client_t * pclient );
 
 void cache_inode_invalidate_related_dirents(  cache_entry_t        * pentry,
