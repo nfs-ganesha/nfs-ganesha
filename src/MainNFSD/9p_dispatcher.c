@@ -252,12 +252,12 @@ void * _9p_socket_thread( void * Arg )
 	     if( ( *p_9pmsglen < _9P_HDR_SIZE ) ||
 		 ( readlen = recv( fds[0].fd,
 				   (char *)(_9pmsg + _9P_HDR_SIZE),  
-                                    *p_9pmsglen - _9P_HDR_SIZE, 0 ) ) !=  *p_9pmsglen - _9P_HDR_SIZE )
+                                   *p_9pmsglen - _9P_HDR_SIZE, 0 ) ) !=  ( *p_9pmsglen - _9P_HDR_SIZE ) )
                  
              {
 		LogEvent( COMPONENT_9P, 
-			  "Badly formed 9P message: Header is too small for client %s on socket %lu", 
-                          strcaller, tcp_sock ) ;
+			  "Badly formed 9P message: Header is too small for client %s on socket %lu: readlen=%u expected=%u", 
+                          strcaller, tcp_sock, readlen, *p_9pmsglen - _9P_HDR_SIZE ) ;
 
                 /* Release the entry */
                 P(workers_data[worker_index].request_pool_mutex);
