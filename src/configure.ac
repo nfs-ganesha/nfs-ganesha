@@ -42,6 +42,7 @@ AC_PROG_MAKE_SET
 
 AC_DEFINE( [VERSION_COMMENT], ["GANESHA 64 bits compliant. SNMP exported stats. FSAL_PROXY re-exports NFSv3. RPCSEC_GSS support (partial). FUSELIKE added"], [No Comment])
 
+
 # specific programs used for ganesha
 GA_PROG_RPCGEN
 GA_PROG_DOXYGEN
@@ -421,8 +422,6 @@ fi
 # BuddyMalloc
 GA_DISABLE_AM_CONDITION([BuddyMalloc], [disable GANESHA's memory allocator, for debug purpose only], [_NO_BUDDY_SYSTEM])
 
-echo "enable_BuddyMalloc=$enable_BuddyMalloc"
-
 if test "$enable_BuddyMalloc" == "yes"; then
         AC_DEFINE(_BUDDY_SYSTEM, 1, [enable GANESHA's memory allocator])
 else
@@ -430,9 +429,9 @@ else
 fi
 AM_CONDITIONAL(USE_BUDDY_SYSTEM, test "$enable_BuddyMalloc" == "yes")
 
-# explicit Ceph path
+# explicit Ceph path @todo : add a defaut value
 AC_ARG_WITH([ceph-prefix], AS_HELP_STRING([--with-ceph-prefix=<path>], [Path to Ceph installation] ),
-		CEPH_PREFIX="$withval" )
+		CEPH_PREFIX="$withval", CEPH_PREFIX="/usr" )
 
 # FSAL based pNFS MDS support (requires NFSv4.1, conflicts with pNFS)
 GA_ENABLE_AM_CONDITION([fsal-mds],[enable FSAL-based pNFS MDS support (NFSv4.1 support is mandatory)],[USE_FSALMDS])
@@ -585,17 +584,10 @@ case $FSAL in
 		;;
 	CEPH)
 		AC_DEFINE([_USE_CEPH], 1, [GANESHA exports CEPH Filesystem])
-                dnl AC_CHECK_HEADERS([cephfs/libcephfs.h], [], [AC_MSG_ERROR( missing ceph include files)])
-		# nfs_duprec.c (etc) are including Ceph's internal
-		# fsal_types.h, leaking Ceph types and file-offset bits
-		# reqt to other units
+                dnl AC_CHECK_HEADERS([ceph/libceph.h], [], [AC_MSG_ERROR( missing ceph include files)])
 		CFLAGS="-I${CEPH_PREFIX}/include -D_FILE_OFFSET_BITS=64 ${CFLAGS}"
-		if test "${with_ceph_prefix+set}" == "set"; then
-		   FSAL_CFLAGS="-D_FILE_OFFSET_BITS=64"
-		   LDFLAGS="-L${CEPH_PREFIX}/lib"
-		else
-		   FSAL_CFLAGS="-D_FILE_OFFSET_BITS=64"
-		fi
+		FSAL_CFLAGS="-D_FILE_OFFSET_BITS=64"
+		LDFLAGS="-L${CEPH_PREFIX}/lib"
                 FSAL_LDFLAGS=-lcephfs
                 FSAL_LIB="\$(top_builddir)/FSAL/FSAL_CEPH/libfsalceph.la"
                 FS_NAME="ceph"
