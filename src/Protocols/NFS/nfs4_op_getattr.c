@@ -146,7 +146,7 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
       res_GETATTR4.status = NFS4ERR_SERVERFAULT ;
       return res_GETATTR4.status;
     }
-   
+
 
   /*
    * Get attributes.

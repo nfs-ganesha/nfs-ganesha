@@ -314,18 +314,14 @@ void cache_inode_release_dirent(  cache_inode_dir_entry_t ** dirent_array,
 cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
                                                  fsal_name_t * pname,
                                                  fsal_name_t * newname,
-						 cache_inode_client_t * pclient,
+                                                 cache_inode_client_t * pclient,
                                                  cache_inode_dirent_op_t dirent_op,
                                                  cache_inode_status_t * pstatus)
 {
   cache_entry_t *pentry = NULL;
   cache_inode_dir_entry_t dirent_key[1], *dirent;
   struct avltree_node *dirent_node, *tmpnode;
-  LRU_List_state_t vstate;
-
-  /* Directory mutation generally invalidates outstanding 
-   * readdirs, hence any cached cookies, so in these cases we 
-   * clear the cookie avl */
+  cache_inode_entry_valid_state_t vstate;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -358,12 +354,12 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
   /* check state of cached dirent */
   vstate = dirent->pentry->internal_md.valid_state;
   if (vstate == VALID || vstate == STALE) {
-  
-      if (vstate == STALE)
-      	LogDebug(COMPONENT_NFS_READDIR,
-		"DIRECTORY: found STALE cache entry");
 
-	/* Entry was found */
+      if (vstate == STALE)
+        LogDebug(COMPONENT_NFS_READDIR,
+                 "DIRECTORY: found STALE cache entry");
+
+      /* Entry was found */
         pentry = dirent->pentry;
         *pstatus = CACHE_INODE_SUCCESS;
   }

@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -354,7 +354,6 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
   fattr4_acl acl;
   fattr4_mimetype mimetype;
   fattr4_aclsupport aclsupport;
-  fattr4_fs_locations fs_locations;
   fattr4_quota_avail_hard quota_avail_hard;
   fattr4_quota_avail_soft quota_avail_soft;
   fattr4_quota_used quota_used;
@@ -470,9 +469,9 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           memset(supported_attrs.bitmap4_val, 0, 3 * sizeof(uint32_t));
 #else
           if((supported_attrs.bitmap4_val =
-              (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
+              (uint32_t *) Mem_Alloc(3 * sizeof(uint32_t))) == NULL)
             return -1;
-          memset(supported_attrs.bitmap4_val, 0, 2 * sizeof(uint32_t));
+          memset(supported_attrs.bitmap4_val, 0, 3 * sizeof(uint32_t));
 #endif
 
           nfs4_list_to_bitmap4(&supported_attrs, &c, attrvalslist_supported);
@@ -798,8 +797,6 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
           LogFullDebug(COMPONENT_NFS_V4_PSEUDO,
                        "-----> Wanting FATTR4_FS_LOCATIONS");
 
-          fs_locations.fs_root.pathname4_len = 0;
-          fs_locations.locations.locations_len = 0;     /* No FS_LOCATIONS no now */
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
           break;
@@ -1259,9 +1256,9 @@ int nfs4_PseudoToFattr(pseudofs_entry_t * psfsp,
 
   /* Set the bitmap for result */
   /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
-  if((Fattr->attrmask.bitmap4_val = (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
+  if((Fattr->attrmask.bitmap4_val = (uint32_t *) Mem_Alloc(3 * sizeof(uint32_t))) == NULL)
     return -1;
-  memset(Fattr->attrmask.bitmap4_val, 0, 2 * sizeof(uint32_t));
+  memset(Fattr->attrmask.bitmap4_val, 0, 3 * sizeof(uint32_t));
 
   nfs4_list_to_bitmap4(&(Fattr->attrmask), &j, attrvalslist);
 

@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -49,6 +49,8 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
@@ -67,6 +69,13 @@
 #include "nfs_file_handle.h"
 #include "nfs_proto_tools.h"
 #include "nfs4_acls.h"
+#ifdef _USE_FSALMDS
+#include "sal_data.h"
+#include "sal_functions.h"
+#include "fsal.h"
+#include "fsal_pnfs.h"
+#include "pnfs_common.h"
+#endif /* _USE_FSALMDS */
 
 #ifdef _USE_NFS4_ACL
 /* Define mapping of NFS4 who name and type. */
@@ -96,13 +105,13 @@ static struct {
 /**
  *
  * nfs_FhandleToStr: Converts a file handle to a string representation.
- * 
+ *
  * Converts a file handle to a string representation.
  *
- * @param rq_vers  [IN]    version of the NFS protocol to be used 
- * @param pfh2     [IN]    NFSv2 file handle or NULL 
- * @param pfh3     [IN]    NFSv3 file handle or NULL 
- * @param pfh4     [IN]    NFSv4 file handle or NULL 
+ * @param rq_vers  [IN]    version of the NFS protocol to be used
+ * @param pfh2     [IN]    NFSv2 file handle or NULL
+ * @param pfh3     [IN]    NFSv3 file handle or NULL
+ * @param pfh4     [IN]    NFSv4 file handle or NULL
  * @param str      [OUT]   string version of handle
  *
  */
@@ -167,7 +176,6 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
   cache_inode_status_t cache_status;
   cache_entry_t *pentry = NULL;
   fsal_attrib_list_t attr;
-  short exportid;
 
   /* Default behaviour */
   *prc = NFS_REQ_OK;
@@ -182,7 +190,6 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
           *pstatus4 = NFS4ERR_BADHANDLE;
           return NULL;
         }
-      exportid = nfs4_FhandleToExportId(pfh4);
       break;
 
     case NFS_V3:
@@ -192,7 +199,6 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
           *pstatus3 = NFS3ERR_BADHANDLE;
           return NULL;
         }
-      exportid = nfs3_FhandleToExportId(pfh3);
       break;
 
     case NFS_V2:
@@ -202,7 +208,6 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
           *pstatus2 = NFSERR_STALE;
           return NULL;
         }
-      exportid = nfs2_FhandleToExportId(pfh2);
       break;
     }
   fsal_data.cookie = DIR_START;
@@ -774,10 +779,9 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   fattr4_quota_used quota_used;
   fattr4_time_modify_set __attribute__ ((__unused__)) time_modify_set;
   fattr4_time_access_set __attribute__ ((__unused__)) time_access_set;
-#ifdef _USE_NFS4_1
-  fattr4_fs_layout_types layout_types;
-  layouttype4 layouts[1];
-#endif
+#ifdef _USE_FSALMDS
+  fattr4_layout_blksize layout_blksize;
+#endif /* _USE_FSALMDS */
 
   u_int tmp_int;
   char tmp_buff[1024];
@@ -1319,7 +1323,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           memset((char *)(attrvalsBuffer + LastOffset), 0,
                  sizeof(fattr4_mimetype));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          op_attr_success = 1;  /* No supported for the moment */
+          op_attr_success = 0;  /* No supported for the moment */
           break;
 
         case FATTR4_MODE:
@@ -1425,7 +1429,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           memcpy((char *)(attrvalsBuffer + LastOffset), &quota_avail_hard,
                  sizeof(fattr4_quota_avail_hard));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          op_attr_success = 1;
+          op_attr_success = 0;
           break;
 
         case FATTR4_QUOTA_AVAIL_SOFT:
@@ -1433,7 +1437,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           memcpy((char *)(attrvalsBuffer + LastOffset), &quota_avail_soft,
                  sizeof(fattr4_quota_avail_soft));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          op_attr_success = 1;
+          op_attr_success = 0;
           break;
 
         case FATTR4_QUOTA_USED:
@@ -1441,7 +1445,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           memcpy((char *)(attrvalsBuffer + LastOffset), &quota_used,
                  sizeof(fattr4_quota_used));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          op_attr_success = 1;
+          op_attr_success = 0;
           break;
 
         case FATTR4_RAWDEV:
@@ -1567,7 +1571,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                  &time_access_set.settime4_u.time.nseconds, sizeof(uint32_t));
           LastOffset += sizeof(uint32_t);
 
-          op_attr_success = 1;
+          op_attr_success = 0;
 #endif
           break;
 
@@ -1578,7 +1582,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           memcpy((char *)(attrvalsBuffer + LastOffset), &time_backup,
                  fattr4tab[attribute_to_set].size_fattr4);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          op_attr_success = 1;
+          op_attr_success = 0;
           break;
 
         case FATTR4_TIME_CREATE:
@@ -1588,7 +1592,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           memcpy((char *)(attrvalsBuffer + LastOffset), &time_create,
                  fattr4tab[attribute_to_set].size_fattr4);
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          op_attr_success = 1;
+          op_attr_success = 0;
           break;
 
         case FATTR4_TIME_DELTA:
@@ -1644,7 +1648,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                  &time_modify_set.settime4_u.time.nseconds, sizeof(uint32_t));
           LastOffset += sizeof(uint32_t);
 
-          op_attr_success = 1;
+          op_attr_success = 0;
 #endif
           break;
 
@@ -1657,20 +1661,37 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
 #ifdef _USE_NFS4_1
         case FATTR4_FS_LAYOUT_TYPES:
-          layout_types.fattr4_fs_layout_types_len = htonl(1);
-          memcpy((char *)(attrvalsBuffer + LastOffset),
-                 &layout_types.fattr4_fs_layout_types_len, sizeof(u_int));
-          LastOffset += sizeof(u_int);
+#ifdef _USE_FSALMDS
+          *((uint32_t*)(attrvalsBuffer+LastOffset))
+            = htonl(pstaticinfo->fs_layout_types
+                    .fattr4_fs_layout_types_len);
 
-          layout_types.fattr4_fs_layout_types_val = layouts;
-          layouts[0] = htonl(LAYOUT4_NFSV4_1_FILES);
-          memcpy((char *)(attrvalsBuffer + LastOffset),
-                 layout_types.fattr4_fs_layout_types_val, sizeof(layouttype4));
-          LastOffset += sizeof(layouttype4);
+          LastOffset += sizeof(uint32_t);
+          for (k = 0; k < (pstaticinfo->fs_layout_types
+                           .fattr4_fs_layout_types_len); k++)
+            {
+              *((layouttype4*)(attrvalsBuffer+LastOffset))
+                = htonl((pstaticinfo->fs_layout_types
+                         .fattr4_fs_layout_types_val[k]));
+              LastOffset += sizeof(layouttype4);
+            }
 
           op_attr_success = 1;
           break;
-#endif
+#endif                                    /* _USE_FSALMDS */
+
+#ifdef _USE_FSALMDS
+        case FATTR4_LAYOUT_BLKSIZE:
+          layout_blksize
+            = htonl((fattr4_layout_blksize) pstaticinfo->layout_blksize);
+          memcpy((char *)(attrvalsBuffer + LastOffset),
+                 &layout_blksize, sizeof(fattr4_layout_blksize));
+          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
+
+          op_attr_success = 1;
+          break;
+#endif /* _USE_FSALMDS */
+#endif /* _USE_NFS4_1 */
 
         default:
           LogFullDebug(COMPONENT_NFS_V4,
@@ -1695,10 +1716,10 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
     }                           /* for i */
 
   /* Set the bitmap for result */
-  if((Fattr->attrmask.bitmap4_val = (uint32_t *) Mem_Alloc_Label(2 * sizeof(uint32_t),
+  if((Fattr->attrmask.bitmap4_val = (uint32_t *) Mem_Alloc_Label(3 * sizeof(uint32_t),
                                                                  "FSALattr_To_Fattr:bitmap")) == NULL)
     return -1;
-  memset((char *)Fattr->attrmask.bitmap4_val, 0, 2 * sizeof(uint32_t));
+  memset((char *)Fattr->attrmask.bitmap4_val, 0, 3 * sizeof(uint32_t));
 
   nfs4_list_to_bitmap4(&(Fattr->attrmask), &j, attrvalslist);
 
@@ -2181,13 +2202,13 @@ seqid4 nfs4_NextSeqId(seqid4 seqid)
  */
 
 /*
- * bitmap is usually 2 x uint32_t which makes a uint64_t 
+ * bitmap is usually 2 x uint32_t which makes a uint64_t
  *
  * Structure of the bitmap is as follow
  *
  *                  0         1
  *    +-------+---------+----------+-
- *    | count | 31 .. 0 | 63 .. 32 | 
+ *    | count | 31 .. 0 | 63 .. 32 |
  *    +-------+---------+----------+-
  *
  * One bit is set for every possible attributes. The bits are packed together in a uint32_T (XDR alignment reason probably)
@@ -2305,8 +2326,8 @@ void nfs4_list_to_bitmap4(bitmap4 * b, uint_t * plen, uint32_t * pval)
   /* Both uint32 int the bitmap MUST be allocated */
   b->bitmap4_val[0] = 0;
   b->bitmap4_val[1] = 0;
+  b->bitmap4_val[2] = 0;
 
-  b->bitmap4_len = 1;
   for(i = 0; i < *plen; i++)
     {
       intpos = pval[i] / 32;
@@ -2314,30 +2335,35 @@ void nfs4_list_to_bitmap4(bitmap4 * b, uint_t * plen, uint32_t * pval)
       val = 1 << bitpos;
       b->bitmap4_val[intpos] |= val;
 
-      if(intpos != 0)
+      if(intpos == 0)
+        b->bitmap4_len = 1;
+      else if(intpos == 1)
         b->bitmap4_len = 2;
+      else if(intpos == 2)
+        b->bitmap4_len = 3;
     }
-  LogFullDebug(COMPONENT_NFS_V4, "Bitmap: Len = %u   Val = %u|%u",
+  LogFullDebug(COMPONENT_NFS_V4, "Bitmap: Len = %u   Val = %u|%u|%u",
                b->bitmap4_len,
                b->bitmap4_len >= 1 ? b->bitmap4_val[0] : 0,
-               b->bitmap4_len >= 2 ? b->bitmap4_val[1] : 0);
+               b->bitmap4_len >= 2 ? b->bitmap4_val[1] : 0,
+               b->bitmap4_len >= 3 ? b->bitmap4_val[2] : 0);
 }                               /* nfs4_list_to_bitmap4 */
 
-/* 
- * Conversion of attributes 
-*/
+/*
+ * Conversion of attributes
+ */
 
 /**
- * 
+ *
  * nfs3_FSALattr_To_Fattr: Converts FSAL Attributes to NFSv3 attributes.
- * 
+ *
  * Converts FSAL Attributes to NFSv3 attributes.
  *
  * @param pexport   [IN]  the related export entry
  * @param FSAL_attr [IN]  pointer to FSAL attributes.
  * @param Fattr     [OUT] pointer to NFSv3 attributes. 
- * 
- * @return 1 if successful, 0 otherwise. 
+ *
+ * @return 1 if successful, 0 otherwise.
  *
  */
 int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related export entry */
@@ -2588,8 +2614,12 @@ int nfs4_Fattr_Check_Access(fattr4 * Fattr, int access)
 int nfs4_Fattr_Check_Access_Bitmap(bitmap4 * pbitmap, int access)
 {
   unsigned int i = 0;
-
-  uint32_t attrmasklist[FATTR4_MOUNTED_ON_FILEID];      /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
+#ifdef _USE_NFS4_1
+#define MAXATTR FATTR4_FS_CHARSET_CAP
+#else
+#define MAXATTR FATTR4_MOUNTED_ON_FILEID
+#endif
+  uint32_t attrmasklist[MAXATTR];
   uint32_t attrmasklen = 0;
 
   /* Parameter sanity check */
@@ -2604,7 +2634,7 @@ int nfs4_Fattr_Check_Access_Bitmap(bitmap4 * pbitmap, int access)
 
   for(i = 0; i < attrmasklen; i++)
     {
-      if(attrmasklist[i] > FATTR4_MOUNTED_ON_FILEID)
+      if(attrmasklist[i] > MAXATTR)
         {
           /* Erroneous value... skip */
           continue;
@@ -2634,8 +2664,11 @@ int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap )
   uint_t val = 0;
   uint_t offset = 0;
 
-  uint32_t bitmap_val[2] ;
+  uint32_t bitmap_val[3] ;
   bitmap4 bout ;
+  int allsupp = 1;
+
+  memset(bitmap_val, 0, 3 * sizeof(uint32_t));
 
   bout.bitmap4_val = bitmap_val ;
   bout.bitmap4_len = pbitmap->bitmap4_len  ;
@@ -2648,9 +2681,6 @@ int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap )
     LogFullDebug(COMPONENT_NFS_V4, "Bitmap: Len = %u ... ",
                  pbitmap->bitmap4_len);
 
-  bout.bitmap4_val[0] = 0 ;
-  bout.bitmap4_val[1] = 0 ;
-
   for(offset = 0; offset < pbitmap->bitmap4_len; offset++)
     {
       for(i = 0; i < 32; i++)
@@ -2659,16 +2689,17 @@ int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap )
           if(pbitmap->bitmap4_val[offset] & val)
            {
              if( fattr4tab[i+32*offset].supported ) /* keep only supported stuff */
-               bout.bitmap4_val[offset] |= val ; 
+               bout.bitmap4_val[offset] |= val ;
+             else
+                  allsupp = 0;
            }
         }
     }
 
-  pbitmap->bitmap4_val[0] = bout.bitmap4_val[0] ;  
-  if( pbitmap->bitmap4_len > 1 )
-     pbitmap->bitmap4_val[1] = bout.bitmap4_val[1] ;  
+  memcpy(pbitmap->bitmap4_val, bout.bitmap4_val,
+         bout.bitmap4_len * sizeof(uint32_t));
 
-  return 1 ;
+  return allsupp;
 }                               /* nfs4_Fattr_Bitmap_Remove_Unsupported */
 
 
@@ -3236,8 +3267,9 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
     return NFS4ERR_BADXDR;
 
   /* Check attributes data */
-  if(Fattr->attr_vals.attrlist4_val == NULL)
-    return NFS4ERR_BADXDR;
+  if((Fattr->attr_vals.attrlist4_val == NULL) &&
+     (Fattr->attr_vals.attrlist4_len != 0))
+    return -1;
 
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(&(Fattr->attrmask), &attrmasklen, attrmasklist);
@@ -4198,4 +4230,268 @@ void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask)
              FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_WRITE_ACL)		 ? 'C':'-',
              FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_WRITE_OWNER)	 ? 'o':'-',
              FSAL_TEST_MASK(v4mask, FSAL_ACE_PERM_SYNCHRONIZE)	 ? 'z':'-');
+}
+
+#ifdef _USE_FSALMDS
+/**
+ *
+ * return_one_state: Return layouts corresponding to one stateid
+ *
+ * This function returns one or more layouts corresponding to a layout
+ * stateid, calling FSAL_layoutreturn for each layout falling within
+ * the specified range and iomode.  If all layouts have been returned,
+ * it deletes the state.
+ *
+ * @param handle       [IN]     Handle for the file whose layouts we return
+ * @param pclient      [IN,OUT] Client pointer for memory pools
+ * @param context      [IN,OUT] Operation context for FSAL calls
+ * @param synthetic    [IN]     True if this is a bulk or synthesized
+ *                              (e.g. last close or lease expiry) return
+ * @param layout_state [IN,OUT] State whose segments we return
+ * @param iomode       [IN]     IO mode specifying which segments to
+ *                              return
+ * @param offset       [IN]     Offset of range to return
+ * @param length       [IN]     Length of range to return
+ * @param body_len     [IN]     Length of type-specific layout return
+ *                              data
+ * @param body_val     [IN]     Type-specific layout return data
+ * @param deleted      [OUT]    True if the layout state has been deleted
+ *
+ * @return NFSv4.1 status codes
+ */
+
+nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
+                               cache_inode_client_t* pclient,
+                               fsal_op_context_t* context,
+                               bool synthetic,
+                               bool reclaim,
+                               layoutreturn_type4 return_type,
+                               state_t *layout_state,
+                               struct pnfs_segment spec_segment,
+                               u_int body_len,
+                               const char* body_val,
+                               bool* deleted)
+{
+     /* Return from cache_inode calls */
+     cache_inode_status_t cache_status = 0;
+     /* Return from SAL calls */
+     state_status_t state_status = 0;
+     /* Return from this function */
+     nfsstat4 nfs_status = 0;
+     /* Iterator along linked list */
+     struct glist_head *glist = NULL;
+     /* Saved 'next' pointer for glist_for_each_safe */
+     struct glist_head *glistn = NULL;
+     /* Input arguments to FSAL_layoutreturn */
+     struct fsal_layoutreturn_arg arg;
+     /* The FSAL file handle */
+     fsal_handle_t *handle = NULL;
+     /* XDR stream holding the lrf_body opaque */
+     XDR lrf_body;
+     /* The beginning of the stream */
+     unsigned int beginning = 0;
+     /* The current segment in iteration */
+     state_layout_segment_t *segment = NULL;
+     /* If we have a lock on the segment */
+     bool seg_locked = false;
+
+     if (body_val) {
+          xdrmem_create(&lrf_body,
+                        (char*) body_val, /* Decoding won't modify this */
+                        body_len,
+                        XDR_DECODE);
+          beginning = xdr_getpos(&lrf_body);
+     }
+
+     handle = cache_inode_get_fsal_handle(entry,
+                                          &cache_status);
+
+     if (cache_status != CACHE_INODE_SUCCESS) {
+          return nfs4_Errno(cache_status);
+     }
+
+     memset(&arg, 0, sizeof(struct fsal_layoutreturn_arg));
+
+     arg.reclaim = reclaim;
+     arg.lo_type = layout_state->state_data.layout.state_layout_type;
+     arg.return_type = return_type;
+     arg.spec_segment = spec_segment;
+     arg.synthetic = synthetic;
+
+     if (!reclaim) {
+          /* The _safe version of glist_for_each allows us to delete
+             segments while we iterate. */
+          glist_for_each_safe(glist,
+                              glistn,
+                              &layout_state->state_data.layout.state_segments) {
+               segment = glist_entry(glist,
+                                     state_layout_segment_t,
+                                     sls_state_segments);
+
+               pthread_mutex_lock(&segment->sls_mutex);
+               seg_locked = true;
+
+               arg.cur_segment = segment->sls_segment;
+               arg.fsal_seg_data = segment->sls_fsal_data;
+               arg.last_segment = (glistn->next == glistn);
+
+               if (pnfs_segment_contains(spec_segment,
+                                         segment->sls_segment)) {
+                    arg.dispose = true;
+               } else if (pnfs_segments_overlap(spec_segment,
+                                                segment->sls_segment)) {
+                    arg.dispose = false;
+               } else {
+                    pthread_mutex_unlock(&segment->sls_mutex);
+                    continue;
+               }
+
+               nfs_status =
+                    fsal_mdsfunctions
+                    .layoutreturn(handle,
+                                  context,
+                                  (body_val ? &lrf_body : NULL),
+                                  &arg);
+
+               if (nfs_status != NFS4_OK) {
+                    goto out;
+               }
+
+               if (arg.dispose) {
+                    if (state_delete_segment(segment)
+                        != STATE_SUCCESS) {
+                         nfs_status = nfs4_Errno_state(state_status);
+                         goto out;
+                    }
+               } else {
+                    segment->sls_segment
+                         = pnfs_segment_difference(spec_segment,
+                                                   segment->sls_segment);
+                    pthread_mutex_unlock(&segment->sls_mutex);
+               }
+          }
+          seg_locked = false;
+
+          if (body_val) {
+               /* This really should work in all cases for an
+                  in-memory decode stream. */
+               xdr_setpos(&lrf_body, beginning);
+          }
+          if (glist_empty(&layout_state->state_data.layout.state_segments)) {
+               state_del(layout_state, pclient, &state_status);
+               *deleted = true;
+          } else {
+               *deleted = false;
+          }
+     } else {
+          /* For a reclaim return, there are no recorded segments in
+             state. */
+          arg.cur_segment.io_mode = 0;
+          arg.cur_segment.offset = 0;
+          arg.cur_segment.length = 0;
+          arg.fsal_seg_data = NULL;
+          arg.last_segment = false;
+          arg.dispose = false;
+
+          nfs_status =
+               fsal_mdsfunctions
+               .layoutreturn(handle,
+                             context,
+                             (body_val ? &lrf_body : NULL),
+                             &arg);
+
+          if (nfs_status != NFS4_OK) {
+               goto out;
+          }
+          *deleted = true;
+     }
+
+     nfs_status = NFS4_OK;
+
+out:
+     if (body_val) {
+          xdr_destroy(&lrf_body);
+     }
+     if (seg_locked) {
+          pthread_mutex_unlock(&segment->sls_mutex);
+     }
+
+     return nfs_status;
+}
+
+/**
+ *
+ * nfs4_pnfs_supported: Check whether a given export supports pNFS
+ *
+ * This function returns true if the export supports pNFS metadata
+ * operations.
+ *
+ * @param export [IN] The export to check.
+ *
+ * @return TRUE or FALSE.
+ */
+fsal_boolean_t nfs4_pnfs_supported(const exportlist_t *export)
+{
+  if (!export)
+    {
+      return FALSE;
+    }
+  else
+    {
+      return export->FS_export_context.fe_static_fs_info->pnfs_supported;
+    }
+}
+
+#endif /* _USE_FSALMDS */
+
+/**
+ *
+ * nfs4_sanity_check_FH: Do basic checks on a filehandle
+ *
+ * This function performs basic checks to make sure the supplied
+ * filehandle is sane for a given operation.
+ *
+ * @param data          [IN] Compound_data_t for the operation to check
+ * @param required_type [IN] The file type this operation requires.
+ *                           Set to 0 to allow any type.
+ *
+ * @return NFSv4.1 status codes
+ */
+
+nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
+                              cache_inode_file_type_t required_type)
+{
+  /* If there is no FH */
+  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
+    {
+      return NFS4ERR_NOFILEHANDLE;
+    }
+
+  /* If the filehandle is invalid */
+  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
+    {
+      return NFS4ERR_BADHANDLE;
+    }
+
+  /* Tests if the Filehandle is expired (for volatile filehandle) */
+  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
+    {
+      return NFS4ERR_FHEXPIRED;
+    }
+
+  if (required_type)
+    {
+      if(data->current_filetype != required_type)
+        {
+          switch (data->current_filetype)
+            {
+            case DIRECTORY:
+              return NFS4ERR_ISDIR;
+            default:
+              return NFS4ERR_INVAL;
+            }
+        }
+    }
+
+  return NFS4_OK;
 }

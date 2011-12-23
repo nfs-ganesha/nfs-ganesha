@@ -15,6 +15,7 @@ libfsalcommon_la_SOURCES = fsal_strings.c          \
                            ../include/err_fsal.h   \
                            ../include/fsal_convert.h 
 
+
 # What's next is required to allow dynamic FSAL to compile
 # COMMON_* functions are in the current directory, it must be compiled before the FSAL_* directories
 
@@ -23,6 +24,14 @@ SUBDIRS = .
 else 
 SUBDIRS = 
 endif 
+
+if USE_FSALMDS
+libfsalcommon_la_SOURCES += common_pnfs.c
+else
+if USE_FSALDS
+libfsalcommon_la_SOURCES += common_pnfs.c
+endif
+endif
 
 if USE_FSAL_HPSS
 SUBDIRS += FSAL_HPSS
@@ -34,6 +43,10 @@ endif
 
 if USE_FSAL_PROXY
 SUBDIRS += FSAL_PROXY
+endif
+
+if USE_FSAL_CEPH
+SUBDIRS = FSAL_CEPH
 endif
 
 if USE_FSAL_FUSE

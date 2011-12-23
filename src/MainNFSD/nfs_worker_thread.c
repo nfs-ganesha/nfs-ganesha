@@ -70,11 +70,6 @@
 #include "nfs_tcb.h"
 #include "SemN.h"
 
-#ifdef _USE_PNFS
-#include "pnfs.h"
-#include "pnfs_service.h"
-#endif
-
 #if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
 void nfs_debug_debug_label_info();
 #endif

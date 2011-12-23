@@ -135,7 +135,7 @@ static const nfs4_op_desc_t optab4v0[] = {
 static const nfs4_op_desc_t optab4v1[] = {
   {"OP_ACCESS", NFS4_OP_ACCESS, nfs4_op_access},
   {"OP_CLOSE", NFS4_OP_CLOSE, nfs41_op_close},
-  {"OP_COMMIT", NFS4_OP_COMMIT, nfs4_op_commit},
+  {"OP_COMMIT", NFS4_OP_COMMIT, nfs41_op_commit},
   {"OP_CREATE", NFS4_OP_CREATE, nfs4_op_create},
   {"OP_DELEGPURGE", NFS4_OP_DELEGPURGE, nfs4_op_delegpurge},
   {"OP_DELEGRETURN", NFS4_OP_DELEGRETURN, nfs4_op_delegreturn},

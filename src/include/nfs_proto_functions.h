@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -61,6 +61,8 @@
 #include "err_HashTable.h"
 
 #define  NFS4_ATTRVALS_BUFFLEN  1024
+
+#define MAX_LAYOUT_SEGMENTS 64
 
 /* ------------------------------ Typedefs and structs----------------------- */
 
@@ -792,6 +794,10 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op, /* [IN] NFS4 OP arguments */
                          compound_data_t * data,        /* [IN] current data for the compound request */
                          struct nfs_resop4 *resp);      /* [OUT] NFS4 OP results */
 
+int nfs41_op_commit(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
+                   compound_data_t * data,      /* [IN] current data for the compound request */
+                   struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
+
 int nfs41_op_close(struct nfs_argop4 *op,       /* [IN] NFS4 OP arguments */
                    compound_data_t * data,      /* [IN] current data for the compound request */
                    struct nfs_resop4 *resp);    /* [OUT] NFS4 OP results */
@@ -1008,7 +1014,7 @@ static const fattr4_dent_t __attribute__ ((__unused__)) fattr4tab[] =
 #ifdef _USE_NFS4_ACL
   "FATTR4_ACLSUPPORT", 13, 1, sizeof(fattr4_aclsupport), FATTR4_ATTR_READ}
 #else
-  "FATTR4_ACLSUPPORT", 13, 0, sizeof(fattr4_aclsupport), FATTR4_ATTR_READ}
+  "FATTR4_ACLSUPPORT", 13, 1, sizeof(fattr4_aclsupport), FATTR4_ATTR_READ}
 #endif
   ,
   {
@@ -1066,7 +1072,7 @@ static const fattr4_dent_t __attribute__ ((__unused__)) fattr4tab[] =
   "FATTR4_MAXWRITE", 31, 1, sizeof(fattr4_maxwrite), FATTR4_ATTR_READ}
   ,
   {
-  "FATTR4_MIMETYPE", 32, 1, sizeof(fattr4_mimetype), FATTR4_ATTR_READ_WRITE}
+  "FATTR4_MIMETYPE", 32, 0, sizeof(fattr4_mimetype), FATTR4_ATTR_READ_WRITE}
   ,
   {
   "FATTR4_MODE", 33, 1, sizeof(fattr4_mode), FATTR4_ATTR_READ_WRITE}
@@ -1147,73 +1153,76 @@ static const fattr4_dent_t __attribute__ ((__unused__)) fattr4tab[] =
   ,
   {
   "FATTR4_DIR_NOTIF_DELAY", 56, 0, sizeof(fattr4_dir_notif_delay),
-        FATTR4_DIR_NOTIF_DELAY}
+        FATTR4_ATTR_READ}
   ,
   {
   "FATTR4_DIRENT_NOTIF_DELAY", 57, 0, sizeof(fattr4_dirent_notif_delay),
-        FATTR4_DIRENT_NOTIF_DELAY}
+        FATTR4_ATTR_READ}
   ,
   {
-  "FATTR4_DACL", 58, 0, sizeof(fattr4_dacl), FATTR4_DACL}
+  "FATTR4_DACL", 58, 0, sizeof(fattr4_dacl), FATTR4_ATTR_READ_WRITE}
   ,
   {
-  "FATTR4_SACL", 59, 0, sizeof(fattr4_sacl), FATTR4_SACL}
+  "FATTR4_SACL", 59, 0, sizeof(fattr4_sacl), FATTR4_ATTR_READ_WRITE}
   ,
   {
-  "FATTR4_CHANGE_POLICY", 60, 0, sizeof(fattr4_change_policy), FATTR4_CHANGE_POLICY}
+  "FATTR4_CHANGE_POLICY", 60, 0, sizeof(fattr4_change_policy), FATTR4_ATTR_READ}
   ,
   {
-  "FATTR4_FS_STATUS", 61, 0, sizeof(fattr4_fs_status), FATTR4_FS_STATUS}
+  "FATTR4_FS_STATUS", 61, 0, sizeof(fattr4_fs_status), FATTR4_ATTR_READ}
   ,
   {
-  "FATTR4_FS_LAYOUT_TYPES", 62, 1, sizeof(fattr4_fs_layout_types),
-        FATTR4_FS_LAYOUT_TYPES}
+#ifdef _USE_FSALMDS
+  "FATTR4_FS_LAYOUT_TYPES", 62, 1, sizeof(fattr4_fs_layout_types), FATTR4_ATTR_READ}
+#else
+  "FATTR4_FS_LAYOUT_TYPES", 62, 0, sizeof(fattr4_fs_layout_types), FATTR4_ATTR_READ}
+#endif /* _USE_FSALMDS */
   ,
   {
-  "FATTR4_LAYOUT_HINT", 63, 0, sizeof(fattr4_layout_hint), FATTR4_LAYOUT_HINT}
+  "FATTR4_LAYOUT_HINT", 63, 0, sizeof(fattr4_layout_hint), FATTR4_ATTR_WRITE}
   ,
   {
-  "FATTR4_LAYOUT_TYPES", 64, 0, sizeof(fattr4_layout_types), FATTR4_LAYOUT_TYPES}
+  "FATTR4_LAYOUT_TYPES", 64, 0, sizeof(fattr4_layout_types), FATTR4_ATTR_READ}
   ,
   {
-  "FATTR4_LAYOUT_BLKSIZE", 65, 1, sizeof(fattr4_layout_blksize), FATTR4_LAYOUT_BLKSIZE}
+#ifdef _USE_FSALMDS
+  "FATTR4_LAYOUT_BLKSIZE", 65, 1, sizeof(fattr4_layout_blksize), FATTR4_ATTR_READ}
+#else
+  "FATTR4_LAYOUT_BLKSIZE", 65, 0, sizeof(fattr4_layout_blksize), FATTR4_ATTR_READ}
+#endif /* _USE_FSALMDS */
   ,
   {
-  "FATTR4_LAYOUT_ALIGNMENT", 66, 0, sizeof(fattr4_layout_alignment),
-        FATTR4_LAYOUT_ALIGNMENT}
+  "FATTR4_LAYOUT_ALIGNMENT", 66, 0, sizeof(fattr4_layout_alignment), FATTR4_ATTR_READ}
   ,
   {
-  "FATTR4_FS_LOCATIONS_INFO", 67, 0, sizeof(fattr4_fs_locations_info),
-        FATTR4_FS_LOCATIONS_INFO}
+  "FATTR4_FS_LOCATIONS_INFO", 67, 0, sizeof(fattr4_fs_locations_info), FATTR4_ATTR_READ}
   ,
   {
-  "FATTR4_MDSTHRESHOLD", 68, 0, sizeof(fattr4_mdsthreshold), FATTR4_MDSTHRESHOLD}
+  "FATTR4_MDSTHRESHOLD", 68, 0, sizeof(fattr4_mdsthreshold), FATTR4_ATTR_READ}
   ,
   {
-  "FATTR4_RETENTION_GET", 69, 0, sizeof(fattr4_retention_get), FATTR4_RETENTION_GET}
+  "FATTR4_RETENTION_GET", 69, 0, sizeof(fattr4_retention_get), FATTR4_ATTR_READ}
   ,
   {
-  "FATTR4_RETENTION_SET", 70, 0, sizeof(fattr4_retention_set), FATTR4_RETENTION_SET}
+  "FATTR4_RETENTION_SET", 70, 0, sizeof(fattr4_retention_set), FATTR4_ATTR_WRITE}
   ,
   {
-  "FATTR4_RETENTEVT_GET", 71, 0, sizeof(fattr4_retentevt_get), FATTR4_RETENTEVT_GET}
+  "FATTR4_RETENTEVT_GET", 71, 0, sizeof(fattr4_retentevt_get), FATTR4_ATTR_READ}
   ,
   {
-  "FATTR4_RETENTEVT_SET", 72, 0, sizeof(fattr4_retentevt_set), FATTR4_RETENTEVT_SET}
+  "FATTR4_RETENTEVT_SET", 72, 0, sizeof(fattr4_retentevt_set), FATTR4_ATTR_WRITE}
   ,
   {
-  "FATTR4_RETENTION_HOLD", 73, 0, sizeof(fattr4_retention_hold), FATTR4_RETENTION_HOLD}
+  "FATTR4_RETENTION_HOLD", 73, 0, sizeof(fattr4_retention_hold), FATTR4_ATTR_READ_WRITE}
   ,
   {
-  "FATTR4_MODE_SET_MASKED", 74, 0, sizeof(fattr4_mode_set_masked),
-        FATTR4_MODE_SET_MASKED}
+  "FATTR4_MODE_SET_MASKED", 74, 0, sizeof(fattr4_mode_set_masked), FATTR4_ATTR_WRITE}
   ,
   {
-  "FATTR4_SUPPATTR_EXCLCREAT", 75, 1, sizeof(fattr4_suppattr_exclcreat),
-        FATTR4_SUPPATTR_EXCLCREAT}
+  "FATTR4_SUPPATTR_EXCLCREAT", 75, 1, sizeof(fattr4_suppattr_exclcreat), FATTR4_ATTR_READ}
   ,
   {
-  "FATTR4_FS_CHARSET_CAP", 76, 0, sizeof(fattr4_fs_charset_cap), FATTR4_FS_CHARSET_CAP}
+  "FATTR4_FS_CHARSET_CAP", 76, 0, sizeof(fattr4_fs_charset_cap), FATTR4_ATTR_READ}
 #endif                          /* _USE_NFS4_1 */
 };
 
@@ -1541,5 +1550,4 @@ int idmap_compute_hash_value(char *name, uint32_t * phashval);
 
 int nfs4_Is_Fh_Referral(nfs_fh4 * pfh);
 int nfs4_Set_Fh_Referral(nfs_fh4 * pfh);
-
 #endif

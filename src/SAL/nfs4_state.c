@@ -95,7 +95,7 @@ int state_conflict(state_t      * pstate,
       return FALSE;              /* lock conflict is managed in the NFS request */
 
     case STATE_TYPE_LAYOUT:
-      return FALSE;              /** @todo No conflict management on layout for now */
+      return FALSE;              /** layout conflict is managed by the FSAL */
 
     case STATE_TYPE_DELEG:
       /* Not yet implemented for now, answer TRUE to avoid weird behavior */
@@ -136,6 +136,20 @@ state_status_t state_add(cache_entry_t         * pentry,
   state_t           * piter_state = NULL;
   char                debug_str[OTHERSIZE * 2 + 1];
   struct glist_head * glist;
+
+  /* Ensure that states are are associated only with the appropriate
+     owners */
+
+  if (((state_type == STATE_TYPE_SHARE) &&
+       (powner_input->so_type != STATE_OPEN_OWNER_NFSV4)) ||
+      ((state_type == STATE_TYPE_LOCK) &&
+       (powner_input->so_type != STATE_LOCK_OWNER_NFSV4)) ||
+      (((state_type == STATE_TYPE_DELEG) ||
+        (state_type == STATE_TYPE_LAYOUT)) &&
+       (powner_input->so_type != STATE_CLIENTID_OWNER_NFSV4)))
+    {
+      return STATE_BAD_TYPE;
+    }
 
   /* Acquire lock to enter critical section on this entry */
   P_w(&pentry->lock);
@@ -211,6 +225,9 @@ state_status_t state_add(cache_entry_t         * pentry,
   if (isDebug(COMPONENT_STATE))
     sprint_mem(debug_str, (char *)pnew_state->stateid_other, OTHERSIZE);
 
+  init_glist(&pnew_state->state_list);
+  init_glist(&pnew_state->owner_states);
+
   /* Add the state to the related hashtable */
   if(!nfs4_State_Set(pnew_state->stateid_other, pnew_state))
     {
@@ -234,6 +251,11 @@ state_status_t state_add(cache_entry_t         * pentry,
 
   /* Add state to list for cache entry */
   glist_add_tail(&pentry->object.file.state_list, &pnew_state->state_list);
+
+  P(powner_input->so_mutex);
+  glist_add_tail(&powner_input->so_owner.so_nfs4_owner.so_state_list,
+                 &pnew_state->owner_states);
+  V(powner_input->so_mutex);
 
   /* Copy the result */
   *ppstate = pnew_state;
@@ -290,12 +312,20 @@ state_status_t state_del(state_t              * pstate,
 
   P_w(&pentry->lock);
 
+  /* Remove from list of states owned by owner */
+
   /* Release the state owner reference */
   if(pstate->state_powner != NULL)
-    dec_state_owner_ref(pstate->state_powner, pclient);
+    {
+      P(pstate->state_powner->so_mutex);
+      glist_del(&pstate->owner_states);
+      V(pstate->state_powner->so_mutex);
+      dec_state_owner_ref(pstate->state_powner, pclient);
+    }
 
   /* Remove from the list of states for a particular cache entry */
   glist_del(&pstate->state_list);
+
 
   /* Remove from the list of lock states for a particular open state */
   if(pstate->state_type == STATE_TYPE_LOCK)

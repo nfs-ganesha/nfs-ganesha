@@ -13,4 +13,3 @@ libtoolize --force --copy
 autoconf
 autoheader
 automake -a --add-missing -Wall
-
