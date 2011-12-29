@@ -349,7 +349,6 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
                           unsigned long *netMask)       /* [OUT] return address mask  */
 {
   CIDR * pcidr = NULL ;
-  unsigned int i = 0 ;
 
   if( ( pcidr = cidr_from_str( host ) ) == NULL )
     return 1 ;
