@@ -1,6 +1,9 @@
 /*
  * Misc pieces
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "stuff_alloc.h"
 #include "../include/cidr.h"
