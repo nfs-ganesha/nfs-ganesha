@@ -958,7 +958,7 @@ void nfs_rpc_getreq(fd_set * readfds)
 
   for(sock = 0; sock < FD_SETSIZE; sock += NFDBITS)
     {
-      for(mask = *maskp++; (bit = ffs(mask)); mask ^= (1 << (bit - 1)))
+      for(mask = *maskp++; (bit = ffs(mask)); mask ^= (1L << (bit - 1)))
         {
           /* sock has input waiting */
           rpc_sock = sock + bit - 1;

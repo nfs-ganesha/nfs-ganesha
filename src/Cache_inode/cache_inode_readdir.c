@@ -718,6 +718,7 @@ cache_inode_status_t cache_inode_remove_cached_dirent(
 }                               /* cache_inode_remove_cached_dirent */
 
 
+#if 0 // unused code
 static void debug_print_dirents(cache_entry_t *dir_pentry)
 {
     struct avltree_node *dirent_node;
@@ -774,6 +775,7 @@ static void debug_print_dirents(cache_entry_t *dir_pentry)
         ++ix;
     }
 }
+#endif
 
 /**
  *

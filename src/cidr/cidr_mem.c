@@ -1,6 +1,9 @@
 /*
  * Various libcidr memory-related functions
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <errno.h>
 #include <stdlib.h>
@@ -16,7 +19,7 @@ cidr_alloc(void)
 {
 	CIDR *toret;
 
-	toret = Mem_Alloc(sizeof(CIDR));
+	toret = (CIDR*)Mem_Alloc(sizeof(CIDR));
 	if(toret==NULL)
 	{
 		errno = ENOMEM;
