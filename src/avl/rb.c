@@ -28,6 +28,9 @@
  *     4. Path from a node to any leafs has the same number of BLACK nodes.
  *
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include "avltree.h"
 
 /*

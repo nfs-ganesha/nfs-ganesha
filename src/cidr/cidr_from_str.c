@@ -2,6 +2,9 @@
  * cidr_from_str() - Generate a CIDR structure from a string in addr/len
  * form.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <ctype.h>
 #include <errno.h>

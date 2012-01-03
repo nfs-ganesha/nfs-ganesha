@@ -1,6 +1,9 @@
 /*
  * cidr_get - Get and return various semi-raw bits of info
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <errno.h>
 #include <stdlib.h>
