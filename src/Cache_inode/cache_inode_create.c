@@ -324,8 +324,8 @@ cache_inode_create(cache_entry_t * pentry_parent,
                 {
                     cache_inode_status_t kill_status;
                     LogEvent(COMPONENT_CACHE_INODE,
-                             "cache_inode_create: Stale FSAL File Handle detected for pentry = %p",
-                             pentry_parent);
+                             "cache_inode_create: Stale FSAL File Handle detected for pentry = %p, fsal_status=(%u,%u)",
+                             pentry_parent, fsal_status.major, fsal_status.minor);
 
                     cache_inode_kill_entry(pentry_parent, NO_LOCK, ht,
                                            pclient, &kill_status);

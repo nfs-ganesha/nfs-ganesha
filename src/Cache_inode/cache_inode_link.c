@@ -265,8 +265,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
           fsal_status_t getattr_status;
 
           LogEvent(COMPONENT_CACHE_INODE,
-                   "cache_inode_link: Stale FSAL File Handle detected for at least one in pentry = %p and pentry = %p",
-                   pentry_src, pentry_dir_dest);
+                   "cache_inode_link: Stale FSAL File Handle detected for at least one in pentry = %p and pentry = %p, fsal_status=(%u,%u)",
+                   pentry_src, pentry_dir_dest,fsal_status.major, fsal_status.minor );
 
           /* Use FSAL_getattrs to find which entry is staled */
           getattr_status = FSAL_getattrs(&handle_src, pcontext, &link_attributes);
