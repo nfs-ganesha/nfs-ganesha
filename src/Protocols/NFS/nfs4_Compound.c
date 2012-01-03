@@ -399,7 +399,11 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
       else
        {
          /* Set optindex to op_illegal */
+#ifdef _USE_NFS4_1
          opindex = (COMPOUND4_MINOR==0)?optab4index[POS_ILLEGAL_V40]:optab4index[POS_ILLEGAL_V41];  
+#else
+         opindex = optab4index[POS_ILLEGAL_V40];  
+#endif 
          LogMajor( COMPONENT_NFS_V4, "Client is using Illegal operation #%u", COMPOUND4_ARRAY.argarray_val[i].argop ) ;
        }
 
