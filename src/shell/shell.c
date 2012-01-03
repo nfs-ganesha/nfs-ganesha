@@ -123,6 +123,7 @@
 #endif
 
 #include <sys/time.h>
+#include "shell.h"
 
 #define MAX_OUTPUT_LEN  (1024*1024)     /* 1MB */
 

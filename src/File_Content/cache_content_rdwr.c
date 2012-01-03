@@ -87,10 +87,10 @@ cache_content_status_t cache_content_open(cache_content_entry_t * pentry,
   if((pentry == NULL) || (pstatus == NULL))
     return CACHE_CONTENT_INVALID_ARGUMENT;
 
-  if(pclient->use_cache == 0)
+  if(pclient->use_fd_cache == 0)
     pentry->local_fs_entry.opened_file.last_op = 0;     /* to force opening the file */
 
-  if((pclient->use_cache == 0) ||
+  if((pclient->use_fd_cache == 0) ||
      (time(NULL) - pentry->local_fs_entry.opened_file.last_op > pclient->retention))
     {
 
@@ -163,9 +163,9 @@ cache_content_status_t cache_content_close(cache_content_entry_t * pentry,
       return *pstatus;
     }
 
-  if((pclient->use_cache == 0) ||
+  if((pclient->use_fd_cache == 0) ||
      (time(NULL) - pentry->local_fs_entry.opened_file.last_op > pclient->retention) ||
-     (pentry->local_fs_entry.opened_file.local_fd > pclient->max_fd_per_thread))
+     (pentry->local_fs_entry.opened_file.local_fd > pclient->max_fd))
     {
       close(pentry->local_fs_entry.opened_file.local_fd);
       pentry->local_fs_entry.opened_file.local_fd = -1;

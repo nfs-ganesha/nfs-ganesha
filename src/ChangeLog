@@ -487,3 +487,7 @@
        - FSAL_LUSTRE/FSAL_XFS/FSAL_FUSELIKE/FSAL_ZFS: regression in readdir detected and fixed
        - export list now supports IP ranges using the CIDR format
 
+1.4.0 -
+      - Bug Fix: Memory leak fixed in RPC's DRC
+      - Bug Fix: Bad computation of rbt_value in RPC's DRC's hashtable
+

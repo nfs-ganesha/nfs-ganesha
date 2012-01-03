@@ -198,7 +198,7 @@ int shell_SetDbgLvl(shell_state_t * context, char *str_debug_level);
  * shell_GetDbgLvl
  * Get the special variable $DEBUG_LEVEL and $DBG_LVL (internal use).
  */
-int shell_GetDbgLvl();
+int shell_GetDbgLvl(shell_state_t * context);
 
 /**
  * shell_GetInputStream

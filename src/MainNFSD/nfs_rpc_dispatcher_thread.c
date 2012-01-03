@@ -649,7 +649,11 @@ void nfs_Init_svc()
  * Selects the smallest request queue,
  * whome the worker is ready and is not garbagging.
  */
-static unsigned int select_worker_queue()
+
+/* PhD: Please note that I renamed this function, added 
+ * it prototype to include/nfs_core.h and removed its "static" tag.
+ * This is done to share this code with the 9P implementation */
+unsigned int nfs_core_select_worker_queue()
 {
   #define NO_VALUE_CHOOSEN  1000000
   unsigned int worker_index = NO_VALUE_CHOOSEN;
@@ -712,7 +716,7 @@ static unsigned int select_worker_queue()
 
   return worker_index;
 
-}                               /* select_worker_queue */
+} /* nfs_core_select_worker_queue */
 
 /**
  * process_rpc_request: process an RPC request.
@@ -744,7 +748,7 @@ process_status_t process_rpc_request(SVCXPRT *xprt)
 #endif
     {
        /* choose a worker depending on its queue length */
-       worker_index = select_worker_queue();
+       worker_index = nfs_core_select_worker_queue();
     }
 
   LogFullDebug(COMPONENT_DISPATCH,
@@ -954,7 +958,7 @@ void nfs_rpc_getreq(fd_set * readfds)
 
   for(sock = 0; sock < FD_SETSIZE; sock += NFDBITS)
     {
-      for(mask = *maskp++; (bit = ffs(mask)); mask ^= (1 << (bit - 1)))
+      for(mask = *maskp++; (bit = ffs(mask)); mask ^= (1L << (bit - 1)))
         {
           /* sock has input waiting */
           rpc_sock = sock + bit - 1;

@@ -158,7 +158,7 @@ cache_content_status_t cache_content_read_conf_client_parameter(config_file_t in
         }
       else if(!strcasecmp(key_name, "Max_Fd"))
         {
-          pparam->max_fd_per_thread = atoi(key_value);
+          pparam->max_fd = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "OpenFile_Retention"))
         {
@@ -166,7 +166,7 @@ cache_content_status_t cache_content_read_conf_client_parameter(config_file_t in
         }
       else if(!strcasecmp(key_name, "Use_OpenClose_cache"))
         {
-          pparam->use_cache = StrToBoolean(key_value);
+          pparam->use_fd_cache = StrToBoolean(key_value);
         }
       else
         {

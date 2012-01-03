@@ -225,8 +225,10 @@ int name2uid(char *name, uid_t * puid)
   gid_t gss_gid;
   uid_t gss_uid;
 #endif
+#ifdef _USE_NFSIDMAP
   char fqname[NFS4_MAX_DOMAIN_LEN];
   int rc;
+#endif
 
   /* NFsv4 specific features: RPCSEC_GSS will provide user like nfs/<host>
    * choice is made to map them to root */
@@ -247,9 +249,46 @@ int name2uid(char *name, uid_t * puid)
                    "name2uid: uidmap_get mapped %s to uid= %d",
                    name, uid);
       *puid = uid;
+
+      return 1 ;
     }
   else
     {
+#ifdef _SOLARIS
+      if(getpwnam_r(name, &passwd, buff, NFS4_MAX_DOMAIN_LEN) != 0)
+#else
+      if(getpwnam_r(name, &passwd, buff, NFS4_MAX_DOMAIN_LEN, &ppasswd) != 0)
+#endif                          /* _SOLARIS */
+        {
+          LogFullDebug(COMPONENT_IDMAPPER,
+                       "name2uid: getpwnam_r %s failed",
+                       name);
+          *puid = -1;
+          return 0;
+        }
+      else
+        {
+          *puid = passwd.pw_uid;
+#ifdef _HAVE_GSSAPI
+          if(uidgidmap_add(passwd.pw_uid, passwd.pw_gid) != ID_MAPPER_SUCCESS)
+            {
+              LogCrit(COMPONENT_IDMAPPER,
+                      "name2uid: uidgidmap_add gss_uid %d gss_gid %d failed",
+                      gss_uid, gss_gid);
+              return 0;
+            }
+#endif                          /* _HAVE_GSSAPI */
+          if(uidmap_add(name, passwd.pw_uid) != ID_MAPPER_SUCCESS)
+            {
+              LogCrit(COMPONENT_IDMAPPER,
+                      "name2uid: uidmap_add %s %d failed",
+                      name, passwd.pw_uid);
+              return 0;
+            }
+
+           return 1 ; /* Job is done */
+        }
+
 #ifdef _USE_NFSIDMAP
       if(!nfsidmap_set_conf())
         {
@@ -306,42 +345,8 @@ int name2uid(char *name, uid_t * puid)
         }
 #endif                          /* _HAVE_GSSAPI */
 
-#else                           /* _USE_NFSIDMAP */
+#endif                           /* _USE_NFSIDMAP */
 
-#ifdef _SOLARIS
-      if(getpwnam_r(name, &passwd, buff, NFS4_MAX_DOMAIN_LEN) != 0)
-#else
-      if(getpwnam_r(name, &passwd, buff, NFS4_MAX_DOMAIN_LEN, &ppasswd) != 0)
-#endif                          /* _SOLARIS */
-        {
-          LogFullDebug(COMPONENT_IDMAPPER,
-                       "name2uid: getpwnam_r %s failed",
-                       name);
-          *puid = -1;
-          return 0;
-        }
-      else
-        {
-          *puid = passwd.pw_uid;
-#ifdef _HAVE_GSSAPI
-          if(uidgidmap_add(passwd.pw_uid, passwd.pw_gid) != ID_MAPPER_SUCCESS)
-            {
-              LogCrit(COMPONENT_IDMAPPER,
-                      "name2uid: uidgidmap_add gss_uid %d gss_gid %d failed",
-                      gss_uid, gss_gid);
-              return 0;
-            }
-#endif                          /* _HAVE_GSSAPI */
-          if(uidmap_add(name, passwd.pw_uid) != ID_MAPPER_SUCCESS)
-            {
-              LogCrit(COMPONENT_IDMAPPER,
-                      "name2uid: uidmap_add %s %d failed",
-                      name, passwd.pw_uid);
-              return 0;
-            }
-
-        }
-#endif                          /* _USE_NFSIDMAP */
     }
 
   return 1;

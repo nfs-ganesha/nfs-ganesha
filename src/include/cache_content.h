@@ -116,9 +116,9 @@ typedef struct cache_content_client_parameter__
   unsigned int nb_prealloc_entry;             /**< number of preallocated pentries */
   char cache_dir[MAXPATHLEN];                 /**< Path to the directory where data are cached */
   unsigned int flush_force_fsal;              /**< Should the flush force the write to FSAL    */
-  unsigned int max_fd_per_thread;             /**< Max fd open per client */
+  unsigned int max_fd;                        /**< Max fd open per client */
   time_t retention;                           /**< Fd retention duration */
-  unsigned int use_cache;                     /** Do we cache fd or not ? */
+  unsigned int use_fd_cache;                  /** Do we cache fd or not ? */
 } cache_content_client_parameter_t;
 
 #define CACHE_CONTENT_SPEC_DATA_SIZE 400
@@ -175,9 +175,9 @@ typedef struct cache_content_client__
   cache_content_stat_t stat;                        /**< File content statistics for this client                  */
   char cache_dir[MAXPATHLEN];                       /**< Path to the directory where data are cached              */
   unsigned int flush_force_fsal;                    /**< Should the flush force the write to FSAL                 */
-  unsigned int max_fd_per_thread;                   /**< Max fd open per client                                   */
+  unsigned int max_fd;                              /**< Max fd open per client                                   */
   time_t retention;                                 /**< Fd retention duration                                    */
-  unsigned int use_cache;                           /**< Do we cache fd or not ?                                  */
+  unsigned int use_fd_cache;                        /**< Do we cache fd or not ?                                  */
   int fd_gc_needed;                                 /**< Should we perform fd gc ?                                */
 } cache_content_client_t;
 
