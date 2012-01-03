@@ -107,7 +107,7 @@
 #define NB_PREALLOC_GC_DUPREQ 100
 #define NB_PREALLOC_ID_MAPPER 200
 
-#define PRIME_CACHE_INODE 29    /* has to be a prime number */
+#define PRIME_CACHE_INODE 37    /* has to be a prime number */
 #define NB_PREALLOC_HASH_CACHE_INODE 1000
 #define NB_PREALLOC_LRU_CACHE_INODE 1000
 

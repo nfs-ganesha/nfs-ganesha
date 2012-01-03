@@ -1,6 +1,9 @@
 /*
  * Functions to generate various networks based on a CIDR
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <errno.h>
 #include <stdlib.h>
@@ -88,7 +91,7 @@ cidr_net_subnets(const CIDR *addr)
 		return(NULL);
 	}
 
-	toret = Mem_Alloc(2 * sizeof(CIDR *));
+	toret = (CIDR **)Mem_Alloc(2 * sizeof(CIDR *));
 	if(toret==NULL)
 	{
 		errno = ENOMEM;

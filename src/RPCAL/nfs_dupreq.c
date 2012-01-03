@@ -176,8 +176,9 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
 {
   int rc;
   nfs_function_desc_t funcdesc = nfs2_func_desc[0];
+  hash_buffer_t usedbuffkey;
 
-  rc = HashTable_Del(ht_dupreq, buffkey, NULL, NULL);
+  rc = HashTable_Del(ht_dupreq, buffkey, &usedbuffkey, NULL);
 
   /* if hashtable no such key => dupreq garbaged by another thread */
   if(rc != HASHTABLE_SUCCESS && rc != HASHTABLE_ERROR_NO_SUCH_KEY)
@@ -271,6 +272,7 @@ static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
 
   /* Send the entry back to the pool */
   ReleaseToPool(pdupreq, dupreq_pool);
+  Mem_Free(usedbuffkey.pdata);
 
   return DUPREQ_SUCCESS;
 }
@@ -396,7 +398,7 @@ unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * 
 
   unsigned long addr_hash = hash_sockaddr((sockaddr_t *) &pdupkey->addr, CHECK_PORT);
 
-  return (((unsigned long)pdupkey->xid + addr_hash)^(pdupkey->checksum)) % p_hparam->index_size;
+  return (((unsigned long)pdupkey->xid + addr_hash)^(pdupkey->checksum));
 }                               /* dupreq_rbt_hash_func */
 
 /**
@@ -605,8 +607,10 @@ int nfs_dupreq_add_not_finished(long xid,
       status = DUPREQ_INSERT_MALLOC_ERROR;
   else
     status = DUPREQ_SUCCESS;
-  if (status != DUPREQ_SUCCESS)
+  if (status != DUPREQ_SUCCESS) {
     ReleaseToPool(pdupreq, dupreq_pool);
+    Mem_Free(pdupkey);
+  }
   return status;
 }                               /* nfs_dupreq_add_not_finished */
 

@@ -1,6 +1,9 @@
 /*
  * Functions to convert to/from in[6]_addr structs
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <errno.h>
 #include <stdlib.h>
@@ -37,7 +40,7 @@ cidr_to_inaddr(const CIDR *addr, struct in_addr *uptr)
 	 */
 	toret = uptr;
 	if(toret==NULL)
-		toret = Mem_Alloc(sizeof(struct in_addr));
+	  toret = (struct in_addr*)Mem_Alloc(sizeof(struct in_addr));
 	if(toret==NULL)
 	{
 		errno = ENOMEM;
@@ -142,7 +145,7 @@ cidr_to_in6addr(const CIDR *addr, struct in6_addr *uptr)
 	/* Use their struct if they gave us one */
 	toret = uptr;
 	if(toret==NULL)
-		toret = Mem_Alloc(sizeof(struct in6_addr));
+	  toret = (struct in6_addr*)Mem_Alloc(sizeof(struct in6_addr));
 	if(toret==NULL)
 	{
 		errno = ENOMEM;
