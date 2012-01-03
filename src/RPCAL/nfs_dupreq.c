@@ -398,7 +398,7 @@ unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * 
 
   unsigned long addr_hash = hash_sockaddr((sockaddr_t *) &pdupkey->addr, CHECK_PORT);
 
-  return (((unsigned long)pdupkey->xid + addr_hash)^(pdupkey->checksum)) % p_hparam->index_size;
+  return (((unsigned long)pdupkey->xid + addr_hash)^(pdupkey->checksum));
 }                               /* dupreq_rbt_hash_func */
 
 /**
