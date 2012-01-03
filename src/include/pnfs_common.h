@@ -33,7 +33,6 @@
 #define _FSAL_PNFS_COMMON_H
 
 #include <stdint.h>
-#include <stdbool.h>
 #include "nfs4.h"
 
 /* The next 3 line are mandatory for proper autotools based management */
@@ -93,33 +92,33 @@ struct pnfs_deviceid {
  *         segments and the io_modes are compatible.
  */
 
-static inline bool
+static inline bool_t
 pnfs_segments_overlap(struct pnfs_segment segment1,
                       struct pnfs_segment segmenta)
 {
      if (!(segment1.io_mode & segmenta.io_mode)) {
-          return false;
+          return FALSE;
      } else if ((segment1.length == 0) || (segmenta.length == 0)) {
-          return false;
+          return FALSE;
      } else if (segment1.offset < segmenta.offset) {
           if (segment1.length == NFS4_UINT64_MAX) {
-               return true;
+               return TRUE;
           } else if (segment1.offset + segment1.length < segmenta.offset) {
-               return false;
+               return FALSE;
           } else {
-               return true;
+               return TRUE;
           }
      } else if (segmenta.offset < segment1.offset) {
           if (segmenta.length == NFS4_UINT64_MAX) {
-               return true;
+               return TRUE;
           } else if ((segmenta.offset + segmenta.length)
                      < segment1.offset) {
-               return false;
+               return FALSE;
           } else {
-               return true;
+               return TRUE;
           }
      } else {
-          return true;
+          return TRUE;
      }
 }
 
@@ -132,27 +131,27 @@ pnfs_segments_overlap(struct pnfs_segment segment1,
  * @return True if segment2 is completely contained within segment1
  */
 
-static inline bool
+static inline bool_t
 pnfs_segment_contains(struct pnfs_segment segment1,
                       struct pnfs_segment segment2)
 {
      if (!(segment1.io_mode & segment2.io_mode)) {
-          return false;
+          return FALSE;
      } else if (segment1.length == 0) {
-          return false;
+          return FALSE;
      } else if (segment1.offset < segment2.offset) {
           if (segment1.length == NFS4_UINT64_MAX) {
-               return true;
+               return TRUE;
           } else if (segment2.length == NFS4_UINT64_MAX) {
-               return false;
+               return FALSE;
           } else if ((segment2.offset + segment2.length) <=
                      (segment1.offset + segment1.length)) {
-               return true;
+               return TRUE;
           } else {
-               return false;
+               return FALSE;
           }
      } else {
-          return false;
+          return FALSE;
      }
 }
 

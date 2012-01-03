@@ -41,7 +41,6 @@
 
 #include <pthread.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs4.h"
@@ -77,7 +76,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
   const char           * tag = "CLOSE";
   struct glist_head    * glist, * glistn;
 #ifdef _USE_FSALMDS
-  bool                   last_close = TRUE;
+  bool_t                 last_close = TRUE;
 #endif /* _USE_FSALMDS */
 
   LogDebug(COMPONENT_STATE,
@@ -221,7 +220,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
                           &data->current_entry->object.file.state_list)
         {
           state_t *pstate = glist_entry(glist, state_t, state_list);
-          bool deleted = false;
+          bool_t deleted = FALSE;
           struct pnfs_segment entire = {
                .io_mode = LAYOUTIOMODE4_ANY,
                .offset = 0,
@@ -237,8 +236,8 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
               nfs4_return_one_state(data->current_entry,
                                     data->pclient,
                                     data->pcontext,
-                                    true,
-                                    false,
+                                    TRUE,
+                                    FALSE,
                                     0,
                                     pstate,
                                     entire,

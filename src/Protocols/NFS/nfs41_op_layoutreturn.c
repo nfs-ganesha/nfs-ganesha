@@ -49,7 +49,6 @@
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
 #include <stdint.h>
-#include <stdbool.h>
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
@@ -111,7 +110,7 @@ nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
      /* FSID of candidate file to return */
      fsal_fsid_t fsid = {0, 0};
      /* True if the supplied layout state was deleted */
-     bool deleted = false;
+     bool_t deleted = FALSE;
      /* State specified in the case of LAYOUTRETURN4_FILE */
      state_t *layout_state = NULL;
      /* State owner associated with this clientid, for bulk returns */
@@ -168,7 +167,7 @@ nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
                     data->current_entry,
                     data->pclient,
                     data->pcontext,
-                    false,
+                    FALSE,
                     arg_LAYOUTRETURN4.lora_reclaim,
                     arg_LAYOUTRETURN4.lora_layoutreturn.lr_returntype,
                     layout_state,
@@ -283,7 +282,7 @@ nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
                     nfs4_return_one_state(layout_state->state_pentry,
                                           data->pclient,
                                           data->pcontext,
-                                          true,
+                                          TRUE,
                                           arg_LAYOUTRETURN4.lora_reclaim,
                                           (arg_LAYOUTRETURN4
                                            .lora_layoutreturn.lr_returntype),

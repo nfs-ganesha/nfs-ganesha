@@ -49,7 +49,6 @@
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
 #include <stdint.h>
-#include <stdbool.h>
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
@@ -145,11 +144,11 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
 
      /* Suggest a new size, if we have it */
      if (arg_LAYOUTCOMMIT4.loca_last_write_offset.no_newoffset) {
-          arg.new_offset = true;
+          arg.new_offset = TRUE;
           arg.last_write =
                arg_LAYOUTCOMMIT4.loca_last_write_offset.newoffset4_u.no_offset;
      } else {
-          arg.new_offset = false;
+          arg.new_offset = FALSE;
      }
 
      arg.reclaim = arg_LAYOUTCOMMIT4.loca_reclaim;
@@ -163,7 +162,7 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
 
      /* Suggest a new modification time if we have it */
      if (arg_LAYOUTCOMMIT4.loca_time_modify.nt_timechanged) {
-          arg.time_changed = true;
+          arg.time_changed = TRUE;
           arg.new_time.seconds =
                arg_LAYOUTCOMMIT4.loca_time_modify.newtime4_u.nt_time.seconds;
           arg.new_time.nseconds =

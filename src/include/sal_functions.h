@@ -433,8 +433,8 @@ unsigned long lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
 #ifdef _USE_FSALMDS
 state_status_t state_add_segment(state_t             * pstate,
                                  struct pnfs_segment * segment,
-                                void                * fsal_data,
-                                 bool                  return_on_close);
+                                 void                * fsal_data,
+                                 bool_t                return_on_close);
 
 state_status_t state_delete_segment(state_layout_segment_t *segment);
 state_status_t state_lookup_layout_state(cache_entry_t * pentry,

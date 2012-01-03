@@ -143,14 +143,14 @@ void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask);
 nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
                                cache_inode_client_t* pclient,
                                fsal_op_context_t* context,
-                               bool synthetic,
-                               bool reclaim,
+                               fsal_boolean_t synthetic,
+                               fsal_boolean_t reclaim,
                                layoutreturn_type4 return_type,
                                state_t *layout_state,
                                struct pnfs_segment spec_segment,
                                u_int body_len,
                                const char* body_val,
-                               bool* deleted);
+                               bool_t* deleted);
 fsal_boolean_t nfs4_pnfs_supported(const exportlist_t *export);
 #endif /* _USE_FSALMDS */
 nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
