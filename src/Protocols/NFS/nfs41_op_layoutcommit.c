@@ -49,7 +49,6 @@
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
 #include <stdint.h>
-#include <stdbool.h>
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"

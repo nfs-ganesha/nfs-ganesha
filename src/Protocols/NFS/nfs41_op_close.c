@@ -41,7 +41,6 @@
 
 #include <pthread.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs4.h"

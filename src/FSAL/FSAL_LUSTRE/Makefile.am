@@ -39,6 +39,14 @@ libfsallustre_la_SOURCES = fsal_access.c      \
                           ../../include/err_fsal.h   \
                           ../../include/FSAL/FSAL_LUSTRE/fsal_types.h
 
+if USE_FSALMDS
+libfsallustre_la_SOURCES += fsal_mds.c
+endif
+
+if USE_FSALDS
+libfsallustre_la_SOURCES += fsal_ds.c 
+endif
+
 endif
 
 if USE_FSAL_SHOOK
@@ -79,6 +87,15 @@ libfsalshook_la_SOURCES = fsal_access.c      \
                           ../../include/fsal_types.h \
                           ../../include/err_fsal.h   \
                           ../../include/FSAL/FSAL_LUSTRE/fsal_types.h
+
+if USE_FSALMDS
+libfsalshook_la_SOURCES += fsal_mds.c
+endif
+
+if USE_FSALDS
+libfsalshook_la_SOURCES += fsal_ds.c
+endif
+
 
 endif
 

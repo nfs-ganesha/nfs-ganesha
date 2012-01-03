@@ -50,7 +50,6 @@
 #include <pwd.h>
 #include <grp.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
@@ -4263,14 +4262,14 @@ void nfs4_access_debug(char *label, uint32_t access, fsal_aceperm_t v4mask)
 nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
                                cache_inode_client_t* pclient,
                                fsal_op_context_t* context,
-                               bool synthetic,
-                               bool reclaim,
+                               fsal_boolean_t synthetic,
+                               fsal_boolean_t reclaim,
                                layoutreturn_type4 return_type,
                                state_t *layout_state,
                                struct pnfs_segment spec_segment,
                                u_int body_len,
                                const char* body_val,
-                               bool* deleted)
+                               fsal_boolean_t * deleted)
 {
      /* Return from cache_inode calls */
      cache_inode_status_t cache_status = 0;
@@ -4293,7 +4292,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
      /* The current segment in iteration */
      state_layout_segment_t *segment = NULL;
      /* If we have a lock on the segment */
-     bool seg_locked = false;
+     fsal_boolean_t seg_locked = false;
 
      if (body_val) {
           xdrmem_create(&lrf_body,

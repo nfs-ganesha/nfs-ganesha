@@ -471,7 +471,7 @@ static int op_dsread(struct nfs_argop4 *op,
                                   arg_READ4.count,
                                   res_READ4.READ4res_u.resok4.data.data_val,
                                   &res_READ4.READ4res_u.resok4.data.data_len,
-                                  (bool *)&res_READ4.READ4res_u.resok4.eof))
+                                  (fsal_boolean_t *)&res_READ4.READ4res_u.resok4.eof))
       != NFS4_OK)
     {
       Mem_Free(buffer);

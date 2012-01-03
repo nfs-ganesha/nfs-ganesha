@@ -37,7 +37,6 @@
 #endif                          /* HAVE_CONFIG_H */
 
 #include <stdint.h>
-#include <stdbool.h>
 #include "pnfs_common.h"
 
 #include "nfs4.h"
@@ -83,7 +82,7 @@ struct fsal_layoutget_res {
      /** Whether the layout should be returned on last close.  Note
       *  that this flag being set on one segment makes all layout
       *  segments associated with the same stateid return_on_close. */
-     bool return_on_close;
+     fsal_boolean_t return_on_close;
      /** This pointer is NULL on the first call FSAL_layoutget.  The
       *  FSAL may store a pointer to any data it wishes, and this
       *  pointer will be supplied to future calls to FSAL_layoutget
@@ -96,14 +95,14 @@ struct fsal_layoutget_res {
       *  clients support multiple segments granted by a single
       *  LAYOUTGET operation, so FSALs should grant a single segment
       *  and set this value on the first call. */
-     bool last_segment;
+     fsal_boolean_t last_segment;
      /** On input, this field signifies a request by the client to be
          signaled when a requested but unavailable layout becomes
          available.  In output, it signifies the FSAL's willingness to
          make a callback when the layout becomes available.  We do not
          yet implement callbacks, so it should always be set to
          false. */
-     bool signal_available;
+     fsal_boolean_t signal_available;
 };
 
 /**
@@ -115,7 +114,7 @@ struct fsal_layoutreturn_arg {
          it held prior to a server reboot.  As such, cur_segment is
          meaningless (no record of the layout having been granted
          exists). */
-     bool reclaim;
+     fsal_boolean_t reclaim;
      /** The type of layout being returned */
      layouttype4 lo_type;
      /** The return type of the LAYOUTRETURN call.  Meaningless if
@@ -136,14 +135,14 @@ struct fsal_layoutreturn_arg {
      void *fsal_seg_data;
      /** Whether this return was synthesized a result of
       *  return_on_close or lease expiration. */
-     bool synthetic;
+     fsal_boolean_t synthetic;
      /** If true, the FSAL must free all resources associated with
       *  res.segment. */
-     bool dispose;
+     fsal_boolean_t dispose;
      /** After this return, there will be no more layouts associated
       *  with this layout state (that is, there will be no more
       *  layouts for this (clientid, handle, layout type) triple. */
-     bool last_segment;
+     fsal_boolean_t last_segment;
 };
 
 /**
@@ -158,14 +157,14 @@ struct fsal_layoutcommit_arg {
      /** Pointer to layout specific data supplied by LAYOUTGET. */
      void *fsal_seg_data;
      /** True if this is a reclaim commit */
-     bool reclaim;
+     fsal_boolean_t reclaim;
      /** True if the client has suggested a new offset */
-     bool new_offset;
+     fsal_boolean_t new_offset;
      /** The offset of the last byte written, if new_offset if set,
       *  otherwise undefined. */
      offset4 last_write;
      /** True if the client provided a new value for mtime */
-     bool time_changed;
+     fsal_boolean_t time_changed;
      /** If new_time is true, the client-supplied modification tiem
       *  for the file.  otherwise, undefined. */
      fsal_time_t new_time;
@@ -183,13 +182,13 @@ struct fsal_layoutcommit_res {
       *  commit_done is set. */
      void *context;
      /** True if the FSAL is returning a new file size */
-     bool size_supplied;
+     fsal_boolean_t size_supplied;
      /** The new file size returned by the FSAL */
      length4 new_size;
      /** The FSAL has completed the LAYOUTCOMMIT operation and
       *  FSAL_layoutcommit need not be called again, even if more
       *  segments are left in the layout. */
-     bool commit_done;
+     fsal_boolean_t commit_done;
 };
 
 /**
@@ -221,7 +220,7 @@ struct fsal_getdevicelist_res {
       *  verifier may be supplied by the FSAL on output. */
      verifier4 cookieverf;
      /** True if the last deviceid has been returned. */
-     bool eof;
+     fsal_boolean_t eof;
      /** Input, the number of devices requested (and the number of
       *  devices there is space for).  Output, the number of devices
       *  supplied by the FSAL. */
@@ -430,7 +429,7 @@ typedef struct fsal_dsfunctions__ {
        /** [OUT] Amount of data actually read */
        count4 *supplied_length,
        /** [OUT] End of file was reached */
-       bool *end_of_file);
+       fsal_boolean_t *end_of_file);
 
      /**
       *

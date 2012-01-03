@@ -32,8 +32,6 @@
 #ifndef _FSAL_PNFS_COMMON_H
 #define _FSAL_PNFS_COMMON_H
 
-#include <stdint.h>
-#include <stdbool.h>
 #include "nfs4.h"
 
 /* The next 3 line are mandatory for proper autotools based management */
@@ -42,6 +40,14 @@
 #endif                          /* HAVE_CONFIG_H */
 
 #ifdef _USE_NFS4_1
+
+#ifndef false
+#define false 0
+#endif
+
+#ifndef true
+#define true 1 
+#endif
 
 /******************************************************
  *               Basic in-memory types
@@ -93,7 +99,7 @@ struct pnfs_deviceid {
  *         segments and the io_modes are compatible.
  */
 
-static inline bool
+static inline fsal_boolean_t
 pnfs_segments_overlap(struct pnfs_segment segment1,
                       struct pnfs_segment segmenta)
 {
@@ -132,7 +138,7 @@ pnfs_segments_overlap(struct pnfs_segment segment1,
  * @return True if segment2 is completely contained within segment1
  */
 
-static inline bool
+static inline fsal_boolean_t
 pnfs_segment_contains(struct pnfs_segment segment1,
                       struct pnfs_segment segment2)
 {
@@ -228,7 +234,7 @@ pnfs_segment_difference(struct pnfs_segment minuend,
  *            Convenience XDR functions
  ******************************************************/
 
-bool_t xdr_fsal_deviceid(XDR *xdrs, struct pnfs_deviceid *deviceid);
+fsal_boolean_t xdr_fsal_deviceid(XDR *xdrs, struct pnfs_deviceid *deviceid);
 
 nfsstat4 FSAL_encode_ipv4_netaddr(XDR *xdrs,
                                   uint16_t proto,
