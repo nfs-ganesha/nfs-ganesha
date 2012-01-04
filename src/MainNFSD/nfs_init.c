@@ -336,11 +336,13 @@ void nfs_set_param_default()
   nfs_param.worker_param.lru_param.nb_call_gc_invalid = 100;
   nfs_param.worker_param.lru_param.clean_entry = clean_pending_request;
   nfs_param.worker_param.lru_param.entry_to_str = print_pending_request;
+  nfs_param.worker_param.lru_param.name = "Worker LRU";
 
   /* Worker parameters : LRU dupreq */
   nfs_param.worker_param.lru_dupreq.nb_entry_prealloc = NB_PREALLOC_LRU_DUPREQ;
   nfs_param.worker_param.lru_dupreq.clean_entry = clean_entry_dupreq;
   nfs_param.worker_param.lru_dupreq.entry_to_str = print_entry_dupreq;
+  nfs_param.worker_param.lru_dupreq.name = "Worker DupReq LRU";
 
   /* Worker parameters : GC */
   nfs_param.worker_param.nb_pending_prealloc = NB_MAX_PENDING_REQUEST;
@@ -637,6 +639,7 @@ void nfs_set_param_default()
       lru_inode_entry_to_str;
   nfs_param.cache_layers_param.cache_inode_client_param.lru_param.clean_entry =
       lru_inode_clean_entry;
+  nfs_param.cache_layers_param.cache_inode_client_param.lru_param.name = "Cache Inode Client LRU";
   nfs_param.cache_layers_param.cache_inode_client_param.nb_prealloc_entry = 1024;
   nfs_param.cache_layers_param.cache_inode_client_param.nb_pre_parent = 2048;
   nfs_param.cache_layers_param.cache_inode_client_param.nb_pre_state_v4 = 512;
