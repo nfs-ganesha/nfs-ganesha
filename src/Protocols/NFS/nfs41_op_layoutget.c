@@ -204,7 +204,7 @@ nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
      /* XXX Currently we have no callbacks, so it makes no sense to
         pass the client-supplied value to the FSAL.  When we get
         callbacks, it will. */
-     res.signal_available = false;
+     res.signal_available = FALSE;
 
      do {
           /* Since the FSAL writes to tis structure with every call, we
@@ -388,7 +388,7 @@ acquire_layout_state(compound_data_t *data,
           if (state_status == STATE_SUCCESS) {
                /* Flag indicating whether all layouts were returned
                   and the state was deleted */
-               bool deleted = false;
+               bool_t deleted = FALSE;
                struct pnfs_segment entire = {
                     .io_mode = LAYOUTIOMODE4_ANY,
                     .offset = 0,
@@ -398,8 +398,8 @@ acquire_layout_state(compound_data_t *data,
                     = nfs4_return_one_state(data->current_entry,
                                             data->pclient,
                                             data->pcontext,
-                                            true,
-                                            false,
+                                            TRUE,
+                                            FALSE,
                                             0,
                                             condemned_state,
                                             entire,
@@ -419,7 +419,7 @@ acquire_layout_state(compound_data_t *data,
           }
 
           layout_data.layout.state_layout_type = layout_type;
-          layout_data.layout.state_return_on_close = false;
+          layout_data.layout.state_return_on_close = FALSE;
 
           if (state_add(data->current_entry,
                         STATE_TYPE_LAYOUT,

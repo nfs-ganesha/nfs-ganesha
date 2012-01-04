@@ -77,7 +77,7 @@ state_status_t
 state_add_segment(state_t *state,
                   struct pnfs_segment *segment,
                   void *fsal_data,
-                  bool return_on_close)
+                  bool_t return_on_close)
 {
      /* Pointer to the new segment being added to the state */
      state_layout_segment_t *new_segment = NULL;

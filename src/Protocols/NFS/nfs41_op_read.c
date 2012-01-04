@@ -57,6 +57,8 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #ifdef _USE_FSALDS
+#include <stdlib.h>
+#include <unistd.h>
 #include "fsal_pnfs.h"
 #endif /* _USE_FSALDS */
 
@@ -383,7 +385,6 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     res_READ4.READ4res_u.resok4.eof = TRUE;
   else
     res_READ4.READ4res_u.resok4.eof = FALSE;
-                                               
 
   /* Say it is ok */
   res_READ4.status = NFS4_OK;
@@ -432,6 +433,8 @@ static int op_dsread(struct nfs_argop4 *op,
   nfsstat4 nfs_status = 0;
   /* Buffer into which data is to be read */
   caddr_t buffer = NULL;
+  /* The system's page size */
+  const long page_size = sysconf(_SC_PAGESIZE);
 
   /* Don't bother calling the FSAL if the read length is 0. */
 
@@ -454,13 +457,28 @@ static int op_dsread(struct nfs_argop4 *op,
       return res_READ4.status;
     }
 
-  if((buffer = (caddr_t) Mem_Alloc(arg_READ4.count)) == NULL)
+  /*
+   * Allocate the memory for the read buffer to be page-aligned if we
+   * can find the page size.  Since the write buffer is allocated by
+   * the XDR code, aligned write support will be rolled into RPC
+   * enhancements.
+   */
+
+  if (page_size == -1)
+    {
+      buffer = (caddr_t) Mem_Alloc(arg_READ4.count);
+    }
+  else
+    {
+      posix_memalign(&buffer, page_size, arg_READ4.count);
+    }
+
+  if (buffer == NULL)
     {
       res_READ4.status = NFS4ERR_SERVERFAULT;
       return res_READ4.status;
     }
 
-  memset(buffer, 0, arg_READ4.count);
   res_READ4.READ4res_u.resok4.data.data_val = buffer;
 
   if ((nfs_status
@@ -471,7 +489,7 @@ static int op_dsread(struct nfs_argop4 *op,
                                   arg_READ4.count,
                                   res_READ4.READ4res_u.resok4.data.data_val,
                                   &res_READ4.READ4res_u.resok4.data.data_len,
-                                  (fsal_boolean_t *)&res_READ4.READ4res_u.resok4.eof))
+                                  &res_READ4.READ4res_u.resok4.eof))
       != NFS4_OK)
     {
       Mem_Free(buffer);

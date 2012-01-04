@@ -62,7 +62,7 @@ CEPHFSAL_DS_read(fsal_handle_t *exthandle,
                  count4 requested_length,
                  caddr_t buffer,
                  count4 *supplied_length,
-                 bool *end_of_file)
+                 fsal_boolean_t *end_of_file)
 {
      /* Our format for the file handle */
      cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
@@ -127,7 +127,7 @@ CEPHFSAL_DS_read(fsal_handle_t *exthandle,
 
      *supplied_length = amount_read;
 
-     *end_of_file = false;
+     *end_of_file = FALSE;
 
      return NFS4_OK;
 }

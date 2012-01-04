@@ -45,7 +45,6 @@
 #include "HashTable.h"
 #include <pthread.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include "stuff_alloc.h"
 #include "fsal_types.h"
 #include "fsal_pnfs.h"
@@ -174,8 +173,8 @@ CEPHFSAL_layoutget(fsal_handle_t *exthandle,
      /* We grant only one segment, and we want it back when the file
         is closed. */
 
-     res->return_on_close = true;
-     res->last_segment = true;
+     res->return_on_close = TRUE;
+     res->last_segment = TRUE;
 
      return NFS4_OK;
 }
@@ -264,7 +263,7 @@ CEPHFSAL_layoutcommit(fsal_handle_t *exthandle,
           if (stold.st_size < arg->last_write + 1) {
                attrmask |= CEPH_SETATTR_SIZE;
                stnew.st_size = arg->last_write + 1;
-               res->size_supplied = true;
+               res->size_supplied = TRUE;
                res->new_size = arg->last_write + 1;
           }
      }
@@ -297,7 +296,7 @@ CEPHFSAL_layoutcommit(fsal_handle_t *exthandle,
 
      /* This is likely universal for files. */
 
-     res->commit_done = true;
+     res->commit_done = TRUE;
 
      return NFS4_OK;
 }
@@ -431,7 +430,7 @@ CEPHFSAL_getdevicelist(fsal_handle_t *handle,
         deviceids, so we do nothing successfully. */
 
      res->count = 0;
-     res->eof = true;
+     res->eof = TRUE;
 
      return NFS4_OK;
 }

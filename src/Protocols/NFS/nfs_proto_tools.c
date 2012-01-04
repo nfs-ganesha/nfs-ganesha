@@ -4269,7 +4269,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
                                struct pnfs_segment spec_segment,
                                u_int body_len,
                                const char* body_val,
-                               fsal_boolean_t * deleted)
+                               bool_t* deleted)
 {
      /* Return from cache_inode calls */
      cache_inode_status_t cache_status = 0;
@@ -4292,7 +4292,11 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
      /* The current segment in iteration */
      state_layout_segment_t *segment = NULL;
      /* If we have a lock on the segment */
+<<<<<<< HEAD
      fsal_boolean_t seg_locked = false;
+=======
+     bool_t seg_locked = FALSE;
+>>>>>>> linuxbox2/pnfs-state-rewrite
 
      if (body_val) {
           xdrmem_create(&lrf_body,
@@ -4328,7 +4332,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
                                      sls_state_segments);
 
                pthread_mutex_lock(&segment->sls_mutex);
-               seg_locked = true;
+               seg_locked = TRUE;
 
                arg.cur_segment = segment->sls_segment;
                arg.fsal_seg_data = segment->sls_fsal_data;
@@ -4336,10 +4340,10 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
 
                if (pnfs_segment_contains(spec_segment,
                                          segment->sls_segment)) {
-                    arg.dispose = true;
+                    arg.dispose = TRUE;
                } else if (pnfs_segments_overlap(spec_segment,
                                                 segment->sls_segment)) {
-                    arg.dispose = false;
+                    arg.dispose = FALSE;
                } else {
                     pthread_mutex_unlock(&segment->sls_mutex);
                     continue;
@@ -4369,7 +4373,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
                     pthread_mutex_unlock(&segment->sls_mutex);
                }
           }
-          seg_locked = false;
+          seg_locked = FALSE;
 
           if (body_val) {
                /* This really should work in all cases for an
@@ -4378,9 +4382,9 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
           }
           if (glist_empty(&layout_state->state_data.layout.state_segments)) {
                state_del(layout_state, pclient, &state_status);
-               *deleted = true;
+               *deleted = TRUE;
           } else {
-               *deleted = false;
+               *deleted = FALSE;
           }
      } else {
           /* For a reclaim return, there are no recorded segments in
@@ -4389,8 +4393,8 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
           arg.cur_segment.offset = 0;
           arg.cur_segment.length = 0;
           arg.fsal_seg_data = NULL;
-          arg.last_segment = false;
-          arg.dispose = false;
+          arg.last_segment = FALSE;
+          arg.dispose = FALSE;
 
           nfs_status =
                fsal_mdsfunctions
@@ -4402,7 +4406,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
           if (nfs_status != NFS4_OK) {
                goto out;
           }
-          *deleted = true;
+          *deleted = TRUE;
      }
 
      nfs_status = NFS4_OK;

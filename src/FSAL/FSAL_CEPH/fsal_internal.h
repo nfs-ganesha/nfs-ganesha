@@ -37,11 +37,8 @@
 #include <sys/statvfs.h>
 #include <cephfs/libcephfs.h>
 #include <string.h>
-
-#if defined(_USE_FSALMDS) || (_USE_FSALDS)
 #include "fsal.h"
 #include "fsal_pnfs.h"
-#endif /* _USE_FSALMDS || _USE_FSALDS */
 
 /* the following variables must not be defined in fsal_internal.c */
 #ifndef FSAL_INTERNAL_C
@@ -412,7 +409,7 @@ nfsstat4 CEPHFSAL_DS_read(fsal_handle_t *handle,
                           count4 requested_length,
                           caddr_t buffer,
                           count4 *supplied_length,
-                          bool *end_of_file);
+                          fsal_boolean_t *end_of_file);
 
 nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *handle,
                            fsal_op_context_t *context,

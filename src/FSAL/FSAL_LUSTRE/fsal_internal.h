@@ -365,35 +365,29 @@ fsal_status_t LUSTREFSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN
                                   fsal_lock_param_t * conflicting_lock)    /* OUT */ ;
 
 unsigned int LUSTREFSAL_GetFileno(fsal_file_t * pfile);
-
 #ifdef _USE_FSALMDS
 nfsstat4 LUSTREFSAL_layoutget(fsal_handle_t *exhandle,
                             fsal_op_context_t *excontext,
                             XDR *loc_body,
                             const struct fsal_layoutget_arg *arg,
                             struct fsal_layoutget_res *res);
-
 nfsstat4 LUSTREFSAL_layoutreturn(fsal_handle_t* handle,
                                fsal_op_context_t* context,
                                XDR *lrf_body,
                                const struct fsal_layoutreturn_arg *arg);
-
 nfsstat4 LUSTREFSAL_layoutcommit(fsal_handle_t *handle,
                                fsal_op_context_t *context,
                                XDR *lou_body,
                                const struct fsal_layoutcommit_arg *arg,
                                struct fsal_layoutcommit_res *res);
-
 nfsstat4 LUSTREFSAL_getdeviceinfo(fsal_op_context_t *context,
                                 XDR* da_addr_body,
                                 layouttype4 type,
                                 const struct pnfs_deviceid *deviceid);
-
 nfsstat4 LUSTREFSAL_getdevicelist(fsal_handle_t *handle,
                                 fsal_op_context_t *context,
                                 const struct fsal_getdevicelist_arg *arg,
                                 struct fsal_getdevicelist_res *res);
-
 #endif /* _USE_FSALMDS */
 
 #ifdef _USE_FSALDS
@@ -422,5 +416,4 @@ nfsstat4 LUSTREFSAL_DS_commit(fsal_handle_t *handle,
                             offset4 offset,
                             count4 count,
                             verifier4 writeverf);
-
 #endif /* _USE_FSALDS */

@@ -299,7 +299,7 @@ FSAL_encode_file_layout(XDR *xdrs,
      /* NFS status code */
      nfsstat4 nfs_status = 0;
 
-     if (!xdr_fsal_deviceid(xdrs, deviceid)) {
+     if (!xdr_fsal_deviceid(xdrs, (struct pnfs_deviceid *)deviceid)) {
           LogMajor(COMPONENT_PNFS, "Failed encoding deviceid.");
           return NFS4ERR_SERVERFAULT;
      }

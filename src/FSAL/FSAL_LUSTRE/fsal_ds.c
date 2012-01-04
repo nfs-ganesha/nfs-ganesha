@@ -53,267 +53,121 @@
           typeof (b) _b = (b);                  \
           _a < _b ? _a : _b; })
 
-nfsstat4
-LUSTREFSAL_DS_read(fsal_handle_t *exthandle,
-                 fsal_op_context_t *extcontext,
-                 const stateid4 *stateid,
-                 offset4 offset,
-                 count4 requested_length,
-                 caddr_t buffer,
-                 count4 *supplied_length,
-                 fsal_boolean_t *end_of_file)
+/**
+ *
+ * LUSTREFSAL_DS_read : the DS reads data to the FSAL.
+ *
+ * This function is used by the pNFS Data Server to write data to the FSAL.
+ *
+ * @param [IN] pfsalhandle : handle for the object to be written
+ * @param [IN] pfsalcontent : FSAL's operation context
+ * @param [IN] stateid : pointer to the stateid to be used (Why is this needed ?)
+ * @param [IN] offset : offset for this IO
+ * @param [IN] requested_length : length to be read
+ * @param [OUT] buffer : place to put read data in
+ * @param [OUT] pread_length: length actually read
+ * @param [IN] verifier: operation's verifier (Why is this needed ?)
+ * @param [OUT] end_of_file : set to TRUE if eof is reached.
+ *
+ * @return a NFSv4 status
+ *
+ */
+nfsstat4 LUSTREFSAL_DS_read( fsal_handle_t     * pfsalhandle,
+                             fsal_op_context_t * pfsalcontext,
+                             const stateid4    * stateid,
+                             offset4             offset,
+                             count4              requested_length,
+                             caddr_t             buffer,
+                             count4            * pread_length,
+                             fsal_boolean_t    * end_of_file)
 {
+#if 0
      /* Our format for the file handle */
-     lustrefsal_handle_t* handle = (lustrefsal_handle_t*) exthandle;
+     lustrefsal_handle_t * phandle = (lustrefsal_handle_t*)pfsalhandle;
+
      /* Our format for the operational context */
-     lustrefsal_op_context_t* context = (lustrefsal_op_context_t*) extcontext;
-     
-     /* Width of a stripe in the file */
-     uint32_t stripe_width = 0;
-     /* Beginning of a block */
-     uint64_t block_start = 0;
-     /* Number of the stripe being read */
-     uint32_t stripe = 0;
-     /* Internal offset within the stripe*/
-     uint32_t internal_offset = 0;
-     /* The amount actually read */
-     int amount_read = 0;
+     lustrefsal_op_context_t* pcontext = (lustrefsal_op_context_t*)pfsalcontext;
 
-     /* Find out what my OSD ID is, so we can avoid talking to other
-        OSDs. */
-
-
-     /* Find out what stripe we're writing to and where within the
-        stripe. */
-
-     stripe_width = handle->data.layout.fl_stripe_unit;
-     if (stripe_width == 0) {
-          /* READ isn't actually allowed to return BADHANDLE */
-          return NFS4ERR_INVAL;
-     }
-     stripe = offset / stripe_width;
-     block_start = stripe * stripe_width;
-     internal_offset = offset - block_start;
-
-     amount_read
-          = lustre_ll_read_block(cmount,
-                               VINODE(handle),
-                               stripe,
-                               buffer,
-                               internal_offset,
-                               min((stripe_width -
-                                    internal_offset),
-                                   requested_length),
-                               &(handle->data.layout));
-     if (amount_read < 0) {
-          return posix2nfs4_error(-amount_read);
-     }
-
-     *supplied_length = amount_read;
-
-     *end_of_file = false;
-
-     return NFS4_OK;
-}
-
-nfsstat4
-LUSTREFSAL_DS_write(fsal_handle_t *exthandle,
-                  fsal_op_context_t *extcontext,
-                  const stateid4 *stateid,
-                  offset4 offset,
-                  count4 write_length,
-                  caddr_t buffer,
-                  stable_how4 stability_wanted,
-                  count4 *written_length,
-                  verifier4 writeverf,
-                  stable_how4 *stability_got)
-{
-     /* Our format for the file handle */
-     lustrefsal_handle_t* handle = (lustrefsal_handle_t*) exthandle;
-     /* Our format for the operational context */
-     lustrefsal_op_context_t* context = (lustrefsal_op_context_t*) extcontext;
-     /* Mount parameter specified for all calls to Ceph */
-     
-     /* User ID and group ID for permissions */
      int uid = FSAL_OP_CONTEXT_TO_UID(context);
      int gid = FSAL_OP_CONTEXT_TO_GID(context);
-     /* The OSD number for this host */
-     int local_OSD = 0;
-     /* Width of a stripe in the file */
-     uint32_t stripe_width = 0;
-     /* Beginning of a block */
-     uint64_t block_start = 0;
-     /* Number of the stripe being written */
-     uint32_t stripe = 0;
-     /* Internal offset within the stripe*/
-     uint32_t internal_offset = 0;
-     /* The amount actually written */
-     int32_t amount_written = 0;
-     /* The adjusted write length, confined to one object */
-     uint32_t adjusted_write = 0;
-     /* Return code from lustre calls */
-     int lustre_status = 0;
-
-     /* Zero the verifier.  All our DS writes are stable, so we don't
-        use it, but we do want to rpevent spurious junk from making it
-        look like there was a failure. */
-
-     memset(writeverf, 0, NFS4_VERIFIER_SIZE);
-
-     /* Find out what my OSD ID is, so we can avoid talking to other
-        OSDs. */
-
-     local_OSD = lustre_get_local_osd(cmount);
-
-     /* Find out what stripe we're writing to and where within the
-        stripe. */
-
-     stripe_width = handle->data.layout.fl_stripe_unit;
-     if (stripe_width == 0) {
-          /* WRITE isn't actually allowed to return BADHANDLE */
-          return NFS4ERR_INVAL;
-     }
-     stripe = offset / stripe_width;
-     block_start = stripe * stripe_width;
-     internal_offset = offset - block_start;
-
-     if (local_OSD
-         != lustre_ll_get_stripe_osd(cmount,
-                                   VINODE(handle),
-                                   stripe,
-                                   &(handle->data.layout))) {
-          return NFS4ERR_PNFS_IO_HOLE;
-     }
-
-     adjusted_write = min((stripe_width - internal_offset),
-                          write_length);
-
-     /* If the client specifies FILE_SYNC4, then we have to connect
-        the filehandle and use the MDS to update size and access
-        time. */
-     if (stability_wanted == FILE_SYNC4) {
-          Fh* descriptor = NULL;
-
-          if ((lustre_status = lustre_ll_connectable_m(cmount, &VINODE(handle),
-                                                   handle->data.parent_ino,
-                                                   handle->data.parent_hash))
-              != 0) {
-               printf("Filehandle connection failed with: %d\n", lustre_status);
-               return posix2nfs4_error(-lustre_status);
-          }
-          if ((lustre_status = lustre_ll_open(cmount,
-                                          VINODE(handle),
-                                          O_WRONLY,
-                                          &descriptor,
-                                          uid,
-                                          gid)) != 0) {
-               printf("Open failed with: %d\n", lustre_status);
-               return posix2nfs4_error(-lustre_status);
-          }
-
-          amount_written
-               = lustre_ll_write(cmount,
-                               descriptor,
-                               offset,
-                               adjusted_write,
-                               buffer);
-
-          if (amount_written < 0) {
-               printf("Write failed with: %d\n", amount_written);
-               lustre_ll_close(cmount, descriptor);
-               return posix2nfs4_error(-amount_written);
-          }
-
-          if ((lustre_status = lustre_ll_fsync(cmount, descriptor, 0)) < 0) {
-               printf("fsync failed with: %d\n", lustre_status);
-               lustre_ll_close(cmount, descriptor);
-               return posix2nfs4_error(-lustre_status);
-          }
-
-      if ((lustre_status = lustre_ll_close(cmount, descriptor)) < 0) {
-           printf("close failed with: %d\n", lustre_status);
-           return posix2nfs4_error(-lustre_status);
-      }
-      *written_length = amount_written;
-      *stability_got = FILE_SYNC4;
-     } else {
-          /* FILE_SYNC4 wasn't specified, so we don't have to bother with
-             the MDS. */
-
-          if ((amount_written
-               = lustre_ll_write_block(cmount,
-                                     VINODE(handle),
-                                     stripe,
-                                     buffer,
-                                     internal_offset,
-                                     adjusted_write,
-                                     &(handle->data.layout),
-                                     handle->data.snapseq,
-                                     (stability_wanted
-                                      == DATA_SYNC4)))
-              < 0) {
-               return posix2nfs4_error(-amount_written);
-          }
-
-          *written_length = amount_written;
-          *stability_got = stability_wanted;
-     }
-
+#endif
      return NFS4_OK;
 }
 
-nfsstat4
-LUSTREFSAL_DS_commit(fsal_handle_t *exthandle,
-                   fsal_op_context_t *extcontext,
-                   offset4 offset,
-                   count4 count,
-                   verifier4 writeverf)
+/**
+ *
+ * LUSTREFSAL_DS_write : the DS writes data to the FSAL.
+ *
+ * This function is used by the pNFS Data Server to write data to the FSAL.
+ *
+ * @param [IN] pfsalhandle : handle for the object to be written
+ * @param [IN] pfsalcontent : FSAL's operation context
+ * @param [IN] stateid : pointer to the stateid to be used (Why is this needed ?)
+ * @param [IN] offset : offset for this IO
+ * @param [IN] write_length : length to be written
+ * @param [IN] buffer : data to be written
+ * @param [IN] stability_wanted: "stable how" flag for this IO
+ * @param [OUT] pwritten_length: length actually written
+ * @param [IN] verifier: operation's verifier (Why is this needed ?)
+ * @param [OUT] stability_got: the "stable_how" that was used for this IO
+ *
+ * @return a NFSv4 status
+ *
+ */
+nfsstat4 LUSTREFSAL_DS_write( fsal_handle_t     * pfsalhandle,
+                              fsal_op_context_t * pfsalcontext,
+                              const stateid4    * stateid,
+                              offset4             offset,
+                              count4              write_length,
+                              caddr_t             buffer,
+                              stable_how4         stability_wanted,
+                              count4            * pwritten_length,
+                              verifier4           writeverf,
+                              stable_how4       * stability_got )
 {
+#if 0
      /* Our format for the file handle */
-     lustrefsal_handle_t* handle = (lustrefsal_handle_t*) exthandle;
+     lustrefsal_handle_t * phandle = (lustrefsal_handle_t*)pfsalhandle;
+
      /* Our format for the operational context */
-     lustrefsal_op_context_t* context = (lustrefsal_op_context_t*) extcontext;
-     /* Mount parameter specified for all calls to Ceph */
-     struct lustre_mount_info *cmount = context->export_context->cmount;
-     /* The OSD number for this host */
-     const int local_OSD = lustre_get_local_osd(cmount);
-     /* Width of a stripe in the file */
-     const uint32_t stripe_width = handle->data.layout.fl_stripe_unit;
-     /* The stripe we're committing */
-     uint32_t stripe = 0;
+     lustrefsal_op_context_t* pcontext = (lustrefsal_op_context_t*)pfsalcontext;
 
-     /* Find out what stripe we're writing to and where within the
-        stripe. */
-
-     if (stripe_width == 0) {
-          /* COMMIT isn't actually allowed to return BADHANDLE */
-          return NFS4ERR_INVAL;
-     }
-
-
-     for (stripe = offset / stripe_width;
-          stripe <= ((offset + count - 1) / stripe_width);
-          ++stripe) {
-          if (local_OSD
-              == lustre_ll_get_stripe_osd(cmount,
-                                        VINODE(handle),
-                                        stripe,
-                                        &(handle->data.layout))) {
-               printf("Committing %"PRIu64".%"PRIu32".\n",
-                      VINODE(handle).ino.val,
-                      stripe);
-               int rc
-                    = lustre_ll_commit_block(cmount,
-                                           VINODE(handle),
-                                           stripe);
-               if (rc < 0) {
-                    return posix2nfs4_error(rc);
-               }
-          }
-          printf("Committed %"PRIu64".%"PRIu32".\n",
-                 VINODE(handle).ino.val,
-                 stripe);
-     }
-
+     int uid = FSAL_OP_CONTEXT_TO_UID(context);
+     int gid = FSAL_OP_CONTEXT_TO_GID(context);
+#endif
      return NFS4_OK;
-}
+} /* LUSTREFSAL_DS_write */
+
+/**
+ *
+ * LUSTREFSAL_DS_commit : commits an DS's unstable write.
+ *
+ * This function commits an unstable write by the pNFS Data Server.
+ *
+ * @param [IN] pfsalhandle : handle for the object to be written
+ * @param [IN] pfsalcontent : FSAL's operation context
+ * @param [IN] offset : offset for this IO
+ * @param [IN] count : length to be commited
+ * @param [IN] verifier: operation's verifier (Why is this needed ?)
+ *
+ * @return a NFSv4 status
+ *
+ */
+nfsstat4 LUSTREFSAL_DS_commit( fsal_handle_t     * pfsalhandle,
+                               fsal_op_context_t * pfsalcontext,
+                               offset4             offset,
+                               count4              count,
+                               verifier4           writeverf)
+{
+#if 0
+     /* Our format for the file handle */
+     lustrefsal_handle_t * phandle = (lustrefsal_handle_t*)pfsalhandle;
+
+     /* Our format for the operational context */
+     lustrefsal_op_context_t* pcontext = (lustrefsal_op_context_t*)pfsalcontext;
+
+     int uid = FSAL_OP_CONTEXT_TO_UID(context);
+     int gid = FSAL_OP_CONTEXT_TO_GID(context);
+#endif
+     return NFS4_OK;
+} /* LUSTREFSAL_DS_commit */

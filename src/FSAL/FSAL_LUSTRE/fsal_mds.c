@@ -40,7 +40,7 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "nfsv41.h"
-#include <cephfs/libcephfs.h>
+#include <lustrefs/liblustrefs.h>
 #include <fcntl.h>
 #include "HashTable.h"
 #include <pthread.h>
@@ -60,21 +60,21 @@ const size_t BIGGEST_PATTERN = 1024; /* Linux supports a stripe
 
 
 nfsstat4
-CEPHFSAL_layoutget(fsal_handle_t *exthandle,
+LUSTREFSAL_layoutget(fsal_handle_t *exthandle,
                    fsal_op_context_t *extcontext,
                    XDR *loc_body,
                    const struct fsal_layoutget_arg *arg,
                    struct fsal_layoutget_res *res)
 {
-     /* The FSAL handle as defined for the CEPH FSAL */
-     cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
-     /* The FSAL operation context as defined for the CEPH FSAL */
-     cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
+     /* The FSAL handle as defined for the LUSTRE FSAL */
+     lustrefsal_handle_t* handle = (lustrefsal_handle_t*) exthandle;
+     /* The FSAL operation context as defined for the LUSTRE FSAL */
+     lustrefsal_op_context_t* context = (lustrefsal_op_context_t*) extcontext;
      /* The mount passed to all*/
-     struct ceph_mount_info *cmount = context->export_context->cmount;
+     struct lustre_mount_info *cmount = context->export_context->cmount;
      /* Structure containing the storage parameters of the file within
         the Ceph cluster. */
-     struct ceph_file_layout file_layout;
+     struct lustre_file_layout file_layout;
      /* Width of each stripe on the file */
      uint64_t stripe_width = 0;
      /* The last byte that can be accessed through pNFS */
@@ -82,7 +82,7 @@ CEPHFSAL_layoutget(fsal_handle_t *exthandle,
      /* The deviceid for this layout */
      struct pnfs_deviceid deviceid = {0, 0};
      /* Data server handle */
-     cephfsal_handle_t ds_handle;
+     lustrefsal_handle_t ds_handle;
      /* NFS Status */
      nfsstat4 nfs_status = 0;
 
@@ -98,9 +98,9 @@ CEPHFSAL_layoutget(fsal_handle_t *exthandle,
      /* Get basic information on the file and calculate the dimensions
         of the layout we can support. */
 
-     memset(&file_layout, 0, sizeof(struct ceph_file_layout));
+     memset(&file_layout, 0, sizeof(struct lustre_file_layout));
 
-     ceph_ll_file_layout(cmount, VINODE(handle), &file_layout);
+     lustre_ll_file_layout(cmount, VINODE(handle), &file_layout);
      stripe_width = file_layout.fl_stripe_unit;
      last_possible_byte = (BIGGEST_PATTERN * stripe_width) - 1;
 
@@ -150,7 +150,7 @@ CEPHFSAL_layoutget(fsal_handle_t *exthandle,
 
      ds_handle = *handle;
      ds_handle.data.layout = file_layout;
-     ds_handle.data.snapseq = ceph_ll_snap_seq(cmount, VINODE(handle));
+     ds_handle.data.snapseq = lustre_ll_snap_seq(cmount, VINODE(handle));
 
      /* We are using sparse layouts with commit-through-DS, so our
         utility word contains only the stripe width, our first stripe
@@ -173,14 +173,14 @@ CEPHFSAL_layoutget(fsal_handle_t *exthandle,
      /* We grant only one segment, and we want it back when the file
         is closed. */
 
-     res->return_on_close = true;
-     res->last_segment = true;
+     res->return_on_close = TRUE;
+     res->last_segment = TRUE;
 
      return NFS4_OK;
 }
 
 nfsstat4
-CEPHFSAL_layoutreturn(fsal_handle_t* handle,
+LUSTREFSAL_layoutreturn(fsal_handle_t* handle,
                       fsal_op_context_t* context,
                       XDR *lrf_body,
                       const struct fsal_layoutreturn_arg *arg)
@@ -204,18 +204,18 @@ CEPHFSAL_layoutreturn(fsal_handle_t* handle,
 }
 
 nfsstat4
-CEPHFSAL_layoutcommit(fsal_handle_t *exthandle,
+LUSTREFSAL_layoutcommit(fsal_handle_t *exthandle,
                       fsal_op_context_t *extcontext,
                       XDR *lou_body,
                       const struct fsal_layoutcommit_arg *arg,
                       struct fsal_layoutcommit_res *res)
 {
      /* Filehandle for Ceph calls */
-     cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
+     lustrefsal_handle_t* handle = (lustrefsal_handle_t*) exthandle;
      /* Operation context */
-     cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
+     lustrefsal_op_context_t* context = (lustrefsal_op_context_t*) extcontext;
      /* Mount structure that must be supplied with each call to Ceph */
-     struct ceph_mount_info *cmount = context->export_context->cmount;
+     struct lustre_mount_info *cmount = context->export_context->cmount;
      /* User ID and group ID for permissions */
      int uid = FSAL_OP_CONTEXT_TO_UID(context);
      int gid = FSAL_OP_CONTEXT_TO_GID(context);
@@ -226,7 +226,7 @@ CEPHFSAL_layoutcommit(fsal_handle_t *exthandle,
      /* Mask to determine exactly what gets set */
      int attrmask = 0;
      /* Error returns from Ceph */
-     int ceph_status = 0;
+     int lustre_status = 0;
 
      /* Sanity check on type */
      if (arg->type != LAYOUT4_NFSV4_1_FILES) {
@@ -241,9 +241,9 @@ CEPHFSAL_layoutcommit(fsal_handle_t *exthandle,
         it can work. */
 
      memset(&stold, 0, sizeof(struct stat));
-     if ((ceph_status = ceph_ll_getattr(cmount, VINODE(handle),
+     if ((lustre_status = lustre_ll_getattr(cmount, VINODE(handle),
                                         &stold, uid, gid)) < 0) {
-          if (ceph_status == -EPERM) {
+          if (lustre_status == -EPERM) {
                LogCrit(COMPONENT_PNFS,
                        "User %u, Group %u not permitted to get attributes "
                        "of file %" PRIu64 ".",
@@ -253,17 +253,17 @@ CEPHFSAL_layoutcommit(fsal_handle_t *exthandle,
                LogCrit(COMPONENT_PNFS,
                        "Error %d in attempt to get attributes of "
                        "file %" PRIu64 ".",
-                       -ceph_status, VINODE(handle).ino.val);
-               return posix2nfs4_error(-ceph_status);
+                       -lustre_status, VINODE(handle).ino.val);
+               return posix2nfs4_error(-lustre_status);
           }
      }
 
      memset(&stnew, 0, sizeof(struct stat));
      if (arg->new_offset) {
           if (stold.st_size < arg->last_write + 1) {
-               attrmask |= CEPH_SETATTR_SIZE;
+               attrmask |= LUSTRE_SETATTR_SIZE;
                stnew.st_size = arg->last_write + 1;
-               res->size_supplied = true;
+               res->size_supplied = TRUE;
                res->new_size = arg->last_write + 1;
           }
      }
@@ -275,11 +275,11 @@ CEPHFSAL_layoutcommit(fsal_handle_t *exthandle,
           stnew.st_mtime = time(NULL);
      }
 
-     attrmask |= CEPH_SETATTR_MTIME;
+     attrmask |= LUSTRE_SETATTR_MTIME;
 
-     if ((ceph_status = ceph_ll_setattr(cmount, VINODE(handle), &stnew,
+     if ((lustre_status = lustre_ll_setattr(cmount, VINODE(handle), &stnew,
                                         attrmask, uid, gid)) < 0) {
-          if (ceph_status == -EPERM) {
+          if (lustre_status == -EPERM) {
                LogCrit(COMPONENT_PNFS,
                        "User %u, Group %u not permitted to get attributes "
                        "of file %" PRIu64 ".",
@@ -289,35 +289,35 @@ CEPHFSAL_layoutcommit(fsal_handle_t *exthandle,
                LogCrit(COMPONENT_PNFS,
                        "Error %d in attempt to get attributes of "
                        "file %" PRIu64 ".",
-                       -ceph_status, VINODE(handle).ino.val);
-               return posix2nfs4_error(-ceph_status);
+                       -lustre_status, VINODE(handle).ino.val);
+               return posix2nfs4_error(-lustre_status);
           }
      }
 
      /* This is likely universal for files. */
 
-     res->commit_done = true;
+     res->commit_done = TRUE;
 
      return NFS4_OK;
 }
 
 nfsstat4
-CEPHFSAL_getdeviceinfo(fsal_op_context_t *extcontext,
+LUSTREFSAL_getdeviceinfo(fsal_op_context_t *extcontext,
                        XDR* da_addr_body,
                        layouttype4 type,
                        const struct pnfs_deviceid *deviceid)
 {
      /* Operation context */
-     cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
+     lustrefsal_op_context_t* context = (lustrefsal_op_context_t*) extcontext;
      /* Mount structure that must be supplied with each call to Ceph */
-     struct ceph_mount_info *cmount = context->export_context->cmount;
+     struct lustre_mount_info *cmount = context->export_context->cmount;
      /* The number of Ceph OSDs in the cluster */
-     unsigned num_osds = ceph_ll_num_osds(cmount);
+     unsigned num_osds = lustre_ll_num_osds(cmount);
      /* Minimal information needed to get layout info */
      vinodeno_t vinode;
      /* Structure containing the storage parameters of the file within
         the Ceph cluster. */
-     struct ceph_file_layout file_layout;
+     struct lustre_file_layout file_layout;
      /* Currently, all layouts have the same number of stripes */
      uint32_t stripes = BIGGEST_PATTERN;
      /* Index for iterating over stripes */
@@ -328,7 +328,7 @@ CEPHFSAL_getdeviceinfo(fsal_op_context_t *extcontext,
      nfsstat4 nfs_status = 0;
 
      vinode.ino.val = deviceid->devid;
-     vinode.snapid.val = CEPH_NOSNAP;
+     vinode.snapid.val = LUSTRE_NOSNAP;
 
      /* Sanity check on type */
      if (type != LAYOUT4_NFSV4_1_FILES) {
@@ -340,8 +340,8 @@ CEPHFSAL_getdeviceinfo(fsal_op_context_t *extcontext,
 
      /* Retrieve and calculate storage parameters of layout */
 
-     memset(&file_layout, 0, sizeof(struct ceph_file_layout));
-     ceph_ll_file_layout(cmount, vinode, &file_layout);
+     memset(&file_layout, 0, sizeof(struct lustre_file_layout));
+     lustre_ll_file_layout(cmount, vinode, &file_layout);
 
      /* As this is large, we encode as we go rather than building a
         structure and encoding it all at once. */
@@ -360,7 +360,7 @@ CEPHFSAL_getdeviceinfo(fsal_op_context_t *extcontext,
 
      for (stripe = 0; stripe < stripes; stripe++) {
           uint32_t stripe_osd
-               = stripe_osd = ceph_ll_get_stripe_osd(cmount,
+               = stripe_osd = lustre_ll_get_stripe_osd(cmount,
                                                      vinode,
                                                      stripe,
                                                      &file_layout);
@@ -393,7 +393,7 @@ CEPHFSAL_getdeviceinfo(fsal_op_context_t *extcontext,
           fsal_multipath_member_t host;
           memset(&host, 0, sizeof(fsal_multipath_member_t));
           host.proto = 6;
-          if (ceph_ll_osdaddr(cmount, osd, &host.addr) < 0) {
+          if (lustre_ll_osdaddr(cmount, osd, &host.addr) < 0) {
                LogCrit(COMPONENT_PNFS,
                        "Unable to get IP address for OSD %lu.",
                        osd);
@@ -413,7 +413,7 @@ CEPHFSAL_getdeviceinfo(fsal_op_context_t *extcontext,
 }
 
 nfsstat4
-CEPHFSAL_getdevicelist(fsal_handle_t *handle,
+LUSTREFSAL_getdevicelist(fsal_handle_t *handle,
                        fsal_op_context_t *context,
                        const struct fsal_getdevicelist_arg *arg,
                        struct fsal_getdevicelist_res *res)
@@ -430,7 +430,7 @@ CEPHFSAL_getdevicelist(fsal_handle_t *handle,
         deviceids, so we do nothing successfully. */
 
      res->count = 0;
-     res->eof = true;
+     res->eof = TRUE;
 
      return NFS4_OK;
 }
