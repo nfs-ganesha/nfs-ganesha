@@ -221,7 +221,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
       return 1;
     }
 
-  param.lru_param.name = name;
+  param.lru_param.name = strdup(name);
 
   if((pclient->lru_gc = LRU_Init(param.lru_param, &lru_status)) == NULL)
     {
