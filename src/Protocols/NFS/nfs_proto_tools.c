@@ -4292,11 +4292,7 @@ nfsstat4 nfs4_return_one_state(cache_entry_t *entry,
      /* The current segment in iteration */
      state_layout_segment_t *segment = NULL;
      /* If we have a lock on the segment */
-<<<<<<< HEAD
-     fsal_boolean_t seg_locked = false;
-=======
      bool_t seg_locked = FALSE;
->>>>>>> linuxbox2/pnfs-state-rewrite
 
      if (body_val) {
           xdrmem_create(&lrf_body,
