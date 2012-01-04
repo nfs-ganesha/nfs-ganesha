@@ -402,10 +402,8 @@ AM_CONDITIONAL(USE_NFS4_1, test "$NFS4_MINOR" = "1")
 AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")
 
 # RPCAL switch argument (default is ONCRPC)
-AC_ARG_WITH( [rpcal], AS_HELP_STRING([--with-rpcal=ONCRPC|GSSRPC|TIRPC (default=ONCRPC)], [specify the type of RPCAL to be used] ),
+AC_ARG_WITH( [rpcal], AS_HELP_STRING([--with-rpcal=ONCRPC|TIRPC (default=ONCRPC)], [specify the type of RPCAL to be used] ),
               RPCAL="$withval", RPCAL="ONCRPC")
-AM_CONDITIONAL(USE_GSSRPC, test "$RPCAL" = "GSSRPC" )
-AM_CONDITIONAL(HAVE_GSSAPI, test "$RPCAL" = "GSSRPC" )
 AM_CONDITIONAL(USE_TIRPC,  test "$RPCAL" = "TIRPC" )
 AM_CONDITIONAL(HAVE_GSSAPI, test "$RPCAL" = "TIRPC" )
 AM_CONDITIONAL(USE_ONCRPC, test "$RPCAL" = "ONCRPC" )
@@ -769,14 +767,6 @@ esac
 case $RPCAL in
 	"ONCRPC")
 		;;
-	"GSSRPC")
-                AC_DEFINE(_USE_GSSRPC,1,[enable security management with GSSRPC])
-	        # ==> Add here libraries needed for GSSRPC
-                AC_CHECK_LIB([gssapi_krb5], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ],
-			     [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )
-                AC_CHECK_LIB([gssrpc], [gssrpc_authunix_create_default], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ],
-			      [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
-		;;
 	"TIRPC")
                 PKG_CHECK_MODULES(TIRPC, libtirpc,
                   [
@@ -951,7 +941,6 @@ AC_CONFIG_FILES([include/Makefile
 		 MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  RPCAL/Makefile
                  RPCAL/ONCRPC/Makefile
-                 RPCAL/GSSRPC/Makefile
                  RPCAL/TIRPC/Makefile
                  MainNFSD/Makefile
                  test/Makefile

@@ -24,11 +24,7 @@ else
 NFS4_ACL_LIB_FLAGS = 
 endif
 
-if USE_GSSRPC
-SEC_LIB_FLAGS = $(SEC_LFLAGS) -lgssrpc -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -ldl
-else
 SEC_LIB_FLAGS =
-endif
 
 if USE_FSAL_FUSE
 

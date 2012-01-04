@@ -18,12 +18,6 @@ else
 FSAL_UP_LIB_FLAGS =
 endif
 
-if USE_GSSRPC
-SEC_LIB_FLAGS =
-SVC_FLAGS =
-SVC_LIB_FLAGS = -lgssrpc
-endif
-
 if HAVE_GSSAPI
 SEC_LIB_FLAGS = $(SEC_LFLAGS) -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -ldl
 endif
