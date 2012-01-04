@@ -52,7 +52,7 @@ if USE_FSAL_SHOOK
 if BUILD_SHARED_FSAL
 lib_LTLIBRARIES = libfsalshook.la
 libfsalshook_la_LDFLAGS = -version-number @LIBVERSION@
-libfsalshook_la_LIBADD = ../../SemN/libSemN.la 
+libfsalshook_la_LIBADD = ../../SemN/libSemN.la -llustreapi  ../libfsalcommon.la 
 else
 noinst_LTLIBRARIES          = libfsalshook.la
 endif

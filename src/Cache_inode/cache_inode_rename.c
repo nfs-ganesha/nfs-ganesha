@@ -428,8 +428,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
           fsal_status_t getattr_status;
 
           LogEvent(COMPONENT_CACHE_INODE,
-                   "cache_inode_rename: Stale FSAL File Handle detected for at least one in  pentry = %p and pentry = %p",
-                   pentry_dirsrc, pentry_dirdest);
+                   "cache_inode_rename: Stale FSAL File Handle detected for at least one in  pentry = %p and pentry = %p, fsaL_status=(%u,%u)",
+                   pentry_dirsrc, pentry_dirdest, fsal_status.major, fsal_status.minor);
 
           /* Use FSAL_getattrs to find which entry is staled */
           getattr_status = FSAL_getattrs(phandle_dirsrc, pcontext, &attrlookup);

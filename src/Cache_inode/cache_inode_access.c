@@ -157,8 +157,8 @@ cache_inode_access_sw(cache_entry_t * pentry,
                             cache_inode_status_t kill_status;
 
                             LogEvent(COMPONENT_CACHE_INODE,
-                                     "cache_inode_access: Stale FSAL File Handle detected for pentry = %p",
-                                     pentry);
+                                     "cache_inode_access: Stale FSAL File Handle detected for pentry = %p, fsal_status=(%u,%u)",
+                                     pentry, fsal_status.major, fsal_status.minor);
 
                             if( use_mutex )
                                  cache_inode_kill_entry( pentry, RD_LOCK, ht,

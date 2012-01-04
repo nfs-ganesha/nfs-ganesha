@@ -205,8 +205,8 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
 
               snprintHandle(handle_str, 256, &pfsdata->handle);
               LogEvent(COMPONENT_CACHE_INODE,
-                       "cache_inode_get: Stale FSAL File Handle %s",
-                       handle_str);
+                       "cache_inode_get: Stale FSAL File Handle %s, fsal_status=(%u,%u)",
+                       handle_str, fsal_status.major, fsal_status.minor);
 
               *pstatus = CACHE_INODE_FSAL_ESTALE;
             }
@@ -268,14 +268,14 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
                   cache_inode_status_t kill_status;
 
                   LogEvent(COMPONENT_CACHE_INODE,
-                           "cache_inode_get: Stale FSAL File Handle detected for pentry = %p",
-                           pentry);
+                           "cache_inode_get: Stale FSAL File Handle detected for pentry = %p, fsal_status=(%u,%u)",
+                           pentry, fsal_status.major, fsal_status.minor);
 
                   if(cache_inode_kill_entry(pentry, NO_LOCK, ht, pclient, &kill_status) !=
                      CACHE_INODE_SUCCESS)
                     LogCrit(COMPONENT_CACHE_INODE,
-                            "cache_inode_get: Could not kill entry %p, status = %u",
-                            pentry, kill_status);
+                            "cache_inode_get: Could not kill entry %p, status = %u, fsal_status=(%u,%u)",
+                            pentry, kill_status, fsal_status.major, fsal_status.minor);
 
                   *pstatus = CACHE_INODE_FSAL_ESTALE;
 
