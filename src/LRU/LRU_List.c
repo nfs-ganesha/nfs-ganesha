@@ -273,6 +273,7 @@ int LRU_gc_invalid(LRU_list_t * plru, void *cleanparam)
   /* Do nothing if not enough calls were done */
   if(plru->nb_call_gc < plru->parameter.nb_call_gc_invalid)
     return LRU_LIST_SUCCESS;
+  plru->nb_call_gc = 0;
 
   /* From the LRU to the entry BEFORE the MRU */
   rc = LRU_LIST_SUCCESS;
