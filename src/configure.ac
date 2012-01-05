@@ -403,7 +403,7 @@ AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")
 
 # RPCAL switch argument (default is ONCRPC)
 AC_ARG_WITH( [rpcal], AS_HELP_STRING([--with-rpcal=ONCRPC|TIRPC (default=ONCRPC)], [specify the type of RPCAL to be used] ),
-              RPCAL="$withval", RPCAL="ONCRPC")
+              RPCAL="$withval", RPCAL="TIRPC")
 AM_CONDITIONAL(USE_TIRPC,  test "$RPCAL" = "TIRPC" )
 AM_CONDITIONAL(HAVE_GSSAPI, test "$RPCAL" = "TIRPC" )
 AM_CONDITIONAL(USE_ONCRPC, test "$RPCAL" = "ONCRPC" )
