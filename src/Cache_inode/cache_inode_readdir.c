@@ -112,7 +112,7 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
       return *pstatus;
     }
 
-  LogFullDebug(COMPONENT_NFS_READDIR,
+  LogFullDebug(COMPONENT_CACHE_INODE,
                "About to readdir in  cache_inode_readdir_nonamecache: pentry=%p "
 	       "cookie=%"PRIu64, pentry_dir, cookie ) ;
 
@@ -238,7 +238,7 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
   //memcpy( pend_cookie, &(end_cookie.data), sizeof( uint64_t ) ) ; 
   FSAL_SET_POFFSET_BY_COOKIE( end_cookie, pend_cookie ) ;
 
-  LogFullDebug(COMPONENT_NFS_READDIR,
+  LogFullDebug(COMPONENT_CACHE_INODE,
                "End of readdir in  cache_inode_readdir_nonamecache: pentry=%p "
 	       "cookie=%"PRIu64, pentry_dir, *pend_cookie ) ;
 
@@ -360,7 +360,7 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
   if (vstate == VALID || vstate == STALE) {
   
       if (vstate == STALE)
-      	LogDebug(COMPONENT_NFS_READDIR,
+      	LogDebug(COMPONENT_CACHE_INODE,
 		"DIRECTORY: found STALE cache entry");
 
 	/* Entry was found */
@@ -923,7 +923,7 @@ cache_inode_status_t cache_inode_readdir_populate(
 
       for(iter = 0; iter < nbfound; iter++)
         {
-          LogFullDebug(COMPONENT_NFS_READDIR,
+          LogFullDebug(COMPONENT_CACHE_INODE,
                        "cache readdir populate found entry %s",
                        array_dirent[iter].name.name);
 
@@ -931,7 +931,7 @@ cache_inode_status_t cache_inode_readdir_populate(
           if(!FSAL_namecmp(&(array_dirent[iter].name), (fsal_name_t *) & FSAL_DOT) ||
              !FSAL_namecmp(&(array_dirent[iter].name), (fsal_name_t *) & FSAL_DOT_DOT))
             {
-              LogFullDebug(COMPONENT_NFS_READDIR,
+              LogFullDebug(COMPONENT_CACHE_INODE,
                            "cache readdir populate : do not cache . and ..");
               continue;
             }
@@ -1203,7 +1203,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   *unlock = FALSE;
 
   /* end cookie initial value is the begin cookie */
-  LogFullDebug(COMPONENT_NFS_READDIR,
+  LogFullDebug(COMPONENT_CACHE_INODE,
                "--> Cache_inode_readdir: setting pend_cookie to cookie=%"
 	       PRIu64,
                cookie);
@@ -1213,7 +1213,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   pclient->stat.nb_call_total++;
   (pclient->stat.func_stats.nb_call[CACHE_INODE_READDIR])++;
 
-  LogFullDebug(COMPONENT_NFS_READDIR,
+  LogFullDebug(COMPONENT_CACHE_INODE,
                "--> Cache_inode_readdir: parameters are cookie=%"PRIu64
 	       "nbwanted=%u",
                cookie, nbwanted);
@@ -1331,7 +1331,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
       }
 
       if ((inoff-3) > avltree_size(&dir_pentry->object.dir.dentries)) {
-          LogCrit(COMPONENT_NFS_V4, "Bad initial cookie %"PRIu64,
+          LogCrit(COMPONENT_CACHE_INODE, "Bad initial cookie %"PRIu64,
                   inoff);
 	  *pstatus = CACHE_INODE_BAD_COOKIE;
 	  V_r(&dir_pentry->lock);
@@ -1344,7 +1344,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 				   &dir_pentry->object.dir.cookies);
 
       if (! dirent_node) {
-	  LogCrit(COMPONENT_NFS_READDIR,
+	  LogCrit(COMPONENT_CACHE_INODE,
 		  "%s: seek to cookie=%"PRIu64" fail",
 		  __func__,
 		  inoff);
@@ -1369,7 +1369,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
       dirent_node = avltree_first(&dir_pentry->object.dir.dentries);
   }
 
-  LogFullDebug(COMPONENT_NFS_READDIR,
+  LogFullDebug(COMPONENT_CACHE_INODE,
                "About to readdir in  cache_inode_readdir: pentry=%p "
 	       "cookie=%"PRIu64,
                dir_pentry,
