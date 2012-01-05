@@ -6,7 +6,8 @@
 #
 # processname: /usr/bin/gpfs.ganesha.nfsd
 # config: /etc/ganesha/gpfs.ganesha.nfsd.conf
-# pidfile: /var/run/snmpd
+# pidfile: /var/run/gpfs.ganesha.nfsd.pid
+#
 ### BEGIN INIT INFO
 # Provides: nfs-ganesha.gpfs
 # Required-Start: $local_fs $network
@@ -23,7 +24,14 @@
 # source function library
 . /etc/init.d/functions
 
+# Source networking configuration.
+[ -f /etc/sysconfig/network ] &&  . /etc/sysconfig/network
+
+# Check for and source configuration file otherwise set defaults
+[ -f /etc/sysconfig/nfs ] && . /etc/sysconfig/nfs
+
 PATHPROG=/usr/bin/gpfs.ganesha.nfsd
+PROG=gpfs.ganesha.nfsd
 LOGFILE=/var/log/nfs-ganesha.log
 #LOGFILE=SYSLOG
 #LOGFILE=STDERR

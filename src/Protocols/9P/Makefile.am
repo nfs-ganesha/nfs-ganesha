@@ -7,6 +7,7 @@ lib9p_la_SOURCES = 9p_interpretor.c  \
                    9p_proto_tools.c  \
                    9p_read_conf.c    \
                    9p_attach.c       \
+                   9p_auth.c         \
                    9p_clunk.c        \
                    9p_create.c       \
                    9p_flush.c        \
@@ -27,6 +28,7 @@ lib9p_la_SOURCES = 9p_interpretor.c  \
                    9p_symlink.c      \
                    9p_version.c      \
                    9p_walk.c         \
+                   9p_xattrwalk.c    \
                    9p_write.c        \
                    9p_rerror.c       \
                   ../../include/9p.h

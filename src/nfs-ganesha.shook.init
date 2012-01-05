@@ -5,7 +5,7 @@
 #
 # processname: /usr/bin/shook.ganesha.nfsd
 # config: /etc/ganesha/shook.ganesha.nfsd.conf
-# pidfile: /var/run/nfs-ganesha.pid
+# pidfile: /var/run/shook.ganesha.nfsd.pid
 #
 ### BEGIN INIT INFO
 # Provides: nfs-ganesha.shook
@@ -46,6 +46,7 @@ start() {
                 RETVAL=$?
                 if [ $RETVAL -eq 0 ]; then 
 		 touch $LOCK_FILE
+                    [ ! -f $PID_FILE ] && /sbin/pidof $prog > $PID_FILE
 		else
 		  RETVAL=1
                 fi

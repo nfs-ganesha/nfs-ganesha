@@ -63,6 +63,9 @@ int _9p_version( _9p_request_data_t * preq9p,
   u16 * version_len = NULL ;
   char * version_str = NULL ;
 
+  int rc = 0 ;
+  u32 err = 0 ;
+
   if ( !preq9p || !plenout || !preply )
    return -1 ;
 
@@ -76,7 +79,9 @@ int _9p_version( _9p_request_data_t * preq9p,
   if( strncmp( version_str, version_9p200l, *version_len ) )
    {
       LogEvent( COMPONENT_9P, "RVERSION: BAD VERSION" ) ;
-      return -1 ;
+      err = ENOENT ;
+      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+      return rc ;
    } 
 
   /* Good version, build the reply */

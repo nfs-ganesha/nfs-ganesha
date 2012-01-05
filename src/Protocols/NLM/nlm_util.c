@@ -41,7 +41,9 @@
 #include "nsm.h"
 #include "nlm_async.h"
 #include "nfs_core.h"
+#include "nfs_tcb.h"
 
+nfs_tcb_t  nlmtcb;
 /* nlm grace time tracking */
 static struct timeval nlm_grace_tv;
 #define NLM4_GRACE_PERIOD 10
@@ -189,6 +191,7 @@ void nlm_init(void)
   granted_cookie.gc_seconds      = (unsigned long) nlm_grace_tv.tv_sec;
   granted_cookie.gc_microseconds = (unsigned long) nlm_grace_tv.tv_usec;
   granted_cookie.gc_cookie       = 0;
+  tcb_new(&nlmtcb, "NLM async thread");
 }
 
 void nlm_startup(void)
@@ -329,6 +332,7 @@ int nlm_process_parameters(struct svc_req        * preq,
   /* Now get the cached inode attributes */
   fsal_data.cookie = DIR_START;
   *ppentry = cache_inode_get(&fsal_data,
+                             CACHE_INODE_JOKER_POLICY,
                              &attr,
                              ht,
                              pclient,
@@ -418,7 +422,12 @@ int nlm_process_parameters(struct svc_req        * preq,
                  alock->fh.n_len);
           /* FSF TODO: Ultimately I think the following will go away, we won't need the context, just the export */
           /* Copy credentials from pcontext */
+#ifdef _USE_HPSS
+          memcpy( &( (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_credential) , 
+                  &pcontext->credential, sizeof( hpssfsal_cred_t ) ) ;
+#else
           (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_credential = pcontext->credential;
+#endif
         }
     }
   /* Fill in plock */

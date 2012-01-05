@@ -22,19 +22,12 @@ fusexmp_use_shared_LDFLAGS = -Bdynamic -Wl,-rpath,/usr/lib
 fusexmp_use_shared_SOURCES= fusexmp_fh.c 
 endif
 
-if USE_GSSRPC
-fusexmp_LDADD += $(SEC_LFLAGS) -lgssrpc -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -ldl
-if IS_LINUX
-fusexmp_use_shared_LDADD += $(SEC_LFLAGS) -lgssrpc -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -ldl
-endif
-else 
 if USE_TIRPC
 fusexmp_LDADD += -ltirpc
 if IS_LINUX
 fusexmp_use_shared_LDADD += -ltirpc
-endif
-endif
-endif
+endif # IS_LINUX
+endif # USE_TIRPC
 
 if IS_LINUX
 if USE_NFS4_ACL

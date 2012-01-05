@@ -361,23 +361,39 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
     }
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME))
     {
+<<<<<<< HEAD
       p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime, p_buffstat->st_atim.tv_nsec);
+=======
+      p_fsalattr_out->atime = posix2fsal_time(p_buffstat->st_atime, 0);
+>>>>>>> next
 
     }
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CTIME))
     {
+<<<<<<< HEAD
       p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime, p_buffstat->st_atim.tv_nsec);
     }
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
     {
       p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime, p_buffstat->st_atim.tv_nsec);
+=======
+      p_fsalattr_out->ctime = posix2fsal_time(p_buffstat->st_ctime, 0);
+    }
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
+    {
+      p_fsalattr_out->mtime = posix2fsal_time(p_buffstat->st_mtime, 0);
+>>>>>>> next
     }
 
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
     {
       p_fsalattr_out->chgtime
+<<<<<<< HEAD
 	      = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime), 0);
+=======
+          = posix2fsal_time(MAX_2(p_buffstat->st_mtime, p_buffstat->st_ctime), 0);
+>>>>>>> next
       p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
     }
 

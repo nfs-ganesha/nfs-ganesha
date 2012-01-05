@@ -18,12 +18,6 @@ else
 FSAL_UP_LIB_FLAGS =
 endif
 
-if USE_GSSRPC
-SEC_LIB_FLAGS =
-SVC_FLAGS =
-SVC_LIB_FLAGS = -lgssrpc
-endif
-
 if HAVE_GSSAPI
 SEC_LIB_FLAGS = $(SEC_LFLAGS) -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -ldl
 endif
@@ -52,6 +46,12 @@ if USE_STAT_EXPORTER
 STAT_EXPORTER_FILE = nfs_stat_exporter_thread.c
 else
 STAT_EXPORTER_FILE =
+endif
+
+if USE_UPCALL_SIMULATOR
+UPCALL_SIMULATOR_FILE = fsal_upcall_simulator_thread.c
+else
+UPCALL_SIMULATOR_FILE =
 endif
 
 if USE_NLM
@@ -93,7 +93,9 @@ endif
 libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              nfs_stats_thread.c                   \
                              $(STAT_EXPORTER_FILE)                \
+                             $(UPCALL_SIMULATOR_FILE)             \
                              nfs_worker_thread.c                  \
+                             nfs_tcb.c                  \
                              nfs_file_content_gc_thread.c         \
                              nfs_rpc_dispatcher_thread.c          \
                              $(DISPATCH_9P_FILES)                 \
@@ -103,10 +105,12 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              nfs_tools.c                          \
                              nfs_init.h                           \
                              ../include/LRU_List.h                \
+                             ../include/nfs_tcb.h                 \
                              ../include/HashTable.h               \
                              ../include/HashData.h                \
                              ../include/rbt_node.h                \
                              ../include/rbt_tree.h                \
+                             ../include/avltree.h                 \
                              ../include/log_functions.h           \
                              ../include/nfs_core.h                \
                              ../include/err_rpc.h                 \
@@ -145,6 +149,7 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       ../IdMapper/libidmap.la                           \
                                       ../support/libsupport.la                          \
                                       ../NodeList/libNodeList.la                        \
+                                      ../avl/libavltree.la                              \
                                       ../$(CACHE_INODE_DIR)/libcache_inode.la           \
                                       ../SAL/libsal.la                                  \
                                       ../File_Content/libcache_content.la               \

@@ -115,7 +115,6 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
 
   pclient->attrmask = param.attrmask;
   pclient->nb_prealloc = param.nb_prealloc_entry;
-  pclient->nb_pre_dir_data = param.nb_pre_dir_data;
   pclient->nb_pre_parent = param.nb_pre_parent;
   pclient->nb_pre_state_v4 = param.nb_pre_state_v4;
   pclient->expire_type_attr = param.expire_type_attr;
@@ -127,9 +126,9 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   pclient->use_test_access = param.use_test_access;
   pclient->getattr_dir_invalidation = param.getattr_dir_invalidation;
   pclient->pworker = pworker_data;
-  pclient->use_cache = param.use_cache;
+  pclient->use_fd_cache = param.use_fd_cache;
   pclient->retention = param.retention;
-  pclient->max_fd_per_thread = param.max_fd_per_thread;
+  pclient->max_fd = param.max_fd;
 
   /* introducing desynchronisation for GC */
   pclient->time_of_last_gc = time(NULL) + thread_index * 20;
@@ -155,12 +154,12 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
       return 1;
     }
 
-  MakePool(&pclient->pool_dir_data, pclient->nb_pre_dir_data, cache_inode_dir_data_t, NULL, NULL);
-  NamePool(&pclient->pool_dir_data, "%s Dir Data Pool", name);
-  if(!IsPoolPreallocated(&pclient->pool_dir_data))
+  MakePool(&pclient->pool_dir_entry, pclient->nb_prealloc, cache_inode_dir_entry_t, NULL, NULL);
+  NamePool(&pclient->pool_dir_entry, "%s Dir Entry Pool", name);
+  if(!IsPoolPreallocated(&pclient->pool_dir_entry))
     {
       LogCrit(COMPONENT_CACHE_INODE,
-              "Can't init %s Dir Data Pool", name);
+              "Can't init %s Dir Entry Pool", name);
       return 1;
     }
 
@@ -222,7 +221,7 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
       return 1;
     }
 
-  param.lru_param.name = name;
+  param.lru_param.name = strdup(name);
 
   if((pclient->lru_gc = LRU_Init(param.lru_param, &lru_status)) == NULL)
     {

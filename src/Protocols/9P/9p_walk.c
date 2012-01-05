@@ -138,11 +138,12 @@ int _9p_walk( _9p_request_data_t * preq9p,
       for( i = 0 ; i <  *nwname ; i ++ )
         {
            snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *(wnames_len[i]), wnames_str[i] ) ;
-           LogDebug( COMPONENT_9P, "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u:%s)",
+           LogDebug( COMPONENT_9P, "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u :%s)",
             (u32)*msgtag, *fid, *newfid, i+1, *nwname, name.name ) ;
 
            if( ( pnewfid->pentry = cache_inode_lookup( pentry,
                                                        &name,
+                                                       pfid->pexport->cache_inode_policy,
                                                        &fsalattr,
                                                        pwkrdata->ht,
                                                        &pwkrdata->cache_inode_client,
@@ -180,14 +181,9 @@ int _9p_walk( _9p_request_data_t * preq9p,
           pnewfid->qid.type = _9P_QTSYMLINK ;
 	  break ;
 
-        case DIR_CONTINUE:
-          pnewfid->qid.path = (u64)pnewfid->pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes.fileid ;
-          pnewfid->qid.type = _9P_QTDIR ;
-	  break ;
-
-        case DIR_BEGINNING:
+        case DIRECTORY:
         case FS_JUNCTION:
-          pnewfid->qid.path = (u64)pnewfid->pentry->object.dir_begin.attributes.fileid ;
+          pnewfid->qid.path = (u64)pnewfid->pentry->object.dir.attributes.fileid ;
           pnewfid->qid.type = _9P_QTDIR ;
 	  break ;
 
@@ -220,8 +216,8 @@ int _9p_walk( _9p_request_data_t * preq9p,
   _9p_setendptr( cursor, preply ) ;
   _9p_checkbound( cursor, preply, plenout ) ;
 
-  LogDebug( COMPONENT_9P, "RWALK: tag=%u fid=%u newfid=%u nwqid=%u",
-            (u32)*msgtag, *fid, *newfid, *nwqid ) ;
+  LogDebug( COMPONENT_9P, "RWALK: tag=%u fid=%u newfid=%u nwqid=%u fileid=%llu pentry=%p",
+            (u32)*msgtag, *fid, *newfid, *nwqid,  pnewfid->qid.path, pnewfid->pentry ) ;
 
   return 1 ;
 }

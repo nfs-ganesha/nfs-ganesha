@@ -4,7 +4,7 @@ if BUILD_SHARED_FSAL
 
 lib_LTLIBRARIES = libfsalvfs.la
 libfsalvfs_la_LDFLAGS = -version-number @LIBVERSION@
-libfsalvfs_la_LIBADD = ../../SemN/libSemN.la 
+libfsalvfs_la_LIBADD = ../../SemN/libSemN.la  ../libfsalcommon.la 
 
 else
 noinst_LTLIBRARIES          = libfsalvfs.la
@@ -32,7 +32,6 @@ libfsalvfs_la_SOURCES = fsal_access.c    \
                         fsal_stats.c     \
 	                fsal_tools.c     \
                         fsal_local_op.c  \
-	                fsal_convert.h   \
                         fsal_internal.h  \
                         fsal_xattrs.c    \
 	                ../../include/fsal.h                     \

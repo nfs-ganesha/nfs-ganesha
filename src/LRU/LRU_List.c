@@ -97,9 +97,19 @@
 #endif
 
 #include <stdlib.h>
+#include <string.h>
 #include "LRU_List.h"
 #include "stuff_alloc.h"
 #include "log_macros.h"
+
+#ifndef TRUE /* XXX need base header for such defines (curr. BuddyMalloc.h) */
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
 
 /* ------ This group contains all the functions used to manipulate the LRU from outside this module ----- */
 
@@ -263,6 +273,7 @@ int LRU_gc_invalid(LRU_list_t * plru, void *cleanparam)
   /* Do nothing if not enough calls were done */
   if(plru->nb_call_gc < plru->parameter.nb_call_gc_invalid)
     return LRU_LIST_SUCCESS;
+  plru->nb_call_gc = 0;
 
   /* From the LRU to the entry BEFORE the MRU */
   rc = LRU_LIST_SUCCESS;

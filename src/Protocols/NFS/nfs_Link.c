@@ -186,7 +186,7 @@ int nfs_Link(nfs_arg_t * parg,
   /*
    * Sanity checks: 
    */
-  if(parent_filetype != DIR_BEGINNING && parent_filetype != DIR_CONTINUE)
+  if(parent_filetype != DIRECTORY)
     {
       switch (preq->rq_vers)
         {
@@ -250,6 +250,7 @@ int nfs_Link(nfs_arg_t * parg,
               if(cache_inode_link(target_pentry,
                                   parent_pentry,
                                   &link_name,
+                                  pexport->cache_inode_policy,
                                   &attr,
                                   ht,
                                   pclient,

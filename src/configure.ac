@@ -2,17 +2,18 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT( [nfs-ganesha], [1.2.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
+AC_INIT( [nfs-ganesha], [1.4.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr] )
 
 AC_SUBST(RELEASE, [1])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/SNMP/PROXY/HPSS/FUSELIKE/LUSTRE/XFS/GPFS/ZFS/VFS .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod),  Early pNFS (alpha) ])
+AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/PROXY/HPSS/FUSELIKE/LUSTRE/XFS/GPFS/ZFS/VFS .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod),  Early pNFS (alpha) ])
 
 # Init Automake
-AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+#AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AM_INIT_AUTOMAKE([foreign])
 
 # check for _GNU_SOURCE and set it in config.h
 AC_GNU_SOURCE
@@ -216,6 +217,14 @@ if test "$enable_quota" == "yes"; then
 fi
 AM_CONDITIONAL(USE_QUOTA, test "$enable_quota" = "yes")
 
+# Invalidation simulator (to be removed when FSAL_UP will be completed)
+GA_ENABLE_AM_CONDITION([upcall-simulator],[enable FSAL upcalls simulator thread],[USE_UPCALL_SIMULATOR])
+
+if test "$enable_upcall_simulator" == "yes"; then
+        AC_DEFINE(_USE_UPCALL_SIMULATOR,1,[enable Upcall simulator thread])
+fi
+AM_CONDITIONAL(USE_UPCALL_SIMULATOR, test "$enable_upcall_simulator" = "yes")
+
 
 # FSAL_UP
 GA_ENABLE_AM_CONDITION([fsal-up],[enable FSAL Upcall Interface support],[USE_FSAL_UP])
@@ -232,8 +241,6 @@ if test "$enable_ds" == "yes"; then
         AC_DEFINE(_USE_DS,1,[enable pNFS DS support])
 fi
 AM_CONDITIONAL(USE_DS, test "$enable_ds" = "yes")
-
-
 
 # TI-RPC
 GA_ENABLE_AM_CONDITION([tirpc],[enable TIRPC support],[USE_TIRPC])
@@ -312,7 +319,7 @@ AC_SUBST(EFENCE)
 
 # Debugging options
 #GA_DISABLE_FLAG( [concurrent-memalloc],  [a thread is not allowed to free a block allocated by another thread], [-D_MONOTHREAD_MEMALLOC] )
-GA_DISABLE_FLAG( [prealloc],             [disable GANESHA's memory preallocator, for debug purpose only], [-D_NO_BLOCK_PREALLOC] )
+GA_DISABLE_FLAG( [prealloc],             [disable memory preallocator, for debug purpose only], [-D_NO_BLOCK_PREALLOC] )
 GA_DISABLE_FLAG( [tcp-register], 	 [disable registration of tcp services on portmapper], 		  [-D_NO_TCP_REGISTER] )
 GA_DISABLE_FLAG( [portmapper], 	         [disable registration on portmapper], 				  [-D_NO_PORTMAPPER] )
 GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and files support],               [-D_NO_XATTRD])
@@ -356,16 +363,23 @@ if test "${with_extra_includedir+set}" == "set"; then
 	CFLAGS="$CFLAGS -I$EXTRA_INCLUDE_DIR"
 fi
 
+# CUnit
+AC_ARG_WITH( [cunit], AS_HELP_STRING([--with-cunit=<path>], [Path to CUnit] ),
+		CUNIT="$withval" )
+
+if test "${with_cunit+set}" == "set"; then
+	CFLAGS="$CFLAGS -I$CUNIT/include"
+	LDFLAGS="-L$CUNIT/lib $LDFLAGS -lcunit"
+fi
+
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|GHOSTFS|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|DYNFSAL|SHOOK (default=PROXY)],
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|DYNFSAL|SHOOK (default=PROXY)],
              [specify the type of filesystem to be exported] ), FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
 AM_CONDITIONAL(USE_FSAL_HPSS,     test "$FSAL" = "HPSS")
-AM_CONDITIONAL(USE_FSAL_GHOSTFS,  test "$FSAL" = "GHOSTFS")
 AM_CONDITIONAL(USE_FSAL_POSIX,    test "$FSAL" = "POSIX")
 AM_CONDITIONAL(USE_FSAL_PROXY,    test "$FSAL" = "PROXY")
-AM_CONDITIONAL(USE_FSAL_SNMP,     test "$FSAL" = "SNMP")
 AM_CONDITIONAL(USE_FSAL_FUSE,     test "$FSAL" = "FUSE")
 AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
 AM_CONDITIONAL(USE_FSAL_SHOOK,    test "$FSAL" = "SHOOK") # variant of Lustre FSAL
@@ -388,10 +402,8 @@ AM_CONDITIONAL(USE_NFS4_1, test "$NFS4_MINOR" = "1")
 AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")
 
 # RPCAL switch argument (default is ONCRPC)
-AC_ARG_WITH( [rpcal], AS_HELP_STRING([--with-rpcal=ONCRPC|GSSRPC|TIRPC (default=ONCRPC)], [specify the type of RPCAL to be used] ),
+AC_ARG_WITH( [rpcal], AS_HELP_STRING([--with-rpcal=ONCRPC|TIRPC (default=ONCRPC)], [specify the type of RPCAL to be used] ),
               RPCAL="$withval", RPCAL="ONCRPC")
-AM_CONDITIONAL(USE_GSSRPC, test "$RPCAL" = "GSSRPC" )
-AM_CONDITIONAL(HAVE_GSSAPI, test "$RPCAL" = "GSSRPC" )
 AM_CONDITIONAL(USE_TIRPC,  test "$RPCAL" = "TIRPC" )
 AM_CONDITIONAL(HAVE_GSSAPI, test "$RPCAL" = "TIRPC" )
 AM_CONDITIONAL(USE_ONCRPC, test "$RPCAL" = "ONCRPC" )
@@ -490,7 +502,7 @@ case $FSAL in
 
 		AC_DEFINE([_USE_HPSS], 1, [GANESHA is compiled with HPSS FSAL])
 		FSAL_CFLAGS="-I/opt/hpss/include"
-		FSAL_LDFLAGS="-L/opt/hpss/lib -Wl,-rpath,/opt/hpss/lib -lhpss"
+		FSAL_LDFLAGS="-L/opt/hpss/lib -Wl,-rpath,/opt/hpss/lib -lhpss -lhpsscs"
         	FSAL_LIB="\$(top_builddir)/FSAL/FSAL_HPSS/libfsalhpss.la \$(top_builddir)/FSAL/FSAL_HPSS/HPSSclapiExt/libhpssapiext.la"
                	FS_NAME="hpss"
 
@@ -512,21 +524,6 @@ case $FSAL in
 		fi
                 FS_NAME="proxy"
                 ;;
-	SNMP)
-		AC_DEFINE([_USE_SNMP], 1, [GANESHA is compiled with SNMP FSAL])
-                AC_CHECK_HEADERS([net-snmp/net-snmp-config.h], [], [AC_MSG_ERROR(missing libsnmp include files)])
-                case "$MYOS" in
-			FREEBSD)
-				FSAL_CFLAGS=`$NETSNMP_CONFIG --cflags`
-				;;
-			*)
-				FSAL_CFLAGS=""
-				;;
-		esac
-                FSAL_LDFLAGS=`$NETSNMP_CONFIG --agent-libs`
-		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_SNMP/libfsalsnmp.la"
-		FS_NAME="snmp"
-		;;
 	FUSE)
 		AC_DEFINE([_USE_FUSE], 1, [GANESHA is compiled as a FUSE-like library])
 		FSAL_CFLAGS=
@@ -734,16 +731,8 @@ case $FSAL in
                 FSAL_LIB="\$(top_builddir)/FSAL/FSAL_POSIX/libfsalposix.la \$(top_builddir)/FSAL/FSAL_POSIX/DBExt/$DBTYPE/libfsaldbext.la"
                 FS_NAME="posix"
                 ;;
-	GHOSTFS)
-		AC_DEFINE([_USE_GHOSTFS], 1, [GANESHA is compiled with GHOST FS FSAL])
-                FSAL_CFLAGS=
-                FSAL_LDFLAGS="\$(top_builddir)/RW_Lock/librwlock.la"
-                FSAL_LIB="\$(top_builddir)/FSAL/FSAL_GHOST_FS/libfsalghostfs.la \$(top_builddir)/FSAL/FSAL_GHOST_FS/GHOST_FS/libghostfs.la"
-                FS_NAME="ghostfs"
-                ;;
-
 	*)
-		AC_MSG_ERROR([This FSAL is not supported yet])
+		AC_MSG_ERROR([This FSAL is not supported])
 esac
 
 case $MFSL in
@@ -777,14 +766,6 @@ esac
 
 case $RPCAL in
 	"ONCRPC")
-		;;
-	"GSSRPC")
-                AC_DEFINE(_USE_GSSRPC,1,[enable security management with GSSRPC])
-	        # ==> Add here libraries needed for GSSRPC
-                AC_CHECK_LIB([gssapi_krb5], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ],
-			     [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )
-                AC_CHECK_LIB([gssrpc], [gssrpc_authunix_create_default], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ],
-			      [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
 		;;
 	"TIRPC")
                 PKG_CHECK_MODULES(TIRPC, libtirpc,
@@ -892,7 +873,6 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_HPSS/Makefile
                  include/FSAL/FSAL_POSIX/Makefile
                  include/FSAL/FSAL_PROXY/Makefile
-                 include/FSAL/FSAL_SNMP/Makefile
                  include/FSAL/FSAL_FUSELIKE/Makefile
                  include/FSAL/FSAL_LUSTRE/Makefile
                  include/FSAL/FSAL_XFS/Makefile
@@ -900,7 +880,6 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_ZFS/Makefile
                  include/FSAL/FSAL_VFS/Makefile
                  include/FSAL/FSAL_TEMPLATE/Makefile
-                 include/FSAL/FSAL_GHOST_FS/Makefile
                  include/MFSL/Makefile
                  include/MFSL/MFSL_NULL/Makefile
                  include/MFSL/MFSL_AIO/Makefile
@@ -919,7 +898,9 @@ AC_CONFIG_FILES([include/Makefile
                  IdMapper/Makefile
                  RW_Lock/Makefile
                  SemN/Makefile
+                 cidr/Makefile
                  LRU/Makefile
+                 avl/Makefile
                  HashTable/Makefile
                  Cache_inode/Makefile
                  SAL/Makefile
@@ -939,15 +920,12 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile
 		 FSAL/FSAL_HPSS/HPSSclapiExt/Makefile
-		 FSAL/FSAL_GHOST_FS/Makefile
-		 FSAL/FSAL_GHOST_FS/GHOST_FS/Makefile
 		 FSAL/FSAL_POSIX/Makefile
 		 FSAL/FSAL_POSIX/DBExt/Makefile
 		 FSAL/FSAL_POSIX/DBExt/PGSQL/Makefile
 		 FSAL/FSAL_POSIX/DBExt/MYSQL/Makefile
 		 FSAL/FSAL_PROXY/Makefile
 		 FSAL/FSAL_PROXY/handle_mapping/Makefile
-		 FSAL/FSAL_SNMP/Makefile
 		 FSAL/FSAL_FUSELIKE/Makefile
 		 FSAL/FSAL_LUSTRE/Makefile
 		 FSAL/FSAL_LUSTRE/PNFS/Makefile
@@ -963,7 +941,6 @@ AC_CONFIG_FILES([include/Makefile
 		 MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  RPCAL/Makefile
                  RPCAL/ONCRPC/Makefile
-                 RPCAL/GSSRPC/Makefile
                  RPCAL/TIRPC/Makefile
                  MainNFSD/Makefile
                  test/Makefile

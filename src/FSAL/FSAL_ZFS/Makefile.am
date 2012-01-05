@@ -4,7 +4,7 @@ if BUILD_SHARED_FSAL
 
 lib_LTLIBRARIES = libfsalzfs.la
 libfsalzfs_la_LDFLAGS = -version-number @LIBVERSION@
-libfsalzfs_la_LIBADD = ../../SemN/libSemN.la @ZFSWRAP_LIBS@
+libfsalzfs_la_LIBADD = ../../SemN/libSemN.la ../libfsalcommon.la @ZFSWRAP_LIBS@
 
 else
 noinst_LTLIBRARIES          = libfsalzfs.la
@@ -39,6 +39,7 @@ libfsalzfs_la_SOURCES = fsal_access.c   \
                         ../../include/fsal_types.h      \
                         ../../include/err_fsal.h        \
                         ../../include/FSAL/FSAL_ZFS/fsal_types.h
+
 
 new: clean all
 

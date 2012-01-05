@@ -61,20 +61,21 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
                                           cache_inode_status_t * pstatus)
 {
   fsal_status_t fsal_status;
+  fsal_attrib_list_t attr ;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* stats */
-  pclient->stat.nb_call_total += 1;
-  pclient->stat.func_stats.nb_call[CACHE_INODE_READLINK] += 1;
+  (pclient->stat.nb_call_total)++;
+  (pclient->stat.func_stats.nb_call[CACHE_INODE_READLINK])++;
 
   /* Lock the entry */
   P_w(&pentry->lock);
   if(cache_inode_renew_entry(pentry, NULL, ht, pclient, pcontext, pstatus) !=
      CACHE_INODE_SUCCESS)
     {
-      pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_READLINK] += 1;
+      (pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_READLINK])++;
       V_w(&pentry->lock);
       return *pstatus;
     }
@@ -84,8 +85,7 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
   switch (pentry->internal_md.type)
     {
     case REGULAR_FILE:
-    case DIR_BEGINNING:
-    case DIR_CONTINUE:
+    case DIRECTORY:
     case CHARACTER_FILE:
     case BLOCK_FILE:
     case SOCKET_FILE:
@@ -104,7 +104,16 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
 
     case SYMBOLIC_LINK:
       assert(pentry->object.symlink);
-      fsal_status = FSAL_pathcpy(plink_content, &(pentry->object.symlink->content)); /* need copy ctor? */
+      if( CACHE_INODE_KEEP_CONTENT( pentry->policy ) )
+        {
+          fsal_status = FSAL_pathcpy(plink_content, &(pentry->object.symlink->content)); /* need copy ctor? */
+        }
+      else
+        {
+           /* Content is not cached, call FSAL_readlink here */
+           fsal_status = FSAL_readlink( &pentry->object.symlink->handle, pcontext, plink_content, &attr ) ; 
+        }
+
       if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
@@ -115,10 +124,10 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
               cache_inode_status_t kill_status;
 
               LogEvent(COMPONENT_CACHE_INODE,
-                       "cache_inode_readlink: Stale FSAL File Handle detected for pentry = %p",
-                       pentry);
+                       "cache_inode_readlink: Stale FSAL File Handle detected for pentry = %p, fsal_status=(%u,%u)",
+                       pentry, fsal_status.major, fsal_status.minor);
 
-              if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+              if(cache_inode_kill_entry(pentry, NO_LOCK, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
                 LogCrit(COMPONENT_CACHE_INODE,
                         "cache_inode_readlink: Could not kill entry %p, status = %u",

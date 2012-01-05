@@ -73,6 +73,8 @@
 #include "nsm.h"
 #endif
 #include "sal_functions.h"
+#include "nfs_tcb.h"
+#include "nfs_tcb.h"
 
 /* global information exported to all layers (as extern vars) */
 
@@ -97,9 +99,14 @@ pthread_t stat_exporter_thrid;
 pthread_t admin_thrid;
 pthread_t fcc_gc_thrid;
 pthread_t sigmgr_thrid;
+nfs_tcb_t gccb;
 
 #ifdef _USE_9P
 pthread_t _9p_dispatcher_thrid;
+#endif
+
+#ifdef _USE_UPCALL_SIMULATOR
+pthread_t upcall_simulator_thrid;
 #endif
 
 char config_path[MAXPATHLEN];
@@ -142,9 +149,9 @@ void *sigmgr_thread( void * arg )
   LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
   LogDebug(COMPONENT_THREAD, "Stopping worker threads");
 
-  if(pause_workers(PAUSE_SHUTDOWN) != PAUSE_EXIT)
+  if(pause_threads(PAUSE_SHUTDOWN) != PAUSE_EXIT)
     LogDebug(COMPONENT_THREAD,
-             "Unexpected return code from pause_workers");
+             "Unexpected return code from pause_threads");
   else
     LogDebug(COMPONENT_THREAD,
              "Done waiting for worker threads to exit");
@@ -326,13 +333,16 @@ void nfs_set_param_default()
 
   /* Worker parameters : LRU */
   nfs_param.worker_param.lru_param.nb_entry_prealloc = NB_PREALLOC_LRU_WORKER;
+  nfs_param.worker_param.lru_param.nb_call_gc_invalid = 100;
   nfs_param.worker_param.lru_param.clean_entry = clean_pending_request;
   nfs_param.worker_param.lru_param.entry_to_str = print_pending_request;
+  nfs_param.worker_param.lru_param.name = "Worker LRU";
 
   /* Worker parameters : LRU dupreq */
   nfs_param.worker_param.lru_dupreq.nb_entry_prealloc = NB_PREALLOC_LRU_DUPREQ;
   nfs_param.worker_param.lru_dupreq.clean_entry = clean_entry_dupreq;
   nfs_param.worker_param.lru_dupreq.entry_to_str = print_entry_dupreq;
+  nfs_param.worker_param.lru_dupreq.name = "Worker DupReq LRU";
 
   /* Worker parameters : GC */
   nfs_param.worker_param.nb_pending_prealloc = NB_MAX_PENDING_REQUEST;
@@ -629,8 +639,8 @@ void nfs_set_param_default()
       lru_inode_entry_to_str;
   nfs_param.cache_layers_param.cache_inode_client_param.lru_param.clean_entry =
       lru_inode_clean_entry;
+  nfs_param.cache_layers_param.cache_inode_client_param.lru_param.name = "Cache Inode Client LRU";
   nfs_param.cache_layers_param.cache_inode_client_param.nb_prealloc_entry = 1024;
-  nfs_param.cache_layers_param.cache_inode_client_param.nb_pre_dir_data = 256;
   nfs_param.cache_layers_param.cache_inode_client_param.nb_pre_parent = 2048;
   nfs_param.cache_layers_param.cache_inode_client_param.nb_pre_state_v4 = 512;
   nfs_param.cache_layers_param.cache_inode_client_param.grace_period_attr   = 0;
@@ -646,16 +656,16 @@ void nfs_set_param_default()
 #else
   nfs_param.cache_layers_param.cache_inode_client_param.attrmask = FSAL_ATTR_MASK_V2_V3;
 #endif
-  nfs_param.cache_layers_param.cache_inode_client_param.max_fd_per_thread = 20;
-  nfs_param.cache_layers_param.cache_inode_client_param.use_cache = 0;
+  nfs_param.cache_layers_param.cache_inode_client_param.max_fd = 20;
+  nfs_param.cache_layers_param.cache_inode_client_param.use_fd_cache = 0;
   nfs_param.cache_layers_param.cache_inode_client_param.use_fsal_hash = 1;
   nfs_param.cache_layers_param.cache_inode_client_param.retention = 60;
 
   /* Data cache client parameters */
   nfs_param.cache_layers_param.cache_content_client_param.nb_prealloc_entry = 128;
   nfs_param.cache_layers_param.cache_content_client_param.flush_force_fsal = 1;
-  nfs_param.cache_layers_param.cache_content_client_param.max_fd_per_thread = 20;
-  nfs_param.cache_layers_param.cache_content_client_param.use_cache = 0;
+  nfs_param.cache_layers_param.cache_content_client_param.max_fd = 20;
+  nfs_param.cache_layers_param.cache_content_client_param.use_fd_cache = 0;
   nfs_param.cache_layers_param.cache_content_client_param.retention = 60;
 
   strcpy(nfs_param.cache_layers_param.cache_content_client_param.cache_dir,
@@ -744,7 +754,6 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
   unsigned int i = 0 ;
   unsigned int saved_fsalid = 0 ;
   unsigned int fsalid = 0 ;
-  unsigned int i = 0 ;
 #endif
 
   /* First, parse the configuration file */
@@ -1371,6 +1380,14 @@ int nfs_check_param_consistency()
       return 1;
     }
 
+  if( 2*nfs_param.core_param.nb_worker  >  nfs_param.cache_layers_param.cache_param.hparam.index_size )
+    {
+      LogCrit(COMPONENT_INIT,
+              "BAD PARAMETER: number of workers is too large compared to Cache_Inode's index size, it should be smaller than half of it");
+      return 1;
+    }
+
+
   if(nfs_param.worker_param.nb_before_gc <
      nfs_param.worker_param.lru_param.nb_entry_prealloc / 2)
     {
@@ -1647,6 +1664,7 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
 
   if(nfs_param.cache_layers_param.dcgcpol.run_interval != 0)
     {
+      tcb_new(&gccb, "NFS FILE CONTENT GARBAGE COLLECTION Thread"); 
       /* Starting the nfs file content gc thread  */
       if((rc =
           pthread_create(&fcc_gc_thrid, &attr_thr, file_content_gc_thread,
@@ -1659,6 +1677,20 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
       LogEvent(COMPONENT_THREAD,
                "file content gc thread was started successfully");
     }
+
+#ifdef _USE_UPCALL_SIMULATOR
+  /* Starts the thread that mimics upcalls from the FSAL */
+   /* Starting the stats thread */
+  if((rc =
+      pthread_create(&upcall_simulator_thrid, &attr_thr, upcall_simulator_thread, (void *)workers_data)) != 0)
+    {
+      LogFatal(COMPONENT_THREAD,
+               "Could not create upcall_simulator_thread, error = %d (%s)",
+               errno, strerror(errno));
+    }
+  LogEvent(COMPONENT_THREAD, "upcall_simulator thread was started successfully");
+#endif
+
 
 }                               /* nfs_Start_threads */
 
@@ -1755,6 +1787,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                state_err_str(state_status));
     }
   LogInfo(COMPONENT_INIT, "Cache Inode library successfully initialized");
+  /* Initialize thread control block */
+  tcb_head_init();
 
   /* Set the cache inode GC policy */
   cache_inode_set_gc_policy(nfs_param.cache_layers_param.gcpol);
@@ -1858,13 +1892,13 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
     {
       char name[256];
 
+      /* Set the index (mostly used for debug purpose */
+      workers_data[i].worker_index = i;
+
       /* Fill in workers fields (semaphores and other stangenesses */
       if(nfs_Init_worker_data(&(workers_data[i])) != 0)
         LogFatal(COMPONENT_INIT,
                  "Error while initializing worker data #%d", i);
-
-      /* Set the index (mostly used for debug purpose */
-      workers_data[i].worker_index = i;
 
       /* Set the pointer for the Cache inode hash table */
       workers_data[i].ht = ht;
@@ -2175,36 +2209,53 @@ void nfs_start(nfs_start_info_t * p_start_info)
 
 #if 0
   /* Will remain as long as all FSAL are not yet in new format */
-  printf("---> fsal_handle_t:%u\n", sizeof(proxyfsal_handle_t));
-  printf("---> fsal_op_context_t:%u\n", sizeof(proxyfsal_op_context_t));
-  printf("---> fsal_file_t:%u\n", sizeof(proxyfsal_file_t));
-  printf("---> fsal_dir_t:%u\n", sizeof(proxyfsal_dir_t));
-  printf("---> fsal_export_context_t:%u\n", sizeof(proxyfsal_export_context_t));
-  printf("---> fsal_cookie_t:%u\n", sizeof(proxyfsal_cookie_t));
-  printf("---> fs_specific_initinfo_t:%u\n", sizeof(proxyfs_specific_initinfo_t));
-  printf("---> fsal_cred_t:%u\n", sizeof(proxyfsal_cred_t));
+  printf("---> fsal_handle_t:%lu\n", sizeof(cephfsal_handle_t));
+  printf("---> fsal_op_context_t:%lu\n", sizeof(cephfsal_op_context_t));
+  printf("---> fsal_file_t:%lu\n", sizeof(cephfsal_file_t));
+  printf("---> fsal_dir_t:%lu\n", sizeof(cephfsal_dir_t));
+  printf("---> fsal_export_context_t:%lu\n", sizeof(cephfsal_export_context_t));
+  printf("---> fsal_cookie_t:%lu\n", sizeof(cephfsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(cephfs_specific_initinfo_t));
 #endif
 #if 0
   /* Will remain as long as all FSAL are not yet in new format */
-  printf("---> fsal_handle_t:%u\n", sizeof(xfsfsal_handle_t));
-  printf("---> fsal_op_context_t:%u\n", sizeof(xfsfsal_op_context_t));
-  printf("---> fsal_file_t:%u\n", sizeof(xfsfsal_file_t));
-  printf("---> fsal_dir_t:%u\n", sizeof(xfsfsal_dir_t));
-  printf("---> fsal_export_context_t:%u\n", sizeof(xfsfsal_export_context_t));
-  printf("---> fsal_cookie_t:%u\n", sizeof(xfsfsal_cookie_t));
-  printf("---> fs_specific_initinfo_t:%u\n", sizeof(xfsfs_specific_initinfo_t));
-  printf("---> fsal_cred_t:%u\n", sizeof(xfsfsal_cred_t));
+  printf("---> fsal_handle_t:%lu\n", sizeof(vfsfsal_handle_t));
+  printf("---> fsal_op_context_t:%lu\n", sizeof(vfsfsal_op_context_t));
+  printf("---> fsal_file_t:%lu\n", sizeof(vfsfsal_file_t));
+  printf("---> fsal_dir_t:%lu\n", sizeof(vfsfsal_dir_t));
+  printf("---> fsal_export_context_t:%lu\n", sizeof(vfsfsal_export_context_t));
+  printf("---> fsal_cookie_t:%lu\n", sizeof(vfsfsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(vfsfs_specific_initinfo_t));
 #endif
 #if 0
   /* Will remain as long as all FSAL are not yet in new format */
-  printf("---> fsal_handle_t:%u\n", sizeof(zfsfsal_handle_t));
-  printf("---> fsal_op_context_t:%u\n", sizeof(zfsfsal_op_context_t));
-  printf("---> fsal_file_t:%u\n", sizeof(zfsfsal_file_t));
-  printf("---> fsal_dir_t:%u\n", sizeof(zfsfsal_dir_t));
-  printf("---> fsal_export_context_t:%u\n", sizeof(zfsfsal_export_context_t));
-  printf("---> fsal_cookie_t:%u\n", sizeof(zfsfsal_cookie_t));
-  printf("---> fs_specific_initinfo_t:%u\n", sizeof(zfsfs_specific_initinfo_t));
-  printf("---> fsal_cred_t:%u\n", sizeof(zfsfsal_cred_t));
+  printf("---> fsal_handle_t:%lu\n", sizeof(proxyfsal_handle_t));
+  printf("---> fsal_op_context_t:%lu\n", sizeof(proxyfsal_op_context_t));
+  printf("---> fsal_file_t:%lu\n", sizeof(proxyfsal_file_t));
+  printf("---> fsal_dir_t:%lu\n", sizeof(proxyfsal_dir_t));
+  printf("---> fsal_export_context_t:%lu\n", sizeof(proxyfsal_export_context_t));
+  printf("---> fsal_cookie_t:%lu\n", sizeof(proxyfsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(proxyfs_specific_initinfo_t));
+#endif
+#if 0
+  /* Will remain as long as all FSAL are not yet in new format */
+  printf("---> fsal_handle_t:%lu\n", sizeof(xfsfsal_handle_t));
+  printf("---> fsal_op_context_t:%lu\n", sizeof(xfsfsal_op_context_t));
+  printf("---> fsal_file_t:%lu\n", sizeof(xfsfsal_file_t));
+  printf("---> fsal_dir_t:%lu\n", sizeof(xfsfsal_dir_t));
+  printf("---> fsal_export_context_t:%lu\n", sizeof(xfsfsal_export_context_t));
+  printf("---> fsal_cookie_t:%lu\n", sizeof(xfsfsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(xfsfs_specific_initinfo_t));
+#endif
+#if 0
+  /* Will remain as long as all FSAL are not yet in new format */
+  printf("---> fsal_handle_t:%lu\n", sizeof(zfsfsal_handle_t));
+  printf("---> fsal_op_context_t:%lu\n", sizeof(zfsfsal_op_context_t));
+  printf("---> fsal_file_t:%lu\n", sizeof(zfsfsal_file_t));
+  printf("---> fsal_dir_t:%lu\n", sizeof(zfsfsal_dir_t));
+  printf("---> fsal_export_context_t:%lu\n", sizeof(zfsfsal_export_context_t));
+  printf("---> fsal_cookie_t:%lu\n", sizeof(zfsfsal_cookie_t));
+  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(zfsfs_specific_initinfo_t));
 #endif
 #if 0
   /* Will remain as long as all FSAL are not yet in new format */
@@ -2237,7 +2288,6 @@ void nfs_start(nfs_start_info_t * p_start_info)
   printf("---> fsal_export_context_t:%lu\n", sizeof(snmpfsal_export_context_t));
   printf("---> fsal_cookie_t:%lu\n", sizeof(snmpfsal_cookie_t));
   printf("---> fs_specific_initinfo_t:%lu\n", sizeof(snmpfs_specific_initinfo_t));
-  printf("---> fsal_cred_t:%lu\n", sizeof(snmpfsal_cred_t));
 #endif
 
   /* store the start info so it is available for all layers */
@@ -2445,7 +2495,7 @@ void nfs_start(nfs_start_info_t * p_start_info)
         }
 
       /* Wait for the threads to complete their init step */
-      if(wait_for_workers_to_awaken() != PAUSE_OK)
+      if(wait_for_threads_to_awaken() != PAUSE_OK)
         {
           /* Not quite sure what to do here... */
         }

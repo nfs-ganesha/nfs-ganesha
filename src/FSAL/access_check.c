@@ -7,7 +7,10 @@
 #endif
 
 #include  "fsal.h"
+<<<<<<< HEAD
 #include <sys/stat.h>
+=======
+>>>>>>> next
 #include "FSAL/access_check.h"
 
 
@@ -390,15 +393,38 @@ static fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /
   LogDebug(COMPONENT_FSAL,
                "fsal_check_access_no_acl: file Mode=%#o, file uid=%d, file gid= %d",
                mode,uid, gid);
+<<<<<<< HEAD
+=======
+
+#ifdef _USE_HPSS
+  LogDebug(COMPONENT_FSAL,
+               "fsal_check_access_no_acl: user uid=%d, user gid= %d, access_type=0X%x",
+               p_context->credential.hpss_usercred.Uid,
+               p_context->credential.hpss_usercred.Gid,
+               access_type);
+#else
+>>>>>>> next
   LogDebug(COMPONENT_FSAL,
                "fsal_check_access_no_acl: user uid=%d, user gid= %d, access_type=0X%x",
                p_context->credential.user,
                p_context->credential.group,
                access_type);
+<<<<<<< HEAD
 
   /* If the uid of the file matches the uid of the user,
    * then the uid mode bits take precedence. */
   if(p_context->credential.user == uid)
+=======
+#endif
+
+  /* If the uid of the file matches the uid of the user,
+   * then the uid mode bits take precedence. */
+#ifdef _USE_HPSS
+  if(p_context->credential.hpss_usercred.Uid == uid)
+#else
+  if(p_context->credential.user == uid)
+#endif
+>>>>>>> next
     {
 
       LogDebug(COMPONENT_FSAL,
@@ -435,6 +461,29 @@ static fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /
   missing_access &= ~FSAL_OWNER_OK;
 
   /* Test if the file belongs to user's group. */
+<<<<<<< HEAD
+=======
+#ifdef _USE_HPSS
+  is_grp = (p_context->credential.hpss_usercred.Gid == gid);
+  if(is_grp)
+    LogDebug(COMPONENT_FSAL,
+                 "fsal_check_access_no_acl: File belongs to user's group %d",
+                 p_context->credential.hpss_usercred.Gid);
+
+  /* Test if file belongs to alt user's groups */
+  if(!is_grp)
+    for(i = 0; i < p_context->credential.hpss_usercred.NumGroups; i++)
+      {
+        is_grp = (p_context->credential.hpss_usercred.AltGroups[i] == gid);
+        if(is_grp)
+          LogDebug(COMPONENT_FSAL,
+                       "fsal_check_access_no_acl: File belongs to user's alt group %d",
+                       p_context->credential.hpss_usercred.AltGroups[i]);
+        if(is_grp)
+          break;
+      }
+#else
+>>>>>>> next
   is_grp = (p_context->credential.group == gid);
   if(is_grp)
     LogDebug(COMPONENT_FSAL,
@@ -453,6 +502,10 @@ static fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /
         if(is_grp)
           break;
       }
+<<<<<<< HEAD
+=======
+#endif
+>>>>>>> next
 
   /* If the gid of the file matches the gid of the user or
    * one of the alternatve gids of the user, then the uid mode
@@ -512,8 +565,18 @@ fsal_status_t fsal_check_access(fsal_op_context_t * p_context,   /* IN */
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   /* The root user ignores the mode/uid/gid of the file */
+<<<<<<< HEAD
   if(p_context->credential.user == 0)
     ReturnCode(ERR_FSAL_NO_ERROR, 0);
+=======
+#ifdef _USE_HPSS
+  if(p_context->credential.hpss_usercred.Uid == 0)
+    ReturnCode(ERR_FSAL_NO_ERROR, 0);
+#else
+  if(p_context->credential.user == 0)
+    ReturnCode(ERR_FSAL_NO_ERROR, 0);
+#endif
+>>>>>>> next
 
 #ifdef _USE_NFS4_ACL
   /* If ACL exists and given access type is ace4 mask, use ACL to check access. */

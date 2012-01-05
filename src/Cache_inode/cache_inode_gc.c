@@ -1,3 +1,4 @@
+
 /*
  * vim:expandtab:shiftwidth=8:tabstop=8:
  *
@@ -117,11 +118,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
     }
 
   fsaldata.handle = *pfsal_handle;
-
-  if(pentry->internal_md.type != DIR_CONTINUE)
-    fsaldata.cookie = DIR_START;
-  else
-    fsaldata.cookie = pentry->object.dir_cont.dir_cont_pos;
+  fsaldata.cookie = DIR_START;
 
   /* Use the handle to build the key */
   if(cache_inode_fsaldata_2_key(&key, &fsaldata, pgcparam->pclient))
@@ -195,25 +192,14 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
   LogFullDebug(COMPONENT_CACHE_INODE_GC,
                "++++> parent directory sent back to pool");
 
-  /* If entry is a DIR_CONTINUE or a DIR_BEGINNING, release pdir_data */
-  if(pentry->internal_md.type == DIR_BEGINNING)
-    {
-      /* Put the pentry back to the pool */
-      ReleaseToPool(pentry->object.dir_begin.pdir_data, &pgcparam->pclient->pool_dir_data);
-    }
-
-  if(pentry->internal_md.type == DIR_CONTINUE)
-    {
-      /* Put the pentry back to the pool */
-      ReleaseToPool(pentry->object.dir_cont.pdir_data, &pgcparam->pclient->pool_dir_data);
-    }
-  LogFullDebug(COMPONENT_CACHE_INODE_GC,
-               "++++> pdir_data (if needed) sent back to pool");
-
 #ifdef _USE_NFS4_ACL
   /* If entry has NFS4 ACL, release it. */
   cache_inode_gc_acl(pentry);
 #endif                          /* _USE_NFS4_ACL */
+
+  /* Release all dirents  Related entries are already invalidated
+   * by the caller */
+  cache_inode_release_dirents(pentry, pgcparam->pclient, CACHE_INODE_AVL_BOTH);
 
   /* Release symlink, if applicable */
   if (pentry->internal_md.type == SYMBOLIC_LINK)
@@ -238,18 +224,21 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
 
 /**
  *
- * cache_inode_gc_invalidate_related_dirent: sets the related directory entries as invalid.
+ * cache_inode_gc_invalidate_related_dirents: invalidate directory entries
+ * related through hard links.
  *
- * sets the related directory entries as invalid. /!\ the parent entry is supposed to be locked.
+ * Removes directory entry associations.  Dirent is not reclaimed (but
+ * may be by the caller).  Cache entry is locked.
  *
  * @param pentry [INOUT] entry to be managed
- * @param addparam [IN] additional parameter used for cleaning.
+ * @param pgcparam [IN] additional parameter used for cleaning.
  *
  * @return  LRU_LIST_SET_INVALID if ok,  LRU_LIST_DO_NOT_SET_INVALID otherwise
  *
  */
-static int cache_inode_gc_invalidate_related_dirent(cache_entry_t * pentry,
-                                                    cache_inode_param_gc_t * pgcparam)
+static int cache_inode_gc_invalidate_related_dirents(
+    cache_entry_t * pentry,
+    cache_inode_param_gc_t * pgcparam)
 {
   cache_inode_parent_entry_t *parent_iter = NULL;
 
@@ -260,66 +249,31 @@ static int cache_inode_gc_invalidate_related_dirent(cache_entry_t * pentry,
       if(parent_iter->parent == NULL)
         {
           LogDebug(COMPONENT_CACHE_INODE_GC,
-                   "cache_inode_gc_invalidate_related_dirent: pentry %p has no parent, no dirent to be removed...",
+                   "cache_inode_gc_invalidate_related_dirent: pentry %p "
+		   "has no parent, no dirent to be removed...",
                    pentry);
           continue;
         }
 
-      /* If I reached this point, then parent_iter->parent is not null and is a valid cache_inode pentry */
+      /* If I reached this point, then parent_iter->parent is not null
+       * and is a valid cache_inode pentry */
       P_w(&parent_iter->parent->lock);
 
       /* Check for type of the parent */
-      if(parent_iter->parent->internal_md.type != DIR_BEGINNING &&
-         parent_iter->parent->internal_md.type != DIR_CONTINUE)
+      if(parent_iter->parent->internal_md.type != DIRECTORY)
         {
           V_w(&parent_iter->parent->lock);
-          /* Major parent incoherency: parent is no directory */
+          /* Major parent incoherency: parent is not a directory */
           LogDebug(COMPONENT_CACHE_INODE_GC,
-                   "cache_inode_gc_invalidate_related_dirent: major inconcistency. Found an entry whose parent is not a directory");
+                   "cache_inode_gc_invalidate_related_dirent: major "
+		   "inconcistency. Found an entry whose parent is not "
+		   "a directory");
           return LRU_LIST_DO_NOT_SET_INVALID;
         }
 
-      /* Set the entry as invalid in the dirent array */
-      if(parent_iter->parent->internal_md.type == DIR_BEGINNING)
-        {
-          if(parent_iter->subdirpos > CHILDREN_ARRAY_SIZE)
-            {
-              V_w(&parent_iter->parent->lock);
-              LogCrit(COMPONENT_CACHE_INODE_GC,
-                      "A known bug occured line %d file %s: pentry=%p type=%u parent_iter->subdirpos=%d, should never exceed %d, entry not removed",
-                      __LINE__, __FILE__, pentry, pentry->internal_md.type,
-                      parent_iter->subdirpos, CHILDREN_ARRAY_SIZE);
-              return LRU_LIST_DO_NOT_SET_INVALID;
-            }
-          else
-            {
-              parent_iter->parent->object.dir_begin.pdir_data->dir_entries[parent_iter->
-                                                                           subdirpos].
-                  active = INVALID;
-              /* Garbage invalidates the effet of the readdir previously made */
-              parent_iter->parent->object.dir_begin.has_been_readdir = CACHE_INODE_NO;
-              parent_iter->parent->object.dir_begin.nbactive -= 1;
-            }
-        }
-      else
-        {
-          if(parent_iter->subdirpos > CHILDREN_ARRAY_SIZE)
-            {
-              V_w(&parent_iter->parent->lock);
-              LogCrit(COMPONENT_CACHE_INODE_GC,
-                      "A known bug occured line %d file %s: pentry=%p type=%u parent_iter->subdirpos=%d, should never exceed %d, entry not removed",
-                      __LINE__, __FILE__, pentry, pentry->internal_md.type,
-                      parent_iter->subdirpos, CHILDREN_ARRAY_SIZE);
-              return LRU_LIST_DO_NOT_SET_INVALID;
-            }
-          else
-            {
-              parent_iter->parent->object.dir_cont.pdir_data->dir_entries[parent_iter->
-                                                                          subdirpos].
-                  active = INVALID;
-              parent_iter->parent->object.dir_cont.nbactive -= 1;
-            }
-        }
+      /* Invalidate related */
+      cache_inode_invalidate_related_dirent(
+	  parent_iter->parent, parent_iter->cookie, pgcparam->pclient);
 
       V_w(&parent_iter->parent->lock);
     }
@@ -358,11 +312,7 @@ int cache_inode_gc_suppress_file(cache_entry_t * pentry,
                pentry);
 
   /* Remove refences in the parent entries */
-  if(cache_inode_gc_invalidate_related_dirent(pentry, pgcparam) != LRU_LIST_SET_INVALID)
-    {
-      V_w(&pentry->lock);
-      return LRU_LIST_DO_NOT_SET_INVALID;
-    }
+  cache_inode_gc_invalidate_related_dirents(pentry, pgcparam);
 
   /* Clean the entry */
   if(cache_inode_gc_clean_entry(pentry, pgcparam) != LRU_LIST_SET_INVALID)
@@ -390,9 +340,6 @@ int cache_inode_gc_suppress_file(cache_entry_t * pentry,
 int cache_inode_gc_suppress_directory(cache_entry_t * pentry,
                                       cache_inode_param_gc_t * pgcparam)
 {
-  cache_entry_t *pentry_iter = NULL;
-  cache_entry_t *pentry_iter_save = NULL;
-
   P_w(&pentry->lock);
   pentry->internal_md.valid_state = INVALID;
 
@@ -401,15 +348,16 @@ int cache_inode_gc_suppress_directory(cache_entry_t * pentry,
       V_w(&pentry->lock);
 
       LogFullDebug(COMPONENT_CACHE_INODE_GC,
-                   "Entry %p (DIR_BEGINNING) is not empty. The dir_chain will not be garbaged now",
+                   "Entry %p (DIRECTORY) is not empty. The entry will not be garbaged now",
                    pentry);
 
       return LRU_LIST_DO_NOT_SET_INVALID;       /* entry is not to be suppressed */
     }
 
-  /* If we reached this point, the directory contains no active entry, it should be removed from the cache */
+  /* If we reached this point, the directory contains no active entry, it
+   * should be removed from the cache */
   LogFullDebug(COMPONENT_CACHE_INODE_GC,
-               "Entry %p (DIR_BEGINNING) and its associated dir_chain will be garbaged",
+               "Entry %p (DIRECTORY) will be garbaged",
                pentry);
 
   LogFullDebug(COMPONENT_CACHE_INODE_GC,
@@ -417,25 +365,11 @@ int cache_inode_gc_suppress_directory(cache_entry_t * pentry,
                pentry);
 
   /* Remove refences in the parent entries */
-  if(cache_inode_gc_invalidate_related_dirent(pentry, pgcparam) != LRU_LIST_SET_INVALID)
+  if(cache_inode_gc_invalidate_related_dirents(pentry, pgcparam)
+     != LRU_LIST_SET_INVALID)
     {
       V_w(&pentry->lock);
       return LRU_LIST_DO_NOT_SET_INVALID;
-    }
-
-  /* Remove the whole dir_chain from the cache */
-  pentry_iter = pentry->object.dir_begin.pdir_cont;
-  while(pentry_iter != NULL)
-    {
-      pentry_iter_save = pentry_iter->object.dir_cont.pdir_cont;
-
-      if(cache_inode_gc_clean_entry(pentry_iter, pgcparam) != LRU_LIST_SET_INVALID)
-        {
-          V_w(&pentry->lock);
-          return LRU_LIST_DO_NOT_SET_INVALID;
-        }
-
-      pentry_iter = pentry_iter_save;
     }
 
   if(cache_inode_gc_clean_entry(pentry, pgcparam) != LRU_LIST_SET_INVALID)
@@ -490,8 +424,14 @@ int cache_inode_gc_function(LRU_entry_t * plru_entry, void *addparam)
                    "We still need %d entries to be garbaged",
                    pgcparam->nb_to_be_purged);
 
+      /* Check if the entry is not a file that holds state
+       *  Files with states are not to be gc-ed  */
+      if( ( pentry->internal_md.type == REGULAR_FILE ) && 
+           cache_inode_file_holds_state( pentry ) )
+         return LRU_LIST_DO_NOT_SET_INVALID ;
+
       /* Should we get ride of this entry ? */
-      if((pentry->internal_md.type == DIR_BEGINNING) &&
+      if((pentry->internal_md.type == DIRECTORY) &&
          (cache_inode_gc_policy.directory_expiration_delay > 0))
         {
           if(current_time - entry_time > cache_inode_gc_policy.directory_expiration_delay)
@@ -623,8 +563,8 @@ cache_inode_status_t cache_inode_gc(hash_table_t * ht,
        *    1- Set the oldest entry as invalid and garbage their contents
        *    2- Free the invalid entry in the LRU
        *
-       *    Behaviour: - A DIR_BEGINNING is garbaged with all its DIR_CONTINUE associated
-       *               - A directory is garbaged when all its entries are garbaged
+       *    Behaviour: - A directory is garbaged when all its entries are
+       *                 garbaged
        *
        */
 
@@ -638,7 +578,8 @@ cache_inode_status_t cache_inode_gc(hash_table_t * ht,
 
       invalid_before_gc = pclient->lru_gc->nb_invalid;
       if(LRU_invalidate_by_function
-         (pclient->lru_gc, cache_inode_gc_function, (void *)&gcparam) != LRU_LIST_SUCCESS)
+         (pclient->lru_gc, cache_inode_gc_function, (void *)&gcparam)
+         != LRU_LIST_SUCCESS)
         {
           *pstatus = CACHE_INODE_LRU_ERROR;
           return *pstatus;
@@ -716,7 +657,7 @@ cache_inode_status_t cache_inode_gc_fd(cache_inode_client_t * pclient,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* nothing to do if there is no fd cache */
-  if(!pclient->use_cache)
+  if(!pclient->use_fd_cache)
     return *pstatus;
 
   /* do not garbage FD too frequently (wait at least for fd retention) */
@@ -725,7 +666,7 @@ cache_inode_status_t cache_inode_gc_fd(cache_inode_client_t * pclient,
 
   gcparam.ht = NULL;            /* not used */
   gcparam.pclient = pclient;
-  gcparam.nb_to_be_purged = pclient->max_fd_per_thread;
+  gcparam.nb_to_be_purged = pclient->max_fd;
 
   if(LRU_apply_function(pclient->lru_gc, cache_inode_gc_fd_func, (void *)&gcparam) !=
      LRU_LIST_SUCCESS)
@@ -736,7 +677,7 @@ cache_inode_status_t cache_inode_gc_fd(cache_inode_client_t * pclient,
 
   LogDebug(COMPONENT_CACHE_INODE_GC,
            "File descriptor GC: %u files closed",
-           pclient->max_fd_per_thread - gcparam.nb_to_be_purged);
+           pclient->max_fd - gcparam.nb_to_be_purged);
   pclient->time_of_last_gc_fd = time(NULL);
 
   *pstatus = CACHE_INODE_SUCCESS;
@@ -763,12 +704,8 @@ static void cache_inode_gc_acl(cache_entry_t * pentry)
       break;
 
     case FS_JUNCTION:
-    case DIR_BEGINNING:
-      pacl = pentry->object.dir_begin.attributes.acl;
-      break;
-
-    case DIR_CONTINUE:
-      pacl = pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes.acl;
+    case DIRECTORY:
+      pacl = pentry->object.dir.attributes.acl;
       break;
 
     case SOCKET_FILE:

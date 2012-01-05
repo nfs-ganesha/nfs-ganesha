@@ -1,0 +1,32 @@
+From a25f78107eda72a7f673975b4f9d0a31f5fd9f56 Mon Sep 17 00:00:00 2001
+From: Thomas LEIBOVICI - CEA/DAM <thomas.leibovici@cea.fr>
+Date: Wed, 14 Dec 2011 12:52:43 +0100
+Subject: [PATCH 2/2] Fix compilation warnings
+To: philippe.deniel@cea.fr
+
+Signed-off-by: Thomas LEIBOVICI - CEA/DAM <thomas.leibovici@cea.fr>
+---
+ src/include/cache_inode.h |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
+
+diff --git a/src/include/cache_inode.h b/src/include/cache_inode.h
+index c12389e..11408c6 100644
+--- a/src/include/cache_inode.h
++++ b/src/include/cache_inode.h
+@@ -947,6 +947,13 @@ cache_inode_status_t cache_inode_invalidate( fsal_handle_t        * pfsal_handle
+                                              cache_inode_client_t * pclient,
+                                              cache_inode_status_t * pstatus) ;
+ 
++void cache_inode_invalidate_related_dirent( cache_entry_t * pentry,
++                                            uint64_t cookie,
++                                            cache_inode_client_t * pclient );
++
++void cache_inode_invalidate_related_dirents(  cache_entry_t        * pentry,
++                                              cache_inode_client_t * pclient);
++
+ int cache_inode_gc_suppress_directory(cache_entry_t * pentry,
+                                       cache_inode_param_gc_t * pgcparam);
+ int cache_inode_gc_suppress_file(cache_entry_t * pentry,
+-- 
+1.7.1
+

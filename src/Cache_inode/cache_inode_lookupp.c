@@ -73,11 +73,11 @@
  * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
  *
  */
-cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
-                                      hash_table_t * ht,
-                                      cache_inode_client_t * pclient,
-                                      fsal_op_context_t * pcontext,
-                                      cache_inode_status_t * pstatus, int use_mutex)
+cache_entry_t *cache_inode_lookupp_sw( cache_entry_t * pentry,
+                                       hash_table_t * ht,
+                                       cache_inode_client_t * pclient,
+                                       fsal_op_context_t * pcontext,
+                                       cache_inode_status_t * pstatus, int use_mutex)
 {
   cache_entry_t *pentry_parent = NULL;
   fsal_status_t fsal_status;
@@ -88,20 +88,20 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
   *pstatus = CACHE_INODE_SUCCESS;
 
   /* stats */
-  pclient->stat.nb_call_total += 1;
-  pclient->stat.func_stats.nb_call[CACHE_INODE_LOOKUP] += 1;
+  (pclient->stat.nb_call_total)++;
+  (pclient->stat.func_stats.nb_call[CACHE_INODE_LOOKUP])++;
 
   /* The entry should be a directory */
   if(use_mutex)
     P_r(&pentry->lock);
-  if(pentry->internal_md.type != DIR_BEGINNING)
+  if(pentry->internal_md.type != DIRECTORY)
     {
       if(use_mutex)
         V_r(&pentry->lock);
       *pstatus = CACHE_INODE_BAD_TYPE;
 
       /* stats */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUPP] += 1;
+      (pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUPP])++;
 
       return NULL;
     }
@@ -110,7 +110,7 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
   if(cache_inode_renew_entry(pentry, NULL, ht, pclient, pcontext, pstatus) !=
      CACHE_INODE_SUCCESS)
     {
-      pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_GETATTR] += 1;
+      (pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_GETATTR])++;
       return NULL;
     }
 
@@ -125,7 +125,7 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
       /* NO, the parent is not cached, query FSAL to get it and cache the result */
       object_attributes.asked_attributes = pclient->attrmask;
       fsal_status =
-          FSAL_lookup(&pentry->object.dir_begin.handle, (fsal_name_t *) & FSAL_DOT_DOT,
+          FSAL_lookup(&pentry->object.dir.handle, (fsal_name_t *) & FSAL_DOT_DOT,
                       pcontext, &fsdata.handle, &object_attributes);
 
       if(FSAL_IS_ERROR(fsal_status))
@@ -140,10 +140,10 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
               cache_inode_status_t kill_status;
 
               LogDebug(COMPONENT_CACHE_INODE,
-                       "cache_inode_lookupp: Stale FSAL FH detected for pentry %p",
-                       pentry);
+                       "cache_inode_lookupp: Stale FSAL FH detected for pentry %p, fsal_status=(%u,%u)",
+                       pentry, fsal_status.major, fsal_status.minor);
 
-              if(cache_inode_kill_entry(pentry, ht, pclient, &kill_status) !=
+              if(cache_inode_kill_entry(pentry, NO_LOCK, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)
                 LogCrit(COMPONENT_CACHE_INODE,
                         "cache_inode_remove: Could not kill entry %p, status = %u",
@@ -153,7 +153,7 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
             }
 
           /* stats */
-          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUPP] += 1;
+          (pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUPP])++;
 
           return NULL;
         }
@@ -161,15 +161,20 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
       /* Call cache_inode_get to populate the cache with the parent entry */
       fsdata.cookie = 0;
 
-      if((pentry_parent = cache_inode_get_located(&fsdata, pentry,
-                                                  &object_attributes,
-                                                  ht, pclient, pcontext, pstatus)) == NULL)
+      if((pentry_parent = cache_inode_get_located( &fsdata,
+                                                   pentry,
+                                                   pentry->policy, /* same policy as son */
+                                                   &object_attributes,
+                                                   ht, 
+                                                   pclient, 
+                                                   pcontext, 
+                                                   pstatus)) == NULL)
         {
           if(use_mutex)
             V_r(&pentry->lock);
 
           /* stats */
-          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUPP] += 1;
+          (pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LOOKUPP])++;
 
           return NULL;
         }
@@ -181,9 +186,9 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
 
   /* stat */
   if(*pstatus != CACHE_INODE_SUCCESS)
-    pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_LOOKUPP] += 1;
+    (pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_LOOKUPP])++;
   else
-    pclient->stat.func_stats.nb_success[CACHE_INODE_LOOKUPP] += 1;
+    (pclient->stat.func_stats.nb_success[CACHE_INODE_LOOKUPP])++;
 
   return pentry_parent;
 }                               /* cache_inode_lookupp_sw */

@@ -197,8 +197,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
           memcpy(pentry->object.file.unstable_data.buffer, buffer, buffer_size);
 
           /* Set mtime and ctime */
-          pentry->object.file.attributes.mtime.seconds = time(NULL);
-          pentry->object.file.attributes.mtime.nseconds = 0;
+          cache_inode_set_time_current( &pentry->object.file.attributes.mtime ) ;  
 
           /* BUGAZOMEU : write operation must NOT modify file's ctime */
           pentry->object.file.attributes.ctime = pentry->object.file.attributes.mtime;
@@ -216,8 +215,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                               seek_descriptor->offset), buffer, buffer_size);
 
               /* Set mtime and ctime */
-              pentry->object.file.attributes.mtime.seconds = time(NULL);
-              pentry->object.file.attributes.mtime.nseconds = 0;
+              cache_inode_set_time_current( &pentry->object.file.attributes.mtime ) ;
 
               /* BUGAZOMEU : write operation must NOT modify file's ctime */
               pentry->object.file.attributes.ctime = pentry->object.file.attributes.mtime;
@@ -489,14 +487,12 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
         {
         case CACHE_INODE_READ:
           /* Set the atime */
-          pentry->object.file.attributes.atime.seconds = time(NULL);
-          pentry->object.file.attributes.atime.nseconds = 0;
+          cache_inode_set_time_current( & pentry->object.file.attributes.atime ) ;
           break;
 
         case CACHE_INODE_WRITE:
           /* Set mtime and ctime */
-          pentry->object.file.attributes.mtime.seconds = time(NULL);
-          pentry->object.file.attributes.mtime.nseconds = 0;
+          cache_inode_set_time_current( & pentry->object.file.attributes.mtime ) ;
 
           /* BUGAZOMEU : write operation must NOT modify file's ctime */
           pentry->object.file.attributes.ctime = pentry->object.file.attributes.mtime;

@@ -212,7 +212,7 @@ int print_stripe(fsal_handle_t * p_objecthandle,  /* object handle */
   else
     {
         LogCrit(COMPONENT_FSAL, "Wrong Luster magic number for %s: %#X <> %#X",
-                 entry_path, p_lum->lmm_magic, LOV_USER_MAGIC_V1);
+                 entry_path.path, p_lum->lmm_magic, LOV_USER_MAGIC_V1);
       return ERR_FSAL_INVAL;
     }
 

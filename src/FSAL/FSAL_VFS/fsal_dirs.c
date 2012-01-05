@@ -25,7 +25,7 @@
 /**
  * FSAL_opendir :
  *     Opens a directory for reading its content.
- *     
+ *
  * \param dir_handle (input)
  *         the handle of the directory to be opened.
  * \param cred (input)
@@ -37,7 +37,7 @@
  *         On successfull completion,the structure pointed
  *         by dir_attributes receives the new directory attributes.
  *         May be NULL.
- * 
+ *
  * \return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
@@ -114,7 +114,7 @@ fsal_status_t VFSFSAL_opendir(fsal_handle_t * p_dir_handle,  /* IN */
 /**
  * FSAL_readdir :
  *     Read the entries of an opened directory.
- *     
+ *
  * \param dir_descriptor (input):
  *        Pointer to the directory descriptor filled by FSAL_opendir.
  * \param start_position (input):
@@ -139,7 +139,7 @@ fsal_status_t VFSFSAL_opendir(fsal_handle_t * p_dir_handle,  /* IN */
  * \param end_of_dir (output)
  *        Pointer to a boolean that indicates if the end of dir
  *        has been reached during the call.
- * 
+ *
  * \return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
@@ -196,18 +196,10 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
   /***************************/
   /* seek into the directory */
   /***************************/
-  start_position.data.cookie = (off_t) startposition.data;
-  errno = 0;
-  if(start_position.data.cookie == 0)
-    {
-      //rewinddir(p_dir_descriptor->p_dir);
-      rc = errno;
-    }
-  else
-    {
-      //seekdir(p_dir_descriptor->p_dir, start_position.cookie);
-      rc = errno;
-    }
+  start_position.data.cookie = *((off_t*) startposition.data);
+  rc = errno = 0;
+  lseek(p_dir_descriptor->fd, start_position.data.cookie, SEEK_SET);
+  rc = errno;
 
   if(rc)
     Return(posix2fsal_error(rc), rc, INDEX_FSAL_readdir);
@@ -245,13 +237,8 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
         {
           dp = (struct linux_dirent *)(buff + bpos);
           d_type = *(buff + bpos + dp->d_reclen - 1);
-                                                    /** @todo not used for the moment. Waiting for information on symlink management */
-          bpos += dp->d_reclen;
 
-          /* LogFullDebug(COMPONENT_FSAL,
-                          "\tino=%8ld|%8lx off=%d|%x reclen=%d|%x name=%s|%d",
-                          dp->d_ino, dp->d_ino, (int)dp->d_off, (int)dp->d_off, 
-                          dp->d_reclen, dp->d_reclen, dp->d_name, (int)dp->d_name[0]  ) ; */
+          bpos += dp->d_reclen;
 
           if(!(*p_nb_entries < max_dir_entries))
             break;
@@ -277,7 +264,9 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
           entry_name.len = strlen(entry_name.name);
 
          if((tmpfd =
-              openat(p_dir_descriptor->fd, dp->d_name, O_RDONLY | O_NOFOLLOW, 0600)) < 0)
+              openat(p_dir_descriptor->fd, dp->d_name,
+                     O_RDONLY | O_NOFOLLOW | O_NONBLOCK,
+                     0600)) < 0)
             {
               errsv = errno;
               if(errsv != ELOOP)        /* ( p_dir_descriptor->fd, dp->d_name) is not a symlink */
@@ -288,6 +277,7 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
 
           /* get object handle */
           TakeTokenFSCall();
+
           if(d_type != DT_LNK)
             {
               st = fsal_internal_fd2handle((fsal_op_context_t *)&(p_dir_descriptor->context),

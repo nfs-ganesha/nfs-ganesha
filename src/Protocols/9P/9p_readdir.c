@@ -83,14 +83,19 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   char * dcount_pos = NULL ;
 
   cache_inode_status_t cache_status;
-  cache_inode_dir_entry_t dirent_array[_9P_MAXDIRCOUNT] ;
+  cache_inode_dir_entry_t **dirent_array = NULL;
   cache_inode_endofdir_t eod_met;
+  cache_entry_t * pentry_dot_dot = NULL ;
+
+  cache_inode_dir_entry_t dirent_dot     ;
+  cache_inode_dir_entry_t dirent_dot_dot ;
 
   unsigned int cookie = 0;
   unsigned int end_cookie = 0;
-  unsigned int cookie_array[_9P_MAXDIRCOUNT] ;
   unsigned int estimated_num_entries = 0 ;
   unsigned int num_entries = 0 ;
+  unsigned int delta = 0 ;
+  int unlock = FALSE ;
   u64 i = 0LL ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
@@ -129,26 +134,83 @@ int _9p_readdir( _9p_request_data_t * preq9p,
    * total   = ~40 bytes (average size) per dentry */ 
   estimated_num_entries = (unsigned int)( *count / 40 ) ;  
 
-  if(cache_inode_readdir( pfid->pentry,
+  if((dirent_array = (cache_inode_dir_entry_t **) Mem_Alloc_Label(
+          estimated_num_entries * sizeof(cache_inode_dir_entry_t*),
+          "cache_inode_dir_entry_t in _9p_readdir")) == NULL)
+    {
+      err = EIO ;
+      rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+      return rc ;
+    }
+
+  /* Is this the first request ? */
+  if( *offset == 0 )
+   {
+      /* compute the parent entry */
+      if( ( pentry_dot_dot = cache_inode_lookupp( pfid->pentry,
+                                                  pwkrdata->ht,
+                                                  &pwkrdata->cache_inode_client,
+                                                  &pfid->fsal_op_context, 
+                                                  &cache_status) ) == NULL )
+        {
+           err = _9p_tools_errno( cache_status ) ; ;
+           rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+           return rc ;
+        }
+
+      /* Deal with "." and ".." */
+      dirent_dot.pentry = pfid->pentry ;
+      strcpy( dirent_dot.name.name, "." ) ;
+      dirent_dot.name.len = strlen( dirent_dot.name.name ) ;
+      dirent_array[0] = &dirent_dot ;
+
+      dirent_dot_dot.pentry = pentry_dot_dot ;
+      strcpy( dirent_dot_dot.name.name, ".." ) ;
+      dirent_dot_dot.name.len = strlen( dirent_dot_dot.name.name ) ;
+      dirent_array[1] = &dirent_dot_dot ;
+ 
+      delta = 2 ;
+   }
+  else
+   delta = 0 ;
+
+  if( *offset == 2 )
+   {
+      /* offset == 2 as an input as one and only reason:
+       *   - a former call with offset=0 was made and the dir was empty
+       *   - '.' and '..' were returned and nothing else
+       *   - the client makes a new call, expecting it to have empty return
+       */
+      num_entries = 0 ; /* Empty return */
+      unlock = FALSE ;
+   }
+  else if(cache_inode_readdir( pfid->pentry,
+                          pfid->pexport->cache_inode_policy,
                           cookie,
-                          estimated_num_entries,
+                          estimated_num_entries - delta,
                           &num_entries,
-                          &end_cookie,
+                          (uint64_t *)&end_cookie,
                           &eod_met,
-                          dirent_array,
-                          cookie_array,
+                          &dirent_array[delta],
                           pwkrdata->ht,
+                          &unlock,
                           &pwkrdata->cache_inode_client,
                           &pfid->fsal_op_context, 
                           &cache_status) != CACHE_INODE_SUCCESS)
     {
+      if( unlock ) V_r( &pfid->pentry->lock ) ;
+
       err = _9p_tools_errno( cache_status ) ; ;
       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
       return rc ;
     }
 
+  /* Unlock the directory if needed */
+  if( unlock ) V_r( &pfid->pentry->lock ) ;
+
   /* Never go behind _9P_MAXDIRCOUNT */
   if( num_entries > _9P_MAXDIRCOUNT ) num_entries = _9P_MAXDIRCOUNT ;
+
 
   /* Build the reply */
   _9p_setinitptr( cursor, preply, _9P_RREADDIR ) ;
@@ -157,17 +219,16 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   /* Remember dcount position for later use */
   _9p_savepos( cursor, dcount_pos, u32 ) ;
 
-
   /* fills in the dentry in 9P marshalling */
-  for( i = 0 ; i < num_entries ; i++ )
+  for( i = 0 ; i < num_entries + delta ; i++ )
    {
      recsize = 0 ; 
 
      /* Build qid */
-     switch( dirent_array[i].pentry->internal_md.type )
+     switch( dirent_array[i]->pentry->internal_md.type )
       {
         case REGULAR_FILE:
-          qid_path = (u64 *)&dirent_array[i].pentry->object.file.attributes.fileid ;
+          qid_path = (u64 *)&dirent_array[i]->pentry->object.file.attributes.fileid ;
           qid_type = &qid_type_file ;
 	  break ;
 
@@ -175,23 +236,18 @@ int _9p_readdir( _9p_request_data_t * preq9p,
         case BLOCK_FILE:
         case SOCKET_FILE:
         case FIFO_FILE:
-          qid_path = (u64 *)&dirent_array[i].pentry->object.special_obj.attributes.fileid ;
+          qid_path = (u64 *)&dirent_array[i]->pentry->object.special_obj.attributes.fileid ;
           qid_type = &qid_type_file ;
 	  break ;
 
         case SYMBOLIC_LINK:
-          qid_path = (u64 *)&dirent_array[i].pentry->object.symlink->attributes.fileid ;
+          qid_path = (u64 *)&dirent_array[i]->pentry->object.symlink->attributes.fileid ;
           qid_type = &qid_type_symlink;
 	  break ;
 
-        case DIR_CONTINUE:
-          qid_path = (u64 *)&dirent_array[i].pentry->object.dir_cont.pdir_begin->object.dir_begin.attributes.fileid ;
-          qid_type = &qid_type_dir ;
-	  break ;
-
-        case DIR_BEGINNING:
+        case DIRECTORY:
         case FS_JUNCTION:
-          qid_path = (u64 *)&dirent_array[i].pentry->object.dir_begin.attributes.fileid ;
+          qid_path = (u64 *)&dirent_array[i]->pentry->object.dir.attributes.fileid ;
           qid_type = &qid_type_dir ;
 	  break ;
 
@@ -206,8 +262,8 @@ int _9p_readdir( _9p_request_data_t * preq9p,
       }
 
      /* Get dirent name information */
-     name_str = dirent_array[i].name.name ;
-     name_len = dirent_array[i].name.len ;
+     name_str = dirent_array[i]->name.name ;
+     name_len = dirent_array[i]->name.len ;
  
      /* Add 13 bytes in recsize for qid + 8 bytes for offset + 1 for type + 2 for strlen = 24 bytes*/
      recsize = 24 + name_len  ;
@@ -226,17 +282,22 @@ int _9p_readdir( _9p_request_data_t * preq9p,
      /* offset */
      _9p_setvalue( cursor, i+cookie+1, u64 ) ;   
 
-
      /* Type (again ?) */
      _9p_setptr( cursor, qid_type, u8 ) ;
 
      /* name */
      _9p_setstr( cursor, name_len, name_str ) ;
   
-     LogDebug( COMPONENT_9P, "RREADDIR dentry: tag=%u fid=%u recsize=%u dentry={ off=%llu,qid=(type=%u,version=%u,path=%llu),type=%u,name=%s",
-              (u32)*msgtag, *fid , recsize, (unsigned long long)i, *qid_type, 0, (unsigned long long)*qid_path, *qid_type, name_str) ;
+     LogDebug( COMPONENT_9P, "RREADDIR dentry: recsize=%u dentry={ off=%llu,qid=(type=%u,version=%u,path=%llu),type=%u,name=%s,pentry=%p",
+               recsize, (unsigned long long)i+cookie+1, *qid_type, 0, (unsigned long long)*qid_path, 
+               *qid_type, name_str, dirent_array[i]->pentry ) ;
    } /* for( i = 0 , ... ) */
 
+  if( !CACHE_INODE_KEEP_CONTENT( pfid->pentry->policy ) )
+    cache_inode_release_dirent( dirent_array, num_entries, &pwkrdata->cache_inode_client ) ;
+  Mem_Free((char *)dirent_array);
+
+  
   /* Set buffsize in previously saved position */
   _9p_setvalue( dcount_pos, dcount, u32 ) ; 
 

@@ -425,7 +425,7 @@ int nfs4_Check_Stateid(stateid4        * pstate,
 
   if((flags & STATEID_SPECIAL_ALL_1) != 0)
     {
-      if(memcmp(pstate->other, all_zero, OTHERSIZE) == 0 &&
+      if(memcmp(pstate->other, all_one, OTHERSIZE) == 0 &&
          pstate->seqid == 0xFFFFFFFF)
         {
           /* All 1 stateid */

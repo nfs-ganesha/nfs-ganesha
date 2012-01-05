@@ -24,11 +24,7 @@ else
 NFS4_ACL_LIB_FLAGS = 
 endif
 
-if USE_GSSRPC
-SEC_LIB_FLAGS = $(SEC_LFLAGS) -lgssrpc -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -ldl
-else
 SEC_LIB_FLAGS =
-endif
 
 if USE_FSAL_FUSE
 
@@ -60,6 +56,7 @@ __FS_NAME__ganeshell_SOURCES    = Getopt.c                            \
                                   shell_utils.h                       \
                                   shell_vars.h                        \
                                   ../include/BuddyMalloc.h            \
+                                  ../include/avltree.h                \
                                   ../include/LRU_List.h               \
                                   ../include/cache_content.h          \
                                   ../include/cache_inode.h            \
@@ -92,13 +89,13 @@ shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
                   ../NodeList/libNodeList.la                         \
                   ../HashTable/libhashtable.la                       \
                   ../LRU/liblru.la                                   \
+                  ../avl/libavltree.la                               \
                   $(BUDDY_LIB_FLAGS)                                 \
                   ../FSAL/libfsalcommon.la                           \
                   $(FSAL_LIB)                                        \
                   $(MFSL_LIB)                                        \
                   $(PNFS_LIB)                                        \
 		  ../FSAL/common_methods.lo			     \
-		  ../FSAL/common_functions.lo			     \
 		  ../FSAL/access_check.lo			     \
                   ../SemN/libSemN.la                                 \
                   ../RW_Lock/librwlock.la                            \

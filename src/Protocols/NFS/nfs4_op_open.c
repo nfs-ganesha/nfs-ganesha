@@ -112,14 +112,12 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   newfh4.nfs_fh4_val = newfh4_val;
 
-  fsal_accessflags_t write_access = FSAL_MODE_MASK_SET(FSAL_W_OK) |
-                                    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA |
-                                                       FSAL_ACE_PERM_APPEND_DATA);
-  fsal_accessflags_t read_access = FSAL_MODE_MASK_SET(FSAL_R_OK) |
-                                   FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_DATA);
+  fsal_accessflags_t write_access = FSAL_WRITE_ACCESS;
+  fsal_accessflags_t read_access = FSAL_READ_ACCESS;
 
   resp->resop = NFS4_OP_OPEN;
   res_OPEN4.status = NFS4_OK;
+  res_OPEN4.OPEN4res_u.resok4.rflags = 0 ;
 
   uint32_t tmp_attr[2];
   uint_t tmp_int = 2;
@@ -312,8 +310,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       pentry_parent = data->current_entry;
 
       /* Parent must be a directory */
-      if((pentry_parent->internal_md.type != DIR_BEGINNING) &&
-         (pentry_parent->internal_md.type != DIR_CONTINUE))
+      if((pentry_parent->internal_md.type != DIRECTORY))
         {
           /* Parent object is not a directory... */
           if(pentry_parent->internal_md.type == SYMBOLIC_LINK)
@@ -424,6 +421,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           /* Does a file with this name already exist ? */
           pentry_lookup = cache_inode_lookup(pentry_parent,
                                              &filename,
+                                             data->pexport->cache_inode_policy,
                                              &attr_newfile,
                                              data->ht,
                                              data->pclient,
@@ -571,10 +569,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   if(powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
                     {
                       if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
-                        res_OPEN4.OPEN4res_u.resok4.rflags =
-                            OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX;
+                        res_OPEN4.OPEN4res_u.resok4.rflags |=
+                            OPEN4_RESULT_CONFIRM | OPEN4_RESULT_LOCKTYPE_POSIX;
                       else
-                        res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
+                        res_OPEN4.OPEN4res_u.resok4.rflags |= OPEN4_RESULT_LOCKTYPE_POSIX;
                     }
                   V(powner->so_mutex);
 
@@ -656,12 +654,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                               if(powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
                                 {
                                   if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
-                                    res_OPEN4.OPEN4res_u.resok4.rflags =
-                                        OPEN4_RESULT_CONFIRM +
-                                        OPEN4_RESULT_LOCKTYPE_POSIX;
+                                    res_OPEN4.OPEN4res_u.resok4.rflags |= OPEN4_RESULT_CONFIRM | OPEN4_RESULT_LOCKTYPE_POSIX;
                                   else
-                                    res_OPEN4.OPEN4res_u.resok4.rflags =
-                                        OPEN4_RESULT_LOCKTYPE_POSIX;
+                                    res_OPEN4.OPEN4res_u.resok4.rflags |= OPEN4_RESULT_LOCKTYPE_POSIX;
                                 }
                               V(powner->so_mutex);
 
@@ -691,7 +686,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                                      newfh4.nfs_fh4_len);
 
                               data->current_entry = pentry_lookup;
-                              data->current_filetype = REGULAR_FILE;
+                              data->current_filetype = REGULAR_FILE; 
+
+                              pfile_state = pstate_iterate ; /* Avoid segfault during test OPEN4 (pstate would be NULL) */
 
                               /* regular exit */
                               V_r(&pentry_lookup->lock);
@@ -722,6 +719,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           if((pentry_newfile = cache_inode_create(pentry_parent,
                                                   &filename,
                                                   REGULAR_FILE,
+                                                  data->pexport->cache_inode_policy,
                                                   mode,
                                                   NULL,
                                                   &attr_newfile,
@@ -826,6 +824,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
             {
               if((pentry_newfile = cache_inode_lookup(pentry_parent,
                                                       &filename,
+                                                      data->pexport->cache_inode_policy,
                                                       &attr_newfile,
                                                       data->ht,
                                                       data->pclient,
@@ -841,8 +840,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           /* OPEN4 is to be done on a file */
           if(pentry_newfile->internal_md.type != REGULAR_FILE)
             {
-              if(pentry_newfile->internal_md.type == DIR_BEGINNING
-                 || pentry_newfile->internal_md.type == DIR_CONTINUE)
+              if(pentry_newfile->internal_md.type == DIRECTORY)
                 {
                   res_OPEN4.status = NFS4ERR_ISDIR;
                   goto out;
@@ -1107,16 +1105,16 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE;
 
   /* No delegation */
-  res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE;
+  res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type |= OPEN_DELEGATE_NONE;
 
   /* If server use OPEN_CONFIRM4, set the correct flag */
   if(powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
     {
       if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
-        res_OPEN4.OPEN4res_u.resok4.rflags =
-            OPEN4_RESULT_CONFIRM + OPEN4_RESULT_LOCKTYPE_POSIX;
+        res_OPEN4.OPEN4res_u.resok4.rflags |=
+            OPEN4_RESULT_CONFIRM | OPEN4_RESULT_LOCKTYPE_POSIX;
       else
-        res_OPEN4.OPEN4res_u.resok4.rflags = OPEN4_RESULT_LOCKTYPE_POSIX;
+        res_OPEN4.OPEN4res_u.resok4.rflags |= OPEN4_RESULT_LOCKTYPE_POSIX;
     }
 
  out_success:

@@ -171,7 +171,7 @@ int nfs_Create(nfs_arg_t * parg,
    * Sanity checks: new file name must be non-null; parent must be a
    * directory. 
    */
-  if((parent_filetype != DIR_BEGINNING) && (parent_filetype != DIR_CONTINUE))
+  if(parent_filetype != DIRECTORY)
     {
       switch (preq->rq_vers)
         {
@@ -246,6 +246,7 @@ int nfs_Create(nfs_arg_t * parg,
            */
           file_pentry = cache_inode_lookup(parent_pentry,
                                            &file_name,
+                                           pexport->cache_inode_policy,
                                            &attr,
                                            ht, pclient, pcontext, &cache_status_lookup);
 
@@ -265,6 +266,7 @@ int nfs_Create(nfs_arg_t * parg,
                 file_pentry = cache_inode_create(parent_pentry,
                                                  &file_name,
                                                  REGULAR_FILE,
+                                                 pexport->cache_inode_policy,
                                                  mode,
                                                  NULL,
                                                  &attr_newfile,

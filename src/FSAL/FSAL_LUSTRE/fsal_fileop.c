@@ -209,8 +209,8 @@ fsal_status_t LUSTREFSAL_open(fsal_handle_t * p_filehandle,       /* IN */
             if (rc == 0)
             {
                 /* use a short timeout of 2s */
-                rc = shook_server_call(SA_RESTORE_TRUNC, p_context->export_context->fsname,
-                                       &p_filehandle->data.fid, 2);
+                rc = shook_server_call(SA_RESTORE_TRUNC, ((lustrefsal_op_context_t *)p_context)->export_context->fsname,
+                                       &((lustrefsal_handle_t *)p_filehandle)->data.fid, 2);
                 if (rc)
                     Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
             }
@@ -226,8 +226,8 @@ fsal_status_t LUSTREFSAL_open(fsal_handle_t * p_filehandle,       /* IN */
         } else {
             /* trigger restore. Give it a chance to retrieve the file in less than a second.
              * Else, it returns ETIME that is converted in ERR_DELAY */
-            rc = shook_server_call(SA_RESTORE, p_context->export_context->fsname,
-                                   &p_filehandle->data.fid, 1);
+            rc = shook_server_call(SA_RESTORE, ((lustrefsal_op_context_t*)p_context)->export_context->fsname,
+                                   &((lustrefsal_handle_t *)p_filehandle)->data.fid, 1);
             if (rc)
                 Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_open);
             /* if rc = 0, file can be opened */
@@ -341,7 +341,12 @@ fsal_status_t LUSTREFSAL_read(fsal_file_t *file_desc,    /* IN */
           rc = lseek(p_file_descriptor->fd, p_seek_descriptor->offset, SEEK_END);
           errsv = errno;
           ReleaseTokenFSCall();
+          break;
 
+        default:
+          LogCrit(COMPONENT_FSAL, "Unexpected value for whence parameter");
+          rc = -1;
+          errsv = EINVAL;
           break;
         }
 
@@ -354,7 +359,7 @@ fsal_status_t LUSTREFSAL_read(fsal_file_t *file_desc,    /* IN */
                              (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
                               (p_seek_descriptor->whence ==
                                FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
-                            p_seek_descriptor->offset);
+                            (long long int)p_seek_descriptor->offset);
 
           Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_read);
         }
@@ -465,6 +470,12 @@ fsal_status_t LUSTREFSAL_write(fsal_file_t *file_desc,   /* IN */
           ReleaseTokenFSCall();
 
           break;
+
+        default:
+          LogCrit(COMPONENT_FSAL, "Unexpected value for whence parameter");
+          rc = -1;
+          errsv = EINVAL;
+          break;
         }
 
       if(rc)
@@ -476,7 +487,7 @@ fsal_status_t LUSTREFSAL_write(fsal_file_t *file_desc,   /* IN */
                              (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
                               (p_seek_descriptor->whence ==
                                FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
-                            p_seek_descriptor->offset);
+                            (long long int)p_seek_descriptor->offset);
 
           Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
 
@@ -490,7 +501,7 @@ fsal_status_t LUSTREFSAL_write(fsal_file_t *file_desc,   /* IN */
                                                        : (p_seek_descriptor->whence ==
                                                           FSAL_SEEK_END ? "SEEK_END" :
                                                           "ERROR"))),
-                        p_seek_descriptor->offset, buffer_size);
+                        (long long int)p_seek_descriptor->offset, buffer_size);
 
     }
 
@@ -510,8 +521,9 @@ fsal_status_t LUSTREFSAL_write(fsal_file_t *file_desc,   /* IN */
   if(nb_written <= 0)
     {
       LogDebug(COMPONENT_FSAL,
-                        "Write operation of size %llu at offset %lld failed. fd=%d, errno=%d.",
-                        i_size, p_seek_descriptor->offset, p_file_descriptor->fd, errsv);
+               "Write operation of size %llu at offset %lld failed. fd=%d, errno=%d.",
+               (unsigned long long)i_size, (long long int)p_seek_descriptor->offset, 
+               p_file_descriptor->fd, errsv);
       Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
     }
 
@@ -535,11 +547,12 @@ fsal_status_t LUSTREFSAL_write(fsal_file_t *file_desc,   /* IN */
  *      - Another error code if an error occured during this call.
  */
 
-fsal_status_t LUSTREFSAL_close(fsal_file_t * p_file_descriptor    /* IN */
+fsal_status_t LUSTREFSAL_close(fsal_file_t * pfile_desc    /* IN */
     )
 {
 
   int rc, errsv;
+  lustrefsal_file_t * p_file_descriptor = (lustrefsal_file_t *)pfile_desc;
 
   /* sanity checks. */
   if(!p_file_descriptor)
@@ -586,9 +599,10 @@ unsigned int LUSTREFSAL_GetFileno(fsal_file_t * pfile)
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t LUSTREFSAL_sync(fsal_file_t * p_file_descriptor   /* IN */)
+fsal_status_t LUSTREFSAL_sync(fsal_file_t * pfile_desc /* IN */)
 {
   int rc, errsv;
+  lustrefsal_file_t * p_file_descriptor = (lustrefsal_file_t *)pfile_desc;
 
   /* sanity checks. */
   if(!p_file_descriptor)

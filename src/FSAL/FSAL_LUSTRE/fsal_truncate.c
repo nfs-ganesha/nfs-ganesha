@@ -104,8 +104,8 @@ fsal_status_t LUSTREFSAL_truncate(fsal_handle_t * p_filehandle,   /* IN */
             if (rc == 0)
             {
                 /* use a short timeout of 2s */
-                rc = shook_server_call(SA_RESTORE_TRUNC, p_context->export_context->fsname,
-                                       &p_filehandle->data.fid, 2);
+                rc = shook_server_call(SA_RESTORE_TRUNC, ((lustrefsal_op_context_t *)p_context)->export_context->fsname,
+                                       &((lustrefsal_handle_t *)p_filehandle)->data.fid, 2);
                 if (rc)
                     Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_truncate);
                 /* file is already truncated, no need to truncate again */
@@ -123,8 +123,8 @@ fsal_status_t LUSTREFSAL_truncate(fsal_handle_t * p_filehandle,   /* IN */
         {
             /* trigger restore. Give it a chance to retrieve the file in less than a second.
              * Else, it returns ETIME that is converted in ERR_DELAY */
-            rc = shook_server_call(SA_RESTORE, p_context->export_context->fsname,
-                                   &p_filehandle->data.fid, 1);
+            rc = shook_server_call(SA_RESTORE, ((lustrefsal_op_context_t *)p_context)->export_context->fsname,
+                                   &((lustrefsal_handle_t *)p_filehandle)->data.fid, 1);
             if (rc)
                 Return(posix2fsal_error(-rc), -rc, INDEX_FSAL_truncate);
 

@@ -5,7 +5,7 @@
 #
 # processname: /usr/bin/xfs.ganesha.nfsd
 # config: /etc/ganesha/xfs.ganesha.nfsd.conf
-# pidfile: /var/run/nfs-ganesha.pid
+# pidfile: /var/run/xfs.ganesha.nfsd.pid
 #
 ### BEGIN INIT INFO
 # Provides: nfs-ganesha.xfs
@@ -22,6 +22,7 @@
 . /etc/rc.d/init.d/functions
 
 PATHPROG=/usr/bin/xfs.ganesha.nfsd 
+PROG=xfs.ganesha.nfsd 
 
 # Default HPSS options
 LOGFILE=/var/log/xfs.ganesha.nfsd.log
@@ -46,6 +47,8 @@ start() {
                 RETVAL=$?
                 if [ $RETVAL -eq 0 ]; then 
 		 touch $LOCK_FILE
+                 [ ! -f $PID_FILE ] &&
+                   /sbin/pidof $PROG > $PID_FILE
 		else
 		  RETVAL=1
                 fi
