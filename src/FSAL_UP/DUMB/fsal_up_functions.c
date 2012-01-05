@@ -56,6 +56,7 @@ fsal_status_t dumb_fsal_up_invalidate(fsal_up_event_data_t * pevdata)
       LogDebug(COMPONENT_FSAL_UP,
                "FSAL_UP_DUMB: calling cache_inode_get()");
   pentry = cache_inode_get(&pevdata->event_context.fsal_data,
+                           CACHE_INODE_POLICY_FULL_WRITE_THROUGH,
                            &attr, pevdata->event_context.ht, NULL, NULL,
                            &cache_status);
   if(pentry == NULL)
@@ -79,7 +80,7 @@ fsal_status_t dumb_fsal_up_invalidate(fsal_up_event_data_t * pevdata)
   if(pentry->internal_md.type == DIRECTORY)
     {
       pentry->object.dir.has_been_readdir = CACHE_INODE_RENEW_NEEDED;
-      LogDebug(COMPONENT_FSAL_CB,
+      LogDebug(COMPONENT_FSAL_UP,
               "FSAL_CB_DUMB: Invalidate reset directory.");
     }
   V_w(&pentry->lock);
