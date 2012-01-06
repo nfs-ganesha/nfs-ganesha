@@ -366,6 +366,9 @@ fsal_status_t LUSTREFSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN
 
 unsigned int LUSTREFSAL_GetFileno(fsal_file_t * pfile);
 #ifdef _USE_FSALMDS
+nfsstat4 LUSTREFSAL_MDS_init( ) ;
+nfsstat4 LUSTREFSAL_MDS_terminate( ) ;
+
 nfsstat4 LUSTREFSAL_layoutget(fsal_handle_t *exhandle,
                             fsal_op_context_t *excontext,
                             XDR *loc_body,
@@ -391,6 +394,14 @@ nfsstat4 LUSTREFSAL_getdevicelist(fsal_handle_t *handle,
 #endif /* _USE_FSALMDS */
 
 #ifdef _USE_FSALDS
+
+fsal_status_t LUSTREFSAL_load_pnfs_parameter_from_conf(config_file_t             in_config,
+                                                       lustre_pnfs_parameter_t * out_parameter);
+
+nfsstat4 LUSTREFSAL_DS_init( lustre_pnfs_parameter_t *pparam ) ;
+
+nfsstat4 LUSTREFSAL_DS_terminate( void ) ;
+
 nfsstat4 LUSTREFSAL_DS_read(fsal_handle_t *handle,
                           fsal_op_context_t *context,
                           const stateid4 *stateid,

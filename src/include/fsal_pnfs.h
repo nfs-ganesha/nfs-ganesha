@@ -43,6 +43,14 @@
 
 #ifdef _USE_NFS4_1
 
+#ifdef _USE_LUSTRE
+#include "FSAL/FSAL_LUSTRE/fsal_pnfs_types.h"
+#endif 
+
+#ifdef _USE_CEPH
+#include "FSAL/FSAL_CEPH/fsal_pnfs_types.h"
+#endif 
+
 /******************************************************
  *         FSAL MDS function argument structs
  ******************************************************/
