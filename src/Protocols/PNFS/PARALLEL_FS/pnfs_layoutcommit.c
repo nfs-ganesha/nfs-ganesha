@@ -65,9 +65,9 @@
  *
  */
 
-nfsstat4 pnfs_layoutcommit( LAYOUTCOMMIT4args  * playoutcommitargs,
-		            compound_data_t    * data,
-			    LAYOUTCOMMIT4res   * playoutcommitres )
+nfsstat4 PARALLEL_FS_pnfs_layoutcommit( LAYOUTCOMMIT4args  * playoutcommitargs,
+		                        compound_data_t    * data,
+			                LAYOUTCOMMIT4res   * playoutcommitres )
 {
   
   /* For the moment, returns no new size */

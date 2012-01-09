@@ -52,9 +52,9 @@
 
 #include "pnfs_internal.h" 
 
-nfsstat4 pnfs_layoutget( LAYOUTGET4args   * playoutgetargs,
-		         compound_data_t  * data,
-			 LAYOUTGET4res    * playoutgetres )
+nfsstat4 PARALLEL_FS_pnfs_layoutget( LAYOUTGET4args   * playoutgetargs,
+		                     compound_data_t  * data,
+			             LAYOUTGET4res    * playoutgetres )
 {
  unsigned int offset = 0;
   uint32_t int32 = 0;

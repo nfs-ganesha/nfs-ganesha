@@ -228,6 +228,18 @@ pnfs_segment_difference(struct pnfs_segment minuend,
 }
 
 /******************************************************
+ *    Common functions for every pNFS implementation
+ ******************************************************/
+
+void COMMON_pnfs_layoutget_Free( LAYOUTGET4res * pres ) ;
+void COMMON_pnfs_layoutcommit_Free( LAYOUTCOMMIT4res * pres ) ;
+void COMMON_pnfs_layoutreturn_Free( LAYOUTRETURN4res * pres ) ;
+
+void COMMON_pnfs_getdevicelist_Free(  GETDEVICELIST4res  * pres ) ;
+void COMMON_pnfs_getdeviceinfo_Free(  GETDEVICEINFO4res  * pres ) ;
+
+
+/******************************************************
  *            Convenience XDR functions
  ******************************************************/
 

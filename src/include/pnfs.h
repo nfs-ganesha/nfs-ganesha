@@ -59,6 +59,40 @@
 #include "nfs_exports.h"
 #include "fsal_pnfs.h"
 
+typedef struct pnfs_functions__
+{
+  nfsstat4(*getdevicelist)( GETDEVICELIST4args * pargs, 
+  	  	            compound_data_t * data,
+			    GETDEVICELIST4res  * pres ) ;
+
+  nfsstat4(*getdeviceinfo)( GETDEVICEINFO4args * pargs, 
+			    compound_data_t * data,
+			    GETDEVICEINFO4res  * pres ) ;
+
+  nfsstat4(*layoutcommit)( LAYOUTCOMMIT4args * pargs, 
+			   compound_data_t * data,
+			   LAYOUTCOMMIT4res  * pres ) ;
+
+  nfsstat4(*layoutget)( LAYOUTGET4args   * pargs, 
+			compound_data_t  * data,
+			LAYOUTGET4res    * pres ) ;
+
+  nfsstat4(*layoutreturn)( LAYOUTRETURN4args * pargs, 
+			   compound_data_t   * data,
+			   LAYOUTRETURN4res  * pres ) ; 
+
+  void(*layoutget_Free)( LAYOUTGET4res * pres ) ;
+
+  void(*layoutcommit_Free)( LAYOUTCOMMIT4res * pres ) ;
+
+  void(*layoutreturn_Free)( LAYOUTRETURN4res * pres ) ;
+
+  void(*getdevicelist_Free)(  GETDEVICELIST4res  * pres ) ;
+
+  void(*getdeviceinfo_Free)(  GETDEVICEINFO4res  * pres ) ;
+
+} pnfs_functions_t ;
+
 nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args * pargs, 
 			     compound_data_t * data,
 			     GETDEVICELIST4res  * pres ) ;
@@ -85,6 +119,17 @@ void pnfs_layoutreturn_Free( LAYOUTRETURN4res * pres ) ;
 
 void pnfs_getdevicelist_Free(  GETDEVICELIST4res  * pres ) ;
 void pnfs_getdeviceinfo_Free(  GETDEVICEINFO4res  * pres ) ;
+
+
+/* Common functions */
+void COMMON_pnfs_layoutget_Free( LAYOUTGET4res * pres ) ;
+void COMMON_pnfs_layoutcommit_Free( LAYOUTCOMMIT4res * pres ) ;
+void COMMON_pnfs_layoutreturn_Free( LAYOUTRETURN4res * pres ) ;
+
+void COMMON_pnfs_getdevicelist_Free(  GETDEVICELIST4res  * pres ) ;
+void COMMON_pnfs_getdeviceinfo_Free(  GETDEVICEINFO4res  * pres ) ;
+
+pnfs_functions_t pNFS_GetFunctions( void ) ;
 
 
 #endif                          /* _PNFS_H */

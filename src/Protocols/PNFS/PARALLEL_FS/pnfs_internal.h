@@ -34,8 +34,8 @@
  *
  */
 
-#ifndef _PNFS_INTERNAL_H
-#define _PNFS_INTERNAL_H
+#ifndef _PNFS_PARALLEL_FS_INTERNAL_H
+#define _PNFS_PARALLEL_FS_INTERNAL_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -61,4 +61,24 @@ typedef struct pnfs_layoutfile_parameter__
   pnfs_ds_parameter_t ds_param[MAX_PNFS_DS];
 } pnfs_parameter_t;
 
-#endif  /*  _PNFS_INTERNAL_H  */
+nfsstat4 PARALLEL_FS_pnfs_getdevicelist( GETDEVICELIST4args * pargs, 
+             			         compound_data_t * data,
+			                 GETDEVICELIST4res  * pres ) ;
+
+nfsstat4 PARALLEL_FS_pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs, 
+			                 compound_data_t * data,
+			                 GETDEVICEINFO4res  * pres ) ;
+
+nfsstat4 PARALLEL_FS_pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs, 
+			                compound_data_t * data,
+			                LAYOUTCOMMIT4res  * pres ) ;
+
+nfsstat4 PARALLEL_FS_pnfs_layoutget( LAYOUTGET4args   * pargs, 
+			             compound_data_t  * data,
+			             LAYOUTGET4res    * pres ) ;
+
+nfsstat4 PARALLEL_FS_pnfs_layoutreturn( LAYOUTRETURN4args * pargs, 
+			                compound_data_t   * data,
+			                LAYOUTRETURN4res  * pres ) ; 
+
+#endif  /*  _PNFS_PARALLEL_FS_INTERNAL_H  */

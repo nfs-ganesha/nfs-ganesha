@@ -65,9 +65,9 @@
  *
  */
 
-nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args  * playoutreturnargs,
-              	            compound_data_t    * data,
-		            LAYOUTRETURN4res   * playoutreturnres )
+nfsstat4 PARALLEL_FS_pnfs_layoutreturn( LAYOUTRETURN4args  * playoutreturnargs,
+              	                        compound_data_t    * data,
+		                        LAYOUTRETURN4res   * playoutreturnres )
 {
   
   playoutreturnres->lorr_status = NFS4_OK;

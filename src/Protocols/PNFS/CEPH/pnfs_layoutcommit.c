@@ -74,6 +74,8 @@
 #include "sal_functions.h"
 #endif /* _USE_FSALMDS */
 
+#include "pnfs_internal.h"
+
 /**
  *
  * \brief The NFS4_OP_LAYOUTCOMMIT operation.
@@ -91,7 +93,7 @@
  *
  */
 
-nfsstat4 pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs, 
+nfsstat4 CEPH_pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs, 
 			    compound_data_t * data,
 			    LAYOUTCOMMIT4res  * pres ) 
 {

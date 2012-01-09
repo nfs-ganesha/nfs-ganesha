@@ -67,6 +67,8 @@
 #include "fsal_pnfs.h"
 #endif /* _USE_FSALMDS */
 
+#include "pnfs_internal.h"
+
 /**
  *
  * \brief The NFS4_OP_GETDEVICELIST operation.
@@ -83,7 +85,7 @@
  *
  */
 
-nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args * pargs,
+nfsstat4 CEPH_pnfs_getdevicelist( GETDEVICELIST4args * pargs,
                              compound_data_t * data,
                              GETDEVICELIST4res  * pres ) 
 {

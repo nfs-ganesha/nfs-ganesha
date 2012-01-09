@@ -140,7 +140,6 @@ int pnfs_read_conf(config_file_t in_config, pnfs_parameter_t * pparam)
   char *key_value;
   char *block_name;
   config_item_t block;
-  struct hostent *hp = NULL;
   int unique;
 
   unsigned int ds_count = 0;

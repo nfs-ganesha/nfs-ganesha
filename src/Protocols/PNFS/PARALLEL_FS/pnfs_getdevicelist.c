@@ -66,9 +66,9 @@
  *
  */
 
-nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args  * pgetdevicelistargs,
-		             compound_data_t     * data,
-			     GETDEVICELIST4res   * pgetdevicelistres )
+nfsstat4 PARALLEL_FS_pnfs_getdevicelist( GETDEVICELIST4args  * pgetdevicelistargs,
+          		                 compound_data_t     * data,
+			                 GETDEVICELIST4res   * pgetdevicelistres )
 {
   
   pgetdevicelistres->gdlr_status = NFS4_OK;

@@ -349,6 +349,11 @@ int main(int argc, char *argv[])
      FSAL_LoadConsts();
    } /* for */
 
+#ifdef _USE_PNFS
+  /* Load pNFS functions */
+  pNFS_LoadFunctions() ;
+#endif 
+
 #ifdef _USE_FSALMDS
   FSAL_LoadMDSFunctions();
 #endif

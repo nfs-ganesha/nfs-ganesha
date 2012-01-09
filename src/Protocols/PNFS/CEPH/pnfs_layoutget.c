@@ -74,6 +74,8 @@
 #include "sal_functions.h"
 #endif                                          /* _USE_FSALMDS */
 
+#include "pnfs_internal.h"
+
 #ifdef _USE_FSALMDS
 static nfsstat4 acquire_layout_state(compound_data_t *data,
                                      stateid4 *supplied_stateid,
@@ -114,7 +116,7 @@ static nfsstat4 one_segment(fsal_handle_t *handle,
 
 #define LOC_BODY_SIZE 256
 
-nfsstat4 pnfs_layoutget( LAYOUTGET4args   * pargs, 
+nfsstat4 CEPH_pnfs_layoutget( LAYOUTGET4args   * pargs, 
 			 compound_data_t  * data,
 			 LAYOUTGET4res    * pres ) 
 {

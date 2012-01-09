@@ -73,6 +73,8 @@
 #include "sal_functions.h"
 #endif /* _USE_FSALMDS */
 
+#include "pnfs_internal.h"
+
 /**
  *
  * \brief The NFS4_OP_LAYOUTRETURN operation.
@@ -91,7 +93,7 @@
  */
 
 
-nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args * pargs, 
+nfsstat4 CEPH_pnfs_layoutreturn( LAYOUTRETURN4args * pargs, 
 			    compound_data_t   * data,
 			    LAYOUTRETURN4res  * pres ) 
 {

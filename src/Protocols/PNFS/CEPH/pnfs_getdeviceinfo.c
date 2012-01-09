@@ -68,6 +68,8 @@
 #include "fsal_pnfs.h"
 #endif /* _USE_FSALMDS */
 
+#include "pnfs_internal.h"
+
 /**
  *
  * \brief The NFS4_OP_GETDEVICEINFO operation.
@@ -89,7 +91,7 @@
 
 #define DA_ADDR_SIZE 5120
 
-nfsstat4 pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs,
+nfsstat4 CEPH_pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs,
                              compound_data_t    * data,
                              GETDEVICEINFO4res  * pres ) 
 {

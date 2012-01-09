@@ -56,9 +56,9 @@
 
 pnfs_parameter_t pnfs_param ;
 
-nfsstat4 pnfs_getdeviceinfo( GETDEVICEINFO4args  * pgetdeviceinfoargs,
-   	                     compound_data_t     * data,
-  		             GETDEVICEINFO4res   * pgetdeviceinfores )
+nfsstat4 PARALLEL_FS_pnfs_getdeviceinfo( GETDEVICEINFO4args  * pgetdeviceinfoargs,
+   	                                 compound_data_t     * data,
+  		                         GETDEVICEINFO4res   * pgetdeviceinfores )
 {
   unsigned int offset = 0;
   uint32_t int32 = 0;

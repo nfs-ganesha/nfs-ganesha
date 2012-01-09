@@ -430,10 +430,6 @@ AM_CONDITIONAL(USE_BUDDY_SYSTEM, test "$enable_BuddyMalloc" == "yes")
 AC_ARG_WITH([ceph-prefix], AS_HELP_STRING([--with-ceph-prefix=<path>], [Path to Ceph installation] ),
 		CEPH_PREFIX="$withval", CEPH_PREFIX="/usr" )
 
-# FSAL based pNFS MDS support (requires NFSv4.1, conflicts with pNFS)
-GA_ENABLE_AM_CONDITION([fsal-mds],[enable FSAL-based pNFS MDS support (NFSv4.1 support is mandatory)],[USE_FSALMDS])
-AM_CONDITIONAL(USE_FSALMDS, test "x$enable_fsal_mds" = "xyes")
-
 # PNFS switch argument (default is nothing)
 AC_ARG_WITH( [pnfs-mds], AS_HELP_STRING([--with-pnf-mds=PARALLEL_FS|CEPH|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
 	PNFS="$withval", PNFS="NONE" )
@@ -444,6 +440,7 @@ AM_CONDITIONAL(USE_PNFS_CEPH,	        test "$PNFS" = "CEPH" )
 
 AM_CONDITIONAL(USE_PNFS,                test "$PNFS" != "NONE" )
 
+AM_CONDITIONAL(USE_FSALMDS, test "$PNFS" = "CEPH") 
 
 # FSAL based pNFS DS support (requires NFSv4.1, conflicts with DS)
 GA_ENABLE_AM_CONDITION([fsal-ds],[enable FSAL-based pNFS DS support (NFSv4.1 support is mandatory)],[USE_FSALDS])
@@ -803,6 +800,7 @@ case $PNFS in
         "CEPH")
                 AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
                 AC_DEFINE(_USE_PNFS_CEPH,1,[enable NFSv4.1/pNFS support for CEPH])
+                AC_DEFINE(_USE_FSALMDS,1,[enable FSAL based pNFS MDS support])
                 PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
                 ;;
         *)
@@ -826,14 +824,6 @@ if [[  $PNFS != "NONE" ]] ; then
   if [[ $NFS4_MINOR == "0" ]] ; then
      AC_MSG_ERROR("You must activate NFSv4.1 support to enable pnfs support" )
   fi
-fi
-
-# Sanity check for FSAL based MDS support
-if test "$enable_fsal_mds" == "yes"; then
-  if [[ x$NFS4_MINOR != "x1" ]] ; then
-     AC_MSG_ERROR("You must activate NFSv4.1 support to enable FSAL meta-data server support" )
-  fi
-        AC_DEFINE(_USE_FSALMDS,1,[enable FSAL based pNFS MDS support])
 fi
 
 # Sanity check for FSAL based DS support

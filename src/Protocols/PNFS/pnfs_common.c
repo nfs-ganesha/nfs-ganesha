@@ -78,7 +78,7 @@
  * \return nothing (void function )
  *
  */
-void pnfs_layoutcommit_Free( LAYOUTCOMMIT4res * resp)
+void COMMON_pnfs_layoutcommit_Free( LAYOUTCOMMIT4res * resp)
 {
      /* Nothing to Mem_Free */
      return;
@@ -94,7 +94,7 @@ void pnfs_layoutcommit_Free( LAYOUTCOMMIT4res * resp)
  * \return nothing (void function )
  *
  */
-void pnfs_layoutget_Free(LAYOUTGET4res * resp)
+void COMMON_pnfs_layoutget_Free(LAYOUTGET4res * resp)
 {
 #ifdef _USE_PNFS
      size_t i = 0;
@@ -120,7 +120,7 @@ void pnfs_layoutget_Free(LAYOUTGET4res * resp)
  * \return nothing (void function )
  *
  */
-void pnfs_layoutreturn_Free( LAYOUTRETURN4res * pres )
+void COMMON_pnfs_layoutreturn_Free( LAYOUTRETURN4res * pres )
 {
   return ;
 }
@@ -135,7 +135,7 @@ void pnfs_layoutreturn_Free( LAYOUTRETURN4res * pres )
  * \return nothing (void function )
  *
  */
-void pnfs_getdevicelist_Free(GETDEVICELIST4res * resp)
+void COMMON_pnfs_getdevicelist_Free(GETDEVICELIST4res * resp)
 {
 #ifdef _USE_PNFS
      if (resp->gdlr_status == NFS4_OK) {
@@ -156,7 +156,7 @@ void pnfs_getdevicelist_Free(GETDEVICELIST4res * resp)
  * \return nothing (void function )
  *
  */
-void pnfs_getdeviceinfo_Free(GETDEVICEINFO4res * resp)
+void COMMON_pnfs_getdeviceinfo_Free(GETDEVICEINFO4res * resp)
 {
 #ifdef _USE_PNFS
      if (resp->gdir_status == NFS4_OK) {
