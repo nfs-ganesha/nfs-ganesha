@@ -493,4 +493,5 @@
       - New FSAL_CEPH (dedicated to the ceph filesystem)
       - pNFS code refurbished with CEPH specific code and generic parallel
         fs support
+      - All RPCs are now based on TIRPC	
 
