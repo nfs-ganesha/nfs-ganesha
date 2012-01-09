@@ -56,6 +56,7 @@
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
+#include "pnfs.h"
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
@@ -90,11 +91,9 @@
  *
  */
 
-#define arg_LAYOUTCOMMIT4 op->nfs_argop4_u.oplayoutcommit
-#define res_LAYOUTCOMMIT4 resp->nfs_resop4_u.oplayoutcommit
-
-int pnfs_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
-                          struct nfs_resop4 *resp)
+nfsstat4 pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs, 
+			    compound_data_t * data,
+			    LAYOUTCOMMIT4res  * pres ) 
 {
      char __attribute__ ((__unused__)) funcname[] = "pnfs_layoutcommit";
 #ifdef _USE_FSALMDS
@@ -122,8 +121,6 @@ int pnfs_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
      unsigned int beginning = 0;
 #endif /* _USE_FSALMDS */
 
-     resp->resop = NFS4_OP_LAYOUTCOMMIT;
-
 #ifdef _USE_FSALMDS
      if ((nfs_status = nfs4_sanity_check_FH(data,
                                             REGULAR_FILE))
@@ -143,36 +140,36 @@ int pnfs_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
      memset(&res, 0, sizeof(struct fsal_layoutcommit_res));
 
      /* Suggest a new size, if we have it */
-     if (arg_LAYOUTCOMMIT4.loca_last_write_offset.no_newoffset) {
+     if (pargs->loca_last_write_offset.no_newoffset) {
           arg.new_offset = TRUE;
           arg.last_write =
-               arg_LAYOUTCOMMIT4.loca_last_write_offset.newoffset4_u.no_offset;
+               pargs->loca_last_write_offset.newoffset4_u.no_offset;
      } else {
           arg.new_offset = FALSE;
      }
 
-     arg.reclaim = arg_LAYOUTCOMMIT4.loca_reclaim;
+     arg.reclaim = pargs->loca_reclaim;
 
      xdrmem_create(&lou_body,
-                   arg_LAYOUTCOMMIT4.loca_layoutupdate.lou_body.lou_body_val,
-                   arg_LAYOUTCOMMIT4.loca_layoutupdate.lou_body.lou_body_len,
+                   pargs->loca_layoutupdate.lou_body.lou_body_val,
+                   pargs->loca_layoutupdate.lou_body.lou_body_len,
                    XDR_DECODE);
 
      beginning = xdr_getpos(&lou_body);
 
      /* Suggest a new modification time if we have it */
-     if (arg_LAYOUTCOMMIT4.loca_time_modify.nt_timechanged) {
+     if (pargs->loca_time_modify.nt_timechanged) {
           arg.time_changed = TRUE;
           arg.new_time.seconds =
-               arg_LAYOUTCOMMIT4.loca_time_modify.newtime4_u.nt_time.seconds;
+               pargs->loca_time_modify.newtime4_u.nt_time.seconds;
           arg.new_time.nseconds =
-               arg_LAYOUTCOMMIT4.loca_time_modify.newtime4_u.nt_time.nseconds;
+               pargs->loca_time_modify.newtime4_u.nt_time.nseconds;
      }
 
      /* Retrieve state corresponding to supplied ID */
 
      if ((nfs_status
-          = nfs4_Check_Stateid(&arg_LAYOUTCOMMIT4.loca_stateid,
+          = nfs4_Check_Stateid(&pargs->loca_stateid,
                                data->current_entry,
                                0LL,
                                &layout_state,
@@ -223,8 +220,8 @@ int pnfs_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
           xdr_setpos(&lou_body, beginning);
      }
 
-     if (arg_LAYOUTCOMMIT4.loca_time_modify.nt_timechanged ||
-         arg_LAYOUTCOMMIT4.loca_last_write_offset.no_newoffset ||
+     if (pargs->loca_time_modify.nt_timechanged ||
+         pargs->loca_last_write_offset.no_newoffset ||
          res.size_supplied) {
           if (cache_inode_kill_entry(data->current_entry,
                                      WT_LOCK,
@@ -237,11 +234,11 @@ int pnfs_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
           }
      }
 
-     (res_LAYOUTCOMMIT4.LAYOUTCOMMIT4res_u.locr_resok4
+     (pres->LAYOUTCOMMIT4res_u.locr_resok4
       .locr_newsize.ns_sizechanged) = res.size_supplied;
 
      if (res.size_supplied) {
-          (res_LAYOUTCOMMIT4.LAYOUTCOMMIT4res_u.locr_resok4
+          (pres->LAYOUTCOMMIT4res_u.locr_resok4
            .locr_newsize.newsize4_u.ns_size) = res.new_size;
      }
 
@@ -251,12 +248,12 @@ out:
 
      xdr_destroy(&lou_body);
 
-     res_LAYOUTCOMMIT4.locr_status = nfs_status;
+     pres->locr_status = nfs_status;
 
 #else
-     res_LAYOUTCOMMIT4.locr_status = NFS4ERR_NOTSUPP;
+     pres->locr_status = NFS4ERR_NOTSUPP;
 #endif
-     return res_LAYOUTCOMMIT4.locr_status;
+     return pres->locr_status;
 }                               /* pnfs_layoutcommit */
 
 /**
@@ -269,7 +266,7 @@ out:
  * \return nothing (void function )
  *
  */
-void pnfs_layoutcommit_Free(LOCK4res * resp)
+void pnfs_layoutcommit_Free( LAYOUTCOMMIT4res * resp)
 {
      /* Nothing to Mem_Free */
      return;

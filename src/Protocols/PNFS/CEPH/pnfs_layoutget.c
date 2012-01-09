@@ -56,6 +56,7 @@
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
+#include "pnfs.h"
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
@@ -113,9 +114,9 @@ static nfsstat4 one_segment(fsal_handle_t *handle,
 
 #define LOC_BODY_SIZE 256
 
-int
-pnfs_layoutget(struct nfs_argop4 *op, compound_data_t * data,
-                   struct nfs_resop4 *resp)
+nfsstat4 pnfs_layoutget( LAYOUTGET4args   * pargs, 
+			 compound_data_t  * data,
+			 LAYOUTGET4res    * pres ) 
 {
      char __attribute__ ((__unused__)) funcname[] = "pnfs_layoutget";
 #ifdef _USE_FSALMDS
@@ -141,8 +142,6 @@ pnfs_layoutget(struct nfs_argop4 *op, compound_data_t * data,
      struct fsal_layoutget_res res;
 #endif /* _USE_FSALMDS */
 
-     resp->resop = NFS4_OP_LAYOUTGET;
-
 #ifdef _USE_FSALMDS
 
      if ((nfs_status = nfs4_sanity_check_FH(data,
@@ -157,8 +156,8 @@ pnfs_layoutget(struct nfs_argop4 *op, compound_data_t * data,
      }
 
      if ((nfs_status = acquire_layout_state(data,
-                                            &arg_LAYOUTGET4.loga_stateid,
-                                            arg_LAYOUTGET4.loga_layout_type,
+                                            &pargs->loga_stateid,
+                                            pargs->loga_layout_type,
                                             &layout_state,
                                             tag))
          != NFS4_OK) {
@@ -193,10 +192,10 @@ pnfs_layoutget(struct nfs_argop4 *op, compound_data_t * data,
 
      memset(layouts, 0, sizeof(layout4) * MAX_LAYOUT_SEGMENTS);
 
-     arg.type = arg_LAYOUTGET4.loga_layout_type;
-     arg.minlength = arg_LAYOUTGET4.loga_minlength;
+     arg.type = pargs->loga_layout_type;
+     arg.minlength = pargs->loga_minlength;
      arg.export_id = data->pexport->id;
-     arg.maxcount = arg_LAYOUTGET4.loga_maxcount;
+     arg.maxcount = pargs->loga_maxcount;
 
      /* Guaranteed on the first call */
      res.context = NULL;
@@ -209,9 +208,9 @@ pnfs_layoutget(struct nfs_argop4 *op, compound_data_t * data,
      do {
           /* Since the FSAL writes to tis structure with every call, we
              re-initialize it with the operation's arguments */
-          res.segment.io_mode = arg_LAYOUTGET4.loga_iomode;
-          res.segment.offset = arg_LAYOUTGET4.loga_offset;
-          res.segment.length = arg_LAYOUTGET4.loga_length;
+          res.segment.io_mode = pargs->loga_iomode;
+          res.segment.offset = pargs->loga_offset;
+          res.segment.length = pargs->loga_length;
 
           /* Clear anything from a previous segment */
           res.fsal_seg_data = NULL;
@@ -236,24 +235,24 @@ pnfs_layoutget(struct nfs_argop4 *op, compound_data_t * data,
 
      /* Update stateid.seqid and copy to current */
      update_stateid(layout_state,
-                    &res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_stateid,
+                    &pres->LAYOUTGET4res_u.logr_resok4.logr_stateid,
                     data,
                     tag);
 
-     res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_return_on_close =
+     pres->LAYOUTGET4res_u.logr_resok4.logr_return_on_close =
           layout_state->state_data.layout.state_return_on_close;
 
      /* Now the layout specific information */
-     res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_len
+     pres->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_len
           = numlayouts;
-     res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val
+     pres->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val
           = layouts;
 
      nfs_status = NFS4_OK;
 
 out:
 
-     if (res_LAYOUTGET4.logr_status != NFS4_OK) {
+     if (pres->logr_status != NFS4_OK) {
           if (layouts) {
                size_t i;
                for (i = 0; i < numlayouts; i++) {
@@ -272,12 +271,12 @@ out:
           }
      }
 
-     res_LAYOUTGET4.logr_status = nfs_status;
+     pres->logr_status = nfs_status;
 
 #else
-     res_LAYOUTGET4.logr_status = NFS4ERR_NOTSUPP;
+     pres->logr_status = NFS4ERR_NOTSUPP;
 #endif /* _USE_FSALMDS*/
-     return res_LAYOUTGET4.logr_status;
+     return pres->logr_status;
 }                               /* pnfs_layoutget */
 
 /**

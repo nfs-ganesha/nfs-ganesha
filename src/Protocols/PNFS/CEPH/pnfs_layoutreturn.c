@@ -90,12 +90,10 @@
  *
  */
 
-#define arg_LAYOUTRETURN4 op->nfs_argop4_u.oplayoutreturn
-#define res_LAYOUTRETURN4 resp->nfs_resop4_u.oplayoutreturn
 
-int
-nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
-                      struct nfs_resop4 *resp)
+nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args * pargs, 
+			    compound_data_t   * data,
+			    LAYOUTRETURN4res  * pres ) 
 {
      char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutreturn";
 #ifdef _USE_FSALMDS
@@ -125,24 +123,22 @@ nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
      struct pnfs_segment spec = {0, 0, 0};
 #endif /* _USE_FSALMDS */
 
-     resp->resop = NFS4_OP_LAYOUTRETURN;
-
 #ifdef _USE_FSALMDS
 
-     switch (arg_LAYOUTRETURN4.lora_layoutreturn.lr_returntype) {
+     switch (pargs->lora_layoutreturn.lr_returntype) {
      case LAYOUTRETURN4_FILE:
           if ((nfs_status = nfs4_sanity_check_FH(data,
                                                  REGULAR_FILE))
               != NFS4_OK) {
-               res_LAYOUTRETURN4.lorr_status = nfs_status;
-               return res_LAYOUTRETURN4.lorr_status;
+               pres->lorr_status = nfs_status;
+               return pres->lorr_status;
           }
           /* Retrieve state corresponding to supplied ID */
-          if (arg_LAYOUTRETURN4.lora_reclaim) {
+          if (pargs->lora_reclaim) {
                layout_state = NULL;
           } else {
                if ((nfs_status
-                    = nfs4_Check_Stateid(&arg_LAYOUTRETURN4.lora_layoutreturn
+                    = nfs4_Check_Stateid(&pargs->lora_layoutreturn
                                          .layoutreturn4_u.lr_layout
                                          .lrf_stateid,
                                          data->current_entry,
@@ -151,46 +147,46 @@ nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
                                          data,
                                          STATEID_SPECIAL_CURRENT,
                                          tag)) != NFS4_OK) {
-                    res_LAYOUTRETURN4.lorr_status = nfs_status;
-                    return res_LAYOUTRETURN4.lorr_status;
+                    pres->lorr_status = nfs_status;
+                    return pres->lorr_status;
                }
           }
 
-          spec.io_mode = arg_LAYOUTRETURN4.lora_iomode;
-          spec.offset = (arg_LAYOUTRETURN4.lora_layoutreturn
+          spec.io_mode = pargs->lora_iomode;
+          spec.offset = (pargs->lora_layoutreturn
                          .layoutreturn4_u.lr_layout.lrf_offset);
-          spec.length = (arg_LAYOUTRETURN4.lora_layoutreturn
+          spec.length = (pargs->lora_layoutreturn
                           .layoutreturn4_u.lr_layout.lrf_length);
 
-          res_LAYOUTRETURN4.lorr_status =
+          pres->lorr_status =
                nfs4_return_one_state(
                     data->current_entry,
                     data->pclient,
                     data->pcontext,
                     FALSE,
-                    arg_LAYOUTRETURN4.lora_reclaim,
-                    arg_LAYOUTRETURN4.lora_layoutreturn.lr_returntype,
+                    pargs->lora_reclaim,
+                    pargs->lora_layoutreturn.lr_returntype,
                     layout_state,
                     spec,
-                    arg_LAYOUTRETURN4.lora_layoutreturn
+                    pargs->lora_layoutreturn
                     .layoutreturn4_u.lr_layout.lrf_body.lrf_body_len,
-                    arg_LAYOUTRETURN4.lora_layoutreturn
+                    pargs->lora_layoutreturn
                     .layoutreturn4_u.lr_layout.lrf_body.lrf_body_val,
                     &deleted);
-          if (res_LAYOUTRETURN4.lorr_status == NFS4_OK) {
+          if (pres->lorr_status == NFS4_OK) {
                if (deleted) {
                     memset(data->current_stateid.other, 0,
                            sizeof(data->current_stateid.other));
                     data->current_stateid.seqid = NFS4_UINT32_MAX;
-                    res_LAYOUTRETURN4.LAYOUTRETURN4res_u.lorr_stateid
+                    pres->LAYOUTRETURN4res_u.lorr_stateid
                          .lrs_present = 0;
                } else {
-                    (res_LAYOUTRETURN4.LAYOUTRETURN4res_u
+                    (pres->LAYOUTRETURN4res_u
                      .lorr_stateid.lrs_present) = 1;
                     /* Update stateid.seqid and copy to current */
                     update_stateid(
                          layout_state,
-                         &res_LAYOUTRETURN4.LAYOUTRETURN4res_u.lorr_stateid
+                         &pres->LAYOUTRETURN4res_u.lorr_stateid
                          .layoutreturn_stateid_u.lrs_stateid,
                          data,
                          tag);
@@ -203,12 +199,12 @@ nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
                = nfs4_sanity_check_FH(data,
                                       0))
               != NFS4_OK) {
-               res_LAYOUTRETURN4.lorr_status = nfs_status;
-               return res_LAYOUTRETURN4.lorr_status;
+               pres->lorr_status = nfs_status;
+               return pres->lorr_status;
           }
           if (!nfs4_pnfs_supported(data->pexport)) {
-               res_LAYOUTRETURN4.lorr_status = NFS4_OK;
-               return res_LAYOUTRETURN4.lorr_status;
+               pres->lorr_status = NFS4_OK;
+               return pres->lorr_status;
           }
           memset(&attrs, 0, sizeof(fsal_attrib_list_t));
           attrs.asked_attributes |= FSAL_ATTR_FSID;
@@ -220,12 +216,12 @@ nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
                                      data->pcontext,
                                      &cache_status);
           if (cache_status != CACHE_INODE_SUCCESS) {
-               res_LAYOUTRETURN4.lorr_status = nfs4_Errno(cache_status);
-               return res_LAYOUTRETURN4.lorr_status;
+               pres->lorr_status = nfs4_Errno(cache_status);
+               return pres->lorr_status;
           }
           fsid = attrs.fsid;
      case LAYOUTRETURN4_ALL:
-          spec.io_mode = arg_LAYOUTRETURN4.lora_iomode;
+          spec.io_mode = pargs->lora_iomode;
           spec.offset = 0;
           spec.length = NFS4_UINT64_MAX;
 
@@ -233,9 +229,9 @@ nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
                = get_clientid_owner(data->psession->clientid,
                                     &clientid_owner))
               != STATE_SUCCESS) {
-               res_LAYOUTRETURN4.lorr_status =
+               pres->lorr_status =
                     nfs4_Errno_state(state_status);
-               return res_LAYOUTRETURN4.lorr_status;
+               return pres->lorr_status;
           }
 
           /* We need the safe version because return_one_state can
@@ -255,7 +251,7 @@ nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
                     layout_state = candidate_state;
                }
 
-               if (arg_LAYOUTRETURN4.lora_layoutreturn.lr_returntype
+               if (pargs->lora_layoutreturn.lr_returntype
                    == LAYOUTRETURN4_FSID) {
                     memset(&attrs, 0, sizeof(fsal_attrib_list_t));
                     attrs.asked_attributes |= FSAL_ATTR_FSID;
@@ -266,9 +262,9 @@ nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
                                         data->pcontext,
                                         &cache_status);
                     if (cache_status != CACHE_INODE_SUCCESS) {
-                         res_LAYOUTRETURN4.lorr_status
+                         pres->lorr_status
                               = nfs4_Errno(cache_status);
-                         return res_LAYOUTRETURN4.lorr_status;
+                         return pres->lorr_status;
                     }
 
               memset(&attrs, 0, sizeof(fsal_attrib_list_t));
@@ -278,20 +274,19 @@ nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
                    continue;
                }
 
-               res_LAYOUTRETURN4.lorr_status =
+               pres->lorr_status =
                     nfs4_return_one_state(layout_state->state_pentry,
                                           data->pclient,
                                           data->pcontext,
                                           TRUE,
-                                          arg_LAYOUTRETURN4.lora_reclaim,
-                                          (arg_LAYOUTRETURN4
-                                           .lora_layoutreturn.lr_returntype),
+                                          pargs->lora_reclaim,
+                                          (pargs->lora_layoutreturn.lr_returntype),
                                           layout_state,
                                           spec,
                                           0,
                                           NULL,
                                           &deleted);
-               if (res_LAYOUTRETURN4.lorr_status != NFS4_OK) {
+               if (pres->lorr_status != NFS4_OK) {
                     break;
                }
           }
@@ -299,17 +294,17 @@ nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
           memset(data->current_stateid.other, 0,
                  sizeof(data->current_stateid.other));
           data->current_stateid.seqid = NFS4_UINT32_MAX;
-          res_LAYOUTRETURN4.LAYOUTRETURN4res_u.lorr_stateid.lrs_present = 0;
+          pres->LAYOUTRETURN4res_u.lorr_stateid.lrs_present = 0;
           break;
 
      default:
-          res_LAYOUTRETURN4.lorr_status = NFS4ERR_INVAL;
-          return res_LAYOUTRETURN4.lorr_status;
+          pres->lorr_status = NFS4ERR_INVAL;
+          return pres->lorr_status;
      }
 #else
-     res_LAYOUTRETURN4.lorr_status = NFS4ERR_NOTSUPP;
+     pres->lorr_status = NFS4ERR_NOTSUPP;
 #endif
-     return res_LAYOUTRETURN4.lorr_status;
+     return pres->lorr_status;
 }                               /* nfs41_op_layoutreturn */
 
 /**
@@ -322,8 +317,7 @@ nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
  * @return nothing (void function )
  *
  */
-void
-nfs41_op_layoutreturn_Free(LOCK4res * resp) {
+void pnfs_layoutreturn_Free(LOCK4res * resp) {
   /* Nothing to Mem_Free */
   return;
 }                               /* nfs41_op_layoutreturn_Free */

@@ -82,11 +82,10 @@
  * \see nfs4_Compound
  *
  */
-#define arg_GETDEVICELIST4  op->nfs_argop4_u.opgetdevicelist
-#define res_GETDEVICELIST4  resp->nfs_resop4_u.opgetdevicelist
 
-int pnfs_getdevicelist(struct nfs_argop4 *op,
-                           compound_data_t * data, struct nfs_resop4 *resp)
+nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args * pargs,
+                             compound_data_t * data,
+                             GETDEVICELIST4res  * pres ) 
 {
      char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdevicelist";
 #ifdef _USE_FSALMDS
@@ -104,8 +103,6 @@ int pnfs_getdevicelist(struct nfs_argop4 *op,
      size_t i = 0;
 #endif /* _USE_FSALMDS */
 
-     resp->resop = NFS4_OP_GETDEVICELIST;
-
 #ifdef _USE_FSALMDS
      if ((nfs_status = nfs4_sanity_check_FH(data, 0))
          != NFS4_OK) {
@@ -116,13 +113,13 @@ int pnfs_getdevicelist(struct nfs_argop4 *op,
 
      if (!nfs4_pnfs_supported(data->pexport)) {
           nfs_status = NFS4_OK;
-          res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4.gdlr_cookie
+          pres->GETDEVICELIST4res_u.gdlr_resok4.gdlr_cookie
                = 0;
-          res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
+          pres->GETDEVICELIST4res_u.gdlr_resok4
                .gdlr_deviceid_list.gdlr_deviceid_list_val = NULL;
-          res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
+          pres->GETDEVICELIST4res_u.gdlr_resok4
                .gdlr_deviceid_list.gdlr_deviceid_list_len = 0;
-          res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4.gdlr_eof
+          pres->GETDEVICELIST4res_u.gdlr_resok4.gdlr_eof
                = 1;
           goto out;
      }
@@ -139,12 +136,12 @@ int pnfs_getdevicelist(struct nfs_argop4 *op,
      memset(&res, 0, sizeof(struct fsal_getdevicelist_res));
 
      arg.export_id = data->pexport->id;
-     arg.type = arg_GETDEVICELIST4.gdla_layout_type;
+     arg.type = pargs->gdla_layout_type;
 
-     res.cookie = arg_GETDEVICELIST4.gdla_cookie;
-     memcpy(&res.cookieverf, arg_GETDEVICELIST4.gdla_cookieverf,
+     res.cookie = pargs->gdla_cookie;
+     memcpy(&res.cookieverf, pargs->gdla_cookieverf,
             NFS4_VERIFIER_SIZE);
-     res.count = arg_GETDEVICELIST4.gdla_maxdevices;
+     res.count = pargs->gdla_maxdevices;
      res.devids = (uint64_t*) Mem_Alloc(res.count * sizeof(uint64_t));
 
      if (res.devids == NULL) {
@@ -167,12 +164,12 @@ int pnfs_getdevicelist(struct nfs_argop4 *op,
           goto out;
      }
 
-     res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4.gdlr_cookie
+     pres->GETDEVICELIST4res_u.gdlr_resok4.gdlr_cookie
           = res.cookie;
-     memcpy(res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4.gdlr_cookieverf,
+     memcpy(pres->GETDEVICELIST4res_u.gdlr_resok4.gdlr_cookieverf,
             res.cookieverf, NFS4_VERIFIER_SIZE);
 
-     if ((res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
+     if ((pres->GETDEVICELIST4res_u.gdlr_resok4
           .gdlr_deviceid_list.gdlr_deviceid_list_val
           = (void*) Mem_Alloc(res.count * sizeof(deviceid4))) == NULL) {
           nfs_status = NFS4ERR_SERVERFAULT;
@@ -181,19 +178,19 @@ int pnfs_getdevicelist(struct nfs_argop4 *op,
 
      for (i = 0; i < res.count; i++) {
           *(uint64_t*)
-               res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
+               pres->GETDEVICELIST4res_u.gdlr_resok4
                .gdlr_deviceid_list.gdlr_deviceid_list_val[i]
                = nfs_htonl64(data->pexport->id);
           *(uint64_t*)
-               (res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
+               (pres->GETDEVICELIST4res_u.gdlr_resok4
                 .gdlr_deviceid_list.gdlr_deviceid_list_val[i] +
                 sizeof(uint64_t))
                = nfs_htonl64(res.devids[i]);
      }
 
-     res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
+     pres->GETDEVICELIST4res_u.gdlr_resok4
           .gdlr_deviceid_list.gdlr_deviceid_list_len = res.count;
-     res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4.gdlr_eof
+     pres->GETDEVICELIST4res_u.gdlr_resok4.gdlr_eof
           = res.eof;
 
      nfs_status = NFS4_OK;
@@ -202,11 +199,11 @@ out:
 
      Mem_Free(res.devids);
 
-     res_GETDEVICELIST4.gdlr_status = nfs_status;
+     pres->gdlr_status = nfs_status;
 #else
-     res_GETDEVICELIST4.gdlr_status = NFS4ERR_NOTSUPP;
+     pres->gdlr_status = NFS4ERR_NOTSUPP;
 #endif                          /* _USE_PNFS */
-     return res_GETDEVICELIST4.gdlr_status;
+     return pres->gdlr_status;
 }                               /* pnfs_exchange_id */
 
 /**

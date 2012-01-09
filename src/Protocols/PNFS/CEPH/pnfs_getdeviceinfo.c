@@ -53,6 +53,7 @@
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
+#include "pnfs.h"
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
@@ -88,11 +89,9 @@
 
 #define DA_ADDR_SIZE 5120
 
-#define arg_GETDEVICEINFO4  op->nfs_argop4_u.opgetdeviceinfo
-#define res_GETDEVICEINFO4  resp->nfs_resop4_u.opgetdeviceinfo
-
-int pnfs_getdeviceinfo(struct nfs_argop4 *op,
-                       compound_data_t * data, struct nfs_resop4 *resp)
+nfsstat4 pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs,
+                             compound_data_t    * data,
+                             GETDEVICEINFO4res  * pres ) 
 {
      char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdeviceinfo";
 #ifdef _USE_FSALMDS
@@ -116,14 +115,12 @@ int pnfs_getdeviceinfo(struct nfs_argop4 *op,
           DA_ADDR_SIZE; /* The maximum size of the opaque in da_addr_body */
 #endif /* _USE_FSALMDS */
 
-     resp->resop = NFS4_OP_GETDEVICEINFO;
-
 #ifdef _USE_FSALMDS
      /* Check that we have space */
 
-     if (arg_GETDEVICEINFO4.gdia_maxcount < mincount) {
+     if (pargs->gdia_maxcount < mincount) {
           nfs_status = NFS4ERR_TOOSMALL;
-          res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_mincount
+          pres->GETDEVICEINFO4res_u.gdir_mincount
                = mincount;
           goto out;
      }
@@ -131,17 +128,17 @@ int pnfs_getdeviceinfo(struct nfs_argop4 *op,
      /* Disassemble and fix byte order of the deviceid halves */
 
      deviceid.export_id =
-          nfs_ntohl64(*(uint64_t*)arg_GETDEVICEINFO4.gdia_device_id);
+          nfs_ntohl64(*(uint64_t*)pargs->gdia_device_id);
 
      deviceid.devid =
-          nfs_ntohl64(*(uint64_t*)(arg_GETDEVICEINFO4.gdia_device_id
+          nfs_ntohl64(*(uint64_t*)(pargs->gdia_device_id
                                    + sizeof(uint64_t)));
 
      /* Set up the device_addr4 and get stream for FSAL to write into */
 
-     res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4
+     pres->GETDEVICEINFO4res_u.gdir_resok4
           .gdir_device_addr.da_layout_type
-          = arg_GETDEVICEINFO4.gdia_layout_type;
+          = pargs->gdia_layout_type;
 
      if ((da_buffer = Mem_Alloc(DA_ADDR_SIZE)) == NULL) {
           nfs_status = NFS4ERR_SERVERFAULT;
@@ -165,7 +162,7 @@ int pnfs_getdeviceinfo(struct nfs_argop4 *op,
           = (fsal_mdsfunctions
              .getdeviceinfo)(data->pcontext,
                              &da_addr_body,
-                             arg_GETDEVICEINFO4.gdia_layout_type,
+                             pargs->gdia_layout_type,
                              &deviceid);
 
      da_length = xdr_getpos(&da_addr_body) - da_beginning;
@@ -175,15 +172,15 @@ int pnfs_getdeviceinfo(struct nfs_argop4 *op,
           goto out;
      }
 
-     res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4
+     pres->GETDEVICEINFO4res_u.gdir_resok4
           .gdir_notification.bitmap4_len = 0;
-     res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4
+     pres->GETDEVICEINFO4res_u.gdir_resok4
           .gdir_notification.bitmap4_val = NULL;
 
-     res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4
+     pres->GETDEVICEINFO4res_u.gdir_resok4
           .gdir_device_addr.da_addr_body.da_addr_body_len
           = da_length;
-     res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4
+     pres->GETDEVICEINFO4res_u.gdir_resok4
           .gdir_device_addr.da_addr_body.da_addr_body_val
           = da_buffer;
 
@@ -196,12 +193,12 @@ out:
           Mem_Free(da_buffer);
      }
 
-     res_GETDEVICEINFO4.gdir_status = nfs_status;
+     pres->gdir_status = nfs_status;
 #else
-     res_GETDEVICEINFO4.gdir_status = NFS4ERR_NOTSUPP;
+     pres->gdir_status = NFS4ERR_NOTSUPP;
 #endif /* _USE_FSALMDS */
 
-     return res_GETDEVICEINFO4.gdir_status;
+     return pres->gdir_status;
 }                               /* nfs41_op_exchange_id */
 
 /**
@@ -214,9 +211,9 @@ out:
  * \return nothing (void function )
  *
  */
-void nfs41_op_getdeviceinfo_Free(GETDEVICEINFO4res * resp)
+void pnfs_getdeviceinfo_Free(GETDEVICEINFO4res * resp)
 {
-#ifdef _USE_FSALMDS
+#ifdef _USE_PNFS
      if (resp->gdir_status == NFS4_OK) {
           if (resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr
               .da_addr_body.da_addr_body_val != NULL) {

@@ -438,7 +438,7 @@ GA_ENABLE_AM_CONDITION([fsal-mds],[enable FSAL-based pNFS MDS support (NFSv4.1 s
 AM_CONDITIONAL(USE_FSALMDS, test "x$enable_fsal_mds" = "xyes")
 
 # PNFS switch argument (default is nothing)
-AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|CEPH|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
+AC_ARG_WITH( [pnfs-mds], AS_HELP_STRING([--with-pnf-mds=PARALLEL_FS|CEPH|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
 	PNFS="$withval", PNFS="NONE" )
 
 AM_CONDITIONAL(USE_PNFS_NONE, 		test "$PNFS" = "NONE" )

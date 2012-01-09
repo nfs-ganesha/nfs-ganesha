@@ -86,8 +86,8 @@ int nfs41_op_getdevicelist(struct nfs_argop4 *op,
 #define arg_GETDEVICELIST4  op->nfs_argop4_u.opgetdevicelist
 #define res_GETDEVICELIST4  resp->nfs_resop4_u.opgetdevicelist
 
-#ifndef _USE_PNFS
   resp->resop = NFS4_OP_GETDEVICELIST;
+#ifndef _USE_PNFS
   res_GETDEVICELIST4.gdlr_status = NFS4ERR_NOTSUPP;
   return res_GETDEVICELIST4.gdlr_status;
 #else
