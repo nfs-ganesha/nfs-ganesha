@@ -146,7 +146,6 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
   dircount = arg_READDIR4.dircount;
   maxcount = arg_READDIR4.maxcount*0.9;
   cookie = (unsigned int)arg_READDIR4.cookie;
-  space_used = sizeof(entry4);
 
   /* dircount is considered meaningless by many nfsv4 client (like the CITI
    * one).  we use maxcount instead. */

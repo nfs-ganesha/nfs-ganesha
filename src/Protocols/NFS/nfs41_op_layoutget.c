@@ -66,10 +66,7 @@
 #include "sal_data.h"
 #include "sal_functions.h"
 
-#ifdef _USE_PNFS
 #include "pnfs.h"
-#include "pnfs_service.h"
-#endif
 
 /**
  * 
@@ -94,43 +91,17 @@
 int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
                        struct nfs_resop4 *resp)
 {
-#ifdef _USE_PNFS
-  state_data_t candidate_data;
-  state_type_t candidate_type;
-  state_t *file_state = NULL;
-  cache_inode_status_t cache_status;
-  state_t *pstate_exists = NULL;
-  int rc;
-#endif
-
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutget";
+
+  resp->resop = NFS4_OP_LAYOUTGET;
 
 #ifndef _USE_PNFS
   resp->resop = NFS4_OP_LAYOUTGET;
   res_LAYOUTGET4.logr_status = NFS4ERR_NOTSUPP;
   return res_LAYOUTGET4.logr_status;
 #else
-  char *buff = NULL;
-  unsigned int lenbuff = 0;
-
   /* Lock are not supported */
   resp->resop = NFS4_OP_LAYOUTGET;
-
-  if((buff = Mem_Alloc(1024)) == NULL)
-    {
-      res_LAYOUTGET4.logr_status = NFS4ERR_SERVERFAULT;
-      return res_LAYOUTGET4.logr_status;
-    }
-
-
-  /* Lock are not supported */
-  resp->resop = NFS4_OP_LAYOUTGET;
-
-  if((buff = Mem_Alloc(1024)) == NULL)
-    {
-      res_LAYOUTGET4.logr_status = NFS4ERR_SERVERFAULT;
-      return res_LAYOUTGET4.logr_status;
-    }
 
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))
@@ -170,92 +141,8 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
       return res_LAYOUTGET4.logr_status;
     }
 
-  /* Parameters's consistency */
-  if(arg_LAYOUTGET4.loga_length < arg_LAYOUTGET4.loga_minlength)
-    {
-      res_LAYOUTGET4.logr_status = NFS4ERR_INVAL;
-      return res_LAYOUTGET4.logr_status;
-    }
-
-  /* Check stateid correctness and get pointer to state */
-  if((rc = nfs4_Check_Stateid(&arg_LAYOUTGET4.loga_stateid,
-                              data->current_entry,
-                              data->psession->clientid,
-                              &pstate_exists,
-                              data,
-                              STATEID_SPECIAL_FOR_LOCK,
-                              "LAYOUTGET")) != NFS4_OK)
-    {
-      res_LAYOUTGET4.logr_status = rc;
-      return res_LAYOUTGET4.logr_status;
-    }
-
-  /* For the moment, only LAYOUT4_FILE is supported */
-  switch (arg_LAYOUTGET4.loga_layout_type)
-    {
-    case LAYOUT4_NFSV4_1_FILES:
-      /* Continue on proceeding the request */
-      break;
-
-    default:
-      res_LAYOUTGET4.logr_status = NFS4ERR_NOTSUPP;
-      return res_LAYOUTGET4.logr_status;
-      break;
-    }                           /* switch( arg_LAYOUTGET4.loga_layout_type ) */
-
-  /* Add a pstate */
-  candidate_type = STATE_TYPE_LAYOUT;
-
-  /* Add the layout state to the table */
-  if(state_add(data->current_entry,
-                candidate_type,
-                &candidate_data,
-                STATE_LOCK_OWNER_UNKNOWN, /* pstate_exists->powner,  ASK FRANK ON THIS */
-                data->pclient,
-                data->pcontext,
-                &file_state, &cache_status) != CACHE_INODE_SUCCESS)
-    {
-      res_LAYOUTGET4.logr_status = NFS4ERR_STALE_STATEID;
-      return res_LAYOUTGET4.logr_status;
-    }
-
-  /* set the returned status */
-
-  /* No return on close for the moment */
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_return_on_close = FALSE;
-
-  /* Manages the stateid */
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_stateid.seqid = 1;
-  memcpy(res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_stateid.other,
-         arg_LAYOUTGET4.loga_stateid.other, OTHERSIZE);
-  //file_state->stateid_other, OTHERSIZE);
-
-  /* Now the layout specific information */
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_len = 1;  /** @todo manages more than one segment */
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val =
-      (layout4 *) Mem_Alloc(sizeof(layout4));
-
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_offset =
-      arg_LAYOUTGET4.loga_offset;
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_length = 0xFFFFFFFFFFFFFFFFLL;   /* Whole file */
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_iomode =
-      arg_LAYOUTGET4.loga_iomode;
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
-      lo_content.loc_type = LAYOUT4_NFSV4_1_FILES;
-
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
-      lo_content.loc_body.loc_body_len = 1024 ;
-  res_LAYOUTGET4.LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].
-      lo_content.loc_body.loc_body_val = buff;
-
-  if( ( rc = pnfs_layoutget( &arg_LAYOUTGET4, data, &res_LAYOUTGET4 ) ) != NFS4_OK )
-    {
-       res_LAYOUTGET4.logr_status = rc ;
-       return res_LAYOUTGET4.logr_status;
-    }
-
-  res_LAYOUTGET4.logr_status = NFS4_OK;
-  return res_LAYOUTGET4.logr_status;
+  /* Call underlying function */
+  return pnfs_layoutget( &arg_LAYOUTGET4, data, &res_LAYOUTGET4 ) ;
 #endif                          /* _USE_PNFS */
 }                               /* nfs41_op_layoutget */
 
@@ -271,13 +158,8 @@ int nfs41_op_layoutget(struct nfs_argop4 *op, compound_data_t * data,
  */
 void nfs41_op_layoutget_Free(LAYOUTGET4res * resp)
 {
-  if(resp->logr_status == NFS4_OK)
-    {
-      if(resp->LAYOUTGET4res_u.logr_resok4.logr_layout.logr_layout_val[0].lo_content.
-         loc_body.loc_body_val != NULL)
-        Mem_Free((char *)resp->LAYOUTGET4res_u.logr_resok4.logr_layout.
-                 logr_layout_val[0].lo_content.loc_body.loc_body_val);
-    }
-
-  return;
+#ifdef _USE_PNFS
+   pnfs_layoutget_Free( resp ) ;
+#endif
+   return ;
 }                               /* nfs41_op_layoutget_Free */

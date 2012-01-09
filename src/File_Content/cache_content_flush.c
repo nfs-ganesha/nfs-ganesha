@@ -85,10 +85,6 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
   fsal_status_t fsal_status;
   cache_inode_status_t cache_inode_status;
   fsal_path_t local_path;
-  cache_entry_t *pentry_inode = NULL;
-
-  /* Get the related cache inode entry */
-  pentry_inode = (cache_entry_t *) pentry->pentry_inode;
 
   *pstatus = CACHE_CONTENT_SUCCESS;
 

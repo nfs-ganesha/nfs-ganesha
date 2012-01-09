@@ -135,7 +135,7 @@ static const nfs4_op_desc_t optab4v0[] = {
 static const nfs4_op_desc_t optab4v1[] = {
   {"OP_ACCESS", NFS4_OP_ACCESS, nfs4_op_access},
   {"OP_CLOSE", NFS4_OP_CLOSE, nfs41_op_close},
-  {"OP_COMMIT", NFS4_OP_COMMIT, nfs4_op_commit},
+  {"OP_COMMIT", NFS4_OP_COMMIT, nfs41_op_commit},
   {"OP_CREATE", NFS4_OP_CREATE, nfs4_op_create},
   {"OP_DELEGPURGE", NFS4_OP_DELEGPURGE, nfs4_op_delegpurge},
   {"OP_DELEGRETURN", NFS4_OP_DELEGRETURN, nfs4_op_delegreturn},
@@ -399,7 +399,11 @@ int nfs4_Compound(nfs_arg_t * parg /* IN     */ ,
       else
        {
          /* Set optindex to op_illegal */
+#ifdef _USE_NFS4_1
          opindex = (COMPOUND4_MINOR==0)?optab4index[POS_ILLEGAL_V40]:optab4index[POS_ILLEGAL_V41];  
+#else
+         opindex = optab4index[POS_ILLEGAL_V40];  
+#endif 
          LogMajor( COMPONENT_NFS_V4, "Client is using Illegal operation #%u", COMPOUND4_ARRAY.argarray_val[i].argop ) ;
        }
 

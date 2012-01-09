@@ -83,7 +83,7 @@ typedef struct file_handle_v4__
 #ifdef _USE_PROXY
   char fsopaque[108];            /* persistent part of FSAL handle */
 #else
-  char fsopaque[61];            /* persistent part of FSAL handle */
+  char fsopaque[69];            /* persistent part of FSAL handle */
 #endif /* _USE_FSAL_PROXY */
   char xattr_pos;               /*                                          len = 1 byte    */
 } file_handle_v4_t;

@@ -501,8 +501,10 @@ int nfs4_Check_Stateid(stateid4        * pstate,
       return NFS4ERR_BAD_STATEID;
     }
 
-  /* Test for seqid = 0 if allowed */
-  if((flags & STATEID_SPECIAL_SEQID_0) == 0 || pstate->seqid != 0)
+  /* Whether stateid.seqid may be zero depends on the state type
+     exclusively, See RFC 5661 pp. 161,287-288. */
+  if((pstate2->state_type == STATE_TYPE_LAYOUT) ||
+     (pstate->seqid != 0))
     {
       /* Check seqid in stateid */
       diff = pstate->seqid - pstate2->state_seqid;

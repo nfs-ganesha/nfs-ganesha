@@ -49,7 +49,8 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 #include "pnfs.h" 
-#include "pnfs_service.h" 
+
+#include "pnfs_internal.h"
 
 /**
  *
@@ -65,12 +66,13 @@
  *
  */
 
-nfsstat4 pnfs_parallel_fs_getdevicelist( GETDEVICELIST4args  * pgetdevicelistargs,
-			            compound_data_t     * data,
-				    GETDEVICELIST4res   * pgetdevicelistres )
+nfsstat4 PARALLEL_FS_pnfs_getdevicelist( GETDEVICELIST4args  * pgetdevicelistargs,
+          		                 compound_data_t     * data,
+			                 GETDEVICELIST4res   * pgetdevicelistres )
 {
   
   pgetdevicelistres->gdlr_status = NFS4_OK;
 
   return pgetdevicelistres->gdlr_status  ;
-}                               /* pnfs_parallel_fs_getdevicelist */
+}    /* pnfs_getdevicelist */
+

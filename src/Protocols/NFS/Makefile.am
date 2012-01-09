@@ -106,12 +106,12 @@ libnfsproto_la_SOURCES += rquota_Null.c            \
 
 endif
 
-
 if USE_NFS4_1
 libnfsproto_la_SOURCES += nfs41_op_exchange_id.c      \
                           nfs41_op_close.c            \
                           nfs41_op_getdevicelist.c    \
                           nfs41_op_getdeviceinfo.c    \
+                          nfs41_op_commit.c           \
                           nfs41_op_create_session.c   \
                           nfs41_op_destroy_session.c  \
                           nfs41_op_free_stateid.c     \
