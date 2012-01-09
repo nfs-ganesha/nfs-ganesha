@@ -616,6 +616,7 @@ case $FSAL in
 
 		AC_CHECK_HEADERS([gpfs_nfs.h], [], [AC_MSG_ERROR(missing gpfs include files)], [
                 #include <fcntl.h>
+		#include <stdint.h>
                 ])
 
                 AC_CHECK_MEMBER([struct file_handle.f_handle], [
@@ -624,11 +625,13 @@ case $FSAL in
                                       [],
                                       [
                                         #include <fcntl.h>
+					#include <stdint.h>
                                         #include <gpfs_nfs.h>
                                       ])
 
 		AC_CHECK_DECL([gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs_ganesha function)], [
                   #include <fcntl.h>
+  		  #include <stdint.h>
                   #include <gpfs_nfs.h>
                 ])
 
@@ -651,6 +654,7 @@ case $FSAL in
 		               [AC_MSG_ERROR(GPFS < 3.5.0 found, you must upgrade GPFS to use this feature)],
 		               [
                                  #include <fcntl.h>
+				 #include <stdint.h>
                                  #include <gpfs_nfs.h>
                                ])
 
