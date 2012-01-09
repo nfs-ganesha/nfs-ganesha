@@ -279,33 +279,6 @@ out:
      return pres->logr_status;
 }                               /* pnfs_layoutget */
 
-/**
- * \brief Frees what was allocared to handle pnfs_layoutget.
- *
- * Frees what was allocared to handle pnfs_layoutget.
- *
- * \param resp  [INOUT]    Pointer to nfs4_op results
- *
- * \return nothing (void function )
- *
- */
-void
-pnfs_layoutget_Free(LAYOUTGET4res * resp)
-{
-#if defined(_USE_FSALMDS)
-     size_t i = 0;
-     if (resp->logr_status == NFS4_OK) {
-          for (i = 0;
-               i < (resp->LAYOUTGET4res_u.logr_resok4
-                    .logr_layout.logr_layout_len);
-               i++) {
-               Mem_Free((char *)resp->LAYOUTGET4res_u.logr_resok4.logr_layout.
-                        logr_layout_val[i].lo_content.loc_body.loc_body_val);
-          }
-     }
-#endif                          /* _USE_FSALMDS */
-}                               /* pnfs_layoutget_Free */
-
 
 #ifdef _USE_FSALMDS
 

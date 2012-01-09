@@ -199,29 +199,6 @@ out:
 #endif /* _USE_FSALMDS */
 
      return pres->gdir_status;
-}                               /* nfs41_op_exchange_id */
+}
 
-/**
- * \brief frees what was allocared to handle nfs4_op_getdeviceinfo.
- *
- * Frees what was allocared to handle nfs4_op_getdeviceinfo.
- *
- * \param resp  [INOUT]    Pointer to nfs4_op results
- *
- * \return nothing (void function )
- *
- */
-void pnfs_getdeviceinfo_Free(GETDEVICEINFO4res * resp)
-{
-#ifdef _USE_PNFS
-     if (resp->gdir_status == NFS4_OK) {
-          if (resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr
-              .da_addr_body.da_addr_body_val != NULL) {
-               Mem_Free(resp->GETDEVICEINFO4res_u.gdir_resok4
-                        .gdir_device_addr.da_addr_body.da_addr_body_val);
-          }
-     }
-#endif
-     return;
-}                               /* nfs41_op_getdeviceinfo_Free */
 

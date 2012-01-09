@@ -166,7 +166,3 @@ nfsstat4 pnfs_layoutget( LAYOUTGET4args   * playoutgetargs,
   return NFS4_OK ;
 }                               /* pnfs_layoutget */
 
-void pnfs_layoutget_Free( LAYOUTGET4res * pres ) 
-{
-  return ;
-}

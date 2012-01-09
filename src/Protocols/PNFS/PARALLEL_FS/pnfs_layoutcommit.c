@@ -79,8 +79,4 @@ nfsstat4 pnfs_layoutcommit( LAYOUTCOMMIT4args  * playoutcommitargs,
   return playoutcommitres->locr_status  ;
 }   /* pnfs_layoutcommit */
 
-void pnfs_layoutcommit_Free( LAYOUTCOMMIT4res * pres ) 
-{
-  return ;
-}
 

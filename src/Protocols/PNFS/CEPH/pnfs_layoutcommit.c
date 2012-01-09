@@ -256,18 +256,3 @@ out:
      return pres->locr_status;
 }                               /* pnfs_layoutcommit */
 
-/**
- * \brief frees what was allocared to handle pnfs_layoutcommit.
- *
- * Frees what was allocared to handle pnfs_layoutcommit.
- *
- * \param resp  [INOUT]    Pointer to nfs4_op results
- *
- * \return nothing (void function )
- *
- */
-void pnfs_layoutcommit_Free( LAYOUTCOMMIT4res * resp)
-{
-     /* Nothing to Mem_Free */
-     return;
-}                               /* pnfs_layoutcommit_Free */

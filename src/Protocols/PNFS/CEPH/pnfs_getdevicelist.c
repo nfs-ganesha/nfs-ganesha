@@ -206,23 +206,3 @@ out:
      return pres->gdlr_status;
 }                               /* pnfs_exchange_id */
 
-/**
- * \brief frees what was allocared to handle nfs4_op_getdevicelist.
- *
- * Frees what was allocared to handle nfs4_op_getdevicelist.
- *
- * \param resp  [INOUT]    Pointer to nfs4_op results
- *
- * \return nothing (void function )
- *
- */
-void pnfs_getdevicelist_Free(GETDEVICELIST4res * resp)
-{
-#ifdef _USE_FSALMDS
-     if (resp->gdlr_status == NFS4_OK) {
-          Mem_Free(resp->GETDEVICELIST4res_u.gdlr_resok4
-                   .gdlr_deviceid_list.gdlr_deviceid_list_val);
-     }
-#endif                          /* _USE_FSALMDS */
-  return;
-}                               /* pnfs_exchange_id_Free */

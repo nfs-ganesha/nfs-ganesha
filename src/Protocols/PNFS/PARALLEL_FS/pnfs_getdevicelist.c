@@ -76,8 +76,3 @@ nfsstat4 pnfs_getdevicelist( GETDEVICELIST4args  * pgetdevicelistargs,
   return pgetdevicelistres->gdlr_status  ;
 }    /* pnfs_getdevicelist */
 
-void pnfs_getdevicelist_Free(  GETDEVICELIST4res  * pres ) 
-{
-  return ;
-} /* pnfs_getdevicelist_Free */
-

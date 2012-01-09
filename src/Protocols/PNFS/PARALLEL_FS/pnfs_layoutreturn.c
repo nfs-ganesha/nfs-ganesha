@@ -75,8 +75,3 @@ nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args  * playoutreturnargs,
   return playoutreturnres->lorr_status  ;
 }                               /* pnfs_layoutreturn */
 
-void pnfs_layoutreturn_Free( LAYOUTRETURN4res * pres ) 
-{
-  return ;
-}
-

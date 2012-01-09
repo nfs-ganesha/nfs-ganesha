@@ -307,18 +307,3 @@ nfsstat4 pnfs_layoutreturn( LAYOUTRETURN4args * pargs,
      return pres->lorr_status;
 }                               /* nfs41_op_layoutreturn */
 
-/**
- * nfs41_op_layoutreturn_Free: frees what was allocared to handle nfs41_op_layoutreturn.
- *
- * Frees what was allocared to handle nfs41_op_layoutreturn.
- *
- * @param resp  [INOUT]    Pointer to nfs4_op results
- *
- * @return nothing (void function )
- *
- */
-void pnfs_layoutreturn_Free(LOCK4res * resp) {
-  /* Nothing to Mem_Free */
-  return;
-}                               /* nfs41_op_layoutreturn_Free */
-
