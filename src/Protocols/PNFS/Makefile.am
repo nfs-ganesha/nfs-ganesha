@@ -4,7 +4,7 @@ if USE_PNFS
 
 noinst_LTLIBRARIES          = libpnfs.la
 
-libpnfs_la_SOURCES = pnfs_empty.c
+libpnfs_la_SOURCES = 
 
 if USE_PNFS_PARALLEL_FS
 SUBDIRS =  PARALLEL_FS
