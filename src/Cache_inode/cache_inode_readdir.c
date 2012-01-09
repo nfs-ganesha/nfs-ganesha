@@ -1236,9 +1236,9 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   *peod_met = TO_BE_CONTINUED;
 
   for(i = 0; i < nbwanted; ++i)
-  {
+    {
       if (!dirent_node)
-	  break;
+        break;
 
       dirent = avltree_container_of(dirent_node,
 				    cache_inode_dir_entry_t, 

@@ -298,8 +298,8 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 
       /* Log */
       LogDebug(COMPONENT_CACHE_INODE,
-	       "Case 1: cached directory entries for entry %p must be renewed"
-	       " (has been readdir)", pentry);
+               "Case 1: cached directory entries for entry %p must be renewed"
+               " (has been readdir)", pentry);
 
       if(isFullDebug(COMPONENT_CACHE_INODE))
         {

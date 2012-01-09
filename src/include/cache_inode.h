@@ -281,7 +281,6 @@ typedef struct cache_inode_unstable_data__
 
 #define DIR_ENTRY_FLAG_NONE     0x0000
 #define DIR_ENTRY_FLAG_DELETED  0x0001
-
 typedef struct cache_inode_dir_entry__
 {
     struct avltree_node node_hk; /* avl keyed on hk.k */
