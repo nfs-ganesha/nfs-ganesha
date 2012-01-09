@@ -24,7 +24,7 @@
  */
 
 /**
- * \file    fsal_types.h
+ * \file    pnfs_internal.h
  * \author  $Author: leibovic $
  * \date    $Date: 2006/02/08 12:45:27 $
  * \version $Revision: 1.19 $
@@ -34,11 +34,31 @@
  *
  */
 
-#ifndef _FSAL_TYPES_PNFS_SPECIFIC_H
-#define _FSAL_TYPES_PNFS_SPECIFIC_H
+#ifndef _PNFS_INTERNAL_H
+#define _PNFS_INTERNAL_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#endif                          /* _FSAL_TYPES_PNFS_SPECIFIC_H */
+#define MAX_PNFS_DS 2
+
+typedef struct pnfs_ds_parameter__
+{
+  unsigned int ipaddr;
+  unsigned short ipport;
+  unsigned int prognum;
+  char rootpath[MAXPATHLEN];
+  char ipaddr_ascii[MAXNAMLEN];
+  unsigned int id;
+  bool_t is_ganesha;
+} pnfs_ds_parameter_t;
+
+typedef struct pnfs_layoutfile_parameter__
+{
+  unsigned int stripe_size;
+  unsigned int stripe_width;
+  pnfs_ds_parameter_t ds_param[MAX_PNFS_DS];
+} pnfs_parameter_t;
+
+#endif  /*  _PNFS_INTERNAL_H  */

@@ -438,15 +438,14 @@ GA_ENABLE_AM_CONDITION([fsal-mds],[enable FSAL-based pNFS MDS support (NFSv4.1 s
 AM_CONDITIONAL(USE_FSALMDS, test "x$enable_fsal_mds" = "xyes")
 
 # PNFS switch argument (default is nothing)
-AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
+AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|CEPH|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
 	PNFS="$withval", PNFS="NONE" )
 
 AM_CONDITIONAL(USE_PNFS_NONE, 		test "$PNFS" = "NONE" )
 AM_CONDITIONAL(USE_PNFS_PARALLEL_FS,	test "$PNFS" = "PARALLEL_FS" )
-AM_CONDITIONAL(USE_PNFS_OSD, 	        test "$PNFS" = "OSD" )
-AM_CONDITIONAL(USE_PNFS_BLOCK, 	        test "$PNFS" = "BLOCK" )
+AM_CONDITIONAL(USE_PNFS_CEPH,	        test "$PNFS" = "CEPH" )
 
-AM_CONDITIONAL(USE_PNFS,                 test "$PNFS" != "NONE" )
+AM_CONDITIONAL(USE_PNFS,                test "$PNFS" != "NONE" )
 
 
 # FSAL based pNFS DS support (requires NFSv4.1, conflicts with DS)
@@ -806,6 +805,24 @@ case $RPCAL in
 
 esac
 
+case $PNFS in
+        "NONE")
+                ;;
+        "PARALLEL_FS")
+                AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
+                AC_DEFINE(_USE_PNFS_PARALLEL_FS,1,[enable NFSv4.1/pNFS support for parallel file system ])
+                PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
+                ;;
+        "CEPH")
+                AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
+                AC_DEFINE(_USE_PNFS_CEPH,1,[enable NFSv4.1/pNFS support for CEPH])
+                PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
+                ;;
+        *)
+                AC_MSG_ERROR([This pNFS layout is not supported])
+esac
+
+
 case $NFS4_MINOR in
 	"0")
 		AC_DEFINE([_USE_NFS4_0],1, [Use NFSv4.0] )
@@ -852,6 +869,7 @@ AC_SUBST(FSAL_CFLAGS)
 AC_SUBST(FSAL_LDFLAGS)
 AC_SUBST(FSAL_LIB)
 AC_SUBST(MFSL_LIB)
+AC_SUBST(PNFS_LIB)
 AC_SUBST(FS_NAME)
 AC_SUBST(SHARED_FSAL)
 AC_SUBST(SHARED_FSAL_PKG)
@@ -908,6 +926,9 @@ AC_CONFIG_FILES([include/Makefile
 		 Protocols/NFS/Makefile
 		 Protocols/NLM/Makefile
                  Protocols/XDR/Makefile
+		 Protocols/PNFS/Makefile
+		 Protocols/PNFS/PARALLEL_FS/Makefile
+		 Protocols/PNFS/CEPH/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile
 		 FSAL/FSAL_HPSS/HPSSclapiExt/Makefile

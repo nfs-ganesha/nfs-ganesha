@@ -45,6 +45,7 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  nfsv40.h                        \
                  nfsv41.h                        \
                  nfs41_session.h                 \
+                 pnfs.h                          \
                  nfs_core.h                      \
                  err_inject.h                    \
                  nfs_creds.h                     \
@@ -83,7 +84,7 @@ include_HEADERS = ganesha_fuse_wrap.h
 endif
 
 
-SUBDIRS = FSAL MFSL
+SUBDIRS = FSAL MFSL 
 
 doc:
 	doxygen ./doxygen.conf.stuff_alloc
