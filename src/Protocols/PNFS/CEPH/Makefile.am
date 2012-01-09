@@ -6,8 +6,7 @@ libpnfslayoutfile_la_SOURCES = pnfs_getdeviceinfo.c        \
                                pnfs_getdevicelist.c        \
                                pnfs_layoutget.c            \
                                pnfs_layoutcommit.c         \
-                               pnfs_layoutreturn.c         \
-                               pnfs_ds_read_conf.c         
+                               pnfs_layoutreturn.c         
 
 new: clean all
 

@@ -44,8 +44,8 @@
 #include <sys/param.h>
 #include "config_parsing.h"
 #include "err_fsal.h"
-//#include <cephfs/libcephfs.h>
-#include "ceph/libceph.h"
+#include <cephfs/libcephfs.h>
+//#include "ceph/libceph.h"
 #include <pthread.h>
 #include "fsal_glue_const.h"
 
