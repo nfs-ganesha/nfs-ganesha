@@ -1524,7 +1524,6 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
 
     /* invalidate pentry */
     pentry->object.dir.has_been_readdir = CACHE_INODE_NO;
-    pentry->object.dir.nbactive--; 
 
     return;
 }
