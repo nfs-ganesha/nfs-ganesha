@@ -110,7 +110,6 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
   fattr4_acl acl;
   fattr4_mimetype mimetype;
   fattr4_aclsupport aclsupport;
-  fattr4_fs_locations fs_locations;
   fattr4_quota_avail_hard quota_avail_hard;
   fattr4_quota_avail_soft quota_avail_soft;
   fattr4_quota_used quota_used;
@@ -530,8 +529,6 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
           LogFullDebug(COMPONENT_NFS_V4_XATTR,
                        "-----> Wanting FATTR4_FS_LOCATIONS");
 
-          fs_locations.fs_root.pathname4_len = 0;
-          fs_locations.locations.locations_len = 0;     /* No FS_LOCATIONS no now */
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
           break;
@@ -1272,7 +1269,6 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   unsigned long space_used = 0;
   entry4 *entry_nfs_array = NULL;
   entry_name_array_item_t *entry_name_array = NULL;
-  nfs_fh4 entryFH;
   fsal_handle_t *pfsal_handle = NULL;
   fsal_status_t fsal_status;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
@@ -1291,8 +1287,6 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   memcpy((char *)&file_handle, data->currentFH.nfs_fh4_val, data->currentFH.nfs_fh4_len);
   nfsfh.nfs_fh4_len = data->currentFH.nfs_fh4_len;
   nfsfh.nfs_fh4_val = (char *)&file_handle;
-
-  entryFH.nfs_fh4_len = 0;
 
   LogFullDebug(COMPONENT_NFS_V4_XATTR, "Entering NFS4_OP_READDIR_PSEUDO");
 

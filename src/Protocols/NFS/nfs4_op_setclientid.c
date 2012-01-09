@@ -300,7 +300,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
       nfs_clientid.last_renew = 0;
       nfs_clientid.credential = data->credential;
 
-      if(nfs_client_id_add(clientid, nfs_clientid, &pworker->clientid_pool) !=
+      if(nfs_client_id_add(clientid, nfs_clientid, data->pclient) !=
          CLIENT_ID_SUCCESS)
         {
           res_SETCLIENTID4.status = NFS4ERR_SERVERFAULT;

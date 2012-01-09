@@ -543,10 +543,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
       pentry->object.file.pentry_parent_open = NULL;
 #endif
 
-#ifdef _USE_PNFS_SPNFS_LIKE /** @todo do the thing in a cleaner way here */
-      pentry->object.file.pnfs_file.ds_file.allocated = FALSE;
-#endif
-
       break;
 
     case DIRECTORY:
@@ -1599,7 +1595,6 @@ cache_inode_status_t cache_inode_dump_content(char *path, cache_entry_t * pentry
 cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pentry)
 {
   FILE *stream = NULL;
-  int rc;
 
   char buff[CACHE_INODE_DUMP_LEN+1];
 
@@ -1615,15 +1610,15 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
   /* Read the information */
   #define XSTR(s) STR(s)
   #define STR(s) #s
-  rc = fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+  fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
   pentry->internal_md.read_time = atoi(buff);
 
-  rc = fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+  fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
   pentry->internal_md.mod_time = atoi(buff);
 
-  rc = fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+  fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
 
-  rc = fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
+  fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
   #undef STR
   #undef XSTR
 

@@ -79,11 +79,16 @@ const char *fsal_function_names[] = {
   "FSAL_get_stats", "FSAL_unused_25", "FSAL_unused_26", "FSAL_unused_27",
   "FSAL_BuildExportContext", "FSAL_InitClientContext", "FSAL_GetClientContext",
   "FSAL_lookupPath", "FSAL_lookupJunction", "FSAL_test_access",
-  "FSAL_rmdir", "FSAL_CleanObjectResources", "FSAL_open_by_name", "FSAL_open_by_fileid",
-  "FSAL_ListXAttrs", "FSAL_GetXAttrValue", "FSAL_SetXAttrValue", "FSAL_GetXAttrAttrs",
-  "FSAL_close_by_fileid", "FSAL_setattr_access", "FSAL_merge_attrs", "FSAL_rename_access",
-  "FSAL_unlink_access", "FSAL_link_access", "FSAL_create_access", "FSAL_unused_49", "FSAL_CleanUpExportContext",
-  "FSAL_getextattrs", "FSAL_sync", "FSAL_lock_op", "FSAL_unused_58"
+  "FSAL_rmdir", "FSAL_CleanObjectResources", "FSAL_open_by_name",
+  "FSAL_open_by_fileid", "FSAL_ListXAttrs", "FSAL_GetXAttrValue",
+  "FSAL_SetXAttrValue", "FSAL_GetXAttrAttrs", "FSAL_close_by_fileid",
+  "FSAL_setattr_access", "FSAL_merge_attrs", "FSAL_rename_access",
+  "FSAL_unlink_access", "FSAL_link_access", "FSAL_create_access",
+  "FSAL_unused_49", "FSAL_CleanUpExportContext", "FSAL_getextattrs",
+  "FSAL_sync", "FSAL_lock_op", "FSAL_cb_init", "FSAL_cb_addfilter",
+  "FSAL_cb_getevents", "FSAL_unused_58", "FSAL_layoutget",
+  "FSAL_layoutreturn", "FSAL_layoutcommit", "FSAL_getdeviceinfo",
+  "FSAL_getdevicelist", "FSAL_ds_read", "FSAL_ds_write", "FSAL_ds_commit"
 };
 
 /* les code d'error */

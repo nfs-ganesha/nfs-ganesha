@@ -411,7 +411,7 @@ hash_table_t *HashTable_Init(hash_parameter_t hparam)
 {
   hash_table_t *ht;
   unsigned int i = 0;
-  char *name = "Unamed";
+  char *name __attribute__((unused)) = "Unamed";
 
   if (hparam.name != NULL)
     name = hparam.name;
@@ -710,7 +710,6 @@ int HashTable_GetRef(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t *
 {
   unsigned long hashval;
   struct rbt_node *pn;
-  struct rbt_head *tete_rbt;
   hash_data_t *pdata = NULL;
   unsigned long rbt_value = 0;
   int rc = 0;
@@ -735,8 +734,6 @@ int HashTable_GetRef(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t *
     hashval   = (*(ht->parameter.hash_func_key)) (&ht->parameter, buffkey);
     rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
    }
-
-  tete_rbt = &(ht->array_rbt[hashval]);
 
   /* Acquire mutex */
   P_r(&(ht->array_lock[hashval]));

@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -58,7 +58,7 @@
 
 /**
  * nfs41_op_open: NFS4_OP_OPEN, opens and eventually creates a regular file.
- * 
+ *
  * NFS4_OP_OPEN, opens and eventually creates a regular file.
  *
  * @param op    [IN]    pointer to nfs4_op arguments
@@ -66,7 +66,7 @@
  * @param resp  [IN]    Pointer to nfs4_op results
  *
  * @return NFS4_OK if successfull, other values show an error.  
- * 
+ *
  */
 
 #define arg_OPEN4 op->nfs_argop4_u.opopen
@@ -94,7 +94,6 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   fsal_accessmode_t         mode = 0600;
   nfs_fh4                   newfh4;
   char                      newfh4_val[NFS4_FHSIZE];
-  nfs_worker_data_t       * pworker = NULL;
   state_data_t              candidate_data;
   state_type_t              candidate_type;
   state_t                 * pfile_state = NULL;
@@ -120,14 +119,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   uint32_t tmp_attr[2];
   uint_t tmp_int = 2;
 
-#ifdef _USE_PNFS
-  nfs_client_id_t nfs_clientid;
-  bool_t open_owner_known = FALSE;
-  int pnfs_status;
-#endif
   cache_inode_create_arg_t create_arg;
-
-  pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))
@@ -226,7 +218,9 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       cause = "CLAIM_NULL";
 
       /* Is this open_owner known? If so, get it so we can use replay cache */
-      convert_nfs4_open_owner(&arg_OPEN4.owner, &owner_name);
+      convert_nfs4_open_owner(&arg_OPEN4.owner,
+                              &owner_name,
+                              data->psession->clientid);
 
       if(!nfs4_owner_Get_Pointer(&owner_name, &powner))
         {
@@ -519,7 +513,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       goto out;
                     }
 
-                  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 2;
+                  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 3;
                   if((res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val =
                       (uint32_t *) Mem_Alloc(res_OPEN4.OPEN4res_u.resok4.attrset.
                                              bitmap4_len * sizeof(uint32_t))) == NULL)
@@ -663,11 +657,6 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                        arg_OPEN4.openhow.openflag4_u.how.mode);
 
           create_arg.use_pnfs = FALSE;
-#ifdef _USE_PNFS
-          /*  set the file has "managed via pNFS" */
-          if(data->pexport->options & EXPORT_OPTION_USE_PNFS)
-            create_arg.use_pnfs = TRUE;
-#endif                          /* _USE_PNFS */
 
           /* Create the file, if we reach this point, it does not exist, we can create it */
           if((pentry_newfile = cache_inode_create(pentry_parent,
@@ -1022,7 +1011,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       goto out;
     }
 
-  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 2;
+  res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 3;
   if((res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val =
       (uint32_t *) Mem_Alloc(res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len *
                              sizeof(uint32_t))) == NULL)
@@ -1042,7 +1031,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       tmp_attr[0] = FATTR4_SIZE;
       tmp_attr[1] = FATTR4_MODE;
       nfs4_list_to_bitmap4(&(res_OPEN4.OPEN4res_u.resok4.attrset), &tmp_int, tmp_attr);
-      res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 2;
+      res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 3;
     }
 
   res_OPEN4.OPEN4res_u.resok4.cinfo.after =
@@ -1111,13 +1100,13 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
 /**
  * nfs4_op_open_Free: frees what was allocared to handle nfs4_op_open.
- * 
+ *
  * Frees what was allocared to handle nfs4_op_open.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs41_op_open_Free(OPEN4res * resp)
 {

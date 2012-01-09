@@ -88,7 +88,6 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   state_t                 * pstate_open;    /* state for the open owner */
   state_owner_t           * plock_owner;
   state_owner_t           * popen_owner;
-  state_owner_t           * presp_owner;    /* Owner to store response in */
   state_owner_t           * conflict_owner = NULL;
   state_nfs4_owner_name_t   owner_name;
   state_lock_desc_t         lock_desc, conflict_desc;
@@ -202,7 +201,6 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       popen_owner = pstate_open->state_powner;
       plock_state = NULL;
       plock_owner = NULL;
-      presp_owner = popen_owner;
 
       LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
               "LOCK New lock owner from open owner",
@@ -222,7 +220,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
       /* Is this lock_owner known ? */
       convert_nfs4_lock_owner(&arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
-                              &owner_name);
+                              &owner_name, data->psession->clientid);
     }
   else
     {
@@ -267,7 +265,6 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       plock_owner = plock_state->state_powner;
       popen_owner = plock_owner->so_owner.so_nfs4_owner.so_related_owner;
       pstate_open = plock_state->state_data.lock.popenstate;
-      presp_owner = plock_owner;
 
       LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
               "LOCK Existing lock owner",

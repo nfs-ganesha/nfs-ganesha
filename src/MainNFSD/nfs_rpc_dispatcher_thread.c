@@ -951,7 +951,6 @@ void nfs_rpc_getreq(fd_set * readfds)
   register long mask, *maskp;
   register int sock;
   register int rpc_sock;
-  process_status_t status;
 
   /* portable access to fds_bits field */
   maskp = __FDS_BITS(readfds);
@@ -1087,7 +1086,7 @@ void nfs_rpc_getreq(fd_set * readfds)
                        "A NFS TCP request from an already connected client");
             }
 
-          status = process_rpc_request(xprt);
+          process_rpc_request(xprt);
         }
     }
 }                               /* nfs_rpc_getreq */

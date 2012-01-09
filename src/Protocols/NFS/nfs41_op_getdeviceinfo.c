@@ -86,52 +86,14 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdeviceinfo";
-#ifdef _USE_PNFS
-  nfsstat4 rc = 0 ;
-#endif
 
   resp->resop = NFS4_OP_GETDEVICEINFO;
-
 #ifndef _USE_PNFS
   res_GETDEVICEINFO4.gdir_status = NFS4ERR_NOTSUPP;
   return res_GETDEVICEINFO4.gdir_status;
-#else
+#endif
 
-  char *buffin = NULL;
-  unsigned int lenbuffin = 0;
-
-  char *buff = NULL;
-  unsigned int lenbuff = 0;
-
-  if((buff = Mem_Alloc(1024)) == NULL)
-    {
-      res_GETDEVICEINFO4.gdir_status = NFS4ERR_SERVERFAULT;
-      return res_GETDEVICEINFO4.gdir_status;
-    }
-
-  /** @todo handle multiple DS here when this will be implemented (switch on deviceid arg) */
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_notification.bitmap4_len = 0;
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_notification.bitmap4_val = NULL;
-
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_layout_type =
-      LAYOUT4_NFSV4_1_FILES;
-
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
-      da_addr_body_len = 1024; /** @todo For wanting of something better */
-  res_GETDEVICEINFO4.GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
-      da_addr_body_val = buff;
-
-  if( ( rc = pnfs_getdeviceinfo( &arg_GETDEVICEINFO4, data, &res_GETDEVICEINFO4 ) ) != NFS4_OK )
-    {
-       res_GETDEVICEINFO4.gdir_status = rc ; 
-       return res_GETDEVICEINFO4.gdir_status;
-    }
-
-
-  res_GETDEVICEINFO4.gdir_status = NFS4_OK;
-
-  return res_GETDEVICEINFO4.gdir_status;
-#endif                          /* _USE_PNFS */
+  return pnfs_getdeviceinfo( &arg_GETDEVICEINFO4, data, &res_GETDEVICEINFO4 ) ;
 }                               /* nfs41_op_exchange_id */
 
 /**
@@ -146,11 +108,8 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
  */
 void nfs41_op_getdeviceinfo_Free(GETDEVICEINFO4res * resp)
 {
-  if(resp->gdir_status == NFS4_OK)
-    if(resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
-       da_addr_body_val != NULL)
-      Mem_Free(resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.da_addr_body.
-               da_addr_body_val);
-
+#ifdef _USE_PNFS
+  pnfs_getdeviceinfo_Free( resp ) ;
+#endif
   return;
 }                               /* nfs41_op_exchange_id_Free */

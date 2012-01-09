@@ -300,7 +300,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
           return *pstatus;
         }
     }
-    
+
   /* pentry->internal_md.type == DIRECTORY */
   fsal_handle_parent = pentry->object.dir.handle;
 
@@ -310,16 +310,6 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       after_attr.asked_attributes = pclient->attrmask;
 #ifdef _USE_MFSL
       cache_inode_get_attributes(pentry, &after_attr);
-#ifdef _USE_PNFS
-      after_attr.numlinks = remove_attr.numlinks ; /* Hook used to pass nlinks to MFSL_unlink */
-      if( to_remove_entry->internal_md.type == REGULAR_FILE )
-        fsal_status = MFSL_unlink(&pentry->mobject,
-                                  pnode_name,
-                                  &to_remove_entry->mobject,
-                                  pcontext, &pclient->mfsl_context, &after_attr,
-                                  &to_remove_entry->object.file.pnfs_file );
-      else
-#endif /* _USE_PNFS */
       fsal_status = MFSL_unlink(&pentry->mobject,
                                 pnode_name,
                                 &to_remove_entry->mobject,

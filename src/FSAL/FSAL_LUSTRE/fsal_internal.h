@@ -12,6 +12,10 @@
 #include  "fsal.h"
 #include <sys/stat.h>
 
+#if (defined(_USE_FSALMDS) || defined(_USE_FSALDS))
+#include "fsal_pnfs.h"
+#endif
+
 /* defined the set of attributes supported with POSIX */
 #define POSIX_SUPPORTED_ATTRIBUTES (                                       \
           FSAL_ATTR_SUPPATTR | FSAL_ATTR_TYPE     | FSAL_ATTR_SIZE      | \
@@ -361,3 +365,66 @@ fsal_status_t LUSTREFSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN
                                   fsal_lock_param_t * conflicting_lock)    /* OUT */ ;
 
 unsigned int LUSTREFSAL_GetFileno(fsal_file_t * pfile);
+#ifdef _USE_FSALMDS
+nfsstat4 LUSTREFSAL_MDS_init( ) ;
+nfsstat4 LUSTREFSAL_MDS_terminate( ) ;
+
+nfsstat4 LUSTREFSAL_layoutget(fsal_handle_t *exhandle,
+                            fsal_op_context_t *excontext,
+                            XDR *loc_body,
+                            const struct fsal_layoutget_arg *arg,
+                            struct fsal_layoutget_res *res);
+nfsstat4 LUSTREFSAL_layoutreturn(fsal_handle_t* handle,
+                               fsal_op_context_t* context,
+                               XDR *lrf_body,
+                               const struct fsal_layoutreturn_arg *arg);
+nfsstat4 LUSTREFSAL_layoutcommit(fsal_handle_t *handle,
+                               fsal_op_context_t *context,
+                               XDR *lou_body,
+                               const struct fsal_layoutcommit_arg *arg,
+                               struct fsal_layoutcommit_res *res);
+nfsstat4 LUSTREFSAL_getdeviceinfo(fsal_op_context_t *context,
+                                XDR* da_addr_body,
+                                layouttype4 type,
+                                const struct pnfs_deviceid *deviceid);
+nfsstat4 LUSTREFSAL_getdevicelist(fsal_handle_t *handle,
+                                fsal_op_context_t *context,
+                                const struct fsal_getdevicelist_arg *arg,
+                                struct fsal_getdevicelist_res *res);
+#endif /* _USE_FSALMDS */
+
+#ifdef _USE_FSALDS
+
+fsal_status_t LUSTREFSAL_load_pnfs_parameter_from_conf(config_file_t             in_config,
+                                                       lustre_pnfs_parameter_t * out_parameter);
+
+nfsstat4 LUSTREFSAL_DS_init( lustre_pnfs_parameter_t *pparam ) ;
+
+nfsstat4 LUSTREFSAL_DS_terminate( void ) ;
+
+nfsstat4 LUSTREFSAL_DS_read(fsal_handle_t *handle,
+                          fsal_op_context_t *context,
+                          const stateid4 *stateid,
+                          offset4 offset,
+                          count4 requested_length,
+                          caddr_t buffer,
+                          count4 *supplied_length,
+                          fsal_boolean_t *end_of_file);
+
+nfsstat4 LUSTREFSAL_DS_write(fsal_handle_t *handle,
+                           fsal_op_context_t *context,
+                           const stateid4 *stateid,
+                           offset4 offset,
+                           count4 write_length,
+                           caddr_t buffer,
+                           stable_how4 stability_wanted,
+                           count4 *written_length,
+                           verifier4 writeverf,
+                           stable_how4 *stability_got);
+
+nfsstat4 LUSTREFSAL_DS_commit(fsal_handle_t *handle,
+                            fsal_op_context_t *context,
+                            offset4 offset,
+                            count4 count,
+                            verifier4 writeverf);
+#endif /* _USE_FSALDS */
