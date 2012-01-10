@@ -343,7 +343,6 @@ typedef struct nfs_version4_parameter__
   unsigned int lease_lifetime;
   unsigned int fh_expire;
   unsigned int returns_err_fh_expired;
-  unsigned int use_open_confirm;
   unsigned int return_bad_stateid;
   char domainname[NFS4_MAX_DOMAIN_LEN];
   char idmapconf[MAXPATHLEN];
