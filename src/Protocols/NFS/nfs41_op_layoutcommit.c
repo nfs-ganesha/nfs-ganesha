@@ -87,14 +87,8 @@
 int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
                           struct nfs_resop4 *resp)
 {
-#ifdef _USE_PNFS
-  cache_inode_status_t cache_status;
-  fsal_attrib_list_t fsal_attr;
-  nfsstat4 rc ; 
-#endif
-
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutcommit";
-  /* Lock are not supported */
+
   resp->resop = NFS4_OP_LAYOUTCOMMIT;
 
 #ifndef _USE_PNFS
@@ -140,28 +134,8 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
       return res_LAYOUTCOMMIT4.locr_status;
     }
 
-  /* Update the mds */
-  if(cache_inode_truncate(data->current_entry,
-                          (fsal_size_t) arg_LAYOUTCOMMIT4.loca_length,
-                          &fsal_attr,
-                          data->ht,
-                          data->pclient,
-                          data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
-    {
-      res_LAYOUTCOMMIT4.locr_status = nfs4_Errno(cache_status);
-      return res_LAYOUTCOMMIT4.locr_status;
-    }
-
   /* Call pNFS service function */
-  if( ( rc = pnfs_layoutcommit( &arg_LAYOUTCOMMIT4, data, &res_LAYOUTCOMMIT4 ) ) != NFS4_OK )
-    {
-      res_LAYOUTCOMMIT4.locr_status = rc ;
-      return res_LAYOUTCOMMIT4.locr_status;
-    }
-   
-  res_LAYOUTCOMMIT4.locr_status = NFS4_OK;
-
-  return res_LAYOUTCOMMIT4.locr_status;
+  return pnfs_layoutcommit( &arg_LAYOUTCOMMIT4, data, &res_LAYOUTCOMMIT4 ); 
 #endif                          /* _USE_PNFS */
 }                               /* nfs41_op_layoutcommit */
 
@@ -177,6 +151,8 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
  */
 void nfs41_op_layoutcommit_Free(LOCK4res * resp)
 {
-  /* Nothing to Mem_Free */
+#ifdef _USE_PNFS
+  pnfs_layoutcommit_Free( resp ) ;
+#endif
   return;
 }                               /* nfs41_op_layoutcommit_Free */

@@ -174,7 +174,8 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* Is this lock_owner known ? */
-  convert_nfs4_open_owner(&arg_LOCKT4.owner, &owner_name);
+  convert_nfs4_open_owner(&arg_LOCKT4.owner, &owner_name,
+                          data->psession->clientid);
 
   if(!nfs4_owner_Get_Pointer(&owner_name, &popen_owner))
     {

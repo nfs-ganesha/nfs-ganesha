@@ -56,11 +56,23 @@
 #include "cache_content_policy.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
+#ifdef _USE_FSALDS
+#include <stdlib.h>
+#include <unistd.h>
+#include "fsal_pnfs.h"
+#endif /* _USE_FSALDS */
+
+#ifdef _USE_FSALDS
+static int op_dsread(struct nfs_argop4 *op,
+                     compound_data_t * data,
+                     struct nfs_resop4 *resp);
+#endif /* _USE_FSALDS */
 
 /**
  * nfs41_op_read: The NFS4_OP_READ operation
  *
- * This functions handles the NFS4_OP_READ operation in NFSv4. This function can be called only from nfs4_Compound.
+ * This functions handles the NFS4_OP_READ operation in NFSv4. This
+ * function can be called only from nfs4_Compound.
  *
  * @param op    [IN]    pointer to nfs41_op arguments
  * @param data  [INOUT] Pointer to the compound request's data
@@ -125,6 +137,13 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_read_xattr(op, data, resp);
+
+#ifdef _USE_FSALDS
+  if(nfs4_Is_Fh_DSHandle(&data->currentFH))
+    {
+      return(op_dsread(op, data, resp));
+    }
+#endif /* _USE_FSALDS */
 
   /* Manage access type MDONLY */
   if(data->pexport->access_type == ACCESSTYPE_MDONLY)
@@ -366,7 +385,6 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     res_READ4.READ4res_u.resok4.eof = TRUE;
   else
     res_READ4.READ4res_u.resok4.eof = FALSE;
-                                               
 
   /* Say it is ok */
   res_READ4.status = NFS4_OK;
@@ -391,3 +409,96 @@ void nfs41_op_read_Free(READ4res * resp)
       Mem_Free(resp->READ4res_u.resok4.data.data_val);
   return;
 }                               /* nfs41_op_read_Free */
+
+#ifdef _USE_FSALDS
+
+/**
+ * op_dsread: Calls down to pNFS data server
+ *
+ * @param op    [IN]    pointer to nfs41_op arguments
+ * @param data  [INOUT] Pointer to the compound request's data
+ * @param resp  [IN]    Pointer to nfs41_op results
+ *
+ * @return NFS4_OK if successfull, other values show an error.
+ *
+ */
+
+static int op_dsread(struct nfs_argop4 *op,
+                     compound_data_t * data,
+                     struct nfs_resop4 *resp)
+{
+  /* The FSAL file handle */
+  fsal_handle_t handle;
+  /* NFSv4 return code */
+  nfsstat4 nfs_status = 0;
+  /* Buffer into which data is to be read */
+  caddr_t buffer = NULL;
+  /* The system's page size */
+  const long page_size = sysconf(_SC_PAGESIZE);
+
+  /* Don't bother calling the FSAL if the read length is 0. */
+
+  if(arg_READ4.count == 0)
+    {
+      res_READ4.READ4res_u.resok4.eof = FALSE;
+      res_READ4.READ4res_u.resok4.data.data_len = 0;
+      res_READ4.READ4res_u.resok4.data.data_val = NULL;
+      res_READ4.status = NFS4_OK;
+      return res_READ4.status;
+    }
+
+  /* Construct the FSAL file handle */
+
+  if ((nfs4_FhandleToFSAL(&data->currentFH,
+                          &handle,
+                          data->pcontext)) == 0)
+    {
+      res_READ4.status = NFS4ERR_INVAL;
+      return res_READ4.status;
+    }
+
+  /*
+   * Allocate the memory for the read buffer to be page-aligned if we
+   * can find the page size.  Since the write buffer is allocated by
+   * the XDR code, aligned write support will be rolled into RPC
+   * enhancements.
+   */
+
+  if (page_size == -1)
+    {
+      buffer = (caddr_t) Mem_Alloc(arg_READ4.count);
+    }
+  else
+    {
+      posix_memalign(&buffer, page_size, arg_READ4.count);
+    }
+
+  if (buffer == NULL)
+    {
+      res_READ4.status = NFS4ERR_SERVERFAULT;
+      return res_READ4.status;
+    }
+
+  res_READ4.READ4res_u.resok4.data.data_val = buffer;
+
+  if ((nfs_status
+       = fsal_dsfunctions.DS_read(&handle,
+                                  data->pcontext,
+                                  &arg_READ4.stateid,
+                                  arg_READ4.offset,
+                                  arg_READ4.count,
+                                  res_READ4.READ4res_u.resok4.data.data_val,
+                                  &res_READ4.READ4res_u.resok4.data.data_len,
+                                  &res_READ4.READ4res_u.resok4.eof))
+      != NFS4_OK)
+    {
+      Mem_Free(buffer);
+    }
+
+
+  res_READ4.status = nfs_status;
+
+  return res_READ4.status;
+}
+
+#endif /* _USE_FSALDS */

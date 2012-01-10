@@ -106,7 +106,6 @@ int nfs_Write(nfs_arg_t * parg,
   fsal_size_t written_size;
   fsal_off_t offset = 0;
   caddr_t data = NULL;
-  enum stable_how stable;       /* NFS V3 storage stability, see RFC1813 page 50 */
   cache_inode_file_type_t filetype;
   fsal_boolean_t eof_met;
   uint64_t stable_flag = FSAL_SAFE_WRITE_TO_FS;
@@ -272,7 +271,6 @@ int nfs_Write(nfs_arg_t * parg,
       offset = parg->arg_write2.offset; /* beginoffset is obsolete */
       size = parg->arg_write2.data.nfsdata2_len;        /* totalcount is obsolete  */
       data = parg->arg_write2.data.nfsdata2_val;
-      stable = FILE_SYNC;
       if (pexport->use_commit == TRUE)
         stable_flag = FSAL_SAFE_WRITE_TO_FS;
       break;
@@ -305,12 +303,11 @@ int nfs_Write(nfs_arg_t * parg,
           stable_flag = FSAL_SAFE_WRITE_TO_FS;
         }
       data = parg->arg_write3.data.data_val;
-      stable = parg->arg_write3.stable;
       break;
     }
 
-  /* 
-   * do not exceed maxium WRITE offset if set 
+  /*
+   * do not exceed maxium WRITE offset if set
    */
   if((pexport->options & EXPORT_OPTION_MAXOFFSETWRITE) == EXPORT_OPTION_MAXOFFSETWRITE)
     {

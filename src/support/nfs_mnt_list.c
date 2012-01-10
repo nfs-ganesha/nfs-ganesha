@@ -286,7 +286,8 @@ int nfs_Remove_MountList_Entry(char *hostname, char *dirpath)
  */
 int nfs_Purge_MountList(void)
 {
-  mountlist piter_mnt_list_entry, piter_mnt_list_entry_next;
+  mountlist piter_mnt_list_entry __attribute__((unused)),
+    piter_mnt_list_entry_next __attribute__((unused));
 
   piter_mnt_list_entry = MNT_List_head;
   piter_mnt_list_entry_next = MNT_List_head;

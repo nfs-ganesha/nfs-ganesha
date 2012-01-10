@@ -113,7 +113,6 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                                                      fsal_op_context_t * pcontext,
                                                      cache_content_status_t * pstatus)
 {
-  int rc;
   fsal_handle_t fsal_handle;
   fsal_status_t fsal_status;
   cache_content_dirinfo_t directory;
@@ -137,9 +136,6 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
 #else
   struct statfs info_fs;
 #endif
-  unsigned long total_user_blocs;
-  unsigned long dispo_hw;
-  unsigned long dispo_lw;
   double tx_used;
 
   /* TODO: I'm not really sure how these work at all as I don't see an
@@ -181,10 +177,6 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                * total = used + available
                *       = f_blocks - f_bfree + f_bavail
                */
-              total_user_blocs = (info_fs.f_blocks + info_fs.f_bavail - info_fs.f_bfree);
-              dispo_hw = (unsigned long)(((100.0 - hw) * total_user_blocs) / 100.0);
-              dispo_lw = (unsigned long)(((100.0 - lw) * total_user_blocs) / 100.0);
-
               tx_used = 100.0 * ((double)info_fs.f_blocks - (double)info_fs.f_bfree) /
                   ((double)info_fs.f_blocks + (double)info_fs.f_bavail -
                    (double)info_fs.f_bfree);
@@ -222,10 +214,10 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
           /* BUG: what happens if any of these fail? */
           #define XSTR(s) STR(s)
           #define STR(s) #s
-          rc = fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
-          rc = fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
-          rc = fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
-          rc = fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
+          fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
           #undef STR
           #undef XSTR
 

@@ -140,6 +140,7 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
 libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la                   \
                                       $(PNFS_LIB)                                       \
                                       $(NLM_LIB)                                        \
+                                      $(FSALMDS_LIB)                                    \
                                       $(SEC_LIB_FLAGS)                                  \
                                       $(SVC_LIB_FLAGS)                                  \
                                       $(NFSIDMAP_LIB_FLAGS)                             \

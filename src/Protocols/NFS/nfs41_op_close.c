@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -40,39 +40,44 @@
 #endif
 
 #include <pthread.h>
+#include <stdint.h>
 #include "log_macros.h"
 #include "stuff_alloc.h"
 #include "nfs4.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 
 /**
  *
  * nfs41_op_close: Implemtation of NFS4_OP_CLOSE
- * 
- * Implemtation of NFS4_OP_CLOSE. Implementation is partial for now, so it always returns NFS4_OK.  
+ *
+ * Implemtation of NFS4_OP_CLOSE.
  *
  * @param op    [IN]    pointer to nfs4_op arguments
  * @param data  [INOUT] Pointer to the compound request's data
  * @param resp  [IN]    Pointer to nfs4_op results
- * 
- * @return NFS4_OK 
- * 
+ *
+ * @return NFS4_OK
+ *
  */
 
 #define arg_CLOSE4 op->nfs_argop4_u.opclose
 #define res_CLOSE4 resp->nfs_resop4_u.opclose
 
-int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
+int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
+                   struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_close";
   int                    rc = 0;
   state_t              * pstate_found = NULL;
   cache_inode_status_t   cache_status;
   state_status_t         state_status;
-  state_owner_t        * popen_owner;
   const char           * tag = "CLOSE";
   struct glist_head    * glist, * glistn;
+#ifdef _USE_FSALMDS
+  bool_t                 last_close = TRUE;
+#endif /* _USE_FSALMDS */
 
   LogDebug(COMPONENT_STATE,
            "Entering NFS v4.1 CLOSE handler -----------------------------------------------------");
@@ -136,8 +141,6 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_CLOSE4.status;
     }
 
-  popen_owner = pstate_found->state_powner;
-
   /* Check is held locks remain */
   glist_for_each(glist, &pstate_found->state_data.share.share_lockstates)
     {
@@ -190,6 +193,68 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                state_err_str(state_status));
     }
 
+#ifdef _USE_FSALMDS
+  /* We can't simply grab a pointer to a layout state and free it
+     later, since a client could have multiple layout states (since a
+     layout state covers layouts of only one layout type) each marked
+     return_on_close. */
+
+  glist_for_each(glist, &data->current_entry->object.file.state_list)
+    {
+      state_t *pstate = glist_entry(glist, state_t, state_list);
+
+      if ((pstate->state_type == STATE_TYPE_SHARE) &&
+          (pstate->state_powner->so_type == STATE_OPEN_OWNER_NFSV4) &&
+          (pstate->state_powner->so_owner.so_nfs4_owner.so_clientid ==
+           data->psession->clientid))
+        {
+          last_close = FALSE;
+          break;
+        }
+    }
+
+  if (last_close)
+    {
+      glist_for_each_safe(glist,
+                          glistn,
+                          &data->current_entry->object.file.state_list)
+        {
+          state_t *pstate = glist_entry(glist, state_t, state_list);
+          bool_t deleted = FALSE;
+          struct pnfs_segment entire = {
+               .io_mode = LAYOUTIOMODE4_ANY,
+               .offset = 0,
+               .length = NFS4_UINT64_MAX
+          };
+
+          if ((pstate->state_type == STATE_TYPE_LAYOUT) &&
+              (pstate->state_powner->so_type == STATE_CLIENTID_OWNER_NFSV4) &&
+              (pstate->state_powner->so_owner.so_nfs4_owner.so_clientid ==
+               data->psession->clientid) &&
+              pstate->state_data.layout.state_return_on_close)
+            {
+              nfs4_return_one_state(data->current_entry,
+                                    data->pclient,
+                                    data->pcontext,
+                                    TRUE,
+                                    FALSE,
+                                    0,
+                                    pstate,
+                                    entire,
+                                    0,
+                                    NULL,
+                                    &deleted);
+              if (!deleted)
+                {
+                  LogCrit(COMPONENT_PNFS,
+                          "Layout state not destroyed on last close return.");
+                }
+            }
+        }
+    }
+#endif /* _USE_FSALMDS */
+
+
   /* Close the file in FSAL through the cache inode */
   P_w(&data->current_entry->lock);
   if(cache_inode_close(data->current_entry,
@@ -216,13 +281,13 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
 /**
  * nfs41_op_close_Free: frees what was allocared to handle nfs4_op_close.
- * 
+ *
  * Frees what was allocared to handle nfs4_op_close.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs41_op_close_Free(CLOSE4res * resp)
 {

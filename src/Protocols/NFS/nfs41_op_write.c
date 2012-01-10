@@ -55,6 +55,15 @@
 #include "cache_content_policy.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
+#ifdef _USE_FSALDS
+#include "fsal_pnfs.h"
+#endif /* _USE_FSALDS */
+
+#ifdef _USE_FSALDS
+static int op_dswrite(struct nfs_argop4 *op,
+                      compound_data_t * data,
+                      struct nfs_resop4 *resp);
+#endif /* _USE_FSALDS */
 
 /**
  * nfs41_op_write: The NFS4_OP_WRITE operation
@@ -124,6 +133,13 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       res_WRITE4.status = NFS4ERR_FHEXPIRED;
       return res_WRITE4.status;
     }
+
+#ifdef _USE_FSALDS
+  if(nfs4_Is_Fh_DSHandle(&data->currentFH))
+    {
+      return(op_dswrite(op, data, resp));
+    }
+#endif /* _USE_FSALDS */
 
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
@@ -397,3 +413,52 @@ void nfs41_op_write_Free(WRITE4res * resp)
   /* Nothing to be done */
   return;
 }                               /* nfs41_op_write_Free */
+
+#ifdef _USE_FSALDS
+
+/**
+ * op_dswrite: Write for a data server
+ *
+ * @param op    [IN]    pointer to nfs41_op arguments
+ * @param data  [INOUT] Pointer to the compound request's data
+ * @param resp  [IN]    Pointer to nfs41_op results
+ *
+ * @return NFS4_OK if successfull, other values show an error.
+ *
+ */
+
+static int op_dswrite(struct nfs_argop4 *op,
+                      compound_data_t * data,
+                      struct nfs_resop4 *resp)
+{
+  /* FSAL file handle */
+  fsal_handle_t handle;
+  /* NFSv4 return code */
+  nfsstat4 nfs_status = 0;
+
+  /* Construct the FSAL file handle */
+
+  if ((nfs4_FhandleToFSAL(&data->currentFH,
+                          &handle,
+                          data->pcontext)) == 0)
+    {
+      res_WRITE4.status = NFS4ERR_INVAL;
+      return res_WRITE4.status;
+    }
+
+  nfs_status
+    = fsal_dsfunctions.DS_write(&handle,
+                                data->pcontext,
+                                &arg_WRITE4.stateid,
+                                arg_WRITE4.offset,
+                                arg_WRITE4.data.data_len,
+                                arg_WRITE4.data.data_val,
+                                arg_WRITE4.stable,
+                                &res_WRITE4.WRITE4res_u.resok4.count,
+                                res_WRITE4.WRITE4res_u.resok4.writeverf,
+                                &res_WRITE4.WRITE4res_u.resok4.committed);
+
+  res_WRITE4.status = nfs_status;
+  return res_WRITE4.status;
+}
+#endif /* _USE_FSALDS */

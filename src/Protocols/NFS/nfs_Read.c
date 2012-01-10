@@ -95,7 +95,6 @@ int nfs_Read(nfs_arg_t * parg,
   cache_entry_t *pentry;
   fsal_attrib_list_t attr;
   fsal_attrib_list_t pre_attr;
-  fsal_attrib_list_t *ppre_attr;
   int rc;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   cache_content_status_t content_status;
@@ -176,9 +175,6 @@ int nfs_Read(nfs_arg_t * parg,
         }
       return NFS_REQ_OK;
     }
-
-  /* get directory attributes before action (for V3 reply) */
-  ppre_attr = &pre_attr;
 
   /* Extract the filetype */
   filetype = cache_inode_fsal_type_convert(pre_attr.type);

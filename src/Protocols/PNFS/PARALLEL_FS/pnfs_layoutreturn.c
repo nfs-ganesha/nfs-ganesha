@@ -49,7 +49,7 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 #include "pnfs.h" 
-#include "pnfs_service.h" 
+#include "pnfs_internal.h"
 
 /**
  *
@@ -65,12 +65,13 @@
  *
  */
 
-nfsstat4 pnfs_parallel_fs_layoutreturn( LAYOUTRETURN4args  * playoutreturnargs,
-			           compound_data_t    * data,
-				   LAYOUTRETURN4res   * playoutreturnres )
+nfsstat4 PARALLEL_FS_pnfs_layoutreturn( LAYOUTRETURN4args  * playoutreturnargs,
+              	                        compound_data_t    * data,
+		                        LAYOUTRETURN4res   * playoutreturnres )
 {
   
   playoutreturnres->lorr_status = NFS4_OK;
 
   return playoutreturnres->lorr_status  ;
-}                               /* pnfs_parallel_fs_layoutreturn */
+}                               /* pnfs_layoutreturn */
+

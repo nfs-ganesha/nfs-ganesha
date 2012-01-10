@@ -568,6 +568,29 @@ int nfs4_Is_Fh_Pseudo(nfs_fh4 * pfh)
 
 /**
  *
+ * nfs4_Is_Fh_DSHandle
+ *
+ * This routine is used to test if a fh is a DS fh
+ *
+ * @param pfh [IN] file handle to test.
+ *
+ * @return TRUE if DS fh, FALSE otherwise
+ *
+ */
+int nfs4_Is_Fh_DSHandle(nfs_fh4 * pfh)
+{
+  file_handle_v4_t *pfhandle4;
+
+  if(pfh == NULL)
+    return 0;
+
+  pfhandle4 = (file_handle_v4_t *) (pfh->nfs_fh4_val);
+
+  return pfhandle4->ds_flag;
+}                               /* nfs4_Is_Fh_DSHandle */
+
+/**
+ *
  * nfs4_Is_Fh_Expired
  *
  * This routine is used to test if a fh is expired

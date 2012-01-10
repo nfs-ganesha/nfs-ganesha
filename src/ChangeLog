@@ -489,5 +489,9 @@
 
 1.4.0 -
       - Bug Fix: Memory leak fixed in RPC's DRC
-      - Bug Fix: Bad computation of rbt_value in RPC's DRC's hashtable
+      - Bug Fix: Bad computation of rbt_value in RPC's DRC's hashtable 
+      - New FSAL_CEPH (dedicated to the ceph filesystem)
+      - pNFS code refurbished with CEPH specific code and generic parallel
+        fs support
+      - All RPCs are now based on TIRPC	
 

@@ -540,7 +540,7 @@ static int nfs_AddClientsToExportList(exportlist_t * ExportEntry,
 
 int parseAccessParam(char *var_name, char *var_value,
 			    exportlist_t *p_entry, int access_option) {
-  int rc, err_flag = FALSE;
+  int rc;
   char *expended_node_list;
 
   /* temp array of clients */
@@ -554,7 +554,6 @@ int parseAccessParam(char *var_name, char *var_value,
 
   if(count <= 0)
     {
-      err_flag = TRUE;
       LogCrit(COMPONENT_CONFIG,
 	      "NFS READ_EXPORT: ERROR: Invalid format for client list in EXPORT::%s definition",
 	      var_name);
@@ -563,7 +562,6 @@ int parseAccessParam(char *var_name, char *var_value,
     }
   else if(count > EXPORT_MAX_CLIENTS)
     {
-      err_flag = TRUE;
       LogCrit(COMPONENT_CONFIG,
               "NFS READ_EXPORT: ERROR: Client list too long (%d>%d)",
 	      count, EXPORT_MAX_CLIENTS);
@@ -588,7 +586,6 @@ int parseAccessParam(char *var_name, char *var_value,
 
   if(rc < 0)
     {
-      err_flag = TRUE;
       LogCrit(COMPONENT_CONFIG,
               "NFS READ_EXPORT: ERROR: Client list too long (>%d)", count);
 
@@ -604,7 +601,6 @@ int parseAccessParam(char *var_name, char *var_value,
 
   if(rc != 0)
     {
-      err_flag = TRUE;
       LogCrit(COMPONENT_CONFIG,
               "NFS READ_EXPORT: ERROR: Invalid client found in \"%s\"",
 	      var_value);
@@ -709,7 +705,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   strcpy(p_entry->pseudopath, "/");
   strcpy(p_entry->referral, "");
 
-  unsigned int fsalid_is_set= FALSE ;
+  unsigned int fsalid_is_set __attribute__((unused)) = FALSE ;
 
   /* parse options for this export entry */
 
