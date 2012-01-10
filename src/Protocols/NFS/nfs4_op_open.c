@@ -565,11 +565,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                   P(powner->so_mutex);
                   if(powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
                     {
-                      if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
                         res_OPEN4.OPEN4res_u.resok4.rflags |=
                             OPEN4_RESULT_CONFIRM | OPEN4_RESULT_LOCKTYPE_POSIX;
-                      else
-                        res_OPEN4.OPEN4res_u.resok4.rflags |= OPEN4_RESULT_LOCKTYPE_POSIX;
                     }
                   V(powner->so_mutex);
 
@@ -650,10 +647,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                               P(powner->so_mutex);
                               if(powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
                                 {
-                                  if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
                                     res_OPEN4.OPEN4res_u.resok4.rflags |= OPEN4_RESULT_CONFIRM | OPEN4_RESULT_LOCKTYPE_POSIX;
-                                  else
-                                    res_OPEN4.OPEN4res_u.resok4.rflags |= OPEN4_RESULT_LOCKTYPE_POSIX;
                                 }
                               V(powner->so_mutex);
 
@@ -1108,11 +1102,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   /* If server use OPEN_CONFIRM4, set the correct flag */
   if(powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
     {
-      if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
         res_OPEN4.OPEN4res_u.resok4.rflags |=
             OPEN4_RESULT_CONFIRM | OPEN4_RESULT_LOCKTYPE_POSIX;
-      else
-        res_OPEN4.OPEN4res_u.resok4.rflags |= OPEN4_RESULT_LOCKTYPE_POSIX;
     }
 
  out_success:

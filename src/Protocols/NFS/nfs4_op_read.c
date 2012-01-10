@@ -211,15 +211,13 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
            }
         }
 
-      /* If NFSv4::Use_OPEN_CONFIRM is set to TRUE in the configuration file, check is state is confirmed */
-      if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
+      /** @todo : this piece of code looks a bit suspicious (see Rong's mail) */    
+      if(pstate_found->state_powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
         {
-          if(pstate_found->state_powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
-            {
-              res_READ4.status = NFS4ERR_BAD_STATEID;
-              return res_READ4.status;
-            }
+            res_READ4.status = NFS4ERR_BAD_STATEID;
+            return res_READ4.status;
         }
+        
     }
   else
     {

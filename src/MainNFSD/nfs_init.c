@@ -377,7 +377,6 @@ void nfs_set_param_default()
   nfs_param.nfsv4_param.lease_lifetime = NFS4_LEASE_LIFETIME;
   nfs_param.nfsv4_param.fh_expire = FALSE;
   nfs_param.nfsv4_param.returns_err_fh_expired = TRUE;
-  nfs_param.nfsv4_param.use_open_confirm = TRUE;
   nfs_param.nfsv4_param.return_bad_stateid = TRUE;
   strncpy(nfs_param.nfsv4_param.domainname, DEFAULT_DOMAIN, MAXNAMLEN);
   strncpy(nfs_param.nfsv4_param.idmapconf, DEFAULT_IDMAPCONF, MAXPATHLEN);
