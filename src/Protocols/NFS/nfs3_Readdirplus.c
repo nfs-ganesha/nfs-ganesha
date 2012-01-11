@@ -237,7 +237,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
   pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries = NULL;
   pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = FALSE;
 
-#warning XXXX fix this--compare nfs4_op_readdir
+/** @todo  XXXX fix this--compare nfs4_op_readdir */
 
   /* How many entries will we retry from cache_inode ? */
   if(begin_cookie > 1)
@@ -576,7 +576,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 	       * sizeof(entryplus3). */
 	      /* FIXME: There is still a 4 byte over estimate here on x86_64. */
 
-#warning Remove cookie offset calculation in readdir and readdirplus (obsoleted)
+/** @todo Remove cookie offset calculation in readdir and readdirplus (obsoleted) */
 
               needed =
 		sizeof(reference_entry)
