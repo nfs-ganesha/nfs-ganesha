@@ -34,11 +34,7 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-<<<<<<< HEAD
 #include "log.h"
-=======
-#include "log_macros.h"
->>>>>>> Cache-inode-avl-hashing
 #include "stuff_alloc.h"
 #include "fsal.h"
 #include "cache_inode.h"
@@ -177,6 +173,8 @@ cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
     }
     return (code);
 }
+
+#define MIN_COOKIE_VAL 3
 
 /*
  * Insert with quadatic, linear probing.  A unique k is assured for
