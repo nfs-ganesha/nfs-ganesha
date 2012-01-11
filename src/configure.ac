@@ -431,7 +431,7 @@ AC_ARG_WITH([ceph-prefix], AS_HELP_STRING([--with-ceph-prefix=<path>], [Path to 
 		CEPH_PREFIX="$withval", CEPH_PREFIX="/usr" )
 
 # PNFS switch argument (default is nothing)
-AC_ARG_WITH( [pnfs-mds], AS_HELP_STRING([--with-pnf-mds=PARALLEL_FS|CEPH|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
+AC_ARG_WITH( [pnfs-mds], AS_HELP_STRING([--with-pnfs-mds=PARALLEL_FS|CEPH|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
 	PNFS="$withval", PNFS="NONE" )
 
 AM_CONDITIONAL(USE_PNFS_NONE, 		test "$PNFS" = "NONE" )
