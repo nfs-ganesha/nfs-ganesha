@@ -212,10 +212,26 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
 
       /** @todo : this piece of code looks a bit suspicious (see Rong's mail) */    
-      if(pstate_found->state_powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
+      switch( pstate_found->state_type )
         {
+          case STATE_TYPE_SHARE:
+            if(pstate_found->state_powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
+              {
+                 res_READ4.status = NFS4ERR_BAD_STATEID;
+                 return res_READ4.status;
+              }
+            break ;
+
+         case STATE_TYPE_LOCK:
+            /* Nothing to do */
+            break ;
+
+         default:
+            /* Sanity check: all other types are illegal. 
+             * we should not got that place (similar check above), anyway it costs nothing to add this test */  
             res_READ4.status = NFS4ERR_BAD_STATEID;
-            return res_READ4.status;
+            return res_READ4.status ;
+            break ;
         }
         
     }
