@@ -211,6 +211,10 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
                                     pcontext, 
                                     &fsal_dirent_array[iter].cookie,
                                     &dirent_array[iter]->fsal_cookie);
+      
+      /* nonamecache ONLY */
+      dirent_array[iter]->hk.k = dirent_array[iter]->fsal_cookie;
+
    } /* for( iter = 0 ; iter < nbfound ; iter ++ ) */
 
   if( fsal_eod == TRUE )
@@ -1245,12 +1249,12 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 				    node_hk);
 
       LogFullDebug(COMPONENT_NFS_READDIR,
-              "cache_inode_readdir: dirent=%p name=%s "
-              "cookie=%"PRIu64" (%d)",
-              dirent,
-              dirent->name.name,
-              dirent->hk.k,
-              dirent->hk.p);
+                   "cache_inode_readdir: dirent=%p name=%s "
+                   "cookie=%"PRIu64" (probes %d)",
+                   dirent,
+                   dirent->name.name,
+                   dirent->hk.k,
+                   dirent->hk.p);
 
       dirent_array[i] = last_dirent = dirent;
       (*pnbfound)++;
