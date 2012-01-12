@@ -291,7 +291,7 @@ cache_inode_avl_qp_lookup_s(
 
     for (j = 0; j < maxj; j++) {
         v->hk.k = (v->hk.k + (j * 2));
-        node = avltree_inline_lookup(&v->node_hk, t);
+        node = avltree_lookup(&v->node_hk, t);
         if (node) {
             /* ensure that node is related to v */
             v2 = avltree_container_of(node, cache_inode_dir_entry_t, node_hk);
