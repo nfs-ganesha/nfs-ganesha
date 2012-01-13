@@ -60,6 +60,13 @@ else
 NLM_LIB =
 endif
 
+if USE_QUOTA
+RQUOTA_LIB = ../Protocols/RQUOTA/librquota.la
+else
+RQUOTA_LIB = 
+endif
+
+
 if USE_9P
 DISPATCH_9P_FILES = 9p_dispatcher.c 
 _9P_LIB = ../Protocols/9P/lib9p.la
@@ -140,6 +147,7 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
 libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la                   \
                                       $(PNFS_LIB)                                       \
                                       $(NLM_LIB)                                        \
+                                      $(RQUOTA_LIB)                                      \
                                       $(FSALMDS_LIB)                                    \
                                       $(SEC_LIB_FLAGS)                                  \
                                       $(SVC_LIB_FLAGS)                                  \

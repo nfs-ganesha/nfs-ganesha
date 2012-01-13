@@ -7,3 +7,7 @@ endif
 if USE_NLM
 SUBDIRS += NLM
 endif
+
+if USE_QUOTA
+SUBDIRS += RQUOTA
+endif

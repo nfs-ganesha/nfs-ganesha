@@ -902,6 +902,7 @@ AC_CONFIG_FILES([include/Makefile
                  Protocols/9P/Makefile
 		 Protocols/NFS/Makefile
 		 Protocols/NLM/Makefile
+		 Protocols/RQUOTA/Makefile
                  Protocols/XDR/Makefile
 		 Protocols/PNFS/Makefile
 		 Protocols/PNFS/PARALLEL_FS/Makefile
