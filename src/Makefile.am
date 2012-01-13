@@ -34,7 +34,7 @@ SUBDIRS = include             \
           IdMapper            \
           snmp_adm            \
           MainNFSD            \
-          cmdline_tools       \
+          shell               \
           cmdline_tools       \
           Docs                \
           tools               \
@@ -47,14 +47,6 @@ SUBDIRS = include             \
 
 if USE_FSAL_FUSE
 SUBDIRS += example-fuse
-endif
-
-if USE_FSALMDS
-else
-if USE_FSALDS
-else
-SUBDIRS += shell
-endif
 endif
 
 DOCDIRS = Cache_inode ConfigParsing File_Content File_Content_Policy HashTable IdMapper LRU Log MainNFSD Protocols/NFS SemN StuffAlloc shell support \
