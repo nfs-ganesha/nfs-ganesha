@@ -568,6 +568,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                         res_OPEN4.OPEN4res_u.resok4.rflags |=
                             OPEN4_RESULT_CONFIRM | OPEN4_RESULT_LOCKTYPE_POSIX;
                     }
+                  else
+                    {
+                        res_OPEN4.OPEN4res_u.resok4.rflags |= OPEN4_RESULT_LOCKTYPE_POSIX ;
+                    }
                   V(powner->so_mutex);
 
                   /* Now produce the filehandle to this file */
@@ -648,6 +652,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                               if(powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
                                 {
                                     res_OPEN4.OPEN4res_u.resok4.rflags |= OPEN4_RESULT_CONFIRM | OPEN4_RESULT_LOCKTYPE_POSIX;
+                                }
+                              else
+                                {
+                                    res_OPEN4.OPEN4res_u.resok4.rflags |= OPEN4_RESULT_LOCKTYPE_POSIX;
                                 }
                               V(powner->so_mutex);
 
@@ -1104,6 +1112,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     {
         res_OPEN4.OPEN4res_u.resok4.rflags |=
             OPEN4_RESULT_CONFIRM | OPEN4_RESULT_LOCKTYPE_POSIX;
+    }
+  else
+    {
+        res_OPEN4.OPEN4res_u.resok4.rflags |= OPEN4_RESULT_LOCKTYPE_POSIX ;
     }
 
  out_success:
