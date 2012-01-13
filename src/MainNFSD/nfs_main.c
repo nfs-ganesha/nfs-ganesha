@@ -155,6 +155,7 @@ int main(int argc, char *argv[])
           printf("%s compiled on %s at %s\n", exec_name, __DATE__, __TIME__);
           printf("Release = %s\n", VERSION);
           printf("Release comment = %s\n", VERSION_COMMENT);
+          printf("Git HEAD = %s\n", _GIT_HEAD_COMMIT ) ;
           exit(0);
           break;
 

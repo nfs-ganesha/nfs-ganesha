@@ -59,6 +59,18 @@ AC_SUBST(LIBVERSION)
 # set '_EXTENDED_TYPE_NEEDED' in config.h
 AC_DEFINE( [_EXTENDED_TYPE_NEEDED], 1, [Using XDR extended types])
 
+# Git latest commit
+AC_MSG_CHECKING( [Git HEAD] )
+head_commit=`git rev-parse HEAD 2>/dev/null`
+
+if test "x$head_commit" == "x" ; then
+  AC_MSG_RESULT( [no git here] ) 
+  AC_DEFINE_UNQUOTED( [_GIT_HEAD_COMMIT], "not within git repository", [Lastest HEAD as configure was run])
+else
+  AC_MSG_RESULT( $head_commit ) 
+  AC_DEFINE_UNQUOTED( [_GIT_HEAD_COMMIT], "$head_commit", [Lastest HEAD as configure was run])
+fi
+
 # plateform relative flags
 case $build in
 	*-linux*)
