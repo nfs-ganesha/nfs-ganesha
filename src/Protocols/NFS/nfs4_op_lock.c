@@ -566,6 +566,18 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                plock_state->state_seqid,
                plock_state);
 
+  if(arg_LOCK4.locker.new_lock_owner)
+    {
+      /* Also save the response in the lock owner */
+      Copy_nfs4_state_req(plock_owner,
+                          arg_LOCK4.locker.locker4_u.open_owner.lock_seqid,
+                          op,
+                          data,
+                          resp,
+                          tag);
+      tag = "LOCK (open owner)";
+    }
+
   /* Save the response in the lock or open owner */
   Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
 
