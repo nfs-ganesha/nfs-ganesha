@@ -409,9 +409,10 @@ int nfs4_Check_Stateid(stateid4        * pstate,
       sprintf(str + OTHERSIZE * 2, ":%u", (unsigned int) pstate->seqid);
     }
 
-  if((flags & STATEID_SPECIAL_ALL_0) != 0)
+  /* Test for OTHER is all zeros */
+  if(memcmp(pstate->other, all_zero, OTHERSIZE) == 0)
     {
-      if(memcmp(pstate->other, all_zero, OTHERSIZE) == 0 && pstate->seqid == 0)
+      if(pstate->seqid == 0 && (flags & STATEID_SPECIAL_ALL_0) != 0)
         {
           /* All 0 stateid */
           LogDebug(COMPONENT_STATE,
@@ -421,12 +422,26 @@ int nfs4_Check_Stateid(stateid4        * pstate,
            */
           return NFS4_OK;
         }
+      if(pstate->seqid == 1 && (flags & STATEID_SPECIAL_CURRENT) != 0)
+        {
+          /* Special current stateid */
+          LogDebug(COMPONENT_STATE,
+                   "Check %s stateid found special 'current' stateid", tag);
+          /* Copy current stateid in and proceed to checks */
+          *pstate = data->current_stateid;
+        }
+
+      LogDebug(COMPONENT_STATE,
+               "Check %s stateid with OTHER all zeros, seqid %u unexpected",
+               tag, (unsigned int) pstate->seqid);
+      return NFS4ERR_BAD_STATEID;
     }
 
-  if((flags & STATEID_SPECIAL_ALL_1) != 0)
+  /* Test for OTHER is all ones */
+  if(memcmp(pstate->other, all_one, OTHERSIZE) == 0)
     {
-      if(memcmp(pstate->other, all_one, OTHERSIZE) == 0 &&
-         pstate->seqid == 0xFFFFFFFF)
+      /* Test for special all ones stateid */
+      if(pstate->seqid == 0xFFFFFFFF && (flags & STATEID_SPECIAL_ALL_1) != 0)
         {
           /* All 1 stateid */
           LogDebug(COMPONENT_STATE,
@@ -436,18 +451,11 @@ int nfs4_Check_Stateid(stateid4        * pstate,
            */
           return NFS4_OK;
         }
-    }
 
-  if((flags & STATEID_SPECIAL_CURRENT) != 0)
-    {
-      if(memcmp(pstate->other, all_zero, OTHERSIZE) == 0 && pstate->seqid == 1)
-        {
-          /* All 0 stateid */
-          LogDebug(COMPONENT_STATE,
-                   "Check %s stateid found special 'current' stateid", tag);
-          /* Copy current stateid in and proceed to checks */
-          *pstate = data->current_stateid;
-        }
+      LogDebug(COMPONENT_STATE,
+               "Check %s stateid with OTHER all ones, seqid %u unexpected",
+               tag, (unsigned int) pstate->seqid);
+      return NFS4ERR_BAD_STATEID;
     }
 
   /* Check if stateid was made from this server instance */
