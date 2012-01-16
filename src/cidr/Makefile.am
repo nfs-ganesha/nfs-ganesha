@@ -17,6 +17,3 @@ EXTRA_DIST = LICENSE
 
 new: clean all
 
-doc:
-	echo "No docs to be generated for libcidr"
-

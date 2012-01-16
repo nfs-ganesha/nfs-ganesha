@@ -169,6 +169,11 @@ srpm: nfs-ganesha.spec remove_hpss rpmdirs
 
 endif
 
+doc:
+	doxygen ./doxygen.conf
+### rep=`grep OUTPUT_DIRECTORY doxygen.conf | grep share  | awk -F '=' '{print $$2;}'` ; cd $$rep/latex ; make ; dvipdf refman.dvi
+
+
 EXTRA_DIST=nfs-ganesha.spec           \
            COMPILING_HOWTO.txt        \
            LICENSE.txt                \

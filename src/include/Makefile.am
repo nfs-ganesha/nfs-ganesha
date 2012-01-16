@@ -86,7 +86,4 @@ endif
 
 SUBDIRS = FSAL MFSL 
 
-doc:
-	doxygen ./doxygen.conf.stuff_alloc
-	rep=`grep OUTPUT_DIRECTORY doxygen.conf.stuff_alloc | grep share  | awk -F '=' '{print $$2;}'` ; cd $$rep/latex ; make
 
