@@ -171,7 +171,7 @@ endif
 
 doc:
 	doxygen ./doxygen.conf
-### rep=`grep OUTPUT_DIRECTORY doxygen.conf | grep share  | awk -F '=' '{print $$2;}'` ; cd $$rep/latex ; make ; dvipdf refman.dvi
+	cd ../share/doc/doxygen/nfs-ganesha/latex ; make -i pdf
 
 
 EXTRA_DIST=nfs-ganesha.spec           \
