@@ -238,7 +238,7 @@ typedef struct nfs_worker_param__
   unsigned int nb_client_id_prealloc;
   unsigned int nb_ip_stats_prealloc;
   unsigned int nb_before_gc;
-  unsigned int nb_dupreq_before_gc;
+  // unsigned int nb_dupreq_before_gc;
 } nfs_worker_parameter_t;
 
 typedef struct nfs_rpc_dupreq_param__
