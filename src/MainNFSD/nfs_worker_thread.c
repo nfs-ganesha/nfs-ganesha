@@ -775,7 +775,6 @@ static void nfs_rpc_execute(request_data_t *preq,
   exportlist_client_entry_t related_client;
   struct user_cred user_credentials;
   int   update_per_share_stats;
-  fsal_op_context_t * pfsal_op_ctx = NULL ;
 
   struct timeval *timer_start = &pworker_data->timer_start;
   struct timeval timer_end;
@@ -1322,12 +1321,8 @@ static void nfs_rpc_execute(request_data_t *preq,
       /* Do the authentication stuff, if needed */
       if(pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
         {
-          /* Swap the anonymous uid/gid if the user should be anonymous */
-          if(nfs_check_anon(&related_client, pexport, &user_credentials) == FALSE
-             || nfs_build_fsal_context(req,
-                                       pexport,
-                                       &pworker_data->thread_fsal_context,
-                                       &user_credentials) == FALSE)
+	  /* Swap the anonymous uid/gid if the user should be anonymous */
+          if(nfs_check_anon(&related_client, pexport, &user_credentials) == FALSE)
             {
               LogInfo(COMPONENT_DISPATCH,
                       "authentication failed, rejecting client");
@@ -1345,6 +1340,7 @@ static void nfs_rpc_execute(request_data_t *preq,
                 }
               return;
             }
+	  pworker_data->user_credentials = user_credentials;
         }
 
       /* processing */
@@ -1369,14 +1365,13 @@ static void nfs_rpc_execute(request_data_t *preq,
         }
 #endif
 
-      pfsal_op_ctx =  &pworker_data->thread_fsal_context ;
+      rc = pworker_data->pfuncdesc->service_function(parg_nfs, 
+						     pexport, 
+						     &pworker_data->user_credentials,
+                                                     pworker_data, 
+                                                     req, 
+                                                     &res_nfs); 
 
-      rc = pworker_data->pfuncdesc->service_function(parg_nfs,
-                                                     pexport,
-                                                     pfsal_op_ctx,
-                                                     pworker_data,
-                                                     req,
-                                                     &res_nfs);
     }
 
   /* Perform statistics here */
@@ -1973,11 +1968,6 @@ void *worker_thread(void *IndexArg)
   char thr_name[32];
   gsh_xprt_private_t *xu = NULL;
 
-#ifdef _USE_SHARED_FSAL
-  unsigned int i = 0 ;
-  unsigned int fsalid = 0 ;
-#endif
-
   snprintf(thr_name, sizeof(thr_name), "Worker Thread #%lu", worker_index);
   SetNameFunction(thr_name);
 
@@ -2008,12 +1998,21 @@ void *worker_thread(void *IndexArg)
                "NFS WORKER #%lu: Initialization of thread's credential",
                worker_index);
 
-  if(FSAL_IS_ERROR(FSAL_InitClientContext(&pmydata->thread_fsal_context)))
+/** @TODO suspicious of this
+ */
+  /* Init the Cache inode client for this worker */
+  if(cache_inode_client_init(
+         &pmydata->cache_inode_client,
+         &nfs_param.cache_layers_param.cache_inode_client_param,
+         worker_index, pmydata))
     {
       /* Failed init */
       LogFatal(COMPONENT_DISPATCH,
-               "Error initializing thread's credential");
+               "Cache Inode client could not be initialized");
     }
+  LogFullDebug(COMPONENT_DISPATCH,
+               "Cache Inode client successfully initialized");
+>>>>>>> Update the thread core(s) to the new api
 
   LogInfo(COMPONENT_DISPATCH, "Worker successfully initialized");
 
@@ -2027,7 +2026,10 @@ void *worker_thread(void *IndexArg)
          (int)nfs_param.core_param.stats_update_delay / 2)
         {
 
-          FSAL_get_stats(&pmydata->stats.fsal_stats, FALSE);
+/** @TODO disable stats for now.  with new api etc. these are different.
+ * btw, why not take this at core level and save duplication in every fsal??
+ */
+/*           FSAL_get_stats(&pmydata->stats.fsal_stats, FALSE); */
 
           /* reset last stat */
           pmydata->stats.last_stat_update = time(NULL);
