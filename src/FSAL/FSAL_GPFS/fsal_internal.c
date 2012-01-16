@@ -92,7 +92,8 @@ static fsal_staticfsinfo_t default_gpfs_info = {
   0,                            /* maxwrite size */
   0,                            /* default umask */
   0,                            /* cross junctions */
-  0400                          /* default access rights for xattrs: root=RW, owner=R */
+  0400,                         /* default access rights for xattrs: root=RW, owner=R */
+  0                             /* default access check support in FSAL */
 };
 
 /* variables for limiting the calls to the filesystem */
@@ -107,6 +108,20 @@ static pthread_once_t once_key = PTHREAD_ONCE_INIT;
 static fsal_status_t fsal_internal_testAccess_acl(fsal_op_context_t * p_context,   /* IN */
                                                   fsal_aceperm_t v4mask,  /* IN */
                                                   fsal_attrib_list_t * p_object_attributes   /* IN */ );
+
+static fsal_status_t fsal_check_access_by_handle(fsal_op_context_t * p_context,   /* IN */
+                                                 fsal_handle_t * p_handle   /* IN */,
+                                                 fsal_accessmode_t mode,   /* IN */
+                                                 fsal_accessflags_t v4mask,   /* IN */
+                                                 fsal_attrib_list_t * p_object_attributes   /* IN */ );
+
+extern fsal_status_t fsal_cred_2_gpfs_cred(struct user_credentials *p_fsalcred,
+                                           struct xstat_cred_t *p_gpfscred);
+
+extern fsal_status_t fsal_mode_2_gpfs_mode(fsal_accessmode_t fsal_mode,
+                                           fsal_accessflags_t v4mask,
+                                           unsigned int *p_gpfsmode,
+                                           fsal_boolean_t is_dir);
 #endif                          /* _USE_NFS4_ACL */
 
 static fsal_status_t fsal_internal_testAccess_no_acl(fsal_op_context_t * p_context,   /* IN */
@@ -793,6 +808,55 @@ fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,   /* IN */
   ReturnCode(ERR_FSAL_ACCESS, 0);
 }
 
+/* Check the access at the file system. It is called when Use_Test_Access = 0. */
+fsal_status_t fsal_internal_access(fsal_op_context_t * p_context,   /* IN */
+                                   fsal_handle_t * p_handle,   /* IN */
+                                   fsal_accessflags_t access_type,  /* IN */
+                                   fsal_attrib_list_t * p_object_attributes /* IN */ )
+{
+  fsal_status_t status;
+  fsal_accessflags_t v4mask = 0;
+  fsal_accessmode_t mode = 0;
+
+  /* sanity checks. */
+  if(!p_context || !p_handle)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  if(IS_FSAL_ACE4_MASK_VALID(access_type))
+    v4mask = FSAL_ACE4_MASK(access_type);
+
+  if(IS_FSAL_MODE_MASK_VALID(access_type))
+    mode = FSAL_MODE_MASK(access_type);
+
+  LogDebug(COMPONENT_FSAL, "requested v4mask=0x%x, mode=0x%x", v4mask, mode);
+
+#ifdef _USE_NFS4_ACL
+  status = fsal_check_access_by_handle(p_context, p_handle, mode, v4mask,
+                                       p_object_attributes);
+
+  if(isFullDebug(COMPONENT_FSAL))
+  {
+    fsal_status_t status2;
+	status2 = fsal_internal_testAccess(p_context, access_type, NULL,
+	                                   p_object_attributes);
+	if(status2.major != status.major)
+	{
+	  LogFullDebug(COMPONENT_FSAL,
+	               "access error: access result major %d, test_access result major %d",
+                   status.major, status2.major);
+	}
+	else
+	  LogFullDebug(COMPONENT_FSAL,
+	               "access ok: access and test_access produced the same result");
+  }
+#else
+  status = fsal_internal_testAccess(p_context, access_type, NULL,
+                                    p_object_attributes);
+#endif
+
+  return status;
+}
+
 /**
  * fsal_stat_by_handle:
  * get the stat value
@@ -1142,6 +1206,33 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
   LogDebug(COMPONENT_FSAL, "fsal_check_access_by_acl_debug: %s", access_data);
 }
 
+static void fsal_print_v4mask(fsal_aceperm_t v4mask)
+{
+  fsal_ace_t ace;
+  fsal_ace_t *pace = &ace;
+  char v4mask_buf[ACL_DEBUG_BUF_SIZE];
+
+  pace->perm = v4mask;
+  memset(v4mask_buf, 0, ACL_DEBUG_BUF_SIZE);
+
+  sprintf(v4mask_buf, "v4mask %c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+          IS_FSAL_ACE_READ_DATA(*pace)		 ? 'r':'-',
+          IS_FSAL_ACE_WRITE_DATA(*pace)		 ? 'w':'-',
+          IS_FSAL_ACE_EXECUTE(*pace)		 ? 'x':'-',
+          IS_FSAL_ACE_ADD_SUBDIRECTORY(*pace)    ? 'm':'-',
+          IS_FSAL_ACE_READ_NAMED_ATTR(*pace)	 ? 'n':'-',
+          IS_FSAL_ACE_WRITE_NAMED_ATTR(*pace) 	 ? 'N':'-',
+          IS_FSAL_ACE_DELETE_CHILD(*pace) 	 ? 'p':'-',
+          IS_FSAL_ACE_READ_ATTR(*pace)		 ? 't':'-',
+          IS_FSAL_ACE_WRITE_ATTR(*pace)		 ? 'T':'-',
+          IS_FSAL_ACE_DELETE(*pace)		 ? 'd':'-',
+          IS_FSAL_ACE_READ_ACL(*pace) 		 ? 'c':'-',
+          IS_FSAL_ACE_WRITE_ACL(*pace)		 ? 'C':'-',
+          IS_FSAL_ACE_WRITE_OWNER(*pace)	 ? 'o':'-',
+          IS_FSAL_ACE_SYNCHRONIZE(*pace)	 ? 'z':'-');
+  LogDebug(COMPONENT_FSAL, "fsal_print_v4mask: %s", v4mask_buf);
+}
+
 static fsal_status_t fsal_internal_testAccess_acl(fsal_op_context_t * p_context,   /* IN */
                                                   fsal_aceperm_t v4mask,  /* IN */
                                                   fsal_attrib_list_t * p_object_attributes   /* IN */ )
@@ -1178,6 +1269,9 @@ static fsal_status_t fsal_internal_testAccess_acl(fsal_op_context_t * p_context,
            p_context->credential.user,
            p_context->credential.group,
            v4mask);
+
+  if(isFullDebug(COMPONENT_FSAL))
+    fsal_print_v4mask(v4mask);
 
   is_owner = fsal_check_ace_owner(uid, p_context);
   is_group = fsal_check_ace_group(gid, p_context);
@@ -1250,6 +1344,67 @@ static fsal_status_t fsal_internal_testAccess_acl(fsal_op_context_t * p_context,
       LogDebug(COMPONENT_FSAL, "fsal_internal_testAccess_acl: access granted");
       ReturnCode(ERR_FSAL_NO_ERROR, 0);
     }
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
+static fsal_status_t fsal_check_access_by_handle(fsal_op_context_t * p_context,   /* IN */
+                                                 fsal_handle_t * p_handle   /* IN */,
+                                                 fsal_accessmode_t mode,   /* IN */
+                                                 fsal_accessflags_t v4mask,   /* IN */
+                                                 fsal_attrib_list_t * p_object_attributes  /* IN */)
+
+{
+  int rc;
+  int dirfd = 0;
+  struct xstat_cred_t gpfscred;
+  fsal_status_t status;
+  struct xstat_access_arg accessarg;
+  unsigned int supported;
+  unsigned int gpfs_mode = 0;
+  fsal_boolean_t is_dir = FALSE;
+
+  if(!p_handle || !p_context || !p_context->export_context)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  dirfd = ((gpfsfsal_op_context_t *)p_context)->export_context->mount_root_fd;
+  is_dir = (p_object_attributes->type == FSAL_TYPE_DIR);
+
+  /* Convert fsal credential to gpfs credential. */
+  status = fsal_cred_2_gpfs_cred(&p_context->credential, &gpfscred);
+  if(FSAL_IS_ERROR(status))
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  /* Convert fsal mode to gpfs mode. */
+  status = fsal_mode_2_gpfs_mode(mode, v4mask, &gpfs_mode, is_dir);
+  if(FSAL_IS_ERROR(status))
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  accessarg.mountdirfd = dirfd;
+  accessarg.handle = (struct gpfs_file_handle *) &((gpfsfsal_handle_t *)p_handle)->data.handle;
+  accessarg.acl = NULL;  /* Not used. */
+  accessarg.cred = (struct xstat_cred_t *) &gpfscred;
+  accessarg.posix_mode = gpfs_mode;
+  accessarg.access = v4mask;
+  accessarg.supported = &supported;
+
+  LogDebug(COMPONENT_FSAL,
+           "fsal_check_access_by_handle: v4mask=0x%X, mode=0x%X, uid=%d, gid=%d",
+           v4mask, gpfs_mode, gpfscred.principal, gpfscred.group);
+
+  if(isFullDebug(COMPONENT_FSAL))
+    fsal_print_v4mask(v4mask);
+
+  rc = gpfs_ganesha(OPENHANDLE_CHECK_ACCESS, &accessarg);
+  LogDebug(COMPONENT_FSAL, "gpfs_ganesha: CHECK_ACCESS returned, rc = %d", rc);
+
+  if(rc < 0)
+  {
+    LogDebug(COMPONENT_FSAL, "access denied");
+    ReturnCode(posix2fsal_error(errno), errno);
+  }
+
+  LogDebug(COMPONENT_FSAL, "access granted");
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }

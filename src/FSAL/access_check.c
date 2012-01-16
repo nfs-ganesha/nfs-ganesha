@@ -12,6 +12,7 @@
 
 
 #ifdef _USE_NFS4_ACL
+#define ACL_DEBUG_BUF_SIZE 256
 static fsal_status_t fsal_check_access_acl(fsal_op_context_t * p_context,   /* IN */
                                                   fsal_aceperm_t v4mask,  /* IN */
                                                   fsal_attrib_list_t * p_object_attributes   /* IN */ );

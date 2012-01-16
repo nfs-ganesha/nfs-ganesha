@@ -88,7 +88,8 @@ static fsal_staticfsinfo_t default_posix_info = {
   0,                            /* maxwrite size */
   0,                            /* default umask */
   0,                            /* cross junctions */
-  0400                          /* default access rights for xattrs: root=RW, owner=R */
+  0400,                         /* default access rights for xattrs: root=RW, owner=R */
+  0                             /* default access check support in FSAL */
 };
 
 /* variables for limiting the calls to the filesystem */
