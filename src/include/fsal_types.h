@@ -836,6 +836,9 @@ struct fsal_staticfsinfo_t
   fsal_accessmode_t xattr_access_rights;  /**< This indicates who is allowed
                                            *   to read/modify xattrs value.
                                            */
+  fsal_boolean_t accesscheck_support;  /**< This indicates whether access check
+                                       *  will be done in FSAL.
+                                       */
 #ifdef _USE_FSALMDS
   fsal_boolean_t pnfs_supported; /**< Whether to support pNFS */
   fattr4_fs_layout_types fs_layout_types;/**< The supported layout
@@ -855,6 +858,7 @@ struct fsal_staticfsinfo_t
                                                ds_addr_body XDR
                                                stream */
 #endif                                     /* _USE_FSALMDS */
+
 };
 
 
