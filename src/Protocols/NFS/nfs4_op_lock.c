@@ -406,14 +406,22 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
       if(nfs4_owner_Get_Pointer(&owner_name, &plock_owner))
         {
-          /* Lock owner already existsc, check lock_seqid if it's not 0 */
-          if(!Check_nfs4_seqid(plock_owner,
+          /* Lock owner already exists, check lock_seqid if it has attached locks */
+          if(!glist_empty(&plock_owner->so_lock_list) &&
+             !Check_nfs4_seqid(plock_owner,
                                arg_LOCK4.locker.locker4_u.open_owner.lock_seqid,
                                op,
                                data,
                                resp,
                                "LOCK (new owner but owner exists)"))
             {
+              LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+                      "LOCK failed to create new lock owner, re-use",
+                      data->current_entry,
+                      data->pcontext,
+                      popen_owner,
+                      &lock_desc);
+              dump_all_locks("All locks (re-use of lock owner)");
               /* Response is all setup for us and LogDebug told what was wrong */
               return res_LOCK4.status;
             }

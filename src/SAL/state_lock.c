@@ -394,7 +394,7 @@ void LogLockDesc(log_components_t     component,
              (unsigned long long) lock_end(plock));
 }
 
-void dump_all_locks(void)
+void dump_all_locks(const char * label)
 {
 #ifdef _DEBUG_MEMLEAKS
   struct glist_head *glist;
@@ -409,7 +409,7 @@ void dump_all_locks(void)
     }
 
   glist_for_each(glist, &state_all_locks)
-    LogEntry("All Locks", glist_entry(glist, state_lock_entry_t, sle_all_locks));
+    LogEntry(label, glist_entry(glist, state_lock_entry_t, sle_all_locks));
 
   V(all_locks_mutex);
 #else
@@ -2365,7 +2365,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
      isFullDebug(COMPONENT_MEMLEAKS) &&
      plock->lock_start == 0 && plock->lock_length == 0 &&
     empty)
-    dump_all_locks();
+    dump_all_locks("All locks (after unlock)");
 
   return *pstatus;
 }

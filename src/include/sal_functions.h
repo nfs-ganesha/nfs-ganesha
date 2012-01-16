@@ -308,6 +308,8 @@ void LogLock(log_components_t     component,
              state_owner_t      * powner,
              fsal_lock_param_t  * plock);
 
+void dump_all_locks(const char * label);
+
 #ifdef _USE_BLOCKING_LOCKS
 /**
  *
