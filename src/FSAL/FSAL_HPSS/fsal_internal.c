@@ -63,7 +63,8 @@ static fsal_staticfsinfo_t default_hpss_info = {
   (1024 * 1024),                /* maxwrite size */
   0,                            /* default umask */
   0,                            /* don't allow cross fileset export path */
-  0400                          /* default access rights for xattrs: root=RW, owner=R */
+  0400,                         /* default access rights for xattrs: root=RW, owner=R */
+  0                             /* default access check support in FSAL */
 };
 
 /*
