@@ -220,9 +220,25 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
   if((pexport = nfs_Get_export_by_id(nfs_param.pexportlist, exportid)) == NULL)
     {
       /* invalid handle */
-       LogCrit(COMPONENT_NFSPROTO,
-              "Invalid file handle passed to nfsFhandleToCache ");
-      return FALSE;
+      switch (rq_vers)
+        {
+        case NFS_V4:
+          *pstatus4 = NFS4ERR_STALE;
+          break;
+
+        case NFS_V3:
+          *pstatus3 = NFS3ERR_STALE;
+          break;
+
+        case NFS_V2:
+          *pstatus2 = NFSERR_STALE;
+          break;
+        }
+      *prc = NFS_REQ_DROP;
+
+      LogFullDebug(COMPONENT_NFSPROTO,
+                   "Invalid file handle passed to nfsFhandleToCache ");
+      return NULL;
     }
 
   if((pentry = cache_inode_get(&fsal_data,
