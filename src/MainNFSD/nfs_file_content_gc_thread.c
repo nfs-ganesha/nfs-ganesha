@@ -115,7 +115,6 @@ int file_content_gc_manage_entry(LRU_entry_t * plru_entry, void *addparam)
   if((cache_content_status = cache_content_flush(pentry,
                                                  CACHE_CONTENT_FLUSH_AND_DELETE,
                                                  &fcc_gc_data.cache_content_client,
-                                                 &fsal_context,
                                                  &cache_content_status)) !=
      CACHE_CONTENT_SUCCESS)
     {
