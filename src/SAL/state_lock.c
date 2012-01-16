@@ -702,13 +702,14 @@ static void merge_lock_entry(cache_entry_t        * pentry,
 
       if(check_entry->sle_lock.lock_start < lock_entry->sle_lock.lock_start)
         /* Expand start of lock_entry */
-        check_entry->sle_lock.lock_start = lock_entry->sle_lock.lock_start;
+        lock_entry->sle_lock.lock_start = check_entry->sle_lock.lock_start;
 
       /* Compute new lock length */
-      lock_entry->sle_lock.lock_length = lock_entry_end - check_entry->sle_lock.lock_start + 1;
+      lock_entry->sle_lock.lock_length = lock_entry_end - lock_entry->sle_lock.lock_start + 1;
 
       /* Remove merged entry */
-      LogEntry("Merging", check_entry);
+      LogEntry("Merged", lock_entry);
+      LogEntry("Merging removing", check_entry);
       remove_from_locklist(check_entry, pclient);
     }
 }
@@ -1339,6 +1340,8 @@ void grant_blocked_lock_immediate(cache_entry_t         * pentry,
   lock_entry->sle_blocked = STATE_NON_BLOCKING;
 
   /* Merge any touching or overlapping locks into this one. */
+  LogEntry("Granted immediate, merging locks for", lock_entry);
+
   merge_lock_entry(pentry, pcontext, lock_entry, pclient);
   LogEntry("Immediate Granted entry", lock_entry);
 }
@@ -1362,6 +1365,7 @@ void state_complete_grant(fsal_op_context_t     * pcontext,
       lock_entry->sle_blocked = STATE_NON_BLOCKING;
 
       /* Merge any touching or overlapping locks into this one. */
+      LogEntry("Granted, merging locks for", lock_entry);
       merge_lock_entry(pentry, pcontext, lock_entry, pclient);
 
       LogEntry("Granted entry", lock_entry);
@@ -2217,7 +2221,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
       merge_lock_entry(pentry, pcontext, found_entry, pclient);
 
       /* Insert entry into lock list */
-      LogEntry("New entry", found_entry);
+      LogEntry("New", found_entry);
 
       glist_add_tail(&pentry->object.file.lock_list, &found_entry->sle_list);
     }
