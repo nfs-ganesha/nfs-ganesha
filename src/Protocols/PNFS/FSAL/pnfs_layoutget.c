@@ -116,9 +116,9 @@ static nfsstat4 one_segment(fsal_handle_t *handle,
 
 #define LOC_BODY_SIZE 256
 
-nfsstat4 CEPH_pnfs_layoutget( LAYOUTGET4args   * pargs, 
-			 compound_data_t  * data,
-			 LAYOUTGET4res    * pres ) 
+nfsstat4 FSAL_pnfs_layoutget( LAYOUTGET4args   * pargs,
+                              compound_data_t  * data,
+                              LAYOUTGET4res    * pres )
 {
      char __attribute__ ((__unused__)) funcname[] = "pnfs_layoutget";
 #ifdef _USE_FSALMDS

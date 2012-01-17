@@ -93,9 +93,9 @@
  */
 
 
-nfsstat4 CEPH_pnfs_layoutreturn( LAYOUTRETURN4args * pargs, 
-			    compound_data_t   * data,
-			    LAYOUTRETURN4res  * pres ) 
+nfsstat4 FSAL_pnfs_layoutreturn( LAYOUTRETURN4args * pargs,
+                                 compound_data_t   * data,
+                                 LAYOUTRETURN4res  * pres )
 {
      char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutreturn";
 #ifdef _USE_FSALMDS

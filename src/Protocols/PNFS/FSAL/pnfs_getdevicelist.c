@@ -85,9 +85,9 @@
  *
  */
 
-nfsstat4 CEPH_pnfs_getdevicelist( GETDEVICELIST4args * pargs,
-                             compound_data_t * data,
-                             GETDEVICELIST4res  * pres ) 
+nfsstat4 FSAL_pnfs_getdevicelist( GETDEVICELIST4args * pargs,
+                                  compound_data_t * data,
+                                  GETDEVICELIST4res  * pres )
 {
      char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdevicelist";
 #ifdef _USE_FSALMDS

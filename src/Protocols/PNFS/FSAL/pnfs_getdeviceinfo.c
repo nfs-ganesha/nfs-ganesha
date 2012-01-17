@@ -91,9 +91,9 @@
 
 #define DA_ADDR_SIZE 5120
 
-nfsstat4 CEPH_pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs,
+nfsstat4 FSAL_pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs,
                              compound_data_t    * data,
-                             GETDEVICEINFO4res  * pres ) 
+                             GETDEVICEINFO4res  * pres )
 {
      char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdeviceinfo";
 #ifdef _USE_FSALMDS
@@ -202,5 +202,3 @@ out:
 
      return pres->gdir_status;
 }
-
-

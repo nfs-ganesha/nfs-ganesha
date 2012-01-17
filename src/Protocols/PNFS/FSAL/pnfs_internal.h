@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 #ifdef HAVE_CONFIG_H
@@ -57,27 +57,27 @@
 #include "fsal_pnfs.h"
 #endif /* _USE_FSALMDS */
 
-#ifndef _PNFS_CEPH_INTERNAL_H
-#define _PNFS_CEPH_INTERNAL_H
+#ifndef _PNFS_FSAL_INTERNAL_H
+#define _PNFS_FSAL_INTERNAL_H
 
-nfsstat4 CEPH_pnfs_getdevicelist( GETDEVICELIST4args * pargs, 
-			          compound_data_t * data,
-			          GETDEVICELIST4res  * pres ) ;
+nfsstat4 FSAL_pnfs_getdevicelist( GETDEVICELIST4args * pargs,
+                                  compound_data_t * data,
+                                  GETDEVICELIST4res  * pres ) ;
 
-nfsstat4 CEPH_pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs, 
-			          compound_data_t * data,
-			          GETDEVICEINFO4res  * pres ) ;
+nfsstat4 FSAL_pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs,
+                                  compound_data_t * data,
+                                  GETDEVICEINFO4res  * pres ) ;
 
-nfsstat4 CEPH_pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs, 
-			         compound_data_t * data,
-			         LAYOUTCOMMIT4res  * pres ) ;
+nfsstat4 FSAL_pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs,
+                                 compound_data_t * data,
+                                 LAYOUTCOMMIT4res  * pres ) ;
 
-nfsstat4 CEPH_pnfs_layoutget( LAYOUTGET4args   * pargs, 
-			      compound_data_t  * data,
-			      LAYOUTGET4res    * pres ) ;
+nfsstat4 FSAL_pnfs_layoutget( LAYOUTGET4args   * pargs,
+                              compound_data_t  * data,
+                              LAYOUTGET4res    * pres ) ;
 
-nfsstat4 CEPH_pnfs_layoutreturn( LAYOUTRETURN4args * pargs, 
-			         compound_data_t   * data,
-			         LAYOUTRETURN4res  * pres ) ; 
+nfsstat4 FSAL_pnfs_layoutreturn( LAYOUTRETURN4args * pargs,
+                                 compound_data_t   * data,
+                                 LAYOUTRETURN4res  * pres ) ;
 
 #endif /*  _PNFS_CEPH_INTERNAL_H */

@@ -443,16 +443,16 @@ AC_ARG_WITH([ceph-prefix], AS_HELP_STRING([--with-ceph-prefix=<path>], [Path to 
 		CEPH_PREFIX="$withval", CEPH_PREFIX="/usr" )
 
 # PNFS switch argument (default is nothing)
-AC_ARG_WITH( [pnfs-mds], AS_HELP_STRING([--with-pnfs-mds=PARALLEL_FS|CEPH|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
+AC_ARG_WITH( [pnfs-mds], AS_HELP_STRING([--with-pnfs-mds=PARALLEL_FS|FSAL|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
 	PNFS="$withval", PNFS="NONE" )
 
 AM_CONDITIONAL(USE_PNFS_NONE, 		test "$PNFS" = "NONE" )
 AM_CONDITIONAL(USE_PNFS_PARALLEL_FS,	test "$PNFS" = "PARALLEL_FS" )
-AM_CONDITIONAL(USE_PNFS_CEPH,	        test "$PNFS" = "CEPH" )
+AM_CONDITIONAL(USE_PNFS_FSAL,	        test "$PNFS" = "FSAL" )
 
 AM_CONDITIONAL(USE_PNFS,                test "$PNFS" != "NONE" )
 
-AM_CONDITIONAL(USE_FSALMDS, test "$PNFS" = "CEPH") 
+AM_CONDITIONAL(USE_FSALMDS, test "$PNFS" = "FSAL") 
 
 # FSAL based pNFS DS support (requires NFSv4.1, conflicts with DS)
 GA_ENABLE_AM_CONDITION([fsal-ds],[enable FSAL-based pNFS DS support (NFSv4.1 support is mandatory)],[USE_FSALDS])
@@ -809,9 +809,9 @@ case $PNFS in
                 AC_DEFINE(_USE_PNFS_PARALLEL_FS,1,[enable NFSv4.1/pNFS support for parallel file system ])
                 PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
                 ;;
-        "CEPH")
+        "FSAL")
                 AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-                AC_DEFINE(_USE_PNFS_CEPH,1,[enable NFSv4.1/pNFS support for CEPH])
+                AC_DEFINE(_USE_PNFS_FSAL,1,[enable FSAL based NFSv4.1/pNFS support ])
                 AC_DEFINE(_USE_FSALMDS,1,[enable FSAL based pNFS MDS support])
                 PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
                 ;;
@@ -918,7 +918,7 @@ AC_CONFIG_FILES([include/Makefile
                  Protocols/XDR/Makefile
 		 Protocols/PNFS/Makefile
 		 Protocols/PNFS/PARALLEL_FS/Makefile
-		 Protocols/PNFS/CEPH/Makefile
+		 Protocols/PNFS/FSAL/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile
 		 FSAL/FSAL_HPSS/HPSSclapiExt/Makefile

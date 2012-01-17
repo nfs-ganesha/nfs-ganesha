@@ -76,12 +76,12 @@
 
 #include "pnfs_internal.h"
 
-pnfs_functions_t pnfs_ceph_functions = {
-  .getdevicelist  = CEPH_pnfs_getdevicelist,
-  .getdeviceinfo  = CEPH_pnfs_getdeviceinfo,
-  .layoutget      = CEPH_pnfs_layoutget,
-  .layoutcommit   = CEPH_pnfs_layoutcommit,
-  .layoutreturn   = CEPH_pnfs_layoutreturn,
+pnfs_functions_t pnfs_fsal_functions = {
+  .getdevicelist  = FSAL_pnfs_getdevicelist,
+  .getdeviceinfo  = FSAL_pnfs_getdeviceinfo,
+  .layoutget      = FSAL_pnfs_layoutget,
+  .layoutcommit   = FSAL_pnfs_layoutcommit,
+  .layoutreturn   = FSAL_pnfs_layoutreturn,
   .layoutget_Free = COMMON_pnfs_layoutget_Free,
   .layoutcommit_Free = COMMON_pnfs_layoutcommit_Free,
   .layoutreturn_Free = COMMON_pnfs_layoutreturn_Free,
@@ -89,7 +89,7 @@ pnfs_functions_t pnfs_ceph_functions = {
   .getdeviceinfo_Free  = COMMON_pnfs_getdeviceinfo_Free
 } ;
 
-pnfs_functions_t pNFS_GetFunctions( void ) 
+pnfs_functions_t pNFS_GetFunctions( void )
 {
-  return pnfs_ceph_functions ;
+  return pnfs_fsal_functions ;
 }
