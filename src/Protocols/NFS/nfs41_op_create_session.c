@@ -93,15 +93,6 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   res_CREATE_SESSION4.csr_status = NFS4_OK;
   clientid = arg_CREATE_SESSION4.csa_clientid;
 
-  LogDebug(COMPONENT_NFS_V4,
-           "CREATE_SESSION clientid=%lld csa_sequence=%"PRIu32
-           " clientid_cs_seq=%" PRIu32" data_oppos=%d data_use_drc=%d\n",
-	   (long long unsigned int) clientid,
-	   arg_CREATE_SESSION4.csa_sequence,
-	   pnfs_clientid->create_session_sequence,
-	   data->oppos,
-	   data->use_drc);
-
   /* Does this id already exists ? */
   if(nfs_client_id_Get_Pointer(clientid, &pnfs_clientid) != CLIENT_ID_SUCCESS)
     {
@@ -109,6 +100,15 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
       res_CREATE_SESSION4.csr_status = NFS4ERR_STALE_CLIENTID;
       return res_CREATE_SESSION4.csr_status;
     }
+
+  LogDebug(COMPONENT_NFS_V4,
+           "CREATE_SESSION clientid=%lld csa_sequence=%"PRIu32
+           " clientid_cs_seq=%" PRIu32" data_oppos=%d data_use_drc=%d\n",
+           (long long unsigned int) clientid,
+           arg_CREATE_SESSION4.csa_sequence,
+           pnfs_clientid->create_session_sequence,
+           data->oppos,
+           data->use_drc);
 
   data->use_drc = FALSE;
 
