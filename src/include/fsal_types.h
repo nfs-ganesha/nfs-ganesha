@@ -843,6 +843,17 @@ struct fsal_staticfsinfo_t
 
   fsal_size_t layout_blksize;             /**< Preferred blocksize for
 					       I/O on layouts*/
+  int max_segment_count; /**< The maximum number of segments this FSAL
+                              will ever return from a single LAYOUTGET
+                              call. */
+  fsal_size_t loc_buffer_size; /**< Size of the buffer that should be
+                                    allocated for a loc_body XDR
+                                    stream. */
+  fsal_size_t dsaddr_buffer_size;         /**< Size of the buffer
+                                               that should be
+                                               allocated for a
+                                               ds_addr_body XDR
+                                               stream */
 #endif                                     /* _USE_FSALMDS */
 };
 

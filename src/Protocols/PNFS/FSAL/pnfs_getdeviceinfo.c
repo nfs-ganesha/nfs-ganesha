@@ -89,8 +89,6 @@
 /* This should be disposed of, and let the FSAL put the size it would
    like in its static info. */
 
-#define DA_ADDR_SIZE 5120
-
 nfsstat4 FSAL_pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs,
                              compound_data_t    * data,
                              GETDEVICEINFO4res  * pres )
@@ -110,23 +108,14 @@ nfsstat4 FSAL_pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs,
      /* Address of the buffer that backs the stream */
      char* da_buffer = NULL;
      /* The space necessary to hold one response */
-     const count4 mincount =
-          sizeof(uint32_t) /* Count for the empty bitmap */ +
-          sizeof(layouttype4) /* Type in the device_addr4 */ +
-          sizeof(uint32_t) /* Number of bytes in da_addr_body */ +
-          DA_ADDR_SIZE; /* The maximum size of the opaque in da_addr_body */
+     count4 mincount = 0;
+     /* The FSAL's requested size for the da_addr_body opaque */
+     size_t da_addr_size = 0;
+     /* Pointer to the export appropriate to this deviceid */
+     exportlist_t *export = NULL;
 #endif /* _USE_FSALMDS */
 
 #ifdef _USE_FSALMDS
-     /* Check that we have space */
-
-     if (pargs->gdia_maxcount < mincount) {
-          nfs_status = NFS4ERR_TOOSMALL;
-          pres->GETDEVICEINFO4res_u.gdir_mincount
-               = mincount;
-          goto out;
-     }
-
      /* Disassemble and fix byte order of the deviceid halves */
 
      deviceid.export_id =
@@ -136,20 +125,59 @@ nfsstat4 FSAL_pnfs_getdeviceinfo( GETDEVICEINFO4args * pargs,
           nfs_ntohl64(*(uint64_t*)(pargs->gdia_device_id
                                    + sizeof(uint64_t)));
 
+     /* Check that we have space */
+
+     export = nfs_Get_export_by_id(data->pfullexportlist,
+                                   deviceid.export_id);
+
+     if (export == NULL) {
+          nfs_status = NFS4ERR_NOENT;
+          goto out;
+     }
+
+     if (!nfs4_pnfs_supported(export)) {
+          nfs_status = NFS4ERR_NOENT;
+          goto out;
+     }
+
+     da_addr_size = (export->FS_export_context.fe_static_fs_info
+                     ->dsaddr_buffer_size);
+
+     if (da_addr_size == 0) {
+          LogCrit(COMPONENT_PNFS,
+                  "The FSAL must specify a non-zero dsaddr_buffer_size "
+                  "in its fsal_staticfsinfo_t");
+          nfs_status = NFS4ERR_SERVERFAULT;
+          goto out;
+     }
+
+     mincount = sizeof(uint32_t) /* Count for the empty bitmap */ +
+          sizeof(layouttype4) /* Type in the device_addr4 */ +
+          sizeof(uint32_t) /* Number of bytes in da_addr_body */ +
+          da_addr_size; /* The FSAL's requested size of the
+                           da_addr_body opaque */
+
+     if (pargs->gdia_maxcount < mincount) {
+          nfs_status = NFS4ERR_TOOSMALL;
+          pres->GETDEVICEINFO4res_u.gdir_mincount
+               = mincount;
+          goto out;
+     }
+
      /* Set up the device_addr4 and get stream for FSAL to write into */
 
      pres->GETDEVICEINFO4res_u.gdir_resok4
           .gdir_device_addr.da_layout_type
           = pargs->gdia_layout_type;
 
-     if ((da_buffer = Mem_Alloc(DA_ADDR_SIZE)) == NULL) {
+     if ((da_buffer = Mem_Alloc(da_addr_size)) == NULL) {
           nfs_status = NFS4ERR_SERVERFAULT;
           goto out;
      }
 
      xdrmem_create(&da_addr_body,
                    da_buffer,
-                   DA_ADDR_SIZE,
+                   da_addr_size,
                    XDR_ENCODE);
      da_beginning = xdr_getpos(&da_addr_body);
 
