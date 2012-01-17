@@ -658,10 +658,12 @@ static void merge_lock_entry(cache_entry_t        * pentry,
                              state_lock_entry_t   * lock_entry,
                              cache_inode_client_t * pclient)
 {
-  state_lock_entry_t *check_entry;
-  uint64_t check_entry_end;
-  uint64_t lock_entry_end;
-  struct glist_head *glist, *glistn;
+  state_lock_entry_t * check_entry;
+  state_lock_entry_t * check_entry_right;
+  uint64_t             check_entry_end;
+  uint64_t             lock_entry_end;
+  struct glist_head  * glist;
+  struct glist_head  * glistn;
 
   /* lock_entry might be STATE_NON_BLOCKING or STATE_GRANTING */
 
@@ -680,10 +682,6 @@ static void merge_lock_entry(cache_entry_t        * pentry,
       if(check_entry->sle_blocked != STATE_NON_BLOCKING)
         continue;
 
-      /* Don't merge locks of different types */
-      if(check_entry->sle_lock.lock_type != lock_entry->sle_lock.lock_type)
-        continue;
-
       check_entry_end = lock_end(&check_entry->sle_lock);
       lock_entry_end  = lock_end(&lock_entry->sle_lock);
 
@@ -694,6 +692,55 @@ static void merge_lock_entry(cache_entry_t        * pentry,
       if((lock_entry_end + 1) < check_entry->sle_lock.lock_start)
         /* nothing to merge */
         continue;
+
+      /* Need to handle locks of different types differently, may split an old lock.
+       * If new lock totally overlaps old lock, the new lock will replace the old
+       * lock so no special work to be done.
+       */
+      if((check_entry->sle_lock.lock_type != lock_entry->sle_lock.lock_type) &&
+         ((lock_entry_end < check_entry_end) ||
+          (check_entry->sle_lock.lock_start < lock_entry->sle_lock.lock_start)))
+        {
+          if(lock_entry_end < check_entry_end &&
+             check_entry->sle_lock.lock_start < lock_entry->sle_lock.lock_start)
+            {
+              /* Need to split old lock */
+              check_entry_right = state_lock_entry_t_dup(pcontext, check_entry);
+              if(check_entry_right == NULL)
+                {
+                  // TODO FSF: OOPS....
+                  // Leave old lock in place, it may cause false conflicts, but should eventually be released
+                  LogMajor(COMPONENT_STATE,
+                           "Memory allocation failure during lock upgrade/downgrade");
+                  continue;
+                }
+              glist_add_tail(&pentry->object.file.lock_list, &(check_entry_right->sle_list));
+            }
+          else
+            {
+              /* No split, just shrink, make the logic below work on original lock */
+              check_entry_right = check_entry;
+            }
+          if(lock_entry_end < check_entry_end)
+            {
+              /* Need to shrink old lock from beginning (right lock if split) */
+              LogEntry("Merge shrinking right", check_entry_right);
+              check_entry_right->sle_lock.lock_start  = lock_entry_end + 1;
+              check_entry_right->sle_lock.lock_length = check_entry_end - lock_entry_end;
+              LogEntry("Merge shrunk right", check_entry_right);
+              continue;
+            }
+          if(check_entry->sle_lock.lock_start < lock_entry->sle_lock.lock_start)
+            {
+              /* Need to shrink old lock from end (left lock if split) */
+              LogEntry("Merge shrinking left", check_entry);
+              check_entry->sle_lock.lock_length = lock_entry->sle_lock.lock_start - check_entry->sle_lock.lock_start;
+              LogEntry("Merge shrunk left", check_entry);
+              continue;
+            }
+          /* Done splitting/shrinking old lock */
+          continue;
+        }
 
       /* check_entry touches or overlaps lock_entry, expand lock_entry */
       if(lock_entry_end < check_entry_end)
@@ -934,6 +981,10 @@ static state_status_t subtract_list_from_list(cache_entry_t        * pentry,
  ******************************************************************************/
 
 #ifdef _USE_BLOCKING_LOCKS
+static void grant_blocked_locks(cache_entry_t        * pentry,
+                                fsal_op_context_t    * pcontext,
+                                cache_inode_client_t * pclient);
+
 int display_lock_cookie_key(hash_buffer_t * pbuff, char *str)
 {
   return display_lock_cookie((char *)pbuff->pdata, pbuff->len, str);
@@ -1344,6 +1395,9 @@ void grant_blocked_lock_immediate(cache_entry_t         * pentry,
 
   merge_lock_entry(pentry, pcontext, lock_entry, pclient);
   LogEntry("Immediate Granted entry", lock_entry);
+
+  /* A lock downgrade could unblock blocked locks */
+  grant_blocked_locks(pentry, pcontext, pclient);
 }
 
 void state_complete_grant(fsal_op_context_t     * pcontext,
@@ -1369,6 +1423,9 @@ void state_complete_grant(fsal_op_context_t     * pcontext,
       merge_lock_entry(pentry, pcontext, lock_entry, pclient);
 
       LogEntry("Granted entry", lock_entry);
+
+      /* A lock downgrade could unblock blocked locks */
+      grant_blocked_locks(pentry, pcontext, pclient);
     }
 
   /* Free cookie and unblock lock.
@@ -2224,6 +2281,11 @@ state_status_t state_lock(cache_entry_t         * pentry,
       LogEntry("New", found_entry);
 
       glist_add_tail(&pentry->object.file.lock_list, &found_entry->sle_list);
+
+#ifdef _USE_BLOCKING_LOCKS
+      /* A lock downgrade could unblock blocked locks */
+      grant_blocked_locks(pentry, pcontext, pclient);
+#endif
     }
   else if(*pstatus == STATE_LOCK_CONFLICT)
     {
