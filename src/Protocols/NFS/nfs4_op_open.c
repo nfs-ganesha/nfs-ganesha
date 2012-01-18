@@ -115,7 +115,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   nfsstat4                  status4;
   uint32_t                  tmp_attr[2];
   uint_t                    tmp_int = 2;
-  char                    * text;
+  char                    * text = "";
 
   LogDebug(COMPONENT_STATE,
            "Entering NFS v4 OPEN handler -----------------------------------------------------");
@@ -602,6 +602,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
                               /* regular exit */
                               V_r(&pentry_lookup->lock);
+                              ReuseState  = TRUE;
+                              pfile_state = pstate_iterate;
                               goto out_success;
                             }
                         }
