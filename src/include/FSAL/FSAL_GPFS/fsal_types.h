@@ -88,6 +88,7 @@
 
 #define OPENHANDLE_HANDLE_LEN 40
 #define OPENHANDLE_KEY_LEN 28
+#define OPENHANDLE_VERSION 1
 #define OPENHANDLE_DRIVER_MAGIC     'O'
 #define OPENHANDLE_OFFSET_OF_FILEID (2 * sizeof(int))
 
@@ -103,9 +104,10 @@
 #ifndef _GPFS_DECLARES_HANDLE
 struct file_handle
 {
-  int handle_size;
-  int handle_type;
-  int handle_key_size;
+   u_int32_t handle_size;
+   u_int32_t handle_type;
+   u_int16_t handle_version;
+   u_int16_t handle_key_size;
   /* file identifier */
   unsigned char f_handle[OPENHANDLE_HANDLE_LEN];
 };
