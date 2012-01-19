@@ -132,6 +132,7 @@ const char *cache_inode_err_str(cache_inode_status_t err)
       case CACHE_INODE_NAME_TOO_LONG:         return "CACHE_INODE_NAME_TOO_LONG";
       case CACHE_INODE_BAD_COOKIE:            return "CACHE_INODE_BAD_COOKIE";
       case CACHE_INODE_FILE_BIG:              return "CACHE_INODE_FILE_BIG";
+      case CACHE_INODE_KILLED:                return "CACHE_INODE_KILLED";
     }
   return "unknown";
 }
