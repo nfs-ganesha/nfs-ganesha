@@ -288,6 +288,8 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
   *nb_entries = current_nb_entries;
   *end_of_dir = (bool_eod_out ? TRUE : FALSE);
 
+  LogDebug(COMPONENT_FSAL, "%s() returned %u entries, end_of_dir=%d", __func__, *nb_entries, *end_of_dir);
+
   Mem_Free( outbuff ) ;
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir); /* @todo badly set fsal_log ? */
 }
