@@ -77,6 +77,8 @@ CEPHFSAL_layoutget(fsal_handle_t *exthandle,
      struct ceph_file_layout file_layout;
      /* Width of each stripe on the file */
      uint64_t stripe_width = 0;
+     /* Utility parameter */
+     nfl_util4 util = 0;
      /* The last byte that can be accessed through pNFS */
      uint64_t last_possible_byte = 0;
      /* The deviceid for this layout */
@@ -157,11 +159,19 @@ CEPHFSAL_layoutget(fsal_handle_t *exthandle,
         is always at the beginning of the layout, and there is no
         pattern offset. */
 
+     if ((stripe_width & ~NFL4_UFLG_STRIPE_UNIT_SIZE_MASK) != 0) {
+          LogCrit(COMPONENT_PNFS,
+                  "Ceph returned stripe width that is disallowed by NFS: "
+                  "%"PRIu32".", stripe_width);
+          return NFS4ERR_SERVERFAULT;
+     }
+     util = stripe_width;
+
      if ((nfs_status
           = FSAL_encode_file_layout(loc_body,
                                     extcontext,
                                     &deviceid,
-                                    stripe_width,
+                                    util,
                                     0,
                                     0,
                                     1,
