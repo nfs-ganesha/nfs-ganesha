@@ -20,6 +20,9 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
                           sec_cred_t * UserCred,
                           ns_ObjHandle_t * ObjHandlePtr,
                           unsigned32 ChaseOptions,
+#if HPSS_LEVEL >= 7322
+                          unsigned32 OptionFlags,
+#endif
                           u_signed64 OffsetIn,
                           unsigned32 BufferSize,
                           unsigned32 GetAttributes,
@@ -137,6 +140,9 @@ int HPSSFSAL_ReadRawAttrsHandle(ns_ObjHandle_t * ObjHandle,     /* IN - director
                                     ucred_ptr,
                                     ObjHandle,
                                     API_CHASE_NONE,
+#if HPSS_LEVEL >= 7322
+                                    NS_READDIR_FLAGS_NFS,
+#endif
                                     OffsetIn,
                                     BufferSize,
                                     GetAttributes,
@@ -156,6 +162,7 @@ int HPSSFSAL_ReadRawAttrsHandle(ns_ObjHandle_t * ObjHandle,     /* IN - director
  * sec_cred_t              *UserCred,      ** IN  - user credentials
  * ns_ObjHandle_t          *ObjHandlePtr,  ** IN  - ID of object
  * unsigned32              ChaseOptions,   ** IN  - chase junctions ?
+ * unsigned32              OptionFlags     ** IN - readdir option flags
  * u_signed64              OffsetIn        ** IN  - starting directory offset
  * unsigned32              BufferSize      ** IN  - size of entry buffer
  * unsigned32              GetAttributes,  ** IN  - get object attributes?
@@ -203,6 +210,9 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
                           sec_cred_t * UserCred,
                           ns_ObjHandle_t * ObjHandle,
                           unsigned32 ChaseOptions,
+#if HPSS_LEVEL >= 7322
+                          unsigned32 OptionFlags,
+#endif
                           u_signed64 OffsetIn,
                           unsigned32 BufferSize,
                           unsigned32 GetAttributes,
@@ -265,7 +275,16 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
                            rqstid,
                            UserCred,
                            ObjHandle,
-                           OffsetIn, BufferSize, select_flags, End, &direntbuf);
+#if HPSS_LEVEL >= 7322
+                           OptionFlags,
+#endif
+                           OffsetIn,
+#if HPSS_LEVEL < 732
+                           BufferSize,
+#else
+                           entry_cnt,
+#endif
+                           select_flags, End, &direntbuf);
 
   /* In case of metadata inconsistency, it may return HPSS_ENOENT 
    * when a directory entry has no associated entry in the FS...
@@ -281,6 +300,9 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
                                rqstid,
                                UserCred,
                                ObjHandle,
+#if HPSS_LEVEL >= 7322
+                               OptionFlags,
+#endif
                                OffsetIn, BufferSize, select_flags, End, &direntbuf);
     }
 
