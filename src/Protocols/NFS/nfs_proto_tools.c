@@ -432,6 +432,7 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
     case CACHE_INODE_CACHE_CONTENT_EXISTS:
     case CACHE_INODE_CACHE_CONTENT_EMPTY:
     case CACHE_INODE_READ_ONLY_FS:
+    case CACHE_INODE_KILLED:
     case CACHE_INODE_FSAL_ESTALE:
     case CACHE_INODE_FSAL_ERR_SEC:
     case CACHE_INODE_QUOTA_EXCEEDED:
@@ -3745,6 +3746,7 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       nfserror = NFS4ERR_NAMETOOLONG;
       break;
 
+    case CACHE_INODE_KILLED:
     case CACHE_INODE_DEAD_ENTRY:
     case CACHE_INODE_FSAL_ESTALE:
       nfserror = NFS4ERR_STALE;
@@ -3876,6 +3878,7 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
       nfserror = NFS3ERR_ROFS;
       break;
 
+    case CACHE_INODE_KILLED:
     case CACHE_INODE_DEAD_ENTRY:
     case CACHE_INODE_FSAL_ESTALE:
       nfserror = NFS3ERR_STALE;
@@ -4014,6 +4017,7 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
       nfserror = NFSERR_ROFS;
       break;
 
+    case CACHE_INODE_KILLED:
     case CACHE_INODE_DEAD_ENTRY:
     case CACHE_INODE_FSAL_ESTALE:
       nfserror = NFSERR_STALE;

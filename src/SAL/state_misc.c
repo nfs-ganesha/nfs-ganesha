@@ -102,6 +102,7 @@ const char *state_err_str(state_status_t err)
       case STATE_GRACE_PERIOD:          return "STATE_GRACE_PERIOD";
       case STATE_CACHE_INODE_ERR:       return "STATE_CACHE_INODE_ERR";
       case STATE_SIGNAL_ERROR:          return "STATE_SIGNAL_ERROR";
+      case STATE_KILLED:                return "STATE_KILLED";
     }
   return "unknown";
 }
@@ -149,6 +150,7 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
       case CACHE_INODE_NAME_TOO_LONG:         return STATE_NAME_TOO_LONG;
       case CACHE_INODE_BAD_COOKIE:            return STATE_BAD_COOKIE;
       case CACHE_INODE_FILE_BIG:              return STATE_FILE_BIG;
+      case CACHE_INODE_KILLED:                return STATE_KILLED;
     }
   return STATE_CACHE_INODE_ERR;
 }
@@ -361,6 +363,7 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
       nfserror = NFS4ERR_NAMETOOLONG;
       break;
 
+    case STATE_KILLED:
     case STATE_DEAD_ENTRY:
     case STATE_FSAL_ESTALE:
       nfserror = NFS4ERR_STALE;
@@ -505,6 +508,7 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
       nfserror = NFS3ERR_ROFS;
       break;
 
+    case STATE_KILLED:
     case STATE_DEAD_ENTRY:
     case STATE_FSAL_ESTALE:
       nfserror = NFS3ERR_STALE;
@@ -647,6 +651,7 @@ nfsstat2 nfs2_Errno_state(state_status_t error)
       nfserror = NFSERR_ROFS;
       break;
 
+    case STATE_KILLED:
     case STATE_DEAD_ENTRY:
     case STATE_FSAL_ESTALE:
       nfserror = NFSERR_STALE;

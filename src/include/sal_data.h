@@ -335,6 +335,7 @@ typedef enum state_status_t
   STATE_GRACE_PERIOD          = 42,
   STATE_CACHE_INODE_ERR       = 43,
   STATE_SIGNAL_ERROR          = 44,
+  STATE_KILLED                = 45,
 } state_status_t;
 
 typedef enum state_blocking_t
