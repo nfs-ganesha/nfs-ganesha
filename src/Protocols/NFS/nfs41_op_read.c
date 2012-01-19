@@ -435,6 +435,8 @@ static int op_dsread(struct nfs_argop4 *op,
   caddr_t buffer = NULL;
   /* The system's page size */
   const long page_size = sysconf(_SC_PAGESIZE);
+  /* End of file flag */
+  fsal_boolean_t eof = FALSE;
 
   /* Don't bother calling the FSAL if the read length is 0. */
 
@@ -489,12 +491,13 @@ static int op_dsread(struct nfs_argop4 *op,
                                   arg_READ4.count,
                                   res_READ4.READ4res_u.resok4.data.data_val,
                                   &res_READ4.READ4res_u.resok4.data.data_len,
-                                  &res_READ4.READ4res_u.resok4.eof))
+                                  &eof))
       != NFS4_OK)
     {
       Mem_Free(buffer);
     }
 
+  res_READ4.READ4res_u.resok4.eof = eof;
 
   res_READ4.status = nfs_status;
 
