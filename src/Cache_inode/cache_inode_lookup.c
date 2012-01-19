@@ -521,10 +521,13 @@ cache_entry_t *cache_inode_valid_lookup(cache_entry_t * pentry_parent,
    * Check if the pentry is stale or valid or what.*/
   if (*pstatus == CACHE_INODE_SUCCESS && pentry != NULL)
     {
-      //      P_w(&pentry->lock);
+      P_w(&pentry->lock);
       cache_status = cache_inode_renew_entry(pentry, pattr, ht,
                                              pclient, pcontext, pstatus);
-      //      V_w(&pentry->lock);
+
+      if (cache_status != CACHE_INODE_KILLED)
+        V_w(&pentry->lock);
+
       if(cache_status != CACHE_INODE_SUCCESS)
         {
           inc_func_err_retryable(pclient, CACHE_INODE_GETATTR);
