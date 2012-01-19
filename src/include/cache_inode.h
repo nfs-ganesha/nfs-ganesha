@@ -504,6 +504,7 @@ typedef enum cache_inode_status_t
   CACHE_INODE_NAME_TOO_LONG         = 36,
   CACHE_INODE_BAD_COOKIE            = 40,
   CACHE_INODE_FILE_BIG              = 41,
+  CACHE_INODE_KILLED                = 42,
 } cache_inode_status_t;
 
 const char *cache_inode_err_str(cache_inode_status_t err);

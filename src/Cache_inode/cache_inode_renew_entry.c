@@ -94,6 +94,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
   fsal_path_t link_content;
   time_t current_time = time(NULL);
   time_t entry_time = pentry->internal_md.refresh_time;
+  cache_inode_status_t  lstatus;
 
   /* If we do nothing (no expiration) then everything is all right */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -231,10 +232,14 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
         }
 
       /* A directory could be removed by something other than Ganesha. */
-      if (isNumlinksZero(pentry, pclient, ht, &object_attributes)
-          != CACHE_INODE_SUCCESS)
+      lstatus = isNumlinksZero(pentry, pclient, ht, &object_attributes);
+      if (lstatus != CACHE_INODE_SUCCESS)
         {
-          *pstatus = CACHE_INODE_FSAL_ESTALE;
+          if (lstatus != CACHE_INODE_KILLED)
+            *pstatus = CACHE_INODE_FSAL_ESTALE;
+          else
+            *pstatus = lstatus;
+
           return *pstatus;
         }
 
@@ -359,10 +364,14 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
         }
 
       /* A directory could be removed by something other than Ganesha. */
-      if (isNumlinksZero(pentry, pclient, ht, &object_attributes)
-          != CACHE_INODE_SUCCESS)
+      lstatus = isNumlinksZero(pentry, pclient, ht, &object_attributes);
+      if (lstatus != CACHE_INODE_SUCCESS)
         {
-          *pstatus = CACHE_INODE_FSAL_ESTALE;
+          if (lstatus != CACHE_INODE_KILLED)
+            *pstatus = CACHE_INODE_FSAL_ESTALE;
+          else
+            *pstatus = lstatus;
+
           return *pstatus;
         }
 
@@ -463,10 +472,14 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
         }
 
       /* A directory could be removed by something other than Ganesha. */
-      if (isNumlinksZero(pentry, pclient, ht, &object_attributes)
-          != CACHE_INODE_SUCCESS)
+      lstatus = isNumlinksZero(pentry, pclient, ht, &object_attributes);
+      if (lstatus != CACHE_INODE_SUCCESS)
         {
-          *pstatus = CACHE_INODE_FSAL_ESTALE;
+          if (lstatus != CACHE_INODE_KILLED)
+            *pstatus = CACHE_INODE_FSAL_ESTALE;
+          else
+            *pstatus = lstatus;
+
           return *pstatus;
         }
 
@@ -575,10 +588,15 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 
       /* Check if the file was deleted by something other than Ganesha.
        * If Ganesha has open fd, then numlinks=0 but we still see the file. */
-      if (isNumlinksZero(pentry, pclient, ht, &object_attributes)
-          != CACHE_INODE_SUCCESS)
+
+      lstatus = isNumlinksZero(pentry, pclient, ht, &object_attributes);
+      if (lstatus != CACHE_INODE_SUCCESS)
         {
-          *pstatus = CACHE_INODE_FSAL_ESTALE;
+          if (lstatus != CACHE_INODE_KILLED)
+            *pstatus = CACHE_INODE_FSAL_ESTALE;
+          else
+            *pstatus = lstatus;
+
           return *pstatus;
         }
 
@@ -699,7 +717,7 @@ static cache_inode_status_t isNumlinksZero(cache_entry_t *pentry,
 {
   int no_state_or_lock = 1;
 
-  LogDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry: numlinks=%lu",
+  LogDebug(COMPONENT_CACHE_INODE, "isNumlinksZero: numlinks=%lu",
            object_attributes->numlinks);
 
   if (pentry->internal_md.type == REGULAR_FILE
@@ -711,7 +729,7 @@ static cache_inode_status_t isNumlinksZero(cache_entry_t *pentry,
     {
       cache_inode_status_t kill_status;
       
-      LogDebug(COMPONENT_CACHE_INODE, "cache_inode_renew_entry: numlinks=0,"
+      LogDebug(COMPONENT_CACHE_INODE, "isNumlinksZero: numlinks=0,"
                "deleting inode entry and returning STALE.");
       /* Now check if we have any locks on the file. If so, then perhaps
        * a process that doesn't respect locks deleted the file. We should
@@ -720,15 +738,22 @@ static cache_inode_status_t isNumlinksZero(cache_entry_t *pentry,
         if(cache_inode_close(pentry, pclient, &kill_status) !=
            CACHE_INODE_SUCCESS)
           LogCrit(COMPONENT_CACHE_INODE,
-                  "cache_inode_renew_entry: Could not close open fd for"
+                  "isNumlinksZero: Could not close open fd for"
                   " entry %p, status = %u",
                   pentry, kill_status);
 
       pentry->internal_md.valid_state = STALE;
-      if(cache_inode_kill_entry(pentry, NO_LOCK, ht, pclient, &kill_status) !=
+      if(cache_inode_kill_entry(pentry, NO_LOCK, ht, pclient, &kill_status) ==
          CACHE_INODE_SUCCESS)
-        LogCrit(COMPONENT_CACHE_INODE,
-                "cache_inode_renew_entry: Could not kill entry %p, "
+        {
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "isNumlinksZero: Killed entry %p, "
+                  "status = %u", pentry, kill_status);
+          return CACHE_INODE_KILLED;
+        }
+
+      LogCrit(COMPONENT_CACHE_INODE,
+                "isNumlinksZero: Could not kill entry %p, "
                 "status = %u", pentry, kill_status);
       return CACHE_INODE_FSAL_ESTALE;
     }
