@@ -521,12 +521,18 @@ cache_entry_t *cache_inode_valid_lookup(cache_entry_t * pentry_parent,
    * Check if the pentry is stale or valid or what.*/
   if (*pstatus == CACHE_INODE_SUCCESS && pentry != NULL)
     {
-      P_w(&pentry->lock);
+      /* TODO: Locking here seems to be fine, but unlocking after renew_entry
+       * results in a deadlock or pause. In some cases renew_entry deletes
+       * the pentry along with the lock. Even detecting that case and not
+       * unlocking doesn't prevent this problem. It may be that we need to
+       * pass to renew_entry the type of lock we have on pentry->lock so that
+       * cache_inode_kill_entry() can properly unlock.*/
+      //P_w(&pentry->lock);
       cache_status = cache_inode_renew_entry(pentry, pattr, ht,
                                              pclient, pcontext, pstatus);
 
-      if (cache_status != CACHE_INODE_KILLED)
-        V_w(&pentry->lock);
+      //if (cache_status != CACHE_INODE_KILLED)
+      //V_w(&pentry->lock);
 
       if(cache_status != CACHE_INODE_SUCCESS)
         {
