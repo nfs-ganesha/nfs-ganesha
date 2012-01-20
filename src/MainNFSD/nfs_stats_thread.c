@@ -91,6 +91,8 @@ void *stats_thread(void *addr)
   nfs_worker_stat_t global_worker_stat;
   hash_stat_t hstat;
   hash_stat_t hstat_reverse;
+  hash_stat_t hstat_drc_udp;
+  hash_stat_t hstat_drc_tcp;
 
   unsigned long long total_fsal_calls;
   fsal_statistics_t global_fsal_stat;
@@ -703,18 +705,27 @@ void *stats_thread(void *addr)
       fprintf(stats_file, "\n");
 
       /* Printing the cache inode hash stat */
-      nfs_dupreq_get_stats(&hstat);
+      nfs_dupreq_get_stats(&hstat_drc_udp, &hstat_drc_tcp);
 
       fprintf(stats_file,
               "DUP_REQ_HASH,%s;%u,%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u\n",
-              strdate, hstat.dynamic.nb_entries, hstat.computed.min_rbt_num_node,
-              hstat.computed.max_rbt_num_node, hstat.computed.average_rbt_num_node,
-              hstat.dynamic.ok.nb_set, hstat.dynamic.notfound.nb_set,
-              hstat.dynamic.err.nb_set, hstat.dynamic.ok.nb_test,
-              hstat.dynamic.notfound.nb_test, hstat.dynamic.err.nb_test,
-              hstat.dynamic.ok.nb_get, hstat.dynamic.notfound.nb_get,
-              hstat.dynamic.err.nb_get, hstat.dynamic.ok.nb_del,
-              hstat.dynamic.notfound.nb_del, hstat.dynamic.err.nb_del);
+              strdate, 
+              hstat_drc_udp.dynamic.nb_entries            + hstat_drc_tcp.dynamic.nb_entries, 
+              hstat_drc_udp.computed.min_rbt_num_node     + hstat_drc_tcp.computed.min_rbt_num_node,
+              hstat_drc_udp.computed.max_rbt_num_node     + hstat_drc_tcp.computed.max_rbt_num_node, 
+              hstat_drc_udp.computed.average_rbt_num_node + hstat_drc_tcp.computed.average_rbt_num_node,
+              hstat_drc_udp.dynamic.ok.nb_set             + hstat_drc_tcp.dynamic.ok.nb_set, 
+              hstat_drc_udp.dynamic.notfound.nb_set       + hstat_drc_tcp.dynamic.notfound.nb_set,
+              hstat_drc_udp.dynamic.err.nb_set            + hstat_drc_tcp.dynamic.err.nb_set, 
+              hstat_drc_udp.dynamic.ok.nb_test            + hstat_drc_tcp.dynamic.ok.nb_test,
+              hstat_drc_udp.dynamic.notfound.nb_test      + hstat_drc_tcp.dynamic.notfound.nb_test, 
+              hstat_drc_udp.dynamic.err.nb_test           + hstat_drc_tcp.dynamic.err.nb_test,
+              hstat_drc_udp.dynamic.ok.nb_get             + hstat_drc_tcp.dynamic.ok.nb_get, 
+              hstat_drc_udp.dynamic.notfound.nb_get       + hstat_drc_tcp.dynamic.notfound.nb_get,
+              hstat_drc_udp.dynamic.err.nb_get            + hstat_drc_tcp.dynamic.err.nb_get, 
+              hstat_drc_udp.dynamic.ok.nb_del             + hstat_drc_tcp.dynamic.ok.nb_del,
+              hstat_drc_udp.dynamic.notfound.nb_del       + hstat_drc_tcp.dynamic.notfound.nb_del, 
+              hstat_drc_udp.dynamic.err.nb_del            + hstat_drc_tcp.dynamic.err.nb_del );
 
       /* Printing the UIDMAP_TYPE hash table stats */
       idmap_get_stats(UIDMAP_TYPE, &hstat, &hstat_reverse);
