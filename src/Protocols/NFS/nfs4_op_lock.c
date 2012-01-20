@@ -472,9 +472,17 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
       init_glist(&plock_state->state_data.lock.state_locklist);
 
+      /* get the exportid */
+      plock_state->exportid = nfs4_FhandleToExportId(&(data->currentFH));
+
       /* Add lock state to the list of lock states belonging to the open state */
       glist_add_tail(&pstate_open->state_data.share.share_lockstates,
                      &plock_state->state_data.lock.state_sharelist);
+
+      /* Add lock owner to the list of the clientid */
+      P(nfs_client_id->clientid_mutex);
+      glist_add_tail(&nfs_client_id->clientid_lockowners, &plock_owner->so_owner.so_nfs4_owner.so_perclient);
+      V(nfs_client_id->clientid_mutex);
     }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
 
   /*

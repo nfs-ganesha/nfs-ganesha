@@ -101,7 +101,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   bool_t                    AttrProvided = FALSE;
   bool_t                    ReuseState = FALSE;
   fsal_accessmode_t         mode = 0600;
-  nfs_client_id_t           nfs_clientid;
+  nfs_client_id_t         * nfs_clientid;
   nfs_worker_data_t       * pworker = NULL;
   state_t                 * pfile_state = NULL;
   state_t                 * pstate_iterate;
@@ -215,7 +215,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   LogDebug(COMPONENT_STATE,
            "OPEN Client id = %llx",
            (unsigned long long)arg_OPEN4.owner.clientid);
-  if(nfs_client_id_get(arg_OPEN4.owner.clientid, &nfs_clientid) !=
+  if(nfs_client_id_Get_Pointer(arg_OPEN4.owner.clientid, &nfs_clientid) !=
       CLIENT_ID_SUCCESS)
     {
       res_OPEN4.status = NFS4ERR_STALE_CLIENTID;
@@ -223,7 +223,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
     }
 
   /* The client id should be confirmed */
-  if(nfs_clientid.confirmed != CONFIRMED_CLIENT_ID)
+  if(nfs_clientid->confirmed != CONFIRMED_CLIENT_ID)
     {
       res_OPEN4.status = NFS4ERR_STALE_CLIENTID;
       cause2 = " (not confirmed)";
@@ -240,7 +240,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
  * }
  * update_lease, below, only updates the local structure
  */
-  nfs4_update_lease(&nfs_clientid);
+  nfs4_update_lease(nfs_clientid);
 
   if (arg_OPEN4.openhow.opentype == OPEN4_CREATE && claim != CLAIM_NULL) {
       res_OPEN4.status = NFS4ERR_INVAL;
@@ -301,6 +301,13 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                    "NFS4 OPEN returning NFS4ERR_RESOURCE for CLAIM_NULL (could not create NFS4 Owner");
           return res_OPEN4.status;
         }
+      LogDebug(COMPONENT_STATE,
+                       "NFS4 OPEN adding owners to client record ");
+
+
+      P(nfs_clientid->clientid_mutex);
+      glist_add_tail(&nfs_clientid->clientid_openowners, &powner->so_owner.so_nfs4_owner.so_perclient);
+      V(nfs_clientid->clientid_mutex);
     }
 
   if (nfs4_in_grace() && claim != CLAIM_PREVIOUS)
@@ -310,7 +317,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
        goto out;
     }
   if (nfs4_in_grace() && claim == CLAIM_PREVIOUS &&
-     nfs_clientid.allow_reclaim != 1)
+     nfs_clientid->allow_reclaim != 1)
     {
        cause2 = " (client cannot reclaim)";
        res_OPEN4.status = NFS4ERR_NO_GRACE;
@@ -969,7 +976,7 @@ out_prev:
                  tag);
 
   /* XXX - jw - this only updates local structure, fix this */
-  nfs4_update_lease(&nfs_clientid);
+  nfs4_update_lease(nfs_clientid);
 
   /* If we are re-using stateid, then release extra reference to open owner */
   if(ReuseState)
@@ -1138,6 +1145,9 @@ nfs4_do_open(struct nfs_argop4 *op, compound_data_t *data,
                 }
 
                 init_glist(&((*statep)->state_data.share.share_lockstates));
+
+                /* get the exportid */  
+                (*statep)->exportid = nfs4_FhandleToExportId(&(data->currentFH));
         }
 
         if (pentry_parent != NULL) {    /* claim null */

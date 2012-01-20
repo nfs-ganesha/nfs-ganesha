@@ -163,6 +163,7 @@ extern char all_one[OTHERSIZE];
 struct state_t
 {
   struct glist_head state_list;                /**< List of states on a file                   */
+  unsigned int      exportid;
   state_type_t      state_type;
   state_data_t      state_data;
   u_int32_t         state_seqid;               /**< The NFSv4 Sequence id                      */
@@ -254,6 +255,7 @@ struct state_nfs4_owner_t
   state_owner_t     * so_related_owner;
   struct glist_head   so_owner_list;    /** < Share and lock owners with the same clientid */
   struct glist_head   so_state_list;    /** < States owned by this owner */
+  struct glist_head   so_perclient;     /** open owner entry to be linked to client */
 };
 
 /* Undistinguished lock owner type */
@@ -265,6 +267,7 @@ struct state_owner_t
   int                     so_refcount;
   int                     so_owner_len;
   char                    so_owner_val[NFS4_OPAQUE_LIMIT]; /* big enough for all owners */
+  cache_inode_client_t  * so_pclient;
   union
   {
     state_nfs4_owner_t    so_nfs4_owner;

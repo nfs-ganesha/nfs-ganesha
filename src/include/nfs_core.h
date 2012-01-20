@@ -465,6 +465,10 @@ typedef struct nfs_client_id__
   nfs_client_cred_t credential;
   int allow_reclaim;
   char *recov_dir;
+  struct glist_head clientid_openowners;
+  struct glist_head clientid_lockowners;
+  pthread_mutex_t clientid_mutex;
+  struct prealloc_pool *clientid_pool;
 #ifdef _USE_NFS4_1
   char server_owner[MAXNAMLEN];
   char server_scope[MAXNAMLEN];
@@ -724,6 +728,8 @@ int nfs_client_id_add(clientid4 clientid,
 int nfs_client_id_set(clientid4 clientid,
                       nfs_client_id_t client_record,
                       struct prealloc_pool *clientid_pool);
+
+void nfs_client_id_expire(nfs_client_id_t *client_record);
 
 int nfs_client_id_compute(char *name, clientid4 * pclientid);
 int nfs_client_id_basic_compute(char *name, clientid4 * pclientid);

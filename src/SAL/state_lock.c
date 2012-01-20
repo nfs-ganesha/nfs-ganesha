@@ -2540,6 +2540,14 @@ state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
        * We pick the first lock the owner holds, and use it's file.
        */
       found_entry = glist_first_entry(&powner->so_lock_list, state_lock_entry_t, sle_owner_locks);
+
+      /* If we don't find any entries, then we are done. */
+      if((found_entry == NULL) || (found_entry->sle_state != pstate))
+      {
+        V(powner->so_mutex);
+        break;
+      }
+
       lock_entry_inc_ref(found_entry);
 
       /* Move this entry to the end of the list (this will help if errors occur) */
@@ -2547,10 +2555,6 @@ state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
       glist_add_tail(&powner->so_lock_list, &found_entry->sle_owner_locks);
 
       V(powner->so_mutex);
-
-      /* If we don't find any entries, then we are done. */
-      if(found_entry == NULL)
-        break;
 
       /* Extract the cache inode entry from the lock entry and release the lock entry */
       pentry = found_entry->sle_pentry;
@@ -2578,6 +2582,9 @@ state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
           /* Increment the error count and try the next lock, with any luck
            * the memory pressure which is causing the problem will resolve itself.
            */
+          LogDebug(COMPONENT_STATE,
+               "state_unlock failed %s",
+               state_err_str(*pstatus));
           errcnt++;
         }
     }

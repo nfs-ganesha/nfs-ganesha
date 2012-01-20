@@ -86,7 +86,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lockt";
 
   state_status_t            state_status;
-  nfs_client_id_t           nfs_client_id;
+  nfs_client_id_t         * nfs_client_id;
   state_nfs4_owner_name_t   owner_name;
   state_owner_t           * popen_owner;
   state_owner_t           * conflict_owner = NULL;
@@ -180,14 +180,14 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Check clientid */
-  if(nfs_client_id_get(arg_LOCKT4.owner.clientid, &nfs_client_id) != CLIENT_ID_SUCCESS)
+  if(nfs_client_id_Get_Pointer(arg_LOCKT4.owner.clientid, &nfs_client_id) != CLIENT_ID_SUCCESS)
     {
       res_LOCKT4.status = NFS4ERR_STALE_CLIENTID;
       return res_LOCKT4.status;
     }
 
   /* The client id should be confirmed */
-  if(nfs_client_id.confirmed != CONFIRMED_CLIENT_ID)
+  if(nfs_client_id->confirmed != CONFIRMED_CLIENT_ID)
     {
       res_LOCKT4.status = NFS4ERR_STALE_CLIENTID;
       return res_LOCKT4.status;
