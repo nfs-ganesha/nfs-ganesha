@@ -124,8 +124,8 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
               cache_inode_status_t kill_status;
 
               LogEvent(COMPONENT_CACHE_INODE,
-                       "cache_inode_readlink: Stale FSAL File Handle detected for pentry = %p",
-                       pentry);
+                       "cache_inode_readlink: Stale FSAL File Handle detected for pentry = %p, fsal_status=(%u,%u)",
+                       pentry, fsal_status.major, fsal_status.minor);
 
               if(cache_inode_kill_entry(pentry, NO_LOCK, ht, pclient, &kill_status) !=
                  CACHE_INODE_SUCCESS)

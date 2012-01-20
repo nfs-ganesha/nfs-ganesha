@@ -81,7 +81,6 @@ fsal_op_context_t *fsal_get_thread_context();
 /* used for generating inode numbers for FS which don't have some */
 static inline unsigned long hash_peer(ino_t parent_inode, char *name)
 {
-  unsigned int i;
   unsigned long hash;
   char *curr;
 
