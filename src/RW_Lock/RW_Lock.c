@@ -48,10 +48,33 @@ static void print_lock(char *s, rw_lock_t * plock)
 {
   
   LogFullDebug(COMPONENT_RW_LOCK,
-               "%s: id = %u:  Lock State: nbr_active = %d, nbr_waiting = %d, nbw_active = %d, nbw_waiting = %d",
-               s, (unsigned int)pthread_self(), plock->nbr_active, plock->nbr_waiting,
+               "%s: id = %u:  Lock:%p State: nbr_active = %d, nbr_waiting = %d, nbw_active = %d, nbw_waiting = %d",
+               s, (unsigned int)pthread_self(), plock, plock->nbr_active, plock->nbr_waiting,
                plock->nbw_active, plock->nbw_waiting);
 }                               /* print_lock */
+
+#define DEBUG_STACK_SIZE 1000
+void dbg_backtrace(void)
+{
+  int j, nptrs;
+  void *buffer[DEBUG_STACK_SIZE];
+  char **strings;
+
+  nptrs = backtrace(buffer, DEBUG_STACK_SIZE);
+
+  strings = backtrace_symbols(buffer, nptrs);
+  if (strings == NULL)
+    {
+      LogFullDebug(COMPONENT_RW_LOCK, "dbg_backtrace...No symbols found.\n");
+      return;
+    }
+
+    for (j = 0; j < nptrs; j++)
+      LogFullDebug(COMPONENT_RW_LOCK, "backtrace: %s\n", strings[j]);
+
+    free(strings);
+}
+
 
 /* 
  * Take the lock for reading 
@@ -89,7 +112,11 @@ int V_r(rw_lock_t * plock)
   print_lock("V_r.1", plock);
 
   /* I am a reader that is no more active */
-  plock->nbr_active--;
+  if(plock->nbr_active == 0)
+    dbg_backtrace();
+  else
+    plock->nbr_active--;
+
 
   /* I was the last active reader, and there are some waiting writters, I let one of them go */
   if(plock->nbr_active == 0 && plock->nbw_waiting > 0)
@@ -140,7 +167,11 @@ int V_w(rw_lock_t * plock)
   print_lock("V_w.1", plock);
 
   /* I was the active writter, I am not it any more */
-  plock->nbw_active--;
+  if(plock->nbw_active == 0)
+    dbg_backtrace();
+  else
+    plock->nbw_active--;
+ 
 
   if(plock->nbw_waiting > 0)
     {
@@ -177,7 +208,10 @@ int rw_lock_downgrade(rw_lock_t * plock)
   print_lock("downgrade.1", plock);
 
   /* I was the active writter, I am not it any more */
-  plock->nbw_active--;
+  if(plock->nbw_active == 0)
+    dbg_backtrace();
+  else
+    plock->nbw_active--;
 
   if(plock->nbr_waiting > 0)
     {
