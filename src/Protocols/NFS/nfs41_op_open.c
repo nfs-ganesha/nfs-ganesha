@@ -656,8 +656,6 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                        "    OPEN open.how = %d",
                        arg_OPEN4.openhow.openflag4_u.how.mode);
 
-          create_arg.use_pnfs = FALSE;
-
           /* Create the file, if we reach this point, it does not exist, we can create it */
           if((pentry_newfile = cache_inode_create(pentry_parent,
                                                   &filename,

@@ -435,11 +435,16 @@ typedef struct cache_inode_param_gc__
   unsigned int nb_to_be_purged;
 } cache_inode_param_gc_t;
 
+typedef struct cache_inode_dir_hint__
+{
+  unsigned int newly_created ;
+} cache_inode_dir_hint_t ;
+
 typedef union cache_inode_create_arg__
 {
-  fsal_path_t link_content;
-  fsal_dev_t dev_spec;
-  bool_t use_pnfs;
+  fsal_path_t            link_content;
+  fsal_dev_t             dev_spec;
+  cache_inode_dir_hint_t dir_hint ;
 } cache_inode_create_arg_t;
 
 #define DIR_START     0

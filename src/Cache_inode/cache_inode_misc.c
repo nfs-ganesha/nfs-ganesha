@@ -555,7 +555,13 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
       pentry->mobject.handle = pentry->object.dir.handle;
 #endif
 
-      pentry->object.dir.has_been_readdir = CACHE_INODE_NO;
+      /* If directory is newly created, it is empty
+       * because we know its content, we consider it read */ 
+      pentry->object.dir.has_been_readdir = CACHE_INODE_NO;  /* default value */
+      if( pcreate_arg != NULL )
+        if( pcreate_arg->dir_hint.newly_created != FALSE )
+          pentry->object.dir.has_been_readdir = CACHE_INODE_YES ;
+
       pentry->object.dir.nbactive = 0;
       pentry->object.dir.referral = NULL;
 
