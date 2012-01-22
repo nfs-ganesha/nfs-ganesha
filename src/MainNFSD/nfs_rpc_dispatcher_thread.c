@@ -1094,29 +1094,6 @@ void nfs_rpc_getreq(fd_set * readfds)
 
 /**
  *
- * clean_pending_request: cleans an entry in a nfs request LRU,
- *
- * cleans an entry in a nfs request LRU.
- *
- * @param pentry [INOUT] entry to be cleaned.
- * @param addparam [IN] additional parameter used for cleaning.
- *
- * @return 0 if ok, other values mean an error.
- *
- */
-int clean_pending_request(LRU_entry_t * pentry, void *addparam)
-{
-  struct prealloc_pool *request_pool = (struct prealloc_pool *) addparam;
-  nfs_request_data_t *preqnfs = (nfs_request_data_t *) (pentry->buffdata.pdata);
-
-  /* Send the entry back to the pool */
-  ReleaseToPool(preqnfs, request_pool);
-
-  return 0;
-}                               /* clean_pending_request */
-
-/**
- *
  * print_pending_request: prints an entry related to a pending request in the LRU list.
  *
  * prints an entry related to a pending request in the LRU list.

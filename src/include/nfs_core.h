@@ -714,7 +714,6 @@ int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2);
 int print_entry_dupreq(LRU_data_t data, char *str);
 int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam);
 
-int clean_pending_request(LRU_entry_t * pentry, void *addparam);
 int print_pending_request(LRU_data_t data, char *str);
 
 void auth_stat2str(enum auth_stat, char *str);
