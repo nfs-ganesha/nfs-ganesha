@@ -79,6 +79,13 @@
 
 static pthread_mutex_t lock_worker_selection = PTHREAD_MUTEX_INITIALIZER;
 
+/* This structure is set to initial state (zero-ed) in stat thread */
+buddy_stats_t          global_tcp_dispatcher_buddy_stat;
+
+/* This structure exists per tcp dispatcher thread */
+buddy_stats_t __thread local_tcp_dispatcher_buddy_stat;
+
+
 #if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
 /**
  *
@@ -1147,9 +1154,10 @@ void rpc_dispatcher_svc_run()
   fd_set readfdset;
   int rc = 0;
 
-#ifdef _DEBUG_MEMLEAKS
-  static int nb_iter_memleaks = 0;
-#endif
+  static int nb_iter = 0;
+
+  /* Init stat */
+  memset( &local_tcp_dispatcher_buddy_stat, 0,  sizeof(buddy_stats_t));
 
   while(TRUE)
     {
@@ -1187,17 +1195,47 @@ void rpc_dispatcher_svc_run()
 
         }                       /* switch */
 
-#ifdef _DEBUG_MEMLEAKS
-      if(nb_iter_memleaks > 1000)
+      if(nb_iter > 1000)
         {
-          nb_iter_memleaks = 0;
+          nb_iter = 0;
 #ifndef _NO_BUDDY_SYSTEM
+          BuddyGetStats(&local_tcp_dispatcher_buddy_stat) ;
+      
+          /* /!\  global_tcp_dispatcher_buddy_stat is updated concurrently
+           * but not protected by a mutex. There is a reason for this:
+           * there may be thousands of tcp dispatchers and having them accessing 
+           * the same lock may finally serialize them with strong impact on perfs.
+           * The variable  global_tcp_dispatcher_buddy_stat is used to output stats
+           * and it can be a bit unprecise, this will not cause the daemon to crash */
+          global_tcp_dispatcher_buddy_stat.TotalMemSpace +=
+              local_tcp_dispatcher_buddy_stat.TotalMemSpace;
+
+          global_tcp_dispatcher_buddy_stat.ExtraMemSpace +=
+              local_tcp_dispatcher_buddy_stat.ExtraMemSpace;
+
+          global_tcp_dispatcher_buddy_stat.StdMemSpace += local_tcp_dispatcher_buddy_stat.StdMemSpace;
+
+          global_tcp_dispatcher_buddy_stat.StdUsedSpace +=
+              local_tcp_dispatcher_buddy_stat.StdUsedSpace;
+
+          if(local_tcp_dispatcher_buddy_stat.StdUsedSpace >
+             global_tcp_dispatcher_buddy_stat.WM_StdUsedSpace)
+            global_tcp_dispatcher_buddy_stat.WM_StdUsedSpace =
+                local_tcp_dispatcher_buddy_stat.StdUsedSpace;
+
+          global_tcp_dispatcher_buddy_stat.NbStdPages += local_tcp_dispatcher_buddy_stat.NbStdPages;
+          global_tcp_dispatcher_buddy_stat.NbStdUsed += local_tcp_dispatcher_buddy_stat.NbStdUsed;
+
+          if(local_tcp_dispatcher_buddy_stat.NbStdUsed > global_tcp_dispatcher_buddy_stat.WM_NbStdUsed)
+            global_tcp_dispatcher_buddy_stat.WM_NbStdUsed = local_tcp_dispatcher_buddy_stat.NbStdUsed;
+
+#ifdef _DEBUG_MEMLEAKS
           nfs_debug_buddy_info();
+#endif
 #endif
         }
       else
-        nb_iter_memleaks += 1;
-#endif
+        nb_iter += 1;
 
     }                           /* while */
 
