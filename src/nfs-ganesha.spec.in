@@ -7,6 +7,8 @@ Release: @RELEASE@%{?dist}
 Summary: NFS Server running in user space with large cache
 License: LGPLv3
 Group: Applications/System
+Requires: libtirpc
+BuildRequires: libtirpc-devel
 %if %{?_with_nfsidmap:1}%{!?_with_nfsidmap:0}
 Requires: nfs-utils-lib
 BuildRequires: nfs-utils-lib-devel

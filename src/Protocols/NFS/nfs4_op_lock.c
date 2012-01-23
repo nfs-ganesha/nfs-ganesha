@@ -80,7 +80,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lock";
 
-#ifndef _WITH_NFSV4_LOCKS
+#ifdef _WITH_NO_NFSV4_LOCKS
   /* Lock are not supported */
   resp->resop = NFS4_OP_LOCK;
   res_LOCK4.status = NFS4ERR_LOCK_NOTSUPP;
@@ -252,7 +252,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
       /* Is this lock_owner known ? */
       convert_nfs4_lock_owner(&arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
-                              &owner_name);
+                              &owner_name, 0LL);
     }
   else
     {

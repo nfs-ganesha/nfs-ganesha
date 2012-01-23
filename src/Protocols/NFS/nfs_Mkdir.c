@@ -106,6 +106,7 @@ int nfs_Mkdir(nfs_arg_t * parg,
   fsal_name_t dir_name;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   cache_inode_status_t cache_status_lookup;
+  cache_inode_create_arg_t create_arg;
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
@@ -234,13 +235,17 @@ int nfs_Mkdir(nfs_arg_t * parg,
 
           if(cache_status_lookup == CACHE_INODE_NOT_FOUND)
             {
+              /* The create_arg structure contains the information "newly created directory"
+               * to be passed to cache_inode_new_entry from cache_inode_create */
+              create_arg.dir_hint.newly_created = TRUE ;
+
               /* Create the directory */
               if((dir_pentry = cache_inode_create(parent_pentry,
                                                   &dir_name,
                                                   DIRECTORY,
                                                   pexport->cache_inode_policy,
                                                   mode,
-                                                  NULL,
+                                                  &create_arg,
                                                   &attr,
                                                   ht,
                                                   pclient,

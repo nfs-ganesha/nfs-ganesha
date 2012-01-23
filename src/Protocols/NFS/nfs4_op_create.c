@@ -287,7 +287,11 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       break;
     case NF4DIR:
       /* Create a new directory */
-      /* do the symlink operation */
+      
+      /* The create_arg structure contains the information "newly created directory"
+       * to be passed to cache_inode_new_entry from cache_inode_create */
+      create_arg.dir_hint.newly_created = TRUE ;
+ 
       if((pentry_new = cache_inode_create(pentry_parent,
                                           &name,
                                           DIRECTORY,

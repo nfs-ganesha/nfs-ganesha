@@ -49,11 +49,12 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 #include "pnfs.h" 
-#include "pnfs_service.h" 
 
-nfsstat4 pnfs_parallel_fs_layoutget( LAYOUTGET4args   * playoutgetargs,
-				compound_data_t  * data,
-				LAYOUTGET4res    * playoutgetres )
+#include "pnfs_internal.h" 
+
+nfsstat4 PARALLEL_FS_pnfs_layoutget( LAYOUTGET4args   * playoutgetargs,
+		                     compound_data_t  * data,
+			             LAYOUTGET4res    * playoutgetres )
 {
  unsigned int offset = 0;
   uint32_t int32 = 0;
@@ -163,4 +164,5 @@ nfsstat4 pnfs_parallel_fs_layoutget( LAYOUTGET4args   * playoutgetargs,
 
   playoutgetres->logr_status = NFS4_OK ;
   return NFS4_OK ;
-}                               /* pnfs_parallel_fs_layoutget */
+}                               /* pnfs_layoutget */
+

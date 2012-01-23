@@ -311,14 +311,9 @@ struct cache_entry_t
     struct cache_inode_file__
     {
       fsal_handle_t handle;                                          /**< The FSAL Handle                                      */
-#ifdef _USE_PNFS_SPNFS_LIKE
-      fsal_pnfs_file_t pnfs_file ;                                   /**< Specific FS information for pNFS management          */
-#endif
       cache_inode_opened_file_t open_fd;                             /**< Cached fsal_file_t for optimized access              */
-#ifdef _USE_PROXY
       fsal_name_t *pname;                                            /**< Pointer to filename, for PROXY only                  */
       cache_entry_t *pentry_parent_open;                             /**< Parent associated with pname, for PROXY only         */
-#endif                          /* _USE_PROXY */
       fsal_attrib_list_t attributes;                                 /**< The FSAL Attributes                                  */
       void *pentry_content;                                          /**< Entry in file content cache (NULL if not cached)     */
       struct glist_head state_list;                                  /**< Pointers for state list                              */
@@ -440,11 +435,16 @@ typedef struct cache_inode_param_gc__
   unsigned int nb_to_be_purged;
 } cache_inode_param_gc_t;
 
+typedef struct cache_inode_dir_hint__
+{
+  unsigned int newly_created ;
+} cache_inode_dir_hint_t ;
+
 typedef union cache_inode_create_arg__
 {
-  fsal_path_t link_content;
-  fsal_dev_t dev_spec;
-  bool_t use_pnfs;
+  fsal_path_t            link_content;
+  fsal_dev_t             dev_spec;
+  cache_inode_dir_hint_t dir_hint ;
 } cache_inode_create_arg_t;
 
 #define DIR_START     0
@@ -936,7 +936,7 @@ cache_inode_status_t cache_inode_gc_fd(cache_inode_client_t * pclient,
                                        cache_inode_status_t * pstatus);
 
 cache_inode_status_t cache_inode_kill_entry( cache_entry_t * pentry,
-                                             cache_inode_lock_how_t lock_how, 
+                                             cache_inode_lock_how_t lock_how,
                                              hash_table_t * ht,
                                              cache_inode_client_t * pclient,
                                              cache_inode_status_t * pstatus);

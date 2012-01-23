@@ -41,9 +41,10 @@ if USE_NLM
 libsal_la_SOURCES += nlm_owner.c
 endif
 
-new: clean all
+if USE_FSALMDS
+libsal_la_SOURCES += state_layout.c
+endif
 
-doc:
-	doxygen ./doxygen.conf
-	rep=`grep OUTPUT_DIRECTORY doxygen.conf | grep share  | awk -F '=' '{print $$2;}'` ; cd $$rep/latex ; make
+
+new: clean all
 

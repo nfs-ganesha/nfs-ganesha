@@ -1,5 +1,8 @@
 noinst_HEADERS = BuddyMalloc.h                   \
                  fsal.h                          \
+                 fsal_pnfs.h                     \
+                 pnfs_common.h              \
+                 fsal_pnfs_files.h               \
                  mfsl.h                          \
                  HashData.h                      \
                  HashTable.h                     \
@@ -43,7 +46,6 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  nfsv41.h                        \
                  nfs41_session.h                 \
                  pnfs.h                          \
-                 pnfs_service.h                  \
                  nfs_core.h                      \
                  err_inject.h                    \
                  nfs_creds.h                     \
@@ -73,10 +75,6 @@ if USE_NFS4_ACL
 noinst_HEADERS += nfs4_acls.h
 endif
 
-if USE_PNFS
-noinst_HEADERS +=  fsal_pnfs.h fsal_pnfs_types.h
-endif
-
 if USE_9P
 noinst_HEADERS +=  9p.h
 endif
@@ -86,9 +84,6 @@ include_HEADERS = ganesha_fuse_wrap.h
 endif
 
 
-SUBDIRS = FSAL MFSL PNFS
+SUBDIRS = FSAL MFSL 
 
-doc:
-	doxygen ./doxygen.conf.stuff_alloc
-	rep=`grep OUTPUT_DIRECTORY doxygen.conf.stuff_alloc | grep share  | awk -F '=' '{print $$2;}'` ; cd $$rep/latex ; make
 

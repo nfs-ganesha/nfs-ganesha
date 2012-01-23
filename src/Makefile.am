@@ -34,7 +34,6 @@ SUBDIRS = include             \
           IdMapper            \
           snmp_adm            \
           MainNFSD            \
-          cmdline_tools       \
           shell               \
           cmdline_tools       \
           Docs                \
@@ -169,6 +168,11 @@ srpm: nfs-ganesha.spec remove_hpss rpmdirs
 	rpmbuild $(RPM_DB_ARGS) $(extra_arg) --define "_topdir `pwd`/rpm" -ts $(distdir).tar.gz
 
 endif
+
+doc:
+	doxygen ./doxygen.conf
+	cd ../share/doc/doxygen/nfs-ganesha/latex ; make -i pdf
+
 
 EXTRA_DIST=nfs-ganesha.spec           \
            COMPILING_HOWTO.txt        \

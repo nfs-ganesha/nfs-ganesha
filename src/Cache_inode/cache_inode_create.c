@@ -105,13 +105,6 @@ cache_inode_create(cache_entry_t * pentry_parent,
     cache_inode_fsal_data_t fsal_data;
     cache_inode_status_t status;
     struct cache_inode_dir__ *pdir = NULL;
-#ifdef _USE_PNFS
-
-#ifdef _USE_PNFS_SPNFS_LIKE  /** @todo : do the thing in a cleaner way here */
-    pnfs_file_t pnfs_file ;
-    pnfs_file.ds_file.allocated = FALSE ;
-#endif
-#endif
 
     memset( ( char *)&fsal_data, 0, sizeof( fsal_data ) ) ;
     memset( ( char *)&object_handle, 0, sizeof( object_handle ) ) ;
@@ -211,11 +204,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
                                       &pclient->mfsl_context,
                                       mode, &object_handle,
                                       &object_attributes, &parent_attributes,
-#ifdef _USE_PNFS_SPNFS_LIKE   /** @todo : do the thing in a cleaner way here */
-	                              &pnfs_file ) ;			      
-#else
                                       NULL);
-#endif /* _USE_PNFS */
 #else
             fsal_status = FSAL_create(&dir_handle,
                                       pname, pcontext, mode,
@@ -403,12 +392,6 @@ cache_inode_create(cache_entry_t * pentry_parent,
                 }
         }
 
-#ifdef _USE_PNFS_SPNFS_LIKE /** @todo : do the thing in a cleaner way here */
-       if((type == REGULAR_FILE) &&
-       (pcreate_arg != NULL) &&
-       (pcreate_arg->use_pnfs == TRUE))
-          memcpy( (char *)&pentry->object.file.pnfs_file, (char *)&pnfs_file, sizeof( pnfs_file_t ) ) ;
-#endif
        /* Update the parent cached attributes */
        cache_inode_set_time_current( &pdir->attributes.mtime ) ;
        pdir->attributes.ctime = pdir->attributes.mtime;

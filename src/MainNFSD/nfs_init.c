@@ -378,7 +378,6 @@ void nfs_set_param_default()
   nfs_param.nfsv4_param.lease_lifetime = NFS4_LEASE_LIFETIME;
   nfs_param.nfsv4_param.fh_expire = FALSE;
   nfs_param.nfsv4_param.returns_err_fh_expired = TRUE;
-  nfs_param.nfsv4_param.use_open_confirm = TRUE;
   nfs_param.nfsv4_param.return_bad_stateid = TRUE;
   strncpy(nfs_param.nfsv4_param.domainname, DEFAULT_DOMAIN, MAXNAMLEN);
   strncpy(nfs_param.nfsv4_param.idmapconf, DEFAULT_IDMAPCONF, MAXPATHLEN);
@@ -527,27 +526,6 @@ void nfs_set_param_default()
   nfs_param.session_id_param.hash_param.key_to_str = display_session_id_key;
   nfs_param.session_id_param.hash_param.val_to_str = display_session_id_val;
   nfs_param.session_id_param.hash_param.name = "Session ID";
-
-#ifdef _USE_PNFS
-  /* pNFS parameters */
-  nfs_param.pnfs_param.layoutfile.stripe_width = 1;
-  nfs_param.pnfs_param.layoutfile.stripe_size = 8192;
-
-  nfs_param.pnfs_param.layoutfile.ds_param[0].ipaddr = htonl(0x7F000001);
-  strncpy(nfs_param.pnfs_param.layoutfile.ds_param[0].ipaddr_ascii, "127.0.0.1",
-          MAXNAMLEN);
-  nfs_param.pnfs_param.layoutfile.ds_param[0].ipport = htons(2049);
-  nfs_param.pnfs_param.layoutfile.ds_param[0].prognum = 100003;
-  nfs_param.pnfs_param.layoutfile.ds_param[0].id = 1;
-  strncpy(nfs_param.pnfs_param.layoutfile.ds_param[0].rootpath, "/", MAXPATHLEN);
-
-  nfs_param.pnfs_param.layoutfile.ds_param[1].ipaddr = htonl(0x7F000001);
-  nfs_param.pnfs_param.layoutfile.ds_param[1].ipport = htons(2049);
-  nfs_param.pnfs_param.layoutfile.ds_param[1].prognum = 100003;
-  nfs_param.pnfs_param.layoutfile.ds_param[1].id = 2;
-  strncpy(nfs_param.pnfs_param.layoutfile.ds_param[1].rootpath, "/", MAXPATHLEN);
-
-#endif                          /* _USE_PNFS */
 
 #endif                          /* _USE_NFS4_1 */
 
@@ -1123,26 +1101,6 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
         LogDebug(COMPONENT_INIT,
 		 "session id configuration read from config file");
     }
-
-#ifdef _USE_PNFS
-  /* Worker paramters: pNFS specific config */
-  if((rc = nfs_read_pnfs_conf(config_struct, &nfs_param.pnfs_param)) < 0)
-    {
-      LogCrit(COMPONENT_INIT,
-              "Error while parsing pNFS configuration");
-      return -1;
-    }
-  else
-    {
-      /* No such stanza in configuration file */
-      if(rc == 1)
-        LogDebug(COMPONENT_INIT,
-		 "No pNFS configuration found in config file, using default");
-      else
-        LogDebug(COMPONENT_INIT,
-		 "pNFS configuration read from config file");
-    }
-#endif                          /* _USE_PNFS */
 
 #endif                          /* _USE_NFS4_1 */
 

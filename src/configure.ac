@@ -9,7 +9,7 @@ AC_SUBST(RELEASE, [1])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/PROXY/HPSS/FUSELIKE/LUSTRE/XFS/GPFS/ZFS/VFS .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod),  Early pNFS (alpha) ])
+AC_REVISION([Compiles:  i386/x86_64. FSAL: POSIX/PROXY/HPSS/FUSELIKE/LUSTRE/XFS/GPFS/ZFS/VFS/CEPH .xattr ghost dir support. RPCSEC_GSS/KRB5, TI-RPC (prod),  Early pNFS (alpha) ])
 
 # Init Automake
 #AM_INIT_AUTOMAKE([-Wall -Werror foreign])
@@ -42,6 +42,7 @@ AC_PROG_MAKE_SET
 
 AC_DEFINE( [VERSION_COMMENT], ["GANESHA 64 bits compliant. SNMP exported stats. FSAL_PROXY re-exports NFSv3. RPCSEC_GSS support (partial). FUSELIKE added"], [No Comment])
 
+
 # specific programs used for ganesha
 GA_PROG_RPCGEN
 GA_PROG_DOXYGEN
@@ -59,6 +60,18 @@ AC_SUBST(LIBVERSION)
 
 # set '_EXTENDED_TYPE_NEEDED' in config.h
 AC_DEFINE( [_EXTENDED_TYPE_NEEDED], 1, [Using XDR extended types])
+
+# Git latest commit
+AC_MSG_CHECKING( [Git HEAD] )
+head_commit=`git rev-parse HEAD 2>/dev/null`
+
+if test "x$head_commit" == "x" ; then
+  AC_MSG_RESULT( [no git here] ) 
+  AC_DEFINE_UNQUOTED( [_GIT_HEAD_COMMIT], "not within git repository", [Lastest HEAD as configure was run])
+else
+  AC_MSG_RESULT( $head_commit ) 
+  AC_DEFINE_UNQUOTED( [_GIT_HEAD_COMMIT], "$head_commit", [Lastest HEAD as configure was run])
+fi
 
 # plateform relative flags
 case $build in
@@ -199,7 +212,6 @@ else
 fi
 AM_CONDITIONAL(BUILD_SHARED_FSAL, test "$enable_buildsharedfsal" = "yes")
 
-
 # NLMv4
 GA_ENABLE_AM_CONDITION([nlm],[enable NLMv4 support (Lock management for NFSv3)],[USE_NLM])
 
@@ -233,14 +245,6 @@ if test "$enable_fsal_up" == "yes"; then
         AC_DEFINE(_USE_FSAL_UP,1,[enable FSAL Upcall Interface support])
 fi
 AM_CONDITIONAL(USE_FSAL_UP, test "$enable_fsal_up" = "yes")
-
-# PNFS/DS
-GA_ENABLE_AM_CONDITION([ds],[enable pNFS DS support],[USE_DS])
-
-if test "$enable_ds" == "yes"; then
-        AC_DEFINE(_USE_DS,1,[enable pNFS DS support])
-fi
-AM_CONDITIONAL(USE_DS, test "$enable_ds" = "yes")
 
 # TI-RPC
 GA_ENABLE_AM_CONDITION([tirpc],[enable TIRPC support],[USE_TIRPC])
@@ -330,7 +334,7 @@ GA_ENABLE_FLAG(  [debug-nfsshell],       [enable extended debug traces for ganes
 GA_ENABLE_FLAG(  [pl-pgsql],		 [enable PGSQL stored procedures (POSIX FSAL)],		          [-D_WITH_PLPGSQL])
 GA_ENABLE_FLAG(  [cache-path],		 [Enable entry path caching in POSIX FSAL],	                  [-D_ENABLE_CACHE_PATH])
 GA_ENABLE_FLAG(  [handle-mapping],	 [enable NFSv2/3 handle mapping for PROXY FSAL],	          [-D_HANDLE_MAPPING])
-GA_ENABLE_FLAG(  [nfs4-locks],	         [enable NFSv4 locks],                                            [-D_WITH_NFSV4_LOCKS])
+GA_DISABLE_FLAG( [nfs4-locks],	         [disable NFSv4 locks],                                           [-D_WITH_NO_NFSV4_LOCKS])
 GA_DISABLE_FLAG( [nfs41-locks],          [disable NFSv4 locks],                                           [-D_WITH_NO_NFSV41_LOCKS])
 
 
@@ -373,7 +377,7 @@ if test "${with_cunit+set}" == "set"; then
 fi
 
 # FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|DYNFSAL|SHOOK (default=PROXY)],
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|CEPH|DYNFSAL|SHOOK (default=PROXY)],
              [specify the type of filesystem to be exported] ), FSAL="$withval", FSAL="PROXY")
 
 # exporting USE_FSAL_... for conditional compilation
@@ -385,6 +389,7 @@ AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
 AM_CONDITIONAL(USE_FSAL_SHOOK,    test "$FSAL" = "SHOOK") # variant of Lustre FSAL
 AM_CONDITIONAL(USE_FSAL_XFS,      test "$FSAL" = "XFS")
 AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
+AM_CONDITIONAL(USE_FSAL_CEPH,     test "$FSAL" = "CEPH")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
 AM_CONDITIONAL(SHARED_FSAL,       test "$FSAL" = "DYNFSAL")
 AM_CONDITIONAL(USE_FSAL_ZFS,      test "$FSAL" = "ZFS")
@@ -401,14 +406,11 @@ AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  
 AM_CONDITIONAL(USE_NFS4_1, test "$NFS4_MINOR" = "1")
 AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")
 
-# RPCAL switch argument (default is ONCRPC)
-AC_ARG_WITH( [rpcal], AS_HELP_STRING([--with-rpcal=ONCRPC|GSSRPC|TIRPC (default=ONCRPC)], [specify the type of RPCAL to be used] ),
-              RPCAL="$withval", RPCAL="ONCRPC")
-AM_CONDITIONAL(USE_GSSRPC, test "$RPCAL" = "GSSRPC" )
-AM_CONDITIONAL(HAVE_GSSAPI, test "$RPCAL" = "GSSRPC" )
+# RPCAL switch argument (default is TIRPC)
+AC_ARG_WITH( [rpcal], AS_HELP_STRING([--with-rpcal=TIRPC (default=TIRPC)], [specify the type of RPCAL to be used] ),
+              RPCAL="$withval", RPCAL="TIRPC")
 AM_CONDITIONAL(USE_TIRPC,  test "$RPCAL" = "TIRPC" )
 AM_CONDITIONAL(HAVE_GSSAPI, test "$RPCAL" = "TIRPC" )
-AM_CONDITIONAL(USE_ONCRPC, test "$RPCAL" = "ONCRPC" )
 
 # Enable 9P Support
 GA_ENABLE_AM_CONDITION([9p],[enable 9P support], [USE_9P])
@@ -427,28 +429,34 @@ if test "$enable_ipv6" == "yes"; then
 fi
 
 # BuddyMalloc
-GA_DISABLE_AM_CONDITION([BuddyMalloc], [disable GANESHA's memory allocator, for debug purpose only], [_NO_BUDDY_SYSTEM])
-
-echo "enable_BuddyMalloc=$enable_BuddyMalloc"
+GA_DISABLE_AM_CONDITION([BuddyMalloc], [disable memory allocator, for debug purpose only], [_NO_BUDDY_SYSTEM])
 
 if test "$enable_BuddyMalloc" == "yes"; then
-        AC_DEFINE(_BUDDY_SYSTEM, 1, [enable GANESHA's memory allocator])
+        AC_DEFINE(_BUDDY_SYSTEM, 1, [enable memory allocator])
 else
-	AC_DEFINE(_NO_BUDDY_SYSTEM, 1, [disable GANESHA's memory allocator, for debug purpose only])
+	AC_DEFINE(_NO_BUDDY_SYSTEM, 1, [disable memory allocator, for debug purpose only])
 fi
 AM_CONDITIONAL(USE_BUDDY_SYSTEM, test "$enable_BuddyMalloc" == "yes")
 
+# explicit Ceph path @todo : add a defaut value
+AC_ARG_WITH([ceph-prefix], AS_HELP_STRING([--with-ceph-prefix=<path>], [Path to Ceph installation] ),
+		CEPH_PREFIX="$withval", CEPH_PREFIX="/usr" )
+
 # PNFS switch argument (default is nothing)
-AC_ARG_WITH( [pnfs], AS_HELP_STRING([--with-pnfs=PARALLEL_FS|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
+AC_ARG_WITH( [pnfs-mds], AS_HELP_STRING([--with-pnfs-mds=PARALLEL_FS|CEPH|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
 	PNFS="$withval", PNFS="NONE" )
 
 AM_CONDITIONAL(USE_PNFS_NONE, 		test "$PNFS" = "NONE" )
 AM_CONDITIONAL(USE_PNFS_PARALLEL_FS,	test "$PNFS" = "PARALLEL_FS" )
-AM_CONDITIONAL(USE_PNFS_OSD, 	        test "$PNFS" = "OSD" )
-AM_CONDITIONAL(USE_PNFS_BLOCK, 	        test "$PNFS" = "BLOCK" )
+AM_CONDITIONAL(USE_PNFS_CEPH,	        test "$PNFS" = "CEPH" )
 
-AM_CONDITIONAL(USE_PNFS,                 test "$PNFS" != "NONE" )
+AM_CONDITIONAL(USE_PNFS,                test "$PNFS" != "NONE" )
 
+AM_CONDITIONAL(USE_FSALMDS, test "$PNFS" = "CEPH") 
+
+# FSAL based pNFS DS support (requires NFSv4.1, conflicts with DS)
+GA_ENABLE_AM_CONDITION([fsal-ds],[enable FSAL-based pNFS DS support (NFSv4.1 support is mandatory)],[USE_FSALDS])
+AM_CONDITIONAL(USE_FSALDS, test "x$enable_fsal_ds" = "xyes")
 
 # MFSL switch argument (default is NULL )
 AC_ARG_WITH( [mfsl], AS_HELP_STRING([--with-mfsl=NONE|NULL|ASYNC|AIO|MIRROR|PROXY_RPCSECGSS (default=NULL)],[specify the type of intermediate FSAL module to be used] ),
@@ -552,7 +560,6 @@ case $FSAL in
         FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
 		FS_NAME="lustre"
 		;;
-
     SHOOK)
         # Lustre FSAL compiled with special compilation directives
         AC_CHECK_LIB([shooksvr], [shook_restore],, AC_MSG_ERROR([libshooksvr not found]))
@@ -580,6 +587,17 @@ case $FSAL in
 		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_XFS/libfsalxfs.la"
 		FS_NAME="xfs"
 		;;
+	CEPH)
+		AC_DEFINE([_USE_CEPH], 1, [GANESHA exports CEPH Filesystem])
+                dnl AC_CHECK_HEADERS([ceph/libceph.h], [], [AC_MSG_ERROR( missing ceph include files)])
+		CFLAGS="-I${CEPH_PREFIX}/include -D_FILE_OFFSET_BITS=64 ${CFLAGS}"
+		FSAL_CFLAGS="-D_FILE_OFFSET_BITS=64"
+		LDFLAGS="-L${CEPH_PREFIX}/lib"
+                FSAL_LDFLAGS=-lcephfs
+                FSAL_LIB="\$(top_builddir)/FSAL/FSAL_CEPH/libfsalceph.la"
+                FS_NAME="ceph"
+                ;;
+
         DYNFSAL)
                	AC_DEFINE( _USE_SHARED_FSAL, 1, [enable shared FSAL] )
 		AM_CONDITIONAL( SHARED_FSAL, test "$FSAL" = "DYNFSAL" )
@@ -634,16 +652,6 @@ case $FSAL in
                                  #include <gpfs_nfs.h>
                                ])
 
-		if [[  $PNFS != "NONE" ]] ; then
-			AC_CHECK_DECLS([OPENHANDLE_LAYOUT_TYPE, OPENHANDLE_GET_DEVICEINFO, OPENHANDLE_GET_DEVICEITER,
-			                OPENHANDLE_LAYOUT_GET, OPENHANDLE_LAYOUT_RETURN],
-			               [],
-			               [AC_MSG_ERROR(missing Layout function)],
-			               [
-                                         #include <fcntl.h>
-                                         #include <gpfs_nfs.h>
-                                       ])
-		fi
 		AC_CHECK_LIB([gpfs], [gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs library)])
 		FSAL_CFLAGS=
 		FSAL_LDFLAGS=""
@@ -767,16 +775,6 @@ case $MFSL in
 esac
 
 case $RPCAL in
-	"ONCRPC")
-		;;
-	"GSSRPC")
-                AC_DEFINE(_USE_GSSRPC,1,[enable security management with GSSRPC])
-	        # ==> Add here libraries needed for GSSRPC
-                AC_CHECK_LIB([gssapi_krb5], [gss_import_name], [AC_DEFINE( _HAVE_GSSAPI,1,[enable GSSAPI support] ) ],
-			     [AC_MSG_ERROR( [GSSAPI could not be found...] ) ] )
-                AC_CHECK_LIB([gssrpc], [gssrpc_authunix_create_default], [AC_DEFINE( _HAVE_GSSRPC,1,[enable GSSRPC support] ) ],
-			      [AC_MSG_ERROR( [GSSRPC_KRB5 could not be found...] ) ] )
-		;;
 	"TIRPC")
                 PKG_CHECK_MODULES(TIRPC, libtirpc,
                   [
@@ -804,26 +802,23 @@ case $RPCAL in
 esac
 
 case $PNFS in
-	"NONE")
-		;;
-	"PARALLEL_FS")
-		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-		AC_DEFINE(_USE_PNFS_PARALLEL_FS,1,[enable NFSv4.1/pNFS support for parallel file system ])
-		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
-		;;
-	"OSD")
-		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-		AC_DEFINE(_USE_PNFS_OSD,1,[enable OSD based NFSv4.1/pNFS support])
-		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
-		;;
-	"BLOCK")
-		AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-		AC_DEFINE(_USE_PNFS_BLOCK,1,[enable Block Device based NFSv4.1/pNFS support])
-		PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
-		;;
-	*)
-		AC_MSG_ERROR([This pNFS layout is not supported])
+        "NONE")
+                ;;
+        "PARALLEL_FS")
+                AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
+                AC_DEFINE(_USE_PNFS_PARALLEL_FS,1,[enable NFSv4.1/pNFS support for parallel file system ])
+                PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
+                ;;
+        "CEPH")
+                AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
+                AC_DEFINE(_USE_PNFS_CEPH,1,[enable NFSv4.1/pNFS support for CEPH])
+                AC_DEFINE(_USE_FSALMDS,1,[enable FSAL based pNFS MDS support])
+                PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
+                ;;
+        *)
+                AC_MSG_ERROR([This pNFS layout is not supported])
 esac
+
 
 case $NFS4_MINOR in
 	"0")
@@ -843,13 +838,13 @@ if [[  $PNFS != "NONE" ]] ; then
   fi
 fi
 
-# Sanity check : no ds if NFS4_MINOR is not NFSv4.1
-if [[  $enable_ds == "yes" ]] ; then
-  if [[ $NFS4_MINOR == "0" ]] ; then
-     AC_MSG_ERROR("You must activate NFSv4.1 support to enable pnfs DS support" )
+# Sanity check for FSAL based DS support
+if test "$enable_fsal_ds" == "yes"; then
+  if [[ x$NFS4_MINOR != "x1" ]] ; then
+     AC_MSG_ERROR("You must activate NFSv4.1 support to enable FSAL data server support" )
   fi
+        AC_DEFINE(_USE_FSALDS,1,[enable FSAL based pNFS DS support])
 fi
-
 
 # MFSL_ASYNC should not be used with HPSS
 if [[ $FSAL == "HPSS" ]] ; then
@@ -890,15 +885,12 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_ZFS/Makefile
                  include/FSAL/FSAL_VFS/Makefile
                  include/FSAL/FSAL_TEMPLATE/Makefile
+                 include/FSAL/FSAL_CEPH/Makefile
                  include/MFSL/Makefile
                  include/MFSL/MFSL_NULL/Makefile
                  include/MFSL/MFSL_AIO/Makefile
                  include/MFSL/MFSL_ASYNC/Makefile
                  include/MFSL/MFSL_PROXY_RPCSECGSS/Makefile
-                 include/PNFS/Makefile
-		 include/PNFS/PARALLEL_FS/Makefile
-		 include/PNFS/OSD/Makefile
-		 include/PNFS/BLOCK/Makefile
                  BuddyMalloc/Makefile
                  Common/Makefile
                  support/Makefile
@@ -922,11 +914,11 @@ AC_CONFIG_FILES([include/Makefile
                  Protocols/9P/Makefile
 		 Protocols/NFS/Makefile
 		 Protocols/NLM/Makefile
+		 Protocols/RQUOTA/Makefile
+                 Protocols/XDR/Makefile
 		 Protocols/PNFS/Makefile
 		 Protocols/PNFS/PARALLEL_FS/Makefile
-		 Protocols/PNFS/OSD/Makefile
-		 Protocols/PNFS/BLOCK/Makefile
-                 Protocols/XDR/Makefile
+		 Protocols/PNFS/CEPH/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile
 		 FSAL/FSAL_HPSS/HPSSclapiExt/Makefile
@@ -936,9 +928,9 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_POSIX/DBExt/MYSQL/Makefile
 		 FSAL/FSAL_PROXY/Makefile
 		 FSAL/FSAL_PROXY/handle_mapping/Makefile
+		 FSAL/FSAL_CEPH/Makefile
 		 FSAL/FSAL_FUSELIKE/Makefile
 		 FSAL/FSAL_LUSTRE/Makefile
-		 FSAL/FSAL_LUSTRE/PNFS/Makefile
 		 FSAL/FSAL_XFS/Makefile
 		 FSAL/FSAL_GPFS/Makefile
                  FSAL/FSAL_ZFS/Makefile
@@ -950,8 +942,6 @@ AC_CONFIG_FILES([include/Makefile
 		 MFSL/MFSL_AIO/Makefile
 		 MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  RPCAL/Makefile
-                 RPCAL/ONCRPC/Makefile
-                 RPCAL/GSSRPC/Makefile
                  RPCAL/TIRPC/Makefile
                  MainNFSD/Makefile
                  test/Makefile

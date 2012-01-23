@@ -85,9 +85,6 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   nfs_client_id_t *pnfs_clientid;
   nfs41_session_t *pnfs41_session = NULL;
   clientid4 clientid = 0;
-  nfs_worker_data_t *pworker = NULL;
-
-  pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
 #define arg_CREATE_SESSION4 op->nfs_argop4_u.opcreate_session
 #define res_CREATE_SESSION4 resp->nfs_resop4_u.opcreate_session
@@ -97,8 +94,13 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   clientid = arg_CREATE_SESSION4.csa_clientid;
 
   LogDebug(COMPONENT_NFS_V4,
-           "CREATE_SESSION clientid = %llx",
-           (long long unsigned int)clientid);
+           "CREATE_SESSION clientid=%lld csa_sequence=%"PRIu32
+           " clientid_cs_seq=%" PRIu32" data_oppos=%d data_use_drc=%d\n",
+	   (long long unsigned int) clientid,
+	   arg_CREATE_SESSION4.csa_sequence,
+	   pnfs_clientid->create_session_sequence,
+	   data->oppos,
+	   data->use_drc);
 
   /* Does this id already exists ? */
   if(nfs_client_id_Get_Pointer(clientid, &pnfs_clientid) != CLIENT_ID_SUCCESS)
@@ -154,7 +156,8 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
 
   memset((char *)pnfs41_session, 0, sizeof(nfs41_session_t));
   pnfs41_session->clientid = clientid;
-  pnfs41_session->sequence = 1;
+
+  pnfs41_session->sequence = arg_CREATE_SESSION4.csa_sequence;
   pnfs41_session->session_flags = CREATE_SESSION4_FLAG_CONN_BACK_CHAN;
   pnfs41_session->fore_channel_attrs = arg_CREATE_SESSION4.csa_fore_chan_attrs;
   pnfs41_session->back_channel_attrs = arg_CREATE_SESSION4.csa_back_chan_attrs;
@@ -169,7 +172,8 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
       return res_CREATE_SESSION4.csr_status;
     }
 
-  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_sequence = 1;
+  res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_sequence =
+    pnfs41_session->sequence;
   res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_flags =
       CREATE_SESSION4_FLAG_CONN_BACK_CHAN;
 

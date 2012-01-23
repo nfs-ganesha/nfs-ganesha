@@ -67,6 +67,8 @@
 #include <errno.h>
 #include <gpfs_nfs.h>
 
+#include "fsal_glue_const.h"
+
 /*
  * labels in the config file
  */

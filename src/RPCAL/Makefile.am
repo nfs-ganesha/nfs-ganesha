@@ -19,18 +19,6 @@ test_rpctools_LDADD = librpcal.la $(BUDDY_LIB_FLAGS) ../HashTable/libhashtable.l
 if USE_TIRPC
 SUBDIRS = TIRPC
 librpcal_la_LIBADD = TIRPC/librpcalcore.la
-else
-if USE_GSSRPC
-SUBDIRS = GSSRPC
-librpcal_la_LIBADD = GSSRPC/librpcalcore.la
-else
-if USE_ONCRPC
-SUBDIRS = ONCRPC
-librpcal_la_LIBADD = ONCRPC/librpcalcore.la
-else
-librpcal_la_LIBADD =
-endif
-endif
 endif
 
 librpcal_la_SOURCES = nfs_dupreq.c \

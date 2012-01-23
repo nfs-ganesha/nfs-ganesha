@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -71,6 +71,8 @@ void dec_state_owner_ref_locked(state_owner_t        * powner,
 
 void dec_state_owner_ref(state_owner_t        * powner,
                          cache_inode_client_t * pclient);
+state_status_t get_clientid_owner(clientid4 clientid,
+                                  state_owner_t **clientid_owner);
 
 /******************************************************************************
  *
@@ -173,12 +175,11 @@ int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
                             char              * other);
 
 #define STATEID_NO_SPECIAL 0
-#define STATEID_SPECIAL_SEQID_0    1
 #define STATEID_SPECIAL_ALL_0      2
 #define STATEID_SPECIAL_ALL_1      4
 #define STATEID_SPECIAL_CURRENT    8
 #define STATEID_SPECIAL_ANY        0xFF
-#define STATEID_SPECIAL_FOR_LOCK   (STATEID_SPECIAL_SEQID_0 | STATEID_SPECIAL_CURRENT)
+#define STATEID_SPECIAL_FOR_LOCK   (STATEID_SPECIAL_CURRENT)
 
 int nfs4_Check_Stateid(stateid4        * pstate,
                        cache_entry_t   * pentry,
@@ -229,11 +230,16 @@ unsigned long nfs4_owner_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long nfs4_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t    * buffclef);
 
-void convert_nfs4_open_owner(open_owner4             * pnfsowoner,
-                             state_nfs4_owner_name_t * pname_owner);
+void convert_nfs4_open_owner(open_owner4             * pnfsowner,
+                             state_nfs4_owner_name_t * pname_owner,
+                             clientid4                 clientid);
 
 void convert_nfs4_lock_owner(lock_owner4             * pnfsowoner,
-                             state_nfs4_owner_name_t * pname_owner);
+                             state_nfs4_owner_name_t * pname_owner,
+                             clientid4                 clientid);
+
+void convert_nfs4_clientid_owner(clientid4                 clientid,
+                                 state_nfs4_owner_name_t * pname_owner);
 
 void nfs4_owner_PrintAll(void);
 
@@ -424,4 +430,16 @@ unsigned long lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
                                         hash_buffer_t * buffclef);
 
+#ifdef _USE_FSALMDS
+state_status_t state_add_segment(state_t             * pstate,
+                                 struct pnfs_segment * segment,
+                                 void                * fsal_data,
+                                 bool_t                return_on_close);
+
+state_status_t state_delete_segment(state_layout_segment_t *segment);
+state_status_t state_lookup_layout_state(cache_entry_t * pentry,
+                                         state_owner_t * powner,
+                                         layouttype4     type,
+                                         state_t      ** pstate);
+#endif                          /*  _USE_FSALMDS */
 #endif                          /*  _SAL_FUNCTIONS_H */

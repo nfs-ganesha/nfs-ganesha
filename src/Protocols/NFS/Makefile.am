@@ -97,21 +97,12 @@ libnfsproto_la_SOURCES = mnt_Export.c	      		     \
                          ../../include/err_inject.h          \
                          ../../include/nfs_file_handle.h
 
-if USE_QUOTA
-libnfsproto_la_SOURCES += rquota_Null.c            \
-                          rquota_getquota.c        \
-                          rquota_getactivequota.c  \
-                          rquota_setquota.c        \
-                          rquota_setactivequota.c
-
-endif
-
-
 if USE_NFS4_1
 libnfsproto_la_SOURCES += nfs41_op_exchange_id.c      \
                           nfs41_op_close.c            \
                           nfs41_op_getdevicelist.c    \
                           nfs41_op_getdeviceinfo.c    \
+                          nfs41_op_commit.c           \
                           nfs41_op_create_session.c   \
                           nfs41_op_destroy_session.c  \
                           nfs41_op_free_stateid.c     \
@@ -137,6 +128,3 @@ test_mnt_proto_LDADD = libnfsproto.la ../../BuddyMalloc/libBuddyMalloc.la ../../
 
 new: clean all
 
-doc:
-	doxygen ./doxygen.conf
-	rep=`grep OUTPUT_DIRECTORY doxygen.conf | grep share  | awk -F '=' '{print $$2;}'` ; cd $$rep/latex ; make

@@ -18,12 +18,6 @@ else
 FSAL_UP_LIB_FLAGS =
 endif
 
-if USE_GSSRPC
-SEC_LIB_FLAGS =
-SVC_FLAGS =
-SVC_LIB_FLAGS = -lgssrpc
-endif
-
 if HAVE_GSSAPI
 SEC_LIB_FLAGS = $(SEC_LFLAGS) -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -ldl
 endif
@@ -65,6 +59,13 @@ NLM_LIB = ../Protocols/NLM/libnlm.la
 else
 NLM_LIB =
 endif
+
+if USE_QUOTA
+RQUOTA_LIB = ../Protocols/RQUOTA/librquota.la
+else
+RQUOTA_LIB = 
+endif
+
 
 if USE_9P
 DISPATCH_9P_FILES = 9p_dispatcher.c 
@@ -146,6 +147,8 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
 libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la                   \
                                       $(PNFS_LIB)                                       \
                                       $(NLM_LIB)                                        \
+                                      $(RQUOTA_LIB)                                      \
+                                      $(FSALMDS_LIB)                                    \
                                       $(SEC_LIB_FLAGS)                                  \
                                       $(SVC_LIB_FLAGS)                                  \
                                       $(NFSIDMAP_LIB_FLAGS)                             \
@@ -202,6 +205,3 @@ endif
 
 new: clean all
 
-doc:
-	doxygen ./doxygen.conf
-	rep=`grep OUTPUT_DIRECTORY doxygen.conf | grep share  | awk -F '=' '{print $$2;}'` ; cd $$rep/latex ; make

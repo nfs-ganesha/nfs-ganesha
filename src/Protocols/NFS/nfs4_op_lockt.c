@@ -77,7 +77,7 @@
 
 int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-#ifndef _WITH_NFSV4_LOCKS
+#ifdef _WITH_NO_NFSV4_LOCKS
   resp->resop = NFS4_OP_LOCKT;
   res_LOCKT4.status = NFS4ERR_LOCK_NOTSUPP;
   return res_LOCKT4.status;
@@ -188,7 +188,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Is this lock_owner known ? */
-  convert_nfs4_open_owner(&arg_LOCKT4.owner, &owner_name);
+  convert_nfs4_lock_owner(&arg_LOCKT4.owner, &owner_name, 0LL);
 
   if(!nfs4_owner_Get_Pointer(&owner_name, &popen_owner))
     {

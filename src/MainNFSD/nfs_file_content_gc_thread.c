@@ -110,10 +110,8 @@ int file_content_gc_manage_entry(LRU_entry_t * plru_entry, void *addparam)
 {
   cache_content_entry_t *pentry = NULL;
   cache_content_status_t cache_content_status;
-  exportlist_t *pexport = NULL;
 
   pentry = (cache_content_entry_t *) plru_entry->buffdata.pdata;
-  pexport = (exportlist_t *) addparam;
 
   if(pentry->local_fs_entry.sync_state == SYNC_OK)
     {

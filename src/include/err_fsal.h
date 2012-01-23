@@ -9,16 +9,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -148,6 +148,10 @@ static family_error_t __attribute__ ((__unused__)) tab_errstatus_FSAL[] =
         "This is a symbolic link, should be file/directory"},
   {
   ERR_FSAL_ATTRNOTSUPP, "ERR_FSAL_ATTRNOTSUPP", "Attribute not supported"},
+#define ERR_FSAL_PNFS_IO_HOLE   10075
+  {
+  ERR_FSAL_PNFS_IO_HOLE, "ERR_FSAL_PNFS_IO_HOLE", "pNFS read of IO hole in sparse layout"},
+#define ERR_FSAL_NOT_INIT       20001
   {
   ERR_FSAL_NOT_INIT, "ERR_FSAL_NOT_INIT", "Filesystem not initialized"},
   {
