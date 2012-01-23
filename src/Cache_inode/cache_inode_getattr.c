@@ -121,7 +121,7 @@ cache_inode_getattr(cache_entry_t * pentry,
     /* RW Lock goes for writer to reader */
     rw_lock_downgrade(&pentry->lock);
 
-    cache_inode_get_attributes(pentry, pattr);
+    *pattr = pentry->attributes;
 
     if(FSAL_TEST_MASK(pattr->asked_attributes,
                       FSAL_ATTR_RDATTR_ERR))

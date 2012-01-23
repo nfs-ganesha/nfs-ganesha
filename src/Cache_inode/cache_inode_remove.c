@@ -309,7 +309,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
       /* Remove the file from FSAL */
       after_attr.asked_attributes = pclient->attrmask;
 #ifdef _USE_MFSL
-      cache_inode_get_attributes(pentry, &after_attr);
+      after_attr = pentry->attributes;
       fsal_status = MFSL_unlink(&pentry->mobject,
                                 pnode_name,
                                 &to_remove_entry->mobject,

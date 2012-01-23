@@ -880,8 +880,6 @@ cache_inode_status_t cache_inode_invalidate_all_cached_dirent(cache_entry_t *
 
 void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pattr);
 
-void cache_inode_get_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pattr);
-
 cache_inode_file_type_t cache_inode_fsal_type_convert(fsal_nodetype_t type);
 
 int cache_inode_type_are_rename_compatible(cache_entry_t * pentry_src,

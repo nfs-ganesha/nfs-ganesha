@@ -219,8 +219,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
   /* Do the link at FSAL level */
   link_attributes.asked_attributes = pclient->attrmask;
 #ifdef _USE_MFSL
-  cache_inode_get_attributes(pentry_src, &link_attributes);
-  cache_inode_get_attributes(pentry_dir_dest, &dirdest_attributes);
+  link_attributes = pentry_src->attributes;
+  dirdest_attributes = pentry_dir_dest->attributes;
   fsal_status =
       MFSL_link(&pentry_src->mobject, &pentry_dir_dest->mobject, plink_name, pcontext,
                 &pclient->mfsl_context, &link_attributes, NULL);

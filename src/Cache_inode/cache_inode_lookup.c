@@ -391,7 +391,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t        * pentry_parent,
     }
 
   /* Return the attributes */
-  cache_inode_get_attributes(pentry, pattr);
+  *pattr = pentry->attributes;
 
   *pstatus = cache_inode_valid(pentry_parent, CACHE_INODE_OP_GET, pclient);
 

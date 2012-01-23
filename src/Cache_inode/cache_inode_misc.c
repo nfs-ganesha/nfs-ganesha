@@ -1134,35 +1134,6 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
 
 /**
  *
- * cache_inode_get_attributes: gets the attributes cached in the entry.
- *
- * Gets the attributes cached in the entry.
- *
- * @param pentry [IN] the entry to deal with.
- * @param pattr [OUT] the attributes for this entry.
- *
- * @return nothing (void function).
- *
- */
-/* FIXME: this whole thing disappears!  same with init_attributes.
- * Does this error test really matter?  If this is a goofy cache entry,
- * shouldn't somewhere else check this?  All this does is a struct copy.
- */
-void cache_inode_get_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pattr)
-{
-  /* The pentry is supposed to be locked */
-  if((pentry->internal_md.type == UNASSIGNED) ||
-     (pentry->internal_md.type == RECYCLED))
-    {
-      memset(pattr, 0, sizeof(fsal_attrib_list_t));
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                   "Unexpected UNNASIGNED or RECYLCED type in cache_inode_get_attributes");
-    }
-  *pattr = pentry->attributes;
-}                               /* cache_inode_get_attributes */
-
-/**
- *
  * cache_inode_init_attributes: sets the initial attributes cached in the entry.
  *
  * Sets the initial attributes cached in the entry. If NFS4 ACL is used,

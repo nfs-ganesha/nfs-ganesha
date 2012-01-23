@@ -314,8 +314,7 @@ int nfs_Mkdir(nfs_arg_t * parg,
                                                   obj_attributes));
 
                               /* Get the attributes of the parent after the operation */
-                              cache_inode_get_attributes(parent_pentry,
-                                                         &attr_parent_after);
+			      attr_parent_after = parent_pentry->attributes;
 
                               /*
                                * Build Weak Cache

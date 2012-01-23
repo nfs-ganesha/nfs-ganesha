@@ -154,7 +154,7 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
       pentry = (cache_entry_t *) value.pdata;
 
       /* return attributes additionally */
-      cache_inode_get_attributes(pentry, pattr);
+      *pattr = pentry->attributes;
 
       if ( !pclient ) {
 	/* invalidate. Just return it to mark it stale and go on. */

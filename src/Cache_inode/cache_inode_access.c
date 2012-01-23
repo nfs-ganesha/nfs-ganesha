@@ -113,7 +113,7 @@ cache_inode_access_sw(cache_entry_t * pentry,
             used_access_type = access_type & ~FSAL_F_OK;
 
             /* We get the attributes */
-            cache_inode_get_attributes(pentry, &attr);
+            attr = pentry->attributes;
             /*
              * Function FSAL_test_access is used instead of FSAL_access.
              * This allow to take benefit of the previously cached
@@ -124,7 +124,7 @@ cache_inode_access_sw(cache_entry_t * pentry,
             if(pclient->use_test_access == 1)
                 {
                     /* We get the attributes */
-                    cache_inode_get_attributes(pentry, &attr);
+		    attr = pentry->attributes;
 
                     fsal_status = FSAL_test_access(pcontext, used_access_type, &attr);
                 }

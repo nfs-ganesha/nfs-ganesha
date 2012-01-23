@@ -135,7 +135,7 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* Get the attributes for the object */
-  cache_inode_get_attributes(data->current_entry, &attr);
+  attr = data->current_entry->attributes;
 
   /* determine the rights to be tested in FSAL */
 
