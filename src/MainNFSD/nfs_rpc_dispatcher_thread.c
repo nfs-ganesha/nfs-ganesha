@@ -1261,7 +1261,7 @@ void *rpc_dispatcher_thread(void *Arg)
   /* Initialisation of the Buddy Malloc */
   LogInfo(COMPONENT_DISPATCH,
           "Initialization of memory manager");
-  if(BuddyInit(&nfs_param.buddy_param_worker) != BUDDY_SUCCESS)
+  if(BuddyInit(&nfs_param.buddy_param_tcp_mgr)!= BUDDY_SUCCESS)
     LogFatal(COMPONENT_DISPATCH,
              "Memory manager could not be initialized");
 #endif
