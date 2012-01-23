@@ -209,14 +209,6 @@ typedef char path_str_t[MAXPATHLEN] ;
 
 #define CLIENT_ID_MAX_LEN             72        /* MUST be a multiple of 9 */
 
-#ifndef P
-#define P( sem ) pthread_mutex_lock( &sem )
-#endif
-
-#ifndef V
-#define V( sem ) pthread_mutex_unlock( &sem )
-#endif
-
 /* The default attribute mask for NFSv2/NFSv3 */
 #define FSAL_ATTR_MASK_V2_V3   ( FSAL_ATTRS_MANDATORY | FSAL_ATTR_MODE     | FSAL_ATTR_FILEID | \
                                  FSAL_ATTR_FSID       | FSAL_ATTR_NUMLINKS | FSAL_ATTR_OWNER  | \

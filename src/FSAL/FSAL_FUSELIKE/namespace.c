@@ -15,14 +15,6 @@
 #include <errno.h>
 #include <assert.h>
 
-#ifndef P
-#define P(_m_)    pthread_mutex_lock(&(_m_))
-#endif
-
-#ifndef V
-#define V(_m_)    pthread_mutex_unlock(&(_m_))
-#endif
-
 /*-----------------------------------------------------
  *              Type definitions
  *-----------------------------------------------------*/

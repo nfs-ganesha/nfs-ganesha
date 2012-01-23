@@ -94,4 +94,8 @@ int find_colon(char c);
 int find_endLine(char c);
 int find_slash(char c);
 
+/* My habit with mutex */
+#define P( _mutex_ ) pthread_mutex_lock( &_mutex_ )
+#define V( _mutex_ ) pthread_mutex_unlock( &_mutex_ )
+
 #endif
