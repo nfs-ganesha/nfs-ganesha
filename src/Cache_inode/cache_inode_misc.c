@@ -140,8 +140,6 @@ const char *cache_inode_err_str(cache_inode_status_t err)
 void cache_inode_print_srvhandle(char *comment, cache_entry_t * pentry);
 #endif
 
-static void cache_inode_init_attributes(cache_entry_t *pentry, fsal_attrib_list_t *pattr);
-
 /**
  *
  * ci_avl_dir_name_cmp
@@ -760,7 +758,16 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
     }
 
   /* Now that added as a new entry, init attribute. */
-  cache_inode_init_attributes(pentry, &fsal_attributes);
+  pentry->attributes = fsal_attributes;
+
+#ifdef _USE_NFS4_ACL
+  LogDebug(COMPONENT_CACHE_INODE, "init_attributes: md_type=%d, acl=%p",
+           pentry->internal_md.type, pattr->acl);
+
+  /* Bump up reference counter of new acl. */
+  if(pentry->attributes.acl)
+    nfs4_acl_entry_inc_ref(pentry->attributes.acl);
+#endif                          /* _USE_NFS4_ACL */
 
   /* if entry is a REGULAR_FILE and has a related data cache entry from a previous server instance that crashed, recover it */
   /* This is done only when this is not a creation (when creating a new file, it is impossible to have it cached)           */
@@ -1131,38 +1138,6 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
 
   return CACHE_INODE_SUCCESS;
 }                               /* cache_inode_valid */
-
-/**
- *
- * cache_inode_init_attributes: sets the initial attributes cached in the entry.
- *
- * Sets the initial attributes cached in the entry. If NFS4 ACL is used,
- * update the reference counter of ACL.
- *
- * @param pentry [OUT] the entry to deal with.
- * @param pattr [IN] the attributes to be set for this entry.
- *
- * @return nothing (void function).
- *
- */
-/* FIXME: this is buggy although it dups old code.
- * What is the difference between _get_ and _init_.
- * the ref counting of acls is interesting with the struct copy...
- */
-void cache_inode_init_attributes( cache_entry_t       * pentry, 
-                                  fsal_attrib_list_t  * pattr)
-{
-  pentry->attributes = *pattr;
-
-#ifdef _USE_NFS4_ACL
-  LogDebug(COMPONENT_CACHE_INODE, "init_attributes: md_type=%d, acl=%p",
-           pentry->internal_md.type, pattr->acl);
-
-  /* Bump up reference counter of new acl. */
-  if(pattr->acl)
-    nfs4_acl_entry_inc_ref(pattr->acl);
-#endif                          /* _USE_NFS4_ACL */
-}
 
 /**
  *
