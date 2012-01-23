@@ -211,7 +211,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t        * pentry_parent,
         {
           LogFullDebug(COMPONENT_CACHE_INODE, "Cache Miss detected");
 
-          dir_handle = pentry_parent->object.dir.handle;
+          dir_handle = pentry_parent->handle;
           object_attributes.asked_attributes = pclient->attrmask;
 #ifdef _USE_MFSL
 

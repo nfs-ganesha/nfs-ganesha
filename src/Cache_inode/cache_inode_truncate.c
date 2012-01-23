@@ -129,27 +129,27 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
         }
 
       /* Cache truncate succeeded, we must now update the size in the attributes */
-      if((pentry->object.file.attributes.asked_attributes & FSAL_ATTR_SIZE) ||
-         (pentry->object.file.attributes.asked_attributes & FSAL_ATTR_SPACEUSED))
+      if((pentry->attributes.asked_attributes & FSAL_ATTR_SIZE) ||
+         (pentry->attributes.asked_attributes & FSAL_ATTR_SPACEUSED))
         {
-          pentry->object.file.attributes.filesize = length;
-          pentry->object.file.attributes.spaceused = length;
+          pentry->attributes.filesize = length;
+          pentry->attributes.spaceused = length;
         }
 
       /* Set the time stamp values too */
-      cache_inode_set_time_current( &pentry->object.file.attributes.mtime ) ;
-      pentry->object.file.attributes.ctime = pentry->object.file.attributes.mtime;
+      cache_inode_set_time_current( &pentry->attributes.mtime ) ;
+      pentry->attributes.ctime = pentry->attributes.mtime;
     }
   else
     {
       /* Call FSAL to actually truncate */
-      pentry->object.file.attributes.asked_attributes = pclient->attrmask;
+      pentry->attributes.asked_attributes = pclient->attrmask;
 #ifdef _USE_MFSL
       fsal_status = MFSL_truncate(&pentry->mobject, pcontext, &pclient->mfsl_context, length, NULL,    
                                   &pentry->object.file.attributes, NULL);
 #else
-      fsal_status = FSAL_truncate(&pentry->object.file.handle, pcontext, length, NULL,  /** @todo &pentry->object.file.open_fd.fd, *//* Used only with FSAL_PROXY */
-                                  &pentry->object.file.attributes);
+      fsal_status = FSAL_truncate(&pentry->handle, pcontext, length, NULL,  /** @todo &pentry->object.file.open_fd.fd, *//* Used only with FSAL_PROXY */
+                                  &pentry->attributes);
 #endif /* _USE_MFSL */
 
       if(FSAL_IS_ERROR(fsal_status))
@@ -191,7 +191,7 @@ cache_inode_status_t cache_inode_truncate_sw(cache_entry_t * pentry,
     V_w(&pentry->lock);
 
   /* Returns the attributes */
-  *pattr = pentry->object.file.attributes;
+  *pattr = pentry->attributes;
 
   /* stat */
   if(*pstatus != CACHE_INODE_SUCCESS)

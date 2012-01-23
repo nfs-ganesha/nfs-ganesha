@@ -353,8 +353,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
 
   if(pentry_dirsrc->internal_md.type == DIRECTORY)
     {
-      phandle_dirsrc = &pentry_dirsrc->object.dir.handle;
-      pattrsrc = &pentry_dirsrc->object.dir.attributes;
+      phandle_dirsrc = &pentry_dirsrc->handle;
+      pattrsrc = &pentry_dirsrc->attributes;
     }
   else
     {
@@ -374,8 +374,8 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
 
   if(pentry_dirdest->internal_md.type == DIRECTORY)
     {
-      phandle_dirdest = &pentry_dirdest->object.dir.handle;
-      pattrdest = &pentry_dirdest->object.dir.attributes;
+      phandle_dirdest = &pentry_dirdest->handle;
+      pattrdest = &pentry_dirdest->attributes;
     }
   else
     {

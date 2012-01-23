@@ -302,7 +302,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
     }
 
   /* pentry->internal_md.type == DIRECTORY */
-  fsal_handle_parent = pentry->object.dir.handle;
+  fsal_handle_parent = pentry->handle;
 
   if(status == CACHE_INODE_SUCCESS)
     {
@@ -370,40 +370,21 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                "cache_inode_remove_cached_dirent: status=%d", status);
 
   /* Update the cached attributes */
-  pentry->object.dir.attributes = after_attr;
+  pentry->attributes = after_attr;
 
   /* Update the attributes for the removed entry */
+/* FIXME: to_remove_entry->attributes and remove_attr are the same bits.
+ * clean this when attributes move to the handle.  Test for type is
+ * not needed here.  But keep it for now...
+ */
 
   if(remove_attr.type != FSAL_TYPE_DIR)
     {
       if(remove_attr.numlinks > 1)
         {
-          switch (to_remove_entry->internal_md.type)
+	  if((to_remove_entry->internal_md.type == UNASSIGNED)||
+	     (to_remove_entry->internal_md.type == RECYCLED))
             {
-            case SYMBOLIC_LINK:
-              assert(to_remove_entry->object.symlink);
-              to_remove_entry->object.symlink->attributes.numlinks -= 1;
-              cache_inode_set_time_current( &to_remove_entry->object.symlink->attributes.ctime ) ;
-              to_remove_numlinks = to_remove_entry->object.symlink->attributes.numlinks;
-              break;
-
-            case REGULAR_FILE:
-              to_remove_entry->object.file.attributes.numlinks -= 1;
-              cache_inode_set_time_current( &to_remove_entry->object.file.attributes.ctime ) ;
-              to_remove_numlinks = to_remove_entry->object.file.attributes.numlinks;
-              break;
-
-            case CHARACTER_FILE:
-            case BLOCK_FILE:
-            case SOCKET_FILE:
-            case FIFO_FILE:
-              to_remove_entry->object.special_obj.attributes.numlinks -= 1;
-              cache_inode_set_time_current( &to_remove_entry->object.special_obj.attributes.ctime ) ;
-              to_remove_numlinks =
-                  to_remove_entry->object.special_obj.attributes.numlinks;
-              break;
-
-            default:
               /* Other objects should not be hard linked */
               if(use_mutex)
                 {
@@ -412,8 +393,10 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
                 }
               *pstatus = CACHE_INODE_BAD_TYPE;
               return *pstatus;
-              break;
             }
+	  to_remove_entry->attributes.numlinks -= 1;
+	  cache_inode_set_time_current( &to_remove_entry->attributes.ctime ) ;
+	  to_remove_numlinks = to_remove_entry->attributes.numlinks;
         }
     }
   else

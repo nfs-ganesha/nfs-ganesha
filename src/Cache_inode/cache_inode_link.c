@@ -183,31 +183,9 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
   P_w(&pentry_dir_dest->lock);
 
   /* Get the handles */
-  switch (pentry_src->internal_md.type)
+  if((pentry_src->internal_md.type == UNASSIGNED) ||
+     (pentry_src->internal_md.type == RECYCLED))
     {
-    case REGULAR_FILE:
-      handle_src = pentry_src->object.file.handle;
-      break;
-
-    case SYMBOLIC_LINK:
-      assert(pentry_src->object.symlink);
-      handle_src = pentry_src->object.symlink->handle;
-      break;
-
-    case FS_JUNCTION:
-    case DIRECTORY:
-      handle_src = pentry_src->object.dir.handle;
-      break;
-
-    case CHARACTER_FILE:
-    case BLOCK_FILE:
-    case SOCKET_FILE:
-    case FIFO_FILE:
-      handle_src = pentry_src->object.special_obj.handle;
-      break;
-
-    case UNASSIGNED:
-    case RECYCLED:
       LogCrit(COMPONENT_CACHE_INODE,
               "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
               pentry_src->internal_md.type, __LINE__, __FILE__);
@@ -215,15 +193,11 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK] += 1;
       return *pstatus;
     }
-
-  switch (pentry_dir_dest->internal_md.type)
+  handle_src = pentry_src->handle;
+  
+  if( !((pentry_dir_dest->internal_md.type == FS_JUNCTION) ||
+	(pentry_dir_dest->internal_md.type == DIRECTORY)))
     {
-    case FS_JUNCTION:
-    case DIRECTORY:
-      handle_dest = pentry_dir_dest->object.dir.handle;
-      break;
-
-    default:
       LogCrit(COMPONENT_CACHE_INODE,
               "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
               pentry_src->internal_md.type, __LINE__, __FILE__);
@@ -231,14 +205,15 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_LINK] += 1;
       return *pstatus;
     }
+  handle_dest = pentry_dir_dest->handle;
 
   /* If object is a data cached regular file, keeps it mtime and size, STEP 1 */
   if((pentry_src->internal_md.type == REGULAR_FILE)
      && (pentry_src->object.file.pentry_content != NULL))
     {
-      save_mtime = pentry_src->object.file.attributes.mtime;
-      save_size = pentry_src->object.file.attributes.filesize;
-      save_spaceused = pentry_src->object.file.attributes.spaceused;
+      save_mtime = pentry_src->attributes.mtime;
+      save_size = pentry_src->attributes.filesize;
+      save_spaceused = pentry_src->attributes.spaceused;
     }
 
   /* Do the link at FSAL level */

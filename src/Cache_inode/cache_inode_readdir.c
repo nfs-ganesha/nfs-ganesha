@@ -123,7 +123,7 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
                              pcontext,
                              &pclient->mfsl_context, &fsal_dirhandle, &dir_attributes, NULL);
 #else
-  fsal_status = FSAL_opendir(&pentry_dir->object.dir.handle,
+  fsal_status = FSAL_opendir(&pentry_dir->handle,
                              pcontext, &fsal_dirhandle, &dir_attributes);
 #endif
 
@@ -862,7 +862,7 @@ cache_inode_status_t cache_inode_readdir_populate(
                              pcontext,
                              &pclient->mfsl_context, &fsal_dirhandle, &dir_attributes, NULL);
 #else
-  fsal_status = FSAL_opendir(&pentry_dir->object.dir.handle,
+  fsal_status = FSAL_opendir(&pentry_dir->handle,
                              pcontext, &fsal_dirhandle, &dir_attributes);
 #endif
   if(FSAL_IS_ERROR(fsal_status))

@@ -4844,34 +4844,13 @@ int fn_Cache_inode_invalidate(int argc,      /* IN : number of args in argv */
                      output)))
     return rc;
 
-  switch( obj_hdl->internal_md.type )
+  if((obj_hdl->internal_md.type == UNASSIGNED) ||
+     (obj_hdl->internal_md.type == RECYCLED))
     {
-    case REGULAR_FILE:
-      pfsal_handle = &obj_hdl->object.file.handle;
-      break;
-
-    case SYMBOLIC_LINK:
-      pfsal_handle = &obj_hdl->object.symlink->handle;
-      break;
-
-    case FS_JUNCTION:
-    case DIRECTORY:
-      pfsal_handle = &obj_hdl->object.dir.handle;
-      break;
-
-    case CHARACTER_FILE:
-    case BLOCK_FILE:
-    case SOCKET_FILE:
-    case FIFO_FILE:
-      pfsal_handle = &obj_hdl->object.special_obj.handle;
-      break;
-
-    case UNASSIGNED:
-    case RECYCLED:
       fprintf(output, "invalidate: unknown pentry type : %u\n",  obj_hdl->internal_md.type );
       return -1 ;
-      break;
     }
+  pfsal_handle = &obj_hdl->handle;
 
   if( ( context->cache_status = cache_inode_invalidate( pfsal_handle,
                                                         &attr,

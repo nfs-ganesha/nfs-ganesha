@@ -97,37 +97,17 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
   /* Lock the entry */
   P_w(&pentry->lock);
 
-  switch (pentry->internal_md.type)
+  if((pentry->internal_md.type == UNASSIGNED) ||
+     (pentry->internal_md.type == RECYCLED))
     {
-    case REGULAR_FILE:
-      pfsal_handle = &pentry->object.file.handle;
-      break;
-
-    case SYMBOLIC_LINK:
-      assert(pentry->object.symlink);
-      pfsal_handle = &pentry->object.symlink->handle;
-      break;
-
-    case FS_JUNCTION:
-    case DIRECTORY:
-      pfsal_handle = &pentry->object.dir.handle;
-      break;
-
-    case CHARACTER_FILE:
-    case BLOCK_FILE:
-    case SOCKET_FILE:
-    case FIFO_FILE:
-      pfsal_handle = &pentry->object.special_obj.handle;
-      break;
-
-    case UNASSIGNED:
-    case RECYCLED:
       LogCrit(COMPONENT_CACHE_INODE,
               "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
               pentry->internal_md.type, __LINE__, __FILE__);
+      V_w(&pentry->lock);
       *pstatus = CACHE_INODE_BAD_TYPE;
       return *pstatus;
     }
+  pfsal_handle = &pentry->handle;
 
   /* Call FSAL to set the attributes */
   /* result_attributes.asked_attributes = pattr->asked_attributes ; */
@@ -213,37 +193,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
     }
 
   /* Keep the new attribute in cache */
-  switch (pentry->internal_md.type)
-    {
-    case REGULAR_FILE:
-      p_object_attributes = &(pentry->object.file.attributes);
-      break;
-
-    case SYMBOLIC_LINK:
-      assert(pentry->object.symlink);
-      p_object_attributes = &(pentry->object.symlink->attributes);
-      break;
-
-    case FS_JUNCTION:
-    case DIRECTORY:
-      p_object_attributes = &(pentry->object.dir.attributes);
-      break;
-
-    case CHARACTER_FILE:
-    case BLOCK_FILE:
-    case SOCKET_FILE:
-    case FIFO_FILE:
-      p_object_attributes = &(pentry->object.special_obj.attributes);
-      break;
-
-    case UNASSIGNED:
-    case RECYCLED:
-      LogCrit(COMPONENT_CACHE_INODE,
-              "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
-              pentry->internal_md.type, __LINE__, __FILE__);
-      *pstatus = CACHE_INODE_BAD_TYPE;
-      return *pstatus;
-    }
+  p_object_attributes = &(pentry->attributes);
 
   /* Update the cached attributes */
   if((result_attributes.asked_attributes & FSAL_ATTR_SIZE) ||

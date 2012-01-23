@@ -111,7 +111,7 @@ cache_inode_status_t cache_inode_readlink(cache_entry_t * pentry, fsal_path_t * 
       else
         {
            /* Content is not cached, call FSAL_readlink here */
-           fsal_status = FSAL_readlink( &pentry->object.symlink->handle, pcontext, plink_content, &attr ) ; 
+           fsal_status = FSAL_readlink( &pentry->handle, pcontext, plink_content, &attr ) ; 
         }
 
       if(FSAL_IS_ERROR(fsal_status))

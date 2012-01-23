@@ -126,35 +126,18 @@ cache_inode_getattr(cache_entry_t * pentry,
     if(FSAL_TEST_MASK(pattr->asked_attributes,
                       FSAL_ATTR_RDATTR_ERR))
         {
-            switch (pentry->internal_md.type)
+	    if((pentry->internal_md.type == FS_JUNCTION) ||
+	       (pentry->internal_md.type == UNASSIGNED) ||
+	       (pentry->internal_md.type == RECYCLED))
                 {
-                case REGULAR_FILE:
-                    pfsal_handle = &pentry->object.file.handle;
-                    break;
-
-                case SYMBOLIC_LINK:
-                    assert(pentry->object.symlink);
-                    pfsal_handle = &pentry->object.symlink->handle;
-                    break;
-
-                case DIRECTORY:
-                    pfsal_handle = &pentry->object.dir.handle;
-                    break;
-                case SOCKET_FILE:
-                case FIFO_FILE:
-                case BLOCK_FILE:
-                case CHARACTER_FILE:
-                    pfsal_handle = &pentry->object.special_obj.handle;
-                    break;
-                case FS_JUNCTION:
-                case UNASSIGNED:
-                case RECYCLED:
                     *pstatus = CACHE_INODE_INVALID_ARGUMENT;
                     LogFullDebug(COMPONENT_CACHE_INODE,
-                                 "cache_inode_getattr: returning %d(%s) from cache_inode_renew_entry - unexpected md_type",
+                                 "cache_inode_getattr: returning %d(%s) "
+				 "from cache_inode_renew_entry - unexpected md_type",
                                  *pstatus, cache_inode_err_str(*pstatus));
                     return *pstatus;
                 }
+            pfsal_handle = &pentry->handle;
 
             /*
              * An error occured when trying to get

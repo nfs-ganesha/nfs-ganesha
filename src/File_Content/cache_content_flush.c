@@ -288,18 +288,18 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
 
 
   if((how != FORCE_FROM_FSAL)
-     && (buffstat.st_mtime > (time_t) pentry_inode->object.file.attributes.mtime.seconds))
+     && (buffstat.st_mtime > (time_t) pentry_inode->attributes.mtime.seconds))
     {
       *pstatus = CACHE_CONTENT_SUCCESS;
 
       LogDebug(COMPONENT_CACHE_CONTENT,
                         "Entry %p is more recent in data cache, keeping it", pentry);
-      pentry_inode->object.file.attributes.mtime.seconds = buffstat.st_mtime;
-      pentry_inode->object.file.attributes.mtime.nseconds = 0;
-      pentry_inode->object.file.attributes.atime.seconds = buffstat.st_atime;
-      pentry_inode->object.file.attributes.atime.nseconds = 0;
-      pentry_inode->object.file.attributes.ctime.seconds = buffstat.st_ctime;
-      pentry_inode->object.file.attributes.ctime.nseconds = 0;
+      pentry_inode->attributes.mtime.seconds = buffstat.st_mtime;
+      pentry_inode->attributes.mtime.nseconds = 0;
+      pentry_inode->attributes.atime.seconds = buffstat.st_atime;
+      pentry_inode->attributes.atime.nseconds = 0;
+      pentry_inode->attributes.ctime.seconds = buffstat.st_ctime;
+      pentry_inode->attributes.ctime.nseconds = 0;
     }
   else
     {
