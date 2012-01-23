@@ -274,7 +274,7 @@ int name2uid(char *name, uid_t * puid)
             {
               LogCrit(COMPONENT_IDMAPPER,
                       "name2uid: uidgidmap_add gss_uid %d gss_gid %d failed",
-                      gss_uid, gss_gid);
+                      passwd.pw_uid, passwd.pw_gid);
               return 0;
             }
 #endif                          /* _HAVE_GSSAPI */

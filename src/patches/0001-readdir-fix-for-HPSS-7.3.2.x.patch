@@ -1,0 +1,111 @@
+From 3bfb7a85ac326aee4ac06b156645a11dcc642cca Mon Sep 17 00:00:00 2001
+From: Thomas Leibovici <thomas.leibovici@cea.fr>
+Date: Thu, 19 Jan 2012 10:55:27 +0100
+Subject: [PATCH] readdir fix for HPSS 7.3.2.x
+To: denielp@admin.ccc.cea.fr
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="------------1.7.1"
+
+This is a multi-part message in MIME format.
+--------------1.7.1
+Content-Type: text/plain; charset=UTF-8; format=fixed
+Content-Transfer-Encoding: 8bit
+
+---
+ src/FSAL/FSAL_HPSS/HPSSclapiExt/api_rddir.c |   24 +++++++++++++++++++++++-
+ src/FSAL/FSAL_HPSS/fsal_dirs.c              |    2 ++
+ 2 files changed, 25 insertions(+), 1 deletions(-)
+
+
+--------------1.7.1
+Content-Type: text/x-patch; name="0001-readdir-fix-for-HPSS-7.3.2.x.patch"
+Content-Transfer-Encoding: 8bit
+Content-Disposition: attachment; filename="0001-readdir-fix-for-HPSS-7.3.2.x.patch"
+
+diff --git a/src/FSAL/FSAL_HPSS/HPSSclapiExt/api_rddir.c b/src/FSAL/FSAL_HPSS/HPSSclapiExt/api_rddir.c
+index 7f70301..42bcbfd 100644
+--- a/src/FSAL/FSAL_HPSS/HPSSclapiExt/api_rddir.c
++++ b/src/FSAL/FSAL_HPSS/HPSSclapiExt/api_rddir.c
+@@ -20,6 +20,9 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
+                           sec_cred_t * UserCred,
+                           ns_ObjHandle_t * ObjHandlePtr,
+                           unsigned32 ChaseOptions,
++#if HPSS_LEVEL >= 7322
++                          unsigned32 OptionFlags,
++#endif
+                           u_signed64 OffsetIn,
+                           unsigned32 BufferSize,
+                           unsigned32 GetAttributes,
+@@ -137,6 +140,9 @@ int HPSSFSAL_ReadRawAttrsHandle(ns_ObjHandle_t * ObjHandle,     /* IN - director
+                                     ucred_ptr,
+                                     ObjHandle,
+                                     API_CHASE_NONE,
++#if HPSS_LEVEL >= 7322
++                                    NS_READDIR_FLAGS_NFS,
++#endif
+                                     OffsetIn,
+                                     BufferSize,
+                                     GetAttributes,
+@@ -156,6 +162,7 @@ int HPSSFSAL_ReadRawAttrsHandle(ns_ObjHandle_t * ObjHandle,     /* IN - director
+  * sec_cred_t              *UserCred,      ** IN  - user credentials
+  * ns_ObjHandle_t          *ObjHandlePtr,  ** IN  - ID of object
+  * unsigned32              ChaseOptions,   ** IN  - chase junctions ?
++ * unsigned32              OptionFlags     ** IN - readdir option flags
+  * u_signed64              OffsetIn        ** IN  - starting directory offset
+  * unsigned32              BufferSize      ** IN  - size of entry buffer
+  * unsigned32              GetAttributes,  ** IN  - get object attributes?
+@@ -203,6 +210,9 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
+                           sec_cred_t * UserCred,
+                           ns_ObjHandle_t * ObjHandle,
+                           unsigned32 ChaseOptions,
++#if HPSS_LEVEL >= 7322
++                          unsigned32 OptionFlags,
++#endif
+                           u_signed64 OffsetIn,
+                           unsigned32 BufferSize,
+                           unsigned32 GetAttributes,
+@@ -265,7 +275,16 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
+                            rqstid,
+                            UserCred,
+                            ObjHandle,
+-                           OffsetIn, BufferSize, select_flags, End, &direntbuf);
++#if HPSS_LEVEL >= 7322
++                           OptionFlags,
++#endif
++                           OffsetIn,
++#if HPSS_LEVEL < 732
++                           BufferSize,
++#else
++                           entry_cnt,
++#endif
++                           select_flags, End, &direntbuf);
+ 
+   /* In case of metadata inconsistency, it may return HPSS_ENOENT 
+    * when a directory entry has no associated entry in the FS...
+@@ -281,6 +300,9 @@ HPSSFSAL_Common_ReadAttrs(apithrdstate_t * ThreadContext,
+                                rqstid,
+                                UserCred,
+                                ObjHandle,
++#if HPSS_LEVEL >= 7322
++                               OptionFlags,
++#endif
+                                OffsetIn, BufferSize, select_flags, End, &direntbuf);
+     }
+ 
+diff --git a/src/FSAL/FSAL_HPSS/fsal_dirs.c b/src/FSAL/FSAL_HPSS/fsal_dirs.c
+index 7bd682c..e90af51 100644
+--- a/src/FSAL/FSAL_HPSS/fsal_dirs.c
++++ b/src/FSAL/FSAL_HPSS/fsal_dirs.c
+@@ -288,6 +288,8 @@ fsal_status_t HPSSFSAL_readdir(hpssfsal_dir_t * dir_descriptor, /* IN */
+   *nb_entries = current_nb_entries;
+   *end_of_dir = (bool_eod_out ? TRUE : FALSE);
+ 
++  LogDebug(COMPONENT_FSAL, "%s() returned %u entries, end_of_dir=%d", __func__, *nb_entries, *end_of_dir);
++
+   Mem_Free( outbuff ) ;
+   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir); /* @todo badly set fsal_log ? */
+ }
+
+--------------1.7.1--
+
+
