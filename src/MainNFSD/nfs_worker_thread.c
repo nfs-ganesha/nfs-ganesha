@@ -2065,6 +2065,12 @@ void *worker_thread(void *IndexArg)
 	    break ;
          }
 
+      /* signal the request processing has completed */
+      LogInfo(COMPONENT_DISPATCH, "Signaling completion of request");
+      P(pnfsreq->req_done_mutex);
+      pthread_cond_signal(&pnfsreq->req_done_condvar);
+      V(pnfsreq->req_done_mutex);
+
       /* Free the req by releasing the entry */
       LogFullDebug(COMPONENT_DISPATCH,
                    "Invalidating processed entry");

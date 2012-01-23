@@ -446,6 +446,8 @@ typedef enum request_type__
 typedef struct request_data__
 {
   request_type_t rtype ;
+  pthread_cond_t   req_done_condvar;
+  pthread_mutex_t  req_done_mutex;
   union request_content__
    {
       nfs_request_data_t nfs ;
