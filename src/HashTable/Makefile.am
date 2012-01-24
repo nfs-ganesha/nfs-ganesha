@@ -26,9 +26,5 @@ test_libcmc_config_LDADD        = libhashtable.la $(BUDDY_LIB_FLAGS) ../RW_Lock/
 
 new: clean all
 
-doc:
-	doxygen ./doxygen.conf
-	rep=`grep OUTPUT_DIRECTORY doxygen.conf | grep share  | awk -F '=' '{print $$2;}'` ; cd $$rep/latex ; make
-
 testrunner:  $(check_PROGRAMS)
 	 ../tools/maketest -x HashTable -f ./maketest.conf > ../testres-xml/HashTable.xml	

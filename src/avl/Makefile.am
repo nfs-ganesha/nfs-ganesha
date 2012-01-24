@@ -7,6 +7,4 @@ libavltree_la_SOURCES  = avl.c   \
                          ../include/avltree.h    
 new: clean all
 
-doc:
-	echo "No docs to be generated for avl-tree"
 

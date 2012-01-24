@@ -53,7 +53,4 @@ libcache_inode_la_SOURCES = cache_inode_access.c             \
 
 new: clean all
 
-doc:
-	doxygen ./doxygen.conf
-	rep=`grep OUTPUT_DIRECTORY doxygen.conf | grep share  | awk -F '=' '{print $$2;}'` ; cd $$rep/latex ; make
 
