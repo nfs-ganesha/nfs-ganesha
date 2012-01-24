@@ -12,8 +12,8 @@ libpnfs_la_LIBADD =  PARALLEL_FS/libpnfslayoutfile.la
 endif 
 
 if USE_PNFS_FSAL
-SUBDIRS = FSAL
-libpnfs_la_LIBADD =  FSAL/libpnfslayoutfile.la
+SUBDIRS = FSAL_SPECIFIC
+libpnfs_la_LIBADD =  FSAL_SPECIFIC/libpnfslayoutfile.la
 endif
 
 endif
