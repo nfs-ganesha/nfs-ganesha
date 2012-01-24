@@ -1120,7 +1120,6 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   fsal_size_t size = 0;
   size_t size_returned = 0;
-  fsal_off_t offset = 0;
   fsal_status_t fsal_status;
   caddr_t data = NULL;
   unsigned int xattr_id = 0;
@@ -1168,7 +1167,6 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
   /* xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
   xattr_id = pfile_handle->xattr_pos - 2;
 
-  offset = parg->arg_read3.offset;
   size = parg->arg_read3.count;
 
   /* Get the xattr related to this xattr_id */

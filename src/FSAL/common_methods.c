@@ -562,18 +562,7 @@ fsal_status_t COMMON_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_open_by_fileid);
 }
 
-<<<<<<< HEAD
-/* File Attributes
 
-
-/* Not supported set
-=======
-/* File Attributes */
-
-/*
-* Not supported set
->>>>>>> next
-*/
 
 /**
  * FSAL_getetxattrs:
@@ -612,7 +601,6 @@ fsal_status_t COMMON_terminate_noerror()
 {
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
-<<<<<<< HEAD
 
 /* Parameter management and initialization
  */
@@ -1015,5 +1003,3 @@ fsal_status_t COMMON_load_FS_common_parameter_from_conf(config_file_t in_config,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
 }                               /* FSAL_load_FS_common_parameter_from_conf */
-=======
->>>>>>> next

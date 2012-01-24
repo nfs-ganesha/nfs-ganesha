@@ -49,7 +49,7 @@
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 #include "pnfs.h" 
-#include "pnfs_service.h" 
+#include "pnfs_internal.h"
 
 /**
  *
@@ -65,9 +65,9 @@
  *
  */
 
-nfsstat4 pnfs_parallel_fs_layoutcommit( LAYOUTCOMMIT4args  * playoutcommitargs,
-			           compound_data_t    * data,
-				   LAYOUTCOMMIT4res   * playoutcommitres )
+nfsstat4 PARALLEL_FS_pnfs_layoutcommit( LAYOUTCOMMIT4args  * playoutcommitargs,
+		                        compound_data_t    * data,
+			                LAYOUTCOMMIT4res   * playoutcommitres )
 {
   
   /* For the moment, returns no new size */
@@ -77,4 +77,6 @@ nfsstat4 pnfs_parallel_fs_layoutcommit( LAYOUTCOMMIT4args  * playoutcommitargs,
   playoutcommitres->locr_status = NFS4_OK;
 
   return playoutcommitres->locr_status  ;
-}                               /* pnfs_parallel_fs_layoutcommit */
+}   /* pnfs_layoutcommit */
+
+

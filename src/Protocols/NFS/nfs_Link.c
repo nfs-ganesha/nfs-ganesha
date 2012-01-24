@@ -105,7 +105,6 @@ int nfs_Link(nfs_arg_t * parg,
   fsal_attrib_list_t attr;
   fsal_attrib_list_t attr_parent_after;
   cache_inode_file_type_t parent_filetype;
-  cache_inode_file_type_t target_filetype;
   short to_exportid = 0;
   short from_exportid = 0;
 
@@ -181,10 +180,9 @@ int nfs_Link(nfs_arg_t * parg,
 
   /* Extract the filetype */
   parent_filetype = cache_inode_fsal_type_convert(parent_attr.type);
-  target_filetype = cache_inode_fsal_type_convert(target_attr.type);
 
   /*
-   * Sanity checks: 
+   * Sanity checks:
    */
   if(parent_filetype != DIRECTORY)
     {

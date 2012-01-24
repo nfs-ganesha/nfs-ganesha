@@ -98,8 +98,6 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
   fsal_name_t entry_name;
   char *str_new_entry_name = NULL;
   fsal_name_t new_entry_name;
-  cache_entry_t *pentry = NULL;
-  cache_entry_t *new_pentry = NULL;
   cache_entry_t *parent_pentry = NULL;
   cache_entry_t *new_parent_pentry = NULL;
   cache_entry_t *should_not_exists = NULL;
@@ -229,8 +227,6 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
       str_new_entry_name = parg->arg_rename3.to.name;
       break;
     }
-
-  pentry = new_pentry = NULL;
 
   if(str_entry_name == NULL ||
      *str_entry_name == '\0' ||

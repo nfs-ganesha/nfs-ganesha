@@ -160,11 +160,11 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
                               &(pentry->object.file.attributes),
                               NULL );
 #else
-      fsal_status = FSAL_open(&(pentry->object.file.handle),
+      fsal_status = FSAL_open(&(pentry->handle),
                               pcontext,
                               openflags,
                               &pentry->object.file.open_fd.fd,
-                              &(pentry->object.file.attributes));
+                              &(pentry->attributes));
 #endif
 
       if(FSAL_IS_ERROR(fsal_status))
@@ -296,9 +296,9 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
       /* Keep coherency with the cache_content */
       if(pentry_file->object.file.pentry_content != NULL)
         {
-          save_filesize = pentry_file->object.file.attributes.filesize;
-          save_spaceused = pentry_file->object.file.attributes.spaceused;
-          save_mtime = pentry_file->object.file.attributes.mtime;
+          save_filesize = pentry_file->attributes.filesize;
+          save_spaceused = pentry_file->attributes.spaceused;
+          save_mtime = pentry_file->attributes.mtime;
         }
 
       /* opened file is not preserved yet */
@@ -310,19 +310,15 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
                                       openflags,
                                       &pentry_file->object.file.open_fd.mfsl_fd,
                                       &(pentry_file->object.file.attributes),
-#ifdef _USE_PNFS
-                                      &pentry_file->object.file.pnfs_file ) ;
-#else
                                       NULL );
-#endif /* _USE_PNFS */
 
 #else
-      fsal_status = FSAL_open_by_name(&(pentry_dir->object.file.handle),
+      fsal_status = FSAL_open_by_name(&(pentry_dir->handle),
                                       pname,
                                       pcontext,
                                       openflags,
                                       &pentry_file->object.file.open_fd.fd,
-                                      &(pentry_file->object.file.attributes));
+                                      &(pentry_file->attributes));
 #endif
 
       if(FSAL_IS_ERROR(fsal_status))
@@ -357,9 +353,9 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
       /* Keep coherency with the cache_content */
       if(pentry_file->object.file.pentry_content != NULL)
         {
-          pentry_file->object.file.attributes.filesize = save_filesize;
-          pentry_file->object.file.attributes.spaceused = save_spaceused;
-          pentry_file->object.file.attributes.mtime = save_mtime;
+          pentry_file->attributes.filesize = save_filesize;
+          pentry_file->attributes.spaceused = save_spaceused;
+          pentry_file->attributes.mtime = save_mtime;
         }
 
 #ifdef _USE_MFSL

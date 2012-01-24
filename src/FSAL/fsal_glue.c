@@ -11,6 +11,7 @@
 #include "config.h"
 #endif
 
+
 #ifdef _USE_SHARED_FSAL
 #include <stdlib.h>
 #include <dlfcn.h>              /* For dlopen */
@@ -23,6 +24,9 @@
 #include "fsal.h"
 #include "fsal_glue.h"
 #include "fsal_up.h"
+#if defined(_USE_FSALMDS) || defined(_USE_FSALDS)
+#include "fsal_pnfs.h"
+#endif /* _USE_FSALMDS || _USE_FSALDS */
 
 int __thread my_fsalid = -1 ;
 
@@ -30,6 +34,7 @@ fsal_functions_t fsal_functions_array[NB_AVAILABLE_FSAL];
 fsal_const_t fsal_consts_array[NB_AVAILABLE_FSAL];
 
 #ifdef _USE_SHARED_FSAL
+
 #define fsal_functions fsal_functions_array[my_fsalid]
 #define fsal_consts fsal_consts_array[my_fsalid]
 #else
@@ -58,59 +63,59 @@ char * FSAL_fsalid2name( int fsalid )
 {
   switch( fsalid )
    {
-	case FSAL_CEPH_ID:
-		return "CEPH" ;
-		break ;
+        case FSAL_CEPH_ID:
+                return "CEPH" ;
+                break ;
 
-	case FSAL_HPSS_ID:
-		return "HPSS" ;
-		break ;
+        case FSAL_HPSS_ID:
+                return "HPSS" ;
+                break ;
 
-	case FSAL_SNMP_ID:
-		return "SNMP" ;
-		break ;
+        case FSAL_SNMP_ID:
+                return "SNMP" ;
+                break ;
 
-	case FSAL_ZFS_ID:
-		return "ZFS" ;
-		break ;
+        case FSAL_ZFS_ID:
+                return "ZFS" ;
+                break ;
 
-	case FSAL_FUSELIKE_ID: 
-		return "FUSELIKE" ;
-		break ;
+        case FSAL_FUSELIKE_ID: 
+                return "FUSELIKE" ;
+                break ;
 
-	case FSAL_LUSTRE_ID:
-		return "LUSTRE" ;
-		break ;
+        case FSAL_LUSTRE_ID:
+                return "LUSTRE" ;
+                break ;
 
-	case FSAL_POSIX_ID:
-		return "POSIX" ;
-		break ;
+        case FSAL_POSIX_ID:
+                return "POSIX" ;
+                break ;
 
-	case FSAL_VFS_ID:
-		return "VFS" ;
-		break ;
+        case FSAL_VFS_ID:
+                return "VFS" ;
+                break ;
 
-	case FSAL_GPFS_ID:
-		return "GPFS" ;
-		break ;
+        case FSAL_GPFS_ID:
+                return "GPFS" ;
+                break ;
 
-	case FSAL_PROXY_ID:
-		return "PROXY" ;
-		break ;
+        case FSAL_PROXY_ID:
+                return "PROXY" ;
+                break ;
 
-	case FSAL_XFS_ID:
-		return "XFS" ;
-		break ;
+        case FSAL_XFS_ID:
+                return "XFS" ;
+                break ;
 
-	default:
-		return "not found" ;
-		break ;
+        default:
+                return "not found" ;
+                break ;
 
    }
   return "You should not see this message... Implementation error !!!!" ;
 } /* FSAL_fsalid2name */
 
-/* Split the fsal_param into a fsalid and a path for a fsal lib 
+/* Split the fsal_param into a fsalid and a path for a fsal lib
  * for example "XFS:/usr/lib/libfsalxfs.so.1.1.0" will produce FSAL_XFS_ID and "/usr/lib/libfsalxfs.so.1.1.0"  */
 int FSAL_param_load_fsal_split( char * param, int * pfsalid, char * pathlib )
 {
@@ -129,8 +134,8 @@ int FSAL_param_load_fsal_split( char * param, int * pfsalid, char * pathlib )
        {
          foundcolon = 1 ;
          *p1 = '\0';
-	 
-         break ; 
+
+         break ;
        }
    }
 
@@ -143,6 +148,12 @@ int FSAL_param_load_fsal_split( char * param, int * pfsalid, char * pathlib )
   return 0 ;
 } /* FSAL_param_load_fsal_split */
 
+#ifdef _USE_FSALMDS
+fsal_mdsfunctions_t fsal_mdsfunctions;
+#endif                                          /* _USE_FSALMDS */
+#ifdef _USE_FSALDS
+fsal_dsfunctions_t fsal_dsfunctions;
+#endif                                          /* _USE_FSALMDS */
 
 #ifdef _USE_SHARED_FSAL
 fsal_functions_t(*getfunctions) (void);
@@ -950,16 +961,16 @@ fsal_status_t FSAL_UP_AddFilter( fsal_up_event_bus_filter_t * pupebfilter,  /* I
 }
 
 fsal_status_t FSAL_UP_GetEvents( fsal_up_event_t ** pevents,            /* OUT */
-				 fsal_count_t * event_nb,          /* IN */
-				 fsal_time_t timeout,                       /* IN */
-				 fsal_count_t * peventfound,                /* OUT */
-				 fsal_up_event_bus_context_t * pupebcontext /* IN */ )
+                                 fsal_count_t * event_nb,          /* IN */
+                                 fsal_time_t timeout,                       /* IN */
+                                 fsal_count_t * peventfound,                /* OUT */
+                                 fsal_up_event_bus_context_t * pupebcontext /* IN */ )
 {
   if (fsal_functions.fsal_up_getevents == NULL)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_UP_getevents);
   else
     return fsal_functions.fsal_up_getevents(pevents, event_nb, timeout,
-					    peventfound, pupebcontext);
+                                            peventfound, pupebcontext);
 }
 #endif /* _USE_FSAL_UP */
 
@@ -1010,6 +1021,20 @@ void FSAL_LoadFunctions(void)
   fsal_functions = (*getfunctions) ();
 }
 
+#ifdef _USE_FSALMDS
+void FSAL_LoadMDSFunctions(void)
+{
+  fsal_mdsfunctions = (*getmdsfunctions) ();
+}
+#endif
+
+#ifdef _USE_FSALDS
+void FSAL_LoadDSFunctions(void)
+{
+  fsal_dsfunctions = (*getdsfunctions) ();
+}
+#endif
+
 void FSAL_LoadConsts(void)
 {
 
@@ -1032,4 +1057,18 @@ void FSAL_LoadConsts(void)
   fsal_consts = FSAL_GetConsts();
 }
 
-#endif
+#ifdef _USE_FSALMDS
+void FSAL_LoadMDSFunctions(void)
+{
+  fsal_mdsfunctions = FSAL_GetMDSFunctions();
+}
+#endif /* _USE_FSALMDS */
+
+#ifdef _USE_FSALDS
+void FSAL_LoadDSFunctions(void)
+{
+  fsal_dsfunctions = FSAL_GetDSFunctions();
+}
+#endif /* _USE_FSALDS */
+
+#endif /* _USE_SHARED_FSAL */

@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  *
  * nfs_client_id.c : The management of the client id cache.
@@ -48,6 +48,8 @@
 #include <string.h>
 #include <pthread.h>
 #include "nfs4.h"
+#include "sal_data.h"
+#include "sal_functions.h"
 
 #ifdef _APPLE
 #define strnlen( s, l ) strlen( s )
@@ -62,9 +64,11 @@ hash_table_t *ht_client_id_reverse;
 /**
  *
  *  client_id_rbt_hash_func: computes the hash value for the entry in Client Id cache.
- * 
- * Computes the hash value for the entry in Client Id cache. In fact, it just use addresse as value (identity function) modulo the size of the hash.
- * This function is called internal in the HasTable_* function
+ *
+ * Computes the hash value for the entry in Client Id cache. In fact,
+ * it just use addresse as value (identity function) modulo the size
+ * of the hash.  This function is called internal in the HasTable_*
+ * function
  *
  * @param hparam     [IN] hash table parameter.
  * @param buffcleff  [IN] pointer to the hash key buffer
@@ -91,10 +95,12 @@ unsigned long client_id_value_hash_func(hash_parameter_t * p_hparam,
 
 /**
  *
- *  client_id_reverse_hash_func: computes the hash value for the entry in Client Id cache.
+ * client_id_reverse_hash_func: computes the hash value for the entry in Client Id cache.
  *
- * Computes the hash value for the entry in Client Id cache. In fact, it just use addresse as value (identity function) modulo the size of the hash.
- * This function is called internal in the HasTable_* function
+ * Computes the hash value for the entry in Client Id cache. In fact,
+ * it just use addresse as value (identity function) modulo the size
+ * of the hash.  This function is called internal in the HasTable_*
+ * function
  *
  * @param hparam     [IN] hash table parameter.
  * @param buffcleff  [IN] pointer to the hash key buffer
@@ -119,8 +125,8 @@ unsigned long client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
 }                               /*  client_id_reverse_value_hash_func */
 
 unsigned int client_id_value_both_reverse( hash_parameter_t * p_hparam,
-				           hash_buffer_t    * buffclef, 
-				           uint32_t * phashval, uint32_t * prbtval )
+                                           hash_buffer_t    * buffclef,
+                                           uint32_t * phashval, uint32_t * prbtval )
 {
    uint32_t h1 = 0 ;
    uint32_t h2 = 0 ;
@@ -140,7 +146,7 @@ unsigned int client_id_value_both_reverse( hash_parameter_t * p_hparam,
 /**
  *
  *  client_id_rbt_hash_func: computes the rbt value for the entry in Client Id cache.
- * 
+ *
  * Computes the rbt value for the entry in Client Id cache. In fact, it just use the address value
  * itself (which is an unsigned integer) as the rbt value.
  * This function is called internal in the HasTable_* function
@@ -262,7 +268,8 @@ int display_client_id_val(hash_buffer_t * pbuff, char *str)
  */
 
 int nfs_client_id_add(clientid4 clientid,
-                      nfs_client_id_t client_record, struct prealloc_pool *clientid_pool)
+                      nfs_client_id_t client_record,
+                      cache_inode_client_t *pclient)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
@@ -270,6 +277,12 @@ int nfs_client_id_add(clientid4 clientid,
   hash_buffer_t buffdata_reverse;
   nfs_client_id_t *pnfs_client_id = NULL;
   clientid4 *pclientid = NULL;
+  state_nfs4_owner_name_t owner_name;
+  state_owner_t *client_owner = NULL;
+  struct prealloc_pool *clientid_pool =
+    &((nfs_worker_data_t*) pclient->pworker)->clientid_pool;
+
+  convert_nfs4_clientid_owner(clientid, &owner_name);
 
   /* Entry to be cached */
   GetFromPool(pnfs_client_id, clientid_pool, nfs_client_id_t);
@@ -319,6 +332,16 @@ int nfs_client_id_add(clientid4 clientid,
                    "-=-=-=-=-=-=-=-=-=-> ht_client_id_reverse ");
       HashTable_Log(COMPONENT_CLIENT_ID_COMPUTE,ht_client_id_reverse);
     }
+
+  if ((client_owner =
+       create_nfs4_owner(pclient, &owner_name,
+                         STATE_CLIENTID_OWNER_NFSV4, NULL, 0))
+      == NULL)
+    {
+      return CLIENT_ID_STATE_ERROR;
+    }
+
+  pnfs_client_id->clientid_owner = client_owner;
 
   return CLIENT_ID_SUCCESS;
 }                               /* nfs_client_id_add */

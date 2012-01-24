@@ -304,7 +304,7 @@ void LogLock(log_components_t     component,
 
       FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                         FSAL_DIGEST_FILEID3,
-                        &(pentry->object.file.handle),
+                        &(pentry->handle),
                         (caddr_t) &fileid_digest);
 
       LogAtLevel(component, debug,
@@ -405,7 +405,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
 
   FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                     FSAL_DIGEST_FILEID3,
-                    &(pentry->object.file.handle),
+                    &(pentry->handle),
                     (caddr_t) &fileid);
 
   new_entry->sle_fileid = (unsigned long long) fileid;
@@ -1624,7 +1624,7 @@ state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
       lock_params.lock_owner  = 0;
 
       fsal_status = FSAL_lock_op(cache_inode_fd(pentry),
-                                 &pentry->object.file.handle,
+                                 &pentry->handle,
                                  pcontext,
                                  NULL,
                                  FSAL_OP_UNLOCK,
@@ -1694,7 +1694,7 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
         lock_op = FSAL_OP_LOCK;
 
       fsal_status = FSAL_lock_op(cache_inode_fd(pentry),
-                                 &pentry->object.file.handle,
+                                 &pentry->handle,
                                  pcontext,
                                  pstatic->lock_support_owner ? powner : NULL,
                                  lock_op,
@@ -2052,7 +2052,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
                             cache_inode_client_t * pclient,
                             state_status_t       * pstatus)
 {
-  bool_t gotsome, empty = FALSE;
+  bool_t empty = FALSE;
 
   /* We need to iterate over the full lock list and remove
    * any mapping entry. And sle_lock.sld_offset = 0 and sle_lock.sld_length = 0 nlm_lock
@@ -2079,14 +2079,14 @@ state_status_t state_unlock(cache_entry_t        * pentry,
 #endif
 
   /* Release the lock from cache inode lock list for pentry */
-  gotsome = subtract_lock_from_list(pentry,
-                                    pcontext,
-                                    powner,
-                                    pstate,
-                                    plock,
-                                    pstatus,
-                                    &pentry->object.file.lock_list,
-                                    pclient);
+  subtract_lock_from_list(pentry,
+                          pcontext,
+                          powner,
+                          pstate,
+                          plock,
+                          pstatus,
+                          &pentry->object.file.lock_list,
+                          pclient);
 
   if(*pstatus != STATE_SUCCESS)
     {

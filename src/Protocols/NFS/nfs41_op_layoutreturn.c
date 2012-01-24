@@ -88,14 +88,17 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
                           struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs41_op_layoutreturn";
-#ifdef _USE_PNFS
-  nfsstat4 rc = 0 ;
-#endif
+
 
 #ifndef _USE_PNFS
+  resp->resop = NFS4_OP_LAYOUTRETURN;
   res_LAYOUTRETURN4.lorr_status = NFS4ERR_NOTSUPP;
   return res_LAYOUTRETURN4.lorr_status;
-#else
+#endif
+
+  nfsstat4 rc = 0 ;
+
+  resp->resop = NFS4_OP_LAYOUTRETURN;
 
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))
@@ -135,17 +138,8 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
       return res_LAYOUTRETURN4.lorr_status;
     }
 
-   /* Call pNFS service function */
-  if( ( rc = pnfs_layoutreturn( &arg_LAYOUTRETURN4, data, &res_LAYOUTRETURN4 ) ) != NFS4_OK )
-    {
-      res_LAYOUTRETURN4.lorr_status = rc ;
-      return res_LAYOUTRETURN4.lorr_status;
-    }
-   
-
-  res_LAYOUTRETURN4.lorr_status = NFS4_OK;
-  return res_LAYOUTRETURN4.lorr_status;
-#endif                          /* _USE_PNFS */
+  /* Call pNFS service function */
+  return pnfs_layoutreturn( &arg_LAYOUTRETURN4, data, &res_LAYOUTRETURN4 ) ;
 }                               /* nfs41_op_layoutreturn */
 
 /**
@@ -160,6 +154,8 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
  */
 void nfs41_op_layoutreturn_Free(LOCK4res * resp)
 {
-  /* Nothing to Mem_Free */
+#ifdef _USE_PNFS
+  pnfs_layoutreturn_Free( resp ) ;
+#endif
   return;
 }                               /* nfs41_op_layoutreturn_Free */

@@ -11,16 +11,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -49,7 +49,7 @@
 
 #ifdef _USE_SHARED_FSAL
 /******************************************************
- *    FSAL ID management for multiple FSAL support 
+ *    FSAL ID management for multiple FSAL support
  ******************************************************/
 void FSAL_SetId( int fsalid ) ;
 int FSAL_GetId( void ) ;
@@ -771,7 +771,7 @@ typedef struct fsal_xattrent__
 
 /**
  * Retrieves the list of extended attributes for an object in the filesystem.
- * 
+ *
  * \param p_objecthandle Handle of the object we want to get extended attributes.
  * \param cookie index of the next entry to be returned.
  * \param p_context pointer to the current security context.
@@ -796,7 +796,7 @@ fsal_status_t FSAL_ListXAttrs(fsal_handle_t * p_objecthandle,   /* IN */
  * \param p_objecthandle Handle of the object you want to get attribute for.
  * \param xattr_name the name of the attribute to be read.
  * \param pxattr_id found xattr_id
- *   
+ *
  * \return ERR_FSAL_NO_ERROR if xattr_name exists, ERR_FSAL_NOENT otherwise
  */
 fsal_status_t FSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* IN */
@@ -911,6 +911,7 @@ fsal_status_t FSAL_RemoveXAttrById(fsal_handle_t * p_objecthandle,      /* IN */
 fsal_status_t FSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,    /* IN */
                                      fsal_op_context_t * p_context,     /* IN */
                                      const fsal_name_t * xattr_name);   /* IN */
+
 
 /******************************************************
  *                FSAL miscelaneous tools.
@@ -1436,13 +1437,13 @@ typedef struct fsal_functions__
   /* FSAL_UP functions */
 #ifdef _USE_FSAL_UP
   fsal_status_t(*fsal_up_init) (struct fsal_up_event_bus_parameter_t_ * pebparam,      /* IN */
-				struct fsal_up_event_bus_context_t_ * pupebcontext     /* OUT */ );
+                                struct fsal_up_event_bus_context_t_ * pupebcontext     /* OUT */ );
   fsal_status_t(*fsal_up_addfilter)(struct fsal_up_event_bus_filter_t_ * pupebfilter,  /* IN */
                                   struct fsal_up_event_bus_context_t_ * pupebcontext /* INOUT */ );
   fsal_status_t(*fsal_up_getevents)(struct fsal_up_event_t_ ** pevents,                /* OUT */
                                   fsal_count_t * event_nb,                   /* IN */
                                   fsal_time_t timeout,                       /* IN */
-				    fsal_count_t * peventfound,                 /* OUT */
+                                    fsal_count_t * peventfound,                 /* OUT */
                                   struct fsal_up_event_bus_context_t_ * pupebcontext /* IN */ );
 #endif /* _USE_FSAL_UP */
 } fsal_functions_t;

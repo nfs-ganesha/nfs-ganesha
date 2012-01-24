@@ -41,6 +41,11 @@ if USE_NLM
 libsal_la_SOURCES += nlm_owner.c
 endif
 
+if USE_FSALMDS
+libsal_la_SOURCES += state_layout.c
+endif
+
+
 new: clean all
 
 doc:

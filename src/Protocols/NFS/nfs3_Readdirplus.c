@@ -237,7 +237,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
   pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries = NULL;
   pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = FALSE;
 
-#warning XXXX fix this--compare nfs4_op_readdir
+/** @todo  XXXX fix this--compare nfs4_op_readdir */
 
   /* How many entries will we retry from cache_inode ? */
   if(begin_cookie > 1)
@@ -420,7 +420,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                       FALSE;
                   RES_READDIRPLUS_REPLY.entries[0].name_handle.handle_follows = FALSE;
 
-                  cache_inode_get_attributes(dir_pentry, &entry_attr);
+		  entry_attr = dir_pentry->attributes;
 
                   /* Set PostPoFh3 structure */
                   pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[0].
@@ -531,7 +531,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                       FALSE;
                   RES_READDIRPLUS_REPLY.entries[delta].name_handle.handle_follows = FALSE;
 
-                  cache_inode_get_attributes(pentry_dot_dot, &entry_attr);
+		  entry_attr = pentry_dot_dot->attributes;
 
                   /* Set PostPoFh3 structure */
                   pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[delta].
@@ -576,7 +576,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 	       * sizeof(entryplus3). */
 	      /* FIXME: There is still a 4 byte over estimate here on x86_64. */
 
-#warning Remove cookie offset calculation in readdir and readdirplus (obsoleted)
+/** @todo Remove cookie offset calculation in readdir and readdirplus (obsoleted) */
 
               needed =
 		sizeof(reference_entry)
@@ -663,8 +663,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
               RES_READDIRPLUS_REPLY.entries[i].name_attributes.attributes_follow = FALSE;
               RES_READDIRPLUS_REPLY.entries[i].name_handle.handle_follows = FALSE;
 
-              cache_inode_get_attributes(dirent_array[i - delta]->pentry,
-                                         &entry_attr);
+	      entry_attr = dirent_array[i - delta]->pentry->attributes;
 
               pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].name_handle.post_op_fh3_u.handle.data.data_val = (char *)fh3_array[i];
 

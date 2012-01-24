@@ -280,8 +280,6 @@ typedef struct cache_inode_internal_md__
 
 struct cache_inode_symlink__
 {
-  fsal_handle_t handle;                                   /**< The FSAL Handle     */
-  fsal_attrib_list_t attributes;                          /**< The FSAL Attributes */
   fsal_path_t content;                                    /**< Content of the link */
 };
 
@@ -304,22 +302,17 @@ struct cache_inode_dir_entry__
 
 struct cache_entry_t
 {
-  cache_inode_policy_t  policy ;                                     /**< The current cache policy for this entry               */
+  cache_inode_policy_t  policy ;                          /**< The current cache policy for this entry               */
+  fsal_handle_t handle;                                   /**< The FSAL Handle     */
+  fsal_attrib_list_t attributes;                          /**< The FSAL Attributes */
 
   union cache_inode_fsobj__
   {
     struct cache_inode_file__
     {
-      fsal_handle_t handle;                                          /**< The FSAL Handle                                      */
-#ifdef _USE_PNFS_SPNFS_LIKE
-      fsal_pnfs_file_t pnfs_file ;                                   /**< Specific FS information for pNFS management          */
-#endif
       cache_inode_opened_file_t open_fd;                             /**< Cached fsal_file_t for optimized access              */
-#ifdef _USE_PROXY
       fsal_name_t *pname;                                            /**< Pointer to filename, for PROXY only                  */
       cache_entry_t *pentry_parent_open;                             /**< Parent associated with pname, for PROXY only         */
-#endif                          /* _USE_PROXY */
-      fsal_attrib_list_t attributes;                                 /**< The FSAL Attributes                                  */
       void *pentry_content;                                          /**< Entry in file content cache (NULL if not cached)     */
       struct glist_head state_list;                                  /**< Pointers for state list                              */
       struct glist_head lock_list;                                   /**< Pointers for lock list                               */
@@ -331,8 +324,6 @@ struct cache_entry_t
 
     struct cache_inode_dir__
     {
-      fsal_handle_t handle;                     /**< The FSAL Handle                                         */
-      fsal_attrib_list_t attributes;            /**< The FSAL Attributes                                     */
       unsigned int nbactive;                    /**< Number of known active children                         */
       cache_inode_flag_t has_been_readdir;      /**< True if a full readdir was performed on the directory   */
       char *referral;                           /**< NULL is not a referral, is not this a 'referral string' */
@@ -340,12 +331,7 @@ struct cache_entry_t
       struct avltree cookies;                   /**< sparse offset avl */
     } dir;                                /**< DIR related field                               */
 
-    struct cache_inode_special_object__
-    {
-      fsal_handle_t handle;                     /**< The FSAL Handle                                         */
-      fsal_attrib_list_t attributes;            /**< The FSAL Attributes                                     */
-      /* Note that special data is in the rawdev field of FSAL attributes */
-    } special_obj;
+    /* Note that special data is in the rawdev field of FSAL attributes */
 
   } object;                                     /**< Type specific field (discriminated by internal_md.type)   */
 
@@ -894,8 +880,6 @@ cache_inode_status_t cache_inode_invalidate_all_cached_dirent(cache_entry_t *
 
 void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pattr);
 
-void cache_inode_get_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pattr);
-
 cache_inode_file_type_t cache_inode_fsal_type_convert(fsal_nodetype_t type);
 
 int cache_inode_type_are_rename_compatible(cache_entry_t * pentry_src,
@@ -936,7 +920,7 @@ cache_inode_status_t cache_inode_gc_fd(cache_inode_client_t * pclient,
                                        cache_inode_status_t * pstatus);
 
 cache_inode_status_t cache_inode_kill_entry( cache_entry_t * pentry,
-                                             cache_inode_lock_how_t lock_how, 
+                                             cache_inode_lock_how_t lock_how,
                                              hash_table_t * ht,
                                              cache_inode_client_t * pclient,
                                              cache_inode_status_t * pstatus);

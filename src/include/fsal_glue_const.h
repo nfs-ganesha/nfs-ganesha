@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -54,14 +54,14 @@
 #endif
 
 #define FSAL_CEPH_ID     0
-#define FSAL_HPSS_ID     1 
-#define FSAL_SNMP_ID     2   
-#define FSAL_ZFS_ID      3    
-#define FSAL_FUSELIKE_ID 4  
-#define FSAL_LUSTRE_ID   5  
-#define FSAL_POSIX_ID    6 
-#define FSAL_VFS_ID      7   
-#define FSAL_GPFS_ID     8   
+#define FSAL_HPSS_ID     1
+#define FSAL_SNMP_ID     2
+#define FSAL_ZFS_ID      3
+#define FSAL_FUSELIKE_ID 4
+#define FSAL_LUSTRE_ID   5
+#define FSAL_POSIX_ID    6
+#define FSAL_VFS_ID      7
+#define FSAL_GPFS_ID     8
 #define FSAL_PROXY_ID    9
 #define FSAL_XFS_ID      10
 

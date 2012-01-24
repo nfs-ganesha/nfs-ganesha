@@ -135,7 +135,7 @@
 LRU_list_t *LRU_Init(LRU_parameter_t lru_param, LRU_status_t * pstatus)
 {
   LRU_list_t *plru = NULL;
-  char *name = "Unamed";
+  char *name __attribute__((unused)) = "Unamed";
 
   if (lru_param.name != NULL)
     name = lru_param.name;

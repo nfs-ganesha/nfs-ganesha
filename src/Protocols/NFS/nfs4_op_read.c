@@ -211,15 +211,29 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
            }
         }
 
-      /* If NFSv4::Use_OPEN_CONFIRM is set to TRUE in the configuration file, check is state is confirmed */
-      if(nfs_param.nfsv4_param.use_open_confirm == TRUE)
+      /** @todo : this piece of code looks a bit suspicious (see Rong's mail) */    
+      switch( pstate_found->state_type )
         {
-          if(pstate_found->state_powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
-            {
-              res_READ4.status = NFS4ERR_BAD_STATEID;
-              return res_READ4.status;
-            }
+          case STATE_TYPE_SHARE:
+            if(pstate_found->state_powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
+              {
+                 res_READ4.status = NFS4ERR_BAD_STATEID;
+                 return res_READ4.status;
+              }
+            break ;
+
+         case STATE_TYPE_LOCK:
+            /* Nothing to do */
+            break ;
+
+         default:
+            /* Sanity check: all other types are illegal. 
+             * we should not got that place (similar check above), anyway it costs nothing to add this test */  
+            res_READ4.status = NFS4ERR_BAD_STATEID;
+            return res_READ4.status ;
+            break ;
         }
+        
     }
   else
     {

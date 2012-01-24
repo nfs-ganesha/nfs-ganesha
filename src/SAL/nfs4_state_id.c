@@ -237,7 +237,7 @@ int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
   /* Get several digests to build the stateid : the server boot time, the fileid and a monotonic counter */
   if(FSAL_IS_ERROR(FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                      FSAL_DIGEST_FILEID3,
-                                     &(pentry->object.file.handle),
+                                     &(pentry->handle),
                                      (caddr_t) & fileid_digest)))
     return 0;
 
@@ -501,8 +501,10 @@ int nfs4_Check_Stateid(stateid4        * pstate,
       return NFS4ERR_BAD_STATEID;
     }
 
-  /* Test for seqid = 0 if allowed */
-  if((flags & STATEID_SPECIAL_SEQID_0) == 0 || pstate->seqid != 0)
+  /* Whether stateid.seqid may be zero depends on the state type
+     exclusively, See RFC 5661 pp. 161,287-288. */
+  if((pstate2->state_type == STATE_TYPE_LAYOUT) ||
+     (pstate->seqid != 0))
     {
       /* Check seqid in stateid */
       diff = pstate->seqid - pstate2->state_seqid;

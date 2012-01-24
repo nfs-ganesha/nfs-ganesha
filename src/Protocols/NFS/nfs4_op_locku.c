@@ -77,7 +77,7 @@
 
 int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-#ifndef _WITH_NFSV4_LOCKS
+#ifdef _WITH_NO_NFSV4_LOCKS
   resp->resop = NFS4_OP_LOCKU;
   res_LOCKU4.status = NFS4ERR_LOCK_NOTSUPP;
   return res_LOCKU4.status;

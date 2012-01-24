@@ -21,11 +21,6 @@ SUBDIRS = TIRPC
 librpcal_la_LIBADD = TIRPC/librpcalcore.la
 endif
 
-if USE_ONCRPC
-SUBDIRS = ONCRPC
-librpcal_la_LIBADD = ONCRPC/librpcalcore.la
-endif
-
 librpcal_la_SOURCES = nfs_dupreq.c \
                       rpc_tools.c \
                       ../include/nfs_dupreq.h

@@ -48,6 +48,23 @@ struct prealloc_pool;
 #include <malloc.h>
 #include <errno.h>
 
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+#ifndef true
+#define true 1
+#endif
+
+#ifndef false
+#define false 0
+#endif
+
+
 #define Mem_Alloc( a )                  malloc( a )
 #define Mem_Calloc( s1, s2 )            calloc( s1, s2 )
 #define Mem_Realloc( p, s )             realloc( p, s )

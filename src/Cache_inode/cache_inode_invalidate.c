@@ -129,7 +129,7 @@ cache_inode_status_t cache_inode_invalidate( fsal_handle_t        * pfsal_handle
 
 
   /* return attributes additionally (may be useful to be caller, at least for debugging purpose */
-  cache_inode_get_attributes(pentry, pattr);
+  *pattr = pentry->attributes;
 
   /* pentry is lock, I call cache_inode_kill_entry with 'locked' flag set */
   P_w( &pentry->lock ) ; 

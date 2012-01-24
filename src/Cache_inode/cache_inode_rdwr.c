@@ -197,10 +197,10 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
           memcpy(pentry->object.file.unstable_data.buffer, buffer, buffer_size);
 
           /* Set mtime and ctime */
-          cache_inode_set_time_current( &pentry->object.file.attributes.mtime ) ;  
+          cache_inode_set_time_current( &pentry->attributes.mtime ) ;  
 
           /* BUGAZOMEU : write operation must NOT modify file's ctime */
-          pentry->object.file.attributes.ctime = pentry->object.file.attributes.mtime;
+          pentry->attributes.ctime = pentry->attributes.mtime;
 
           *pio_size = buffer_size;
         }                       /* if( pentry->object.file.unstable_data.buffer == NULL ) */
@@ -215,10 +215,10 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                               seek_descriptor->offset), buffer, buffer_size);
 
               /* Set mtime and ctime */
-              cache_inode_set_time_current( &pentry->object.file.attributes.mtime ) ;
+              cache_inode_set_time_current( &pentry->attributes.mtime ) ;
 
               /* BUGAZOMEU : write operation must NOT modify file's ctime */
-              pentry->object.file.attributes.ctime = pentry->object.file.attributes.mtime;
+              pentry->attributes.ctime = pentry->attributes.mtime;
 
               *pio_size = buffer_size;
             }
@@ -317,15 +317,15 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                        io_size, *pio_size);
 
           /* Use information from the buffstat to update the file metadata */
-          pentry->object.file.attributes.filesize = buffstat.st_size;
-          pentry->object.file.attributes.spaceused =
+          pentry->attributes.filesize = buffstat.st_size;
+          pentry->attributes.spaceused =
               buffstat.st_blksize * buffstat.st_blocks;
 
         }
       else
         {
           /* No data cache entry, we operated directly on FSAL */
-          pentry->object.file.attributes.asked_attributes = pclient->attrmask;
+          pentry->attributes.asked_attributes = pclient->attrmask;
 
           /* We need to open if we don't have a cached
            * descriptor or our open flags differs.
@@ -465,7 +465,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
               /*post_write_attr.asked_attributes =  pclient->attrmask ; */
               post_write_attr.asked_attributes = FSAL_ATTR_SIZE | FSAL_ATTR_SPACEUSED;
               fsal_status_getattr =
-                  FSAL_getattrs(&(pentry->object.file.handle), pcontext,
+                  FSAL_getattrs(&(pentry->handle), pcontext,
                                 &post_write_attr);
 
               /* if failed, the next block will handle the error */
@@ -474,8 +474,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
               else
                 {
                   /* Update Cache Inode attributes */
-                  pentry->object.file.attributes.filesize = post_write_attr.filesize;
-                  pentry->object.file.attributes.spaceused = post_write_attr.spaceused;
+                  pentry->attributes.filesize = post_write_attr.filesize;
+                  pentry->attributes.spaceused = post_write_attr.spaceused;
                 }
             }
 
@@ -487,15 +487,15 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
         {
         case CACHE_INODE_READ:
           /* Set the atime */
-          cache_inode_set_time_current( & pentry->object.file.attributes.atime ) ;
+          cache_inode_set_time_current( & pentry->attributes.atime ) ;
           break;
 
         case CACHE_INODE_WRITE:
           /* Set mtime and ctime */
-          cache_inode_set_time_current( & pentry->object.file.attributes.mtime ) ;
+          cache_inode_set_time_current( & pentry->attributes.mtime ) ;
 
           /* BUGAZOMEU : write operation must NOT modify file's ctime */
-          pentry->object.file.attributes.ctime = pentry->object.file.attributes.mtime;
+          pentry->attributes.ctime = pentry->attributes.mtime;
 
           break;
         }
@@ -504,7 +504,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
   /* if(stable == TRUE ) */
   /* Return attributes to caller */
   if(pfsal_attr != NULL)
-    *pfsal_attr = pentry->object.file.attributes;
+    *pfsal_attr = pentry->attributes;
 
   *pstatus = CACHE_INODE_SUCCESS;
 
