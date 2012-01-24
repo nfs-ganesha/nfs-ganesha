@@ -1763,17 +1763,14 @@ void cache_inode_print_srvhandle(char *comment, cache_entry_t * pentry)
     {
     case REGULAR_FILE:
       strcpy(tag, "file");
-      pfsal_handle = (proxyfsal_handle_t *) &(pentry->handle);
       break;
 
     case SYMBOLIC_LINK:
       strcpy(tag, "link");
-      pfsal_handle = (proxyfsal_handle_t *) &(pentry->handle);
       break;
 
     case DIRECTORY:
       strcpy(tag, "dir ");
-      pfsal_handle = (proxyfsal_handle_t *) &(pentry->handle);
       break;
 
     default:
@@ -1781,6 +1778,7 @@ void cache_inode_print_srvhandle(char *comment, cache_entry_t * pentry)
       break;
     }
 
+  pfsal_handle = (proxyfsal_handle_t *) &(pentry->handle);
   nfsfh.nfs_fh4_len = pfsal_handle->data.srv_handle_len;
   nfsfh.nfs_fh4_val = pfsal_handle->data.srv_handle_val;
 
