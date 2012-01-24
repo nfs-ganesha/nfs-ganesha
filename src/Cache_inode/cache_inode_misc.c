@@ -504,7 +504,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 
       pentry->handle = pfsdata->handle;
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.file.handle;
+      pentry->mobject.handle = pentry->handle;
 #ifdef _USE_MFSL_PROXY
       pentry->mobject.plock = &pentry->lock;
 #endif
@@ -550,7 +550,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 
       pentry->handle = pfsdata->handle;
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.dir.handle;
+      pentry->mobject.handle = pentry->handle;
 #endif
 
       /* If directory is newly created, it is empty
@@ -584,7 +584,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
         }
       pentry->handle = pfsdata->handle;
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.symlink->handle;
+      pentry->mobject.handle = pentry->handle;
 #endif
      if( CACHE_INODE_KEEP_CONTENT( policy ) )
       {  
@@ -608,7 +608,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 
       pentry->handle = pfsdata->handle;
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.special_obj.handle;
+      pentry->mobject.handle = pentry->handle;
 #endif
       break;
 
@@ -619,7 +619,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 
       pentry->handle = pfsdata->handle;
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.special_obj.handle;
+      pentry->mobject.handle = pentry->handle;
 #endif
       break;
 
@@ -630,7 +630,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 
       pentry->handle = pfsdata->handle;
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.special_obj.handle;
+      pentry->mobject.handle = pentry->handle;
 #endif
       break;
 
@@ -641,7 +641,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 
       pentry->handle = pfsdata->handle;
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.special_obj.handle;
+      pentry->mobject.handle = pentry->handle;
 #endif
       break;
 
@@ -677,7 +677,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
       pentry->internal_md.type = DIRECTORY;
 
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.dir.handle;
+      pentry->mobject.handle = pentry->handle;
 #endif
 
       pentry->object.dir.has_been_readdir = CACHE_INODE_NO;

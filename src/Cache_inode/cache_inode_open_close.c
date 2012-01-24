@@ -157,7 +157,7 @@ cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
                               &pclient->mfsl_context,
                               openflags,
                               &pentry->object.file.open_fd.mfsl_fd,
-                              &(pentry->object.file.attributes),
+                              &(pentry->attributes),
                               NULL );
 #else
       fsal_status = FSAL_open(&(pentry->handle),
@@ -309,7 +309,7 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
                                       &pclient->mfsl_context,
                                       openflags,
                                       &pentry_file->object.file.open_fd.mfsl_fd,
-                                      &(pentry_file->object.file.attributes),
+                                      &(pentry_file->attributes),
                                       NULL );
 
 #else
