@@ -1763,17 +1763,17 @@ void cache_inode_print_srvhandle(char *comment, cache_entry_t * pentry)
     {
     case REGULAR_FILE:
       strcpy(tag, "file");
-      pfsal_handle = (proxyfsal_handle_t *) &(pentry->object.file.handle);
+      pfsal_handle = (proxyfsal_handle_t *) &(pentry->handle);
       break;
 
     case SYMBOLIC_LINK:
       strcpy(tag, "link");
-      pfsal_handle = (proxyfsal_handle_t *) &(pentry->object.symlink->handle);
+      pfsal_handle = (proxyfsal_handle_t *) &(pentry->handle);
       break;
 
     case DIRECTORY:
       strcpy(tag, "dir ");
-      pfsal_handle = (proxyfsal_handle_t *) &(pentry->object.dir.handle);
+      pfsal_handle = (proxyfsal_handle_t *) &(pentry->handle);
       break;
 
     default:
