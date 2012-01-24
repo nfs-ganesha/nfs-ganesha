@@ -348,7 +348,6 @@ void nfs_set_param_default()
   nfs_param.worker_param.nb_pending_prealloc = NB_MAX_PENDING_REQUEST;
   nfs_param.worker_param.nb_before_gc = NB_REQUEST_BEFORE_GC;
   nfs_param.worker_param.nb_dupreq_prealloc = NB_PREALLOC_HASH_DUPREQ;
-  nfs_param.worker_param.nb_dupreq_before_gc = NB_PREALLOC_GC_DUPREQ;
 
   /* Workers parameters : IP/Name values pool prealloc */
   nfs_param.worker_param.nb_ip_stats_prealloc = 20;

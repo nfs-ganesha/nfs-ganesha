@@ -173,10 +173,6 @@ int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * ppara
         {
           pparam->nb_dupreq_prealloc = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Nb_DupReq_Before_GC"))
-        {
-          pparam->nb_dupreq_before_gc = atoi(key_value);
-        }
       else if(!strcasecmp(key_name, "Nb_Client_Id_Prealloc"))
         {
           pparam->nb_client_id_prealloc = atoi(key_value);
