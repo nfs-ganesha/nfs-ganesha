@@ -2518,6 +2518,13 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
        */
       found_entry = glist_first_entry(&pnsmclient->ssc_lock_list, state_lock_entry_t, sle_client_locks);
 
+      /* If we don't find any entries, then we are done. */
+      if(found_entry == NULL)
+        {
+          V(pnsmclient->ssc_mutex);
+          break;
+        }
+
       /* Get a reference so the lock entry will still be valid when we release the ssc_mutex */
       lock_entry_inc_ref(found_entry);
 
@@ -2535,10 +2542,6 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
         }
 
       V(pnsmclient->ssc_mutex);
-
-      /* If we don't find any entries, then we are done. */
-      if(found_entry == NULL)
-        break;
 
       /* Extract the cache inode entry from the lock entry and release the lock entry */
       pentry = found_entry->sle_pentry;

@@ -201,9 +201,17 @@ int display_nlm_client(state_nlm_client_t *pkey, char *str)
   strtmp += sprintf(strtmp, "%p: NSM Client {", pkey);
   strtmp += display_nsm_client(pkey->slc_nsm_client, strtmp);
   strtmp += sprintf(strtmp, "} caller_name=");
-  strncpy(strtmp, pkey->slc_nlm_caller_name, pkey->slc_nlm_caller_name_len);
-  strtmp += pkey->slc_nlm_caller_name_len;
-  strtmp += sprintf(strtmp, " type=%s", xprt_type_to_str(pkey->slc_client_type));
+  if(pkey->slc_nlm_caller_name_len == -1)
+    {
+      *strtmp++ = '*';
+      *strtmp++ = '\0';
+    }
+  else
+    {
+      strncpy(strtmp, pkey->slc_nlm_caller_name, pkey->slc_nlm_caller_name_len);
+      strtmp += pkey->slc_nlm_caller_name_len;
+      strtmp += sprintf(strtmp, " type=%s", xprt_type_to_str(pkey->slc_client_type));
+    }
   strtmp += sprintf(strtmp, " refcount=%d", pkey->slc_refcount);
 
   return strtmp - str;
@@ -320,22 +328,31 @@ int display_nlm_owner(state_owner_t *pkey, char *str)
 
   strtmp += display_nlm_client(pkey->so_owner.so_nlm_owner.so_client, strtmp);
 
-  strtmp += sprintf(strtmp, "} oh=(%u:", pkey->so_owner_len);
-
-  for(i = 0; i < pkey->so_owner_len; i++)
-    if(!isprint(pkey->so_owner_val[i]))
-      break;
-
-  if(i == pkey->so_owner_len)
+  if(pkey->so_owner_len == -1)
     {
-      memcpy(strtmp, pkey->so_owner_val, pkey->so_owner_len);
-      strtmp[pkey->so_owner_len] = '\0';
-      strtmp += pkey->so_owner_len;
+      const char * tmp = "} oh=(*";
+      strcpy(strtmp, tmp);
+      strtmp += strlen(tmp);
     }
-  else for(i = 0; i < pkey->so_owner_len; i++)
+  else
     {
-      sprintf(strtmp, "%02x", (unsigned char)pkey->so_owner_val[i]);
-      strtmp += 2;
+      strtmp += sprintf(strtmp, "} oh=(%u:", pkey->so_owner_len);
+
+      for(i = 0; i < pkey->so_owner_len; i++)
+        if(!isprint(pkey->so_owner_val[i]))
+          break;
+
+      if(i == pkey->so_owner_len)
+        {
+          memcpy(strtmp, pkey->so_owner_val, pkey->so_owner_len);
+          strtmp[pkey->so_owner_len] = '\0';
+          strtmp += pkey->so_owner_len;
+        }
+      else for(i = 0; i < pkey->so_owner_len; i++)
+        {
+          sprintf(strtmp, "%02x", (unsigned char)pkey->so_owner_val[i]);
+          strtmp += 2;
+        }
     }
 
   strtmp += sprintf(strtmp, ") svid=%d", pkey->so_owner.so_nlm_owner.so_nlm_svid);
@@ -748,6 +765,43 @@ state_nsm_client_t *get_nsm_client(care_t       care,
 
   if(nfs_param.core_param.nsm_use_caller_name)
     {
+      pkey->ssc_nlm_caller_name_len = strlen(caller_name);
+
+      if(pkey->ssc_nlm_caller_name_len > LM_MAXSTRLEN)
+        {
+          /* Discard the key we created */
+          free_nsm_client(pkey);
+          return NULL;
+        }
+
+      pkey->ssc_nlm_caller_name = Mem_Alloc(pkey->ssc_nlm_caller_name_len + 1);
+      if(pkey->ssc_nlm_caller_name == NULL)
+        {
+          /* Discard the key we created */
+          free_nsm_client(pkey);
+          return NULL;
+        }
+
+      memcpy(pkey->ssc_nlm_caller_name,
+             caller_name,
+             pkey->ssc_nlm_caller_name_len);
+      pkey->ssc_nlm_caller_name[pkey->ssc_nlm_caller_name_len] = '\0';
+    }
+  else if(xprt == NULL)
+    {
+      int rc = ipstring_to_sockaddr(caller_name, &pkey->ssc_client_addr);
+      if(rc != 0)
+        {
+          LogEvent(COMPONENT_STATE,
+                  "Error converting caller_name %s to an ipaddress %s",
+                  caller_name, gai_strerror(rc));
+
+          /* Discard the key we created */
+          free_nsm_client(pkey);
+
+          return NULL;
+        }
+
       pkey->ssc_nlm_caller_name_len = strlen(caller_name);
 
       if(pkey->ssc_nlm_caller_name_len > LM_MAXSTRLEN)
