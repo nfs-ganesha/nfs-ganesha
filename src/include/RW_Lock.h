@@ -33,20 +33,8 @@
 
 #include <pthread.h>
 #include "log_macros.h"
+#include "common_utils.h"
 
-/* My habit with mutex */
-
-#define P( mutex )                                                          \
-  do { int rc ;                                                             \
-    if( ( rc = pthread_mutex_lock( &mutex ) ) != 0 )                        \
-      LogFullDebug(COMPONENT_RW_LOCK, "  --> Error P: %d %d", rc, errno );  \
-  } while (0)
-
-#define V( mutex )                                                          \
-  do { int rc ;                                                             \
-    if( ( rc = pthread_mutex_unlock( &mutex ) ) != 0 )                      \
-      LogFullDebug(COMPONENT_RW_LOCK, "  --> Error V: %d %d", rc, errno );  \
-  } while (0)
 
 /* Type representing the lock itself */
 typedef struct _RW_LOCK

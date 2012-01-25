@@ -71,15 +71,6 @@
 typedef struct cache_entry_t        cache_entry_t;
 typedef struct cache_inode_client_t cache_inode_client_t;
 
-/* Some habits concerning mutex management */
-#ifndef P
-#define P( a ) pthread_mutex_lock( &a )
-#endif
-
-#ifndef V
-#define V( a ) pthread_mutex_unlock( &a )
-#endif
-
 #define FILEHANDLE_MAX_LEN_V2 32
 #define FILEHANDLE_MAX_LEN_V3 64
 #define FILEHANDLE_MAX_LEN_V4 128

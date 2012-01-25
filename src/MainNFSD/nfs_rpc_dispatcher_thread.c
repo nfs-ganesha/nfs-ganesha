@@ -898,8 +898,14 @@ process_status_t process_rpc_request(SVCXPRT *xprt)
       pnfsreq->rcontent.nfs.xprt = pnfsreq->rcontent.nfs.xprt_copy;
       preq->rq_xprt = pnfsreq->rcontent.nfs.xprt_copy;
 
+      P(pnfsreq->req_done_mutex);
       /* Regular management of the request (UDP request or TCP request on connected handler */
       DispatchWorkNFS(pnfsreq, worker_index);
+
+      LogInfo(COMPONENT_DISPATCH, "Waiting for completion of request");
+      pthread_cond_wait(&pnfsreq->req_done_condvar, &pnfsreq->req_done_mutex);
+      V(pnfsreq->req_done_mutex);
+      LogInfo(COMPONENT_DISPATCH, "Request processing has completed");
 
       gettimeofday(&timer_end, NULL);
       timer_diff = time_diff(timer_start, timer_end);
@@ -1252,5 +1258,7 @@ void constructor_request_data_t(void *ptr)
 {
   request_data_t * pdata = (request_data_t *) ptr;
 
+  pthread_cond_init(&pdata->req_done_condvar, NULL);
+  pthread_mutex_init(&pdata->req_done_mutex, NULL);
   constructor_nfs_request_data_t( &(pdata->rcontent.nfs) ) ;
 }

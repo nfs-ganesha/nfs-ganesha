@@ -75,15 +75,6 @@
 #define _USE_BLOCKING_LOCKS
 #endif
 
-/* Some habits concerning mutex management */
-#ifndef P
-#define P( a ) pthread_mutex_lock( &a )
-#endif
-
-#ifndef V
-#define V( a ) pthread_mutex_unlock( &a )
-#endif
-
 #define STATE_LOCK_OFFSET_EOF 0xFFFFFFFFFFFFFFFFLL
 
 /* Forward references to types */
