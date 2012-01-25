@@ -87,6 +87,7 @@ typedef struct lru_list__
 typedef int LRU_status_t;
 
 LRU_entry_t *LRU_new_entry(LRU_list_t * plru, LRU_status_t * pstatus);
+int LRU_pop_entry (LRU_list_t * plru, LRU_entry_t  *out_entry);
 LRU_list_t *LRU_Init(LRU_parameter_t lru_param, LRU_status_t * pstatus);
 int LRU_gc_invalid(LRU_list_t * plru, void *cleanparam);
 int LRU_invalidate(LRU_list_t * plru, LRU_entry_t * pentry);

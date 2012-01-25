@@ -43,6 +43,7 @@
 #include "solaris_port.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -407,6 +408,23 @@ struct timeval time_diff(struct timeval time_from, struct timeval time_to)
 
   return result;
 }
+
+/**
+ *
+ * clean_pending_request: cleans an entry in a nfs request LRU,
+ *
+ * cleans an entry in a nfs request LRU.
+ *
+ * @param pentry [INOUT] entry to be cleaned.
+ * @param request_pool [IN] the memory pool into which the request is put back
+ */
+static inline void clean_pending_request(LRU_entry_t * pentry, struct prealloc_pool *request_pool)
+{
+  nfs_request_data_t *preqnfs = (nfs_request_data_t *) (pentry->buffdata.pdata);
+
+  /* Send the entry back to the pool */
+  ReleaseToPool(preqnfs, request_pool);
+}                               /* clean_pending_request */
 
 /**
  * is_rpc_call_valid: helper function to validate rpc calls.
@@ -1794,10 +1812,9 @@ void *worker_thread(void *IndexArg)
 {
   nfs_worker_data_t *pmydata;
   request_data_t *pnfsreq;
-  LRU_entry_t *pentry;
+  LRU_entry_t  out_entry;
   struct svc_req *preq;
   unsigned long worker_index;
-  bool_t found = FALSE;
   int rc = 0;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   unsigned int gc_allowed = FALSE;
@@ -1991,29 +2008,15 @@ void *worker_thread(void *IndexArg)
                    pmydata->pending_request->nb_entry,
                    pmydata->pending_request->nb_invalid);
 
-      found = FALSE;
       P(pmydata->request_pool_mutex);
-
-      for(pentry = pmydata->pending_request->LRU; pentry != NULL; pentry = pentry->next)
-        {
-          if(pentry->valid_state == LRU_ENTRY_VALID)
-            {
-              found = TRUE;
-              break;
-            }
-        }
-
-      V(pmydata->request_pool_mutex);
-
-      if(!found)
-        {
+      if (LRU_pop_entry(pmydata->pending_request, &out_entry) == LRU_LIST_EMPTY_LIST) {
           LogMajor(COMPONENT_DISPATCH,
                    "No pending request available");
           continue;             /* return to main loop */
-        }
+      }
+      V(pmydata->request_pool_mutex);
 
-      pnfsreq = (request_data_t *) (pentry->buffdata.pdata);
-
+      pnfsreq = (request_data_t *) (out_entry.buffdata.pdata);
      
       switch( pnfsreq->rtype )
        {
@@ -2057,15 +2060,17 @@ void *worker_thread(void *IndexArg)
 	    break ;
          }
 
+      /* signal the request processing has completed */
+      LogInfo(COMPONENT_DISPATCH, "Signaling completion of request");
+      P(pnfsreq->req_done_mutex);
+      pthread_cond_signal(&pnfsreq->req_done_condvar);
+      V(pnfsreq->req_done_mutex);
+
       /* Free the req by releasing the entry */
       LogFullDebug(COMPONENT_DISPATCH,
                    "Invalidating processed entry");
       P(pmydata->request_pool_mutex);
-      if(LRU_invalidate(pmydata->pending_request, pentry) != LRU_LIST_SUCCESS)
-        {
-          LogCrit(COMPONENT_DISPATCH,
-                  "Incoherency: released entry for dispatch could not be tagged invalid");
-        }
+      clean_pending_request(&out_entry, &pmydata->request_pool);
       V(pmydata->request_pool_mutex);
 
       if(pmydata->passcounter > nfs_param.worker_param.nb_before_gc)
@@ -2107,19 +2112,6 @@ void *worker_thread(void *IndexArg)
           LogFullDebug(COMPONENT_DISPATCH,
                        "Garbage collecting on pending request list");
           pmydata->passcounter = 0;
-
-          P(pmydata->request_pool_mutex);
-
-          if(LRU_gc_invalid(pmydata->pending_request, (void *)&pmydata->request_pool) !=
-             LRU_LIST_SUCCESS)
-            LogCrit(COMPONENT_DISPATCH,
-                    "ERROR: Impossible garbage collection on pending request list");
-          else
-            LogFullDebug(COMPONENT_DISPATCH,
-                         "Garbage collection on pending request list OK");
-
-          V(pmydata->request_pool_mutex);
-
         }
       else
         LogFullDebug(COMPONENT_DISPATCH,

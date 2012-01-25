@@ -328,7 +328,7 @@ static ThreadLogContext_t *Log_GetThreadContext(int ok_errors)
 
 }                               /* Log_GetThreadContext */
 
-static const char *Log_GetThreadFunction(int ok_errors)
+static inline const char *Log_GetThreadFunction(int ok_errors)
 {
   ThreadLogContext_t *context = Log_GetThreadContext(ok_errors);
 

@@ -334,12 +334,13 @@ void nfs_set_param_default()
   /* Worker parameters : LRU */
   nfs_param.worker_param.lru_param.nb_entry_prealloc = NB_PREALLOC_LRU_WORKER;
   nfs_param.worker_param.lru_param.nb_call_gc_invalid = 100;
-  nfs_param.worker_param.lru_param.clean_entry = clean_pending_request;
+  nfs_param.worker_param.lru_param.clean_entry = NULL;// poison so that GC isnt executed
   nfs_param.worker_param.lru_param.entry_to_str = print_pending_request;
   nfs_param.worker_param.lru_param.name = "Worker LRU";
 
   /* Worker parameters : LRU dupreq */
   nfs_param.worker_param.lru_dupreq.nb_entry_prealloc = NB_PREALLOC_LRU_DUPREQ;
+  nfs_param.worker_param.lru_dupreq.nb_call_gc_invalid = 100;
   nfs_param.worker_param.lru_dupreq.clean_entry = clean_entry_dupreq;
   nfs_param.worker_param.lru_dupreq.entry_to_str = print_entry_dupreq;
   nfs_param.worker_param.lru_dupreq.name = "Worker DupReq LRU";

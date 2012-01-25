@@ -207,14 +207,6 @@ typedef char path_str_t[MAXPATHLEN] ;
 
 #define CLIENT_ID_MAX_LEN             72        /* MUST be a multiple of 9 */
 
-#ifndef P
-#define P( sem ) pthread_mutex_lock( &sem )
-#endif
-
-#ifndef V
-#define V( sem ) pthread_mutex_unlock( &sem )
-#endif
-
 /* The default attribute mask for NFSv2/NFSv3 */
 #define FSAL_ATTR_MASK_V2_V3   ( FSAL_ATTRS_MANDATORY | FSAL_ATTR_MODE     | FSAL_ATTR_FILEID | \
                                  FSAL_ATTR_FSID       | FSAL_ATTR_NUMLINKS | FSAL_ATTR_OWNER  | \
@@ -448,6 +440,8 @@ typedef enum request_type__
 typedef struct request_data__
 {
   request_type_t rtype ;
+  pthread_cond_t   req_done_condvar;
+  pthread_mutex_t  req_done_mutex;
   union request_content__
    {
       nfs_request_data_t nfs ;
@@ -706,7 +700,6 @@ int compare_req(hash_buffer_t * buff1, hash_buffer_t * buff2);
 int print_entry_dupreq(LRU_data_t data, char *str);
 int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam);
 
-int clean_pending_request(LRU_entry_t * pentry, void *addparam);
 int print_pending_request(LRU_data_t data, char *str);
 
 void auth_stat2str(enum auth_stat, char *str);

@@ -96,6 +96,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include "LRU_List.h"
@@ -241,6 +242,56 @@ LRU_entry_t *LRU_new_entry(LRU_list_t * plru, LRU_status_t * pstatus)
   return new_entry;
 }                               /* LRU_new_entry */
 
+
+/**
+ *
+ * _LRU_remove_entry : remove an entry from the list
+ */
+static inline void _LRU_remove_entry(LRU_list_t * plru, LRU_entry_t * const pentry)
+{
+    if(pentry->prev != NULL)
+	pentry->prev->next = pentry->next;
+    else {
+	assert(pentry == plru->LRU); // we remove the list head
+	plru->LRU = pentry->next;
+    }
+
+    if(pentry->next != NULL)
+	pentry->next->prev = pentry->prev;
+    else {
+	assert(pentry == plru->MRU);	// we remove the MRU
+	plru->MRU = NULL;
+    }
+    plru->nb_entry --;
+    /* Put it back to pre-allocated pool */
+    ReleaseToPool(pentry, &plru->lru_entry_pool);
+}
+
+/**
+ *
+ * LRU_pop_entry : pop the entry at the head of the list, returning the data it points to.
+ *
+ * @param plru Pointer to the list to be managed.
+ * @param out_entry the data pointed by the poped entry
+ * @return a status indicating whether the LRU is empty (hence cannot pop an item) or otherwise pop succeeded.
+ *   when successfull, the LRU data is returned.
+ *
+ */
+int LRU_pop_entry (LRU_list_t * plru, LRU_entry_t  *out_entry)
+{
+    LRU_entry_t * const pentry = plru->LRU;
+    void  *pdata;
+
+
+    if (plru->nb_entry == 0) {
+	return LRU_LIST_EMPTY_LIST;
+    }
+    memcpy(out_entry, pentry, sizeof(*out_entry));
+    pdata = pentry->buffdata.pdata;
+    _LRU_remove_entry(plru, pentry);
+    return LRU_LIST_SUCCESS;
+}
+
 /**
  * 
  * LRU_gc_invalid : garbagge collection for invalid entries.
@@ -290,22 +341,8 @@ int LRU_gc_invalid(LRU_list_t * plru, void *cleanparam)
               rc = LRU_LIST_BAD_RELEASE_ENTRY;
             }
 
-          if(pentry->prev != NULL)
-            pentry->prev->next = pentry->next;
-          else
-            plru->LRU = pentry->next;
-
-          if(pentry->next != NULL)
-            pentry->next->prev = pentry->prev;
-          else
-            LogCrit(COMPONENT_LRU,
-                    "SHOULD Never appear  !!!! line %d file %s",
-                    __LINE__, __FILE__);
-          plru->nb_entry -= 1;
-          plru->nb_invalid -= 1;
-
-          /* Put it back to pre-allocated pool */
-          ReleaseToPool(pentry, &plru->lru_entry_pool);
+	  _LRU_remove_entry(plru, pentry);
+          plru->nb_invalid --;
         }
     }
 

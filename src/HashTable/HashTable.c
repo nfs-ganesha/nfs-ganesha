@@ -187,14 +187,6 @@
 #define FALSE 0
 #endif
 
-#ifndef P
-#define P( a ) pthread_mutex_lock( &a )
-#endif
-
-#ifndef V
-#define V( a ) pthread_mutex_unlock( &a )
-#endif
-
 /* ------ This group contains all the functions used to manipulate the hash table internally in this module ------ */
 
 /**

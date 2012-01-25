@@ -1035,9 +1035,6 @@ void *TEST9(void *arg)
 pthread_mutex_t testA_mutex = PTHREAD_MUTEX_INITIALIZER;
 caddr_t tab_alloc_testA[NB_ITEMA];
 
-#define P( __mutex__ ) pthread_mutex_lock( &__mutex__ )
-#define V( __mutex__ ) pthread_mutex_unlock( &__mutex__ )
-
 void *TESTA(void *arg)
 {
 

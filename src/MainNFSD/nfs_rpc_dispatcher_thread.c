@@ -905,8 +905,14 @@ process_status_t process_rpc_request(SVCXPRT *xprt)
       pnfsreq->rcontent.nfs.xprt = pnfsreq->rcontent.nfs.xprt_copy;
       preq->rq_xprt = pnfsreq->rcontent.nfs.xprt_copy;
 
+      P(pnfsreq->req_done_mutex);
       /* Regular management of the request (UDP request or TCP request on connected handler */
       DispatchWorkNFS(pnfsreq, worker_index);
+
+      LogInfo(COMPONENT_DISPATCH, "Waiting for completion of request");
+      pthread_cond_wait(&pnfsreq->req_done_condvar, &pnfsreq->req_done_mutex);
+      V(pnfsreq->req_done_mutex);
+      LogInfo(COMPONENT_DISPATCH, "Request processing has completed");
 
       gettimeofday(&timer_end, NULL);
       timer_diff = time_diff(timer_start, timer_end);
@@ -1100,29 +1106,6 @@ void nfs_rpc_getreq(fd_set * readfds)
 
 /**
  *
- * clean_pending_request: cleans an entry in a nfs request LRU,
- *
- * cleans an entry in a nfs request LRU.
- *
- * @param pentry [INOUT] entry to be cleaned.
- * @param addparam [IN] additional parameter used for cleaning.
- *
- * @return 0 if ok, other values mean an error.
- *
- */
-int clean_pending_request(LRU_entry_t * pentry, void *addparam)
-{
-  struct prealloc_pool *request_pool = (struct prealloc_pool *) addparam;
-  nfs_request_data_t *preqnfs = (nfs_request_data_t *) (pentry->buffdata.pdata);
-
-  /* Send the entry back to the pool */
-  ReleaseToPool(preqnfs, request_pool);
-
-  return 0;
-}                               /* clean_pending_request */
-
-/**
- *
  * print_pending_request: prints an entry related to a pending request in the LRU list.
  *
  * prints an entry related to a pending request in the LRU list.
@@ -1313,5 +1296,7 @@ void constructor_request_data_t(void *ptr)
 {
   request_data_t * pdata = (request_data_t *) ptr;
 
+  pthread_cond_init(&pdata->req_done_condvar, NULL);
+  pthread_mutex_init(&pdata->req_done_mutex, NULL);
   constructor_nfs_request_data_t( &(pdata->rcontent.nfs) ) ;
 }
