@@ -24,9 +24,6 @@
 #include "fsal.h"
 #include "fsal_glue.h"
 #include "fsal_up.h"
-#if defined(_USE_FSALMDS) || defined(_USE_FSALDS)
-#include "fsal_pnfs.h"
-#endif /* _USE_FSALMDS || _USE_FSALDS */
 
 int __thread my_fsalid = -1 ;
 
@@ -147,13 +144,6 @@ int FSAL_param_load_fsal_split( char * param, int * pfsalid, char * pathlib )
   *pfsalid = FSAL_name2fsalid( strwork ) ;
   return 0 ;
 } /* FSAL_param_load_fsal_split */
-
-#ifdef _USE_FSALMDS
-fsal_mdsfunctions_t fsal_mdsfunctions;
-#endif                                          /* _USE_FSALMDS */
-#ifdef _USE_FSALDS
-fsal_dsfunctions_t fsal_dsfunctions;
-#endif                                          /* _USE_FSALMDS */
 
 #ifdef _USE_SHARED_FSAL
 fsal_functions_t(*getfunctions) (void);
@@ -1021,20 +1011,6 @@ void FSAL_LoadFunctions(void)
   fsal_functions = (*getfunctions) ();
 }
 
-#ifdef _USE_FSALMDS
-void FSAL_LoadMDSFunctions(void)
-{
-  fsal_mdsfunctions = (*getmdsfunctions) ();
-}
-#endif
-
-#ifdef _USE_FSALDS
-void FSAL_LoadDSFunctions(void)
-{
-  fsal_dsfunctions = (*getdsfunctions) ();
-}
-#endif
-
 void FSAL_LoadConsts(void)
 {
 
@@ -1056,19 +1032,5 @@ void FSAL_LoadConsts(void)
 {
   fsal_consts = FSAL_GetConsts();
 }
-
-#ifdef _USE_FSALMDS
-void FSAL_LoadMDSFunctions(void)
-{
-  fsal_mdsfunctions = FSAL_GetMDSFunctions();
-}
-#endif /* _USE_FSALMDS */
-
-#ifdef _USE_FSALDS
-void FSAL_LoadDSFunctions(void)
-{
-  fsal_dsfunctions = FSAL_GetDSFunctions();
-}
-#endif /* _USE_FSALDS */
 
 #endif /* _USE_SHARED_FSAL */

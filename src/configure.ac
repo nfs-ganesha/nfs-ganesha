@@ -448,8 +448,6 @@ AC_ARG_WITH( [pnfs-mds], AS_HELP_STRING([--with-pnfs-mds=PARALLEL_FS|FSAL|NONE (
 
 AM_CONDITIONAL(USE_PNFS_NONE, 		test "$PNFS" = "NONE" )
 AM_CONDITIONAL(USE_PNFS_PARALLEL_FS,	test "$PNFS" = "PARALLEL_FS" )
-AM_CONDITIONAL(USE_PNFS_FSAL,	        test "$PNFS" = "FSAL" )
-
 AM_CONDITIONAL(USE_PNFS,                test "$PNFS" != "NONE" )
 
 AM_CONDITIONAL(USE_FSALMDS, test "$PNFS" = "FSAL") 
@@ -457,6 +455,7 @@ AM_CONDITIONAL(USE_FSALMDS, test "$PNFS" = "FSAL")
 # FSAL based pNFS DS support (requires NFSv4.1, conflicts with DS)
 GA_ENABLE_AM_CONDITION([fsal-ds],[enable FSAL-based pNFS DS support (NFSv4.1 support is mandatory)],[USE_FSALDS])
 AM_CONDITIONAL(USE_FSALDS, test "x$enable_fsal_ds" = "xyes")
+AM_CONDITIONAL(USE_PNFS_FSAL, test \( "x$enable_fsal_ds" = "xyes" \) -o \( "x$PNFS" = "xFSAL" \))
 
 # MFSL switch argument (default is NULL )
 AC_ARG_WITH( [mfsl], AS_HELP_STRING([--with-mfsl=NONE|NULL|ASYNC|AIO|MIRROR|PROXY_RPCSECGSS (default=NULL)],[specify the type of intermediate FSAL module to be used] ),
@@ -594,7 +593,12 @@ case $FSAL in
 		FSAL_CFLAGS="-D_FILE_OFFSET_BITS=64"
 		LDFLAGS="-L${CEPH_PREFIX}/lib"
                 FSAL_LDFLAGS=-lcephfs
-                FSAL_LIB="\$(top_builddir)/FSAL/FSAL_CEPH/libfsalceph.la"
+		if test \( "x$PNFS" = "xFSAL" \) -o \( "x$enable_fsal_ds" = "xyes" \); then
+			FSALPNFS_LIB="\$(top_builddir)/FSAL/FSAL_CEPH/libfsalpnfsceph.la"
+		else
+			FSALPNFS_LIB=""
+		fi
+		FSAL_LIB="\$(top_builddir)/FSAL/FSAL_CEPH/libfsalceph.la"
                 FS_NAME="ceph"
                 ;;
 
@@ -857,6 +861,7 @@ AC_SUBST(CFLAGS)
 AC_SUBST(FSAL_CFLAGS)
 AC_SUBST(FSAL_LDFLAGS)
 AC_SUBST(FSAL_LIB)
+AC_SUBST(FSALPNFS_LIB)
 AC_SUBST(MFSL_LIB)
 AC_SUBST(PNFS_LIB)
 AC_SUBST(FS_NAME)
