@@ -23,6 +23,7 @@
  */
 
 #include "config.h"
+#include <sys/utsname.h>
 #include "rpc.h"
 #include "nsm.h"
 #include "nlm4.h"
@@ -32,9 +33,33 @@
 pthread_mutex_t nsm_mutex = PTHREAD_MUTEX_INITIALIZER;
 CLIENT *nsm_clnt;
 unsigned long nsm_count;
+char * nodename;
 
 bool_t nsm_connect()
 {
+  struct utsname utsname;
+
+  if(nsm_clnt != NULL)
+    return TRUE;
+
+  if(uname(&utsname) == -1)
+    {
+      LogDebug(COMPONENT_NLM,
+               "uname failed with errno %d (%s)",
+               errno, strerror(errno));
+      return FALSE;
+    }
+
+  nodename = Mem_Alloc(strlen(utsname.nodename)+1);
+  if(nodename == NULL)
+    {
+      LogDebug(COMPONENT_NLM,
+               "failed to allocate memory for nodename");
+      return FALSE;
+    }
+
+  strcpy(nodename, utsname.nodename);
+
   if(nsm_clnt == NULL)
     nsm_clnt = Clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
 
@@ -47,6 +72,8 @@ void nsm_disconnect()
     {
       Clnt_destroy(nsm_clnt);
       nsm_clnt = NULL;
+      if(nodename != NULL)
+        Mem_Free(nodename);
     }
 }
 
@@ -64,7 +91,6 @@ bool_t nsm_monitor(state_nsm_client_t *host)
     return TRUE;
 
   nsm_mon.mon_id.mon_name      = host->ssc_nlm_caller_name;
-  nsm_mon.mon_id.my_id.my_name = "localhost";
   nsm_mon.mon_id.my_id.my_prog = NLMPROG;
   nsm_mon.mon_id.my_id.my_vers = NLM4_VERS;
   nsm_mon.mon_id.my_id.my_proc = NLMPROC4_SM_NOTIFY;
@@ -84,6 +110,9 @@ bool_t nsm_monitor(state_nsm_client_t *host)
       V(nsm_mutex);
       return FALSE;
     }
+
+  /* Set this after we call nsm_connect() */
+  nsm_mon.mon_id.my_id.my_name = nodename;
 
   ret = clnt_call(nsm_clnt,
                   SM_MON,
@@ -136,7 +165,6 @@ bool_t nsm_unmonitor(state_nsm_client_t *host)
     return TRUE;
 
   nsm_mon_id.mon_name      = host->ssc_nlm_caller_name;
-  nsm_mon_id.my_id.my_name = "localhost";
   nsm_mon_id.my_id.my_prog = NLMPROG;
   nsm_mon_id.my_id.my_vers = NLM4_VERS;
   nsm_mon_id.my_id.my_proc = NLMPROC4_SM_NOTIFY;
@@ -152,6 +180,9 @@ bool_t nsm_unmonitor(state_nsm_client_t *host)
       V(nsm_mutex);
       return FALSE;
     }
+
+  /* Set this after we call nsm_connect() */
+  nsm_mon_id.my_id.my_name = nodename;
 
   ret = clnt_call(nsm_clnt,
                   SM_UNMON,
@@ -188,7 +219,6 @@ void nsm_unmonitor_all(void)
   struct my_id   nsm_id;
   struct timeval tout = { 5, 0 };
 
-  nsm_id.my_name = "localhost";
   nsm_id.my_prog = NLMPROG;
   nsm_id.my_vers = NLM4_VERS;
   nsm_id.my_proc = NLMPROC4_SM_NOTIFY;
@@ -203,6 +233,9 @@ void nsm_unmonitor_all(void)
       V(nsm_mutex);
       return;
     }
+
+  /* Set this after we call nsm_connect() */
+  nsm_id.my_name = nodename;
 
   ret = clnt_call(nsm_clnt,
                   SM_UNMON_ALL,
