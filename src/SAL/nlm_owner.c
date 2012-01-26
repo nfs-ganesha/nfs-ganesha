@@ -201,17 +201,9 @@ int display_nlm_client(state_nlm_client_t *pkey, char *str)
   strtmp += sprintf(strtmp, "%p: NSM Client {", pkey);
   strtmp += display_nsm_client(pkey->slc_nsm_client, strtmp);
   strtmp += sprintf(strtmp, "} caller_name=");
-  if(pkey->slc_nlm_caller_name_len == -1)
-    {
-      *strtmp++ = '*';
-      *strtmp++ = '\0';
-    }
-  else
-    {
-      strncpy(strtmp, pkey->slc_nlm_caller_name, pkey->slc_nlm_caller_name_len);
-      strtmp += pkey->slc_nlm_caller_name_len;
-      strtmp += sprintf(strtmp, " type=%s", xprt_type_to_str(pkey->slc_client_type));
-    }
+  strncpy(strtmp, pkey->slc_nlm_caller_name, pkey->slc_nlm_caller_name_len);
+  strtmp += pkey->slc_nlm_caller_name_len;
+  strtmp += sprintf(strtmp, " type=%s", xprt_type_to_str(pkey->slc_client_type));
   strtmp += sprintf(strtmp, " refcount=%d", pkey->slc_refcount);
 
   return strtmp - str;
@@ -249,11 +241,6 @@ int compare_nlm_client(state_nlm_client_t *pclient1,
 
   if(compare_nsm_client(pclient1->slc_nsm_client, pclient2->slc_nsm_client) != 0)
     return 1;
-
-  /* Handle special client that matches any NLM Client with the same NSM Client */
-  if(pclient1->slc_nlm_caller_name_len == -1 ||
-     pclient2->slc_nlm_caller_name_len == -1)
-    return 0;
 
   if(pclient1->slc_client_type != pclient2->slc_client_type)
     return 1;
@@ -328,31 +315,22 @@ int display_nlm_owner(state_owner_t *pkey, char *str)
 
   strtmp += display_nlm_client(pkey->so_owner.so_nlm_owner.so_client, strtmp);
 
-  if(pkey->so_owner_len == -1)
+  strtmp += sprintf(strtmp, "} oh=(%u:", pkey->so_owner_len);
+
+  for(i = 0; i < pkey->so_owner_len; i++)
+    if(!isprint(pkey->so_owner_val[i]))
+      break;
+
+  if(i == pkey->so_owner_len)
     {
-      const char * tmp = "} oh=(*";
-      strcpy(strtmp, tmp);
-      strtmp += strlen(tmp);
+      memcpy(strtmp, pkey->so_owner_val, pkey->so_owner_len);
+      strtmp[pkey->so_owner_len] = '\0';
+      strtmp += pkey->so_owner_len;
     }
-  else
+  else for(i = 0; i < pkey->so_owner_len; i++)
     {
-      strtmp += sprintf(strtmp, "} oh=(%u:", pkey->so_owner_len);
-
-      for(i = 0; i < pkey->so_owner_len; i++)
-        if(!isprint(pkey->so_owner_val[i]))
-          break;
-
-      if(i == pkey->so_owner_len)
-        {
-          memcpy(strtmp, pkey->so_owner_val, pkey->so_owner_len);
-          strtmp[pkey->so_owner_len] = '\0';
-          strtmp += pkey->so_owner_len;
-        }
-      else for(i = 0; i < pkey->so_owner_len; i++)
-        {
-          sprintf(strtmp, "%02x", (unsigned char)pkey->so_owner_val[i]);
-          strtmp += 2;
-        }
+      sprintf(strtmp, "%02x", (unsigned char)pkey->so_owner_val[i]);
+      strtmp += 2;
     }
 
   strtmp += sprintf(strtmp, ") svid=%d", pkey->so_owner.so_nlm_owner.so_nlm_svid);
@@ -394,11 +372,6 @@ int compare_nlm_owner(state_owner_t *powner1,
   if(compare_nlm_client(powner1->so_owner.so_nlm_owner.so_client,
                         powner2->so_owner.so_nlm_owner.so_client) != 0)
     return 1;
-
-  /* Handle special owner that matches any lock owner with the same nlm client */
-  if(powner1->so_owner_len == -1 ||
-     powner2->so_owner_len == -1)
-    return 0;
 
   if(powner1->so_owner.so_nlm_owner.so_nlm_svid !=
      powner2->so_owner.so_nlm_owner.so_nlm_svid)
