@@ -1563,30 +1563,3 @@ state_owner_t *get_nlm_owner(care_t               care,
   Mem_Free(powner);
   return NULL;
 }
-
-void make_nlm_special_owner(state_nsm_client_t * pnsm_client,
-                            state_nlm_client_t * pnlm_client,
-                            state_owner_t      * pnlm_owner)
-{
-
-  inc_nsm_client_ref(pnsm_client);
-
-  /* fill in special NLM Client, all we need is:
-   *   pointer to NSM Client
-   *   slc_nlm_caller_name_len = -1
-   */
-  memset(pnlm_client, 0, sizeof(*pnlm_client));
-  pnlm_client->slc_nsm_client          = pnsm_client;
-  pnlm_client->slc_refcount            = 1;
-  pnlm_client->slc_nlm_caller_name_len = -1;
-
-  /* fill in special NLM Owner, all we need is:
-   *   pointer to NLM Client
-   *   so_owner.so_nlm_owner.so_client = -1
-   */
-  memset(pnlm_owner, 0, sizeof(*pnlm_owner));
-  pnlm_owner->so_type                             = STATE_LOCK_OWNER_NLM;
-  pnlm_owner->so_refcount                         = 1;
-  pnlm_owner->so_owner.so_nlm_owner.so_client     = pnlm_client;
-  pnlm_owner->so_owner_len                        = -1;
-}

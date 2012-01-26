@@ -150,10 +150,6 @@ unsigned long nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                       hash_buffer_t    * buffclef);
 
-void make_nlm_special_owner(state_nsm_client_t * pnsm_client,
-                            state_nlm_client_t * pnlm_client,
-                            state_owner_t      * pnlm_owner);
-
 state_owner_t *get_nlm_owner(care_t               care,
                              state_nlm_client_t * pclient, 
                              netobj             * oh,
