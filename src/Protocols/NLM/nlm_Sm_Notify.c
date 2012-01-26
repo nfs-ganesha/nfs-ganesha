@@ -88,6 +88,9 @@ int nlm4_Sm_Notify(nfs_arg_t * parg /* IN     */ ,
 
   dec_nsm_client_ref(nsm_client);
 
+  LogDebug(COMPONENT_NLM,
+           "REQUEST RESULT: nlm4_sm_notify DONE");
+
   return NFS_REQ_OK;
 }
 

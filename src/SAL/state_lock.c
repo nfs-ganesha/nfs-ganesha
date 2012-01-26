@@ -2499,13 +2499,22 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
                                 cache_inode_client_t * pclient,
                                 state_status_t       * pstatus)
 {
-  state_owner_t        owner;
-  state_nlm_client_t   client;
+  state_owner_t      * powner;
   state_lock_entry_t * found_entry;
   fsal_lock_param_t    lock;
   cache_entry_t      * pentry;
   int                  errcnt = 0;
   struct glist_head    newlocks;
+
+  if(isFullDebug(COMPONENT_STATE))
+    {
+      char client[HASHTABLE_DISPLAY_STRLEN];
+
+      display_nsm_client(pnsmclient, client);
+
+      LogFullDebug(COMPONENT_STATE,
+                   "state_nlm_notify for %s", client);
+    }
 
   init_glist(&newlocks);
 
@@ -2530,21 +2539,26 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
 
       /* Remove from the client lock list */
       glist_del(&found_entry->sle_client_locks);
+
       if(found_entry->sle_state == pstate)
         {
           /* This is a new lock acquired since the client rebooted, retain it. */
+          LogEntry("Don't release new lock", found_entry);
           glist_add_tail(&newlocks, &found_entry->sle_client_locks);
+          V(pnsmclient->ssc_mutex);
+          continue;
         }
-      else
-        {
-          /* Move this entry to the end of the list (this will help if errors occur) */
-          glist_add_tail(&pnsmclient->ssc_lock_list, &found_entry->sle_client_locks);
-        }
+
+      LogEntry("Release client locks based on", found_entry);
+
+      /* Move this entry to the end of the list (this will help if errors occur) */
+      glist_add_tail(&pnsmclient->ssc_lock_list, &found_entry->sle_client_locks);
 
       V(pnsmclient->ssc_mutex);
 
       /* Extract the cache inode entry from the lock entry and release the lock entry */
       pentry = found_entry->sle_pentry;
+      powner = found_entry->sle_owner;
 
       P(pentry->object.file.lock_list_mutex);
 
@@ -2557,13 +2571,10 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
       lock.lock_start  = 0;
       lock.lock_length = 0;
 
-      /* Make special NLM Client/Owner that matches all clients/owners from NSM Client */
-      make_nlm_special_owner(pnsmclient, &client, &owner);
-
       /* Remove all locks held by this NLM Client on the file */
       if(state_unlock(pentry,
                       pcontext,
-                      &owner,
+                      powner,
                       pstate,
                       &lock,
                       pclient,
@@ -2572,14 +2583,18 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
           /* Increment the error count and try the next lock, with any luck
            * the memory pressure which is causing the problem will resolve itself.
            */
+          LogFullDebug(COMPONENT_STATE,
+                       "state_unlock returned %s",
+                       state_err_str(*pstatus));
           errcnt++;
         }
-
-      dec_nsm_client_ref(pnsmclient);
     }
 
   /* Put locks from current client incarnation onto end of list */
+  P(pnsmclient->ssc_mutex);
   glist_add_list_tail(&pnsmclient->ssc_lock_list, &newlocks);
+  V(pnsmclient->ssc_mutex);
+  LogFullDebug(COMPONENT_STATE, "DONE");
 
   return *pstatus;
 }
