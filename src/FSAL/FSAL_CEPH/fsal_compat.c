@@ -137,33 +137,3 @@ fsal_const_t FSAL_GetConsts(void)
 {
   return fsal_ceph_consts;
 }                               /* FSAL_GetConsts */
-
-#ifdef _USE_FSALMDS
-fsal_mdsfunctions_t fsal_ceph_mdsfunctions = {
-  .layoutget = CEPHFSAL_layoutget,
-  .layoutreturn = CEPHFSAL_layoutreturn,
-  .layoutcommit = CEPHFSAL_layoutcommit,
-  .getdeviceinfo = CEPHFSAL_getdeviceinfo,
-  .getdevicelist = CEPHFSAL_getdevicelist
-};
-
-fsal_mdsfunctions_t FSAL_GetMDSFunctions(void)
-{
-  return fsal_ceph_mdsfunctions;
-}
-#endif /* _USE_FSALMDS */
-
-#ifdef _USE_FSALDS
-fsal_dsfunctions_t fsal_ceph_dsfunctions = {
-  .DS_read = CEPHFSAL_DS_read,
-  .DS_write = CEPHFSAL_DS_write,
-  .DS_commit = CEPHFSAL_DS_commit
-};
-#endif /* _USE_FSALDS */
-
-#ifdef _USE_FSALDS
-fsal_dsfunctions_t FSAL_GetDSFunctions(void)
-{
-  return fsal_ceph_dsfunctions;
-}
-#endif /* _USE_FSALDS */

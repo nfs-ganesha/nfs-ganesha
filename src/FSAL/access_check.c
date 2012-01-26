@@ -7,6 +7,7 @@
 #endif
 
 #include  "fsal.h"
+#include <sys/stat.h>
 #include "FSAL/access_check.h"
 
 
@@ -390,7 +391,6 @@ static fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /
   LogDebug(COMPONENT_FSAL,
                "fsal_check_access_no_acl: file Mode=%#o, file uid=%d, file gid= %d",
                mode,uid, gid);
-
 #ifdef _USE_HPSS
   LogDebug(COMPONENT_FSAL,
                "fsal_check_access_no_acl: user uid=%d, user gid= %d, access_type=0X%x",
@@ -403,6 +403,9 @@ static fsal_status_t fsal_check_access_no_acl(fsal_op_context_t * p_context,   /
                p_context->credential.user,
                p_context->credential.group,
                access_type);
+  /* If the uid of the file matches the uid of the user,
+   * then the uid mode bits take precedence. */
+  if(p_context->credential.user == uid)
 #endif
 
   /* If the uid of the file matches the uid of the user,

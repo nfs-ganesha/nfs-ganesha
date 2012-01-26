@@ -71,15 +71,6 @@
 typedef struct cache_entry_t        cache_entry_t;
 typedef struct cache_inode_client_t cache_inode_client_t;
 
-/* Some habits concerning mutex management */
-#ifndef P
-#define P( a ) pthread_mutex_lock( &a )
-#endif
-
-#ifndef V
-#define V( a ) pthread_mutex_unlock( &a )
-#endif
-
 #define FILEHANDLE_MAX_LEN_V2 32
 #define FILEHANDLE_MAX_LEN_V3 64
 #define FILEHANDLE_MAX_LEN_V4 128
@@ -280,8 +271,6 @@ typedef struct cache_inode_internal_md__
 
 struct cache_inode_symlink__
 {
-  fsal_handle_t handle;                                   /**< The FSAL Handle     */
-  fsal_attrib_list_t attributes;                          /**< The FSAL Attributes */
   fsal_path_t content;                                    /**< Content of the link */
 };
 
@@ -304,17 +293,17 @@ struct cache_inode_dir_entry__
 
 struct cache_entry_t
 {
-  cache_inode_policy_t  policy ;                                     /**< The current cache policy for this entry               */
+  cache_inode_policy_t  policy ;                          /**< The current cache policy for this entry               */
+  fsal_handle_t handle;                                   /**< The FSAL Handle     */
+  fsal_attrib_list_t attributes;                          /**< The FSAL Attributes */
 
   union cache_inode_fsobj__
   {
     struct cache_inode_file__
     {
-      fsal_handle_t handle;                                          /**< The FSAL Handle                                      */
       cache_inode_opened_file_t open_fd;                             /**< Cached fsal_file_t for optimized access              */
       fsal_name_t *pname;                                            /**< Pointer to filename, for PROXY only                  */
       cache_entry_t *pentry_parent_open;                             /**< Parent associated with pname, for PROXY only         */
-      fsal_attrib_list_t attributes;                                 /**< The FSAL Attributes                                  */
       void *pentry_content;                                          /**< Entry in file content cache (NULL if not cached)     */
       struct glist_head state_list;                                  /**< Pointers for state list                              */
       struct glist_head lock_list;                                   /**< Pointers for lock list                               */
@@ -326,8 +315,6 @@ struct cache_entry_t
 
     struct cache_inode_dir__
     {
-      fsal_handle_t handle;                     /**< The FSAL Handle                                         */
-      fsal_attrib_list_t attributes;            /**< The FSAL Attributes                                     */
       unsigned int nbactive;                    /**< Number of known active children                         */
       cache_inode_flag_t has_been_readdir;      /**< True if a full readdir was performed on the directory   */
       char *referral;                           /**< NULL is not a referral, is not this a 'referral string' */
@@ -335,12 +322,7 @@ struct cache_entry_t
       struct avltree cookies;                   /**< Readdir cookie avl (transient) */
     } dir;                                /**< DIR related field                               */
 
-    struct cache_inode_special_object__
-    {
-      fsal_handle_t handle;                     /**< The FSAL Handle                                         */
-      fsal_attrib_list_t attributes;            /**< The FSAL Attributes                                     */
-      /* Note that special data is in the rawdev field of FSAL attributes */
-    } special_obj;
+    /* Note that special data is in the rawdev field of FSAL attributes */
 
   } object;                                     /**< Type specific field (discriminated by internal_md.type)   */
 
@@ -908,8 +890,6 @@ cache_inode_status_t cache_inode_invalidate_all_cached_dirent(cache_entry_t *
                                                               pstatus);
 
 void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pattr);
-
-void cache_inode_get_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pattr);
 
 cache_inode_file_type_t cache_inode_fsal_type_convert(fsal_nodetype_t type);
 

@@ -97,7 +97,7 @@ my @fsal_fn_names = (
 # indicates which layers' stats we want
 my $select_tag = "ALL";
 # the number of lines for each stat
-my $tail_flags = "-19";
+my $tail_flags = "-23";
 
 # Is the configuration file to be parsed in full ?
 my $full_flag = 0 ;

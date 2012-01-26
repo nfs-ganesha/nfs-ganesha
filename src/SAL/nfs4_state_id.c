@@ -237,7 +237,7 @@ int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
   /* Get several digests to build the stateid : the server boot time, the fileid and a monotonic counter */
   if(FSAL_IS_ERROR(FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                      FSAL_DIGEST_FILEID3,
-                                     &(pentry->object.file.handle),
+                                     &(pentry->handle),
                                      (caddr_t) & fileid_digest)))
     return 0;
 

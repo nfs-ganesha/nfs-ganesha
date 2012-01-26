@@ -94,7 +94,10 @@ static fsal_staticfsinfo_t default_ceph_info = {
   .xattr_access_rights = 0400,
 #ifdef _USE_FSALMDS
   .pnfs_supported = TRUE,
-  .layout_blksize = 0x400000
+  .layout_blksize = 0x400000,
+  .max_segment_count = 1,
+  .loc_buffer_size = 256,
+  .dsaddr_buffer_size = 5120
 #endif /* _USE_FSALMDS */
 };
 

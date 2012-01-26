@@ -294,8 +294,8 @@ typedef struct fsal_fsid__
 
 typedef struct fsal_dev__
 {
-  fsal_uint_t major;
-  fsal_uint_t minor;
+  dev_t major;
+  dev_t minor;
 } fsal_dev_t;
 
 /* The maximum ACLs that a file can support */
@@ -846,6 +846,17 @@ struct fsal_staticfsinfo_t
 
   fsal_size_t layout_blksize;             /**< Preferred blocksize for
 					       I/O on layouts*/
+  int max_segment_count; /**< The maximum number of segments this FSAL
+                              will ever return from a single LAYOUTGET
+                              call. */
+  fsal_size_t loc_buffer_size; /**< Size of the buffer that should be
+                                    allocated for a loc_body XDR
+                                    stream. */
+  fsal_size_t dsaddr_buffer_size;         /**< Size of the buffer
+                                               that should be
+                                               allocated for a
+                                               ds_addr_body XDR
+                                               stream */
 #endif                                     /* _USE_FSALMDS */
 
 };

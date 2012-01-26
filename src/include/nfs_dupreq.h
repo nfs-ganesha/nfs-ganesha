@@ -77,6 +77,7 @@ typedef struct dupreq_entry__
   long xid;
   sockaddr_t addr;
   int checksum;
+  int ipproto ;
 
   pthread_mutex_t dupreq_mutex;
   int processing; /* if currently being processed, this should be = 1 */
@@ -113,10 +114,12 @@ int nfs_dupreq_finish(long xid,
 unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
                                      hash_buffer_t * buffclef);
 unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
-void nfs_dupreq_get_stats(hash_stat_t * phstat);
+void nfs_dupreq_get_stats(hash_stat_t * phstat_udp, hash_stat_t * phstat_tcp ) ;
+
 
 #define DUPREQ_SUCCESS             0
 #define DUPREQ_INSERT_MALLOC_ERROR 1
+
 #define DUPREQ_NOT_FOUND           2
 #define DUPREQ_BEING_PROCESSED     3
 #define DUPREQ_ALREADY_EXISTS      4

@@ -93,9 +93,9 @@
  *
  */
 
-nfsstat4 CEPH_pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs, 
-			    compound_data_t * data,
-			    LAYOUTCOMMIT4res  * pres ) 
+nfsstat4 FSAL_pnfs_layoutcommit( LAYOUTCOMMIT4args * pargs,
+                                 compound_data_t * data,
+                                 LAYOUTCOMMIT4res  * pres )
 {
      char __attribute__ ((__unused__)) funcname[] = "pnfs_layoutcommit";
 #ifdef _USE_FSALMDS

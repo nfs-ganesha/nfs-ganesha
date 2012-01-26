@@ -62,8 +62,6 @@
 
 #define  NFS4_ATTRVALS_BUFFLEN  1024
 
-#define MAX_LAYOUT_SEGMENTS 64
-
 /* ------------------------------ Typedefs and structs----------------------- */
 
 typedef union nfs_arg__

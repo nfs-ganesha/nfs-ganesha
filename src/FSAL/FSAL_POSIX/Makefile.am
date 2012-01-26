@@ -76,6 +76,7 @@ posix_ganesha_fsal_posixdb_tool_LDADD      = $(BUDDY_LIB_FLAGS)                 
                                              ../fsal_strings.lo                                   \
                                              ../fsal_convert.lo                                   \
 					     ../fsal_errors.lo					  \
+					     ../common_functions.lo				  \
                                              ../../Common/libcommon_utils.la
 
 

@@ -171,7 +171,6 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 
 #ifndef _NO_BUDDY_SYSTEM
   /* Free stuff allocated by BuddyMalloc before thread exists */
-  /* sleep(nfs_param.core_param.expiration_dupreq * 2);   / ** @todo : remove this for a cleaner fix */
   if((rc = BuddyDestroy()) != BUDDY_SUCCESS)
     LogCrit(COMPONENT_DISPATCH,
             "Error %d from BuddyDestroy",

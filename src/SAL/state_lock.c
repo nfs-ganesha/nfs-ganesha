@@ -365,7 +365,7 @@ void LogLock(log_components_t     component,
 
       FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                         FSAL_DIGEST_FILEID3,
-                        &(pentry->object.file.handle),
+                        &(pentry->handle),
                         (caddr_t) &fileid_digest);
 
       LogAtLevel(component, debug,
@@ -458,7 +458,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
 
   FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                     FSAL_DIGEST_FILEID3,
-                    &(pentry->object.file.handle),
+                    &(pentry->handle),
                     (caddr_t) &fileid);
 
   new_entry->sle_fileid = (unsigned long long) fileid;
@@ -1754,7 +1754,7 @@ state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
       LogEntry("FSAL Unlock", found_entry);
 
       fsal_status = FSAL_lock_op(cache_inode_fd(pentry),
-                                 &pentry->object.file.handle,
+                                 &pentry->handle,
                                  pcontext,
                                  NULL,
                                  FSAL_OP_UNLOCK,
@@ -1821,7 +1821,7 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
         lock_op = FSAL_OP_LOCK;
 
       fsal_status = FSAL_lock_op(cache_inode_fd(pentry),
-                                 &pentry->object.file.handle,
+                                 &pentry->handle,
                                  pcontext,
                                  pstatic->lock_support_owner ? powner : NULL,
                                  lock_op,

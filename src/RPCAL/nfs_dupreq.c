@@ -84,7 +84,8 @@ extern nfs_function_desc_t rquota1_func_desc[];
 extern nfs_function_desc_t rquota2_func_desc[];
 #endif                          /* _USE_QUOTA */
 /* Structure used for duplicated request cache */
-hash_table_t *ht_dupreq;
+hash_table_t *ht_dupreq_udp;
+hash_table_t *ht_dupreq_tcp;
 
 void LogDupReq(const char *label, sockaddr_t *addr, long xid, u_long rq_prog)
 {
@@ -153,6 +154,23 @@ unsigned int get_rpc_xid(struct svc_req *reqp)
 #endif
 }                               /* get_rpc_xid */
 
+static unsigned int get_ipproto_by_xprt( SVCXPRT * xprt )
+{
+   if( xprt->xp_p2 != NULL )
+     return IPPROTO_UDP ;
+   else if ( xprt->xp_p1 != NULL )
+     return IPPROTO_TCP;
+   else
+     return IPPROTO_IP ; /* Dummy output */
+}
+
+
+static hash_table_t * get_ht_by_xprt( SVCXPRT * xprt )
+{
+   return (get_ipproto_by_xprt( xprt )==IPPROTO_UDP)?ht_dupreq_udp:ht_dupreq_tcp ;
+}
+
+
 /**
  *
  * print_entry_dupreq: prints an entry in the LRU list.
@@ -171,7 +189,7 @@ int print_entry_dupreq(LRU_data_t data, char *str)
   return 0;
 }
 
-static int _remove_dupreq(hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
+static int _remove_dupreq(hash_table_t * ht_dupreq, hash_buffer_t *buffkey, dupreq_entry_t *pdupreq,
                           struct prealloc_pool *dupreq_pool, int nfs_req_status)
 {
   int rc;
@@ -286,7 +304,11 @@ int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
   hash_buffer_t buffval;
   dupreq_key_t dupkey;
   dupreq_entry_t *pdupreq;
+  hash_table_t * ht_dupreq = NULL ;
 
+  /* Get correct HT depending on proto used */
+  ht_dupreq = get_ht_by_xprt( xprt ) ;
+ 
   /* Get the socket address for the key */
   if(copy_xprt_addr(&dupkey.addr, xprt) == 0)
     return DUPREQ_NOT_FOUND;
@@ -314,7 +336,7 @@ int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
 
   LogDupReq("REMOVING", &pdupreq->addr, pdupreq->xid, pdupreq->rq_prog);
 
-  status = _remove_dupreq(&buffkey, pdupreq, dupreq_pool, ! NFS_REQ_OK);
+  status = _remove_dupreq( ht_dupreq, &buffkey, pdupreq, dupreq_pool, ! NFS_REQ_OK);
   return status;
 }
 
@@ -336,7 +358,8 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
   struct prealloc_pool *dupreq_pool = (struct prealloc_pool *) addparam;
   dupreq_entry_t *pdupreq = (dupreq_entry_t *) (pentry->buffdata.pdata);
   dupreq_key_t dupkey;
-
+  hash_table_t * ht_dupreq = NULL ;
+  
   /* Get the socket address for the key */
   memcpy((char *)&dupkey.addr, (char *)&pdupreq->addr, sizeof(dupkey.addr));
   dupkey.xid = pdupreq->xid;
@@ -347,9 +370,15 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
   buffkey.pdata = (caddr_t) &dupkey;
   buffkey.len = sizeof(dupreq_key_t);
 
+  /* Get correct HT depending on proto used */
+  if( pdupreq->ipproto == IPPROTO_TCP )
+     ht_dupreq = ht_dupreq_tcp ;
+  else
+     ht_dupreq = ht_dupreq_udp ;
+
   LogDupReq("Garbage collection on", &pdupreq->addr, pdupreq->xid, pdupreq->rq_prog);
 
-  return _remove_dupreq(&buffkey, pdupreq, dupreq_pool, NFS_REQ_OK);
+  return _remove_dupreq(ht_dupreq, &buffkey, pdupreq, dupreq_pool, NFS_REQ_OK);
 }                               /* clean_entry_dupreq */
 
 /**
@@ -494,12 +523,20 @@ int display_req_val(hash_buffer_t * pbuff, char *str)
  */
 int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param)
 {
-  if((ht_dupreq = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_dupreq_udp = HashTable_Init(param.hash_param)) == NULL)
     {
       LogCrit(COMPONENT_DUPREQ,
               "Cannot init the duplicate request hash table");
       return -1;
     }
+
+  if((ht_dupreq_tcp = HashTable_Init(param.hash_param)) == NULL)
+    {
+      LogCrit(COMPONENT_DUPREQ,
+              "Cannot init the duplicate request hash table");
+      return -1;
+    }
+
 
   return DUPREQ_SUCCESS;
 }                               /* nfs_Init_dupreq */
@@ -530,7 +567,11 @@ int nfs_dupreq_add_not_finished(long xid,
   dupreq_entry_t *pdupreq = NULL;
   int status = 0;
   dupreq_key_t *pdupkey = NULL;
-  
+  hash_table_t * ht_dupreq = NULL ;
+
+  /* Get correct HT depending on proto used */
+  ht_dupreq = get_ht_by_xprt( xprt ) ;
+ 
   /* Entry to be cached */
   GetFromPool(pdupreq, dupreq_pool, dupreq_entry_t);
   if(pdupreq == NULL)
@@ -576,6 +617,7 @@ int nfs_dupreq_add_not_finished(long xid,
   pdupreq->rq_proc = ptr_req->rq_proc;
   pdupreq->timestamp = time(NULL);
   pdupreq->processing = 1;
+  pdupreq->ipproto = get_ipproto_by_xprt( xprt ) ;
   buffdata.pdata = (caddr_t) pdupreq;
   buffdata.len = sizeof(dupreq_entry_t);
 
@@ -643,6 +685,11 @@ int nfs_dupreq_finish(long xid,
   LRU_status_t lru_status;
   dupreq_key_t dupkey;
   dupreq_entry_t *pdupreq;
+  hash_table_t * ht_dupreq = NULL ;
+
+  /* Get correct HT depending on proto used */
+  ht_dupreq = get_ht_by_xprt( xprt ) ;
+ 
 
   /* Get the socket address for the key */
   if(copy_xprt_addr(&dupkey.addr, xprt) == 0)
@@ -697,6 +744,11 @@ nfs_res_t nfs_dupreq_get(long xid, struct svc_req *ptr_req, SVCXPRT *xprt, int *
   hash_buffer_t buffval;
   nfs_res_t res_nfs;
   dupreq_key_t dupkey;
+  hash_table_t * ht_dupreq = NULL ;
+
+  /* Get correct HT depending on proto used */
+  ht_dupreq = get_ht_by_xprt( xprt ) ;
+ 
 
   memset(&res_nfs, 0, sizeof(res_nfs));
 
@@ -773,7 +825,8 @@ int nfs_dupreq_gc_function(LRU_entry_t * pentry, void *addparam)
  * @see HashTable_GetStats
  *
  */
-void nfs_dupreq_get_stats(hash_stat_t * phstat)
+void nfs_dupreq_get_stats(hash_stat_t * phstat_udp, hash_stat_t * phstat_tcp )
 {
-  HashTable_GetStats(ht_dupreq, phstat);
+  HashTable_GetStats(ht_dupreq_udp, phstat_udp);
+  HashTable_GetStats(ht_dupreq_tcp, phstat_tcp);
 }                               /* nfs_dupreq_get_stats */

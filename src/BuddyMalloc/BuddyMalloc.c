@@ -49,13 +49,11 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include "common_utils.h"
 
 /* to detect memory corruption */
 #define MAGIC_NUMBER_FREE   0xF4EEB10C
 #define MAGIC_NUMBER_USED   0x1D0BE1AE
-
-#define P( _mutex_ ) pthread_mutex_lock( &_mutex_ )
-#define V( _mutex_ ) pthread_mutex_unlock( &_mutex_ )
 
 /* type to hold address differences in buddy */
 #define BUDDY_PTRDIFF_T  ptrdiff_t

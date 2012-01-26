@@ -102,13 +102,6 @@ codecheck:
 	rm -f cppcheck-xml/cppcheck.xml
 	 cppcheck -j12 -v --force --xml --enable=all -I`pwd`/include $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS) . 2>cppcheck-xml/cppcheck.xml
 
-cscope:
-	find . -type f -name "*.[ch]" | grep -v rpm/ > cscope.namefile
-	cscope -i cscope.namefile
-
-doc:
-	curdir=`pwd` ; for i in $(DOCDIRS) ; do cd $$i ; make doc ; cd $$curdir ; done
-
 # Remove HPSS specifc (and non OpenSource) code from distribution
 remove_hpss: dist 
 	tar xzf $(distdir).tar.gz
@@ -183,6 +176,7 @@ EXTRA_DIST=nfs-ganesha.spec           \
            TODO                       \
            THANKS                     \
            KNOWN_BUGS                 \
+           nfs-ganesha.ceph.init      \
            nfs-ganesha.posix.init     \
            nfs-ganesha.lustre.init    \
            nfs-ganesha.shook.init     \

@@ -431,7 +431,7 @@ int nfs_Create(nfs_arg_t * parg,
                               data.data_len = sizeof(file_handle_v3_t);
 
                           /* Get the attributes of the parent after the operation */
-                          cache_inode_get_attributes(parent_pentry, &attr_parent_after);
+			  attr_parent_after = parent_pentry->attributes;
 
                           /* Build entry attributes */
                           nfs_SetPostOpAttr(pcontext, pexport,

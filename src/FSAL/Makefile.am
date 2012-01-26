@@ -2,17 +2,23 @@ AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
 noinst_LTLIBRARIES          = libfsalcommon.la
 
+if USE_PNFS_FSAL
+noinst_LTLIBRARIES += libfsalpnfscommon.la
+endif
+
 libfsalcommon_la_SOURCES = fsal_strings.c          \
                            fsal_errors.c           \
                            fsal_convert.c          \
                            fsal_glue.c             \
 			   common_methods.c	   \
 			   access_check.c	   \
-			   ../include/FSAL/common_methods.h \
-			   ../include/FSAL/access_check.h \
-                           ../include/fsal.h       \
-                           ../include/fsal_types.h \
-                           ../include/err_fsal.h   \
+			   common_functions.c      \
+			   ../include/FSAL/common_methods.h   \
+			   ../include/FSAL/access_check.h     \
+			   ../include/FSAL/common_functions.h \
+                           ../include/fsal.h                  \
+                           ../include/fsal_types.h            \
+                           ../include/err_fsal.h              \
                            ../include/fsal_convert.h 
 
 
@@ -25,12 +31,10 @@ else
 SUBDIRS = 
 endif 
 
-if USE_FSALMDS
-libfsalcommon_la_SOURCES += common_pnfs.c
+if USE_PNFS_FSAL
+libfsalpnfscommon_la_SOURCES = common_pnfs.c
 else
-if USE_FSALDS
-libfsalcommon_la_SOURCES += common_pnfs.c
-endif
+libfsalpnfscommon_la_sources =
 endif
 
 if USE_FSAL_HPSS

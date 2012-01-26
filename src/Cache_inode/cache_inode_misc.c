@@ -141,8 +141,6 @@ const char *cache_inode_err_str(cache_inode_status_t err)
 void cache_inode_print_srvhandle(char *comment, cache_entry_t * pentry);
 #endif
 
-static void cache_inode_init_attributes(cache_entry_t *pentry, fsal_attrib_list_t *pattr);
-
 /**
  *
  * ci_avl_dir_name_cmp
@@ -505,9 +503,9 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                "cache_inode_new_entry: Adding a REGULAR_FILE pentry=%p policy=%u",
                pentry, policy );
 
-      pentry->object.file.handle = pfsdata->handle;
+      pentry->handle = pfsdata->handle;
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.file.handle;
+      pentry->mobject.handle = pentry->handle;
 #ifdef _USE_MFSL_PROXY
       pentry->mobject.plock = &pentry->lock;
 #endif
@@ -551,9 +549,9 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                "cache_inode_new_entry: Adding a DIRECTORY pentry=%p policy=%u",
                pentry, policy);
 
-      pentry->object.dir.handle = pfsdata->handle;
+      pentry->handle = pfsdata->handle;
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.dir.handle;
+      pentry->mobject.handle = pentry->handle;
 #endif
 
       /* If directory is newly created, it is empty
@@ -585,9 +583,9 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                    "Can't allocate entry symlink from symlink pool");
           break;
         }
-      pentry->object.symlink->handle = pfsdata->handle;
+      pentry->handle = pfsdata->handle;
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.symlink->handle;
+      pentry->mobject.handle = pentry->handle;
 #endif
      if( CACHE_INODE_KEEP_CONTENT( policy ) )
       {  
@@ -609,9 +607,9 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                "cache_inode_new_entry: Adding a SOCKET_FILE pentry = %p",
                pentry);
 
-      pentry->object.special_obj.handle = pfsdata->handle;
+      pentry->handle = pfsdata->handle;
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.special_obj.handle;
+      pentry->mobject.handle = pentry->handle;
 #endif
       break;
 
@@ -620,9 +618,9 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                "cache_inode_new_entry: Adding a FIFO_FILE pentry = %p",
                pentry);
 
-      pentry->object.special_obj.handle = pfsdata->handle;
+      pentry->handle = pfsdata->handle;
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.special_obj.handle;
+      pentry->mobject.handle = pentry->handle;
 #endif
       break;
 
@@ -631,9 +629,9 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                "cache_inode_new_entry: Adding a BLOCK_FILE pentry=%p policy=%u",
                pentry, policy);
 
-      pentry->object.special_obj.handle = pfsdata->handle;
+      pentry->handle = pfsdata->handle;
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.special_obj.handle;
+      pentry->mobject.handle = pentry->handle;
 #endif
       break;
 
@@ -642,9 +640,9 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                "cache_inode_new_entry: Adding a CHARACTER_FILE pentry=%p policy=%u",
                pentry, policy);
 
-      pentry->object.special_obj.handle = pfsdata->handle;
+      pentry->handle = pfsdata->handle;
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.special_obj.handle;
+      pentry->mobject.handle = pentry->handle;
 #endif
       break;
 
@@ -654,7 +652,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                  pentry, policy);
 
         fsal_status = FSAL_lookupJunction( &pfsdata->handle, pcontext,
-					   &pentry->object.dir.handle,
+					   &pentry->handle,
 					   NULL);
         if( FSAL_IS_ERROR( fsal_status ) )
          {
@@ -665,7 +663,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
          }
 
       fsal_attributes.asked_attributes = pclient->attrmask;
-      fsal_status = FSAL_getattrs( &pentry->object.dir.handle, pcontext,
+      fsal_status = FSAL_getattrs( &pentry->handle, pcontext,
 				   &fsal_attributes);
       if( FSAL_IS_ERROR( fsal_status ) )
          {
@@ -680,7 +678,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
       pentry->internal_md.type = DIRECTORY;
 
 #ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->object.dir.handle;
+      pentry->mobject.handle = pentry->handle;
 #endif
 
       pentry->object.dir.has_been_readdir = CACHE_INODE_NO;
@@ -767,7 +765,16 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
     }
 
   /* Now that added as a new entry, init attribute. */
-  cache_inode_init_attributes(pentry, &fsal_attributes);
+  pentry->attributes = fsal_attributes;
+
+#ifdef _USE_NFS4_ACL
+  LogDebug(COMPONENT_CACHE_INODE, "init_attributes: md_type=%d, acl=%p",
+           pentry->internal_md.type, pattr->acl);
+
+  /* Bump up reference counter of new acl. */
+  if(pentry->attributes.acl)
+    nfs4_acl_entry_inc_ref(pentry->attributes.acl);
+#endif                          /* _USE_NFS4_ACL */
 
   /* if entry is a REGULAR_FILE and has a related data cache entry from a previous server instance that crashed, recover it */
   /* This is done only when this is not a creation (when creating a new file, it is impossible to have it cached)           */
@@ -814,7 +821,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                       pentry);
             }
           else
-            pentry->object.file.attributes.filesize = (fsal_size_t) size_in_cache;
+            pentry->attributes.filesize = (fsal_size_t) size_in_cache;
 
         }
     }
@@ -1141,107 +1148,6 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
 
 /**
  *
- * cache_inode_get_attributes: gets the attributes cached in the entry.
- *
- * Gets the attributes cached in the entry.
- *
- * @param pentry [IN] the entry to deal with.
- * @param pattr [OUT] the attributes for this entry.
- *
- * @return nothing (void function).
- *
- */
-void cache_inode_get_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pattr)
-{
-  /* The pentry is supposed to be locked */
-  switch (pentry->internal_md.type)
-    {
-    case REGULAR_FILE:
-      *pattr = pentry->object.file.attributes;
-      break;
-
-    case SYMBOLIC_LINK:
-      assert(pentry->object.symlink);
-      *pattr = pentry->object.symlink->attributes;
-      break;
-
-    case FS_JUNCTION:
-    case DIRECTORY:
-      *pattr = pentry->object.dir.attributes;
-      break;
-
-    case SOCKET_FILE:
-    case FIFO_FILE:
-    case BLOCK_FILE:
-    case CHARACTER_FILE:
-      *pattr = pentry->object.special_obj.attributes;
-      break;
-
-    case UNASSIGNED:
-    case RECYCLED:
-      memset(pattr, 0, sizeof(fsal_attrib_list_t));
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                   "Unexpected UNNASIGNED or RECYLCED type in cache_inode_get_attributes");
-    }
-}                               /* cache_inode_get_attributes */
-
-/**
- *
- * cache_inode_init_attributes: sets the initial attributes cached in the entry.
- *
- * Sets the initial attributes cached in the entry. If NFS4 ACL is used,
- * update the reference counter of ACL.
- *
- * @param pentry [OUT] the entry to deal with.
- * @param pattr [IN] the attributes to be set for this entry.
- *
- * @return nothing (void function).
- *
- */
-void cache_inode_init_attributes( cache_entry_t       * pentry, 
-                                  fsal_attrib_list_t  * pattr)
-{
-  switch (pentry->internal_md.type)
-    {
-    case REGULAR_FILE:
-      pentry->object.file.attributes = *pattr;
-      break;
-
-    case SYMBOLIC_LINK:
-      assert(pentry->object.symlink);
-      pentry->object.symlink->attributes = *pattr;
-      break;
-
-    case FS_JUNCTION:
-    case DIRECTORY:
-      pentry->object.dir.attributes = *pattr;
-      break;
-
-    case SOCKET_FILE:
-    case FIFO_FILE:
-    case BLOCK_FILE:
-    case CHARACTER_FILE:
-      pentry->object.special_obj.attributes = *pattr;
-      break;
-    case UNASSIGNED:
-    case RECYCLED:
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                   "Unexpected UNNASIGNED or RECYLCED type in cache_inode_set_attributes");
-      break;
-    }
-
-#ifdef _USE_NFS4_ACL
-  LogDebug(COMPONENT_CACHE_INODE, "init_attributes: md_type=%d, acl=%p",
-           pentry->internal_md.type, pattr->acl);
-
-  /* Bump up reference counter of new acl. */
-  if(pattr->acl)
-    nfs4_acl_entry_inc_ref(pattr->acl);
-#endif                          /* _USE_NFS4_ACL */
-}
-
-/**
- *
  * cache_inode_set_attributes: sets the attributes cached in the entry.
  *
  * Sets the attributes cached in the entry.
@@ -1252,53 +1158,17 @@ void cache_inode_init_attributes( cache_entry_t       * pentry,
  * @return nothing (void function).
  *
  */
+/* FIXME: this also breaks on acls with UNASSIGNED|RECYCLED
+ * if they occur, shouldn't we assert or ?? rather than leave bits hanging silently?
+ */
 void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pattr)
 {
 #ifdef _USE_NFS4_ACL
-  fsal_acl_t *p_oldacl = NULL;
+  fsal_acl_t *p_oldacl = pentry->attributes.acl;
   fsal_acl_t *p_newacl = pattr->acl;
 #endif                          /* _USE_NFS4_ACL */
 
-  switch (pentry->internal_md.type)
-    {
-    case REGULAR_FILE:
-#ifdef _USE_NFS4_ACL
-      p_oldacl = pentry->object.file.attributes.acl;
-#endif                          /* _USE_NFS4_ACL */
-      pentry->object.file.attributes = *pattr;
-      break;
-
-    case SYMBOLIC_LINK:
-      assert(pentry->object.symlink);
-#ifdef _USE_NFS4_ACL
-      p_oldacl = pentry->object.symlink->attributes.acl;
-#endif                          /* _USE_NFS4_ACL */
-      pentry->object.symlink->attributes = *pattr;
-      break;
-
-    case FS_JUNCTION:
-    case DIRECTORY:
-#ifdef _USE_NFS4_ACL
-      p_oldacl = pentry->object.dir.attributes.acl;
-#endif                          /* _USE_NFS4_ACL */
-      pentry->object.dir.attributes = *pattr;
-      break;
-
-    case SOCKET_FILE:
-    case FIFO_FILE:
-    case BLOCK_FILE:
-    case CHARACTER_FILE:
-#ifdef _USE_NFS4_ACL
-      p_oldacl = pentry->object.special_obj.attributes.acl;
-#endif                          /* _USE_NFS4_ACL */
-      pentry->object.special_obj.attributes = *pattr;
-      break;
-    case UNASSIGNED:
-    case RECYCLED:
-      LogFullDebug(COMPONENT_CACHE_INODE,
-                   "Unexpected UNNASIGNED or RECYLCED type in cache_inode_set_attributes");
-      break;
-    }
+  pentry->attributes = *pattr;
 
 #ifdef _USE_NFS4_ACL
   /* If acl has been changed, release old acl and increase the reference
@@ -1395,9 +1265,12 @@ cache_inode_file_type_t cache_inode_fsal_type_convert(fsal_nodetype_t type)
  * @param pentry [IN] the input pentry.
  * @param pstatus [OUT] the status for the extraction (If not
  * CACHE_INODE_SUCCESS, there is an error).
- *
  * @return the result of the conversion. NULL shows an error.
  *
+ */
+/*
+ * FIXME: valid cache entry should be checked long before we get here.
+ * this is just dereferencing something that is always there.  Make it gone.
  */
 fsal_handle_t *cache_inode_get_fsal_handle(cache_entry_t * pentry,
                                            cache_inode_status_t * pstatus)
@@ -1414,36 +1287,17 @@ fsal_handle_t *cache_inode_get_fsal_handle(cache_entry_t * pentry,
     }
   else
     {
-      switch (pentry->internal_md.type)
+      if((pentry->internal_md.type == UNASSIGNED) ||
+	 (pentry->internal_md.type == RECYCLED))
         {
-        case REGULAR_FILE:
-          preturned_handle = &pentry->object.file.handle;
-          *pstatus = CACHE_INODE_SUCCESS;
-          break;
-
-        case SYMBOLIC_LINK:
-          assert(pentry->object.symlink);
-          preturned_handle = &pentry->object.symlink->handle;
-          *pstatus = CACHE_INODE_SUCCESS;
-          break;
-
-        case DIRECTORY:
-          preturned_handle = &pentry->object.dir.handle;
-          *pstatus = CACHE_INODE_SUCCESS;
-          break;
-
-        case SOCKET_FILE:
-        case FIFO_FILE:
-        case BLOCK_FILE:
-        case CHARACTER_FILE:
-          preturned_handle = &pentry->object.special_obj.handle;
-          break;
-
-        default:
           preturned_handle = NULL;
           *pstatus = CACHE_INODE_BAD_TYPE;
-          break;
-        }                       /* switch( pentry->internal_md.type ) */
+	}
+      else
+        {
+          preturned_handle = &pentry->handle;
+          *pstatus = CACHE_INODE_SUCCESS;
+         }                       /* switch( pentry->internal_md.type ) */
     }
 
   return preturned_handle;
@@ -1577,7 +1431,7 @@ cache_inode_status_t cache_inode_dump_content(char *path, cache_entry_t * pentry
   fprintf(stream, "internal:mod_time=%d\n", (int)pentry->internal_md.mod_time);
   fprintf(stream, "internal:export_id=%d\n", 0);
 
-  snprintHandle(buff, CACHE_INODE_DUMP_LEN, &(pentry->object.file.handle));
+  snprintHandle(buff, CACHE_INODE_DUMP_LEN, &(pentry->handle));
   fprintf(stream, "file: FSAL handle=%s", buff);
 
   /* Close the handle */
@@ -1629,7 +1483,7 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
   #undef STR
   #undef XSTR
 
-  if(sscanHandle(&(pentry->object.file.handle), buff) < 0)
+  if(sscanHandle(&(pentry->handle), buff) < 0)
     {
       /* expected = 2*sizeof(fsal_handle_t) in hexa representation */
       LogCrit(COMPONENT_CACHE_INODE,
@@ -1880,17 +1734,14 @@ void cache_inode_print_srvhandle(char *comment, cache_entry_t * pentry)
     {
     case REGULAR_FILE:
       strcpy(tag, "file");
-      pfsal_handle = (proxyfsal_handle_t *) &(pentry->object.file.handle);
       break;
 
     case SYMBOLIC_LINK:
       strcpy(tag, "link");
-      pfsal_handle = (proxyfsal_handle_t *) &(pentry->object.symlink->handle);
       break;
 
     case DIRECTORY:
       strcpy(tag, "dir ");
-      pfsal_handle = (proxyfsal_handle_t *) &(pentry->object.dir.handle);
       break;
 
     default:
@@ -1898,6 +1749,7 @@ void cache_inode_print_srvhandle(char *comment, cache_entry_t * pentry)
       break;
     }
 
+  pfsal_handle = (proxyfsal_handle_t *) &(pentry->handle);
   nfsfh.nfs_fh4_len = pfsal_handle->data.srv_handle_len;
   nfsfh.nfs_fh4_val = pfsal_handle->data.srv_handle_val;
 

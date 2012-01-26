@@ -195,7 +195,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
       /* This checking is to be done ... */
       LogDebug(COMPONENT_CACHE_INODE,
                "cache_inode_renew_entry testing directory mtime");
-      pfsal_handle = &pentry->object.dir.handle;
+      pfsal_handle = &pentry->handle;
 
       /* Call FSAL to get the attributes */
       object_attributes.asked_attributes = pclient->attrmask;
@@ -246,11 +246,11 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
       LogDebug(COMPONENT_CACHE_INODE,
                "cache_inode_renew_entry: Entry=%p, type=%d, Cached Time=%d, FSAL Time=%d",
                pentry, pentry->internal_md.type,
-               pentry->object.dir.attributes.mtime.seconds,
+               pentry->attributes.mtime.seconds,
                object_attributes.mtime.seconds);
 
       /* Compare the FSAL mtime and the cached mtime */
-      if(pentry->object.dir.attributes.mtime.seconds <
+      if(pentry->attributes.mtime.seconds <
          object_attributes.mtime.seconds)
         {
           /* Cached directory content is obsolete, it must be renewed */
@@ -325,7 +325,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
       /* Do the getattr if it had not being done before */
       if(pfsal_handle == NULL)
         {
-          pfsal_handle = &pentry->object.dir.handle;
+          pfsal_handle = &pentry->handle;
 
           /* Call FSAL to get the attributes */
           object_attributes.asked_attributes = pclient->attrmask;
@@ -434,7 +434,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
             } while ((d_node = avltree_next(d_node)));
         }
 
-      pfsal_handle = &pentry->object.dir.handle;
+      pfsal_handle = &pentry->handle;
 
       /* Call FSAL to get the attributes */
       object_attributes.asked_attributes = pclient->attrmask;
@@ -508,6 +508,23 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 	  ((current_time - entry_time >= pclient->grace_period_attr)
 	   || (pentry->internal_md.valid_state == STALE)))
     {
+       if((pentry->internal_md.type == FS_JUNCTION) || /* ??? isn't this 'like' a dir? */
+	 (pentry->internal_md.type == UNASSIGNED) ||
+	 (pentry->internal_md.type == RECYCLED))
+        {
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
+                  pentry->internal_md.type, __LINE__, __FILE__);
+          *pstatus = CACHE_INODE_BAD_TYPE;
+          return *pstatus;
+        }
+      /* Would be better if state was a flag that we could and/or the bits but
+       * in any case we need to get rid of stale so we only go through here
+       * once.
+       */
+      if ( pentry->internal_md.valid_state == STALE )
+	pentry->internal_md.valid_state = VALID;
+      
       /* stats */
       (pclient->stat.func_stats.nb_call[CACHE_INODE_RENEW_ENTRY])++;
 
@@ -515,34 +532,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
       LogDebug(COMPONENT_CACHE_INODE,
                "Attributes for entry %p must be renewed", pentry);
 
-      switch (pentry->internal_md.type)
-        {
-        case REGULAR_FILE:
-          pfsal_handle = &pentry->object.file.handle;
-          break;
-
-        case SYMBOLIC_LINK:
-          assert(pentry->object.symlink);
-          pfsal_handle = &pentry->object.symlink->handle;
-          break;
-
-        case SOCKET_FILE:
-        case FIFO_FILE:
-        case CHARACTER_FILE:
-        case BLOCK_FILE:
-          pfsal_handle = &pentry->object.special_obj.handle;
-          break;
-
-        case DIRECTORY:
-        case FS_JUNCTION:
-        case UNASSIGNED:
-        case RECYCLED:
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "WARNING: unknown source pentry type: internal_md.type=%d, line %d in file %s",
-                  pentry->internal_md.type, __LINE__, __FILE__);
-          *pstatus = CACHE_INODE_BAD_TYPE;
-          return *pstatus;
-        }
+      pfsal_handle = &pentry->handle;
 
       /* Call FSAL to get the attributes */
       object_attributes.asked_attributes = pclient->attrmask;
@@ -627,7 +617,16 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
       || (pentry->internal_md.valid_state == STALE)))
     {
       assert(pentry->object.symlink);
-      pfsal_handle = &pentry->object.symlink->handle;
+      pfsal_handle = &pentry->handle;
+      /* Would be better if state was a flag that we could and/or the bits but
+       * in any case we need to get rid of stale so we only go through here
+       * once.
+       */
+      if ( pentry->internal_md.valid_state == STALE )
+	pentry->internal_md.valid_state = VALID;
+
+      assert(pentry->object.symlink);
+      pfsal_handle = &pentry->handle;
 
       /* Log */
       LogDebug(COMPONENT_CACHE_INODE,

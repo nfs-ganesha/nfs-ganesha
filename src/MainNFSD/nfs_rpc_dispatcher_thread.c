@@ -79,6 +79,13 @@
 
 static pthread_mutex_t lock_worker_selection = PTHREAD_MUTEX_INITIALIZER;
 
+/* This structure is set to initial state (zero-ed) in stat thread */
+buddy_stats_t          global_tcp_dispatcher_buddy_stat;
+
+/* This structure exists per tcp dispatcher thread */
+buddy_stats_t __thread local_tcp_dispatcher_buddy_stat;
+
+
 #if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
 /**
  *
@@ -898,8 +905,14 @@ process_status_t process_rpc_request(SVCXPRT *xprt)
       pnfsreq->rcontent.nfs.xprt = pnfsreq->rcontent.nfs.xprt_copy;
       preq->rq_xprt = pnfsreq->rcontent.nfs.xprt_copy;
 
+      P(pnfsreq->req_done_mutex);
       /* Regular management of the request (UDP request or TCP request on connected handler */
       DispatchWorkNFS(pnfsreq, worker_index);
+
+      LogInfo(COMPONENT_DISPATCH, "Waiting for completion of request");
+      pthread_cond_wait(&pnfsreq->req_done_condvar, &pnfsreq->req_done_mutex);
+      V(pnfsreq->req_done_mutex);
+      LogInfo(COMPONENT_DISPATCH, "Request processing has completed");
 
       gettimeofday(&timer_end, NULL);
       timer_diff = time_diff(timer_start, timer_end);
@@ -1093,29 +1106,6 @@ void nfs_rpc_getreq(fd_set * readfds)
 
 /**
  *
- * clean_pending_request: cleans an entry in a nfs request LRU,
- *
- * cleans an entry in a nfs request LRU.
- *
- * @param pentry [INOUT] entry to be cleaned.
- * @param addparam [IN] additional parameter used for cleaning.
- *
- * @return 0 if ok, other values mean an error.
- *
- */
-int clean_pending_request(LRU_entry_t * pentry, void *addparam)
-{
-  struct prealloc_pool *request_pool = (struct prealloc_pool *) addparam;
-  nfs_request_data_t *preqnfs = (nfs_request_data_t *) (pentry->buffdata.pdata);
-
-  /* Send the entry back to the pool */
-  ReleaseToPool(preqnfs, request_pool);
-
-  return 0;
-}                               /* clean_pending_request */
-
-/**
- *
  * print_pending_request: prints an entry related to a pending request in the LRU list.
  *
  * prints an entry related to a pending request in the LRU list.
@@ -1147,9 +1137,10 @@ void rpc_dispatcher_svc_run()
   fd_set readfdset;
   int rc = 0;
 
-#ifdef _DEBUG_MEMLEAKS
-  static int nb_iter_memleaks = 0;
-#endif
+  static int nb_iter = 0;
+
+  /* Init stat */
+  memset( &local_tcp_dispatcher_buddy_stat, 0,  sizeof(buddy_stats_t));
 
   while(TRUE)
     {
@@ -1187,17 +1178,47 @@ void rpc_dispatcher_svc_run()
 
         }                       /* switch */
 
-#ifdef _DEBUG_MEMLEAKS
-      if(nb_iter_memleaks > 1000)
+      if(nb_iter > 1000)
         {
-          nb_iter_memleaks = 0;
+          nb_iter = 0;
 #ifndef _NO_BUDDY_SYSTEM
+          BuddyGetStats(&local_tcp_dispatcher_buddy_stat) ;
+      
+          /* /!\  global_tcp_dispatcher_buddy_stat is updated concurrently
+           * but not protected by a mutex. There is a reason for this:
+           * there may be thousands of tcp dispatchers and having them accessing 
+           * the same lock may finally serialize them with strong impact on perfs.
+           * The variable  global_tcp_dispatcher_buddy_stat is used to output stats
+           * and it can be a bit unprecise, this will not cause the daemon to crash */
+          global_tcp_dispatcher_buddy_stat.TotalMemSpace +=
+              local_tcp_dispatcher_buddy_stat.TotalMemSpace;
+
+          global_tcp_dispatcher_buddy_stat.ExtraMemSpace +=
+              local_tcp_dispatcher_buddy_stat.ExtraMemSpace;
+
+          global_tcp_dispatcher_buddy_stat.StdMemSpace += local_tcp_dispatcher_buddy_stat.StdMemSpace;
+
+          global_tcp_dispatcher_buddy_stat.StdUsedSpace +=
+              local_tcp_dispatcher_buddy_stat.StdUsedSpace;
+
+          if(local_tcp_dispatcher_buddy_stat.StdUsedSpace >
+             global_tcp_dispatcher_buddy_stat.WM_StdUsedSpace)
+            global_tcp_dispatcher_buddy_stat.WM_StdUsedSpace =
+                local_tcp_dispatcher_buddy_stat.StdUsedSpace;
+
+          global_tcp_dispatcher_buddy_stat.NbStdPages += local_tcp_dispatcher_buddy_stat.NbStdPages;
+          global_tcp_dispatcher_buddy_stat.NbStdUsed += local_tcp_dispatcher_buddy_stat.NbStdUsed;
+
+          if(local_tcp_dispatcher_buddy_stat.NbStdUsed > global_tcp_dispatcher_buddy_stat.WM_NbStdUsed)
+            global_tcp_dispatcher_buddy_stat.WM_NbStdUsed = local_tcp_dispatcher_buddy_stat.NbStdUsed;
+
+#ifdef _DEBUG_MEMLEAKS
           nfs_debug_buddy_info();
+#endif
 #endif
         }
       else
-        nb_iter_memleaks += 1;
-#endif
+        nb_iter += 1;
 
     }                           /* while */
 
@@ -1223,7 +1244,7 @@ void *rpc_dispatcher_thread(void *Arg)
   /* Initialisation of the Buddy Malloc */
   LogInfo(COMPONENT_DISPATCH,
           "Initialization of memory manager");
-  if(BuddyInit(&nfs_param.buddy_param_worker) != BUDDY_SUCCESS)
+  if(BuddyInit(&nfs_param.buddy_param_tcp_mgr)!= BUDDY_SUCCESS)
     LogFatal(COMPONENT_DISPATCH,
              "Memory manager could not be initialized");
 #endif
@@ -1275,5 +1296,7 @@ void constructor_request_data_t(void *ptr)
 {
   request_data_t * pdata = (request_data_t *) ptr;
 
+  pthread_cond_init(&pdata->req_done_condvar, NULL);
+  pthread_mutex_init(&pdata->req_done_mutex, NULL);
   constructor_nfs_request_data_t( &(pdata->rcontent.nfs) ) ;
 }

@@ -107,8 +107,8 @@ void COMMON_pnfs_layoutget_Free(LAYOUTGET4res * resp)
                         logr_layout_val[i].lo_content.loc_body.loc_body_val);
           }
      }
-#endif         
-}                            
+#endif
+}
 
 /**
  * \brief Frees what was allocared to handle pnfs_layoutreturn.
@@ -142,9 +142,9 @@ void COMMON_pnfs_getdevicelist_Free(GETDEVICELIST4res * resp)
           Mem_Free(resp->GETDEVICELIST4res_u.gdlr_resok4
                    .gdlr_deviceid_list.gdlr_deviceid_list_val);
      }
-#endif        
+#endif
   return;
-}                           
+}
 
 /**
  * \brief frees what was allocared to handle nfs4_op_getdeviceinfo.
@@ -168,4 +168,4 @@ void COMMON_pnfs_getdeviceinfo_Free(GETDEVICEINFO4res * resp)
      }
 #endif
      return;
-}           
+}

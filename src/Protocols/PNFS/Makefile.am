@@ -11,9 +11,9 @@ SUBDIRS =  PARALLEL_FS
 libpnfs_la_LIBADD =  PARALLEL_FS/libpnfslayoutfile.la
 endif 
 
-if USE_PNFS_CEPH
-SUBDIRS = CEPH
-libpnfs_la_LIBADD =  CEPH/libpnfslayoutfile.la
+if USE_PNFS_FSAL
+SUBDIRS = FSAL_SPECIFIC
+libpnfs_la_LIBADD =  FSAL_SPECIFIC/libpnfslayoutfile.la
 endif
 
 endif

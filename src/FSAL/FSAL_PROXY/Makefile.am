@@ -18,8 +18,6 @@ noinst_LTLIBRARIES          = libfsalproxy.la
 
 endif
 
-
-
 libfsalproxy_la_SOURCES = fsal_access.c         \
                           fsal_context.c        \
                           fsal_dirs.c           \
@@ -51,7 +49,6 @@ libfsalproxy_la_SOURCES = fsal_access.c         \
                           ../../include/fsal_types.h                     \
                           ../../include/FSAL/FSAL_PROXY/fsal_types.h     \
                           ../../include/err_fsal.h
-
 
 new: clean all
 

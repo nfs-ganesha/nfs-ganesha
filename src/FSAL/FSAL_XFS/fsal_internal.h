@@ -34,6 +34,7 @@
 
 #include  "fsal.h"
 #include <sys/stat.h>
+#include "FSAL/common_functions.h"
 
 /* defined the set of attributes supported with POSIX */
 #define POSIX_SUPPORTED_ATTRIBUTES (                                       \
@@ -99,16 +100,6 @@ fsal_status_t fsal_internal_Handle2FidPath(xfsfsal_op_context_t * p_context,    
 fsal_status_t fsal_internal_Path2Handle(xfsfsal_op_context_t * p_context,       /* IN */
                                         fsal_path_t * p_fsalpath,       /* IN */
                                         xfsfsal_handle_t * p_handle /* OUT */ );
-
-/**
- *  test the access to a file from its POSIX attributes (struct stat) OR its FSAL attributes (fsal_attrib_list_t).
- *
- */
-fsal_status_t fsal_internal_testAccess(fsal_op_context_t * p_context,        /* IN */
-                                       fsal_accessflags_t access_type,  /* IN */
-                                       struct stat *p_buffstat, /* IN, optional */
-                                       fsal_attrib_list_t *
-                                       p_object_attributes /* IN, optional */ );
 
 fsal_status_t fsal_internal_inum2handle(fsal_op_context_t * p_context,       /* IN */
                                         ino_t inum,     /* IN */
@@ -326,18 +317,7 @@ fsal_status_t XFSFSAL_ExpandHandle(fsal_export_context_t * p_expcontext,     /* 
                                    caddr_t in_buff,     /* IN */
                                    fsal_handle_t * p_out_fsal_handle /* OUT */ );
 
-fsal_status_t XFSFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter);
-
-fsal_status_t XFSFSAL_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter);
-
 fsal_status_t XFSFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter);
-
-fsal_status_t XFSFSAL_load_FSAL_parameter_from_conf(config_file_t in_config,
-                                                    fsal_parameter_t * out_parameter);
-
-fsal_status_t XFSFSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
-                                                         fsal_parameter_t *
-                                                         out_parameter);
 
 fsal_status_t XFSFSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
                                                            fsal_parameter_t *

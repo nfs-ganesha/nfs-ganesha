@@ -521,3 +521,25 @@ posix2nfs4_error(int posix_errorcode)
           return NFS4ERR_SERVERFAULT;
      }
 }
+
+/* Glue */
+
+#ifdef _USE_FSALMDS
+fsal_mdsfunctions_t fsal_mdsfunctions;
+#endif                                          /* _USE_FSALMDS */
+#ifdef _USE_FSALDS
+fsal_dsfunctions_t fsal_dsfunctions;
+#endif                                          /* _USE_FSALMDS */
+
+#ifdef _USE_FSALMDS
+void FSAL_LoadMDSFunctions(void)
+{
+  fsal_mdsfunctions = FSAL_GetMDSFunctions();
+}
+#endif /* _USE_FSALMDS */
+#ifdef _USE_FSALDS
+void FSAL_LoadDSFunctions(void)
+{
+  fsal_dsfunctions = FSAL_GetDSFunctions();
+}
+#endif /* _USE_FSALDS */

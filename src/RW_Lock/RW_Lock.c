@@ -44,7 +44,7 @@
 /*
  * Debugging function
  */
-static void print_lock(char *s, rw_lock_t * plock)
+static inline void print_lock(char *s, rw_lock_t * plock)
 {
   
   LogFullDebug(COMPONENT_RW_LOCK,

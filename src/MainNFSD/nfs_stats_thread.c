@@ -52,6 +52,8 @@
 #include "log_macros.h"
 
 extern hash_table_t *ht_ip_stats[NB_MAX_WORKER_THREAD];
+extern buddy_stats_t global_tcp_dispatcher_buddy_stat;
+
 
 void set_min_latency(nfs_request_stat_item_t *cur_stat, unsigned int val)
 {
@@ -91,6 +93,8 @@ void *stats_thread(void *addr)
   nfs_worker_stat_t global_worker_stat;
   hash_stat_t hstat;
   hash_stat_t hstat_reverse;
+  hash_stat_t hstat_drc_udp;
+  hash_stat_t hstat_drc_tcp;
 
   unsigned long long total_fsal_calls;
   fsal_statistics_t global_fsal_stat;
@@ -703,18 +707,27 @@ void *stats_thread(void *addr)
       fprintf(stats_file, "\n");
 
       /* Printing the cache inode hash stat */
-      nfs_dupreq_get_stats(&hstat);
+      nfs_dupreq_get_stats(&hstat_drc_udp, &hstat_drc_tcp);
 
       fprintf(stats_file,
               "DUP_REQ_HASH,%s;%u,%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u\n",
-              strdate, hstat.dynamic.nb_entries, hstat.computed.min_rbt_num_node,
-              hstat.computed.max_rbt_num_node, hstat.computed.average_rbt_num_node,
-              hstat.dynamic.ok.nb_set, hstat.dynamic.notfound.nb_set,
-              hstat.dynamic.err.nb_set, hstat.dynamic.ok.nb_test,
-              hstat.dynamic.notfound.nb_test, hstat.dynamic.err.nb_test,
-              hstat.dynamic.ok.nb_get, hstat.dynamic.notfound.nb_get,
-              hstat.dynamic.err.nb_get, hstat.dynamic.ok.nb_del,
-              hstat.dynamic.notfound.nb_del, hstat.dynamic.err.nb_del);
+              strdate, 
+              hstat_drc_udp.dynamic.nb_entries            + hstat_drc_tcp.dynamic.nb_entries, 
+              hstat_drc_udp.computed.min_rbt_num_node     + hstat_drc_tcp.computed.min_rbt_num_node,
+              hstat_drc_udp.computed.max_rbt_num_node     + hstat_drc_tcp.computed.max_rbt_num_node, 
+              hstat_drc_udp.computed.average_rbt_num_node + hstat_drc_tcp.computed.average_rbt_num_node,
+              hstat_drc_udp.dynamic.ok.nb_set             + hstat_drc_tcp.dynamic.ok.nb_set, 
+              hstat_drc_udp.dynamic.notfound.nb_set       + hstat_drc_tcp.dynamic.notfound.nb_set,
+              hstat_drc_udp.dynamic.err.nb_set            + hstat_drc_tcp.dynamic.err.nb_set, 
+              hstat_drc_udp.dynamic.ok.nb_test            + hstat_drc_tcp.dynamic.ok.nb_test,
+              hstat_drc_udp.dynamic.notfound.nb_test      + hstat_drc_tcp.dynamic.notfound.nb_test, 
+              hstat_drc_udp.dynamic.err.nb_test           + hstat_drc_tcp.dynamic.err.nb_test,
+              hstat_drc_udp.dynamic.ok.nb_get             + hstat_drc_tcp.dynamic.ok.nb_get, 
+              hstat_drc_udp.dynamic.notfound.nb_get       + hstat_drc_tcp.dynamic.notfound.nb_get,
+              hstat_drc_udp.dynamic.err.nb_get            + hstat_drc_tcp.dynamic.err.nb_get, 
+              hstat_drc_udp.dynamic.ok.nb_del             + hstat_drc_tcp.dynamic.ok.nb_del,
+              hstat_drc_udp.dynamic.notfound.nb_del       + hstat_drc_tcp.dynamic.notfound.nb_del, 
+              hstat_drc_udp.dynamic.err.nb_del            + hstat_drc_tcp.dynamic.err.nb_del );
 
       /* Printing the UIDMAP_TYPE hash table stats */
       idmap_get_stats(UIDMAP_TYPE, &hstat, &hstat_reverse);
@@ -818,6 +831,7 @@ void *stats_thread(void *addr)
       /* buddy memory */
 
       memset(&global_buddy_stat, 0, sizeof(buddy_stats_t));
+      memset(&global_tcp_dispatcher_buddy_stat, 0, sizeof(buddy_stats_t));
 
       for(i = 0; i < nfs_param.core_param.nb_worker; i++)
         {
@@ -844,10 +858,30 @@ void *stats_thread(void *addr)
 
         }
 
+      /* Add aggregated Tcp Dispatcher buddy malloc */
+      global_buddy_stat.TotalMemSpace +=
+          global_tcp_dispatcher_buddy_stat.TotalMemSpace;
+      global_buddy_stat.ExtraMemSpace +=
+          global_tcp_dispatcher_buddy_stat.ExtraMemSpace;
+
+      global_buddy_stat.StdMemSpace += global_tcp_dispatcher_buddy_stat.StdMemSpace;
+      global_buddy_stat.StdUsedSpace +=
+          global_tcp_dispatcher_buddy_stat.StdUsedSpace;
+
+      if(global_tcp_dispatcher_buddy_stat.StdUsedSpace >
+         global_tcp_dispatcher_buddy_stat.WM_StdUsedSpace)
+        global_buddy_stat.WM_StdUsedSpace =
+            global_tcp_dispatcher_buddy_stat.StdUsedSpace;
+
+      global_buddy_stat.NbStdPages += global_tcp_dispatcher_buddy_stat.NbStdPages;
+      global_buddy_stat.NbStdUsed += global_tcp_dispatcher_buddy_stat.NbStdUsed;
+
+      if(global_tcp_dispatcher_buddy_stat.NbStdUsed > global_buddy_stat.WM_NbStdUsed)
+        global_buddy_stat.WM_NbStdUsed = global_tcp_dispatcher_buddy_stat.NbStdUsed;
+
       /* total memory space preallocated, total space preallocated for pages, total space that overflows pages */
       /* total memory, used memory, avg used memory/worker, max used memory/worker */
       /* total pages, used pages, avg used pages/worker, max used pages/worker */
-
       fprintf(stats_file, "BUDDY_MEMORY,%s;%lu,%lu,%lu|%lu,%lu,%lu|%u,%u,%u,%u\n",
               strdate,
               (unsigned long)global_buddy_stat.TotalMemSpace,

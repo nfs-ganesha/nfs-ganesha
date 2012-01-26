@@ -17,6 +17,7 @@
 
 #include "fsal.h"
 #include "fsal_internal.h"
+#include "FSAL/access_check.h"
 #include "fsal_convert.h"
 #include "stuff_alloc.h"
 #include <string.h>
@@ -84,7 +85,7 @@ fsal_status_t XFSFSAL_opendir(fsal_handle_t * p_dir_handle,  /* IN */
     }
 
   /* Test access rights for this directory */
-  status = fsal_internal_testAccess(p_context, FSAL_R_OK, &buffstat, NULL);
+  status = fsal_check_access(p_context, FSAL_R_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_opendir);
 

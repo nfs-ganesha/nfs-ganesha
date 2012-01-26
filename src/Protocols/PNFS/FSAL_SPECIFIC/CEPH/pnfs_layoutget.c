@@ -114,11 +114,9 @@ static nfsstat4 one_segment(fsal_handle_t *handle,
 /* In the future, put soemthing in the FSAL's static info allowing it
    to specify how big this buffer should be. */
 
-#define LOC_BODY_SIZE 256
-
-nfsstat4 CEPH_pnfs_layoutget( LAYOUTGET4args   * pargs, 
-			 compound_data_t  * data,
-			 LAYOUTGET4res    * pres ) 
+nfsstat4 FSAL_pnfs_layoutget( LAYOUTGET4args   * pargs,
+                              compound_data_t  * data,
+                              LAYOUTGET4res    * pres )
 {
      char __attribute__ ((__unused__)) funcname[] = "pnfs_layoutget";
 #ifdef _USE_FSALMDS
@@ -142,6 +140,9 @@ nfsstat4 CEPH_pnfs_layoutget( LAYOUTGET4args   * pargs,
      struct fsal_layoutget_arg arg;
      /* Input/output and output arguments of layoutget */
      struct fsal_layoutget_res res;
+     /* Maximum number of segments this FSAL will ever return for a
+        single LAYOUTGET */
+     int max_segment_count = 0;
 #endif /* _USE_FSALMDS */
 
 #ifdef _USE_FSALMDS
@@ -185,14 +186,25 @@ nfsstat4 CEPH_pnfs_layoutget( LAYOUTGET4args   * pargs,
       * Initialize segment array and fill out input-only arguments
       */
 
+     max_segment_count = (data->pcontext->export_context->
+                          fe_static_fs_info->max_segment_count);
+
+     if (max_segment_count == 0) {
+          LogCrit(COMPONENT_PNFS,
+                  "The FSAL must specify a non-zero max_segment_count "
+                  "in its fsal_staticfsinfo_t");
+          nfs_status = NFS4ERR_SERVERFAULT;
+          goto out;
+     }
+
      if ((layouts = (layout4*) Mem_Alloc(sizeof(layout4) *
-                                         MAX_LAYOUT_SEGMENTS))
+                                         max_segment_count))
          == NULL) {
           nfs_status = NFS4ERR_SERVERFAULT;
           goto out;
      }
 
-     memset(layouts, 0, sizeof(layout4) * MAX_LAYOUT_SEGMENTS);
+     memset(layouts, 0, sizeof(layout4) * max_segment_count);
 
      arg.type = pargs->loga_layout_type;
      arg.minlength = pargs->loga_minlength;
@@ -229,7 +241,7 @@ nfsstat4 CEPH_pnfs_layoutget( LAYOUTGET4args   * pargs,
 
           numlayouts++;
 
-          if ((numlayouts == MAX_LAYOUT_SEGMENTS) && !res.last_segment) {
+          if ((numlayouts == max_segment_count) && !res.last_segment) {
                nfs_status = NFS4ERR_SERVERFAULT;
                goto out;
           }
@@ -453,6 +465,17 @@ one_segment(fsal_handle_t *handle,
      nfsstat4 nfs_status = 0;
      /* Return from state calls */
      state_status_t state_status = 0;
+     /* Size of a loc_body buffer */
+     size_t loc_body_size =
+          context->export_context->fe_static_fs_info->loc_buffer_size;
+
+     if (loc_body_size == 0) {
+          LogCrit(COMPONENT_PNFS,
+                  "The FSAL must specify a non-zero loc_buffer_size "
+                  "in its fsal_staticfsinfo_t");
+          nfs_status = NFS4ERR_SERVERFAULT;
+          goto out;
+     }
 
      /* Initialize the layout_content4 structure, allocate a buffer,
      and create an XDR stream for the FSAL to encode to. */
@@ -460,11 +483,11 @@ one_segment(fsal_handle_t *handle,
      current->lo_content.loc_type
           = arg->type;
      current->lo_content.loc_body.loc_body_val
-          = Mem_Alloc(LOC_BODY_SIZE);
+          = Mem_Alloc(loc_body_size);
 
      xdrmem_create(&loc_body,
                    current->lo_content.loc_body.loc_body_val,
-                   LOC_BODY_SIZE,
+                   loc_body_size,
                    XDR_ENCODE);
 
      start_position = xdr_getpos(&loc_body);

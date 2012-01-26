@@ -38,6 +38,7 @@
 
 #include "fsal.h"
 #include "fsal_internal.h"
+#include "FSAL/access_check.h"
 #include "fsal_convert.h"
 #include <unistd.h>
 
@@ -130,7 +131,7 @@ fsal_status_t XFSFSAL_unlink(fsal_handle_t * p_parent_directory_handle,      /* 
 
   /* client must be able to lookup the parent directory and modify it */
   status =
-      fsal_internal_testAccess(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_parent, NULL);
+      fsal_check_access(p_context, FSAL_W_OK | FSAL_X_OK, &buffstat_parent, NULL);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_unlink);
 

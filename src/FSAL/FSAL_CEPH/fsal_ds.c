@@ -291,12 +291,10 @@ CEPHFSAL_DS_commit(fsal_handle_t *exthandle,
      cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
      /* Mount parameter specified for all calls to Ceph */
      struct ceph_mount_info *cmount = context->export_context->cmount;
-     /* The OSD number for this host */
-     const int local_OSD = ceph_get_local_osd(cmount);
      /* Width of a stripe in the file */
      const uint32_t stripe_width = handle->data.layout.fl_stripe_unit;
-     /* The stripe we're committing */
-     uint32_t stripe = 0;
+     /* Error return from Ceph */
+     int rc = 0;
 
      /* Find out what stripe we're writing to and where within the
         stripe. */
@@ -307,28 +305,12 @@ CEPHFSAL_DS_commit(fsal_handle_t *exthandle,
      }
 
 
-     for (stripe = offset / stripe_width;
-          stripe <= ((offset + count - 1) / stripe_width);
-          ++stripe) {
-          if (local_OSD
-              == ceph_ll_get_stripe_osd(cmount,
-                                        VINODE(handle),
-                                        stripe,
-                                        &(handle->data.layout))) {
-               printf("Committing %"PRIu64".%"PRIu32".\n",
-                      VINODE(handle).ino.val,
-                      stripe);
-               int rc
-                    = ceph_ll_commit_block(cmount,
-                                           VINODE(handle),
-                                           stripe);
-               if (rc < 0) {
-                    return posix2nfs4_error(rc);
-               }
-          }
-          printf("Committed %"PRIu64".%"PRIu32".\n",
-                 VINODE(handle).ino.val,
-                 stripe);
+     rc = ceph_ll_commit_blocks(cmount,
+                                VINODE(handle),
+                                offset,
+                                count);
+     if (rc < 0) {
+          return posix2nfs4_error(rc);
      }
 
      return NFS4_OK;
