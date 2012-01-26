@@ -109,17 +109,39 @@ start() {
 	fi
 
 	# start the statd daemon
-	echo -n $"Starting statd: "
+	rm -f /var/lock/subsys/rpc.statd
+
+	# Make sure locks are recovered
+	rm -f /var/run/sm-notify.pid
+
+	# Start daemons.
+	# See if the kernel lockd should start up 
+	# listening on a particular port
+	#
+	if [ -n "$LOCKD_TCPPORT" -o -n "$LOCKD_UDPPORT" ]; then 
+		[ -x /sbin/modprobe ] && /sbin/modprobe lockd $LOCKDARG
+		[ -n "$LOCKD_TCPPORT" ] && \
+			/sbin/sysctl -w fs.nfs.nlm_tcpport=$LOCKD_TCPPORT >/dev/null 2>&1
+		[ -n "$LOCKD_UDPPORT" ] && \
+			/sbin/sysctl -w fs.nfs.nlm_udpport=$LOCKD_UDPPORT >/dev/null 2>&1
+	fi
+
+	echo -n $"Starting NFS statd: "
+	# Set statd's local hostname if defined
+	[ -n "${STATD_HOSTNAME}" ] && STATDARG="$STATDARG -n ${STATD_HOSTNAME}"
+
 	# See if a statd's ports has been defined
 	[ -n "$STATD_PORT" ] && STATDARG="$STATDARG -p $STATD_PORT"
 	[ -n "$STATD_OUTGOING_PORT" ] \
 		&& STATDARG="$STATDARG -o $STATD_OUTGOING_PORT"
+
 	# See if we have an HA-callout program specified
 	[ -n "$STATD_HA_CALLOUT" ] \
 		&& STATDARG="$STATDARG -H $STATD_HA_CALLOUT"
 	daemon rpc.statd "$STATDARG"
 	RETVAL=$?
 	echo
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/rpc.statd
 	if [ $RETVAL -ne 0 ]; then
 		failure
 		return $RETVAL
@@ -143,6 +165,7 @@ start() {
         echo  -n $"Starting $prog: "
 	daemon $PATHPROG $OPTIONS
 	RETVAL=$?
+	sm-notify -f
 
         # Sleeping here gives Ganesha an adequate amount of time to
         # initialize the server and fail if anything goes wrong.
@@ -181,11 +204,13 @@ stop() {
 	echo -n $"Stopping statd: "
 	killproc rpc.statd
 	RETVAL=$?
+	rm -f /var/lock/subsys/rpc.statd
+	rm -f /var/run/sm-notify.pid
 	echo
 
 	# Kill the Ganesha process
 	echo -n $"Stopping $prog: "
-	killproc $PATHPROG
+	killproc -d 30 $PATHPROG
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && rm -f  /var/lock/subsys/gpfs.ganesha.nfsd
 
@@ -200,7 +225,6 @@ stop() {
 		 fi
 	done
 
-	sleep 1
         echo
         return $RETVAL
 }
