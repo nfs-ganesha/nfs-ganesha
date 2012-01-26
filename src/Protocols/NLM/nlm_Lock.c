@@ -74,10 +74,11 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
 
   netobj_to_string(&arg->cookie, buffer, 1024);
   LogDebug(COMPONENT_NLM,
-           "REQUEST PROCESSING: Calling nlm4_Lock svid=%d off=%llx len=%llx cookie=%s",
+           "REQUEST PROCESSING: Calling nlm4_Lock svid=%d off=%llx len=%llx cookie=%s reclaim=%s",
            (int) arg->alock.svid,
            (unsigned long long) arg->alock.l_offset,
-           (unsigned long long) arg->alock.l_len, buffer);
+           (unsigned long long) arg->alock.l_len, buffer,
+           arg->reclaim ? "yes" : "no");
 
   if(!copy_netobj(&pres->res_nlm4test.cookie, &arg->cookie))
     {
