@@ -1,20 +1,23 @@
-EXTRA_DIST = hosts.ganesha uidgid_mapfile.ganesha snmp.conf \
-	     hpss.ganesha.nfsd.conf \
-	     posix.ganesha.nfsd.conf \
-	     proxy.ganesha.nfsd.conf \
-	     snmp.ganesha.nfsd.conf \
-	     lustre.ganesha.nfsd.conf \
-	     shook.ganesha.nfsd.conf \
-	     xfs.ganesha.nfsd.conf \
-	     gpfs.ganesha.nfsd.conf \
-	     gpfs.ganesha.main.conf \
+EXTRA_DIST = hosts.ganesha             \
+             uidgid_mapfile.ganesha    \
+             snmp.conf                 \
+             ceph.ganesha.nfsd.conf    \
+	     hpss.ganesha.nfsd.conf    \
+	     posix.ganesha.nfsd.conf   \
+	     proxy.ganesha.nfsd.conf   \
+	     snmp.ganesha.nfsd.conf    \
+	     lustre.ganesha.nfsd.conf  \
+	     shook.ganesha.nfsd.conf   \
+	     xfs.ganesha.nfsd.conf     \
+	     gpfs.ganesha.nfsd.conf    \
+	     gpfs.ganesha.main.conf    \
 	     gpfs.ganesha.exports.conf \
-	     vfs.ganesha.nfsd.conf \
-	     vfs.ganesha.main.conf \
-	     vfs.ganesha.exports.conf \
+	     vfs.ganesha.nfsd.conf     \
+	     vfs.ganesha.main.conf     \
+	     vfs.ganesha.exports.conf  \
 	     dynfsal.ganesha.nfsd.conf \
-	     zfs.ganesha.nfsd.conf \
-	logrotate_ganesha
+	     zfs.ganesha.nfsd.conf     \
+	     logrotate_ganesha
 
 if USE_FSAL_FUSE
 sysconf_DATA = hosts.ganesha snmp.conf uidgid_mapfile.ganesha

@@ -176,6 +176,7 @@ EXTRA_DIST=nfs-ganesha.spec           \
            TODO                       \
            THANKS                     \
            KNOWN_BUGS                 \
+           nfs-ganesha.ceph.init      \
            nfs-ganesha.posix.init     \
            nfs-ganesha.lustre.init    \
            nfs-ganesha.shook.init     \

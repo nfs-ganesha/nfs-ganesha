@@ -154,6 +154,21 @@ name-spaces. This package provides support for GANESHA using the POSIX
 interface.
 %endif
 
+%if %{?_with_ceph:1}%{!?_with_ceph:0}
+%package ceph
+Summary: The NFS-GANESHA server compiled for using the CEPH interface
+Group: Applications/System
+BuildRequires: libattr-devel
+Requires: %{name}-common = %{version}-%{release}
+
+%description ceph
+NFS-GANESHA is a NFS Server running in user space with a large cache.
+It comes with various back-end modules to support different file systems and
+name-spaces. This package provides support for GANESHA using the CEPH
+interface.
+%endif
+
+
 %if %{?_with_lustre:1}%{!?_with_lustre:0}
 %package lustre
 Summary: The NFS-GANESHA server compiled for using the LUSTRE interface
@@ -404,6 +419,14 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/ganesha/vfs.ganesha*
 %endif
 
+%if %{?_with_ceph:1}%{!?_with_ceph:0}
+%files ceph
+%defattr(-,root,root,-)
+%{_bindir}/ceph.ganesha.*
+%{_bindir}/ceph.ganeshell
+%{_sysconfdir}/init.d/nfs-ganesha-ceph
+%config(noreplace) %{_sysconfdir}/ganesha/ceph.ganesha*
+%endif
 
 %if %{?_with_lustre:1}%{!?_with_lustre:0}
 %files lustre
