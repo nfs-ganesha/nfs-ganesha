@@ -625,13 +625,33 @@ case $FSAL in
 		FS_NAME="dynfsal"
                 ;;
 	GPFS)
-                # The following are needed in many GPFS environments
-                CFLAGS="$CFLAGS -I/usr/lpp/mmfs/include"
-                LDFLAGS="$LDFLAGS -L/usr/lpp/mmfs/lib"
+		# Test for GPFS rpms
+		gpfs_rpm=`rpm -qa | grep gpfs.base`
+		if test "x$gpfs_rpm" == "x" ; then
+		   	# Copy the header files and library to the right place
+		   	AC_MSG_NOTICE([GPFS rpms are not installed])
+			mkdir -p /usr/lpp/mmfs/
+			cp -r ./FSAL/FSAL_GPFS/include/ /usr/lpp/mmfs/
+			cp -r ./FSAL/FSAL_GPFS/lib/ /usr/lpp/mmfs/
+			ln -s /usr/lpp/mmfs/include/gpfs.h /usr/include/
+			ln -s /usr/lpp/mmfs/include/gpfs.h /usr/include/gpfs_gpl.h
+			ln -s /usr/lpp/mmfs/include/gpfs_nfs.h /usr/include/
+			ln -s /usr/lpp/mmfs/include/gpfs_fcntl.h /usr/include/
+			ln -s /usr/lpp/mmfs/include/gpfs_lweTypes.h /usr/include/
+			ln -s /usr/lpp/mmfs/lib/i386/libgpfs.so /usr/lib/
+			ln -s /usr/lpp/mmfs/lib/libgpfs.so /usr/lib64/
+		else
+			AC_MSG_NOTICE([GPFS rpms are installed])
+		fi
 
 		AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
 		AC_DEFINE(_USE_FSAL_UP,1,[enable FSAL Upcall Interface support])
 
+
+		AC_CHECK_HEADERS([gpfs.h gpfs_fcntl.h gpfs_gpl.h gpfs_lweTypes.h],
+				 [],
+				 [AC_MSG_ERROR(missing gpfs include files)],
+				 [])
 		AC_CHECK_HEADERS([gpfs_nfs.h], [], [AC_MSG_ERROR(missing gpfs include files)], [
                 #include <fcntl.h>
 		#include <stdint.h>
