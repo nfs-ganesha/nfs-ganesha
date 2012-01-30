@@ -645,8 +645,8 @@ void nfs_Init_svc()
   Register_program(P_NLM, CORE_OPTION_NFSV3, NLM4_VERS);
 #endif                          /* USE_NLM */
 #ifdef _USE_QUOTA
-  Register_program(P_NLM, CORE_OPTION_ALL_VERS, RQUOTAVERS);
-  Register_program(P_NLM, CORE_OPTION_ALL_VERS, EXT_RQUOTAVERS);
+  Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS, RQUOTAVERS);
+  Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS, EXT_RQUOTAVERS);
 #endif                          /* USE_QUOTA */
 #endif                          /* _NO_PORTMAPPER */
 

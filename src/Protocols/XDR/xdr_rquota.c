@@ -3,6 +3,10 @@
  * It was generated using rpcgen.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "rquota.h"
 
 bool_t xdr_sq_dqblk(XDR * xdrs, sq_dqblk * objp)
@@ -101,7 +105,7 @@ bool_t xdr_sq_dqblk(XDR * xdrs, sq_dqblk * objp)
 
 bool_t xdr_getquota_args(XDR * xdrs, getquota_args * objp)
 {
-  register int32_t *buf;
+  register __attribute__ ((__unused__)) int32_t *buf;
 
   if(!xdr_string(xdrs, &objp->gqa_pathp, RQ_PATHLEN))
     return FALSE;
@@ -112,7 +116,7 @@ bool_t xdr_getquota_args(XDR * xdrs, getquota_args * objp)
 
 bool_t xdr_setquota_args(XDR * xdrs, setquota_args * objp)
 {
-  register int32_t *buf;
+  register __attribute__ ((__unused__)) int32_t *buf;
 
   if(!xdr_int(xdrs, &objp->sqa_qcmd))
     return FALSE;
@@ -127,7 +131,7 @@ bool_t xdr_setquota_args(XDR * xdrs, setquota_args * objp)
 
 bool_t xdr_ext_getquota_args(XDR * xdrs, ext_getquota_args * objp)
 {
-  register int32_t *buf;
+  register __attribute__ ((__unused__)) int32_t *buf;
 
   if(!xdr_string(xdrs, &objp->gqa_pathp, RQ_PATHLEN))
     return FALSE;
@@ -140,7 +144,7 @@ bool_t xdr_ext_getquota_args(XDR * xdrs, ext_getquota_args * objp)
 
 bool_t xdr_ext_setquota_args(XDR * xdrs, ext_setquota_args * objp)
 {
-  register int32_t *buf;
+  register __attribute__ ((__unused__)) int32_t *buf;
 
   if(!xdr_int(xdrs, &objp->sqa_qcmd))
     return FALSE;
@@ -267,7 +271,7 @@ bool_t xdr_rquota(XDR * xdrs, rquota * objp)
 
 bool_t xdr_qr_status(XDR * xdrs, qr_status * objp)
 {
-  register int32_t *buf;
+  register __attribute__ ((__unused__)) int32_t *buf;
 
   if(!xdr_enum(xdrs, (enum_t *) objp))
     return FALSE;
@@ -276,7 +280,7 @@ bool_t xdr_qr_status(XDR * xdrs, qr_status * objp)
 
 bool_t xdr_getquota_rslt(XDR * xdrs, getquota_rslt * objp)
 {
-  register int32_t *buf;
+  register __attribute__ ((__unused__)) int32_t *buf;
 
   if(!xdr_qr_status(xdrs, &objp->status))
     return FALSE;
@@ -298,7 +302,7 @@ bool_t xdr_getquota_rslt(XDR * xdrs, getquota_rslt * objp)
 
 bool_t xdr_setquota_rslt(XDR * xdrs, setquota_rslt * objp)
 {
-  register int32_t *buf;
+  register __attribute__ ((__unused__)) int32_t *buf;
 
   if(!xdr_qr_status(xdrs, &objp->status))
     return FALSE;
