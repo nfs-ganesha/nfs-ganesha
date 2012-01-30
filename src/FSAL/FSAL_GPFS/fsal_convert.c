@@ -590,7 +590,7 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_RAWDEV))
         {
             p_fsalattr_out->rawdev = posix2fsal_devt(p_buffstat->st_rdev);    /* XXX: convert ? */
-            LogFullDebug(COMPONENT_FSAL, "rawdev major = %u, minor = %u", p_fsalattr_out->rawdev.major, p_fsalattr_out->rawdev.minor);
+            LogFullDebug(COMPONENT_FSAL, "rawdev major = %lu, minor = %lu", p_fsalattr_out->rawdev.major, p_fsalattr_out->rawdev.minor);
         }
     /* mounted_on_fileid :
        if ( FSAL_TEST_MASK(p_fsalattr_out->asked_attributes,
