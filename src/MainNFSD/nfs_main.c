@@ -156,6 +156,7 @@ int main(int argc, char *argv[])
           printf("Release = %s\n", VERSION);
           printf("Release comment = %s\n", VERSION_COMMENT);
           printf("Git HEAD = %s\n", _GIT_HEAD_COMMIT ) ;
+          printf("Git Describe = %s\n", _GIT_DESCRIBE ) ;
           exit(0);
           break;
 
