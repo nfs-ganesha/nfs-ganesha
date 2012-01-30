@@ -68,9 +68,13 @@ head_commit=`git rev-parse HEAD 2>/dev/null`
 if test "x$head_commit" == "x" ; then
   AC_MSG_RESULT( [no git here] ) 
   AC_DEFINE_UNQUOTED( [_GIT_HEAD_COMMIT], "not within git repository", [Lastest HEAD as configure was run])
+  AC_DEFINE_UNQUOTED( [_GIT_DESCRIBE], "not within git repository", [Result of git-describe --long])
 else
   AC_MSG_RESULT( $head_commit ) 
   AC_DEFINE_UNQUOTED( [_GIT_HEAD_COMMIT], "$head_commit", [Lastest HEAD as configure was run])
+  git_describe=`git describe --long`
+  AC_MSG_RESULT( $git_describe ) 
+  AC_DEFINE_UNQUOTED( [_GIT_DESCRIBE], "$git_describe", [Result of git-describe --long])
 fi
 
 # plateform relative flags
