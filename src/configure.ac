@@ -241,6 +241,29 @@ if test "$enable_upcall_simulator" == "yes"; then
 fi
 AM_CONDITIONAL(USE_UPCALL_SIMULATOR, test "$enable_upcall_simulator" = "yes")
 
+# FSAL switch argument (default is PROXY)
+AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|CEPH|DYNFSAL|SHOOK (default=PROXY)],
+             [specify the type of filesystem to be exported] ), FSAL="$withval", FSAL="PROXY")
+
+# exporting USE_FSAL_... for conditional compilation
+AM_CONDITIONAL(USE_FSAL_HPSS,     test "$FSAL" = "HPSS")
+AM_CONDITIONAL(USE_FSAL_POSIX,    test "$FSAL" = "POSIX")
+AM_CONDITIONAL(USE_FSAL_PROXY,    test "$FSAL" = "PROXY")
+AM_CONDITIONAL(USE_FSAL_FUSE,     test "$FSAL" = "FUSE")
+AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
+AM_CONDITIONAL(USE_FSAL_SHOOK,    test "$FSAL" = "SHOOK") # variant of Lustre FSAL
+AM_CONDITIONAL(USE_FSAL_XFS,      test "$FSAL" = "XFS")
+AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
+AM_CONDITIONAL(USE_FSAL_CEPH,     test "$FSAL" = "CEPH")
+AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
+AM_CONDITIONAL(SHARED_FSAL,       test "$FSAL" = "DYNFSAL")
+AM_CONDITIONAL(USE_FSAL_ZFS,      test "$FSAL" = "ZFS")
+AM_CONDITIONAL(USE_FSAL_VFS,      test "$FSAL" = "VFS")
+
+
+AM_CONDITIONAL(RESULT_IS_LIB,      test "$FSAL" = "FUSE")
+AM_CONDITIONAL(RESULT_IS_DAEMON,   test "$FSAL" != "FUSE")
+
 
 # FSAL_UP
 GA_ENABLE_AM_CONDITION([fsal-up],[enable FSAL Upcall Interface support],[USE_FSAL_UP])
@@ -282,16 +305,21 @@ CACHE_INODE_DIR="Cache_inode"
 
 AC_SUBST(CACHE_INODE_DIR)
 
-GA_ENABLE_AM_CONDITION([snmp-adm], [export GANESHA statistics with SNMP], [USE_SNMP_ADM])
+# Exports stats via SNMP
 
-# for using it in Makefiles
-AM_CONDITIONAL(ENABLE_SNMP_ADM,    test "$enable_snmp_adm" = "yes" )
+GA_ENABLE_AM_CONDITION([snmp-adm], [export GANESHA statistics with SNMP], [ENABLE_SNMP_ADM])
+
+if test "$FSAL" == "FUSE" ; then #it makes no sense to embed snmp stats when generating a lib for FUSE
+  enable_snmp_adm="no"
+fi
+
+AM_CONDITIONAL(USE_SNMP_ADM,    test "$enable_snmp_adm" = "yes" )
 
 if test "$enable_snmp_adm" == "yes"; then
-	AC_DEFINE(_SNMP_ADM_ACTIVE,1,[export GANESHA statistics with SNMP])
-	EXT_LIBS=`$NETSNMP_CONFIG --agent-libs`
-	EXT_LDADD="\$(top_builddir)/snmp_adm/libsnmp_adm.la $EXT_LIBS"
-fi
+   AC_DEFINE(_SNMP_ADM_ACTIVE,1,[export GANESHA statistics with SNMP])
+   EXT_LIBS=`$NETSNMP_CONFIG --agent-libs`
+   EXT_LDADD="\$(top_builddir)/snmp_adm/libsnmp_adm.la $EXT_LIBS"
+fi 
 
 AC_SUBST(EXT_LDADD)
 
@@ -380,28 +408,6 @@ if test "${with_cunit+set}" == "set"; then
 	LDFLAGS="-L$CUNIT/lib $LDFLAGS -lcunit"
 fi
 
-# FSAL switch argument (default is PROXY)
-AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|CEPH|DYNFSAL|SHOOK (default=PROXY)],
-             [specify the type of filesystem to be exported] ), FSAL="$withval", FSAL="PROXY")
-
-# exporting USE_FSAL_... for conditional compilation
-AM_CONDITIONAL(USE_FSAL_HPSS,     test "$FSAL" = "HPSS")
-AM_CONDITIONAL(USE_FSAL_POSIX,    test "$FSAL" = "POSIX")
-AM_CONDITIONAL(USE_FSAL_PROXY,    test "$FSAL" = "PROXY")
-AM_CONDITIONAL(USE_FSAL_FUSE,     test "$FSAL" = "FUSE")
-AM_CONDITIONAL(USE_FSAL_LUSTRE,   test "$FSAL" = "LUSTRE")
-AM_CONDITIONAL(USE_FSAL_SHOOK,    test "$FSAL" = "SHOOK") # variant of Lustre FSAL
-AM_CONDITIONAL(USE_FSAL_XFS,      test "$FSAL" = "XFS")
-AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
-AM_CONDITIONAL(USE_FSAL_CEPH,     test "$FSAL" = "CEPH")
-AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
-AM_CONDITIONAL(SHARED_FSAL,       test "$FSAL" = "DYNFSAL")
-AM_CONDITIONAL(USE_FSAL_ZFS,      test "$FSAL" = "ZFS")
-AM_CONDITIONAL(USE_FSAL_VFS,      test "$FSAL" = "VFS")
-
-
-AM_CONDITIONAL(RESULT_IS_LIB,      test "$FSAL" = "FUSE")
-AM_CONDITIONAL(RESULT_IS_DAEMON,   test "$FSAL" != "FUSE")
 
 # NFSv4.0 NFSv4.1 switch
 AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  (default=1)], [specify if server support NFSv4 or NFSv4.1] ),
