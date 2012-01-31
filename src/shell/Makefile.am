@@ -80,7 +80,7 @@ __FS_NAME__ganeshell_SOURCES    = Getopt.c                            \
 
 
 shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
-                  ../$(CACHE_INODE_DIR)/libcache_inode.la            \
+                  ../Cache_inode/libcache_inode.la                   \
                   ../File_Content/libcache_content.la                \
                   ../File_Content_Policy/libcache_content_policy.la  \
                   ../IdMapper/libidmap.la                            \

@@ -300,11 +300,6 @@ if test "$enable_nfsidmap" == "yes"; then
 fi
 AM_CONDITIONAL(USE_NFSIDMAP, test "$enable_nfsidmap" == "yes" )
 
-
-CACHE_INODE_DIR="Cache_inode"
-
-AC_SUBST(CACHE_INODE_DIR)
-
 # Exports stats via SNMP
 
 GA_ENABLE_AM_CONDITION([snmp-adm], [export GANESHA statistics with SNMP], [ENABLE_SNMP_ADM])
