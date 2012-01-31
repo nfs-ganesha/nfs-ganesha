@@ -417,7 +417,13 @@ int nlm_process_parameters(struct svc_req        * preq,
                  alock->fh.n_len);
           /* FSF TODO: Ultimately I think the following will go away, we won't need the context, just the export */
           /* Copy credentials from pcontext */
+#ifdef _USE_HPSS
+	  /** @todo : PhD: Think about removing hpsscred_t from FSAL */ 
+          (*ppblock_data)->sbd_credential.user  =  pcontext->credential.hpss_usercred.Uid ;
+          (*ppblock_data)->sbd_credential.group =  pcontext->credential.hpss_usercred.Gid ;
+#else
           (*ppblock_data)->sbd_credential = pcontext->credential;
+#endif
         }
     }
   /* Fill in plock */
