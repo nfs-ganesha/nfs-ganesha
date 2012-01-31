@@ -29,8 +29,8 @@
 #include "nlm4.h"
 #include "sal_functions.h"
 
-bool_t nlm_block_data_to_fsal_context(state_nlm_block_data_t * nlm_block_data,
-                                      fsal_op_context_t      * fsal_context);
+bool_t nlm_block_data_to_fsal_context(state_block_data_t * block_data,
+                                      fsal_op_context_t  * fsal_context);
 
 extern const char *lock_result_str(int rc);
 extern netobj *copy_netobj(netobj * dst, netobj * src);
@@ -60,7 +60,7 @@ extern int in_nlm_grace_period(void);
 int nlm_process_parameters(struct svc_req        * preq,
                            bool_t                  exclusive,
                            nlm4_lock             * alock,
-                           state_lock_desc_t     * plock,
+                           fsal_lock_param_t     * plock,
                            hash_table_t          * ht,
                            cache_entry_t        ** ppentry,
                            fsal_op_context_t     * pcontext,
@@ -73,7 +73,7 @@ int nlm_process_parameters(struct svc_req        * preq,
 
 void nlm_process_conflict(nlm4_holder          * nlm_holder,
                           state_owner_t        * holder,
-                          state_lock_desc_t    * conflict,
+                          fsal_lock_param_t    * conflict,
                           cache_inode_client_t * pclient);
 
 nlm4_stats nlm_convert_state_error(state_status_t status);

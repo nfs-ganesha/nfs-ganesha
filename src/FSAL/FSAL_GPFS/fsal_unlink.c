@@ -127,7 +127,11 @@ fsal_status_t GPFSFSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* I
   access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK  | FSAL_X_OK) |
                 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD);
 
+  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
   status = fsal_internal_testAccess(p_context, access_mask, NULL, &parent_dir_attrs);
+  else
+    status = fsal_internal_access(p_context, p_parent_directory_handle, access_mask,
+                                  &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_unlink);
 

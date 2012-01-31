@@ -6,12 +6,14 @@ noinst_LTLIBRARIES            = libsal.la
 #check_PROGRAMS                = test_cache_inode test_cache_inode_readlink \
 #                                test_cache_inode_readdir test_cache_inode_lookup 
 
-libsal_la_SOURCES = state_lock.c                     \
+libsal_la_SOURCES = state_async.c                    \
+                    state_lock.c                     \
                     state_misc.c                     \
                     nfs4_state.c                     \
                     nfs4_state_id.c                  \
                     nfs4_owner.c                     \
                     nfs4_lease.c                     \
+                    nfs4_recovery.c                  \
                     ../include/BuddyMalloc.h         \
                     ../include/HashData.h            \
                     ../include/HashTable.h           \

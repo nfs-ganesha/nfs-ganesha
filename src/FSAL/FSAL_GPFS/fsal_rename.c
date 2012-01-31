@@ -151,7 +151,11 @@ fsal_status_t GPFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* I
   access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
                 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD);
 
+  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
   status = fsal_internal_testAccess(p_context, access_mask, NULL, &src_dir_attrs);
+  else
+    status = fsal_internal_access(p_context, p_old_parentdir_handle, access_mask,
+                                  &src_dir_attrs);
   if(FSAL_IS_ERROR(status)) {
     close(old_parent_fd);
     if (!src_equal_tgt)
@@ -165,7 +169,11 @@ fsal_status_t GPFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* I
                 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE |
                                    FSAL_ACE_PERM_ADD_SUBDIRECTORY);
 
+	  if(!p_context->export_context->fe_static_fs_info->accesscheck_support)
       status = fsal_internal_testAccess(p_context, access_mask, NULL, &tgt_dir_attrs);
+	  else
+	    status = fsal_internal_access(p_context, p_new_parentdir_handle, access_mask,
+	                                  &tgt_dir_attrs);
       if(FSAL_IS_ERROR(status)) {
         close(old_parent_fd);
         close(new_parent_fd);

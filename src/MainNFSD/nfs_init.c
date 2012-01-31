@@ -1547,11 +1547,9 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
            "%d worker threads were started successfully",
 	   nfs_param.core_param.nb_worker);
 
-#ifdef _USE_NLM
-  /* Start NLM threads */
+  /* Start State Async threads */
   if(!flush_datacache_mode)
-    nlm_startup();
-#endif
+    state_async_thread_start();
 
   /* Starting the rpc dispatcher thread */
   if((rc =
@@ -1732,6 +1730,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                cache_inode_err_str(cache_status));
     }
 
+  /* Initialize thread control block */
+  tcb_head_init();
+
 #ifdef _USE_BLOCKING_LOCKS
   if(state_lock_init(&state_status,
                      nfs_param.cache_layers_param.cache_param.cookie_param)
@@ -1745,8 +1746,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                state_err_str(state_status));
     }
   LogInfo(COMPONENT_INIT, "Cache Inode library successfully initialized");
-  /* Initialize thread control block */
-  tcb_head_init();
 
   /* Set the cache inode GC policy */
   cache_inode_set_gc_policy(nfs_param.cache_layers_param.gcpol);
@@ -2096,8 +2095,26 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   create_fsal_up_threads();
 #endif /* _USE_FSAL_UP */
 
+  /* Create stable storage directory, this should not be necessary */
+  nfs4_create_recov_dir();
+
+  /* initialize grace and read in the client IDs */
+  nfs4_init_grace();
+  nfs4_load_recov_clids();
+
+  /* Start grace period */
+  nfs4_start_grace();
+
   LogInfo(COMPONENT_INIT,
           "Cache Inode root entries successfully created");
+
+  /* Set accesscheck_support value to FSAL context object. */
+#ifdef _USE_NFS4_ACL
+  nfs_param.pexportlist->FS_export_context.fe_static_fs_info->accesscheck_support =
+  !nfs_param.cache_layers_param.cache_inode_client_param.use_test_access;
+  LogDebug(COMPONENT_INIT, "accesscheck_support is set to %d",
+           nfs_param.pexportlist->FS_export_context.fe_static_fs_info->accesscheck_support);
+#endif
 
 }                               /* nfs_Init */
 
@@ -2476,6 +2493,8 @@ void nfs_start(nfs_start_info_t * p_start_info)
   /* Regular exit */
   LogEvent(COMPONENT_MAIN,
            "NFS EXIT: regular exit");
+
+  nfs4_clean_recov_dir();
   Cleanup();
 
   /* let main return 0 to exit */

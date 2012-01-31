@@ -68,7 +68,7 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
   state_nsm_client_t * nsm_client;
   state_nlm_client_t * nlm_client;
   state_owner_t      * nlm_owner;
-  state_lock_desc_t    lock;
+  fsal_lock_param_t    lock;
   int                  rc;
 
   netobj_to_string(&arg->cookie, buffer, sizeof(buffer));
@@ -148,23 +148,25 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
   return NFS_REQ_OK;
 }
 
-static void nlm4_unlock_message_resp(nlm_async_queue_t *arg)
+static void nlm4_unlock_message_resp(state_async_queue_t *arg)
 {
+  state_nlm_async_data_t * nlm_arg = &arg->state_async_data.state_nlm_async_data;
+
   if(isFullDebug(COMPONENT_NLM))
     {
       char buffer[1024];
-      netobj_to_string(&arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie, buffer, 1024);
+      netobj_to_string(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie, buffer, 1024);
       LogFullDebug(COMPONENT_NLM,
                    "Calling nlm_send_async cookie=%s status=%s",
-                   buffer, lock_result_str(arg->nlm_async_args.nlm_async_res.res_nlm4.stat.stat));
+                   buffer, lock_result_str(nlm_arg->nlm_async_args.nlm_async_res.res_nlm4.stat.stat));
     }
   nlm_send_async(NLMPROC4_UNLOCK_RES,
-                 arg->nlm_async_host,
-                 &(arg->nlm_async_args.nlm_async_res),
+                 nlm_arg->nlm_async_host,
+                 &(nlm_arg->nlm_async_args.nlm_async_res),
                  NULL);
-  nlm4_Unlock_Free(&arg->nlm_async_args.nlm_async_res);
-  dec_nsm_client_ref(arg->nlm_async_host->slc_nsm_client);
-  dec_nlm_client_ref(arg->nlm_async_host);
+  nlm4_Unlock_Free(&nlm_arg->nlm_async_args.nlm_async_res);
+  dec_nsm_client_ref(nlm_arg->nlm_async_host->slc_nsm_client);
+  dec_nlm_client_ref(nlm_arg->nlm_async_host);
   Mem_Free(arg);
 }
 

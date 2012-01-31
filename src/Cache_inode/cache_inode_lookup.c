@@ -483,3 +483,67 @@ cache_entry_t *cache_inode_lookup(cache_entry_t * pentry_parent,
                                 pstatus, 
                                 TRUE);
 }                               /* cache_inode_lookup */
+
+/**
+ *
+ * cache_inode_valid_lookup: looks up for a name in a directory indicated by a cached entry and renews it.
+ *
+ * Looks up for a name in a directory indicated by a cached entry. The directory should have been cached before.
+ * If the name is found, the entry is renewed then returned.
+ *
+ * @param pentry_parent [IN]    entry for the parent directory to be managed.
+ * @param name          [IN]    name of the entry that we are looking for in the cache.
+ * @param pattr         [OUT]   attributes for the entry that we have found.
+ * @param ht            [IN]    hash table used for the cache, unused in this call.
+ * @param pclient       [INOUT] ressource allocated by the client for the nfs management.
+ * @param pcontext         [IN]    FSAL credentials
+ * @param pstatus       [OUT]   returned status.
+ *
+ * @return CACHE_INODE_SUCCESS if operation is a success \n
+ * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
+ *
+ */
+cache_entry_t *cache_inode_valid_lookup(cache_entry_t * pentry_parent,
+                                        fsal_name_t * pname,
+                                        cache_inode_policy_t policy,
+                                        fsal_attrib_list_t * pattr,
+                                        hash_table_t * ht,
+                                        cache_inode_client_t * pclient,
+                                        fsal_op_context_t * pcontext,
+                                        cache_inode_status_t * pstatus)
+{
+  cache_entry_t *pentry;
+  cache_inode_status_t cache_status;
+  pentry = cache_inode_lookup_sw(pentry_parent, pname, policy, pattr, ht,
+                                 pclient, pcontext, pstatus, TRUE);
+
+  /* cache_inode_lookup_sw() could have given a STALE inode entry.
+   * Check if the pentry is stale or valid or what.*/
+  if (*pstatus == CACHE_INODE_SUCCESS && pentry != NULL)
+    {
+      /* TODO: Locking here seems to be fine, but unlocking after renew_entry
+       * results in a deadlock or pause. In some cases renew_entry deletes
+       * the pentry along with the lock. Even detecting that case and not
+       * unlocking doesn't prevent this problem. It may be that we need to
+       * pass to renew_entry the type of lock we have on pentry->lock so that
+       * cache_inode_kill_entry() can properly unlock.*/
+      //P_w(&pentry->lock);
+      cache_status = cache_inode_renew_entry(pentry, pattr, ht,
+                                             pclient, pcontext, pstatus);
+
+      //if (cache_status != CACHE_INODE_KILLED)
+      //V_w(&pentry->lock);
+
+      if(cache_status != CACHE_INODE_SUCCESS)
+        {
+          inc_func_err_retryable(pclient, CACHE_INODE_GETATTR);
+          LogFullDebug(COMPONENT_CACHE_INODE,
+                       "cache_inode_valid_lookup: The file was found but could not be "
+                       "renewed. Returning %d(%s) from cache_inode_renew_entry",
+                       cache_status, cache_inode_err_str(cache_status));
+          *pstatus = CACHE_INODE_FSAL_ESTALE;
+          return NULL;
+        }
+    }
+  return pentry;
+}                               /* cache_inode_valid_lookup */

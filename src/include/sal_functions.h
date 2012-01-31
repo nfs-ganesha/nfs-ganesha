@@ -41,6 +41,7 @@
 #include "sal_data.h"
 #include "cache_inode.h"
 #include "nfs_exports.h"
+#include "nfs_core.h"
 
 /******************************************************************************
  *
@@ -200,7 +201,7 @@ int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t * *pstate_data);
 int nfs4_State_Del(char other[OTHERSIZE]);
 void nfs_State_PrintAll(void);
 
-int nfs4_is_lease_expired(cache_entry_t * pentry);
+int nfs4_is_lease_expired(nfs_client_id_t * pentry);
 
 int display_state_id_val(hash_buffer_t * pbuff, char *str);
 int display_state_id_key(hash_buffer_t * pbuff, char *str);
@@ -256,7 +257,7 @@ int Init_nfs4_owner(nfs4_owner_parameter_t param);
 
 void Process_nfs4_conflict(LOCK4denied          * denied,    /* NFS v4 LOck4denied structure to fill in */
                            state_owner_t        * holder,    /* owner that holds conflicting lock */
-                           state_lock_desc_t    * conflict,  /* description of conflicting lock */
+                           fsal_lock_param_t    * conflict,  /* description of conflicting lock */
                            cache_inode_client_t * pclient);
 
 void Release_nfs4_denied(LOCK4denied * denied);
@@ -295,7 +296,7 @@ void LogLock(log_components_t     component,
              cache_entry_t      * pentry,
              fsal_op_context_t  * pcontext,
              state_owner_t      * powner,
-             state_lock_desc_t  * plock);
+             fsal_lock_param_t  * plock);
 
 #ifdef _USE_BLOCKING_LOCKS
 /**
@@ -352,9 +353,9 @@ state_status_t state_release_grant(fsal_op_context_t    * pcontext,
 state_status_t state_test(cache_entry_t        * pentry,
                           fsal_op_context_t    * pcontext,
                           state_owner_t        * powner,
-                          state_lock_desc_t    * plock,
+                          fsal_lock_param_t    * plock,
                           state_owner_t       ** holder,   /* owner that holds conflicting lock */
-                          state_lock_desc_t    * conflict, /* description of conflicting lock */
+                          fsal_lock_param_t    * conflict, /* description of conflicting lock */
                           cache_inode_client_t * pclient,
                           state_status_t       * pstatus);
 
@@ -364,9 +365,9 @@ state_status_t state_lock(cache_entry_t         * pentry,
                           state_t               * pstate,
                           state_blocking_t        blocking,
                           state_block_data_t    * block_data,
-                          state_lock_desc_t     * plock,
+                          fsal_lock_param_t     * plock,
                           state_owner_t        ** holder,   /* owner that holds conflicting lock */
-                          state_lock_desc_t     * conflict, /* description of conflicting lock */
+                          fsal_lock_param_t     * conflict, /* description of conflicting lock */
                           cache_inode_client_t  * pclient,
                           state_status_t        * pstatus);
 
@@ -374,7 +375,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
                             fsal_op_context_t    * pcontext,
                             state_owner_t        * powner,
                             state_t              * pstate,
-                            state_lock_desc_t    * plock,
+                            fsal_lock_param_t    * plock,
                             cache_inode_client_t * pclient,
                             state_status_t       * pstatus);
 
@@ -382,7 +383,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
 state_status_t state_cancel(cache_entry_t        * pentry,
                             fsal_op_context_t    * pcontext,
                             state_owner_t        * powner,
-                            state_lock_desc_t    * plock,
+                            fsal_lock_param_t    * plock,
                             cache_inode_client_t * pclient,
                             state_status_t       * pstatus);
 #endif
@@ -442,4 +443,50 @@ state_status_t state_lookup_layout_state(cache_entry_t * pentry,
                                          layouttype4     type,
                                          state_t      ** pstate);
 #endif                          /*  _USE_FSALMDS */
+/******************************************************************************
+ *
+ * Async functions
+ *
+ ******************************************************************************/
+
+#ifdef _USE_BLOCKING_LOCKS
+
+/* Schedule Async Work */
+state_status_t state_async_schedule(state_async_queue_t *arg);
+
+/* Signal Async Work */
+void signal_async_work();
+
+state_status_t state_async_init();
+void state_async_thread_start();
+
+void grant_blocked_lock_upcall(cache_entry_t        * pentry,
+                               void                 * powner,
+                               fsal_lock_param_t    * plock,
+                               cache_inode_client_t * pclient);
+
+void available_blocked_lock_upcall(cache_entry_t        * pentry,
+                                   void                 * powner,
+                                   fsal_lock_param_t    * plock,
+                                   cache_inode_client_t * pclient);
+
+void process_blocked_lock_upcall(state_block_data_t   * block_data,
+                                 cache_inode_client_t * pclient);
+#endif
+/*
+ *
+ * NFSv4 Recovery functions
+ *
+ */
+void nfs4_init_grace();
+void nfs4_start_grace();
+int nfs4_in_grace();
+void nfs4_create_clid_name(nfs_client_id_t *, struct svc_req *);
+void nfs4_add_clid(nfs_client_id_t *);
+void nfs4_rm_clid(char *);
+void nfs4_chk_clid(nfs_client_id_t *);
+void nfs4_load_recov_clids();
+void nfs4_clean_recov_dir();
+void nfs4_create_recov_dir();
+
 #endif                          /*  _SAL_FUNCTIONS_H */

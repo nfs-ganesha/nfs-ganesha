@@ -39,6 +39,9 @@
 #include "cache_inode.h"
 #include "HashTable.h"
 #include "fsal_up.h"
+#include "sal_functions.h"
+
+static cache_inode_policy_t cachepol = CACHE_INODE_POLICY_ATTRS_ONLY_WRITE_THROUGH;
 
 /* Set the FSAL UP functions that will be used to process events.
  * This is called DUMB_FSAL_UP because it only invalidates cache inode
@@ -55,7 +58,7 @@ fsal_status_t dumb_fsal_up_invalidate(fsal_up_event_data_t * pevdata)
   pevdata->event_context.fsal_data.cookie = DIR_START;
       LogDebug(COMPONENT_FSAL_UP,
                "FSAL_UP_DUMB: calling cache_inode_get()");
-  pentry = cache_inode_get(&pevdata->event_context.fsal_data,
+  pentry = cache_inode_get(&pevdata->event_context.fsal_data, cachepol,
                            &attr, pevdata->event_context.ht, NULL, NULL,
                            &cache_status);
   if(pentry == NULL)
@@ -79,7 +82,7 @@ fsal_status_t dumb_fsal_up_invalidate(fsal_up_event_data_t * pevdata)
   if(pentry->internal_md.type == DIRECTORY)
     {
       pentry->object.dir.has_been_readdir = CACHE_INODE_RENEW_NEEDED;
-      LogDebug(COMPONENT_FSAL_CB,
+      LogDebug(COMPONENT_FSAL_UP,
               "FSAL_CB_DUMB: Invalidate reset directory.");
     }
   V_w(&pentry->lock);
@@ -121,14 +124,74 @@ fsal_status_t dumb_fsal_up_link(fsal_up_event_data_t * pevdata)
   INVALIDATE_STUB;
 }
 
-fsal_status_t dumb_fsal_up_lock(fsal_up_event_data_t * pevdata)
+fsal_status_t dumb_fsal_up_lock_grant(fsal_up_event_data_t * pevdata)
 {
-  INVALIDATE_STUB;
+  cache_inode_status_t   cache_status;
+  cache_entry_t        * pentry = NULL;
+  fsal_attrib_list_t     attr;
+
+  /* Avoid dir cont check in cache_inode_get() */
+  pevdata->event_context.fsal_data.cookie = DIR_START;
+      LogDebug(COMPONENT_FSAL_UP,
+               "FSAL_UP_DUMB: calling cache_inode_get()");
+  pentry = cache_inode_get(&pevdata->event_context.fsal_data, cachepol,
+                           &attr, pevdata->event_context.ht, NULL, NULL,
+                           &cache_status);
+  if(pentry == NULL)
+    {
+      LogDebug(COMPONENT_FSAL_UP,
+               "FSAL_UP_DUMB: cache inode get failed.");
+      /* Not an error. Expecting some nodes will not have it in cache in
+       * a cluster. */
+      ReturnCode(ERR_FSAL_NO_ERROR, 0);
+    }
+
+  LogDebug(COMPONENT_FSAL_UP,
+           "FSAL_UP_DUMB: Lock Grant found entry %p",
+           pentry);
+
+  grant_blocked_lock_upcall(pentry,
+                            pevdata->type.lock_grant.lock_owner,
+                            &pevdata->type.lock_grant.lock_param,
+                            NULL);
+                            
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t dumb_fsal_up_locku(fsal_up_event_data_t * pevdata)
+fsal_status_t dumb_fsal_up_lock_avail(fsal_up_event_data_t * pevdata)
 {
-  INVALIDATE_STUB;
+  cache_inode_status_t   cache_status;
+  cache_entry_t        * pentry = NULL;
+  fsal_attrib_list_t     attr;
+
+  /* Avoid dir cont check in cache_inode_get() */
+  pevdata->event_context.fsal_data.cookie = DIR_START;
+      LogDebug(COMPONENT_FSAL_UP,
+               "FSAL_UP_DUMB: calling cache_inode_get()");
+  pentry = cache_inode_get(&pevdata->event_context.fsal_data, cachepol,
+                           &attr, pevdata->event_context.ht, NULL, NULL,
+                           &cache_status);
+  if(pentry == NULL)
+    {
+      LogDebug(COMPONENT_FSAL_UP,
+               "FSAL_UP_DUMB: cache inode get failed.");
+      /* Not an error. Expecting some nodes will not have it in cache in
+       * a cluster. */
+      ReturnCode(ERR_FSAL_NO_ERROR, 0);
+    }
+
+  LogDebug(COMPONENT_FSAL_UP,
+           "FSAL_UP_DUMB: Lock Available found entry %p",
+           pentry);
+
+  available_blocked_lock_upcall(pentry,
+                                pevdata->type.lock_grant.lock_owner,
+                                &pevdata->type.lock_grant.lock_param,
+                                NULL);
+                            
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t dumb_fsal_up_open(fsal_up_event_data_t * pevdata)
@@ -153,8 +216,8 @@ fsal_up_event_functions_t dumb_event_func = {
   .fsal_up_commit = dumb_fsal_up_commit,
   .fsal_up_write = dumb_fsal_up_write,
   .fsal_up_link = dumb_fsal_up_link,
-  .fsal_up_lock = dumb_fsal_up_lock,
-  .fsal_up_locku = dumb_fsal_up_locku,
+  .fsal_up_lock_grant = dumb_fsal_up_lock_grant,
+  .fsal_up_lock_avail = dumb_fsal_up_lock_avail,
   .fsal_up_open = dumb_fsal_up_open,
   .fsal_up_close = dumb_fsal_up_close,
   .fsal_up_setattr = dumb_fsal_up_setattr,

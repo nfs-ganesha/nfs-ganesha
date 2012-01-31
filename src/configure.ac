@@ -67,11 +67,11 @@ head_commit=`git rev-parse HEAD 2>/dev/null`
 
 if test "x$head_commit" == "x" ; then
   AC_MSG_RESULT( [no git here] ) 
-  AC_DEFINE_UNQUOTED( [_GIT_HEAD_COMMIT], "not within git repository", [Lastest HEAD as configure was run])
-  AC_DEFINE_UNQUOTED( [_GIT_DESCRIBE], "not within git repository", [Result of git-describe --long])
+  AC_DEFINE_UNQUOTED( [_GIT_HEAD_COMMIT], "not compiled within a git repository", [Lastest HEAD at the time configure was run])
+  AC_DEFINE_UNQUOTED( [_GIT_DESCRIBE], "not compiled within a git repository", [Result of git-describe --long])
 else
   AC_MSG_RESULT( $head_commit ) 
-  AC_DEFINE_UNQUOTED( [_GIT_HEAD_COMMIT], "$head_commit", [Lastest HEAD as configure was run])
+  AC_DEFINE_UNQUOTED( [_GIT_HEAD_COMMIT], "$head_commit", [Lastest HEAD at the time configure was run])
   git_describe=`git describe --long`
   AC_MSG_RESULT( $git_describe ) 
   AC_DEFINE_UNQUOTED( [_GIT_DESCRIBE], "$git_describe", [Result of git-describe --long])
@@ -624,6 +624,7 @@ case $FSAL in
 
 		AC_CHECK_HEADERS([gpfs_nfs.h], [], [AC_MSG_ERROR(missing gpfs include files)], [
                 #include <fcntl.h>
+		#include <stdint.h>
                 ])
 
                 AC_CHECK_MEMBER([struct file_handle.f_handle], [
@@ -632,11 +633,13 @@ case $FSAL in
                                       [],
                                       [
                                         #include <fcntl.h>
+					#include <stdint.h>
                                         #include <gpfs_nfs.h>
                                       ])
 
 		AC_CHECK_DECL([gpfs_ganesha], [], [AC_MSG_ERROR(missing gpfs_ganesha function)], [
                   #include <fcntl.h>
+  		  #include <stdint.h>
                   #include <gpfs_nfs.h>
                 ])
 
@@ -645,6 +648,8 @@ case $FSAL in
                                 OPENHANDLE_LINK_BY_FD,
 		                OPENHANDLE_READLINK_BY_FD,
                                 OPENHANDLE_STAT_BY_HANDLE,
+                                OPENHANDLE_GET_LOCK,
+                                OPENHANDLE_SET_LOCK,
                                 XATTR_STAT,
                                 XATTR_MODE,
                                 XATTR_UID,
@@ -657,6 +662,7 @@ case $FSAL in
 		               [AC_MSG_ERROR(GPFS < 3.5.0 found, you must upgrade GPFS to use this feature)],
 		               [
                                  #include <fcntl.h>
+				 #include <stdint.h>
                                  #include <gpfs_nfs.h>
                                ])
 

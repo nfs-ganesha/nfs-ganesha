@@ -112,7 +112,9 @@ fsal_status_t GPFSFSAL_lock_op( fsal_file_t       * p_file_descriptor, /* IN */
   else if(lock_op == FSAL_OP_LOCK || lock_op == FSAL_OP_UNLOCK)
     glock_args.cmd = F_SETLK;
   else if(lock_op == FSAL_OP_LOCKB)
-    glock_args.cmd = F_SETLKW; /*TODO: Handle FSAL_OP_CANCEL */
+    glock_args.cmd = F_SETLKW;
+  else if(lock_op == FSAL_OP_CANCEL)
+    glock_args.cmd = 1029; // TODO FSF: hack - replace with GPFS_F_CANCELLK;
   else
     {
       LogDebug(COMPONENT_FSAL,
@@ -148,24 +150,41 @@ fsal_status_t GPFSFSAL_lock_op( fsal_file_t       * p_file_descriptor, /* IN */
   retval = gpfs_ganesha(lock_op == FSAL_OP_LOCKT ?
       OPENHANDLE_GET_LOCK : OPENHANDLE_SET_LOCK, &gpfs_sg_arg);
 
-  if(retval && lock_op == FSAL_OP_LOCK)
+  if(retval)
     {
-      if(conflicting_lock != NULL)
+      int errsv = errno;
+
+      if((conflicting_lock != NULL) &&
+         (lock_op == FSAL_OP_LOCK || lock_op == FSAL_OP_LOCKB))
         {
+          int retval2;
           glock_args.cmd = F_GETLK;
-          retval = gpfs_ganesha(OPENHANDLE_GET_LOCK, &gpfs_sg_arg);
-          if(retval)
+          retval2 = gpfs_ganesha(OPENHANDLE_GET_LOCK, &gpfs_sg_arg);
+          if(retval2)
             {
               LogCrit(COMPONENT_FSAL,
                       "After failing a set lock request, An attempt to get the current owner details also failed.");
-              Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock_op);
             }
-          conflicting_lock->lock_owner = glock_args.flock.l_pid;
-          conflicting_lock->lock_length = glock_args.flock.l_len;
-          conflicting_lock->lock_start = glock_args.flock.l_start;
-          conflicting_lock->lock_type = glock_args.flock.l_type;
+          else
+            {
+              conflicting_lock->lock_length = glock_args.flock.l_len;
+              conflicting_lock->lock_start  = glock_args.flock.l_start;
+              conflicting_lock->lock_type   = glock_args.flock.l_type;
+            }
         }
-      Return(posix2fsal_error(errno), errno, INDEX_FSAL_lock_op);
+      if(retval == 1)
+        {
+          LogFullDebug(COMPONENT_FSAL,
+                       "GPFS queued blocked lock");
+          Return(ERR_FSAL_BLOCKED, 0, INDEX_FSAL_lock_op);
+        }
+      else
+        {
+          LogFullDebug(COMPONENT_FSAL,
+                       "GPFS lock operation failed error %d %d (%s)",
+                       retval, errsv, strerror(errsv));
+          Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_lock_op);
+        }
     }
 
   /* F_UNLCK is returned then the tested operation would be possible. */
@@ -173,17 +192,15 @@ fsal_status_t GPFSFSAL_lock_op( fsal_file_t       * p_file_descriptor, /* IN */
     {
       if(lock_op == FSAL_OP_LOCKT && glock_args.flock.l_type != F_UNLCK)
         {
-          conflicting_lock->lock_owner = glock_args.flock.l_pid;
           conflicting_lock->lock_length = glock_args.flock.l_len;
-          conflicting_lock->lock_start = glock_args.flock.l_start;
-          conflicting_lock->lock_type = glock_args.flock.l_type;
+          conflicting_lock->lock_start  = glock_args.flock.l_start;
+          conflicting_lock->lock_type   = glock_args.flock.l_type;
         }
       else
         {
-          conflicting_lock->lock_owner = 0;
           conflicting_lock->lock_length = 0;
-          conflicting_lock->lock_start = 0;
-          conflicting_lock->lock_type = FSAL_NO_LOCK;
+          conflicting_lock->lock_start  = 0;
+          conflicting_lock->lock_type   = FSAL_NO_LOCK;
         }
     }
 

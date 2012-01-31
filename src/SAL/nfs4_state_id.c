@@ -491,6 +491,13 @@ int nfs4_Check_Stateid(stateid4        * pstate,
           else
             return NFS4_OK;
         }
+/* XXX - jw - this will be added when client expiry work is complete.
+ * need to change client_id_get to client_id_Get_Pointer
+ * if (nfs4_is_leased_expired(&nfs_clientid))
+ *   return NFS4ERR_EXPIRED;
+ * else
+ *   nfs4_update_lease(nfs_clientid);
+ */
     }
 
   /* Sanity check : Is this the right file ? */

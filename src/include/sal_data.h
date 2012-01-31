@@ -56,6 +56,7 @@
 #include "config_parsing.h"
 #include "nfs23.h"
 #include "nfs4.h"
+#include "nfs_proto_functions.h"
 #ifdef _USE_NLM
 #include "nlm4.h"
 #endif
@@ -83,8 +84,13 @@ typedef struct state_owner_t        state_owner_t;
 typedef struct state_t              state_t;
 typedef struct nfs_argop4_state     nfs_argop4_state;
 typedef struct state_lock_entry_t   state_lock_entry_t;
+typedef struct state_async_queue_t  state_async_queue_t;
+#ifdef _USE_NLM
+typedef struct state_nlm_client_t   state_nlm_client_t;
+#endif
 #ifdef _USE_BLOCKING_LOCKS
 typedef struct state_cookie_entry_t state_cookie_entry_t;
+typedef struct state_block_data_t   state_block_data_t;
 #endif /* _USE_BLOCKING_LOCKS */
 #ifdef _USE_FSALMDS
 typedef struct state_layout_segment_t state_layout_segment_t;
@@ -204,7 +210,7 @@ typedef struct state_nsm_client_t
   char                  * ssc_nlm_caller_name;
 } state_nsm_client_t;
 
-typedef struct state_nlm_client_t
+struct state_nlm_client_t
 {
   pthread_mutex_t         slc_mutex;
   state_nsm_client_t    * slc_nsm_client;
@@ -213,7 +219,7 @@ typedef struct state_nlm_client_t
   int                     slc_nlm_caller_name_len;
   char                    slc_nlm_caller_name[LM_MAXSTRLEN+1];
   CLIENT                * slc_callback_clnt;
-} state_nlm_client_t;
+};
 
 typedef struct state_nlm_owner_t
 {
@@ -319,6 +325,8 @@ typedef enum state_status_t
   STATE_FILE_BIG              = 41,
   STATE_GRACE_PERIOD          = 42,
   STATE_CACHE_INODE_ERR       = 43,
+  STATE_SIGNAL_ERROR          = 44,
+  STATE_KILLED                = 45,
 } state_status_t;
 
 typedef enum state_blocking_t
@@ -330,20 +338,6 @@ typedef enum state_blocking_t
   STATE_CANCELED
 } state_blocking_t;
 
-typedef enum state_lock_type_t
-{
-  STATE_LOCK_R,   /* not exclusive */
-  STATE_LOCK_W,   /* exclusive */
-  STATE_NO_LOCK   /* used when test lock returns success */
-} state_lock_type_t;
-
-typedef struct state_lock_desc_t
-{
-  state_lock_type_t sld_type;
-  uint64_t          sld_offset;
-  uint64_t          sld_length;
-} state_lock_desc_t;
-
 /* The granted call back is responsible for acquiring a reference to
  * the lock entry if needed.
  *
@@ -354,27 +348,51 @@ typedef state_status_t (*granted_callback_t)(cache_entry_t        * pentry,
                                              cache_inode_client_t * pclient,
                                              state_status_t       * pstatus);
 
+typedef bool_t (*block_data_to_fsal_context_t)(state_block_data_t * block_data,
+                                               fsal_op_context_t  * fsal_context);
+
 #ifdef _USE_BLOCKING_LOCKS
 typedef struct state_nlm_block_data_t
 {
   sockaddr_t                 sbd_nlm_hostaddr;
   netobj                     sbd_nlm_fh;
   char                       sbd_nlm_fh_buf[MAX_NETOBJ_SZ];
-  struct user_credentials    sbd_credential;
 } state_nlm_block_data_t;
 
-typedef struct state_block_data_t
+/* List of all locks blocked in FSAL */
+struct glist_head state_blocked_locks;
+
+/* List of all async blocking locks notified by FSAL but not processed */
+struct glist_head state_notified_locks;
+
+/* Mutex to protect above lists */
+pthread_mutex_t blocked_locks_mutex;
+
+typedef enum state_grant_type_t
 {
-  granted_callback_t           sbd_granted_callback;
-  state_cookie_entry_t       * sbd_blocked_cookie;
+  STATE_GRANT_NONE,
+  STATE_GRANT_INTERNAL,
+  STATE_GRANT_FSAL,
+  STATE_GRANT_FSAL_AVAILABLE
+} state_grant_type_t;
+
+struct state_block_data_t
+{
+  struct glist_head              sbd_list;
+  state_grant_type_t             sbd_grant_type;
+  granted_callback_t             sbd_granted_callback;
+  state_cookie_entry_t         * sbd_blocked_cookie;
+  state_lock_entry_t           * sbd_lock_entry;
+  block_data_to_fsal_context_t   sbd_block_data_to_fsal_context;
+  struct user_credentials        sbd_credential;
   union
     {
 #ifdef _USE_NLM
-      state_nlm_block_data_t   sbd_nlm_block_data;
+      state_nlm_block_data_t     sbd_nlm_block_data;
 #endif
-      void                   * sbd_v4_block_data;
+      void                     * sbd_v4_block_data;
     } sbd_block_data;
-} state_block_data_t;
+};
 #else
 typedef void state_block_data_t;
 #endif
@@ -394,7 +412,7 @@ struct state_lock_entry_t
   state_block_data_t   * sle_block_data;
   state_owner_t        * sle_owner;
   state_t              * sle_state;
-  state_lock_desc_t      sle_lock;
+  fsal_lock_param_t      sle_lock;
   pthread_mutex_t        sle_mutex;
 };
 
@@ -438,6 +456,45 @@ struct state_cookie_entry_t
   state_lock_entry_t * sce_lock_entry;
   void               * sce_pcookie;
   int                  sce_cookie_size;
+};
+
+/*
+ * Structures for state async processing
+ *
+ */
+extern cache_inode_client_t state_async_cache_inode_client;
+
+typedef void (state_async_func) (state_async_queue_t * arg);
+
+#ifdef _USE_NLM
+typedef struct state_nlm_async_data_t
+{
+  state_nlm_client_t       * nlm_async_host;
+  void                     * nlm_async_key;
+  union
+    {
+      nfs_res_t              nlm_async_res;
+      nlm4_testargs          nlm_async_grant;
+    } nlm_async_args;
+} state_nlm_async_data_t;
+#endif
+
+typedef struct state_async_block_data_t
+{
+  state_lock_entry_t * state_async_lock_entry;
+} state_async_block_data_t;
+
+struct state_async_queue_t
+{
+  struct glist_head              state_async_glist;
+  state_async_func             * state_async_func;
+  union
+    {
+#ifdef _USE_NLM
+      state_nlm_async_data_t     state_nlm_async_data;
+#endif
+      void                     * state_no_data;
+    } state_async_data;
 };
 #endif
 

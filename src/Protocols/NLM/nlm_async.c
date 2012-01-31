@@ -39,26 +39,26 @@
 #include "nlm_async.h"
 #include "nfs_tcb.h"
 
-static pthread_t               nlm_async_thread_id;
-static struct glist_head       nlm_async_queue;
-pthread_mutex_t                nlm_async_resp_mutex  = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t                 nlm_async_resp_cond   = PTHREAD_COND_INITIALIZER;
-cache_inode_client_parameter_t nlm_async_cache_inode_client_param;
-cache_inode_client_t           nlm_async_cache_inode_client;
-extern nfs_tcb_t               nlmtcb;
+pthread_mutex_t nlm_async_resp_mutex  = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t  nlm_async_resp_cond   = PTHREAD_COND_INITIALIZER;
 
 int nlm_send_async_res_nlm4(state_nlm_client_t * host,
-                            nlm_callback_func    func,
+                            state_async_func     func,
                             nfs_res_t          * pres)
 {
-  nlm_async_queue_t *arg = (nlm_async_queue_t *) Mem_Alloc(sizeof(*arg));
+  state_async_queue_t    * arg = (state_async_queue_t *) Mem_Alloc(sizeof(*arg));
+  state_nlm_async_data_t * nlm_arg;
+  state_status_t           status;
+
   if(arg != NULL)
     {
+      nlm_arg = &arg->state_async_data.state_nlm_async_data;
       memset(arg, 0, sizeof(*arg));
-      arg->nlm_async_host               = host;
-      arg->nlm_async_func               = func;
-      arg->nlm_async_args.nlm_async_res = *pres;
-      if(!copy_netobj(&arg->nlm_async_args.nlm_async_res.res_nlm4.cookie, &pres->res_nlm4.cookie))
+      arg->state_async_func                 = func;
+      nlm_arg->nlm_async_host               = host;
+      nlm_arg->nlm_async_args.nlm_async_res = *pres;
+      if(!copy_netobj(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4.cookie,
+                      &pres->res_nlm4.cookie))
         {
           LogFullDebug(COMPONENT_NLM,
                        "Unable to copy async response file handle");
@@ -73,34 +73,34 @@ int nlm_send_async_res_nlm4(state_nlm_client_t * host,
       return NFS_REQ_DROP;
    }
 
-  P(nlmtcb.tcb_mutex);
-  glist_add_tail(&nlm_async_queue, &arg->nlm_async_glist);
-  if(pthread_cond_signal(&nlmtcb.tcb_condvar) == -1)
-    {
-      LogFullDebug(COMPONENT_NLM,
-                   "Unable to signal nlm_asyn_thread");
-      glist_del(&arg->nlm_async_glist);
-      netobj_free(&arg->nlm_async_args.nlm_async_res.res_nlm4.cookie);
-      Mem_Free(arg);
-      arg = NULL;
-    }
-  V(nlmtcb.tcb_mutex);
+  status = state_async_schedule(arg);
 
-  return arg != NULL ? NFS_REQ_OK : NFS_REQ_DROP;
+  if(status != STATE_SUCCESS)
+    {
+      Mem_Free(arg);
+      return NFS_REQ_DROP;
+    }
+
+  return NFS_REQ_OK;
 }
 
 int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
-                                nlm_callback_func    func,
+                                state_async_func     func,
                                 nfs_res_t          * pres)
 {
-  nlm_async_queue_t *arg = (nlm_async_queue_t *) Mem_Alloc(sizeof(*arg));
+  state_async_queue_t    * arg = (state_async_queue_t *) Mem_Alloc(sizeof(*arg));
+  state_nlm_async_data_t * nlm_arg;
+  state_status_t           status;
+
   if(arg != NULL)
     {
+      nlm_arg = &arg->state_async_data.state_nlm_async_data;
       memset(arg, 0, sizeof(*arg));
-      arg->nlm_async_host               = host;
-      arg->nlm_async_func               = func;
-      arg->nlm_async_args.nlm_async_res = *pres;
-      if(!copy_netobj(&arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie, &pres->res_nlm4test.cookie))
+      arg->state_async_func               = func;
+      nlm_arg->nlm_async_host               = host;
+      nlm_arg->nlm_async_args.nlm_async_res = *pres;
+      if(!copy_netobj(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie,
+                      &pres->res_nlm4test.cookie))
         {
           LogFullDebug(COMPONENT_NLM,
                        "Unable to copy async response file handle");
@@ -109,12 +109,12 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
         }
       else if(pres->res_nlm4test.test_stat.stat == NLM4_DENIED)
         {
-          if(!copy_netobj(&arg->nlm_async_args.nlm_async_res.res_nlm4test.test_stat.nlm4_testrply_u.holder.oh,
+          if(!copy_netobj(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.test_stat.nlm4_testrply_u.holder.oh,
                           &pres->res_nlm4test.test_stat.nlm4_testrply_u.holder.oh))
             {
               LogFullDebug(COMPONENT_NLM,
                            "Unable to copy async response oh");
-              netobj_free(&arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie);
+              netobj_free(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie);
               Mem_Free(arg);
               return NFS_REQ_DROP;
             }
@@ -127,184 +127,19 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
       return NFS_REQ_DROP;
    }
 
-  P(nlmtcb.tcb_mutex);
-  glist_add_tail(&nlm_async_queue, &arg->nlm_async_glist);
-  if(pthread_cond_signal(&nlmtcb.tcb_condvar) == -1)
+
+  status = state_async_schedule(arg);
+
+  if(status != STATE_SUCCESS)
     {
-      LogFullDebug(COMPONENT_NLM,
-                   "Unable to signal nlm_asyn_thread");
-      glist_del(&arg->nlm_async_glist);
-      netobj_free(&arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie);
+      netobj_free(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.cookie);
       if(pres->res_nlm4test.test_stat.stat == NLM4_DENIED)
-        netobj_free(&arg->nlm_async_args.nlm_async_res.res_nlm4test.test_stat.nlm4_testrply_u.holder.oh);
+        netobj_free(&nlm_arg->nlm_async_args.nlm_async_res.res_nlm4test.test_stat.nlm4_testrply_u.holder.oh);
       Mem_Free(arg);
-      arg = NULL;
+      return NFS_REQ_DROP;
     }
-  V(nlmtcb.tcb_mutex);
 
-  return arg != NULL ? NFS_REQ_OK : NFS_REQ_DROP;
-}
-
-/* Execute a func from the async queue */
-void *nlm_async_thread(void *argp)
-{
-#ifndef _NO_BUDDY_SYSTEM
-  int rc;
-#endif
-  nlm_async_queue_t *entry;
-  struct timeval now;
-  struct timespec timeout;
-  struct glist_head nlm_async_tmp_queue;
-  struct glist_head *glist, *glistn;
-
-  SetNameFunction("nlm_async_thread");
-
-#ifndef _NO_BUDDY_SYSTEM
-  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_NLM,
-               "NLM async thread: Memory manager could not be initialized");
-    }
-  LogInfo(COMPONENT_NLM,
-          "NLM async thread: Memory manager successfully initialized");
-#endif
-  if(mark_thread_existing(&nlmtcb) == PAUSE_EXIT)
-    {
-      /* Oops, that didn't last long... exit. */
-      mark_thread_done(&nlmtcb);
-      LogDebug(COMPONENT_NLM,
-               "NLM async thread: exiting before initialization");
-      return NULL;
-    }
-  LogFullDebug(COMPONENT_NLM,
-               "NLM async thread: my pthread id is %p",
-               (caddr_t) pthread_self());
-
-  while(1)
-    {
-      /* Check without tcb lock*/
-      if((nlmtcb.tcb_state != STATE_AWAKE) || glist_empty(&nlm_async_queue))
-        {
-          while(1)
-            {
-              P(nlmtcb.tcb_mutex);
-              if((nlmtcb.tcb_state == STATE_AWAKE) &&
-                  !glist_empty(&nlm_async_queue))
-                {
-                  V(nlmtcb.tcb_mutex);
-                  break;
-                }
-              switch(thread_sm_locked(&nlmtcb))
-                {
-                  case THREAD_SM_RECHECK:
-                    V(nlmtcb.tcb_mutex);
-                    continue;
-
-                  case THREAD_SM_BREAK:
-                    if(glist_empty(&nlm_async_queue))
-                      {
-                        gettimeofday(&now, NULL);
-                        timeout.tv_sec = 10 + now.tv_sec;
-                        timeout.tv_nsec = 0;
-                        pthread_cond_timedwait(&nlmtcb.tcb_condvar,
-                                               &nlmtcb.tcb_mutex,
-                                               &timeout);
-                      }
-                    V(nlmtcb.tcb_mutex);
-                    continue;
-
-                  case THREAD_SM_EXIT:
-                    V(nlmtcb.tcb_mutex);
-                    return NULL;
-                }
-            }
-        }
-
-      P(nlmtcb.tcb_mutex);
-      init_glist(&nlm_async_tmp_queue);
-      /* Collect all the work items and add it to the temp
-       * list. Later we iterate over tmp list without holding
-       * the nlmtcb.tcb_mutex.
-       */
-      glist_for_each_safe(glist, glistn, &nlm_async_queue)
-      {
-        entry = glist_entry(glist, nlm_async_queue_t, nlm_async_glist);
-        glist_del(glist);
-        glist_add(&nlm_async_tmp_queue, glist);
-
-      }
-      V(nlmtcb.tcb_mutex);
-      glist_for_each_safe(glist, glistn, &nlm_async_tmp_queue)
-      {
-        entry = glist_entry(glist, nlm_async_queue_t, nlm_async_glist);
-        glist_del(&entry->nlm_async_glist);
-        entry->nlm_async_func(entry);
-      }
-    }
-  tcb_remove(&nlmtcb);
-}
-
-/* Insert 'func' to async queue */
-int nlm_async_callback(nlm_async_queue_t *arg)
-{
-  int rc;
-
-  LogFullDebug(COMPONENT_NLM, "Callback %p", arg);
-
-  P(nlmtcb.tcb_mutex);
-  glist_add_tail(&nlm_async_queue, &arg->nlm_async_glist);
-  rc = pthread_cond_signal(&nlmtcb.tcb_condvar);
-  if(rc == -1)
-    glist_del(&arg->nlm_async_glist);
-  V(nlmtcb.tcb_mutex);
-
-  return rc;
-}
-
-static int local_lru_inode_entry_to_str(LRU_data_t data, char *str)
-{
-  return sprintf(str, "N/A ");
-}                               /* local_lru_inode_entry_to_str */
-
-static int local_lru_inode_clean_entry(LRU_entry_t * entry, void *adddata)
-{
-  return 0;
-}                               /* lru_clean_entry */
-
-int nlm_async_callback_init()
-{
-  init_glist(&nlm_async_queue);
-
-  /* setting the 'nlm_async_cache_inode_client_param' structure */
-  nlm_async_cache_inode_client_param.lru_param.nb_entry_prealloc = 10;
-  nlm_async_cache_inode_client_param.lru_param.entry_to_str = local_lru_inode_entry_to_str;
-  nlm_async_cache_inode_client_param.lru_param.clean_entry = local_lru_inode_clean_entry;
-  nlm_async_cache_inode_client_param.nb_prealloc_entry = 0;
-  nlm_async_cache_inode_client_param.nb_pre_parent = 0;
-  nlm_async_cache_inode_client_param.nb_pre_state_v4 = 0;
-  nlm_async_cache_inode_client_param.grace_period_link = 0;
-  nlm_async_cache_inode_client_param.grace_period_attr = 0;
-  nlm_async_cache_inode_client_param.grace_period_dirent = 0;
-  nlm_async_cache_inode_client_param.grace_period_attr   = 0;
-  nlm_async_cache_inode_client_param.grace_period_link   = 0;
-  nlm_async_cache_inode_client_param.grace_period_dirent = 0;
-  nlm_async_cache_inode_client_param.expire_type_attr    = CACHE_INODE_EXPIRE_NEVER;
-  nlm_async_cache_inode_client_param.expire_type_link    = CACHE_INODE_EXPIRE_NEVER;
-  nlm_async_cache_inode_client_param.expire_type_dirent  = CACHE_INODE_EXPIRE_NEVER;
-  nlm_async_cache_inode_client_param.use_test_access = 1;
-  nlm_async_cache_inode_client_param.attrmask = 0;
-
-  if(cache_inode_client_init(&nlm_async_cache_inode_client,
-                             nlm_async_cache_inode_client_param,
-                             NLM_THREAD_INDEX, NULL))
-    {
-      LogCrit(COMPONENT_NLM,
-              "Could not initialize cache inode client for NLM Async Thread");
-      return -1;
-    }
-  
-  return pthread_create(&nlm_async_thread_id, NULL, nlm_async_thread, NULL);
+  return NFS_REQ_OK;
 }
 
 nlm_reply_proc_t nlm_reply_proc[] = {

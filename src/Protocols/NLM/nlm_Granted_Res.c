@@ -89,7 +89,7 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
 
   if(cookie_entry->sce_lock_entry == NULL ||
      cookie_entry->sce_lock_entry->sle_block_data == NULL ||
-     !nlm_block_data_to_fsal_context(&cookie_entry->sce_lock_entry->sle_block_data->sbd_block_data.sbd_nlm_block_data,
+     !nlm_block_data_to_fsal_context(cookie_entry->sce_lock_entry->sle_block_data,
                                      pcontext))
     {
       /* This must be an old NLM_GRANTED_RES */
