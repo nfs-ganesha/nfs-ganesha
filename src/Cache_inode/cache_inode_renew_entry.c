@@ -518,13 +518,6 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
           *pstatus = CACHE_INODE_BAD_TYPE;
           return *pstatus;
         }
-      /* Would be better if state was a flag that we could and/or the bits but
-       * in any case we need to get rid of stale so we only go through here
-       * once.
-       */
-      if ( pentry->internal_md.valid_state == STALE )
-	pentry->internal_md.valid_state = VALID;
-      
       /* stats */
       (pclient->stat.func_stats.nb_call[CACHE_INODE_RENEW_ENTRY])++;
 
@@ -616,15 +609,6 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
      ((current_time - entry_time >= pclient->grace_period_link)
       || (pentry->internal_md.valid_state == STALE)))
     {
-      assert(pentry->object.symlink);
-      pfsal_handle = &pentry->handle;
-      /* Would be better if state was a flag that we could and/or the bits but
-       * in any case we need to get rid of stale so we only go through here
-       * once.
-       */
-      if ( pentry->internal_md.valid_state == STALE )
-	pentry->internal_md.valid_state = VALID;
-
       assert(pentry->object.symlink);
       pfsal_handle = &pentry->handle;
 

@@ -69,10 +69,10 @@ void dbg_backtrace(void)
       return;
     }
 
-    for (j = 0; j < nptrs; j++)
-      LogFullDebug(COMPONENT_RW_LOCK, "backtrace: %s\n", strings[j]);
+  for (j = 0; j < nptrs; j++)
+    LogFullDebug(COMPONENT_RW_LOCK, "backtrace: %s\n", strings[j]);
 
-    free(strings);
+  free(strings);
 }
 
 
@@ -113,7 +113,9 @@ int V_r(rw_lock_t * plock)
 
   /* I am a reader that is no more active */
   if(plock->nbr_active == 0)
-    dbg_backtrace();
+    // TODO: Failing on virtual machines
+    // dbg_backtrace();
+    print_lock("V_r.1_1", plock);
   else
     plock->nbr_active--;
 
@@ -168,10 +170,11 @@ int V_w(rw_lock_t * plock)
 
   /* I was the active writter, I am not it any more */
   if(plock->nbw_active == 0)
-    dbg_backtrace();
+    // TODO: Failing on virtual machines
+    //dbg_backtrace();
+    print_lock("V_w.1_1", plock);
   else
     plock->nbw_active--;
- 
 
   if(plock->nbw_waiting > 0)
     {
@@ -209,7 +212,9 @@ int rw_lock_downgrade(rw_lock_t * plock)
 
   /* I was the active writter, I am not it any more */
   if(plock->nbw_active == 0)
-    dbg_backtrace();
+    // TODO: Failing on virtual machines
+    // dbg_backtrace();
+    print_lock("downgrade.1_1", plock);
   else
     plock->nbw_active--;
 

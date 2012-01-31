@@ -313,7 +313,14 @@ static int get_hash(snmp_adm_type_union * param, void *opt)
     }
   else if((cs & 0xF0) == 0x10)
     {
-      nfs_dupreq_get_stats(&hstat);
+//TODO: This should have taken care by the following commit.
+// Commenting for now. Philippe to fix it ASAP.
+// commit 1619edd026ea02b5c9d9edaa93512582ee0e4d3f
+//Author: Philippe DENIEL <philippe.deniel@cea.fr>
+//Date:   Fri Jan 20 10:18:23 2012 +0100
+// DRC : manage UDP and TCP request in two different hashtable. This is a prepa
+//
+//      nfs_dupreq_get_stats(&hstat);
     }
   else if((cs & 0xF0) == 0x20)
     {
