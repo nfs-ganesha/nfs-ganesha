@@ -527,9 +527,12 @@ fsal_status_t WRAP_HPSSFSAL_unlink(fsal_handle_t * p_parent_directory_handle,   
                          p_parent_directory_attributes);
 }
 
-fsal_status_t WRAP_HPSSFSAL_sync(fsal_file_t * p_file_descriptor     /* IN */)
+fsal_status_t WRAP_HPSSFSAL_sync( fsal_file_t * p_file_descriptor, 
+                                  fsal_off_t    offset, 
+                                  fsal_size_t   length )
+
 {
-  return HPSSFSAL_sync((hpssfsal_file_t *) p_file_descriptor);
+  return HPSSFSAL_sync((hpssfsal_file_t *) p_file_descriptor, offset, length );
 }
 
 

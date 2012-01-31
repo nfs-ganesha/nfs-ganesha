@@ -404,12 +404,18 @@ unsigned int CEPHFSAL_GetFileno(fsal_file_t * pfile)
  *
  * \param file_descriptor (input):
  *        The file descriptor returned by FSAL_open.
+ * \param offset:
+ *        The starting offset for the portion of file to be synced       
+ * \param length:
+ *        The length for the portion of file to be synced.
  *
  * \return Major error codes:
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t CEPHFSAL_sync(fsal_file_t *extdescriptor)
+fsal_status_t CEPHFSAL_sync( fsal_file_t * extdescriptor, 
+                             fsal_off_t    offset, 
+                             fsal_size_t   length )
 {
   cephfsal_file_t* descriptor = (cephfsal_file_t*) extdescriptor;
   struct ceph_mount_info *cmount = descriptor->ctx.export_context->cmount;

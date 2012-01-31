@@ -130,9 +130,9 @@ cache_inode_commit(cache_entry_t * pentry,
         }
 
 #ifdef _USE_MFSL      
-      fsal_status = MFSL_sync(&(pentry->object.file.open_fd.mfsl_fd), NULL); 
+      fsal_status = MFSL_sync(&(pentry->object.file.open_fd.mfsl_fd), offset, count, NULL); 
 #else
-      fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd));
+      fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd), offset, count );
 #endif
       if(FSAL_IS_ERROR(fsal_status))
       {

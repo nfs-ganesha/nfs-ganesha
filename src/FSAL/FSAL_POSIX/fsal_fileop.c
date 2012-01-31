@@ -703,12 +703,19 @@ unsigned int POSIXFSAL_GetFileno(fsal_file_t * pfile)
  *
  * \param file_descriptor (input):
  *        The file descriptor returned by FSAL_open.
+ * \param offset:
+ *        The starting offset for the portion of file to be synced       
+ * \param length:
+ *        The length for the portion of file to be synced.
  *
  * \return Major error codes:
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t POSIXFSAL_sync(fsal_file_t * file_descriptor       /* IN */)
+fsal_status_t POSIXFSAL_sync(fsal_file_t * file_descriptor,
+                             fsal_off_t    offset, 
+                             fsal_size_t   length )
+
 {
   posixfsal_file_t * p_file_descriptor = (posixfsal_file_t *) file_descriptor;
   int rc, errsv;
