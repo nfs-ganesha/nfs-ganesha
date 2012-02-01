@@ -77,9 +77,12 @@ cache_inode_getattr(cache_entry_t *entry,
                     fsal_attrib_list_t *attr, /* XXX Change this so
                                                 * we don't just copy
                                                 * stuff on the stack. */
-                    fsal_op_context_t *context,
                     cache_inode_status_t *status)
 {
+    cache_inode_status_t status;
+    struct fsal_obj_handle *obj_handle = NULL;
+    fsal_status_t fsal_status;
+
      /* sanity check */
      if(entry == NULL || attr == NULL || context == NULL) {
           *status = CACHE_INODE_INVALID_ARGUMENT;
@@ -101,8 +104,12 @@ cache_inode_getattr(cache_entry_t *entry,
          != CACHE_INODE_SUCCESS) {
           goto out;
      }
+/** @TODO  attributes are a bit murky here with the 'trusted' stuff.
+ *  investigate. maybe we go fetch'm ?
+ */
+/* 	    fsal_status = obj_handle->ops->getattrs(obj_handle, pattr); */
 
-     *attr = entry->attributes;
+     *pattr = pentry->obj_handle->attributes;
 
      pthread_rwlock_unlock(&entry->attr_lock);
 

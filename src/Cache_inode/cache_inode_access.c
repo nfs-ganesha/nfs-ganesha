@@ -41,19 +41,17 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "LRU_List.h"
-#include "log.h"
-#include "HashData.h"
-#include "HashTable.h"
-#include "fsal.h"
-#include "cache_inode.h"
-#include "abstract_mem.h"
-
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
+#include "LRU_List.h"
+#include "log.h"
+#include "HashData.h"
+#include "HashTable.h"
+#include "cache_inode.h"
+#include "abstract_mem.h"
 
 /**
  *
@@ -74,12 +72,14 @@
 cache_inode_status_t
 cache_inode_access_sw(cache_entry_t *entry,
                       fsal_accessflags_t access_type,
-                      fsal_op_context_t *context,
+                      struct user_cred *creds,
                       cache_inode_status_t *status,
                       int use_mutex)
 {
+     fsal_attrib_list_t attr;
      fsal_status_t fsal_status;
      fsal_accessflags_t used_access_type;
+     struct fsal_obj_handle *pfsal_handle = pentry->obj_handle;
 
      LogFullDebug(COMPONENT_CACHE_INODE,
                   "cache_inode_access_sw: access_type=0X%x",
@@ -99,14 +99,19 @@ cache_inode_access_sw(cache_entry_t *entry,
           /* We get ride of F_OK */
           used_access_type = access_type & ~FSAL_F_OK;
 
-          /*
-           * Function FSAL_test_access is used instead of FSAL_access.
-           * This allow to take benefit of the previously cached
-           * attributes. This behavior is configurable via the
-           * configuration file.
-           */
+	  /* We get the attributes */
+	  attr = pentry->obj_handle->attributes;
+
 
           if(cache_inode_params.use_test_access == 1) {
+/** @TODO There is something way too clever with this use_test_access
+ * flag.  If the flag is set, the FSAL_IS_ERROR is testing an uninitialized
+ * fsal_status.  Also, the 'then' part is a NOP given the line above.
+ * we will get the deref right for now.  The issue in the comment is solved
+ * at the fsal level anyway because we have the access method but the fsal
+ * writer makes the decision on how it is to be handled (locally in the fsal
+ * or using the supplied common. This is also another struct copy...
+ */
                /* We actually need the lock here since we're using
                   the attribute cache, so get it if the caller didn't
                   acquire it.  */
@@ -118,18 +123,16 @@ cache_inode_access_sw(cache_entry_t *entry,
                          goto out;
                     }
                }
-               fsal_status
-                    = FSAL_test_access(context,
-                                       used_access_type,
-                                       &entry->attributes);
+	       fsal_status = pfsal_handle->ops->getattrs(pfsal_handle, &attr);
                if (use_mutex) {
                     pthread_rwlock_unlock(&entry->attr_lock);
                }
           } else {
                /* There is no reason to hold the mutex here, since we
                   aren't doing anything with cached attributes. */
-                    fsal_status = FSAL_access(&entry->handle, context,
-                                              used_access_type, NULL);
+	       fsal_status = pfsal_handle->ops->test_access(pfsal_handle,
+							    creds,
+							    used_access_type);
           }
 
           if(FSAL_IS_ERROR(fsal_status)) {
@@ -165,11 +168,11 @@ out:
 cache_inode_status_t
 cache_inode_access_no_mutex(cache_entry_t *entry,
                             fsal_accessflags_t access_type,
-                            fsal_op_context_t *context,
-                            cache_inode_status_t *status)
+			    struct user_cred *creds,
+                            cache_inode_status_t * status)
 {
     return cache_inode_access_sw(entry, access_type,
-                                 context, status, FALSE);
+                                 creds, status, FALSE);
 }
 
 /**
@@ -190,9 +193,9 @@ cache_inode_access_no_mutex(cache_entry_t *entry,
 cache_inode_status_t
 cache_inode_access(cache_entry_t *entry,
                    fsal_accessflags_t access_type,
-                   fsal_op_context_t *context,
-                   cache_inode_status_t *status)
+		   struct user_cred *creds,
+                   cache_inode_status_t * status)
 {
     return cache_inode_access_sw(entry, access_type,
-                                 context, status, TRUE);
+                                 creds, status, TRUE);
 }
