@@ -63,30 +63,29 @@
 #include "nfs_proto_tools.h"
 
 
-cache_inode_status_t cache_inode_statfs(cache_entry_t *entry,
-                                        fsal_dynamicfsinfo_t *dynamicinfo,
-                                        fsal_op_context_t *context,
-                                        cache_inode_status_t *status)
+cache_inode_status_t cache_inode_statfs(cache_entry_t * pentry,
+                                        fsal_dynamicfsinfo_t * pdynamicinfo)
 {
-  fsal_status_t fsal_status = {0, 0};
+  struct fsal_obj_handle *pfsal_handle;
+  fsal_status_t fsal_status;
+  struct fsal_export *export;
+  cache_inode_status_t status = CACHE_INODE_SUCCESS;
 
   /* Sanity check */
-  if(!entry || !context || !dynamicinfo || !status)
+  if(!pentry || !pdynamicinfo)
     {
-      *status = CACHE_INODE_INVALID_ARGUMENT;
-      return *status;
+      status = CACHE_INODE_INVALID_ARGUMENT;
+      return status;
     }
 
-  /* Default return value */
-  *status = CACHE_INODE_SUCCESS;
+  /* Get the handle for this entry */
+  pfsal_handle = pentry->obj_handle;
 
+  export = pfsal_handle->export;
   /* Get FSAL to get dynamic info */
-  if(FSAL_IS_ERROR
-     ((fsal_status = FSAL_dynamic_fsinfo(&entry->handle,
-                                         context,
-                                         dynamicinfo))))
+  fsal_status = export->ops->get_fs_dynamic_info(export, pdynamicinfo);
+  if(FSAL_IS_ERROR(fsal_status))
     {
-      *status = cache_inode_error_convert(fsal_status);
 /**
  * @todo ACE: Re-enable this after we kill cache_inode_client_t
  */
@@ -95,7 +94,7 @@ cache_inode_status_t cache_inode_statfs(cache_entry_t *entry,
            cache_inode_kill_entry(entry, client);
       }
 #endif /* 0 */
-      return *status;
+      status =  cache_inode_error_convert(fsal_status);
     }
   LogFullDebug(COMPONENT_CACHE_INODE,
                "cache_inode_statfs: dynamicinfo: {total_bytes = %zu, "
@@ -104,5 +103,5 @@ cache_inode_status_t cache_inode_statfs(cache_entry_t *entry,
                dynamicinfo->total_bytes, dynamicinfo->free_bytes,
                dynamicinfo->avail_bytes, dynamicinfo->total_files,
                dynamicinfo->free_files, dynamicinfo->avail_files);
-  return CACHE_INODE_SUCCESS;
+  return status;
 } /* cache_inode_statfs */
