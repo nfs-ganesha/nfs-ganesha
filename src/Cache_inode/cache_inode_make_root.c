@@ -68,9 +68,8 @@
  * @param pstatus [OUT] returned status.
  */
 
-cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
+cache_entry_t *cache_inode_make_root(struct fsal_obj_handle *root_hdl,
                                      cache_inode_client_t * pclient,
-                                     fsal_op_context_t * pcontext,
                                      cache_inode_status_t * pstatus)
 {
   cache_entry_t *pentry = NULL;
@@ -82,7 +81,7 @@ cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
 
-  if((pentry = cache_inode_get(pfsdata,
+  if((pentry = cache_inode_get(root_hdl,
                                &attr,
                                pclient,
                                pcontext,
