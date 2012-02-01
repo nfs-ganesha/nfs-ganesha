@@ -566,8 +566,8 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
              }
            return FALSE;
          }
-       if((preq->rq_vers == RQUOTAVERS) && (preq->rq_proc > RQUOTAPROC_SETACTIVEQUOTA) ||
-          (preq->rq_vers == EXT_RQUOTAVERS) && (preq->rq_proc > RQUOTAPROC_SETACTIVEQUOTA))
+       if (((preq->rq_vers == RQUOTAVERS) && (preq->rq_proc > RQUOTAPROC_SETACTIVEQUOTA)) ||
+	   ((preq->rq_vers == EXT_RQUOTAVERS) && (preq->rq_proc > RQUOTAPROC_SETACTIVEQUOTA)))
         {
           if(xprt != NULL)
             svcerr_noproc(xprt);

@@ -63,6 +63,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
+#include "sal_functions.h"
 
 /**
  * nfs4_op_rename: The NFS4_OP_REMOVE operation.

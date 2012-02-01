@@ -202,6 +202,7 @@ int nfs4_State_Del(char other[OTHERSIZE]);
 void nfs_State_PrintAll(void);
 
 int nfs4_is_lease_expired(nfs_client_id_t * pentry);
+void nfs4_update_lease(nfs_client_id_t * clientp);
 
 int display_state_id_val(hash_buffer_t * pbuff, char *str);
 int display_state_id_key(hash_buffer_t * pbuff, char *str);
