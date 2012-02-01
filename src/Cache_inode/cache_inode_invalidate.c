@@ -1,4 +1,4 @@
-/*
+</*
  * vim:expandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
@@ -71,12 +71,15 @@
  * @retval Other errors shows a FSAL error.
  *
  */
+
 cache_inode_status_t
-cache_inode_invalidate(cache_inode_fsal_data_t *fsal_data,
+<<<<<<< HEAD
+cache_inode_invalidate(struct fsal_obj_handle * pfsal_handle,
                        cache_inode_status_t *status,
                        uint32_t flags)
 {
      hash_buffer_t key, value;
+     struct fsal_handle_desc fh_desc;
      int rc = 0 ;
      cache_entry_t *entry;
      struct hash_latch latch;
@@ -87,9 +90,7 @@ cache_inode_invalidate(cache_inode_fsal_data_t *fsal_data,
      }
 
      /* Locate the entry in the cache */
-     FSAL_ExpandHandle(NULL,  /* pcontext but not used... */
-                       FSAL_DIGEST_SIZEOF,
-                       &fsal_data->fh_desc);
+     pfsal_handle->ops->handle_to_key(pfsal_handle, &fh_desc);
 
      /* Turn the input to a hash key */
      key.pdata = fsal_data->fh_desc.start;
