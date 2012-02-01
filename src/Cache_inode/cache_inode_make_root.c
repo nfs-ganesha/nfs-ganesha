@@ -69,8 +69,7 @@
  * @return the newly created cache entry.
  */
 
-cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t *fsdata,
-                                     fsal_op_context_t *context,
+cache_entry_t *cache_inode_make_root(struct fsal_obj_handle *root_hdl,
                                      cache_inode_status_t *status)
 {
   cache_entry_t *entry = NULL;
@@ -82,11 +81,10 @@ cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t *fsdata,
   /* Set the return default to CACHE_INODE_SUCCESS */
   *status = CACHE_INODE_SUCCESS;
 
-  if((entry = cache_inode_get(fsdata,
-                              &attr,
-                              context,
-                              NULL,
-                              status)) != NULL)
+  if((pentry = cache_inode_get(root_hdl,
+                               &attr,
+                               NULL,
+                               status)) != NULL)
     {
       /* The root directory is its own parent.  (Even though this is a
          weakref, it shouldn't be broken in practice.) */
