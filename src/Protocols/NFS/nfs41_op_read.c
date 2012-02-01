@@ -146,7 +146,8 @@ int nfs41_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 #endif /* _USE_FSALDS */
 
   /* Manage access type MDONLY */
-  if(data->pexport->access_type == ACCESSTYPE_MDONLY)
+  if(( data->pexport->access_type == ACCESSTYPE_MDONLY ) ||
+     ( data->pexport->access_type == ACCESSTYPE_MDONLY_RO ) )
     {
       res_READ4.status = NFS4ERR_DQUOT;
       return res_READ4.status;

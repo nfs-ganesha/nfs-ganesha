@@ -145,12 +145,24 @@ int nfs41_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_write_xattr(op, data, resp);
 
-  /* Manage access type MDONLY */
-  if(data->pexport->access_type == ACCESSTYPE_MDONLY)
-    {
-      res_WRITE4.status = NFS4ERR_DQUOT;
-      return res_WRITE4.status;
-    }
+  switch( data->pexport->access_type )
+   {
+     case ACCESSTYPE_MDONLY:
+     case ACCESSTYPE_MDONLY_RO:
+        res_WRITE4.status = NFS4ERR_DQUOT;
+        return res_WRITE4.status;
+        break ;
+
+     case ACCESSTYPE_RO:
+        res_WRITE4.status = NFS4ERR_ROFS ;
+        return res_WRITE4.status;
+        break ;
+
+     default:
+        break ;
+   } /* switch( data->pexport->access_type ) */
+
+
 
   /* Only files can be written */
   if(data->current_filetype != REGULAR_FILE)
