@@ -96,8 +96,8 @@ bool_t nsm_monitor(state_nsm_client_t *host)
   if(ret != RPC_SUCCESS)
     {
       LogDebug(COMPONENT_NLM,
-               "Can not monitor %s SM_MON ret %d",
-               nsm_mon.mon_id.mon_name, ret);
+               "Can not monitor %s SM_MON ret %d %s",
+               nsm_mon.mon_id.mon_name, ret, clnt_sperror(nsm_clnt, ""));
       nsm_disconnect();
       V(nsm_mutex);
       return FALSE;
@@ -164,8 +164,8 @@ bool_t nsm_unmonitor(state_nsm_client_t *host)
   if(ret != RPC_SUCCESS)
     {
       LogDebug(COMPONENT_NLM,
-               "Can not unmonitor %s SM_MON ret %d",
-               nsm_mon_id.mon_name, ret);
+               "Can not unmonitor %s SM_MON ret %d %s",
+               nsm_mon_id.mon_name, ret, clnt_sperror(nsm_clnt, ""));
       nsm_disconnect();
       V(nsm_mutex);
       return FALSE;
@@ -215,8 +215,8 @@ void nsm_unmonitor_all(void)
   if(ret != RPC_SUCCESS)
     {
       LogDebug(COMPONENT_NLM,
-               "Can not unmonitor all ret %d",
-               ret);
+               "Can not unmonitor all ret %d %s",
+               ret, clnt_sperror(nsm_clnt, ""));
     }
 
   nsm_disconnect();

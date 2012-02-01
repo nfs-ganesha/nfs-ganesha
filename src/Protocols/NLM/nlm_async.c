@@ -222,8 +222,8 @@ int nlm_send_async(int                  proc,
   else if(retval != RPC_SUCCESS)
     {
       LogMajor(COMPONENT_NLM,
-               "%s: NLM async Client procedure call %d failed with return code %d",
-               __func__, proc, retval);
+               "%s: NLM async Client procedure call %d failed with return code %d %s",
+               __func__, proc, retval, clnt_sperror(host->slc_callback_clnt, ""));
       pthread_mutex_lock(&nlm_async_resp_mutex);
       resp_key = NULL;
       pthread_mutex_unlock(&nlm_async_resp_mutex);
