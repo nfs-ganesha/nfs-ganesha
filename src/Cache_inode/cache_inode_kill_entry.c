@@ -84,12 +84,11 @@ void
 cache_inode_kill_entry(cache_entry_t *entry,
                        cache_inode_client_t *client)
 {
-     cache_inode_fsal_data_t fsaldata;
      hash_buffer_t key;
      hash_buffer_t val;
+     struct fsal_obj_handle *pfsal_handle = entry->obj_handle;
+     struct fsal_handle_desc fh_desc;
      int rc = 0;
-
-     memset(&fsaldata, 0, sizeof(fsaldata));
 
      LogInfo(COMPONENT_CACHE_INODE,
              "Using cache_inode_kill_entry for entry %p", entry);
@@ -97,14 +96,10 @@ cache_inode_kill_entry(cache_entry_t *entry,
      cache_inode_unpinnable(entry);
      state_wipe_file(entry, client);
 
-     fsaldata.fh_desc = entry->fh_desc;
-     FSAL_ExpandHandle(NULL,
-                       FSAL_DIGEST_SIZEOF,
-                       &fsaldata.fh_desc);
-
      /* Use the handle to build the key */
-     key.pdata = fsaldata.fh_desc.start;
-     key.len = fsaldata.fh_desc.len;
+     pfsal_handle->ops->handle_to_key(pfsal_handle, &fh_desc);
+     key.pdata = fh_desc.start;
+     key.len = fh_desc.len;
 
      val.pdata = entry;
      val.len = sizeof(cache_entry_t);
