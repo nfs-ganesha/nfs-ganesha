@@ -82,7 +82,6 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
                                                cache_content_spec_data_t * pspecdata,
                                                cache_content_client_t * pclient,
                                                cache_content_add_behaviour_t how,
-                                               fsal_op_context_t * pcontext,
                                                cache_content_status_t * pstatus)
 {
   cache_content_status_t status;
@@ -127,7 +126,6 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
   /* Set the path to the local files */
   if((status = cache_content_create_name(pfc_pentry->local_fs_entry.cache_path_index,
                                          CACHE_CONTENT_INDEX_FILE,
-                                         pcontext,
                                          pentry_inode, pclient)) != CACHE_CONTENT_SUCCESS)
     {
       ReleaseToPool(pfc_pentry, &pclient->content_pool);
@@ -146,7 +144,6 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
 
   if((status = cache_content_create_name(pfc_pentry->local_fs_entry.cache_path_data,
                                          CACHE_CONTENT_DATA_FILE,
-                                         pcontext,
                                          pentry_inode, pclient)) != CACHE_CONTENT_SUCCESS)
     {
       ReleaseToPool(pfc_pentry, &pclient->content_pool);
@@ -217,9 +214,9 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
     {
       /* Get the file content from the FSAL, populate the data cache */
       if(pclient->flush_force_fsal == 0)
-        cache_content_refresh(pfc_pentry, pclient, pcontext, DEFAULT_REFRESH, &status);
+        cache_content_refresh(pfc_pentry, pclient, DEFAULT_REFRESH, &status);
       else
-        cache_content_refresh(pfc_pentry, pclient, pcontext, FORCE_FROM_FSAL, &status);
+        cache_content_refresh(pfc_pentry, pclient, FORCE_FROM_FSAL, &status);
 
       if(status != CACHE_CONTENT_SUCCESS)
         {

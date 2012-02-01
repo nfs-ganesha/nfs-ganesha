@@ -74,7 +74,6 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                                                    unsigned int mod,
                                                    cache_content_client_t * pclient_data,
                                                    cache_inode_client_t * pclient_inode,
-                                                   fsal_op_context_t * pcontext,
                                                    cache_content_status_t * pstatus)
 {
   DIR *cache_directory;
@@ -157,7 +156,7 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                   if((pentry = cache_inode_get(&fsal_data,
                                                &fsal_attr,
                                                pclient_inode,
-                                               pcontext, &cache_inode_status)) == NULL)
+                                               &cache_inode_status)) == NULL)
                     {
                       LogCrit(COMPONENT_CACHE_CONTENT,
                                    "Error adding cached inode for file ID %"PRIx64", error=%d",
@@ -184,7 +183,6 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                                                                NULL,
                                                                pclient_data,
                                                                RECOVER_ENTRY,
-                                                               pcontext,
                                                                &cache_content_status)) ==
                      NULL)
                     {

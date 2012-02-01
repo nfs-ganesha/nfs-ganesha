@@ -111,25 +111,25 @@ short HashFileID4(u_int64_t fileid4)
  */
 cache_content_status_t cache_content_create_name(char *path,
                                                  cache_content_nametype_t type,
-                                                 fsal_op_context_t * pcontext,
                                                  cache_entry_t * pentry_inode,
                                                  cache_content_client_t * pclient)
 {
   fsal_status_t fsal_status;
   u_int64_t fileid4;            /* Don't want to include nfs_prot.h at this level */
-  fsal_handle_t *pfsal_handle = NULL;
   struct fsal_handle_desc fh_desc;
+  struct fsal_obj_handle *obj_handle = NULL;
   char entrydir[MAXPATHLEN];
   int i, nb_char;
   short hash_val;
 
-  pfsal_handle = &pentry_inode->handle;
+  obj_handle = pentry_inode->obj_handle;
 
   fh_desc.start = (caddr_t)&fileid4;
   fh_desc.len = sizeof(fileid4);
   /* Get the digest for the handle, for computing an entry name */
-  fsal_status = FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
-                                  FSAL_DIGEST_FILEID4, pfsal_handle, &fh_desc);
+  fsal_status = obj_handle->ops->handle_digest(obj_handle,
+					       FSAL_DIGEST_FILEID4,
+					       &fh_desc);
 
   if(FSAL_IS_ERROR(fsal_status))
     return CACHE_CONTENT_FSAL_ERROR;
@@ -606,14 +606,12 @@ int cache_content_local_cache_opendir(char *cache_dir,
  *
  * @param pentry_inode [IN] entry in cache_inode layer for this file.
  * @param pclient      [IN]  ressource allocated by the client for the nfs management.
- * @param pcontext     [IN] the related FSAL Context
  * @pstatus           [OUT] returned status.
  *
  * @return CACHE_CONTENT_SUCCESS if entry is found, CACHE_CONTENT_NOT_FOUND if not found
  */
 cache_content_status_t cache_content_test_cached(cache_entry_t * pentry_inode,
                                                  cache_content_client_t * pclient,
-                                                 fsal_op_context_t * pcontext,
                                                  cache_content_status_t * pstatus)
 {
   char cache_path_index[MAXPATHLEN];
@@ -621,7 +619,7 @@ cache_content_status_t cache_content_test_cached(cache_entry_t * pentry_inode,
   if(pstatus == NULL)
     return CACHE_CONTENT_INVALID_ARGUMENT;
 
-  if(pentry_inode == NULL || pclient == NULL || pcontext == NULL)
+  if(pentry_inode == NULL || pclient == NULL)
     {
       *pstatus = CACHE_CONTENT_INVALID_ARGUMENT;
       return *pstatus;
@@ -630,7 +628,6 @@ cache_content_status_t cache_content_test_cached(cache_entry_t * pentry_inode,
   /* Build the cache index path */
   if((*pstatus = cache_content_create_name(cache_path_index,
                                            CACHE_CONTENT_INDEX_FILE,
-                                           pcontext,
                                            pentry_inode,
                                            pclient)) != CACHE_CONTENT_SUCCESS)
     {

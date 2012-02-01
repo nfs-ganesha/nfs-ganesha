@@ -73,7 +73,7 @@ cache_content_caching_type_t cache_content_cache_behaviour(cache_entry_t * pentr
 
   if(ppolicy_data->UseMaxCacheSize)
     {
-      if(pentry_inode->attributes.filesize > ppolicy_data->MaxCacheSize)
+      if(pentry_inode->obj_handle->attributes.filesize > ppolicy_data->MaxCacheSize)
         *pstatus = CACHE_CONTENT_TOO_LARGE_FOR_CACHE;
     }
 

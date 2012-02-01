@@ -194,7 +194,6 @@ cache_content_status_t cache_content_close(cache_content_entry_t * pentry,
  * @param pbuffstat       [OUT] the 'stat' of entry in the data cache after the operation
  * @param buffer write:[IN] read:[OUT] the buffer for the data.
  * @param pclient         [IN]  ressource allocated by the client for the nfs management.
- * @param pcontext        [IN] fsal credentials for the operation.
  * @pstatus               [OUT] returned status.
  *
  * @return CACHE_CONTENT_SUCCESS is successful .
@@ -209,7 +208,6 @@ cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
                                           fsal_boolean_t * p_fsal_eof,
                                           struct stat * pbuffstat,
                                           cache_content_client_t * pclient,
-                                          fsal_op_context_t * pcontext,
                                           cache_content_status_t * pstatus)
 {
   fsal_status_t fsal_status;
