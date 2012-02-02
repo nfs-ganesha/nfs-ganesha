@@ -587,7 +587,7 @@ unsigned int LUSTREFSAL_GetFileno(fsal_file_t * pfile)
 
 
 /**
- * FSAL_sync:
+ * FSAL_commit:
  * This function is used for processing stable writes and COMMIT requests.
  * Calling this function makes sure the changes to a specific file are
  * written to disk rather than kept in memory.
@@ -603,7 +603,7 @@ unsigned int LUSTREFSAL_GetFileno(fsal_file_t * pfile)
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t LUSTREFSAL_sync( fsal_file_t * pfile_desc, 
+fsal_status_t LUSTREFSAL_commit( fsal_file_t * pfile_desc, 
                                fsal_off_t    offset, 
                                fsal_size_t   length )
 {
@@ -612,12 +612,12 @@ fsal_status_t LUSTREFSAL_sync( fsal_file_t * pfile_desc,
 
   /* sanity checks. */
   if(!p_file_descriptor)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_sync);
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_commit);
 
   if (((lustrefsal_file_t *)p_file_descriptor)->fd <= 0)
   {
      LogWarn(COMPONENT_FSAL, "sync on closed fd");
-     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync);
+     Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_commit);
   }
 
   /* Flush data. */
@@ -629,8 +629,8 @@ fsal_status_t LUSTREFSAL_sync( fsal_file_t * pfile_desc,
   if(rc)
   {
     LogEvent(COMPONENT_FSAL, "Error in fsync operation");
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_sync);
+    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_commit);
   }
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync);
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_commit);
 }

@@ -408,7 +408,7 @@ fsal_status_t GPFSFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,      /*
 
 unsigned int GPFSFSAL_GetFileno(fsal_file_t * pfile);
 
-fsal_status_t GPFSFSAL_sync( fsal_file_t * p_file_descriptor,
+fsal_status_t GPFSFSAL_commit( fsal_file_t * p_file_descriptor,
                              fsal_off_t    offset,
                              fsal_size_t   size ) ;
 

@@ -534,7 +534,7 @@ unsigned int XFSFSAL_GetFileno(fsal_file_t * pfile)
 }
 
 /**
- * FSAL_sync:
+ * FSAL_commit:
  * This function is used for processing stable writes and COMMIT requests.
  * Calling this function makes sure the changes to a specific file are
  * written to disk rather than kept in memory.
@@ -550,7 +550,7 @@ unsigned int XFSFSAL_GetFileno(fsal_file_t * pfile)
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t XFSFSAL_sync( fsal_file_t * p_file_descriptor,
+fsal_status_t XFSFSAL_commit( fsal_file_t * p_file_descriptor,
                             fsal_off_t    offset, 
                             fsal_size_t   length )
 {
@@ -558,10 +558,10 @@ fsal_status_t XFSFSAL_sync( fsal_file_t * p_file_descriptor,
 
   /* sanity checks. */
   if(!p_file_descriptor)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_sync);
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_commit);
 
   if(((xfsfsal_file_t *)p_file_descriptor)->fd == 0 )
-    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync); /* Nothing to sync, the file is not opened */
+    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_commit); /* Nothing to sync, the file is not opened */
 
   /* Flush data. */
   TakeTokenFSCall();
@@ -572,9 +572,9 @@ fsal_status_t XFSFSAL_sync( fsal_file_t * p_file_descriptor,
   if(rc)
     {
       LogEvent(COMPONENT_FSAL, "Error in fsync operation");
-      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_sync);
+      Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_commit);
     }
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync);
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_commit);
 }
 

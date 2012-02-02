@@ -134,7 +134,7 @@ typedef struct fsal_staticfsinfo_t fsal_staticfsinfo_t;
 #define INDEX_FSAL_unused_49            49
 #define INDEX_FSAL_CleanUpExportContext 50
 #define INDEX_FSAL_getextattrs          51
-#define INDEX_FSAL_sync                 52
+#define INDEX_FSAL_commit               52
 #define INDEX_FSAL_getattrs_descriptor  53
 #define INDEX_FSAL_lock_op              54
 #define INDEX_FSAL_UP_init              55

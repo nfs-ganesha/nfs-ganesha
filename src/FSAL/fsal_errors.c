@@ -65,7 +65,7 @@ const char *fsal_function_names[] = {
   "FSAL_ListXAttrs", "FSAL_GetXAttrValue", "FSAL_SetXAttrValue", "FSAL_GetXAttrAttrs",
   "FSAL_close_by_fileid", "FSAL_setattr_access", "FSAL_merge_attrs", "FSAL_rename_access",
   "FSAL_unlink_access", "FSAL_link_access", "FSAL_create_access", "FSAL_unused_49", "FSAL_CleanUpExportContext",
-  "FSAL_getextattrs", "FSAL_sync", "FSAL_getattrs_descriptor", "FSAL_lock_op",
+  "FSAL_getextattrs", "FSAL_commit", "FSAL_getattrs_descriptor", "FSAL_lock_op",
   "FSAL_UP_init", "FSAL_UP_addfilter", "FSAL_UP_getevents", "FSAL_unused_58"
 };
 

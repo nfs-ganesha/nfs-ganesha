@@ -235,7 +235,7 @@ fsal_status_t PROXYFSAL_write(fsal_file_t * p_file_descriptor,     /* IN */
                               caddr_t buffer,   /* IN */
                               fsal_size_t * p_write_amount /* OUT */ );
 
-fsal_status_t PROXYFSAL_sync( fsal_file_t * p_file_descriptor,
+fsal_status_t PROXYFSAL_commit( fsal_file_t * p_file_descriptor,
                               fsal_off_t    offset,
                               fsal_size_t   size ) ;
 

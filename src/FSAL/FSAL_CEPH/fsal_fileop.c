@@ -397,7 +397,7 @@ unsigned int CEPHFSAL_GetFileno(fsal_file_t * pfile)
 }
 
 /**
- * FSAL_sync:
+ * FSAL_commit:
  * This function is used for processing stable writes and COMMIT requests.
  * Calling this function makes sure the changes to a specific file are
  * written to disk rather than kept in memory.
@@ -413,7 +413,7 @@ unsigned int CEPHFSAL_GetFileno(fsal_file_t * pfile)
  *      - ERR_FSAL_NO_ERROR: no error.
  *      - Another error code if an error occured during this call.
  */
-fsal_status_t CEPHFSAL_sync( fsal_file_t * extdescriptor, 
+fsal_status_t CEPHFSAL_commit( fsal_file_t * extdescriptor, 
                              fsal_off_t    offset, 
                              fsal_size_t   length )
 {
@@ -423,14 +423,14 @@ fsal_status_t CEPHFSAL_sync( fsal_file_t * extdescriptor,
 
   /* sanity checks. */
   if(!extdescriptor)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_sync);
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_commit);
 
   TakeTokenFSCall();
   if ((rc = ceph_ll_fsync(cmount, FH(descriptor), 0)) < 0)
     {
-      Return(posix2fsal_error(rc), 0, INDEX_FSAL_sync);
+      Return(posix2fsal_error(rc), 0, INDEX_FSAL_commit);
     }
   ReleaseTokenFSCall();
 
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync);
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_commit);
 }

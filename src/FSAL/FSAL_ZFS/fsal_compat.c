@@ -77,7 +77,7 @@ fsal_functions_t fsal_zfs_functions = {
       ZFSFSAL_load_FS_specific_parameter_from_conf,
   .fsal_truncate = ZFSFSAL_truncate,
   .fsal_unlink = ZFSFSAL_unlink,
-  .fsal_sync = ZFSFSAL_sync,
+  .fsal_commit = ZFSFSAL_commit,
   .fsal_getfsname = ZFSFSAL_GetFSName,
   .fsal_getxattrattrs = ZFSFSAL_GetXAttrAttrs,
   .fsal_listxattrs = ZFSFSAL_ListXAttrs,
