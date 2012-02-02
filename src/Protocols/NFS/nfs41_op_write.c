@@ -483,7 +483,7 @@ static int op_dswrite(struct nfs_argop4 *op,
                                 arg_WRITE4.data.data_val,
                                 arg_WRITE4.stable,
                                 &res_WRITE4.WRITE4res_u.resok4.count,
-                                res_WRITE4.WRITE4res_u.resok4.writeverf,
+                                &res_WRITE4.WRITE4res_u.resok4.writeverf,
                                 &res_WRITE4.WRITE4res_u.resok4.committed);
 
   res_WRITE4.status = nfs_status;

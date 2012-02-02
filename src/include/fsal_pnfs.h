@@ -471,7 +471,7 @@ typedef struct fsal_dsfunctions__ {
           /** [OUT] Amount of data actually written */
           count4 *written_length,
           /** [OUT] Write verifier */
-          verifier4 writeverf,
+          verifier4 *writeverf,
           /** [OUT] Stability of write performed */
           stable_how4 *stability_got);
 
@@ -498,7 +498,7 @@ typedef struct fsal_dsfunctions__ {
        /** [IN] Number of bytes to commit */
        count4 count,
        /** [OUT] Write verifier */
-       verifier4 writever4);
+       verifier4 *writeverf);
 } fsal_dsfunctions_t;
 
 /*
