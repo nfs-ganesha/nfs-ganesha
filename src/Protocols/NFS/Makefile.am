@@ -102,7 +102,6 @@ libnfsproto_la_SOURCES += nfs41_op_exchange_id.c      \
                           nfs41_op_close.c            \
                           nfs41_op_getdevicelist.c    \
                           nfs41_op_getdeviceinfo.c    \
-                          nfs41_op_commit.c           \
                           nfs41_op_create_session.c   \
                           nfs41_op_destroy_session.c  \
                           nfs41_op_free_stateid.c     \
@@ -113,12 +112,10 @@ libnfsproto_la_SOURCES += nfs41_op_exchange_id.c      \
                           nfs41_op_lock.c             \
                           nfs41_op_lockt.c            \
                           nfs41_op_locku.c            \
-                          nfs41_op_read.c             \
                           nfs41_op_reclaim_complete.c \
                           nfs41_op_sequence.c         \
                           nfs41_op_set_ssv.c          \
-                          nfs41_op_test_stateid.c     \
-                          nfs41_op_write.c
+                          nfs41_op_test_stateid.c
 endif
 
 
