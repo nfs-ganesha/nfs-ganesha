@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -63,19 +63,29 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
+#ifdef _USE_FSALDS
+#include "fsal_pnfs.h"
+#endif /* _USE_FSALDS */
+
+#ifdef _USE_FSALDS
+static int op_dscommit(struct nfs_argop4 *op,
+                       compound_data_t * data,
+                       struct nfs_resop4 *resp);
+#endif /* _USE_FSALDS */
+
 
 /**
  *
  * nfs4_op_commit: Implemtation of NFS4_OP_COMMIT
- * 
+ *
  * Implemtation of NFS4_OP_COMMIT. This is usually made for cache validator implementation.
  *
  * @param op    [IN]    pointer to nfs4_op arguments
  * @param data  [INOUT] Pointer to the compound request's data
  * @param resp  [IN]    Pointer to nfs4_op results
- * 
- * @return NFS4_OK 
- * 
+ *
+ * @return NFS4_OK
+ *
  */
 
 extern verifier4 NFS4_write_verifier;   /* NFS V4 write verifier */
@@ -118,6 +128,14 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       res_COMMIT4.status = NFS4ERR_FHEXPIRED;
       return res_COMMIT4.status;
     }
+
+#ifdef _USE_FSALDS
+  if((data->minorversion == 1) &&
+     (nfs4_Is_Fh_DSHandle(&data->currentFH)))
+    {
+      return(op_dscommit(op, data, resp));
+    }
+#endif /* _USE_FSALDS */
 
   /* Commit is done only on a file */
   if(data->current_filetype != REGULAR_FILE)
@@ -164,16 +182,63 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
 /**
  * nfs4_op_commit_Free: frees what was allocared to handle nfs4_op_commit.
- * 
+ *
  * Frees what was allocared to handle nfs4_op_commit.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs4_op_commit_Free(COMMIT4res * resp)
 {
   /* Nothing to be done */
   return;
 }                               /* nfs4_op_commit_Free */
+
+#ifdef _USE_FSALDS
+/**
+ *
+ * op_dscommit: Call pNFS data server commit
+ *
+ * @param op    [IN]     pointer to nfs4_op arguments
+ * @param data  [IN/OUT] Pointer to the compound request's data
+ * @param resp  [IN]     Pointer to nfs4_op results
+ *
+ * @return NFS4_OK
+ *
+ */
+
+static int op_dscommit(struct nfs_argop4 *op,
+                       compound_data_t * data,
+                       struct nfs_resop4 *resp)
+{
+  /* FSAL file handle */
+  fsal_handle_t handle;
+  /* NFSv4 status code */
+  nfsstat4 nfs_status = 0;
+
+  /* Construct the FSAL file handle */
+
+  if ((nfs4_FhandleToFSAL(&data->currentFH,
+                          &handle,
+                          data->pcontext)) == 0)
+    {
+      res_COMMIT4.status = NFS4ERR_INVAL;
+      return res_COMMIT4.status;
+    }
+
+  /* Call the commit operation */
+
+  nfs_status = fsal_dsfunctions
+    .DS_commit(&handle,
+               data->pcontext,
+               arg_COMMIT4.offset,
+               arg_COMMIT4.count,
+               &res_COMMIT4.COMMIT4res_u.resok4.writeverf);
+
+  res_COMMIT4.status = nfs_status;
+  return res_COMMIT4.status;
+}
+
+#endif /* _USE_FSALDS */

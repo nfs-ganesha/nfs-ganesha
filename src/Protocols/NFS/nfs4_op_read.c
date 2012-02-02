@@ -56,6 +56,17 @@
 #include "cache_content_policy.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
+#ifdef _USE_FSALDS
+#include <stdlib.h>
+#include <unistd.h>
+#include "fsal_pnfs.h"
+#endif /* _USE_FSALDS */
+
+#ifdef _USE_FSALDS
+static int op_dsread(struct nfs_argop4 *op,
+                     compound_data_t * data,
+                     struct nfs_resop4 *resp);
+#endif /* _USE_FSALDS */
 
 /**
  * nfs4_op_read: The NFS4_OP_READ operation
@@ -126,6 +137,14 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_read_xattr(op, data, resp);
 
+#ifdef _USE_FSALDS
+  if((data->minorversion == 1) &&
+     (nfs4_Is_Fh_DSHandle(&data->currentFH)))
+    {
+      return(op_dsread(op, data, resp));
+    }
+#endif /* _USE_FSALDS */
+
   /* Manage access type MDONLY */
   if(( data->pexport->access_type == ACCESSTYPE_MDONLY ) ||
      ( data->pexport->access_type == ACCESSTYPE_MDONLY_RO ) )
@@ -154,7 +173,12 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
    */
   if((rc = nfs4_Check_Stateid(&arg_READ4.stateid,
                               pentry,
+#ifdef _USE_NFS41
+                              (data->minorversion == 0 ?
+                               0LL : data->psession->clientid),
+#else
                               0LL,
+#endif /* _USE_NFS41 */
                               &pstate_found,
                               data,
                               STATEID_SPECIAL_ANY,
@@ -199,8 +223,8 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         {
          /* Even if file is open for write, the client may do accidently read operation (caching).
           * Because of this, READ is allowed if not explicitely denied.
-          * See page 72 in RFC3530 for more details */
- 
+          * See RFC 3530, p. 72/RFC 5661, p. 186 for more details */
+
           if( pstate_open->state_data.share.share_deny & OPEN4_SHARE_DENY_READ )
            {
              /* Bad open mode, return NFS4ERR_OPENMODE */
@@ -213,28 +237,31 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
         }
 
       /** @todo : this piece of code looks a bit suspicious (see Rong's mail) */    
-      switch( pstate_found->state_type )
+      if(data->minorversion == 0)
         {
-          case STATE_TYPE_SHARE:
-            if(pstate_found->state_powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
-              {
-                 res_READ4.status = NFS4ERR_BAD_STATEID;
-                 return res_READ4.status;
-              }
-            break ;
+          switch( pstate_found->state_type )
+            {
+            case STATE_TYPE_SHARE:
+              if(pstate_found->state_powner->so_owner.so_nfs4_owner.so_confirmed == FALSE)
+                {
+                  res_READ4.status = NFS4ERR_BAD_STATEID;
+                  return res_READ4.status;
+                }
+              break ;
 
-         case STATE_TYPE_LOCK:
-            /* Nothing to do */
-            break ;
+            case STATE_TYPE_LOCK:
+              /* Nothing to do */
+              break ;
 
-         default:
-            /* Sanity check: all other types are illegal. 
-             * we should not got that place (similar check above), anyway it costs nothing to add this test */  
-            res_READ4.status = NFS4ERR_BAD_STATEID;
-            return res_READ4.status ;
-            break ;
+            default:
+              /* Sanity check: all other types are illegal.  we should
+               * not got that place (similar check above), anyway it
+               * costs nothing to add this test */
+              res_READ4.status = NFS4ERR_BAD_STATEID;
+              return res_READ4.status ;
+              break ;
+            }
         }
-        
     }
   else
     {
@@ -366,7 +393,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     }
 
   /* Some work is to be done */
-  if((bufferdata = (char *)Mem_Alloc(size)) == NULL)
+  if((bufferdata = Mem_Alloc_Page_Aligned(size)) == NULL)
     {
       res_READ4.status = NFS4ERR_SERVERFAULT;
       return res_READ4.status;
@@ -400,7 +427,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                (unsigned long long)offset, read_size, eof_met);
 
   /* Is EOF met or not ? */
-  if( ( eof_met == TRUE ) || 
+  if( ( eof_met == TRUE ) ||
       ( (offset + read_size) >= attr.filesize) )
     res_READ4.READ4res_u.resok4.eof = TRUE;
   else
@@ -426,6 +453,88 @@ void nfs4_op_read_Free(READ4res * resp)
 {
   if(resp->status == NFS4_OK)
     if(resp->READ4res_u.resok4.data.data_len != 0)
-      Mem_Free(resp->READ4res_u.resok4.data.data_val);
+      Mem_Free_Page_Aligned(resp->READ4res_u.resok4.data.data_val);
   return;
 }                               /* nfs4_op_read_Free */
+
+
+#ifdef _USE_FSALDS
+
+/**
+ * op_dsread: Calls down to pNFS data server
+ *
+ * @param op    [IN]    pointer to nfs41_op arguments
+ * @param data  [INOUT] Pointer to the compound request's data
+ * @param resp  [IN]    Pointer to nfs41_op results
+ *
+ * @return NFS4_OK if successfull, other values show an error.
+ *
+ */
+
+static int op_dsread(struct nfs_argop4 *op,
+                     compound_data_t * data,
+                     struct nfs_resop4 *resp)
+{
+  /* The FSAL file handle */
+  fsal_handle_t handle;
+  /* NFSv4 return code */
+  nfsstat4 nfs_status = 0;
+  /* Buffer into which data is to be read */
+  caddr_t buffer = NULL;
+  /* End of file flag */
+  fsal_boolean_t eof = FALSE;
+
+  /* Don't bother calling the FSAL if the read length is 0. */
+
+  if(arg_READ4.count == 0)
+    {
+      res_READ4.READ4res_u.resok4.eof = FALSE;
+      res_READ4.READ4res_u.resok4.data.data_len = 0;
+      res_READ4.READ4res_u.resok4.data.data_val = NULL;
+      res_READ4.status = NFS4_OK;
+      return res_READ4.status;
+    }
+
+  /* Construct the FSAL file handle */
+
+  if ((nfs4_FhandleToFSAL(&data->currentFH,
+                          &handle,
+                          data->pcontext)) == 0)
+    {
+      res_READ4.status = NFS4ERR_INVAL;
+      return res_READ4.status;
+    }
+
+  buffer = Mem_Alloc_Page_Aligned(arg_READ4.count);
+
+  if (buffer == NULL)
+    {
+      res_READ4.status = NFS4ERR_SERVERFAULT;
+      return res_READ4.status;
+    }
+
+  res_READ4.READ4res_u.resok4.data.data_val = buffer;
+
+  if ((nfs_status
+       = fsal_dsfunctions.DS_read(&handle,
+                                  data->pcontext,
+                                  &arg_READ4.stateid,
+                                  arg_READ4.offset,
+                                  arg_READ4.count,
+                                  res_READ4.READ4res_u.resok4.data.data_val,
+                                  &res_READ4.READ4res_u.resok4.data.data_len,
+                                  &eof))
+      != NFS4_OK)
+    {
+      Mem_Free_Page_Aligned(buffer);
+      buffer = NULL;
+    }
+
+  res_READ4.READ4res_u.resok4.eof = eof;
+
+  res_READ4.status = nfs_status;
+
+  return res_READ4.status;
+}
+
+#endif /* _USE_FSALDS */
