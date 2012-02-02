@@ -239,7 +239,7 @@ static int op_dscommit(struct nfs_argop4 *op,
                data->pcontext,
                arg_COMMIT4.offset,
                arg_COMMIT4.count,
-               res_COMMIT4.COMMIT4res_u.resok4.writeverf);
+               &res_COMMIT4.COMMIT4res_u.resok4.writeverf);
 
   res_COMMIT4.status = nfs_status;
   return res_COMMIT4.status;

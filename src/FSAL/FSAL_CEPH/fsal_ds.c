@@ -141,7 +141,7 @@ CEPHFSAL_DS_write(fsal_handle_t *exthandle,
                   caddr_t buffer,
                   stable_how4 stability_wanted,
                   count4 *written_length,
-                  verifier4 writeverf,
+                  verifier4 *writeverf,
                   stable_how4 *stability_got)
 {
      /* Our format for the file handle */
@@ -174,7 +174,7 @@ CEPHFSAL_DS_write(fsal_handle_t *exthandle,
         use it, but we do want to rpevent spurious junk from making it
         look like there was a failure. */
 
-     memset(writeverf, 0, NFS4_VERIFIER_SIZE);
+     memset(*writeverf, 0, NFS4_VERIFIER_SIZE);
 
      /* Find out what my OSD ID is, so we can avoid talking to other
         OSDs. */
@@ -283,7 +283,7 @@ CEPHFSAL_DS_commit(fsal_handle_t *exthandle,
                    fsal_op_context_t *extcontext,
                    offset4 offset,
                    count4 count,
-                   verifier4 writeverf)
+                   verifier4 *writeverf)
 {
      /* Our format for the file handle */
      cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
@@ -304,6 +304,7 @@ CEPHFSAL_DS_commit(fsal_handle_t *exthandle,
           return NFS4ERR_INVAL;
      }
 
+     memset(*writeverf, 0, NFS4_VERIFIER_SIZE);
 
      rc = ceph_ll_commit_blocks(cmount,
                                 VINODE(handle),

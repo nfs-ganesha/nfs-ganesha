@@ -421,12 +421,12 @@ nfsstat4 CEPHFSAL_DS_write(fsal_handle_t *handle,
                            caddr_t buffer,
                            stable_how4 stability_wanted,
                            count4 *written_length,
-                           verifier4 writeverf,
+                           verifier4 *writeverf,
                            stable_how4 *stability_got);
 
 nfsstat4 CEPHFSAL_DS_commit(fsal_handle_t *handle,
                             fsal_op_context_t *context,
                             offset4 offset,
                             count4 count,
-                            verifier4 writeverf);
+                            verifier4 *writeverf);
 #endif /* _USE_FSALDS */
