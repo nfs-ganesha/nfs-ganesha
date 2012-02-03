@@ -223,14 +223,6 @@ typedef struct exportlist__
   nfs_worker_stat_t *worker_stats; /* List of worker stats to support per-share stat. */
 } exportlist_t;
 
-/* Used to record the uid and gid of the client that made a request. */
-struct user_cred {
-  uid_t caller_uid;
-  gid_t caller_gid;
-  unsigned int caller_glen;
-  gid_t *caller_garray;
-};
-
 /* Constant for options masks */
 #define EXPORT_OPTION_NOSUID          0x00000001        /* mask off setuid mode bit            */
 #define EXPORT_OPTION_NOSGID          0x00000002        /* mask off setgid mode bit            */
