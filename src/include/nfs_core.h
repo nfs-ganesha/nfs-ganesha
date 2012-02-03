@@ -827,7 +827,6 @@ int export_client_matchv6(struct in6_addr *paddrv6,
 
 /* Config reparsing routines */
 void admin_replace_exports();
-int CleanUpExportContext(fsal_export_context_t * p_export_context);
 exportlist_t *RemoveExportEntry(exportlist_t * exportEntry);
 exportlist_t *GetExportEntry(char *exportPath);
 

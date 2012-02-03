@@ -578,30 +578,11 @@ void nfs_client_id_expire(nfs_client_id_t *client_record)
       
       glist_for_each_safe(glist2, glistn2, &plock_owner->so_owner.so_nfs4_owner.so_state_list)
         {
-          fsal_op_context_t        fsal_context;
-          fsal_status_t            fsal_status;
-
           state_t* plock_state = glist_entry(glist2,
                                              state_t,
 					     state_owner_list);
 
-          /* construct the fsal context based on the export and root credential */
-	  fsal_status = FSAL_GetClientContext(&fsal_context,
-                                      &plock_state->state_pexport->FS_export_context,
-                                      0,
-                                      0,
-                                      NULL,
-                                      0);
-          if(FSAL_IS_ERROR(fsal_status))
-            {
-              /* log error here , and continue? */
-              LogDebug(COMPONENT_STATE,
-                      "FSAL_GetClientConext failed");
-              continue;
-            }
-
-          state_owner_unlock_all(&fsal_context,
-                                 plock_owner,
+          state_owner_unlock_all(plock_owner,
                                  plock_state,
                                  plock_owner->so_pclient,
                                  &pstatus);

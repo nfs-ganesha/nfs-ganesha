@@ -126,6 +126,13 @@ const char *Rpc_gss_svc_name[] =
  * @return the pointer to the pointer to the export list or NULL if failed.
  *
  */
+/* FIXME: Exports should really be managed as an object...  exportroot should
+ * be a static in this module and the only thing that leaks out to the rest of
+ * the code is entries that are created here and searched for here.
+ * this means that the exportroot arg here will disappear at some point,
+ * probably when exportlist_t is overhauled to use nlm_list etc.
+ */
+
 exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exportid)
 {
   exportlist_t *piter;
@@ -321,69 +328,6 @@ int nfs_check_anon(exportlist_client_entry_t * pexport_client,
 
   return TRUE;
 }
-
-/**
- *
- * nfs_build_fsal_context: Builds the FSAL context according to the request and the export entry.
- *
- * Builds the FSAL credentials according to the request and the export entry.
- *
- * @param ptr_req [IN]  incoming request.
- * @param pexport_client [IN] related export client
- * @param pexport [IN]  related export entry
- * @param pcred   [IN/OUT] initialized credential of caller thread.
- * @param user_credentials [OUT] Filled in structure with uid and gids
- * 
- * @return TRUE if successful, FALSE otherwise 
- *
- */
-int nfs_build_fsal_context(struct svc_req *ptr_req,
-                           exportlist_t * pexport,
-                           fsal_op_context_t * pcontext,
-                           struct user_cred *user_credentials)
-{
-  fsal_status_t fsal_status;
-
-  if (user_credentials == NULL)
-    return FALSE;
-
-  /* Build the credentials */
-  fsal_status = FSAL_GetClientContext(pcontext,
-                                      &pexport->FS_export_context,
-                                      user_credentials->caller_uid, user_credentials->caller_gid,
-                                      user_credentials->caller_garray, user_credentials->caller_glen);
-
-  /*
-   * TODO: Fix this hack
-   * This hack put here to pass the IP address to the fsal
-   * via the fsal_op_context_t->credential.
-   *
-   * This a hack because it breaks the fsal API. fsal_op_context_t is an
-   * fsal specific structure that should only be handled in the fsal
-   *
-   * But we do this here because passing the ip through the
-   * FSAL_GetClientContext parameters requires a lot of code change
-   *
-   * The plan is to correct this hack when we roll over to the new
-   * API where this struct has been made common
-   */
-  copy_xprt_addr(&pcontext->credential.caller_addr, ptr_req->rq_xprt);
-
-  if(FSAL_IS_ERROR(fsal_status))
-    {
-      LogEvent(COMPONENT_DISPATCH,
-               "NFS DISPATCHER: FAILURE: Could not get credentials for (uid=%d,gid=%d), fsal error=(%d,%d)",
-               user_credentials->caller_uid, user_credentials->caller_gid,
-               fsal_status.major, fsal_status.minor);
-      return FALSE;
-    }
-  else
-    LogDebug(COMPONENT_DISPATCH,
-             "NFS DISPATCHER: FSAL Cred acquired for (uid=%d,gid=%d)",
-             user_credentials->caller_uid, user_credentials->caller_gid);
-
-  return TRUE;
-}                               /* nfs_build_fsal_context */
 
 /**
  *
