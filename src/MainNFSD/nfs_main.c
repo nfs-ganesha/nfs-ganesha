@@ -48,9 +48,9 @@
 #include <pthread.h>
 #include <signal.h>             /* for sigaction */
 #include <errno.h>
-#if defined(_USE_FSALMDS) || (_USE_FSALDS)
+#ifdef _PNFS
 #include "fsal_pnfs.h"
-#endif /* _USE_FSALMDS || _USE_FSALDS */
+#endif /* _PNFS */
 
 /* parameters for NFSd startup and default values */
 
@@ -375,17 +375,12 @@ int main(int argc, char *argv[])
      FSAL_LoadConsts();
    } /* for */
 
-#ifdef _USE_PNFS
-  /* Load pNFS functions */
-  pNFS_LoadFunctions() ;
-#endif 
-
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
   FSAL_LoadMDSFunctions();
-#endif
-#ifdef _USE_FSALDS
+#endif /* _PNFS_MDS */
+#ifdef _PNFS_DS
   FSAL_LoadDSFunctions();
-#endif
+#endif /* _PNFS_DS */
 
 #else
   /* Get the FSAL functions */
@@ -394,18 +389,13 @@ int main(int argc, char *argv[])
   /* Get the FSAL consts */
   FSAL_LoadConsts();
 
-#ifdef _USE_PNFS
-  /* Load pNFS functions */
-  pNFS_LoadFunctions() ;
-#endif
-
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
   FSAL_LoadMDSFunctions();
-#endif
-#ifdef _USE_FSALDS
+#endif /* _PNFS_MDS */
+#ifdef _PNFS_DS
   FSAL_LoadDSFunctions();
-#endif
-#endif                          /* _USE_SHARED_FSAL */
+#endif /* _PNFS_DS */
+#endif /* _USE_SHARED_FSAL */
 
   LogEvent(COMPONENT_MAIN,
            ">>>>>>>>>>--------------------------------------- <<<<<<<<<<" ) ;

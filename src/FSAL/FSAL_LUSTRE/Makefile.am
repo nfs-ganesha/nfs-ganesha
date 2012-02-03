@@ -39,12 +39,12 @@ libfsallustre_la_SOURCES = fsal_access.c      \
                           ../../include/err_fsal.h   \
                           ../../include/FSAL/FSAL_LUSTRE/fsal_types.h
 
-if USE_FSALMDS
+if USE_PNFS_MDS
 libfsallustre_la_SOURCES += fsal_mds.c        \
                             fsal_pnfs_tools.c
 endif
 
-if USE_FSALDS
+if USE_PNFS_DS
 libfsallustre_la_SOURCES += fsal_ds.c 
 endif
 
@@ -89,11 +89,11 @@ libfsalshook_la_SOURCES = fsal_access.c      \
                           ../../include/err_fsal.h   \
                           ../../include/FSAL/FSAL_LUSTRE/fsal_types.h
 
-if USE_FSALMDS
+if USE_PNFS_MDS
 libfsalshook_la_SOURCES += fsal_mds.c
 endif
 
-if USE_FSALDS
+if USE_PNFS_DS
 libfsalshook_la_SOURCES += fsal_ds.c
 endif
 

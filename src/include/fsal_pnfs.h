@@ -398,9 +398,9 @@ typedef struct fsal_mdsfunctions__ {
  * XXX variable must be removed and references to it must be updated
  * XXX after the Lieb Rearchitecture.
  */
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
 extern fsal_mdsfunctions_t fsal_mdsfunctions;
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
 /**
  * Pointers to FSAL implementations of pNFS DS functions
@@ -506,9 +506,9 @@ typedef struct fsal_dsfunctions__ {
  * XXX variable must be removed and references to it must be updated
  * XXX after the Lieb Rearchitecture.
  */
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
 extern fsal_dsfunctions_t fsal_dsfunctions;
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */
 
 fsal_mdsfunctions_t FSAL_GetMDSFunctions(void);
 void FSAL_LoadMDSFunctions(void);

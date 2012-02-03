@@ -35,36 +35,36 @@
 #include "fsal_glue.h"
 #include "fsal_internal.h"
 #include "FSAL/common_methods.h"
-#ifdef _USE_FSALMDS
+#ifdef _PNFS
 #include "fsal_pnfs.h"
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS */
 
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
 fsal_mdsfunctions_t fsal_ceph_mdsfunctions = {
-  .layoutget = CEPHFSAL_layoutget,
-  .layoutreturn = CEPHFSAL_layoutreturn,
-  .layoutcommit = CEPHFSAL_layoutcommit,
-  .getdeviceinfo = CEPHFSAL_getdeviceinfo,
-  .getdevicelist = CEPHFSAL_getdevicelist
+     .layoutget = CEPHFSAL_layoutget,
+     .layoutreturn = CEPHFSAL_layoutreturn,
+     .layoutcommit = CEPHFSAL_layoutcommit,
+     .getdeviceinfo = CEPHFSAL_getdeviceinfo,
+     .getdevicelist = CEPHFSAL_getdevicelist
 };
 
 fsal_mdsfunctions_t FSAL_GetMDSFunctions(void)
 {
-  return fsal_ceph_mdsfunctions;
+     return fsal_ceph_mdsfunctions;
 }
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
 fsal_dsfunctions_t fsal_ceph_dsfunctions = {
-  .DS_read = CEPHFSAL_DS_read,
-  .DS_write = CEPHFSAL_DS_write,
-  .DS_commit = CEPHFSAL_DS_commit
+     .DS_read = CEPHFSAL_DS_read,
+     .DS_write = CEPHFSAL_DS_write,
+     .DS_commit = CEPHFSAL_DS_commit
 };
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */
 
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
 fsal_dsfunctions_t FSAL_GetDSFunctions(void)
 {
-  return fsal_ceph_dsfunctions;
+     return fsal_ceph_dsfunctions;
 }
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */

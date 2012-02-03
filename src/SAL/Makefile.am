@@ -42,7 +42,7 @@ if USE_NLM
 libsal_la_SOURCES += nlm_owner.c
 endif
 
-if USE_FSALMDS
+if USE_PNFS_MDS
 libsal_la_SOURCES += state_layout.c
 endif
 

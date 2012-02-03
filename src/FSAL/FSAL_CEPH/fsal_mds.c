@@ -76,7 +76,7 @@ CEPHFSAL_layoutget(fsal_handle_t *exthandle,
         the Ceph cluster. */
      struct ceph_file_layout file_layout;
      /* Width of each stripe on the file */
-     uint64_t stripe_width = 0;
+     uint32_t stripe_width = 0;
      /* Utility parameter */
      nfl_util4 util = 0;
      /* The last byte that can be accessed through pNFS */

@@ -474,9 +474,7 @@ fsal_status_t CEPHFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
      umask
      auth_exportpath_xdev
      xattr_access_rights
-#ifdef _USE_FSALMDS
      pnfs_supported
-#endif
    */
 
   var_max = config_GetNbItems(block);
@@ -633,7 +631,7 @@ fsal_status_t CEPHFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
                              FSAL_INIT_FORCE_VALUE, unix2fsal_mode(mode));
 
         }
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
       else if(!STRCMP(key_name, "pnfs_supported"))
         {
           int pnfs_supported = StrToBoolean(key_value);
@@ -650,7 +648,7 @@ fsal_status_t CEPHFSAL_load_FS_common_parameter_from_conf(config_file_t in_confi
                              pnfs_supported,
                              FSAL_INIT_FORCE_VALUE, pnfs_supported);
         }
-#endif /* _USE_FSALMDS */
+#endif /* !_PNFS_MDS */
       else
         {
           LogCrit(COMPONENT_CONFIG,

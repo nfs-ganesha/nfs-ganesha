@@ -68,13 +68,13 @@
 #include "nfs_file_handle.h"
 #include "nfs_proto_tools.h"
 #include "nfs4_acls.h"
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
 #include "sal_data.h"
 #include "sal_functions.h"
 #include "fsal.h"
 #include "fsal_pnfs.h"
 #include "pnfs_common.h"
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
 #ifdef _USE_NFS4_ACL
 /* Define mapping of NFS4 who name and type. */
@@ -779,9 +779,9 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   fattr4_quota_used quota_used;
   fattr4_time_modify_set __attribute__ ((__unused__)) time_modify_set;
   fattr4_time_access_set __attribute__ ((__unused__)) time_access_set;
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
   fattr4_layout_blksize layout_blksize;
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
   u_int tmp_int;
   char tmp_buff[1024];
@@ -1666,7 +1666,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
 #ifdef _USE_NFS4_1
         case FATTR4_FS_LAYOUT_TYPES:
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
           *((uint32_t*)(attrvalsBuffer+LastOffset))
             = htonl(pstaticinfo->fs_layout_types
                     .fattr4_fs_layout_types_len);
@@ -1683,9 +1683,9 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
           op_attr_success = 1;
           break;
-#endif                                    /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
         case FATTR4_LAYOUT_BLKSIZE:
           layout_blksize
             = htonl((fattr4_layout_blksize) pstaticinfo->layout_blksize);
@@ -1695,7 +1695,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
 
           op_attr_success = 1;
           break;
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 #endif /* _USE_NFS4_1 */
 
         default:
@@ -4309,3 +4309,4 @@ nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
 
   return NFS4_OK;
 }
+

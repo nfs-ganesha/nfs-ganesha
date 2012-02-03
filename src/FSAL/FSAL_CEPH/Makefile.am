@@ -3,7 +3,7 @@ AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
 noinst_LTLIBRARIES          = libfsalceph.la
 
-if USE_PNFS_FSAL
+if USE_PNFS
 noinst_LTLIBRARIES += libfsalpnfsceph.la
 endif
 
@@ -42,7 +42,7 @@ libfsalceph_la_SOURCES = fsal_access.c  \
                         ../../include/err_fsal.h        \
                         ../../include/FSAL/FSAL_CEPH/fsal_types.h
 
-if USE_PNFS_FSAL
+if USE_PNFS
 libfsalpnfsceph_la_SOURCES = fsal_pnfscompat.c                         \
 			     ../../include/fsal.h                      \
 			     ../../include/fsal_types.h                \
@@ -52,11 +52,11 @@ libfsalpnfsceph_la_SOURCES = fsal_pnfscompat.c                         \
 			     ../../include/fsal_pnfs_files.h           \
 			     ../../include/FSAL/FSAL_CEPH/fsal_types.h
 
-if USE_FSALMDS
+if USE_PNFS_MDS
 libfsalpnfsceph_la_SOURCES += fsal_mds.c
 endif
 
-if USE_FSALDS
+if USE_PNFS_DS
 libfsalpnfsceph_la_SOURCES += fsal_ds.c
 endif
 endif

@@ -456,20 +456,23 @@ AM_CONDITIONAL(USE_BUDDY_SYSTEM, test "$enable_BuddyMalloc" == "yes")
 AC_ARG_WITH([ceph-prefix], AS_HELP_STRING([--with-ceph-prefix=<path>], [Path to Ceph installation] ),
 		CEPH_PREFIX="$withval", CEPH_PREFIX="/usr" )
 
-# PNFS switch argument (default is nothing)
-AC_ARG_WITH( [pnfs-mds], AS_HELP_STRING([--with-pnfs-mds=PARALLEL_FS|FSAL|NONE (default=NONE)], [specify the type of pNFS layout to be used] ),
-	PNFS="$withval", PNFS="NONE" )
+# pNFS Metadata Server Support
+GA_ENABLE_AM_CONDITION([pnfs-mds], [enable pNFS Metadata Server support (NFSv4.1 support is mandatory)],[USE_PNFS_MDS])
+if test "x$enable_pnfs_mds" = "xyes"; then
+        AC_DEFINE(_PNFS_MDS,1,[pNFS Metadata Server support])
+fi
 
-AM_CONDITIONAL(USE_PNFS_NONE, 		test "$PNFS" = "NONE" )
-AM_CONDITIONAL(USE_PNFS_PARALLEL_FS,	test "$PNFS" = "PARALLEL_FS" )
-AM_CONDITIONAL(USE_PNFS,                test "$PNFS" != "NONE" )
+# pNFS Data Server support (for LAYOUT4_NFSV4_1_FILES support.)
+GA_ENABLE_AM_CONDITION([pnfs-ds],[enable pNFS Data Server support (NFSv4.1 support is mandatory)],[USE_PNFS_DS])
+if test "x$enable_pnfs_ds" = "xyes"; then
+        AC_DEFINE(_PNFS_DS,1,[pNFS LAYOUT4_NFSV4_1_FILES Data Server support])
+fi
 
-AM_CONDITIONAL(USE_FSALMDS, test "$PNFS" = "FSAL") 
-
-# FSAL based pNFS DS support (requires NFSv4.1, conflicts with DS)
-GA_ENABLE_AM_CONDITION([fsal-ds],[enable FSAL-based pNFS DS support (NFSv4.1 support is mandatory)],[USE_FSALDS])
-AM_CONDITIONAL(USE_FSALDS, test "x$enable_fsal_ds" = "xyes")
-AM_CONDITIONAL(USE_PNFS_FSAL, test \( "x$enable_fsal_ds" = "xyes" \) -o \( "x$PNFS" = "xFSAL" \))
+# For common files used by either one
+AM_CONDITIONAL(USE_PNFS, test \( "x$enable_pnfs_mds" = "xyes" \) -o \( "x$enable_pnfs_ds" = "xyes" \))
+if test \( "x$enable_pnfs_mds" = "xyes" \) -o \( "x$enable_pnfs_ds" = "xyes" \); then
+        AC_DEFINE(_PNFS,1,[pNFS support])
+fi
 
 # MFSL switch argument (default is NULL )
 AC_ARG_WITH( [mfsl], AS_HELP_STRING([--with-mfsl=NONE|NULL|ASYNC|AIO|MIRROR|PROXY_RPCSECGSS (default=NULL)],[specify the type of intermediate FSAL module to be used] ),
@@ -607,7 +610,7 @@ case $FSAL in
 		FSAL_CFLAGS="-D_FILE_OFFSET_BITS=64"
 		LDFLAGS="-L${CEPH_PREFIX}/lib"
                 FSAL_LDFLAGS=-lcephfs
-		if test \( "x$PNFS" = "xFSAL" \) -o \( "x$enable_fsal_ds" = "xyes" \); then
+                if test \( "x$enable_pnfs_mds" = "xyes" \) -o \( "x$enable_pnfs_ds" = "xyes" \); then
 			FSALPNFS_LIB="\$(top_builddir)/FSAL/FSAL_CEPH/libfsalpnfsceph.la"
 		else
 			FSALPNFS_LIB=""
@@ -826,25 +829,6 @@ case $RPCAL in
 
 esac
 
-case $PNFS in
-        "NONE")
-                ;;
-        "PARALLEL_FS")
-                AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-                AC_DEFINE(_USE_PNFS_PARALLEL_FS,1,[enable NFSv4.1/pNFS support for parallel file system ])
-                PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
-                ;;
-        "FSAL")
-                AC_DEFINE(_USE_PNFS,1,[enable NFSv4.1/pNFS support])
-                AC_DEFINE(_USE_PNFS_FSAL,1,[enable FSAL based NFSv4.1/pNFS support ])
-                AC_DEFINE(_USE_FSALMDS,1,[enable FSAL based pNFS MDS support])
-                PNFS_LIB="\$(top_builddir)/Protocols/PNFS/libpnfs.la"
-                ;;
-        *)
-                AC_MSG_ERROR([This pNFS layout is not supported])
-esac
-
-
 case $NFS4_MINOR in
 	"0")
 		AC_DEFINE([_USE_NFS4_0],1, [Use NFSv4.0] )
@@ -857,8 +841,8 @@ case $NFS4_MINOR in
 esac
 
 # Sanity check : no pnfs if NFS4_MINOR is not NFSv4.1
-if [[  $PNFS != "NONE" ]] ; then
-  if [[ $NFS4_MINOR == "0" ]] ; then
+if test x$PNFS = "xyes"; then
+  if test x$NFS4_MINOR != "x1"; then
      AC_MSG_ERROR("You must activate NFSv4.1 support to enable pnfs support" )
   fi
 fi
@@ -884,7 +868,6 @@ AC_SUBST(FSAL_LDFLAGS)
 AC_SUBST(FSAL_LIB)
 AC_SUBST(FSALPNFS_LIB)
 AC_SUBST(MFSL_LIB)
-AC_SUBST(PNFS_LIB)
 AC_SUBST(FS_NAME)
 AC_SUBST(SHARED_FSAL)
 AC_SUBST(SHARED_FSAL_PKG)
@@ -942,10 +925,6 @@ AC_CONFIG_FILES([include/Makefile
 		 Protocols/NLM/Makefile
 		 Protocols/RQUOTA/Makefile
                  Protocols/XDR/Makefile
-		 Protocols/PNFS/Makefile
-		 Protocols/PNFS/PARALLEL_FS/Makefile
-		 Protocols/PNFS/FSAL_SPECIFIC/Makefile
-		 Protocols/PNFS/FSAL_SPECIFIC/CEPH/Makefile
 		 FSAL/Makefile
 		 FSAL/FSAL_HPSS/Makefile
 		 FSAL/FSAL_HPSS/HPSSclapiExt/Makefile
