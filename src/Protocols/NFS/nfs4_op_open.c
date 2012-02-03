@@ -598,7 +598,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                 }
                               V(powner->so_mutex);
 
-                              status4 = nfs4_create_fh(data, pentry_lookup, &text);
+                              status4 = nfs4_create_fh(data, pentry_lookup,
+                                  &text);
                               if(status4 != NFS4_OK)
                                 {
                                   cause2 = text;

@@ -52,17 +52,12 @@
 #include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
-#include "cache_inode.h"
-#include "cache_content.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
 #include "nfs_proto_functions.h"
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
+#include "pnfs.h"
 
 /**
  * 
@@ -95,8 +90,6 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op, compound_data_t * data,
   res_LAYOUTRETURN4.lorr_status = NFS4ERR_NOTSUPP;
   return res_LAYOUTRETURN4.lorr_status;
 #endif
-
-  nfsstat4 rc = 0 ;
 
   resp->resop = NFS4_OP_LAYOUTRETURN;
 
