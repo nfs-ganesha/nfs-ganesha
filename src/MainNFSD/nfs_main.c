@@ -61,6 +61,7 @@ nfs_start_info_t my_nfs_start_info = {
 
 char *my_config_path = "/etc/ganesha/ganesha.conf";
 char my_pidfile[] = "/var/run/ganesha.pid";
+config_file_t config_struct;
 char log_path[MAXPATHLEN] = "";
 char exec_name[MAXPATHLEN] = "nfs-ganesha";
 char host_name[MAXHOSTNAMELEN] = "localhost";
@@ -292,11 +293,22 @@ int main(int argc, char *argv[])
   /* Set the parameter to 0 before doing anything */
   memset((char *)&nfs_param, 0, sizeof(nfs_parameter_t));
 
-  /* Get the FSAL functions */
-  FSAL_LoadFunctions();
+  /* Parse the configuration file so we all know what is going on. */
 
-  /* Get the FSAL consts */
-  FSAL_LoadConsts();
+  if(config_path == NULL) {
+	  LogFatal(COMPONENT_INIT,
+		   "start_fsals: No configuration file named.");
+	  return 1;
+  }
+  config_struct = config_ParseFile(config_path);
+
+  if(!config_struct)
+    {
+      LogFatal(COMPONENT_INIT, "Error while parsing %s: %s",
+               config_path, config_GetErrorMsg());
+    }
+
+  start_fsals(config_struct);
 
 #ifdef _PNFS_MDS
   FSAL_LoadMDSFunctions();
@@ -305,25 +317,15 @@ int main(int argc, char *argv[])
   FSAL_LoadDSFunctions();
 #endif
 
-  LogEvent(COMPONENT_MAIN,
-           ">>>>>>>>>>--------------------------------------- <<<<<<<<<<" ) ;
-
-  LogEvent(COMPONENT_MAIN,
-           ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
-           FSAL_GetFSName());
-
-  LogEvent(COMPONENT_MAIN,
-           ">>>>>>>>>>--------------------------------------- <<<<<<<<<<" ) ;
-
   /* initialize default parameters */
 
   nfs_set_param_default();
 
   /* parse configuration file */
 
-  if(nfs_set_param_from_conf(&my_nfs_start_info))
+  if(nfs_set_param_from_conf(config_struct, &my_nfs_start_info))
     {
-      LogFatal(COMPONENT_INIT, "Error parsing configuration file.");
+      LogFatal(COMPONENT_INIT, "Error setting parameters from configuration file.");
     }
 
   /* check parameters consitency */
@@ -332,6 +334,11 @@ int main(int argc, char *argv[])
     {
       LogFatal(COMPONENT_INIT,
 	       "Inconsistent parameters found. Exiting..." ) ;
+    }
+  if(init_fsals(config_struct))  /* init the FSALs from the config */
+    {
+      LogFatal(COMPONENT_INIT,
+	       "FSALs could not initialize. Exiting..." ) ;
     }
 
   /* Everything seems to be OK! We can now start service threads */

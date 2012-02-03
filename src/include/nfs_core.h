@@ -633,7 +633,8 @@ typedef struct nfs_worker_data__
   sigset_t sigmask; /* masked signals */
   unsigned int gc_in_progress;
   unsigned int current_xid;
-  fsal_op_context_t thread_fsal_context;
+  struct user_cred user_credentials;
+
   /* Description of current or most recent function processed and start time (or 0) */
   const nfs_function_desc_t *pfuncdesc;
   struct timeval timer_start;
@@ -782,6 +783,8 @@ void constructor_nfs_request_data_t(void *ptr);
 void constructor_request_data_t(void *ptr);
 
 /* Config parsing routines */
+extern config_file_t config_struct;
+
 int get_stat_exporter_conf(config_file_t in_config, external_tools_parameter_t * out_parameter);
 int nfs_read_core_conf(config_file_t in_config, nfs_core_parameter_t * pparam);
 int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * pparam);

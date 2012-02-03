@@ -63,7 +63,8 @@ void nfs_set_param_default();
  * nfs_set_param_from_conf:
  * Load parameters from config file.
  */
-int nfs_set_param_from_conf(nfs_start_info_t * p_start_info);
+int nfs_set_param_from_conf(config_file_t config_struct,
+			    nfs_start_info_t * p_start_info);
 
 /**
  * nfs_check_param_consistency:
