@@ -675,12 +675,20 @@ typedef fsal_uint_t fsal_accessflags_t;
                           FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_DATA))
 
 
+/* Object handle LRU resource actions
+ */
+
+#define LRU_CLOSE_FILES	0x1
+#define LRU_FREE_MEMORY	0x2
+
+typedef unsigned int lru_actions_t;
+
 /** directory entry */
 
 typedef struct fsal_dirent__
 {
 
-  fsal_handle_t handle;             /**< directory entry handle. */
+  struct fsal_obj_handle *handle;   /**< directory entry handle. */
   fsal_name_t name;                 /**< directory entry name.   */
   fsal_cookie_t cookie;             /**< cookie for reading dir
                                          from this entry         */
@@ -831,6 +839,29 @@ typedef fsal_ushort_t fsal_fhexptype_t;
         break;                                                    \
     }
 
+/* enums for accessing
+ * boolean fields of staticfsinfo
+ */
+
+typedef enum {
+	no_trunc,
+	chown_restricted,
+	case_insensitive,
+	case_preserving,
+	link_support,
+	symlink_support,
+	lock_support,
+	lock_support_owner,
+	lock_support_async_block,
+	named_attr,
+	unique_handles,
+	cansettime,
+	homogenous,
+	auth_exportpath_xdev,
+	dirs_have_sticky_bit,
+	pnfs_supported
+} fsal_fsinfo_options_t;
+	
 struct fsal_staticfsinfo_t
 {
 
@@ -899,7 +930,7 @@ struct fsal_staticfsinfo_t
                                                ds_addr_body XDR
                                                stream */
 #endif /* _PNFS_MDS */
-
+  fsal_boolean_t dirs_have_sticky_bit; /**< fsal does bsd/posix "sticky bit" */
 };
 
 
