@@ -320,5 +320,8 @@ fsal_status_t ZFSFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
                                   fsal_op_context_t * p_context,        /* IN */
                                   fsal_extattrib_list_t * p_object_attributes /* OUT */) ;
 
-fsal_status_t ZFSFSAL_sync(fsal_file_t * p_file_descriptor     /* IN */);
+fsal_status_t ZFSFSAL_commit( fsal_file_t * p_file_descriptor,
+                            fsal_off_t    offset,
+                            fsal_size_t   size ) ;
+
 

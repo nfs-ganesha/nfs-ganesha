@@ -109,7 +109,7 @@ cache_inode_commit(cache_entry_t * pentry,
      }
 
     /* If we aren't using the Ganesha write buffer, then we're using the filesystem
-     * write buffer so execute a normal fsal_sync() call. */
+     * write buffer so execute a normal fsal_commit() call. */
     if (typeofcommit == FSAL_UNSAFE_WRITE_TO_FS_BUFFER)
     {
 
@@ -130,17 +130,17 @@ cache_inode_commit(cache_entry_t * pentry,
         }
 
 #ifdef _USE_MFSL      
-      fsal_status = MFSL_sync(&(pentry->object.file.open_fd.mfsl_fd), NULL); 
+      fsal_status = MFSL_commit(&(pentry->object.file.open_fd.mfsl_fd), offset, count, NULL); 
 #else
-      fsal_status = FSAL_sync(&(pentry->object.file.open_fd.fd));
+      fsal_status = FSAL_commit(&(pentry->object.file.open_fd.fd), offset, count );
 #endif
       if(FSAL_IS_ERROR(fsal_status))
       {
         LogMajor(COMPONENT_CACHE_INODE,
-                 "cache_inode_rdwr: fsal_sync() failed: fsal_status.major = %d",
+                 "cache_inode_rdwr: fsal_commit() failed: fsal_status.major = %d",
                  fsal_status.major);
 
-      /* Close the fd that we just opened before the FSAL_sync(). We are already
+      /* Close the fd that we just opened before the FSAL_commit(). We are already
        * replying with an error. No need to catch an additional error form 
        * a close? */
          cache_inode_close(pentry, pclient, &status);
@@ -155,7 +155,7 @@ cache_inode_commit(cache_entry_t * pentry,
       }
       *pstatus = CACHE_INODE_SUCCESS;
 
-      /* Close the fd that we just opened before the FSAL_sync() */
+      /* Close the fd that we just opened before the FSAL_commit() */
       if(cache_inode_close(pentry, pclient, pstatus) != CACHE_INODE_SUCCESS)
         {
           LogEvent(COMPONENT_CACHE_INODE,

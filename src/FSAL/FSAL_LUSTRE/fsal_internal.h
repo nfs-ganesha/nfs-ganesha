@@ -185,7 +185,9 @@ fsal_status_t LUSTREFSAL_write(fsal_file_t * p_file_descriptor,   /* IN */
                                caddr_t buffer,  /* IN */
                                fsal_size_t * p_write_amount /* OUT */ );
 
-fsal_status_t LUSTREFSAL_sync(fsal_file_t * p_file_descriptor  /* IN */);
+fsal_status_t LUSTREFSAL_commit( fsal_file_t * p_file_descriptor,
+                               fsal_off_t    offset,
+                               fsal_size_t   size ) ;
 
 fsal_status_t LUSTREFSAL_close(fsal_file_t * p_file_descriptor /* IN */ );
 
