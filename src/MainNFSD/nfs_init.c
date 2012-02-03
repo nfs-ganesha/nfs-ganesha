@@ -682,22 +682,13 @@ void nfs_set_param_default()
  * nfs_set_param_from_conf:
  * Load parameters from config file.
  */
-int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
+int nfs_set_param_from_conf(config_file_t config_struct,
+			    nfs_start_info_t * p_start_info)
 {
-  config_file_t config_struct;
   int rc;
   fsal_status_t fsal_status;
   cache_inode_status_t cache_inode_status;
 
-  /* First, parse the configuration file */
-
-  config_struct = config_ParseFile(config_path);
-
-  if(!config_struct)
-    {
-      LogFatal(COMPONENT_INIT, "Error while parsing %s: %s",
-               config_path, config_GetErrorMsg());
-    }
 
   /* Core parameters */
   if((rc = nfs_read_core_conf(config_struct, &nfs_param.core_param)) < 0)
@@ -717,64 +708,6 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
                  "core configuration read from config file");
     }
 
-  /* Load FSAL configuration from parsed file */
-  fsal_status =
-      FSAL_load_FSAL_parameter_from_conf(config_struct, &nfs_param.fsal_param);
-  if(FSAL_IS_ERROR(fsal_status))
-    {
-      if(fsal_status.major == ERR_FSAL_NOENT)
-        LogDebug(COMPONENT_INIT,
-		 "No FSAL parameters found in config file, using default");
-      else
-        {
-          LogCrit(COMPONENT_INIT, "Error while parsing FSAL parameters");
-          LogError(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
-          return -1;
-        }
-    }
-  else
-    LogDebug(COMPONENT_INIT,
-             "FSAL parameters read from config file");
-
-  /* Load FSAL configuration from parsed file */
-  fsal_status =
-      FSAL_load_FS_common_parameter_from_conf(config_struct, &nfs_param.fsal_param);
-  if(FSAL_IS_ERROR(fsal_status))
-    {
-      if(fsal_status.major == ERR_FSAL_NOENT)
-        LogDebug(COMPONENT_INIT,
-		 "No FS common configuration found in config file, using default");
-      else
-        {
-          LogCrit(COMPONENT_INIT,
-                  "Error while parsing FS common configuration");
-          LogError(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
-          return -1;
-        }
-    }
-  else
-    LogDebug(COMPONENT_INIT,
-             "FS comon configuration read from config file");
-
-  /* Load FSAL configuration from parsed file */
-  fsal_status =
-      FSAL_load_FS_specific_parameter_from_conf(config_struct, &nfs_param.fsal_param);
-  if(FSAL_IS_ERROR(fsal_status))
-    {
-      if(fsal_status.major == ERR_FSAL_NOENT)
-        LogDebug(COMPONENT_INIT,
-		 "No FS specific configuration found in config file, using default");
-      else
-        {
-          LogCrit(COMPONENT_INIT,
-                  "Error while parsing FS specific configuration");
-          LogError(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
-          return -1;
-        }
-    }
-  else
-    LogDebug(COMPONENT_INIT,
-             "FS specific configuration read from config file");
 
   /* Workers parameters */
   if((rc = nfs_read_worker_conf(config_struct, &nfs_param.worker_param)) < 0)
@@ -1469,15 +1402,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   OM_uint32 maj_stat, min_stat;
   char GssError[MAXNAMLEN];
 #endif
-
-  /* FSAL Initialisation */
-  fsal_status = FSAL_Init(&nfs_param.fsal_param);
-  if(FSAL_IS_ERROR(fsal_status))
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_INIT, "FSAL library could not be initialized");
-    }
-  LogInfo(COMPONENT_INIT, "FSAL library successfully initialized");
 
 #ifdef USE_DBUS
   /* DBUS init */
