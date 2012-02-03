@@ -105,6 +105,7 @@
 #define CONF_EXPORT_MAX_OFF_READ       "MaxOffsetRead"
 #define CONF_EXPORT_MAX_CACHE_SIZE     "MaxCacheSize"
 #define CONF_EXPORT_REFERRAL           "Referral"
+#define CONF_EXPORT_FSAL	       "FSAL"
 #define CONF_EXPORT_PNFS               "Use_pNFS"
 #define CONF_EXPORT_UQUOTA             "User_Quota"
 #define CONF_EXPORT_USE_COMMIT                  "Use_NFS_Commit"
@@ -637,6 +638,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   int i, rc;
   char *var_name;
   char *var_value;
+  struct fsal_module *fsal_hdl = NULL;
 
   /* the mandatory options */
 
@@ -2041,6 +2043,30 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               }
             }
         }
+      else if(!STRCMP(var_name, CONF_EXPORT_FSAL))
+        {
+	  fsal_hdl = lookup_fsal(var_value);
+	  if(fsal_hdl != NULL)
+	    {
+              fsal_status_t expres = fsal_hdl->ops->create_export(fsal_hdl,
+								  p_entry->fullpath, /* correct path? */
+								  p_entry->FS_specific,
+								  p_entry,
+								  NULL, /* no stacked fsals for now */
+								  &p_entry->export_hdl);
+              if(FSAL_IS_ERROR(expres))
+ 	        {
+	          LogCrit(COMPONENT_CONFIG,
+			  "Could not create FSAL export for %s", p_entry->fullpath);
+                }
+              fsal_hdl->ops->put(fsal_hdl); /* unlock the fsal */
+            }
+          else
+	    {
+		    LogCrit(COMPONENT_CONFIG,
+			    "FSAL %s is not loaded!", var_value);
+	    }
+	}
       else
         {
           LogCrit(COMPONENT_CONFIG,
@@ -2050,6 +2076,47 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
     }
 
+  if(fsal_hdl == NULL)
+    {
+      LogCrit(COMPONENT_CONFIG,
+	      "No FSAL for this export defined using VFS");
+      fsal_hdl = lookup_fsal("VFS"); /* should have a "Default_FSAL" param... */
+      if(fsal_hdl != NULL)
+        {
+          fsal_status_t expres = fsal_hdl->ops->create_export(fsal_hdl,
+							      p_entry->fullpath, /* correct path? */
+							      p_entry->FS_specific,
+							      p_entry,
+							      NULL, /* no stacked fsals for now */
+							      &p_entry->export_hdl);
+          if(FSAL_IS_ERROR(expres))
+            {
+	      LogCrit(COMPONENT_CONFIG,
+		      "Could not create FSAL export for %s", p_entry->fullpath);
+            }
+          fsal_hdl->ops->put(fsal_hdl);
+        }
+      else
+        {
+	  LogCrit(COMPONENT_CONFIG,
+		  "HELP! even VFS FSAL is not resident!");
+        }
+    }
+  else
+    {
+      fsal_status_t expres = fsal_hdl->ops->create_export(fsal_hdl,
+							  p_entry->fullpath, /* correct path? */
+							  p_entry->FS_specific,
+							  p_entry,
+							  NULL, /* no stacked fsals for now */
+							  &p_entry->export_hdl);
+      if(FSAL_IS_ERROR(expres))
+	{
+	  LogCrit(COMPONENT_CONFIG,
+		  "Could not create FSAL export for %s", p_entry->fullpath);
+        }
+    }
+          
   /** check for mandatory options */
   if((set_options & mandatory_options) != mandatory_options)
     {
@@ -2939,60 +3006,37 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
 #endif
       fsal_status_t fsal_status;
       cache_inode_fsal_data_t fsdata;
-      fsal_handle_t fsal_handle;
+/*       struct fsal_obj_handle *root_hdl; */
       fsal_path_t exportpath_fsal;
       fsal_mdsize_t strsize = MNTPATHLEN + 1;
       cache_entry_t *pentry = NULL;
 
-      fsal_op_context_t context;
       fsal_staticfsinfo_t *pstaticinfo = NULL;
       fsal_export_context_t *export_context = NULL;
 
-      /* Get the context for FSAL super user */
-      fsal_status = FSAL_InitClientContext(&context);
-      if(FSAL_IS_ERROR(fsal_status))
+      /* creating the datacache client for recovering data cache */
+      if(cache_content_client_init
+         (&recover_datacache_client,
+          nfs_param.cache_layers_param.cache_content_client_param,
+          "recovering"))
         {
-          LogCrit(COMPONENT_INIT,
-                  "Couldn't get the context for FSAL super user");
-          return FALSE;
+          LogFatal(COMPONENT_INIT,
+                   "cache content client (for datacache recovery) could not be allocated");
         }
+
+
+      /* Link together the small client and the recover_datacache_client */
+      small_client.pcontent_client = (void *)&recover_datacache_client;
 
       /* loop the export list */
 
       for(pcurrent = pexportlist; pcurrent != NULL; pcurrent = pcurrent->next)
         {
-
-          /* Build the FSAL path */
-          if(FSAL_IS_ERROR((fsal_status = FSAL_str2path(pcurrent->fullpath,
-                                                        strsize, &exportpath_fsal))))
-            return FALSE;
-
-          /* inits context for the current export entry */
-
-          fsal_status =
-              FSAL_BuildExportContext(&pcurrent->FS_export_context, &exportpath_fsal,
-                                      pcurrent->FS_specific);
-
-          if(FSAL_IS_ERROR(fsal_status))
-            {
-              LogCrit(COMPONENT_INIT,
-                      "Couldn't build export context for %s",
-                      pcurrent->fullpath);
-              return FALSE;
-            }
-
-          /* get the related client context */
-          fsal_status = FSAL_GetClientContext(&context, &pcurrent->FS_export_context, 0, 0, NULL, 0 ) ;
-
-          if(FSAL_IS_ERROR(fsal_status))
-            {
-              LogCrit(COMPONENT_INIT,
-                      "Couldn't get the credentials for FSAL super user");
-              return FALSE;
-            }
-
           /* Lookup for the FSAL Path */
-          if(FSAL_IS_ERROR((fsal_status = FSAL_lookupPath(&exportpath_fsal, &context, &fsal_handle, NULL))))
+          fsal_status = pcurrent->export_hdl->ops->lookup_path(pcurrent->export_hdl,
+							       &exportpath_fsal,
+							       &pcurrent->proot_handle);
+          if(FSAL_IS_ERROR(fsal_status))
             {
               LogCrit(COMPONENT_INIT,
                       "Couldn't access the root of the exported namespace, ExportId=%u Path=%s FSAL_ERROR=(%u,%u)",
@@ -3000,32 +3044,17 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
                       fsal_status.minor);
               return FALSE;
             }
-
-          /* stores handle to the export entry */
-
-          pcurrent->proot_handle = gsh_malloc(sizeof(fsal_handle_t));
-
-          if(FSAL_IS_ERROR(fsal_status))
-            {
-              LogCrit(COMPONENT_INIT,
-                      "Couldn't allocate memory");
-              return FALSE;
-            }
-
-          *pcurrent->proot_handle = fsal_handle;
-          export_context = &pcurrent->FS_export_context;
-          pstaticinfo = export_context->fe_static_fs_info;
           if( ((pcurrent->options & EXPORT_OPTION_MAXREAD) != EXPORT_OPTION_MAXREAD )) 
              {
-               if ( pstaticinfo && pstaticinfo->maxread )
-                  pcurrent->MaxRead = pstaticinfo->maxread;
+	       if ( pcurrent->export_hdl->ops->fs_maxread(pcurrent->export_hdl) > 0)
+                  pcurrent->MaxRead = pcurrent->export_hdl->ops->fs_maxread(pcurrent->export_hdl);
                else
                   pcurrent->MaxRead = LASTDEFAULT;
              }
           if( ((pcurrent->options & EXPORT_OPTION_MAXWRITE) != EXPORT_OPTION_MAXWRITE )) 
              {
-               if ( pstaticinfo && pstaticinfo->maxwrite )
-                  pcurrent->MaxWrite = pstaticinfo->maxwrite;
+               if ( pcurrent->export_hdl->ops->fs_maxwrite(pcurrent->export_hdl) > 0)
+                  pcurrent->MaxWrite = pcurrent->export_hdl->ops->fs_maxwrite(pcurrent->export_hdl);
                else
                   pcurrent->MaxWrite = LASTDEFAULT;
              }
@@ -3036,16 +3065,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
                       (long long) pcurrent->MaxWrite);
              
           /* Add this entry to the Cache Inode as a "root" entry */
-          fsdata.fh_desc.start = (caddr_t) &fsal_handle;
-          fsdata.fh_desc.len = 0;
-	  (void) FSAL_ExpandHandle(
-#ifdef _USE_SHARED_FSAL
-		                   context[pcurrent->fsalid].export_context,
-#else
-				   context.export_context,
-#endif
-				   FSAL_DIGEST_SIZEOF,
-				   &fsdata.fh_desc);
 
           /* cache_inode_make_root returns a cache_entry with
              reference count of 2, where 1 is the sentinel value of
@@ -3056,8 +3075,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
              export entries, then the function to remove an export
              entry MUST put the extra reference. */
 
-          if((pentry = cache_inode_make_root(&fsdata,
-                                             &context,
+          if((pentry = cache_inode_make_root(pcurrent->proot_handle,
                                              &cache_status)) == NULL)
             {
               LogCrit(COMPONENT_INIT,
@@ -3089,29 +3107,26 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
 
 } /* nfs_export_create_root_entry */
 
-/* cleans up the export content */
-int CleanUpExportContext(fsal_export_context_t * p_export_context)
-{
-
-  FSAL_CleanUpExportContext(p_export_context);
-
-  return TRUE;
-}
-
-
 /* Frees current export entry and returns next export entry. */
 exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
 {
   exportlist_t *next;
+  fsal_status_t fsal_status;
 
   if (exportEntry == NULL)
     return NULL;
 
   next = exportEntry->next;
-
-  if (exportEntry->proot_handle != NULL)
-    gsh_free(exportEntry->proot_handle);
-
+  if(exportEntry->export_hdl != NULL)
+    {
+      fsal_status = exportEntry->export_hdl->ops->release(exportEntry->export_hdl);
+      if(FSAL_IS_ERROR(fsal_status))
+        {
+	  LogCrit(COMPONENT_CONFIG,
+		  "Cannot release export object, quitting");
+	  return NULL;
+	}
+    }
   if (exportEntry->worker_stats != NULL)
     gsh_free(exportEntry->worker_stats);
 

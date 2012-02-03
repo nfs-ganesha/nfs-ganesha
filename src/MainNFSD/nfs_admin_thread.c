@@ -139,7 +139,6 @@ static int ChangeoverExports()
     {
       /* Leave the head so that the list may be replaced later without
        * changing the reference pointer in worker threads. */
-      CleanUpExportContext(&pcurrent->FS_export_context);
 
       if (pcurrent == nfs_param.pexportlist)
         break;

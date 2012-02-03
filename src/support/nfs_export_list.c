@@ -125,6 +125,13 @@ const char *Rpc_gss_svc_name[] =
  * @return the pointer to the pointer to the export list or NULL if failed.
  *
  */
+/* FIXME: Exports should really be managed as an object...  exportroot should
+ * be a static in this module and the only thing that leaks out to the rest of
+ * the code is entries that are created here and searched for here.
+ * this means that the exportroot arg here will disappear at some point,
+ * probably when exportlist_t is overhauled to use nlm_list etc.
+ */
+
 exportlist_t *nfs_Get_export_by_id(exportlist_t * exportroot, unsigned short exportid)
 {
   exportlist_t *piter;
@@ -329,6 +336,11 @@ int nfs_check_anon(exportlist_client_entry_t * pexport_client,
   return TRUE;
 }
 
+#if 0
+/** @TODO keep this around for reference.  When we add the request context,
+ *  we have to add the req->req_xprt (sockaddr)
+ */
+
 /**
  *
  * nfs_build_fsal_context: Builds the FSAL context according to the request
@@ -395,7 +407,7 @@ int nfs_build_fsal_context(struct svc_req *req,
 
   return TRUE;
 }                               /* nfs_build_fsal_context */
-
+#endif /* if 0 */
 /**
  *
  * nfs_compare_rpc_cred: Compares two RPC creds
