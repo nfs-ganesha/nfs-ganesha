@@ -60,9 +60,9 @@ cephfs_specific_initinfo_t global_spec_info;
           FSAL_ATTR_CTIME    | FSAL_ATTR_MTIME    | FSAL_ATTR_SPACEUSED | \
           FSAL_ATTR_CHGTIME  )
 
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
 static layouttype4 layout_type_list[] = {LAYOUT4_NFSV4_1_FILES};
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
 /* filesystem info for your filesystem */
 static fsal_staticfsinfo_t default_ceph_info = {
@@ -92,13 +92,13 @@ static fsal_staticfsinfo_t default_ceph_info = {
   .umask = 0,
   .auth_exportpath_xdev = 0,
   .xattr_access_rights = 0400,
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
   .pnfs_supported = TRUE,
   .layout_blksize = 0x400000,
   .max_segment_count = 1,
   .loc_buffer_size = 256,
   .dsaddr_buffer_size = 5120
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 };
 
 /* variables for limiting the calls to the filesystem */
@@ -518,12 +518,12 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
                         "FSAL INIT: Max simultaneous calls to filesystem is unlimited.");
     }
 
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
   default_ceph_info.fs_layout_types.fattr4_fs_layout_types_val
     = layout_type_list;
   default_ceph_info.fs_layout_types.fattr4_fs_layout_types_len
     = 1;
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
   /* setting default values. */
   global_fs_info = default_ceph_info;
@@ -578,7 +578,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
 
   /* Analyzing fs_common_info struct */
 
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
   if((fs_common_info->behaviors.maxfilesize != FSAL_INIT_FS_DEFAULT) ||
      (fs_common_info->behaviors.maxlink != FSAL_INIT_FS_DEFAULT) ||
      (fs_common_info->behaviors.maxnamelen != FSAL_INIT_FS_DEFAULT) ||
@@ -592,7 +592,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
      (fs_common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT) ||
      (fs_common_info->behaviors.fs_layout_types != FSAL_INIT_FS_DEFAULT) ||
      (fs_common_info->behaviors.layout_blksize != FSAL_INIT_FS_DEFAULT))
-#else
+#else /* !_PNFS_MDS */
   if((fs_common_info->behaviors.maxfilesize != FSAL_INIT_FS_DEFAULT) ||
      (fs_common_info->behaviors.maxlink != FSAL_INIT_FS_DEFAULT) ||
      (fs_common_info->behaviors.maxnamelen != FSAL_INIT_FS_DEFAULT) ||
@@ -604,7 +604,7 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
      (fs_common_info->behaviors.lease_time != FSAL_INIT_FS_DEFAULT) ||
      (fs_common_info->behaviors.supported_attrs != FSAL_INIT_FS_DEFAULT) ||
      (fs_common_info->behaviors.homogenous != FSAL_INIT_FS_DEFAULT))
-#endif /* _USE_FSALMDS */
+#endif /* !_PNFS_MDS */
     {
       ReturnCode(ERR_FSAL_NOTSUPP, 0);
     }
@@ -615,9 +615,9 @@ fsal_status_t fsal_internal_init_global(fsal_init_info_t * fsal_info,
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_owner);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, lock_support_async_block);
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, cansettime);
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
   SET_BOOLEAN_PARAM(global_fs_info, fs_common_info, pnfs_supported);
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
   SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxread);
   SET_INTEGER_PARAM(global_fs_info, fs_common_info, maxwrite);

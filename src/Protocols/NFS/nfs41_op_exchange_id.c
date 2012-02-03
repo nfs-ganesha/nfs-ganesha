@@ -79,17 +79,6 @@
  *
  */
 
-#if 0
-static uint32_t all_eia_flags =
-    EXCHGID4_FLAG_SUPP_MOVED_MIGR |
-    EXCHGID4_FLAG_BIND_PRINC_STATEID |
-    EXCHGID4_FLAG_USE_NON_PNFS |
-    EXCHGID4_FLAG_USE_PNFS_MDS |
-    EXCHGID4_FLAG_USE_PNFS_DS |
-    EXCHGID4_FLAG_MASK_PNFS |
-    EXCHGID4_FLAG_UPD_CONFIRMED_REC_A | EXCHGID4_FLAG_CONFIRMED_R;
-#endif
-
 int nfs41_op_exchange_id(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp)
 {
@@ -278,20 +267,16 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_clientid = clientid;
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_sequenceid =
       nfs_clientid.create_session_sequence;
-#if defined(_USE_FSALMDS) && defined(_USE_FSALDS)
+#if defined(_PNFS_MDS) && defined(_PNFS_DS)
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =
       EXCHGID4_FLAG_USE_PNFS_MDS | EXCHGID4_FLAG_USE_PNFS_DS |
       EXCHGID4_FLAG_SUPP_MOVED_REFER;
-#elif defined(_USE_FSALMDS)
+#elif defined(_PNFS_MDS)
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =
       EXCHGID4_FLAG_USE_PNFS_MDS | EXCHGID4_FLAG_SUPP_MOVED_REFER;
-#elif defined(_USE_FSALDS)
+#elif defined(_PNFS_DS)
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =
       EXCHGID4_FLAG_USE_PNFS_DS | EXCHGID4_FLAG_SUPP_MOVED_REFER;
-#elif defined(_USE_DS)
-  res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =
-      EXCHGID4_FLAG_USE_PNFS_MDS | EXCHGID4_FLAG_USE_PNFS_DS |
-      EXCHGID4_FLAG_SUPP_MOVED_REFER;
 #else
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_flags =
       EXCHGID4_FLAG_USE_NON_PNFS | EXCHGID4_FLAG_SUPP_MOVED_REFER;

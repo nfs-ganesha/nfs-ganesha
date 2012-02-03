@@ -171,7 +171,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 #endif
         }
 
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
       /* The export and fsalid should be updated, but DS handles
          don't support metdata operations.  Thus, we can't call into
          Cache_inode to populate the metadata cache. */
@@ -181,7 +181,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           data->current_filetype = REGULAR_FILE;
         }
       else
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */
         {
           /* Build the pentry */
           if((data->current_entry = nfs_FhandleToCache(NFS_V4,

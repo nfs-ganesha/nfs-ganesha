@@ -271,11 +271,6 @@ int ganefuse_main(int argc, char *argv[],
   /* Get the FSAL consts */
   FSAL_LoadConsts();
 
-#ifdef _USE_PNFS
-  /* Load pNFS functions */
-  pNFS_LoadFunctions() ;
-#endif 
-
   LogEvent(COMPONENT_MAIN,
            ">>>>>>>>>> Starting GANESHA NFS Daemon on FSAL/%s <<<<<<<<<<",
            FSAL_GetFSName());

@@ -2,7 +2,7 @@ AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
 noinst_LTLIBRARIES          = libfsalcommon.la
 
-if USE_PNFS_FSAL
+if USE_PNFS
 noinst_LTLIBRARIES += libfsalpnfscommon.la
 endif
 
@@ -31,7 +31,7 @@ else
 SUBDIRS = 
 endif 
 
-if USE_PNFS_FSAL
+if USE_PNFS
 libfsalpnfscommon_la_SOURCES = common_pnfs.c
 else
 libfsalpnfscommon_la_sources =

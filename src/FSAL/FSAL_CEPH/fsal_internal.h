@@ -378,7 +378,7 @@ fsal_status_t fsal_internal_testAccess(cephfsal_op_context_t* context,
                                        fsal_accessflags_t access_type,
                                        struct stat * st,
                                        fsal_attrib_list_t * object_attributes);
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
 nfsstat4 CEPHFSAL_layoutget(fsal_handle_t *exhandle,
                             fsal_op_context_t *excontext,
                             XDR *loc_body,
@@ -401,9 +401,9 @@ nfsstat4 CEPHFSAL_getdevicelist(fsal_handle_t *handle,
                                 fsal_op_context_t *context,
                                 const struct fsal_getdevicelist_arg *arg,
                                 struct fsal_getdevicelist_res *res);
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
 nfsstat4 CEPHFSAL_DS_read(fsal_handle_t *handle,
                           fsal_op_context_t *context,
                           const stateid4 *stateid,
@@ -429,4 +429,4 @@ nfsstat4 CEPHFSAL_DS_commit(fsal_handle_t *handle,
                             offset4 offset,
                             count4 count,
                             verifier4 *writeverf);
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */

@@ -49,9 +49,9 @@
 #ifdef _USE_NFS4_ACL
 #include <openssl/md5.h>
 #endif                          /* _USE_NFS4_ACL */
-#ifdef _USE_FSALMDS
+#ifdef _PNFS
 #include "nfs4.h"
-#endif
+#endif /* _PNFS */
 
 #ifdef _SOLARIS
 #ifndef MAXNAMLEN
@@ -839,7 +839,7 @@ struct fsal_staticfsinfo_t
   fsal_boolean_t accesscheck_support;  /**< This indicates whether access check
                                        *  will be done in FSAL.
                                        */
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
   fsal_boolean_t pnfs_supported; /**< Whether to support pNFS */
   fattr4_fs_layout_types fs_layout_types;/**< The supported layout
 					      types */
@@ -857,7 +857,7 @@ struct fsal_staticfsinfo_t
                                                allocated for a
                                                ds_addr_body XDR
                                                stream */
-#endif                                     /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
 };
 
@@ -901,7 +901,7 @@ typedef struct fs_common_initinfo__
   /* specifies the behavior for each init value. */
   struct _behavior_
   {
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
     fsal_initflag_t
         maxfilesize, maxlink, maxnamelen, maxpathlen,
         no_trunc, chown_restricted, case_insensitive,
@@ -911,7 +911,7 @@ typedef struct fs_common_initinfo__
         homogenous, supported_attrs, maxread, maxwrite, umask,
       auth_exportpath_xdev, xattr_access_rights, pnfs_supported,
       fs_layout_types, layout_blksize;
-#else
+#else /* !_PNFS_MDS */
     fsal_initflag_t
         maxfilesize, maxlink, maxnamelen, maxpathlen,
         no_trunc, chown_restricted, case_insensitive,
@@ -920,7 +920,7 @@ typedef struct fs_common_initinfo__
         named_attr, unique_handles, lease_time, acl_support, cansettime,
         homogenous, supported_attrs, maxread, maxwrite, umask,
         auth_exportpath_xdev, xattr_access_rights;
-#endif /* _USE_FSALMDS */
+#endif /* !_PNFS_MDS */
   } behaviors;
 
   /* specifies the values to be set if behavior <> FSAL_INIT_FS_DEFAULT */

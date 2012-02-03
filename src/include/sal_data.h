@@ -64,9 +64,9 @@
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
 #endif                          /* _USE_NFS4_1 */
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
 #include "fsal_pnfs.h"
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
 /* Indicate if state code must support blocking locks
  * NLM supports blocking locks
@@ -92,9 +92,9 @@ typedef struct state_nlm_client_t   state_nlm_client_t;
 typedef struct state_cookie_entry_t state_cookie_entry_t;
 typedef struct state_block_data_t   state_block_data_t;
 #endif /* _USE_BLOCKING_LOCKS */
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
 typedef struct state_layout_segment_t state_layout_segment_t;
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
 typedef struct nfs_state_id_param__
 {
@@ -137,13 +137,13 @@ typedef struct state_deleg__
 
 typedef struct state_layout__
 {
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
   layouttype4            state_layout_type;
   bool_t                 state_return_on_close;
   struct glist_head      state_segments;
-#else
+#else /* !_PNFS_MDS */
   int nothing;
-#endif /* _USE_FSALMDS */
+#endif /* !_PNFS_MDS */
 } state_layout_t;
 
 typedef union state_data_t
@@ -422,7 +422,7 @@ struct state_lock_entry_t
   pthread_mutex_t        sle_mutex;
 };
 
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
 struct state_layout_segment_t
 {
   struct glist_head      sls_state_segments;
@@ -431,7 +431,7 @@ struct state_layout_segment_t
   void                 * sls_fsal_data;
   pthread_mutex_t        sls_mutex;
 };
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
 #ifdef _USE_NLM
 #define sle_client_locks sle_locks

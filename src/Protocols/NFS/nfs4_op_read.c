@@ -56,17 +56,17 @@
 #include "cache_content_policy.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
 #include <stdlib.h>
 #include <unistd.h>
 #include "fsal_pnfs.h"
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */
 
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
 static int op_dsread(struct nfs_argop4 *op,
                      compound_data_t * data,
                      struct nfs_resop4 *resp);
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */
 
 /**
  * nfs4_op_read: The NFS4_OP_READ operation
@@ -137,13 +137,13 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_read_xattr(op, data, resp);
 
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
   if((data->minorversion == 1) &&
      (nfs4_Is_Fh_DSHandle(&data->currentFH)))
     {
       return(op_dsread(op, data, resp));
     }
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */
 
   /* Manage access type MDONLY */
   if(( data->pexport->access_type == ACCESSTYPE_MDONLY ) ||
@@ -458,7 +458,7 @@ void nfs4_op_read_Free(READ4res * resp)
 }                               /* nfs4_op_read_Free */
 
 
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
 
 /**
  * op_dsread: Calls down to pNFS data server

@@ -53,7 +53,7 @@
  *
  */
 
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
 
 /*
  * Functions potentially useful to all MDSs of layout types
@@ -177,9 +177,9 @@ FSAL_encode_ipv4_netaddr(XDR *xdrs,
 
      return NFS4_OK;
 }
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
 
 /*
  * Functions specific to NFSV4_1_FILES layouts
@@ -399,7 +399,7 @@ FSAL_encode_v4_multipath(XDR *xdrs,
 
      return NFS4_OK;
 }
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
 /**
  * Convert POSIX error codes to NFS 4 error codes
@@ -524,22 +524,22 @@ posix2nfs4_error(int posix_errorcode)
 
 /* Glue */
 
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
 fsal_mdsfunctions_t fsal_mdsfunctions;
-#endif                                          /* _USE_FSALMDS */
-#ifdef _USE_FSALDS
+#endif /* _PNFS_MDS */
+#ifdef _PNFS_DS
 fsal_dsfunctions_t fsal_dsfunctions;
-#endif                                          /* _USE_FSALMDS */
+#endif /* _PNFS_DS */
 
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
 void FSAL_LoadMDSFunctions(void)
 {
-  fsal_mdsfunctions = FSAL_GetMDSFunctions();
+     fsal_mdsfunctions = FSAL_GetMDSFunctions();
 }
-#endif /* _USE_FSALMDS */
-#ifdef _USE_FSALDS
+#endif /* _PNFS_MDS */
+#ifdef _PNFS_DS
 void FSAL_LoadDSFunctions(void)
 {
-  fsal_dsfunctions = FSAL_GetDSFunctions();
+     fsal_dsfunctions = FSAL_GetDSFunctions();
 }
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */

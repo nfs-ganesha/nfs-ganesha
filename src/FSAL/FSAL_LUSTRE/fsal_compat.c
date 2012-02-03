@@ -16,9 +16,9 @@
 #include "fsal_internal.h"
 #include "FSAL/common_methods.h"
 
-#if (defined(_USE_FSALMDS) || defined(_USE_FSALDS))
+#ifdef _PNFS
 #include "fsal_pnfs.h"
-#endif
+#endif /* _PNFS */
 
 fsal_functions_t fsal_lustre_functions = {
   .fsal_access = LUSTREFSAL_access,
@@ -119,7 +119,7 @@ fsal_const_t FSAL_GetConsts(void)
   return fsal_lustre_consts;
 }                               /* FSAL_GetConsts */
 
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
 fsal_mdsfunctions_t fsal_lustre_mdsfunctions = {
   .layoutget = LUSTREFSAL_layoutget,
   .layoutreturn = LUSTREFSAL_layoutreturn,
@@ -132,9 +132,9 @@ fsal_mdsfunctions_t FSAL_GetMDSFunctions(void)
 {
   return fsal_lustre_mdsfunctions;
 }
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
 fsal_dsfunctions_t fsal_lustre_dsfunctions = {
   .DS_read = LUSTREFSAL_DS_read,
   .DS_write = LUSTREFSAL_DS_write,
@@ -145,4 +145,4 @@ fsal_dsfunctions_t FSAL_GetDSFunctions(void)
 {
   return fsal_lustre_dsfunctions;
 }
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */

@@ -69,11 +69,6 @@
 #include "nfs_stat.h"
 #include "SemN.h"
 
-#ifdef _USE_PNFS
-#include "pnfs.h"
-#include "pnfs_service.h"
-#endif
-
 nfs_worker_data_t mydata ;
 
 static cache_entry_t * choose_pentry( hash_table_t * ht)

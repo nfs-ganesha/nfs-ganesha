@@ -63,15 +63,15 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
 #include "fsal_pnfs.h"
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */
 
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
 static int op_dscommit(struct nfs_argop4 *op,
                        compound_data_t * data,
                        struct nfs_resop4 *resp);
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */
 
 
 /**
@@ -129,13 +129,13 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_COMMIT4.status;
     }
 
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
   if((data->minorversion == 1) &&
      (nfs4_Is_Fh_DSHandle(&data->currentFH)))
     {
       return(op_dscommit(op, data, resp));
     }
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */
 
   /* Commit is done only on a file */
   if(data->current_filetype != REGULAR_FILE)
@@ -196,7 +196,7 @@ void nfs4_op_commit_Free(COMMIT4res * resp)
   return;
 }                               /* nfs4_op_commit_Free */
 
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
 /**
  *
  * op_dscommit: Call pNFS data server commit
@@ -241,4 +241,4 @@ static int op_dscommit(struct nfs_argop4 *op,
   return res_COMMIT4.status;
 }
 
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */

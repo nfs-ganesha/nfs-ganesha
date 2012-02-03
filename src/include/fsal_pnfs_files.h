@@ -40,7 +40,7 @@
 #include "config.h"
 #endif                          /* HAVE_CONFIG_H */
 
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_DS
 
 /**
  * This type exists soleley so arrays of hosts can be passed to
@@ -73,5 +73,5 @@ nfsstat4 FSAL_encode_v4_multipath(XDR *xdrs,
                                   uint32_t num_hosts,
                                   fsal_multipath_member_t *hosts);
 
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_DS */
 #endif /* _FSAL_PNFS_FILES_H */

@@ -75,9 +75,9 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
   state_status_t         state_status;
   const char           * tag = "CLOSE";
   struct glist_head    * glist, * glistn;
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
   bool_t                 last_close = TRUE;
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
   LogDebug(COMPONENT_STATE,
            "Entering NFS v4.1 CLOSE handler -----------------------------------------------------");
@@ -193,7 +193,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
                state_err_str(state_status));
     }
 
-#ifdef _USE_FSALMDS
+#ifdef _PNFS_MDS
   /* We can't simply grab a pointer to a layout state and free it
      later, since a client could have multiple layout states (since a
      layout state covers layouts of only one layout type) each marked
@@ -252,7 +252,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
             }
         }
     }
-#endif /* _USE_FSALMDS */
+#endif /* _PNFS_MDS */
 
 
   /* Close the file in FSAL through the cache inode */

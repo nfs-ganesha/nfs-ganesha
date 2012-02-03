@@ -5,7 +5,6 @@ check_PROGRAMS                = test_avl test_anon_support test_access_list_type
 liboutils_profiling_la_SOURCES = MesureTemps.c ../include/MesureTemps.h
 
 COMMON_LDADD = ../Protocols/NFS/libnfsproto.la                   \
-               $(PNFS_LIB)                                       \
                $(SEC_LIB_FLAGS)                                  \
                $(SVC_LIB_FLAGS)                                  \
                $(NFSIDMAP_LIB_FLAGS)                             \

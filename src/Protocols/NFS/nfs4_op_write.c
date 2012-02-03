@@ -55,15 +55,15 @@
 #include "cache_content_policy.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
 #include "fsal_pnfs.h"
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */
 
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
 static int op_dswrite(struct nfs_argop4 *op,
                       compound_data_t * data,
                       struct nfs_resop4 *resp);
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */
 
 /**
  * nfs4_op_write: The NFS4_OP_WRITE operation
@@ -153,13 +153,13 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))
     return nfs4_op_write_xattr(op, data, resp);
 
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
   if((data->minorversion == 1) &&
      (nfs4_Is_Fh_DSHandle(&data->currentFH)))
     {
       return(op_dswrite(op, data, resp));
     }
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */
 
 
   /* Manage access type */
@@ -464,7 +464,7 @@ void nfs4_op_write_Free(WRITE4res * resp)
   return;
 }                               /* nfs4_op_write_Free */
 
-#ifdef _USE_FSALDS
+#ifdef _PNFS_DS
 
 /**
  * op_dswrite: Write for a data server
@@ -511,5 +511,5 @@ static int op_dswrite(struct nfs_argop4 *op,
   res_WRITE4.status = nfs_status;
   return res_WRITE4.status;
 }
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */
 
