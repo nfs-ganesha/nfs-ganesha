@@ -101,6 +101,8 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_create";
   unsigned int i = 0;
 
+  memset(&create_arg, 0, sizeof(create_arg));
+
   resp->resop = NFS4_OP_CREATE;
   res_CREATE4.status = NFS4_OK;
 

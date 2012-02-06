@@ -122,6 +122,8 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
   fsal_attrib_list_t fsal_attributes;
   cache_inode_fsal_data_t *ppoolfsdata = NULL;
 
+  memset(&create_arg, 0, sizeof(create_arg));
+
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
 

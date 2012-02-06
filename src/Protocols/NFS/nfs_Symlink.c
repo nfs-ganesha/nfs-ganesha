@@ -113,6 +113,8 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
   cache_inode_status_t cache_status_parent;
   fsal_handle_t *pfsal_handle;
 
+  memset(&create_arg, 0, sizeof(create_arg));
+
   if(isDebug(COMPONENT_NFSPROTO))
     {
       char str[LEN_FH_STR];

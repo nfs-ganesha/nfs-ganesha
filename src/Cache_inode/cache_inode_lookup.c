@@ -111,6 +111,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t        * pentry_parent,
   cache_inode_fsal_data_t new_entry_fsdata;
   fsal_accessflags_t access_mask = 0;
 
+  memset(&create_arg, 0, sizeof(create_arg));
   memset( (char *)&new_entry_fsdata, 0, sizeof( new_entry_fsdata ) ) ; 
 
   /* Set the return default to CACHE_INODE_SUCCESS */

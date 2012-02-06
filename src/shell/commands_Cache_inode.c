@@ -2011,6 +2011,8 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
 
   cmdCacheInode_thr_info_t *context;
 
+  memset(&create_arg, 0, sizeof(create_arg));
+
   /* is the fs initialized ? */
   if(!cache_init)
     {

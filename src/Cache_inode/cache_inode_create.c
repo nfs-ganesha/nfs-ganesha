@@ -104,11 +104,16 @@ cache_inode_create(cache_entry_t * pentry_parent,
     fsal_handle_t dir_handle;
     cache_inode_fsal_data_t fsal_data;
     cache_inode_status_t status;
+    cache_inode_create_arg_t zero_create_arg;
 
+    memset(&zero_create_arg, 0, sizeof(zero_create_arg));
     memset( ( char *)&fsal_data, 0, sizeof( fsal_data ) ) ;
     memset( ( char *)&object_handle, 0, sizeof( object_handle ) ) ;
 
     fsal_accessflags_t access_mask = 0;
+
+    if (pcreate_arg == NULL)
+      pcreate_arg = &zero_create_arg;
 
     /* Set the return default to CACHE_INODE_SUCCESS */
     *pstatus = CACHE_INODE_SUCCESS;

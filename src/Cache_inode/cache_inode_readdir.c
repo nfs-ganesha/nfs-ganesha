@@ -820,6 +820,8 @@ cache_inode_status_t cache_inode_readdir_populate(
   cache_inode_dir_entry_t *new_dir_entry = NULL;
   uint64_t i = 0;
 
+  memset(&create_arg, 0, sizeof(create_arg));
+
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
 

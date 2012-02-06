@@ -108,6 +108,8 @@ int nfs_Mkdir(nfs_arg_t * parg,
   cache_inode_status_t cache_status_lookup;
   cache_inode_create_arg_t create_arg;
 
+  memset(&create_arg, 0, sizeof(create_arg));
+
   if(isDebug(COMPONENT_NFSPROTO))
     {
       char str[LEN_FH_STR];

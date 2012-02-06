@@ -103,6 +103,8 @@ int nfs3_Mknod(nfs_arg_t * parg,
   cache_inode_create_arg_t create_arg;
   fsal_handle_t *pfsal_handle;
 
+  memset(&create_arg, 0, sizeof(create_arg));
+
   if(isDebug(COMPONENT_NFSPROTO))
     {
       char str[LEN_FH_STR];

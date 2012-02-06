@@ -121,6 +121,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   cache_inode_create_arg_t create_arg;
 
+  memset(&create_arg, 0, sizeof(create_arg));
+
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
