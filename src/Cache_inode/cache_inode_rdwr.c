@@ -93,7 +93,7 @@ cache_inode_rdwr(cache_entry_t *entry,
                  void *buffer,
                  bool_t *eof,
                  cache_inode_client_t *client,
-                 fsal_op_context_t *context,
+                 struct user_cred *creds,
                  cache_inode_stability_t stable,
                  cache_inode_status_t *status)
 {
@@ -210,20 +210,18 @@ cache_inode_rdwr(cache_entry_t *entry,
 
           /* Call FSAL_read or FSAL_write */
           if (io_direction == CACHE_INODE_READ) {
-               fsal_status
-                    = FSAL_read(&(entry->object.file.open_fd.fd),
-                                &seek_descriptor,
-                                io_size,
-                                buffer,
-                                bytes_moved,
-                                eof);
+	       fsal_status = entry->obj_handle->ops->read(entry->obj_handle,
+							  &seek_descriptor,
+							  io_size,
+							  buffer,
+							  bytes_moved,
+							  eof);
           } else {
-               fsal_status
-                    = FSAL_write(&(entry->object.file.open_fd.fd),
-                                 &seek_descriptor,
-                                 io_size,
-                                 buffer,
-                                 bytes_moved);
+	       fsal_status = entry->obj_handle->ops->write(entry->obj_handle,
+							   &seek_descriptor,
+							   io_size,
+							   buffer,
+							   bytes_moved);
 
                /* Alright, the unstable write is complete. Now if it was
                   supposed to be a stable write we can sync to the hard

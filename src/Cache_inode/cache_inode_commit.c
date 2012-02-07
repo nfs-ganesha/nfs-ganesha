@@ -126,9 +126,9 @@ cache_inode_commit(cache_entry_t *entry,
                }
           }
 
-          fsal_status = FSAL_commit(&(entry->object.file.open_fd.fd),
-                                    offset,
-                                    count);
+	  fsal_status = entry->obj_handle->ops->commit(entry->obj_handle,
+						       offset,
+						       count);
           if (FSAL_IS_ERROR(fsal_status)) {
                LogMajor(COMPONENT_CACHE_INODE,
                         "cache_inode_rdwr: fsal_commit() failed: "
