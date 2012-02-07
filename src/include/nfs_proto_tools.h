@@ -81,7 +81,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
                                   nfsstat3 * pstatus3,
                                   nfsstat4 * pstatus4,
                                   fsal_attrib_list_t * pattr,
-                                  fsal_op_context_t * pcontext,
+                                  exportlist_t *pexport,
                                   int *prc);
 
 void nfs_SetWccData(exportlist_t * pexport,
@@ -92,12 +92,10 @@ int nfs_SetPostOpAttr(exportlist_t * pexport,
                       const fsal_attrib_list_t * pfsal_attr,
                       post_op_attr * presult);
 
-int nfs_SetPostOpXAttrDir(fsal_op_context_t * pcontext,
-                          exportlist_t * pexport,
+int nfs_SetPostOpXAttrDir(exportlist_t * pexport,
                           fsal_attrib_list_t * pfsal_attr, post_op_attr * presult);
 
-int nfs_SetPostOpXAttrFile(fsal_op_context_t * pcontext,
-                           exportlist_t * pexport,
+int nfs_SetPostOpXAttrFile(exportlist_t * pexport,
                            fsal_attrib_list_t * pfsal_attr, post_op_attr * presult);
 
 void nfs_SetPreOpAttr(fsal_attrib_list_t * pfsal_attr, pre_op_attr * pattr);
