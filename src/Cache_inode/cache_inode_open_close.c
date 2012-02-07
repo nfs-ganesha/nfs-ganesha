@@ -80,9 +80,16 @@ cache_inode_fd(cache_entry_t *entry)
           return NULL;
      }
 
-     if (entry->object.file.open_fd.openflags != FSAL_O_CLOSED) {
-          return &entry->object.file.open_fd.fd;
-     }
+/** @TODO loose scrap.  this is all done in the fsal now
+ *  deprecate.
+ */
+/*   if(((pentry->object.file.open_fd.openflags == FSAL_O_RDONLY) || */
+/*       (pentry->object.file.open_fd.openflags == FSAL_O_RDWR) || */
+/*       (pentry->object.file.open_fd.openflags == FSAL_O_WRONLY)) && */
+/*      (pentry->object.file.open_fd.fileno != 0)) */
+/*     { */
+/*       return &pentry->object.file.open_fd.fd; */
+/*     } */
 
      return NULL;
 }
@@ -144,15 +151,17 @@ is_open_for_read(cache_entry_t *entry)
  * @return CACHE_INODE_SUCCESS if successful, errors otherwise
  */
 
+<<<<<<< HEAD
 cache_inode_status_t
 cache_inode_open(cache_entry_t *entry,
                  fsal_openflags_t openflags,
-                 fsal_op_context_t *context,
+		 struct user_cred *creds,
                  uint32_t flags,
                  cache_inode_status_t *status)
 {
      /* Error return from FSAL */
      fsal_status_t fsal_status = {0, 0};
+     fsal_accessflags_t access_type;
 
      if ((entry == NULL) || (context == NULL) ||
          (status == NULL)) {
@@ -172,10 +181,30 @@ cache_inode_open(cache_entry_t *entry,
           goto out;
      }
 
+     access_type = (openflags == FSAL_O_RDWR) ? FSAL_R_OK : FSAL_W_OK;
+
      if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
           pthread_rwlock_wrlock(&entry->content_lock);
      }
 
+     /* access check but based on fsal_open_flags_t, not fsal_access_flags_t
+      * this may be checked above but here is a last stop check.
+      * Execute access not considered here.  Could fail execute opens.
+      * FIXME: sort out access checks in callers.
+      */
+     fsal_status = pentry->obj_handle->ops->test_access(pentry->obj_handle,
+							creds, access_type);
+     if(FSAL_IS_ERROR(fsal_status)) {
+	 *status = cache_inode_error_convert(fsal_status);
+
+	 LogDebug(COMPONENT_CACHE_INODE,
+		  "returning %d(%s) from access check",
+		  *status, cache_inode_err_str(*status));
+	 goto unlock;
+     }
+/* @TODO all this logic is in the fsal as is the fd itself.
+ * Do we have to test this or can we depend on the fsal?
+ */
      /* Open file need to be closed, unless it is already open as read/write */
      if ((entry->object.file.open_fd.openflags != FSAL_O_RDWR) &&
          (entry->object.file.open_fd.openflags != 0) &&
@@ -203,11 +232,8 @@ cache_inode_open(cache_entry_t *entry,
      }
 
      if ((entry->object.file.open_fd.openflags == FSAL_O_CLOSED)) {
-          fsal_status = FSAL_open(&(entry->handle),
-                                  context,
-                                  openflags,
-                                  &entry->object.file.open_fd.fd,
-                                  NULL);
+	  fsal_status = entry->obj_handle->ops->open(entry->obj_handle,
+						     openflags);
           if (FSAL_IS_ERROR(fsal_status)) {
                *status = cache_inode_error_convert(fsal_status);
                LogDebug(COMPONENT_CACHE_INODE,
@@ -301,7 +327,7 @@ cache_inode_close(cache_entry_t *entry,
          (flags & CACHE_INODE_FLAG_REALLYCLOSE)) {
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_close: entry %p", entry);
-          fsal_status = FSAL_close(&(entry->object.file.open_fd.fd));
+	  fsal_status = entry->obj_handle->ops->close(entry->obj_handle);
 
           entry->object.file.open_fd.openflags = FSAL_O_CLOSED;
           if (FSAL_IS_ERROR(fsal_status) &&
