@@ -171,6 +171,7 @@ int fridgethr_init( )
   pthread_attr_init(&attr_thr) ; 
   pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
   pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED);      /* If not, the conn mgr will be "defunct" threads */
+  pthread_attr_setstacksize(&attr_thr, THREAD_STACK_SIZE);
 
   fridge_content = NULL ;
 
