@@ -180,7 +180,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                                    NULL,
                                                    &(res_OPEN4.status),
                                                    &attr,
-                                                   data->pcontext,
+                                                   data->pexport,
                                                    data->pclient,
                                                    &retval)) == NULL)
         {
@@ -409,7 +409,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
       if(cache_inode_getattr(pentry_parent,
                              &attr_parent,
                              data->pclient,
-                             data->pcontext,
                              &cache_status) != CACHE_INODE_SUCCESS)
         {
           res_OPEN4.status = nfs4_Errno(cache_status);
@@ -470,8 +469,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                              &filename,
                                              &attr_newfile,
                                              data->pclient,
-                                             data->pcontext,
-                                             &cache_status);
+                                             &data->user_credentials,
+					     &cache_status);
+
           if(cache_status != CACHE_INODE_NOT_FOUND)
             {
               /* if open is UNCHECKED, return NFS4_OK (RFC3530 page 172) */
@@ -690,7 +690,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                    NULL,
                                    &attr_newfile,
                                    data->pclient,
-                                   data->pcontext,
+                                   data->user_credentials,
                                    &cache_status)) == NULL)
             {
               /* If the file already exists, this is not an error if
@@ -720,7 +720,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                   = cache_inode_setattr(pentry_newfile,
                                         &sattr,
                                         data->pclient,
-                                        data->pcontext,
+                                        data->user_credentials,
                                         &cache_status)) !=
                  CACHE_INODE_SUCCESS)
                 {
@@ -763,7 +763,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                                    &filename,
                                    &attr_newfile,
                                    data->pclient,
-                                   data->pcontext,
+                                   data->user_credentials,
                                    &cache_status)) == NULL)
             {
                res_OPEN4.status = nfs4_Errno(cache_status);
@@ -961,7 +961,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   if((cache_status = cache_inode_getattr(pentry_parent,
                                          &attr_parent,
                                          data->pclient,
-                                         data->pcontext,
                                          &cache_status))
      != CACHE_INODE_SUCCESS)
     {
@@ -1128,7 +1127,7 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
          * to the file */
         if(args->share_deny & OPEN4_SHARE_DENY_WRITE) {
                 if(cache_inode_access(pentry, wr_acc, data->pclient,
-                    data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
+                    &data->user_credentials, &cache_status) != CACHE_INODE_SUCCESS) {
                         return NFS4ERR_ACCESS;
                 }
         }
@@ -1137,14 +1136,14 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
          * it for read */
         if(args->share_access & OPEN4_SHARE_ACCESS_READ) {
                 if(cache_inode_access(pentry, rd_acc, data->pclient,
-                    data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
+                    &data->user_credentials, &cache_status) != CACHE_INODE_SUCCESS) {
                         return NFS4ERR_ACCESS;
                 }
         }
 
         if(AttrProvided == TRUE) {      /* Set the attribute if provided */
                 if(cache_inode_setattr(pentry, sattr, data->pclient,
-                    data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
+                    &data->user_credentials, &cache_status) != CACHE_INODE_SUCCESS) {
                         return nfs4_Errno(cache_status);
                 }
 
@@ -1158,8 +1157,8 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
         /* Same check on write */
         if(args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
                 if(cache_inode_access(pentry, wr_acc, data->pclient,
-                    data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
-                        return NFS4ERR_ACCESS;
+                    &data->user_credentials, &cache_status) != CACHE_INODE_SUCCESS) {
+			return NFS4ERR_ACCESS;
                 }
         }
 
@@ -1211,7 +1210,7 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
                 }
 
                 if(state_add_impl(pentry_newfile, candidate_type, &candidate_data,
-                    powner, data->pclient, data->pcontext, statep,
+                    powner, data->pclient, statep,
                     &state_status) != STATE_SUCCESS) {
                         *cause2 = STATE_ADD;
                         return NFS4ERR_SHARE_DENIED;
@@ -1241,14 +1240,16 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
 
         if (pentry_parent != NULL) {    /* claim null */
           /* Open the file */
-          if(cache_inode_open(pentry_newfile, data->pclient, openflags, data->pcontext,
+          if(cache_inode_open(pentry_newfile, data->pclient, openflags,
+			      &data->user_credentials,
                               0, &cache_status) != CACHE_INODE_SUCCESS) {
             *cause2 = " cache_inode_open";
             return NFS4ERR_ACCESS;
           }
         } else { /* claim previous */
           if (cache_inode_open(pentry_newfile, data->pclient, openflags,
-                               data->pcontext, 0, &cache_status) != CACHE_INODE_SUCCESS) {
+                               &data->user_credentials,
+			       0, &cache_status) != CACHE_INODE_SUCCESS) {
             *cause2 = CACHE_INODE_OPEN;
             return nfs4_Errno(cache_status);
           }
@@ -1306,7 +1307,7 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
 static nfsstat4
 nfs4_create_fh(compound_data_t *data, cache_entry_t *pentry, char **cause2)
 {
-        fsal_handle_t *pnewfsal_handle = NULL;
+	struct fsal_obj_handle  * obj_hdl = NULL;
         nfs_fh4 newfh4;
         struct alloc_file_handle_v4 new_handle;
 
@@ -1314,10 +1315,10 @@ nfs4_create_fh(compound_data_t *data, cache_entry_t *pentry, char **cause2)
         newfh4.nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
 
         /* Now produce the filehandle to this file */
-        pnewfsal_handle = &pentry->handle;
+		obj_hdl = pentry->obj_handle;
 
         /* Building a new fh */
-        if(!nfs4_FSALToFhandle(&newfh4, pnewfsal_handle, data)) {
+        if(!nfs4_FSALToFhandle(&newfh4, obj_hdl, data)) {
                 *cause2 = " (nfs4_FSALToFhandle failed)";
                 return NFS4ERR_SERVERFAULT;
         }

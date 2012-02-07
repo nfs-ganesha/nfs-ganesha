@@ -220,7 +220,7 @@ nfs4_op_readdir(struct nfs_argop4 *op,
                              &num_entries,
                              &eod_met,
                              data->pclient,
-                             data->pcontext,
+                             &data->user_credentials,
                              nfs4_readdir_callback,
                              &cb_data,
                              &cache_status) != CACHE_INODE_SUCCESS) {

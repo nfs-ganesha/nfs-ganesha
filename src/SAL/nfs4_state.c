@@ -120,7 +120,6 @@ int state_conflict(state_t      * pstate,
  * @param pstate_data   [IN]    data related to this state
  * @param powner_input  [IN]    related open_owner
  * @param pclient       [INOUT] cache inode client to be used
- * @param pcontext      [IN]    FSAL credentials
  * @param ppstate       [OUT]   pointer to a pointer to the new state
  * @param pstatus       [OUT]   returned status
  *
@@ -132,7 +131,6 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
                               state_data_t          * pstate_data,
                               state_owner_t         * powner_input,
                               cache_inode_client_t  * pclient,
-                              fsal_op_context_t     * pcontext,
                               state_t              ** ppstate,
                               state_status_t        * pstatus)
 {

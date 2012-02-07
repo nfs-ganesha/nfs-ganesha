@@ -160,7 +160,7 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                         &name,
                                         &attr_parent,
                                         data->pclient,
-                                        data->pcontext,
+                                        &data->user_credentials,
                                         &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_REMOVE4.status = nfs4_Errno(cache_status);

@@ -104,7 +104,6 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
      not need to be held during a non-anonymous read, since the open
      state itself prevents a conflict. */
   bool_t                   anonymous = FALSE;
-  fsal_staticfsinfo_t * pstaticinfo = data->pcontext->export_context->fe_static_fs_info;
 
   /* Say we are managing NFS4_OP_READ */
   resp->resop = NFS4_OP_READ;
@@ -272,7 +271,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       if(cache_inode_access(pentry,
                             FSAL_READ_ACCESS,
                             data->pclient,
-                            data->pcontext,
+                            &data->user_credentials,
                             &cache_status) != CACHE_INODE_SUCCESS)
         {
           if (anonymous)
@@ -310,7 +309,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   if( ((data->pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD))
     check_size = data->pexport->MaxRead;
   else
-    check_size = pstaticinfo->maxread;
+    check_size = pentry->obj_handle->export->ops->fs_maxread(pentry->obj_handle->export);
   if( size > check_size )
     {
       /* the client asked for too much data,
@@ -358,7 +357,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                       bufferdata,
                       &eof_met,
                       data->pclient,
-                      data->pcontext,
+                      &data->user_credentials,
                       CACHE_INODE_SAFE_WRITE_TO_FS,
                       &cache_status) != CACHE_INODE_SUCCESS) ||
      ((cache_inode_getattr(pentry, &attr, data->pclient, data->pcontext,

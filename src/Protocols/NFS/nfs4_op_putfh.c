@@ -171,7 +171,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                                        NULL,
                                                        &(res_PUTFH4.status),
                                                        &attr,
-                                                       data->pcontext,
+                                                       data->pexport,
                                                        data->pclient,
                                                        &rc)) == NULL)
             {

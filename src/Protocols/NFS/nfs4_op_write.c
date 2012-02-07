@@ -99,7 +99,6 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   state_t                * pstate_open;
   cache_inode_status_t     cache_status;
   cache_entry_t          * pentry = NULL;
-  fsal_staticfsinfo_t    * pstaticinfo = NULL ;
 #ifdef _USE_QUOTA
   fsal_status_t            fsal_status ;
 #endif
@@ -145,7 +144,6 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 #endif /* _PNFS_DS */
 
-  pstaticinfo = data->pcontext->export_context->fe_static_fs_info;
   /* Manage access type */
   switch( data->pexport->access_type )
    {
@@ -256,7 +254,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       if(cache_inode_access(pentry,
                             FSAL_WRITE_ACCESS,
                             data->pclient,
-                            data->pcontext,
+                            &data->user_credentials,
                             &cache_status) != CACHE_INODE_SUCCESS)
         {
           res_WRITE4.status = nfs4_Errno(cache_status);;
@@ -294,7 +292,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   if( ((data->pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE)) 
     check_size = data->pexport->MaxWrite;
   else
-    check_size = pstaticinfo->maxwrite;
+    check_size = pentry->obj_handle->export->ops->fs_maxwrite(pentry->obj_handle->export);
   if( size > check_size )
     {
       /*
@@ -350,7 +348,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       bufferdata,
                       &eof_met,
                       data->pclient,
-                      data->pcontext,
+                      &data->user_credentials,
                       stability,
                       &cache_status) != CACHE_INODE_SUCCESS)
     {

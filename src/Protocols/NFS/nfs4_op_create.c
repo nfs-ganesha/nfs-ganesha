@@ -211,7 +211,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if((cache_status = cache_inode_getattr(pentry_parent,
                                          &attr_parent,
                                          data->pclient,
-                                         data->pcontext,
                                          &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_CREATE4.status = nfs4_Errno(cache_status);
@@ -264,7 +263,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                           &create_arg,
                                           &attr_new,
                                           data->pclient,
-                                          data->pcontext, &cache_status)) == NULL)
+                                          &data->user_credentials, &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
           return res_CREATE4.status;
@@ -292,7 +291,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                           &create_arg,
                                           &attr_new,
                                           data->pclient,
-                                          data->pcontext, &cache_status)) == NULL)
+                                          &data->user_credentials, &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
           return res_CREATE4.status;
@@ -316,7 +315,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                           NULL,
                                           &attr_new,
                                           data->pclient,
-                                          data->pcontext, &cache_status)) == NULL)
+                                          &data->user_credentials, &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
           return res_CREATE4.status;
@@ -340,7 +339,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                           NULL,
                                           &attr_new,
                                           data->pclient,
-                                          data->pcontext, &cache_status)) == NULL)
+                                          &data->user_credentials, &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
           return res_CREATE4.status;
@@ -367,7 +366,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                           &create_arg,
                                           &attr_new,
                                           data->pclient,
-                                          data->pcontext, &cache_status)) == NULL)
+                                          &data->user_credentials, &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
           return res_CREATE4.status;
@@ -394,7 +393,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                           &create_arg,
                                           &attr_new,
                                           data->pclient,
-                                          data->pcontext, &cache_status)) == NULL)
+                                          &data->user_credentials, &cache_status)) == NULL)
         {
           res_CREATE4.status = nfs4_Errno(cache_status);
           return res_CREATE4.status;
@@ -449,7 +448,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if((cache_status = cache_inode_setattr(pentry_new,
                                              &sattr,
                                              data->pclient,
-                                             data->pcontext,
+                                             &data->user_credentials,
                                              &cache_status)) != CACHE_INODE_SUCCESS)
 
         {
@@ -479,7 +478,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if((cache_status = cache_inode_getattr(pentry_parent,
                                          &attr_parent,
                                          data->pclient,
-                                         data->pcontext,
                                          &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_CREATE4.status = nfs4_Errno(cache_status);
