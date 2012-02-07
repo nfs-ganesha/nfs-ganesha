@@ -198,7 +198,6 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   /* We have to keep track of the 'change' file attribute for reply structure */
   if((cache_status = cache_inode_getattr(dir_pentry,
                                          &attr,
-                                         data->pcontext,
                                          &cache_status)) != CACHE_INODE_SUCCESS)
     {
       res_LINK4.status = nfs4_Errno(cache_status);
@@ -215,7 +214,7 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                       dir_pentry,
                       &newname,
                       &attr,
-                      data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+                      &data->user_credentials, &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_LINK4.status = nfs4_Errno(cache_status);
       return res_LINK4.status;

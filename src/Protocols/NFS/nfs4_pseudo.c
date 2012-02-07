@@ -1426,7 +1426,8 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   fsal_path_t exportpath_fsal;
   char pathfsal[MAXPATHLEN] ;
   fsal_attrib_list_t attr;
-  fsal_handle_t fsal_handle;
+  struct fsal_export *exp_hdl;
+  struct fsal_obj_handle *fsal_handle;
   cache_entry_t *pentry = NULL;
   fsal_mdsize_t strsize = MNTPATHLEN + 1;
 
@@ -1517,8 +1518,9 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         }
 
       /* Lookup the FSAL to build the fsal handle */
-      if(FSAL_IS_ERROR(fsal_status = FSAL_lookupPath(&exportpath_fsal,
-                                                     data->pcontext, &fsal_handle, NULL)))
+      exp_hdl = psfsentry.junction_export->export_hdl;
+      fsal_status = exp_hdl->ops->lookup_path(exp_hdl, &exportpath_fsal, &fsal_handle);
+      if(FSAL_IS_ERROR(fsal_status))
         {
 	  LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to lookup for %s, id=%d",
@@ -1553,7 +1555,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         }
 
       /* Build the nfs4 handle */
-      if(!nfs4_FSALToFhandle(&data->currentFH, &fsal_handle, data))
+      if(!nfs4_FSALToFhandle(&data->currentFH, fsal_handle, data))
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to build the first file handle");
@@ -1567,14 +1569,9 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
       /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
-      fsdata.fh_desc.start = (caddr_t)&fsal_handle;
-      fsdata.fh_desc.len = 0;
-      FSAL_ExpandHandle(data->pcontext->export_context,
-                        FSAL_DIGEST_SIZEOF,
-                        &fsdata.fh_desc);
+      fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc);
 
-      if((pentry = cache_inode_make_root(&fsdata,
-                                         data->pcontext,
+      if((pentry = cache_inode_make_root(fsal_handle,
                                          &cache_status)) == NULL)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
@@ -1587,7 +1584,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       /* Get the attributes (costless: the attributes was cached when the root pentry was created */
       if(cache_inode_getattr(pentry,
                              &attr,
-                             data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+                             &cache_status) != CACHE_INODE_SUCCESS)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get attributes for root pentry");
@@ -1709,7 +1706,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   cache_inode_fsal_data_t fsdata;
   fsal_path_t exportpath_fsal;
   fsal_attrib_list_t attr;
-  fsal_handle_t fsal_handle;
+  struct fsal_export *exp_hdl;
+  struct fsal_obj_handle *fsal_handle;
   fsal_mdsize_t strsize = MNTPATHLEN + 1;
   fsal_status_t fsal_status;
   int error = 0;
@@ -1789,8 +1787,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
         }
 
       /* Lookup the FSAL to build the fsal handle */
-      if(FSAL_IS_ERROR(fsal_status = FSAL_lookupPath(&exportpath_fsal,
-                                                     data->pcontext, &fsal_handle, NULL)))
+      exp_hdl = psfsentry.junction_export->export_hdl;
+      fsal_status = exp_hdl->ops->lookup_path(exp_hdl, &exportpath_fsal, &fsal_handle);
+      if(FSAL_IS_ERROR(fsal_status))
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to lookup for %s, id=%d",
@@ -1825,7 +1824,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
         }
 
       /* Build the nfs4 handle */
-      if(!nfs4_FSALToFhandle(&data->currentFH, &fsal_handle, data))
+      if(!nfs4_FSALToFhandle(&data->currentFH, fsal_handle, data))
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to build the first file handle");
@@ -1839,14 +1838,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
       /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
-      fsdata.fh_desc.start = (caddr_t) &fsal_handle;
-      fsdata.fh_desc.len = 0;
-      FSAL_ExpandHandle(data->pcontext->export_context,
-                        FSAL_DIGEST_SIZEOF,
-                        &fsdata.fh_desc);
+      fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc);
 
-      if((pentry = cache_inode_make_root(&fsdata,
-                                         data->pcontext,
+      if((pentry = cache_inode_make_root(fsal_handle,
                                          &cache_status)) == NULL)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
@@ -1859,7 +1853,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       /* Get the attributes (costless: the attributes was cached when the root pentry was created */
       if(cache_inode_getattr(pentry,
                              &attr,
-                             data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+                             &cache_status) != CACHE_INODE_SUCCESS)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get attributes for root pentry");
@@ -2006,9 +2000,11 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
               res_READDIR4.status = NFS4ERR_SERVERFAULT;
               return res_READDIR4.status;
             }
-          if(FSAL_IS_ERROR(fsal_status = FSAL_lookupPath(&exportpath_fsal,
-                                                 data->pcontext, 
-                                                 &fsal_handle, NULL)))
+	  exp_hdl = psfsentry.junction_export->export_hdl;
+	  fsal_status = exp_hdl->ops->lookup_path(exp_hdl,
+						  &exportpath_fsal,
+						  &fsal_handle);
+	  if(FSAL_IS_ERROR(fsal_status))
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to lookup for %s , id=%d",
@@ -2028,14 +2024,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
               return res_READDIR4.status;
             }
           /* Add the entry to the cache as a root. There has to be a better way. */
-          fsdata.fh_desc.start = (caddr_t) &fsal_handle;
-          fsdata.fh_desc.len = 0;
-          FSAL_ExpandHandle(data->pcontext->export_context,
-                            FSAL_DIGEST_SIZEOF,
-                            &fsdata.fh_desc);
-          if((pentry = cache_inode_make_root(&fsdata,
-                                             data->pcontext,
-                                             &cache_status)) == NULL)
+	  fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc);
+          if((pentry = cache_inode_make_root(fsal_handle,
+					     &cache_status)) == NULL)
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Allocate root entry in cache inode failed, for %s, id=%d",
@@ -2046,7 +2037,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           /* Finally, get the attributes */
           if(cache_inode_getattr(pentry,
                              &attr,
-                             data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+                             &cache_status) != CACHE_INODE_SUCCESS)
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to get attributes for root pentry");

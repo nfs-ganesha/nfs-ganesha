@@ -239,7 +239,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     {
       if(cache_inode_access(pentry,
                             FSAL_WRITE_ACCESS,
-                            data->pcontext,
+                            &data->user_credentials,
                             &cache_status) != CACHE_INODE_SUCCESS)
         {
           res_WRITE4.status = nfs4_Errno(cache_status);;
@@ -271,7 +271,14 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* The size to be written should not be greater than FATTR4_MAXWRITESIZE because this value is asked
    * by the client at mount time, but we check this by security */
 
-  if( size > data->pexport->MaxWrite )
+  /* We should check against the value we returned in getattr. This was not
+   * the case before the following check_size code was added.
+   */
+  if( ((data->pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE)) 
+    check_size = data->pexport->MaxWrite;
+  else
+    check_size = pentry->obj_handle->export->ops->fs_maxwrite(pentry->obj_handle->export);
+  if( size > check_size )
     {
       /*
        * The client asked for too much data, we
@@ -325,7 +332,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       &written_size,
                       bufferdata,
                       &eof_met,
-                      data->pcontext,
+                      &data->user_credentials,
                       stability,
                       &cache_status) != CACHE_INODE_SUCCESS)
     {

@@ -206,7 +206,7 @@ nfs4_op_desc_t *optabvers[] = { (nfs4_op_desc_t *) optab4v0 };
 
 int nfs4_Compound(nfs_arg_t *parg,
                   exportlist_t *pexport,
-                  fsal_op_context_t *pcontext,
+                  struct user_cred *creds,
                   nfs_worker_data_t *pworker,
                   struct svc_req *preq,
                   nfs_res_t * pres)
@@ -281,8 +281,7 @@ int nfs4_Compound(nfs_arg_t *parg,
 
   data.pfullexportlist = pexport;       /* Full export list is
                                            provided in input */
-  data.pcontext = pcontext; /* Get the fsal credentials from the
-                               worker thread */
+  data.user_credentials = *creds;     /* Get the client user's credentials */
   data.pworker = pworker;
   data.pseudofs = nfs4_GetPseudoFs();
   data.reqp = preq;

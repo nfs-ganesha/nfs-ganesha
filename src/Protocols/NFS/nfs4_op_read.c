@@ -260,7 +260,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     {
       if(cache_inode_access(pentry,
                             FSAL_READ_ACCESS,
-                            data->pcontext,
+                            &data->user_credentials,
                             &cache_status) != CACHE_INODE_SUCCESS)
         {
           if (anonymous)
@@ -292,7 +292,14 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       }
 
   /* Do not read more than FATTR4_MAXREAD */
-  if( size > data->pexport->MaxRead )
+  /* We should check against the value we returned in getattr. This was not
+   * the case before the following check_size code was added.
+   */
+  if( ((data->pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD))
+    check_size = data->pexport->MaxRead;
+  else
+    check_size = pentry->obj_handle->export->ops->fs_maxread(pentry->obj_handle->export);
+  if( size > check_size )
     {
       /* the client asked for too much data,
        * this should normally not happen because
@@ -339,7 +346,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                       &read_size,
                       bufferdata,
                       &eof_met,
-                      data->pcontext,
+                      &data->user_credentials,
                       CACHE_INODE_SAFE_WRITE_TO_FS,
                       &cache_status) != CACHE_INODE_SUCCESS) ||
      ((cache_inode_getattr(pentry, &attr, data->pcontext,
