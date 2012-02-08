@@ -628,7 +628,6 @@ case $FSAL in
 		AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
 		AC_DEFINE(_USE_FSAL_UP,1,[enable FSAL Upcall Interface support])
 
-
 		AC_CHECK_HEADERS([gpfs.h gpfs_fcntl.h gpfs_gpl.h gpfs_lweTypes.h],
 				 [],
                                  [AC_MSG_ERROR(Missing RPMS. You may run ./install_files_gpfs.sh as root from src/FSAL/FSAL_GPFS)],
