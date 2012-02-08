@@ -623,6 +623,30 @@ int parseAccessParam(char *var_name, char *var_value,
   return rc;
 }
 
+bool_t fsal_specific_checks(exportlist_t *p_entry)
+{
+  #ifdef _USE_GPFS
+  p_entry->use_fsal_up = TRUE;
+
+  if (strncmp(p_entry->fsal_up_type, "DUMB", 4) != 0)
+    {
+      LogWarn(COMPONENT_CONFIG,
+              "NFS READ_EXPORT: ERROR: %s must be \"DUMB\" when using GPFS."
+              " Setting it to \"DUMB\"", CONF_EXPORT_FSAL_UP_TYPE);
+      strncpy(p_entry->fsal_up_type,"DUMB", 4);
+    }
+  if (p_entry->use_ganesha_write_buffer != FALSE)
+    {
+      LogWarn(COMPONENT_CONFIG,
+              "NFS READ_EXPORT: ERROR: %s must be FALSE when using GPFS. "
+              "Setting it to FALSE.", CONF_EXPORT_USE_GANESHA_WRITE_BUFFER);
+      p_entry->use_ganesha_write_buffer = FALSE;
+    }
+  #endif
+
+  return TRUE;
+}
+
 /**
  * BuildExportEntry : builds an export entry from configutation file.
  * Don't stop immediately on error,
@@ -664,6 +688,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->anonymous_uid = (uid_t) ANON_UID;
   p_entry->anonymous_gid = (gid_t) ANON_GID;
   p_entry->use_commit = TRUE;
+  p_entry->use_ganesha_write_buffer = FALSE;
 
   /* Defaults for FSAL_UP. It is ok to leave the filter list NULL
    * even if we enable the FSAL_UP. */
@@ -2134,6 +2159,13 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
    }
 #endif
 
+  /* Here we can make sure certain options are turned on for specific FSALs */
+  if (!fsal_specific_checks(p_entry))
+    {
+      LogCrit(COMPONENT_CONFIG,
+               "NFS READ_EXPORT: ERROR: Found conflicts in export entry.");
+      return -1;
+    }
 
   *pp_export = p_entry;
 
