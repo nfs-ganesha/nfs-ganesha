@@ -200,7 +200,8 @@ typedef enum nfs_clientid_confirm_state__
 { CONFIRMED_CLIENT_ID = 1,
   UNCONFIRMED_CLIENT_ID = 2,
   REBOOTED_CLIENT_ID = 3,
-  CB_RECONFIGURED_CLIENT_ID = 4
+  CB_RECONFIGURED_CLIENT_ID = 4,
+  EXPIRED_CLIENT_ID = 5
 } nfs_clientid_confirm_state_t;
 
 typedef char path_str_t[MAXPATHLEN] ;
@@ -623,6 +624,7 @@ void *stat_exporter_thread(void *IndexArg);
 int stats_snmp(nfs_worker_data_t * workers_data_local);
 void *file_content_gc_thread(void *IndexArg);
 void *nfs_file_content_flush_thread(void *flush_data_arg);
+void *reaper_thread(void *arg);
 
 #ifdef _USE_UPCALL_SIMULATOR
 void * upcall_simulator_thread( void * UnusedArg ) ;

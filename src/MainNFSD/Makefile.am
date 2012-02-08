@@ -110,6 +110,7 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              nfs_rpc_tcp_socket_manager_thread.c  \
                              nfs_init.c                           \
                              nfs_tools.c                          \
+                             nfs_reaper_thread.c                  \
                              nfs_init.h                           \
                              ../include/LRU_List.h                \
                              ../include/nfs_tcb.h                 \

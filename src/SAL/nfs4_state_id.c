@@ -387,7 +387,7 @@ int nfs4_Check_Stateid(stateid4        * pstate,
 {
   u_int16_t         time_digest = 0;
   state_t         * pstate2;
-  nfs_client_id_t   nfs_clientid;
+  nfs_client_id_t * nfs_clientid;
   char              str[OTHERSIZE * 2 + 1 + 6];
   int32_t           diff;
 
@@ -488,7 +488,7 @@ int nfs4_Check_Stateid(stateid4        * pstate,
    * with NFSv4.0, the clientid is related to the stateid itself */
   if(clientid == 0LL)
     {
-      if(nfs_client_id_get(pstate2->state_powner->so_owner.so_nfs4_owner.so_clientid,
+      if(nfs_client_id_Get_Pointer(pstate2->state_powner->so_owner.so_nfs4_owner.so_clientid,
                            &nfs_clientid) != CLIENT_ID_SUCCESS)
         {
           LogDebug(COMPONENT_STATE,
@@ -499,13 +499,11 @@ int nfs4_Check_Stateid(stateid4        * pstate,
           else
             return NFS4_OK;
         }
-/* XXX - jw - this will be added when client expiry work is complete.
- * need to change client_id_get to client_id_Get_Pointer
- * if (nfs4_is_leased_expired(&nfs_clientid))
- *   return NFS4ERR_EXPIRED;
- * else
- *   nfs4_update_lease(nfs_clientid);
- */
+
+      if (nfs4_is_lease_expired(nfs_clientid))
+        return NFS4ERR_EXPIRED;
+
+      nfs4_update_lease(nfs_clientid);
     }
 
   /* Sanity check : Is this the right file ? */

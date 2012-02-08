@@ -104,6 +104,8 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
       P(nfs_clientid->clientid_mutex);
       if(nfs_clientid->confirmed == CONFIRMED_CLIENT_ID)
         {
+          LogDebug(COMPONENT_NFS_V4,
+                   "SETCLIENTID_CONFIRM clientid is already confirmed");
           /* Client id was already confirmed and is then in use, this is NFS4ERR_CLID_INUSE if not same client */
 
           /* Check the verifier */

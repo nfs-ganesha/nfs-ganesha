@@ -492,9 +492,18 @@ void nfs_client_id_expire(nfs_client_id_t *client_record)
   struct glist_head    * glist, * glistn;
   struct glist_head    * glist2, * glistn2;
   state_status_t         pstatus;
+  int rc;
+
+  P(client_record->clientid_mutex);
+  if (client_record->confirmed == EXPIRED_CLIENT_ID)
+    {
+      V(client_record->clientid_mutex);
+      return;
+    }
+
+  client_record->confirmed = EXPIRED_CLIENT_ID;
 
   /* traverse the client's lock owners, and release all locks */
-  P(client_record->clientid_mutex);
   glist_for_each_safe(glist, glistn, &client_record->clientid_lockowners)
     {
       state_owner_t * plock_owner = glist_entry(glist,
@@ -563,13 +572,26 @@ void nfs_client_id_expire(nfs_client_id_t *client_record)
 
   dec_state_owner_ref(client_record->clientid_owner, client_record->clientid_owner->so_pclient);
 
+  if (client_record->recov_dir != NULL)
+    {
+      nfs4_rm_clid(client_record->recov_dir);
+      Mem_Free(client_record->recov_dir);
+      client_record->recov_dir = NULL;
+    }
+
   V(client_record->clientid_mutex);
 
   /* need to free client record */
-  if ((nfs_client_id_remove(client_record->clientid, client_record->clientid_pool)) == CLIENT_ID_SUCCESS)
+  rc = nfs_client_id_remove(client_record->clientid, client_record->clientid_pool);
+  if (rc == CLIENT_ID_SUCCESS)
     {
       LogDebug(COMPONENT_STATE,
                "clientid removed\n");
+    }
+  else
+    {
+      LogDebug(COMPONENT_STATE,
+               "nfs_client_id_remove failed with rc = %d", rc);
     }
 }
 
@@ -703,20 +725,14 @@ int nfs_client_id_remove(clientid4 clientid, struct prealloc_pool *clientid_pool
 {
   hash_buffer_t buffkey, old_key, old_key_reverse, old_value;
   nfs_client_id_t *pnfs_client_id = NULL;
-  clientid4 *pclientid = NULL;
 
-  if((pclientid = (clientid4 *) Mem_Alloc(sizeof(clientid4))) == NULL)
-    return CLIENT_ID_INSERT_MALLOC_ERROR;
-
-  *pclientid = clientid;
-  buffkey.pdata = (caddr_t) pclientid;
+  buffkey.pdata = (caddr_t) &clientid;
   buffkey.len = 0;
 
   /* Remove entry */
 
   if(HashTable_Del(ht_client_id, &buffkey, &old_key, &old_value) != HASHTABLE_SUCCESS)
     {
-      Mem_Free(pclientid);
       return CLIENT_ID_NOT_FOUND;
     }
 
@@ -731,14 +747,12 @@ int nfs_client_id_remove(clientid4 clientid, struct prealloc_pool *clientid_pool
     {
       ReleaseToPool(pnfs_client_id, clientid_pool);
       Mem_Free(old_key.pdata);
-      Mem_Free(pclientid);
       return CLIENT_ID_NOT_FOUND;
     }
 
   ReleaseToPool(pnfs_client_id, clientid_pool);
   Mem_Free(old_key_reverse.pdata);
   Mem_Free(old_key.pdata);
-  Mem_Free(pclientid);
 
   return CLIENT_ID_SUCCESS;
 

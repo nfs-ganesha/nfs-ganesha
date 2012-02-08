@@ -193,6 +193,15 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_LOCKT4.status;
     }
 
+  /* The protocol doesn't allow for EXPIRED, so return STALE_CLIENTID */
+  if (nfs4_is_lease_expired(nfs_client_id))
+    {
+      nfs_client_id_expire(nfs_client_id);
+      res_LOCKT4.status = NFS4ERR_STALE_CLIENTID;
+      return res_LOCKT4.status;
+    }
+  nfs4_update_lease(nfs_client_id);
+
   /* Is this lock_owner known ? */
   convert_nfs4_lock_owner(&arg_LOCKT4.owner, &owner_name, 0LL);
 

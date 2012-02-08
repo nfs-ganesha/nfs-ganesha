@@ -99,6 +99,7 @@ pthread_t stat_exporter_thrid;
 pthread_t admin_thrid;
 pthread_t fcc_gc_thrid;
 pthread_t sigmgr_thrid;
+pthread_t reaper_thrid;
 nfs_tcb_t gccb;
 
 #ifdef _USE_9P
@@ -1617,6 +1618,17 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
            "statistics exporter thread was started successfully");
 
 #endif      /*  _USE_STAT_EXPORTER */
+
+  /* Starting the reaper thread */
+  if((rc =
+      pthread_create(&reaper_thrid, &attr_thr, reaper_thread, (void *)workers_data)) != 0)
+    {
+      LogFatal(COMPONENT_THREAD,
+               "Could not create reaper_thread, error = %d (%s)",
+               errno, strerror(errno));
+    }
+  LogEvent(COMPONENT_THREAD,
+           "reaper thread was started successfully");
 
   if(nfs_param.cache_layers_param.dcgcpol.run_interval != 0)
     {

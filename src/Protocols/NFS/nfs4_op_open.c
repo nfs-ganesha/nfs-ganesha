@@ -230,16 +230,12 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
       goto out2;
     }
 
- /* XXX - jw - need to use Get_Pointer version of client_id_get and 
- * uncomment this section when client expiry is completed.
- * if (nfs4_is_lease_expired(&nfs_clientid))
- * {
- *   free_all_state(nfs_clientid);
- *   res_OPEN4.status = NFS4ERR_EXPIRED;
- *   goto out2;
- * }
- * update_lease, below, only updates the local structure
- */
+  if (nfs4_is_lease_expired(nfs_clientid))
+    {
+      nfs_client_id_expire(nfs_clientid);
+      res_OPEN4.status = NFS4ERR_EXPIRED;
+      goto out2;
+    }
   nfs4_update_lease(nfs_clientid);
 
   if (arg_OPEN4.openhow.opentype == OPEN4_CREATE && claim != CLAIM_NULL) {
@@ -976,7 +972,6 @@ out_prev:
                  data,
                  tag);
 
-  /* XXX - jw - this only updates local structure, fix this */
   nfs4_update_lease(nfs_clientid);
 
   /* If we are re-using stateid, then release extra reference to open owner */

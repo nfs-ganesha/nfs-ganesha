@@ -103,20 +103,15 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       goto out;
     }
 
-/*  This will be added when client expiry is commpleted
   if (nfs4_is_lease_expired(nfs_clientid))
     {
-      clean_client_state(nfs_clientid);
       res_RENEW4.status = NFS4ERR_EXPIRED;
     }
   else
     {
-*/
       nfs_clientid->last_renew = time(NULL);
       res_RENEW4.status = NFS4_OK;      /* Regular exit */
-/*
     }
-*/
 
 out:
   return res_RENEW4.status;

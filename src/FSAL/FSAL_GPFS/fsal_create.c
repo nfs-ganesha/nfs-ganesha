@@ -427,7 +427,7 @@ fsal_status_t GPFSFSAL_link(fsal_handle_t * p_target_handle,        /* IN */
 
   /* get the target handle access by fid */
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd(p_context, p_target_handle, &srcfd, O_RDONLY);
+  status = fsal_internal_handle2fd(p_context, p_target_handle, &srcfd, O_RDWR);
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_link);

@@ -171,4 +171,5 @@ int HashTable_DelRef(hash_table_t * ht, hash_buffer_t * buffkey,
                      hash_buffer_t * p_usedbuffkey, hash_buffer_t * p_usedbuffdata,
                      int (*put_ref)(hash_buffer_t *) );
 
+extern hash_table_t * ht_client_id;
 #endif                          /* _HASHTABLE_H */

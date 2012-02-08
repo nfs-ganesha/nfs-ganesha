@@ -395,6 +395,25 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       return res_LOCK4.status;
     }
 
+  /*
+   * do grace period checking
+   */
+  if (nfs4_in_grace() && !arg_LOCK4.reclaim)
+    {
+      res_LOCK4.status = NFS4ERR_GRACE;
+      goto out;
+    }
+  if (nfs4_in_grace() && arg_LOCK4.reclaim && !nfs_client_id->allow_reclaim)
+    {
+      res_LOCK4.status = NFS4ERR_NO_GRACE;
+      goto out;
+    }
+  if (!nfs4_in_grace() && arg_LOCK4.reclaim)
+    {
+      res_LOCK4.status = NFS4ERR_NO_GRACE;
+      goto out;
+    }
+
   if(arg_LOCK4.locker.new_lock_owner)
     {
       /* A lock owner is always associated with a previously made open
@@ -493,25 +512,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       V(nfs_client_id->clientid_mutex);
     }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
 
-  /*
-   * do grace period checking
-   */
-  if (nfs4_in_grace() && !arg_LOCK4.reclaim)
-  {
-     res_LOCK4.status = NFS4ERR_GRACE;
-     goto out;
-  }
-  if (nfs4_in_grace() && arg_LOCK4.reclaim && !nfs_client_id->allow_reclaim)
-  {
-     res_LOCK4.status = NFS4ERR_NO_GRACE;
-     goto out;
-  }
-  if (!nfs4_in_grace() && arg_LOCK4.reclaim)
-  {
-     res_LOCK4.status = NFS4ERR_NO_GRACE;
-     goto out;
-  }
-
   /* Now we have a lock owner and a stateid.
    * Go ahead and push lock into SAL (and FSAL).
    */
@@ -586,9 +586,6 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       tag = "LOCK (open owner)";
     }
 
-  /* Save the response in the lock or open owner */
-  Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
-
   LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
           "LOCK applied",
           data->current_entry,
@@ -596,6 +593,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           plock_owner,
           &lock_desc);
 out:
+
+  /* Save the response in the lock or open owner */
+  Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
 
   return res_LOCK4.status;
 #endif
