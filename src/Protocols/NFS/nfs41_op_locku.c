@@ -159,7 +159,6 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
           tag,
           data->current_entry,
-          data->pcontext,
           plock_owner,
           &lock_desc);
 
@@ -167,7 +166,6 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
    * Go ahead and push unlock into SAL (and FSAL).
    */
   if(state_unlock(data->current_entry,
-                  data->pcontext,
                   data->pexport,
                   plock_owner,
                   pstate_found,

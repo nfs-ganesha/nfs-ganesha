@@ -181,7 +181,6 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
           "LOCKT",
           data->current_entry,
-          data->pcontext,
           plock_owner,
           &lock_desc);
 
@@ -189,8 +188,8 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
    * Go ahead and test the lock in SAL (and FSAL).
    */
   if(state_test(data->current_entry,
-                data->pcontext,
                 data->pexport,
+                &data->user_credentials,
                 plock_owner,
                 &lock_desc,
                 &conflict_owner,
