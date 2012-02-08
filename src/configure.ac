@@ -630,7 +630,7 @@ case $FSAL in
                 LDFLAGS="$LDFLAGS -L/usr/lpp/mmfs/lib"
 
 		AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
-
+		AC_DEFINE(_USE_FSAL_UP,1,[enable FSAL Upcall Interface support])
 
 		AC_CHECK_HEADERS([gpfs_nfs.h], [], [AC_MSG_ERROR(missing gpfs include files)], [
                 #include <fcntl.h>
