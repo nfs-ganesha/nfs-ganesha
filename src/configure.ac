@@ -233,6 +233,14 @@ if test "$enable_quota" == "yes"; then
 fi
 AM_CONDITIONAL(USE_QUOTA, test "$enable_quota" = "yes")
 
+# RQUOTA 
+GA_ENABLE_AM_CONDITION([rquota],[enable RQUOTA protocol support],[USE_QUOTA])
+
+if test "$enable_rquota" == "yes"; then
+        AC_DEFINE(_USE_RQUOTA,1,[enable RQUOTA protocol support])
+fi
+AM_CONDITIONAL(USE_RQUOTA, test "$enable_rquota" = "yes")
+
 # Invalidation simulator (to be removed when FSAL_UP will be completed)
 GA_ENABLE_AM_CONDITION([upcall-simulator],[enable FSAL upcalls simulator thread],[USE_UPCALL_SIMULATOR])
 

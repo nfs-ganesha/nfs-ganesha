@@ -11,7 +11,7 @@ libnfs_mnt_xdr_la_SOURCES = xdr_mount.c               \
                             ../../include/err_inject.h \
                             ../../include/extended_types.h
 
-if USE_QUOTA
+if USE_RQUOTA
 libnfs_mnt_xdr_la_SOURCES += xdr_rquota.c \
                              ../../include/rquota.h
 endif

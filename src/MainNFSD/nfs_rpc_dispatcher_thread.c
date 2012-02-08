@@ -160,7 +160,7 @@ const char *tags[] = {
 #ifdef _USE_NLM
   "NLM",
 #endif
-#ifdef _USE_QUOTA
+#ifdef _USE_RQUOTA
   "RQUOTA",
 #endif
 };
@@ -233,7 +233,7 @@ void unregister_rpc(void)
 #ifdef _USE_NLM
   unregister(nfs_param.core_param.program[P_NLM], 1, NLM4_VERS);
 #endif
-#ifdef _USE_QUOTA
+#ifdef _USE_RQUOTA
   unregister(nfs_param.core_param.program[P_RQUOTA], RQUOTAVERS, EXT_RQUOTAVERS);
 #endif
 }
@@ -587,7 +587,7 @@ void nfs_Init_svc()
                tcp_socket[P_NFS]);
     }
 
-#ifdef _USE_QUOTA
+#ifdef _USE_RQUOTA
   /* Some log that can be useful when debug ONC/RPC and RPCSEC_GSS matter */
   LogDebug(COMPONENT_DISPATCH,
            "Socket numbers are: rquota_udp=%u  rquota_tcp=%u",
@@ -644,7 +644,7 @@ void nfs_Init_svc()
 #ifdef _USE_NLM
   Register_program(P_NLM, CORE_OPTION_NFSV3, NLM4_VERS);
 #endif                          /* USE_NLM */
-#ifdef _USE_QUOTA
+#ifdef _USE_RQUOTA
   Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS, RQUOTAVERS);
   Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS, EXT_RQUOTAVERS);
 #endif                          /* USE_QUOTA */
@@ -1030,7 +1030,7 @@ void nfs_rpc_getreq(fd_set * readfds)
               xprt = udp_xprt[P_NLM];
             }
 #endif                          /* _USE_NLM */
-#ifdef _USE_QUOTA
+#ifdef _USE_RQUOTA
           else if(udp_socket[P_RQUOTA] == rpc_sock)
             {
               LogFullDebug(COMPONENT_DISPATCH, "A RQUOTA UDP request");
@@ -1080,7 +1080,7 @@ void nfs_rpc_getreq(fd_set * readfds)
               xprt = tcp_xprt[P_NLM];
             }
 #endif                          /* _USE_NLM */
-#ifdef _USE_QUOTA
+#ifdef _USE_RQUOTA
           else if(tcp_socket[P_RQUOTA] == rpc_sock)
             {
               LogFullDebug(COMPONENT_DISPATCH,

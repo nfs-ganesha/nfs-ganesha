@@ -79,7 +79,7 @@ extern nfs_function_desc_t mnt3_func_desc[];
 #ifdef _USE_NLM
 extern nfs_function_desc_t nlm4_func_desc[];
 #endif                          /* _USE_NLM */
-#ifdef _USE_QUOTA
+#ifdef _USE_RQUOTA
 extern nfs_function_desc_t rquota1_func_desc[];
 extern nfs_function_desc_t rquota2_func_desc[];
 #endif                          /* _USE_QUOTA */
@@ -260,7 +260,7 @@ static int _remove_dupreq(hash_table_t * ht_dupreq, hash_buffer_t *buffkey, dupr
         }                       /* switch( pdupreq->vers ) */
     }
 #endif                          /* _USE_NLM */
-#ifdef _USE_QUOTA
+#ifdef _USE_RQUOTA
   else if(pdupreq->rq_prog == nfs_param.core_param.program[P_RQUOTA])
     {
 

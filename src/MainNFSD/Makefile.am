@@ -60,7 +60,7 @@ else
 NLM_LIB =
 endif
 
-if USE_QUOTA
+if USE_RQUOTA
 RQUOTA_LIB = ../Protocols/RQUOTA/librquota.la
 else
 RQUOTA_LIB = 
