@@ -118,6 +118,7 @@ cache_content_client_t recover_datacache_client;
 #define CONF_EXPORT_REFERRAL           "Referral"
 #define CONF_EXPORT_FSALID             "FSALID"
 #define CONF_EXPORT_PNFS               "Use_pNFS"
+#define CONF_EXPORT_UQUOTA             "User_Quota"
 #define CONF_EXPORT_USE_COMMIT                  "Use_NFS_Commit"
 #define CONF_EXPORT_USE_GANESHA_WRITE_BUFFER    "Use_Ganesha_Write_Buffer"
 #define CONF_EXPORT_USE_FSAL_UP        "Use_FSAL_UP"
@@ -128,39 +129,40 @@ cache_content_client_t recover_datacache_client;
 /** @todo : add encrypt handles option */
 
 /* Internal identifiers */
-#define FLAG_EXPORT_ID            0x00000001
-#define FLAG_EXPORT_PATH          0x00000002
+#define FLAG_EXPORT_ID            0x000000001
+#define FLAG_EXPORT_PATH          0x000000002
 
-#define FLAG_EXPORT_ROOT_OR_ACCESS 0x00000004
+#define FLAG_EXPORT_ROOT_OR_ACCESS 0x000000004
 
-#define FLAG_EXPORT_PSEUDO          0x00000010
-#define FLAG_EXPORT_ACCESSTYPE      0x00000020
-#define FLAG_EXPORT_ANON_ROOT       0x00000040
-#define FLAG_EXPORT_NFS_PROTO       0x00000080
-#define FLAG_EXPORT_TRANS_PROTO     0x00000100
-#define FLAG_EXPORT_SECTYPE         0x00000200
-#define FLAG_EXPORT_MAX_READ        0x00000400
-#define FLAG_EXPORT_MAX_WRITE       0x00000800
-#define FLAG_EXPORT_PREF_READ       0x00001000
-#define FLAG_EXPORT_PREF_WRITE      0x00002000
-#define FLAG_EXPORT_PREF_READDIR    0x00004000
-#define FLAG_EXPORT_FSID            0x00008000
-#define FLAG_EXPORT_NOSUID          0x00010000
-#define FLAG_EXPORT_NOSGID          0x00020000
-#define FLAG_EXPORT_PRIVILEGED_PORT 0x00040000
-#define FLAG_EXPORT_USE_DATACACHE   0x00080000
-#define FLAG_EXPORT_FS_SPECIFIC     0x00100000
-#define FLAG_EXPORT_FS_TAG          0x00200000
-#define FLAG_EXPORT_MAX_OFF_WRITE   0x00400000
-#define FLAG_EXPORT_MAX_OFF_READ    0x00800000
-#define FLAG_EXPORT_MAX_CACHE_SIZE  0x01000000
-#define FLAG_EXPORT_USE_PNFS        0x02000000
-#define FLAG_EXPORT_ACCESS_LIST     0x04000000
-#define FLAG_EXPORT_ACCESSTYPE_LIST 0x08000000
-#define FLAG_EXPORT_ANON_GROUP      0x10000000
-#define FLAG_EXPORT_ALL_ANON        0x20000000
-#define FLAG_EXPORT_ANON_USER       0x40000000
-#define FLAG_EXPORT_CACHE_POLICY    0x80000000
+#define FLAG_EXPORT_PSEUDO          0x000000010
+#define FLAG_EXPORT_ACCESSTYPE      0x000000020
+#define FLAG_EXPORT_ANON_ROOT       0x000000040
+#define FLAG_EXPORT_NFS_PROTO       0x000000080
+#define FLAG_EXPORT_TRANS_PROTO     0x000000100
+#define FLAG_EXPORT_SECTYPE         0x000000200
+#define FLAG_EXPORT_MAX_READ        0x000000400
+#define FLAG_EXPORT_MAX_WRITE       0x000000800
+#define FLAG_EXPORT_PREF_READ       0x000001000
+#define FLAG_EXPORT_PREF_WRITE      0x000002000
+#define FLAG_EXPORT_PREF_READDIR    0x000004000
+#define FLAG_EXPORT_FSID            0x000008000
+#define FLAG_EXPORT_NOSUID          0x000010000
+#define FLAG_EXPORT_NOSGID          0x000020000
+#define FLAG_EXPORT_PRIVILEGED_PORT 0x000040000
+#define FLAG_EXPORT_USE_DATACACHE   0x000080000
+#define FLAG_EXPORT_FS_SPECIFIC     0x000100000
+#define FLAG_EXPORT_FS_TAG          0x000200000
+#define FLAG_EXPORT_MAX_OFF_WRITE   0x000400000
+#define FLAG_EXPORT_MAX_OFF_READ    0x000800000
+#define FLAG_EXPORT_MAX_CACHE_SIZE  0x001000000
+#define FLAG_EXPORT_USE_PNFS        0x002000000
+#define FLAG_EXPORT_ACCESS_LIST     0x004000000
+#define FLAG_EXPORT_ACCESSTYPE_LIST 0x008000000
+#define FLAG_EXPORT_ANON_GROUP      0x010000000
+#define FLAG_EXPORT_ALL_ANON        0x020000000
+#define FLAG_EXPORT_ANON_USER       0x040000000
+#define FLAG_EXPORT_CACHE_POLICY    0x080000000
+#define FLAG_EXPORT_USE_UQUOTA      0x100000000
 
 /* limites for nfs_ParseConfLine */
 /* Used in BuildExportEntry() */
@@ -1760,6 +1762,35 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
               continue;
             }
           set_options |= EXPORT_OPTION_USE_PNFS;
+        }
+      else if(!STRCMP(var_name, CONF_EXPORT_UQUOTA ) )
+        {
+          /* check if it has not already been set */
+          if((set_options & FLAG_EXPORT_USE_UQUOTA) == FLAG_EXPORT_USE_UQUOTA)
+            {
+              DEFINED_TWICE_WARNING("FLAG_EXPORT_USE_UQUOTA");
+              continue;
+            }
+
+          switch (StrToBoolean(var_value))
+            {
+            case 1:
+              p_entry->options |= EXPORT_OPTION_USE_UQUOTA;
+              break;
+
+            case 0:
+              /*default (false) */
+              break;
+
+            default:           /* error */
+              LogCrit(COMPONENT_CONFIG,
+                      "NFS READ_EXPORT: ERROR: Invalid value for '%s' (%s): TRUE or FALSE expected.",
+                      var_name, var_value);
+              err_flag = TRUE;
+              continue;
+            }
+          set_options |= EXPORT_OPTION_USE_UQUOTA;
+
         }
       else if(!STRCMP(var_name, CONF_EXPORT_FS_SPECIFIC))
         {
