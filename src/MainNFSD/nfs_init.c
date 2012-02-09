@@ -1539,48 +1539,50 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
   LogDebug(COMPONENT_THREAD,
            "sigmgr thread started");
 
-  /* Starting all of the worker thread */
-  for(i = 0; i < nfs_param.core_param.nb_worker; i++)
+  if(!flush_datacache_mode)
     {
-      if((rc =
-          pthread_create(&(worker_thrid[i]), &attr_thr, worker_thread, (void *)i)) != 0)
-        {
-          LogFatal(COMPONENT_THREAD,
-                   "Could not create worker_thread #%lu, error = %d (%s)",
-                   i, errno, strerror(errno));
-        }
-    }
-  LogEvent(COMPONENT_THREAD,
-           "%d worker threads were started successfully",
-	   nfs_param.core_param.nb_worker);
+      /* Starting all of the worker thread */
+      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
+	{
+	  if((rc =
+	      pthread_create(&(worker_thrid[i]), &attr_thr, worker_thread, (void *)i)) != 0)
+	    {
+	      LogFatal(COMPONENT_THREAD,
+		       "Could not create worker_thread #%lu, error = %d (%s)",
+		       i, errno, strerror(errno));
+	    }
+	}
+      LogEvent(COMPONENT_THREAD,
+	       "%d worker threads were started successfully",
+	       nfs_param.core_param.nb_worker);
 
 #ifdef _USE_BLOCKING_LOCKS
-  /* Start State Async threads */
-  if(!flush_datacache_mode)
-    state_async_thread_start();
+      /* Start State Async threads */
+      state_async_thread_start();
 #endif
 
-  /* Starting the rpc dispatcher thread */
-  if((rc =
-      pthread_create(&rpc_dispatcher_thrid, &attr_thr, rpc_dispatcher_thread,
-                     &nfs_param)) != 0)
-    {
-      LogFatal(COMPONENT_THREAD,
-               "Could not create rpc_dispatcher_thread, error = %d (%s)",
-               errno, strerror(errno));
-    }
-  LogEvent(COMPONENT_THREAD, "rpc dispatcher thread was started successfully");
+      /* Starting the rpc dispatcher thread */
+      if((rc =
+	  pthread_create(&rpc_dispatcher_thrid, &attr_thr, rpc_dispatcher_thread,
+			 &nfs_param)) != 0)
+	{
+	  LogFatal(COMPONENT_THREAD,
+		   "Could not create rpc_dispatcher_thread, error = %d (%s)",
+		   errno, strerror(errno));
+	}
+      LogEvent(COMPONENT_THREAD, "rpc dispatcher thread was started successfully");
 
 #ifdef _USE_9P
-  /* Starting the 9p dispatcher thread */
-  if((rc = pthread_create(&_9p_dispatcher_thrid, &attr_thr, _9p_dispatcher_thread, NULL ) ) != 0 )     
-    {
-      LogFatal(COMPONENT_THREAD,
-               "Could not create  9p dispatcher_thread, error = %d (%s)",
-               errno, strerror(errno));
-    }
-  LogEvent(COMPONENT_THREAD, "9p dispatcher thread was started successfully");
+      /* Starting the 9p dispatcher thread */
+      if((rc = pthread_create(&_9p_dispatcher_thrid, &attr_thr, _9p_dispatcher_thread, NULL ) ) != 0 )     
+	{
+	  LogFatal(COMPONENT_THREAD,
+		   "Could not create  9p dispatcher_thread, error = %d (%s)",
+		   errno, strerror(errno));
+	}
+      LogEvent(COMPONENT_THREAD, "9p dispatcher thread was started successfully");
 #endif
+    }
 
   /* Starting the admin thread */
   if((rc = pthread_create(&admin_thrid, &attr_thr, admin_thread, NULL)) != 0)
