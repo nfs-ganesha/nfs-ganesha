@@ -941,6 +941,12 @@ fsal_status_t FSAL_set_quota(fsal_path_t * pfsal_path,  /* IN */
                              fsal_quota_t * pquot,      /* IN */
                              fsal_quota_t * presquot);  /* OUT */
 
+fsal_status_t FSAL_check_quota( fsal_path_t * pfsal_path,  /* IN */
+				int quota_type,
+				fsal_uid_t fsal_uid);      /* IN */
+
+
+
 /******************************************************
  *                Standard convertion routines.
  ******************************************************/
@@ -1238,6 +1244,11 @@ typedef struct fsal_functions__
                                   int quota_type,       /* IN */
                                   fsal_uid_t fsal_uid,  /* IN */
                                   fsal_quota_t * pquota);       /* OUT */
+
+  /* FSAL_check_quota */
+  fsal_status_t(*fsal_check_quota)( fsal_path_t * pfsal_path,  /* IN */
+                                     int quota_type,
+                                     fsal_uid_t fsal_uid);      /* IN */
 
   /* FSAL_rcp */
   fsal_status_t(*fsal_rcp) (fsal_handle_t * filehandle, /* IN */

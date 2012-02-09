@@ -54,6 +54,7 @@ fsal_functions_t fsal_xfs_functions = {
   .fsal_cleanobjectresources = COMMON_CleanObjectResources,
   .fsal_set_quota = XFSFSAL_set_quota,
   .fsal_get_quota = XFSFSAL_get_quota,
+  .fsal_check_quota = COMMON_check_quota,
   .fsal_rcp = XFSFSAL_rcp,
   .fsal_rcp_by_fileid = COMMON_rcp_by_fileid,
   .fsal_rename = XFSFSAL_rename,
