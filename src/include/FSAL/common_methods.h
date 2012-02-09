@@ -62,7 +62,7 @@ fsal_status_t COMMON_set_quota_noquota(fsal_path_t * pfsal_path,  /* IN */
 				       fsal_quota_t * pquot,      /* IN */
 				       fsal_quota_t * presquot);   /* OUT */
 
-fsal_status_t COMMON_check_quota( fsal_path_t * pfsal_path,  /* IN */
+fsal_status_t COMMON_check_quota( char * path,  /* IN */
                                   fsal_quota_type_t   quota_type,
                                   fsal_uid_t fsal_uid) ;     /* IN */
 

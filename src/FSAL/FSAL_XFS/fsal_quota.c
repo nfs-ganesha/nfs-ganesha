@@ -191,42 +191,36 @@ fsal_status_t XFSFSAL_set_quota(fsal_path_t * pfsal_path,       /* IN */
  */
 
 
-fsal_status_t XFSFSAL_check_quota( fsal_path_t      * pfsal_path,  /* IN */
-                                   fsal_quota_type_t  quota_type,
-                                   fsal_uid_t         fsal_uid)      /* IN */
+fsal_status_t XFSFSAL_check_quota( char              * path,  /* IN */
+                                   fsal_quota_type_t   quota_type,
+                                   fsal_uid_t          fsal_uid)      /* IN */
 {
   struct dqblk fs_quota;
   char fs_spec[MAXPATHLEN];
-
-  if(!pfsal_path )
+  
+  if(!path )
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  if(fsal_internal_path2fsname(pfsal_path->path, fs_spec) == -1)
+  if(fsal_internal_path2fsname( path, fs_spec) == -1)
     ReturnCode(ERR_FSAL_INVAL, 0);
 
+  if( fsal_uid == 0 ) /* No quota for root */
+    ReturnCode(ERR_FSAL_NO_ERROR, 0) ;
+  
   memset((char *)&fs_quota, 0, sizeof(struct dqblk));
 
-  if(quotactl(FSAL_QCMD(Q_GETQUOTA, quota_type), fs_spec, fsal_uid, (caddr_t) & fs_quota)
-     < 0)
+  if(quotactl(FSAL_QCMD(Q_GETQUOTA, USRQUOTA), fs_spec, fsal_uid, (caddr_t) & fs_quota) < 0 )
     ReturnCode(posix2fsal_error(errno), errno);
-
+  
   switch( quota_type )
    {
         case FSAL_QUOTA_BLOCKS:
-          printf( "---> BLOCKS: current=%llu  Hard=%llu Soft=%llu\n", 
-                  (unsigned long long)fs_quota.dqb_curspace, 
-                  (unsigned long long)fs_quota.dqb_bhardlimit, 
-                  (unsigned long long)fs_quota.dqb_bsoftlimit ) ;
           if( fs_quota.dqb_curspace > fs_quota.dqb_bhardlimit )
             ReturnCode( ERR_FSAL_DQUOT, EDQUOT ) ;
           
           break ;
 
         case FSAL_QUOTA_INODES:
-          printf( "---> INODES: current=%llu  Hard=%llu Soft=%llu\n", 
-                  (unsigned long long)fs_quota.dqb_curinodes, 
-                  (unsigned long long)fs_quota.dqb_ihardlimit, 
-                  (unsigned long long)fs_quota.dqb_isoftlimit ) ;
           if( fs_quota.dqb_curinodes > fs_quota.dqb_ihardlimit )
             ReturnCode( ERR_FSAL_DQUOT, EDQUOT ) ;
           

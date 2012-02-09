@@ -184,6 +184,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
                     return pentry;
                 }
         }
+
     /*
      * At this point, the entry was not found, this means
      * that it doesn't exist in FSAL, we can create it
