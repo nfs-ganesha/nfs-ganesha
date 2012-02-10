@@ -124,7 +124,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   uint32_t                  tmp_attr[2];
   uint_t                    tmp_int = 2;
 #ifdef _USE_QUOTA
-  fsal_status_t            fsal_status ;
+  fsal_status_t            fsal_status;
 #endif
   char                    * text = "";
 
