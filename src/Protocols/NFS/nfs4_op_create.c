@@ -95,6 +95,9 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   fsal_accessmode_t mode = 0777;
   fsal_name_t name;
+#ifdef _USE_QUOTA
+  fsal_status_t            fsal_status ;
+#endif
 
   cache_inode_create_arg_t create_arg;
 
@@ -124,6 +127,18 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       res_CREATE4.status = NFS4ERR_FHEXPIRED;
       return res_CREATE4.status;
     }
+
+#ifdef _USE_QUOTA
+  /* if quota support is active, then we should check is the FSAL allows inode creation or not */
+  fsal_status = FSAL_check_quota( data->pexport->fullpath, 
+                                  FSAL_QUOTA_INODES,
+                                  FSAL_OP_CONTEXT_TO_UID( data->pcontext ) ) ;
+  if( FSAL_IS_ERROR( fsal_status ) )
+    {
+      res_CREATE4.status = NFS4ERR_DQUOT ;
+      return res_CREATE4.status;
+    }
+#endif /* _USE_QUOTA */
 
   /* Pseudo Fs is explictely a Read-Only File system */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
