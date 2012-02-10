@@ -1820,6 +1820,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
           LogFatal(COMPONENT_INIT, "Impossible to set gss principal to GSSRPC");
         }
 
+      /* set_svc_name creates a copy */
+      gss_release_name(&min_stat, &gss_service_name);
+
       /* Init the HashTable */
       if(Gss_ctx_Hash_Init(nfs_param.krb5_param) == -1)
         {

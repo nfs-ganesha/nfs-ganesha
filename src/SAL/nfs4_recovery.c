@@ -267,6 +267,9 @@ nfs4_load_recov_clids()
                 }
                 dentp = readdir(dp);
         }
+        if (dentp != NULL)
+            free(dentp);
+        free(dp);
 }
 
 void
