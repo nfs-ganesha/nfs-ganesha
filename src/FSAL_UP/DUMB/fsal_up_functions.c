@@ -54,6 +54,8 @@ fsal_status_t dumb_fsal_up_invalidate(fsal_up_event_data_t * pevdata)
   cache_entry_t *pentry = NULL;
   fsal_attrib_list_t attr;
 
+  memset(&attr, 0, sizeof(fsal_attrib_list_t));
+
   /* Avoid dir cont check in cache_inode_get() */
   pevdata->event_context.fsal_data.cookie = DIR_START;
       LogDebug(COMPONENT_FSAL_UP,

@@ -1659,6 +1659,9 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
   LogEvent(COMPONENT_THREAD, "upcall_simulator thread was started successfully");
 #endif
 
+#ifdef _USE_FSAL_UP
+  create_fsal_up_threads();
+#endif /* _USE_FSAL_UP */
 
 }                               /* nfs_Start_threads */
 
@@ -2105,9 +2108,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   /* This thread depends on ALL parts of Ganesha being initialized. 
    * So initialize Callback interface after everything else. */
 #ifdef _USE_FSAL_UP
-  nfs_param.fsal_up_param.ht = ht;
   nfs_Init_FSAL_UP(); /* initalizes an event pool */
-  create_fsal_up_threads();
+  nfs_param.fsal_up_param.ht = ht;
 #endif /* _USE_FSAL_UP */
 
   /* Create stable storage directory, this should not be necessary */
