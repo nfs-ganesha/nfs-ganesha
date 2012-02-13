@@ -488,6 +488,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
     }
 
   /* Init the internal metadata */
+  pentry->deleted = FALSE;
   pentry->internal_md.type = type;
   pentry->internal_md.valid_state = VALID;
   pentry->internal_md.read_time = 0;

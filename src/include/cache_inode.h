@@ -326,6 +326,9 @@ struct cache_entry_t
 
   } object;                                     /**< Type specific field (discriminated by internal_md.type)   */
 
+#ifdef _USE_FSAL_UP
+  int deleted;
+#endif
   rw_lock_t lock;                             /**< a reader-writter lock used to protect the data     */
   cache_inode_internal_md_t internal_md;      /**< My metadata (from this cache's point of view)      */
   LRU_entry_t *gc_lru_entry;                  /**< related LRU entry in the LRU list used for GC      */
