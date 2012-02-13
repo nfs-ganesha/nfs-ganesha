@@ -255,7 +255,7 @@ nfs4_load_recov_clids()
         while (dentp != NULL) {
                 /* don't add '.' and '..', or any '.*' entry */
                 if (dentp->d_name[0] != '.') {
-                        new_ent = Mem_Alloc(sizeof(clid_entry_t));
+                        new_ent = (clid_entry_t *) Mem_Alloc(sizeof(clid_entry_t));
                         if (new_ent == NULL) {
                                 LogEvent(COMPONENT_NFS_V4, "Mem_Alloc FAILED");
                                 return;
