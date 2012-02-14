@@ -103,11 +103,11 @@ int nfs_Write(nfs_arg_t * parg,
   cache_content_status_t content_status;
   fsal_seek_t seek_descriptor;
   fsal_size_t size = 0;
-  fsal_size_t written_size;
+  fsal_size_t written_size=0;
   fsal_off_t offset = 0;
   caddr_t data = NULL;
   cache_inode_file_type_t filetype;
-  fsal_boolean_t eof_met;
+  fsal_boolean_t eof_met=FALSE;
   uint64_t stable_flag = FSAL_SAFE_WRITE_TO_FS;
 
   if(isDebug(COMPONENT_NFSPROTO))
