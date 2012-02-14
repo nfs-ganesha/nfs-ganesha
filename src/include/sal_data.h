@@ -351,10 +351,10 @@ typedef state_status_t (*granted_callback_t)(cache_entry_t        * pentry,
                                              cache_inode_client_t * pclient,
                                              state_status_t       * pstatus);
 
+#ifdef _USE_BLOCKING_LOCKS
 typedef bool_t (*block_data_to_fsal_context_t)(state_block_data_t * block_data,
                                                fsal_op_context_t  * fsal_context);
 
-#ifdef _USE_BLOCKING_LOCKS
 typedef struct state_nlm_block_data_t
 {
   sockaddr_t                 sbd_nlm_hostaddr;

@@ -1548,9 +1548,11 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
            "%d worker threads were started successfully",
 	   nfs_param.core_param.nb_worker);
 
+#ifdef _USE_BLOCKING_LOCKS
   /* Start State Async threads */
   if(!flush_datacache_mode)
     state_async_thread_start();
+#endif
 
   /* Starting the rpc dispatcher thread */
   if((rc =

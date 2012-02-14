@@ -128,6 +128,7 @@ fsal_status_t dumb_fsal_up_link(fsal_up_event_data_t * pevdata)
 
 fsal_status_t dumb_fsal_up_lock_grant(fsal_up_event_data_t * pevdata)
 {
+#ifdef _USE_BLOCKING_LOCKS
   cache_inode_status_t   cache_status;
   cache_entry_t        * pentry = NULL;
   fsal_attrib_list_t     attr;
@@ -159,10 +160,14 @@ fsal_status_t dumb_fsal_up_lock_grant(fsal_up_event_data_t * pevdata)
                             
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
+#else
+  INVALIDATE_STUB;
+#endif
 }
 
 fsal_status_t dumb_fsal_up_lock_avail(fsal_up_event_data_t * pevdata)
 {
+#ifdef _USE_BLOCKING_LOCKS
   cache_inode_status_t   cache_status;
   cache_entry_t        * pentry = NULL;
   fsal_attrib_list_t     attr;
@@ -194,6 +199,9 @@ fsal_status_t dumb_fsal_up_lock_avail(fsal_up_event_data_t * pevdata)
                             
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
+#else
+  INVALIDATE_STUB;
+#endif
 }
 
 fsal_status_t dumb_fsal_up_open(fsal_up_event_data_t * pevdata)
