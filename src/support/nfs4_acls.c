@@ -97,7 +97,7 @@ fsal_ace_t *nfs4_ace_alloc(int nace)
   fsal_ace_t *pace = NULL;
 
   pace = (fsal_ace_t *)Mem_Alloc(nace * sizeof(fsal_ace_t));
-
+  memset(pace, 0, nace * sizeof(fsal_ace_t));
   return pace;
 }
 
