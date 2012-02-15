@@ -26,7 +26,7 @@
 #endif
 
 #include <pthread.h>
-#include "log_macros.h"
+#include "log.h"
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -35,7 +35,7 @@
 #include <string.h>
 #include <malloc.h>
 #include "rpc.h"
-#include "log_macros.h"
+#include "log.h"
 #include "nlm_list.h"
 #include "nlm_util.h"
 #include "nlm_async.h"

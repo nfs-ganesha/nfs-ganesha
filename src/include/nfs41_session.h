@@ -53,7 +53,7 @@
 #ifdef _USE_MFSL
 #include "mfsl.h"
 #endif
-#include "log_macros.h"
+#include "log.h"
 #include "config_parsing.h"
 #include "nfs23.h"
 #include "nfs4.h"

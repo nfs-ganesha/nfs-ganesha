@@ -28,7 +28,7 @@
 
 #include "BuddyMalloc.h"
 #include <pthread.h>
-#include "log_macros.h"
+#include "log.h"
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/time.h>

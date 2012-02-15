@@ -16,7 +16,7 @@
 #endif
 
 #include "fsal.h"
-#include "log_macros.h"
+#include "log.h"
 #include <unistd.h>             /* for using gethostname */
 #include <stdlib.h>             /* for using exit */
 #include <string.h>

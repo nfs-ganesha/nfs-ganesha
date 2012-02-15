@@ -27,7 +27,7 @@
 #ifndef _ERR_RPC_H
 #define _ERR_RPC_H
 
-#include "log_macros.h"
+#include "log.h"
 
 static family_error_t __attribute__ ((__unused__)) tab_error_rpc[] =
 {

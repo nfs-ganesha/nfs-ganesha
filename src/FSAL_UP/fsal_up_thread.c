@@ -33,7 +33,7 @@
 #include <pthread.h>
 #include "nfs_core.h"
 #include "stuff_alloc.h"
-#include "log_macros.h"
+#include "log.h"
 #include "fsal_up.h"
 
 static int fsal_up_thread_exists(exportlist_t *entry);

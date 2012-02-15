@@ -101,7 +101,7 @@
 #include <string.h>
 #include "LRU_List.h"
 #include "stuff_alloc.h"
-#include "log_macros.h"
+#include "log.h"
 
 #ifndef TRUE /* XXX need base header for such defines (curr. BuddyMalloc.h) */
 #define TRUE 1

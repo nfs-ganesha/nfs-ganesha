@@ -9,7 +9,7 @@
 #include "stuff_alloc.h"
 #include "fsal.h"
 #include "HashTable.h"
-#include "log_macros.h"
+#include "log.h"
 #include "RW_Lock.h"
 #include "nfs4_acls.h"
 #include <openssl/md5.h>

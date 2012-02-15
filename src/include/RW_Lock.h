@@ -32,7 +32,7 @@
 #define _RW_LOCK_H
 
 #include <pthread.h>
-#include "log_macros.h"
+#include "log.h"
 #include "common_utils.h"
 
 

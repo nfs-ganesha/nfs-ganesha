@@ -33,7 +33,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <sys/quota.h>
-#include "log_macros.h"
+#include "log.h"
 #include "fsal.h"
 #include "fsal_pnfs.h"
 #include "pnfs_common.h"

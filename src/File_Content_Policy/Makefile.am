@@ -10,7 +10,7 @@ libcache_content_policy_la_SOURCES = cache_content_cache_behaviour.c   \
                                      ../include/cache_content_policy.h \
                                      ../include/stuff_alloc.h          \
                                      ../include/LRU_List.h             \
-                                     ../include/log_functions.h        \
+                                     ../include/log.h        \
                                      ../include/HashData.h             \
                                      ../include/HashTable.h            \
                                      ../include/fsal.h                 \

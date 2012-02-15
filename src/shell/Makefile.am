@@ -66,7 +66,7 @@ __FS_NAME__ganeshell_SOURCES    = Getopt.c                            \
                                   ../include/err_fsal.h               \
                                   ../include/err_ghost_fs.h           \
                                   ../include/fsal.h                   \
-                                  ../include/log_functions.h          \
+                                  ../include/log.h                    \
                                   ../include/mount.h                  \
                                   ../include/nfs23.h                  \
                                   ../include/nfs4.h                   \

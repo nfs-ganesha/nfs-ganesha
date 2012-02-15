@@ -1,5 +1,5 @@
 #include "config_parsing.h"
-#include "log_macros.h"
+#include "log.h"
 #include <errno.h>
 
 int main(int argc, char **argv)

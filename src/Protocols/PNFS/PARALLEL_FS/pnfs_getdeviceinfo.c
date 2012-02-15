@@ -25,7 +25,7 @@
 #include "HashTable.h"
 #include "stuff_alloc.h"
 #include "rpc.h"
-#include "log_macros.h"
+#include "log.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"

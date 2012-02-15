@@ -47,7 +47,7 @@
 #include <pthread.h>
 #include "HashData.h"
 #include "HashTable.h"
-#include "log_macros.h"
+#include "log.h"
 #include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"

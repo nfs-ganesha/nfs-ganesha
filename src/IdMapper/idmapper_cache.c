@@ -43,7 +43,7 @@
 
 #include "HashData.h"
 #include "HashTable.h"
-#include "log_macros.h"
+#include "log.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"

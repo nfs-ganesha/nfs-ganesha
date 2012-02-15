@@ -49,7 +49,7 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
-#include "log_macros.h"
+#include "log.h"
 #include "stuff_alloc.h"
 #include "nfs4.h"
 #include "sal_functions.h"

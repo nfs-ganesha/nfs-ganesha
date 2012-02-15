@@ -37,7 +37,7 @@
 #endif
 
 #include "BuddyMalloc.h"
-#include "log_macros.h"
+#include "log.h"
 #include "common_utils.h"
 #include <strings.h>
 #include <string.h>

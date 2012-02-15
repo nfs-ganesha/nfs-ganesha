@@ -43,7 +43,7 @@
 
 #include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>              /* for having MAXHOSTNAMELEN */
-#include "log_macros.h"
+#include "log.h"
 #include "nfs23.h"
 #ifdef _USE_NLM
 #include "nlm4.h"

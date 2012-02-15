@@ -40,7 +40,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <pthread.h>
-#include "log_macros.h"
+#include "log.h"
 #include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"

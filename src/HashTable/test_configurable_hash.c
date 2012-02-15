@@ -81,7 +81,7 @@
 #include <errno.h>
 #include "HashTable.h"
 #include "MesureTemps.h"
-#include "log_macros.h"
+#include "log.h"
 #include "stuff_alloc.h"
 
 #define LENBUF 256

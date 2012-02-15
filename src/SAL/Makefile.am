@@ -23,8 +23,7 @@ libsal_la_SOURCES = state_async.c                    \
                     ../include/err_cache_inode.h     \
                     ../include/fsal.h                \
                     ../include/fsal_types.h          \
-                    ../include/log_functions.h       \
-                    ../include/log_macros.h          \
+                    ../include/log.h       \
                     ../include/nfs4.h                \
                     ../include/nfs_core.h            \
                     ../include/nfs_exports.h         \

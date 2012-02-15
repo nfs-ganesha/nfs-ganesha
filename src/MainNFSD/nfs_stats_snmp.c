@@ -29,7 +29,7 @@
 
 #include "stuff_alloc.h"
 #include "common_utils.h"
-#include "log_macros.h"
+#include "log.h"
 
 #define  CONF_SNMP_ADM_LABEL  "SNMP_ADM"
 /* case unsensitivity */

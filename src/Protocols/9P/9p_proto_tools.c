@@ -46,7 +46,7 @@
 #include <pwd.h>
 #include "nfs_core.h"
 #include "stuff_alloc.h"
-#include "log_macros.h"
+#include "log.h"
 #include "9p.h"
 
 int _9p_init(  _9p_parameter_t * pparam ) 

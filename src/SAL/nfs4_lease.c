@@ -45,7 +45,7 @@
 #include "solaris_port.h"
 #endif
 
-#include "log_macros.h"
+#include "log.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs4.h"

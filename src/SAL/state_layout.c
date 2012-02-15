@@ -46,7 +46,7 @@
 #include <string.h>
 
 #include "LRU_List.h"
-#include "log_macros.h"
+#include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"

@@ -40,7 +40,7 @@
 #include "solaris_port.h"
 #endif
 
-#include "log_macros.h"
+#include "log.h"
 #include "ganesha_fuse_wrap.h"
 #include "nfs_init.h"
 #include "fsal.h"

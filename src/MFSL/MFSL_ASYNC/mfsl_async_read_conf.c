@@ -43,7 +43,7 @@
 #include "mfsl_types.h"
 #include "mfsl.h"
 #include "stuff_alloc.h"
-#include "log_macros.h"
+#include "log.h"
 #include "config_parsing.h"
 
 #include <strings.h>

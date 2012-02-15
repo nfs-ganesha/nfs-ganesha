@@ -35,7 +35,7 @@
 #ifndef _ERR_FSAL_H
 #define _ERR_FSAL_H
 
-#include "log_macros.h"
+#include "log.h"
 
 typedef enum fsal_errors_t
 {

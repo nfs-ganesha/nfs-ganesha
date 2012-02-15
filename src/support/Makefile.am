@@ -43,7 +43,7 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          ../include/common_utils.h          \
                          ../include/config_parsing.h        \
                          ../include/fsal.h                  \
-                         ../include/log_functions.h         \
+                         ../include/log.h         \
                          ../include/lookup3.h               \
                          ../include/mount.h                 \
                          ../include/nfs23.h                 \

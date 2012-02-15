@@ -27,7 +27,7 @@
 #include "rpc.h"
 #include "nsm.h"
 #include "nlm4.h"
-#include "log_macros.h"
+#include "log.h"
 #include "nfs_core.h"
 
 pthread_mutex_t nsm_mutex = PTHREAD_MUTEX_INITIALIZER;

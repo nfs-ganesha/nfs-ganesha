@@ -49,7 +49,7 @@
 #include "nfs_core.h"
 #include "nfs_stat.h"
 #include "nfs_exports.h"
-#include "log_macros.h"
+#include "log.h"
 
 extern hash_table_t *ht_ip_stats[NB_MAX_WORKER_THREAD];
 

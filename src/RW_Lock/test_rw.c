@@ -38,7 +38,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "RW_Lock.h"
-#include "log_macros.h"
+#include "log.h"
 
 #define MAX_WRITTERS 3
 #define MAX_READERS 5
