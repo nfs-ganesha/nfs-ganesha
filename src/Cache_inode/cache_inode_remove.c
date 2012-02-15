@@ -366,7 +366,7 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
   /* Remove the entry from parent dir_entries avl */
   cache_inode_remove_cached_dirent(pentry, pnode_name, ht, pclient, &status);
 
-  LogFullDebug(COMPONENT_CACHE_INODE,
+  LogDebug(COMPONENT_CACHE_INODE,
                "cache_inode_remove_cached_dirent: status=%d", status);
 
   /* Update the cached attributes */

@@ -508,7 +508,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
   switch (type)
     {
     case REGULAR_FILE:
-      LogDebug(COMPONENT_CACHE_INODE,
+      LogMidDebug(COMPONENT_CACHE_INODE,
                "cache_inode_new_entry: Adding a REGULAR_FILE pentry=%p policy=%u",
                pentry, policy );
 
@@ -554,7 +554,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
       break;
 
     case DIRECTORY:
-      LogDebug(COMPONENT_CACHE_INODE,
+      LogMidDebug(COMPONENT_CACHE_INODE,
                "cache_inode_new_entry: Adding a DIRECTORY pentry=%p policy=%u",
                pentry, policy);
 
@@ -581,7 +581,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
       break;
 
     case SYMBOLIC_LINK:
-      LogDebug(COMPONENT_CACHE_INODE,
+      LogMidDebug(COMPONENT_CACHE_INODE,
                "cache_inode_new_entry: Adding a SYMBOLIC_LINK pentry=%p policy=%u",
                pentry, policy );
       GetFromPool(pentry->object.symlink, &pclient->pool_entry_symlink,
@@ -612,7 +612,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
       break;
 
     case SOCKET_FILE:
-      LogDebug(COMPONENT_CACHE_INODE,
+      LogMidDebug(COMPONENT_CACHE_INODE,
                "cache_inode_new_entry: Adding a SOCKET_FILE pentry = %p",
                pentry);
 
@@ -623,7 +623,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
       break;
 
     case FIFO_FILE:
-      LogDebug(COMPONENT_CACHE_INODE,
+      LogMidDebug(COMPONENT_CACHE_INODE,
                "cache_inode_new_entry: Adding a FIFO_FILE pentry = %p",
                pentry);
 
@@ -634,7 +634,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
       break;
 
     case BLOCK_FILE:
-      LogDebug(COMPONENT_CACHE_INODE,
+      LogMidDebug(COMPONENT_CACHE_INODE,
                "cache_inode_new_entry: Adding a BLOCK_FILE pentry=%p policy=%u",
                pentry, policy);
 
@@ -645,7 +645,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
       break;
 
     case CHARACTER_FILE:
-      LogDebug(COMPONENT_CACHE_INODE,
+      LogMidDebug(COMPONENT_CACHE_INODE,
                "cache_inode_new_entry: Adding a CHARACTER_FILE pentry=%p policy=%u",
                pentry, policy);
 
@@ -656,7 +656,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
       break;
 
     case FS_JUNCTION:
-        LogDebug(COMPONENT_CACHE_INODE,
+        LogMidDebug(COMPONENT_CACHE_INODE,
                  "cache_inode_new_entry: Adding a FS_JUNCTION pentry=%p policy=%u",
                  pentry, policy);
 
@@ -795,7 +795,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 
       if(cache_content_status == CACHE_CONTENT_SUCCESS)
         {
-          LogDebug(COMPONENT_CACHE_INODE,
+          LogMidDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Entry %p is already datacached, recovering...",
                    pentry);
 
@@ -816,7 +816,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                       pentry);
             }
           else
-            LogDebug(COMPONENT_CACHE_INODE,
+            LogMidDebug(COMPONENT_CACHE_INODE,
                      "Cached data added successfully for pentry %p",
                      pentry);
 
@@ -1185,13 +1185,13 @@ void cache_inode_set_attributes(cache_entry_t * pentry, fsal_attrib_list_t * pat
   if(p_oldacl != p_newacl)
     {
       fsal_acl_status_t status;
-      LogDebug(COMPONENT_CACHE_INODE, "acl has been changed: old acl=%p, new acl=%p",
+      LogFullDebug(COMPONENT_CACHE_INODE, "acl has been changed: old acl=%p, new acl=%p",
                p_oldacl, p_newacl);
 
       /* Release old acl. */
       if(p_oldacl)
         {
-          LogDebug(COMPONENT_CACHE_INODE, "md_type = %d, release old acl = %p",
+          LogFullDebug(COMPONENT_CACHE_INODE, "md_type = %d, release old acl = %p",
                    pentry->internal_md.type, p_oldacl);
 
           nfs4_acl_release_entry(p_oldacl, &status);
@@ -1386,7 +1386,7 @@ void cache_inode_print_dir(cache_entry_t * cache_entry_root)
 
   if(cache_entry_root->internal_md.type != DIRECTORY)
     {
-      LogFullDebug(COMPONENT_CACHE_INODE,
+      LogDebug(COMPONENT_CACHE_INODE,
                    "This entry is not a directory");
       return;
     }
@@ -1764,7 +1764,7 @@ void cache_inode_print_srvhandle(char *comment, cache_entry_t * pentry)
 
   nfs4_sprint_fhandle(&nfsfh, outstr);
 
-  LogFullDebug(COMPONENT_CACHE_INODE,
+  LogMidDebug(COMPONENT_CACHE_INODE,
                "-->-->-->-->--> External FH (%s) comment=%s = %s",
                tag, comment, outstr);
 }                               /* cache_inode_print_srvhandle */

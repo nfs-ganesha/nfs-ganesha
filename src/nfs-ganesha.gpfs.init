@@ -53,6 +53,7 @@ CONFFILE=/etc/ganesha/gpfs.ganesha.nfsd.conf
 ## NIV_EVENT
 ## NIV_INFO
 ## NIV_DEBUG
+## NIV_MID_DEBUG
 ## NIV_FULL_DEBUG
 
 #Some common useful log components:

@@ -158,7 +158,7 @@ int ganefuse_main(int argc, char *argv[],
           if(debug_level == -1)
             {
               fprintf(stderr,
-                      "Invalid value for option 'N': NIV_NULL, NIV_MAJ, NIV_CRIT, NIV_EVENT, NIV_DEBUG or NIV_FULL_DEBUG expected.\n");
+                      "Invalid value for option 'N': NIV_NULL, NIV_MAJ, NIV_CRIT, NIV_EVENT, NIV_DEBUG, NIV_MID_DEBUG or NIV_FULL_DEBUG expected.\n");
               exit(1);
             }
           break;
