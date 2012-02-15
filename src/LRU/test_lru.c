@@ -62,7 +62,7 @@
 #include <string.h>
 #include "BuddyMalloc.h"
 #include "LRU_List.h"
-#include "log_macros.h"
+#include "log.h"
 
 #define PREALLOC 10000
 #define MAXTEST 10

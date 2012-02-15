@@ -23,7 +23,7 @@
 #endif
 
 #include "LRU_List.h"
-#include "log_functions.h"
+#include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"

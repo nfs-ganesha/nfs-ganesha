@@ -83,7 +83,7 @@
 #include "BuddyMalloc.h"
 #include "HashTable.h"
 #include "MesureTemps.h"
-#include "log_macros.h"
+#include "log.h"
 
 #define MAXTEST 10000           /* Plus grand que MAXDESTROY !! */
 #define MAXDESTROY 50

@@ -43,7 +43,7 @@
 #include "stuff_alloc.h"
 #include <pthread.h>
 
-#include "log_macros.h"
+#include "log.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

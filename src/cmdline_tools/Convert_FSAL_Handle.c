@@ -39,7 +39,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include "log_functions.h"
+#include "log.h"
 #include "stuff_alloc.h"
 #include "fsal.h"
 

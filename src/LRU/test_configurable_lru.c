@@ -58,7 +58,7 @@
 #include <string.h>
 #include "BuddyMalloc.h"
 #include "LRU_List.h"
-#include "log_macros.h"
+#include "log.h"
 
 #define LENBUF 256
 #define STRSIZE 10

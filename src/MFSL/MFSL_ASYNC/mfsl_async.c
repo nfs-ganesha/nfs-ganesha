@@ -38,7 +38,7 @@
 #endif
 
 /* fsal_types contains constants and type definitions for FSAL */
-#include "log_functions.h"
+#include "log.h"
 #include "stuff_alloc.h"
 #include "fsal_types.h"
 #include "fsal.h"

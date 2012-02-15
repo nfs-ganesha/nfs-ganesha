@@ -46,7 +46,7 @@
 #include <string.h>
 
 #include "config_parsing.h"
-#include "log_macros.h"
+#include "log.h"
 
 #ifndef TRUE
 #define TRUE 1

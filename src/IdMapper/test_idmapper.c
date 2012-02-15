@@ -17,7 +17,7 @@
 #include <sys/resource.h>       /* for having setrlimit */
 #include <signal.h>             /* for sigaction */
 #include "rpc.h"
-#include "log_functions.h"
+#include "log.h"
 #include "stuff_alloc.h"
 #include "fsal.h"
 #include "nfs23.h"

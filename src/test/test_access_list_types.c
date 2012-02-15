@@ -6,7 +6,7 @@
 
 #include "nfs_exports.h"
 #include "config_parsing.h"
-#include "log_macros.h"
+#include "log.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs_stat.h"

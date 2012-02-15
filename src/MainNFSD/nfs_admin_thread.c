@@ -48,7 +48,7 @@
 #include <pthread.h>
 #include "nfs_core.h"
 #include "stuff_alloc.h"
-#include "log_macros.h"
+#include "log.h"
 #include "nfs_tcb.h"
 
 exportlist_t *temp_pexportlist;

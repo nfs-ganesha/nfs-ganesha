@@ -25,7 +25,7 @@ libnlm_la_SOURCES = nlm_Cancel.c                        \
 #include "config.h"
 #include "HashData.h"
 #include "HashTable.h"
-#include "log_macros.h"
+#include "log.h"
 #include "mount.h"
 #include "nfs23.h"
 #include "nfs4.h"

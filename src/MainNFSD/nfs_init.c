@@ -42,7 +42,7 @@
 #include "rpc.h"
 #include "nfs_init.h"
 #include "stuff_alloc.h"
-#include "log_macros.h"
+#include "log.h"
 #include "fsal.h"
 #include "nfs23.h"
 #include "nfs4.h"

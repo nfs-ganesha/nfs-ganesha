@@ -52,7 +52,7 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "fsal_types.h"
-#include "log_macros.h"
+#include "log.h"
 #include "config_parsing.h"
 #include "nfs23.h"
 #include "nfs4.h"

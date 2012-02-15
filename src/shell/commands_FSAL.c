@@ -229,7 +229,7 @@
 #include <string.h>
 #include <pwd.h>
 #include "fsal.h"
-#include "log_functions.h"
+#include "log.h"
 #include "err_ghost_fs.h"
 #include "config_parsing.h"
 #include "cmd_tools.h"

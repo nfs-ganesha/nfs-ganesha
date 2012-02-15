@@ -40,7 +40,7 @@ libcache_inode_la_SOURCES = cache_inode_access.c             \
 			    ../include/fsal.h                \
                             ../include/fsal_types.h          \
                             ../include/LRU_List.h            \
-                            ../include/log_functions.h       \
+                            ../include/log.h       \
                             ../include/HashData.h            \
                             ../include/HashTable.h           \
                             ../include/err_cache_inode.h

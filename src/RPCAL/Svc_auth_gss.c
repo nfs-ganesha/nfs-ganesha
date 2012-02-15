@@ -54,7 +54,7 @@
 
 #include "stuff_alloc.h"
 #include "nfs_core.h"
-#include "log_macros.h"
+#include "log.h"
 
 #ifdef SPKM
 

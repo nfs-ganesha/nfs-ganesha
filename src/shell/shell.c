@@ -102,7 +102,7 @@
 #include "shell.h"
 #include "shell_utils.h"
 #include "shell_vars.h"
-#include "log_functions.h"
+#include "log.h"
 #include "commands.h"
 #include "cmd_tools.h"
 

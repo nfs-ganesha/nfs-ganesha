@@ -44,11 +44,10 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "LRU_List.h"
-#include "log_macros.h"
+#include "log.h"
 #include "err_fsal.h"
 #include "err_cache_inode.h"
 #include "stuff_alloc.h"
-#include "log_macros.h"
 
 #define HPSS_SSM "hpss_ssm"
 #define HPSS_KEYTAB "/krb5/hpssserver.keytab"

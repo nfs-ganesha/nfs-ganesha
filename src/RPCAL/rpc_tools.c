@@ -60,7 +60,7 @@
 #include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"
-#include "log_macros.h"
+#include "log.h"
 #include "nfs_core.h"
 #include "nfs23.h"
 #include "nfs4.h"

@@ -65,7 +65,7 @@
 
 #include <grp.h>
 #include "rpc.h"
-#include "log_functions.h"
+#include "log.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs23.h"

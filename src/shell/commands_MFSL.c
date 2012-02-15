@@ -47,7 +47,7 @@
 #include <pwd.h>
 #include "fsal.h"
 #include "mfsl.h"
-#include "log_macros.h"
+#include "log.h"
 #include "err_ghost_fs.h"
 #include "config_parsing.h"
 #include "cmd_tools.h"

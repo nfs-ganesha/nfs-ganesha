@@ -7,7 +7,7 @@ libidmap_la_SOURCES = idmapper.c                   \
                       ../include/nfs_tools.h       \
                       ../include/HashData.h        \
                       ../include/HashTable.h       \
-                      ../include/log_functions.h   \
+                      ../include/log.h   \
                       ../include/stuff_alloc.h     \
                       ../include/nfs_core.h        \
                       ../include/err_inject.h      \

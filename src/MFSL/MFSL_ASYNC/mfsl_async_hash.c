@@ -41,7 +41,7 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "log_functions.h"
+#include "log.h"
 #include "fsal_types.h"
 #include "fsal.h"
 #include "mfsl_types.h"

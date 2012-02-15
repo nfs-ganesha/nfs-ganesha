@@ -45,7 +45,7 @@
 #include <signal.h>
 #include <libgen.h>
 
-#include "log_macros.h"
+#include "log.h"
 //#include "nfs_core.h"
 
 /* La longueur d'une chaine */

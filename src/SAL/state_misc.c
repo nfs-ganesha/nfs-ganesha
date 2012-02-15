@@ -47,7 +47,7 @@
 #include <pthread.h>
 #include <string.h>
 
-#include "log_macros.h"
+#include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"

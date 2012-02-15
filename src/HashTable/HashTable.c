@@ -177,7 +177,7 @@
 #include "RW_Lock.h"
 #include "HashTable.h"
 #include "stuff_alloc.h"
-#include "log_macros.h"
+#include "log.h"
 
 #ifndef TRUE
 #define TRUE 1

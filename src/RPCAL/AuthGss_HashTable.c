@@ -13,10 +13,9 @@
 #include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"
-#include "log_macros.h"
+#include "log.h"
 #include "config_parsing.h"
 #include "nfs_core.h"
-#include "log_macros.h"
 
 #include "rpcal.h"
 #ifdef HAVE_HEIMDAL
