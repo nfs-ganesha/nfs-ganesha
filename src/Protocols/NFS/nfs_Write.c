@@ -44,6 +44,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
@@ -259,6 +260,7 @@ int nfs_Write(nfs_arg_t * parg,
                   break ;
  
                 default:
+		  assert(0); // if we get here than the value is an invalid enum - corruption
                   break ;
              }
            break ;
@@ -276,6 +278,7 @@ int nfs_Write(nfs_arg_t * parg,
                   break ;
  
                 default:
+		  assert(0); // if we get here than the value is an invalid enum - corruption
                   break ;
              }
           break;
