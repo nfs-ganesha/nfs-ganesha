@@ -96,7 +96,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
   hash_buffer_t key, old_key, old_value;
   int rc;
 
-  LogFullDebug(COMPONENT_CACHE_INODE_GC,
+  LogMidDebug(COMPONENT_CACHE_INODE_GC,
                "(pthread_self=%p): About to remove pentry=%p, type=%d",
                (caddr_t)pthread_self(),
                pentry, pentry->internal_md.type);
@@ -161,7 +161,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
               "cache_inode_gc_clean_entry: Could'nt free FSAL ressources fsal_status.major=%u",
               fsal_status.major);
     }
-  LogFullDebug(COMPONENT_CACHE_INODE_GC,
+  LogMidDebug(COMPONENT_CACHE_INODE_GC,
                "++++> pentry %p deleted from HashTable", pentry);
 
   /* Release the hash key data */
@@ -189,7 +189,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
       parent_iter = parent_iter_next;
     }
 
-  LogFullDebug(COMPONENT_CACHE_INODE_GC,
+  LogMidDebug(COMPONENT_CACHE_INODE_GC,
                "++++> parent directory sent back to pool");
 
 #ifdef _USE_NFS4_ACL
@@ -216,7 +216,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
   /* Regular exit */
   pgcparam->nb_to_be_purged = pgcparam->nb_to_be_purged - 1;
 
-  LogFullDebug(COMPONENT_CACHE_INODE_GC,
+  LogDebug(COMPONENT_CACHE_INODE_GC,
                "++++> pentry %p: clean entry is ok", pentry);
 
   return LRU_LIST_SET_INVALID;  /* Cleaning ok */
@@ -300,14 +300,14 @@ int cache_inode_gc_suppress_file(cache_entry_t * pentry,
 {
   P_w(&pentry->lock);
 
-  LogFullDebug(COMPONENT_CACHE_INODE_GC,
+  LogMidDebug(COMPONENT_CACHE_INODE_GC,
                "Entry %p (REGULAR_FILE/SYMBOLIC_LINK) will be garbaged",
                pentry);
 
   /* Set the entry as invalid */
   pentry->internal_md.valid_state = INVALID;
 
-  LogFullDebug(COMPONENT_CACHE_INODE_GC,
+  LogDebug(COMPONENT_CACHE_INODE_GC,
                "****> cache_inode_gc_suppress_file on %p",
                pentry);
 
@@ -347,7 +347,7 @@ int cache_inode_gc_suppress_directory(cache_entry_t * pentry,
     {
       V_w(&pentry->lock);
 
-      LogFullDebug(COMPONENT_CACHE_INODE_GC,
+      LogDebug(COMPONENT_CACHE_INODE_GC,
                    "Entry %p (DIRECTORY) is not empty. The entry will not be garbaged now",
                    pentry);
 
@@ -356,11 +356,11 @@ int cache_inode_gc_suppress_directory(cache_entry_t * pentry,
 
   /* If we reached this point, the directory contains no active entry, it
    * should be removed from the cache */
-  LogFullDebug(COMPONENT_CACHE_INODE_GC,
+  LogMidDebug(COMPONENT_CACHE_INODE_GC,
                "Entry %p (DIRECTORY) will be garbaged",
                pentry);
 
-  LogFullDebug(COMPONENT_CACHE_INODE_GC,
+  LogDebug(COMPONENT_CACHE_INODE_GC,
                "****> cache_inode_gc_suppress_directory on %p",
                pentry);
 
@@ -420,7 +420,7 @@ int cache_inode_gc_function(LRU_entry_t * plru_entry, void *addparam)
 
   if(pgcparam->nb_to_be_purged != 0)
     {
-      LogFullDebug(COMPONENT_CACHE_INODE_GC,
+      LogMidDebug(COMPONENT_CACHE_INODE_GC,
                    "We still need %d entries to be garbaged",
                    pgcparam->nb_to_be_purged);
 
@@ -437,7 +437,7 @@ int cache_inode_gc_function(LRU_entry_t * plru_entry, void *addparam)
           if(current_time - entry_time > cache_inode_gc_policy.directory_expiration_delay)
             {
               /* Entry should be tagged invalid */
-              LogDebug(COMPONENT_CACHE_INODE_GC,
+              LogMidDebug(COMPONENT_CACHE_INODE_GC,
                        "----->>>>>>>> DIR GC : Garbage collection on dir entry %p",
                        pentry);
               return cache_inode_gc_suppress_directory(pentry, pgcparam);
@@ -456,7 +456,7 @@ int cache_inode_gc_function(LRU_entry_t * plru_entry, void *addparam)
           if(current_time - entry_time > cache_inode_gc_policy.file_expiration_delay)
             {
               /* Entry should be suppress and tagged invalid */
-              LogDebug(COMPONENT_CACHE_INODE_GC,
+              LogMidDebug(COMPONENT_CACHE_INODE_GC,
                        "----->>>>>> REGULAR/SYMLINK GC : Garbage collection on regular/symlink entry %p",
                        pentry);
               return cache_inode_gc_suppress_file(pentry, pgcparam);
@@ -675,7 +675,7 @@ cache_inode_status_t cache_inode_gc_fd(cache_inode_client_t * pclient,
       return *pstatus;
     }
 
-  LogDebug(COMPONENT_CACHE_INODE_GC,
+  LogFullDebug(COMPONENT_CACHE_INODE_GC,
            "File descriptor GC: %u files closed",
            pclient->max_fd - gcparam.nb_to_be_purged);
   pclient->time_of_last_gc_fd = time(NULL);
@@ -716,7 +716,7 @@ static void cache_inode_gc_acl(cache_entry_t * pentry)
   /* Release an acl. */
   if(pacl)
     {
-      LogDebug(COMPONENT_CACHE_INODE_GC, "cache_inode_gc_acl: md_type = %d, acl  = %p",
+      LogFullDebug(COMPONENT_CACHE_INODE_GC, "cache_inode_gc_acl: md_type = %d, acl  = %p",
                pentry->internal_md.type, pacl);
 
       nfs4_acl_release_entry(pacl, &status);

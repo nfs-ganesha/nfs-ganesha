@@ -125,7 +125,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
           case SYMBOLIC_LINK:
             print = 0;
             cache_inode_expire_to_str(pclient->expire_type_link, pclient->grace_period_link, grace2);
-            LogDebug(COMPONENT_CACHE_INODE,
+            LogFullDebug(COMPONENT_CACHE_INODE,
                      "Renew Entry test of %p for SYMBOLIC_LINK elapsed time=%u, grace_period_attr=%s, grace_period_link=%s",
                      pentry, elapsed, grace, grace2);
             break;
@@ -138,7 +138,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
           case DIRECTORY:
             print = 0;
             cache_inode_expire_to_str(pclient->expire_type_dirent, pclient->grace_period_dirent, grace2);
-            LogDebug(COMPONENT_CACHE_INODE,
+            LogFullDebug(COMPONENT_CACHE_INODE,
                      "Renew Entry test of %p for DIRECTORY elapsed time=%u, grace_period_attr=%s, grace_period_dirent=%s, has_been_readdir=%u",
                      pentry, elapsed, grace, grace2,
                      pentry->object.dir.has_been_readdir);
@@ -155,7 +155,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
         }
       if(print)
         {
-          LogDebug(COMPONENT_CACHE_INODE,
+          LogFullDebug(COMPONENT_CACHE_INODE,
                    "Renew Entry test of %p for %s elapsed time=%u, grace_period_attr=%s",
                    pentry, type, elapsed, grace);
         }
@@ -178,7 +178,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
       return *pstatus;
     }
 
-  LogDebug(COMPONENT_CACHE_INODE,
+  LogMidDebug(COMPONENT_CACHE_INODE,
            "cache_inode_renew_entry use getattr/mtime checking %d, is dir "
 	   "beginning %d, has bit in mask %d, has been readdir %d state %d",
            pclient->getattr_dir_invalidation,
@@ -243,7 +243,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
           return *pstatus;
         }
 
-      LogDebug(COMPONENT_CACHE_INODE,
+      LogFullDebug(COMPONENT_CACHE_INODE,
                "cache_inode_renew_entry: Entry=%p, type=%d, Cached Time=%d, FSAL Time=%d",
                pentry, pentry->internal_md.type,
                pentry->attributes.mtime.seconds,

@@ -112,7 +112,7 @@ cache_inode_getattr(cache_entry_t * pentry,
         {
             V_w(&pentry->lock);
             inc_func_err_retryable(pclient, CACHE_INODE_GETATTR);
-            LogFullDebug(COMPONENT_CACHE_INODE,
+            LogDebug(COMPONENT_CACHE_INODE,
                          "cache_inode_getattr: returning %d(%s) from cache_inode_renew_entry",
                          *pstatus, cache_inode_err_str(*pstatus));
             return *pstatus;
@@ -195,9 +195,9 @@ cache_inode_getattr(cache_entry_t * pentry,
         inc_func_success(pclient, CACHE_INODE_GETATTR);
 
 #ifdef _USE_NFS4_ACL
-    if(isDebug(COMPONENT_NFS_V4_ACL))
+    if(isFullDebug(COMPONENT_NFS_V4_ACL))
       {
-        LogDebug(COMPONENT_CACHE_INODE,
+        LogFullDebug(COMPONENT_CACHE_INODE,
                  "cache_inode_getattr: pentry = %p, acl = %p",
                  pentry, pattr->acl);
 
@@ -206,7 +206,7 @@ cache_inode_getattr(cache_entry_t * pentry,
             fsal_ace_t *pace;
             for(pace = pattr->acl->aces; pace < pattr->acl->aces + pattr->acl->naces; pace++)
               {
-                LogDebug(COMPONENT_CACHE_INODE,
+                LogFullDebug(COMPONENT_CACHE_INODE,
                          "cache_inode_getattr: ace type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
                          pace->type, pace->flag, pace->perm, IS_FSAL_ACE_SPECIAL_ID(*pace),
                          GET_FSAL_ACE_WHO_TYPE(*pace), GET_FSAL_ACE_WHO(*pace));
@@ -215,7 +215,7 @@ cache_inode_getattr(cache_entry_t * pentry,
       }
 #endif                          /* _USE_NFS4_ACL */
 
-    LogFullDebug(COMPONENT_CACHE_INODE,
+    LogDebug(COMPONENT_CACHE_INODE,
                  "cache_inode_getattr: returning %d(%s) from cache_inode_valid",
                  *pstatus, cache_inode_err_str(*pstatus));
     return *pstatus;

@@ -215,7 +215,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
                * This will lead to a situation where (for example) untar-ing a file will produced invalid files 
                * with a size of 0 despite the fact that they are not empty */
 
-              LogFullDebug(COMPONENT_CACHE_INODE,
+              LogMidDebug(COMPONENT_CACHE_INODE,
                            "cache_inode_setattr with FSAL_ATTR_SIZE on data cached entry");
             }
         }
@@ -254,7 +254,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
 #ifdef _USE_NFS4_ACL
   if(result_attributes.asked_attributes & FSAL_ATTR_ACL)
     {
-      LogDebug(COMPONENT_CACHE_INODE, "cache_inode_setattr: old acl = %p, new acl = %p",
+      LogFullDebug(COMPONENT_CACHE_INODE, "cache_inode_setattr: old acl = %p, new acl = %p",
                p_object_attributes->acl, result_attributes.acl);
 
       /* Release previous acl entry. */

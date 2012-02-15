@@ -134,7 +134,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t        * pentry_parent,
       {
           V_w(&pentry_parent->lock);
           inc_func_err_retryable(pclient, CACHE_INODE_GETATTR);
-          LogFullDebug(COMPONENT_CACHE_INODE,
+          LogDebug(COMPONENT_CACHE_INODE,
                        "cache_inode_lookup: returning %d(%s) from cache_inode_renew_entry",
                        *pstatus, cache_inode_err_str(*pstatus));
           return NULL;
@@ -210,7 +210,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t        * pentry_parent,
 
       if(pentry == NULL)
         {
-          LogFullDebug(COMPONENT_CACHE_INODE, "Cache Miss detected");
+          LogDebug(COMPONENT_CACHE_INODE, "Cache Miss detected");
 
           dir_handle = pentry_parent->handle;
           object_attributes.asked_attributes = pclient->attrmask;
@@ -236,7 +236,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t        * pentry_parent,
             }
           else
             {
-              LogDebug(COMPONENT_CACHE_INODE,
+              LogMidDebug(COMPONENT_CACHE_INODE,
                        "cache_inode_lookup chose to bypass FSAL and trusted his cache for name=%s",
                        pname->name);
               fsal_status.major = ERR_FSAL_NOENT;
@@ -538,7 +538,7 @@ cache_entry_t *cache_inode_valid_lookup(cache_entry_t * pentry_parent,
       if(cache_status != CACHE_INODE_SUCCESS)
         {
           inc_func_err_retryable(pclient, CACHE_INODE_GETATTR);
-          LogFullDebug(COMPONENT_CACHE_INODE,
+          LogDebug(COMPONENT_CACHE_INODE,
                        "cache_inode_valid_lookup: The file was found but could not be "
                        "renewed. Returning %d(%s) from cache_inode_renew_entry",
                        cache_status, cache_inode_err_str(cache_status));
