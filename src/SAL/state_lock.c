@@ -478,6 +478,12 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
                      &new_entry->sle_client_locks);
 
       inc_nlm_client_ref_locked(powner->so_owner.so_nlm_owner.so_client);
+
+      /* Add to list of locks owned by export */
+      P(pexport->exp_state_mutex);
+      glist_add_tail(&pexport->exp_lock_list,
+                     &new_entry->sle_export_locks);
+      V(pexport->exp_state_mutex);
     }
 #endif
   /* Add to list of locks owned by powner */
@@ -591,6 +597,11 @@ static void remove_from_locklist(state_lock_entry_t   * lock_entry,
           glist_del(&lock_entry->sle_client_locks);
 
           dec_nlm_client_ref_locked(powner->so_owner.so_nlm_owner.so_client);
+
+          /* Remove from list of locks owned by export */
+          P(lock_entry->sle_pexport->exp_state_mutex);
+          glist_del(&lock_entry->sle_export_locks);
+          V(lock_entry->sle_pexport->exp_state_mutex);
         }
 #endif
 
@@ -2550,7 +2561,9 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
       /* We just need to find any file this client has locks on.
        * We pick the first lock the client holds, and use it's file.
        */
-      found_entry = glist_first_entry(&pnsmclient->ssc_lock_list, state_lock_entry_t, sle_client_locks);
+      found_entry = glist_first_entry(&pnsmclient->ssc_lock_list,
+                                      state_lock_entry_t,
+                                      sle_client_locks);
 
       /* If we don't find any entries, then we are done. */
       if(found_entry == NULL)
