@@ -262,8 +262,11 @@ static void LogEntry(const char         *reason,
       DisplayOwner(ple->sle_owner, owner);
 
       LogFullDebug(COMPONENT_STATE,
-                   "%s Entry: %p pentry=%p, fileid=%llu, type=%s, start=0x%llx, end=0x%llx, blocked=%s/%p, state=%p, refcount=%d, owner={%s}",
-                   reason, ple, ple->sle_pentry, ple->sle_fileid, str_lockt(ple->sle_lock.lock_type),
+                   "%s Entry: %p pentry=%p, fileid=%llu, export=%u, type=%s, start=0x%llx, end=0x%llx, blocked=%s/%p, state=%p, refcount=%d, owner={%s}",
+                   reason, ple,
+                   ple->sle_pentry, ple->sle_fileid,
+                   (unsigned int) ple->sle_pexport->id,
+                   str_lockt(ple->sle_lock.lock_type),
                    (unsigned long long) ple->sle_lock.lock_start,
                    (unsigned long long) lock_end(&ple->sle_lock),
                    str_blocked(ple->sle_blocked),
