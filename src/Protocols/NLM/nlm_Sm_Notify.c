@@ -76,8 +76,7 @@ int nlm4_Sm_Notify(nfs_arg_t * parg /* IN     */ ,
        * locks from a client that has rebooted from being released
        * by this SM_NOTIFY.
        */
-      if(state_nlm_notify(pcontext,
-                          nsm_client,
+      if(state_nlm_notify(nsm_client,
                           (void *) (ptrdiff_t) arg->state,
                           pclient,
                           &state_status) != STATE_SUCCESS)

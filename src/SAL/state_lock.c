@@ -2528,8 +2528,7 @@ state_status_t state_cancel(cache_entry_t        * pentry,
  * state_nlm_notify: Handle an SM_NOTIFY from NLM
  *
  */
-state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
-                                state_nsm_client_t   * pnsmclient,
+state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
                                 state_t              * pstate,
                                 cache_inode_client_t * pclient,
                                 state_status_t       * pstatus)
@@ -2541,6 +2540,8 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
   cache_entry_t      * pentry;
   int                  errcnt = 0;
   struct glist_head    newlocks;
+  fsal_op_context_t    fsal_context;
+  fsal_status_t        fsal_status;
 
   if(isFullDebug(COMPONENT_STATE))
     {
@@ -2610,9 +2611,24 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
       lock.lock_start  = 0;
       lock.lock_length = 0;
 
+      /* construct the fsal context based on the export and root credential */
+      fsal_status = FSAL_GetClientContext(&fsal_context,
+                                          &pexport->FS_export_context,
+                                          0,
+                                          0,
+                                          NULL,
+                                          0);
+      if(FSAL_IS_ERROR(fsal_status))
+        {
+          /* log error here , and continue? */
+          LogDebug(COMPONENT_STATE,
+                   "FSAL_GetClientConext failed");
+          continue;
+        }
+
       /* Remove all locks held by this NLM Client on the file */
       if(state_unlock(pentry,
-                      pcontext,
+                      &fsal_context,
                       pexport,
                       powner,
                       pstate,

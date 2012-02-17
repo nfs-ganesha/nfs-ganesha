@@ -401,8 +401,7 @@ state_status_t state_cancel(cache_entry_t        * pentry,
 #endif
 
 #ifdef _USE_NLM
-state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
-                                state_nsm_client_t   * pnsmclient,
+state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
                                 state_t              * pstate,
                                 cache_inode_client_t * pclient,
                                 state_status_t       * pstatus);
