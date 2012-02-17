@@ -227,7 +227,7 @@ state_status_t state_add(cache_entry_t         * pentry,
     sprint_mem(debug_str, (char *)pnew_state->stateid_other, OTHERSIZE);
 
   init_glist(&pnew_state->state_list);
-  init_glist(&pnew_state->owner_states);
+  init_glist(&pnew_state->state_owner_list);
 
   /* Add the state to the related hashtable */
   if(!nfs4_State_Set(pnew_state->stateid_other, pnew_state))
@@ -255,7 +255,7 @@ state_status_t state_add(cache_entry_t         * pentry,
 
   P(powner_input->so_mutex);
   glist_add_tail(&powner_input->so_owner.so_nfs4_owner.so_state_list,
-                 &pnew_state->owner_states);
+                 &pnew_state->state_owner_list);
   V(powner_input->so_mutex);
 
   /* Copy the result */
@@ -319,7 +319,7 @@ state_status_t state_del(state_t              * pstate,
   if(pstate->state_powner != NULL)
     {
       P(pstate->state_powner->so_mutex);
-      glist_del(&pstate->owner_states);
+      glist_del(&pstate->state_owner_list);
       V(pstate->state_powner->so_mutex);
       dec_state_owner_ref(pstate->state_powner, pclient);
     }
@@ -327,18 +327,22 @@ state_status_t state_del(state_t              * pstate,
   /* Remove from the list of states for a particular cache entry */
   glist_del(&pstate->state_list);
 
-
   /* Remove from the list of lock states for a particular open state */
   if(pstate->state_type == STATE_TYPE_LOCK)
     glist_del(&pstate->state_data.lock.state_sharelist);
+
+  V_w(&pentry->lock);
+
+  /* Remove from list of states for a particular export */
+  P(pstate->state_pexport->exp_state_mutex);
+  glist_del(&pstate->state_export_list);
+  V(pstate->state_pexport->exp_state_mutex);
 
   ReleaseToPool(pstate, &pclient->pool_state_v4);
 
   LogFullDebug(COMPONENT_STATE, "Deleted state %s", debug_str);
 
   *pstatus = STATE_SUCCESS;
-
-  V_w(&pentry->lock);
 
   return *pstatus;
 }                               /* state_del */

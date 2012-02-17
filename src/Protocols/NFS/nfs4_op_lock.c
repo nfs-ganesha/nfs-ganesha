@@ -499,8 +499,11 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
       init_glist(&plock_state->state_data.lock.state_locklist);
 
-      /* get the exportid */
-      plock_state->exportid = nfs4_FhandleToExportId(&(data->currentFH));
+      /* Attach this lock to an export */
+      plock_state->state_pexport = data->pexport;
+      P(data->pexport->exp_state_mutex);
+      glist_add_tail(&data->pexport->exp_state_list, &plock_state->state_export_list);
+      V(data->pexport->exp_state_mutex);
 
       /* Add lock state to the list of lock states belonging to the open state */
       glist_add_tail(&pstate_open->state_data.share.share_lockstates,

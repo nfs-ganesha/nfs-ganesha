@@ -162,15 +162,16 @@ extern char all_one[OTHERSIZE];
 
 struct state_t
 {
-  struct glist_head state_list;                /**< List of states on a file                   */
-  unsigned int      exportid;
-  state_type_t      state_type;
-  state_data_t      state_data;
-  u_int32_t         state_seqid;               /**< The NFSv4 Sequence id                      */
-  char              stateid_other[OTHERSIZE];  /**< "Other" part of state id, used as hash key */
-  state_owner_t   * state_powner;              /**< State Owner related to this state          */
-  cache_entry_t   * state_pentry;              /**< Related pentry                             */
-  struct glist_head owner_states;              /**< List of states for an owner                */
+  struct glist_head   state_list;                /**< List of states on a file                   */
+  struct glist_head   state_owner_list;          /**< List of states for an owner                */
+  struct glist_head   state_export_list;         /**< List of states on the same export          */
+  exportlist_t      * state_pexport;             /**< Export this entry belongs to               */
+  state_owner_t     * state_powner;              /**< State Owner related to this state          */
+  cache_entry_t     * state_pentry;              /**< Related pentry                             */
+  state_type_t        state_type;
+  state_data_t        state_data;
+  u_int32_t           state_seqid;               /**< The NFSv4 Sequence id                      */
+  char                stateid_other[OTHERSIZE];  /**< "Other" part of state id, used as hash key */
 };
 
 typedef struct state_nfs4_owner_name_t

@@ -1142,8 +1142,11 @@ nfs4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 
                 init_glist(&((*statep)->state_data.share.share_lockstates));
 
-                /* get the exportid */  
-                (*statep)->exportid = nfs4_FhandleToExportId(&(data->currentFH));
+                /* Attach this lock to an export */
+                (*statep)->state_pexport = data->pexport;
+                P(data->pexport->exp_state_mutex);
+                glist_add_tail(&data->pexport->exp_state_list, &(*statep)->state_export_list);
+                V(data->pexport->exp_state_mutex);
         }
 
         if (pentry_parent != NULL) {    /* claim null */

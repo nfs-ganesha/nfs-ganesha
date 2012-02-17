@@ -432,7 +432,7 @@ static void release_lockstate(state_owner_t *plock_owner)
     {
       state_t * pstate_found = glist_entry(glist,
 					  state_t,
-					  owner_states);  
+					  state_owner_list);  
       if(state_del(pstate_found,
                plock_owner->so_pclient,
                &state_status) != STATE_SUCCESS)
@@ -457,7 +457,7 @@ static void release_openstate(state_owner_t *popen_owner)
     {
       state_t * pstate_found = glist_entry(glist,
 					  state_t,
-					  owner_states);  
+					  state_owner_list);  
 				     
 				     
       cache_entry_t    * pentry = pstate_found->state_pentry;
@@ -507,31 +507,21 @@ void nfs_client_id_expire(nfs_client_id_t *client_record)
   glist_for_each_safe(glist, glistn, &client_record->clientid_lockowners)
     {
       state_owner_t * plock_owner = glist_entry(glist,
-                                          state_owner_t,
-					  so_owner.so_nfs4_owner.so_perclient);
+                                                state_owner_t,
+                                	        so_owner.so_nfs4_owner.so_perclient);
       
       glist_for_each_safe(glist2, glistn2, &plock_owner->so_owner.so_nfs4_owner.so_state_list)
         {
-          exportlist_t           * pexport = NULL;
           fsal_op_context_t        fsal_context;
           fsal_status_t            fsal_status;
 
           state_t* plock_state = glist_entry(glist2,
-                                          state_t,
-					  owner_states);
+                                             state_t,
+					     state_owner_list);
 
-          /* get the export from the export id */
           /* construct the fsal context based on the export and root credential */
-	  
-          if ((pexport = nfs_Get_export_by_id(nfs_param.pexportlist, plock_state->exportid)) == NULL)
-            {
-              /* log error here , and continue? */
-              LogDebug(COMPONENT_STATE,
-                      "nfs_Get_export_by_id failed exportid=%d", plock_state->exportid);
-              continue;
-            }
-          fsal_status = FSAL_GetClientContext(&fsal_context,
-                                      &pexport->FS_export_context,
+	  fsal_status = FSAL_GetClientContext(&fsal_context,
+                                      &plock_state->state_pexport->FS_export_context,
                                       0,
                                       0,
                                       NULL,
@@ -545,10 +535,10 @@ void nfs_client_id_expire(nfs_client_id_t *client_record)
             }
 
           state_owner_unlock_all(&fsal_context,
-                                      plock_owner,
-                                      plock_state,
-                                      plock_owner->so_pclient,
-                                      &pstatus);
+                                 plock_owner,
+                                 plock_state,
+                                 plock_owner->so_pclient,
+                                 &pstatus);
         }
     }
   
