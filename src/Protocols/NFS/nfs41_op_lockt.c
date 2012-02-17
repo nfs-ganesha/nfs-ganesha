@@ -217,6 +217,7 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
    */
   if(state_test(data->current_entry,
                 data->pcontext,
+                data->pexport,
                 plock_owner,
                 &lock_desc,
                 &conflict_owner,

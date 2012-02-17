@@ -1955,6 +1955,7 @@ void copy_conflict(state_lock_entry_t  * found_entry,
  */
 state_status_t state_test(cache_entry_t        * pentry,
                           fsal_op_context_t    * pcontext,
+                          exportlist_t         * pexport,
                           state_owner_t        * powner,
                           fsal_lock_param_t    * plock,
                           state_owner_t       ** holder,   /* owner that holds conflicting lock */
@@ -2032,6 +2033,7 @@ state_status_t state_test(cache_entry_t        * pentry,
  */
 state_status_t state_lock(cache_entry_t         * pentry,
                           fsal_op_context_t     * pcontext,
+                          exportlist_t          * pexport,
                           state_owner_t         * powner,
                           state_t               * pstate,
                           state_blocking_t        blocking,
@@ -2342,6 +2344,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
  */
 state_status_t state_unlock(cache_entry_t        * pentry,
                             fsal_op_context_t    * pcontext,
+                            exportlist_t         * pexport,
                             state_owner_t        * powner,
                             state_t              * pstate,
                             fsal_lock_param_t    * plock,
@@ -2449,6 +2452,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
  */
 state_status_t state_cancel(cache_entry_t        * pentry,
                             fsal_op_context_t    * pcontext,
+                            exportlist_t         * pexport,
                             state_owner_t        * powner,
                             fsal_lock_param_t    * plock,
                             cache_inode_client_t * pclient,
@@ -2505,6 +2509,7 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
 {
   state_owner_t      * powner;
   state_lock_entry_t * found_entry;
+  exportlist_t       * pexport;
   fsal_lock_param_t    lock;
   cache_entry_t      * pentry;
   int                  errcnt = 0;
@@ -2561,8 +2566,9 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
       V(pnsmclient->ssc_mutex);
 
       /* Extract the cache inode entry from the lock entry and release the lock entry */
-      pentry = found_entry->sle_pentry;
-      powner = found_entry->sle_owner;
+      pentry  = found_entry->sle_pentry;
+      powner  = found_entry->sle_owner;
+      pexport = found_entry->sle_pexport;
 
       P(pentry->object.file.lock_list_mutex);
 
@@ -2578,6 +2584,7 @@ state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
       /* Remove all locks held by this NLM Client on the file */
       if(state_unlock(pentry,
                       pcontext,
+                      pexport,
                       powner,
                       pstate,
                       &lock,
@@ -2616,6 +2623,7 @@ state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
                                       state_status_t       * pstatus)
 {
   state_lock_entry_t * found_entry;
+  exportlist_t       * pexport;
   fsal_lock_param_t    lock;
   cache_entry_t      * pentry;
   int                  errcnt = 0;
@@ -2645,7 +2653,8 @@ state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
       V(powner->so_mutex);
 
       /* Extract the cache inode entry from the lock entry and release the lock entry */
-      pentry = found_entry->sle_pentry;
+      pentry  = found_entry->sle_pentry;
+      pexport = found_entry->sle_pexport;
 
       P(pentry->object.file.lock_list_mutex);
 
@@ -2661,6 +2670,7 @@ state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
       /* Remove all locks held by this owner on the file */
       if(state_unlock(pentry,
                       pcontext,
+                      pexport,
                       powner,
                       pstate,
                       &lock,

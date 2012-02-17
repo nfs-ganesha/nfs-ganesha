@@ -120,6 +120,7 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
 
   if(state_cancel(pentry,
                   pcontext,
+                  pexport,
                   nlm_owner,
                   &lock,
                   pclient,

@@ -197,6 +197,7 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
    */
   if(state_unlock(data->current_entry,
                   data->pcontext,
+                  data->pexport,
                   plock_owner,
                   pstate_found,
                   &lock_desc,
