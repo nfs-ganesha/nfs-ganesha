@@ -157,6 +157,7 @@ bool_t lock_owner_is_nlm(state_lock_entry_t * lock_entry)
 
 state_status_t do_lock_op(cache_entry_t        * pentry,
                           fsal_op_context_t    * pcontext,
+                          exportlist_t         * pexport,
                           fsal_lock_op_t         lock_op,
                           state_owner_t        * powner,
                           fsal_lock_param_t    * plock,
@@ -426,6 +427,7 @@ void dump_all_locks(const char * label)
  ******************************************************************************/
 static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
                                                    fsal_op_context_t  * pcontext,
+                                                   exportlist_t       * pexport,
                                                    state_blocking_t     blocked,
                                                    state_owner_t      * powner,
                                                    state_t            * pstate,
@@ -457,6 +459,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
   new_entry->sle_state      = pstate;
   new_entry->sle_block_data = NULL;   /* will be filled in later if necessary */
   new_entry->sle_lock       = *plock;
+  new_entry->sle_pexport    = pexport;
 
   FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                     FSAL_DIGEST_FILEID3,
@@ -506,6 +509,7 @@ inline state_lock_entry_t *state_lock_entry_t_dup(fsal_op_context_t  * pcontext,
 {
   return create_state_lock_entry(orig_entry->sle_pentry,
                                  pcontext,
+                                 orig_entry->sle_pexport,
                                  orig_entry->sle_blocked,
                                  orig_entry->sle_owner,
                                  orig_entry->sle_state,
@@ -1219,6 +1223,7 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
         /* If we get STATE_LOCK_BLOCKED we need to return... */
         *pstatus = do_lock_op(pentry,
                               pcontext,
+                              lock_entry->sle_pexport,
                               FSAL_OP_LOCKB,
                               lock_entry->sle_owner,
                               &lock_entry->sle_lock,
@@ -1233,6 +1238,7 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
         /* If we get STATE_LOCK_BLOCKED we need to return... */
         *pstatus = do_lock_op(pentry,
                               pcontext,
+                              lock_entry->sle_pexport,
                               FSAL_OP_LOCK,
                               lock_entry->sle_owner,
                               &lock_entry->sle_lock,
@@ -1286,6 +1292,7 @@ state_status_t state_cancel_grant(fsal_op_context_t    * pcontext,
   /* We had acquired an FSAL lock, need to release it. */
   *pstatus = do_lock_op(cookie_entry->sce_pentry,
                         pcontext,
+                        cookie_entry->sce_lock_entry->sle_pexport,
                         FSAL_OP_UNLOCK,
                         cookie_entry->sce_lock_entry->sle_owner,
                         &cookie_entry->sce_lock_entry->sle_lock,
@@ -1577,6 +1584,7 @@ state_status_t cancel_blocked_lock(cache_entry_t        * pentry,
        */
       state_status = do_lock_op(pentry,
                                 pcontext,
+                                lock_entry->sle_pexport,
                                 FSAL_OP_CANCEL,
                                 lock_entry->sle_owner,
                                 &lock_entry->sle_lock,
@@ -1698,6 +1706,7 @@ state_status_t state_release_grant(fsal_op_context_t     * pcontext,
       /* We had acquired an FSAL lock, need to release it. */
       *pstatus = do_lock_op(pentry,
                             pcontext,
+                            lock_entry->sle_pexport,
                             FSAL_OP_UNLOCK,
                             lock_entry->sle_owner,
                             &lock_entry->sle_lock,
@@ -1766,6 +1775,7 @@ inline const char *fsal_lock_op_str(fsal_lock_op_t op)
  */
 state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
                                   fsal_op_context_t    * pcontext,
+                                  exportlist_t         * pexport,
                                   fsal_lock_param_t    * plock,
                                   cache_inode_client_t * pclient)
 {
@@ -1779,6 +1789,7 @@ state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
 
   unlock_entry = create_state_lock_entry(pentry,
                                          pcontext,
+                                         pexport,
                                          STATE_NON_BLOCKING,
                                          &unknown_owner, /* no real owner */
                                          NULL, /* no real state */
@@ -1847,6 +1858,7 @@ state_status_t do_unlock_no_owner(cache_entry_t        * pentry,
 
 state_status_t do_lock_op(cache_entry_t        * pentry,
                           fsal_op_context_t    * pcontext,
+                          exportlist_t         * pexport,
                           fsal_lock_op_t         lock_op,
                           state_owner_t        * powner,
                           fsal_lock_param_t    * plock,
@@ -1907,7 +1919,7 @@ state_status_t do_lock_op(cache_entry_t        * pentry,
     }
   else
     {
-      status = do_unlock_no_owner(pentry, pcontext, plock, pclient);
+      status = do_unlock_no_owner(pentry, pcontext, pexport, plock, pclient);
     }
 
   if(status == STATE_LOCK_CONFLICT)
@@ -1994,6 +2006,7 @@ state_status_t state_test(cache_entry_t        * pentry,
       /* Prepare to make call to FSAL for this lock */
       *pstatus = do_lock_op(pentry,
                             pcontext,
+                            pexport,
                             FSAL_OP_LOCKT,
                             powner,
                             plock,
@@ -2244,6 +2257,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
    */
   found_entry = create_state_lock_entry(pentry,
                                         pcontext,
+                                        pexport,
                                         STATE_NON_BLOCKING,
                                         powner,
                                         pstate,
@@ -2263,6 +2277,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
       /* Prepare to make call to FSAL for this lock */
       *pstatus = do_lock_op(pentry,
                             pcontext,
+                            pexport,
                             lock_op,
                             powner,
                             plock,
@@ -2403,6 +2418,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
    */
   *pstatus = do_lock_op(pentry,
                         pcontext,
+                        pexport,
                         FSAL_OP_UNLOCK,
                         powner,
                         plock,
