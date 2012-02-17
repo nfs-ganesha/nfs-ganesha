@@ -697,6 +697,20 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->PrefReaddir = (fsal_size_t) 16384;
   p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_THROUGH ;
 
+  init_glist(&p_entry->exp_state_list);
+#ifdef _USE_NLM
+  init_glist(&p_entry->exp_lock_list);
+#endif
+
+  if(pthread_mutex_init(&p_entry->exp_state_mutex, NULL) == -1)
+    {
+      Mem_Free(p_entry);
+      LogCrit(COMPONENT_CONFIG,
+              "NFS READ_EXPORT: ERROR: could not initialize exp_state_mutex");
+      /* free the entry before exiting */
+      return -1;
+    }
+
   strcpy(p_entry->FS_specific, "");
   strcpy(p_entry->FS_tag, "");
   strcpy(p_entry->fullpath, "/");
