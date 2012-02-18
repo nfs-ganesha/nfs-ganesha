@@ -179,7 +179,7 @@ void *upcall_simulator_thread(void *UnusedArgument)
 
   /* Init the Cache inode client for this worker */
   if(cache_inode_client_init(&mydata.cache_inode_client,
-                             nfs_param.cache_layers_param.cache_inode_client_param,
+                             &(nfs_param.cache_layers_param.cache_inode_client_param),
                              SMALL_CLIENT_INDEX, &mydata))
     {
       /* Failed init */

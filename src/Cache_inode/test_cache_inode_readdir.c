@@ -281,7 +281,7 @@ main(int argc, char *argv[])
   cache_client_param.expire_type_dirent  = CACHE_INODE_EXPIRE_NEVER;
 
   /* Init the cache_inode client */
-  if(cache_inode_client_init(&client, cache_client_param, 0) != 0)
+  if(cache_inode_client_init(&client, &cache_client_param, 0) != 0)
     exit(1);
 
   /* Getting the root of the FS */

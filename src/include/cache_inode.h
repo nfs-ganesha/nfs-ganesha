@@ -520,8 +520,8 @@ hash_table_t *cache_inode_init(cache_inode_parameter_t param,
                                cache_inode_status_t * pstatus);
 
 int cache_inode_client_init(cache_inode_client_t * pclient,
-                            cache_inode_client_parameter_t param,
-                            int thread_index, void *pworker_data);
+                            cache_inode_client_parameter_t * paramp,
+                            int thread_index, void * pworker_data);
 
 cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
 			       cache_inode_policy_t policy,

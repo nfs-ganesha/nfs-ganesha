@@ -2855,7 +2855,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 #endif
 
       /* creating the 'small_client' */
-      if(cache_inode_client_init(&small_client, small_client_param, SMALL_CLIENT_INDEX, NULL))
+      if(cache_inode_client_init(&small_client, &small_client_param, SMALL_CLIENT_INDEX, NULL))
         {
           LogFatal(COMPONENT_INIT,
                    "small cache inode client could not be allocated");
