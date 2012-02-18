@@ -138,8 +138,8 @@ LRU_list_t *LRU_Init(LRU_parameter_t lru_param, LRU_status_t * pstatus)
   LRU_list_t *plru = NULL;
   char *name __attribute__((unused)) = "Unamed";
 
-  if (lru_param.name != NULL)
-    name = lru_param.name;
+  if (lru_param.lp_name != NULL)
+    name = lru_param.lp_name;
 
   /* Sanity check */
   if((plru = (LRU_list_t *) Mem_Alloc(sizeof(LRU_list_t))) == NULL)

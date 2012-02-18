@@ -1662,7 +1662,7 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
     return -1;
 
   sprintf(name, "Worker Thread #%u Pending Request", pdata->worker_index);
-  nfs_param.worker_param.lru_param.name = Str_Dup(name);
+  nfs_param.worker_param.lru_param.lp_name = name;
 
   if((pdata->pending_request =
       LRU_Init(nfs_param.worker_param.lru_param, &status)) == NULL)
@@ -1672,7 +1672,7 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
     }
 
   sprintf(name, "Worker Thread #%u Duplicate Request", pdata->worker_index);
-  nfs_param.worker_param.lru_dupreq.name = Str_Dup(name);
+  nfs_param.worker_param.lru_dupreq.lp_name = name;
 
   if((pdata->duplicate_request =
       LRU_Init(nfs_param.worker_param.lru_dupreq, &status)) == NULL)
