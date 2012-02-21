@@ -300,7 +300,7 @@ void nfs_set_param_default()
 #ifdef _USE_9P
   nfs_param._9p_param._9p_port = _9P_PORT ;
 #endif
-#ifdef _USE_QUOTA
+#ifdef _USE_RQUOTA
   nfs_param.core_param.program[P_RQUOTA] = RQUOTAPROG;
   nfs_param.core_param.port[P_RQUOTA] = RQUOTA_PORT;
 #endif

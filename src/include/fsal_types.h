@@ -995,6 +995,12 @@ typedef struct fsal_quota__
   u_int bsize;
 } fsal_quota_t;
 
+typedef enum fsal_quota_type__
+{
+  FSAL_QUOTA_BLOCKS = 1, 
+  FSAL_QUOTA_INODES = 2 
+} fsal_quota_type_t ;
+
 /* output digest sizes */
 
 #define FSAL_DIGEST_SIZE_HDLV2 29

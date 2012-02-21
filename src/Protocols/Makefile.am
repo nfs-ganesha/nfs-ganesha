@@ -8,6 +8,6 @@ if USE_NLM
 SUBDIRS += NLM
 endif
 
-if USE_QUOTA
+if USE_RQUOTA
 SUBDIRS += RQUOTA
 endif

@@ -256,10 +256,11 @@ struct user_cred {
 #define EXPORT_OPTION_TCP             0x02000000        /* TCP protocol is supported      */
 
 /* Maximum offset set for R/W */
-#define EXPORT_OPTION_MAXOFFSETWRITE  0x04000000        /* Maximum Offset for write is set */
-#define EXPORT_OPTION_MAXOFFSETREAD   0x08000000        /* Maximum Offset for read is set  */
-#define EXPORT_OPTION_MAXCACHESIZE    0x10000000        /* Maximum Offset for read is set  */
-#define EXPORT_OPTION_USE_PNFS        0x20000000        /* Using pNFS or not using pNFS ?  */
+#define EXPORT_OPTION_MAXOFFSETWRITE  0x04000000        /* Maximum Offset for write is set  */
+#define EXPORT_OPTION_MAXOFFSETREAD   0x08000000        /* Maximum Offset for read is set   */
+#define EXPORT_OPTION_MAXCACHESIZE    0x10000000        /* Maximum Offset for read is set   */
+#define EXPORT_OPTION_USE_PNFS        0x20000000        /* Using pNFS or not using pNFS ?   */
+#define EXPORT_OPTION_USE_UQUOTA      0x40000000        /* Using user quota for this export */
 
 /* nfs_export_check_access() return values */
 #define EXPORT_PERMISSION_GRANTED            0x00000001

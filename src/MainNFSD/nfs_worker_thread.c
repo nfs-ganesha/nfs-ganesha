@@ -307,7 +307,7 @@ const nfs_function_desc_t nlm4_func_desc[] = {
 };
 #endif                          /* _USE_NLM */
 
-#ifdef _USE_QUOTA
+#ifdef _USE_RQUOTA
 const nfs_function_desc_t rquota1_func_desc[] = {
   [0] = {
          rquota_Null, rquota_Null_Free, (xdrproc_t) xdr_void, (xdrproc_t) xdr_void,
@@ -549,7 +549,7 @@ int is_rpc_call_valid(SVCXPRT *xprt, struct svc_req *preq)
     }
 #endif                          /* _USE_NLM */
 
-#ifdef _USE_QUOTA
+#ifdef _USE_RQUOTA
    if(preq->rq_prog == nfs_param.core_param.program[P_RQUOTA])
      {
        /* Call is with NLMPROG */
@@ -629,7 +629,7 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
     }
 #endif                          /* _USE_NLM */
 
-#ifdef _USE_QUOTA
+#ifdef _USE_RQUOTA
   if(ptr_req->rq_prog == nfs_param.core_param.program[P_RQUOTA])
     {
       if(ptr_req->rq_vers == RQUOTAVERS)
@@ -637,7 +637,7 @@ const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_data_t *preqnfs)
       else
         return &rquota2_func_desc[ptr_req->rq_proc];
     }
-#endif                          /* _USE_QUOTA */
+#endif                          /* _USE_RQUOTA */
 
   /* Oops, should never get here! */
   svcerr_noprog(preqnfs->xprt);

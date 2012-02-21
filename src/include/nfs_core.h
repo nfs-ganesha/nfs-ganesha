@@ -254,7 +254,7 @@ typedef enum protos
 #ifdef _USE_NLM
   P_NLM,
 #endif
-#ifdef _USE_QUOTA
+#ifdef _USE_RQUOTA
   P_RQUOTA,
 #endif
   P_COUNT

@@ -109,6 +109,9 @@ int nfs_Write(nfs_arg_t * parg,
   cache_inode_file_type_t filetype;
   fsal_boolean_t eof_met;
   uint64_t stable_flag = FSAL_SAFE_WRITE_TO_FS;
+#ifdef _USE_QUOTA
+  fsal_status_t fsal_status ;
+#endif
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
@@ -254,6 +257,9 @@ int nfs_Write(nfs_arg_t * parg,
                 case ACCESSTYPE_RO:
                   pres->res_attr2.status = NFSERR_ROFS;
                   break ;
+ 
+                default:
+                  break ;
              }
            break ;
 
@@ -267,6 +273,9 @@ int nfs_Write(nfs_arg_t * parg,
 
                 case ACCESSTYPE_RO:
                   pres->res_write3.status = NFS3ERR_ROFS;
+                  break ;
+ 
+                default:
                   break ;
              }
           break;
@@ -285,6 +294,30 @@ int nfs_Write(nfs_arg_t * parg,
 
       return NFS_REQ_OK;
     }
+
+#ifdef _USE_QUOTA
+    /* if quota support is active, then we should check is the FSAL allows inode creation or not */
+    fsal_status = FSAL_check_quota( pexport->fullpath, 
+                                    FSAL_QUOTA_BLOCKS,
+                                    FSAL_OP_CONTEXT_TO_UID( pcontext ) ) ;
+    if( FSAL_IS_ERROR( fsal_status ) )
+     {
+
+       switch (preq->rq_vers)
+         {
+           case NFS_V2:
+             pres->res_attr2.status = NFSERR_DQUOT;
+             break;
+
+           case NFS_V3:
+             pres->res_write3.status = NFS3ERR_DQUOT;
+             break;
+         }
+
+       return NFS_REQ_OK ;
+     }
+#endif /* _USE_QUOTA */
+
 
   /* Extract the argument from the request */
   switch (preq->rq_vers)

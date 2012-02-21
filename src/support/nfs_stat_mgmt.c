@@ -178,7 +178,7 @@ void nfs_stat_update(nfs_stat_type_t type,
         }
     }
 #endif
-#ifdef _USE_QUOTA
+#ifdef _USE_RQUOTA
   else if(preq->rq_prog == nfs_param.core_param.program[P_RQUOTA])
     {
       switch (preq->rq_vers)

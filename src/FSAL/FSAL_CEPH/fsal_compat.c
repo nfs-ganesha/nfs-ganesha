@@ -78,6 +78,7 @@ fsal_functions_t fsal_ceph_functions = {
   .fsal_cleanobjectresources = COMMON_CleanObjectResources,
   .fsal_set_quota = COMMON_set_quota_noquota,
   .fsal_get_quota = COMMON_get_quota_noquota,
+  .fsal_check_quota = COMMON_check_quota,
   .fsal_rcp = CEPHFSAL_rcp,
   .fsal_rcp_by_fileid = COMMON_rcp_by_fileid,
   .fsal_rename = CEPHFSAL_rename,

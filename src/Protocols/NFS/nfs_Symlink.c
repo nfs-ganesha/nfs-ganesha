@@ -112,6 +112,9 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
   cache_inode_status_t cache_status;
   cache_inode_status_t cache_status_parent;
   fsal_handle_t *pfsal_handle;
+#ifdef _USE_QUOTA
+  fsal_status_t fsal_status ;
+#endif
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
@@ -187,6 +190,30 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
 
       return NFS_REQ_OK;
     }
+
+#ifdef _USE_QUOTA
+    /* if quota support is active, then we should check is the FSAL allows inode creation or not */
+    fsal_status = FSAL_check_quota( pexport->fullpath, 
+                                    FSAL_QUOTA_INODES,
+                                    FSAL_OP_CONTEXT_TO_UID( pcontext ) ) ;
+    if( FSAL_IS_ERROR( fsal_status ) )
+     {
+
+       switch (preq->rq_vers)
+         {
+           case NFS_V2:
+             pres->res_stat2 = NFSERR_DQUOT ;
+             break;
+
+           case NFS_V3:
+             pres->res_symlink3.status = NFS3ERR_DQUOT;
+             break;
+         }
+
+       return NFS_REQ_OK ;
+     }
+#endif /* _USE_QUOTA */
+
 
   switch (preq->rq_vers)
     {

@@ -637,6 +637,13 @@ fsal_status_t FSAL_get_quota(fsal_path_t * pfsal_path,  /* IN */
   return fsal_functions.fsal_get_quota(pfsal_path, quota_type, fsal_uid, pquota);
 }
 
+fsal_status_t FSAL_check_quota( char              * path,  /* IN */
+                                fsal_quota_type_t   quota_type,
+                                fsal_uid_t          fsal_uid)      /* IN */
+{
+  return fsal_functions.fsal_check_quota( path, quota_type, fsal_uid ) ;
+}
+
 fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
                        fsal_op_context_t * p_context,   /* IN */
                        fsal_path_t * p_local_path,      /* IN */

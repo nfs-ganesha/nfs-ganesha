@@ -116,6 +116,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   uint32_t                  tmp_attr[2];
   uint_t                    tmp_int = 2;
   char                    * text;
+#ifdef _USE_QUOTA
+  fsal_status_t            fsal_status ;
+#endif
 
   LogDebug(COMPONENT_STATE,
            "Entering NFS v4 OPEN handler -----------------------------------------------------");
@@ -449,6 +452,17 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
         {
         case OPEN4_CREATE:
           /* a new file is to be created */
+#ifdef _USE_QUOTA
+          /* if quota support is active, then we should check is the FSAL allows inode creation or not */
+          fsal_status = FSAL_check_quota( data->pexport->fullpath, 
+                                          FSAL_QUOTA_INODES,
+                                          FSAL_OP_CONTEXT_TO_UID( data->pcontext ) ) ;
+          if( FSAL_IS_ERROR( fsal_status ) )
+            {
+              res_OPEN4.status = NFS4ERR_DQUOT ;
+              return res_OPEN4.status;
+            }
+#endif /* _USE_QUOTA */
 
           if(arg_OPEN4.openhow.openflag4_u.how.mode == EXCLUSIVE4)
             cause = "OPEN4_CREATE EXCLUSIVE";

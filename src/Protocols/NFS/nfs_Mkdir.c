@@ -107,6 +107,9 @@ int nfs_Mkdir(nfs_arg_t * parg,
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   cache_inode_status_t cache_status_lookup;
   cache_inode_create_arg_t create_arg;
+#ifdef _USE_QUOTA
+  fsal_status_t fsal_status ;
+#endif
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
@@ -178,6 +181,31 @@ int nfs_Mkdir(nfs_arg_t * parg,
 
       return NFS_REQ_OK;
     }
+
+
+#ifdef _USE_QUOTA
+    /* if quota support is active, then we should check is the FSAL allows inode creation or not */
+    fsal_status = FSAL_check_quota( pexport->fullpath, 
+                                    FSAL_QUOTA_INODES,
+                                    FSAL_OP_CONTEXT_TO_UID( pcontext ) ) ;
+    if( FSAL_IS_ERROR( fsal_status ) )
+     {
+
+       switch (preq->rq_vers)
+         {
+           case NFS_V2:
+             pres->res_dirop2.status = NFSERR_DQUOT;
+             break;
+
+           case NFS_V3:
+             pres->res_mkdir3.status = NFS3ERR_DQUOT;
+             break;
+         }
+
+       return NFS_REQ_OK ;
+     }
+#endif /* _USE_QUOTA */
+
 
   switch (preq->rq_vers)
     {

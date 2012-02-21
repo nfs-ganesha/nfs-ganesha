@@ -95,6 +95,9 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   cache_entry_t          * pentry = NULL;
   int                      rc = 0;
   struct glist_head      * glist;
+#ifdef _USE_QUOTA
+  fsal_status_t            fsal_status ;
+#endif
 
   cache_content_policy_data_t datapol;
 
@@ -124,6 +127,18 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       res_WRITE4.status = NFS4ERR_FHEXPIRED;
       return res_WRITE4.status;
     }
+
+#ifdef _USE_QUOTA
+    /* if quota support is active, then we should check is the FSAL allows inode creation or not */
+    fsal_status = FSAL_check_quota( data->pexport->fullpath, 
+                                    FSAL_QUOTA_BLOCKS,
+                                    FSAL_OP_CONTEXT_TO_UID( data->pcontext ) ) ;
+    if( FSAL_IS_ERROR( fsal_status ) )
+     {
+      res_WRITE4.status = NFS4ERR_DQUOT ;
+      return res_WRITE4.status;
+     }
+#endif /* _USE_QUOTA */
 
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */
   if(nfs4_Is_Fh_Xattr(&(data->currentFH)))

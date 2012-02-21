@@ -173,3 +173,60 @@ fsal_status_t XFSFSAL_set_quota(fsal_path_t * pfsal_path,       /* IN */
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /*  FSAL_set_quota */
+
+
+/**
+ * FSAL_check_quota :
+ * checks if quotas allow a user to do an operation
+ *
+ * \param  pfsal_path
+ *        path to the filesystem whose quota are requested
+ * \param  quota_type
+ *        type of quota to be checked (inodes or blocks       
+ * \param  fsal_uid
+ * 	  uid for the user whose quota are requested
+ * \return Major error codes :
+ *        - ERR_FSAL_NO_ERROR     (no error)
+ *        - Another error code if an error occured.
+ */
+
+
+fsal_status_t XFSFSAL_check_quota( char              * path,  /* IN */
+                                   fsal_quota_type_t   quota_type,
+                                   fsal_uid_t          fsal_uid)      /* IN */
+{
+  struct dqblk fs_quota;
+  char fs_spec[MAXPATHLEN];
+  
+  if(!path )
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  if(fsal_internal_path2fsname( path, fs_spec) == -1)
+    ReturnCode(ERR_FSAL_INVAL, 0);
+
+  if( fsal_uid == 0 ) /* No quota for root */
+    ReturnCode(ERR_FSAL_NO_ERROR, 0) ;
+  
+  memset((char *)&fs_quota, 0, sizeof(struct dqblk));
+
+  if(quotactl(FSAL_QCMD(Q_GETQUOTA, USRQUOTA), fs_spec, fsal_uid, (caddr_t) & fs_quota) < 0 )
+    ReturnCode(posix2fsal_error(errno), errno);
+  
+  switch( quota_type )
+   {
+        case FSAL_QUOTA_BLOCKS:
+          if( fs_quota.dqb_curspace > fs_quota.dqb_bhardlimit )
+            ReturnCode( ERR_FSAL_DQUOT, EDQUOT ) ;
+          
+          break ;
+
+        case FSAL_QUOTA_INODES:
+          if( fs_quota.dqb_curinodes > fs_quota.dqb_ihardlimit )
+            ReturnCode( ERR_FSAL_DQUOT, EDQUOT ) ;
+          
+          break ;
+   } /* switch( quota_type ) */
+ 
+  ReturnCode(ERR_FSAL_NO_ERROR, 0) ;
+} /* XFSFSAL_check_quota */
+

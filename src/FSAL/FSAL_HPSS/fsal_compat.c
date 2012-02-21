@@ -682,6 +682,7 @@ fsal_functions_t fsal_hpss_functions = {
   .fsal_cleanobjectresources = WRAP_HPSSFSAL_CleanObjectResources,
   .fsal_set_quota = WRAP_HPSSFSAL_set_quota,
   .fsal_get_quota = WRAP_HPSSFSAL_get_quota,
+  .fsal_check_quota = COMMON_check_quota,
   .fsal_rcp = WRAP_HPSSFSAL_rcp,
   .fsal_rcp_by_fileid = WRAP_HPSSFSAL_rcp_by_fileid,
   .fsal_rename = WRAP_HPSSFSAL_rename,
