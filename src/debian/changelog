@@ -1,3 +1,14 @@
+nfs-ganesha (1.4.0-1) stable; urgency=low
+ * Bug Fix: Memory leak fixed in RPC's DRC
+ * Bug Fix: Bad computation of rbt_value in RPC's DRC's hashtable 
+ * New FSAL_CEPH (dedicated to the ceph filesystem)
+ * pNFS code refurbished with CEPH specific code and layout file support
+ * All RPCs are now based on TIRPC	
+ * Bug Fix: in nfs_Write, for clean handle of umask, the server should allow the owner of a file to write to it, even if the file is read-only
+ * Bug Fix: bad memory padding in fsal_handle_t and fsal_cookie_t
+
+ -- Philippe Deniel <philippe.deniel@cea.fr>  Tue, 21 Feb 2012 10:00:00 +0200
+
 nfs-ganesha (1.3.0-1) stable; urgency=low
  * Lustre FSAL: exporting several Lustre filesystem with the same server
  * A bug was found and fix in OP4_READDIRPLUS (produced missing entries)

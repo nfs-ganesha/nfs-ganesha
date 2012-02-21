@@ -491,7 +491,10 @@
       - Bug Fix: Memory leak fixed in RPC's DRC
       - Bug Fix: Bad computation of rbt_value in RPC's DRC's hashtable 
       - New FSAL_CEPH (dedicated to the ceph filesystem)
-      - pNFS code refurbished with CEPH specific code and generic parallel
-        fs support
+      - pNFS code refurbished with CEPH specific code and layout file support
       - All RPCs are now based on TIRPC	
+      - Bug Fix: in nfs_Write, for clean handle of umask, the server should
+       allow the owner of a file to write to it, even if the file is read-only
+       (has mode r---r--r-- for example)
+      - Bug Fix: bad memory padding in fsal_handle_t and fsal_cookie_t
 
