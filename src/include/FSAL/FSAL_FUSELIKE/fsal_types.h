@@ -59,9 +59,9 @@ typedef union {
                                    can reuse their old inode numbers,
                                    which is not NFS compliant. */
   } data ;
-#ifdef _BUILD_SHARED_FSAL
+/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
   char pad[FSAL_HANDLE_T_SIZE];
-#endif
+/** #endif @todo : second part of the TMP fix for connectathon */
 } fusefsal_handle_t;
 
 typedef struct
@@ -104,9 +104,9 @@ typedef struct
 
 typedef union {
   off_t data;
-#ifdef _BUILD_SHARED_FSAL
+/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
   char pad[FSAL_COOKIE_T_SIZE];
-#endif
+/** #endif @todo : second part of the TMP fix for connectathon */
 } fusefsal_cookie_t;
 
 //#define FSAL_READDIR_FROM_BEGINNING ((fusefsal_cookie_t)0)

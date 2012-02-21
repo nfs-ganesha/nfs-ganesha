@@ -89,9 +89,9 @@ typedef union {
     /* The hpss handle */
     ns_ObjHandle_t ns_handle;
   } data ;
-#ifdef _BUILD_SHARED_FSAL
+/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
   char pad[FSAL_HANDLE_T_SIZE];
-#endif
+/** #endif @todo : second part of the TMP fix for connectathon */
 } hpssfsal_handle_t;
 
 /** FSAL security context */
@@ -240,9 +240,9 @@ typedef struct
 /** directory cookie : OffsetOut parameter of hpss_ReadRawAttrsHandle. */
 typedef union {
   u_signed64 data ;
-#ifdef _BUILD_SHARED_FSAL
+/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
   char pad[FSAL_COOKIE_T_SIZE];
-#endif
+/** #endif @todo : second part of the TMP fix for connectathon */
 } hpssfsal_cookie_t;
 
 //#define FSAL_READDIR_FROM_BEGINNING  (cast64(0))

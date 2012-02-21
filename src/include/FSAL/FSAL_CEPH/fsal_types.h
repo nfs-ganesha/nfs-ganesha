@@ -58,9 +58,9 @@ typedef union {
     uint64_t parent_ino;
     uint32_t parent_hash;
   } data;
-#ifdef _BUILD_SHARED_FSAL
+/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
   char pad[FSAL_HANDLE_T_SIZE];
-#endif
+/** #endif @todo : second part of the TMP fix for connectathon */
 } cephfsal_handle_t;
 
 #define VINODE(fh) ((fh)->data.vi)

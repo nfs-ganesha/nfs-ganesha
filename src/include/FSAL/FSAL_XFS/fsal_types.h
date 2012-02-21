@@ -91,9 +91,9 @@ typedef union {
     uint32_t inode;
     char type;
   } data ;
-#ifdef _BUILD_SHARED_FSAL
+/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
   char pad[FSAL_HANDLE_T_SIZE];
-#endif
+/** #endif @todo : second part of the TMP fix for connectathon */
 } xfsfsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */
@@ -135,9 +135,9 @@ typedef union {
  {
   off_t cookie;
  } data ;
-#ifdef _BUILD_SHARED_FSAL
+/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
   char pad[FSAL_COOKIE_T_SIZE];
-#endif
+/** #endif @todo : second part of the TMP fix for connectathon */
 } xfsfsal_cookie_t;
 
 #define FSAL_SET_PCOOKIE_BY_OFFSET( __pfsal_cookie, __cookie )           \

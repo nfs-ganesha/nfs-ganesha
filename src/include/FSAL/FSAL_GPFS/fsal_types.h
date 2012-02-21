@@ -162,9 +162,9 @@ typedef union {
  {
   off_t cookie;
  } data ;
-#ifdef _BUILD_SHARED_FSAL
+/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
   char pad[FSAL_COOKIE_T_SIZE];
-#endif
+/** #endif @todo : second part of the TMP fix for connectathon */
 } gpfsfsal_cookie_t;
 
 // static const fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };

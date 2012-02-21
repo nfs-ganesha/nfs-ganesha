@@ -84,9 +84,9 @@ typedef union {
     unsigned int srv_handle_len;
     char srv_handle_val[FSAL_PROXY_FILEHANDLE_MAX_LEN] ; 
   } data ;
-#ifdef _BUILD_SHARED_FSAL
+/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
   char pad[FSAL_HANDLE_T_SIZE];
-#endif
+/** #endif @todo : second part of the TMP fix for connectathon */
 }  proxyfsal_handle_t;
 
 typedef struct
@@ -145,9 +145,11 @@ typedef struct
 
 typedef union {
   nfs_cookie4 data ;
-#ifdef _BUILD_SHARED_FSAL
+/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
   char pad[FSAL_COOKIE_T_SIZE];
-#endif
+/** #endif @todo : second part of the TMP fix for connectathon */
+
+} proxyfsal_cookie_t;
 
 #define FSAL_SET_PCOOKIE_BY_OFFSET( __pfsal_cookie, __cookie )           \
 do                                                                       \
@@ -160,8 +162,6 @@ do                                                                       \
 {                                                                        \
    __cookie =  ((proxyfsal_cookie_t *)__pfsal_cookie)->data ;       \
 } while( 0 )
-
-} proxyfsal_cookie_t;
 
 // #define FSAL_READDIR_FROM_BEGINNING 0
 
