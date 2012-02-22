@@ -100,8 +100,6 @@ fsal_status_t XFSFSAL_lookup(fsal_handle_t * parent_handle,      /* IN */
   /* get information about root */
   if(!p_parent_directory_handle)
     {
-     printf( "=====> IT IS USED IN NFS !!!!!\n" ) ;
-
       /* get handle for the mount point  */
       memcpy(p_object_handle->data.handle_val, p_context->export_context->mnt_handle_val,
              p_context->export_context->mnt_handle_len);
