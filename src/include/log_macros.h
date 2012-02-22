@@ -31,6 +31,24 @@
  *
  */
 
+/* these macros gain a few percent of speed on gcc, especially with so many log entries */
+#if (__GNUC__ >= 3)
+/* the strange !! is to ensure that __builtin_expect() takes either 0 or 1 as its first argument */
+#ifndef likely
+#define likely(x)   __builtin_expect(!!(x), 1)
+#endif
+#ifndef unlikely
+#define unlikely(x) __builtin_expect(!!(x), 0)
+#endif
+#else
+#ifndef likely
+#define likely(x) (x)
+#endif
+#ifndef unlikely
+#define unlikely(x) (x)
+#endif
+#endif
+
 /*
  * Log components used throughout the code.
  *
@@ -142,8 +160,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogAlways(component, format, args...) \
   do { \
-    if (LogComponents[component].comp_log_type != TESTLOG || \
-        LogComponents[component].comp_log_level <= NIV_FULL_DEBUG) \
+    if (unlikely(LogComponents[component].comp_log_type != TESTLOG || \
+                 LogComponents[component].comp_log_level <= NIV_FULL_DEBUG)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__,  NIV_NULL, \
                                "%s: " format, \
                                LogComponents[component].comp_str, ## args ); \
@@ -157,7 +175,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogFatal(component, format, args...) \
   do { \
-    if (LogComponents[component].comp_log_level >= NIV_FATAL) \
+    if (likely(LogComponents[component].comp_log_level >= NIV_FATAL)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_FATAL, \
                                "%s: FATAL ERROR: " format, \
                                LogComponents[component].comp_str, ## args ); \
@@ -165,7 +183,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogMajor(component, format, args...) \
   do { \
-    if (LogComponents[component].comp_log_level >= NIV_MAJOR) \
+    if (likely(LogComponents[component].comp_log_level >= NIV_MAJOR)) \
       DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_MAJ, \
                                "%s: MAJOR ERROR: " format, \
                                LogComponents[component].comp_str, ## args ); \
@@ -173,7 +191,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogCrit(component, format, args...) \
   do { \
-    if (LogComponents[component].comp_log_level >= NIV_CRIT) \
+    if (likely(LogComponents[component].comp_log_level >= NIV_CRIT)) \
       DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_CRIT, \
                                "%s: CRITICAL ERROR: " format, \
                                LogComponents[component].comp_str, ## args ); \
@@ -181,7 +199,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogWarn(component, format, args...) \
   do { \
-    if (LogComponents[component].comp_log_level >= NIV_WARN) \
+    if (unlikely(LogComponents[component].comp_log_level >= NIV_WARN)) \
       DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_WARN, \
                                "%s: WARN: " format, \
                                LogComponents[component].comp_str, ## args ); \
@@ -189,7 +207,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogEvent(component, format, args...) \
   do { \
-    if (LogComponents[component].comp_log_level >= NIV_EVENT) \
+    if (unlikely(LogComponents[component].comp_log_level >= NIV_EVENT)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_EVENT, \
                                "%s: EVENT: " format, \
                                LogComponents[component].comp_str, ## args ); \
@@ -197,7 +215,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogInfo(component, format, args...) \
   do { \
-    if (LogComponents[component].comp_log_level >= NIV_INFO) \
+    if (unlikely(LogComponents[component].comp_log_level >= NIV_INFO)) \
       DisplayLogComponentLevel(component, (char *) __FUNCTION__, NIV_INFO, \
                                "%s: INFO: " format, \
                                LogComponents[component].comp_str, ## args ); \
@@ -205,7 +223,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogDebug(component, format, args...) \
   do { \
-    if (LogComponents[component].comp_log_level >= NIV_DEBUG) \
+    if (unlikely(LogComponents[component].comp_log_level >= NIV_DEBUG)) \
       DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_DEBUG, \
                                "%s: DEBUG: " format, \
                                LogComponents[component].comp_str, ## args ); \
@@ -213,7 +231,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogFullDebug(component, format, args...) \
   do { \
-    if (LogComponents[component].comp_log_level >= NIV_FULL_DEBUG) \
+    if (unlikely(LogComponents[component].comp_log_level >= NIV_FULL_DEBUG)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_FULL_DEBUG, \
                                "%s: FULLDEBUG: " format, \
                                LogComponents[component].comp_str, ## args ); \
@@ -221,7 +239,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogAtLevel(component, level, format, args...) \
   do { \
-    if (LogComponents[component].comp_log_level >= level) \
+    if (unlikely(LogComponents[component].comp_log_level >= level)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__, level, \
                                "%s: %s: " format, \
                                LogComponents[component].comp_str, tabLogLevel[level].short_str, ## args ); \
@@ -229,20 +247,20 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogError( component, a, b, c ) \
   do { \
-    if (LogComponents[component].comp_log_level >= NIV_CRIT) \
+    if (unlikely(LogComponents[component].comp_log_level >= NIV_CRIT)) \
       DisplayErrorComponentLogLine( component,(char *)__FUNCTION__, a, b, c, __LINE__ ); \
   } while (0)
 
 #define isLevel(component, level) \
-  (LogComponents[component].comp_log_level >= level)
+  (unlikely(LogComponents[component].comp_log_level >= level))
 
 #define isInfo(component) \
-  (LogComponents[component].comp_log_level >= NIV_INFO)
+  (unlikely(LogComponents[component].comp_log_level >= NIV_INFO))
 
 #define isDebug(component) \
-  (LogComponents[component].comp_log_level >= NIV_DEBUG)
+  (unlikely(LogComponents[component].comp_log_level >= NIV_DEBUG))
 
 #define isFullDebug(component) \
-  (LogComponents[component].comp_log_level >= NIV_FULL_DEBUG)
+  (unlikely(LogComponents[component].comp_log_level >= NIV_FULL_DEBUG))
 
 #endif
