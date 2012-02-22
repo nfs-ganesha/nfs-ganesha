@@ -948,16 +948,16 @@ typedef struct fsal_parameter__
 
 /** Statistics about the use of the Filesystem abstraction layer. */
 
-typedef struct fsal_statistics__
-{
-  struct func_fsak_stats__
-  {
+typedef struct func_fsal_stats__ {
     unsigned int nb_call[FSAL_NB_FUNC];            /**< Total number of calls to fsal              */
     unsigned int nb_success[FSAL_NB_FUNC];         /**< Total number of successfull calls          */
     unsigned int nb_err_retryable[FSAL_NB_FUNC];   /**< Total number of failed/retryable calls     */
     unsigned int nb_err_unrecover[FSAL_NB_FUNC];   /**< Total number of failed/unrecoverable calls */
-  } func_stats;
+} func_fsal_stats_t;
 
+typedef struct fsal_statistics__
+{
+    func_fsal_stats_t    func_stats;
 } fsal_statistics_t;
 
 /** Status of FSAL operations */
