@@ -46,7 +46,6 @@ typedef struct _RW_LOCK
   pthread_mutex_t mutexProtect;
   pthread_cond_t condWrite;
   pthread_cond_t condRead;
-  pthread_mutex_t mcond;
 } rw_lock_t;
 
 int rw_lock_init(rw_lock_t * plock);
