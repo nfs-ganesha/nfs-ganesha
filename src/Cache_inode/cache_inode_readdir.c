@@ -1397,6 +1397,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
       {
          LogCrit(COMPONENT_CACHE_INODE, "cache_inode_readdir: "
                  "UNEXPECTED CASE: dirent is NULL whereas nbfound>0");
+         V_r(&dir_pentry->lock);
          *pstatus = CACHE_INODE_INCONSISTENT_ENTRY;
          return CACHE_INODE_INCONSISTENT_ENTRY;
       }
