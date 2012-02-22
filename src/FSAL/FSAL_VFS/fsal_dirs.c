@@ -254,7 +254,6 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
                             &(p_pdirent[*p_nb_entries].name))))
             ReturnStatus(st, INDEX_FSAL_readdir);
 
-          d_type = DT_UNKNOWN;
 
           // TODO: there is a race here, because between handle fetch
           // and open at things might change.  we need to figure out if there
@@ -263,78 +262,37 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
           strncpy(entry_name.name, dp->d_name, sizeof(entry_name.name));
           entry_name.len = strlen(entry_name.name);
 
-         if((tmpfd =
-              openat(p_dir_descriptor->fd, dp->d_name,
-                     O_RDONLY | O_NOFOLLOW | O_NONBLOCK,
-                     0600)) < 0)
-            {
-              errsv = errno;
-              if(errsv != ELOOP)        /* ( p_dir_descriptor->fd, dp->d_name) is not a symlink */
-                Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_readdir);
-              else
-                d_type = DT_LNK;
-            }
-
           /* get object handle */
           TakeTokenFSCall();
 
-          if(d_type != DT_LNK)
+          
+          if(fstatat(p_dir_descriptor->fd, dp->d_name, &buffstat, AT_SYMLINK_NOFOLLOW) < 0 )
             {
-              st = fsal_internal_fd2handle((fsal_op_context_t *)&(p_dir_descriptor->context),
-					   tmpfd, &(p_pdirent[*p_nb_entries].handle));
-              close(tmpfd);
+              ReleaseTokenFSCall();
+              Return(posix2fsal_error(errno), errno, INDEX_FSAL_readdir);
             }
-          else
+
+          st = fsal_internal_get_handle_at( p_dir_descriptor->fd, dp->d_name,
+		           				            &p_pdirent[*p_nb_entries].handle) ;
+          if(FSAL_IS_ERROR(st))
             {
-              if(fstatat(p_dir_descriptor->fd, dp->d_name, &buffstat, AT_SYMLINK_NOFOLLOW)
-                 < 0)
-                {
-                  ReleaseTokenFSCall();
-                  Return(posix2fsal_error(errno), errno, INDEX_FSAL_readdir);
-                }
-
-              st = fsal_internal_get_handle_at( p_dir_descriptor->fd, dp->d_name,
-						&p_pdirent[*p_nb_entries].handle) ;
-              if(FSAL_IS_ERROR(st))
-                {
-                  ReleaseTokenFSCall();
-                  ReturnStatus(st, INDEX_FSAL_readdir);
-                }
-              p_pdirent[*p_nb_entries].attributes.asked_attributes = get_attr_mask;
-
-              st = posix2fsal_attributes(&buffstat, &p_pdirent[*p_nb_entries].attributes);
-              if(FSAL_IS_ERROR(st))
-                {
-                  ReleaseTokenFSCall();
-                  FSAL_CLEAR_MASK(p_pdirent[*p_nb_entries].attributes.asked_attributes);
-                  FSAL_SET_MASK(p_pdirent[*p_nb_entries].attributes.asked_attributes,
-                                FSAL_ATTR_RDATTR_ERR);
-                  ReturnStatus(st, INDEX_FSAL_getattrs);
-                }
-
+              ReleaseTokenFSCall();
+              ReturnStatus(st, INDEX_FSAL_readdir);
             }
+          p_pdirent[*p_nb_entries].attributes.asked_attributes = get_attr_mask;
+
+          st = posix2fsal_attributes(&buffstat, &p_pdirent[*p_nb_entries].attributes);
+          if(FSAL_IS_ERROR(st))
+            {
+              ReleaseTokenFSCall();
+              FSAL_CLEAR_MASK(p_pdirent[*p_nb_entries].attributes.asked_attributes);
+              FSAL_SET_MASK(p_pdirent[*p_nb_entries].attributes.asked_attributes,
+                            FSAL_ATTR_RDATTR_ERR);
+              ReturnStatus(st, INDEX_FSAL_getattrs);
+            }
+
           ReleaseTokenFSCall();
 
-          if(FSAL_IS_ERROR(st))
-            ReturnStatus(st, INDEX_FSAL_readdir);
-
-    /************************
-     * Fills the attributes *
-     ************************/
-          if(d_type != DT_LNK)
-            {
-              p_pdirent[*p_nb_entries].attributes.asked_attributes = get_attr_mask;
-
-              st = VFSFSAL_getattrs(&p_pdirent[*p_nb_entries].handle,
-                                    (fsal_op_context_t *) & p_dir_descriptor->context,
-                                    &p_pdirent[*p_nb_entries].attributes);
-              if(FSAL_IS_ERROR(st))
-                {
-                  FSAL_CLEAR_MASK(p_pdirent[*p_nb_entries].attributes.asked_attributes);
-                  FSAL_SET_MASK(p_pdirent[*p_nb_entries].attributes.asked_attributes,
-                                FSAL_ATTR_RDATTR_ERR);
-                }
-            }
           //p_pdirent[*p_nb_entries].cookie.cookie = dp->d_off;
           ((vfsfsal_cookie_t *) (&p_pdirent[*p_nb_entries].cookie))->data.cookie = dp->d_off;
           p_pdirent[*p_nb_entries].nextentry = NULL;
