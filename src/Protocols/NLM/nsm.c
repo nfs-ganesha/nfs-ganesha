@@ -145,7 +145,7 @@ bool_t nsm_monitor(state_nsm_client_t *host)
   nsm_count++;
   host->ssc_monitored = TRUE;
   LogDebug(COMPONENT_NLM,
-           "Monitored %s", nsm_mon.mon_id.mon_name);
+           "Monitored %s for nodename %s", nsm_mon.mon_id.mon_name, nodename);
 
   V(nsm_mutex);
   return TRUE;
@@ -206,7 +206,7 @@ bool_t nsm_unmonitor(state_nsm_client_t *host)
   nsm_count--;
   nsm_disconnect();
   LogDebug(COMPONENT_NLM,
-           "Unonitored %s", nsm_mon_id.mon_name);
+           "Unonitored %s for nodename %s", nsm_mon_id.mon_name, nodename);
 
   V(nsm_mutex);
   return TRUE;

@@ -80,7 +80,7 @@ int nlm4_Lock(nfs_arg_t            * parg,
   if(!copy_netobj(&pres->res_nlm4test.cookie, &arg->cookie))
     {
       pres->res_nlm4.stat.stat = NLM4_FAILED;
-      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Test %s",
+      LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
                lock_result_str(pres->res_nlm4.stat.stat));
       return NFS_REQ_OK;
     }
