@@ -85,7 +85,7 @@ typedef struct cache_inode_client_t cache_inode_client_t;
 
 #define CACHE_INODE_TIME( __pentry ) (__pentry->internal_md.read_time > __pentry->internal_md.mod_time)?__pentry->internal_md.read_time:__pentry->internal_md.mod_time
 
-#define CACHE_INODE_KEEP_CONTENT( __policy ) ((__policy==CACHE_INODE_POLICY_FULL_WRITE_THROUGH)||(__policy==CACHE_INODE_POLICY_FULL_WRITE_BACK ) )?1:0 
+#define CACHE_INODE_KEEP_CONTENT( __policy ) ((__policy==CACHE_INODE_JOKER_POLICY)||(__policy==CACHE_INODE_POLICY_FULL_WRITE_THROUGH)||(__policy==CACHE_INODE_POLICY_FULL_WRITE_BACK ) )?1:0 
               
 
 #define CONF_LABEL_CACHE_INODE_GCPOL  "CacheInode_GC_Policy"
