@@ -2552,22 +2552,6 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
       return EXPORT_PERMISSION_GRANTED;
     }
 
-  /* If mount protocol is called, just check that AUTH_NONE is not used */
-  if(ptr_req->rq_prog == mnt_prog)
-    {
-      if(ptr_req->rq_cred.oa_flavor != AUTH_NONE)
-        {
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Granted mnt_prog");
-          return EXPORT_PERMISSION_GRANTED;
-        }
-      else
-        {
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Denied mnt_prog because it used AUTH_NONE");
-          return EXPORT_PERMISSION_DENIED;
-        }
-    }
 #ifdef _USE_TIPRC_IPV6
   if(hostaddr->ss_family == AF_INET)
 #endif
