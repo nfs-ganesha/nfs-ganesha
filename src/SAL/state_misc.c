@@ -307,10 +307,6 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
       nfserror = NFS4ERR_INVAL;
       break;
 
-    case STATE_INVALID_ARGUMENT:
-      nfserror = NFS4ERR_PERM;
-      break;
-
     case STATE_NOT_A_DIRECTORY:
       nfserror = NFS4ERR_NOTDIR;
       break;
@@ -410,6 +406,7 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
       nfserror = NFS4ERR_GRACE;
       break;
 
+    case STATE_INVALID_ARGUMENT:
     case STATE_CACHE_INODE_ERR:
     case STATE_INCONSISTENT_ENTRY:
     case STATE_HASH_TABLE_ERROR:

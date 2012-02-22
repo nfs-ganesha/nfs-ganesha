@@ -59,9 +59,17 @@
 static nfsstat4 nfs4_chk_shrdny(struct nfs_argop4 *, compound_data_t *,
     cache_entry_t *, fsal_accessflags_t, fsal_accessflags_t, fsal_openflags_t *,
     bool_t , fsal_attrib_list_t *, struct nfs_resop4 *);
-static nfsstat4 nfs4_do_open(struct nfs_argop4 *, compound_data_t *,
-    cache_entry_t *, cache_entry_t *, state_owner_t *, state_t **,
-    fsal_name_t *, fsal_openflags_t, char **);
+
+static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
+                             compound_data_t    * data,
+                             cache_entry_t      * pentry_newfile,
+                             cache_entry_t      * pentry_parent,
+                             state_owner_t      * powner,
+                             state_t           ** statep,
+                             fsal_name_t        * filename,
+                             fsal_openflags_t     openflags,
+                             char              ** cause2);
+
 static nfsstat4 nfs4_create_fh(compound_data_t *, cache_entry_t *, char **);
 /**
  * nfs4_op_open: NFS4_OP_OPEN, opens and eventually creates a regular file.
@@ -1133,11 +1141,15 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
         return NFS4_OK;
 }
 
-static nfsstat4
-nfs4_do_open(struct nfs_argop4 *op, compound_data_t *data,
-    cache_entry_t *pentry_newfile, cache_entry_t *pentry_parent,
-    state_owner_t *powner, state_t **statep, fsal_name_t *filename,
-    fsal_openflags_t openflags, char **cause2)
+static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
+                             compound_data_t    * data,
+                             cache_entry_t      * pentry_newfile,
+                             cache_entry_t      * pentry_parent,
+                             state_owner_t      * powner,
+                             state_t           ** statep,
+                             fsal_name_t        * filename,
+                             fsal_openflags_t     openflags,
+                             char              ** cause2)
 {
         OPEN4args *args = &op->nfs_argop4_u.opopen;
         state_data_t candidate_data;
@@ -1169,11 +1181,23 @@ nfs4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 
                 init_glist(&((*statep)->state_data.share.share_lockstates));
 
-                /* Attach this lock to an export */
+                /* Attach this open to an export */
                 (*statep)->state_pexport = data->pexport;
                 P(data->pexport->exp_state_mutex);
                 glist_add_tail(&data->pexport->exp_state_list, &(*statep)->state_export_list);
                 V(data->pexport->exp_state_mutex);
+        } else {
+          /* Check if open from another export */
+          if((*statep)->state_pexport != data->pexport)
+            {
+              LogEvent(COMPONENT_STATE,
+                       "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
+                       (*statep)->state_pexport->id,
+                       (*statep)->state_pexport->fullpath,
+                       data->pexport->id,
+                       data->pexport->fullpath);
+              return STATE_INVALID_ARGUMENT;
+            }
         }
 
         if (pentry_parent != NULL) {    /* claim null */
