@@ -69,6 +69,16 @@
 
 #include "fsal_glue_const.h"
 
+#define fsal_handle_t gpfsfsal_handle_t
+#define fsal_op_context_t gpfsfsal_op_context_t
+#define fsal_file_t gpfsfsal_file_t
+#define fsal_dir_t gpfsfsal_dir_t
+#define fsal_export_context_t gpfsfsal_export_context_t
+#define fsal_lockdesc_t gpfsfsal_lockdesc_t
+#define fsal_cookie_t gpfsfsal_cookie_t
+#define fs_specific_initinfo_t gpfsfs_specific_initinfo_t
+#define fsal_cred_t gpfsfsal_cred_t
+
 /*
  * labels in the config file
  */
@@ -162,9 +172,9 @@ typedef union {
  {
   off_t cookie;
  } data ;
-/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
+#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_COOKIE_T_SIZE];
-/** #endif @todo : second part of the TMP fix for connectathon */
+#endif
 } gpfsfsal_cookie_t;
 
 // static const fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };

@@ -49,6 +49,16 @@
 #include <pthread.h>
 #include "fsal_glue_const.h"
 
+#define fsal_handle_t cephfsal_handle_t
+#define fsal_op_context_t cephfsal_op_context_t
+#define fsal_file_t cephfsal_file_t
+#define fsal_dir_t cephfsal_dir_t
+#define fsal_export_context_t cephfsal_export_context_t
+#define fsal_lockdesc_t cephfsal_lockdesc_t
+#define fsal_cookie_t cephfsal_cookie_t
+#define fs_specific_initinfo_t cephfs_specific_initinfo_t
+#define fsal_cred_t cephfsal_cred_t
+
 typedef union {
   struct
   {
@@ -58,9 +68,9 @@ typedef union {
     uint64_t parent_ino;
     uint32_t parent_hash;
   } data;
-/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
+#ifdef _BUILD_SHARED_FSAL 
   char pad[FSAL_HANDLE_T_SIZE];
-/** #endif @todo : second part of the TMP fix for connectathon */
+#endif
 } cephfsal_handle_t;
 
 #define VINODE(fh) ((fh)->data.vi)

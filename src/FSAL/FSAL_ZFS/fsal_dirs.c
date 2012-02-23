@@ -164,7 +164,7 @@ fsal_status_t ZFSFSAL_readdir(fsal_dir_t * dir_desc, /* IN */
   if(!dir_descriptor || !p_dirent || !end_position || !nb_entries || !end_of_dir)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
-  memcpy( (char *)&start_position.data.cookie, start_pos.data, sizeof( off_t ) ) ;
+  memcpy( (char *)&start_position.data.cookie, (char *)&start_pos.data, sizeof( off_t ) ) ;
 
   /* Hook to create the pseudo directory */
   if(dir_descriptor->handle.data.zfs_handle.inode == ZFS_SNAP_DIR_INODE)

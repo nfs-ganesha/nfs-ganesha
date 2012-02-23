@@ -349,7 +349,7 @@ fsal_status_t FUSEFSAL_readdir(fsal_dir_t * dir_desc,     /* IN */
   reqbuff.p_entries = pdirent;
   reqbuff.status.major = 0;
   reqbuff.status.minor = 0;
-  memcpy( (char *)&reqbuff.begin_off, start_position.data, sizeof( off_t ) ) ;
+  memcpy( (char *)&reqbuff.begin_off, (char *)&start_position.data, sizeof( off_t ) ) ;
   reqbuff.curr_off = 0 ;
 
   TakeTokenFSCall();

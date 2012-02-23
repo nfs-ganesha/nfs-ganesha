@@ -82,14 +82,24 @@
 #include "fsal_handle_syscalls.h"
 #include "fsal_glue_const.h"
 
+#define fsal_handle_t vfsfsal_handle_t
+#define fsal_op_context_t vfsfsal_op_context_t
+#define fsal_file_t vfsfsal_file_t
+#define fsal_dir_t vfsfsal_dir_t
+#define fsal_export_context_t vfsfsal_export_context_t
+#define fsal_lockdesc_t vfsfsal_lockdesc_t
+#define fsal_cookie_t vfsfsal_cookie_t
+#define fs_specific_initinfo_t vfsfs_specific_initinfo_t
+#define fsal_cred_t vfsfsal_cred_t
+
 typedef union {
  struct
   {
      vfs_file_handle_t vfs_handle ;
   } data ;
-/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
+#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_HANDLE_T_SIZE];
-/** #endif @todo : second part of the TMP fix for connectathon */
+#endif
 } vfsfsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */
@@ -128,9 +138,9 @@ typedef union {
  {
   off_t cookie;
  } data ;
-/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
+#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_COOKIE_T_SIZE];
-/** #endif @todo : second part of the TMP fix for connectathon */
+#endif 
 } vfsfsal_cookie_t;
 
 #define FSAL_SET_PCOOKIE_BY_OFFSET( __pfsal_cookie, __cookie )           \

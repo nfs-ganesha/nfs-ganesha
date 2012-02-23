@@ -193,7 +193,7 @@ fsal_status_t XFSFSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   /***************************/
   /* seek into the directory */
   /***************************/
-  memcpy( (char *)&start_position.data.cookie, startposition.data, sizeof( off_t ) ) ;
+  memcpy( (char *)&start_position.data.cookie, (char *)&startposition.data, sizeof( off_t ) ) ;
   rc = errno = 0;
   lseek(p_dir_descriptor->fd, start_position.data.cookie, SEEK_SET);
   rc = errno;

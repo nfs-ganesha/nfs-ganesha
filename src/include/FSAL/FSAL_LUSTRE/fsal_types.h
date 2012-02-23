@@ -69,6 +69,16 @@
 #include <asm/types.h>
 #include <lustre/liblustreapi.h>
 
+#define fsal_handle_t lustrefsal_handle_t
+#define fsal_op_context_t lustrefsal_op_context_t
+#define fsal_file_t lustrefsal_file_t
+#define fsal_dir_t lustrefsal_dir_t
+#define fsal_export_context_t lustrefsal_export_context_t
+#define fsal_lockdesc_t lustrefsal_lockdesc_t
+#define fsal_cookie_t lustrefsal_cookie_t
+#define fs_specific_initinfo_t lustrefs_specific_initinfo_t
+#define fsal_cred_t lustrefsal_cred_t
+
 /*
  * labels in the config file
  */
@@ -87,9 +97,9 @@ typedef union {
     /* used for FSAL_DIGEST_FILEID */
     unsigned long long inode;
   } data ;
-/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
+#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_HANDLE_T_SIZE];
-/** #endif @todo : second part of the TMP fix for connectathon */
+#endif 
 } lustrefsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */
@@ -136,9 +146,9 @@ typedef union
   {
     off_t cookie;
   } data ;
-/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
+#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_COOKIE_T_SIZE];
-/** #endif @todo : second part of the TMP fix for connectathon */
+#endif 
 } lustrefsal_cookie_t;
 
 #define FSAL_SET_PCOOKIE_BY_OFFSET( __pfsal_cookie, __cookie )           \

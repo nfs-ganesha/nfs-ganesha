@@ -37,17 +37,7 @@
 #include "fsal_glue_const.h"
 
 /* In the "static" case, original types are used, this is safer */
-#if defined(_USE_SHARED_FSAL) || \
-    defined(_USE_POSIX)        || \
-    defined(_USE_VFS)          || \
-    defined(_USE_XFS)          || \
-    defined(_USE_GPFS)         || \
-    defined(_USE_ZFS)          || \
-    defined(_USE_SNMP)         || \
-    defined(_USE_PROXY)        || \
-    defined(_USE_LUSTRE)       || \
-    defined(_USE_FUSE)         || \
-    defined(_USE_CEPH)
+#ifdef _USE_SHARED_FSAL
 
 /* Allow aliasing of fsal_handle_t since FSALs will be
  * casting between pointer types

@@ -74,7 +74,17 @@
 
 #include "fsal_glue_const.h"
 
-  /* some void types for this template... */
+#define fsal_handle_t proxyfsal_handle_t
+#define fsal_op_context_t proxyfsal_op_context_t
+#define fsal_file_t proxyfsal_file_t
+#define fsal_dir_t proxyfsal_dir_t
+#define fsal_export_context_t proxyfsal_export_context_t
+#define fsal_lockdesc_t proxyfsal_lockdesc_t
+#define fsal_cookie_t proxyfsal_cookie_t
+#define fs_specific_initinfo_t proxyfs_specific_initinfo_t
+#define fsal_cred_t proxyfsal_cred_t
+
+/* some void types for this template... */
 typedef union {
  struct 
   {
@@ -84,9 +94,9 @@ typedef union {
     unsigned int srv_handle_len;
     char srv_handle_val[FSAL_PROXY_FILEHANDLE_MAX_LEN] ; 
   } data ;
-/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
+#ifdef _BUILD_SHARED_FSAL 
   char pad[FSAL_HANDLE_T_SIZE];
-/** #endif @todo : second part of the TMP fix for connectathon */
+#endif 
 }  proxyfsal_handle_t;
 
 typedef struct
@@ -145,9 +155,9 @@ typedef struct
 
 typedef union {
   nfs_cookie4 data ;
-/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
+#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_COOKIE_T_SIZE];
-/** #endif @todo : second part of the TMP fix for connectathon */
+#endif 
 
 } proxyfsal_cookie_t;
 

@@ -196,7 +196,7 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
   /***************************/
   /* seek into the directory */
   /***************************/
-  start_position.data.cookie = *((off_t*) startposition.data);
+  start_position.data.cookie = *((off_t*) &startposition.data);
   rc = errno = 0;
   lseek(p_dir_descriptor->fd, start_position.data.cookie, SEEK_SET);
   rc = errno;

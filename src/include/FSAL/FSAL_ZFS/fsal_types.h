@@ -58,6 +58,16 @@
 
 #include "fsal_glue_const.h"
 
+#define fsal_handle_t zfsfsal_handle_t
+#define fsal_op_context_t zfsfsal_op_context_t
+#define fsal_file_t zfsfsal_file_t
+#define fsal_dir_t zfsfsal_dir_t
+#define fsal_export_context_t zfsfsal_export_context_t
+#define fsal_lockdesc_t zfsfsal_lockdesc_t
+#define fsal_cookie_t zfsfsal_cookie_t
+#define fs_specific_initinfo_t zfsfs_specific_initinfo_t
+#define fsal_cred_t zfsfsal_cred_t
+
 typedef union
 {
   struct
@@ -66,9 +76,9 @@ typedef union
     fsal_nodetype_t type;
     char i_snap;
   } data;
-/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
+#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_HANDLE_T_SIZE];
-/** #endif @todo : second part of the TMP fix for connectathon */
+#endif
 } zfsfsal_handle_t;
 
 typedef struct
@@ -118,9 +128,9 @@ typedef union
   {
     off_t cookie;
   } data;
-/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
+#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_COOKIE_T_SIZE];
-/** #endif @todo : second part of the TMP fix for connectathon */
+#endif 
 } zfsfsal_cookie_t;
 
 #define FSAL_SET_PCOOKIE_BY_OFFSET( __pfsal_cookie, __cookie )           \
