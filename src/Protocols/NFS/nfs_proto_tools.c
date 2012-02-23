@@ -1364,8 +1364,10 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 deltalen = 0;
               else
                 deltalen = 4 - file_owner.utf8string_len % 4;
-
-              utf8len = htonl(file_owner.utf8string_len + deltalen);
+/* Following code used to add deltalen to utf8len which is wrong. It caused
+ * clients verifying utf8 strings to reject the attribute.
+ */
+              utf8len = htonl(file_owner.utf8string_len);
               memcpy((char *)(attrvalsBuffer + LastOffset), &utf8len, sizeof(u_int));
               LastOffset += sizeof(u_int);
 
@@ -1400,8 +1402,11 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                 deltalen = 0;
               else
                 deltalen = 4 - file_owner_group.utf8string_len % 4;
+/* Following code used to add deltalen to utf8len which is wrong. It caused
+ * clients verifying utf8 strings to reject the attribute.
+ */
 
-              utf8len = htonl(file_owner_group.utf8string_len + deltalen);
+              utf8len = htonl(file_owner_group.utf8string_len);
               memcpy((char *)(attrvalsBuffer + LastOffset), &utf8len, sizeof(u_int));
               LastOffset += sizeof(u_int);
 

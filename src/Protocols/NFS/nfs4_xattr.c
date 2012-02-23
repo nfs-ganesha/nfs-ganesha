@@ -528,9 +528,16 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
         case FATTR4_FS_LOCATIONS:
           LogFullDebug(COMPONENT_NFS_V4_XATTR,
                        "-----> Wanting FATTR4_FS_LOCATIONS");
-
+/* RFC 3530: "When the fs_locations attribute is interrogated and there are no
+   alternate file system locations, the server SHOULD return a zero-
+   length array of fs_location4 structures, together with a valid
+   fs_root. The code below does not return a fs_root which causes client
+   problems when they interrogate this attribute. For now moving attribute to
+   unsupported.
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
+*/
+          op_attr_success = 0;
           break;
 
         case FATTR4_HIDDEN:
@@ -672,8 +679,10 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
                 deltalen = 0;
               else
                 deltalen = 4 - file_owner.utf8string_len % 4;
-
-              utf8len = htonl(file_owner.utf8string_len + deltalen);
+/* Following code used to add deltalen to utf8len which is wrong. It caused
+ * clients verifying utf8 strings to reject the attribute.
+ */
+              utf8len = htonl(file_owner.utf8string_len);
               memcpy((char *)(attrvalsBuffer + LastOffset), &utf8len, sizeof(u_int));
               LastOffset += sizeof(u_int);
 
@@ -711,7 +720,10 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
               else
                 deltalen = 4 - file_owner_group.utf8string_len % 4;
 
-              utf8len = htonl(file_owner_group.utf8string_len + deltalen);
+/* Following code used to add deltalen to utf8len which is wrong. It caused
+ * clients verifying utf8 strings to reject the attribute.
+ */
+              utf8len = htonl(file_owner_group.utf8string_len);
               memcpy((char *)(attrvalsBuffer + LastOffset), &utf8len, sizeof(u_int));
               LastOffset += sizeof(u_int);
 

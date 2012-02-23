@@ -1046,7 +1046,7 @@ static const fattr4_dent_t __attribute__ ((__unused__)) fattr4tab[] =
   "FATTR4_FILES_TOTAL", 23, 1, sizeof(fattr4_files_total), FATTR4_ATTR_READ}
   ,
   {
-  "FATTR4_FS_LOCATIONS", 24, 1, sizeof(fattr4_fs_locations), FATTR4_ATTR_READ}
+  "FATTR4_FS_LOCATIONS", 24, 0, sizeof(fattr4_fs_locations), FATTR4_ATTR_READ}
   ,
   {
   "FATTR4_HIDDEN", 25, 1, sizeof(fattr4_hidden), FATTR4_ATTR_READ_WRITE}
