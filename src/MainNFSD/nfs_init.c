@@ -1563,6 +1563,12 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
       state_async_thread_start();
 #endif
 
+      /*
+       * Now that all TCB controlled threads (workers, NLM, sigmgr) were created, lets wait for them to fully
+       * initialze __before__ we create the threads that listen for incoming requests.
+       */
+      wait_for_threads_to_awaken();
+
       /* Starting the rpc dispatcher thread */
       if((rc =
 	  pthread_create(&rpc_dispatcher_thrid, &attr_thr, rpc_dispatcher_thread,

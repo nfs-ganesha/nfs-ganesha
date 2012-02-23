@@ -198,13 +198,14 @@ pause_rc wait_for_threads_to_pause()
  * wait_for_threads_to_awaken: Wait for threads to become active
  *
  */
-pause_rc _wait_for_threads_to_awaken()
+static pause_rc _wait_for_threads_to_awaken()
 {
   struct timespec timeout;
   int rc;
   int t1, t2;
 
-  LogDebug(COMPONENT_THREAD, "Waiting for threads to awaken");
+  LogDebug(COMPONENT_THREAD, "Waiting for threads to awaken. active=%u, existing=%u",
+           num_active_threads, num_existing_threads);
   t1 = time(NULL);
   while(num_active_threads < num_existing_threads)
     {
@@ -241,6 +242,10 @@ pause_rc _wait_for_threads_to_awaken()
   return PAUSE_OK;
 }
 
+/*
+ * This API must NOT be called by more than a single thread - the caller witll
+ * wait on a cond-var & only once hread will be awakened by a notification.
+ */
 pause_rc wait_for_threads_to_awaken()
 {
   pause_rc rc;
