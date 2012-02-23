@@ -833,8 +833,6 @@ void *stats_thread(void *addr)
       /* buddy memory */
 
       memset(&global_buddy_stat, 0, sizeof(buddy_stats_t));
-      memset(&global_tcp_dispatcher_buddy_stat, 0, sizeof(buddy_stats_t));
-
       for(i = 0; i < nfs_param.core_param.nb_worker; i++)
         {
 
