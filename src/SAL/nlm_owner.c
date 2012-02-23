@@ -1385,12 +1385,13 @@ void remove_nlm_owner(cache_inode_client_t * pclient,
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nlm_owner_Get_Pointer(state_owner_t  * pkey,
+static int nlm_owner_Get_Pointer(state_owner_t  * pkey,
                           state_owner_t ** powner)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
 
+  *powner = NULL; // in case we dont find it, return NULL
   buffkey.pdata = (caddr_t) pkey;
   buffkey.len = sizeof(*pkey);
 
