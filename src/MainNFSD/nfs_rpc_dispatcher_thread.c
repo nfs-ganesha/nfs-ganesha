@@ -249,6 +249,30 @@ void unregister_rpc(void)
   (nfs_param.core_param.core_options & (CORE_OPTION_NFSV2 | CORE_OPTION_NFSV3)) != 0)
 #endif
 
+/**
+ * close_rpc_fd - close file descriptors used for RPC services so that restarting
+ * the NFS server wont encounter issues of "Addres Already In Use" - this has
+ * occured even though we set the SO_REUSEADDR option when restarting the server
+ * with a single export (i.e.: a small config) & no logging at all, making the
+ * restart very fast.
+ * when closing a listening socket it will be closed immediately if no connection
+ * is pending on it, hence drastically reducing the probability for trouble.
+ */
+static void close_rpc_fd()
+{
+    protos p;
+
+    for(p = P_NFS; p < P_COUNT; p++) {
+	if (udp_socket[p] != -1) {
+	    close(udp_socket[p]);
+	}
+	if (tcp_socket[p] != -1) {
+	    close(tcp_socket[p]);
+	}
+    }
+}
+
+
 void Create_udp(protos prot)
 {
 #ifdef _USE_TIRPC
@@ -396,7 +420,9 @@ void Bind_sockets(void)
 
 void Clean_RPC(void)
 {
+  //TODO: consider the need to call Svc_dg_destroy for UDP & ?? for TCP based services
   unregister_rpc();
+  close_rpc_fd();
 }
 
 cleanup_list_element clean_rpc = {NULL, Clean_RPC};
