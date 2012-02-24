@@ -524,9 +524,18 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
 #ifndef _USE_NFS4_ACL
             p_fsalattr_out->acl = NULL;
 #else
-            if(gpfs_acl_2_fsal_acl(p_fsalattr_out,
-                                   (gpfs_acl_t *)p_buffxstat->buffacl) != ERR_FSAL_NO_ERROR)
-              p_fsalattr_out->acl = NULL;
+            if(p_buffxstat->attr_valid & XATTR_ACL == 0)
+              {
+                /* ACL is invalid. */
+                p_fsalattr_out->acl = NULL;
+              }
+            else
+              {
+                /* ACL is valid, so try to convert fsal acl. */
+                if(gpfs_acl_2_fsal_acl(p_fsalattr_out,
+                   (gpfs_acl_t *)p_buffxstat->buffacl) != ERR_FSAL_NO_ERROR)
+                  p_fsalattr_out->acl = NULL;
+              }
 #endif                          /* _USE_NFS4_ACL */
             LogFullDebug(COMPONENT_FSAL, "acl = %p", p_fsalattr_out->acl);
         }

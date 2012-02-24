@@ -870,13 +870,32 @@ xstatarg.attr_valid = XATTR_STAT;
   rc = gpfs_ganesha(OPENHANDLE_GET_XSTAT, &xstatarg);
   LogDebug(COMPONENT_FSAL, "gpfs_ganesha: GET_XSTAT returned, rc = %d", rc);
 
-  if(rc < 0) {
-    LogFullDebug(COMPONENT_FSAL, "fsal_get_xstat_by_handle returned errno:%d -- %s",
-		 errno, strerror(errno));
-    ReturnCode(posix2fsal_error(errno), errno);
-  }
+  if(rc < 0)
+    {
+      if(errno == ENODATA)
+        {
+          /* For the special file that do not have ACL, GPFS returns ENODATA.
+           * In this case, return okay with stat. */
+          p_buffxstat->attr_valid = XATTR_STAT;
+          LogFullDebug(COMPONENT_FSAL, "retrieved only stat, not acl");
+          ReturnCode(ERR_FSAL_NO_ERROR, 0);
+        }
+      else
+        {
+          /* Handle other errors. */
+          LogFullDebug(COMPONENT_FSAL, "fsal_get_xstat_by_handle returned errno:%d -- %s",
+                       errno, strerror(errno));
+          ReturnCode(posix2fsal_error(errno), errno);
+        }
+    }
 
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+#ifdef _USE_NFS4_ACL
+  p_buffxstat->attr_valid = XATTR_STAT | XATTR_ACL;
+#else
+  p_buffxstat->attr_valid = XATTR_STAT;
+#endif
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);  
 }
 
 /* Set NFS4 ACL as well as stat. For now, set stat only until NFS4 ACL

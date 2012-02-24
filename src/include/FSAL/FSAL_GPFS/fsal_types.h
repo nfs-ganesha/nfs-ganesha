@@ -206,6 +206,7 @@ typedef struct
 /* A set of buffers to retrieve multiple attributes at the same time. */
 typedef struct fsal_xstat__
 {
+  int attr_valid;
   struct stat64 buffstat;
   char buffacl[GPFS_ACL_BUF_SIZE];
 } gpfsfsal_xstat_t;
