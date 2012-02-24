@@ -97,7 +97,7 @@ fsal_ace_t *nfs4_ace_alloc(int nace)
   fsal_ace_t *pace = NULL;
 
   pace = (fsal_ace_t *)Mem_Alloc(nace * sizeof(fsal_ace_t));
-
+  memset(pace, 0, nace * sizeof(fsal_ace_t));
   return pace;
 }
 
@@ -124,6 +124,9 @@ void nfs4_ace_free(fsal_ace_t *pace)
   if(!pace)
     return;
 
+  LogDebug(COMPONENT_NFS_V4_ACL,
+           "free ace %p", pace);
+
   Mem_Free(pace);
 }
 
@@ -131,6 +134,9 @@ static void nfs4_acl_free(fsal_acl_t *pacl)
 {
   if(!pacl)
     return;
+
+  if(pacl->aces)
+    nfs4_ace_free(pacl->aces);
 
   P(fsal_acl_pool_mutex);
   ReleaseToPool(pacl, &fsal_acl_pool);
@@ -389,14 +395,14 @@ void nfs4_acl_release_entry(fsal_acl_t *pacl, fsal_acl_status_t *pstatus)
 static void nfs4_acls_test()
 {
   int i = 0;
-  fsal_acl_data_t acldata;
+  fsal_acl_data_t acldata, acldata2;
   fsal_ace_t *pace = NULL;
   fsal_acl_t *pacl = NULL;
   fsal_acl_status_t status;
 
   acldata.naces = 3;
   acldata.aces = nfs4_ace_alloc(3);
-  LogDebug(COMPONENT_NFS_V4_ACL, "&acldata.aces = %p", &acldata.aces);
+  LogDebug(COMPONENT_NFS_V4_ACL, "acldata.aces = %p", acldata.aces);
 
   pace = acldata.aces;
 
@@ -415,7 +421,23 @@ static void nfs4_acls_test()
   LogDebug(COMPONENT_NFS_V4_ACL, "pacl = %p, ref = %u, status = %u", pacl, pacl->ref, status);
   V_r(&pacl->lock);
 
-  pacl = nfs4_acl_new_entry(&acldata, &status);
+  acldata2.naces = 3;
+  acldata2.aces = nfs4_ace_alloc(3);
+
+  LogDebug(COMPONENT_NFS_V4_ACL, "acldata2.aces = %p", acldata2.aces);
+
+  pace = acldata2.aces;
+
+  for(i = 0; i < 3; i++)
+    {
+      pace->type = i;
+      pace->perm = i;
+      pace->flag = i;
+      pace->who.uid = i;
+      pace++;
+    }
+
+  pacl = nfs4_acl_new_entry(&acldata2, &status);
   nfs4_acl_entry_inc_ref(pacl);
   P_r(&pacl->lock);
   LogDebug(COMPONENT_NFS_V4_ACL, "re-access: pacl = %p, ref = %u, status = %u", pacl, pacl->ref, status);

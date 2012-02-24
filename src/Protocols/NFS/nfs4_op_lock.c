@@ -395,6 +395,25 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       return res_LOCK4.status;
     }
 
+  /*
+   * do grace period checking
+   */
+  if (nfs4_in_grace() && !arg_LOCK4.reclaim)
+    {
+      res_LOCK4.status = NFS4ERR_GRACE;
+      goto out;
+    }
+  if (nfs4_in_grace() && arg_LOCK4.reclaim && !nfs_client_id->allow_reclaim)
+    {
+      res_LOCK4.status = NFS4ERR_NO_GRACE;
+      goto out;
+    }
+  if (!nfs4_in_grace() && arg_LOCK4.reclaim)
+    {
+      res_LOCK4.status = NFS4ERR_NO_GRACE;
+      goto out;
+    }
+
   if(arg_LOCK4.locker.new_lock_owner)
     {
       /* A lock owner is always associated with a previously made open
@@ -406,14 +425,22 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
       if(nfs4_owner_Get_Pointer(&owner_name, &plock_owner))
         {
-          /* Lock owner already existsc, check lock_seqid if it's not 0 */
-          if(!Check_nfs4_seqid(plock_owner,
+          /* Lock owner already exists, check lock_seqid if it has attached locks */
+          if(!glist_empty(&plock_owner->so_lock_list) &&
+             !Check_nfs4_seqid(plock_owner,
                                arg_LOCK4.locker.locker4_u.open_owner.lock_seqid,
                                op,
                                data,
                                resp,
                                "LOCK (new owner but owner exists)"))
             {
+              LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+                      "LOCK failed to create new lock owner, re-use",
+                      data->current_entry,
+                      data->pcontext,
+                      popen_owner,
+                      &lock_desc);
+              dump_all_locks("All locks (re-use of lock owner)");
               /* Response is all setup for us and LogDebug told what was wrong */
               return res_LOCK4.status;
             }
@@ -472,35 +499,28 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
       init_glist(&plock_state->state_data.lock.state_locklist);
 
+      /* Attach this lock to an export */
+      plock_state->state_pexport = data->pexport;
+      P(data->pexport->exp_state_mutex);
+      glist_add_tail(&data->pexport->exp_state_list, &plock_state->state_export_list);
+      V(data->pexport->exp_state_mutex);
+
       /* Add lock state to the list of lock states belonging to the open state */
       glist_add_tail(&pstate_open->state_data.share.share_lockstates,
                      &plock_state->state_data.lock.state_sharelist);
-    }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
 
-  /*
-   * do grace period checking
-   */
-  if (nfs4_in_grace() && !arg_LOCK4.reclaim)
-  {
-     res_LOCK4.status = NFS4ERR_GRACE;
-     goto out;
-  }
-  if (nfs4_in_grace() && arg_LOCK4.reclaim && !nfs_client_id->allow_reclaim)
-  {
-     res_LOCK4.status = NFS4ERR_NO_GRACE;
-     goto out;
-  }
-  if (!nfs4_in_grace() && arg_LOCK4.reclaim)
-  {
-     res_LOCK4.status = NFS4ERR_NO_GRACE;
-     goto out;
-  }
+      /* Add lock owner to the list of the clientid */
+      P(nfs_client_id->clientid_mutex);
+      glist_add_tail(&nfs_client_id->clientid_lockowners, &plock_owner->so_owner.so_nfs4_owner.so_perclient);
+      V(nfs_client_id->clientid_mutex);
+    }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
 
   /* Now we have a lock owner and a stateid.
    * Go ahead and push lock into SAL (and FSAL).
    */
   if(state_lock(data->current_entry,
                 data->pcontext,
+                data->pexport,
                 plock_owner,
                 plock_state,
                 blocking,
@@ -558,8 +578,17 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                plock_state->state_seqid,
                plock_state);
 
-  /* Save the response in the lock or open owner */
-  Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
+  if(arg_LOCK4.locker.new_lock_owner)
+    {
+      /* Also save the response in the lock owner */
+      Copy_nfs4_state_req(plock_owner,
+                          arg_LOCK4.locker.locker4_u.open_owner.lock_seqid,
+                          op,
+                          data,
+                          resp,
+                          tag);
+      tag = "LOCK (open owner)";
+    }
 
   LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
           "LOCK applied",
@@ -568,6 +597,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
           plock_owner,
           &lock_desc);
 out:
+
+  /* Save the response in the lock or open owner */
+  Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
 
   return res_LOCK4.status;
 #endif

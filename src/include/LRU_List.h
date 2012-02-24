@@ -70,7 +70,7 @@ typedef struct lru_param__
   unsigned int nb_call_gc_invalid;                 /**< How many call before garbagging invalid entries           */
   int (*entry_to_str) (LRU_data_t, char *);        /**< Function used to convert an entry to a string. */
   int (*clean_entry) (LRU_entry_t *, void *);      /**< Function used for cleaning an entry while released */
-  char *name;                                      /**< Name for LRU list */
+  char *lp_name;                                      /**< Name for LRU list */
 } LRU_parameter_t;
 
 typedef struct lru_list__

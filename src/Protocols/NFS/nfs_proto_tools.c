@@ -2663,6 +2663,7 @@ int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap )
   uint_t i = 0;
   uint_t val = 0;
   uint_t offset = 0;
+  uint fattr4tabidx = 0;
 
   uint32_t bitmap_val[3] ;
   bitmap4 bout ;
@@ -2685,17 +2686,24 @@ int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap )
     {
       for(i = 0; i < 32; i++)
         {
+          fattr4tabidx = i+32*offset;
+#ifdef _USE_NFS4_1
+          if (fattr4tabidx > FATTR4_FS_CHARSET_CAP)
+#else
+          if (fattr4tabidx > FATTR4_MOUNTED_ON_FILEID)
+#endif
+             goto exit;
+
           val = 1 << i;         /* Compute 2**i */
           if(pbitmap->bitmap4_val[offset] & val)
            {
-             if( fattr4tab[i+32*offset].supported ) /* keep only supported stuff */
+             if( fattr4tab[fattr4tabidx].supported ) /* keep only supported stuff */
                bout.bitmap4_val[offset] |= val ;
-             else
-                  allsupp = 0;
            }
         }
     }
 
+exit:
   memcpy(pbitmap->bitmap4_val, bout.bitmap4_val,
          bout.bitmap4_len * sizeof(uint32_t));
 
@@ -3267,9 +3275,9 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
     return NFS4ERR_BADXDR;
 
   /* Check attributes data */
-  if((Fattr->attr_vals.attrlist4_val == NULL) &&
-     (Fattr->attr_vals.attrlist4_len != 0))
-    return -1;
+  if((Fattr->attr_vals.attrlist4_val == NULL) ||
+     (Fattr->attr_vals.attrlist4_len == 0))
+    return NFS4ERR_BADXDR;
 
   /* Convert the attribute bitmap to an attribute list */
   nfs4_bitmap4_to_list(&(Fattr->attrmask), &attrmasklen, attrmasklist);

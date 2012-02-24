@@ -219,6 +219,18 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
         }
 #endif
 
+//warning fix for real (still hunting for root cause)
+#define S_NSECS 1000000000UL	/* nsecs in 1s */
+      /* a carry into seconds appears clearly ruled out */
+      if (sattr.atime.nseconds > S_NSECS)
+          sattr.atime.nseconds = 0;
+
+      if (sattr.mtime.nseconds > S_NSECS)
+          sattr.mtime.nseconds = 0;
+
+      if (sattr.ctime.nseconds > S_NSECS)
+          sattr.ctime.nseconds = 0;
+
       if(cache_inode_setattr(data->current_entry,
                              &sattr,
                              data->ht,

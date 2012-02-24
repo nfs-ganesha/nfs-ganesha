@@ -200,7 +200,8 @@ typedef enum nfs_clientid_confirm_state__
 { CONFIRMED_CLIENT_ID = 1,
   UNCONFIRMED_CLIENT_ID = 2,
   REBOOTED_CLIENT_ID = 3,
-  CB_RECONFIGURED_CLIENT_ID = 4
+  CB_RECONFIGURED_CLIENT_ID = 4,
+  EXPIRED_CLIENT_ID = 5
 } nfs_clientid_confirm_state_t;
 
 typedef char path_str_t[MAXPATHLEN] ;
@@ -429,6 +430,8 @@ typedef struct nfs_request_data__
   char cred_area[2 * MAX_AUTH_BYTES + RQCRED_SIZE];
   nfs_res_t res_nfs;
   nfs_arg_t arg_nfs;
+  struct timeval time_queued; /* The time at which a request was added
+                               * to the worker thread queue. */
 } nfs_request_data_t;
 
 typedef enum request_type__
@@ -440,8 +443,6 @@ typedef enum request_type__
 typedef struct request_data__
 {
   request_type_t rtype ;
-  pthread_cond_t   req_done_condvar;
-  pthread_mutex_t  req_done_mutex;
   union request_content__
    {
       nfs_request_data_t nfs ;
@@ -465,6 +466,10 @@ typedef struct nfs_client_id__
   nfs_client_cred_t credential;
   int allow_reclaim;
   char *recov_dir;
+  struct glist_head clientid_openowners;
+  struct glist_head clientid_lockowners;
+  pthread_mutex_t clientid_mutex;
+  struct prealloc_pool *clientid_pool;
 #ifdef _USE_NFS4_1
   char server_owner[MAXNAMLEN];
   char server_scope[MAXNAMLEN];
@@ -619,6 +624,7 @@ void *stat_exporter_thread(void *IndexArg);
 int stats_snmp(nfs_worker_data_t * workers_data_local);
 void *file_content_gc_thread(void *IndexArg);
 void *nfs_file_content_flush_thread(void *flush_data_arg);
+void *reaper_thread(void *arg);
 
 #ifdef _USE_UPCALL_SIMULATOR
 void * upcall_simulator_thread( void * UnusedArg ) ;
@@ -724,6 +730,8 @@ int nfs_client_id_add(clientid4 clientid,
 int nfs_client_id_set(clientid4 clientid,
                       nfs_client_id_t client_record,
                       struct prealloc_pool *clientid_pool);
+
+void nfs_client_id_expire(nfs_client_id_t *client_record);
 
 int nfs_client_id_compute(char *name, clientid4 * pclientid);
 int nfs_client_id_basic_compute(char *name, clientid4 * pclientid);

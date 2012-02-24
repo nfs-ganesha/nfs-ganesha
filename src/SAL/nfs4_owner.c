@@ -249,11 +249,11 @@ void remove_nfs4_owner(cache_inode_client_t * pclient,
   if ((powner->so_type == STATE_OPEN_OWNER_NFSV4) ||
       (powner->so_type == STATE_LOCK_OWNER_NFSV4))
     {
-      nfs_client_id_t client_id;
-      if (nfs_client_id_get(powner->so_owner.so_nfs4_owner.so_clientid,
+      nfs_client_id_t *client_id;
+      if (nfs_client_id_Get_Pointer(powner->so_owner.so_nfs4_owner.so_clientid,
                             &client_id) == CLIENT_ID_SUCCESS)
         {
-          clientid_powner = client_id.clientid_owner;
+          clientid_powner = client_id->clientid_owner;
         }
     }
 
@@ -261,6 +261,8 @@ void remove_nfs4_owner(cache_inode_client_t * pclient,
   oname.son_owner_len = powner->so_owner_len;
   oname.son_islock    = powner->so_type == STATE_LOCK_OWNER_NFSV4;
   memcpy(oname.son_owner_val, powner->so_owner_val, powner->so_owner_len);
+
+  glist_del(&powner->so_owner.so_nfs4_owner.so_perclient);
 
   buffkey.pdata = (caddr_t) &oname;
   buffkey.len   = sizeof(*powner);
@@ -510,11 +512,11 @@ state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
   if ((type == STATE_OPEN_OWNER_NFSV4) ||
       (type == STATE_LOCK_OWNER_NFSV4))
     {
-      nfs_client_id_t client_id;
-      if (nfs_client_id_get(pname->son_clientid,
+      nfs_client_id_t *client_id;
+      if (nfs_client_id_Get_Pointer(pname->son_clientid,
                             &client_id) == CLIENT_ID_SUCCESS)
         {
-          clientid_powner = client_id.clientid_owner;
+          clientid_powner = client_id->clientid_owner;
         }
       else
         {
@@ -550,6 +552,13 @@ state_owner_t *create_nfs4_owner(cache_inode_client_t    * pclient,
   powner->so_owner.so_nfs4_owner.so_resp.resop    = NFS4_OP_ILLEGAL;
   powner->so_owner.so_nfs4_owner.so_args.argop    = NFS4_OP_ILLEGAL;
   powner->so_refcount                             = 1;
+#if 0
+  /* WAITING FOR COMMUNITY FIX */
+  /* setting lock owner confirmed */
+  if ( type == STATE_LOCK_OWNER_NFSV4)
+    powner->so_owner.so_nfs4_owner.so_confirmed   = 1;
+#endif
+  powner->so_pclient                              = pclient;
 
   init_glist(&powner->so_lock_list);
   init_glist(&powner->so_owner.so_nfs4_owner.so_owner_list);

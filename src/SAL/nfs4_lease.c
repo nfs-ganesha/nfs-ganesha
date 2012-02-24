@@ -65,11 +65,11 @@
 int nfs4_is_lease_expired(nfs_client_id_t * clientp)
 {
   LogFullDebug(COMPONENT_NFS_V4,
-               "Check lease for client_name = %s id=%lu",
+               "Check lease for client_name = %s id=%"PRIx64"",
                clientp->client_name, clientp->clientid);
 
   LogFullDebug(COMPONENT_NFS_V4,
-               "--------- nfs4_is_lease_expired ---------> %ld %ld delta=%ld lease=%u",
+               "--------- nfs4_is_lease_expired ---------> %lu %lu delta=%lu lease=%u",
                time(NULL), clientp->last_renew,
                time(NULL) - clientp->last_renew, nfs_param.nfsv4_param.lease_lifetime);
 
@@ -83,7 +83,7 @@ int nfs4_is_lease_expired(nfs_client_id_t * clientp)
 void nfs4_update_lease(nfs_client_id_t * clientp)
 {
   LogFullDebug(COMPONENT_NFS_V4,
-               "Update lease for client_name = %s id=%lu",
+               "Update lease for client_name = %s id=%"PRIx64"",
                clientp->client_name, clientp->clientid);
 
   clientp->last_renew = time(NULL);

@@ -243,7 +243,7 @@ static int InitClient(cmdCacheInode_thr_info_t * thr_info)
   strcpy(thr_info->current_path, "/");
 
   /* Init the cache_inode client */
-  if(cache_inode_client_init(&thr_info->client, cache_client_param, 0, NULL) != 0)
+  if(cache_inode_client_init(&thr_info->client, &cache_client_param, 0, NULL) != 0)
     return 1;
 
   /* Init the cache content client */
@@ -710,7 +710,7 @@ if(FSAL_IS_ERROR(status = FSAL_str2path("/tmp", FSAL_MAX_PATH_LEN, &pathroot)))
     }
 
   /* Init the cache_inode client */
-  if(cache_inode_client_init(&context->client, cache_client_param, 0, NULL) != 0)
+  if(cache_inode_client_init(&context->client, &cache_client_param, 0, NULL) != 0)
     return 1;
 
 #ifdef _USE_ASYNC_CACHE_INODE
@@ -2010,6 +2010,8 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
   cache_inode_create_arg_t create_arg;
 
   cmdCacheInode_thr_info_t *context;
+
+  memset(&create_arg, 0, sizeof(create_arg));
 
   /* is the fs initialized ? */
   if(!cache_init)

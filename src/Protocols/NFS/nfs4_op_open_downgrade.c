@@ -126,15 +126,39 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
       return res_OPEN_DOWNGRADE4.status;
     }
 
-  /* Update the state */
-  pstate_found->state_seqid += 1;
+  /* What kind of open is it ? */
+  LogFullDebug(COMPONENT_STATE,
+               "OPEN_DOWNGRADE: Share Deny = %d   Share Access = %d ",
+               arg_OPEN_DOWNGRADE4.share_deny,
+               arg_OPEN_DOWNGRADE4.share_access);
+
+  if((pstate_found->state_data.share.share_access & arg_OPEN_DOWNGRADE4.share_access) !=
+     (arg_OPEN_DOWNGRADE4.share_access))
+    {
+      /* Open share access is not a superset of downgrade share access */
+      res_OPEN_DOWNGRADE4.status = NFS4ERR_INVAL;
+      return res_OPEN_DOWNGRADE4.status;
+    }
+
+  if((pstate_found->state_data.share.share_deny & arg_OPEN_DOWNGRADE4.share_deny) !=
+     (arg_OPEN_DOWNGRADE4.share_deny))
+    {
+      /* Open share deny is not a superset of downgrade share deny */
+      res_OPEN_DOWNGRADE4.status = NFS4ERR_INVAL;
+      return res_OPEN_DOWNGRADE4.status;
+    }
+
+  pstate_found->state_data.share.share_access = arg_OPEN_DOWNGRADE4.share_access;
+  pstate_found->state_data.share.share_deny   = arg_OPEN_DOWNGRADE4.share_deny;
 
   /* Successful exit */
   res_OPEN_DOWNGRADE4.status = NFS4_OK;
-  res_OPEN_DOWNGRADE4.OPEN_DOWNGRADE4res_u.resok4.open_stateid.seqid =
-      pstate_found->state_seqid;
-  memcpy(res_OPEN_DOWNGRADE4.OPEN_DOWNGRADE4res_u.resok4.open_stateid.other,
-         pstate_found->stateid_other, OTHERSIZE);
+
+  /* Handle stateid/seqid for success */
+  update_stateid(pstate_found,
+                 &res_OPEN_DOWNGRADE4.OPEN_DOWNGRADE4res_u.resok4.open_stateid,
+                 data,
+                 tag);
 
   /* Save the response in the open owner */
   Copy_nfs4_state_req(pstate_found->state_powner, arg_OPEN_DOWNGRADE4.seqid, op, data, resp, tag);

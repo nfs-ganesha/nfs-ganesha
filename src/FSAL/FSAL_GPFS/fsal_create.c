@@ -427,7 +427,7 @@ fsal_status_t GPFSFSAL_link(fsal_handle_t * p_target_handle,        /* IN */
 
   /* get the target handle access by fid */
   TakeTokenFSCall();
-  status = fsal_internal_handle2fd(p_context, p_target_handle, &srcfd, O_RDONLY);
+  status = fsal_internal_handle2fd(p_context, p_target_handle, &srcfd, O_RDWR);
   ReleaseTokenFSCall();
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_link);
@@ -519,6 +519,7 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
   int setgid_bit = 0;
   fsal_status_t status;
   int fd, newfd;
+  int flags=(O_RDONLY|O_NOFOLLOW);
 
   mode_t unix_mode = 0;
   dev_t unix_dev = 0;
@@ -558,6 +559,7 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
 
     case FSAL_TYPE_FIFO:
       unix_mode |= S_IFIFO;
+      flags = (O_RDONLY | O_NOFOLLOW | O_NONBLOCK);
       break;
 
     default:
@@ -620,7 +622,7 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
 
   if(FSAL_IS_ERROR(status = fsal_internal_handle2fd_at(fd,
                                                        p_object_handle, &newfd,
-                                                       O_RDONLY | O_NOFOLLOW)))
+                                                       flags)))
     {
       close(fd);
       ReturnStatus(status, INDEX_FSAL_mknode);

@@ -42,6 +42,8 @@
 #include <string.h>
 #include <execinfo.h>
 #include "RW_Lock.h"
+#include <execinfo.h>
+#include <malloc.h>
 
 /*
  * Debugging function

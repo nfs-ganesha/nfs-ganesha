@@ -699,6 +699,20 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->PrefReaddir = (fsal_size_t) 16384;
   p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_THROUGH ;
 
+  init_glist(&p_entry->exp_state_list);
+#ifdef _USE_NLM
+  init_glist(&p_entry->exp_lock_list);
+#endif
+
+  if(pthread_mutex_init(&p_entry->exp_state_mutex, NULL) == -1)
+    {
+      Mem_Free(p_entry);
+      LogCrit(COMPONENT_CONFIG,
+              "NFS READ_EXPORT: ERROR: could not initialize exp_state_mutex");
+      /* free the entry before exiting */
+      return -1;
+    }
+
   strcpy(p_entry->FS_specific, "");
   strcpy(p_entry->FS_tag, "");
   strcpy(p_entry->fullpath, "/");
@@ -2583,22 +2597,6 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
       return EXPORT_PERMISSION_GRANTED;
     }
 
-  /* If mount protocol is called, just check that AUTH_NONE is not used */
-  if(ptr_req->rq_prog == mnt_prog)
-    {
-      if(ptr_req->rq_cred.oa_flavor != AUTH_NONE)
-        {
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Granted mnt_prog");
-          return EXPORT_PERMISSION_GRANTED;
-        }
-      else
-        {
-          LogFullDebug(COMPONENT_DISPATCH,
-                       "Denied mnt_prog because it used AUTH_NONE");
-          return EXPORT_PERMISSION_DENIED;
-        }
-    }
 #ifdef _USE_TIPRC_IPV6
   if(hostaddr->ss_family == AF_INET)
 #endif
@@ -2886,7 +2884,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 #endif
 
       /* creating the 'small_client' */
-      if(cache_inode_client_init(&small_client, small_client_param, SMALL_CLIENT_INDEX, NULL))
+      if(cache_inode_client_init(&small_client, &small_client_param, SMALL_CLIENT_INDEX, NULL))
         {
           LogFatal(COMPONENT_INIT,
                    "small cache inode client could not be allocated");

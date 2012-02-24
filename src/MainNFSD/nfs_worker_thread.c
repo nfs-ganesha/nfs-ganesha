@@ -715,6 +715,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   struct timeval *timer_start = &pworker_data->timer_start;
   struct timeval timer_end;
   struct timeval timer_diff;
+  struct timeval queue_timer_diff;
   nfs_request_latency_stat_t latency_stat;
 
   /* Get the value from the worker data */
@@ -1224,6 +1225,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   memset(timer_start, 0, sizeof(struct timeval));
   memset(&timer_end, 0, sizeof(struct timeval));
   memset(&timer_diff, 0, sizeof(struct timeval));
+  memset(&queue_timer_diff, 0, sizeof(struct timeval));
 
   /*
    * It is now time for checking if export list allows the machine to perform the request
@@ -1419,33 +1421,49 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                                                      ptr_req, 
                                                      &res_nfs); 
 
-      gettimeofday(&timer_end, NULL);
-      timer_diff = time_diff(*timer_start, timer_end);
-      memset(timer_start, 0, sizeof(struct timeval));
-
-      if(timer_diff.tv_sec >= nfs_param.core_param.long_processing_threshold)
-        LogEvent(COMPONENT_DISPATCH,
-                 "Function %s xid=%u exited with status %d taking %llu.%.6llu seconds to process",
-                 pworker_data->pfuncdesc->funcname, rpcxid, rc,
-                 (unsigned long long)timer_diff.tv_sec,
-                 (unsigned long long)timer_diff.tv_usec);
-      else
-        LogDebug(COMPONENT_DISPATCH,
-                 "Function %s xid=%u exited with status %d taking %llu.%.6llu seconds to process",
-                 pworker_data->pfuncdesc->funcname, rpcxid, rc,
-                 (unsigned long long)timer_diff.tv_sec,
-                 (unsigned long long)timer_diff.tv_usec);
     }
 
   /* Perform statistics here */
+  gettimeofday(&timer_end, NULL);
+
+  /* process time */
   stat_type = (rc == NFS_REQ_OK) ? GANESHA_STAT_SUCCESS : GANESHA_STAT_DROP;
-
+  timer_diff = time_diff(*timer_start, timer_end); 
   latency_stat.type = SVC_TIME;
-  latency_stat.latency = timer_diff.tv_sec * 1000000 + timer_diff.tv_usec; /* microseconds */
-
+  latency_stat.latency = timer_diff.tv_sec * 1000000
+    + timer_diff.tv_usec; /* microseconds */
   nfs_stat_update(stat_type, &(pworker_data->stats.stat_req), ptr_req, &latency_stat);
+  
+  /* process time + queue time */
+  queue_timer_diff = time_diff(preqnfs->time_queued, timer_end);
+  latency_stat.type = AWAIT_TIME;
+  latency_stat.latency = queue_timer_diff.tv_sec * 1000000
+    + queue_timer_diff.tv_usec; /* microseconds */
+  nfs_stat_update(GANESHA_STAT_SUCCESS, &(pworker_data->stats.stat_req), ptr_req, &latency_stat);
+
   pworker_data->stats.nb_total_req += 1;
 
+  if(timer_diff.tv_sec >= nfs_param.core_param.long_processing_threshold)
+    LogEvent(COMPONENT_DISPATCH,
+             "Function %s xid=%u exited with status %d taking %llu.%.6llu seconds to process",
+             pworker_data->pfuncdesc->funcname, rpcxid, rc,
+             (unsigned long long)timer_diff.tv_sec,
+             (unsigned long long)timer_diff.tv_usec);
+  else
+    LogDebug(COMPONENT_DISPATCH,
+             "Function %s xid=%u exited with status %d taking %llu.%.6llu seconds to process",
+                 pworker_data->pfuncdesc->funcname, rpcxid, rc,
+             (unsigned long long)timer_diff.tv_sec,
+             (unsigned long long)timer_diff.tv_usec);
+
+  LogFullDebug(COMPONENT_DISPATCH,
+               "Function %s xid=%u: process %llu.%.6llu await %llu.%.6llu",
+               pworker_data->pfuncdesc->funcname, rpcxid,
+               (unsigned long long int)timer_diff.tv_sec,
+               (unsigned long long int)timer_diff.tv_usec,
+               (unsigned long long int)queue_timer_diff.tv_sec,
+               (unsigned long long int)queue_timer_diff.tv_usec);
+  
   /* Perform NFSv4 operations statistics if required */
   if(ptr_req->rq_vers == NFS_V4)
     if(ptr_req->rq_proc == NFSPROC4_COMPOUND)
@@ -1644,7 +1662,7 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
     return -1;
 
   sprintf(name, "Worker Thread #%u Pending Request", pdata->worker_index);
-  nfs_param.worker_param.lru_param.name = Str_Dup(name);
+  nfs_param.worker_param.lru_param.lp_name = name;
 
   if((pdata->pending_request =
       LRU_Init(nfs_param.worker_param.lru_param, &status)) == NULL)
@@ -1654,7 +1672,7 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
     }
 
   sprintf(name, "Worker Thread #%u Duplicate Request", pdata->worker_index);
-  nfs_param.worker_param.lru_dupreq.name = Str_Dup(name);
+  nfs_param.worker_param.lru_dupreq.lp_name = name;
 
   if((pdata->duplicate_request =
       LRU_Init(nfs_param.worker_param.lru_dupreq, &status)) == NULL)
@@ -1893,7 +1911,7 @@ void *worker_thread(void *IndexArg)
 
   /* Init the Cache inode client for this worker */
   if(cache_inode_client_init(&pmydata->cache_inode_client,
-                             nfs_param.cache_layers_param.cache_inode_client_param,
+                             &(nfs_param.cache_layers_param.cache_inode_client_param),
                              worker_index, pmydata))
     {
       /* Failed init */
@@ -2062,9 +2080,6 @@ void *worker_thread(void *IndexArg)
 
       /* signal the request processing has completed */
       LogInfo(COMPONENT_DISPATCH, "Signaling completion of request");
-      P(pnfsreq->req_done_mutex);
-      pthread_cond_signal(&pnfsreq->req_done_condvar);
-      V(pnfsreq->req_done_mutex);
 
       /* Free the req by releasing the entry */
       LogFullDebug(COMPONENT_DISPATCH,

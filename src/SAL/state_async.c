@@ -265,7 +265,7 @@ state_status_t state_async_init()
   state_async_cache_inode_client_param.attrmask                    = 0;
 
   if(cache_inode_client_init(&state_async_cache_inode_client,
-                             state_async_cache_inode_client_param,
+                             &state_async_cache_inode_client_param,
                              NLM_THREAD_INDEX, NULL))
     {
       LogCrit(COMPONENT_STATE,

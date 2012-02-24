@@ -111,6 +111,8 @@ int nfs_Mkdir(nfs_arg_t * parg,
   fsal_status_t fsal_status ;
 #endif
 
+  memset(&create_arg, 0, sizeof(create_arg));
+
   if(isDebug(COMPONENT_NFSPROTO))
     {
       char str[LEN_FH_STR];

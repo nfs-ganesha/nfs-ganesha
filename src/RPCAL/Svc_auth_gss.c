@@ -210,6 +210,10 @@ bool_t Svcauth_gss_import_name(char *service)
       gss_release_name(&min_stat, &name);
       return (FALSE);
     }
+
+  /* set_svc_name() creates a duplicate, we don't need this copy */
+  gss_release_name(&min_stat, &name);
+
   return (TRUE);
 }
 

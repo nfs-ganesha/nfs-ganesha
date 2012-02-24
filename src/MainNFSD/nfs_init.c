@@ -99,6 +99,7 @@ pthread_t stat_exporter_thrid;
 pthread_t admin_thrid;
 pthread_t fcc_gc_thrid;
 pthread_t sigmgr_thrid;
+pthread_t reaper_thrid;
 nfs_tcb_t gccb;
 
 #ifdef _USE_9P
@@ -336,14 +337,14 @@ void nfs_set_param_default()
   nfs_param.worker_param.lru_param.nb_call_gc_invalid = 100;
   nfs_param.worker_param.lru_param.clean_entry = NULL;// poison so that GC isnt executed
   nfs_param.worker_param.lru_param.entry_to_str = print_pending_request;
-  nfs_param.worker_param.lru_param.name = "Worker LRU";
+  nfs_param.worker_param.lru_param.lp_name = "Worker LRU";
 
   /* Worker parameters : LRU dupreq */
   nfs_param.worker_param.lru_dupreq.nb_entry_prealloc = NB_PREALLOC_LRU_DUPREQ;
   nfs_param.worker_param.lru_dupreq.nb_call_gc_invalid = 100;
   nfs_param.worker_param.lru_dupreq.clean_entry = clean_entry_dupreq;
   nfs_param.worker_param.lru_dupreq.entry_to_str = print_entry_dupreq;
-  nfs_param.worker_param.lru_dupreq.name = "Worker DupReq LRU";
+  nfs_param.worker_param.lru_dupreq.lp_name = "Worker DupReq LRU";
 
   /* Worker parameters : GC */
   nfs_param.worker_param.nb_pending_prealloc = NB_MAX_PENDING_REQUEST;
@@ -617,7 +618,7 @@ void nfs_set_param_default()
       lru_inode_entry_to_str;
   nfs_param.cache_layers_param.cache_inode_client_param.lru_param.clean_entry =
       lru_inode_clean_entry;
-  nfs_param.cache_layers_param.cache_inode_client_param.lru_param.name = "Cache Inode Client LRU";
+  nfs_param.cache_layers_param.cache_inode_client_param.lru_param.lp_name = "Cache Inode Client LRU";
   nfs_param.cache_layers_param.cache_inode_client_param.nb_prealloc_entry = 1024;
   nfs_param.cache_layers_param.cache_inode_client_param.nb_pre_parent = 2048;
   nfs_param.cache_layers_param.cache_inode_client_param.nb_pre_state_v4 = 512;
@@ -1547,9 +1548,11 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
            "%d worker threads were started successfully",
 	   nfs_param.core_param.nb_worker);
 
+#ifdef _USE_BLOCKING_LOCKS
   /* Start State Async threads */
   if(!flush_datacache_mode)
     state_async_thread_start();
+#endif
 
   /* Starting the rpc dispatcher thread */
   if((rc =
@@ -1618,6 +1621,17 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
 
 #endif      /*  _USE_STAT_EXPORTER */
 
+  /* Starting the reaper thread */
+  if((rc =
+      pthread_create(&reaper_thrid, &attr_thr, reaper_thread, (void *)workers_data)) != 0)
+    {
+      LogFatal(COMPONENT_THREAD,
+               "Could not create reaper_thread, error = %d (%s)",
+               errno, strerror(errno));
+    }
+  LogEvent(COMPONENT_THREAD,
+           "reaper thread was started successfully");
+
   if(nfs_param.cache_layers_param.dcgcpol.run_interval != 0)
     {
       tcb_new(&gccb, "NFS FILE CONTENT GARBAGE COLLECTION Thread"); 
@@ -1647,6 +1661,9 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
   LogEvent(COMPONENT_THREAD, "upcall_simulator thread was started successfully");
 #endif
 
+#ifdef _USE_FSAL_UP
+  create_fsal_up_threads();
+#endif /* _USE_FSAL_UP */
 
 }                               /* nfs_Start_threads */
 
@@ -1807,6 +1824,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
         {
           LogFatal(COMPONENT_INIT, "Impossible to set gss principal to GSSRPC");
         }
+
+      /* set_svc_name creates a copy */
+      gss_release_name(&min_stat, &gss_service_name);
 
       /* Init the HashTable */
       if(Gss_ctx_Hash_Init(nfs_param.krb5_param) == -1)
@@ -2090,9 +2110,8 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   /* This thread depends on ALL parts of Ganesha being initialized. 
    * So initialize Callback interface after everything else. */
 #ifdef _USE_FSAL_UP
-  nfs_param.fsal_up_param.ht = ht;
   nfs_Init_FSAL_UP(); /* initalizes an event pool */
-  create_fsal_up_threads();
+  nfs_param.fsal_up_param.ht = ht;
 #endif /* _USE_FSAL_UP */
 
   /* Create stable storage directory, this should not be necessary */

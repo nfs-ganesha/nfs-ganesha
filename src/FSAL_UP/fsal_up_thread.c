@@ -46,6 +46,8 @@ void create_fsal_up_threads()
   fsal_up_arg_t *fsal_up_args;
   exportlist_t *pcurrent;
 
+  memset(&attr_thr, 0, sizeof(attr_thr));
+
   /* Initialization of thread attrinbutes borrowed from nfs_init.c */
   if(pthread_attr_init(&attr_thr) != 0)
     LogDebug(COMPONENT_THREAD, "can't init pthread's attributes");
@@ -101,6 +103,7 @@ void create_fsal_up_threads()
               Fatal();
             }
 
+	  memset(fsal_up_args, 0, sizeof(fsal_up_arg_t));
           fsal_up_args->export_entry = pcurrent;
 
           if( ( rc = pthread_create( &pcurrent->fsal_up_thr, &attr_thr,
@@ -126,6 +129,7 @@ void constructor_fsal_up_event_t(void *ptr)
 /* One pool can be used for all FSAL_UP used for exports. */
 void nfs_Init_FSAL_UP()
 {
+  memset(&nfs_param.fsal_up_param, 0, sizeof(nfs_param.fsal_up_param));
   nfs_param.fsal_up_param.nb_event_data_prealloc = 2;
 
   /* DEBUGGING */
@@ -153,7 +157,7 @@ fsal_status_t process_event(fsal_up_event_t *event, fsal_up_event_functions_t *e
   fsal_status_t status;
   /* Set the event data structure's cache inode hash table reference. */
   event->event_data.event_context.ht = nfs_param.fsal_up_param.ht;
-
+     LogCrit(COMPONENT_INIT, "event->event_data.event_context.ht = nfs_param.fsal_up_param.ht %p %p", event->event_data.event_context.ht, nfs_param.fsal_up_param.ht);
   /* FullDebug, convert fhandle to file path and print. */
 
   /* DEBUGGING */
@@ -288,6 +292,9 @@ void *fsal_up_thread(void *Arg)
   fsal_count_t nb_events_found, event_nb;
   fsal_time_t timeout;
   char thr_name[40];
+
+  memset(&fsal_up_bus_param, 0, sizeof(fsal_up_event_bus_parameter_t));
+  memset(&fsal_up_context, 0, sizeof(fsal_up_event_bus_context_t));
 
   snprintf(thr_name, sizeof(thr_name), "FSAL UP Thread for filesystem %llu.%llu",
            fsal_up_args->export_entry->filesystem_id.major,

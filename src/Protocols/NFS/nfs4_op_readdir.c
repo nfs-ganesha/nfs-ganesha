@@ -287,6 +287,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
           return res_READDIR4.status;
         }
+      memset((char *)entry_nfs_array, 0, num_entries * sizeof(entry4));
 
       for(i = 0; i < num_entries; i++) 
         {

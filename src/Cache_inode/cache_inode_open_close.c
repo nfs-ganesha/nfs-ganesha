@@ -263,7 +263,7 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
   /* Open file need to be closed, unless it is already open as read/write */
   if((pentry_file->object.file.open_fd.openflags != FSAL_O_RDWR) &&
      (pentry_file->object.file.open_fd.openflags != 0) &&
-     (pentry_file->object.file.open_fd.fileno >= 0) &&
+     (pentry_file->object.file.open_fd.fileno != 0) &&
      (pentry_file->object.file.open_fd.openflags != openflags))
     {
 #ifdef _USE_MFSL

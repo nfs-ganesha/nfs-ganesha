@@ -47,12 +47,6 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
                                 state_async_func     func,
                                 nfs_res_t          * pres);
 
-typedef struct
-{
-  xdrproc_t inproc;
-  xdrproc_t outproc;
-} nlm_reply_proc_t;
-
 /* Client routine  to send the asynchrnous response, key is used to wait for a response */
 int nlm_send_async(int                  proc,
                    state_nlm_client_t * host,

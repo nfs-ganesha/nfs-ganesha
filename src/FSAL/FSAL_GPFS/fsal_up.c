@@ -71,6 +71,8 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_UP_getevents);
     }
 
+  memset(&pfsal_data, 0, sizeof(cache_inode_fsal_data_t));
+
   gpfsfsal_export_context_t *p_export_context =
     (gpfsfsal_export_context_t *)&pupebcontext->FS_export_context;
 
@@ -100,8 +102,7 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
    * ... open,close,read,...,invalidate? */
   if (*pevents == NULL)
     GetFromPool(*pevents, pupebcontext->event_pool, fsal_up_event_t);
-  memset(&(*pevents)->event_data.event_context.fsal_data, 0,
-         sizeof(cache_inode_fsal_data_t));
+  memset(*pevents, 0, sizeof(fsal_up_event_t));
   memcpy(&(*pevents)->event_data.event_context.fsal_data, &pfsal_data,
          sizeof(cache_inode_fsal_data_t));
 

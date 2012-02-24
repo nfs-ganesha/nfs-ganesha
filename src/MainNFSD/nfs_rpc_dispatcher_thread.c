@@ -79,12 +79,13 @@
 
 static pthread_mutex_t lock_worker_selection = PTHREAD_MUTEX_INITIALIZER;
 
+#ifndef _NO_BUDDY_SYSTEM
 /* This structure is set to initial state (zero-ed) in stat thread */
 buddy_stats_t          global_tcp_dispatcher_buddy_stat;
 
 /* This structure exists per tcp dispatcher thread */
 buddy_stats_t __thread local_tcp_dispatcher_buddy_stat;
-
+#endif
 
 #if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
 /**
@@ -862,18 +863,8 @@ process_status_t process_rpc_request(SVCXPRT *xprt)
     }
   else
     {
-      struct timeval timer_start;
-      struct timeval timer_end;
-      struct timeval timer_diff;
-
-      nfs_stat_type_t stat_type;
-      nfs_request_latency_stat_t latency_stat;
-
-      memset(&timer_start, 0, sizeof(struct timeval));
-      memset(&timer_end, 0, sizeof(struct timeval));
-      memset(&timer_diff, 0, sizeof(struct timeval));
-
-      gettimeofday(&timer_start, NULL);
+      memset(&pnfsreq->rcontent.nfs.time_queued, 0, sizeof(struct timeval));
+      gettimeofday(&pnfsreq->rcontent.nfs.time_queued, NULL);
 
       /* Call svc_getargs before making copy to prevent race conditions. */
       pnfsreq->rcontent.nfs.req.rq_prog = pmsg->rm_call.cb_prog;
@@ -905,34 +896,9 @@ process_status_t process_rpc_request(SVCXPRT *xprt)
       pnfsreq->rcontent.nfs.xprt = pnfsreq->rcontent.nfs.xprt_copy;
       preq->rq_xprt = pnfsreq->rcontent.nfs.xprt_copy;
 
-      P(pnfsreq->req_done_mutex);
       /* Regular management of the request (UDP request or TCP request on connected handler */
       DispatchWorkNFS(pnfsreq, worker_index);
 
-      LogInfo(COMPONENT_DISPATCH, "Waiting for completion of request");
-      pthread_cond_wait(&pnfsreq->req_done_condvar, &pnfsreq->req_done_mutex);
-      V(pnfsreq->req_done_mutex);
-      LogInfo(COMPONENT_DISPATCH, "Request processing has completed");
-
-      gettimeofday(&timer_end, NULL);
-      timer_diff = time_diff(timer_start, timer_end);
-
-      /* Update await time. */
-      stat_type = GANESHA_STAT_SUCCESS;
-      latency_stat.type = AWAIT_TIME;
-      latency_stat.latency = timer_diff.tv_sec * 1000000 + timer_diff.tv_usec; /* microseconds */
-      nfs_stat_update(stat_type,
-                      &(workers_data[worker_index].stats.stat_req),
-                      &(pnfsreq->rcontent.nfs.req),
-                      &latency_stat);
-
-      LogFullDebug(COMPONENT_DISPATCH,
-                   "Worker Thread #%u has committed the operation: end_time %llu.%.6llu await %llu.%.6llu",
-                   worker_index,
-                   (unsigned long long int)timer_end.tv_sec,
-                   (unsigned long long int)timer_end.tv_usec,
-                   (unsigned long long int)timer_diff.tv_sec,
-                   (unsigned long long int)timer_diff.tv_usec);
       return PROCESS_DISPATCHED;
     }
 
@@ -1139,8 +1105,10 @@ void rpc_dispatcher_svc_run()
 
   static int nb_iter = 0;
 
+#ifndef _NO_BUDDY_SYSTEM
   /* Init stat */
   memset( &local_tcp_dispatcher_buddy_stat, 0,  sizeof(buddy_stats_t));
+#endif
 
   while(TRUE)
     {
@@ -1296,7 +1264,5 @@ void constructor_request_data_t(void *ptr)
 {
   request_data_t * pdata = (request_data_t *) ptr;
 
-  pthread_cond_init(&pdata->req_done_condvar, NULL);
-  pthread_mutex_init(&pdata->req_done_mutex, NULL);
   constructor_nfs_request_data_t( &(pdata->rcontent.nfs) ) ;
 }

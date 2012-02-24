@@ -54,6 +54,8 @@ fsal_status_t dumb_fsal_up_invalidate(fsal_up_event_data_t * pevdata)
   cache_entry_t *pentry = NULL;
   fsal_attrib_list_t attr;
 
+  memset(&attr, 0, sizeof(fsal_attrib_list_t));
+
   /* Avoid dir cont check in cache_inode_get() */
   pevdata->event_context.fsal_data.cookie = DIR_START;
       LogDebug(COMPONENT_FSAL_UP,
@@ -126,6 +128,7 @@ fsal_status_t dumb_fsal_up_link(fsal_up_event_data_t * pevdata)
 
 fsal_status_t dumb_fsal_up_lock_grant(fsal_up_event_data_t * pevdata)
 {
+#ifdef _USE_BLOCKING_LOCKS
   cache_inode_status_t   cache_status;
   cache_entry_t        * pentry = NULL;
   fsal_attrib_list_t     attr;
@@ -157,10 +160,14 @@ fsal_status_t dumb_fsal_up_lock_grant(fsal_up_event_data_t * pevdata)
                             
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
+#else
+  INVALIDATE_STUB;
+#endif
 }
 
 fsal_status_t dumb_fsal_up_lock_avail(fsal_up_event_data_t * pevdata)
 {
+#ifdef _USE_BLOCKING_LOCKS
   cache_inode_status_t   cache_status;
   cache_entry_t        * pentry = NULL;
   fsal_attrib_list_t     attr;
@@ -192,6 +199,9 @@ fsal_status_t dumb_fsal_up_lock_avail(fsal_up_event_data_t * pevdata)
                             
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
+#else
+  INVALIDATE_STUB;
+#endif
 }
 
 fsal_status_t dumb_fsal_up_open(fsal_up_event_data_t * pevdata)

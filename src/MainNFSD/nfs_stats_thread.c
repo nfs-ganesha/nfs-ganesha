@@ -52,8 +52,10 @@
 #include "log_macros.h"
 
 extern hash_table_t *ht_ip_stats[NB_MAX_WORKER_THREAD];
-extern buddy_stats_t global_tcp_dispatcher_buddy_stat;
 
+#ifndef _NO_BUDDY_SYSTEM
+extern buddy_stats_t global_tcp_dispatcher_buddy_stat;
+#endif
 
 void set_min_latency(nfs_request_stat_item_t *cur_stat, unsigned int val)
 {

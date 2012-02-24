@@ -121,6 +121,7 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
 
   if(state_unlock(pentry,
                   pcontext,
+                  pexport,
                   nlm_owner,
                   NULL,
                   &lock,

@@ -51,16 +51,10 @@
 #include "rpc.h"
 #include "log_macros.h"
 #include "stuff_alloc.h"
-#include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
-#include "nfs_core.h"
-#include "cache_inode.h"
-#include "cache_content.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
+#include "sal_functions.h"
 #include "nfs_proto_functions.h"
-#include "nfs_tools.h"
+#include "nfs_core.h"
 
 /**
  * 
@@ -103,20 +97,15 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       goto out;
     }
 
-/*  This will be added when client expiry is commpleted
   if (nfs4_is_lease_expired(nfs_clientid))
     {
-      clean_client_state(nfs_clientid);
       res_RENEW4.status = NFS4ERR_EXPIRED;
     }
   else
     {
-*/
       nfs_clientid->last_renew = time(NULL);
       res_RENEW4.status = NFS4_OK;      /* Regular exit */
-/*
     }
-*/
 
 out:
   return res_RENEW4.status;

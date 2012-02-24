@@ -696,23 +696,14 @@ static void cache_inode_gc_acl(cache_entry_t * pentry)
   switch (pentry->internal_md.type)
     {
     case REGULAR_FILE:
-      pacl = pentry->object.file.attributes.acl;
-      break;
-
     case SYMBOLIC_LINK:
-      pacl = pentry->object.symlink->attributes.acl;
-      break;
-
     case FS_JUNCTION:
     case DIRECTORY:
-      pacl = pentry->object.dir.attributes.acl;
-      break;
-
     case SOCKET_FILE:
     case FIFO_FILE:
     case BLOCK_FILE:
     case CHARACTER_FILE:
-      pacl = pentry->object.special_obj.attributes.acl;
+      pacl = pentry->attributes.acl;
       break;
 
     case UNASSIGNED:

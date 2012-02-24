@@ -100,11 +100,11 @@ int nfs_Read(nfs_arg_t * parg,
   cache_content_status_t content_status;
   fsal_seek_t seek_descriptor;
   fsal_size_t size = 0;
-  fsal_size_t read_size;
+  fsal_size_t read_size=0;
   fsal_off_t offset = 0;
   caddr_t data = NULL;
   cache_inode_file_type_t filetype;
-  fsal_boolean_t eof_met;
+  fsal_boolean_t eof_met=FALSE;
   cache_content_policy_data_t datapol;
 
   if(isDebug(COMPONENT_NFSPROTO))

@@ -37,6 +37,7 @@
 #ifndef _NFS_EXPORTS_H
 #define _NFS_EXPORTS_H
 
+#include <pthread.h>
 #include <sys/types.h>
 #include <sys/param.h>
 
@@ -57,6 +58,7 @@
 #include "cache_inode.h"
 #include "cache_content.h"
 #include "nfs_ip_stats.h"
+#include "nlm_list.h"
 
 /*
  * Export List structure 
@@ -200,6 +202,15 @@ typedef struct exportlist__
   unsigned int fsalid ;
 
   cache_inode_policy_t cache_inode_policy ;
+
+  pthread_mutex_t   exp_state_mutex; /* Mutex to protect the following two lists */
+  struct glist_head exp_state_list;  /* List of NFS v4 state belonging to this export */
+#ifdef _USE_NLM
+  struct glist_head exp_lock_list;   /* List of locks belonging to this export
+                                      * Only need this list if NLM, otherwise
+                                      * state list is sufficient
+                                      */
+#endif
 
 #ifdef _USE_FSAL_UP
   bool_t use_fsal_up;

@@ -69,15 +69,14 @@ int nlm4_Sm_Notify(nfs_arg_t * parg /* IN     */ ,
            "REQUEST PROCESSING: Calling nlm4_sm_notify for %s",
            arg->name);
 
-  nsm_client = get_nsm_client(TRUE, preq->rq_xprt, arg->name);
+  nsm_client = get_nsm_client(TRUE, NULL, arg->name);
   if(nsm_client != NULL)
     {
       /* Cast the state number into a state pointer to protect
        * locks from a client that has rebooted from being released
        * by this SM_NOTIFY.
        */
-      if(state_nlm_notify(pcontext,
-                          nsm_client,
+      if(state_nlm_notify(nsm_client,
                           (void *) (ptrdiff_t) arg->state,
                           pclient,
                           &state_status) != STATE_SUCCESS)
@@ -87,6 +86,9 @@ int nlm4_Sm_Notify(nfs_arg_t * parg /* IN     */ ,
     }
 
   dec_nsm_client_ref(nsm_client);
+
+  LogDebug(COMPONENT_NLM,
+           "REQUEST RESULT: nlm4_sm_notify DONE");
 
   return NFS_REQ_OK;
 }

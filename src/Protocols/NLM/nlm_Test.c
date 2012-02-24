@@ -128,6 +128,7 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
 
   if(state_test(pentry,
                 pcontext,
+                pexport,
                 nlm_owner,
                 &lock,
                 &holder,

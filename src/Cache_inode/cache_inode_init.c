@@ -93,15 +93,15 @@ hash_table_t *cache_inode_init(cache_inode_parameter_t param,
  * Init the ressource necessary for the cache inode management on the client handside.
  *
  * @param pclient      [OUT] the pointer to the client to be initiated.
- * @param param        [IN]  the parameter for this cache client.
+ * @param paramp        [IN]  the parameter for this cache client.
  * @param thread_index [IN]  an integer related to the 'position' of the thread, from 0 to Nb_Workers -1
  *
  * @return 0 if successful, 1 if failed.
  *
  */
 int cache_inode_client_init(cache_inode_client_t * pclient,
-                            cache_inode_client_parameter_t param,
-                            int thread_index, void *pworker_data)
+                            cache_inode_client_parameter_t * paramp,
+                            int thread_index, void * pworker_data)
 {
   LRU_status_t lru_status;
   char name[256];
@@ -113,22 +113,22 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
   else
     sprintf(name, "Cache Inode NLM Async #%d", thread_index - NLM_THREAD_INDEX);
 
-  pclient->attrmask = param.attrmask;
-  pclient->nb_prealloc = param.nb_prealloc_entry;
-  pclient->nb_pre_parent = param.nb_pre_parent;
-  pclient->nb_pre_state_v4 = param.nb_pre_state_v4;
-  pclient->expire_type_attr = param.expire_type_attr;
-  pclient->expire_type_link = param.expire_type_link;
-  pclient->expire_type_dirent = param.expire_type_dirent;
-  pclient->grace_period_attr = param.grace_period_attr;
-  pclient->grace_period_link = param.grace_period_link;
-  pclient->grace_period_dirent = param.grace_period_dirent;
-  pclient->use_test_access = param.use_test_access;
-  pclient->getattr_dir_invalidation = param.getattr_dir_invalidation;
+  pclient->attrmask = paramp->attrmask;
+  pclient->nb_prealloc = paramp->nb_prealloc_entry;
+  pclient->nb_pre_parent = paramp->nb_pre_parent;
+  pclient->nb_pre_state_v4 = paramp->nb_pre_state_v4;
+  pclient->expire_type_attr = paramp->expire_type_attr;
+  pclient->expire_type_link = paramp->expire_type_link;
+  pclient->expire_type_dirent = paramp->expire_type_dirent;
+  pclient->grace_period_attr = paramp->grace_period_attr;
+  pclient->grace_period_link = paramp->grace_period_link;
+  pclient->grace_period_dirent = paramp->grace_period_dirent;
+  pclient->use_test_access = paramp->use_test_access;
+  pclient->getattr_dir_invalidation = paramp->getattr_dir_invalidation;
   pclient->pworker = pworker_data;
-  pclient->use_fd_cache = param.use_fd_cache;
-  pclient->retention = param.retention;
-  pclient->max_fd = param.max_fd;
+  pclient->use_fd_cache = paramp->use_fd_cache;
+  pclient->retention = paramp->retention;
+  pclient->max_fd = paramp->max_fd;
 
   /* introducing desynchronisation for GC */
   pclient->time_of_last_gc = time(NULL) + thread_index * 20;
@@ -221,9 +221,9 @@ int cache_inode_client_init(cache_inode_client_t * pclient,
       return 1;
     }
 
-  param.lru_param.name = strdup(name);
+  paramp->lru_param.lp_name = name;
 
-  if((pclient->lru_gc = LRU_Init(param.lru_param, &lru_status)) == NULL)
+  if((pclient->lru_gc = LRU_Init(paramp->lru_param, &lru_status)) == NULL)
     {
       LogCrit(COMPONENT_CACHE_INODE,
               "Can't init %s lru gc", name);

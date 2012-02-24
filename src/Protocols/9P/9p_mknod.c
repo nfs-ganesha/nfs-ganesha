@@ -84,6 +84,8 @@ int _9p_mknod( _9p_request_data_t * preq9p,
   if ( !preq9p || !pworker_data || !plenout || !preply )
    return -1 ;
 
+  memset(&create_arg, 0, sizeof(create_arg));
+
   /* Get data */
   _9p_getptr( cursor, msgtag, u16 ) ; 
 

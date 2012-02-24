@@ -142,36 +142,18 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
   return NFS_REQ_OK;
 }
 
-nlm_reply_proc_t nlm_reply_proc[] = {
-
-  [NLMPROC4_GRANTED_MSG] = {
-                            .inproc = (xdrproc_t) xdr_nlm4_testargs,
-                            .outproc = (xdrproc_t) xdr_void,
-                            }
-  ,
-  [NLMPROC4_TEST_RES] = {
-                         .inproc = (xdrproc_t) xdr_nlm4_testres,
-                         .outproc = (xdrproc_t) xdr_void,
-                         }
-  ,
-  [NLMPROC4_LOCK_RES] = {
-                         .inproc = (xdrproc_t) xdr_nlm4_res,
-                         .outproc = (xdrproc_t) xdr_void,
-                         }
-  ,
-  [NLMPROC4_CANCEL_RES] = {
-                           .inproc = (xdrproc_t) xdr_nlm4_res,
-                           .outproc = (xdrproc_t) xdr_void,
-                           }
-  ,
-  [NLMPROC4_UNLOCK_RES] = {
-                           .inproc = (xdrproc_t) xdr_nlm4_res,
-                           .outproc = (xdrproc_t) xdr_void,
-                           }
-  ,
+xdrproc_t nlm_reply_proc[] =
+{
+  [NLMPROC4_GRANTED_MSG] = (xdrproc_t) xdr_nlm4_testargs,
+  [NLMPROC4_TEST_RES]    = (xdrproc_t) xdr_nlm4_testres,
+  [NLMPROC4_LOCK_RES]    = (xdrproc_t) xdr_nlm4_res,
+  [NLMPROC4_CANCEL_RES]  = (xdrproc_t) xdr_nlm4_res,
+  [NLMPROC4_UNLOCK_RES]  = (xdrproc_t) xdr_nlm4_res,
 };
 
 static void *resp_key;
+
+#define MAX_ASYNC_RETRY 2
 
 /* Client routine  to send the asynchrnous response, key is used to wait for a response */
 int nlm_send_async(int                  proc,
@@ -179,54 +161,71 @@ int nlm_send_async(int                  proc,
                    void               * inarg,
                    void               * key)
 {
-  struct timeval tout = { 0, 10 };
-  xdrproc_t inproc = NULL, outproc = NULL;
-  int retval;
-  struct timeval start, now;
+  struct timeval  tout = { 0, 10 };
+  int             retval, retry;
+  struct timeval  start, now;
   struct timespec timeout;
 
-  if(host->slc_callback_clnt == NULL)
+  for(retry = 1; retry <= MAX_ASYNC_RETRY; retry++)
     {
-      LogFullDebug(COMPONENT_NLM,
-                   "Clnt_create %s",
-                   host->slc_nsm_client->ssc_nlm_caller_name);
-
-      host->slc_callback_clnt = Clnt_create(host->slc_nsm_client->ssc_nlm_caller_name,
-                                            NLMPROG,
-                                            NLM4_VERS,
-                                            (char *)xprt_type_to_str(host->slc_client_type));
-
       if(host->slc_callback_clnt == NULL)
         {
-          LogMajor(COMPONENT_NLM,
-                   "Cannot create NLM async %s connection to client %s",
-                   xprt_type_to_str(host->slc_client_type),
-                   host->slc_nsm_client->ssc_nlm_caller_name);
-          return -1;
+          LogFullDebug(COMPONENT_NLM,
+                       "Clnt_create %s",
+                       host->slc_nsm_client->ssc_nlm_caller_name);
+
+          host->slc_callback_clnt = Clnt_create(host->slc_nsm_client->ssc_nlm_caller_name,
+                                                NLMPROG,
+                                                NLM4_VERS,
+                                                (char *)xprt_type_to_str(host->slc_client_type));
+
+          if(host->slc_callback_clnt == NULL)
+            {
+              LogMajor(COMPONENT_NLM,
+                       "Cannot create NLM async %s connection to client %s",
+                       xprt_type_to_str(host->slc_client_type),
+                       host->slc_nsm_client->ssc_nlm_caller_name);
+              return -1;
+            }
         }
-    }
 
-  inproc = nlm_reply_proc[proc].inproc;
-  outproc = nlm_reply_proc[proc].outproc;
-
-  pthread_mutex_lock(&nlm_async_resp_mutex);
-  resp_key = key;
-  pthread_mutex_unlock(&nlm_async_resp_mutex);
-
-  LogFullDebug(COMPONENT_NLM, "About to make clnt_call");
-  retval = clnt_call(host->slc_callback_clnt, proc, inproc, inarg, outproc, NULL, tout);
-  LogFullDebug(COMPONENT_NLM, "Done with clnt_call");
-
-  if(retval == RPC_TIMEDOUT)
-    retval = RPC_SUCCESS;
-  else if(retval != RPC_SUCCESS)
-    {
-      LogMajor(COMPONENT_NLM,
-               "%s: NLM async Client procedure call %d failed with return code %d",
-               __func__, proc, retval);
       pthread_mutex_lock(&nlm_async_resp_mutex);
-      resp_key = NULL;
+      resp_key = key;
       pthread_mutex_unlock(&nlm_async_resp_mutex);
+
+      LogFullDebug(COMPONENT_NLM, "About to make clnt_call");
+      retval = clnt_call(host->slc_callback_clnt,
+                         proc,
+                         nlm_reply_proc[proc],
+                         inarg,
+                         (xdrproc_t) xdr_void,
+                         NULL,
+                         tout);
+      LogFullDebug(COMPONENT_NLM, "Done with clnt_call");
+
+      if(retval == RPC_TIMEDOUT || retval == RPC_SUCCESS)
+        {
+          retval = RPC_SUCCESS;
+          break;
+        }
+
+      LogDebug(COMPONENT_NLM,
+               "NLM async Client procedure call %d failed with return code %d %s",
+               proc, retval, clnt_sperror(host->slc_callback_clnt, ""));
+
+      Clnt_destroy(host->slc_callback_clnt);
+      host->slc_callback_clnt = NULL;
+
+      if(retry == MAX_ASYNC_RETRY)
+        {
+          LogMajor(COMPONENT_NLM,
+                   "NLM async Client exceeded retry count %d",
+                   MAX_ASYNC_RETRY);
+          pthread_mutex_lock(&nlm_async_resp_mutex);
+          resp_key = NULL;
+          pthread_mutex_unlock(&nlm_async_resp_mutex);
+          return retval;
+        }
     }
 
   pthread_mutex_lock(&nlm_async_resp_mutex);

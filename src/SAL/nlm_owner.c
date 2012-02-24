@@ -242,11 +242,6 @@ int compare_nlm_client(state_nlm_client_t *pclient1,
   if(compare_nsm_client(pclient1->slc_nsm_client, pclient2->slc_nsm_client) != 0)
     return 1;
 
-  /* Handle special client that matches any NLM Client with the same NSM Client */
-  if(pclient1->slc_nlm_caller_name_len == -1 ||
-     pclient2->slc_nlm_caller_name_len == -1)
-    return 0;
-
   if(pclient1->slc_client_type != pclient2->slc_client_type)
     return 1;
 
@@ -377,11 +372,6 @@ int compare_nlm_owner(state_owner_t *powner1,
   if(compare_nlm_client(powner1->so_owner.so_nlm_owner.so_client,
                         powner2->so_owner.so_nlm_owner.so_client) != 0)
     return 1;
-
-  /* Handle special owner that matches any lock owner with the same nlm client */
-  if(powner1->so_owner_len == -1 ||
-     powner2->so_owner_len == -1)
-    return 0;
 
   if(powner1->so_owner.so_nlm_owner.so_nlm_svid !=
      powner2->so_owner.so_nlm_owner.so_nlm_svid)
@@ -748,6 +738,43 @@ state_nsm_client_t *get_nsm_client(care_t       care,
 
   if(nfs_param.core_param.nsm_use_caller_name)
     {
+      pkey->ssc_nlm_caller_name_len = strlen(caller_name);
+
+      if(pkey->ssc_nlm_caller_name_len > LM_MAXSTRLEN)
+        {
+          /* Discard the key we created */
+          free_nsm_client(pkey);
+          return NULL;
+        }
+
+      pkey->ssc_nlm_caller_name = Mem_Alloc(pkey->ssc_nlm_caller_name_len + 1);
+      if(pkey->ssc_nlm_caller_name == NULL)
+        {
+          /* Discard the key we created */
+          free_nsm_client(pkey);
+          return NULL;
+        }
+
+      memcpy(pkey->ssc_nlm_caller_name,
+             caller_name,
+             pkey->ssc_nlm_caller_name_len);
+      pkey->ssc_nlm_caller_name[pkey->ssc_nlm_caller_name_len] = '\0';
+    }
+  else if(xprt == NULL)
+    {
+      int rc = ipstring_to_sockaddr(caller_name, &pkey->ssc_client_addr);
+      if(rc != 0)
+        {
+          LogEvent(COMPONENT_STATE,
+                  "Error converting caller_name %s to an ipaddress %s",
+                  caller_name, gai_strerror(rc));
+
+          /* Discard the key we created */
+          free_nsm_client(pkey);
+
+          return NULL;
+        }
+
       pkey->ssc_nlm_caller_name_len = strlen(caller_name);
 
       if(pkey->ssc_nlm_caller_name_len > LM_MAXSTRLEN)
@@ -1508,31 +1535,4 @@ state_owner_t *get_nlm_owner(care_t               care,
   Mem_Free(pkey);
   Mem_Free(powner);
   return NULL;
-}
-
-void make_nlm_special_owner(state_nsm_client_t * pnsm_client,
-                            state_nlm_client_t * pnlm_client,
-                            state_owner_t      * pnlm_owner)
-{
-
-  inc_nsm_client_ref(pnsm_client);
-
-  /* fill in special NLM Client, all we need is:
-   *   pointer to NSM Client
-   *   slc_nlm_caller_name_len = -1
-   */
-  memset(pnlm_client, 0, sizeof(*pnlm_client));
-  pnlm_client->slc_nsm_client          = pnsm_client;
-  pnlm_client->slc_refcount            = 1;
-  pnlm_client->slc_nlm_caller_name_len = -1;
-
-  /* fill in special NLM Owner, all we need is:
-   *   pointer to NLM Client
-   *   so_owner.so_nlm_owner.so_client = -1
-   */
-  memset(pnlm_owner, 0, sizeof(*pnlm_owner));
-  pnlm_owner->so_type                             = STATE_LOCK_OWNER_NLM;
-  pnlm_owner->so_refcount                         = 1;
-  pnlm_owner->so_owner.so_nlm_owner.so_client     = pnlm_client;
-  pnlm_owner->so_owner_len                        = -1;
 }

@@ -150,10 +150,6 @@ unsigned long nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
 unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
                                       hash_buffer_t    * buffclef);
 
-void make_nlm_special_owner(state_nsm_client_t * pnsm_client,
-                            state_nlm_client_t * pnlm_client,
-                            state_owner_t      * pnlm_owner);
-
 state_owner_t *get_nlm_owner(care_t               care,
                              state_nlm_client_t * pclient, 
                              netobj             * oh,
@@ -206,6 +202,15 @@ void nfs4_update_lease(nfs_client_id_t * clientp);
 
 int display_state_id_val(hash_buffer_t * pbuff, char *str);
 int display_state_id_key(hash_buffer_t * pbuff, char *str);
+
+/******************************************************************************
+ *
+ * NFSv4 Lease functions
+ *
+ ******************************************************************************/
+
+int nfs4_is_lease_expired(nfs_client_id_t * pentry);
+void nfs4_update_lease(nfs_client_id_t * clientp);
 
 /******************************************************************************
  *
@@ -299,6 +304,8 @@ void LogLock(log_components_t     component,
              state_owner_t      * powner,
              fsal_lock_param_t  * plock);
 
+void dump_all_locks(const char * label);
+
 #ifdef _USE_BLOCKING_LOCKS
 /**
  *
@@ -353,6 +360,7 @@ state_status_t state_release_grant(fsal_op_context_t    * pcontext,
 
 state_status_t state_test(cache_entry_t        * pentry,
                           fsal_op_context_t    * pcontext,
+                          exportlist_t         * pexport,
                           state_owner_t        * powner,
                           fsal_lock_param_t    * plock,
                           state_owner_t       ** holder,   /* owner that holds conflicting lock */
@@ -362,6 +370,7 @@ state_status_t state_test(cache_entry_t        * pentry,
 
 state_status_t state_lock(cache_entry_t         * pentry,
                           fsal_op_context_t     * pcontext,
+                          exportlist_t          * pexport,
                           state_owner_t         * powner,
                           state_t               * pstate,
                           state_blocking_t        blocking,
@@ -374,6 +383,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
 
 state_status_t state_unlock(cache_entry_t        * pentry,
                             fsal_op_context_t    * pcontext,
+                            exportlist_t         * pexport,
                             state_owner_t        * powner,
                             state_t              * pstate,
                             fsal_lock_param_t    * plock,
@@ -383,6 +393,7 @@ state_status_t state_unlock(cache_entry_t        * pentry,
 #ifdef _USE_BLOCKING_LOCKS
 state_status_t state_cancel(cache_entry_t        * pentry,
                             fsal_op_context_t    * pcontext,
+                            exportlist_t         * pexport,
                             state_owner_t        * powner,
                             fsal_lock_param_t    * plock,
                             cache_inode_client_t * pclient,
@@ -390,8 +401,7 @@ state_status_t state_cancel(cache_entry_t        * pentry,
 #endif
 
 #ifdef _USE_NLM
-state_status_t state_nlm_notify(fsal_op_context_t    * pcontext,
-                                state_nsm_client_t   * pnsmclient,
+state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
                                 state_t              * pstate,
                                 cache_inode_client_t * pclient,
                                 state_status_t       * pstatus);

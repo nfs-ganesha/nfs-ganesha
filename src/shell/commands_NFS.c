@@ -375,7 +375,7 @@ int InitNFSClient(cmdnfs_thr_info_t * p_thr_info)
   p_thr_info->authunix_struct.aup_len = 0; /** @todo No secondary groups support. */
 
   /* Init the cache_inode client */
-  if(cache_inode_client_init(&p_thr_info->client, cache_client_param, 0, NULL) != 0)
+  if(cache_inode_client_init(&p_thr_info->client, &cache_client_param, 0, NULL) != 0)
     return 1;
 
   /* Init the cache content client */

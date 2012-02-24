@@ -391,6 +391,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
    */
   if(state_lock(data->current_entry,
                 data->pcontext,
+                data->pexport,
                 plock_owner,
                 plock_state,
                 blocking,

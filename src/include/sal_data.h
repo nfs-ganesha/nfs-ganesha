@@ -162,14 +162,16 @@ extern char all_one[OTHERSIZE];
 
 struct state_t
 {
-  struct glist_head state_list;                /**< List of states on a file                   */
-  state_type_t      state_type;
-  state_data_t      state_data;
-  u_int32_t         state_seqid;               /**< The NFSv4 Sequence id                      */
-  char              stateid_other[OTHERSIZE];  /**< "Other" part of state id, used as hash key */
-  state_owner_t   * state_powner;              /**< State Owner related to this state          */
-  cache_entry_t   * state_pentry;              /**< Related pentry                             */
-  struct glist_head owner_states;              /**< List of states for an owner                */
+  struct glist_head   state_list;                /**< List of states on a file                   */
+  struct glist_head   state_owner_list;          /**< List of states for an owner                */
+  struct glist_head   state_export_list;         /**< List of states on the same export          */
+  exportlist_t      * state_pexport;             /**< Export this entry belongs to               */
+  state_owner_t     * state_powner;              /**< State Owner related to this state          */
+  cache_entry_t     * state_pentry;              /**< Related pentry                             */
+  state_type_t        state_type;
+  state_data_t        state_data;
+  u_int32_t           state_seqid;               /**< The NFSv4 Sequence id                      */
+  char                stateid_other[OTHERSIZE];  /**< "Other" part of state id, used as hash key */
 };
 
 typedef struct state_nfs4_owner_name_t
@@ -254,6 +256,7 @@ struct state_nfs4_owner_t
   state_owner_t     * so_related_owner;
   struct glist_head   so_owner_list;    /** < Share and lock owners with the same clientid */
   struct glist_head   so_state_list;    /** < States owned by this owner */
+  struct glist_head   so_perclient;     /** open owner entry to be linked to client */
 };
 
 /* Undistinguished lock owner type */
@@ -265,6 +268,7 @@ struct state_owner_t
   int                     so_refcount;
   int                     so_owner_len;
   char                    so_owner_val[NFS4_OPAQUE_LIMIT]; /* big enough for all owners */
+  cache_inode_client_t  * so_pclient;
   union
   {
     state_nfs4_owner_t    so_nfs4_owner;
@@ -348,10 +352,10 @@ typedef state_status_t (*granted_callback_t)(cache_entry_t        * pentry,
                                              cache_inode_client_t * pclient,
                                              state_status_t       * pstatus);
 
+#ifdef _USE_BLOCKING_LOCKS
 typedef bool_t (*block_data_to_fsal_context_t)(state_block_data_t * block_data,
                                                fsal_op_context_t  * fsal_context);
 
-#ifdef _USE_BLOCKING_LOCKS
 typedef struct state_nlm_block_data_t
 {
   sockaddr_t                 sbd_nlm_hostaddr;
@@ -405,13 +409,15 @@ struct state_lock_entry_t
 #ifdef _DEBUG_MEMLEAKS
   struct glist_head      sle_all_locks;
 #endif
-  int                    sle_ref_count;
-  unsigned long long     sle_fileid;
+  struct glist_head      sle_export_locks;
+  exportlist_t         * sle_pexport;
   cache_entry_t        * sle_pentry;
-  state_blocking_t       sle_blocked;
   state_block_data_t   * sle_block_data;
   state_owner_t        * sle_owner;
   state_t              * sle_state;
+  unsigned long long     sle_fileid;
+  state_blocking_t       sle_blocked;
+  int                    sle_ref_count;
   fsal_lock_param_t      sle_lock;
   pthread_mutex_t        sle_mutex;
 };

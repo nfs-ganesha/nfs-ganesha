@@ -372,6 +372,12 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
   int rc = 0;
   off_t size_in_cache;
   cache_content_status_t cache_content_status ;
+  cache_inode_create_arg_t zero_create_arg;
+
+  memset(&zero_create_arg, 0, sizeof(zero_create_arg));
+
+  if (pcreate_arg == NULL)
+    pcreate_arg = &zero_create_arg;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -482,6 +488,9 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
     }
 
   /* Init the internal metadata */
+#ifdef _USE_FSAL_UP
+  pentry->deleted = FALSE;
+#endif
   pentry->internal_md.type = type;
   pentry->internal_md.valid_state = VALID;
   pentry->internal_md.read_time = 0;
@@ -769,7 +778,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 
 #ifdef _USE_NFS4_ACL
   LogDebug(COMPONENT_CACHE_INODE, "init_attributes: md_type=%d, acl=%p",
-           pentry->internal_md.type, pattr->acl);
+           pentry->internal_md.type, pentry->attributes.acl);
 
   /* Bump up reference counter of new acl. */
   if(pentry->attributes.acl)

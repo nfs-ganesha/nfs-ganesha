@@ -326,6 +326,9 @@ struct cache_entry_t
 
   } object;                                     /**< Type specific field (discriminated by internal_md.type)   */
 
+#ifdef _USE_FSAL_UP
+  int deleted;
+#endif
   rw_lock_t lock;                             /**< a reader-writter lock used to protect the data     */
   cache_inode_internal_md_t internal_md;      /**< My metadata (from this cache's point of view)      */
   LRU_entry_t *gc_lru_entry;                  /**< related LRU entry in the LRU list used for GC      */
@@ -517,8 +520,8 @@ hash_table_t *cache_inode_init(cache_inode_parameter_t param,
                                cache_inode_status_t * pstatus);
 
 int cache_inode_client_init(cache_inode_client_t * pclient,
-                            cache_inode_client_parameter_t param,
-                            int thread_index, void *pworker_data);
+                            cache_inode_client_parameter_t * paramp,
+                            int thread_index, void * pworker_data);
 
 cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * pfsdata,
 			       cache_inode_policy_t policy,
