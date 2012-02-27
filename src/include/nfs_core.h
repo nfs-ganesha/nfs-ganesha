@@ -645,15 +645,22 @@ pause_rc wait_for_workers_to_awaken();
 void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index);
 void *worker_thread(void *IndexArg);
 process_status_t process_rpc_request(SVCXPRT *xprt);
+int stats_snmp(nfs_worker_data_t * workers_data_local);
+/*
+ * Thread entry functions
+ */
 void *rpc_dispatcher_thread(void *arg);
 void *admin_thread(void *arg);
 void *stats_thread(void *IndexArg);
 void *long_processing_thread(void *arg);
 void *stat_exporter_thread(void *IndexArg);
-int stats_snmp(nfs_worker_data_t * workers_data_local);
 void *file_content_gc_thread(void *IndexArg);
 void *nfs_file_content_flush_thread(void *flush_data_arg);
 void *reaper_thread(void *arg);
+void *rpc_tcp_socket_manager_thread(void *Arg);
+void *sigmgr_thread( void * arg );
+void *fsal_up_thread(void *Arg);
+void *state_async_thread(void *argp);
 
 #ifdef _USE_UPCALL_SIMULATOR
 void * upcall_simulator_thread( void * UnusedArg ) ;

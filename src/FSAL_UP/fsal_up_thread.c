@@ -36,7 +36,6 @@
 #include "log_macros.h"
 #include "fsal_up.h"
 
-void *fsal_up_thread(void *Arg);
 static int fsal_up_thread_exists(exportlist_t *entry);
 
 void create_fsal_up_threads()
