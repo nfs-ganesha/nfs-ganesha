@@ -397,9 +397,8 @@ int write_stats(char *stat_buf, int num_cmds, char **function_names, nfs_request
           tot_await_time_ms = (float)((float)tot_await_time / (float)1000);
         }
 
-
       /* Extract call name from function name. */
-      name = Str_Dup(function_names[i]);
+      name = strdup(function_names[i]);
       ver = strtok_r(name, "_", &saveptr);
       call = strtok_r(NULL, "_", &saveptr);
 
@@ -414,11 +413,97 @@ int write_stats(char *stat_buf, int num_cmds, char **function_names, nfs_request
           offset += 1;
         }
 
-      Mem_Free(name);
+      free(name);
     }
 
   return rc;
 }
+
+int merge_nfs_stats_by_share(char *stat_buf, nfs_stat_client_req_t *stat_client_req,
+                             nfs_worker_stat_t *global_data,
+                             nfs_worker_stat_t *workers_stat)
+{
+  int rc = ERR_STAT_NO_ERROR;
+
+  unsigned int i = 0;
+  unsigned int num_cmds = 0;
+  nfs_request_stat_item_t *global_stat_items = NULL;
+  nfs_request_stat_item_t *workers_stat_items[nfs_param.core_param.nb_worker];
+  char **function_names = NULL;
+
+  switch(stat_client_req->nfs_version)
+    {
+      case 2:
+        num_cmds = NFS_V2_NB_COMMAND;
+        global_stat_items = (global_data->stat_req.stat_req_nfs2);
+        for(i = 0; i < nfs_param.core_param.nb_worker; i++)
+          {
+            workers_stat_items[i] = (workers_stat[i].stat_req.stat_req_nfs2);
+          }
+        function_names = nfsv2_function_names;
+      break;
+
+      case 3:
+        num_cmds = NFS_V3_NB_COMMAND;
+        global_stat_items = (global_data->stat_req.stat_req_nfs3);
+        for(i = 0; i < nfs_param.core_param.nb_worker; i++)
+          {
+            workers_stat_items[i] = (workers_stat[i].stat_req.stat_req_nfs3);
+          }
+        function_names = nfsv3_function_names;
+      break;
+
+      case 4:
+        num_cmds = NFS_V4_NB_COMMAND;
+        global_stat_items = (global_data->stat_req.stat_req_nfs4);
+        for(i = 0; i < nfs_param.core_param.nb_worker; i++)
+          {
+            workers_stat_items[i] = (workers_stat[i].stat_req.stat_req_nfs4);
+          }
+        function_names = nfsv4_function_names;
+      break;
+
+      default:
+        // TODO: Invalid NFS version handling
+        LogCrit(COMPONENT_MAIN, "Error: Invalid NFS version.");
+      break;
+    }
+
+  switch(stat_client_req->stat_type)
+    {
+      case PER_SERVER:
+      case PER_SHARE:
+        for(i = 0; i < num_cmds; i++)
+          {
+            rc = merge_stats(global_stat_items, workers_stat_items, i, 0);
+          }
+        rc = write_stats(stat_buf, num_cmds, function_names, global_stat_items, 0);
+      break;
+
+      case PER_SERVER_DETAIL:
+      case PER_SHARE_DETAIL:
+        for(i = 0; i < num_cmds; i++)
+          {
+            rc = merge_stats(global_stat_items, workers_stat_items, i, 1);
+          }
+        rc = write_stats(stat_buf, num_cmds, function_names, global_stat_items, 1);
+      break;
+
+      case PER_CLIENT:
+      break;
+
+      case PER_CLIENTSHARE:
+      break;
+
+      default:
+        // TODO: Invalid stat type handling
+        LogCrit(COMPONENT_MAIN, "Error: Invalid stat type.");
+      break;
+        }
+
+  return rc;
+}
+
 
 int merge_nfs_stats(char *stat_buf, nfs_stat_client_req_t *stat_client_req,
                     nfs_worker_stat_t *global_data, nfs_worker_data_t *workers_data)
@@ -472,6 +557,7 @@ int merge_nfs_stats(char *stat_buf, nfs_stat_client_req_t *stat_client_req,
   switch(stat_client_req->stat_type)
     {
       case PER_SERVER:
+      case PER_SHARE:
         for(i = 0; i < num_cmds; i++)
           {
             rc = merge_stats(global_stat_items, workers_stat_items, i, 0);
@@ -480,6 +566,7 @@ int merge_nfs_stats(char *stat_buf, nfs_stat_client_req_t *stat_client_req,
       break;
 
       case PER_SERVER_DETAIL:
+      case PER_SHARE_DETAIL:
         for(i = 0; i < num_cmds; i++)
           {
             rc = merge_stats(global_stat_items, workers_stat_items, i, 1);
@@ -488,9 +575,6 @@ int merge_nfs_stats(char *stat_buf, nfs_stat_client_req_t *stat_client_req,
       break;
 
       case PER_CLIENT:
-      break;
-
-      case PER_SHARE:
       break;
 
       case PER_CLIENTSHARE:
@@ -517,6 +601,8 @@ int process_stat_request(void *addr, int new_fd)
   char *value = NULL;
   char *saveptr1 = NULL;
   char *saveptr2 = NULL;
+
+  exportlist_t *pexport = NULL;
 
   nfs_worker_data_t *workers_data = addr;
   nfs_worker_stat_t global_worker_stat;
@@ -550,6 +636,18 @@ int process_stat_request(void *addr, int new_fd)
           {
             stat_client_req.stat_type = PER_SERVER_DETAIL;
           }
+        else if(strcmp(value, "share") == 0)
+          {
+            stat_client_req.stat_type = PER_SHARE;
+          }
+        else if(strcmp(value, "share_detail") == 0)
+          {
+            stat_client_req.stat_type = PER_SHARE_DETAIL;
+          }
+      }
+      else if(strcmp(key, "path") == 0)
+        {
+          strcpy(stat_client_req.share_path, value);
       }
     }
 
@@ -557,10 +655,36 @@ int process_stat_request(void *addr, int new_fd)
   }
 
   memset(stat_buf, 0, 4096);
-  merge_nfs_stats(stat_buf, &stat_client_req, &global_worker_stat, workers_data);
+
+  if(stat_client_req.stat_type == PER_SHARE ||
+     stat_client_req.stat_type == PER_SHARE_DETAIL)
+    {
+      LogDebug(COMPONENT_MAIN, "share path %s",
+               stat_client_req.share_path);
+
+      // Get export entry
+      pexport = GetExportEntry(stat_client_req.share_path);
+      if(!pexport)
+        {
+          LogEvent(COMPONENT_MAIN, "Invalid export, discard stat request");
+          goto exit;
+        }
+      else
+        LogDebug(COMPONENT_MAIN, "Got export entry, pexport %p", pexport);
+
+      merge_nfs_stats_by_share(stat_buf, &stat_client_req, &global_worker_stat,
+                               pexport->worker_stats);
+    }
+  else
+    {
+      merge_nfs_stats(stat_buf, &stat_client_req, &global_worker_stat,
+                      workers_data);
+    }
+
   if((rc = send(new_fd, stat_buf, 4096, 0)) == -1)
     LogError(COMPONENT_MAIN, ERR_SYS, errno, rc);
 
+exit:
   close(new_fd);
 
   return rc;
