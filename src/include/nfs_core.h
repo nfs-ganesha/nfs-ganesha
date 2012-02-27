@@ -401,22 +401,6 @@ typedef struct nfs_param__
 
 } nfs_parameter_t;
 
-typedef struct nfs_worker_stat__
-{
-  unsigned int nb_total_req;
-  unsigned int nb_udp_req;
-  unsigned int nb_tcp_req;
-  nfs_request_stat_t stat_req;
-
-  /* the last time stat have been retrieved from buddy and FSAL layers */
-  time_t last_stat_update;
-  fsal_statistics_t fsal_stats;
-#ifndef _NO_BUDDY_SYSTEM
-  buddy_stats_t buddy_stats;
-#endif
-
-} nfs_worker_stat_t;
-
 typedef struct nfs_dupreq_stat__
 {
   hash_stat_t htstat;
@@ -731,6 +715,7 @@ int export_client_matchv6(struct in6_addr *paddrv6,
 void admin_replace_exports();
 int CleanUpExportContext(fsal_export_context_t * p_export_context);
 exportlist_t *RemoveExportEntry(exportlist_t * exportEntry);
+exportlist_t *GetExportEntry(char *exportPath);
 
 /* Tools */
 unsigned int get_rpc_xid(struct svc_req *reqp);

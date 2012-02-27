@@ -1446,14 +1446,29 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
     + timer_diff.tv_usec; /* microseconds */
   nfs_stat_update(stat_type, &(pworker_data->stats.stat_req), ptr_req, &latency_stat);
   
+  /* Update per-share counter and process time */
+  nfs_stat_update(stat_type,
+                  &(pexport->worker_stats[pworker_data->worker_index].stat_req),
+                  ptr_req, &latency_stat);
+
   /* process time + queue time */
   queue_timer_diff = time_diff(preqnfs->time_queued, timer_end);
   latency_stat.type = AWAIT_TIME;
   latency_stat.latency = queue_timer_diff.tv_sec * 1000000
     + queue_timer_diff.tv_usec; /* microseconds */
-  nfs_stat_update(GANESHA_STAT_SUCCESS, &(pworker_data->stats.stat_req), ptr_req, &latency_stat);
+  nfs_stat_update(GANESHA_STAT_SUCCESS, &(pworker_data->stats.stat_req), ptr_req,
+                  &latency_stat);
 
+  /* Update per-share process time + queue time */
+  nfs_stat_update(GANESHA_STAT_SUCCESS,
+                  &(pexport->worker_stats[pworker_data->worker_index].stat_req),
+                  ptr_req, &latency_stat);
+
+  /* Update total counters */
   pworker_data->stats.nb_total_req += 1;
+
+  /* Update per-share total counters */
+  pexport->worker_stats[pworker_data->worker_index].nb_total_req += 1;
 
   if(timer_diff.tv_sec >= nfs_param.core_param.long_processing_threshold)
     LogEvent(COMPONENT_DISPATCH,

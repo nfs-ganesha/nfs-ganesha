@@ -219,6 +219,8 @@ typedef struct exportlist__
   pthread_t fsal_up_thr; /* This value may be modified later to point to an FSAL CB thread. */
   struct fsal_up_filter_list_t_ *fsal_up_filter_list; /* List of filters to apply through FSAL CB interface. */
 #endif /* _USE_FSAL_UP */
+
+  nfs_worker_stat_t *worker_stats; /* List of worker stats to support per-share stat. */
 } exportlist_t;
 
 /* Used to record the uid and gid of the client that made a request. */

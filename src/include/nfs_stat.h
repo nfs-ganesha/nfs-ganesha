@@ -139,8 +139,9 @@ typedef enum
 {
   PER_SERVER = 0,
   PER_SERVER_DETAIL,
-  PER_CLIENT,
   PER_SHARE,
+  PER_SHARE_DETAIL,
+  PER_CLIENT,
   PER_CLIENTSHARE
 } nfs_stat_client_req_type_t;
 
@@ -149,8 +150,24 @@ typedef struct
   int nfs_version;
   nfs_stat_client_req_type_t stat_type;
   char client_name[1024];
-  char share_name[1024];
+  char share_path[1024];
 } nfs_stat_client_req_t;
+
+typedef struct nfs_worker_stat__
+{
+  unsigned int nb_total_req;
+  unsigned int nb_udp_req;
+  unsigned int nb_tcp_req;
+  nfs_request_stat_t stat_req;
+
+  /* the last time stat have been retrieved from buddy and FSAL layers */
+  time_t last_stat_update;
+  fsal_statistics_t fsal_stats;
+#ifndef _NO_BUDDY_SYSTEM
+  buddy_stats_t buddy_stats;
+#endif
+
+} nfs_worker_stat_t;
 
 void nfs_stat_update(nfs_stat_type_t type,
                      nfs_request_stat_t * pstat_req, struct svc_req *preq,
