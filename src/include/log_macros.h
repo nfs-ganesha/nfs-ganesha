@@ -160,8 +160,8 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogAlways(component, format, args...) \
   do { \
-    if (unlikely(LogComponents[component].comp_log_type != TESTLOG || \
-                 LogComponents[component].comp_log_level <= NIV_FULL_DEBUG)) \
+    if (likely(LogComponents[component].comp_log_type != TESTLOG || \
+	       LogComponents[component].comp_log_level <= NIV_FULL_DEBUG)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__,  NIV_NULL, \
                                "%s: " format, \
                                LogComponents[component].comp_str, ## args ); \
@@ -199,7 +199,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogWarn(component, format, args...) \
   do { \
-    if (unlikely(LogComponents[component].comp_log_level >= NIV_WARN)) \
+    if (likely(LogComponents[component].comp_log_level >= NIV_WARN)) \
       DisplayLogComponentLevel(component,  (char *)__FUNCTION__, NIV_WARN, \
                                "%s: WARN: " format, \
                                LogComponents[component].comp_str, ## args ); \
@@ -207,7 +207,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 
 #define LogEvent(component, format, args...) \
   do { \
-    if (unlikely(LogComponents[component].comp_log_level >= NIV_EVENT)) \
+    if (likely(LogComponents[component].comp_log_level >= NIV_EVENT)) \
       DisplayLogComponentLevel(component, (char *)__FUNCTION__, NIV_EVENT, \
                                "%s: EVENT: " format, \
                                LogComponents[component].comp_str, ## args ); \
