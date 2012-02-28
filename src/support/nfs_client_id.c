@@ -347,6 +347,8 @@ int nfs_client_id_add(clientid4 clientid,
     }
 
   pnfs_client_id->clientid_owner = client_owner;
+  pnfs_client_id->recov_dir = NULL;
+  pnfs_client_id->last_renew = time(NULL);
 
   return CLIENT_ID_SUCCESS;
 }                               /* nfs_client_id_add */
