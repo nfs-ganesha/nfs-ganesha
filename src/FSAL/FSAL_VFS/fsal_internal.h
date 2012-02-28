@@ -106,10 +106,6 @@ fsal_status_t fsal_readlink_by_handle(fsal_op_context_t * p_context,
 /**
  * Get the handle for a path (posix or fid path)
  */
-fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
-                                       fsal_path_t * p_fsalpath,        /* IN */
-                                       fsal_handle_t * p_handle /* OUT */ );
-
 fsal_status_t fsal_internal_get_handle_at(int dfd, const char *name,    /* IN */
                                           fsal_handle_t * p_handle /* OUT */ );
 

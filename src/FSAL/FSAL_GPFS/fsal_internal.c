@@ -518,13 +518,14 @@ fsal_status_t fsal_internal_get_handle(fsal_op_context_t * p_context,   /* IN */
                                        fsal_handle_t * p_handle /* OUT */ )
 {
   int rc;
+  gpfsfsal_handle_t *p_gpfs_handle = (gpfsfsal_handle_t *)p_handle;
   struct name_handle_arg harg;
 
   if(!p_context || !p_handle || !p_fsalpath)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  memset(p_handle, 0, sizeof(*p_handle));
-  harg.handle = (struct gpfs_file_handle *) &((gpfsfsal_handle_t *)p_handle)->data.handle;
+  memset(p_gpfs_handle, 0, sizeof(*p_gpfs_handle));
+  harg.handle = (struct gpfs_file_handle *) &p_gpfs_handle->data.handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
   harg.handle->handle_version = OPENHANDLE_VERSION;
@@ -564,13 +565,14 @@ fsal_status_t fsal_internal_get_handle_at(int dfd,      /* IN */
                                                                          */ )
 {
   int rc;
+  gpfsfsal_handle_t *p_gpfs_handle = (gpfsfsal_handle_t *)p_handle;
   struct name_handle_arg harg;
 
   if(!p_handle || !p_fsalname)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  memset(p_handle, 0, sizeof(*p_handle));
-  harg.handle = (struct gpfs_file_handle *) &((gpfsfsal_handle_t *)p_handle)->data.handle;
+  memset(p_gpfs_handle, 0, sizeof(*p_gpfs_handle));
+  harg.handle = (struct gpfs_file_handle *) &p_gpfs_handle->data.handle;
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.handle->handle_version = OPENHANDLE_VERSION;
   harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
@@ -613,7 +615,6 @@ fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * handle)
   harg.handle = (struct gpfs_file_handle *) &p_handle->data.handle;
   memset(&p_handle->data.handle, 0, sizeof(struct file_handle));
 
-  memset(p_handle, 0, sizeof(*p_handle));
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
   harg.handle->handle_version = OPENHANDLE_VERSION;
