@@ -371,6 +371,7 @@ int principal2uid(char *principal, uid_t * puid)
   uid_t gss_uid;
   int rc;
 
+#ifdef _USE_NFSIDMAP
   if(uidmap_get(principal, (unsigned long *)&gss_uid) != ID_MAPPER_SUCCESS)
     {
       if(!nfsidmap_set_conf())
@@ -413,6 +414,9 @@ int principal2uid(char *principal, uid_t * puid)
   *puid = gss_uid;
 
   return 1;
+#else
+  return 0 ;
+#endif /* _USE_NFSIDMAP */
 }                               /* principal2uid */
 #endif                          /* _HAVE_GSSAPI */
 
