@@ -2245,6 +2245,7 @@ void nfs4_bitmap4_to_list(bitmap4 * b, uint_t * plen, uint32_t * pval)
   uint_t val = 0;
   uint_t index = 0;
   uint_t offset = 0;
+  uint_t fattr4tabidx=0;
   if(b->bitmap4_len > 0)
     LogFullDebug(COMPONENT_NFS_V4, "Bitmap: Len = %u Val = %u|%u",
                  b->bitmap4_len, b->bitmap4_val[0], b->bitmap4_val[1]);
@@ -2255,11 +2256,20 @@ void nfs4_bitmap4_to_list(bitmap4 * b, uint_t * plen, uint32_t * pval)
     {
       for(i = 0; i < 32; i++)
         {
+          fattr4tabidx = i+32*offset;
+#ifdef _USE_NFS4_1
+          if (fattr4tabidx > FATTR4_FS_CHARSET_CAP)
+#else
+          if (fattr4tabidx > FATTR4_MOUNTED_ON_FILEID)
+#endif
+             goto exit;
+
           val = 1 << i;         /* Compute 2**i */
           if(b->bitmap4_val[offset] & val)
-            pval[index++] = i + 32 * offset;
+            pval[index++] = fattr4tabidx;
         }
     }
+exit:
   *plen = index;
 
 }                               /* nfs4_bitmap4_to_list */
