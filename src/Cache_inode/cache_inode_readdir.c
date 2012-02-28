@@ -944,7 +944,7 @@ cache_inode_status_t cache_inode_readdir_populate(
 #endif
               /* Let's read the link for caching its value */
               object_attributes.asked_attributes = pclient->attrmask;
-              if( CACHE_INODE_KEEP_CONTENT( pentry_dir->policy ) )
+              if( CACHE_INODE_KEEP_CONTENT( policy ) )
                 {
 #ifdef _USE_MFSL
                   tmp_mfsl.handle = array_dirent[iter].handle;

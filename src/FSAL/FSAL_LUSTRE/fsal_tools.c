@@ -248,19 +248,19 @@ fsal_status_t LUSTREFSAL_ExpandHandle(fsal_export_context_t *exp_context,       
       /* NFSV2 handle digest */
     case FSAL_DIGEST_NFSV2:
       memset(p_out_fsal_handle, 0, sizeof(lustrefsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
+      memcpy(p_out_fsal_handle, in_buff, sizeof(p_out_fsal_handle->data) );
       break;
 
       /* NFSV3 handle digest */
     case FSAL_DIGEST_NFSV3:
       memset(p_out_fsal_handle, 0, sizeof(lustrefsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
+      memcpy(p_out_fsal_handle, in_buff, sizeof(p_out_fsal_handle->data) );
       break;
 
       /* NFSV4 handle digest */
     case FSAL_DIGEST_NFSV4:
       memset(p_out_fsal_handle, 0, sizeof(lustrefsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(fsal_u64_t) + sizeof(int));
+      memcpy(p_out_fsal_handle, in_buff, sizeof(p_out_fsal_handle->data) );
       break;
 
     default:
