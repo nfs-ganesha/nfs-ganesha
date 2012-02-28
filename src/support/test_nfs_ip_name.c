@@ -1,5 +1,5 @@
 
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include "config_parsing.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"

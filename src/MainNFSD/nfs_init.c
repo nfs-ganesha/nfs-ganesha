@@ -39,7 +39,7 @@
 #include "solaris_port.h"
 #endif
 
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include "nfs_init.h"
 #include "stuff_alloc.h"
 #include "log.h"
@@ -99,7 +99,6 @@ pthread_t worker_thrid[NB_MAX_WORKER_THREAD];
 pthread_t flusher_thrid[NB_MAX_FLUSHER_THREAD];
 nfs_flush_thread_data_t flush_info[NB_MAX_FLUSHER_THREAD];
 
-pthread_t rpc_dispatcher_thrid;
 pthread_t stat_thrid;
 pthread_t stat_exporter_thrid;
 pthread_t admin_thrid;
@@ -1171,13 +1170,19 @@ int nfs_check_param_consistency()
       return 1;
     }
 
+#if 0
+/* XXXX this seems somewhat the obvious of what I would have reasoned.  Where
+ * we had a thread for every connection (but sharing a single fdset for select),
+ * dispatching on a small, fixed worker pool, we now had an arbitrary, fixed
+ * work pool, with flexible event channels.
+ */
   if( 2*nfs_param.core_param.nb_worker  >  nfs_param.cache_layers_param.cache_param.hparam.index_size )
     {
       LogCrit(COMPONENT_INIT,
               "BAD PARAMETER: number of workers is too large compared to Cache_Inode's index size, it should be smaller than half of it");
       return 1;
     }
-
+#endif
 
   if(nfs_param.dupreq_param.hash_param.nb_node_prealloc <
      nfs_param.worker_param.lru_dupreq.nb_entry_prealloc)
@@ -1334,19 +1339,9 @@ static void nfs_Start_threads(void)
                "Could not create sigmgr_thread, error = %d (%s)",
                errno, strerror(errno));
     }
-
   LogDebug(COMPONENT_THREAD,
            "sigmgr thread started");
 
-  /* Starting the rpc dispatcher thread */
-  if((rc =
-      pthread_create(&rpc_dispatcher_thrid, &attr_thr, rpc_dispatcher_thread,
-                     NULL)) != 0)
-    {
-      LogFatal(COMPONENT_THREAD,
-               "Could not create rpc_dpsatcher_thread, error = %d (%s)",
-               errno, strerror(errno));
-    }
   /* Starting all of the worker thread */
   for(i = 0; i < nfs_param.core_param.nb_worker; i++)
     {
@@ -1374,6 +1369,9 @@ static void nfs_Start_threads(void)
    * for incoming requests.
    */
   wait_for_threads_to_awaken();
+
+  /* Start event channel service threads */
+  nfs_rpc_dispatch_threads(&attr_thr);
 
 #ifdef _USE_9P
   /* Starting the 9p dispatcher thread */

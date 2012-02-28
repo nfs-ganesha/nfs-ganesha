@@ -43,7 +43,7 @@
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"

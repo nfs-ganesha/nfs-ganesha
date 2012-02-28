@@ -123,7 +123,7 @@ unsigned int get_rpc_xid(struct svc_req *reqp)
    * the structures are defined here */
 
 #ifdef _USE_TIRPC
-  return get_tirpc_xid(reqp->rq_xprt);
+  return svc_shim_get_xid(reqp->rq_xprt);
 #else 
   unsigned int Xid = 0;
   struct udp_private2__

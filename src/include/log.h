@@ -565,4 +565,9 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT];
 #define isFullDebug(component) \
     (unlikely(LogComponents[component].comp_log_level >= NIV_FULL_DEBUG))
 
+/*
+ *  Re-export component logging to TI-RPC internal logging
+ */
+void rpc_warnx(/* const */ char *fmt, ...);
+
 #endif

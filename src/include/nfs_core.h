@@ -43,7 +43,7 @@
 #include <time.h>
 #include <sys/time.h>
 
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include "LRU_List.h"
 #include "fsal.h"
 #include "cache_inode.h"
@@ -405,6 +405,8 @@ typedef struct request_data__
 {
     struct glist_head pending_req_queue;  // chaining of pending requests
   request_type_t rtype ;
+  pthread_cond_t   req_done_condvar;
+  pthread_mutex_t  req_done_mutex;
   union request_content__
    {
       nfs_request_data_t nfs ;
@@ -626,6 +628,7 @@ void nfs_Init_admin_data(void);
 int nfs_Init_worker_data(nfs_worker_data_t * pdata);
 int nfs_Init_request_data(nfs_request_data_t * pdata);
 int nfs_Init_gc_counter(void);
+void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr);
 void constructor_nfs_request_data_t(void *ptr);
 void constructor_request_data_t(void *ptr);
 

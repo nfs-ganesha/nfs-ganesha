@@ -20,6 +20,8 @@ else
 NFS4_ACL_LIB_FLAGS = 
 endif
 
+TIRPC_LIB = ../../contrib/libtirpc/src/libtirpc.la
+
 SEC_LIB_FLAGS =
 
 if USE_FSAL_FUSE
@@ -97,6 +99,7 @@ shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
                   ../Log/liblog.la                                   \
                   ../ConfigParsing/libConfigParsing.la               \
                   ../Protocols/XDR/libnfs_mnt_xdr.la                 \
+                  $(TIRPC_LIB)                                       \
 		  ../Common/libcommon_utils.la
 
 __FS_NAME__ganeshell_LDADD = $(shell_libs)                           \

@@ -6,6 +6,8 @@ else
 BUDDYDIR =
 endif
 
+TIRPCDIR = ../contrib/libtirpc
+
 SUBDIRS = include             \
           Log 		      \
           $(LIBTREEDIR)       \
@@ -22,6 +24,7 @@ SUBDIRS = include             \
 	  NodeList	      \
           Cache_inode         \
           SAL                 \
+          $(TIRPCDIR)         \
           RPCAL               \
           Protocols           \
           RPCAL               \

@@ -35,7 +35,7 @@
 #endif
 
 #include "nfs_proto_functions.h"
-#include "rpc.h"
+#include "ganesha_rpc.h"
 
 /**
  * @defgroup MNTprocs    Mount protocol functions.

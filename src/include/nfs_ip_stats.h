@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>              /* for having MAXHOSTNAMELEN */
 #include "stuff_alloc.h"

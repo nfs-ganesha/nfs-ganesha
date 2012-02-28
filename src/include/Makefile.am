@@ -56,7 +56,7 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  stuff_alloc.h                   \
                  nfs_ip_stats.h                  \
                  Connectathon_config_parsing.h   \
-		 rpc.h 	\
+		 ganesha_rpc.h 	\
                  Rpc_com_tirpc.h                 \
                  solaris_port.h \
 		 rpc/svc_auth.h

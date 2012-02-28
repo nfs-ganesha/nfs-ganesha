@@ -6,7 +6,8 @@
 #ifndef _NSM_H_RPCGEN
 #define _NSM_H_RPCGEN
 
-#include "rpc.h"
+#include "config.h"
+#include "ganesha_rpc.h"
 #include "sal_data.h"
 
 #ifdef __cplusplus

@@ -5,26 +5,18 @@
 #define GANESHA_RPC_H
 
 
-#ifdef _USE_GSSRPC
-#include <gssrpc/rpc.h>
-#include <gssrpc/types.h>
-#include <gssrpc/svc.h>
-#include <gssrpc/svc_auth.h>
-#include <gssrpc/pmap_clnt.h>
-#else                          /* _USE_GSSRPC */
 #include <rpc/rpc.h>
-#include <rpc/types.h>
 #include <rpc/svc.h>
-#include <rpc/pmap_clnt.h>
-#endif
-
-#ifdef _USE_TIRPC
 #include <rpc/svc_dg.h>
+#include <rpc/clnt.h>
+
 #ifdef _HAVE_GSSAPI
 #include <rpc/auth_gss.h>
 #include <rpc/svc_auth.h>
 #endif
-#endif
+
+#include <rpc/svc_rqst.h>
+#include  <rpc/svc_dplx.h>
 
 #include "HashTable.h"
 
@@ -49,8 +41,6 @@ typedef struct sockaddr_in sockaddr_t;
 #ifndef AUTH_SYS
 #define AUTH_SYS 1
 #endif
-
-extern void InitRPC(int num_sock);
 
 #ifdef _USE_TIRPC
 extern void Svc_dg_soft_destroy(SVCXPRT * xport);
@@ -88,12 +78,6 @@ extern bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*disp
 
 #ifdef _SOLARIS
 #define _authenticate __authenticate
-#endif
-
-#ifdef _USE_TIRPC
-/* These functions were renamed between rpc and tirpc, make our code work either way */
-#define xdr_uint64_t xdr_u_int64_t
-#define xdr_uint32_t  xdr_u_int32_t
 #endif
 
 #ifdef _USE_GSSRPC
@@ -140,13 +124,6 @@ enum auth_stat Rpcsecgss__authenticate(register struct svc_req *rqst,
                                        bool_t * no_dispatch);
 #endif
 
-extern fd_set Svc_fdset;
-
-/* Declare the various RPC transport dynamic arrays */
-extern SVCXPRT         **Xports;
-extern pthread_mutex_t  *mutex_cond_xprt;
-extern pthread_cond_t   *condvar_xprt;
-
 #ifdef _HAVE_GSSAPI
 void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat);
 uint32_t gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
@@ -169,6 +146,8 @@ extern int sprint_sockip(sockaddr_t *addr, char *buf, int len);
 extern SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig);
 extern SVCXPRT *Svcxprt_copycreate();
 
+/* XXX removing */
+#if 0
 typedef enum xprt_type_t
 {
   XPRT_UNKNOWN,
@@ -178,6 +157,8 @@ typedef enum xprt_type_t
 } xprt_type_t;
 
 extern xprt_type_t get_xprt_type(SVCXPRT *xprt);
+#endif
+
 extern const char *xprt_type_to_str(xprt_type_t type);
 
 typedef enum _ignore_port

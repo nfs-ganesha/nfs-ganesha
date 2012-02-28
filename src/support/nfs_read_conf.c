@@ -85,8 +85,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <ctype.h>
-#include "rpc.h"
 #include "log.h"
+#include "ganesha_rpc.h"
 #include "stuff_alloc.h"
 #include "fsal.h"
 #include "nfs23.h"

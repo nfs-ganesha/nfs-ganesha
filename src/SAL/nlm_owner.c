@@ -48,7 +48,7 @@
 #include "nlm4.h"
 #include "sal_functions.h"
 #include "nsm.h"
-#include "rpc.h"
+#include "ganesha_rpc.h"
 
 //TODO FSF: check if can optimize by using same reference as key and value
 
@@ -1191,7 +1191,7 @@ state_nlm_client_t *get_nlm_client(care_t               care,
   pkey->slc_refcount            = 1;
   pkey->slc_nsm_client          = pnsm_client;
   pkey->slc_nlm_caller_name_len = strlen(caller_name);
-  pkey->slc_client_type         = get_xprt_type(xprt);
+  pkey->slc_client_type         = svc_get_xprt_type(xprt);
 
   if(pkey->slc_nlm_caller_name_len > LM_MAXSTRLEN)
     {

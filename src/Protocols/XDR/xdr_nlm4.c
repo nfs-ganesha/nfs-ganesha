@@ -11,7 +11,7 @@
 #include "solaris_port.h"
 #endif
 
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include "nlm4.h"
 
 bool_t xdr_nlm4_stats(XDR * xdrs, nlm4_stats * objp)

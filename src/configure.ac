@@ -271,7 +271,19 @@ GA_ENABLE_AM_CONDITION([tirpc],[enable TIRPC support],[USE_TIRPC])
 
 if test "$enable_tirpc" == "yes"; then
 	AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
-	AC_CHECK_LIB([tirpc], [svc_tli_create], [AC_DEFINE( _HAVE_TIRPC,1,[enable TIRPC support] ) ], [AC_MSG_ERROR( [TI-RPC could not be found...] ) ] )
+        TIRPCDIR=`pwd`/../contrib/libtirpc
+        if test ! -f "${TIRPCDIR}/configure"; then
+	   cd ${TIRPCDIR}
+           sh autogen.sh
+	   ./configure CFLAGS="${CFLAGS}" --enable-epoll --enable-gss --prefix=/usr
+	   cd ../../src
+        fi
+
+	# My auto-foo doesn't extend to this
+	#AC_CONFIG_SUBDIRS([../contrib/libtirpc])
+	CFLAGS="-I${TIRPCDIR}/tirpc/ $CFLAGS"
+	TIRPC_LIB="${TIRPCDIR}/src/libtirpc.la"
+	TIRPC_LIBS="$TIRPC_LIB"
 fi
 
 # IPv6
@@ -740,18 +752,6 @@ case $RPCAL in
 	"ONCRPC")
 		;;
 	"TIRPC")
-                PKG_CHECK_MODULES(TIRPC, libtirpc,
-                  [
-                        AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
-                        AC_DEFINE( _HAVE_TIRPC,1,[enable TIRPC support])
-                        CFLAGS="$CFLAGS $TIRPC_CFLAGS"
-                        LIBS="$TIRPC_LIBS $LIBS"
-                  ],
-                  [
-                        AC_MSG_ERROR( [TI-RPC could not be found...] )
-                  ]
-                )
-
                 KRBLIBS=`krb5-config --libs gssapi`
                 if test "$KRBLIBS" == ""; then
                    AC_MSG_ERROR( [krb5 libs not found, is krb5-config available...?] )

@@ -3,7 +3,7 @@
 #ifndef GANESHA_RPCAL_H
 #define GANESHA_RPCAL_H
 
-#include "rpc.h"
+#include "ganesha_rpc.h"
 
 #ifdef _USE_TIRPC
 #include "RW_Lock.h"

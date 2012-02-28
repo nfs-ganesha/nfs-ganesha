@@ -35,7 +35,7 @@ typedef unsigned short u_short;
 #endif
 #endif
 
-#include "rpc.h"
+#include "ganesha_rpc.h"
 #include <string.h>
 #include "fsal.h"
 #include "cache_inode.h"
@@ -71,6 +71,11 @@ typedef unsigned short u_short;
 /*char *strndup(const char *s, size_t n); */
 
 nfs_parameter_t nfs_param;
+
+/* XXX we should not be assigning to a TI-RPC package global.  In particular,
+ * this one has a macro shadowing a struct. */
+#undef rpc_createerr
+struct rpc_createerr rpc_createerr;
 
 /* Function used for debugging */
 #ifdef _DEBUG_NFS_SHELL
