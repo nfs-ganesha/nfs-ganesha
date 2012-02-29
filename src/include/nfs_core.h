@@ -289,6 +289,7 @@ typedef struct nfs_core_param__
 #ifdef _USE_NLM
   bool_t nsm_use_caller_name;
 #endif
+  bool_t clustered;
 } nfs_core_parameter_t;
 
 typedef struct nfs_ip_name_param__
@@ -594,6 +595,7 @@ extern time_t ServerBootTime;
 extern nfs_worker_data_t *workers_data;
 extern char config_path[MAXPATHLEN];
 extern char pidfile_path[MAXPATHLEN] ;
+extern ushort g_nodeid;
 
 typedef enum process_status
 {

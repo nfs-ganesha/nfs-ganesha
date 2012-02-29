@@ -490,13 +490,13 @@ void process_blocked_lock_upcall(state_block_data_t   * block_data,
  *
  */
 void nfs4_init_grace();
-void nfs4_start_grace();
+void nfs4_start_grace(nfs_grace_start_t *gsp);
 int nfs4_in_grace();
 void nfs4_create_clid_name(nfs_client_id_t *, struct svc_req *);
 void nfs4_add_clid(nfs_client_id_t *);
 void nfs4_rm_clid(char *);
 void nfs4_chk_clid(nfs_client_id_t *);
-void nfs4_load_recov_clids();
+void nfs4_load_recov_clids(ushort nodeid);
 void nfs4_clean_recov_dir();
 void nfs4_create_recov_dir();
 
