@@ -5,7 +5,7 @@
 #
 # processname: /usr/bin/snmp.ganesha.nfsd
 # config: /etc/ganesha/snmp.ganesha.nfsd.conf
-# pidfile: /var/run/snmp.ganesha.nfsd.pid
+# pidfile: /var/run/nfs-ganesha.pid
 #
 ### BEGIN INIT INFO
 # Provides: nfs-ganesha.snmp
@@ -13,7 +13,7 @@
 # Required-Stop: $local_fs $named $time $network
 # Default-Start: 2 3 4 5
 # Default-Stop: 0 1 6
-# Short-Description: start and stop nfs-ganesha/SNMP daemon
+# Short-Description: start and stop nfs-ganesha/LUSTRE daemon
 # Description: NFS-GANESHA
 ### END INIT INFO
 
@@ -22,18 +22,17 @@
 . /etc/rc.d/init.d/functions
 
 PATHPROG=/usr/bin/snmp.ganesha.nfsd 
-PROG=snmp.ganesha.nfsd 
 
 # Default HPSS options
 LOGFILE=/var/log/snmp.ganesha.nfsd.log
 CONFFILE=/etc/ganesha/snmp.ganesha.nfsd.conf
 
-OPTIONS="-d -L $LOGFILE -f $CONFFILE -N NIV_EVENT"
-RETVAL=0
-
 prog=snmp.ganesha.nfsd
 PID_FILE=${PID_FILE:=/var/run/${prog}.pid}
 LOCK_FILE=${LOCK_FILE:=/var/lock/subsys/${prog}}
+
+OPTIONS="-d -L $LOGFILE -f $CONFFILE -N NIV_EVENT -p $PID_FILE "
+RETVAL=0
 
 [ -f /etc/sysconfig/nfs-ganesha.snmp ] && . /etc/sysconfig/nfs-ganesha.snmp 
 
@@ -46,11 +45,9 @@ start() {
                 daemon --pidfile $PID_FILE $PATHPROG $OPTIONS
                 RETVAL=$?
                 if [ $RETVAL -eq 0 ]; then 
-		 touch $LOCK_FILE
-                 [ ! -f $PID_FILE ] &&
-                   /sbin/pidof $PROG > $PID_FILE
-		else
-		  RETVAL=1
+		            touch $LOCK_FILE
+		        else
+		            RETVAL=1
                 fi
         fi
         echo 
@@ -86,6 +83,8 @@ case "$1" in
   restart)
 	if [ -f $LOCK_FILE ] ; then
 		stop
+		#avoid race
+    	sleep 3
 	fi
 	start
         ;;

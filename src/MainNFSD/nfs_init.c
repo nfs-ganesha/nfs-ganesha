@@ -112,6 +112,8 @@ pthread_t upcall_simulator_thrid;
 
 char config_path[MAXPATHLEN];
 
+char pidfile_path[MAXPATHLEN] ;
+
 /**
  *
  * This thread is in charge of signal management 
@@ -174,6 +176,10 @@ void *sigmgr_thread( void * arg )
             st.major, st.minor);
 
   LogDebug(COMPONENT_THREAD, "sigmgr thread exiting");
+
+  /* Remove pid file. I do not check for status (best effort, 
+   * the daemon is stopping anyway */
+  unlink( pidfile_path ) ;
 
   /* Might as well exit - no need for this thread any more */
   return NULL;

@@ -27,12 +27,12 @@ PATHPROG=/usr/bin/lustre.ganesha.nfsd
 LOGFILE=/var/log/lustre.ganesha.nfsd.log
 CONFFILE=/etc/ganesha/lustre.ganesha.nfsd.conf
 
-OPTIONS="-d -L $LOGFILE -f $CONFFILE -N NIV_EVENT"
-RETVAL=0
-
 prog=lustre.ganesha.nfsd
 PID_FILE=${PID_FILE:=/var/run/${prog}.pid}
 LOCK_FILE=${LOCK_FILE:=/var/lock/subsys/${prog}}
+
+OPTIONS="-d -L $LOGFILE -f $CONFFILE -N NIV_EVENT -p $PID_FILE "
+RETVAL=0
 
 [ -f /etc/sysconfig/nfs-ganesha.lustre ] && . /etc/sysconfig/nfs-ganesha.lustre 
 
@@ -45,10 +45,9 @@ start() {
                 daemon --pidfile $PID_FILE $PATHPROG $OPTIONS
                 RETVAL=$?
                 if [ $RETVAL -eq 0 ]; then 
-		 touch $LOCK_FILE
-                    [ ! -f $PID_FILE ] && /sbin/pidof $prog > $PID_FILE
-		else
-		  RETVAL=1
+		            touch $LOCK_FILE
+		        else
+		            RETVAL=1
                 fi
         fi
         echo 
@@ -84,6 +83,8 @@ case "$1" in
   restart)
 	if [ -f $LOCK_FILE ] ; then
 		stop
+		#avoid race
+    	sleep 3
 	fi
 	start
         ;;

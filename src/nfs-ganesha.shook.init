@@ -5,7 +5,7 @@
 #
 # processname: /usr/bin/shook.ganesha.nfsd
 # config: /etc/ganesha/shook.ganesha.nfsd.conf
-# pidfile: /var/run/shook.ganesha.nfsd.pid
+# pidfile: /var/run/nfs-ganesha.pid
 #
 ### BEGIN INIT INFO
 # Provides: nfs-ganesha.shook
@@ -27,14 +27,14 @@ PATHPROG=/usr/bin/shook.ganesha.nfsd
 LOGFILE=/var/log/shook.ganesha.nfsd.log
 CONFFILE=/etc/ganesha/shook.ganesha.nfsd.conf
 
-OPTIONS="-d -L $LOGFILE -f $CONFFILE -N NIV_EVENT"
-RETVAL=0
-
 prog=shook.ganesha.nfsd
 PID_FILE=${PID_FILE:=/var/run/${prog}.pid}
 LOCK_FILE=${LOCK_FILE:=/var/lock/subsys/${prog}}
 
-[ -f /etc/sysconfig/nfs-ganesha.shook ] && . /etc/sysconfig/nfs-ganesha.shook
+OPTIONS="-d -L $LOGFILE -f $CONFFILE -N NIV_EVENT -p $PID_FILE "
+RETVAL=0
+
+[ -f /etc/sysconfig/nfs-ganesha.shook ] && . /etc/sysconfig/nfs-ganesha.shook 
 
 start() {
         echo -n $"Starting $prog: "
@@ -45,10 +45,9 @@ start() {
                 daemon --pidfile $PID_FILE $PATHPROG $OPTIONS
                 RETVAL=$?
                 if [ $RETVAL -eq 0 ]; then 
-		 touch $LOCK_FILE
-                    [ ! -f $PID_FILE ] && /sbin/pidof $prog > $PID_FILE
-		else
-		  RETVAL=1
+		            touch $LOCK_FILE
+		        else
+		            RETVAL=1
                 fi
         fi
         echo 
@@ -84,6 +83,8 @@ case "$1" in
   restart)
 	if [ -f $LOCK_FILE ] ; then
 		stop
+		#avoid race
+    	sleep 3
 	fi
 	start
         ;;
