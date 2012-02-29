@@ -504,4 +504,11 @@ struct state_async_queue_t
 };
 #endif
 
+typedef struct nfs_grace_start
+{
+  int		event;
+  ushort	nodeid;
+  void		*ipaddr;
+} nfs_grace_start_t;
+
 #endif                          /*  _SAL_DATA_H */
