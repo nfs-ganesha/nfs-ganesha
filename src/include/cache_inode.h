@@ -78,7 +78,6 @@ typedef struct cache_inode_client_t cache_inode_client_t;
 /* #define CHILDREN_ARRAY_SIZE 16 */
 /* #define CHILDREN_ARRAY_SIZE 64 */
 #define CHILDREN_ARRAY_SIZE 16
-#define NB_CHUNCK_READDIR 4     /* Should be equal to FSAL_READDIR_SIZE divided by CHILDREN_ARRAY_SIZE */
 
 #define CACHE_INODE_UNSTABLE_BUFFERSIZE 100*1024*1024
 #define DIR_ENTRY_NAMLEN 1024
