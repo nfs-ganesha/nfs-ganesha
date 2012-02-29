@@ -419,11 +419,12 @@ AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  
 AM_CONDITIONAL(USE_NFS4_1, test "$NFS4_MINOR" = "1")
 AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")
 
-# RPCAL switch argument (default is TIRPC)
-AC_ARG_WITH( [rpcal], AS_HELP_STRING([--with-rpcal=TIRPC (default=TIRPC)], [specify the type of RPCAL to be used] ),
+# RPCAL switch argument (default is ONCRPC)
+AC_ARG_WITH( [rpcal], AS_HELP_STRING([--with-rpcal=ONCRPC|TIRPC (default=ONCRPC)], [specify the type of RPCAL to be used] ),
               RPCAL="$withval", RPCAL="TIRPC")
 AM_CONDITIONAL(USE_TIRPC,  test "$RPCAL" = "TIRPC" )
 AM_CONDITIONAL(HAVE_GSSAPI, test "$RPCAL" = "TIRPC" )
+AM_CONDITIONAL(USE_ONCRPC, test "$RPCAL" = "ONCRPC" )
 
 # Enable 9P Support
 GA_ENABLE_AM_CONDITION([9p],[enable 9P support], [USE_9P])
@@ -798,6 +799,8 @@ case $MFSL in
 esac
 
 case $RPCAL in
+	"ONCRPC")
+		;;
 	"TIRPC")
                 PKG_CHECK_MODULES(TIRPC, libtirpc,
                   [
@@ -967,6 +970,7 @@ AC_CONFIG_FILES([include/Makefile
 		 MFSL/MFSL_AIO/Makefile
 		 MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  RPCAL/Makefile
+                 RPCAL/ONCRPC/Makefile
                  RPCAL/TIRPC/Makefile
                  MainNFSD/Makefile
                  test/Makefile
