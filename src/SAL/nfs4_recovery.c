@@ -233,6 +233,7 @@ nfs4_load_recov_clids()
         struct glist_head *node;
         clid_entry_t *clid_entry;
         clid_entry_t *new_ent;
+        int rc;
 
         /* start with an empty list */
         if (!glist_empty(&grace.g_clid_list)) {
@@ -258,6 +259,7 @@ nfs4_load_recov_clids()
                         new_ent = (clid_entry_t *) Mem_Alloc(sizeof(clid_entry_t));
                         if (new_ent == NULL) {
                                 LogEvent(COMPONENT_NFS_V4, "Mem_Alloc FAILED");
+                                (void) closedir(dp);
                                 return;
                         }
                         strncpy(new_ent->cl_name, dentp->d_name, 256);
@@ -267,9 +269,13 @@ nfs4_load_recov_clids()
                 }
                 dentp = readdir(dp);
         }
-        if (dentp != NULL)
-            free(dentp);
-        free(dp);
+
+        rc = closedir(dp);
+        if (rc == -1) {
+                LogEvent(COMPONENT_NFS_V4,
+                    "Failed to close v4 recovery dir (%s), errno=%d",
+                    NFS_V4_RECOV_DIR, errno);
+        }
 }
 
 void

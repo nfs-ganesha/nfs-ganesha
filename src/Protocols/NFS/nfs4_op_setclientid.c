@@ -265,8 +265,9 @@ retry:
       nfs_clientid->confirmed = UNCONFIRMED_CLIENT_ID;
       nfs_clientid->cb_program = arg_SETCLIENTID4.callback.cb_program;
       nfs_clientid->clientid = clientid;
-      nfs_clientid->last_renew = 0;
+      nfs_clientid->last_renew = time(NULL);
       nfs_clientid->credential = data->credential;
+      nfs_clientid->create_session_sequence = 0;
       if(pthread_mutex_init(&nfs_clientid->clientid_mutex, NULL) == -1)
       {
         res_SETCLIENTID4.status = NFS4ERR_SERVERFAULT;
