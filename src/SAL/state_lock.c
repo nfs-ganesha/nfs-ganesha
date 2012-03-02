@@ -2107,9 +2107,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
           /* Need to reject lock request if this lock owner already has a lock
            * on this file via a different export.
            */
-          if(found_entry->sle_pexport != pexport &&
-             found_entry->sle_pexport != NULL &&
-             pexport != NULL)
+          if(found_entry->sle_pexport != pexport)
             {
               V(pentry->object.file.lock_list_mutex);
               LogEvent(COMPONENT_STATE,
@@ -2144,6 +2142,24 @@ state_status_t state_lock(cache_entry_t         * pentry,
   glist_for_each(glist, &pentry->object.file.lock_list)
     {
       found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
+
+      /* Need to reject lock request if this lock owner already has a lock
+       * on this file via a different export.
+       */
+      if(found_entry->sle_pexport != pexport &&
+         !different_owners(found_entry->sle_owner, powner))
+        {
+          V(pentry->object.file.lock_list_mutex);
+          LogEvent(COMPONENT_STATE,
+                   "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
+                   found_entry->sle_pexport->id,
+                   found_entry->sle_pexport->fullpath,
+                   pexport->id,
+                   pexport->fullpath);
+          LogEntry("Found lock entry belonging to another export", found_entry);
+          *pstatus = STATE_INVALID_ARGUMENT;
+          return *pstatus;
+        }
 
       /* Don't skip blocked locks for fairness */
 
