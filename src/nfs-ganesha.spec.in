@@ -318,6 +318,7 @@ rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/ganesha
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/init.d
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
 mkdir -p $RPM_BUILD_ROOT%{_bindir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}
@@ -329,6 +330,7 @@ make install DESTDIR=$RPM_BUILD_ROOT sysconfdir=/etc/ganesha
 
 %if %{?_with_fuse:0}%{!?_with_fuse:1}
 install -m 755 nfs-ganesha.@FS_NAME@.init                      $RPM_BUILD_ROOT%{_sysconfdir}/init.d/nfs-ganesha-@FS_NAME@
+install -m 755 nfs-ganesha.@FS_NAME@.sysconfig                 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/ganesha
 %endif
 
 %if %{?_with_posix:1}%{!?_with_posix:0}
@@ -389,6 +391,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/proxy.ganesha.*
 %{_bindir}/proxy.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-proxy
+%{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/proxy.ganesha*
 %endif
 
@@ -398,6 +401,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/xfs.ganesha.*
 %{_bindir}/xfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-xfs
+%{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/xfs.ganesha*
 %endif
 
@@ -407,6 +411,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/gpfs.ganesha.*
 %{_bindir}/gpfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-gpfs
+%{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha*
 %endif
 
@@ -416,6 +421,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/vfs.ganesha.*
 %{_bindir}/vfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-vfs
+%{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/vfs.ganesha*
 %endif
 
@@ -425,6 +431,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/ceph.ganesha.*
 %{_bindir}/ceph.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-ceph
+%{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/ceph.ganesha*
 %endif
 
@@ -434,6 +441,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/lustre.ganesha.*
 %{_bindir}/lustre.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-lustre
+%{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/lustre.ganesha*
 %endif
 
@@ -443,6 +451,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/shook.ganesha.*
 %{_bindir}/shook.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-shook
+%{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/shook.ganesha*
 %endif
 
@@ -452,6 +461,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/dynfsal.ganesha.*
 %{_bindir}/dynfsal.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-dynfsal
+%{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/dynfsal.ganesha*
 %endif
 
@@ -461,6 +471,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/posix.ganesha.*
 %{_bindir}/posix.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-posix
+%{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/posixdb_v8.sql
 %config(noreplace) %{_sysconfdir}/ganesha/posixdb_mysql5.sql
 %config(noreplace) %{_sysconfdir}/ganesha/posixdb_v7.sql
@@ -474,6 +485,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/snmp.ganesha.*
 %{_bindir}/snmp.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-snmp
+%{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/snmp.ganesha*
 %endif
 
@@ -501,6 +513,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/hpss.ganesha.*
 %{_bindir}/hpss.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-hpss
+%{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/hpss.ganesha*
 %endif
 
@@ -510,6 +523,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/zfs.ganesha.*
 %{_bindir}/zfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-zfs
+%{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/zfs.ganesha*
 %endif
 

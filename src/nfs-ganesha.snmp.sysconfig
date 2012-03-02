@@ -1,0 +1,2 @@
+LOGFILE=/var/log/snmp.ganesha.nfsd.log
+CONFFILE=/etc/ganesha/snmp.ganesha.nfsd.conf

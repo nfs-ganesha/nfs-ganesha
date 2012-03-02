@@ -1,0 +1,2 @@
+LOGFILE=/var/log/proxy.ganesha.nfsd.log
+CONFFILE=/etc/ganesha/proxy.ganesha.nfsd.conf

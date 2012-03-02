@@ -167,27 +167,37 @@ doc:
 	cd ../share/doc/doxygen/nfs-ganesha/latex ; make -i pdf
 
 
-EXTRA_DIST=nfs-ganesha.spec           \
-           COMPILING_HOWTO.txt        \
-           LICENSE.txt                \
-           ganesha.vim                \
-           ganesha_au.vim             \
-           ChangeLog                  \
-           TODO                       \
-           THANKS                     \
-           KNOWN_BUGS                 \
-           nfs-ganesha.ceph.init      \
-           nfs-ganesha.posix.init     \
-           nfs-ganesha.lustre.init    \
-           nfs-ganesha.shook.init     \
-           nfs-ganesha.xfs.init       \
-           nfs-ganesha.gpfs.init      \
-           nfs-ganesha.vfs.init       \
-           nfs-ganesha.hpss.init      \
-           nfs-ganesha.proxy.init     \
-           nfs-ganesha.snmp.init      \
-           nfs-ganesha.zfs.init       \
-           nfs-ganesha.dynfsal.init
+EXTRA_DIST=nfs-ganesha.spec              \
+           COMPILING_HOWTO.txt           \
+           LICENSE.txt                   \
+           ganesha.vim                   \
+           ganesha_au.vim                \
+           ChangeLog                     \
+           TODO                          \
+           THANKS                        \
+           KNOWN_BUGS                    \
+           nfs-ganesha.ceph.init         \
+           nfs-ganesha.posix.init        \
+           nfs-ganesha.lustre.init       \
+           nfs-ganesha.shook.init        \
+           nfs-ganesha.xfs.init          \
+           nfs-ganesha.gpfs.init         \
+           nfs-ganesha.vfs.init          \
+           nfs-ganesha.hpss.init         \
+           nfs-ganesha.proxy.init        \
+           nfs-ganesha.snmp.init         \
+           nfs-ganesha.zfs.init          \
+           nfs-ganesha.dynfsal.init      \
+           nfs-ganesha.ceph.sysconfig    \
+           nfs-ganesha.hpss.sysconfig    \
+           nfs-ganesha.proxy.sysconfig   \
+           nfs-ganesha.dynfsal.sysconfig \
+           nfs-ganesha.lustre.sysconfig  \
+           nfs-ganesha.shook.sysconfig   \
+           nfs-ganesha.gpfs.sysconfig    \
+           nfs-ganesha.posix.sysconfig   \
+           nfs-ganesha.snmp.sysconfig
+
 
 pkgconfigdir=$(libdir)/pkgconfig
 if USE_FSAL_FUSE

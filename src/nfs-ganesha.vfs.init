@@ -27,6 +27,9 @@ PATHPROG=/usr/bin/vfs.ganesha.nfsd
 LOGFILE=/var/log/vfs.ganesha.nfsd.log
 CONFFILE=/etc/ganesha/vfs.ganesha.nfsd.conf
 
+# If sysconfig is set, use setting in it
+[ -f /etc/sysconfig/ganesha ] && . /etc/sysconfig/ganesha
+
 prog=vfs.ganesha.nfsd
 PID_FILE=${PID_FILE:=/var/run/${prog}.pid}
 LOCK_FILE=${LOCK_FILE:=/var/lock/subsys/${prog}}

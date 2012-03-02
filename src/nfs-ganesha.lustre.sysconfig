@@ -1,0 +1,2 @@
+LOGFILE=/var/log/lustre.ganesha.nfsd.log
+CONFFILE=/etc/ganesha/lustre.ganesha.nfsd.conf

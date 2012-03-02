@@ -63,7 +63,7 @@ nfs_start_info_t my_nfs_start_info = {
 };
 
 char *my_config_path = "/etc/ganesha/ganesha.conf";
-char my_pidfile[] = "/var/run/nfs-ganesha.pid";
+char my_pidfile[] = "/var/run/ganesha.pid";
 char log_path[MAXPATHLEN] = "";
 char exec_name[MAXPATHLEN] = "nfs-ganesha";
 char host_name[MAXHOSTNAMELEN] = "localhost";
@@ -92,7 +92,7 @@ char usage[] =
     "SIGTERM    : Cleanly terminate the program\n"
     "------------- Default Values -------------\n"
     "LogFile    : /tmp/nfs-ganesha.log\n"
-    "PidFile    : /var/run/nfs-ganesha.pid\n"
+    "PidFile    : /var/run/ganesha.pid\n"
     "DebugLevel : NIV_EVENT\n" "ConfigFile : /etc/ganesha/ganesha.conf\n";
 
 /**

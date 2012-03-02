@@ -27,6 +27,9 @@ PATHPROG=/usr/bin/posix.ganesha.nfsd
 LOGFILE=/var/log/posix.ganesha.nfsd.log
 CONFFILE=/etc/ganesha/posix.ganesha.nfsd.conf
 
+# If sysconfig is set, use setting in it
+[ -f /etc/sysconfig/ganesha ] && . /etc/sysconfig/ganesha
+
 prog=posix.ganesha.nfsd
 PID_FILE=${PID_FILE:=/var/run/${prog}.pid}
 LOCK_FILE=${LOCK_FILE:=/var/lock/subsys/${prog}}
