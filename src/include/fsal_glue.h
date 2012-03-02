@@ -100,6 +100,8 @@ typedef struct
   char data[FSAL_FS_SPECIFIC_INITINFO_T];
 } fs_specific_initinfo_t;
 
+#define FSAL_OP_CONTEXT_TO_UID( __pcontext ) ( __pcontext->credential.user )
+
 #endif                          /* USE_SHARED_FSAL */
 
 #endif                          /* _FSAL_GLUE_H */
