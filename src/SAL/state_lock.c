@@ -2107,9 +2107,7 @@ state_status_t state_lock(cache_entry_t         * pentry,
           /* Need to reject lock request if this lock owner already has a lock
            * on this file via a different export.
            */
-          if(found_entry->sle_pexport != pexport &&
-             found_entry->sle_pexport != NULL &&
-             pexport != NULL)
+          if(found_entry->sle_pexport != pexport)
             {
               V(pentry->object.file.lock_list_mutex);
               LogEvent(COMPONENT_STATE,
