@@ -81,3 +81,26 @@ fsal_status_t HPSSFSAL_set_quota(fsal_path_t * pfsal_path,      /* IN */
 {
   ReturnCode(ERR_FSAL_NO_QUOTA, 0);
 }                               /*  FSAL_set_quota */
+
+/**
+ * FSAL_check_quota :
+ * checks if quotas allow a user to do an operation
+ *
+ * \param  pfsal_path
+ *        path to the filesystem whose quota are requested
+ * \param  quota_type
+ *        type of quota to be checked (inodes or blocks       
+ * \param  fsal_uid
+ *        uid for the user whose quota are requested
+ * \return Major error codes :
+ *        - ERR_FSAL_NO_ERROR     (no error)
+ *        - Another error code if an error occured.
+ */
+
+
+fsal_status_t HPSSFSAL_check_quota( char              * path,  /* IN */
+                                    fsal_quota_type_t   quota_type,
+                                    fsal_uid_t          fsal_uid)      /* IN */
+{
+  ReturnCode(ERR_FSAL_NO_ERROR, 0) ;
+} 

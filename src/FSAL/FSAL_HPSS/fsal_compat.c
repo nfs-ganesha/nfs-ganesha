@@ -361,6 +361,13 @@ fsal_status_t WRAP_HPSSFSAL_get_quota(fsal_path_t * pfsal_path, /* IN */
   return HPSSFSAL_get_quota(pfsal_path, quota_type, fsal_uid, pquota);
 }
 
+fsal_status_t WRAP_HPSSFSAL_check_quota( char * path,  /* IN */
+                                         fsal_quota_type_t  quota_type,
+                                         fsal_uid_t fsal_uid)      /* IN */
+{
+  return HPSSFSAL_check_quota( path, quota_type, fsal_uid ) ;
+}
+
 fsal_status_t WRAP_HPSSFSAL_rcp(fsal_handle_t * filehandle,     /* IN */
                                 fsal_op_context_t * p_context,  /* IN */
                                 fsal_path_t * p_local_path,     /* IN */
@@ -682,7 +689,7 @@ fsal_functions_t fsal_hpss_functions = {
   .fsal_cleanobjectresources = WRAP_HPSSFSAL_CleanObjectResources,
   .fsal_set_quota = WRAP_HPSSFSAL_set_quota,
   .fsal_get_quota = WRAP_HPSSFSAL_get_quota,
-  .fsal_check_quota = COMMON_check_quota,
+  .fsal_check_quota = WRAP_HPSSFSAL_check_quota,
   .fsal_rcp = WRAP_HPSSFSAL_rcp,
   .fsal_rcp_by_fileid = WRAP_HPSSFSAL_rcp_by_fileid,
   .fsal_rename = WRAP_HPSSFSAL_rename,

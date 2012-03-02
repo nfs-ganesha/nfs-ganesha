@@ -261,6 +261,10 @@ fsal_status_t HPSSFSAL_get_quota(fsal_path_t * pfsal_path,      /* IN */
                                  fsal_uid_t fsal_uid,   /* IN */
                                  fsal_quota_t * pquota);        /* OUT */
 
+fsal_status_t HPSSFSAL_check_quota( char              * path,  /* IN */
+                                    fsal_quota_type_t   quota_type,
+                                    fsal_uid_t          fsal_uid) ;     /* IN */
+
 fsal_status_t HPSSFSAL_rcp(hpssfsal_handle_t * filehandle,      /* IN */
                            hpssfsal_op_context_t * p_context,   /* IN */
                            fsal_path_t * p_local_path,  /* IN */
