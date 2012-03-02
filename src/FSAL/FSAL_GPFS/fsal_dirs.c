@@ -184,7 +184,7 @@ fsal_status_t GPFSFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
   /***************************/
   /* seek into the directory */
   /***************************/
-  start_position.data.cookie = (off_t)startposition.data;
+  start_position.data.cookie = startposition.data.cookie; 
   errno = 0;
   if(start_position.data.cookie == 0)
     {
