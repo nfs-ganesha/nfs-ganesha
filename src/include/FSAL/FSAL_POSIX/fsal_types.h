@@ -64,6 +64,16 @@
 
 #define CONF_LABEL_FS_SPECIFIC   "POSIX"
 
+#define fsal_handle_t posixfsal_handle_t
+#define fsal_op_context_t posixfsal_op_context_t
+#define fsal_file_t posixfsal_file_t
+#define fsal_dir_t posixfsal_dir_t
+#define fsal_export_context_t posixfsal_export_context_t
+#define fsal_lockdesc_t posixfsal_lockdesc_t
+#define fsal_cookie_t posixfsal_cookie_t
+#define fs_specific_initinfo_t posixfs_specific_initinfo_t
+#define fsal_cred_t posixfsal_cred_t
+
 /* other includes */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -93,9 +103,9 @@ typedef union {
     int ts;                       /* timestamp */
     fsal_posixdb_fileinfo_t info; /* info from the database, related to the object on the FS */
   } data ;
-/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
+#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_HANDLE_T_SIZE];
-/** #endif @todo : second part of the TMP fix for connectathon */
+#endif
 } posixfsal_handle_t;  /**< FS object handle.            */
 
 /** Authentification context.    */
@@ -135,9 +145,9 @@ typedef union {
   {
     off_t cookie;
   } data ;
-/** #ifdef _BUILD_SHARED_FSAL @todo: TMP fix for connectathon, waiting for Jim's patch on handles's size */
+#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_COOKIE_T_SIZE];
-/** #endif @todo : second part of the TMP fix for connectathon */
+#endif
 } posixfsal_cookie_t;
 
 /* Directory stream descriptor. */

@@ -129,12 +129,21 @@ char * FSAL_fsalid2name( int fsalid ) ;
 /** This macros manage conversion between directory offset and cookies
  *  BEWARE : this will probably bug with FSAL_SNMP and FSAL_CEPH 
  */
+#ifdef _USE_CEPH
+#define FSAL_SET_COOKIE_BY_OFFSET( __cookie, __offset )  \
+   memcpy( (char *)&(__cookie.cookie), (char *)&__offset, sizeof( __cookie.cookie ) ) 
+
+#define FSAL_SET_POFFSET_BY_COOKIE( __cookie, __poffset )  \
+    memcpy( (char *)__poffset, (char *)&(__cookie.cookie), sizeof( uint64_t ) )
+
+#else
 #define FSAL_SET_COOKIE_BY_OFFSET( __cookie, __offset )  \
    memcpy( (char *)&(__cookie.data), (char *)&__offset, sizeof( uint64_t ) ) 
-    
 
 #define FSAL_SET_POFFSET_BY_COOKIE( __cookie, __poffset )  \
     memcpy( (char *)__poffset, (char *)&(__cookie.data), sizeof( uint64_t ) ) 
+
+#endif    
 
 #define FSAL_GET_EXP_CTX( popctx ) (fsal_export_context_t *)(popctx->export_context)
 
