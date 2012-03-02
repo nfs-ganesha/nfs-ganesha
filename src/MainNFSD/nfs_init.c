@@ -1305,11 +1305,8 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
     }
   else if(rc == 0)
     {
-      LogCrit(COMPONENT_INIT,
+      LogWarn(COMPONENT_INIT,
               "No export entries found in configuration file !!!");
-#ifndef _USE_FUSE
-      return -1;
-#endif
     }
 
   LogEvent(COMPONENT_INIT, "Configuration file successfully parsed");
@@ -1319,7 +1316,6 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
   config_Free(config_struct);
 
   return 0;
-
 }
 
 /**
@@ -2145,10 +2141,12 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
   /* Set accesscheck_support value to FSAL context object. */
 #ifdef _USE_NFS4_ACL
-  nfs_param.pexportlist->FS_export_context.fe_static_fs_info->accesscheck_support =
-  !nfs_param.cache_layers_param.cache_inode_client_param.use_test_access;
-  LogDebug(COMPONENT_INIT, "accesscheck_support is set to %d",
+  if (nfs_param.pexportlist)
+    {
+      nfs_param.pexportlist->FS_export_context.fe_static_fs_info->accesscheck_support = !nfs_param.cache_layers_param.cache_inode_client_param.use_test_access;
+      LogDebug(COMPONENT_INIT, "accesscheck_support is set to %d",
            nfs_param.pexportlist->FS_export_context.fe_static_fs_info->accesscheck_support);
+    }
 #endif
 
 }                               /* nfs_Init */
