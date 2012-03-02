@@ -108,9 +108,9 @@ int rebuild_export_list()
     }
   else if(status == 0)
     {
-      LogCrit(COMPONENT_CONFIG,
+      LogWarn(COMPONENT_CONFIG,
               "rebuild_export_list: No export entries found in configuration file !!!");
-      return status;
+      return 0;
     }
 
   /* At least one worker thread should exist. Each worker thread has a pointer to
@@ -125,15 +125,17 @@ int rebuild_export_list()
   return 1;
 }
 
-static void ChangeoverExports()
+static int ChangeoverExports()
 {
-  exportlist_t *pcurrent;
+
+  exportlist_t *pcurrent = NULL;
 
   /* Now we know that the configuration was parsed successfully.
    * And that worker threads are no longer accessing the export list.
    * Remove all but the first export entry in the exports list.
    */
-  pcurrent = nfs_param.pexportlist->next;
+  if (nfs_param.pexportlist)
+    pcurrent = nfs_param.pexportlist->next;
 
   while(pcurrent != NULL)
     {
@@ -148,6 +150,13 @@ static void ChangeoverExports()
       pcurrent = nfs_param.pexportlist->next;
     }
 
+  /* Allocate memory if needed, could have started with NULL exports */
+  if (nfs_param.pexportlist == NULL)
+    nfs_param.pexportlist = (exportlist_t *) Mem_Alloc(sizeof(exportlist_t));
+
+  if (nfs_param.pexportlist == NULL)
+    return Mem_Errno;
+
   /* Changed the old export list head to the new export list head.
    * All references to the exports list should be up-to-date now. */
   memcpy(nfs_param.pexportlist, temp_pexportlist, sizeof(exportlist_t));
@@ -156,6 +165,7 @@ static void ChangeoverExports()
    * the new list since the export list is built as a linked list. */
   Mem_Free(temp_pexportlist);
   temp_pexportlist = NULL;
+  return 0;
 }
 
 void *admin_thread(void *Arg)
@@ -185,10 +195,9 @@ void *admin_thread(void *Arg)
       reload_exports = FALSE;
       V(mutex_admin_condvar);
 
-      if (!rebuild_export_list())
+      if (rebuild_export_list() <= 0)
         {
-          LogCrit(COMPONENT_MAIN,
-                  "Attempt to reload exports list from config file failed.");
+          LogCrit(COMPONENT_MAIN, "Could not reload the exports list.");
           continue;
         }
 
@@ -213,7 +222,11 @@ void *admin_thread(void *Arg)
 #endif /* _USE_NFSIDMAP */
 #endif /* _HAVE_GSSAPI */
 
-      ChangeoverExports();
+      if (ChangeoverExports())
+        {
+          LogCrit(COMPONENT_MAIN, "ChangeoverExports failed.");
+          continue;
+        }
 
       LogEvent(COMPONENT_MAIN,
                "Exports reloaded and active");
