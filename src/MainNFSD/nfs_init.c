@@ -2519,7 +2519,8 @@ void nfs_start(nfs_start_info_t * p_start_info)
   LogEvent(COMPONENT_MAIN,
            "NFS EXIT: regular exit");
 
-  nfs4_clean_recov_dir();
+  if(!p_start_info->flush_datacache_mode)
+    nfs4_clean_recov_dir();
   Cleanup();
 
   /* let main return 0 to exit */
