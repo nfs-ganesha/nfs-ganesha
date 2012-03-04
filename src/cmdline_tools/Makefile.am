@@ -6,7 +6,7 @@ endif
 
 EXTRA_DIST = ganesha_log_level
 
-AM_CFLAGS    = $(DLOPEN_FLAGS) -Wimplicit -I../MainNFSD $(FSAL_CFLAGS) $(SEC_CFLAGS)
+AM_CFLAGS    = $(DLOPEN_FLAGS) -Wimplicit -I$(srcdir)/../MainNFSD $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
 bin_PROGRAMS = $(FS_NAME).ganesha.convertFH
 bin_SCRIPTS = ganesha_log_level
