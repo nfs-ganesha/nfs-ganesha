@@ -273,16 +273,17 @@ void cache_inode_release_fsaldata_key(hash_buffer_t * pkey,
  * @return the same as *pstatus
  *
  */
-cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
-                                     fsal_attrib_list_t * pfsal_attr,
-                                     cache_inode_file_type_t type,
-                                     cache_inode_create_arg_t * pcreate_arg,
-                                     cache_entry_t * pentry_dir_prev,
-                                     hash_table_t * ht,
-                                     cache_inode_client_t * pclient,
-                                     fsal_op_context_t * pcontext,
-                                     unsigned int create_flag,
-                                     cache_inode_status_t * pstatus)
+cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
+                                     fsal_attrib_list_t        * pfsal_attr,
+                                     cache_inode_file_type_t     type,
+                                     cache_inode_policy_t        policy,
+                                     cache_inode_create_arg_t  * pcreate_arg,
+                                     cache_entry_t             * pentry_dir_prev,
+                                     hash_table_t              * ht,
+                                     cache_inode_client_t      * pclient,
+                                     fsal_op_context_t         * pcontext,
+                                     unsigned int                create_flag,
+                                     cache_inode_status_t      * pstatus)
 {
   cache_entry_t *pentry = NULL;
   cache_inode_dir_data_t *pdir_data = NULL;
@@ -438,6 +439,8 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t * pfsdata,
 
   pentry->gc_lru_entry = NULL;
   pentry->gc_lru = NULL;
+
+  pentry->policy = policy ;
 
   /* No parent for now, it will be added in cache_inode_add_cached_dirent */
   pentry->parent_list = NULL;
@@ -1706,13 +1709,11 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
  * sets the related directory entries as invalid. /!\ the parent entry is supposed to be locked.
  *
  * @param pentry [INOUT] entry to be managed
- * @param pclient [IN] related pclient
  *
  * @return  LRU_LIST_SET_INVALID if ok,  LRU_LIST_DO_NOT_SET_INVALID otherwise
  *
  */
-static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry,
-                                                  cache_inode_client_t * pclient)
+static void cache_inode_invalidate_related_dirent(cache_entry_t * pentry )
 {
   cache_inode_parent_entry_t *parent_iter = NULL;
 
@@ -1890,7 +1891,44 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
     }
 
   /* Clean parent entries */
-  cache_inode_invalidate_related_dirent(pentry, pclient);
+  cache_inode_invalidate_related_dirent(pentry);
+
+  /* If entry is datacached, remove it from the cache */
+  if(pentry->internal_md.type == REGULAR_FILE)
+    {
+      cache_content_status_t cache_content_status;
+
+      if(pentry->object.file.pentry_content != NULL)
+        if(cache_content_release_entry
+           ((cache_content_entry_t *) pentry->object.file.pentry_content,
+            (cache_content_client_t *) pclient->pcontent_client,
+            &cache_content_status) != CACHE_CONTENT_SUCCESS)
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "Could not removed datacached entry for pentry %p", pentry); /** @todo : something is missing here */
+    }
+
+  /* If entry is a DIR_CONTINUE or a DIR_BEGINNING, release pdir_data */
+  if(pentry->internal_md.type == DIR_BEGINNING)
+    {
+      for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+        {
+          pentry->object.dir_begin.pdir_data->dir_entries[i].active = INVALID;
+          pentry->object.dir_begin.pdir_data->dir_entries[i].pentry = NULL;
+        }
+      /* Put the pentry back to the pool */
+      ReleaseToPool(pentry->object.dir_begin.pdir_data, &pclient->pool_dir_data);
+    }
+
+  if(pentry->internal_md.type == DIR_CONTINUE)
+    {
+      for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
+        {
+          pentry->object.dir_cont.pdir_data->dir_entries[i].active = INVALID;
+          pentry->object.dir_cont.pdir_data->dir_entries[i].pentry = NULL;
+        }
+      /* Put the pentry back to the pool */
+      ReleaseToPool(pentry->object.dir_cont.pdir_data, &pclient->pool_dir_data);
+    }
 
   /* use the key to delete the entry */
   if((rc = HashTable_Del(ht, &key, &old_key, &old_value)) != HASHTABLE_SUCCESS)
@@ -1937,43 +1975,6 @@ cache_inode_status_t cache_inode_kill_entry(cache_entry_t * pentry,
       ReleaseToPool(parent_iter, &pclient->pool_parent);
 
       parent_iter = parent_iter_next;
-    }
-
-  /* If entry is datacached, remove it from the cache */
-  if(pentry->internal_md.type == REGULAR_FILE)
-    {
-      cache_content_status_t cache_content_status;
-
-      if(pentry->object.file.pentry_content != NULL)
-        if(cache_content_release_entry
-           ((cache_content_entry_t *) pentry->object.file.pentry_content,
-            (cache_content_client_t *) pclient->pcontent_client,
-            &cache_content_status) != CACHE_CONTENT_SUCCESS)
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "Could not removed datacached entry for pentry %p", pentry);
-    }
-
-  /* If entry is a DIR_CONTINUE or a DIR_BEGINNING, release pdir_data */
-  if(pentry->internal_md.type == DIR_BEGINNING)
-    {
-      for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
-        {
-          pentry->object.dir_begin.pdir_data->dir_entries[i].active = INVALID;
-          pentry->object.dir_begin.pdir_data->dir_entries[i].pentry = NULL;
-        }
-      /* Put the pentry back to the pool */
-      ReleaseToPool(pentry->object.dir_begin.pdir_data, &pclient->pool_dir_data);
-    }
-
-  if(pentry->internal_md.type == DIR_CONTINUE)
-    {
-      for(i = 0; i < CHILDREN_ARRAY_SIZE; i++)
-        {
-          pentry->object.dir_cont.pdir_data->dir_entries[i].active = INVALID;
-          pentry->object.dir_cont.pdir_data->dir_entries[i].pentry = NULL;
-        }
-      /* Put the pentry back to the pool */
-      ReleaseToPool(pentry->object.dir_cont.pdir_data, &pclient->pool_dir_data);
     }
 
   /* Destroy the mutex associated with the pentry */

@@ -171,6 +171,7 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                   fsal_data.cookie = 0;
 
                   if((pentry = cache_inode_get(&fsal_data,
+                                               CACHE_INODE_JOKER_POLICY,
                                                &fsal_attr,
                                                ht,
                                                pclient_inode,

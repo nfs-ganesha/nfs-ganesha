@@ -293,11 +293,15 @@ cache_inode_status_t cache_inode_remove_sw(cache_entry_t * pentry,             /
     }
 
   /* Looks up for the entry to remove */
-  if((to_remove_entry = cache_inode_lookup_sw(pentry,
-                                              pnode_name,
-                                              &remove_attr,
-                                              ht,
-                                              pclient, pcontext, &status, FALSE)) == NULL)
+  if((to_remove_entry = cache_inode_lookup_sw( pentry,
+                                               pnode_name,
+                                               CACHE_INODE_JOKER_POLICY,
+                                               &remove_attr,
+                                               ht,
+                                               pclient, 
+                                               pcontext, 
+                                               &status, 
+                                               FALSE)) == NULL)
     {
       *pstatus = status;
 

@@ -75,13 +75,15 @@
  * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
  *
  */
-cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
-                                     fsal_name_t * pname,
-                                     fsal_attrib_list_t * pattr,
-                                     hash_table_t * ht,
+cache_entry_t *cache_inode_lookup_sw(cache_entry_t        * pentry_parent,
+                                     fsal_name_t          * pname,
+                                     cache_inode_policy_t   policy,
+                                     fsal_attrib_list_t   * pattr,
+                                     hash_table_t         * ht,
                                      cache_inode_client_t * pclient,
-                                     fsal_op_context_t * pcontext,
-                                     cache_inode_status_t * pstatus, int use_mutex)
+                                     fsal_op_context_t    * pcontext,
+                                     cache_inode_status_t * pstatus, 
+                                     int use_mutex)
 {
   cache_entry_t *pdir_chain = NULL;
   cache_entry_t *pentry = NULL;
@@ -384,8 +386,17 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
 #endif
           new_entry_fsdata.cookie = 0;
 
-          if((pentry = cache_inode_new_entry(&new_entry_fsdata, &object_attributes, type, &create_arg, NULL, ht, pclient, pcontext, FALSE,      /* This is a population and not a creation */
-                                             pstatus)) == NULL)
+          if((pentry = cache_inode_new_entry( &new_entry_fsdata, 
+                                              &object_attributes,
+                                              type, 
+                                              policy,
+                                              &create_arg, 
+                                              NULL, 
+                                              ht, 
+                                              pclient, 
+                                              pcontext, 
+                                              FALSE,      /* This is a population and not a creation */
+                                              pstatus ) ) == NULL )
             {
               if(use_mutex == TRUE)
                 V_r(&pentry_parent->lock);
@@ -454,16 +465,24 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t * pentry_parent,
  * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
  *
  */
-cache_entry_t *cache_inode_lookup_no_mutex(cache_entry_t * pentry_parent,
-                                           fsal_name_t * pname,
-                                           fsal_attrib_list_t * pattr,
-                                           hash_table_t * ht,
+cache_entry_t *cache_inode_lookup_no_mutex(cache_entry_t        * pentry_parent,
+                                           fsal_name_t          * pname,
+                                           cache_inode_policy_t   policy,
+                                           fsal_attrib_list_t   * pattr,
+                                           hash_table_t         * ht,
                                            cache_inode_client_t * pclient,
-                                           fsal_op_context_t * pcontext,
+                                           fsal_op_context_t    * pcontext,
                                            cache_inode_status_t * pstatus)
 {
-  return cache_inode_lookup_sw(pentry_parent,
-                               pname, pattr, ht, pclient, pcontext, pstatus, FALSE);
+  return cache_inode_lookup_sw( pentry_parent,
+                                pname, 
+                                policy,
+                                pattr, 
+                                ht, 
+                                pclient, 
+                                pcontext,  
+                                pstatus, 
+                                FALSE);
 }                               /* cache_inode_lookup_no_mutex */
 
 /**
@@ -486,12 +505,20 @@ cache_entry_t *cache_inode_lookup_no_mutex(cache_entry_t * pentry_parent,
  */
 cache_entry_t *cache_inode_lookup(cache_entry_t * pentry_parent,
                                   fsal_name_t * pname,
+                                  cache_inode_policy_t policy,
                                   fsal_attrib_list_t * pattr,
                                   hash_table_t * ht,
                                   cache_inode_client_t * pclient,
                                   fsal_op_context_t * pcontext,
                                   cache_inode_status_t * pstatus)
 {
-  return cache_inode_lookup_sw(pentry_parent,
-                               pname, pattr, ht, pclient, pcontext, pstatus, TRUE);
+  return cache_inode_lookup_sw( pentry_parent,
+                                pname, 
+                                policy,
+                                pattr, 
+                                ht, 
+                                pclient, 
+                                pcontext, 
+                                pstatus, 
+                                TRUE);
 }                               /* cache_inode_lookup */

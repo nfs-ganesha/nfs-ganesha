@@ -210,6 +210,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
   print_buff(COMPONENT_FILEHANDLE, (char *)&fsal_data.handle, sizeof(fsal_data.handle));
 
   if((pentry = cache_inode_get(&fsal_data,
+                               CACHE_INODE_JOKER_POLICY,
                                &attr, ht, pclient, pcontext, &cache_status)) == NULL)
     {
       switch (rq_vers)

@@ -80,6 +80,7 @@
 cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
                                       cache_entry_t * pentry_dir_dest,
                                       fsal_name_t * plink_name,
+                                      cache_inode_policy_t policy,
                                       fsal_attrib_list_t * pattr,
                                       hash_table_t * ht,
                                       cache_inode_client_t * pclient,
@@ -141,10 +142,14 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
     }
 
   /* Check if an entry of the same name doesn't exist in the destination directory */
-  if((pentry_lookup = cache_inode_lookup(pentry_dir_dest,
-                                         plink_name,
-                                         &lookup_attributes,
-                                         ht, pclient, pcontext, pstatus)) != NULL)
+  if((pentry_lookup = cache_inode_lookup( pentry_dir_dest,
+                                          plink_name,
+                                          policy,
+                                          &lookup_attributes,
+                                          ht,
+                                          pclient, 
+                                          pcontext, 
+                                          pstatus ) ) != NULL )
     {
       /* There exists such an entry... */
       *pstatus = CACHE_INODE_ENTRY_EXISTS;

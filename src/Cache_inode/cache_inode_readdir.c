@@ -470,6 +470,7 @@ cache_inode_status_t cache_inode_add_cached_dirent(cache_entry_t * pentry_parent
           if((pentry = cache_inode_new_entry(&fsdata,
                                              NULL,
                                              DIR_CONTINUE,
+                                             CACHE_INODE_POLICY_FULL_WRITE_THROUGH,
                                              NULL,
                                              pdir_chain,
                                              ht,
@@ -932,8 +933,17 @@ cache_inode_status_t cache_inode_readdir_populate(cache_entry_t * pentry_dir,
           new_entry_fsdata.handle = array_dirent[iter].handle;
           new_entry_fsdata.cookie = 0;
 
-          if((pentry = cache_inode_new_entry(&new_entry_fsdata, &array_dirent[iter].attributes, type, &create_arg, NULL, ht, pclient, pcontext, FALSE,  /* This is population and no creation */
-                                             pstatus)) == NULL)
+          if((pentry = cache_inode_new_entry( &new_entry_fsdata, 
+                                              &array_dirent[iter].attributes, 
+                                              type, 
+                                              CACHE_INODE_POLICY_FULL_WRITE_THROUGH,
+                                              &create_arg, 
+                                              NULL, 
+                                              ht, 
+                                              pclient, 
+                                              pcontext, 
+                                              FALSE,  /* This is population and no creation */
+                                              pstatus)) == NULL)
             return *pstatus;
 
           cache_status = cache_inode_add_cached_dirent(pentry_parent,

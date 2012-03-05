@@ -79,6 +79,9 @@ static int cache_init = FALSE;
 /** Global variable : the garbagge policy to be used */
 static cache_inode_gc_policy_t gcpol;
 
+/** Global variable : the cache policy to be used */
+static cache_inode_policy_t cachepol = CACHE_INODE_POLICY_FULL_WRITE_THROUGH;
+
 /** Global (exported) variable : init parameters for clients. */
 cache_inode_client_parameter_t cache_client_param;
 cache_content_client_parameter_t datacache_client_param;
@@ -384,6 +387,7 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
       /* Get the corresponding pentry */
       fsdata.cookie = 0;
       if((pentry_tmp = cache_inode_get(&fsdata,
+                                       cachepol,
                                        &attrlookup,
                                        ht,
                                        &context->client,
@@ -452,6 +456,7 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
 
       if((pentry_tmp = cache_inode_lookup(pentry_lookup,
                                           &name,
+                                          cachepol,
                                           &attrlookup,
                                           ht,
                                           &context->client,
@@ -716,7 +721,10 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   fsdata.cookie = 0;
   fsdata.handle = root_handle;
 
-  if((context->pentry = cache_inode_make_root(&fsdata, ht, &context->client,
+  if((context->pentry = cache_inode_make_root(&fsdata,
+                                              cachepol,
+                                              ht, 
+                                              &context->client,
                                               &context->context,
                                               &context->cache_status)) == NULL)
     {
@@ -1753,6 +1761,7 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
   subdir_hdl = cache_inode_create(new_hdl,
                                   &objname,
                                   DIR_BEGINNING,
+                                  cachepol,
                                   fsalmode,
                                   NULL,
                                   &attrmkdir,
@@ -1904,6 +1913,7 @@ int fn_Cache_inode_link(int argc,       /* IN : number of args in argv */
   if(cache_inode_link(target_hdl,
                       dir_hdl,
                       &link_name,
+                      cachepol,
                       &attrlink,
                       ht,
                       &context->client,
@@ -2054,6 +2064,7 @@ int fn_Cache_inode_ln(int argc, /* IN : number of args in argv */
   if((subdir_hdl = cache_inode_create(new_hdl,
                                       &objname,
                                       SYMBOLIC_LINK,
+                                      cachepol,
                                       fsalmode,
                                       &create_arg,
                                       &attrsymlink,
@@ -2242,6 +2253,7 @@ int fn_Cache_inode_create(int argc,     /* IN : number of args in argv */
   if((subdir_hdl = cache_inode_create(new_hdl,
                                       &objname,
                                       REGULAR_FILE,
+                                      cachepol,
                                       fsalmode,
                                       NULL,
                                       &attrcreate,
@@ -4530,6 +4542,7 @@ int fn_Cache_inode_open_by_name(int argc,       /* IN : number of args in argv *
 
   if((pentry_file = cache_inode_lookup(context->pentry,
                                        &filename,
+                                       cachepol,
                                        &file_attr,
                                        ht,
                                        &context->client,

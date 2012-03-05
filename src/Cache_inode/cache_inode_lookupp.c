@@ -73,11 +73,11 @@
  * @return CACHE_INODE_LRU_ERROR if allocation error occured when validating the entry
  *
  */
-cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
-                                      hash_table_t * ht,
-                                      cache_inode_client_t * pclient,
-                                      fsal_op_context_t * pcontext,
-                                      cache_inode_status_t * pstatus, int use_mutex)
+cache_entry_t *cache_inode_lookupp_sw( cache_entry_t * pentry,
+                                       hash_table_t * ht,
+                                       cache_inode_client_t * pclient,
+                                       fsal_op_context_t * pcontext,
+                                       cache_inode_status_t * pstatus, int use_mutex)
 {
   cache_entry_t *pentry_parent = NULL;
   fsal_status_t fsal_status;
@@ -161,9 +161,14 @@ cache_entry_t *cache_inode_lookupp_sw(cache_entry_t * pentry,
       /* Call cache_inode_get to populate the cache with the parent entry */
       fsdata.cookie = 0;
 
-      if((pentry_parent = cache_inode_get_located(&fsdata, pentry,
-                                                  &object_attributes,
-                                                  ht, pclient, pcontext, pstatus)) == NULL)
+      if((pentry_parent = cache_inode_get_located( &fsdata,
+                                                   pentry,
+                                                   pentry->policy, /* same policy as son */
+                                                   &object_attributes,
+                                                   ht, 
+                                                   pclient, 
+                                                   pcontext, 
+                                                   pstatus)) == NULL)
         {
           if(use_mutex)
             V_r(&pentry->lock);
