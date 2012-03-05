@@ -661,7 +661,8 @@ void nfs_set_param_default()
   nfs_param.cache_layers_param.dcgcpol.lifetime = -1;        /* No gc */
   nfs_param.cache_layers_param.dcgcpol.hwmark_df = 99;
   nfs_param.cache_layers_param.dcgcpol.lwmark_df = 98;
-  nfs_param.cache_layers_param.dcgcpol.run_interval = 3600;  /* 1h */
+  //nfs_param.cache_layers_param.dcgcpol.run_interval = 3600;  /* 1h */
+  nfs_param.cache_layers_param.dcgcpol.run_interval = 0;  /* 1h */
   nfs_param.cache_layers_param.dcgcpol.nb_call_before_gc = 1000;
   nfs_param.cache_layers_param.dcgcpol.emergency_grace_delay = 3600; /* 1h */
 
