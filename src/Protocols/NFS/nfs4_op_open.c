@@ -487,6 +487,19 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                  && (cache_status == CACHE_INODE_SUCCESS))
                 {
 
+                  /*
+                   * we are not creating the file, attributes on recreate
+                   * should be ignored except for size = 0.
+                   */
+                  if (AttrProvided && (sattr.asked_attributes & FSAL_ATTR_SIZE)
+                     && (sattr.filesize == 0))
+                    {
+                      sattr.asked_attributes = FSAL_ATTR_SIZE;
+                    }
+                  else
+                    {
+                      AttrProvided = FALSE;
+                    }
                   status4 = nfs4_chk_shrdny(op, data, pentry_lookup,
                       read_access, write_access, &openflags, AttrProvided,
                       &sattr, resp);

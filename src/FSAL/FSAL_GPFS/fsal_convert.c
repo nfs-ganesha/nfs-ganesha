@@ -524,7 +524,7 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
 #ifndef _USE_NFS4_ACL
             p_fsalattr_out->acl = NULL;
 #else
-            if(p_buffxstat->attr_valid & XATTR_ACL == 0)
+            if((p_buffxstat->attr_valid & XATTR_ACL) == 0)
               {
                 /* ACL is invalid. */
                 p_fsalattr_out->acl = NULL;
