@@ -614,7 +614,8 @@ void nfs_set_param_default()
   nfs_param.cache_layers_param.gcpol.directory_expiration_delay = -1;        /* No gc */
   nfs_param.cache_layers_param.gcpol.hwmark_nb_entries = 10000;
   nfs_param.cache_layers_param.gcpol.lwmark_nb_entries = 10000;
-  nfs_param.cache_layers_param.gcpol.run_interval = 3600;    /* 1h */
+  //nfs_param.cache_layers_param.gcpol.run_interval = 3600;    /* 1h */
+  nfs_param.cache_layers_param.gcpol.run_interval = 0;    /* NO Data Cache */
   nfs_param.cache_layers_param.gcpol.nb_call_before_gc = 1000;
 
   /* Cache inode client parameters */
