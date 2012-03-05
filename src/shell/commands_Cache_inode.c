@@ -634,6 +634,25 @@ if(FSAL_IS_ERROR(status = FSAL_str2path("/tmp", FSAL_MAX_PATH_LEN, &pathroot)))
       fprintf(output, "%s\n", buffer);
       return 1;
     }
+#elif defined( _USE_XFS )
+if(FSAL_IS_ERROR(status = FSAL_str2path("/xfs", FSAL_MAX_PATH_LEN, &pathroot)))
+    {
+      char buffer[LOG_MAX_STRLEN];
+
+      MakeLogError(buffer, ERR_FSAL, status.major, status.minor, __LINE__);
+      fprintf(output, "%s\n", buffer);
+      return 1;
+    }
+
+  if(FSAL_IS_ERROR
+     (status = FSAL_lookupPath(&pathroot, &context->context, &root_handle, NULL)))
+    {
+      char buffer[LOG_MAX_STRLEN];
+
+      MakeLogError(buffer, ERR_FSAL, status.major, status.minor, __LINE__);
+      fprintf(output, "%s\n", buffer);
+      return 1;
+    }
 #else
   if(FSAL_IS_ERROR
      (status = FSAL_lookup(NULL, NULL, &context->context, &root_handle, NULL)))
