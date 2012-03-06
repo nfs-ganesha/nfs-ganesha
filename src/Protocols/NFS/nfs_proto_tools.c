@@ -183,7 +183,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
   switch (rq_vers)
     {
     case NFS_V4:
-      if(!nfs4_FhandleToFSAL(pfh4, &fsal_data.handle, pcontext))
+      if(!nfs4_FhandleToFSAL(pfh4, &fsal_data.fh_desc, pcontext))
         {
           *prc = NFS_REQ_DROP;
           *pstatus4 = NFS4ERR_BADHANDLE;
@@ -192,7 +192,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
       break;
 
     case NFS_V3:
-      if(!nfs3_FhandleToFSAL(pfh3, &fsal_data.handle, pcontext))
+      if(!nfs3_FhandleToFSAL(pfh3, &fsal_data.fh_desc, pcontext))
         {
           *prc = NFS_REQ_DROP;
           *pstatus3 = NFS3ERR_BADHANDLE;
@@ -201,7 +201,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
       break;
 
     case NFS_V2:
-      if(!nfs2_FhandleToFSAL(pfh2, &fsal_data.handle, pcontext))
+      if(!nfs2_FhandleToFSAL(pfh2, &fsal_data.fh_desc, pcontext))
         {
           *prc = NFS_REQ_DROP;
           *pstatus2 = NFSERR_STALE;
@@ -209,9 +209,8 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
         }
       break;
     }
-  fsal_data.cookie = DIR_START;
 
-  print_buff(COMPONENT_FILEHANDLE, (char *)&fsal_data.handle, sizeof(fsal_data.handle));
+  print_buff(COMPONENT_FILEHANDLE, fsal_data.fh_desc.start, fsal_data.fh_desc.len);
 
   if((pentry = cache_inode_get(&fsal_data,
                                CACHE_INODE_JOKER_POLICY,
@@ -4081,6 +4080,38 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
 
 /**
  * 
+ * nfs3_AllocateFH: Allocates a buffer to be used for storing a NFSv4 filehandle.
+ * 
+ * Allocates a buffer to be used for storing a NFSv3 filehandle.
+ *
+ * @param fh [INOUT] the filehandle to manage.
+ * 
+ * @return NFS3_OK if successful, NFS3ERR_SERVERFAULT, NFS3ERR_RESOURCE or NFS3ERR_STALE  otherwise.
+ *
+ */
+int nfs3_AllocateFH(nfs_fh3 *fh)
+{
+  char __attribute__ ((__unused__)) funcname[] = "AllocateFH3";
+
+  if(fh == NULL)
+    return NFS3ERR_SERVERFAULT;
+
+  /* Allocating the filehandle in memory */
+  fh->data.data_len = sizeof(struct alloc_file_handle_v3);
+  if((fh->data.data_val = (char *)Mem_Alloc_Label(fh->data.data_len,
+                                                "nfs3_AllocateFH")) == NULL)
+    {
+      LogError(COMPONENT_NFSPROTO, ERR_SYS, ERR_MALLOC, errno);
+      return NFS3ERR_SERVERFAULT;
+    }
+
+  memset((char *)fh->data.data_val, 0, fh->data.data_len);
+
+  return NFS3_OK;
+}                               /* nfs4_AllocateFH */
+
+/**
+ * 
  * nfs4_AllocateFH: Allocates a buffer to be used for storing a NFSv4 filehandle.
  * 
  * Allocates a buffer to be used for storing a NFSv4 filehandle.
@@ -4098,7 +4129,7 @@ int nfs4_AllocateFH(nfs_fh4 * fh)
     return NFS4ERR_SERVERFAULT;
 
   /* Allocating the filehandle in memory */
-  fh->nfs_fh4_len = sizeof(file_handle_v4_t);
+  fh->nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
   if((fh->nfs_fh4_val = (char *)Mem_Alloc_Label(fh->nfs_fh4_len,
                                                 "nfs4_AllocateFH")) == NULL)
     {

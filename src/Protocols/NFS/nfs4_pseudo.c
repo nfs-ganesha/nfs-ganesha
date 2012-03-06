@@ -1340,18 +1340,18 @@ int nfs4_FhandleToPseudo(nfs_fh4 * fh4p, pseudofs_t * psfstree,
 
 int nfs4_PseudoToFhandle(nfs_fh4 * fh4p, pseudofs_entry_t * psfsentry)
 {
-  file_handle_v4_t fhandle4;
+  file_handle_v4_t *fhandle4;
 
-  memset(&fhandle4, 0, sizeof(fhandle4));
-
-  fhandle4.pseudofs_flag = TRUE;
-  fhandle4.pseudofs_id = psfsentry->pseudo_id;
+  memset(fh4p->nfs_fh4_val, 0, sizeof(struct alloc_file_handle_v4)); /* clean whole thing */
+  fhandle4 = (file_handle_v4_t *)fh4p->nfs_fh4_val;
+  fhandle4->fhversion = GANESHA_FH_VERSION;
+  fhandle4->pseudofs_flag = TRUE;
+  fhandle4->pseudofs_id = psfsentry->pseudo_id;
 
   LogFullDebug(COMPONENT_NFS_V4_PSEUDO, "PSEUDO_TO_FH: Pseudo id = %d -> %d",
-               psfsentry->pseudo_id, fhandle4.pseudofs_id);
+               psfsentry->pseudo_id, fhandle4->pseudofs_id);
 
-  memcpy(fh4p->nfs_fh4_val, &fhandle4, sizeof(fhandle4));
-  fh4p->nfs_fh4_len = sizeof(file_handle_v4_t);
+  fh4p->nfs_fh4_len = sizeof(file_handle_v4_t); /* no handle in opaque */
 
   return TRUE;
 }                               /* nfs4_PseudoToFhandle */
@@ -1674,8 +1674,17 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
       /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
+<<<<<<< HEAD
       fsdata.handle = fsal_handle;
       fsdata.cookie = 0;
+=======
+      fsdata.fh_desc.start = (caddr_t)&fsal_handle;
+      fsdata.fh_desc.len = 0;
+      (void) FSAL_ExpandHandle(data->pcontext,
+			       FSAL_DIGEST_SIZEOF,
+			       &fsdata.fh_desc);
+
+>>>>>>> 5b152b7... Update nfs4_pseudo.c  proto ops
       if((pentry = cache_inode_make_root(&fsdata,
                                          data->pexport->cache_inode_policy,
                                          data->ht,
@@ -1949,8 +1958,12 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
       /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
-      fsdata.handle = fsal_handle;
-      fsdata.cookie = 0;
+      fsdata.fh_desc.start = (caddr_t) &fsal_handle;
+      fsdata.fh_desc.len = 0;
+      (void) FSAL_ExpandHandle(data->pcontext,
+			       FSAL_DIGEST_SIZEOF,
+			       &fsdata.fh_desc);
+
       if((pentry = cache_inode_make_root(&fsdata,
                                          data->pexport->cache_inode_policy,
                                          data->ht,
