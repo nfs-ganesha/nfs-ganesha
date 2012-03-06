@@ -185,11 +185,11 @@ int nfs_Write(nfs_arg_t * parg,
        * but belongs to him, then allow it to do it, push the permission check
        * to the client side */
       if( ( cache_status == CACHE_INODE_FSAL_EACCESS  ) &&
-          ( pentry->object.dir_begin.attributes.owner ==  FSAL_OP_CONTEXT_TO_UID( pcontext ) ) )
+          ( pentry->object.file.attributes.owner ==  FSAL_OP_CONTEXT_TO_UID( pcontext ) ) )
        {
           LogDebug( COMPONENT_NFSPROTO, 
                     "Exception management: allowed user %u to write to read-only file belonging to him",
-                    pentry->object.dir_begin.attributes.owner ) ;
+                    pentry->object.file.attributes.owner ) ;
        }
       else
        {
