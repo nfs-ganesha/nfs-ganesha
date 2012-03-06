@@ -92,15 +92,15 @@ cache_inode_status_t cache_inode_invalidate( fsal_handle_t        * pfsal_handle
     return CACHE_INODE_INVALID_ARGUMENT ;
 
   /* Locate the entry in the cache */
-  fsal_data.handle = *pfsal_handle ;
-  fsal_data.cookie = 0;  /* No DIR_CONTINUE is managed here */
+  fsal_data.fh_desc.start = (caddr_t)pfsal_handle ;
+  fsal_data.fh_desc.len = 0;  /* No DIR_CONTINUE is managed here */
+  (void) FSAL_ExpandHandle(NULL,  /* pcontext but not used... */
+			   FSAL_DIGEST_SIZEOF,
+			   &fsal_data.fh_desc);
 
   /* Turn the input to a hash key */
-  if(cache_inode_fsaldata_2_key(&key, &fsal_data, pclient))
-   {
-      *pstatus = CACHE_INODE_INVALID_ARGUMENT;
-      return *pstatus ;
-   }
+  key.pdata = fsal_data.fh_desc.start;
+  key.len = fsal_data.fh_desc.len;
 
   /* Search the cache for an entry with the related fsal_handle */
   if( ( rc = HashTable_Get(ht, &key, &value) ) == HASHTABLE_ERROR_NO_SUCH_KEY )
