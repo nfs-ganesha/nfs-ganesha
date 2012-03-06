@@ -202,6 +202,23 @@ typedef enum fsal_nodetype__
  *  FS dependant :
  * --------------*/
 
+/* export object
+ * Created by fsal and referenced by the export list
+ */
+
+/* handle descriptor
+ * used primarily to extract the bits of a file object handle from
+ * protocol buffers and for calculating hashes.
+ * This points into a buffer allocated and passed by the caller.
+ * len is set to the buffer size when passed.  It is updated to
+ * the actual copy length on return.
+ */
+
+struct fsal_handle_desc {
+       size_t len;     /* actual valid length of handle [IN/OUT]*/
+       caddr_t start;  /* first octet/byte of embedded handle */
+};
+
 /* prefered readdir size */
 #define FSAL_READDIR_SIZE 2048
 
@@ -1028,7 +1045,7 @@ typedef enum fsal_quota_type__
 
 typedef enum fsal_digesttype_t
 {
-
+  FSAL_DIGEST_SIZEOF, /* just tell me how big... */
   /* NFS handles */
   FSAL_DIGEST_NFSV2,
   FSAL_DIGEST_NFSV3,

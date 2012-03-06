@@ -50,52 +50,104 @@
 #endif
 
 /*
- * Structure of the filehandle 
+ * Structure of the filehandle
+ * these structures must be naturally aligned.  The xdr buffer from/to which
+ * they come/go are 4 byte aligned.
  */
 
+#define ULTIMATE_ANSWER 0x42
+
+#define GANESHA_FH_VERSION ULTIMATE_ANSWER - 1
+
 /* This must be exactly 32 bytes long, and aligned on 32 bits */
-typedef struct file_handle_v2__
+typedef struct file_handle_v2
 {
-  unsigned short exportid;      /* must be correlated to exportlist_t::id   len = 2 bytes  */
-  char fsopaque[29];            /* persistent part of FSAL handle, opaque   len = 25 bytes */
-  char xattr_pos;               /* Used for xattr management                len = 1  byte  */
+  uint8_t fhversion;	/* set to 0x41 to separate from Linux knfsd len = 1 byte */
+  uint8_t xattr_pos;    /* Used for xattr management                len = 1 byte  */
+  uint16_t exportid;    /* must be correlated to exportlist_t::id   len = 2 bytes  */
+  uint8_t fsopaque[28]; /* persistent part of FSAL handle, opaque   len = 28 bytes */
 } file_handle_v2_t;
 
+/* An NFSv2 handle of fixed size. use for allocations only.
+ * there is no padding because v2 handles must be fixed size.
+ */
+
+struct alloc_file_handle_v2 {
+	struct file_handle_v2 handle;	/* the real handle */
+};
+
 /* This is up to 64 bytes long, aligned on 32 bits */
-typedef struct file_handle_v3__
+typedef struct file_handle_v3
 {
-  unsigned short exportid;      /* must be correlated to exportlist_t::id   len = 2 bytes   */
-  char fsopaque[61];            /* persistent part of FSAL handle, opaque   len = 41 bytes  */
-  char xattr_pos;               /* Used for xattr management                len = 1  byte  */
+  uint8_t fhversion;	/* set to 0x41 to separate from Linux knfsd len = 1 byte */
+  uint8_t xattr_pos;    /* Used for xattr management                len = 1  byte  */
+  uint16_t exportid;    /* must be correlated to exportlist_t::id   len = 2 bytes   */
+  uint8_t fs_len;       /* actual length of opaque handle           len = 1  byte */
+  uint8_t fsopaque[];   /* persistent part of FSAL handle, opaque   len <= 59 bytes  */
 } file_handle_v3_t;
 
+/* An NFSv3 handle of maximum size. use this for allocations, sizeof, and memset only.
+ * the pad space is where the opaque handle expands into. pad is struct aligned
+ */
 
+struct alloc_file_handle_v3 {
+	struct file_handle_v3 handle;	/* the real handle */
+	uint8_t pad[58];			/* pad to mandatory max 64 bytes */
+};
 
-/* This must be up to 128 bytes, aligned on 32 bits */
-typedef struct file_handle_v4__
+/* nfs3_sizeof_handle
+ * return the actual size of a handle based on the sized fsopaque
+ */
+
+static inline size_t nfs3_sizeof_handle(struct file_handle_v3 *hdl)
 {
-  unsigned short pseudofs_id;   /* Id for the pseudo fs related to this fh  len = 2 bytes   */
-  unsigned char ds_flag;        /* TRUE if FH is a 'DS file handle'         len = 1 byte    */
-  unsigned char pseudofs_flag;  /* TRUE if FH is within pseudofs            len = 1 byte    */
-  unsigned int exportid;        /* must be correlated to exportlist_t::id   len = 4 bytes   */
-  unsigned short refid;         /* used for referral                        len = 2 bytes   */
-  unsigned int srvboot_time;    /* 0 if FH won't expire                     len = 4 bytes   */
-#ifdef _USE_PROXY
-  char fsopaque[108];            /* persistent part of FSAL handle */
-#else
-  char fsopaque[69];            /* persistent part of FSAL handle */
-#endif /* _USE_FSAL_PROXY */
-  char xattr_pos;               /*                                          len = 1 byte    */
+	return offsetof(struct file_handle_v3, fsopaque) + hdl->fs_len;
+}
+
+/* This is up to 128 bytes, aligned on 32 bits
+ */
+typedef struct file_handle_v4
+{
+  uint8_t fhversion;	  /* set to 0x41 to separate from Linux knfsd len = 1 byte */
+  uint8_t xattr_pos;      /*                                          len = 1 byte    */
+  uint16_t exportid;      /* must be correlated to exportlist_t::id   len = 2 bytes   */
+  uint32_t srvboot_time;  /* 0 if FH won't expire                     len = 4 bytes   */
+  uint16_t pseudofs_id;   /* Id for the pseudo fs related to this fh  len = 2 bytes   */
+  uint16_t refid;         /* used for referral                        len = 2 bytes   */
+  uint8_t ds_flag;        /* TRUE if FH is a 'DS file handle'         len = 1 byte    */
+  uint8_t pseudofs_flag;  /* TRUE if FH is within pseudofs            len = 1 byte    */
+  uint8_t fs_len;         /* actual length of opaque handle           len = 1  byte */
+  uint8_t fsopaque[];     /* persistent part of FSAL handle           len <= 113 bytes */
 } file_handle_v4_t;
+
+/* An NFSv4 handle of maximum size.  use for allocations, sizeof, and memset only
+ * the pad space is where the opaque handle expands into. pad is struct aligned
+ */
+struct alloc_file_handle_v4 {
+	struct file_handle_v4 handle;	/* the real handle */
+	uint8_t pad[112];			/* pad to mandatory max 128 bytes */
+};
+
+/* nfs4_sizeof_handle
+ * return the actual size of a handle based on the sized fsopaque
+ */
+
+static inline size_t nfs4_sizeof_handle(struct file_handle_v4 *hdl)
+{
+	return offsetof(struct file_handle_v4, fsopaque) + hdl->fs_len;
+}
 
 #define LEN_FH_STR 1024
 
 /* File handle translation utility */
-int nfs4_FhandleToFSAL(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
+int nfs4_FhandleToFSAL(nfs_fh4 * pfh4,
+		       struct fsal_handle_desc *fh_desc,
                        fsal_op_context_t * pcontext);
-int nfs3_FhandleToFSAL(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
+int nfs3_FhandleToFSAL(nfs_fh3 * pfh3,
+		       struct fsal_handle_desc *fh_desc,
                        fsal_op_context_t * pcontext);
-int nfs2_FhandleToFSAL(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
+int nfs2_FhandleToFSAL(fhandle2 * pfh2,
+		       struct fsal_handle_desc *fh_desc,
                        fsal_op_context_t * pcontext);
 
 int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
@@ -113,6 +165,9 @@ short nfs3_FhandleToExportId(nfs_fh3 * pfh3);
 #ifdef _USE_NLM
 short nlm4_FhandleToExportId(netobj * pfh3);
 #endif
+
+/* nfs3 validation */
+int nfs3_Is_Fh_Invalid(nfs_fh3 *pfh3);
 
 /* NFSv4 specific FH related functions */
 int nfs4_Is_Fh_Empty(nfs_fh4 * pfh);
