@@ -267,10 +267,12 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
       break;
 
     case MOUNT_V3:
-      if((pres->res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val =
-          Mem_Alloc(NFS3_FHSIZE)) == NULL)
-        pres->res_mnt3.fhs_status = MNT3ERR_INVAL;      /* BUGAZOMEU: pas forcement le meilleur code retour ... */
-      else
+/* FIXME: The mountinfo.fhandle definition is an overlay on/of nfs_fh3.
+ * redefine and eliminate one or the other.
+ */
+      pres->res_mnt3.fhs_status =
+	      nfs3_AllocateFH((nfs_fh3 *) &pres->res_mnt3.mountres3_u.mountinfo.fhandle);
+      if(pres->res_mnt3.fhs_status ==  NFS3_OK)
         {
           if(!nfs3_FSALToFhandle
              ((nfs_fh3 *) & (pres->res_mnt3.mountres3_u.mountinfo.fhandle), &pfsal_handle,

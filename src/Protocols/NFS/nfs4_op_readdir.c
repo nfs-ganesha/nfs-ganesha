@@ -85,7 +85,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
   uint64_t end_cookie = 0;
   fsal_handle_t *entry_FSALhandle;
   nfs_fh4 entryFH;
-  char val_fh[NFS4_FHSIZE];
+  struct alloc_file_handle_v4 entry_handle;
   entry_name_array_item_t *entry_name_array = NULL;
   unsigned int estimated_num_entries;
   unsigned int num_entries;
@@ -101,8 +101,9 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_READDIR;
   res_READDIR4.status = NFS4_OK;
 
-  entryFH.nfs_fh4_len = 0;
-  entryFH.nfs_fh4_val = val_fh;
+  entryFH.nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
+  entryFH.nfs_fh4_val = (caddr_t) &entry_handle;
+  memset(entryFH.nfs_fh4_val, 0, entryFH.nfs_fh4_len);
 
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))

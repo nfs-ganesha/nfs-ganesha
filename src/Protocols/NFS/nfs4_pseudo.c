@@ -1674,17 +1674,12 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
       /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
-<<<<<<< HEAD
-      fsdata.handle = fsal_handle;
-      fsdata.cookie = 0;
-=======
       fsdata.fh_desc.start = (caddr_t)&fsal_handle;
       fsdata.fh_desc.len = 0;
       (void) FSAL_ExpandHandle(data->pcontext,
 			       FSAL_DIGEST_SIZEOF,
 			       &fsdata.fh_desc);
 
->>>>>>> 5b152b7... Update nfs4_pseudo.c  proto ops
       if((pentry = cache_inode_make_root(&fsdata,
                                          data->pexport->cache_inode_policy,
                                          data->ht,

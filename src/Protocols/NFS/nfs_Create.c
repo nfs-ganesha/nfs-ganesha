@@ -431,13 +431,10 @@ int nfs_Create(nfs_arg_t * parg,
 
                         case NFS_V3:
                           /* Build file handle */
-                          if((pres->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.
-                              handle.data.data_val = Mem_Alloc_Label(NFS3_FHSIZE,
-                                                                     "Filehandle V3 in nfs3_Create")) == NULL)
-                            {
-                              pres->res_create3.status = NFS3ERR_IO;
-                              return NFS_REQ_OK;
-                            }
+			  pres->res_create3.status =
+			     nfs3_AllocateFH(&pres->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle);
+			  if( pres->res_create3.status !=  NFS3_OK)
+			    return NFS_REQ_OK;
 
                           /* Set Post Op Fh3 structure */
                           if(nfs3_FSALToFhandle
@@ -453,8 +450,6 @@ int nfs_Create(nfs_arg_t * parg,
 
                           /* Set Post Op Fh3 structure */
                           pres->res_create3.CREATE3res_u.resok.obj.handle_follows = TRUE;
-                          pres->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle.
-                              data.data_len = sizeof(file_handle_v3_t);
 
                           /* Get the attributes of the parent after the operation */
 			  attr_parent_after = parent_pentry->attributes;

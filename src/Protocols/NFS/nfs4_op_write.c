@@ -485,17 +485,20 @@ static int op_dswrite(struct nfs_argop4 *op,
   fsal_handle_t handle;
   /* NFSv4 return code */
   nfsstat4 nfs_status = 0;
+  struct fsal_handle_desc fh_desc;
 
   /* Construct the FSAL file handle */
 
   if ((nfs4_FhandleToFSAL(&data->currentFH,
-                          &handle,
+                          &fh_desc,
                           data->pcontext)) == 0)
     {
       res_WRITE4.status = NFS4ERR_INVAL;
       return res_WRITE4.status;
     }
 
+  memset((caddr_t) &handle, 0, sizeof(handle));
+  memcpy((caddr_t) &handle, fh_desc.start, fh_desc.len);
   nfs_status
     = fsal_dsfunctions.DS_write(&handle,
                                 data->pcontext,

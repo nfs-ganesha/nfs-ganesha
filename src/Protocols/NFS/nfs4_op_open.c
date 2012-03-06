@@ -1224,10 +1224,11 @@ nfs4_create_fh(compound_data_t *data, cache_entry_t *pentry, char **cause2)
 {
         fsal_handle_t *pnewfsal_handle = NULL;
         nfs_fh4 newfh4;
-        char newfh4_val[NFS4_FHSIZE];
+        struct alloc_file_handle_v4 new_handle;
         cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
 
-        newfh4.nfs_fh4_val = newfh4_val;
+        newfh4.nfs_fh4_val = (caddr_t) &new_handle;
+	newfh4.nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
 
         /* Now produce the filehandle to this file */
         if((pnewfsal_handle =

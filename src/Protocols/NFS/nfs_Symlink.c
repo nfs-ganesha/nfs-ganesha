@@ -322,12 +322,10 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                     }
                 }
 
-              if((pres->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle.data.
-                  data_val = Mem_Alloc(NFS3_FHSIZE)) == NULL)
-                {
-                  pres->res_symlink3.status = NFS3ERR_IO;
-                  return NFS_REQ_OK;
-                }
+	      pres->res_symlink3.status =
+		      nfs3_AllocateFH(&pres->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle);
+	      if(pres->res_symlink3.status !=  NFS3_OK)
+		return NFS_REQ_OK;
 
               if(nfs3_FSALToFhandle
                  (&pres->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle,
@@ -357,8 +355,6 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
 
               /* Set Post Op Fh3 structure */
               pres->res_symlink3.SYMLINK3res_u.resok.obj.handle_follows = TRUE;
-              pres->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle.data.
-                  data_len = sizeof(file_handle_v3_t);
 
               /* Build entry attributes */
               nfs_SetPostOpAttr(pcontext, pexport,

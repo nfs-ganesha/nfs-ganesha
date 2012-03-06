@@ -103,11 +103,8 @@ int nfs3_Fsinfo(nfs_arg_t * parg,
   pres->res_fsinfo3.FSINFO3res_u.resfail.obj_attributes.attributes_follow = FALSE;
 
   /* Convert file handle into a fsal_handle */
-  if(nfs3_FhandleToFSAL(&(parg->arg_fsinfo3.fsroot), &fsal_data.handle, pcontext) == 0)
+  if(nfs3_FhandleToFSAL(&(parg->arg_fsinfo3.fsroot), &fsal_data.fh_desc, pcontext) == 0)
     return NFS_REQ_DROP;
-
-  /* Set the cookie */
-  fsal_data.cookie = DIR_START;
 
   /* Get the entry in the cache_inode */
   if((pentry = cache_inode_get( &fsal_data,
