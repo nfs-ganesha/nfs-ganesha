@@ -167,8 +167,7 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                                       inum);
 
                   /* Populating the cache_inode... */
-                  fsal_data.handle = inode_entry.handle;
-                  fsal_data.cookie = 0;
+                  fsal_data.fh_desc = inode_entry.fh_desc;
 
                   if((pentry = cache_inode_get(&fsal_data,
                                                CACHE_INODE_JOKER_POLICY,
