@@ -196,7 +196,7 @@ FSAL_encode_ipv4_netaddr(XDR *xdrs,
  * \param fsal_handle [IN]  The FSAL file handle
  * \param export_id   [IN]  The export ID
  * \param export      [IN]  The FSAL export context
- * \param v4_handle   [OUT] Pointer to which the file_handle_v4_t is * written.
+ * \param v4_handle   [OUT] Pointer to an nfs_fh4 descriptor for the handle.
  *
  * \return NFSv4 error codes
  *
@@ -205,24 +205,33 @@ static nfsstat4
 make_file_handle_v4(fsal_handle_t *fsal_handle,
                     unsigned short export_id,
                     fsal_export_context_t *export,
-                    file_handle_v4_t *v4_handle)
+                    nfs_fh4 *wirehandle)
 {
      /* Return code from FSAL functions */
      fsal_status_t fsal_status = {0, 0};
      /* We only use this to convert the FSAL error code */
      cache_inode_status_t cache_status = 0;
+     struct fsal_handle_desc fh_desc;
+     file_handle_v4_t *v4_handle = (file_handle_v4_t *)wirehandle->nfs_fh4_val;
 
-     memset(v4_handle, 0, sizeof(file_handle_v4_t));
+     wirehandle->wirehandle->nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
+     memset(wirehandle->wirehandle->nfs_fh4_val,
+	    0,
+	    wirehandle->wirehandle->nfs_fh4_len);
+     fh_desc.start = wirehandle->nfs_fh4_val;
+     fh_desc.len = wirehandle->nfs_fh4_len - offsetof(file_handle_v4_t, fsopaque);
 
      fsal_status =
           FSAL_DigestHandle(export, FSAL_DIGEST_NFSV4, fsal_handle,
-                            (caddr_t) &v4_handle->fsopaque);
+                            &fh_desc);
 
      if (FSAL_IS_ERROR(fsal_status)) {
           cache_status = cache_inode_error_convert(fsal_status);
           return nfs4_Errno(cache_status);
      }
 
+     v4_handle->fhversion = GANESHA_FH_VERSION;
+     v4_handle->fs_len = fh_desc.len;
      v4_handle->exportid = export_id;
      v4_handle->ds_flag = 1;
 
@@ -242,7 +251,7 @@ make_file_handle_v4(fsal_handle_t *fsal_handle,
  * \param wirehandle  [OUT] Pointer to an nfs_fh4 to which to write
  *                          the handle.  nfs_fh4.nfs_fh4_val MUST
  *                          point to allocated memory of at least
- *                          NFS4_FHLEN bytes.
+ *                          NFS4_FHSIZE bytes.
  *
  * \return NFSv4 error codes
  *
@@ -253,12 +262,11 @@ FSAL_fh4_dshandle(fsal_handle_t *fsal_handle,
                   fsal_export_context_t *export,
                   nfs_fh4 *wirehandle)
 {
-     wirehandle->nfs_fh4_len = sizeof(file_handle_v4_t);
      return make_file_handle_v4(
           fsal_handle,
           export_id,
           export,
-          (file_handle_v4_t *)wirehandle->nfs_fh4_val);
+          wirehandle);
 }
 
 /**
@@ -327,27 +335,26 @@ FSAL_encode_file_layout(XDR *xdrs,
      for (i = 0; i < num_fhs; i++) {
           /* Temporary external handle that hodls the converted handle before
              encoding */
-          file_handle_v4_t temp_handle;
-          /* Pointer to handle, needed by XDR encoder */
-          file_handle_v4_t *handle_ptr = &temp_handle;
-          /* Size of a filehandle, so we can take a pointer to it */
-          u_int handle_size = sizeof(file_handle_v4_t);
+          struct alloc_file_handle_v4 temphandle;
+	  nfs_fh4 handle;
 
-          memset(&temp_handle, 0, sizeof(file_handle_v4_t));
+	  handle.nfs_fh4_val = (caddr_t) &temphandle;
+	  handle.nfs_fh4_len = sizeof(temphandle);
+          memset(handle.nfs_fh4_val, 0, handle.nfs_fh4_len);
 
           if ((nfs_status
                = make_file_handle_v4(fhs + i,
                                      deviceid->export_id,
                                      context->export_context,
-                                     &temp_handle)) != NFS4_OK) {
+                                     &handle)) != NFS4_OK) {
                LogMajor(COMPONENT_PNFS,
                         "Failed converting FH %lu.", i);
                return nfs_status;
           }
 
-          if (!xdr_bytes(xdrs, (char **)&handle_ptr,
-                         &handle_size,
-                         sizeof(file_handle_v4_t))) {
+          if (!xdr_bytes(xdrs, (char **)&handle.nfs_fh4_val,
+                         &handle.nfs_fh4_len,
+                         handle.nfs_fh4_len)) {
                LogMajor(COMPONENT_PNFS,
                         "Failed encoding FH %lu.", i);
                return NFS4ERR_SERVERFAULT;
