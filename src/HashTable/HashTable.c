@@ -567,7 +567,6 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
 {
   unsigned int hashval = 0;
   unsigned int rbt_value = 0;
-  struct rbt_head *tete_rbt = NULL;
   struct rbt_node *qn = NULL;
   struct rbt_node *pn = NULL;
   hash_data_t *pdata = NULL;
@@ -592,7 +591,6 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
     rbt_value = (*(ht->parameter.hash_func_rbt)) (&ht->parameter, buffkey);
    }
 
-  tete_rbt = &(ht->array_rbt[hashval]);
   LogFullDebug(COMPONENT_HASHTABLE,
                "Key = %p   Value = %p  hashval = %u  rbt_value = %u",
                buffkey->pdata, buffval->pdata, hashval, rbt_value);
@@ -626,6 +624,8 @@ int HashTable_Test_And_Set(hash_table_t * ht, hash_buffer_t * buffkey,
     }
   else
     {
+      struct rbt_head *tete_rbt = &(ht->array_rbt[hashval]);
+
       /* No entry of that key, add it to the trees */
       if(how == HASHTABLE_SET_HOW_TEST_ONLY)
         {
@@ -701,9 +701,9 @@ int HashTable_GetRef(hash_table_t * ht, hash_buffer_t * buffkey, hash_buffer_t *
                      void (*get_ref)(hash_buffer_t *) )
 {
   unsigned long hashval;
+  unsigned long rbt_value = 0;
   struct rbt_node *pn;
   hash_data_t *pdata = NULL;
-  unsigned long rbt_value = 0;
   int rc = 0;
 
   /* Sanity check */
@@ -983,6 +983,13 @@ int HashTable_DelRef(hash_table_t * ht, hash_buffer_t * buffkey,
     }
 
   pdata = (hash_data_t *) RBT_OPAQ(pn);
+  if(put_ref != NULL)
+    if(put_ref(&pdata->buffval) != 0)
+      {
+        V_w(&(ht->array_lock[hashval]));
+        return HASHTABLE_NOT_DELETED;
+      }
+
 
   /* Return the key buffer back to the end user if pusedbuffkey isn't NULL */
   if(p_usedbuffkey != NULL)
@@ -990,13 +997,6 @@ int HashTable_DelRef(hash_table_t * ht, hash_buffer_t * buffkey,
 
   if(p_usedbuffdata != NULL)
     *p_usedbuffdata = pdata->buffval;
-
-  if(put_ref != NULL)
-    if(put_ref(&pdata->buffval) != 0)
-      {
-        V_w(&(ht->array_lock[hashval]));
-        return HASHTABLE_NOT_DELETED;
-      }
 
   /* Key was found */
   tete_rbt = &(ht->array_rbt[hashval]);
