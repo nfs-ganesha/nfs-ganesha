@@ -371,7 +371,8 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
       /* It is a file handle */
       int rc;
 
-      rc = sscanHandle(&(fsdata.handle), str_path + 1);
+/*FIXME: this probably won't work with sized handle and no fh_desc.len */
+      rc = sscanHandle(fsdata.fh_desc.start, str_path + 1);
 
       if(rc <= 0)
         {
@@ -386,7 +387,11 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
         }
 
       /* Get the corresponding pentry */
-      fsdata.cookie = 0;
+      fsdata.fh_desc.len = 0;
+      (void) FSAL_ExpandHandle(NULL,
+			       FSAL_DIGEST_SIZEOF,
+			       &fsdata.fh_desc);
+
       if((pentry_tmp = cache_inode_get(&fsdata,
                                        cachepol,
                                        &attrlookup,
@@ -757,8 +762,11 @@ if(FSAL_IS_ERROR(status = FSAL_str2path("/xfs", FSAL_MAX_PATH_LEN, &pathroot)))
 
   context->client.pcontent_client = (caddr_t) & context->dc_client;
 
-  fsdata.cookie = 0;
-  fsdata.handle = root_handle;
+  fsdata.fh_desc.len = 0;
+  fsdata.fh_desc.start = (caddr_t) &root_handle;
+  (void) FSAL_ExpandHandle(&context->exp_context,
+			   FSAL_DIGEST_SIZEOF,
+			   &fsdata.fh_desc);
 
   if((context->pentry = cache_inode_make_root(&fsdata,
                                               cachepol,

@@ -5743,6 +5743,7 @@ int fn_fsal_handle(int argc,     /* IN : number of args in argv */
   char buff[1024];
   char buff2[1024];
   fsal_handle_t filehdl;
+  struct fsal_handle_desc fh_desc;
   fsal_status_t st;
   int rc;
   fsal_digesttype_t dt ; /* digest type */
@@ -5804,7 +5805,9 @@ int fn_fsal_handle(int argc,     /* IN : number of args in argv */
                            argv[3], context->current_dir, &filehdl, output)))
                 return rc;
 
-        st = FSAL_DigestHandle(&context->exp_context, dt, &filehdl, buff);
+	fh_desc.start = buff;
+	fh_desc.len = sizeof(buff);
+        st = FSAL_DigestHandle(&context->exp_context, dt, &filehdl, &fh_desc);
         if(FSAL_IS_ERROR(st))
         {
               snprintHandle(buff, 2 * sizeof(fsal_handle_t) + 1, &filehdl);
@@ -5849,8 +5852,10 @@ int fn_fsal_handle(int argc,     /* IN : number of args in argv */
                 return EINVAL;
         }
 
+	fh_desc.start = buff;
+	fh_desc.len = length;
         /* Expand the handle */
-        st = FSAL_ExpandHandle(&context->exp_context, dt, buff, &filehdl);
+        st = FSAL_ExpandHandle(&context->exp_context, dt, &fh_desc);
         if(FSAL_IS_ERROR(st))
         {
               fprintf(output, "Error executing FSAL_ExpandHandle(%s):", argv[3]);
@@ -5859,7 +5864,7 @@ int fn_fsal_handle(int argc,     /* IN : number of args in argv */
               return st.major;
         }
 
-        snprintHandle(buff2, 2 * sizeof(fsal_handle_t) + 1, &filehdl);
+        snprintHandle(buff2, 2 * fh_desc.len + 1, fh_desc.start);
         fprintf(output, "@%s\n", buff2);
   }
   else

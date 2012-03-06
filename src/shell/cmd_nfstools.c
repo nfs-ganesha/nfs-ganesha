@@ -542,7 +542,7 @@ int cmdnfs_fhandle3(cmdnfs_encodetype_t encodeflag,
       str_handle++;
 
       /* Allocation of the nfs3 handle */
-      p_fhandle->fhandle3_val = Mem_Alloc(NFS3_FHSIZE);
+      p_fhandle->fhandle3_val = Mem_Alloc(sizeof(struct alloc_file_handle_v3));
 
       if(p_fhandle->fhandle3_val == NULL)
         {
@@ -550,9 +550,10 @@ int cmdnfs_fhandle3(cmdnfs_encodetype_t encodeflag,
           return FALSE;
         }
 
-      p_fhandle->fhandle3_len = (unsigned int)sizeof(file_handle_v3_t);
+      p_fhandle->fhandle3_len = (unsigned int)sizeof(struct alloc_file_handle_v3);
 
-      rc = sscanmem((caddr_t) (p_fhandle->fhandle3_val), (int)sizeof(file_handle_v3_t),
+      rc = sscanmem((caddr_t) (p_fhandle->fhandle3_val),
+		    (int)sizeof(struct alloc_file_handle_v3),
                     str_handle);
 
       if(rc < 2 * (int)sizeof(file_handle_v3_t))
