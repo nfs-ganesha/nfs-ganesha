@@ -118,42 +118,42 @@
  *
  *  nfs4_FhandleToFSAL: converts a nfs4 file handle to a FSAL file handle.
  *
- * Converts a nfs4 file handle to a FSAL file handle.
+ * Validates and Converts a nfs4 file handle to a FSAL file handle.
  *
  * @param pfh4 [IN] pointer to the file handle to be converted
- * @param pfsalhandle [OUT] pointer to the extracted FSAL handle
+ * @param fh_desc [OUT] extracted handle descriptor
  *
  * @return 1 if successful, 0 otherwise
  *
  */
-int nfs4_FhandleToFSAL(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
+int nfs4_FhandleToFSAL(nfs_fh4 * pfh4,
+		       struct fsal_handle_desc *fh_desc,
                        fsal_op_context_t * pcontext)
 {
   fsal_status_t fsal_status;
   file_handle_v4_t *pfile_handle;
 
+  BUILD_BUG_ON(sizeof(struct alloc_file_handle_v4) != NFS4_FHSIZE);
   print_fhandle4(COMPONENT_FILEHANDLE, pfh4);
-
-  /* Verify the len */
-  if(pfh4->nfs_fh4_len != sizeof(file_handle_v4_t))
-    return 0;                   /* Corrupted FH */
 
   /* Cast the fh as a non opaque structure */
   pfile_handle = (file_handle_v4_t *) (pfh4->nfs_fh4_val);
 
-  /* The filehandle should not be related to pseudo fs */
-  if(pfile_handle->pseudofs_id != 0 || pfile_handle->pseudofs_flag != FALSE)
+  /* validate the filehandle  */
+  if(pfh4->nfs_fh4_len != nfs4_sizeof_handle(pfile_handle) ||
+     pfile_handle->fhversion != GANESHA_FH_VERSION ||
+     pfile_handle->pseudofs_id != 0 ||
+     pfile_handle->pseudofs_flag != FALSE)
     return 0;                   /* Bad FH */
 
   /* Fill in the fs opaque part */
-  fsal_status =
-      FSAL_ExpandHandle(FSAL_GET_EXP_CTX(pcontext), FSAL_DIGEST_NFSV4,
-                        (caddr_t) & (pfile_handle->fsopaque), pfsalhandle);
+  fh_desc->start = (caddr_t)&pfile_handle->fsopaque;
+  fh_desc->len = pfile_handle->fs_len;
+  fsal_status = FSAL_ExpandHandle(FSAL_GET_EXP_CTX(pcontext),
+				  FSAL_DIGEST_NFSV4,
+				  fh_desc);
   if(FSAL_IS_ERROR(fsal_status))
     return 0;                   /* Corrupted (or stale) FH */
-
-  print_buff(COMPONENT_FILEHANDLE, (char *)pfsalhandle, sizeof(fsal_handle_t));
-
   return 1;
 }                               /* nfs4_FhandleToFSAL */
 
@@ -169,29 +169,31 @@ int nfs4_FhandleToFSAL(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
  * @return 1 if successful, 0 otherwise
  *
  */
-int nfs3_FhandleToFSAL(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
+int nfs3_FhandleToFSAL(nfs_fh3 * pfh3,
+		       struct fsal_handle_desc *fh_desc,
                        fsal_op_context_t * pcontext)
 {
   fsal_status_t fsal_status;
   file_handle_v3_t *pfile_handle;
 
+  BUILD_BUG_ON(sizeof(struct alloc_file_handle_v3) != NFS3_FHSIZE);
   print_fhandle3(COMPONENT_FILEHANDLE, pfh3);
-
-  /* Verify the len */
-  if(pfh3->data.data_len != sizeof(file_handle_v3_t))
-    return 0;                   /* Corrupted FH */
 
   /* Cast the fh as a non opaque structure */
   pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
 
+  /* validate the filehandle  */
+  if(nfs3_Is_Fh_Invalid(pfh3) != NFS3_OK)
+    return 0;                   /* Bad FH */
+
   /* Fill in the fs opaque part */
-  fsal_status =
-      FSAL_ExpandHandle(FSAL_GET_EXP_CTX(pcontext), FSAL_DIGEST_NFSV3,
-                        (caddr_t) & (pfile_handle->fsopaque), pfsalhandle);
+  fh_desc->start = (caddr_t) &pfile_handle->fsopaque;
+  fh_desc->len = pfile_handle->fs_len;
+  fsal_status = FSAL_ExpandHandle(FSAL_GET_EXP_CTX(pcontext),
+				  FSAL_DIGEST_NFSV3,
+				  fh_desc);
   if(FSAL_IS_ERROR(fsal_status))
     return 0;                   /* Corrupted FH */
-
-  print_buff(COMPONENT_FILEHANDLE, (char *)pfsalhandle, sizeof(fsal_handle_t));
 
   return 1;
 }                               /* nfs3_FhandleToFSAL */
@@ -208,24 +210,32 @@ int nfs3_FhandleToFSAL(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
  * @return 1 if successful, 0 otherwise
  *
  */
-int nfs2_FhandleToFSAL(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
+int nfs2_FhandleToFSAL(fhandle2 * pfh2,
+		       struct fsal_handle_desc *fh_desc,
                        fsal_op_context_t * pcontext)
 {
   fsal_status_t fsal_status;
   file_handle_v2_t *pfile_handle;
 
+  BUILD_BUG_ON(sizeof(struct alloc_file_handle_v2) != NFS2_FHSIZE);
   /* Cast the fh as a non opaque structure */
   pfile_handle = (file_handle_v2_t *) pfh2;
   print_fhandle2(COMPONENT_FILEHANDLE, pfh2);
 
+  /* validate the filehandle  */
+  if(pfile_handle->fhversion != GANESHA_FH_VERSION)
+    return 0;                   /* Bad FH */
+
   /* Fill in the fs opaque part */
-  fsal_status =
-      FSAL_ExpandHandle(FSAL_GET_EXP_CTX(pcontext), FSAL_DIGEST_NFSV2,
-                        (caddr_t) & (pfile_handle->fsopaque), pfsalhandle);
+  fh_desc->start = (caddr_t) & (pfile_handle->fsopaque);
+  fh_desc->len = sizeof(pfile_handle->fsopaque);
+  fsal_status = FSAL_ExpandHandle(FSAL_GET_EXP_CTX(pcontext),
+				  FSAL_DIGEST_NFSV2,
+				  fh_desc);
   if(FSAL_IS_ERROR(fsal_status))
     return 0;                   /* Corrupted FH */
 
-  print_buff(COMPONENT_FILEHANDLE, (char *)pfsalhandle, sizeof(fsal_handle_t));
+  print_buff(COMPONENT_FILEHANDLE, (char *)fh_desc->start, fh_desc->len);
 
   return 1;
 }                               /* nfs2_FhandleToFSAL */
@@ -247,48 +257,37 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
                        compound_data_t * data)
 {
   fsal_status_t fsal_status;
-  file_handle_v4_t file_handle;
+  file_handle_v4_t *file_handle;
+  struct fsal_handle_desc fh_desc;
 
-  /* zero-ification of the buffer to be used as handle */
-  memset(pfh4->nfs_fh4_val, 0, sizeof(file_handle_v4_t));
-  memset((caddr_t) &file_handle, 0, sizeof(file_handle_v4_t));
+  /* reset the buffer to be used as handle */
+  pfh4->nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
+  memset(pfh4->nfs_fh4_val, 0, pfh4->nfs_fh4_len);
+  file_handle = (file_handle_v4_t *)pfh4->nfs_fh4_val;
 
   /* Fill in the fs opaque part */
+  fh_desc.start = (caddr_t) &file_handle->fsopaque;
+  fh_desc.len = pfh4->nfs_fh4_len - offsetof(file_handle_v4_t, fsopaque);
   fsal_status =
       FSAL_DigestHandle(&data->pexport->FS_export_context, FSAL_DIGEST_NFSV4, pfsalhandle,
-                        (caddr_t) & file_handle.fsopaque);
+                        &fh_desc);
   if(FSAL_IS_ERROR(fsal_status))
     return 0;
 
+  file_handle->fhversion = GANESHA_FH_VERSION;
+  file_handle->fs_len = fh_desc.len;   /* set the actual size */
   /* keep track of the export id */
-  file_handle.exportid = data->pexport->id;
-
-  /* No Pseudo fs here */
-  file_handle.pseudofs_id = 0;
-  file_handle.pseudofs_flag = FALSE;
-  file_handle.ds_flag = 0;
-  file_handle.refid = 0;
+  file_handle->exportid = data->pexport->id;
 
   /* if FH expires, set it there */
   if(nfs_param.nfsv4_param.fh_expire == TRUE)
     {
       LogFullDebug(COMPONENT_NFS_V4, "An expireable file handle was created.");
-      file_handle.srvboot_time = ServerBootTime;
+      file_handle->srvboot_time = ServerBootTime;
     }
-  else
-    {
-      /* Non expirable FH */
-      file_handle.srvboot_time = 0;
-    }
-
-  /* Set the last byte */
-  file_handle.xattr_pos = 0;
 
   /* Set the len */
-  pfh4->nfs_fh4_len = sizeof(file_handle_v4_t);
-
-  /* Set the data */
-  memcpy(pfh4->nfs_fh4_val, &file_handle, sizeof(file_handle_v4_t));
+  pfh4->nfs_fh4_len = nfs4_sizeof_handle(file_handle); /* re-adjust to as built */
 
   return 1;
 }                               /* nfs4_FSALToFhandle */
@@ -305,37 +304,39 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
  *
  * @return 1 if successful, 0 otherwise
  *
+ * FIXME: do we have to worry about buffer alignment and memcpy to 
+ * compensate??
  */
 int nfs3_FSALToFhandle(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
                        exportlist_t * pexport)
 {
   fsal_status_t fsal_status;
-  file_handle_v3_t file_handle;
+  file_handle_v3_t *file_handle;
+  struct fsal_handle_desc fh_desc;
 
   print_buff(COMPONENT_FILEHANDLE, (char *)pfsalhandle, sizeof(fsal_handle_t));
 
-  /* zero-ification of the buffer to be used as handle */
-  memset(pfh3->data.data_val, 0, NFS3_FHSIZE);
-  memset((caddr_t) &file_handle, 0, sizeof(file_handle_v3_t));
+  /* reset the buffer to be used as handle */
+  pfh3->data.data_len = sizeof(struct alloc_file_handle_v3);
+  memset(pfh3->data.data_val, 0, pfh3->data.data_len);
+  file_handle = (file_handle_v3_t *)pfh3->data.data_val;
 
   /* Fill in the fs opaque part */
+  fh_desc.start = (caddr_t) &file_handle->fsopaque;
+  fh_desc.len = pfh3->data.data_len - offsetof(file_handle_v3_t, fsopaque);
   fsal_status =
       FSAL_DigestHandle(&pexport->FS_export_context, FSAL_DIGEST_NFSV3, pfsalhandle,
-                        (caddr_t) & file_handle.fsopaque);
+                        &fh_desc);
   if(FSAL_IS_ERROR(fsal_status))
     return 0;
 
+  file_handle->fhversion = GANESHA_FH_VERSION;
+  file_handle->fs_len = fh_desc.len;   /* set the actual size */
   /* keep track of the export id */
-  file_handle.exportid = pexport->id;
-
-  /* Set the last byte */
-  file_handle.xattr_pos = 0;
+  file_handle->exportid = pexport->id;
 
   /* Set the len */
-  pfh3->data.data_len = sizeof(file_handle_v3_t);
-
-  /* Set the data */
-  memcpy(pfh3->data.data_val, &file_handle, sizeof(file_handle_v3_t));
+  pfh3->data.data_len = nfs3_sizeof_handle(file_handle); /* re-adjust to as built */
 
   print_fhandle3(COMPONENT_FILEHANDLE, pfh3);
 
@@ -359,18 +360,21 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
                        exportlist_t * pexport)
 {
   fsal_status_t fsal_status;
-  file_handle_v2_t file_handle;
+  file_handle_v2_t *file_handle;
+  struct fsal_handle_desc fh_desc;
 
   print_buff(COMPONENT_FILEHANDLE, (char *)pfsalhandle, sizeof(fsal_handle_t));
 
   /* zero-ification of the buffer to be used as handle */
-  memset(pfh2, 0, NFS2_FHSIZE);
-  memset((caddr_t) &file_handle, 0, sizeof(file_handle_v2_t));
+  memset(pfh2, 0, sizeof(struct alloc_file_handle_v2));
+  file_handle = (file_handle_v2_t *)pfh2;
 
   /* Fill in the fs opaque part */
+  fh_desc.start = (caddr_t) &file_handle->fsopaque;
+  fh_desc.len = sizeof(file_handle->fsopaque);
   fsal_status =
       FSAL_DigestHandle(&pexport->FS_export_context, FSAL_DIGEST_NFSV2, pfsalhandle,
-                        (caddr_t) & file_handle.fsopaque);
+                        &fh_desc);
   if(FSAL_IS_ERROR(fsal_status))
    {
      if( fsal_status.major == ERR_FSAL_TOOSMALL )
@@ -380,14 +384,16 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
                fsal_status.major, fsal_status.minor, __func__ ) ;
     return 0;
    }
+
+  file_handle->fhversion = GANESHA_FH_VERSION;
   /* keep track of the export id */
-  file_handle.exportid = pexport->id;
+  file_handle->exportid = pexport->id;
 
   /* Set the last byte */
-  file_handle.xattr_pos = 0;
+  file_handle->xattr_pos = 0;
 
-  /* Set the data */
-  memcpy((caddr_t) pfh2, &file_handle, sizeof(file_handle_v2_t));
+/*   /\* Set the data *\/ */
+/*   memcpy((caddr_t) pfh2, &file_handle, sizeof(file_handle_v2_t)); */
 
   print_fhandle2(COMPONENT_FILEHANDLE, pfh2);
 
@@ -638,16 +644,67 @@ int nfs4_Is_Fh_Expired(nfs_fh4 * pfh)
  */
 int nfs4_Is_Fh_Invalid(nfs_fh4 * pfh)
 {
-  if(pfh == NULL)
-    return NFS4ERR_BADHANDLE;
+  file_handle_v4_t *pfilehandle4;
 
-  if(pfh->nfs_fh4_len > sizeof(file_handle_v4_t))
+  if(pfh == NULL || pfh->nfs_fh4_val == NULL)
+  {
+    LogMajor(COMPONENT_FILEHANDLE,
+	     "Invalid (NULL) File handle: pfh=0x%p",
+	     pfh);
     return NFS4ERR_BADHANDLE;
+  }
 
-  if(pfh->nfs_fh4_val == NULL)
+  pfilehandle4 = (file_handle_v4_t *) pfh->nfs_fh4_val;
+  if(pfh->nfs_fh4_len > sizeof(struct alloc_file_handle_v4) ||
+     pfh->nfs_fh4_len < nfs4_sizeof_handle(pfilehandle4) ||
+     pfilehandle4->fhversion != GANESHA_FH_VERSION)
+  {
+    LogMajor(COMPONENT_FILEHANDLE,
+	     "Invalid File handle: len=%d, version=%x",
+	     pfh->nfs_fh4_len,
+	     pfilehandle4->fhversion);
     return NFS4ERR_BADHANDLE;
+  }
 
   return NFS4_OK;
+}                               /* nfs4_Is_Fh_Invalid */
+
+/**
+ *
+ * nfs3_Is_Fh_Invalid
+ *
+ * This routine is used to test if a fh is invalid.
+ *
+ * @param pfh [IN] file handle to test.
+ * 
+ * @return NFS4_OK if successfull. 
+ *
+ */
+int nfs3_Is_Fh_Invalid(nfs_fh3 *pfh3)
+{
+  file_handle_v3_t *pfilehandle3;
+
+  if(pfh3 == NULL || pfh3->data.data_val == NULL)
+  {
+    LogMajor(COMPONENT_FILEHANDLE,
+	     "Invalid (NULL) File handle: pfh3=0x%p",
+	     pfh3);
+    return NFS3ERR_BADHANDLE;
+  }
+
+  pfilehandle3 = (file_handle_v3_t *) pfh3->data.data_val;
+  if(pfh3->data.data_len > sizeof(struct alloc_file_handle_v3) ||
+     pfh3->data.data_len < nfs3_sizeof_handle(pfilehandle3) ||
+     pfilehandle3->fhversion != GANESHA_FH_VERSION)
+  {
+    LogMajor(COMPONENT_FILEHANDLE,
+	     "Invalid File handle: len=%d, version=%x",
+	     pfh3->data.data_len,
+	     pfilehandle3->fhversion);
+    return NFS3ERR_BADHANDLE;
+  }
+
+  return NFS3_OK;
 }                               /* nfs4_Is_Fh_Invalid */
 
 /**
