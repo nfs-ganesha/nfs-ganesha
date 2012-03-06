@@ -279,12 +279,10 @@ int nfs3_Mknod(nfs_arg_t * parg,
               if(cache_status == CACHE_INODE_SUCCESS)
                 {
                   /* Build file handle */
-                  if((pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle.data.
-                      data_val = Mem_Alloc_Label(NFS3_FHSIZE, "Filehandle V3 in nfs3_mknod")) == NULL)
-                    {
-                      pres->res_mknod3.status = NFS3ERR_IO;
-                      return NFS_REQ_OK;
-                    }
+                  pres->res_mknod3.status =
+		      nfs3_AllocateFH(&pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle);
+		  if(pres->res_mknod3.status !=  NFS3_OK)
+		    return NFS_REQ_OK;
 
                   if(nfs3_FSALToFhandle
                      (&pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle,
@@ -299,8 +297,6 @@ int nfs3_Mknod(nfs_arg_t * parg,
                     {
                       /* Set Post Op Fh3 structure */
                       pres->res_mknod3.MKNOD3res_u.resok.obj.handle_follows = TRUE;
-                      pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle.data.
-                          data_len = sizeof(file_handle_v3_t);
 
                       /*
                        * Build entry

@@ -93,7 +93,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   bool_t                    ReuseState = FALSE;
   fsal_accessmode_t         mode = 0600;
   nfs_fh4                   newfh4;
-  char                      newfh4_val[NFS4_FHSIZE];
+  struct alloc_file_handle_v4 new_handle;
   state_data_t              candidate_data;
   state_type_t              candidate_type;
   state_t                 * pfile_state = NULL;
@@ -111,7 +111,8 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   LogDebug(COMPONENT_STATE,
            "Entering NFS v4.1 OPEN handler -----------------------------------------------------");
 
-  newfh4.nfs_fh4_val = newfh4_val;
+  newfh4.nfs_fh4_val = (caddr_t) &new_handle;
+  newfh4.nfs_fh4_len = sizeof(struct alloc_file_handle_v4);
 
   fsal_accessflags_t write_access = FSAL_WRITE_ACCESS;
   fsal_accessflags_t read_access = FSAL_READ_ACCESS;
