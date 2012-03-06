@@ -118,6 +118,11 @@ typedef struct
 
 //#define FSAL_GET_EXP_CTX( popctx ) (fsal_export_context_t *)(( (vfsfsal_op_context_t *)popctx)->export_context)
 
+/** @TODO
+ * Danger Will Robinson.
+ * this overlay causes type warnings due to the dereference
+ * of this struct in ExpandHandle and DigestHandle.
+ */
 typedef struct
 {
   vfsfsal_export_context_t *export_context;     /* Must be the first entry in this structure */
