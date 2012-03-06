@@ -415,7 +415,7 @@ unsigned int FSAL_Handle_to_Hash_both(fsal_handle_t * p_handle, unsigned int coo
 fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
                                 fsal_digesttype_t output_type,  /* IN */
                                 fsal_handle_t * in_fsal_handle, /* IN */
-                                caddr_t out_buff        /* OUT */
+                                struct fsal_handle_desc *fh_desc        /* IN/OUT */
     );
 
 /** FSAL_ExpandHandle :
@@ -424,8 +424,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
  */
 fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
                                 fsal_digesttype_t in_type,      /* IN */
-                                caddr_t in_buff,        /* IN */
-                                fsal_handle_t * out_fsal_handle /* OUT */
+                                struct fsal_handle_desc *fh_desc /* IN/OUT */
     );
 
 /**
@@ -1344,13 +1343,12 @@ typedef struct fsal_functions__
    fsal_status_t(*fsal_digesthandle) (fsal_export_context_t * p_expcontext,     /* IN */
                                       fsal_digesttype_t output_type,    /* IN */
                                       fsal_handle_t * p_in_fsal_handle, /* IN */
-                                      caddr_t out_buff /* OUT */ );
+                                      struct fsal_handle_desc *fh_desc /* OUT */ );
 
   /* FSAL_ExpandHandle */
    fsal_status_t(*fsal_expandhandle) (fsal_export_context_t * p_expcontext,     /* IN */
                                       fsal_digesttype_t in_type,        /* IN */
-                                      caddr_t in_buff,  /* IN */
-                                      fsal_handle_t * p_out_fsal_handle /* OUT */ );
+                                      struct fsal_handle_desc *fh_desc  /* IN OUT */ );
 
   /* FSAL_SetDefault_FSAL_parameter */
    fsal_status_t(*fsal_setdefault_fsal_parameter) (fsal_parameter_t * out_parameter);
