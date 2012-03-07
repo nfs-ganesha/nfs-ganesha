@@ -95,6 +95,9 @@ int P_r(rw_lock_t * plock)
   /* no new read lock is granted if writters are waiting or active */
   while(plock->nbw_active > 0 || plock->nbw_waiting > 0)
     pthread_cond_wait(&(plock->condRead), &(plock->mutexProtect));
+  
+  assert(plock->nbw_active == 0);
+  assert(plock->nbw_waiting == 0);
 
   assert(plock->nbw_active==0);
   assert(plock->nbw_waiting==0);
@@ -102,10 +105,11 @@ int P_r(rw_lock_t * plock)
   /* There is no active or waiting writters, readers can go ... */
   plock->nbr_waiting--;
   plock->nbr_active++;
-
-  V(plock->mutexProtect);
+  assert(plock->nbr_waiting >= 0);
 
   print_lock("P_r.end", plock);
+  V(plock->mutexProtect);
+
 
   return 0;
 }                               /* P_r */
@@ -156,6 +160,8 @@ int P_w(rw_lock_t * plock)
   /* nobody must be active obtain exclusive lock */
   while(plock->nbr_active > 0 || plock->nbw_active > 0)
     pthread_cond_wait(&plock->condWrite, &plock->mutexProtect);
+  assert(plock->nbr_active == 0);
+  assert(plock->nbw_active == 0);
 
   assert(plock->nbr_active==0);
   assert(plock->nbw_active==0);
@@ -163,10 +169,11 @@ int P_w(rw_lock_t * plock)
   /* I become active and no more waiting */
   plock->nbw_waiting--;
   plock->nbw_active++;
-
-  V(plock->mutexProtect);
+  assert(plock->nbw_waiting >= 0);
 
   print_lock("P_w.end", plock);
+  V(plock->mutexProtect);
+
   return 0;
 }                               /* P_w */
 
@@ -207,9 +214,9 @@ int V_w(rw_lock_t * plock)
       print_lock("V_w.3", plock);
 
     }
+  print_lock("V_w.end", plock);
   V(plock->mutexProtect);
 
-  print_lock("V_w.end", plock);
 
   return 0;
 }                               /* V_w */
@@ -243,9 +250,9 @@ int rw_lock_downgrade(rw_lock_t * plock)
   /* caller is also a reader, now */
   plock->nbr_active++;
 
+  print_lock("downgrade.end", plock);
   V(plock->mutexProtect);
 
-  print_lock("downgrade.end", plock);
 
   return 0;
 
