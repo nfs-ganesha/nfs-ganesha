@@ -28,7 +28,7 @@
 /* OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF       */
 /* ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                                   */
 /*                                                                              */
-/* @(#)42       1.1.2.121  src/avs/fs/mmfs/ts/util/gpfs.h, mmfs, avs_rhrz 12/20/11 11:00:19 */
+/* @(#)42       1.1.2.122  src/avs/fs/mmfs/ts/util/gpfs.h, mmfs, avs_rhrz 1/23/12 00:54:07 */
 /*
  *  Library calls for GPFS interfaces
  */
@@ -2788,7 +2788,7 @@ gpfs_getfilesetid(const char *pathname,
                   int *idP);
 
 
-/* NAME:        gpfs_clone_snap(), gpfs_clone_dedupe_snap()
+/* NAME:        gpfs_clone_snap()
  *
  * FUNCTION:    Create an immutable clone parent from a source file
  *
@@ -2796,9 +2796,7 @@ gpfs_getfilesetid(const char *pathname,
  *              destPathP:    path to destination file, to be created
  *
  *              If destPathP is NULL, then the source file will be changed
- *              in place into an immutable clone parent. gpfs_clone_dedupe_snap
- *              performs the same operation as gpfs_clone_snap and marks the
- *              immutable clone as a "deduplication" parent.
+ *              in place into an immutable clone parent.
  *
  * Returns:     0       Successful
  *              -1      Failure
@@ -2815,10 +2813,6 @@ gpfs_getfilesetid(const char *pathname,
  */
 int GPFS_API
 gpfs_clone_snap(const char *sourcePathP, const char *destPathP);
-
-int GPFS_API
-gpfs_clone_dedupe_snap(const char *sourcePathP, const char *destPathP);
-
 
 /* NAME:        gpfs_clone_copy()
  *
@@ -2914,198 +2908,6 @@ gpfs_clone_split(gpfs_file_t fileDesc, int ancLimit);
  */
 int GPFS_API
 gpfs_clone_unsnap(gpfs_file_t fileDesc);
-
-/* NAME:        gpfs_clone_fattach()
- *
- * FUNCTION:    Attach a clone to a new parent
- *
- * Input:       childFile:      descriptor for clone child
- *              oldParentFile:  descriptor for the clone child's current parent
- *              newParentFile:  descriptor for the new clone parent
- *
- *              This function assigns a new parent to an existing clone. This 
- *              operation is used by the full-file deduplication facility 
- *              after it has determined that both the current parent and the 
- *              new parent are identical. The function does not alter any data 
- *              blocks assigned to the child. It also does not check that the 
- *              current and new parents are equivalent.
- *
- * Returns:     0       Successful
- *              -1      Failure
- *
- * Errno:       ENOSYS  Function not available
- */
-int GPFS_API
-gpfs_clone_fattach(gpfs_file_t childFile, 
-                   gpfs_file_t oldParentFile, 
-                   gpfs_file_t newParentFile);
-
-
-/* NAME:        gpfs_fhashattr()
- *
- * FUNCTION:    Query and set a file's hash attribute
- *
- * Input:       fileDesc:       descriptor for clone child
- *              compareAttrP:   initial attribute state used for compare-and-swap
- *              newAttrP:       hash attribute to assign
- * Output       oldAttrP:       file's previous hash attribute
- *
- *              This function provides a compare-and-swap of a file's hash
- *              attribute. It can be used both to set and get the hash value
- *              while protecting against concurrent access. compareAttrP, 
- *              newAttrP, and oldAttrP are all required parameters. One method
- *              for querying the current hash of a file is to initialize
- *              a hash_attr_t structure to zero and use it for all the
- *              hash_attr_t arguments. When setting a new hash, newAttrP,  
- *              compareAttrP must first match the file's current hash value.
- *              gpfs_fhashattr does not return an error when compareAttrP does 
- *              not match and newAttrP is not assigned. To detect this condition, 
- *              compare compareAttrP to the output oldAttrP. Here is a 
- *              legitimate comparison expression:
- *
- *                size_t cmpSize = offsetof(hash_attr_t, value) + compareAttrP->length;
- *                bool good = memcmp(compareAttrP, oldAttrP, cmpSize) == 0;
- *
- * Returns:     0       Successful
- *              -1      Failure
- *
- * Errno:       ENOSYS  Function not available
- *              EINVAL  The parent and child are not related, the new parent
- *                      is not a clone snap, or some other inconsistency.
- */
-
-/* The data structures and definitions below are used by the gpfs_fhashattr()
-   function, and define the contents of the "gpfs.HASH" extended attribute. */
-
-/* These definitions specify the type of hashing used. At present, only 
-   SHA-256 is defined. */
-#define GPFS_HASHTYPE_UNDEFINED   0x00 /* the file does not have a hash attribute */
-#define GPFS_HASHTYPE_SHA256      0x01 /* the hash attribute holds a SHA-256 hash */
-
-/* These definitions specify the state of the hash value. */
-#define GPFS_HASHSTATE_UNDEFINED  0x00 /* the file does not have a hash attribute */
-#define GPFS_HASHSTATE_NULL       0x01 /* the hash value is not assigned */
-#define GPFS_HASHSTATE_GENERATING 0x02 /* the hash value is being generated */
-#define GPFS_HASHSTATE_ASSIGNED   0x03 /* the hash value is assigned */
-
-/* Additional state information encoded as bit flags. */
-#define GPFS_HASHFLAG_VALID       0x01 /* the file has not been modified */
-
-/* Hash length constants. */
-#define GPFS_HASHLENGTH_UNDEFINED 0x00
-#define GPFS_HASHLENGTH_SHA256    0x20
-#define GPFS_HASHLENGTH_MAX       0x40
-
-/* Common extended attribute header for hash entries. */
-typedef struct gpfs_hashattr_t
-{
-  unsigned char flags;        /* see GPFS_HASHFLAG_... above */
-  unsigned char state;        /* see GPFS_HASHSTATE_... above */
-  unsigned char type;         /* see GPFS_HASHTYPE_... above */
-  unsigned char length;       /* length of the hash value */
-  unsigned char value[GPFS_HASHLENGTH_MAX]; /* binary encoding of hash value */
-} gpfs_hashattr_t;
-
-int GPFS_API
-gpfs_fhashattr(gpfs_file_t fileDesc,
-               const gpfs_hashattr_t *compareAttrP, 
-               const gpfs_hashattr_t *newAttrP,
-               gpfs_hashattr_t *oldAttrP);
-
-
-/* NAME:        gpfs_flink()
- *
- * FUNCTION:    creates a new link to an existing file using file descriptors
- *
- * Input:       dirDesc:    directory descriptor that will hold new name
- *              name:       new name
- *              fileDesc:   descriptor of file getting the new name
- *              flags:      options (must be zero)
- *
- *              This function provide a standard "link" operation using
- *              descriptors for the directory and file. The descriptors 
- *              protect against race conditions in the presence of concurrent
- *              name updates.
- *
- * Returns:     0       Successful
- *              -1      Failure
- *
- * Errno:       ENOSYS  Function not available
- */
-
-#define GPFS_LNFLAG_NONE            0x0000 /* No link options */
-
-int GPFS_API
-gpfs_flink(gpfs_file_t dirDesc,
-           const char *name,
-           gpfs_file_t fileDesc,
-           int flags);
-
-
-/* NAME:        gpfs_funlink()
- *
- * FUNCTION:    deletes a link using file descriptors
- *
- * Input:       dirDesc:    directory descriptor containing name
- *              name:       name to remove
- *              fileDesc:   descriptor of file referred to by name
- *              flags:      options (must be zero)
- *
- *              This function provide a standard "unlink" operation using
- *              descriptors for the directory and file. The descriptors 
- *              protect against race conditions in the presence of concurrent
- *              name updates.
- *
- * Returns:     0       Successful
- *              -1      Failure
- *
- * Errno:       ENOSYS  Function not available
- */
-
-int GPFS_API
-gpfs_funlink(gpfs_file_t dirDesc,
-             const char *name,
-             gpfs_file_t fileDesc,
-             int flags);
-
-
-/* NAME:        gpfs_fclean_weaklink()
- *
- * FUNCTION:    deletes a broken weaklink
- *
- * Input:       dirDesc:    descriptor of the directory containing name
- *              name:       name of the broken link
- *              flags:      options (must be zero)
- *
- *              This function provide a standard "unlink" operation using
- *              descriptors for the directory and file. The descriptors 
- *              protect against race conditions in the presence of concurrent
- *              name updates.
- *
- * Returns:     0       Successful
- *              -1      Failure
- *
- * Errno:       ENOSYS  Function not available
- *              EEXIST  The link is not broken (the file still exists)
- *              ENOENT  Link name does not exist
- */
-
-int GPFS_API
-gpfs_fclean_weaklink(gpfs_file_t dirDesc,
-                     const char *name,
-                     int flags);
-
-/* NAME:        GPFS_WEAKLINKS_DIRECTORY_NAME_PREFIX
- *
- * DESCRIPTION: To create a weaklinks directory (weakdir), create a new
- *              directory using a name that starts with this string. The 
- *              weakdir may subsequently be renamed. Weakdirs cannot be
- *              converted to normal directories and normal directories cannot
- *              be converted to weakdirs. Any subdiretory created within a 
- *              weakdir will also be a weakdir.
- */
-
-#define GPFS_WEAKLINKS_DIRECTORY_NAME_PREFIX "{4b67f534-ffab-452e-b5de-271705b3336d}"
 
 /* NAME:       gpfs_get_fset_masks()
  *

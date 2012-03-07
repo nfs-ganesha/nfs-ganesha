@@ -28,7 +28,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                                   
  *                                                                              
  */
-/* @(#)51       1.37  src/avs/fs/mmfs/ts/kernext/gpfs_fcntl.h, mmfs, avs_rhrz 8/8/11 12:46:51 */
+/* @(#)51       1.38  src/avs/fs/mmfs/ts/kernext/gpfs_fcntl.h, mmfs, avs_rhrz 1/27/12 09:58:58 */
 
 /*
  * GPFS interface definitions for supporting I/O hints and directives.
@@ -917,7 +917,7 @@ typedef struct {
   char buffer[0];
                                /* buffer for returned list of names
                                   Each attribute name is prefixed with
-                                  a 1-byte name length that include the
+                                  a 1-byte name length that includes the
                                   trailing null. The next attribute name
                                   follows immediately in the buffer (and is
                                   prefixed with its own length). Following
@@ -927,9 +927,18 @@ typedef struct {
                                   
                                   \7abcdef\0\4ABC\0\10user.name\0\0
                                   
-                                  The actual length of the buffer may be
-                                  more or less than the 
-                                  GPFS_FCNTL_XATTR_MAX_NAMELEN. */
+                                  The actual length of the buffer required 
+                                  depends on the number of attributes set on
+                                  the file and the length of each attribute name.
+                                  If the buffer provided is too small for all
+                                  of the returned names, the errReasonCode
+                                  will be set to GPFS_FCNTL_ERR_BUFFER_TOO_SMALL
+                                  and bufferLen will be set to the minimum
+                                  size buffer required to list all attributes.
+                                  An initial buffer length of 0 may be used to
+                                  query the attributes and determine the 
+                                  correct buffer size for this file. */
+
 } gpfsListXAttr_t;
 
 
