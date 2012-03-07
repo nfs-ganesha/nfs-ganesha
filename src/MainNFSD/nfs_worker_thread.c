@@ -1277,16 +1277,21 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
   LogFullDebug(COMPONENT_DISPATCH,
                "nfs_rpc_execute about to call nfs_export_check_access");
-  export_check_result = nfs_export_check_access(&pworker_data->hostaddr,
-                                                ptr_req,
-                                                pexport,
-                                                nfs_param.core_param.program[P_NFS],
-                                                nfs_param.core_param.program[P_MNT],
-                                                pworker_data->ht_ip_stats,
-                                                &pworker_data->ip_stats_pool,
-                                                &related_client,
-                                                &user_credentials,
-                                                (pworker_data->pfuncdesc->dispatch_behaviour & MAKES_WRITE) == MAKES_WRITE);
+
+  if( ptr_req->rq_prog != nfs_param.core_param.program[P_MNT] )
+    export_check_result = nfs_export_check_access(&pworker_data->hostaddr,
+                                                  ptr_req,
+                                                  pexport,
+                                                  nfs_param.core_param.program[P_NFS],
+                                                  nfs_param.core_param.program[P_MNT],
+                                                  pworker_data->ht_ip_stats,
+                                                  &pworker_data->ip_stats_pool,
+                                                  &related_client,
+                                                  &user_credentials,
+                                                  (pworker_data->pfuncdesc->dispatch_behaviour & MAKES_WRITE) == MAKES_WRITE);
+  else
+   export_check_result = EXPORT_PERMISSION_GRANTED ;
+
   if (export_check_result == EXPORT_PERMISSION_DENIED)
     {
       char addrbuf[SOCK_NAME_MAX];
