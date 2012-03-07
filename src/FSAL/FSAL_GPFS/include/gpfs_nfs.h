@@ -1,7 +1,7 @@
 /* IBM_PROLOG_BEGIN_TAG                                                   */
 /* This is an automatically generated prolog.                             */
 /*                                                                        */
-/* avs_rhrz src/avs/fs/mmfs/ts/util/gpfs_nfs.h 1.22                       */
+/* avs_rhrz src/avs/fs/mmfs/ts/util/gpfs_nfs.h 1.23                       */
 /*                                                                        */
 /* Licensed Materials - Property of IBM                                   */
 /*                                                                        */
@@ -44,7 +44,7 @@
 /* OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF       */
 /* ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                                   */
 /*                                                                              */
-/* @(#)83       1.22  src/avs/fs/mmfs/ts/util/gpfs_nfs.h, mmfs, avs_rhrz 1/13/12 17:05:09 */
+/* @(#)83       1.23  src/avs/fs/mmfs/ts/util/gpfs_nfs.h, mmfs, avs_rhrz 1/19/12 12:19:24 */
 /*
  *  Library calls for GPFS interfaces
  */
@@ -59,6 +59,8 @@ extern "C" {
 struct flock
 {};
 #endif
+
+//#define GPFS_PRINTK
 
 /* GANESHA common information */
 
@@ -95,7 +97,7 @@ struct xstat_cred_t
 {
   u_int32_t principal;          /* user id */
   u_int32_t group;              /* primary group id */
-  uint16_t num_groups;         /* number secondary groups for this user */
+  u_int16_t num_groups;         /* number secondary groups for this user */
 #define XSTAT_CRED_NGROUPS 32
   u_int32_t eGroups[XSTAT_CRED_NGROUPS];/* array of secondary groups */
 };
@@ -110,12 +112,8 @@ struct gpfs_file_handle
 {
   u_int32_t handle_size;
   u_int32_t handle_type;
-#if 0 //???
   u_int16_t handle_version;
   u_int16_t handle_key_size;
-#else
-  u_int32_t handle_key_size;
-#endif
   /* file identifier */
   unsigned char f_handle[OPENHANDLE_HANDLE_LEN];
 };
@@ -220,14 +218,14 @@ enum pnfs_iomode {
 	IOMODE_ANY = 3,
 };
 #endif
-/*
+
 enum stable_nfs
 {
-  UNSTABLE4 = 0,
-  DATA_SYNC4 = 1,
-  FILE_SYNC4 = 2
+  x_UNSTABLE4 = 0,
+  x_DATA_SYNC4 = 1,
+  x_FILE_SYNC4 = 2
 };
-*/
+
 struct pnfstime4 {
 	u_int64_t	seconds;
 	u_int32_t	nseconds;
