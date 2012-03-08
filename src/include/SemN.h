@@ -16,6 +16,7 @@
 #define TOOLS_H
 
 #include <pthread.h>
+#include <semaphore.h>
 
 /*
  *  Synchronization features
@@ -23,15 +24,11 @@
 
 typedef struct semaphore
 {
-
-  pthread_mutex_t mutex;
-  pthread_cond_t cond;
-  int count;
-
+  sem_t semaphore;
 } semaphore_t;
 
 /** Initializes a semaphore. */
-int semaphore_init(semaphore_t * sem, int value);
+int semaphore_init(semaphore_t * sem, unsigned int value);
 /** Destroys a semaphore. */
 int semaphore_destroy(semaphore_t * sem);
 

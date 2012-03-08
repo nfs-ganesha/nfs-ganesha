@@ -16,10 +16,10 @@ void *sem_me(void *arg)
 {
         int me = (int)arg;
         semaphore_P(&x);
-        printf("%d: Got it, count is %d\n", me, x.count);
+        printf("%d: Got it %d\n", me);
         sleep(1);
         semaphore_V(&x);
-        printf("%d: dropped it, count is %d\n", me, x.count);
+        printf("%d: dropped it\n", me);
 }
 
 int main()
