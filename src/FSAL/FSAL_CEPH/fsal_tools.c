@@ -335,8 +335,8 @@ fsal_status_t CEPHFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_p
   if(out_parameter == NULL)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  strcpy(((cephfs_specific_initinfo_t*)
-          out_parameter->fs_specific_info.data)->cephserver, "localhost");
+  strcpy(&((cephfs_specific_initinfo_t)
+           out_parameter->fs_specific_info).cephserver[0], "localhost");
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -703,8 +703,8 @@ fsal_status_t CEPHFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
 
       if(!STRCMP(key_name, "cephserver"))
         {
-          strncpy(((cephfs_specific_initinfo_t*)
-                   out_parameter->fs_specific_info.data)->cephserver,
+          strncpy(&((cephfs_specific_initinfo_t)
+                    out_parameter->fs_specific_info).cephserver[0],
                   key_value, FSAL_MAX_NAME_LEN);
         }
       else

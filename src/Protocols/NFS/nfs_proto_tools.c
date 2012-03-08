@@ -725,7 +725,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                            fattr4 * Fattr,
                            compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap)
 {
-  fattr4_type file_type;
+  fattr4_type file_type = 0;
   fattr4_link_support link_support;
   fattr4_symlink_support symlink_support;
   fattr4_fh_expire_type expire_type;

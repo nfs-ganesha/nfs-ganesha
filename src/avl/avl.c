@@ -265,14 +265,16 @@ struct avltree_node *avltree_lookup(const struct avltree_node *key,
 	struct avltree_node *parent, *unbalanced;
 	int is_left;
 
-	return do_lookup(key, tree, &parent, &unbalanced, &is_left);
+        return do_lookup(key, tree, &parent, &unbalanced, &is_left);
 }
 
 struct avltree_node *avltree_inf(const struct avltree_node *key,
-				 const struct avltree *tree,
-				 struct avltree_node **glb)
+                                 const struct avltree *tree,
+                                 struct avltree_node **glb)
 {
-    struct avltree_node *parent, *lb, *unbalanced;
+    struct avltree_node *parent __attribute__((unused));
+    struct avltree_node *lb;
+    struct avltree_node *unbalanced __attribute__((unused));
     struct avltree_node *node = tree->root;
     int is_left = 0;
     int res = 0;
@@ -283,18 +285,18 @@ struct avltree_node *avltree_inf(const struct avltree_node *key,
     is_left = 0;
 
     while (node) {
-	if (get_balance(node) != 0)
-	    unbalanced = node;
-	res = tree->cmp_fn(node, key);
-	if (res == 0)
-	    return node;
-	else if (res < 1) /* lb is less than key */
-	    lb = node;
-	parent = node;
-	if ((is_left = res > 0))
-	    node = node->left;
-	else
-	    node = node->right;
+        if (get_balance(node) != 0)
+            unbalanced = node;
+        res = tree->cmp_fn(node, key);
+        if (res == 0)
+            return node;
+        else if (res < 1) /* lb is less than key */
+            lb = node;
+        parent = node;
+        if ((is_left = res > 0))
+            node = node->left;
+        else
+            node = node->right;
     } /* while */
 
     /* pass up the glb */

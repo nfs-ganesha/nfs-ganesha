@@ -280,7 +280,7 @@ static inline void _LRU_remove_entry(LRU_list_t * plru, LRU_entry_t * const pent
 int LRU_pop_entry (LRU_list_t * plru, LRU_entry_t  *out_entry)
 {
     LRU_entry_t * const pentry = plru->LRU;
-    void  *pdata;
+    void  *pdata __attribute__((unused));
 
 
     if (plru->nb_entry == 0) {

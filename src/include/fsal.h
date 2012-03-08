@@ -941,8 +941,8 @@ fsal_status_t FSAL_set_quota(fsal_path_t * pfsal_path,  /* IN */
                              fsal_quota_t * presquot);  /* OUT */
 
 fsal_status_t FSAL_check_quota( char * path,  /* IN */
-				fsal_quota_type_t  quota_type,
-				fsal_uid_t fsal_uid);      /* IN */
+                                fsal_quota_type_t  quota_type,
+                                fsal_uid_t fsal_uid);      /* IN */
 
 
 

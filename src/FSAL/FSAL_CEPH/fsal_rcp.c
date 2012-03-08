@@ -107,8 +107,8 @@ fsal_status_t CEPHFSAL_rcp(fsal_handle_t * filehandle,
 
   int eof = FALSE;
 
-  ssize_t local_size;
-  fsal_size_t fs_size;
+  ssize_t local_size = 0;
+  fsal_size_t fs_size = 0;
 
   /* sanity checks. */
 
@@ -306,7 +306,7 @@ fsal_status_t CEPHFSAL_rcp(fsal_handle_t * filehandle,
           if(to_fs)             /* to FSAL filesystem */
             {
 
-              st=CEPHFSAL_write(&fs_fd, NULL, local_size, IObuffer, &fs_size);
+              st = CEPHFSAL_write(&fs_fd, NULL, local_size, IObuffer, &fs_size);
 
               if(FSAL_IS_ERROR(st))
                 break;          /* exit loop */
