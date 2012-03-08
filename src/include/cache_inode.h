@@ -506,12 +506,6 @@ cache_inode_status_t cache_inode_clean_entry(cache_entry_t * pentry);
 
 int cache_inode_compare_key_fsal(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
-int cache_inode_fsaldata_2_key(hash_buffer_t * pkey, cache_inode_fsal_data_t * pfsdata,
-                               cache_inode_client_t * pclient);
-
-void cache_inode_release_fsaldata_key(hash_buffer_t * pkey,
-                                      cache_inode_client_t * pclient);
-
 void cache_inode_release_symlink(cache_entry_t * pentry,
                                  struct prealloc_pool *pool);
 
