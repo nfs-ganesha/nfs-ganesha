@@ -86,7 +86,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
   clientid4 clientid;
   nfs_client_id_t * nfs_clientid;
   nfs_client_id_t   new_nfs_clientid;
-  nfs_worker_data_t *pworker = NULL;
+  nfs_worker_data_t *pworker __attribute__((unused)) = NULL;
 
   pworker = (nfs_worker_data_t *) data->pclient->pworker;
 

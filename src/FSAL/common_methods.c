@@ -524,7 +524,7 @@ fsal_status_t COMMON_set_quota_noquota(fsal_path_t * pfsal_path,  /* IN */
  * \param  quota_type
  *        type of quota to be checked (inodes or blocks       
  * \param  fsal_uid
- * 	  uid for the user whose quota are requested
+ *        uid for the user whose quota are requested
  * \return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.

@@ -240,7 +240,7 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op,
                state_t *candidate_state
                     = glist_entry(glist,
                                   state_t,
-                                  owner_states);
+                                  state_owner_list);
                if (candidate_state->state_type != STATE_TYPE_LAYOUT) {
                     continue;
                } else {

@@ -110,7 +110,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   bool_t                    ReuseState = FALSE;
   fsal_accessmode_t         mode = 0600;
   nfs_client_id_t         * nfs_clientid;
-  nfs_worker_data_t       * pworker = NULL;
+  nfs_worker_data_t       * pworker __attribute__((unused)) = NULL;
   state_t                 * pfile_state = NULL;
   state_t                 * pstate_iterate;
   state_nfs4_owner_name_t   owner_name;

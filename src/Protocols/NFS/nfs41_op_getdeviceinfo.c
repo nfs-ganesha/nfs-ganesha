@@ -116,14 +116,19 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
      resp->resop = NFS4_OP_GETDEVICEINFO;
 
 #ifdef _PNFS_MDS
-     /* Disassemble and fix byte order of the deviceid halves */
 
-     deviceid.export_id =
-          nfs_ntohl64(*(uint64_t*)arg_GETDEVICEINFO4.gdia_device_id);
+     /* Disassemble and fix byte order of the deviceid halves.  Do
+        memcpy then byte swap to avoid potential problems with
+        unaligned/misaligned access. */
 
-     deviceid.devid =
-          nfs_ntohl64(*(uint64_t*)(arg_GETDEVICEINFO4.gdia_device_id
-                                   + sizeof(uint64_t)));
+     memcpy(&deviceid.export_id, arg_GETDEVICEINFO4.gdia_device_id,
+            sizeof(uint64_t));
+     deviceid.export_id = nfs_ntohl64(deviceid.export_id);
+
+     memcpy(&deviceid.devid,
+            arg_GETDEVICEINFO4.gdia_device_id + sizeof(uint64_t),
+            sizeof(uint64_t));
+     deviceid.devid = nfs_ntohl64(deviceid.export_id);
 
      /* Check that we have space */
 
