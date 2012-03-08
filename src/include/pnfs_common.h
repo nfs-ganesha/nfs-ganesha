@@ -47,7 +47,7 @@
 #endif
 
 #ifndef true
-#define true 1 
+#define true 1
 #endif
 
 /******************************************************
@@ -55,7 +55,7 @@
  ******************************************************/
 
 /**
- * \brief Represent a layout segment
+ * @brief Represent a layout segment
  *
  * This structure not only represents segments granted by the FSAL or
  * being committed or returned, but also selectors as used in
@@ -72,7 +72,7 @@ struct pnfs_segment {
 };
 
 /**
- * \brief FSAL view of the NFSv4.1 deviceid4.
+ * @brief FSAL view of the NFSv4.1 deviceid4.
  */
 
 struct pnfs_deviceid {
@@ -91,16 +91,16 @@ struct pnfs_deviceid {
  ******************************************************/
 
 /**
- * \brief Test for overlap and compatible io_mode of segments
+ * @brief Test for overlap and compatible io_mode of segments
  *
- * \param segment1 [IN] A layout segment
- * \param segmenta [IN] A layout segment
+ * @param segment1 [IN] A layout segment
+ * @param segmenta [IN] A layout segment
  *
- * \return True if there is one or more byte contained in both both
+ * @return True if there is one or more byte contained in both both
  *         segments and the io_modes are compatible.
  */
-static inline bool_t pnfs_segments_overlap( struct pnfs_segment segment1,
-                                            struct pnfs_segment segmenta)
+static inline bool_t pnfs_segments_overlap(struct pnfs_segment segment1,
+                                           struct pnfs_segment segmenta)
 {
      if (!(segment1.io_mode & segmenta.io_mode)) {
           return FALSE;
@@ -129,21 +129,24 @@ static inline bool_t pnfs_segments_overlap( struct pnfs_segment segment1,
 }
 
 /**
- * \brief Check if one segment contains the other
+ * @brief Check if one segment contains the other
+ *
+ * This function checks whether segment2 is subsegment (not
+ * necessarily proper) of segment1.
  *
  * @param segment1 [IN] The putative supersegment
  * @param segment2 [IN] The putative subsugment
  *
  * @return True if segment2 is completely contained within segment1
  */
-static inline bool_t pnfs_segment_contains( struct pnfs_segment segment1,
-                                            struct pnfs_segment segment2)
+static inline bool_t pnfs_segment_contains(struct pnfs_segment segment1,
+                                           struct pnfs_segment segment2)
 {
      if (!(segment1.io_mode & segment2.io_mode)) {
           return FALSE;
      } else if (segment1.length == 0) {
           return FALSE;
-     } else if (segment1.offset < segment2.offset) {
+     } else if (segment1.offset <= segment2.offset) {
           if (segment1.length == NFS4_UINT64_MAX) {
                return TRUE;
           } else if (segment2.length == NFS4_UINT64_MAX) {
@@ -230,14 +233,6 @@ pnfs_segment_difference(struct pnfs_segment minuend,
 /******************************************************
  *    Common functions for every pNFS implementation
  ******************************************************/
-
-void COMMON_pnfs_layoutget_Free( LAYOUTGET4res * pres ) ;
-void COMMON_pnfs_layoutcommit_Free( LAYOUTCOMMIT4res * pres ) ;
-void COMMON_pnfs_layoutreturn_Free( LAYOUTRETURN4res * pres ) ;
-
-void COMMON_pnfs_getdevicelist_Free(  GETDEVICELIST4res  * pres ) ;
-void COMMON_pnfs_getdeviceinfo_Free(  GETDEVICEINFO4res  * pres ) ;
-
 
 /******************************************************
  *            Convenience XDR functions
