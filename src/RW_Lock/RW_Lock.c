@@ -44,6 +44,7 @@
 #include "RW_Lock.h"
 #include <execinfo.h>
 #include <malloc.h>
+#include <assert.h>
 
 /*
  * Debugging function
@@ -92,8 +93,11 @@ int P_r(rw_lock_t * plock)
   plock->nbr_waiting++;
 
   /* no new read lock is granted if writters are waiting or active */
-  if(plock->nbw_active > 0 || plock->nbw_waiting > 0)
+  while(plock->nbw_active > 0 || plock->nbw_waiting > 0)
     pthread_cond_wait(&(plock->condRead), &(plock->mutexProtect));
+
+  assert(plock->nbw_active==0);
+  assert(plock->nbw_waiting==0);
 
   /* There is no active or waiting writters, readers can go ... */
   plock->nbr_waiting--;
@@ -152,6 +156,9 @@ int P_w(rw_lock_t * plock)
   /* nobody must be active obtain exclusive lock */
   while(plock->nbr_active > 0 || plock->nbw_active > 0)
     pthread_cond_wait(&plock->condWrite, &plock->mutexProtect);
+
+  assert(plock->nbr_active==0);
+  assert(plock->nbw_active==0);
 
   /* I become active and no more waiting */
   plock->nbw_waiting--;
