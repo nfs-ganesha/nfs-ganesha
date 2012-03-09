@@ -127,7 +127,7 @@ char * FSAL_fsalid2name( int fsalid ) ;
 #define FSAL_SET_COOKIE_BEGINNING( cookie ) memset( (char *)&cookie, 0, sizeof( fsal_cookie_t ) )
 
 /** This macros manage conversion between directory offset and cookies
- *  BEWARE : this will probably bug with FSAL_SNMP and FSAL_CEPH 
+ *  BEWARE : this will probably bug with FSAL_SNMP
  */
 #define FSAL_SET_COOKIE_BY_OFFSET( __cookie, __offset )  \
    memcpy( (char *)&(__cookie.data), (char *)&__offset, sizeof( uint64_t ) ) 
@@ -940,7 +940,7 @@ fsal_status_t FSAL_set_quota(fsal_path_t * pfsal_path,  /* IN */
                              fsal_quota_t * pquot,      /* IN */
                              fsal_quota_t * presquot);  /* OUT */
 
-fsal_status_t FSAL_check_quota( char * path,  /* IN */
+fsal_status_t FSAL_check_quota( fsal_path_t * path,  /* IN */
                                 fsal_quota_type_t  quota_type,
                                 fsal_uid_t fsal_uid);      /* IN */
 

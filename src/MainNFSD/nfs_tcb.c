@@ -129,7 +129,6 @@ int tcb_new(nfs_tcb_t *element, char *name)
 void wait_for_threads_to_exit()
 {
   struct timespec timeout;
-  int rc;
   int t1, t2;
   unsigned int original_existing = num_existing_threads;
 
@@ -142,7 +141,7 @@ void wait_for_threads_to_exit()
           num_existing_threads);
       timeout.tv_sec  = time(NULL) + 1;
       timeout.tv_nsec = 0;
-      rc = pthread_cond_timedwait(&active_threads_cond, &gtcb_mutex, &timeout);
+      pthread_cond_timedwait(&active_threads_cond, &gtcb_mutex, &timeout);
     }
   t2 = time(NULL);
   LogInfo(COMPONENT_THREAD,
@@ -153,7 +152,6 @@ void wait_for_threads_to_exit()
 pause_rc _wait_for_threads_to_pause()
 {
   struct timespec timeout;
-  int rc;
   int t1, t2;
   LogDebug(COMPONENT_THREAD, "Waiting for thread threads to sleep");
 
@@ -175,7 +173,7 @@ pause_rc _wait_for_threads_to_pause()
 
       timeout.tv_sec  = time(NULL) + 1;
       timeout.tv_nsec = 0;
-      rc = pthread_cond_timedwait(&active_threads_cond, &gtcb_mutex, &timeout);
+      pthread_cond_timedwait(&active_threads_cond, &gtcb_mutex, &timeout);
     }
   t2 = time(NULL);
   LogInfo(COMPONENT_THREAD, "%u threads asleep out of %u after %d seconds",
@@ -201,7 +199,6 @@ pause_rc wait_for_threads_to_pause()
 static pause_rc _wait_for_threads_to_awaken()
 {
   struct timespec timeout;
-  int rc;
   int t1, t2;
 
   LogDebug(COMPONENT_THREAD, "Waiting for threads to awaken. active=%u, existing=%u",
@@ -233,7 +230,7 @@ static pause_rc _wait_for_threads_to_awaken()
 
       timeout.tv_sec  = time(NULL) + 10;
       timeout.tv_nsec = 0;
-      rc = pthread_cond_timedwait(&active_threads_cond, &gtcb_mutex, &timeout);
+      pthread_cond_timedwait(&active_threads_cond, &gtcb_mutex, &timeout);
     }
   t2 = time(NULL);
   LogInfo(COMPONENT_THREAD,
