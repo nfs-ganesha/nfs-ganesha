@@ -6,8 +6,8 @@ The selection of the FSAL to be compiled with is done at './configure' time, via
 Compiling NFS-GANESHA with POSIX FSAL:
 	./configure --with-fsal=POSIX && make && make install
 
-Compiling NFS-GANESHA with SNMP FSAL:
-	./configure --with-fsal=SNMP && make && make install
+Compiling NFS-GANESHA with LUSTRE FSAL:
+	./configure --with-fsal=LUSTRE && make && make install
 
 Compiling NFS-GANESHA with PROXY FSAL
 	./configure --with-fsal=PROXY && make && make install
