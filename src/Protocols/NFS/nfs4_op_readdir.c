@@ -321,9 +321,12 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
               goto out;
             }
 
-          /* If file handle is asked in the attributes, provide it */
-          if(arg_READDIR4.attr_request.bitmap4_val != NULL
-             && (arg_READDIR4.attr_request.bitmap4_val[0] & FATTR4_FILEHANDLE))
+          /*  The following old code with & on FATTR4_FILEHANDLE is bogus. 
+           *  Always provide the handle. Keeps us out of trouble
+           *
+           *  && (arg_READDIR4.attr_request.bitmap4_val[0] & FATTR4_FILEHANDLE))
+           */
+          if(arg_READDIR4.attr_request.bitmap4_val != NULL)
             {
               if((entry_FSALhandle =
                   cache_inode_get_fsal_handle(pentry,
