@@ -98,11 +98,13 @@ typedef struct fs_specific_initinfo__
 
 
 typedef union {
-  loff_t cookie;
+  struct {
+    loff_t cookie;
+  } data;
   char pad[FSAL_COOKIE_T_SIZE];
 } cephfsal_cookie_t;
 
-#define COOKIE(c) ((c).cookie)
+#define COOKIE(c) ((c).data.cookie)
 
 typedef void *cephfsal_lockdesc_t;
 

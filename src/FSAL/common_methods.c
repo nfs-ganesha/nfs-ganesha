@@ -531,7 +531,7 @@ fsal_status_t COMMON_set_quota_noquota(fsal_path_t * pfsal_path,  /* IN */
  */
 
 
-fsal_status_t COMMON_check_quota( char              * pfsal_path,  /* IN */
+fsal_status_t COMMON_check_quota( fsal_path_t       * pfsal_path,  /* IN */
                                   fsal_quota_type_t   quota_type,
                                   fsal_uid_t          fsal_uid)      /* IN */
 {
