@@ -2154,6 +2154,9 @@ void *worker_thread(void *IndexArg)
        * present there may be no effect. */
       LogInfo(COMPONENT_DISPATCH, "Signaling completion of request");
 
+      /* Zero out worker timer_start to indicate done processing */
+      memset(&pmydata->timer_start, 0, sizeof(struct timeval));
+
       /* Free the req by releasing the entry */
       LogFullDebug(COMPONENT_DISPATCH,
                    "Invalidating processed entry");
