@@ -213,6 +213,7 @@ fsal_status_t process_event(fsal_up_event_t *event, fsal_up_event_functions_t *e
     default:
       LogDebug(COMPONENT_FSAL_UP, "Unknown FSAL UP event type found: %d",
               event->event_type);
+      ReturnCode(ERR_FSAL_NO_ERROR, 0);
     }
 
   if (FSAL_IS_ERROR(status))
