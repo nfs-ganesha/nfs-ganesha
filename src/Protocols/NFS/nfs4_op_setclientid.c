@@ -267,7 +267,9 @@ retry:
       nfs_clientid->clientid = clientid;
       nfs_clientid->last_renew = time(NULL);
       nfs_clientid->credential = data->credential;
+#ifdef _USE_NFS4_1
       nfs_clientid->create_session_sequence = 0;
+#endif
       if(pthread_mutex_init(&nfs_clientid->clientid_mutex, NULL) == -1)
       {
         res_SETCLIENTID4.status = NFS4ERR_SERVERFAULT;
