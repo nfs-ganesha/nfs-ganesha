@@ -88,7 +88,11 @@ restart:
                                  * little hack: only want to reap v4 clients
                                  * 4.1 initializess this field to '1'
                                  */
+#ifdef _USE_NFS4_1
                                 v4 = (clientp->create_session_sequence == 0);
+#else
+				v4 = 1;
+#endif
                                 if (clientp->confirmed != EXPIRED_CLIENT_ID &&
                                     nfs4_is_lease_expired(clientp) && v4) {
                                         V_w(&(ht->array_lock[i]));
