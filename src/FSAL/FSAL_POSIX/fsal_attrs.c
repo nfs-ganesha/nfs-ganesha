@@ -204,7 +204,7 @@ fsal_status_t POSIXFSAL_setattrs(fsal_handle_t * filehandle,     /* IN */
       else
         for(i = 0; i < p_context->credential.nbgroups; i++)
           {
-            if(in_grp = (attrs.group == p_context->credential.alt_groups[i]))
+            if((in_grp = (attrs.group == p_context->credential.alt_groups[i])))
               break;
           }
       if(p_context->credential.user != 0 && !in_grp)

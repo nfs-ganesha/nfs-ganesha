@@ -22,8 +22,6 @@ typedef struct cache_path_entry__
 
 #define CACHE_PATH_SIZE 509     /* prime near 512 */
 
-static cache_path_entry_t cache_array[CACHE_PATH_SIZE];
-
 int fsal_posixdb_cache_init()
 {
 #ifdef _ENABLE_CACHE_PATH
@@ -43,11 +41,6 @@ int fsal_posixdb_cache_init()
 
 #endif
   return 0;
-}
-
-static unsigned int hash_cache_path(fsal_u64_t id, int ts)
-{
-  return (1999 * id + 3 * ts + 5) % CACHE_PATH_SIZE;
 }
 
 /* @todo pour augmenter les performances d'acces au cache,

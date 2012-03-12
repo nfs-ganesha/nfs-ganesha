@@ -46,10 +46,12 @@ my_bool my_init(void);
 fsal_status_t POSIXFSAL_Init(fsal_parameter_t * init_info       /* IN */
     )
 {
+#if defined(_USE_PGSQL)
   posixfs_specific_initinfo_t * posix_init
     = (posixfs_specific_initinfo_t *)&init_info->fs_specific_info;
+  int rc = 0 ;
+#endif
   fsal_status_t status;
-  int rc;
 
   /* sanity check.  */
   if(!init_info)

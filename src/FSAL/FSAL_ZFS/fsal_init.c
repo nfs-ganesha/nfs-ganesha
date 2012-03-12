@@ -28,7 +28,7 @@ extern snapshot_t *p_snapshots;
 extern pthread_rwlock_t vfs_lock;
 pthread_t snapshot_thread;
 
-static void *SnapshotThread(void *);
+__attribute(( unused )) static void *SnapshotThread(void *);
 
 size_t stack_size = 0;
 
@@ -148,7 +148,7 @@ fsal_status_t ZFSFSAL_Init(fsal_parameter_t * init_info    /* IN */
     LogDebug(COMPONENT_FSAL, "FSAL INIT: Creating the auto-snapshot thread");
     zfsfs_specific_initinfo_t *fs_configuration = malloc(sizeof(*fs_configuration));
     *fs_configuration = *spec_info;
-#if 0
+#if 0 
     if(pthread_create(&snapshot_thread, NULL, SnapshotThread, fs_configuration))
     {
       snapshot_thread = (pthread_t)NULL;
@@ -192,7 +192,7 @@ fsal_status_t ZFSFSAL_terminate()
 }
 
 /* Take a snapshot */
-static libzfswrap_vfs_t *TakeSnapshotAndMount(const char *psz_zpool, const char *psz_prefix, char **ppsz_name)
+__attribute(( unused )) static libzfswrap_vfs_t *TakeSnapshotAndMount(const char *psz_zpool, const char *psz_prefix, char **ppsz_name)
 {
     char psz_buffer[FSAL_MAX_NAME_LEN];
     const char *psz_error;
@@ -212,7 +212,7 @@ static libzfswrap_vfs_t *TakeSnapshotAndMount(const char *psz_zpool, const char 
     return libzfswrap_mount(psz_buffer, psz_buffer, "");
 }
 
-static void AddSnapshot(libzfswrap_vfs_t *p_vfs, char *psz_name)
+__attribute(( unused )) static void AddSnapshot(libzfswrap_vfs_t *p_vfs, char *psz_name)
 {
     i_snapshots++;
     if( ( p_snapshots = realloc(p_snapshots, (i_snapshots + 1) * sizeof(*p_snapshots)) ) == NULL )
@@ -228,7 +228,7 @@ static void AddSnapshot(libzfswrap_vfs_t *p_vfs, char *psz_name)
     p_snapshots[i_snapshots].index = i_snapshots;
 }
 
-static int CountSnapshot(const char *psz_prefix)
+__attribute(( unused )) static int CountSnapshot(const char *psz_prefix)
 {
   int i,count = 0;
   size_t len = strlen(psz_prefix);
@@ -240,7 +240,7 @@ static int CountSnapshot(const char *psz_prefix)
   return count;
 }
 
-static void RemoveOldSnapshots(const char *psz_prefix, int number)
+__attribute(( unused )) static void RemoveOldSnapshots(const char *psz_prefix, int number)
 {
   int i;
   char *psz_name;
@@ -284,7 +284,7 @@ static void RemoveOldSnapshots(const char *psz_prefix, int number)
 }
 
 /* Thread that handle snapshots */
-static void *SnapshotThread(void *data)
+__attribute(( unused )) static void *SnapshotThread(void *data)
 {
   zfsfs_specific_initinfo_t *fs_info = (zfsfs_specific_initinfo_t*)data;
 

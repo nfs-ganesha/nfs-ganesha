@@ -107,7 +107,6 @@ int get_timestamp(posixfsal_handle_t * p_objecthandle,  /* IN */
 int print_timestamp(caddr_t InBuff, size_t InSize, caddr_t OutBuff, size_t * pOutSize)
 {
   unsigned int date = 0;
-  struct tm date_tm;
 
   memcpy((char *)&date, InBuff, sizeof(date));
 
@@ -448,7 +447,6 @@ fsal_status_t POSIXFSAL_GetXAttrAttrs(fsal_handle_t * objecthandle,      /* IN *
   posixfsal_handle_t * p_objecthandle = (posixfsal_handle_t *) objecthandle;
   posixfsal_op_context_t * p_context = (posixfsal_op_context_t *) context;
   int rc;
-  char buff[MAXNAMLEN];
   fsal_status_t st;
   fsal_attrib_list_t file_attrs;
 
@@ -634,7 +632,6 @@ fsal_status_t POSIXFSAL_GetXAttrIdByName(fsal_handle_t * objecthandle,   /* IN *
     )
 {
   posixfsal_handle_t * p_objecthandle = (posixfsal_handle_t *) objecthandle;
-  posixfsal_op_context_t * p_context = (posixfsal_op_context_t *) context;
   unsigned int index;
   int found = FALSE;
 
