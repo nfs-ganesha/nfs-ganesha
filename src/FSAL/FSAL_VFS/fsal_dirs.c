@@ -174,12 +174,11 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
   char buff[BUF_SIZE];
   struct linux_dirent *dp = NULL;
   int bpos = 0;
-  int tmpfd = 0;
 
   char d_type;
   struct stat buffstat;
 
-  int errsv, rc = 0;
+  int rc = 0;
 
   memset(buff, 0, BUF_SIZE);
   memset(&entry_name, 0, sizeof(fsal_name_t));
