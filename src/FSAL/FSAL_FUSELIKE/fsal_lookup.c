@@ -65,7 +65,6 @@ fsal_status_t FUSEFSAL_lookup(fsal_handle_t * parent_handle,      /* IN */
 {
 
   int rc;
-  fsal_status_t status;
   struct stat stbuff;
   fusefsal_handle_t * object_handle = (fusefsal_handle_t *)obj_handle;
   fusefsal_handle_t * parent_directory_handle = (fusefsal_handle_t *)parent_handle;

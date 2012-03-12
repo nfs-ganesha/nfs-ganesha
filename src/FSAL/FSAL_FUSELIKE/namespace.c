@@ -191,7 +191,6 @@ static hash_table_t *nodes_hash = NULL;
 
 static unsigned long hash_peer_idx(hash_parameter_t * p_conf, hash_buffer_t * p_key)
 {
-  unsigned int i;
   unsigned long hash;
   lookup_peer_t *p_peer = (lookup_peer_t *) p_key->pdata;
   char *name;
@@ -210,7 +209,6 @@ static unsigned long hash_peer_idx(hash_parameter_t * p_conf, hash_buffer_t * p_
 
 static unsigned long hash_peer_rbt(hash_parameter_t * p_conf, hash_buffer_t * p_key)
 {
-  unsigned int i;
   unsigned long hash;
   lookup_peer_t *p_peer = (lookup_peer_t *) p_key->pdata;
   char *name;
@@ -553,7 +551,6 @@ int h_del_node(ino_t inode, dev_t device)
 {
   hash_buffer_t buffkey;
   inode_t key;
-  int rc;
 
   /* test if inode is referenced in nodes hashtable */
   key.inum = inode;
@@ -575,8 +572,6 @@ int h_del_node(ino_t inode, dev_t device)
 /* Initialize namespace and create root with the given inode number */
 int NamespaceInit(ino_t root_inode, dev_t root_dev, unsigned int *p_root_gen)
 {
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
   fsnode_t *root;
 
   /* Initialize pools.
@@ -622,7 +617,6 @@ static int NamespaceAdd_nl(ino_t parent_ino, dev_t parent_dev, unsigned int pare
   fsnode_t *p_parent = NULL;
   fsnode_t *p_node = NULL;
   fsnode_t *p_node_exist = NULL;
-  lookup_peer_t lpeer;
   lookup_peer_t *p_lpeer;
   int rc;
 

@@ -61,7 +61,6 @@ fsal_status_t FUSEFSAL_access(fsal_handle_t * obj_handle,        /* IN */
     )
 {
 
-  fsal_status_t st;
   int mask, rc;
   char object_path[FSAL_MAX_PATH_LEN];
   fsal_attrib_list_t tmp_attrs;
@@ -185,9 +184,7 @@ fsal_status_t FUSEFSAL_test_access(fsal_op_context_t * p_context,   /* IN */
     )
 {
   fsal_accessflags_t missing_access;
-  gid_t grp;
   int is_grp;
-  unsigned int i;
 
   /* sanity checks. */
 

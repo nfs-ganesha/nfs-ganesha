@@ -162,7 +162,7 @@ static void fill_dirent(fsal_dirent_t * to_be_filled,
 
       LogFullDebug(COMPONENT_FSAL,
            "getattr_mask = %X, recupere = %X, status=%d, inode=%llX.%llu, type=%d, posixmode=%#o, mode=%#o",
-           getattr_mask, to_be_filled->attributes.asked_attributes, status.major,
+           (unsigned int)getattr_mask, (unsigned int)to_be_filled->attributes.asked_attributes, status.major,
            to_be_filled->attributes.fsid.major, to_be_filled->attributes.fileid,
            to_be_filled->attributes.type, tmp_statbuff.st_mode,
            to_be_filled->attributes.mode);

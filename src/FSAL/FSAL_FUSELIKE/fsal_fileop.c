@@ -304,7 +304,6 @@ fsal_status_t FUSEFSAL_read(fsal_file_t * file_desc,  /* IN */
     )
 {
   size_t req_size;
-  size_t nb_read;
   int rc;
   off_t seekoffset = 0;
   struct stat stbuf;
@@ -607,8 +606,6 @@ fsal_status_t FUSEFSAL_commit( fsal_file_t * p_file_descriptor,
                              fsal_off_t    offset, 
                              fsal_size_t   length )
 {
-  int rc, errsv;
-
   /* sanity checks. */
   if(!p_file_descriptor)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_commit);

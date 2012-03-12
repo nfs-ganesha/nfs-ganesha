@@ -59,7 +59,6 @@ fsal_status_t FUSEFSAL_unlink(fsal_handle_t * parent,     /* IN */
 
   int rc;
   fsal_status_t st;
-  fusefsal_handle_t obj_handle;
   char parent_path[FSAL_MAX_PATH_LEN];
   char child_path[FSAL_MAX_PATH_LEN];
   struct stat stbuff;

@@ -260,11 +260,6 @@ fsal_status_t FUSEFSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* I
                                           /**< IN/OUT xattr attributes (if supported) */
     )
 {
-  int rc;
-  char buff[MAXNAMLEN];
-  fsal_status_t st;
-  fsal_attrib_list_t file_attrs;
-
   /* sanity checks */
   if(!p_objecthandle || !p_context || !p_attrs)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetXAttrAttrs);
@@ -272,36 +267,6 @@ fsal_status_t FUSEFSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* I
   /* @todo: to be implemented */
 
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_GetXAttrAttrs);
-#if 0
-  /* check that this index match the type of entry */
-  if(xattr_id >= XATTR_COUNT
-     || !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->object_type_reminder))
-    {
-      Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrAttrs);
-    }
-
-  /* object attributes we want to retrieve from parent */
-  file_attrs.asked_attributes = FSAL_ATTR_MODE | FSAL_ATTR_FILEID | FSAL_ATTR_OWNER
-      | FSAL_ATTR_GROUP | FSAL_ATTR_ATIME | FSAL_ATTR_MTIME
-      | FSAL_ATTR_CTIME | FSAL_ATTR_CREATION | FSAL_ATTR_CHGTIME | FSAL_ATTR_FSID;
-
-  /* don't retrieve attributes not asked */
-
-  file_attrs.asked_attributes &= p_attrs->asked_attributes;
-
-  st = FSAL_getattrs(p_objecthandle, p_context, &file_attrs);
-
-  if(FSAL_IS_ERROR(st))
-    Return(st.major, st.minor, INDEX_FSAL_GetXAttrAttrs);
-
-  if((rc = file_attributes_to_xattr_attrs(&file_attrs, p_attrs, xattr_id)))
-    {
-      Return(ERR_FSAL_INVAL, rc, INDEX_FSAL_GetXAttrAttrs);
-    }
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrAttrs);
-#endif
-
 }                               /* FSAL_GetXAttrAttrs */
 
 /**
@@ -325,79 +290,12 @@ fsal_status_t FUSEFSAL_ListXAttrs(fsal_handle_t *obj_handle,   /* IN */
                                   int *end_of_list      /* OUT */
     )
 {
-  int rc;
-  unsigned int index;
-  unsigned int out_index;
-  char object_path[FSAL_MAX_PATH_LEN];
-  fsal_status_t st;
-  fsal_attrib_list_t file_attrs;
-  fusefsal_handle_t * p_objecthandle = (fusefsal_handle_t *)obj_handle;
 
   /* sanity checks */
-  if(!p_objecthandle || !p_context || !xattrs_tab || !p_nb_returned || !end_of_list)
+  if(!obj_handle || !p_context || !xattrs_tab || !p_nb_returned || !end_of_list)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_ListXAttrs);
 
-  /* get the full path for the object */
-  rc = NamespacePath(p_objecthandle->data.inode, p_objecthandle->data.device,
-                     p_objecthandle->data.validator, object_path);
-  if(rc)
-    Return(ERR_FSAL_STALE, rc, INDEX_FSAL_ListXAttrs);
-
-  /* set context for the next operation, so it can be retrieved by FS thread */
-  fsal_set_thread_context(p_context);
-
-  /* @todo: to be implemented */
-
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_ListXAttrs);
-
-#if 0
-
-  /* object attributes we want to retrieve from parent */
-  file_attrs.asked_attributes = FSAL_ATTR_MODE | FSAL_ATTR_FILEID | FSAL_ATTR_OWNER
-      | FSAL_ATTR_GROUP | FSAL_ATTR_ATIME | FSAL_ATTR_MTIME
-      | FSAL_ATTR_CTIME | FSAL_ATTR_CREATION | FSAL_ATTR_CHGTIME | FSAL_ATTR_FSID;
-
-  /* don't retrieve unsuipported attributes */
-  file_attrs.asked_attributes &= global_fs_info.supported_attrs;
-
-  st = FSAL_getattrs(p_objecthandle, p_context, &file_attrs);
-
-  if(FSAL_IS_ERROR(st))
-    Return(st.major, st.minor, INDEX_FSAL_ListXAttrs);
-
-  for(index = cookie, out_index = 0;
-      index < XATTR_COUNT && out_index < xattrs_tabsize; index++)
-    {
-      if(do_match_type(xattr_list[index].flags, p_objecthandle->object_type_reminder))
-        {
-          /* fills an xattr entry */
-          xattrs_tab[out_index].xattr_id = index;
-          FSAL_str2name(xattr_list[index].xattr_name, FSAL_MAX_NAME_LEN,
-                        &xattrs_tab[out_index].xattr_name);
-          xattrs_tab[out_index].xattr_cookie = index + 1;
-
-          /* set asked attributes (all supported) */
-          xattrs_tab[out_index].attributes.asked_attributes =
-              global_fs_info.supported_attrs;
-
-          if(file_attributes_to_xattr_attrs
-             (&file_attrs, &xattrs_tab[out_index].attributes, index))
-            {
-              /* set error flag */
-              xattrs_tab[out_index].attributes.asked_attributes = FSAL_ATTR_RDATTR_ERR;
-            }
-
-          /* next output slot */
-          out_index++;
-        }
-    }
-
-  *p_nb_returned = out_index;
-  *end_of_list = (index == XATTR_COUNT);
-
-  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_ListXAttrs);
-#endif
-
 }
 
 /**
@@ -418,25 +316,11 @@ fsal_status_t FUSEFSAL_GetXAttrValueById(fsal_handle_t * p_objecthandle,    /* I
                                          size_t * p_output_size /* OUT */
     )
 {
-  int rc;
-#if 0
   /* sanity checks */
   if(!p_objecthandle || !p_context || !p_output_size || !buffer_addr)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetXAttrValue);
 
-  /* check that this index match the type of entry */
-  if(xattr_id >= XATTR_COUNT
-     || !do_match_type(xattr_list[xattr_id].flags, p_objecthandle->object_type_reminder))
-    {
-      Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_GetXAttrValue);
-    }
-
-  /* get the value */
-  rc = xattr_list[xattr_id].get_func(p_objecthandle,
-                                     p_context, buffer_addr, buffer_size, p_output_size);
-#endif
-  Return(rc, 0, INDEX_FSAL_GetXAttrValue);
-
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_GetXAttrValue);
 }
 
 /**
@@ -454,34 +338,11 @@ fsal_status_t FUSEFSAL_GetXAttrIdByName(fsal_handle_t * p_objecthandle,     /* I
                                         unsigned int *pxattr_id /* OUT */
     )
 {
-  unsigned int index;
-  int found = FALSE;
-
-#if 0
   /* sanity checks */
   if(!p_objecthandle || !xattr_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetXAttrValue);
 
-  for(index = 0; index < XATTR_COUNT; index++)
-    {
-      if(do_match_type(xattr_list[index].flags, p_objecthandle->info.ftype)
-         && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
-        {
-          found = TRUE;
-          break;
-        }
-    }
-
-  if(found)
-    {
-      *pxattr_id = index;
-      Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_GetXAttrValue);
-    }
-  else
-    Return(ERR_FSAL_NOENT, ENOENT, INDEX_FSAL_GetXAttrValue);
-#endif
-
-  Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_GetXAttrValue);
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_GetXAttrValue);
 }                               /* FSAL_GetXAttrIdByName */
 
 /**
@@ -502,29 +363,11 @@ fsal_status_t FUSEFSAL_GetXAttrValueByName(fsal_handle_t * p_objecthandle,  /* I
                                            size_t * p_output_size       /* OUT */
     )
 {
-  unsigned int index;
-
   /* sanity checks */
   if(!p_objecthandle || !p_context || !p_output_size || !buffer_addr || !xattr_name)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_GetXAttrValue);
 
-  /* look for this name */
-#if 0
-  for(index = 0; index < XATTR_COUNT; index++)
-    {
-      if(do_match_type(xattr_list[index].flags, p_objecthandle->object_type_reminder)
-         && !strcmp(xattr_list[index].xattr_name, xattr_name->name))
-        {
-
-          return FSAL_GetXAttrValueById(p_objecthandle, index, p_context, buffer_addr,
-                                        buffer_size, p_output_size);
-
-        }
-    }
-#endif
-  /* not found */
-  Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_GetXAttrValue);
-
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_GetXAttrValue);
 }
 
 fsal_status_t FUSEFSAL_SetXAttrValue(fsal_handle_t * p_objecthandle,        /* IN */

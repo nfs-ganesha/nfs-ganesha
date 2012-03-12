@@ -363,7 +363,6 @@ fsal_status_t FUSEFSAL_load_FS_specific_parameter_from_conf(config_file_t in_con
                                                             out_parameter)
 {
   int err;
-  int blk_index;
   int var_max, var_index;
   char *key_name;
   char *key_value;
