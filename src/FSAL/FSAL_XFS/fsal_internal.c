@@ -51,7 +51,7 @@
 #include <xfs/handle.h>
 #include <mntent.h>
 
-/* Add missing prototype in xfs/*.h */
+/* Add missing prototype */
 int fd_to_handle(int fd, void **hanp, size_t * hlen);
 
 /* credential lifetime (1h) */
