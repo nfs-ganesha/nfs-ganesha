@@ -763,7 +763,6 @@ static int xattr_name_to_id(char *lustre_path, const char *name)
   unsigned int i;
   char names[MAXPATHLEN], *ptr;
   size_t namesize;
-  size_t len = 0;
 
   /* get xattrs */
 
