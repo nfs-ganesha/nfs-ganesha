@@ -216,7 +216,6 @@ int get_ts(proxyfsal_handle_t * p_objecthandle, /* IN */
 int print_ts(caddr_t InBuff, size_t InSize, caddr_t OutBuff, size_t * pOutSize)
 {
   unsigned int date = 0;
-  struct tm date_tm;
 
   memcpy((char *)&date, InBuff, sizeof(date));
 
@@ -453,7 +452,6 @@ fsal_status_t PROXYFSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,      /* IN
     )
 {
   int rc;
-  char buff[MAXNAMLEN];
   fsal_status_t st;
   fsal_attrib_list_t file_attrs;
 

@@ -48,8 +48,6 @@ fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * file_hdl,    /* IN *
   COMPOUND4args argnfs4;
   COMPOUND4res resnfs4;
   nfs_fh4 nfs4fh;
-  fsal_status_t fsal_status;
-  fsal_attrib_list_t open_attrs;
   bitmap4 inbitmap;
   bitmap4 convert_bitmap;
   uint32_t inbitmap_val[2];

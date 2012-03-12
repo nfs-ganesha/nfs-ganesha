@@ -222,9 +222,7 @@ fsal_status_t PROXYFSAL_setattr_access(fsal_op_context_t * p_context,      /* IN
                                        fsal_attrib_list_t * pobject_attributes  /* IN */
     )
 {
-  fsal_status_t fsal_status;
   int same_owner = FALSE;
-  int root_access = FALSE;
 
   /* sanity check */
   if(p_context == NULL || pcandidate_attributes == NULL || pobject_attributes == NULL)

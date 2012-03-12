@@ -1160,10 +1160,8 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
 
 fsal_status_t fsal_internal_set_auth_gss(proxyfsal_op_context_t * p_thr_context)
 {
-
-  fsal_status_t fsal_status;
-
 #ifdef _USE_GSSRPC
+  fsal_status_t fsal_status;
   struct rpc_gss_sec rpcsec_gss_data;
   gss_OID mechOid;
   char mechname[1024];

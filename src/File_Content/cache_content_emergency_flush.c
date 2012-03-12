@@ -127,7 +127,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
   struct stat buffstat;
   time_t max_acmtime = 0;
 #ifdef _USE_PROXY
-  fsal_u64_t fileid;
+  __attribute__((unused)) fsal_u64_t fileid;
 #endif
   cache_content_flush_behaviour_t local_flushhow = flushhow;
   unsigned int passcounter = 0;

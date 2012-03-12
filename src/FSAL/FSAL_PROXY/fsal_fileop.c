@@ -322,7 +322,6 @@ static fsal_status_t PROXYFSAL_open_stateless(fsal_handle_t * filehandle,  /* IN
   COMPOUND4res resnfs4;
   nfs_fh4 nfs4fh;
   bitmap4 bitmap;
-  uint32_t bitmap_val[2];
   uint32_t bitmap_open[2];
   uint32_t bitmap_getattr_res[2];
   uint32_t share_access;
@@ -336,9 +335,7 @@ static fsal_status_t PROXYFSAL_open_stateless(fsal_handle_t * filehandle,  /* IN
   fsal_attrib_list_t attributes;
   nfs_argop4 argoparray[FSAL_OPEN_STATELESS_NB_OP_ALLOC];
   nfs_resop4 resoparray[FSAL_OPEN_STATELESS_NB_OP_ALLOC];
-  char fattr_val[FSAL_OPEN_STATELESS_VAL_BUFFER];
   struct timeval timeout = TIMEOUTRPC;
-  u_int32_t owner = time(NULL);
 
   /* sanity checks.
    * note : file_attributes is optional.
