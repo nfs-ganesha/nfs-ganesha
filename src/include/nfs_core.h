@@ -119,6 +119,7 @@
 
 #define DEFAULT_NFS_PRINCIPAL     "nfs" /* GSSAPI will expand this to nfs/host@DOMAIN */
 #define DEFAULT_NFS_KEYTAB        ""    /* let GSSAPI use keytab specified in /etc/krb5.conf */
+#define DEFAULT_NFS_CCACHE_DIR    "/var/run/ganesha"
 
 /* Config labels */
 #define CONF_LABEL_NFS_CORE         "NFS_Core_Param"
@@ -395,8 +396,85 @@ typedef struct nfs_request_data__
                                * to the worker thread queue. */
 } nfs_request_data_t;
 
+struct nfs_client_id__;
+typedef struct nfs_client_id__ nfs_client_id_t;
+
+typedef struct wait_entry
+{
+    pthread_mutex_t mtx;
+    pthread_cond_t cv;
+} wait_entry_t;
+
+/* thread wait queue */
+typedef struct wait_q_entry
+{
+    uint32_t lflags;
+    uint32_t rflags;
+    wait_entry_t lwe; /* initial waiter */
+    wait_entry_t rwe; /* reciprocal waiter */
+    struct wait_q_entry *tail;
+    struct wait_q_entry *next;
+} wait_queue_entry_t;
+
+enum rpc_chan_type {
+    RPC_CHAN_V40,
+    RPC_CHAN_V41
+};
+
+typedef struct rpc_call_channel
+{
+    enum rpc_chan_type type;
+    pthread_mutex_t mtx;
+    uint32_t states;
+    union {
+        struct {
+            nfs_client_id_t *nfs_client;
+        } v40;
+    } nvu;
+    time_t last_called;
+    CLIENT *clnt;
+    struct rpc_gss_sec gss_sec;
+} rpc_call_channel_t;
+
+typedef struct __nfs4_compound {
+    union {
+        int type;
+        struct {
+            CB_COMPOUND4args args;
+            CB_COMPOUND4res res;
+        } v4;
+    } v_u;
+} nfs4_compound_t;
+
+/* RPC callback processing */
+typedef enum rpc_call_hook
+{
+    RPC_CALL_COMPLETE,
+    RPC_CALL_ABORT,
+} rpc_call_hook;
+
+typedef struct _rpc_call rpc_call_t;
+
+typedef int32_t (*rpc_call_func)(rpc_call_t* call, rpc_call_hook hook,
+                                 void* arg, uint32_t flags);
+
+extern gss_OID_desc krb5oid;
+
+struct _rpc_call
+{
+    rpc_call_channel_t *chan;
+    rpc_call_func call_hook;
+    nfs4_compound_t cbt;
+    struct wait_entry we;
+    enum clnt_stat stat;
+    uint32_t states;
+    uint32_t flags;
+    void *u_data[2];
+};
+
 typedef enum request_type__
 {
+  NFS_CALL,
   NFS_REQUEST,
   _9P_REQUEST
 } request_type_t ;
@@ -409,20 +487,73 @@ typedef struct request_data__
   pthread_mutex_t  req_done_mutex;
   union request_content__
    {
+      rpc_call_t *call ;
       nfs_request_data_t nfs ;
 #ifdef _USE_9P
       _9p_request_data_t _9p ;
 #endif
-   } rcontent ;
+   } r_u ;
 } request_data_t ;
 
-typedef struct nfs_client_id__
+/* XXXX this is automatically redundant, but in fact upstream TI-RPC is
+ * not up-to-date with RFC 5665, will fix (Matt)
+ *
+ * (c) 2012, Linux Box Corp
+*/
+enum rfc_5665_nc_type
+{
+    _NC_ERR,
+    _NC_TCP,
+    _NC_TCP6,
+    _NC_RDMA,
+    _NC_RDMA6,
+    _NC_SCTP,
+    _NC_SCTP6,
+    _NC_UDP,
+    _NC_UDP6,
+};
+typedef enum rfc_5665_nc_type nc_type;
+
+static const struct __netid_nc_table
+{
+    const char *netid;
+    int netid_len;
+    const nc_type nc;
+    int af;
+} 
+    netid_nc_table[]  = 
+{
+    { "-",      1,  _NC_ERR,    0         },
+    { "tcp",    3,  _NC_TCP,    AF_INET   },
+    { "tcp6",   4,  _NC_TCP6,   AF_INET6  },
+    { "rdma",   4,  _NC_RDMA,   AF_INET   },
+    { "rdma6",  5,  _NC_RDMA6,  AF_INET6  },
+    { "sctp",   4,  _NC_SCTP,   AF_INET   },
+    { "sctp6",  5,  _NC_SCTP6,  AF_INET6  },
+    { "udp",    3,  _NC_UDP,    AF_INET   },
+    { "udp6",   4,  _NC_UDP6,   AF_INET6  },
+};
+
+nc_type nfs_netid_to_nc(const char *netid);
+#ifdef _USE_NFS4_1
+void nfs_set_client_location(nfs_client_id_t *clid, const netaddr4 *addr4);
+#else
+void nfs_set_client_location(nfs_client_id_t *clid, const clientaddr4 *addr4);
+#endif
+
+/* end TI-RPC */
+
+typedef struct gsh_addr
+{
+    nc_type nc;
+    struct sockaddr_storage ss;
+    uint32_t port;
+} gsh_addr_t;
+
+struct nfs_client_id__
 {
   char client_name[NFS4_MAX_DOMAIN_LEN];
   clientid4 clientid;
-  uint32_t cb_program;
-  char client_r_addr[SOCK_NAME_MAX];
-  char client_r_netid[MAXNAMLEN];
   verifier4 verifier;
   verifier4 incoming_verifier;
   time_t last_renew;
@@ -434,6 +565,18 @@ typedef struct nfs_client_id__
   struct glist_head clientid_lockowners;
   pthread_mutex_t clientid_mutex;
   struct prealloc_pool *clientid_pool;
+  struct {
+      char client_r_addr[SOCK_NAME_MAX]; /* supplied univ. address */
+      gsh_addr_t addr; 
+      uint32_t program;
+      union {
+          struct {
+              uint32_t states;
+              struct rpc_call_channel chan;
+              uint32_t callback_ident;
+          } v40;
+      } cb_u;
+  } cb;
 #ifdef _USE_NFS4_1
   char server_owner[MAXNAMLEN];
   char server_scope[MAXNAMLEN];
@@ -442,7 +585,7 @@ typedef struct nfs_client_id__
   unsigned create_session_sequence;
 #endif
   state_owner_t *clientid_owner;
-} nfs_client_id_t;
+} /* nfs_client_id_t */;
 
 typedef enum idmap_type__
 { UIDMAP_TYPE = 1,
@@ -591,6 +734,7 @@ pause_rc wake_workers(awaken_reason_t reason);
 pause_rc wait_for_workers_to_awaken();
 void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index);
 void *worker_thread(void *IndexArg);
+request_data_t *nfs_rpc_get_nfsreq(nfs_worker_data_t *worker, uint32_t flags);
 process_status_t process_rpc_request(SVCXPRT *xprt);
 int stats_snmp(void);
 /*

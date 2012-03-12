@@ -243,7 +243,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       snprintf(nfs_clientid.verifier, NFS4_VERIFIER_SIZE, "%u",
                (unsigned int)ServerBootTime);
       nfs_clientid.confirmed = UNCONFIRMED_CLIENT_ID;
-      nfs_clientid.cb_program = 0;      /* to be set at create_session time */
+      nfs_clientid.cb.program = 0; /* to be set at create_session time */
       nfs_clientid.clientid = clientid;
       nfs_clientid.last_renew = time(NULL);
       if (pthread_mutex_init(&nfs_clientid.clientid_mutex, NULL) == -1)

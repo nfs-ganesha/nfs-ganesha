@@ -1721,12 +1721,20 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
 
 void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index)
 {
-  struct svc_req *ptr_req = &pnfsreq->rcontent.nfs.req;
-  unsigned int rpcxid = get_rpc_xid(ptr_req);
+  struct svc_req *ptr_req = NULL;
+  uint32_t rpcxid = 0;
+
+  switch (pnfsreq->rtype) {
+  case NFS_CALL:
+      break;
+  default:
+      ptr_req = &pnfsreq->r_u.nfs.req;
+      rpcxid = get_rpc_xid(ptr_req);
+  }
 
   LogDebug(COMPONENT_DISPATCH,
-           "Awaking Worker Thread #%u for request %p, xid=%u",
-           worker_index, pnfsreq, rpcxid);
+           "Awaking Worker Thread #%u for request %p, rtype=%d xid=%u",
+           worker_index, pnfsreq, pnfsreq->rtype, rpcxid);
 
   P(workers_data[worker_index].wcb.tcb_mutex);
   P(workers_data[worker_index].request_pool_mutex);
@@ -1851,8 +1859,8 @@ nfs_worker_process_rpc_requests(nfs_worker_data_t *pmydata,
   bool_t no_dispatch = TRUE, recv_status;
   process_status_t rc = PROCESS_DONE;
 
-  preq = &pnfsreq->rcontent.nfs.req;
-  pmsg = &pnfsreq->rcontent.nfs.msg;
+  preq = &pnfsreq->r_u.nfs.req;
+  pmsg = &pnfsreq->r_u.nfs.msg;
 
 again:
   /*
@@ -1861,13 +1869,13 @@ again:
    */
   LogFullDebug(COMPONENT_DISPATCH,
                "Before calling SVC_RECV on socket %d",
-               pnfsreq->rcontent.nfs.xprt->xp_fd);
+               pnfsreq->r_u.nfs.xprt->xp_fd);
 
-  recv_status = SVC_RECV(pnfsreq->rcontent.nfs.xprt, pmsg);
+  recv_status = SVC_RECV(pnfsreq->r_u.nfs.xprt, pmsg);
 
   LogFullDebug(COMPONENT_DISPATCH,
                "Status for SVC_RECV on socket %d is %d, xid=%lu",
-               pnfsreq->rcontent.nfs.xprt->xp_fd, recv_status,
+               pnfsreq->r_u.nfs.xprt->xp_fd, recv_status,
                (unsigned long)pmsg->rm_xid);
 
   /* If status is ok, the request will be processed by the related
@@ -1884,40 +1892,40 @@ again:
       sockaddr_t addr;
       char addrbuf[SOCK_NAME_MAX];
 
-      if(copy_xprt_addr(&addr, pnfsreq->rcontent.nfs.xprt) == 1)
+      if(copy_xprt_addr(&addr, pnfsreq->r_u.nfs.xprt) == 1)
         sprint_sockaddr(&addr, addrbuf, sizeof(addrbuf));
       else
         sprintf(addrbuf, "<unresolved>");
 
-      stat = SVC_STAT(pnfsreq->rcontent.nfs.xprt);
+      stat = SVC_STAT(pnfsreq->r_u.nfs.xprt);
 
       if(stat == XPRT_DIED)
         {
 
           LogDebug(COMPONENT_DISPATCH,
                    "Client on socket=%d, addr=%s disappeared...",
-                   pnfsreq->rcontent.nfs.xprt->xp_fd, addrbuf);
+                   pnfsreq->r_u.nfs.xprt->xp_fd, addrbuf);
           /* XXX someone must do this */
-          SVC_DESTROY(pnfsreq->rcontent.nfs.xprt);
+          SVC_DESTROY(pnfsreq->r_u.nfs.xprt);
           rc = PROCESS_LOST_CONN;
         }
       else if(stat == XPRT_MOREREQS)
         {
           LogDebug(COMPONENT_DISPATCH,
                    "Client on socket=%d, addr=%s has status XPRT_MOREREQS",
-                   pnfsreq->rcontent.nfs.xprt->xp_fd, addrbuf);
+                   pnfsreq->r_u.nfs.xprt->xp_fd, addrbuf);
         }
       else if(stat == XPRT_IDLE)
         {
           LogDebug(COMPONENT_DISPATCH,
                    "Client on socket=%d, addr=%s has status XPRT_IDLE",
-                   pnfsreq->rcontent.nfs.xprt->xp_fd, addrbuf);
+                   pnfsreq->r_u.nfs.xprt->xp_fd, addrbuf);
         }
       else
         {
           LogDebug(COMPONENT_DISPATCH,
                    "Client on socket=%d, addr=%s has status unknown (%d)",
-                   pnfsreq->rcontent.nfs.xprt->xp_fd, addrbuf, (int)stat);
+                   pnfsreq->r_u.nfs.xprt->xp_fd, addrbuf, (int)stat);
         }
 
       goto unblock;
@@ -1925,25 +1933,25 @@ again:
   else
     {
       /* Call svc_getargs before making copy to prevent race conditions. */
-      pnfsreq->rcontent.nfs.req.rq_prog = pmsg->rm_call.cb_prog;
-      pnfsreq->rcontent.nfs.req.rq_vers = pmsg->rm_call.cb_vers;
-      pnfsreq->rcontent.nfs.req.rq_proc = pmsg->rm_call.cb_proc;
+      pnfsreq->r_u.nfs.req.rq_prog = pmsg->rm_call.cb_prog;
+      pnfsreq->r_u.nfs.req.rq_vers = pmsg->rm_call.cb_vers;
+      pnfsreq->r_u.nfs.req.rq_proc = pmsg->rm_call.cb_proc;
 
-      pfuncdesc = nfs_rpc_get_funcdesc(&pnfsreq->rcontent.nfs);
+      pfuncdesc = nfs_rpc_get_funcdesc(&pnfsreq->r_u.nfs);
 
       if(pfuncdesc == INVALID_FUNCDESC)
         goto unblock;
 
-      if(AuthenticateRequest(&pnfsreq->rcontent.nfs,
+      if(AuthenticateRequest(&pnfsreq->r_u.nfs,
                              &no_dispatch) != AUTH_OK || no_dispatch)
         goto unblock;
 
-      if(!nfs_rpc_get_args(&pnfsreq->rcontent.nfs, pfuncdesc))
+      if(!nfs_rpc_get_args(&pnfsreq->r_u.nfs, pfuncdesc))
         goto unblock;
 
-      pnfsreq->rcontent.nfs.xprt_copy = pnfsreq->rcontent.nfs.xprt;
-      pnfsreq->rcontent.nfs.xprt = pnfsreq->rcontent.nfs.xprt_copy;
-      preq->rq_xprt = pnfsreq->rcontent.nfs.xprt_copy;
+      pnfsreq->r_u.nfs.xprt_copy = pnfsreq->r_u.nfs.xprt;
+      pnfsreq->r_u.nfs.xprt = pnfsreq->r_u.nfs.xprt_copy;
+      preq->rq_xprt = pnfsreq->r_u.nfs.xprt_copy;
 
       /* Validate the rpc request as being a valid program, version,
        * and proc. If not, report the error. Otherwise, execute the
@@ -1955,7 +1963,7 @@ again:
                        (int)preq->rq_prog, (int)preq->rq_vers,
                        (int)preq->rq_proc, preq->rq_xprt);
           /* Execute it */
-          nfs_rpc_execute(&pnfsreq->rcontent.nfs, pmydata);
+          nfs_rpc_execute(&pnfsreq->r_u.nfs, pmydata);
       }
       rc = PROCESS_DISPATCHED;
     }
@@ -1967,12 +1975,12 @@ unblock:
    * into the worker thread, so this will asynchronous wrt to the shared
    * event loop */
   if (rc == PROCESS_DISPATCHED) {
-      if (SVC_STAT(pnfsreq->rcontent.nfs.xprt) == XPRT_MOREREQS)
+      if (SVC_STAT(pnfsreq->r_u.nfs.xprt) == XPRT_MOREREQS)
           goto again;
   }
 
   if (rc != PROCESS_LOST_CONN)
-      (void) svc_rqst_unblock_events(pnfsreq->rcontent.nfs.xprt,
+      (void) svc_rqst_unblock_events(pnfsreq->r_u.nfs.xprt,
                                      SVC_RQST_FLAG_NONE);
 
   return (rc);
@@ -1993,15 +2001,14 @@ unblock:
  */
 void *worker_thread(void *IndexArg)
 {
-  nfs_worker_data_t *pmydata;
   request_data_t *pnfsreq;
-  unsigned long worker_index;
-  int rc = 0;
+  struct svc_req *preq;
   unsigned int gc_allowed = FALSE;
+  unsigned long worker_index = (unsigned long) IndexArg;
+  nfs_worker_data_t *pmydata = &(workers_data[worker_index]);
   char thr_name[32];
+  int rc = 0;
 
-  worker_index = (unsigned long)IndexArg;
-  pmydata = &(workers_data[worker_index]);
 #ifdef _USE_SHARED_FSAL
   unsigned int i = 0 ;
   unsigned int fsalid = 0 ;
@@ -2146,23 +2153,29 @@ void *worker_thread(void *IndexArg)
                         "I have some work to do, pnfsreq=%p, pending=%d, xid=%lu",
                         pnfsreq,
                         pmydata->pending_request_len,
-                        (unsigned long) pnfsreq->rcontent.nfs.msg.rm_xid);
+                        (unsigned long) pnfsreq->r_u.nfs.msg.rm_xid);
 
-           if(pnfsreq->rcontent.nfs.xprt->xp_fd == 0)
-            {
-              LogFullDebug(COMPONENT_DISPATCH,
-                           "No RPC management, xp_sock==0");
+           if(pnfsreq->r_u.nfs.xprt->xp_fd == 0)
+           {
+               LogFullDebug(COMPONENT_DISPATCH,
+                            "RPC dispatch error:  pnfsreq=%p, xp_fd==0",
+                            pnfsreq);
             }
            else
-            {
+           {
               /* Process the sequence */
               (void) nfs_worker_process_rpc_requests(pmydata, pnfsreq);
             }
            break ;
 
+       case NFS_CALL:
+           /* NFSv4 rpc call (callback) */
+           (void) nfs_rpc_dispatch_call(pnfsreq->r_u.call, 0 /* XXX flags */);
+           break ;
+
 	  case _9P_REQUEST:
 #ifdef _USE_9P
-	     _9p_execute( &pnfsreq->rcontent._9p, pmydata ) ;
+	     _9p_execute( &pnfsreq->r_u._9p, pmydata ) ;
 #else
 	     LogCrit(COMPONENT_DISPATCH, "Implementation error, 9P message "
                      "when 9P support is disabled" ) ; 

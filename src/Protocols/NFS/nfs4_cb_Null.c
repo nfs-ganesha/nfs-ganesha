@@ -61,6 +61,7 @@
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
+#include "nfs_rpc_callback.h"
 
 /**
  * nfs_cb_Null: The NFS4/CB proc null function, for all versions.

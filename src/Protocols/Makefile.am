@@ -11,3 +11,7 @@ endif
 if USE_RQUOTA
 SUBDIRS += RQUOTA
 endif
+
+if USE_DBUS
+SUBDIRS += DBUS
+endif

@@ -16,15 +16,7 @@ TESTS = test_rpctools
 test_rpctools_SOURCES = test_rpctools.c
 test_rpctools_LDADD = librpcal.la $(BUDDY_LIB_FLAGS) ../HashTable/libhashtable.la ../RW_Lock/librwlock.la
 
-#if USE_TIRPC
-#SUBDIRS = TIRPC
-#librpcal_la_LIBADD = TIRPC/librpcalcore.la
-#endif
-
-if USE_ONCRPC
-SUBDIRS = ONCRPC
-librpcal_la_LIBADD = ONCRPC/librpcalcore.la
-endif
+SUBDIRS = gssd
 
 librpcal_la_SOURCES = nfs_dupreq.c \
                       rpc_tools.c \

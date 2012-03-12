@@ -132,7 +132,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
     }
 
   pnfs_clientid->confirmed = CONFIRMED_CLIENT_ID;
-  pnfs_clientid->cb_program = arg_CREATE_SESSION4.csa_cb_program;
+  pnfs_clientid->cb.program = arg_CREATE_SESSION4.csa_cb_program;
 
   pnfs_clientid->create_session_sequence += 1;
   /** @todo: BUGAZOMEU Gerer les parametres de secu */

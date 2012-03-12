@@ -79,19 +79,19 @@
 #define arg_SECINFO4 op->nfs_argop4_u.opsecinfo
 #define res_SECINFO4 resp->nfs_resop4_u.opsecinfo
 
-gss_OID_desc krb5oid =
-   {9, "\052\206\110\206\367\022\001\002\002"};
+extern gss_OID_desc krb5oid;
 
 int nfs4_op_secinfo(struct nfs_argop4 *op,
                     compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_secinfo";
 
-  fsal_name_t            secinfo_fh_name;
-  cache_inode_status_t   cache_status;
-  cache_entry_t        * entry_src;
-  fsal_attrib_list_t     attr_secinfo;
-  int                    num_entry = 0;
+  fsal_name_t secinfo_fh_name;
+  cache_inode_status_t cache_status;
+  cache_entry_t *entry_src;
+  fsal_attrib_list_t attr_secinfo;
+  sec_oid4 v5oid = {krb5oid.length, (char *)krb5oid.elements};
+  int num_entry = 0;
 
   resp->resop = NFS4_OP_SECINFO;
   res_SECINFO4.status = NFS4_OK;
@@ -156,8 +156,8 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
       return res_SECINFO4.status;
     }
 
-  sec_oid4 local_oid = {krb5oid.length, (char *)krb5oid.elements};
-  
+  /* XXX we have the opportunity to associate a preferred security triple
+   * with a specific fs/export.  For now, list all implemented. */  
   int idx=0;
   if (data->pexport->options & EXPORT_OPTION_AUTH_NONE)
       res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++].flavor = AUTH_NONE;
@@ -168,21 +168,21 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
       res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].flavor = RPCSEC_GSS;
       res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_NONE;
       res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++].secinfo4_u.flavor_info.oid = local_oid;
+      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++].secinfo4_u.flavor_info.oid = v5oid;
     }
   if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_INTG)
     {
       res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].flavor = RPCSEC_GSS;
       res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_INTEGRITY;
       res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++].secinfo4_u.flavor_info.oid = local_oid;
+      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++].secinfo4_u.flavor_info.oid = v5oid;
     }
   if (data->pexport->options & EXPORT_OPTION_RPCSEC_GSS_PRIV)
     {
       res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].flavor = RPCSEC_GSS;
       res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_PRIVACY;
       res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx].secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++].secinfo4_u.flavor_info.oid = local_oid;
+      res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_val[idx++].secinfo4_u.flavor_info.oid = v5oid;
     }
   res_SECINFO4.SECINFO4res_u.resok4.SECINFO4resok_len = idx;
 

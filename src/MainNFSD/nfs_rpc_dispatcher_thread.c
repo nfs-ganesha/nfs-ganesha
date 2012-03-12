@@ -523,7 +523,7 @@ void nfs_Init_svc()
 {
     protos p;
     svc_init_params svc_params;
-    int ix, code = 0;
+    int ix, code __attribute__((unused)) = 0;
     int one = 1;
 
     LogInfo(COMPONENT_DISPATCH, "NFS INIT: Core options = %d",
@@ -694,27 +694,27 @@ void nfs_Init_svc()
   /* Acquire RPCSEC_GSS basis if needed */
   if(nfs_param.krb5_param.active_krb5 == TRUE)
     {
-      if(Svcauth_gss_import_name(nfs_param.krb5_param.principal) != TRUE)
+      if(Svcauth_gss_import_name(nfs_param.krb5_param.svc.principal) != TRUE)
         {
           LogFatal(COMPONENT_DISPATCH,
                    "Could not import principal name %s into GSSAPI",
-                   nfs_param.krb5_param.principal);
+                   nfs_param.krb5_param.svc.principal);
         }
       else
         {
           LogInfo(COMPONENT_DISPATCH,
                   "Successfully imported principal %s into GSSAPI",
-                  nfs_param.krb5_param.principal);
+                  nfs_param.krb5_param.svc.principal);
 
           /* Trying to acquire a credentials for checking name's validity */
           if(!Svcauth_gss_acquire_cred())
             LogCrit(COMPONENT_DISPATCH,
                      "Cannot acquire credentials for principal %s",
-                     nfs_param.krb5_param.principal);
+                     nfs_param.krb5_param.svc.principal);
           else
             LogInfo(COMPONENT_DISPATCH,
                     "Principal %s is suitable for acquiring credentials",
-                    nfs_param.krb5_param.principal);
+                    nfs_param.krb5_param.svc.principal);
         }
     }
 #endif                          /* _HAVE_GSSAPI */
@@ -860,8 +860,24 @@ unsigned int nfs_core_select_worker_queue()
 } /* nfs_core_select_worker_queue */
 
 /**
- * dispatch_rpc_request: dispatch an RPC request to some worker for
- * processing.
+ * nfs_rpc_get_nfsreq: get a request frame (call or svc request)
+ */
+request_data_t *
+nfs_rpc_get_nfsreq(nfs_worker_data_t *worker, uint32_t flags)
+{
+    request_data_t *pnfsreq = NULL;
+
+    P(worker->request_pool_mutex);
+    GetFromPool(pnfsreq, &worker->request_pool,
+                request_data_t);
+    V(worker->request_pool_mutex);
+
+    return (pnfsreq);
+}
+
+/**
+ * process_rpc_request: process an RPC request.
+ *
  */
 process_status_t dispatch_rpc_request(SVCXPRT *xprt)
 {
@@ -914,16 +930,16 @@ process_status_t dispatch_rpc_request(SVCXPRT *xprt)
   pnfsreq->rtype = NFS_REQUEST ;
 
   /* Set up cred area */
-  cred_area = pnfsreq->rcontent.nfs.cred_area;
-  preq = &(pnfsreq->rcontent.nfs.req);
-  pmsg = &(pnfsreq->rcontent.nfs.msg);
+  cred_area = pnfsreq->r_u.nfs.cred_area;
+  preq = &(pnfsreq->r_u.nfs.req);
+  pmsg = &(pnfsreq->r_u.nfs.msg);
 
   pmsg->rm_call.cb_cred.oa_base = cred_area;
   pmsg->rm_call.cb_verf.oa_base = &(cred_area[MAX_AUTH_BYTES]);
   preq->rq_clntcred = &(cred_area[2 * MAX_AUTH_BYTES]);
 
   /* Set up xprt */
-  pnfsreq->rcontent.nfs.xprt = xprt;
+  pnfsreq->r_u.nfs.xprt = xprt;
   preq->rq_xprt = xprt;
 
   /* Hand it off */
@@ -976,7 +992,7 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
 
     /* The following actions are now purely diagnostic, the only side effect is a message to
      * the log. */
-    int code = 0;
+    int code  __attribute__((unused)) = 0;
     int rpc_fd = xprt->xp_fd;
 
     svc_xprt_dump_xprts("process_rpc_request");
@@ -1001,9 +1017,8 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
         /*
          * This is an initial tcp connection
          * There is no RPC message, this is only a TCP connect.
-         * In this case, the SVC_RECV does only produces a new connected socket (it does
+         * In this case, the SVC_RECV only produces a new connected socket (it does
          * just a call to accept)
-         * there is no need of worker thread processing to be done
          */
         LogFullDebug(COMPONENT_DISPATCH,
                      "An initial NFS TCP request from a new client %d",
@@ -1133,5 +1148,5 @@ void constructor_request_data_t(void *ptr)
 {
   request_data_t * pdata = (request_data_t *) ptr;
 
-  constructor_nfs_request_data_t( &(pdata->rcontent.nfs) ) ;
+  constructor_nfs_request_data_t( &(pdata->r_u.nfs) ) ;
 }

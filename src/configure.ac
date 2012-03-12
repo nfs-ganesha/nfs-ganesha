@@ -6,6 +6,8 @@ AC_INIT( [nfs-ganesha], [1.4.0], [philippe.deniel@cea.fr,thomas.leibovici@cea.fr
 
 AC_SUBST(RELEASE, [1])
 
+AC_DEFINE( [NFS_GANESHA], 1, [Ganesha])
+
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -227,6 +229,17 @@ if test "$enable_rquota" == "yes"; then
 fi
 AM_CONDITIONAL(USE_RQUOTA, test "$enable_rquota" = "yes")
 
+# DBUS
+GA_ENABLE_AM_CONDITION([dbus],[enable DBUS protocol support],[USE_DBUS])
+
+if test "$enable_dbus" == "yes"; then
+        AC_DEFINE(USE_DBUS,1,[enable DBUS protocol support])
+	AC_CHECK_LIB([dbus-1], [main], [AC_DEFINE( HAVE_DBUS,1,[enable DBUS support] ) ], [AC_MSG_ERROR( [libdbus-1.x could not be found...] ) ] )
+	CFLAGS="$CFLAGS `pkg-config dbus-1 --cflags`"
+	LDFLAGS="$LDFLAGS -ldbus-1"
+fi
+AM_CONDITIONAL(USE_DBUS, test "$enable_dbus" = "yes")
+
 # Invalidation simulator (to be removed when FSAL_UP will be completed)
 GA_ENABLE_AM_CONDITION([upcall-simulator],[enable FSAL upcalls simulator thread],[USE_UPCALL_SIMULATOR])
 
@@ -234,6 +247,14 @@ if test "$enable_upcall_simulator" == "yes"; then
         AC_DEFINE(_USE_UPCALL_SIMULATOR,1,[enable Upcall simulator thread])
 fi
 AM_CONDITIONAL(USE_UPCALL_SIMULATOR, test "$enable_upcall_simulator" = "yes")
+
+# Callback simulator                                                                                         
+GA_ENABLE_AM_CONDITION([cb-simulator],[enable callback simulator thread],[USE_CB_SIMULATOR])
+
+if test "$enable_cb_simulator" == "yes"; then
+        AC_DEFINE(_USE_CB_SIMULATOR,1,[enable callback simulator thread])
+fi
+AM_CONDITIONAL(USE_CB_SIMULATOR, test "$enable_cb_simulator" = "yes")
 
 # FSAL switch argument (default is PROXY)
 AC_ARG_WITH( [fsal], AS_HELP_STRING([--with-fsal=HPSS|POSIX|PROXY|SNMP|FUSE|LUSTRE|XFS|GPFS|ZFS|VFS|CEPH|DYNFSAL|SHOOK (default=PROXY)],
@@ -304,6 +325,19 @@ if test "$enable_nfsidmap" == "yes"; then
 	AC_DEFINE(_USE_NFSIDMAP, 1, [enable Id Mapping through libnfsidmap])
 fi
 AM_CONDITIONAL(USE_NFSIDMAP, test "$enable_nfsidmap" == "yes" )
+
+dnl check for the keyutils libraries and headers
+AC_KEYUTILS
+
+dnl Check for Kerberos V5
+AC_KERBEROS_V5
+
+dnl Invoked after AC_KERBEROS_V5; AC_LIBRPCSECGSS needs to have KRBLIBS set
+AC_LIBRPCSECGSS
+
+dnl Need krb5_util.h and friends.  This will be out-of-tree Very Soon,
+dnl so don't put pieces into src/include
+CFLAGS="$CFLAGS -I\$(top_builddir)/RPCAL/gssd"
 
 # Exports stats via SNMP
 
@@ -840,6 +874,7 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL_UP/DUMB/Makefile
 		 Protocols/Makefile
                  Protocols/9P/Makefile
+		 Protocols/DBUS/Makefile
 		 Protocols/NFS/Makefile
 		 Protocols/NLM/Makefile
 		 Protocols/RQUOTA/Makefile
@@ -864,6 +899,7 @@ AC_CONFIG_FILES([include/Makefile
                  RPCAL/Makefile
                  RPCAL/ONCRPC/Makefile
                  RPCAL/TIRPC/Makefile
+                 RPCAL/gssd/Makefile
                  MainNFSD/Makefile
                  test/Makefile
                  cmdline_tools/Makefile

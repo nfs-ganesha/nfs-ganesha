@@ -1095,11 +1095,12 @@ int nfs_read_krb5_conf(config_file_t in_config, nfs_krb5_parameter_t * pparam)
 
       if(!strcasecmp(key_name, "PrincipalName"))
         {
-          strncpy(pparam->principal, key_value, sizeof(pparam->principal));
+          strlcpy(pparam->svc.principal, key_value,
+                  sizeof(pparam->svc.principal));
         }
       else if(!strcasecmp(key_name, "KeytabPath"))
         {
-          strncpy(pparam->keytab, key_value, sizeof(pparam->keytab));
+          strlcpy(pparam->keytab, key_value, sizeof(pparam->keytab));
         }
       else if(!strcasecmp(key_name, "Active_krb5"))
         {
