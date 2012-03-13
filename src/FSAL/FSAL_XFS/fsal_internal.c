@@ -413,6 +413,12 @@ fsal_status_t fsal_internal_fd2handle(fsal_op_context_t * p_context,
   if((rc = fd_to_handle(fd, (void **)(&handle_val), &handle_len)) < 0)
     ReturnCode(posix2fsal_error(errno), errno);
 
+  if(handle_len > sizeof(phandle->data.handle_val))
+    {
+      free_handle(handle_val, handle_len);
+      ReturnCode(ERR_FSAL_TOOSMALL, 0);
+    }
+
   memcpy(phandle->data.handle_val, handle_val, handle_len);
   phandle->data.handle_len = handle_len;
 
