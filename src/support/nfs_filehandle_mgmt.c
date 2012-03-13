@@ -372,8 +372,14 @@ int nfs2_FSALToFhandle(fhandle2 * pfh2, fsal_handle_t * pfsalhandle,
       FSAL_DigestHandle(&pexport->FS_export_context, FSAL_DIGEST_NFSV2, pfsalhandle,
                         (caddr_t) & file_handle.fsopaque);
   if(FSAL_IS_ERROR(fsal_status))
+   {
+     if( fsal_status.major == ERR_FSAL_TOOSMALL )
+      LogCrit( COMPONENT_FILEHANDLE, "NFSv2 file handle is too small to manage this fsal" ) ;
+     else
+      LogCrit( COMPONENT_FILEHANDLE, "FSAL_DigestHandle return (%u,%u) when called from %s", 
+               fsal_status.major, fsal_status.minor, __func__ ) ;
     return 0;
-
+   }
   /* keep track of the export id */
   file_handle.exportid = pexport->id;
 
