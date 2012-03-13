@@ -2468,6 +2468,15 @@ state_status_t state_unlock(cache_entry_t        * pentry,
       return *pstatus;
     }
 
+  if(pentry->type != REGULAR_FILE)
+    {
+      LogLock(COMPONENT_STATE, NIV_DEBUG,
+              "Bad Unlock",
+              pentry, pcontext, powner, plock);
+      *pstatus = STATE_BAD_TYPE;
+      return *pstatus;
+    }
+
   /* We need to iterate over the full lock list and remove
    * any mapping entry. And sle_lock.lock_start = 0 and sle_lock.lock_length = 0 nlm_lock
    * implies remove all entries
@@ -2597,6 +2606,15 @@ state_status_t state_cancel(cache_entry_t        * pentry,
   struct glist_head    * glist;
   state_lock_entry_t   * found_entry;
   cache_inode_status_t   cache_status;
+
+  if(pentry->type != REGULAR_FILE)
+    {
+      LogLock(COMPONENT_STATE, NIV_DEBUG,
+              "Bad Cancel",
+              pentry, pcontext, powner, plock);
+      *pstatus = STATE_BAD_TYPE;
+      return *pstatus;
+    }
 
   *pstatus = STATE_NOT_FOUND;
 
