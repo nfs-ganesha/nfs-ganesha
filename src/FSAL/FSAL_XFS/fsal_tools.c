@@ -185,6 +185,11 @@ unsigned int XFSFSAL_Handle_to_RBTIndex(fsal_handle_t * handle, unsigned int coo
   return h;
 }
 
+static size_t xfs_sizeof_handle(const xfsfsal_handle_t *hdl)
+{
+	return offsetof(xfsfsal_handle_t, data.handle_val) + hdl->data.handle_len;
+}
+
 /**
  * FSAL_DigestHandle :
  *  Convert an xfsfsal_handle_t to a buffer
@@ -224,7 +229,7 @@ fsal_status_t XFSFSAL_DigestHandle(fsal_export_context_t * p_expcontext,     /* 
     case FSAL_DIGEST_NFSV2:
     case FSAL_DIGEST_NFSV3:
     case FSAL_DIGEST_NFSV4:
-      sz = sizeof(*xfs_handle);
+      sz = xfs_sizeof_handle(xfs_handle);
       start = xfs_handle;
       break;
 
@@ -274,15 +279,13 @@ fsal_status_t XFSFSAL_ExpandHandle(fsal_export_context_t * p_expcontext,     /* 
                                    struct fsal_handle_desc *fh_desc /* IN/OUT */
     )
 {
-  const xfsfsal_handle_t *hdl;
   size_t fh_size;
 
   /* sanity checks */
   if( !fh_desc || !fh_desc->start)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  hdl = (const xfsfsal_handle_t *)(fh_desc->start);
-  fh_size = sizeof(*hdl);
+  fh_size = xfs_sizeof_handle((const xfsfsal_handle_t *)(fh_desc->start));
   switch(in_type)
     {
     case FSAL_DIGEST_NFSV2:
