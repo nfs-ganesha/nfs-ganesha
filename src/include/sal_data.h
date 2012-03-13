@@ -470,7 +470,7 @@ struct state_cookie_entry_t
  */
 extern cache_inode_client_t state_async_cache_inode_client;
 
-typedef void (state_async_func) (state_async_queue_t * arg);
+typedef void (state_async_func_t) (state_async_queue_t * arg);
 
 #ifdef _USE_NLM
 typedef struct state_nlm_async_data_t
@@ -493,7 +493,7 @@ typedef struct state_async_block_data_t
 struct state_async_queue_t
 {
   struct glist_head              state_async_glist;
-  state_async_func             * state_async_func;
+  state_async_func_t           * state_async_func;
   union
     {
 #ifdef _USE_NLM
