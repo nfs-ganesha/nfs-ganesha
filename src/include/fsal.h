@@ -78,19 +78,6 @@ extern int __build_bug_on_failed;
 
 #ifndef _USE_SWIG
 
-#ifdef _USE_SHARED_FSAL
-/******************************************************
- *    FSAL ID management for multiple FSAL support
- ******************************************************/
-void FSAL_SetId( int fsalid ) ;
-int FSAL_GetId( void ) ;
-int FSAL_Is_Loaded( int fsalid ) ;
-#endif
-int FSAL_param_load_fsal_split( char * param, int * fsalid, char * pathlib ) ;
-int FSAL_name2fsalid( char * fsname ) ;
-char * FSAL_fsalid2name( int fsalid ) ;
-
-
 /******************************************************
  *            Attribute mask management.
  ******************************************************/

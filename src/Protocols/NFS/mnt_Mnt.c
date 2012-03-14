@@ -181,11 +181,6 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
       return NFS_REQ_OK;
     }
 
-#ifdef _USE_SHARED_FSAL
-  /* At this step, the export entry is known and it's required to use it to set the current thread's fsalid */
-  FSAL_SetId( p_current_item->fsalid ) ;
-#endif
-
   LogDebug(COMPONENT_NFSPROTO,
            "MOUNT: Export entry Path=%s Tag=%s matches %s, export_id=%u",
            exported_path, p_current_item->FS_tag, exportPath,

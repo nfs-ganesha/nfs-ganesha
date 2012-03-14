@@ -374,13 +374,7 @@ typedef struct nfs_param__
   hash_parameter_t nlm_owner_hash_param;
 #endif
   nfs_cache_layers_parameter_t cache_layers_param;
-#ifdef _USE_SHARED_FSAL
-  unsigned int nb_loaded_fsal ;
-  unsigned int loaded_fsal[NB_AVAILABLE_FSAL];
-  fsal_parameter_t fsal_param[NB_AVAILABLE_FSAL];
-#else
   fsal_parameter_t fsal_param;
-#endif
   external_tools_parameter_t extern_param;
 
   /* list of exports declared in config file */
@@ -511,12 +505,7 @@ typedef struct nfs_worker_data__
   sockaddr_t hostaddr;
   unsigned int gc_in_progress;
   unsigned int current_xid;
-#ifdef _USE_SHARED_FSAL
-  fsal_op_context_t thread_fsal_context[NB_AVAILABLE_FSAL];
-#else
   fsal_op_context_t thread_fsal_context;
-#endif
-
   /* Description of current or most recent function processed and start time (or 0) */
   const nfs_function_desc_t *pfuncdesc;
   struct timeval timer_start;

@@ -76,9 +76,7 @@ typedef union
     fsal_nodetype_t type;
     char i_snap;
   } data;
-#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_HANDLE_T_SIZE];
-#endif
 } zfsfsal_handle_t;
 
 typedef struct
@@ -128,9 +126,7 @@ typedef union
   {
     off_t cookie;
   } data;
-#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_COOKIE_T_SIZE];
-#endif 
 } zfsfsal_cookie_t;
 
 #define FSAL_SET_PCOOKIE_BY_OFFSET( __pfsal_cookie, __cookie )           \

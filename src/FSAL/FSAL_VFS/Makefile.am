@@ -1,15 +1,6 @@
 AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
-if BUILD_SHARED_FSAL
-
-lib_LTLIBRARIES = libfsalvfs.la
-libfsalvfs_la_LDFLAGS = -version-number @LIBVERSION@
-libfsalvfs_la_LIBADD = ../../SemN/libSemN.la  ../libfsalcommon.la 
-
-else
 noinst_LTLIBRARIES          = libfsalvfs.la
-
-endif
 
 libfsalvfs_la_SOURCES = fsal_access.c    \
                         fsal_compat.c    \

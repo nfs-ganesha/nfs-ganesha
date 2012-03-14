@@ -118,14 +118,6 @@ int main(int argc, char *argv[])
 #endif
   sigset_t signals_to_block;
 
-#ifdef _USE_SHARED_FSAL
-  int fsalid = -1 ;
-  unsigned int i = 0 ;
-  int nb_fsal = NB_AVAILABLE_FSAL ;
-  path_str_t fsal_path_param[NB_AVAILABLE_FSAL];
-  path_str_t fsal_path_lib;
-#endif
-
   /* retrieve executable file's name */
   strncpy(ganesha_exec_path, argv[0], MAXPATHLEN);
 
@@ -330,59 +322,6 @@ int main(int argc, char *argv[])
   /* Set the parameter to 0 before doing anything */
   memset((char *)&nfs_param, 0, sizeof(nfs_parameter_t));
 
-#ifdef _USE_SHARED_FSAL
-  nb_fsal = NB_AVAILABLE_FSAL ;
-  if(nfs_get_fsalpathlib_conf(config_path, fsal_path_param, &nb_fsal))
-    {
-      LogMajor(COMPONENT_INIT,
-               "NFS MAIN: Error parsing configuration file for FSAL dynamic lib param.");
-      exit(1);
-    }
-
-  /* Keep track of the loaded FSALs */
-  nfs_param.nb_loaded_fsal = nb_fsal ;
-
-  for( i = 0 ; i < nb_fsal ; i++ )
-    {
-      if( FSAL_param_load_fsal_split( fsal_path_param[i], &fsalid, fsal_path_lib ) )
-        {
-          LogFatal(COMPONENT_INIT,
-                   "NFS MAIN: Error parsing configuration file for FSAL path.");
-          exit(1);
-        }
-
-      /* Keep track of the loaded FSALs */
-      nfs_param.loaded_fsal[i] = fsalid ;
-
-      LogEvent( COMPONENT_INIT,
-	        "Loading FSAL module for %s", FSAL_fsalid2name( fsalid ) ) ;
-   
-      /* Load the FSAL library (if needed) */
-      if(!FSAL_LoadLibrary(fsal_path_lib))
-       {
-         LogMajor(COMPONENT_INIT,
-	          "NFS MAIN: Could not load FSAL dynamic library %s", fsal_path_lib);
-         exit(1);
-        }
-
-     /* Set the FSAL id */
-     FSAL_SetId( fsalid ) ;
-
-     /* Get the FSAL functions */
-     FSAL_LoadFunctions();
-
-     /* Get the FSAL consts */
-     FSAL_LoadConsts();
-   } /* for */
-
-#ifdef _PNFS_MDS
-  FSAL_LoadMDSFunctions();
-#endif /* _PNFS_MDS */
-#ifdef _PNFS_DS
-  FSAL_LoadDSFunctions();
-#endif /* _PNFS_DS */
-
-#else
   /* Get the FSAL functions */
   FSAL_LoadFunctions();
 
@@ -394,8 +333,7 @@ int main(int argc, char *argv[])
 #endif /* _PNFS_MDS */
 #ifdef _PNFS_DS
   FSAL_LoadDSFunctions();
-#endif /* _PNFS_DS */
-#endif /* _USE_SHARED_FSAL */
+#endif
 
   LogEvent(COMPONENT_MAIN,
            ">>>>>>>>>>--------------------------------------- <<<<<<<<<<" ) ;

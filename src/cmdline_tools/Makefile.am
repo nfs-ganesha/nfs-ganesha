@@ -1,8 +1,4 @@
-if SHARED_FSAL
-DLOPEN_FLAGS =
-else
 DLOPEN_FLAGS = -rdynamic
-endif
 
 EXTRA_DIST = ganesha_log_level
 

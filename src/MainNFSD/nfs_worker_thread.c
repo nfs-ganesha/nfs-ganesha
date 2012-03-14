@@ -1343,23 +1343,12 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
       /* Do the authentication stuff, if needed */
       if(pworker_data->pfuncdesc->dispatch_behaviour & NEEDS_CRED)
         {
-#ifdef _USE_SHARED_FSAL
-	  FSAL_SetId( pexport->fsalid ) ;
-
-	  /* Swap the anonymous uid/gid if the user should be anonymous */
-          if(nfs_check_anon(&related_client, pexport, &user_credentials) == FALSE
-	     || nfs_build_fsal_context(ptr_req,
-                                       pexport,
-				       &pworker_data->thread_fsal_context[pexport->fsalid],
-				       &user_credentials) == FALSE)
-#else
 	  /* Swap the anonymous uid/gid if the user should be anonymous */
           if(nfs_check_anon(&related_client, pexport, &user_credentials) == FALSE
 	     || nfs_build_fsal_context(ptr_req,
                                        pexport,
 				       &pworker_data->thread_fsal_context,
                                        &user_credentials) == FALSE)
-#endif
             {
               LogInfo(COMPONENT_DISPATCH,
                       "authentication failed, rejecting client");
@@ -1397,17 +1386,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }
 #endif
 
-#ifdef _USE_SHARED_FSAL
-      if( pexport != NULL )
-       {
-         pfsal_op_ctx = &pworker_data->thread_fsal_context[pexport->fsalid] ; 
-         FSAL_SetId( pexport->fsalid ) ;
-       }
-      else
-	pfsal_op_ctx = NULL ; /* Only for mount protocol (pexport is then meaningless */
-#else
       pfsal_op_ctx =  &pworker_data->thread_fsal_context ;
-#endif
 
       rc = pworker_data->pfuncdesc->service_function(parg_nfs, 
 						     pexport, 
@@ -1843,10 +1822,6 @@ void *worker_thread(void *IndexArg)
 
   worker_index = (unsigned long)IndexArg;
   pmydata = &(workers_data[worker_index]);
-#ifdef _USE_SHARED_FSAL 
-  unsigned int i = 0 ;
-  unsigned int fsalid = 0 ;
-#endif
 
   snprintf(thr_name, sizeof(thr_name), "Worker Thread #%lu", worker_index);
   SetNameFunction(thr_name);
@@ -1882,30 +1857,12 @@ void *worker_thread(void *IndexArg)
                "NFS WORKER #%lu: Initialization of thread's credential",
                worker_index);
 
-#ifdef _USE_SHARED_FSAL
-  for( i = 0 ; i < nfs_param.nb_loaded_fsal ; i++ )
-   {
-      fsalid =  nfs_param.loaded_fsal[i] ;
-
-      FSAL_SetId( fsalid ) ;
-
-      if(FSAL_IS_ERROR(FSAL_InitClientContext(&(pmydata->thread_fsal_context[fsalid]))))
-       {
-         /* Failed init */
-         LogMajor(COMPONENT_DISPATCH,
-                  "NFS  WORKER #%lu: Error initializing thread's credential for FSAL %s",
-                 worker_index, FSAL_fsalid2name( fsalid ) );
-         exit(1);
-       }
-   } /* for */
-#else
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&pmydata->thread_fsal_context)))
     {
       /* Failed init */
       LogFatal(COMPONENT_DISPATCH,
                "Error initializing thread's credential");
     }
-#endif /* _USE_SHARED_FSAL */
 
   /* Init the Cache inode client for this worker */
   if(cache_inode_client_init(&pmydata->cache_inode_client,
@@ -1921,11 +1878,7 @@ void *worker_thread(void *IndexArg)
 
 #ifdef _USE_MFSL
 
-#ifdef _USE_SHARED_FSAL
-#error "For the moment, no MFSL are supported with dynamic FSALs"
-#else
   if(FSAL_IS_ERROR(MFSL_GetContext(&pmydata->cache_inode_client.mfsl_context, (&(pmydata->thread_fsal_context) ) ) ) ) 
-#endif
     {
       /* Failed init */
       LogFatal(COMPONENT_DISPATCH, "Error initing MFSL");

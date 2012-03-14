@@ -101,9 +101,7 @@ typedef union {
     char type;
     char handle_val[FSAL_XFS_HANDLE_LEN];
   } data ;
-#ifdef _BUILD_SHARED_FSAL 
   char pad[FSAL_HANDLE_T_SIZE];
-#endif 
 } xfsfsal_handle_t;  /**< FS object handle */
 
 /** Authentification context.    */
@@ -145,9 +143,7 @@ typedef union {
  {
   off_t cookie;
  } data ;
-#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_COOKIE_T_SIZE];
-#endif 
 } xfsfsal_cookie_t;
 
 #define FSAL_SET_PCOOKIE_BY_OFFSET( __pfsal_cookie, __cookie )           \

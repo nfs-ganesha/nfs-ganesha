@@ -37,7 +37,12 @@
 #include "fsal_glue_const.h"
 
 /* In the "static" case, original types are used, this is safer */
-#ifdef _USE_SHARED_FSAL
+/* These declarations were part of the USE_SHARED_FSAL feature
+ * which is now deprecated.  Deprecate this file completely with
+ * the new FSAL API change.  In the meantime, leave it for
+ * history reasons.
+ */
+#if 0
 
 /* Allow aliasing of fsal_handle_t since FSALs will be
  * casting between pointer types
@@ -102,6 +107,6 @@ typedef struct
 
 #define FSAL_OP_CONTEXT_TO_UID( __pcontext ) ( __pcontext->credential.user )
 
-#endif                          /* USE_SHARED_FSAL */
+#endif
 
 #endif                          /* _FSAL_GLUE_H */

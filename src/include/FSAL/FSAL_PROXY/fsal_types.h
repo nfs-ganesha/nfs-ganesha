@@ -93,9 +93,7 @@ typedef union {
     uint8_t srv_handle_len;
     char srv_handle_val[FSAL_PROXY_FILEHANDLE_MAX_LEN] ; 
   } data ;
-#ifdef _BUILD_SHARED_FSAL 
   char pad[FSAL_HANDLE_T_SIZE];
-#endif 
 }  proxyfsal_handle_t;
 
 typedef struct
@@ -154,9 +152,7 @@ typedef struct
 
 typedef union {
   nfs_cookie4 data ;
-#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_COOKIE_T_SIZE];
-#endif 
 
 } proxyfsal_cookie_t;
 

@@ -202,19 +202,6 @@ GA_PROG_NETSNMP_CONFIG
 # Features options
 
 
-# Build FSAL's dynamic lib
-GA_ENABLE_AM_CONDITION([buildsharedfsal],[when enable, build the FSAL as both static and dynamic library],[BUILD_SHARED_FSAL])
-
-if test "$enable_buildsharedfsal" == "yes"; then
-        AC_DEFINE(_BUILD_SHARED_FSAL,1,[Build shared FSAL])
-	SHARED_FSAL=1
-	SHARED_FSAL_PKG=yes
-else
-	SHARED_FSAL=0
-	SHARED_FSAL_PKG=no
-fi
-AM_CONDITIONAL(BUILD_SHARED_FSAL, test "$enable_buildsharedfsal" = "yes")
-
 # NLMv4
 GA_ENABLE_AM_CONDITION([nlm],[enable NLMv4 support (Lock management for NFSv3)],[USE_NLM])
 
@@ -263,7 +250,6 @@ AM_CONDITIONAL(USE_FSAL_XFS,      test "$FSAL" = "XFS")
 AM_CONDITIONAL(USE_FSAL_GPFS,     test "$FSAL" = "GPFS")
 AM_CONDITIONAL(USE_FSAL_CEPH,     test "$FSAL" = "CEPH")
 AM_CONDITIONAL(USE_FSAL_TEMPLATE, test "$FSAL" = "TEMPLATE")
-AM_CONDITIONAL(SHARED_FSAL,       test "$FSAL" = "DYNFSAL")
 AM_CONDITIONAL(USE_FSAL_ZFS,      test "$FSAL" = "ZFS")
 AM_CONDITIONAL(USE_FSAL_VFS,      test "$FSAL" = "VFS")
 
@@ -619,14 +605,6 @@ case $FSAL in
                 FS_NAME="ceph"
                 ;;
 
-        DYNFSAL)
-               	AC_DEFINE( _USE_SHARED_FSAL, 1, [enable shared FSAL] )
-		AM_CONDITIONAL( SHARED_FSAL, test "$FSAL" = "DYNFSAL" )
-		FSAL_CFLAGS=-rdynamic
-                FSAL_LDFLAGS="-ldl"
-		FSAL_LIB=
-		FS_NAME="dynfsal"
-                ;;
 	GPFS)
 		AC_DEFINE([_USE_GPFS], 1, [GANESHA exports GPFS Filesystem])
 		AC_DEFINE(_USE_FSAL_UP,1,[enable FSAL Upcall Interface support])
@@ -874,8 +852,6 @@ AC_SUBST(FSAL_LIB)
 AC_SUBST(FSALPNFS_LIB)
 AC_SUBST(MFSL_LIB)
 AC_SUBST(FS_NAME)
-AC_SUBST(SHARED_FSAL)
-AC_SUBST(SHARED_FSAL_PKG)
 AC_SUBST(SEC_CFLAGS)
 AC_SUBST(SEC_LFLAGS)
 AC_SUBST(DEBIAN_DB_DEP)

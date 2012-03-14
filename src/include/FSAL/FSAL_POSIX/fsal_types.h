@@ -103,9 +103,7 @@ typedef union {
     int ts;                       /* timestamp */
     fsal_posixdb_fileinfo_t info; /* info from the database, related to the object on the FS */
   } data ;
-#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_HANDLE_T_SIZE];
-#endif
 } posixfsal_handle_t;  /**< FS object handle.            */
 
 /** Authentification context.    */
@@ -145,9 +143,7 @@ typedef union {
   {
     off_t cookie;
   } data ;
-#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_COOKIE_T_SIZE];
-#endif
 } posixfsal_cookie_t;
 
 /* Directory stream descriptor. */

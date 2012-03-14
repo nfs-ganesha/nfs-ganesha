@@ -180,9 +180,7 @@ typedef union {
  {
   off_t cookie;
  } data ;
-#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_COOKIE_T_SIZE];
-#endif
 } gpfsfsal_cookie_t;
 
 // static const fsal_cookie_t FSAL_READDIR_FROM_BEGINNING = { 0 };

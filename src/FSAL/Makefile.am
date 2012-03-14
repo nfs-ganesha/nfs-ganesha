@@ -25,11 +25,7 @@ libfsalcommon_la_SOURCES = fsal_strings.c          \
 # What's next is required to allow dynamic FSAL to compile
 # COMMON_* functions are in the current directory, it must be compiled before the FSAL_* directories
 
-if BUILD_SHARED_FSAL
 SUBDIRS = . 
-else 
-SUBDIRS = 
-endif 
 
 if USE_PNFS
 libfsalpnfscommon_la_SOURCES = common_pnfs.c

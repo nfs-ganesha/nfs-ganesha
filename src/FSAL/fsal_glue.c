@@ -12,11 +12,6 @@
 #endif
 
 
-#ifdef _USE_SHARED_FSAL
-#include <stdlib.h>
-#include <dlfcn.h>              /* For dlopen */
-#endif
-
 #include <string.h> /* For strncpy */
 
 #define fsal_increment_nbcall( _f_,_struct_status_ )
@@ -30,140 +25,15 @@ int __thread my_fsalid = -1 ;
 fsal_functions_t fsal_functions_array[NB_AVAILABLE_FSAL];
 fsal_const_t fsal_consts_array[NB_AVAILABLE_FSAL];
 
-#ifdef _USE_SHARED_FSAL
-
-#define fsal_functions fsal_functions_array[my_fsalid]
-#define fsal_consts fsal_consts_array[my_fsalid]
-#else
 #define fsal_functions fsal_functions_array[0]
 #define fsal_consts fsal_consts_array[0]
-#endif
 
-
-int FSAL_name2fsalid( char * fsname )
-{
-   if(      !strncasecmp( fsname, "CEPH",     MAXNAMLEN ) ) return FSAL_CEPH_ID ;
-   else if( !strncasecmp( fsname, "HPSS",     MAXNAMLEN ) ) return FSAL_HPSS_ID ;
-   else if( !strncasecmp( fsname, "SNMP",     MAXNAMLEN ) ) return FSAL_SNMP_ID ;
-   else if( !strncasecmp( fsname, "ZFS",      MAXNAMLEN ) ) return FSAL_ZFS_ID  ;
-   else if( !strncasecmp( fsname, "FUSELIKE", MAXNAMLEN ) ) return FSAL_FUSELIKE_ID ; 
-   else if( !strncasecmp( fsname, "LUSTRE",   MAXNAMLEN ) ) return FSAL_LUSTRE_ID ;
-   else if( !strncasecmp( fsname, "POSIX",    MAXNAMLEN ) ) return FSAL_POSIX_ID ;
-   else if( !strncasecmp( fsname, "VFS",      MAXNAMLEN ) ) return FSAL_VFS_ID ;
-   else if( !strncasecmp( fsname, "GPFS",     MAXNAMLEN ) ) return FSAL_GPFS_ID ;
-   else if( !strncasecmp( fsname, "PROXY",    MAXNAMLEN ) ) return FSAL_PROXY_ID ;
-   else if( !strncasecmp( fsname, "XFS",      MAXNAMLEN ) ) return FSAL_XFS_ID ;
-   else return -1 ;
-} /* FSAL_name2fsalid */
-
-char * FSAL_fsalid2name( int fsalid )
-{
-  switch( fsalid )
-   {
-        case FSAL_CEPH_ID:
-                return "CEPH" ;
-                break ;
-
-        case FSAL_HPSS_ID:
-                return "HPSS" ;
-                break ;
-
-        case FSAL_SNMP_ID:
-                return "SNMP" ;
-                break ;
-
-        case FSAL_ZFS_ID:
-                return "ZFS" ;
-                break ;
-
-        case FSAL_FUSELIKE_ID: 
-                return "FUSELIKE" ;
-                break ;
-
-        case FSAL_LUSTRE_ID:
-                return "LUSTRE" ;
-                break ;
-
-        case FSAL_POSIX_ID:
-                return "POSIX" ;
-                break ;
-
-        case FSAL_VFS_ID:
-                return "VFS" ;
-                break ;
-
-        case FSAL_GPFS_ID:
-                return "GPFS" ;
-                break ;
-
-        case FSAL_PROXY_ID:
-                return "PROXY" ;
-                break ;
-
-        case FSAL_XFS_ID:
-                return "XFS" ;
-                break ;
-
-        default:
-                return "not found" ;
-                break ;
-
-   }
-  return "You should not see this message... Implementation error !!!!" ;
-} /* FSAL_fsalid2name */
-
-/* Split the fsal_param into a fsalid and a path for a fsal lib
- * for example "XFS:/usr/lib/libfsalxfs.so.1.1.0" will produce FSAL_XFS_ID and "/usr/lib/libfsalxfs.so.1.1.0"  */
-int FSAL_param_load_fsal_split( char * param, int * pfsalid, char * pathlib )
-{
-  char *p1 = NULL ;
-  int foundcolon = 0 ;
-
-  char strwork[MAXPATHLEN] ;
-
-  if( !param || !pfsalid || !pathlib )
-    return -1 ;
-
-  strncpy( strwork, param, MAXPATHLEN ) ;
-  for( p1 = strwork; *p1 != '\0' ; p1++ )
-   {
-      if( *p1 == ':' )
-       {
-         foundcolon = 1 ;
-         *p1 = '\0';
-
-         break ;
-       }
-   }
-
-  if( foundcolon != 1 )
-    return -1 ;
-
-  p1+= 1 ;
-  strncpy( pathlib, p1, MAXPATHLEN ) ;
-  *pfsalid = FSAL_name2fsalid( strwork ) ;
-  return 0 ;
-} /* FSAL_param_load_fsal_split */
-
-#ifdef _USE_SHARED_FSAL
-fsal_functions_t(*getfunctions) (void);
-fsal_const_t(*getconsts) (void);
-
-int FSAL_Is_Loaded( int fsalid )
-{
-  return (fsal_functions_array[fsalid].fsal_access == NULL)?FALSE:TRUE ;
-}
-
-void FSAL_SetId( int fsalid )
-{
-  my_fsalid = fsalid ;
-}
-
-int FSAL_GetId( void )
-{
-  return my_fsalid ;
-} /* FSAL_GetId */
-#endif                          /* _USE_SHARED_FSAL */
+#ifdef _USE_FSALMDS
+fsal_mdsfunctions_t fsal_mdsfunctions;
+#endif                                          /* _USE_FSALMDS */
+#ifdef _USE_FSALDS
+fsal_dsfunctions_t fsal_dsfunctions;
+#endif                                          /* _USE_FSALMDS */
 
 fsal_status_t FSAL_access(fsal_handle_t * object_handle,        /* IN */
                           fsal_op_context_t * p_context,        /* IN */
@@ -463,74 +333,7 @@ fsal_status_t FSAL_dynamic_fsinfo(fsal_handle_t * p_filehandle, /* IN */
 
 fsal_status_t FSAL_Init(fsal_parameter_t * init_info /* IN */ )
 {
-#ifdef _USE_SHARED_FSAL
-
-  /* Sanity check (only useful when dlopen is used, otherwise type are macros to FSAL specific types */
-  if(fsal_consts.fsal_handle_t_size != sizeof(fsal_handle_t))
-    {
-      LogFatal(COMPONENT_FSAL,
-               "Implementation Error, local and specific fsal_handle_t do not match: %u |%lu !!!!",
-               fsal_consts.fsal_handle_t_size, sizeof(fsal_handle_t));
-      exit(1);
-    }
-  if(fsal_consts.fsal_cookie_t_size != sizeof(fsal_cookie_t))
-    {
-      LogFatal(COMPONENT_FSAL,
-               "Implementation Error, local and specific fsal_cookie_t do not match: %u |%lu !!!!",
-               fsal_consts.fsal_cookie_t_size, sizeof(fsal_cookie_t));
-      exit(1);
-    }
-
-#if 0
-  if(fsal_consts.fsal_op_context_t_size != sizeof(fsal_op_context_t) - sizeof(void *))
-    {
-      LogFatal(COMPONENT_FSAL,
-               "Implementation Error, local and specific fsal_op_context_t do not match: %u |%u !!!!",
-               fsal_consts.fsal_op_context_t_size,
-               sizeof(fsal_op_context_t) - sizeof(void *));
-    }
-
-  if(fsal_consts.fsal_export_context_t_size != sizeof(fsal_export_context_t))
-    {
-      LogFatal(COMPONENT_FSAL,
-               "Implementation Error, local and specific fsal_export_context_t do not match: %u |%u !!!!",
-               fsal_consts.fsal_export_context_t_size, sizeof(fsal_export_context_t));
-    }
-
-  if(fsal_consts.fsal_file_t_size != sizeof(fsal_file_t))
-    {
-      LogFatal(COMPONENT_FSAL,
-               "Implementation Error, local and specific fsal_file_context_t do not match: %u |%u !!!!",
-               fsal_consts.fsal_file_t_size, sizeof(fsal_file_t));
-    }
-
-  if(fsal_consts.fsal_cred_t_size != sizeof(fsal_cred_t))
-    {
-      LogFatal(COMPONENT_FSAL,
-               "Implementation Error, local and specific fsal_cred_t do not match: %u |%u !!!!",
-               fsal_consts.fsal_cred_t_size, sizeof(fsal_cred_t));
-    }
-
-  if(fsal_consts.fs_specific_initinfo_t_size != sizeof(fs_specific_initinfo_t))
-    {
-      LogFatal(COMPONENT_FSAL,
-               "Implementation Error, local and specific fs_specific_initinfo_t do not match: %u |%u !!!!",
-               fsal_consts.fs_specific_initinfo_t_size, sizeof(fs_specific_initinfo_t));
-    }
-
-  if(fsal_consts.fsal_dir_t_size != sizeof(fsal_dir_t))
-    {
-      LogFatal(COMPONENT_FSAL,
-               "Implementation Error, local and specific fsal_dir_t do not match: %u |%u !!!!",
-               fsal_consts.fsal_dir_t_size, sizeof(fsal_dir_t));
-    }
-#endif /* 0 */
-
   return fsal_functions.fsal_init(init_info);
-#else                          /* USE_SHARED_FSAL */
-
-  return fsal_functions.fsal_init(init_info);
-#endif                          /* USE_SHARED_FSAL */
 }
 
 fsal_status_t FSAL_terminate()
@@ -801,11 +604,7 @@ fsal_status_t FSAL_unlink(fsal_handle_t * p_parent_directory_handle,    /* IN */
 
 char *FSAL_GetFSName()
 {
-#ifdef _USE_SHARED_FSAL
-  return "Multiple Dynamic FSAL" ;
-#else
   return fsal_functions.fsal_getfsname();
-#endif
 }
 
 fsal_status_t FSAL_GetXAttrAttrs(fsal_handle_t * p_objecthandle,        /* IN */
@@ -961,60 +760,6 @@ fsal_status_t FSAL_UP_GetEvents( fsal_up_event_t ** pevents,            /* OUT *
 }
 #endif /* _USE_FSAL_UP */
 
-#ifdef _USE_SHARED_FSAL
-int FSAL_LoadLibrary(char *path)
-{
-  void *handle;
-  char *error;
-
-  LogEvent(COMPONENT_FSAL, "Load shared FSAL : %s", path);
-
-  if((handle = dlopen(path, RTLD_LAZY)) == NULL)
-    {
-      LogMajor(COMPONENT_FSAL,
-               "FSAL_LoadLibrary: could not load fsal: %s",
-               dlerror());
-      return 0;
-    }
-
-  /* Clear any existing error : dlerror will be used to check if dlsym succeeded or not */
-  dlerror();
-
-  /* Map FSAL_GetFunctions */
-  getfunctions = (fsal_functions_t (*)(void))dlsym(handle, "FSAL_GetFunctions");
-  if((error = dlerror()) != NULL)
-    {
-      LogMajor(COMPONENT_FSAL,
-               "FSAL_LoadLibrary: Could not map symbol FSAL_GetFunctions:%s",
-               error);
-      return 0;
-    }
-  /* Map FSAL_GetConsts */
-  getconsts = (fsal_const_t (*)(void))dlsym(handle, "FSAL_GetConsts");
-  if((error = dlerror()) != NULL)
-    {
-      LogMajor(COMPONENT_FSAL,
-               "FSAL_LoadLibrary: Could not map symbol FSAL_GetConsts:%s",
-               error);
-      return 0;
-    }
-
-  return 1;
-}                               /* FSAL_LoadLibrary */
-
-void FSAL_LoadFunctions(void)
-{
-
-  fsal_functions = (*getfunctions) ();
-}
-
-void FSAL_LoadConsts(void)
-{
-
-  fsal_consts = (*getconsts) ();
-}
-
-#else
 int FSAL_LoadLibrary(char *path)
 {
   return 1;                     /* Does nothing, this is the "static" case */
@@ -1030,4 +775,16 @@ void FSAL_LoadConsts(void)
   fsal_consts = FSAL_GetConsts();
 }
 
-#endif /* _USE_SHARED_FSAL */
+#ifdef _USE_FSALMDS
+void FSAL_LoadMDSFunctions(void)
+{
+  fsal_mdsfunctions = FSAL_GetMDSFunctions();
+}
+#endif /* _USE_FSALMDS */
+
+#ifdef _USE_FSALDS
+void FSAL_LoadDSFunctions(void)
+{
+  fsal_dsfunctions = FSAL_GetDSFunctions();
+}
+#endif /* _USE_FSALDS */

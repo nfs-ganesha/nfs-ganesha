@@ -116,7 +116,6 @@ cache_content_client_t recover_datacache_client;
 #define CONF_EXPORT_MAX_OFF_READ       "MaxOffsetRead"
 #define CONF_EXPORT_MAX_CACHE_SIZE     "MaxCacheSize"
 #define CONF_EXPORT_REFERRAL           "Referral"
-#define CONF_EXPORT_FSALID             "FSALID"
 #define CONF_EXPORT_PNFS               "Use_pNFS"
 #define CONF_EXPORT_UQUOTA             "User_Quota"
 #define CONF_EXPORT_USE_COMMIT                  "Use_NFS_Commit"
@@ -753,8 +752,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   strcpy(p_entry->fsname, "");
   strcpy(p_entry->pseudopath, "/");
   strcpy(p_entry->referral, "");
-
-  unsigned int fsalid_is_set __attribute__((unused)) = FALSE ;
 
   /* parse options for this export entry */
 
@@ -2072,21 +2069,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
             }
         }
 #endif /* _USE_FSAL_UP */
-      else if(!STRCMP(var_name, CONF_EXPORT_FSALID))
-        {
-           if( ( p_entry->fsalid = FSAL_name2fsalid( var_value ) ) == -1 )
-            {
-                LogCrit(COMPONENT_CONFIG,
-                        "NFS READ_EXPORT: ERROR: Invalid value for %s (%s)", var_name, var_value ) ;
-#ifdef _USE_SHARED_FSAL
-		/* Critacal only for the FSAL-less daemon */
-                err_flag= TRUE ;
-#endif
-		continue;
-            }
-          else
-            fsalid_is_set = TRUE ;
-        }
       else if(!STRCMP(var_name, CONF_EXPORT_USE_COOKIE_VERIFIER))
         {
           switch (StrToBoolean(var_value))
@@ -2169,25 +2151,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
       Mem_Free(p_entry);
       return -1;
     }
-
-#ifdef _USE_SHARED_FSAL
-  if( fsalid_is_set == FALSE ) 
-   {
-        LogCrit(COMPONENT_CONFIG,
-                "NFS READ_EXPORT: ERROR: Missing mandatory parameter %s",
-                CONF_EXPORT_FSALID);
-        return -1 ;
-   }
-
-  /* Check is FSAL is loaded */
-  if( !FSAL_Is_Loaded( p_entry->fsalid ) ) 
-   {
-        LogCrit(COMPONENT_CONFIG,
-                "NFS READ_EXPORT: ERROR: FSAL library not loaded for fsalid=%s in export entry (id=%u)", 
-                FSAL_fsalid2name( p_entry->fsalid ), p_entry->id ) ;
-        return -1 ;
-   }
-#endif
 
   /* Here we can make sure certain options are turned on for specific FSALs */
   if (!fsal_specific_checks(p_entry))
@@ -2916,13 +2879,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       fsal_mdsize_t strsize = MNTPATHLEN + 1;
       cache_entry_t *pentry = NULL;
 
-#ifdef _USE_SHARED_FSAL
-      unsigned int i = 0 ;
-      unsigned int fsalid = 0 ;
-      fsal_op_context_t context[NB_AVAILABLE_FSAL];
-#else
       fsal_op_context_t context;
-#endif
 
       /* setting the 'small_client' structure */
       small_client_param.lru_param.nb_entry_prealloc = 10;
@@ -2972,23 +2929,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       small_client.pcontent_client = (void *)&recover_datacache_client;
 
       /* Get the context for FSAL super user */
-#ifdef _USE_SHARED_FSAL
-      for( i = 0 ; i < nfs_param.nb_loaded_fsal ; i++ )
-       {
-         fsalid = nfs_param.loaded_fsal[i] ;
-
-         FSAL_SetId( fsalid ) ;
-
-           
-         fsal_status = FSAL_InitClientContext(&context[fsalid]);
-         if(FSAL_IS_ERROR(fsal_status))
-          {
-            LogCrit(COMPONENT_INIT,
-                    "Couldn't get the context for FSAL super user on FSAL %s", FSAL_fsalid2name( fsalid ) );
-            return FALSE;
-          }
-       }
-#else
       fsal_status = FSAL_InitClientContext(&context);
       if(FSAL_IS_ERROR(fsal_status))
         {
@@ -2996,15 +2936,11 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
                   "Couldn't get the context for FSAL super user");
           return FALSE;
         }
-#endif
 
       /* loop the export list */
 
       for(pcurrent = pexportlist; pcurrent != NULL; pcurrent = pcurrent->next)
         {
-#ifdef _USE_SHARED_FSAL
-         FSAL_SetId( pcurrent->fsalid ) ;
-#endif 
 
 #ifdef _USE_MFSL_ASYNC
           if(!(pcurrent->options & EXPORT_OPTION_USE_DATACACHE))
@@ -3035,11 +2971,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
             }
 
           /* get the related client context */
-#ifdef _USE_SHARED_FSAL
-          fsal_status = FSAL_GetClientContext(&context[pcurrent->fsalid], &pcurrent->FS_export_context, 0, 0, NULL, 0 ) ;
-#else
           fsal_status = FSAL_GetClientContext(&context, &pcurrent->FS_export_context, 0, 0, NULL, 0 ) ;
-#endif
 
           if(FSAL_IS_ERROR(fsal_status))
             {
@@ -3049,11 +2981,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
             }
 
           /* Lookup for the FSAL Path */
-#ifdef _USE_SHARED_FSAL
-          if(FSAL_IS_ERROR((fsal_status = FSAL_lookupPath(&exportpath_fsal, &context[pcurrent->fsalid], &fsal_handle, NULL))))
-#else
           if(FSAL_IS_ERROR((fsal_status = FSAL_lookupPath(&exportpath_fsal, &context, &fsal_handle, NULL))))
-#endif
             {
               LogCrit(COMPONENT_INIT,
                       "Couldn't access the root of the exported namespace, ExportId=%u Path=%s FSAL_ERROR=(%u,%u)",
@@ -3091,11 +3019,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
                                              pcurrent->cache_inode_policy,
                                              ht,
                                              &small_client,
-#ifdef _USE_SHARED_FSAL
-                                             &context[pcurrent->fsalid], 
-#else
                                              &context, 
-#endif
                                              &cache_status)) == NULL)
             {
               LogCrit(COMPONENT_INIT,
@@ -3122,15 +3046,9 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
             {
               LogEvent(COMPONENT_INIT, "Recovering Data Cache for export id %u",
                        pcurrent->id);
-#ifdef _USE_SHARED_FSAL
               if(cache_content_crash_recover
                  (pcurrent->id, &recover_datacache_client, &small_client, ht, &context,
                   &cache_content_status) != CACHE_CONTENT_SUCCESS)
-#else
-              if(cache_content_crash_recover
-                 (pcurrent->id, &recover_datacache_client, &small_client, ht, &context[pcurrent->fsalid],
-                  &cache_content_status) != CACHE_CONTENT_SUCCESS)
-#endif
                 {
                   LogWarn(COMPONENT_INIT,
                           "Datacache for export id %u is not recoverable: error = %d",

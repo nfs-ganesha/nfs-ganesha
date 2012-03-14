@@ -268,9 +268,6 @@ static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 #define FSAL_NAME_INITIALIZER {"",0}
 #define FSAL_PATH_INITIALIZER {"",0}
 
-/* Do not include fsal_types for the FSAL is compiled with dlopen */
-#ifndef _USE_SHARED_FSAL
-
 #ifdef _USE_GHOSTFS
 #include "FSAL/FSAL_GHOST_FS/fsal_types.h"
 #elif defined(_USE_HPSS)
@@ -301,11 +298,6 @@ static const fsal_name_t FSAL_DOT_DOT = { "..", 2 };
 #else                           /* no _USE_<filesystem> flag ! */
 #error "No filesystem compilation flag set for the FSAL."
 #endif /* _USE_GHOSTFS */
-
-#else /* _USE_SHARED_FSAL */
-#define CONF_LABEL_FS_SPECIFIC   "DYNFSAL"
-
-#endif                          /* _USE_SHARED_FSAL */
 
 #include "fsal_glue.h"
 

@@ -8,22 +8,7 @@ endif
 
 SUBDIRS	= DBExt
 
-if BUILD_SHARED_FSAL
-
-lib_LTLIBRARIES = libfsalposix.la
-libfsalposix_la_LDFLAGS = -version-number @LIBVERSION@
-
-if USE_PGSQL
-libfsalposix_la_LIBADD = ../../SemN/libSemN.la  ../libfsalcommon.la  ./DBExt/PGSQL/libfsaldbext.la $(FSAL_LDFLAGS)
-endif
-if USE_MYSQL
-libfsalposix_la_LIBADD = ../../SemN/libSemN.la  ../libfsalcommon.la  ./DBExt/MYSQL/libfsaldbext.la $(FSAL_LDFLAGS) 
-endif
-else
-
 noinst_LTLIBRARIES          = libfsalposix.la
-
-endif
 
 libfsalposix_la_SOURCES = fsal_access.c      \
                           fsal_compat.c      \

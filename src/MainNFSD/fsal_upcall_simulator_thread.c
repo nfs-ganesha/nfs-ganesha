@@ -123,11 +123,6 @@ void *upcall_simulator_thread(void *UnusedArgument)
   fsal_status_t fsal_status ;
 #endif
 
-#ifdef _USE_SHARED_FSAL 
-  unsigned int i = 0 ;
-  unsigned int fsalid = 0 ;
-#endif
-
   snprintf(thr_name, sizeof(thr_name), "Upcall Simulator Thread" );
   SetNameFunction(thr_name);
 
@@ -147,30 +142,12 @@ void *upcall_simulator_thread(void *UnusedArgument)
 
   LogDebug(COMPONENT_CACHE_INODE, "UPCALL SIMULATOR: my pthread id is %p",(caddr_t) pthread_self() ) ;
 
-#ifdef _USE_SHARED_FSAL
-  for( i = 0 ; i < nfs_param.nb_loaded_fsal ; i++ )
-   {
-      fsalid =  nfs_param.loaded_fsal[i] ;
-
-      FSAL_SetId( fsalid ) ;
-
-      if(FSAL_IS_ERROR(FSAL_InitClientContext(&(mydata.thread_fsal_context[fsalid]))))
-       {
-         /* Failed init */
-         LogMajor(COMPONENT_CACHE_INODE,
-                  "NFS  WORKER #%lu: Error initializing thread's credential for FSAL %s",
-                 worker_index, FSAL_fsalid2name( fsalid ) );
-         exit(1);
-       }
-   } /* for */
-#else
   if(FSAL_IS_ERROR(FSAL_InitClientContext(&mydata.thread_fsal_context)))
     {
       /* Failed init */
       LogFatal(COMPONENT_CACHE_INODE,
                "Error initializing thread's credential");
     }
-#endif /* _USE_SHARED_FSAL */
 
   /* Init the Cache inode client for this worker */
   if(cache_inode_client_init(&mydata.cache_inode_client,
@@ -186,11 +163,7 @@ void *upcall_simulator_thread(void *UnusedArgument)
 
 #ifdef _USE_MFSL
 
-#ifdef _USE_SHARED_FSAL
-#error "For the moment, no MFSL are supported with dynamic FSALs"
-#else
   if(FSAL_IS_ERROR(MFSL_GetContext(&mydata.cache_inode_client.mfsl_context, (&(mydata.thread_fsal_context) ) ) ) ) 
-#endif
     {
       /* Failed init */
       LogFatal(COMPONENT_CACHE_INODE, "Error initing MFSL");

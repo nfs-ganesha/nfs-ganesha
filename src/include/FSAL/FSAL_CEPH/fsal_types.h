@@ -70,9 +70,7 @@ typedef union {
     uint64_t snapseq;
 #endif /* _PNFS */
    } data;
-#ifdef _BUILD_SHARED_FSAL
   char pad[FSAL_HANDLE_T_SIZE];
-#endif
 } cephfsal_handle_t;
 
 #define VINODE(fh) ((fh)->data.vi)
