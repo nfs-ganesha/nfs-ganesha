@@ -21,7 +21,7 @@ typedef unsigned int u_int32_t;
 #include   <sys/socket.h>
 #include   <errno.h>
 
-#include "log_macros.h"
+#include "log.h"
 
 #ifdef _APPLE
 #define MAX(a, b)   ((a) > (b)? (a): (b))
