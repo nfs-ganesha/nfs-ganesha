@@ -78,6 +78,9 @@ OPTIONS="-d -f $CONFFILE -L $LOGFILE"
 RETVAL=0
 prog="gpfs.ganesha.nfsd"
 
+which sm-notify &> /dev/null
+HAVE_SMNOTIFY=`echo $?`
+
 start() {
 	# Check if the user is root
         if [ $UID -ne 0 ]; then
@@ -137,7 +140,9 @@ start() {
 	rm -f /var/lock/subsys/rpc.statd
 
 	# Make sure locks are recovered
-	rm -f /var/run/sm-notify.pid
+	if [ $HAVE_SMNOTIFY -eq 0 ]; then
+		rm -f /var/run/sm-notify.pid
+	fi
 
 	# Start daemons.
 	# See if the kernel lockd should start up 
@@ -190,7 +195,9 @@ start() {
         echo  -n $"Starting $prog: "
 	daemon $PATHPROG $OPTIONS
 	RETVAL=$?
-	sm-notify -f
+	if [ $HAVE_SMNOTIFY -eq 0 ]; then
+		sm-notify -f
+	fi
 
         # Sleeping here gives Ganesha an adequate amount of time to
         # initialize the server and fail if anything goes wrong.
@@ -230,7 +237,9 @@ stop() {
 	killproc rpc.statd
 	RETVAL=$?
 	rm -f /var/lock/subsys/rpc.statd
-	rm -f /var/run/sm-notify.pid
+	if [ $HAVE_SMNOTIFY -eq 0 ]; then
+		rm -f /var/run/sm-notify.pid
+	fi
 	echo
 
 	# Kill the Ganesha process
