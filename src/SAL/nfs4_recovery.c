@@ -50,6 +50,7 @@ char v4_recov_dir[PATH_MAX];
  */
 typedef struct grace
 {
+        pthread_mutex_t g_mutex;
         time_t g_start;
         time_t g_duration;
         struct glist_head g_clid_list;
@@ -65,10 +66,13 @@ typedef struct clid_entry
         char cl_name[256];
 } clid_entry_t;
 
+static void nfs4_load_recov_clids_nolock(ushort);
+
 void
 nfs4_init_grace()
 {
         init_glist(&grace.g_clid_list);
+        (void)pthread_mutex_init(&grace.g_mutex, NULL);
 }
 
 /*
@@ -82,6 +86,8 @@ nfs4_start_grace(nfs_grace_start_t *gsp)
 {
         int duration = grace_period;
 
+        P(grace.g_mutex);
+
         /* if not failover and no clients able to recover, skip grace period */
         if ((gsp == NULL) && glist_empty(&grace.g_clid_list))
                 duration = 0;
@@ -91,14 +97,15 @@ nfs4_start_grace(nfs_grace_start_t *gsp)
          * is doing a take over.  read in the client ids from the failing node
          */
         if (gsp && gsp->nodeid != 0)
-                nfs4_load_recov_clids(gsp->nodeid);
+                nfs4_load_recov_clids_nolock(gsp->nodeid);
 
         LogDebug(COMPONENT_NFS_V4, "grace period started, duration(%d)",
-            grace_period);
-        /* lock */
+            duration);
+
         grace.g_start = time(NULL);
         grace.g_duration = duration;
-        /* unlock */
+
+        V(grace.g_mutex);
 }
 
 int
@@ -106,9 +113,11 @@ nfs4_in_grace()
 {
         int gp;
 
-        /* lock */
+        P(grace.g_mutex);
+
         gp = ((grace.g_start + grace.g_duration) > time(NULL));
-        /* unlock */
+
+        V(grace.g_mutex);
 
         LogDebug(COMPONENT_NFS_V4, "in grace period  == %d", gp);
 
@@ -210,9 +219,13 @@ nfs4_chk_clid(nfs_client_id_t *nfs_clientid)
         if (!nfs4_in_grace())
                 return;
 
+        P(grace.g_mutex);
+
         /* If there were no clients at time of restart, we're done */
-        if (glist_empty(&grace.g_clid_list))
+        if (glist_empty(&grace.g_clid_list)) {
+                V(grace.g_mutex);
                 return;
+        }
 
         /*
          * loop through the list and try to find this client.  if we
@@ -230,9 +243,11 @@ nfs4_chk_clid(nfs_client_id_t *nfs_clientid)
                             nfs_clientid->client_name,
                             (long long)nfs_clientid->clientid);
                         nfs_clientid->allow_reclaim = 1;
+                        V(grace.g_mutex);
                         return;
                 }
         }
+        V(grace.g_mutex);
 }
 
 /*
@@ -241,8 +256,8 @@ nfs4_chk_clid(nfs_client_id_t *nfs_clientid)
  * a take over, nodeid will be nonzero.  in this case, add that node's
  * clientids to the existing list.
  */
-void
-nfs4_load_recov_clids(ushort nodeid)
+static void
+nfs4_load_recov_clids_nolock(ushort nodeid)
 {
         DIR *dp;
         struct dirent *dentp;
@@ -310,10 +325,22 @@ nfs4_load_recov_clids(ushort nodeid)
 }
 
 void
+nfs4_load_recov_clids(ushort nodeid)
+{
+        P(grace.g_mutex);
+
+        nfs4_load_recov_clids_nolock(nodeid);
+
+        V(grace.g_mutex);
+}
+
+void
 nfs4_clean_recov_dir()
 {
         struct glist_head *node, *noden;
         clid_entry_t *clid_entry;
+
+        P(grace.g_mutex);
 
         if (!glist_empty(&grace.g_clid_list)) {
                 glist_for_each_safe(node, noden, &grace.g_clid_list) {
@@ -323,6 +350,8 @@ nfs4_clean_recov_dir()
                         Mem_Free(clid_entry);
                 }
         }
+
+        V(grace.g_mutex);
 }
 
 /*
