@@ -617,7 +617,7 @@ chkconfig --add nfs-ganesha-zfs
 
 
 %changelog
-* Tue Feb 21 2012 Philippe Deniel <philippe.deniel@cea.fr> 1.4.0-1
+* Thu Mar 15 2012 Philippe Deniel <philippe.deniel@cea.fr> 1.4.0-1
 - Bug Fix: Memory leak fixed in RPC's DRC
 - Bug Fix: Bad computation of rbt_value in RPC's DRC's hashtable 
 - New FSAL_CEPH (dedicated to the ceph filesystem)
