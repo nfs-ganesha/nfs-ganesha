@@ -68,6 +68,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+#include <math.h>
 #ifdef _USE_NLM
 #include "nlm_util.h"
 #include "nsm.h"
@@ -1323,6 +1324,33 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
   return 0;
 }
 
+
+/**
+ * is_prime : check whether a given value is prime or not
+ */
+static int is_prime (int  v)
+{
+    int    i, m;
+
+    if (v <= 1)
+	return FALSE;
+    if (v == 2)
+	return TRUE;
+    if (v % 2 == 0)
+	return FALSE;
+    // dont link with libm just for this
+#ifdef LINK_LIBM
+    m = (int)sqrt(v);
+#else
+    m = v;
+#endif
+    for (i = 2 ; i <= m; i +=2) {
+	if (v % i == 0)
+	    return FALSE;
+    }
+    return TRUE;
+}
+
 /**
  * nfs_check_param_consistency:
  * Checks parameters concistency (limits, ...)
@@ -1378,6 +1406,32 @@ int nfs_check_param_consistency()
               nfs_param.worker_param.lru_dupreq.nb_entry_prealloc);
       return 1;
     }
+
+  // check for parameters which need to be primes
+  if (!is_prime(nfs_param.krb5_param.hash_param.index_size) ||
+      !is_prime(nfs_param.dupreq_param.hash_param.index_size) ||
+      !is_prime(nfs_param.ip_name_param.hash_param.index_size) ||
+      !is_prime(nfs_param.uidmap_cache_param.hash_param.index_size) ||
+      !is_prime(nfs_param.unamemap_cache_param.hash_param.index_size) ||
+      !is_prime(nfs_param.gidmap_cache_param.hash_param.index_size) ||
+      !is_prime(nfs_param.uidgidmap_cache_param.hash_param.index_size) ||
+      !is_prime(nfs_param.gnamemap_cache_param.hash_param.index_size) ||
+      !is_prime(nfs_param.ip_stats_param.hash_param.index_size) ||
+      !is_prime(nfs_param.client_id_param.hash_param.index_size) ||
+      !is_prime(nfs_param.client_id_param.hash_param_reverse.index_size) ||
+      !is_prime(nfs_param.state_id_param.hash_param.index_size) ||
+#ifdef _USE_NFS4_1
+      !is_prime(nfs_param.session_id_param.hash_param.index_size) ||
+#endif
+      !is_prime(nfs_param.nfs4_owner_param.hash_param.index_size) ||
+      !is_prime(nfs_param.nsm_client_hash_param.index_size) ||
+      !is_prime(nfs_param.nlm_client_hash_param.index_size) ||
+      !is_prime(nfs_param.nlm_owner_hash_param.index_size) ||
+      !is_prime(nfs_param.cache_layers_param.cache_param.hparam.index_size) ||
+      !is_prime(nfs_param.cache_layers_param.cache_param.cookie_param.index_size)) {
+      LogCrit(COMPONENT_INIT, "BAD PARAMETER(s) : expected primes");
+  }
+
 #ifdef _USE_MFSL_ASYNC
   if(nfs_param.cache_layers_param.cache_inode_client_param.expire_type_attr != CACHE_INODE_EXPIRE_NEVER)
     {
