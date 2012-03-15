@@ -141,18 +141,19 @@ typedef enum cache_inode_expire_type__
   CACHE_INODE_EXPIRE_IMMEDIATE = 2
 } cache_inode_expire_type_t;
 
-typedef struct cache_inode_stat__
+typedef struct func_inode_stats__
 {
-  unsigned int nb_gc_lru_active;        /**< Number of active entries in Garbagge collecting list */
-  unsigned int nb_gc_lru_total;         /**< Total mumber of entries in Garbagge collecting list  */
-
-  struct func_inode_stats__
-  {
     unsigned int nb_call[CACHE_INODE_NB_COMMAND];                         /**< total number of calls per functions     */
     unsigned int nb_success[CACHE_INODE_NB_COMMAND];                      /**< succesfull calls per function           */
     unsigned int nb_err_retryable[CACHE_INODE_NB_COMMAND];                /**< failed/retryable calls per function     */
     unsigned int nb_err_unrecover[CACHE_INODE_NB_COMMAND];                /**< failed/unrecoverable calls per function */
-  } func_stats;
+} func_inode_stats_t;
+
+typedef struct cache_inode_stat__
+{
+  unsigned int nb_gc_lru_active;        /**< Number of active entries in Garbagge collecting list */
+  unsigned int nb_gc_lru_total;         /**< Total mumber of entries in Garbagge collecting list  */
+  func_inode_stats_t func_stats;
   unsigned int nb_call_total;                                       /**< Total number of calls */
 } cache_inode_stat_t;
 
