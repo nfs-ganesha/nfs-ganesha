@@ -7,8 +7,8 @@ Release: @RELEASE@%{?dist}
 Summary: NFS Server running in user space with large cache
 License: LGPLv3
 Group: Applications/System
-Requires: libtirpc
-BuildRequires: libtirpc-devel
+#Requires: libtirpc
+#BuildRequires: libtirpc-devel
 %if %{?_with_nfsidmap:1}%{!?_with_nfsidmap:0}
 Requires: nfs-utils-lib
 BuildRequires: nfs-utils-lib-devel
@@ -617,7 +617,7 @@ chkconfig --add nfs-ganesha-zfs
 
 
 %changelog
-* Tue Feb 21 2012 Philippe Deniel <philippe.deniel@cea.fr> 1.4.0-1
+* Thu Mar 15 2012 Philippe Deniel <philippe.deniel@cea.fr> 1.4.0-1
 - Bug Fix: Memory leak fixed in RPC's DRC
 - Bug Fix: Bad computation of rbt_value in RPC's DRC's hashtable 
 - New FSAL_CEPH (dedicated to the ceph filesystem)
@@ -625,6 +625,8 @@ chkconfig --add nfs-ganesha-zfs
 - All RPCs are now based on TIRPC	
 - Bug Fix: in nfs_Write, for clean handle of umask, the server should allow the owner of a file to write to it, even if the file is read-only
 - Bug Fix: bad memory padding in fsal_handle_t and fsal_cookie_t
+- Git HEAD for this version : 0841368074233d5f7209bbe985259af70065680d
+- Git tag for this version: 1.4.0
 
 * Fri Dec 23 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.3.0-1
 - Lustre FSAL: exporting several Lustre filesystem with the same server instance
