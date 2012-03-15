@@ -625,6 +625,8 @@ chkconfig --add nfs-ganesha-zfs
 - All RPCs are now based on TIRPC	
 - Bug Fix: in nfs_Write, for clean handle of umask, the server should allow the owner of a file to write to it, even if the file is read-only
 - Bug Fix: bad memory padding in fsal_handle_t and fsal_cookie_t
+- Git HEAD for this version : 0841368074233d5f7209bbe985259af70065680d
+- Git tag for this version: 1.4.0
 
 * Fri Dec 23 2011 Philippe Deniel <philippe.deniel@cea.fr> 1.3.0-1
 - Lustre FSAL: exporting several Lustre filesystem with the same server instance
