@@ -78,7 +78,9 @@ int XFSFSAL_handlecmp(fsal_handle_t * hdl1, fsal_handle_t * hdl2,
       return -1;
     }
 
-  if(handle1->data.handle_len != handle2->data.handle_len)
+  if((handle1->data.inode != handle2->data.inode) ||
+     (handle1->data.type != handle2->data.type) ||
+     (handle1->data.handle_len != handle2->data.handle_len))
     return 1;
 
   return memcmp(handle1->data.handle_val, handle2->data.handle_val, handle2->data.handle_len);
