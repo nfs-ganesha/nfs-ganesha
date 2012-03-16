@@ -251,6 +251,19 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           return res_LOCK4.status;
         }
 
+      /* Check if lock state belongs to same export */
+      if(plock_state->state_pexport != data->pexport)
+        {
+          LogEvent(COMPONENT_STATE,
+                   "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
+                   plock_state->state_pexport->id,
+                   plock_state->state_pexport->fullpath,
+                   data->pexport->id,
+                   data->pexport->fullpath);
+          res_LOCK4.status = STATE_INVALID_ARGUMENT;
+          return res_LOCK4.status;
+        }
+
       /* An lock state has been found. Check its type */
       if(plock_state->state_type != STATE_TYPE_LOCK)
         {
@@ -380,6 +393,12 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
       init_glist(&plock_state->state_data.lock.state_locklist);
+
+      /* Attach this lock to an export */
+      plock_state->state_pexport = data->pexport;
+      P(data->pexport->exp_state_mutex);
+      glist_add_tail(&data->pexport->exp_state_list, &plock_state->state_export_list);
+      V(data->pexport->exp_state_mutex);
 
       /* Add lock state to the list of lock states belonging to the open state */
       glist_add_tail(&pstate_open->state_data.share.share_lockstates,
