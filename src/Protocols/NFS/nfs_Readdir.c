@@ -468,11 +468,12 @@ int nfs_Readdir(nfs_arg_t * parg,
                     {
                       /* get parent pentry */
 
-                      if((pentry_dot_dot = cache_inode_lookupp(dir_pentry,
+                      if((pentry_dot_dot = cache_inode_lookupp_sw(dir_pentry,
                                                                ht,
                                                                pclient,
                                                                pcontext,
-                                                               &cache_status_gethandle))
+                                                               &cache_status_gethandle,
+                                                               !dir_pentry_unlock))
                          == NULL)
                         {
                             /* after successful cache_inode_readdir, dir_pentry
@@ -682,11 +683,12 @@ int nfs_Readdir(nfs_arg_t * parg,
                     {
                       /* get parent pentry */
 
-                      if((pentry_dot_dot = cache_inode_lookupp(dir_pentry,
+                      if((pentry_dot_dot = cache_inode_lookupp_sw(dir_pentry,
                                                                ht,
                                                                pclient,
                                                                pcontext,
-                                                               &cache_status_gethandle))
+                                                               &cache_status_gethandle,
+                                                               !dir_pentry_unlock))
                          == NULL)
                         {
                             /* after successful cache_inode_readdir, dir_pentry
