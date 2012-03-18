@@ -174,15 +174,47 @@ fsal_status_t XFSFSAL_lookup(fsal_handle_t * parent_handle,      /* IN */
   status = fsal_check_access(context, FSAL_X_OK, &buffstat, NULL);
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_lookup);
-
+  
   /* get file handle, it it exists */
   TakeTokenFSCall();
-  objectfd = openat(parentfd, p_filename->name, O_RDONLY, 0600);
+  objectfd = openat(parentfd, p_filename->name, O_RDONLY|O_NOFOLLOW, 0600);
   errsrv = errno;
   ReleaseTokenFSCall();
+  LogFullDebug(COMPONENT_FSAL, "openat(%s) = %d(%d)",
+		p_filename->name, objectfd, errsrv);
 
   if(objectfd < 0)
     {
+      if(errsrv == ELOOP)
+	{
+	  if(fstatat(parentfd, p_filename->name,
+		     &buffstat, AT_SYMLINK_NOFOLLOW) == 0)
+	    {
+	      status = fsal_internal_inum2handle(p_context,
+						 buffstat.st_ino, object_handle);
+	      if(!FSAL_IS_ERROR(status))
+		{
+		  close(parentfd);
+		  if(p_object_attributes)
+		    {
+		      /* convert attributes */
+		      status = posix2fsal_attributes(&buffstat,
+						     p_object_attributes);
+		      if(FSAL_IS_ERROR(status))
+			{
+			  FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);
+			  FSAL_SET_MASK(p_object_attributes->asked_attributes,
+					 FSAL_ATTR_RDATTR_ERR);
+			}
+		    }
+
+		  LogFullDebug(COMPONENT_FSAL, "got handle for symlink %s",
+				 p_filename->name);
+		  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_lookup);
+
+		}
+	    }		
+	}
       close(parentfd);
       Return(posix2fsal_error(errsrv), errsrv, INDEX_FSAL_lookup);
     }
