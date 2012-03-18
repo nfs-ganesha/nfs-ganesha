@@ -138,6 +138,7 @@ fsal_status_t XFSFSAL_BuildExportContext(fsal_export_context_t *export_context, 
           Return(ERR_FSAL_NOENT, 0, INDEX_FSAL_BuildExportContext);
         }
     }
+  endmntent(fp);
 
   /* Save pointer to fsal_staticfsinfo_t in export context */
   p_export_context->fe_static_fs_info = &global_fs_info;
