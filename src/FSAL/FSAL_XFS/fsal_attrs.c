@@ -42,6 +42,80 @@
 #include <utime.h>
 #include <inttypes.h>
 
+#define MAX_2( x, y )    ( (x) > (y) ? (x) : (y) )
+
+static fsal_status_t
+bulkstat_by_inode(fsal_op_context_t * context, ino_t inum, fsal_attrib_list_t * p_fsalattr_out)
+{
+  xfsfsal_op_context_t * p_context = (xfsfsal_op_context_t *)context;
+  xfs_bstat_t stat;
+  fsal_attrib_mask_t supp_attr, unsupp_attr;
+  int fd = 0;
+
+  /* check that asked attributes are supported */
+  supp_attr = global_fs_info.supported_attrs;
+  unsupp_attr = (p_fsalattr_out->asked_attributes) & (~supp_attr);
+  if(unsupp_attr)
+    {
+      LogFullDebug(COMPONENT_FSAL, "Unsupported attributes: %#llX",
+                        unsupp_attr);
+      ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
+    }
+
+  if((fd = open(p_context->export_context->mount_point, O_DIRECTORY)) == -1)
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  if(fsal_internal_get_bulkstat_by_inode(fd, &inum, &stat) < 0)
+    {
+      close(fd);
+      ReturnCode(posix2fsal_error(errno), errno);
+    }
+
+  /* Initialize ACL regardless of whether ACL was asked or not.
+   * This is needed to make sure ACL attribute is initialized. */
+  p_fsalattr_out->acl = NULL;
+
+  /* Fills the output struct */
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
+    p_fsalattr_out->supported_attributes = supp_attr;
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
+    p_fsalattr_out->type = posix2fsal_type(stat.bs_mode);
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SIZE))
+    p_fsalattr_out->filesize = stat.bs_size;
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FSID))
+    p_fsalattr_out->fsid = posix2fsal_fsid(context->export_context->dev_id);
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
+    p_fsalattr_out->fileid = (fsal_u64_t) (stat.bs_ino);
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MODE))
+    p_fsalattr_out->mode = unix2fsal_mode(stat.bs_mode);
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_NUMLINKS))
+    p_fsalattr_out->numlinks = stat.bs_nlink;
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_OWNER))
+    p_fsalattr_out->owner = stat.bs_uid;
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_GROUP))
+    p_fsalattr_out->group = stat.bs_gid;
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME))
+    p_fsalattr_out->atime = posix2fsal_time(stat.bs_atime.tv_sec, 0);
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CTIME))
+    p_fsalattr_out->ctime = posix2fsal_time(stat.bs_ctime.tv_sec, 0);
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
+    p_fsalattr_out->mtime = posix2fsal_time(stat.bs_mtime.tv_sec, 0);
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
+    {
+      p_fsalattr_out->chgtime =
+	posix2fsal_time(MAX_2(stat.bs_mtime.tv_sec, stat.bs_ctime.tv_sec), 0);
+      p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
+    }
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
+    p_fsalattr_out->spaceused = stat.bs_blocks * S_BLKSIZE;
+
+  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_RAWDEV))
+    p_fsalattr_out->rawdev = posix2fsal_devt(stat.bs_rdev);    /* XXX: convert ? */
+
+  close(fd);
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
 /**
  * FSAL_getattrs:
  * Get attributes for the object specified by its filehandle.
@@ -70,6 +144,7 @@ fsal_status_t XFSFSAL_getattrs(fsal_handle_t * p_filehandle, /* IN */
   fsal_status_t st;
   int fd;
   struct stat buffstat;
+  xfsfsal_handle_t *xh = (xfsfsal_handle_t *)p_filehandle;
 
   /* sanity checks.
    * note : object_attributes is mandatory in FSAL_getattrs.
@@ -77,31 +152,41 @@ fsal_status_t XFSFSAL_getattrs(fsal_handle_t * p_filehandle, /* IN */
   if(!p_filehandle || !p_context || !p_object_attributes)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
-  TakeTokenFSCall();
-  st = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDONLY);
-  ReleaseTokenFSCall();
-
-  if(FSAL_IS_ERROR(st))
-    ReturnStatus(st, INDEX_FSAL_getattrs);
-
-  /* get file metadata */
-  TakeTokenFSCall();
-  rc = fstat(fd, &buffstat);
-  errsv = errno;
-  ReleaseTokenFSCall();
-
-  close(fd);
-
-  if(rc != 0)
+  if(xh->data.type == DT_LNK)
     {
-      if(errsv == ENOENT)
-        Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_getattrs);
-      else
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_getattrs);
+      TakeTokenFSCall();
+      st = bulkstat_by_inode(p_context, xh->data.inode, p_object_attributes);
+      ReleaseTokenFSCall();
     }
+  else
+    {
 
-  /* convert attributes */
-  st = posix2fsal_attributes(&buffstat, p_object_attributes);
+      TakeTokenFSCall();
+      st = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDONLY);
+      ReleaseTokenFSCall();
+
+      if(FSAL_IS_ERROR(st))
+	ReturnStatus(st, INDEX_FSAL_getattrs);
+
+      /* get file metadata */
+      TakeTokenFSCall();
+      rc = fstat(fd, &buffstat);
+      errsv = errno;
+      ReleaseTokenFSCall();
+
+      close(fd);
+
+      if(rc != 0)
+	{
+	  if(errsv == ENOENT)
+	    Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_getattrs);
+	  else
+	    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_getattrs);
+	}
+
+      /* convert attributes */
+      st = posix2fsal_attributes(&buffstat, p_object_attributes);
+    }
   if(FSAL_IS_ERROR(st))
     {
       FSAL_CLEAR_MASK(p_object_attributes->asked_attributes);

@@ -61,6 +61,7 @@ fsal_status_t XFSFSAL_BuildExportContext(fsal_export_context_t *export_context, 
   char *handle;
   size_t handle_len = 0;
   xfsfsal_export_context_t *p_export_context = export_context;
+  struct stat sb;
 
   /* sanity check */
   if(p_export_context == NULL)
@@ -156,7 +157,9 @@ fsal_status_t XFSFSAL_BuildExportContext(fsal_export_context_t *export_context, 
   memcpy(p_export_context->mnt_handle_val, handle, handle_len);
   p_export_context->mnt_handle_len = handle_len;
 
-  p_export_context->dev_id = 1;  /** @todo BUGAZOMEU : put something smarter here, using setmntent */
+  if(stat(mntdir, &sb) < 0)
+    Return(ERR_FSAL_FAULT, errno, INDEX_FSAL_BuildExportContext);
 
+  p_export_context->dev_id = sb.st_dev;
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_BuildExportContext);
 }
