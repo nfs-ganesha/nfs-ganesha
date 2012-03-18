@@ -152,7 +152,7 @@ fsal_status_t XFSFSAL_getattrs(fsal_handle_t * p_filehandle, /* IN */
   if(!p_filehandle || !p_context || !p_object_attributes)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
-  if(xh->data.type == DT_LNK)
+  if(xh->data.type)
     {
       TakeTokenFSCall();
       st = bulkstat_by_inode(p_context, xh->data.inode, p_object_attributes);
@@ -160,7 +160,6 @@ fsal_status_t XFSFSAL_getattrs(fsal_handle_t * p_filehandle, /* IN */
     }
   else
     {
-
       TakeTokenFSCall();
       st = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDONLY);
       ReleaseTokenFSCall();

@@ -537,7 +537,33 @@ fsal_status_t fsal_internal_inum2handle(fsal_op_context_t * context,
   memcpy(phandle->data.handle_val, &xfsfilehandle, sizeof(xfs_filehandle_t));
   phandle->data.handle_len = sizeof(xfs_filehandle_t);
   phandle->data.inode = inum;
-  phandle->data.type = DT_LNK;
+  switch (bstat.bs_mode & S_IFMT)
+    {
+    case S_IFSOCK:
+      phandle->data.type = DT_SOCK;
+      break;
+    case S_IFLNK:
+      phandle->data.type = DT_LNK;
+      break;
+    case S_IFREG:
+    case S_IFDIR:
+      LogCrit(COMPONENT_FSAL, "Why are you trying to fake handle on %ld?",
+	      xfs_ino);
+      break;
+    case S_IFBLK:
+      phandle->data.type = DT_BLK;
+      break;
+    case S_IFCHR:
+      phandle->data.type = DT_CHR;
+      break;
+    case S_IFIFO:
+      phandle->data.type = DT_FIFO;
+      break;
+    default:
+      LogCrit(COMPONENT_FSAL, "Unknown value %o for inode %ld",
+	      bstat.bs_mode & S_IFMT, xfs_ino);
+      break;
+    }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /* fsal_internal_inum2handle */
