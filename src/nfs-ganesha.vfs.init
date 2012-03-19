@@ -1,235 +1,88 @@
 #!/bin/bash
-# init file for ganesha
 #
-# chkconfig: - 50 50
+# chkconfig: 2345 50 50
 # description: GANESHA NFS Daemon
 #
 # processname: /usr/bin/vfs.ganesha.nfsd
 # config: /etc/ganesha/vfs.ganesha.nfsd.conf
+<<<<<<< HEAD
 # pidfile: /var/run/snmpd
+=======
+# pidfile: /var/run/nfs-ganesha.pid
+#
+>>>>>>> 38257b0... Ganesha daemon now has a '-p' option to deal with process's pid file. The init script will reflect the use of this new option.
 ### BEGIN INIT INFO
 # Provides: nfs-ganesha.vfs
-# Required-Start: $local_fs $network
-# Required-Stop: $local_fs $network
-# Should-Start:
-# Should-Stop:
-# Default-Start:
-# Default-Stop:
-# Short-Description: start and stop nfs-ganesha/VFS daemon
+# Required-Start: $local_fs $named $time $network
+# Required-Stop: $local_fs $named $time $network
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: start and stop nfs-ganesha/LUSTRE daemon
 # Description: NFS-GANESHA
 ### END INIT INFO
 
 
 # source function library
-. /etc/init.d/functions
+. /etc/rc.d/init.d/functions
 
+<<<<<<< HEAD
 PATHPROG=/usr/bin/vfs.ganesha.nfsd
 LOGFILE=/var/log/nfs-ganesha.log
 #LOGFILE=SYSLOG
 #LOGFILE=STDERR
 #LOGFILE=STDOUT
+=======
+PATHPROG=/usr/bin/vfs.ganesha.nfsd 
+>>>>>>> 38257b0... Ganesha daemon now has a '-p' option to deal with process's pid file. The init script will reflect the use of this new option.
 
+# Default HPSS options
+LOGFILE=/var/log/vfs.ganesha.nfsd.log
 CONFFILE=/etc/ganesha/vfs.ganesha.nfsd.conf
 
-# Remote quota server
-[ -z "$RQUOTAD" ] && RQUOTAD=`type -path rpc.rquotad`
+prog=vfs.ganesha.nfsd
+PID_FILE=${PID_FILE:=/var/run/${prog}.pid}
+LOCK_FILE=${LOCK_FILE:=/var/lock/subsys/${prog}}
 
-#DEBUGLEVEL=NIV_NULL
-#DEBUGLEVEL=NIV_MAJOR
-#DEBUGLEVEL=NIV_CRIT
-DEBUGLEVEL=NIV_EVENT
-#DEBUGLEVEL=NIV_DEBUG
-#DEBUGLEVEL=NIV_FULL_DEBUG
-
-OPTIONS="-d -f $CONFFILE -N $DEBUGLEVEL -L $LOGFILE"
+OPTIONS="-d -L $LOGFILE -f $CONFFILE -N NIV_EVENT -p $PID_FILE "
 RETVAL=0
-prog="vfs.ganesha.nfsd"
+
+[ -f /etc/sysconfig/nfs-ganesha.vfs ] && . /etc/sysconfig/nfs-ganesha.vfs 
 
 start() {
-	# Check if the user is root
+        echo -n $"Starting $prog: "
         if [ $UID -ne 0 ]; then
-	        echo "VFS Ganesha must be started by the root user."
                 RETVAL=1
                 failure
-		echo
-		return $RETVAL
-	fi
-
-	if [ ! -x /sbin/rpc.statd ]; then
-		echo "statd is not available"
-		RETVAL=1
-		failure
-		echo
-		return $RETVAL
-	fi
-
-	# Make sure the rpc.statd is not already running.
-	if status rpc.statd > /dev/null ; then
-		echo "statd already running. Kill it."
-		RETVAL=1
-		failure
-		echo
-		return $RETVAL
-	fi
-
-	# Make sure the rpc.rquotad is not already running.
-	if status rpc.rquotad > /dev/null ; then
-		echo "rquotad already running. Kill it."
-		RETVAL=1
-		failure
-		echo
-		return $RETVAL
-	fi
-
-	# Check if a Ganesha configuration file is available
-	if [ ! -f "$CONFFILE" ]; then
-	        echo "The following configuration file is required but does not exist: $CONFFILE"
-		RETVAL=1
-		failure
-	        echo
-	        return $RETVAL
-	fi
-
-	# Check if Ganesha is already running
-	result=`pidof "$PATHPROG"`
-	if [ $result ]; then
-	        echo "VFS Ganesha is already running."
-		RETVAL=1
-		failure
-	        echo
-	        return $RETVAL
-	fi
-
-	# start the statd daemon
-	echo -n $"Starting statd: "
-	# See if a statd's ports has been defined
-	[ -n "$STATD_PORT" ] && STATDARG="$STATDARG -p $STATD_PORT"
-	[ -n "$STATD_OUTGOING_PORT" ] \
-		&& STATDARG="$STATDARG -o $STATD_OUTGOING_PORT"
-	# See if we have an HA-callout program specified
-	[ -n "$STATD_HA_CALLOUT" ] \
-		&& STATDARG="$STATDARG -H $STATD_HA_CALLOUT"
-	daemon rpc.statd "$STATDARG"
-	RETVAL=$?
-	echo
-	if [ $RETVAL -ne 0 ]; then
-		failure
-		return $RETVAL
-	fi
-
-	# start the rquotad daemon
-	if [ -n "$RQUOTAD" ] ; then
-		echo -n $"Starting rquotad: "
-		[ -n "$RQUOTAD_PORT" ] \
-			&& RPCRQUOTADOPTS="$RPCRQUOTADOPTS -p $RQUOTAD_PORT"
-		daemon rpc.rquotad $RPCRQUOTADOPTS
-		RETVAL=$?
-		echo
-		if [ $RETVAL -ne 0 ]; then
-			failure
-			return $RETVAL
-		fi
-	fi
-
-	# Start the Ganesha daemon
-        echo  -n $"Starting $prog: "
-	daemon $PATHPROG $OPTIONS
-	RETVAL=$?
-
-        # Sleeping here gives Ganesha an adequate amount of time to
-        # initialize the server and fail if anything goes wrong.
-        # Without this sleep and the server will be in the midst of
-        # initializing. It may fail immediately after this script runs.
-	sleep 2
-
-	# Check if Ganesha is still running
-	result=`pidof "$PATHPROG"`
-	if [ ! $result ]; then
-	    failure
-	    echo
-	    return $RETVAL
-	fi
-	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/vfs.ganesha.nfsd
-
-        echo
-        return $RETVAL
+        else
+                daemon --pidfile $PID_FILE $PATHPROG $OPTIONS
+                RETVAL=$?
+                if [ $RETVAL -eq 0 ]; then 
+		            touch $LOCK_FILE
+		        else
+		            RETVAL=1
+                fi
+        fi
+        echo 
 }
 
 stop() {
-	# Check if user is root
+        echo -n $"Stopping $prog: "
         if [ $UID -ne 0 ]; then
-	        echo "VFS Ganesha must be stopped by the root user."
                 RETVAL=1
                 failure
-		echo
-		return $RETVAL
-	fi
+        else
+                killproc $PATHPROG
+                RETVAL=$?
+                if [ $RETVAL -eq 0 ]; then 
+		  rm -f  $LOCK_FILE
+                  success
+		else
+		  failure
+                fi
 
-	echo -n $"Stopping rquotad: "
-	killproc rpc.rquotad
-	RETVAL=$?
-	echo
-
-	echo -n $"Stopping statd: "
-	killproc rpc.statd
-	RETVAL=$?
-	echo
-
-	# Kill the Ganesha process
-	echo -n $"Stopping $prog: "
-	killproc $PATHPROG
-	RETVAL=$?
-	[ $RETVAL -eq 0 ] && rm -f  /var/lock/subsys/vfs.ganesha.nfsd
-
-	# Give Ganesha time to quit
-	result=`pidof "$PATHPROG"`
-	while true; do
-	         if [ $result ]; then
-		         sleep .1
-			 result=`pidof "$PATHPROG"`
-	         else
-		         break
-		 fi
-	done
-
-	sleep 1
+        fi
         echo
         return $RETVAL
-}
-
-restart(){
-	stop
-	start
-        return $RETVAL
-}
-
-condrestart(){
-    [ -e /var/lock/subsys/vfs.ganesha.nfsd ] && restart
-    return 0
-}
-
-reload() {
-    result=`pidof "$PATHPROG"`
-    if [ $result ]; then
-	    echo "Reloading Ganesha Exports"
-	    kill -HUP $result;
-    fi
-}
-
-ganesha_status() {
-    result=`pidof "$PATHPROG"`
-    if [ $result ]; then
-	    echo "VFS Ganesha is running."
-	    RETVAL=0
-    else
-	    echo "VFS Ganesha is not running."
-	    RETVAL=1
-    fi
-    status rpc.statd
-    if [ -n "$RQUOTAD" ] ; then
-    	status rpc.rquotad
-    fi
-    return $RETVAL
 }
 
 case "$1" in
@@ -240,19 +93,42 @@ case "$1" in
 	stop
 	;;
   restart)
-	restart
-	;;
-  reload)
-	reload
+	if [ -f $LOCK_FILE ] ; then
+		stop
+		#avoid race
+    	sleep 3
+	fi
+	start
         ;;
-  condrestart)
-	condrestart
+  reload)
+	if [ ! -f $LOCK_FILE ] ; then
+	   killproc -p $PID_FILE $prog -HUP
+        fi
+        RETVAL=0 ;
+        ;;
+  force-reload)
+	stop 
+	start
+	;;
+  try-restart)
+	if [ -f $LOCK_FILE ] ; then
+		stop
+
+		#avoid race
+		sleep 3
+		start
+	fi
 	;;
   status)
-        ganesha_status
-        ;;
+	if [ $RETVAL -eq 5 ] ; then 
+	    RETVAL=3
+        else
+	   status -p $PID_FILE $PATHPROG
+	   RETVAL=$?
+        fi
+	;;
   *)
-	echo $"Usage: $0 {start|stop|status|restart|condrestart|reload}"
+	echo $"Usage: $0 {start|stop|restart|reload|try-restart|status}"
 	RETVAL=1
 esac
 

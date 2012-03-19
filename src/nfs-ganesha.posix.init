@@ -13,7 +13,7 @@
 # Required-Stop: $local_fs $named $time $network
 # Default-Start: 2 3 4 5
 # Default-Stop: 0 1 6
-# Short-Description: start and stop nfs-ganesha/POSIX daemon
+# Short-Description: start and stop nfs-ganesha/LUSTRE daemon
 # Description: NFS-GANESHA
 ### END INIT INFO
 
@@ -27,12 +27,12 @@ PATHPROG=/usr/bin/posix.ganesha.nfsd
 LOGFILE=/var/log/posix.ganesha.nfsd.log
 CONFFILE=/etc/ganesha/posix.ganesha.nfsd.conf
 
-OPTIONS="-d -L $LOGFILE -f $CONFFILE -N NIV_EVENT"
-RETVAL=0
-
 prog=posix.ganesha.nfsd
 PID_FILE=${PID_FILE:=/var/run/${prog}.pid}
 LOCK_FILE=${LOCK_FILE:=/var/lock/subsys/${prog}}
+
+OPTIONS="-d -L $LOGFILE -f $CONFFILE -N NIV_EVENT -p $PID_FILE "
+RETVAL=0
 
 [ -f /etc/sysconfig/nfs-ganesha.posix ] && . /etc/sysconfig/nfs-ganesha.posix 
 
@@ -45,9 +45,15 @@ start() {
                 daemon --pidfile $PID_FILE $PATHPROG $OPTIONS
                 RETVAL=$?
                 if [ $RETVAL -eq 0 ]; then 
+<<<<<<< HEAD
 		 touch $LOCK_FILE
 		else
 		  RETVAL=1
+=======
+		            touch $LOCK_FILE
+		        else
+		            RETVAL=1
+>>>>>>> 38257b0... Ganesha daemon now has a '-p' option to deal with process's pid file. The init script will reflect the use of this new option.
                 fi
         fi
         echo 
@@ -83,6 +89,8 @@ case "$1" in
   restart)
 	if [ -f $LOCK_FILE ] ; then
 		stop
+		#avoid race
+    	sleep 3
 	fi
 	start
         ;;

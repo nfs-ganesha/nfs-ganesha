@@ -60,6 +60,7 @@ nfs_start_info_t my_nfs_start_info = {
 };
 
 char *my_config_path = "/etc/ganesha/ganesha.conf";
+char my_pidfile[] = "/var/run/nfs-ganesha.pid";
 char log_path[MAXPATHLEN] = "";
 char exec_name[MAXPATHLEN] = "nfs-ganesha";
 char host_name[MAXHOSTNAMELEN] = "localhost";
@@ -69,13 +70,14 @@ char ganesha_exec_path[MAXPATHLEN];
 
 /* command line syntax */
 
-char options[] = "h@RTdS:F:S:P:f:L:N:";
+char options[] = "h@RTdS:F:S:P:f:L:N:p:";
 char usage[] =
     "Usage: %s [-hd][-L <logfile>][-N <dbg_lvl>][-f <config_file>]\n"
     "\t[-h]                display this help\n"
     "\t[-L <logfile>]      set the default logfile for the daemon\n"
     "\t[-N <dbg_lvl>]      set the verbosity level\n"
     "\t[-f <config_file>]  set the config file to be used\n"
+    "\t[-p <pid_file>]     set the pid file\n"
     "\t[-d]                the daemon starts in background, in a new process group\n"
     "\t[-R]                daemon will manage RPCSEC_GSS (default is no RPCSEC_GSS)\n"
     "\t[-T]                dump the default configuration on stdout\n"
@@ -87,6 +89,7 @@ char usage[] =
     "SIGTERM    : Cleanly terminate the program\n"
     "------------- Default Values -------------\n"
     "LogFile    : /tmp/nfs-ganesha.log\n"
+    "PidFile    : /var/run/nfs-ganesha.pid\n"
     "DebugLevel : NIV_EVENT\n" "ConfigFile : /etc/ganesha/ganesha.conf\n";
 
 /**
@@ -106,6 +109,7 @@ int main(int argc, char *argv[])
   char *tempo_exec_name = NULL;
   char localmachine[MAXHOSTNAMELEN];
   int c;
+  FILE * pidfile = NULL ;
 #ifndef HAVE_DAEMON
   pid_t son_pid;
 #endif
@@ -138,6 +142,8 @@ int main(int argc, char *argv[])
     strncpy(host_name, localmachine, MAXHOSTNAMELEN);
 
   strcpy(config_path, my_config_path);
+
+  strcpy( pidfile_path, my_pidfile ) ;
 
   /* now parsing options with getopt */
   while((c = getopt(argc, argv, options)) != EOF)
@@ -172,6 +178,11 @@ int main(int argc, char *argv[])
           /* config file */
           strncpy(config_path, optarg, MAXPATHLEN);
           break;
+
+        case 'p':
+          /* PID file */
+          strncpy( pidfile_path, optarg, MAXPATHLEN ) ;
+          break ;
 
         case 'd':
           /* Detach or not detach ? */
@@ -287,6 +298,18 @@ int main(int argc, char *argv[])
 #ifdef _LINUX
   signal(SIGXFSZ, SIG_IGN);
 #endif
+
+  /* Echo PID into pidfile */
+  if( ( pidfile = fopen( pidfile_path, "w" ) ) == NULL )
+   {
+     LogCrit( COMPONENT_MAIN, "Can't open pid file %si for writing", pidfile_path ) ;
+   }
+  else
+   {
+     /* Put pid into file, then close it */
+     fprintf( pidfile, "%u", getpid() ) ;
+     fclose( pidfile ) ;
+   }
 
   /* Set up for the signal handler.
    * Blocks the signals the signal handler will handle.

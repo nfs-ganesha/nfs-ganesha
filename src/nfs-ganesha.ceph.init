@@ -3,12 +3,12 @@
 # chkconfig: 2345 50 50
 # description: GANESHA NFS Daemon
 #
-# processname: /usr/bin/snmp.ganesha.nfsd
-# config: /etc/ganesha/snmp.ganesha.nfsd.conf
+# processname: /usr/bin/ceph.ganesha.nfsd
+# config: /etc/ganesha/ceph.ganesha.nfsd.conf
 # pidfile: /var/run/nfs-ganesha.pid
 #
 ### BEGIN INIT INFO
-# Provides: nfs-ganesha.snmp
+# Provides: nfs-ganesha.ceph
 # Required-Start: $local_fs $named $time $network
 # Required-Stop: $local_fs $named $time $network
 # Default-Start: 2 3 4 5
@@ -21,20 +21,20 @@
 # source function library
 . /etc/rc.d/init.d/functions
 
-PATHPROG=/usr/bin/snmp.ganesha.nfsd 
+PATHPROG=/usr/bin/ceph.ganesha.nfsd 
 
 # Default HPSS options
-LOGFILE=/var/log/snmp.ganesha.nfsd.log
-CONFFILE=/etc/ganesha/snmp.ganesha.nfsd.conf
+LOGFILE=/var/log/ceph.ganesha.nfsd.log
+CONFFILE=/etc/ganesha/ceph.ganesha.nfsd.conf
 
-prog=snmp.ganesha.nfsd
+prog=ceph.ganesha.nfsd
 PID_FILE=${PID_FILE:=/var/run/${prog}.pid}
 LOCK_FILE=${LOCK_FILE:=/var/lock/subsys/${prog}}
 
 OPTIONS="-d -L $LOGFILE -f $CONFFILE -N NIV_EVENT -p $PID_FILE "
 RETVAL=0
 
-[ -f /etc/sysconfig/nfs-ganesha.snmp ] && . /etc/sysconfig/nfs-ganesha.snmp 
+[ -f /etc/sysconfig/nfs-ganesha.ceph ] && . /etc/sysconfig/nfs-ganesha.ceph 
 
 start() {
         echo -n $"Starting $prog: "
@@ -45,15 +45,9 @@ start() {
                 daemon --pidfile $PID_FILE $PATHPROG $OPTIONS
                 RETVAL=$?
                 if [ $RETVAL -eq 0 ]; then 
-<<<<<<< HEAD
-		 touch $LOCK_FILE
-		else
-		  RETVAL=1
-=======
 		            touch $LOCK_FILE
 		        else
 		            RETVAL=1
->>>>>>> 38257b0... Ganesha daemon now has a '-p' option to deal with process's pid file. The init script will reflect the use of this new option.
                 fi
         fi
         echo 

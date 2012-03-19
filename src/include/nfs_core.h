@@ -564,6 +564,7 @@ extern nfs_parameter_t nfs_param;
 extern time_t ServerBootTime;
 extern nfs_worker_data_t *workers_data;
 extern char config_path[MAXPATHLEN];
+extern char pidfile_path[MAXPATHLEN] ;
 
 typedef enum process_status
 {
