@@ -1245,7 +1245,7 @@ typedef struct fsal_functions__
                                   fsal_quota_t * pquota);       /* OUT */
 
   /* FSAL_check_quota */
-  fsal_status_t(*fsal_check_quota)( char * pfsal_path,  /* IN */
+  fsal_status_t(*fsal_check_quota)( fsal_path_t * pfsal_path,  /* IN */
                                     fsal_quota_type_t   quota_type,
                                     fsal_uid_t fsal_uid);      /* IN */
 
