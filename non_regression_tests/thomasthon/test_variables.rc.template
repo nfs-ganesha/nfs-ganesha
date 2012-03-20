@@ -1,0 +1,18 @@
+# Configuration file for the run_test.sh framework
+# 
+# Use this template to build your own test_variables.rc
+#
+
+# Use this variable to set the nfs client
+NFS_CLIENT=client1.mynet
+
+# Use this one to set up the server
+NFS_SERVER=server.mynet
+
+# Use the two next variables to mount a share from the server on the client
+# command that will be use is kind of "mount $NFS_SERVER:$REMOTE_DIR $MNT_DIR
+REMOTE_DIR=/my/remote/share
+MNT_DIR=/mnt
+
+# Path to cthon04 test's suite
+CTHON04_DIR=/opt/cthon04
