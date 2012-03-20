@@ -112,21 +112,20 @@ function create_tree
 function test1
 {
     # create user directory
-    user=$(get_test_user)
-    dir="$TEST_DIR/dir.$user.$$"
+    dir="$TEST_DIR/dir.$USER.$$"
     file="$dir/test_file"
 
     mkdir $dir || error "error mkdir $dir"
-    chown $user $dir
+    chown $USER $dir
 
     # create a file as user in this dir
-    do_as_user $user "dd if=/dev/zero of=$file bs=1M count=1" || "error writing $file"
+    do_as_user $USER "dd if=/dev/zero of=$file bs=1M count=1" || "error writing $file"
 
     # set file 444
     chmod 444 "$file" || error "error chmod 444 $file"
 
     # copy the file as user
-    do_as_user $user "cp $file $file.copy" || "error copying $file to $file.copy"
+    do_as_user $USER "cp $file $file.copy" || "error copying $file to $file.copy"
 
     ls -l $file.copy || error "target file $file.copy not found"
     
@@ -151,8 +150,8 @@ function test2
     rm -r $dir || error "couldn't remove $dir"
 }
 
-### test3 : cthon04's basic tests
-function test3
+### test3b : cthon04's basic tests
+function test3b
 {
    dir="$TEST_DIR/dir.$$"
    mkdir -p $dir
@@ -163,8 +162,8 @@ function test3
    ./runtests || error "ERROR while running cthon04's basic tests"
 }
 
-### test4 : cthon04's general tests
-function test4
+### test3g : cthon04's general tests
+function test3g
 {
    dir="$TEST_DIR/dir.$$"
    mkdir -p $dir
@@ -175,8 +174,8 @@ function test4
    ./runtests || error "ERROR while running cthon04's general tests"
 }
 
-### test5 : cthon04's special tests
-function test5
+### test3s : cthon04's special tests
+function test3s
 {
    dir="$TEST_DIR/dir.$$"
    mkdir -p $dir
@@ -187,8 +186,8 @@ function test5
    ./runtests || error "ERROR while running cthon04's special tests"
 }
 
-### test6 : cthon04's lock tests
-function test6
+### test3l : cthon04's lock tests
+function test3l
 {
    dir="$TEST_DIR/dir.$$"
    mkdir -p $dir
@@ -204,12 +203,12 @@ function test6
 
 ######################## DEFINE TEST LIST HERE ####################
 
-run_test test1  "copy file with 444 mode"
-run_test test2  "rm -rf of wide namespace"
-run_test test3  "cthon04's basic tests"
-run_test test4  "cthon04's general tests"
-run_test test5  "cthon04's special tests"
-run_test test6  "cthon04's lock tests"
+run_test test1   "copy file with 444 mode"
+run_test test2   "rm -rf of wide namespace"
+run_test test3b  "cthon04's basic tests"
+run_test test3g  "cthon04's general tests"
+run_test test3s  "cthon04's special tests"
+run_test test3l  "cthon04's lock tests"
 
 # display test summary / generate outputs
 test_finalize
