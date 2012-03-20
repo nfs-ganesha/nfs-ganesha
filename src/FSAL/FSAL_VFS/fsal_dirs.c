@@ -175,7 +175,6 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
   struct linux_dirent *dp = NULL;
   int bpos = 0;
 
-  char d_type;
   struct stat buffstat;
 
   int rc = 0;
@@ -235,7 +234,6 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
       for(bpos = 0; bpos < rc;)
         {
           dp = (struct linux_dirent *)(buff + bpos);
-          d_type = *(buff + bpos + dp->d_reclen - 1);
 
           bpos += dp->d_reclen;
 
