@@ -1087,7 +1087,7 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
           break;
 
         case FATTR4_TIME_MODIFY_SET:
-          memcpy((char *)&attr_time,
+          memcpy((char *)&attr_time_set,
                  (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
                  sizeof(fattr4_time_modify_set));
 
