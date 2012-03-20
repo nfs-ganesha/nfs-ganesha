@@ -11,6 +11,14 @@ else
   exit 1 
 fi
 
+# The script uses "su", it has to be run as root
+MY_UID=`id -u`
+#if [[ $MY_ID != 0 ]] ; then
+if [[ `id -u` != 0 ]] ; then
+  echo "  /!\\ This script must be run as root"
+  exit 1 
+fi
+
 ########################## TEST HELPERS ##################
 
 function space_used
