@@ -16,3 +16,6 @@ MNT_DIR=/mnt
 
 # Path to cthon04 test's suite
 CTHON04_DIR=/opt/cthon04
+
+# Non-root user that will run part of the test
+USER=lambda
