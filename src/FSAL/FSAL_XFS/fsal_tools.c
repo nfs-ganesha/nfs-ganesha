@@ -35,6 +35,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
@@ -189,6 +190,7 @@ unsigned int XFSFSAL_Handle_to_RBTIndex(fsal_handle_t * handle, unsigned int coo
 
 static size_t xfs_sizeof_handle(const xfsfsal_handle_t *hdl)
 {
+	assert(hdl->data.handle_len > 0 && hdl->data.handle_len < FSAL_XFS_HANDLE_LEN);
 	return offsetof(xfsfsal_handle_t, data.handle_val) + hdl->data.handle_len;
 }
 
