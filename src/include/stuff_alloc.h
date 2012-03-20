@@ -132,8 +132,8 @@ Mem_Alloc_Page_Aligned_(const size_t s,
      }
 
      if ((memalign_rc = posix_memalign(&memalign_pointer,
-                                       s,
-                                       page_size)) != 0) {
+                                       page_size,
+                                       s)) != 0) {
           LogMajor(COMPONENT_MEMALLOC,
                    "%s: Unable to allocate %zu bytes of memory in "
                    "%s:%ju: error code %d.",
