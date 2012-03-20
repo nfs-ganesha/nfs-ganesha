@@ -4,6 +4,12 @@ CURDIR=`dirname $0`
 # include test framework
 . $CURDIR/test_framework.inc
 
+if [[ -r ./$CURDIR/test_variables.rc ]]  ; then
+   .  ./$CURDIR/test_variables.rc
+else
+  echo "  /!\\ Please make test's configuration in  $CURDIR/test_variables.rc"
+  exit 1 
+fi
 
 ########################## TEST HELPERS ##################
 
@@ -49,6 +55,24 @@ function do_as_user
     action_arg=$2
     su - $user_arg -c "$action_arg"
 }
+
+function do_ssh_root
+{
+    remote=$1
+    action_arg=$2
+    ssh root@$remote $action_arg 
+}
+
+function do_mount
+{
+  # example : do_mount vers=3,lock server:/tmp /mnt
+  mount_opt=$1
+  server_url=$2
+  mntpath=$3
+
+  mount -o $mount_opt $server_url $mntpath || error "ERROR mounting $server_url on $mntpath with option $mount_opt"
+}
+
 
 function empty_client_cache
 {
@@ -127,12 +151,65 @@ function test2
     rm -r $dir || error "couldn't remove $dir"
 }
 
+### test3 : cthon04's basic tests
+function test3
+{
+   dir="$TEST_DIR/dir.$$"
+   mkdir -p $dir
+
+   cd $CTHON04_DIR/basic
+   export NFSTESTDIR=$dir   
+
+   ./runtests || error "ERROR while running cthon04's basic tests"
+}
+
+### test4 : cthon04's general tests
+function test4
+{
+   dir="$TEST_DIR/dir.$$"
+   mkdir -p $dir
+
+   cd $CTHON04_DIR/general
+   export NFSTESTDIR=$dir   
+
+   ./runtests || error "ERROR while running cthon04's general tests"
+}
+
+### test5 : cthon04's special tests
+function test5
+{
+   dir="$TEST_DIR/dir.$$"
+   mkdir -p $dir
+
+   cd $CTHON04_DIR/special
+   export NFSTESTDIR=$dir   
+
+   ./runtests || error "ERROR while running cthon04's special tests"
+}
+
+### test6 : cthon04's lock tests
+function test6
+{
+   dir="$TEST_DIR/dir.$$"
+   mkdir -p $dir
+
+   cd $CTHON04_DIR/lock
+   export NFSTESTDIR=$dir   
+
+   ./runtests || error "ERROR while running cthon04's lock tests"
+}
+
+
 # syntax: ONLY=2,3 ./run_test.sh [-j] <test_dir>
 
 ######################## DEFINE TEST LIST HERE ####################
 
 run_test test1  "copy file with 444 mode"
 run_test test2  "rm -rf of wide namespace"
+run_test test3  "cthon04's basic tests"
+run_test test4  "cthon04's general tests"
+run_test test5  "cthon04's special tests"
+run_test test6  "cthon04's lock tests"
 
 # display test summary / generate outputs
 test_finalize
