@@ -2782,7 +2782,6 @@ void find_blocked_lock_upcall(cache_entry_t        * pentry,
   state_lock_entry_t   * found_entry;
   struct glist_head    * glist;
   state_block_data_t   * pblock;
-  bool_t                 empty = FALSE;
 
   P(blocked_locks_mutex);
 
@@ -2820,7 +2819,7 @@ void find_blocked_lock_upcall(cache_entry_t        * pentry,
 
   if(isFullDebug(COMPONENT_STATE) &&
      isFullDebug(COMPONENT_MEMLEAKS))
-    empty = LogBlockedList("Blocked Lock List", NULL, &state_blocked_locks);
+    LogBlockedList("Blocked Lock List", NULL, &state_blocked_locks);
 
   V(blocked_locks_mutex);
 
@@ -2828,7 +2827,7 @@ void find_blocked_lock_upcall(cache_entry_t        * pentry,
 
   if(isFullDebug(COMPONENT_STATE) &&
      isFullDebug(COMPONENT_MEMLEAKS))
-    empty = LogList("File Lock List", pentry, &pentry->object.file.lock_list);
+    LogList("File Lock List", pentry, &pentry->object.file.lock_list);
 
   V(pentry->object.file.lock_list_mutex);
 
