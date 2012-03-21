@@ -8,6 +8,8 @@
 
 BASE=`pwd`
 
+# Make the related export entries in *.ganesha.nfsd.conf file
+# To be done : had other FSALs configuration
 case $FSAL in
   VFS)
      header=vfs

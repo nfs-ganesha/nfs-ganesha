@@ -62,24 +62,6 @@ function do_as_user
     su - $user_arg -c "$action_arg"
 }
 
-function do_ssh_root
-{
-    remote=$1
-    action_arg=$2
-    ssh root@$remote $action_arg 
-}
-
-function do_mount
-{
-  # example : do_mount vers=3,lock server:/tmp /mnt
-  mount_opt=$1
-  server_url=$2
-  mntpath=$3
-
-  mount -o $mount_opt $server_url $mntpath || error "ERROR mounting $server_url on $mntpath with option $mount_opt"
-}
-
-
 function empty_client_cache
 {
     [ "$DEBUG" = "1" ] && echo "emptying client cache (data+metadata)"
