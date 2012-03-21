@@ -1360,15 +1360,23 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
   /* Read the information */
   #define XSTR(s) STR(s)
   #define STR(s) #s
-  fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+  if(fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n",
+            buff) != 1)
+    goto bad_entry;
   pentry->internal_md.read_time = atoi(buff);
 
-  fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+  if(fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n",
+            buff) != 1)
+    goto bad_entry;
   pentry->internal_md.mod_time = atoi(buff);
 
-  fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+  if(fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n",
+            buff) != 1)
+    goto bad_entry;
 
-  fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
+  if (fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s",
+	     buff) != 1)
+    goto bad_entry;
   #undef STR
   #undef XSTR
 
@@ -1392,6 +1400,12 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
   fclose(stream);
 
   return CACHE_INODE_SUCCESS;
+
+bad_entry:
+  LogCrit(COMPONENT_CACHE_INODE,
+	  "Inconsitent cache context index %s", path);
+  fclose(stream);
+  return CACHE_INODE_INCONSISTENT_ENTRY;
 }                               /* cache_inode_reload_content */
 
 /**

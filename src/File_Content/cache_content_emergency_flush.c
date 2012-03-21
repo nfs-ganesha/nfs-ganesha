@@ -198,6 +198,7 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
       /* Manage only index files */
       if(!strcmp(dir_entry.d_name + strlen(dir_entry.d_name) - 5, "index"))
         {
+          int rc;
           if((inum = cache_content_get_inum(dir_entry.d_name)) == -1)
             {
               LogCrit(COMPONENT_CACHE_CONTENT, "Bad file name %s found in cache", dir_entry.d_name);
@@ -214,14 +215,15 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
           /* BUG: what happens if any of these fail? */
           #define XSTR(s) STR(s)
           #define STR(s) #s
-          fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
-          fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
-          fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
-          fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
+          rc = fscanf(stream, "internal:read_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          rc = fscanf(stream, "internal:mod_time=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          rc = fscanf(stream, "internal:export_id=%" XSTR(CACHE_INODE_DUMP_LEN) "s\n", buff);
+          rc = fscanf(stream, "file: FSAL handle=%" XSTR(CACHE_INODE_DUMP_LEN) "s", buff);
           #undef STR
           #undef XSTR
 
-          if(sscanHandle(&fsal_handle, buff) < 0)
+          fclose(stream);
+          if(rc != 1 || sscanHandle(&fsal_handle, buff) < 0)
             {
               /* expected = 2*sizeof(fsal_handle_t) in hexa representation */
               LogCrit(COMPONENT_CACHE_CONTENT,
@@ -232,7 +234,6 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
             }
 
           /* Now close the stream */
-          fclose(stream);
 
           cache_content_get_datapath(cachedir, inum, datapath);
 
