@@ -5,9 +5,6 @@
 #  - NFS_VERS
 #  - SERVER 
 #
-FSAL=VFS
-NFS_VERS=3
-SERVER=aury62
 
 BASE=`pwd`
 
