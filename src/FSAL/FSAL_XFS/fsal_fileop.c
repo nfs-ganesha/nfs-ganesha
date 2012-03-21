@@ -292,6 +292,7 @@ fsal_status_t XFSFSAL_read(fsal_file_t * p_file_descriptor,  /* IN */
           /* use pread/pwrite call */
           pcall = TRUE;
           rc = 0;
+	  errsv = 0;
           break;
 
         case FSAL_SEEK_END:
@@ -303,6 +304,10 @@ fsal_status_t XFSFSAL_read(fsal_file_t * p_file_descriptor,  /* IN */
 		     p_seek_descriptor->offset, SEEK_END);
           errsv = errno;
           ReleaseTokenFSCall();
+
+	default:
+	  rc = -1;
+	  errsv = EINVAL;
 
           break;
         }
@@ -414,6 +419,7 @@ fsal_status_t XFSFSAL_write(fsal_file_t * p_file_descriptor, /* IN */
           /* set absolute position to offset */
           pcall = TRUE;
           rc = 0;
+	  errsv = 0;
           break;
 
         case FSAL_SEEK_END:
@@ -426,6 +432,10 @@ fsal_status_t XFSFSAL_write(fsal_file_t * p_file_descriptor, /* IN */
           ReleaseTokenFSCall();
 
           break;
+	default:
+	  rc = -1;
+	  errsv = EINVAL;
+	  break;
         }
 
       if(rc)
