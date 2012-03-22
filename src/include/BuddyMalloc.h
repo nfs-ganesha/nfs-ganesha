@@ -79,7 +79,7 @@
 #define BUDDY_ERR_ALREADYINIT 20001
 
 /* type to hold addresses in buddy */
-#define BUDDY_ADDR_T     caddr_t
+#define BUDDY_ADDR_T     void *
 
 /** Return pointer to errno for the current thread. */
 int *p_BuddyErrno();
