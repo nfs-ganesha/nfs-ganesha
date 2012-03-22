@@ -480,7 +480,7 @@ int display_req_key(hash_buffer_t * pbuff, char *str)
 
   sprint_sockaddr(&pdupkey->addr, namebuf, sizeof(namebuf));
 
-  return sprintf("addr=%s xid=%ld checksum=%d",
+  return sprintf(str, "addr=%s xid=%ld checksum=%d",
                  namebuf, pdupkey->xid, pdupkey->checksum);
 
 }
@@ -505,7 +505,7 @@ int display_req_val(hash_buffer_t * pbuff, char *str)
 
   sprint_sockaddr(&pdupreq->addr, namebuf, sizeof(namebuf));
 
-  return sprintf("addr=%s xid=%ld checksum=%d rq_prog=%lu rq_vers=%lu rq_proc=%lu",
+  return sprintf(str, "addr=%s xid=%ld checksum=%d rq_prog=%lu rq_vers=%lu rq_proc=%lu",
                  namebuf, pdupreq->xid, pdupreq->checksum,
                  pdupreq->rq_prog, pdupreq->rq_vers, pdupreq->rq_proc);
 }
