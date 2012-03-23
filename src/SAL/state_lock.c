@@ -468,7 +468,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
   new_entry->sle_lock       = *plock;
   new_entry->sle_pexport    = pexport;
 
-  fh_desc.start = &fileid;
+  fh_desc.start = (caddr_t)&fileid;
   fh_desc.len = sizeof(&fileid);
   FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                     FSAL_DIGEST_FILEID3,
