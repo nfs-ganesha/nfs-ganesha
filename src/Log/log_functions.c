@@ -65,6 +65,7 @@ log_level_t tabLogLevel[NB_LOG_LEVEL] =
   {NIV_EVENT,      "NIV_EVENT",      "EVENT",      LOG_NOTICE},
   {NIV_INFO,       "NIV_INFO",       "INFO",       LOG_INFO},
   {NIV_DEBUG,      "NIV_DEBUG",      "DEBUG",      LOG_DEBUG},
+  {NIV_MID_DEBUG,  "NIV_MID_DEBUG",  "MID_DEBUG", LOG_DEBUG},
   {NIV_FULL_DEBUG, "NIV_FULL_DEBUG", "FULL_DEBUG", LOG_DEBUG}
 };
 
