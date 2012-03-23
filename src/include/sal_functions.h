@@ -497,7 +497,7 @@ void nfs4_add_clid(nfs_client_id_t *);
 void nfs4_rm_clid(char *);
 void nfs4_chk_clid(nfs_client_id_t *);
 void nfs4_load_recov_clids(ushort nodeid);
-void nfs4_clean_recov_dir();
+void nfs4_clean_old_recov_dir();
 void nfs4_create_recov_dir();
 
 #endif                          /*  _SAL_FUNCTIONS_H */

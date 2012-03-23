@@ -40,8 +40,10 @@
 
 #define NFS_V4_RECOV_ROOT "/var/lib/nfs/ganesha"
 #define NFS_V4_RECOV_DIR "v4recov"
+#define NFS_V4_OLD_DIR "v4old"
 
 char v4_recov_dir[PATH_MAX];
+char v4_old_dir[PATH_MAX];
 
 /*
  * construct to enable grace period, this could be expanded to implement
@@ -251,19 +253,65 @@ nfs4_chk_clid(nfs_client_id_t *nfs_clientid)
 }
 
 /*
- * create the client reclaim list.  open the recovery directory and loop
- * through all of its entries and add them to the list.  if called due to
- * a take over, nodeid will be nonzero.  in this case, add that node's
- * clientids to the existing list.
+ * create the client reclaim list.
+ * when not doing a take over, first open the old state dir and read in
+ * those entries.  the reason for the two directories is in case of a 
+ * reboot/restart during grace period.  next, read in entries from the
+ * recovery directory and then move them into the old state directory.
+ * if called due to a take over, nodeid will be nonzero.  in this case,
+ * add that node's clientids to the existing list.  then move those
+ * entries into the old state directory.
  */
+static int
+nfs4_read_recov_clids(DIR *dp, char *srcdir, int takeover)
+{
+        struct dirent *dentp;
+        clid_entry_t *new_ent;
+        char src[PATH_MAX], dest[PATH_MAX];
+        int rc;
+
+        dentp = readdir(dp);
+        while (dentp != NULL) {
+                /* don't add '.' and '..', or any '.*' entry */
+                if (dentp->d_name[0] != '.') {
+                        new_ent =
+                            (clid_entry_t *) Mem_Alloc(sizeof(clid_entry_t));
+                        if (new_ent == NULL) {
+                                LogEvent(COMPONENT_NFS_V4, "Mem_Alloc FAILED");
+                                return -1;
+                        }
+                        strncpy(new_ent->cl_name, dentp->d_name, 256);
+                        glist_add(&grace.g_clid_list, &new_ent->cl_list);
+                        LogDebug(COMPONENT_NFS_V4, "added %s to clid list",
+                            new_ent->cl_name);
+                        if (srcdir != NULL) {
+                                (void) snprintf(src, PATH_MAX, "%s/%s",
+                                    srcdir, dentp->d_name);
+                                (void) snprintf(dest, PATH_MAX, "%s/%s",
+                                    v4_old_dir, dentp->d_name);
+                                if (takeover)
+                                        rc = mkdir(dest, 0700);
+                                else
+                                        rc = rename(src, dest);
+                                if (rc == -1) {
+                                        LogEvent(COMPONENT_NFS_V4,
+                                          "Failed to make dir (%s), errno=%d",
+                                          dest, errno);
+                                }
+                        }
+                }
+                dentp = readdir(dp);
+        }
+
+        return 0;
+}
+
 static void
 nfs4_load_recov_clids_nolock(ushort nodeid)
 {
         DIR *dp;
-        struct dirent *dentp;
         struct glist_head *node;
         clid_entry_t *clid_entry;
-        clid_entry_t *new_ent;
         int rc;
         char path[PATH_MAX];
 
@@ -278,6 +326,22 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
                         }
                 }
 
+                dp = opendir(v4_old_dir);
+                if (dp == NULL) {
+                        LogEvent(COMPONENT_NFS_V4,
+                            "Failed to open v4 recovery dir (%s), errno=%d",
+                            v4_old_dir, errno);
+                        return;
+                }
+                rc = nfs4_read_recov_clids(dp, NULL, 0);
+                if (rc == -1) {
+                        (void) closedir(dp);
+                        LogEvent(COMPONENT_NFS_V4,
+                            "Failed to read v4 recovery dir (%s)", v4_old_dir);
+                        return;
+                }
+                (void) closedir(dp);
+
                 dp = opendir(v4_recov_dir);
                 if (dp == NULL) {
                         LogEvent(COMPONENT_NFS_V4,
@@ -285,6 +349,22 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
                             v4_recov_dir, errno);
                         return;
                 }
+
+                rc = nfs4_read_recov_clids(dp, v4_recov_dir, 0);
+                if (rc == -1) {
+                        (void) closedir(dp);
+                        LogEvent(COMPONENT_NFS_V4,
+                            "Failed to read v4 recovery dir (%s)",
+                            v4_recov_dir);
+                        return;
+                }
+                rc = closedir(dp);
+                if (rc == -1) {
+                        LogEvent(COMPONENT_NFS_V4,
+                            "Failed to close v4 recovery dir (%s), errno=%d",
+                            v4_recov_dir, errno);
+                }
+
         } else {
                 snprintf(path, PATH_MAX, "%s/%s/node%d",
                     NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, nodeid);
@@ -296,32 +376,23 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
                             path, errno);
                         return;
                 }
-        }
 
-        dentp = readdir(dp);
-        while (dentp != NULL) {
-                /* don't add '.' and '..', or any '.*' entry */
-                if (dentp->d_name[0] != '.') {
-                        new_ent = (clid_entry_t *) Mem_Alloc(sizeof(clid_entry_t));
-                        if (new_ent == NULL) {
-                                LogEvent(COMPONENT_NFS_V4, "Mem_Alloc FAILED");
-                                (void) closedir(dp);
-                                return;
-                        }
-                        strncpy(new_ent->cl_name, dentp->d_name, 256);
-                        glist_add(&grace.g_clid_list, &new_ent->cl_list);
-                        LogDebug(COMPONENT_NFS_V4, "added %s to clid list",
-                            new_ent->cl_name);
+                rc = nfs4_read_recov_clids(dp, path, 1);
+                if (rc == -1) {
+                        (void) closedir(dp);
+                        LogEvent(COMPONENT_NFS_V4,
+                            "Failed to read v4 recovery dir (%s)",
+                            path);
+                        return;
                 }
-                dentp = readdir(dp);
+                rc = closedir(dp);
+                if (rc == -1) {
+                        LogEvent(COMPONENT_NFS_V4,
+                            "Failed to close v4 recovery dir (%s), errno=%d",
+                            path, errno);
+                }
         }
 
-        rc = closedir(dp);
-        if (rc == -1) {
-                LogEvent(COMPONENT_NFS_V4,
-                    "Failed to close v4 recovery dir (%s), errno=%d",
-                    v4_recov_dir, errno);
-        }
 }
 
 void
@@ -335,23 +406,36 @@ nfs4_load_recov_clids(ushort nodeid)
 }
 
 void
-nfs4_clean_recov_dir()
+nfs4_clean_old_recov_dir()
 {
-        struct glist_head *node, *noden;
-        clid_entry_t *clid_entry;
+        DIR *dp;
+        struct dirent *dentp;
+        char path[PATH_MAX];
+        int rc;
 
-        P(grace.g_mutex);
-
-        if (!glist_empty(&grace.g_clid_list)) {
-                glist_for_each_safe(node, noden, &grace.g_clid_list) {
-                        glist_del(node);
-                        clid_entry = glist_entry(node, clid_entry_t, cl_list);
-                        nfs4_rm_clid(clid_entry->cl_name);
-                        Mem_Free(clid_entry);
-                }
+        dp = opendir(v4_old_dir);
+        if (dp == NULL) {
+                LogEvent(COMPONENT_NFS_V4,
+                    "Failed to open old v4 recovery dir (%s), errno=%d",
+                    v4_old_dir, errno);
+                return;
         }
 
-        V(grace.g_mutex);
+        for (dentp = readdir(dp); dentp != NULL; dentp = readdir(dp)) {
+                /* don't remove '.' and '..', or any '.*' entry */
+                if (dentp->d_name[0] == '.')
+                        continue;
+
+                (void) snprintf(path, PATH_MAX, "%s/%s",
+                    v4_old_dir, dentp->d_name);
+
+                rc = rmdir(path);
+                if (rc == -1) {
+                        LogEvent(COMPONENT_NFS_V4,
+                            "Failed to remove %s, errno=%d",
+                            path, errno);
+                }
+        }
 }
 
 /*
@@ -379,15 +463,34 @@ nfs4_create_recov_dir()
                     "Failed to create v4 recovery dir(%s), errno=%d",
                     v4_recov_dir, errno);
         }
+
+        snprintf(v4_old_dir, PATH_MAX, "%s/%s",
+            NFS_V4_RECOV_ROOT, NFS_V4_OLD_DIR);
+        err = mkdir(v4_old_dir, 0755);
+        if (err == -1 && errno != EEXIST) {
+                LogEvent(COMPONENT_NFS_V4,
+                    "Failed to create v4 recovery dir(%s), errno=%d",
+                    v4_old_dir, errno);
+        }
         if (nfs_param.core_param.clustered) {
                 snprintf(v4_recov_dir, PATH_MAX, "%s/%s/node%d",
-                    NFS_V4_RECOV_ROOT,NFS_V4_RECOV_DIR, g_nodeid);
+                    NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, g_nodeid);
 
                 err = mkdir(v4_recov_dir, 0755);
                 if (err == -1 && errno != EEXIST) {
                         LogEvent(COMPONENT_NFS_V4,
                             "Failed to create v4 recovery dir(%s), errno=%d",
                             v4_recov_dir, errno);
+                }
+
+                snprintf(v4_old_dir, PATH_MAX, "%s/%s/node%d",
+                    NFS_V4_RECOV_ROOT, NFS_V4_OLD_DIR, g_nodeid);
+
+                err = mkdir(v4_old_dir, 0755);
+                if (err == -1 && errno != EEXIST) {
+                        LogEvent(COMPONENT_NFS_V4,
+                            "Failed to create v4 recovery dir(%s), errno=%d",
+                            v4_old_dir, errno);
                 }
         }
 }

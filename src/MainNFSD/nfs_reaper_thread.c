@@ -40,7 +40,7 @@
 #include "nfs_core.h"
 #include "log.h"
 
-unsigned int reaper_delay = 10;
+unsigned int reaper_delay = 15;
 
 void *reaper_thread(void *unused)
 {
@@ -51,6 +51,7 @@ void *reaper_thread(void *unused)
         int v4;
         struct rbt_node *pn;
         nfs_client_id_t *clientp;
+        int old_state_cleaned = 0;
 
 #ifndef _NO_BUDDY_SYSTEM
         if((i = BuddyInit(&nfs_param.buddy_param_admin)) != BUDDY_SUCCESS) {
@@ -116,6 +117,13 @@ restart:
                         pthread_rwlock_unlock(&ht->partitions[i].lock);
                 }
 
+                if (old_state_cleaned == 0) {
+                        /* if not in grace period, clean up the old state */
+                        if(!nfs4_in_grace()) {
+                                nfs4_clean_old_recov_dir();
+                                old_state_cleaned = 1;
+                        }
+                }
         }                           /* while ( 1 ) */
 
         return NULL;
