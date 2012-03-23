@@ -557,7 +557,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                          sizeof(changeid4));
                   res_OPEN4.OPEN4res_u.resok4.cinfo.after =
                       (changeid4) pentry_parent->internal_md.mod_time;
-                  res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE;
+                  res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = FALSE;
 
                   /* No delegation */
                   res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type =
@@ -623,7 +623,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                      sizeof(changeid4));
                               res_OPEN4.OPEN4res_u.resok4.cinfo.after =
                                   (changeid4) pentry_parent->internal_md.mod_time;
-                              res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE;
+                              res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = FALSE;
 
                               /* No delegation */
                               res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type =
@@ -1102,7 +1102,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   res_OPEN4.OPEN4res_u.resok4.cinfo.after =
       (changeid4) pentry_parent->internal_md.mod_time;
-  res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = TRUE;
+  res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = FALSE;
 
   /* No delegation */
   res_OPEN4.OPEN4res_u.resok4.delegation.delegation_type = OPEN_DELEGATE_NONE;

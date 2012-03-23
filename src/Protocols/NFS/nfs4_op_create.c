@@ -530,7 +530,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       (changeid4) pentry_parent->internal_md.mod_time;
 
   /* Operation is supposed to be atomic .... */
-  res_CREATE4.CREATE4res_u.resok4.cinfo.atomic = TRUE;
+  res_CREATE4.CREATE4res_u.resok4.cinfo.atomic = FALSE;
 
   LogFullDebug(COMPONENT_NFS_V4,
                "CREATE CINFO before = %"PRIu64"  after = %"PRIu64"  atomic = %d",

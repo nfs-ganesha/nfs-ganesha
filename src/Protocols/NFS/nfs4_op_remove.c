@@ -195,7 +195,7 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       (changeid4) parent_entry->internal_md.mod_time;
 
   /* Operation was not atomic .... */
-  res_REMOVE4.REMOVE4res_u.resok4.cinfo.atomic = TRUE;
+  res_REMOVE4.REMOVE4res_u.resok4.cinfo.atomic = FALSE;
 
   /* If you reach this point, everything was ok */
 

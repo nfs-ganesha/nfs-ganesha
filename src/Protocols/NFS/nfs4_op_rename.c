@@ -399,8 +399,8 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
               (changeid4) src_entry->internal_md.mod_time;
           res_RENAME4.RENAME4res_u.resok4.target_cinfo.before =
               (changeid4) dst_entry->internal_md.mod_time;
-          res_RENAME4.RENAME4res_u.resok4.target_cinfo.atomic = TRUE;
-          res_RENAME4.RENAME4res_u.resok4.source_cinfo.atomic = TRUE;
+          res_RENAME4.RENAME4res_u.resok4.target_cinfo.atomic = FALSE;
+          res_RENAME4.RENAME4res_u.resok4.source_cinfo.atomic = FALSE;
 
           res_RENAME4.status = NFS4_OK;
           return NFS4_OK;

@@ -249,7 +249,7 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   memset(&(res_LINK4.LINK4res_u.resok4.cinfo.after), 0, sizeof(changeid4));
   res_LINK4.LINK4res_u.resok4.cinfo.after = (changeid4) dir_pentry->internal_md.mod_time;
-  res_LINK4.LINK4res_u.resok4.cinfo.atomic = TRUE;
+  res_LINK4.LINK4res_u.resok4.cinfo.atomic = FALSE;
 
   res_LINK4.status = NFS4_OK;
   return NFS4_OK;
