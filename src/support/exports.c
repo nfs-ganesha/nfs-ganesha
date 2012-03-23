@@ -690,6 +690,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   p_entry->anonymous_gid = (gid_t) ANON_GID;
   p_entry->use_commit = TRUE;
   p_entry->use_ganesha_write_buffer = FALSE;
+  p_entry->UseCookieVerifier = TRUE;
 
   /* Defaults for FSAL_UP. It is ok to leave the filter list NULL
    * even if we enable the FSAL_UP. */
