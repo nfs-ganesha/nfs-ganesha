@@ -76,9 +76,10 @@ int display_state_id_key(hash_buffer_t * pbuff, char *str)
 {
   unsigned int i = 0;
   unsigned int len = 0;
+  unsigned char *s = pbuff->pdata;
 
   for(i = 0; i < OTHERSIZE; i++)
-    len += sprintf(&(str[i * 2]), "%02x", (unsigned char)pbuff->pdata[i]);
+    len += sprintf(&(str[i * 2]), "%02x", s[i]);
   return len;
 }                               /* display_state_id_val */
 
@@ -112,7 +113,7 @@ int compare_state_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
   return memcmp(buff1->pdata, buff2->pdata, OTHERSIZE);
 }                               /* compare_state_id */
 
-unsigned long state_id_value_hash_func(hash_parameter_t * p_hparam,
+uint32_t state_id_value_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t * buffclef)
 {
   unsigned int sum = 0;
@@ -133,17 +134,17 @@ unsigned long state_id_value_hash_func(hash_parameter_t * p_hparam,
   return (unsigned long)(sum % p_hparam->index_size);
 }                               /*  client_id_reverse_value_hash_func */
 
-unsigned long state_id_rbt_hash_func(hash_parameter_t * p_hparam,
-                                     hash_buffer_t * buffclef)
+uint64_t state_id_rbt_hash_func(hash_parameter_t * p_hparam,
+                                hash_buffer_t * buffclef)
 {
 
   u_int32_t i1 = 0;
   u_int32_t i2 = 0;
   u_int32_t i3 = 0;
 
-  memcpy(&i1, &(buffclef->pdata[0]), sizeof(u_int32_t));
-  memcpy(&i2, &(buffclef->pdata[4]), sizeof(u_int32_t));
-  memcpy(&i3, &(buffclef->pdata[8]), sizeof(u_int32_t));
+  memcpy(&i1, buffclef->pdata, sizeof(u_int32_t));
+  memcpy(&i2, buffclef->pdata + 4, sizeof(u_int32_t));
+  memcpy(&i3, buffclef->pdata + 8, sizeof(u_int32_t));
 
   if(isDebug(COMPONENT_HASHTABLE))
     LogFullDebug(COMPONENT_STATE,
@@ -153,24 +154,24 @@ unsigned long state_id_rbt_hash_func(hash_parameter_t * p_hparam,
   return (unsigned long)(i1 ^ i2 ^ i3);
 }                               /* state_id_rbt_hash_func */
 
-unsigned int state_id_hash_both( hash_parameter_t * p_hparam,
-				 hash_buffer_t    * buffclef, 
-				 uint32_t * phashval, uint32_t * prbtval )
+int state_id_hash_both(hash_parameter_t * p_hparam,
+                       hash_buffer_t    * buffclef,
+                       uint32_t * phashval, uint64_t * prbtval )
 {
    uint32_t h1 = 0 ;
    uint32_t h2 = 0 ;
 
-   Lookup3_hash_buff_dual( (char *)(buffclef->pdata), OTHERSIZE, &h1, &h2 ) ;
+   Lookup3_hash_buff_dual((buffclef->pdata), OTHERSIZE, &h1, &h2);
 
-    h1 = h1 % p_hparam->index_size ;
+   h1 = h1 % p_hparam->index_size ;
 
-    *phashval = h1 ;
-    *prbtval = h2 ; 
+   *phashval = h1;
+   *prbtval = h2;
 
-  if(isDebug(COMPONENT_HASHTABLE))
-    LogFullDebug(COMPONENT_STATE,
-                 "value = %lu rbt = %lu",
-                 (unsigned long) h1, (unsigned long) h2);
+   if(isDebug(COMPONENT_HASHTABLE))
+        LogFullDebug(COMPONENT_STATE,
+                     "value = %"PRIu32" rbt = %"PRIu32,
+                     h1, h2);
 
    /* Success */
    return 1 ;

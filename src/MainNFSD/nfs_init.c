@@ -1401,7 +1401,7 @@ int nfs_check_param_consistency()
      nfs_param.worker_param.lru_dupreq.nb_entry_prealloc)
     {
       LogCrit(COMPONENT_INIT,
-              "BAD PARAMETER(dupreq): nb_node_prealloc = %d should be greater than nb_entry_prealloc = %d",
+              "BAD PARAMETER(dupreq): nb_node_prealloc = %zd should be greater than nb_entry_prealloc = %d",
               nfs_param.dupreq_param.hash_param.nb_node_prealloc,
               nfs_param.worker_param.lru_dupreq.nb_entry_prealloc);
       return 1;

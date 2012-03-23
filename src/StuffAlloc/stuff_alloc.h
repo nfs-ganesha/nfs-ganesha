@@ -202,7 +202,7 @@ do {                                                         \
  */
 #define InitPool(pool, num_alloc, type, ctor, dtor)          \
 do {                                                         \
-  int size;                                                  \
+  int size __attribute__((unused));                          \
   memset((pool), 0, sizeof(*(pool)));                        \
   (pool)->pa_free        = NULL;                             \
   (pool)->pa_constructor = ctor;                             \

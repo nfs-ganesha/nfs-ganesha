@@ -73,7 +73,7 @@ unsigned int expiration_time;
  * @see HashTable_Init
  *
  */
-unsigned long int ip_name_value_hash_func(hash_parameter_t * p_hparam,
+uint32_t ip_name_value_hash_func(hash_parameter_t * p_hparam,
                                           hash_buffer_t * buffclef)
 {
   return hash_sockaddr((sockaddr_t *)buffclef->pdata, IGNORE_PORT) % p_hparam->index_size;
@@ -94,11 +94,11 @@ unsigned long int ip_name_value_hash_func(hash_parameter_t * p_hparam,
  * @see HashTable_Init
  *
  */
-unsigned long int ip_name_rbt_hash_func(hash_parameter_t * p_hparam,
+uint64_t ip_name_rbt_hash_func(hash_parameter_t * p_hparam,
                                         hash_buffer_t * buffclef)
 {
   return hash_sockaddr((sockaddr_t *)buffclef->pdata, IGNORE_PORT);
-} 
+}
 
 /**
  *

@@ -98,6 +98,8 @@ iterators invalidated are those referring to the deleted node.
 #ifndef _RBT_TREE_H
 #define _RDT_TREE_H
 
+#include <stdint.h>
+
 /*
  * For RBT_HEAD_INIT, RBT_COUNT, RBT_RIGHTMOST and RBT_LEFTMOST :
  *   __header is the header
@@ -483,7 +485,7 @@ iterators invalidated are those referring to the deleted node.
  * For RBT_FIND
  *   __header is the header node
  *   __node will contain the found node
- *   __val is a long and contains the value to search
+ *   __val is a uint64_t and contains the value to search
  *   __x is a temporary variable
  * No nodes are modified
  * __node is modified
@@ -522,7 +524,7 @@ iterators invalidated are those referring to the deleted node.
  * For RBT_FIND_LEFT
  *   __header is the header node
  *   __node will contain the found node
- *   __val is a long and contains the value to search
+ *   __val is a uint64_t and contains the value to search
  *   __x is a temporary variable
  * No nodes are modified
  * __node is modified

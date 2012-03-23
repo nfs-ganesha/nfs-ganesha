@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -985,13 +985,13 @@ inline unsigned int cache_inode_file_holds_state( cache_entry_t * pentry );
 inline int cache_inode_set_time_current( fsal_time_t * ptime ) ;
 
 /* Hash functions for hashtables and RBT */
-unsigned long cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
+uint32_t cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t * buffclef);
-unsigned long cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
+uint64_t cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
                                         hash_buffer_t * buffclef);
-unsigned int cache_inode_fsal_rbt_both( hash_parameter_t * p_hparam,
-				        hash_buffer_t    * buffclef, 
-				        uint32_t * phashval, uint32_t * prbtval ) ;
+int cache_inode_fsal_rbt_both( hash_parameter_t * p_hparam,
+                               hash_buffer_t    * buffclef,
+                               uint32_t * phashval, uint64_t * prbtval ) ;
 int display_key(hash_buffer_t * pbuff, char *str);
 int display_not_implemented(hash_buffer_t * pbuff, char *str);
 int display_value(hash_buffer_t * pbuff, char *str);

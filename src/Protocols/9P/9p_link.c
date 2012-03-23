@@ -68,7 +68,6 @@ int _9p_link( _9p_request_data_t * preq9p,
   _9p_fid_t * pdfid = NULL ;
   _9p_fid_t * ptargetfid = NULL ;
 
-  cache_entry_t       * pentry= NULL ;
   fsal_attrib_list_t    fsalattr ;
   cache_inode_status_t  cache_status ;
   fsal_name_t           link_name ;

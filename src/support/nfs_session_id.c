@@ -75,9 +75,10 @@ int display_session_id_key(hash_buffer_t * pbuff, char *str)
 {
   unsigned int i = 0;
   unsigned int len = 0;
+  unsigned char *s = pbuff->pdata;
 
   for(i = 0; i < NFS4_SESSIONID_SIZE; i++)
-    len += sprintf(&(str[i * 2]), "%02x", (unsigned char)pbuff->pdata[i]);
+    len += sprintf(&(str[i * 2]), "%02x", s[i]);
   return len;
 }                               /* display_session_id_val */
 
@@ -91,7 +92,7 @@ int compare_session_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
   return memcmp(buff1->pdata, buff2->pdata, NFS4_SESSIONID_SIZE);
 }                               /* compare_session_id */
 
-unsigned long session_id_value_hash_func(hash_parameter_t * p_hparam,
+uint32_t session_id_value_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t * buffclef)
 {
   unsigned int sum = 0;
@@ -112,8 +113,8 @@ unsigned long session_id_value_hash_func(hash_parameter_t * p_hparam,
   return (unsigned long)(sum % p_hparam->index_size);
 }                               /*  client_id_reverse_value_hash_func */
 
-unsigned long session_id_rbt_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t * buffclef)
+uint64_t session_id_rbt_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t * buffclef)
 {
 
   u_int32_t i1 = 0;
@@ -130,10 +131,10 @@ unsigned long session_id_rbt_hash_func(hash_parameter_t * p_hparam,
                    "         ----- session_id_rbt_hash_func : %s", str);
     }
 
-  memcpy(&i1, &(buffclef->pdata[0]), sizeof(u_int32_t));
-  memcpy(&i2, &(buffclef->pdata[4]), sizeof(u_int32_t));
-  memcpy(&i3, &(buffclef->pdata[8]), sizeof(u_int32_t));
-  memcpy(&i4, &(buffclef->pdata[12]), sizeof(u_int32_t));
+  memcpy(&i1, buffclef->pdata, sizeof(u_int32_t));
+  memcpy(&i2, buffclef->pdata + 4, sizeof(u_int32_t));
+  memcpy(&i3, buffclef->pdata + 8, sizeof(u_int32_t));
+  memcpy(&i4, buffclef->pdata + 12, sizeof(u_int32_t));
 
   LogFullDebug(COMPONENT_SESSIONS,
                "--->  session_id_rbt_hash_func=%lu",

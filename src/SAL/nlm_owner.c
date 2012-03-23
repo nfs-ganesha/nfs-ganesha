@@ -132,7 +132,7 @@ int compare_nsm_client_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
 
 }                               /* compare_nsm_client */
 
-unsigned long nsm_client_value_hash_func(hash_parameter_t * p_hparam,
+uint32_t nsm_client_value_hash_func(hash_parameter_t * p_hparam,
                                         hash_buffer_t * buffclef)
 {
   unsigned long        res;
@@ -162,7 +162,7 @@ unsigned long nsm_client_value_hash_func(hash_parameter_t * p_hparam,
   return (unsigned long)(res % p_hparam->index_size);
 }                               /* nsm_client_value_hash_func */
 
-unsigned long nsm_client_rbt_hash_func(hash_parameter_t * p_hparam,
+uint64_t nsm_client_rbt_hash_func(hash_parameter_t * p_hparam,
                                       hash_buffer_t * buffclef)
 {
   unsigned long        res;
@@ -260,7 +260,7 @@ int compare_nlm_client_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
 
 }                               /* compare_nlm_client */
 
-unsigned long nlm_client_value_hash_func(hash_parameter_t * p_hparam,
+uint32_t nlm_client_value_hash_func(hash_parameter_t * p_hparam,
                                         hash_buffer_t * buffclef)
 {
   unsigned int sum = 0;
@@ -282,8 +282,8 @@ unsigned long nlm_client_value_hash_func(hash_parameter_t * p_hparam,
   return (unsigned long)(res % p_hparam->index_size);
 }                               /* nlm_client_value_hash_func */
 
-unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
-                                      hash_buffer_t * buffclef)
+uint64_t nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i;
@@ -393,8 +393,8 @@ int compare_nlm_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
 
 }                               /* compare_nlm_owner */
 
-unsigned long nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
-                                        hash_buffer_t * buffclef)
+uint32_t nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
+                                   hash_buffer_t * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i;
@@ -417,8 +417,8 @@ unsigned long nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
 
 }                               /* nlm_so_nlm_ohue_hash_func */
 
-unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
-                                      hash_buffer_t * buffclef)
+uint64_t nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
+                                 hash_buffer_t * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i;

@@ -78,8 +78,8 @@ hash_table_t *ht_client_id_reverse;
  * @see HashTable_Init
  *
  */
-unsigned long client_id_value_hash_func(hash_parameter_t * p_hparam,
-                                        hash_buffer_t * buffclef)
+uint32_t client_id_value_hash_func(hash_parameter_t * p_hparam,
+                                   hash_buffer_t * buffclef)
 {
   unsigned long hash_func;
   clientid4 clientid;
@@ -110,8 +110,8 @@ unsigned long client_id_value_hash_func(hash_parameter_t * p_hparam,
  * @see HashTable_Init
  *
  */
-unsigned long client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
-                                                hash_buffer_t * buffclef)
+uint32_t client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
+                                           hash_buffer_t * buffclef)
 {
   unsigned long sum = 0;
   unsigned int i = 0;
@@ -124,9 +124,9 @@ unsigned long client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
   return (unsigned long)(sum % p_hparam->index_size);
 }                               /*  client_id_reverse_value_hash_func */
 
-unsigned int client_id_value_both_reverse( hash_parameter_t * p_hparam,
-                                           hash_buffer_t    * buffclef,
-                                           uint32_t * phashval, uint32_t * prbtval )
+int client_id_value_both_reverse( hash_parameter_t * p_hparam,
+                                  hash_buffer_t    * buffclef,
+                                  uint32_t * phashval, uint64_t * prbtval )
 {
    uint32_t h1 = 0 ;
    uint32_t h2 = 0 ;
@@ -137,7 +137,7 @@ unsigned int client_id_value_both_reverse( hash_parameter_t * p_hparam,
     h1 = h1 % p_hparam->index_size ;
 
     *phashval = h1 ;
-    *prbtval = h2 ; 
+    *prbtval = h2 ;
 
    /* Success */
    return 1 ;

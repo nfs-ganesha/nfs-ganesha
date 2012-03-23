@@ -425,7 +425,7 @@ static void free_register_info(register_info * ptr)
  */
 int snmp_adm_config_daemon(char *agent_x_socket, char *filelog, int prod_id)
 {
-  int err_init, err_root;
+  int err_init;
 
   product_id = prod_id;
 
@@ -454,12 +454,10 @@ int snmp_adm_config_daemon(char *agent_x_socket, char *filelog, int prod_id)
           write = snprintf(buf + offset, len, ".%ld", root_oid[i]);
         }
       snmp_adm_log("ROOT_OID=%s", buf);
-      err_root = 0;
     }
   else
     {
       snmp_adm_log("cannot find a valid ROOT_OID");
-      err_root = 1;
       configured = 0;
       return 1;
     }

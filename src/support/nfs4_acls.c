@@ -22,8 +22,10 @@ static pthread_mutex_t fsal_acl_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct prealloc_pool fsal_acl_key_pool;
 static pthread_mutex_t fsal_acl_key_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static unsigned int fsal_acl_hash_both(hash_parameter_t * p_hparam,
-                                       hash_buffer_t * buffclef, uint32_t * phashval, uint32_t * prbtval);
+static int fsal_acl_hash_both(hash_parameter_t * p_hparam,
+                              hash_buffer_t * buffclef,
+                              uint32_t * phashval,
+                              uint64_t * prbtval);
 static int compare_fsal_acl(hash_buffer_t * p_key1, hash_buffer_t * p_key2);
 static int display_fsal_acl_key(hash_buffer_t * p_val, char *outbuff);
 static int display_fsal_acl_val(hash_buffer_t * p_val, char *outbuff);
@@ -46,16 +48,18 @@ static hash_table_t *fsal_acl_hash = NULL;
 
 /* hash table functions */
 
-static unsigned int fsal_acl_hash_both(hash_parameter_t * p_hparam,
-                                       hash_buffer_t * buffclef, uint32_t * phashval, uint32_t * prbtval)
+static int fsal_acl_hash_both(hash_parameter_t *p_hparam,
+                              hash_buffer_t *buffclef,
+                              uint32_t *phashval,
+                              uint64_t *prbtval)
 {
   char printbuf[2 * MD5_DIGEST_LENGTH];
   uint32_t h1 = 0 ;
   uint32_t h2 = 0 ;
 
-  char *p_aclkey = (char *) (buffclef->pdata);
+  char *p_aclkey = (buffclef->pdata);
 
-  Lookup3_hash_buff_dual((char *)(p_aclkey), MD5_DIGEST_LENGTH, &h1, &h2);
+  Lookup3_hash_buff_dual(p_aclkey, MD5_DIGEST_LENGTH, &h1, &h2);
 
   h1 = h1 % p_hparam->index_size;
 
@@ -219,8 +223,8 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *pacldata, fsal_acl_status_t *pst
   /* Set the return default to NFS_V4_ACL_SUCCESS */
   *pstatus = NFS_V4_ACL_SUCCESS;
 
-  LogDebug(COMPONENT_NFS_V4_ACL, "nfs4_acl_new_entry: acl hash table size = %u",
-           HashTable_GetSize(fsal_acl_hash));
+  LogDebug(COMPONENT_NFS_V4_ACL, "nfs4_acl_new_entry: acl hash table size "
+           "= %zu", HashTable_GetSize(fsal_acl_hash));
 
   /* Turn the input to a hash key */
   if(nfs4_acldata_2_key(&buffkey, pacldata))

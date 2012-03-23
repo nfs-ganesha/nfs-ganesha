@@ -82,8 +82,8 @@ hash_table_t *ht_uidgid;
  * @see HashTable_Init
  *
  */
-unsigned long idmapper_value_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t * buffclef)
+uint32_t idmapper_value_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i = 0;
@@ -97,7 +97,7 @@ unsigned long idmapper_value_hash_func(hash_parameter_t * p_hparam,
 }                               /*  ip_name_value_hash_func */
 
 
-unsigned long namemapper_value_hash_func(hash_parameter_t * p_hparam,
+uint32_t namemapper_value_hash_func(hash_parameter_t * p_hparam,
                                          hash_buffer_t * buffclef)
 {
   return ((unsigned long)(buffclef->pdata) % p_hparam->index_size);
@@ -117,8 +117,8 @@ unsigned long namemapper_value_hash_func(hash_parameter_t * p_hparam,
  * @see HashTable_Init
  *
  */
-unsigned long idmapper_rbt_hash_func(hash_parameter_t * p_hparam,
-                                     hash_buffer_t * buffclef)
+uint64_t idmapper_rbt_hash_func(hash_parameter_t * p_hparam,
+                                hash_buffer_t * buffclef)
 {
   unsigned int result;
 
@@ -129,8 +129,8 @@ unsigned long idmapper_rbt_hash_func(hash_parameter_t * p_hparam,
   return (unsigned long)result;
 }                               /* ip_name_rbt_hash_func */
 
-unsigned long namemapper_rbt_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t * buffclef)
+uint64_t namemapper_rbt_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t * buffclef)
 {
   return (unsigned long)(buffclef->pdata);
 }

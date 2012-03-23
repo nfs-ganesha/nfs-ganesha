@@ -136,7 +136,7 @@ typedef struct rbt_node
   struct rbt_node *parent;      /* parent node or NULL for root */
   struct rbt_node *left;        /* left node */
   struct rbt_node *next;        /* "right" node */
-  long rbt_value;               /* used for order */
+  uint64_t rbt_value;           /* used for order */
   void *rbt_opaq;               /* pointer for external object */
 } rbt_node_t;
 

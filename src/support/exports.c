@@ -2808,8 +2808,8 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
        * |            0          |        FFFF       |    IPv4 address   |
        * |---------------------------------------------------------------|   */
       if(!memcmp(psockaddr_in6->sin6_addr.s6_addr, ten_bytes_all_0, 10) &&
-         !memcmp((char *)(psockaddr_in6->sin6_addr.s6_addr + 10),
-                 (char *)&two_bytes_all_1, 2))
+         !memcmp((psockaddr_in6->sin6_addr.s6_addr + 10),
+                 &two_bytes_all_1, 2))
         {
           /* Use IP address as a string for wild character access checks. */
           if(!ipvalid)
@@ -2820,29 +2820,31 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
             }
 
           /* This is an IPv4 address mapped to an IPv6 one. Extract the IPv4 address and proceed with IPv4 autentication */
-          memcpy((char *)&addr, (char *)(psockaddr_in6->sin6_addr.s6_addr + 12), 4);
+          memcpy(&hostaddr, (psockaddr_in6->sin6_addr.s6_addr + 12), 4);
 
           /* Proceed with IPv4 dedicated function */
           /* check if any root access export matches this client */
           if((user_credentials->caller_uid == 0) &&
-             export_client_match(addr, ipstring, &(pexport->clients),
+             export_client_match(hostaddr, ipstring, &(pexport->clients),
                                  pclient_found, EXPORT_OPTION_ROOT))
             return EXPORT_PERMISSION_GRANTED;
           /* else, check if any access only export matches this client */
           if(proc_makes_write)
             {
-              if (export_client_match(addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_WRITE_ACCESS))
+              if (export_client_match(hostaddr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_WRITE_ACCESS))
                 return EXPORT_PERMISSION_GRANTED;
-              else if (pexport->new_access_list_version && export_client_match(addr, ipstring,
+              else if (pexport->new_access_list_version &&
+                       export_client_match(hostaddr, ipstring,
                                            &(pexport->clients), pclient_found, EXPORT_OPTION_MD_WRITE_ACCESS))
                 {
                   pexport->access_type = ACCESSTYPE_MDONLY;
                   return EXPORT_MDONLY_GRANTED;
                 }
             } else { /* request will not write anything */
-            if (export_client_match(addr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_READ_ACCESS))
+            if (export_client_match(hostaddr, ipstring, &(pexport->clients), pclient_found, EXPORT_OPTION_READ_ACCESS))
               return EXPORT_PERMISSION_GRANTED;
-            else if (pexport->new_access_list_version && export_client_match(addr, ipstring,
+            else if (pexport->new_access_list_version &&
+                     export_client_match(hostaddr, ipstring,
                                          &(pexport->clients), pclient_found, EXPORT_OPTION_MD_READ_ACCESS))
               {
                 pexport->access_type = ACCESSTYPE_MDONLY_RO;

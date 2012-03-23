@@ -473,7 +473,7 @@ void cache_inode_print_conf_hash_parameter(FILE * output, cache_inode_parameter_
           param.hparam.index_size);
   fprintf(output, "CacheInode Hash: Alphabet_Length         = %d\n",
           param.hparam.alphabet_length);
-  fprintf(output, "CacheInode Hash: Prealloc_Node_Pool_Size = %d\n",
+  fprintf(output, "CacheInode Hash: Prealloc_Node_Pool_Size = %zd\n",
           param.hparam.nb_node_prealloc);
 }                               /* cache_inode_print_conf_hash_parameter */
 

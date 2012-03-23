@@ -182,8 +182,8 @@ int compare_nfs4_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
   return memcmp(pname1->son_owner_val, pname2->son_owner_val, pname1->son_owner_len);
 }                               /* compare_nfs4_owner */
 
-unsigned long nfs4_owner_value_hash_func(hash_parameter_t * p_hparam,
-                                         hash_buffer_t * buffclef)
+uint32_t nfs4_owner_value_hash_func(hash_parameter_t * p_hparam,
+                                    hash_buffer_t * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i = 0;
@@ -209,8 +209,8 @@ unsigned long nfs4_owner_value_hash_func(hash_parameter_t * p_hparam,
 
 }                               /* nfs4_owner_value_hash_func */
 
-unsigned long nfs4_owner_rbt_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t * buffclef)
+uint64_t nfs4_owner_rbt_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t * buffclef)
 {
   state_nfs4_owner_name_t *pname = (state_nfs4_owner_name_t *) buffclef->pdata;
 

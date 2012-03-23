@@ -95,11 +95,11 @@ int compare_nsm_client(state_nsm_client_t * pclient1,
 
 int compare_nsm_client_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
-unsigned long nsm_client_value_hash_func(hash_parameter_t * p_hparam,
-                                         hash_buffer_t    * buffclef);
+uint32_t nsm_client_value_hash_func(hash_parameter_t * p_hparam,
+                                    hash_buffer_t    * buffclef);
 
-unsigned long nsm_client_rbt_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t    * buffclef);
+uint64_t nsm_client_rbt_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t    * buffclef);
 
 state_nsm_client_t *get_nsm_client(care_t       care,
                                    SVCXPRT    * xprt,
@@ -119,11 +119,11 @@ int compare_nlm_client(state_nlm_client_t * pclient1,
 
 int compare_nlm_client_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
-unsigned long nlm_client_value_hash_func(hash_parameter_t * p_hparam,
-                                         hash_buffer_t    * buffclef);
+uint32_t nlm_client_value_hash_func(hash_parameter_t * p_hparam,
+                                    hash_buffer_t    * buffclef);
 
-unsigned long nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t    * buffclef);
+uint64_t nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t    * buffclef);
 
 state_nlm_client_t *get_nlm_client(care_t               care,
                                    SVCXPRT            * xprt,
@@ -144,14 +144,14 @@ int compare_nlm_owner(state_owner_t * powner1,
 
 int compare_nlm_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
-unsigned long nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
-                                        hash_buffer_t    * buffclef);
+uint32_t nlm_owner_value_hash_func(hash_parameter_t * p_hparam,
+                                   hash_buffer_t    * buffclef);
 
-unsigned long nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
-                                      hash_buffer_t    * buffclef);
+uint64_t nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
+                                 hash_buffer_t    * buffclef);
 
 state_owner_t *get_nlm_owner(care_t               care,
-                             state_nlm_client_t * pclient, 
+                             state_nlm_client_t * pclient,
                              netobj             * oh,
                              uint32_t             svid);
 void nlm_owner_PrintAll(void);
@@ -231,11 +231,11 @@ int compare_nfs4_owner(state_owner_t * powner1,
 
 int compare_nfs4_owner_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
-unsigned long nfs4_owner_value_hash_func(hash_parameter_t * p_hparam,
-                                         hash_buffer_t    * buffclef);
+uint32_t nfs4_owner_value_hash_func(hash_parameter_t * p_hparam,
+                                    hash_buffer_t    * buffclef);
 
-unsigned long nfs4_owner_rbt_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t    * buffclef);
+uint64_t nfs4_owner_rbt_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t    * buffclef);
 
 void convert_nfs4_open_owner(open_owner4             * pnfsowner,
                              state_nfs4_owner_name_t * pname_owner,
@@ -437,10 +437,10 @@ state_status_t state_del(state_t              * pstate,
 int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
 int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);
 int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
-unsigned long lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
+uint32_t lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
                                           hash_buffer_t * buffclef);
-unsigned long lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
-                                        hash_buffer_t * buffclef);
+uint64_t lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
+                                   hash_buffer_t * buffclef);
 
 #ifdef _PNFS_MDS
 state_status_t state_add_segment(state_t             * pstate,

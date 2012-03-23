@@ -191,7 +191,7 @@ hash_table_t *ht_gss_ctx;
  * @see HashTable_Init
  *
  */
-unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef)
+uint32_t gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef)
 {
   unsigned long hash_func;
   gss_union_ctx_id_desc *pgss_ctx;
@@ -228,7 +228,7 @@ unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buf
  * @see HashTable_Init
  *
  */
-unsigned long gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef)
+uint64_t gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef)
 {
   unsigned long hash_func;
   gss_union_ctx_id_desc *pgss_ctx;

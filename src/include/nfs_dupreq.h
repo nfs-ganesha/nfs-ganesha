@@ -111,9 +111,9 @@ int nfs_dupreq_finish(long xid,
 		      nfs_res_t * p_res_nfs,
 		      LRU_list_t * lru_dupreq);
 
-unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
+uint32_t dupreq_value_hash_func(hash_parameter_t * p_hparam,
                                      hash_buffer_t * buffclef);
-unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
+uint64_t dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
 void nfs_dupreq_get_stats(hash_stat_t * phstat_udp, hash_stat_t * phstat_tcp ) ;
 
 

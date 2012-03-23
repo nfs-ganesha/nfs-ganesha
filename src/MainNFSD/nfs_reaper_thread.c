@@ -76,7 +76,7 @@ void *reaper_thread(void *unused)
 
 restart:
                         /* acquire mutex */
-                        P_w(&(ht->array_lock[i]));
+                        pthread_rwlock_wrlock(&(ht->array_lock[i]));
 
                         /* go through all entries in the red-black-tree*/
                         RBT_LOOP(head_rbt, pn) {
@@ -95,7 +95,8 @@ restart:
 #endif
                                 if (clientp->confirmed != EXPIRED_CLIENT_ID &&
                                     nfs4_is_lease_expired(clientp) && v4) {
-                                        V_w(&(ht->array_lock[i]));
+                                        pthread_rwlock_unlock(
+                                             &(ht->array_lock[i]));
                                         LogDebug(COMPONENT_MAIN,
                                             "NFS reaper: expire client %s",
                                             clientp->client_name);
@@ -111,7 +112,7 @@ restart:
 
                                 RBT_INCREMENT(pn);
                         }
-                        V_w(&(ht->array_lock[i]));
+                        pthread_rwlock_unlock(&(ht->array_lock[i]));
                 }
 
         }                           /* while ( 1 ) */

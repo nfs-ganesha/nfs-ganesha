@@ -396,8 +396,8 @@ int clean_entry_dupreq(LRU_entry_t * pentry, void *addparam)
  * @see HashTable_Init
  *
  */
-unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
-                                     hash_buffer_t * buffclef)
+uint32_t dupreq_value_hash_func(hash_parameter_t * p_hparam,
+                                hash_buffer_t * buffclef)
 {
   dupreq_key_t *pdupkey = (dupreq_key_t *)(buffclef->pdata);
   unsigned long addr_hash = hash_sockaddr((sockaddr_t *) &pdupkey->addr, CHECK_PORT);
@@ -421,7 +421,7 @@ unsigned long dupreq_value_hash_func(hash_parameter_t * p_hparam,
  * @see HashTable_Init
  *
  */
-unsigned long dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef)
+uint64_t dupreq_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef)
 {
   dupreq_key_t *pdupkey = (dupreq_key_t *)(buffclef->pdata);
 

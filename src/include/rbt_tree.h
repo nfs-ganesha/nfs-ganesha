@@ -483,7 +483,7 @@ iterators invalidated are those referring to the deleted node.
  * For RBT_FIND
  *   __header is the header node
  *   __node will contain the found node
- *   __val is a long and contains the value to search
+ *   __val is a uint64_t and contains the value to search
  *   __x is a temporary variable
  * No nodes are modified
  * __node is modified
@@ -522,7 +522,7 @@ iterators invalidated are those referring to the deleted node.
  * For RBT_FIND_LEFT
  *   __header is the header node
  *   __node will contain the found node
- *   __val is a long and contains the value to search
+ *   __val is a uint64_t and contains the value to search
  *   __x is a temporary variable
  * No nodes are modified
  * __node is modified

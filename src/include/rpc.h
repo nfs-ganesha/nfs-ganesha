@@ -150,9 +150,9 @@ extern pthread_cond_t   *condvar_xprt;
 
 #ifdef _HAVE_GSSAPI
 void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat);
-unsigned long gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
-unsigned long gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam,
-                                    hash_buffer_t * buffclef);
+uint32_t gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef);
+uint64_t gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam,
+                               hash_buffer_t * buffclef);
 int compare_gss_ctx(hash_buffer_t * buff1, hash_buffer_t * buff2);
 int display_gss_ctx(hash_buffer_t * pbuff, char *str);
 int display_gss_svc_data(hash_buffer_t * pbuff, char *str);

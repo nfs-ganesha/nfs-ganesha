@@ -766,36 +766,36 @@ int display_client_id_val(hash_buffer_t * pbuff, char *str);
 int compare_client_id(hash_buffer_t * buff1, hash_buffer_t * buff2);
 int compare_client_id_reverse(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
-unsigned long client_id_rbt_hash_func(hash_parameter_t * p_hparam,
-                                      hash_buffer_t * buffclef);
-unsigned long client_id_rbt_hash_func_reverse(hash_parameter_t * p_hparam,
-                                              hash_buffer_t * buffclef);
+uint64_t client_id_rbt_hash_func(hash_parameter_t * p_hparam,
+                                 hash_buffer_t * buffclef);
+uint64_t client_id_rbt_hash_func_reverse(hash_parameter_t * p_hparam,
+                                         hash_buffer_t * buffclef);
 
-unsigned long state_id_value_hash_func(hash_parameter_t * p_hparam,
+uint32_t state_id_value_hash_func(hash_parameter_t * p_hparam,
                                        hash_buffer_t * buffclef);
-unsigned long state_id_rbt_hash_func(hash_parameter_t * p_hparam,
+uint64_t state_id_rbt_hash_func(hash_parameter_t * p_hparam,
                                      hash_buffer_t * buffclef);
-unsigned int state_id_hash_both( hash_parameter_t * p_hparam,
-				 hash_buffer_t    * buffclef, 
-				 uint32_t * phashval, uint32_t * prbtval );
+int state_id_hash_both(hash_parameter_t * p_hparam,
+                       hash_buffer_t    * buffclef,
+                       uint32_t * phashval, uint64_t * prbtval );
 
-unsigned long client_id_value_hash_func(hash_parameter_t * p_hparam,
-                                        hash_buffer_t * buffclef);
-unsigned long client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
-                                                hash_buffer_t * buffclef);
-unsigned int client_id_value_both_reverse( hash_parameter_t * p_hparam,
-				           hash_buffer_t    * buffclef, 
-				           uint32_t * phashval, uint32_t * prbtval ) ;
-
-unsigned long idmapper_rbt_hash_func(hash_parameter_t * p_hparam,
-                                     hash_buffer_t * buffclef);
-unsigned long int namemapper_rbt_hash_func(hash_parameter_t * p_hparam,
+uint32_t client_id_value_hash_func(hash_parameter_t * p_hparam,
+                                   hash_buffer_t * buffclef);
+uint32_t client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
                                            hash_buffer_t * buffclef);
+int client_id_value_both_reverse(hash_parameter_t * p_hparam,
+                                 hash_buffer_t    * buffclef,
+                                 uint32_t * phashval, uint64_t * prbtval ) ;
 
-unsigned long int namemapper_value_hash_func(hash_parameter_t * p_hparam,
+uint64_t idmapper_rbt_hash_func(hash_parameter_t * p_hparam,
+                                     hash_buffer_t * buffclef);
+uint64_t namemapper_rbt_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t * buffclef);
+
+uint32_t namemapper_value_hash_func(hash_parameter_t * p_hparam,
                                              hash_buffer_t * buffclef);
-unsigned long idmapper_value_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t * buffclef);
+uint32_t idmapper_value_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t * buffclef);
 
 int idmap_populate(char *path, idmap_type_t maptype);
 
@@ -858,10 +858,10 @@ unsigned int nfs_core_select_worker_queue() ;
 int display_session_id_key(hash_buffer_t * pbuff, char *str);
 int display_session_id_val(hash_buffer_t * pbuff, char *str);
 int compare_session_id(hash_buffer_t * buff1, hash_buffer_t * buff2);
-unsigned long session_id_value_hash_func(hash_parameter_t * p_hparam,
-                                         hash_buffer_t * buffclef);
-unsigned long session_id_rbt_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t * buffclef);
+uint32_t session_id_value_hash_func(hash_parameter_t * p_hparam,
+                                    hash_buffer_t * buffclef);
+uint64_t session_id_rbt_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t * buffclef);
 int nfs41_Init_session_id(nfs_session_id_parameter_t param);
 int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
                       nfs41_session_t * psession_data);

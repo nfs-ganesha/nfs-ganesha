@@ -1075,8 +1075,8 @@ int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2)
   return memcmp(buff1->pdata, buff2->pdata, buff1->len);
 }
 
-unsigned long lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
-                                          hash_buffer_t * buffclef)
+uint32_t lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
+                                     hash_buffer_t * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i;
@@ -1097,8 +1097,8 @@ unsigned long lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
   return (unsigned long)(res % p_hparam->index_size);
 }
 
-unsigned long lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
-                                        hash_buffer_t * buffclef)
+uint64_t lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
+                                   hash_buffer_t * buffclef)
 {
   unsigned int sum = 0;
   unsigned int i;
