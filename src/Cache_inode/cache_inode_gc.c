@@ -160,7 +160,7 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
   /* Sanity check: old_value.pdata is expected to be equal to pentry,
    * and is released later in this function */
   if((cache_entry_t *) old_value.pdata != pentry ||
-     ((cache_entry_t *)old_value.pdata)->fh_desc.start != &pentry->handle)
+     ((cache_entry_t *)old_value.pdata)->fh_desc.start != (caddr_t)&pentry->handle)
     {
       LogCrit(COMPONENT_CACHE_INODE_GC,
               "cache_inode_gc_clean_entry: unexpected pdata %p from hash table (pentry=%p)",

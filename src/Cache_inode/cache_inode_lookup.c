@@ -343,7 +343,7 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t        * pentry_parent,
           new_entry_fsdata.fh_desc.start = (caddr_t)(&object_handle);
 #endif
           new_entry_fsdata.fh_desc.len = 0;
-	  (void) FSAL_ExpandHandle(pcontext,
+	  (void) FSAL_ExpandHandle(pcontext->export_context,
 				   FSAL_DIGEST_SIZEOF,
 				   &new_entry_fsdata.fh_desc);
 

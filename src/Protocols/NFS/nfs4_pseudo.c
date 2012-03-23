@@ -1676,7 +1676,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
       fsdata.fh_desc.start = (caddr_t)&fsal_handle;
       fsdata.fh_desc.len = 0;
-      (void) FSAL_ExpandHandle(data->pcontext,
+      (void) FSAL_ExpandHandle(data->pcontext->export_context,
 			       FSAL_DIGEST_SIZEOF,
 			       &fsdata.fh_desc);
 
@@ -1955,7 +1955,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
       fsdata.fh_desc.start = (caddr_t) &fsal_handle;
       fsdata.fh_desc.len = 0;
-      (void) FSAL_ExpandHandle(data->pcontext,
+      (void) FSAL_ExpandHandle(data->pcontext->export_context,
 			       FSAL_DIGEST_SIZEOF,
 			       &fsdata.fh_desc);
 
