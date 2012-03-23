@@ -208,8 +208,6 @@ static int ci_avl_dir_ck_cmp(const struct avltree_node *lhs,
  */
 int cache_inode_compare_key_fsal(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  fsal_status_t status;
-
   /* Test if one of teh entries are NULL */
   if(buff1->pdata == NULL)
     return (buff2->pdata == NULL) ? 0 : 1;
@@ -428,7 +426,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
   memcpy(&pentry->handle,
 	 pfsdata->fh_desc.start,
 	 pfsdata->fh_desc.len);
-  pentry->fh_desc.start = &pentry->handle;
+  pentry->fh_desc.start = (caddr_t)&pentry->handle;
   pentry->fh_desc.len = pfsdata->fh_desc.len;
 
 #ifdef _USE_MFSL
@@ -1182,7 +1180,7 @@ fsal_handle_t *cache_inode_get_fsal_handle(cache_entry_t * pentry,
           *pstatus = CACHE_INODE_SUCCESS;
          }                       /* switch( pentry->internal_md.type ) */
     }
-  if(pentry->fh_desc.start != &pentry->handle)
+  if(pentry->fh_desc.start != (caddr_t) &pentry->handle)
     {
       LogCrit(COMPONENT_CACHE_INODE,
 	      "Mangled handle descriptor: "

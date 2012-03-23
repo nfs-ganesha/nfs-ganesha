@@ -146,7 +146,7 @@ cache_inode_status_t cache_inode_clean_internal(cache_entry_t * to_remove_entry,
       /* Sanity check: old_value.pdata is expected to be equal to pentry,
        * and is released later in this function */
       if((cache_entry_t *) old_value.pdata != to_remove_entry ||
-	 ((cache_entry_t *)old_value.pdata)->fh_desc.start != &to_remove_entry->handle)
+	 ((cache_entry_t *)old_value.pdata)->fh_desc.start != (caddr_t)&(to_remove_entry->handle))
         {
           LogCrit(COMPONENT_CACHE_INODE,
                   "cache_inode_remove: unexpected pdata %p from hash table (pentry=%p)",

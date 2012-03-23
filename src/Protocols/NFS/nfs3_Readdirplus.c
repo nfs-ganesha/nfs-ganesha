@@ -383,7 +383,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                       return NFS_REQ_OK;
                     }
 
-		  fh_desc.start = &(RES_READDIRPLUS_REPLY.entries[0].fileid);
+		  fh_desc.start = (caddr_t)&(RES_READDIRPLUS_REPLY.entries[0].fileid);
 		  fh_desc.len = sizeof(RES_READDIRPLUS_REPLY.entries[0].fileid);
                   FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                     FSAL_DIGEST_FILEID3,
@@ -492,7 +492,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                       return NFS_REQ_OK;
                     }
 
-		  fh_desc.start = & (RES_READDIRPLUS_REPLY.entries[delta].fileid);
+		  fh_desc.start = (caddr_t)&(RES_READDIRPLUS_REPLY.entries[delta].fileid);
 		  fh_desc.len = sizeof(RES_READDIRPLUS_REPLY.entries[delta].fileid);
                   FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                     FSAL_DIGEST_FILEID3,
@@ -637,7 +637,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                   return NFS_REQ_OK;
                 }
 
-	      fh_desc.start = &(RES_READDIRPLUS_REPLY.entries[i].fileid);
+	      fh_desc.start = (caddr_t)&(RES_READDIRPLUS_REPLY.entries[i].fileid);
 	      fh_desc.len = sizeof(RES_READDIRPLUS_REPLY.entries[i].fileid);
               /* Now fill in the replyed entryplus3 list */
               FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),

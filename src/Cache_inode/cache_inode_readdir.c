@@ -192,7 +192,7 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
       /* Get the related pentry without populating the name cache (but eventually populating the attrs cache */
       entry_fsdata.fh_desc.start = (caddr_t)(&fsal_dirent_array[iter].handle);
       entry_fsdata.fh_desc.len = 0;
-      (void) FSAL_ExpandHandle(pcontext,
+      (void) FSAL_ExpandHandle(pcontext->export_context,
 			       FSAL_DIGEST_SIZEOF,
 			       &entry_fsdata.fh_desc);
 
@@ -996,7 +996,7 @@ cache_inode_status_t cache_inode_readdir_populate(
              returned */
           new_entry_fsdata.fh_desc.start = (caddr_t)(&array_dirent[iter].handle);
 	  new_entry_fsdata.fh_desc.len = 0;
-	  (void) FSAL_ExpandHandle(pcontext,
+	  (void) FSAL_ExpandHandle(pcontext->export_context,
 				   FSAL_DIGEST_SIZEOF,
 				   &new_entry_fsdata.fh_desc);
 

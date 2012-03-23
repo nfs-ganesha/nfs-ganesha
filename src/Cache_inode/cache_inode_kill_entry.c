@@ -182,7 +182,7 @@ cache_inode_status_t cache_inode_kill_entry( cache_entry_t          * pentry,
         }
     }
 
-  fsaldata.fh_desc.start = pfsal_handle;
+  fsaldata.fh_desc.start = (caddr_t)pfsal_handle;
   fsaldata.fh_desc.len = 0;
   (void) FSAL_ExpandHandle(NULL,  /* pcontext but not used... */
 			   FSAL_DIGEST_SIZEOF,
@@ -215,7 +215,7 @@ cache_inode_status_t cache_inode_kill_entry( cache_entry_t          * pentry,
   /* Sanity check: old_value.pdata is expected to be equal to pentry,
    * and is released later in this function */
   if((cache_entry_t *) old_value.pdata != pentry ||
-	 ((cache_entry_t *)old_value.pdata)->fh_desc.start != &pentry->handle)
+	 ((cache_entry_t *)old_value.pdata)->fh_desc.start != (caddr_t)&pentry->handle)
     {
       LogCrit(COMPONENT_CACHE_INODE,
               "cache_inode_kill_entry: unexpected pdata %p from hash table (pentry=%p)",

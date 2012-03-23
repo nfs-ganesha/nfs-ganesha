@@ -3048,9 +3048,9 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
           fsdata.fh_desc.len = 0;
 	  (void) FSAL_ExpandHandle(
 #ifdef _USE_SHARED_FSAL
-		                   &context[pcurrent->fsalid], 
+		                   context[pcurrent->fsalid].export_context,
 #else
-				   &context, 
+				   context.export_context,
 #endif
 				   FSAL_DIGEST_SIZEOF,
 				   &fsdata.fh_desc);

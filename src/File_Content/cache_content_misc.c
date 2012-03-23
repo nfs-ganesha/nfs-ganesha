@@ -132,7 +132,7 @@ cache_content_status_t cache_content_create_name(char *path,
       return CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
     }
 
-  fh_desc.start = &fileid4;
+  fh_desc.start = (caddr_t)&fileid4;
   fh_desc.len = sizeof(fileid4);
   /* Get the digest for the handle, for computing an entry name */
   fsal_status = FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
