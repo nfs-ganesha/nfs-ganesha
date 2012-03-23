@@ -118,7 +118,7 @@ typedef struct
 
   unsigned int mnt_handle_len;  /* for optimizing concatenation */
   unsigned int mnt_fshandle_len;        /* for optimizing concatenation */
-  unsigned int dev_id;
+  dev_t dev_id;
 } xfsfsal_export_context_t;
 
 #define FSAL_EXPORT_CONTEXT_SPECIFIC( _pexport_context ) (uint64_t)((_pexport_context)->dev_id)
