@@ -120,7 +120,6 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
   cache_inode_file_type_t type;
   int hrc = 0;
   fsal_attrib_list_t fsal_attributes;
-  cache_inode_fsal_data_t *ppoolfsdata = NULL;
   fsal_handle_t *pfile_handle;
 
   memset(&create_arg, 0, sizeof(create_arg));
@@ -138,7 +137,7 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
   /* Turn the input to a hash key on our own.
    */
   key.pdata = pfsdata->fh_desc.start;
-  key.len == pfsdata->fh_desc.len;
+  key.len = pfsdata->fh_desc.len;
 
   hrc = HashTable_Get(ht, &key, &value);
   switch (hrc)
