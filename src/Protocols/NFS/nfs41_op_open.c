@@ -510,6 +510,12 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                       cause2 = " (state_add failed)";
                       goto out;
                     }
+                  /* Attach this open to an export */
+                  pfile_state->state_pexport = data->pexport;
+                  P(data->pexport->exp_state_mutex);
+                  glist_add_tail(&data->pexport->exp_state_list,
+                                 &pfile_state->state_export_list);
+                  V(data->pexport->exp_state_mutex);
 
                   init_glist(&pfile_state->state_data.share.share_lockstates);
 
@@ -724,6 +730,13 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
               cause2 = " state_add failed";
               goto out;
             }
+
+          /* Attach this open to an export */
+          pfile_state->state_pexport = data->pexport;
+          P(data->pexport->exp_state_mutex);
+          glist_add_tail(&data->pexport->exp_state_list,
+                         &pfile_state->state_export_list);
+          V(data->pexport->exp_state_mutex);
 
           init_glist(&pfile_state->state_data.share.share_lockstates);
 
@@ -949,6 +962,12 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                   goto out;
                 }
 
+              /* Attach this open to an export */
+              pfile_state->state_pexport = data->pexport;
+              P(data->pexport->exp_state_mutex);
+              glist_add_tail(&data->pexport->exp_state_list,
+                             &pfile_state->state_export_list);
+              V(data->pexport->exp_state_mutex);
               init_glist(&pfile_state->state_data.share.share_lockstates);
             }
 
