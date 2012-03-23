@@ -145,7 +145,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
   /* get the characteristic value for readdir operation */
   dircount = arg_READDIR4.dircount;
   maxcount = arg_READDIR4.maxcount*0.9;
-  cookie = (unsigned int)arg_READDIR4.cookie;
+  cookie = arg_READDIR4.cookie;
 
   /* dircount is considered meaningless by many nfsv4 client (like the CITI
    * one).  we use maxcount instead. */
@@ -302,7 +302,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
             }
 
           /* Set the cookie value */
-          entry_nfs_array[i].cookie = dirent_array[i]->cookie;
+          entry_nfs_array[i].cookie = dirent_array[i]->hk.k;
 
           /* Get the pentry for the object's attributes and filehandle */
           if( ( pentry = cache_inode_lookup_no_mutex( dir_pentry,

@@ -1588,7 +1588,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                    "--------------> begin_cookie = %"PRIu64", nbfound=%d, "
 		   "last cookie=%"PRIu64", end_cookie=%"PRIu64", "
 		   "begin_cookie + nbfound =%"PRIu64"\n",
-                   begin_cookie, nbfound, dirent_array[nbfound - 1]->cookie,
+                   begin_cookie, nbfound, dirent_array[nbfound - 1]->hk.k,
                    end_cookie, begin_cookie + nbfound);
       begin_cookie = end_cookie;
     }

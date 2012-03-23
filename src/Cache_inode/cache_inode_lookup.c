@@ -48,6 +48,7 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
+#include "cache_inode_avl.h"
 #include "stuff_alloc.h"
 
 #include <unistd.h>
@@ -92,10 +93,9 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t        * pentry_parent,
                                      cache_inode_status_t * pstatus, 
                                      int use_mutex)
 {
-
-  cache_inode_dir_entry_t dirent_key[1], *dirent;
-  struct avltree_node *dirent_node;
-  cache_inode_dir_entry_t *new_dir_entry;
+  /* avl */
+  cache_inode_dir_entry_t dirent_key[1], *dirent = NULL;
+  cache_inode_dir_entry_t *new_dir_entry = NULL;
   cache_entry_t *pentry = NULL;
   fsal_status_t fsal_status;
 #ifdef _USE_MFSL
@@ -200,13 +200,9 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t        * pentry_parent,
        * the fsal. */
 
       FSAL_namecpy(&dirent_key->name, pname);
-      dirent_node = avltree_lookup(&dirent_key->node_n,
-				   &pentry_parent->object.dir.dentries);
-      if (dirent_node) {
-      	  dirent = avltree_container_of(dirent_node, cache_inode_dir_entry_t,
-					node_n);
-	  pentry = dirent->pentry;
-      }
+      dirent = cache_inode_avl_qp_lookup_s(pentry_parent, dirent_key, 1);
+      if (dirent)
+          pentry = dirent->pentry;
 
       if(pentry == NULL)
         {

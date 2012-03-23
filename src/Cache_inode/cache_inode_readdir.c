@@ -49,6 +49,7 @@
 #include "stuff_alloc.h"
 #include "fsal.h"
 #include "cache_inode.h"
+#include "cache_inode_avl.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -227,9 +228,6 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
                                     pcontext, 
                                     &fsal_dirent_array[iter].cookie,
                                     &dirent_array[iter]->fsal_cookie);
-
-       dirent_array[iter]->cookie = dirent_array[iter]->fsal_cookie ;
-
    } /* for( iter = 0 ; iter < nbfound ; iter ++ ) */
 
   if( fsal_eod == TRUE )
@@ -322,9 +320,12 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
                                                  cache_inode_status_t * pstatus)
 {
   cache_entry_t *pentry = NULL;
-  cache_inode_dir_entry_t dirent_key[1], *dirent;
-  struct avltree_node *dirent_node, *tmpnode;
-  cache_inode_entry_valid_state_t vstate;
+  cache_inode_dir_entry_t dirent_key[1], *dirent, *dirent2;
+  LRU_List_state_t vstate;
+
+  /* Directory mutation generally invalidates outstanding 
+   * readdirs, hence any cached cookies, so in these cases we 
+   * clear the cookie avl */
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -343,16 +344,11 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
   }
 
   FSAL_namecpy(&dirent_key->name, pname);
-  dirent_node = avltree_lookup(&dirent_key->node_n,
-			       &pentry_parent->object.dir.dentries);
-  if (! dirent_node) {
+  dirent = cache_inode_avl_qp_lookup_s(pentry_parent, dirent_key, 1);
+  if (! dirent) {
       *pstatus = CACHE_INODE_NOT_FOUND; /* Right error code (see above)? */
       return NULL;
   }
-
-  /* unpack avl node */
-  dirent = avltree_container_of(dirent_node, cache_inode_dir_entry_t,
-				node_n);
 
   /* check state of cached dirent */
   vstate = dirent->pentry->internal_md.valid_state;
@@ -374,8 +370,7 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
       switch (dirent_op)
         {
         case CACHE_INODE_DIRENT_OP_REMOVE:
-	    avltree_remove(&dirent->node_n,
-                           &pentry_parent->object.dir.dentries);
+            cache_inode_avl_remove(pentry_parent, dirent);
 	    /* release to pool */
 	    ReleaseToPool(dirent, &pclient->pool_dir_entry);
 	    pentry_parent->object.dir.nbactive--;
@@ -385,28 +380,27 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
         case CACHE_INODE_DIRENT_OP_RENAME:
 	  /* change the installed inode only the rename can succeed */
 	  FSAL_namecpy(&dirent_key->name, newname);
-  	  tmpnode = avltree_lookup(&dirent_key->node_n,
-				   &pentry_parent->object.dir.dentries);
-	  if (tmpnode) {
+          dirent2 = cache_inode_avl_qp_lookup_s(pentry_parent, dirent_key, 1);
+	  if (dirent2) {
 	    /* rename would cause a collision */
 	    *pstatus = CACHE_INODE_ENTRY_EXISTS;
 
 	  } else {
-	      /* remove, rename, and re-insert the object with new keys */
-	      avltree_remove(&dirent->node_n,
-                             &pentry_parent->object.dir.dentries);
-
+	      /* try to rename in-place */
+              cache_inode_avl_remove(pentry_parent, dirent);
 	      FSAL_namecpy(&dirent->name, newname);
-	      tmpnode = avltree_insert(&dirent->node_n,
-				       &pentry_parent->object.dir.dentries);
-	      if (tmpnode) {
-		  /* collision, tree state unchanged--this won't happen */
+              if (cache_inode_avl_qp_insert(pentry_parent, dirent) == -1) {
+		  /* collision, tree state unchanged--unlikely */
 		  *pstatus = CACHE_INODE_ENTRY_EXISTS;
-
 		  /* still, try to revert the change in place */
 		  FSAL_namecpy(&dirent->name, pname);
-		  tmpnode = avltree_insert(&dirent->node_n,
-					   &pentry_parent->object.dir.dentries);
+                  if (cache_inode_avl_qp_insert(pentry_parent, dirent) == -1) {
+                      LogDebug(COMPONENT_NFS_READDIR,
+                               "DIRECTORY: failed renaming dirent (%s, %s)",
+                               pname->name, newname->name);
+                      /* XXX force an invalidate -- not sure what type, yet
+                       * XXX fix */
+                  }
 	      } else {
 		  *pstatus = CACHE_INODE_SUCCESS;
 	      }
@@ -519,7 +513,6 @@ cache_inode_status_t cache_inode_add_cached_dirent(
   fsal_status_t fsal_status;
   cache_inode_parent_entry_t *next_parent_entry = NULL;
   cache_inode_dir_entry_t *new_dir_entry = NULL;
-  struct avltree_node *tmpnode;
 
   *pstatus = CACHE_INODE_SUCCESS;
 
@@ -547,7 +540,7 @@ cache_inode_status_t cache_inode_add_cached_dirent(
     return *pstatus;
   }
 
-  /* still need the parent list */
+  /* XXX for now, still need the parent list */
   GetFromPool(next_parent_entry, &pclient->pool_parent,
               cache_inode_parent_entry_t);
   if(next_parent_entry == NULL)
@@ -561,9 +554,7 @@ cache_inode_status_t cache_inode_add_cached_dirent(
   next_parent_entry->next_parent = NULL;
 
   /* add to avl */
-  tmpnode = avltree_insert(&new_dir_entry->node_n,
-			   &pentry_parent->object.dir.dentries);
-  if (tmpnode) {
+  if (cache_inode_avl_qp_insert(pentry_parent, new_dir_entry) == -1) {
   	/* collision, tree not updated--release both pool objects and return
          * err */
 	ReleaseToPool(next_parent_entry, &pclient->pool_parent);
@@ -724,51 +715,25 @@ static void debug_print_dirents(cache_entry_t *dir_pentry)
     cache_inode_dir_entry_t *dirent;
     int size, ix;
 
-    size = avltree_size(&dir_pentry->object.dir.cookies);
+    size = avltree_size(&dir_pentry->object.dir.avl);
 
-    LogCrit(COMPONENT_CACHE_INODE,
-            "cookie avl size: %d",
-            size);
-
-    dirent_node = avltree_first(&dir_pentry->object.dir.cookies);
+    LogDebug(COMPONENT_CACHE_INODE, "cookie avl size: %d", size);
 
     ix = 0;
+    dirent_node = avltree_first(&dir_pentry->object.dir.avl);
     while (dirent_node) {
         dirent = avltree_container_of(dirent_node,
                                       cache_inode_dir_entry_t, 
-                                      node_c);
+                                      node_hk);
 
-        LogCrit(COMPONENT_CACHE_INODE,
-                "cookie: ix %d %p (%s, %"PRIu64")",
+        LogDebug(COMPONENT_CACHE_INODE,
+                "cookie: ix %d %p (%s, %"PRIu64" %d, %"PRIu64")",
                 ix,
                 dirent,
                 dirent->name.name,
-                dirent->cookie);
-
-        dirent_node = avltree_next(dirent_node);
-        ++ix;
-    }
-
-    size = avltree_size(&dir_pentry->object.dir.dentries);
-
-    LogCrit(COMPONENT_CACHE_INODE,
-            "name avl size: %d",
-            size);
-
-    dirent_node = avltree_first(&dir_pentry->object.dir.dentries);
-
-    ix = 0;
-    while (dirent_node) {
-        dirent = avltree_container_of(dirent_node,
-                                      cache_inode_dir_entry_t,
-                                      node_n);
-
-        LogCrit(COMPONENT_CACHE_INODE,
-                "name: ix %d %p (%s, %"PRIu64")",
-                ix,
-                dirent,
-                dirent->name.name,
-                dirent->cookie);
+                dirent->hk.k,
+                dirent->hk.p,
+                dirent->fsal_cookie);
 
         dirent_node = avltree_next(dirent_node);
         ++ix;
@@ -1036,21 +1001,12 @@ cache_inode_status_t cache_inode_readdir_populate(
            * therefore with if _USE_MFSL. 
            *
            * I'm ignoring the status because the default operation is a memcmp--
-           * we lready -have- the cookie. */
+           * we already -have- the cookie. */
 
-          if (cache_status != CACHE_INODE_ENTRY_EXISTS) {
-
+          if (cache_status != CACHE_INODE_ENTRY_EXISTS)
               (void) FSAL_cookie_to_uint64(&array_dirent[iter].handle,
                                            pcontext, &array_dirent[iter].cookie,
                                            &new_dir_entry->fsal_cookie);
-
-              /* we are filling in all entries, and the cookie avl was
-               * cleared before adding dirents */
-              new_dir_entry->cookie = i; /* still an offset */
-              (void) avltree_insert(&new_dir_entry->node_c,
-                                    &pentry_parent->object.dir.cookies);
-          } /* !exist */
-
         } /* iter */
       
       /* Get prepared for next step */
@@ -1082,62 +1038,19 @@ cache_inode_status_t cache_inode_readdir_populate(
 
 /**
  *
- * revalidate_cookie_cache:  sync cookie avl offsets with the dentry name avl.
+ * revalidate_cookie_cache:  no-op
  *
- * If no cookies are cached, add those of any dirents in the name avl.  The
- * entry is assumed to be write locked.
+ * In a future revision, this functino may be used to reorganize the
+ * dirent avl based on collision heuristics.
  *
  * @param pentry [IN] entry for the parent directory to be read.
  *
  * @return void
  *
  */
-static void revalidate_cookie_cache(cache_entry_t *dir_pentry,
-                                    cache_inode_client_t *pclient)
+static inline void revalidate_cookie_cache(cache_entry_t *dir_pentry,
+                                           cache_inode_client_t *pclient)
 {
-  struct avltree_node *dirent_node;
-  cache_inode_dir_entry_t *dirent;
-  int size_n, size_c, ix;
-
-  /* we'll try to add entries to any directory whose cookie
-   * avl cache is currently empty (mutating dirent operations
-   * clear it) */
-#if 0
-  if (avltree_size(&dir_pentry->object.dir.cookies) > 0)
-      return;
-#else
-  size_c = avltree_size(&dir_pentry->object.dir.cookies);
-  size_n = avltree_size(&dir_pentry->object.dir.dentries);
-  if (size_c == size_n)
-      return;
-  /* the following is safe to call arbitrarily many times, with
-   * CACHE_INODE_AVL_COOKIES -only-. */
-      cache_inode_release_dirents(dir_pentry,
-                                  pclient,
-                                  CACHE_INODE_AVL_COOKIES);      
-#endif
-
-  dirent_node = avltree_first(&dir_pentry->object.dir.dentries);
-  dirent = avltree_container_of(dirent_node,
-				cache_inode_dir_entry_t, 
-				node_n);
-
-  ix = 3; /* first non-reserved cookie value */
-  dirent_node = &dirent->node_n;
-  while (dirent_node) {
-      dirent = avltree_container_of(dirent_node,
-				    cache_inode_dir_entry_t, 
-				    node_n);
-      dirent->cookie = ix;
-      /* XXX we could optimize this somewhat (saving an internal
-       * lookup in avltree_insert), by adding an avl append
-       * operation */
-      (void) avltree_insert(&dirent->node_c,
-			    &dir_pentry->object.dir.cookies);
-      dirent_node = avltree_next(dirent_node);
-      ++ix;
-  }
-
   return;
 }
 
@@ -1190,7 +1103,6 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
   cache_inode_dir_entry_t dirent_key[1], *dirent;
   struct avltree_node *dirent_node;
   fsal_accessflags_t access_mask = 0;
-  uint64_t inoff = cookie;
   int i = 0;
 
   /* Guide to parameters:
@@ -1328,40 +1240,27 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 
   if (cookie > 0) {
 
+      /* XXX hmm.  may need to constrain qp_insert_s to k > 2 */
       if (cookie < 3) {
 	  *pstatus = CACHE_INODE_BAD_COOKIE;
 	  V_r(&dir_pentry->lock);
 	  return *pstatus;
       }
 
-      if ((inoff-3) > avltree_size(&dir_pentry->object.dir.dentries)) {
-          LogCrit(COMPONENT_CACHE_INODE, "Bad initial cookie %"PRIu64,
-                  inoff);
-	  *pstatus = CACHE_INODE_BAD_COOKIE;
-	  V_r(&dir_pentry->lock);
-	  return *pstatus;
-      }
-
       /* we assert this can now succeed */
-      dirent_key->cookie = inoff;
-      dirent_node = avltree_lookup(&dirent_key->node_c,
-				   &dir_pentry->object.dir.cookies);
-
-      if (! dirent_node) {
-	  LogCrit(COMPONENT_CACHE_INODE,
-		  "%s: seek to cookie=%"PRIu64" fail",
-		  __func__,
-		  inoff);
+      dirent_key->hk.k = cookie;
+      dirent = cache_inode_avl_lookup_k(dir_pentry, dirent_key);
+      if (! dirent) {
+	  LogFullDebug(COMPONENT_NFS_READDIR,
+                       "%s: seek to cookie=%"PRIu64" fail",
+                       __func__,
+                       cookie);
 	  *pstatus = CACHE_INODE_NOT_FOUND;
 	  V_r(&dir_pentry->lock);
 	  return *pstatus;
       }
 
-      /* switch avls */
-      dirent = avltree_container_of(dirent_node,
-				    cache_inode_dir_entry_t, 
-				    node_c);
-      dirent_node = &dirent->node_n;
+      dirent_node = &dirent->node_hk;
 
       /* client wants the cookie -after- the last we sent, and
        * the Linux 3.0 and 3.1.0-rc7 clients misbehave if we
@@ -1370,14 +1269,16 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 
   } else {
       /* initial readdir */
-      dirent_node = avltree_first(&dir_pentry->object.dir.dentries);
+      dirent_node = avltree_first(&dir_pentry->object.dir.avl);
   }
 
-  LogDebug(COMPONENT_CACHE_INODE,
-               "About to readdir in  cache_inode_readdir: pentry=%p "
-	       "cookie=%"PRIu64,
-               dir_pentry,
-	       cookie);
+  LogDebug(COMPONENT_NFS_READDIR,
+           "About to readdir in  cache_inode_readdir: pentry=%p "
+           "cookie=%"PRIu64" collisions %d",
+           dir_pentry,
+           cookie,
+           dir_pentry->object.dir.collisions
+      );
 
   /* Now satisfy the request from the cached readdir--stop when either
    * the requested sequence or dirent sequence is exhausted */
@@ -1391,7 +1292,15 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 
       dirent = avltree_container_of(dirent_node,
 				    cache_inode_dir_entry_t, 
-				    node_n);
+				    node_hk);
+
+      LogFullDebug(COMPONENT_NFS_READDIR,
+              "cache_inode_readdir: dirent=%p name=%s "
+              "cookie=%"PRIu64" (%d)",
+              dirent,
+              dirent->name.name,
+              dirent->hk.k,
+              dirent->hk.p);
 
       dirent_array[i] = dirent;
       (*pnbfound)++;
@@ -1409,7 +1318,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
          *pstatus = CACHE_INODE_INCONSISTENT_ENTRY;
          return CACHE_INODE_INCONSISTENT_ENTRY;
       }
-      *pend_cookie = dirent->cookie;
+      *pend_cookie = dirent->hk.k;
   }
 
   if (! dirent_node)

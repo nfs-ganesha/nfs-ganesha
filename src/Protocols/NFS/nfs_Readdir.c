@@ -1,5 +1,5 @@
  /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vimf:expandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -590,7 +590,7 @@ int nfs_Readdir(nfs_arg_t * parg,
 
                   if(i != num_entries + delta - 1)
                     *(RES_READDIR2_OK.entries[i].cookie) =
-                        dirent_array[i - delta]->cookie;
+                        dirent_array[i - delta]->hk.k;
                   else
                     *(RES_READDIR2_OK.entries[i].cookie) = end_cookie;
 
@@ -812,7 +812,7 @@ int nfs_Readdir(nfs_arg_t * parg,
 
                   if(i != num_entries + delta - 1)
                     RES_READDIR3_OK.reply.entries[i].cookie =
-                        dirent_array[i - delta]->cookie;
+                        dirent_array[i - delta]->hk.k;
                   else
                     RES_READDIR3_OK.reply.entries[i].cookie = end_cookie;
 

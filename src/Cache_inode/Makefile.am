@@ -34,6 +34,7 @@ libcache_inode_la_SOURCES = cache_inode_access.c             \
                             cache_inode_release_data_cache.c \
 			    cache_inode_fsal_hash.c          \
 			    cache_inode_kill_entry.c         \
+			    cache_inode_avl.c                \
                             ../include/cache_inode.h         \
                             ../include/BuddyMalloc.h         \
                             ../include/stuff_alloc.h         \

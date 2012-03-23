@@ -143,7 +143,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 
   dircount = parg->arg_readdirplus3.dircount;
   maxcount = parg->arg_readdirplus3.maxcount;
-  begin_cookie = (unsigned int)parg->arg_readdirplus3.cookie;
+  begin_cookie = parg->arg_readdirplus3.cookie;
 
   /* FIXME: This calculation over estimates the number of bytes that 
    * READDIRPLUS3resok will use on the wire by 4 bytes on x86_64. */
@@ -237,8 +237,6 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 
   pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries = NULL;
   pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = FALSE;
-
-/** @todo  XXXX fix this--compare nfs4_op_readdir */
 
   /* How many entries will we retry from cache_inode ? */
   if(begin_cookie > 1)
@@ -574,8 +572,6 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 	       * sizeof(entryplus3). */
 	      /* FIXME: There is still a 4 byte over estimate here on x86_64. */
 
-/** @todo Remove cookie offset calculation in readdir and readdirplus (obsoleted) */
-
               needed =
 		sizeof(reference_entry)
 		+ NFS3_FHSIZE
@@ -656,7 +652,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                            end_cookie);
               if(i != num_entries + delta - 1)
                 RES_READDIRPLUS_REPLY.entries[i].cookie =
-                    dirent_array[i - delta]->cookie;
+                    dirent_array[i - delta]->hk.k;
               else
                 RES_READDIRPLUS_REPLY.entries[i].cookie = end_cookie;
 

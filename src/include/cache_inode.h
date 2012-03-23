@@ -261,6 +261,7 @@ typedef enum cache_inode_avl_which__
 
 typedef struct cache_inode_internal_md__
 {
+  rw_lock_t lock;                                          /**< md reader-writer lock                                */
   cache_inode_file_type_t type;                            /**< The type of the entry                                */
   cache_inode_entry_valid_state_t valid_state;             /**< Is this entry valid or invalid ?                     */
   time_t read_time;                                        /**< Epoch time of the last read operation on the entry   */
@@ -281,15 +282,17 @@ typedef struct cache_inode_unstable_data__
   uint32_t length;
 } cache_inode_unstable_data_t;
 
-struct cache_inode_dir_entry__
+typedef struct cache_inode_dir_entry__
 {
-    struct avltree_node node_n; /* avl keyed on name */
-    struct avltree_node node_c; /* avl keyed on cookie */
+    struct avltree_node node_hk; /* avl keyed on hk.k */
+    struct {
+        uint64_t k; /* readdir cookie */
+        uint32_t p; /* nprobes , eff. metric */
+    } hk;
     cache_entry_t *pentry;
     fsal_name_t name;
-    uint64_t cookie;
     uint64_t fsal_cookie;
-};
+} cache_inode_dir_entry_t;
 
 struct cache_entry_t
 {
@@ -319,9 +322,9 @@ struct cache_entry_t
       unsigned int nbactive;                    /**< Number of known active children                         */
       cache_inode_flag_t has_been_readdir;      /**< True if a full readdir was performed on the directory   */
       char *referral;                           /**< NULL is not a referral, is not this a 'referral string' */
-      struct avltree dentries;                  /**< Children */
-      struct avltree cookies;                   /**< Readdir cookie avl (transient) */
-    } dir;                                /**< DIR related field                               */
+      struct avltree avl;                       /**< Children */
+      unsigned int collisions;                  /**< For future heuristics. Expect 0. */
+    } dir;                                      /**< DIR related field                */
 
     /* Note that special data is in the rawdev field of FSAL attributes */
 
@@ -330,16 +333,11 @@ struct cache_entry_t
 #ifdef _USE_FSAL_UP
   int deleted;
 #endif
-  rw_lock_t lock;                             /**< a reader-writter lock used to protect the data     */
+  rw_lock_t lock;                             /**< a reader-writer lock used to protect the data      */
   cache_inode_internal_md_t internal_md;      /**< My metadata (from this cache's point of view)      */
   LRU_entry_t *gc_lru_entry;                  /**< related LRU entry in the LRU list used for GC      */
   LRU_list_t *gc_lru;                         /**< related LRU list for GC                            */    
-  
-  /* XXX In the next step past asyncrhronous cache invalidates (i.e., invalidate
-   * upcalls), we may wish to support removal of specific links to an entry, updating
-   * related dentry caches in place.  It appears that an efficient way to support
-   * this would be to replace the current parent chain with a chain of link records,
-   * each containing a {parent_inode, name} pair. */
+
    
   /* List of parent cache entries of directory entries related by
    * hard links */
@@ -353,7 +351,6 @@ struct cache_entry_t
 #endif
 };
 
-typedef struct cache_inode_dir_entry__ cache_inode_dir_entry_t;
 typedef struct cache_inode_file__ cache_inode_file_t;
 typedef struct cache_inode_symlink__ cache_inode_symlink_t;
 typedef union cache_inode_fsobj__ cache_inode_fsobj_t;
