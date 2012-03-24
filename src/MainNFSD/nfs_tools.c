@@ -98,6 +98,7 @@ unsigned long decimal_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t *
 
 int display_cache(hash_buffer_t * pbuff, char *str)
 {
+    *str = '\0';
   return 0;
 }
 
