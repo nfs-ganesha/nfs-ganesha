@@ -1636,25 +1636,12 @@ int fn_Cache_inode_callstat(int argc,   /* IN : number of args in argv */
 
   /* Statistics for the HashTable */
   HashTable_GetStats(ht, &hstat);
-  fprintf(output, "Operation            |     ok      |    err      |   notfound  \n");
-  fprintf(output, "Set                  | %11u | %11u | %11u \n",
-          hstat.dynamic.ok.nb_set, hstat.dynamic.err.nb_set,
-          hstat.dynamic.notfound.nb_set);
-  fprintf(output, "Test                 | %11u | %11u | %11u \n",
-          hstat.dynamic.ok.nb_test, hstat.dynamic.err.nb_test,
-          hstat.dynamic.notfound.nb_test);
-  fprintf(output, "Get                  | %11u | %11u | %11u \n", hstat.dynamic.ok.nb_get,
-          hstat.dynamic.err.nb_get, hstat.dynamic.notfound.nb_get);
-  fprintf(output, "Del                  | %11u | %11u | %11u \n", hstat.dynamic.ok.nb_del,
-          hstat.dynamic.err.nb_del, hstat.dynamic.notfound.nb_del);
+  fprintf(output, "There are %zu entries in the Cache inode HashTable\n",
+          hstat.entries);
   fprintf(output,
-          "------------------------------------------------------------------------------\n");
-  fprintf(output, "There are %d entries in the Cache inode HashTable\n",
-          hstat.dynamic.nb_entries);
-  fprintf(output,
-          "index_size=%d  min_rbt_num_node=%d  max_rbt_num_node=%d average_rbt_num_node=%d\n",
-          ht->parameter.index_size, hstat.computed.min_rbt_num_node,
-          hstat.computed.max_rbt_num_node, hstat.computed.average_rbt_num_node);
+          "index_size=%"PRIu32"  min_rbt_num_node=%zu  max_rbt_num_node=%zu average_rbt_num_node=%zu\n",
+          ht->parameter.index_size, hstat.min_rbt_num_node,
+          hstat.max_rbt_num_node, hstat.average_rbt_num_node);
   fprintf(output,
           "------------------------------------------------------------------------------\n");
   fprintf(output,

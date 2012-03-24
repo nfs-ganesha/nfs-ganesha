@@ -638,15 +638,11 @@ void *stats_thread(void *addr)
 
       /* Pinting the cache inode hash stat */
       fprintf(stats_file,
-              "CACHE_INODE_HASH,%s;%u,%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u\n",
-              strdate, cache_inode_stat->dynamic.nb_entries, cache_inode_stat->computed.min_rbt_num_node,
-              cache_inode_stat->computed.max_rbt_num_node, cache_inode_stat->computed.average_rbt_num_node,
-              cache_inode_stat->dynamic.ok.nb_set, cache_inode_stat->dynamic.notfound.nb_set,
-              cache_inode_stat->dynamic.err.nb_set, cache_inode_stat->dynamic.ok.nb_test,
-              cache_inode_stat->dynamic.notfound.nb_test, cache_inode_stat->dynamic.err.nb_test,
-              cache_inode_stat->dynamic.ok.nb_get, cache_inode_stat->dynamic.notfound.nb_get,
-              cache_inode_stat->dynamic.err.nb_get, cache_inode_stat->dynamic.ok.nb_del,
-              cache_inode_stat->dynamic.notfound.nb_del, cache_inode_stat->dynamic.err.nb_del);
+              "CACHE_INODE_HASH,%s;%zu,%zu,%zu,%zu\n",
+              strdate, cache_inode_stat->entries,
+              cache_inode_stat->min_rbt_num_node,
+              cache_inode_stat->max_rbt_num_node,
+              cache_inode_stat->average_rbt_num_node);
 
       fprintf(stats_file, "NFS/MOUNT STATISTICS,%s;%u,%u,%u|%u,%u,%u,%u,%u|%u,%u,%u,%u\n",
               strdate,
@@ -760,85 +756,50 @@ void *stats_thread(void *addr)
       fprintf(stats_file, "\n");
 
       fprintf(stats_file,
-              "DUP_REQ_HASH,%s;%u,%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u\n",
-              strdate, 
-              hstat_drc_udp->dynamic.nb_entries            + hstat_drc_tcp->dynamic.nb_entries,
-              hstat_drc_udp->computed.min_rbt_num_node     + hstat_drc_tcp->computed.min_rbt_num_node,
-              hstat_drc_udp->computed.max_rbt_num_node     + hstat_drc_tcp->computed.max_rbt_num_node,
-              hstat_drc_udp->computed.average_rbt_num_node + hstat_drc_tcp->computed.average_rbt_num_node,
-              hstat_drc_udp->dynamic.ok.nb_set             + hstat_drc_tcp->dynamic.ok.nb_set,
-              hstat_drc_udp->dynamic.notfound.nb_set       + hstat_drc_tcp->dynamic.notfound.nb_set,
-              hstat_drc_udp->dynamic.err.nb_set            + hstat_drc_tcp->dynamic.err.nb_set,
-              hstat_drc_udp->dynamic.ok.nb_test            + hstat_drc_tcp->dynamic.ok.nb_test,
-              hstat_drc_udp->dynamic.notfound.nb_test      + hstat_drc_tcp->dynamic.notfound.nb_test,
-              hstat_drc_udp->dynamic.err.nb_test           + hstat_drc_tcp->dynamic.err.nb_test,
-              hstat_drc_udp->dynamic.ok.nb_get             + hstat_drc_tcp->dynamic.ok.nb_get,
-              hstat_drc_udp->dynamic.notfound.nb_get       + hstat_drc_tcp->dynamic.notfound.nb_get,
-              hstat_drc_udp->dynamic.err.nb_get            + hstat_drc_tcp->dynamic.err.nb_get,
-              hstat_drc_udp->dynamic.ok.nb_del             + hstat_drc_tcp->dynamic.ok.nb_del,
-              hstat_drc_udp->dynamic.notfound.nb_del       + hstat_drc_tcp->dynamic.notfound.nb_del,
-              hstat_drc_udp->dynamic.err.nb_del            + hstat_drc_tcp->dynamic.err.nb_del);
+              "DUP_REQ_HASH,%s;%zu,%zu,%zu,%zu\n",
+              strdate,
+              hstat_drc_udp->entries + hstat_drc_tcp->entries,
+              hstat_drc_udp->min_rbt_num_node +
+              hstat_drc_tcp->min_rbt_num_node,
+              hstat_drc_udp->max_rbt_num_node +
+              hstat_drc_tcp->max_rbt_num_node,
+              hstat_drc_udp->average_rbt_num_node +
+              hstat_drc_tcp->average_rbt_num_node);
 
       fprintf(stats_file,
-              "UIDMAP_HASH,%s;%u,%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u\n", strdate,
-              uid_map_hstat->dynamic.nb_entries, uid_map_hstat->computed.min_rbt_num_node,
-              uid_map_hstat->computed.max_rbt_num_node, uid_map_hstat->computed.average_rbt_num_node,
-              uid_map_hstat->dynamic.ok.nb_set, uid_map_hstat->dynamic.notfound.nb_set,
-              uid_map_hstat->dynamic.err.nb_set, uid_map_hstat->dynamic.ok.nb_test,
-              uid_map_hstat->dynamic.notfound.nb_test, uid_map_hstat->dynamic.err.nb_test,
-              uid_map_hstat->dynamic.ok.nb_get, uid_map_hstat->dynamic.notfound.nb_get,
-              uid_map_hstat->dynamic.err.nb_get, uid_map_hstat->dynamic.ok.nb_del,
-              uid_map_hstat->dynamic.notfound.nb_del, uid_map_hstat->dynamic.err.nb_del);
+              "UIDMAP_HASH,%s;%zu,%zu,%zu,%zu\n", strdate,
+              uid_map_hstat->entries, uid_map_hstat->min_rbt_num_node,
+              uid_map_hstat->max_rbt_num_node,
+              uid_map_hstat->average_rbt_num_node);
       fprintf(stats_file,
-              "UNAMEMAP_HASH,%s;%u,%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u\n",
-              strdate, hstat_uid_reverse->dynamic.nb_entries,
-              hstat_uid_reverse->computed.min_rbt_num_node,
-              hstat_uid_reverse->computed.max_rbt_num_node,
-              hstat_uid_reverse->computed.average_rbt_num_node,
-              hstat_uid_reverse->dynamic.ok.nb_set, hstat_uid_reverse->dynamic.notfound.nb_set,
-              hstat_uid_reverse->dynamic.err.nb_set, hstat_uid_reverse->dynamic.ok.nb_test,
-              hstat_uid_reverse->dynamic.notfound.nb_test, hstat_uid_reverse->dynamic.err.nb_test,
-              hstat_uid_reverse->dynamic.ok.nb_get, hstat_uid_reverse->dynamic.notfound.nb_get,
-              hstat_uid_reverse->dynamic.err.nb_get, hstat_uid_reverse->dynamic.ok.nb_del,
-              hstat_uid_reverse->dynamic.notfound.nb_del, hstat_uid_reverse->dynamic.err.nb_del);
+              "UNAMEMAP_HASH,%s;%zu,%zu,%zu,%zu",
+              strdate, hstat_uid_reverse->entries,
+              hstat_uid_reverse->min_rbt_num_node,
+              hstat_uid_reverse->max_rbt_num_node,
+              hstat_uid_reverse->average_rbt_num_node);
 
       fprintf(stats_file,
-              "GIDMAP_HASH,%s;%u,%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u\n", strdate,
-              gid_map_hstat->dynamic.nb_entries, gid_map_hstat->computed.min_rbt_num_node,
-              gid_map_hstat->computed.max_rbt_num_node, gid_map_hstat->computed.average_rbt_num_node,
-              gid_map_hstat->dynamic.ok.nb_set, gid_map_hstat->dynamic.notfound.nb_set,
-              gid_map_hstat->dynamic.err.nb_set, gid_map_hstat->dynamic.ok.nb_test,
-              gid_map_hstat->dynamic.notfound.nb_test, gid_map_hstat->dynamic.err.nb_test,
-              gid_map_hstat->dynamic.ok.nb_get, gid_map_hstat->dynamic.notfound.nb_get,
-              gid_map_hstat->dynamic.err.nb_get, gid_map_hstat->dynamic.ok.nb_del,
-              gid_map_hstat->dynamic.notfound.nb_del, gid_map_hstat->dynamic.err.nb_del);
+              "GIDMAP_HASH,%s;%zu,%zu,%zu,%zu\n", strdate,
+              gid_map_hstat->entries,
+              gid_map_hstat->min_rbt_num_node,
+              gid_map_hstat->max_rbt_num_node,
+              gid_map_hstat->average_rbt_num_node);
       fprintf(stats_file,
-              "GNAMEMAP_HASH,%s;%u,%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u\n",
-              strdate, hstat_gid_reverse->dynamic.nb_entries,
-              hstat_gid_reverse->computed.min_rbt_num_node,
-              hstat_gid_reverse->computed.max_rbt_num_node,
-              hstat_gid_reverse->computed.average_rbt_num_node,
-              hstat_gid_reverse->dynamic.ok.nb_set, hstat_gid_reverse->dynamic.notfound.nb_set,
-              hstat_gid_reverse->dynamic.err.nb_set, hstat_gid_reverse->dynamic.ok.nb_test,
-              hstat_gid_reverse->dynamic.notfound.nb_test, hstat_gid_reverse->dynamic.err.nb_test,
-              hstat_gid_reverse->dynamic.ok.nb_get, hstat_gid_reverse->dynamic.notfound.nb_get,
-              hstat_gid_reverse->dynamic.err.nb_get, hstat_gid_reverse->dynamic.ok.nb_del,
-              hstat_gid_reverse->dynamic.notfound.nb_del, hstat_gid_reverse->dynamic.err.nb_del);
+              "GNAMEMAP_HASH,%s;%zu,%zu,%zu,%zu\n",
+              strdate, hstat_gid_reverse->entries,
+              hstat_gid_reverse->min_rbt_num_node,
+              hstat_gid_reverse->max_rbt_num_node,
+              hstat_gid_reverse->average_rbt_num_node);
 
       fprintf(stats_file,
-              "IP_NAME_HASH,%s;%u,%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u|%u,%u,%u\n",
-              strdate, ip_name_hstat->dynamic.nb_entries,
-              ip_name_hstat->computed.min_rbt_num_node,
-              ip_name_hstat->computed.max_rbt_num_node,
-              ip_name_hstat->computed.average_rbt_num_node,
-              ip_name_hstat->dynamic.ok.nb_set, ip_name_hstat->dynamic.notfound.nb_set,
-              ip_name_hstat->dynamic.err.nb_set, ip_name_hstat->dynamic.ok.nb_test,
-              ip_name_hstat->dynamic.notfound.nb_test, ip_name_hstat->dynamic.err.nb_test,
-              ip_name_hstat->dynamic.ok.nb_get, ip_name_hstat->dynamic.notfound.nb_get,
-              ip_name_hstat->dynamic.err.nb_get, ip_name_hstat->dynamic.ok.nb_del,
-              ip_name_hstat->dynamic.notfound.nb_del, ip_name_hstat->dynamic.err.nb_del);
+              "IP_NAME_HASH,%s;%zu,%zu,%zu,%zu\n",
+              strdate, ip_name_hstat->entries,
+              ip_name_hstat->min_rbt_num_node,
+              ip_name_hstat->max_rbt_num_node,
+              ip_name_hstat->average_rbt_num_node);
 
-      fprintf(stats_file, "FSAL_CALLS,%s;%llu", strdate, ganesha_stats.total_fsal_calls);
+      fprintf(stats_file, "FSAL_CALLS,%s;%llu", strdate,
+              ganesha_stats.total_fsal_calls);
       for(j = 0; j < FSAL_NB_FUNC; j++)
         fprintf(stats_file, "|%u,%u,%u,%u",
                 global_fsal_stat->func_stats.nb_call[j],

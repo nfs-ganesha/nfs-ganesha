@@ -108,7 +108,6 @@ fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_context)
   char clientid_name[MAXNAMLEN];
   char cbaddr[MAXNAMLEN];
   char cbnetid[MAXNAMLEN];
-  clientid4 resultclientid;
   struct timeval timeout = TIMEOUTRPC;
 
   LogEvent( COMPONENT_FSAL, "Negociating a new ClientId with the remote server" ) ;
@@ -172,10 +171,6 @@ fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_context)
       return fsal_internal_proxy_error_convert(resnfs4.status,
                                                INDEX_FSAL_InitClientContext);
     }
-
-  resultclientid =
-      resnfs4.resarray.resarray_val[0].nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.
-      resok4.clientid;
 
   /* Step 2: Confirm the client id */
   argnfs4.minorversion = 0;

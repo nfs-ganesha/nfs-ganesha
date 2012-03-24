@@ -47,7 +47,8 @@ void *reaper_thread(void *unused)
         hash_table_t *ht = ht_client_id;
         struct rbt_head *head_rbt;
         hash_data_t *pdata = NULL;
-        int i, v4;
+        uint32_t i;
+        int v4;
         struct rbt_node *pn;
         nfs_client_id_t *clientp;
 
@@ -72,11 +73,11 @@ void *reaper_thread(void *unused)
 
                 /* For each bucket of the hashtable */
                 for(i = 0; i < ht->parameter.index_size; i++) {
-                        head_rbt = &(ht->array_rbt[i]);
+                        head_rbt = &ht->partitions[i].rbt;
 
 restart:
                         /* acquire mutex */
-                        pthread_rwlock_wrlock(&(ht->array_lock[i]));
+                        pthread_rwlock_wrlock(&ht->partitions[i].lock);
 
                         /* go through all entries in the red-black-tree*/
                         RBT_LOOP(head_rbt, pn) {
@@ -96,7 +97,7 @@ restart:
                                 if (clientp->confirmed != EXPIRED_CLIENT_ID &&
                                     nfs4_is_lease_expired(clientp) && v4) {
                                         pthread_rwlock_unlock(
-                                             &(ht->array_lock[i]));
+                                             &ht->partitions[i].lock);
                                         LogDebug(COMPONENT_MAIN,
                                             "NFS reaper: expire client %s",
                                             clientp->client_name);
@@ -112,7 +113,7 @@ restart:
 
                                 RBT_INCREMENT(pn);
                         }
-                        pthread_rwlock_unlock(&(ht->array_lock[i]));
+                        pthread_rwlock_unlock(&ht->partitions[i].lock);
                 }
 
         }                           /* while ( 1 ) */

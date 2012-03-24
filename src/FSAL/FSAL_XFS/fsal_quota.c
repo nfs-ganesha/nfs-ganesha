@@ -191,7 +191,7 @@ fsal_status_t XFSFSAL_set_quota(fsal_path_t * pfsal_path,       /* IN */
  */
 
 
-fsal_status_t XFSFSAL_check_quota( char              * path,  /* IN */
+fsal_status_t XFSFSAL_check_quota( fsal_path_t * path,  /* IN */
                                    fsal_quota_type_t   quota_type,
                                    fsal_uid_t          fsal_uid)      /* IN */
 {
@@ -201,13 +201,13 @@ fsal_status_t XFSFSAL_check_quota( char              * path,  /* IN */
   if(!path )
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  if(fsal_internal_path2fsname( path, fs_spec) == -1)
+  if(fsal_internal_path2fsname( path->path, fs_spec) == -1)
     ReturnCode(ERR_FSAL_INVAL, 0);
 
   if( fsal_uid == 0 ) /* No quota for root */
     ReturnCode(ERR_FSAL_NO_ERROR, 0) ;
   
-  memset((char *)&fs_quota, 0, sizeof(struct dqblk));
+  memset(&fs_quota, 0, sizeof(struct dqblk));
 
   if(quotactl(FSAL_QCMD(Q_GETQUOTA, USRQUOTA), fs_spec, fsal_uid, (caddr_t) & fs_quota) < 0 )
     ReturnCode(posix2fsal_error(errno), errno);

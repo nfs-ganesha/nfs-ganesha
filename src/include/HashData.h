@@ -38,15 +38,15 @@
  * Defintion of buffers to be used into the HashTable
  */
 
-typedef struct hashbuff__
+typedef struct hash_buff
 {
      void *pdata;
      size_t len;
 } hash_buffer_t;
 
-typedef struct hash_data__
+typedef struct hash_data
 {
-     hash_buffer_t buffval;
-     hash_buffer_t buffkey;
+     struct hash_buff buffval;
+     struct hash_buff buffkey;
 } hash_data_t;
 #endif

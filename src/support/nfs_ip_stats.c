@@ -465,11 +465,11 @@ void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
            current_time_struct.tm_hour,
            current_time_struct.tm_min, current_time_struct.tm_sec);
 
-  /* All clients are supposed to have call at least one time worker #0 
+  /* All clients are supposed to have call at least one time worker #0
    * we loop on every client in the HashTable */
   for(i = 0; i < ht_ip_stats[0]->parameter.index_size; i++)
     {
-      tete_rbt = &((ht_ip_stats[0]->array_rbt)[i]);
+      tete_rbt = &ht_ip_stats[0]->partitions[i].rbt;
       RBT_LOOP(tete_rbt, it)
       {
         pdata = (hash_data_t *) it->rbt_opaq;

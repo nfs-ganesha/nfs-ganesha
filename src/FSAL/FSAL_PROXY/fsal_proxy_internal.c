@@ -192,10 +192,6 @@ void fsal_internal_proxy_setup_fattr(fsal_proxy_internal_fattr_t * pfattr)
  */
 fsal_status_t fsal_internal_proxy_error_convert(nfsstat4 nfsstatus, int indexfunc)
 {
-  fsal_status_t fsal_status;
-
-  fsal_status.minor = 0;
-
   switch (nfsstatus)
     {
     case NFS4_OK:
