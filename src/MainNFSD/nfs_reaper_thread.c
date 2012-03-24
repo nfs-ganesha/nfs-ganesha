@@ -40,6 +40,8 @@
 #include "nfs_core.h"
 #include "log.h"
 
+extern struct hash_table *ht_client_id;
+
 unsigned int reaper_delay = 10;
 
 void *reaper_thread(void *unused)
