@@ -467,7 +467,7 @@ int nfs4_acls_init()
   MakePool(&fsal_acl_key_pool, nb_pool_prealloc, fsal_acl_key_t, NULL, NULL);
 
   /* Create hash table. */
-  fsal_acl_hash = HashTable_Init(fsal_acl_hash_config);
+  fsal_acl_hash = HashTable_Init(&fsal_acl_hash_config);
 
   if(!fsal_acl_hash)
     {

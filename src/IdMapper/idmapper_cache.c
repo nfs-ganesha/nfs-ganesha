@@ -210,7 +210,7 @@ int display_idmapper_val(hash_buffer_t * pbuff, char *str)
  */
 int idmap_uid_init(nfs_idmap_cache_parameter_t param)
 {
-  if((ht_pwnam = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_pwnam = HashTable_Init(&param.hash_param)) == NULL)
     {
       LogCrit(COMPONENT_IDMAPPER,
               "NFS ID MAPPER: Cannot init IDMAP_UID cache");
@@ -222,7 +222,7 @@ int idmap_uid_init(nfs_idmap_cache_parameter_t param)
 
 int uidgidmap_init(nfs_idmap_cache_parameter_t param)
 {
-  if((ht_uidgid = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_uidgid = HashTable_Init(&param.hash_param)) == NULL)
     {
       LogCrit(COMPONENT_IDMAPPER,
               "NFS UID/GID MAPPER: Cannot init UIDGID_MAP cache");
@@ -234,7 +234,7 @@ int uidgidmap_init(nfs_idmap_cache_parameter_t param)
 
 int idmap_uname_init(nfs_idmap_cache_parameter_t param)
 {
-  if((ht_pwuid = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_pwuid = HashTable_Init(&param.hash_param)) == NULL)
     {
       LogCrit(COMPONENT_IDMAPPER,
               "NFS ID MAPPER: Cannot init IDMAP_UNAME cache");
@@ -257,7 +257,7 @@ int idmap_uname_init(nfs_idmap_cache_parameter_t param)
  */
 int idmap_gid_init(nfs_idmap_cache_parameter_t param)
 {
-  if((ht_grnam = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_grnam = HashTable_Init(&param.hash_param)) == NULL)
     {
       LogCrit(COMPONENT_IDMAPPER,
               "NFS ID MAPPER: Cannot init IDMAP_GID cache");
@@ -269,7 +269,7 @@ int idmap_gid_init(nfs_idmap_cache_parameter_t param)
 
 int idmap_gname_init(nfs_idmap_cache_parameter_t param)
 {
-  if((ht_grgid = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_grgid = HashTable_Init(&param.hash_param)) == NULL)
     {
       LogCrit(COMPONENT_IDMAPPER,
               "NFS ID MAPPER: Cannot init IDMAP_GNAME cache");

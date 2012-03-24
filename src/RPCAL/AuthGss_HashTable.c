@@ -476,7 +476,7 @@ int Gss_ctx_Hash_Del(gss_union_ctx_id_desc * pgss_ctx)
  */
 int Gss_ctx_Hash_Init(nfs_krb5_parameter_t param)
 {
-  if((ht_gss_ctx = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_gss_ctx = HashTable_Init(&param.hash_param)) == NULL)
     {
       LogCrit(COMPONENT_RPCSEC_GSS, "GSS_CTX_HASH: Cannot init GSS CTX  cache");
       return -1;

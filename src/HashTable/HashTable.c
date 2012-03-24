@@ -219,13 +219,8 @@ compute(struct hash_table *ht, struct hash_buff *key,
  *
  */
 
-/**
- * @todo ACE: Make this a pointer so we are't shoving it onto the
- * stack.  No need for two copies when one will do.
- */
-
 struct hash_table *
-HashTable_Init(struct hash_param hparam)
+HashTable_Init(struct hash_param *hparam)
 {
      /* The hash table being constructed */
      struct hash_table *ht = NULL;
@@ -256,27 +251,27 @@ HashTable_Init(struct hash_param hparam)
 
      if ((ht = Mem_Alloc(sizeof(struct hash_table) +
                          sizeof(struct hash_partition) *
-                         hparam.index_size)) == NULL) {
+                         hparam->index_size)) == NULL) {
           goto deconstruct;
      }
 
      memset(ht, 0,
             sizeof(struct hash_table) +
-            sizeof(struct hash_partition) * hparam.index_size);
+            sizeof(struct hash_partition) * hparam->index_size);
 
      /* We need to save copy of the parameters in the table. */
-     ht->parameter = hparam;
+     ht->parameter = *hparam;
 
-     for (index = 0; index < hparam.index_size; ++index) {
+     for (index = 0; index < hparam->index_size; ++index) {
 
           MakePool(&ht->partitions[index].node_pool,
-                                   hparam.nb_node_prealloc,
+                                   hparam->nb_node_prealloc,
                                    rbt_node_t, NULL, NULL);
           if (!IsPoolPreallocated(&ht->partitions[index].node_pool)) {
                goto deconstruct;
           }
           MakePool(&ht->partitions[index].data_pool,
-                   hparam.nb_node_prealloc, hash_data_t, NULL, NULL);
+                   hparam->nb_node_prealloc, hash_data_t, NULL, NULL);
           if (!IsPoolPreallocated(&ht->partitions[index].data_pool))
                goto deconstruct;
           RBT_HEAD_INIT(&(ht->partitions[index].rbt));

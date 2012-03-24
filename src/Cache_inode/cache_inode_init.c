@@ -74,7 +74,7 @@ hash_table_t *cache_inode_init(cache_inode_parameter_t param,
 {
   hash_table_t *ht = NULL;
 
-  ht = HashTable_Init(param.hparam);
+  ht = HashTable_Init(&param.hparam);
 
   if(ht != NULL)
     *pstatus = CACHE_INODE_SUCCESS;

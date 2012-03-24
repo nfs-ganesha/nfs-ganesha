@@ -523,14 +523,14 @@ int display_req_val(hash_buffer_t * pbuff, char *str)
  */
 int nfs_Init_dupreq(nfs_rpc_dupreq_parameter_t param)
 {
-  if((ht_dupreq_udp = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_dupreq_udp = HashTable_Init(&param.hash_param)) == NULL)
     {
       LogCrit(COMPONENT_DUPREQ,
               "Cannot init the duplicate request hash table");
       return -1;
     }
 
-  if((ht_dupreq_tcp = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_dupreq_tcp = HashTable_Init(&param.hash_param)) == NULL)
     {
       LogCrit(COMPONENT_DUPREQ,
               "Cannot init the duplicate request hash table");

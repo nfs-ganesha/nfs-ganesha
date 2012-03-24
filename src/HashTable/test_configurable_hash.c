@@ -254,7 +254,7 @@ int main(int argc, char *argv[])
   hparam.val_to_str = display_buff;
 
   /* Init de la table */
-  if((ht = HashTable_Init(hparam)) == NULL)
+  if((ht = HashTable_Init(&hparam)) == NULL)
     {
       LogTest("Test ECHOUE : Mauvaise init");
       exit(1);

@@ -190,7 +190,7 @@ int mfsl_async_hash_init(void)
   mfsl_hparam.val_to_str = mfsl_async_display_not_implemented;
 
   /* Init de la table */
-  if((mfsl_ht = HashTable_Init(mfsl_hparam)) == NULL)
+  if((mfsl_ht = HashTable_Init(&mfsl_hparam)) == NULL)
     return 0;
 
   return 1;

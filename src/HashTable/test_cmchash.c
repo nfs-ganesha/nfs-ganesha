@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
   BuddyInit(NULL);
 
   /* Init de la table */
-  if((ht = HashTable_Init(hparam)) == NULL)
+  if((ht = HashTable_Init(&hparam)) == NULL)
     {
       LogTest("Test FAILED: Bad init");
       exit(1);

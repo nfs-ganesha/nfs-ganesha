@@ -411,7 +411,7 @@ hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param)
 {
   hash_table_t *ht_ip_stats;
 
-  if((ht_ip_stats = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_ip_stats = HashTable_Init(&param.hash_param)) == NULL)
     {
       LogCrit(COMPONENT_INIT, "NFS IP_STATS: Cannot init IP stats cache");
       return NULL;

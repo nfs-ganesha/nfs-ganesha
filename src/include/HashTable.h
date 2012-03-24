@@ -183,7 +183,7 @@ const char *hash_table_err_to_str(hash_error_t err);
 
 /* These are the primitives of the hash table */
 
-struct hash_table *HashTable_Init(struct hash_param hc);
+struct hash_table *HashTable_Init(struct hash_param *hparam);
 hash_error_t HashTable_GetLatch(struct hash_table *ht,
                                 struct hash_buff *key,
                                 struct hash_buff *val,

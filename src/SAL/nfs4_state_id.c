@@ -195,7 +195,7 @@ int nfs4_Init_state_id(nfs_state_id_parameter_t param)
   memset(all_zero, 0, OTHERSIZE);
   memset(all_one, 0xFF, OTHERSIZE);
 
-  if((ht_state_id = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_state_id = HashTable_Init(&param.hash_param)) == NULL)
     {
       LogCrit(COMPONENT_STATE, "Cannot init State Id cache");
       return -1;

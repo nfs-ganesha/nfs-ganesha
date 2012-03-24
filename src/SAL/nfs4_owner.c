@@ -323,7 +323,7 @@ void remove_nfs4_owner(cache_inode_client_t * pclient,
 int Init_nfs4_owner(nfs4_owner_parameter_t param)
 {
 
-  if((ht_nfs4_owner = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_nfs4_owner = HashTable_Init(&param.hash_param)) == NULL)
     {
       LogCrit(COMPONENT_STATE,
               "Cannot init NFS Open Owner cache");

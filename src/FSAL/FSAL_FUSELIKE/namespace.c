@@ -586,8 +586,8 @@ int NamespaceInit(ino_t root_inode, dev_t root_dev, unsigned int *p_root_gen)
     return ENOMEM;
 
   /* init the lookup hash table */
-  lookup_hash = HashTable_Init(lookup_hash_config);
-  nodes_hash = HashTable_Init(nodes_hash_config);
+  lookup_hash = HashTable_Init(&lookup_hash_config);
+  nodes_hash = HashTable_Init(&nodes_hash_config);
 
   if(!lookup_hash || !nodes_hash)
     return ENOMEM;

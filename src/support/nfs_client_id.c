@@ -762,7 +762,7 @@ int nfs_client_id_remove(clientid4 clientid, struct prealloc_pool *clientid_pool
  */
 int nfs_Init_client_id(nfs_client_id_parameter_t param)
 {
-  if((ht_client_id = HashTable_Init(param.hash_param)) == NULL)
+  if((ht_client_id = HashTable_Init(&param.hash_param)) == NULL)
     {
       LogCrit(COMPONENT_INIT, "NFS CLIENT_ID: Cannot init Client Id cache");
       return -1;
@@ -784,7 +784,8 @@ int nfs_Init_client_id(nfs_client_id_parameter_t param)
  */
 int nfs_Init_client_id_reverse(nfs_client_id_parameter_t param)
 {
-  if((ht_client_id_reverse = HashTable_Init(param.hash_param_reverse)) == NULL)
+  if((ht_client_id_reverse
+      = HashTable_Init(&param.hash_param_reverse)) == NULL)
     {
       LogCrit(COMPONENT_INIT, "NFS CLIENT_ID: Cannot init Client Id cache");
       return -1;

@@ -453,21 +453,23 @@ uint64_t nlm_owner_rbt_hash_func(hash_parameter_t * p_hparam,
 int Init_nlm_hash(void)
 {
 
-  if((ht_nsm_client = HashTable_Init(nfs_param.nsm_client_hash_param)) == NULL)
+  if((ht_nsm_client =
+      HashTable_Init(&nfs_param.nsm_client_hash_param)) == NULL)
     {
       LogCrit(COMPONENT_STATE,
               "Cannot init NSM Client cache");
       return -1;
     }
 
-  if((ht_nlm_client = HashTable_Init(nfs_param.nlm_client_hash_param)) == NULL)
+  if((ht_nlm_client
+      = HashTable_Init(&nfs_param.nlm_client_hash_param)) == NULL)
     {
       LogCrit(COMPONENT_STATE,
               "Cannot init NLM Client cache");
       return -1;
     }
 
-  if((ht_nlm_owner = HashTable_Init(nfs_param.nlm_owner_hash_param)) == NULL)
+  if((ht_nlm_owner = HashTable_Init(&nfs_param.nlm_owner_hash_param)) == NULL)
     {
       LogCrit(COMPONENT_STATE,
               "Cannot init NLM Owner cache");

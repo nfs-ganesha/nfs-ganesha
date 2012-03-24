@@ -289,7 +289,7 @@ int HandleMap_Init(const handle_map_param_t * p_param)
   handle_hash_config.index_size = p_param->hashtable_size;
   handle_hash_config.nb_node_prealloc = p_param->nb_handles_prealloc;
 
-  handle_map_hash = HashTable_Init(handle_hash_config);
+  handle_map_hash = HashTable_Init(&handle_hash_config);
 
   if(!handle_map_hash)
     {

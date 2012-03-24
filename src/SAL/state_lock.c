@@ -123,7 +123,7 @@ state_status_t state_lock_init(state_status_t * pstatus)
     }
 
 #ifdef _USE_BLOCKING_LOCKS
-  ht_lock_cookies = HashTable_Init(cookie_param);
+  ht_lock_cookies = HashTable_Init(&cookie_param);
   if(ht_lock_cookies == NULL)
     {
       LogCrit(COMPONENT_STATE,
