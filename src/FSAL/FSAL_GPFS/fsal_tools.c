@@ -232,7 +232,7 @@ fsal_status_t GPFSFSAL_DigestHandle(fsal_export_context_t *exp_context,   /* IN 
 
     case FSAL_DIGEST_NFSV3:
     case FSAL_DIGEST_NFSV4:
-      fh_size = gpfs_sizeof_handle((struct file_handle *)in_fsal_handle);
+      fh_size = gpfs_sizeof_handle((struct gpfs_file_handle *)in_fsal_handle);
       if(fh_desc->len < fh_size)
         {
           LogMajor(COMPONENT_FSAL,
@@ -283,7 +283,7 @@ fsal_status_t GPFSFSAL_DigestHandle(fsal_export_context_t *exp_context,   /* IN 
  *  Convert a buffer extracted from NFS handles
  *  to an FSAL handle.
  *  All we do here is adjust the descriptor length based on knowing the
- *  internals of struct file_handle and let the upper level do handle memcpy,
+ *  internals of struct gpfs_file_handle and let the upper level do handle memcpy,
  *  hash lookup and/or compare.  No copies anymore.
  *
  * \param in_type (input):
@@ -299,14 +299,14 @@ fsal_status_t GPFSFSAL_ExpandHandle(fsal_export_context_t *exp_context,   /* IN 
                                 struct fsal_handle_desc *fh_desc  /* IN/OUT */
     )
 {
-  struct file_handle *hdl;
+  struct gpfs_file_handle *hdl;
   size_t fh_size;
 
   /* sanity checks */
   if(!fh_desc || !fh_desc->start)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  hdl = (struct file_handle *)fh_desc->start;
+  hdl = (struct gpfs_file_handle *)fh_desc->start;
   fh_size = gpfs_sizeof_handle(hdl);
 
   if(in_type == FSAL_DIGEST_NFSV2)
