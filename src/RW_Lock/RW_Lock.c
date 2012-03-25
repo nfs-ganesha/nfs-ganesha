@@ -99,9 +99,6 @@ int P_r(rw_lock_t * plock)
   assert(plock->nbw_active == 0);
   assert(plock->nbw_waiting == 0);
 
-  assert(plock->nbw_active==0);
-  assert(plock->nbw_waiting==0);
-
   /* There is no active or waiting writters, readers can go ... */
   plock->nbr_waiting--;
   plock->nbr_active++;
