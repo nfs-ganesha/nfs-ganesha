@@ -475,12 +475,13 @@ if test \( "x$enable_pnfs_mds" = "xyes" \) -o \( "x$enable_pnfs_ds" = "xyes" \);
 fi
 
 # MFSL switch argument (default is NULL )
-AC_ARG_WITH( [mfsl], AS_HELP_STRING([--with-mfsl=NONE|NULL|ASYNC|AIO|MIRROR|PROXY_RPCSECGSS (default=NULL)],[specify the type of intermediate FSAL module to be used] ),
+AC_ARG_WITH( [mfsl], AS_HELP_STRING([--with-mfsl=NONE|NULL|TIMER|ASYNC|AIO|MIRROR|PROXY_RPCSECGSS (default=NULL)],[specify the type of intermediate FSAL module to be used] ),
 	     MFSL="$withval", MFSL="NONE" )
 
 AM_CONDITIONAL(USE_MFSL_NONE,            test "$MFSL" = "NONE")
 AM_CONDITIONAL(USE_MFSL_AIO,             test "$MFSL" = "AIO")
 AM_CONDITIONAL(USE_MFSL_NULL,            test "$MFSL" = "NULL")
+AM_CONDITIONAL(USE_MFSL_TIMER,           test "$MFSL" = "TIMER")
 AM_CONDITIONAL(USE_MFSL_ASYNC,           test "$MFSL" = "ASYNC")
 AM_CONDITIONAL(USE_MFSL_PROXY_RPCSECGSS, test "$MFSL" = "PROXY_RPCSECGSS")
 
@@ -775,6 +776,11 @@ case $MFSL in
         NONE)
 		MFS_LIB=""
 		;;
+	TIMER)
+		AC_DEFINE([_USE_MFSL], 1, [Use MFSL module])
+		AC_DEFINE([_USE_MFSL_TIMER], 1, [Use MFSL_TIMER module which measures times taken by FSAL functions])
+		MFSL_LIB="\$(top_builddir)/MFSL/MFSL_TIMER/libmfsltimer.la"
+		;;
 	NULL)
 		AC_DEFINE([_USE_MFSL], 1, [Use MFSL module])
 		AC_DEFINE([_USE_MFSL_NULL], 1, [Use MFSL_NULL module which calls directly the FSAL functions])
@@ -897,6 +903,7 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_CEPH/Makefile
                  include/MFSL/Makefile
                  include/MFSL/MFSL_NULL/Makefile
+                 include/MFSL/MFSL_TIMER/Makefile
                  include/MFSL/MFSL_AIO/Makefile
                  include/MFSL/MFSL_ASYNC/Makefile
                  include/MFSL/MFSL_PROXY_RPCSECGSS/Makefile
@@ -944,6 +951,7 @@ AC_CONFIG_FILES([include/Makefile
 		 FSAL/FSAL_TEMPLATE/Makefile
 		 MFSL/Makefile
 		 MFSL/MFSL_NULL/Makefile
+		 MFSL/MFSL_TIMER/Makefile
 		 MFSL/MFSL_ASYNC/Makefile
 		 MFSL/MFSL_AIO/Makefile
 		 MFSL/MFSL_PROXY_RPCSECGSS/Makefile
