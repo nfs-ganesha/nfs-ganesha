@@ -227,6 +227,7 @@ int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
   uint64_t fileid_digest = 0;
   u_int16_t srvboot_digest = 0;
   uint32_t open_owner_digest = 0;
+  struct fsal_handle_desc fh_desc;
 
   LogFullDebug(COMPONENT_STATE,
                "pentry=%p popen_owner=%u|%s",
@@ -235,10 +236,12 @@ int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
                popen_owner->so_owner_val);
 
   /* Get several digests to build the stateid : the server boot time, the fileid and a monotonic counter */
+  fh_desc.start = (caddr_t)&fileid_digest;
+  fh_desc.len = sizeof(uint64_t);
   if(FSAL_IS_ERROR(FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                      FSAL_DIGEST_FILEID3,
                                      &(pentry->handle),
-                                     (caddr_t) & fileid_digest)))
+                                     &fh_desc)))
     return 0;
 
   srvboot_digest = (u_int16_t) (ServerBootTime & 0x0000FFFF);;

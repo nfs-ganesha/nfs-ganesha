@@ -338,11 +338,14 @@ cache_entry_t *cache_inode_lookup_sw(cache_entry_t        * pentry_parent,
 
           /* Allocation of a new entry in the cache */
 #ifdef _USE_MFSL
-          new_entry_fsdata.handle = object_handle.handle;
+          new_entry_fsdata.fh_desc.start = (caddr_t)(&object_handle.handle);
 #else
-          new_entry_fsdata.handle = object_handle;
+          new_entry_fsdata.fh_desc.start = (caddr_t)(&object_handle);
 #endif
-          new_entry_fsdata.cookie = 0;
+          new_entry_fsdata.fh_desc.len = 0;
+	  (void) FSAL_ExpandHandle(pcontext->export_context,
+				   FSAL_DIGEST_SIZEOF,
+				   &new_entry_fsdata.fh_desc);
 
           if((pentry = cache_inode_new_entry( &new_entry_fsdata, 
                                               &object_attributes,

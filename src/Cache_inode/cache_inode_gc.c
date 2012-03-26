@@ -117,19 +117,15 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
       return LRU_LIST_DO_NOT_SET_INVALID;
     }
 
-  fsaldata.handle = *pfsal_handle;
-  fsaldata.cookie = DIR_START;
+  fsaldata.fh_desc.start = (caddr_t)pfsal_handle;
+  fsaldata.fh_desc.len = 0;
+  (void) FSAL_ExpandHandle(NULL,  /* pcontext but not used... */
+			   FSAL_DIGEST_SIZEOF,
+			   &fsaldata.fh_desc);
 
   /* Use the handle to build the key */
-  if(cache_inode_fsaldata_2_key(&key, &fsaldata, pgcparam->pclient))
-    {
-      LogCrit(COMPONENT_CACHE_INODE_GC,
-              "cache_inode_gc_clean_entry: could not build hashtable key");
-
-      cache_inode_release_fsaldata_key(&key, pgcparam->pclient);
-
-      return LRU_LIST_DO_NOT_SET_INVALID;
-    }
+  key.pdata = fsaldata.fh_desc.start;
+  key.len = fsaldata.fh_desc.len;
 
   /* use the key to delete the entry */
   rc = HashTable_Del(pgcparam->ht, &key, &old_key, &old_value);
@@ -140,8 +136,6 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
               "cache_inode_gc_clean_entry: entry could not be deleted, status = %d",
               rc);
 
-      cache_inode_release_fsaldata_key(&key, pgcparam->pclient);
-
       return LRU_LIST_DO_NOT_SET_INVALID;
     }
   else if(rc == HASHTABLE_ERROR_NO_SUCH_KEY)
@@ -150,7 +144,6 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
                "cache_inode_gc_clean_entry: entry already deleted, type=%d, status=%d",
                pentry->internal_md.type, rc);
 
-      cache_inode_release_fsaldata_key(&key, pgcparam->pclient);
       return LRU_LIST_SET_INVALID;
     }
 
@@ -164,19 +157,15 @@ static int cache_inode_gc_clean_entry(cache_entry_t * pentry,
   LogMidDebug(COMPONENT_CACHE_INODE_GC,
                "++++> pentry %p deleted from HashTable", pentry);
 
-  /* Release the hash key data */
-  cache_inode_release_fsaldata_key(&old_key, pgcparam->pclient);
-
   /* Sanity check: old_value.pdata is expected to be equal to pentry,
    * and is released later in this function */
-  if((cache_entry_t *) old_value.pdata != pentry)
+  if((cache_entry_t *) old_value.pdata != pentry ||
+     ((cache_entry_t *)old_value.pdata)->fh_desc.start != (caddr_t)&pentry->handle)
     {
       LogCrit(COMPONENT_CACHE_INODE_GC,
               "cache_inode_gc_clean_entry: unexpected pdata %p from hash table (pentry=%p)",
               old_value.pdata, pentry);
     }
-
-  cache_inode_release_fsaldata_key(&key, pgcparam->pclient);
 
   /* Recover the parent list entries */
   parent_iter = pentry->parent_list;

@@ -112,7 +112,7 @@
 
 /* some versions of GPFS don't have this in their headers */
 #ifndef _GPFS_DECLARES_HANDLE
-struct file_handle
+struct gpfs_file_handle
 {
    u_int32_t handle_size;
    u_int32_t handle_type;
@@ -123,6 +123,10 @@ struct file_handle
 };
 #endif
 
+static inline size_t gpfs_sizeof_handle(struct gpfs_file_handle *hdl)
+{
+  return offsetof(struct gpfs_file_handle, f_handle) + hdl->handle_key_size;
+}
 /** end of open by handle structures */
 
 /* Allow aliasing of fsal_handle_t since FSALs will be
@@ -133,7 +137,7 @@ typedef struct
   struct
   {
     //  unsigned int fsid[2];
-    struct file_handle handle;
+    struct gpfs_file_handle handle;
   } data ;
 } __attribute__((__may_alias__)) gpfsfsal_handle_t;  /**< FS object handle */
 

@@ -313,13 +313,11 @@ int nfs_Mkdir(nfs_arg_t * parg,
 
                         case NFS_V3:
                           /* Build file handle */
-                          if((pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
-                              handle.data.data_val = Mem_Alloc_Label(NFS3_FHSIZE,
-                                                                     "Filehandle V3 in nfs3_mkdir")) == NULL)
-                            {
-                              pres->res_mkdir3.status = NFS3ERR_IO;
-                              return NFS_REQ_OK;
-                            }
+			  pres->res_mkdir3.status =
+				  nfs3_AllocateFH(&pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
+						  handle);
+			  if(pres->res_mkdir3.status !=  NFS3_OK)
+				  return NFS_REQ_OK;
 
                           if(nfs3_FSALToFhandle
                              (&pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
@@ -335,8 +333,6 @@ int nfs_Mkdir(nfs_arg_t * parg,
                               /* Set Post Op Fh3 structure */
                               pres->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows =
                                   TRUE;
-                              pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.handle.
-                                  data.data_len = sizeof(file_handle_v3_t);
 
                               /*
                                * Build entry

@@ -1539,6 +1539,7 @@ int nfs4_bitmap4_Remove_Unsupported(bitmap4 * pbitmap) ;
 nfsstat4 nfs4_Errno(cache_inode_status_t error);
 nfsstat3 nfs3_Errno(cache_inode_status_t error);
 nfsstat2 nfs2_Errno(cache_inode_status_t error);
+int nfs3_AllocateFH(nfs_fh3 * fh);
 int nfs4_AllocateFH(nfs_fh4 * fh);
 
 uint64_t nfs_htonl64(uint64_t arg64);

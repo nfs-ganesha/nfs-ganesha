@@ -120,7 +120,7 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
   cache_inode_file_type_t type;
   int hrc = 0;
   fsal_attrib_list_t fsal_attributes;
-  cache_inode_fsal_data_t *ppoolfsdata = NULL;
+  fsal_handle_t *pfile_handle;
 
   memset(&create_arg, 0, sizeof(create_arg));
 
@@ -134,22 +134,13 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
     pclient->stat.func_stats.nb_call[CACHE_INODE_GET] += 1;
   }
 
-  /* Turn the input to a hash key */
-  if(cache_inode_fsaldata_2_key(&key, pfsdata, pclient))
-    {
-      *pstatus = CACHE_INODE_UNAPPROPRIATED_KEY;
+  /* Turn the input to a hash key on our own.
+   */
+  key.pdata = pfsdata->fh_desc.start;
+  key.len = pfsdata->fh_desc.len;
 
-      /* stats */
-      /* cache_invalidate calls this with no context or client */
-      if (pclient) {
-	pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;
-	ppoolfsdata = (cache_inode_fsal_data_t *) key.pdata;
-	ReleaseToPool(ppoolfsdata, &pclient->pool_key);
-      }
-      return NULL;
-    }
-
-  switch (hrc = HashTable_Get(ht, &key, &value))
+  hrc = HashTable_Get(ht, &key, &value);
+  switch (hrc)
     {
     case HASHTABLE_SUCCESS:
       /* Entry exists in the cache and was found */
@@ -172,27 +163,11 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
       }
       /* Cache miss, allocate a new entry */
 
-      /* XXX I do not think this can happen with avl dirent cache */
-      if(pfsdata->cookie != DIR_START)
-        {
-          /* added for sanity check */
-          LogDebug(COMPONENT_CACHE_INODE,
-                       "cache_inode_get: pfsdata->cookie != DIR_START (=%"PRIu64") on object whose type is %u",
-                       pfsdata->cookie,
-                       cache_inode_fsal_type_convert(fsal_attributes.type));
-
-          pfsdata->cookie = DIR_START;
-
-          /* Free this key */
-          cache_inode_release_fsaldata_key(&key, pclient);
-
-          /* redo the call */
-          return cache_inode_get(pfsdata, policy, pattr, ht, pclient, pcontext, pstatus);
-        }
+      pfile_handle = (fsal_handle_t *) pfsdata->fh_desc.start;
 
       /* First, call FSAL to know what the object is */
       fsal_attributes.asked_attributes = pclient->attrmask;
-      fsal_status = FSAL_getattrs(&pfsdata->handle, pcontext, &fsal_attributes);
+      fsal_status = FSAL_getattrs(pfile_handle, pcontext, &fsal_attributes);
       if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);
@@ -205,7 +180,7 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
             {
               char handle_str[256];
 
-              snprintHandle(handle_str, 256, &pfsdata->handle);
+              snprintHandle(handle_str, 256, pfile_handle);
               LogEvent(COMPONENT_CACHE_INODE,
                        "cache_inode_get: Stale FSAL File Handle %s, fsal_status=(%u,%u)",
                        handle_str, fsal_status.major, fsal_status.minor);
@@ -215,9 +190,6 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
 
           /* stats */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;
-
-          /* Free this key */
-          cache_inode_release_fsaldata_key(&key, pclient);
 
           return NULL;
         }
@@ -229,9 +201,6 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
 
           /* stats */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;
-
-          /* Free this key */
-          cache_inode_release_fsaldata_key(&key, pclient);
 
           return NULL;
         }
@@ -246,7 +215,7 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
              FSAL_CLEAR_MASK(fsal_attributes.asked_attributes);
              FSAL_SET_MASK(fsal_attributes.asked_attributes, pclient->attrmask);
              fsal_status =
-                FSAL_readlink(&pfsdata->handle, pcontext, &create_arg.link_content,
+                FSAL_readlink(pfile_handle, pcontext, &create_arg.link_content,
                               &fsal_attributes);
             }
           else
@@ -261,9 +230,6 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
 
               /* stats */
               pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;
-
-              /* Free this key */
-              cache_inode_release_fsaldata_key(&key, pclient);
 
               if(fsal_status.major == ERR_FSAL_STALE)
                 {
@@ -306,9 +272,6 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
           /* stats */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;
 
-          /* Free this key */
-          cache_inode_release_fsaldata_key(&key, pclient);
-
           return NULL;
         }
 
@@ -332,23 +295,9 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
       /* stats */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;
 
-      /* Free this key */
-      cache_inode_release_fsaldata_key(&key, pclient);
-
       return NULL;
       break;
-    }
-
-  /* Want to ASSERT pclient at this point */
-  *pstatus = CACHE_INODE_SUCCESS;
-  
-  if (pentry->object.symlink != NULL) {
-  	int stop_here;
-	stop_here = 1;
-	if (stop_here) {
-		stop_here = 2;
-	}
-  }
+    }  /* end switch */
 
   /* valid the found entry, if this is not feasable, returns nothing to the client */
   if( plocation != NULL )
@@ -368,9 +317,6 @@ cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
 
   /* stats */
   pclient->stat.func_stats.nb_success[CACHE_INODE_GET] += 1;
-
-  /* Free this key */
-  cache_inode_release_fsaldata_key(&key, pclient);
 
   return pentry;
 }  /* cache_inode_get_located */

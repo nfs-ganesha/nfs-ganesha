@@ -122,11 +122,13 @@ cache_entry_t *cache_inode_lookupp_sw( cache_entry_t * pentry,
     }
   else
     {
+      fsal_handle_t parent_handle;
+
       /* NO, the parent is not cached, query FSAL to get it and cache the result */
       object_attributes.asked_attributes = pclient->attrmask;
       fsal_status =
           FSAL_lookup(&pentry->handle, (fsal_name_t *) & FSAL_DOT_DOT,
-                      pcontext, &fsdata.handle, &object_attributes);
+                      pcontext, &parent_handle, &object_attributes);
 
       if(FSAL_IS_ERROR(fsal_status))
         {
@@ -159,7 +161,11 @@ cache_entry_t *cache_inode_lookupp_sw( cache_entry_t * pentry,
         }
 
       /* Call cache_inode_get to populate the cache with the parent entry */
-      fsdata.cookie = 0;
+      fsdata.fh_desc.start = (caddr_t)&parent_handle;
+      fsdata.fh_desc.len = 0;
+      (void) FSAL_ExpandHandle(pcontext->export_context,
+			       FSAL_DIGEST_SIZEOF,
+			       &fsdata.fh_desc);
 
       if((pentry_parent = cache_inode_get_located( &fsdata,
                                                    pentry,

@@ -317,14 +317,13 @@ int nlm_process_parameters(struct svc_req        * preq,
 
   /* Convert file handle into a cache entry */
   if(alock->fh.n_len > MAX_NETOBJ_SZ ||
-     !nfs3_FhandleToFSAL((nfs_fh3 *) &alock->fh, &fsal_data.handle, pcontext))
+     !nfs3_FhandleToFSAL((nfs_fh3 *) &alock->fh, &fsal_data.fh_desc, pcontext))
     {
       /* handle is not valid */
       return NLM4_STALE_FH;
     }
 
   /* Now get the cached inode attributes */
-  fsal_data.cookie = DIR_START;
   *ppentry = cache_inode_get(&fsal_data,
                              CACHE_INODE_JOKER_POLICY,
                              &attr,

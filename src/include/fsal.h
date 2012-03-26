@@ -41,6 +41,36 @@
 #include "config.h"
 #endif                          /* HAVE_CONFIG_H */
 
+#include <stddef.h>
+
+/**
+ * BUILD_BUG_ON - break compile if a condition is true.
+ * @condition: the condition which the compiler should know is false.
+ *
+ * If you have some code which relies on certain constants being equal, or
+ * other compile-time-evaluated condition, you should use BUILD_BUG_ON to
+ * detect if someone changes it.
+ *
+ * The implementation uses gcc's reluctance to create a negative array, but
+ * gcc (as of 4.4) only emits that error for obvious cases (eg. not arguments
+ * to inline functions).  So as a fallback we use the optimizer; if it can't
+ * prove the condition is false, it will cause a link error on the undefined
+ * "__build_bug_on_failed".  This error message can be harder to track down
+ * though, hence the two different methods.
+ *
+ * Blatantly stolen from kernel source, include/linux/kernel.h:651
+ */
+#ifndef __OPTIMIZE__
+#define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
+#else
+extern int __build_bug_on_failed;
+#define BUILD_BUG_ON(condition)                                 \
+        do {                                                    \
+                ((void)sizeof(char[1 - 2*!!(condition)]));      \
+                if (condition) __build_bug_on_failed = 1;       \
+        } while(0)
+#endif
+
 /* fsal_types contains constants and type definitions for FSAL */
 #include "fsal_types.h"
 #include "common_utils.h"
@@ -385,7 +415,7 @@ unsigned int FSAL_Handle_to_Hash_both(fsal_handle_t * p_handle, unsigned int coo
 fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
                                 fsal_digesttype_t output_type,  /* IN */
                                 fsal_handle_t * in_fsal_handle, /* IN */
-                                caddr_t out_buff        /* OUT */
+                                struct fsal_handle_desc *fh_desc        /* IN/OUT */
     );
 
 /** FSAL_ExpandHandle :
@@ -394,8 +424,7 @@ fsal_status_t FSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
  */
 fsal_status_t FSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
                                 fsal_digesttype_t in_type,      /* IN */
-                                caddr_t in_buff,        /* IN */
-                                fsal_handle_t * out_fsal_handle /* OUT */
+                                struct fsal_handle_desc *fh_desc /* IN/OUT */
     );
 
 /**
@@ -1245,7 +1274,7 @@ typedef struct fsal_functions__
                                   fsal_quota_t * pquota);       /* OUT */
 
   /* FSAL_check_quota */
-  fsal_status_t(*fsal_check_quota)( fsal_path_t * pfsal_path,  /* IN */
+  fsal_status_t(*fsal_check_quota)( char * pfsal_path,  /* IN */
                                     fsal_quota_type_t   quota_type,
                                     fsal_uid_t fsal_uid);      /* IN */
 
@@ -1314,13 +1343,12 @@ typedef struct fsal_functions__
    fsal_status_t(*fsal_digesthandle) (fsal_export_context_t * p_expcontext,     /* IN */
                                       fsal_digesttype_t output_type,    /* IN */
                                       fsal_handle_t * p_in_fsal_handle, /* IN */
-                                      caddr_t out_buff /* OUT */ );
+                                      struct fsal_handle_desc *fh_desc /* OUT */ );
 
   /* FSAL_ExpandHandle */
    fsal_status_t(*fsal_expandhandle) (fsal_export_context_t * p_expcontext,     /* IN */
                                       fsal_digesttype_t in_type,        /* IN */
-                                      caddr_t in_buff,  /* IN */
-                                      fsal_handle_t * p_out_fsal_handle /* OUT */ );
+                                      struct fsal_handle_desc *fh_desc  /* IN OUT */ );
 
   /* FSAL_SetDefault_FSAL_parameter */
    fsal_status_t(*fsal_setdefault_fsal_parameter) (fsal_parameter_t * out_parameter);

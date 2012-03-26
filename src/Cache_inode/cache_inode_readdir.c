@@ -190,8 +190,11 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
               continue;
 
       /* Get the related pentry without populating the name cache (but eventually populating the attrs cache */
-      entry_fsdata.handle = fsal_dirent_array[iter].handle;
-      entry_fsdata.cookie = 0; /* XXX needed? */
+      entry_fsdata.fh_desc.start = (caddr_t)(&fsal_dirent_array[iter].handle);
+      entry_fsdata.fh_desc.len = 0;
+      (void) FSAL_ExpandHandle(pcontext->export_context,
+			       FSAL_DIGEST_SIZEOF,
+			       &entry_fsdata.fh_desc);
 
       /* Allocate a dirent to be returned to the client */
       /** @todo Make sure this piece of memory once the data are used */
@@ -991,8 +994,11 @@ cache_inode_status_t cache_inode_readdir_populate(
 
           /* Try adding the entry, if it exists then this existing entry is
              returned */
-          new_entry_fsdata.handle = array_dirent[iter].handle;
-	  new_entry_fsdata.cookie = 0; /* XXX needed? */
+          new_entry_fsdata.fh_desc.start = (caddr_t)(&array_dirent[iter].handle);
+	  new_entry_fsdata.fh_desc.len = 0;
+	  (void) FSAL_ExpandHandle(pcontext->export_context,
+				   FSAL_DIGEST_SIZEOF,
+				   &new_entry_fsdata.fh_desc);
 
           if((pentry = cache_inode_new_entry( &new_entry_fsdata,
 		                              &array_dirent[iter].attributes,

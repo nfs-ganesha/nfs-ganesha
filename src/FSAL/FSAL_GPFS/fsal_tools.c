@@ -194,7 +194,7 @@ unsigned int GPFSFSAL_Handle_to_RBTIndex(fsal_handle_t * handle, unsigned int co
 }
 
 /**
- * FSAL_DigestHandle :
+ * GPFSFSAL_DigestHandle :
  *  Convert an fsal_handle_t to a buffer
  *  to be included into NFS handles,
  *  or another digest.
@@ -203,23 +203,22 @@ unsigned int GPFSFSAL_Handle_to_RBTIndex(fsal_handle_t * handle, unsigned int co
  *        Indicates the type of digest to do.
  * \param in_fsal_handle (input):
  *        The handle to be converted to digest.
- * \param out_buff (output):
- *        The buffer where the digest is to be stored.
  *
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
 fsal_status_t GPFSFSAL_DigestHandle(fsal_export_context_t *exp_context,   /* IN */
                                 fsal_digesttype_t output_type,  /* IN */
-                                fsal_handle_t * in_handle,       /* IN */
-                                caddr_t out_buff        /* OUT */
+                                fsal_handle_t * in_fsal_handle,       /* IN */
+                                struct fsal_handle_desc *fh_desc /* IN/OUT */
     )
 {
   gpfsfsal_export_context_t * p_expcontext = (gpfsfsal_export_context_t *)exp_context;
-  gpfsfsal_handle_t * p_in_fsal_handle = (gpfsfsal_handle_t *)in_handle;
+  gpfsfsal_handle_t * p_in_fsal_handle = (gpfsfsal_handle_t *)in_fsal_handle;
+  size_t fh_size;
 
   /* sanity checks */
-  if(!p_in_fsal_handle || !out_buff || !p_expcontext)
+  if(!p_in_fsal_handle || !fh_desc || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   switch (output_type)
@@ -232,21 +231,17 @@ fsal_status_t GPFSFSAL_DigestHandle(fsal_export_context_t *exp_context,   /* IN 
       ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
     case FSAL_DIGEST_NFSV3:
-
-      if(sizeof(gpfsfsal_handle_t) > FSAL_DIGEST_SIZE_HDLV3)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(gpfsfsal_handle_t));
-      break;
-
     case FSAL_DIGEST_NFSV4:
-
-      if(sizeof(gpfsfsal_handle_t) > FSAL_DIGEST_SIZE_HDLV4)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(gpfsfsal_handle_t));
+      fh_size = gpfs_sizeof_handle((struct gpfs_file_handle *)in_fsal_handle);
+      if(fh_desc->len < fh_size)
+        {
+          LogMajor(COMPONENT_FSAL,
+                   "GPFSFSAL_DigestHandle: space too small for handle.Need %lu, have %lu",
+                   (unsigned long)fh_size, (unsigned long)fh_desc->len);
+          ReturnCode(ERR_FSAL_TOOSMALL, 0);
+        }
+      memcpy(fh_desc->start, (caddr_t)p_in_fsal_handle, fh_size);
+      fh_desc->len = fh_size;
       break;
 
       /* FileId digest for NFSv2 */
@@ -259,27 +254,24 @@ fsal_status_t GPFSFSAL_DigestHandle(fsal_export_context_t *exp_context,   /* IN 
     case FSAL_DIGEST_FILEID3:
 
       /* sanity check about output size */
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
       /* If the handle_size is the full OPENHANDLE_HANDLE_LEN then we assume it's a new style GPFS handle */
       if(p_in_fsal_handle->data.handle.handle_size < OPENHANDLE_HANDLE_LEN)
-        memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle, sizeof(int));
+        memcpy(fh_desc->start, p_in_fsal_handle->data.handle.f_handle, sizeof(uint32_t));
       else
-        memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle + OPENHANDLE_OFFSET_OF_FILEID, sizeof(uint64_t));
+        memcpy(fh_desc->start, p_in_fsal_handle->data.handle.f_handle + OPENHANDLE_OFFSET_OF_FILEID, sizeof(uint64_t));
       break;
 
       /* FileId digest for NFSv4 */
     case FSAL_DIGEST_FILEID4:
 
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID4);
       if(p_in_fsal_handle->data.handle.handle_size < OPENHANDLE_HANDLE_LEN)
-        memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle, sizeof(int));
+        memcpy(fh_desc->start, p_in_fsal_handle->data.handle.f_handle, sizeof(uint32_t));
       else
-        memcpy(out_buff, p_in_fsal_handle->data.handle.f_handle + OPENHANDLE_OFFSET_OF_FILEID, sizeof(uint64_t));
+        memcpy(fh_desc->start, p_in_fsal_handle->data.handle.f_handle + OPENHANDLE_OFFSET_OF_FILEID, sizeof(uint64_t));
       break;
 
     default:
       ReturnCode(ERR_FSAL_SERVERFAULT, 0);
-
     }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
@@ -290,57 +282,47 @@ fsal_status_t GPFSFSAL_DigestHandle(fsal_export_context_t *exp_context,   /* IN 
  * FSAL_ExpandHandle :
  *  Convert a buffer extracted from NFS handles
  *  to an FSAL handle.
+ *  All we do here is adjust the descriptor length based on knowing the
+ *  internals of struct gpfs_file_handle and let the upper level do handle memcpy,
+ *  hash lookup and/or compare.  No copies anymore.
  *
  * \param in_type (input):
  *        Indicates the type of digest to be expanded.
- * \param in_buff (input):
- *        Pointer to the digest to be expanded.
- * \param out_fsal_handle (output):
- *        The handle built from digest.
+ * \param fh_desc (input/output):
+ *        digest descriptor.  returns length to be copied
  *
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
 fsal_status_t GPFSFSAL_ExpandHandle(fsal_export_context_t *exp_context,   /* IN */
                                 fsal_digesttype_t in_type,      /* IN */
-                                caddr_t in_buff,        /* IN */
-                                fsal_handle_t *out_handle       /* OUT */
+                                struct fsal_handle_desc *fh_desc  /* IN/OUT */
     )
 {
-  gpfsfsal_export_context_t * p_expcontext = (gpfsfsal_export_context_t *)exp_context;
-  gpfsfsal_handle_t * p_out_fsal_handle = (gpfsfsal_handle_t *)out_handle;
+  struct gpfs_file_handle *hdl;
+  size_t fh_size;
 
   /* sanity checks */
-  if(!p_out_fsal_handle || !in_buff || !p_expcontext)
+  if(!fh_desc || !fh_desc->start)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  switch (in_type)
+  hdl = (struct gpfs_file_handle *)fh_desc->start;
+  fh_size = gpfs_sizeof_handle(hdl);
+
+  if(in_type == FSAL_DIGEST_NFSV2)
     {
-
-      /* NFSV2 handle digest */
-    case FSAL_DIGEST_NFSV2:
-
       /* GPFS FSAL can no longer support NFS v2 */
       ReturnCode(ERR_FSAL_NOTSUPP, 0);
-
-      /* NFSV3 handle digest */
-    case FSAL_DIGEST_NFSV3:
-
-      memset(p_out_fsal_handle, 0, sizeof(gpfsfsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(gpfsfsal_handle_t));
-      break;
-
-      /* NFSV4 handle digest */
-    case FSAL_DIGEST_NFSV4:
-
-      memset(p_out_fsal_handle, 0, sizeof(gpfsfsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(gpfsfsal_handle_t));
-      break;
-
-    default:
+    }
+  else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size)
+    {
+      LogMajor(COMPONENT_FSAL,
+               "GPFSFSAL_ExpandHandle: size mismatch for handle.  should be %lu, got %lu",
+               fh_size, fh_desc->len);
       ReturnCode(ERR_FSAL_SERVERFAULT, 0);
     }
 
+  fh_desc->len = fh_size;  /* pass back the actual size */
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
 }

@@ -91,6 +91,11 @@ static inline int open_by_handle_at(int mdirfd, struct file_handle * handle,
 #error "Not Linux, no by handle syscalls defined."
 #endif
 
+static inline size_t vfs_sizeof_handle(struct file_handle *hdl)
+{
+	return offsetof(struct file_handle, f_handle) + hdl->handle_bytes;
+}
+
 #define VFS_HANDLE_LEN 24 /* At least 20 for BTRFS support */
 typedef struct vfs_file_handle {
         unsigned int handle_bytes;

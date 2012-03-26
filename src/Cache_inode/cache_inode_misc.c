@@ -208,10 +208,6 @@ static int ci_avl_dir_ck_cmp(const struct avltree_node *lhs,
  */
 int cache_inode_compare_key_fsal(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
-  fsal_status_t status;
-  cache_inode_fsal_data_t *pfsdata1 = NULL;
-  cache_inode_fsal_data_t *pfsdata2 = NULL;
-
   /* Test if one of teh entries are NULL */
   if(buff1->pdata == NULL)
     return (buff2->pdata == NULL) ? 0 : 1;
@@ -222,11 +218,9 @@ int cache_inode_compare_key_fsal(hash_buffer_t * buff1, hash_buffer_t * buff2)
       else
         {
           int rc;
-          pfsdata1 = (cache_inode_fsal_data_t *) (buff1->pdata);
-          pfsdata2 = (cache_inode_fsal_data_t *) (buff2->pdata);
 
-          rc = (!FSAL_handlecmp(&pfsdata1->handle, &pfsdata2->handle, &status)
-                && (pfsdata1->cookie == pfsdata2->cookie)) ? 0 : 1;
+          rc = (buff1->len == buff2->len &&
+		!memcmp(buff1->pdata, buff2->pdata, buff1->len)) ? 0 : 1;
 
           return rc;
         }
@@ -266,74 +260,6 @@ int cache_inode_set_time_current( fsal_time_t * ptime )
 
 /**
  *
- * cache_inode_fsaldata_2_key: builds a key from the FSAL data.
- *
- * Builds a key from the FSAL data. If the key is used for reading and stay local to the function
- * pclient can be NULL (psfsdata in the scope of the current calling routine is used). If the key
- * must survive after the end of the calling routine, a new key is allocated and ressource in *pclient are used
- *
- * @param pkey [OUT] computed key
- * @param pfsdata [IN] FSAL data to be used to compute the key
- * @param pclient [INOUT] if NULL, pfsdata is used to build the key (that stay local), if not pool_key is used to
- * allocate a new key
- *
- * @return 0 if keys if successfully build, 1 otherwise
- *
- */
-int cache_inode_fsaldata_2_key(hash_buffer_t * pkey, cache_inode_fsal_data_t * pfsdata,
-                               cache_inode_client_t * pclient)
-{
-  cache_inode_fsal_data_t *ppoolfsdata = NULL;
-
-  /* Allocate a new key for storing data, if this a set, not a get
-   * in the case of a 'get' key, pclient == NULL and * pfsdata is used */
-
-  if(pclient != NULL)
-    {
-      GetFromPool(ppoolfsdata, &pclient->pool_key, cache_inode_fsal_data_t);
-      if(ppoolfsdata == NULL)
-        {
-          LogDebug(COMPONENT_CACHE_INODE,
-                   "Can't allocate a new key from cache pool");
-          return 1;
-        }
-
-      *ppoolfsdata = *pfsdata;
-
-      pkey->pdata = (caddr_t) ppoolfsdata;
-    }
-  else
-    pkey->pdata = (caddr_t) pfsdata;
-
-  pkey->len = sizeof(cache_inode_fsal_data_t);
-
-  return 0;
-}                               /* cache_inode_fsaldata_2_key */
-
-/**
- *
- * cache_inode_release_fsaldata_key: release a fsal key used to access the cache inode
- *
- * Release a fsal key used to access the cache inode.
- *
- * @param pkey    [IN]    pointer to the key to be freed
- * @param pclient [INOUT] ressource allocated by the client for the nfs management.
- *
- * @return nothing (void function)
- *
- */
-void cache_inode_release_fsaldata_key(hash_buffer_t * pkey,
-                                      cache_inode_client_t * pclient)
-{
-  cache_inode_fsal_data_t *ppoolfsdata = NULL;
-
-  ppoolfsdata = (cache_inode_fsal_data_t *) pkey->pdata;
-
-  ReleaseToPool(ppoolfsdata, &pclient->pool_key);
-}                               /* cache_inode_release_fsaldata_key */
-
-/**
- *
  * cache_inode_new_entry: adds a new entry to the cache_inode.
  *
  * adds a new entry to the cache_inode. These function os used to allocate entries of any kind. Some
@@ -366,12 +292,13 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                                      cache_inode_status_t      * pstatus)
 {
   cache_entry_t *pentry = NULL;
-  hash_buffer_t key, value;
+  hash_buffer_t probe_key, key, value;
   fsal_attrib_list_t fsal_attributes;
   fsal_status_t fsal_status;
   int rc = 0;
   off_t size_in_cache;
   cache_content_status_t cache_content_status ;
+  fsal_handle_t file_handle;  /* biggest handle we will ever see. note: temp */
   cache_inode_create_arg_t zero_create_arg;
 
   memset(&zero_create_arg, 0, sizeof(zero_create_arg));
@@ -386,27 +313,25 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
   pclient->stat.nb_call_total++;
   (pclient->stat.func_stats.nb_call[CACHE_INODE_NEW_ENTRY])++;
 
-  /* Turn the input to a hash key */
-  if(cache_inode_fsaldata_2_key(&key, pfsdata, NULL))
-    {
-      *pstatus = CACHE_INODE_UNAPPROPRIATED_KEY;
+  /* Turn the input to a hash key for probing */
+  probe_key.pdata = pfsdata->fh_desc.start;
+  probe_key.len = pfsdata->fh_desc.len;
 
-      /* stats */
-      (pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_NEW_ENTRY])++;
-      cache_inode_release_fsaldata_key(&key, pclient);
-
-      return NULL;
-    }
+/* cobble up a "handle" for the getattrs for now
+ */
+  memset((caddr_t)&file_handle, 0, sizeof(file_handle));
+  memcpy((caddr_t)&file_handle, pfsdata->fh_desc.start, pfsdata->fh_desc.len);
 
   /* Check if the entry doesn't already exists */
-  if(HashTable_Get(ht, &key, &value) == HASHTABLE_SUCCESS)
+  if(HashTable_Get(ht, &probe_key, &value) == HASHTABLE_SUCCESS)
     {
       /* Entry is already in the cache, do not add it */
       pentry = (cache_entry_t *) value.pdata;
       *pstatus = CACHE_INODE_ENTRY_EXISTS;
 
       LogDebug(COMPONENT_CACHE_INODE,
-               "cache_inode_new_entry: Trying to add an already existing entry. Found entry %p type: %d State: %d, New type: %d",
+               "cache_inode_new_entry: Trying to add an already existing entry."
+	       "Found entry %p type: %d State: %d, New type: %d",
                pentry, pentry->internal_md.type, pentry->internal_md.valid_state, type);
 
       /* stats */
@@ -428,7 +353,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
       return NULL;
     }
 
-  /*  if( type == DIRECTORY ) */
+  memset(pentry, 0, sizeof(cache_entry_t));
 
   if(rw_lock_init(&(pentry->lock)) != 0)
     {
@@ -449,7 +374,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
   if(pfsal_attr == NULL)
     {
        fsal_attributes.asked_attributes = pclient->attrmask;
-       fsal_status = FSAL_getattrs(&pfsdata->handle, pcontext, &fsal_attributes);
+       fsal_status = FSAL_getattrs(&file_handle, pcontext, &fsal_attributes);
 
        if(FSAL_IS_ERROR(fsal_status))
          {
@@ -493,17 +418,23 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
 #endif
   pentry->internal_md.type = type;
   pentry->internal_md.valid_state = VALID;
-  pentry->internal_md.read_time = 0;
-  pentry->internal_md.mod_time = pentry->internal_md.alloc_time = time(NULL);
-  pentry->internal_md.refresh_time = pentry->internal_md.alloc_time;
-
-  pentry->gc_lru_entry = NULL;
-  pentry->gc_lru = NULL;
+  pentry->internal_md.mod_time =
+	  pentry->internal_md.alloc_time =
+	  pentry->internal_md.refresh_time = time(NULL);
 
   pentry->policy = policy ;
+  memcpy(&pentry->handle,
+	 pfsdata->fh_desc.start,
+	 pfsdata->fh_desc.len);
+  pentry->fh_desc.start = (caddr_t)&pentry->handle;
+  pentry->fh_desc.len = pfsdata->fh_desc.len;
 
-  /* No parent for now, it will be added in cache_inode_add_cached_dirent */
-  pentry->parent_list = NULL;
+#ifdef _USE_MFSL
+  pentry->mobject.handle = pentry->handle;
+#ifdef _USE_MFSL_PROXY
+  pentry->mobject.plock = &pentry->lock;
+#endif
+#endif
 
   switch (type)
     {
@@ -512,14 +443,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                "cache_inode_new_entry: Adding a REGULAR_FILE pentry=%p policy=%u",
                pentry, policy );
 
-      pentry->handle = pfsdata->handle;
-#ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->handle;
-#ifdef _USE_MFSL_PROXY
-      pentry->mobject.plock = &pentry->lock;
-#endif
-#endif
-      pentry->object.file.pentry_content = NULL;    /* Not yet a File Content entry associated with this entry */
       init_glist(&pentry->object.file.state_list);  /* No associated states yet */
       init_glist(&pentry->object.file.lock_list);   /* No associated locks yet */
       if(pthread_mutex_init(&pentry->object.file.lock_list_mutex, NULL) != 0)
@@ -536,20 +459,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
           (pclient->stat.func_stats.nb_err_retryable[CACHE_INODE_NEW_ENTRY])++;
           return NULL;
         }
-      pentry->object.file.open_fd.fileno = 0;
-      pentry->object.file.open_fd.last_op = 0;
-      pentry->object.file.open_fd.openflags = 0;
-#ifdef _USE_MFSL
-      memset(&(pentry->object.file.open_fd.mfsl_fd), 0, sizeof(mfsl_file_t));
-#else
-      memset(&(pentry->object.file.open_fd.fd), 0, sizeof(fsal_file_t));
-#endif
-      memset(&(pentry->object.file.unstable_data), 0,
-             sizeof(cache_inode_unstable_data_t));
-#ifdef _USE_PROXY
-      pentry->object.file.pname = NULL;
-      pentry->object.file.pentry_parent_open = NULL;
-#endif
 
       break;
 
@@ -557,11 +466,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
       LogMidDebug(COMPONENT_CACHE_INODE,
                "cache_inode_new_entry: Adding a DIRECTORY pentry=%p policy=%u",
                pentry, policy);
-
-      pentry->handle = pfsdata->handle;
-#ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->handle;
-#endif
 
       /* If directory is newly created, it is empty
        * because we know its content, we consider it read */ 
@@ -592,10 +496,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                    "Can't allocate entry symlink from symlink pool");
           break;
         }
-      pentry->handle = pfsdata->handle;
-#ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->handle;
-#endif
      if( CACHE_INODE_KEEP_CONTENT( policy ) )
       {  
         fsal_status =
@@ -616,10 +516,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                "cache_inode_new_entry: Adding a SOCKET_FILE pentry = %p",
                pentry);
 
-      pentry->handle = pfsdata->handle;
-#ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->handle;
-#endif
       break;
 
     case FIFO_FILE:
@@ -627,10 +523,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                "cache_inode_new_entry: Adding a FIFO_FILE pentry = %p",
                pentry);
 
-      pentry->handle = pfsdata->handle;
-#ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->handle;
-#endif
       break;
 
     case BLOCK_FILE:
@@ -638,10 +530,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                "cache_inode_new_entry: Adding a BLOCK_FILE pentry=%p policy=%u",
                pentry, policy);
 
-      pentry->handle = pfsdata->handle;
-#ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->handle;
-#endif
       break;
 
     case CHARACTER_FILE:
@@ -649,10 +537,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                "cache_inode_new_entry: Adding a CHARACTER_FILE pentry=%p policy=%u",
                pentry, policy);
 
-      pentry->handle = pfsdata->handle;
-#ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->handle;
-#endif
       break;
 
     case FS_JUNCTION:
@@ -660,7 +544,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                  "cache_inode_new_entry: Adding a FS_JUNCTION pentry=%p policy=%u",
                  pentry, policy);
 
-        fsal_status = FSAL_lookupJunction( &pfsdata->handle, pcontext,
+        fsal_status = FSAL_lookupJunction( &file_handle, pcontext,
 					   &pentry->handle,
 					   NULL);
         if( FSAL_IS_ERROR( fsal_status ) )
@@ -686,14 +570,7 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
       /* XXX Fake FS_JUNCTION into directory */
       pentry->internal_md.type = DIRECTORY;
 
-#ifdef _USE_MFSL
-      pentry->mobject.handle = pentry->handle;
-#endif
-
       pentry->object.dir.has_been_readdir = CACHE_INODE_NO;
-      pentry->object.dir.nbactive = 0;
-      pentry->object.dir.referral = NULL;
-
       /* init avl trees */
       avltree_init(&pentry->object.dir.dentries, ci_avl_dir_name_cmp,
 		   0 /* flags */);
@@ -715,21 +592,16 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
       return NULL;
     }
 
-  /* Turn the input to a hash key */
-  if(cache_inode_fsaldata_2_key(&key, pfsdata, pclient))
-    {
-      *pstatus = CACHE_INODE_UNAPPROPRIATED_KEY;
 
-      /* stats */
-      (pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_NEW_ENTRY])++;
-      cache_inode_release_fsaldata_key(&key, pclient);
-
-      return NULL;
-    }
-
-  /* Adding the entry in the cache */
+  /* Adding the entry in the cache
+   * note we have the key point to the handle within the cache entry
+   * rather than allocating a cache_inode_data_t. the copy from the caller
+   * is done above in the init of the cache entry.
+   */
   value.pdata = (caddr_t) pentry;
   value.len = sizeof(cache_entry_t);
+  key.pdata = pentry->fh_desc.start;
+  key.len = pentry->fh_desc.len;
 
   if((rc =
       HashTable_Test_And_Set(ht, &key, &value,
@@ -1308,7 +1180,15 @@ fsal_handle_t *cache_inode_get_fsal_handle(cache_entry_t * pentry,
           *pstatus = CACHE_INODE_SUCCESS;
          }                       /* switch( pentry->internal_md.type ) */
     }
-
+  if(pentry->fh_desc.start != (caddr_t) &pentry->handle)
+    {
+      LogCrit(COMPONENT_CACHE_INODE,
+	      "Mangled handle descriptor: "
+	      "fh_desc.start = 0x%p, &pentry->handle = 0x%p",
+	      pentry->fh_desc.start, &pentry->handle);
+      preturned_handle = NULL;
+      *pstatus = CACHE_INODE_BAD_TYPE;
+    }
   return preturned_handle;
 }                               /* cache_inode_get_fsal_handle */
 
@@ -1492,6 +1372,10 @@ cache_inode_status_t cache_inode_reload_content(char *path, cache_entry_t * pent
   #undef STR
   #undef XSTR
 
+/* FIXME: handles are now variable length. get the length of the handle
+ * from the file and then scan the handle to that size and fill out pentry->fh_desc.
+ * current config turns off file caching (for now).
+ */
   if(sscanHandle(&(pentry->handle), buff) < 0)
     {
       /* expected = 2*sizeof(fsal_handle_t) in hexa representation */

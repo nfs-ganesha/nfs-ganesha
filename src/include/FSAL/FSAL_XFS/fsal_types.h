@@ -96,10 +96,10 @@
 typedef union {
  struct
   {
-    char handle_val[FSAL_XFS_HANDLE_LEN];
+    uint64_t inode;
     unsigned int handle_len;
-    uint32_t inode;
     char type;
+    char handle_val[FSAL_XFS_HANDLE_LEN];
   } data ;
 #ifdef _BUILD_SHARED_FSAL 
   char pad[FSAL_HANDLE_T_SIZE];

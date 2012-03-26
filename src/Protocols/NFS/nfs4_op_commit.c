@@ -215,18 +215,22 @@ static int op_dscommit(struct nfs_argop4 *op,
 {
   /* FSAL file handle */
   fsal_handle_t handle;
+  struct fsal_handle_desc fh_desc;
   /* NFSv4 status code */
   nfsstat4 nfs_status = 0;
 
   /* Construct the FSAL file handle */
 
   if ((nfs4_FhandleToFSAL(&data->currentFH,
-                          &handle,
+                          &fh_desc,
                           data->pcontext)) == 0)
     {
       res_COMMIT4.status = NFS4ERR_INVAL;
       return res_COMMIT4.status;
     }
+
+  memset(&handle, 0, sizeof(handle));
+  memcpy(&handle, fh_desc.start, fh_desc.len);
 
   /* Call the commit operation */
 

@@ -109,6 +109,7 @@ int nfs_Readdir(nfs_arg_t * parg,
   cache_inode_status_t cache_status;
   cache_inode_status_t cache_status_gethandle;
   fsal_handle_t *pfsal_handle;
+  struct fsal_handle_desc fh_desc;
   int dir_pentry_unlock = FALSE;
   unsigned int delta = 0;
   unsigned int i = 0;
@@ -435,11 +436,12 @@ int nfs_Readdir(nfs_arg_t * parg,
                           pres->res_readdir2.status = nfs2_Errno(cache_status_gethandle);
                           return NFS_REQ_OK;
                         }
-
+		      fh_desc.start = (caddr_t) & (RES_READDIR2_OK.entries[0].fileid);
+		      fh_desc.len = sizeof(RES_READDIR2_OK.entries[0].fileid);
                       FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                         FSAL_DIGEST_FILEID2,
                                         pfsal_handle,
-                                        (caddr_t) & (RES_READDIR2_OK.entries[0].fileid));
+                                        &fh_desc);
 
                       RES_READDIR2_OK.entries[0].name = entry_name_array[0];
                       strcpy(RES_READDIR2_OK.entries[0].name, ".");
@@ -510,11 +512,12 @@ int nfs_Readdir(nfs_arg_t * parg,
                           return NFS_REQ_OK;
                         }
 
+		      fh_desc.start = (caddr_t) & (RES_READDIR2_OK.entries[delta].fileid);
+		      fh_desc.len = sizeof(RES_READDIR2_OK.entries[delta].fileid);
                       FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                         FSAL_DIGEST_FILEID2,
                                         pfsal_handle,
-                                        (caddr_t) & (RES_READDIR2_OK.entries[delta].
-                                                     fileid));
+                                        &fh_desc);
 
                       RES_READDIR2_OK.entries[delta].name = entry_name_array[delta];
                       strcpy(RES_READDIR2_OK.entries[delta].name, "..");
@@ -565,12 +568,14 @@ int nfs_Readdir(nfs_arg_t * parg,
                         }
                       break;
                     }
+		  fh_desc.start = (caddr_t) & (RES_READDIR2_OK.entries[i].fileid);
+		  fh_desc.len = sizeof(RES_READDIR2_OK.entries[i].fileid);
                   FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                     FSAL_DIGEST_FILEID2,
                                     cache_inode_get_fsal_handle(
                                         dirent_array[i - delta]->pentry,
                                         &cache_status_gethandle),
-                                    (caddr_t) & (RES_READDIR2_OK.entries[i].fileid));
+                                    &fh_desc);
 
                   FSAL_name2str(&dirent_array[i - delta]->name,
                                 entry_name_array[i],
@@ -650,11 +655,12 @@ int nfs_Readdir(nfs_arg_t * parg,
                           return NFS_REQ_OK;
                         }
 
+		      fh_desc.start = (caddr_t) & (RES_READDIR3_OK.reply.entries[0].fileid);
+		      fh_desc.len = sizeof(RES_READDIR3_OK.reply.entries[0].fileid);
                       FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                         FSAL_DIGEST_FILEID3,
                                         pfsal_handle,
-                                        (caddr_t) & (RES_READDIR3_OK.reply.entries[0].
-                                                     fileid));
+                                        &fh_desc);
 
                       RES_READDIR3_OK.reply.entries[0].name = entry_name_array[0];
                       strcpy(RES_READDIR3_OK.reply.entries[0].name, ".");
@@ -731,11 +737,12 @@ int nfs_Readdir(nfs_arg_t * parg,
                           return NFS_REQ_OK;
                         }
 
+		      fh_desc.start = (caddr_t) & (RES_READDIR3_OK.reply.entries[delta].fileid);
+		      fh_desc.len = sizeof(RES_READDIR3_OK.reply.entries[delta].fileid);
                       FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                         FSAL_DIGEST_FILEID3,
                                         pfsal_handle,
-                                        (caddr_t) & (RES_READDIR3_OK.reply.entries[delta].
-                                                     fileid));
+                                        &fh_desc);
 
                       RES_READDIR3_OK.reply.entries[delta].name = entry_name_array[delta];
                       strcpy(RES_READDIR3_OK.reply.entries[delta].name, "..");
@@ -783,13 +790,14 @@ int nfs_Readdir(nfs_arg_t * parg,
                         }
                       break;
                     }
+		  fh_desc.start = (caddr_t) & (RES_READDIR3_OK.reply.entries[i].fileid);
+		  fh_desc.len = sizeof(RES_READDIR3_OK.reply.entries[i].fileid);
                   FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                     FSAL_DIGEST_FILEID3,
                                     cache_inode_get_fsal_handle(
                                         dirent_array[i - delta]->pentry,
                                         &cache_status_gethandle),
-                                    (caddr_t) & (RES_READDIR3_OK.reply.entries[i].
-                                                 fileid));
+                                    &fh_desc);
 
                   FSAL_name2str(&dirent_array[i - delta]->name,
                                 entry_name_array[i],

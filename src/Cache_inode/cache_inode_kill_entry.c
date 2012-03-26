@@ -182,21 +182,15 @@ cache_inode_status_t cache_inode_kill_entry( cache_entry_t          * pentry,
         }
     }
 
-  fsaldata.handle = *pfsal_handle;
-  fsaldata.cookie = DIR_START;
+  fsaldata.fh_desc.start = (caddr_t)pfsal_handle;
+  fsaldata.fh_desc.len = 0;
+  (void) FSAL_ExpandHandle(NULL,  /* pcontext but not used... */
+			   FSAL_DIGEST_SIZEOF,
+			   &fsaldata.fh_desc);
 
   /* Use the handle to build the key */
-  if(cache_inode_fsaldata_2_key(&key, &fsaldata, pclient))
-    {
-      free_lock( pentry, lock_how ) ; 
-
-      LogCrit(COMPONENT_CACHE_INODE,
-              "cache_inode_kill_entry: could not build hashtable key");
-
-      cache_inode_release_fsaldata_key(&key, pclient);
-      *pstatus = CACHE_INODE_NOT_FOUND;
-      return *pstatus;
-    }
+  key.pdata = fsaldata.fh_desc.start;
+  key.len = fsaldata.fh_desc.len;
 
   /* use the key to delete the entry */
   if((rc = HashTable_Del(ht, &key, &old_key, &old_value)) != HASHTABLE_SUCCESS)
@@ -206,14 +200,9 @@ cache_inode_status_t cache_inode_kill_entry( cache_entry_t          * pentry,
                  "cache_inode_kill_entry: entry could not be deleted, status = %d",
                  rc);
 
-      cache_inode_release_fsaldata_key(&key, pclient);
-
       *pstatus = CACHE_INODE_NOT_FOUND;
       return *pstatus;
     }
-
-  /* Release the hash key data */
-  cache_inode_release_fsaldata_key(&old_key, pclient);
 
   /* Clean up the associated ressources in the FSAL */
   if(FSAL_IS_ERROR(fsal_status = FSAL_CleanObjectResources(pfsal_handle)))
@@ -225,15 +214,13 @@ cache_inode_status_t cache_inode_kill_entry( cache_entry_t          * pentry,
 
   /* Sanity check: old_value.pdata is expected to be equal to pentry,
    * and is released later in this function */
-  if((cache_entry_t *) old_value.pdata != pentry)
+  if((cache_entry_t *) old_value.pdata != pentry ||
+	 ((cache_entry_t *)old_value.pdata)->fh_desc.start != (caddr_t)&pentry->handle)
     {
       LogCrit(COMPONENT_CACHE_INODE,
               "cache_inode_kill_entry: unexpected pdata %p from hash table (pentry=%p)",
               old_value.pdata, pentry);
     }
-
-  /* Release the current key */
-  cache_inode_release_fsaldata_key(&key, pclient);
 
   /* Recover the parent list entries */
   parent_iter = pentry->parent_list;
