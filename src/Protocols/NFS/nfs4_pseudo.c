@@ -2156,8 +2156,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
               return res_READDIR4.status;
             }
           /* Add the entry to the cache as a root. There has to be a better way. */
-          fsdata.handle = fsal_handle;
-          fsdata.cookie = 0;
+	  fsdata.fh_desc.start = (caddr_t) &fsal_handle;
+	  fsdata.fh_desc.len = 0;
           if((pentry = cache_inode_make_root(&fsdata,
                                      data->pexport->cache_inode_policy,
                                      data->ht,
