@@ -348,11 +348,14 @@ cache_inode_create(cache_entry_t * pentry_parent,
     else
         {
 #ifdef _USE_MFSL
-            fsal_data.handle = object_handle.handle;
+	    fsal_data.fh_desc.start = (caddr_t)(&object_handle.handle);
 #else
-            fsal_data.handle = object_handle;
+            fsal_data.fh_desc.start = (caddr_t)(&object_handle);
 #endif
-            fsal_data.cookie = DIR_START;
+            fsal_data.fh_desc.len = 0;
+            (void) FSAL_ExpandHandle(pcontext->export_context,
+				     FSAL_DIGEST_SIZEOF,
+				     &fsal_data.fh_desc);
 
             pentry = cache_inode_new_entry( &fsal_data, 
                                             &object_attributes,

@@ -1284,8 +1284,9 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   fsal_handle_t *pfsal_handle = NULL;
   fsal_status_t fsal_status;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-  file_handle_v4_t file_handle;
+  file_handle_v4_t *file_handle;
   nfs_fh4 nfsfh;
+  struct alloc_file_handle_v4 temp_handle;
 
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_readdir_xattr";
 
@@ -1295,10 +1296,14 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_READDIR;
   res_READDIR4.status = NFS4_OK;
 
-  memset(&file_handle, 0, sizeof(file_handle_v4_t));
-  memcpy((char *)&file_handle, data->currentFH.nfs_fh4_val, data->currentFH.nfs_fh4_len);
+  nfsfh.nfs_fh4_val = (caddr_t) &temp_handle;
+  nfsfh.nfs_fh4_len = sizeof(struct alloc_file_handle_v4);  
+  memset(nfsfh.nfs_fh4_val, 0, nfsfh.nfs_fh4_len);
+
+  memcpy(nfsfh.nfs_fh4_val, data->currentFH.nfs_fh4_val, data->currentFH.nfs_fh4_len);
   nfsfh.nfs_fh4_len = data->currentFH.nfs_fh4_len;
-  nfsfh.nfs_fh4_val = (char *)&file_handle;
+
+  file_handle = &temp_handle.handle;
 
   LogFullDebug(COMPONENT_NFS_V4_XATTR, "Entering NFS4_OP_READDIR_PSEUDO");
 
@@ -1448,7 +1453,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
           /* Set the cookie value */
           entry_nfs_array[i].cookie = cookie + i + 3;   /* 0, 1 and 2 are reserved */
 
-          file_handle.xattr_pos = xattrs_tab[i].xattr_id + 2;
+          file_handle->xattr_pos = xattrs_tab[i].xattr_id + 2;
           if(nfs4_XattrToFattr(&(entry_nfs_array[i].attrs),
                                data, &nfsfh, &(arg_READDIR4.attr_request)) != 0)
             {

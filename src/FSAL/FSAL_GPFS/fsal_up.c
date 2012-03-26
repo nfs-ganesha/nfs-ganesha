@@ -60,9 +60,19 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
   struct glock fl;
   struct callback_arg callback;
   cache_inode_fsal_data_t pfsal_data;
-  gpfsfsal_handle_t *phandle = (gpfsfsal_handle_t *) &pfsal_data.handle;
+  fsal_handle_t *tmp_handlep;
+  gpfsfsal_handle_t *phandle;
   int reason = 0;
   unsigned int *fhP;
+  cache_inode_fsal_data_t *event_fsal_data;
+
+  tmp_handlep = malloc(sizeof(fsal_handle_t));
+  memset((char *)tmp_handlep, 0, sizeof(fsal_handle_t)) ;
+
+  memset((char *)&pfsal_data, 0, sizeof(pfsal_data));
+  pfsal_data.fh_desc.start = (caddr_t)tmp_handlep;
+  pfsal_data.fh_desc.len = sizeof(*tmp_handlep);
+  phandle = (gpfsfsal_handle_t *) pfsal_data.fh_desc.start;
 
   if (pupebcontext == NULL || event_nb == NULL)
     {
@@ -71,12 +81,9 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
       Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_UP_getevents);
     }
 
-  memset(&pfsal_data, 0, sizeof(cache_inode_fsal_data_t));
-
   gpfsfsal_export_context_t *p_export_context =
     (gpfsfsal_export_context_t *)&pupebcontext->FS_export_context;
 
-  pfsal_data.cookie = 0;
   phandle->data.handle.handle_size = OPENHANDLE_HANDLE_LEN;
   phandle->data.handle.handle_key_size = 0;
   callback.mountdirfd = p_export_context->mount_root_fd;
@@ -90,9 +97,18 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
            "inode update: rc %d reason %d update ino %ld",
            rc, reason, callback.buf->st_ino);
   LogDebug(COMPONENT_FSAL,
-           "inode update: handle size = %u key_size = %u",
+           "inode update: tmp_handlep:%p callback.handle:%p  pfsal_data.fh_desc.start:%p handle size = %u handle_type:%d handle_version:%d key_size = %u f_handle:%p", tmp_handlep, callback.handle, pfsal_data.fh_desc.start,
            callback.handle->handle_size,
-           callback.handle->handle_key_size);
+           callback.handle->handle_type,
+           callback.handle->handle_version,
+           callback.handle->handle_key_size,
+           callback.handle->f_handle);
+
+  callback.handle->handle_version = OPENHANDLE_VERSION;
+
+  // TODO: Workaround until we get new GPFS code.
+  callback.handle->handle_type = 7;
+
   fhP = (int *)&(callback.handle->f_handle[0]);
   LogDebug(COMPONENT_FSAL,
            " inode update: handle %08x %08x %08x %08x %08x %08x %08x\n",
@@ -102,10 +118,11 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
    * ... open,close,read,...,invalidate? */
   if (*pevents == NULL)
     GetFromPool(*pevents, pupebcontext->event_pool, fsal_up_event_t);
-  memset(*pevents, 0, sizeof(fsal_up_event_t));
-  memcpy(&(*pevents)->event_data.event_context.fsal_data, &pfsal_data,
-         sizeof(cache_inode_fsal_data_t));
 
+  memset(*pevents, 0, sizeof(fsal_up_event_t));
+  event_fsal_data = &(*pevents)->event_data.event_context.fsal_data;
+  memcpy(event_fsal_data, &pfsal_data, sizeof(cache_inode_fsal_data_t));
+  GPFSFSAL_ExpandHandle(NULL, FSAL_DIGEST_SIZEOF, &(event_fsal_data->fh_desc));
   if (reason == INODE_LOCK_GRANTED) /* Lock Event */
     {
       LogDebug(COMPONENT_FSAL,

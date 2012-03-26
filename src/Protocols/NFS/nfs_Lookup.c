@@ -211,7 +211,7 @@ int nfs_Lookup(nfs_arg_t * parg,
                 case NFS_V3:
                   /* Build FH */
                   if((pres->res_lookup3.LOOKUP3res_u.resok.object.data.data_val =
-                      Mem_Alloc(NFS3_FHSIZE)) == NULL)
+                      Mem_Alloc(sizeof(struct alloc_file_handle_v3))) == NULL)
                     pres->res_lookup3.status = NFS3ERR_INVAL;
                   else
                     {

@@ -174,6 +174,7 @@ int main(int argc, char *argv[])
   char attr_buffer[4096];
   size_t sz_returned;
   fsal_u64_t objid;
+  struct fsal_handle_desc fh_desc;
   char options[] = "h@f:v:i:";
   char usage[] = "%s [-h][-f <cfg_path>] {-v 2|3|4 <NFS_FileHandle> | -i <inum>}\n"
       "   -h               : prints this help\n"
@@ -399,7 +400,7 @@ int main(int argc, char *argv[])
       switch (nfs_version)
         {
         case 2:
-          if(!nfs2_FhandleToFSAL(&filehandle_v2, &fsal_data.handle, &fsal_op_context))
+          if(!nfs2_FhandleToFSAL(&filehandle_v2, &fsal_data.fh_desc, &fsal_op_context))
             {
               fprintf(stderr, "Cannot convert Fhandle to FSAL\n");
               exit(1);
@@ -407,7 +408,7 @@ int main(int argc, char *argv[])
           break;
 
         case 3:
-          if(!nfs3_FhandleToFSAL(&filehandle_v3, &fsal_data.handle, &fsal_op_context))
+          if(!nfs3_FhandleToFSAL(&filehandle_v3, &fsal_data.fh_desc, &fsal_op_context))
             {
               fprintf(stderr, "Cannot convert Fhandle to FSAL\n");
               exit(1);
@@ -415,7 +416,7 @@ int main(int argc, char *argv[])
           break;
 
         case 4:
-          if(!nfs4_FhandleToFSAL(&filehandle_v4, &fsal_data.handle, &fsal_op_context))
+          if(!nfs4_FhandleToFSAL(&filehandle_v4, &fsal_data.fh_desc, &fsal_op_context))
             {
               fprintf(stderr, "Cannot convert Fhandle to FSAL\n");
               exit(1);
@@ -425,8 +426,8 @@ int main(int argc, char *argv[])
 
       printf("\n");
 
-      snprintmem((caddr_t) str, 2 * CMD_BUFFER_SIZE, (caddr_t) & fsal_data.handle,
-                 sizeof(fsal_data.handle));
+      snprintmem((caddr_t) str, 2 * CMD_BUFFER_SIZE, fsal_data.fh_desc.start,
+                 fsal_data.fh_desc.len);
 
       printf("%-18s = %s\n", "FSAL Handle", str);
 
@@ -439,7 +440,7 @@ int main(int argc, char *argv[])
         {
           unsigned int index;
 
-          fsal_status = FSAL_ListXAttrs(&fsal_data.handle, cookie, &fsal_op_context,
+          fsal_status = FSAL_ListXAttrs((fsal_handle_t *)fsal_data.fh_desc.start, cookie, &fsal_op_context,
                                         xattr_array, 256, &nb_returned, &eol);
 
           if(FSAL_IS_ERROR(fsal_status))
@@ -457,7 +458,7 @@ int main(int argc, char *argv[])
               printf("%-18s = ", xattr_array[index].xattr_name.name);
 
               fsal_status =
-                  FSAL_GetXAttrValueByName(&fsal_data.handle,
+		  FSAL_GetXAttrValueByName((fsal_handle_t *)fsal_data.fh_desc.start,
                                            &xattr_array[index].xattr_name,
                                            &fsal_op_context, attr_buffer, 4096,
                                            &sz_returned);
@@ -475,9 +476,12 @@ int main(int argc, char *argv[])
         }
 
       /* get object ID */
+      fh_desc.start = (caddr_t) & objid;
+      fh_desc.len = sizeof(fsal_u64_t);
       fsal_status =
-          FSAL_DigestHandle(&fsal_export_context, FSAL_DIGEST_FILEID4, &fsal_data.handle,
-                            (caddr_t) & objid);
+	  FSAL_DigestHandle(&fsal_export_context, FSAL_DIGEST_FILEID4,
+			    (fsal_handle_t *)fsal_data.fh_desc.start,
+                            &fh_desc);
 
       if(FSAL_IS_ERROR(fsal_status))
         {

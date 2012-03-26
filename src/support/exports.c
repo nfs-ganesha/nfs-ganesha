@@ -3044,8 +3044,16 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
           *pcurrent->proot_handle = fsal_handle;
 
           /* Add this entry to the Cache Inode as a "root" entry */
-          fsdata.handle = fsal_handle;
-          fsdata.cookie = 0;
+          fsdata.fh_desc.start = (caddr_t) &fsal_handle;
+          fsdata.fh_desc.len = 0;
+	  (void) FSAL_ExpandHandle(
+#ifdef _USE_SHARED_FSAL
+		                   context[pcurrent->fsalid].export_context,
+#else
+				   context.export_context,
+#endif
+				   FSAL_DIGEST_SIZEOF,
+				   &fsdata.fh_desc);
 
           if((pentry = cache_inode_make_root(&fsdata,
                                              pcurrent->cache_inode_policy,

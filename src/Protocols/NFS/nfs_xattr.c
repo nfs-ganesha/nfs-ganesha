@@ -489,9 +489,10 @@ int nfs3_Lookup_Xattr(nfs_arg_t * parg,
     }
 
   /* Build FH */
-  if((pres->res_lookup3.LOOKUP3res_u.resok.object.data.data_val =
-      Mem_Alloc(NFS3_FHSIZE)) == NULL)
-    pres->res_lookup3.status = NFS3ERR_INVAL;
+  pres->res_lookup3.status =
+	  nfs3_AllocateFH((nfs_fh3 *) & (pres->res_lookup3.LOOKUP3res_u.resok.object.data));
+  if(pres->res_lookup3.status !=  NFS3_OK)
+    return NFS_REQ_OK;
 
   if(nfs3_FSALToFhandle((nfs_fh3 *) & (pres->res_lookup3.LOOKUP3res_u.resok.object.data),
                         pfsal_handle, pexport))
@@ -950,12 +951,10 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
     }
 
   /* Build file handle */
-
-  if((resok->obj.post_op_fh3_u.handle.data.data_val = Mem_Alloc(NFS3_FHSIZE)) == NULL)
-    {
-      pres->res_create3.status = NFS3ERR_IO;
-      return NFS_REQ_OK;
-    }
+  pres->res_create3.status =
+	  nfs3_AllocateFH(&resok->obj.post_op_fh3_u.handle);
+  if(pres->res_create3.status != NFS3_OK)
+    return NFS_REQ_OK;
 
   /* Set Post Op Fh3 structure */
   if(nfs3_FSALToFhandle(&resok->obj.post_op_fh3_u.handle, pfsal_handle, pexport) == 0)
@@ -974,7 +973,6 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
   p_handle_out->xattr_pos = attr_id + 2;
 
   resok->obj.handle_follows = TRUE;
-  resok->obj.post_op_fh3_u.handle.data.data_len = sizeof(file_handle_v3_t);
 
   /* set current time (the file is new) */
   fsal_set_times_current(&attr_attrs);
@@ -1451,7 +1449,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                          parg->arg_readdirplus3.dir.data.data_len);
 
                   RES_READDIRPLUS_REPLY.entries[0].name_handle.post_op_fh3_u.handle.data.
-                      data_len = sizeof(file_handle_v3_t);
+                      data_len = parg->arg_readdirplus3.dir.data.data_len;
                   pfile_handle =
                       (file_handle_v3_t *) (RES_READDIRPLUS_REPLY.entries[0].name_handle.
                                             post_op_fh3_u.handle.data.data_val);
@@ -1488,7 +1486,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                          parg->arg_readdirplus3.dir.data.data_len);
 
                   RES_READDIRPLUS_REPLY.entries[delta].name_handle.post_op_fh3_u.handle.
-                      data.data_len = sizeof(file_handle_v3_t);
+                      data.data_len = parg->arg_readdirplus3.dir.data.data_len;
                   pfile_handle =
                       (file_handle_v3_t *) (RES_READDIRPLUS_REPLY.entries[delta].
                                             name_handle.post_op_fh3_u.handle.data.
@@ -1575,7 +1573,7 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                      (char *)parg->arg_readdirplus3.dir.data.data_val,
                      parg->arg_readdirplus3.dir.data.data_len);
               RES_READDIRPLUS_REPLY.entries[i].name_handle.post_op_fh3_u.handle.data.
-                  data_len = sizeof(file_handle_v3_t);
+                  data_len = parg->arg_readdirplus3.dir.data.data_len;
               pfile_handle =
                   (file_handle_v3_t *) (RES_READDIRPLUS_REPLY.entries[i].name_handle.
                                         post_op_fh3_u.handle.data.data_val);

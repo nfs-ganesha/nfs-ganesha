@@ -118,6 +118,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
   cache_inode_status_t cache_status;
   cache_inode_status_t cache_status_gethandle;
   fsal_handle_t *pfsal_handle = NULL;
+  struct fsal_handle_desc fh_desc;
   entry_name_array_item_t *entry_name_array = NULL;
   fh3_buffer_item_t *fh3_array = NULL;
   entryplus3 reference_entry;
@@ -382,11 +383,12 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                       return NFS_REQ_OK;
                     }
 
+		  fh_desc.start = (caddr_t)&(RES_READDIRPLUS_REPLY.entries[0].fileid);
+		  fh_desc.len = sizeof(RES_READDIRPLUS_REPLY.entries[0].fileid);
                   FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                     FSAL_DIGEST_FILEID3,
                                     pfsal_handle,
-                                    (caddr_t) & (RES_READDIRPLUS_REPLY.entries[0].
-                                                 fileid));
+                                    &fh_desc);
 
                   RES_READDIRPLUS_REPLY.entries[0].name = entry_name_array[0];
                   strcpy(RES_READDIRPLUS_REPLY.entries[0].name, ".");
@@ -425,9 +427,6 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                   /* Set PostPoFh3 structure */
                   pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[0].
                       name_handle.handle_follows = TRUE;
-                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[0].
-                      name_handle.post_op_fh3_u.handle.data.data_len =
-                      sizeof(file_handle_v3_t);
 
                   nfs_SetPostOpAttr(pcontext, pexport,
                                     dir_pentry,
@@ -493,11 +492,12 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                       return NFS_REQ_OK;
                     }
 
+		  fh_desc.start = (caddr_t)&(RES_READDIRPLUS_REPLY.entries[delta].fileid);
+		  fh_desc.len = sizeof(RES_READDIRPLUS_REPLY.entries[delta].fileid);
                   FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                     FSAL_DIGEST_FILEID3,
                                     pfsal_handle,
-                                    (caddr_t) & (RES_READDIRPLUS_REPLY.entries[delta].
-                                                 fileid));
+                                    &fh_desc);
 
                   RES_READDIRPLUS_REPLY.entries[delta].name = entry_name_array[delta];
                   strcpy(RES_READDIRPLUS_REPLY.entries[delta].name, "..");
@@ -537,9 +537,6 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                   /* Set PostPoFh3 structure */
                   pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[delta].
                       name_handle.handle_follows = TRUE;
-                  pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[delta].
-                      name_handle.post_op_fh3_u.handle.data.data_len =
-                      sizeof(file_handle_v3_t);
 
                   nfs_SetPostOpAttr(pcontext, pexport,
                                     pentry_dot_dot,
@@ -640,11 +637,13 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                   return NFS_REQ_OK;
                 }
 
+	      fh_desc.start = (caddr_t)&(RES_READDIRPLUS_REPLY.entries[i].fileid);
+	      fh_desc.len = sizeof(RES_READDIRPLUS_REPLY.entries[i].fileid);
               /* Now fill in the replyed entryplus3 list */
               FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
                                 FSAL_DIGEST_FILEID3,
                                 pfsal_handle,
-                                (caddr_t) & (RES_READDIRPLUS_REPLY.entries[i].fileid));
+                                &fh_desc);
 
               FSAL_name2str(&dirent_array[i - delta]->name, entry_name_array[i],
                             FSAL_MAX_NAME_LEN);
@@ -690,7 +689,6 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
 
               /* Set PostPoFh3 structure */
               pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].name_handle.handle_follows = TRUE;
-              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].name_handle.post_op_fh3_u.handle.data.data_len = sizeof(file_handle_v3_t);
 
               nfs_SetPostOpAttr(pcontext, pexport,
                                 dirent_array[i - delta]->pentry,

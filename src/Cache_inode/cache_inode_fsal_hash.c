@@ -68,18 +68,18 @@ unsigned long cache_inode_fsal_hash_func(hash_parameter_t * p_hparam,
 {
     unsigned long h = 0;
     char printbuf[512];
-    cache_inode_fsal_data_t *pfsdata = (cache_inode_fsal_data_t *) (buffclef->pdata);
+    fsal_handle_t *pfsal_handle = (fsal_handle_t *) (buffclef->pdata);
 
-    h = FSAL_Handle_to_HashIndex(&pfsdata->handle, pfsdata->cookie,
+    h = FSAL_Handle_to_HashIndex(pfsal_handle, 0,
                                  p_hparam->alphabet_length,
                                  p_hparam->index_size);
 
     if(isFullDebug(COMPONENT_HASHTABLE))
         {
-            snprintHandle(printbuf, 512, &pfsdata->handle);
+            snprintHandle(printbuf, 512, pfsal_handle);
             LogFullDebug(COMPONENT_HASHTABLE,
                          "hash_func key: buff = (Handle=%s, Cookie=%"PRIu64"), hash value=%lu",
-                         printbuf, pfsdata->cookie, h);
+                         printbuf, 0UL, h);
         }
 
     return h;
@@ -106,17 +106,16 @@ unsigned long cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
      */
     uint32_t h = 0;
     char printbuf[512];
+    fsal_handle_t *pfsal_handle = (fsal_handle_t *) (buffclef->pdata);
 
-    cache_inode_fsal_data_t *pfsdata = (cache_inode_fsal_data_t *) (buffclef->pdata);
-
-    h = Lookup3_hash_buff((char *)(&pfsdata->handle.data), sizeof(pfsdata->handle.data ) );
+    h = Lookup3_hash_buff((char *)pfsal_handle, buffclef->len );
 
     if(isFullDebug(COMPONENT_HASHTABLE))
         {
-            snprintHandle(printbuf, 512, &pfsdata->handle);
+            snprintHandle(printbuf, 512, pfsal_handle);
             LogFullDebug(COMPONENT_HASHTABLE,
                          "hash_func rbt: buff = (Handle=%s, Cookie=%"PRIu64"), value=%u",
-                         printbuf, pfsdata->cookie, h);
+                         printbuf, 0UL, h);
         }
     return h;
 }                               /* cache_inode_fsal_rbt_func */
@@ -129,18 +128,17 @@ unsigned long __cache_inode_fsal_rbt_func(hash_parameter_t * p_hparam,
      * producing same value as decimal_simple_hash_func
      */
     unsigned long h = 0;
+    fsal_handle_t *pfsal_handle = (fsal_handle_t *) (buffclef->pdata);
     char printbuf[512];
 
-    cache_inode_fsal_data_t *pfsdata = (cache_inode_fsal_data_t *) (buffclef->pdata);
-
-    h = FSAL_Handle_to_RBTIndex(&pfsdata->handle, pfsdata->cookie);
+    h = FSAL_Handle_to_RBTIndex(pfsal_handle, 0);
 
     if(isFullDebug(COMPONENT_HASHTABLE))
         {
-            snprintHandle(printbuf, 512, &pfsdata->handle);
+            snprintHandle(printbuf, 512, pfsal_handle);
             LogFullDebug(COMPONENT_HASHTABLE,
                          "hash_func rbt: buff = (Handle=%s, Cookie=%"PRIu64"), value=%lu",
-                         printbuf, pfsdata->cookie, h);
+                         printbuf, 0UL, h);
         }
     return h;
 }                               /* cache_inode_fsal_rbt_func */
@@ -166,28 +164,27 @@ unsigned int cache_inode_fsal_rbt_both_on_fsal( hash_parameter_t * p_hparam,
 {
     char printbuf[512];
     unsigned int rc = 0 ;
+    fsal_handle_t *pfsal_handle = (fsal_handle_t *) (buffclef->pdata);
 
-    cache_inode_fsal_data_t *pfsdata = (cache_inode_fsal_data_t *) (buffclef->pdata);
-
-    rc = FSAL_Handle_to_Hash_both( &pfsdata->handle, pfsdata->cookie,
+    rc = FSAL_Handle_to_Hash_both( pfsal_handle, 0,
 				   p_hparam->alphabet_length, p_hparam->index_size,
 				   phashval, prbtval ) ;
 
     if( rc == 0 )
       {
-          snprintHandle(printbuf, 512, &pfsdata->handle);
+          snprintHandle(printbuf, 512, pfsal_handle);
           LogMajor(COMPONENT_HASHTABLE,
                    "Unable to hash (Handle=%s, Cookie=%"PRIu64")",
-                   printbuf, pfsdata->cookie);
+                   printbuf, 0UL);
           return 0 ;
       }
 
     if(isFullDebug(COMPONENT_HASHTABLE))
       {
-          snprintHandle(printbuf, 512, &pfsdata->handle);
+          snprintHandle(printbuf, 512, pfsal_handle);
           LogFullDebug(COMPONENT_HASHTABLE,
                        "hash_func rbt both: buff = (Handle=%s, Cookie=%"PRIu64"), hashvalue=%u rbtvalue=%u",
-                       printbuf, pfsdata->cookie, *phashval, *prbtval );
+                       printbuf, 0UL, *phashval, *prbtval );
       }
 
    /* Success */
@@ -201,10 +198,9 @@ unsigned int cache_inode_fsal_rbt_both_locally( hash_parameter_t * p_hparam,
     char printbuf[512];
     uint32_t h1 = 0 ;
     uint32_t h2 = 0 ;
+    fsal_handle_t *pfsal_handle = (fsal_handle_t *) (buffclef->pdata);
 
-    cache_inode_fsal_data_t *pfsdata = (cache_inode_fsal_data_t *) (buffclef->pdata);
-
-    Lookup3_hash_buff_dual((char *)(&pfsdata->handle.data), sizeof(pfsdata->handle.data),
+    Lookup3_hash_buff_dual((char *)pfsal_handle, buffclef->len,
                            &h1, &h2  );
 
     h1 = h1 % p_hparam->index_size ;
@@ -214,10 +210,10 @@ unsigned int cache_inode_fsal_rbt_both_locally( hash_parameter_t * p_hparam,
 
     if(isFullDebug(COMPONENT_HASHTABLE))
         {
-            snprintHandle(printbuf, 512, &pfsdata->handle);
+            snprintHandle(printbuf, 512, pfsal_handle);
             LogFullDebug(COMPONENT_HASHTABLE,
                          "hash_func rbt both: buff = (Handle=%s, Cookie=%"PRIu64"), hashvalue=%u rbtvalue=%u",
-                         printbuf, pfsdata->cookie, h1, h2 );
+                         printbuf, 0UL, h1, h2 );
         }
 
    /* Success */
@@ -239,16 +235,12 @@ unsigned int cache_inode_fsal_rbt_both( hash_parameter_t * p_hparam,
 
 int display_key(hash_buffer_t * pbuff, char *str)
 {
-    cache_inode_fsal_data_t *pfsdata;
     char buffer[128];
 
-    pfsdata = (cache_inode_fsal_data_t *) pbuff->pdata;
-
-    snprintHandle(buffer, 128, &(pfsdata->handle));
+    snprintHandle(buffer, 128, pbuff->pdata);
 
     return snprintf(str, HASHTABLE_DISPLAY_STRLEN,
-                    "(Handle=%s, Cookie=%"PRIu64")", buffer,
-                    pfsdata->cookie);
+                    "(Handle=%s, Cookie=%"PRIu64")", buffer, 0UL);
 }
 
 int display_not_implemented(hash_buffer_t * pbuff, char *str)

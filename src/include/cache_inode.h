@@ -294,6 +294,7 @@ struct cache_entry_t
 {
   cache_inode_policy_t  policy ;                          /**< The current cache policy for this entry               */
   fsal_handle_t handle;                                   /**< The FSAL Handle     */
+  struct fsal_handle_desc fh_desc;                        /**< points to handle.  adds size, len for hash table etc. */
   fsal_attrib_list_t attributes;                          /**< The FSAL Attributes */
 
   union cache_inode_fsobj__
@@ -359,8 +360,7 @@ typedef struct cache_inode_parent_entry__ cache_inode_parent_entry_t;
 
 typedef struct cache_inode_fsal_data__
 {
-  fsal_handle_t handle;                         /**< FSAL handle           */
-  uint64_t cookie;                              /**< Cache inode cookie    */
+  struct fsal_handle_desc fh_desc;              /**< FSAL handle descriptor  */
 } cache_inode_fsal_data_t;
 
 #define SMALL_CLIENT_INDEX 0x20000000
@@ -505,12 +505,6 @@ const char *cache_inode_err_str(cache_inode_status_t err);
 cache_inode_status_t cache_inode_clean_entry(cache_entry_t * pentry);
 
 int cache_inode_compare_key_fsal(hash_buffer_t * buff1, hash_buffer_t * buff2);
-
-int cache_inode_fsaldata_2_key(hash_buffer_t * pkey, cache_inode_fsal_data_t * pfsdata,
-                               cache_inode_client_t * pclient);
-
-void cache_inode_release_fsaldata_key(hash_buffer_t * pkey,
-                                      cache_inode_client_t * pclient);
 
 void cache_inode_release_symlink(cache_entry_t * pentry,
                                  struct prealloc_pool *pool);

@@ -110,11 +110,8 @@ int nfs3_Commit(nfs_arg_t * parg,
   ppre_attr = NULL;
 
   /* Convert file handle into a fsal_handle */
-  if(nfs3_FhandleToFSAL(&(parg->arg_commit3.file), &fsal_data.handle, pcontext) == 0)
+  if(nfs3_FhandleToFSAL(&(parg->arg_commit3.file), &fsal_data.fh_desc, pcontext) == 0)
     return NFS_REQ_DROP;
-
-  /* Set cookie to 0 */
-  fsal_data.cookie = DIR_START;
 
   /* Get the entry in the cache_inode */
   if((pentry = cache_inode_get( &fsal_data,

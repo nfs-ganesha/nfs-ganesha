@@ -125,15 +125,8 @@ cache_inode_status_t cache_inode_clean_internal(cache_entry_t * to_remove_entry,
     }
 
   /* delete the entry from the cache */
-  fsaldata.handle = *pfsal_handle_remove;
-
-  /* XXX always DIR_START */
-  fsaldata.cookie = DIR_START;
-
-  if(cache_inode_fsaldata_2_key(&key, &fsaldata, pclient))
-    {
-      return CACHE_INODE_INCONSISTENT_ENTRY;
-    }
+  key.pdata = to_remove_entry->fh_desc.start;
+  key.len = to_remove_entry->fh_desc.len;
 
   /* use the key to delete the entry */
   rc = HashTable_Del(ht, &key, &old_key, &old_value);
@@ -144,27 +137,22 @@ cache_inode_status_t cache_inode_clean_internal(cache_entry_t * to_remove_entry,
 
   if((rc != HASHTABLE_SUCCESS) && (rc != HASHTABLE_ERROR_NO_SUCH_KEY))
     {
-      cache_inode_release_fsaldata_key(&key, pclient);
       return CACHE_INODE_INCONSISTENT_ENTRY;
     }
 
   /* release the key that was stored in hash table */
   if(rc != HASHTABLE_ERROR_NO_SUCH_KEY)
     {
-      cache_inode_release_fsaldata_key(&old_key, pclient);
-
       /* Sanity check: old_value.pdata is expected to be equal to pentry,
        * and is released later in this function */
-      if((cache_entry_t *) old_value.pdata != to_remove_entry)
+      if((cache_entry_t *) old_value.pdata != to_remove_entry ||
+	 ((cache_entry_t *)old_value.pdata)->fh_desc.start != (caddr_t)&(to_remove_entry->handle))
         {
           LogCrit(COMPONENT_CACHE_INODE,
                   "cache_inode_remove: unexpected pdata %p from hash table (pentry=%p)",
                   old_value.pdata, to_remove_entry);
         }
     }
-
-  /* release the key used for hash query */
-  cache_inode_release_fsaldata_key(&key, pclient);
 
   /* Free the parent list entries */
 

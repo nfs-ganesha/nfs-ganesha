@@ -118,6 +118,7 @@ cache_content_status_t cache_content_create_name(char *path,
   fsal_status_t fsal_status;
   u_int64_t fileid4;            /* Don't want to include nfs_prot.h at this level */
   fsal_handle_t *pfsal_handle = NULL;
+  struct fsal_handle_desc fh_desc;
   cache_inode_status_t cache_status;
   char entrydir[MAXPATHLEN];
   int i, nb_char;
@@ -131,9 +132,11 @@ cache_content_status_t cache_content_create_name(char *path,
       return CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
     }
 
+  fh_desc.start = (caddr_t)&fileid4;
+  fh_desc.len = sizeof(fileid4);
   /* Get the digest for the handle, for computing an entry name */
   fsal_status = FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
-                                  FSAL_DIGEST_FILEID4, pfsal_handle, (caddr_t) & fileid4);
+                                  FSAL_DIGEST_FILEID4, pfsal_handle, &fh_desc);
 
   if(FSAL_IS_ERROR(fsal_status))
     return CACHE_CONTENT_FSAL_ERROR;
