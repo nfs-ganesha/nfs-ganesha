@@ -205,8 +205,19 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
           if(pentry->object.file.pentry_content == NULL)
             {
               /* Operation on a non data cached file */
-              p_object_attributes->filesize = result_attributes.filesize;
-              p_object_attributes->spaceused = result_attributes.filesize;      /* Unclear hook here. BUGAZOMEU */
+              /* we are always returning size now per change above */
+              /* if size is requested, use the truncate returned attribute */
+              /* otherwise, use the setattr returned attribute */
+              if(pattr->asked_attributes & FSAL_ATTR_SIZE)
+              {
+                 p_object_attributes->filesize = truncate_attributes.filesize;
+                 p_object_attributes->spaceused = truncate_attributes.filesize;
+              }
+              else
+              {
+                 p_object_attributes->filesize = result_attributes.filesize;
+                 p_object_attributes->spaceused = result_attributes.filesize;
+              }
             }
           else
             {
