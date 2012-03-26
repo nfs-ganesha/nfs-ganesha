@@ -111,7 +111,7 @@
  */
 
 /* some versions of GPFS don't have this in their headers */
-#ifndef _GPFS_DECLARES_HANDLE
+#ifndef H_GPFS_NFS
 struct gpfs_file_handle
 {
    u_int32_t handle_size;

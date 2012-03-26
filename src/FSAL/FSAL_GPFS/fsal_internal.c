@@ -613,7 +613,7 @@ fsal_status_t fsal_internal_fd2handle(int fd, fsal_handle_t * handle)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   harg.handle = (struct gpfs_file_handle *) &p_handle->data.handle;
-  memset(&p_handle->data.handle, 0, sizeof(struct file_handle));
+  memset(&p_handle->data.handle, 0, sizeof(struct gpfs_file_handle));
 
   harg.handle->handle_size = OPENHANDLE_HANDLE_LEN;
   harg.handle->handle_key_size = OPENHANDLE_KEY_LEN;
