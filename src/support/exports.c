@@ -702,6 +702,12 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   memset(&p_entry->fsal_up_thr, 0, sizeof(pthread_t));
 #endif /* _USE_FSAL_UP */
 
+  p_entry->worker_stats = (nfs_worker_stat_t *)
+                          Mem_Alloc(sizeof(nfs_worker_stat_t) *
+                                    sizeof(nfs_param.core_param.nb_worker));
+  memset(p_entry->worker_stats, 0,
+         sizeof(nfs_worker_stat_t) * sizeof(nfs_param.core_param.nb_worker));
+
   /* by default, we support auth_none and auth_sys */
   p_entry->options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
 
@@ -3126,6 +3132,60 @@ exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
   if (exportEntry->proot_handle != NULL)
     Mem_Free(exportEntry->proot_handle);
 
+  if (exportEntry->worker_stats != NULL)
+    Mem_Free(exportEntry->worker_stats);
+
   Mem_Free(exportEntry);
   return next;
+}
+
+exportlist_t *GetExportEntry(char *exportPath)
+{
+  exportlist_t *pexport = NULL;
+  exportlist_t *p_current_item = NULL;
+  char tmplist_path[MAXPATHLEN];
+  char tmpexport_path[MAXPATHLEN];
+  int found = 0;
+
+  pexport = nfs_param.pexportlist;
+
+  /*
+   * Find the export for the dirname (using as well Path or Tag )
+   */
+  for(p_current_item = pexport; p_current_item != NULL;
+      p_current_item = p_current_item->next)
+  {
+    LogDebug(COMPONENT_CONFIG, "full path %s, export path %s",
+             p_current_item->fullpath, exportPath);
+
+    /* Make sure the path in export entry ends with a '/', if not adds one */
+    if(p_current_item->fullpath[strlen(p_current_item->fullpath) - 1] == '/')
+      strncpy(tmplist_path, p_current_item->fullpath, MAXPATHLEN);
+    else
+      snprintf(tmplist_path, MAXPATHLEN, "%s/", p_current_item->fullpath);
+
+    /* Make sure that the argument from MNT ends with a '/', if not adds one */
+    if(exportPath[strlen(exportPath) - 1] == '/')
+      strncpy(tmpexport_path, exportPath, MAXPATHLEN);
+    else
+      snprintf(tmpexport_path, MAXPATHLEN, "%s/", exportPath);
+
+    /* Is tmplist_path a subdirectory of tmpexport_path ? */
+    if(!strncmp(tmplist_path, tmpexport_path, strlen(tmplist_path)))
+    {
+      found = 1;
+      break;
+    }
+  }
+
+  if(found)
+    {
+      LogDebug(COMPONENT_CONFIG, "returning export %s", p_current_item->fullpath);
+      return p_current_item;
+    }
+  else
+    {
+      LogDebug(COMPONENT_CONFIG, "returning export NULL");
+      return NULL;
+    }
 }

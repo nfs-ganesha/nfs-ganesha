@@ -43,7 +43,7 @@ pthread_mutex_t nlm_async_resp_mutex  = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  nlm_async_resp_cond   = PTHREAD_COND_INITIALIZER;
 
 int nlm_send_async_res_nlm4(state_nlm_client_t * host,
-                            state_async_func     func,
+                            state_async_func_t   func,
                             nfs_res_t          * pres)
 {
   state_async_queue_t    * arg = (state_async_queue_t *) Mem_Alloc(sizeof(*arg));
@@ -85,7 +85,7 @@ int nlm_send_async_res_nlm4(state_nlm_client_t * host,
 }
 
 int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
-                                state_async_func     func,
+                                state_async_func_t   func,
                                 nfs_res_t          * pres)
 {
   state_async_queue_t    * arg = (state_async_queue_t *) Mem_Alloc(sizeof(*arg));

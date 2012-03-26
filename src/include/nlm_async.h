@@ -40,11 +40,11 @@ extern pthread_cond_t                 nlm_async_resp_cond;
 int nlm_async_callback_init();
 
 int nlm_send_async_res_nlm4(state_nlm_client_t * host,
-                            state_async_func     func,
+                            state_async_func_t   func,
                             nfs_res_t          * pres);
 
 int nlm_send_async_res_nlm4test(state_nlm_client_t * host,
-                                state_async_func     func,
+                                state_async_func_t   func,
                                 nfs_res_t          * pres);
 
 /* Client routine  to send the asynchrnous response, key is used to wait for a response */
