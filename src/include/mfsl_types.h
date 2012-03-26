@@ -56,6 +56,10 @@
 #include "MFSL/MFSL_NULL/mfsl_types.h"
 #endif
 
+#ifdef _USE_MFSL_TIMER
+#include "MFSL/MFSL_TIMER/mfsl_types.h"
+#endif
+
 #ifdef _USE_MFSL_ASYNC
 #include "MFSL/MFSL_ASYNC/mfsl_types.h"
 #endif
