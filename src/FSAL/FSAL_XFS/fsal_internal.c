@@ -360,24 +360,21 @@ fsal_status_t fsal_internal_handle2fd(fsal_op_context_t * p_context,
 {
   int rc = 0;
   int errsv = 0;
+  xfsfsal_handle_t *xh = (xfsfsal_handle_t *)phandle;
 
   if(!phandle || !pfd || !p_context)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  rc = open_by_handle(((xfsfsal_handle_t *)phandle)->data.handle_val,
-		      ((xfsfsal_handle_t *)phandle)->data.handle_len,
-		      oflags);
+  rc = open_by_handle(xh->data.handle_val, xh->data.handle_len, oflags);
+  errsv = errno;
   if(rc == -1)
     {
-      errsv = errno;
-
       if(errsv == EISDIR)
         {
-          if((rc =
-              open_by_handle(((xfsfsal_handle_t *)phandle)->data.handle_val,
-			     ((xfsfsal_handle_t *)phandle)->data.handle_len,
-			     O_DIRECTORY) < 0))
-            ReturnCode(posix2fsal_error(errsv), errsv);
+          rc = open_by_handle(xh->data.handle_val, xh->data.handle_len,
+			      O_DIRECTORY);
+          if(rc < 0)
+	     ReturnCode(posix2fsal_error(errsv), errsv);
         }
       else
         ReturnCode(posix2fsal_error(errsv), errsv);
