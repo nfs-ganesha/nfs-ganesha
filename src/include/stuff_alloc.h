@@ -47,6 +47,9 @@ struct prealloc_pool;
 
 #include <malloc.h>
 #include <errno.h>
+#include <unistd.h>
+
+#include "log.h"
 
 #ifndef TRUE
 #define TRUE 1
@@ -106,6 +109,12 @@ struct prealloc_pool;
 #  define Str_Dup_Label( a, lbl )         BuddyStr_Dup_Exit( a )
 #endif
 
+#define Mem_Errno            BuddyErrno
+
+#define GetPreferedPool( _n, _s )  BuddyPreferedPoolCount( _n, _s)
+
+#endif
+
 #define Mem_Alloc_Page_Aligned(s) Mem_Alloc_Page_Aligned_(s, __FILE__, __LINE__, __func__)
 #define Mem_Free_Page_Aligned(a)  free(a)
 
@@ -143,13 +152,6 @@ Mem_Alloc_Page_Aligned_(const size_t s,
 
      return memalign_pointer;
 }
-
-
-#define Mem_Errno            BuddyErrno
-
-#define GetPreferedPool( _n, _s )  BuddyPreferedPoolCount( _n, _s)
-
-#endif
 
 /*******************************************************************************
  *
