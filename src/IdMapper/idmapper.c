@@ -102,9 +102,8 @@ int nfsidmap_set_conf()
  */
 int uid2name(char *name, uid_t * puid)
 {
-  char fqname[NFS4_MAX_DOMAIN_LEN];
-
 #ifdef _USE_NFSIDMAP
+  char fqname[NFS4_MAX_DOMAIN_LEN];
 
   int rc;
 
@@ -221,11 +220,11 @@ int name2uid(char *name, uid_t * puid)
   struct passwd *res;
   char buff[NFS4_MAX_DOMAIN_LEN];
   uid_t uid;
+#ifdef _USE_NFSIDMAP
 #ifdef _HAVE_GSSAPI
   gid_t gss_gid;
   uid_t gss_uid;
 #endif
-#ifdef _USE_NFSIDMAP
   char fqname[NFS4_MAX_DOMAIN_LEN];
   int rc;
 #endif
@@ -367,11 +366,11 @@ int name2uid(char *name, uid_t * puid)
 #ifdef _HAVE_GSSAPI
 int principal2uid(char *principal, uid_t * puid)
 {
+#ifdef _USE_NFSIDMAP
   gid_t gss_gid;
   uid_t gss_uid;
   int rc;
 
-#ifdef _USE_NFSIDMAP
   if(uidmap_get(principal, (unsigned long *)&gss_uid) != ID_MAPPER_SUCCESS)
     {
       if(!nfsidmap_set_conf())
