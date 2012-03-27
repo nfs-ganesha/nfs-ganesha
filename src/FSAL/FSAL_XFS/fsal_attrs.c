@@ -152,14 +152,20 @@ fsal_status_t XFSFSAL_getattrs(fsal_handle_t * p_filehandle, /* IN */
   if(!p_filehandle || !p_context || !p_object_attributes)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_getattrs);
 
-  if(xh->data.type)
+  switch(xh->data.type)
     {
+    case DT_LNK:
+    case DT_BLK:
+    case DT_SOCK:
+    case DT_CHR:
+    case DT_FIFO:
       TakeTokenFSCall();
       st = bulkstat_by_inode(p_context, xh->data.inode, p_object_attributes);
       ReleaseTokenFSCall();
-    }
-  else
-    {
+      break;
+
+    case DT_REG:
+    case DT_DIR:
       TakeTokenFSCall();
       st = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDONLY);
       ReleaseTokenFSCall();
@@ -185,6 +191,13 @@ fsal_status_t XFSFSAL_getattrs(fsal_handle_t * p_filehandle, /* IN */
 
       /* convert attributes */
       st = posix2fsal_attributes(&buffstat, p_object_attributes);
+      break;
+
+    default:
+	LogEvent(COMPONENT_FSAL,
+		 "Corrupted filehandle - unexpected file type %d",
+		 xh->data.type);
+	Return(ERR_FSAL_STALE, EINVAL, INDEX_FSAL_getattrs);
     }
   if(FSAL_IS_ERROR(st))
     {
