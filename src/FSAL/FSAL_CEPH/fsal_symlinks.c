@@ -80,6 +80,7 @@ fsal_status_t CEPHFSAL_readlink(fsal_handle_t * exthandle,
   char strcontent[FSAL_MAX_PATH_LEN];
   int uid = FSAL_OP_CONTEXT_TO_UID(context);
   int gid = FSAL_OP_CONTEXT_TO_GID(context);
+  struct ceph_mount_info *cmount = context->export_context->cmount;
 
   /* sanity checks.
    * note : link_attributes is optional.
@@ -87,7 +88,7 @@ fsal_status_t CEPHFSAL_readlink(fsal_handle_t * exthandle,
   if(!handle || !context || !link_content)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readlink);
 
-  rc = ceph_ll_readlink(context->export_context->cmount,
+  rc = ceph_ll_readlink(cmount,
                         VINODE(handle), (char**) &strcontent, uid, gid);
 
   if (rc < 0)
@@ -166,6 +167,7 @@ fsal_status_t CEPHFSAL_symlink(fsal_handle_t * extparent,
   int gid = FSAL_OP_CONTEXT_TO_GID(context);
   char strpath[FSAL_MAX_PATH_LEN];
   char strname[FSAL_MAX_NAME_LEN];
+  struct ceph_mount_info *cmount = context->export_context->cmount;
 
   /* sanity checks.
    * note : link_attributes is optional.
@@ -181,12 +183,14 @@ fsal_status_t CEPHFSAL_symlink(fsal_handle_t * extparent,
   if(!global_fs_info.symlink_support)
     Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_symlink);
 
-  rc = ceph_ll_symlink(context->export_context->cmount,
+  rc = ceph_ll_symlink(cmount,
                        VINODE(parent), strname, strpath, &st, uid, gid);
   if (rc)
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_symlink);
 
-  stat2fsal_fh(&st, link);
+  rc = stat2fsal_fh(cmount, &st, link);
+  if (rc < 0)
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
   if(link_attributes)
     {

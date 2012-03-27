@@ -118,7 +118,12 @@ fsal_status_t CEPHFSAL_create(fsal_handle_t * extparent,
   if (rc < 0)
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
-  stat2fsal_fh(&st, (cephfsal_handle_t*) object_handle);
+  rc = stat2fsal_fh(cmount,
+                    &st,
+                    (cephfsal_handle_t*) object_handle);
+
+  if (rc < 0)
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
   if(object_attributes)
     {
@@ -212,7 +217,12 @@ fsal_status_t CEPHFSAL_mkdir(fsal_handle_t * extparent,
   if (rc < 0)
     Return(posix2fsal_error(rc), 0, INDEX_FSAL_mkdir);
 
-  stat2fsal_fh(&st, (cephfsal_handle_t*) object_handle);
+  rc = stat2fsal_fh(cmount,
+                    &st,
+                    (cephfsal_handle_t*) object_handle);
+
+  if (rc < 0)
+    Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
   if(object_attributes)
     {

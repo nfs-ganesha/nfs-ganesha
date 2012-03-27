@@ -87,6 +87,7 @@ fsal_status_t CEPHFSAL_lookup(fsal_handle_t * extparent,
   cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
   cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
   char str[FSAL_MAX_NAME_LEN];
+  struct ceph_mount_info *cmount = context->export_context->cmount;
 
   /* sanity checks
    * note : object_attributes is optionnal
@@ -136,7 +137,7 @@ fsal_status_t CEPHFSAL_lookup(fsal_handle_t * extparent,
 
       /* Ceph returns POSIX errors, so let's use them */
 
-      rc = ceph_ll_lookup(context->export_context->cmount,
+      rc = ceph_ll_lookup(cmount,
                           VINODE(parent), str, &st,
                           FSAL_OP_CONTEXT_TO_UID(context),
                           FSAL_OP_CONTEXT_TO_GID(context));
@@ -146,7 +147,10 @@ fsal_status_t CEPHFSAL_lookup(fsal_handle_t * extparent,
           Return(posix2fsal_error(rc), 0, INDEX_FSAL_lookup);
         }
 
-      stat2fsal_fh(&st, handle);
+      rc = stat2fsal_fh(cmount, &st, handle);
+
+      if (rc < 0)
+        Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
       if(object_attributes)
         {
@@ -247,6 +251,7 @@ fsal_status_t CEPHFSAL_lookupPath(fsal_path_t * path,
   cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
   cephfsal_op_context_t* context = (cephfsal_op_context_t*) extcontext;
   char str[FSAL_MAX_PATH_LEN];
+  struct ceph_mount_info *cmount = context->export_context->cmount;
 
   /* sanity checks
    * note : object_attributes is optionnal
@@ -283,14 +288,16 @@ fsal_status_t CEPHFSAL_lookupPath(fsal_path_t * path,
     }
   else                          /* this is a real lookup(parent, name)  */
     {
-      rc = ceph_ll_walk(context->export_context->cmount, str, &st);
+      rc = ceph_ll_walk(cmount, str, &st);
 
       if(rc)
         {
           Return(posix2fsal_error(rc), 0, INDEX_FSAL_lookupPath);
         }
 
-      stat2fsal_fh(&st, handle);
+      stat2fsal_fh(cmount, &st, handle);
+      if (rc < 0)
+        Return(posix2fsal_error(rc), 0, INDEX_FSAL_create);
 
       if(object_attributes)
         {
