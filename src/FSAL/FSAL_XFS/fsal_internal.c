@@ -404,8 +404,21 @@ fsal_status_t fsal_internal_fd2handle(fsal_op_context_t * p_context,
   rc = fstat(fd, &ino);
   if(rc)
     ReturnCode(posix2fsal_error(errno), errno);
+
   phandle->data.inode = ino.st_ino;
-  phandle->data.type = DT_UNKNOWN;  /** Put here something smarter */
+  switch (ino.st_mode & S_IFMT)
+    {
+    case S_IFREG:
+      phandle->data.type = DT_REG;
+      break;
+    case S_IFDIR:
+      phandle->data.type = DT_DIR;
+      break;
+    default:
+      LogCrit(COMPONENT_FSAL, "Unexpected type 0%o for inode %zd",
+              ino.st_mode & S_IFMT, ino.st_ino);
+      ReturnCode(ERR_FSAL_INVAL, EINVAL);
+    }
 
   if((rc = fd_to_handle(fd, (void **)(&handle_val), &handle_len)) < 0)
     ReturnCode(posix2fsal_error(errno), errno);
