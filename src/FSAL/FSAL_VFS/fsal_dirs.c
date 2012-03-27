@@ -195,7 +195,7 @@ fsal_status_t VFSFSAL_readdir(fsal_dir_t * dir_descriptor,      /* IN */
   /***************************/
   /* seek into the directory */
   /***************************/
-  start_position.data.cookie = (off_t) startposition.data;
+  memcpy( (char *)&start_position.data.cookie, (char *)&startposition.data, sizeof( off_t ) ) ;
   errno = 0;
   if(start_position.data.cookie == 0)
     {
