@@ -41,6 +41,8 @@
 #include "mfsl_types.h"
 #include "mfsl.h"
 #include "common_utils.h"
+#include <sys/time.h>
+
 
 #ifndef _USE_SWIG
 /******************************************************
@@ -542,16 +544,14 @@ fsal_status_t MFSL_close(mfsl_file_t * file_descriptor, /* IN */
   return fsal_status ;
 }                               /* MFSL_close */
 
-fsal_status_t MFSL_commit( mfsl_file_t * file_descriptor /* IN */,
-                         fsal_off_t    offset,
-                         fsal_size_t   length,
-			 void        * pextra)
+fsal_status_t MFSL_sync(mfsl_file_t * file_descriptor /* IN */,
+                        void * pextra)
 {
   struct timeval start, stop, delta ;
   fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 } ;
   
   gettimeofday( &start, 0 ) ; 
-  fsal_status = FSAL_commit( &file_descriptor->fsal_file, offset, length ) ;
+  fsal_status = FSAL_sync( &file_descriptor->fsal_file ) ;
   gettimeofday( &stop, 0 ) ; 
   delta = mfsl_timer_diff( &stop, &start ) ;
   LogFullDebug( COMPONENT_MFSL, "%s: duration=%ld.%06ld", __FUNCTION__, delta.tv_sec, delta.tv_usec ) ;
