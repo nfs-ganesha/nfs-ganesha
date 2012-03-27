@@ -170,7 +170,10 @@ fsal_status_t LUSTREFSAL_readdir(fsal_dir_t *dir_desc,   /* IN */
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
   max_dir_entries = (buffersize / sizeof(fsal_dirent_t));
-  start_position.data.cookie = (off_t)start_pos.data;
+
+  /* zero the whole start pos structure */
+  memset((char *)&start_position, 0, sizeof(start_position));
+  memcpy((char *)&start_position.data.cookie, (char *)&start_pos.data, sizeof(off_t)) ;
 
   /***************************/
   /* seek into the directory */
@@ -258,7 +261,18 @@ fsal_status_t LUSTREFSAL_readdir(fsal_dir_t *dir_desc,   /* IN */
                         FSAL_ATTR_RDATTR_ERR);
         }
 
-      ((lustrefsal_cookie_t *) (&p_pdirent[*p_nb_entries].cookie))->data.cookie = telldir(p_dir_descriptor->p_dir);
+//      ((lustrefsal_cookie_t *) (&p_pdirent[*p_nb_entries].cookie))->data.cookie = telldir(p_dir_descriptor->p_dir);
+
+      /* zero the output structure before filling it partially */
+      memset(&p_pdirent[*p_nb_entries].cookie, 0, sizeof(fsal_cookie_t));
+
+      /* copy the content of an off_t to the output buffer */
+      off_t tmp_off = telldir(p_dir_descriptor->p_dir);
+      LogFullDebug(COMPONENT_FSAL, "entry_cookie=%#lx", tmp_off);
+      memcpy( &p_pdirent[*p_nb_entries].cookie.data, &tmp_off, sizeof(off_t));
+
+
+
       p_pdirent[*p_nb_entries].nextentry = NULL;
       if(*p_nb_entries)
         p_pdirent[*p_nb_entries - 1].nextentry = &(p_pdirent[*p_nb_entries]);
