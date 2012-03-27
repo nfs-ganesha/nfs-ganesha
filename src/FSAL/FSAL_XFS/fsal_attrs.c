@@ -49,71 +49,39 @@ bulkstat_by_inode(fsal_op_context_t * context, ino_t inum, fsal_attrib_list_t * 
 {
   xfsfsal_op_context_t * p_context = (xfsfsal_op_context_t *)context;
   xfs_bstat_t stat;
-  fsal_attrib_mask_t supp_attr, unsupp_attr;
+  struct stat sb;
   int fd = 0;
-
-  /* check that asked attributes are supported */
-  supp_attr = global_fs_info.supported_attrs;
-  unsupp_attr = (p_fsalattr_out->asked_attributes) & (~supp_attr);
-  if(unsupp_attr)
-    {
-      LogFullDebug(COMPONENT_FSAL, "Unsupported attributes: %#llX",
-                        unsupp_attr);
-      ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
-    }
+  int errsv, rc;
 
   if((fd = open(p_context->export_context->mount_point, O_DIRECTORY)) == -1)
     ReturnCode(posix2fsal_error(errno), errno);
 
-  if(fsal_internal_get_bulkstat_by_inode(fd, &inum, &stat) < 0)
-    {
-      close(fd);
-      ReturnCode(posix2fsal_error(errno), errno);
-    }
-
-  /* Initialize ACL regardless of whether ACL was asked or not.
-   * This is needed to make sure ACL attribute is initialized. */
-  p_fsalattr_out->acl = NULL;
-
-  /* Fills the output struct */
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
-    p_fsalattr_out->supported_attributes = supp_attr;
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
-    p_fsalattr_out->type = posix2fsal_type(stat.bs_mode);
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SIZE))
-    p_fsalattr_out->filesize = stat.bs_size;
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FSID))
-    p_fsalattr_out->fsid = posix2fsal_fsid(context->export_context->dev_id);
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FILEID))
-    p_fsalattr_out->fileid = (fsal_u64_t) (stat.bs_ino);
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MODE))
-    p_fsalattr_out->mode = unix2fsal_mode(stat.bs_mode);
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_NUMLINKS))
-    p_fsalattr_out->numlinks = stat.bs_nlink;
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_OWNER))
-    p_fsalattr_out->owner = stat.bs_uid;
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_GROUP))
-    p_fsalattr_out->group = stat.bs_gid;
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_ATIME))
-    p_fsalattr_out->atime = posix2fsal_time(stat.bs_atime.tv_sec, 0);
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CTIME))
-    p_fsalattr_out->ctime = posix2fsal_time(stat.bs_ctime.tv_sec, 0);
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_MTIME))
-    p_fsalattr_out->mtime = posix2fsal_time(stat.bs_mtime.tv_sec, 0);
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_CHGTIME))
-    {
-      p_fsalattr_out->chgtime =
-	posix2fsal_time(MAX_2(stat.bs_mtime.tv_sec, stat.bs_ctime.tv_sec), 0);
-      p_fsalattr_out->change = (uint64_t) p_fsalattr_out->chgtime.seconds ;
-    }
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
-    p_fsalattr_out->spaceused = stat.bs_blocks * S_BLKSIZE;
-
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_RAWDEV))
-    p_fsalattr_out->rawdev = posix2fsal_devt(stat.bs_rdev);    /* XXX: convert ? */
-
+  rc = fsal_internal_get_bulkstat_by_inode(fd, &inum, &stat);
+  errsv = errno;
   close(fd);
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+
+  if(rc < 0)
+    ReturnCode(posix2fsal_error(errsv), errsv);
+
+  memset(&sb, 0, sizeof(sb));
+  sb.st_mode = stat.bs_mode;
+  sb.st_size = stat.bs_size;
+  sb.st_dev = context->export_context->dev_id;
+  sb.st_ino = stat.bs_ino;
+  sb.st_nlink = stat.bs_nlink;
+  sb.st_uid = stat.bs_uid;
+  sb.st_gid = stat.bs_gid;
+  sb.st_atim.tv_sec = stat.bs_atime.tv_sec;
+  sb.st_atim.tv_nsec = stat.bs_atime.tv_nsec;
+  sb.st_ctim.tv_sec = stat.bs_ctime.tv_sec;
+  sb.st_ctim.tv_nsec = stat.bs_ctime.tv_nsec;
+  sb.st_mtim.tv_sec = stat.bs_mtime.tv_sec;
+  sb.st_mtim.tv_nsec = stat.bs_mtime.tv_nsec;
+  sb.st_blocks = stat.bs_blocks;
+  sb.st_blksize = stat.bs_blksize;
+  sb.st_rdev = stat.bs_rdev;
+
+  return posix2fsal_attributes(&sb, p_fsalattr_out);
 }
 
 /**
