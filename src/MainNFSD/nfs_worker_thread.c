@@ -420,7 +420,7 @@ struct timeval time_diff(struct timeval time_from, struct timeval time_to)
  */
 static inline void clean_pending_request(LRU_entry_t * pentry, struct prealloc_pool *request_pool)
 {
-  nfs_request_data_t *preqnfs = (nfs_request_data_t *) (pentry->buffdata.pdata);
+  request_data_t *preqnfs = (request_data_t *) (pentry->buffdata.pdata);
 
   /* Send the entry back to the pool */
   ReleaseToPool(preqnfs, request_pool);
