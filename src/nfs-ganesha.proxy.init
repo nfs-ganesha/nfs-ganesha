@@ -45,15 +45,9 @@ start() {
                 daemon --pidfile $PID_FILE $PATHPROG $OPTIONS
                 RETVAL=$?
                 if [ $RETVAL -eq 0 ]; then 
-<<<<<<< HEAD
-		 touch $LOCK_FILE
-		else
-		  RETVAL=1
-=======
 		            touch $LOCK_FILE
 		        else
 		            RETVAL=1
->>>>>>> 38257b0... Ganesha daemon now has a '-p' option to deal with process's pid file. The init script will reflect the use of this new option.
                 fi
         fi
         echo 
