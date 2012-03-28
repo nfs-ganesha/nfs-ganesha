@@ -165,7 +165,7 @@ function test3b
    cd $CTHON04_DIR/basic
    export NFSTESTDIR=$dir   
 
-   ./runtests || error "ERROR while running cthon04's basic tests"
+   timeout -s KILL 5m ./runtests || error "ERROR while running cthon04's basic tests"
 }
 
 ### test3g : cthon04's general tests
@@ -177,7 +177,7 @@ function test3g
    cd $CTHON04_DIR/general
    export NFSTESTDIR=$dir   
 
-   ./runtests || error "ERROR while running cthon04's general tests"
+   timeout -s KILL 5m ./runtests || error "ERROR while running cthon04's general tests"
 }
 
 ### test3s : cthon04's special tests
@@ -189,7 +189,7 @@ function test3s
    cd $CTHON04_DIR/special
    export NFSTESTDIR=$dir   
 
-   ./runtests || error "ERROR while running cthon04's special tests"
+   timeout -s KILL 5m ./runtests || error "ERROR while running cthon04's special tests"
 }
 
 ### test3l : cthon04's lock tests
@@ -201,7 +201,7 @@ function test3l
    cd $CTHON04_DIR/lock
    export NFSTESTDIR=$dir   
 
-   ./runtests || error "ERROR while running cthon04's lock tests"
+   timeout -s KILL 5m ./runtests || error "ERROR while running cthon04's lock tests"
 }
 
 
