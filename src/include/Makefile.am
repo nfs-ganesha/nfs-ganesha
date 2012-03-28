@@ -1,7 +1,7 @@
 noinst_HEADERS = BuddyMalloc.h                   \
                  fsal.h                          \
                  fsal_pnfs.h                     \
-                 pnfs_common.h              \
+                 pnfs_common.h                   \
                  fsal_pnfs_files.h               \
                  mfsl.h                          \
                  HashData.h                      \
@@ -13,6 +13,8 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  HashTable.h                     \
                  LRU_List.h                      \
                  avltree.h                       \
+                 cache_inode_avl.h               \
+                 murmur3.h                       \
                  cidr.h                          \
                  MesureTemps.h                   \
                  RW_Lock.h                       \
