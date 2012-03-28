@@ -69,6 +69,16 @@
 #include <asm/types.h>
 #include <lustre/liblustreapi.h>
 
+#define fsal_handle_t lustrefsal_handle_t
+#define fsal_op_context_t lustrefsal_op_context_t
+#define fsal_file_t lustrefsal_file_t
+#define fsal_dir_t lustrefsal_dir_t
+#define fsal_export_context_t lustrefsal_export_context_t
+#define fsal_lockdesc_t lustrefsal_lockdesc_t
+#define fsal_cookie_t lustrefsal_cookie_t
+#define fs_specific_initinfo_t lustrefs_specific_initinfo_t
+#define fsal_cred_t lustrefsal_cred_t
+
 /*
  * labels in the config file
  */
