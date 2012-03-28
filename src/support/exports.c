@@ -704,9 +704,9 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
   p_entry->worker_stats = (nfs_worker_stat_t *)
                           Mem_Alloc(sizeof(nfs_worker_stat_t) *
-                                    sizeof(nfs_param.core_param.nb_worker));
+                                    nfs_param.core_param.nb_worker);
   memset(p_entry->worker_stats, 0,
-         sizeof(nfs_worker_stat_t) * sizeof(nfs_param.core_param.nb_worker));
+         sizeof(nfs_worker_stat_t) * nfs_param.core_param.nb_worker);
 
   /* by default, we support auth_none and auth_sys */
   p_entry->options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
