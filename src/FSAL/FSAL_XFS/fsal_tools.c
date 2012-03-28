@@ -188,9 +188,15 @@ unsigned int XFSFSAL_Handle_to_RBTIndex(fsal_handle_t * handle, unsigned int coo
   return h;
 }
 
-static size_t xfs_sizeof_handle(const xfsfsal_handle_t *hdl)
+static ssize_t xfs_sizeof_handle(const xfsfsal_handle_t *hdl)
 {
-	assert(hdl->data.handle_len > 0 && hdl->data.handle_len < FSAL_XFS_HANDLE_LEN);
+	/* data.handle_len is unsigned */
+	if(hdl->data.handle_len >= FSAL_XFS_HANDLE_LEN)
+	  {
+		LogMajor(COMPONENT_FSAL, "Incorrect XFS handle length %d",
+			 hdl->data.handle_len);
+		return (size_t)-1;
+	  }
 	return offsetof(xfsfsal_handle_t, data.handle_val) + hdl->data.handle_len;
 }
 
@@ -221,7 +227,7 @@ fsal_status_t XFSFSAL_DigestHandle(fsal_export_context_t * p_expcontext,     /* 
 {
   const xfsfsal_handle_t * xfs_handle = (const xfsfsal_handle_t *)handle;
   const void *start;
-  size_t sz;
+  ssize_t sz;
   unsigned int ino32;
 
   /* sanity checks */
@@ -283,13 +289,34 @@ fsal_status_t XFSFSAL_ExpandHandle(fsal_export_context_t * p_expcontext,     /* 
                                    struct fsal_handle_desc *fh_desc /* IN/OUT */
     )
 {
-  size_t fh_size;
+  ssize_t fh_size;
+  const xfsfsal_handle_t *xh = (const xfsfsal_handle_t *)fh_desc->start;
 
   /* sanity checks */
   if( !fh_desc || !fh_desc->start)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  fh_size = xfs_sizeof_handle((const xfsfsal_handle_t *)(fh_desc->start));
+  fh_size = xfs_sizeof_handle(xh);
+  if(fh_size < 0)
+    ReturnCode(ERR_FSAL_BADHANDLE, 0);
+
+  switch(xh->data.type)
+    {
+    case DT_LNK:
+    case DT_BLK:
+    case DT_SOCK:
+    case DT_CHR:
+    case DT_FIFO:
+    case DT_REG:
+    case DT_DIR:
+	break;
+    default:
+	LogMajor(COMPONENT_FSAL,
+		 "Corrupted filehandle - unexpected file type %d",
+		 xh->data.type);
+	ReturnCode(ERR_FSAL_BADHANDLE, EINVAL);
+    }
+
   switch(in_type)
     {
     case FSAL_DIGEST_NFSV2:
@@ -308,7 +335,7 @@ fsal_status_t XFSFSAL_ExpandHandle(fsal_export_context_t * p_expcontext,     /* 
 	  LogMajor(COMPONENT_FSAL,
 		   "size mismatch for handle.  should be %zd, got %zd",
 		   fh_size, fh_desc->len);
-	  ReturnCode(ERR_FSAL_SERVERFAULT, 0);
+	  ReturnCode(ERR_FSAL_BADHANDLE, 0);
 	}
       break;
     case FSAL_DIGEST_SIZEOF:

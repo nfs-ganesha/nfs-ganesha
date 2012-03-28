@@ -165,7 +165,7 @@ fsal_status_t XFSFSAL_getattrs(fsal_handle_t * p_filehandle, /* IN */
 	LogEvent(COMPONENT_FSAL,
 		 "Corrupted filehandle - unexpected file type %d",
 		 xh->data.type);
-	Return(ERR_FSAL_STALE, EINVAL, INDEX_FSAL_getattrs);
+	Return(ERR_FSAL_BADHANDLE, EINVAL, INDEX_FSAL_getattrs);
     }
   if(FSAL_IS_ERROR(st))
     {
