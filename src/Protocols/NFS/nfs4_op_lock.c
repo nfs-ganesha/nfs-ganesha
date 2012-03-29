@@ -242,15 +242,17 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                    "LOCK failed open stateid is not a SHARE");
           return res_LOCK4.status;
         }
-
+#ifdef _CONFORM_TO_TEST_LOCK8c
       /* Lock seqid (seqid wanted for new lock) should be 0 (see newpynfs test LOCK8c)  */
       if(arg_LOCK4.locker.locker4_u.open_owner.lock_seqid != 0)
         {
           res_LOCK4.status = NFS4ERR_BAD_SEQID;
           LogDebug(COMPONENT_NFS_V4_LOCK,
-                   "LOCK failed new lock stateid is not 0");
+                   "LOCK failed new lock seqid is not 0, it is set to: %d",
+                   arg_LOCK4.locker.locker4_u.open_owner.lock_seqid );
           return res_LOCK4.status;
         }
+#endif/* _CONFORM_TO_TEST_LOCK8c */
 
       /* Is this lock_owner known ? */
       convert_nfs4_lock_owner(&arg_LOCK4.locker.locker4_u.open_owner.lock_owner,
