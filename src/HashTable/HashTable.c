@@ -84,9 +84,9 @@ hash_table_err_to_str(hash_error_t err)
           return "HASHTABLE_NOT_DELETED";
      case HASHTABLE_OVERWRITTEN:
           return "HASHTABLE_OVERWRITTEN";
-     default:
-          return "UNKNOWN HASH TABLE ERROR";
      }
+
+     return "UNKNOWN HASH TABLE ERROR";
 }
 
 /**
