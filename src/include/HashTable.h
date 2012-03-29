@@ -353,4 +353,12 @@ hash_error_t HashTable_DelRef(struct hash_table *ht,
                               struct hash_buff *stored_key,
                               struct hash_buff *stored_val,
                               int (*put_ref)(struct hash_buff *));
+
+/**
+ * @todo ACE: HashTable.h seems a singularly inappropriate place for a
+ * reference to the clientid hash table.  Come back later, remove
+ * this, see what breaks, and find somewhere more appropriate to put
+ * it.
+ */
+extern hash_table_t * ht_client_id;
 #endif                          /* _HASHTABLE_H */
