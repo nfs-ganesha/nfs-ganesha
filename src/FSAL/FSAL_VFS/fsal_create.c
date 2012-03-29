@@ -599,8 +599,8 @@ fsal_status_t VFSFSAL_mknode(fsal_handle_t * parentdir_handle,       /* IN */
     }
 
   /* get the new object handle */
-  //if((newfd = openat(fd, p_node_name->name, O_RDONLY, 0600)) < 0)
-  if((newfd = openat(fd, p_node_name->name, O_RDONLY, unix_mode)) < 0)
+  if((newfd = openat(fd, p_node_name->name, O_NONBLOCK | O_RDONLY,
+                     unix_mode)) < 0)
     {
       errsv = errno;
       close(fd);
