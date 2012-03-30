@@ -994,24 +994,30 @@ HashTable_DelRef(hash_table_t *ht,
      rc = HashTable_GetLatch(ht, key, &temp_val,
                              TRUE, &latch);
 
-     if ((rc != HASHTABLE_SUCCESS) &&
-         (rc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
-          return rc;
-     }
+     switch (rc) {
+     case HASHTABLE_ERROR_NO_SUCH_KEY:
+          HashTable_ReleaseLatched(ht, &latch);
+          break;
 
-     if (put_ref != NULL) {
-          if (put_ref(&temp_val) != 0) {
-               HashTable_ReleaseLatched(ht,
-                                        &latch);
-               return HASHTABLE_NOT_DELETED;
+     case HASHTABLE_SUCCESS:
+          if (put_ref != NULL) {
+               if (put_ref(&temp_val) != 0) {
+                    HashTable_ReleaseLatched(ht, &latch);
+                    rc = HASHTABLE_NOT_DELETED;
+               }
           }
+          HashTable_DeleteLatched(ht,
+                                  key,
+                                  &latch,
+                                  stored_key,
+                                  stored_val);
+          break;
+
+     default:
+          break;
      }
 
-     return HashTable_DeleteLatched(ht,
-                                    key,
-                                    &latch,
-                                    stored_key,
-                                    stored_val);
+     return rc;
 } /* HashTable_DelRef */
 
 /* @} */
