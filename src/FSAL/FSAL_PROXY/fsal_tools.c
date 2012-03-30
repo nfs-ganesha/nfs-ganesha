@@ -214,9 +214,6 @@ static ssize_t proxy_sizeof_handle(const proxyfsal_handle_t *pxh)
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-
-#define NFSV4_FH_OPAQUE_SIZE 108 /* Take care of coherency with size of file_handle_v4_t::fsopaque */
-
 fsal_status_t PROXYFSAL_DigestHandle(fsal_export_context_t * exp_context, /* IN */
                                      fsal_digesttype_t output_type,     /* IN */
                                      fsal_handle_t * in_handle,       /* IN */
@@ -237,14 +234,12 @@ fsal_status_t PROXYFSAL_DigestHandle(fsal_export_context_t * exp_context, /* IN 
 
   switch (output_type)
     {
-
-      /* NFSV2 handle digest */
     case FSAL_DIGEST_NFSV2:
     case FSAL_DIGEST_NFSV3:
-
-#ifdef _HANDLE_MAPPING
       if(!global_fsal_proxy_specific_info.enable_handle_mapping)
         ReturnCode(ERR_FSAL_NOTSUPP, 0);
+
+#ifdef _HANDLE_MAPPING
       if(fh_desc->len < sizeof(map_hdl))
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
@@ -261,10 +256,8 @@ fsal_status_t PROXYFSAL_DigestHandle(fsal_export_context_t * exp_context, /* IN 
       memset(fh_desc->start, 0, fh_desc->len);
       memcpy(fh_desc->start, &map_hdl, sizeof(map_hdl));
       ReturnCode(ERR_FSAL_NO_ERROR, 0);
-#else
-      ReturnCode(ERR_FSAL_NOTSUPP, 0);
 #endif
-
+    /* fallthru */
     case FSAL_DIGEST_NFSV4:
       sz = proxy_sizeof_handle(in_fsal_handle);
       data = in_fsal_handle;
@@ -333,11 +326,10 @@ fsal_status_t PROXYFSAL_ExpandHandle(fsal_export_context_t * p_expcontext, /* IN
     {
     case FSAL_DIGEST_NFSV2:
     case FSAL_DIGEST_NFSV3:
-
-#ifdef _HANDLE_MAPPING
       if(!global_fsal_proxy_specific_info.enable_handle_mapping)
         ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
+#ifdef _HANDLE_MAPPING
       if(fh_desc->len < sizeof(*map_hdl))
         ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
@@ -367,11 +359,8 @@ fsal_status_t PROXYFSAL_ExpandHandle(fsal_export_context_t * p_expcontext, /* IN
 	ReturnCode(ERR_FSAL_TOOSMALL, 0);
       memcpy(fh_desc->start, &tmp_hdl, sz);
       break;
-#else
-      /* Proxy works only on NFSv4 requests */
-      ReturnCode(ERR_FSAL_NOTSUPP, 0);
 #endif
-
+    /* fallthru */
     case FSAL_DIGEST_NFSV4:
       sz = proxy_sizeof_handle((proxyfsal_handle_t *)fh_desc->start);
       if(sz < 0)
