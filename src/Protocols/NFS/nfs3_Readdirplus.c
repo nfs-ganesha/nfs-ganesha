@@ -238,17 +238,27 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
   pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries = NULL;
   pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = FALSE;
 
-  /* How many entries will we retry from cache_inode ? */
-  if(begin_cookie > 1)
-    {
+  /* cookie 0 must return "." as first entry (and keep 2 slots for . and ..)
+   * cookie 1 must return ".." as first entry (and keep 1 slot for ..)
+   * cookie 2 returns the first real entry (but we pass cookie=0 since iteration is initial)
+   */
+  switch (begin_cookie) {
+  case 0:
+      asked_num_entries = (estimated_num_entries - 2);
+      cache_inode_cookie = 0;
+      break;
+  case 1:
+      asked_num_entries = (estimated_num_entries - 1);
+      cache_inode_cookie = 0;
+      break;
+  case 2:
+      asked_num_entries = estimated_num_entries;
+      cache_inode_cookie = 0;
+      break;
+  default:
       asked_num_entries = estimated_num_entries;
       cache_inode_cookie = begin_cookie;
-    }
-  else
-    {
-      asked_num_entries = ((estimated_num_entries > 2) ? estimated_num_entries - 2 : 0);        /* Keep space for '.' and '..' */
-      cache_inode_cookie = 0;
-    }
+  }
 
   /* A definition that will be very useful to avoid very long names for variables */
 #define RES_READDIRPLUS_REPLY pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply

@@ -294,26 +294,27 @@ int nfs_Readdir(nfs_arg_t * parg,
       return NFS_REQ_DROP;
     }
 
-  /* How many entries will we retry from cache_inode ? */
-
-  if(cookie > 1)                /* it is not the cookie for "." nor ".." */
-    {
+  /* cookie 0 must return "." as first entry (and keep 2 slots for . and ..)
+   * cookie 1 must return ".." as first entry (and keep 1 slot for ..)
+   * cookie 2 returns the first real entry (but we pass cookie=0 since iteration is initial)
+   */
+  switch (cookie) {
+  case 0:
+      asked_num_entries = (estimated_num_entries - 2);
+      cache_inode_cookie = 0;
+      break;
+  case 1:
+      asked_num_entries = (estimated_num_entries - 1);
+      cache_inode_cookie = 0;
+      break;
+  case 2:
+      asked_num_entries = estimated_num_entries;
+      cache_inode_cookie = 0;
+      break;
+  default:
       asked_num_entries = estimated_num_entries;
       cache_inode_cookie = cookie;
-    }
-  else
-    {
-
-      /* keep space for "." and ".." */
-
-      /* cookie 0 must return "." as first entry (and keep 2 slots for . and ..)
-       * cookie 1 must return ".." as first entry (and keep 1 slot for ..)
-       */
-
-      asked_num_entries =
-          (estimated_num_entries > 2 - cookie ? estimated_num_entries + cookie - 2 : 0);
-      cache_inode_cookie = 0;
-    }
+  }
 
 /* Some definitions that will be very useful to avoid very long names for variables */
 #define RES_READDIR2_OK   pres->res_readdir2.READDIR2res_u.readdirok
