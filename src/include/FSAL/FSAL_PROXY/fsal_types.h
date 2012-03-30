@@ -192,7 +192,6 @@ typedef struct
   unsigned int cred_lifetime;
   unsigned int sec_type;
   bool_t active_krb5;
-  char openfh_wd[MAXPATHLEN];
 
   /* initialization info for handle mapping */
 

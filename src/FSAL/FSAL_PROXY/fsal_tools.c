@@ -479,7 +479,6 @@ fsal_status_t PROXYFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_
   init_info->sec_type = 0;
 
   strcpy(init_info->srv_proto, "tcp");
-  strncpy(init_info->openfh_wd, "/.hl_dir", MAXPATHLEN);
 
 #ifdef _HANDLE_MAPPING
   init_info->enable_handle_mapping = FALSE;
@@ -670,11 +669,6 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
 #endif
-        }
-
-      else if(!STRCMP(key_name, "Open_by_FH_Working_Dir"))
-        {
-          strncpy(init_info->openfh_wd, key_value, MAXPATHLEN);
         }
       else if(!STRCMP(key_name, "Enable_Handle_Mapping"))
         {

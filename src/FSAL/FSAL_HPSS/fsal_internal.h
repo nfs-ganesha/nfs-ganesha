@@ -270,12 +270,6 @@ fsal_status_t HPSSFSAL_rcp(hpssfsal_handle_t * filehandle,      /* IN */
                            fsal_path_t * p_local_path,  /* IN */
                            fsal_rcpflag_t transfer_opt /* IN */ );
 
-fsal_status_t HPSSFSAL_rcp_by_fileid(hpssfsal_handle_t * filehandle,    /* IN */
-                                     fsal_u64_t fileid, /* IN */
-                                     hpssfsal_op_context_t * p_context, /* IN */
-                                     fsal_path_t * p_local_path,        /* IN */
-                                     fsal_rcpflag_t transfer_opt /* IN */ );
-
 fsal_status_t HPSSFSAL_rename(hpssfsal_handle_t * p_old_parentdir_handle,       /* IN */
                               fsal_name_t * p_old_name, /* IN */
                               hpssfsal_handle_t * p_new_parentdir_handle,       /* IN */

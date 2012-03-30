@@ -474,19 +474,6 @@ fsal_status_t MFSL_rcp(mfsl_object_t * filehandle,      /* IN */
   return FSAL_rcp(&filehandle->handle, p_context, p_local_path, transfer_opt);
 }                               /* MFSL_rcp */
 
-fsal_status_t MFSL_rcp_by_fileid(mfsl_object_t * filehandle,    /* IN */
-                                 fsal_u64_t fileid,     /* IN */
-                                 fsal_op_context_t * p_context, /* IN */
-                                 mfsl_context_t * p_mfsl_context,       /* IN */
-                                 fsal_path_t * p_local_path,    /* IN */
-                                 fsal_rcpflag_t transfer_opt,    /* IN */
-				 void * pextra
-    )
-{
-  return FSAL_rcp_by_fileid(&filehandle->handle,
-                            fileid, p_context, p_local_path, transfer_opt);
-}                               /* MFSL_rcp_by_fileid */
-
 /* To be called before exiting */
 fsal_status_t MFSL_terminate(void)
 {

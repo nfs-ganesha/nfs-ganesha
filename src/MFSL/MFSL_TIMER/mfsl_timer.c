@@ -710,27 +710,6 @@ fsal_status_t MFSL_rcp(mfsl_object_t * filehandle,      /* IN */
   return fsal_status ;
 }                               /* MFSL_rcp */
 
-fsal_status_t MFSL_rcp_by_fileid(mfsl_object_t * filehandle,    /* IN */
-                                 fsal_u64_t fileid,     /* IN */
-                                 fsal_op_context_t * p_context, /* IN */
-                                 mfsl_context_t * p_mfsl_context,       /* IN */
-                                 fsal_path_t * p_local_path,    /* IN */
-                                 fsal_rcpflag_t transfer_opt,    /* IN */
-				 void * pextra
-    )
-{
-  struct timeval start, stop, delta ;
-  fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 } ;
-  
-  gettimeofday( &start, 0 ) ; 
-  fsal_status = FSAL_rcp_by_fileid(&filehandle->handle,
-                            fileid, p_context, p_local_path, transfer_opt);
-  gettimeofday( &stop, 0 ) ; 
-  delta = mfsl_timer_diff( &stop, &start ) ;
-  LogFullDebug( COMPONENT_MFSL, "%s: duration=%ld.%06ld", __FUNCTION__, delta.tv_sec, delta.tv_usec ) ;
-  return fsal_status ;
-}                               /* MFSL_rcp_by_fileid */
-
 /* To be called before exiting */
 fsal_status_t MFSL_terminate(void)
 {

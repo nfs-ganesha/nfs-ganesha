@@ -58,7 +58,6 @@ fsal_functions_t fsal_xfs_functions = {
   .fsal_get_quota = POSIXFSAL_get_quota,
   .fsal_check_quota = COMMON_check_quota,
   .fsal_rcp = POSIXFSAL_rcp,
-  .fsal_rcp_by_fileid = COMMON_rcp_by_fileid,
   .fsal_rename = POSIXFSAL_rename,
   .fsal_get_stats = POSIXFSAL_get_stats,
   .fsal_readlink = POSIXFSAL_readlink,

@@ -729,13 +729,6 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
                        fsal_rcpflag_t transfer_opt      /* IN */
     );
 
-fsal_status_t FSAL_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
-                                 fsal_u64_t fileid,     /* IN */
-                                 fsal_op_context_t * p_context, /* IN */
-                                 fsal_path_t * p_local_path,    /* IN */
-                                 fsal_rcpflag_t transfer_opt    /* IN */
-    );
-
 fsal_status_t FSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
                             fsal_handle_t     * p_filehandle,        /* IN */
                             fsal_op_context_t * p_context,           /* IN */
@@ -1276,13 +1269,6 @@ typedef struct fsal_functions__
                             fsal_op_context_t * p_context,      /* IN */
                             fsal_path_t * p_local_path, /* IN */
                             fsal_rcpflag_t transfer_opt);       /* IN */
-
-  /* FSAL_rcp_by_fileid */
-  fsal_status_t(*fsal_rcp_by_fileid) (fsal_handle_t * filehandle,       /* IN */
-                                      fsal_u64_t fileid,        /* IN */
-                                      fsal_op_context_t * p_context,    /* IN */
-                                      fsal_path_t * p_local_path,       /* IN */
-                                      fsal_rcpflag_t transfer_opt /* IN */ );
 
   /* FSAL_rename */
   fsal_status_t(*fsal_rename) (fsal_handle_t * p_old_parentdir_handle,  /* IN */

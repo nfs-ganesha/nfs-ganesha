@@ -1338,38 +1338,6 @@ int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
 }                               /* fsal_internal_ClientReconnect */
 
 /**
- *
- * FSAL_proxy_set_hldir: Gets the fsal_handle for hldir and store it in the thread context.
- *
- * Gets the fsal_handle for hldir and store it in the thread context.
- *
- * @param p_thr_context [INOUT]  pointer to the FSAL thread context.
- * @param hl_path       [ IN ]   the path (on the server) to the hl directory
- *
- * @return 0 if successful, -1 if failed
- *
- */
-int FSAL_proxy_set_hldir(proxyfsal_op_context_t * p_thr_context, char *hl_path)
-{
-  fsal_path_t fsal_path;
-  fsal_status_t fsal_status;
-
-  if(p_thr_context == NULL || hl_path == NULL)
-    return -1;
-
-  if(FSAL_IS_ERROR(FSAL_str2path(hl_path, MAXPATHLEN, &fsal_path)))
-    return -1;
-
-  fsal_status = FSAL_lookupPath(&fsal_path,
-                                (fsal_op_context_t *)p_thr_context, (fsal_handle_t *) &(p_thr_context->openfh_wd_handle), NULL);
-
-  if(FSAL_IS_ERROR(fsal_status))
-    return -1;
-
-  return 0;
-}                               /* FSAL_proxy_set_hldir */
-
-/**
  * FSAL_proxy_open_confirm:
  * Confirms a previously made OP_OPEN if this is required by the server
  *

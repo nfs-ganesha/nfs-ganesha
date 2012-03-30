@@ -652,16 +652,6 @@ fsal_status_t FSAL_rcp(fsal_handle_t * filehandle,      /* IN */
   return fsal_functions.fsal_rcp(filehandle, p_context, p_local_path, transfer_opt);
 }
 
-fsal_status_t FSAL_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
-                                 fsal_u64_t fileid,     /* IN */
-                                 fsal_op_context_t * p_context, /* IN */
-                                 fsal_path_t * p_local_path,    /* IN */
-                                 fsal_rcpflag_t transfer_opt /* IN */ )
-{
-  return fsal_functions.fsal_rcp_by_fileid(filehandle, fileid, p_context, p_local_path,
-                                           transfer_opt);
-}
-
 fsal_status_t FSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* IN */
                           fsal_name_t * p_old_name,     /* IN */
                           fsal_handle_t * p_new_parentdir_handle,       /* IN */
