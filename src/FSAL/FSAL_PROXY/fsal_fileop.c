@@ -581,6 +581,7 @@ fsal_status_t PROXYFSAL_read(fsal_file_t * file_desc,        /* IN */
           offset = seek_descriptor->offset + file_descriptor->current_offset;
           break;
 
+        default:
         case FSAL_SEEK_END:
           Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_read);
           break;
@@ -708,6 +709,7 @@ fsal_status_t PROXYFSAL_write(fsal_file_t * file_desc,       /* IN */
           offset = seek_descriptor->offset + file_descriptor->current_offset;
           break;
 
+        default:
         case FSAL_SEEK_END:
           Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_write);
           break;

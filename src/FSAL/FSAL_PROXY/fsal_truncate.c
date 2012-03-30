@@ -232,6 +232,10 @@ fsal_status_t PROXYFSAL_truncate(fsal_handle_t * file_hdl,       /* IN */
   uint32_t bitmap_conv_val[2];
   proxyfsal_handle_t * filehandle = (proxyfsal_handle_t *)file_hdl;
   proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
+  struct fsal_handle_desc fhd = {
+	.len = sizeof(fileid),
+	.start = (caddr_t)&fileid
+  };
 
 #define FSAL_TRUNCATE_NB_OP_ALLOC 3
   nfs_argop4 argoparray[FSAL_TRUNCATE_NB_OP_ALLOC];
@@ -263,7 +267,7 @@ fsal_status_t PROXYFSAL_truncate(fsal_handle_t * file_hdl,       /* IN */
 
   /* First, we need to get the fileid on a filehandle base */
   fsal_status = FSAL_DigestHandle(context->export_context,
-                                  FSAL_DIGEST_FILEID4, file_hdl, (caddr_t) & fileid);
+                                  FSAL_DIGEST_FILEID4, file_hdl, &fhd);
   if(FSAL_IS_ERROR(fsal_status))
     {
       Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_truncate);
