@@ -163,9 +163,9 @@ int stat_export_check_access(struct sockaddr_storage *pssaddr,
 }                               /* stat_export_check_access */
 
 static int parseAccessParam_for_statexporter(char *var_name, char *var_value,
-					     exportlist_client_t *clients)
+                                             exportlist_client_t *clients)
 {
-  int rc, err_flag = FALSE;
+  int rc = 0, err_flag __attribute__((unused)) = FALSE;
   char *expended_node_list;
 
   /* temp array of clients */
@@ -381,7 +381,7 @@ int write_stats(char *stat_buf, int num_cmds, char **function_names, nfs_request
   float tot_latency_ms = 0;
   float tot_await_time_ms = 0;
   char *name = NULL;
-  char *ver = NULL;
+  char *ver __attribute__((unused)) = NULL;
   char *call = NULL;
   char *saveptr = NULL;
 

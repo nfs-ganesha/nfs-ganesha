@@ -353,52 +353,16 @@ static int get_hash(snmp_adm_type_union * param, void *opt)
   switch (cs)
     {
     case 0:
-      param->integer = hstat.dynamic.nb_entries;
+      param->integer = hstat.entries;
       break;
     case 1:
-      param->integer = hstat.computed.min_rbt_num_node;
+      param->integer = hstat.min_rbt_num_node;
       break;
     case 2:
-      param->integer = hstat.computed.max_rbt_num_node;
+      param->integer = hstat.max_rbt_num_node;
       break;
     case 3:
-      param->integer = hstat.computed.average_rbt_num_node;
-      break;
-    case 4:
-      param->integer = hstat.dynamic.ok.nb_set;
-      break;
-    case 5:
-      param->integer = hstat.dynamic.notfound.nb_set;
-      break;
-    case 6:
-      param->integer = hstat.dynamic.err.nb_set;
-      break;
-    case 7:
-      param->integer = hstat.dynamic.ok.nb_test;
-      break;
-    case 8:
-      param->integer = hstat.dynamic.notfound.nb_test;
-      break;
-    case 9:
-      param->integer = hstat.dynamic.err.nb_test;
-      break;
-    case 10:
-      param->integer = hstat.dynamic.ok.nb_get;
-      break;
-    case 11:
-      param->integer = hstat.dynamic.notfound.nb_get;
-      break;
-    case 12:
-      param->integer = hstat.dynamic.err.nb_get;
-      break;
-    case 13:
-      param->integer = hstat.dynamic.ok.nb_del;
-      break;
-    case 14:
-      param->integer = hstat.dynamic.notfound.nb_del;
-      break;
-    case 15:
-      param->integer = hstat.dynamic.err.nb_del;
+      param->integer = hstat.average_rbt_num_node;
       break;
     default:
       return 1;
