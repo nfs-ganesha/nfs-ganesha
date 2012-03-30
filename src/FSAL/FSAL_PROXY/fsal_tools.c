@@ -671,49 +671,7 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
             }
 #endif
         }
-      else if(!STRCMP(key_name, "Open_by_FH_Working_Dir"))
-        {
-          strncpy(init_info->openfh_wd, key_value, MAXPATHLEN);
-        }
 
-      else if(!STRCMP(key_name, "Enable_Handle_Mapping"))
-        {
-          init_info->enable_handle_mapping = StrToBoolean(key_value);
-
-          if(init_info->enable_handle_mapping == -1)
-            {
-              LogCrit(COMPONENT_CONFIG,
-                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s --> %s (boolean expected)",
-                      key_name, key_value);
-              ReturnCode(ERR_FSAL_INVAL, 0);
-            }
-        }
-      else if(!STRCMP(key_name, "HandleMap_DB_Dir"))
-        {
-          strncpy(init_info->hdlmap_dbdir, key_value, MAXPATHLEN);
-        }
-      else if(!STRCMP(key_name, "HandleMap_Tmp_Dir"))
-        {
-          strncpy(init_info->hdlmap_tmpdir, key_value, MAXPATHLEN);
-        }
-      else if(!STRCMP(key_name, "HandleMap_DB_Count"))
-        {
-          init_info->hdlmap_dbcount = (unsigned int)atoi(key_value);
-        }
-      else if(!STRCMP(key_name, "HandleMap_HashTable_Size"))
-        {
-          init_info->hdlmap_hashsize = (unsigned int)atoi(key_value);
-        }
-      else if(!STRCMP(key_name, "HandleMap_Nb_Entries_Prealloc"))
-        {
-          init_info->hdlmap_nb_entry_prealloc =
-              (unsigned int)atoi(key_value);
-        }
-      else if(!STRCMP(key_name, "HandleMap_Nb_DB_Operations_Prealloc"))
-        {
-          init_info->hdlmap_nb_db_op_prealloc =
-              (unsigned int)atoi(key_value);
-        }
       else if(!STRCMP(key_name, "Open_by_FH_Working_Dir"))
         {
           strncpy(init_info->openfh_wd, key_value, MAXPATHLEN);
