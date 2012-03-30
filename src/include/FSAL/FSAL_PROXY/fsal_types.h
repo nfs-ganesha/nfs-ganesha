@@ -88,10 +88,9 @@
 typedef union {
  struct 
   {
-    fsal_nodetype_t object_type_reminder;
     uint64_t fileid4;
-    unsigned int timestamp;
-    unsigned int srv_handle_len;
+    uint8_t object_type_reminder;
+    uint8_t srv_handle_len;
     char srv_handle_val[FSAL_PROXY_FILEHANDLE_MAX_LEN] ; 
   } data ;
 #ifdef _BUILD_SHARED_FSAL 

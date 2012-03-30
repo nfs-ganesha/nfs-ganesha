@@ -79,10 +79,6 @@ int PROXYFSAL_handlecmp(fsal_handle_t * handle_1, fsal_handle_t * handle_2,
   if(handle1->data.srv_handle_len != handle2->data.srv_handle_len)
     return -1;
 
-  /* Check timestamp for server's instance (take care when volatile FH will be used) */
-  if(handle1->data.timestamp != handle2->data.timestamp)
-    return -1;
-
   /* At last, check underlying FH value. We use the fact that srv_handle_len is the same */
   if(memcmp(handle1->data.srv_handle_val, handle2->data.srv_handle_val, handle1->data.srv_handle_len))
     return -1;

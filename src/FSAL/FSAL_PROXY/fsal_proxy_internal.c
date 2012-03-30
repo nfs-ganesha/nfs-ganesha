@@ -409,7 +409,6 @@ int fsal_internal_proxy_create_fh(nfs_fh4 * pnfs4_handle,
 
   pfsal_handle->data.object_type_reminder = type;
   pfsal_handle->data.fileid4 = fileid;
-  pfsal_handle->data.timestamp = /** @todo fh should be volatile ? ServerBootTime ; */ 0;
   pfsal_handle->data.srv_handle_len = pnfs4_handle->nfs_fh4_len;
   memset(pfsal_handle->data.srv_handle_val, 0, FSAL_PROXY_FILEHANDLE_MAX_LEN);
   memcpy(pfsal_handle->data.srv_handle_val, pnfs4_handle->nfs_fh4_val,
