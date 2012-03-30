@@ -330,15 +330,6 @@ fsal_status_t MFSL_rcp(mfsl_object_t * filehandle,      /* IN */
 		       void * pextra
     );
 
-fsal_status_t MFSL_rcp_by_name(mfsl_object_t * filehandle,      /* IN */
-                               fsal_name_t * pfilename, /* IN */
-                               fsal_op_context_t * p_context,   /* IN */
-                               mfsl_context_t * p_mfsl_context, /* IN */
-                               fsal_path_t * p_local_path,      /* IN */
-                               fsal_rcpflag_t transfer_opt,     /* IN */
-			       void * pextra 
-    );
-
 fsal_status_t MFSL_rcp_by_fileid(mfsl_object_t * filehandle,    /* IN */
                                  fsal_u64_t fileid,     /* IN */
                                  fsal_op_context_t * p_context, /* IN */

@@ -310,8 +310,6 @@ struct cache_entry_t
     struct cache_inode_file__
     {
       cache_inode_opened_file_t open_fd;                             /**< Cached fsal_file_t for optimized access              */
-      fsal_name_t *pname;                                            /**< Pointer to filename, for PROXY only                  */
-      cache_entry_t *pentry_parent_open;                             /**< Parent associated with pname, for PROXY only         */
       void *pentry_content;                                          /**< Entry in file content cache (NULL if not cached)     */
       struct glist_head state_list;                                  /**< Pointers for state list                              */
       struct glist_head lock_list;                                   /**< Pointers for lock list                               */

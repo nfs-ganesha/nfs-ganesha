@@ -124,28 +124,13 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
 
       return *pstatus;
     }
-#if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
-  fsal_status =
-      FSAL_rcp_by_name(
-          &(pentry_inode->object.file.pentry_parent_open->object.dir.handle),
-          pentry_inode->object.file.pname, pcontext, &local_path,
-          FSAL_RCP_LOCAL_TO_FS);
-#else
   /* Write the data from the local data file to the fs file */
   fsal_status = FSAL_rcp(pfsal_handle, pcontext, &local_path, FSAL_RCP_LOCAL_TO_FS);
-#endif
-
   if(FSAL_IS_ERROR(fsal_status))
     {
-#if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
-      LogMajor(COMPONENT_CACHE_CONTENT, 
-                        "Error %d,%d from FSAL_rcp_by_name when flushing file",
-                        fsal_status.major, fsal_status.minor);
-#else
       LogMajor(COMPONENT_CACHE_CONTENT,
                         "Error %d,%d from FSAL_rcp when flushing file", fsal_status.major,
                         fsal_status.minor);
-#endif
 
       /* Unlock related Cache Inode pentry */
       V_w(&pentry->pentry_inode->lock);
@@ -303,33 +288,16 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
     }
   else
     {
-#if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
-      fsal_status =
-          FSAL_rcp_by_name(
-             &(pentry_inode->object.file.pentry_parent_open->object.dir.handle),
-              pentry_inode->object.file.pname, pcontext,
-              &local_path,
-              FSAL_RCP_FS_TO_LOCAL);
-#else
       /* Write the data from the local data file to the fs file */
       fsal_status = FSAL_rcp(pfsal_handle, pcontext, &local_path,
                              FSAL_RCP_FS_TO_LOCAL);
-#endif
       if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = CACHE_CONTENT_FSAL_ERROR;
-
-#if ( defined( _USE_PROXY ) && defined( _BY_NAME) )
-          LogMajor(COMPONENT_CACHE_CONTENT,
-                            "FSAL_rcp_by_name failed for %s: fsal_status.major=%u fsal_status.minor=%u",
-                            pentry->local_fs_entry.cache_path_data, fsal_status.major,
-                            fsal_status.minor);
-#else
           LogMajor(COMPONENT_CACHE_CONTENT,
                             "FSAL_rcp failed for %s: fsal_status.major=%u fsal_status.minor=%u",
                             pentry->local_fs_entry.cache_path_data, fsal_status.major,
                             fsal_status.minor);
-#endif
 
           /* stat */
           pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_REFRESH] += 1;

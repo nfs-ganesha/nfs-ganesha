@@ -332,24 +332,6 @@ cache_inode_status_t cache_inode_open_by_name(cache_entry_t * pentry_dir,
           return *pstatus;
         }
 
-#ifdef _USE_PROXY
-
-      /* If proxy if used, we should keep the name of the file to do FSAL_rcp if needed */
-      if((pentry_file->object.file.pname =
-          (fsal_name_t *) Mem_Alloc_Label(sizeof(fsal_name_t), "fsal_name_t")) == NULL)
-        {
-          *pstatus = CACHE_INODE_MALLOC_ERROR;
-
-          return *pstatus;
-        }
-
-      pentry_file->object.file.pentry_parent_open = pentry_dir;
-      pentry_file->object.file.pname->len = pname->len;
-      memcpy((char *)(pentry_file->object.file.pname->name), (char *)(pname->name),
-             FSAL_MAX_NAME_LEN);
-
-#endif
-
       /* Keep coherency with the cache_content */
       if(pentry_file->object.file.pentry_content != NULL)
         {
@@ -469,15 +451,6 @@ cache_inode_status_t cache_inode_close(cache_entry_t * pentry,
           return *pstatus;
         }
     }
-#ifdef _USE_PROXY
-  /* If proxy if used, free the name if needed */
-  if(pentry->object.file.pname != NULL)
-    {
-      Mem_Free((char *)(pentry->object.file.pname));
-      pentry->object.file.pname = NULL;
-    }
-  pentry->object.file.pentry_parent_open = NULL;
-#endif
 
   *pstatus = CACHE_CONTENT_SUCCESS;
 
