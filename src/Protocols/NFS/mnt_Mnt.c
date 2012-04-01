@@ -272,7 +272,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
  */
       pres->res_mnt3.fhs_status =
 	      nfs3_AllocateFH((nfs_fh3 *) &pres->res_mnt3.mountres3_u.mountinfo.fhandle);
-      if(pres->res_mnt3.fhs_status ==  NFS3_OK)
+      if(pres->res_mnt3.fhs_status ==  MNT3_OK)
         {
           if(!nfs3_FSALToFhandle
              ((nfs_fh3 *) & (pres->res_mnt3.mountres3_u.mountinfo.fhandle), &pfsal_handle,
