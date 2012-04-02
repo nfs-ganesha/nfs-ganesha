@@ -108,6 +108,10 @@ cache_inode_commit(cache_entry_t * pentry,
             return *pstatus;
      }
 
+     /* Check commit range */
+     if ((uint64_t)count > ~(uint64_t)offset)
+                return NFS4ERR_INVAL;
+
     /* If we aren't using the Ganesha write buffer, then we're using the filesystem
      * write buffer so execute a normal fsal_commit() call. */
     if (typeofcommit == FSAL_UNSAFE_WRITE_TO_FS_BUFFER)
