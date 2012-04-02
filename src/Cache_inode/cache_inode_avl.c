@@ -70,12 +70,19 @@ int cache_inode_avl_qp_insert(
     struct avltree *t = &entry->object.dir.avl;
     struct avltree_node *node;
     uint32_t hk[4];
-    int j, j2;
+    int j, j2, tries;
 
     assert(avltree_size(t) < UINT64_MAX);
 
-    MurmurHash3_x64_128(v->name.name,  FSAL_MAX_NAME_LEN, 67, hk);
-    memcpy(&v->hk.k, hk, 8);
+    /* don't permit illegal cookies */
+    for (tries = 0; tries < 5; ++tries) {
+        MurmurHash3_x64_128(v->name.name,  FSAL_MAX_NAME_LEN, 67, hk);
+        memcpy(&v->hk.k, hk, 8);
+        if (v->hk.k < 3)
+            continue;
+    }
+
+    assert(v->hk.k > 2);
 
     for (j = 0; j < UINT64_MAX; j++) {
         v->hk.k = (v->hk.k + (j * 2));

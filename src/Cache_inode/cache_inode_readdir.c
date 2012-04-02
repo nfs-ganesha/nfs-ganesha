@@ -1240,7 +1240,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
 
   if (cookie > 0) {
 
-      /* XXX hmm.  may need to constrain qp_insert_s to k > 2 */
+      /* qp_insert_s is constrained to k > 2 */
       if (cookie < 3) {
 	  *pstatus = CACHE_INODE_BAD_COOKIE;
 	  V_r(&dir_pentry->lock);
