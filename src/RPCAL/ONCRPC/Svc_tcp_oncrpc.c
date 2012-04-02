@@ -25,7 +25,7 @@ typedef unsigned int u_int32_t;
 #include   <errno.h>
 #include   <pthread.h>
 
-#include   "log_macros.h"
+#include   "log.h"
 
 #include   "nfs_core.h"
 

@@ -61,6 +61,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
+#include "sal_functions.h"
 
 /**
  *
@@ -71,8 +72,8 @@
  * @param op    [IN]    pointer to nfs4_op arguments
  * @param data  [INOUT] Pointer to the compound request's data
  * @param resp  [IN]    Pointer to nfs4_op results
- * 
- * @return NFS4_OK if successfull, other values show an error. 
+ *
+ * @return NFS4_OK if successfull, other values show an error.
  *
  * @see all the nfs4_op_<*> function
  * @see nfs4_Compound
@@ -84,7 +85,8 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
 #define arg_SEQUENCE4  op->nfs_argop4_u.opsequence
 #define res_SEQUENCE4  resp->nfs_resop4_u.opsequence
 
-  nfs41_session_t *psession;
+  nfs41_session_t *psession = NULL;
+  nfs_client_id_t *nfs_clientid = NULL;
 
   resp->resop = NFS4_OP_SEQUENCE;
   res_SEQUENCE4.sr_status = NFS4_OK;
@@ -100,6 +102,24 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
     {
       res_SEQUENCE4.sr_status = NFS4ERR_BADSESSION;
       return res_SEQUENCE4.sr_status;
+    }
+
+  /* Is this an existing client id ? */
+  if(nfs_client_id_Get_Pointer(psession->clientid, &nfs_clientid) !=
+     CLIENT_ID_SUCCESS)
+    {
+      /* Unknown client id */
+      res_SEQUENCE4.sr_status = NFS4ERR_STALE_CLIENTID;
+      return res_SEQUENCE4.sr_status;
+    }
+
+  if (nfs4_is_lease_expired(nfs_clientid))
+    {
+      res_SEQUENCE4.sr_status = NFS4ERR_EXPIRED;
+    }
+  else
+    {
+      nfs_clientid->last_renew = time(NULL);
     }
 
   /* Check is slot is compliant with ca_maxrequests */

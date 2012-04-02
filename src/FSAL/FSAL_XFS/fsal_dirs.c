@@ -110,6 +110,67 @@ fsal_status_t XFSFSAL_opendir(fsal_handle_t * p_dir_handle,  /* IN */
 
 }
 
+/*
+ * Common code used by fsal_lookup and fsal_readdir -
+ * given the name try to stat an entry. If an entry is
+ * regular file or directory then open it and use fd2handle
+ * to get a real handle, otherwise use inum2handle to fake
+ * a handle.
+ */
+fsal_status_t
+xfsfsal_stat_by_name(fsal_op_context_t * context,
+		     int atfd,
+		     const char *name,
+		     fsal_handle_t *handle,
+		     fsal_attrib_list_t * attributes)
+{
+  int rc;
+  int errsv;
+  struct stat buffstat;
+  fsal_status_t st;
+
+  TakeTokenFSCall();
+  rc = fstatat(atfd, name, &buffstat, AT_SYMLINK_NOFOLLOW);
+  errsv = errno;
+  ReleaseTokenFSCall();
+  if(rc < 0)
+      ReturnCode(posix2fsal_error(errsv), errsv);
+
+  if(S_ISDIR(buffstat.st_mode) ||  S_ISREG(buffstat.st_mode))
+    {
+      int tmpfd;
+
+      TakeTokenFSCall();
+      tmpfd = openat(atfd, name, O_RDONLY | O_NOFOLLOW, 0600);
+      errsv = errno;
+      ReleaseTokenFSCall();
+      if(tmpfd < 0)
+	  ReturnCode(posix2fsal_error(errsv), errsv);
+
+      st = fsal_internal_fd2handle(context, tmpfd, handle);
+      close(tmpfd);
+    } 
+  else
+    {
+       st = fsal_internal_inum2handle(context, buffstat.st_ino, handle);
+    }
+
+  if(FSAL_IS_ERROR(st))
+    return st;
+
+  if(attributes)
+    {
+      st = posix2fsal_attributes(&buffstat, attributes);
+      if(FSAL_IS_ERROR(st))
+	{
+	  FSAL_CLEAR_MASK(attributes->asked_attributes);
+	  FSAL_SET_MASK(attributes->asked_attributes, FSAL_ATTR_RDATTR_ERR);
+	}
+    }
+  return st;
+}
+
+
 /**
  * FSAL_readdir :
  *     Read the entries of an opened directory.
@@ -172,12 +233,8 @@ fsal_status_t XFSFSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
   char buff[BUF_SIZE];
   struct linux_dirent *dp = NULL;
   int bpos = 0;
-  int tmpfd = 0;
 
-  char d_type;
-  struct stat buffstat;
-
-  int errsv = 0, rc = 0;
+  int rc = 0;
 
   memset(buff, 0, BUF_SIZE);
 
@@ -233,8 +290,6 @@ fsal_status_t XFSFSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
       for(bpos = 0; bpos < rc;)
         {
           dp = (struct linux_dirent *)(buff + bpos);
-          d_type = *(buff + bpos + dp->d_reclen - 1);
-                                                    /** @todo not used for the moment. Waiting for information on symlink management */
           bpos += dp->d_reclen;
 
           /* LogFullDebug(COMPONENT_FSAL, "\tino=%8ld|%8lx off=%d|%x reclen=%d|%x name=%s|%d", dp->d_ino, dp->d_ino, (int)dp->d_off, (int)dp->d_off, 
@@ -254,89 +309,24 @@ fsal_status_t XFSFSAL_readdir(fsal_dir_t * dir_descriptor, /* IN */
                             &(p_pdirent[*p_nb_entries].name))))
             ReturnStatus(st, INDEX_FSAL_readdir);
 
-          d_type = DT_UNKNOWN;
-          if((tmpfd =
-              openat(p_dir_descriptor->fd, dp->d_name, O_RDONLY | O_NOFOLLOW, 0600)) < 0)
-            {
-              if(errno != ELOOP)        /* ( p_dir_descriptor->fd, dp->d_name) is not a symlink */
-                Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_readdir);
-              else
-                d_type = DT_LNK;
-            }
+          p_pdirent[*p_nb_entries].attributes.asked_attributes = get_attr_mask;
+          st = xfsfsal_stat_by_name((fsal_op_context_t *)&(p_dir_descriptor->context),
+				    p_dir_descriptor->fd, dp->d_name, 
+				    &p_pdirent[*p_nb_entries].handle,
+				    &p_pdirent[*p_nb_entries].attributes);
 
-          /* get object handle */
-          TakeTokenFSCall();
-          if(d_type != DT_LNK)
-            {
-              st = fsal_internal_fd2handle((fsal_op_context_t *)&(p_dir_descriptor->context),
-					   tmpfd, &(p_pdirent[*p_nb_entries].handle));
-              close(tmpfd);
-            }
-          else
-            {
-              if(fstatat(p_dir_descriptor->fd, dp->d_name, &buffstat, AT_SYMLINK_NOFOLLOW)
-                 < 0)
-                {
-                  ReleaseTokenFSCall();
-                  Return(posix2fsal_error(errno), errno, INDEX_FSAL_readdir);
-                }
+	  if(FSAL_IS_ERROR(st))
+	    ReturnStatus(st, INDEX_FSAL_readdir);
 
-              st = fsal_internal_inum2handle(&p_dir_descriptor->context,
-                                             buffstat.st_ino, &(p_pdirent[*p_nb_entries].handle));
+	  ((xfsfsal_cookie_t *) (&p_pdirent[*p_nb_entries].cookie))->data.cookie = dp->d_off;
+	  p_pdirent[*p_nb_entries].nextentry = NULL;
+	  if(*p_nb_entries)
+	    p_pdirent[*p_nb_entries - 1].nextentry = &(p_pdirent[*p_nb_entries]);
 
-              if(FSAL_IS_ERROR(st))
-                {
-                  ReleaseTokenFSCall();
-                  ReturnStatus(st, INDEX_FSAL_readdir);
-                }
-              p_pdirent[*p_nb_entries].attributes.asked_attributes = get_attr_mask;
+	  memcpy((char *)p_end_position, (char *)&p_pdirent[*p_nb_entries].cookie,
+		 sizeof(xfsfsal_cookie_t));
 
-              st = posix2fsal_attributes(&buffstat, &p_pdirent[*p_nb_entries].attributes);
-              if(FSAL_IS_ERROR(st))
-                {
-                  ReleaseTokenFSCall();
-                  FSAL_CLEAR_MASK(p_pdirent[*p_nb_entries].attributes.asked_attributes);
-                  FSAL_SET_MASK(p_pdirent[*p_nb_entries].attributes.asked_attributes,
-                                FSAL_ATTR_RDATTR_ERR);
-                  ReturnStatus(st, INDEX_FSAL_getattrs);
-                }
-
-            }
-          ReleaseTokenFSCall();
-
-          if(FSAL_IS_ERROR(st))
-            ReturnStatus(st, INDEX_FSAL_readdir);
-
-    /************************
-     * Fills the attributes *
-     ************************/
-          if(d_type != DT_LNK)
-            {
-              p_pdirent[*p_nb_entries].attributes.asked_attributes = get_attr_mask;
-
-              st = XFSFSAL_getattrs((xfsfsal_handle_t
-                                     *) (&(p_pdirent[*p_nb_entries].handle)),
-                                    (xfsfsal_op_context_t *) & p_dir_descriptor->context,
-                                    &p_pdirent[*p_nb_entries].attributes);
-              if(FSAL_IS_ERROR(st))
-                {
-                  FSAL_CLEAR_MASK(p_pdirent[*p_nb_entries].attributes.asked_attributes);
-                  FSAL_SET_MASK(p_pdirent[*p_nb_entries].attributes.asked_attributes,
-                                FSAL_ATTR_RDATTR_ERR);
-                }
-            }
-          //p_pdirent[*p_nb_entries].cookie.cookie = dp->d_off;
-          ((xfsfsal_cookie_t *) (&p_pdirent[*p_nb_entries].cookie))->data.cookie = dp->d_off;
-          p_pdirent[*p_nb_entries].nextentry = NULL;
-          if(*p_nb_entries)
-            p_pdirent[*p_nb_entries - 1].nextentry = &(p_pdirent[*p_nb_entries]);
-
-          //(*p_end_position) = p_pdirent[*p_nb_entries].cookie;
-          memcpy((char *)p_end_position, (char *)&p_pdirent[*p_nb_entries].cookie,
-                 sizeof(xfsfsal_cookie_t));
-
-          (*p_nb_entries)++;
-
+	  (*p_nb_entries)++;
         }                       /* for */
     }                           /* While */
 

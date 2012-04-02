@@ -199,7 +199,12 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
                        (unsigned int)ServerBootTime);
               nfs_clientid.confirmed = REBOOTED_CLIENT_ID;
               nfs_clientid.clientid = clientid;
-              nfs_clientid.last_renew = 0;
+              nfs_clientid.last_renew = time(NULL);
+              if (pthread_mutex_init(&nfs_clientid.clientid_mutex, NULL) == -1)
+                {
+                  res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
+                  return res_EXCHANGE_ID4.eir_status;
+                }
 
               if(nfs_client_id_set(clientid, nfs_clientid,
                                    &pworker->clientid_pool) !=
@@ -208,7 +213,6 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
                   res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
                   return res_EXCHANGE_ID4.eir_status;
                 }
-
             }
           else
             {
@@ -242,7 +246,12 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
       nfs_clientid.confirmed = UNCONFIRMED_CLIENT_ID;
       nfs_clientid.cb_program = 0;      /* to be set at create_session time */
       nfs_clientid.clientid = clientid;
-      nfs_clientid.last_renew = 0;
+      nfs_clientid.last_renew = time(NULL);
+      if (pthread_mutex_init(&nfs_clientid.clientid_mutex, NULL) == -1)
+        {
+          res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
+          return res_EXCHANGE_ID4.eir_status;
+        }
       nfs_clientid.nb_session = 0;
       nfs_clientid.create_session_sequence = 1;
       nfs_clientid.credential = data->credential;

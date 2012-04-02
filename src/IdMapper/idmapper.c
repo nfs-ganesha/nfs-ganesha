@@ -218,7 +218,7 @@ int uid2name(char *name, uid_t * puid)
 int name2uid(char *name, uid_t * puid)
 {
   struct passwd passwd;
-  struct passwd *ppasswd;
+  struct passwd *res;
   char buff[NFS4_MAX_DOMAIN_LEN];
   uid_t uid;
 #ifdef _HAVE_GSSAPI
@@ -255,9 +255,9 @@ int name2uid(char *name, uid_t * puid)
   else
     {
 #ifdef _SOLARIS
-      if(getpwnam_r(name, &passwd, buff, NFS4_MAX_DOMAIN_LEN) != 0)
+      if((res = getpwnam_r(name, &passwd, buff, NFS4_MAX_DOMAIN_LEN)) == NULL)
 #else
-      if(getpwnam_r(name, &passwd, buff, NFS4_MAX_DOMAIN_LEN, &ppasswd) != 0)
+      if(getpwnam_r(name, &passwd, buff, NFS4_MAX_DOMAIN_LEN, &res) != 0)
 #endif                          /* _SOLARIS */
         {
           LogFullDebug(COMPONENT_IDMAPPER,
@@ -266,23 +266,23 @@ int name2uid(char *name, uid_t * puid)
           *puid = -1;
           return 0;
         }
-      else
+      else if (res != NULL)
         {
-          *puid = passwd.pw_uid;
+          *puid = res->pw_uid;
 #ifdef _HAVE_GSSAPI
-          if(uidgidmap_add(passwd.pw_uid, passwd.pw_gid) != ID_MAPPER_SUCCESS)
+          if(uidgidmap_add(res->pw_uid, res->pw_gid) != ID_MAPPER_SUCCESS)
             {
               LogCrit(COMPONENT_IDMAPPER,
                       "name2uid: uidgidmap_add gss_uid %d gss_gid %d failed",
-                      passwd.pw_uid, passwd.pw_gid);
+                      res->pw_uid, res->pw_gid);
               return 0;
             }
 #endif                          /* _HAVE_GSSAPI */
-          if(uidmap_add(name, passwd.pw_uid) != ID_MAPPER_SUCCESS)
+          if(uidmap_add(name, res->pw_uid) != ID_MAPPER_SUCCESS)
             {
               LogCrit(COMPONENT_IDMAPPER,
                       "name2uid: uidmap_add %s %d failed",
-                      name, passwd.pw_uid);
+                      name, res->pw_uid);
               return 0;
             }
 
@@ -541,15 +541,7 @@ int gid2name(char *name, gid_t * pgid)
  */
 int name2gid(char *name, gid_t * pgid)
 {
-#ifndef _USE_NFSIDMAP
-  struct group g;
-#ifndef _SOLARIS
-  struct group *pg = NULL;
-#endif
-  static char buff[NFS4_MAX_DOMAIN_LEN]; /* Working area for getgrnam_r */
-#endif
   gid_t gid;
-  int rc;
 
   if(gidmap_get(name, (unsigned long *)&gid) == ID_MAPPER_SUCCESS)
     {
@@ -561,6 +553,7 @@ int name2gid(char *name, gid_t * pgid)
   else
     {
 #ifdef _USE_NFSIDMAP
+      int rc;
       if(!nfsidmap_set_conf())
         {
           LogCrit(COMPONENT_IDMAPPER,
@@ -590,9 +583,12 @@ int name2gid(char *name, gid_t * pgid)
         }
 
 #else
+      struct group g;
+      struct group *pg = NULL;
+      static char buff[NFS4_MAX_DOMAIN_LEN]; /* Working area for getgrnam_r */
 
 #ifdef _SOLARIS
-      if(getgrnam_r(name, &g, buff, NFS4_MAX_DOMAIN_LEN) != 0)
+      if((pg = getgrnam_r(name, &g, buff, NFS4_MAX_DOMAIN_LEN)) == NULL)
 #else
       if(getgrnam_r(name, &g, buff, NFS4_MAX_DOMAIN_LEN, &pg) != 0)
 #endif
@@ -603,18 +599,25 @@ int name2gid(char *name, gid_t * pgid)
           *pgid = -1;
           return 0;
         }
-      else
+      else if (pg != NULL)
         {
-          *pgid = g.gr_gid;
+          *pgid = pg->gr_gid;
 
-          if(gidmap_add(name, g.gr_gid) != ID_MAPPER_SUCCESS)
+          if(gidmap_add(name, pg->gr_gid) != ID_MAPPER_SUCCESS)
             {
               LogCrit(COMPONENT_IDMAPPER,
                       "name2gid: gidmap_add %s %d failed",
-                      name, g.gr_gid);
+                      name, pg->gr_gid);
               return 0;
             }
-
+        }
+      else
+        {
+          LogFullDebug(COMPONENT_IDMAPPER,
+                       "name2gid: %s is unknown",
+                       name);
+          *pgid = -1;
+          return 0;
         }
 #endif                          /* _USE_NFSIDMAP */
     }

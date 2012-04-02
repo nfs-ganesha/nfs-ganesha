@@ -406,4 +406,10 @@ fsal_status_t XFSFSAL_commit( fsal_file_t * p_file_descriptor,
                             fsal_size_t   size ) ;
 
 
+fsal_status_t xfsfsal_stat_by_name(fsal_op_context_t * context,
+				   int atfd,
+				   const char *name,
+				   fsal_handle_t *handle,
+				   fsal_attrib_list_t * attributes);
+
 

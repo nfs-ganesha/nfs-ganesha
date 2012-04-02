@@ -62,24 +62,6 @@ function do_as_user
     su - $user_arg -c "$action_arg"
 }
 
-function do_ssh_root
-{
-    remote=$1
-    action_arg=$2
-    ssh root@$remote $action_arg 
-}
-
-function do_mount
-{
-  # example : do_mount vers=3,lock server:/tmp /mnt
-  mount_opt=$1
-  server_url=$2
-  mntpath=$3
-
-  mount -o $mount_opt $server_url $mntpath || error "ERROR mounting $server_url on $mntpath with option $mount_opt"
-}
-
-
 function empty_client_cache
 {
     [ "$DEBUG" = "1" ] && echo "emptying client cache (data+metadata)"
@@ -204,6 +186,16 @@ function test3l
    timeout -s KILL 5m ./runtests || error "ERROR while running cthon04's lock tests"
 }
 
+### test4g : git clone a local repository
+function test4g
+{
+   dir="$TEST_DIR/dir.$$"
+   mkdir -p $dir
+
+   cd $dir
+   git clone $GIT_CLONE_URL || error "ERROR while cloning a git repository"
+}
+
 
 # syntax: ONLY=2,3 ./run_test.sh [-j] <test_dir>
 
@@ -215,6 +207,7 @@ run_test test3b  "cthon04's basic tests"
 run_test test3g  "cthon04's general tests"
 run_test test3s  "cthon04's special tests"
 run_test test3l  "cthon04's lock tests"
+run_test test4g  "git clone a local repository"
 
 # display test summary / generate outputs
 test_finalize
