@@ -92,6 +92,12 @@ int cache_inode_avl_qp_insert(
             v->hk.p = j;
             if (entry->object.dir.collisions < j)
                 entry->object.dir.collisions = j;
+
+            LogDebug(COMPONENT_CACHE_INODE,
+                     "inserted new dirent on entry=%p cookie=%"PRIu64
+                     " collisions %d",
+                     entry, v->hk.k, entry->object.dir.collisions);
+
             return (0);
         }
     }
