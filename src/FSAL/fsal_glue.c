@@ -859,6 +859,14 @@ fsal_status_t FSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op);
 }
 
+fsal_status_t FSAL_SetThrCred( fsal_uid_t uid, fsal_gid_t gid )
+{
+  if(fsal_functions.fsal_lock_op != NULL)
+    return fsal_functions.fsal_setthrcred( uid, gid ) ;
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
 /* FSAL_UP functions */
 #ifdef _USE_FSAL_UP
 fsal_status_t FSAL_UP_Init( fsal_up_event_bus_parameter_t * pebparam,      /* IN */

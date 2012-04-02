@@ -211,17 +211,6 @@ fsal_status_t LUSTREFSAL_symlink(fsal_handle_t * p_parent_directory_handle,     
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_lookup);
 
-  /* chown the symlink to the current user/group */
-
-  TakeTokenFSCall();
-  rc = lchown(fsalpath.path, p_context->credential.user,
-              setgid_bit ? -1 : p_context->credential.group);
-  errsv = errno;
-  ReleaseTokenFSCall();
-
-  if(rc)
-    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_symlink);
-
   /* get attributes if asked */
 
   if(p_link_attributes)

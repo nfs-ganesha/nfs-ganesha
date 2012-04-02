@@ -25,6 +25,7 @@
 
 #include <pthread.h>
 #include <string.h>
+#include <sys/fsuid.h>
 
 /* credential lifetime (1h) */
 fsal_uint_t CredentialLifetime = 3600;
@@ -538,6 +539,7 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,    /* IN 
   int rc;
   struct stat ino;
   lustre_fid fid;
+  uid_t old_uid = 0 ;
   lustrefsal_handle_t * p_handle = (lustrefsal_handle_t *)handle;
 
   if(!p_context || !p_handle || !p_fsalpath)
@@ -547,7 +549,9 @@ fsal_status_t fsal_internal_Path2Handle(fsal_op_context_t * p_context,    /* IN 
 
   LogFullDebug(COMPONENT_FSAL, "Lookup handle for %s", p_fsalpath->path);
 
+  old_uid = setfsuid( 0 ) ;
   rc = llapi_path2fid(p_fsalpath->path, &fid);
+  setfsuid( old_uid ) ;
 
   LogFullDebug(COMPONENT_FSAL, "llapi_path2fid(%s): status=%d, fid=" DFID_NOBRACE,
                   p_fsalpath->path, rc, PFID(&fid));

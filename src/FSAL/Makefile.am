@@ -6,6 +6,7 @@ libfsalcommon_la_SOURCES = fsal_strings.c          \
                            fsal_errors.c           \
                            fsal_convert.c          \
                            fsal_glue.c             \
+                           fsal_thrcreds.c         \
 			   common_methods.c	   \
 			   ../include/FSAL/common_methods.h \
                            ../include/fsal.h       \

@@ -71,7 +71,29 @@ fsal_status_t COMMON_close_by_fileid(fsal_file_t * file_descriptor /* IN */ ,
 				     fsal_u64_t fileid);
 
 fsal_status_t COMMON_rcp_by_fileid(fsal_handle_t * filehandle,    /* IN */
-				   fsal_u64_t fileid,     /* IN */
-				   fsal_op_context_t * p_context, /* IN */
-				   fsal_path_t * p_local_path,    /* IN */
-				   fsal_rcpflag_t transfer_opt /* IN */ );
+                                   fsal_u64_t fileid,     /* IN */
+                                   fsal_op_context_t * p_context, /* IN */
+                                   fsal_path_t * p_local_path,    /* IN */
+                                   fsal_rcpflag_t transfer_opt /* IN */ );
+
+fsal_status_t COMMON_getextattrs_notsupp(
+     fsal_handle_t * p_filehandle, /* IN */
+     fsal_op_context_t * p_context,        /* IN */
+     fsal_extattrib_list_t * p_object_attributes /* OUT */ );
+
+fsal_status_t COMMON_terminate_noerror();
+
+fsal_status_t COMMON_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter);
+
+fsal_status_t COMMON_SetDefault_FS_common_parameter(fsal_parameter_t * out_parameter);
+
+fsal_status_t COMMON_load_FSAL_parameter_from_conf(config_file_t in_config,
+                                                    fsal_parameter_t * out_parameter);
+
+fsal_status_t COMMON_load_FS_common_parameter_from_conf(config_file_t in_config,
+                                                         fsal_parameter_t *
+                                                         out_parameter);
+
+fsal_status_t COMMON_SetThrCred( fsal_uid_t uid, fsal_gid_t gid ) ;
+
+#endif

@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/fsuid.h>
 #include <string.h>
 
 #ifdef LINUX
@@ -61,13 +62,25 @@ struct file_handle {
 static inline int name_to_handle_at(int mdirfd, const char *name,
 				    struct file_handle * handle, int *mnt_id, int flags)
 {
-  return syscall(__NR_name_to_handle_at, mdirfd, name, handle, mnt_id, flags);
+  int rc ;
+  uid_t olduid= setfsuid( 0 ) ;
+
+  rc = syscall(__NR_name_to_handle_at, mdirfd, name, handle, mnt_id, flags);
+  setfsuid( olduid ) ;
+
+  return rc ;
 }
 
 static inline int open_by_handle_at(int mdirfd, struct file_handle * handle,
 				    int flags)
 {
-  return syscall(__NR_open_by_handle_at, mdirfd, handle, flags);
+  int rc ;
+  uid_t olduid= setfsuid( 0 ) ;
+
+  rc = syscall(__NR_open_by_handle_at, mdirfd, handle, flags);
+  setfsuid( olduid ) ;
+
+  return rc ;
 }
 #endif
 

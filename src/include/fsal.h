@@ -657,6 +657,8 @@ fsal_status_t FSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
                             fsal_lock_param_t * conflicting_lock     /* OUT */
                             );
 
+fsal_status_t FSAL_SetThrCred( fsal_uid_t uid, fsal_gid_t gid ) ;
+
 /* FSAL_UP functions */
 /* These structs are defined here because including fsal_up.h causes
  * preprocessor issues. */
@@ -1352,6 +1354,9 @@ typedef struct fsal_functions__
   unsigned int (*fsal_getfileno) (fsal_file_t *);
 
   fsal_status_t(*fsal_sync) (fsal_file_t * p_file_descriptor  /* IN */);
+
+  /* manage creds */
+  fsal_status_t (*fsal_setthrcred)(fsal_uid_t uid, fsal_gid_t gid ) ;
 
   /* FSAL_UP functions */
 #ifdef _USE_FSAL_UP

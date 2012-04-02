@@ -69,6 +69,7 @@ typedef unsigned long long int u_int64_t;
 /* other includes */
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/fsuid.h>
 #include <dirent.h>             /* for MAXNAMLEN */
 #include "config_parsing.h"
 #include "err_fsal.h"

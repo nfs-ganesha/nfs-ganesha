@@ -142,21 +142,6 @@ fsal_status_t LUSTREFSAL_create(fsal_handle_t * p_parent_directory_handle,      
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_create);
 
-  /* the file has been created */
-  /* chown the file to the current user */
-
-  if(p_context->credential.user != geteuid())
-    {
-      TakeTokenFSCall();
-      /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      rc = lchown(fsalpath.path, p_context->credential.user,
-                  setgid_bit ? -1 : (int)p_context->credential.group);
-      errsv = errno;
-      ReleaseTokenFSCall();
-      if(rc)
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_create);
-    }
-
   /* retrieve file attributes */
   if(p_object_attributes)
     {
@@ -283,21 +268,6 @@ fsal_status_t LUSTREFSAL_mkdir(fsal_handle_t * p_parent_directory_handle, /* IN 
 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_mkdir);
-
-  /* the directory has been created */
-  /* chown the file to the current user/group */
-
-  if(p_context->credential.user != geteuid())
-    {
-      TakeTokenFSCall();
-      /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      rc = lchown(fsalpath.path, p_context->credential.user,
-                  setgid_bit ? -1 : (int)p_context->credential.group);
-      errsv = errno;
-      ReleaseTokenFSCall();
-      if(rc)
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mkdir);
-    }
 
   /* retrieve file attributes */
   if(p_object_attributes)
@@ -552,24 +522,6 @@ fsal_status_t LUSTREFSAL_mknode(fsal_handle_t * parentdir_handle, /* IN */
 
   if(FSAL_IS_ERROR(status))
     ReturnStatus(status, INDEX_FSAL_mknode);
-
-  /* the node has been created */
-  /* chown the file to the current user/group */
-
-  if(p_context->credential.user != geteuid())
-    {
-      TakeTokenFSCall();
-
-      /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      rc = lchown(fsalpath.path, p_context->credential.user,
-                  setgid_bit ? -1 : (int)p_context->credential.group);
-      errsv = errno;
-
-      ReleaseTokenFSCall();
-
-      if(rc)
-        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mknode);
-    }
 
   /* Fills the attributes if needed */
   if(node_attributes)

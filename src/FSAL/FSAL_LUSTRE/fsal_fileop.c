@@ -128,6 +128,7 @@ fsal_status_t LUSTREFSAL_open(fsal_handle_t * p_filehandle,       /* IN */
   fsal_path_t fsalpath;
   struct stat buffstat;
   int posix_flags = 0;
+  uid_t old_uid = 0 ;
 
   /* sanity checks.
    * note : file_attributes is optional.
@@ -237,8 +238,13 @@ fsal_status_t LUSTREFSAL_open(fsal_handle_t * p_filehandle,       /* IN */
 #endif
 
   TakeTokenFSCall();
+
+  /* FSAL manages badly umask, and so seems to do ./lustre/fid, let's be root for that */
+  old_uid = setfsuid( 0 ) ;
   p_file_descriptor->fd = open(fsalpath.path, posix_flags, 0644);
   errsv = errno;
+  setfsuid( old_uid ) ;
+
   ReleaseTokenFSCall();
 
   if(p_file_descriptor->fd == -1)
