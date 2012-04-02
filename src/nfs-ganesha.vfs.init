@@ -5,12 +5,8 @@
 #
 # processname: /usr/bin/vfs.ganesha.nfsd
 # config: /etc/ganesha/vfs.ganesha.nfsd.conf
-<<<<<<< HEAD
-# pidfile: /var/run/snmpd
-=======
 # pidfile: /var/run/nfs-ganesha.pid
 #
->>>>>>> 38257b0... Ganesha daemon now has a '-p' option to deal with process's pid file. The init script will reflect the use of this new option.
 ### BEGIN INIT INFO
 # Provides: nfs-ganesha.vfs
 # Required-Start: $local_fs $named $time $network
@@ -25,15 +21,11 @@
 # source function library
 . /etc/rc.d/init.d/functions
 
-<<<<<<< HEAD
 PATHPROG=/usr/bin/vfs.ganesha.nfsd
 LOGFILE=/var/log/nfs-ganesha.log
 #LOGFILE=SYSLOG
 #LOGFILE=STDERR
 #LOGFILE=STDOUT
-=======
-PATHPROG=/usr/bin/vfs.ganesha.nfsd 
->>>>>>> 38257b0... Ganesha daemon now has a '-p' option to deal with process's pid file. The init script will reflect the use of this new option.
 
 # Default HPSS options
 LOGFILE=/var/log/vfs.ganesha.nfsd.log

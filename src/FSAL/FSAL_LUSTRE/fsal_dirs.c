@@ -175,6 +175,8 @@ fsal_status_t LUSTREFSAL_readdir(fsal_dir_t *dir_desc,   /* IN */
   memset((char *)&start_position, 0, sizeof(start_position));
   memcpy((char *)&start_position.data.cookie, (char *)&start_pos.data, sizeof(off_t)) ;
 
+  LogFullDebug(COMPONENT_FSAL, "start_cookie=%#lx", start_position.data.cookie);
+
   /***************************/
   /* seek into the directory */
   /***************************/
@@ -270,8 +272,6 @@ fsal_status_t LUSTREFSAL_readdir(fsal_dir_t *dir_desc,   /* IN */
       off_t tmp_off = telldir(p_dir_descriptor->p_dir);
       LogFullDebug(COMPONENT_FSAL, "entry_cookie=%#lx", tmp_off);
       memcpy( &p_pdirent[*p_nb_entries].cookie.data, &tmp_off, sizeof(off_t));
-
-
 
       p_pdirent[*p_nb_entries].nextentry = NULL;
       if(*p_nb_entries)

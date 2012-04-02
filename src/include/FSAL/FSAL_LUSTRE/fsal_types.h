@@ -79,7 +79,6 @@
 #define fs_specific_initinfo_t lustrefs_specific_initinfo_t
 #define fsal_cred_t lustrefsal_cred_t
 
-
 /*
  * labels in the config file
  */
