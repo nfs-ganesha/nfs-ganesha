@@ -2417,11 +2417,16 @@ int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
 
   Fattr->fileid = FSAL_attr->fileid;
   Fattr->atime.seconds = FSAL_attr->atime.seconds;
-  Fattr->atime.nseconds = FSAL_attr->atime.nseconds;
+  // Fattr->atime.nseconds = FSAL_attr->atime.nseconds;
+  Fattr->atime.nseconds = 0 ;
+
   Fattr->mtime.seconds = FSAL_attr->mtime.seconds;
-  Fattr->mtime.nseconds = FSAL_attr->mtime.nseconds;
+  // Fattr->mtime.nseconds = FSAL_attr->mtime.nseconds;
+  Fattr->mtime.nseconds = 0 ;
+
   Fattr->ctime.seconds = FSAL_attr->ctime.seconds;
-  Fattr->ctime.nseconds = FSAL_attr->ctime.nseconds;
+  // Fattr->ctime.nseconds = FSAL_attr->ctime.nseconds;
+  Fattr->ctime.nseconds = 0 ;
 
   return 1;
 }                               /* nfs3_FSALattr_To_Fattr */
