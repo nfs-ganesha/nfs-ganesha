@@ -2416,6 +2416,7 @@ int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
                Fattr->fsid);
 
   Fattr->fileid = FSAL_attr->fileid;
+
   Fattr->atime.seconds = FSAL_attr->atime.seconds;
   //Fattr->atime.nseconds = FSAL_attr->atime.nseconds;
   Fattr->atime.nseconds = 0;
