@@ -70,7 +70,7 @@
  *
  * @param parg    [IN]    pointer to nfs arguments union
  * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
+ * @param creds   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
  * @param preq    [IN]    pointer to SVC request related to this call 
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
@@ -83,7 +83,7 @@
 
 int nfs_Setattr(nfs_arg_t * parg,
                 exportlist_t * pexport,
-                fsal_op_context_t * pcontext,
+                struct user_cred *creds,
                 cache_inode_client_t * pclient,
                 struct svc_req *preq, nfs_res_t * pres)
 {
@@ -127,7 +127,7 @@ int nfs_Setattr(nfs_arg_t * parg,
                                   NULL,
                                   &(pres->res_attr2.status),
                                   &(pres->res_setattr3.status),
-                                  NULL, &pre_attr, pcontext, pclient, &rc)) == NULL)
+                                  NULL, &pre_attr, pexport, pclient, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -248,7 +248,7 @@ int nfs_Setattr(nfs_arg_t * parg,
           cache_status = cache_inode_truncate(pentry,
                                               setattr.filesize,
                                               &trunc_attr,
-                                              pclient, pcontext, &cache_status);
+                                              pclient, creds, &cache_status);
           setattr.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
           setattr.asked_attributes &= ~FSAL_ATTR_SIZE;
         }
@@ -265,7 +265,7 @@ int nfs_Setattr(nfs_arg_t * parg,
             {
               cache_status = cache_inode_setattr(pentry,
                                                  &setattr,
-                                                 pclient, pcontext, &cache_status);
+                                                 pclient, creds, &cache_status);
             }
           else
             {
@@ -277,7 +277,7 @@ int nfs_Setattr(nfs_arg_t * parg,
       else
         cache_status = cache_inode_setattr(pentry,
                                            &setattr,
-                                           pclient, pcontext, &cache_status);
+                                           pclient, creds, &cache_status);
     }
 
   if(cache_status == CACHE_INODE_SUCCESS)
@@ -317,7 +317,7 @@ int nfs_Setattr(nfs_arg_t * parg,
     goto out;
   }
 
-  nfs_SetFailedStatus(pcontext, pexport,
+  nfs_SetFailedStatus(pexport,
                       preq->rq_vers,
                       cache_status,
                       &pres->res_attr2.status,

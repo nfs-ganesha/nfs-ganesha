@@ -72,7 +72,7 @@
  *
  * @param parg    [IN]    pointer to nfs arguments union
  * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
+ * @param creds   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
  * @param preq    [IN]    pointer to SVC request related to this call 
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
@@ -85,7 +85,7 @@
 
 int nfs_Create(nfs_arg_t * parg,
                exportlist_t * pexport,
-               fsal_op_context_t * pcontext,
+               struct user_cred *creds,
                cache_inode_client_t * pclient,
                struct svc_req *preq, nfs_res_t * pres)
 {
@@ -106,6 +106,7 @@ int nfs_Create(nfs_arg_t * parg,
   cache_inode_status_t cache_status_lookup;
   cache_inode_file_type_t parent_filetype;
   int rc = NFS_REQ_OK;
+  struct fsal_obj_handle *pfsal_handle;
 #ifdef _USE_QUOTA
   fsal_status_t fsal_status ;
 #endif
@@ -136,7 +137,7 @@ int nfs_Create(nfs_arg_t * parg,
 
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_create3.where.dir))))
     {
-      rc = nfs3_Create_Xattr(parg, pexport, pcontext, pclient, preq, pres);
+      rc = nfs3_Create_Xattr(parg, pexport, creds, pclient, preq, pres);
       goto out;
     }
 
@@ -156,7 +157,7 @@ int nfs_Create(nfs_arg_t * parg,
                                          &(pres->res_create3.status),
                                          NULL,
                                          &parent_attr,
-                                         pcontext, pclient, &rc)) == NULL)
+                                         pexport, pclient, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -229,9 +230,10 @@ int nfs_Create(nfs_arg_t * parg,
 
 #ifdef _USE_QUOTA
     /* if quota support is active, then we should check is the FSAL allows inode creation or not */
-    fsal_status = FSAL_check_quota( pexport->fullpath, 
-                                    FSAL_QUOTA_INODES,
-                                    FSAL_OP_CONTEXT_TO_UID( pcontext ) ) ;
+  fsal_status = pexport->export_hdl->ops->check_quota(pexport->export_hdl,
+						      pexport->fullpath, 
+						      FSAL_QUOTA_INODES,
+						      creds) ;
     if( FSAL_IS_ERROR( fsal_status ) )
      {
 
@@ -274,7 +276,7 @@ int nfs_Create(nfs_arg_t * parg,
                                            &file_name,
                                            &attr,
                                            pclient,
-                                           pcontext,
+                                           creds,
                                            &cache_status_lookup);
 
           if((cache_status_lookup == CACHE_INODE_NOT_FOUND) ||
@@ -295,7 +297,7 @@ int nfs_Create(nfs_arg_t * parg,
                                                  mode,
                                                  NULL,
                                                  &attr_newfile,
-                                                 pclient, pcontext, &cache_status);
+                                                 pclient, creds, &cache_status);
 
               if(file_pentry != NULL)
                 {
@@ -352,11 +354,11 @@ int nfs_Create(nfs_arg_t * parg,
                       if(cache_inode_setattr(file_pentry,
                                              &attributes_create,
                                              pclient,
-                                             pcontext,
+                                             creds,
                                              &cache_status) != CACHE_INODE_SUCCESS)
                         {
                           /* If we are here, there was an error */
-                          nfs_SetFailedStatus(pcontext, pexport,
+                          nfs_SetFailedStatus(pexport,
                                               preq->rq_vers,
                                               cache_status,
                                               &pres->res_dirop2.status,
@@ -380,12 +382,11 @@ int nfs_Create(nfs_arg_t * parg,
                       if(cache_inode_getattr(file_pentry,
                                              &attr_newfile,
                                              pclient,
-                                             pcontext,
                                              &cache_status) != CACHE_INODE_SUCCESS)
                         {
                           /* If we are here, there was an error */
 
-                          nfs_SetFailedStatus(pcontext, pexport,
+                          nfs_SetFailedStatus(pexport,
                                               preq->rq_vers,
                                               cache_status,
                                               &pres->res_dirop2.status,
@@ -443,7 +444,7 @@ int nfs_Create(nfs_arg_t * parg,
                       if(nfs3_FSALToFhandle(
                               &(pres->res_create3.CREATE3res_u.resok
                                 .obj.post_op_fh3_u.handle),
-                              &file_pentry->handle, pexport) == 0)
+                              pfsal_handle, pexport) == 0)
                         {
                           Mem_Free(pres->res_create3.CREATE3res_u.resok.obj.
                                    post_op_fh3_u.handle.data.data_val);
@@ -518,7 +519,7 @@ int nfs_Create(nfs_arg_t * parg,
                     }
                 }
 
-              nfs_SetFailedStatus(pcontext, pexport,
+              nfs_SetFailedStatus(pexport,
                                   preq->rq_vers,
                                   cache_status,
                                   &pres->res_dirop2.status,
@@ -536,7 +537,7 @@ int nfs_Create(nfs_arg_t * parg,
     }
 
   /* Set the exit status */
-  nfs_SetFailedStatus(pcontext, pexport,
+  nfs_SetFailedStatus(pexport,
                       preq->rq_vers,
                       cache_status,
                       &pres->res_dirop2.status,

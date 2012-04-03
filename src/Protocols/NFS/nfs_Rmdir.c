@@ -70,7 +70,7 @@
  *
  * @param parg    [IN]    pointer to nfs arguments union
  * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
+ * @param creds   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
  * @param preq    [IN]    pointer to SVC request related to this call 
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
@@ -83,7 +83,7 @@
 
 int nfs_Rmdir(nfs_arg_t * parg /* IN  */ ,
               exportlist_t * pexport /* IN  */ ,
-              fsal_op_context_t * pcontext /* IN  */ ,
+              struct user_cred *creds /* IN  */ ,
               cache_inode_client_t * pclient /* IN  */ ,
               struct svc_req *preq /* IN  */ ,
               nfs_res_t * pres /* OUT */ )
@@ -142,7 +142,7 @@ int nfs_Rmdir(nfs_arg_t * parg /* IN  */ ,
                                          &(pres->res_rmdir3.status),
                                          NULL,
                                          &pre_parent_attr,
-                                         pcontext, pclient, &rc)) == NULL)
+                                         pexport, pclient, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -205,7 +205,7 @@ int nfs_Rmdir(nfs_arg_t * parg /* IN  */ ,
                                                 &name,
                                                 &pentry_child_attr,
                                                 pclient,
-                                                pcontext,
+                                                creds,
                                                 &cache_status)) != NULL)
             {
               /* Extract the filetype */
@@ -239,7 +239,7 @@ int nfs_Rmdir(nfs_arg_t * parg /* IN  */ ,
                                     &name,
                                     &parent_attr,
                                     pclient,
-                                    pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                                    creds, &cache_status) == CACHE_INODE_SUCCESS)
                 {
                   switch (preq->rq_vers)
                     {
@@ -271,7 +271,7 @@ int nfs_Rmdir(nfs_arg_t * parg /* IN  */ ,
       goto out;
     }
 
-  nfs_SetFailedStatus(pcontext, pexport,
+  nfs_SetFailedStatus(pexport,
                       preq->rq_vers,
                       cache_status,
                       &pres->res_stat2,

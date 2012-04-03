@@ -68,7 +68,7 @@
  * 
  *  @param parg        [IN]    ignored
  *  @param pexportlist [IN]    ignored
- *	@param pcontextp      [IN]    ignored
+ *  @param creds       [IN]    ignored
  *  @param pclient     [INOUT] ignored
  *  @param preq        [IN]    ignored 
  *	@param pres        [OUT]   ignored
@@ -77,7 +77,7 @@
 
 int nfs_Null(nfs_arg_t * parg /* IN     */ ,
              exportlist_t * pexport /* IN     */ ,
-             fsal_op_context_t * pcontext /* IN     */ ,
+             struct user_cred *creds /* IN     */ ,
              cache_inode_client_t * pclient /* INOUT  */ ,
              struct svc_req *preq /* IN     */ ,
              nfs_res_t * pres /* OUT    */ )
