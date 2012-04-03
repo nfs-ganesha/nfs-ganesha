@@ -68,7 +68,7 @@
  * 
  *  @param parg        [IN]    The export path to be mounted.
  *  @param pexportlist [IN]    The export list.
- *  @param pcontextp   [IN]    ignored
+ *  @param creds       [IN]    ignored
  *  @param pclient     [INOUT] ignored
  *  @param preq        [IN]    ignored 
  *  @param pres        [OUT]   Pointer to the result structure.
@@ -77,7 +77,7 @@
 
 int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
             exportlist_t * pexport /* IN      */ ,
-            fsal_op_context_t * pcontext /* IN      */ ,
+            struct user_cred *creds /* IN      */ ,
             cache_inode_client_t * pclient /* IN/OUT  */ ,
             struct svc_req *preq /* IN      */ ,
             nfs_res_t * pres /* OUT     */ )
@@ -86,8 +86,8 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   char exportPath[MNTPATHLEN + 1];
   exportlist_t *p_current_item;
 
-  fsal_handle_t pfsal_handle;
-
+  struct fsal_obj_handle *pfsal_handle;
+  struct fsal_export *exp_hdl;
   int auth_flavor[NB_AUTH_FLAVOR];
   int index_auth = 0;
   int i = 0;
@@ -206,8 +206,6 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   /*
    * retrieve the associated NFS handle
    */
-
-  pfsal_handle = *p_current_item->proot_handle;
   if(!(bytag == TRUE || !strncmp(tmpexport_path, tmplist_path, MAXPATHLEN)))
     {
       if(FSAL_IS_ERROR(FSAL_str2path(tmpexport_path, MAXPATHLEN, &fsal_path)))
@@ -225,9 +223,10 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
           return NFS_REQ_OK;
         }
 
+      exp_hdl = p_current_item->export_hdl;
       LogEvent(COMPONENT_NFSPROTO,
                "MOUNT: Performance warning: Export entry is not cached");
-      if(FSAL_IS_ERROR(FSAL_lookupPath(&fsal_path, pcontext, &pfsal_handle, NULL)))
+      if(FSAL_IS_ERROR(exp_hdl->ops->lookup_path(exp_hdl, &fsal_path, &pfsal_handle)))
         {
           switch (preq->rq_vers)
             {
@@ -248,7 +247,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
     {
     case MOUNT_V1:
       if(!nfs2_FSALToFhandle(&(pres->res_mnt1.fhstatus2_u.directory),
-                             &pfsal_handle, p_current_item))
+                             pfsal_handle, p_current_item))
         {
           pres->res_mnt1.status = NFSERR_IO;
         }
@@ -267,7 +266,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
       if(pres->res_mnt3.fhs_status ==  MNT3_OK)
         {
           if(!nfs3_FSALToFhandle
-             ((nfs_fh3 *) & (pres->res_mnt3.mountres3_u.mountinfo.fhandle), &pfsal_handle,
+             ((nfs_fh3 *) & (pres->res_mnt3.mountres3_u.mountinfo.fhandle), pfsal_handle,
               p_current_item))
             {
               pres->res_mnt3.fhs_status = MNT3ERR_INVAL;
