@@ -71,7 +71,7 @@
 
 int mnt_Dump(nfs_arg_t *parg,
              exportlist_t *pexport,
-             fsal_op_context_t *pcontext,
+             struct user_cred *creds,
              nfs_worker_data_t *pworker,
              struct svc_req *preq,
              nfs_res_t * pres)

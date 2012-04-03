@@ -72,6 +72,7 @@
 
 int mnt_Umnt(nfs_arg_t *parg,
              exportlist_t *pexport,
+             struct user_cred *creds,
              fsal_op_context_t *pcontext,
              nfs_worker_data_t *pworker,
              struct svc_req *preq,
