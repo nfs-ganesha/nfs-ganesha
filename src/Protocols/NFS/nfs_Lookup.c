@@ -83,7 +83,7 @@
 
 int nfs_Lookup(nfs_arg_t *parg,
                exportlist_t *pexport,
-               fsal_op_context_t *pcontext,
+               struct user_cred *creds,
                nfs_worker_data_t *pworker,
                struct svc_req *preq,
                nfs_res_t * pres)
@@ -97,7 +97,7 @@ int nfs_Lookup(nfs_arg_t *parg,
   char strname[MAXNAMLEN];
   unsigned int xattr_found = FALSE;
   fsal_name_t name;
-  fsal_handle_t *pfsal_handle;
+  struct fsal_obj_handle *pfsal_handle;
   int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))
@@ -138,7 +138,7 @@ int nfs_Lookup(nfs_arg_t *parg,
                                       &(pres->res_dirop2.status),
                                       &(pres->res_lookup3.status),
                                       NULL,
-                                      &attrdir, pcontext, &rc)) == NULL)
+                                      &attrdir, pexport, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -168,7 +168,7 @@ int nfs_Lookup(nfs_arg_t *parg,
 
   if((preq->rq_vers == NFS_V3) &&
      (nfs3_Is_Fh_Xattr(&(parg->arg_lookup3.what.dir)))) {
-      rc = nfs3_Lookup_Xattr(parg, pexport, pcontext, preq, pres);
+      rc = nfs3_Lookup_Xattr(parg, pexport, creds, preq, pres);
       goto out;
   }
 
@@ -182,7 +182,7 @@ int nfs_Lookup(nfs_arg_t *parg,
           = cache_inode_lookup(pentry_dir,
                                &name,
                                &attr,
-                               pcontext,
+                               creds,
                                &cache_status)) != NULL)
         {
           /* Do not forget cross junction management */
@@ -231,7 +231,7 @@ int nfs_Lookup(nfs_arg_t *parg,
                                                                     LOOKUP3res_u.resok.
                                                                     object.data));
                               /* Build entry attributes */
-                              nfs_SetPostOpXAttrDir(pcontext, pexport,
+                              nfs_SetPostOpXAttrDir(pexport,
                                                     &attr,
                                                     &(pres->res_lookup3.LOOKUP3res_u.
                                                       resok.obj_attributes));
@@ -270,7 +270,7 @@ int nfs_Lookup(nfs_arg_t *parg,
             goto out;
         }
 
-      nfs_SetFailedStatus(pcontext, pexport,
+      nfs_SetFailedStatus(pexport,
                           preq->rq_vers,
                           cache_status,
                           &pres->res_dirop2.status,

@@ -83,7 +83,7 @@
 
 int nfs_Mkdir(nfs_arg_t *parg,
               exportlist_t *pexport,
-              fsal_op_context_t *pcontext,
+              struct user_cred *creds,
               nfs_worker_data_t *pworker,
               struct svc_req *preq,
               nfs_res_t *pres)
@@ -97,7 +97,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
   fsal_attrib_list_t *ppre_attr;
   fsal_attrib_list_t attr_parent_after;
   cache_inode_file_type_t parent_filetype;
-  fsal_handle_t *pfsal_handle;
+  struct fsal_obj_handle *pfsal_handle;
   fsal_name_t dir_name;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   cache_inode_status_t cache_status_lookup;
@@ -149,7 +149,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
                                          &(pres->res_mkdir3.status),
                                          NULL,
                                          &parent_attr,
-                                         pcontext, &rc)) == NULL)
+                                         pexport, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -184,9 +184,10 @@ int nfs_Mkdir(nfs_arg_t *parg,
 
 #ifdef _USE_QUOTA
     /* if quota support is active, then we should check is the FSAL allows inode creation or not */
-    fsal_status = FSAL_check_quota( pexport->fullpath, 
-                                    FSAL_QUOTA_INODES,
-                                    FSAL_OP_CONTEXT_TO_UID( pcontext ) ) ;
+  fsal_status = pexport->export_hdl->ops->check_quota(pexport->export_hdl,
+						      pexport->fullpath, 
+						      FSAL_QUOTA_INODES,
+						      creds) ;
     if( FSAL_IS_ERROR( fsal_status ) )
      {
 
@@ -255,7 +256,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
           dir_pentry = cache_inode_lookup(parent_pentry,
                                           &dir_name,
                                           &attr,
-                                          pcontext,
+                                          creds,
                                           &cache_status_lookup);
 
           if(cache_status_lookup == CACHE_INODE_NOT_FOUND)
@@ -271,7 +272,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
                                                   mode,
                                                   &create_arg,
                                                   &attr,
-                                                  pcontext, &cache_status)) != NULL)
+                                                  creds, &cache_status)) != NULL)
                 {
                   /*
                    * Get the FSAL handle for this entry
@@ -379,7 +380,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
                     }
                 }
 
-              nfs_SetFailedStatus(pcontext, pexport,
+              nfs_SetFailedStatus(pexport,
                                   preq->rq_vers,
                                   cache_status,
                                   &pres->res_dirop2.status,
@@ -402,7 +403,7 @@ int nfs_Mkdir(nfs_arg_t *parg,
       rc = NFS_REQ_DROP;
       goto out;
     }
-  nfs_SetFailedStatus(pcontext, pexport,
+  nfs_SetFailedStatus(pexport,
                       preq->rq_vers,
                       cache_status,
                       &pres->res_dirop2.status,

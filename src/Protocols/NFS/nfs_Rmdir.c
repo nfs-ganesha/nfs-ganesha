@@ -82,7 +82,7 @@
 
 int nfs_Rmdir(nfs_arg_t *parg,
               exportlist_t *pexport,
-              fsal_op_context_t *pcontext,
+              struct user_cred *creds /* IN  */ ,
               nfs_worker_data_t *pworker,
               struct svc_req *preq,
               nfs_res_t *pres)
@@ -141,7 +141,7 @@ int nfs_Rmdir(nfs_arg_t *parg,
                                          &(pres->res_rmdir3.status),
                                          NULL,
                                          &pre_parent_attr,
-                                         pcontext, &rc)) == NULL)
+                                         pexport, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -203,7 +203,7 @@ int nfs_Rmdir(nfs_arg_t *parg,
           if((pentry_child = cache_inode_lookup(parent_pentry,
                                                 &name,
                                                 &pentry_child_attr,
-                                                pcontext,
+                                                creds,
                                                 &cache_status)) != NULL)
             {
               /* Extract the filetype */
@@ -236,7 +236,7 @@ int nfs_Rmdir(nfs_arg_t *parg,
               if(cache_inode_remove(parent_pentry,
                                     &name,
                                     &parent_attr,
-                                    pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                                    creds, &cache_status) == CACHE_INODE_SUCCESS)
                 {
                   switch (preq->rq_vers)
                     {
@@ -268,7 +268,7 @@ int nfs_Rmdir(nfs_arg_t *parg,
       goto out;
     }
 
-  nfs_SetFailedStatus(pcontext, pexport,
+  nfs_SetFailedStatus(pexport,
                       preq->rq_vers,
                       cache_status,
                       &pres->res_stat2,

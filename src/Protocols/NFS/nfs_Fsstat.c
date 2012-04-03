@@ -83,7 +83,7 @@
 
 int nfs_Fsstat(nfs_arg_t *parg,
                exportlist_t *pexport,
-               fsal_op_context_t *pcontext,
+               struct user_cred *creds,
                nfs_worker_data_t *pworker,
                struct svc_req *preq,
                nfs_res_t * pres)
@@ -119,7 +119,7 @@ int nfs_Fsstat(nfs_arg_t *parg,
                                   NULL,
                                   &(pres->res_statfs2.status),
                                   &(pres->res_fsstat3.status),
-                                  NULL, NULL, pcontext, &rc)) == NULL)
+                                  NULL, NULL, pexport, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       /* return NFS_REQ_DROP ; */
@@ -129,13 +129,11 @@ int nfs_Fsstat(nfs_arg_t *parg,
   /* Get statistics and convert from cache */
 
   if((cache_status = cache_inode_statfs(pentry,
-                                        &dynamicinfo,
-                                        pcontext, &cache_status)) == CACHE_INODE_SUCCESS)
+                                        &dynamicinfo)) == CACHE_INODE_SUCCESS)
     {
       /* This call is costless, the pentry was cached during call to nfs_FhandleToCache */
       if((cache_status = cache_inode_getattr(pentry,
                                              &attr,
-                                             pcontext,
                                              &cache_status)) == CACHE_INODE_SUCCESS)
         {
 
@@ -205,7 +203,7 @@ int nfs_Fsstat(nfs_arg_t *parg,
     goto out;
   }
 
-  nfs_SetFailedStatus(pcontext, pexport,
+  nfs_SetFailedStatus(pexport,
                       preq->rq_vers,
                       cache_status,
                       &pres->res_statfs2.status,

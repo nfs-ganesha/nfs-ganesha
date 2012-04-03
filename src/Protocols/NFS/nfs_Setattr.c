@@ -81,7 +81,7 @@
 
 int nfs_Setattr(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                fsal_op_context_t *pcontext,
+                struct user_cred *creds,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres)
@@ -124,7 +124,7 @@ int nfs_Setattr(nfs_arg_t *parg,
                                   NULL,
                                   &(pres->res_attr2.status),
                                   &(pres->res_setattr3.status),
-                                  NULL, &pre_attr, pcontext, &rc)) == NULL)
+                                  NULL, &pre_attr, pexport, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -245,7 +245,7 @@ int nfs_Setattr(nfs_arg_t *parg,
           cache_status = cache_inode_truncate(pentry,
                                               setattr.filesize,
                                               &trunc_attr,
-                                              pcontext, &cache_status);
+                                              creds, &cache_status);
           setattr.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
           setattr.asked_attributes &= ~FSAL_ATTR_SIZE;
         }
@@ -262,7 +262,7 @@ int nfs_Setattr(nfs_arg_t *parg,
             {
               cache_status = cache_inode_setattr(pentry,
                                                  &setattr,
-                                                 pcontext, &cache_status);
+                                                 creds, &cache_status);
             }
           else
             {
@@ -274,7 +274,7 @@ int nfs_Setattr(nfs_arg_t *parg,
       else
         cache_status = cache_inode_setattr(pentry,
                                            &setattr,
-                                           pcontext, &cache_status);
+                                           creds, &cache_status);
     }
 
   if(cache_status == CACHE_INODE_SUCCESS)
@@ -314,7 +314,7 @@ int nfs_Setattr(nfs_arg_t *parg,
     goto out;
   }
 
-  nfs_SetFailedStatus(pcontext, pexport,
+  nfs_SetFailedStatus(pexport,
                       preq->rq_vers,
                       cache_status,
                       &pres->res_attr2.status,

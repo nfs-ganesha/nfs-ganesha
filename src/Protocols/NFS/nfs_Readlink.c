@@ -84,7 +84,7 @@
 
 int nfs_Readlink(nfs_arg_t *parg,
                  exportlist_t *pexport,
-                 fsal_op_context_t *pcontext,
+                 struct user_cred *creds,
                  nfs_worker_data_t *pworker,
                  struct svc_req *preq,
                  nfs_res_t * pres)
@@ -122,7 +122,7 @@ int nfs_Readlink(nfs_arg_t *parg,
                                   NULL,
                                   &(pres->res_readlink2.status),
                                   &(pres->res_readlink3.status),
-                                  NULL, &attr, pcontext, &rc)) == NULL)
+                                  NULL, &attr, pexport, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -151,8 +151,7 @@ int nfs_Readlink(nfs_arg_t *parg,
   /* Perform readlink on the pentry */
   if(cache_inode_readlink(pentry,
                           &symlink_data,
-                          pcontext, &cache_status)
-     == CACHE_INODE_SUCCESS)
+                          creds, &cache_status) == CACHE_INODE_SUCCESS)
     {
       if((ptr = gsh_malloc(symlink_data.len+1)) == NULL)
         {
@@ -199,7 +198,7 @@ int nfs_Readlink(nfs_arg_t *parg,
       goto out;
     }
 
-  nfs_SetFailedStatus(pcontext, pexport,
+  nfs_SetFailedStatus(pexport,
                       preq->rq_vers,
                       cache_status,
                       &pres->res_readlink2.status,

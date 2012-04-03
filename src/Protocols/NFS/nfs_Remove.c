@@ -83,7 +83,7 @@
 
 int nfs_Remove(nfs_arg_t *parg,
                exportlist_t *pexport,
-               fsal_op_context_t *pcontext,
+               struct user_cred *creds /* IN  */ ,
                nfs_worker_data_t *pworker,
                struct svc_req *preq,
                nfs_res_t *pres)
@@ -142,14 +142,14 @@ int nfs_Remove(nfs_arg_t *parg,
                                          &(pres->res_remove3.status),
                                          NULL,
                                          &pre_parent_attr,
-                                         pcontext, &rc)) == NULL)
+                                         pexport, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
     }
 
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_remove3.object.dir)))) {
-    rc = nfs3_Remove_Xattr(parg, pexport, pcontext, preq, pres);
+    rc = nfs3_Remove_Xattr(parg, pexport, creds, preq, pres);
     goto out;
   }
 
@@ -209,7 +209,7 @@ int nfs_Remove(nfs_arg_t *parg,
           if((pentry_child = cache_inode_lookup(parent_pentry,
                                                 &name,
                                                 &pentry_child_attr,
-                                                pcontext,
+                                                creds,
                                                 &cache_status)) != NULL)
             {
               /* Extract the filetype */
@@ -244,7 +244,7 @@ int nfs_Remove(nfs_arg_t *parg,
               if(cache_inode_remove(parent_pentry,
                                     &name,
                                     &parent_attr,
-                                    pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                                    creds, &cache_status) == CACHE_INODE_SUCCESS)
                 {
                   switch (preq->rq_vers)
                     {
@@ -270,7 +270,7 @@ int nfs_Remove(nfs_arg_t *parg,
     }
 
   /* If we are here, there was an error */
-  nfs_SetFailedStatus(pcontext, pexport,
+  nfs_SetFailedStatus(pexport,
                       preq->rq_vers,
                       cache_status,
                       &pres->res_stat2,

@@ -83,7 +83,7 @@
 
 int nfs_Rename(nfs_arg_t *parg,
                exportlist_t *pexport,
-               fsal_op_context_t *pcontext,
+               struct user_cred *creds /* IN  */ ,
                nfs_worker_data_t *pworker,
                struct svc_req *preq,
                nfs_res_t *pres)
@@ -160,7 +160,7 @@ int nfs_Rename(nfs_arg_t *parg,
                                          &(pres->res_dirop2.status),
                                          &(pres->res_create3.status),
                                          NULL,
-                                         &pre_attr, pcontext, &rc)) == NULL)
+                                         &pre_attr, pexport, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -175,7 +175,7 @@ int nfs_Rename(nfs_arg_t *parg,
                                              &(pres->res_create3.status),
                                              NULL,
                                              &new_parent_attr,
-                                             pcontext, &rc)) == NULL)
+                                             pexport, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -241,7 +241,7 @@ int nfs_Rename(nfs_arg_t *parg,
       should_not_exists = cache_inode_lookup(new_parent_pentry,
                                              &new_entry_name,
                                              &tst_attr,
-                                             pcontext,
+                                             creds,
                                              &cache_status);
 
       if(cache_status == CACHE_INODE_NOT_FOUND)
@@ -250,7 +250,7 @@ int nfs_Rename(nfs_arg_t *parg,
           should_exists = cache_inode_lookup(parent_pentry,
                                              &entry_name,
                                              &tst_attr,
-                                             pcontext,
+                                             creds,
                                              &cache_status);
 
           /* Rename entry */
@@ -260,7 +260,7 @@ int nfs_Rename(nfs_arg_t *parg,
                                new_parent_pentry,
                                &new_entry_name,
                                &attr, &new_attr,
-                               pcontext, &cache_status);
+                               creds, &cache_status);
 
           if(cache_status == CACHE_INODE_SUCCESS)
             {
@@ -345,7 +345,7 @@ int nfs_Rename(nfs_arg_t *parg,
               if((should_exists = cache_inode_lookup(parent_pentry,
                                                      &entry_name,
                                                      &tst_attr,
-                                                     pcontext,
+                                                     creds,
                                                      &cache_status))
                  != NULL)
                 {
@@ -393,7 +393,7 @@ int nfs_Rename(nfs_arg_t *parg,
                       if(cache_inode_remove(new_parent_pentry,
                                             &new_entry_name,
                                             &tst_attr,
-                                            pcontext,
+                                            creds,
                                             &cache_status) == CACHE_INODE_SUCCESS)
                         {
                           if(cache_inode_rename(parent_pentry,
@@ -402,7 +402,7 @@ int nfs_Rename(nfs_arg_t *parg,
                                                 &new_entry_name,
                                                 &attr,
                                                 &new_attr,
-                                                pcontext,
+                                                creds,
                                                 &cache_status) == CACHE_INODE_SUCCESS)
                             {
                               switch (preq->rq_vers)
@@ -456,7 +456,7 @@ int nfs_Rename(nfs_arg_t *parg,
       goto out;
     }
 
-  nfs_SetFailedStatus(pcontext, pexport,
+  nfs_SetFailedStatus(pexport,
                       preq->rq_vers,
                       cache_status,
                       &pres->res_stat2,

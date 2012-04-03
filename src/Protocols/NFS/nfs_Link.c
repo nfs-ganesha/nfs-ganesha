@@ -84,7 +84,7 @@
 
 int nfs_Link(nfs_arg_t *parg,
              exportlist_t *pexport,
-             fsal_op_context_t *pcontext,
+             struct user_cred *creds,
              nfs_worker_data_t *pworker,
              struct svc_req *preq,
              nfs_res_t * pres)
@@ -153,7 +153,7 @@ int nfs_Link(nfs_arg_t *parg,
                                          &(pres->res_link3.status),
                                          NULL,
                                          &parent_attr,
-                                         pcontext, &rc)) == NULL)
+                                         pexport, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;
@@ -168,7 +168,7 @@ int nfs_Link(nfs_arg_t *parg,
                                          &(pres->res_link3.status),
                                          NULL,
                                          &target_attr,
-                                         pcontext, &rc)) == NULL)
+                                         pexport, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;;
@@ -246,11 +246,11 @@ int nfs_Link(nfs_arg_t *parg,
                                   parent_pentry,
                                   &link_name,
                                   &attr,
-                                  pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                                  creds, &cache_status) == CACHE_INODE_SUCCESS)
                 {
                   if(cache_inode_getattr(parent_pentry,
                                          &attr_parent_after,
-                                         pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+					 &cache_status) == CACHE_INODE_SUCCESS)
                     {
                       switch (preq->rq_vers)
                         {
@@ -298,7 +298,7 @@ int nfs_Link(nfs_arg_t *parg,
       goto out;
     }
 
-  nfs_SetFailedStatus(pcontext, pexport,
+  nfs_SetFailedStatus(pexport,
                       preq->rq_vers,
                       cache_status,
                       &pres->res_stat2,

@@ -84,7 +84,7 @@
 
 int nfs_Getattr(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                fsal_op_context_t *pcontext,
+                struct user_cred *creds,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres)
@@ -112,7 +112,7 @@ int nfs_Getattr(nfs_arg_t *parg,
                                   NULL,
                                   &(pres->res_attr2.status),
                                   &(pres->res_getattr3.status),
-                                  NULL, &attr, pcontext, &rc)) == NULL)
+                                  NULL, &attr, pexport, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       LogFullDebug(COMPONENT_NFSPROTO,
@@ -122,7 +122,7 @@ int nfs_Getattr(nfs_arg_t *parg,
 
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_getattr3.object))))
     {
-      rc = nfs3_Getattr_Xattr(parg, pexport, pcontext, preq, pres);
+      rc = nfs3_Getattr_Xattr(parg, pexport, creds, preq, pres);
       LogFullDebug(COMPONENT_NFSPROTO,
                    "nfs_Getattr returning %d from nfs3_Getattr_Xattr", rc);
       goto out;
@@ -134,7 +134,7 @@ int nfs_Getattr(nfs_arg_t *parg,
    */
   if(cache_inode_getattr(pentry,
                          &attr,
-                         pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                         &cache_status) == CACHE_INODE_SUCCESS)
     {
       /*
        * Client API should be keeping us from crossing junctions,
@@ -149,7 +149,7 @@ int nfs_Getattr(nfs_arg_t *parg,
           if(nfs2_FSALattr_To_Fattr(pexport, &attr,
                                     &(pres->res_attr2.ATTR2res_u.attributes)) == 0)
             {
-              nfs_SetFailedStatus(pcontext, pexport,
+              nfs_SetFailedStatus(pexport,
                                   preq->rq_vers,
                                   CACHE_INODE_INVALID_ARGUMENT,
                                   &pres->res_attr2.status,
@@ -168,7 +168,7 @@ int nfs_Getattr(nfs_arg_t *parg,
                                     &(pres->res_getattr3.GETATTR3res_u.resok.
                                       obj_attributes)) == 0)
             {
-              nfs_SetFailedStatus(pcontext, pexport,
+              nfs_SetFailedStatus(pexport,
                                   preq->rq_vers,
                                   CACHE_INODE_INVALID_ARGUMENT,
                                   &pres->res_attr2.status,
@@ -196,7 +196,7 @@ int nfs_Getattr(nfs_arg_t *parg,
   if (cache_status != CACHE_INODE_FSAL_ESTALE)
     cache_status = CACHE_INODE_INVALID_ARGUMENT;
 
-  nfs_SetFailedStatus(pcontext, pexport,
+  nfs_SetFailedStatus(pexport,
                       preq->rq_vers,
                       cache_status,
                       &pres->res_attr2.status,

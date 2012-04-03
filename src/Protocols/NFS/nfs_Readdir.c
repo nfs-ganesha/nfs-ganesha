@@ -145,7 +145,7 @@ struct nfs3_readdir_cb_data
 int
 nfs_Readdir(nfs_arg_t *arg,
             exportlist_t *export,
-            fsal_op_context_t *context,
+	    struct user_cred *creds,
             nfs_worker_data_t *worker,
             struct svc_req *req,
             nfs_res_t *res)
@@ -202,7 +202,7 @@ nfs_Readdir(nfs_arg_t *arg,
                                &(res->res_readdir3.status),
                                NULL,
                                &dir_attr,
-                               context,
+                               export,
                                &rc)) == NULL) {
           /* Stale NFS FH? */
           goto out;
@@ -381,7 +381,7 @@ nfs_Readdir(nfs_arg_t *arg,
                              cache_inode_cookie,
                              &num_entries,
                              &eod_met,
-                             context,
+                             creds,
                              cbfunc,
                              cbdata,
                              &cache_status) != CACHE_INODE_SUCCESS) {

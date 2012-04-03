@@ -84,7 +84,7 @@
 
 int nfs_Symlink(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                fsal_op_context_t *pcontext,
+                struct user_cred *creds /* IN  */ ,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres)
@@ -104,7 +104,7 @@ int nfs_Symlink(nfs_arg_t *parg,
   fsal_attrib_list_t *ppre_attr;
   cache_inode_status_t cache_status;
   cache_inode_status_t cache_status_parent;
-  fsal_handle_t *pfsal_handle;
+  struct fsal_obj_handle *pfsal_handle;
   int rc = NFS_REQ_OK;
 #ifdef _USE_QUOTA
   fsal_status_t fsal_status ;
@@ -155,7 +155,7 @@ int nfs_Symlink(nfs_arg_t *parg,
                                          &(pres->res_symlink3.status),
                                          NULL,
                                          &parent_attr,
-                                         pcontext, &rc)) == NULL)
+                                         pexport, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       goto out;;
@@ -190,9 +190,10 @@ int nfs_Symlink(nfs_arg_t *parg,
 
 #ifdef _USE_QUOTA
     /* if quota support is active, then we should check is the FSAL allows inode creation or not */
-    fsal_status = FSAL_check_quota( pexport->fullpath, 
-                                    FSAL_QUOTA_INODES,
-                                    FSAL_OP_CONTEXT_TO_UID( pcontext ) ) ;
+  fsal_status = pexport->export_hdl->ops->check_quota(pexport->export_hdl,
+						      pexport->fullpath, 
+						      FSAL_QUOTA_INODES,
+						      creds) ;
     if( FSAL_IS_ERROR( fsal_status ) )
      {
 
@@ -245,7 +246,7 @@ int nfs_Symlink(nfs_arg_t *parg,
                                               mode,
                                               &create_arg,
                                               &attr_symlink,
-                                              pcontext, &cache_status)) != NULL)
+                                              creds, &cache_status)) != NULL)
         {
           switch (preq->rq_vers)
             {
@@ -286,10 +287,10 @@ int nfs_Symlink(nfs_arg_t *parg,
                   /* A call to cache_inode_setattr is required */
                   if(cache_inode_setattr(symlink_pentry,
                                          &attributes_symlink,
-                                         pcontext, &cache_status) != CACHE_INODE_SUCCESS)
+                                         creds, &cache_status) != CACHE_INODE_SUCCESS)
                     {
                       /* If we are here, there was an error */
-                      nfs_SetFailedStatus(pcontext, pexport,
+                      nfs_SetFailedStatus(pexport,
                                           preq->rq_vers,
                                           cache_status,
                                           &pres->res_dirop2.status,
@@ -334,9 +335,7 @@ int nfs_Symlink(nfs_arg_t *parg,
               /* The the parent pentry attributes for building Wcc Data */
               if(cache_inode_getattr(parent_pentry,
                                      &attr_parent_after,
-                                     pcontext,
-                                     &cache_status_parent)
-                 != CACHE_INODE_SUCCESS)
+                                     &cache_status_parent) != CACHE_INODE_SUCCESS)
                 {
                   gsh_free(pres->res_symlink3.SYMLINK3res_u.resok.obj.
                            post_op_fh3_u.handle.data.data_val);
@@ -377,7 +376,7 @@ int nfs_Symlink(nfs_arg_t *parg,
       goto out;
     }
 
-  nfs_SetFailedStatus(pcontext, pexport,
+  nfs_SetFailedStatus(pexport,
                       preq->rq_vers,
                       cache_status,
                       &pres->res_stat2,
