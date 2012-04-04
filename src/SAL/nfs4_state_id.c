@@ -600,3 +600,104 @@ void update_stateid(state_t         * pstate,
                tag, str);
     }
 }
+
+/**
+ *
+ *  nfs4_check_special_stateid
+ *
+ *  Special stateid, no open state, check to see if any share conflicts
+ *  The stateid is all-0 or all-1
+ *
+ *  @return NFS4_OK if ok, anything else if otherwise
+ *
+ */
+int nfs4_check_special_stateid(cache_entry_t *pentry,
+                               const char    *tag,
+                               int access)
+{
+  
+  struct glist_head * glist;
+  state_t           * pstate_iterate;
+  int                 rc = NFS4_OK;
+
+  if(pentry == NULL)
+    {
+      rc = NFS4ERR_SERVERFAULT;
+      return rc;
+    }
+
+  /* Acquire lock to enter critical section on this entry */
+  P_r(&pentry->lock);
+
+  /* Iterate through file's state to look for conflicts */
+  glist_for_each(glist, &pentry->object.file.state_list)
+    {
+      pstate_iterate = glist_entry(glist, state_t, state_list);
+
+      switch(pstate_iterate->state_type)
+        {
+          case STATE_TYPE_SHARE:
+            if((access == FATTR4_ATTR_READ) &&
+               (pstate_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_READ))
+              {
+                /* Reading to this file is prohibited, file is read-denied */
+                rc = NFS4ERR_LOCKED;
+                LogDebug(COMPONENT_NFS_V4_LOCK,
+                         "%s is denied by state %p",
+                         tag,
+                         pstate_iterate);
+                goto ssid_out;
+              }
+
+            if((access == FATTR4_ATTR_WRITE) &&
+               (pstate_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE))
+              {
+                /* Writing to this file is prohibited, file is write-denied */
+                rc = NFS4ERR_LOCKED;
+                LogDebug(COMPONENT_NFS_V4_LOCK,
+                         "%s is denied by state %p",
+                         tag,
+                         pstate_iterate);
+                goto ssid_out;
+              }
+
+            if((access == FATTR4_ATTR_READ_WRITE) &&
+               (pstate_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_BOTH))
+              {
+                /* Reading and writing to this file is prohibited, file is rw-denied */
+                rc = NFS4ERR_LOCKED;
+                LogDebug(COMPONENT_NFS_V4_LOCK,
+                         "%s is denied by state %p",
+                         tag,
+                         pstate_iterate);
+                goto ssid_out;
+              }
+
+            break;
+
+          case STATE_TYPE_LOCK:
+            /* Skip, will check for conflicting locks later */
+            break;
+
+          case STATE_TYPE_DELEG:
+            // TODO FSF: should check for conflicting delegations, may need to recall
+            break;
+
+          case STATE_TYPE_LAYOUT:
+            // TODO FSF: should check for conflicting layouts, may need to recall
+            // Need to look at this even for NFS v4 WRITE since there may be NFS v4.1 users of the file
+            break;
+
+          case STATE_TYPE_NONE:
+            break;
+
+          default:
+            break;
+        }
+    }
+  // TODO FSF: need to check against existing locks
+
+ ssid_out:  // Use this exit point if the lock was already acquired.
+  V_r(&pentry->lock);
+  return rc;
+}

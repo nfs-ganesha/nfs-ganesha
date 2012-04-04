@@ -191,6 +191,10 @@ void update_stateid(state_t         * pstate,
                     compound_data_t * data,
                     const char      * tag);
 
+int nfs4_check_special_stateid(cache_entry_t *pentry,
+                               const char    *tag,
+                               int            access);
+
 int nfs4_Init_state_id(nfs_state_id_parameter_t param);
 int nfs4_State_Set(char other[OTHERSIZE], state_t * pstate_data);
 int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t * *pstate_data);
