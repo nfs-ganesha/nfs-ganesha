@@ -68,7 +68,7 @@
  * 
  * @param parg    [IN]    pointer to nfs arguments union
  * @param pexport [IN]    pointer to nfs export list 
- * @param pcontext   [IN]    credentials to be used for this request
+ * @param creds   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
  * @param preq    [IN]    pointer to SVC request related to this call 
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
@@ -81,7 +81,7 @@ extern writeverf3 NFS3_write_verifier;  /* NFS V3 write verifier      */
 
 int nfs3_Commit(nfs_arg_t * parg,
                 exportlist_t * pexport,
-                fsal_op_context_t * pcontext,
+                struct user_cred *creds,
                 cache_inode_client_t * pclient,
                 struct svc_req *preq, nfs_res_t * pres)
 {
@@ -109,7 +109,9 @@ int nfs3_Commit(nfs_arg_t * parg,
   ppre_attr = NULL;
 
   /* Convert file handle into a fsal_handle */
-  if(nfs3_FhandleToFSAL(&(parg->arg_commit3.file), &fsal_data.fh_desc, pcontext) == 0)
+  if(nfs3_FhandleToFSAL(&(parg->arg_commit3.file),
+			&fsal_data.fh_desc,
+			pexport->export_hdl) == 0)
     {
       rc = NFS_REQ_DROP;
       goto out;
@@ -119,7 +121,6 @@ int nfs3_Commit(nfs_arg_t * parg,
   if((pentry = cache_inode_get(&fsal_data,
                                &pre_attr,
                                pclient,
-                               pcontext,
                                NULL,
                                &cache_status)) == NULL)
     {
@@ -148,7 +149,7 @@ int nfs3_Commit(nfs_arg_t * parg,
                         parg->arg_commit3.count,
                         typeofcommit,
                         pclient,
-                        pcontext,
+                        creds,
                         &cache_status) != CACHE_INODE_SUCCESS)
     {
       pres->res_commit3.status = NFS3ERR_IO;;

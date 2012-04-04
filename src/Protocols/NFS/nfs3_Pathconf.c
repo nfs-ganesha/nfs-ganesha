@@ -80,7 +80,7 @@
 
 int nfs3_Pathconf(nfs_arg_t * parg,
                   exportlist_t * pexport,
-                  fsal_op_context_t * pcontext,
+                  struct user_cred *creds,
                   cache_inode_client_t * pclient,
                   struct svc_req *preq, nfs_res_t * pres)
 {
@@ -90,8 +90,8 @@ int nfs3_Pathconf(nfs_arg_t * parg,
   cache_entry_t *pentry = NULL;
   cache_inode_fsal_data_t fsal_data;
   fsal_attrib_list_t attr;
-  fsal_staticfsinfo_t * pstaticinfo = pcontext->export_context->fe_static_fs_info;
   int rc = NFS_REQ_OK;
+  struct fsal_export *exp_hdl = pexport->export_hdl;
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
@@ -105,7 +105,7 @@ int nfs3_Pathconf(nfs_arg_t * parg,
   pres->res_pathconf3.PATHCONF3res_u.resfail.obj_attributes.attributes_follow = FALSE;
 
   /* Convert file handle into a fsal_handle */
-  if(nfs3_FhandleToFSAL(&(parg->arg_pathconf3.object), &fsal_data.fh_desc, pcontext) == 0)
+  if(nfs3_FhandleToFSAL(&(parg->arg_pathconf3.object), &fsal_data.fh_desc, pexport) == 0)
     {
       rc = NFS_REQ_DROP;
       goto out;
@@ -115,7 +115,6 @@ int nfs3_Pathconf(nfs_arg_t * parg,
   if((pentry = cache_inode_get(&fsal_data,
                                &attr,
                                pclient,
-                               pcontext,
                                NULL,
                                &cache_status)) == NULL)
     {
@@ -131,12 +130,18 @@ int nfs3_Pathconf(nfs_arg_t * parg,
                     &(pres->res_pathconf3
                       .PATHCONF3res_u.resok.obj_attributes));
 
-  pres->res_pathconf3.PATHCONF3res_u.resok.linkmax = pstaticinfo->maxlink;
-  pres->res_pathconf3.PATHCONF3res_u.resok.name_max = pstaticinfo->maxnamelen;
-  pres->res_pathconf3.PATHCONF3res_u.resok.no_trunc = pstaticinfo->no_trunc;
-  pres->res_pathconf3.PATHCONF3res_u.resok.chown_restricted = pstaticinfo->chown_restricted;
-  pres->res_pathconf3.PATHCONF3res_u.resok.case_insensitive = pstaticinfo->case_insensitive;
-  pres->res_pathconf3.PATHCONF3res_u.resok.case_preserving = pstaticinfo->case_preserving;
+  pres->res_pathconf3.PATHCONF3res_u.resok.linkmax
+	  = exp_hdl->ops->fs_maxlink(exp_hdl);
+  pres->res_pathconf3.PATHCONF3res_u.resok.name_max
+	  = exp_hdl->ops->fs_maxnamelen(exp_hdl);
+  pres->res_pathconf3.PATHCONF3res_u.resok.no_trunc
+	  = exp_hdl->ops->fs_supports(exp_hdl, no_trunc);
+  pres->res_pathconf3.PATHCONF3res_u.resok.chown_restricted
+	  = exp_hdl->ops->fs_supports(exp_hdl, chown_restricted);
+  pres->res_pathconf3.PATHCONF3res_u.resok.case_insensitive
+	  = exp_hdl->ops->fs_supports(exp_hdl, case_insensitive);
+  pres->res_pathconf3.PATHCONF3res_u.resok.case_preserving
+	  = exp_hdl->ops->fs_supports(exp_hdl, case_preserving);
 
  out:
 
