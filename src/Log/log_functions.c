@@ -1123,7 +1123,9 @@ int DisplayLogComponentLevel(log_components_t component,
   va_list arguments;
   int rc;
   va_start(arguments, format);
+  uid_t saved_uid = 0 ;
 
+  saved_uid = setfsuid( 0 ) ;
   switch(LogComponents[component].comp_log_type)
     {
     case SYSLOG:
@@ -1149,6 +1151,8 @@ int DisplayLogComponentLevel(log_components_t component,
     }
 
   va_end(arguments);
+
+  setfsuid( saved_uid ) ;
 
   if(level == NIV_FATAL)
     Fatal();
