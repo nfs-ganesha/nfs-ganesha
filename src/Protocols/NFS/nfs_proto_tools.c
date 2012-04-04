@@ -303,10 +303,10 @@ void nfs_SetPreOpAttr(fsal_attrib_list_t * pfsal_attr, pre_op_attr * pattr)
       pattr->pre_op_attr_u.attributes.size = pfsal_attr->filesize;
 
       pattr->pre_op_attr_u.attributes.mtime.seconds = pfsal_attr->mtime.seconds;
-      pattr->pre_op_attr_u.attributes.mtime.nseconds = pfsal_attr->mtime.nseconds;
+      pattr->pre_op_attr_u.attributes.mtime.nseconds = 0 ;
 
       pattr->pre_op_attr_u.attributes.ctime.seconds = pfsal_attr->ctime.seconds;
-      pattr->pre_op_attr_u.attributes.ctime.nseconds = pfsal_attr->ctime.nseconds;
+      pattr->pre_op_attr_u.attributes.ctime.nseconds = 0; 
 
       pattr->attributes_follow = TRUE;
     }
@@ -1815,7 +1815,7 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
       if(psattr->atime.set_it == SET_TO_CLIENT_TIME)
         {
           pFSAL_attr->atime.seconds = psattr->atime.set_atime_u.atime.seconds;
-          pFSAL_attr->atime.nseconds = psattr->atime.set_atime_u.atime.nseconds;
+          pFSAL_attr->atime.nseconds = 0;
         }
       else
         {
@@ -1823,7 +1823,7 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
           gettimeofday(&t, NULL);
 
           pFSAL_attr->atime.seconds = t.tv_sec;
-          pFSAL_attr->atime.nseconds = t.tv_usec * 1000;
+          pFSAL_attr->atime.nseconds = 0;
         }
       pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME;
     }
@@ -1831,20 +1831,19 @@ int nfs3_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
   if(psattr->mtime.set_it != DONT_CHANGE)
     {
       LogFullDebug(COMPONENT_NFSPROTO,
-                   "nfs3_Sattr_To_FSALattr: set=%d mtime = %d,%d",
-                   psattr->atime.set_it, psattr->mtime.set_mtime_u.mtime.seconds,
-                   psattr->mtime.set_mtime_u.mtime.nseconds);
+                   "nfs3_Sattr_To_FSALattr: set=%d mtime = %d",
+                   psattr->atime.set_it, psattr->mtime.set_mtime_u.mtime.seconds ) ;
       if(psattr->mtime.set_it == SET_TO_CLIENT_TIME)
         {
           pFSAL_attr->mtime.seconds = psattr->mtime.set_mtime_u.mtime.seconds;
-          pFSAL_attr->mtime.nseconds = psattr->mtime.set_mtime_u.mtime.nseconds;
+          pFSAL_attr->mtime.nseconds = 0 ;
         }
       else
         {
           /* Use the server's current time */
           gettimeofday(&t, NULL);
           pFSAL_attr->mtime.seconds = t.tv_sec;
-          pFSAL_attr->mtime.nseconds = t.tv_usec * 1000;
+          pFSAL_attr->mtime.nseconds = 0 ;
         }
       pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME;
     }
@@ -2462,11 +2461,11 @@ int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
 
   Fattr->fileid = FSAL_attr->fileid;
   Fattr->atime.seconds = FSAL_attr->atime.seconds;
-  Fattr->atime.nseconds = FSAL_attr->atime.nseconds;
+  Fattr->atime.nseconds = 0 ;
   Fattr->mtime.seconds = FSAL_attr->mtime.seconds;
-  Fattr->mtime.nseconds = FSAL_attr->mtime.nseconds;
+  Fattr->mtime.nseconds = 0; 
   Fattr->ctime.seconds = FSAL_attr->ctime.seconds;
-  Fattr->ctime.nseconds = FSAL_attr->ctime.nseconds;
+  Fattr->ctime.nseconds = 0 ;
 
   return 1;
 }                               /* nfs3_FSALattr_To_Fattr */
@@ -2526,7 +2525,7 @@ int nfs2_Sattr_To_FSALattr(fsal_attrib_list_t * pFSAL_attr,     /* Out: file att
       gettimeofday(&t, NULL);
 
       pFSAL_attr->atime.seconds = pFSAL_attr->mtime.seconds = t.tv_sec;
-      pFSAL_attr->atime.nseconds = pFSAL_attr->mtime.nseconds = t.tv_usec * 1000;
+      pFSAL_attr->atime.nseconds = pFSAL_attr->mtime.nseconds = 0 ;
       FSAL_SET_MASK(pFSAL_attr->asked_attributes, FSAL_ATTR_ATIME);
       FSAL_SET_MASK(pFSAL_attr->asked_attributes, FSAL_ATTR_MTIME);
     }
