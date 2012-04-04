@@ -97,12 +97,10 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   cache_inode_status_t     cache_status;
   state_t                * pstate_found = NULL;
   state_t                * pstate_open;
-  state_t                * pstate_iterate;
   cache_content_status_t   content_status;
   fsal_attrib_list_t       attr;
   cache_entry_t          * pentry = NULL;
   int                      rc = 0;
-  struct glist_head      * glist;
 
   cache_content_policy_data_t datapol;
 
@@ -268,48 +266,16 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       /* Special stateid, no open state, check to see if any share conflicts */
       pstate_open = NULL;
 
-      /* Acquire lock to enter critical section on this entry */
-      P_r(&pentry->lock);
-
-      /* Iterate through file's state to look for conflicts */
-      glist_for_each(glist, &pentry->object.file.state_list)
+      /*
+       * Special stateid, no open state, check to see if any share conflicts
+       * The stateid is all-0 or all-1
+       */
+      rc = nfs4_check_special_stateid(pentry,"READ",FATTR4_ATTR_READ);
+      if(rc != NFS4_OK)
         {
-          pstate_iterate = glist_entry(glist, state_t, state_list);
-
-          switch(pstate_iterate->state_type)
-            {
-              case STATE_TYPE_SHARE:
-                if(pstate_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_READ)
-                  {
-                    /* Reading from this file is prohibited, file is read-denied */
-                    V_r(&pentry->lock);
-                    res_READ4.status = NFS4ERR_LOCKED;
-                    LogDebug(COMPONENT_NFS_V4_LOCK,
-                             "READ is denied by state %p",
-                             pstate_iterate);
-                    return res_READ4.status;
-                  }
-                break;
-
-              case STATE_TYPE_LOCK:
-                /* Skip, will check for conflicting locks later */
-                break;
-
-              case STATE_TYPE_DELEG:
-                // TODO FSF: should check for conflicting delegations, may need to recall
-                break;
-
-              case STATE_TYPE_LAYOUT:
-                // TODO FSF: should check for conflicting layouts, may need to recall
-                // Need to look at this even for NFS v4 READ since there may be NFS v4.1 users of the file
-                break;
-
-              case STATE_TYPE_NONE:
-                break;
-            }
+          res_READ4.status = rc;
+          return res_READ4.status;
         }
-      // TODO FSF: need to check against existing locks
-      V_r(&pentry->lock);
     }
 
   if (pstate_open == NULL)
