@@ -63,9 +63,10 @@
 #include "nfs_proto_functions.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
+#include "sal_functions.h"
 
 /**
- * nfs4_op_rename: The NFS4_OP_SETATTR operation.
+ * nfs4_op_setattr: The NFS4_OP_SETATTR operation.
  * 
  * This functions handles the NFS4_OP_SETATTR operation in NFSv4. This function can be called only from nfs4_Compound
  *
@@ -83,11 +84,15 @@
 int nfs4_op_setattr(struct nfs_argop4 *op,
                     compound_data_t * data, struct nfs_resop4 *resp)
 {
-  fsal_attrib_list_t sattr;
-  fsal_attrib_list_t parent_attr;
-  cache_inode_status_t cache_status;
-  int rc = 0;
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_setattr";
+  fsal_attrib_list_t     sattr;
+  fsal_attrib_list_t     parent_attr;
+  cache_inode_status_t   cache_status;
+  int                    rc = 0;
+  const char           * tag = "SETATTR";
+  state_t              * pstate_found = NULL;
+  state_t              * pstate_open  = NULL;
+  cache_entry_t        * pentry       = NULL;
 
   resp->resop = NFS4_OP_SETATTR;
   res_SETATTR4.status = NFS4_OK;
@@ -154,6 +159,77 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
         {
           res_SETATTR4.status = NFS4ERR_ISDIR;
           return res_SETATTR4.status;
+        }
+      /* Object should be a file */
+      if(data->current_entry->internal_md.type != REGULAR_FILE)
+        {
+          res_SETATTR4.status = NFS4ERR_INVAL;
+          return res_SETATTR4.status;
+        }
+
+      /* vnode to manage is the current one */
+      pentry = data->current_entry;
+
+      /* Check stateid correctness and get pointer to state */
+      rc = nfs4_Check_Stateid(&arg_SETATTR4.stateid,
+                              data->current_entry,
+                              0LL,
+                              &pstate_found,
+                              data,
+                              STATEID_SPECIAL_ANY,
+                              tag);
+      if(rc != NFS4_OK)
+        {
+          res_SETATTR4.status = rc;
+          return res_SETATTR4.status;
+        }
+
+      /* NB: After this points, if pstate_found == NULL, then the stateid is all-0 or all-1 */
+      if(pstate_found != NULL)
+        {
+          switch(pstate_found->state_type)
+            {
+              case STATE_TYPE_SHARE:
+                pstate_open = pstate_found;
+                break;
+
+              case STATE_TYPE_LOCK:
+                pstate_open = pstate_found->state_data.lock.popenstate;
+                break;
+
+              case STATE_TYPE_DELEG:
+                pstate_open = NULL;
+                break;
+
+              default:
+                res_SETATTR4.status = NFS4ERR_BAD_STATEID;
+                return res_SETATTR4.status;
+            }
+
+          /* This is a size operation, this means that the file MUST have been opened for writing */
+          if(pstate_open != NULL &&
+             (pstate_open->state_data.share.share_access & OPEN4_SHARE_ACCESS_WRITE) == 0)
+            {
+              /* Bad open mode, return NFS4ERR_OPENMODE */
+              res_SETATTR4.status = NFS4ERR_OPENMODE;
+              return res_SETATTR4.status;
+            }
+        }
+      else
+        {
+          /* Special stateid, no open state, check to see if any share conflicts */
+          pstate_open = NULL;
+
+          /*
+           * Special stateid, no open state, check to see if any share conflicts
+           * The stateid is all-0 or all-1
+           */
+          rc = nfs4_check_special_stateid(pentry,"SETATTR(size)",FATTR4_ATTR_WRITE);
+          if(rc != NFS4_OK)
+            {
+              res_SETATTR4.status = rc;
+              return res_SETATTR4.status;
+            }     
         }
 
       if((cache_status = cache_inode_truncate(data->current_entry,
