@@ -80,7 +80,7 @@
 
 int nfs3_Commit(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                fsal_op_context_t *pcontext,
+                struct user_cred *creds,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres)
@@ -107,7 +107,9 @@ int nfs3_Commit(nfs_arg_t *parg,
   ppre_attr = NULL;
 
   /* Convert file handle into a fsal_handle */
-  if(nfs3_FhandleToFSAL(&(parg->arg_commit3.file), &fsal_data.fh_desc, pcontext) == 0)
+  if(nfs3_FhandleToFSAL(&(parg->arg_commit3.file),
+			&fsal_data.fh_desc,
+			pexport->export_hdl) == 0)
     {
       rc = NFS_REQ_DROP;
       goto out;
@@ -116,7 +118,6 @@ int nfs3_Commit(nfs_arg_t *parg,
   /* Get the entry in the cache_inode */
   if((pentry = cache_inode_get(&fsal_data,
                                &pre_attr,
-                               pcontext,
                                NULL,
                                &cache_status)) == NULL)
     {
@@ -144,7 +145,7 @@ int nfs3_Commit(nfs_arg_t *parg,
                         parg->arg_commit3.offset,
                         parg->arg_commit3.count,
                         typeofcommit,
-                        pcontext,
+                        creds,
                         &cache_status) != CACHE_INODE_SUCCESS)
     {
       pres->res_commit3.status = NFS3ERR_IO;;

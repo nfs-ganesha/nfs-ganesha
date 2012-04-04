@@ -79,7 +79,7 @@
 
 int nfs3_Fsinfo(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                fsal_op_context_t *pcontext,
+                struct user_cred *creds,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t * pres)
@@ -102,7 +102,7 @@ int nfs3_Fsinfo(nfs_arg_t *parg,
   pres->res_fsinfo3.FSINFO3res_u.resfail.obj_attributes.attributes_follow = FALSE;
 
   /* Convert file handle into a fsal_handle */
-  if(nfs3_FhandleToFSAL(&(parg->arg_fsinfo3.fsroot), &fsal_data.fh_desc, pcontext) == 0)
+  if(nfs3_FhandleToFSAL(&(parg->arg_fsinfo3.fsroot), &fsal_data.fh_desc, pexport) == 0)
     {
       rc = NFS_REQ_DROP;
       goto out;
@@ -111,7 +111,6 @@ int nfs3_Fsinfo(nfs_arg_t *parg,
   /* Get the entry in the cache_inode */
   if((pentry = cache_inode_get(&fsal_data,
                                &attr,
-                               pcontext,
                                NULL,
                                &cache_status)) == NULL)
     {

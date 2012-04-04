@@ -81,7 +81,7 @@
 
 int nfs3_Access(nfs_arg_t *parg,
                 exportlist_t *pexport,
-                fsal_op_context_t *pcontext,
+                struct user_cred *creds,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
                 nfs_res_t *pres)
@@ -105,7 +105,7 @@ int nfs3_Access(nfs_arg_t *parg,
   /* Is this a xattr FH ? */
   if(nfs3_Is_Fh_Xattr(&(parg->arg_access3.object)))
     {
-      rc = nfs3_Access_Xattr(parg, pexport, pcontext, preq, pres);
+      rc = nfs3_Access_Xattr(parg, pexport, creds, preq, pres);
       goto out;
     }
 
@@ -124,7 +124,6 @@ int nfs3_Access(nfs_arg_t *parg,
   /* Get the entry in the cache_inode */
   if((pentry = cache_inode_get(&fsal_data,
                                &attr,
-                               pcontext,
                                NULL,
                                &cache_status)) == NULL)
     {
@@ -174,7 +173,7 @@ int nfs3_Access(nfs_arg_t *parg,
   /* Perform the 'access' call */
   if(cache_inode_access(pentry,
                         access_mode,
-                        pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                        creds, &cache_status) == CACHE_INODE_SUCCESS)
     {
       nfs3_access_debug("granted access", parg->arg_access3.access);
 
@@ -207,19 +206,19 @@ int nfs3_Access(nfs_arg_t *parg,
       access_mode = nfs_get_access_mask(ACCESS3_READ, &attr);
       if(cache_inode_access(pentry,
                             access_mode,
-                            pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                            creds, &cache_status) == CACHE_INODE_SUCCESS)
         pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_READ;
 
       access_mode = nfs_get_access_mask(ACCESS3_MODIFY, &attr);
       if(cache_inode_access(pentry,
                             access_mode,
-                            pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                            creds, &cache_status) == CACHE_INODE_SUCCESS)
         pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_MODIFY;
 
       access_mode = nfs_get_access_mask(ACCESS3_EXTEND, &attr);
       if(cache_inode_access(pentry,
                             access_mode,
-                            pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                            creds, &cache_status) == CACHE_INODE_SUCCESS)
         pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_EXTEND;
 
       if(filetype == REGULAR_FILE)
@@ -227,7 +226,7 @@ int nfs3_Access(nfs_arg_t *parg,
           access_mode = nfs_get_access_mask(ACCESS3_EXECUTE, &attr);
           if(cache_inode_access(pentry,
                                 access_mode,
-                                pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                                creds, &cache_status) == CACHE_INODE_SUCCESS)
             pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_EXECUTE;
         }
       else
@@ -235,7 +234,7 @@ int nfs3_Access(nfs_arg_t *parg,
           access_mode = nfs_get_access_mask(ACCESS3_LOOKUP, &attr);
           if(cache_inode_access(pentry,
                                 access_mode,
-                                pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                                creds, &cache_status) == CACHE_INODE_SUCCESS)
             pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_LOOKUP;
         }
 
@@ -244,7 +243,7 @@ int nfs3_Access(nfs_arg_t *parg,
           access_mode = nfs_get_access_mask(ACCESS3_DELETE, &attr);
           if(cache_inode_access(pentry,
                                 access_mode,
-                                pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                                creds, &cache_status) == CACHE_INODE_SUCCESS)
             pres->res_access3.ACCESS3res_u.resok.access |= ACCESS3_DELETE;
         }
 
@@ -262,7 +261,7 @@ int nfs3_Access(nfs_arg_t *parg,
       goto out;
     }
 
-  nfs_SetFailedStatus(pcontext, pexport,
+  nfs_SetFailedStatus(pexport,
                       NFS_V3,
                       cache_status,
                       NULL,
