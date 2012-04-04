@@ -627,7 +627,6 @@ static int DisplayLogPath_valist(char *path, char * function, log_components_t c
 {
   char tampon[STR_LEN_TXT];
   int fd, my_status;
-  uid_t old_uid = setfsuid( 0 ) ;
 
   DisplayLogString_valist(tampon, function, component, format, arguments);
 
@@ -657,7 +656,6 @@ static int DisplayLogPath_valist(char *path, char * function, log_components_t c
 
               /* fermeture du fichier */
               close(fd);
-              setfsuid( old_uid ) ;
               return SUCCES;
             }                   /* if fcntl */
           else
@@ -675,13 +673,11 @@ static int DisplayLogPath_valist(char *path, char * function, log_components_t c
           {
             fprintf(stderr, "Error: couldn't complete write to the log file, ensure disk has not filled up");
             close(fd);
-            setfsuid( old_uid ) ;
             return ERR_FICHIER_LOG;
           }
 
           /* fermeture du fichier */
           close(fd);
-          setfsuid( old_uid ) ;
           return SUCCES;
         }
 #endif
@@ -694,11 +690,9 @@ static int DisplayLogPath_valist(char *path, char * function, log_components_t c
               tab_systeme_err[ERR_FICHIER_LOG].label,
               tab_systeme_err[ERR_FICHIER_LOG].msg, my_status, path, tampon);
 
-      setfsuid( old_uid ) ;
       return ERR_FICHIER_LOG;
     }
   /* if path */
-  setfsuid( old_uid ) ;
   return SUCCES;
 }                               /* DisplayLogPath_valist */
 

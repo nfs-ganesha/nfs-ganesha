@@ -1,3 +1,5 @@
+#ifndef _COMMON_METHODS_H
+#define _COMMON_METHODS_H
 /*
  * Common FSAL methods
  */

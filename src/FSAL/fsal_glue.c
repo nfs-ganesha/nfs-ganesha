@@ -861,7 +861,7 @@ fsal_status_t FSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
 
 fsal_status_t FSAL_SetThrCred( fsal_uid_t uid, fsal_gid_t gid )
 {
-  if(fsal_functions.fsal_lock_op != NULL)
+  if(fsal_functions.fsal_setthrcred != NULL)
     return fsal_functions.fsal_setthrcred( uid, gid ) ;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);

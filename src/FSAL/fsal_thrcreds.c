@@ -43,7 +43,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <sys/quota.h>
-#include "log.h"
+#include "log_macros.h"
 #include "fsal.h"
 #include "FSAL/common_methods.h"
 
