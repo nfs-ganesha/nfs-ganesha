@@ -244,17 +244,17 @@ int main(int argc, char *argv[])
   nfs_prereq_init("convert_fh", "localhost", NIV_MAJ, "/dev/tty");
 
   /* Load the FSAL library (if needed) */
-  if(!FSAL_LoadLibrary((char *)fsal_path_lib))  /** @todo: this part of the code and this utility has to be checked */
-    {
-      fprintf(stderr, "NFS MAIN: Could not load FSAL dynamic library %s", (char *)fsal_path_lib[0]);
-      exit(1);
-    }
+/*   if(!FSAL_LoadLibrary((char *)fsal_path_lib))  /\** @todo: this part of the code and this utility has to be checked *\/ */
+/*     { */
+/*       fprintf(stderr, "NFS MAIN: Could not load FSAL dynamic library %s", (char *)fsal_path_lib[0]); */
+/*       exit(1); */
+/*     } */
 
   /* Get the FSAL functions */
-  FSAL_LoadFunctions();
+/*   FSAL_LoadFunctions(); */
 
   /* Get the FSAL consts */
-  FSAL_LoadConsts();
+/*   FSAL_LoadConsts(); */
 
   /* initialize default parameters */
 
@@ -262,11 +262,11 @@ int main(int argc, char *argv[])
 
   /* parse configuration file */
 
-  if(nfs_set_param_from_conf(&nfs_start_info))
-    {
-      fprintf(stderr, "Error parsing configuration file '%s'", config_path);
-      exit(1);
-    }
+/*   if(nfs_set_param_from_conf(&nfs_start_info)) */
+/*     { */
+/*       fprintf(stderr, "Error parsing configuration file '%s'", config_path); */
+/*       exit(1); */
+/*     } */
 
   /* check parameters consitency */
 
@@ -288,7 +288,7 @@ int main(int argc, char *argv[])
   if(!flag_i)
     {
 
-      fsal_status = FSAL_Init(&nfs_param.fsal_param);
+/*       fsal_status = FSAL_Init(&nfs_param.fsal_param); */
       if(FSAL_IS_ERROR(fsal_status))
         {
           /* Failed init */
@@ -350,17 +350,17 @@ int main(int argc, char *argv[])
 
       FSAL_str2path(pexport->fullpath, MAXPATHLEN, &export_path);
 
-      if(FSAL_IS_ERROR
-         (fsal_status =
-          FSAL_BuildExportContext(&fsal_export_context, &export_path,
-                                  pexport->FS_specific)))
-        {
-          fprintf(stderr, "Error in FSAL_BuildExportContext, major=%u, minor=%u\n",
-                  fsal_status.major, fsal_status.minor);
-          exit(1);
-        }
+/*       if(FSAL_IS_ERROR */
+/*          (fsal_status = */
+/*           FSAL_BuildExportContext(&fsal_export_context, &export_path, */
+/*                                   pexport->FS_specific))) */
+/*         { */
+/*           fprintf(stderr, "Error in FSAL_BuildExportContext, major=%u, minor=%u\n", */
+/*                   fsal_status.major, fsal_status.minor); */
+/*           exit(1); */
+/*         } */
 
-      fsal_status = FSAL_InitClientContext(&fsal_op_context);
+/*       fsal_status = FSAL_InitClientContext(&fsal_op_context); */
       if(FSAL_IS_ERROR(fsal_status))
         {
           /* Failed init */
@@ -369,8 +369,8 @@ int main(int argc, char *argv[])
           exit(1);
         }
 
-      fsal_status = FSAL_GetClientContext(&fsal_op_context,
-                                          &fsal_export_context, 0, 0, NULL, 0);
+/*       fsal_status = FSAL_GetClientContext(&fsal_op_context, */
+/*                                           &fsal_export_context, 0, 0, NULL, 0); */
 
       if(FSAL_IS_ERROR(fsal_status))
         {
@@ -381,32 +381,32 @@ int main(int argc, char *argv[])
         }
 
       /* now, can use the fsal_op_context */
-      switch (nfs_version)
-        {
-        case 2:
-          if(!nfs2_FhandleToFSAL(&filehandle_v2, &fsal_data.fh_desc, &fsal_op_context))
-            {
-              fprintf(stderr, "Cannot convert Fhandle to FSAL\n");
-              exit(1);
-            }
-          break;
+/*       switch (nfs_version) */
+/*         { */
+/*         case 2: */
+/*           if(!nfs2_FhandleToFSAL(&filehandle_v2, &fsal_data.fh_desc, &fsal_op_context)) */
+/*             { */
+/*               fprintf(stderr, "Cannot convert Fhandle to FSAL\n"); */
+/*               exit(1); */
+/*             } */
+/*           break; */
 
-        case 3:
-          if(!nfs3_FhandleToFSAL(&filehandle_v3, &fsal_data.fh_desc, &fsal_op_context))
-            {
-              fprintf(stderr, "Cannot convert Fhandle to FSAL\n");
-              exit(1);
-            }
-          break;
+/*         case 3: */
+/*           if(!nfs3_FhandleToFSAL(&filehandle_v3, &fsal_data.fh_desc, &fsal_op_context)) */
+/*             { */
+/*               fprintf(stderr, "Cannot convert Fhandle to FSAL\n"); */
+/*               exit(1); */
+/*             } */
+/*           break; */
 
-        case 4:
-          if(!nfs4_FhandleToFSAL(&filehandle_v4, &fsal_data.fh_desc, &fsal_op_context))
-            {
-              fprintf(stderr, "Cannot convert Fhandle to FSAL\n");
-              exit(1);
-            }
-          break;
-        }
+/*         case 4: */
+/*           if(!nfs4_FhandleToFSAL(&filehandle_v4, &fsal_data.fh_desc, &fsal_op_context)) */
+/*             { */
+/*               fprintf(stderr, "Cannot convert Fhandle to FSAL\n"); */
+/*               exit(1); */
+/*             } */
+/*           break; */
+/*         } */
 
       printf("\n");
 
@@ -424,8 +424,8 @@ int main(int argc, char *argv[])
         {
           unsigned int index;
 
-          fsal_status = FSAL_ListXAttrs((fsal_handle_t *)fsal_data.fh_desc.start, cookie, &fsal_op_context,
-                                        xattr_array, 256, &nb_returned, &eol);
+/*           fsal_status = FSAL_ListXAttrs((fsal_handle_t *)fsal_data.fh_desc.start, cookie, &fsal_op_context, */
+/*                                         xattr_array, 256, &nb_returned, &eol); */
 
           if(FSAL_IS_ERROR(fsal_status))
             {
@@ -441,11 +441,11 @@ int main(int argc, char *argv[])
 
               printf("%-18s = ", xattr_array[index].xattr_name.name);
 
-              fsal_status =
-		  FSAL_GetXAttrValueByName((fsal_handle_t *)fsal_data.fh_desc.start,
-                                           &xattr_array[index].xattr_name,
-                                           &fsal_op_context, attr_buffer, 4096,
-                                           &sz_returned);
+/*               fsal_status = */
+/* 		  FSAL_GetXAttrValueByName((fsal_handle_t *)fsal_data.fh_desc.start, */
+/*                                            &xattr_array[index].xattr_name, */
+/*                                            &fsal_op_context, attr_buffer, 4096, */
+/*                                            &sz_returned); */
 
               if(FSAL_IS_ERROR(fsal_status))
                 {
@@ -462,10 +462,10 @@ int main(int argc, char *argv[])
       /* get object ID */
       fh_desc.start = (caddr_t) & objid;
       fh_desc.len = sizeof(fsal_u64_t);
-      fsal_status =
-	  FSAL_DigestHandle(&fsal_export_context, FSAL_DIGEST_FILEID4,
-			    (fsal_handle_t *)fsal_data.fh_desc.start,
-                            &fh_desc);
+/*       fsal_status = */
+/* 	  FSAL_DigestHandle(&fsal_export_context, FSAL_DIGEST_FILEID4, */
+/* 			    (fsal_handle_t *)fsal_data.fh_desc.start, */
+/*                             &fh_desc); */
 
       if(FSAL_IS_ERROR(fsal_status))
         {

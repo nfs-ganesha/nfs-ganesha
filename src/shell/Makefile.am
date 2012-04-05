@@ -82,7 +82,6 @@ shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
                   ../avl/libavltree.la                               \
                   ../FSAL/libfsalcommon.la                           \
                   $(FSAL_LIB)                                        \
-		  ../FSAL/common_methods.lo			     \
 		  ../FSAL/common_functions.lo			     \
 		  ../FSAL/access_check.lo			     \
                   ../SemN/libSemN.la                                 \

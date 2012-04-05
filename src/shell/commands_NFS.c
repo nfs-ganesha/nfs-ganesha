@@ -327,7 +327,7 @@ int InitNFSClient(cmdnfs_thr_info_t * p_thr_info)
     return 0;
 
   /* for the moment, create export context for root fileset */
-  st = FSAL_BuildExportContext(&p_thr_info->exp_context, NULL, NULL);
+/*   st = FSAL_BuildExportContext(&p_thr_info->exp_context, NULL, NULL); */
 
   if(FSAL_IS_ERROR(st))
     {
@@ -339,7 +339,7 @@ int InitNFSClient(cmdnfs_thr_info_t * p_thr_info)
 
   /* initialize FSAL credential for this thread */
 
-  st = FSAL_InitClientContext(&p_thr_info->context);
+/*   st = FSAL_InitClientContext(&p_thr_info->context); */
 
   if(FSAL_IS_ERROR(st))
     {
@@ -358,8 +358,8 @@ int InitNFSClient(cmdnfs_thr_info_t * p_thr_info)
       return errno;
     }
 
-  st = FSAL_GetClientContext(&p_thr_info->context, &p_thr_info->exp_context,
-                             uid, pw_struct->pw_gid, NULL, 0);
+/*   st = FSAL_GetClientContext(&p_thr_info->context, &p_thr_info->exp_context, */
+/*                              uid, pw_struct->pw_gid, NULL, 0); */
 
   if(FSAL_IS_ERROR(st))
     {
@@ -3648,8 +3648,8 @@ int fn_nfs_su(int argc,         /* IN : number of args in argv */
       fprintf(output, "\n");
     }
 
-  st = FSAL_GetClientContext(&p_thr_info->context, &p_thr_info->exp_context,
-                             pw_struct->pw_uid, pw_struct->pw_gid, groups_tab, nb_grp);
+/*   st = FSAL_GetClientContext(&p_thr_info->context, &p_thr_info->exp_context, */
+/*                              pw_struct->pw_uid, pw_struct->pw_gid, groups_tab, nb_grp); */
 
   if(FSAL_IS_ERROR(st))
     {
