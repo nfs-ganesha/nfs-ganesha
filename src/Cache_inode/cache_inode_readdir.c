@@ -106,6 +106,9 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
 
+  /* XXXX */
+  abort();
+
   /* Only DIRECTORY entries are concerned */
   if(pentry_dir->internal_md.type != DIRECTORY)
     {
@@ -1163,7 +1166,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
                                              unlock,
                                              pclient,
                                              pcontext,
-                                             pstatus ) ;    
+                                             pstatus ) ;
   
   P_w(&dir_pentry->lock);
 
