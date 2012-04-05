@@ -53,7 +53,7 @@
 
 int nlm4_Lock(nfs_arg_t            * parg,
               exportlist_t         * pexport,
-              fsal_op_context_t    * pcontext,
+              struct user_cred     * creds /* IN     */ ,
               nfs_worker_data_t    * pworker,
               struct svc_req       * preq,
               nfs_res_t            * pres)
@@ -113,7 +113,7 @@ int nlm4_Lock(nfs_arg_t            * parg,
                               &arg->alock,
                               &lock,
                               &pentry,
-                              pcontext,
+                              pexport,
                               care,
                               &nsm_client,
                               &nlm_client,
@@ -134,8 +134,8 @@ int nlm4_Lock(nfs_arg_t            * parg,
    * that will release old locks
    */
   if(state_lock(pentry,
-                pcontext,
                 pexport,
+		creds,
                 nlm_owner,
                 (void *) (ptrdiff_t) arg->state,
                 arg->block ? STATE_NLM_BLOCKING : STATE_NON_BLOCKING,
@@ -209,6 +209,7 @@ static void nlm4_lock_message_resp(state_async_queue_t *arg)
  */
 int nlm4_Lock_Message(nfs_arg_t *parg,
                       exportlist_t *pexport,
+                      struct user_cred *creds /* IN     */ ,
                       fsal_op_context_t *pcontext,
                       nfs_worker_data_t *pworker,
                       struct svc_req *preq,
@@ -229,7 +230,7 @@ int nlm4_Lock_Message(nfs_arg_t *parg,
   if(nlm_client == NULL)
     rc = NFS_REQ_DROP;
   else
-    rc = nlm4_Lock(parg, pexport, pcontext, pworker, preq, pres);
+    rc = nlm4_Lock(parg, pexport, creds, pworker, preq, pres);
 
   if(rc == NFS_REQ_OK)
     rc = nlm_send_async_res_nlm4(nlm_client, nlm4_lock_message_resp, pres);
