@@ -100,7 +100,7 @@ int nfs_Readdir(nfs_arg_t * parg,
   cache_inode_dir_entry_t **dirent_array;
   cookieverf3 cookie_verifier;
   int rc;
-  unsigned int num_entries;
+  unsigned long num_entries;
   unsigned long space_used = 0;
   unsigned long estimated_num_entries = 0;
   unsigned long asked_num_entries;
@@ -339,7 +339,7 @@ int nfs_Readdir(nfs_arg_t * parg,
 
       LogFullDebug(COMPONENT_NFS_READDIR,
                    "-- Readdir -> Call to cache_inode_readdir( cookie=%"PRIu64
-                   ", asked=%lu ) -> num_entries = %u",
+                   ", asked=%lu ) -> num_entries = %lu",
                    cache_inode_cookie, asked_num_entries, num_entries);
 
       if(eod_met == END_OF_DIR)

@@ -1169,7 +1169,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
 #define CACHE_INODE_SHELL_READDIR_SIZE 10
   uint64_t begin_cookie = 0;
   uint64_t end_cookie = 0;
-  unsigned int nbfound;
+  unsigned long nbfound;
   cache_inode_dir_entry_t * dirent_array[CACHE_INODE_SHELL_READDIR_SIZE] ;
   cache_inode_endofdir_t eod_met;
   unsigned int i;
@@ -1585,7 +1585,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
 
       /* Ready for next iteration */
       LogFullDebug(COMPONENT_CACHE_INODE,
-                   "--------------> begin_cookie = %"PRIu64", nbfound=%d, "
+                   "--------------> begin_cookie = %"PRIu64", nbfound=%lu, "
 		   "last cookie=%"PRIu64", end_cookie=%"PRIu64", "
 		   "begin_cookie + nbfound =%"PRIu64"\n",
                    begin_cookie, nbfound, dirent_array[nbfound - 1]->hk.k,

@@ -81,7 +81,7 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
                                                              cache_inode_policy_t policy,
                                                              uint64_t cookie,
                                                              unsigned int nbwanted,
-                                                             unsigned int *pnbfound,
+                                                             unsigned long *pnbfound,
                                                              uint64_t *pend_cookie,
                                                              cache_inode_endofdir_t *peod_met,
                                                              cache_inode_dir_entry_t **dirent_array,
@@ -166,7 +166,7 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
                               nbwanted * sizeof(fsal_dirent_t),
                               fsal_dirent_array,
                               &end_cookie,
-                              (fsal_count_t *)pnbfound, 
+                              pnbfound,
                               &fsal_eod, 
                               &pclient->mfsl_context, 
                               NULL);
@@ -177,7 +177,7 @@ static cache_inode_status_t cache_inode_readdir_nonamecache( cache_entry_t * pen
                               nbwanted * sizeof(fsal_dirent_t),
                               fsal_dirent_array,
                               &end_cookie, 
-                              (fsal_count_t *)pnbfound, 
+                              pnbfound,
                               &fsal_eod);
 #endif
   if(FSAL_IS_ERROR(fsal_status))
@@ -1093,7 +1093,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
                                          cache_inode_policy_t policy,
                                          uint64_t cookie,
                                          unsigned int nbwanted,
-                                         unsigned int *pnbfound,
+                                         unsigned long *pnbfound,
                                          uint64_t *pend_cookie,
                                          cache_inode_endofdir_t *peod_met,
                                          cache_inode_dir_entry_t **dirent_array,

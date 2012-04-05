@@ -88,7 +88,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
   struct alloc_file_handle_v4 entry_handle;
   entry_name_array_item_t *entry_name_array = NULL;
   unsigned int estimated_num_entries;
-  unsigned int num_entries;
+  unsigned long num_entries;
   int dir_pentry_unlock = FALSE;
 
   unsigned int i = 0;
@@ -404,7 +404,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op,
       {
 
           LogFullDebug(COMPONENT_NFS_V4,
-                  "End of directory reached:  num_entries=%d i=%d",
+                  "End of directory reached:  num_entries=%lu i=%d",
                   num_entries,
                   i);
 
