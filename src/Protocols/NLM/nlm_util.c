@@ -193,7 +193,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
   char                     buffer[1024];
   state_status_t           state_status = STATE_SUCCESS;
   state_cookie_entry_t   * cookie_entry;
-  fsal_op_context_t        context, * pcontext = &context;
+  exportlist_t  *pexport;
   state_nlm_async_data_t * nlm_arg = &arg->state_async_data.state_nlm_async_data;
 
   if(isDebug(COMPONENT_NLM))
@@ -245,8 +245,8 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
   pthread_rwlock_wrlock(&cookie_entry->sce_pentry->state_lock);
 
   if(cookie_entry->sce_lock_entry->sle_block_data == NULL ||
-     !nlm_block_data_to_fsal_context(cookie_entry->sce_lock_entry->sle_block_data,
-                                     pcontext))
+     !nlm_block_data_to_export(cookie_entry->sce_lock_entry->sle_block_data,
+			       &pexport))
     {
       /* Wow, we're not doing well... */
       pthread_rwlock_unlock(&cookie_entry->sce_pentry->state_lock);
@@ -258,8 +258,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 
   pthread_rwlock_unlock(&cookie_entry->sce_pentry->state_lock);
 
-  if(state_release_grant(pcontext,
-                         cookie_entry,
+  if(state_release_grant(cookie_entry,
                          &state_async_cache_inode_client,
                          &state_status) != STATE_SUCCESS)
     {
@@ -275,7 +274,7 @@ int nlm_process_parameters(struct svc_req        * preq,
                            nlm4_lock             * alock,
                            fsal_lock_param_t     * plock,
                            cache_entry_t        ** ppentry,
-                           fsal_op_context_t     * pcontext,
+                           exportlist_t          * pexport,
                            cache_inode_client_t  * pclient,
                            care_t                  care,
                            state_nsm_client_t   ** ppnsm_client,
@@ -294,7 +293,7 @@ int nlm_process_parameters(struct svc_req        * preq,
 
   /* Convert file handle into a cache entry */
   if(alock->fh.n_len > MAX_NETOBJ_SZ ||
-     !nfs3_FhandleToFSAL((nfs_fh3 *) &alock->fh, &fsal_data.fh_desc, pcontext))
+     !nfs3_FhandleToFSAL((nfs_fh3 *) &alock->fh, &fsal_data.fh_desc, pexport))
     {
       /* handle is not valid */
       return NLM4_STALE_FH;
@@ -304,7 +303,6 @@ int nlm_process_parameters(struct svc_req        * preq,
   *ppentry = cache_inode_get(&fsal_data,
                              &attr,
                              pclient,
-                             pcontext,
                              NULL,
                              &cache_status);
   if(*ppentry == NULL)
@@ -383,22 +381,13 @@ int nlm_process_parameters(struct svc_req        * preq,
               return NLM4_FAILED;
             }
           (*ppblock_data)->sbd_granted_callback = nlm_granted_callback;
-          (*ppblock_data)->sbd_block_data_to_fsal_context = nlm_block_data_to_fsal_context;
+          (*ppblock_data)->sbd_block_data_to_fsal_context = nlm_block_data_to_export;
           (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh.n_bytes =
             (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh_buf;
           (*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh.n_len = alock->fh.n_len;
           memcpy((*ppblock_data)->sbd_block_data.sbd_nlm_block_data.sbd_nlm_fh_buf,
                  alock->fh.n_bytes,
                  alock->fh.n_len);
-          /* FSF TODO: Ultimately I think the following will go away, we won't need the context, just the export */
-          /* Copy credentials from pcontext */
-#ifdef _USE_HPSS
-	  /** @todo : PhD: Think about removing hpsscred_t from FSAL */ 
-          (*ppblock_data)->sbd_credential.user  =  pcontext->credential.hpss_usercred.Uid ;
-          (*ppblock_data)->sbd_credential.group =  pcontext->credential.hpss_usercred.Gid ;
-#else
-          (*ppblock_data)->sbd_credential = pcontext->credential;
-#endif
         }
     }
   /* Fill in plock */
@@ -476,8 +465,8 @@ nlm4_stats nlm_convert_state_error(state_status_t status)
     }
 }
 
-bool_t nlm_block_data_to_fsal_context(state_block_data_t * block_data,
-                                      fsal_op_context_t  * fsal_context)
+bool_t nlm_block_data_to_export(state_block_data_t * block_data,
+				exportlist_t  **ppexport)
 {
   exportlist_t           * pexport = NULL;
   short                    exportid;
@@ -515,33 +504,10 @@ bool_t nlm_block_data_to_fsal_context(state_block_data_t * block_data,
 
       return FALSE;
     }
-
+  *ppexport = pexport;
   LogFullDebug(COMPONENT_NLM,
                "Found export entry for dirname=%s as exportid=%d",
                pexport->dirname, pexport->id);
-  /* Build the credentials */
-  fsal_status = FSAL_GetClientContext(fsal_context,
-                                      &pexport->FS_export_context,
-                                      block_data->sbd_credential.user,
-                                      block_data->sbd_credential.group,
-                                      block_data->sbd_credential.alt_groups,
-                                      block_data->sbd_credential.nbgroups);
-
-  if(FSAL_IS_ERROR(fsal_status))
-    {
-      LogEvent(COMPONENT_NLM,
-               "Could not get credentials for (uid=%d,gid=%d), fsal error=(%d,%d)",
-               block_data->sbd_credential.user,
-               block_data->sbd_credential.group,
-               fsal_status.major, fsal_status.minor);
-      return FALSE;
-    }
-  else
-    LogDebug(COMPONENT_NLM,
-             "FSAL Cred acquired for (uid=%d,gid=%d)",
-             block_data->sbd_credential.user,
-             block_data->sbd_credential.group);
-
   return TRUE;
 }
 
@@ -550,8 +516,8 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
                                     cache_inode_client_t * pclient,
                                     state_status_t       * pstatus)
 {
-  fsal_op_context_t        fsal_context, *pcontext = &fsal_context;
   state_block_data_t     * block_data     = lock_entry->sle_block_data;
+  exportlist_t           * pexport;
   state_nlm_block_data_t * nlm_block_data = &block_data->sbd_block_data.sbd_nlm_block_data;
   state_cookie_entry_t   * cookie_entry = NULL;
   state_async_queue_t    * arg;
@@ -561,7 +527,7 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
   granted_cookie_t         nlm_grant_cookie;
   state_status_t           dummy_status;
 
-  if(nlm_block_data_to_fsal_context(block_data, &fsal_context) != TRUE)
+  if(nlm_block_data_to_export(block_data, &pexport) != TRUE)
     {
       *pstatus = STATE_INCONSISTENT_ENTRY;
       return *pstatus;
@@ -588,7 +554,6 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
    * Could return STATE_LOCK_BLOCKED because FSAL would have had to block.
    */
   if(state_add_grant_cookie(pentry,
-                            pcontext,
                             &nlm_grant_cookie,
                             sizeof(nlm_grant_cookie),
                             lock_entry,
@@ -662,8 +627,7 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
   free_grant_arg(arg);
 
   /* Cancel the pending grant to release the cookie */
-  if(state_cancel_grant(pcontext,
-                        cookie_entry,
+  if(state_cancel_grant(cookie_entry,
                         pclient,
                         &dummy_status) != STATE_SUCCESS)
     {

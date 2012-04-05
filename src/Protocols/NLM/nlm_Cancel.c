@@ -45,7 +45,7 @@
  *
  *  @param parg        [IN]
  *  @param pexportlist [IN]
- *  @param pcontextp   [IN]
+ *  @param creds       [IN]
  *  @param pclient     [INOUT]
  *  @param ht          [INOUT]
  *  @param preq        [IN]
@@ -55,7 +55,7 @@
 
 int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
                 exportlist_t * pexport /* IN     */ ,
-                fsal_op_context_t * pcontext /* IN     */ ,
+                struct user_cred *creds /* IN     */ ,
                 cache_inode_client_t * pclient /* INOUT  */ ,
                 struct svc_req *preq /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ )
@@ -99,7 +99,7 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
                               &arg->alock,
                               &lock,
                               &pentry,
-                              pcontext,
+                              pexport,
                               pclient,
                               CARE_NOT, /* cancel doesn't care if owner is found */
                               &nsm_client,
@@ -117,7 +117,6 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
     }
 
   if(state_cancel(pentry,
-                  pcontext,
                   pexport,
                   nlm_owner,
                   &lock,
@@ -174,7 +173,7 @@ static void nlm4_cancel_message_resp(state_async_queue_t *arg)
  *
  *  @param parg        [IN]
  *  @param pexportlist [IN]
- *  @param pcontextp   [IN]
+ *  @param creds       [IN]
  *  @param pclient     [INOUT]
  *  @param preq        [IN]
  *  @param pres        [OUT]
@@ -182,7 +181,7 @@ static void nlm4_cancel_message_resp(state_async_queue_t *arg)
  */
 int nlm4_Cancel_Message(nfs_arg_t            * parg     /* IN     */ ,
                         exportlist_t         * pexport  /* IN     */ ,
-                        fsal_op_context_t    * pcontext /* IN     */ ,
+                        struct user_cred     * creds /* IN     */ ,
                         cache_inode_client_t * pclient  /* INOUT  */ ,
                         struct svc_req       * preq     /* IN     */ ,
                         nfs_res_t            * pres     /* OUT    */ )
@@ -202,7 +201,7 @@ int nlm4_Cancel_Message(nfs_arg_t            * parg     /* IN     */ ,
   if(nlm_client == NULL)
     rc = NFS_REQ_DROP;
   else
-    rc = nlm4_Cancel(parg, pexport, pcontext, pclient, preq, pres);
+    rc = nlm4_Cancel(parg, pexport, creds, pclient, preq, pres);
 
   if(rc == NFS_REQ_OK)
     rc = nlm_send_async_res_nlm4(nlm_client, nlm4_cancel_message_resp, pres);

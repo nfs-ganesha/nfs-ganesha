@@ -29,8 +29,8 @@
 #include "nlm4.h"
 #include "sal_functions.h"
 
-bool_t nlm_block_data_to_fsal_context(state_block_data_t * block_data,
-                                      fsal_op_context_t  * fsal_context);
+bool_t nlm_block_data_to_export(state_block_data_t * block_data,
+				exportlist_t  **ppexport);
 
 extern const char *lock_result_str(int rc);
 extern netobj *copy_netobj(netobj * dst, netobj * src);
@@ -46,7 +46,7 @@ extern void netobj_to_string(netobj *obj, char *buffer, int maxlen);
  * alock:        nlm4_lock request structure
  * plock:        cache_lock_desc_t to fill in from alock
  * ppentry:      cache inode entry pointer to fill in
- * pcontext:     FSAL op context
+ * pexport:      the export of interest
  * pclient:      cache inode client
  * care:         TRUE if this caller cares if an owner is found (otherwise return NLM4_GRANTED
  *               because the caller will have nothing to do)
@@ -59,7 +59,7 @@ int nlm_process_parameters(struct svc_req        * preq,
                            nlm4_lock             * alock,
                            fsal_lock_param_t     * plock,
                            cache_entry_t        ** ppentry,
-                           fsal_op_context_t     * pcontext,
+                           exportlist_t          * pexport,
                            cache_inode_client_t  * pclient,
                            care_t                  care,
                            state_nsm_client_t   ** ppnsm_client,

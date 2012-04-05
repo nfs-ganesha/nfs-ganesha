@@ -46,7 +46,7 @@
  *
  *  @param parg        [IN]
  *  @param pexportlist [IN]
- *  @param pcontextp   [IN]
+ *  @param creds       [IN]
  *  @param pclient     [INOUT]
  *  @param preq        [IN]
  *  @param pres        [OUT]
@@ -54,7 +54,7 @@
  */
 int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
                      exportlist_t * dummy_pexport /* IN     */ ,
-                     fsal_op_context_t * dummy_pcontext /* IN     */ ,
+                     struct user_cred * dummy_creds /* IN     */ ,
                      cache_inode_client_t * pclient /* INOUT  */ ,
                      struct svc_req *preq /* IN     */ ,
                      nfs_res_t * pres /* OUT    */ )
@@ -63,7 +63,7 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
   char                   buffer[1024];
   state_status_t         state_status = STATE_SUCCESS;
   state_cookie_entry_t * cookie_entry;
-  fsal_op_context_t      context, * pcontext = &context;
+  exportlist_t  *pexport; /* not really used */
 
   netobj_to_string(&arg->cookie, buffer, 1024);
   LogDebug(COMPONENT_NLM,
@@ -87,8 +87,8 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
 
   if(cookie_entry->sce_lock_entry == NULL ||
      cookie_entry->sce_lock_entry->sle_block_data == NULL ||
-     !nlm_block_data_to_fsal_context(cookie_entry->sce_lock_entry->sle_block_data,
-                                     pcontext))
+     !nlm_block_data_to_export(cookie_entry->sce_lock_entry->sle_block_data,
+                                     &pexport))
     {
       /* This must be an old NLM_GRANTED_RES */
       pthread_rwlock_unlock(&cookie_entry->sce_pentry->state_lock);
@@ -104,8 +104,7 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
     {
       LogMajor(COMPONENT_NLM,
                "Granted call failed due to client error, releasing lock");
-      if(state_release_grant(pcontext,
-                             cookie_entry,
+      if(state_release_grant(cookie_entry,
                              pclient,
                              &state_status) != STATE_SUCCESS)
         {
@@ -115,7 +114,7 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
     }
   else
     {
-      state_complete_grant(pcontext, cookie_entry, pclient);
+      state_complete_grant(cookie_entry, pclient);
       nlm_signal_async_resp(cookie_entry);
     }
 
