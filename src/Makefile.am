@@ -34,7 +34,6 @@ SUBDIRS = include             \
           IdMapper            \
           snmp_adm            \
           MainNFSD            \
-          cmdline_tools       \
           Docs                \
           tools               \
           config_samples      \
@@ -43,6 +42,10 @@ SUBDIRS = include             \
           rpm                 \
           cppcheck-xml        \
           testres-xml
+
+# disable shell and command line tools.  broken wrt new api
+#          shell
+#          cmdline_tools
 
 if USE_FSAL_FUSE
 SUBDIRS += example-fuse

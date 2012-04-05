@@ -192,11 +192,11 @@ static int InitThread(cmdCacheInode_thr_info_t * thr_info)
   struct passwd *pw_struct;
 
   /* for the moment, create export context for root fileset */
-  st = FSAL_BuildExportContext(&thr_info->exp_context, NULL, NULL);
+/*   st = FSAL_BuildExportContext(&thr_info->exp_context, NULL, NULL); */
 
   /* initialize FSAL credential for this thread */
 
-  st = FSAL_InitClientContext(&thr_info->context);
+/*   st = FSAL_InitClientContext(&thr_info->context); */
 
   if(FSAL_IS_ERROR(st))
     {
@@ -216,8 +216,8 @@ static int InitThread(cmdCacheInode_thr_info_t * thr_info)
       return 1;
     }
 
-  st = FSAL_GetClientContext(&thr_info->context, &thr_info->exp_context,
-                             uid, pw_struct->pw_gid, NULL, 0);
+/*   st = FSAL_GetClientContext(&thr_info->context, &thr_info->exp_context, */
+/*                              uid, pw_struct->pw_gid, NULL, 0); */
 
   if(FSAL_IS_ERROR(st))
     {
@@ -385,22 +385,22 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
 
       /* Get the corresponding pentry */
       fsdata.fh_desc.len = 0;
-      (void) FSAL_ExpandHandle(NULL,
-			       FSAL_DIGEST_SIZEOF,
-			       &fsdata.fh_desc);
+/*       (void) FSAL_ExpandHandle(NULL, */
+/* 			       FSAL_DIGEST_SIZEOF, */
+/* 			       &fsdata.fh_desc); */
 
-      if((pentry_tmp = cache_inode_get(&fsdata,
-                                       cachepol,
-                                       &attrlookup,
-                                       &context->client,
-                                       &context->context,
-                                       &context->cache_status)) == NULL)
-        {
-          log_fprintf(output, "Error executing cache_inode_get( \"%s\" ) : %J%r\n",
-                      str_path, ERR_CACHE_INODE, context->cache_status);
+/*       if((pentry_tmp = cache_inode_get(&fsdata, */
+/*                                        cachepol, */
+/*                                        &attrlookup, */
+/*                                        &context->client, */
+/*                                        &context->context, */
+/*                                        &context->cache_status)) == NULL) */
+/*         { */
+/*           log_fprintf(output, "Error executing cache_inode_get( \"%s\" ) : %J%r\n", */
+/*                       str_path, ERR_CACHE_INODE, context->cache_status); */
 
-          return context->cache_status;
-        }
+/*           return context->cache_status; */
+/*         } */
 
       strncpy(io_global_path, str_path, size_global_path);
       io_global_path[size_global_path - 1] = '\0';
@@ -456,6 +456,7 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
 
       /* lookup this name */
 
+<<<<<<< HEAD
       if((pentry_tmp = cache_inode_lookup(pentry_lookup,
                                           &name,
                                           cachepol,
@@ -470,6 +471,23 @@ int cache_solvepath(char *io_global_path, int size_global_path, /* global path *
 
           return context->cache_status;
         }
+=======
+/*       if((pentry_tmp = cache_inode_lookup(pentry_lookup, */
+/*                                           &name, */
+/*                                           cachepol, */
+/*                                           &attrlookup, */
+/*                                           ht, */
+/*                                           &context->client, */
+/* /\*                                           &context->context, *\/ */
+/*                                           &context->cache_status)) == NULL) */
+/*         { */
+/*           log_fprintf(output, */
+/*                       "Error executing cache_inode_lookup( \"%s\", \"%s\" ) : %J%r\n", */
+/*                       tmp_path, name.name, ERR_CACHE_INODE, context->cache_status); */
+
+/*           return context->cache_status; */
+/*         } */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
 
       /* updates current handle */
       pentry_lookup = pentry_tmp;
@@ -593,6 +611,8 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
 
   if(flag_v)
     cache_inode_print_conf_gc_policy(output, gcpol);
+
+#if 0
 
   /* retrieve lower layer info */
 
@@ -758,14 +778,19 @@ if(FSAL_IS_ERROR(status = FSAL_str2path("/xfs", FSAL_MAX_PATH_LEN, &pathroot)))
 
   fsdata.fh_desc.len = 0;
   fsdata.fh_desc.start = (caddr_t) &root_handle;
+
+/** @TODO leave this for now for rebase onto new handle.  Move
+ * to extract_handle
+ */
   (void) FSAL_ExpandHandle(&context->exp_context,
 			   FSAL_DIGEST_SIZEOF,
 			   &fsdata.fh_desc);
+/*   fsdata.cookie = 0; */
 
   if((context->pentry = cache_inode_make_root(&fsdata,
                                               cachepol,
                                               &context->client,
-                                              &context->context,
+/*                                               &context->context, */
                                               &context->cache_status)) == NULL)
     {
       fprintf(output, "Error: can't init fs's root");
@@ -791,6 +816,8 @@ if(FSAL_IS_ERROR(status = FSAL_str2path("/xfs", FSAL_MAX_PATH_LEN, &pathroot)))
 
   /* Free config struct */
   config_Free(config_file);
+
+#endif
 
   return 0;
 }
@@ -880,7 +907,7 @@ int fn_Cache_inode_pwd(int argc,        /* IN : number of args in argv */
                        char **argv,     /* IN : arg list               */
                        FILE * output)   /* IN : output stream          */
 {
-  fsal_handle_t *pfsal_handle = NULL;
+  struct fsal_obj_handle *pfsal_handle = NULL;
   char buff[128];
 
   cmdCacheInode_thr_info_t *context;
@@ -944,6 +971,7 @@ int fn_Cache_inode_cd(int argc, /* IN : number of args in argv */
       return ENOTDIR;
     }
 
+<<<<<<< HEAD
   if((context->cache_status = cache_inode_access(new_pentry,
                                                  FSAL_X_OK,
                                                  &context->client,
@@ -955,6 +983,20 @@ int fn_Cache_inode_cd(int argc, /* IN : number of args in argv */
                   ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
+=======
+/*   if((context->cache_status = cache_inode_access(new_pentry, */
+/*                                                  FSAL_X_OK, */
+/*                                                  ht, */
+/*                                                  &context->client, */
+/*                                                  &context->context, */
+/*                                                  &context->cache_status)) != */
+/*      CACHE_INODE_SUCCESS) */
+/*     { */
+/*       log_fprintf(output, "Error executing cache_inode_access : %J%r\n", */
+/*                   ERR_CACHE_INODE, context->cache_status); */
+/*       return context->cache_status; */
+/*     } */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
 
   /* if so, apply changes */
   strncpy(context->current_path, glob_path, FSAL_MAX_PATH_LEN);
@@ -1051,7 +1093,7 @@ int fn_Cache_inode_stat(int argc,       /* IN : number of args in argv */
   if(cache_inode_getattr(pentry_stat,
                          &attrs,
                          &context->client,
-                         &context->context,
+/*                          &context->context, */
                          &context->cache_status) != CACHE_INODE_SUCCESS)
     {
       log_fprintf(output, "Error executing cache_inode_getattr( \"%s\" ) : %J%r\n",
@@ -1329,6 +1371,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
     {
       if(pentry_tmp->type == SYMBOLIC_LINK)
         {
+<<<<<<< HEAD
           if(cache_inode_readlink(pentry_tmp,
                                   &symlink_path,
                                   &context->client,
@@ -1341,12 +1384,27 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
 
               return context->cache_status;
             }
+=======
+/*           if(cache_inode_readlink(pentry_tmp, */
+/*                                   &symlink_path, */
+/*                                   ht, */
+/*                                   &context->client, */
+/*                                   &context->context, */
+/*                                   &context->cache_status) != CACHE_INODE_SUCCESS) */
+/*             { */
+/*               if(!flag_z) */
+/*                 log_fprintf(output, "Error executing cache_inode_readlink : %J%r\n", */
+/*                             ERR_CACHE_INODE, context->cache_status); */
+
+/*               return context->cache_status; */
+/*             } */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
         }
 
       if(cache_inode_getattr(pentry_tmp,
                              &attrs,
                              &context->client,
-                             &context->context,
+/*                              &context->context, */
                              &context->cache_status) != CACHE_INODE_SUCCESS)
         {
           if(!flag_z)
@@ -1375,7 +1433,16 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
             {
               char buff[128];
 
+<<<<<<< HEAD
               pfsal_handle = &pentry_tmp->handle;
+=======
+/*               if((pfsal_handle = */
+/*                   cache_inode_get_fsal_handle(pentry_tmp, */
+/*                                               &context->cache_status)) == NULL) */
+/*                 { */
+/*                   return 1; */
+/*                 } */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
               snprintmem(buff, 128, (caddr_t) pfsal_handle, sizeof(fsal_handle_t));
               fprintf(output, "%s (@%s)\n", str_name, buff);
             }
@@ -1418,6 +1485,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
         fprintf(output, "-->cache_inode_readdir(path=%s,cookie=%"PRIu64")\n",
                 glob_path, begin_cookie);
 
+<<<<<<< HEAD
       if (cache_inode_readdir(pentry_tmp,
                              cachepol,
                              begin_cookie,
@@ -1435,6 +1503,30 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
            * read locked */
           return context->cache_status;
         }
+=======
+/*       if(cache_inode_readdir(pentry_tmp, */
+/*                              cachepol, */
+/*                              begin_cookie, */
+/*                              CACHE_INODE_SHELL_READDIR_SIZE, */
+/*                              &nbfound, */
+/*                              &end_cookie, */
+/*                              &eod_met, */
+/*                              dirent_array, */
+/*                              ht, */
+/*                              &dir_pentry_unlock, */
+/*                              &context->client, */
+/*                              &context->context, */
+/*                              &context->cache_status) != CACHE_INODE_SUCCESS) */
+/*         { */
+/*           fprintf(output, "Error %d in cache_inode_readdir\n", */
+/*                   context->cache_status); */
+/*           /\* after successful cache_inode_readdir, pentry_tmp may be */
+/*            * read locked *\/ */
+/*           if (dir_pentry_unlock) */
+/*               V_r(&pentry_tmp->lock); */
+/*           return context->cache_status; */
+/*         } */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
 
       for(i = 0; i < nbfound; i++)
         {
@@ -1456,6 +1548,7 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
 
           if(pentry->type == SYMBOLIC_LINK)
             {
+<<<<<<< HEAD
               if(cache_inode_readlink(pentry,
                                       &symlink_path,
                                       &context->client,
@@ -1468,10 +1561,26 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                    * read locked */
                   return context->cache_status;
                 }
+=======
+/*               if(cache_inode_readlink(dirent_array[i]->pentry, */
+/*                                       &symlink_path, */
+/*                                       ht, */
+/*                                       &context->client, */
+/*                                       &context->context, */
+/*                                       &context->cache_status) != CACHE_INODE_SUCCESS) */
+/*                 { */
+/*                   log_fprintf(output, "Error executing cache_inode_readlink : %J%r\n", */
+/*                               ERR_CACHE_INODE, context->cache_status); */
+/*                   /\* after successful cache_inode_readdir, pentry_tmp may be */
+/*                    * read locked *\/ */
+/*                   return context->cache_status; */
+/*                 } */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
             }
 
           if(flag_l)
             {
+<<<<<<< HEAD
               if(cache_inode_getattr(pentry,
                                      &attrs,
                                      &context->client,
@@ -1484,12 +1593,28 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                    * read locked */
                   return context->cache_status;
                 }
+=======
+/*               if(cache_inode_getattr(dirent_array[i]->pentry, */
+/*                                      &attrs, */
+/*                                      ht, */
+/*                                      &context->client, */
+/*                                      &context->context, */
+/*                                      &context->cache_status) != CACHE_INODE_SUCCESS) */
+/*                 { */
+/*                   log_fprintf(output, "Error executing cache_inode_getattr : %J%r\n", */
+/*                               ERR_CACHE_INODE, context->cache_status); */
+/*                   /\* after successful cache_inode_readdir, pentry_tmp may be */
+/*                    * read locked *\/ */
+/*                   return context->cache_status; */
+/*                 } */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
 
               print_item_line(output, &attrs, item_path, symlink_path.path);
             }
           else if(flag_S)
             {
               fprintf(output, "%s :\n", item_path);
+<<<<<<< HEAD
               if(cache_inode_getattr(pentry,
                                      &attrs,
                                      &context->client,
@@ -1502,6 +1627,21 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                    * read locked */
                   return context->cache_status;
                 }
+=======
+/*               if(cache_inode_getattr(dirent_array[i]->pentry, */
+/*                                      &attrs, */
+/*                                      ht, */
+/*                                      &context->client, */
+/*                                      &context->context, */
+/*                                      &context->cache_status) != CACHE_INODE_SUCCESS) */
+/*                 { */
+/*                   log_fprintf(output, "Error executing cache_inode_getattr : %J%r\n", */
+/*                               ERR_CACHE_INODE, context->cache_status); */
+/*                   /\* after successful cache_inode_readdir, pentry_tmp may be */
+/*                    * read locked *\/ */
+/*                   return context->cache_status; */
+/*                 } */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
               if(!flag_z)
                 print_fsal_attributes(attrs, output);
             }
@@ -1532,7 +1672,18 @@ int fn_Cache_inode_ls(int argc, /* IN : number of args in argv */
                 {
                   char buff[128];
 
+<<<<<<< HEAD
                   pfsal_handle = &pentry->handle;
+=======
+/*                   if((pfsal_handle = */
+/*                       cache_inode_get_fsal_handle(dirent_array[i]->pentry, */
+/*                                                   &context->cache_status)) == NULL) */
+/*                     { */
+/*                         /\* after successful cache_inode_readdir, pentry_tmp may be */
+/*                          * read locked *\/ */
+/*                       return 1; */
+/*                     } */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
                   snprintmem(buff, 128, (caddr_t) pfsal_handle, sizeof(fsal_handle_t));
                   fprintf(output, "%s (@%s)\n", item_path, buff);
                 }
@@ -1773,6 +1924,7 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
       return st.major;
     }
 
+<<<<<<< HEAD
   subdir_hdl = cache_inode_create(new_hdl,
                                   &objname,
                                   DIRECTORY,
@@ -1782,6 +1934,18 @@ int fn_Cache_inode_mkdir(int argc,      /* IN : number of args in argv */
                                   &attrmkdir,
                                   &context->client,
                                   &context->context, &context->cache_status);
+=======
+/*   subdir_hdl = cache_inode_create(new_hdl, */
+/*                                   &objname, */
+/*                                   DIRECTORY, */
+/*                                   cachepol, */
+/*                                   fsalmode, */
+/*                                   NULL, */
+/*                                   &attrmkdir, */
+/*                                   ht, */
+/*                                   &context->client, */
+/*                                   &context->context, &context->cache_status); */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
 
   if((subdir_hdl == NULL) || (context->cache_status != 0))
     {
@@ -3061,23 +3225,24 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
 
     }
 
-  if(cache_inode_open_by_name(context->pentry,
-                              &name,
-                              obj_hdl,
-                              &context->client,
-                              FSAL_O_RDWR,
-                              &context->context,
-                              &context->cache_status) != CACHE_INODE_SUCCESS)
-    {
-      log_fprintf(output, "Error opening file during cache_inode_add_cache : %J%r\n",
-                  ERR_CACHE_INODE, context->cache_status);
-      return context->cache_status;
-    }
+/*   if(cache_inode_open_by_name(context->pentry, */
+/*                               &name, */
+/*                               obj_hdl, */
+/*                               &context->client, */
+/*                               FSAL_O_RDWR, */
+/*                               &context->context, */
+/*                               &context->cache_status) != CACHE_INODE_SUCCESS) */
+/*     { */
+/*       log_fprintf(output, "Error opening file during cache_inode_add_cache : %J%r\n", */
+/*                   ERR_CACHE_INODE, context->cache_status); */
+/*       return context->cache_status; */
+/*     } */
 #endif
 
   if(flag_v)
     printf("---> data_cache using pentry_inode = %p\n", obj_hdl);
 
+<<<<<<< HEAD
   if(cache_inode_add_data_cache(obj_hdl, &context->client, &context->context,
                                 &context->cache_status) != CACHE_INODE_SUCCESS)
     {
@@ -3085,6 +3250,15 @@ int fn_Cache_inode_data_cache(int argc, /* IN : number of args in argv */
                   ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
+=======
+/*   if(cache_inode_add_data_cache(obj_hdl, ht, &context->client, &context->context, */
+/*                                 &context->cache_status) != CACHE_INODE_SUCCESS) */
+/*     { */
+/*       log_fprintf(output, "Error executing cache_inode_add_cache : %J%r\n", */
+/*                   ERR_CACHE_INODE, context->cache_status); */
+/*       return context->cache_status; */
+/*     } */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
 
   if(flag_v)
     {
@@ -3190,6 +3364,7 @@ int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv *
                      output)))
     return rc;
 
+<<<<<<< HEAD
   if(cache_inode_release_data_cache
      (obj_hdl, &context->client, &context->context,
       &context->cache_status) != CACHE_INODE_SUCCESS)
@@ -3198,6 +3373,16 @@ int fn_Cache_inode_release_cache(int argc,      /* IN : number of args in argv *
                   ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
+=======
+/*   if(cache_inode_release_data_cache */
+/*      (obj_hdl, ht, &context->client, &context->context, */
+/*       &context->cache_status) != CACHE_INODE_SUCCESS) */
+/*     { */
+/*       log_fprintf(output, "Error executing cache_inode_release_cache : %J%r\n", */
+/*                   ERR_CACHE_INODE, context->cache_status); */
+/*       return context->cache_status; */
+/*     } */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
 
   if(flag_v)
     {
@@ -3286,6 +3471,7 @@ int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv *
       return -1;
     }
 
+<<<<<<< HEAD
   if(cache_content_crash_recover(EXPORT_ID,
                                  0,
                                  1,
@@ -3297,6 +3483,19 @@ int fn_Cache_inode_recover_cache(int argc,      /* IN : number of args in argv *
               cache_content_status);
       return cache_content_status;
     }
+=======
+/*   if(cache_content_crash_recover(EXPORT_ID, */
+/*                                  0, */
+/*                                  1, */
+/*                                  (cache_content_client_t *) context->client. */
+/*                                  pcontent_client, &context->client, ht, &context->context, */
+/*                                  &cache_content_status) != CACHE_CONTENT_SUCCESS) */
+/*     { */
+/*       fprintf(output, "Error executing cache_content_crash_recover: %d\n", */
+/*               cache_content_status); */
+/*       return cache_content_status; */
+/*     } */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
 
   if(flag_v)
     {
@@ -3408,16 +3607,16 @@ int fn_Cache_inode_refresh_cache(int argc,      /* IN : number of args in argv *
       return 1;
     }
 
-  if(cache_content_refresh(obj_hdl->object.file.pentry_content,
-                           (cache_content_client_t *) context->client.pcontent_client,
-                           &context->context,
-                           FORCE_FROM_FSAL,
-                           &cache_content_status) != CACHE_CONTENT_SUCCESS)
-    {
-      fprintf(output, "Error executing cache_content_refresh: %d\n",
-              cache_content_status);
-      return cache_content_status;
-    }
+/*   if(cache_content_refresh(obj_hdl->object.file.pentry_content, */
+/*                            (cache_content_client_t *) context->client.pcontent_client, */
+/*                            &context->context, */
+/*                            FORCE_FROM_FSAL, */
+/*                            &cache_content_status) != CACHE_CONTENT_SUCCESS) */
+/*     { */
+/*       fprintf(output, "Error executing cache_content_refresh: %d\n", */
+/*               cache_content_status); */
+/*       return cache_content_status; */
+/*     } */
 
   if(flag_v)
     {
@@ -3529,15 +3728,15 @@ int fn_Cache_inode_flush_cache(int argc,        /* IN : number of args in argv *
       return 1;
     }
 
-  if(cache_content_flush(obj_hdl->object.file.pentry_content,
-                         CACHE_CONTENT_FLUSH_AND_DELETE,
-                         (cache_content_client_t *) context->client.pcontent_client,
-                         &context->context,
-                         &cache_content_status) != CACHE_CONTENT_SUCCESS)
-    {
-      fprintf(output, "Error executing cache_content_flush: %d\n", cache_content_status);
-      return cache_content_status;
-    }
+/*   if(cache_content_flush(obj_hdl->object.file.pentry_content, */
+/*                          CACHE_CONTENT_FLUSH_AND_DELETE, */
+/*                          (cache_content_client_t *) context->client.pcontent_client, */
+/*                          &context->context, */
+/*                          &cache_content_status) != CACHE_CONTENT_SUCCESS) */
+/*     { */
+/*       fprintf(output, "Error executing cache_content_flush: %d\n", cache_content_status); */
+/*       return cache_content_status; */
+/*     } */
 
   if(flag_v)
     {
@@ -3882,6 +4081,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
   /* while EOF is not reached, and read<asked (when total_bytes!=0) */
   while(!is_eof && !((total_bytes != 0) && (total_nb_read >= total_bytes)))
     {
+<<<<<<< HEAD
       if(cache_inode_rdwr(obj_hdl,
                           CACHE_INODE_READ,
                           &seek_desc,
@@ -3899,6 +4099,26 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
 
           return context->cache_status;
         }
+=======
+/*       if(cache_inode_rdwr(obj_hdl, */
+/*                           CACHE_INODE_READ, */
+/*                           &seek_desc, */
+/*                           block_size, */
+/*                           &once_nb_read, */
+/*                           &fsal_attr, */
+/*                           (caddr_t) p_read_buff, */
+/*                           &is_eof, */
+/*                           ht, */
+/*                           &context->client, */
+/*                           &context->context, */
+/*                           TRUE, &context->cache_status) != CACHE_INODE_SUCCESS) */
+/*         { */
+/*           log_fprintf(output, "Error executing cache_inode_read : %J%r\n", */
+/*                       ERR_CACHE_INODE, context->cache_status); */
+
+/*           return context->cache_status; */
+/*         } */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
 
       if(isFullDebug(COMPONENT_CACHE_INODE))
         {
@@ -4341,6 +4561,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
 
   while(nb_block_written < nb_times)
     {
+<<<<<<< HEAD
       if(cache_inode_rdwr(obj_hdl,
                           CACHE_INODE_WRITE,
                           &seek_desc,
@@ -4358,6 +4579,26 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
 
           return context->cache_status;
         }
+=======
+/*       if(cache_inode_rdwr(obj_hdl, */
+/*                           CACHE_INODE_WRITE, */
+/*                           &seek_desc, */
+/*                           block_size, */
+/*                           &size_written_once, */
+/*                           &fsal_attr, */
+/*                           (caddr_t) databuff, */
+/*                           &fsal_eof, */
+/*                           ht, */
+/*                           &context->client, */
+/*                           &context->context, */
+/*                           TRUE, &context->cache_status) != CACHE_INODE_SUCCESS) */
+/*         { */
+/*           log_fprintf(output, "Error executing cache_inode_write : %J%r\n", */
+/*                       ERR_CACHE_INODE, context->cache_status); */
+
+/*           return context->cache_status; */
+/*         } */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
 
       fprintf(output, ".");
 
@@ -4486,8 +4727,8 @@ int fn_Cache_inode_su(int argc, /* IN : number of args in argv */
       fprintf(output, "\n");
     }
 
-  st = FSAL_GetClientContext(&context->context, &context->exp_context,
-                             pw_struct->pw_uid, pw_struct->pw_gid, groups_tab, nb_grp);
+/*   st = FSAL_GetClientContext(&context->context, &context->exp_context, */
+/*                              pw_struct->pw_uid, pw_struct->pw_gid, groups_tab, nb_grp); */
 
   if(FSAL_IS_ERROR(st))
     {
@@ -4548,6 +4789,7 @@ int fn_Cache_inode_open_by_name(int argc,       /* IN : number of args in argv *
   strncpy(glob_path, context->current_path, FSAL_MAX_PATH_LEN);
   glob_path[FSAL_MAX_PATH_LEN - 1] = '\0';
 
+<<<<<<< HEAD
   if((pentry_file = cache_inode_lookup(context->pentry,
                                        &filename,
                                        cachepol,
@@ -4574,6 +4816,35 @@ int fn_Cache_inode_open_by_name(int argc,       /* IN : number of args in argv *
                   ERR_CACHE_INODE, context->cache_status);
       return context->cache_status;
     }
+=======
+/*   if((pentry_file = cache_inode_lookup(context->pentry, */
+/*                                        &filename, */
+/*                                        cachepol, */
+/*                                        &file_attr, */
+/*                                        ht, */
+/*                                        &context->client, */
+/*                                        &context->context, */
+/*                                        &context->cache_status)) == NULL) */
+/*     { */
+/*       fprintf(output, "Error: cannot lookup %s in %s : %u\n", argv[1], glob_path, */
+/*               context->cache_status); */
+/*       return -1; */
+/*     } */
+
+/*   if((context->cache_status = cache_inode_open_by_name(context->pentry, */
+/*                                                        &filename, */
+/*                                                        pentry_file, */
+/*                                                        &context->client, */
+/*                                                        FSAL_O_RDWR, */
+/*                                                        &context->context, */
+/*                                                        &context->cache_status)) != */
+/*      CACHE_INODE_SUCCESS) */
+/*     { */
+/*       log_fprintf(output, "Error executing cache_inode_open_by_name : %J%r\n", */
+/*                   ERR_CACHE_INODE, context->cache_status); */
+/*       return context->cache_status; */
+/*     } */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
 
   return 0;
 }
@@ -4724,7 +4995,12 @@ int fn_Cache_inode_invalidate(int argc,      /* IN : number of args in argv */
 
   cmdCacheInode_thr_info_t *context;
 
+<<<<<<< HEAD
   fsal_handle_t * pfsal_handle = NULL ;
+=======
+  fsal_attrib_list_t attr ;
+  struct fsal_obj_handle * pfsal_handle = NULL ;
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
 
   /* is the fs initialized ? */
   if(!cache_init)
@@ -4812,6 +5088,7 @@ int fn_Cache_inode_invalidate(int argc,      /* IN : number of args in argv */
       fprintf(output, "invalidate: unknown pentry type : %u\n",  obj_hdl->type );
       return -1 ;
     }
+<<<<<<< HEAD
   pfsal_handle = &obj_hdl->handle;
 
   if( ( context->cache_status = cache_inode_invalidate( pfsal_handle,
@@ -4821,6 +5098,19 @@ int fn_Cache_inode_invalidate(int argc,      /* IN : number of args in argv */
       fprintf(output, "Error executing cache_inode_invalidate: %d\n", context->cache_status);
       return -1 ;
     }
+=======
+/*   pfsal_handle = &obj_hdl->handle; */
+
+/*   if( ( context->cache_status = cache_inode_invalidate( pfsal_handle, */
+/*                                                         &attr, */
+/*                                                         ht, */
+/*                                                         &context->client, */
+/*                                                         &context->cache_status) ) != CACHE_INODE_SUCCESS ) */
+/*     { */
+/*       fprintf(output, "Error executing cache_inode_invalidate: %d\n", context->cache_status); */
+/*       return -1 ; */
+/*     } */
+>>>>>>> Comment out old fsal api in shell and cmdline_tools utilities
 
   if(flag_v)
     {
