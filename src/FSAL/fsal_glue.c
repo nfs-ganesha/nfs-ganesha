@@ -356,6 +356,9 @@ fsal_status_t FSAL_write(fsal_file_t * p_file_descriptor,       /* IN */
 
 fsal_status_t FSAL_sync(fsal_file_t * p_file_descriptor)
 {
+  if( fsal_functions.fsal_sync != NULL )
+    return  fsal_functions.fsal_sync(  p_file_descriptor) ;
+
   ReturnCode( 0, 0 ) ;
 }
 

@@ -128,7 +128,7 @@ fsal_status_t LUSTREFSAL_open(fsal_handle_t * p_filehandle,       /* IN */
   fsal_path_t fsalpath;
   struct stat buffstat;
   int posix_flags = 0;
-  uid_t old_uid = 0 ;
+  uid_t saved_uid = 0 ;
 
   /* sanity checks.
    * note : file_attributes is optional.
@@ -238,12 +238,23 @@ fsal_status_t LUSTREFSAL_open(fsal_handle_t * p_filehandle,       /* IN */
 #endif
 
   TakeTokenFSCall();
-
-  /* FSAL manages badly umask, and so seems to do ./lustre/fid, let's be root for that */
-  old_uid = setfsuid( 0 ) ;
-  p_file_descriptor->fd = open(fsalpath.path, posix_flags, 0644);
+  p_file_descriptor->fd = open(fsalpath.path, posix_flags);
   errsv = errno;
-  setfsuid( old_uid ) ;
+
+  /* Exception management (umask does not exist in NFS)
+   * if file has no write permission, but belongs to the user, then 
+   * trust the client and open it */
+  if( ( p_file_descriptor->fd == -1 ) && ( errsv == EACCES ) )
+   {
+      if( ( p_context->credential.user == buffstat.st_uid ) && 
+          !( buffstat.st_mode & S_IWUSR ) && ( posix_flags == O_WRONLY) )
+       { 
+         saved_uid = setfsuid( 0 ) ;
+         p_file_descriptor->fd = open(fsalpath.path, posix_flags);
+         errsv = errno ;
+         setfsuid( saved_uid ) ;
+       }
+   }
 
   ReleaseTokenFSCall();
 
@@ -639,4 +650,43 @@ fsal_status_t LUSTREFSAL_commit( fsal_file_t * pfile_desc,
   }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
+
 }
+
+/**
+ *  FSAL_sync:
+ *  This function is used for processing stable writes and COMMIT requests.
+ *  Calling this function makes sure the changes to a specific file are
+ *  written to disk rather than kept in memory.
+ *  
+ *  \param file_descriptor (input):
+ *         The file descriptor returned by FSAL_open.
+ *
+ * \return Major error codes:
+ *      - ERR_FSAL_NO_ERROR: no error.
+ *      - Another error code if an error occured during this call.
+ */
+fsal_status_t LUSTREFSAL_sync(fsal_file_t * p_file_descriptor       /* IN */)
+{
+  int rc, errsv;
+
+  /* sanity checks. */
+  if(!p_file_descriptor)
+    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_sync);
+
+  if(((lustrefsal_file_t *)p_file_descriptor)->fd == 0 )
+    Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync); /* Nothing to sync, the fd is not opened */
+
+  /* Flush data. */
+  TakeTokenFSCall();
+  rc = fsync(((lustrefsal_file_t *)p_file_descriptor)->fd);
+  errsv = errno;
+  ReleaseTokenFSCall();
+
+
+  if(rc)
+    Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_sync);
+
+  Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_sync);
+}
+

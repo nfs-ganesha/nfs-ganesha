@@ -26,6 +26,7 @@ libfsallustre_la_SOURCES = fsal_access.c      \
                           fsal_unlink.c      \
 			  fsal_create.c      \
                           fsal_fileop.c      \
+                          fsal_quota.c       \
                           fsal_internal.c    \
                           fsal_stats.c       \
                           fsal_tools.c       \

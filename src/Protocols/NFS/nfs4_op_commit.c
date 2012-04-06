@@ -86,6 +86,7 @@ extern verifier4 NFS4_write_verifier;   /* NFS V4 write verifier */
 int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_commit";
+  fsal_status_t fsal_status ;
 
   fsal_attrib_list_t attr;
   cache_inode_status_t cache_status;
@@ -154,6 +155,19 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       res_COMMIT4.status = NFS4ERR_INVAL;
       return res_COMMIT4.status;
     }
+
+/* Check for quota */
+#ifndef _NO_QUOTA_CHECK
+    /* if quota support is active, then we should check is the FSAL allows inode creation or not */
+    fsal_status = LUSTREFSAL_check_quota( data->pexport->fullpath,
+                                    FSAL_OP_CONTEXT_TO_UID( data->pcontext ) ) ;
+    if( FSAL_IS_ERROR( fsal_status ) )
+     {
+      res_COMMIT4.status = NFS4ERR_DQUOT ;
+      return res_COMMIT4.status;
+     }
+#endif /* _USE_QUOTA */
+
 
   memcpy(res_COMMIT4.COMMIT4res_u.resok4.writeverf, (char *)&NFS4_write_verifier,
          NFS4_VERIFIER_SIZE);
