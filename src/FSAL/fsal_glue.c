@@ -981,7 +981,7 @@ int FSAL_LoadLibrary(char *path)
   dlerror();
 
   /* Map FSAL_GetFunctions */
-  *(void **)(&getfunctions) = dlsym(handle, "FSAL_GetFunctions");
+  getfunctions = (fsal_functions_t (*)(void))dlsym(handle, "FSAL_GetFunctions");
   if((error = dlerror()) != NULL)
     {
       LogMajor(COMPONENT_FSAL,
@@ -990,7 +990,7 @@ int FSAL_LoadLibrary(char *path)
       return 0;
     }
   /* Map FSAL_GetConsts */
-  *(void **)(&getconsts) = dlsym(handle, "FSAL_GetConsts");
+  getconsts = (fsal_const_t (*)(void))dlsym(handle, "FSAL_GetConsts");
   if((error = dlerror()) != NULL)
     {
       LogMajor(COMPONENT_FSAL,
