@@ -1015,17 +1015,29 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 		}
 		/* Decode checksum. */
 		if (!Xdr_rpc_gss_buf(xdrs, &wrapbuf, (u_int)-1)) {
+#if 0
 			gss_release_buffer(&min_stat, &databuf);
+#else
+			Mem_Free(databuf.value);
+#endif
 			LogFullDebug(COMPONENT_RPCSEC_GSS,"xdr decode checksum failed");
 			return (FALSE);
 		}
 		/* Verify checksum and QOP. */
 		maj_stat = gss_verify_mic(&min_stat, ctx, &databuf,
 					  &wrapbuf, &qop_state);
+#if 0
 		gss_release_buffer(&min_stat, &wrapbuf);
+#else
+			Mem_Free(wrapbuf.value);
+#endif
 
 		if (maj_stat != GSS_S_COMPLETE || qop_state != qop) {
+#if 0
 			gss_release_buffer(&min_stat, &databuf);
+#else
+			Mem_Free(databuf.value);
+#endif
 			LogFullDebug(COMPONENT_RPCSEC_GSS,"gss_verify_mic %d %d", maj_stat, min_stat);
 			return (FALSE);
 		}
@@ -1055,7 +1067,12 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 	xdr_stat = (xdr_u_int(&tmpxdrs, &seq_num) &&
 		    (*xdr_func)(&tmpxdrs, xdr_ptr));
 	XDR_DESTROY(&tmpxdrs);
+        /* XXX xdr allocated this buffer, not gss (valgrind maps it to Buddy) */
+#if 0
 	gss_release_buffer(&min_stat, &databuf);
+#else
+	Mem_Free(databuf.value);
+#endif
 
 	/* Verify sequence number. */
 	if (xdr_stat == TRUE && seq_num != seq) {

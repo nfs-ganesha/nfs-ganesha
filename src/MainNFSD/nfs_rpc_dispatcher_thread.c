@@ -543,7 +543,10 @@ void nfs_Init_svc()
   if (!tirpc_control(TIRPC_SET_WARNX, (warnx_t) rpc_warnx))
       LogCrit(COMPONENT_INIT, "Failed redirecting TI-RPC __warnx");
 
-#define TIRPC_SET_ALLOCATORS 1
+  /* Is BuddyMalloc useful as a general RPC allocator?  We should find out.  Permit
+   * comparative profiling.
+   */
+#define TIRPC_SET_ALLOCATORS 0
 #if !defined(_NO_BUDDY_SYSTEM) && defined(TIRPC_SET_ALLOCATORS)
   if (!tirpc_control(TIRPC_SET_MALLOC, (mem_alloc_t) BuddyMallocZ))
       LogCrit(COMPONENT_INIT, "Failed redirecting TI-RPC alloc");
