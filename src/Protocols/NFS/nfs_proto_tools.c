@@ -3441,7 +3441,7 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           pFSAL_attr->asked_attributes |= FSAL_ATTR_MODE;
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: On voit le mode 0%o", pFSAL_attr->mode);
+                       "      SATTR: We see the mode 0%o", pFSAL_attr->mode);
           break;
 
         case FATTR4_OWNER:
@@ -3466,9 +3466,9 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           pFSAL_attr->asked_attributes |= FSAL_ATTR_OWNER;
 
           LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: On voit le owner %s len = %d", buffer, len);
+                       "      SATTR: We see the owner %s len = %d", buffer, len);
           LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: On voit le owner %d", pFSAL_attr->owner);
+                       "      SATTR: We see the owner %d", pFSAL_attr->owner);
           break;
 
         case FATTR4_OWNER_GROUP:
@@ -3493,9 +3493,9 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           pFSAL_attr->asked_attributes |= FSAL_ATTR_GROUP;
 
           LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: On voit le owner_group %s len = %d", buffer, len);
+                       "      SATTR: We see the owner_group %s len = %d", buffer, len);
           LogFullDebug(COMPONENT_NFS_V4,
-                       "      SATTR: On voit le owner_group %d", pFSAL_attr->group);
+                       "      SATTR: We see the owner_group %d", pFSAL_attr->group);
           break;
 
         case FATTR4_CHANGE:

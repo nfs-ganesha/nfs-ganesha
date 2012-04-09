@@ -120,7 +120,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
       if((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
         {
           LogCrit(COMPONENT_NFS_V4,
-                  "Erreur %d dans nfs4_SetCompoundExport", error);
+                  "Error %d in nfs4_SetCompoundExport", error);
           resp->nfs_resop4_u.opgetfh.status = error;
           return resp->nfs_resop4_u.opgetfh.status;
         }

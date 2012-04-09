@@ -850,7 +850,7 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_TYPE;
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          LogFullDebug(COMPONENT_NFS_V4, "SATTR: On voit le type %d\n", (int)pFSAL_attr->filesize);
+          LogFullDebug(COMPONENT_NFS_V4, "SATTR: We see the type %d\n", (int)pFSAL_attr->filesize);
           break;
 
         case FATTR4_FILEID:    /* Used only by FSAL_PROXY to reverse convert */
@@ -899,7 +899,7 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_SIZE;
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          LogFullDebug(COMPONENT_NFS_V4, "SATTR: On voit la taille %d\n", (int)pFSAL_attr->filesize);
+          LogFullDebug(COMPONENT_NFS_V4, "SATTR: We see the size %d\n", (int)pFSAL_attr->filesize);
           break;
 
         case FATTR4_MODE:
@@ -912,7 +912,7 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_MODE;
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-          LogFullDebug(COMPONENT_NFS_V4, "SATTR: On voit le mode 0%o\n", pFSAL_attr->mode);
+          LogFullDebug(COMPONENT_NFS_V4, "SATTR: We see the mode 0%o\n", pFSAL_attr->mode);
           break;
 
         case FATTR4_OWNER:
@@ -936,8 +936,8 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
           utf82uid(&utf8buffer, &(pFSAL_attr->owner));
           pFSAL_attr->asked_attributes |= FSAL_ATTR_OWNER;
 
-          LogFullDebug(COMPONENT_NFS_V4, "SATTR: On voit le owner %s len = %d\n", buffer, len);
-          LogFullDebug(COMPONENT_NFS_V4, "SATTR: On voit le owner %d\n", pFSAL_attr->owner);
+          LogFullDebug(COMPONENT_NFS_V4, "SATTR: We see the owner %s len = %d\n", buffer, len);
+          LogFullDebug(COMPONENT_NFS_V4, "SATTR: We see the owner %d\n", pFSAL_attr->owner);
 
           break;
 
@@ -962,8 +962,8 @@ int proxy_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,
           utf82gid(&utf8buffer, &(pFSAL_attr->group));
           pFSAL_attr->asked_attributes |= FSAL_ATTR_GROUP;
 
-          LogFullDebug(COMPONENT_NFS_V4, "SATTR: On voit le owner_group %s len = %d\n", buffer, len);
-          LogFullDebug(COMPONENT_NFS_V4, "SATTR: On voit le owner_group %d\n", pFSAL_attr->group);
+          LogFullDebug(COMPONENT_NFS_V4, "SATTR: We see the owner_group %s len = %d\n", buffer, len);
+          LogFullDebug(COMPONENT_NFS_V4, "SATTR: We see the owner_group %d\n", pFSAL_attr->group);
 
           break;
 

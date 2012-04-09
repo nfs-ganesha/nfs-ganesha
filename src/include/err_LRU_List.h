@@ -43,17 +43,17 @@
 {
 #define ERR_LRU_LIST_NO_ERROR 0
   {
-  ERR_LRU_LIST_NO_ERROR, "ERR_LRU_LIST_NO_ERROR", "Pas d'erreur"},
+  ERR_LRU_LIST_NO_ERROR, "ERR_LRU_LIST_NO_ERROR", "No errors!"},
 #define ERR_LRU_LIST_INIT     1
   {
-  ERR_LRU_LIST_INIT, "ERR_LRU_LIST_INIT", "Erreur a l'initialisation"},
+  ERR_LRU_LIST_INIT, "ERR_LRU_LIST_INIT", "Init error"},
 #define ERR_LRU_LIST_GC_INVALID 2
   {
-  ERR_LRU_LIST_GC_INVALID, "ERR_LRU_LIST_GC_INVALID", "Erreur dans le gc des invalides"},
+  ERR_LRU_LIST_GC_INVALID, "ERR_LRU_LIST_GC_INVALID", "Error: invalid garbage collector action"},
 #define ERR_LRU_LIST_INVALIDATE 3
   {
   ERR_LRU_LIST_INVALIDATE, "ERR_LRU_LIST_INVALIDATE",
-        "Invalidation impossible de l'entree"},
+        "Entry invalidation is impossible"},
   {
   ERR_NULL, "ERR_NULL", ""}
 };
@@ -61,11 +61,11 @@
 static family_error_t __attribute__ ((__unused__)) tab_errstatus_LRU[] =
 {
   {
-  LRU_LIST_SUCCESS, "LRU_LISTSUCCESS", "Succes"},
+  LRU_LIST_SUCCESS, "LRU_LISTSUCCESS", "Success"},
   {
-  LRU_LIST_MALLOC_ERROR, "LRU_LIST_MALLOC_ERROR", "Erreur de malloc dans la couche LRU"},
+  LRU_LIST_MALLOC_ERROR, "LRU_LIST_MALLOC_ERROR", "LRU layer malloc error"},
   {
-  LRU_LIST_EMPTY_LIST, "LRU_LIST_EMPTY_LIST", "La liste est vide"},
+  LRU_LIST_EMPTY_LIST, "LRU_LIST_EMPTY_LIST", "Empty list"},
   {
   ERR_NULL, "ERR_NULL", ""}
 };
