@@ -1426,11 +1426,14 @@ int nfs_check_param_consistency()
       !is_prime(nfs_param.session_id_param.hash_param.index_size) ||
 #endif
       !is_prime(nfs_param.nfs4_owner_param.hash_param.index_size) ||
+#ifdef _USE_NLM
       !is_prime(nfs_param.nsm_client_hash_param.index_size) ||
       !is_prime(nfs_param.nlm_client_hash_param.index_size) ||
       !is_prime(nfs_param.nlm_owner_hash_param.index_size) ||
-      !is_prime(nfs_param.cache_layers_param.cache_param.hparam.index_size) ||
-      !is_prime(nfs_param.cache_layers_param.cache_param.cookie_param.index_size)) {
+      !is_prime(nfs_param.cache_layers_param.cache_param.cookie_param.index_size) ||
+#endif
+      !is_prime(nfs_param.cache_layers_param.cache_param.hparam.index_size))
+  {
       LogCrit(COMPONENT_INIT, "BAD PARAMETER(s) : expected primes");
   }
 
