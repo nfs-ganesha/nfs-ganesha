@@ -1347,15 +1347,31 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           op_attr_success = 1;
           break;
 
+          /* The following MAXREAD-MAXWRITE code establishes these semantics: 
+           *  a. If you set the MaxWrite and MaxRead defaults in an export file
+           *  they apply. 
+           *  b. If you set the MaxWrite and MaxRead defaults in the main.conf
+           *  file they apply unless overwritten by an export file setting. 
+           *  c. If no settings are present in the export file or the main.conf
+           *  file then the defaults values in the FSAL apply. 
+           */
+
         case FATTR4_MAXREAD:
-          maxread = nfs_htonl64((fattr4_maxread) pstaticinfo->maxread);
+          if ( ((pexport->options & EXPORT_OPTION_MAXREAD) == EXPORT_OPTION_MAXREAD ))
+            maxread = nfs_htonl64((fattr4_maxread) pexport->MaxRead );
+          else
+            maxread = nfs_htonl64((fattr4_maxread) pstaticinfo->maxread);
+
           memcpy((char *)(attrvalsBuffer + LastOffset), &maxread, sizeof(fattr4_maxread));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           op_attr_success = 1;
           break;
 
         case FATTR4_MAXWRITE:
-          maxwrite = nfs_htonl64((fattr4_maxwrite) pstaticinfo->maxwrite);
+          if ( ((pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE ))
+            maxwrite = nfs_htonl64((fattr4_maxwrite) pexport->MaxWrite );
+          else
+            maxwrite = nfs_htonl64((fattr4_maxwrite) pstaticinfo->maxwrite);
           memcpy((char *)(attrvalsBuffer + LastOffset), &maxwrite,
                  sizeof(fattr4_maxwrite));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;

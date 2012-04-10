@@ -88,7 +88,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_write";
 
   fsal_seek_t              seek_descriptor;
-  fsal_size_t              size;
+  fsal_size_t              size, check_size;
   fsal_size_t              written_size;
   fsal_off_t               offset;
   fsal_boolean_t           eof_met;
@@ -102,6 +102,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   fsal_attrib_list_t       attr;
   cache_entry_t          * pentry = NULL;
   int                      rc = 0;
+  fsal_staticfsinfo_t    * pstaticinfo = NULL ;
 #ifdef _USE_QUOTA
   fsal_status_t            fsal_status ;
 #endif
@@ -159,7 +160,7 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 #endif /* _PNFS_DS */
 
-
+  pstaticinfo = data->pcontext->export_context->fe_static_fs_info;
   /* Manage access type */
   switch( data->pexport->access_type )
    {
@@ -306,14 +307,26 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* The size to be written should not be greater than FATTR4_MAXWRITESIZE because this value is asked
    * by the client at mount time, but we check this by security */
-  if((data->pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE &&
-     size > data->pexport->MaxWrite)
+
+  /* We should check against the value we returned in getattr. This was not
+   * the case before the following check_size code was added.
+   */
+  if( ((data->pexport->options & EXPORT_OPTION_MAXWRITE) == EXPORT_OPTION_MAXWRITE)) 
+    check_size = data->pexport->MaxWrite;
+  else
+    check_size = pstaticinfo->maxwrite;
+  if( size > check_size )
     {
       /*
        * The client asked for too much data, we
        * must restrict him
        */
-      size = data->pexport->MaxWrite;
+
+      LogFullDebug(COMPONENT_NFS_V4,
+               "NFS4_OP_WRITE: write requested size = %llu  write allowed size = %llu",
+               size, check_size);
+
+      size = check_size;
     }
 
   /* Where are the data ? */
