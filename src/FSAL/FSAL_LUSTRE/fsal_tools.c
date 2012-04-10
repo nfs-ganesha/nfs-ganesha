@@ -134,49 +134,37 @@ unsigned int LUSTREFSAL_Handle_to_RBTIndex(fsal_handle_t *handle,
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t LUSTREFSAL_DigestHandle(fsal_export_context_t *exp_context,       /* IN */
-                                      fsal_digesttype_t output_type,    /* IN */
-                                      fsal_handle_t *in_handle,   /* IN */
-                                      caddr_t out_buff  /* OUT */
-    )
+fsal_status_t LUSTREFSAL_DigestHandle(fsal_export_context_t * exp_context,     /* IN */
+                                      fsal_digesttype_t output_type,       /* IN */
+                                      fsal_handle_t *in_fsal_handle, /* IN */
+                                      struct fsal_handle_desc *fh_desc     /* IN/OUT */ )
 {
   unsigned int ino32;
   lustrefsal_export_context_t * p_expcontext = (lustrefsal_export_context_t *)exp_context;
-  lustrefsal_handle_t * p_in_fsal_handle = (lustrefsal_handle_t *)in_handle;
+  lustrefsal_handle_t * p_in_fsal_handle = (lustrefsal_handle_t *)in_fsal_handle;
+  size_t fh_size;
 
   /* sanity checks */
-  if(!p_in_fsal_handle || !out_buff || !p_expcontext)
+  if(!p_in_fsal_handle || !fh_desc || !fh_desc->start || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   switch (output_type)
     {
 
-      /* NFS handle digest */
+    /* NFS handle digest */
     case FSAL_DIGEST_NFSV2:
-
-      if(sizeof(p_in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV2)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(lustrefsal_handle_t));
-      break;
-
     case FSAL_DIGEST_NFSV3:
-
-      if(sizeof(p_in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV3)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(p_in_fsal_handle->data));
-      break;
-
     case FSAL_DIGEST_NFSV4:
-
-      if(sizeof(p_in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV4)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
-      memcpy(out_buff, p_in_fsal_handle, sizeof(p_in_fsal_handle->data));
+      fh_size = sizeof(((lustrefsal_handle_t *)in_fsal_handle)->data) ;
+      if(fh_desc->len < fh_size)
+        {
+	       LogMajor( COMPONENT_FSAL,
+		             "VFS DigestHandle: space too small for handle.  need %lu, have %lu",
+		             fh_size, fh_desc->len);
+	       ReturnCode(ERR_FSAL_TOOSMALL, 0);
+	    }
+      memcpy(fh_desc->start, (caddr_t)p_in_fsal_handle, fh_size);
+      fh_desc->len = fh_size;
       break;
 
       /* FileId digest for NFSv2 */
@@ -184,25 +172,23 @@ fsal_status_t LUSTREFSAL_DigestHandle(fsal_export_context_t *exp_context,       
 
       ino32 = low32m(p_in_fsal_handle->data.inode);
 
-      /* sanity check about output size */
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID2);
-      memcpy(out_buff, &ino32, sizeof(int));
-
+      memset(fh_desc->start, 0, FSAL_DIGEST_SIZE_FILEID2);
+      memcpy(fh_desc->start, &ino32, sizeof( ino32 ));
+      fh_desc->len = FSAL_DIGEST_SIZE_FILEID2; 
       break;
 
       /* FileId digest for NFSv3 */
     case FSAL_DIGEST_FILEID3:
-
-      /* sanity check about output size */
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
-      memcpy(out_buff, &(p_in_fsal_handle->data.inode), sizeof(fsal_u64_t));
+      memset(fh_desc->start, 0, FSAL_DIGEST_SIZE_FILEID3);
+      memcpy(fh_desc->start, &(p_in_fsal_handle->data.inode), sizeof(fsal_u64_t));
+      fh_desc->len = FSAL_DIGEST_SIZE_FILEID3;
       break;
 
       /* FileId digest for NFSv4 */
     case FSAL_DIGEST_FILEID4:
-
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID4);
-      memcpy(out_buff, &(p_in_fsal_handle->data.inode), sizeof(fsal_u64_t));
+      memset(fh_desc->start, 0, FSAL_DIGEST_SIZE_FILEID4);
+      memcpy(fh_desc->start, &(p_in_fsal_handle->data.inode), sizeof(fsal_u64_t));
+      fh_desc->len = FSAL_DIGEST_SIZE_FILEID4;
       break;
 
     default:
@@ -229,46 +215,38 @@ fsal_status_t LUSTREFSAL_DigestHandle(fsal_export_context_t *exp_context,       
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t LUSTREFSAL_ExpandHandle(fsal_export_context_t *exp_context,       /* IN */
-                                      fsal_digesttype_t in_type,        /* IN */
-                                      caddr_t in_buff,  /* IN */
-                                      fsal_handle_t *out_handle   /* OUT */
-    )
+fsal_status_t LUSTREFSAL_ExpandHandle(fsal_export_context_t * pexpcontext,     /* IN not used */
+                                   fsal_digesttype_t in_type,   /* IN */
+                                   struct fsal_handle_desc *fh_desc  /* IN/OUT */ )
 {
-  lustrefsal_export_context_t * p_expcontext = (lustrefsal_export_context_t *)exp_context;
-  lustrefsal_handle_t * p_out_fsal_handle = (lustrefsal_handle_t *)out_handle;
+  lustrefsal_export_context_t * p_expcontext = (lustrefsal_export_context_t *)pexpcontext;
+  lustrefsal_handle_t dummy_handle ;
+  size_t fh_size;
 
   /* sanity checks */
-  if(!p_out_fsal_handle || !in_buff || !p_expcontext)
+  if(!fh_desc || !fh_desc->start || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  switch (in_type)
+  fh_size = sizeof( dummy_handle.data ); /* All LUSTRE handle have the same size */
+  if(in_type == FSAL_DIGEST_NFSV2)
     {
-
-      /* NFSV2 handle digest */
-    case FSAL_DIGEST_NFSV2:
-      memset(p_out_fsal_handle, 0, sizeof(lustrefsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(p_out_fsal_handle->data) );
-      break;
-
-      /* NFSV3 handle digest */
-    case FSAL_DIGEST_NFSV3:
-      memset(p_out_fsal_handle, 0, sizeof(lustrefsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(p_out_fsal_handle->data) );
-      break;
-
-      /* NFSV4 handle digest */
-    case FSAL_DIGEST_NFSV4:
-      memset(p_out_fsal_handle, 0, sizeof(lustrefsal_handle_t));
-      memcpy(p_out_fsal_handle, in_buff, sizeof(p_out_fsal_handle->data) );
-      break;
-
-    default:
+      if(fh_desc->len < fh_size)
+        {
+          LogMajor(COMPONENT_FSAL,
+		   "VFS ExpandHandle: V2 size too small for handle.  should be %lu, got %lu",
+		   fh_size, fh_desc->len);
+	  ReturnCode(ERR_FSAL_SERVERFAULT, 0);
+	}
+    }
+  else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size)
+    {
+      LogMajor(COMPONENT_FSAL,
+	       "VFS ExpandHandle: size mismatch for handle.  should be %lu, got %lu",
+	       fh_size, fh_desc->len);
       ReturnCode(ERR_FSAL_SERVERFAULT, 0);
     }
-
+  fh_desc->len = fh_size;  /* pass back the actual size */
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-
 }
 
 /**
