@@ -703,6 +703,34 @@ static int nfs4_encode_acl(fsal_attrib_list_t * pattr, char *attrvalsBuffer, u_i
 }
 #endif                          /* _USE_NFS4_ACL */
 
+static uint_t
+nfs_tools_xdr_utf8(utf8str_mixed *utf8, char *attrvalsBuffer)
+{
+  u_int utf8len = 0;
+  u_int deltalen = utf8->utf8string_len % 4;
+  u_int LastOffset = 0;
+
+  utf8len = htonl(utf8->utf8string_len);
+  memcpy(attrvalsBuffer, &utf8len, sizeof(u_int));
+  LastOffset += sizeof(u_int);
+
+  memcpy(attrvalsBuffer + LastOffset,
+         utf8->utf8string_val, utf8->utf8string_len);
+  LastOffset += utf8->utf8string_len;
+
+  /* Free what was allocated by uid2utf8 */
+  Mem_Free((char *)utf8->utf8string_val);
+
+  /* Pad with zero to keep xdr alignement */
+  if(deltalen)
+    {
+      deltalen = 4 - deltalen;
+      memset(attrvalsBuffer + LastOffset, 0, deltalen);
+      LastOffset += deltalen;
+    }
+  return LastOffset;
+}
+
 /**
  *
  * nfs4_FSALattr_To_Fattr: Converts FSAL Attributes to NFSv4 Fattr buffer.
@@ -1355,35 +1383,9 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           /* Return the uid as a human readable utf8 string */
           if(uid2utf8(pattr->owner, &file_owner) == 0)
             {
-              u_int utf8len = 0;
-              u_int deltalen = 0;
-
-              /* Take care of 32 bits alignment */
-              if(file_owner.utf8string_len % 4 == 0)
-                deltalen = 0;
-              else
-                deltalen = 4 - file_owner.utf8string_len % 4;
-/* Following code used to add deltalen to utf8len which is wrong. It caused
- * clients verifying utf8 strings to reject the attribute.
- */
-              utf8len = htonl(file_owner.utf8string_len);
-              memcpy((char *)(attrvalsBuffer + LastOffset), &utf8len, sizeof(u_int));
-              LastOffset += sizeof(u_int);
-
-              memcpy((char *)(attrvalsBuffer + LastOffset),
-                     file_owner.utf8string_val, file_owner.utf8string_len);
-              LastOffset += file_owner.utf8string_len;
-
-              /* Free what was allocated by uid2utf8 */
-              Mem_Free((char *)file_owner.utf8string_val);
-
-              /* Pad with zero to keep xdr alignement */
-              if(deltalen != 0)
-                memset((char *)(attrvalsBuffer + LastOffset), 0, deltalen);
-              LastOffset += deltalen;
-
+              LastOffset += nfs_tools_xdr_utf8(&file_owner,
+                                               (char *)(attrvalsBuffer + LastOffset));
               op_attr_success = 1;
-
             }
           else
             op_attr_success = 0;
@@ -1393,36 +1395,9 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           /* Return the gid as a human-readable utf8 string */
           if(gid2utf8(pattr->group, &file_owner_group) == 0)
             {
-              u_int utf8len = 0;
-              u_int deltalen = 0;
-
-              /* Take care of 32 bits alignment */
-              if(file_owner_group.utf8string_len % 4 == 0)
-                deltalen = 0;
-              else
-                deltalen = 4 - file_owner_group.utf8string_len % 4;
-/* Following code used to add deltalen to utf8len which is wrong. It caused
- * clients verifying utf8 strings to reject the attribute.
- */
-
-              utf8len = htonl(file_owner_group.utf8string_len);
-              memcpy((char *)(attrvalsBuffer + LastOffset), &utf8len, sizeof(u_int));
-              LastOffset += sizeof(u_int);
-
-              memcpy((char *)(attrvalsBuffer + LastOffset),
-                     file_owner_group.utf8string_val, file_owner_group.utf8string_len);
-              LastOffset += file_owner_group.utf8string_len;
-
-              /* Free what was used for utf8 conversion */
-              Mem_Free((char *)file_owner_group.utf8string_val);
-
-              /* Pad with zero to keep xdr alignement */
-              if(deltalen != 0)
-                memset((char *)(attrvalsBuffer + LastOffset), 0, deltalen);
-              LastOffset += deltalen;
-
+              LastOffset += nfs_tools_xdr_utf8(&file_owner_group,
+                                               (char *)(attrvalsBuffer + LastOffset));
               op_attr_success = 1;
-
             }
           else
             op_attr_success = 0;
