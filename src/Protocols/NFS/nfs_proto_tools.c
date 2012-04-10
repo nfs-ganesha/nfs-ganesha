@@ -1550,7 +1550,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                  &time_access_set.settime4_u.time.nseconds, sizeof(uint32_t));
           LastOffset += sizeof(uint32_t);
 
-          op_attr_success = 0;
+          op_attr_success = 1;
 #endif
           break;
 
@@ -1627,7 +1627,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                  &time_modify_set.settime4_u.time.nseconds, sizeof(uint32_t));
           LastOffset += sizeof(uint32_t);
 
-          op_attr_success = 0;
+          op_attr_success = 1;
 #endif
           break;
 
