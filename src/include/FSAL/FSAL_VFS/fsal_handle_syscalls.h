@@ -31,6 +31,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <stddef.h> /* For having offsetof defined */
+
 
 #ifdef LINUX
 #ifndef MAX_HANDLE_SZ
