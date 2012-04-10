@@ -1408,8 +1408,10 @@ int nfs_check_param_consistency()
     }
 
   // check for parameters which need to be primes
-  if (!is_prime(nfs_param.krb5_param.hash_param.index_size) ||
-      !is_prime(nfs_param.dupreq_param.hash_param.index_size) ||
+  if (!is_prime(nfs_param.dupreq_param.hash_param.index_size) ||
+#ifdef _HAVE_GSSAPI
+      !is_prime(nfs_param.krb5_param.hash_param.index_size) ||
+#endif
       !is_prime(nfs_param.ip_name_param.hash_param.index_size) ||
       !is_prime(nfs_param.uidmap_cache_param.hash_param.index_size) ||
       !is_prime(nfs_param.unamemap_cache_param.hash_param.index_size) ||
