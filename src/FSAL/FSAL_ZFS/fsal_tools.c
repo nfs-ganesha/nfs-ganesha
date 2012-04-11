@@ -123,65 +123,58 @@ unsigned int ZFSFSAL_Handle_to_RBTIndex(fsal_handle_t * handle, unsigned int coo
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-
-fsal_status_t ZFSFSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t output_type,  /* IN */
-                                fsal_handle_t * in_handle, /* IN */
-                                caddr_t out_buff        /* OUT */
-    )
+fsal_status_t ZFSFSAL_DigestHandle(fsal_export_context_t * exp_context,     /* IN */
+                                   fsal_digesttype_t output_type,       /* IN */
+                                   fsal_handle_t *in_fsal_handle, /* IN */
+                                   struct fsal_handle_desc *fh_desc     /* IN/OUT */ )
 {
   uint32_t ino32;
-  zfsfsal_handle_t * in_fsal_handle = (zfsfsal_handle_t *)in_handle;
+  zfsfsal_export_context_t * p_expcontext = (zfsfsal_export_context_t *)exp_context;
+  zfsfsal_handle_t * p_in_fsal_handle = (zfsfsal_handle_t *)in_fsal_handle;
+  size_t fh_size;
 
   /* sanity checks */
-  if(!in_fsal_handle || !out_buff || !p_expcontext)
+  if(!p_in_fsal_handle || !fh_desc || !fh_desc->start || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
+
   switch (output_type)
-    {
-
-      /* NFSV2 handle digest */
-    case FSAL_DIGEST_NFSV2:
-      if(sizeof(in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV2)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
-      memcpy(out_buff, in_fsal_handle, sizeof(in_fsal_handle->data) );
-      break;
-
-      /* NFSV3 handle digest */
-    case FSAL_DIGEST_NFSV3:
-      if(sizeof(in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV3)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
-      memcpy(out_buff, in_fsal_handle, sizeof(in_fsal_handle->data));
-      break;
-
-      /* NFSV4 handle digest */
-    case FSAL_DIGEST_NFSV4:
-      if(sizeof(in_fsal_handle->data) > FSAL_DIGEST_SIZE_HDLV4)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
-      memcpy(out_buff, in_fsal_handle, sizeof(in_fsal_handle->data));
-      break;
-
-      /* FileId digest for NFSv2 */
-    case FSAL_DIGEST_FILEID2:
+   {
+     /* NFS handle digest */
+     case FSAL_DIGEST_NFSV2:
+     case FSAL_DIGEST_NFSV3:
+     case FSAL_DIGEST_NFSV4:
+       fh_size = sizeof(p_in_fsal_handle->data) ;
+       if(fh_desc->len < fh_size)
+         {
+	       LogMajor( COMPONENT_FSAL,
+		             "ZFS DigestHandle: space too small for handle.  need %lu, have %lu",
+		             fh_size, fh_desc->len);
+	       ReturnCode(ERR_FSAL_TOOSMALL, 0);
+	    }
+       memcpy(fh_desc->start, (caddr_t)p_in_fsal_handle, fh_size);
+       fh_desc->len = fh_size;
+       break;
+     /* FileId digest for NFSv3 */
+     case FSAL_DIGEST_FILEID2:
       ino32 = (uint32_t)(in_fsal_handle->data.zfs_handle.inode);
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID2);
-      memcpy(out_buff, &ino32, sizeof(uint32_t));
+      memset(fh_desc->start, 0, FSAL_DIGEST_SIZE_FILEID2);
+      memcpy(fh_desc->start, &ino32, sizeof( ino32 ));
+      fh_desc->len = FSAL_DIGEST_SIZE_FILEID2; 
       break;
 
       /* FileId digest for NFSv3 */
     case FSAL_DIGEST_FILEID3:
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID3);
-      memcpy(out_buff, &(in_fsal_handle->data.zfs_handle.inode), sizeof(fsal_u64_t));
+      memset(fh_desc->start, 0, FSAL_DIGEST_SIZE_FILEID3);
+      memcpy(fh_desc->start, &(p_in_fsal_handle->data.zfs_handle.inode), sizeof(fsal_u64_t));
+      fh_desc->len = FSAL_DIGEST_SIZE_FILEID3;
       break;
 
       /* FileId digest for NFSv4 */
-
     case FSAL_DIGEST_FILEID4:
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_FILEID4);
-      memcpy(out_buff, &(in_fsal_handle->data.zfs_handle.inode), sizeof(fsal_u64_t));
+      memset(fh_desc->start, 0, FSAL_DIGEST_SIZE_FILEID4);
+      memcpy(fh_desc->start, &(p_in_fsal_handle->data.zfs_handle.inode), sizeof(fsal_u64_t));
+      fh_desc->len = FSAL_DIGEST_SIZE_FILEID4;
       break;
 
     default:
@@ -207,43 +200,38 @@ fsal_status_t ZFSFSAL_DigestHandle(fsal_export_context_t * p_expcontext,   /* IN
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-fsal_status_t ZFSFSAL_ExpandHandle(fsal_export_context_t * p_expcontext,   /* IN */
-                                fsal_digesttype_t in_type,      /* IN */
-                                caddr_t in_buff,        /* IN */
-                                fsal_handle_t * out_handle /* OUT */
-    )
+fsal_status_t ZFSFSAL_ExpandHandle(fsal_export_context_t * pexpcontext,     /* IN not used */
+                                   fsal_digesttype_t in_type,   /* IN */
+                                   struct fsal_handle_desc *fh_desc  /* IN/OUT */ )
 {
-  zfsfsal_handle_t * out_fsal_handle = (zfsfsal_handle_t *)out_handle;
+  zfsfsal_handle_t dummy_handle ;
+  size_t fh_size;
 
   /* sanity checks */
-  if(!out_fsal_handle || !in_buff || !p_expcontext)
+  if(!fh_desc || !fh_desc->start || !pexpcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
-  switch (in_type)
+  fh_size = sizeof( dummy_handle.data ); /* All ZFS handle have the same size */
+  if(in_type == FSAL_DIGEST_NFSV2)
     {
-
-    case FSAL_DIGEST_NFSV2:
-      memset(out_fsal_handle, 0, sizeof(zfsfsal_handle_t));
-      memcpy(out_fsal_handle, in_buff, sizeof(out_fsal_handle->data));
-      break;
-
-    case FSAL_DIGEST_NFSV3:
-      memset(out_fsal_handle, 0, sizeof(zfsfsal_handle_t));
-      memcpy(out_fsal_handle, in_buff, sizeof(out_fsal_handle->data));
-      break;
-
-    case FSAL_DIGEST_NFSV4:
-      memset(out_fsal_handle, 0, sizeof(zfsfsal_handle_t));
-      memcpy(out_fsal_handle, in_buff, sizeof(out_fsal_handle->data));
-      break;
-
-    default:
-      /* Invalid input digest type. */
-      ReturnCode(ERR_FSAL_INVAL, 0);
+      if(fh_desc->len < fh_size)
+        {
+          LogMajor(COMPONENT_FSAL,
+		   "ZFS ExpandHandle: V2 size too small for handle.  should be %lu, got %lu",
+		   fh_size, fh_desc->len);
+	  ReturnCode(ERR_FSAL_SERVERFAULT, 0);
+	}
     }
-
+  else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size)
+    {
+      LogMajor(COMPONENT_FSAL,
+	       "ZFS ExpandHandle: size mismatch for handle.  should be %lu, got %lu",
+	       fh_size, fh_desc->len);
+      ReturnCode(ERR_FSAL_SERVERFAULT, 0);
+    }
+  fh_desc->len = fh_size;  /* pass back the actual size */
+ 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
-
 }
 
 /**

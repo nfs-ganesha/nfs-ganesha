@@ -230,15 +230,14 @@ unsigned int ZFSFSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
 
 unsigned int ZFSFSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie);
 
-fsal_status_t ZFSFSAL_DigestHandle(fsal_export_context_t * p_expcontext,     /* IN */
+fsal_status_t ZFSFSAL_DigestHandle(fsal_export_context_t * exp_context,     /* IN */
                                    fsal_digesttype_t output_type,       /* IN */
-                                   fsal_handle_t * p_in_fsal_handle, /* IN */
-                                   caddr_t out_buff /* OUT */ );
+                                   fsal_handle_t *in_fsal_handle, /* IN */
+                                   struct fsal_handle_desc *fh_desc     /* IN/OUT */ ) ;
 
-fsal_status_t ZFSFSAL_ExpandHandle(fsal_export_context_t * p_expcontext,     /* IN */
+fsal_status_t ZFSFSAL_ExpandHandle(fsal_export_context_t * p_expcontext,     /* IN not used */
                                    fsal_digesttype_t in_type,   /* IN */
-                                   caddr_t in_buff,     /* IN */
-                                   fsal_handle_t * p_out_fsal_handle /* OUT */ );
+                                   struct fsal_handle_desc *fh_desc  /* IN/OUT */ ) ;
 
 fsal_status_t ZFSFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_parameter);
 
