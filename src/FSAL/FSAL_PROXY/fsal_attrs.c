@@ -204,7 +204,6 @@ fsal_status_t PROXYFSAL_setattrs(fsal_handle_t * filehandle,       /* IN */
   fsal_attrib_list_t attrs;
 
   nfs_fh4 nfs4fh;
-  uint32_t bitmap_val[2];
   uint32_t bitmap_conv_val[2];
   fattr4 input_attr;
   bitmap4 convert_bitmap;
@@ -223,7 +222,6 @@ fsal_status_t PROXYFSAL_setattrs(fsal_handle_t * filehandle,       /* IN */
   nfs_argop4 argoparray[FSAL_SETATTR_NB_OP_ALLOC];
   nfs_resop4 resoparray[FSAL_SETATTR_NB_OP_ALLOC];
 
-  char fattr_val[FSAL_SETATTR_VAL_BUFFER];
   struct timeval timeout = TIMEOUTRPC;
 
   /* sanity checks.
@@ -245,12 +243,6 @@ fsal_status_t PROXYFSAL_setattrs(fsal_handle_t * filehandle,       /* IN */
   argnfs4.tag.utf8string_val = NULL;
   argnfs4.tag.utf8string_len = 0;
   argnfs4.argarray.argarray_len = 0;
-
-  input_attr.attrmask.bitmap4_val = bitmap_val;
-  input_attr.attrmask.bitmap4_len = 2;
-
-  input_attr.attr_vals.attrlist4_val = fattr_val;
-  input_attr.attr_vals.attrlist4_len = FSAL_SETATTR_VAL_BUFFER;
 
   convert_bitmap.bitmap4_val = bitmap_conv_val;
   convert_bitmap.bitmap4_len = 2;
@@ -329,6 +321,7 @@ fsal_status_t PROXYFSAL_setattrs(fsal_handle_t * filehandle,       /* IN */
 
   /* Call the NFSv4 function */
   COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
+  nfs4_Fattr_Free(&input_attr);
   if(rc != RPC_SUCCESS)
     {
       ReleaseTokenFSCall();

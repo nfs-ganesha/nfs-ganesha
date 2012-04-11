@@ -143,6 +143,7 @@ fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * file_hdl,    /* IN *
   TakeTokenFSCall();
 
   COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
+  nfs4_Fattr_Free(&fattr_set);
   if(rc != RPC_SUCCESS)
     {
       ReleaseTokenFSCall();
@@ -349,6 +350,7 @@ fsal_status_t PROXYFSAL_truncate(fsal_handle_t * file_hdl,       /* IN */
   TakeTokenFSCall();
 
   COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
+  nfs4_Fattr_Free(&fattr_set);
   if(rc != RPC_SUCCESS)
     {
       ReleaseTokenFSCall();
