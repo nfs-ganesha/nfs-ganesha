@@ -18,7 +18,15 @@ else
   DYNOPT=""
 fi
 
-./configure --with-fsal=$FSAL --with-db=PGSQL --with-nfs4-minorversion=1 --with-mfsl=$MFSL --enable-nlm --enable-snmp-adm $DYNOPT|| exit 1 
+if [[ $FSAL == "GPFS" ]] ; then
+  FUOPT=" --enable-fsal-up"
+else
+  FUOPT=""
+fi
+
+REGULAR_OPT="--with-db=PGSQL --with-nfs4-minorversion=1 --enable-nlm --enable-snmp-adm"
+
+./configure --with-fsal=$FSAL --with-mfsl=$MFSL  $REGULAR_OPT $FUOPT $DYNOPT|| exit 1 
 
 
 make -j 2 || make -j 2 || make || failed="TRUE"
