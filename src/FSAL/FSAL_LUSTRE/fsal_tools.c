@@ -155,11 +155,11 @@ fsal_status_t LUSTREFSAL_DigestHandle(fsal_export_context_t * exp_context,     /
     case FSAL_DIGEST_NFSV2:
     case FSAL_DIGEST_NFSV3:
     case FSAL_DIGEST_NFSV4:
-      fh_size = sizeof(((lustrefsal_handle_t *)in_fsal_handle)->data) ;
+      fh_size = sizeof(p_in_fsal_handle->data) ;
       if(fh_desc->len < fh_size)
         {
 	       LogMajor( COMPONENT_FSAL,
-		             "VFS DigestHandle: space too small for handle.  need %lu, have %lu",
+		             "LUSTRE DigestHandle: space too small for handle.  need %lu, have %lu",
 		             fh_size, fh_desc->len);
 	       ReturnCode(ERR_FSAL_TOOSMALL, 0);
 	    }
@@ -233,7 +233,7 @@ fsal_status_t LUSTREFSAL_ExpandHandle(fsal_export_context_t * pexpcontext,     /
       if(fh_desc->len < fh_size)
         {
           LogMajor(COMPONENT_FSAL,
-		   "VFS ExpandHandle: V2 size too small for handle.  should be %lu, got %lu",
+		   "LUSTRE ExpandHandle: V2 size too small for handle.  should be %lu, got %lu",
 		   fh_size, fh_desc->len);
 	  ReturnCode(ERR_FSAL_SERVERFAULT, 0);
 	}
@@ -241,7 +241,7 @@ fsal_status_t LUSTREFSAL_ExpandHandle(fsal_export_context_t * pexpcontext,     /
   else if(in_type != FSAL_DIGEST_SIZEOF && fh_desc->len != fh_size)
     {
       LogMajor(COMPONENT_FSAL,
-	       "VFS ExpandHandle: size mismatch for handle.  should be %lu, got %lu",
+	       "LUSTRE ExpandHandle: size mismatch for handle.  should be %lu, got %lu",
 	       fh_size, fh_desc->len);
       ReturnCode(ERR_FSAL_SERVERFAULT, 0);
     }
