@@ -84,6 +84,7 @@ restart:
 
                                 clientp =
                                     (nfs_client_id_t *)pdata->buffval.pdata;
+#if _USE_NFS4_1
                                 /*
                                  * little hack: only want to reap v4 clients
                                  * 4.1 initializess this field to '1'
