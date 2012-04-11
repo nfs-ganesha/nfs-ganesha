@@ -47,231 +47,219 @@
 
 char *CEPHFSAL_GetFSName()
 {
-  return "CEPH";
+     return "CEPH";
 }
 
 /**
- * FSAL_handlecmp:
- * Compare 2 handles.
+ * @brief Compare 2 handles
  *
- * \param handle1 (input):
- *        The first handle to be compared.
- * \param handle2 (input):
- *        The second handle to be compared.
- * \param status (output):
- *        The status of the compare operation.
+ * This function compares two FSAL handles, returning 0 if they are to
+ * be considered identical.
  *
- * \return - 0 if handles are the same.
- *         - A non null value else.
- *         - Segfault if status is a NULL pointer.
+ * @param handle1 [in] The first handle to be compared
+ * @param handle2 [in] The second handle to be compared
+ * @param status [out] Status of the compare operation
+ *
+ * @retval 0 if handles are the same
+ * @retval Something else if they're not
  */
 
-int CEPHFSAL_handlecmp(fsal_handle_t * exthandle1,
-                       fsal_handle_t * exthandle2,
-                       fsal_status_t * status)
+int
+CEPHFSAL_handlecmp(fsal_handle_t *exthandle1,
+                   fsal_handle_t *exthandle2,
+                   fsal_status_t *status)
 {
-  cephfsal_handle_t* handle1 = (cephfsal_handle_t*) exthandle1;
-  cephfsal_handle_t* handle2 = (cephfsal_handle_t*) exthandle2;
-  *status = FSAL_STATUS_NO_ERROR;
+     cephfsal_handle_t *handle1 = (cephfsal_handle_t *)exthandle1;
+     cephfsal_handle_t *handle2 = (cephfsal_handle_t *)exthandle2;
+     *status = FSAL_STATUS_NO_ERROR;
 
-  if(!handle1 || !handle2)
-    {
-      status->major = ERR_FSAL_FAULT;
-      return -1;
-    }
+     if (!handle1 || !handle2) {
+          status->major = ERR_FSAL_FAULT;
+          return -1;
+     }
 
-  if ((VINODE(handle1).ino.val == VINODE(handle2).ino.val) &&
-      (VINODE(handle1).snapid.val == VINODE(handle2).snapid.val))
-    return 0;
-  else
-    return 1;
+     if ((VINODE(handle1).ino.val == VINODE(handle2).ino.val) &&
+         (VINODE(handle1).snapid.val == VINODE(handle2).snapid.val)) {
+          return 0;
+     } else {
+          return 1;
+     }
 }
 
 /**
- * FSAL_Handle_to_HashIndex
- * This function is used for hashing a FSAL handle
- * in order to dispatch entries into the hash table array.
+ * @brief Generate an index in the handle table
  *
- * \param p_handle      The handle to be hashed
- * \param cookie        Makes it possible to have different hash value for the
- *                      same handle, when cookie changes.
- * \param alphabet_len  Parameter for polynomial hashing algorithm
- * \param index_size    The range of hash value will be [0..index_size-1]
+ * This function is used for hashing a FSAL handle in order to
+ * distribute entries into the hash table array.
  *
- * \return The hash value
+ * @param exthandle [in] The handle to be hashed
+ * @param cookie [in] Makes it possible to have different hash value for the
+ *                    same handle, when cookie changes.
+ * @param alphabet_len [in] Parameter for polynomial hashing algorithm
+ * @param index_size [in] The range of hash value will be [0..index_size-1]
+ *
+ * @return The hash value
  */
 
-unsigned int CEPHFSAL_Handle_to_HashIndex(fsal_handle_t * exthandle,
-                                          unsigned int cookie,
-                                          unsigned int alphabet_len,
-                                          unsigned int index_size)
+unsigned int
+CEPHFSAL_Handle_to_HashIndex(fsal_handle_t *exthandle,
+                             unsigned int cookie,
+                             unsigned int alphabet_len,
+                             unsigned int index_size)
 {
-  cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
-  /* XXX Come up with a better hash */
-  return (unsigned int)
-    ((VINODE(handle).ino.val + VINODE(handle).snapid.val) %
-     index_size);
-}
+     cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
 
-/*
- * FSAL_Handle_to_RBTIndex
- * This function is used for generating a RBT node ID
- * in order to identify entries into the RBT.
- *
- * \param p_handle      The handle to be hashed
- * \param cookie        Makes it possible to have different hash value for the
- *                      same handle, when cookie changes.
- *
- * \return The hash value
- */
-
-unsigned int CEPHFSAL_Handle_to_RBTIndex(fsal_handle_t * exthandle,
-                                         unsigned int cookie)
-{
-  cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
-  /* Come up with a better index */
-  return (unsigned int)(0xABCD1234 ^ VINODE(handle).ino.val ^
-                        VINODE(handle).snapid.val ^ cookie);
+     return (unsigned int)
+          ((VINODE(handle).ino.val + VINODE(handle).snapid.val) %
+           index_size);
 }
 
 /**
- * FSAL_DigestHandle :
- *  Convert an fsal_handle_t to a buffer
- *  to be included into NFS handles,
- *  or another digest.
+ * @brief Generate a hash to locate the handle within a tree
  *
- * \param output_type (input):
- *        Indicates the type of digest to do.
- * \param in_fsal_handle (input):
- *        The handle to be converted to digest.
- * \param out_buff (output):
- *        The buffer where the digest is to be stored.
+ * This function is used for generating a RBT node ID in order to
+ * identify entries into the RBT.
+ *
+ * @param exthandle [in] The handle to be hashed
+ * @param cookie [in] Makes it possible to have different hash value
+ *                    for the same handle, when cookie changes.
+ *
+ * @return The hash value
+ */
+
+unsigned int
+CEPHFSAL_Handle_to_RBTIndex(fsal_handle_t *exthandle,
+                            unsigned int cookie)
+{
+     cephfsal_handle_t* handle = (cephfsal_handle_t *)exthandle;
+     return (unsigned int)(0xABCD1234 ^ VINODE(handle).ino.val ^
+                           VINODE(handle).snapid.val ^ cookie);
+}
+
+/**
+ * @brief Create a wire level representation of an FSAL handle
+ *
+ * Convert an fsal_handle_t to a buffer to be included into NFS
+ * handles, or another digest.
+ *
+ * @param extexport [in] The export context
+ * @param output_type [in] The type of digest requested
+ * @param exthandle [in] The handle to be digested
+ * @param fh_desc [out] Counted buffer to hold the handle
+ *
+ * @return Errors as appropriate
+ */
+
+fsal_status_t
+CEPHFSAL_DigestHandle(fsal_export_context_t *extexport,
+                      fsal_digesttype_t output_type,
+                      fsal_handle_t *exthandle,
+                      struct fsal_handle_desc *fh_desc)
+{
+     cephfsal_handle_t *handle = (cephfsal_handle_t *)exthandle;
+     size_t fh_len = 0;
+     void *fh_data = NULL;
+
+     fh_len = sizeof(handle->data);
+     fh_data = &handle->data;
+
+     switch (output_type) {
+          /* Digested Handles */
+     case FSAL_DIGEST_NFSV2:
+     case FSAL_DIGEST_NFSV3:
+     case FSAL_DIGEST_NFSV4:
+          if (fh_desc->len < fh_len) {
+               LogMajor(COMPONENT_FSAL,
+                        "Ceph DigestHandle: space too small for handle.  "
+                        "Need %zu, have %zu", fh_len, fh_desc->len);
+               ReturnCode(ERR_FSAL_TOOSMALL, 0);
+          } else {
+               memcpy(fh_desc->start, fh_data,
+                      fh_len);
+               fh_desc->len = fh_len;
+          }
+          break;
+
+          /* Integer IDs */
+
+     case FSAL_DIGEST_FILEID2:
+          memcpy(fh_desc->start, &VINODE(handle), FSAL_DIGEST_SIZE_FILEID2);
+          fh_desc->len = FSAL_DIGEST_SIZE_FILEID2;
+          break;
+     case FSAL_DIGEST_FILEID3:
+          memcpy(fh_desc->start, &VINODE(handle).ino.val,
+                 FSAL_DIGEST_SIZE_FILEID3);
+          fh_desc->len = FSAL_DIGEST_SIZE_FILEID3;
+          break;
+     case FSAL_DIGEST_FILEID4:
+          memcpy(fh_desc->start, &VINODE(handle).ino.val,
+                 FSAL_DIGEST_SIZE_FILEID4);
+          fh_desc->len = FSAL_DIGEST_SIZE_FILEID4;
+          break;
+
+     default:
+          ReturnCode(ERR_FSAL_SERVERFAULT, 0);
+     }
+
+     ReturnCode(ERR_FSAL_NO_ERROR, 0);
+} /* FSAL_DigestHandle */
+
+/**
+ * @brief Bring in a wire handle
+ *
+ * All we do here is adjust the descriptor length based on knowing the
+ * internals of struct file_handle and let the upper level handle
+ * memcpy, hash lookup and/or compare.  No copies anymore.
+ *
+ * @param extexport [in] The export handle
+ * @param in_type [in] The type of digest to be expanded
+ * @param fh_desc [in,out] Descriptor for buffer
  *
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
 
-fsal_status_t CEPHFSAL_DigestHandle(fsal_export_context_t * extexport,
-                                    fsal_digesttype_t output_type,
-                                    fsal_handle_t * exthandle,
-                                    caddr_t out_buff)
+fsal_status_t
+CEPHFSAL_ExpandHandle(fsal_export_context_t *extexport,
+                      fsal_digesttype_t in_type,
+                      struct fsal_handle_desc *fh_desc)
 {
-  cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
-  cephfsal_export_context_t* export = (cephfsal_export_context_t*)extexport;
-  struct ceph_mount_info *cmount = export->cmount;
-  int rc = 0;
+     cephfsal_handle_t* handle = (cephfsal_handle_t*) fh_desc->start;
+     cephfsal_export_context_t* export = (cephfsal_export_context_t*)extexport;
+     struct ceph_mount_info *cmount = export->cmount;
+     int rc = 0;
 
-  /* sanity checks */
-  if(!exthandle || !out_buff || !extexport)
-    ReturnCode(ERR_FSAL_FAULT, 0);
+     if (in_type != FSAL_DIGEST_SIZEOF) {
+          if (fh_desc->len != sizeof(handle->data)) {
+               LogMajor(COMPONENT_FSAL,
+                        "VFS ExpandHandle: size mismatch. "
+                        "should be %zu, got %zu",
+                        sizeof(VINODE(handle)), fh_desc->len);
+               ReturnCode(ERR_FSAL_SERVERFAULT, 0);
+          }
 
-  rc = ceph_ll_connectable_x(cmount, VINODE(handle),
-                             &handle->data.parent_ino,
-                             &handle->data.parent_hash);
-  if (rc < 0)
-    ReturnCode(posix2fsal_error(rc), 0);
+#ifdef _PNFS
+          if (handle->data.layout.fl_stripe_unit == 0) {
+               rc = ceph_ll_connectable_m(cmount, &VINODE(handle),
+                                          handle->data.parent_ino,
+                                          handle->data.parent_hash);
+               if (rc < 0) {
+                    ReturnCode(posix2fsal_error(rc), 0);
+               }
+          }
+#else /* !_PNFS */
+          rc = ceph_ll_connectable_m(cmount, &VINODE(handle),
+                                     handle->data.parent_ino,
+                                     handle->data.parent_hash);
+          if (rc < 0) {
+               ReturnCode(posix2fsal_error(rc), 0);
+          }
+#endif /* !_PNFS */
+     } else {
+          fh_desc->len = sizeof(handle->data);
+     }
 
-  switch (output_type)
-    {
-      /* Digested Handles */
-    case FSAL_DIGEST_NFSV2:
-      if (sizeof(VINODE(handle)) > FSAL_DIGEST_SIZE_HDLV2)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-    case FSAL_DIGEST_NFSV3:
-      if(sizeof(VINODE(handle)) > FSAL_DIGEST_SIZE_HDLV3)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-      memcpy(out_buff, &VINODE(handle),
-             sizeof(VINODE(handle)));
-      break;
-    case FSAL_DIGEST_NFSV4:
-      if(sizeof(VINODE(handle)) > FSAL_DIGEST_SIZE_HDLV4)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-      memcpy(out_buff, &(handle->data),
-             sizeof(handle->data));
-      break;
-
-      /* Integer IDs */
-
-    case FSAL_DIGEST_FILEID2:
-      if (sizeof(VINODE(handle).ino.val) > FSAL_DIGEST_SIZE_FILEID2)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-    case FSAL_DIGEST_FILEID3:
-      if(sizeof(VINODE(handle).ino.val) > FSAL_DIGEST_SIZE_FILEID3)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-    case FSAL_DIGEST_FILEID4:
-      if(sizeof(VINODE(handle).ino.val) > FSAL_DIGEST_SIZE_FILEID4)
-        ReturnCode(ERR_FSAL_TOOSMALL, 0);
-      *((uint64_t* )out_buff) = VINODE(handle).ino.val;
-
-      break;
-
-    default:
-      ReturnCode(ERR_FSAL_SERVERFAULT, 0);
-    }
-
-
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
-}                               /* FSAL_DigestHandle */
-
-/**
- * FSAL_ExpandHandle :
- *  Convert a buffer extracted from NFS handles
- *  to an FSAL handle.
- *
- * \param in_type (input):
- *        Indicates the type of digest to be expanded.
- * \param in_buff (input):
- *        Pointer to the digest to be expanded.
- * \param out_fsal_handle (output):
- *        The handle built from digest.
- *
- * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
- *         Else, it is a non null value.
- */
-fsal_status_t CEPHFSAL_ExpandHandle(fsal_export_context_t * extexport,
-                                    fsal_digesttype_t in_type,
-                                    caddr_t in_buff,
-                                    fsal_handle_t * exthandle)
-{
-  cephfsal_handle_t* handle = (cephfsal_handle_t*) exthandle;
-  cephfsal_export_context_t* export = (cephfsal_export_context_t*)extexport;
-  struct ceph_mount_info *cmount = export->cmount;
-  int rc = 0;
-
-  /* sanity checks */
-  if(!handle || !in_buff || !extexport)
-    ReturnCode(ERR_FSAL_FAULT, 0);
-
-  memset(handle, sizeof(cephfsal_handle_t), 0);
-
-  switch (in_type)
-   {
-    case FSAL_DIGEST_NFSV2:
-    case FSAL_DIGEST_NFSV3:
-      memcpy(&(VINODE(handle)), in_buff,
-             sizeof(VINODE(handle)));
-      break;
-    case FSAL_DIGEST_NFSV4:
-      memcpy(&(handle->data), in_buff,
-             sizeof(handle->data));
-      break;
-
-    default:
-      /* Invalid input digest type. */
-      ReturnCode(ERR_FSAL_INVAL, 0);
-    }
-
-  if (handle->data.layout.fl_stripe_unit == 0)
-    rc = ceph_ll_connectable_m(cmount, &VINODE(handle),
-                               handle->data.parent_ino,
-                               handle->data.parent_hash);
-  else
-    rc = 0;
-
-  if (rc < 0)
-    ReturnCode(posix2fsal_error(rc), 0);
-
-  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+     ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**

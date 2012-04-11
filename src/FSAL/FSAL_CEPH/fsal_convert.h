@@ -79,7 +79,9 @@ fsal_time_t posix2fsal_time(time_t tsec);
 #define high32m( a ) ( (unsigned int)( a >> 32 ) )
 #define low32m( a ) ( (unsigned int)a )
 
-void stat2fsal_fh(struct stat *st, cephfsal_handle_t *fh);
+int stat2fsal_fh(struct ceph_mount_info *cmount,
+                 struct stat *st,
+                 cephfsal_handle_t* handle);
 
 #endif
 

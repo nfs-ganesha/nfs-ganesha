@@ -281,16 +281,13 @@ unsigned int CEPHFSAL_Handle_to_HashIndex(fsal_handle_t * exthandle,
 
 unsigned int CEPHFSAL_Handle_to_RBTIndex(fsal_handle_t * exthandle,
                                          unsigned int cookie);
-
-fsal_status_t CEPHFSAL_DigestHandle(fsal_export_context_t * extexport,
+fsal_status_t CEPHFSAL_DigestHandle(fsal_export_context_t *extexport,
                                     fsal_digesttype_t output_type,
-                                    fsal_handle_t * exthandle,
-                                    caddr_t out_buff);
-
-fsal_status_t CEPHFSAL_ExpandHandle(fsal_export_context_t * extexport,
+                                    fsal_handle_t *exthandle,
+                                    struct fsal_handle_desc *fh_desc);
+fsal_status_t CEPHFSAL_ExpandHandle(fsal_export_context_t *extexport,
                                     fsal_digesttype_t in_type,
-                                    caddr_t in_buff,
-                                    fsal_handle_t * exthandle);
+                                    struct fsal_handle_desc *fh_desc);
 
 fsal_status_t CEPHFSAL_SetDefault_FSAL_parameter(fsal_parameter_t * out_parameter);
 

@@ -327,8 +327,14 @@ fsal_status_t posix2fsal_attributes(struct stat* st,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
-void stat2fsal_fh(struct stat *st, cephfsal_handle_t* fh)
+int stat2fsal_fh(struct ceph_mount_info *cmount,
+                 struct stat *st,
+                 cephfsal_handle_t* handle)
 {
-  VINODE(fh).ino.val = st->st_ino;
-  VINODE(fh).snapid.val = st->st_dev;
+  VINODE(handle).ino.val = st->st_ino;
+  VINODE(handle).snapid.val = st->st_dev;
+
+  return ceph_ll_connectable_x(cmount, VINODE(handle),
+                               &handle->data.parent_ino,
+                               &handle->data.parent_hash);
 }
