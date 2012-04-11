@@ -325,8 +325,7 @@ HashTable_Del(struct hash_table *ht,
                                          stored_val);
 
      case HASHTABLE_ERROR_NO_SUCH_KEY:
-          return HashTable_ReleaseLatched(ht,
-                                          &latch);
+          HashTable_ReleaseLatched(ht, &latch);
      default:
           return rc;
      }
