@@ -731,6 +731,21 @@ nfs_tools_xdr_utf8(utf8str_mixed *utf8, char *attrvalsBuffer)
   return LastOffset;
 }
 
+void nfs4_Fattr_Free(fattr4 *fattr)
+{
+  if(fattr->attrmask.bitmap4_val != NULL)
+    {
+      Mem_Free(fattr->attrmask.bitmap4_val);
+      fattr->attrmask.bitmap4_val = NULL;
+    }
+
+  if(fattr->attr_vals.attrlist4_val != NULL)
+    {
+      Mem_Free(fattr->attr_vals.attrlist4_val);
+      fattr->attr_vals.attrlist4_val = NULL;
+    }
+}
+
 /**
  *
  * nfs4_FSALattr_To_Fattr: Converts FSAL Attributes to NFSv4 Fattr buffer.
@@ -740,6 +755,8 @@ nfs_tools_xdr_utf8(utf8str_mixed *utf8, char *attrvalsBuffer)
  * @param pexport [IN]  the related export entry.
  * @param pattr   [IN]  pointer to FSAL attributes.
  * @param Fattr   [OUT] NFSv4 Fattr buffer
+ *		  Memory for bitmap_val and attr_val is dynamically allocated,
+ *		  caller is responsible for freeing it.
  * @param data    [IN]  NFSv4 compoud request's data.
  * @param Bitmap  [OUT] NFSv4 attributes bitmap to the Fattr buffer.
  * 
@@ -867,7 +884,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   nfs4_bitmap4_to_list(Bitmap, &attrmasklen, attrmasklist);
 
   /* Once the bitmap has been converted to a list of attribute, manage each attribute */
-  Fattr->attr_vals.attrlist4_len = 0;
   LastOffset = 0;
   j = 0;
 
@@ -1695,6 +1711,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
     }                           /* for i */
 
   /* Set the bitmap for result */
+  memset(Fattr, 0, sizeof(*Fattr));
   if((Fattr->attrmask.bitmap4_val = (uint32_t *) Mem_Alloc_Label(3 * sizeof(uint32_t),
                                                                  "FSALattr_To_Fattr:bitmap")) == NULL)
     return -1;
@@ -1703,18 +1720,20 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   nfs4_list_to_bitmap4(&(Fattr->attrmask), &j, attrvalslist);
 
   /* Set the attrlist4 */
+  /* LastOffset contains the length of the attrvalsBuffer usefull data */
   Fattr->attr_vals.attrlist4_len = LastOffset;
   if(LastOffset != 0)           /* No need to allocate an empty buffer */
     {
-      if((Fattr->attr_vals.attrlist4_val =
-          Mem_Alloc_Label(Fattr->attr_vals.attrlist4_len,
-                          "FSALattr_To_Fattr:attrvals")) == NULL)
-        return -1;
-      memset((char *)Fattr->attr_vals.attrlist4_val, 0, Fattr->attr_vals.attrlist4_len);
+      Fattr->attr_vals.attrlist4_val = Mem_Alloc_Label(LastOffset,
+                                                       "FSALattr_To_Fattr:attrvals");
+      if(Fattr->attr_vals.attrlist4_val == NULL)
+        {
+          Mem_Free(Fattr->attrmask.bitmap4_val);
+          return -1;
+        }
       memcpy(Fattr->attr_vals.attrlist4_val, attrvalsBuffer,
              Fattr->attr_vals.attrlist4_len);
     }
-  /* LastOffset contains the length of the attrvalsBuffer usefull data */
 
   return 0;
 }                               /* nfs4_FSALattr_To_Fattr */

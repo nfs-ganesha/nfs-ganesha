@@ -458,8 +458,7 @@ void nfs4_op_readdir_Free(READDIR4res * resp)
       for(entries = resp->READDIR4res_u.resok4.reply.entries; entries != NULL;
           entries = entries->nextentry)
         {
-          Mem_Free((char *)entries->attrs.attrmask.bitmap4_val);
-          /** @todo Fixeme , bad Free here Mem_Free( (char *)entries->attrs.attr_vals.attrlist4_val ) ; */
+	  nfs4_Fattr_Free(&entries->attrs);
         }
 
       if(resp->READDIR4res_u.resok4.reply.entries != NULL)

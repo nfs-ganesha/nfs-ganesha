@@ -186,13 +186,6 @@ int nfs4_op_getattr(struct nfs_argop4 *op,
 void nfs4_op_getattr_Free(GETATTR4res * resp)
 {
   if(resp->status == NFS4_OK)
-    {
-      if(resp->GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val != NULL)
-        Mem_Free((char *)resp->GETATTR4res_u.resok4.obj_attributes.attrmask.bitmap4_val);
-
-      if(resp->GETATTR4res_u.resok4.obj_attributes.attr_vals.attrlist4_val != NULL)
-        Mem_Free((char *)resp->GETATTR4res_u.resok4.obj_attributes.attr_vals.
-                 attrlist4_val);
-    }
+    nfs4_Fattr_Free(&resp->GETATTR4res_u.resok4.obj_attributes);
   return;
 }                               /* nfs4_op_getattr_Free */

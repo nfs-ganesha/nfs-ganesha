@@ -1526,6 +1526,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                            fattr4 * Fattr,
                            compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap);
 
+void nfs4_Fattr_Free(fattr4 *);
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 /* time_how4          * mtime_set, *//* Out: How to set mtime */
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         /* time_how4          * atimen_set ) ; *//* Out: How to set atime */
 
