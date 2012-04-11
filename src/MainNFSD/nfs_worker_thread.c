@@ -2212,12 +2212,9 @@ void *worker_thread(void *IndexArg)
         {
           pmydata->gc_in_progress = TRUE;
 
+#ifndef _USE_SHARED_FSAL
       fsal_status = MFSL_RefreshContext(&pmydata->cache_inode_client.mfsl_context,
-#ifdef _USE_SHARED_FSAL
-                                        &pmydata->thread_fsal_context[pexport->fsalid]);
-#else
                                         &pmydata->thread_fsal_context);
-#endif
 
           if(FSAL_IS_ERROR(fsal_status))
             {
@@ -2225,7 +2222,9 @@ void *worker_thread(void *IndexArg)
               V(pmydata->wcb.tcb_mutex);
               LogFatal(COMPONENT_DISPATCH, "Error regreshing MFSL context");
             }
-
+#else
+#error "For the moment, no MFSL are supported with dynamic FSALs"
+#endif
           pmydata->gc_in_progress = FALSE;
         }
 
