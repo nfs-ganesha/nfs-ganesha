@@ -349,7 +349,6 @@ int nfs_LookupNetworkAddr(char *host,   /* [IN] host/address specifier */
                           unsigned long *netMask)       /* [OUT] return address mask  */
 {
   CIDR * pcidr = NULL ;
-  unsigned int i = 0 ;
 
   if( ( pcidr = cidr_from_str( host ) ) == NULL )
     return 1 ;
@@ -382,6 +381,7 @@ int nfs_AddClientsToClientArray(exportlist_client_t *clients,
   int is_wildcarded_host = FALSE;
   unsigned long netMask;
   unsigned long netAddr;
+  int error = 0 ;
 
   /* How many clients are there already? */
   j = (*clients).num_clients;
