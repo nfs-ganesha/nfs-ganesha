@@ -709,7 +709,7 @@ unsigned int nfs_core_select_worker_queue()
     {
       for(i = 0; i < nfs_param.core_param.nb_worker; i++)
         {
-          total_number_pending += workers_data[i].pending_request->nb_entry;
+          total_number_pending += workers_data[i].pending_request_len;
         }
       avg_number_pending = total_number_pending / nfs_param.core_param.nb_worker;
       /* Reset counter. */
@@ -788,7 +788,7 @@ process_status_t process_rpc_request(SVCXPRT *xprt)
   LogFullDebug(COMPONENT_DISPATCH,
                "Use request from Worker Thread #%u's pool, xprt->xp_sock=%d, thread has %d pending requests",
                worker_index, xprt->XP_SOCK,
-               workers_data[worker_index].pending_request->nb_entry);
+               workers_data[worker_index].pending_request_len);
 
   /* Get a pnfsreq from the worker's pool */
   P(workers_data[worker_index].request_pool_mutex);

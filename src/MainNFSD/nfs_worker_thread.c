@@ -410,23 +410,6 @@ struct timeval time_diff(struct timeval time_from, struct timeval time_to)
 }
 
 /**
- *
- * clean_pending_request: cleans an entry in a nfs request LRU,
- *
- * cleans an entry in a nfs request LRU.
- *
- * @param pentry [INOUT] entry to be cleaned.
- * @param request_pool [IN] the memory pool into which the request is put back
- */
-static inline void clean_pending_request(LRU_entry_t * pentry, struct prealloc_pool *request_pool)
-{
-  request_data_t *preqnfs = (request_data_t *) (pentry->buffdata.pdata);
-
-  /* Send the entry back to the pool */
-  ReleaseToPool(preqnfs, request_pool);
-}                               /* clean_pending_request */
-
-/**
  * is_rpc_call_valid: helper function to validate rpc calls.
  *
  */
@@ -1653,7 +1636,7 @@ worker_available_rc worker_available(unsigned long worker_index, unsigned int av
                          "worker thread #%lu is doing garbage collection", worker_index);
             rc = WORKER_GC;
           }
-        else if(workers_data[worker_index].pending_request->nb_entry >= avg_number_pending)
+        else if(workers_data[worker_index].pending_request_len >= avg_number_pending)
           {
             rc = WORKER_BUSY;
           }
@@ -1699,15 +1682,9 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   if(tcb_new(&(pdata->wcb), name) != 0)
     return -1;
 
-  sprintf(name, "Worker Thread #%u Pending Request", pdata->worker_index);
-  nfs_param.worker_param.lru_param.lp_name = name;
-
-  if((pdata->pending_request =
-      LRU_Init(nfs_param.worker_param.lru_param, &status)) == NULL)
-    {
-      LogError(COMPONENT_DISPATCH, ERR_LRU, ERR_LRU_LIST_INIT, status);
-      return -1;
-    }
+  // TODO(eitanb): remember to remove this LRU's config (nfs_param.worker_param.lru_param)
+  init_glist(&pdata->pending_request);
+  pdata->pending_request_len = 0;
 
   sprintf(name, "Worker Thread #%u Duplicate Request", pdata->worker_index);
   nfs_param.worker_param.lru_dupreq.lp_name = name;
@@ -1729,8 +1706,6 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
 
 void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index)
 {
-  LRU_entry_t *pentry = NULL;
-  LRU_status_t status;
   struct svc_req *ptr_req = &pnfsreq->rcontent.nfs.req;
   unsigned int rpcxid = get_rpc_xid(ptr_req);
 
@@ -1741,20 +1716,8 @@ void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index)
   P(workers_data[worker_index].wcb.tcb_mutex);
   P(workers_data[worker_index].request_pool_mutex);
 
-  pentry = LRU_new_entry(workers_data[worker_index].pending_request, &status);
-
-  if(pentry == NULL)
-    {
-      V(workers_data[worker_index].request_pool_mutex);
-      V(workers_data[worker_index].wcb.tcb_mutex);
-      LogMajor(COMPONENT_DISPATCH,
-               "Error while inserting pending request to Worker Thread #%u... Exiting",
-               worker_index);
-      Fatal();
-    }
-
-  pentry->buffdata.pdata = (caddr_t) pnfsreq;
-  pentry->buffdata.len = sizeof(*pnfsreq);
+  glist_add_tail(&workers_data[worker_index].pending_request, &pnfsreq->pending_req_queue);
+  workers_data[worker_index].pending_request_len++;
 
   if(pthread_cond_signal(&(workers_data[worker_index].wcb.tcb_condvar)) == -1)
     {
@@ -1868,7 +1831,6 @@ void *worker_thread(void *IndexArg)
 {
   nfs_worker_data_t *pmydata;
   request_data_t *pnfsreq;
-  LRU_entry_t  out_entry;
   struct svc_req *preq;
   unsigned long worker_index;
   int rc = 0;
@@ -1900,8 +1862,7 @@ void *worker_thread(void *IndexArg)
     }
 
   LogFullDebug(COMPONENT_DISPATCH,
-               "Starting, nb_entry=%d",
-               pmydata->pending_request->nb_entry);
+               "Starting, pending=%d", pmydata->pending_request_len);
   /* Initialisation of the Buddy Malloc */
 #ifndef _NO_BUDDY_SYSTEM
   if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
@@ -2010,22 +1971,19 @@ void *worker_thread(void *IndexArg)
 
       /* Wait on condition variable for work to be done */
       LogFullDebug(COMPONENT_DISPATCH,
-                   "waiting for requests to process, nb_entry=%d",
-                   pmydata->pending_request->nb_entry);
-      assert(pmydata->pending_request->nb_invalid == 0);
+                   "waiting for requests to process, pending=%d",
+                   pmydata->pending_request_len);
 
       /* Get the state without lock first, if things are fine
        * don't bother to check under lock.
        */
-      assert(pmydata->pending_request->nb_invalid == 0);
       if((pmydata->wcb.tcb_state != STATE_AWAKE) ||
-          (pmydata->pending_request->nb_entry == 0)) {
+          (pmydata->pending_request_len == 0)) {
           while(1)
             {
               P(pmydata->wcb.tcb_mutex);
-	      assert(pmydata->pending_request->nb_invalid == 0);
               if(pmydata->wcb.tcb_state == STATE_AWAKE &&
-                 (pmydata->pending_request->nb_entry != 0)) {
+                 (pmydata->pending_request_len != 0)) {
                   V(pmydata->wcb.tcb_mutex);
                   break;
                 }
@@ -2036,8 +1994,7 @@ void *worker_thread(void *IndexArg)
                     continue;
 
                   case THREAD_SM_BREAK:
-		      assert(pmydata->pending_request->nb_invalid == 0);
-                    if(pmydata->pending_request->nb_entry == 0) {
+                    if(pmydata->pending_request_len == 0) {
                         /* No work; wait */
                         pthread_cond_wait(&(pmydata->wcb.tcb_condvar),
                                           &(pmydata->wcb.tcb_mutex));
@@ -2054,30 +2011,29 @@ void *worker_thread(void *IndexArg)
         }
 
       LogFullDebug(COMPONENT_DISPATCH,
-                   "Processing a new request, pause_state: %s, nb_entry=%u",
+                   "Processing a new request, pause_state: %s, pending=%u",
                    pause_state_str[pmydata->wcb.tcb_state],
-                   pmydata->pending_request->nb_entry);
-      assert(pmydata->pending_request->nb_invalid == 0);
+                   pmydata->pending_request_len);
 
       P(pmydata->request_pool_mutex);
-      if (LRU_pop_entry(pmydata->pending_request, &out_entry) == LRU_LIST_EMPTY_LIST) {
-          LogMajor(COMPONENT_DISPATCH,
-                   "No pending request available");
-          continue;             /* return to main loop */
+      pnfsreq = glist_first_entry(&pmydata->pending_request, request_data_t, pending_req_queue);
+      if (pnfsreq == NULL) {
+	  V(pmydata->request_pool_mutex);
+	  LogMajor(COMPONENT_DISPATCH, "No pending request available");
+	  continue;             /* return to main loop */
       }
+      glist_del(&pnfsreq->pending_req_queue);
+      pmydata->pending_request_len--;
       V(pmydata->request_pool_mutex);
 
-      pnfsreq = (request_data_t *) (out_entry.buffdata.pdata);
-     
       switch( pnfsreq->rtype )
        {
           case NFS_REQUEST:
            LogFullDebug(COMPONENT_DISPATCH,
-                        "I have some work to do, pnfsreq=%p, length=%d, xid=%lu",
+                        "I have some work to do, pnfsreq=%p, pending=%d, xid=%lu",
                         pnfsreq,
-                        pmydata->pending_request->nb_entry,
+                        pmydata->pending_request_len,
                         (unsigned long) pnfsreq->rcontent.nfs.msg.rm_xid);
-	   assert(pmydata->pending_request->nb_invalid == 0);
 
            if(pnfsreq->rcontent.nfs.xprt->XP_SOCK == 0)
             {
@@ -2118,7 +2074,7 @@ void *worker_thread(void *IndexArg)
       LogFullDebug(COMPONENT_DISPATCH,
                    "Invalidating processed entry");
       P(pmydata->request_pool_mutex);
-      clean_pending_request(&out_entry, &pmydata->request_pool);
+      ReleaseToPool(pnfsreq, &pmydata->request_pool);
       V(pmydata->request_pool_mutex);
 
       if(pmydata->passcounter > nfs_param.worker_param.nb_before_gc)

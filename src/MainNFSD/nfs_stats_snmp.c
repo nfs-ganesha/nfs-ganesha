@@ -432,9 +432,7 @@ static int get_pending(snmp_adm_type_union * param, void *opt_arg)
 
   for(i = 0; i < nfs_param.core_param.nb_worker; i++)
     {
-	assert(workers_data[i].pending_request->nb_invalid == 0);
-      len_pending_request = workers_data[i].pending_request->nb_entry;
-
+      len_pending_request = workers_data[i].pending_request_len;
       if((len_pending_request < min_pending_request)
          || (min_pending_request == MIN_NOT_SET))
         min_pending_request = len_pending_request;

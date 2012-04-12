@@ -427,6 +427,7 @@ typedef enum request_type__
 
 typedef struct request_data__
 {
+    struct glist_head pending_req_queue;  // chaining of pending requests
   request_type_t rtype ;
   union request_content__
    {
@@ -493,7 +494,8 @@ typedef struct nfs_thread_control_block__
 typedef struct nfs_worker_data__
 {
   unsigned int worker_index;
-  LRU_list_t *pending_request;
+  int  pending_request_len;
+  struct glist_head pending_request;
   LRU_list_t *duplicate_request;
   struct prealloc_pool request_pool;
   struct prealloc_pool dupreq_pool;

@@ -380,9 +380,7 @@ void stats_collect (ganesha_stats_t                 *ganesha_stats)
             }
         }
 
-        /* Computing the pending request stats */
-	assert(workers_data[i].pending_request->nb_invalid == 0);
-        ganesha_stats->len_pending_request = workers_data[i].pending_request->nb_entry;
+        ganesha_stats->len_pending_request = workers_data[i].pending_request_len;
         if (ganesha_stats->len_pending_request < ganesha_stats->min_pending_request)
             ganesha_stats->min_pending_request = ganesha_stats->len_pending_request;
 
