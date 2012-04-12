@@ -349,7 +349,7 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
   FSAL_namecpy(&dirent_key->name, pname);
   dirent = cache_inode_avl_qp_lookup_s(pentry_parent, dirent_key, 1);
   if (! dirent) {
-      *pstatus = CACHE_INODE_NOT_FOUND; /* Right error code (see above)? */
+      *pstatus = CACHE_INODE_BAD_COOKIE; /* Right error code (see above)? */
       return NULL;
   }
 
@@ -1258,7 +1258,7 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
                        "%s: seek to cookie=%"PRIu64" fail",
                        __func__,
                        cookie);
-	  *pstatus = CACHE_INODE_NOT_FOUND;
+	  *pstatus = CACHE_INODE_BAD_COOKIE;
 	  V_r(&dir_pentry->lock);
 	  return *pstatus;
       }
