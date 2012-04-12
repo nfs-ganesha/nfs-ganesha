@@ -2013,10 +2013,12 @@ void *worker_thread(void *IndexArg)
                    "waiting for requests to process, nb_entry=%d, nb_invalid=%d",
                    pmydata->pending_request->nb_entry,
                    pmydata->pending_request->nb_invalid);
+      assert(pmydata->pending_request->nb_invalid == 0);
 
       /* Get the state without lock first, if things are fine
        * don't bother to check under lock.
        */
+      assert(pmydata->pending_request->nb_invalid == 0);
       if((pmydata->wcb.tcb_state != STATE_AWAKE) ||
           (pmydata->pending_request->nb_entry ==
            pmydata->pending_request->nb_invalid))
@@ -2024,6 +2026,7 @@ void *worker_thread(void *IndexArg)
           while(1)
             {
               P(pmydata->wcb.tcb_mutex);
+	      assert(pmydata->pending_request->nb_invalid == 0);
               if(pmydata->wcb.tcb_state == STATE_AWAKE &&
                  (pmydata->pending_request->nb_entry !=
                   pmydata->pending_request->nb_invalid))
@@ -2038,6 +2041,7 @@ void *worker_thread(void *IndexArg)
                     continue;
 
                   case THREAD_SM_BREAK:
+		      assert(pmydata->pending_request->nb_invalid == 0);
                     if(pmydata->pending_request->nb_entry ==
                         pmydata->pending_request->nb_invalid)
                       {
@@ -2061,6 +2065,7 @@ void *worker_thread(void *IndexArg)
                    pause_state_str[pmydata->wcb.tcb_state],
                    pmydata->pending_request->nb_entry,
                    pmydata->pending_request->nb_invalid);
+      assert(pmydata->pending_request->nb_invalid == 0);
 
       P(pmydata->request_pool_mutex);
       if (LRU_pop_entry(pmydata->pending_request, &out_entry) == LRU_LIST_EMPTY_LIST) {
@@ -2081,6 +2086,7 @@ void *worker_thread(void *IndexArg)
                         pmydata->pending_request->nb_entry,
                         pmydata->pending_request->nb_invalid,
                         (unsigned long) pnfsreq->rcontent.nfs.msg.rm_xid);
+	   assert(pmydata->pending_request->nb_invalid == 0);
 
            if(pnfsreq->rcontent.nfs.xprt->XP_SOCK == 0)
             {
