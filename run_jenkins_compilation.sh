@@ -18,15 +18,22 @@ else
   DYNOPT=""
 fi
 
+# Deal with MORE_OPT
+
+MORE_OPT=""
+
 if [[ $FSAL == "GPFS" ]] ; then
-  FUOPT=" --enable-fsal-up"
-else
-  FUOPT=""
+  MORE_OPT=" --enable-fsal-up"
 fi
+
+if [[ $FSAL == "PROXY" ]] ; then 
+  MORE_OPT=" --enable-handle-mapping"
+fi
+  
 
 REGULAR_OPT="--with-db=PGSQL --with-nfs4-minorversion=1 --enable-nlm --enable-snmp-adm"
 
-./configure --with-fsal=$FSAL --with-mfsl=$MFSL  $REGULAR_OPT $FUOPT $DYNOPT|| exit 1 
+./configure --with-fsal=$FSAL --with-mfsl=$MFSL  $REGULAR_OPT $MORE_OPT $DYNOPT|| exit 1 
 
 
 make -j 2 || make -j 2 || make || failed="TRUE"
