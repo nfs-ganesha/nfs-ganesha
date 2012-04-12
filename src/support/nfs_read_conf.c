@@ -181,10 +181,6 @@ int nfs_read_worker_conf(config_file_t in_config, nfs_worker_parameter_t * ppara
         {
           pparam->nb_ip_stats_prealloc = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "LRU_Pending_Job_Prealloc_PoolSize"))
-        {
-          pparam->lru_param.nb_entry_prealloc = atoi(key_value);
-        }
       else if(!strcasecmp(key_name, "LRU_DupReq_Prealloc_PoolSize"))
         {
           pparam->lru_dupreq.nb_entry_prealloc = atoi(key_value);
@@ -1231,9 +1227,6 @@ int nfs_read_version4_conf(config_file_t in_config, nfs_version4_parameter_t * p
  */
 void Print_param_worker_in_log(nfs_worker_parameter_t * pparam)
 {
-  LogInfo(COMPONENT_INIT,
-          "NFS PARAM : worker_param.lru_param.nb_entry_prealloc = %d",
-          pparam->lru_param.nb_entry_prealloc);
   LogInfo(COMPONENT_INIT,
           "NFS PARAM : worker_param.nb_pending_prealloc = %d",
           pparam->nb_pending_prealloc);

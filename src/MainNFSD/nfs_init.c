@@ -344,13 +344,6 @@ void nfs_set_param_default()
 
   nfs_param.core_param.clustered = FALSE;
 
-  /* Worker parameters : LRU */
-  nfs_param.worker_param.lru_param.nb_entry_prealloc = NB_PREALLOC_LRU_WORKER;
-  nfs_param.worker_param.lru_param.nb_call_gc_invalid = 100;
-  nfs_param.worker_param.lru_param.clean_entry = NULL;// poison so that GC isnt executed
-  nfs_param.worker_param.lru_param.entry_to_str = print_pending_request;
-  nfs_param.worker_param.lru_param.lp_name = "Worker LRU";
-
   /* Worker parameters : LRU dupreq */
   nfs_param.worker_param.lru_dupreq.nb_entry_prealloc = NB_PREALLOC_LRU_DUPREQ;
   nfs_param.worker_param.lru_dupreq.nb_call_gc_invalid = 100;
@@ -1383,19 +1376,6 @@ int nfs_check_param_consistency()
       return 1;
     }
 
-
-  if(nfs_param.worker_param.nb_before_gc <
-     nfs_param.worker_param.lru_param.nb_entry_prealloc / 2)
-    {
-      LogCrit(COMPONENT_INIT,
-              "BAD PARAMETER: worker_param.nb_before_gc is too small: %d",
-              nfs_param.worker_param.nb_before_gc);
-      LogCrit(COMPONENT_INIT,
-              "BAD PARAMETER: It should be at least half of worker_param.lru_param.nb_entry_prealloc = %d",
-              nfs_param.worker_param.lru_param.nb_entry_prealloc);
-
-      return 1;
-    }
 
   if(nfs_param.dupreq_param.hash_param.nb_node_prealloc <
      nfs_param.worker_param.lru_dupreq.nb_entry_prealloc)

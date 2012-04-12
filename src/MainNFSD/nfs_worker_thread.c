@@ -1682,7 +1682,6 @@ int nfs_Init_worker_data(nfs_worker_data_t * pdata)
   if(tcb_new(&(pdata->wcb), name) != 0)
     return -1;
 
-  // TODO(eitanb): remember to remove this LRU's config (nfs_param.worker_param.lru_param)
   init_glist(&pdata->pending_request);
   pdata->pending_request_len = 0;
 

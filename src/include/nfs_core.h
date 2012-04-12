@@ -224,14 +224,12 @@ typedef char path_str_t[MAXPATHLEN] ;
 
 typedef struct nfs_worker_param__
 {
-  LRU_parameter_t lru_param;
   LRU_parameter_t lru_dupreq;
   unsigned int nb_pending_prealloc;
   unsigned int nb_dupreq_prealloc;
   unsigned int nb_client_id_prealloc;
   unsigned int nb_ip_stats_prealloc;
   unsigned int nb_before_gc;
-  // unsigned int nb_dupreq_before_gc;
 } nfs_worker_parameter_t;
 
 typedef struct nfs_rpc_dupreq_param__
