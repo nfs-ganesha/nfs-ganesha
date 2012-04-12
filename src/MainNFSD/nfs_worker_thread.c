@@ -2010,9 +2010,8 @@ void *worker_thread(void *IndexArg)
 
       /* Wait on condition variable for work to be done */
       LogFullDebug(COMPONENT_DISPATCH,
-                   "waiting for requests to process, nb_entry=%d, nb_invalid=%d",
-                   pmydata->pending_request->nb_entry,
-                   pmydata->pending_request->nb_invalid);
+                   "waiting for requests to process, nb_entry=%d",
+                   pmydata->pending_request->nb_entry);
       assert(pmydata->pending_request->nb_invalid == 0);
 
       /* Get the state without lock first, if things are fine
@@ -2020,17 +2019,13 @@ void *worker_thread(void *IndexArg)
        */
       assert(pmydata->pending_request->nb_invalid == 0);
       if((pmydata->wcb.tcb_state != STATE_AWAKE) ||
-          (pmydata->pending_request->nb_entry ==
-           pmydata->pending_request->nb_invalid))
-        {
+          (pmydata->pending_request->nb_entry == 0)) {
           while(1)
             {
               P(pmydata->wcb.tcb_mutex);
 	      assert(pmydata->pending_request->nb_invalid == 0);
               if(pmydata->wcb.tcb_state == STATE_AWAKE &&
-                 (pmydata->pending_request->nb_entry !=
-                  pmydata->pending_request->nb_invalid))
-                {
+                 (pmydata->pending_request->nb_entry != 0)) {
                   V(pmydata->wcb.tcb_mutex);
                   break;
                 }
@@ -2042,9 +2037,7 @@ void *worker_thread(void *IndexArg)
 
                   case THREAD_SM_BREAK:
 		      assert(pmydata->pending_request->nb_invalid == 0);
-                    if(pmydata->pending_request->nb_entry ==
-                        pmydata->pending_request->nb_invalid)
-                      {
+                    if(pmydata->pending_request->nb_entry == 0) {
                         /* No work; wait */
                         pthread_cond_wait(&(pmydata->wcb.tcb_condvar),
                                           &(pmydata->wcb.tcb_mutex));
@@ -2061,10 +2054,9 @@ void *worker_thread(void *IndexArg)
         }
 
       LogFullDebug(COMPONENT_DISPATCH,
-                   "Processing a new request, pause_state: %s, nb_entry=%u, nb_invalid=%u",
+                   "Processing a new request, pause_state: %s, nb_entry=%u",
                    pause_state_str[pmydata->wcb.tcb_state],
-                   pmydata->pending_request->nb_entry,
-                   pmydata->pending_request->nb_invalid);
+                   pmydata->pending_request->nb_entry);
       assert(pmydata->pending_request->nb_invalid == 0);
 
       P(pmydata->request_pool_mutex);
@@ -2081,10 +2073,9 @@ void *worker_thread(void *IndexArg)
        {
           case NFS_REQUEST:
            LogFullDebug(COMPONENT_DISPATCH,
-                        "I have some work to do, pnfsreq=%p, length=%d, invalid=%d, xid=%lu",
+                        "I have some work to do, pnfsreq=%p, length=%d, xid=%lu",
                         pnfsreq,
                         pmydata->pending_request->nb_entry,
-                        pmydata->pending_request->nb_invalid,
                         (unsigned long) pnfsreq->rcontent.nfs.msg.rm_xid);
 	   assert(pmydata->pending_request->nb_invalid == 0);
 
