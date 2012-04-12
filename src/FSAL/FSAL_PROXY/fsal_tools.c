@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:set expandtab:shiftwidth=2:tabstop=8:
  */
 
 /**
@@ -77,10 +77,6 @@ int PROXYFSAL_handlecmp(fsal_handle_t * handle_1, fsal_handle_t * handle_2,
 
   /* Check if size are the same for underlying's server FH */
   if(handle1->data.srv_handle_len != handle2->data.srv_handle_len)
-    return -1;
-
-  /* Check timestamp for server's instance (take care when volatile FH will be used) */
-  if(handle1->data.timestamp != handle2->data.timestamp)
     return -1;
 
   /* At last, check underlying FH value. We use the fact that srv_handle_len is the same */
@@ -194,6 +190,14 @@ unsigned int PROXYFSAL_Handle_to_RBTIndex(fsal_handle_t *handle,
   return h;
 }
 
+static ssize_t proxy_sizeof_handle(const proxyfsal_handle_t *pxh)
+{
+  if(pxh->data.srv_handle_len > sizeof(pxh->data.srv_handle_val))
+    return -1;
+  return offsetof(proxyfsal_handle_t, data.srv_handle_val) + 
+	 pxh->data.srv_handle_len;
+}
+
 /**
  * FSAL_DigestHandle :
  *  Convert an proxyfsal_handle_t to a buffer
@@ -210,56 +214,34 @@ unsigned int PROXYFSAL_Handle_to_RBTIndex(fsal_handle_t *handle,
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
-
-#define NFSV4_FH_OPAQUE_SIZE 108 /* Take care of coherency with size of file_handle_v4_t::fsopaque */
-
 fsal_status_t PROXYFSAL_DigestHandle(fsal_export_context_t * exp_context, /* IN */
                                      fsal_digesttype_t output_type,     /* IN */
                                      fsal_handle_t * in_handle,       /* IN */
-                                     caddr_t out_buff   /* OUT */
-    )
+                                     struct fsal_handle_desc * fh_desc)
 {
 #ifdef _HANDLE_MAPPING
   nfs23_map_handle_t map_hdl;
 #endif
   proxyfsal_export_context_t * p_expcontext = (proxyfsal_export_context_t *)exp_context;
   proxyfsal_handle_t * in_fsal_handle = (proxyfsal_handle_t *)in_handle;
+  ssize_t sz;
+  const void *data;
+  uint32_t fid2;
 
   /* sanity checks */
-  if(!in_fsal_handle || !out_buff || !p_expcontext)
+  if(!in_handle || !fh_desc || !fh_desc->start || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   switch (output_type)
     {
-
-      /* NFSV2 handle digest */
     case FSAL_DIGEST_NFSV2:
-
-#ifdef _HANDLE_MAPPING
+    case FSAL_DIGEST_NFSV3:
       if(!global_fsal_proxy_specific_info.enable_handle_mapping)
         ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
-      /* returns a digest and register it to handle map
-       * (use the same checksum as cache inode's RBT index)
-       */
-      map_hdl.object_id = in_fsal_handle->data.fileid4;
-      map_hdl.handle_hash = FSAL_Handle_to_RBTIndex(in_fsal_handle, 0);
-
-      HandleMap_SetFH(&map_hdl, in_fsal_handle);
-
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV2);
-      memcpy(out_buff, &map_hdl, sizeof(nfs23_map_handle_t));
-
-#else
-      /* Proxy works only on NFSv4 requests */
-      ReturnCode(ERR_FSAL_NOTSUPP, 0);
-#endif
-
-      break;
-
-      /* NFSV3 handle digest */
-    case FSAL_DIGEST_NFSV3:
 #ifdef _HANDLE_MAPPING
+      if(fh_desc->len < sizeof(map_hdl))
+        ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
       /* returns a digest and register it to handle map
        * (use the same checksum as cache inode's RBT index)
@@ -269,60 +251,45 @@ fsal_status_t PROXYFSAL_DigestHandle(fsal_export_context_t * exp_context, /* IN 
 
       HandleMap_SetFH(&map_hdl, in_fsal_handle);
 
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV3);
-      memcpy(out_buff, &map_hdl, sizeof(nfs23_map_handle_t));
-
-#else
-      /* Proxy works only on NFSv4 requests */
-      ReturnCode(ERR_FSAL_NOTSUPP, 0);
+      /* Do no set length - use as much of opaque handle as allowed,
+       * it could help when converting handles back in ExpandHandle */
+      memset(fh_desc->start, 0, fh_desc->len);
+      memcpy(fh_desc->start, &map_hdl, sizeof(map_hdl));
+      ReturnCode(ERR_FSAL_NO_ERROR, 0);
 #endif
-      break;
-
-      /* NFSV4 handle digest */
+    /* fallthru */
     case FSAL_DIGEST_NFSV4:
-
-     if(in_fsal_handle->data.srv_handle_len + sizeof(fsal_u64_t) + 2 * sizeof(unsigned int) >
-       NFSV4_FH_OPAQUE_SIZE)
-         ReturnCode(ERR_FSAL_INVAL, ENOSPC);
-
-      memset(out_buff, 0, FSAL_DIGEST_SIZE_HDLV4);
-
-      /* Keep the file id */
-      memcpy(out_buff, (char *)&(in_fsal_handle->data.fileid4), sizeof(fsal_u64_t));
-
-      /* Keep  the type of then object at the beginning */
-      memcpy((char *)(out_buff + sizeof(fsal_u64_t)),
-             (char *)&(in_fsal_handle->data.object_type_reminder), sizeof(unsigned int));
-
-      /* Then the len of the file handle */
-      memcpy((char *)(out_buff + sizeof(fsal_u64_t) + sizeof(unsigned int)),
-             &(in_fsal_handle->data.srv_handle_len), sizeof(unsigned int));
-
-      /* Then keep the value of the buff */
-      memcpy((char *)(out_buff + sizeof(fsal_u64_t) + 2 * sizeof(unsigned int)),
-             in_fsal_handle->data.srv_handle_val, in_fsal_handle->data.srv_handle_len);
+      sz = proxy_sizeof_handle(in_fsal_handle);
+      data = in_fsal_handle;
       break;
 
-      /* FileId digest for NFSv2 */
     case FSAL_DIGEST_FILEID2:
-      /* Just keep the most significant part */
-      memcpy(out_buff, (char *)(&(in_fsal_handle->data.fileid4) + sizeof(u_int32_t)),
-             sizeof(u_int32_t));
+      fid2 = in_fsal_handle->data.fileid4;
+      if(fid2 != in_fsal_handle->data.fileid4)
+	ReturnCode(ERR_FSAL_OVERFLOW, 0);
+      data = &fid2;
+      sz = sizeof(fid2);
       break;
 
-      /* FileId digest for NFSv3 */
     case FSAL_DIGEST_FILEID3:
-      memcpy(out_buff, (char *)&(in_fsal_handle->data.fileid4), sizeof(fsal_u64_t));
-      break;
-
     case FSAL_DIGEST_FILEID4:
-      memcpy(out_buff, (char *)&(in_fsal_handle->data.fileid4), sizeof(fsal_u64_t));
+      sz = sizeof(in_fsal_handle->data.fileid4);
+      data = &(in_fsal_handle->data.fileid4);
       break;
 
     default:
       ReturnCode(ERR_FSAL_SERVERFAULT, 0);
     }
 
+  if(fh_desc->len <  sz)
+    {
+      LogDebug(COMPONENT_FSAL, "Cannot fit %zd bytes into %zd",
+	       sz, fh_desc->len);
+      ReturnCode(ERR_FSAL_TOOSMALL, 0);
+    }
+
+  fh_desc->len = sz;
+  memcpy(fh_desc->start, data, sz);
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
 }                               /* FSAL_DigestHandle */
@@ -334,59 +301,52 @@ fsal_status_t PROXYFSAL_DigestHandle(fsal_export_context_t * exp_context, /* IN 
  *
  * \param in_type (input):
  *        Indicates the type of digest to be expanded.
- * \param in_buff (input):
- *        Pointer to the digest to be expanded.
- * \param out_fsal_handle (output):
- *        The handle built from digest.
+ * \param fh_desc (input/output):
+ *        Pointer to the handle descriptor, length is set and verified
  *
  * \return The major code is ERR_FSAL_NO_ERROR is no error occured.
  *         Else, it is a non null value.
  */
 fsal_status_t PROXYFSAL_ExpandHandle(fsal_export_context_t * p_expcontext, /* IN */
                                      fsal_digesttype_t in_type, /* IN */
-                                     caddr_t in_buff,   /* IN */
-                                     fsal_handle_t * out_fsal_handle       /* OUT */
-    )
+                                     struct fsal_handle_desc *fh_desc)
 {
-  fsal_nodetype_t nodetype;
-  fsal_u64_t fileid;
-  nfs_fh4 nfs4fh;
 #ifdef _HANDLE_MAPPING
-  nfs23_map_handle_t map_hdl;
+  nfs23_map_handle_t *map_hdl;
   proxyfsal_handle_t tmp_hdl;
   int rc;
 #endif
+  ssize_t sz;
 
   /* sanity checks */
-  if(!out_fsal_handle || !in_buff || !p_expcontext)
+  if(!fh_desc || !fh_desc->start || !p_expcontext)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   switch (in_type)
     {
-
     case FSAL_DIGEST_NFSV2:
     case FSAL_DIGEST_NFSV3:
-
-#ifdef _HANDLE_MAPPING
       if(!global_fsal_proxy_specific_info.enable_handle_mapping)
         ReturnCode(ERR_FSAL_NOTSUPP, 0);
 
-      /* retrieve significant info */
-      memcpy(&map_hdl, in_buff, sizeof(nfs23_map_handle_t));
+#ifdef _HANDLE_MAPPING
+      if(fh_desc->len < sizeof(*map_hdl))
+        ReturnCode(ERR_FSAL_TOOSMALL, 0);
 
-      rc = HandleMap_GetFH(&map_hdl, &tmp_hdl);
+      map_hdl = (nfs23_map_handle_t *)fh_desc->start;
+      rc = HandleMap_GetFH(map_hdl, &tmp_hdl);
 
       if(isFullDebug(COMPONENT_FSAL))
         {
           if(rc == HANDLEMAP_STALE)
             LogFullDebug(COMPONENT_FSAL, "File id=%llu : HandleMap_GetFH returns HANDLEMAP_STALE\n",
-                         (unsigned long long)map_hdl.object_id);
+                         (unsigned long long)map_hdl->object_id);
           else if(rc == 0)
             LogFullDebug(COMPONENT_FSAL, "File id=%llu : HandleMap_GetFH returns HANDLEMAP_SUCCESS\n",
-                         (unsigned long long)map_hdl.object_id);
+                         (unsigned long long)map_hdl->object_id);
           else
             LogFullDebug(COMPONENT_FSAL, "File id=%llu : HandleMap_GetFH returns error %d\n",
-                         (unsigned long long)map_hdl.object_id, rc);
+                         (unsigned long long)map_hdl->object_id, rc);
         }
 
       if(rc == HANDLEMAP_STALE)
@@ -394,50 +354,32 @@ fsal_status_t PROXYFSAL_ExpandHandle(fsal_export_context_t * p_expcontext, /* IN
       else if(rc != 0)
         ReturnCode(ERR_FSAL_SERVERFAULT, rc);
 
-      /* The fsal_handle we get may not be up-to-date
-       * so we pass an extract of its content to fsal_internal_proxy_create_fh()
-       */
-      fsal_internal_proxy_extract_fh(&nfs4fh, &tmp_hdl);
-
-      if(fsal_internal_proxy_create_fh
-         (&nfs4fh, tmp_hdl.data.object_type_reminder, tmp_hdl.data.fileid4,
-          out_fsal_handle) != TRUE)
-        ReturnCode(ERR_FSAL_FAULT, 0);
-
-#else
-      /* Proxy works only on NFSv4 requests */
-      ReturnCode(ERR_FSAL_NOTSUPP, 0);
+      sz = proxy_sizeof_handle(&tmp_hdl);
+      if(fh_desc->len < sz)
+	ReturnCode(ERR_FSAL_TOOSMALL, 0);
+      memcpy(fh_desc->start, &tmp_hdl, sz);
+      break;
 #endif
-      break;
-
+    /* fallthru */
     case FSAL_DIGEST_NFSV4:
-      /* take the file id */
-      memcpy((char *)&fileid, in_buff, sizeof(fsal_u64_t));
-
-      /* Keep  the type of then object at the beginning */
-      memcpy((char *)&nodetype, (char *)(in_buff + sizeof(fsal_u64_t)),
-             sizeof(unsigned int));
-
-      /* Then the len of the file handle */
-      memcpy((char *)&(nfs4fh.nfs_fh4_len),
-             (char *)(in_buff + sizeof(fsal_u64_t) + sizeof(unsigned int)),
-             sizeof(unsigned int));
-
-      /* Then keep the value of the buff */
-      nfs4fh.nfs_fh4_val =
-          (char *)(in_buff + sizeof(fsal_u64_t) + 2 * sizeof(unsigned int));
-
-      if(fsal_internal_proxy_create_fh(&nfs4fh, nodetype, fileid, out_fsal_handle) !=
-         TRUE)
-        ReturnCode(ERR_FSAL_FAULT, 0);
-
+      sz = proxy_sizeof_handle((proxyfsal_handle_t *)fh_desc->start);
+      if(sz < 0)
+	ReturnCode(ERR_FSAL_BADHANDLE, 0);
+      if(fh_desc->len != sz)
+        {
+          LogMajor(COMPONENT_FSAL,
+                   "size mismatch for handle.  should be %zd, got %zd",
+                   sz, fh_desc->len);
+          ReturnCode(ERR_FSAL_BADHANDLE, 0);
+        }
       break;
-
-    default:
-      /* Invalid input digest type. */
-      ReturnCode(ERR_FSAL_INVAL, 0);
+    case FSAL_DIGEST_SIZEOF:
+      sz = proxy_sizeof_handle((proxyfsal_handle_t *)fh_desc->start);
+      break;
+    default: /* Catch FILEID2, FILEID3, FILEID4 */
+      ReturnCode(ERR_FSAL_SERVERFAULT, 0);
     }
-
+  fh_desc->len = sz;  /* pass back the actual size */
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -479,7 +421,6 @@ fsal_status_t PROXYFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t * out_
   init_info->sec_type = 0;
 
   strcpy(init_info->srv_proto, "tcp");
-  strncpy(init_info->openfh_wd, "/.hl_dir", MAXPATHLEN);
 
 #ifdef _HANDLE_MAPPING
   init_info->enable_handle_mapping = FALSE;
@@ -670,53 +611,6 @@ fsal_status_t PROXYFSAL_load_FS_specific_parameter_from_conf(config_file_t in_co
               ReturnCode(ERR_FSAL_INVAL, 0);
             }
 #endif
-        }
-      else if(!STRCMP(key_name, "Open_by_FH_Working_Dir"))
-        {
-          strncpy(init_info->openfh_wd, key_value, MAXPATHLEN);
-        }
-
-      else if(!STRCMP(key_name, "Enable_Handle_Mapping"))
-        {
-          init_info->enable_handle_mapping = StrToBoolean(key_value);
-
-          if(init_info->enable_handle_mapping == -1)
-            {
-              LogCrit(COMPONENT_CONFIG,
-                      "FSAL LOAD PARAMETER: ERROR: Unexpected value for %s --> %s (boolean expected)",
-                      key_name, key_value);
-              ReturnCode(ERR_FSAL_INVAL, 0);
-            }
-        }
-      else if(!STRCMP(key_name, "HandleMap_DB_Dir"))
-        {
-          strncpy(init_info->hdlmap_dbdir, key_value, MAXPATHLEN);
-        }
-      else if(!STRCMP(key_name, "HandleMap_Tmp_Dir"))
-        {
-          strncpy(init_info->hdlmap_tmpdir, key_value, MAXPATHLEN);
-        }
-      else if(!STRCMP(key_name, "HandleMap_DB_Count"))
-        {
-          init_info->hdlmap_dbcount = (unsigned int)atoi(key_value);
-        }
-      else if(!STRCMP(key_name, "HandleMap_HashTable_Size"))
-        {
-          init_info->hdlmap_hashsize = (unsigned int)atoi(key_value);
-        }
-      else if(!STRCMP(key_name, "HandleMap_Nb_Entries_Prealloc"))
-        {
-          init_info->hdlmap_nb_entry_prealloc =
-              (unsigned int)atoi(key_value);
-        }
-      else if(!STRCMP(key_name, "HandleMap_Nb_DB_Operations_Prealloc"))
-        {
-          init_info->hdlmap_nb_db_op_prealloc =
-              (unsigned int)atoi(key_value);
-        }
-      else if(!STRCMP(key_name, "Open_by_FH_Working_Dir"))
-        {
-          strncpy(init_info->openfh_wd, key_value, MAXPATHLEN);
         }
       else if(!STRCMP(key_name, "Enable_Handle_Mapping"))
         {

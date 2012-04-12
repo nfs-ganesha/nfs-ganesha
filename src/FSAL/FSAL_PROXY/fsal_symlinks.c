@@ -242,7 +242,6 @@ fsal_status_t PROXYFSAL_symlink(fsal_handle_t * parent_directory_handle,   /* IN
   COMPOUND4res resnfs4;
   nfs_fh4 nfs4fh;
   bitmap4 bitmap;
-  uint32_t bitmap_val[2];
   uint32_t bitmap_res[2];
   uint32_t bitmap_mkdir[2];
   uint32_t bitmap_getattr_res[2];
@@ -266,7 +265,6 @@ fsal_status_t PROXYFSAL_symlink(fsal_handle_t * parent_directory_handle,   /* IN
   nfs_argop4 argoparray[FSAL_SYMLINK_NB_OP_ALLOC];
   nfs_resop4 resoparray[FSAL_SYMLINK_NB_OP_ALLOC];
 
-  char fattr_val[FSAL_SYMLINK_VAL_BUFFER];
   struct timeval timeout = TIMEOUTRPC;
 
   /* sanity checks.
@@ -289,12 +287,6 @@ fsal_status_t PROXYFSAL_symlink(fsal_handle_t * parent_directory_handle,   /* IN
   argnfs4.tag.utf8string_val = NULL;
   argnfs4.tag.utf8string_len = 0;
   argnfs4.argarray.argarray_len = 0;
-
-  input_attr.attrmask.bitmap4_val = bitmap_val;
-  input_attr.attrmask.bitmap4_len = 2;
-
-  input_attr.attr_vals.attrlist4_val = fattr_val;
-  input_attr.attr_vals.attrlist4_len = FSAL_SYMLINK_VAL_BUFFER;
 
   fsal_internal_proxy_setup_fattr(&fattr_internal);
 
@@ -364,6 +356,7 @@ fsal_status_t PROXYFSAL_symlink(fsal_handle_t * parent_directory_handle,   /* IN
 
   /* Call the NFSv4 function */
   COMPOUNDV4_EXECUTE(p_context, argnfs4, resnfs4, rc);
+  nfs4_Fattr_Free(&input_attr);
   if(rc != RPC_SUCCESS)
     {
       ReleaseTokenFSCall();

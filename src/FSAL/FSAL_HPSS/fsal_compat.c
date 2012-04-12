@@ -377,17 +377,6 @@ fsal_status_t WRAP_HPSSFSAL_rcp(fsal_handle_t * filehandle,     /* IN */
                       (hpssfsal_op_context_t *) p_context, p_local_path, transfer_opt);
 }
 
-fsal_status_t WRAP_HPSSFSAL_rcp_by_fileid(fsal_handle_t * filehandle,   /* IN */
-                                          fsal_u64_t fileid,    /* IN */
-                                          fsal_op_context_t * p_context,        /* IN */
-                                          fsal_path_t * p_local_path,   /* IN */
-                                          fsal_rcpflag_t transfer_opt /* IN */ )
-{
-  return HPSSFSAL_rcp_by_fileid((hpssfsal_handle_t *) filehandle, fileid,
-                                (hpssfsal_op_context_t *) p_context, p_local_path,
-                                transfer_opt);
-}
-
 fsal_status_t WRAP_HPSSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,      /* IN */
                                    fsal_name_t * p_old_name,    /* IN */
                                    fsal_handle_t * p_new_parentdir_handle,      /* IN */
@@ -691,7 +680,6 @@ fsal_functions_t fsal_hpss_functions = {
   .fsal_get_quota = WRAP_HPSSFSAL_get_quota,
   .fsal_check_quota = WRAP_HPSSFSAL_check_quota,
   .fsal_rcp = WRAP_HPSSFSAL_rcp,
-  .fsal_rcp_by_fileid = WRAP_HPSSFSAL_rcp_by_fileid,
   .fsal_rename = WRAP_HPSSFSAL_rename,
   .fsal_get_stats = WRAP_HPSSFSAL_get_stats,
   .fsal_readlink = WRAP_HPSSFSAL_readlink,

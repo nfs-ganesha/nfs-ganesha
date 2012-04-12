@@ -55,7 +55,7 @@
 #define MAX_NUM_FAMILY  50
 #define UNUSED_SLOT -1
 
-log_level_t tabLogLevel[NB_LOG_LEVEL] =
+log_level_t tabLogLevel[] =
 {
   {NIV_NULL,       "NIV_NULL",       "NULL",       LOG_NOTICE},
   {NIV_FATAL,      "NIV_FATAL",      "FATAL",      LOG_CRIT},
@@ -65,9 +65,13 @@ log_level_t tabLogLevel[NB_LOG_LEVEL] =
   {NIV_EVENT,      "NIV_EVENT",      "EVENT",      LOG_NOTICE},
   {NIV_INFO,       "NIV_INFO",       "INFO",       LOG_INFO},
   {NIV_DEBUG,      "NIV_DEBUG",      "DEBUG",      LOG_DEBUG},
-  {NIV_MID_DEBUG,  "NIV_MID_DEBUG",  "MID_DEBUG", LOG_DEBUG},
+  {NIV_MID_DEBUG,  "NIV_MID_DEBUG",  "MID_DEBUG",  LOG_DEBUG},
   {NIV_FULL_DEBUG, "NIV_FULL_DEBUG", "FULL_DEBUG", LOG_DEBUG}
 };
+
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
+#endif
 
 /* les code d'error */
 errctx_t __attribute__ ((__unused__)) tab_systeme_err[] =
@@ -336,7 +340,7 @@ int ReturnLevelAscii(const char *LevelEnAscii)
 {
   int i = 0;
 
-  for(i = 0; i < NB_LOG_LEVEL; i++)
+  for(i = 0; i < ARRAY_SIZE(tabLogLevel); i++)
     if(!strcmp(tabLogLevel[i].str, LevelEnAscii))
       return tabLogLevel[i].value;
 
@@ -348,7 +352,7 @@ char *ReturnLevelInt(int level)
 {
   int i = 0;
 
-  for(i = 0; i < NB_LOG_LEVEL; i++)
+  for(i = 0; i < ARRAY_SIZE(tabLogLevel); i++)
     if(tabLogLevel[i].value == level)
       return tabLogLevel[i].str;
 

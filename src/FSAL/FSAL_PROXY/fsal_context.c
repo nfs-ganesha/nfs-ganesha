@@ -333,13 +333,7 @@ fsal_status_t PROXYFSAL_InitClientContext(fsal_op_context_t *context)
   if(FSAL_IS_ERROR(fsal_status))
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
 
-#ifdef _BY_FILEID
-  if(FSAL_proxy_set_hldir(p_thr_context, global_fsal_proxy_specific_info.openfh_wd) == -1)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_InitClientContext);
-#endif
-
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
-
 }
 
 /* @} */

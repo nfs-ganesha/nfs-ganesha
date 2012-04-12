@@ -281,26 +281,11 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
             }
 
           fsal_status = FSAL_str2path(datapath, strsize, &fsal_path);
-#if defined(  _USE_PROXY ) && defined( _BY_FILEID )
-          fileid = cache_content_get_inum(dir_entry.d_name);
-
-          LogFullDebug(COMPONENT_CACHE_CONTENT, "====> Fileid = %llu %llx", fileid, fileid);
-
-          if(!FSAL_IS_ERROR(fsal_status))
-            {
-              fsal_status = FSAL_rcp_by_fileid(&fsal_handle,
-                                               fileid,
-                                               pcontext,
-                                               &fsal_path, FSAL_RCP_LOCAL_TO_FS);
-            }
-#else
           if(!FSAL_IS_ERROR(fsal_status))
             {
               fsal_status = FSAL_rcp(&fsal_handle,
                                      pcontext, &fsal_path, FSAL_RCP_LOCAL_TO_FS);
             }
-#endif
-
           if(FSAL_IS_ERROR(fsal_status))
             {
               if((fsal_status.major == ERR_FSAL_NOENT) ||

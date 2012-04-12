@@ -134,7 +134,6 @@ fsal_status_t FSAL_proxy_setclientid(proxyfsal_op_context_t * p_context);
 fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_context);
 fsal_status_t FSAL_proxy_setclientid_renego(proxyfsal_op_context_t * p_context);
 
-int FSAL_proxy_set_hldir(proxyfsal_op_context_t * p_thr_context, char *hl_path);
 int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context);
 fsal_status_t FSAL_proxy_open_confirm(proxyfsal_file_t * pfd);
 void *FSAL_proxy_change_user(proxyfsal_op_context_t * p_thr_context);
@@ -292,12 +291,6 @@ fsal_status_t PROXYFSAL_rcp(fsal_handle_t * filehandle,    /* IN */
                             fsal_path_t * p_local_path, /* IN */
                             fsal_rcpflag_t transfer_opt /* IN */ );
 
-fsal_status_t PROXYFSAL_rcp_by_fileid(fsal_handle_t * filehandle,  /* IN */
-                                      fsal_u64_t fileid,        /* IN */
-                                      fsal_op_context_t * p_context,       /* IN */
-                                      fsal_path_t * p_local_path,       /* IN */
-                                      fsal_rcpflag_t transfer_opt /* IN */ );
-
 fsal_status_t PROXYFSAL_rename(fsal_handle_t * p_old_parentdir_handle,     /* IN */
                                fsal_name_t * p_old_name,        /* IN */
                                fsal_handle_t * p_new_parentdir_handle,     /* IN */
@@ -338,12 +331,11 @@ unsigned int PROXYFSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle,
 fsal_status_t PROXYFSAL_DigestHandle(fsal_export_context_t * p_expcontext, /* IN */
                                      fsal_digesttype_t output_type,     /* IN */
                                      fsal_handle_t * p_in_fsal_handle,     /* IN */
-                                     caddr_t out_buff /* OUT */ );
+                                     struct fsal_handle_desc * fh_desc /* IN/OUT */ );
 
 fsal_status_t PROXYFSAL_ExpandHandle(fsal_export_context_t * p_expcontext, /* IN */
                                      fsal_digesttype_t in_type, /* IN */
-                                     caddr_t in_buff,   /* IN */
-                                     fsal_handle_t * p_out_fsal_handle /* OUT */ );
+                                     struct fsal_handle_desc * in_buff);
 
 fsal_status_t PROXYFSAL_SetDefault_FS_specific_parameter(fsal_parameter_t *
                                                          out_parameter);

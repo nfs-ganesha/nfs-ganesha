@@ -167,6 +167,7 @@ int nfs4_op_verify(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
         res_VERIFY4.status = NFS4ERR_NOT_SAME;
     }
 
+  nfs4_Fattr_Free(&file_attr4);
   return res_VERIFY4.status;
 }                               /* nfs4_op_verify */
 

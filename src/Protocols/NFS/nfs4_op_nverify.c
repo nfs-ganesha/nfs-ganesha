@@ -169,6 +169,7 @@ int nfs4_op_nverify(struct nfs_argop4 *op,
         res_NVERIFY4.status = NFS4ERR_SAME;
     }
 
+  nfs4_Fattr_Free(&file_attr4);
   return res_NVERIFY4.status;
 }                               /* nfs4_op_nverify */
 

@@ -84,7 +84,6 @@ case $build in
                 MYOS=LINUX
 		AC_DEFINE( [LINUX], 1, [Build Operating System is Linux] )
 		AC_DEFINE( [_LINUX], 1, [Build Operating System is Linux] )
-		EXTRA_LIB=""
 	 	;;
 	*-apple*)
 		MYOS=MACOS

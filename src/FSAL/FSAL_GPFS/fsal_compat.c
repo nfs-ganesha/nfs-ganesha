@@ -59,7 +59,6 @@ fsal_functions_t fsal_gpfs_functions = {
   .fsal_get_quota = COMMON_get_quota_noquota,
   .fsal_check_quota = COMMON_check_quota,
   .fsal_rcp = GPFSFSAL_rcp,
-  .fsal_rcp_by_fileid = COMMON_rcp_by_fileid,
   .fsal_rename = GPFSFSAL_rename,
   .fsal_get_stats = GPFSFSAL_get_stats,
   .fsal_readlink = GPFSFSAL_readlink,

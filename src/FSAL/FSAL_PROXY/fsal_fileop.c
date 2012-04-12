@@ -283,13 +283,22 @@ fsal_status_t PROXYFSAL_open_by_name(fsal_handle_t * dirhandle,    /* IN */
 }                               /* FSAL_open_by_name */
 
 /**
- * FSAL_open_stateless:
- * Open a regular file for reading/writing its data content, in a stateless way.
+ * FSAL_open:
+ * Open a regular file for reading/writing its data content.
  *
  * \param filehandle (input):
- *        Handle of the directory that contain the file to be read/modified.
+ *        Handle of the file to be read/modified.
  * \param cred (input):
  *        Authentication context for the operation (user,...).
+ * \param openflags (input):
+ *        Flags that indicates behavior for file opening and access.
+ *        This is an inclusive OR of the following values
+ *        ( such of them are not compatible) :
+ *        - FSAL_O_RDONLY: opening file for reading only.
+ *        - FSAL_O_RDWR: opening file for reading and writing.
+ *        - FSAL_O_WRONLY: opening file for writting only.
+ *        - FSAL_O_APPEND: always write at the end of the file.
+ *        - FSAL_O_TRUNC: truncate the file to 0 on opening.
  * \param file_descriptor (output):
  *        The file descriptor to be used for FSAL_read/write operations.
  * \param file_attributes (optionnal input/output):
@@ -302,19 +311,18 @@ fsal_status_t PROXYFSAL_open_by_name(fsal_handle_t * dirhandle,    /* IN */
  * \return Major error codes:
  *      - ERR_FSAL_NO_ERROR     (no error)
  *      - ERR_FSAL_ACCESS       (user doesn't have the permissions for opening the file)
- *      - ERR_FSAL_STALE        (filehandle does not address an existing object) 
+ *      - ERR_FSAL_STALE        (filehandle does not address an existing object)
  *      - ERR_FSAL_INVAL        (filehandle does not address a regular file,
  *                               or open flags are conflicting)
  *      - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
  *      - Other error codes can be returned :
  *        ERR_FSAL_IO, ...
  */
-
-static fsal_status_t PROXYFSAL_open_stateless(fsal_handle_t * filehandle,  /* IN */
-                                              fsal_op_context_t *context,       /* IN */
-                                              fsal_openflags_t openflags,       /* IN */
-                                              fsal_file_t * file_desc,       /* OUT */
-                                              fsal_attrib_list_t * file_attributes      /* [ IN/OUT ] */
+fsal_status_t PROXYFSAL_open(fsal_handle_t * filehandle,  /* IN */
+                             fsal_op_context_t *context,       /* IN */
+                             fsal_openflags_t openflags,       /* IN */
+                             fsal_file_t * file_desc,       /* OUT */
+                             fsal_attrib_list_t * file_attributes      /* [ IN/OUT ] */
     )
 {
   int rc;
@@ -445,73 +453,7 @@ static fsal_status_t PROXYFSAL_open_stateless(fsal_handle_t * filehandle,  /* IN
   memset((char *)file_descriptor->stateid.other, 0, 12);
 
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_open);
-}                               /* FSAL_open_stateless */
-
-/**
- * FSAL_open:
- * Open a regular file for reading/writing its data content.
- *
- * \param filehandle (input):
- *        Handle of the file to be read/modified.
- * \param cred (input):
- *        Authentication context for the operation (user,...).
- * \param openflags (input):
- *        Flags that indicates behavior for file opening and access.
- *        This is an inclusive OR of the following values
- *        ( such of them are not compatible) :
- *        - FSAL_O_RDONLY: opening file for reading only.
- *        - FSAL_O_RDWR: opening file for reading and writing.
- *        - FSAL_O_WRONLY: opening file for writting only.
- *        - FSAL_O_APPEND: always write at the end of the file.
- *        - FSAL_O_TRUNC: truncate the file to 0 on opening.
- * \param file_descriptor (output):
- *        The file descriptor to be used for FSAL_read/write operations.
- * \param file_attributes (optionnal input/output):
- *        Post operation attributes.
- *        As input, it defines the attributes that the caller
- *        wants to retrieve (by positioning flags into this structure)
- *        and the output is built considering this input
- *        (it fills the structure according to the flags it contains).
- *
- * \return Major error codes:
- *      - ERR_FSAL_NO_ERROR     (no error)
- *      - ERR_FSAL_ACCESS       (user doesn't have the permissions for opening the file)
- *      - ERR_FSAL_STALE        (filehandle does not address an existing object)
- *      - ERR_FSAL_INVAL        (filehandle does not address a regular file,
- *                               or open flags are conflicting)
- *      - ERR_FSAL_FAULT        (a NULL pointer was passed as mandatory argument)
- *      - Other error codes can be returned :
- *        ERR_FSAL_IO, ...
- */
-
-fsal_status_t PROXYFSAL_open(fsal_handle_t * filehandle,   /* IN */
-                             fsal_op_context_t * p_context,        /* IN */
-                             fsal_openflags_t openflags,        /* IN */
-                             fsal_file_t * file_descriptor,        /* OUT */
-                             fsal_attrib_list_t * file_attributes       /* [ IN/OUT ] */
-    )
-{
-  fsal_status_t fsal_status;
-
-  /* sanity checks.
-   * note : file_attributes is optional.
-   */
-  if(!filehandle || !p_context || !file_descriptor)
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open);
-
-  /* >> you can check if this is a file if the information
-   * is stored into the handle << */
-
-  if(((proxyfsal_handle_t *)filehandle)->data.object_type_reminder != FSAL_TYPE_FILE)
-    {
-      Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_open);
-    }
-
-  fsal_status =
-      PROXYFSAL_open_stateless(filehandle, p_context, openflags, file_descriptor,
-                               file_attributes);
-  Return(fsal_status.major, fsal_status.minor, INDEX_FSAL_open);
-}
+}                               /* FSAL_open */
 
 /**
  * FSAL_read:
@@ -581,6 +523,7 @@ fsal_status_t PROXYFSAL_read(fsal_file_t * file_desc,        /* IN */
           offset = seek_descriptor->offset + file_descriptor->current_offset;
           break;
 
+        default:
         case FSAL_SEEK_END:
           Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_read);
           break;
@@ -708,6 +651,7 @@ fsal_status_t PROXYFSAL_write(fsal_file_t * file_desc,       /* IN */
           offset = seek_descriptor->offset + file_descriptor->current_offset;
           break;
 
+        default:
         case FSAL_SEEK_END:
           Return(ERR_FSAL_INVAL, 0, INDEX_FSAL_write);
           break;
