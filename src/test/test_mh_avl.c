@@ -1,12 +1,12 @@
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
 
 #include "CUnit/Basic.h"
 
-#include <afs/afsint.h>
 #include "avltree.h"
 #include "murmur3.h"
 

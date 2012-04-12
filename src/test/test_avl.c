@@ -1,11 +1,11 @@
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
 
 #include "CUnit/Basic.h"
 
-#include <afs/afsint.h>
 #include "avltree.h"
 
 
@@ -205,6 +205,32 @@ int clean_suite10000(void)
 }
 
 
+/* 
+ * The suite initialization function.
+ * Initializes resources to be shared across tests.
+ * Returns zero on success, non-zero otherwise.
+ *
+ */
+int init_supremum(void)
+{
+    avltree_init(&avl_tree_2, avl_unit_cmpf, 0 /* flags */);
+
+    return 0;
+}
+
+/* The suite cleanup function.
+ * Closes the temporary resources used by the tests.
+ * Returns zero on success, non-zero otherwise.
+ */
+int clean_supremum(void)
+{
+
+    avltree_destroy(&avl_tree_2);
+
+    return 0;
+}
+
+
 /*
  *  END SUITE INITIALIZATION and CLEANUP FUNCTIONS
  */
@@ -284,7 +310,6 @@ void deletes_tree_1(void)
     avl_unit_free_val(v);
 }
 
-//xx
 void inserts_tree_2(void)
 {
     avl_unit_val_t *v;
@@ -356,6 +381,105 @@ void deletes_tree_2(void)
     int ix;
 
     for (ix = 1; ix < 4; ++ix) {
+
+	/* reuse key */
+	v->key = ix;
+
+	/* find mapping */
+	node = avltree_lookup(&v->node_k, &avl_tree_2);
+        v2 = avltree_container_of(node, avl_unit_val_t, node_k);
+	CU_ASSERT(v2->val == (ix+1));
+
+	/* and remove it */
+        avltree_remove(&v2->node_k, &avl_tree_2);
+	avl_unit_free_val(v2);
+    }
+
+    /* free search k */
+    avl_unit_free_val(v);
+}
+
+
+// xxxx
+void inserts_supremum(void)
+{
+    avl_unit_val_t *v;
+    int ix;
+
+    for (ix = 100; ix < 1000; ix += 100) {
+
+	/* new k, v */
+	v = avl_unit_new_val(ix);
+
+	/* if actual key cannot be marshalled as a pointer */
+	v->key = ix;
+
+	/* insert mapping */
+        avltree_insert(&v->node_k, &avl_tree_2);
+    }
+}
+
+void checks_supremum(void)
+{
+    struct avltree_node *node;
+    avl_unit_val_t *v2, *v = avl_unit_new_val(0);
+    int ix;
+
+    for (ix = 100; ix < 1000; ix += 100) {
+
+	/* reuse v */
+	v->key = (ix - 2); /* a value -just less than ix- */
+
+	/* lookup mapping */
+	node = avltree_sup(&v->node_k, &avl_tree_2);
+        CU_ASSERT(node != NULL);
+        if (node) {
+            v2 = avltree_container_of(node, avl_unit_val_t, node_k);
+            CU_ASSERT((unsigned long) v2->val == (ix+1));
+        }
+
+        /* ok, now find the -infimum- */
+        v->key = ix + 2; /* a value just above ix */
+
+	/* lookup mapping */
+	node = avltree_inf(&v->node_k, &avl_tree_2);
+        CU_ASSERT(node != NULL);
+        if (node) {
+            v2 = avltree_container_of(node, avl_unit_val_t, node_k);
+            CU_ASSERT((unsigned long) v2->val == (ix+1));
+        }        
+
+    }
+
+    /* now check the boundary case for supremum */
+    v->key = 500;
+
+    node = avltree_sup(&v->node_k, &avl_tree_2);
+    CU_ASSERT(node != NULL);
+    if (node) {
+        v2 = avltree_container_of(node, avl_unit_val_t, node_k);
+        CU_ASSERT((unsigned long) v2->val == (v->key+1));
+    }
+
+    /* and infimum */
+    node = avltree_inf(&v->node_k, &avl_tree_2);
+    CU_ASSERT(node != NULL);
+    if (node) {
+        v2 = avltree_container_of(node, avl_unit_val_t, node_k);
+        CU_ASSERT((unsigned long) v2->val == (v->key+1));
+    }
+
+    /* free v */
+    avl_unit_free_val(v);
+}
+
+void deletes_supremum(void)
+{
+    struct avltree_node *node;
+    avl_unit_val_t *v2, *v = avl_unit_new_val(0);
+    int ix;
+
+    for (ix = 100; ix < 1000; ix += 100) {
 
 	/* reuse key */
 	v->key = ix;
@@ -776,19 +900,28 @@ int main()
       CU_TEST_INFO_NULL,
     };
 
+    CU_TestInfo avl_tree_unit_supremum[] = {
+      { "Inserts supremum.", inserts_supremum },
+      { "Checks supremum (and infimum).", checks_supremum },
+      { "Deletes supremum.", deletes_supremum },
+      CU_TEST_INFO_NULL,
+    };
+
     CU_SuiteInfo suites[] = {
-      { "Rb tree operations 1", init_suite1, clean_suite1,
+      { "Avl operations 1", init_suite1, clean_suite1,
 	avl_tree_unit_1_arr },
-      { "Rb tree operations 2", init_suite2, clean_suite2,
+      { "Avl operations 2", init_suite2, clean_suite2,
 	avl_tree_unit_2_arr },
-      { "Rb tree operations 2 R", init_suite2, clean_suite2,
+      { "Avl operations 2 R", init_suite2, clean_suite2,
 	avl_tree_unit_2r_arr },
-      { "Rb tree operations 100", init_suite100, clean_suite100,
+      { "Avl operations 100", init_suite100, clean_suite100,
 	avl_tree_unit_100_arr },
-      { "Rb tree operations 10000", init_suite10000, clean_suite10000,
+      { "Avl operations 10000", init_suite10000, clean_suite10000,
 	avl_tree_unit_10000_arr },
       { "Check min 1", init_suite1, clean_suite1,
 	avl_tree_unit_min_1_arr },
+      { "Check supremum", init_supremum, clean_supremum,
+        avl_tree_unit_supremum },
       CU_SUITE_INFO_NULL,
     };
   
