@@ -154,8 +154,9 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
     {
       truncate_attributes.asked_attributes = pclient->attrmask;
 
-      fsal_status = FSAL_truncate(pfsal_handle,
-                                  pcontext, pattr->filesize, NULL, &truncate_attributes);
+      fsal_status = FSAL_truncate(pfsal_handle, pcontext, pattr->filesize,
+          &(pentry->object.file.open_fd.fd),  /* used by FSAL_GPFS */
+          &truncate_attributes);
       if(FSAL_IS_ERROR(fsal_status))
         {
           *pstatus = cache_inode_error_convert(fsal_status);

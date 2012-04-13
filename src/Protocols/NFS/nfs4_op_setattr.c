@@ -243,6 +243,9 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
           res_SETATTR4.status = nfs4_Errno(cache_status);
           return res_SETATTR4.status;
         }
+      /* we just did the truncate, turn off these attrs */
+      sattr.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
+      sattr.asked_attributes &= ~FSAL_ATTR_SIZE;
     }
 
   /* Now, we set the mode */
