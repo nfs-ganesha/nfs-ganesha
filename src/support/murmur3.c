@@ -12,7 +12,7 @@
 //-----------------------------------------------------------------------------
 // Platform-specific functions and macros
 
-#define	FORCE_INLINE __attribute__((always_inline))
+#define	FORCE_INLINE inline __attribute__((always_inline))
 
 inline uint32_t rotl32 ( uint32_t x, int8_t r )
 {
