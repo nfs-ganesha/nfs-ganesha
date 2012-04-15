@@ -7,6 +7,10 @@
 // compile and run any of them on any platform, but your performance with the
 // non-native version will be less than optimal.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "murmur3.h"
 
 //-----------------------------------------------------------------------------
