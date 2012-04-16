@@ -323,11 +323,11 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
 {
   cache_entry_t *pentry = NULL;
   cache_inode_dir_entry_t dirent_key[1], *dirent, *dirent2, *dirent3;
-  LRU_List_state_t vstate;
+  cache_inode_entry_valid_state_t vstate;
   int code = 0;
 
-  /* Directory mutation generally invalidates outstanding 
-   * readdirs, hence any cached cookies, so in these cases we 
+  /* Directory mutation generally invalidates outstanding
+   * readdirs, hence any cached cookies, so in these cases we
    * clear the cookie avl */
 
   /* Set the return default to CACHE_INODE_SUCCESS */
@@ -358,8 +358,8 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
   if (vstate == VALID || vstate == STALE) {
 
       if (vstate == STALE)
-      	LogDebug(COMPONENT_CACHE_INODE,
-		"DIRECTORY: found STALE cache entry");
+        LogDebug(COMPONENT_CACHE_INODE,
+                 "DIRECTORY: found STALE cache entry");
 
       /* Entry was found */
         pentry = dirent->pentry;

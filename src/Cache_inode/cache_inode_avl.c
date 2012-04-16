@@ -118,7 +118,7 @@ cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
                             int j, int j2)
 {
     int code = -1;
-    struct avltree_node *node, *node2;
+    struct avltree_node *node;
     cache_inode_dir_entry_t *v_exist = NULL;
     struct avltree *t = &entry->object.dir.avl.t;
     struct avltree *c = &entry->object.dir.avl.c;
@@ -281,7 +281,6 @@ cache_inode_avl_qp_lookup_s(
     struct avltree *t = &entry->object.dir.avl.t;
     struct avltree_node *node;
     cache_inode_dir_entry_t *v2;
-    unsigned long ix, s;
     uint32_t hk[4];
     int j;
 
