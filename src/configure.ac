@@ -459,19 +459,6 @@ if test \( "x$enable_pnfs_mds" = "xyes" \) -o \( "x$enable_pnfs_ds" = "xyes" \);
         AC_DEFINE(_PNFS,1,[pNFS support])
 fi
 
-# MFSL switch argument (default is NULL )
-AC_ARG_WITH( [mfsl], AS_HELP_STRING([--with-mfsl=NONE|NULL|TIMER|ASYNC|AIO|MIRROR|PROXY_RPCSECGSS (default=NULL)],[specify the type of intermediate FSAL module to be used] ),
-	     MFSL="$withval", MFSL="NONE" )
-
-AM_CONDITIONAL(USE_MFSL_NONE,            test "$MFSL" = "NONE")
-AM_CONDITIONAL(USE_MFSL_AIO,             test "$MFSL" = "AIO")
-AM_CONDITIONAL(USE_MFSL_NULL,            test "$MFSL" = "NULL")
-AM_CONDITIONAL(USE_MFSL_TIMER,           test "$MFSL" = "TIMER")
-AM_CONDITIONAL(USE_MFSL_ASYNC,           test "$MFSL" = "ASYNC")
-AM_CONDITIONAL(USE_MFSL_PROXY_RPCSECGSS, test "$MFSL" = "PROXY_RPCSECGSS")
-
-AM_CONDITIONAL(USE_MFSL,                 test "$MFSL" != "NONE" )
-
 # Database switch (for POSIX FSAL)
 AC_ARG_WITH( [db], AS_HELP_STRING([--with-db=MYSQL|PGSQL (default=MYSQL)],[specify the database engine for POSIX FSAL] ),
 	     DBTYPE="$withval", DBTYPE="MYSQL" )
@@ -749,40 +736,6 @@ case $FSAL in
 		AC_MSG_ERROR([This FSAL is not supported])
 esac
 
-case $MFSL in
-        NONE)
-		MFS_LIB=""
-		;;
-	TIMER)
-		AC_DEFINE([_USE_MFSL], 1, [Use MFSL module])
-		AC_DEFINE([_USE_MFSL_TIMER], 1, [Use MFSL_TIMER module which measures times taken by FSAL functions])
-		MFSL_LIB="\$(top_builddir)/MFSL/MFSL_TIMER/libmfsltimer.la"
-		;;
-	NULL)
-		AC_DEFINE([_USE_MFSL], 1, [Use MFSL module])
-		AC_DEFINE([_USE_MFSL_NULL], 1, [Use MFSL_NULL module which calls directly the FSAL functions])
-		MFSL_LIB="\$(top_builddir)/MFSL/MFSL_NULL/libmfslnull.la"
-		;;
-	ASYNC)
-		AC_DEFINE([_USE_MFSL], 1, [Use MFSL module])
-		AC_DEFINE([_USE_MFSL_ASYNC], 1, [Use MFSL_ASYNC module which calls the FSAL functions asynchronously])
-		MFSL_LIB="\$(top_builddir)/MFSL/MFSL_ASYNC/libmfslasync.la"
-		;;
-	AIO)
-		AC_DEFINE([_USE_MFSL], 1, [Use MFSL module])
-		AC_DEFINE([_USE_MFSL_AIO], 1, [Use MFSL_AIO module with asynchronous FSAL read and write ])
-		MFSL_LIB="\$(top_builddir)/MFSL/MFSL_AIO/libmfslaio.la"
-		;;
-	PROXY_RPCSECGSS)
-		AC_DEFINE([_USE_MFSL], 1, [Use MFSL module])
-		AC_DEFINE([_USE_MFSL_PROXY_RPCSECGSS], 1, [Use MFSL_PROXY_RPCSECGSS, wraps the FSAL call for RPCSECGSS client side in proxy])
-		MFSL_LIB="\$(top_builddir)/MFSL/MFSL_PROXY_RPCSECGSS/libmfslproxy_rpcsecgss.la"
-		;;
-	*)
-		AC_MSG_ERROR([This MFSL is not supported yet])
-
-esac
-
 case $RPCAL in
 	"ONCRPC")
 		;;
@@ -838,19 +791,11 @@ if test "$enable_fsal_ds" == "yes"; then
         AC_DEFINE(_USE_FSALDS,1,[enable FSAL based pNFS DS support])
 fi
 
-# MFSL_ASYNC should not be used with HPSS
-if [[ $FSAL == "HPSS" ]] ; then
-  if [[ $MFSL == "ASYNC" ]] ; then
-		AC_MSG_ERROR([FSAL_HPSS and MFSL_ASYNC are incompatible])
-  fi
-fi
-
 AC_SUBST(CFLAGS)
 AC_SUBST(FSAL_CFLAGS)
 AC_SUBST(FSAL_LDFLAGS)
 AC_SUBST(FSAL_LIB)
 AC_SUBST(FSALPNFS_LIB)
-AC_SUBST(MFSL_LIB)
 AC_SUBST(FS_NAME)
 AC_SUBST(SEC_CFLAGS)
 AC_SUBST(SEC_LFLAGS)
@@ -876,12 +821,6 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_VFS/Makefile
                  include/FSAL/FSAL_TEMPLATE/Makefile
                  include/FSAL/FSAL_CEPH/Makefile
-                 include/MFSL/Makefile
-                 include/MFSL/MFSL_NULL/Makefile
-                 include/MFSL/MFSL_TIMER/Makefile
-                 include/MFSL/MFSL_AIO/Makefile
-                 include/MFSL/MFSL_ASYNC/Makefile
-                 include/MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  BuddyMalloc/Makefile
                  Common/Makefile
                  support/Makefile
@@ -924,12 +863,6 @@ AC_CONFIG_FILES([include/Makefile
                  FSAL/FSAL_ZFS/Makefile
                  FSAL/FSAL_VFS/Makefile
 		 FSAL/FSAL_TEMPLATE/Makefile
-		 MFSL/Makefile
-		 MFSL/MFSL_NULL/Makefile
-		 MFSL/MFSL_TIMER/Makefile
-		 MFSL/MFSL_ASYNC/Makefile
-		 MFSL/MFSL_AIO/Makefile
-		 MFSL/MFSL_PROXY_RPCSECGSS/Makefile
                  RPCAL/Makefile
                  RPCAL/ONCRPC/Makefile
                  RPCAL/TIRPC/Makefile

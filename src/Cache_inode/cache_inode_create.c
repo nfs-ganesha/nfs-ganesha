@@ -94,12 +94,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
     cache_entry_t *pentry = NULL;
     cache_inode_dir_entry_t *new_dir_entry;
     fsal_status_t fsal_status;
-#ifdef _USE_MFSL
-    mfsl_object_t object_handle;
-    fsal_attrib_list_t parent_attributes;
-#else
     fsal_handle_t object_handle;
-#endif
     fsal_attrib_list_t object_attributes;
     fsal_handle_t dir_handle;
     cache_inode_fsal_data_t fsal_data;
@@ -202,109 +197,50 @@ cache_inode_create(cache_entry_t * pentry_parent,
     switch (type)
         {
         case REGULAR_FILE:
-#ifdef _USE_MFSL
-	    parent_attributes = pentry_parent->attributes;
-            fsal_status = MFSL_create(&pentry_parent->mobject,
-                                      pname, pcontext,
-                                      &pclient->mfsl_context,
-                                      mode, &object_handle,
-                                      &object_attributes, &parent_attributes,
-                                      NULL);
-#else
             fsal_status = FSAL_create(&dir_handle,
                                       pname, pcontext, mode,
                                       &object_handle, &object_attributes);
-#endif
             break;
 
         case DIRECTORY:
-#ifdef _USE_MFSL
-	    parent_attributes = pentry_parent->attributes;
-            fsal_status = MFSL_mkdir(&pentry_parent->mobject,
-                                     pname, pcontext,
-                                     &pclient->mfsl_context,
-                                     mode, &object_handle,
-                                     &object_attributes, &parent_attributes, NULL);
-#else
             fsal_status = FSAL_mkdir(&dir_handle,
                                      pname, pcontext, mode,
                                      &object_handle, &object_attributes);
-#endif
             break;
 
         case SYMBOLIC_LINK:
-#ifdef _USE_MFSL
-	    parent_attributes = pentry_parent->attributes;
-            fsal_status = MFSL_symlink(&pentry_parent->mobject,
-                                       pname, &pcreate_arg->link_content,
-                                       pcontext, &pclient->mfsl_context,
-                                       mode, &object_handle, &object_attributes, NULL);
-#else
             fsal_status = FSAL_symlink(&dir_handle,
                                        pname, &pcreate_arg->link_content,
                                        pcontext, mode, &object_handle,
                                        &object_attributes);
-#endif
             break;
 
         case SOCKET_FILE:
-#ifdef _USE_MFSL
-            fsal_status = MFSL_mknode(&pentry_parent->mobject, pname,
-                                      pcontext, &pclient->mfsl_context, mode,
-                                      FSAL_TYPE_SOCK, NULL, /* no dev_t needed for socket file */
-                                      &object_handle, &object_attributes, NULL);
-#else
             fsal_status = FSAL_mknode(&dir_handle, pname, pcontext,
                                       mode, FSAL_TYPE_SOCK, NULL, /* no dev_t needed for socket file */
                                       &object_handle, &object_attributes);
-#endif
             break;
 
         case FIFO_FILE:
-#ifdef _USE_MFSL
-            fsal_status = MFSL_mknode(&pentry_parent->mobject, pname,
-                                      pcontext, &pclient->mfsl_context,
-                                      mode, FSAL_TYPE_FIFO, NULL, /* no dev_t needed for FIFO file */
-                                      &object_handle, &object_attributes, NULL);
-#else
             fsal_status = FSAL_mknode(&dir_handle, pname, pcontext,
                                       mode, FSAL_TYPE_FIFO, NULL, /* no dev_t needed for FIFO file */
                                       &object_handle, &object_attributes);
-#endif
             break;
 
         case BLOCK_FILE:
-#ifdef _USE_MFSL
-            fsal_status = MFSL_mknode(&pentry_parent->mobject,
-                                      pname, pcontext,
-                                      &pclient->mfsl_context,
-                                      mode, FSAL_TYPE_BLK,
-                                      &pcreate_arg->dev_spec,
-                                      &object_handle, &object_attributes, NULL);
-#else
             fsal_status = FSAL_mknode(&dir_handle,
                                       pname, pcontext,
                                       mode, FSAL_TYPE_BLK,
                                       &pcreate_arg->dev_spec,
                                       &object_handle, &object_attributes);
-#endif
             break;
 
         case CHARACTER_FILE:
-#ifdef _USE_MFSL
-            fsal_status = MFSL_mknode(&pentry_parent->mobject,
-                                      pname, pcontext,
-                                      &pclient->mfsl_context,
-                                      mode, FSAL_TYPE_CHR,
-                                      &pcreate_arg->dev_spec,
-                                      &object_handle, &object_attributes, NULL);
-#else
             fsal_status = FSAL_mknode(&dir_handle,
                                       pname, pcontext,
                                       mode, FSAL_TYPE_CHR,
                                       &pcreate_arg->dev_spec,
                                       &object_handle, &object_attributes);
-#endif
             break;
 
         default:
@@ -347,11 +283,7 @@ cache_inode_create(cache_entry_t * pentry_parent,
         }
     else
         {
-#ifdef _USE_MFSL
-	    fsal_data.fh_desc.start = (caddr_t)(&object_handle.handle);
-#else
             fsal_data.fh_desc.start = (caddr_t)(&object_handle);
-#endif
             fsal_data.fh_desc.len = 0;
             (void) FSAL_ExpandHandle(pcontext->export_context,
 				     FSAL_DIGEST_SIZEOF,
@@ -376,11 +308,6 @@ cache_inode_create(cache_entry_t * pentry_parent,
                     inc_func_err_unrecover(pclient, CACHE_INODE_CREATE);
                     return NULL;
                 }
-#ifdef _USE_MFSL
-            /* Copy the MFSL object to the cache */
-            memcpy((char *)&(pentry->mobject),
-                   (char *)&object_handle, sizeof(mfsl_object_t));
-#endif
 
             /* Add this entry to the directory */
             status = cache_inode_add_cached_dirent(pentry_parent,

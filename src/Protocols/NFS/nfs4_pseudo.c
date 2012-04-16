@@ -1516,9 +1516,6 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   char pathfsal[MAXPATHLEN] ;
   fsal_attrib_list_t attr;
   fsal_handle_t fsal_handle;
-#ifdef _USE_MFSL
-  mfsl_object_t mobject;
-#endif
   cache_entry_t *pentry = NULL;
   fsal_mdsize_t strsize = MNTPATHLEN + 1;
 
@@ -1609,15 +1606,8 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         }
 
       /* Lookup the FSAL to build the fsal handle */
-#ifdef _USE_MFSL
-      if(FSAL_IS_ERROR(fsal_status = MFSL_lookupPath(&exportpath_fsal,
-                                                     data->pcontext,
-                                                     &data->pclient->mfsl_context,
-                                                     &mobject, NULL)))
-#else
       if(FSAL_IS_ERROR(fsal_status = FSAL_lookupPath(&exportpath_fsal,
                                                      data->pcontext, &fsal_handle, NULL)))
-#endif
         {
 	  LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to lookup for %s, id=%d",
@@ -1628,9 +1618,6 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
           return res_LOOKUP4.status;
         }
-#ifdef _USE_MFSL
-      fsal_handle = mobject.handle;
-#endif
 
       if(data->mounted_on_FH.nfs_fh4_len == 0)
         {
@@ -1808,9 +1795,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   fsal_path_t exportpath_fsal;
   fsal_attrib_list_t attr;
   fsal_handle_t fsal_handle;
-#ifdef _USE_MFSL
-  mfsl_object_t mobject;
-#endif
   fsal_mdsize_t strsize = MNTPATHLEN + 1;
   fsal_status_t fsal_status;
   int error = 0;
@@ -1889,15 +1873,8 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
         }
 
       /* Lookup the FSAL to build the fsal handle */
-#ifdef _USE_MFSL
-      if(FSAL_IS_ERROR(fsal_status = MFSL_lookupPath(&exportpath_fsal,
-                                                     data->pcontext,
-                                                     &data->pclient->mfsl_context,
-                                                     &mobject, NULL)))
-#else
       if(FSAL_IS_ERROR(fsal_status = FSAL_lookupPath(&exportpath_fsal,
                                                      data->pcontext, &fsal_handle, NULL)))
-#endif
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to lookup for %s, id=%d",
@@ -1908,9 +1885,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
           return res_READDIR4.status;
         }
-#ifdef _USE_MFSL
-      fsal_handle = mobject.handle;
-#endif
 
       if(data->mounted_on_FH.nfs_fh4_len == 0)
         {
@@ -2119,16 +2093,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
               res_READDIR4.status = NFS4ERR_SERVERFAULT;
               return res_READDIR4.status;
             }
-#ifdef _USE_MFSL
-          if(FSAL_IS_ERROR(fsal_status = MFSL_lookupPath(&exportpath_fsal,
-                                                 data->pcontext,
-                                                 &data->pclient->mfsl_context,
-                                                 &mobject, NULL)))
-#else
           if(FSAL_IS_ERROR(fsal_status = FSAL_lookupPath(&exportpath_fsal,
                                                  data->pcontext, 
                                                  &fsal_handle, NULL)))
-#endif
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to lookup for %s , id=%d",
@@ -2139,9 +2106,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
               res_READDIR4.status = NFS4ERR_SERVERFAULT;
               return res_READDIR4.status;
             }
-#ifdef _USE_MFSL
-          fsal_handle = mobject.handle;
-#endif
           /* Build the nfs4 handle. Again, we do this unconditionally. */
           if(!nfs4_FSALToFhandle(&entryFH, &fsal_handle, data))
             {

@@ -52,9 +52,6 @@
 #include "HashTable.h"
 #include "avltree.h"
 #include "fsal.h"
-#ifdef _USE_MFSL
-#include "mfsl.h"
-#endif
 #include "log.h"
 #include "config_parsing.h"
 #include "nfs23.h"
@@ -193,11 +190,7 @@ typedef struct cache_inode_client_parameter__
 
 typedef struct cache_inode_opened_file__
 {
-#ifdef _USE_MFSL
-  mfsl_file_t mfsl_fd ;
-#else
   fsal_file_t fd;
-#endif 
   unsigned int fileno;
   fsal_openflags_t openflags;
   time_t last_op;
@@ -355,9 +348,6 @@ struct cache_entry_t
     cache_entry_t *parent;                           /**< Parent entry */
     struct cache_inode_parent_entry__ *next_parent;  /**< Next parent */
   } *parent_list;
-#ifdef _USE_MFSL
-  mfsl_object_t mobject;
-#endif
 };
 
 typedef struct cache_inode_file__ cache_inode_file_t;
@@ -409,9 +399,6 @@ struct cache_inode_client_t
   time_t retention;                                                /**< Fd retention duration                                    */
   unsigned int use_fd_cache;                                       /** Do we cache fd or not ?                                   */
   int fd_gc_needed;                                                /**< Should we perform fd gc ?                                */
-#ifdef _USE_MFSL
-  mfsl_context_t mfsl_context;                                     /**< Context to be used for MFSL module                       */
-#endif
 };
 
 typedef struct cache_inode_gc_policy__
@@ -571,11 +558,7 @@ cache_inode_status_t cache_inode_close(cache_entry_t * pentry,
                                        cache_inode_status_t * pstatus);
 #endif
 
-#ifdef _USE_MFSL
-mfsl_file_t * cache_inode_fd(cache_entry_t * pentry);
-#else
 fsal_file_t * cache_inode_fd(cache_entry_t * pentry);
-#endif
 
 cache_inode_status_t cache_inode_open(cache_entry_t * pentry,
                                       cache_inode_client_t * pclient,

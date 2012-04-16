@@ -2942,15 +2942,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       for(pcurrent = pexportlist; pcurrent != NULL; pcurrent = pcurrent->next)
         {
 
-#ifdef _USE_MFSL_ASYNC
-          if(!(pcurrent->options & EXPORT_OPTION_USE_DATACACHE))
-            {
-              LogFatal(COMPONENT_INIT,
-                       "ERROR : the export entry iId=%u, Export Path=%s must have datacache enabled...",
-                       pcurrent->id, pcurrent->fullpath);
-            }
-#endif
- 
           /* Build the FSAL path */
           if(FSAL_IS_ERROR((fsal_status = FSAL_str2path(pcurrent->fullpath,
                                                         strsize, &exportpath_fsal))))

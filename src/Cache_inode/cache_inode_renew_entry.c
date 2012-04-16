@@ -535,11 +535,7 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 
       /* Call FSAL to get the attributes */
       object_attributes.asked_attributes = pclient->attrmask;
-#ifdef _USE_MFSL
-      fsal_status = FSAL_getattrs_descriptor(&(cache_inode_fd(pentry)->fsal_file), pfsal_handle, pcontext, &object_attributes);
-#else
       fsal_status = FSAL_getattrs_descriptor(cache_inode_fd(pentry), pfsal_handle, pcontext, &object_attributes);
-#endif
       if(FSAL_IS_ERROR(fsal_status) && fsal_status.major == ERR_FSAL_NOT_OPENED)
         {
           //TODO: LOOKATME !!!!!
@@ -627,14 +623,8 @@ cache_inode_status_t cache_inode_renew_entry(cache_entry_t * pentry,
 
       if( CACHE_INODE_KEEP_CONTENT( pentry->policy ) )
        {
-#ifdef _USE_MFSL
-      fsal_status =
-          MFSL_readlink(&pentry->mobject, pcontext, &pclient->mfsl_context, &link_content,
-                        &object_attributes, NULL);
-#else
       fsal_status =
           FSAL_readlink(pfsal_handle, pcontext, &link_content, &object_attributes);
-#endif
         }
       else
         { 

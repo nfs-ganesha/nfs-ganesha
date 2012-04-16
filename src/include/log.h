@@ -131,7 +131,6 @@ typedef enum log_components
   COMPONENT_PNFS,
   COMPONENT_RPC_CACHE,
   COMPONENT_RW_LOCK,
-  COMPONENT_MFSL,
   COMPONENT_NLM,
   COMPONENT_RPC,
   COMPONENT_THREAD,
@@ -356,7 +355,6 @@ static status_t __attribute__ ((__unused__)) tab_systeme_status[] =
 #define ERR_LRU           10
 #define ERR_HASHTABLE     11
 #define ERR_FSAL          13
-#define ERR_MFSL          14
 #define ERR_GHOSTFS       15
 #define ERR_CACHE_INODE   16
 #define ERR_CACHE_CONTENT 17

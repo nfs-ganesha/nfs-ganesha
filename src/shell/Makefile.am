@@ -89,7 +89,6 @@ shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
                   $(BUDDY_LIB_FLAGS)                                 \
                   ../FSAL/libfsalcommon.la                           \
                   $(FSAL_LIB)                                        \
-                  $(MFSL_LIB)                                        \
 		  ../FSAL/common_methods.lo			     \
 		  ../FSAL/common_functions.lo			     \
 		  ../FSAL/access_check.lo			     \
@@ -106,10 +105,6 @@ __FS_NAME__ganeshell_LDADD = $(shell_libs)                           \
                     $(SEC_LIB_FLAGS) @EFENCE@ @EXTRA_LIB@ 
 
 __FS_NAME__ganeshell_DEPENDENCIES = $(__FS_NAME__ganeshell_SOURCES) $(shell_libs)
-
-if USE_MFSL
-__FS_NAME__ganeshell_SOURCES +=   commands_MFSL.c   
-endif
 
 endif
 

@@ -346,39 +346,21 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
 
           if(read_or_write == CACHE_INODE_READ)
             {
-#ifdef _USE_MFSL
-              fsal_status = MFSL_read(&(pentry->object.file.open_fd.mfsl_fd),
-                                      seek_descriptor,
-                                      io_size,
-                                      buffer,
-                                      pio_size, p_fsal_eof, &pclient->mfsl_context, NULL);
-#else
               fsal_status = FSAL_read(&(pentry->object.file.open_fd.fd),
                                       seek_descriptor,
                                       io_size, buffer, pio_size, p_fsal_eof);
-#endif
             }
           else
             {
-#ifdef _USE_MFSL
-              fsal_status = MFSL_write(&(pentry->object.file.open_fd.mfsl_fd),
-                                       seek_descriptor,
-                                       io_size, buffer, pio_size, &pclient->mfsl_context, NULL);
-#else
               fsal_status = FSAL_write(&(pentry->object.file.open_fd.fd),
                                        seek_descriptor, io_size, buffer, pio_size);
-#endif
 
 #if 0
               /* Alright, the unstable write is complete. Now if it was supposed to be a stable write
                * we can sync to the hard drive. */
               if(stable == FSAL_SAFE_WRITE_TO_FS)
                 {
-#ifdef _USE_MFSL
-                  fsal_status = MFSL_commit(&(pentry->object.file.open_fd.mfsl_fd), NULL);
-#else
                   fsal_status = FSAL_commit(&(pentry->object.file.open_fd.fd));
-#endif
 #endif
 
             }
@@ -407,11 +389,7 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
                                "cache_inode_rdwr: CLOSING pentry %p: fd=%d",
                                pentry, pentry->object.file.open_fd.fileno);
 
-#ifdef _USE_MFSL
-                  MFSL_close(&(pentry->object.file.open_fd.mfsl_fd), &pclient->mfsl_context, NULL);
-#else
                   FSAL_close(&(pentry->object.file.open_fd.fd));
-#endif
 
                   *pstatus = cache_inode_error_convert(fsal_status);
                 }

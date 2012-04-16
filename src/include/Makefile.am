@@ -3,7 +3,6 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  fsal_pnfs.h                     \
                  pnfs_common.h                   \
                  fsal_pnfs_files.h               \
-                 mfsl.h                          \
                  HashData.h                      \
                  HashTable.h                     \
                  LRU_List.h                      \
@@ -23,7 +22,6 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  fsal_types.h                    \
                  fsal_glue.h                     \
                  fsal_glue_const.h               \
-                 mfsl_types.h                    \
                  cache_content.h                 \
                  cache_content_policy.h          \
                  cache_inode.h                   \
@@ -34,7 +32,6 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  err_cache_content.h             \
                  err_cache_inode.h               \
                  err_fsal.h                      \
-                 err_mfsl.h                      \
                  err_ghost_fs.h                  \
                  err_rpc.h                       \
                  extended_types.h                \
@@ -84,6 +81,6 @@ include_HEADERS = ganesha_fuse_wrap.h
 endif
 
 
-SUBDIRS = FSAL MFSL 
+SUBDIRS = FSAL
 
 

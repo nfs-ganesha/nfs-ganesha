@@ -137,14 +137,8 @@ cache_inode_access_sw(cache_entry_t * pentry,
                                 V_r(&pentry->lock);
                             return *pstatus;
                         }
-#ifdef _USE_MFSL
-                    fsal_status = MFSL_access(&pentry->mobject, pcontext,
-                                              &pclient->mfsl_context,
-                                              used_access_type, &attr, NULL);
-#else
                     fsal_status = FSAL_access(pfsal_handle, pcontext,
                                               used_access_type, &attr);
-#endif
                 }
 
             if(FSAL_IS_ERROR(fsal_status))

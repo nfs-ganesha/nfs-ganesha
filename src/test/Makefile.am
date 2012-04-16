@@ -25,7 +25,6 @@ COMMON_LDADD = ../Protocols/NFS/libnfsproto.la                   \
                ../LRU/liblru.la                                  \
                $(BUDDY_LIB_FLAGS)                                \
                ../FSAL/libfsalcommon.la                          \
-               $(MFSL_LIB)                                       \
                $(FSAL_LIB)                                       \
                ../Log/liblog.la                                  \
                ../ConfigParsing/libConfigParsing.la              \

@@ -400,17 +400,9 @@ cache_inode_status_t cache_inode_rename(cache_entry_t * pentry_dirsrc,
    * Indeed, if the FSAL_rename fails unexpectly,
    * the cache would be inconsistent !
    */
-#ifdef _USE_MFSL
-  fsal_status = MFSL_rename(&pentry_dirsrc->mobject,
-                            poldname,
-                            &pentry_dirdest->mobject,
-                            pnewname,
-                            pcontext, &pclient->mfsl_context, pattrsrc, pattrdest, NULL);
-#else
   fsal_status = FSAL_rename(phandle_dirsrc,
                             poldname,
                             phandle_dirdest, pnewname, pcontext, pattrsrc, pattrdest);
-#endif
   if(FSAL_IS_ERROR(fsal_status))
     {
       *pstatus = cache_inode_error_convert(fsal_status);

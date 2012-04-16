@@ -92,9 +92,6 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
   fsal_handle_t handle_dest;
   fsal_attrib_list_t link_attributes;
   cache_inode_dir_entry_t *new_dir_entry;
-#ifdef _USE_MFSL
-  fsal_attrib_list_t dirdest_attributes;
-#endif
   cache_inode_status_t status;
   cache_entry_t *pentry_lookup = NULL;
   fsal_attrib_list_t lookup_attributes;
@@ -218,16 +215,8 @@ cache_inode_status_t cache_inode_link(cache_entry_t * pentry_src,
 
   /* Do the link at FSAL level */
   link_attributes.asked_attributes = pclient->attrmask;
-#ifdef _USE_MFSL
-  link_attributes = pentry_src->attributes;
-  dirdest_attributes = pentry_dir_dest->attributes;
-  fsal_status =
-      MFSL_link(&pentry_src->mobject, &pentry_dir_dest->mobject, plink_name, pcontext,
-                &pclient->mfsl_context, &link_attributes, NULL);
-#else
   fsal_status =
       FSAL_link(&handle_src, &handle_dest, plink_name, pcontext, &link_attributes);
-#endif
   if(FSAL_IS_ERROR(fsal_status))
     {
       *pstatus = cache_inode_error_convert(fsal_status);

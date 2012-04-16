@@ -1816,10 +1816,6 @@ void *worker_thread(void *IndexArg)
   unsigned int gc_allowed = FALSE;
   char thr_name[32];
 
-#ifdef _USE_MFSL
-  fsal_status_t fsal_status ;
-#endif
-
   worker_index = (unsigned long)IndexArg;
   pmydata = &(workers_data[worker_index]);
 
@@ -1875,15 +1871,6 @@ void *worker_thread(void *IndexArg)
     }
   LogFullDebug(COMPONENT_DISPATCH,
                "Cache Inode client successfully initialized");
-
-#ifdef _USE_MFSL
-
-  if(FSAL_IS_ERROR(MFSL_GetContext(&pmydata->cache_inode_client.mfsl_context, (&(pmydata->thread_fsal_context) ) ) ) ) 
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_DISPATCH, "Error initing MFSL");
-    }
-#endif
 
   /* Init the Cache content client for this worker */
   if(cache_content_client_init(&pmydata->cache_content_client,
@@ -2110,30 +2097,6 @@ void *worker_thread(void *IndexArg)
           P(pmydata->wcb.tcb_mutex);
           pmydata->gc_in_progress = FALSE;
         }
-#ifdef _USE_MFSL
-      /* As MFSL context are refresh, and because this could be a time consuming operation, the worker is
-       * set as "making garbagge collection" to avoid new requests to come in its pending queue */
-      if(pmydata->wcb.tcb_state == STATE_AWAKE)
-        {
-          pmydata->gc_in_progress = TRUE;
-
-#ifndef _USE_SHARED_FSAL
-      fsal_status = MFSL_RefreshContext(&pmydata->cache_inode_client.mfsl_context,
-                                        &pmydata->thread_fsal_context);
-
-          if(FSAL_IS_ERROR(fsal_status))
-            {
-              /* Failed init */
-              V(pmydata->wcb.tcb_mutex);
-              LogFatal(COMPONENT_DISPATCH, "Error regreshing MFSL context");
-            }
-#else
-#error "For the moment, no MFSL are supported with dynamic FSALs"
-#endif
-          pmydata->gc_in_progress = FALSE;
-        }
-
-#endif
       V(pmydata->wcb.tcb_mutex);
 
     }                           /* while( 1 ) */

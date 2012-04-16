@@ -121,13 +121,7 @@ cache_inode_status_t cache_inode_setattr(cache_entry_t * pentry, fsal_attrib_lis
   result_attributes.asked_attributes = pclient->attrmask;
   /* end of mod */
 
-#ifdef _USE_MFSL
-  fsal_status =
-      MFSL_setattrs(&pentry->mobject, pcontext, &pclient->mfsl_context, pattr,
-                    &result_attributes, NULL);
-#else
   fsal_status = FSAL_setattrs(pfsal_handle, pcontext, pattr, &result_attributes);
-#endif
   if(FSAL_IS_ERROR(fsal_status))
     {
       *pstatus = cache_inode_error_convert(fsal_status);

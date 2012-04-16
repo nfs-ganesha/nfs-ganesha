@@ -144,10 +144,6 @@ layer_def_t layer_list[] = {
    "NFSv2, NFSv3, MNTv1, MNTv3 protocols (calls through RPCs)",
    nfs_remote_layer_SetLogLevel}
   ,
-#ifdef _USE_MFSL
-  {"MFSL", commands_MFSL, "MFSL intermediate layer", nfs_remote_layer_SetLogLevel}
-  ,
-#endif
   {NULL, NULL, NULL, NULL}      /* End of layer list */
 };
 

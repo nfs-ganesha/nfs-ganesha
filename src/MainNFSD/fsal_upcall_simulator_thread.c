@@ -119,10 +119,6 @@ void *upcall_simulator_thread(void *UnusedArgument)
   fsal_attrib_list_t attr ;
   cache_inode_status_t cache_status ;
 
-#ifdef _USE_MFSL
-  fsal_status_t fsal_status ;
-#endif
-
   snprintf(thr_name, sizeof(thr_name), "Upcall Simulator Thread" );
   SetNameFunction(thr_name);
 
@@ -160,15 +156,6 @@ void *upcall_simulator_thread(void *UnusedArgument)
     }
   LogFullDebug(COMPONENT_CACHE_INODE,
                "Cache Inode client successfully initialized");
-
-#ifdef _USE_MFSL
-
-  if(FSAL_IS_ERROR(MFSL_GetContext(&mydata.cache_inode_client.mfsl_context, (&(mydata.thread_fsal_context) ) ) ) ) 
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_CACHE_INODE, "Error initing MFSL");
-    }
-#endif
 
   mydata.ht = workers_data[0].ht ;
 

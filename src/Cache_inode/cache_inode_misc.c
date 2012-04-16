@@ -379,13 +379,6 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
   pentry->fh_desc.start = (caddr_t)&pentry->handle;
   pentry->fh_desc.len = pfsdata->fh_desc.len;
 
-#ifdef _USE_MFSL
-  pentry->mobject.handle = pentry->handle;
-#ifdef _USE_MFSL_PROXY
-  pentry->mobject.plock = &pentry->lock;
-#endif
-#endif
-
   switch (type)
     {
     case REGULAR_FILE:

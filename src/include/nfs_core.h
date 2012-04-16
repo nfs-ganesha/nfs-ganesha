@@ -46,9 +46,6 @@
 #include "rpc.h"
 #include "LRU_List.h"
 #include "fsal.h"
-#ifdef _USE_MFSL
-#include "mfsl.h"
-#endif
 #include "cache_inode.h"
 #include "sal_data.h"
 #include "cache_content.h"
@@ -385,10 +382,6 @@ typedef struct nfs_param__
   buddy_parameter_t buddy_param_admin;
   buddy_parameter_t buddy_param_tcp_mgr;
   buddy_parameter_t buddy_param_fsal_up;
-#endif
-
-#ifdef _USE_MFSL
-  mfsl_parameter_t mfsl_param;
 #endif
 
 } nfs_parameter_t;

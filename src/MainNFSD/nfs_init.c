@@ -165,14 +165,6 @@ void *sigmgr_thread( void * arg )
 
   LogEvent(COMPONENT_MAIN, "NFS EXIT: synchonizing FSAL");
 
-#ifdef _USE_MFSL
-  st = MFSL_terminate();
-
-  if(FSAL_IS_ERROR(st))
-    LogCrit(COMPONENT_MAIN, "NFS EXIT: ERROR %d.%d while synchonizing MFSL",
-            st.major, st.minor);
-#endif
-
   st = FSAL_terminate();
 
   if(FSAL_IS_ERROR(st))
@@ -666,10 +658,6 @@ void nfs_set_param_default()
   FSAL_SetDefault_FS_common_parameter(&nfs_param.fsal_param);
   FSAL_SetDefault_FS_specific_parameter(&nfs_param.fsal_param);
 
-#ifdef _USE_MFSL
-  MFSL_SetDefault_parameter(&nfs_param.mfsl_param);
-#endif
-
   /* Buddy parameters */
 #ifndef _NO_BUDDY_SYSTEM
   Buddy_set_default_parameter(&nfs_param.buddy_param_admin);
@@ -840,26 +828,6 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
   else
     LogDebug(COMPONENT_INIT,
              "FS specific configuration read from config file");
-
-#ifdef _USE_MFSL
-  /* Load FSAL configuration from parsed file */
-  fsal_status = MFSL_load_parameter_from_conf(config_struct, &nfs_param.mfsl_param);
-  if(FSAL_IS_ERROR(fsal_status))
-    {
-      if(fsal_status.major == ERR_FSAL_NOENT)
-        LogDebug(COMPONENT_INIT,
-	         "No MFSL parameters found in config file, using default");
-      else
-        {
-          LogCrit(COMPONENT_INIT, "Error while parsing MFSL parameters");
-          LogError(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
-          return -1;
-        }
-    }
-  else
-    LogDebug(COMPONENT_INIT,
-             "MFSL parameters read from config file");
-#endif                          /* _USE_MFSL */
 
   /* Workers parameters */
   if((rc = nfs_read_worker_conf(config_struct, &nfs_param.worker_param)) < 0)
@@ -1318,36 +1286,6 @@ int nfs_check_param_consistency()
       LogCrit(COMPONENT_INIT, "BAD PARAMETER(s) : expected primes");
   }
 
-#ifdef _USE_MFSL_ASYNC
-  if(nfs_param.cache_layers_param.cache_inode_client_param.expire_type_attr != CACHE_INODE_EXPIRE_NEVER)
-    {
-      LogCrit(COMPONENT_INIT,
-              "BAD PARAMETER (Cache_Inode): Attr_Expiration_Time should be Never when used with MFSL_ASYNC");
-      return 1;
-    }
-
-  if(nfs_param.cache_layers_param.cache_inode_client_param.expire_type_dirent != CACHE_INODE_EXPIRE_NEVER)
-    {
-      LogCrit(COMPONENT_INIT,
-              "BAD PARAMETER (Cache_Inode): Directory_Expiration_Time should be Never when used with MFSL_ASYNC");
-      return 1;
-    }
-
-  if(nfs_param.cache_layers_param.cache_inode_client_param.expire_type_link != CACHE_INODE_EXPIRE_NEVER)
-    {
-      LogCrit(COMPONENT_INIT,
-              "BAD PARAMETER (Cache_Inode): Symlink_Expiration_Time should be Never when used with MFSL_ASYNC");
-      return 1;
-    }
-
-  if(nfs_param.cache_layers_param.cache_inode_client_param.getattr_dir_invalidation !=
-     0)
-    {
-      LogCrit(COMPONENT_INIT,
-              "BAD PARAMETER (Cache_Inode): Use_Getattr_Directory_Invalidation should be NO when used with MFSL_ASYNC");
-      return 1;
-    }
-#endif                          /* _USE_MFSL_ASYNC */
 
   return 0;
 }
@@ -1660,16 +1598,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
     }
   LogInfo(COMPONENT_INIT, "FSAL library successfully initialized");
 
-#ifdef _USE_MFSL
-  /* MFSL Initialisation */
-  fsal_status = MFSL_Init(&nfs_param.mfsl_param);
-  if(FSAL_IS_ERROR(fsal_status))
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_INIT, "MFSL library could not be initialized");
-    }
-  LogInfo(COMPONENT_INIT, "MFSL library  successfully initialized");
-#endif
 
   /* Cache Inode Initialisation */
   if((ht =

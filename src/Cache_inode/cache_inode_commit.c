@@ -133,11 +133,7 @@ cache_inode_commit(cache_entry_t * pentry,
           return *pstatus;
         }
 
-#ifdef _USE_MFSL      
-      fsal_status = MFSL_commit(&(pentry->object.file.open_fd.mfsl_fd), offset, count, NULL); 
-#else
       fsal_status = FSAL_commit(&(pentry->object.file.open_fd.fd), offset, count );
-#endif
       if(FSAL_IS_ERROR(fsal_status))
       {
         LogMajor(COMPONENT_CACHE_INODE,
