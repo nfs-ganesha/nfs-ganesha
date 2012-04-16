@@ -343,7 +343,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
           LogFullDebug(COMPONENT_NFS_V4_XATTR,
                        "-----> Wanting FATTR4_LEASE_TIME");
 
-          lease_time = htonl(NFS4_LEASE_LIFETIME);
+          lease_time = htonl(nfs_param.nfsv4_param.lease_lifetime);
           memcpy((char *)(attrvalsBuffer + LastOffset), &lease_time,
                  sizeof(fattr4_lease_time));
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;

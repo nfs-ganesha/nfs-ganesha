@@ -159,28 +159,6 @@ void netobj_to_string(netobj *obj, char *buffer, int maxlen)
     }
 }
 
-int in_nlm_grace_period(void)
-{
-  struct timeval tv;
-  if(nlm_grace_tv.tv_sec == 0)
-    return 0;
-
-  if(gettimeofday(&tv, NULL) == 0)
-    {
-      if(tv.tv_sec < (nlm_grace_tv.tv_sec + NLM4_GRACE_PERIOD))
-        {
-          return 1;
-        }
-      else
-        {
-          nlm_grace_tv.tv_sec = 0;
-          return 0;
-        }
-    }
-
-  return 0;
-}
-
 void nlm_init(void)
 {
   /* start NLM grace period */

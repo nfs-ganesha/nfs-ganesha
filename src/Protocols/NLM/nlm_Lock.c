@@ -89,7 +89,7 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
     }
 
   /* allow only reclaim lock request during recovery */
-  if(in_nlm_grace_period() && !arg->reclaim)
+  if(nfs_in_grace() && !arg->reclaim)
     {
       pres->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
       LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",
@@ -97,7 +97,7 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
       return NFS_REQ_OK;
     }
 
-  if(!in_nlm_grace_period() && arg->reclaim)
+  if(!nfs_in_grace() && arg->reclaim)
     {
       pres->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
       LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Lock %s",

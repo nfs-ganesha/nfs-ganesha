@@ -142,7 +142,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_LOCKT4.status;
     }
 
-  if (nfs4_in_grace())
+  if (nfs_in_grace())
     {
       res_LOCKT4.status = NFS4ERR_GRACE;
       return res_LOCKT4.status;

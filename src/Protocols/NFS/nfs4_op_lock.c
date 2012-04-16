@@ -413,17 +413,17 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   /*
    * do grace period checking
    */
-  if (nfs4_in_grace() && !arg_LOCK4.reclaim)
+  if (nfs_in_grace() && !arg_LOCK4.reclaim)
     {
       res_LOCK4.status = NFS4ERR_GRACE;
       goto out;
     }
-  if (nfs4_in_grace() && arg_LOCK4.reclaim && !nfs_client_id->allow_reclaim)
+  if (nfs_in_grace() && arg_LOCK4.reclaim && !nfs_client_id->allow_reclaim)
     {
       res_LOCK4.status = NFS4ERR_NO_GRACE;
       goto out;
     }
-  if (!nfs4_in_grace() && arg_LOCK4.reclaim)
+  if (!nfs_in_grace() && arg_LOCK4.reclaim)
     {
       res_LOCK4.status = NFS4ERR_NO_GRACE;
       goto out;

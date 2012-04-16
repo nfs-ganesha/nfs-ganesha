@@ -88,7 +88,7 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
     }
 
 
-  if(in_nlm_grace_period())
+  if(nfs_in_grace())
     {
       pres->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
       LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",

@@ -118,7 +118,7 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_REMOVE4.status;
     }
 
-  if (nfs4_in_grace())
+  if (nfs_in_grace())
     {
       res_REMOVE4.status = NFS4ERR_GRACE;
       return res_REMOVE4.status;

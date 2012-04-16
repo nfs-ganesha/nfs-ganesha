@@ -317,20 +317,20 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
       V(nfs_clientid->clientid_mutex);
     }
 
-  if (nfs4_in_grace() && claim != CLAIM_PREVIOUS)
+  if (nfs_in_grace() && claim != CLAIM_PREVIOUS)
     {
        cause2 = " (in grace period)";
        res_OPEN4.status = NFS4ERR_GRACE;
        goto out;
     }
-  if (nfs4_in_grace() && claim == CLAIM_PREVIOUS &&
+  if (nfs_in_grace() && claim == CLAIM_PREVIOUS &&
      nfs_clientid->allow_reclaim != 1)
     {
        cause2 = " (client cannot reclaim)";
        res_OPEN4.status = NFS4ERR_NO_GRACE;
        goto out;
     }
-  if (!nfs4_in_grace() && claim == CLAIM_PREVIOUS)
+  if (!nfs_in_grace() && claim == CLAIM_PREVIOUS)
     {
        cause2 = " (not in grace period)";
        res_OPEN4.status = NFS4ERR_NO_GRACE;

@@ -60,8 +60,6 @@ typedef struct grace
 
 static grace_t grace;
 
-int grace_period = 45;
-
 typedef struct clid_entry
 {
         struct glist_head cl_list;
@@ -86,7 +84,10 @@ nfs4_init_grace()
 void
 nfs4_start_grace(nfs_grace_start_t *gsp)
 {
-        int duration = grace_period;
+        int duration;
+
+        /* limit the grace period to a maximum of 45 seconds */
+        duration = MIN(45, nfs_param.nfsv4_param.lease_lifetime);
 
         P(grace.g_mutex);
 
@@ -111,7 +112,7 @@ nfs4_start_grace(nfs_grace_start_t *gsp)
 }
 
 int
-nfs4_in_grace()
+nfs_in_grace()
 {
         int gp;
 
@@ -218,7 +219,7 @@ nfs4_chk_clid(nfs_client_id_t *nfs_clientid)
         clid_entry_t *clid_ent;
 
         /* If we aren't in grace period, then reclaim is not possible */
-        if (!nfs4_in_grace())
+        if (!nfs_in_grace())
                 return;
 
         P(grace.g_mutex);

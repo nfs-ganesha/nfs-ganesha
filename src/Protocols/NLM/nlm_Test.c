@@ -87,7 +87,7 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
       return NFS_REQ_OK;
     }
 
-  if(in_nlm_grace_period())
+  if(nfs_in_grace())
     {
       pres->res_nlm4test.test_stat.stat = NLM4_DENIED_GRACE_PERIOD;
       LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Test %s",

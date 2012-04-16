@@ -119,7 +119,7 @@ restart:
 
                 if (old_state_cleaned == 0) {
                         /* if not in grace period, clean up the old state */
-                        if(!nfs4_in_grace()) {
+                        if(!nfs_in_grace()) {
                                 nfs4_clean_old_recov_dir();
                                 old_state_cleaned = 1;
                         }
