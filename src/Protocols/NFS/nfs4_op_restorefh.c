@@ -130,6 +130,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op,
   memcpy((char *)(data->currentFH.nfs_fh4_val), (char *)(data->savedFH.nfs_fh4_val),
          data->savedFH.nfs_fh4_len);
 
+  data->currentFH.nfs_fh4_len = data->savedFH.nfs_fh4_len;
   data->current_entry = data->saved_entry;
   data->current_filetype = data->saved_filetype;
 
