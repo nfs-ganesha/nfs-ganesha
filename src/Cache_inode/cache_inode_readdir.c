@@ -392,6 +392,7 @@ cache_entry_t *cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
               avl_dirent_set_deleted(pentry_parent, dirent);
               GetFromPool(dirent3, &pclient->pool_dir_entry,
                           cache_inode_dir_entry_t);
+              dirent3->flags = DIR_ENTRY_FLAG_NONE;
 	      FSAL_namecpy(&dirent3->name, newname);
               dirent3->pentry = dirent->pentry;
               code = cache_inode_avl_qp_insert(pentry_parent, dirent3);
@@ -530,12 +531,13 @@ cache_inode_status_t cache_inode_add_cached_dirent(
     
   /* in cache inode avl, we always insert on pentry_parent */
   GetFromPool(new_dir_entry, &pclient->pool_dir_entry, cache_inode_dir_entry_t);
-
   if(new_dir_entry == NULL)
     {
       *pstatus = CACHE_INODE_MALLOC_ERROR;
       return *pstatus;
     }
+
+  new_dir_entry->flags = DIR_ENTRY_FLAG_NONE;
 
   fsal_status = FSAL_namecpy(&new_dir_entry->name, pname);
   if(FSAL_IS_ERROR(fsal_status))
@@ -1316,20 +1318,6 @@ cache_inode_status_t cache_inode_readdir(cache_entry_t * dir_pentry,
               dirent->name.name,
               dirent->hk.k,
               dirent->hk.p);
-
-      /* XXX the following skip no longer happens */
-      if (dirent->flags & DIR_ENTRY_FLAG_DELETED) {
-          LogFullDebug(COMPONENT_NFS_READDIR,
-                       "cache_inode_readdir: skip deleted=%p name=%s "
-                       "cookie=%"PRIu64" (%d)",
-                       dirent,
-                       dirent->name.name,
-                       dirent->hk.k,
-                       dirent->hk.p);
-          dirent_node = avltree_next(dirent_node);
-          i--;
-          continue;
-      }
 
       dirent_array[i] = last_dirent = dirent;
       (*pnbfound)++;
