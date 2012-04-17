@@ -281,7 +281,6 @@ fsal_up_event_bus_filter_t *find_filter(char filtername[MAX_FILTER_NAMELEN])
 void *fsal_up_thread(void *Arg)
 {
   fsal_status_t status;
-  int rc;
   fsal_up_arg_t *fsal_up_args = (fsal_up_arg_t *)Arg;
   fsal_up_event_bus_context_t fsal_up_context;
   fsal_up_event_bus_parameter_t fsal_up_bus_param;
