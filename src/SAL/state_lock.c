@@ -896,6 +896,7 @@ static bool_t subtract_lock_from_list(cache_entry_t        * pentry,
   init_glist(&split_lock_list);
   init_glist(&remove_list);
 
+  *pstatus = STATE_SUCCESS;
   glist_for_each_safe(glist, glistn, list)
     {
       found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
