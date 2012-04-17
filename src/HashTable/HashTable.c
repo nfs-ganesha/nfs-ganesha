@@ -941,16 +941,21 @@ HashTable_Get_and_Del(hash_table_t  *ht,
      rc = HashTable_GetLatch(ht, key, NULL,
                              TRUE, &latch);
 
-     if ((rc != HASHTABLE_SUCCESS) &&
-         (rc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
+     switch (rc) {
+     case HASHTABLE_SUCCESS:
+          return HashTable_DeleteLatched(ht,
+                                         key,
+                                         &latch,
+                                         stored_key,
+                                         val);
+
+
+     case HASHTABLE_ERROR_NO_SUCH_KEY:
+          HashTable_ReleaseLatched(ht, &latch);
+     default:
           return rc;
      }
 
-     return HashTable_DeleteLatched(ht,
-                                    key,
-                                    &latch,
-                                    stored_key,
-                                    val);
 } /* HashTable_Get_and_Del */
 
 /**
