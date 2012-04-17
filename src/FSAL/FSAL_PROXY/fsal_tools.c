@@ -319,7 +319,7 @@ fsal_status_t PROXYFSAL_ExpandHandle(fsal_export_context_t * p_expcontext, /* IN
   ssize_t sz;
 
   /* sanity checks */
-  if(!fh_desc || !fh_desc->start || !p_expcontext)
+  if(!fh_desc || !fh_desc->start)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
   switch (in_type)
