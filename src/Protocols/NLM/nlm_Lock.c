@@ -63,7 +63,7 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
 {
   nlm4_lockargs      * arg = &parg->arg_nlm4_lock;
   cache_entry_t      * pentry;
-  state_status_t       state_status = CACHE_INODE_SUCCESS;
+  state_status_t       state_status = STATE_SUCCESS;
   char                 buffer[MAXNETOBJ_SZ * 2];
   state_nsm_client_t * nsm_client;
   state_nlm_client_t * nlm_client;

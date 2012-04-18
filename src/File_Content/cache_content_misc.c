@@ -234,6 +234,9 @@ u_int64_t cache_content_get_inum(char *filename)
   if(strncmp(bname, "node=", strlen("node=")))
     return 0;
 
+  if(strlen(bname) < 5)
+    return 0;
+
   if(strncmp(bname + strlen(bname) - 5, "index", NAME_MAX))
     return 0;
 

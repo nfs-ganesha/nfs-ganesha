@@ -234,10 +234,12 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
                   "Invalid FSAL handle in index file %s: unexpected length %u (expected=%u)",
                    indexpath, (unsigned int)strlen(buff),
                    (unsigned int)(2 * sizeof(fsal_handle_t)));
-              continue;
+              continue;  /* if the while test fails, stream will still be opened */
             }
 
           /* Now close the stream */
+          fclose(stream);
+          stream = NULL;
 
           cache_content_get_datapath(cachedir, inum, datapath);
 
@@ -362,6 +364,9 @@ cache_content_status_t cache_content_emergency_flush(char *cachedir,
     }                           /* while */
 
   cache_content_local_cache_closedir(&directory);
+
+  if(stream != NULL)
+    fclose(stream);
 
   return *pstatus;
 }                               /* cache_content_emergency_flush */

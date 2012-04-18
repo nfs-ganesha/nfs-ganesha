@@ -62,7 +62,7 @@ int nlm4_Sm_Notify(nfs_arg_t * parg /* IN     */ ,
                    nfs_res_t * pres /* OUT    */ )
 {
   nlm4_sm_notifyargs * arg = &parg->arg_nlm4_sm_notify;
-  state_status_t       state_status = CACHE_INODE_SUCCESS;
+  state_status_t       state_status = STATE_SUCCESS;
   state_nsm_client_t * nsm_client;
 
   LogDebug(COMPONENT_NLM,

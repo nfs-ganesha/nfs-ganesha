@@ -127,9 +127,14 @@ static const char *gss_stored2data(struct svc_rpc_gss_data *gd,
                    gd->cname.value, (int)gd->cname.length, (int)pstored->cname_len);
       gss_release_buffer(&minor, &gd->cname);
     }
-  if(gd->cname.value == NULL && pstored->cname_len != 0)
+  if(gd->cname.value == NULL)
     {
-      if((gd->cname.value = (void *)malloc(pstored->cname_len+1)) == NULL)
+      if(pstored->cname_len != 0)
+        {
+          if((gd->cname.value = (void *)malloc(pstored->cname_len+1)) == NULL)
+            return "could not allocate cname";
+        }
+      else
         return "could not allocate cname";
     }
   memcpy(gd->cname.value, pstored->cname_val, pstored->cname_len);

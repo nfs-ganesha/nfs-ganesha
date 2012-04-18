@@ -1594,7 +1594,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       if( pseudo_is_slash == TRUE )
        {
          strncat( pathfsal, "/", MAXPATHLEN ) ;
-         strncat( pathfsal, name, MAXPATHLEN - strlen(pathfsal)) ;
+         strncat( pathfsal, name, MAXPATHLEN - strlen(pathfsal) - 1) ;  // - 1 for the '/0'
        }
 
       if(FSAL_IS_ERROR

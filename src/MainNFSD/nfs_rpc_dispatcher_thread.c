@@ -699,7 +699,8 @@ unsigned int nfs_core_select_worker_queue()
   unsigned int i;
   static unsigned int last;
   unsigned int cpt = 0;
-  worker_available_rc rc;
+  worker_available_rc rc_worker;
+  pause_rc            rc_pause;
 
   P(lock_worker_selection);
   counter++;
@@ -723,22 +724,22 @@ unsigned int nfs_core_select_worker_queue()
           cpt++, i = (i + 1) % nfs_param.core_param.nb_worker)
         {
           /* Choose only fully initialized workers and that does not gc. */
-          rc = worker_available(i, avg_number_pending);
-          if(rc == WORKER_AVAILABLE)
+          rc_worker = worker_available(i, avg_number_pending);
+          if(rc_worker == WORKER_AVAILABLE)
             {
               worker_index = i;
               break;
             }
-          else if(rc == WORKER_ALL_PAUSED)
+          else if(rc_worker == WORKER_ALL_PAUSED)
             {
               /* Wait for the threads to awaken */
-              rc = wait_for_threads_to_awaken();
-              /*              if(rc == PAUSE_EXIT)
+              rc_pause = wait_for_threads_to_awaken();
+              /*              if(rc_pause == PAUSE_EXIT)
                 {
                 }
               */
             }
-          else if(rc == WORKER_EXIT)
+          else if(rc_worker == WORKER_EXIT)
             {
             }
         }

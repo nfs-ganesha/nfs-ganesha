@@ -641,7 +641,7 @@ void Process_nfs4_conflict(LOCK4denied          * denied,    /* NFS v4 LOck4deni
       denied->owner.owner.owner_val = unknown_owner.so_owner_val;
     }
 
-  if(holder->so_type == STATE_LOCK_OWNER_NFSV4)
+  if(holder != NULL && holder->so_type == STATE_LOCK_OWNER_NFSV4)
     denied->owner.clientid = holder->so_owner.so_nfs4_owner.so_clientid;
   else
     denied->owner.clientid = 0;
