@@ -1,6 +1,7 @@
 AM_CFLAGS                     = $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
-noinst_LTLIBRARIES          = libfsalvfs.la
+#noinst_LTLIBRARIES          = libfsalvfs.la
+lib_LTLIBRARIES          = libfsalvfs.la
 
 libfsalvfs_la_SOURCES = fsal_convert.c   \
                         fsal_internal.c	 \
@@ -15,7 +16,6 @@ libfsalvfs_la_SOURCES = fsal_convert.c   \
 	                ../../include/err_fsal.h	         \
 	                ../../include/FSAL/FSAL_VFS/fsal_types.h \
 	                ../../include/FSAL/FSAL_VFS/fsal_handle_syscalls.h
-
 
 new: clean all
 
