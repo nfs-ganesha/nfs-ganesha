@@ -401,6 +401,7 @@ struct cache_inode_populate_cb_state {
  */
 
 static fsal_status_t populate(const char *name,
+			      unsigned int dtype,
 			      struct fsal_obj_handle *dir_hdl,
 			      void *dir_state,
 			      struct fsal_cookie *cookie)
@@ -408,9 +409,7 @@ static fsal_status_t populate(const char *name,
 	struct cache_inode_populate_cb_state *state
 		= (struct cache_inode_populate_cb_state *)dir_state;
 	struct fsal_obj_handle *entry_hdl;
-	cache_inode_create_arg_t create_arg;
 	cache_inode_dir_entry_t *new_dir_entry = NULL;
-	cache_inode_fsal_data_t new_entry_fsdata;
 	cache_entry_t *pentry = NULL;
 	fsal_status_t status;
 	fsal_name_t entry_name;
@@ -422,34 +421,8 @@ static fsal_status_t populate(const char *name,
 	if(FSAL_IS_ERROR(status)) {
 		return status;
 	}
-	entry_hdl->attributes.asked_attributes = state->pclient->attrmask;
-	status = dir_hdl->ops->getattrs(dir_hdl, &dir_hdl->attributes);
-	if(FSAL_IS_ERROR(status))
-		goto error;
-
-	memset(&create_arg, 0, sizeof(create_arg));
-	if(entry_hdl->type == FSAL_TYPE_LNK) {
-		status = entry_hdl->ops->readlink(entry_hdl,
-						  create_arg.link_content.path,
-						  FSAL_MAX_PATH_LEN);
-		if(FSAL_IS_ERROR(status))
-			goto error;
-		
-		/* hack FSAL_str2path bits for now */
-		create_arg.link_content.len = strlen(create_arg.link_content.path);
-	}
-/** @TODO conflict here between new handle and new api.
- * obj handle is derived above.  cache_inode_new_entry expects to create its own obj
- * and expects simply a handle, typically, extracted from the proto header.
- */
-	new_entry_fsdata.handle = entry_hdl;
-	new_entry_fsdata.cookie = 0; /* what is this I copied? */
-	pentry = cache_inode_new_entry(&new_entry_fsdata,
-				       &entry_hdl->attributes,
-				       cache_inode_fsal_type_convert(entry_hdl->type),
+	pentry = cache_inode_new_entry(entry_hdl,
 				       state->policy,
-				       &create_arg,
-				       NULL,
 				       state->ht,
 				       state->pclient,
 				       FALSE,
@@ -457,7 +430,8 @@ static fsal_status_t populate(const char *name,
 	if(pentry == NULL) {
 		status.major = ERR_FSAL_NOENT; /* error for signalling cache inode errors */
 		status.minor = *state->pstatus;
-		goto error;
+		/* we do not free entry_hdl because it is consumed by cache_inode_new_entry */
+		return status;
 	}
 	*state->pstatus = cache_inode_add_cached_dirent(state->pentry_dir,
 						      &entry_name,
@@ -474,11 +448,13 @@ static fsal_status_t populate(const char *name,
 	}
 	if(*state->pstatus != CACHE_INODE_ENTRY_EXISTS) {
 		/* somehow make the cookie into a uint64_t */
-		new_dir_entry->fsal_cookie = *cookie; /* struct copy */
-		new_dir_entry->cookie = state->offset_cookie;
-		state->offset_cookie++; /* still and offset */
-		(void)avltree_insert(&new_dir_entry->node_c,
-				     &state->pentry_dir->object.dir.cookies);
+/** @TODO fix for new readdir logic
+ */
+/* 		new_dir_entry->fsal_cookie = *cookie; /\* struct copy *\/ */
+/* 		new_dir_entry->cookie = state->offset_cookie; */
+/* 		state->offset_cookie++; /\* still and offset *\/ */
+/* 		(void)avltree_insert(&new_dir_entry->node_c, */
+/* 				     &state->pentry_dir->object.dir.cookies); */
 	}
 	ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
@@ -562,7 +538,7 @@ cache_inode_readdir_populate(cache_entry_t *directory,
   state.ht = ht;
   state.offset_cookie = 0;
 
-  fsal_status = pentry_dir->handle->ops->readdir(pentry_dir->handle,
+  fsal_status = pentry_dir->obj_handle->ops->readdir(pentry_dir->obj_handle,
 						 0, /* read the whole dir */
 						 NULL, /* starting at the beginning */
 						 (void *)&state,
@@ -712,7 +688,7 @@ cache_inode_readdir_populate(cache_entry_t *directory,
       return *status;
     }
 
-#endif if 0 /* check populate callback */
+#endif  /* check populate callback */
 
   /* End of work */
   atomic_set_int_bits(&directory->flags,

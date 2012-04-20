@@ -176,7 +176,7 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                                    "Error when recovering size for file ID %"PRIx64, inum);
                     }
                   else
-                    pentry->attributes.filesize = (fsal_size_t) size_in_cache;
+                    pentry->obj_handle->attributes.filesize = (fsal_size_t) size_in_cache;
 
                   /* Adding the cached entry to the data cache */
                   if((pentry_content = cache_content_new_entry(pentry,
