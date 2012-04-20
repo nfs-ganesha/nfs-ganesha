@@ -145,9 +145,10 @@ typedef struct fsal_staticfsinfo_t fsal_staticfsinfo_t;
 #define INDEX_FSAL_ds_read              64
 #define INDEX_FSAL_ds_write             65
 #define INDEX_FSAL_ds_commit            66
+#define INDEX_FSAL_share_op             67
 
 /* number of FSAL functions */
-#define FSAL_NB_FUNC  67
+#define FSAL_NB_FUNC  68
 
 extern const char *fsal_function_names[];
 
@@ -874,6 +875,8 @@ struct fsal_staticfsinfo_t
   fsal_boolean_t accesscheck_support;  /**< This indicates whether access check
                                        *  will be done in FSAL.
                                        */
+  fsal_boolean_t share_support;        /**< FS supports share reservation? */
+  fsal_boolean_t share_support_owner;  /**< FS supports share reservation with open owners ? */
 #ifdef _PNFS_MDS
   fsal_boolean_t pnfs_supported; /**< Whether to support pNFS */
   fattr4_fs_layout_types fs_layout_types;/**< The supported layout
@@ -944,7 +947,8 @@ typedef struct fs_common_initinfo__
         lock_support_owner, lock_support_async_block,
         named_attr, unique_handles, lease_time, acl_support, cansettime,
         homogenous, supported_attrs, maxread, maxwrite, umask,
-      auth_exportpath_xdev, xattr_access_rights, pnfs_supported,
+        auth_exportpath_xdev, xattr_access_rights, accesscheck_support,
+        share_support, share_support_owner, pnfs_supported,
       fs_layout_types, layout_blksize;
 #else /* !_PNFS_MDS */
     fsal_initflag_t
@@ -954,7 +958,8 @@ typedef struct fs_common_initinfo__
         lock_support_owner, lock_support_async_block,
         named_attr, unique_handles, lease_time, acl_support, cansettime,
         homogenous, supported_attrs, maxread, maxwrite, umask,
-        auth_exportpath_xdev, xattr_access_rights;
+        auth_exportpath_xdev, xattr_access_rights, accesscheck_support,
+        share_support, share_support_owner;
 #endif /* !_PNFS_MDS */
   } behaviors;
 
@@ -1104,5 +1109,11 @@ typedef struct fsal_lock_param_t
   fsal_size_t         lock_start;
   fsal_size_t         lock_length;
 } fsal_lock_param_t;
+
+typedef struct fsal_share_param_t
+{
+  unsigned int share_access;
+  unsigned int share_deny;
+} fsal_share_param_t;
 
 #endif                          /* _FSAL_TYPES_H */

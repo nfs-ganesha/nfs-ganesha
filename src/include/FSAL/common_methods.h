@@ -95,4 +95,10 @@ fsal_status_t COMMON_load_FSAL_parameter_from_conf(config_file_t in_config,
 fsal_status_t COMMON_load_FS_common_parameter_from_conf(config_file_t in_config,
                                                          fsal_parameter_t *
                                                          out_parameter);
+
+fsal_status_t COMMON_share_op_notsupp( fsal_file_t       * p_file_descriptor,   /* IN */
+                             fsal_handle_t     * p_filehandle,        /* IN */
+                             fsal_op_context_t * p_context,           /* IN */
+                             void              * p_owner,             /* IN (opaque to FSAL) */
+                             fsal_share_param_t  request_share        /* IN */ );
 #endif

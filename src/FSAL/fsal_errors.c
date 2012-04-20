@@ -66,7 +66,9 @@ const char *fsal_function_names[] = {
   "FSAL_close_by_fileid", "FSAL_setattr_access", "FSAL_merge_attrs", "FSAL_rename_access",
   "FSAL_unlink_access", "FSAL_link_access", "FSAL_create_access", "FSAL_unused_49", "FSAL_CleanUpExportContext",
   "FSAL_getextattrs", "FSAL_commit", "FSAL_getattrs_descriptor", "FSAL_lock_op",
-  "FSAL_UP_init", "FSAL_UP_addfilter", "FSAL_UP_getevents", "FSAL_unused_58"
+  "FSAL_UP_init", "FSAL_UP_addfilter", "FSAL_UP_getevents", "FSAL_unused_58",
+  "FSAL_layoutget", "FSAL_layoutreturn", "FSAL_layoutcommit", "FSAL_getdeviceinfo",
+  "FSAL_getdevicelist", "FSAL_ds_read", "FSAL_ds_write", "FSAL_ds_commit", "FSAL_share_op"
 };
 
 family_error_t __attribute__ ((__unused__)) tab_errstatus_FSAL[] =

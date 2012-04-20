@@ -295,6 +295,15 @@ typedef struct cache_inode_dir_entry__
     uint32_t flags;
 } cache_inode_dir_entry_t;
 
+/* The ref counted share reservation state. */
+typedef struct cache_inode_share__
+{
+  unsigned int share_access_read;
+  unsigned int share_access_write;
+  unsigned int share_deny_read;
+  unsigned int share_deny_write;
+} cache_inode_share_t;
+
 struct cache_entry_t
 {
   cache_inode_policy_t  policy ;                          /**< The current cache policy for this entry               */
@@ -312,6 +321,7 @@ struct cache_entry_t
       struct glist_head lock_list;                                   /**< Pointers for lock list                               */
       pthread_mutex_t lock_list_mutex;                               /**< Mutex to protect lock list                           */
       cache_inode_unstable_data_t unstable_data;                     /**< Unstable data, for use with WRITE/COMMIT             */
+      cache_inode_share_t share_state;                               /**< The ref counted share reservation state              */
     } file;                                   /**< file related filed     */
 
     struct cache_inode_symlink__ *symlink;     /**< symlink related field  */

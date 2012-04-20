@@ -94,8 +94,9 @@ fsal_functions_t fsal_gpfs_functions = {
 #ifdef _USE_FSAL_UP
   .fsal_up_init = GPFSFSAL_UP_Init,
   .fsal_up_addfilter = GPFSFSAL_UP_AddFilter,
-  .fsal_up_getevents = GPFSFSAL_UP_GetEvents
+  .fsal_up_getevents = GPFSFSAL_UP_GetEvents,
 #endif /* _USE_FSAL_UP */
+  .fsal_share_op = GPFSFSAL_share_op
 };
 
 fsal_const_t fsal_gpfs_consts = {

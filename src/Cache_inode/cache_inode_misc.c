@@ -476,6 +476,12 @@ cache_entry_t *cache_inode_new_entry(cache_inode_fsal_data_t   * pfsdata,
                "cache_inode_new_entry: Adding a CHARACTER_FILE pentry=%p policy=%u",
                pentry, policy);
 
+      /* Initialize the ref counted share state of this file. */
+      pentry->object.file.share_state.share_access_read = 0;
+      pentry->object.file.share_state.share_access_write = 0;
+      pentry->object.file.share_state.share_deny_read = 0;
+      pentry->object.file.share_state.share_deny_write = 0;
+
       break;
 
     case FS_JUNCTION:

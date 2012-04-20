@@ -12,7 +12,7 @@ libfsalgpfs_la_SOURCES = fsal_access.c fsal_compat.c fsal_context.c	\
 	fsal_stats.c fsal_tools.c fsal_create.c	\
 	fsal_fileop.c fsal_internal.c fsal_stats.c	\
 	fsal_xattrs.c fsal_local_op.c		\
-	fsal_xattrs.c fsal_up.c
+	fsal_xattrs.c fsal_up.c fsal_share.c
 
 libfsalgpfs_la_LIBADD = -lgpfs                                          \
 			../../support/libsupport.la

@@ -200,6 +200,22 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
     }
 
+  /* File is closed, release the share state */
+  if(pstate_found->state_type == STATE_TYPE_SHARE)
+    {
+      if(state_share_remove(pstate_found->state_pentry,
+                            data->pcontext,
+                            popen_owner,
+                            pstate_found,
+                            data->pclient,
+                            &state_status) != STATE_SUCCESS)
+        {
+          LogDebug(COMPONENT_STATE,
+                   "CLOSE failed to release share state error %s",
+                   state_err_str(state_status));
+        }
+    }
+
   /* File is closed, release the corresponding state */
   if(state_del(pstate_found,
                data->pclient,

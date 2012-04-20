@@ -438,6 +438,55 @@ state_status_t state_del(state_t              * pstate,
                          cache_inode_client_t * pclient,
                          state_status_t       * pstatus);
 
+state_status_t state_share_add(cache_entry_t         * pentry,
+                               fsal_op_context_t     * pcontext,
+                               state_owner_t         * powner,
+                               state_t               * pstate,  /* state that holds share bits to be added */
+                               cache_inode_client_t  * pclient,
+                               state_status_t        * pstatus);
+
+state_status_t state_share_remove(cache_entry_t         * pentry,
+                                  fsal_op_context_t     * pcontext,
+                                  state_owner_t         * powner,
+                                  state_t               * pstate,  /* state that holds share bits to be removed */
+                                  cache_inode_client_t  * pclient,
+                                  state_status_t        * pstatus);
+
+state_status_t state_share_upgrade(cache_entry_t         * pentry,
+                                   fsal_op_context_t     * pcontext,
+                                   state_data_t          * pstate_data, /* new share bits */
+                                   state_owner_t         * powner,
+                                   state_t               * pstate,      /* state that holds current share bits */
+                                   cache_inode_client_t  * pclient,
+                                   state_status_t        * pstatus);
+
+state_status_t state_share_downgrade(cache_entry_t         * pentry,
+                                     fsal_op_context_t     * pcontext,
+                                     state_data_t          * pstate_data, /* new share bits */
+                                     state_owner_t         * powner,
+                                     state_t               * pstate,      /* state that holds current share bits */
+                                     cache_inode_client_t  * pclient,
+                                     state_status_t        * pstatus);
+
+state_status_t state_share_set_prev(state_t      * pstate,
+                                    state_data_t * pstate_data);
+
+state_status_t state_share_check_prev(state_t      * pstate,
+                                    state_data_t * pstate_data);
+
+state_status_t state_share_check_conflict_sw(cache_entry_t  * pentry,
+                                             state_data_t   * pstate_data,
+                                             state_status_t * pstatus,
+                                             int use_mutex);
+
+state_status_t state_share_check_conflict_no_mutex(cache_entry_t  * pentry,
+                                                   state_data_t   * pstate_data,
+                                                   state_status_t * pstatus);
+
+state_status_t state_share_check_conflict(cache_entry_t  * pentry,
+                                          state_data_t   * pstate_data,
+                                          state_status_t * pstatus);
+
 int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
 int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);
 int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2);

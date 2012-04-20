@@ -85,6 +85,8 @@ static nfsstat4 nfs4_create_fh(compound_data_t *, cache_entry_t *, char **);
  */
 
 #define STATE_ADD " (state_add failed)"
+#define STATE_SHARE_ADD  " (state_share_add failed)"
+#define STATE_SHARE_UP   " (state_share_upgrade failed)"
 #define CACHE_INODE_OPEN " cache_inode_open"
 #define arg_OPEN4 op->nfs_argop4_u.opopen
 #define res_OPEN4 resp->nfs_resop4_u.opopen
@@ -349,6 +351,14 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
        cause2 = " (invalid share_access or share_deny)";
        goto out;
    }
+
+  /* Set openflags. */
+  if(arg_OPEN4.share_access == OPEN4_SHARE_ACCESS_BOTH)
+    openflags = FSAL_O_RDWR;
+  else if(arg_OPEN4.share_access == OPEN4_SHARE_ACCESS_READ)
+    openflags = FSAL_O_RDONLY;
+  else if(arg_OPEN4.share_access == OPEN4_SHARE_ACCESS_WRITE)
+    openflags = FSAL_O_WRONLY;
 
   /* First switch is based upon claim type */
   switch (claim)
@@ -712,16 +722,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
             }
 
-          /* Set the openflags variable */
-          if(arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE)
-            openflags |= FSAL_O_RDONLY;
-          if(arg_OPEN4.share_deny & OPEN4_SHARE_DENY_READ)
-            openflags |= FSAL_O_WRONLY;
-          if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE)
-            openflags = FSAL_O_RDWR;
-          if(arg_OPEN4.share_access != 0)
-            openflags = FSAL_O_RDWR;    /* @todo : BUGAZOMEU : Something better later */
-
           status4 = nfs4_do_open(op, data, pentry_newfile, pentry_parent,
               powner, &pfile_state, &filename, openflags, &text);
           if (status4 != NFS4_OK)
@@ -814,42 +814,11 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                   /* We'll be re-using the found state */
                   pfile_state = pstate_iterate;
                   ReuseState  = TRUE;
-                }
-              else
-                {
-                  /* This is a different owner, check for possible conflicts */
-                  if((pstate_iterate->state_data.share.share_access & OPEN4_SHARE_ACCESS_WRITE)
-                     && (arg_OPEN4.share_deny & OPEN4_SHARE_DENY_WRITE))
-                    {
-                      V_r(&pentry_newfile->lock);
-                      res_OPEN4.status = NFS4ERR_SHARE_DENIED;
-                      cause2 = " (OPEN4_SHARE_DENY_WRITE)";
-                      goto out;
-                    }
-                }
-
-              /* In all cases opening in read access a read denied file or write access to a write denied file 
-               * should fail, even if the owner is the same, see discussion in 14.2.16 and 8.9
-               */
-
-              /* deny read access on read denied file */
-              if((pstate_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_READ)
-                 && (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ))
-                {
-                  V_r(&pentry_newfile->lock);
-                  res_OPEN4.status = NFS4ERR_SHARE_DENIED;
-                  cause2 = " (OPEN4_SHARE_ACCESS_READ)";
-                  goto out;
-                }
-
-              /* deny write access on write denied file */
-              if((pstate_iterate->state_data.share.share_deny & OPEN4_SHARE_DENY_WRITE)
-                 && (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE))
-                {
-                  V_r(&pentry_newfile->lock);
-                  res_OPEN4.status = NFS4ERR_SHARE_DENIED;
-                  cause2 = " (OPEN4_SHARE_ACCESS_WRITE)";
-                  goto out;
+                  LogFullDebug(COMPONENT_STATE, "Found existing open state %p "
+                               "type %u for open owner %p",
+                               pfile_state,
+                               pfile_state->state_type,
+                               pstate_iterate->state_powner);
                 }
             }
 
@@ -875,15 +844,6 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
     case CLAIM_PREVIOUS:
       powner->so_owner.so_nfs4_owner.so_confirmed = TRUE;
-
-      /* Set the openflags variable */
-      if((arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ) &&
-          (arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE))
-        openflags = FSAL_O_RDWR;
-      else if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_READ)
-        openflags |= FSAL_O_RDONLY;
-      else
-        openflags |= FSAL_O_WRONLY;
 
       /* pentry_parent is actually the file to be reclaimed, not the parent */
       pentry_newfile = pentry_parent;
@@ -1103,7 +1063,6 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
                         return NFS4ERR_ACCESS;
                 }
-                *openflags = FSAL_O_WRONLY;
         }
 
         /* Same check on read: check for readability of a file before opening
@@ -1113,7 +1072,6 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
                         return NFS4ERR_ACCESS;
                 }
-                *openflags = FSAL_O_RDONLY;
         }
 
         if(AttrProvided == TRUE) {      /* Set the attribute if provided */
@@ -1133,9 +1091,8 @@ nfs4_chk_shrdny(struct nfs_argop4 *op, compound_data_t *data,
         if(args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
                 if(cache_inode_access(pentry, wr_acc, data->ht, data->pclient,
                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS) {
-                          return NFS4ERR_ACCESS;
+                        return NFS4ERR_ACCESS;
                 }
-                *openflags = FSAL_O_RDWR;
         }
 
         return NFS4_OK;
@@ -1156,13 +1113,26 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
         state_type_t candidate_type;
         state_status_t state_status;
         cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+        int new_state = 0;
 
-        if(*statep == NULL) {
                 /* Set the state for the related file */
                 /* Prepare state management structure */
                 candidate_type                    = STATE_TYPE_SHARE;
                 candidate_data.share.share_deny   = args->share_deny;
                 candidate_data.share.share_access = args->share_access;
+        candidate_data.share.share_access_prev = 0;
+        candidate_data.share.share_deny_prev = 0;
+
+        /* Quick exit if there is any share conflict */
+        if(state_share_check_conflict(pentry_newfile, &candidate_data,
+                                      &state_status) != STATE_SUCCESS)
+          {
+            *cause2 = " (share conflict)";
+            return NFS4ERR_SHARE_DENIED;
+          }
+
+        if(*statep == NULL) {
+                new_state = 1;
 
                 /* If file is opened under mode EXCLUSIVE4, open verifier
                  * should be kept to detect non vicious double open */
@@ -1201,6 +1171,7 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
         }
 
         if (pentry_parent != NULL) {    /* claim null */
+                LogDebug(COMPONENT_STATE, "Open filename %s", filename->name);
                 /* Open the file */
                 if(cache_inode_open_by_name(pentry_parent, filename,
                     pentry_newfile, data->pclient, openflags, data->pcontext,
@@ -1215,6 +1186,52 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
                         return nfs4_Errno(cache_status);
                 }
         }
+
+        /* Push share state to SAL (and FSAL) and update the union of file
+         * share state.
+         */
+        if(new_state)
+          {
+            if(state_share_add(pentry_newfile, data->pcontext, powner, *statep,
+                               data->pclient, &state_status) != STATE_SUCCESS)
+              {
+                if(cache_inode_close(pentry_newfile, data->pclient,
+                                     &cache_status) != CACHE_INODE_SUCCESS)
+                  {
+                    /* Log bad close and continue. */
+                    LogEvent(COMPONENT_STATE, "Failed to close cache inode: status=%d",
+                             cache_status);
+                  }
+                *cause2 = STATE_SHARE_ADD;
+                return NFS4ERR_SHARE_DENIED;
+              }
+          }
+        else
+          {
+            /* If we find the previous share state, update share state. */
+            if((candidate_type == STATE_TYPE_SHARE) &&
+               ((*statep)->state_type == STATE_TYPE_SHARE))
+              {
+                LogFullDebug(COMPONENT_STATE, "Update existing share state");
+                if(state_share_upgrade(pentry_newfile, data->pcontext,
+                                       &candidate_data, powner, *statep,
+                                       data->pclient,
+                                       &state_status) != STATE_SUCCESS)
+                  {
+                    if(cache_inode_close(pentry_newfile, data->pclient,
+                                         &cache_status) != CACHE_INODE_SUCCESS)
+                      {
+                        /* Log bad close and continue. */
+                        LogEvent(COMPONENT_STATE, "Failed to close cache inode: status=%d",
+                                 cache_status);
+                      }
+                    LogEvent(COMPONENT_STATE, "Failed to update existing "
+                                 "share state");
+                    *cause2 = STATE_SHARE_UP;
+                    return NFS4ERR_SHARE_DENIED;
+                  }
+              }
+          }
 
         return NFS4_OK;
 }

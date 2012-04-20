@@ -673,6 +673,9 @@ fsal_status_t COMMON_SetDefault_FS_common_parameter(fsal_parameter_t * out_param
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, umask);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, auth_exportpath_xdev);
   FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, xattr_access_rights);
+  FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, accesscheck_support);
+  FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, share_support);
+  FSAL_SET_INIT_DEFAULT(out_parameter->fs_common_info, share_support_owner);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
@@ -1015,3 +1018,12 @@ fsal_status_t COMMON_load_FS_common_parameter_from_conf(config_file_t in_config,
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
 }                               /* FSAL_load_FS_common_parameter_from_conf */
+
+fsal_status_t COMMON_share_op_notsupp( fsal_file_t       * p_file_descriptor,   /* IN */
+                                       fsal_handle_t     * p_filehandle,        /* IN */
+                                       fsal_op_context_t * p_context,           /* IN */
+                                       void              * p_owner,             /* IN (opaque to FSAL) */
+                                       fsal_share_param_t  request_share )      /* IN */
+{
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_share_op);
+}

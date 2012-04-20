@@ -89,7 +89,8 @@ fsal_functions_t fsal_zfs_functions = {
   .fsal_removexattrbyid = ZFSFSAL_RemoveXAttrById,
   .fsal_removexattrbyname = ZFSFSAL_RemoveXAttrByName,
   .fsal_getfileno = ZFSFSAL_GetFileno,
-  .fsal_getextattrs = ZFSFSAL_getextattrs
+  .fsal_getextattrs = ZFSFSAL_getextattrs,
+  .fsal_share_op = COMMON_share_op_notsupp
 };
 
 fsal_const_t fsal_zfs_consts = {

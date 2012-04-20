@@ -92,6 +92,9 @@ static fsal_staticfsinfo_t default_ceph_info = {
   .umask = 0,
   .auth_exportpath_xdev = 0,
   .xattr_access_rights = 0400,
+  .accesscheck_support = 0,
+  .share_support = 0,
+  .share_support_owner = 0,
 #ifdef _PNFS_MDS
   .pnfs_supported = TRUE,
   .layout_blksize = 0x400000,

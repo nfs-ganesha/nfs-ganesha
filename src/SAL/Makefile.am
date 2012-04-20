@@ -8,6 +8,7 @@ noinst_LTLIBRARIES            = libsal.la
 
 libsal_la_SOURCES = state_async.c                    \
                     state_lock.c                     \
+                    state_share.c                    \
                     state_misc.c                     \
                     nfs4_state.c                     \
                     nfs4_state_id.c                  \

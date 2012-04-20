@@ -726,6 +726,22 @@ fsal_status_t FSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
   Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_lock_op);
 }
 
+fsal_status_t FSAL_share_op( fsal_file_t       * p_file_descriptor,   /* IN */
+                             fsal_handle_t     * p_filehandle,        /* IN */
+                             fsal_op_context_t * p_context,           /* IN */
+                             void              * p_owner,             /* IN (opaque to FSAL) */
+                             fsal_share_param_t  request_share)       /* IN */
+{
+  if(fsal_functions.fsal_share_op != NULL)
+    return fsal_functions.fsal_share_op(p_file_descriptor,
+                                        p_filehandle,
+                                        p_context,
+                                        p_owner,
+                                        request_share);
+
+  Return(ERR_FSAL_NOTSUPP, 0, INDEX_FSAL_share_op);
+}
+
 /* FSAL_UP functions */
 #ifdef _USE_FSAL_UP
 fsal_status_t FSAL_UP_Init( fsal_up_event_bus_parameter_t * pebparam,      /* IN */
