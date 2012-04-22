@@ -2439,6 +2439,12 @@ int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
                    FSAL_attr->type);
       Fattr->type = 0;
       return 0;
+
+    default:
+      LogEvent(COMPONENT_NFSPROTO,
+                   "nfs3_FSALattr_To_Fattr: Bogus type = %d",
+                   FSAL_attr->type);
+      return 0;
     }
 
   Fattr->mode = fsal2unix_mode(FSAL_attr->mode);
