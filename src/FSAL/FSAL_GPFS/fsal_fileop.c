@@ -273,10 +273,7 @@ fsal_status_t GPFSFSAL_read(fsal_file_t * file_desc,        /* IN */
         {
           LogFullDebug(COMPONENT_FSAL,
                        "Error in posix fseek operation (whence=%s, offset=%lld)",
-                       (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
-                        (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
-                         (p_seek_descriptor->whence ==
-                          FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
+		       format_seek_whence(p_seek_descriptor->whence),
                        (long long) p_seek_descriptor->offset);
 
           Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_read);
@@ -394,10 +391,7 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
         {
           LogFullDebug(COMPONENT_FSAL,
                        "Error in posix fseek operation (whence=%s, offset=%lld)",
-                       (p_seek_descriptor->whence == FSAL_SEEK_CUR ? "SEEK_CUR" :
-                        (p_seek_descriptor->whence == FSAL_SEEK_SET ? "SEEK_SET" :
-                         (p_seek_descriptor->whence ==
-                          FSAL_SEEK_END ? "SEEK_END" : "ERROR"))),
+		       format_seek_whence(p_seek_descriptor->whence),
                        (long long) p_seek_descriptor->offset);
 
           Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_write);
@@ -406,12 +400,7 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
 
       LogFullDebug(COMPONENT_FSAL,
                    "Write operation (whence=%s, offset=%lld, size=%lld)",
-                   (p_seek_descriptor->whence ==
-                    FSAL_SEEK_CUR ? "SEEK_CUR" : (p_seek_descriptor->whence ==
-                                                  FSAL_SEEK_SET ? "SEEK_SET"
-                                                  : (p_seek_descriptor->whence ==
-                                                     FSAL_SEEK_END ? "SEEK_END" :
-                                                     "ERROR"))),
+                   format_seek_whence(p_seek_descriptor->whence),
                    (long long) p_seek_descriptor->offset, buffer_size);
 
     }

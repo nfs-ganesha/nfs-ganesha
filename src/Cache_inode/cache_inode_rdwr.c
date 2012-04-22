@@ -308,8 +308,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
             }
 
           LogFullDebug(COMPONENT_CACHE_INODE,
-                       "cache_inode_rdwr: inode/dc: io_size=%llu, pio_size=%llu,  eof=%d, seek=%d.%"PRIu64,
-                       io_size, *pio_size, *p_fsal_eof, seek_descriptor->whence,
+                       "cache_inode_rdwr: inode/dc: io_size=%llu, pio_size=%llu,  eof=%d, seek=%s %"PRIu64,
+                       io_size, *pio_size, *p_fsal_eof, format_seek_whence(seek_descriptor->whence),
                        seek_descriptor->offset);
 
           LogMidDebug(COMPONENT_CACHE_INODE,
@@ -414,8 +414,8 @@ cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
             }
 
           LogFullDebug(COMPONENT_CACHE_INODE,
-                       "cache_inode_rdwr: inode/direct: io_size=%llu, pio_size=%llu, eof=%d, seek=%d.%"PRIu64,
-                       io_size, *pio_size, *p_fsal_eof, seek_descriptor->whence,
+                       "cache_inode_rdwr: inode/direct: io_size=%llu, pio_size=%llu, eof=%d, seek=%s %"PRIu64,
+                       io_size, *pio_size, *p_fsal_eof, format_seek_whence(seek_descriptor->whence),
                        seek_descriptor->offset);
 
           if(cache_inode_close(pentry, pclient, pstatus) != CACHE_INODE_SUCCESS)
