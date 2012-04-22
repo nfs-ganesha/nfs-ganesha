@@ -4,7 +4,6 @@
 #ifndef GANESHA_RPC_H
 #define GANESHA_RPC_H
 
-#include "config.h"
 
 #ifdef _USE_GSSRPC
 #include <gssrpc/rpc.h>

@@ -42,10 +42,6 @@
 #define FALSE 0
 #endif
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #ifdef _USE_NFS4_ACL
 #include <openssl/md5.h>
 #endif                          /* _USE_NFS4_ACL */

@@ -3,6 +3,10 @@
  * It was generated using rpcgen.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "nsm.h"
 
 bool_t xdr_res(XDR * xdrs, res * objp)

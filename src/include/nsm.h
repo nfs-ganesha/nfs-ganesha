@@ -6,7 +6,6 @@
 #ifndef _NSM_H_RPCGEN
 #define _NSM_H_RPCGEN
 
-#include "config.h"
 #include "rpc.h"
 #include "sal_data.h"
 
