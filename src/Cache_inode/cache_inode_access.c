@@ -113,6 +113,8 @@ cache_inode_access_sw(cache_entry_t *pentry,
  * at the fsal level anyway because we have the access method but the fsal
  * writer makes the decision on how it is to be handled (locally in the fsal
  * or using the supplied common. This is also another struct copy...
+ * NOTE: below, we use test_access method that uses the handle object's attrs
+ * anyway.
  */
           if(pclient->use_test_access == 1) {
                /* We actually need the lock here since we're using
