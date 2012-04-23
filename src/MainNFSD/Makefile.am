@@ -1,6 +1,15 @@
 DLOPEN_FLAGS = -rdynamic
 
-AM_CFLAGS                     = -Wimplicit $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS)
+AM_CFLAGS                     = -Wimplicit $(DLOPEN_FLAGS)  $(FSAL_CFLAGS) $(SEC_CFLAGS) $(SVC_FLAGS)  \
+                                ../FSAL/access_check.lo \
+                                ../FSAL/common_functions.lo \
+                                ../FSAL/fsal_commonlib.lo \
+                                ../FSAL/fsal_convert.lo \
+                                ../FSAL/fsal_manager.lo \
+                                ../FSAL/fsal_config.lo \
+                                ../FSAL/fsal_errors.lo \
+                                ../FSAL/fsal_strings.lo
+
 
 if USE_BUDDY_SYSTEM
 BUDDY_LIB_FLAGS = ../BuddyMalloc/libBuddyMalloc.la
