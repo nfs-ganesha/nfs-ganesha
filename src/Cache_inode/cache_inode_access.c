@@ -111,6 +111,8 @@ cache_inode_access_sw(cache_entry_t *entry,
  * at the fsal level anyway because we have the access method but the fsal
  * writer makes the decision on how it is to be handled (locally in the fsal
  * or using the supplied common. This is also another struct copy...
+ * NOTE: below, we use test_access method that uses the handle object's attrs
+ * anyway.
  */
                /* We actually need the lock here since we're using
                   the attribute cache, so get it if the caller didn't
