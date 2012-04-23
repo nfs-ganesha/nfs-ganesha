@@ -111,22 +111,36 @@ int start_fsals(config_file_t config)
 			return 1;
 		}
 		if(strcasecmp(key, "FSAL_Shared_Library") == 0) {
-			char *name = NULL;
-			char *so_name = rindex(value, ':');
 			struct fsal_module *fsal_hdl;
 			int rc;
+			char *name = NULL;
+			char *so_name = rindex(value, ':');
 
-			if(so_name != NULL) {
-				so_name++;
-				name = alloca(so_name - value);
-			} else {
-				so_name = value;
-			}
+                        if(so_name != NULL) {
+                          so_name++;
+                          if (so_name - value == 0) {
+                            LogCrit(COMPONENT_INIT, "start_fsals: Failed to"
+                                    " load (%s) because parameter is in wrong"
+                                    " format (name:lib)", value);
+                            continue;
+                          }
+                          name = strndup(value, so_name - value - 1);
+                        } else {
+                          LogCrit(COMPONENT_INIT, "start_fsals: Failed to"
+                                  " load (%s) because parameter is in wrong"
+                                  " format (name:lib)", value);
+                          continue;
+                        }
+
+			LogDebug(COMPONENT_INIT,
+				     "start_fsals: Loading module w/ name=%s"
+                                     " and library=%s", name, so_name);
 			rc = load_fsal(so_name, name, &fsal_hdl);
+                        free(name);
 			if(rc < 0) {
 				LogCrit(COMPONENT_INIT,
-					"start_fsals: Failed to load (%s) because: %s",
-					so_name, strerror(rc));
+					"start_fsals: Failed to load (%s)"
+                                        " because: %s",	so_name, strerror(rc));
 			}
 		}
 	}
@@ -193,9 +207,12 @@ int load_fsal(const char *path, const char *name, struct fsal_module **fsal_hdl_
 
 #ifdef LINUX
 	/* recent linux/glibc can probe to see if it already there */
-	dl = dlopen(name, RTLD_NOLOAD);
+	LogMajor(COMPONENT_INIT,
+		 "load_fsal: dlopen(%s, RTLD_NOLOAD)\n",path);
+	dl = dlopen(path, RTLD_NOLOAD);
 	if(dl != NULL) {
 		retval = EEXIST;
+		LogCrit(COMPONENT_INIT, "Already exists ...");
 		goto errout;
 	}
 #endif
@@ -203,12 +220,15 @@ int load_fsal(const char *path, const char *name, struct fsal_module **fsal_hdl_
 	load_state = loading;
 	pthread_mutex_unlock(&fsal_lock);
 
-	dl = dlopen(name, RTLD_LAZY|RTLD_LOCAL);
+	LogMajor(COMPONENT_INIT,
+		 "load_fsal: dlopen(%s, RTLD_LAZY|RTLD_LOCAL)\n",path);
+	dl = dlopen(path, RTLD_LAZY|RTLD_LOCAL);
 
 	pthread_mutex_lock(&fsal_lock);
 	if(dl == NULL) {
 		retval = errno;
 		dl_error = strdup(dlerror());
+		LogCrit(COMPONENT_INIT, "Could not dlopen module:%s Error:%s", path, dl_error);
 		goto errout;
 	}
 	(void)dlerror(); /* clear it */
@@ -224,10 +244,14 @@ int load_fsal(const char *path, const char *name, struct fsal_module **fsal_hdl_
 		if(sym_error != NULL) {
 			dl_error = strdup(sym_error);
 			so_error = ENOENT;
+			LogCrit(COMPONENT_INIT, "Could not execute symbol fsal_init"
+                                " from module:%s Error:%s", path, dl_error);
 			goto errout;
 		}
 		if((void *)module_init == NULL) {
 			so_error = EFAULT;
+			LogCrit(COMPONENT_INIT, "Could not execute symbol fsal_init"
+                                " from module:%s Error:%s", path, dl_error);
 			goto errout;
 		}
 		pthread_mutex_unlock(&fsal_lock);
@@ -239,10 +263,14 @@ int load_fsal(const char *path, const char *name, struct fsal_module **fsal_hdl_
 	if(load_state == error) { /* we are in registration hell */
 		dlclose(dl);
 		retval = so_error; /* this is the registration error */
+		LogCrit(COMPONENT_INIT, "Could not execute symbol fsal_init"
+                        " from module:%s Error:%s", path, dl_error);
 		goto errout;
 	}
 	if(load_state != registered) {
 		retval = EPERM;
+		LogCrit(COMPONENT_INIT, "Could not execute symbol fsal_init"
+                        " from module:%s Error:%s", path, dl_error);
 		goto errout;
 	}
 
@@ -503,7 +531,7 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name)
 	pthread_mutex_init(&fsal_hdl->lock, &attrs);
 	init_glist(&fsal_hdl->fsals);
 	init_glist(&fsal_hdl->exports);
-	glist_add_list_tail(&fsal_list, &fsal_hdl->fsals);
+	glist_add_tail(&fsal_list, &fsal_hdl->fsals);
 	if(load_state == loading)
 		load_state = registered;
 	pthread_mutex_unlock(&fsal_lock);
