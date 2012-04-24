@@ -211,7 +211,7 @@ int cache_inode_avl_qp_insert(
     }
     
     LogCrit(COMPONENT_CACHE_INODE,
-            "cache_inode_avl_qp_insert_s: could not insert at j=%d (%s)\n",
+            "cache_inode_avl_qp_insert_s: could not insert at j=%d (%s)",
             j, v->name.name);
 
     memcpy(&v->hk.k, hk, 8);
@@ -224,7 +224,7 @@ int cache_inode_avl_qp_insert(
     }
 
     LogCrit(COMPONENT_CACHE_INODE,
-            "cache_inode_avl_qp_insert_s: could not insert at j=%d (%s)\n",
+            "cache_inode_avl_qp_insert_s: could not insert at j=%d (%s)",
             j, v->name.name);
 
     return (-1);
@@ -300,7 +300,7 @@ cache_inode_avl_qp_lookup_s(
     }
 
     LogFullDebug(COMPONENT_CACHE_INODE,
-                 "cache_inode_avl_qp_lookup_s: entry not found at j=%d (%s)\n",
+                 "cache_inode_avl_qp_lookup_s: entry not found at j=%d (%s)",
                  j, v->name.name);
 
     return (NULL);

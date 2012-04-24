@@ -943,21 +943,6 @@ cache_inode_status_t cache_inode_valid(cache_entry_t * pentry,
                pclient->lru_gc->nb_call_gc,
                pclient->lru_gc->parameter.nb_call_gc_invalid);
 
-  LogFullDebug(COMPONENT_CACHE_INODE_GC,
-               "LRU GC state: nb_entries=%d nb_invalid=%d nb_call_gc=%d param.nb_call_gc_invalid=%d",
-               pclient->lru_gc->nb_entry,
-               pclient->lru_gc->nb_invalid,
-               pclient->lru_gc->nb_call_gc,
-               pclient->lru_gc->parameter.nb_call_gc_invalid);
-
-  LogFullDebug(COMPONENT_CACHE_INODE_GC,
-               "LRU GC state: nb_entries=%d nb_invalid=%d nb_call_gc=%d param.nb_call_gc_invalid=%d",
-               pclient->lru_gc->nb_entry,
-               pclient->lru_gc->nb_invalid,
-               pclient->lru_gc->nb_call_gc,
-               pclient->lru_gc->parameter.nb_call_gc_invalid);
-
-
   /* Call LRU_gc_invalid to get ride of the unused invalid lru entries */
   if(LRU_gc_invalid(pclient->lru_gc, NULL) != LRU_LIST_SUCCESS)
     return CACHE_INODE_LRU_ERROR;
