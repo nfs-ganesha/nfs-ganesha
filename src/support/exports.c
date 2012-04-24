@@ -2060,6 +2060,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_FSAL))
         {
+	  if(p_entry->export_hdl != NULL)
+	    {
+	      LogCrit(COMPONENT_CONFIG,
+		      "FSAL is already defined as (%s), new attempt = (%s)",
+		      p_entry->export_hdl->fsal->ops->get_name(p_entry->export_hdl->fsal),
+		      var_value);
+	      continue;
+	    }
 	  fsal_hdl = lookup_fsal(var_value);
 	  if(fsal_hdl != NULL)
 	    {
@@ -2089,12 +2097,15 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                   var_name);
         }
 
-    }
-
-  if(fsal_hdl == NULL)
+    } /* End of for */
+/** @TODO at some point, have a global config def for the default FSAL when
+ * an export doesn't supply it.  Right now, it is VFS for lack of a better
+ * idea.
+ */
+  if(p_entry->export_hdl == NULL)
     {
-      LogCrit(COMPONENT_CONFIG,
-	      "No FSAL for this export defined using VFS");
+      LogMajor(COMPONENT_CONFIG,
+	      "No FSAL for this export defined. Fallback to using VFS");
       fsal_hdl = lookup_fsal("VFS"); /* should have a "Default_FSAL" param... */
       if(fsal_hdl != NULL)
         {
@@ -2115,20 +2126,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         {
 	  LogCrit(COMPONENT_CONFIG,
 		  "HELP! even VFS FSAL is not resident!");
-        }
-    }
-  else
-    {
-      fsal_status_t expres = fsal_hdl->ops->create_export(fsal_hdl,
-							  p_entry->fullpath, /* correct path? */
-							  p_entry->FS_specific,
-							  p_entry,
-							  NULL, /* no stacked fsals for now */
-							  &p_entry->export_hdl);
-      if(FSAL_IS_ERROR(expres))
-	{
-	  LogCrit(COMPONENT_CONFIG,
-		  "Could not create FSAL export for %s", p_entry->fullpath);
         }
     }
           
@@ -2964,7 +2961,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
         {
           /* Lookup for the FSAL Path */
           fsal_status = pcurrent->export_hdl->ops->lookup_path(pcurrent->export_hdl,
-							       &exportpath_fsal,
+							       pcurrent->fullpath,
 							       &pcurrent->proot_handle);
           if(FSAL_IS_ERROR(fsal_status))
             {

@@ -1353,7 +1353,7 @@ static struct fsal_obj_ops obj_ops = {
  */
 
 fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
-			      fsal_path_t *path,
+			      const char *path,
 			      struct fsal_obj_handle **handle)
 {
 	int fd;
@@ -1368,35 +1368,29 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 	struct file_handle *fh
 		= alloca(sizeof(struct file_handle) + MAX_HANDLE_SZ);
 
-	if(path->path[0] != '/') {
+	memset(fh, 0, sizeof(struct file_handle) + MAX_HANDLE_SZ);
+	fh->handle_bytes = MAX_HANDLE_SZ;
+	if(path[0] != '/') {
 		fsal_error = ERR_FSAL_INVAL;
 		goto errout;
 	}
-	fd = open(path->path, O_RDONLY, 0600);
+	fd = open(path, O_RDONLY, 0600);
 	if(fd < 0) {
-		fsal_error = posix2fsal_error(errno);
 		retval = errno;
+		fsal_error = posix2fsal_error(retval);
 		goto errout;
 	}
 	retval = fstat(fd, &stat);
-	if(fd < 0) {
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
-		goto errout;
+	if(retval < 0) {
+		goto fileerr;
 	}
 	retval = name_to_handle_at(fd, "", fh, &mnt_id, AT_EMPTY_PATH);
 	if(retval < 0) {
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
-		close(fd);
-		goto errout;
+		goto fileerr;
 	}
 	retval = fstatat(fd, "", &stat, AT_EMPTY_PATH);
 	if(retval < 0) {
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
-		close(fd);
-		goto errout;
+		goto fileerr;
 	}
 	if(S_ISLNK(stat.st_mode)) { /* I could lazy eval this... */
 		retlink = readlinkat(fd, "", link_buff, FSAL_MAX_PATH_LEN);
@@ -1422,7 +1416,12 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 		goto errout;
 	}
 	ReturnCode(ERR_FSAL_NO_ERROR, 0);
-	
+
+fileerr:
+	retval = errno;
+	fsal_error = posix2fsal_error(retval);
+	close(fd);
+
 errout:
 	ReturnCode(fsal_error, retval);	
 }
