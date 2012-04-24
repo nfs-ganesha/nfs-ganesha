@@ -32,8 +32,8 @@
 
 PATHPROG=/usr/bin/gpfs.ganesha.nfsd
 PROG=gpfs.ganesha.nfsd
-LOGFILE=/var/log/nfs-ganesha.log
-#LOGFILE=SYSLOG
+#LOGFILE=/var/log/nfs-ganesha.log
+LOGFILE=SYSLOG
 #LOGFILE=STDERR
 #LOGFILE=STDOUT
 
