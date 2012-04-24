@@ -10,7 +10,7 @@ int vfs_get_root_fd(struct fsal_export *exp_hdl);
  */
 
 fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
-			      fsal_path_t *path,
+			      const char *path,
 			      struct fsal_obj_handle **handle);
 
 fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,

@@ -92,7 +92,7 @@ struct export_ops {
 
 	/* create an object handle within this export */
 	fsal_status_t (*lookup_path)(struct fsal_export *exp_hdl,
-				     fsal_path_t *path,
+				     const char *path,
 				     struct fsal_obj_handle **handle);
 	fsal_status_t (*lookup_junction)(struct fsal_export *exp_hdl,
 				struct fsal_obj_handle *junction,

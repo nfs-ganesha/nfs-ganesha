@@ -606,7 +606,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	endmntent(fp);
 	if(outlen <= 0) {
 		LogCrit(COMPONENT_FSAL,
-			"VFS create_export: No mount entry matches '%s' in %s",
+			"No mount entry matches '%s' in %s",
 			export_path->path, MOUNTED);
 		fsal_error = ERR_FSAL_NOENT;
 		goto errout;
@@ -614,21 +614,23 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	myself->root_fd = open(mntdir,  O_RDONLY|O_DIRECTORY);
 	if(myself->root_fd < 0) {
 		LogMajor(COMPONENT_FSAL,
-			 "VFS create_export: Could not open VFS mount point %s: rc = %d",
+			 "Could not open VFS mount point %s: rc = %d",
 			 mntdir, errno);
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
 		goto errout;
 	} else {
 		struct stat root_stat;
+		int mnt_id = 0;
 		struct file_handle *fh = alloca(sizeof(struct file_handle)
 					       + MAX_HANDLE_SZ);
-		int mnt_id = 0;
 
+		memset(fh, 0, sizeof(struct file_handle) + MAX_HANDLE_SZ);
+		fh->handle_bytes = MAX_HANDLE_SZ;
 		retval = fstat(myself->root_fd, &root_stat);
 		if(retval < 0) {
 			LogMajor(COMPONENT_FSAL,
-				 "VFS create_export, fstat: root_path: %s, fd=%d, errno=(%d) %s",
+				 "fstat: root_path: %s, fd=%d, errno=(%d) %s",
 				 mntdir, myself->root_fd, errno, strerror(errno));
 			fsal_error = posix2fsal_error(errno);
 			retval = errno;
@@ -639,7 +641,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 					   &mnt_id, AT_EMPTY_PATH);
 		if(retval != 0) {
 			LogMajor(COMPONENT_FSAL,
-				 "VFS create_export, name_to_handle: root_path: %s, root_fd=%d, errno=(%d) %s",
+				 "name_to_handle: root_path: %s, root_fd=%d, errno=(%d) %s",
 				 mntdir, myself->root_fd, errno, strerror(errno));
 			fsal_error = posix2fsal_error(errno);
 			retval = errno;
@@ -648,7 +650,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		myself->root_handle = malloc(sizeof(struct file_handle) + fh->handle_bytes);
 		if(myself->root_handle == NULL) {
 			LogMajor(COMPONENT_FSAL,
-				 "VFS create_export: memory for root handle, errno=(%d) %s",
+				 "memory for root handle, errno=(%d) %s",
 				 errno, strerror(errno));
 			fsal_error = posix2fsal_error(errno);
 			retval = errno;
