@@ -1067,10 +1067,6 @@ int nfs_set_param_from_conf(config_file_t config_struct,
 
   LogEvent(COMPONENT_INIT, "Configuration file successfully parsed");
 
-  /* freeing syntax tree : */
-
-  config_Free(config_struct);
-
   return 0;
 }
 

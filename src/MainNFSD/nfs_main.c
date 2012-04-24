@@ -328,8 +328,6 @@ int main(int argc, char *argv[])
       LogFatal(COMPONENT_INIT, "Error setting parameters from configuration file.");
     }
 
-  /* check parameters consitency */
-
   if(nfs_check_param_consistency())
     {
       LogFatal(COMPONENT_INIT,
@@ -340,6 +338,10 @@ int main(int argc, char *argv[])
       LogFatal(COMPONENT_INIT,
 	       "FSALs could not initialize. Exiting..." ) ;
     }
+
+  /* freeing syntax tree : */
+
+  config_Free(config_struct);
 
   /* Everything seems to be OK! We can now start service threads */
   nfs_start(&my_nfs_start_info);
