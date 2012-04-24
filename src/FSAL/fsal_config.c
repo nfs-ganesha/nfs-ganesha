@@ -115,33 +115,51 @@ void init_fsal_parameters(fsal_init_info_t *init_info,
 }
 
 fsal_status_t load_FSAL_parameters_from_conf(config_file_t in_config,
+					     const char *fsal_name,
                                              fsal_init_info_t *init_info)
 {
   int err;
   int var_max, var_index;
   char *key_name;
   char *key_value;
-  config_item_t block;
-
+  config_item_t fsal_block, block;
+  int i, fsal_cnt;
   int DebugLevel = -1;
   char *LogFile = NULL;
 
-  block = config_FindItemByName(in_config, CONF_LABEL_FSAL);
-
-  /* cannot read item */
-
-  if(block == NULL)
-    {
-      LogCrit(COMPONENT_CONFIG,
-              "FSAL LOAD PARAMETER: Cannot read item \"%s\" from configuration file",
-              CONF_LABEL_FSAL);
-      ReturnCode(ERR_FSAL_NOENT, 0);
-    }
-  else if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
+  fsal_block = config_FindItemByName(in_config, CONF_LABEL_FSAL);
+  if(fsal_block == NULL) {
+     LogFatal(COMPONENT_INIT,
+	      "Cannot find item \"%s\" in configuration",
+	      CONF_LABEL_FSAL);
+     ReturnCode(ERR_FSAL_NOENT, 0);
+  }
+  if(config_ItemType(fsal_block) != CONFIG_ITEM_BLOCK) {
+     LogFatal(COMPONENT_INIT,
+	      "\"%s\" is not a block",
+	      CONF_LABEL_FSAL);
+     ReturnCode(ERR_FSAL_NOENT, 0);
+  }
+  fsal_cnt = config_GetNbItems(fsal_block);
+  for(i = 0; i < fsal_cnt; i++)
+  {
+	  block = config_GetItemByIndex(fsal_block, i);
+	  if(config_ItemType(block) == CONFIG_ITEM_BLOCK &&
+	     strcasecmp(config_GetBlockName(block), fsal_name) == 0) {
+		  break;
+	  }
+  }
+  if(i == fsal_cnt) {
+     LogFatal(COMPONENT_INIT,
+	      "Cannot find the %s section of %s in the configuration file",
+	      fsal_name, CONF_LABEL_FSAL);
+     ReturnCode(ERR_FSAL_NOENT, 0);
+  }
+  if(config_ItemType(block) != CONFIG_ITEM_BLOCK)
     {
       LogCrit(COMPONENT_CONFIG,
               "FSAL LOAD PARAMETER: Item \"%s\" is expected to be a block",
-              CONF_LABEL_FSAL);
+              fsal_name);
       ReturnCode(ERR_FSAL_INVAL, 0);
     }
 
@@ -198,6 +216,10 @@ fsal_status_t load_FSAL_parameters_from_conf(config_file_t in_config,
 
           init_info->max_fs_calls = (unsigned int)maxcalls;
 
+        }
+      else if(strcasecmp(key_name, "FSAL_Shared_Library") == 0)
+        {
+	  continue; /* scanned at load time */
         }
       else
         {

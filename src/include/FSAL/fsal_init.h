@@ -49,6 +49,7 @@ void init_fsal_parameters(fsal_init_info_t *init_info,
 			      fs_common_initinfo_t *common_info);
 
 fsal_status_t load_FSAL_parameters_from_conf(config_file_t in_config,
+					     const char *fsal_name,
 					     fsal_init_info_t *init_info);
 
 fsal_status_t load_FS_common_parameters_from_conf(config_file_t in_config,
