@@ -52,7 +52,7 @@ struct vfs_fsal_module {
 /* I keep a static pointer to my instance
  * needed for ctor/dtor ops
  */
-struct fsal_module *myself;
+static struct fsal_module *myself;
 const char myname[] = "VFS";
 
 /* filesystem info for VFS */
@@ -112,6 +112,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	fsal_status_t fsal_status;
 
 	fsal_status = load_FSAL_parameters_from_conf(config_struct,
+						     fsal_hdl->ops->get_name(fsal_hdl),
 						     &vfs_me->fsal_info);
 	if(FSAL_IS_ERROR(fsal_status))
 		return fsal_status;
@@ -187,7 +188,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 MODULE_INIT void vfs_init(void) {
 	int retval;
 	struct vfs_fsal_module *vfs_me;
-	struct fsal_module *myself;
 
 	vfs_me = malloc(sizeof(struct vfs_fsal_module)+sizeof(struct fsal_ops));
 	if(vfs_me== NULL) {

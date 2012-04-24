@@ -78,89 +78,78 @@ static enum load_state {
 
 int start_fsals(config_file_t config)
 {
-	config_item_t block;
+	config_item_t fsal_block, block;
 	config_item_t item;
 	char *key, *value;
-	int i, item_cnt;
+	int i, fb, fsal_cnt, item_cnt;
 
-	block = config_FindItemByName(config, CONF_LABEL_NFS_CORE);
-	if(block == NULL) {
+	fsal_block = config_FindItemByName(config, CONF_LABEL_FSAL);
+	if(fsal_block == NULL) {
 		LogFatal(COMPONENT_INIT,
-			 "start_fsals: Cannot find item \"%s\" in configuration",
-			 CONF_LABEL_NFS_CORE);
+			 "Cannot find item \"%s\" in configuration",
+			 CONF_LABEL_FSAL);
 		return 1;
 	}
-	if(config_ItemType(block) != CONFIG_ITEM_BLOCK) {
+	if(config_ItemType(fsal_block) != CONFIG_ITEM_BLOCK) {
 		LogFatal(COMPONENT_INIT,
-			 "start_fsals: \"%s\" is not a block",
-			 CONF_LABEL_NFS_CORE);
+			 "\"%s\" is not a block",
+			 CONF_LABEL_FSAL);
 		return 1;
 	}
 	load_state = idle;  /* .init was a long time ago... */
 
-	item_cnt = config_GetNbItems(block);
-	for(i = 0; i < item_cnt; i++) {
-		item = config_GetItemByIndex(block, i);
-		if(config_GetKeyValue(item, &key, &value) == 0) {
+	fsal_cnt = config_GetNbItems(fsal_block);
+	for(fb = 0; fb < fsal_cnt; fb++) {
+		block = config_GetItemByIndex(fsal_block, fb);
+		if(config_ItemType(block) == CONFIG_ITEM_BLOCK) {
+			char *fsal_name;
 
-		} else {
-			LogFatal(COMPONENT_INIT,
-				 "start_fsals: Error fetching [%d]"
-				 " from config section \"%s\"",
-				 i, CONF_LABEL_NFS_CORE);
-			return 1;
-		}
-		if(strcasecmp(key, "FSAL_Shared_Library") == 0) {
-			struct fsal_module *fsal_hdl;
-			int rc;
-			char *name = NULL;
-			char *so_name = rindex(value, ':');
+			fsal_name = config_GetBlockName(block);
+			item_cnt = config_GetNbItems(block);
+			for(i = 0; i < item_cnt; i++) {
+				item = config_GetItemByIndex(block, i);
+				if(config_GetKeyValue(item, &key, &value) != 0) {
+					LogFatal(COMPONENT_INIT,
+						 "Error fetching [%d]"
+						 " from config section \"%s\"",
+						 i, CONF_LABEL_NFS_CORE);
+					return 1;
+				}
+				if(strcasecmp(key, "FSAL_Shared_Library") == 0) {
+					struct fsal_module *fsal_hdl;
+					int rc;
 
-                        if(so_name != NULL) {
-                          so_name++;
-                          if (so_name - value == 0) {
-                            LogCrit(COMPONENT_INIT, "start_fsals: Failed to"
-                                    " load (%s) because parameter is in wrong"
-                                    " format (name:lib)", value);
-                            continue;
-                          }
-                          name = strndup(value, so_name - value - 1);
-                        } else {
-                          LogCrit(COMPONENT_INIT, "start_fsals: Failed to"
-                                  " load (%s) because parameter is in wrong"
-                                  " format (name:lib)", value);
-                          continue;
-                        }
-
-			LogDebug(COMPONENT_INIT,
-				     "start_fsals: Loading module w/ name=%s"
-                                     " and library=%s", name, so_name);
-			rc = load_fsal(so_name, name, &fsal_hdl);
-                        free(name);
-			if(rc < 0) {
-				LogCrit(COMPONENT_INIT,
-					"start_fsals: Failed to load (%s)"
-                                        " because: %s",	so_name, strerror(rc));
+					LogDebug(COMPONENT_INIT,
+						 "Loading module w/ name=%s"
+						 " and library=%s", fsal_name, value);
+					rc = load_fsal(value, fsal_name, &fsal_hdl);
+					if(rc < 0) {
+						LogCrit(COMPONENT_INIT,
+							"Failed to load (%s)"
+							" because: %s",	value, strerror(rc));
+					}
+				}
+			}
+		} else { /* a FSAL global parameter */
+			item = block;
+			if(config_GetKeyValue(item, &key, &value) != 0) {
+				LogFatal(COMPONENT_INIT,
+					 "Error fetching [%d]"
+					 " from config section \"%s\"",
+					 i, CONF_LABEL_NFS_CORE);
+				return 1;
+			}
+			if(strcasecmp(key, "LogLevel") == 0) {
+				LogDebug(COMPONENT_INIT, "LogLevel = %s", value);
+			} else {
+				LogDebug(COMPONENT_INIT, "Some odd key/value: %s = %s",
+					 key, value);
 			}
 		}
 	}
-	if( !glist_empty(&fsal_list)) {
-		struct fsal_module *loaded_fsal;
-		struct glist_head *entry;
-
-		pthread_mutex_lock(&fsal_lock);
-		glist_for_each(entry, &fsal_list) {
-			loaded_fsal = glist_entry(entry, struct fsal_module, fsals);
-			LogInfo(COMPONENT_INIT,
-				"start_fsals: loaded (%s) as \"%s\"",
-				loaded_fsal->ops->get_name(loaded_fsal),
-				loaded_fsal->ops->get_lib_name(loaded_fsal));
-		}
-		pthread_mutex_unlock(&fsal_lock);
-		return 0;
-	} else {
+	if(glist_empty(&fsal_list)) {
 		LogFatal(COMPONENT_INIT,
-			 "start_fsals: No fsal modules loaded");
+			 "No fsal modules loaded");
 	}
 	return 1;
 }
@@ -207,12 +196,12 @@ int load_fsal(const char *path, const char *name, struct fsal_module **fsal_hdl_
 
 #ifdef LINUX
 	/* recent linux/glibc can probe to see if it already there */
-	LogMajor(COMPONENT_INIT,
-		 "load_fsal: dlopen(%s, RTLD_NOLOAD)\n",path);
+	LogDebug(COMPONENT_INIT,
+		 "Probing to see if %s is already loaded",path);
 	dl = dlopen(path, RTLD_NOLOAD);
 	if(dl != NULL) {
 		retval = EEXIST;
-		LogCrit(COMPONENT_INIT, "Already exists ...");
+		LogDebug(COMPONENT_INIT, "Already exists ...");
 		goto errout;
 	}
 #endif
@@ -220,15 +209,16 @@ int load_fsal(const char *path, const char *name, struct fsal_module **fsal_hdl_
 	load_state = loading;
 	pthread_mutex_unlock(&fsal_lock);
 
-	LogMajor(COMPONENT_INIT,
-		 "load_fsal: dlopen(%s, RTLD_LAZY|RTLD_LOCAL)\n",path);
+	LogDebug(COMPONENT_INIT,
+		 "Loading FSAL %s with %s", name, path);
 	dl = dlopen(path, RTLD_LAZY|RTLD_LOCAL);
 
 	pthread_mutex_lock(&fsal_lock);
 	if(dl == NULL) {
 		retval = errno;
 		dl_error = strdup(dlerror());
-		LogCrit(COMPONENT_INIT, "Could not dlopen module:%s Error:%s", path, dl_error);
+		LogCrit(COMPONENT_INIT,
+			"Could not dlopen module:%s Error:%s", path, dl_error);
 		goto errout;
 	}
 	(void)dlerror(); /* clear it */
@@ -310,7 +300,7 @@ errout:
 	load_state = idle;
 	pthread_mutex_unlock(&fsal_lock);
 	LogMajor(COMPONENT_INIT,
-		 "load_fsal: Failed to load module (%s) because: %s\n",
+		 "Failed to load module (%s) because: %s\n",
 		 path, strerror(retval));
 	return retval;
 }
@@ -342,11 +332,11 @@ int init_fsals(config_file_t config_struct)
 
 		if( !FSAL_IS_ERROR(fsal_status)) {
 			LogInfo(COMPONENT_INIT,
-				"init_fsals: initialized %s",
+				"Initialized %s",
 				fsal->name);
 		} else {
 			LogCrit(COMPONENT_INIT,
-				 "init_fsals: initialization failed for %s",
+				 "Initialization failed for %s",
 				 fsal->name);
 			retval = EINVAL;
 			goto out;
@@ -418,7 +408,7 @@ static const char *get_name(struct fsal_module *fsal_hdl)
 	pthread_mutex_lock(&fsal_hdl->lock);
 	if(fsal_hdl->refs <= 0) {
 		LogCrit(COMPONENT_CONFIG,
-			"lib_of_fsal: Called without reference!");
+			"Called without reference!");
 		name = NULL;
 	} else {
 		name = fsal_hdl->name;
@@ -441,7 +431,7 @@ static const char *get_lib_name(struct fsal_module *fsal_hdl)
 	pthread_mutex_lock(&fsal_hdl->lock);
 	if(fsal_hdl->refs <= 0) {
 		LogCrit(COMPONENT_CONFIG,
-			"lib_of_fsal: Called without reference!");
+			"Called without reference!");
 		path = NULL;
 	} else {
 		path = fsal_hdl->path;

@@ -6,10 +6,8 @@ progress and therefore still in flux at this point.
 
 State
 -----
-This (mostly)compiles but, being incomplete, it does not work.  No, I have not
-done any testing because there is not enough of it yet to have any
-meaningful testing.  If you find a bug, I won't be surprised.  Point it
-out now so I don't have to search for it with gdb later.
+The server builds and runs to the point of processing exports.  Only the
+VFS fsal is functional at this point.  Debugging continues.
 
 This branch is based on the latest stable tag of the mainline 'next' branch.
 The first patch of the new api work is this file, titled:
@@ -34,51 +32,30 @@ VFS fsal
 	new infrastructure.  The main.c file is the fsal object itself
 	followed by export.c which implements fsal_export for VFS.
 	handle.c implements fsal_obj_object. File management for handles
-	is in file.c
-
-	As with the infrastructure, these are whole files that were built
-	up from incremental commits.  The set is by no means complete.
-
-	The file operations are partial.  The 'open' method is the only
-	one with just enough code to start fd caching managment.  I have
-	not written the others yet because the build does not get this far
-	yet in this pass.  The api is set to the core calling code can
-	build.  The extended attributes are completely missing at this
-	point.  These are all not supported in VFS at this point anyway.
+	is in file.c and extended attributes, not implemented yet for VFS
+	are in xattr.c.
 
 FSAL initialization
 	This set of changes to the main server load and initialize
 	the fsals.  Once they are all loaded, fsal_export objects
-	are created as part of the export list initialization.  Lastly,
-	the USE_SHARED_FSAL bits are deprecated.  This patch will grow.
-	What is there now are the bits that had to be moved out of the
-	way at this point.
+	are created as part of the export list initialization.
 
 Cache Inode changes
 	Starting with the commit titled  "Change cache_inode.h to use new api"
 	we invade the cache_inode_* code.  This series of patches replaces
 	fsal_handle_t with a pointer to an allocated fsal_obj_handle and
-	the various FSAL_* calls relevant to it.  Enough conversion was
-	done to get successful compiles.  In cases where the new code
-	is not ready to support core changes yet, some expedient hacks
-	were done to get a clean compile.  This work will progress to
-	where the use of fsal_handle_t is completely deprecated at which
-	point, all definitions of it will be removed.
+	the various FSAL_* calls relevant to it.
 
 	The readdir operation has been changed to use a callback.  This
 	greatly simplifies the FSAL method and eliminates multiple loops,
-	fixed array storage, and a lot of extra work.  The 'nonamecache'
-	variant has not been implemented yet however.  The callback
-	pattern can easily handle it but there is question whether this
-	is a good idea now that directory entries, as avl trees, are more
-	efficient for name resolution.
+	fixed array storage, and a lot of extra work.
 
-	File descriptors are being removed from the API and will will
+	File descriptors are removed from the API and will will
 	be deprecated entirely from cache entries.  An fd is a property
 	of the FSAL and will be managed (cached) there.  The VFS fsal
 	and other POSIX based interfaces have an fd but library based
 	FSALs have other structures and apis so fileno and friends
-	will be deprecated in the core.
+	are deprecated in the core.
 
 Protocol
 	These files manage the protocol on one side and access to the
@@ -92,6 +69,84 @@ State and Locking
 	fsal_op_context pcontext has been for the most part removed from
 	these files.  A few places require user credentials for looking 
 	up handles etc.  As with protocol, user_credentials takes its place.
+
+Configuration File Changes
+--------------------------
+In order to support multiple FSAL definitions in the configuration,
+the configuration file now accepts a new syntax for FSAL initialization.
+The following fragment defines the loading of the VFS fsal.
+
+###################################################
+#
+# FSAL parameters.
+#
+# To use the default value for a parameter,
+# just comment the associated line.
+#
+###################################################
+
+FSAL
+{
+  LogLevel = "Red Alert";
+  Foo = "baz";
+  VFS {
+	FSAL_Shared_Library = "/usr/local/lib/libfsalvfs.so";
+	# logging level (NIV_FULL_DEBUG, NIV_DEBUG,
+	# NIV_EVNMT, NIV_CRIT, NIV_MAJ, NIV_NULL)
+	  DebugLevel = "NIV_FULL_DEBUG" ;
+
+	# Logging file
+	#Options: "/var/log/nfs-ganesha.log" or some other file path
+	#         "SYSLOG" prints to syslog
+	#         "STDERR" prints stderr messages to the console that
+	#                  started the ganesha process
+	#         "STDOUT" prints stdout messages to the console that
+	#                  started the ganesha process
+	#LogFile = "SYSLOG";
+	LogFile = "/var/log/nfs-ganesha.log";
+
+	# maximum number of simultaneous calls
+	# to the filesystem.
+	# ( 0 = no limit ).  
+	max_FS_calls = 0;
+  }
+
+}
+
+The "FSAL" block has one sub-block, in this example "VFS", for each
+fsal it is to load.  There can be as many sub-blocks as make sense.
+This is the power of trhe new api, to support multiple fsals simultaneously.
+There is also provision for FSAL global parameters although none are
+actually defined at this point.
+
+The "name" of the FSAL is the tag at the beginning of the sub-block, in this
+case "VFS".  This name is used for fsal module lookups and diagnostics.
+
+The "FSAL_Shared_Library" value is the absolute path to the module itself.
+The path can be anywhere in the local filesystem.
+
+The rest of the parameters are the usual FSAL configuration parameters.
+
+Exports are connected to a specific FSAL in the following fragment:
+
+EXPORT
+{
+  # Export Id (mandatory)
+  Export_Id = 77 ;
+  
+  # Exported path (mandatory)
+  Path = "/home/tmp";
+
+  # Exporting FSAL
+  FSAL = "VFS";
+
+  # more export parameters...
+}
+
+The "FSAL" keyword defines which FSAL module to use for this export.  If
+This keyword is missing in an export, the VFS fsal is used.  This logic
+may change in future to have a server global definition within the
+configuration file.
 
 Things to look for
 ------------------
@@ -120,7 +175,7 @@ Structure definitions
 	copying.  Existing core code dereferences the buffer and a NULL
 	terminated string.  They will eventually be deprecated and removed.
 	
-	The file include/fsal_api.h will contain the full fsal api. The
+	The file include/fsal_api.h contains the full fsal api. The
 	only part visible to the server core is defined here.
 
 	Each file that implements an object has its version of the
