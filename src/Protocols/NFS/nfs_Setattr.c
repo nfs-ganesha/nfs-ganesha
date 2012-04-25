@@ -96,7 +96,7 @@ int nfs_Setattr(nfs_arg_t * parg,
   fsal_attrib_list_t setattr;
   cache_entry_t *pentry = NULL;
   fsal_attrib_list_t pre_attr;
-  fsal_attrib_list_t parent_attr;
+  fsal_attrib_list_t trunc_attr;
   fsal_attrib_list_t *ppre_attr;
   cache_inode_status_t cache_status;
   int rc;
@@ -243,10 +243,9 @@ int nfs_Setattr(nfs_arg_t * parg,
         {
           cache_status = cache_inode_truncate(pentry,
                                               setattr.filesize,
-                                              &parent_attr,
+                                              &trunc_attr,
                                               ht, pclient, pcontext, &cache_status);
-          setattr.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
-          setattr.asked_attributes &= ~FSAL_ATTR_SIZE;
+          setattr.asked_attributes &= ~(FSAL_ATTR_SPACEUSED|FSAL_ATTR_SIZE);
         }
     }
   else
@@ -264,10 +263,11 @@ int nfs_Setattr(nfs_arg_t * parg,
                                                  ht, pclient, pcontext, &cache_status);
             }
           else
-            cache_status = CACHE_INODE_SUCCESS;
+            {
+              cache_status = CACHE_INODE_SUCCESS;
+              setattr = trunc_attr;
+            }
 
-          setattr.asked_attributes |= FSAL_ATTR_SPACEUSED;
-          setattr.asked_attributes |= FSAL_ATTR_SIZE;
         }
       else
         cache_status = cache_inode_setattr(pentry,
