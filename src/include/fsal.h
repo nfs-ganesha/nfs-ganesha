@@ -313,7 +313,13 @@ fsal_status_t FSAL_name2buffdesc(fsal_name_t * in_name, fsal_buffdesc_t * out_bu
 /* snprintmem and sscanmem are defined into common_utils */
 
 #define snprintHandle(target, tgt_size, p_handle) \
-  snprintmem(target,tgt_size,(caddr_t)p_handle,sizeof(fsal_handle_t))
+  do {                                                           \
+        struct fsal_handle_desc fd = {                           \
+                .start = (char *)p_handle                        \
+        };                                                       \
+        FSAL_ExpandHandle(NULL, FSAL_DIGEST_SIZEOF, &fd);        \
+        snprintmem(target,tgt_size,(caddr_t)p_handle,fd.len);    \
+  } while(0)
 
 #define snprintCookie(target, tgt_size, p_cookie) \
   snprintmem(target,tgt_size,(caddr_t)p_cookie,sizeof(fsal_cookie_t))
