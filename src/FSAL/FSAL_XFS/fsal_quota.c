@@ -179,7 +179,7 @@ fsal_status_t XFSFSAL_set_quota(fsal_path_t * pfsal_path,       /* IN */
  * FSAL_check_quota :
  * checks if quotas allow a user to do an operation
  *
- * \param  pfsal_path
+ * \param fs_spec
  *        path to the filesystem whose quota are requested
  * \param  quota_type
  *        type of quota to be checked (inodes or blocks       
@@ -191,18 +191,14 @@ fsal_status_t XFSFSAL_set_quota(fsal_path_t * pfsal_path,       /* IN */
  */
 
 
-fsal_status_t XFSFSAL_check_quota( fsal_path_t * path,  /* IN */
+fsal_status_t XFSFSAL_check_quota( char * fs_spec,  /* IN */
                                    fsal_quota_type_t   quota_type,
                                    fsal_uid_t          fsal_uid)      /* IN */
 {
   struct dqblk fs_quota;
-  char fs_spec[MAXPATHLEN];
   
-  if(!path )
+  if(!fs_spec )
     ReturnCode(ERR_FSAL_FAULT, 0);
-
-  if(fsal_internal_path2fsname( path->path, fs_spec) == -1)
-    ReturnCode(ERR_FSAL_INVAL, 0);
 
   if( fsal_uid == 0 ) /* No quota for root */
     ReturnCode(ERR_FSAL_NO_ERROR, 0) ;

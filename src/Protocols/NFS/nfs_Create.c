@@ -455,8 +455,7 @@ int nfs_Create(nfs_arg_t * parg,
 			  attr_parent_after = parent_pentry->attributes;
 
                           /* Build entry attributes */
-                          nfs_SetPostOpAttr(pcontext, pexport,
-                                            file_pentry,
+                          nfs_SetPostOpAttr(pexport,
                                             &attr_newfile,
                                             &(pres->res_create3.CREATE3res_u.resok.
                                               obj_attributes));
@@ -465,8 +464,7 @@ int nfs_Create(nfs_arg_t * parg,
                            * Build Weak Cache Coherency
                            * data 
                            */
-                          nfs_SetWccData(pcontext, pexport,
-                                         parent_pentry,
+                          nfs_SetWccData(pexport,
                                          ppre_attr,
                                          &attr_parent_after,
                                          &(pres->res_create3.CREATE3res_u.resok.dir_wcc));

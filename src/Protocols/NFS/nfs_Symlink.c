@@ -357,14 +357,12 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
               pres->res_symlink3.SYMLINK3res_u.resok.obj.handle_follows = TRUE;
 
               /* Build entry attributes */
-              nfs_SetPostOpAttr(pcontext, pexport,
-                                symlink_pentry,
+              nfs_SetPostOpAttr(pexport,
                                 &attr_symlink,
                                 &(pres->res_symlink3.SYMLINK3res_u.resok.obj_attributes));
 
               /* Build Weak Cache Coherency data */
-              nfs_SetWccData(pcontext, pexport,
-                             parent_pentry,
+              nfs_SetWccData(pexport,
                              ppre_attr,
                              &attr_parent_after,
                              &(pres->res_symlink3.SYMLINK3res_u.resok.dir_wcc));

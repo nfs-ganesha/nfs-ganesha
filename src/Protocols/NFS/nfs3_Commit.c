@@ -146,21 +146,13 @@ int nfs3_Commit(nfs_arg_t * parg,
     {
       pres->res_commit3.status = NFS3ERR_IO;;
 
-      nfs_SetWccData(pcontext,
-                     pexport,
-                     pentry,
-                     ppre_attr,
-                     ppre_attr, &(pres->res_commit3.COMMIT3res_u.resfail.file_wcc));
-
       return NFS_REQ_OK;
     }
 
   /* Set the pre_attr */
   ppre_attr = &pre_attr;
 
-  nfs_SetWccData(pcontext,
-                 pexport,
-                 pentry,
+  nfs_SetWccData(pexport,
                  ppre_attr, ppre_attr, &(pres->res_commit3.COMMIT3res_u.resok.file_wcc));
 
   /* Set the write verifier */

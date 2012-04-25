@@ -252,8 +252,7 @@ int nfs_Rmdir(nfs_arg_t * parg /* IN  */ ,
 
                     case NFS_V3:
                       /* Build Weak Cache Coherency data */
-                      nfs_SetWccData(pcontext, pexport,
-                                     parent_pentry,
+                      nfs_SetWccData(pexport,
                                      ppre_attr,
                                      &parent_attr,
                                      &(pres->res_rmdir3.RMDIR3res_u.resok.dir_wcc));

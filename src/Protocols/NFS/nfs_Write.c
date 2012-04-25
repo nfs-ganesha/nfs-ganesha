@@ -516,10 +516,7 @@ int nfs_Write(nfs_arg_t * parg,
             case NFS_V3:
 
               /* Build Weak Cache Coherency data */
-              nfs_SetWccData(pcontext,
-                             pexport,
-                             pentry,
-                             ppre_attr,
+              nfs_SetWccData(pexport, ppre_attr,
                              &attr, &(pres->res_write3.WRITE3res_u.resok.file_wcc));
 
               /* Set the written size */

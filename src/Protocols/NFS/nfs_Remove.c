@@ -260,8 +260,7 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
 
                     case NFS_V3:
                       /* Build Weak Cache Coherency data */
-                      nfs_SetWccData(pcontext, pexport,
-                                     parent_pentry,
+                      nfs_SetWccData(pexport,
                                      pparent_attr,
                                      &parent_attr,
                                      &(pres->res_remove3.REMOVE3res_u.resok.dir_wcc));

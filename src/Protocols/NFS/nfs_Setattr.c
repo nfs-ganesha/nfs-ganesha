@@ -96,7 +96,7 @@ int nfs_Setattr(nfs_arg_t * parg,
   fsal_attrib_list_t setattr;
   cache_entry_t *pentry = NULL;
   fsal_attrib_list_t pre_attr;
-  fsal_attrib_list_t parent_attr;
+  fsal_attrib_list_t trunc_attr;
   fsal_attrib_list_t *ppre_attr;
   cache_inode_status_t cache_status;
   int rc;
@@ -138,8 +138,7 @@ int nfs_Setattr(nfs_arg_t * parg,
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_setattr3.object))))
     {
       /* do nothing */
-      nfs_SetWccData(pcontext, pexport,
-                     pentry,
+      nfs_SetWccData(pexport,
                      &pre_attr,
                      &pre_attr, &(pres->res_setattr3.SETATTR3res_u.resok.obj_wcc));
 
@@ -193,9 +192,9 @@ int nfs_Setattr(nfs_arg_t * parg,
            * to occur concurently on the same object, from different clients */
           fattr3 attributes;
 
-          if(nfs3_FSALattr_To_Fattr(pexport, ppre_attr, &attributes) == 0)
+          if(nfs3_FSALattr_To_PartialFattr(ppre_attr, FSAL_ATTR_CTIME, &attributes) == 0)
             {
-              pres->res_setattr3.status = NFS3ERR_NOT_SYNC;
+              pres->res_setattr3.status = NFS3ERR_INVAL;
               return NFS_REQ_OK;
             }
           LogFullDebug(COMPONENT_NFSPROTO, "css=%d acs=%d    csn=%d acn=%d",
@@ -244,10 +243,9 @@ int nfs_Setattr(nfs_arg_t * parg,
         {
           cache_status = cache_inode_truncate(pentry,
                                               setattr.filesize,
-                                              &parent_attr,
+                                              &trunc_attr,
                                               ht, pclient, pcontext, &cache_status);
-          setattr.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
-          setattr.asked_attributes &= ~FSAL_ATTR_SIZE;
+          setattr.asked_attributes &= ~(FSAL_ATTR_SPACEUSED|FSAL_ATTR_SIZE);
         }
     }
   else
@@ -265,10 +263,11 @@ int nfs_Setattr(nfs_arg_t * parg,
                                                  ht, pclient, pcontext, &cache_status);
             }
           else
-            cache_status = CACHE_INODE_SUCCESS;
+            {
+              cache_status = CACHE_INODE_SUCCESS;
+              setattr = trunc_attr;
+            }
 
-          setattr.asked_attributes |= FSAL_ATTR_SPACEUSED;
-          setattr.asked_attributes |= FSAL_ATTR_SIZE;
         }
       else
         cache_status = cache_inode_setattr(pentry,
@@ -292,8 +291,7 @@ int nfs_Setattr(nfs_arg_t * parg,
 
         case NFS_V3:
           /* Build Weak Cache Coherency data */
-          nfs_SetWccData(pcontext, pexport,
-                         pentry,
+          nfs_SetWccData(pexport,
                          ppre_attr,
                          &setattr, &(pres->res_setattr3.SETATTR3res_u.resok.obj_wcc));
 

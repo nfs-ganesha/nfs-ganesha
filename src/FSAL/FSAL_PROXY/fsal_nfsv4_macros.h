@@ -278,7 +278,11 @@ do {                                                                            
   pthread_mutex_lock( &pcontext->lock ) ;                                                 \
   __renew_rc = fsal_internal_ClientReconnect( pcontext ) ;                                \
   pthread_mutex_unlock( &pcontext->lock ) ;                                               \
-  sleep( pcontext->retry_sleeptime ) ;                                                    \
+  if (__renew_rc) {                                                                       \
+     LogEvent(COMPONENT_FSAL, "Cannot reconnect, will sleep for %d seconds",              \
+              pcontext->retry_sleeptime ) ;                                               \
+   sleep( pcontext->retry_sleeptime ) ;                                                   \
+  }                                                                                       \
   } while( 1  ) ;                                                                         \
 }  while( 0 )
 

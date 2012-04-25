@@ -272,8 +272,7 @@ int nfs_Link(nfs_arg_t * parg,
                            * attributes 
                            */
 
-                          nfs_SetPostOpAttr(pcontext, pexport,
-                                            target_pentry,
+                          nfs_SetPostOpAttr(pexport,
                                             &attr,
                                             &(pres->res_link3.LINK3res_u.resok.
                                               file_attributes));
@@ -282,8 +281,7 @@ int nfs_Link(nfs_arg_t * parg,
                            * Build Weak Cache Coherency
                            * data 
                            */
-                          nfs_SetWccData(pcontext, pexport,
-                                         parent_pentry,
+                          nfs_SetWccData(pexport,
                                          ppre_attr,
                                          &attr_parent_after,
                                          &(pres->res_link3.LINK3res_u.resok.linkdir_wcc));

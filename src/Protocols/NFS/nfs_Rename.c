@@ -279,14 +279,12 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                    * Build Weak Cache Coherency
                    * data 
                    */
-                  nfs_SetWccData(pcontext, pexport,
-                                 parent_pentry,
+                  nfs_SetWccData(pexport,
                                  ppre_attr,
                                  &attr,
                                  &(pres->res_rename3.RENAME3res_u.resok.fromdir_wcc));
 
-                  nfs_SetWccData(pcontext, pexport,
-                                 new_parent_pentry,
+                  nfs_SetWccData(pexport,
                                  pnew_pre_attr,
                                  &new_attr,
                                  &(pres->res_rename3.RENAME3res_u.resok.todir_wcc));
@@ -319,14 +317,12 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                        * Build Weak Cache Coherency
                        * data 
                        */
-                      nfs_SetWccData(pcontext, pexport,
-                                     parent_pentry,
+                      nfs_SetWccData(pexport,
                                      ppre_attr,
                                      &attr,
                                      &(pres->res_rename3.RENAME3res_u.resok.fromdir_wcc));
 
-                      nfs_SetWccData(pcontext, pexport,
-                                     parent_pentry,
+                      nfs_SetWccData(pexport,
                                      ppre_attr,
                                      &attr,
                                      &(pres->res_rename3.RENAME3res_u.resok.todir_wcc));
@@ -369,15 +365,13 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                            * Build Weak Cache Coherency
                            * data 
                            */
-                          nfs_SetWccData(pcontext, pexport,
-                                         parent_pentry,
+                          nfs_SetWccData(pexport,
                                          ppre_attr,
                                          ppre_attr, /* Attributes before and after will be unchanged. */
                                          &(pres->res_rename3.RENAME3res_u.resok.
                                            fromdir_wcc));
                           
-                          nfs_SetWccData(pcontext, pexport,
-                                         parent_pentry,
+                          nfs_SetWccData(pexport,
                                          ppre_attr,
                                          ppre_attr, /* Attributes before and after will be unchanged. */
                                          &(pres->res_rename3.RENAME3res_u.resok.
@@ -425,15 +419,13 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                                    * Build Weak Cache Coherency
                                    * data 
                                    */
-                                  nfs_SetWccData(pcontext, pexport,
-                                                 parent_pentry,
+                                  nfs_SetWccData(pexport,
                                                  ppre_attr,
                                                  &attr,
                                                  &(pres->res_rename3.RENAME3res_u.resok.
                                                    fromdir_wcc));
 
-                                  nfs_SetWccData(pcontext, pexport,
-                                                 parent_pentry,
+                                  nfs_SetWccData(pexport,
                                                  ppre_attr,
                                                  &attr,
                                                  &(pres->res_rename3.RENAME3res_u.resok.

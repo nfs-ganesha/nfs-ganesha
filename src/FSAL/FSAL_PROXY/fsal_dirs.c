@@ -140,13 +140,13 @@ fsal_status_t PROXYFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
   int i = 0;
   int cpt = 0;
   entry4 *piter_entry = NULL;
-  entry4 tabentry4[FSAL_READDIR_SIZE];
-  //char tabentry4name[FSAL_READDIR_SIZE][MAXNAMLEN];
-  char * tabentry4name = NULL ;
-  uint32_t tabentry4bitmap[FSAL_READDIR_SIZE][2];
+  struct proxy_entry4 {
+        entry4 e4;
+        char name[MAXNAMLEN];
+        fsal_proxy_internal_fattr_readdir_t attr;
+        uint32_t bitmap[2];
+  } *pxy_e4;
   struct timeval timeout = TIMEOUTRPC;
-  //fsal_proxy_internal_fattr_readdir_t tabentry4attr[FSAL_READDIR_SIZE];
-  fsal_proxy_internal_fattr_readdir_t * tabentry4attr = NULL ;
 #define FSAL_READDIR_NB_OP_ALLOC 2
   nfs_argop4 argoparray[FSAL_READDIR_NB_OP_ALLOC];
   nfs_resop4 resoparray[FSAL_READDIR_NB_OP_ALLOC];
@@ -160,15 +160,14 @@ fsal_status_t PROXYFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
   if(!dir_descriptor || !pdirent || !end_position || !nb_entries || !end_of_dir)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
-  if( ( tabentry4name = Mem_Alloc( FSAL_READDIR_SIZE * MAXNAMLEN ) ) == NULL )
-    Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
+  /* How much data should I read ? */
+  nbreaddir = buffersize / (sizeof(fsal_dirent_t));
+  if(nbreaddir > FSAL_READDIR_SIZE)
+    nbreaddir = FSAL_READDIR_SIZE;
 
-  if( ( tabentry4attr =
-	 (fsal_proxy_internal_fattr_readdir_t *)Mem_Alloc( sizeof( fsal_proxy_internal_fattr_readdir_t ) * FSAL_READDIR_SIZE ) ) == NULL )
-   {
-     Mem_Free( tabentry4name ) ;
-     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
-   }
+  pxy_e4 = (struct proxy_entry4 *)Mem_Calloc(nbreaddir, sizeof(*pxy_e4));
+  if(pxy_e4 == NULL)
+   Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
 
   memcpy( (char *)&start_position.data, (char *)&start_pos.data, sizeof( nfs_cookie4 ) ) ;
 
@@ -195,37 +194,29 @@ fsal_status_t PROXYFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
   /* Set up reply structure */
   resnfs4.resarray.resarray_val = resoparray;
 
-  /* How much data should I read ? */
-  nbreaddir = buffersize / (sizeof(fsal_dirent_t));
-  if(nbreaddir > FSAL_READDIR_SIZE)
-    nbreaddir = FSAL_READDIR_SIZE;
-
-  memset((char *)tabentry4, 0, FSAL_READDIR_SIZE * sizeof(entry4));
-  memset((char *)tabentry4name, 0, FSAL_READDIR_SIZE * MAXNAMLEN);
-  memset((char *)tabentry4attr, 0,
-         FSAL_READDIR_SIZE * sizeof(fsal_proxy_internal_fattr_readdir_t));
   for(i = 0; i < nbreaddir; i++)
     {
-      fsal_internal_proxy_setup_readdir_fattr(&tabentry4attr[i]);
+      fsal_internal_proxy_setup_readdir_fattr(&pxy_e4[i].attr);
 
-      tabentry4[i].name.utf8string_val = (char *)(tabentry4name+i*MAXNAMLEN*sizeof(char) ) ;
-      tabentry4[i].name.utf8string_len = MAXNAMLEN;
+      pxy_e4[i].e4.name.utf8string_val = pxy_e4[i].name;
+      pxy_e4[i].e4.name.utf8string_len = sizeof(pxy_e4[i].name);
 
-      tabentry4[i].attrs.attr_vals.attrlist4_val = (char *)&(tabentry4attr[i]);
-      tabentry4[i].attrs.attr_vals.attrlist4_len =
-          sizeof(fsal_proxy_internal_fattr_readdir_t);
+      pxy_e4[i].e4.attrs.attr_vals.attrlist4_val = (char *)&(pxy_e4[i].attr);
+      pxy_e4[i].e4.attrs.attr_vals.attrlist4_len = sizeof(pxy_e4[i].attr);
 
-      tabentry4[i].attrs.attrmask.bitmap4_val = tabentry4bitmap[i];
-      tabentry4[i].attrs.attrmask.bitmap4_len = 2;
+      pxy_e4[i].e4.attrs.attrmask.bitmap4_val = pxy_e4[i].bitmap;
+      pxy_e4[i].e4.attrs.attrmask.bitmap4_len = 2;
+
+      pxy_e4[i].e4.nextentry = &pxy_e4[i+1].e4; /* Last one cleared after the loop */
     }
+  pxy_e4[i].e4.nextentry = NULL;
   resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.opreaddir.
-      READDIR4res_u.resok4.reply.entries = (entry4 *) tabentry4;
+      READDIR4res_u.resok4.reply.entries = &pxy_e4->e4;
 
   /* >> Call your filesystem lookup function here << */
   if(fsal_internal_proxy_extract_fh(&nfs4fh, (fsal_handle_t *) &dir_descriptor->fhandle) == FALSE)
    {
-    Mem_Free( tabentry4attr ) ;
-    Mem_Free( tabentry4name ) ;
+    Mem_Free( pxy_e4 ) ;
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
    }
   /** @todo : use NFS4_OP_VERIFY to implement a cache validator, BUGAZOMEU */
@@ -236,18 +227,19 @@ fsal_status_t PROXYFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
   TakeTokenFSCall();
   /* Call the NFSv4 function */
   COMPOUNDV4_EXECUTE(dir_descriptor->pcontext, argnfs4, resnfs4, rc);
+  ReleaseTokenFSCall();
   if(rc != RPC_SUCCESS)
     {
-      ReleaseTokenFSCall();
 
-      Mem_Free( tabentry4attr ) ;
-      Mem_Free( tabentry4name ) ;
+      Mem_Free( pxy_e4 ) ;
       Return(ERR_FSAL_IO, rc, INDEX_FSAL_readdir);
     }
-  ReleaseTokenFSCall();
 
   if(resnfs4.status != NFS4_OK)
-    return fsal_internal_proxy_error_convert(resnfs4.status, INDEX_FSAL_readdir);
+    {
+      Mem_Free( pxy_e4 ) ;
+      return fsal_internal_proxy_error_convert(resnfs4.status, INDEX_FSAL_readdir);
+    }
 
   /* Set the reply structure */
   if(resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.opreaddir.
@@ -255,10 +247,6 @@ fsal_status_t PROXYFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
     {
       *end_of_dir = TRUE;
     }
-
-  /* >> convert error code and return on error << */
-
-  /* >> fill the output dirent array << */
 
   /* until the requested count is reached
    * or the end of dir is reached...
@@ -276,19 +264,18 @@ fsal_status_t PROXYFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
           FSAL_CLEAR_MASK(pdirent[cpt].attributes.asked_attributes);
           FSAL_SET_MASK(pdirent[cpt].attributes.asked_attributes, FSAL_ATTR_RDATTR_ERR);
 
-          Mem_Free( tabentry4attr ) ;
-          Mem_Free( tabentry4name ) ;
+          Mem_Free( pxy_e4 ) ;
           Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
         }
 
       if(fsal_internal_proxy_fsal_utf8_2_name(&(pdirent[cpt].name),
                                               &(piter_entry->name)) == FALSE)
         {
-          Mem_Free( tabentry4attr ) ;
-          Mem_Free( tabentry4name ) ;
+          Mem_Free( pxy_e4 ) ;
           Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_readdir);
         }
 
+      pdirent[cpt].cookie.data = piter_entry->cookie;
       /* Link the entries together */
       pdirent[cpt].nextentry = NULL;    /* Will be overwritten if there is an entry behind, stay NULL if not */
       if(cpt != 0)
@@ -300,15 +287,14 @@ fsal_status_t PROXYFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
       /* Get ready for next pdirent */
       cpt += 1;
 
-      if(cpt >= FSAL_READDIR_SIZE)
+      if(cpt >= nbreaddir)
         break;
     }
 
   /* The number of entries to be returned */
   *nb_entries = cpt;
 
-  Mem_Free( tabentry4attr ) ;
-  Mem_Free( tabentry4name ) ;
+  Mem_Free( pxy_e4 ) ;
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_readdir);
 
 }

@@ -363,8 +363,8 @@ int nfs_Readdir(nfs_arg_t * parg,
               pres->res_readdir3.status = NFS3_OK;
               RES_READDIR3_OK.reply.entries = NULL;
               RES_READDIR3_OK.reply.eof = TRUE;
-              nfs_SetPostOpAttr(pcontext, pexport,
-                                dir_pentry, &dir_attr, &(RES_READDIR3_OK.dir_attributes));
+              nfs_SetPostOpAttr(pexport,
+                                &dir_attr, &(RES_READDIR3_OK.dir_attributes));
               memcpy(RES_READDIR3_OK.cookieverf, cookie_verifier, sizeof(cookieverf3));
               break;
             }
@@ -829,8 +829,8 @@ int nfs_Readdir(nfs_arg_t * parg,
 
               RES_READDIR3_OK.reply.eof = FALSE;        /* the actual value will be set in post treatments */
 
-              nfs_SetPostOpAttr(pcontext, pexport,
-                                dir_pentry, &dir_attr, &(RES_READDIR3_OK.dir_attributes));
+              nfs_SetPostOpAttr(pexport,
+                                &dir_attr, &(RES_READDIR3_OK.dir_attributes));
 
               memcpy(RES_READDIR3_OK.cookieverf, cookie_verifier, sizeof(cookieverf3));
               pres->res_readdir3.status = NFS3_OK;
@@ -861,8 +861,7 @@ int nfs_Readdir(nfs_arg_t * parg,
                 case NFS_V3:
                   pres->res_readdir3.status = NFS3_OK;
                   RES_READDIR3_OK.reply.eof = TRUE;
-                  nfs_SetPostOpAttr(pcontext, pexport,
-                                    dir_pentry,
+                  nfs_SetPostOpAttr(pexport,
                                     &dir_attr, &(RES_READDIR3_OK.dir_attributes));
                   memcpy(RES_READDIR3_OK.cookieverf, cookie_verifier,
                          sizeof(cookieverf3));
