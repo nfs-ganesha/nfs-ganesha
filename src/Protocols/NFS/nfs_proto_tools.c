@@ -3305,28 +3305,69 @@ int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask)
   return NFS4_OK;
 }                               /* nfs4_Fattr_To_FSAL_attr */
 
+static int nfstime4_to_fsal_time(fsal_time_t *ts, const char *attrval)
+{
+  int LastOffset = 0;
+  uint64_t seconds;
+  uint32_t nseconds;
+
+  memcpy(&seconds, attrval + LastOffset, sizeof(seconds));
+  LastOffset += sizeof(seconds) ;
+
+  memcpy(&nseconds, attrval + LastOffset, sizeof(nseconds));
+  LastOffset += sizeof( nseconds ) ;
+
+  ts->seconds = (uint32_t) nfs_ntohl64(seconds);
+  ts->nseconds = (uint32_t) ntohl(nseconds);
+
+  return LastOffset; 
+}
+
+static int settime4_to_fsal_time(fsal_time_t *ts, const char *attrval)
+{
+  time_how4 how;
+  int LastOffset = 0;
+
+  memcpy(&how, attrval + LastOffset , sizeof(how));
+  LastOffset += sizeof(how);
+
+  if(ntohl(how) == SET_TO_SERVER_TIME4)
+    {
+      ts->seconds = time(NULL);   /* Use current server's time */
+      ts->nseconds = 0;
+    }
+  else
+    {
+        LastOffset += nfstime4_to_fsal_time(ts, attrval + LastOffset);
+    }
+
+  return LastOffset;
+}
 
 /**
  * 
- * nfs4_Fattr_To_FSAL_attr: Converts NFSv4 attributes buffer to a FSAL attributes structure.
+ * Fattr4_To_FSAL_attr: Converts NFSv4 attributes buffer to a FSAL attributes structure.
  * 
  * Converts NFSv4 attributes buffer to a FSAL attributes structure.
  *
+ * NB! If the pointer for the handle is provided the memory is not allocated,
+ *     the handle's nfs_fh4_val points inside fattr4. The pointer is valid
+ *     as long as fattr4 is valid.
+ *
  * @param pFSAL_attr [OUT]  pointer to FSAL attributes.
  * @param Fattr      [IN] pointer to NFSv4 attributes. 
+ * @param hdl4       [OUT] optional pointer to return NFSv4 file handle
  * 
  * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
  */
-int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
+int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4 *hdl4)
 {
   u_int LastOffset = 0;
   unsigned int i = 0;
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_FattrToSattr";
   uint32_t attrmasklist[FATTR4_MOUNTED_ON_FILEID];      /* List cannot be longer than FATTR4_MOUNTED_ON_FILEID */
   uint32_t attrmasklen = 0;
   uint32_t attribute_to_set = 0;
-
   int len;
   char buffer[MAXNAMLEN];
   utf8string utf8buffer;
@@ -3334,17 +3375,12 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
   fattr4_type attr_type;
   fattr4_fsid attr_fsid;
   fattr4_fileid attr_fileid;
-  fattr4_time_modify_set attr_time_set;
   fattr4_rdattr_error rdattr_error;
-  nfstime4 attr_time;
   fattr4_size attr_size;
   fattr4_change attr_change;
   fattr4_numlinks attr_numlinks;
   fattr4_rawdev attr_rawdev;
   fattr4_space_used attr_space_used;
-  fattr4_time_access attr_time_access;
-  fattr4_time_modify attr_time_modify;
-  fattr4_time_metadata attr_time_metadata;
 #ifdef _USE_NFS4_ACL
   int rc;
 #endif
@@ -3425,10 +3461,9 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
               pFSAL_attr->type = FSAL_TYPE_FIFO;
               break;
 
-            case FSAL_TYPE_JUNCTION:
+            default:
               /* For wanting of a better solution */
-              pFSAL_attr->type = 0;
-              break;
+              return NFS4ERR_BADXDR;
             }                   /* switch( pattr->type ) */
 
           pFSAL_attr->asked_attributes |= FSAL_ATTR_TYPE;
@@ -3592,106 +3627,32 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
           break;
 
         case FATTR4_TIME_ACCESS:       /* Used only by FSAL_PROXY to reverse convert */
-          memcpy((char *)&attr_time_access,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_time_access));
-          pFSAL_attr->atime.seconds = (uint32_t) nfs_ntohl64(attr_time_access.seconds);
-          pFSAL_attr->atime.nseconds = (uint32_t) ntohl(attr_time_access.nseconds);
-
+          LastOffset += nfstime4_to_fsal_time(&pFSAL_attr->atime, 
+                                              (char *)(Fattr->attr_vals.attrlist4_val + LastOffset));
           pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME;
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
           break;
 
         case FATTR4_TIME_METADATA:     /* Used only by FSAL_PROXY to reverse convert */
-          memcpy((char *)&attr_time_metadata,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_time_metadata));
-          pFSAL_attr->ctime.seconds = (uint32_t) nfs_ntohl64(attr_time_metadata.seconds);
-          pFSAL_attr->ctime.nseconds = (uint32_t) ntohl(attr_time_metadata.nseconds);
-
+          LastOffset += nfstime4_to_fsal_time(&pFSAL_attr->ctime, 
+                                              (char *)(Fattr->attr_vals.attrlist4_val + LastOffset));
           pFSAL_attr->asked_attributes |= FSAL_ATTR_CTIME;
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
           break;
 
         case FATTR4_TIME_MODIFY:       /* Used only by FSAL_PROXY to reverse convert */
-          memcpy((char *)&attr_time_modify,
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(fattr4_time_modify));
-          pFSAL_attr->mtime.seconds = (uint32_t) nfs_ntohl64(attr_time_modify.seconds);
-          pFSAL_attr->mtime.nseconds = (uint32_t) ntohl(attr_time_modify.nseconds);
-
+          LastOffset += nfstime4_to_fsal_time(&pFSAL_attr->mtime, 
+                                              (char *)(Fattr->attr_vals.attrlist4_val + LastOffset));
           pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME;
-          LastOffset += fattr4tab[attribute_to_set].size_fattr4;
-
           break;
 
         case FATTR4_TIME_ACCESS_SET:
-          memcpy((char *)&(attr_time_set.set_it),
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(time_how4));
-
-          LastOffset += sizeof(time_how4);
-
-          if(ntohl(attr_time_set.set_it) == SET_TO_SERVER_TIME4)
-            {
-              pFSAL_attr->atime.seconds = time(NULL);   /* Use current server's time */
-              pFSAL_attr->atime.nseconds = 0;
-            }
-          else
-            {
-              /* Read the remaining part of the data */
-              memcpy((char *)&(attr_time_set.settime4_u.time),
-                     (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                     sizeof(nfstime4));
-
-              //LastOffset += sizeof(nfstime4);
-              LastOffset += sizeof(int64_t) + sizeof(uint32_t);
-
-              /* Take care of XDR when dealing with fattr4 */
-              attr_time = attr_time_set.settime4_u.time;
-              attr_time.seconds = nfs_ntohl64(attr_time.seconds);
-              attr_time.nseconds = ntohl(attr_time.nseconds);
-
-              pFSAL_attr->atime.seconds = attr_time.seconds;
-              pFSAL_attr->atime.nseconds = attr_time.nseconds;
-            }
+          LastOffset += settime4_to_fsal_time(&pFSAL_attr->atime,
+                                              Fattr->attr_vals.attrlist4_val + LastOffset);
           pFSAL_attr->asked_attributes |= FSAL_ATTR_ATIME;
-
           break;
 
         case FATTR4_TIME_MODIFY_SET:
-          memcpy((char *)&(attr_time_set.set_it),
-                 (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                 sizeof(time_how4));
-
-          LastOffset += sizeof(time_how4);
-
-          if(ntohl(attr_time_set.set_it) == SET_TO_SERVER_TIME4)
-            {
-              pFSAL_attr->mtime.seconds = time(NULL);   /* Use current server's time */
-              pFSAL_attr->mtime.nseconds = 0;
-            }
-          else
-            {
-              /* Read the remaining part of the data */
-              memcpy((char *)&(attr_time_set.settime4_u.time),
-                     (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
-                     sizeof(nfstime4));
-
-              /* Take care of XDR when dealing with fattr4 */
-              attr_time = attr_time_set.settime4_u.time;
-              attr_time.seconds = nfs_ntohl64(attr_time.seconds);
-              attr_time.nseconds = ntohl(attr_time.nseconds);
-
-              //LastOffset += sizeof(nfstime4);
-              LastOffset += sizeof(int64_t) + sizeof(uint32_t);
-
-              pFSAL_attr->mtime.seconds = attr_time.seconds;
-              pFSAL_attr->mtime.nseconds = attr_time.nseconds;
-            }
-
+          LastOffset += settime4_to_fsal_time(&pFSAL_attr->mtime,
+                                              Fattr->attr_vals.attrlist4_val + LastOffset);
           pFSAL_attr->asked_attributes |= FSAL_ATTR_MTIME;
 
           break;
@@ -3701,6 +3662,11 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
                  sizeof(u_int));
           len = ntohl(len);
           LastOffset += sizeof(u_int);
+          if(hdl4)
+            {
+               hdl4->nfs_fh4_len = len;
+               hdl4->nfs_fh4_val = Fattr->attr_vals.attrlist4_val + LastOffset;
+            }
           LastOffset += len;
           LogFullDebug(COMPONENT_NFS_V4,
                        "     SATTR: On a demande le filehandle len =%u", len);
@@ -3735,7 +3701,24 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
     }                           /* for */
 
   return NFS4_OK;
-}                               /* nfs4_Fattr_To_FSAL_attr */
+}                               /* Fattr4_To_FSAL_attr */
+
+/**
+ * 
+ * nfs4_Fattr_To_FSAL_attr: Converts NFSv4 attributes buffer to a FSAL attributes structure.
+ * 
+ * Converts NFSv4 attributes buffer to a FSAL attributes structure.
+ *
+ * @param pFSAL_attr [OUT]  pointer to FSAL attributes.
+ * @param Fattr      [IN] pointer to NFSv4 attributes. 
+ * 
+ * @return NFS4_OK if successful, NFS4ERR codes if not.
+ *
+ */
+int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr)
+{
+  return Fattr4_To_FSAL_attr(pFSAL_attr, Fattr, NULL);
+}
 
 /* Error conversion routines */
 /**
