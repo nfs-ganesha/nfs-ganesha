@@ -268,7 +268,7 @@ fsal_status_t XFSFSAL_get_quota(fsal_path_t * pfsal_path,       /* IN */
                                 fsal_uid_t fsal_uid,    /* IN */
                                 fsal_quota_t * pquota); /* OUT */
 
-fsal_status_t XFSFSAL_check_quota( fsal_path_t * path,  /* IN */
+fsal_status_t XFSFSAL_check_quota( char * path,  /* IN */
                                    fsal_quota_type_t   quota_type,
                                    fsal_uid_t fsal_uid);      /* IN */
 
