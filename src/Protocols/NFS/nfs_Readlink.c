@@ -179,8 +179,7 @@ int nfs_Readlink(nfs_arg_t * parg,
 
         case NFS_V3:
           pres->res_readlink3.READLINK3res_u.resok.data = ptr;
-          nfs_SetPostOpAttr(pcontext, pexport,
-                            pentry,
+          nfs_SetPostOpAttr(pexport,
                             &attr,
                             &(pres->res_readlink3.READLINK3res_u.resok.
                               symlink_attributes));

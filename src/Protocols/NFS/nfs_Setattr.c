@@ -138,8 +138,7 @@ int nfs_Setattr(nfs_arg_t * parg,
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_setattr3.object))))
     {
       /* do nothing */
-      nfs_SetWccData(pcontext, pexport,
-                     pentry,
+      nfs_SetWccData(pexport,
                      &pre_attr,
                      &pre_attr, &(pres->res_setattr3.SETATTR3res_u.resok.obj_wcc));
 
@@ -193,9 +192,9 @@ int nfs_Setattr(nfs_arg_t * parg,
            * to occur concurently on the same object, from different clients */
           fattr3 attributes;
 
-          if(nfs3_FSALattr_To_Fattr(pexport, ppre_attr, &attributes) == 0)
+          if(nfs3_FSALattr_To_PartialFattr(ppre_attr, FSAL_ATTR_CTIME, &attributes) == 0)
             {
-              pres->res_setattr3.status = NFS3ERR_NOT_SYNC;
+              pres->res_setattr3.status = NFS3ERR_INVAL;
               return NFS_REQ_OK;
             }
           LogFullDebug(COMPONENT_NFSPROTO, "css=%d acs=%d    csn=%d acn=%d",
@@ -292,8 +291,7 @@ int nfs_Setattr(nfs_arg_t * parg,
 
         case NFS_V3:
           /* Build Weak Cache Coherency data */
-          nfs_SetWccData(pcontext, pexport,
-                         pentry,
+          nfs_SetWccData(pexport,
                          ppre_attr,
                          &setattr, &(pres->res_setattr3.SETATTR3res_u.resok.obj_wcc));
 

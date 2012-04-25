@@ -296,9 +296,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
           pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries = NULL;
           pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = TRUE;
 
-          nfs_SetPostOpAttr(pcontext, pexport,
-                            dir_pentry,
-                            NULL,
+          nfs_SetPostOpAttr(pexport, NULL,
                             &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.
                               dir_attributes));
 
@@ -436,9 +434,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                   pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[0].
                       name_handle.handle_follows = TRUE;
 
-                  nfs_SetPostOpAttr(pcontext, pexport,
-                                    dir_pentry,
-                                    &entry_attr,
+                  nfs_SetPostOpAttr(pexport, &entry_attr,
                                     &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.
                                       reply.entries[0].name_attributes));
 
@@ -546,9 +542,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
                   pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[delta].
                       name_handle.handle_follows = TRUE;
 
-                  nfs_SetPostOpAttr(pcontext, pexport,
-                                    pentry_dot_dot,
-                                    &entry_attr,
+                  nfs_SetPostOpAttr(pexport, &entry_attr,
                                     &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.
                                       reply.entries[delta].name_attributes));
 
@@ -696,8 +690,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
               /* Set PostPoFh3 structure */
               pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].name_handle.handle_follows = TRUE;
 
-              nfs_SetPostOpAttr(pcontext, pexport,
-                                dirent_array[i - delta]->pentry,
+              nfs_SetPostOpAttr(pexport,
                                 &entry_attr,
                                 &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries[i].name_attributes));
 
@@ -718,10 +711,7 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
           pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = FALSE;
         }
        
-      nfs_SetPostOpAttr(pcontext,
-                        pexport,
-                        dir_pentry,
-                        &dir_attr,
+      nfs_SetPostOpAttr(pexport, &dir_attr,
                         &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.dir_attributes));
 
       memcpy(pres->res_readdirplus3.READDIRPLUS3res_u.resok.cookieverf,
@@ -738,13 +728,6 @@ int nfs3_Readdirplus(nfs_arg_t * parg,
         }
       else
         pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = FALSE;
-
-      nfs_SetPostOpAttr(pcontext, pexport,
-                        dir_pentry,
-                        &dir_attr,
-                        &(pres->res_readdirplus3.READDIRPLUS3res_u.resok.dir_attributes));
-      memcpy(pres->res_readdirplus3.READDIRPLUS3res_u.resok.cookieverf, cookie_verifier,
-             sizeof(cookieverf3));
 
       LogFullDebug(COMPONENT_NFS_READDIR,
                    "============================================================");

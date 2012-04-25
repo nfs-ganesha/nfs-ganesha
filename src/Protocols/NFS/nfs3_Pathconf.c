@@ -124,10 +124,8 @@ int nfs3_Pathconf(nfs_arg_t * parg,
     }
 
   /* Build post op file attributes */
-  nfs_SetPostOpAttr(pcontext, pexport,
-                    pentry,
-                    &attr, &(pres->res_pathconf3.PATHCONF3res_u.resok.obj_attributes));
-
+  nfs_SetPostOpAttr(pexport,
+                    &attr, &(pres->res_pathconf3.PATHCONF3res_u.resok.obj_attributes)); 
   pres->res_pathconf3.PATHCONF3res_u.resok.linkmax = pstaticinfo->maxlink;
   pres->res_pathconf3.PATHCONF3res_u.resok.name_max = pstaticinfo->maxnamelen;
   pres->res_pathconf3.PATHCONF3res_u.resok.no_trunc = pstaticinfo->no_trunc;

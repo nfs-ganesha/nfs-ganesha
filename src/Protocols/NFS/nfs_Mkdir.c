@@ -338,8 +338,7 @@ int nfs_Mkdir(nfs_arg_t * parg,
                                * Build entry
                                * attributes 
                                */
-                              nfs_SetPostOpAttr(pcontext, pexport,
-                                                dir_pentry,
+                              nfs_SetPostOpAttr(pexport,
                                                 &attr,
                                                 &(pres->res_mkdir3.MKDIR3res_u.resok.
                                                   obj_attributes));
@@ -351,8 +350,7 @@ int nfs_Mkdir(nfs_arg_t * parg,
                                * Build Weak Cache
                                * Coherency data 
                                */
-                              nfs_SetWccData(pcontext, pexport,
-                                             parent_pentry,
+                              nfs_SetWccData(pexport,
                                              ppre_attr,
                                              &attr_parent_after,
                                              &(pres->res_mkdir3.MKDIR3res_u.resok.

@@ -168,8 +168,7 @@ int nfs_Fsstat(nfs_arg_t * parg,
               break;
 
             case NFS_V3:
-              nfs_SetPostOpAttr(pcontext, pexport,
-                                pentry,
+              nfs_SetPostOpAttr(pexport,
                                 &attr,
                                 &(pres->res_fsstat3.FSSTAT3res_u.resok.obj_attributes));
 
