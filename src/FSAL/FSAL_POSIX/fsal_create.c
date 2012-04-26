@@ -59,7 +59,7 @@ fsal_status_t POSIXFSAL_create(fsal_handle_t * parent_directory_handle,  /* IN *
   posixfsal_handle_t * p_parent_directory_handle
     = (posixfsal_handle_t *) parent_directory_handle;
   posixfsal_op_context_t * p_context = (posixfsal_op_context_t *) context;
-  posixfsal_handle_t * p_object_handle = (posixfsal_handle_t *) p_object_handle;
+  posixfsal_handle_t * p_object_handle = (posixfsal_handle_t *) object_handle;
   int rc, fd, errsv;
   int setgid_bit = 0;
   fsal_status_t status;
