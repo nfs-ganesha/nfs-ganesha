@@ -96,7 +96,6 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
   char tmplist_path[MAXPATHLEN];
   char tmpexport_path[MAXPATHLEN];
   char *hostname;
-  fsal_path_t fsal_path;
   unsigned int bytag = FALSE;
 
   LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Mnt path=%s",
@@ -208,25 +207,12 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
    */
   if(!(bytag == TRUE || !strncmp(tmpexport_path, tmplist_path, MAXPATHLEN)))
     {
-      if(FSAL_IS_ERROR(FSAL_str2path(tmpexport_path, MAXPATHLEN, &fsal_path)))
-        {
-          switch (preq->rq_vers)
-            {
-            case MOUNT_V1:
-              pres->res_mnt1.status = NFSERR_IO;
-              break;
-
-            case MOUNT_V3:
-              pres->res_mnt3.fhs_status = MNT3ERR_IO;
-              break;
-            }
-          return NFS_REQ_OK;
-        }
-
       exp_hdl = p_current_item->export_hdl;
       LogEvent(COMPONENT_NFSPROTO,
                "MOUNT: Performance warning: Export entry is not cached");
-      if(FSAL_IS_ERROR(exp_hdl->ops->lookup_path(exp_hdl, &fsal_path, &pfsal_handle)))
+      if(FSAL_IS_ERROR(exp_hdl->ops->lookup_path(exp_hdl,
+						 tmpexport_path,
+						 &pfsal_handle)))
         {
           switch (preq->rq_vers)
             {

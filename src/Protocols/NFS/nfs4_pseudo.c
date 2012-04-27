@@ -1510,14 +1510,12 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
   int error = 0;
   cache_inode_status_t cache_status = 0;
   fsal_status_t fsal_status;
-  cache_inode_fsal_data_t fsdata;
-  fsal_path_t exportpath_fsal;
+/*   cache_inode_fsal_data_t fsdata; */
   char pathfsal[MAXPATHLEN] ;
   fsal_attrib_list_t attr;
   struct fsal_export *exp_hdl;
   struct fsal_obj_handle *fsal_handle;
   cache_entry_t *pentry = NULL;
-  fsal_mdsize_t strsize = MNTPATHLEN + 1;
 
   resp->resop = NFS4_OP_LOOKUP;
 
@@ -1589,25 +1587,19 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         }
 
       /* Build fsal data for creation of the first entry */
-      strncpy( pathfsal, data->pexport->fullpath, MAXPATHLEN ) ;
-
-      if( pseudo_is_slash == TRUE )
+      if( pseudo_is_slash != TRUE )
+        {
+          strncpy( pathfsal, data->pexport->fullpath, MAXPATHLEN ) ;
+	}
+      else
        {
-         strncat( pathfsal, "/", MAXPATHLEN ) ;
-         strncat( pathfsal, name, MAXPATHLEN - strlen(pathfsal) - 1) ;  // - 1 for the '/0'
+	 pathfsal[0] = '/';
+         strncat(&pathfsal[1], name, MAXPATHLEN - 1);
        }
 
-      if(FSAL_IS_ERROR
-         ((fsal_status =
-           FSAL_str2path( pathfsal, strsize, &exportpath_fsal))))
-        {
-          res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-          return res_LOOKUP4.status;
-        }
-
       /* Lookup the FSAL to build the fsal handle */
-      exp_hdl = psfsentry.junction_export->export_hdl;
-      fsal_status = exp_hdl->ops->lookup_path(exp_hdl, &exportpath_fsal, &fsal_handle);
+      exp_hdl = data->pexport->export_hdl;
+      fsal_status = exp_hdl->ops->lookup_path(exp_hdl, pathfsal, &fsal_handle);
       if(FSAL_IS_ERROR(fsal_status))
         {
 	  LogMajor(COMPONENT_NFS_V4_PSEUDO,
@@ -1657,7 +1649,13 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
       /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
-      fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc);
+/** @TODO make_root calls new_entry which will free the object.
+ * this may happen a lot as we traverse pseudos.  Might we have a lookahead
+ * or think of a better way to handle this once the pseudo has been cached?
+ * leave the handle_to_key here for a bit till we sort this out.
+ * maybe the fsal lookup above should be a cache_inode_lookup??
+ */
+/*       fsal_handle->ops->handle_to_key(fsal_handle, &fsdata.fh_desc); */
 
       if((pentry = cache_inode_make_root(fsal_handle,
                                          data->pclient),
@@ -1670,7 +1668,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
           return res_LOOKUP4.status;
         }
 
-      /* Get the attributes (costless: the attributes was cached when the root pentry was created */
+      /* Get the attributes (costless: the attributes wer cached when the root pentry was created */
       if(cache_inode_getattr(pentry,
                              &attr,
                              ((cache_inode_client_t *) data->pclient),
@@ -1792,11 +1790,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
   exportlist_t *save_pexport;
   nfs_fh4 entryFH;
   cache_inode_fsal_data_t fsdata;
-  fsal_path_t exportpath_fsal;
   fsal_attrib_list_t attr;
   struct fsal_export *exp_hdl;
   struct fsal_obj_handle *fsal_handle;
-  fsal_mdsize_t strsize = MNTPATHLEN + 1;
   fsal_status_t fsal_status;
   int error = 0;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
@@ -1864,18 +1860,12 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           res_READDIR4.status = NFS4ERR_WRONGSEC;
           return res_READDIR4.status;
         }
-      /* Build fsal data for creation of the first entry */
-      if(FSAL_IS_ERROR
-         ((fsal_status =
-           FSAL_str2path(data->pexport->fullpath, strsize, &exportpath_fsal))))
-        {
-          res_READDIR4.status = NFS4ERR_SERVERFAULT;
-          return res_READDIR4.status;
-        }
 
       /* Lookup the FSAL to build the fsal handle */
-      exp_hdl = psfsentry.junction_export->export_hdl;
-      fsal_status = exp_hdl->ops->lookup_path(exp_hdl, &exportpath_fsal, &fsal_handle);
+      exp_hdl = data->pexport->export_hdl;
+      fsal_status = exp_hdl->ops->lookup_path(exp_hdl,
+					      data->pexport->fullpath,
+					      &fsal_handle);
       if(FSAL_IS_ERROR(fsal_status))
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
@@ -2084,16 +2074,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
               return res_READDIR4.status;
             }
           /* Do the look up. */
-          if(FSAL_IS_ERROR
-             ((fsal_status =
-               FSAL_str2path(iter->junction_export->fullpath, (strlen(iter->junction_export->fullpath) +1 ), &exportpath_fsal))))
-            {
-              res_READDIR4.status = NFS4ERR_SERVERFAULT;
-              return res_READDIR4.status;
-            }
-	  exp_hdl = psfsentry.junction_export->export_hdl;
+	  exp_hdl = data->pexport->export_hdl;
 	  fsal_status = exp_hdl->ops->lookup_path(exp_hdl,
-						  &exportpath_fsal,
+						  iter->junction_export->fullpath,
 						  &fsal_handle);
 	  if(FSAL_IS_ERROR(fsal_status))
             {
@@ -2107,7 +2090,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
               return res_READDIR4.status;
             }
           /* Build the nfs4 handle. Again, we do this unconditionally. */
-          if(!nfs4_FSALToFhandle(&entryFH, &fsal_handle, data))
+          if(!nfs4_FSALToFhandle(&entryFH, fsal_handle, data))
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Failed to build the first file handle");
