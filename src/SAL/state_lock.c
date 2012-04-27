@@ -2692,7 +2692,6 @@ state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
   cache_entry_t      * pentry;
   int                  errcnt = 0;
   struct glist_head    newlocks;
-  fsal_status_t        fsal_status;
 
   if(isFullDebug(COMPONENT_STATE))
     {

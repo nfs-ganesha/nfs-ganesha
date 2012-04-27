@@ -293,7 +293,9 @@ int nlm_process_parameters(struct svc_req        * preq,
 
   /* Convert file handle into a cache entry */
   if(alock->fh.n_len > MAX_NETOBJ_SZ ||
-     !nfs3_FhandleToFSAL((nfs_fh3 *) &alock->fh, &fsal_data.fh_desc, pexport))
+     !nfs3_FhandleToFSAL((nfs_fh3 *) &alock->fh,
+			 &fsal_data.fh_desc,
+			 pexport->export_hdl))
     {
       /* handle is not valid */
       return NLM4_STALE_FH;
@@ -470,7 +472,6 @@ bool_t nlm_block_data_to_export(state_block_data_t * block_data,
 {
   exportlist_t           * pexport = NULL;
   short                    exportid;
-  fsal_status_t            fsal_status;
   state_nlm_block_data_t * nlm_block_data = &block_data->sbd_block_data.sbd_nlm_block_data;
 
   /* Get export ID from handle */

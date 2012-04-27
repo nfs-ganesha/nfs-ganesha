@@ -357,7 +357,7 @@ typedef state_status_t (*granted_callback_t)(cache_entry_t        * pentry,
                                              state_status_t       * pstatus);
 
 typedef bool_t (*block_data_to_fsal_context_t)(state_block_data_t * block_data,
-                                               fsal_op_context_t  * fsal_context);
+					       exportlist_t  **ppexport);
 
 typedef struct state_nlm_block_data_t
 {

@@ -115,7 +115,7 @@ int nfs3_Access(nfs_arg_t * parg,
 
   /* Convert file handle into a fsal_handle */
   if(nfs3_FhandleToFSAL(&(parg->arg_access3.object),
-                        &fsal_data.fh_desc, pcontext) == 0)
+                        &fsal_data.fh_desc, pexport->export_hdl) == 0)
     {
       rc = NFS_REQ_DROP;
       goto out;

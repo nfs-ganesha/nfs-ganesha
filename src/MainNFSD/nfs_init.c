@@ -143,7 +143,6 @@ void *sigmgr_thread( void * UnusedArg )
 {
   SetNameFunction("sigmgr");
   int signal_caught = 0;
-  fsal_status_t st;
 
   /* Loop until we catch SIGTERM */
   while(signal_caught != SIGTERM)
@@ -692,7 +691,6 @@ int nfs_set_param_from_conf(config_file_t config_struct,
 			    nfs_start_info_t * p_start_info)
 {
   int rc;
-  fsal_status_t fsal_status;
   cache_inode_status_t cache_inode_status;
 
 #ifndef _NO_BUDDY_SYSTEM
@@ -1439,7 +1437,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 {
   cache_inode_status_t cache_status;
   state_status_t state_status;
-  fsal_status_t fsal_status;
   unsigned int i = 0;
   int rc = 0;
 #ifdef _HAVE_GSSAPI
@@ -1864,89 +1861,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 void nfs_start(nfs_start_info_t * p_start_info)
 {
   struct rlimit ulimit_data;
-
-#if 0
-  /* Will remain as long as all FSAL are not yet in new format */
-  printf("---> fsal_handle_t:%lu\n", sizeof(cephfsal_handle_t));
-  printf("---> fsal_op_context_t:%lu\n", sizeof(cephfsal_op_context_t));
-  printf("---> fsal_file_t:%lu\n", sizeof(cephfsal_file_t));
-  printf("---> fsal_dir_t:%lu\n", sizeof(cephfsal_dir_t));
-  printf("---> fsal_export_context_t:%lu\n", sizeof(cephfsal_export_context_t));
-  printf("---> fsal_cookie_t:%lu\n", sizeof(cephfsal_cookie_t));
-  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(cephfs_specific_initinfo_t));
-#endif
-#if 0
-  /* Will remain as long as all FSAL are not yet in new format */
-  printf("---> fsal_handle_t:%lu\n", sizeof(vfsfsal_handle_t));
-  printf("---> fsal_op_context_t:%lu\n", sizeof(vfsfsal_op_context_t));
-  printf("---> fsal_file_t:%lu\n", sizeof(vfsfsal_file_t));
-  printf("---> fsal_dir_t:%lu\n", sizeof(vfsfsal_dir_t));
-  printf("---> fsal_export_context_t:%lu\n", sizeof(vfsfsal_export_context_t));
-  printf("---> fsal_cookie_t:%lu\n", sizeof(vfsfsal_cookie_t));
-  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(vfsfs_specific_initinfo_t));
-#endif
-#if 0
-  /* Will remain as long as all FSAL are not yet in new format */
-  printf("---> fsal_handle_t:%lu\n", sizeof(proxyfsal_handle_t));
-  printf("---> fsal_op_context_t:%lu\n", sizeof(proxyfsal_op_context_t));
-  printf("---> fsal_file_t:%lu\n", sizeof(proxyfsal_file_t));
-  printf("---> fsal_dir_t:%lu\n", sizeof(proxyfsal_dir_t));
-  printf("---> fsal_export_context_t:%lu\n", sizeof(proxyfsal_export_context_t));
-  printf("---> fsal_cookie_t:%lu\n", sizeof(proxyfsal_cookie_t));
-  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(proxyfs_specific_initinfo_t));
-#endif
-#if 0
-  /* Will remain as long as all FSAL are not yet in new format */
-  printf("---> fsal_handle_t:%lu\n", sizeof(xfsfsal_handle_t));
-  printf("---> fsal_op_context_t:%lu\n", sizeof(xfsfsal_op_context_t));
-  printf("---> fsal_file_t:%lu\n", sizeof(xfsfsal_file_t));
-  printf("---> fsal_dir_t:%lu\n", sizeof(xfsfsal_dir_t));
-  printf("---> fsal_export_context_t:%lu\n", sizeof(xfsfsal_export_context_t));
-  printf("---> fsal_cookie_t:%lu\n", sizeof(xfsfsal_cookie_t));
-  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(xfsfs_specific_initinfo_t));
-#endif
-#if 0
-  /* Will remain as long as all FSAL are not yet in new format */
-  printf("---> fsal_handle_t:%lu\n", sizeof(zfsfsal_handle_t));
-  printf("---> fsal_op_context_t:%lu\n", sizeof(zfsfsal_op_context_t));
-  printf("---> fsal_file_t:%lu\n", sizeof(zfsfsal_file_t));
-  printf("---> fsal_dir_t:%lu\n", sizeof(zfsfsal_dir_t));
-  printf("---> fsal_export_context_t:%lu\n", sizeof(zfsfsal_export_context_t));
-  printf("---> fsal_cookie_t:%lu\n", sizeof(zfsfsal_cookie_t));
-  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(zfsfs_specific_initinfo_t));
-#endif
-#if 0
-  /* Will remain as long as all FSAL are not yet in new format */
-  printf("---> fsal_handle_t:%lu\n", sizeof(lustrefsal_handle_t));
-  printf("---> fsal_op_context_t:%lu\n", sizeof(lustrefsal_op_context_t));
-  printf("---> fsal_file_t:%lu\n", sizeof(lustrefsal_file_t));
-  printf("---> fsal_dir_t:%lu\n", sizeof(lustrefsal_dir_t));
-  printf("---> fsal_export_context_t:%lu\n", sizeof(lustrefsal_export_context_t));
-  printf("---> fsal_cookie_t:%lu\n", sizeof(lustrefsal_cookie_t));
-  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(lustrefs_specific_initinfo_t));
-  printf("---> fsal_cred_t:%lu\n", sizeof(lustrefsal_cred_t));
-#endif
-#if 0
-  /* Will remain as long as all FSAL are not yet in new format */
-  printf("---> fsal_handle_t:%lu\n", sizeof(hpssfsal_handle_t));
-  printf("---> fsal_op_context_t:%lu\n", sizeof(hpssfsal_op_context_t));
-  printf("---> fsal_file_t:%lu\n", sizeof(hpssfsal_file_t));
-  printf("---> fsal_dir_t:%lu\n", sizeof(hpssfsal_dir_t));
-  printf("---> fsal_export_context_t:%lu\n", sizeof(hpssfsal_export_context_t));
-  printf("---> fsal_cookie_t:%lu\n", sizeof(hpssfsal_cookie_t));
-  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(hpssfs_specific_initinfo_t));
-  printf("---> fsal_cred_t:%lu\n", sizeof(hpssfsal_cred_t));
-#endif
-#if 0
-  /* Will remain as long as all FSAL are not yet in new format */
-  printf("---> fsal_handle_t:%lu\n", sizeof(snmpfsal_handle_t));
-  printf("---> fsal_op_context_t:%lu\n", sizeof(snmpfsal_op_context_t));
-  printf("---> fsal_file_t:%lu\n", sizeof(snmpfsal_file_t));
-  printf("---> fsal_dir_t:%lu\n", sizeof(snmpfsal_dir_t));
-  printf("---> fsal_export_context_t:%lu\n", sizeof(snmpfsal_export_context_t));
-  printf("---> fsal_cookie_t:%lu\n", sizeof(snmpfsal_cookie_t));
-  printf("---> fs_specific_initinfo_t:%lu\n", sizeof(snmpfs_specific_initinfo_t));
-#endif
 
   /* store the start info so it is available for all layers */
   nfs_start_info = *p_start_info;

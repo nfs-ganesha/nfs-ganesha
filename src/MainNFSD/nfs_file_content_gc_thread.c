@@ -74,7 +74,6 @@ extern int fcc_debug_level;
 
 /* Use the same structure as the worker (but not all the fields will be used) */
 nfs_worker_data_t fcc_gc_data;
-static fsal_op_context_t fsal_context;
 
 /* Variable used for forcing flush via a signal */
 unsigned int force_flush_by_signal;
