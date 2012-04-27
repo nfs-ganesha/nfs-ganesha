@@ -2668,7 +2668,6 @@ state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
   cache_entry_t      * pentry;
   int                  errcnt = 0;
   struct glist_head    newlocks;
-  fsal_status_t        fsal_status;
   state_nlm_share_t  * found_share;
 
   if(isFullDebug(COMPONENT_STATE))
@@ -2797,28 +2796,8 @@ state_status_t state_nlm_notify(state_nsm_client_t   * pnsmclient,
 
       V(pnsmclient->ssc_mutex);
 
-      /* construct the fsal context based on the export and root credential */
-      fsal_status = FSAL_GetClientContext(&fsal_context,
-                                          &pexport->FS_export_context,
-                                          0,
-                                          0,
-                                          NULL,
-                                          0);
-      if(FSAL_IS_ERROR(fsal_status))
-        {
-#ifdef FSF
-          dec_state_owner_ref_locked(powner);
-#endif
-
-          /* log error here , and continue? */
-          LogDebug(COMPONENT_STATE,
-                   "FSAL_GetClientConext failed");
-          continue;
-        }
-
       /* Remove all shares held by this NSM Client and Owner on the file */
       if(state_nlm_unshare(pentry,
-                           &fsal_context,
                            OPEN4_SHARE_ACCESS_NONE,
                            OPEN4_SHARE_DENY_NONE,
                            powner,

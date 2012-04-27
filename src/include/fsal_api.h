@@ -23,6 +23,7 @@ struct fsal_module {
 /* fsal module methods */
 
 struct fsal_export;
+struct exportlist__;  /* full def in include/nfs_exports.h */
 
 struct fsal_ops {
 	/* base methods implemented in fsal_manager.c */
@@ -40,6 +41,7 @@ struct fsal_ops {
 				       const char *fs_options,
 				       struct exportlist__ *exp_entry,
 				       struct fsal_module *next_fsal,
+				       /* upcall vector */
 				       struct fsal_export **export);
 };
 

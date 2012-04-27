@@ -3002,14 +3002,37 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
       cache_content_status_t cache_content_status;
 #endif
       fsal_status_t fsal_status;
-      cache_inode_fsal_data_t fsdata;
-/*       struct fsal_obj_handle *root_hdl; */
-      fsal_path_t exportpath_fsal;
-      fsal_mdsize_t strsize = MNTPATHLEN + 1;
       cache_entry_t *pentry = NULL;
+/** @TODO suspicious. missing in rc8, present in newapi rc7
+ */
+      /* setting the 'small_client' structure */
+      small_client_param.nb_prealloc_entry = 10;
+      small_client_param.nb_pre_state_v4 = 10;
+      small_client_param.grace_period_link = 0;
+      small_client_param.grace_period_attr = 0;
+      small_client_param.grace_period_dirent = 0;
+      small_client_param.grace_period_attr   = 0;
+      small_client_param.grace_period_link   = 0;
+      small_client_param.grace_period_dirent = 0;
+      small_client_param.expire_type_attr    = CACHE_INODE_EXPIRE_NEVER;
+      small_client_param.expire_type_link    = CACHE_INODE_EXPIRE_NEVER;
+      small_client_param.expire_type_dirent  = CACHE_INODE_EXPIRE_NEVER;
+      small_client_param.use_test_access = 1;
+#ifdef _USE_NFS4_ACL
+      small_client_param.attrmask = FSAL_ATTR_MASK_V4;
+#else
+      small_client_param.attrmask = FSAL_ATTR_MASK_V2_V3;
+#endif
 
-      fsal_staticfsinfo_t *pstaticinfo = NULL;
-      fsal_export_context_t *export_context = NULL;
+      /* creating the 'small_client' */
+      if(cache_inode_client_init(&small_client, &small_client_param, SMALL_CLIENT_INDEX, NULL))
+        {
+          LogFatal(COMPONENT_INIT,
+                   "small cache inode client could not be allocated");
+        }
+      else
+        LogInfo(COMPONENT_INIT,
+                "small cache inode client successfully initialized");
 
       /* creating the datacache client for recovering data cache */
       if(cache_content_client_init

@@ -82,7 +82,7 @@ fsal_op_context_t fsal_context[NB_MAX_FLUSHER_THREAD];
 
 void *nfs_file_content_flush_thread(void *flush_data_arg)
 {
-  fsal_status_t fsal_status;
+/*   fsal_status_t fsal_status; */
   char cache_sub_dir[MAXPATHLEN];
   cache_content_status_t content_status;
   nfs_flush_thread_data_t *p_flush_data = NULL;
