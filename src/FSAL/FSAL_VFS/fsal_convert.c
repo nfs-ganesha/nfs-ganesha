@@ -178,32 +178,15 @@ fsal_status_t posix2fsal_attributes(struct stat * p_buffstat,
                                     fsal_attrib_list_t * p_fsalattr_out)
 {
 
-  fsal_attrib_mask_t supp_attr, unsupp_attr;
-
   /* sanity checks */
   if(!p_buffstat || !p_fsalattr_out)
     ReturnCode(ERR_FSAL_FAULT, 0);
-
-  /* check that asked attributes are supported */
-  supp_attr = global_fs_info.supported_attrs;
-
-  unsupp_attr = (p_fsalattr_out->asked_attributes) & (~supp_attr);
-  if(unsupp_attr)
-    {
-      LogFullDebug(COMPONENT_FSAL, "Unsupported attributes: %#llX",
-                        unsupp_attr);
-      ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
-    }
 
   /* Initialize ACL regardless of whether ACL was asked or not.
    * This is needed to make sure ACL attribute is initialized. */
   p_fsalattr_out->acl = NULL;
 
   /* Fills the output struct */
-  if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
-    {
-      p_fsalattr_out->supported_attributes = supp_attr;
-    }
   if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
     {
       p_fsalattr_out->type = posix2fsal_type(p_buffstat->st_mode);
@@ -291,32 +274,15 @@ fsal_status_t posixstat64_2_fsal_attributes(struct stat64 *p_buffstat,
                                             fsal_attrib_list_t *p_fsalattr_out)
 {
 
-    fsal_attrib_mask_t supp_attr, unsupp_attr;
-
     /* sanity checks */
     if(!p_buffstat || !p_fsalattr_out)
         ReturnCode(ERR_FSAL_FAULT, 0);
-
-    /* check that asked attributes are supported */
-    supp_attr = global_fs_info.supported_attrs;
-
-    unsupp_attr = (p_fsalattr_out->asked_attributes) & (~supp_attr);
-    if(unsupp_attr)
-        {
-            LogFullDebug(COMPONENT_FSAL, "Unsupported attributes: %#llX",
-                         unsupp_attr);
-            ReturnCode(ERR_FSAL_ATTRNOTSUPP, 0);
-        }
 
     /* Initialize ACL regardless of whether ACL was asked or not.
      * This is needed to make sure ACL attribute is initialized. */
     p_fsalattr_out->acl = NULL;
 
     /* Fills the output struct */
-    if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SUPPATTR))
-        {
-            p_fsalattr_out->supported_attributes = supp_attr;
-        }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_TYPE))
         {
             p_fsalattr_out->type = posix2fsal_type(p_buffstat->st_mode);
