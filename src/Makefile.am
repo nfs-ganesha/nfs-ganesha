@@ -60,6 +60,9 @@ endif
 testrunner: 
 	for i in $(TESTRUNNER_DIRS) ; do cd $$i ; make testrunner ; cd .. ; done
 
+contrib-install:
+	for i in $(TIRPCDIR) ; do cd $$i ; make install ; cd .. ; done
+
 new: clean all
 
 prepare-deb: distdir

@@ -275,7 +275,7 @@ if test "$enable_tirpc" == "yes"; then
         if test ! -f "${TIRPCDIR}/configure"; then
 	   cd ${TIRPCDIR}
            sh autogen.sh
-	   ./configure CFLAGS="${CFLAGS}" --enable-epoll --enable-gss --prefix=/usr
+	   ./configure CFLAGS="${CFLAGS}" --enable-epoll --enable-gss --prefix="${prefix}"
 	   cd ../../src
         fi
 
