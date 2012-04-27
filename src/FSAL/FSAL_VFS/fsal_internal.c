@@ -63,37 +63,38 @@ fsal_uint_t CredentialLifetime = 3600;
 fsal_staticfsinfo_t global_fs_info;
 
 /* filesystem info for VFS */
-static fsal_staticfsinfo_t default_posix_info = {
-  0xFFFFFFFFFFFFFFFFLL,         /* max file size (64bits) */
-  _POSIX_LINK_MAX,              /* max links */
-  FSAL_MAX_NAME_LEN,            /* max filename */
-  FSAL_MAX_PATH_LEN,            /* max pathlen */
-  TRUE,                         /* no_trunc */
-  TRUE,                         /* chown restricted */
-  FALSE,                        /* case insensitivity */
-  TRUE,                         /* case preserving */
-  FSAL_EXPTYPE_PERSISTENT,      /* FH expire type */
-  TRUE,                         /* hard link support */
-  TRUE,                         /* symlink support */
-  TRUE,                         /* lock management */
-  FALSE,                        /* lock owners */
-  FALSE,                        /* async blocking locks */
-  TRUE,                         /* named attributes */
-  TRUE,                         /* handles are unique and persistent */
-  {10, 0},                      /* Duration of lease at FS in seconds */
-  FSAL_ACLSUPPORT_ALLOW,        /* ACL support */
-  TRUE,                         /* can change times */
-  TRUE,                         /* homogenous */
-  VFS_SUPPORTED_ATTRIBUTES,     /* supported attributes */
-  0,                            /* maxread size */
-  0,                            /* maxwrite size */
-  0,                            /* default umask */
-  0,                            /* cross junctions */
-  0400,                         /* default access rights for xattrs: root=RW, owner=R */
-  0,                            /* default access check support in FSAL */
-  0,                            /* default share reservation support in FSAL */
-  0                             /* default share reservation support with open owners in FSAL */
-};
+/* static fsal_staticfsinfo_t default_posix_info = { */
+/*   0xFFFFFFFFFFFFFFFFLL,         /\* max file size (64bits) *\/ */
+/*   _POSIX_LINK_MAX,              /\* max links *\/ */
+/*   FSAL_MAX_NAME_LEN,            /\* max filename *\/ */
+/*   FSAL_MAX_PATH_LEN,            /\* max pathlen *\/ */
+/*   TRUE,                         /\* no_trunc *\/ */
+/*   TRUE,                         /\* chown restricted *\/ */
+/*   FALSE,                        /\* case insensitivity *\/ */
+/*   TRUE,                         /\* case preserving *\/ */
+/*   FSAL_EXPTYPE_PERSISTENT,      /\* FH expire type *\/ */
+/*   TRUE,                         /\* hard link support *\/ */
+/*   TRUE,                         /\* symlink support *\/ */
+/*   TRUE,                         /\* lock management *\/ */
+/*   FALSE,                        /\* lock owners *\/ */
+/*   FALSE,                        /\* async blocking locks *\/ */
+/*   TRUE,                         /\* named attributes *\/ */
+/*   TRUE,                         /\* handles are unique and persistent *\/ */
+/*   {10, 0},                      /\* Duration of lease at FS in seconds *\/ */
+/*   FSAL_ACLSUPPORT_ALLOW,        /\* ACL support *\/ */
+/*   TRUE,                         /\* can change times *\/ */
+/*   TRUE,                         /\* homogenous *\/ */
+/*   VFS_SUPPORTED_ATTRIBUTES,     /\* supported attributes *\/ */
+/*   0,                            /\* maxread size *\/ */
+/*   0,                            /\* maxwrite size *\/ */
+/*   0,                            /\* default umask *\/ */
+/*   0,                            /\* cross junctions *\/ */
+/*   0400,                         /\* default access rights for xattrs: root=RW, owner=R *\/ */
+/*   0                             /\* default access check support in FSAL *\/ */
+/** @TODO new params for share op to be added to new api
+ */
+/*   0,                            /\* default share reservation support in FSAL *\/ */
+/*   0                             /\* default share reservation support with open owners in F *//* }; */
 
 /* variables for limiting the calls to the filesystem */
 static int limit_calls = FALSE;

@@ -505,8 +505,8 @@ static struct export_ops exp_ops = {
  */
 
 fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
-				fsal_path_t *export_path,
-				char *fs_options,
+				const char *export_path,
+				const char *fs_options,
 				struct exportlist__ *exp_entry,
 				struct fsal_module *next_fsal,
 				struct fsal_export **export)
@@ -524,8 +524,8 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 
 	*export = NULL; /* poison it first */
 	if(export_path == NULL
-	   || strlen(export_path->path) == 0
-	   || strlen(export_path->path) > MAXPATHLEN) {
+	   || strlen(export_path) == 0
+	   || strlen(export_path) > MAXPATHLEN) {
 		LogMajor(COMPONENT_FSAL,
 			 "vfs_create_export: export path empty or too big");
 		ReturnCode(ERR_FSAL_INVAL, 0);
@@ -544,6 +544,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	}
 	memset(myself, 0, sizeof(struct vfs_fsal_export));
 	myself->root_fd = -1;
+	init_glist(&myself->export.handles);
 	init_glist(&myself->export.exports);
 	pthread_mutexattr_init(&attrs);
 	pthread_mutexattr_settype(&attrs, PTHREAD_MUTEX_ADAPTIVE_NP);
@@ -581,11 +582,11 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 						p_mnt->mnt_type, MAXNAMLEN);
 					strncpy(fs_spec,
 						p_mnt->mnt_fsname, MAXPATHLEN);
-				} else if((strncmp(export_path->path,
+				} else if((strncmp(export_path,
 						  p_mnt->mnt_dir,
 						  pathlen) == 0) &&
-					  ((export_path->path[pathlen] == '/') ||
-					   (export_path->path[pathlen] == '\0'))) {
+					  ((export_path[pathlen] == '/') ||
+					   (export_path[pathlen] == '\0'))) {
 					if(strcasecmp(p_mnt->mnt_type, "xfs") == 0) {
 						LogDebug(COMPONENT_FSAL,
 							 "Mount (%s) is XFS, skipping",
@@ -607,7 +608,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	if(outlen <= 0) {
 		LogCrit(COMPONENT_FSAL,
 			"No mount entry matches '%s' in %s",
-			export_path->path, MOUNTED);
+			export_path, MOUNTED);
 		fsal_error = ERR_FSAL_NOENT;
 		goto errout;
         }

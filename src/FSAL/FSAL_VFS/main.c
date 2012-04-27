@@ -176,8 +176,10 @@ static void dump_config(struct fsal_module *fsal_hdl, int log_fd)
  */
 
 fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
-				fsal_path_t *export_path,
-				char *fs_options,
+				const char *export_path,
+				const char *fs_options,
+				struct exportlist__ *exp_entry,
+				struct fsal_module *next_fsal,
 				struct fsal_export **export);
 
 /* Module initialization.

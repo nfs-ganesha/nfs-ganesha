@@ -49,6 +49,25 @@ static struct fsal_obj_ops obj_ops;
 /* helpers
  */
 
+/*
+ * is_supported_attribute
+ */
+
+static int is_supported_attribute(struct fsal_obj_handle *obj_hdl,
+					 fsal_attrib_list_t *attr)
+{
+	fsal_attrib_mask_t mask;
+
+	mask = obj_hdl->export->ops->fs_supported_attrs(obj_hdl->export);
+	if(attr->asked_attributes & ~mask) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "Unsupported attributes: asked = %#llX, allowed = %#llX",
+			     attr->asked_attributes, mask);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 /* alloc_handle
  * allocate and fill in a handle
  * this uses malloc/free for the time being.
@@ -86,7 +105,10 @@ static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
 	hdl->fd = -1;  /* no open on this yet */
 	hdl->obj_handle.type = posix2fsal_type(stat->st_mode);
 	hdl->obj_handle.export = exp_hdl;
-	hdl->obj_handle.attributes.asked_attributes = FSAL_ATTRS_POSIX;
+	hdl->obj_handle.attributes.asked_attributes
+		= exp_hdl->ops->fs_supported_attrs(exp_hdl);
+	hdl->obj_handle.attributes.supported_attributes
+		= hdl->obj_handle.attributes.asked_attributes;
 	st = posix2fsal_attributes(stat, &hdl->obj_handle.attributes);
 	if(FSAL_IS_ERROR(st)) {
 		if(hdl->link_content != NULL)
@@ -108,6 +130,7 @@ static struct vfs_fsal_obj_handle *alloc_handle(struct file_handle *fh,
 	retval = fsal_attach_handle(exp_hdl, &hdl->obj_handle.handles);
 	if(retval != 0)
 		goto errout; /* seriously bad */
+	pthread_mutex_unlock(&hdl->obj_handle.lock);
 	return hdl;
 
 errout:
@@ -938,6 +961,10 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t st;
 	int retval = 0;
 
+	if( !is_supported_attribute(obj_hdl, obj_attr)) {
+		fsal_error = ERR_FSAL_ATTRNOTSUPP;
+		goto out;
+	}
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	mntfd = vfs_get_root_fd(obj_hdl->export);
 	fd = open_by_handle_at(mntfd, myself->handle, (O_PATH|O_NOACCESS));
@@ -970,97 +997,87 @@ out:
 }
 
 static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
-			      fsal_attrib_list_t *attrib_set)
+			      fsal_attrib_list_t *attrs)
 {
 	struct vfs_fsal_obj_handle *myself;
 	int fd, mntfd;
 	struct stat stat;
-	fsal_attrib_list_t attrs = *attrib_set;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
+	if( !is_supported_attribute(obj_hdl, attrs)) {
+		fsal_error = ERR_FSAL_ATTRNOTSUPP;
+		goto out;
+	}
 	/* apply umask, if mode attribute is to be changed */
-	if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MODE)) {
-		attrs.mode
+	if(FSAL_TEST_MASK(attrs->asked_attributes, FSAL_ATTR_MODE)) {
+		attrs->mode
 			&= ~obj_hdl->export->ops->fs_umask(obj_hdl->export);
 	}
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	mntfd = vfs_get_root_fd(obj_hdl->export);
 	fd = open_by_handle_at(mntfd, myself->handle, (O_PATH|O_NOACCESS));
 	if(fd < 0) {
-		fsal_error = posix2fsal_error(errno);
 		retval = errno;
+		fsal_error = posix2fsal_error(retval);
 		goto out;
 	}
 	retval = fstat(fd, &stat);
 	if(retval < 0) {
-		fsal_error = posix2fsal_error(errno);
-		retval = errno;
-		close(fd);
-		goto out;
+		goto fileerr;
 	}
 	/** CHMOD **/
-	if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MODE)) {
+	if(FSAL_TEST_MASK(attrs->asked_attributes, FSAL_ATTR_MODE)) {
 		/* The POSIX chmod call doesn't affect the symlink object, but
 		 * the entry it points to. So we must ignore it.
 		 */
 		if(!S_ISLNK(stat.st_mode)) {
-			retval = fchmod(fd, fsal2unix_mode(attrs.mode));
+			retval = fchmod(fd, fsal2unix_mode(attrs->mode));
 			if(retval != 0) {
-				retval = errno;
-				close(fd);
-				fsal_error = posix2fsal_error(retval);
-				goto out;
+				goto fileerr;
 			}
 		}
 	}
 
 	/**  CHOWN  **/
-	if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_OWNER | FSAL_ATTR_GROUP)) {
-		/*      LogFullDebug(COMPONENT_FSAL, "Performing chown(%s, %d,%d)",
-                        fsalpath.path, FSAL_TEST_MASK(attrs.asked_attributes,
-                                                      FSAL_ATTR_OWNER) ? (int)attrs.owner
-                        : -1, FSAL_TEST_MASK(attrs.asked_attributes,
-			FSAL_ATTR_GROUP) ? (int)attrs.group : -1);*/
-
+	if(FSAL_TEST_MASK(attrs->asked_attributes, FSAL_ATTR_OWNER | FSAL_ATTR_GROUP)) {
 		retval = fchown(fd,
-				FSAL_TEST_MASK(attrs.asked_attributes,
-					       FSAL_ATTR_OWNER) ? (int)attrs.owner : -1,
-				FSAL_TEST_MASK(attrs.asked_attributes,
-					       FSAL_ATTR_GROUP) ? (int)attrs.group : -1);
+				FSAL_TEST_MASK(attrs->asked_attributes,
+					       FSAL_ATTR_OWNER) ? (int)attrs->owner : -1,
+				FSAL_TEST_MASK(attrs->asked_attributes,
+					       FSAL_ATTR_GROUP) ? (int)attrs->group : -1);
 		if(retval) {
-			fsal_error = posix2fsal_error(errno);
-			retval = errno;
-			close(fd);
-			goto out;
+			goto fileerr;
 		}
 	}
 
 	/**  UTIME  **/
-	if(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME | FSAL_ATTR_MTIME)) {
+	if(FSAL_TEST_MASK(attrs->asked_attributes, FSAL_ATTR_ATIME | FSAL_ATTR_MTIME)) {
 		struct timeval timebuf[2];
 
 		/* Atime */
 		timebuf[0].tv_sec =
-			(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_ATIME) ?
-			 (time_t) attrs.atime.seconds : stat.st_atime);
+			(FSAL_TEST_MASK(attrs->asked_attributes, FSAL_ATTR_ATIME) ?
+			 (time_t) attrs->atime.seconds : stat.st_atime);
 		timebuf[0].tv_usec = 0;
 
 		/* Mtime */
 		timebuf[1].tv_sec =
-			(FSAL_TEST_MASK(attrs.asked_attributes, FSAL_ATTR_MTIME) ?
-			 (time_t) attrs.mtime.seconds : stat.st_mtime);
+			(FSAL_TEST_MASK(attrs->asked_attributes, FSAL_ATTR_MTIME) ?
+			 (time_t) attrs->mtime.seconds : stat.st_mtime);
 		timebuf[1].tv_usec = 0;
 		retval = futimes(fd, timebuf);
 		if(retval) {
-			fsal_error = posix2fsal_error(errno);
-			retval = errno;
-			close(fd);
-			goto out;
+			goto fileerr;
 		}
 	}
-	close(fd); /* consolidate goto out to here... */
-	
+	close(fd);
+	return getattrs(obj_hdl, attrs);  /* refresh ourself */
+
+fileerr:	
+	retval = errno;
+	close(fd);
+	fsal_error = posix2fsal_error(retval);
 out:
 	ReturnCode(fsal_error, retval);	
 }
@@ -1078,11 +1095,6 @@ static fsal_boolean_t handle_is(struct fsal_obj_handle *obj_hdl,
 /* compare
  * compare two handles.
  * return 0 for equal, -1 for anything else
- */
-/* NOTE: this api may have to be changed to instead of comparing
- * two fsal_obj_handles, a somewhat silly idea when you think about it,
- * to comparing the handle to a "buffer" containing the protocol handle
- * this is used to validate hits into hash buckets.
  */
 static fsal_boolean_t compare(struct fsal_obj_handle *obj_hdl,
 			      struct fsal_obj_handle *other_hdl)
@@ -1282,6 +1294,7 @@ static fsal_status_t release(struct fsal_obj_handle *obj_hdl)
 	int retval = 0;
 
 	pthread_mutex_lock(&obj_hdl->lock);
+	obj_hdl->refs--;  /* subtract the reference when we were created */
 	if(obj_hdl->refs != 0) {
 		pthread_mutex_unlock(&obj_hdl->lock);
 		retval = obj_hdl->refs > 0 ? EBUSY : EINVAL;
