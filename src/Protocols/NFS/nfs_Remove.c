@@ -94,8 +94,6 @@ int nfs_Remove(nfs_arg_t *parg,
   fsal_attrib_list_t pentry_child_attr;
   fsal_attrib_list_t parent_attr;
   fsal_attrib_list_t *pparent_attr = NULL;
-  cache_inode_file_type_t filetype;
-  cache_inode_file_type_t childtype;
   cache_inode_status_t cache_status;
   char *file_name = NULL;
   fsal_name_t name;
@@ -156,14 +154,11 @@ int nfs_Remove(nfs_arg_t *parg,
   /* get directory attributes before action (for V3 reply) */
   pparent_attr = &pre_parent_attr;
 
-  /* Extract the filetype */
-  filetype = cache_inode_fsal_type_convert(pre_parent_attr.type);
-
   /*
    * Sanity checks: new directory name must be non-null; parent must be
    * a directory. 
    */
-  if(filetype != DIRECTORY)
+  if(pre_parent_attr.type != DIRECTORY)
     {
       switch (preq->rq_vers)
         {
@@ -212,13 +207,10 @@ int nfs_Remove(nfs_arg_t *parg,
                                                 creds,
                                                 &cache_status)) != NULL)
             {
-              /* Extract the filetype */
-              childtype = cache_inode_fsal_type_convert(pentry_child_attr.type);
-
               /*
                * Sanity check: make sure we are about to remove a directory
                */
-              if(childtype == DIRECTORY)
+              if(pentry_child_attr.type == DIRECTORY)
                 {
                   switch (preq->rq_vers)
                     {

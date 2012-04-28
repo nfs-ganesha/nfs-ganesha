@@ -661,64 +661,6 @@ cache_inode_error_convert(fsal_status_t fsal_status)
 }                               /* cache_inode_error_convert */
 
 /**
- * @brief converts an FSAL type to the corresponding cache_inode type
- *
- * This function converts an FSAL type to the corresponding
- * cache_inode type.
- *
- * @param[in] type The input FSAL type
- *
- * @return the cache_inode type
- *
- */
-cache_inode_file_type_t
-cache_inode_fsal_type_convert(fsal_nodetype_t type)
-{
-  cache_inode_file_type_t rctype;
-
-  switch (type)
-    {
-    case FSAL_TYPE_DIR:
-      rctype = DIRECTORY;
-      break;
-
-    case FSAL_TYPE_FILE:
-      rctype = REGULAR_FILE;
-      break;
-
-    case FSAL_TYPE_LNK:
-      rctype = SYMBOLIC_LINK;
-      break;
-
-    case FSAL_TYPE_BLK:
-      rctype = BLOCK_FILE;
-      break;
-
-    case FSAL_TYPE_FIFO:
-      rctype = FIFO_FILE;
-      break;
-
-    case FSAL_TYPE_CHR:
-      rctype = CHARACTER_FILE;
-      break;
-
-    case FSAL_TYPE_SOCK:
-      rctype = SOCKET_FILE;
-      break;
-
-    case FSAL_TYPE_JUNCTION:
-      rctype = FS_JUNCTION ;
-      break ;
-
-    default:
-      rctype = UNASSIGNED;
-      break;
-    }
-
-  return rctype;
-}                               /* cache_inode_fsal_type_convert */
-
-/**
  * @brief Test if an entry can be overwritten during a rename
  *
  * This function checks if an existing entry can be overwritten by a
