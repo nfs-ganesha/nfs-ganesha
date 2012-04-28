@@ -192,37 +192,21 @@ cache_inode_create(cache_entry_t *parent,
 						   &object_handle);
             break;
 
-    case SOCKET_FILE:
+        case SOCKET_FILE:
+        case FIFO_FILE:
             fsal_status = dir_handle->ops->mknode(dir_handle,
 						  pname,
-						  FSAL_TYPE_SOCK,
-						  NULL, /* no dev_t needed for socket file */
+						  type,
+						  NULL, /* no dev_t needed */
 						  &object_attributes,
 						  &object_handle);
             break;
 
-    case FIFO_FILE:
+        case BLOCK_FILE:
+        case CHARACTER_FILE:
             fsal_status = dir_handle->ops->mknode(dir_handle,
 						  pname,
-						  FSAL_TYPE_FIFO,
-						  NULL, /* no dev_t needed for socket file */
-						  &object_attributes,
-						  &object_handle);
-            break;
-
-    case BLOCK_FILE:
-            fsal_status = dir_handle->ops->mknode(dir_handle,
-						  pname,
-						  FSAL_TYPE_BLK,
-						  &pcreate_arg->dev_spec,
-						  &object_attributes,
-						  &object_handle);
-            break;
-
-    case CHARACTER_FILE:
-            fsal_status = dir_handle->ops->mknode(dir_handle,
-						  pname,
-						  FSAL_TYPE_CHR,
+						  type,
 						  &pcreate_arg->dev_spec,
 						  &object_attributes,
 						  &object_handle);

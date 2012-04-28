@@ -1685,7 +1685,7 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
           cache_inode_put(data->current_entry, data->pclient);
       }
       data->current_entry = pentry;
-      data->current_filetype = cache_inode_fsal_type_convert(attr.type);
+      data->current_filetype = attr.type;
 
     }                           /* else */
 
@@ -1945,7 +1945,7 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           cache_inode_put(data->current_entry, data->pclient);
       }
       data->current_entry = pentry;
-      data->current_filetype = cache_inode_fsal_type_convert(attr.type);
+      data->current_filetype = attr.type;
 
       /* redo the call on the other side of the junction */
       return nfs4_op_readdir(op, data, resp);

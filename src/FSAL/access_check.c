@@ -252,7 +252,7 @@ static int fsal_check_access_acl(struct user_cred *creds,   /* IN */
   uid = p_object_attributes->owner;
   gid = p_object_attributes->group;
   pacl = p_object_attributes->acl;
-  is_dir = (p_object_attributes->type == FSAL_TYPE_DIR);
+  is_dir = (p_object_attributes->type == DIRECTORY);
 
   LogDebug(COMPONENT_FSAL,
            "fsal_check_access_acl: file acl=%p, file uid=%d, file gid= %d",

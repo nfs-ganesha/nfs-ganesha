@@ -142,7 +142,7 @@ int nfs3_Access(nfs_arg_t * parg,
     }
 
   /* Get file type */
-  filetype = cache_inode_fsal_type_convert(attr.type);
+  filetype = attr.type;
 
   access_mode = 0;
 

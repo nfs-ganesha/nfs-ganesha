@@ -88,7 +88,6 @@ int nfs3_Mknod(nfs_arg_t * parg,
   fsal_attrib_list_t parent_attr;
   fsal_attrib_list_t *ppre_attr;
   fsal_attrib_list_t attr_parent_after;
-  cache_inode_file_type_t parent_filetype;
   cache_inode_file_type_t nodetype;
   char *str_file_name = NULL;
   fsal_name_t file_name;
@@ -139,14 +138,11 @@ int nfs3_Mknod(nfs_arg_t * parg,
   /* get directory attributes before action (for V3 reply) */
   ppre_attr = &parent_attr;
 
-  /* Extract the filetype */
-  parent_filetype = cache_inode_fsal_type_convert(parent_attr.type);			       
-
   /*
    * Sanity checks: new node name must be non-null; parent must be a
    * directory. 
    */
-  if(parent_filetype != DIRECTORY)
+  if(parent_attr.type != DIRECTORY)
     {
       pres->res_mknod3.status = NFS3ERR_NOTDIR;
       rc = NFS_REQ_OK;

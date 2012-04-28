@@ -98,7 +98,6 @@ int nfs_Mkdir(nfs_arg_t * parg,
   fsal_attrib_list_t attr;
   fsal_attrib_list_t *ppre_attr;
   fsal_attrib_list_t attr_parent_after;
-  cache_inode_file_type_t parent_filetype;
   struct fsal_obj_handle *pfsal_handle;
   fsal_name_t dir_name;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
@@ -160,13 +159,10 @@ int nfs_Mkdir(nfs_arg_t * parg,
   /* get directory attributes before action (for V3 reply) */
   ppre_attr = &parent_attr;
 
-  /* Extract the filetype */
-  parent_filetype = cache_inode_fsal_type_convert(parent_attr.type);
-
   /*
    * Sanity checks: 
    */
-  if(parent_filetype != DIRECTORY)
+  if(parent_attr.type != DIRECTORY)
     {
       switch (preq->rq_vers)
         {

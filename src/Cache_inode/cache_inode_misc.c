@@ -619,63 +619,6 @@ cache_inode_status_t cache_inode_error_convert(fsal_status_t fsal_status)
 
 /**
  *
- * cache_inode_fsal_type_convert: converts an FSAL type to the cache_inode type to be used.
- *
- * Converts an FSAL type to the cache_inode type to be used.
- *
- * @param type [IN] the input FSAL type.
- *
- * @return the result of the conversion.
- *
- */
-cache_inode_file_type_t cache_inode_fsal_type_convert(fsal_nodetype_t type)
-{
-  cache_inode_file_type_t rctype;
-
-  switch (type)
-    {
-    case FSAL_TYPE_DIR:
-      rctype = DIRECTORY;
-      break;
-
-    case FSAL_TYPE_FILE:
-      rctype = REGULAR_FILE;
-      break;
-
-    case FSAL_TYPE_LNK:
-      rctype = SYMBOLIC_LINK;
-      break;
-
-    case FSAL_TYPE_BLK:
-      rctype = BLOCK_FILE;
-      break;
-
-    case FSAL_TYPE_FIFO:
-      rctype = FIFO_FILE;
-      break;
-
-    case FSAL_TYPE_CHR:
-      rctype = CHARACTER_FILE;
-      break;
-
-    case FSAL_TYPE_SOCK:
-      rctype = SOCKET_FILE;
-      break;
-
-    case FSAL_TYPE_JUNCTION:
-      rctype = FS_JUNCTION ;
-      break ;
-
-    default:
-      rctype = UNASSIGNED;
-      break;
-    }
-
-  return rctype;
-}                               /* cache_inode_fsal_type_convert */
-
-/**
- *
  * cache_inode_type_are_rename_compatible: test if an existing entry could be scrtached during a rename.
  *
  * test if an existing entry could be scrtached during a rename. No mutext management.

@@ -99,7 +99,6 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
   fsal_accessmode_t mode = 0777;
   cache_entry_t *symlink_pentry = NULL;
   cache_entry_t *parent_pentry;
-  cache_inode_file_type_t parent_filetype;
   fsal_attrib_list_t parent_attr;
   fsal_attrib_list_t attr_symlink;
   fsal_attrib_list_t attributes_symlink;
@@ -167,14 +166,11 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
   /* get directory attributes before action (for V3 reply) */
   ppre_attr = &parent_attr;
 
-  /* Extract the filetype */
-  parent_filetype = cache_inode_fsal_type_convert(parent_attr.type);
-
   /*
    * Sanity checks: new directory name must be non-null; parent must be
    * a directory. 
    */
-  if(parent_filetype != DIRECTORY)
+  if(parent_attr.type != DIRECTORY)
     {
       switch (preq->rq_vers)
         {

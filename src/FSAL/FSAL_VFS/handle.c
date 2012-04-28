@@ -168,9 +168,11 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 	if( !path)
 		ReturnCode(ERR_FSAL_FAULT, 0);
+	memset(fh, 0, sizeof(struct file_handle) + MAX_HANDLE_SZ);
+	fh->handle_bytes = MAX_HANDLE_SZ;
 	mount_fd = vfs_get_root_fd(parent->export);
 	parent_hdl = container_of(parent, struct vfs_fsal_obj_handle, obj_handle);
-	if( !parent->ops->handle_is(parent, FSAL_TYPE_DIR)) {
+	if( !parent->ops->handle_is(parent, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			parent);
@@ -182,7 +184,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		retval = errno;
 		goto errout;
 	}
-	retval = name_to_handle_at(dirfd, path, fh, &mnt_id, AT_SYMLINK_NOFOLLOW);
+	retval = name_to_handle_at(dirfd, path, fh, &mnt_id, 0);
 	if(retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
@@ -257,12 +259,14 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 		= alloca(sizeof(struct file_handle) + MAX_HANDLE_SZ);
 
 	*handle = NULL; /* poison it */
-	if( !dir_hdl->ops->handle_is(dir_hdl, FSAL_TYPE_DIR)) {
+	if( !dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
 		ReturnCode(ERR_FSAL_NOTDIR, 0);
 	}
+	memset(fh, 0, sizeof(struct file_handle) + MAX_HANDLE_SZ);
+	fh->handle_bytes = MAX_HANDLE_SZ;
 	myself = container_of(dir_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	mount_fd = vfs_get_root_fd(dir_hdl->export);
 	user = attrib->owner;
@@ -361,12 +365,14 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		= alloca(sizeof(struct file_handle) + MAX_HANDLE_SZ);
 
 	*handle = NULL; /* poison it */
-	if( !dir_hdl->ops->handle_is(dir_hdl, FSAL_TYPE_DIR)) {
+	if( !dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
 		ReturnCode(ERR_FSAL_NOTDIR, 0);
 	}
+	memset(fh, 0, sizeof(struct file_handle) + MAX_HANDLE_SZ);
+	fh->handle_bytes = MAX_HANDLE_SZ;
 	myself = container_of(dir_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	mount_fd = vfs_get_root_fd(dir_hdl->export);
 	user = attrib->owner;
@@ -445,7 +451,7 @@ errout:
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      fsal_name_t *name,
-			      fsal_nodetype_t nodetype,  /* IN */
+			      object_file_type_t nodetype,  /* IN */
 			      fsal_dev_t *dev,  /* IN */
 			      fsal_attrib_list_t *attrib,
 			      struct fsal_obj_handle **handle)
@@ -464,12 +470,14 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		= alloca(sizeof(struct file_handle) + MAX_HANDLE_SZ);
 
 	*handle = NULL; /* poison it */
-	if( !dir_hdl->ops->handle_is(dir_hdl, FSAL_TYPE_DIR)) {
+	if( !dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
 		ReturnCode(ERR_FSAL_NOTDIR, 0);
 	}
+	memset(fh, 0, sizeof(struct file_handle) + MAX_HANDLE_SZ);
+	fh->handle_bytes = MAX_HANDLE_SZ;
 	myself = container_of(dir_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	mount_fd = vfs_get_root_fd(dir_hdl->export);
 	user = attrib->owner;
@@ -477,7 +485,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	unix_mode = fsal2unix_mode(attrib->mode)
 		& ~dir_hdl->export->ops->fs_umask(dir_hdl->export);
 	switch (nodetype) {
-	case FSAL_TYPE_BLK:
+	case BLOCK_FILE:
 		if( !dev) {
 			fsal_error = ERR_FSAL_FAULT;
 			goto errout;
@@ -485,7 +493,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		unix_mode |= S_IFBLK;
 		unix_dev = makedev(dev->major, dev->minor);
 		break;
-	case FSAL_TYPE_CHR:
+	case CHARACTER_FILE:
 		if( !dev) {
 			fsal_error = ERR_FSAL_FAULT;
 			goto errout;
@@ -493,10 +501,10 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		unix_mode |= S_IFCHR;
 		unix_dev = makedev(dev->major, dev->minor);
 		break;
-	case FSAL_TYPE_SOCK:
+	case SOCKET_FILE:
 		unix_mode |= S_IFSOCK;
 		break;
-	case FSAL_TYPE_FIFO:
+	case FIFO_FILE:
 		unix_mode |= S_IFIFO;
 		break;
 	default:
@@ -595,12 +603,14 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		= alloca(sizeof(struct file_handle) + MAX_HANDLE_SZ);
 
 	*handle = NULL; /* poison it first */
-	if( !dir_hdl->ops->handle_is(dir_hdl, FSAL_TYPE_DIR)) {
+	if( !dir_hdl->ops->handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
 		ReturnCode(ERR_FSAL_NOTDIR, 0);
 	}
+	memset(fh, 0, sizeof(struct file_handle) + MAX_HANDLE_SZ);
+	fh->handle_bytes = MAX_HANDLE_SZ;
 	myself = container_of(dir_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	mount_fd = vfs_get_root_fd(dir_hdl->export);
 	user = attrib->owner;
@@ -687,7 +697,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 
-	if(obj_hdl->type != FSAL_TYPE_LNK) {
+	if(obj_hdl->type != SYMBOLIC_LINK) {
 		fsal_error = ERR_FSAL_FAULT;
 		goto out;
 	}
@@ -1087,7 +1097,7 @@ out:
  */
 
 static fsal_boolean_t handle_is(struct fsal_obj_handle *obj_hdl,
-				fsal_nodetype_t type)
+				object_file_type_t type)
 {
 	return obj_hdl->type == type;
 }

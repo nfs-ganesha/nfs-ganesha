@@ -127,7 +127,7 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       access_mask |= nfs_get_access_mask(ACCESS4_READ, &attr);
     }
 
-  if((arg_ACCESS4.access & ACCESS4_LOOKUP) && (attr.type == FSAL_TYPE_DIR))
+  if((arg_ACCESS4.access & ACCESS4_LOOKUP) && (attr.type == DIRECTORY))
     {
       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_LOOKUP;
       access_mask |= nfs_get_access_mask(ACCESS4_LOOKUP, &attr);
@@ -145,13 +145,13 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       access_mask |= nfs_get_access_mask(ACCESS4_EXTEND, &attr);
     }
 
-  if((arg_ACCESS4.access & ACCESS4_DELETE) && (attr.type == FSAL_TYPE_DIR))
+  if((arg_ACCESS4.access & ACCESS4_DELETE) && (attr.type == DIRECTORY))
     {
       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_DELETE;
       access_mask |= nfs_get_access_mask(ACCESS4_DELETE, &attr);
     }
 
-  if((arg_ACCESS4.access & ACCESS4_EXECUTE) && (attr.type != FSAL_TYPE_DIR))
+  if((arg_ACCESS4.access & ACCESS4_EXECUTE) && (attr.type != DIRECTORY))
     {
       res_ACCESS4.ACCESS4res_u.resok4.supported |= ACCESS4_EXECUTE;
       access_mask |= nfs_get_access_mask(ACCESS4_EXECUTE, &attr);
@@ -184,7 +184,7 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 			    &cache_status) == CACHE_INODE_SUCCESS)
         res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_READ;
 
-      if(attr.type == FSAL_TYPE_DIR)
+      if(attr.type == DIRECTORY)
         {
           access_mask = nfs_get_access_mask(ACCESS4_LOOKUP, &attr);
           if(cache_inode_access(data->current_entry,
@@ -211,7 +211,7 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 			    &cache_status) == CACHE_INODE_SUCCESS)
         res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_EXTEND;
 
-      if(attr.type == FSAL_TYPE_DIR)
+      if(attr.type == DIRECTORY)
         {
           access_mask = nfs_get_access_mask(ACCESS4_DELETE, &attr);
           if(cache_inode_access(data->current_entry,
@@ -222,7 +222,7 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
             res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_DELETE;
         }
 
-      if(attr.type != FSAL_TYPE_DIR)
+      if(attr.type != DIRECTORY)
         {
           access_mask = nfs_get_access_mask(ACCESS4_EXECUTE, &attr);
           if(cache_inode_access(data->current_entry,

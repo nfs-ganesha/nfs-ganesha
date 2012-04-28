@@ -178,24 +178,6 @@ typedef struct cache_inode_opened_file__
 } cache_inode_opened_file_t;
 
 /**
- * Enumeration of all cache_entry types known by cache_inode.
- */
-typedef enum cache_inode_file_type__
-{
-  UNASSIGNED = 1, /*< No filetype at all. */
-  REGULAR_FILE = 2, /*< Regular file (can be opened, read, written) */
-  CHARACTER_FILE = 3, /*< Character special device file */
-  BLOCK_FILE = 4, /*< Block special device file */
-  SYMBOLIC_LINK = 5, /*< Symbolic link */
-  SOCKET_FILE = 6, /*< Unix domain socket. */
-  FIFO_FILE = 7, /*< FIFO or 'named pipe' */
-  DIRECTORY = 8, /*< A directory */
-  FS_JUNCTION = 9, /*< A directory-like node leading from one
-                       filesystem to another */
-  RECYCLED = 10 /*< This entry has been recycled */
-} cache_inode_file_type_t;
-
-/**
  * Indicate whether this is a read or write operation, for
  * cache_inode_rdwr.
  */

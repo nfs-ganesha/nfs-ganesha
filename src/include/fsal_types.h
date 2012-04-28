@@ -182,19 +182,46 @@ typedef enum fsal_initflag__
       /* Note : for booleans, we considerate that TRUE > FALSE */
 } fsal_initflag_t;
 
+/* Object file type within the system */
+typedef enum
+{ UNASSIGNED = 1,  /** @TODO funny duck. might not be relevant anymore... */
+  REGULAR_FILE = 2,
+  CHARACTER_FILE = 3,
+  BLOCK_FILE = 4,
+  SYMBOLIC_LINK = 5,
+  SOCKET_FILE = 6,
+  FIFO_FILE = 7,
+  DIRECTORY = 8,
+  FS_JUNCTION = 9,
+  EXTENDED_ATTR = 10,
+  RECYCLED = 11      /** @TODO tested for but never actually set! deprecate */
+} object_file_type_t;
+
+/** @TODO temporary cpp hack
+ * part of deprecating fsal_nodetype_t and cache_inode_file_type_t
+ * make it go away when fixing core types usage
+ */
+
+#define cache_inode_file_type_t object_file_type_t
+
+
+/** @TODO deprecate this.  Not only a duplicate of cache_inode_file_type_t
+ * but the bits don't even line up.  Replace usage with ^^
+ * for now, make the bits line up.  DO NOT USE in new api!!!
+ */
 /** FS object types */
-typedef enum fsal_nodetype__
-{
-  FSAL_TYPE_FIFO = 0x1,  /**< Fifo              */
-  FSAL_TYPE_CHR = 0x2,   /**< character special */
-  FSAL_TYPE_DIR = 0x4,   /**< directory         */
-  FSAL_TYPE_BLK = 0x6,   /**< block special     */
-  FSAL_TYPE_FILE = 0x8,  /**< regular file      */
-  FSAL_TYPE_LNK = 0xA,   /**< symbolic link     */
-  FSAL_TYPE_SOCK = 0xC,  /**< socket            */
-  FSAL_TYPE_XATTR = 0xE, /**< extended attribute */
-  FSAL_TYPE_JUNCTION = 0xF /**< junction to another fileset */
-} fsal_nodetype_t;
+/* typedef enum fsal_nodetype__ */
+/* { */
+/*   FSAL_TYPE_FIFO =  7,   /\**< Fifo              *\/ */
+/*   FSAL_TYPE_CHR =   3,   /\**< character special *\/ */
+/*   FSAL_TYPE_DIR =   8,   /\**< directory         *\/ */
+/*   FSAL_TYPE_BLK =   4,   /\**< block special     *\/ */
+/*   FSAL_TYPE_FILE =  2,   /\**< regular file      *\/ */
+/*   FSAL_TYPE_LNK =   5,   /\**< symbolic link     *\/ */
+/*   FSAL_TYPE_SOCK =  6,   /\**< socket            *\/ */
+/*   FSAL_TYPE_XATTR = 10,  /\**< extended attribute *\/ */
+/*   FSAL_TYPE_JUNCTION = 9 /\**< junction to another fileset *\/ */
+/* } fsal_nodetype_t; */
 
 /* ---------------
  *  FS dependant :
@@ -606,7 +633,7 @@ typedef struct fsal_attrib_list__
                                              */
 
   fsal_attrib_mask_t supported_attributes;
-  fsal_nodetype_t type;
+  object_file_type_t type;
   fsal_size_t filesize;
   fsal_fsid_t fsid;
   fsal_acl_t *acl;
@@ -666,7 +693,7 @@ typedef fsal_uint_t fsal_accessflags_t;
 #define IS_FSAL_MODE_MASK_VALID(access)  ((access & FSAL_ACCESS_FLAG_BIT_MASK) == FSAL_MODE_MASK_FLAG)
 #define IS_FSAL_ACE4_MASK_VALID(access)  ((access & FSAL_ACCESS_FLAG_BIT_MASK) == FSAL_ACE4_MASK_FLAG)
 
-#define IS_FSAL_DIR(filetype)  (filetype == FSAL_TYPE_DIR)
+#define IS_FSAL_DIR(filetype)  (filetype == DIRECTORY)
 
 #define FSAL_WRITE_ACCESS (FSAL_MODE_MASK_SET(FSAL_W_OK) | \
                            FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA | \

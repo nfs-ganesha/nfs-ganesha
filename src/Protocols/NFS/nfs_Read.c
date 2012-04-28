@@ -132,7 +132,6 @@ int nfs_Read(nfs_arg_t * parg,
   size_t read_size = 0;
   fsal_off_t offset = 0;
   void *data = NULL;
-  cache_inode_file_type_t filetype;
   fsal_boolean_t eof_met=FALSE;
   int rc = NFS_REQ_OK;
 
@@ -219,11 +218,8 @@ int nfs_Read(nfs_arg_t * parg,
       goto out;
     }
 
-  /* Extract the filetype */
-  filetype = cache_inode_fsal_type_convert(pre_attr.type);
-
   /* Sanity check: read only from a regular file */
-  if(filetype != REGULAR_FILE)
+  if(pre_attr.type != REGULAR_FILE)
     {
       switch (preq->rq_vers)
         {
@@ -236,7 +232,7 @@ int nfs_Read(nfs_arg_t * parg,
           break;
 
         case NFS_V3:
-          if(filetype == DIRECTORY)
+          if(pre_attr.type == DIRECTORY)
             pres->res_read3.status = NFS3ERR_ISDIR;
           else
             pres->res_read3.status = NFS3ERR_INVAL;

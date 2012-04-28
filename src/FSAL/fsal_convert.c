@@ -144,7 +144,7 @@ fsal_accessmode_t unix2fsal_mode(mode_t unix_mode)
 
 /**
  * posix2fsal_type:
- * Convert posix object type to FSAL node type.
+ * Convert posix object type to an object type.
  *
  * \param posix_type_in (input):
  *        The POSIX object type.
@@ -152,32 +152,32 @@ fsal_accessmode_t unix2fsal_mode(mode_t unix_mode)
  * \return - The FSAL node type associated to posix_type_in.
  *         - -1 if the input type is unknown.
  */
-fsal_nodetype_t posix2fsal_type(mode_t posix_type_in)
+object_file_type_t posix2fsal_type(mode_t posix_type_in)
 {
 
   switch (posix_type_in & S_IFMT)
     {
     case S_IFIFO:
-      return FSAL_TYPE_FIFO;
+      return FIFO_FILE;
 
     case S_IFCHR:
-      return FSAL_TYPE_CHR;
+      return CHARACTER_FILE;
 
     case S_IFDIR:
-      return FSAL_TYPE_DIR;
+      return DIRECTORY;
 
     case S_IFBLK:
-      return FSAL_TYPE_BLK;
+      return BLOCK_FILE;
 
     case S_IFREG:
     case S_IFMT:
-      return FSAL_TYPE_FILE;
+      return REGULAR_FILE;
 
     case S_IFLNK:
-      return FSAL_TYPE_LNK;
+      return SYMBOLIC_LINK;
 
     case S_IFSOCK:
-      return FSAL_TYPE_SOCK;
+      return SOCKET_FILE;
 
     default:
       LogWarn(COMPONENT_FSAL, "Unknown object type: %d", posix_type_in);

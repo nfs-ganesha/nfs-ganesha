@@ -107,8 +107,6 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
   fsal_attrib_list_t new_parent_attr;
   fsal_attrib_list_t attr;
   fsal_attrib_list_t tst_attr;
-  cache_inode_file_type_t parent_filetype;
-  cache_inode_file_type_t new_parent_filetype;
   int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))
@@ -188,15 +186,11 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
   ppre_attr = &pre_attr;
   pnew_pre_attr = &new_parent_attr;
 
-  /* Get the filetypes */
-  parent_filetype = cache_inode_fsal_type_convert(pre_attr.type);
-  new_parent_filetype = cache_inode_fsal_type_convert(new_parent_attr.type);
-
   /*
    * Sanity checks: we must manage directories
    */
-  if((parent_filetype != DIRECTORY) ||
-     (new_parent_filetype != DIRECTORY))
+  if((pre_attr.type != DIRECTORY) ||
+     (new_parent_attr.type != DIRECTORY))
     {
       switch (preq->rq_vers)
         {

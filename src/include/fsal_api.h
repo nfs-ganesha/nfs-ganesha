@@ -155,7 +155,7 @@ struct fsal_obj_handle {
 	pthread_mutex_t lock;
 	struct glist_head handles;
 	int refs;
-	fsal_nodetype_t type;
+	object_file_type_t type;
 	struct fsal_export *export;	/* export who created me */
 	fsal_attrib_list_t attributes;  /* used to be in cache_entry */
 	struct fsal_obj_ops *ops;
@@ -209,7 +209,7 @@ struct fsal_obj_ops {
 			       struct fsal_obj_handle **new_obj);
 	fsal_status_t (*mknode)(struct fsal_obj_handle *dir_hdl,
 				fsal_name_t *name,
-				fsal_nodetype_t nodetype,  /* IN */
+				object_file_type_t nodetype,  /* IN */
 				fsal_dev_t *dev,  /* IN */
 				fsal_attrib_list_t *attrib,
 				struct fsal_obj_handle **new_obj);
@@ -310,7 +310,7 @@ struct fsal_obj_ops {
 
 	/* handle operations */
 	fsal_boolean_t (*handle_is)(struct fsal_obj_handle *obj_hdl,
-				    fsal_nodetype_t type);
+				    object_file_type_t type);
 	fsal_status_t (*lru_cleanup)(struct fsal_obj_handle *obj_hdl,
 				     lru_actions_t requests);
 	fsal_boolean_t (*compare)(struct fsal_obj_handle *obj1_hdl,

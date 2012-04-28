@@ -104,7 +104,6 @@ int nfs_Create(nfs_arg_t * parg,
   fsal_attrib_list_t *ppre_attr;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   cache_inode_status_t cache_status_lookup;
-  cache_inode_file_type_t parent_filetype;
   int rc = NFS_REQ_OK;
   struct fsal_obj_handle *pfsal_handle;
 #ifdef _USE_QUOTA
@@ -166,14 +165,11 @@ int nfs_Create(nfs_arg_t * parg,
   /* get directory attributes before action (for V3 reply) */
   ppre_attr = &parent_attr;
 
-  /* Extract the filetype */
-  parent_filetype = cache_inode_fsal_type_convert(parent_attr.type);
-
   /*
    * Sanity checks: new file name must be non-null; parent must be a
    * directory. 
    */
-  if(parent_filetype != DIRECTORY)
+  if(parent_attr.type != DIRECTORY)
     {
       switch (preq->rq_vers)
         {

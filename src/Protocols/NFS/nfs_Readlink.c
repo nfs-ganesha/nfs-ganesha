@@ -90,7 +90,6 @@ int nfs_Readlink(nfs_arg_t * parg,
 
   cache_entry_t *pentry = NULL;
   fsal_attrib_list_t attr;
-  cache_inode_file_type_t filetype;
   cache_inode_status_t cache_status;
   fsal_path_t symlink_data;
   char *ptr = NULL;
@@ -127,11 +126,8 @@ int nfs_Readlink(nfs_arg_t * parg,
       goto out;
     }
 
-  /* Extract the filetype */
-  filetype = cache_inode_fsal_type_convert(attr.type);
-
   /* Sanity Check: the pentry must be a link */
-  if(filetype != SYMBOLIC_LINK)
+  if(attr.type != SYMBOLIC_LINK)
     {
       switch (preq->rq_vers)
         {

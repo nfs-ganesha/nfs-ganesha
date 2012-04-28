@@ -61,7 +61,7 @@ mode_t fsal2unix_mode(fsal_accessmode_t fsal_mode);
 fsal_accessmode_t unix2fsal_mode(mode_t unix_mode);
 
 /** converts hpss object type to fsal object type. */
-fsal_nodetype_t posix2fsal_type(mode_t posix_type_in);
+object_file_type_t posix2fsal_type(mode_t posix_type_in);
 
 /** converts posix fsid to fsal FSid. */
 fsal_fsid_t posix2fsal_fsid(dev_t posix_devid);
