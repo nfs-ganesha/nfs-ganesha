@@ -136,6 +136,7 @@ cache_inode_invalidate(cache_inode_fsal_data_t *fsal_data,
 
      atomic_clear_int_bits(&entry->flags,
                            CACHE_INODE_TRUST_ATTRS |
+                           CACHE_INODE_DIR_POPULATED |
                            CACHE_INODE_TRUST_CONTENT);
 
 
