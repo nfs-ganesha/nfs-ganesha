@@ -83,43 +83,10 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_OPEN_CONFIRM;
   res_OPEN_CONFIRM4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_OPEN_CONFIRM4.status = NFS4ERR_NOFILEHANDLE;
-      return res_OPEN_CONFIRM4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_OPEN_CONFIRM4.status = NFS4ERR_BADHANDLE;
-      return res_OPEN_CONFIRM4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_OPEN_CONFIRM4.status = NFS4ERR_FHEXPIRED;
-      return res_OPEN_CONFIRM4.status;
-    }
-
-  /* Should not operate on non-file objects */
-  if(data->current_entry->internal_md.type != REGULAR_FILE)
-    {
-      switch (data->current_entry->internal_md.type)
-        {
-        case DIRECTORY:
-          res_OPEN_CONFIRM4.status = NFS4ERR_ISDIR;
-          return res_OPEN_CONFIRM4.status;
-          break;
-        default:
-          res_OPEN_CONFIRM4.status = NFS4ERR_INVAL;
-          return res_OPEN_CONFIRM4.status;
-          break;
-
-        }
-    }
+  if ((res_OPEN_CONFIRM4.status
+       = nfs4_sanity_check_FH(data, REGULAR_FILE) != NFS4_OK)) {
+       return res_OPEN_CONFIRM4.status;
+  }
 
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_OPEN_CONFIRM4.open_stateid,

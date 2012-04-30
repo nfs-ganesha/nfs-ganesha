@@ -22,8 +22,6 @@ SUBDIRS = include             \
 	  NodeList	      \
           Cache_inode         \
           SAL                 \
-          File_Content        \
-          File_Content_Policy \
           RPCAL               \
           Protocols           \
           RPCAL               \
@@ -33,7 +31,6 @@ SUBDIRS = include             \
           IdMapper            \
           snmp_adm            \
           MainNFSD            \
-          shell               \
           cmdline_tools       \
           Docs                \
           tools               \
@@ -48,7 +45,7 @@ if USE_FSAL_FUSE
 SUBDIRS += example-fuse
 endif
 
-DOCDIRS = Cache_inode ConfigParsing File_Content File_Content_Policy HashTable IdMapper LRU Log MainNFSD Protocols/NFS SemN StuffAlloc shell support \
+DOCDIRS = Cache_inode ConfigParsing HashTable IdMapper LRU Log MainNFSD Protocols/NFS SemN StuffAlloc support \
           FSAL/FSAL_HPSS FSAL/FSAL_POSIX FSAL/FSAL_PROXY FSAL/FSAL_SNMP FSAL/FSAL_FUSE FSAL/FSAL_ZFS
 
 TESTRUNNER_DIRS = HashTable LRU Log RW_Lock

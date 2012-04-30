@@ -321,7 +321,7 @@ fsal_status_t posix2fsal_attributes(struct stat* st,
 
   if(FSAL_TEST_MASK(attrs->asked_attributes, FSAL_ATTR_RAWDEV))
     {
-      attrs->rawdev = posix2fsal_devt(st->st_rdev);    /* XXX: convert ? */
+      attrs->rawdev = posix2fsal_devt(st->st_rdev);
     }
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);

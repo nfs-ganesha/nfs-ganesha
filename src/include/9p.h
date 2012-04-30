@@ -34,7 +34,6 @@
 #include <sys/select.h>
 #include "fsal.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 
 typedef uint8_t   u8;
 typedef uint16_t u16;

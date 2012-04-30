@@ -171,9 +171,15 @@ int cache_inode_fsal_rbt_both_on_fsal(hash_parameter_t * p_hparam,
 
     fsal_handle_t *pfsal_handle = (fsal_handle_t *) (buffclef->pdata);
 
+    /**
+     * @todo ACE: This is a temporary hack so we don't have to change
+     * every FSAL right now.
+     */
+
     rc = FSAL_Handle_to_Hash_both( pfsal_handle, 0,
-                                   p_hparam->alphabet_length, p_hparam->index_size,
-                                   &FSALindex, &FSALrbt);
+				   p_hparam->alphabet_length, p_hparam->index_size,
+				   &FSALindex, &FSALrbt);
+
     *phashval = FSALindex;
     *prbtval = FSALrbt;
     if( rc == 0 )
@@ -187,12 +193,10 @@ int cache_inode_fsal_rbt_both_on_fsal(hash_parameter_t * p_hparam,
 
     if(isFullDebug(COMPONENT_HASHTABLE))
       {
-          snprintHandle(printbuf, 512, pfsal_handle);
+          snprintHandle(printbuf, 512, buffclef->pdata);
           LogFullDebug(COMPONENT_HASHTABLE,
-                       "hash_func rbt both: buff = (Handle=%s,"
-                       " hashvalue=%"PRIu32
-                       " rbtvalue=%"PRIu64,
-                       printbuf, *phashval, *prbtval );
+                       "hash_func rbt both: buff = (Handle=%s, Cookie=%"PRIu64"), hashvalue=%u rbtvalue=%u",
+                       printbuf, 0UL, FSALindex, FSALrbt);
       }
 
    /* Success */
@@ -266,5 +270,5 @@ int display_value(hash_buffer_t * pbuff, char *str)
 
     return snprintf(str, HASHTABLE_DISPLAY_STRLEN,
                     "(Type=%d, Address=%p)",
-                    pentry->internal_md.type, pentry);
+                    pentry->type, pentry);
 }

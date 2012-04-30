@@ -132,7 +132,6 @@ int cache_content_client_init(cache_content_client_t * pclient,
   pclient->nb_prealloc = param.nb_prealloc_entry;
   pclient->flush_force_fsal = param.flush_force_fsal;
   pclient->max_fd = param.max_fd ;
-  pclient->retention = param.retention;
   pclient->use_fd_cache = param.use_fd_cache;
   strncpy(pclient->cache_dir, param.cache_dir, MAXPATHLEN);
 

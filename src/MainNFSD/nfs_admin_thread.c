@@ -55,11 +55,10 @@ exportlist_t *temp_pexportlist;
 pthread_cond_t admin_condvar = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t mutex_admin_condvar = PTHREAD_MUTEX_INITIALIZER;
 bool_t reload_exports;
-hash_table_t *admin_ht;
 
-void nfs_Init_admin_data(hash_table_t *ht)
+void nfs_Init_admin_data(void)
 {
-  admin_ht = ht;
+  return;
 }
 
 void admin_replace_exports()
@@ -115,7 +114,7 @@ int rebuild_export_list()
 
   /* At least one worker thread should exist. Each worker thread has a pointer to
    * the same hash table. */
-  if(nfs_export_create_root_entry(temp_pexportlist, admin_ht) != TRUE)
+  if(nfs_export_create_root_entry(temp_pexportlist) != TRUE)
     {
       LogCrit(COMPONENT_MAIN,
               "replace_exports: Error initializing Cache Inode root entries");
@@ -168,7 +167,7 @@ static int ChangeoverExports()
   return 0;
 }
 
-void *admin_thread(void *Arg)
+void *admin_thread(void *UnusedArg)
 {
 #ifndef _NO_BUDDY_SYSTEM
   int rc = 0;

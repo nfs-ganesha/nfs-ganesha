@@ -56,10 +56,10 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
@@ -137,7 +137,6 @@ int nfs4_op_verify(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Get the cache inode attribute */
   if((cache_status = cache_inode_getattr(data->current_entry,
                                          &file_attr,
-                                         data->ht,
                                          data->pclient,
                                          data->pcontext,
                                          &cache_status)) != CACHE_INODE_SUCCESS)

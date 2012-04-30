@@ -126,9 +126,9 @@
  * @return 1 if successful, 0 otherwise
  *
  */
-int nfs4_FhandleToFSAL(nfs_fh4 * pfh4,
-		       struct fsal_handle_desc *fh_desc,
-                       fsal_op_context_t * pcontext)
+int nfs4_FhandleToFSAL(nfs_fh4 *pfh4,
+                       struct fsal_handle_desc *fh_desc,
+                       fsal_op_context_t *pcontext)
 {
   fsal_status_t fsal_status;
   file_handle_v4_t *pfile_handle;
@@ -246,15 +246,16 @@ int nfs2_FhandleToFSAL(fhandle2 * pfh2,
  *
  * Converts a nfs4 file handle to a FSAL file handle.
  *
- * @param pfh4 [OUT] pointer to the extracted file handle 
+ * @param pfh4 [OUT] pointer to the extracted file handle
  * @param pfsalhandle [IN] pointer to the FSAL handle to be converted
- * @param data [IN] pointer to NFSv4 compound data structure. 
+ * @param data [IN] pointer to NFSv4 compound data structure.
  *
  * @return 1 if successful, 0 otherwise
  *
  */
-int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
-                       compound_data_t * data)
+int nfs4_FSALToFhandle(nfs_fh4 *pfh4,
+                       fsal_handle_t *pfsalhandle,
+                       compound_data_t *data)
 {
   fsal_status_t fsal_status;
   file_handle_v4_t *file_handle;
@@ -269,7 +270,9 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
   fh_desc.start = (caddr_t) &file_handle->fsopaque;
   fh_desc.len = pfh4->nfs_fh4_len - offsetof(file_handle_v4_t, fsopaque);
   fsal_status =
-      FSAL_DigestHandle(&data->pexport->FS_export_context, FSAL_DIGEST_NFSV4, pfsalhandle,
+      FSAL_DigestHandle(&data->pexport->FS_export_context,
+                        FSAL_DIGEST_NFSV4,
+                        pfsalhandle,
                         &fh_desc);
   if(FSAL_IS_ERROR(fsal_status))
     return 0;
@@ -307,8 +310,9 @@ int nfs4_FSALToFhandle(nfs_fh4 * pfh4, fsal_handle_t * pfsalhandle,
  * FIXME: do we have to worry about buffer alignment and memcpy to 
  * compensate??
  */
-int nfs3_FSALToFhandle(nfs_fh3 * pfh3, fsal_handle_t * pfsalhandle,
-                       exportlist_t * pexport)
+int nfs3_FSALToFhandle(nfs_fh3 *pfh3,
+                       fsal_handle_t *pfsalhandle,
+                       exportlist_t *pexport)
 {
   fsal_status_t fsal_status;
   file_handle_v3_t *file_handle;

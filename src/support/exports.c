@@ -54,7 +54,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_file_handle.h"
 #include "nfs_exports.h"
 #include "nfs_tools.h"
@@ -75,7 +74,6 @@
  * this cache_inode_client will be used to handle the root of each entry (created when reading export file) */
 cache_inode_client_t small_client;
 cache_inode_client_parameter_t small_client_param;
-cache_content_client_t recover_datacache_client;
 
 #define STRCMP strcasecmp
 
@@ -111,7 +109,6 @@ cache_content_client_t recover_datacache_client;
 #define CONF_EXPORT_USE_DATACACHE      "Cache_Data"
 #define CONF_EXPORT_FS_SPECIFIC        "FS_Specific"
 #define CONF_EXPORT_FS_TAG             "Tag"
-#define CONF_EXPORT_CACHE_POLICY       "Cache_Inode_Policy"
 #define CONF_EXPORT_MAX_OFF_WRITE      "MaxOffsetWrite"
 #define CONF_EXPORT_MAX_OFF_READ       "MaxOffsetRead"
 #define CONF_EXPORT_MAX_CACHE_SIZE     "MaxCacheSize"
@@ -168,16 +165,6 @@ cache_content_client_t recover_datacache_client;
 /* Used in BuildExportEntry() */
 #define EXPORT_MAX_CLIENTS   EXPORTS_NB_MAX_CLIENTS     /* number of clients */
 #define EXPORT_MAX_CLIENTLEN 256        /* client name len */
-
-static int local_lru_inode_entry_to_str(LRU_data_t data, char *str)
-{
-  return sprintf(str, "N/A ");
-}                               /* local_lru_inode_entry_to_str */
-
-static int local_lru_inode_clean_entry(LRU_entry_t * entry, void *adddata)
-{
-  return 0;
-}                               /* lru_clean_entry */
 
 /**
  * nfs_ParseConfLine: parse a line with a settable separator and  end of line
@@ -670,7 +657,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   unsigned int set_options = 0;
 
   int err_flag   = FALSE;
-  int err_policy = FALSE;
 
   /* allocates export entry */
   p_entry = (exportlist_t *) Mem_Alloc(sizeof(exportlist_t));
@@ -721,15 +707,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
     p_entry->options |= EXPORT_OPTION_NFSV4;
   p_entry->options |= EXPORT_OPTION_UDP | EXPORT_OPTION_TCP;
 
-  p_entry->filesystem_id.major = (fsal_u64_t) 666;
-  p_entry->filesystem_id.minor = (fsal_u64_t) 666;
+  p_entry->filesystem_id.major = 666;
+  p_entry->filesystem_id.minor = 666;
 
-  p_entry->MaxWrite = (fsal_size_t) 16384;
-  p_entry->MaxRead = (fsal_size_t) 16384;
-  p_entry->PrefWrite = (fsal_size_t) 16384;
-  p_entry->PrefRead = (fsal_size_t) 16384;
-  p_entry->PrefReaddir = (fsal_size_t) 16384;
-  p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_THROUGH ;
+  p_entry->MaxWrite = 16384;
+  p_entry->MaxRead = 16384;
+  p_entry->PrefWrite = 16384;
+  p_entry->PrefRead = 16384;
+  p_entry->PrefReaddir = 16384;
 
   init_glist(&p_entry->exp_state_list);
 #ifdef _USE_NLM
@@ -1864,47 +1849,6 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
           set_options |= FLAG_EXPORT_FS_TAG;
 
         }
-      else if( !STRCMP(var_name, CONF_EXPORT_CACHE_POLICY ))
-        {
-          /* check if it has not already been set */
-          if((set_options & FLAG_EXPORT_CACHE_POLICY) == FLAG_EXPORT_CACHE_POLICY)
-            {
-              DEFINED_TWICE_WARNING(CONF_EXPORT_CACHE_POLICY);
-              continue;
-            }
-          else if( !STRCMP( var_value, "WriteThrough" ) )
-           {
-              p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_THROUGH ; 
-              err_policy = FALSE  ;
-           } 
-          else if( !STRCMP( var_value, "WriteBack" ) )         
-           {
-              p_entry->cache_inode_policy = CACHE_INODE_POLICY_FULL_WRITE_BACK ; 
-              err_policy = FALSE  ;
-           } 
-          else if( !STRCMP( var_value, "AttrsOnlyWriteThrough" ) )
-           {
-              p_entry->cache_inode_policy = CACHE_INODE_POLICY_ATTRS_ONLY_WRITE_THROUGH ; 
-              err_policy = FALSE  ;
-           } 
-          else if( !STRCMP( var_value, "NoCache" ) )             
-           {
-              p_entry->cache_inode_policy = CACHE_INODE_POLICY_NO_CACHE ; 
-              err_policy = FALSE  ;
-           } 
-          else
-             err_policy = TRUE ;
-
-        
-          if( err_policy == TRUE ) 
-           {
-             err_flag = TRUE ;
-             
-             LogCrit(COMPONENT_CONFIG, "Invalid Cache_Inode_Policy value : %s", var_value ) ;
-           }
-
-          set_options |=  FLAG_EXPORT_CACHE_POLICY ;
-        }
       else if(!STRCMP(var_name, CONF_EXPORT_MAX_OFF_WRITE))
         {
           long long int offset;
@@ -2026,20 +1970,20 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
 #ifdef _USE_FSAL_UP
       else if(!STRCMP(var_name, CONF_EXPORT_FSAL_UP_TYPE))
-	{
+        {
           strncpy(p_entry->fsal_up_type,var_value,sizeof(var_value));
-	}
+        }
       else if(!STRCMP(var_name, CONF_EXPORT_FSAL_UP_TIMEOUT))
         {
-	  /* Right now we are expecting seconds ... we should support
+          /* Right now we are expecting seconds ... we should support
 	   * nseconds as well! */
           p_entry->fsal_up_timeout.seconds = atoi(var_value);
           if (p_entry->fsal_up_timeout.seconds < 0
-	      || p_entry->fsal_up_timeout.nseconds < 0)
-	    {
-	      p_entry->fsal_up_timeout.seconds = 0;
-	      p_entry->fsal_up_timeout.nseconds = 0;
-	    }
+              || p_entry->fsal_up_timeout.nseconds < 0)
+            {
+              p_entry->fsal_up_timeout.seconds = 0;
+              p_entry->fsal_up_timeout.nseconds = 0;
+            }
         }
       else if(!STRCMP(var_name, CONF_EXPORT_FSAL_UP_FILTERS))
         {
@@ -2598,9 +2542,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
 
   if (pexport != NULL)
     {
-      if (pexport->new_access_list_version)
-        pexport->access_type = ACCESSTYPE_RW;
-      else if(proc_makes_write && (pexport->access_type == ACCESSTYPE_RO))
+      if(proc_makes_write && (pexport->access_type == ACCESSTYPE_RO))
         return EXPORT_WRITE_ATTEMPT_WHEN_RO;
       else if(proc_makes_write && (pexport->access_type == ACCESSTYPE_MDONLY_RO))
         return EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO;
@@ -2630,8 +2572,10 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
         nfs_ip_stats_incr(ht_ip_stats, hostaddr, nfs_prog, mnt_prog,
                           ptr_req)) == IP_STATS_NOT_FOUND)
       {
-        if(nfs_ip_stats_add(ht_ip_stats, hostaddr, ip_stats_pool) == IP_STATS_SUCCESS)
-          rc = nfs_ip_stats_incr(ht_ip_stats, hostaddr, nfs_prog, mnt_prog, ptr_req);
+        if(nfs_ip_stats_add(ht_ip_stats, hostaddr, ip_stats_pool) ==
+           IP_STATS_SUCCESS)
+          rc = nfs_ip_stats_incr(ht_ip_stats, hostaddr, nfs_prog,
+                                 mnt_prog, ptr_req);
       }
 
 #ifdef _USE_TIRPC_IPV6
@@ -2860,12 +2804,11 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
  * Create the root entries for the cached entries.
  *
  * @param pexportlist [IN]    the export list to be parsed
- * @param ht          [INOUT] the hash table to be used to the cache inode
  *
  * @return TRUE is successfull, FALSE if something wrong occured.
  *
  */
-int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
+int nfs_export_create_root_entry(exportlist_t * pexportlist)
 {
       exportlist_t *pcurrent = NULL;
       cache_inode_status_t cache_status;
@@ -2882,11 +2825,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       fsal_op_context_t context;
 
       /* setting the 'small_client' structure */
-      small_client_param.lru_param.nb_entry_prealloc = 10;
-      small_client_param.lru_param.entry_to_str = local_lru_inode_entry_to_str;
-      small_client_param.lru_param.clean_entry = local_lru_inode_clean_entry;
       small_client_param.nb_prealloc_entry = 10;
-      small_client_param.nb_pre_parent = 10;
       small_client_param.nb_pre_state_v4 = 10;
       small_client_param.grace_period_link = 0;
       small_client_param.grace_period_attr = 0;
@@ -2913,20 +2852,6 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
       else
         LogInfo(COMPONENT_INIT,
                 "small cache inode client successfully initialized");
-
-      /* creating the datacache client for recovering data cache */
-      if(cache_content_client_init
-         (&recover_datacache_client,
-          nfs_param.cache_layers_param.cache_content_client_param,
-          "recovering"))
-        {
-          LogFatal(COMPONENT_INIT,
-                   "cache content client (for datacache recovery) could not be allocated");
-        }
-
-
-      /* Link together the small client and the recover_datacache_client */
-      small_client.pcontent_client = (void *)&recover_datacache_client;
 
       /* Get the context for FSAL super user */
       fsal_status = FSAL_InitClientContext(&context);
@@ -3006,11 +2931,18 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
 				   FSAL_DIGEST_SIZEOF,
 				   &fsdata.fh_desc);
 
+          /* cache_inode_make_root returns a cache_entry with
+             reference count of 2, where 1 is the sentinel value of
+             a cache entry in the hash table.  The export list in
+             this case owns the extra reference, but other users of
+             cache_inode_make_root MUST put the entry.  In the future
+             if functionality is added to dynamically add and remove
+             export entries, then the function to remove an export
+             entry MUST put the extra reference. */
+
           if((pentry = cache_inode_make_root(&fsdata,
-                                             pcurrent->cache_inode_policy,
-                                             ht,
                                              &small_client,
-                                             &context, 
+                                             &context,
                                              &cache_status)) == NULL)
             {
               LogCrit(COMPONENT_INIT,
@@ -3031,26 +2963,16 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht)
               LogInfo(COMPONENT_INIT, "A referral is set : %s",
                       pentry->object.dir.referral);
             }
-#ifdef _CRASH_RECOVERY_AT_STARTUP
-          /* Recover the datacache from a previous crah */
-          if(pcurrent->options & EXPORT_OPTION_USE_DATACACHE)
-            {
-              LogEvent(COMPONENT_INIT, "Recovering Data Cache for export id %u",
-                       pcurrent->id);
-              if(cache_content_crash_recover
-                 (pcurrent->id, &recover_datacache_client, &small_client, ht, &context,
-                  &cache_content_status) != CACHE_CONTENT_SUCCESS)
-                {
-                  LogWarn(COMPONENT_INIT,
-                          "Datacache for export id %u is not recoverable: error = %d",
-                          pcurrent->id, cache_content_status);
-                }
-            }
-#endif
         }
 
+  /* Note: As mentioned above, we are returning with an extra
+     reference to the root entry.  This reference is owned by the
+     export list.  If we ever have a function to remove objects from
+     the export list, it must return this extra reference. */
+
   return TRUE;
-}                               /* nfs_export_create_root_entry */
+
+} /* nfs_export_create_root_entry */
 
 /* cleans up the export content */
 int CleanUpExportContext(fsal_export_context_t * p_export_context)

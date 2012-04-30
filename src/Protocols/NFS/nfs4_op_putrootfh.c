@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -57,7 +57,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -136,8 +135,12 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op,
       res_PUTROOTFH4.status = error;
       return res_PUTROOTFH4.status;
     }
-  data->current_entry = NULL;   /* No cache inode entry for the directory within pseudo fs */
-  data->current_filetype = DIRECTORY;      /* Only directory in the pseudo fs */
+
+  if (data->current_entry) {
+      cache_inode_put(data->current_entry, data->pclient);
+  }
+  data->current_entry = NULL; /* No cache inode entry for the directory within pseudo fs */
+  data->current_filetype = DIRECTORY; /* Only directory in the pseudo fs */
 
   /* I copy the root FH to the currentFH and, if not already done, to the publicFH */
   /* For the moment, I choose to have rootFH = publicFH */

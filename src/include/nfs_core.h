@@ -48,7 +48,6 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "sal_data.h"
-#include "cache_content.h"
 #include "nfs_stat.h"
 #include "external_tools.h"
 
@@ -188,11 +187,6 @@
 #define XATTRD_NAME_LEN 9       /* MUST be equal to strlen( XATTRD_NAME ) */
 #define XATTR_BUFFERSIZE 4096
 
-/* Flags for how the stable flag should be interpretted */
-#define FSAL_UNSAFE_WRITE_TO_FS_BUFFER 0
-#define FSAL_SAFE_WRITE_TO_FS 1
-#define FSAL_UNSAFE_WRITE_TO_GANESHA_BUFFER 2
-
 typedef enum nfs_clientid_confirm_state__
 { CONFIRMED_CLIENT_ID = 1,
   UNCONFIRMED_CLIENT_ID = 2,
@@ -238,9 +232,7 @@ typedef struct nfs_cache_layer_parameter__
 {
   cache_inode_parameter_t cache_param;
   cache_inode_client_parameter_t cache_inode_client_param;
-  cache_content_client_parameter_t cache_content_client_param;
   cache_inode_gc_policy_t gcpol;
-  cache_content_gc_policy_t dcgcpol;
 } nfs_cache_layers_parameter_t;
 
 typedef enum protos
@@ -322,7 +314,6 @@ typedef struct nfs_fsal_up_param__
 {
   struct prealloc_pool event_pool;
   unsigned int nb_event_data_prealloc;
-  hash_table_t *ht; /* cache inode hashtable */
 } nfs_fsal_up_parameter_t;
 
 typedef char entry_name_array_item_t[FSAL_MAX_NAME_LEN];
@@ -487,8 +478,6 @@ typedef struct nfs_worker_data__
   struct prealloc_pool ip_stats_pool;
   struct prealloc_pool clientid_pool;
   cache_inode_client_t cache_inode_client;
-  cache_content_client_t cache_content_client;
-  hash_table_t *ht;
   hash_table_t *ht_ip_stats;
   pthread_mutex_t request_pool_mutex;
   nfs_tcb_t wcb; /* Worker control block */
@@ -532,7 +521,6 @@ typedef struct fridge_entry__
  * group together all of NFS-Ganesha's statistics
  */
 typedef struct ganesha_stats__ {
-    cache_inode_stat_t      global_cache_inode;
     nfs_worker_stat_t       global_worker_stat;
     hash_stat_t             cache_inode_hstat;
     hash_stat_t             uid_map;
@@ -613,22 +601,22 @@ pause_rc wait_for_workers_to_awaken();
 void DispatchWorkNFS(request_data_t *pnfsreq, unsigned int worker_index);
 void *worker_thread(void *IndexArg);
 process_status_t process_rpc_request(SVCXPRT *xprt);
-int stats_snmp(nfs_worker_data_t * workers_data_local);
+int stats_snmp(void);
 /*
  * Thread entry functions
  */
-void *rpc_dispatcher_thread(void *arg);
-void *admin_thread(void *arg);
-void *stats_thread(void *IndexArg);
-void *long_processing_thread(void *arg);
-void *stat_exporter_thread(void *IndexArg);
-void *file_content_gc_thread(void *IndexArg);
+void *rpc_dispatcher_thread(void *UnusedArg);
+void *admin_thread(void *UnusedArg);
+void *stats_thread(void *UnusedArg);
+void *long_processing_thread(void *UnusedArg);
+void *stat_exporter_thread(void *UnusedArg);
+void *file_content_gc_thread(void *UnusedArg);
 void *nfs_file_content_flush_thread(void *flush_data_arg);
-void *reaper_thread(void *arg);
+void *reaper_thread(void *UnusedArg);
 void *rpc_tcp_socket_manager_thread(void *Arg);
-void *sigmgr_thread( void * arg );
+void *sigmgr_thread( void * UnusedArg );
 void *fsal_up_thread(void *Arg);
-void *state_async_thread(void *argp);
+void *state_async_thread(void *UnusedArg);
 
 #ifdef _USE_UPCALL_SIMULATOR
 void * upcall_simulator_thread( void * UnusedArg ) ;
@@ -645,7 +633,7 @@ void nfs_operate_on_sigterm() ;
 void nfs_operate_on_sighup() ;
 
 void nfs_Init_svc(void);
-void nfs_Init_admin_data(hash_table_t *ht);
+void nfs_Init_admin_data(void);
 int nfs_Init_worker_data(nfs_worker_data_t * pdata);
 int nfs_Init_request_data(nfs_request_data_t * pdata);
 int nfs_Init_gc_counter(void);
@@ -672,7 +660,7 @@ int nfs_read_session_id_conf(config_file_t in_config,
                              nfs_session_id_parameter_t * pparam);
 #endif                          /* _USE_NFS4_1 */
 
-int nfs_export_create_root_entry(exportlist_t * pexportlist, hash_table_t * ht);
+int nfs_export_create_root_entry(exportlist_t * pexportlist);
 
 /* Add a list of clients to the client array of either an exports entry or
  * another service that has a client array (like snmp or statistics exporter) */
@@ -770,7 +758,7 @@ int client_id_value_both_reverse(hash_parameter_t * p_hparam,
                                  uint32_t * phashval, uint64_t * prbtval ) ;
 
 uint64_t idmapper_rbt_hash_func(hash_parameter_t * p_hparam,
-                                     hash_buffer_t * buffclef);
+                                hash_buffer_t * buffclef);
 uint64_t namemapper_rbt_hash_func(hash_parameter_t * p_hparam,
                                   hash_buffer_t * buffclef);
 

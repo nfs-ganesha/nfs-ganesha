@@ -192,7 +192,7 @@ fsal_status_t FSAL_load_FS_common_parameter_from_conf(config_file_t in_config,
 fsal_status_t FSAL_load_FS_specific_parameter_from_conf(config_file_t in_config,
                                                         fsal_parameter_t * out_parameter);
 
-/** 
+/**
  *  FSAL_Init:
  *  Initializes Filesystem abstraction layer.
  */
@@ -275,7 +275,8 @@ fsal_status_t FSAL_name2str(fsal_name_t * p_name,       /* IN */
                             fsal_mdsize_t out_str_maxlen        /* IN */
     );
 
-int FSAL_namecmp(fsal_name_t * p_name1, fsal_name_t * p_name2);
+int FSAL_namecmp(const fsal_name_t *p_name1,
+                 const fsal_name_t *p_name2);
 
 fsal_status_t FSAL_namecpy(fsal_name_t * p_tgt_name, fsal_name_t * p_src_name);
 
@@ -351,7 +352,7 @@ int FSAL_handlecmp(fsal_handle_t * handle1, fsal_handle_t * handle2,
  * in order to dispatch entries into the hash table array.
  *
  * \param p_handle	The handle to be hashed
- * \param cookie 	Makes it possible to have different hash value for the
+ * \param cookie        Makes it possible to have different hash value for the
  *			same handle, when cookie changes.
  * \param alphabet_len	Parameter for polynomial hashing algorithm
  * \param index_size	The range of hash value will be [0..index_size-1]
@@ -363,13 +364,13 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
                                       unsigned int cookie,
                                       unsigned int alphabet_len, unsigned int index_size);
 
-/*
- * FSAL_Handle_to_RBTIndex 
+/**
+ * FSAL_Handle_to_RBTIndex
  * This function is used for generating a RBT node ID 
  * in order to identify entries into the RBT.
  *
  * \param p_handle	The handle to be hashed
- * \param cookie 	Makes it possible to have different hash value for the
+ * \param cookie        Makes it possible to have different hash value for the
  *			same handle, when cookie changes.
  *
  * \return The hash value
@@ -377,13 +378,13 @@ unsigned int FSAL_Handle_to_HashIndex(fsal_handle_t * p_handle,
 
 unsigned int FSAL_Handle_to_RBTIndex(fsal_handle_t * p_handle, unsigned int cookie);
 
-/*
- * FSAL_Handle_to_Hash_Both 
+/**
+ * FSAL_Handle_to_Hash_Both
  * This function is used for generating both a RBT node ID and a hash index in one pass
  * in order to identify entries into the RBT.
  *
  * \param p_handle	The handle to be hashed
- * \param cookie 	Makes it possible to have different hash value for the
+ * \param cookie        Makes it possible to have different hash value for the
  *			same handle, when cookie changes.
  * \param alphabet_len	Parameter for polynomial hashing algorithm
  * \param index_size	The range of hash value will be [0..index_size-1]
@@ -952,7 +953,7 @@ fsal_status_t FSAL_set_quota(fsal_path_t * pfsal_path,  /* IN */
                              fsal_quota_t * pquot,      /* IN */
                              fsal_quota_t * presquot);  /* OUT */
 
-fsal_status_t FSAL_check_quota( char * path,  /* IN */
+fsal_status_t FSAL_check_quota( char *path,  /* IN */
                                 fsal_quota_type_t  quota_type,
                                 fsal_uid_t fsal_uid);      /* IN */
 

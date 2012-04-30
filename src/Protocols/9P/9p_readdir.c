@@ -148,10 +148,11 @@ int _9p_readdir( _9p_request_data_t * preq9p,
    {
       /* compute the parent entry */
       if( ( pentry_dot_dot = cache_inode_lookupp( pfid->pentry,
-                                                  pwkrdata->ht,
                                                   &pwkrdata->cache_inode_client,
-                                                  &pfid->fsal_op_context, 
-                                                  &cache_status) ) == NULL )
+                                                  &pfid->fsal_op_context,
+                                                  &cache_status,
+                                                  CACHE_INODE_FLAG_NONE))
+          == NULL )
         {
            err = _9p_tools_errno( cache_status ) ; ;
            rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
@@ -192,7 +193,6 @@ int _9p_readdir( _9p_request_data_t * preq9p,
                           (uint64_t *)&end_cookie,
                           &eod_met,
                           &dirent_array[delta],
-                          pwkrdata->ht,
                           &unlock,
                           &pwkrdata->cache_inode_client,
                           &pfid->fsal_op_context, 
@@ -222,49 +222,16 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   /* fills in the dentry in 9P marshalling */
   for( i = 0 ; i < num_entries + delta ; i++ )
    {
-     recsize = 0 ; 
+     recsize = 0 ;
 
      /* Build qid */
-     switch( dirent_array[i]->pentry->internal_md.type )
-      {
-        case REGULAR_FILE:
-          qid_path = (u64 *)&dirent_array[i]->pentry->object.file.attributes.fileid ;
-          qid_type = &qid_type_file ;
-	  break ;
-
-        case CHARACTER_FILE:
-        case BLOCK_FILE:
-        case SOCKET_FILE:
-        case FIFO_FILE:
-          qid_path = (u64 *)&dirent_array[i]->pentry->object.special_obj.attributes.fileid ;
-          qid_type = &qid_type_file ;
-	  break ;
-
-        case SYMBOLIC_LINK:
-          qid_path = (u64 *)&dirent_array[i]->pentry->object.symlink->attributes.fileid ;
-          qid_type = &qid_type_symlink;
-	  break ;
-
-        case DIRECTORY:
-        case FS_JUNCTION:
-          qid_path = (u64 *)&dirent_array[i]->pentry->object.dir.attributes.fileid ;
-          qid_type = &qid_type_dir ;
-	  break ;
-
-        case UNASSIGNED:
-        case RECYCLED:
-        default:
-          LogMajor( COMPONENT_9P, "implementation error, you should not see this message !!!!!!" ) ;
-          err = EINVAL ;
-          rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
-          return rc ;
-          break ;
-      }
+     qid_path = (u64 *)&dirent_array[i]->pentry->attributes.fileid ;
+     qid_type = &qid_type_file ;
 
      /* Get dirent name information */
      name_str = dirent_array[i]->name.name ;
      name_len = dirent_array[i]->name.len ;
- 
+
      /* Add 13 bytes in recsize for qid + 8 bytes for offset + 1 for type + 2 for strlen = 24 bytes*/
      recsize = 24 + name_len  ;
 

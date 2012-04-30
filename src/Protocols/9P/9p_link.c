@@ -72,7 +72,7 @@ int _9p_link( _9p_request_data_t * preq9p,
   cache_inode_status_t  cache_status ;
   fsal_name_t           link_name ;
 
-  int rc = 0 ; 
+  int rc = 0 ;
   int err = 0 ;
 
   if ( !preq9p || !pworker_data || !plenout || !preply )
@@ -109,13 +109,12 @@ int _9p_link( _9p_request_data_t * preq9p,
 
    if( cache_inode_link( ptargetfid->pentry,
                          pdfid->pentry,
-			 &link_name,
+                         &link_name,
                          ptargetfid->pexport->cache_inode_policy,
-			 &fsalattr,
-			 pwkrdata->ht,
-                         &pwkrdata->cache_inode_client, 
-                         &pdfid->fsal_op_context, 
-     			 &cache_status) != CACHE_INODE_SUCCESS )
+                         &fsalattr,
+                         &pwkrdata->cache_inode_client,
+                         &pdfid->fsal_op_context,
+                         &cache_status) != CACHE_INODE_SUCCESS )
     {
       err = _9p_tools_errno( cache_status ) ; ;
       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;

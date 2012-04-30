@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -54,7 +54,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -70,7 +69,6 @@
  * @param pexport [IN]    pointer to nfs export list 
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
- * @param ht      [INOUT] cache inode hash table
  * @param preq    [IN]    pointer to SVC request related to this call 
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
@@ -82,7 +80,7 @@ int nfs3_Fsinfo(nfs_arg_t * parg,
                 exportlist_t * pexport,
                 fsal_op_context_t * pcontext,
                 cache_inode_client_t * pclient,
-                hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
+                struct svc_req *preq, nfs_res_t * pres)
 {
   static char __attribute__ ((__unused__)) funcName[] = "nfs3_Fsinfo";
 
@@ -90,6 +88,7 @@ int nfs3_Fsinfo(nfs_arg_t * parg,
   cache_entry_t *pentry = NULL;
   cache_inode_fsal_data_t fsal_data;
   fsal_attrib_list_t attr;
+  int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
@@ -104,25 +103,27 @@ int nfs3_Fsinfo(nfs_arg_t * parg,
 
   /* Convert file handle into a fsal_handle */
   if(nfs3_FhandleToFSAL(&(parg->arg_fsinfo3.fsroot), &fsal_data.fh_desc, pcontext) == 0)
-    return NFS_REQ_DROP;
+    {
+      rc = NFS_REQ_DROP;
+      goto out;
+    }
 
   /* Get the entry in the cache_inode */
-  if((pentry = cache_inode_get( &fsal_data,
-                                pexport->cache_inode_policy,
-                                &attr, 
-                                ht, 
-                                pclient, 
-                                pcontext, 
-                                &cache_status)) == NULL)
+  if((pentry = cache_inode_get(&fsal_data,
+                               &attr,
+                               pclient,
+                               pcontext,
+                               &cache_status)) == NULL)
     {
       /* Stale NFS FH ? */
       pres->res_fsinfo3.status = NFS3ERR_STALE;
-      return NFS_REQ_OK;
+      rc = NFS_REQ_OK;
+      goto out;
     }
 
   /*
    * New fields were added to nfs_config_t to handle this value. We use
-   * them 
+   * them
    */
 
 #define FSINFO_FIELD pres->res_fsinfo3.FSINFO3res_u.resok
@@ -161,22 +162,31 @@ int nfs3_Fsinfo(nfs_arg_t * parg,
 
   /*
    * Allow all kinds of operations to be performed on the server
-   * through NFS v3 
+   * through NFS v3
    */
-  FSINFO_FIELD.properties = FSF3_LINK | FSF3_SYMLINK | FSF3_HOMOGENEOUS | FSF3_CANSETTIME;
+  FSINFO_FIELD.properties = FSF3_LINK | FSF3_SYMLINK |
+       FSF3_HOMOGENEOUS | FSF3_CANSETTIME;
 
   nfs_SetPostOpAttr(pexport,
-                    &attr, &(pres->res_fsinfo3.FSINFO3res_u.resok.obj_attributes));
+                    &attr,
+                    &(pres->res_fsinfo3.FSINFO3res_u.resok.obj_attributes));
   pres->res_fsinfo3.status = NFS3_OK;
 
-  return NFS_REQ_OK;
+ out:
+
+  if (pentry)
+    {
+      cache_inode_put(pentry, pclient);
+    }
+
+  return rc;
 }                               /* nfs3_Fsinfo */
 
 /**
  * nfs3_Fsinfo_Free: Frees the result structure allocated for nfs3_Fsinfo.
- * 
+ *
  * Frees the result structure allocated for nfs3_Fsinfo.
- * 
+ *
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */

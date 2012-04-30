@@ -119,18 +119,11 @@ cache_content_status_t cache_content_create_name(char *path,
   u_int64_t fileid4;            /* Don't want to include nfs_prot.h at this level */
   fsal_handle_t *pfsal_handle = NULL;
   struct fsal_handle_desc fh_desc;
-  cache_inode_status_t cache_status;
   char entrydir[MAXPATHLEN];
   int i, nb_char;
   short hash_val;
 
-  if((pfsal_handle = cache_inode_get_fsal_handle(pentry_inode, &cache_status)) == NULL)
-    {
-      /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_NEW_ENTRY] += 1;
-
-      return CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
-    }
+  pfsal_handle = &pentry_inode->handle;
 
   fh_desc.start = (caddr_t)&fileid4;
   fh_desc.len = sizeof(fileid4);
@@ -400,33 +393,6 @@ cache_inode_status_t cache_content_error_convert(cache_content_status_t status)
 
 /**
  *
- * cache_content_fsal_seek_convert: converts a fsal_seek_t to unix offet. 
- *
- * Converts a fsal_seek_t to unix offet. Non absolulte fsal_seek_t will produce an error. 
- *
- * @param seek [IN] FSAL Seek descriptor.
- * @param pstatus [OUT] pointer to the status. 
- *
- * @return the converted value.
- * 
- */
-off_t cache_content_fsal_seek_convert(fsal_seek_t seek, cache_content_status_t * pstatus)
-{
-  off_t offset = 0;
-
-  if(seek.whence != FSAL_SEEK_SET)
-    *pstatus = CACHE_CONTENT_INVALID_ARGUMENT;
-  else
-    {
-      *pstatus = CACHE_CONTENT_SUCCESS;
-      offset = (off_t) seek.offset;
-    }
-
-  return offset;
-}                               /* cache_content_fsal_seek_convert */
-
-/**
- *
  * cache_content_fsal_size_convert: converts a fsal_size_t to unix size. 
  *
  * Converts a fsal_seek_t to unix size.
@@ -494,59 +460,6 @@ cache_content_status_t cache_content_prepare_directories(exportlist_t * pexportl
   /* If this point is reached, everything went ok */
   return CACHE_CONTENT_SUCCESS;
 }                               /* cache_content_prepare_directories */
-
-/**
- *
- * cache_content_valid: validates an entry to update its garbagge status.
- *
- * Validates an error to update its garbagge status.
- * Entry is supposed to be locked when this function is called !!
- *
- * @param pentry [INOUT] entry to be validated.
- * @param op [IN] can be set to CACHE_INODE_OP_GET or CACHE_INODE_OP_SET to show the type of operation done.
- * @param pclient [INOUT] ressource allocated by the client for the nfs management.
- *
- * @return CACHE_INODE_SUCCESS if successful \n
- * @return CACHE_INODE_LRU_ERROR if an errorr occured in LRU management.
- *
- */
-cache_content_status_t cache_content_valid(cache_content_entry_t * pentry,
-                                           cache_content_op_t op,
-                                           cache_content_client_t * pclient)
-{
-  /* /!\ NOTE THIS CAREFULLY: entry is supposed to be locked when this function is called !! */
-
-#ifndef _NO_BUDDY_SYSTEM
-  buddy_stats_t __attribute__ ((__unused__)) bstats;
-#endif
-
-  if(pentry == NULL)
-    return CACHE_CONTENT_INVALID_ARGUMENT;
-
-  /* Update internal md */
-  pentry->internal_md.valid_state = VALID;
-
-  switch (op)
-    {
-    case CACHE_CONTENT_OP_GET:
-      pentry->internal_md.read_time = time(NULL);
-      break;
-
-    case CACHE_CONTENT_OP_SET:
-      pentry->internal_md.mod_time = time(NULL);
-      pentry->internal_md.refresh_time = pentry->internal_md.mod_time;
-      pentry->local_fs_entry.sync_state = FLUSH_NEEDED;
-      break;
-
-    case CACHE_CONTENT_OP_FLUSH:
-      pentry->internal_md.mod_time = time(NULL);
-      pentry->internal_md.refresh_time = pentry->internal_md.mod_time;
-      pentry->local_fs_entry.sync_state = SYNC_OK;
-      break;
-    }
-
-  return CACHE_CONTENT_SUCCESS;
-}                               /* cache_content_valid */
 
 /**
  *

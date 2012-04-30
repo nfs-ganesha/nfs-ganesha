@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -57,7 +57,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -66,7 +65,7 @@
 
 /**
  * nfs4_op_lookup: looks up into theFSAL.
- * 
+ *
  * looks up into the FSAL. If a junction is crossed, does what is necessary.
  *
  * @param op    [IN]    pointer to nfs4_op arguments
@@ -74,7 +73,7 @@
  * @param resp  [IN]    Pointer to nfs4_op results
  *
  * @return NFS4_OK if successfull, other values show an error.  
- * 
+ *
  */
 #define arg_LOOKUP4 op->nfs_argop4_u.oplookup
 #define res_LOOKUP4 resp->nfs_resop4_u.oplookup
@@ -180,10 +179,10 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   dir_pentry = data->current_entry;
 
   /* Sanity check: dir_pentry should be ACTUALLY a directory */
-  if(dir_pentry->internal_md.type != DIRECTORY)
+  if(dir_pentry->type != DIRECTORY)
     {
       /* This is not a directory */
-      if(dir_pentry->internal_md.type == SYMBOLIC_LINK)
+      if(dir_pentry->type == SYMBOLIC_LINK)
         res_LOOKUP4.status = NFS4ERR_SYMLINK;
       else
         res_LOOKUP4.status = NFS4ERR_NOTDIR;
@@ -195,25 +194,18 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* BUGAZOMEU: Faire la gestion des cross junction traverse */
   if((file_pentry = cache_inode_lookup(dir_pentry,
                                        &name,
-                                       data->pexport->cache_inode_policy,
                                        &attrlookup,
-                                       data->ht,
                                        data->pclient,
                                        data->pcontext, &cache_status)) != NULL)
     {
       /* Extract the fsal attributes from the cache inode pentry */
-      pfsal_handle = cache_inode_get_fsal_handle(file_pentry, &cache_status);
-
-      if(cache_status != CACHE_INODE_SUCCESS)
-        {
-          res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
-          return res_LOOKUP4.status;
-        }
+      pfsal_handle = &file_pentry->handle;
 
       /* Convert it to a file handle */
       if(!nfs4_FSALToFhandle(&data->currentFH, pfsal_handle, data))
         {
           res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+          cache_inode_put(file_pentry, data->pclient);
           return res_LOOKUP4.status;
         }
 
@@ -236,17 +228,24 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
           LogFullDebug(COMPONENT_NFS_V4,
                        "----> FSAL handle parent and children in nfs4_op_lookup");
           print_buff(COMPONENT_NFS_V4,
-                     (char *)cache_inode_get_fsal_handle(file_pentry, &cache_status),
+                     (char *)&file_pentry->handle,
                      sizeof(fsal_handle_t));
           print_buff(COMPONENT_NFS_V4,
-                     (char *)cache_inode_get_fsal_handle(dir_pentry, &cache_status),
+                     (char *)&dir_pentry->handle,
                      sizeof(fsal_handle_t));
         }
       LogHandleNFS4("NFS4 LOOKUP CURRENT FH: ", &data->currentFH);
 
+      /* Release dir_pentry, as it is not reachable from anywhere in
+         compound after this function returns.  Count on later
+         operations or nfs4_Compound to clean up current_entry. */
+
+      if (dir_pentry)
+        cache_inode_put(dir_pentry, data->pclient);
+
       /* Keep the pointer within the compound data */
       data->current_entry = file_pentry;
-      data->current_filetype = file_pentry->internal_md.type;
+      data->current_filetype = file_pentry->type;
 
       /* Return successfully */
       res_LOOKUP4.status = NFS4_OK;
@@ -257,12 +256,13 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
         res_LOOKUP4.status = nfs4_fh_to_xattrfh(&(data->currentFH), &(data->currentFH));
 #endif
 
-      if((data->current_entry->internal_md.type == DIRECTORY) &&
+      if((data->current_entry->type == DIRECTORY) &&
          (data->current_entry->object.dir.referral != NULL))
         {
           if(!nfs4_Set_Fh_Referral(&(data->currentFH)))
             {
               res_LOOKUP4.status = NFS4ERR_SERVERFAULT;
+              cache_inode_put(file_pentry, data->pclient);
               return res_LOOKUP4.status;
             }
         }

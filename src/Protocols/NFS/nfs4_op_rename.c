@@ -78,10 +78,10 @@
 
 int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  cache_entry_t *dst_entry;
-  cache_entry_t *src_entry;
-  cache_entry_t *tst_entry_dst;
-  cache_entry_t *tst_entry_src;
+  cache_entry_t *dst_entry = NULL;
+  cache_entry_t *src_entry = NULL;
+  cache_entry_t *tst_entry_dst = NULL;
+  cache_entry_t *tst_entry_src = NULL;
 
   fsal_attrib_list_t attr_dst;
   fsal_attrib_list_t attr_src;
@@ -92,8 +92,8 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
   fsal_status_t fsal_status;
 
-  fsal_handle_t *handlenew;
-  fsal_handle_t *handleold;
+  fsal_handle_t *handlenew = NULL;
+  fsal_handle_t *handleold = NULL;
 
   fsal_name_t oldname;
   fsal_name_t newname;
@@ -269,7 +269,6 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* For the change_info4, get the 'change' attributes for both directories */
   if((cache_status = cache_inode_getattr(src_entry,
                                          &attr_src,
-                                         data->ht,
                                          data->pclient,
                                          data->pcontext,
                                          &cache_status)) != CACHE_INODE_SUCCESS)
@@ -287,62 +286,61 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_RENAME4.status;
     }
 #endif
-  /* Lookup oldfile to see if it exists */
+  /* Lookup oldfile to see if it exists (refcount +1) */
   if((tst_entry_src = cache_inode_lookup(src_entry,
                                          &oldname,
-                                         data->pexport->cache_inode_policy,
                                          &attr_tst_src,
-                                         data->ht,
                                          data->pclient,
-                                         data->pcontext, &cache_status)) == NULL)
+                                         data->pcontext,
+                                         &cache_status)) == NULL)
     {
       res_RENAME4.status = nfs4_Errno(cache_status);
-      return res_RENAME4.status;
+      goto release;
     }
 
-  /* Lookup file with new name to see if it already exists,
+  /* Lookup file with new name to see if it already exists (refcount +1),
    * I expect to get NO_ERROR or ENOENT, anything else means an error */
   tst_entry_dst = cache_inode_lookup(dst_entry,
                                      &newname,
-                                     data->pexport->cache_inode_policy,
                                      &attr_tst_dst,
-                                     data->ht,
-                                     data->pclient, data->pcontext, &cache_status);
-  if((cache_status != CACHE_INODE_SUCCESS) && (cache_status != CACHE_INODE_NOT_FOUND))
+                                     data->pclient,
+                                     data->pcontext,
+                                     &cache_status);
+  if((cache_status != CACHE_INODE_SUCCESS) &&
+     (cache_status != CACHE_INODE_NOT_FOUND))
     {
-      /* Unexpected status at this step, exit with an error */
-      res_RENAME4.status = nfs4_Errno(cache_status);
-      return res_RENAME4.status;
+        /* Unexpected status at this step, exit with an error */
+        res_RENAME4.status = nfs4_Errno(cache_status);
+        goto release;
     }
 
   if(cache_status == CACHE_INODE_NOT_FOUND)
     tst_entry_dst = NULL;       /* Just to make sure */
 
   /* Renaming a file to one of its own hardlink is allowed, return NFS4_OK */
-  if(tst_entry_src == tst_entry_dst)
-    {
+  if(tst_entry_src == tst_entry_dst) {
       res_RENAME4.status = NFS4_OK;
-      return res_RENAME4.status;
+      goto release;
     }
 
   /* Renaming dir into existing file should return NFS4ERR_EXIST */
-  if ((tst_entry_src->internal_md.type == DIRECTORY) &&
+  if ((tst_entry_src->type == DIRECTORY) &&
       ((tst_entry_dst != NULL) &&
-       (tst_entry_dst-> internal_md.type == REGULAR_FILE)))
+       (tst_entry_dst->type == REGULAR_FILE)))
     {
       res_RENAME4.status = NFS4ERR_EXIST;
-      return res_RENAME4.status;
+      goto release;
     }
 
   /* Renaming file into existing dir should return NFS4ERR_EXIST */
-  if(tst_entry_src->internal_md.type == REGULAR_FILE)
+  if(tst_entry_src->type == REGULAR_FILE)
     {
       if(tst_entry_dst != NULL)
         {
-	  if(tst_entry_dst->internal_md.type == DIRECTORY)
+          if(tst_entry_dst->type == DIRECTORY)
             {
               res_RENAME4.status = NFS4ERR_EXIST;
-              return res_RENAME4.status;
+              goto release;
             }
         }
     }
@@ -351,67 +349,49 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
    * Renaming file into existing, nonempty dir should return NFS4ERR_EXIST */
   if(tst_entry_dst != NULL)
     {
-	if((tst_entry_dst->internal_md.type == DIRECTORY)
-	   && ((tst_entry_src->internal_md.type == DIRECTORY)
-                || (tst_entry_src->internal_md.type == REGULAR_FILE)))
+      if((tst_entry_dst->type == DIRECTORY)
+         && ((tst_entry_src->type == DIRECTORY)
+             || (tst_entry_src->type == REGULAR_FILE)))
         {
           if(cache_inode_is_dir_empty_WithLock(tst_entry_dst) ==
-	     CACHE_INODE_DIR_NOT_EMPTY)
+             CACHE_INODE_DIR_NOT_EMPTY)
             {
               res_RENAME4.status = NFS4ERR_EXIST;
-              return res_RENAME4.status;
+              goto release;
             }
         }
     }
 
-  /* Client cache coherency information */
-  memset(&(res_RENAME4.RENAME4res_u.resok4.source_cinfo.before), 0, sizeof(changeid4));
-  memset(&(res_RENAME4.RENAME4res_u.resok4.source_cinfo.after), 0, sizeof(changeid4));
-
-  res_RENAME4.RENAME4res_u.resok4.source_cinfo.before =
-      (changeid4) src_entry->internal_md.mod_time;
-  res_RENAME4.RENAME4res_u.resok4.target_cinfo.before =
-      (changeid4) dst_entry->internal_md.mod_time;
+  res_RENAME4.RENAME4res_u.resok4.source_cinfo.before
+       = cache_inode_get_changeid4(src_entry);
+  res_RENAME4.RENAME4res_u.resok4.target_cinfo.before
+       = cache_inode_get_changeid4(dst_entry);
 
   if(cache_status == CACHE_INODE_SUCCESS)
     {
-      /* New entry already exists, its attributes are in attr_tst_*, check for old entry to see if types are compatible */
-      handlenew = cache_inode_get_fsal_handle(tst_entry_dst, &cache_status);
-      if(cache_status != CACHE_INODE_SUCCESS)
-        {
-          /* Unexpected status at this step, exit with an error */
-          res_RENAME4.status = nfs4_Errno(cache_status);
-          return res_RENAME4.status;
-        }
-
-      handleold = cache_inode_get_fsal_handle(tst_entry_src, &cache_status);
-      if(cache_status != CACHE_INODE_SUCCESS)
-        {
-          /* Unexpected status at this step, exit with an error */
-          res_RENAME4.status = nfs4_Errno(cache_status);
-          return res_RENAME4.status;
-        }
+      /* New entry already exists, its attributes are in attr_tst_*,
+         check for old entry to see if types are compatible */
+      handlenew = &tst_entry_dst->handle;
+      handleold = &tst_entry_src->handle;
 
       if(!FSAL_handlecmp(handlenew, handleold, &fsal_status))
         {
           /* For the change_info4, get the 'change' attributes for both directories */
-          res_RENAME4.RENAME4res_u.resok4.source_cinfo.before =
-              (changeid4) src_entry->internal_md.mod_time;
-          res_RENAME4.RENAME4res_u.resok4.target_cinfo.before =
-              (changeid4) dst_entry->internal_md.mod_time;
+          res_RENAME4.RENAME4res_u.resok4.source_cinfo.before
+            = cache_inode_get_changeid4(src_entry);
+          res_RENAME4.RENAME4res_u.resok4.target_cinfo.before
+            = cache_inode_get_changeid4(dst_entry);
           res_RENAME4.RENAME4res_u.resok4.target_cinfo.atomic = FALSE;
           res_RENAME4.RENAME4res_u.resok4.source_cinfo.atomic = FALSE;
 
           res_RENAME4.status = NFS4_OK;
-          return NFS4_OK;
+          goto release;
         }
       else
         {
           /* Destination exists and is something different from source */
-          if(( tst_entry_src->internal_md.type == REGULAR_FILE &&
-              tst_entry_dst->internal_md.type == REGULAR_FILE ) ||
-              ( tst_entry_src->internal_md.type == DIRECTORY &&
-              tst_entry_dst->internal_md.type == DIRECTORY ))
+          if( tst_entry_src->type == REGULAR_FILE &&
+              tst_entry_dst->type == REGULAR_FILE )
             {
               if(cache_inode_rename(src_entry,
                                     &oldname,
@@ -419,19 +399,18 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                                     &newname,
                                     &attr_src,
                                     &attr_dst,
-                                    data->ht,
                                     data->pclient,
                                     data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
                {
 
                  res_RENAME4.status = nfs4_Errno(cache_status);
-                 return res_RENAME4.status;
+                 goto release;
                }
             }
           else
             { 
               res_RENAME4.status = NFS4ERR_EXIST;
-              return NFS4ERR_EXIST;
+              goto release;
             }
         }
     }
@@ -444,26 +423,32 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                             &newname,
                             &attr_src,
                             &attr_dst,
-                            data->ht,
                             data->pclient,
                             data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
         {
           res_RENAME4.status = nfs4_Errno(cache_status);
-          return res_RENAME4.status;
+          goto release;
         }
     }
 
   /* If you reach this point, then everything was alright */
   /* For the change_info4, get the 'change' attributes for both directories */
-  res_RENAME4.RENAME4res_u.resok4.source_cinfo.before =
-      (changeid4) src_entry->internal_md.mod_time;
-  res_RENAME4.RENAME4res_u.resok4.target_cinfo.before =
-      (changeid4) dst_entry->internal_md.mod_time;
-  res_RENAME4.RENAME4res_u.resok4.target_cinfo.atomic = TRUE;
-  res_RENAME4.RENAME4res_u.resok4.source_cinfo.atomic = TRUE;
+
+  res_RENAME4.RENAME4res_u.resok4.source_cinfo.after =
+       cache_inode_get_changeid4(src_entry);
+  res_RENAME4.RENAME4res_u.resok4.target_cinfo.after =
+       cache_inode_get_changeid4(dst_entry);
+  res_RENAME4.RENAME4res_u.resok4.target_cinfo.atomic = FALSE;
+  res_RENAME4.RENAME4res_u.resok4.source_cinfo.atomic = FALSE;
   res_RENAME4.status = nfs4_Errno(cache_status);
 
-  return res_RENAME4.status;
+release:
+  if (tst_entry_src)
+      (void) cache_inode_put(tst_entry_src, data->pclient);
+  if (tst_entry_dst)
+      (void) cache_inode_put(tst_entry_dst, data->pclient);
+
+  return (res_RENAME4.status);
 }                               /* nfs4_op_rename */
 
 /**

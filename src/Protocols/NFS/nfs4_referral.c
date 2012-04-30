@@ -58,7 +58,6 @@
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 
 int nfs4_Set_Fh_Referral(nfs_fh4 * pfh)
 {

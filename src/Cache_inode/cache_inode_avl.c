@@ -91,8 +91,11 @@ avl_dirent_set_deleted(cache_entry_t *entry, cache_inode_dir_entry_t *v)
     assert(! node);
 
     v->flags |= DIR_ENTRY_FLAG_DELETED;
+    v->name.len = 0;
+    v->entry.ptr = (void*)0xdeaddeaddeaddead;
+    v->entry.gen = 0;
 
-    (void) avltree_insert(&v->node_hk, &entry->object.dir.avl.c);
+    avltree_insert(&v->node_hk, &entry->object.dir.avl.c);
 }
 
 void
@@ -138,10 +141,10 @@ cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
         v_exist = avltree_container_of(node, cache_inode_dir_entry_t,
                                        node_hk);
         FSAL_namecpy(&v_exist->name, &v->name);
-        v_exist->pentry = v->pentry;
+        v_exist->entry = v->entry;
         avl_dirent_clear_deleted(entry, v_exist);
         v = v_exist;
-        code = 1; /* tell client to dispose v */    
+        code = 1; /* tell client to dispose v */
     } else {
         /* try to insert active */
         node = avltree_insert(&v->node_hk, t);
@@ -204,14 +207,14 @@ int cache_inode_avl_qp_insert(
         v->hk.k = (v->hk.k + (j * 2));
 
         /* reject values 0, 1 and 2 */
-        if (v->hk.k < 3)
+        if (v->hk.k < MIN_COOKIE_VAL)
             continue;
 
         code = cache_inode_avl_insert_impl(entry, v, j, 0);
         if (code >= 0)
             return (code);
     }
-    
+
     LogCrit(COMPONENT_CACHE_INODE,
             "cache_inode_avl_qp_insert_s: could not insert at j=%d (%s)",
             j, v->name.name);
@@ -233,8 +236,7 @@ int cache_inode_avl_qp_insert(
 }
 
 cache_inode_dir_entry_t *
-cache_inode_avl_lookup_k(
-    cache_entry_t *entry, uint64_t k, uint32_t flags)
+cache_inode_avl_lookup_k(cache_entry_t *entry, uint64_t k, uint32_t flags)
 {
     struct avltree *t = &entry->object.dir.avl.t;
     struct avltree *c = &entry->object.dir.avl.c;
@@ -296,6 +298,7 @@ cache_inode_avl_qp_lookup_s(
             /* ensure that node is related to v */
             v2 = avltree_container_of(node, cache_inode_dir_entry_t, node_hk);
             if (! FSAL_namecmp(&v->name, &v2->name)) {
+                assert(!(v2->flags & DIR_ENTRY_FLAG_DELETED));
                 return (v2);
             }
         }

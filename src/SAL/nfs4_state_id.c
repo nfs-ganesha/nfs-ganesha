@@ -404,7 +404,7 @@ int nfs4_Check_Stateid(stateid4        * pstate,
   if(pentry == NULL)
     return NFS4ERR_SERVERFAULT;
 
-  if(pentry->internal_md.type != REGULAR_FILE)
+  if(pentry->type != REGULAR_FILE)
     return NFS4ERR_SERVERFAULT;
 
   if(isDebug(COMPONENT_STATE))
@@ -475,9 +475,6 @@ int nfs4_Check_Stateid(stateid4        * pstate,
   /* Try to get the related state */
   if(!nfs4_State_Get_Pointer(pstate->other, &pstate2))
     {
-      /* stat */
-      data->pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET_STATE] += 1;
-
       /* State not found : return NFS4ERR_BAD_STATEID, RFC3530 page 129 */
       LogDebug(COMPONENT_STATE,
                "Check %s stateid could not find state %s", tag, str);
@@ -627,10 +624,10 @@ int nfs4_check_special_stateid(cache_entry_t *pentry,
     }
 
   /* Acquire lock to enter critical section on this entry */
-  P_r(&pentry->lock);
+  pthread_rwlock_rdlock(&pentry->state_lock);
 
   /* Iterate through file's state to look for conflicts */
-  glist_for_each(glist, &pentry->object.file.state_list)
+  glist_for_each(glist, &pentry->state_list)
     {
       pstate_iterate = glist_entry(glist, state_t, state_list);
 
@@ -698,6 +695,6 @@ int nfs4_check_special_stateid(cache_entry_t *pentry,
   // TODO FSF: need to check against existing locks
 
  ssid_out:  // Use this exit point if the lock was already acquired.
-  V_r(&pentry->lock);
+  pthread_rwlock_unlock(&pentry->state_lock);
   return rc;
 }

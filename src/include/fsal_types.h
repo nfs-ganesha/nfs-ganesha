@@ -157,13 +157,13 @@ typedef unsigned int fsal_uint_t;         /**< 32 bit unsigned integer.     */
 typedef unsigned short fsal_ushort_t;     /**< 16 bit unsigned integer.     */
 typedef int fsal_boolean_t;                  /**< boolean                   */
 
-typedef fsal_u64_t fsal_size_t;               /**< data size           */
+typedef size_t fsal_size_t;                   /**< data size           */
 typedef off_t fsal_off_t;                     /**< offset              */
 typedef unsigned long fsal_mdsize_t;          /**< metadata size       */
 typedef unsigned long fsal_count_t;           /**< FS object count.    */
 typedef uid_t fsal_uid_t;                     /**< Owner               */
 typedef gid_t fsal_gid_t;                     /**< Group               */
-typedef mode_t fsal_accessmode_t;              /**< Access mode (32 bits) */
+typedef mode_t fsal_accessmode_t;             /**< Access mode (32 bits) */
 
 typedef struct fsal_time__
 {
@@ -691,6 +691,7 @@ typedef struct fsal_dirent__
 
 typedef fsal_ushort_t fsal_openflags_t;
 
+#define FSAL_O_CLOSED   0x0000  /* read only  */
 #define FSAL_O_RDONLY   0x0001  /* read only  */
 #define FSAL_O_RDWR     0x0002  /* read/write */
 #define FSAL_O_WRONLY   0x0004  /* write only */
@@ -1106,7 +1107,7 @@ typedef enum fsal_lock_t
 typedef struct fsal_lock_param_t
 {
   fsal_lock_t         lock_type;
-  fsal_size_t         lock_start;
+  fsal_off_t          lock_start;
   fsal_size_t         lock_length;
 } fsal_lock_param_t;
 

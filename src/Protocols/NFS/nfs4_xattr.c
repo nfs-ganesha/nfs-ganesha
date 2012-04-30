@@ -58,7 +58,6 @@ t*
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 
 int nfs4_XattrToFattr(fattr4 * Fattr,
                       compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap)
@@ -1180,12 +1179,7 @@ int nfs4_op_lookup_xattr(struct nfs_argop4 *op,
   res_LOOKUP4.status = NFS4_OK;
 
   /* Get the FSAL Handle fo the current object */
-  pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
-  if(cache_status != CACHE_INODE_SUCCESS)
-    {
-      res_LOOKUP4.status = nfs4_Errno(cache_status);
-      return res_LOOKUP4.status;
-    }
+  pfsal_handle = &data->current_entry->handle;
 
   /* UTF8 strings may not end with \0, but they carry their length */
   utf82str(strname, sizeof(strname), &arg_LOOKUP4.objname);
@@ -1283,7 +1277,6 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   entry_name_array_item_t *entry_name_array = NULL;
   fsal_handle_t *pfsal_handle = NULL;
   fsal_status_t fsal_status;
-  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   file_handle_v4_t *file_handle;
   nfs_fh4 nfsfh;
   struct alloc_file_handle_v4 temp_handle;
@@ -1383,12 +1376,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
   res_READDIR4.READDIR4res_u.resok4.reply.eof = FALSE;
 
   /* Get the fsal_handle */
-  pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
-  if(cache_status != CACHE_INODE_SUCCESS)
-    {
-      res_READDIR4.status = NFS4ERR_SERVERFAULT;
-      return res_READDIR4.status;
-    }
+  pfsal_handle = &data->current_entry->handle;
 
   /* Used FSAL extended attributes functions */
   fsal_status = FSAL_ListXAttrs(pfsal_handle,
@@ -1522,12 +1510,7 @@ int nfs4_op_open_xattr(struct nfs_argop4 *op,
   res_OPEN4.status = NFS4_OK;
 
   /* Get the FSAL Handle fo the current object */
-  pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
-  if(cache_status != CACHE_INODE_SUCCESS)
-    {
-      res_OPEN4.status = nfs4_Errno(cache_status);
-      return res_OPEN4.status;
-    }
+  pfsal_handle = &data->current_entry->handle;
 
   /* UTF8 strings may not end with \0, but they carry their length */
   utf82str(strname, sizeof(strname), &arg_OPEN4.claim.open_claim4_u.file);
@@ -1630,33 +1613,19 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
   fsal_handle_t *pfsal_handle = NULL;
   file_handle_v4_t *pfile_handle = NULL;
   unsigned int xattr_id = 0;
-  cache_inode_status_t cache_status;
   fsal_status_t fsal_status;
   char *buffer = NULL;
   size_t size_returned;
 
   /* Get the FSAL Handle fo the current object */
-  pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
-  if(cache_status != CACHE_INODE_SUCCESS)
-    {
-      res_LOOKUP4.status = nfs4_Errno(cache_status);
-      return res_LOOKUP4.status;
-    }
-
-  /* Get the FSAL Handle fo the current object */
-  pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
-  if(cache_status != CACHE_INODE_SUCCESS)
-    {
-      res_LOOKUP4.status = nfs4_Errno(cache_status);
-      return res_LOOKUP4.status;
-    }
+  pfsal_handle = &data->current_entry->handle;
 
   /* Get the xattr_id */
   pfile_handle = (file_handle_v4_t *) (data->currentFH.nfs_fh4_val);
 
   /* for Xattr FH, we adopt the current convention:
    * xattr_pos = 0 ==> the FH is the one of the actual FS object
-   * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory 
+   * xattr_pos = 1 ==> the FH is the one of the xattr ghost directory
    * xattr_pos > 1 ==> The FH is the one for the xattr ghost file whose xattr_id = xattr_pos -2 */
   xattr_id = pfile_handle->xattr_pos - 2;
 
@@ -1710,24 +1679,10 @@ int nfs4_op_write_xattr(struct nfs_argop4 *op,
   fsal_handle_t *pfsal_handle = NULL;
   file_handle_v4_t *pfile_handle = NULL;
   unsigned int xattr_id = 0;
-  cache_inode_status_t cache_status;
   fsal_status_t fsal_status;
 
   /* Get the FSAL Handle fo the current object */
-  pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
-  if(cache_status != CACHE_INODE_SUCCESS)
-    {
-      res_LOOKUP4.status = nfs4_Errno(cache_status);
-      return res_LOOKUP4.status;
-    }
-
-  /* Get the FSAL Handle fo the current object */
-  pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
-  if(cache_status != CACHE_INODE_SUCCESS)
-    {
-      res_LOOKUP4.status = nfs4_Errno(cache_status);
-      return res_LOOKUP4.status;
-    }
+  pfsal_handle = &data->current_entry->handle;
 
   /* Get the xattr_id */
   pfile_handle = (file_handle_v4_t *) (data->currentFH.nfs_fh4_val);
@@ -1796,12 +1751,7 @@ int nfs4_op_remove_xattr(struct nfs_argop4 *op, compound_data_t * data,
     }
 
   /* Get the FSAL Handle fo the current object */
-  pfsal_handle = cache_inode_get_fsal_handle(data->current_entry, &cache_status);
-  if(cache_status != CACHE_INODE_SUCCESS)
-    {
-      res_REMOVE4.status = nfs4_Errno(cache_status);
-      return res_REMOVE4.status;
-    }
+  pfsal_handle = &data->current_entry->handle;
 
   /* Test RM7: remiving '.' should return NFS4ERR_BADNAME */
   if(!FSAL_namecmp(&name, (fsal_name_t *) & FSAL_DOT)

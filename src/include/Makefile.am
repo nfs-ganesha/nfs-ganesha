@@ -22,14 +22,11 @@ noinst_HEADERS = BuddyMalloc.h                   \
                  fsal_types.h                    \
                  fsal_glue.h                     \
                  fsal_glue_const.h               \
-                 cache_content.h                 \
-                 cache_content_policy.h          \
                  cache_inode.h                   \
                  common_utils.h                  \
                  config_parsing.h                \
                  err_HashTable.h                 \
                  err_LRU_List.h                  \
-                 err_cache_content.h             \
                  err_cache_inode.h               \
                  err_fsal.h                      \
                  err_ghost_fs.h                  \

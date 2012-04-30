@@ -99,10 +99,8 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              $(UPCALL_SIMULATOR_FILE)             \
                              nfs_worker_thread.c                  \
                              nfs_tcb.c                  \
-                             nfs_file_content_gc_thread.c         \
                              nfs_rpc_dispatcher_thread.c          \
                              $(DISPATCH_9P_FILES)                 \
-                             nfs_file_content_flush_thread.c      \
                              nfs_rpc_tcp_socket_manager_thread.c  \
                              nfs_init.c                           \
                              nfs_tools.c                          \
@@ -133,7 +131,6 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/nfs4.h                    \
                              ../include/mount.h                   \
                              ../include/cache_inode.h             \
-                             ../include/cache_content.h           \
                              ../include/config_parsing.h          \
                              ../include/fsal_up.h                 \
                              ../include/SemN.h                    \
@@ -157,8 +154,6 @@ libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la           
                                       ../avl/libavltree.la                              \
                                       ../Cache_inode/libcache_inode.la                  \
                                       ../SAL/libsal.la                                  \
-                                      ../File_Content/libcache_content.la               \
-                                      ../File_Content_Policy/libcache_content_policy.la \
                                       ../HashTable/libhashtable.la                      \
                                       ../LRU/liblru.la                                  \
                                       ../FSAL/libfsalcommon.la                          \

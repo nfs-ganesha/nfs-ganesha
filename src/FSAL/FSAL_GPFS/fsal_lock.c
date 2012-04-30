@@ -104,8 +104,9 @@ fsal_status_t GPFSFSAL_lock_op( fsal_file_t       * p_file_descriptor, /* IN */
 
   LogFullDebug(COMPONENT_FSAL,
                "Locking: op:%d type:%d start:%llu length:%llu owner:%p",
-               lock_op, request_lock.lock_type, request_lock.lock_start,
-               request_lock.lock_length, p_owner);
+               lock_op, request_lock.lock_type,
+               (unsigned long long)request_lock.lock_start,
+               (unsigned long long)request_lock.lock_length, p_owner);
 
   if(lock_op == FSAL_OP_LOCKT)
     glock_args.cmd = F_GETLK;

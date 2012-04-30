@@ -25,7 +25,7 @@
 
 void display_fsinfo(fsal_staticfsinfo_t *info) {
 	LogDebug(COMPONENT_FSAL, "FileSystem info: {");
-	LogDebug(COMPONENT_FSAL, "  maxfilesize  = %llX    ",
+	LogDebug(COMPONENT_FSAL, "  maxfilesize  = %zX    ",
 		 info->maxfilesize);
 	LogDebug(COMPONENT_FSAL, "  maxlink  = %lu   ",
 		 info->maxlink);
@@ -65,9 +65,9 @@ void display_fsinfo(fsal_staticfsinfo_t *info) {
 		 info->homogenous);
 	LogDebug(COMPONENT_FSAL, "  supported_attrs  = %llX  ",
 		 info->supported_attrs);
-	LogDebug(COMPONENT_FSAL, "  maxread  = %llX     ",
+	LogDebug(COMPONENT_FSAL, "  maxread  = %zX     ",
 		 info->maxread);
-	LogDebug(COMPONENT_FSAL, "  maxwrite  = %llX     ",
+	LogDebug(COMPONENT_FSAL, "  maxwrite  = %zX     ",
 		 info->maxwrite);
 	LogDebug(COMPONENT_FSAL, "  umask  = %X ", info->umask);
 	LogDebug(COMPONENT_FSAL, "  auth_exportpath_xdev  = %d  ",

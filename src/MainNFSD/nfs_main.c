@@ -55,10 +55,7 @@
 /* parameters for NFSd startup and default values */
 
 nfs_start_info_t my_nfs_start_info = {
-  .flush_datacache_mode = FALSE,
   .dump_default_config = FALSE,
-  .nb_flush_threads = 1,
-  .flush_behaviour = CACHE_CONTENT_FLUSH_AND_DELETE,
   .lw_mark_trigger = FALSE
 };
 
@@ -84,9 +81,6 @@ char usage[] =
     "\t[-d]                the daemon starts in background, in a new process group\n"
     "\t[-R]                daemon will manage RPCSEC_GSS (default is no RPCSEC_GSS)\n"
     "\t[-T]                dump the default configuration on stdout\n"
-    "\t[-F] <nb_flushers>  flushes the data cache with purge, but do not answer to requests\n"
-    "\t[-S] <nb_flushers>  flushes the data cache without purge, but do not answer to requests\n"
-    "\t[-P] <nb_flushers>  flushes the data cache with purge until lw mark is reached, then just sync. Do not answer to requests\n"
     "----------------- Signals ----------------\n"
     "SIGUSR1    : Enable/Disable File Content Cache forced flush\n"
     "SIGTERM    : Cleanly terminate the program\n"
@@ -202,39 +196,6 @@ int main(int argc, char *argv[])
         case 'T':
           /* Dump the default configuration on stdout */
           my_nfs_start_info.dump_default_config = TRUE;
-          break;
-
-        case 'F':
-          /* Flushes the data cache to the FSAL and purges the cache */
-          my_nfs_start_info.flush_datacache_mode = TRUE;
-          my_nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_AND_DELETE;
-          my_nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
-          my_nfs_start_info.lw_mark_trigger = FALSE;
-
-          if(my_nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
-            my_nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
-          break;
-
-        case 'S':
-          /* Flushes the data cache to the FSAL, without purging the cache */
-          my_nfs_start_info.flush_datacache_mode = TRUE;
-          my_nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_SYNC_ONLY;
-          my_nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
-          my_nfs_start_info.lw_mark_trigger = FALSE;
-
-          if(my_nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
-            my_nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
-          break;
-
-        case 'P':
-          /* Flushes the data like '-F' until low water mark is reached, then just sync */
-          my_nfs_start_info.flush_datacache_mode = TRUE;
-          my_nfs_start_info.flush_behaviour = CACHE_CONTENT_FLUSH_AND_DELETE;
-          my_nfs_start_info.nb_flush_threads = (unsigned int)atoi(optarg);
-          my_nfs_start_info.lw_mark_trigger = TRUE;
-
-          if(my_nfs_start_info.nb_flush_threads > NB_MAX_FLUSHER_THREAD)
-            my_nfs_start_info.nb_flush_threads = NB_MAX_FLUSHER_THREAD;
           break;
 
         case '?':

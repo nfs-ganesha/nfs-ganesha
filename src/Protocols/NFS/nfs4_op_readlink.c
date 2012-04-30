@@ -57,7 +57,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -127,7 +126,6 @@ int nfs4_op_readlink(struct nfs_argop4 *op,
   /* Using cache_inode_readlink */
   if(cache_inode_readlink(data->current_entry,
                           &symlink_path,
-                          data->ht,
                           data->pclient,
                           data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {

@@ -65,7 +65,7 @@ cache_content_caching_type_t cache_content_cache_behaviour(cache_entry_t * pentr
 {
   *pstatus = CACHE_CONTENT_FULLY_CACHED;
 
-  if(pentry_inode->internal_md.type != REGULAR_FILE)
+  if(pentry_inode->type != REGULAR_FILE)
     {
       *pstatus = CACHE_CONTENT_INVALID_ARGUMENT;
       return *pstatus;

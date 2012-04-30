@@ -138,8 +138,6 @@ int _9p_attach( _9p_request_data_t * preq9p,
   pfid= &preq9p->pconn->fids[*fid] ;
   pfid->pexport = pexport ;
   pfid->fid = *fid ;
- 
-  memcpy( &pfid->fsal_op_context, &pwkrdata->thread_fsal_context, sizeof( fsal_op_context_t ) ) ;
 
   /* Is user name provided as a string or as an uid ? */
   if( *uname_len != 0 )
@@ -168,12 +166,17 @@ int _9p_attach( _9p_request_data_t * preq9p,
   memcpy( (char *)&fsdata.handle, (char *)pexport->proot_handle, sizeof( fsal_handle_t ) ) ;
   fsdata.cookie = 0;
 
+  /* refcount */
+  if (pfid->pentry) {
+      cache_inode_put(pfid->pentry, &pwkrdata->cache_inode_client);
+  }
+
+  /* refcount +1 */
   pfid->pentry = cache_inode_get( &fsdata,
-                                  pexport->cache_inode_policy,      
-                                  &fsalattr, 
-                                  pwkrdata->ht,
+                                  pexport->cache_inode_policy,
+                                  &fsalattr,
                                   &pwkrdata->cache_inode_client,
-                                  &pfid->fsal_op_context, 
+                                  &pfid->fsal_op_context,
                                   &cache_status ) ;
 
   if( pfid->pentry == NULL )

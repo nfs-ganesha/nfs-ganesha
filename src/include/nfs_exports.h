@@ -56,7 +56,6 @@
 #include "mount.h"
 #include "nfs_stat.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_ip_stats.h"
 #include "nlm_list.h"
 
@@ -200,8 +199,6 @@ typedef struct exportlist__
   exportlist_client_t clients;  /* allowed clients                                   */
   struct exportlist__ *next;    /* next entry                                        */
   unsigned int fsalid ;
-
-  cache_inode_policy_t cache_inode_policy ;
 
   pthread_mutex_t   exp_state_mutex; /* Mutex to protect the following two lists */
   struct glist_head exp_state_list;  /* List of NFS v4 state belonging to this export */
@@ -375,11 +372,6 @@ int get_req_uid_gid(struct svc_req *ptr_req,
 
 int nfs_compare_clientcred(nfs_client_cred_t * pcred1, nfs_client_cred_t * pcred2);
 int nfs_rpc_req2client_cred(struct svc_req *reqp, nfs_client_cred_t * pcred);
-
-cache_content_status_t cache_content_prepare_directories(exportlist_t * pexportlist,
-                                                         char *cache_dir,
-                                                         cache_content_status_t *
-                                                         pstatus);
 
 int nfs_export_check_access(sockaddr_t *hostaddr,
                             struct svc_req *ptr_req,

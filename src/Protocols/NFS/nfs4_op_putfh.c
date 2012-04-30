@@ -31,7 +31,7 @@
  * \brief   Routines used for managing the NFS4_OP_PUTFH operation.
  *
  * nfs4_op_putfh.c : Routines used for managing the NFS4_OP_PUTFH operation.
- * 
+ *
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -46,6 +46,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
+#include <assert.h>
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
@@ -56,7 +57,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -94,27 +94,6 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   resp->resop = NFS4_OP_PUTFH;
   res_PUTFH4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(arg_PUTFH4.object)))
-    {
-      res_PUTFH4.status = NFS4ERR_NOFILEHANDLE;
-      return res_PUTFH4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(arg_PUTFH4.object)))
-    {
-      res_PUTFH4.status = NFS4ERR_BADHANDLE;
-      return res_PUTFH4.status;
-    }
-
-  /* Tests if teh Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(arg_PUTFH4.object)))
-    {
-      res_PUTFH4.status = NFS4ERR_FHEXPIRED;
-      return res_PUTFH4.status;
-    }
-
   /* If no currentFH were set, allocate one */
   if(data->currentFH.nfs_fh4_len == 0)
     {
@@ -147,13 +126,16 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   LogHandleNFS4("NFS4_OP_PUTFH CURRENT FH: ", &arg_PUTFH4.object);
 
-  /* If the filehandle is not pseudo hs file handle, get the entry
-     related to it, otherwise use fake values */
+  /* If the filehandle is not pseudo fs file handle, get the entry
+   * related to it, otherwise use fake values */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
     {
-      data->current_entry = NULL;
-      data->current_filetype = DIRECTORY;
-      data->pexport = NULL;     /* No exportlist is related to pseudo fs */
+        if (data->current_entry) {
+            cache_inode_put(data->current_entry, data->pclient);
+        }
+        data->current_entry = NULL;
+        data->current_filetype = DIRECTORY;
+        data->pexport = NULL; /* No exportlist is related to pseudo fs */
     }
   else
     {
@@ -169,6 +151,12 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         }
 
 #ifdef _PNFS_DS
+      /* As usual, protect existing refcounts */
+      if (data->current_entry) {
+          cache_inode_put(data->current_entry, data->pclient);
+          data->current_entry = NULL;
+          data->current_filetype = UNASSIGNED;
+      }
       /* The export and fsalid should be updated, but DS handles
          don't support metdata operations.  Thus, we can't call into
          Cache_inode to populate the metadata cache. */
@@ -180,7 +168,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       else
 #endif /* _PNFS_DS */
         {
-          /* Build the pentry */
+          /* Build the pentry.  Refcount +1. */
           if((data->current_entry = nfs_FhandleToCache(NFS_V4,
                                                        NULL,
                                                        NULL,
@@ -191,14 +179,13 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
                                                        &attr,
                                                        data->pcontext,
                                                        data->pclient,
-                                                       data->ht,
                                                        &rc)) == NULL)
             {
               res_PUTFH4.status = NFS4ERR_BADHANDLE;
               return res_PUTFH4.status;
             }
-
           /* Extract the filetype */
+          assert(data->current_entry->lru.refcount > 1);
           data->current_filetype = cache_inode_fsal_type_convert(attr.type);
         }
     }

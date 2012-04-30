@@ -65,10 +65,10 @@ avl_dirent_hk_cmpf(const struct avltree_node *lhs,
     rk = avltree_container_of(rhs, cache_inode_dir_entry_t, node_hk);
 
     if (lk->hk.k < rk->hk.k)
-	return (-1);
+        return (-1);
 
     if (lk->hk.k == rk->hk.k)
-	return (0);
+        return (0);
 
     return (1);
 }

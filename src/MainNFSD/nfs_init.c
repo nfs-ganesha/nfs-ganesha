@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -51,6 +51,7 @@
 #include "rquota.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "err_cache_inode.h"
 #include "cache_content.h"
 #include "err_cache_content.h"
@@ -83,6 +84,7 @@
 nfs_parameter_t nfs_param;
 time_t ServerBootTime = 0;
 nfs_worker_data_t *workers_data = NULL;
+hash_table_t *fh_to_cache_entry_ht = NULL; /* Cache inode handle lookup table */
 verifier4 NFS4_write_verifier;  /* NFS V4 write verifier */
 writeverf3 NFS3_write_verifier; /* NFS V3 write verifier */
 
@@ -126,7 +128,7 @@ char pidfile_path[MAXPATHLEN] ;
  * @return (never returns : never ending loop)
  *
  */
-void *sigmgr_thread( void * arg )
+void *sigmgr_thread( void * UnusedArg )
 {
   SetNameFunction("sigmgr");
   int signal_caught = 0;
@@ -305,7 +307,7 @@ void nfs_set_param_default()
   nfs_param.core_param.drop_inval_errors = FALSE;
   nfs_param.core_param.drop_delay_errors = TRUE;
   nfs_param.core_param.core_dump_size = -1;
-  nfs_param.core_param.nb_max_fd = -1;       /* Use OS's default */
+  nfs_param.core_param.nb_max_fd = 1024;
   nfs_param.core_param.stats_update_delay = 60;
   nfs_param.core_param.long_processing_threshold = 10; /* seconds */
   nfs_param.core_param.tcp_fridge_expiration_delay = -1;
@@ -595,24 +597,19 @@ void nfs_set_param_default()
 #endif
 
   /* Cache inode parameters : Garbage collection policy */
-  nfs_param.cache_layers_param.gcpol.file_expiration_delay = -1;     /* No gc */
-  nfs_param.cache_layers_param.gcpol.directory_expiration_delay = -1;        /* No gc */
-  nfs_param.cache_layers_param.gcpol.hwmark_nb_entries = 10000;
-  nfs_param.cache_layers_param.gcpol.lwmark_nb_entries = 10000;
-  //nfs_param.cache_layers_param.gcpol.run_interval = 3600;    /* 1h */
-  nfs_param.cache_layers_param.gcpol.run_interval = 0;    /* NO Data Cache */
-  nfs_param.cache_layers_param.gcpol.nb_call_before_gc = 1000;
+  nfs_param.cache_layers_param.gcpol.entries_hwmark = 100000;
+  nfs_param.cache_layers_param.gcpol.entries_lwmark = 50000;
+  nfs_param.cache_layers_param.gcpol.use_fd_cache = TRUE;
+  nfs_param.cache_layers_param.gcpol.lru_run_interval = 600;
+  nfs_param.cache_layers_param.gcpol.fd_limit_percent = 99;
+  nfs_param.cache_layers_param.gcpol.fd_hwmark_percent = 90;
+  nfs_param.cache_layers_param.gcpol.fd_lwmark_percent = 50;
+  nfs_param.cache_layers_param.gcpol.reaper_work = 1000;
+  nfs_param.cache_layers_param.gcpol.biggest_window = 40;
+  nfs_param.cache_layers_param.gcpol.required_progress = 5;
+  nfs_param.cache_layers_param.gcpol.futility_count = 8;
 
-  /* Cache inode client parameters */
-  nfs_param.cache_layers_param.cache_inode_client_param.lru_param.nb_entry_prealloc =
-      2048;
-  nfs_param.cache_layers_param.cache_inode_client_param.lru_param.entry_to_str =
-      lru_inode_entry_to_str;
-  nfs_param.cache_layers_param.cache_inode_client_param.lru_param.clean_entry =
-      lru_inode_clean_entry;
-  nfs_param.cache_layers_param.cache_inode_client_param.lru_param.lp_name = "Cache Inode Client LRU";
   nfs_param.cache_layers_param.cache_inode_client_param.nb_prealloc_entry = 1024;
-  nfs_param.cache_layers_param.cache_inode_client_param.nb_pre_parent = 2048;
   nfs_param.cache_layers_param.cache_inode_client_param.nb_pre_state_v4 = 512;
   nfs_param.cache_layers_param.cache_inode_client_param.grace_period_attr   = 0;
   nfs_param.cache_layers_param.cache_inode_client_param.grace_period_link   = 0;
@@ -627,29 +624,7 @@ void nfs_set_param_default()
 #else
   nfs_param.cache_layers_param.cache_inode_client_param.attrmask = FSAL_ATTR_MASK_V2_V3;
 #endif
-  nfs_param.cache_layers_param.cache_inode_client_param.max_fd = 20;
-  nfs_param.cache_layers_param.cache_inode_client_param.use_fd_cache = 0;
   nfs_param.cache_layers_param.cache_inode_client_param.use_fsal_hash = 1;
-  nfs_param.cache_layers_param.cache_inode_client_param.retention = 60;
-
-  /* Data cache client parameters */
-  nfs_param.cache_layers_param.cache_content_client_param.nb_prealloc_entry = 128;
-  nfs_param.cache_layers_param.cache_content_client_param.flush_force_fsal = 1;
-  nfs_param.cache_layers_param.cache_content_client_param.max_fd = 20;
-  nfs_param.cache_layers_param.cache_content_client_param.use_fd_cache = 0;
-  nfs_param.cache_layers_param.cache_content_client_param.retention = 60;
-
-  strcpy(nfs_param.cache_layers_param.cache_content_client_param.cache_dir,
-         "/tmp/ganesha.datacache");
-
-  /* Data cache parameters: Garbage collection policy */
-  nfs_param.cache_layers_param.dcgcpol.lifetime = -1;        /* No gc */
-  nfs_param.cache_layers_param.dcgcpol.hwmark_df = 99;
-  nfs_param.cache_layers_param.dcgcpol.lwmark_df = 98;
-  //nfs_param.cache_layers_param.dcgcpol.run_interval = 3600;  /* 1h */
-  nfs_param.cache_layers_param.dcgcpol.run_interval = 0;  /* 1h */
-  nfs_param.cache_layers_param.dcgcpol.nb_call_before_gc = 1000;
-  nfs_param.cache_layers_param.dcgcpol.emergency_grace_delay = 3600; /* 1h */
 
   /* FSAL parameters */
   nfs_param.fsal_param.fsal_info.max_fs_calls = 30;  /* No semaphore to access the FSAL */
@@ -683,7 +658,6 @@ void nfs_set_param_default()
   nfs_param.extern_param.snmp_adm.export_buddy_stats = TRUE;
 #endif
   nfs_param.extern_param.snmp_adm.export_nfs_calls_detail = FALSE;
-  nfs_param.extern_param.snmp_adm.export_cache_inode_calls_detail = FALSE;
   nfs_param.extern_param.snmp_adm.export_fsal_calls_detail = FALSE;
 #endif
 }                               /* nfs_set_param_default */
@@ -698,7 +672,6 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
   int rc;
   fsal_status_t fsal_status;
   cache_inode_status_t cache_inode_status;
-  cache_content_status_t cache_content_status;
 
   /* First, parse the configuration file */
 
@@ -1095,46 +1068,6 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
     LogDebug(COMPONENT_INIT,
              "Cache Inode Client configuration read from config file");
 
-  /* Data cache client parameters */
-  if((cache_content_status = cache_content_read_conf_client_parameter(config_struct,
-                                                                      &nfs_param.
-                                                                      cache_layers_param.
-                                                                      cache_content_client_param))
-     != CACHE_CONTENT_SUCCESS)
-    {
-      if(cache_content_status == CACHE_CONTENT_NOT_FOUND)
-        LogDebug(COMPONENT_INIT,
-                 "No Cache Content Client configuration found, using default");
-      else
-        {
-          LogCrit(COMPONENT_INIT,
-                  "Error while parsing Cache Content Client configuration");
-          return -1;
-        }
-    }
-  else
-    LogDebug(COMPONENT_INIT,
-             "Cache Content Client configuration read from config file");
-
-  if((cache_content_status =
-      cache_content_read_conf_gc_policy(config_struct,
-                                        &nfs_param.cache_layers_param.dcgcpol)) !=
-     CACHE_CONTENT_SUCCESS)
-    {
-      if(cache_content_status == CACHE_CONTENT_NOT_FOUND)
-        LogDebug(COMPONENT_INIT,
-                 "No File Content Garbage Collection Policy configuration found, using default");
-      else
-        {
-          LogCrit(COMPONENT_INIT,
-                  "Error while parsing File Content Garbage Collection Policy configuration");
-          return -1;
-        }
-    }
-  else
-    LogDebug(COMPONENT_INIT,
-             "File Content Garbage Collection Policy configuration read from config file");
-
 #ifdef _SNMP_ADM_ACTIVE
   if(get_snmpadm_conf(config_struct, &nfs_param.extern_param) != 0)
     {
@@ -1297,21 +1230,6 @@ void nfs_reset_stats(void)
 
   for(i = 0; i < nfs_param.core_param.nb_worker; i++)
     {
-      workers_data[i].cache_inode_client.stat.nb_gc_lru_active = 0;
-      workers_data[i].cache_inode_client.stat.nb_gc_lru_total = 0;
-      workers_data[i].cache_inode_client.stat.nb_call_total = 0;
-
-      for(j = 0; j < CACHE_INODE_NB_COMMAND; j++)
-        {
-          workers_data[i].cache_inode_client.stat.func_stats.nb_success[j] = 0;
-          workers_data[i].cache_inode_client.stat.func_stats.nb_call[j] = 0;
-          workers_data[i].cache_inode_client.stat.func_stats.nb_err_retryable[j] = 0;
-          workers_data[i].cache_inode_client.stat.func_stats.nb_err_unrecover[j] = 0;
-        }
-    }
-
-  for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-    {
       workers_data[i].stats.nb_total_req = 0;
       workers_data[i].stats.nb_udp_req = 0;
       workers_data[i].stats.nb_tcp_req = 0;
@@ -1381,7 +1299,7 @@ void nfs_reset_stats(void)
 
 }                               /* void nfs_reset_stats( void ) */
 
-static void nfs_Start_threads(bool_t flush_datacache_mode)
+static void nfs_Start_threads(void)
 {
   int rc = 0;
   pthread_attr_t attr_thr;
@@ -1410,7 +1328,7 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
    }
 
   /* Starting the thread dedicated to signal handling */
-  if( ( rc = pthread_create( &sigmgr_thrid, &attr_thr, sigmgr_thread, (void *)NULL ) ) != 0 )
+  if( ( rc = pthread_create( &sigmgr_thrid, &attr_thr, sigmgr_thread, NULL ) ) != 0 )
     {
       LogFatal(COMPONENT_THREAD,
                "Could not create sigmgr_thread, error = %d (%s)",
@@ -1420,56 +1338,54 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
   LogDebug(COMPONENT_THREAD,
            "sigmgr thread started");
 
-  if(!flush_datacache_mode)
+  /* Starting the rpc dispatcher thread */
+  if((rc =
+      pthread_create(&rpc_dispatcher_thrid, &attr_thr, rpc_dispatcher_thread,
+                     NULL)) != 0)
     {
-      /* Starting all of the worker thread */
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-	{
-	  if((rc =
-	      pthread_create(&(worker_thrid[i]), &attr_thr, worker_thread, (void *)i)) != 0)
-	    {
-	      LogFatal(COMPONENT_THREAD,
-		       "Could not create worker_thread #%lu, error = %d (%s)",
-		       i, errno, strerror(errno));
-	    }
-	}
-      LogEvent(COMPONENT_THREAD,
-	       "%d worker threads were started successfully",
-	       nfs_param.core_param.nb_worker);
+      LogFatal(COMPONENT_THREAD,
+               "Could not create rpc_dpsatcher_thread, error = %d (%s)",
+               errno, strerror(errno));
+    }
+  /* Starting all of the worker thread */
+  for(i = 0; i < nfs_param.core_param.nb_worker; i++)
+    {
+      if((rc =
+          pthread_create(&(worker_thrid[i]), &attr_thr, worker_thread, (void *)i)) != 0)
+        {
+          LogFatal(COMPONENT_THREAD,
+                   "Could not create worker_thread #%lu, error = %d (%s)",
+                   i, errno, strerror(errno));
+        }
+    }
+  LogEvent(COMPONENT_THREAD,
+           "%d worker threads were started successfully",
+           nfs_param.core_param.nb_worker);
 
 #ifdef _USE_BLOCKING_LOCKS
-      /* Start State Async threads */
-      state_async_thread_start();
+  /* Start State Async threads */
+  state_async_thread_start();
 #endif
 
-      /*
-       * Now that all TCB controlled threads (workers, NLM, sigmgr) were created, lets wait for them to fully
-       * initialze __before__ we create the threads that listen for incoming requests.
-       */
-      wait_for_threads_to_awaken();
-
-      /* Starting the rpc dispatcher thread */
-      if((rc =
-	  pthread_create(&rpc_dispatcher_thrid, &attr_thr, rpc_dispatcher_thread,
-			 &nfs_param)) != 0)
-	{
-	  LogFatal(COMPONENT_THREAD,
-		   "Could not create rpc_dispatcher_thread, error = %d (%s)",
-		   errno, strerror(errno));
-	}
-      LogEvent(COMPONENT_THREAD, "rpc dispatcher thread was started successfully");
+  /*
+   * Now that all TCB controlled threads (workers, NLM,
+   * sigmgr) were created, lets wait for them to fully
+   * initialze __before__ we create the threads that listen
+   * for incoming requests.
+   */
+  wait_for_threads_to_awaken();
 
 #ifdef _USE_9P
-      /* Starting the 9p dispatcher thread */
-      if((rc = pthread_create(&_9p_dispatcher_thrid, &attr_thr, _9p_dispatcher_thread, NULL ) ) != 0 )     
-	{
-	  LogFatal(COMPONENT_THREAD,
-		   "Could not create  9p dispatcher_thread, error = %d (%s)",
-		   errno, strerror(errno));
-	}
-      LogEvent(COMPONENT_THREAD, "9p dispatcher thread was started successfully");
-#endif
+  /* Starting the 9p dispatcher thread */
+  if((rc = pthread_create(&_9p_dispatcher_thrid, &attr_thr,
+                          _9p_dispatcher_thread, NULL ) ) != 0 )
+    {
+      LogFatal(COMPONENT_THREAD,
+               "Could not create  9p dispatcher_thread, error = %d (%s)",
+               errno, strerror(errno));
     }
+  LogEvent(COMPONENT_THREAD, "9p dispatcher thread was started successfully");
+#endif
 
   /* Starting the admin thread */
   if((rc = pthread_create(&admin_thrid, &attr_thr, admin_thread, NULL)) != 0)
@@ -1482,7 +1398,7 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
 
   /* Starting the stats thread */
   if((rc =
-      pthread_create(&stat_thrid, &attr_thr, stats_thread, (void *)workers_data)) != 0)
+      pthread_create(&stat_thrid, &attr_thr, stats_thread, NULL)) != 0)
     {
       LogFatal(COMPONENT_THREAD,
                "Could not create stats_thread, error = %d (%s)",
@@ -1494,7 +1410,7 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
 
   /* Starting the long processing threshold thread */
   if((rc =
-      pthread_create(&stat_thrid, &attr_thr, long_processing_thread, (void *)workers_data)) != 0)
+      pthread_create(&stat_thrid, &attr_thr, long_processing_thread, NULL)) != 0)
     {
       LogFatal(COMPONENT_THREAD,
                "Could not create long_processing_thread, error = %d (%s)",
@@ -1505,7 +1421,7 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
 
   /* Starting the stat exporter thread */
   if((rc =
-      pthread_create(&stat_exporter_thrid, &attr_thr, stat_exporter_thread, (void *)workers_data)) != 0)
+      pthread_create(&stat_exporter_thrid, &attr_thr, stat_exporter_thread, NULL)) != 0)
     {
       LogFatal(COMPONENT_THREAD,
                "Could not create stat_exporter_thread, error = %d (%s)",
@@ -1518,7 +1434,7 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
 
   /* Starting the reaper thread */
   if((rc =
-      pthread_create(&reaper_thrid, &attr_thr, reaper_thread, (void *)workers_data)) != 0)
+      pthread_create(&reaper_thrid, &attr_thr, reaper_thread, NULL)) != 0)
     {
       LogFatal(COMPONENT_THREAD,
                "Could not create reaper_thread, error = %d (%s)",
@@ -1527,27 +1443,11 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
   LogEvent(COMPONENT_THREAD,
            "reaper thread was started successfully");
 
-  if(nfs_param.cache_layers_param.dcgcpol.run_interval != 0)
-    {
-      tcb_new(&gccb, "NFS FILE CONTENT GARBAGE COLLECTION Thread"); 
-      /* Starting the nfs file content gc thread  */
-      if((rc =
-          pthread_create(&fcc_gc_thrid, &attr_thr, file_content_gc_thread,
-                         (void *)NULL)) != 0)
-        {
-          LogFatal(COMPONENT_THREAD,
-                   "Could not create file_content_gc_thread, error = %d (%s)",
-                   errno, strerror(errno));
-        }
-      LogEvent(COMPONENT_THREAD,
-               "file content gc thread was started successfully");
-    }
-
 #ifdef _USE_UPCALL_SIMULATOR
   /* Starts the thread that mimics upcalls from the FSAL */
    /* Starting the stats thread */
   if((rc =
-      pthread_create(&upcall_simulator_thrid, &attr_thr, upcall_simulator_thread, (void *)workers_data)) != 0)
+      pthread_create(&upcall_simulator_thrid, &attr_thr, upcall_simulator_thread, NULL)) != 0)
     {
       LogFatal(COMPONENT_THREAD,
                "Could not create upcall_simulator_thread, error = %d (%s)",
@@ -1575,8 +1475,6 @@ static void nfs_Start_threads(bool_t flush_datacache_mode)
 
 static void nfs_Init(const nfs_start_info_t * p_start_info)
 {
-  hash_table_t *ht = NULL;      /* Cache inode main hash table */
-
   cache_inode_status_t cache_status;
   state_status_t state_status;
   fsal_status_t fsal_status;
@@ -1600,7 +1498,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
 
   /* Cache Inode Initialisation */
-  if((ht =
+  if((fh_to_cache_entry_ht =
       cache_inode_init(nfs_param.cache_layers_param.cache_param, &cache_status)) == NULL)
     {
       LogFatal(COMPONENT_INIT,
@@ -1628,14 +1526,11 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   /* Set the cache inode GC policy */
   cache_inode_set_gc_policy(nfs_param.cache_layers_param.gcpol);
 
-  /* Set the cache content GC policy */
-  cache_content_set_gc_policy(nfs_param.cache_layers_param.dcgcpol);
+  /* Cache Inode LRU (call this here, rather than as part of
+     cache_inode_init() so the GC policy has been set */
+  cache_inode_lru_pkginit();
 
-  /* If only 'basic' init for having FSAL anc Cache Inode is required, stop init now */
-  if(p_start_info->flush_datacache_mode)
-    {
-      return;
-    }
+
 #ifdef _USE_ASYNC_CACHE_INODE
   /* Start the TAD and synclets for writeback cache inode */
   cache_inode_async_init(nfs_param.cache_layers_param.cache_inode_client_param);
@@ -1738,9 +1633,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
         LogFatal(COMPONENT_INIT,
                  "Error while initializing worker data #%d", i);
 
-      /* Set the pointer for the Cache inode hash table */
-      workers_data[i].ht = ht;
-
       sprintf(name, "IP Stats for worker %d", i);
       nfs_param.ip_stats_param.hash_param.name = Str_Dup(name);
       ht_ip_stats[i] = nfs_Init_ip_stats(nfs_param.ip_stats_param);
@@ -1757,7 +1649,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                request_data_t,
                constructor_request_data_t, NULL);
       NamePool(&workers_data[i].request_pool, "Request Data Pool %d", i);
-               
+
       if(!IsPoolPreallocated(&workers_data[i].request_pool))
         {
           LogCrit(COMPONENT_INIT,
@@ -1804,7 +1696,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
     }                           /* for i */
 
   /* Admin initialisation */
-  nfs_Init_admin_data(ht);
+  nfs_Init_admin_data();
 
   /* Set the stats to zero */
   nfs_reset_stats();
@@ -1961,7 +1853,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 #endif /* _USE_9P */
 
   /* Create the root entries for each exported FS */
-  if((rc = nfs_export_create_root_entry(nfs_param.pexportlist, ht)) != TRUE)
+  if((rc = nfs_export_create_root_entry(nfs_param.pexportlist)) != TRUE)
     {
       LogFatal(COMPONENT_INIT,
                "Error initializing Cache Inode root entries");
@@ -1972,7 +1864,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
    * So initialize Callback interface after everything else. */
 #ifdef _USE_FSAL_UP
   nfs_Init_FSAL_UP(); /* initalizes an event pool */
-  nfs_param.fsal_up_param.ht = ht;
 #endif /* _USE_FSAL_UP */
 
   /* Create stable storage directory, this should not be necessary */
@@ -2001,68 +1892,12 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 }                               /* nfs_Init */
 
 /**
- * nfs_Start_file_content_flushers: Starts the threads in charge of flushing the data cache
- *
- * Simply do all the call to pthread_create to spawn the flushers.
- * Threads are created "joinable" and scheduled as "scope system".
- * 
- * @param nb_threads Number of threads to be started.
- * 
- * @return nothing (void function) 
- *
- */
-static void nfs_Start_file_content_flushers(unsigned int nb_threads)
-{
-  int rc = 0;
-  pthread_attr_t attr_thr;
-  unsigned long i = 0;
-
-  /* Init for thread parameter (mostly for scheduling) */
-  pthread_attr_init(&attr_thr);
-#ifndef _IRIX_6
-  pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
-  pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE);
-  pthread_attr_setstacksize(&attr_thr, THREAD_STACK_SIZE);
-#endif
-
-  /* Starting all of the flushers */
-  for(i = 0; i < nb_threads; i++)
-    {
-      /* init index and stats */
-      flush_info[i].thread_index = i;
-      flush_info[i].nb_flushed = 0;
-      flush_info[i].nb_too_young = 0;
-      flush_info[i].nb_errors = 0;
-      flush_info[i].nb_orphans = 0;
-
-      if((rc =
-          pthread_create(&(flusher_thrid[i]), &attr_thr, nfs_file_content_flush_thread,
-                         (void *)&flush_info[i])) != 0)
-        {
-          LogError(COMPONENT_THREAD, ERR_SYS, ERR_PTHREAD_CREATE, rc);
-          Fatal();
-        }
-      else
-        LogInfo(COMPONENT_THREAD, "datacache flusher #%lu started", i);
-
-    }
-  LogInfo(COMPONENT_THREAD,
-          "%u datacache flushers threads were started successfully",
-          nb_threads);
-
-}                               /* nfs_Start_file_content_flushers */
-
-/**
  * nfs_start:
  * start NFS service
  */
 void nfs_start(nfs_start_info_t * p_start_info)
 {
   struct rlimit ulimit_data;
-  cache_content_status_t content_status;
-  fsal_status_t fsal_status;
-  fsal_op_context_t fsal_context;
-  unsigned int i;
 
 #if 0
   /* Will remain as long as all FSAL are not yet in new format */
@@ -2172,49 +2007,6 @@ void nfs_start(nfs_start_info_t * p_start_info)
         }
     }
 
-  /* Set up Max Open file descriptors if set */
-  if(nfs_param.core_param.nb_max_fd != -1)
-    {
-      LogDebug(COMPONENT_INIT, "I set the max fd rlimit to %u",
-                 nfs_param.core_param.nb_max_fd);
-      ulimit_data.rlim_cur = nfs_param.core_param.nb_max_fd;
-      ulimit_data.rlim_max = nfs_param.core_param.nb_max_fd;
-
-      if(setrlimit(RLIMIT_NOFILE, &ulimit_data) != 0)
-        {
-          LogError(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
-          LogCrit(COMPONENT_INIT, "Impossible to set RLIMIT_NOFILE to %d",
-                  nfs_param.core_param.nb_max_fd);
-        }
-      else
-        LogDebug(COMPONENT_INIT, "Setting RLIMIT_NOFILE to %d",
-                 nfs_param.core_param.nb_max_fd);
-    }
-  else
-    {
-      if(getrlimit(RLIMIT_NOFILE, &ulimit_data) != 0)
-        {
-          LogError(COMPONENT_INIT, ERR_SYS, ERR_SETRLIMIT, errno);
-          LogMajor(COMPONENT_INIT, "Impossible to get RLIMIT_NOFILE");
-          Fatal();
-        }
-      nfs_param.core_param.nb_max_fd = ulimit_data.rlim_cur;
-      LogDebug(COMPONENT_INIT, "RLIMIT_NOFILE was cur %d max %d",
-               (int)ulimit_data.rlim_cur, (int)ulimit_data.rlim_max);
-    }
-
-  /* Allocate the directories for the datacache */
-  if(cache_content_prepare_directories(nfs_param.pexportlist,
-                                       nfs_param.cache_layers_param.
-                                       cache_content_client_param.cache_dir,
-                                       &content_status) != CACHE_CONTENT_SUCCESS)
-    {
-      LogFatal(COMPONENT_INIT,
-               "File Content Cache directories could not be allocated");
-    }
-  else
-    LogInfo(COMPONENT_INIT, "File Content Cache directory initialized");
-
   /* Print the worker parameters in log */
   Print_param_worker_in_log(&(nfs_param.worker_param));
 
@@ -2232,142 +2024,71 @@ void nfs_start(nfs_start_info_t * p_start_info)
   nfs_Init(p_start_info);
 
   /* Spawns service threads */
-  nfs_Start_threads(p_start_info->flush_datacache_mode);
+  nfs_Start_threads();
 
-  if(p_start_info->flush_datacache_mode)
+#ifdef _USE_NLM
+  /* NSM Unmonitor all */
+  nsm_unmonitor_all();
+#endif
+
+  /* Populate the ID_MAPPER file with mapping file if needed */
+  if(nfs_param.uidmap_cache_param.mapfile[0] == '\0')
     {
-
-      unsigned int nb_flushed = 0;
-      unsigned int nb_too_young = 0;
-      unsigned int nb_errors = 0;
-      unsigned int nb_orphans = 0;
-
-      LogEvent(COMPONENT_INIT, "Starting Data Cache emergency flush");
-
-      fsal_status = FSAL_InitClientContext(&fsal_context);
-
-      if(FSAL_IS_ERROR(fsal_status))
-        {
-          LogError(COMPONENT_INIT, ERR_FSAL, fsal_status.major, fsal_status.minor);
-          Fatal();
-        }
-
-      LogEvent(COMPONENT_INIT,
-               "--------------------------------------------------");
-      LogEvent(COMPONENT_INIT,
-               "    NFS SERVER STARTED IN EMERGENCY FLUSH MODE");
-      LogEvent(COMPONENT_INIT,
-               "--------------------------------------------------");
-      /* The number of flusher sould be less than FSAL::max_fs_calls to avoid deadlocks */
-      if(nfs_param.fsal_param.fsal_info.max_fs_calls > 0)
-        {
-          if(p_start_info->nb_flush_threads > nfs_param.fsal_param.fsal_info.max_fs_calls)
-            {
-              p_start_info->nb_flush_threads =
-                  nfs_param.fsal_param.fsal_info.max_fs_calls;
-              LogCrit(COMPONENT_THREAD,
-                      "Too much flushers, there should be less flushers than FSAL::max_fs_calls. Using %u threads instead",
-                      nfs_param.fsal_param.fsal_info.max_fs_calls);
-            }
-        }
-
-      nfs_Start_file_content_flushers(p_start_info->nb_flush_threads);
-
-      LogDebug(COMPONENT_THREAD, "Waiting for datacache flushers to exit");
-
-      /* Wait for the thread to terminate */
-      for(i = 0; i < p_start_info->nb_flush_threads; i++)
-        {
-          pthread_join(flusher_thrid[i], NULL);
-
-          /* add this thread's stats to total count */
-          nb_flushed += flush_info[i].nb_flushed;
-          nb_too_young += flush_info[i].nb_too_young;
-          nb_errors += flush_info[i].nb_errors;
-          nb_orphans += flush_info[i].nb_orphans;
-
-          LogDebug(COMPONENT_THREAD, "Flusher #%u terminated", i);
-        }
-
-      LogDebug(COMPONENT_MAIN, "Nbr files flushed sucessfully: %u",
-               nb_flushed);
-      LogDebug(COMPONENT_MAIN, "Nbr files too young          : %u",
-               nb_too_young);
-      LogDebug(COMPONENT_MAIN, "Nbr flush errors             : %u",
-               nb_errors);
-      LogDebug(COMPONENT_MAIN, "Orphan entries removed       : %u",
-               nb_orphans);
-
-      /* Tell the admin that flush is done */
-      LogEvent(COMPONENT_MAIN,
-               "Flush of the data cache is done, nfs daemon will now exit");
+      LogDebug(COMPONENT_INIT, "No Uid Map file is used");
     }
   else
     {
-#ifdef _USE_NLM
-      /* NSM Unmonitor all */
-      nsm_unmonitor_all();
-#endif
-
-      /* Populate the ID_MAPPER file with mapping file if needed */
-      if(nfs_param.uidmap_cache_param.mapfile[0] == '\0')
-        {
-          LogDebug(COMPONENT_INIT, "No Uid Map file is used");
-        }
-      else
-        {
-          LogDebug(COMPONENT_INIT, "Populating UID_MAPPER with file %s",
-                   nfs_param.uidmap_cache_param.mapfile);
-          if(idmap_populate(nfs_param.uidmap_cache_param.mapfile, UIDMAP_TYPE) !=
-             ID_MAPPER_SUCCESS)
-            LogDebug(COMPONENT_INIT, "UID_MAPPER was NOT populated");
-        }
-
-      if(nfs_param.gidmap_cache_param.mapfile[0] == '\0')
-        {
-          LogDebug(COMPONENT_INIT, "No Gid Map file is used");
-        }
-      else
-        {
-          LogDebug(COMPONENT_INIT, "Populating GID_MAPPER with file %s",
-                   nfs_param.uidmap_cache_param.mapfile);
-          if(idmap_populate(nfs_param.gidmap_cache_param.mapfile, GIDMAP_TYPE) !=
-             ID_MAPPER_SUCCESS)
-            LogDebug(COMPONENT_INIT, "GID_MAPPER was NOT populated");
-        }
-
-      if(nfs_param.ip_name_param.mapfile[0] == '\0')
-        {
-          LogDebug(COMPONENT_INIT, "No Hosts Map file is used");
-        }
-      else
-        {
-          LogDebug(COMPONENT_INIT, "Populating IP_NAME with file %s",
-                   nfs_param.ip_name_param.mapfile);
-          if(nfs_ip_name_populate(nfs_param.ip_name_param.mapfile) != IP_NAME_SUCCESS)
-            LogDebug(COMPONENT_INIT, "IP_NAME was NOT populated");
-        }
-
-      /* Wait for the threads to complete their init step */
-      if(wait_for_threads_to_awaken() != PAUSE_OK)
-        {
-          /* Not quite sure what to do here... */
-        }
-      else
-        {
-          LogEvent(COMPONENT_INIT,
-                   "-------------------------------------------------");
-          LogEvent(COMPONENT_INIT,
-                   "             NFS SERVER INITIALIZED");
-          LogEvent(COMPONENT_INIT,
-                   "-------------------------------------------------");
-        }
-
-      /* Wait for dispatcher to exit */
-      LogDebug(COMPONENT_THREAD,
-               "Wait for sigmgr thread to exit");
-      pthread_join(sigmgr_thrid, NULL);
+      LogDebug(COMPONENT_INIT, "Populating UID_MAPPER with file %s",
+               nfs_param.uidmap_cache_param.mapfile);
+      if(idmap_populate(nfs_param.uidmap_cache_param.mapfile, UIDMAP_TYPE) !=
+         ID_MAPPER_SUCCESS)
+        LogDebug(COMPONENT_INIT, "UID_MAPPER was NOT populated");
     }
+
+  if(nfs_param.gidmap_cache_param.mapfile[0] == '\0')
+    {
+      LogDebug(COMPONENT_INIT, "No Gid Map file is used");
+    }
+  else
+    {
+      LogDebug(COMPONENT_INIT, "Populating GID_MAPPER with file %s",
+               nfs_param.uidmap_cache_param.mapfile);
+      if(idmap_populate(nfs_param.gidmap_cache_param.mapfile, GIDMAP_TYPE) !=
+         ID_MAPPER_SUCCESS)
+        LogDebug(COMPONENT_INIT, "GID_MAPPER was NOT populated");
+    }
+
+  if(nfs_param.ip_name_param.mapfile[0] == '\0')
+    {
+      LogDebug(COMPONENT_INIT, "No Hosts Map file is used");
+    }
+  else
+    {
+      LogDebug(COMPONENT_INIT, "Populating IP_NAME with file %s",
+               nfs_param.ip_name_param.mapfile);
+      if(nfs_ip_name_populate(nfs_param.ip_name_param.mapfile) != IP_NAME_SUCCESS)
+        LogDebug(COMPONENT_INIT, "IP_NAME was NOT populated");
+    }
+
+  /* Wait for the threads to complete their init step */
+  if(wait_for_threads_to_awaken() != PAUSE_OK)
+    {
+      /* Not quite sure what to do here... */
+    }
+  else
+    {
+      LogEvent(COMPONENT_INIT,
+               "-------------------------------------------------");
+      LogEvent(COMPONENT_INIT,
+               "             NFS SERVER INITIALIZED");
+      LogEvent(COMPONENT_INIT,
+               "-------------------------------------------------");
+    }
+
+  /* Wait for dispatcher to exit */
+  LogDebug(COMPONENT_THREAD,
+           "Wait for sigmgr thread to exit");
+  pthread_join(sigmgr_thrid, NULL);
 
   /* Regular exit */
   LogEvent(COMPONENT_MAIN,

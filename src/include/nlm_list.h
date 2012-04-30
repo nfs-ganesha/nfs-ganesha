@@ -42,7 +42,7 @@ struct glist_head
 
 /*FIXME!!! grand hack due to mysql conflict name glist*/
 
-static inline void init_glist(struct glist_head *head)
+static inline void init_glist(struct glist_head *head) /* XXX glist_init? */
 {
   head->next = head;
   head->prev = head;

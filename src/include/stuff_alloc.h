@@ -224,7 +224,7 @@ do {                                                         \
  */
 #define InitPool(pool, num_alloc, type, ctor, dtor)          \
 do {                                                         \
-  int size __attribute__((unused));                       \
+  int size __attribute__((unused));                          \
   memset((pool), 0, sizeof(*(pool)));                        \
   (pool)->pa_free        = NULL;                             \
   (pool)->pa_constructor = ctor;                             \
@@ -532,7 +532,5 @@ Mem_Alloc_Page_Aligned_(const size_t s,
 
      return memalign_pointer;
 }
-
-
 
 #endif                          /* _STUFF_ALLOC_H */

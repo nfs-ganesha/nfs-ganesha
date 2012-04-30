@@ -46,7 +46,6 @@
 #include "LRU_List.h"
 #include "fsal.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 
 #include "nfs23.h"
 #include "nfs4.h"

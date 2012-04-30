@@ -10,16 +10,17 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
@@ -30,7 +31,7 @@
  * \version $Revision: 1.10 $
  * \brief   Routines used for managing the NFS4_OP_SAVEFH operation.
  *
- * nfs4_op_getfh.c : Routines used for managing the NFS4_OP_SAVEFH operation.
+ * nfs4_op_savefh.c : Routines used for managing the NFS4_OP_SAVEFH operation.
  *
  *
  */
@@ -57,7 +58,7 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
+#include "cache_inode_lru.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -66,27 +67,31 @@
 
 /**
  *
- * nfs4_op_savefh: the NFS4_OP_SAVEFH operation
+ * \brief the NFS4_OP_SAVEFH operation
  *
- * This functions handles the NFS4_OP_SAVEFH operation in NFSv4. This function can be called only from nfs4_Compound.
- * The operation set the savedFH with the value of the currentFH.
+ * This functions handles the NFS4_OP_SAVEFH operation in NFSv4. This
+ * function can be called only from nfs4_Compound.  The operation set
+ * the savedFH with the value of the currentFH.
  *
  * @param op    [IN]    pointer to nfs4_op arguments
  * @param data  [INOUT] Pointer to the compound request's data
  * @param resp  [IN]    Pointer to nfs4_op results
- * 
- * @return NFS4_OK if successfull, other values show an error. 
+ *
+ * @return NFS4_OK if successfull, other values show an error.
  *
  * @see all the nfs4_op_<*> function
  * @see nfs4_Compound
  *
  */
 
-int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
+int nfs4_op_savefh(struct nfs_argop4 *op,
+                   compound_data_t *data,
+                   struct nfs_resop4 *resp)
 {
   int error;
 
-  /* First of all, set the reply to zero to make sure it contains no parasite information */
+  /* First of all, set the reply to zero to make sure it contains no
+     parasite information */
   memset(resp, 0, sizeof(struct nfs_resop4));
 
   resp->resop = NFS4_OP_SAVEFH;
@@ -125,13 +130,40 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }
 
   /* Copy the data from current FH to saved FH */
-  memcpy((char *)(data->savedFH.nfs_fh4_val), (char *)(data->currentFH.nfs_fh4_val),
+  memcpy(data->savedFH.nfs_fh4_val,
+         data->currentFH.nfs_fh4_val,
          data->currentFH.nfs_fh4_len);
   data->savedFH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
-  /* Keep the vnodep in mind */
+
+  /* If saved and current entry are equal, skip the following. */
+
+  if (data->saved_entry == data->current_entry) {
+      goto out;
+  }
+
+  if (data->saved_entry) {
+      cache_inode_put(data->saved_entry, data->pclient);
+      data->saved_entry = NULL;
+  }
+
   data->saved_entry = data->current_entry;
   data->saved_filetype = data->current_filetype;
+
+  /* Take another reference.  As of now the filehandle is both saved
+     and current and both must be counted.  Guard this, in case we
+     have a pseudofs handle. */
+
+  if (data->saved_entry) {
+       if (cache_inode_lru_ref(data->saved_entry,
+                               data->pclient,
+                               LRU_FLAG_NONE) != CACHE_INODE_SUCCESS) {
+            resp->nfs_resop4_u.opsavefh.status = NFS4ERR_STALE;
+            return resp->nfs_resop4_u.opsavefh.status;
+       }
+  }
+
+ out:
 
   if(isFullDebug(COMPONENT_NFS_V4))
     {
@@ -145,13 +177,13 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
 /**
  * nfs4_op_savefh_Free: frees what was allocared to handle nfs4_op_savefh.
- * 
+ *
  * Frees what was allocared to handle nfs4_op_savefh.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs4_op_savefh_Free(SAVEFH4res * resp)
 {

@@ -93,7 +93,7 @@ fsal_status_t VFSFSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN */
       Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_lock_op);
     }
 
-  LogFullDebug(COMPONENT_FSAL, "Locking: op:%d type:%d start:%llu length:%llu ", lock_op,
+  LogFullDebug(COMPONENT_FSAL, "Locking: op:%d type:%d start:%"PRIu64" length:%zu ", lock_op,
                request_lock.lock_type, request_lock.lock_start, request_lock.lock_length);
 
   if(lock_op == FSAL_OP_LOCKT)

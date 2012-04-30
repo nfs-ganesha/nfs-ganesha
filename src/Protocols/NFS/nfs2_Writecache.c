@@ -55,7 +55,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -71,7 +70,6 @@
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
  * @param preq    [IN]    pointer to SVC request related to this call 
- * @param ht      [INOUT] cache inode hash table
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
  * @return always NFS_REQ_OK (this routine does nothing)
@@ -82,7 +80,7 @@ int nfs2_Writecache(nfs_arg_t * parg,
                     exportlist_t * pexport,
                     fsal_op_context_t * pcontext,
                     cache_inode_client_t * pclient,
-                    hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
+                    struct svc_req *preq, nfs_res_t * pres)
 {
   /* This is an unsupported function, it is never used */
   LogCrit(COMPONENT_NFSPROTO,

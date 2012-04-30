@@ -98,7 +98,7 @@ int _9p_setattr( _9p_request_data_t * preq9p,
   _9p_getptr( cursor, mtime_sec,  u64 ) ;
   _9p_getptr( cursor, mtime_nsec, u64 ) ;
 
-  LogDebug( COMPONENT_9P, "TSETATTR: tag=%u fid=%u mode=0%o uid=%u gid=%u size=%llu atime=(%llu|%llu) mtime=(%llu|%llu)",
+  LogDebug( COMPONENT_9P, "TSETATTR: tag=%u fid=%u mode=0%o uid=%u gid=%u size=%"PRIu64" atime=(%llu|%llu) mtime=(%llu|%llu)",
             (u32)*msgtag, *fid, *mode, *uid, *gid, *size,  (unsigned long long)*atime_sec, (unsigned long long)*atime_nsec, 
             (unsigned long long)*mtime_sec, (unsigned long long)*mtime_nsec  ) ;
 
@@ -188,10 +188,9 @@ int _9p_setattr( _9p_request_data_t * preq9p,
 
   /* Now set the attr */ 
   if( cache_inode_setattr( pfid->pentry,
-			   &fsalattr,
-                           pwkrdata->ht,
-			   &pwkrdata->cache_inode_client,
-			   &pfid->fsal_op_context,
+                           &fsalattr,
+                           &pwkrdata->cache_inode_client,
+                           &pfid->fsal_op_context,
                            &cache_status ) != CACHE_INODE_SUCCESS )
     {
       err = _9p_tools_errno( cache_status ) ; ;

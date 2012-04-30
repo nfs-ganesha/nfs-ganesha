@@ -58,6 +58,11 @@
 #include <pthread.h>
 #include <string.h>
 
+static const char *CONF_LABEL_CACHE_INODE_GCPOL = "CacheInode_GC_Policy";
+static const char *CONF_LABEL_CACHE_INODE_CLIENT = "CacheInode_Client";
+static const char *CONF_LABEL_CACHE_INODE_HASH = "CacheInode_Hash";
+
+
 /**
  *
  * cache_inode_read_conf_hash_parameter: read the configuration for the hash in Cache_inode layer.
@@ -253,21 +258,9 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
           return CACHE_INODE_INVALID_ARGUMENT;
         }
 
-      if(!strcasecmp(key_name, "LRU_Prealloc_PoolSize"))
-        {
-          pparam->lru_param.nb_entry_prealloc = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "LRU_Nb_Call_Gc_invalid"))
-        {
-          pparam->lru_param.nb_call_gc_invalid = atoi(key_value);
-        }
       else if(!strcasecmp(key_name, "Entry_Prealloc_PoolSize"))
         {
           pparam->nb_prealloc_entry = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "ParentData_Prealloc_PoolSize"))
-        {
-          pparam->nb_pre_parent = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "State_v4_Prealloc_PoolSize"))
         {
@@ -304,18 +297,6 @@ cache_inode_status_t cache_inode_read_conf_client_parameter(config_file_t in_con
       else if(!strcasecmp(key_name, "Use_Test_Access"))
         {
           pparam->use_test_access = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Max_Fd"))
-        {
-          pparam->max_fd = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "OpenFile_Retention"))
-        {
-          pparam->retention = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Use_OpenClose_cache"))
-        {
-          pparam->use_fd_cache = StrToBoolean(key_value);
         }
       else if(!strcasecmp( key_name, "Use_FSAL_Hash" ) )
         {
@@ -417,30 +398,49 @@ cache_inode_status_t cache_inode_read_conf_gc_policy(config_file_t in_config,
                   var_index, CONF_LABEL_CACHE_INODE_GCPOL);
           return CACHE_INODE_INVALID_ARGUMENT;
         }
-
-      if(!strcasecmp(key_name, "File_Lifetime"))
+      else if(!strcasecmp(key_name, "Entries_HWMark"))
         {
-          ppolicy->file_expiration_delay = atoi(key_value);
+          ppolicy->entries_hwmark = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Directory_Lifetime"))
+      else if(!strcasecmp(key_name, "Entries_LWMark"))
         {
-          ppolicy->directory_expiration_delay = atoi(key_value);
+          ppolicy->entries_lwmark = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "NbEntries_HighWater"))
+      else if(!strcasecmp(key_name, "Cache_FDs"))
         {
-          ppolicy->hwmark_nb_entries = atoi(key_value);
+          ppolicy->use_fd_cache = StrToBoolean(key_value);
         }
-      else if(!strcasecmp(key_name, "NbEntries_LowWater"))
+      else if(!strcasecmp(key_name, "LRU_Run_Interval"))
         {
-          ppolicy->lwmark_nb_entries = atoi(key_value);
+          ppolicy->lru_run_interval = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Runtime_Interval"))
+      else if(!strcasecmp(key_name, "FD_Limit_Percent"))
         {
-          ppolicy->run_interval = atoi(key_value);
+          ppolicy->fd_limit_percent = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "Nb_Call_Before_GC"))
+      else if(!strcasecmp(key_name, "FD_HWMark_Percent"))
         {
-          ppolicy->nb_call_before_gc = atoi(key_value);
+          ppolicy->fd_hwmark_percent = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "FD_LWMark_Percent"))
+        {
+          ppolicy->fd_lwmark_percent = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "Reaper_Work"))
+        {
+          ppolicy->reaper_work = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "Biggest_Window"))
+        {
+          ppolicy->biggest_window = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "Required_Progress"))
+        {
+          ppolicy->required_progress = atoi(key_value);
+        }
+      else if(!strcasecmp(key_name, "Futility_Count"))
+        {
+          ppolicy->futility_count = atoi(key_value);
         }
       else
         {
@@ -492,14 +492,8 @@ void cache_inode_print_conf_hash_parameter(FILE * output, cache_inode_parameter_
 void cache_inode_print_conf_client_parameter(FILE * output,
                                              cache_inode_client_parameter_t param)
 {
-  fprintf(output, "CacheInode Client: LRU_Prealloc_PoolSize        = %d\n",
-          param.lru_param.nb_entry_prealloc);
-  fprintf(output, "CacheInode Client: LRU_Nb_Call_Gc_invalid       = %d\n",
-          param.lru_param.nb_call_gc_invalid);
-  fprintf(output, "CacheInode Client: Entry_Prealloc_PoolSize      = %d\n",
+  fprintf(output, "CacheInode Client: Entry_Prealloc_PoolSize      = %jd\n",
           param.nb_prealloc_entry);
-  fprintf(output, "CacheInode Client: ParentData_Prealloc_PoolSize = %d\n",
-          param.nb_pre_parent);
   fprintf(output, "CacheInode Client: Attr_Expiration_Time         = %d\n",
           (int)param.grace_period_attr);
   fprintf(output, "CacheInode Client: Symlink_Expiration_Time      = %d\n",
@@ -522,17 +516,32 @@ void cache_inode_print_conf_client_parameter(FILE * output,
  * @return nothing (void function).
  *
  */
-void cache_inode_print_conf_gc_policy(FILE * output, cache_inode_gc_policy_t gcpolicy)
+void cache_inode_print_conf_gc_policy(FILE * output,
+                                      cache_inode_gc_policy_t *gcpolicy)
 {
-  fprintf(output, "Garbage Policy: File_Lifetime       = %d\n",
-          gcpolicy.file_expiration_delay);
-  fprintf(output, "Garbage Policy: Directory_Lifetime  = %d\n",
-          gcpolicy.directory_expiration_delay);
-  fprintf(output, "Garbage Policy: NbEntries_HighWater = %d\n",
-          gcpolicy.hwmark_nb_entries);
-  fprintf(output, "Garbage Policy: NbEntries_LowWater  = %d\n",
-          gcpolicy.lwmark_nb_entries);
-  fprintf(output, "Garbage Policy: Nb_Call_Before_GC   = %d\n",
-          gcpolicy.nb_call_before_gc);
-  fprintf(output, "Garbage Policy: Runtime_Interval    = %d\n", gcpolicy.run_interval);
-}                               /* cache_inode_print_gc_pol */
+     fprintf(output,
+             "CacheInode_GC_Policy: HWMark_Entries = %d\n"
+             "CacheInode_GC_Policy: LWMark_Entries = %d\n"
+             "CacheInode_GC_Policy: Cache_FDs = %s\n"
+             "CacheInode_GC_Policy: LRU_Run_Interval = %d\n"
+             "CacheInode_GC_Policy: FD_Limit_Percent = %d\n"
+             "CacheInode_GC_Policy: FD_HWMark_Percent = %d\n"
+             "CacheInode_GC_Policy: FD_LWMark_Percent = %d\n"
+             "CacheInode_GC_Policy: Reaper_Work = %d\n"
+             "CacheInode_GC_Policy: Biggest_Window = %d\n"
+             "CacheInode_GC_Policy: Required_Progress = %d\n"
+             "CacheInode_GC_Policy: Futility_Count = %d\n",
+             gcpolicy->entries_lwmark,
+             gcpolicy->entries_hwmark,
+             (gcpolicy->use_fd_cache ?
+              "TRUE" :
+              "FALSE"),
+             gcpolicy->lru_run_interval,
+             gcpolicy->fd_limit_percent,
+             gcpolicy->fd_hwmark_percent,
+             gcpolicy->fd_lwmark_percent,
+             gcpolicy->reaper_work,
+             gcpolicy->biggest_window,
+             gcpolicy->required_progress,
+             gcpolicy->futility_count);
+} /* cache_inode_print_gc_policy */

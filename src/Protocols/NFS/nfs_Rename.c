@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -57,7 +57,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -71,11 +70,10 @@
  * Implements the NFS PROC SYMLINK function (for V2 and V3).
  *
  * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
+ * @param pexport [IN]    pointer to nfs export list
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
- * @param ht      [INOUT] cache inode hash table
- * @param preq    [IN]    pointer to SVC request related to this call 
+ * @param preq    [IN]    pointer to SVC request related to this call
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
  * @return NFS_REQ_OK if successfull \n
@@ -88,7 +86,6 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                exportlist_t * pexport /* IN  */ ,
                fsal_op_context_t * pcontext /* IN  */ ,
                cache_inode_client_t * pclient /* IN  */ ,
-               hash_table_t * ht /* INOUT */ ,
                struct svc_req *preq /* IN  */ ,
                nfs_res_t * pres /* OUT */ )
 {
@@ -103,7 +100,6 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
   cache_entry_t *should_not_exists = NULL;
   cache_entry_t *should_exists = NULL;
   cache_inode_status_t cache_status;
-  int rc;
   fsal_attrib_list_t *ppre_attr;
   fsal_attrib_list_t pre_attr;
   fsal_attrib_list_t *pnew_pre_attr;
@@ -113,10 +109,11 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
   fsal_attrib_list_t tst_attr;
   cache_inode_file_type_t parent_filetype;
   cache_inode_file_type_t new_parent_filetype;
+  int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
-      char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
+     char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
 
       switch (preq->rq_vers)
         {
@@ -166,10 +163,10 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                                          &(pres->res_dirop2.status),
                                          &(pres->res_create3.status),
                                          NULL,
-                                         &pre_attr, pcontext, pclient, ht, &rc)) == NULL)
+                                         &pre_attr, pcontext, pclient, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
-      return rc;
+      goto out;
     }
 
   /* Convert todir file handle into a cache_entry */
@@ -181,10 +178,10 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                                              &(pres->res_create3.status),
                                              NULL,
                                              &new_parent_attr,
-                                             pcontext, pclient, ht, &rc)) == NULL)
+                                             pcontext, pclient, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
-      return rc;
+      goto out;
     }
 
   /* get the attr pointers */
@@ -212,7 +209,8 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
           break;
         }
 
-      return NFS_REQ_OK;
+      rc = NFS_REQ_OK;
+      goto out;
     }
 
   switch (preq->rq_vers)
@@ -245,18 +243,20 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
        */
       should_not_exists = cache_inode_lookup(new_parent_pentry,
                                              &new_entry_name,
-                                             pexport->cache_inode_policy,
                                              &tst_attr,
-                                             ht, pclient, pcontext, &cache_status);
+                                             pclient,
+                                             pcontext,
+                                             &cache_status);
 
       if(cache_status == CACHE_INODE_NOT_FOUND)
         {
           /* We need to lookup over the old entry also */
           should_exists = cache_inode_lookup(parent_pentry,
                                              &entry_name,
-                                             pexport->cache_inode_policy,
                                              &tst_attr,
-                                             ht, pclient, pcontext, &cache_status);
+                                             pclient,
+                                             pcontext,
+                                             &cache_status);
 
           /* Rename entry */
           if(cache_status == CACHE_INODE_SUCCESS)
@@ -264,7 +264,9 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                                &entry_name,
                                new_parent_pentry,
                                &new_entry_name,
-                               &attr, &new_attr, ht, pclient, pcontext, &cache_status);
+                               &attr, &new_attr,
+                               pclient,
+                               pcontext, &cache_status);
 
           if(cache_status == CACHE_INODE_SUCCESS)
             {
@@ -294,7 +296,8 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
 
                 }
 
-              return NFS_REQ_OK;
+              rc = NFS_REQ_OK;
+              goto out;
             }
         }
       else
@@ -332,26 +335,30 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
 
                     }
 
-                  return NFS_REQ_OK;
+                  rc = NFS_REQ_OK;
+                  goto out;
                 }
 
             }
 
-          /* New entry already exists. In this case (see RFC), entry should be compatible: Both are non-directories or 
-           * both are directories and 'todir' is empty. If compatible, old 'todir' entry is scratched, if not returns EEXISTS */
+          /* New entry already exists. In this case (see RFC), entry
+           * should be compatible: Both are non-directories or both
+           * are directories and 'todir' is empty. If compatible, old
+           * 'todir' entry is scratched, if not returns EEXISTS */
           if(should_not_exists != NULL)
             {
               /* We need to lookup over the old entry also */
               if((should_exists = cache_inode_lookup(parent_pentry,
                                                      &entry_name,
-                                                     pexport->cache_inode_policy,
                                                      &tst_attr,
-                                                     ht,
                                                      pclient,
-                                                     pcontext, &cache_status)) != NULL)
+                                                     pcontext,
+                                                     &cache_status))
+                 != NULL)
                 {
-                  /* If pentry is the same for source and target, then we are trying to rename
-                   * a hard link to another hard link with the same inode. This is a noop. */
+                  /* If pentry is the same for source and target, then
+                   * we are trying to rename a hard link to another
+                   * hard link with the same inode. This is a noop. */
                   if (should_not_exists == should_exists)
                     {
                       switch (preq->rq_vers)
@@ -359,7 +366,7 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                         case NFS_V2:
                           pres->res_stat2 = NFS_OK;
                           break;
-                          
+
                         case NFS_V3:
                           /*
                            * Build Weak Cache Coherency
@@ -382,7 +389,8 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                           
                         }
                       
-                      return NFS_REQ_OK;                      
+                      rc = NFS_REQ_OK;
+                      goto out;
                     }
                   
                   if(cache_inode_type_are_rename_compatible
@@ -392,7 +400,6 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                       if(cache_inode_remove(new_parent_pentry,
                                             &new_entry_name,
                                             &tst_attr,
-                                            ht,
                                             pclient,
                                             pcontext,
                                             &cache_status) == CACHE_INODE_SUCCESS)
@@ -403,7 +410,6 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                                                 &new_entry_name,
                                                 &attr,
                                                 &new_attr,
-                                                ht,
                                                 pclient,
                                                 pcontext,
                                                 &cache_status) == CACHE_INODE_SUCCESS)
@@ -436,17 +442,18 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
 
                                 }
 
-                              return NFS_REQ_OK;
+                              rc = NFS_REQ_OK;
+                              goto out;
                             }
                         }
 
                     }
-                }               /*  if( cache_inode_type_are_rename_compatible( should_exists, should_not_exists ) ) */
+                }
             }
 
-          /* if( ( should_exists = cache_inode_lookup( parent_pentry, .... */
-          /* If this point is reached, then destination object already exists with that name in the directory 
-             and types are not compatible, we should return that the file exists */
+          /* If this point is reached, then destination object already
+             exists with that name in the directory and types are not
+             compatible, we should return that the file exists */
           cache_status = CACHE_INODE_ENTRY_EXISTS;
         }                       /* if( should_not_exists != NULL ) */
     }
@@ -454,7 +461,8 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
   /* If we are here, there was an error */
   if(nfs_RetryableError(cache_status))
     {
-      return NFS_REQ_DROP;
+      rc = NFS_REQ_DROP;
+      goto out;
     }
 
   nfs_SetFailedStatus(pcontext, pexport,
@@ -469,7 +477,22 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                       new_parent_pentry,
                       pnew_pre_attr, &(pres->res_rename3.RENAME3res_u.resfail.todir_wcc));
 
-  return NFS_REQ_OK;
+  rc = NFS_REQ_OK;
+
+out:
+  if (parent_pentry)
+      cache_inode_put(parent_pentry, pclient);
+
+  if (new_parent_pentry)
+      cache_inode_put(new_parent_pentry, pclient);
+
+  if (should_not_exists)
+      cache_inode_put(should_not_exists, pclient);
+
+  if (should_exists)
+      cache_inode_put(should_exists, pclient);
+
+  return (rc);
 
 }                               /* nfs_Rename */
 

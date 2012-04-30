@@ -98,12 +98,11 @@ int _9p_unlinkat( _9p_request_data_t * preq9p,
   snprintf( name.name, FSAL_MAX_NAME_LEN, "%.*s", *name_len, name_str ) ;
 
   if( cache_inode_remove( pdfid->pentry,
-			  &name,
-			  &fsalattr,
-			  pwkrdata->ht,
-                          &pwkrdata->cache_inode_client, 
-                          &pdfid->fsal_op_context, 
-     			  &cache_status) != CACHE_INODE_SUCCESS )
+                          &name,
+                          &fsalattr,
+                          &pwkrdata->cache_inode_client,
+                          &pdfid->fsal_op_context,
+                          &cache_status) != CACHE_INODE_SUCCESS )
     {
       err = _9p_tools_errno( cache_status ) ; ;
       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;

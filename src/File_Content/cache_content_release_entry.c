@@ -86,9 +86,6 @@ cache_content_status_t cache_content_release_entry(cache_content_entry_t * pentr
   /* stat */
   pclient->stat.func_stats.nb_call[CACHE_CONTENT_RELEASE_ENTRY] += 1;
 
-  /* Remove the link between the Cache Inode entry and the File Content entry */
-  pentry->pentry_inode->object.file.pentry_content = NULL;
-
   /* close the associated opened file */
   if(pentry->local_fs_entry.opened_file.local_fd > 0)
     {

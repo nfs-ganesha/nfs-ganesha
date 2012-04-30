@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -57,7 +57,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -75,7 +74,6 @@
  * @param pexport [IN]    pointer to nfs export list 
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
- * @param ht      [INOUT] cache inode hash table
  * @param preq    [IN]    pointer to SVC request related to this call 
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
@@ -89,7 +87,6 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                 exportlist_t * pexport /* IN  */ ,
                 fsal_op_context_t * pcontext /* IN  */ ,
                 cache_inode_client_t * pclient /* IN  */ ,
-                hash_table_t * ht /* INOUT */ ,
                 struct svc_req *preq /* IN  */ ,
                 nfs_res_t * pres /* OUT */ )
 {
@@ -100,7 +97,7 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
   char *str_target_path = NULL;
   cache_inode_create_arg_t create_arg;
   fsal_accessmode_t mode = 0777;
-  cache_entry_t *symlink_pentry;
+  cache_entry_t *symlink_pentry = NULL;
   cache_entry_t *parent_pentry;
   cache_inode_file_type_t parent_filetype;
   fsal_attrib_list_t parent_attr;
@@ -108,10 +105,10 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
   fsal_attrib_list_t attributes_symlink;
   fsal_attrib_list_t attr_parent_after;
   fsal_attrib_list_t *ppre_attr;
-  int rc;
   cache_inode_status_t cache_status;
   cache_inode_status_t cache_status_parent;
   fsal_handle_t *pfsal_handle;
+  int rc = NFS_REQ_OK;
 #ifdef _USE_QUOTA
   fsal_status_t fsal_status ;
 #endif
@@ -161,10 +158,10 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                                          &(pres->res_symlink3.status),
                                          NULL,
                                          &parent_attr,
-                                         pcontext, pclient, ht, &rc)) == NULL)
+                                         pcontext, pclient, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
-      return rc;
+      goto out;;
     }
 
   /* get directory attributes before action (for V3 reply) */
@@ -190,7 +187,8 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
           break;
         }
 
-      return NFS_REQ_OK;
+      rc = NFS_REQ_OK;
+      goto out;
     }
 
 #ifdef _USE_QUOTA
@@ -212,7 +210,8 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
              break;
          }
 
-       return NFS_REQ_OK ;
+       rc = NFS_REQ_OK;
+       goto out;
      }
 #endif /* _USE_QUOTA */
 
@@ -230,8 +229,6 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
       break;
     }
 
-  symlink_pentry = NULL;
-
   if(str_symlink_name == NULL ||
      *str_symlink_name == '\0'||
      str_target_path == NULL  ||
@@ -248,11 +245,9 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
       if((symlink_pentry = cache_inode_create(parent_pentry,
                                               &symlink_name,
                                               SYMBOLIC_LINK,
-                                              pexport->cache_inode_policy,
                                               mode,
                                               &create_arg,
                                               &attr_symlink,
-                                              ht,
                                               pclient, pcontext, &cache_status)) != NULL)
         {
           switch (preq->rq_vers)
@@ -263,20 +258,15 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
 
             case NFS_V3:
               /* Build file handle */
-              if((pfsal_handle = cache_inode_get_fsal_handle(symlink_pentry,
-                                                             &cache_status)) == NULL)
-                {
-                  pres->res_symlink3.status = NFS3ERR_IO;
-                  return NFS_REQ_OK;
-                }
+              pfsal_handle = &symlink_pentry->handle;
 
               /* Some clients (like the Spec NFS benchmark) set attributes with the NFSPROC3_SYMLINK request */
               if(nfs3_Sattr_To_FSALattr(&attributes_symlink,
-                                        &parg->arg_symlink3.symlink.symlink_attributes) ==
-                 0)
+                                        &parg->arg_symlink3.symlink.symlink_attributes) == 0)
                 {
                   pres->res_create3.status = NFS3ERR_INVAL;
-                  return NFS_REQ_OK;
+                  rc = NFS_REQ_OK;
+                  goto out;
                 }
 
               /* Mode is managed above (in cache_inode_create), there is no need 
@@ -299,7 +289,6 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                   /* A call to cache_inode_setattr is required */
                   if(cache_inode_setattr(symlink_pentry,
                                          &attributes_symlink,
-                                         ht,
                                          pclient,
                                          pcontext, &cache_status) != CACHE_INODE_SUCCESS)
                     {
@@ -315,17 +304,24 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                                           &(pres->res_symlink3.SYMLINK3res_u.resok.
                                             dir_wcc), NULL, NULL, NULL);
 
-                      if(nfs_RetryableError(cache_status))
-                        return NFS_REQ_DROP;
+                      if(nfs_RetryableError(cache_status)) {
+                        rc = NFS_REQ_DROP;
+                        goto out;
+                      }
 
-                      return NFS_REQ_OK;
+                      rc = NFS_REQ_OK;
+                      goto out;
                     }
                 }
 
-	      pres->res_symlink3.status =
-		      nfs3_AllocateFH(&pres->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle);
-	      if(pres->res_symlink3.status !=  NFS3_OK)
-		return NFS_REQ_OK;
+              if ((pres->res_symlink3.status =
+                   (nfs3_AllocateFH(&pres->res_symlink3.SYMLINK3res_u
+                                    .resok.obj.post_op_fh3_u.handle)))
+                  != NFS3_OK) {
+                   pres->res_symlink3.status = NFS3ERR_IO;
+                   rc = NFS_REQ_OK;
+                   goto out;
+              }
 
               if(nfs3_FSALToFhandle
                  (&pres->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle,
@@ -335,13 +331,13 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                            post_op_fh3_u.handle.data.data_val);
 
                   pres->res_symlink3.status = NFS3ERR_BADHANDLE;
-                  return NFS_REQ_OK;
+                  rc = NFS_REQ_OK;
+                  goto out;
                 }
 
               /* The the parent pentry attributes for building Wcc Data */
               if(cache_inode_getattr(parent_pentry,
                                      &attr_parent_after,
-                                     ht,
                                      pclient,
                                      pcontext,
                                      &cache_status_parent) != CACHE_INODE_SUCCESS)
@@ -350,7 +346,8 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                            post_op_fh3_u.handle.data.data_val);
 
                   pres->res_symlink3.status = NFS3ERR_BADHANDLE;
-                  return NFS_REQ_OK;
+                  rc = NFS_REQ_OK;
+                  goto out;
                 }
 
               /* Set Post Op Fh3 structure */
@@ -359,7 +356,8 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
               /* Build entry attributes */
               nfs_SetPostOpAttr(pexport,
                                 &attr_symlink,
-                                &(pres->res_symlink3.SYMLINK3res_u.resok.obj_attributes));
+                                &(pres->res_symlink3.SYMLINK3res_u
+                                  .resok.obj_attributes));
 
               /* Build Weak Cache Coherency data */
               nfs_SetWccData(pexport,
@@ -371,14 +369,16 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
               break;
             }                   /* switch */
 
-          return NFS_REQ_OK;
+          rc = NFS_REQ_OK;
+          goto out;
         }
     }
 
   /* If we are here, there was an error */
   if(nfs_RetryableError(cache_status))
     {
-      return NFS_REQ_DROP;
+      rc = NFS_REQ_DROP;
+      goto out;
     }
 
   nfs_SetFailedStatus(pcontext, pexport,
@@ -392,7 +392,18 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                       &(pres->res_symlink3.SYMLINK3res_u.resfail.dir_wcc),
                       NULL, NULL, NULL);
 
-  return NFS_REQ_OK;
+  rc = NFS_REQ_OK;
+
+out:
+  /* return references */
+  if (parent_pentry)
+      cache_inode_put(parent_pentry, pclient);
+
+  if (symlink_pentry)
+      cache_inode_put(symlink_pentry, pclient);
+
+  return (rc);
+
 }                               /* nfs_Symlink */
 
 /**

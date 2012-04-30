@@ -8,16 +8,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  *
  */
 
@@ -57,7 +57,6 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
                 exportlist_t * pexport /* IN     */ ,
                 fsal_op_context_t * pcontext /* IN     */ ,
                 cache_inode_client_t * pclient /* INOUT  */ ,
-                hash_table_t * ht /* INOUT  */ ,
                 struct svc_req *preq /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ )
 {
@@ -99,7 +98,6 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
                               arg->exclusive,
                               &arg->alock,
                               &lock,
-                              ht,
                               &pentry,
                               pcontext,
                               pclient,
@@ -178,7 +176,6 @@ static void nlm4_cancel_message_resp(state_async_queue_t *arg)
  *  @param pexportlist [IN]
  *  @param pcontextp   [IN]
  *  @param pclient     [INOUT]
- *  @param ht          [INOUT]
  *  @param preq        [IN]
  *  @param pres        [OUT]
  *
@@ -187,7 +184,6 @@ int nlm4_Cancel_Message(nfs_arg_t            * parg     /* IN     */ ,
                         exportlist_t         * pexport  /* IN     */ ,
                         fsal_op_context_t    * pcontext /* IN     */ ,
                         cache_inode_client_t * pclient  /* INOUT  */ ,
-                        hash_table_t         * ht       /* INOUT  */ ,
                         struct svc_req       * preq     /* IN     */ ,
                         nfs_res_t            * pres     /* OUT    */ )
 {
@@ -206,7 +202,7 @@ int nlm4_Cancel_Message(nfs_arg_t            * parg     /* IN     */ ,
   if(nlm_client == NULL)
     rc = NFS_REQ_DROP;
   else
-    rc = nlm4_Cancel(parg, pexport, pcontext, pclient, ht, preq, pres);
+    rc = nlm4_Cancel(parg, pexport, pcontext, pclient, preq, pres);
 
   if(rc == NFS_REQ_OK)
     rc = nlm_send_async_res_nlm4(nlm_client, nlm4_cancel_message_resp, pres);

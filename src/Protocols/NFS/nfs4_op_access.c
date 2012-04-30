@@ -10,7 +10,7 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -57,7 +57,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -180,7 +179,7 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Perform the 'access' call */
   if(cache_inode_access(data->current_entry,
                         access_mask,
-                        data->ht, data->pclient,
+                        data->pclient,
                         data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
         {
       res_ACCESS4.ACCESS4res_u.resok4.access = res_ACCESS4.ACCESS4res_u.resok4.supported;
@@ -197,7 +196,7 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       access_mask = nfs_get_access_mask(ACCESS4_READ, &attr);
       if(cache_inode_access(data->current_entry,
                             access_mask,
-                            data->ht, data->pclient,
+                            data->pclient,
                             data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
         res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_READ;
 
@@ -206,7 +205,7 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
           access_mask = nfs_get_access_mask(ACCESS4_LOOKUP, &attr);
           if(cache_inode_access(data->current_entry,
                                 access_mask,
-                                data->ht, data->pclient,
+                                data->pclient,
                                 data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
             res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_LOOKUP;
     }
@@ -214,14 +213,14 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       access_mask = nfs_get_access_mask(ACCESS4_MODIFY, &attr);
       if(cache_inode_access(data->current_entry,
                             access_mask,
-                            data->ht, data->pclient,
+                            data->pclient,
                             data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
         res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_MODIFY;
 
       access_mask = nfs_get_access_mask(ACCESS4_EXTEND, &attr);
       if(cache_inode_access(data->current_entry,
                             access_mask,
-                            data->ht, data->pclient,
+                            data->pclient,
                             data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
         res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_EXTEND;
 
@@ -230,7 +229,7 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
           access_mask = nfs_get_access_mask(ACCESS4_DELETE, &attr);
           if(cache_inode_access(data->current_entry,
                                 access_mask,
-                                data->ht, data->pclient,
+                                data->pclient,
                                 data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
             res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_DELETE;
         }
@@ -240,7 +239,7 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
           access_mask = nfs_get_access_mask(ACCESS4_EXECUTE, &attr);
           if(cache_inode_access(data->current_entry,
                                 access_mask,
-                                data->ht, data->pclient,
+                                data->pclient,
                                 data->pcontext, &cache_status) == CACHE_INODE_SUCCESS)
             res_ACCESS4.ACCESS4res_u.resok4.access |= ACCESS4_EXECUTE;
         }

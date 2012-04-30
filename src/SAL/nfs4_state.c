@@ -57,6 +57,7 @@
 #include "fsal.h"
 #include "sal_functions.h"
 #include "stuff_alloc.h"
+#include "cache_inode_lru.h"
 
 /**
  *
@@ -108,6 +109,170 @@ int state_conflict(state_t      * pstate,
 
 /**
  *
+ * state_add_impl: adds a new state to a file pentry
+ *
+ * Adds a new state to a file pentry.  This version of the function
+ * does not take the state lock on the entry.  It exists to allow
+ * callers to integrate state into a larger operation.
+ *
+ * @param pentry        [INOUT] cache entry to operate on
+ * @param state_type    [IN]    state to be defined
+ * @param pstate_data   [IN]    data related to this state
+ * @param powner_input  [IN]    related open_owner
+ * @param pclient       [INOUT] cache inode client to be used
+ * @param pcontext      [IN]    FSAL credentials
+ * @param ppstate       [OUT]   pointer to a pointer to the new state
+ * @param pstatus       [OUT]   returned status
+ *
+ * @return the same as *pstatus
+ *
+ */
+state_status_t state_add_impl(cache_entry_t         * pentry,
+                              state_type_t            state_type,
+                              state_data_t          * pstate_data,
+                              state_owner_t         * powner_input,
+                              cache_inode_client_t  * pclient,
+                              fsal_op_context_t     * pcontext,
+                              state_t              ** ppstate,
+                              state_status_t        * pstatus)
+{
+  state_t              * pnew_state  = NULL;
+  state_t              * piter_state = NULL;
+  char                   debug_str[OTHERSIZE * 2 + 1];
+  struct glist_head    * glist;
+  cache_inode_status_t   cache_status;
+  bool_t                 got_pinned = FALSE;
+
+  if(glist_empty(&pentry->state_list))
+    {
+      cache_status = cache_inode_inc_pin_ref(pentry);
+
+      if(cache_status != CACHE_INODE_SUCCESS)
+        {
+          *pstatus = cache_inode_status_to_state_status(cache_status);
+          LogDebug(COMPONENT_STATE,
+                   "Could not pin file");
+          return *pstatus;
+        }
+
+      got_pinned = TRUE;
+    }
+
+  GetFromPool(pnew_state, &pclient->pool_state_v4, state_t);
+
+  if(pnew_state == NULL)
+    {
+      LogDebug(COMPONENT_STATE,
+               "Can't allocate a new file state from cache pool");
+
+      /* stat */
+      *pstatus = STATE_MALLOC_ERROR;
+
+      if(got_pinned)
+        cache_inode_dec_pin_ref(pentry);
+
+      return *pstatus;
+    }
+
+  memset(pnew_state, 0, sizeof(*pnew_state));
+
+  /* Browse the state's list */
+  glist_for_each(glist, &pentry->state_list)
+    {
+      piter_state = glist_entry(glist, state_t, state_list);
+
+      if(state_conflict(piter_state, state_type, pstate_data))
+        {
+          LogDebug(COMPONENT_STATE,
+                   "new state conflicts with another state for pentry %p",
+                   pentry);
+
+          /* stat */
+          ReleaseToPool(pnew_state, &pclient->pool_state_v4);
+
+          *pstatus = STATE_STATE_CONFLICT;
+
+          if(got_pinned)
+            cache_inode_dec_pin_ref(pentry);
+
+          return *pstatus;
+        }
+    }
+
+  /* Add the stateid.other, this will increment pentry->object.file.state_current_counter */
+  if(!nfs4_BuildStateId_Other(pentry,
+                              pcontext,
+                              powner_input,
+                              pnew_state->stateid_other))
+    {
+      LogDebug(COMPONENT_STATE,
+               "Can't create a new state id for the pentry %p (E)", pentry);
+
+      ReleaseToPool(pnew_state, &pclient->pool_state_v4);
+
+      *pstatus = STATE_STATE_ERROR;
+
+      if(got_pinned)
+        cache_inode_dec_pin_ref(pentry);
+
+      return *pstatus;
+    }
+
+  /* Set the type and data for this state */
+  memcpy(&(pnew_state->state_data), pstate_data, sizeof(state_data_t));
+  pnew_state->state_type   = state_type;
+  pnew_state->state_seqid  = 0; /* will be incremented to 1 later */
+  pnew_state->state_pentry = pentry;
+  pnew_state->state_powner = powner_input;
+
+  if (isDebug(COMPONENT_STATE))
+    sprint_mem(debug_str, (char *)pnew_state->stateid_other, OTHERSIZE);
+
+  init_glist(&pnew_state->state_list);
+  init_glist(&pnew_state->state_owner_list);
+
+  /* Add the state to the related hashtable */
+  if(!nfs4_State_Set(pnew_state->stateid_other, pnew_state))
+    {
+      LogDebug(COMPONENT_STATE,
+               "Can't create a new state id %s for the pentry %p (F)",
+               debug_str, pentry);
+
+      ReleaseToPool(pnew_state, &pclient->pool_state_v4);
+
+      /* Return STATE_MALLOC_ERROR since most likely the nfs4_State_Set failed
+       * to allocate memory.
+       */
+      *pstatus = STATE_MALLOC_ERROR;
+
+      if(got_pinned)
+        cache_inode_dec_pin_ref(pentry);
+
+      return *pstatus;
+    }
+
+  /* Add state to list for cache entry */
+  glist_add_tail(&pentry->state_list, &pnew_state->state_list);
+
+  P(powner_input->so_mutex);
+  glist_add_tail(&powner_input->so_owner.so_nfs4_owner.so_state_list,
+                 &pnew_state->state_owner_list);
+  V(powner_input->so_mutex);
+
+  /* Copy the result */
+  *ppstate = pnew_state;
+
+  LogFullDebug(COMPONENT_STATE,
+               "Add State: %s", debug_str);
+
+  /* Regular exit */
+  *pstatus = STATE_SUCCESS;
+  return *pstatus;
+}                               /* state_add */
+
+
+/**
+ *
  * state_add: adds a new state to a file pentry
  *
  * Adds a new state to a file pentry
@@ -133,11 +298,6 @@ state_status_t state_add(cache_entry_t         * pentry,
                          state_t              ** ppstate,
                          state_status_t        * pstatus)
 {
-  state_t           * pnew_state  = NULL;
-  state_t           * piter_state = NULL;
-  char                debug_str[OTHERSIZE * 2 + 1];
-  struct glist_head * glist;
-
   /* Ensure that states are are associated only with the appropriate
      owners */
 
@@ -149,146 +309,21 @@ state_status_t state_add(cache_entry_t         * pentry,
         (state_type == STATE_TYPE_LAYOUT)) &&
        (powner_input->so_type != STATE_CLIENTID_OWNER_NFSV4)))
     {
-      return STATE_BAD_TYPE;
+      return (*pstatus = STATE_BAD_TYPE);
     }
 
-  /* Acquire lock to enter critical section on this entry */
-  P_w(&pentry->lock);
+  pthread_rwlock_wrlock(&pentry->state_lock);
+  state_add_impl(pentry, state_type, pstate_data, powner_input,
+                 pclient, pcontext, ppstate, pstatus);
+  pthread_rwlock_unlock(&pentry->state_lock);
 
-  GetFromPool(pnew_state, &pclient->pool_state_v4, state_t);
-
-  if(pnew_state == NULL)
-    {
-      LogDebug(COMPONENT_STATE,
-               "Can't allocate a new file state from cache pool");
-
-      /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
-
-      V_w(&pentry->lock);
-
-      *pstatus = STATE_MALLOC_ERROR;
-      return *pstatus;
-    }
-
-  memset(pnew_state, 0, sizeof(*pnew_state));
-
-  /* Brwose the state's list */
-  glist_for_each(glist, &pentry->object.file.state_list)
-    {
-      piter_state = glist_entry(glist, state_t, state_list);
-
-      if(state_conflict(piter_state, state_type, pstate_data))
-        {
-          LogDebug(COMPONENT_STATE,
-                   "new state conflicts with another state for pentry %p",
-                   pentry);
-
-          /* stat */
-          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
-
-          ReleaseToPool(pnew_state, &pclient->pool_state_v4);
-
-          V_w(&pentry->lock);
-
-          *pstatus = STATE_STATE_CONFLICT;
-          return *pstatus;
-        }
-    }
-
-  /* Add the stateid.other, this will increment pentry->object.file.state_current_counter */
-  if(!nfs4_BuildStateId_Other(pentry,
-                              pcontext,
-                              powner_input,
-                              pnew_state->stateid_other))
-    {
-      LogDebug(COMPONENT_STATE,
-               "Can't create a new state id for the pentry %p (E)", pentry);
-
-      /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
-
-      ReleaseToPool(pnew_state, &pclient->pool_state_v4);
-
-      V_w(&pentry->lock);
-
-      *pstatus = STATE_STATE_ERROR;
-      return *pstatus;
-    }
-
-  /* Set the type and data for this state */
-  memcpy(&(pnew_state->state_data), pstate_data, sizeof(state_data_t));
-  pnew_state->state_type   = state_type;
-  pnew_state->state_seqid  = 0; /* will be incremented to 1 later */
-  pnew_state->state_pentry = pentry;
-  pnew_state->state_powner = powner_input;
-
-  if (isDebug(COMPONENT_STATE))
-    sprint_mem(debug_str, (char *)pnew_state->stateid_other, OTHERSIZE);
-
-  init_glist(&pnew_state->state_list);
-  init_glist(&pnew_state->state_owner_list);
-
-  /* Add the state to the related hashtable */
-  if(!nfs4_State_Set(pnew_state->stateid_other, pnew_state))
-    {
-      LogDebug(COMPONENT_STATE,
-               "Can't create a new state id %s for the pentry %p (F)",
-               debug_str, pentry);
-
-      /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_ADD_STATE] += 1;
-
-      ReleaseToPool(pnew_state, &pclient->pool_state_v4);
-
-      V_w(&pentry->lock);
-
-      /* Return STATE_MALLOC_ERROR since most likely the nfs4_State_Set failed
-       * to allocate memory.
-       */
-      *pstatus = STATE_MALLOC_ERROR;
-      return *pstatus;
-    }
-
-  /* Add state to list for cache entry */
-  glist_add_tail(&pentry->object.file.state_list, &pnew_state->state_list);
-
-  P(powner_input->so_mutex);
-  glist_add_tail(&powner_input->so_owner.so_nfs4_owner.so_state_list,
-                 &pnew_state->state_owner_list);
-  V(powner_input->so_mutex);
-
-  /* Copy the result */
-  *ppstate = pnew_state;
-
-  LogFullDebug(COMPONENT_STATE,
-               "Add State: %s", debug_str);
-
-  V_w(&pentry->lock);
-
-  /* Regular exit */
-  *pstatus = STATE_SUCCESS;
   return *pstatus;
 }                               /* state_add */
 
-/**
- *
- * state_del: deletes a state from the hash's state
- *
- * Deletes a state from the hash's state
- *
- * @param pstate   [OUT]   pointer to the new state
- * @param pclient  [INOUT] related cache inode client
- * @param pstatus  [OUT]   returned status
- *
- * @return the same as *pstatus
- *
- */
-state_status_t state_del(state_t              * pstate,
-                         cache_inode_client_t * pclient,
-                         state_status_t       * pstatus)
+state_status_t state_del_locked(state_t              * pstate,
+                                cache_entry_t        * pentry,
+                                cache_inode_client_t * pclient)
 {
-  cache_entry_t * pentry = NULL;
   char            debug_str[OTHERSIZE * 2 + 1];
 
   if (isDebug(COMPONENT_STATE))
@@ -296,22 +331,13 @@ state_status_t state_del(state_t              * pstate,
 
   LogFullDebug(COMPONENT_STATE, "Deleting state %s", debug_str);
 
-  /* Locks the related pentry before operating on it */
-  pentry = pstate->state_pentry;
-
   /* Remove the entry from the HashTable */
   if(!nfs4_State_Del(pstate->stateid_other))
     {
-      /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_DEL_STATE] += 1;
-
       LogDebug(COMPONENT_STATE, "Could not delete state %s", debug_str);
 
-      *pstatus = STATE_STATE_ERROR;
-      return *pstatus;
+      return STATE_STATE_ERROR;
     }
-
-  P_w(&pentry->lock);
 
   /* Remove from list of states owned by owner */
 
@@ -331,8 +357,6 @@ state_status_t state_del(state_t              * pstate,
   if(pstate->state_type == STATE_TYPE_LOCK)
     glist_del(&pstate->state_data.lock.state_sharelist);
 
-  V_w(&pentry->lock);
-
   /* Remove from list of states for a particular export */
   P(pstate->state_pexport->exp_state_mutex);
   glist_del(&pstate->state_export_list);
@@ -342,7 +366,73 @@ state_status_t state_del(state_t              * pstate,
 
   LogFullDebug(COMPONENT_STATE, "Deleted state %s", debug_str);
 
-  *pstatus = STATE_SUCCESS;
+  if(glist_empty(&pentry->state_list))
+    cache_inode_dec_pin_ref(pentry);
+
+  return STATE_SUCCESS;
+}
+
+/**
+ *
+ * state_del: deletes a state from the hash's state
+ *
+ * Deletes a state from the hash's state
+ *
+ * @param pstate   [OUT]   pointer to the new state
+ * @param pclient  [INOUT] related cache inode client
+ * @param pstatus  [OUT]   returned status
+ *
+ * @return the same as *pstatus
+ *
+ */
+state_status_t state_del(state_t              * pstate,
+                         cache_inode_client_t * pclient,
+                         state_status_t       * pstatus)
+{
+  cache_entry_t *entry = pstate->state_pentry;
+
+  pthread_rwlock_wrlock(&entry->state_lock);
+
+  *pstatus = state_del_locked(pstate, pstate->state_pentry, pclient);
+
+  pthread_rwlock_unlock(&entry->state_lock);
 
   return *pstatus;
 }                               /* state_del */
+
+void state_nfs4_state_wipe(cache_entry_t        * pentry,
+                           cache_inode_client_t * pclient)
+{
+  struct glist_head * glist;
+  state_t           * pstate = NULL;
+
+  if(glist_empty(&pentry->state_list))
+    return;
+
+  /* Iterate through file's state to wipe out all stateids */
+  glist_for_each(glist, &pentry->state_list)
+    {
+      pstate = glist_entry(glist, state_t, state_list);
+
+      switch(pstate->state_type)
+        {
+          case STATE_TYPE_SHARE:
+            break;
+
+          case STATE_TYPE_LOCK:
+            break;
+
+          case STATE_TYPE_DELEG:
+            break;
+
+          case STATE_TYPE_LAYOUT:
+            break;
+
+          case STATE_TYPE_NONE:
+            break;
+        }
+      state_del_locked(pstate, pentry, pclient);
+    }
+
+  cache_inode_dec_pin_ref(pstate->state_pentry);
+}

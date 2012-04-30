@@ -49,7 +49,6 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "stuff_alloc.h"
 #include "nfs_core.h"
 
@@ -59,455 +58,272 @@
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
+#include <assert.h>
 
 /**
+ * @brief Reads/Writes through the cache layer
  *
- * cache_inode_rdwr: Reads/Writes through the cache layer.
+ * This function performs I/O, either using the Ganesha in-memory or
+ * disk cache or through the FSAL directly.  The caller MUST NOT hold
+ * either the content or attribute locks when calling this function.
  *
- * Reads/Writes through the cache layer.
+ * @param entry [in] Cache entry indicating file to be read or written
+ * @param io_direction [in] Whether this is a read or a write
+ * @param offset [in] Absolute file position for I/O
+ * @param io_size [in] Amount of data to be read or written
+ * @param bytes_moved [ouT] The length of data successfuly read or written
+ * @param buffer [in,out] Where in memory to read or write data
+ * @param eof [out] Whether a READ encountered the end of file.  May
+ *                  be NULL for writes.
+ * @param client [in] Structure for managing per-client resources
+ * @param context [in] FSAL credentials
+ * @param stable [in] The stability of the write to perform
+ * @param status [out] Status of operation
  *
- * @param pentry [IN] entry in cache inode layer whose content is to be accessed.
- * @param read_or_write [IN] a flag of type cache_content_io_direction_t to tell if a read or write is to be done.
- * @param seek_descriptor [IN] absolute position (in the FSAL file) where the IO will be done.
- * @param buffer_size [IN] size of the buffer pointed by parameter 'buffer'.
- * @param pio_size [OUT] the size of the io that was successfully made.
- * @param pfsal_attr [OUT] the FSAL attributes after the operation.
- * @param buffer write:[IN] read:[OUT] the buffer for the data.
- * @param ht [INOUT] the hashtable used for managing the cache.
- * @param pclient [IN]  ressource allocated by the client for the nfs management.
- * @param pcontext [IN] fsal context for the operation.
- * @param stable[IN] if FALSE, data will be written to unstable storage (for implementing write/commit)
- * @pstatus [OUT] returned status.
- *
- * @return CACHE_CONTENT_SUCCESS is successful .
- *
- * @todo: BUGAZEOMEU; gestion de la taille du fichier a prendre en compte.
- *
+ * @return CACHE_INODE_SUCCESS or various errors
  */
 
-cache_inode_status_t cache_inode_rdwr(cache_entry_t * pentry,
-                                      cache_inode_io_direction_t read_or_write,
-                                      fsal_seek_t * seek_descriptor,
-                                      fsal_size_t buffer_size,
-                                      fsal_size_t * pio_size,
-                                      fsal_attrib_list_t * pfsal_attr,
-                                      caddr_t buffer,
-                                      fsal_boolean_t * p_fsal_eof,
-                                      hash_table_t * ht,
-                                      cache_inode_client_t * pclient,
-                                      fsal_op_context_t * pcontext,
-                                      uint64_t stable, 
-				      cache_inode_status_t * pstatus)
+cache_inode_status_t
+cache_inode_rdwr(cache_entry_t *entry,
+                 cache_inode_io_direction_t io_direction,
+                 uint64_t offset,
+                 size_t io_size,
+                 size_t *bytes_moved,
+                 void *buffer,
+                 bool_t *eof,
+                 cache_inode_client_t *client,
+                 fsal_op_context_t *context,
+                 cache_inode_stability_t stable,
+                 cache_inode_status_t *status)
 {
-  int statindex = 0;
-  cache_content_io_direction_t io_direction;
-  cache_content_status_t cache_content_status;
-  fsal_status_t fsal_status;
-  fsal_openflags_t openflags;
-  fsal_size_t io_size;
-  fsal_attrib_list_t post_write_attr;
-  fsal_status_t fsal_status_getattr;
-  struct stat buffstat;
+     /* Error return from FSAL calls */
+     fsal_status_t fsal_status = {0, 0};
+     /* Required open mode to successfully read or write */
+     fsal_openflags_t openflags = FSAL_O_CLOSED;
+     fsal_openflags_t loflags;
+     /* TRUE if we have taken the content lock on 'entry' */
+     bool_t content_locked = FALSE;
+     /* TRUE if we have taken the attribute lock on 'entry' */
+     bool_t attributes_locked = FALSE;
+     /* TRUE if we opened a previously closed FD */
+     bool_t opened = FALSE;
+     /* We need this until Jim Lieb redoes the FSAL interface.  But
+        there's no reason to make users of cache_inode deal with it. */
+     fsal_seek_t seek_descriptor = {
+          .whence = FSAL_SEEK_SET,
+          .offset = offset
+     };
 
-  /* Set the return default to CACHE_INODE_SUCCESS */
-  *pstatus = CACHE_INODE_SUCCESS;
+     /* Set flags for a read or write, as appropriate */
+     if (io_direction == CACHE_INODE_READ) {
+          openflags = FSAL_O_RDONLY;
+     } else {
+          openflags = FSAL_O_WRONLY;
+     }
 
-  /* For now, only FSAL_SEEK_SET is supported */
-  if(seek_descriptor->whence != FSAL_SEEK_SET)
-    {
-      LogCrit(COMPONENT_CACHE_INODE,
-              "Implementation trouble: seek_descriptor was not a 'FSAL_SEEK_SET' cursor");
-      *pstatus = CACHE_INODE_INVALID_ARGUMENT;
-      return *pstatus;
-    }
+     /* IO is done only on REGULAR_FILEs */
+     if (entry->type != REGULAR_FILE) {
+          *status = CACHE_INODE_BAD_TYPE;
+          goto out;
+     }
 
-  io_size = buffer_size;
+     if (stable == CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER) {
+          /* Write to memory */
+          pthread_rwlock_wrlock(&entry->content_lock);
+          content_locked = TRUE;
 
-  LogDebug(COMPONENT_CACHE_INODE,
-           "cache_inode_rdwr: INODE : IO Size = %llu fdsize =%zu seeksize=%zu",
-           buffer_size, sizeof(fsal_file_t), sizeof(fsal_seek_t));
+          /* Is the unstable_data buffer allocated? */
+          if ((entry->object.file.unstable_data.buffer == NULL) &&
+              (io_size <= CACHE_INODE_UNSTABLE_BUFFERSIZE)) {
+               if ((entry->object.file.unstable_data.buffer =
+                    Mem_Alloc_Label(CACHE_INODE_UNSTABLE_BUFFERSIZE,
+                                    "Cache_Inode Unstable Buffer")) == NULL) {
+                    *status = CACHE_INODE_MALLOC_ERROR;
+                    goto out;
+               }
 
-  /* stat */
-  pclient->stat.nb_call_total += 1;
-  if(read_or_write == CACHE_INODE_READ)
-    {
-      statindex = CACHE_INODE_READ_DATA;
-      io_direction = CACHE_CONTENT_READ;
-      openflags = FSAL_O_RDONLY;
-      pclient->stat.func_stats.nb_call[CACHE_INODE_READ_DATA] += 1;
-    }
-  else
-    {
-      statindex = CACHE_INODE_WRITE_DATA;
-      io_direction = CACHE_CONTENT_WRITE;
-      openflags = FSAL_O_WRONLY;
-      pclient->stat.func_stats.nb_call[CACHE_INODE_WRITE_DATA] += 1;
-    }
+               entry->object.file.unstable_data.offset = offset;
+               entry->object.file.unstable_data.length = io_size;
 
-  P_w(&pentry->lock);
+               memcpy(entry->object.file.unstable_data.buffer,
+                      buffer, io_size);
 
-  /* IO are done only on REGULAR_FILEs */
-  if(pentry->internal_md.type != REGULAR_FILE)
-    {
-      *pstatus = CACHE_INODE_BAD_TYPE;
-      V_w(&pentry->lock);
+               pthread_rwlock_wrlock(&entry->attr_lock);
+               attributes_locked = TRUE;
+               cache_inode_set_time_current(&entry->attributes.mtime);
+               *bytes_moved = io_size;
+          } else {
+               if ((entry->object.file.unstable_data.offset < offset) &&
+                   (io_size + offset < CACHE_INODE_UNSTABLE_BUFFERSIZE)) {
+                    entry->object.file.unstable_data.length =
+                         io_size + offset;
+                    memcpy(entry->object.file.unstable_data.buffer +
+                           offset, buffer, io_size);
 
-      /* stats */
-      pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;
+                    pthread_rwlock_wrlock(&entry->attr_lock);
+                    attributes_locked = TRUE;
+                    cache_inode_set_time_current(&entry->attributes.mtime);
+                    *bytes_moved = io_size;
+               } else {
+                    /* Go back to stable writes */
+                    stable = CACHE_INODE_SAFE_WRITE_TO_FS;
+               }
+          }
+          if (content_locked) {
+               pthread_rwlock_unlock(&entry->content_lock);
+               content_locked = FALSE;
+          }
+          if (attributes_locked) {
+               pthread_rwlock_unlock(&entry->attr_lock);
+               attributes_locked = FALSE;
+          }
+     }
 
-      return *pstatus;
-    }
-
-  /* Non absolute address within the file are not supported (we act only like pread/pwrite) */
-  if(seek_descriptor->whence != FSAL_SEEK_SET)
-    {
-      *pstatus = CACHE_INODE_INVALID_ARGUMENT;
-      V_w(&pentry->lock);
-
-      /* stats */
-      pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;
-
-      return *pstatus;
-    }
-
-  /* Do we use stable or unstable storage ? */
-  if(stable == FSAL_UNSAFE_WRITE_TO_GANESHA_BUFFER)
-    {
-      /* Data will be stored in memory and not flush to FSAL */
-
-      /* If the unstable_data buffer allocated ? */
-      if(pentry->object.file.unstable_data.buffer == NULL)
-        {
-          if((pentry->object.file.unstable_data.buffer =
-              Mem_Alloc_Label(CACHE_INODE_UNSTABLE_BUFFERSIZE,
-                              "Cache_Inode Unstable Buffer")) == NULL)
-            {
-              *pstatus = CACHE_INODE_MALLOC_ERROR;
-              V_w(&pentry->lock);
-
-              /* stats */
-              pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;
-
-              return *pstatus;
-            }
-
-          pentry->object.file.unstable_data.offset = seek_descriptor->offset;
-          pentry->object.file.unstable_data.length = buffer_size;
-
-          memcpy(pentry->object.file.unstable_data.buffer, buffer, buffer_size);
-
-          /* Set mtime and ctime */
-          cache_inode_set_time_current( &pentry->attributes.mtime ) ;  
-
-          /* BUGAZOMEU : write operation must NOT modify file's ctime */
-          pentry->attributes.ctime = pentry->attributes.mtime;
-
-          *pio_size = buffer_size;
-        }                       /* if( pentry->object.file.unstable_data.buffer == NULL ) */
-      else
-        {
-          if((pentry->object.file.unstable_data.offset < seek_descriptor->offset) &&
-             (buffer_size + seek_descriptor->offset < CACHE_INODE_UNSTABLE_BUFFERSIZE))
-            {
-              pentry->object.file.unstable_data.length =
-                  buffer_size + seek_descriptor->offset;
-              memcpy((char *)(pentry->object.file.unstable_data.buffer +
-                              seek_descriptor->offset), buffer, buffer_size);
-
-              /* Set mtime and ctime */
-              cache_inode_set_time_current( &pentry->attributes.mtime ) ;
-
-              /* BUGAZOMEU : write operation must NOT modify file's ctime */
-              pentry->attributes.ctime = pentry->attributes.mtime;
-
-              *pio_size = buffer_size;
-            }
-          else
-            {
-              /* Go back to regular situation */
-              stable = FSAL_SAFE_WRITE_TO_FS;
-            }
-        }
-
-    }
-  /* if( stable == FALSE ) */
-  if(stable == FSAL_SAFE_WRITE_TO_FS ||
-     stable == FSAL_UNSAFE_WRITE_TO_FS_BUFFER)
-    {
-      /* Calls file content cache to operate on the cache */
-      if(pentry->object.file.pentry_content != NULL)
-        {
-          /* Entry is data cached */
-          cache_content_rdwr(pentry->object.file.pentry_content,
-                             io_direction,
-                             seek_descriptor,
-                             &io_size,
-                             pio_size,
-                             buffer,
-                             p_fsal_eof,
-                             &buffstat,
-                             (cache_content_client_t *) pclient->pcontent_client,
-                             pcontext, &cache_content_status);
-
-          /* If the entry under resync */
-          if(cache_content_status == CACHE_CONTENT_LOCAL_CACHE_NOT_FOUND)
-            {
-              /* Data cache gc has removed this entry */
-              if(cache_content_new_entry(pentry,
-                                         NULL,
-                                         (cache_content_client_t *)pclient->pcontent_client, 
-                                         RENEW_ENTRY, pcontext,
-                                         &cache_content_status) == NULL)
-                {
-                  /* Entry could not be recoverd, cache_content_status contains an error, let it be managed by the next block */
-                  LogCrit(COMPONENT_CACHE_INODE,
-                          "Read/Write Operation through cache failed with status %d (renew process failed)",
-                          cache_content_status);
-
-		  /* Will go to the end of the function on the error clause with cache_content_status describing the error */
-                }
-              else
-                {
-                  /* Entry was successfully renewed */
-                  LogInfo(COMPONENT_CACHE_INODE,
-                          "----> File Content Entry %p was successfully renewed",
-                          pentry);
-
-                  /* Try to access the content of the file again */
-                  cache_content_rdwr(pentry->object.file.pentry_content,
-                                     io_direction,
-                                     seek_descriptor,
-                                     &io_size,
-                                     pio_size,
-                                     buffer,
-                                     p_fsal_eof,
-                                     &buffstat,
-                                     (cache_content_client_t *) pclient->pcontent_client,
-                                     pcontext, &cache_content_status);
-
-                  /* No management of cache_content_status in case of failure, this will be done
-                   * within the next block */
-                }
-
-            }
-
-          if(cache_content_status != CACHE_CONTENT_SUCCESS)
-            {
-              *pstatus = cache_content_error_convert(cache_content_status);
-
-              V_w(&pentry->lock);
-
-              LogCrit(COMPONENT_CACHE_INODE,
-                      "Read/Write Operation through cache failed with status %d",
-                      cache_content_status);
-
-              /* stats */
-              pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;
-
-              return *pstatus;
-            }
-
-          LogFullDebug(COMPONENT_CACHE_INODE,
-                       "cache_inode_rdwr: inode/dc: io_size=%llu, pio_size=%llu,  eof=%d, seek=%s %"PRIu64,
-                       io_size, *pio_size, *p_fsal_eof, format_seek_whence(seek_descriptor->whence),
-                       seek_descriptor->offset);
-
-          LogMidDebug(COMPONENT_CACHE_INODE,
-                       "cache_inode_rdwr: INODE  AFTER : IO Size = %llu %llu",
-                       io_size, *pio_size);
-
-          /* Use information from the buffstat to update the file metadata */
-          pentry->attributes.filesize = buffstat.st_size;
-          pentry->attributes.spaceused =
-              buffstat.st_blksize * buffstat.st_blocks;
-
-        }
-      else
-        {
-          /* No data cache entry, we operated directly on FSAL */
-          pentry->attributes.asked_attributes = pclient->attrmask;
-
-          /* We need to open if we don't have a cached
-           * descriptor or our open flags differs.
-           */
-          if(cache_inode_open(pentry,
-                              pclient,
-                              openflags, pcontext, pstatus) != CACHE_INODE_SUCCESS)
-            {
-              V_w(&pentry->lock);
-
-              /* stats */
-              pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;
-
-              return *pstatus;
-            }
+     if (stable == CACHE_INODE_SAFE_WRITE_TO_FS ||
+         stable == CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER) {
+          /* Write through the FSAL.  We need a write lock only
+             if we need to open or close a file descriptor. */
+          pthread_rwlock_rdlock(&entry->content_lock);
+          content_locked = TRUE;
+          loflags = entry->object.file.open_fd.openflags;
+          if ((!cache_inode_fd(entry)) ||
+              (loflags && loflags != FSAL_O_RDWR && loflags != openflags)) {
+               pthread_rwlock_unlock(&entry->content_lock);
+               pthread_rwlock_wrlock(&entry->content_lock);
+               loflags = entry->object.file.open_fd.openflags;
+               if ((!cache_inode_fd(entry)) ||
+                   (loflags && loflags != FSAL_O_RDWR &&
+                    loflags != openflags)) {
+                    if (cache_inode_open(entry,
+                                         client,
+                                         openflags,
+                                         context,
+                                         CACHE_INODE_FLAG_CONTENT_HAVE |
+                                         CACHE_INODE_FLAG_CONTENT_HOLD,
+                                         status) != CACHE_INODE_SUCCESS) {
+                         goto out;
+                    }
+                    opened = TRUE;
+               }
+          }
 
           /* Call FSAL_read or FSAL_write */
+          if (io_direction == CACHE_INODE_READ) {
+               fsal_status
+                    = FSAL_read(&(entry->object.file.open_fd.fd),
+                                &seek_descriptor,
+                                io_size,
+                                buffer,
+                                bytes_moved,
+                                eof);
+          } else {
+               fsal_status
+                    = FSAL_write(&(entry->object.file.open_fd.fd),
+                                 &seek_descriptor,
+                                 io_size,
+                                 buffer,
+                                 bytes_moved);
 
-          if(read_or_write == CACHE_INODE_READ)
-            {
-              fsal_status = FSAL_read(&(pentry->object.file.open_fd.fd),
-                                      seek_descriptor,
-                                      io_size, buffer, pio_size, p_fsal_eof);
-            }
-          else
-            {
-              fsal_status = FSAL_write(&(pentry->object.file.open_fd.fd),
-                                       seek_descriptor, io_size, buffer, pio_size);
+               /* Alright, the unstable write is complete. Now if it was
+                  supposed to be a stable write we can sync to the hard
+                  drive. */
 
-#if 0
-              /* Alright, the unstable write is complete. Now if it was supposed to be a stable write
-               * we can sync to the hard drive. */
-              if(stable == FSAL_SAFE_WRITE_TO_FS)
-                {
-                  fsal_status = FSAL_commit(&(pentry->object.file.open_fd.fd));
-#endif
-
-            }
+               if (stable == CACHE_INODE_SAFE_WRITE_TO_FS) {
+                    fsal_status
+                         = FSAL_commit(&(entry->object.file.open_fd.fd),
+                                  offset, io_size);
+               }
+          }
 
           LogFullDebug(COMPONENT_FSAL,
-                       "cache_inode_rdwr: FSAL IO operation returned %d, asked_size=%llu, effective_size=%llu",
-                       fsal_status.major, (unsigned long long)io_size,
-                       (unsigned long long)*pio_size);
+                       "cache_inode_rdwr: FSAL IO operation returned "
+                       "%d, asked_size=%zu, effective_size=%zu",
+                       fsal_status.major, io_size, *bytes_moved);
 
-          if(FSAL_IS_ERROR(fsal_status))
-            {
+          if (FSAL_IS_ERROR(fsal_status)) {
+               if (fsal_status.major == ERR_FSAL_DELAY) {
+                    LogEvent(COMPONENT_CACHE_INODE,
+                             "cache_inode_rdwr: FSAL_write "
+                             " returned EBUSY");
+               } else {
+                    LogDebug(COMPONENT_CACHE_INODE,
+                             "cache_inode_rdwr: fsal_status.major = %d",
+                             fsal_status.major);
+               }
 
-              if(fsal_status.major == ERR_FSAL_DELAY)
-                LogEvent(COMPONENT_CACHE_INODE,
-                         "cache_inode_rdwr: FSAL_write returned EBUSY");
-              else
-                LogDebug(COMPONENT_CACHE_INODE,
-                         "cache_inode_rdwr: fsal_status.major = %d",
-                         fsal_status.major);
+               if (fsal_status.major == ERR_FSAL_STALE) {
+                    cache_inode_kill_entry(entry, client);
+               }
 
-              if((fsal_status.major != ERR_FSAL_NOT_OPENED)
-                 && (pentry->object.file.open_fd.fileno != 0))
-                {
+               if ((fsal_status.major != ERR_FSAL_NOT_OPENED)
+                   && (entry->object.file.open_fd.openflags
+                       != FSAL_O_CLOSED)) {
+                    LogFullDebug(COMPONENT_CACHE_INODE,
+                                 "cache_inode_rdwr: CLOSING entry %p",
+                                 entry);
 
-                  LogDebug(COMPONENT_CACHE_INODE,
-                               "cache_inode_rdwr: CLOSING pentry %p: fd=%d",
-                               pentry, pentry->object.file.open_fd.fileno);
+                    pthread_rwlock_unlock(&entry->content_lock);
+                    pthread_rwlock_wrlock(&entry->content_lock);
+                    FSAL_close(&(entry->object.file.open_fd.fd));
+                    entry->object.file.open_fd.openflags
+                         = FSAL_O_CLOSED;
+                    *status = cache_inode_error_convert(fsal_status);
+               }
 
-                  FSAL_close(&(pentry->object.file.open_fd.fd));
-                  pentry->object.file.open_fd.fileno = 0;
-
-                  *pstatus = cache_inode_error_convert(fsal_status);
-                }
-              else
-                {
-                  /* the fd has been close by another thread.
-                   * return CACHE_INODE_FSAL_DELAY so the client will
-                   * retry with a new fd.
-                   */
-                  *pstatus = CACHE_INODE_FSAL_DELAY;
-                }
-
-              pentry->object.file.open_fd.last_op = 0;
-              pentry->object.file.open_fd.fileno = 0;
-
-              V_w(&pentry->lock);
-
-              /* stats */
-              pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;
-
-              return *pstatus;
-            }
+               goto out;
+          }
 
           LogFullDebug(COMPONENT_CACHE_INODE,
-                       "cache_inode_rdwr: inode/direct: io_size=%llu, pio_size=%llu, eof=%d, seek=%s %"PRIu64,
-                       io_size, *pio_size, *p_fsal_eof, format_seek_whence(seek_descriptor->whence),
-                       seek_descriptor->offset);
+                       "cache_inode_rdwr: inode/direct: io_size=%zu, "
+                       "bytes_moved=%zu, offset=%"PRIu64,
+                       io_size, *bytes_moved, offset);
 
-          if(cache_inode_close(pentry, pclient, pstatus) != CACHE_INODE_SUCCESS)
-            {
-              LogEvent(COMPONENT_CACHE_INODE,
-                       "cache_inode_rdwr: cache_inode_close = %d", *pstatus);
+          if (opened) {
+               if (cache_inode_close(entry, client,
+                                     CACHE_INODE_FLAG_CONTENT_HAVE |
+                                     CACHE_INODE_FLAG_CONTENT_HOLD,
+                                     status) != CACHE_INODE_SUCCESS) {
+                    LogEvent(COMPONENT_CACHE_INODE,
+                             "cache_inode_rdwr: cache_inode_close = %d",
+                             *status);
+                    goto out;
+               }
+          }
 
-              V_w(&pentry->lock);
+          if (content_locked) {
+               pthread_rwlock_unlock(&entry->content_lock);
+               content_locked = FALSE;
+          }
+     }
 
-              /* stats */
-              pclient->stat.func_stats.nb_err_unrecover[statindex] += 1;
+     pthread_rwlock_wrlock(&entry->attr_lock);
+     attributes_locked = TRUE;
+     if (io_direction == CACHE_INODE_WRITE) {
+          if ((*status = cache_inode_refresh_attrs(entry,
+                                                   context,
+                                                   client))
+              != CACHE_INODE_SUCCESS) {
+               goto out;
+          }
+     } else {
+          cache_inode_set_time_current(&entry->attributes.atime);
+     }
+     pthread_rwlock_unlock(&entry->attr_lock);
+     attributes_locked = FALSE;
 
-              return *pstatus;
-            }
+     *status = CACHE_INODE_SUCCESS;
 
-          if(read_or_write == CACHE_INODE_WRITE)
-            {
-              /* Do a getattr in order to have update information on filesize
-               * This query is done directly on FSAL (object is not data cached), and result
-               * will be propagated to cache Inode */
+out:
 
-              /* WARNING: This operation is to be done AFTER FSAL_close (some FSAL, like POSIX,
-               * may not flush data until the file is closed */
+     if (content_locked) {
+          pthread_rwlock_unlock(&entry->content_lock);
+          content_locked = FALSE;
+     }
 
-              /*post_write_attr.asked_attributes =  pclient->attrmask ; */
-              post_write_attr.asked_attributes = FSAL_ATTR_SIZE | FSAL_ATTR_SPACEUSED;
-              fsal_status_getattr =
-                  FSAL_getattrs(&(pentry->handle), pcontext,
-                                &post_write_attr);
+     if (attributes_locked) {
+          pthread_rwlock_unlock(&entry->attr_lock);
+          attributes_locked = FALSE;
+     }
 
-              /* if failed, the next block will handle the error */
-              if(FSAL_IS_ERROR(fsal_status_getattr))
-                fsal_status = fsal_status_getattr;
-              else
-                {
-                  /* Update Cache Inode attributes */
-                  pentry->attributes.filesize = post_write_attr.filesize;
-                  pentry->attributes.spaceused = post_write_attr.spaceused;
-                }
-            }
-
-        }
-
-      /* IO was successfull (through cache content or not), we manually update the times in the attributes */
-
-      switch (read_or_write)
-        {
-        case CACHE_INODE_READ:
-          /* Set the atime */
-          cache_inode_set_time_current( & pentry->attributes.atime ) ;
-          break;
-
-        case CACHE_INODE_WRITE:
-          /* Set mtime and ctime */
-          cache_inode_set_time_current( & pentry->attributes.mtime ) ;
-
-          /* BUGAZOMEU : write operation must NOT modify file's ctime */
-          pentry->attributes.ctime = pentry->attributes.mtime;
-
-          break;
-        }
-    }
-
-  /* if(stable == TRUE ) */
-  /* Return attributes to caller */
-  if(pfsal_attr != NULL)
-    *pfsal_attr = pentry->attributes;
-
-  *pstatus = CACHE_INODE_SUCCESS;
-
-  /* stat */
-  if(read_or_write == CACHE_INODE_READ)
-    {
-      *pstatus = cache_inode_valid(pentry, CACHE_INODE_OP_GET, pclient);
-
-      if(*pstatus != CACHE_INODE_SUCCESS)
-        pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_READ] += 1;
-      else
-        pclient->stat.func_stats.nb_success[CACHE_INODE_READ] += 1;
-    }
-  else
-    {
-      *pstatus = cache_inode_valid(pentry, CACHE_INODE_OP_SET, pclient);
-
-      if(*pstatus != CACHE_INODE_SUCCESS)
-        pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_WRITE] += 1;
-      else
-        pclient->stat.func_stats.nb_success[CACHE_INODE_WRITE] += 1;
-    }
-
-  V_w(&pentry->lock);
-
-  return *pstatus;
-}                               /* cache_inode_rdwr */
+     return *status;
+} /* cache_inode_rdwr */

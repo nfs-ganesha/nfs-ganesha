@@ -58,7 +58,6 @@
 #include "nfs_exports.h"
 #include "nfs_file_handle.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 
 #define NB_TOK_ARG 10
 #define NB_OPT_TOK 10
@@ -1658,15 +1657,14 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
       fsdata.fh_desc.start = (caddr_t)&fsal_handle;
       fsdata.fh_desc.len = 0;
-      (void) FSAL_ExpandHandle(data->pcontext->export_context,
-			       FSAL_DIGEST_SIZEOF,
-			       &fsdata.fh_desc);
+      FSAL_ExpandHandle(data->pcontext->export_context,
+                        FSAL_DIGEST_SIZEOF,
+                        &fsdata.fh_desc);
 
       if((pentry = cache_inode_make_root(&fsdata,
-                                         data->pexport->cache_inode_policy,
-                                         data->ht,
-                                         ((cache_inode_client_t *) data->pclient),
-                                         data->pcontext, &cache_status)) == NULL)
+                                         data->pclient,
+                                         data->pcontext,
+                                         &cache_status)) == NULL)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Allocate root entry in cache inode failed, for %s, id=%d",
@@ -1678,7 +1676,6 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
       /* Get the attributes (costless: the attributes was cached when the root pentry was created */
       if(cache_inode_getattr(pentry,
                              &attr,
-                             data->ht,
                              ((cache_inode_client_t *) data->pclient),
                              data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
         {
@@ -1689,6 +1686,9 @@ int nfs4_op_lookup_pseudo(struct nfs_argop4 *op,
         }
 
       /* Keep the pentry within the compound data */
+      if (data->current_entry) {
+          cache_inode_put(data->current_entry, data->pclient);
+      }
       data->current_entry = pentry;
       data->current_filetype = cache_inode_fsal_type_convert(attr.type);
 
@@ -1751,6 +1751,9 @@ int nfs4_op_lookupp_pseudo(struct nfs_argop4 *op,
   data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
   /* Keep the vnode pointer within the data compound */
+  if (data->current_entry) {
+      cache_inode_put(data->current_entry, data->pclient);
+  }
   data->current_entry = NULL;
   data->current_filetype = UNASSIGNED;
 
@@ -1925,15 +1928,14 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       /* Add the entry to the cache as a root (BUGAZOMEU: make it a junction entry when junction is available) */
       fsdata.fh_desc.start = (caddr_t) &fsal_handle;
       fsdata.fh_desc.len = 0;
-      (void) FSAL_ExpandHandle(data->pcontext->export_context,
-			       FSAL_DIGEST_SIZEOF,
-			       &fsdata.fh_desc);
+      FSAL_ExpandHandle(data->pcontext->export_context,
+                        FSAL_DIGEST_SIZEOF,
+                        &fsdata.fh_desc);
 
       if((pentry = cache_inode_make_root(&fsdata,
-                                         data->pexport->cache_inode_policy,
-                                         data->ht,
-                                         ((cache_inode_client_t *) data->pclient),
-                                         data->pcontext, &cache_status)) == NULL)
+                                         data->pclient,
+                                         data->pcontext,
+                                         &cache_status)) == NULL)
         {
           LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Allocate root entry in cache inode failed, for %s, id=%d",
@@ -1945,7 +1947,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
       /* Get the attributes (costless: the attributes was cached when the root pentry was created */
       if(cache_inode_getattr(pentry,
                              &attr,
-                             data->ht,
                              ((cache_inode_client_t *) data->pclient),
                              data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
         {
@@ -1956,6 +1957,9 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
         }
 
       /* Keep the pentry within the compound data */
+      if (data->current_entry) {
+          cache_inode_put(data->current_entry, data->pclient);
+      }
       data->current_entry = pentry;
       data->current_filetype = cache_inode_fsal_type_convert(attr.type);
 
@@ -2117,14 +2121,13 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           /* Add the entry to the cache as a root. There has to be a better way. */
           fsdata.fh_desc.start = (caddr_t) &fsal_handle;
           fsdata.fh_desc.len = 0;
-          (void) FSAL_ExpandHandle(data->pcontext->export_context,
-                                   FSAL_DIGEST_SIZEOF,
-                                   &fsdata.fh_desc);
+          FSAL_ExpandHandle(data->pcontext->export_context,
+                            FSAL_DIGEST_SIZEOF,
+                            &fsdata.fh_desc);
           if((pentry = cache_inode_make_root(&fsdata,
-                                     data->pexport->cache_inode_policy,
-                                     data->ht,
-                                     ((cache_inode_client_t *) data->pclient),
-                                     data->pcontext, &cache_status)) == NULL)
+                                             data->pclient,
+                                             data->pcontext,
+                                             &cache_status)) == NULL)
             {
               LogMajor(COMPONENT_NFS_V4_PSEUDO,
                    "PSEUDO FS JUNCTION TRAVERSAL: /!\\ | Allocate root entry in cache inode failed, for %s, id=%d",
@@ -2135,7 +2138,6 @@ int nfs4_op_readdir_pseudo(struct nfs_argop4 *op,
           /* Finally, get the attributes */
           if(cache_inode_getattr(pentry,
                              &attr,
-                             data->ht,
                              ((cache_inode_client_t *) data->pclient),
                              data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
             {

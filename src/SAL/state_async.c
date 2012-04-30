@@ -62,7 +62,7 @@ cache_inode_client_t           state_async_cache_inode_client;
 nfs_tcb_t                      state_async_tcb;
 
 /* Execute a func from the async queue */
-void *state_async_thread(void *argp)
+void *state_async_thread(void *UnusedArg)
 {
 #ifndef _NO_BUDDY_SYSTEM
   int rc;
@@ -228,16 +228,6 @@ void signal_async_work()
 
   V(state_async_tcb.tcb_mutex);
 }
-
-static int local_lru_inode_entry_to_str(LRU_data_t data, char *str)
-{
-  return sprintf(str, "N/A ");
-}                               /* local_lru_inode_entry_to_str */
-
-static int local_lru_inode_clean_entry(LRU_entry_t * entry, void *adddata)
-{
-  return 0;
-}                               /* lru_clean_entry */
 #endif
 
 state_status_t state_async_init()
@@ -246,11 +236,7 @@ state_status_t state_async_init()
   init_glist(&state_async_queue);
 
   /* setting the 'state_async_cache_inode_client_param' structure */
-  state_async_cache_inode_client_param.lru_param.nb_entry_prealloc = 10;
-  state_async_cache_inode_client_param.lru_param.entry_to_str      = local_lru_inode_entry_to_str;
-  state_async_cache_inode_client_param.lru_param.clean_entry       = local_lru_inode_clean_entry;
   state_async_cache_inode_client_param.nb_prealloc_entry           = 0;
-  state_async_cache_inode_client_param.nb_pre_parent               = 0;
   state_async_cache_inode_client_param.nb_pre_state_v4             = 0;
   state_async_cache_inode_client_param.grace_period_link           = 0;
   state_async_cache_inode_client_param.grace_period_attr           = 0;

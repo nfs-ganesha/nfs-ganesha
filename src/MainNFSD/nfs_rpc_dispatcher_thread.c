@@ -61,7 +61,6 @@
 #include "nfs_init.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -85,7 +84,7 @@ buddy_stats_t          global_tcp_dispatcher_buddy_stat;
 
 /* This structure exists per tcp dispatcher thread */
 buddy_stats_t __thread local_tcp_dispatcher_buddy_stat;
-#endif
+#endif /*!_NO_BUDDY_SYSTEM*/
 
 #if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
 /**
@@ -693,14 +692,12 @@ unsigned int nfs_core_select_worker_queue()
   unsigned int worker_index = NO_VALUE_CHOOSEN;
   unsigned int avg_number_pending = NO_VALUE_CHOOSEN;
   unsigned int total_number_pending = 0;
+  unsigned int i;
+  unsigned int cpt = 0;
 
   static unsigned int counter;
-
-  unsigned int i;
   static unsigned int last;
-  unsigned int cpt = 0;
   worker_available_rc rc_worker;
-  pause_rc            rc_pause;
 
   P(lock_worker_selection);
   counter++;
@@ -716,7 +713,6 @@ unsigned int nfs_core_select_worker_queue()
       /* Reset counter. */
       counter = 0;
     }
-  V(lock_worker_selection);
 
   /* Choose the queue whose length is smaller than average. */
       for(i = (last + 1) % nfs_param.core_param.nb_worker, cpt = 0;
@@ -733,11 +729,7 @@ unsigned int nfs_core_select_worker_queue()
           else if(rc_worker == WORKER_ALL_PAUSED)
             {
               /* Wait for the threads to awaken */
-              rc_pause = wait_for_threads_to_awaken();
-              /*              if(rc_pause == PAUSE_EXIT)
-                {
-                }
-              */
+              wait_for_threads_to_awaken();
             }
           else if(rc_worker == WORKER_EXIT)
             {
@@ -748,6 +740,8 @@ unsigned int nfs_core_select_worker_queue()
     worker_index = (last + 1) % nfs_param.core_param.nb_worker;
 
   last = worker_index;
+
+  V(lock_worker_selection);
 
   return worker_index;
 
@@ -1135,7 +1129,7 @@ void rpc_dispatcher_svc_run()
 #ifndef _NO_BUDDY_SYSTEM
   /* Init stat */
   memset( &local_tcp_dispatcher_buddy_stat, 0,  sizeof(buddy_stats_t));
-#endif
+#endif /* !_NO_BUDDY_SYSTEM */
 
   while(TRUE)
     {
@@ -1231,7 +1225,7 @@ void rpc_dispatcher_svc_run()
  * @return Pointer to the result (but this function will mostly loop forever).
  *
  */
-void *rpc_dispatcher_thread(void *Arg)
+void *rpc_dispatcher_thread(void *UnusedArg)
 {
   SetNameFunction("dispatch_thr");
 

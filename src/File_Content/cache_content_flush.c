@@ -83,7 +83,6 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
 {
   fsal_handle_t *pfsal_handle = NULL;
   fsal_status_t fsal_status;
-  cache_inode_status_t cache_inode_status;
   fsal_path_t local_path;
 
   *pstatus = CACHE_CONTENT_SUCCESS;
@@ -92,21 +91,10 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
   pclient->stat.func_stats.nb_call[CACHE_CONTENT_FLUSH] += 1;
 
   /* Get the fsal handle */
-  if((pfsal_handle =
-      cache_inode_get_fsal_handle(pentry->pentry_inode, &cache_inode_status)) == NULL)
-    {
-      *pstatus = CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
-
-      LogMajor(COMPONENT_CACHE_CONTENT,
-                        "cache_content_flush: cannot get handle");
-      /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_FLUSH] += 1;
-
-      return *pstatus;
-    }
+  pfsal_handle = &pentry->pentry_inode->handle;
 
   /* Lock related Cache Inode pentry to avoid concurrency while read/write operation */
-  P_w(&pentry->pentry_inode->lock);
+  pthread_rwlock_wrlock(&pentry->pentry_inode->content_lock);
 
   /* Convert the path to FSAL path */
   fsal_status =
@@ -117,7 +105,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
       *pstatus = CACHE_CONTENT_FSAL_ERROR;
 
       /* Unlock related Cache Inode pentry */
-      V_w(&pentry->pentry_inode->lock);
+      pthread_rwlock_unlock(&pentry->pentry_inode->content_lock);
 
       /* stat */
       pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_FLUSH] += 1;
@@ -133,7 +121,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
                         fsal_status.minor);
 
       /* Unlock related Cache Inode pentry */
-      V_w(&pentry->pentry_inode->lock);
+      pthread_rwlock_unlock(&pentry->pentry_inode->content_lock);
 
       *pstatus = CACHE_CONTENT_FSAL_ERROR;
 
@@ -150,7 +138,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
       if(unlink(pentry->local_fs_entry.cache_path_index))
         {
           /* Unlock related Cache Inode pentry */
-          V_w(&pentry->pentry_inode->lock);
+          pthread_rwlock_unlock(&pentry->pentry_inode->content_lock);
 
           LogCrit(COMPONENT_CACHE_CONTENT, "Can't unlink flushed index %s, errno=%u(%s)",
                      pentry->local_fs_entry.cache_path_index, errno, strerror(errno));
@@ -162,7 +150,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
       if(unlink(pentry->local_fs_entry.cache_path_data))
         {
           /* Unlock related Cache Inode pentry */
-          V_w(&pentry->pentry_inode->lock);
+          pthread_rwlock_unlock(&pentry->pentry_inode->content_lock);
 
           LogCrit(COMPONENT_CACHE_CONTENT, "Can't unlink flushed index %s, errno=%u(%s)",
                      pentry->local_fs_entry.cache_path_data, errno, strerror(errno));
@@ -172,7 +160,7 @@ cache_content_status_t cache_content_flush(cache_content_entry_t * pentry,
     }
 
   /* Unlock related Cache Inode pentry */
-  V_w(&pentry->pentry_inode->lock);
+  pthread_rwlock_unlock(&pentry->pentry_inode->content_lock);
 
   /* Exit the function with no error */
   pclient->stat.func_stats.nb_success[CACHE_CONTENT_FLUSH] += 1;
@@ -210,7 +198,6 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
 {
   fsal_handle_t *pfsal_handle = NULL;
   fsal_status_t fsal_status;
-  cache_inode_status_t cache_inode_status;
   cache_entry_t *pentry_inode = NULL;
   fsal_path_t local_path;
   struct stat buffstat;
@@ -224,18 +211,7 @@ cache_content_status_t cache_content_refresh(cache_content_entry_t * pentry,
   pentry_inode = (cache_entry_t *) pentry->pentry_inode;
 
   /* Get the fsal handle */
-  if((pfsal_handle =
-      cache_inode_get_fsal_handle(pentry_inode, &cache_inode_status)) == NULL)
-    {
-      *pstatus = CACHE_CONTENT_BAD_CACHE_INODE_ENTRY;
-
-      LogMajor(COMPONENT_CACHE_CONTENT,
-                        "cache_content_refresh: cannot get handle");
-      /* stat */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_CONTENT_REFRESH] += 1;
-
-      return *pstatus;
-    }
+  pfsal_handle = &pentry_inode->handle;
 
   /* Convert the path to FSAL path */
   fsal_status =

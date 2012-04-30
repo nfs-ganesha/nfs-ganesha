@@ -136,7 +136,6 @@ int _9p_auth( _9p_request_data_t * preq9p,
   pfid= &preq9p->pconn->fids[*afid] ;
   pfid->pexport = pexport ;
   pfid->fid = *afid ;
- 
   memcpy( &pfid->fsal_op_context, &pwkrdata->thread_fsal_context, sizeof( fsal_op_context_t ) ) ;
 
   /* Is user name provided as a string or as an uid ? */
@@ -167,11 +166,10 @@ int _9p_auth( _9p_request_data_t * preq9p,
   fsdata.cookie = 0;
 
   pfid->pentry = cache_inode_get( &fsdata,
-                                  pexport->cache_inode_policy,      
-                                  &fsalattr, 
-                                  pwkrdata->ht,
+                                  pexport->cache_inode_policy,
+                                  &fsalattr,
                                   &pwkrdata->cache_inode_client,
-                                  &pfid->fsal_op_context, 
+                                  &pfid->fsal_op_context,
                                   &cache_status ) ;
 
   if( pfid->pentry == NULL )

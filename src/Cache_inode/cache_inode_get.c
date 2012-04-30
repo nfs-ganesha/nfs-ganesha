@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -48,6 +48,7 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
+#include "cache_inode_lru.h"
 #include "stuff_alloc.h"
 
 #include <unistd.h>
@@ -55,268 +56,205 @@
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
+#include <assert.h>
 
 /**
  *
- * cache_inode_get: Gets an entry by using its fsdata as a key and caches it if needed.
- * 
+ * @brief Gets an entry by using its fsdata as a key and caches it if needed.
+ *
  * Gets an entry by using its fsdata as a key and caches it if needed.
  *
- * @param fsdata [IN] file system data
- * @param pattr [OUT] pointer to the attributes for the result. 
- * @param ht [IN] hash table used for the cache, unused in this call.
- * @param pclient [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext [IN] FSAL credentials 
- * @param pstatus [OUT] returned status.
- * 
- * @return the pointer to the entry is successfull, NULL otherwise.
+ * If a cache entry is returned, its refcount is incremented by one.
+ *
+ * cache_inode_get_located is no longer needed with the split between
+ * directory ad attribute locks.
+ *
+ * @param fsdata [IN] File system data
+ * @param pattr [OUT] Pointer to the attributes for the result
+ * @param pclient [INOUT] Pointer to resource management structure
+ * @param pcontext [IN] FSAL credentials
+ * @param pstatus [OUT] Returned status
+ *
+ * @return If successful, the pointer to the entry; NULL otherwise
  *
  */
-cache_entry_t *cache_inode_get( cache_inode_fsal_data_t * pfsdata,
-                                cache_inode_policy_t policy,
-                                fsal_attrib_list_t * pattr,
-                                hash_table_t * ht,
-                                cache_inode_client_t * pclient,
-                                fsal_op_context_t * pcontext,
-                                cache_inode_status_t * pstatus )
+cache_entry_t *
+cache_inode_get(cache_inode_fsal_data_t *fsdata,
+                fsal_attrib_list_t *attr,
+                cache_inode_client_t *client,
+                fsal_op_context_t *context,
+                cache_inode_status_t *status)
 {
-  return cache_inode_get_located( pfsdata, NULL, policy, pattr, ht, pclient, pcontext, pstatus ) ;
+     hash_buffer_t key, value;
+     cache_entry_t *entry = NULL;
+     fsal_status_t fsal_status = {0, 0};
+     cache_inode_create_arg_t create_arg = {
+          .newly_created_dir = FALSE
+     };
+     cache_inode_file_type_t type = UNASSIGNED;
+     hash_error_t hrc = 0;
+     fsal_attrib_list_t fsal_attributes;
+     fsal_handle_t *file_handle;
+     struct hash_latch latch;
+
+     /* Set the return default to CACHE_INODE_SUCCESS */
+     *status = CACHE_INODE_SUCCESS;
+
+     /* Turn the input to a hash key on our own.
+      */
+     key.pdata = fsdata->fh_desc.start;
+     key.len = fsdata->fh_desc.len;
+
+     hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value,
+                              FALSE,
+                              &latch);
+
+     if ((hrc != HASHTABLE_SUCCESS) &&
+         (hrc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
+          /* This should not happened */
+          *status = CACHE_INODE_HASH_TABLE_ERROR;
+          LogCrit(COMPONENT_CACHE_INODE,
+                  "Hash access failed with code %d"
+                  " - this should not have happened",
+                  hrc);
+          return NULL;
+     }
+
+     if (hrc == HASHTABLE_SUCCESS) {
+          /* Entry exists in the cache and was found */
+          entry = value.pdata;
+          /* take an extra reference within the critical section */
+          if (cache_inode_lru_ref(entry, client, LRU_REQ_INITIAL) !=
+              CACHE_INODE_SUCCESS) {
+               /* Dead entry.  Treat like a lookup failure. */
+               entry = NULL;
+          } else {
+               cache_inode_lock_trust_attrs(entry,
+                                            context,
+                                            client);
+               *attr = entry->attributes;
+               pthread_rwlock_unlock(&entry->attr_lock);
+          }
+     }
+     HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
+
+     if (!client) {
+          /* Upcalls have no access to a cache_inode_client_t,
+             so just return the entry without revalidating it or
+             creating a new one. */
+          if (entry == NULL) {
+               *status = CACHE_INODE_NOT_FOUND;
+          }
+          return entry;
+     }
+
+     if (!entry) {
+          /* Cache miss, allocate a new entry */
+          file_handle = (fsal_handle_t *) fsdata->fh_desc.start;
+          /* First, call FSAL to know what the object is */
+          fsal_attributes.asked_attributes = client->attrmask;
+          fsal_status
+               = FSAL_getattrs(file_handle, context, &fsal_attributes);
+          if (FSAL_IS_ERROR(fsal_status)) {
+               *status = cache_inode_error_convert(fsal_status);
+               LogDebug(COMPONENT_CACHE_INODE,
+                        "cache_inode_get: cache_inode_status=%u "
+                        "fsal_status=%u,%u ", *status,
+                        fsal_status.major,
+                        fsal_status.minor);
+               return NULL;
+          }
+
+          /* The type has to be set in the attributes */
+          if (!FSAL_TEST_MASK(fsal_attributes.supported_attributes,
+                              FSAL_ATTR_TYPE)) {
+               *status = CACHE_INODE_FSAL_ERROR;
+               return NULL;
+          }
+
+          /* Get the cache_inode file type */
+          type = cache_inode_fsal_type_convert(fsal_attributes.type);
+          if (type == SYMBOLIC_LINK) {
+               fsal_attributes.asked_attributes = client->attrmask;
+               fsal_status =
+                    FSAL_readlink(file_handle, context,
+                                  &create_arg.link_content,
+                                  &fsal_attributes);
+
+               if (FSAL_IS_ERROR(fsal_status)) {
+                    *status = cache_inode_error_convert(fsal_status);
+                    return NULL;
+               }
+          }
+          if ((entry
+               = cache_inode_new_entry(fsdata,
+                                       &fsal_attributes,
+                                       type,
+                                       &create_arg,
+                                       client,
+                                       context,
+                                       CACHE_INODE_FLAG_NONE,
+                                       status)) == NULL) {
+               return NULL;
+          }
+
+          /* Set the returned attributes */
+          *attr = fsal_attributes;
+     }
+
+     *status = CACHE_INODE_SUCCESS;
+
+     /* This is the replacement for cache_inode_renew_entry.  Rather
+        than calling that function at the start of every cache_inode
+        call with the inode locked, we call cache_inode_check trust to
+        perform 'heavyweight' (timed expiration of cached attributes,
+        getattr-based directory trust) checks the first time after
+        getting an inode.  It does all of the checks read-locked and
+        only acquires a write lock if there's something requiring a
+        change.
+
+        There is a second light-weight check done before use of cached
+        data that checks whether the bits saying that inode attributes
+        or inode content are trustworthy have been cleared by, for
+        example, FSAL_CB.
+
+        To summarize, the current implementation is that policy-based
+        trust of validity is checked once per logical series of
+        operations at cache_inode_get, and asynchronous trust is
+        checked with use (when the attributes are locked for reading,
+        for example.) */
+
+     if ((*status = cache_inode_check_trust(entry,
+                                            context,
+                                            client))
+         != CACHE_INODE_SUCCESS) {
+          cache_inode_put(entry, client);
+          entry = NULL;
+     }
+
+     return entry;
 } /* cache_inode_get */
 
 /**
  *
- * cache_inode_geti_located: Gets an entry by using its fsdata as a key and caches it if needed, with origin information.
- * 
- * Gets an entry by using its fsdata as a key and caches it if needed, with origin/location information.
- * The reason to this call is cross-junction management : you can go through a directory that it its own parent from a 
- * FSAL point of view. This could lead to hang (same P_w taken twice on the same entry). To deal this, a check feature is 
- * added through the plocation argument.
+ * cache_inode_put:  release logical reference to a cache entry conferred by
+ * a previous call to cache_inode_get (cache_inode_get_located).
  *
- * @param fsdata [IN] file system data
- * @param plocation [IN] pentry used as "location form where the call is done". Usually a son of a parent entry
- * @param pattr [OUT] pointer to the attributes for the result. 
- * @param ht [IN] hash table used for the cache, unused in this call.
+ * The result is typically to decrement the reference count on entry, but
+ * additional side effects include LRU adjustment, movement to/from the
+ * protected LRU partition, or recyling if the caller has raced an operation
+ * which made entry unreachable (and this current caller has the last
+ * reference).  Caller MUST NOT make further accesses to the memory pointed
+ * to by entry.
+ *
+ * @param entry [IN] cache entry being returned
  * @param pclient [INOUT] ressource allocated by the client for the nfs management.
- * @param pcontext [IN] FSAL credentials 
- * @param pstatus [OUT] returned status.
- * 
- * @return the pointer to the entry is successfull, NULL otherwise.
+ *
+ * @return status.
  *
  */
-
-cache_entry_t *cache_inode_get_located(cache_inode_fsal_data_t * pfsdata,
-                                       cache_entry_t * plocation, 
-                                       cache_inode_policy_t policy,
-                                       fsal_attrib_list_t * pattr,
-                                       hash_table_t * ht,
-                                       cache_inode_client_t * pclient,
-                                       fsal_op_context_t * pcontext,
-                                       cache_inode_status_t * pstatus)
+cache_inode_status_t cache_inode_put(cache_entry_t *entry,
+                                     cache_inode_client_t *pclient)
 {
-  hash_buffer_t key, value;
-  cache_entry_t *pentry = NULL;
-  fsal_status_t fsal_status;
-  cache_inode_create_arg_t create_arg;
-  cache_inode_file_type_t type;
-  int hrc = 0;
-  fsal_attrib_list_t fsal_attributes;
-  fsal_handle_t *pfile_handle;
-
-  memset(&create_arg, 0, sizeof(create_arg));
-
-  /* Set the return default to CACHE_INODE_SUCCESS */
-  *pstatus = CACHE_INODE_SUCCESS;
-
-  /* stats */
-  /* cache_invalidate calls this with no context or client */
-  if (pclient) {
-    pclient->stat.nb_call_total += 1;
-    pclient->stat.func_stats.nb_call[CACHE_INODE_GET] += 1;
-  }
-
-  /* Turn the input to a hash key on our own.
-   */
-  key.pdata = pfsdata->fh_desc.start;
-  key.len = pfsdata->fh_desc.len;
-
-  hrc = HashTable_Get(ht, &key, &value);
-  switch (hrc)
-    {
-    case HASHTABLE_SUCCESS:
-      /* Entry exists in the cache and was found */
-      pentry = (cache_entry_t *) value.pdata;
-
-      /* return attributes additionally */
-      *pattr = pentry->attributes;
-
-      if ( !pclient ) {
-	/* invalidate. Just return it to mark it stale and go on. */
-	return( pentry );
-      }
-
-      break;
-
-    case HASHTABLE_ERROR_NO_SUCH_KEY:
-      if ( !pclient ) {
-	/* invalidate. Just return */
-	return( NULL );
-      }
-      /* Cache miss, allocate a new entry */
-
-      pfile_handle = (fsal_handle_t *) pfsdata->fh_desc.start;
-
-      /* First, call FSAL to know what the object is */
-      fsal_attributes.asked_attributes = pclient->attrmask;
-      fsal_status = FSAL_getattrs(pfile_handle, pcontext, &fsal_attributes);
-      if(FSAL_IS_ERROR(fsal_status))
-        {
-          *pstatus = cache_inode_error_convert(fsal_status);
-
-          LogDebug(COMPONENT_CACHE_INODE,
-                   "cache_inode_get: cache_inode_status=%u fsal_status=%u,%u ",
-                   *pstatus, fsal_status.major, fsal_status.minor);
-
-          if(fsal_status.major == ERR_FSAL_STALE)
-            {
-              char handle_str[256];
-
-              snprintHandle(handle_str, 256, pfile_handle);
-              LogEvent(COMPONENT_CACHE_INODE,
-                       "cache_inode_get: Stale FSAL File Handle %s, fsal_status=(%u,%u)",
-                       handle_str, fsal_status.major, fsal_status.minor);
-
-              *pstatus = CACHE_INODE_FSAL_ESTALE;
-            }
-
-          /* stats */
-          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;
-
-          return NULL;
-        }
-
-      /* The type has to be set in the attributes */
-      if(!FSAL_TEST_MASK(fsal_attributes.supported_attributes, FSAL_ATTR_TYPE))
-        {
-          *pstatus = CACHE_INODE_FSAL_ERROR;
-
-          /* stats */
-          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;
-
-          return NULL;
-        }
-
-      /* Get the cache_inode file type */
-      type = cache_inode_fsal_type_convert(fsal_attributes.type);
-
-      if(type == SYMBOLIC_LINK)
-        {
-          if( CACHE_INODE_KEEP_CONTENT( policy ) )
-           {
-             FSAL_CLEAR_MASK(fsal_attributes.asked_attributes);
-             FSAL_SET_MASK(fsal_attributes.asked_attributes, pclient->attrmask);
-             fsal_status =
-                FSAL_readlink(pfile_handle, pcontext, &create_arg.link_content,
-                              &fsal_attributes);
-            }
-          else
-            { 
-               fsal_status.major = ERR_FSAL_NO_ERROR ;
-               fsal_status.minor = 0 ;
-            }
-
-          if(FSAL_IS_ERROR(fsal_status))
-            {
-              *pstatus = cache_inode_error_convert(fsal_status);
-
-              /* stats */
-              pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;
-
-              if(fsal_status.major == ERR_FSAL_STALE)
-                {
-                  cache_inode_status_t kill_status;
-
-                  LogEvent(COMPONENT_CACHE_INODE,
-                           "cache_inode_get: Stale FSAL File Handle detected for pentry = %p, fsal_status=(%u,%u)",
-                           pentry, fsal_status.major, fsal_status.minor);
-
-                  if(cache_inode_kill_entry(pentry, NO_LOCK, ht, pclient, &kill_status) !=
-                     CACHE_INODE_SUCCESS)
-                    LogCrit(COMPONENT_CACHE_INODE,
-                            "cache_inode_get: Could not kill entry %p, status = %u, fsal_status=(%u,%u)",
-                            pentry, kill_status, fsal_status.major, fsal_status.minor);
-
-                  *pstatus = CACHE_INODE_FSAL_ESTALE;
-
-                }
-
-              return NULL;
-            }
-        }
-
-      /* Add the entry to the cache */
-      if ( type == 1)
-	LogCrit(COMPONENT_CACHE_INODE,"inode get");
-
-      if((pentry = cache_inode_new_entry( pfsdata,
-                                          &fsal_attributes, 
-                                          type,
-                                          policy, 
-                                          &create_arg, 
-                                          NULL,    /* never used to add a new DIR_CONTINUE within this function */
-                                          ht, 
-                                          pclient, 
-                                          pcontext, 
-                                          FALSE,  /* This is a population, not a creation */
-                                          pstatus ) ) == NULL )
-        {
-          /* stats */
-          pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;
-
-          return NULL;
-        }
-
-      /* Set the returned attributes */
-      *pattr = fsal_attributes;
-
-      /* Now, exit the switch/case and returns */
-      break;
-
-    default:
-      /* This should not happened */
-      *pstatus = CACHE_INODE_INVALID_ARGUMENT;
-      LogCrit(COMPONENT_CACHE_INODE,
-              "cache_inode_get returning CACHE_INODE_INVALID_ARGUMENT - this should not have happened");
-
-      if ( !pclient ) {
-        /* invalidate. Just return */
-        return( NULL );
-      }
-
-      /* stats */
-      pclient->stat.func_stats.nb_err_unrecover[CACHE_INODE_GET] += 1;
-
-      return NULL;
-      break;
-    }  /* end switch */
-
-  /* valid the found entry, if this is not feasable, returns nothing to the client */
-  if( plocation != NULL )
-   {
-     if( plocation != pentry )
-      {
-        P_w(&pentry->lock);
-        if((*pstatus =
-           cache_inode_valid(pentry, CACHE_INODE_OP_GET, pclient)) != CACHE_INODE_SUCCESS)
-          {
-            V_w(&pentry->lock);
-            pentry = NULL;
-          }
-        V_w(&pentry->lock);
-      }
-   }
-
-  /* stats */
-  pclient->stat.func_stats.nb_success[CACHE_INODE_GET] += 1;
-
-  return pentry;
-}  /* cache_inode_get_located */
+  return (cache_inode_lru_unref(entry, pclient, LRU_FLAG_NONE));
+}

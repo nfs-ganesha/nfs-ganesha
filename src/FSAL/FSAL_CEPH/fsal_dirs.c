@@ -163,9 +163,8 @@ fsal_status_t CEPHFSAL_readdir(fsal_dir_t *extdescriptor,
   cephfsal_dir_t* descriptor = (cephfsal_dir_t*) extdescriptor;
   struct ceph_mount_info *cmount = descriptor->ctx.export_context->cmount;
 
-  /* XXXX gcc reports strict aliasing violation: */
-  loff_t start = ((cephfsal_cookie_t) extstart).data.cookie;
-  loff_t* end = &((cephfsal_cookie_t*) extend)->data.cookie;
+  loff_t start = ((cephfsal_cookie_t*) extstart.data)->cookie;
+  loff_t* end = &((cephfsal_cookie_t*) extend->data)->cookie;
   unsigned int max_entries = buffersize / sizeof(fsal_dirent_t);
 
   /* sanity checks */

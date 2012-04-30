@@ -949,6 +949,11 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
+  { COMPONENT_CACHE_INODE_LRU,    "COMPONENT_CACHE_INODE_LRU", "CACHE INODE LRU",
+    NIV_EVENT,
+    SYSLOG,
+    "SYSLOG"
+  },
   { COMPONENT_HASHTABLE,         "COMPONENT_HASHTABLE", "HASH TABLE",
     NIV_EVENT,
     SYSLOG,

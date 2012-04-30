@@ -52,6 +52,7 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "sal_functions.h"
+#include "cache_inode_lru.h"
 
 const char *state_err_str(state_status_t err)
 {
@@ -146,7 +147,7 @@ state_status_t cache_inode_status_to_state_status(cache_inode_status_t status)
       case CACHE_INODE_ASYNC_POST_ERROR:      return STATE_ASYNC_POST_ERROR;
       case CACHE_INODE_NOT_SUPPORTED:         return STATE_NOT_SUPPORTED;
       case CACHE_INODE_STATE_ERROR:           return STATE_STATE_ERROR;
-      case CACHE_INODE_FSAL_DELAY:            return STATE_FSAL_DELAY;
+      case CACHE_INODE_DELAY:                 return STATE_FSAL_DELAY;
       case CACHE_INODE_NAME_TOO_LONG:         return STATE_NAME_TOO_LONG;
       case CACHE_INODE_BAD_COOKIE:            return STATE_BAD_COOKIE;
       case CACHE_INODE_FILE_BIG:              return STATE_FILE_BIG;
@@ -899,3 +900,24 @@ void dec_state_owner_ref(state_owner_t        * powner,
   dec_state_owner_ref_locked(powner, pclient);
 }
 
+void state_wipe_file(cache_entry_t        * pentry,
+                     cache_inode_client_t * pclient)
+{
+  bool_t had_lock = FALSE;
+
+  /* The state lock may have been acquired by the caller. */
+  if (pthread_rwlock_trywrlock(&pentry->state_lock))
+    {
+      /* This thread already has some kind of lock, but we don't know
+         if it's a write lock. */
+      had_lock = TRUE;
+      pthread_rwlock_unlock(&pentry->state_lock);
+    }
+  pthread_rwlock_wrlock(&pentry->state_lock);
+  state_lock_wipe(pentry, pclient);
+  state_nfs4_state_wipe(pentry, pclient);
+  if (!had_lock)
+    {
+      pthread_rwlock_unlock(&pentry->state_lock);
+    }
+}

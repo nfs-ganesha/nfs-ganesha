@@ -154,9 +154,7 @@ void nfs_Init_FSAL_UP()
 fsal_status_t process_event(fsal_up_event_t *event, fsal_up_event_functions_t *event_func)
 {
   fsal_status_t status;
-  /* Set the event data structure's cache inode hash table reference. */
-  event->event_data.event_context.ht = nfs_param.fsal_up_param.ht;
-     LogDebug(COMPONENT_FSAL_UP, "event->event_data.event_context.ht = nfs_param.fsal_up_param.ht %p %p", event->event_data.event_context.ht, nfs_param.fsal_up_param.ht);
+
   /* FullDebug, convert fhandle to file path and print. */
 
   /* DEBUGGING */

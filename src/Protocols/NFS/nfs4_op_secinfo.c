@@ -57,7 +57,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -147,9 +146,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
 
   if((entry_src = cache_inode_lookup(data->current_entry,
                                          &secinfo_fh_name,
-                                         data->pexport->cache_inode_policy,
                                          &attr_secinfo,
-                                         data->ht,
                                          data->pclient,
                                          data->pcontext, &cache_status)) == NULL)
     {

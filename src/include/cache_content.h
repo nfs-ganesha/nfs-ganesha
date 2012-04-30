@@ -7,19 +7,20 @@
  *
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 3 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
  * ---------------------------------------
  */
 
@@ -28,7 +29,7 @@
  * \author  $Author: leibovic $
  * \date    $Date: 2006/02/17 13:41:01 $
  * \version $Revision: 1.29 $
- * \brief   Management of the cached content layer. 
+ * \brief   Management of the cached content layer.
  *
  * cache_content.h : Management of the cached content layer
  *
@@ -102,11 +103,6 @@ typedef enum cache_content_entry_valid_state__
   TO_BE_GARBAGGED = 2
 } cache_content_entry_valid_state_t;
 
-typedef enum cache_content_io_direction__
-{ CACHE_CONTENT_READ = 1,
-  CACHE_CONTENT_WRITE = 2
-} cache_content_io_direction_t;
-
 typedef enum cache_content_flush_behaviour__
 { CACHE_CONTENT_FLUSH_AND_DELETE = 1,
   CACHE_CONTENT_FLUSH_SYNC_ONLY = 2
@@ -117,7 +113,6 @@ typedef struct cache_content_client_parameter__
   char cache_dir[MAXPATHLEN];                 /**< Path to the directory where data are cached */
   unsigned int flush_force_fsal;              /**< Should the flush force the write to FSAL    */
   unsigned int max_fd;                        /**< Max fd open per client */
-  time_t retention;                           /**< Fd retention duration */
   unsigned int use_fd_cache;                  /** Do we cache fd or not ? */
 } cache_content_client_parameter_t;
 
@@ -287,11 +282,11 @@ cache_content_status_t cache_content_close(cache_content_entry_t * pentry,
                                            cache_content_status_t * pstatus);
 
 cache_content_status_t cache_content_rdwr(cache_content_entry_t * pentry,
-                                          cache_content_io_direction_t read_or_write,
-                                          fsal_seek_t * seek_descriptor,
-                                          fsal_size_t * pio_size_in,
-                                          fsal_size_t * pio_size_out,
-                                          caddr_t buffer,
+                                          cache_inode_io_direction_t read_or_write,
+                                          uint64_t offset,
+                                          size_t *pio_size_in,
+                                          size_t *pio_size_out,
+                                          void *buffer,
                                           fsal_boolean_t * p_fsal_eof,
                                           struct stat *pbuffstat,
                                           cache_content_client_t * pclient,
@@ -338,7 +333,6 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                                                    unsigned int mod,
                                                    cache_content_client_t * pclient_data,
                                                    cache_inode_client_t * pclient_inode,
-                                                   hash_table_t * ht,
                                                    fsal_op_context_t * pcontext,
                                                    cache_content_status_t * pstatus);
 
@@ -348,10 +342,6 @@ int cache_content_get_datapath(char *basepath, u_int64_t inum, char *datapath);
 off_t cache_content_recover_size(char *basepath, u_int64_t inum);
 
 cache_inode_status_t cache_content_error_convert(cache_content_status_t status);
-
-cache_content_status_t cache_content_valid(cache_content_entry_t * pentry,
-                                           cache_content_op_t op,
-                                           cache_content_client_t * pclient);
 
 cache_content_status_t cache_content_read_conf_gc_policy(config_file_t in_config,
                                                          cache_content_gc_policy_t *

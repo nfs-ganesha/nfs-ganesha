@@ -117,10 +117,9 @@ int _9p_symlink( _9p_request_data_t * preq9p,
                                               mode,
                                               &create_arg,
                                               &fsalattr,
-                                              pwkrdata->ht,
-                                              &pwkrdata->cache_inode_client, 
-                                              &pfid->fsal_op_context, 
-     			 		      &cache_status)) == NULL)
+                                              &pwkrdata->cache_inode_client,
+                                              &pfid->fsal_op_context,
+                                              &cache_status)) == NULL)
    {
       err = _9p_tools_errno( cache_status ) ; ;
       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;

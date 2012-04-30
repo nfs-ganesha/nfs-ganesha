@@ -192,18 +192,6 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
             }
           out_parameter->snmp_adm.export_nfs_calls_detail = bool;
         }
-      else if(!STRCMP(key_name, "Export_cache_inode_calls_detail"))
-        {
-          int bool = StrToBoolean(key_value);
-          if(bool == -1)
-            {
-              LogCrit(COMPONENT_CONFIG,
-                      "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
-                      key_name);
-              return EINVAL;
-            }
-          out_parameter->snmp_adm.export_cache_inode_calls_detail = bool;
-        }
       else if(!STRCMP(key_name, "Export_FSAL_calls_detail"))
         {
           int bool = StrToBoolean(key_value);
@@ -236,69 +224,6 @@ static int getuptime(snmp_adm_type_union * param, void *opt)
   return 0;
 }
 
-static int get_inode_stat_nb(snmp_adm_type_union * param, void *opt)
-{
-  long cs = (long)opt;
-  param->integer = 0;
-  unsigned int i;
-
-  switch (cs)
-    {
-    case 0:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        param->integer += workers_data[i].cache_inode_client.stat.nb_gc_lru_active;
-      break;
-    case 1:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        param->integer += workers_data[i].cache_inode_client.stat.nb_gc_lru_total;
-      break;
-    case 2:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        param->integer += workers_data[i].cache_inode_client.stat.nb_call_total;
-      break;
-    default:
-      return 1;
-
-    }
-  return 0;
-}
-
-static int get_inode_stat_func_stat(snmp_adm_type_union * param, void *opt)
-{
-  long j = ((long)opt) / 4;
-  long stat = ((long)opt) % 4;
-
-  unsigned int i;
-
-  param->integer = 0;
-
-  switch (stat)
-    {
-    case 0:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        param->integer +=
-            workers_data[i].cache_inode_client.stat.func_stats.nb_success[j];
-      break;
-    case 1:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        param->integer += workers_data[i].cache_inode_client.stat.func_stats.nb_call[j];
-      break;
-    case 2:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        param->integer +=
-            workers_data[i].cache_inode_client.stat.func_stats.nb_err_retryable[j];
-      break;
-    case 3:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        param->integer +=
-            workers_data[i].cache_inode_client.stat.func_stats.nb_err_unrecover[j];
-      break;
-    default:
-      return 1;
-    }
-  return 0;
-}
-
 static int get_hash(snmp_adm_type_union * param, void *opt)
 {
   hash_stat_t hstat, hstat_reverse;
@@ -309,7 +234,7 @@ static int get_hash(snmp_adm_type_union * param, void *opt)
     {
       /* Pinting the cache inode hash stat */
       /* This is done only on worker[0]: the hashtable is shared and worker 0 always exists */
-      HashTable_GetStats(workers_data[0].ht, &hstat);
+      HashTable_GetStats(fh_to_cache_entry_ht, &hstat);
     }
   else if((cs & 0xF0) == 0x10)
     {
@@ -771,14 +696,6 @@ static register_get_set snmp_export_stat_general[] = {
 #define SNMPADM_STAT_GENERAL_COUNT 1
 
 static register_get_set snmp_export_stat_cache[] = {
-
-  {"cache_nb_gc_lru_active", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO,
-   get_inode_stat_nb, NULL, (void *)0},
-  {"cache_nb_gc_lru_total", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO,
-   get_inode_stat_nb, NULL, (void *)1},
-  {"cache_nb_call_total", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO,
-   get_inode_stat_nb, NULL, (void *)2},
-
   {"cache_nb_entries", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO, get_hash,
    NULL, (void *)0x00},
   {"cache_min_rbt_num_node", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO,
@@ -786,31 +703,7 @@ static register_get_set snmp_export_stat_cache[] = {
   {"cache_max_rbt_num_node", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO,
    get_hash, NULL, (void *)0x02},
   {"cache_avg_rbt_num_node", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO,
-   get_hash, NULL, (void *)0x03},
-  {"cache_nbset_ok", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO, get_hash, NULL,
-   (void *)0x04},
-  {"cache_nbset_notfound", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO, get_hash,
-   NULL, (void *)0x05},
-  {"cache_nbset_err", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO, get_hash, NULL,
-   (void *)0x06},
-  {"cache_nbtest_ok", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO, get_hash, NULL,
-   (void *)0x07},
-  {"cache_nbtest_notfound", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO, get_hash,
-   NULL, (void *)0x08},
-  {"cache_nbtest_err", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO, get_hash,
-   NULL, (void *)0x09},
-  {"cache_nbget_ok", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO, get_hash, NULL,
-   (void *)0x0A},
-  {"cache_nbget_notfound", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO, get_hash,
-   NULL, (void *)0x0B},
-  {"cache_nbget_err", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO, get_hash, NULL,
-   (void *)0x0C},
-  {"cache_nbdel_ok", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO, get_hash, NULL,
-   (void *)0x0D},
-  {"cache_nbdel_notfound", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO, get_hash,
-   NULL, (void *)0x0E},
-  {"cache_nbdel_err", "cache_inode", SNMP_ADM_INTEGER, SNMP_ADM_ACCESS_RO, get_hash, NULL,
-   (void *)0x0F}
+   get_hash, NULL, (void *)0x03}
 };
 
 #define SNMPADM_STAT_CACHE_COUNT 19
@@ -1088,61 +981,6 @@ static register_get_set snmp_export_stat_buddy[] = {
 
 #endif                          /* _NO_BUDDY_SYSTEM */
 
-static void create_dyn_cache_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
-{
-  long j;
-
-  *p_dyn_gs_count = 4 * CACHE_INODE_NB_COMMAND;
-  *p_dyn_gs =
-      (register_get_set *) Mem_Alloc(4 * CACHE_INODE_NB_COMMAND *
-                                     sizeof(register_get_set));
-
-  for(j = 0; j < 4 * CACHE_INODE_NB_COMMAND; j += 4)
-    {
-      (*p_dyn_gs)[j + 0].label = Mem_Alloc(256 * sizeof(char));
-      snprintf((*p_dyn_gs)[j + 0].label, 256, "%s_nb_success",
-               cache_inode_function_names[j / 4]);
-      (*p_dyn_gs)[j + 0].desc = "Number of success calls to inode cache for this command";
-      (*p_dyn_gs)[j + 0].type = SNMP_ADM_INTEGER;
-      (*p_dyn_gs)[j + 0].access = SNMP_ADM_ACCESS_RO;
-      (*p_dyn_gs)[j + 0].getter = get_inode_stat_func_stat;
-      (*p_dyn_gs)[j + 0].setter = NULL;
-      (*p_dyn_gs)[j + 0].opt_arg = (void *)(j + 0);
-
-      (*p_dyn_gs)[j + 1].label = Mem_Alloc(256 * sizeof(char));
-      snprintf((*p_dyn_gs)[j + 1].label, 256, "%s_nb_call",
-               cache_inode_function_names[j / 4]);
-      (*p_dyn_gs)[j + 1].desc = "Number of calls to inode cache for this command";
-      (*p_dyn_gs)[j + 1].type = SNMP_ADM_INTEGER;
-      (*p_dyn_gs)[j + 1].access = SNMP_ADM_ACCESS_RO;
-      (*p_dyn_gs)[j + 1].getter = get_inode_stat_func_stat;
-      (*p_dyn_gs)[j + 1].setter = NULL;
-      (*p_dyn_gs)[j + 1].opt_arg = (void *)(j + 1);
-
-      (*p_dyn_gs)[j + 2].label = Mem_Alloc(256 * sizeof(char));
-      snprintf((*p_dyn_gs)[j + 2].label, 256, "%s_nb_retryable",
-               cache_inode_function_names[j / 4]);
-      (*p_dyn_gs)[j + 2].desc =
-          "Number of retryable calls to inode cache for this command";
-      (*p_dyn_gs)[j + 2].type = SNMP_ADM_INTEGER;
-      (*p_dyn_gs)[j + 2].access = SNMP_ADM_ACCESS_RO;
-      (*p_dyn_gs)[j + 2].getter = get_inode_stat_func_stat;
-      (*p_dyn_gs)[j + 2].setter = NULL;
-      (*p_dyn_gs)[j + 2].opt_arg = (void *)(j + 2);
-
-      (*p_dyn_gs)[j + 3].label = Mem_Alloc(256 * sizeof(char));
-      snprintf((*p_dyn_gs)[j + 3].label, 256, "%s_nb_unrecover",
-               cache_inode_function_names[j / 4]);
-      (*p_dyn_gs)[j + 3].desc =
-          "Number of unrecover calls to inode cache for this command";
-      (*p_dyn_gs)[j + 3].type = SNMP_ADM_INTEGER;
-      (*p_dyn_gs)[j + 3].access = SNMP_ADM_ACCESS_RO;
-      (*p_dyn_gs)[j + 3].getter = get_inode_stat_func_stat;
-      (*p_dyn_gs)[j + 3].setter = NULL;
-      (*p_dyn_gs)[j + 3].opt_arg = (void *)(j + 3);
-    }
-}
-
 static void create_dyn_mntv1_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
 {
   long j;
@@ -1418,11 +1256,9 @@ static void free_dyn(register_get_set * dyn, int count)
  * Start snmp thread.
  * @return 0 on success.
  */
-int stats_snmp(nfs_worker_data_t * workers_data_local)
+int stats_snmp(void)
 {
   int rc = 0;
-
-  workers_data = workers_data_local;
 
   register_get_set *dyn_gs;
   int dyn_gs_count;
@@ -1504,19 +1340,6 @@ int stats_snmp(nfs_worker_data_t * workers_data_local)
         }
     }
 #endif                          /* _NO_BUDDY_SYSTEM */
-
-  if(nfs_param.extern_param.snmp_adm.export_cache_inode_calls_detail)
-    {
-      create_dyn_cache_stat(&dyn_gs, &dyn_gs_count);
-
-      if((rc = snmp_adm_register_get_set_function(STAT_OID, dyn_gs, dyn_gs_count)))
-        {
-          LogCrit(COMPONENT_INIT,
-                  "Error registering dynamic cache statistic variables to SNMP");
-          return 2;
-        }
-      free_dyn(dyn_gs, dyn_gs_count);
-    }
 
   if(nfs_param.extern_param.snmp_adm.export_nfs_calls_detail)
     {

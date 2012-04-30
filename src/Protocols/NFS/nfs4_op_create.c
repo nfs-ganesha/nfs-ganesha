@@ -56,7 +56,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -230,7 +229,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* get attributes of parent directory, for 'change4' info replyed */
   if((cache_status = cache_inode_getattr(pentry_parent,
                                          &attr_parent,
-                                         data->ht,
                                          data->pclient,
                                          data->pcontext,
                                          &cache_status)) != CACHE_INODE_SUCCESS)
@@ -238,10 +236,9 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       res_CREATE4.status = nfs4_Errno(cache_status);
       return res_CREATE4.status;
     }
-  /* Change info for client cache coherency, pentry internal_md is used for that */
-  memset(&(res_CREATE4.CREATE4res_u.resok4.cinfo.before), 0, sizeof(changeid4));
-  res_CREATE4.CREATE4res_u.resok4.cinfo.before =
-      (changeid4) pentry_parent->internal_md.mod_time;
+
+  res_CREATE4.CREATE4res_u.resok4.cinfo.before
+       = cache_inode_get_changeid4(pentry_parent);
 
   /* Convert the incoming fattr4 to a vattr structure, if such arguments are supplied */
   if(arg_CREATE4.createattrs.attrmask.bitmap4_len != 0)
@@ -282,11 +279,9 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if((pentry_new = cache_inode_create(pentry_parent,
                                           &name,
                                           SYMBOLIC_LINK,
-                                          data->pexport->cache_inode_policy,
                                           mode,
                                           &create_arg,
                                           &attr_new,
-                                          data->ht,
                                           data->pclient,
                                           data->pcontext, &cache_status)) == NULL)
         {
@@ -304,19 +299,17 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       break;
     case NF4DIR:
       /* Create a new directory */
-      
+
       /* The create_arg structure contains the information "newly created directory"
        * to be passed to cache_inode_new_entry from cache_inode_create */
-      create_arg.dir_hint.newly_created = TRUE ;
- 
+      create_arg.newly_created_dir = TRUE ;
+
       if((pentry_new = cache_inode_create(pentry_parent,
                                           &name,
                                           DIRECTORY,
-                                          data->pexport->cache_inode_policy,
                                           mode,
                                           &create_arg,
                                           &attr_new,
-                                          data->ht,
                                           data->pclient,
                                           data->pcontext, &cache_status)) == NULL)
         {
@@ -338,11 +331,9 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if((pentry_new = cache_inode_create(pentry_parent,
                                           &name,
                                           SOCKET_FILE,
-                                          data->pexport->cache_inode_policy,
                                           mode,
                                           NULL,
                                           &attr_new,
-                                          data->ht,
                                           data->pclient,
                                           data->pcontext, &cache_status)) == NULL)
         {
@@ -364,11 +355,9 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if((pentry_new = cache_inode_create(pentry_parent,
                                           &name,
                                           FIFO_FILE,
-                                          data->pexport->cache_inode_policy,
                                           mode,
                                           NULL,
                                           &attr_new,
-                                          data->ht,
                                           data->pclient,
                                           data->pcontext, &cache_status)) == NULL)
         {
@@ -393,11 +382,9 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if((pentry_new = cache_inode_create(pentry_parent,
                                           &name,
                                           CHARACTER_FILE,
-                                          data->pexport->cache_inode_policy,
                                           mode,
                                           &create_arg,
                                           &attr_new,
-                                          data->ht,
                                           data->pclient,
                                           data->pcontext, &cache_status)) == NULL)
         {
@@ -422,11 +409,9 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       if((pentry_new = cache_inode_create(pentry_parent,
                                           &name,
                                           BLOCK_FILE,
-                                          data->pexport->cache_inode_policy,
                                           mode,
                                           &create_arg,
                                           &attr_new,
-                                          data->ht,
                                           data->pclient,
                                           data->pcontext, &cache_status)) == NULL)
         {
@@ -450,11 +435,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     }                           /* switch( arg_CREATE4.objtype.type ) */
 
   /* Now produce the filehandle to this file */
-  if((pnewfsal_handle = cache_inode_get_fsal_handle(pentry_new, &cache_status)) == NULL)
-    {
-      res_CREATE4.status = nfs4_Errno(cache_status);
-      return res_CREATE4.status;
-    }
+  pnewfsal_handle = &pentry_new->handle;
 
   /* Allocation of a new file handle */
   if(nfs4_AllocateFH(&newfh4) != NFS4_OK)
@@ -486,7 +467,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     {
       if((cache_status = cache_inode_setattr(pentry_new,
                                              &sattr,
-                                             data->ht,
                                              data->pclient,
                                              data->pcontext,
                                              &cache_status)) != CACHE_INODE_SUCCESS)
@@ -517,7 +497,6 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Get the change info on parent directory after the operation was successfull */
   if((cache_status = cache_inode_getattr(pentry_parent,
                                          &attr_parent,
-                                         data->ht,
                                          data->pclient,
                                          data->pcontext,
                                          &cache_status)) != CACHE_INODE_SUCCESS)
@@ -526,8 +505,8 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_CREATE4.status;
     }
   memset(&(res_CREATE4.CREATE4res_u.resok4.cinfo.after), 0, sizeof(changeid4));
-  res_CREATE4.CREATE4res_u.resok4.cinfo.after =
-      (changeid4) pentry_parent->internal_md.mod_time;
+  res_CREATE4.CREATE4res_u.resok4.cinfo.after
+       = cache_inode_get_changeid4(pentry_parent);
 
   /* Operation is supposed to be atomic .... */
   res_CREATE4.CREATE4res_u.resok4.cinfo.atomic = FALSE;
@@ -541,8 +520,12 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* @todo : BUGAZOMEU: fair ele free dans cette fonction */
 
   /* Keep the vnode entry for the file in the compound data */
+
+  if (data->current_entry) {
+      cache_inode_put(data->current_entry, data->pclient);
+  }
   data->current_entry = pentry_new;
-  data->current_filetype = pentry_new->internal_md.type;
+  data->current_filetype = pentry_new->type;
 
   /* If you reach this point, then no error occured */
   res_CREATE4.status = NFS4_OK;
@@ -552,13 +535,13 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
 /**
  * nfs4_op_create_Free: frees what was allocared to handle nfs4_op_create.
- * 
+ *
  * Frees what was allocared to handle nfs4_op_create.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs4_op_create_Free(CREATE4res * resp)
 {

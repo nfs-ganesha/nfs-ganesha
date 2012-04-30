@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -57,7 +57,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -66,16 +65,15 @@
 
 /**
  *
- *  nfs_Lookup: The NFS PROC2 and PROC3 LOOKUP
+ * @brief The NFS PROC2 and PROC3 LOOKUP
  *
  * Implements the NFS PROC LOOKUP function (for V2 and V3).
- * 
+ *
  * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
+ * @param pexport [IN]    pointer to nfs export list
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
- * @param ht      [INOUT] cache inode hash table
- * @param preq    [IN]    pointer to SVC request related to this call 
+ * @param preq    [IN]    pointer to SVC request related to this call
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
  * @return always NFS_REQ_OK (this routine does nothing)
@@ -86,12 +84,12 @@ int nfs_Lookup(nfs_arg_t * parg,
                exportlist_t * pexport,
                fsal_op_context_t * pcontext,
                cache_inode_client_t * pclient,
-               hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
+               struct svc_req *preq, nfs_res_t * pres)
 {
   static char __attribute__ ((__unused__)) funcName[] = "nfs_Lookup";
 
-  cache_entry_t *pentry_dir;
-  cache_entry_t *pentry_file;
+  cache_entry_t *pentry_dir = NULL;
+  cache_entry_t *pentry_file = NULL;
   cache_inode_status_t cache_status;
   fsal_attrib_list_t attr;
   fsal_attrib_list_t attrdir;
@@ -100,7 +98,7 @@ int nfs_Lookup(nfs_arg_t * parg,
   unsigned int xattr_found = FALSE;
   fsal_name_t name;
   fsal_handle_t *pfsal_handle;
-  int rc;
+  int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
@@ -140,10 +138,10 @@ int nfs_Lookup(nfs_arg_t * parg,
                                       &(pres->res_dirop2.status),
                                       &(pres->res_lookup3.status),
                                       NULL,
-                                      &attrdir, pcontext, pclient, ht, &rc)) == NULL)
+                                      &attrdir, pcontext, pclient, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
-      return rc;
+      goto out;
     }
 
   switch (preq->rq_vers)
@@ -158,7 +156,6 @@ int nfs_Lookup(nfs_arg_t * parg,
     }
 
   /* Do the lookup */
-  pentry_file = NULL;
 
 #ifndef _NO_XATTRD
   /* Is this a .xattr.d.<object> name ? */
@@ -169,8 +166,11 @@ int nfs_Lookup(nfs_arg_t * parg,
     }
 #endif
 
-  if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_lookup3.what.dir))))
-    return nfs3_Lookup_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
+  if((preq->rq_vers == NFS_V3) &&
+     (nfs3_Is_Fh_Xattr(&(parg->arg_lookup3.what.dir)))) {
+      rc = nfs3_Lookup_Xattr(parg, pexport, pcontext, pclient, preq, pres);
+      goto out;
+  }
 
   if((cache_status = cache_inode_error_convert(FSAL_str2name(strpath,
                                                              FSAL_MAX_NAME_LEN,
@@ -178,17 +178,16 @@ int nfs_Lookup(nfs_arg_t * parg,
      CACHE_INODE_SUCCESS)
     {
       /* BUGAZOMEU: Faire la gestion des cross junction traverse */
-      if((pentry_file = cache_inode_valid_lookup( pentry_dir,
-                                                  &name,
-                                                  pexport->cache_inode_policy,
-                                                  &attr,
-                                                  ht,
-                                                  pclient,
-                                                  pcontext,
-                                                  &cache_status)) != NULL)
+      if((pentry_file
+          = cache_inode_lookup(pentry_dir,
+                               &name,
+                               &attr,
+                               pclient,
+                               pcontext,
+                               &cache_status)) != NULL)
         {
           /* Do not forget cross junction management */
-          pfsal_handle = cache_inode_get_fsal_handle(pentry_file, &cache_status);
+          pfsal_handle = &pentry_file->handle;
           if(cache_status == CACHE_INODE_SUCCESS)
             {
               switch (preq->rq_vers)
@@ -244,14 +243,16 @@ int nfs_Lookup(nfs_arg_t * parg,
                             /* Build entry attributes */
                             nfs_SetPostOpAttr(pexport,
                                               &attr,
-                                              &(pres->res_lookup3.LOOKUP3res_u.resok.
-                                                obj_attributes));
+                                              &(pres->res_lookup3
+                                                .LOOKUP3res_u.resok
+                                                .obj_attributes));
 
                           /* Build directory attributes */
                           nfs_SetPostOpAttr(pexport,
                                             &attrdir,
-                                            &(pres->res_lookup3.LOOKUP3res_u.resok.
-                                              dir_attributes));
+                                            &(pres->res_lookup3
+                                              .LOOKUP3res_u.resok
+                                              .dir_attributes));
 
                           pres->res_lookup3.status = NFS3_OK;
                         }       /* if */
@@ -262,13 +263,13 @@ int nfs_Lookup(nfs_arg_t * parg,
         }                       /* if( ( pentry_file = cache_inode_lookup... */
     }
 
-  /* if( ( cache_status = cache_inode_error_convert... */
-
   if(cache_status != CACHE_INODE_SUCCESS)
     {
       /* If we are here, there was an error */
-      if(nfs_RetryableError(cache_status))
-        return NFS_REQ_DROP;
+        if(nfs_RetryableError(cache_status)) {
+            rc =NFS_REQ_DROP;
+            goto out;
+        }
 
       nfs_SetFailedStatus(pcontext, pexport,
                           preq->rq_vers,
@@ -280,7 +281,18 @@ int nfs_Lookup(nfs_arg_t * parg,
                           NULL, NULL, NULL, NULL, NULL, NULL);
     }
 
-  return NFS_REQ_OK;
+  rc = NFS_REQ_OK;
+
+out:
+  /* return references */
+  if (pentry_dir)
+      cache_inode_put(pentry_dir, pclient);
+
+  if (pentry_file)
+      cache_inode_put(pentry_file, pclient);
+
+  return (rc);
+
 }                               /* nfs_Lookup */
 
 /**

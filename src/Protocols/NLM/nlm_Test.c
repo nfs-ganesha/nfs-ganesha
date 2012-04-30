@@ -47,7 +47,6 @@
  *  @param pexportlist [IN]
  *  @param pcontextp   [IN]
  *  @param pclient     [INOUT]
- *  @param ht          [INOUT]
  *  @param preq        [IN]
  *  @param pres        [OUT]
  *
@@ -57,7 +56,6 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
               exportlist_t * pexport /* IN     */ ,
               fsal_op_context_t * pcontext /* IN     */ ,
               cache_inode_client_t * pclient /* INOUT  */ ,
-              hash_table_t * ht /* INOUT  */ ,
               struct svc_req *preq /* IN     */ ,
               nfs_res_t * pres /* OUT    */ )
 {
@@ -107,7 +105,6 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
                               arg->exclusive,
                               &arg->alock,
                               &lock,
-                              ht,
                               &pentry,
                               pcontext,
                               pclient,
@@ -194,7 +191,6 @@ static void nlm4_test_message_resp(state_async_queue_t *arg)
  *  @param pexportlist [IN]
  *  @param pcontextp   [IN]
  *  @param pclient     [INOUT]
- *  @param ht          [INOUT]
  *  @param preq        [IN]
  *  @param pres        [OUT]
  *
@@ -204,7 +200,6 @@ int nlm4_Test_Message(nfs_arg_t * parg /* IN     */ ,
                       exportlist_t * pexport /* IN     */ ,
                       fsal_op_context_t * pcontext /* IN     */ ,
                       cache_inode_client_t * pclient /* INOUT  */ ,
-                      hash_table_t * ht /* INOUT  */ ,
                       struct svc_req *preq /* IN     */ ,
                       nfs_res_t * pres /* OUT    */ )
 {
@@ -223,7 +218,7 @@ int nlm4_Test_Message(nfs_arg_t * parg /* IN     */ ,
   if(nlm_client == NULL)
     rc = NFS_REQ_DROP;
   else
-    rc = nlm4_Test(parg, pexport, pcontext, pclient, ht, preq, pres);
+    rc = nlm4_Test(parg, pexport, pcontext, pclient, preq, pres);
 
   if(rc == NFS_REQ_OK)
     rc = nlm_send_async_res_nlm4test(nlm_client, nlm4_test_message_resp, pres);

@@ -55,7 +55,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -71,7 +70,6 @@
  * @param pexport [IN]    pointer to nfs export list 
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
- * @param ht      [INOUT] cache inode hash table
  * @param preq    [IN]    pointer to SVC request related to this call 
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
@@ -85,7 +83,7 @@ int nfs3_Commit(nfs_arg_t * parg,
                 exportlist_t * pexport,
                 fsal_op_context_t * pcontext,
                 cache_inode_client_t * pclient,
-                hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
+                struct svc_req *preq, nfs_res_t * pres)
 {
   static char __attribute__ ((__unused__)) funcName[] = "nfs3_Access";
 
@@ -95,6 +93,7 @@ int nfs3_Commit(nfs_arg_t * parg,
   fsal_attrib_list_t pre_attr;
   fsal_attrib_list_t *ppre_attr;
   uint64_t typeofcommit;
+  int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
@@ -111,42 +110,54 @@ int nfs3_Commit(nfs_arg_t * parg,
 
   /* Convert file handle into a fsal_handle */
   if(nfs3_FhandleToFSAL(&(parg->arg_commit3.file), &fsal_data.fh_desc, pcontext) == 0)
-    return NFS_REQ_DROP;
+    {
+      rc = NFS_REQ_DROP;
+      goto out;
+    }
 
   /* Get the entry in the cache_inode */
-  if((pentry = cache_inode_get( &fsal_data,
-                                pexport->cache_inode_policy,
-                                &pre_attr, 
-                                ht, 
-                                pclient, 
-                                pcontext, 
-                                &cache_status)) == NULL)
+  if((pentry = cache_inode_get(&fsal_data,
+                               &pre_attr,
+                               pclient,
+                               pcontext,
+                               &cache_status)) == NULL)
     {
       /* Stale NFS FH ? */
       pres->res_commit3.status = NFS3ERR_STALE;
-      return NFS_REQ_OK;
+      rc = NFS_REQ_OK;
+      goto out;
     }
 
   if((pexport->use_commit == TRUE) &&
      (pexport->use_ganesha_write_buffer == FALSE))
-    typeofcommit = FSAL_UNSAFE_WRITE_TO_FS_BUFFER;
+    typeofcommit = CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER;
   else if((pexport->use_commit == TRUE) &&
           (pexport->use_ganesha_write_buffer == TRUE))
-    typeofcommit = FSAL_UNSAFE_WRITE_TO_GANESHA_BUFFER;
-  else 
-    /* We only do stable writes with this export so no need to execute a commit */
-    return NFS_REQ_OK;    
+    typeofcommit = CACHE_INODE_UNSAFE_WRITE_TO_GANESHA_BUFFER;
+  else
+    {
+      /* We only do stable writes with this export so no need to execute a commit */
+      rc = NFS_REQ_OK;
+      goto out;
+    }
 
   /* Do not use DC if data cache is enabled, the data is kept synchronous is the DC */
   if(cache_inode_commit(pentry,
                         parg->arg_commit3.offset,
                         parg->arg_commit3.count,
-                        &pre_attr,
-                        ht, pclient, pcontext, typeofcommit, &cache_status) != CACHE_INODE_SUCCESS)
+                        typeofcommit,
+                        pclient,
+                        pcontext,
+                        &cache_status) != CACHE_INODE_SUCCESS)
     {
       pres->res_commit3.status = NFS3ERR_IO;;
 
-      return NFS_REQ_OK;
+      nfs_SetWccData(pexport,
+                     ppre_attr,
+                     ppre_attr, &(pres->res_commit3.COMMIT3res_u.resfail.file_wcc));
+
+      rc = NFS_REQ_OK;
+      goto out;
     }
 
   /* Set the pre_attr */
@@ -160,7 +171,14 @@ int nfs3_Commit(nfs_arg_t * parg,
          sizeof(writeverf3));
   pres->res_commit3.status = NFS3_OK;
 
-  return NFS_REQ_OK;
+ out:
+
+  if (pentry)
+    {
+      cache_inode_put(pentry, pclient);
+    }
+
+  return rc;
 }                               /* nfs3_Commit */
 
 /**

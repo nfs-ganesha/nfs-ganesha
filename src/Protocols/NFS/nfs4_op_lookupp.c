@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -57,7 +57,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -103,7 +102,7 @@
  * @param resp  [IN]    Pointer to nfs4_op results
  *
  * @return NFS4_OK if successfull, other values show an error.  
- * 
+ *
  */
 #define arg_LOOKUPP4 op->nfs_argop4_u.oplookupp
 #define res_LOOKUPP4 resp->nfs_resop4_u.oplookupp
@@ -179,21 +178,15 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
   name = FSAL_DOT_DOT;
 
   /* BUGAZOMEU: Faire la gestion des cross junction traverse */
-  if((file_pentry = cache_inode_lookup(dir_pentry,
-                                       &name,
-                                       data->pexport->cache_inode_policy,
-                                       &attrlookup,
-                                       data->ht,
-                                       data->pclient,
-                                       data->pcontext, &cache_status)) != NULL)
+  if((file_pentry
+      = cache_inode_lookup(dir_pentry,
+                           &name,
+                           &attrlookup,
+                           data->pclient,
+                           data->pcontext, &cache_status)) != NULL)
     {
       /* Extract the fsal attributes from the cache inode pentry */
-      pfsal_handle = cache_inode_get_fsal_handle(file_pentry, &cache_status);
-      if(cache_status != CACHE_INODE_SUCCESS)
-        {
-          res_LOOKUPP4.status = NFS4ERR_SERVERFAULT;
-          return res_LOOKUPP4.status;
-        }
+      pfsal_handle = &file_pentry->handle;
 
       /* Convert it to a file handle */
       if(!nfs4_FSALToFhandle(&data->currentFH, pfsal_handle, data))
@@ -207,9 +200,16 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
              (char *)(data->currentFH.nfs_fh4_val), data->currentFH.nfs_fh4_len);
       data->mounted_on_FH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
 
+      /* Release dir_pentry, as it is not reachable from anywhere in
+         compound after this function returns.  Count on later
+         operations or nfs4_Compound to clean up current_entry. */
+
+      if (dir_pentry)
+        cache_inode_put(dir_pentry, data->pclient);
+
       /* Keep the pointer within the compound data */
       data->current_entry = file_pentry;
-      data->current_filetype = file_pentry->internal_md.type;
+      data->current_filetype = file_pentry->type;
 
       /* Return successfully */
       res_LOOKUPP4.status = NFS4_OK;
@@ -217,12 +217,13 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
 
     }
 
-  /* If the part of the code is reached, then something wrong occured in the lookup process, status is not HPSS_E_NOERROR 
-   * and contains the code for the error */
+  /* If the part of the code is reached, then something wrong occured in the
+   * lookup process, status is not HPSS_E_NOERROR and contains the code for
+   * the error */
 
   /* If NFS4ERR_SYMLINK should be returned for a symlink instead of ENOTDIR */
   if((cache_status == CACHE_INODE_NOT_A_DIRECTORY) &&
-     (dir_pentry->internal_md.type == SYMBOLIC_LINK))
+     (dir_pentry->type == SYMBOLIC_LINK))
     res_LOOKUPP4.status = NFS4ERR_SYMLINK;
   else
     res_LOOKUPP4.status = nfs4_Errno(cache_status);
@@ -232,7 +233,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op,
 
 /**
  * nfs4_op_lookupp_Free: frees what was allocared to handle nfs4_op_lookupp.
- * 
+ *
  * Frees what was allocared to handle nfs4_op_lookupp.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results

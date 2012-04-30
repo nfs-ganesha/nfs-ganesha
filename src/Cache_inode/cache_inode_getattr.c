@@ -66,7 +66,6 @@
  *
  * @param pentry [IN] entry to be managed.
  * @param pattr [OUT] pointer to the results
- * @param ht [IN] hash table used for the cache, unused in this call.
  * @param pclient [INOUT] ressource allocated by the client for the nfs management.
  * @param pcontext [IN] FSAL credentials
  * @param pstatus [OUT] returned status.
@@ -76,143 +75,43 @@
  *
  */
 cache_inode_status_t
-cache_inode_getattr(cache_entry_t * pentry,
-                    fsal_attrib_list_t * pattr,
-                    hash_table_t * ht, /* Unused, kept for protototype's homogeneity */
-                    cache_inode_client_t * pclient,
-                    fsal_op_context_t * pcontext,
-                    cache_inode_status_t * pstatus)
+cache_inode_getattr(cache_entry_t *pentry,
+                    fsal_attrib_list_t *pattr, /* XXX Change this so
+                                                * we don't just copy
+                                                * stuff on the stack. */
+                    cache_inode_client_t *pclient,
+                    fsal_op_context_t *pcontext,
+                    cache_inode_status_t *pstatus)
 {
-    cache_inode_status_t status;
-    fsal_handle_t *pfsal_handle = NULL;
-    fsal_status_t fsal_status;
+     /* sanity check */
+     if(pentry == NULL || pattr == NULL || pclient == NULL ||
+        pcontext == NULL) {
+          *pstatus = CACHE_INODE_INVALID_ARGUMENT;
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "cache_inode_getattr: returning "
+                   "CACHE_INODE_INVALID_ARGUMENT because of bad arg");
+          return *pstatus;
+     }
 
-    /* sanity check */
-    if(pentry == NULL || pattr == NULL ||
-       ht == NULL || pclient == NULL || pcontext == NULL)
-        {
-            *pstatus = CACHE_INODE_INVALID_ARGUMENT;
-            LogDebug(COMPONENT_CACHE_INODE,
-                     "cache_inode_getattr: returning CACHE_INODE_INVALID_ARGUMENT because of bad arg");
-            return *pstatus;
-        }
+     /* Set the return default to CACHE_INODE_SUCCESS */
+     *pstatus = CACHE_INODE_SUCCESS;
 
-    /* Set the return default to CACHE_INODE_SUCCESS */
-    *pstatus = CACHE_INODE_SUCCESS;
+/* Lock (and refresh if necessary) the attributes, copy them out, and
+   unlock. */
 
-    /* stats */
-    pclient->stat.nb_call_total += 1;
-    inc_func_call(pclient, CACHE_INODE_GETATTR);
+     if ((*pstatus
+          = cache_inode_lock_trust_attrs(pentry,
+                                         pcontext,
+                                         pclient))
+         != CACHE_INODE_SUCCESS) {
+          goto out;
+     }
 
-    /* Lock the entry */
-    P_w(&pentry->lock);
-    status = cache_inode_renew_entry(pentry, pattr, ht,
-                                     pclient, pcontext, pstatus);
-    if(status != CACHE_INODE_SUCCESS)
-        {
-            V_w(&pentry->lock);
-            inc_func_err_retryable(pclient, CACHE_INODE_GETATTR);
-            LogDebug(COMPONENT_CACHE_INODE,
-                         "cache_inode_getattr: returning %d(%s) from cache_inode_renew_entry",
-                         *pstatus, cache_inode_err_str(*pstatus));
-            return *pstatus;
-        }
+     *pattr = pentry->attributes;
 
-    /* RW Lock goes for writer to reader */
-    rw_lock_downgrade(&pentry->lock);
+     pthread_rwlock_unlock(&pentry->attr_lock);
 
-    *pattr = pentry->attributes;
+out:
 
-    if(FSAL_TEST_MASK(pattr->asked_attributes,
-                      FSAL_ATTR_RDATTR_ERR))
-        {
-	    if((pentry->internal_md.type == FS_JUNCTION) ||
-	       (pentry->internal_md.type == UNASSIGNED) ||
-	       (pentry->internal_md.type == RECYCLED))
-                {
-                    *pstatus = CACHE_INODE_INVALID_ARGUMENT;
-                    LogFullDebug(COMPONENT_CACHE_INODE,
-                                 "cache_inode_getattr: returning %d(%s) "
-				 "from cache_inode_renew_entry - unexpected md_type",
-                                 *pstatus, cache_inode_err_str(*pstatus));
-                    return *pstatus;
-                }
-            pfsal_handle = &pentry->handle;
-
-            /*
-             * An error occured when trying to get
-             * the attributes, they have to be renewed
-             */
-            fsal_status = FSAL_getattrs_descriptor(cache_inode_fd(pentry), pfsal_handle, pcontext, pattr);
-            if(FSAL_IS_ERROR(fsal_status))
-                {
-                    *pstatus = cache_inode_error_convert(fsal_status);
-                    
-                    V_r(&pentry->lock);
-
-                    if(fsal_status.major == ERR_FSAL_STALE)
-                        {
-                            cache_inode_status_t kill_status;
-
-                            LogEvent(COMPONENT_CACHE_INODE,
-                                     "cache_inode_getattr: Stale FSAL File Handle detected for pentry = %p, fsal_status=(%u,%u)",
-                                     pentry, fsal_status.major, fsal_status.minor);
-
-                            /* Locked flag is set to true to show entry has a read lock */
-                            cache_inode_kill_entry( pentry, WT_LOCK, ht,
-                                                    pclient, &kill_status);
-                            if(kill_status != CACHE_INODE_SUCCESS)
-                                LogCrit(COMPONENT_CACHE_INODE,
-                                        "cache_inode_getattr: Could not kill entry %p, status = %u, fsal_status=(%u,%u)",
-                                        pentry, kill_status, fsal_status.major, fsal_status.minor);
-
-                            *pstatus = CACHE_INODE_FSAL_ESTALE;
-                        }
-
-                    /* stat */
-                    inc_func_err_unrecover(pclient, CACHE_INODE_GETATTR);
-                    LogDebug(COMPONENT_CACHE_INODE,
-                             "cache_inode_getattr: returning %d(%s) from FSAL_getattrs_descriptor",
-                             *pstatus, cache_inode_err_str(*pstatus));
-                    return *pstatus;
-                }
-
-            /* Set the new attributes */
-            cache_inode_set_attributes(pentry, pattr);
-        }
-    *pstatus = cache_inode_valid(pentry, CACHE_INODE_OP_GET, pclient);
-
-    V_r(&pentry->lock);
-
-    /* stat */
-    if(*pstatus != CACHE_INODE_SUCCESS)
-        inc_func_err_retryable(pclient, CACHE_INODE_GETATTR);
-    else
-        inc_func_success(pclient, CACHE_INODE_GETATTR);
-
-#ifdef _USE_NFS4_ACL
-    if(isFullDebug(COMPONENT_NFS_V4_ACL))
-      {
-        LogFullDebug(COMPONENT_CACHE_INODE,
-                 "cache_inode_getattr: pentry = %p, acl = %p",
-                 pentry, pattr->acl);
-
-        if(pattr->acl)
-          {
-            fsal_ace_t *pace;
-            for(pace = pattr->acl->aces; pace < pattr->acl->aces + pattr->acl->naces; pace++)
-              {
-                LogFullDebug(COMPONENT_CACHE_INODE,
-                         "cache_inode_getattr: ace type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
-                         pace->type, pace->flag, pace->perm, IS_FSAL_ACE_SPECIAL_ID(*pace),
-                         GET_FSAL_ACE_WHO_TYPE(*pace), GET_FSAL_ACE_WHO(*pace));
-              }
-          }
-      }
-#endif                          /* _USE_NFS4_ACL */
-
-    LogDebug(COMPONENT_CACHE_INODE,
-                 "cache_inode_getattr: returning %d(%s) from cache_inode_valid",
-                 *pstatus, cache_inode_err_str(*pstatus));
     return *pstatus;
 }

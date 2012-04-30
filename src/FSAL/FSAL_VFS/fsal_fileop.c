@@ -433,7 +433,7 @@ fsal_status_t VFSFSAL_write(fsal_file_t * file_desc,       /* IN */
         }
 
       LogFullDebug(COMPONENT_FSAL,
-                   "Write operation (whence=%s, offset=%lld, size=%lld)",
+                   "Write operation (whence=%s, offset=%lld, size=%zd)",
                    (p_seek_descriptor->whence ==
                     FSAL_SEEK_CUR ? "SEEK_CUR" : (p_seek_descriptor->whence ==
                                                   FSAL_SEEK_SET ? "SEEK_SET"

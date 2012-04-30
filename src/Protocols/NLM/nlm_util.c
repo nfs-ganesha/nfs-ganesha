@@ -242,21 +242,21 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
       return;
     }
 
-  P(cookie_entry->sce_pentry->object.file.lock_list_mutex);
+  pthread_rwlock_wrlock(&cookie_entry->sce_pentry->state_lock);
 
   if(cookie_entry->sce_lock_entry->sle_block_data == NULL ||
      !nlm_block_data_to_fsal_context(cookie_entry->sce_lock_entry->sle_block_data,
                                      pcontext))
     {
       /* Wow, we're not doing well... */
-      V(cookie_entry->sce_pentry->object.file.lock_list_mutex);
+      pthread_rwlock_unlock(&cookie_entry->sce_pentry->state_lock);
       LogFullDebug(COMPONENT_NLM,
                    "Could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
                    buffer);
       return;
     }
 
-  V(cookie_entry->sce_pentry->object.file.lock_list_mutex);
+  pthread_rwlock_unlock(&cookie_entry->sce_pentry->state_lock);
 
   if(state_release_grant(pcontext,
                          cookie_entry,
@@ -274,7 +274,6 @@ int nlm_process_parameters(struct svc_req        * preq,
                            bool_t                  exclusive,
                            nlm4_lock             * alock,
                            fsal_lock_param_t     * plock,
-                           hash_table_t          * ht,
                            cache_entry_t        ** ppentry,
                            fsal_op_context_t     * pcontext,
                            cache_inode_client_t  * pclient,
@@ -303,9 +302,7 @@ int nlm_process_parameters(struct svc_req        * preq,
 
   /* Now get the cached inode attributes */
   *ppentry = cache_inode_get(&fsal_data,
-                             CACHE_INODE_JOKER_POLICY,
                              &attr,
-                             ht,
                              pclient,
                              pcontext,
                              &cache_status);

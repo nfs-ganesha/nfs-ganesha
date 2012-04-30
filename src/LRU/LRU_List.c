@@ -282,7 +282,6 @@ int LRU_pop_entry (LRU_list_t * plru, LRU_entry_t  *out_entry)
     LRU_entry_t * const pentry = plru->LRU;
     void  *pdata __attribute__((unused));
 
-
     if (plru->nb_entry == 0) {
 	return LRU_LIST_EMPTY_LIST;
     }

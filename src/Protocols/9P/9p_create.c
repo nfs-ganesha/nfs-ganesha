@@ -114,7 +114,6 @@ int _9p_create( _9p_request_data_t * preq9p,
                                               *mode,
                                               NULL,
                                               &fsalattr,
-                                              pwkrdata->ht,
                                               &pwkrdata->cache_inode_client, 
                                               &pfid->fsal_op_context, 
      			 		      &cache_status)) == NULL)

@@ -57,7 +57,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -84,16 +83,17 @@
 int nfs4_op_setattr(struct nfs_argop4 *op,
                     compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_setattr";
   fsal_attrib_list_t     sattr;
   fsal_attrib_list_t     parent_attr;
-  cache_inode_status_t   cache_status;
+  cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
   int                    rc = 0;
   const char           * tag = "SETATTR";
   state_t              * pstate_found = NULL;
   state_t              * pstate_open  = NULL;
   cache_entry_t        * pentry       = NULL;
 
+  memset(&sattr, 0, sizeof(sattr));
+  memset(&parent_attr, 0, sizeof(parent_attr));
   resp->resop = NFS4_OP_SETATTR;
   res_SETATTR4.status = NFS4_OK;
 
@@ -161,7 +161,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
           return res_SETATTR4.status;
         }
       /* Object should be a file */
-      if(data->current_entry->internal_md.type != REGULAR_FILE)
+      if(data->current_entry->type != REGULAR_FILE)
         {
           res_SETATTR4.status = NFS4ERR_INVAL;
           return res_SETATTR4.status;
@@ -235,7 +235,6 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
       if((cache_status = cache_inode_truncate(data->current_entry,
                                               sattr.filesize,
                                               &parent_attr,
-                                              data->ht,
                                               data->pclient,
                                               data->pcontext,
                                               &cache_status)) != CACHE_INODE_SUCCESS)
@@ -312,7 +311,6 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
 
       if(cache_inode_setattr(data->current_entry,
                              &sattr,
-                             data->ht,
                              data->pclient,
                              data->pcontext, &cache_status) != CACHE_INODE_SUCCESS)
         {

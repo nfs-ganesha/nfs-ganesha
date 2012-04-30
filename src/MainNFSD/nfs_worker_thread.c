@@ -61,7 +61,6 @@
 #include "rquota.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -1206,7 +1205,9 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
     }
 
   /* Zero out timers prior to starting processing */
+  P(pworker_data->request_pool_mutex);
   memset(timer_start, 0, sizeof(struct timeval));
+  V(pworker_data->request_pool_mutex);
   memset(&timer_end, 0, sizeof(struct timeval));
   memset(&timer_diff, 0, sizeof(struct timeval));
   memset(&queue_timer_diff, 0, sizeof(struct timeval));
@@ -1367,6 +1368,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }
 
       /* processing */
+      P(pworker_data->request_pool_mutex);
       gettimeofday(timer_start, NULL);
 
       LogDebug(COMPONENT_DISPATCH,
@@ -1374,6 +1376,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                pworker_data->pfuncdesc->funcname,
                (unsigned long long)timer_start->tv_sec,
                (unsigned long long)timer_start->tv_usec);
+
+      V(pworker_data->request_pool_mutex);
 
 
 #ifdef _ERROR_INJECTION
@@ -1392,7 +1396,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 						     pexport, 
 						     pfsal_op_ctx,
                                                      &(pworker_data->cache_inode_client), 
-                                                     pworker_data->ht, 
                                                      ptr_req, 
                                                      &res_nfs); 
 
@@ -1403,7 +1406,9 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
 
   /* process time */
   stat_type = (rc == NFS_REQ_OK) ? GANESHA_STAT_SUCCESS : GANESHA_STAT_DROP;
+  P(pworker_data->request_pool_mutex);
   timer_diff = time_diff(*timer_start, timer_end); 
+  V(pworker_data->request_pool_mutex);
   latency_stat.type = SVC_TIME;
   latency_stat.latency = timer_diff.tv_sec * 1000000
     + timer_diff.tv_usec; /* microseconds */
@@ -1812,12 +1817,15 @@ void *worker_thread(void *IndexArg)
   struct svc_req *preq;
   unsigned long worker_index;
   int rc = 0;
-  cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
   unsigned int gc_allowed = FALSE;
   char thr_name[32];
 
   worker_index = (unsigned long)IndexArg;
   pmydata = &(workers_data[worker_index]);
+#ifdef _USE_SHARED_FSAL
+  unsigned int i = 0 ;
+  unsigned int fsalid = 0 ;
+#endif
 
   snprintf(thr_name, sizeof(thr_name), "Worker Thread #%lu", worker_index);
   SetNameFunction(thr_name);
@@ -1871,21 +1879,6 @@ void *worker_thread(void *IndexArg)
     }
   LogFullDebug(COMPONENT_DISPATCH,
                "Cache Inode client successfully initialized");
-
-  /* Init the Cache content client for this worker */
-  if(cache_content_client_init(&pmydata->cache_content_client,
-                               nfs_param.cache_layers_param.cache_content_client_param,
-                               thr_name))
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_DISPATCH,
-               "Cache Content client could not be initialized");
-    }
-  LogFullDebug(COMPONENT_DISPATCH,
-               "Cache Content client successfully initialized");
-
-  /* Bind the data cache client to the inode cache client */
-  pmydata->cache_inode_client.pcontent_client = (caddr_t) & pmydata->cache_content_client;
 
   LogInfo(COMPONENT_DISPATCH, "Worker successfully initialized");
 
@@ -2081,14 +2074,6 @@ void *worker_thread(void *IndexArg)
           LogFullDebug(COMPONENT_DISPATCH,
                        "There are %d concurrent garbage collection",
                        nb_current_gc_workers);
-
-          if(cache_inode_gc(pmydata->ht,
-                            &(pmydata->cache_inode_client),
-                            &cache_status) != CACHE_INODE_SUCCESS)
-            {
-              LogCrit(COMPONENT_DISPATCH,
-                      "NFS WORKER: FAILURE: Bad cache_inode garbage collection");
-            }
 
           P(lock_nb_current_gc_workers);
           nb_current_gc_workers -= 1;

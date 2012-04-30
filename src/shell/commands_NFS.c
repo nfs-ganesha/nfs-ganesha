@@ -2,6 +2,7 @@
  * vim:expandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright CEA/DAM/DIF  (2008)
+
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
@@ -144,7 +145,6 @@
 #include "rpc.h"
 #include "fsal.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "commands.h"
 #include "stuff_alloc.h"
 #include "Getopt.h"
@@ -201,7 +201,7 @@ static void set_nfs_fh3(nfs_fh3 * p_nfshdl, shell_fh3_t * p_int_fh3)
 /* ------------------------- END ------------------------------ */
 
 /* The cache hash table (defined in "commands_Cache_inode.c") */
-extern hash_table_t *ht;
+extern hash_table_t *fh_to_cache_entry_ht;
 
 extern cache_inode_client_parameter_t cache_client_param;
 extern cache_content_client_parameter_t datacache_client_param;
@@ -450,7 +450,7 @@ int nfs_init(char *filename, int flag_v, FILE * output)
     }
 
   /* initalize export entries */
-  if((rc = nfs_export_create_root_entry(pexportlist, ht)) != TRUE)
+  if((rc = nfs_export_create_root_entry(pexportlist)) != TRUE)
     {
       fprintf(output, "nfs_init: Error %d initializing root entries, exiting...", -rc);
       return -1;
@@ -615,7 +615,7 @@ int fn_MNT1_command(int argc,   /* IN : number of args in argv */
           rc = funcdesc->func_call(&nfs_arg,
                                    pexportlist,
                                    &(p_thr_info->context),
-                                   &(p_thr_info->client), ht, &req, &nfs_res);
+                                   &(p_thr_info->client), &req, &nfs_res);
 
           /* freeing args */
 
@@ -705,7 +705,7 @@ int fn_MNT3_command(int argc,   /* IN : number of args in argv */
           rc = funcdesc->func_call(&nfs_arg,
                                    pexportlist,
                                    &(p_thr_info->context),
-                                   &(p_thr_info->client), ht, &req, &nfs_res);
+                                   &(p_thr_info->client), &req, &nfs_res);
 
           /* freeing args */
 
@@ -811,7 +811,7 @@ int fn_NFS2_command(int argc,   /* IN : number of args in argv */
           rc = funcdesc->func_call(&nfs_arg,
                                    pexport,
                                    &(p_thr_info->context),
-                                   &(p_thr_info->client), ht, &req, &nfs_res);
+                                   &(p_thr_info->client), &req, &nfs_res);
 
           /* freeing args */
 
@@ -918,7 +918,7 @@ int fn_NFS3_command(int argc,   /* IN : number of args in argv */
           rc = funcdesc->func_call(&nfs_arg,
                                    pexport,
                                    &(p_thr_info->context),
-                                   &(p_thr_info->client), ht, &req, &nfs_res);
+                                   &(p_thr_info->client), &req, &nfs_res);
 
           /* freeing args */
 
@@ -1062,7 +1062,7 @@ static int nfs_solvepath(cmdnfs_thr_info_t * p_thr_info, char *io_global_path,  
       rc = nfs_Lookup((nfs_arg_t *) & dirop_arg,
                       pexport,
                       &(p_thr_info->context),
-                      &(p_thr_info->client), ht, &req, (nfs_res_t *) & lookup_res);
+                      &(p_thr_info->client), &req, (nfs_res_t *) & lookup_res);
 
       if(rc != 0)
         {
@@ -1144,7 +1144,7 @@ static int nfs_getattr(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_hdl,
   rc = nfs_Getattr((nfs_arg_t *) & nfshdl,
                    pexport,
                    &(p_thr_info->context),
-                   &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
+                   &(p_thr_info->client), &req, (nfs_res_t *) & res);
 
   if(rc != 0)
     {
@@ -1201,7 +1201,7 @@ static int nfs_access(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_hdl, nfs3_
   rc = nfs3_Access((nfs_arg_t *) & arg,
                    pexport,
                    &(p_thr_info->context),
-                   &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
+                   &(p_thr_info->client), &req, (nfs_res_t *) & res);
 
   if(rc != 0)
     {
@@ -1256,7 +1256,7 @@ static int nfs_readlink(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_hdl,
   rc = nfs_Readlink((nfs_arg_t *) & nfshdl,
                     pexport,
                     &(p_thr_info->context),
-                    &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
+                    &(p_thr_info->client), &req, (nfs_res_t *) & res);
 
   if(rc != 0)
     {
@@ -1320,7 +1320,7 @@ static int nfs_readdirplus(cmdnfs_thr_info_t * p_thr_info, shell_fh3_t * p_dir_h
   rc = nfs3_Readdirplus((nfs_arg_t *) & arg,
                         pexport,
                         &(p_thr_info->context),
-                        &(p_thr_info->client), ht, &req, (nfs_res_t *) p_res);
+                        &(p_thr_info->client), &req, (nfs_res_t *) p_res);
 
   if(rc != 0)
     {
@@ -1403,7 +1403,7 @@ static int nfs_create(cmdnfs_thr_info_t * p_thr_info,
   rc = nfs_Create((nfs_arg_t *) & arg,
                   pexport,
                   &(p_thr_info->context),
-                  &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
+                  &(p_thr_info->client), &req, (nfs_res_t *) & res);
 
   if(rc != 0)
     {
@@ -1477,7 +1477,7 @@ static int nfs_mkdir(cmdnfs_thr_info_t * p_thr_info,
   rc = nfs_Mkdir((nfs_arg_t *) & arg,
                  pexport,
                  &(p_thr_info->context),
-                 &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
+                 &(p_thr_info->client), &req, (nfs_res_t *) & res);
 
   if(rc != 0)
     {
@@ -1538,7 +1538,7 @@ static int nfs_rmdir(cmdnfs_thr_info_t * p_thr_info,
   rc = nfs_Rmdir((nfs_arg_t *) & arg,
                  pexport,
                  &(p_thr_info->context),
-                 &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
+                 &(p_thr_info->client), &req, (nfs_res_t *) & res);
 
   if(rc != 0)
     {
@@ -1593,7 +1593,7 @@ static int nfs_remove(cmdnfs_thr_info_t * p_thr_info,
   rc = nfs_Remove((nfs_arg_t *) & arg,
                   pexport,
                   &(p_thr_info->context),
-                  &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
+                  &(p_thr_info->client), &req, (nfs_res_t *) & res);
 
   if(rc != 0)
     {
@@ -1648,7 +1648,7 @@ static int nfs_setattr(cmdnfs_thr_info_t * p_thr_info,
   rc = nfs_Setattr((nfs_arg_t *) & arg,
                    pexport,
                    &(p_thr_info->context),
-                   &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
+                   &(p_thr_info->client), &req, (nfs_res_t *) & res);
 
   if(rc != 0)
     {
@@ -1705,7 +1705,7 @@ static int nfs_rename(cmdnfs_thr_info_t * p_thr_info,
   rc = nfs_Rename((nfs_arg_t *) & arg,
                   pexport,
                   &(p_thr_info->context),
-                  &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
+                  &(p_thr_info->client), &req, (nfs_res_t *) & res);
 
   if(rc != 0)
     {
@@ -1761,7 +1761,7 @@ static int nfs_link(cmdnfs_thr_info_t * p_thr_info,
   rc = nfs_Link((nfs_arg_t *) & arg,
                 pexport,
                 &(p_thr_info->context),
-                &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
+                &(p_thr_info->client), &req, (nfs_res_t *) & res);
 
   if(rc != 0)
     {
@@ -1818,7 +1818,7 @@ static int nfs_symlink(cmdnfs_thr_info_t * p_thr_info,
   rc = nfs_Symlink((nfs_arg_t *) & arg,
                    pexport,
                    &(p_thr_info->context),
-                   &(p_thr_info->client), ht, &req, (nfs_res_t *) & res);
+                   &(p_thr_info->client), &req, (nfs_res_t *) & res);
 
   if(rc != 0)
     {
@@ -1914,7 +1914,7 @@ int fn_nfs_mount(int argc,      /* IN : number of args in argv */
 
   rc = mnt_Mnt(&nfs_arg,
                pexportlist,
-               &(p_thr_info->context), &(p_thr_info->client), ht, &req, &nfs_res);
+               &(p_thr_info->context), &(p_thr_info->client), &req, &nfs_res);
 
   /* freeing args */
 
@@ -2017,7 +2017,7 @@ int fn_nfs_umount(int argc,     /* IN : number of args in argv */
 
   rc = mnt_Umnt(&nfs_arg,
                 pexportlist,
-                &(p_thr_info->context), &(p_thr_info->client), ht, &req, &nfs_res);
+                &(p_thr_info->context), &(p_thr_info->client), &req, &nfs_res);
 
   /* freeing args */
 

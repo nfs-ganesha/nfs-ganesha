@@ -115,15 +115,14 @@ int _9p_renameat( _9p_request_data_t * preq9p,
   snprintf( newname.name, FSAL_MAX_NAME_LEN, "%.*s", *newname_len, newname_str ) ;
 
   if( cache_inode_rename( poldfid->pentry,
-			  &oldname,
-  			  pnewfid->pentry,
-			  &newname,
-			  &oldfsalattr,
-			  &newfsalattr,
-			  pwkrdata->ht,
+                          &oldname,
+                          pnewfid->pentry,
+                          &newname,
+                          &oldfsalattr,
+                          &newfsalattr,
                           &pwkrdata->cache_inode_client, 
                           &poldfid->fsal_op_context, 
-     			  &cache_status) != CACHE_INODE_SUCCESS )
+                          &cache_status) != CACHE_INODE_SUCCESS )
     {
       err = _9p_tools_errno( cache_status ) ; ;
       rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;

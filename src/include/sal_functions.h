@@ -75,6 +75,9 @@ void dec_state_owner_ref(state_owner_t        * powner,
 state_status_t get_clientid_owner(clientid4 clientid,
                                   state_owner_t **clientid_owner);
 
+void state_wipe_file(cache_entry_t        * pentry,
+                     cache_inode_client_t * pclient);
+
 /******************************************************************************
  *
  * NLM State functions
@@ -417,9 +420,27 @@ state_status_t state_owner_unlock_all(fsal_op_context_t    * pcontext,
                                       cache_inode_client_t * pclient,
                                       state_status_t       * pstatus);
 
+void state_lock_wipe(cache_entry_t        * pentry,
+                     cache_inode_client_t * pclient);
+
+/******************************************************************************
+ *
+ * NFS4 state_t functions
+ *
+ ******************************************************************************/
+
 int state_conflict(state_t      * pstate,
                    state_type_t   state_type,
                    state_data_t * pstate_data);
+
+state_status_t state_add_impl(cache_entry_t         * pentry,
+                              state_type_t            state_type,
+                              state_data_t          * pstate_data,
+                              state_owner_t         * powner_input,
+                              cache_inode_client_t  * pclient,
+                              fsal_op_context_t     * pcontext,
+                              state_t              ** ppstate,
+                              state_status_t        * pstatus);
 
 state_status_t state_add(cache_entry_t         * pentry,
                          state_type_t            state_type,
@@ -433,6 +454,10 @@ state_status_t state_add(cache_entry_t         * pentry,
 state_status_t state_set(state_t              * pstate,
                          cache_inode_client_t * pclient,
                          state_status_t       * pstatus);
+
+state_status_t state_del_locked(state_t              * pstate,
+                                cache_entry_t        * pentry,
+                                cache_inode_client_t * pclient);
 
 state_status_t state_del(state_t              * pstate,
                          cache_inode_client_t * pclient,
@@ -474,18 +499,11 @@ state_status_t state_share_set_prev(state_t      * pstate,
 state_status_t state_share_check_prev(state_t      * pstate,
                                     state_data_t * pstate_data);
 
-state_status_t state_share_check_conflict_sw(cache_entry_t  * pentry,
-                                             state_data_t   * pstate_data,
-                                             state_status_t * pstatus,
-                                             int use_mutex);
-
-state_status_t state_share_check_conflict_no_mutex(cache_entry_t  * pentry,
-                                                   state_data_t   * pstate_data,
-                                                   state_status_t * pstatus);
-
 state_status_t state_share_check_conflict(cache_entry_t  * pentry,
                                           state_data_t   * pstate_data,
                                           state_status_t * pstatus);
+void state_nfs4_state_wipe(cache_entry_t        * pentry,
+                           cache_inode_client_t * pclient);
 
 int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
 int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);

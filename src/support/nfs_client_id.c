@@ -50,6 +50,7 @@
 #include "nfs4.h"
 #include "sal_data.h"
 #include "sal_functions.h"
+#include "cache_inode_lru.h"
 
 #ifdef _APPLE
 #define strnlen( s, l ) strlen( s )
@@ -434,6 +435,14 @@ static void release_lockstate(state_owner_t *plock_owner)
       state_t * pstate_found = glist_entry(glist,
 					  state_t,
 					  state_owner_list);  
+
+      /* Make sure we hold an lru ref to the cache inode while calling state_del */
+      if(cache_inode_lru_ref(pstate_found->state_pentry,
+                             plock_owner->so_pclient,
+                             0) != CACHE_INODE_SUCCESS)
+        LogCrit(COMPONENT_STATE,
+                "Ugliness - cache_inode_lru_ref has returned non-success");
+
       if(state_del(pstate_found,
                plock_owner->so_pclient,
                &state_status) != STATE_SUCCESS)
@@ -442,12 +451,16 @@ static void release_lockstate(state_owner_t *plock_owner)
                "release_lockstate failed to release stateid error %s",
                 state_err_str(state_status));
       }
+
+      /* Release the lru ref to the cache inode we held while calling state_del */
+      cache_inode_lru_unref(pstate_found->state_pentry,
+                            plock_owner->so_pclient,
+                            0);
     }
-    
 }
+
 /**
  * release_openstate: traverse the state list of the open owner
- *   
  */
 static void release_openstate(state_owner_t *popen_owner)
 {
@@ -457,61 +470,38 @@ static void release_openstate(state_owner_t *popen_owner)
   glist_for_each_safe(glist, glistn, &popen_owner->so_owner.so_nfs4_owner.so_state_list)
     {
 
-      fsal_op_context_t        fsal_context;
-      fsal_status_t            fsal_status;
-
       state_t * pstate_found = glist_entry(glist,
-					  state_t,
-					  state_owner_list);  
-				     
+                                           state_t,
+                                           state_owner_list);
       cache_entry_t    * pentry = pstate_found->state_pentry;
       cache_inode_status_t   cache_status;
 
-      /* Construct the fsal context based on the export and root credential */
-      fsal_status = FSAL_GetClientContext(&fsal_context,
-                                          &pstate_found->state_pexport->FS_export_context,
-                                          0,
-                                          0,
-                                          NULL,
-                                          0);
-
-      if(FSAL_IS_ERROR(fsal_status))
-        {
-          /* log error here , and continue? */
-          LogDebug(COMPONENT_STATE,
-                   "FSAL_GetClientConext failed");
-          continue;
-        }
-
-      if(pstate_found->state_type == STATE_TYPE_SHARE)
-        {
-          if(state_share_remove(pstate_found->state_pentry,
-                                &fsal_context,
-                                popen_owner,
-                                pstate_found,
-                                popen_owner->so_pclient,
-                                &state_status) != STATE_SUCCESS)
-            {
-              LogDebug(COMPONENT_STATE,
-                       "EXPIRY failed to release share stateid error %s",
-                       state_err_str(state_status));
-            }
-        }
+      /* Make sure we hold an lru ref to the cache inode while calling state_del */
+      if(cache_inode_lru_ref(pstate_found->state_pentry,
+                             popen_owner->so_pclient,
+                             0) != CACHE_INODE_SUCCESS)
+        LogCrit(COMPONENT_STATE,
+                "Ugliness - cache_inode_lru_ref has returned non-success");
 
       if(state_del(pstate_found,
                popen_owner->so_pclient,
                &state_status) != STATE_SUCCESS)
-      { 
+      {
          LogDebug(COMPONENT_STATE,
                "EXPIRY failed to release stateid error %s",
                state_err_str(state_status));
       }
+
+      /* Release the lru ref to the cache inode we held while calling state_del */
+      cache_inode_lru_unref(pstate_found->state_pentry,
+                            popen_owner->so_pclient,
+                            0);
+
       /* Close the file in FSAL through the cache inode */
-      P_w(&pentry->lock);
       cache_inode_close(pentry,
-                       popen_owner->so_pclient,
-                       &cache_status);
-      V_w(&pentry->lock);
+                        popen_owner->so_pclient,
+                        CACHE_INODE_FLAG_NONE,
+                        &cache_status);
     }
 }
 
@@ -584,7 +574,10 @@ void nfs_client_id_expire(nfs_client_id_t *client_record)
       state_owner_t * plock_owner = glist_entry(glist,
                                           state_owner_t,
 					  so_owner.so_nfs4_owner.so_perclient);
+      inc_state_owner_ref(plock_owner);
       release_lockstate(plock_owner);
+      dec_state_owner_ref(plock_owner, plock_owner->so_pclient);
+      
     }
 
   /* release the corresponding open states , close files*/
@@ -593,7 +586,9 @@ void nfs_client_id_expire(nfs_client_id_t *client_record)
       state_owner_t * popen_owner = glist_entry(glist,
                                           state_owner_t,
 					  so_owner.so_nfs4_owner.so_perclient);
+      inc_state_owner_ref(popen_owner);
       release_openstate(popen_owner);
+      dec_state_owner_ref(popen_owner, popen_owner->so_pclient);
     }
 
   dec_state_owner_ref(client_record->clientid_owner, client_record->clientid_owner->so_pclient);

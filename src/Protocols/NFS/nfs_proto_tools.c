@@ -60,7 +60,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -143,6 +142,8 @@ void nfs_FhandleToStr(u_long     rq_vers,
  * 
  * Gets a cache entry using a file handle (v2/3/4) as input.
  *
+ * If a cache entry is returned, its refcount is +1.
+ *
  * @param rq_vers  [IN]    version of the NFS protocol to be used 
  * @param pfh2     [IN]    NFSv2 file handle or NULL 
  * @param pfh3     [IN]    NFSv3 file handle or NULL 
@@ -153,7 +154,6 @@ void nfs_FhandleToStr(u_long     rq_vers,
  * @param pattr    [OUT]   FSAL attributes related to this cache entry
  * @param pcontext    [IN]    client's FSAL credentials
  * @param pclient  [IN]    client's ressources to be used for accessing the Cache Inode
- * @param ht       [INOUT] Hash Table used to address the Cache Inode 
  * @param prc      [OUT]   internal status for the request (NFS_REQ_DROP or NFS_REQ_OK)
  *
  * @return a pointer to the related pentry if successful, NULL is returned in case of a failure.
@@ -169,20 +169,19 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
                                   fsal_attrib_list_t * pattr,
                                   fsal_op_context_t * pcontext,
                                   cache_inode_client_t * pclient,
-                                  hash_table_t * ht, int *prc)
+                                  int *prc)
 {
   cache_inode_fsal_data_t fsal_data;
   cache_inode_status_t cache_status;
-  cache_inode_policy_t policy;
   cache_entry_t *pentry = NULL;
   fsal_attrib_list_t attr;
-  exportlist_t *pexport;
-  short exportid;
+  exportlist_t *pexport = NULL;
+  short exportid = 0;
 
   /* Default behaviour */
   *prc = NFS_REQ_OK;
 
-  memset( (char *)&fsal_data, 0, sizeof( fsal_data ) ) ;
+  memset(&fsal_data, 0, sizeof(fsal_data));
   switch (rq_vers)
     {
     case NFS_V4:
@@ -192,6 +191,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
           *pstatus4 = NFS4ERR_BADHANDLE;
           return NULL;
         }
+      exportid = nfs4_FhandleToExportId(pfh4);
       break;
 
     case NFS_V3:
@@ -201,6 +201,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
           *pstatus3 = NFS3ERR_BADHANDLE;
           return NULL;
         }
+      exportid = nfs3_FhandleToExportId(pfh3);
       break;
 
     case NFS_V2:
@@ -210,6 +211,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
           *pstatus2 = NFSERR_STALE;
           return NULL;
         }
+      exportid = nfs2_FhandleToExportId(pfh2);
       break;
     }
 
@@ -242,8 +244,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
     }
 
   if((pentry = cache_inode_get(&fsal_data,
-                               pexport->cache_inode_policy,
-                               &attr, ht, pclient, pcontext, &cache_status)) == NULL)
+                               &attr, pclient, pcontext, &cache_status)) == NULL)
     {
       switch (rq_vers)
         {
@@ -275,30 +276,33 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
  *
  * Converts FSAL Attributes to NFSv3 PostOp Attributes structure.
  *
- * If the conversion fails (for example because we were given bogus
- * FSAL_attr as input) then tell the client that we don't have
- * attributes for it and force it to do getattr.
- * 
  * @param pexport    [IN]  the related export entry
  * @param pfsal_attr [IN]  FSAL attributes
  * @param pattr      [OUT] NFSv3 PostOp structure attributes.
  *
  */
-void nfs_SetPostOpAttr(exportlist_t * pexport,
-                       fsal_attrib_list_t * pfsal_attr,
-                       post_op_attr * presult)
+int nfs_SetPostOpAttr(exportlist_t *pexport,
+                      const fsal_attrib_list_t *pfsal_attr,
+                      post_op_attr *presult)
 {
-  if((pexport == NULL) || (pfsal_attr == NULL))
+  if(pfsal_attr == NULL)
     {
-      presult->attributes_follow = FALSE;
+      presult->attributes_follow
+           = nfs3_FSALattr_To_Fattr(pexport,
+                                    pfsal_attr,
+                                    &(presult->post_op_attr_u.attributes));
     }
+
+  if(nfs3_FSALattr_To_Fattr(pexport,
+                            pfsal_attr,
+                            &(presult->post_op_attr_u.attributes))
+     == 0)
+    presult->attributes_follow = FALSE;
   else
-    {
-      presult->attributes_follow = nfs3_FSALattr_To_Fattr(pexport,
-                                                          pfsal_attr,
-                                                          &(presult->post_op_attr_u.attributes));
-    }
-}                               /* nfs_SetPostOpAttr */
+    presult->attributes_follow = TRUE;
+
+  return 0;
+} /* nfs_SetPostOpAttr */
 
 /**
  *
@@ -400,7 +404,7 @@ int nfs_RetryableError(cache_inode_status_t cache_status)
         }
       break;
 
-    case CACHE_INODE_FSAL_DELAY:
+    case CACHE_INODE_DELAY:
       if(nfs_param.core_param.drop_delay_errors)
         {
           /* Drop the request */
@@ -774,16 +778,20 @@ void nfs4_Fattr_Free(fattr4 *fattr)
  *		  Memory for bitmap_val and attr_val is dynamically allocated,
  *		  caller is responsible for freeing it.
  * @param data    [IN]  NFSv4 compoud request's data.
- * @param Bitmap  [OUT] NFSv4 attributes bitmap to the Fattr buffer.
- * 
+ * @param objFH   [IN]  The NFSv4 filehandle of the object whose
+ *                      attributes are requested
+ * @param Bitmap  [IN]  Bitmap of attributes being requested
+ *
  * @return -1 if failed, 0 if successful.
  *
  */
 
-int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
-                           fsal_attrib_list_t * pattr,
-                           fattr4 * Fattr,
-                           compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap)
+int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
+                           fsal_attrib_list_t *pattr,
+                           fattr4 *Fattr,
+                           compound_data_t *data,
+                           nfs_fh4 *objFH,
+                           bitmap4 *Bitmap)
 {
   fattr4_type file_type = 0;
   fattr4_link_support link_support;
@@ -879,7 +887,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
   fsal_staticfsinfo_t * pstaticinfo = NULL ;
   fsal_dynamicfsinfo_t dynamicinfo;
 
-  if( data != NULL ) /* data can be NULL if called from FSAL_PROXY operating as a client */
+  if( data != NULL )
     pstaticinfo = data->pcontext->export_context->fe_static_fs_info;
 
 #ifdef _USE_NFS4_ACL
@@ -1306,7 +1314,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_FS_LOCATIONS:
-          if(data->current_entry->internal_md.type != DIRECTORY)
+          if(data->current_entry->type != DIRECTORY)
             {
               op_attr_success = 0;
               break;
@@ -1579,9 +1587,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_TIME_ACCESS_SET:
-#ifdef _USE_PROXY
-          op_attr_success = 0;  /* should never be used here outside FSAL_PROXY */
-#else
           time_access_set.set_it = htonl(SET_TO_CLIENT_TIME4);
           memcpy((char *)(attrvalsBuffer + LastOffset),
                  &time_access_set.set_it, sizeof(time_how4));
@@ -1598,8 +1603,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                  &time_access_set.settime4_u.time.nseconds, sizeof(uint32_t));
           LastOffset += sizeof(uint32_t);
 
-          op_attr_success = 1;
-#endif
+          op_attr_success = 0;
           break;
 
         case FATTR4_TIME_BACKUP:
@@ -1656,9 +1660,6 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
           break;
 
         case FATTR4_TIME_MODIFY_SET:
-#ifndef _USE_PROXY
-          op_attr_success = 0;  /* should never be used here outside FSAL_PROXY */
-#else
           time_modify_set.set_it = htonl(SET_TO_CLIENT_TIME4);
           memcpy((char *)(attrvalsBuffer + LastOffset),
                  &time_modify_set.set_it, sizeof(time_how4));
@@ -1675,8 +1676,7 @@ int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
                  &time_modify_set.settime4_u.time.nseconds, sizeof(uint32_t));
           LastOffset += sizeof(uint32_t);
 
-          op_attr_success = 1;
-#endif
+          op_attr_success = 0;
           break;
 
         case FATTR4_MOUNTED_ON_FILEID:
@@ -2053,15 +2053,15 @@ int nfs4_FhandleToExId(nfs_fh4 * fh4p, unsigned short *ExIdp)
 /**
  *
  * nfs4_stringid_split: Splits a domain stamped name in two different parts.
- * 
- *  Splits a domain stamped name in two different parts.
  *
- * @param buff [IN] the input string 
+ * Splits a domain stamped name in two different parts.
+ *
+ * @param buff [IN] the input string
  * @param uidname [OUT] the extracted uid name
  * @param domainname [OUT] the extracted fomain name
  *
  * @return nothing (void function) 
- * 
+ *
  */
 void nfs4_stringid_split(char *buff, char *uidname, char *domainname)
 {
@@ -2532,7 +2532,7 @@ nfs3_FSALattr_To_PartialFattr(const fsal_attrib_list_t * FSAL_attr,
  *
  */
 int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related export entry */
-                           fsal_attrib_list_t * FSAL_attr,      /* In: file attributes */
+                           const fsal_attrib_list_t * FSAL_attr,      /* In: file attributes */
                            fattr3 * Fattr)      /* Out: file attributes */
 {
   if(FSAL_attr == NULL || Fattr == NULL)
@@ -3220,6 +3220,7 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
     }
 
   pacl = nfs4_acl_new_entry(&acldata, &status);
+  pFSAL_attr->acl = pacl;
   if(pacl == NULL)
     {
       LogCrit(COMPONENT_NFS_V4,
@@ -3232,7 +3233,6 @@ static int nfs4_decode_acl(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, u_in
                   status);
 
   /* Set new ACL */
-  pFSAL_attr->acl = pacl;
   LogFullDebug(COMPONENT_NFS_V4,
                "SATTR: new acl = %p",
                pacl);
@@ -3454,7 +3454,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
 
       switch (attribute_to_set)
         {
-        case FATTR4_TYPE:      /* Used only by FSAL_PROXY to reverse convert */
+        case FATTR4_TYPE:
           memcpy((char *)&attr_type,
                  (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
                  sizeof(fattr4_type));
@@ -3498,7 +3498,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
           LastOffset += fattr4tab[attribute_to_set].size_fattr4;
           break;
 
-        case FATTR4_FILEID:    /* Used only by FSAL_PROXY to reverse convert */
+        case FATTR4_FILEID:
           /* The analog to the inode number. RFC3530 says "a number uniquely identifying the file within the filesystem"
            * I use hpss_GetObjId to extract this information from the Name Server's handle */
           memcpy((char *)&attr_fileid,
@@ -3511,7 +3511,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
 
           break;
 
-        case FATTR4_FSID:      /* Used only by FSAL_PROXY to reverse convert */
+        case FATTR4_FSID:
           memcpy((char *)&attr_fsid,
                  (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
                  sizeof(fattr4_fsid));
@@ -3523,7 +3523,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
 
           break;
 
-        case FATTR4_NUMLINKS:  /* Used only by FSAL_PROXY to reverse convert */
+        case FATTR4_NUMLINKS:
           memcpy((char *)&attr_numlinks,
                  (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
                  sizeof(fattr4_numlinks));
@@ -3631,7 +3631,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
 
           break;
 
-        case FATTR4_RAWDEV:    /* Used only by FSAL_PROXY to reverse convert */
+        case FATTR4_RAWDEV:
           memcpy((char *)&attr_rawdev,
                  (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
                  sizeof(fattr4_rawdev));
@@ -3643,7 +3643,7 @@ int Fattr4_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr, fattr4 * Fattr, nfs_fh4
 
           break;
 
-        case FATTR4_SPACE_USED:        /* Used only by FSAL_PROXY to reverse convert */
+        case FATTR4_SPACE_USED:
           memcpy((char *)&attr_space_used,
                  (char *)(Fattr->attr_vals.attrlist4_val + LastOffset),
                  sizeof(fattr4_space_used));
@@ -3861,7 +3861,7 @@ nfsstat4 nfs4_Errno(cache_inode_status_t error)
       nfserror = NFS4ERR_NOTSUPP;
       break;
 
-    case CACHE_INODE_FSAL_DELAY:
+    case CACHE_INODE_DELAY:
       nfserror = NFS4ERR_DELAY;
       break;
 
@@ -3993,7 +3993,7 @@ nfsstat3 nfs3_Errno(cache_inode_status_t error)
       nfserror = NFS3ERR_NOTSUPP;
       break;
 
-    case CACHE_INODE_FSAL_DELAY:
+    case CACHE_INODE_DELAY:
       nfserror = NFS3ERR_JUKEBOX;
       break;
 
@@ -4140,7 +4140,7 @@ nfsstat2 nfs2_Errno(cache_inode_status_t error)
     case CACHE_INODE_ASYNC_POST_ERROR:
     case CACHE_INODE_STATE_ERROR:
     case CACHE_INODE_NOT_SUPPORTED:
-    case CACHE_INODE_FSAL_DELAY:
+    case CACHE_INODE_DELAY:
     case CACHE_INODE_BAD_COOKIE:
     case CACHE_INODE_FILE_BIG:
         /* Should not occur */

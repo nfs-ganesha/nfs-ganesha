@@ -226,10 +226,11 @@ fsal_status_t FSAL_path2str(fsal_path_t * p_path,       /* IN */
 /**
  * FSAL_namecmp :
  * compares two FSAL_name_t.
- * 
+ *
  * \return The same value as strcmp.
  */
-int FSAL_namecmp(fsal_name_t * p_name1, fsal_name_t * p_name2)
+int FSAL_namecmp(const fsal_name_t *p_name1,
+                 const fsal_name_t *p_name2)
 {
 
   return (strncmp(p_name1->name, p_name2->name, FSAL_MAX_NAME_LEN));

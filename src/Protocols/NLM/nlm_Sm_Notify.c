@@ -47,7 +47,6 @@
  *  @param pexportlist [IN]
  *  @param pcontextp   [IN]
  *  @param pclient     [INOUT]
- *  @param ht          [INOUT]
  *  @param preq        [IN]
  *  @param pres        [OUT]
  *
@@ -57,7 +56,6 @@ int nlm4_Sm_Notify(nfs_arg_t * parg /* IN     */ ,
                    exportlist_t * pexport /* IN     */ ,
                    fsal_op_context_t * pcontext /* IN     */ ,
                    cache_inode_client_t * pclient /* INOUT  */ ,
-                   hash_table_t * ht /* INOUT  */ ,
                    struct svc_req *preq /* IN     */ ,
                    nfs_res_t * pres /* OUT    */ )
 {

@@ -96,7 +96,6 @@ int _9p_lopen( _9p_request_data_t * preq9p,
   /* Perform the 'access' call */
   if(cache_inode_access( pfid->pentry,
                          fsalaccess,
-                         pwkrdata->ht,
                          &pwkrdata->cache_inode_client,
                          &pfid->fsal_op_context, 
                          &cache_status ) != CACHE_INODE_SUCCESS )

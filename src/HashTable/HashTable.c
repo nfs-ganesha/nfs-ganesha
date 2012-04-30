@@ -174,7 +174,6 @@ static inline hash_error_t
 compute(struct hash_table *ht, struct hash_buff *key,
         uint32_t *index, uint64_t *rbt_hash)
 {
-
      /* Compute the partition index and red-black tree hash */
      if (ht->parameter.hash_func_both) {
           if (!(*(ht->parameter.hash_func_both))(&ht->parameter,
@@ -313,29 +312,6 @@ deconstruct:
      return (ht = NULL);
 
 } /* HashTable_Init */
-
-/**
- *
- * @brief Look up a value and latch the partition
- *
- * This function attempts to locate a key in the hash store and return
- * the associated value.  If the latch pointer is non-NULL, it retains
- * a lock on the appropriate partition whether the partition is found
- * or not.  (No lock is retained if the return code is anything other
- * than HASHTABLE_SUCCESS or HASHTABLE_ERROR_NO_SUCH_KEY.)
- *
- * @param ht [in] The hash store to be searched
- * @param key [in] A buffer descriptore locating the key to find
- * @param val [out] A buffer descriptor locating the value found.
- *                  Maybe NULL
- * @param may_write [in] If true, acquire and hold a write lock, read
- *                       otherwise.
- * @param latch [out] A pointer to a structure which will be filled
- *                    with data for one of the Latched calls.  If this
- *                    is NULL, no lock will be retained.
- *
- * @return HASHTABLE_SUCCESS or errors
- */
 
 hash_error_t
 HashTable_GetLatch(struct hash_table *ht,

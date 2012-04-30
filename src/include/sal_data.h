@@ -59,11 +59,11 @@
 #include "nfs_proto_functions.h"
 #ifdef _USE_NLM
 #include "nlm4.h"
-#endif
+#endif /* _USE_NLM */
 #include "nlm_list.h"
 #ifdef _USE_NFS4_1
 #include "nfs41_session.h"
-#endif                          /* _USE_NFS4_1 */
+#endif /* _USE_NFS4_1 */
 #ifdef _PNFS_MDS
 #include "fsal_pnfs.h"
 #endif /* _PNFS_MDS */
@@ -74,7 +74,7 @@
  */
 #ifdef _USE_NLM
 #define _USE_BLOCKING_LOCKS
-#endif
+#endif /* _USE_NLM */
 
 #define STATE_LOCK_OFFSET_EOF 0xFFFFFFFFFFFFFFFFLL
 
@@ -87,7 +87,7 @@ typedef struct state_lock_entry_t   state_lock_entry_t;
 typedef struct state_async_queue_t  state_async_queue_t;
 #ifdef _USE_NLM
 typedef struct state_nlm_client_t   state_nlm_client_t;
-#endif
+#endif /* _USE_NLM */
 #ifdef _USE_BLOCKING_LOCKS
 typedef struct state_cookie_entry_t state_cookie_entry_t;
 typedef struct state_block_data_t   state_block_data_t;
@@ -189,7 +189,7 @@ typedef enum state_owner_type_t
   STATE_LOCK_OWNER_UNKNOWN,
 #ifdef _USE_NLM
   STATE_LOCK_OWNER_NLM,
-#endif
+#endif /* _USE_NLM */
   STATE_OPEN_OWNER_NFSV4,
   STATE_LOCK_OWNER_NFSV4,
   STATE_CLIENTID_OWNER_NFSV4
@@ -230,7 +230,7 @@ typedef struct state_nlm_owner_t
   state_nlm_client_t * so_client;
   int32_t              so_nlm_svid;
 } state_nlm_owner_t;
-#endif
+#endif /* _USE_NLM */
 
 struct nfs_argop4_state
 {
@@ -276,7 +276,7 @@ struct state_owner_t
     state_nfs4_owner_t    so_nfs4_owner;
 #ifdef _USE_NLM
     state_nlm_owner_t     so_nlm_owner;
-#endif
+#endif /* _USE_NLM */
   } so_owner;
 };
 
@@ -344,6 +344,7 @@ typedef enum state_blocking_t
   STATE_CANCELED
 } state_blocking_t;
 
+#ifdef _USE_BLOCKING_LOCKS
 /* The granted call back is responsible for acquiring a reference to
  * the lock entry if needed.
  *
@@ -354,7 +355,6 @@ typedef state_status_t (*granted_callback_t)(cache_entry_t        * pentry,
                                              cache_inode_client_t * pclient,
                                              state_status_t       * pstatus);
 
-#ifdef _USE_BLOCKING_LOCKS
 typedef bool_t (*block_data_to_fsal_context_t)(state_block_data_t * block_data,
                                                fsal_op_context_t  * fsal_context);
 
@@ -395,13 +395,13 @@ struct state_block_data_t
     {
 #ifdef _USE_NLM
       state_nlm_block_data_t     sbd_nlm_block_data;
-#endif
+#endif /* _USE_NLM */
       void                     * sbd_v4_block_data;
     } sbd_block_data;
 };
-#else
+#else /* !_USE_BLOCKING_LOCKS */
 typedef void state_block_data_t;
-#endif
+#endif /* !_USE_BLOCKING_LOCKS */
 
 struct state_lock_entry_t
 {
@@ -410,7 +410,7 @@ struct state_lock_entry_t
   struct glist_head      sle_locks;
 #ifdef _DEBUG_MEMLEAKS
   struct glist_head      sle_all_locks;
-#endif
+#endif /* _DEBUG_MEMLEAKS */
   struct glist_head      sle_export_locks;
   exportlist_t         * sle_pexport;
   cache_entry_t        * sle_pentry;
@@ -485,7 +485,7 @@ typedef struct state_nlm_async_data_t
       nlm4_testargs          nlm_async_grant;
     } nlm_async_args;
 } state_nlm_async_data_t;
-#endif
+#endif /* _USE_NLM */
 
 typedef struct state_async_block_data_t
 {
@@ -504,7 +504,7 @@ struct state_async_queue_t
       void                     * state_no_data;
     } state_async_data;
 };
-#endif
+#endif /* _USE_BLOCKING_LOCKS */
 
 typedef struct nfs_grace_start
 {
@@ -513,4 +513,4 @@ typedef struct nfs_grace_start
   void		*ipaddr;
 } nfs_grace_start_t;
 
-#endif                          /*  _SAL_DATA_H */
+#endif /*  _SAL_DATA_H */

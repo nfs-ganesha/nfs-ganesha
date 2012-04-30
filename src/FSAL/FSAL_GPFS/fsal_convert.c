@@ -512,7 +512,8 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SIZE))
         {
             p_fsalattr_out->filesize = p_buffstat->st_size;
-            LogFullDebug(COMPONENT_FSAL, "filesize = %llu", p_fsalattr_out->filesize);
+            LogFullDebug(COMPONENT_FSAL, "filesize = %llu",
+                         (unsigned long long)p_fsalattr_out->filesize);
         }
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_FSID))
         {
@@ -593,7 +594,8 @@ fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *p_buffxstat,
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_SPACEUSED))
         {
             p_fsalattr_out->spaceused = p_buffstat->st_blocks * S_BLKSIZE;
-            LogFullDebug(COMPONENT_FSAL, "spaceused = %llu", p_fsalattr_out->spaceused);
+            LogFullDebug(COMPONENT_FSAL, "spaceused = %llu",
+                         (unsigned long long)p_fsalattr_out->spaceused);
         }
 
     if(FSAL_TEST_MASK(p_fsalattr_out->asked_attributes, FSAL_ATTR_RAWDEV))

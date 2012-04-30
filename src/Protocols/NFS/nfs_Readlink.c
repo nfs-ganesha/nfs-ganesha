@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -57,7 +57,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -74,7 +73,6 @@
  * @param pexport [IN]    pointer to nfs export list 
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
- * @param ht      [INOUT] cache inode hash table
  * @param preq    [IN]    pointer to SVC request related to this call 
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
@@ -86,7 +84,7 @@ int nfs_Readlink(nfs_arg_t * parg,
                  exportlist_t * pexport,
                  fsal_op_context_t * pcontext,
                  cache_inode_client_t * pclient,
-                 hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
+                 struct svc_req *preq, nfs_res_t * pres)
 {
   static char __attribute__ ((__unused__)) funcName[] = "nfs_Readlink";
 
@@ -94,9 +92,9 @@ int nfs_Readlink(nfs_arg_t * parg,
   fsal_attrib_list_t attr;
   cache_inode_file_type_t filetype;
   cache_inode_status_t cache_status;
-  int rc;
   fsal_path_t symlink_data;
   char *ptr = NULL;
+  int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
@@ -123,10 +121,10 @@ int nfs_Readlink(nfs_arg_t * parg,
                                   NULL,
                                   &(pres->res_readlink2.status),
                                   &(pres->res_readlink3.status),
-                                  NULL, &attr, pcontext, pclient, ht, &rc)) == NULL)
+                                  NULL, &attr, pcontext, pclient, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
-      return rc;
+      goto out;
     }
 
   /* Extract the filetype */
@@ -144,14 +142,15 @@ int nfs_Readlink(nfs_arg_t * parg,
         case NFS_V3:
           pres->res_readlink3.status = NFS3ERR_INVAL;
         }                       /* switch */
-      return NFS_REQ_OK;
+      rc = NFS_REQ_OK;
+      goto out;
     }
 
   /* if */
   /* Perform readlink on the pentry */
   if(cache_inode_readlink(pentry,
                           &symlink_data,
-                          ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                          pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
       if((ptr = Mem_Alloc(FSAL_MAX_NAME_LEN)) == NULL)
         {
@@ -164,7 +163,8 @@ int nfs_Readlink(nfs_arg_t * parg,
             case NFS_V3:
               pres->res_readlink3.status = NFS3ERR_IO;
             }                   /* switch */
-          return NFS_REQ_OK;
+          rc = NFS_REQ_OK;
+          goto out;
         }
 
       strcpy(ptr, symlink_data.path);
@@ -186,13 +186,15 @@ int nfs_Readlink(nfs_arg_t * parg,
           pres->res_readlink3.status = NFS3_OK;
           break;
         }
-      return NFS_REQ_OK;
+      rc = NFS_REQ_OK;
+      goto out;
     }
 
   /* If we are here, there was an error */
   if(nfs_RetryableError(cache_status))
     {
-      return NFS_REQ_DROP;
+      rc = NFS_REQ_DROP;
+      goto out;
     }
 
   nfs_SetFailedStatus(pcontext, pexport,
@@ -204,7 +206,14 @@ int nfs_Readlink(nfs_arg_t * parg,
                       &(pres->res_readlink3.READLINK3res_u.resfail.symlink_attributes),
                       NULL, NULL, NULL, NULL, NULL, NULL);
 
-  return NFS_REQ_OK;
+  rc = NFS_REQ_OK;
+
+out:
+  /* return references */
+  if (pentry)
+      cache_inode_put(pentry, pclient);
+
+  return (rc);
 }                               /* nfs_Readlink */
 
 /**

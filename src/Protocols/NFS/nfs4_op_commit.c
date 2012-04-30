@@ -57,7 +57,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -97,7 +96,6 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_commit";
 
-  fsal_attrib_list_t attr;
   cache_inode_status_t cache_status;
 
   /* for the moment, read/write are not done asynchronously, no commit is necessary */
@@ -161,11 +159,9 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   if(cache_inode_commit(data->current_entry,
                         arg_COMMIT4.offset,
                         arg_COMMIT4.count,
-                        &attr,
-                        data->ht,
+                        CACHE_INODE_UNSAFE_WRITE_TO_FS_BUFFER,
                         data->pclient,
                         data->pcontext,
-                        FSAL_UNSAFE_WRITE_TO_FS_BUFFER,
                         &cache_status) != CACHE_INODE_SUCCESS)
     {
       res_COMMIT4.status = NFS4ERR_INVAL;

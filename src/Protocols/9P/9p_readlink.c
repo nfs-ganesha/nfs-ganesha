@@ -90,9 +90,8 @@ int _9p_readlink( _9p_request_data_t * preq9p,
   /* let's do the job */
   if( cache_inode_readlink( pfid->pentry,
  		            &symlink_data,
-                            pwkrdata->ht,
                             &pwkrdata->cache_inode_client,
-                            &pfid->fsal_op_context, 
+                            &pfid->fsal_op_context,
                             &cache_status ) != CACHE_INODE_SUCCESS )
     {
       err = _9p_tools_errno( cache_status ) ; ;

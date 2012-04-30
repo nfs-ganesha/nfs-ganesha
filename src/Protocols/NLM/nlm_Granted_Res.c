@@ -48,7 +48,6 @@
  *  @param pexportlist [IN]
  *  @param pcontextp   [IN]
  *  @param pclient     [INOUT]
- *  @param ht          [INOUT]
  *  @param preq        [IN]
  *  @param pres        [OUT]
  *
@@ -57,7 +56,6 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
                      exportlist_t * dummy_pexport /* IN     */ ,
                      fsal_op_context_t * dummy_pcontext /* IN     */ ,
                      cache_inode_client_t * pclient /* INOUT  */ ,
-                     hash_table_t * ht /* INOUT  */ ,
                      struct svc_req *preq /* IN     */ ,
                      nfs_res_t * pres /* OUT    */ )
 {
@@ -85,7 +83,7 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
       return NFS_REQ_OK;
     }
 
-  P(cookie_entry->sce_pentry->object.file.lock_list_mutex);
+  pthread_rwlock_wrlock(&cookie_entry->sce_pentry->state_lock);
 
   if(cookie_entry->sce_lock_entry == NULL ||
      cookie_entry->sce_lock_entry->sle_block_data == NULL ||
@@ -93,14 +91,14 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
                                      pcontext))
     {
       /* This must be an old NLM_GRANTED_RES */
-      V(cookie_entry->sce_pentry->object.file.lock_list_mutex);
+      pthread_rwlock_unlock(&cookie_entry->sce_pentry->state_lock);
       LogFullDebug(COMPONENT_NLM,
                    "Could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
                    buffer);
       return NFS_REQ_OK;
     }
 
-  V(cookie_entry->sce_pentry->object.file.lock_list_mutex);
+  pthread_rwlock_unlock(&cookie_entry->sce_pentry->state_lock);
 
   if(arg->stat.stat != NLM4_GRANTED)
     {

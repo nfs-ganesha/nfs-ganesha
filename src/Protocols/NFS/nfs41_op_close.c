@@ -85,46 +85,10 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
   memset(&res_CLOSE4, 0, sizeof(res_CLOSE4));
   resp->resop = NFS4_OP_CLOSE;
 
-  /* If the filehandle is Empty */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_CLOSE4.status = NFS4ERR_NOFILEHANDLE;
-      return res_CLOSE4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_CLOSE4.status = NFS4ERR_BADHANDLE;
-      return res_CLOSE4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_CLOSE4.status = NFS4ERR_FHEXPIRED;
-      return res_CLOSE4.status;
-    }
-
-  if(data->current_entry == NULL)
-    {
-      res_CLOSE4.status = NFS4ERR_SERVERFAULT;
-      return res_CLOSE4.status;
-    }
-
-  /* Should not operate on directories */
-  if(data->current_entry->internal_md.type == DIRECTORY)
-    {
-      res_CLOSE4.status = NFS4ERR_ISDIR;
-      return res_CLOSE4.status;
-    }
-
-  /* Object should be a file */
-  if(data->current_entry->internal_md.type != REGULAR_FILE)
-    {
-      res_CLOSE4.status = NFS4ERR_INVAL;
-      return res_CLOSE4.status;
-    }
+  if ((res_CLOSE4.status
+       = nfs4_sanity_check_FH(data, REGULAR_FILE) != NFS4_OK)) {
+       return res_CLOSE4.status;
+  }
 
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_CLOSE4.open_stateid,
@@ -256,17 +220,14 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
 
 
   /* Close the file in FSAL through the cache inode */
-  P_w(&data->current_entry->lock);
   if(cache_inode_close(data->current_entry,
                        data->pclient,
+                       0,
                        &cache_status) != CACHE_INODE_SUCCESS)
     {
-      V_w(&data->current_entry->lock);
-
       res_CLOSE4.status = nfs4_Errno(cache_status);
       return res_CLOSE4.status;
     }
-  V_w(&data->current_entry->lock);
 
   res_CLOSE4.status = NFS4_OK;
 

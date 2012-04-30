@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -74,7 +74,6 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                                                    unsigned int mod,
                                                    cache_content_client_t * pclient_data,
                                                    cache_inode_client_t * pclient_inode,
-                                                   hash_table_t * ht,
                                                    fsal_op_context_t * pcontext,
                                                    cache_content_status_t * pstatus)
 {
@@ -152,27 +151,11 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                   sprintf(fullpath, "%s/%s/%s", pclient_data->cache_dir, direntp->d_name,
                           dirent_export.d_name);
 
-                  if((cache_inode_status = cache_inode_reload_content(fullpath,
-                                                                      &inode_entry)) !=
-                     CACHE_INODE_SUCCESS)
-                    {
-                      LogMajor(COMPONENT_CACHE_CONTENT,
-                                        "File Content Cache record for File ID %"PRIx64" is unreadable",
-                                        inum);
-                      continue;
-                    }
-                  else
-                    LogMajor(COMPONENT_CACHE_CONTENT,
-                                      "File Content Cache record for File ID %"PRIx64" : READ OK",
-                                      inum);
-
                   /* Populating the cache_inode... */
                   fsal_data.fh_desc = inode_entry.fh_desc;
 
                   if((pentry = cache_inode_get(&fsal_data,
-                                               CACHE_INODE_JOKER_POLICY,
                                                &fsal_attr,
-                                               ht,
                                                pclient_inode,
                                                pcontext, &cache_inode_status)) == NULL)
                     {
@@ -214,14 +197,6 @@ cache_content_status_t cache_content_crash_recover(unsigned short exportid,
                     LogEvent(COMPONENT_CACHE_CONTENT,
                                       "Cached data added successfully for file ID %"PRIx64,
                                       inum);
-
-                  if((cache_content_status =
-                      cache_content_valid(pentry_content, CACHE_CONTENT_OP_GET,
-                                          pclient_data)) != CACHE_CONTENT_SUCCESS)
-                    {
-                      *pstatus = cache_content_status;
-                      return *pstatus;
-                    }
 
                 }
 

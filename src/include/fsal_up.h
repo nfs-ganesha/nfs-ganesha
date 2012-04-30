@@ -65,7 +65,6 @@ typedef struct fsal_up_event_bus_context_t_
 typedef struct fsal_up_event_data_context_t_
 {
   cache_inode_fsal_data_t fsal_data;
-  hash_table_t *ht;
 } fsal_up_event_data_context_t;
 
 typedef struct fsal_up_arg_t_

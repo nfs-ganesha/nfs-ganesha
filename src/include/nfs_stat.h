@@ -49,7 +49,6 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 
 #define NFS_V2_NB_COMMAND 18
 extern char *nfsv2_function_names[];

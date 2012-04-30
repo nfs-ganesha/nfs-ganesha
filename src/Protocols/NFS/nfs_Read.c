@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -56,8 +56,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
-#include "cache_content_policy.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -71,11 +69,10 @@
  * Implements the NFS PROC READ function (for V2 and V3).
  *
  * @param parg    [IN]    pointer to nfs arguments union
- * @param pexport [IN]    pointer to nfs export list 
+ * @param pexport [IN]    pointer to nfs export list
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
- * @param ht      [INOUT] cache inode hash table
- * @param preq    [IN]    pointer to SVC request related to this call 
+ * @param preq    [IN]    pointer to SVC request related to this call
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
  * @return NFS_REQ_OK if successfull \n
@@ -88,24 +85,21 @@ int nfs_Read(nfs_arg_t * parg,
              exportlist_t * pexport,
              fsal_op_context_t * pcontext,
              cache_inode_client_t * pclient,
-             hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
+             struct svc_req *preq, nfs_res_t * pres)
 {
   static char __attribute__ ((__unused__)) funcName[] = "nfs_Read";
 
   cache_entry_t *pentry;
   fsal_attrib_list_t attr;
   fsal_attrib_list_t pre_attr;
-  int rc;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-  cache_content_status_t content_status;
-  fsal_seek_t seek_descriptor;
-  fsal_size_t size = 0;
-  fsal_size_t read_size=0;
+  size_t size = 0;
+  size_t read_size;
   fsal_off_t offset = 0;
-  caddr_t data = NULL;
+  void *data = NULL;
   cache_inode_file_type_t filetype;
   fsal_boolean_t eof_met=FALSE;
-  cache_content_policy_data_t datapol;
+  int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
@@ -132,8 +126,6 @@ int nfs_Read(nfs_arg_t * parg,
                str, (unsigned long long) offset, (unsigned long long) size);
     }
 
-  datapol.UseMaxCacheSize = FALSE;
-
   if(preq->rq_vers == NFS_V3)
     {
       /* to avoid setting it on each error case */
@@ -147,18 +139,20 @@ int nfs_Read(nfs_arg_t * parg,
                                   NULL,
                                   &(pres->res_read2.status),
                                   &(pres->res_read3.status),
-                                  NULL, &pre_attr, pcontext, pclient, ht, &rc)) == NULL)
+                                  NULL, &pre_attr, pcontext, pclient, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
-      return rc;
+      goto out;
     }
 
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_read3.file))))
-    return nfs3_Read_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
+  {
+    rc = nfs3_Read_Xattr(parg, pexport, pcontext, pclient, preq, pres);
+    goto out;
+  }
 
   if(cache_inode_access(pentry,
                         FSAL_READ_ACCESS,
-                        ht,
                         pclient,
                         pcontext,
                         &cache_status) != CACHE_INODE_SUCCESS)
@@ -173,7 +167,8 @@ int nfs_Read(nfs_arg_t * parg,
           pres->res_read3.status = nfs3_Errno(cache_status);
           break;
         }
-      return NFS_REQ_OK;
+      rc = NFS_REQ_OK;
+      goto out;
     }
 
   /* Extract the filetype */
@@ -200,7 +195,8 @@ int nfs_Read(nfs_arg_t * parg,
           break;
         }
 
-      return NFS_REQ_OK;
+      rc = NFS_REQ_OK;
+      goto out;
     }
 
   /* For MDONLY export, reject write operation */
@@ -229,7 +225,8 @@ int nfs_Read(nfs_arg_t * parg,
                           &(pres->res_read3.READ3res_u.resfail.file_attributes),
                           NULL, NULL, NULL, NULL, NULL, NULL);
 
-      return NFS_REQ_OK;
+      rc = NFS_REQ_OK;
+      goto out;
     }
 
   /* Extract the argument from the request */
@@ -283,7 +280,8 @@ int nfs_Read(nfs_arg_t * parg,
                               &(pres->res_read3.READ3res_u.resfail.file_attributes),
                               NULL, NULL, NULL, NULL, NULL, NULL);
 
-          return NFS_REQ_OK;
+          rc = NFS_REQ_OK;
+          goto out;
         }
     }
 
@@ -315,64 +313,23 @@ int nfs_Read(nfs_arg_t * parg,
 
       if(data == NULL)
         {
-          return NFS_REQ_DROP;
+          rc = NFS_REQ_DROP;
+          goto out;
         }
 
-      seek_descriptor.whence = FSAL_SEEK_SET;
-      seek_descriptor.offset = offset;
-
-      datapol.UseMaxCacheSize = pexport->options & EXPORT_OPTION_MAXCACHESIZE;
-      datapol.MaxCacheSize = pexport->MaxCacheSize;
-
-      /* If export is not cached, cache it now */
-      if((pexport->options & EXPORT_OPTION_USE_DATACACHE) &&
-         (cache_content_cache_behaviour(pentry,
-                                        &datapol,
-                                        (cache_content_client_t *)
-                                        pclient->pcontent_client,
-                                        &content_status) == CACHE_CONTENT_FULLY_CACHED)
-         && (pentry->object.file.pentry_content == NULL))
-        {
-          /* Entry is not in datacache, but should be in, cache it */
-          cache_inode_add_data_cache(pentry, ht, pclient, pcontext, &cache_status);
-          if((cache_status != CACHE_INODE_SUCCESS) &&
-             (cache_status != CACHE_INODE_CACHE_CONTENT_EXISTS))
-            {
-              /* Entry is not in datacache, but should be in, cache it .
-               * Several threads may call this function at the first time and a race condition can occur here
-               * in order to avoid this, cache_inode_add_data_cache is "mutex protected" 
-               * The first call will create the file content cache entry, the further will return
-               * with error CACHE_INODE_CACHE_CONTENT_EXISTS which is not a pathological thing here */
-
-              /* If we are here, there was an error */
-              if(nfs_RetryableError(cache_status))
-                {
-                  return NFS_REQ_DROP;
-                }
-
-              nfs_SetFailedStatus(pcontext, pexport,
-                                  preq->rq_vers,
-                                  cache_status,
-                                  &pres->res_read2.status,
-                                  &pres->res_read3.status,
-                                  pentry,
-                                  &(pres->res_read3.READ3res_u.resfail.file_attributes),
-                                  NULL, NULL, NULL, NULL, NULL, NULL);
-
-              return NFS_REQ_OK;
-            }
-        }
-
-      if(cache_inode_rdwr(pentry,
-                          CACHE_INODE_READ,
-                          &seek_descriptor,
-                          size,
-                          &read_size,
-                          &attr,
-                          data,
-                          &eof_met,
-                          ht,
-                          pclient, pcontext, TRUE, &cache_status) == CACHE_INODE_SUCCESS)
+      if((cache_inode_rdwr(pentry,
+                           CACHE_INODE_READ,
+                           offset,
+                           size,
+                           &read_size,
+                           data,
+                           &eof_met,
+                           pclient,
+                           pcontext,
+                           CACHE_INODE_SAFE_WRITE_TO_FS,
+                           &cache_status) == CACHE_INODE_SUCCESS) &&
+         (cache_inode_getattr(pentry, &attr, pclient, pcontext,
+                              &cache_status)) == CACHE_INODE_SUCCESS)
 
         {
           switch (preq->rq_vers)
@@ -397,7 +354,8 @@ int nfs_Read(nfs_arg_t * parg,
                 pres->res_read3.READ3res_u.resok.eof = TRUE;
 
               /* Build Post Op Attributes */
-              nfs_SetPostOpAttr(pexport, &attr,
+              nfs_SetPostOpAttr(pexport,
+                                &attr,
                                 &(pres->res_read3.READ3res_u.resok.file_attributes));
 
               pres->res_read3.READ3res_u.resok.file_attributes.attributes_follow = TRUE;
@@ -410,14 +368,16 @@ int nfs_Read(nfs_arg_t * parg,
               break;
             }                   /* switch */
 
-          return NFS_REQ_OK;
+          rc = NFS_REQ_OK;
+          goto out;
         }
     }
 
   /* If we are here, there was an error */
   if(nfs_RetryableError(cache_status))
     {
-      return NFS_REQ_DROP;
+      rc = NFS_REQ_DROP;
+      goto out;
     }
 
   nfs_SetFailedStatus(pcontext, pexport,
@@ -429,7 +389,15 @@ int nfs_Read(nfs_arg_t * parg,
                       &(pres->res_read3.READ3res_u.resfail.file_attributes),
                       NULL, NULL, NULL, NULL, NULL, NULL);
 
-  return NFS_REQ_OK;
+  rc = NFS_REQ_OK;
+
+out:
+  /* return references */
+  if (pentry)
+      cache_inode_put(pentry, pclient);
+
+  return (rc);
+
 }                               /* nfs_Read */
 
 /**

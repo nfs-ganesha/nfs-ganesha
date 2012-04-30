@@ -158,9 +158,7 @@ int main(int argc, char *argv[])
   fsal_status_t fsal_status;
   unsigned int nfs_version = 3;
   path_str_t fsal_path_lib[NB_AVAILABLE_FSAL];
-  short cache_content_hash;
   char entry_path[MAXPATHLEN];
-  int i, nb_char;
 
   fsal_path_t export_path = FSAL_PATH_INITIALIZER;
   unsigned int cookie;
@@ -478,27 +476,10 @@ int main(int argc, char *argv[])
 
     }
 
-  /* end of retrieval of objid */
-  /* build the path in the datacache */
-  cache_content_hash = HashFileID4(objid);
-
   /* for limiting the number of entries into each datacache directory
    * we create 256 subdirectories on 2 levels, depending on the entry's fileid.
    */
-  nb_char = snprintf(entry_path, MAXPATHLEN, "export_id=%d", 0);
-
-  for(i = 0; i <= 8; i += 8)
-    {
-      /* concatenation of hashval */
-      nb_char += snprintf((char *)(entry_path + nb_char), MAXPATHLEN - nb_char,
-                          "/%02hhX", (char)((cache_content_hash >> i) & 0xFF));
-    }
-
-  /* displays the node name */
-
-  printf("%-18s = %s/%s/node=%llx*\n", "DataCache path",
-         nfs_param.cache_layers_param.cache_content_client_param.cache_dir, entry_path,
-         objid);
+  snprintf(entry_path, MAXPATHLEN, "export_id=%d", 0);
 
   exit(0);
 }

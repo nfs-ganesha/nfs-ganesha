@@ -10,21 +10,21 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
 /**
- * \file	  nfs_Geattr.c 
+ * \file    nfs_Getattr.c
  * \author  $Author: deniel $
  * \data    $Date: 2005/11/28 17:02:53 $
  * \version $Revision: 1.15 $
@@ -58,7 +58,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -75,7 +74,6 @@
  * @param pexport [IN]    pointer to nfs export list 
  * @param pcontext   [IN]    credentials to be used for this request
  * @param pclient [INOUT] client resource to be used
- * @param ht      [INOUT] cache inode hash table
  * @param preq    [IN]    pointer to SVC request related to this call 
  * @param pres    [OUT]   pointer to the structure to contain the result of the call
  *
@@ -89,14 +87,14 @@ int nfs_Getattr(nfs_arg_t * parg,
                 exportlist_t * pexport,
                 fsal_op_context_t * pcontext,
                 cache_inode_client_t * pclient,
-                hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres)
+                struct svc_req *preq, nfs_res_t * pres)
 {
   static char __attribute__ ((__unused__)) funcName[] = "nfs_Getattr";
 
   fsal_attrib_list_t attr;
   cache_entry_t *pentry = NULL;
   cache_inode_status_t cache_status;
-  int rc = 0;
+  int rc = NFS_REQ_OK;
 
   if(isDebug(COMPONENT_NFSPROTO))
     {
@@ -116,20 +114,20 @@ int nfs_Getattr(nfs_arg_t * parg,
                                   NULL,
                                   &(pres->res_attr2.status),
                                   &(pres->res_getattr3.status),
-                                  NULL, &attr, pcontext, pclient, ht, &rc)) == NULL)
+                                  NULL, &attr, pcontext, pclient, &rc)) == NULL)
     {
       /* Stale NFS FH ? */
       LogFullDebug(COMPONENT_NFSPROTO,
                    "nfs_Getattr returning %d", rc);
-      return rc;
+      goto out;
     }
 
   if((preq->rq_vers == NFS_V3) && (nfs3_Is_Fh_Xattr(&(parg->arg_getattr3.object))))
     {
-      rc = nfs3_Getattr_Xattr(parg, pexport, pcontext, pclient, ht, preq, pres);
+      rc = nfs3_Getattr_Xattr(parg, pexport, pcontext, pclient, preq, pres);
       LogFullDebug(COMPONENT_NFSPROTO,
                    "nfs_Getattr returning %d from nfs3_Getattr_Xattr", rc);
-      return rc;
+      goto out;
     }
 
   /*
@@ -138,7 +136,7 @@ int nfs_Getattr(nfs_arg_t * parg,
    */
   if(cache_inode_getattr(pentry,
                          &attr,
-                         ht, pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                         pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
       /*
        * Client API should be keeping us from crossing junctions,
@@ -161,7 +159,8 @@ int nfs_Getattr(nfs_arg_t * parg,
                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
               LogFullDebug(COMPONENT_NFSPROTO,
                            "nfs_Getattr set failed status v2");
-              return NFS_REQ_OK;
+              rc = NFS_REQ_OK;
+              goto out;
             }
           pres->res_attr2.status = NFS_OK;
           break;
@@ -180,19 +179,21 @@ int nfs_Getattr(nfs_arg_t * parg,
 
               LogFullDebug(COMPONENT_NFSPROTO,
                            "nfs_Getattr set failed status v3");
-              return NFS_REQ_OK;
+              rc = NFS_REQ_OK;
+              goto out;
             }
           pres->res_getattr3.status = NFS3_OK;
           break;
         }                       /* switch */
 
       LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr succeeded");
-      return NFS_REQ_OK;
+      rc = NFS_REQ_OK;
+      goto out;
     }
 
   LogFullDebug(COMPONENT_CACHE_INODE,"nfs_Getattr: cache_inode_get() "
-	       "returned cache status %d(%s)",
-	       cache_status, cache_inode_err_str(cache_status));
+               "returned cache status %d(%s)",
+               cache_status, cache_inode_err_str(cache_status));
 
   if (cache_status != CACHE_INODE_FSAL_ESTALE)
     cache_status = CACHE_INODE_INVALID_ARGUMENT;
@@ -205,7 +206,16 @@ int nfs_Getattr(nfs_arg_t * parg,
                       NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
   LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr set failed status");
-  return NFS_REQ_OK;
+
+  rc = NFS_REQ_OK;
+
+out:
+  /* return references */
+  if (pentry)
+      cache_inode_put(pentry, pclient);
+
+  return (rc);
+
 }                               /* nfs_Getattr */
 
 /**

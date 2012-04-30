@@ -57,7 +57,6 @@
 #include "mount.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
@@ -93,11 +92,6 @@ int ___cache_content_invalidate_flushed(LRU_entry_t * plru_entry, void *addparam
       /* Entry is not to be set invalid */
       return LRU_LIST_DO_NOT_SET_INVALID;
     }
-
-  /* Clean up and set the entry invalid */
-  P_w(&pentry->pentry_inode->lock);
-  pentry->pentry_inode->object.file.pentry_content = NULL;
-  V_w(&pentry->pentry_inode->lock);
 
   /* Release the entry */
   ReleaseToPool(pentry, &pclient->content_pool);
@@ -136,7 +130,7 @@ int file_content_gc_manage_entry(LRU_entry_t * plru_entry, void *addparam)
 
 extern  nfs_tcb_t gccb;
 
-void *file_content_gc_thread(void *IndexArg)
+void *file_content_gc_thread(void *UnusedArg)
 {
   char command[2 * MAXPATHLEN];
   exportlist_t *pexport = NULL;

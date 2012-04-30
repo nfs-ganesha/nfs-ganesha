@@ -41,8 +41,6 @@
 #include "fsal_up.h"
 #include "sal_functions.h"
 
-static cache_inode_policy_t cachepol = CACHE_INODE_POLICY_ATTRS_ONLY_WRITE_THROUGH;
-
 /* Set the FSAL UP functions that will be used to process events.
  * This is called DUMB_FSAL_UP because it only invalidates cache inode
  * entires ... inode entries are not updated or refreshed through this
@@ -51,39 +49,13 @@ static cache_inode_policy_t cachepol = CACHE_INODE_POLICY_ATTRS_ONLY_WRITE_THROU
 fsal_status_t dumb_fsal_up_invalidate(fsal_up_event_data_t * pevdata)
 {
   cache_inode_status_t cache_status;
-  cache_entry_t *pentry = NULL;
-  fsal_attrib_list_t attr;
-
-  memset(&attr, 0, sizeof(fsal_attrib_list_t));
-
-  pentry = cache_inode_get(&pevdata->event_context.fsal_data, cachepol,
-                           &attr, pevdata->event_context.ht, NULL, NULL,
-                           &cache_status);
-  if(pentry == NULL)
-    {
-      LogDebug(COMPONENT_FSAL_UP,
-               "FSAL_UP_DUMB: cache inode get failed.");
-      /* Not an error. Expecting some nodes will not have it in cache in
-       * a cluster. */
-      ReturnCode(ERR_FSAL_NO_ERROR, 0);
-    }
 
   LogDebug(COMPONENT_FSAL_UP,
-          "FSAL_UP_DUMB: Invalidate cache found entry %p type %u",
-          pentry, pentry->internal_md.type);
+           "FSAL_UP_DUMB: calling cache_inode_get()");
 
   /* Lock the entry */
-  P_w(&pentry->lock);
-      LogDebug(COMPONENT_FSAL_UP,
-               "FSAL_UP_DUMB: setting state to STALE");
-  pentry->internal_md.valid_state = STALE;
-  if(pentry->internal_md.type == DIRECTORY)
-    {
-      pentry->object.dir.has_been_readdir = CACHE_INODE_RENEW_NEEDED;
-      LogDebug(COMPONENT_FSAL_UP,
-              "FSAL_CB_DUMB: Invalidate reset directory.");
-    }
-  V_w(&pentry->lock);
+  cache_inode_invalidate(&pevdata->event_context.fsal_data,
+                         &cache_status);
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }
@@ -129,10 +101,10 @@ fsal_status_t dumb_fsal_up_lock_grant(fsal_up_event_data_t * pevdata)
   cache_entry_t        * pentry = NULL;
   fsal_attrib_list_t     attr;
 
-      LogDebug(COMPONENT_FSAL_UP,
-               "FSAL_UP_DUMB: calling cache_inode_get()");
-  pentry = cache_inode_get(&pevdata->event_context.fsal_data, cachepol,
-                           &attr, pevdata->event_context.ht, NULL, NULL,
+  LogDebug(COMPONENT_FSAL_UP,
+           "FSAL_UP_DUMB: calling cache_inode_get()");
+  pentry = cache_inode_get(&pevdata->event_context.fsal_data,
+                           &attr, NULL, NULL,
                            &cache_status);
   if(pentry == NULL)
     {
@@ -151,7 +123,7 @@ fsal_status_t dumb_fsal_up_lock_grant(fsal_up_event_data_t * pevdata)
                             pevdata->type.lock_grant.lock_owner,
                             &pevdata->type.lock_grant.lock_param,
                             NULL);
-                            
+
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 #else
@@ -166,10 +138,10 @@ fsal_status_t dumb_fsal_up_lock_avail(fsal_up_event_data_t * pevdata)
   cache_entry_t        * pentry = NULL;
   fsal_attrib_list_t     attr;
 
-      LogDebug(COMPONENT_FSAL_UP,
-               "FSAL_UP_DUMB: calling cache_inode_get()");
-  pentry = cache_inode_get(&pevdata->event_context.fsal_data, cachepol,
-                           &attr, pevdata->event_context.ht, NULL, NULL,
+  LogDebug(COMPONENT_FSAL_UP,
+           "FSAL_UP_DUMB: calling cache_inode_get()");
+  pentry = cache_inode_get(&pevdata->event_context.fsal_data,
+                           &attr, NULL, NULL,
                            &cache_status);
   if(pentry == NULL)
     {
@@ -188,7 +160,7 @@ fsal_status_t dumb_fsal_up_lock_avail(fsal_up_event_data_t * pevdata)
                                 pevdata->type.lock_grant.lock_owner,
                                 &pevdata->type.lock_grant.lock_param,
                                 NULL);
-                            
+
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 #else

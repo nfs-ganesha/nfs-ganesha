@@ -52,7 +52,6 @@
 #include "LRU_List.h"
 #include "fsal.h"
 #include "cache_inode.h"
-#include "cache_content.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_file_handle.h"
@@ -195,7 +194,7 @@ typedef int (*nfs_protocol_function_t) (nfs_arg_t *,
                                         exportlist_t *,
                                         fsal_op_context_t *,
                                         cache_inode_client_t *,
-                                        hash_table_t *, struct svc_req *, nfs_res_t *);
+                                        struct svc_req *, nfs_res_t *);
 
 typedef int (*nfsremote_protocol_function_t) (CLIENT *, nfs_arg_t *, nfs_res_t *);
 
@@ -220,7 +219,6 @@ int mnt_Null(nfs_arg_t * parg /* IN  */ ,
              exportlist_t * pexport /* IN  */ ,
              fsal_op_context_t * pcontext /* IN  */ ,
              cache_inode_client_t * pclient /* IN  */ ,
-             hash_table_t * ht /* INOUT */ ,
              struct svc_req *preq /* IN  */ ,
              nfs_res_t * pres /* OUT */ );
 
@@ -228,7 +226,6 @@ int mnt_Mnt(nfs_arg_t * parg /* IN  */ ,
             exportlist_t * pexport /* IN  */ ,
             fsal_op_context_t * pcontext /* IN  */ ,
             cache_inode_client_t * pclient /* IN  */ ,
-            hash_table_t * ht /* INOUT */ ,
             struct svc_req *preq /* IN  */ ,
             nfs_res_t * pres /* OUT */ );
 
@@ -236,7 +233,6 @@ int mnt_Dump(nfs_arg_t * parg /* IN  */ ,
              exportlist_t * pexport /* IN  */ ,
              fsal_op_context_t * pcontext /* IN  */ ,
              cache_inode_client_t * pclient /* IN  */ ,
-             hash_table_t * ht /* INOUT */ ,
              struct svc_req *preq /* IN  */ ,
              nfs_res_t * pres /* OUT */ );
 
@@ -244,7 +240,6 @@ int mnt_Umnt(nfs_arg_t * parg /* IN  */ ,
              exportlist_t * pexport /* IN  */ ,
              fsal_op_context_t * pcontext /* IN  */ ,
              cache_inode_client_t * pclient /* IN  */ ,
-             hash_table_t * ht /* INOUT */ ,
              struct svc_req *preq /* IN  */ ,
              nfs_res_t * pres /* OUT */ );
 
@@ -252,7 +247,6 @@ int mnt_UmntAll(nfs_arg_t * parg /* IN  */ ,
                 exportlist_t * pexport /* IN  */ ,
                 fsal_op_context_t * pcontext /* IN  */ ,
                 cache_inode_client_t * pclient /* IN  */ ,
-                hash_table_t * ht /* INOUT */ ,
                 struct svc_req *preq /* IN  */ ,
                 nfs_res_t * pres /* OUT */ );
 
@@ -260,7 +254,6 @@ int mnt_Export(nfs_arg_t * parg /* IN  */ ,
                exportlist_t * pexport /* IN  */ ,
                fsal_op_context_t * pcontext /* IN  */ ,
                cache_inode_client_t * pclient /* IN  */ ,
-               hash_table_t * ht /* INOUT */ ,
                struct svc_req *preq /* IN  */ ,
                nfs_res_t * pres /* OUT */ );
 
@@ -278,7 +271,6 @@ int nlm_Null(nfs_arg_t * parg /* IN  */ ,
              exportlist_t * pexport /* IN  */ ,
              fsal_op_context_t * pcontext /* IN  */ ,
              cache_inode_client_t * pclient /* IN  */ ,
-             hash_table_t * ht /* INOUT */ ,
              struct svc_req *preq /* IN  */ ,
              nfs_res_t * pres /* OUT */ );
 
@@ -286,7 +278,6 @@ int nlm4_Test(nfs_arg_t * parg /* IN     */ ,
               exportlist_t * pexport /* IN     */ ,
               fsal_op_context_t * pcontext /* IN     */ ,
               cache_inode_client_t * pclient /* INOUT  */ ,
-              hash_table_t * ht /* INOUT  */ ,
               struct svc_req *preq /* IN     */ ,
               nfs_res_t * pres /* OUT    */ );
 
@@ -294,7 +285,6 @@ int nlm4_Lock(nfs_arg_t * parg /* IN     */ ,
               exportlist_t * pexport /* IN     */ ,
               fsal_op_context_t * pcontext /* IN     */ ,
               cache_inode_client_t * pclient /* INOUT  */ ,
-              hash_table_t * ht /* INOUT  */ ,
               struct svc_req *preq /* IN     */ ,
               nfs_res_t * pres /* OUT    */ );
 
@@ -302,7 +292,6 @@ int nlm4_Cancel(nfs_arg_t * parg /* IN     */ ,
                 exportlist_t * pexport /* IN     */ ,
                 fsal_op_context_t * pcontext /* IN     */ ,
                 cache_inode_client_t * pclient /* INOUT  */ ,
-                hash_table_t * ht /* INOUT  */ ,
                 struct svc_req *preq /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ );
 
@@ -310,7 +299,6 @@ int nlm4_Unlock(nfs_arg_t * parg /* IN     */ ,
                 exportlist_t * pexport /* IN     */ ,
                 fsal_op_context_t * pcontext /* IN     */ ,
                 cache_inode_client_t * pclient /* INOUT  */ ,
-                hash_table_t * ht /* INOUT  */ ,
                 struct svc_req *preq /* IN     */ ,
                 nfs_res_t * pres /* OUT    */ );
 
@@ -318,7 +306,6 @@ int nlm4_Sm_Notify(nfs_arg_t * parg /* IN     */ ,
                    exportlist_t * pexport /* IN     */ ,
                    fsal_op_context_t * pcontext /* IN     */ ,
                    cache_inode_client_t * pclient /* INOUT  */ ,
-                   hash_table_t * ht /* INOUT  */ ,
                    struct svc_req *preq /* IN     */ ,
                    nfs_res_t * pres /* OUT    */ );
 
@@ -326,7 +313,6 @@ int nlm4_Test_Message(nfs_arg_t * parg /* IN     */ ,
                       exportlist_t * pexport /* IN     */ ,
                       fsal_op_context_t * pcontext /* IN     */ ,
                       cache_inode_client_t * pclient /* INOUT  */ ,
-                      hash_table_t * ht /* INOUT  */ ,
                       struct svc_req *preq /* IN     */ ,
                       nfs_res_t * pres /* OUT    */ );
 
@@ -334,7 +320,6 @@ int nlm4_Cancel_Message(nfs_arg_t * parg /* IN     */ ,
                         exportlist_t * pexport /* IN     */ ,
                         fsal_op_context_t * pcontext /* IN     */ ,
                         cache_inode_client_t * pclient /* INOUT  */ ,
-                        hash_table_t * ht /* INOUT  */ ,
                         struct svc_req *preq /* IN     */ ,
                         nfs_res_t * pres /* OUT    */ );
 
@@ -342,7 +327,6 @@ int nlm4_Lock_Message(nfs_arg_t * parg /* IN     */ ,
                       exportlist_t * pexport /* IN     */ ,
                       fsal_op_context_t * pcontext /* IN     */ ,
                       cache_inode_client_t * pclient /* INOUT  */ ,
-                      hash_table_t * ht /* INOUT  */ ,
                       struct svc_req *preq /* IN     */ ,
                       nfs_res_t * pres /* OUT    */ );
 
@@ -350,7 +334,6 @@ int nlm4_Unlock_Message(nfs_arg_t * parg /* IN     */ ,
                         exportlist_t * pexport /* IN     */ ,
                         fsal_op_context_t * pcontext /* IN     */ ,
                         cache_inode_client_t * pclient /* INOUT  */ ,
-                        hash_table_t * ht /* INOUT  */ ,
                         struct svc_req *preq /* IN     */ ,
                         nfs_res_t * pres /* OUT    */ );
 
@@ -359,7 +342,6 @@ int nlm4_Granted_Res(nfs_arg_t * parg /* IN     */ ,
                      exportlist_t * pexport /* IN     */ ,
                      fsal_op_context_t * pcontext /* IN     */ ,
                      cache_inode_client_t * pclient /* INOUT  */ ,
-                     hash_table_t * ht /* INOUT  */ ,
                      struct svc_req *preq /* IN     */ ,
                      nfs_res_t * pres /* OUT    */ );
 
@@ -377,7 +359,6 @@ int rquota_Null(nfs_arg_t * parg /* IN  */ ,
                 exportlist_t * pexport /* IN  */ ,
                 fsal_op_context_t * pcontext /* IN  */ ,
                 cache_inode_client_t * pclient /* IN  */ ,
-                hash_table_t * ht /* INOUT */ ,
                 struct svc_req *preq /* IN  */ ,
                 nfs_res_t * pres /* OUT */ );
 
@@ -385,7 +366,6 @@ int rquota_getquota(nfs_arg_t * parg /* IN  */ ,
                     exportlist_t * pexport /* IN  */ ,
                     fsal_op_context_t * pcontext /* IN  */ ,
                     cache_inode_client_t * pclient /* IN  */ ,
-                    hash_table_t * ht /* INOUT */ ,
                     struct svc_req *preq /* IN  */ ,
                     nfs_res_t * pres /* OUT */ );
 
@@ -393,7 +373,6 @@ int rquota_getactivequota(nfs_arg_t * parg /* IN  */ ,
                           exportlist_t * pexport /* IN  */ ,
                           fsal_op_context_t * pcontext /* IN  */ ,
                           cache_inode_client_t * pclient /* IN  */ ,
-                          hash_table_t * ht /* INOUT */ ,
                           struct svc_req *preq /* IN  */ ,
                           nfs_res_t * pres /* OUT */ );
 
@@ -401,7 +380,6 @@ int rquota_setquota(nfs_arg_t * parg /* IN  */ ,
                     exportlist_t * pexport /* IN  */ ,
                     fsal_op_context_t * pcontext /* IN  */ ,
                     cache_inode_client_t * pclient /* IN  */ ,
-                    hash_table_t * ht /* INOUT */ ,
                     struct svc_req *preq /* IN  */ ,
                     nfs_res_t * pres /* OUT */ );
 
@@ -409,7 +387,6 @@ int rquota_setactivequota(nfs_arg_t * parg /* IN  */ ,
                           exportlist_t * pexport /* IN  */ ,
                           fsal_op_context_t * pcontext /* IN  */ ,
                           cache_inode_client_t * pclient /* IN  */ ,
-                          hash_table_t * ht /* INOUT */ ,
                           struct svc_req *preq /* IN  */ ,
                           nfs_res_t * pres /* OUT */ );
 
@@ -427,7 +404,6 @@ int nfs_Null(nfs_arg_t * parg /* IN  */ ,
              exportlist_t * pexport /* IN  */ ,
              fsal_op_context_t * pcontext /* IN  */ ,
              cache_inode_client_t * pclient /* IN  */ ,
-             hash_table_t * ht /* INOUT */ ,
              struct svc_req *preq /* IN  */ ,
              nfs_res_t * pres /* OUT */ );
 
@@ -435,7 +411,6 @@ int nfs_Getattr(nfs_arg_t * parg /* IN  */ ,
                 exportlist_t * pexport /* IN  */ ,
                 fsal_op_context_t * pcontext /* IN  */ ,
                 cache_inode_client_t * pclient /* IN  */ ,
-                hash_table_t * ht /* INOUT */ ,
                 struct svc_req *preq /* IN  */ ,
                 nfs_res_t * pres /* OUT */ );
 
@@ -443,7 +418,6 @@ int nfs_Setattr(nfs_arg_t * parg /* IN  */ ,
                 exportlist_t * pexport /* IN  */ ,
                 fsal_op_context_t * pcontext /* IN  */ ,
                 cache_inode_client_t * pclient /* IN  */ ,
-                hash_table_t * ht /* INOUT */ ,
                 struct svc_req *preq /* IN  */ ,
                 nfs_res_t * pres /* OUT */ );
 
@@ -451,7 +425,6 @@ int nfs2_Root(nfs_arg_t * parg /* IN  */ ,
               exportlist_t * pexport /* IN  */ ,
               fsal_op_context_t * pcontext /* IN  */ ,
               cache_inode_client_t * pclient /* IN  */ ,
-              hash_table_t * ht /* INOUT */ ,
               struct svc_req *preq /* IN  */ ,
               nfs_res_t * pres /* OUT */ );
 
@@ -459,7 +432,6 @@ int nfs_Lookup(nfs_arg_t * parg /* IN  */ ,
                exportlist_t * pexport /* IN  */ ,
                fsal_op_context_t * pcontext /* IN  */ ,
                cache_inode_client_t * pclient /* IN  */ ,
-               hash_table_t * ht /* INOUT */ ,
                struct svc_req *preq /* IN  */ ,
                nfs_res_t * pres /* OUT */ );
 
@@ -467,7 +439,6 @@ int nfs_Readlink(nfs_arg_t * parg /* IN  */ ,
                  exportlist_t * pexport /* IN  */ ,
                  fsal_op_context_t * pcontext /* IN  */ ,
                  cache_inode_client_t * pclient /* IN  */ ,
-                 hash_table_t * ht /* INOUT */ ,
                  struct svc_req *preq /* IN  */ ,
                  nfs_res_t * pres /* OUT */ );
 
@@ -475,7 +446,6 @@ int nfs_Read(nfs_arg_t * parg /* IN  */ ,
              exportlist_t * pexport /* IN  */ ,
              fsal_op_context_t * pcontext /* IN  */ ,
              cache_inode_client_t * pclient /* IN  */ ,
-             hash_table_t * ht /* INOUT */ ,
              struct svc_req *preq /* IN  */ ,
              nfs_res_t * pres /* OUT */ );
 
@@ -483,7 +453,6 @@ int nfs2_Writecache(nfs_arg_t * parg /* IN  */ ,
                     exportlist_t * pexport /* IN  */ ,
                     fsal_op_context_t * pcontext /* IN  */ ,
                     cache_inode_client_t * pclient /* IN  */ ,
-                    hash_table_t * ht /* INOUT */ ,
                     struct svc_req *preq /* IN  */ ,
                     nfs_res_t * pres /* OUT */ );
 
@@ -491,7 +460,6 @@ int nfs_Write(nfs_arg_t * parg /* IN  */ ,
               exportlist_t * pexport /* IN  */ ,
               fsal_op_context_t * pcontext /* IN  */ ,
               cache_inode_client_t * pclient /* IN  */ ,
-              hash_table_t * ht /* INOUT */ ,
               struct svc_req *preq /* IN  */ ,
               nfs_res_t * pres /* OUT */ );
 
@@ -499,7 +467,6 @@ int nfs_Create(nfs_arg_t * parg /* IN  */ ,
                exportlist_t * pexport /* IN  */ ,
                fsal_op_context_t * pcontext /* IN  */ ,
                cache_inode_client_t * pclient /* IN  */ ,
-               hash_table_t * ht /* INOUT */ ,
                struct svc_req *preq /* IN  */ ,
                nfs_res_t * pres /* OUT */ );
 
@@ -507,7 +474,6 @@ int nfs_Remove(nfs_arg_t * parg /* IN  */ ,
                exportlist_t * pexport /* IN  */ ,
                fsal_op_context_t * pcontext /* IN  */ ,
                cache_inode_client_t * pclient /* IN  */ ,
-               hash_table_t * ht /* INOUT */ ,
                struct svc_req *preq /* IN  */ ,
                nfs_res_t * pres /* OUT */ );
 
@@ -515,7 +481,6 @@ int nfs_Rename(nfs_arg_t * parg /* IN  */ ,
                exportlist_t * pexport /* IN  */ ,
                fsal_op_context_t * pcontext /* IN  */ ,
                cache_inode_client_t * pclient /* IN  */ ,
-               hash_table_t * ht /* INOUT */ ,
                struct svc_req *preq /* IN  */ ,
                nfs_res_t * pres /* OUT */ );
 
@@ -523,7 +488,6 @@ int nfs_Link(nfs_arg_t * parg /* IN  */ ,
              exportlist_t * pexport /* IN  */ ,
              fsal_op_context_t * pcontext /* IN  */ ,
              cache_inode_client_t * pclient /* IN  */ ,
-             hash_table_t * ht /* INOUT */ ,
              struct svc_req *preq /* IN  */ ,
              nfs_res_t * pres /* OUT */ );
 
@@ -531,7 +495,6 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                 exportlist_t * pexport /* IN  */ ,
                 fsal_op_context_t * pcontext /* IN  */ ,
                 cache_inode_client_t * pclient /* IN  */ ,
-                hash_table_t * ht /* INOUT */ ,
                 struct svc_req *preq /* IN  */ ,
                 nfs_res_t * pres /* OUT */ );
 
@@ -539,7 +502,6 @@ int nfs_Mkdir(nfs_arg_t * parg /* IN  */ ,
               exportlist_t * pexport /* IN  */ ,
               fsal_op_context_t * pcontext /* IN  */ ,
               cache_inode_client_t * pclient /* IN  */ ,
-              hash_table_t * ht /* INOUT */ ,
               struct svc_req *preq /* IN  */ ,
               nfs_res_t * pres /* OUT */ );
 
@@ -547,7 +509,6 @@ int nfs_Rmdir(nfs_arg_t * parg /* IN  */ ,
               exportlist_t * pexport /* IN  */ ,
               fsal_op_context_t * pcontext /* IN  */ ,
               cache_inode_client_t * pclient /* IN  */ ,
-              hash_table_t * ht /* INOUT */ ,
               struct svc_req *preq /* IN  */ ,
               nfs_res_t * pres /* OUT */ );
 
@@ -555,7 +516,6 @@ int nfs_Readdir(nfs_arg_t * parg /* IN  */ ,
                 exportlist_t * pexport /* IN  */ ,
                 fsal_op_context_t * pcontext /* IN  */ ,
                 cache_inode_client_t * pclient /* IN  */ ,
-                hash_table_t * ht /* INOUT */ ,
                 struct svc_req *preq /* IN  */ ,
                 nfs_res_t * pres /* OUT */ );
 
@@ -563,7 +523,6 @@ int nfs_Fsstat(nfs_arg_t * parg /* IN  */ ,
                exportlist_t * pexport /* IN  */ ,
                fsal_op_context_t * pcontext /* IN  */ ,
                cache_inode_client_t * pclient /* IN  */ ,
-               hash_table_t * ht /* INOUT */ ,
                struct svc_req *preq /* IN  */ ,
                nfs_res_t * pres /* OUT */ );
 
@@ -571,7 +530,6 @@ int nfs3_Access(nfs_arg_t * parg /* IN  */ ,
                 exportlist_t * pexport /* IN  */ ,
                 fsal_op_context_t * pcontext /* IN  */ ,
                 cache_inode_client_t * pclient /* IN  */ ,
-                hash_table_t * ht /* INOUT */ ,
                 struct svc_req *preq /* IN  */ ,
                 nfs_res_t * pres /* OUT */ );
 
@@ -579,7 +537,6 @@ int nfs3_Readdirplus(nfs_arg_t * parg /* IN  */ ,
                      exportlist_t * pexport /* IN  */ ,
                      fsal_op_context_t * pcontext /* IN  */ ,
                      cache_inode_client_t * pclient /* IN  */ ,
-                     hash_table_t * ht /* INOUT */ ,
                      struct svc_req *preq /* IN  */ ,
                      nfs_res_t * pres /* OUT */ );
 
@@ -587,7 +544,6 @@ int nfs3_Fsinfo(nfs_arg_t * parg /* IN  */ ,
                 exportlist_t * pexport /* IN  */ ,
                 fsal_op_context_t * pcontext /* IN  */ ,
                 cache_inode_client_t * pclient /* IN  */ ,
-                hash_table_t * ht /* INOUT */ ,
                 struct svc_req *preq /* IN  */ ,
                 nfs_res_t * pres /* OUT */ );
 
@@ -595,7 +551,6 @@ int nfs3_Pathconf(nfs_arg_t * parg /* IN  */ ,
                   exportlist_t * pexport /* IN  */ ,
                   fsal_op_context_t * pcontext /* IN  */ ,
                   cache_inode_client_t * pclient /* IN  */ ,
-                  hash_table_t * ht /* INOUT */ ,
                   struct svc_req *preq /* IN  */ ,
                   nfs_res_t * pres /* OUT */ );
 
@@ -603,7 +558,6 @@ int nfs3_Commit(nfs_arg_t * parg /* IN  */ ,
                 exportlist_t * pexport /* IN  */ ,
                 fsal_op_context_t * pcontext /* IN  */ ,
                 cache_inode_client_t * pclient /* IN  */ ,
-                hash_table_t * ht /* INOUT */ ,
                 struct svc_req *preq /* IN  */ ,
                 nfs_res_t * pres /* OUT */ );
 
@@ -611,7 +565,6 @@ int nfs3_Mknod(nfs_arg_t * parg /* IN  */ ,
                exportlist_t * pexport /* IN  */ ,
                fsal_op_context_t * pcontext /* IN  */ ,
                cache_inode_client_t * pclient /* IN  */ ,
-               hash_table_t * ht /* INOUT */ ,
                struct svc_req *preq /* IN  */ ,
                nfs_res_t * pres /* OUT */ );
 
@@ -621,7 +574,6 @@ int nfs4_Compound(nfs_arg_t * parg /* IN  */ ,
                   exportlist_t * pexport /* IN  */ ,
                   fsal_op_context_t * pcontext /* IN  */ ,
                   cache_inode_client_t * pclient /* IN  */ ,
-                  hash_table_t * ht /* INOUT */ ,
                   struct svc_req *preq /* IN  */ ,
                   nfs_res_t * pres /* OUT */ );
 
@@ -1446,7 +1398,7 @@ int nfs2_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related expor
                            fattr2 * pFattr);    /* Out: file attributes */
 
 int nfs3_FSALattr_To_Fattr(exportlist_t * pexport,      /* In: the related export entry */
-                           fsal_attrib_list_t * pFSAL_attr,     /* In: file attributes  */
+                           const fsal_attrib_list_t * pFSAL_attr,     /* In: file attributes  */
                            fattr3 * pFattr);    /* Out: file attributes */
 int nfs3_FSALattr_To_PartialFattr(const fsal_attrib_list_t *,
                                   fsal_attrib_mask_t,
@@ -1460,55 +1412,54 @@ int nfs3_Access_Xattr(nfs_arg_t * parg,
                       exportlist_t * pexport,
                       fsal_op_context_t * pcontext,
                       cache_inode_client_t * pclient,
-                      hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres);
+                      struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Getattr_Xattr(nfs_arg_t * parg,
                        exportlist_t * pexport,
                        fsal_op_context_t * pcontext,
                        cache_inode_client_t * pclient,
-                       hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres);
+                       struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Lookup_Xattr(nfs_arg_t * parg,
                       exportlist_t * pexport,
                       fsal_op_context_t * pcontext,
                       cache_inode_client_t * pclient,
-                      hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres);
+                      struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Read_Xattr(nfs_arg_t * parg,
                     exportlist_t * pexport,
                     fsal_op_context_t * pcontext,
                     cache_inode_client_t * pclient,
-                    hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres);
+                    struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Create_Xattr(nfs_arg_t * parg,
                       exportlist_t * pexport,
                       fsal_op_context_t * pcontext,
                       cache_inode_client_t * pclient,
-                      hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres);
+                      struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Write_Xattr(nfs_arg_t * parg,
                      exportlist_t * pexport,
                      fsal_op_context_t * pcontext,
                      cache_inode_client_t * pclient,
-                     hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres);
+                     struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                        exportlist_t * pexport,
                        fsal_op_context_t * pcontext,
                        cache_inode_client_t * pclient,
-                       hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres);
+                       struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                            exportlist_t * pexport,
                            fsal_op_context_t * pcontext,
                            cache_inode_client_t * pclient,
-                           hash_table_t * ht, struct svc_req *preq, nfs_res_t * pres);
+                           struct svc_req *preq, nfs_res_t * pres);
 
 int nfs3_Remove_Xattr(nfs_arg_t * parg /* IN  */ ,
                       exportlist_t * pexport /* IN  */ ,
                       fsal_op_context_t * pcontext /* IN  */ ,
                       cache_inode_client_t * pclient /* IN  */ ,
-                      hash_table_t * ht /* INOUT */ ,
                       struct svc_req *preq /* IN  */ ,
                       nfs_res_t * pres /* OUT */ );
 
@@ -1526,12 +1477,12 @@ int nfs4_Fattr_To_FSAL_attr(fsal_attrib_list_t * pFSAL_attr,    /* Out: File att
 
 int nfs4_attrmap_to_FSAL_attrmask(bitmap4 attrmap, fsal_attrib_mask_t* attrmask);
 
-int nfs4_FSALattr_To_Fattr(exportlist_t * pexport,
-                           fsal_attrib_list_t * pattr,
-                           fattr4 * Fattr,
-                           compound_data_t * data, nfs_fh4 * objFH, bitmap4 * Bitmap);
-
-void nfs4_Fattr_Free(fattr4 *);
+int nfs4_FSALattr_To_Fattr(exportlist_t *pexport,
+                           fsal_attrib_list_t *pattr,
+                           fattr4 *Fattr,
+                           compound_data_t *data,
+                           nfs_fh4 *objFH,
+                           bitmap4 *Bitmap);
 
 void nfs4_list_to_bitmap4(bitmap4 * b, uint_t * plen, uint32_t * pval);
 void nfs4_bitmap4_to_list(bitmap4 * b, uint_t * plen, uint32_t * pval);
