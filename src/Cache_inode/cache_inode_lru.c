@@ -1366,6 +1366,7 @@ cache_inode_lru_unref(cache_entry_t *entry,
           struct lru_q_base *q
                = lru_select_queue(entry->lru.flags,
                                   entry->lru.lane);
+          pthread_mutex_lock(&q->mtx);
           if (--(entry->lru.refcount) == 0) {
                /* Refcount has fallen to zero.  Remove the entry from
                   the queue and mark it as dead. */
