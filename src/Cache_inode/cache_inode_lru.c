@@ -1223,6 +1223,10 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
                          entry->lru.lane);
      }
      entry->lru.pin_refcnt++;
+
+     /* Also take an LRU reference */
+     entry->lru.refcount++;
+
      pthread_mutex_unlock(&entry->lru.mtx);
 
      return rc;
@@ -1263,10 +1267,18 @@ cache_inode_dec_pin_ref(cache_entry_t *entry)
 {
      pthread_mutex_lock(&entry->lru.mtx);
      assert(entry->lru.pin_refcnt);
+     /* Make sure at least one other LRU reference is held,
+      * caller should separately hold an LRU reference
+      */
+     assert(entry->lru.refcount > 1);
      entry->lru.pin_refcnt--;
      if (!entry->lru.pin_refcnt && (entry->lru.flags & LRU_ENTRY_PINNED)) {
           lru_move_entry(&entry->lru, 0, entry->lru.lane);
      }
+
+     /* Also release an LRU reference */
+     entry->lru.refcount--;
+
      pthread_mutex_unlock(&entry->lru.mtx);
 
      return CACHE_INODE_SUCCESS;
