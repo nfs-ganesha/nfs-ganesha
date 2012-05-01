@@ -399,7 +399,7 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
         }
 
       LogFullDebug(COMPONENT_FSAL,
-                   "Write operation (whence=%s, offset=%lld, size=%lld)",
+                   "Write operation (whence=%s, offset=%lld, size=%zd)",
                    format_seek_whence(p_seek_descriptor->whence),
                    (long long) p_seek_descriptor->offset, buffer_size);
 
