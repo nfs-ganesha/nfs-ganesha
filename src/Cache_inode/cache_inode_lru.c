@@ -175,7 +175,7 @@ static struct lru_q_ LRU_2[LRU_N_Q_LANES];
  * instruct them to close them.
  */
 
-size_t open_fd_count = 0;
+uint32_t open_fd_count = 0;
 
 /**
  * The refcount mechanism distinguishes 3 key object states:
@@ -473,8 +473,6 @@ cache_inode_lru_clean(cache_entry_t *entry,
                LogCrit(COMPONENT_CACHE_INODE_LRU,
                        "Error closing file in cleanup: %d.",
                        cache_status);
-          } else {
-               --open_fd_count;
           }
      }
 
@@ -759,7 +757,7 @@ lru_thread(void *arg __attribute__((unused)))
 
           if (open_fd_count < lru_state.fds_lowat) {
                LogDebug(COMPONENT_CACHE_INODE_LRU,
-                        "FD count is %zd and low water mark is "
+                        "FD count is %d and low water mark is "
                         "%d: not reaping.",
                         open_fd_count,
                         lru_state.fds_lowat);
@@ -863,10 +861,8 @@ lru_thread(void *arg __attribute__((unused)))
                                         LogCrit(COMPONENT_CACHE_INODE_LRU,
                                                 "Error closing file in "
                                                 "LRU thread.");
-                                   } else {
-                                        ++closed;
-                                        --open_fd_count;
-                                   }
+                                   } else
+                                     ++closed;
                               }
                               /* Move the entry to L2 whatever the
                                  result of examining it.*/

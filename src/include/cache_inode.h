@@ -1145,6 +1145,36 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
 }
 
 /**
+ * \brief Atomically increment a 32-bit integer
+ *
+ * This function is a wrapper around a GCC atomic primitive and
+ * adds 1 thirty-two bit integer.
+ *
+ * @param var [in,out] Pointer to the integer to modify
+ */
+
+static inline void
+atomic_inc_int(uint32_t *var)
+{
+     __sync_fetch_and_add(var, 1);
+}
+
+/**
+ * \brief Atomically decrement a 32-bit integer
+ *
+ * This function is a wrapper around a GCC atomic primitive and
+ * subtracts 1 thirty-two bit integer.
+ *
+ * @param var [in,out] Pointer to the integer to modify
+ */
+
+static inline void
+atomic_dec_int(uint32_t *var)
+{
+     __sync_fetch_and_sub(var, 1);
+}
+
+/**
  * \brief Atomically clear bits in a 32-bit integer
  *
  * This function is a wrapper around a GCC atomic primitive and

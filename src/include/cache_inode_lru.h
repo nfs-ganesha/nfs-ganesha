@@ -119,7 +119,7 @@ static const uint32_t LRU_NO_LANE = ~0;
 extern void cache_inode_lru_pkginit(void);
 extern void cache_inode_lru_pkgshutdown(void);
 
-extern size_t open_fd_count;
+extern uint32_t open_fd_count;
 
 extern struct cache_entry_t *cache_inode_lru_get(cache_inode_client_t *pclient,
                                                  cache_inode_status_t *pstatus,
