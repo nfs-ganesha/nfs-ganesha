@@ -390,8 +390,10 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       else
         {
           /* Destination exists and is something different from source */
-          if( tst_entry_src->type == REGULAR_FILE &&
-              tst_entry_dst->type == REGULAR_FILE )
+          if(( tst_entry_src->type == REGULAR_FILE &&
+              tst_entry_dst->type == REGULAR_FILE ) ||
+              ( tst_entry_src->type == DIRECTORY &&
+              tst_entry_dst->type == DIRECTORY ))
             {
               if(cache_inode_rename(src_entry,
                                     &oldname,

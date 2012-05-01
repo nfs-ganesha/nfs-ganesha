@@ -82,6 +82,7 @@ cache_inode_truncate_impl(cache_entry_t *pentry,
                           cache_inode_status_t *pstatus)
 {
   fsal_status_t fsal_status;
+  fsal_file_t *fd;
 
   /* Set the return default to CACHE_INODE_SUCCESS */
   *pstatus = CACHE_INODE_SUCCESS;
@@ -95,8 +96,12 @@ cache_inode_truncate_impl(cache_entry_t *pentry,
 
   /* Call FSAL to actually truncate */
   pentry->attributes.asked_attributes = pclient->attrmask;
+  if (pentry->object.file.open_fd.openflags == FSAL_O_CLOSED)
+    fd = NULL;
+  else
+    fd = &(pentry->object.file.open_fd.fd);
   fsal_status = FSAL_truncate(&pentry->handle, pcontext, length,
-                              NULL,
+                              fd, /* used by FSAL_GPFS */
                               &pentry->attributes);
 
   if(FSAL_IS_ERROR(fsal_status))
