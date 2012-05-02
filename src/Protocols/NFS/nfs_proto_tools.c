@@ -217,6 +217,7 @@ cache_entry_t *nfs_FhandleToCache(u_long rq_vers,
   *prc = NFS_REQ_OK;
 
   memset(&fsal_data, 0, sizeof(fsal_data));
+  fsal_data.export = pexport->export_hdl;
   switch (rq_vers)
     {
     case NFS_V4:

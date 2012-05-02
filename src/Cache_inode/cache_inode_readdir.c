@@ -60,7 +60,6 @@
 #include <pthread.h>
 #include <assert.h>
 
-#if 0
 /**
  * @brief Invalidates all cached entries for a directory
  *
@@ -447,14 +446,16 @@ static fsal_status_t populate(const char *name,
 		goto error;
 	}
 	if(*state->pstatus != CACHE_INODE_ENTRY_EXISTS) {
-		/* somehow make the cookie into a uint64_t */
-/** @TODO fix for new readdir logic
- */
-/* 		new_dir_entry->fsal_cookie = *cookie; /\* struct copy *\/ */
-/* 		new_dir_entry->cookie = state->offset_cookie; */
-/* 		state->offset_cookie++; /\* still and offset *\/ */
-/* 		(void)avltree_insert(&new_dir_entry->node_c, */
-/* 				     &state->pentry_dir->object.dir.cookies); */
+		/* somehow make the cookie into a uint64_t
+		 * this is a hammer and fsal_cookie_t is a bit strange
+		 * the VFS fsal can just stuff the offset (64 bits) into it
+		 * and that works here.  If other FSALs have something different,
+		 * particularly larger than 64 bits, beware and/or make sure
+		 * the readdir method gets the most important 64 bits where they
+		 * belong. Short circuit the FSAL_cookie_to_uint64() call.
+		 */
+		
+		memcpy(&new_dir_entry->fsal_cookie, cookie, sizeof(uint64_t));
 	}
 	ReturnCode(ERR_FSAL_NO_ERROR, 0);
 
@@ -552,143 +553,6 @@ cache_inode_readdir_populate(cache_entry_t *directory,
       }
       return *status;
     }
-
-#if 0
-/** @TODO check this against populate callback
- */
-  /* Loop for readding the directory */
-  FSAL_SET_COOKIE_BEGINNING(begin_cookie);
-  FSAL_SET_COOKIE_BEGINNING(end_cookie);
-  eod = FALSE;
-
-  do
-    {
-      fsal_status
-        = FSAL_readdir(&dir_handle,
-                       begin_cookie,
-                       client->attrmask,
-                       FSAL_READDIR_SIZE * sizeof(fsal_dirent_t),
-                       array_dirent, &end_cookie, &found, &eod);
-
-      if(FSAL_IS_ERROR(fsal_status))
-        {
-          *status = cache_inode_error_convert(fsal_status);
-          goto bail;
-        }
-
-      for(iter = 0; iter < found; iter++)
-        {
-          LogMidDebug(COMPONENT_CACHE_INODE,
-                       "cache readdir populate found entry %s",
-                       array_dirent[iter].name.name);
-
-          /* It is not needed to cache '.' and '..' */
-          if(!FSAL_namecmp(&(array_dirent[iter].name),
-                           (fsal_name_t *) & FSAL_DOT) ||
-             !FSAL_namecmp(&(array_dirent[iter].name),
-                           (fsal_name_t *) & FSAL_DOT_DOT))
-            {
-              LogMidDebug(COMPONENT_CACHE_INODE,
-                          "cache readdir populate : do not cache . and ..");
-              continue;
-            }
-
-          /* If dir entry is a symbolic link, its content has to be read */
-          if((type =
-              cache_inode_fsal_type_convert(array_dirent[iter]
-                                            .attributes.type))
-             == SYMBOLIC_LINK)
-            {
-              /* Let's read the link for caching its value */
-              object_attributes.asked_attributes = client->attrmask;
-              fsal_status
-                = FSAL_readlink(&array_dirent[iter].handle,
-                                context,
-                                &create_arg.link_content, &object_attributes);
-
-              if(FSAL_IS_ERROR(fsal_status))
-                {
-                     *status = cache_inode_error_convert(fsal_status);
-                     if (fsal_status.major == ERR_FSAL_STALE) {
-                          cache_inode_kill_entry(directory, client);
-                     }
-                     goto bail;
-                }
-            }
-          else
-            {
-              create_arg.newly_created_dir = FALSE;
-            }
-
-          /* Try adding the entry, if it exists then this existing entry is
-             returned */
-          new_entry_fsdata.fh_desc.start
-            = (caddr_t)(&array_dirent[iter].handle);
-          new_entry_fsdata.fh_desc.len = 0;
-          FSAL_ExpandHandle(context->export_context,
-                            FSAL_DIGEST_SIZEOF,
-                            &new_entry_fsdata.fh_desc);
-
-          if((entry
-              = cache_inode_new_entry(&new_entry_fsdata,
-                                      &array_dirent[iter].attributes,
-                                      type,
-                                      &create_arg,
-                                      client,
-                                      context,
-                                      CACHE_INODE_FLAG_NONE,
-                                      status)) == NULL)
-            goto bail;
-          cache_status
-            = cache_inode_add_cached_dirent(directory,
-                                            &(array_dirent[iter].name),
-                                            entry,
-                                            &new_dir_entry,
-                                            client,
-                                            context,
-                                            status);
-
-          /* Once the weakref is stored in the directory entry, we
-             can release the reference we took on the entry. */
-          cache_inode_lru_unref(entry, client, 0);
-
-          if(cache_status != CACHE_INODE_SUCCESS
-             && cache_status != CACHE_INODE_ENTRY_EXISTS)
-            goto bail;
-
-          /*
-           * Remember the FSAL readdir cookie associated with this
-           * dirent.  This is needed for partial directory reads.
-           *
-           * to_uint64 should be a lightweight operation--it is in the
-           * current default implementation.
-           *
-           * I'm ignoring the status because the default operation is
-           * a memcpy-- we already -have- the cookie. */
-
-          if (cache_status != CACHE_INODE_ENTRY_EXISTS)
-              FSAL_cookie_to_uint64(&array_dirent[iter].handle,
-                                    context, &array_dirent[iter].cookie,
-                                    &new_dir_entry->fsal_cookie);
-        } /* iter */
-
-      /* Get prepared for next step */
-      begin_cookie = end_cookie;
-
-      /* next offset */
-      i++;
-    }
-  while(eod != TRUE);
-
-  /* Close the directory */
-  fsal_status = FSAL_closedir(&dir_handle);
-  if(FSAL_IS_ERROR(fsal_status))
-    {
-      *status = cache_inode_error_convert(fsal_status);
-      return *status;
-    }
-
-#endif  /* check populate callback */
 
   /* End of work */
   atomic_set_int_bits(&directory->flags,
