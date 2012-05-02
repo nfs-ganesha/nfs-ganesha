@@ -86,7 +86,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
   resp->resop = NFS4_OP_CLOSE;
 
   if ((res_CLOSE4.status
-       = nfs4_sanity_check_FH(data, REGULAR_FILE) != NFS4_OK)) {
+       = nfs4_sanity_check_FH(data, REGULAR_FILE)) != NFS4_OK) {
        return res_CLOSE4.status;
   }
 

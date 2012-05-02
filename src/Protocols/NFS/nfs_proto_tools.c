@@ -4403,6 +4403,9 @@ nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
     {
       if(data->current_filetype != required_type)
         {
+          if (required_type == DIRECTORY)
+            return NFS4ERR_NOTDIR;
+
           switch (data->current_filetype)
             {
             case DIRECTORY:

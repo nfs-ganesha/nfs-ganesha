@@ -84,7 +84,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   res_OPEN_CONFIRM4.status = NFS4_OK;
 
   if ((res_OPEN_CONFIRM4.status
-       = nfs4_sanity_check_FH(data, REGULAR_FILE) != NFS4_OK)) {
+       = nfs4_sanity_check_FH(data, REGULAR_FILE)) != NFS4_OK) {
        return res_OPEN_CONFIRM4.status;
   }
 
