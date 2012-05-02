@@ -97,6 +97,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   cache_inode_status_t     cache_status = CACHE_INODE_SUCCESS;
   state_t                * pstate_found = NULL;
   state_t                * pstate_open = NULL;
+  fsal_attrib_list_t       attr;
   cache_entry_t          * pentry = NULL;
   int                      rc = 0;
   /* This flag is set to true in the case of an anonymous read so that
@@ -378,7 +379,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     }
   memset(bufferdata, 0, size);
 
-  if(cache_inode_rdwr(pentry,
+  if((cache_inode_rdwr(pentry,
                       CACHE_INODE_READ,
                       offset,
                       size,
@@ -388,7 +389,10 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                       data->pclient,
                       data->pcontext,
                       CACHE_INODE_SAFE_WRITE_TO_FS,
-                      &cache_status) != CACHE_INODE_SUCCESS)
+                      &cache_status) != CACHE_INODE_SUCCESS) ||
+     ((cache_inode_getattr(pentry, &attr, data->pclient, data->pcontext,
+                              &cache_status)) != CACHE_INODE_SUCCESS))
+ 
     {
       res_READ4.status = nfs4_Errno(cache_status);
       if (anonymous)
@@ -405,7 +409,12 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                "NFS4_OP_READ: offset = %"PRIu64" read length = %zu eof=%u",
                offset, read_size, eof_met);
 
-  res_READ4.READ4res_u.resok4.eof = eof_met;
+  /* Is EOF met or not ? */
+  if( ( eof_met == TRUE ) ||
+      ( (offset + read_size) >= attr.filesize) )
+    res_READ4.READ4res_u.resok4.eof = TRUE;
+  else
+    res_READ4.READ4res_u.resok4.eof = FALSE;
 
   /* Say it is ok */
   res_READ4.status = NFS4_OK;

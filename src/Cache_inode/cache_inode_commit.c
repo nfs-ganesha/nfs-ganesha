@@ -95,6 +95,9 @@ cache_inode_commit(cache_entry_t *entry,
      /* True if we opened our own file descriptor */
      bool_t opened = FALSE;
 
+     if ((uint64_t)count > ~(uint64_t)offset)
+         return NFS4ERR_INVAL;
+
      pthread_rwlock_rdlock(&entry->content_lock);
      content_locked = TRUE;
 

@@ -75,7 +75,7 @@ fsal_status_t GPFSFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
 {
 
   int errsv, rc = 0;
-  int fd = 0;
+  int fd = -1;
   gpfsfsal_file_t *file_desc = (gpfsfsal_file_t *)file_descriptor;
   fsal_status_t st;
 
@@ -95,11 +95,14 @@ fsal_status_t GPFSFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
     }
 
   /* either the fd passed in was 0, or invalid */
-  if (rc || fd == 0)
+  if (rc || fd == -1)
     {
       TakeTokenFSCall();
       st = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDWR);
       ReleaseTokenFSCall();
+
+      if (FSAL_IS_ERROR(st))
+        ReturnStatus(st, INDEX_FSAL_truncate);
 
       /* Executes the POSIX truncate operation */
 
