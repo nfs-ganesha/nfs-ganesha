@@ -4384,27 +4384,39 @@ nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->currentFH)))
     {
+      LogDebug(COMPONENT_FILEHANDLE,
+               "nfs4_Is_Fh_Empty failed");
       return NFS4ERR_NOFILEHANDLE;
     }
 
   /* If the filehandle is invalid */
   if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
     {
+      LogDebug(COMPONENT_FILEHANDLE,
+               "nfs4_Is_Fh_Invalid failed");
       return NFS4ERR_BADHANDLE;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
   if(nfs4_Is_Fh_Expired(&(data->currentFH)))
     {
+      LogDebug(COMPONENT_FILEHANDLE,
+               "nfs4_Is_Fh_Expired failed");
       return NFS4ERR_FHEXPIRED;
     }
 
+  /* Check for the correct file type */
   if (required_type)
     {
       if(data->current_filetype != required_type)
         {
-          if (required_type == DIRECTORY)
+          LogDebug(COMPONENT_NFSPROTO,
+                   "Wrong file type");
+
+          if(required_type == DIRECTORY)
             return NFS4ERR_NOTDIR;
+          if(required_type == SYMBOLIC_LINK)
+            return NFS4ERR_INVAL;
 
           switch (data->current_filetype)
             {
