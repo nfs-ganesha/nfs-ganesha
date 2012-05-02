@@ -81,14 +81,13 @@
 
 int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  fsal_attrib_list_t attr;
-  fsal_accessflags_t  access_mask = 0;
-  cache_inode_status_t cache_status;
-
-  uint32_t max_access =
-      (ACCESS4_READ | ACCESS4_LOOKUP | ACCESS4_MODIFY | ACCESS4_EXTEND | ACCESS4_DELETE |
-       ACCESS4_EXECUTE);
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_access";
+
+  fsal_attrib_list_t   attr;
+  fsal_accessflags_t   access_mask = 0;
+  cache_inode_status_t cache_status;
+  uint32_t max_access = (ACCESS4_READ | ACCESS4_LOOKUP | ACCESS4_MODIFY |
+                         ACCESS4_EXTEND | ACCESS4_DELETE | ACCESS4_EXECUTE);
 
   /* initialize output */
   res_ACCESS4.ACCESS4res_u.resok4.supported = 0;
@@ -97,26 +96,10 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   resp->resop = NFS4_OP_ACCESS;
   res_ACCESS4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_ACCESS4.status = NFS4ERR_NOFILEHANDLE;
-      return res_ACCESS4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_ACCESS4.status = NFS4ERR_BADHANDLE;
-      return res_ACCESS4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_ACCESS4.status = NFS4ERR_FHEXPIRED;
-      return res_ACCESS4.status;
-    }
+  /* Do basic checks on a filehandle */
+  res_ACCESS4.status = nfs4_sanity_check_FH(data, 0LL);
+  if(res_ACCESS4.status != NFS4_OK)
+    return res_ACCESS4.status;
 
   /* If Filehandle points to a pseudo fs entry, manage it via pseudofs specific functions */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))

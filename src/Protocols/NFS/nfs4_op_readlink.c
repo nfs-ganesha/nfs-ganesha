@@ -60,6 +60,7 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
@@ -86,42 +87,21 @@
 int nfs4_op_readlink(struct nfs_argop4 *op,
                      compound_data_t * data, struct nfs_resop4 *resp)
 {
-  cache_inode_status_t cache_status;
-  fsal_path_t symlink_path;
-
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_readlink";
+
+  cache_inode_status_t cache_status;
+  fsal_path_t          symlink_path;
 
   resp->resop = NFS4_OP_READLINK;
   res_READLINK4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_READLINK4.status = NFS4ERR_NOFILEHANDLE;
-      return NFS4ERR_NOFILEHANDLE;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_READLINK4.status = NFS4ERR_BADHANDLE;
-      return NFS4ERR_BADHANDLE;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_READLINK4.status = NFS4ERR_FHEXPIRED;
-      return NFS4ERR_FHEXPIRED;
-    }
-
-  /* You can readlink only on a link ... */
-  if(data->current_filetype != SYMBOLIC_LINK)
-    {
-      /* As said on page 194 of RFC3530, return NFS4ERR_INVAL in this case */
-      res_READLINK4.status = NFS4ERR_INVAL;
-      return res_READLINK4.status;
-    }
+  /*
+   * Do basic checks on a filehandle
+   * You can readlink only on a link ...
+   */
+  res_READLINK4.status = nfs4_sanity_check_FH(data, SYMBOLIC_LINK);
+  if(res_READLINK4.status != NFS4_OK)
+    return res_READLINK4.status;
 
   /* Using cache_inode_readlink */
   if(cache_inode_readlink(data->current_entry,

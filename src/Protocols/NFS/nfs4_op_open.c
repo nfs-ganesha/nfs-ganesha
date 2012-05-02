@@ -147,32 +147,10 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   res_OPEN4.status = NFS4_OK;
   res_OPEN4.OPEN4res_u.resok4.rflags = 0 ;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_OPEN4.status = NFS4ERR_NOFILEHANDLE;
-      LogDebug(COMPONENT_STATE,
-               "NFS4 OPEN returning NFS4ERR_NOFILEHANDLE");
-      return res_OPEN4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_OPEN4.status = NFS4ERR_BADHANDLE;
-      LogDebug(COMPONENT_STATE,
-               "NFS4 OPEN returning NFS4ERR_BADHANDLE");
-      return res_OPEN4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_OPEN4.status = NFS4ERR_FHEXPIRED;
-      LogDebug(COMPONENT_STATE,
-               "NFS4 OPEN returning NFS4ERR_FHEXPIRED");
-      return res_OPEN4.status;
-    }
+  /* Do basic checks on a filehandle */
+  res_OPEN4.status = nfs4_sanity_check_FH(data, 0LL);
+  if(res_OPEN4.status != NFS4_OK)
+    return res_OPEN4.status;
 
   /* This can't be done on the pseudofs */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))

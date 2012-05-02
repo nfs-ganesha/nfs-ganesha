@@ -54,6 +54,7 @@
 #include "nfs_core.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nlm_list.h"
 
 /**
@@ -110,51 +111,15 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
 
   /* Initialize to sane starting values */
   resp->resop = NFS4_OP_LOCK;
+  res_LOCK4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_LOCK4.status = NFS4ERR_NOFILEHANDLE;
-      LogDebug(COMPONENT_NFS_V4_LOCK,
-               "LOCK failed nfs4_Is_Fh_Empty");
-      return res_LOCK4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_LOCK4.status = NFS4ERR_BADHANDLE;
-      LogDebug(COMPONENT_NFS_V4_LOCK,
-               "LOCK failed nfs4_Is_Fh_Invalid");
-      return res_LOCK4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_LOCK4.status = NFS4ERR_FHEXPIRED;
-      LogDebug(COMPONENT_NFS_V4_LOCK,
-               "LOCK failed nfs4_Is_Fh_Expired");
-      return res_LOCK4.status;
-    }
-
-  /* Lock is done only on a file */
-  if(data->current_filetype != REGULAR_FILE)
-    {
-      /* Type of the entry is not correct */
-      switch (data->current_filetype)
-        {
-        case DIRECTORY:
-          res_LOCK4.status = NFS4ERR_ISDIR;
-          break;
-        default:
-          res_LOCK4.status = NFS4ERR_INVAL;
-          break;
-        }
-      LogDebug(COMPONENT_NFS_V4_LOCK,
-               "LOCK failed wrong file type");
-      return res_LOCK4.status;
-    }
+  /*
+   * Do basic checks on a filehandle
+   * Lock is done only on a file
+   */
+  res_LOCK4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
+  if(res_LOCK4.status != NFS4_OK)
+    return res_LOCK4.status;
 
   /* Convert lock parameters to internal types */
   switch(arg_LOCK4.locktype)

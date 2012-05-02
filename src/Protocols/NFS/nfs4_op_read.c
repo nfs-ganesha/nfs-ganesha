@@ -99,7 +99,6 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   state_t                * pstate_open = NULL;
   fsal_attrib_list_t       attr;
   cache_entry_t          * pentry = NULL;
-  int                      rc = 0;
   /* This flag is set to true in the case of an anonymous read so that
      we know to release the state lock afterward.  The state lock does
      not need to be held during a non-anonymous read, since the open
@@ -111,26 +110,13 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   resp->resop = NFS4_OP_READ;
   res_READ4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_READ4.status = NFS4ERR_NOFILEHANDLE;
-      return res_READ4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_READ4.status = NFS4ERR_BADHANDLE;
-      return res_READ4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_READ4.status = NFS4ERR_FHEXPIRED;
-      return res_READ4.status;
-    }
+  /*
+   * Do basic checks on a filehandle
+   * Only files can be read
+   */
+  res_READ4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
+  if(res_READ4.status != NFS4_OK)
+    return res_READ4.status;
 
   /* If Filehandle points to a xattr object, manage it via the xattrs
      specific functions */
@@ -153,41 +139,26 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       return res_READ4.status;
     }
 
-  /* Only files can be read */
-  if(data->current_filetype != REGULAR_FILE)
-    {
-      /* If the source is no file, return EISDIR if it is a directory
-         and EINAVL otherwise */
-      if(data->current_filetype == DIRECTORY)
-        res_READ4.status = NFS4ERR_ISDIR;
-      else
-        res_READ4.status = NFS4ERR_INVAL;
-
-      return res_READ4.status;
-    }
-
   /* vnode to manage is the current one */
   pentry = data->current_entry;
 
   /* Check stateid correctness and get pointer to state
    * (also checks for special stateids)
    */
-  if((rc = nfs4_Check_Stateid(&arg_READ4.stateid,
-                              pentry,
-#ifdef _USE_NFS4_1
-                              (data->minorversion == 0 ?
-                               0LL : data->psession->clientid),
+  res_READ4.status = nfs4_Check_Stateid(&arg_READ4.stateid,
+                                        pentry,
+#ifdef _USE_NFS41
+                                        (data->minorversion == 0 ?
+                                         0LL : data->psession->clientid),
 #else
-                              0LL,
+                                        0LL,
 #endif /* _USE_NFS41 */
-                              &pstate_found,
-                              data,
-                              STATEID_SPECIAL_ANY,
-                              "READ")) != NFS4_OK)
-    {
-      res_READ4.status = rc;
-      return res_READ4.status;
-    }
+                                        &pstate_found,
+                                        data,
+                                        STATEID_SPECIAL_ANY,
+                                        "READ");
+  if(res_READ4.status != NFS4_OK)
+    return res_READ4.status;
 
   /* NB: After this point, if pstate_found == NULL, then the stateid
      is all-0 or all-1 */
@@ -287,11 +258,11 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
        * Special stateid, no open state, check to see if any share conflicts
        * The stateid is all-0 or all-1
        */
-      rc = nfs4_check_special_stateid(pentry,"READ",FATTR4_ATTR_READ);
-      if(rc != NFS4_OK)
+      res_READ4.status = nfs4_check_special_stateid(pentry,"READ",
+                                                    FATTR4_ATTR_READ);
+      if(res_READ4.status != NFS4_OK)
         {
           pthread_rwlock_unlock(&pentry->state_lock);
-          res_READ4.status = rc;
           return res_READ4.status;
         }
     }

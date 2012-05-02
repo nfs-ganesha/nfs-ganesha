@@ -83,51 +83,55 @@
  * @see nfs4_Compound
  *
  */
+
+#define arg_RESTOREFH op->nfs_argop4_u.oprestorefh
+#define res_RESTOREFH resp->nfs_resop4_u.oprestorefh
+
 int nfs4_op_restorefh(struct nfs_argop4 *op,
                       compound_data_t * data, struct nfs_resop4 *resp)
 {
-  int error;
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_restorefh";
 
   /* First of all, set the reply to zero to make sure it contains no
      parasite information */
   memset(resp, 0, sizeof(struct nfs_resop4));
 
   resp->resop = NFS4_OP_RESTOREFH;
-  resp->nfs_resop4_u.oprestorefh.status = NFS4_OK;
+  res_RESTOREFH.status = NFS4_OK;
 
   /* If there is no currentFH, teh return an error */
   if(nfs4_Is_Fh_Empty(&(data->savedFH)))
     {
       /* There is no current FH, return NFS4ERR_RESTOREFH (cg RFC3530,
          page 202) */
-      resp->nfs_resop4_u.oprestorefh.status = NFS4ERR_RESTOREFH;
-      return resp->nfs_resop4_u.oprestorefh.status;
+      res_RESTOREFH.status = NFS4ERR_RESTOREFH;
+      return res_RESTOREFH.status;
     }
 
   /* If the filehandle is invalid */
   if(nfs4_Is_Fh_Invalid(&(data->savedFH)))
     {
-      resp->nfs_resop4_u.oprestorefh.status = NFS4ERR_BADHANDLE;
-      return NFS4ERR_BADHANDLE;
+      res_RESTOREFH.status = NFS4ERR_BADHANDLE;
+      return res_RESTOREFH.status;
     }
 
   /* Tests if the Filehandle is expired (for volatile filehandle) */
   if(nfs4_Is_Fh_Expired(&(data->savedFH)))
     {
-      resp->nfs_resop4_u.opgetfh.status = NFS4ERR_FHEXPIRED;
-      return NFS4ERR_FHEXPIRED;
+      res_RESTOREFH.status = NFS4ERR_FHEXPIRED;
+      return res_RESTOREFH.status;
     }
 
   /* If data->exportp is null, a junction from pseudo fs was
      traversed, credp and exportp have to be updated */
   if(data->pexport == NULL)
     {
-      if((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
+      res_RESTOREFH.status = nfs4_SetCompoundExport(data);
+      if(res_RESTOREFH.status != NFS4_OK)
         {
           LogCrit(COMPONENT_NFS_V4,
-                  "Error %d in nfs4_SetCompoundExport", error);
-          resp->nfs_resop4_u.opgetfh.status = error;
-          return resp->nfs_resop4_u.opgetfh.status;
+                  "Error %d in nfs4_SetCompoundExport", res_RESTOREFH.status);
+          return res_RESTOREFH.status;
         }
     }
 

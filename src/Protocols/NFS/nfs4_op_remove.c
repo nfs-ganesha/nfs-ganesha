@@ -56,12 +56,13 @@
 #include "nfs_core.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 #include "sal_functions.h"
 
 /**
- * nfs4_op_rename: The NFS4_OP_REMOVE operation.
+ * nfs4_op_remove: The NFS4_OP_REMOVE operation.
  * 
  * This functions handles the NFS4_OP_REMOVE operation in NFSv4. This function can be called only from nfs4_Compound.
  *
@@ -78,38 +79,24 @@
 
 int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  cache_entry_t *parent_entry = NULL;
-
-  fsal_attrib_list_t attr_parent;
-  fsal_name_t name;
-
-  cache_inode_status_t cache_status;
-
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_remove";
+
+  cache_entry_t        * parent_entry = NULL;
+  fsal_attrib_list_t     attr_parent;
+  fsal_name_t            name;
+  cache_inode_status_t   cache_status;
 
   resp->resop = NFS4_OP_REMOVE;
   res_REMOVE4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_REMOVE4.status = NFS4ERR_NOFILEHANDLE;
-      return res_REMOVE4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_REMOVE4.status = NFS4ERR_BADHANDLE;
-      return res_REMOVE4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_REMOVE4.status = NFS4ERR_FHEXPIRED;
-      return res_REMOVE4.status;
-    }
+  /*
+   * Do basic checks on a filehandle
+   * Delete arg_REMOVE4.target in directory pointed by currentFH
+   * Make sure the currentFH is pointed a directory
+   */
+  res_REMOVE4.status = nfs4_sanity_check_FH(data, DIRECTORY);
+  if(res_REMOVE4.status != NFS4_OK)
+    return res_REMOVE4.status;
 
   /* Pseudo Fs is explictely a Read-Only File system */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
@@ -135,14 +122,6 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   memset(&(res_REMOVE4.REMOVE4res_u.resok4.cinfo.before), 0, sizeof(changeid4));
   res_REMOVE4.REMOVE4res_u.resok4.cinfo.before =
        cache_inode_get_changeid4(parent_entry);
-
-  /* The operation delete object named arg_REMOVE4.target in directory pointed bt cuurentFH */
-  /* Make sur the currentFH is pointed a directory */
-  if(data->current_filetype != DIRECTORY)
-    {
-      res_REMOVE4.status = NFS4ERR_NOTDIR;
-      return res_REMOVE4.status;
-    }
 
   /* Check for name length */
   if(arg_REMOVE4.target.utf8string_len > FSAL_MAX_NAME_LEN)

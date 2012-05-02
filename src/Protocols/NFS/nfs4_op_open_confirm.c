@@ -75,6 +75,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
                          compound_data_t * data, struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_confirm";
+
   int              rc = 0;
   state_t        * pstate_found = NULL;
   state_owner_t  * popen_owner;
@@ -83,10 +84,13 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_OPEN_CONFIRM;
   res_OPEN_CONFIRM4.status = NFS4_OK;
 
-  if ((res_OPEN_CONFIRM4.status
-       = nfs4_sanity_check_FH(data, REGULAR_FILE)) != NFS4_OK) {
-       return res_OPEN_CONFIRM4.status;
-  }
+  /*
+   * Do basic checks on a filehandle
+   * Should not operate on non-file objects
+   */
+  res_OPEN_CONFIRM4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
+  if(res_OPEN_CONFIRM4.status != NFS4_OK)
+    return res_OPEN_CONFIRM4.status;
 
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_OPEN_CONFIRM4.open_stateid,

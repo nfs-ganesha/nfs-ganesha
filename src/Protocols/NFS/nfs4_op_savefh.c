@@ -62,6 +62,7 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
@@ -84,49 +85,32 @@
  *
  */
 
+#define arg_SAVEFH op->nfs_argop4_u.opsavefh
+#define res_SAVEFH resp->nfs_resop4_u.opsavefh
+
 int nfs4_op_savefh(struct nfs_argop4 *op,
-                   compound_data_t *data,
+                   compound_data_t * data,
                    struct nfs_resop4 *resp)
 {
-  int error;
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_savefh";
 
   /* First of all, set the reply to zero to make sure it contains no
      parasite information */
   memset(resp, 0, sizeof(struct nfs_resop4));
-
   resp->resop = NFS4_OP_SAVEFH;
-  resp->nfs_resop4_u.opsavefh.status = NFS4_OK;
+  res_SAVEFH.status = NFS4_OK;
 
-  /* If there is no currentFH, teh  return an error */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      /* There is no current FH, return NFS4ERR_NOFILEHANDLE */
-      resp->nfs_resop4_u.opsavefh.status = NFS4ERR_NOFILEHANDLE;
-      return NFS4ERR_NOFILEHANDLE;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      resp->nfs_resop4_u.opgetfh.status = NFS4ERR_BADHANDLE;
-      return NFS4ERR_BADHANDLE;
-    }
-
-  /* Tests if teh Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      resp->nfs_resop4_u.opgetfh.status = NFS4ERR_FHEXPIRED;
-      return NFS4ERR_FHEXPIRED;
-    }
+  /* Do basic checks on a filehandle */
+  res_SAVEFH.status = nfs4_sanity_check_FH(data, 0LL);
+  if(res_SAVEFH.status != NFS4_OK)
+    return res_SAVEFH.status;
 
   /* If the savefh is not allocated, do it now */
   if(data->savedFH.nfs_fh4_len == 0)
     {
-      if((error = nfs4_AllocateFH(&(data->savedFH))) != NFS4_OK)
-        {
-          resp->nfs_resop4_u.opsavefh.status = error;
-          return error;
-        }
+      res_SAVEFH.status = nfs4_AllocateFH(&(data->savedFH));
+      if(res_SAVEFH.status != NFS4_OK)
+        return res_SAVEFH.status;
     }
 
   /* Copy the data from current FH to saved FH */

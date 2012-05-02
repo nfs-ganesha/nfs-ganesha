@@ -54,6 +54,7 @@
 #include "nfs_core.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 
 /**
  *
@@ -77,13 +78,14 @@
 
 int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_locku";
+
 #ifdef _WITH_NO_NFSV4_LOCKS
   resp->resop = NFS4_OP_LOCKU;
   res_LOCKU4.status = NFS4ERR_LOCK_NOTSUPP;
   return res_LOCKU4.status;
 #else
 
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_locku";
   state_status_t      state_status;
   state_t           * pstate_found = NULL;
   state_owner_t     * plock_owner;
@@ -96,43 +98,15 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* Initialize to sane default */
   resp->resop = NFS4_OP_LOCKU;
+  res_LOCKU4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_LOCKU4.status = NFS4ERR_NOFILEHANDLE;
-      return res_LOCKU4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_LOCKU4.status = NFS4ERR_BADHANDLE;
-      return res_LOCKU4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_LOCKU4.status = NFS4ERR_FHEXPIRED;
-      return res_LOCKU4.status;
-    }
-
-  /* LOCKU is done only on a file */
-  if(data->current_filetype != REGULAR_FILE)
-    {
-      /* Type of the entry is not correct */
-      switch (data->current_filetype)
-        {
-        case DIRECTORY:
-          res_LOCKU4.status = NFS4ERR_ISDIR;
-          return res_LOCKU4.status;
-
-        default:
-          res_LOCKU4.status = NFS4ERR_INVAL;
-          return res_LOCKU4.status;
-        }
-    }
+  /*
+   * Do basic checks on a filehandle
+   * LOCKU is done only on a file
+   */
+  res_LOCKU4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
+  if(res_LOCKU4.status != NFS4_OK)
+    return res_LOCKU4.status;
 
   /* Convert lock parameters to internal types */
   switch(arg_LOCKU4.locktype)

@@ -85,11 +85,11 @@
 
 int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  int rc;
-  int error;
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_putfh";
+
+  int                rc;
   fsal_attrib_list_t attr;
 
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_putfh";
 
   resp->resop = NFS4_OP_PUTFH;
   res_PUTFH4.status = NFS4_OK;
@@ -97,21 +97,17 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* If no currentFH were set, allocate one */
   if(data->currentFH.nfs_fh4_len == 0)
     {
-      if((error = nfs4_AllocateFH(&(data->currentFH))) != NFS4_OK)
-        {
-          res_PUTFH4.status = error;
-          return res_PUTFH4.status;
-        }
+      res_PUTFH4.status = nfs4_AllocateFH(&(data->currentFH));
+      if(res_PUTFH4.status != NFS4_OK)
+        return res_PUTFH4.status;
     }
 
   /* The same is to be done with mounted_on_FH */
   if(data->mounted_on_FH.nfs_fh4_len == 0)
     {
-      if((error = nfs4_AllocateFH(&(data->mounted_on_FH))) != NFS4_OK)
-        {
-          res_PUTFH4.status = error;
-          return res_PUTFH4.status;
-        }
+      res_PUTFH4.status = nfs4_AllocateFH(&(data->mounted_on_FH));
+      if(res_PUTFH4.status != NFS4_OK)
+        return res_PUTFH4.status;
     }
 
   /* Copy the filehandle from the reply structure */
@@ -143,11 +139,9 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
          traversed, credp and exportp have to be updated */
       if(data->pexport == NULL)
         {
-          if((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
-            {
-              res_PUTFH4.status = error;
-              return res_PUTFH4.status;
-            }
+          res_PUTFH4.status = nfs4_SetCompoundExport(data);
+          if(res_PUTFH4.status != NFS4_OK)
+            return res_PUTFH4.status;
         }
 
 #ifdef _PNFS_DS

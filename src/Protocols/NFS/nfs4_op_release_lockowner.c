@@ -80,7 +80,7 @@
 int nfs4_op_release_lockowner(struct nfs_argop4 *op,
                               compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lock";
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_release_lockowner";
 
   /* Lock are not supported, but return NFS4_OK and do noting */
   resp->resop = NFS4_OP_RELEASE_LOCKOWNER;

@@ -80,44 +80,27 @@
 
 int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  fsal_name_t name;
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lookup";
+
   char strname[MAXNAMLEN];
 #ifndef _NO_XATTRD
   char objname[MAXNAMLEN];
 #endif
-  unsigned int xattr_found = FALSE;
-  cache_entry_t *dir_pentry = NULL;
-  cache_entry_t *file_pentry = NULL;
-  fsal_attrib_list_t attrlookup;
-  cache_inode_status_t cache_status;
-
-  fsal_handle_t *pfsal_handle = NULL;
-
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lookup";
+  fsal_name_t            name;
+  unsigned int           xattr_found = FALSE;
+  cache_entry_t        * dir_pentry = NULL;
+  cache_entry_t        * file_pentry = NULL;
+  fsal_attrib_list_t     attrlookup;
+  cache_inode_status_t   cache_status;
+  fsal_handle_t        * pfsal_handle = NULL;
 
   resp->resop = NFS4_OP_LOOKUP;
   res_LOOKUP4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_LOOKUP4.status = NFS4ERR_NOFILEHANDLE;
-      return res_LOOKUP4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_LOOKUP4.status = NFS4ERR_BADHANDLE;
-      return res_LOOKUP4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_LOOKUP4.status = NFS4ERR_FHEXPIRED;
-      return res_LOOKUP4.status;
-    }
+  /* Do basic checks on a filehandle */
+  res_LOOKUP4.status = nfs4_sanity_check_FH(data, 0LL);
+  if(res_LOOKUP4.status != NFS4_OK)
+    return res_LOOKUP4.status;
 
   /* Check for empty name */
   if(op->nfs_argop4_u.oplookup.objname.utf8string_len == 0 ||
@@ -127,7 +110,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_LOOKUP4.status;
     }
 
-  /* Check for name to long */
+  /* Check for name too long */
   if(op->nfs_argop4_u.oplookup.objname.utf8string_len > FSAL_MAX_NAME_LEN)
     {
       res_LOOKUP4.status = NFS4ERR_NAMETOOLONG;

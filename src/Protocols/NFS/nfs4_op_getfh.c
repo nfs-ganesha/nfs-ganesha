@@ -45,6 +45,7 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
 #include "nfs_tools.h"
 
@@ -66,60 +67,42 @@
  *
  */
 
+#define arg_GETFG op->nfs_argop4_u.opgetfh
+#define res_GETFH resp->nfs_resop4_u.opgetfh
+
 int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  int error;
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getfh";
 
   resp->resop = NFS4_OP_GETFH;
+  res_GETFH.status = NFS4_OK;
 
   LogHandleNFS4("NFS4 GETFH BEFORE: %s", &data->currentFH);
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      resp->nfs_resop4_u.opgetfh.status = NFS4ERR_NOFILEHANDLE;
-      return NFS4ERR_NOFILEHANDLE;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      resp->nfs_resop4_u.opgetfh.status = NFS4ERR_BADHANDLE;
-      return NFS4ERR_BADHANDLE;
-    }
-
-  /* Tests if teh Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      resp->nfs_resop4_u.opgetfh.status = NFS4ERR_FHEXPIRED;
-      return NFS4ERR_FHEXPIRED;
-    }
+  /* Do basic checks on a filehandle */
+  res_GETFH.status = nfs4_sanity_check_FH(data, 0LL);
+  if(res_GETFH.status != NFS4_OK)
+    return res_GETFH.status;
 
   /* Test if the filehandle is related to a referral */
   if(nfs4_Is_Fh_Referral(&(data->currentFH)))
     {
-      resp->nfs_resop4_u.opgetfh.status = NFS4ERR_MOVED;
-      return NFS4ERR_MOVED;
+      res_GETFH.status = NFS4ERR_MOVED;
+      return res_GETFH.status;
     }
-  /* Copy the filehandle to the reply structure */
-  resp->nfs_resop4_u.opgetfh.status = NFS4_OK;
 
-  if((error =
-      nfs4_AllocateFH(&(resp->nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object)))
-     != NFS4_OK)
-    {
-      resp->nfs_resop4_u.opgetfh.status = error;
-      return error;
-    }
+
+  /* Copy the filehandle to the reply structure */
+  res_GETFH.status = nfs4_AllocateFH(&(res_GETFH.GETFH4res_u.resok4.object));
+  if(res_GETFH.status != NFS4_OK)
+    return res_GETFH.status;
 
   /* Put the data in place */
-  resp->nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_len =
-      data->currentFH.nfs_fh4_len;
-  memcpy(resp->nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object.nfs_fh4_val,
+  res_GETFH.GETFH4res_u.resok4.object.nfs_fh4_len = data->currentFH.nfs_fh4_len;
+  memcpy(res_GETFH.GETFH4res_u.resok4.object.nfs_fh4_val,
          data->currentFH.nfs_fh4_val, data->currentFH.nfs_fh4_len);
 
-  LogHandleNFS4("NFS4 GETFH AFTER: %s", &resp->nfs_resop4_u.opgetfh.GETFH4res_u.resok4.object);
+  LogHandleNFS4("NFS4 GETFH AFTER: %s", &res_GETFH.GETFH4res_u.resok4.object);
 
   return NFS4_OK;
 }                               /* nfs4_op_getfh */

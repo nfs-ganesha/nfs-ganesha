@@ -60,6 +60,7 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "sal_functions.h"
 
@@ -86,51 +87,33 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_secinfo";
 
+  fsal_name_t            secinfo_fh_name;
+  cache_inode_status_t   cache_status;
+  cache_entry_t        * entry_src;
+  fsal_attrib_list_t     attr_secinfo;
+  int                    num_entry = 0;
+
   resp->resop = NFS4_OP_SECINFO;
   res_SECINFO4.status = NFS4_OK;
-  fsal_name_t secinfo_fh_name;
-  cache_inode_status_t cache_status;
-  cache_entry_t *entry_src;
-  fsal_attrib_list_t attr_secinfo;
-  int num_entry = 0;
 
   /* Read name from uft8 strings, if one is empty then returns NFS4ERR_INVAL */
   if(arg_SECINFO4.name.utf8string_len == 0)
     {
       res_SECINFO4.status = NFS4ERR_INVAL;
-      return NFS4ERR_INVAL;
-    }
-
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_SECINFO4.status = NFS4ERR_NOFILEHANDLE;
       return res_SECINFO4.status;
     }
 
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_SECINFO4.status = NFS4ERR_BADHANDLE;
-      return res_SECINFO4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_SECINFO4.status = NFS4ERR_FHEXPIRED;
-      return res_SECINFO4.status;
-    }
+  /*
+   * Do basic checks on a filehandle
+   * SecInfo is done only on a directory
+   */
+  res_SECINFO4.status = nfs4_sanity_check_FH(data, DIRECTORY);
+  if(res_SECINFO4.status != NFS4_OK)
+    return res_SECINFO4.status;
 
   if (nfs_in_grace())
     {
       res_SECINFO4.status = NFS4ERR_GRACE;
-      return res_SECINFO4.status;
-    }
-
-  if(data->current_filetype != DIRECTORY)
-    {
-      res_SECINFO4.status = NFS4ERR_NOTDIR;
       return res_SECINFO4.status;
     }
 

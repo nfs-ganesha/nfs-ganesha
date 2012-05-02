@@ -99,7 +99,6 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   state_t                * pstate_open;
   cache_inode_status_t     cache_status;
   cache_entry_t          * pentry = NULL;
-  int                      rc = 0;
   fsal_staticfsinfo_t    * pstaticinfo = NULL ;
 #ifdef _USE_QUOTA
   fsal_status_t            fsal_status ;
@@ -114,26 +113,13 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   resp->resop = NFS4_OP_WRITE;
   res_WRITE4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_WRITE4.status = NFS4ERR_NOFILEHANDLE;
-      return res_WRITE4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_WRITE4.status = NFS4ERR_BADHANDLE;
-      return res_WRITE4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_WRITE4.status = NFS4ERR_FHEXPIRED;
-      return res_WRITE4.status;
-    }
+  /*
+   * Do basic checks on a filehandle
+   * Only files can be written
+   */
+  res_WRITE4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
+  if(res_WRITE4.status != NFS4_OK)
+    return res_WRITE4.status;
 
 #ifdef _USE_QUOTA
     /* if quota support is active, then we should check is the FSAL allows inode creation or not */
@@ -178,40 +164,27 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
         break ;
    } /* switch( data->pexport->access_type ) */
 
-  /* Only files can be written */
-  if(data->current_filetype != REGULAR_FILE)
-    {
-      /* If the destination is no file, return EISDIR if it is a directory and EINAVL otherwise */
-      if(data->current_filetype == DIRECTORY)
-        res_WRITE4.status = NFS4ERR_ISDIR;
-      else
-        res_WRITE4.status = NFS4ERR_INVAL;
-
-      return res_WRITE4.status;
-    }
-
   /* vnode to manage is the current one */
   pentry = data->current_entry;
 
   /* Check stateid correctness and get pointer to state
    * (also checks for special stateids)
    */
-  if((rc = nfs4_Check_Stateid(&arg_WRITE4.stateid,
-                              pentry,
-#ifdef _USE_NFS4_1
-                              (data->minorversion == 0 ?
-                               0LL : data->psession->clientid),
+
+  res_WRITE4.status = nfs4_Check_Stateid(&arg_WRITE4.stateid,
+                                         pentry,
+#ifdef _USE_NFS41
+                                         (data->minorversion == 0 ?
+                                          0LL : data->psession->clientid),
 #else
-                              0LL,
-#endif /* _USE_NFS4_1 */
-                              &pstate_found,
-                              data,
-                              STATEID_SPECIAL_ANY,
-                              "WRITE")) != NFS4_OK)
-    {
-      res_WRITE4.status = rc;
-      return res_WRITE4.status;
-    }
+                                         0LL,
+#endif /* _USE_NFS41 */
+                                         &pstate_found,
+                                         data,
+                                         STATEID_SPECIAL_ANY,
+                                         "WRITE");
+  if(res_WRITE4.status != NFS4_OK)
+    return res_WRITE4.status;
 
   /* NB: After this points, if pstate_found == NULL, then the stateid is all-0 or all-1 */
 
@@ -269,11 +242,11 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
        * Special stateid, no open state, check to see if any share conflicts
        * The stateid is all-0 or all-1
        */
-      rc = nfs4_check_special_stateid(pentry,"WRITE",FATTR4_ATTR_WRITE);
-      if(rc != NFS4_OK)
+      res_WRITE4.status = nfs4_check_special_stateid(pentry,"WRITE",
+                                                     FATTR4_ATTR_WRITE);
+      if(res_WRITE4.status != NFS4_OK)
         {
-          pthread_rwlock_unlock(&pentry->state_lock);
-          res_WRITE4.status = rc;
+          pthread_rwlock_unlock(&pentry->state_lock); 
           return res_WRITE4.status;
         }
     }

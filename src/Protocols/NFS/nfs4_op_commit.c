@@ -60,6 +60,7 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 #ifdef _PNFS_DS
@@ -103,29 +104,16 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   res_COMMIT4.status = NFS4_OK;
 
   LogFullDebug(COMPONENT_NFS_V4,
-               "      COMMIT4: Demande de commit sur offset = %"PRIu64", size = %"PRIu32,
+               "      COMMIT4: Commit order over offset = %"PRIu64", size = %"PRIu32,
                arg_COMMIT4.offset, (uint32_t)arg_COMMIT4.count);
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_COMMIT4.status = NFS4ERR_NOFILEHANDLE;
-      return res_COMMIT4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_COMMIT4.status = NFS4ERR_BADHANDLE;
-      return res_COMMIT4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_COMMIT4.status = NFS4ERR_FHEXPIRED;
-      return res_COMMIT4.status;
-    }
+  /* 
+   * Do basic checks on a filehandle 
+   * Commit is done only on a file
+   */
+  res_COMMIT4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
+  if(res_COMMIT4.status != NFS4_OK)
+    return res_COMMIT4.status;
 
 #ifdef _PNFS_DS
   if((data->minorversion == 1) &&
@@ -134,24 +122,6 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return(op_dscommit(op, data, resp));
     }
 #endif /* _PNFS_DS */
-
-  /* Commit is done only on a file */
-  if(data->current_filetype != REGULAR_FILE)
-    {
-      /* Type of the entry is not correct */
-      switch (data->current_filetype)
-        {
-        case DIRECTORY:
-          res_COMMIT4.status = NFS4ERR_ISDIR;
-          break;
-        default:
-          res_COMMIT4.status = NFS4ERR_INVAL;
-          break;
-        }
-
-      /* Exit with an error */
-      return res_COMMIT4.status;
-    }
 
   // FIX ME!! At the moment we just assume the user is _not_ using
   // the ganesha unsafe buffer. In the future, a check based on

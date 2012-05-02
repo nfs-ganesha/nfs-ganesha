@@ -59,6 +59,7 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
@@ -80,54 +81,34 @@
 
 int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  cache_entry_t *pentry_parent = NULL;
-  cache_entry_t *pentry_new = NULL;
-
-  fsal_attrib_list_t attr_parent;
-  fsal_attrib_list_t attr_new;
-  fsal_attrib_list_t sattr;
-  fsal_handle_t *pnewfsal_handle = NULL;
-
-  nfs_fh4 newfh4;
-  cache_inode_status_t cache_status;
-  int convrc = 0;
-
-  fsal_accessmode_t mode = 0777;
-  fsal_name_t name;
-#ifdef _USE_QUOTA
-  fsal_status_t            fsal_status ;
-#endif
-
-  cache_inode_create_arg_t create_arg;
-
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_create";
-  unsigned int i = 0;
+
+  cache_entry_t        * pentry_parent = NULL;
+  cache_entry_t        * pentry_new = NULL;
+  fsal_attrib_list_t     attr_parent;
+  fsal_attrib_list_t     attr_new;
+  fsal_attrib_list_t     sattr;
+  fsal_handle_t        * pnewfsal_handle = NULL;
+  nfs_fh4                newfh4;
+  cache_inode_status_t   cache_status;
+  int                    convrc = 0;
+  fsal_accessmode_t      mode = 0777;
+  fsal_name_t            name;
+#ifdef _USE_QUOTA
+  fsal_status_t          fsal_status ;
+#endif
+  cache_inode_create_arg_t create_arg;
+  unsigned int             i = 0;
 
   memset(&create_arg, 0, sizeof(create_arg));
 
   resp->resop = NFS4_OP_CREATE;
   res_CREATE4.status = NFS4_OK;
 
-  /* If the filehandle is Empty */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_CREATE4.status = NFS4ERR_NOFILEHANDLE;
-      return res_CREATE4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_CREATE4.status = NFS4ERR_BADHANDLE;
-      return res_CREATE4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_CREATE4.status = NFS4ERR_FHEXPIRED;
-      return res_CREATE4.status;
-    }
+  /* Do basic checks on a filehandle */
+  res_CREATE4.status = nfs4_sanity_check_FH(data, 0LL);
+  if(res_CREATE4.status != NFS4_OK)
+    return res_CREATE4.status;
 
 #ifdef _USE_QUOTA
   /* if quota support is active, then we should check is the FSAL allows inode creation or not */

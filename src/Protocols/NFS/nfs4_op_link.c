@@ -60,6 +60,7 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 
@@ -81,39 +82,21 @@
 
 int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  cache_entry_t *dir_pentry = NULL;
-  cache_entry_t *file_pentry = NULL;
-
-  cache_inode_status_t cache_status;
-
-  int error;
-  fsal_attrib_list_t attr;
-  fsal_name_t newname;
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_link";
+
+  cache_entry_t        * dir_pentry = NULL;
+  cache_entry_t        * file_pentry = NULL;
+  cache_inode_status_t   cache_status;
+  fsal_attrib_list_t     attr;
+  fsal_name_t            newname;
 
   resp->resop = NFS4_OP_LINK;
   res_LINK4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_LINK4.status = NFS4ERR_NOFILEHANDLE;
-      return res_LINK4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_LINK4.status = NFS4ERR_BADHANDLE;
-      return res_LINK4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_LINK4.status = NFS4ERR_FHEXPIRED;
-      return res_LINK4.status;
-    }
+  /* Do basic checks on a filehandle */
+  res_LINK4.status = nfs4_sanity_check_FH(data, 0LL);
+  if(res_LINK4.status != NFS4_OK)
+    return res_LINK4.status;
 
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->savedFH)))
@@ -146,11 +129,9 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
   /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
   if(data->pexport == NULL)
     {
-      if((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
-        {
-          res_LINK4.status = error;
-          return res_LINK4.status;
-        }
+      res_LINK4.status = nfs4_SetCompoundExport(data);
+      if(res_LINK4.status != NFS4_OK)
+        return res_LINK4.status;
     }
 
   /*

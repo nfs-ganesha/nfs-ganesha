@@ -54,6 +54,7 @@
 #include "nfs_core.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 
 /**
  *
@@ -97,43 +98,15 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* Initialize to sane default */
   resp->resop = NFS4_OP_LOCKT;
+  res_LOCKT4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_LOCKT4.status = NFS4ERR_NOFILEHANDLE;
-      return res_LOCKT4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_LOCKT4.status = NFS4ERR_BADHANDLE;
-      return res_LOCKT4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_LOCKT4.status = NFS4ERR_FHEXPIRED;
-      return res_LOCKT4.status;
-    }
-
-  /* LOCKT is done only on a file */
-  if(data->current_filetype != REGULAR_FILE)
-    {
-      /* Type of the entry is not correct */
-      switch (data->current_filetype)
-        {
-        case DIRECTORY:
-          res_LOCKT4.status = NFS4ERR_ISDIR;
-          break;
-        default:
-          res_LOCKT4.status = NFS4ERR_INVAL;
-          break;
-        }
-      return res_LOCKT4.status;
-    }
+  /*
+   * Do basic checks on a filehandle
+   * LOCKT is done only on a file
+   */
+  res_LOCKT4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
+  if(res_LOCKT4.status != NFS4_OK)
+    return res_LOCKT4.status;
 
   /* Lock length should not be 0 */
   if(arg_LOCKT4.length == 0LL)

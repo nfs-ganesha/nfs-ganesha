@@ -90,33 +90,13 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_OPEN_DOWNGRADE;
   res_OPEN_DOWNGRADE4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_OPEN_DOWNGRADE4.status = NFS4ERR_NOFILEHANDLE;
-      return res_OPEN_DOWNGRADE4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_OPEN_DOWNGRADE4.status = NFS4ERR_BADHANDLE;
-      return res_OPEN_DOWNGRADE4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_OPEN_DOWNGRADE4.status = NFS4ERR_FHEXPIRED;
-      return res_OPEN_DOWNGRADE4.status;
-    }
-
-  /* Commit is done only on a file */
-  if(data->current_filetype != REGULAR_FILE)
-    {
-      res_OPEN_DOWNGRADE4.status = NFS4ERR_INVAL;
-      return res_OPEN_DOWNGRADE4.status;
-    }
+  /*
+   * Do basic checks on a filehandle
+   * Commit is done only on a file
+   */
+  res_OPEN_DOWNGRADE4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
+  if(res_OPEN_DOWNGRADE4.status != NFS4_OK)
+    return res_OPEN_DOWNGRADE4.status;
 
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_OPEN_DOWNGRADE4.open_stateid,

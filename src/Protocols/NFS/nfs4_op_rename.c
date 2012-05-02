@@ -56,6 +56,7 @@
 #include "nfs_core.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 #include "sal_functions.h"
@@ -78,29 +79,22 @@
 
 int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  cache_entry_t *dst_entry = NULL;
-  cache_entry_t *src_entry = NULL;
-  cache_entry_t *tst_entry_dst = NULL;
-  cache_entry_t *tst_entry_src = NULL;
-
-  fsal_attrib_list_t attr_dst;
-  fsal_attrib_list_t attr_src;
-  fsal_attrib_list_t attr_tst_dst;
-  fsal_attrib_list_t attr_tst_src;
-
-  cache_inode_status_t cache_status;
-
-  fsal_status_t fsal_status;
-
-  fsal_handle_t *handlenew = NULL;
-  fsal_handle_t *handleold = NULL;
-
-  fsal_name_t oldname;
-  fsal_name_t newname;
-
-  nfsstat4 error;
-
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_rename";
+
+  cache_entry_t        * dst_entry = NULL;
+  cache_entry_t        * src_entry = NULL;
+  cache_entry_t        * tst_entry_dst = NULL;
+  cache_entry_t        * tst_entry_src = NULL;
+  fsal_attrib_list_t     attr_dst;
+  fsal_attrib_list_t     attr_src;
+  fsal_attrib_list_t     attr_tst_dst;
+  fsal_attrib_list_t     attr_tst_src;
+  cache_inode_status_t   cache_status;
+  fsal_status_t          fsal_status;
+  fsal_handle_t        * handlenew = NULL;
+  fsal_handle_t        * handleold = NULL;
+  fsal_name_t            oldname;
+  fsal_name_t            newname;
 
   resp->resop = NFS4_OP_RENAME;
   res_RENAME4.status = NFS4_OK;
@@ -113,26 +107,10 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return NFS4ERR_INVAL;
     }
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_RENAME4.status = NFS4ERR_NOFILEHANDLE;
-      return res_RENAME4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_RENAME4.status = NFS4ERR_BADHANDLE;
-      return res_RENAME4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_RENAME4.status = NFS4ERR_FHEXPIRED;
-      return res_RENAME4.status;
-    }
+  /* Do basic checks on a filehandle */
+  res_RENAME4.status = nfs4_sanity_check_FH(data, 0LL);
+  if(res_RENAME4.status != NFS4_OK)
+    return res_RENAME4.status;
 
   /* If there is no FH */
   if(nfs4_Is_Fh_Empty(&(data->savedFH)))
@@ -171,11 +149,9 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* If data->exportp is null, a junction from pseudo fs was traversed, credp and exportp have to be updated */
   if(data->pexport == NULL)
     {
-      if((error = nfs4_SetCompoundExport(data)) != NFS4_OK)
-        {
-          res_RENAME4.status = error;
-          return res_RENAME4.status;
-        }
+      res_RENAME4.status = nfs4_SetCompoundExport(data);
+      if(res_RENAME4.status != NFS4_OK)
+        return res_RENAME4.status;
     }
 
   /* Read oldname and newname from uft8 strings, if one is empty then returns NFS4ERR_INVAL */

@@ -60,6 +60,7 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
 #include "sal_functions.h"
@@ -83,10 +84,11 @@
 int nfs4_op_setattr(struct nfs_argop4 *op,
                     compound_data_t * data, struct nfs_resop4 *resp)
 {
+  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_setattr";
+
   fsal_attrib_list_t     sattr;
   fsal_attrib_list_t     parent_attr;
   cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
-  int                    rc = 0;
   const char           * tag = "SETATTR";
   state_t              * pstate_found = NULL;
   state_t              * pstate_open  = NULL;
@@ -97,26 +99,10 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
   resp->resop = NFS4_OP_SETATTR;
   res_SETATTR4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_SETATTR4.status = NFS4ERR_NOFILEHANDLE;
-      return res_SETATTR4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_SETATTR4.status = NFS4ERR_BADHANDLE;
-      return res_SETATTR4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_SETATTR4.status = NFS4ERR_FHEXPIRED;
-      return res_SETATTR4.status;
-    }
+  /* Do basic checks on a filehandle */
+  res_SETATTR4.status = nfs4_sanity_check_FH(data,0LL);
+  if(res_SETATTR4.status != NFS4_OK)
+    return res_SETATTR4.status;
 
   /* Pseudo Fs is explictely a Read-Only File system */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
@@ -140,13 +126,9 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
     }
 
   /* Convert the fattr4 in the request to a nfs3_sattr structure */
-  rc = nfs4_Fattr_To_FSAL_attr(&sattr, &(arg_SETATTR4.obj_attributes));
-
-  if(rc != NFS4_OK)
-    {
-      res_SETATTR4.status = rc;
-      return res_SETATTR4.status;
-    }
+  res_SETATTR4.status = nfs4_Fattr_To_FSAL_attr(&sattr, &(arg_SETATTR4.obj_attributes));
+  if(res_SETATTR4.status != NFS4_OK)
+    return res_SETATTR4.status;
 
   /*
    * trunc may change Xtime so we have to start with trunc and finish
@@ -171,18 +153,15 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
       pentry = data->current_entry;
 
       /* Check stateid correctness and get pointer to state */
-      rc = nfs4_Check_Stateid(&arg_SETATTR4.stateid,
-                              data->current_entry,
-                              0LL,
-                              &pstate_found,
-                              data,
-                              STATEID_SPECIAL_ANY,
-                              tag);
-      if(rc != NFS4_OK)
-        {
-          res_SETATTR4.status = rc;
-          return res_SETATTR4.status;
-        }
+      res_SETATTR4.status = nfs4_Check_Stateid(&arg_SETATTR4.stateid,
+                                               data->current_entry,
+                                               0LL,
+                                               &pstate_found,
+                                               data,
+                                               STATEID_SPECIAL_ANY,
+                                               tag);
+      if(res_SETATTR4.status != NFS4_OK)
+        return res_SETATTR4.status;
 
       /* NB: After this points, if pstate_found == NULL, then the stateid is all-0 or all-1 */
       if(pstate_found != NULL)
@@ -224,12 +203,10 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
            * Special stateid, no open state, check to see if any share conflicts
            * The stateid is all-0 or all-1
            */
-          rc = nfs4_check_special_stateid(pentry,"SETATTR(size)",FATTR4_ATTR_WRITE);
-          if(rc != NFS4_OK)
-            {
-              res_SETATTR4.status = rc;
-              return res_SETATTR4.status;
-            }     
+          res_SETATTR4.status = nfs4_check_special_stateid(pentry,"SETATTR(size)",
+                                                           FATTR4_ATTR_WRITE);
+          if(res_SETATTR4.status != NFS4_OK)
+            return res_SETATTR4.status;
         }
 
       if((cache_status = cache_inode_truncate(data->current_entry,

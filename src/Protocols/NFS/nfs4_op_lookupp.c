@@ -60,37 +60,9 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nfs_tools.h"
 #include "nfs_file_handle.h"
-
-/*==============================================================================
- *
- * Function:
- *	nfs4_op_lookupp - The NFS4_OP_LOOKUPP operation
- *
- * Synopsis:
- *   int nfs4_op_lookupp(  struct nfs_argop4 * op ,   
- *                         compound_data_t   * data,
- *                         struct nfs_resop4 * resp)
- *
- * Description:
- *      This functions handles the NFS4_OP_LOOKUPP operation in NFSv4. This function can be called only from nfs4_Compound
- *
- * Other Inputs:
- *
- * Outputs:
- *
-  * Interfaces:
- *
- * Resources Used:
- *	memory
- *
- * Limitations:
- *
- * Assumptions:
- *  Notes:
- *
- *----------------------------------------------------------------------------*/
 
 /**
  * nfs4_op_lookupp: looks up  for the parent into theFSAL.
@@ -110,39 +82,23 @@
 int nfs4_op_lookupp(struct nfs_argop4 *op,
                     compound_data_t * data, struct nfs_resop4 *resp)
 {
-  fsal_name_t name;
-  cache_entry_t *dir_pentry = NULL;
-  cache_entry_t *file_pentry = NULL;
-  fsal_attrib_list_t attrlookup;
-  cache_inode_status_t cache_status;
-  int error = 0;
-  fsal_handle_t *pfsal_handle = NULL;
-
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lookupp";
 
+  fsal_name_t            name;
+  cache_entry_t        * dir_pentry = NULL;
+  cache_entry_t        * file_pentry = NULL;
+  fsal_attrib_list_t     attrlookup;
+  cache_inode_status_t   cache_status;
+  int                    error = 0;
+  fsal_handle_t        * pfsal_handle = NULL;
+
   resp->resop = NFS4_OP_LOOKUPP;
-  resp->nfs_resop4_u.oplookupp.status = NFS4_OK;
+  res_LOOKUPP4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_LOOKUPP4.status = NFS4ERR_NOFILEHANDLE;
-      return res_LOOKUPP4.status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_LOOKUPP4.status = NFS4ERR_BADHANDLE;
-      return res_LOOKUPP4.status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_LOOKUPP4.status = NFS4ERR_FHEXPIRED;
-      return res_LOOKUPP4.status;
-    }
+  /* Do basic checks on a filehandle */
+  res_LOOKUPP4.status = nfs4_sanity_check_FH(data, 0LL);
+  if(res_LOOKUPP4.status != NFS4_OK)
+    return res_LOOKUPP4.status;
 
   /* looking up for parent directory from ROOTFH return NFS4ERR_NOENT (RFC3530, page 166) */
   if(data->currentFH.nfs_fh4_len == data->rootFH.nfs_fh4_len

@@ -64,7 +64,6 @@
 
 #define arg_GETATTR4 op->nfs_argop4_u.opgetattr
 #define res_GETATTR4 resp->nfs_resop4_u.opgetattr
-#define res_FATTR4  res_GETATTR4.GETATTR4res_u.resok4.obj_attributes
 
 /**
  *
@@ -82,33 +81,19 @@
 int nfs4_op_getattr(struct nfs_argop4 *op,
                     compound_data_t * data, struct nfs_resop4 *resp)
 {
-  fsal_attrib_list_t attr;
-  cache_inode_status_t cache_status;
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getattr";
+
+  fsal_attrib_list_t   attr;
+  cache_inode_status_t cache_status;
 
   /* This is a NFS4_OP_GETTAR */
   resp->resop = NFS4_OP_GETATTR;
+  res_GETATTR4.status = NFS4_OK;
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_GETATTR4.status = NFS4ERR_NOFILEHANDLE;
-      return NFS4ERR_NOFILEHANDLE;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_GETATTR4.status = NFS4ERR_BADHANDLE;
-      return NFS4ERR_BADHANDLE;
-    }
-
-  /* Tests if teh Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_GETATTR4.status = NFS4ERR_FHEXPIRED;
-      return NFS4ERR_FHEXPIRED;
-    }
+  /* Do basic checks on a filehandle */
+  res_GETATTR4.status = nfs4_sanity_check_FH(data, 0LL);
+  if(res_GETATTR4.status != NFS4_OK)
+    return res_GETATTR4.status;
 
   /* Pseudo Fs management */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))
