@@ -5,6 +5,7 @@
 #define GANESHA_RPC_H
 
 
+#include <rpc/xdr_inline.h>
 #include <rpc/rpc.h>
 #include <rpc/svc.h>
 #include <rpc/svc_dg.h>

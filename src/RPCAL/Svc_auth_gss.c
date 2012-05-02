@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <rpc/xdr_inline.h>
 #include "rpcal.h"
 #ifdef HAVE_HEIMDAL
 #include <gssapi.h>
