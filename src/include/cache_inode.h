@@ -1131,7 +1131,7 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
           pthread_rwlock_wrlock(&entry->attr_lock);
           /* Has someone else done it for us? */
           if (!(entry->flags & CACHE_INODE_TRUST_ATTRS)) {
-               /* Release teh lock on error */
+               /* Release the lock on error */
                if ((cache_status =
                     cache_inode_refresh_attrs(entry,
                                               context,

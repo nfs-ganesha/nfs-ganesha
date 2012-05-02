@@ -200,12 +200,6 @@ uint32_t open_fd_count = 0;
 static pthread_mutex_t lru_mtx;
 static pthread_cond_t lru_cv;
 
-static const uint32_t LRU_STATE_NONE = 0x00;
-static const uint32_t LRU_STATE_RECLAIMING = 0x01;
-
-static const uint32_t LRU_SLEEPING = 0x00000001;
-static const uint32_t LRU_SHUTDOWN = 0x00000002;
-
 static const uint32_t FD_FALLBACK_LIMIT = 0x400;
 
 /**

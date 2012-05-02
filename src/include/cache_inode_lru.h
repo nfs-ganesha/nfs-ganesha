@@ -109,6 +109,13 @@ static const uint32_t LRU_REQ_SCAN = 0x0080;
 
 static const int32_t LRU_SENTINEL_REFCOUNT = 1;
 
+static const uint32_t LRU_STATE_NONE = 0x00;
+static const uint32_t LRU_STATE_RECLAIMING = 0x01;
+
+static const uint32_t LRU_SLEEPING = 0x00000001;
+static const uint32_t LRU_SHUTDOWN = 0x00000002;
+
+
 /* The number of lanes comprising a logical queue.  This must be
    prime. */
 
@@ -132,7 +139,7 @@ extern cache_inode_status_t cache_inode_lru_unref(
      cache_entry_t * entry,
      cache_inode_client_t *pclient,
      uint32_t flags);
-extern void lru_wake_thread();
+void lru_wake_thread(uint32_t flags);
 cache_inode_status_t cache_inode_inc_pin_ref(cache_entry_t *entry);
 void cache_inode_unpinnable(cache_entry_t *entry);
 cache_inode_status_t cache_inode_dec_pin_ref(cache_entry_t *entry);
@@ -151,13 +158,13 @@ cache_inode_lru_fds_available(void)
                   "FD Hard Limit Exceeded.  Disabling FD Cache and waking"
                   " LRU thread.");
           lru_state.caching_fds = FALSE;
-          lru_wake_thread();
+          lru_wake_thread(LRU_SLEEPING);
           return FALSE;
      }
      if (open_fd_count >= lru_state.fds_hiwat) {
           LogInfo(COMPONENT_CACHE_INODE_LRU,
                   "FDs above high water mark, waking LRU thread.");
-          lru_wake_thread();
+          lru_wake_thread(LRU_SLEEPING);
      }
 
      return TRUE;
