@@ -282,7 +282,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 		retval = errno;
 		goto errout;
 	}
-	retval = fstat(dir_fd, &stat);
+	retval = fstatat(dir_fd, "", &stat, AT_EMPTY_PATH);
 	if(retval < 0) {
 		fsal_error = posix2fsal_error(errno);
 		retval = errno;
@@ -388,7 +388,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		retval = errno;
 		goto errout;
 	}
-	retval = fstat(dir_fd, &stat);
+	retval = fstatat(dir_fd, "", &stat, AT_EMPTY_PATH);
 	if(retval < 0) {
 		goto direrr;
 	}
@@ -523,7 +523,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		retval = errno;
 		goto errout;
 	}
-	retval = fstat(dir_fd, &stat);
+	retval = fstatat(dir_fd, "", &stat, AT_EMPTY_PATH);
 	if(retval < 0) {
 		goto direrr;
 	}
@@ -626,7 +626,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		retval = errno;
 		goto errout;
 	}
-	retval = fstat(dir_fd, &stat);
+	retval = fstatat(dir_fd, "", &stat, AT_EMPTY_PATH);
 	if(retval < 0) {
 		goto direrr;
 	}
@@ -735,7 +735,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 	}
 	memcpy(link_content,
 	       myself->link_content,
-	       strlen(myself->link_content + 1));  
+	       strlen(myself->link_content) + 1);  
 
 out:
 	ReturnCode(fsal_error, retval);	
@@ -888,7 +888,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			dentry = (struct linux_dirent *)(buf + bpos);
 			if(strcmp(dentry->d_name, ".") == 0 ||
 			   strcmp(dentry->d_name, "..") == 0)
-				continue; /* must skip '.' and '..' */
+				goto skip; /* must skip '.' and '..' */
 			d_type = *(buf + bpos + dentry->d_reclen - 1);
 			entry_cookie->size = sizeof(off_t);
 			memcpy(&entry_cookie->cookie, &dentry->d_off, sizeof(off_t));
@@ -903,6 +903,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				retval = status.minor;
 				goto done;
 			}
+		skip:
+			bpos += dentry->d_reclen;
 			cnt++;
 			if(entry_cnt > 0 && cnt >= entry_cnt)
 				goto done;
@@ -1025,8 +1027,10 @@ static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
 			&= ~obj_hdl->export->ops->fs_umask(obj_hdl->export);
 	}
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+/** @TODO use cached fd at some point
+ */
 	mntfd = vfs_get_root_fd(obj_hdl->export);
-	fd = open_by_handle_at(mntfd, myself->handle, (O_PATH|O_NOACCESS));
+	fd = open_by_handle_at(mntfd, myself->handle, O_RDONLY);
 	if(fd < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);

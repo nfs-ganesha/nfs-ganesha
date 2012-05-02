@@ -106,7 +106,6 @@ fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
 		if(FSAL_IS_ERROR(open_status)) {
 			return open_status;
 		}
-		myself->openflags = FSAL_O_RDONLY;
 	}
 	if(seek_descriptor == NULL) {
 		nb_read = read(myself->fd, buffer, buffer_size);
@@ -169,7 +168,6 @@ fsal_status_t vfs_write(struct fsal_obj_handle *obj_hdl,
 		if(FSAL_IS_ERROR(open_status)) {
 			return open_status;
 		}
-		myself->openflags = FSAL_O_RDWR;
 	}
 	if(seek_descriptor == NULL) {
 		nb_written = write(myself->fd, buffer, buffer_size);
@@ -353,8 +351,9 @@ fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	if(myself->fd >= 0) {
+	if(myself->fd >= 0 && !myself->lock_status) {
 		retval = close(myself->fd);
+		myself->fd = -1;
 		myself->lock_status = 0;
 		myself->openflags = 0;
 	}
@@ -381,6 +380,7 @@ fsal_status_t vfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	if(myself->fd >= 0 && !(myself->lock_status)) {
 		retval = close(myself->fd);
+		myself->fd = -1;
 		myself->lock_status = 0;
 		myself->openflags = 0;
 	}
