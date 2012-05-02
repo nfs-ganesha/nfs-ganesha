@@ -66,14 +66,18 @@
  *
  * If a cache entry is returned, its refcount is incremented by one.
  *
- * cache_inode_get_located is no longer needed with the split between
- * directory ad attribute locks.
+ * It turns out we do need cache_inode_get_located functionality for
+ * cases like lookupp on an entry returning itself when it isn't a
+ * root.  Therefore, if the 'associated' parameter is equal to the got
+ * cache entry, a reference count is incremented but the structure
+ * pointed to by attr is NOT filled in.
  *
- * @param fsdata [IN] File system data
- * @param pattr [OUT] Pointer to the attributes for the result
- * @param pclient [INOUT] Pointer to resource management structure
- * @param pcontext [IN] FSAL credentials
- * @param pstatus [OUT] Returned status
+ * @param[in]     fsdata     File system data
+ * @param[out]    attr       The attributes of the got entry
+ * @param[in,out] client     Resource management structure
+ * @param[in]     context    FSAL credentials
+ * @param[in]     associated Entry that may be equal to the got entry
+ * @param[out]    status     Returned status
  *
  * @return If successful, the pointer to the entry; NULL otherwise
  *
@@ -83,6 +87,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
                 fsal_attrib_list_t *attr,
                 cache_inode_client_t *client,
                 fsal_op_context_t *context,
+                cache_entry_t *associated,
                 cache_inode_status_t *status)
 {
      hash_buffer_t key, value;
@@ -129,16 +134,16 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
                /* Dead entry.  Treat like a lookup failure. */
                entry = NULL;
           } else {
-               cache_inode_lock_trust_attrs(entry,
-                                            context,
-                                            client);
-               *attr = entry->attributes;
-               pthread_rwlock_unlock(&entry->attr_lock);
+               if (entry == associated) {
+                    /* Take a quick exit so we don't invert lock
+                       ordering. */
+                    return entry;
+               }
           }
      }
      HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
 
-     if (!client) {
+     if (!client && !entry) {
           /* Upcalls have no access to a cache_inode_client_t,
              so just return the entry without revalidating it or
              creating a new one. */
@@ -198,8 +203,6 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
                return NULL;
           }
 
-          /* Set the returned attributes */
-          *attr = fsal_attributes;
      }
 
      *status = CACHE_INODE_SUCCESS;
@@ -231,6 +234,11 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
           cache_inode_put(entry, client);
           entry = NULL;
      }
+
+     /* Set the returned attributes */
+     cache_inode_lock_trust_attrs(entry, context, client);
+     *attr = entry->attributes;
+     pthread_rwlock_unlock(&entry->attr_lock);
 
      return entry;
 } /* cache_inode_get */

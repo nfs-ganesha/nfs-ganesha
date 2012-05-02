@@ -305,6 +305,7 @@ int nlm_process_parameters(struct svc_req        * preq,
                              &attr,
                              pclient,
                              pcontext,
+                             NULL,
                              &cache_status);
   if(*ppentry == NULL)
     {

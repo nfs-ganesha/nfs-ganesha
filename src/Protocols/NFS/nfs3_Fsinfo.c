@@ -113,6 +113,7 @@ int nfs3_Fsinfo(nfs_arg_t * parg,
                                &attr,
                                pclient,
                                pcontext,
+                               NULL,
                                &cache_status)) == NULL)
     {
       /* Stale NFS FH ? */

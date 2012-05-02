@@ -116,6 +116,7 @@ int nfs3_Pathconf(nfs_arg_t * parg,
                                &attr,
                                pclient,
                                pcontext,
+                               NULL,
                                &cache_status)) == NULL)
     {
       /* Stale NFS FH ? */

@@ -126,6 +126,7 @@ int nfs3_Access(nfs_arg_t * parg,
                                &attr,
                                pclient,
                                pcontext,
+                               NULL,
                                &cache_status)) == NULL)
     {
       if(nfs_RetryableError(cache_status))

@@ -86,6 +86,7 @@ cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t * pfsdata,
                                &attr,
                                pclient,
                                pcontext,
+                               NULL,
                                pstatus)) != NULL)
     {
       /* The root directory is its own parent.  (Even though this is a

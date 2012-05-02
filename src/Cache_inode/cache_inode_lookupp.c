@@ -160,6 +160,7 @@ cache_inode_lookupp_impl(cache_entry_t *entry,
                                        &object_attributes,
                                        client,
                                        context,
+                                       entry,
                                        status)) == NULL) {
                return NULL;
           }

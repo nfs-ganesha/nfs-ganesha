@@ -120,6 +120,7 @@ int nfs3_Commit(nfs_arg_t * parg,
                                &pre_attr,
                                pclient,
                                pcontext,
+                               NULL,
                                &cache_status)) == NULL)
     {
       /* Stale NFS FH ? */
