@@ -89,7 +89,7 @@ int nfs41_op_getdevicelist(struct nfs_argop4 *op,
                            compound_data_t *data,
                            struct nfs_resop4 *resp)
 {
-     char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdevicelist";
+     char __attribute__ ((__unused__)) funcname[] = "nfs41_op_getdevicelist";
 #ifdef _PNFS_MDS
      /* NFS4 return code */
      nfsstat4 nfs_status = 0;

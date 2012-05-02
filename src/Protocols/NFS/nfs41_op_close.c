@@ -69,6 +69,7 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
                    struct nfs_resop4 *resp)
 {
   char __attribute__ ((__unused__)) funcname[] = "nfs4_op_close";
+
   int                    rc = 0;
   state_t              * pstate_found = NULL;
   cache_inode_status_t   cache_status;
@@ -84,11 +85,21 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
 
   memset(&res_CLOSE4, 0, sizeof(res_CLOSE4));
   resp->resop = NFS4_OP_CLOSE;
+  res_CLOSE4.status = NFS4_OK;
 
-  if ((res_CLOSE4.status
-       = nfs4_sanity_check_FH(data, REGULAR_FILE)) != NFS4_OK) {
-       return res_CLOSE4.status;
-  }
+  /*
+   * Do basic checks on a filehandle
+   * Object should be a file
+   */
+  res_CLOSE4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
+  if(res_CLOSE4.status != NFS4_OK)
+    return res_CLOSE4.status;
+
+  if(data->current_entry == NULL)
+    {
+      res_CLOSE4.status = NFS4ERR_SERVERFAULT;
+      return res_CLOSE4.status;
+    }
 
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_CLOSE4.open_stateid,

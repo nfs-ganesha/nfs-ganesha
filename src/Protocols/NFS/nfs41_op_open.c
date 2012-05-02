@@ -75,7 +75,7 @@
 
 int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open";
+  char __attribute__ ((__unused__)) funcname[] = "nfs41_op_open";
 
   cache_entry_t           * pentry_parent = NULL;
   cache_entry_t           * pentry_lookup = NULL;
@@ -130,32 +130,12 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   memset(&create_arg, 0, sizeof(create_arg));
 
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_OPEN4.status = NFS4ERR_NOFILEHANDLE;
-      LogDebug(COMPONENT_STATE,
-               "NFS41 OPEN returning NFS4ERR_NOFILEHANDLE");
-      goto out;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_OPEN4.status = NFS4ERR_BADHANDLE;
-      LogDebug(COMPONENT_STATE,
-               "NFS41 OPEN returning NFS4ERR_BADHANDLE");
-      goto out;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_OPEN4.status = NFS4ERR_FHEXPIRED;
-      LogDebug(COMPONENT_STATE,
-               "NFS41 OPEN returning NFS4ERR_FHEXPIRED");
-      goto out;
-    }
+  /*
+   * Do basic checks on a filehandle
+   */
+  res_OPEN4.status = nfs4_sanity_check_FH(data, 0LL);
+  if(res_OPEN4.status != NFS4_OK)
+    goto out;
 
   /* This can't be done on the pseudofs */
   if(nfs4_Is_Fh_Pseudo(&(data->currentFH)))

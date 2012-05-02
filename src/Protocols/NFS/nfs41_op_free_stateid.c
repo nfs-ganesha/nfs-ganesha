@@ -54,6 +54,7 @@
 #include "nfs_core.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nlm_list.h"
 
 /**
@@ -82,35 +83,11 @@ int nfs41_op_free_stateid(struct nfs_argop4 *op, compound_data_t * data, struct 
 
   /* Lock are not supported */
   resp->resop = NFS4_OP_FREE_STATEID;
-
-  /* If there is no FH */
-  if(nfs4_Is_Fh_Empty(&(data->currentFH)))
-    {
-      res_FREE_STATEID4.fsr_status = NFS4ERR_NOFILEHANDLE;
-      LogDebug(COMPONENT_NFS_V4,
-               "LOCK failed nfs4_Is_Fh_Empty");
-      return res_FREE_STATEID4.fsr_status;
-    }
-
-  /* If the filehandle is invalid */
-  if(nfs4_Is_Fh_Invalid(&(data->currentFH)))
-    {
-      res_FREE_STATEID4.fsr_status = NFS4ERR_BADHANDLE;
-      LogDebug(COMPONENT_NFS_V4,
-               "LOCK failed nfs4_Is_Fh_Invalid");
-      return res_FREE_STATEID4.fsr_status;
-    }
-
-  /* Tests if the Filehandle is expired (for volatile filehandle) */
-  if(nfs4_Is_Fh_Expired(&(data->currentFH)))
-    {
-      res_FREE_STATEID4.fsr_status = NFS4ERR_FHEXPIRED;
-      LogDebug(COMPONENT_NFS_V4,
-               "LOCK failed nfs4_Is_Fh_Expired");
-      return res_FREE_STATEID4.fsr_status;
-    }
-
   res_FREE_STATEID4.fsr_status = NFS4_OK;
+
+  /* Do basic checks on a filehandle */
+  res_FREE_STATEID4.fsr_status = nfs4_sanity_check_FH(data,0LL);
+  /* If nfs4_sanity_check_FH is OK it'll return NFS4_OK, an error otherwise */
 
   return res_FREE_STATEID4.fsr_status;
 }                               /* nfs41_op_lock */

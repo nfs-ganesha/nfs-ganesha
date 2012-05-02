@@ -90,7 +90,7 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
                            compound_data_t *data,
                            struct nfs_resop4 *resp)
 {
-     char __attribute__ ((__unused__)) funcname[] = "nfs4_op_getdeviceinfo";
+     char __attribute__ ((__unused__)) funcname[] = "nfs41_op_getdeviceinfo";
 #ifdef _PNFS_MDS
      /* The separated deviceid passed to the FSAL */
      struct pnfs_deviceid deviceid = {0, 0};
