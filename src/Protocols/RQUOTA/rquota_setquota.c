@@ -65,7 +65,7 @@
  */
 int rquota_setquota(nfs_arg_t *parg,
                     exportlist_t *pexport,
-                    fsal_op_context_t *pcontext,
+                    struct user_cred *creds /* IN  */ ,
                     nfs_worker_data_t *pworker,
                     struct svc_req *preq,
                     nfs_res_t * pres)
@@ -75,21 +75,22 @@ int rquota_setquota(nfs_arg_t *parg,
   fsal_quota_t fsal_quota_out;
   fsal_path_t fsal_path;
   int quota_type = USRQUOTA;
-  int quota_id;
+  struct user_cred tempcreds;
   char work[MAXPATHLEN];
 
   LogFullDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling rquota_setquota");
 
+  memset(&tempcreds, 0, sizeof(struct user_cred));
+  tempcreds.caller_uid = parg->arg_rquota_getquota.gqa_uid;
+  tempcreds.caller_gid = parg->arg_ext_rquota_getquota.gqa_id;
   if(preq->rq_vers == EXT_RQUOTAVERS)
     {
       quota_type = parg->arg_ext_rquota_getquota.gqa_type;
-      quota_id = parg->arg_ext_rquota_getquota.gqa_id;
     }
   else
     {
       quota_type = USRQUOTA;
-      quota_id = parg->arg_rquota_getquota.gqa_uid;
     }
 
   if(parg->arg_rquota_getquota.gqa_pathp[0] == '/')
@@ -124,8 +125,12 @@ int rquota_setquota(nfs_arg_t *parg,
   fsal_quota_in.btimeleft = parg->arg_rquota_setquota.sqa_dqblk.rq_btimeleft;
   fsal_quota_in.ftimeleft = parg->arg_rquota_setquota.sqa_dqblk.rq_ftimeleft;
 
-  fsal_status = FSAL_set_quota(&fsal_path,
-                               quota_type, quota_id, &fsal_quota_in, &fsal_quota_out);
+  fsal_status = pexport->export_hdl->ops->set_quota(pexport->export_hdl,
+						    work,
+						    quota_type,
+						    &tempcreds,
+						    &fsal_quota_in,
+						    &fsal_quota_out);
   if(FSAL_IS_ERROR(fsal_status))
     {
       if(fsal_status.major == ERR_FSAL_NO_QUOTA)

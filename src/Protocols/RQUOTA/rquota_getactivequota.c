@@ -65,7 +65,7 @@
 
 int rquota_getactivequota(nfs_arg_t *parg,
                           exportlist_t *pexport,
-                          fsal_op_context_t *pcontext,
+                          struct user_cred *creds /* IN  */ ,
                           nfs_worker_data_t *pworker,
                           struct svc_req *preq,
                           nfs_res_t *pres)

@@ -65,30 +65,30 @@
  */
 int rquota_getquota(nfs_arg_t  *parg,
                     exportlist_t  *pexport,
-                    fsal_op_context_t *pcontext,
+                    struct user_cred *creds /* IN  */ ,
                     nfs_worker_data_t *pworker,
                     struct svc_req *preq,
                     nfs_res_t * pres)
 {
   fsal_status_t fsal_status;
   fsal_quota_t fsal_quota;
-  fsal_path_t fsal_path;
   int quota_type = USRQUOTA;
-  int quota_id;
+  struct user_cred tempcreds;
   char work[MAXPATHLEN];
 
   LogFullDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling rquota_getquota");
 
+  memset(&tempcreds, 0, sizeof(struct user_cred));
+  tempcreds.caller_uid = parg->arg_rquota_getquota.gqa_uid;
+  tempcreds.caller_gid = parg->arg_ext_rquota_getquota.gqa_type;
   if(preq->rq_vers == EXT_RQUOTAVERS)
     {
       quota_type = parg->arg_ext_rquota_getquota.gqa_type;
-      quota_id = parg->arg_ext_rquota_getquota.gqa_id;
     }
   else
     {
       quota_type = USRQUOTA;
-      quota_id = parg->arg_rquota_getquota.gqa_uid;
     }
 
   if(parg->arg_rquota_getquota.gqa_pathp[0] == '/')
@@ -106,13 +106,11 @@ int rquota_getquota(nfs_arg_t  *parg,
         }
     }
 
-  if(FSAL_IS_ERROR((fsal_status = FSAL_str2path(work, MAXPATHLEN, &fsal_path))))
-    {
-      pres->res_rquota_getquota.status = Q_EPERM;
-      return NFS_REQ_OK;
-    }
-
-  fsal_status = FSAL_get_quota(&fsal_path, quota_type, quota_id, &fsal_quota);
+  fsal_status = pexport->export_hdl->ops->get_quota(pexport->export_hdl,
+						    work,
+						    quota_type,
+						    &tempcreds,
+						    &fsal_quota);
   if(FSAL_IS_ERROR(fsal_status))
     {
       if(fsal_status.major == ERR_FSAL_NO_QUOTA)
