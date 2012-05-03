@@ -73,9 +73,9 @@ void create_fsal_up_threads()
 
       /* Make sure there are not multiple fsal_up_threads handling multiple
        * exports on the same filesystem. This could potentially cause issues. */
-      LogEvent(COMPONENT_INIT, "Checking if export id %d with filesystem "
+      LogEvent(COMPONENT_INIT, "Checking if export handle 0x%p with filesystem "
                "id %llu.%llu already has an assigned FSAL_UP thread.",
-               pcurrent->fsalid, pcurrent->filesystem_id.major,
+               pcurrent->export_hdl, pcurrent->filesystem_id.major,
                pcurrent->filesystem_id.minor);
 
       id = fsal_up_thread_exists(pcurrent);
