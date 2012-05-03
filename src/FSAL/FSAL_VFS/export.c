@@ -273,7 +273,7 @@ static fsal_size_t layout_blksize(struct fsal_export *exp_hdl)
  */
 
 static fsal_status_t check_quota(struct fsal_export *exp_hdl,
-				 fsal_path_t * pfsal_path,
+				 const char * filepath,
 				 int quota_type,
 				 struct user_cred *creds)
 {
@@ -290,7 +290,7 @@ static fsal_status_t check_quota(struct fsal_export *exp_hdl,
  */
 
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
-			       fsal_path_t * pfsal_path,
+			       const char * filepath,
 			       int quota_type,
 			       struct user_cred *creds,
 			       fsal_quota_t *pquota)
@@ -303,7 +303,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 	int retval;
 
 	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
-	retval = stat(pfsal_path->path, &path_stat);
+	retval = stat(filepath, &path_stat);
 	if(retval < 0) {
 		LogMajor(COMPONENT_FSAL,
 			 "VFS get_quota, fstat: root_path: %s, fd=%d, errno=(%d) %s",
@@ -315,7 +315,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 	if(path_stat.st_dev != myself->root_dev) {
 		LogMajor(COMPONENT_FSAL,
 			 "VFS get_quota: crossed mount boundary! root_path: %s, quota path: %s",
-			 myself->mntdir, pfsal_path->path);
+			 myself->mntdir, filepath);
 		fsal_error = ERR_FSAL_FAULT; /* maybe a better error? */
 		retval = 0;
 		goto out;
@@ -349,7 +349,7 @@ out:
  */
 
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
-			       fsal_path_t * pfsal_path,
+			       const char *filepath,
 			       int quota_type,
 			       struct user_cred *creds,
 			       fsal_quota_t * pquota,
@@ -363,7 +363,7 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 	int retval;
 
 	myself = container_of(exp_hdl, struct vfs_fsal_export, export);
-	retval = stat(pfsal_path->path, &path_stat);
+	retval = stat(filepath, &path_stat);
 	if(retval < 0) {
 		LogMajor(COMPONENT_FSAL,
 			 "VFS set_quota, fstat: root_path: %s, fd=%d, errno=(%d) %s",
@@ -375,7 +375,7 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 	if(path_stat.st_dev != myself->root_dev) {
 		LogMajor(COMPONENT_FSAL,
 			 "VFS set_quota: crossed mount boundary! root_path: %s, quota path: %s",
-			 myself->mntdir, pfsal_path->path);
+			 myself->mntdir, filepath);
 		fsal_error = ERR_FSAL_FAULT; /* maybe a better error? */
 		retval = 0;
 		goto err;
@@ -412,7 +412,7 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 		goto err;
 	}
 	if(presquota != NULL) {
-		return exp_hdl->ops->get_quota(exp_hdl, pfsal_path, quota_type,
+		return exp_hdl->ops->get_quota(exp_hdl, filepath, quota_type,
 					       creds, presquota);
 	}
 err:

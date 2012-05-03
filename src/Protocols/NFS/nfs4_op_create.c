@@ -88,6 +88,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   fsal_attrib_list_t     attr_parent;
   fsal_attrib_list_t     attr_new;
   fsal_attrib_list_t     sattr;
+  struct fsal_export    *exp_hdl = data->pexport->export_hdl;
   struct fsal_obj_handle *pnewfsal_handle = NULL;
   nfs_fh4                newfh4;
   cache_inode_status_t   cache_status;
@@ -111,10 +112,12 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     return res_CREATE4.status;
 
 #ifdef _USE_QUOTA
-  /* if quota support is active, then we should check is the FSAL allows inode creation or not */
-  fsal_status = FSAL_check_quota( data->pexport->fullpath, 
-                                  FSAL_QUOTA_INODES,
-                                  FSAL_OP_CONTEXT_TO_UID( data->pcontext ) ) ;
+  /* if quota support is active, then we should check is the FSAL allows
+   * inode creation or not */
+  fsal_status = exp_hdl->ops->check_quota(exp_hdl,
+					  data->pexport->fullpath,
+					  FSAL_QUOTA_INODES,
+					  &data->user_credentials);
   if( FSAL_IS_ERROR( fsal_status ) )
     {
       res_CREATE4.status = NFS4ERR_DQUOT ;

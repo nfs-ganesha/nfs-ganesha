@@ -372,10 +372,10 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           /* a new file is to be created */
 #ifdef _USE_QUOTA
           /* if quota support is active, then we should check is the FSAL allows inode creation or not */
-		fsal_status = data->pexport->export_hdl->ops->check_quota(data->pexport->export_hdl,
-									  data->pexport->fullpath, 
-									  FSAL_QUOTA_INODES,
-									  data->user_credentials);
+	  fsal_status = data->pexport->export_hdl->ops->check_quota(data->pexport->export_hdl,
+								    data->pexport->fullpath, 
+								    FSAL_QUOTA_INODES,
+								    &data->user_credentials);
           if( FSAL_IS_ERROR( fsal_status ) )
             {
               res_OPEN4.status = NFS4ERR_DQUOT ;

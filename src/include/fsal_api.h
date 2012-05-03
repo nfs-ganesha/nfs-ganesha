@@ -130,16 +130,16 @@ struct export_ops {
 #endif
 	/* quotas are managed at the file system (export) level */
 	fsal_status_t (*check_quota)(struct fsal_export *exp_hdl,
-				   fsal_path_t * pfsal_path,
+				   const char * filepath,
 				   int quota_type,
 				   struct user_cred *creds);
 	fsal_status_t (*get_quota)(struct fsal_export *exp_hdl,
-				   fsal_path_t * pfsal_path,
+				   const char * filepath,
 				   int quota_type,
 				   struct user_cred *creds,
 				   fsal_quota_t * pquota);
 	fsal_status_t (*set_quota)(struct fsal_export *exp_hdl,
-				   fsal_path_t * pfsal_path,
+				   const char * filepath,
 				   int quota_type,
 				   struct user_cred *creds,
 				   fsal_quota_t * pquota,

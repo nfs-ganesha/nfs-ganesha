@@ -122,14 +122,15 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
 #ifdef _USE_QUOTA
     /* if quota support is active, then we should check is the FSAL allows inode creation or not */
-    fsal_status = FSAL_check_quota( data->pexport->fullpath, 
-                                    FSAL_QUOTA_BLOCKS,
-                                    FSAL_OP_CONTEXT_TO_UID( data->pcontext ) ) ;
-    if( FSAL_IS_ERROR( fsal_status ) )
-     {
+  fsal_status = data->pexport->export_hdl->ops->check_quota(data->pexport->export_hdl,
+							    data->pexport->fullpath,
+							    FSAL_QUOTA_INODES,
+							    &data->user_credentials);
+  if( FSAL_IS_ERROR( fsal_status ) )
+    {
       res_WRITE4.status = NFS4ERR_DQUOT ;
       return res_WRITE4.status;
-     }
+    }
 #endif /* _USE_QUOTA */
 
   /* If Filehandle points to a xattr object, manage it via the xattrs specific functions */

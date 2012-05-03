@@ -64,32 +64,36 @@
  *  @param pres        [OUT]   ignored
  *
  */
+/** @TODO the use of creds and the bits from preq seem a bit muddled
+ *  here.  sort it out. Otherwise, why is creds passed here except
+ *  in an earlier sweep of fsal_op_context?
+ */
 int rquota_getquota(nfs_arg_t * parg /* IN     */ ,
                     exportlist_t * pexport /* IN     */ ,
-                    fsal_op_context_t * pcontext /* IN     */ ,
+                    struct user_cred *creds /* IN  */ ,
                     cache_inode_client_t * pclient /* INOUT  */ ,
                     struct svc_req *preq /* IN     */ ,
                     nfs_res_t * pres /* OUT    */ )
 {
   fsal_status_t fsal_status;
   fsal_quota_t fsal_quota;
-  fsal_path_t fsal_path;
   int quota_type = USRQUOTA;
-  int quota_id;
+  struct user_cred tempcreds;
   char work[MAXPATHLEN];
 
   LogFullDebug(COMPONENT_NFSPROTO,
                "REQUEST PROCESSING: Calling rquota_getquota");
 
+  memset(&tempcreds, 0, sizeof(struct user_cred));
+  tempcreds.caller_uid = parg->arg_rquota_getquota.gqa_uid;
+  tempcreds.caller_gid = parg->arg_ext_rquota_getquota.gqa_type;
   if(preq->rq_vers == EXT_RQUOTAVERS)
     {
       quota_type = parg->arg_ext_rquota_getquota.gqa_type;
-      quota_id = parg->arg_ext_rquota_getquota.gqa_id;
     }
   else
     {
       quota_type = USRQUOTA;
-      quota_id = parg->arg_rquota_getquota.gqa_uid;
     }
 
   if(parg->arg_rquota_getquota.gqa_pathp[0] == '/')
@@ -107,13 +111,11 @@ int rquota_getquota(nfs_arg_t * parg /* IN     */ ,
         }
     }
 
-  if(FSAL_IS_ERROR((fsal_status = FSAL_str2path(work, MAXPATHLEN, &fsal_path))))
-    {
-      pres->res_rquota_getquota.status = Q_EPERM;
-      return NFS_REQ_OK;
-    }
-
-  fsal_status = FSAL_get_quota(&fsal_path, quota_type, quota_id, &fsal_quota);
+  fsal_status = pexport->export_hdl->ops->get_quota(pexport->export_hdl,
+						    work,
+						    quota_type,
+						    &tempcreds,
+						    &fsal_quota);
   if(FSAL_IS_ERROR(fsal_status))
     {
       if(fsal_status.major == ERR_FSAL_NO_QUOTA)
