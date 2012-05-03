@@ -136,6 +136,7 @@ libMainServices_la_SOURCES = nfs_admin_thread.c                   \
                              ../include/SemN.h                    \
                              ../include/external_tools.h          \
                              ../include/err_inject.h              \
+                             ../include/err_cache_content.h       \
                              $(STAT_SNMP_FILES)
 
 libMainServices_la_LIBADD         =   ../Protocols/NFS/libnfsproto.la                   \

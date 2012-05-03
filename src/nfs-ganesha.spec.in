@@ -409,7 +409,6 @@ rm -rf $RPM_BUILD_ROOT
 %files gpfs
 %defattr(-,root,root,-)
 %{_bindir}/gpfs.ganesha.*
-%{_bindir}/gpfs.ganeshell
 %{_sysconfdir}/init.d/nfs-ganesha-gpfs
 %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha*

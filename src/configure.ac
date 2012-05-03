@@ -838,8 +838,6 @@ AC_CONFIG_FILES([include/Makefile
                  SAL/Makefile
 		 FSAL_UP/Makefile
 		 FSAL_UP/DUMB/Makefile
-                 File_Content/Makefile
-                 File_Content_Policy/Makefile
 		 Protocols/Makefile
                  Protocols/9P/Makefile
 		 Protocols/NFS/Makefile
@@ -869,7 +867,6 @@ AC_CONFIG_FILES([include/Makefile
                  MainNFSD/Makefile
                  test/Makefile
                  cmdline_tools/Makefile
-                 shell/Makefile
                  snmp_adm/Makefile
                  example-fuse/Makefile
                  Docs/Makefile

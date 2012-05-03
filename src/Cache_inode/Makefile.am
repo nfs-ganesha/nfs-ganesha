@@ -38,7 +38,10 @@ libcache_inode_la_SOURCES = cache_inode_access.c             \
                             ../include/log.h       \
                             ../include/HashData.h            \
                             ../include/HashTable.h           \
-                            ../include/err_cache_inode.h
+                            ../include/err_cache_inode.h     \
+                            ../include/generic_weakref.h     \
+                            ../include/cache_inode_lru.h     \
+                            ../include/cache_inode_weakref.h
 
 
 new: clean all
