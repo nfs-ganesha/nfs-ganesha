@@ -502,11 +502,6 @@ static void release_openstate(state_owner_t *popen_owner)
           /* log error here , and continue? */
           LogEvent(COMPONENT_STATE,
                    "FSAL_GetClientConext failed");
-          pthread_rwlock_unlock(&pentry->state_lock);
-          cache_inode_lru_unref(pstate_found->state_pentry,
-                                popen_owner->so_pclient,
-                                0);
-          continue;
         }
       else if(pstate_found->state_type == STATE_TYPE_SHARE)
         {
@@ -518,30 +513,6 @@ static void release_openstate(state_owner_t *popen_owner)
                                 &state_status) != STATE_SUCCESS)
             {
               LogEvent(COMPONENT_STATE,
-                       "EXPIRY failed to release share stateid error %s",
-                       state_err_str(state_status));
-            }
-        }
-
-      if(state_del(pstate_found,
-               popen_owner->so_pclient,
-               &state_status) != STATE_SUCCESS)
-      {
-         LogDebug(COMPONENT_STATE,
-               "EXPIRY failed to release stateid error %s",
-               state_err_str(state_status));
-      }
-
-      if(pstate_found->state_type == STATE_TYPE_SHARE)
-        {
-          if(state_share_remove(pstate_found->state_pentry,
-                                &fsal_context,
-                                popen_owner,
-                                pstate_found,
-                                popen_owner->so_pclient,
-                                &state_status) != STATE_SUCCESS)
-            {
-              LogDebug(COMPONENT_STATE,
                        "EXPIRY failed to release share stateid error %s",
                        state_err_str(state_status));
             }
