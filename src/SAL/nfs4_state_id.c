@@ -72,6 +72,9 @@ hash_table_t *ht_state_id;
 char all_zero[OTHERSIZE];
 char all_one[OTHERSIZE];
 
+pthread_mutex_t StateIdMutex = PTHREAD_MUTEX_INITIALIZER;
+uint64_t state_id_counter;
+
 int display_state_id_key(hash_buffer_t * pbuff, char *str)
 {
   unsigned int i = 0;
@@ -208,57 +211,22 @@ int nfs4_Init_state_id(nfs_state_id_parameter_t param)
  *
  * nfs4_BuildStateId_Other
  *
- * This routine fills in the pcontext field in the compound data.
- * pentry is supposed to be locked when this function is called.
- *
- * @param pentry      [INOUT] related pentry (should be a REGULAR FILE)
- * @param pcontext    [IN]    FSAL's operation context
- * @param popen_owner [IN]    the NFSV4.x open_owner for whom this stateid is built
+ * This routine builds the 12 byte "other" portion of a stateid from
+ * the ServerEpoch and a 64 bit global counter.
  * @param other       [OUT]   the stateid.other object (a char[OTHERSIZE] string)
  *
- * @return 1 if ok, 0 otherwise.
- *
  */
-
-int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
-                            fsal_op_context_t * pcontext,
-                            state_owner_t     * popen_owner,
-                            char              * other)
+void nfs4_BuildStateId_Other(char * other)
 {
-  uint64_t fileid_digest = 0;
-  u_int16_t srvboot_digest = 0;
-  uint32_t open_owner_digest = 0;
-  struct fsal_handle_desc fh_desc;
-
-  LogFullDebug(COMPONENT_STATE,
-               "pentry=%p popen_owner=%u|%s",
-               pentry,
-               popen_owner->so_owner_len,
-               popen_owner->so_owner_val);
-
-  /* Get several digests to build the stateid : the server boot time, the fileid and a monotonic counter */
-  fh_desc.start = (caddr_t)&fileid_digest;
-  fh_desc.len = sizeof(uint64_t);
-  if(FSAL_IS_ERROR(FSAL_DigestHandle(FSAL_GET_EXP_CTX(pcontext),
-                                     FSAL_DIGEST_FILEID3,
-                                     &(pentry->handle),
-                                     &fh_desc)))
-    return 0;
-
-  srvboot_digest = (u_int16_t) (ServerBootTime & 0x0000FFFF);;
-  open_owner_digest = popen_owner->so_owner.so_nfs4_owner.so_counter;
-
-  LogFullDebug(COMPONENT_STATE,
-               "pentry=%p fileid=%"PRIu64" open_owner_digest=%u",
-               pentry, fileid_digest, open_owner_digest);
-
-  /* Now, let's do the time's warp again.... Well, in fact we'll just build the stateid.other field */
-  memcpy((char *)other, &srvboot_digest, 2);
-  memcpy((char *)(other + 2), &fileid_digest, 8);
-  memcpy((char *)(other + 10), &open_owner_digest, 2);
-
-  return 1;
-}                               /* nfs4_BuildStateId_Other */
+  /* Use only 32 bits of server epoch */
+  uint32_t epoch = (uint32_t) ServerEpoch;
+  memcpy(other, &epoch, sizeof(uint32_t));
+ 
+  P(StateIdMutex);
+  memcpy(other + sizeof(uint32_t), &state_id_counter, sizeof(uint64_t));
+  state_id_counter++;
+  V(StateIdMutex);
+}
 
 /**
  *

@@ -169,10 +169,7 @@ int Init_nlm_hash(void);
  *
  ******************************************************************************/
 
-int nfs4_BuildStateId_Other(cache_entry_t     * pentry,
-                            fsal_op_context_t * pcontext,
-                            state_owner_t     * popen_owner,
-                            char              * other);
+void nfs4_BuildStateId_Other(char * other);
 
 #define STATEID_NO_SPECIAL 0
 #define STATEID_SPECIAL_ALL_0      2

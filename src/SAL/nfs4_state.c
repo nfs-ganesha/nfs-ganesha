@@ -199,24 +199,8 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
         }
     }
 
-  /* Add the stateid.other, this will increment pentry->object.file.state_current_counter */
-  if(!nfs4_BuildStateId_Other(pentry,
-                              pcontext,
-                              powner_input,
-                              pnew_state->stateid_other))
-    {
-      LogDebug(COMPONENT_STATE,
-               "Can't create a new state id for the pentry %p (E)", pentry);
-
-      ReleaseToPool(pnew_state, &pclient->pool_state_v4);
-
-      *pstatus = STATE_STATE_ERROR;
-
-      if(got_pinned)
-        cache_inode_dec_pin_ref(pentry);
-
-      return *pstatus;
-    }
+  /* Add the stateid.other, this will increment state_id_counter */
+  nfs4_BuildStateId_Other(pnew_state->stateid_other);
 
   /* Set the type and data for this state */
   memcpy(&(pnew_state->state_data), pstate_data, sizeof(state_data_t));
