@@ -192,13 +192,13 @@ cache_inode_lru_fds_available(void)
                   "FD Hard Limit Exceeded.  Disabling FD Cache and waking"
                   " LRU thread.");
           lru_state.caching_fds = FALSE;
-          lru_wake_thread(LRU_SLEEPING);
+          lru_wake_thread(LRU_FLAG_NONE);
           return FALSE;
      }
      if (open_fd_count >= lru_state.fds_hiwat) {
           LogInfo(COMPONENT_CACHE_INODE_LRU,
                   "FDs above high water mark, waking LRU thread.");
-          lru_wake_thread(LRU_SLEEPING);
+          lru_wake_thread(LRU_FLAG_NONE);
      }
 
      return TRUE;
