@@ -71,7 +71,9 @@ int main(int argc, char *argv[])
   char options[] = "h@";
   char usage[] = "%s [-h] <FSAL_Handle>\n" "   -h               : prints this help\n";
 
+  /* Set the server's boot time and epoch */
   ServerBootTime = time(NULL);
+  ServerEpoch    = ServerBootTime;
 
   /* What is the executable file's name */
   if((tempo_exec_name = strrchr(argv[0], '/')) != NULL)

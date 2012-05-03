@@ -89,7 +89,11 @@
 
 /* nfs_parameter_t      nfs_param = {0}; */
 nfs_parameter_t nfs_param;
-time_t ServerBootTime = 0;
+
+/* ServerEpoch is ServerBootTime unless overriden by -E command line option */
+time_t ServerBootTime;
+time_t ServerEpoch;
+
 nfs_worker_data_t *workers_data = NULL;
 hash_table_t *fh_to_cache_entry_ht = NULL; /* Cache inode handle lookup table */
 verifier4 NFS4_write_verifier;  /* NFS V4 write verifier */
@@ -2065,9 +2069,6 @@ void nfs_start(nfs_start_info_t * p_start_info)
 
   /* Print the worker parameters in log */
   Print_param_worker_in_log(&(nfs_param.worker_param));
-
-  /* Set the server's boot time */
-  ServerBootTime = time(NULL);
 
   /* Set the write verifiers */
   memset(NFS3_write_verifier, 0, sizeof(writeverf3));

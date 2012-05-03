@@ -678,7 +678,11 @@ typedef struct ganesha_stats__ {
 } ganesha_stats_t;
 
 extern nfs_parameter_t nfs_param;
+
+/* ServerEpoch is ServerBootTime unless overriden by -E command line option */
 extern time_t ServerBootTime;
+extern time_t ServerEpoch;
+
 extern nfs_worker_data_t *workers_data;
 extern char config_path[MAXPATHLEN];
 extern char pidfile_path[MAXPATHLEN] ;

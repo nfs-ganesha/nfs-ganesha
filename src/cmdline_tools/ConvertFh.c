@@ -176,7 +176,9 @@ int main(int argc, char *argv[])
       "   -v <nfs_version> : sets the NFS version the file handle passed as argument\n"
       "   -i <inum>        : get datacache path for the given inode number (decimal)\n";
 
+  /* Set the server's boot time and epoch */
   ServerBootTime = time(NULL);
+  ServerEpoch    = ServerBootTime;
 
   SetDefaultLogging("STDERR");
 
