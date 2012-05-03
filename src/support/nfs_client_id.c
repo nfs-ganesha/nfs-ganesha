@@ -473,9 +473,6 @@ static void release_openstate(state_owner_t *popen_owner)
       fsal_op_context_t        fsal_context;
       fsal_status_t            fsal_status;
 
-      fsal_op_context_t        fsal_context;
-      fsal_status_t            fsal_status;
-
       state_t * pstate_found = glist_entry(glist,
 					   state_t,
 					   state_owner_list);  
