@@ -16,7 +16,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  *
  * ---------------------------------------
  */
@@ -223,7 +224,8 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
      /* Check if the entry doesn't already exists */
      /* This is slightly ugly, since we make two tries in the event
         that the lru reference fails. */
-     hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value, TRUE, &latch);
+     hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value,
+                              TRUE, &latch);
      if ((hrc != HASHTABLE_SUCCESS) && (hrc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
           *status = CACHE_INODE_HASH_TABLE_ERROR;
           LogCrit(COMPONENT_CACHE_INODE, "Hash access failed with code %d"
@@ -245,39 +247,7 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
                HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
                goto out;
           } else {
-               /* Dead entry.  Treat as lookup failure.  Make another
-                  attempt then fail. */
-               HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
-               hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value,
-                                        TRUE, &latch);
-               if ((hrc != HASHTABLE_SUCCESS) &&
-                   (hrc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
-                    *status = CACHE_INODE_HASH_TABLE_ERROR;
-                    LogCrit(COMPONENT_CACHE_INODE,
-                            "Hash access failed with code %d"
-                            " - this should not have happened",
-                            hrc);
-                    goto out;
-               }
-               if (hrc == HASHTABLE_SUCCESS) {
-                    entry = value.pdata;
-                    *status = CACHE_INODE_ENTRY_EXISTS;
-                    if (cache_inode_lru_ref(entry, client, LRU_FLAG_NONE) !=
-                        CACHE_INODE_SUCCESS) {
-                         LogCrit(COMPONENT_CACHE_INODE,
-                                 "Double dead entry, almost certain bug.\n");
-                         HashTable_ReleaseLatched(fh_to_cache_entry_ht,
-                                                  &latch);
-                         entry = NULL;
-                         *status = CACHE_INODE_LRU_ERROR;
-                         goto out;
-                    }
-                    HashTable_ReleaseLatched(fh_to_cache_entry_ht,
-                                             &latch);
-                    goto out;
-               }
-               /* The second lookup failed, so we fall through as
-                  normal. */
+               /* Entry is being deconstructed, so just replace it. */
                entry = NULL;
                *status = CACHE_INODE_SUCCESS;
           }
@@ -434,10 +404,8 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
 
      if((rc =
          HashTable_SetLatched(fh_to_cache_entry_ht, &key, &value,
-                              &latch, FALSE, NULL, NULL))
+                              &latch, TRUE, NULL, NULL))
         != HASHTABLE_SUCCESS) {
-          /* Since we have it latched a collission is impossible.
-             Something serious has happened.*/
           LogCrit(COMPONENT_CACHE_INODE,
                   "cache_inode_new_entry: entry could not be added to hash, "
                   "rc=%d", rc);
@@ -509,7 +477,7 @@ cache_inode_status_t cache_inode_clean_entry(cache_entry_t * pentry)
 
 /**
  *
- * cache_inode_error_convert: converts an FSAL error to the corresponding cache_inode error.
+ * @brief converts an FSAL error to the corresponding cache_inode error.
  *
  * Converts an FSAL error to the corresponding cache_inode error.
  *

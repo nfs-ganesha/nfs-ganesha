@@ -103,16 +103,19 @@ cache_inode_status_t
 cache_inode_clean_internal(cache_entry_t *entry,
                            cache_inode_client_t *client)
 {
-     hash_buffer_t key, old_key, old_value;
+     hash_buffer_t key, val;
      hash_error_t rc = 0;
 
      key.pdata = entry->fh_desc.start;
      key.len = entry->fh_desc.len;
 
-     rc = HashTable_Del(fh_to_cache_entry_ht,
-                        &key,
-                        &old_key,
-                        &old_value);
+
+     val.pdata = entry;
+     val.len = sizeof(cache_entry_t);
+
+     rc = HashTable_DelSafe(fh_to_cache_entry_ht,
+                            &key,
+                            &val);
 
      /* Nonexistence is as good as success. */
      if ((rc != HASHTABLE_SUCCESS) &&
@@ -122,11 +125,6 @@ cache_inode_clean_internal(cache_entry_t *entry,
           LogCrit(COMPONENT_CACHE_INODE,
                   "HashTable_Del error %d in cache_inode_clean_internal", rc);
           return CACHE_INODE_INCONSISTENT_ENTRY;
-     }
-
-     /* Release the key that was stored in hash table */
-     if (rc != HASHTABLE_ERROR_NO_SUCH_KEY) {
-          assert(old_value.pdata == entry);
      }
 
      /* Delete from the weakref table */

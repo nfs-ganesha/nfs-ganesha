@@ -352,6 +352,9 @@ hash_error_t HashTable_DelRef(struct hash_table *ht,
                               struct hash_buff *stored_key,
                               struct hash_buff *stored_val,
                               int (*put_ref)(struct hash_buff *));
+hash_error_t HashTable_DelSafe(hash_table_t *ht,
+                               hash_buffer_t *key,
+                               hash_buffer_t *val);
 
 /**
  * @todo ACE: HashTable.h seems a singularly inappropriate place for a

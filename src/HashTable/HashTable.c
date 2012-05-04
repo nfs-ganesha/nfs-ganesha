@@ -986,13 +986,74 @@ HashTable_DelRef(hash_table_t *ht,
                if (put_ref(&temp_val) != 0) {
                     HashTable_ReleaseLatched(ht, &latch);
                     rc = HASHTABLE_NOT_DELETED;
+                    goto out;
                }
           }
-          HashTable_DeleteLatched(ht,
-                                  key,
-                                  &latch,
-                                  stored_key,
-                                  stored_val);
+          rc = HashTable_DeleteLatched(ht,
+                                       key,
+                                       &latch,
+                                       stored_key,
+                                       stored_val);
+          break;
+
+     default:
+          break;
+     }
+
+out:
+
+     return rc;
+} /* HashTable_DelRef */
+
+/**
+ *
+ * @brief Remove an entry if key and value both match
+ *
+ * This function looks up an entry and removes it if both the key and
+ * the supplied pointer matches the stored value pointer.
+ *
+ * @param ht [in] The hashtable to be modified
+ * @param key [in] The key corresponding to the entry to delete
+ * @param val [in] A pointer, which should match the stored entry's
+ *                 value pointer.
+ *
+ * @retval HASHTABLE_SUCCESS on deletion
+ * @retval HASHTABLE_NO_SUCH_KEY if the key was not found or the
+ *         values did not match.
+ */
+
+hash_error_t
+HashTable_DelSafe(hash_table_t *ht,
+                  hash_buffer_t *key,
+                  hash_buffer_t *val)
+{
+     /* structure to hold retained state */
+     struct hash_latch latch;
+     /* Stored return code */
+     hash_error_t rc = 0;
+     /* Temporary buffer descriptor.  We need the value to call the
+        decrement function, even if the caller didn't request the
+        value. */
+     struct hash_buff found_val;
+
+     rc = HashTable_GetLatch(ht, key, &found_val,
+                             TRUE, &latch);
+
+     switch (rc) {
+     case HASHTABLE_ERROR_NO_SUCH_KEY:
+          HashTable_ReleaseLatched(ht, &latch);
+          break;
+
+     case HASHTABLE_SUCCESS:
+          if (found_val.pdata == val->pdata) {
+               rc = HashTable_DeleteLatched(ht,
+                                            key,
+                                            &latch,
+                                            NULL,
+                                            NULL);
+          } else {
+               rc = HASHTABLE_ERROR_NO_SUCH_KEY;
+          }
           break;
 
      default:
@@ -1000,7 +1061,7 @@ HashTable_DelRef(hash_table_t *ht,
      }
 
      return rc;
-} /* HashTable_DelRef */
+} /* HashTable_DelSafe */
 
 /* @} */
 
