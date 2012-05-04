@@ -591,10 +591,8 @@ HashTable_DeleteLatched(struct hash_table *ht,
      /* Its partition */
      struct hash_partition *partition = &ht->partitions[latch->index];
 
-     if (!latch->locator) {
-          HashTable_ReleaseLatched(ht, latch);
-          return HASHTABLE_SUCCESS;
-     }
+     if (!latch->locator)
+         return( HashTable_ReleaseLatched(ht, latch) );
 
      data = RBT_OPAQ(latch->locator);
      if (stored_key) {
