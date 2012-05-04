@@ -30,6 +30,7 @@
 #include <rpc/clnt.h>
 #include <rpc/xdr.h>
 #include <rpc/auth.h>
+#include <arpa/inet.h>
 #endif
 #include "nfs4.h"
 
@@ -790,11 +791,130 @@ fsal_status_t fsal_internal_set_auth_gss(proxyfsal_op_context_t * p_thr_context)
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_InitClientContext);
 }                               /* fsal_internal_set_auth_gss */
 
+
+fsal_status_t
+fsal_proxy_create_rpc_clnt(proxyfsal_op_context_t * ctx)
+{
+  int sock;
+  struct sockaddr_in addr_rpc;
+  struct timeval timeout = TIMEOUTRPC;
+  int rc;
+  int priv_port = 0 ; 
+  fsal_status_t fsal_status;
+  char addr[INET_ADDRSTRLEN];
+
+  memset(&addr_rpc, 0, sizeof(addr_rpc));
+  addr_rpc.sin_port = ctx->srv_port;
+  addr_rpc.sin_family = AF_INET;
+  addr_rpc.sin_addr.s_addr = ctx->srv_addr;
+
+  if(!strcmp(ctx->srv_proto, "udp"))
+    {
+      if((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+        ReturnCode(ERR_FSAL_FAULT, errno);
+
+      ctx->rpc_client = clntudp_bufcreate(&addr_rpc,
+                                          ctx->srv_prognum,
+                                          FSAL_PROXY_NFS_V4,
+                                          (struct timeval){ 25, 0},
+                                          &sock,
+                                          ctx->srv_sendsize,
+                                          ctx->srv_recvsize);
+
+      if(ctx->rpc_client == NULL)
+        {
+
+          LogCrit(COMPONENT_FSAL,
+                  "Cannot contact server addr=%s port=%u prognum=%u using NFSv4 protocol",
+                  inet_ntop(AF_INET, &ctx->srv_addr, addr, sizeof(addr)),
+                  ntohs(ctx->srv_port), ctx->srv_prognum);
+
+          ReturnCode(ERR_FSAL_INVAL, 0);
+        }
+    }
+  else if(!strcmp(ctx->srv_proto, "tcp"))
+    {
+      if( ctx->use_privileged_client_port  == TRUE )
+        {
+	  if( (sock = rresvport( &priv_port ) )< 0 )
+           {
+             LogCrit(COMPONENT_FSAL, "Cannot create a tcp socket on a privileged port");
+             ReturnCode(ERR_FSAL_FAULT, 0);
+           }
+        }
+      else
+        {
+          if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+            {
+              LogCrit(COMPONENT_FSAL, "Cannot create a tcp socket - %d", errno);
+              ReturnCode(ERR_FSAL_FAULT, 0);
+            }
+        }
+
+      if(connect(sock, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
+        {
+          LogCrit(COMPONENT_FSAL,
+                  "Cannot connect to server addr=%s port=%u",
+                  inet_ntop(AF_INET, &ctx->srv_addr, addr, sizeof(addr)),
+                  ntohs(ctx->srv_port));
+
+          ReturnCode(ERR_FSAL_FAULT, 0);
+        }
+
+      ctx->rpc_client = clnttcp_create(&addr_rpc,
+                                       ctx->srv_prognum,
+                                       FSAL_PROXY_NFS_V4,
+                                       &sock,
+                                       ctx->srv_sendsize,
+                                       ctx->srv_recvsize);
+      if(ctx->rpc_client == NULL)
+        {
+          LogCrit(COMPONENT_FSAL,
+                  "Cannot contact server addr=%s port=%u prognum=%u using NFSv4 protocol",
+                  inet_ntop(AF_INET, &ctx->srv_addr, addr, sizeof(addr)),
+                  ntohs(ctx->srv_port), ctx->srv_prognum);
+
+          ReturnCode(ERR_FSAL_INVAL, 0);
+        }
+    }
+  else
+    {
+      ReturnCode(ERR_FSAL_INVAL, 0);
+    }
+
+  ctx->socket = sock;
+
+#ifdef _USE_GSSRPC
+  if(global_fsal_proxy_specific_info.active_krb5 == TRUE)
+    {
+      fsal_status = fsal_internal_set_auth_gss(ctx);
+      if(FSAL_IS_ERROR(fsal_status))
+        ReturnCode(fsal_status.major, fsal_status.minor);
+    }
+  else
+#endif                          /* _USE_GSSRPC */
+  if((ctx->rpc_client->cl_auth = authunix_create_default()) == NULL)
+    ReturnCode(ERR_FSAL_INVAL, 0);
+
+  /* test if the newly created context can 'ping' the server via PROC_NULL */
+  rc = clnt_call(ctx->rpc_client, NFSPROC4_NULL,
+                 (xdrproc_t) xdr_void, (caddr_t) NULL,
+                 (xdrproc_t) xdr_void, (caddr_t) NULL, timeout);
+  if(rc  != RPC_SUCCESS)
+    ReturnCode(ERR_FSAL_INVAL, rc);
+
+  fsal_status = FSAL_proxy_setclientid(ctx);
+  if(FSAL_IS_ERROR(fsal_status))
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}
+
 /**
  *
  * fsal_internal_ClientReconnect: Redo a previously lost connection to the server.
  *
- * edo a previously lost connection to the server.
+ * Redo a previously lost connection to the server.
  *
  * @param p_thr_context [INOUT]  pointer to the FSAL thread context.
  *
@@ -803,130 +923,21 @@ fsal_status_t fsal_internal_set_auth_gss(proxyfsal_op_context_t * p_thr_context)
  */
 int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
 {
-  int rc;
-  struct timeval timeout = TIMEOUTRPC;
-  struct sockaddr_in addr_rpc;
   fsal_status_t fsal_status;
+  char addr[INET_ADDRSTRLEN];
 
-
-  memset(&addr_rpc, 0, sizeof(addr_rpc));
-  addr_rpc.sin_port = p_thr_context->srv_port;
-  addr_rpc.sin_family = AF_INET;
-  addr_rpc.sin_addr.s_addr = p_thr_context->srv_addr;
-  int priv_port = 0 ;
-
-  LogEvent( COMPONENT_FSAL, "Remote server lost, trying to reconnect to remote server" ) ;
+  LogEvent(COMPONENT_FSAL,
+           "Lost connection to the server %s, trying to reconnect",
+           inet_ntop(AF_INET,  &p_thr_context->srv_addr, addr, sizeof(addr)));
 
   /* First of all, close the formerly opened socket that is now useless */
   if( close( p_thr_context->socket ) == -1 )
     LogMajor( COMPONENT_FSAL,
               "FSAL RECONNECT : got POSIX error %u while closing socket in fsal_internal_ClientReconnect", errno ) ;
   
-  // clnt_destroy(p_thr_context->rpc_client);
-  // clnt_destroy makes the server segfaults if no server exists on the other side
-
-  if(!strcmp(p_thr_context->srv_proto, "udp"))
-    {
-      if( ( p_thr_context->socket = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP ) ) < 0)
-        return -1;
-
-      if((p_thr_context->rpc_client = clntudp_bufcreate(&addr_rpc,
-                                                        p_thr_context->srv_prognum,
-                                                        FSAL_PROXY_NFS_V4,
-                                                        (struct timeval)
-                                                        {
-                                                        25, 0},
-                                                        &p_thr_context->socket,
-                                                        p_thr_context->srv_sendsize,
-                                                        p_thr_context->srv_recvsize)) == NULL )
-        {
-
-          LogCrit(COMPONENT_FSAL,
-               "FSAL RECONNECT : Cannot contact server addr=%u.%u.%u.%u port=%u prognum=%u using NFSv4 protocol",
-               (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
-               (ntohl(p_thr_context->srv_addr) & 0x00FF0000) >> 16,
-               (ntohl(p_thr_context->srv_addr) & 0x0000FF00) >> 8,
-               (ntohl(p_thr_context->srv_addr) & 0x000000FF),
-               ntohs(p_thr_context->srv_port), p_thr_context->srv_prognum);
-
-          return -1;
-        }
-    }
-  else if(!strcmp(p_thr_context->srv_proto, "tcp"))
-    {
-      if( p_thr_context->use_privileged_client_port  == TRUE )
-       {
-	  if( (p_thr_context->socket = rresvport( &priv_port ) ) < 0 )
-           {
-            LogCrit(COMPONENT_FSAL, "FSAL RECONNECT: cannot get a privilegeed tcp socket");
-            return -1;
-           }
-       }
-      else
-       {
-        if((p_thr_context->socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
-          {
-            LogCrit(COMPONENT_FSAL, "FSAL RECONNECT: cannot create a tcp socket");
-            return -1;
-          }
-       }
-
-      if(connect(p_thr_context->socket, (struct sockaddr *)&addr_rpc, sizeof(addr_rpc)) < 0)
-        {
-          LogCrit(COMPONENT_FSAL, "FSAL RECONNECT : Cannot connect to server addr=%u.%u.%u.%u port=%u",
-                  (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
-                  (ntohl(p_thr_context->srv_addr) & 0x00FF0000) >> 16,
-                  (ntohl(p_thr_context->srv_addr) & 0x0000FF00) >> 8,
-                  (ntohl(p_thr_context->srv_addr) & 0x000000FF),
-                  ntohs(p_thr_context->srv_port));
-
-          return -1;
-        }
-
-      if((p_thr_context->rpc_client = clnttcp_create(&addr_rpc,
-                                                     p_thr_context->srv_prognum,
-                                                     FSAL_PROXY_NFS_V4,
-                                                     &p_thr_context->socket,
-                                                     p_thr_context->srv_sendsize,
-                                                     p_thr_context->srv_recvsize)) ==
-         NULL)
-        {
-          LogCrit(COMPONENT_FSAL,
-               "FSAL RECONNECT : Cannot contact server addr=%x.%x.%x.%x port=%u prognum=%u using NFSv4 protocol",
-               (ntohl(p_thr_context->srv_addr) & 0xFF000000) >> 24,
-               (ntohl(p_thr_context->srv_addr) & 0x00FF0000) >> 16,
-               (ntohl(p_thr_context->srv_addr) & 0x0000FF00) >> 8,
-               (ntohl(p_thr_context->srv_addr) & 0x000000FF),
-               ntohs(p_thr_context->srv_port), p_thr_context->srv_prognum);
-
-          return -1;
-        }
-    }
-  else
-    {
-      return -1;
-    }
-#ifdef _USE_GSSRPC
-  if(global_fsal_proxy_specific_info.active_krb5 == TRUE)
-    {
-      fsal_status = fsal_internal_set_auth_gss(p_thr_context);
-      if(FSAL_IS_ERROR(fsal_status))
-        return -1;
-    }
-  else
-#endif
-  if((p_thr_context->rpc_client->cl_auth = authunix_create_default()) == NULL)
-    {
-      return -1;
-    }
-
-  /* test if the newly created context can 'ping' the server via PROC_NULL */
-  if((rc = clnt_call(p_thr_context->rpc_client, NFSPROC4_NULL,
-                     (xdrproc_t) xdr_void, (caddr_t) NULL,
-                     (xdrproc_t) xdr_void, (caddr_t) NULL, timeout)) != RPC_SUCCESS)
-    {
-      return -1;
-    }
+  fsal_status = fsal_proxy_create_rpc_clnt(p_thr_context);
+  if(FSAL_IS_ERROR(fsal_status))
+    return -1;
 
   fsal_status = FSAL_proxy_setclientid_renego(p_thr_context);
   if(FSAL_IS_ERROR(fsal_status))

@@ -134,6 +134,7 @@ fsal_status_t FSAL_proxy_setclientid(proxyfsal_op_context_t * p_context);
 fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_context);
 fsal_status_t FSAL_proxy_setclientid_renego(proxyfsal_op_context_t * p_context);
 
+fsal_status_t fsal_proxy_create_rpc_clnt(proxyfsal_op_context_t *);
 int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context);
 fsal_status_t FSAL_proxy_open_confirm(proxyfsal_file_t * pfd);
 void *FSAL_proxy_change_user(proxyfsal_op_context_t * p_thr_context);
