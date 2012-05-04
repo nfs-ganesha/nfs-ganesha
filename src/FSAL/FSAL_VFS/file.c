@@ -52,6 +52,7 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	pthread_mutex_lock(&obj_hdl->lock);
 	if(myself->fd >= 0 && !myself->lock_status) {
 		if(openflags != myself->openflags) { /* make smarter */
 			retval = close(myself->fd);
@@ -75,6 +76,7 @@ fsal_status_t vfs_open(struct fsal_obj_handle *obj_hdl,
 	myself->lock_status = 0; /* no locks on new files */
 
 out:
+	pthread_mutex_unlock(&obj_hdl->lock);
 	ReturnCode(fsal_error, retval);	
 }
 
@@ -98,6 +100,10 @@ fsal_status_t vfs_read(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+/** @TODO this is racy as is write and commit.  need to get/put the fd across
+ *  these calls.  Same will apply to things like getattrs if they share the fd
+ *  at some point.  lower priority for now...
+ */
 	if(myself->fd < 0 ||
 	   !(myself->openflags&(FSAL_O_RDONLY|FSAL_O_RDWR))) {
 		fsal_status_t open_status;
@@ -351,16 +357,18 @@ fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
 	int retval = 0;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	pthread_mutex_lock(&obj_hdl->lock);
 	if(myself->fd >= 0 && !myself->lock_status) {
 		retval = close(myself->fd);
+		if(retval < 0) {
+			retval = errno;
+			fsal_error = posix2fsal_error(retval);
+		}
 		myself->fd = -1;
 		myself->lock_status = 0;
 		myself->openflags = 0;
 	}
-	if(retval == -1) {
-		retval = errno;
-		fsal_error = posix2fsal_error(retval);
-	}
+	pthread_mutex_unlock(&obj_hdl->lock);
 	ReturnCode(fsal_error, retval);	
 }
 
