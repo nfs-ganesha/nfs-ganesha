@@ -87,8 +87,10 @@ avl_dirent_set_deleted(cache_entry_t *entry, cache_inode_dir_entry_t *v)
     assert(node);
     avltree_remove(&v->node_hk, &entry->object.dir.avl.t);
 
+#if EXTRA_CHECK_DELETED_WORKED
     node = avltree_inline_lookup(&v->node_hk, c);
     assert(! node);
+#endif
 
     v->flags |= DIR_ENTRY_FLAG_DELETED;
     v->name.len = 0;
