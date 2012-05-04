@@ -213,6 +213,7 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
      bool_t typespec = FALSE;
      bool_t latched = FALSE;
      struct hash_latch latch;
+     hash_error_t hrc = 0;
 
      assert(attr);
 
@@ -222,8 +223,14 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
      /* Check if the entry doesn't already exists */
      /* This is slightly ugly, since we make two tries in the event
         that the lru reference fails. */
-     if (HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value, TRUE,
-                            &latch) == HASHTABLE_SUCCESS) {
+     hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value, TRUE, &latch);
+     if ((hrc != HASHTABLE_SUCCESS) && (hrc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
+          *status = CACHE_INODE_HASH_TABLE_ERROR;
+          LogCrit(COMPONENT_CACHE_INODE, "Hash access failed with code %d"
+                  " - this should not have happened", hrc);
+          goto out;
+     }
+     if (hrc == HASHTABLE_SUCCESS) {
           /* Entry is already in the cache, do not add it */
           entry = value.pdata;
           *status = CACHE_INODE_ENTRY_EXISTS;
@@ -241,8 +248,18 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
                /* Dead entry.  Treat as lookup failure.  Make another
                   attempt then fail. */
                HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
-               if (HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value, TRUE,
-                                      &latch) == HASHTABLE_SUCCESS) {
+               hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value,
+                                        TRUE, &latch);
+               if ((hrc != HASHTABLE_SUCCESS) &&
+                   (hrc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
+                    *status = CACHE_INODE_HASH_TABLE_ERROR;
+                    LogCrit(COMPONENT_CACHE_INODE,
+                            "Hash access failed with code %d"
+                            " - this should not have happened",
+                            hrc);
+                    goto out;
+               }
+               if (hrc == HASHTABLE_SUCCESS) {
                     entry = value.pdata;
                     *status = CACHE_INODE_ENTRY_EXISTS;
                     if (cache_inode_lru_ref(entry, client, LRU_FLAG_NONE) !=

@@ -137,6 +137,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
                if (entry == associated) {
                     /* Take a quick exit so we don't invert lock
                        ordering. */
+                    HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
                     return entry;
                }
           }

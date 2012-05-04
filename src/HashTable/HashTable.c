@@ -482,7 +482,8 @@ HashTable_SetLatched(struct hash_table *ht,
      if (descriptors == NULL) {
           ReleaseToPool(mutator,
                         &ht->partitions[latch->index].node_pool);
-          return HASHTABLE_INSERT_MALLOC_ERROR;
+          rc = HASHTABLE_INSERT_MALLOC_ERROR;
+          goto out;
      }
 
      RBT_OPAQ(mutator) = descriptors;
