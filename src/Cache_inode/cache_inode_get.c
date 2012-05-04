@@ -143,7 +143,7 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
      }
      HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
 
-     if (!client && !entry) {
+     if (!client && !context) {
           /* Upcalls have no access to a cache_inode_client_t,
              so just return the entry without revalidating it or
              creating a new one. */
