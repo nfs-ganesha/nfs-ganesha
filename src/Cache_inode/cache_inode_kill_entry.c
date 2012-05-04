@@ -106,17 +106,6 @@ cache_inode_kill_entry(cache_entry_t *entry,
      key.pdata = fsaldata.fh_desc.start;
      key.len = fsaldata.fh_desc.len;
 
-     /* Sanity check: old_value.pdata is expected to be equal to pentry,
-      * and is released later in this function */
-     if ((cache_entry_t *) old_value.pdata != entry ||
-         ((fsal_handle_t *) ((cache_entry_t *)old_value.pdata)->fh_desc.start)
-         != &entry->handle) {
-          LogCrit(COMPONENT_CACHE_INODE,
-                  "cache_inode_kill_entry: unexpected pdata %p from "
-                  "hash table (entry=%p)", old_value.pdata, entry);
-     }
-
-
      if ((rc = HashTable_Del(fh_to_cache_entry_ht,
                              &key,
                              &old_key,
@@ -127,7 +116,18 @@ cache_inode_kill_entry(cache_entry_t *entry,
                        " status = %d",
                        rc);
           }
+     } else {
+         /* Sanity check: old_value.pdata is expected to be equal to pentry,
+          * and is released later in this function */
+         if ((cache_entry_t *) old_value.pdata != entry ||
+             ((fsal_handle_t *) ((cache_entry_t *)old_value.pdata)->fh_desc.start)
+             != &entry->handle) {
+                  LogCrit(COMPONENT_CACHE_INODE,
+                      "cache_inode_kill_entry: unexpected pdata %p from "
+                      "hash table (entry=%p)", old_value.pdata, entry);
+         }
      }
+
      cache_inode_weakref_delete(&entry->weakref);
 
      /* return HashTable (sentinel) reference */
