@@ -73,9 +73,13 @@ typedef int (*val_display_function_t)(struct hash_buff*,
  * given hash table.
  */
 
+#define HT_FLAG_NONE            0x0000
+#define HT_FLAG_CACHE           0x0001 
 
 struct hash_param
 {
+     uint32_t flags; /*< Create flags */
+     uint32_t cache_entry_count; /*< 2^10 <= Power of 2 <= 2^15 */
      uint32_t index_size; /*< Number of partition trees, this MUST be a
                               prime number. */
      uint32_t alphabet_length; /*< Size of the input alphabet for
@@ -130,15 +134,16 @@ typedef struct hash_stat
 
 struct hash_partition
 {
-     size_t count; /*< Numer of entries in this partition */
-     struct rbt_head rbt; /*< The red-black tree */
-     pthread_rwlock_t lock; /*< Lock for this partition */
-     struct prealloc_pool node_pool; /*< Pre-allocated nodes,
-                                        ready to use for new
-                                        entries */
-     struct prealloc_pool data_pool ; /*< Pre-allocated pdata buffers
-                                          ready to use for new
-                                          entries */
+    size_t count; /*< Numer of entries in this partition */
+    struct rbt_head rbt; /*< The red-black tree */
+    pthread_rwlock_t lock; /*< Lock for this partition */
+    struct prealloc_pool node_pool; /*< Pre-allocated nodes,
+                                      ready to use for new
+                                      entries */
+    struct prealloc_pool data_pool ; /*< Pre-allocated pdata buffers
+                                       ready to use for new
+                                       entries */
+    struct rbt_node** cache; /*< expected entry cache */
 };
 
 typedef struct hash_table

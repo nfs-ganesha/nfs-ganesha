@@ -57,6 +57,14 @@
 #define FALSE 0
 #endif
 
+#define CACHE_PAGE_SIZE(ht) ((ht)->parameter.cache_entry_count * sizeof(struct rbt_node*))
+
+static inline
+int cache_offsetof(struct hash_table *ht, uint64_t rbthash)
+{
+    return (rbthash % ht->parameter.cache_entry_count);
+}
+
 /**
  * @defgroup HTInternals Internal implementation details of the hash table
  *@{
@@ -112,17 +120,37 @@ Key_Locate(struct hash_table *ht,
            uint64_t rbthash,
            struct rbt_node **node)
 {
+     /* The current partition */
+     struct hash_partition *partition = &(ht->partitions[index]);
+
      /* The root of the red black tree matching this index */
      struct rbt_head *root = NULL;
+
      /* A pair of buffer descriptors locating key and value for this
         entry*/
      struct hash_data *data = NULL;
+
      /* The node in the red-black tree currently being traversed */
      struct rbt_node *cursor = NULL;
+
      /* TRUE if we have located the key */
      int found = FALSE;
 
      *node = NULL;
+
+     if (partition->cache) {
+          cursor = partition->cache[cache_offsetof(ht, rbthash)];
+          LogFullDebug(COMPONENT_HASHTABLE_CACHE,
+                       "hash %s index %d slot %"PRIu64"\n", (cursor) ? "hit" : "miss",
+                       index, cache_offsetof(ht, rbthash));
+          if (cursor) {
+              data = RBT_OPAQ(cursor);
+              if (ht->parameter.compare_key(key,
+                                            &(data->buffkey)) == 0) {
+                  goto out;
+              }
+          }
+     }
 
      root = &(ht->partitions[index].rbt);
 
@@ -141,6 +169,9 @@ Key_Locate(struct hash_table *ht,
           data = RBT_OPAQ(cursor);
           if (ht->parameter.compare_key(key,
                                         &(data->buffkey)) == 0) {
+               if (partition->cache) {
+                   partition->cache[cache_offsetof(ht, rbthash)] = cursor;
+               }
                found = TRUE;
                break;
           }
@@ -153,6 +184,7 @@ Key_Locate(struct hash_table *ht,
           return HASHTABLE_ERROR_NO_SUCH_KEY;
      }
 
+out:
      *node = cursor;
 
      return HASHTABLE_SUCCESS;
@@ -228,6 +260,8 @@ HashTable_Init(struct hash_param *hparam)
      /* Read-Write Lock attributes, to prevent write starvation under
         GLIBC */
      pthread_rwlockattr_t rwlockattr;
+     /* Hash partition */
+     struct hash_partition *partition = NULL;
      /* The number of fully initialized partitions */
      uint32_t completed = 0;
 
@@ -258,22 +292,29 @@ HashTable_Init(struct hash_param *hparam)
             sizeof(struct hash_table) +
             sizeof(struct hash_partition) * hparam->index_size);
 
+     /* Fixup entry size */
+     if (hparam->flags & HT_FLAG_CACHE) {
+         if (! hparam->cache_entry_count)
+             hparam->cache_entry_count = 32767; /* works fine with a good hash algo */
+     }
+
      /* We need to save copy of the parameters in the table. */
      ht->parameter = *hparam;
 
      for (index = 0; index < hparam->index_size; ++index) {
 
-          MakePool(&ht->partitions[index].node_pool,
-                                   hparam->nb_node_prealloc,
-                                   rbt_node_t, NULL, NULL);
-          if (!IsPoolPreallocated(&ht->partitions[index].node_pool)) {
+          partition = (&ht->partitions[index]);
+
+          MakePool(&partition->node_pool, hparam->nb_node_prealloc,
+                   rbt_node_t, NULL, NULL);
+          if (!IsPoolPreallocated(&partition->node_pool)) {
                goto deconstruct;
           }
-          MakePool(&ht->partitions[index].data_pool,
+          MakePool(&partition->data_pool,
                    hparam->nb_node_prealloc, hash_data_t, NULL, NULL);
-          if (!IsPoolPreallocated(&ht->partitions[index].data_pool))
+          if (!IsPoolPreallocated(&partition->data_pool))
                goto deconstruct;
-          RBT_HEAD_INIT(&(ht->partitions[index].rbt));
+          RBT_HEAD_INIT(&(partition->rbt));
 
           /**
            * @todo: ACE: When a function to destroy a memory pool is
@@ -281,12 +322,18 @@ HashTable_Init(struct hash_param *hparam)
            * ITERATION should be freed before jumping to deconstruct.
            */
 
-          if (pthread_rwlock_init(&(ht->partitions[index].lock),
-                                  &rwlockattr) != 0) {
+          if (pthread_rwlock_init(&partition->lock, &rwlockattr) != 0) {
                LogCrit(COMPONENT_HASHTABLE,
                        "Unable to initialize lock in hash table.");
                goto deconstruct;
           }
+
+          /* Allocate a cache if requested */
+          if (hparam->flags & HT_FLAG_CACHE) {
+              partition->cache = Mem_Alloc(CACHE_PAGE_SIZE(ht));
+              memset(partition->cache, 0, CACHE_PAGE_SIZE(ht));
+          }
+
           completed++;
      }
 
@@ -303,6 +350,9 @@ deconstruct:
            * could see to destroy a memory pool.  Such a function
            * should be added and called here.
            */
+          if (hparam->flags & HT_FLAG_CACHE)
+              Mem_Free(ht->partitions[completed - 1].cache);
+
           pthread_rwlock_destroy(
                &(ht->partitions[completed - 1].lock));
           completed--;
@@ -538,6 +588,9 @@ HashTable_DeleteLatched(struct hash_table *ht,
      /* The pair of buffer descriptors comprising the stored entry */
      struct hash_data *data = NULL;
 
+     /* Its partition */
+     struct hash_partition *partition = &ht->partitions[latch->index];
+
      if (!latch->locator) {
           HashTable_ReleaseLatched(ht, latch);
           return HASHTABLE_SUCCESS;
@@ -552,10 +605,33 @@ HashTable_DeleteLatched(struct hash_table *ht,
           *stored_val = data->buffval;
      }
 
+     /* Clear cache */
+     if(partition->cache) {
+         uint64_t offset = cache_offsetof(ht, latch->rbt_hash);
+         struct rbt_node *cnode = partition->cache[offset];
+         if (cnode) {
+#if COMPARE_BEFORE_CLEAR_CACHE
+             struct hash_data *data1 = RBT_OPAQ(cnode);
+             struct hash_data *data2 = RBT_OPAQ(latch->locator);
+             if (ht->parameter.compare_key(&(data1->buffkey),
+                                           &(data2->buffkey)) == 0) {
+                 LogFullDebug(COMPONENT_HASHTABLE_CACHE,
+                              "hash clear index %d slot %"PRIu64"\n",
+                              latch->index, offset);
+                 partition->cache[offset] = NULL;
+             }
+#else
+             LogFullDebug(COMPONENT_HASHTABLE_CACHE,
+                          "hash clear slot %"PRIu64"\n", offset);
+             partition->cache[offset] = NULL;
+#endif
+         }
+     }
+
      /* Now remove the entry */
-     RBT_UNLINK(&ht->partitions[latch->index].rbt, latch->locator);
-     ReleaseToPool(data, &ht->partitions[latch->index].data_pool);
-     ReleaseToPool(latch->locator, &ht->partitions[latch->index].node_pool);
+     RBT_UNLINK(&partition->rbt, latch->locator);
+     ReleaseToPool(data, &partition->data_pool);
+     ReleaseToPool(latch->locator, &partition->node_pool);
 
      HashTable_ReleaseLatched(ht, latch);
      return HASHTABLE_SUCCESS;
