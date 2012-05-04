@@ -1599,7 +1599,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
         }
       /* Free only the non dropped requests */
       if(rc == NFS_REQ_OK) {
-        pworker_data->pfuncdesc->free_function(&res_nfs);
+          /* XXXXXXX fix */
+          /* pworker_data->pfuncdesc->free_function(&res_nfs); */
       }
 
     }
@@ -1858,6 +1859,8 @@ nfs_worker_process_rpc_requests(nfs_worker_data_t *pmydata,
   const nfs_function_desc_t *pfuncdesc;
   bool_t no_dispatch = TRUE, recv_status;
   process_status_t rc = PROCESS_DONE;
+  SVCXPRT *xprt = pnfsreq->r_u.nfs.xprt;
+  sigset_t mask;
 
   preq = &pnfsreq->r_u.nfs.req;
   pmsg = &pnfsreq->r_u.nfs.msg;
@@ -1869,9 +1872,11 @@ again:
    */
   LogFullDebug(COMPONENT_DISPATCH,
                "Before calling SVC_RECV on socket %d",
-               pnfsreq->r_u.nfs.xprt->xp_fd);
+               xprt->xp_fd);
 
+  svc_dplx_lock_x(xprt, &mask);
   recv_status = SVC_RECV(pnfsreq->r_u.nfs.xprt, pmsg);
+  svc_dplx_unlock_x(xprt, &mask);
 
   LogFullDebug(COMPONENT_DISPATCH,
                "Status for SVC_RECV on socket %d is %d, xid=%lu",
@@ -1897,7 +1902,9 @@ again:
       else
         sprintf(addrbuf, "<unresolved>");
 
+      svc_dplx_lock_x(xprt, &mask);
       stat = SVC_STAT(pnfsreq->r_u.nfs.xprt);
+      svc_dplx_unlock_x(xprt, &mask);
 
       if(stat == XPRT_DIED)
         {
@@ -1949,9 +1956,7 @@ again:
       if(!nfs_rpc_get_args(&pnfsreq->r_u.nfs, pfuncdesc))
         goto unblock;
 
-      pnfsreq->r_u.nfs.xprt_copy = pnfsreq->r_u.nfs.xprt;
-      pnfsreq->r_u.nfs.xprt = pnfsreq->r_u.nfs.xprt_copy;
-      preq->rq_xprt = pnfsreq->r_u.nfs.xprt_copy;
+      preq->rq_xprt = pnfsreq->r_u.nfs.xprt;
 
       /* Validate the rpc request as being a valid program, version,
        * and proc. If not, report the error. Otherwise, execute the

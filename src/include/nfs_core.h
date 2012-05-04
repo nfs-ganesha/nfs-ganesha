@@ -386,7 +386,6 @@ typedef struct nfs_dupreq_stat__
 typedef struct nfs_request_data__
 {
   SVCXPRT *xprt;
-  SVCXPRT *xprt_copy;
   struct svc_req req;
   struct rpc_msg msg;
   char cred_area[2 * MAX_AUTH_BYTES + RQCRED_SIZE];

@@ -1129,7 +1129,6 @@ void constructor_nfs_request_data_t(void *ptr)
   nfs_request_data_t * pdata = (nfs_request_data_t *) ptr;
 
   memset(pdata, 0, sizeof(*pdata));
-  pdata->xprt_copy = NULL; /* Svcxprt_copycreate() */
 }
 
 /**
