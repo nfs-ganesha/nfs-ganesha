@@ -65,6 +65,7 @@
 #include "nfs4_acls.h"
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/capability.h>     /* For CAP management */
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
@@ -2196,6 +2197,9 @@ void nfs_start(nfs_start_info_t * p_start_info)
   fsal_op_context_t fsal_context;
   unsigned int i;
 
+  struct __user_cap_data_struct capdata ;
+  struct __user_cap_header_struct caphdr ;
+
 #if 0
   /* Will remain as long as all FSAL are not yet in new format */
   printf("---> fsal_handle_t:%u\n", sizeof(proxyfsal_handle_t));
@@ -2347,6 +2351,27 @@ void nfs_start(nfs_start_info_t * p_start_info)
   /* Initialize all layers and service threads */
   nfs_Init(p_start_info);
 
+  /* Remove CAP_SYS_RESOURCE */ 
+  caphdr.version = _LINUX_CAPABILITY_VERSION_2 ; // kernel is newer than 2.6.25
+  caphdr.pid = getpid() ;
+
+  if( capget( &caphdr, &capdata ) != 0 )
+    {
+      LogFatal(COMPONENT_INIT,
+	       "Failed to query capabilities for process" ) ;
+    }
+
+  /* Set the capability bitmask to remove CAP_SYS_RESOURCE */ 
+  capdata.effective   &= ~CAP_TO_MASK( CAP_SYS_RESOURCE );
+  capdata.permitted   &= ~CAP_TO_MASK( CAP_SYS_RESOURCE );
+  capdata.inheritable &= ~CAP_TO_MASK( CAP_SYS_RESOURCE );
+
+  if( capset( &caphdr, &capdata ) != 0 )
+    {
+      LogFatal(COMPONENT_INIT,
+	       "Failed to set capabilities for process" ) ;
+    }
+  
   /* Spawns service threads */
   nfs_Start_threads(p_start_info->flush_datacache_mode);
 

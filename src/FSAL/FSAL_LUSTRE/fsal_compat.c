@@ -52,8 +52,8 @@ fsal_functions_t fsal_lustre_functions = {
   .fsal_lookuppath = LUSTREFSAL_lookupPath,
   .fsal_lookupjunction = LUSTREFSAL_lookupJunction,
   .fsal_cleanobjectresources = COMMON_CleanObjectResources,
-  .fsal_set_quota = COMMON_set_quota_noquota,
-  .fsal_get_quota = COMMON_get_quota_noquota,
+  .fsal_set_quota = LUSTREFSAL_set_quota,
+  .fsal_get_quota = LUSTREFSAL_get_quota,
   .fsal_rcp = LUSTREFSAL_rcp,
   .fsal_rcp_by_fileid = COMMON_rcp_by_fileid,
 

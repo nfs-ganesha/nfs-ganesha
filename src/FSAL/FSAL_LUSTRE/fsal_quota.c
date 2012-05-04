@@ -60,7 +60,6 @@ fsal_status_t LUSTREFSAL_check_quota( char              * path,  /* IN */
                                       fsal_uid_t          fsal_uid)      /* IN */
 {
   struct if_quotactl dataquota ;
-  char fs_spec[MAXPATHLEN];
 
   if(!path )
     ReturnCode(ERR_FSAL_FAULT, 0);
@@ -85,4 +84,136 @@ fsal_status_t LUSTREFSAL_check_quota( char              * path,  /* IN */
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0) ;
 } /* LUSTREFSAL_check_quota */
-               
+              
+/**
+ * FSAL_get_quota :
+ * Gets the quota for a given path.
+ *
+ * \param  pfsal_path
+ *        path to the filesystem whose quota are requested
+ * \param quota_type
+ *         the kind of requested quota (user or group)
+ * \param  fsal_uid
+ * 	  uid for the user whose quota are requested
+ * \param pquota (input):
+ *        pointer to the structure containing the wanted quotas
+ * \param presquot (output)
+ *        pointer to the structure containing the resulting quotas
+ *
+ * \return Major error codes :
+ *        - ERR_FSAL_NO_ERROR     (no error)
+ *        - Another error code if an error occured.
+ */
+
+fsal_status_t LUSTREFSAL_set_quota(fsal_path_t * pfsal_path,       /* IN */
+                                int quota_type, /* IN */
+                                fsal_uid_t fsal_uid,    /* IN */
+                                fsal_quota_t * pquota,  /* IN */
+                                fsal_quota_t * presquota)       /* OUT */
+{
+  fsal_status_t fsal_status;
+  struct if_quotactl dataquota ;
+
+  memset((char *)&dataquota, 0, sizeof(struct if_quotactl));
+
+  dataquota.qc_cmd  = LUSTRE_Q_GETQUOTA ;
+  dataquota.qc_type = quota_type ; 
+  dataquota.qc_id = fsal_uid ;
+
+  if(!pfsal_path || !pfsal_path->path ||!pquota)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  memset((char *)&dataquota, 0, sizeof(struct if_quotactl));
+
+  /* Convert FSAL structure to XFS one */
+  if(pquota->bhardlimit != 0)
+    {
+      dataquota.qc_dqblk.dqb_bhardlimit = pquota->bhardlimit;
+      dataquota.qc_dqblk.dqb_valid |= QIF_BLIMITS;
+    }
+
+  if(pquota->bsoftlimit != 0)
+    {
+      dataquota.qc_dqblk.dqb_bsoftlimit = pquota->bsoftlimit;
+      dataquota.qc_dqblk.dqb_valid |= QIF_BLIMITS;
+    }
+
+  if(pquota->fhardlimit != 0)
+    {
+      dataquota.qc_dqblk.dqb_ihardlimit = pquota->fhardlimit;
+      dataquota.qc_dqblk.dqb_valid |= QIF_ILIMITS;
+    }
+
+  if(pquota->btimeleft != 0)
+    {
+      dataquota.qc_dqblk.dqb_btime = pquota->btimeleft;
+      dataquota.qc_dqblk.dqb_valid |= QIF_BTIME;
+    }
+
+  if(pquota->ftimeleft != 0)
+    {
+      dataquota.qc_dqblk.dqb_itime = pquota->ftimeleft;
+      dataquota.qc_dqblk.dqb_valid |= QIF_ITIME;
+    }
+
+  if(llapi_quotactl( pfsal_path->path, &dataquota) < 0 )
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  if(presquota != NULL)
+    {
+      fsal_status = FSAL_get_quota(pfsal_path, quota_type, fsal_uid, presquota);
+
+      if(FSAL_IS_ERROR(fsal_status))
+        return fsal_status;
+    }
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}                               /*  FSAL_set_quota */ 
+
+/**
+ * FSAL_get_quota :
+ * Gets the quota for a given path.
+ *
+ * \param  pfsal_path
+ *        path to the filesystem whose quota are requested
+ * \param quota_type
+ *         the kind of requested quota (user or group)
+ * \param  fsal_uid
+ * 	  uid for the user whose quota are requested
+ * \param pquota (input):
+ *        Parameter to the structure containing the requested quotas
+ *
+ * \return Major error codes :
+ *        - ERR_FSAL_NO_ERROR     (no error)
+ *        - Another error code if an error occured.
+ */
+fsal_status_t LUSTREFSAL_get_quota(fsal_path_t * pfsal_path,       /* IN */
+                                   int quota_type, /* IN */
+                                   fsal_uid_t fsal_uid,    /* IN */
+                                   fsal_quota_t * pquota)  /* OUT */
+{
+  fsal_status_t fsal_status;
+  struct if_quotactl dataquota ;
+
+  memset((char *)&dataquota, 0, sizeof(struct if_quotactl));
+
+  if(!pfsal_path || !pfsal_path->path ||!pquota)
+    ReturnCode(ERR_FSAL_FAULT, 0);
+
+  if(llapi_quotactl( pfsal_path->path, &dataquota) < 0 )
+    ReturnCode(posix2fsal_error(errno), errno);
+
+  /* Convert XFS structure to FSAL one */
+  pquota->bhardlimit = dataquota.qc_dqblk.dqb_bhardlimit;
+  pquota->bsoftlimit = dataquota.qc_dqblk.dqb_bsoftlimit;
+  pquota->curblocks  = dataquota.qc_dqblk.dqb_curspace;
+  pquota->fhardlimit = dataquota.qc_dqblk.dqb_ihardlimit;
+  pquota->curfiles   = dataquota.qc_dqblk.dqb_curinodes;
+  pquota->btimeleft  = dataquota.qc_dqblk.dqb_btime;
+  pquota->ftimeleft  = dataquota.qc_dqblk.dqb_itime;
+  pquota->bsize      = DEV_BSIZE;
+
+  ReturnCode(ERR_FSAL_NO_ERROR, 0);
+}                               /*  FSAL_get_quota */
+
+

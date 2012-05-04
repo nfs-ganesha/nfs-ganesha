@@ -48,7 +48,6 @@
 #include <pthread.h>
 #include <signal.h>             /* for sigaction */
 #include <errno.h>
-#include <sys/capability.h>     /* For CAP management */
 
 /* parameters for NFSd startup and default values */
 
@@ -115,8 +114,6 @@ int main(int argc, char *argv[])
   pid_t son_pid;
 #endif
   sigset_t signals_to_block;
-  struct __user_cap_data_struct capdata ;
-  struct __user_cap_header_struct caphdr ;
 
 #ifdef _USE_SHARED_FSAL
   int fsalid = -1 ;
@@ -404,28 +401,6 @@ int main(int argc, char *argv[])
       LogFatal(COMPONENT_INIT,
 	       "Inconsistent parameters found, could have significant impact on the daemon behavior");
     }
-
-  /* Remove CAP_SYS_RESOURCE */ 
-  caphdr.version = _LINUX_CAPABILITY_VERSION_2 ; // kernel is newer than 2.6.25
-  caphdr.pid = getpid() ;
-
-  if( capget( &caphdr, &capdata ) != 0 )
-    {
-      LogFatal(COMPONENT_INIT,
-	       "Failed to query capabilities for process" ) ;
-    }
-
-  /* Set the capability bitmask to remove CAP_SYS_RESOURCE */ 
-  capdata.effective   &= ~CAP_TO_MASK( CAP_SYS_RESOURCE );
-  capdata.permitted   &= ~CAP_TO_MASK( CAP_SYS_RESOURCE );
-  capdata.inheritable &= ~CAP_TO_MASK( CAP_SYS_RESOURCE );
-
-  if( capset( &caphdr, &capdata ) != 0 )
-    {
-      LogFatal(COMPONENT_INIT,
-	       "Failed to set capabilities for process" ) ;
-    }
-  
 
   /* Everything seems to be OK! We can now start service threads */
   nfs_start(&my_nfs_start_info);

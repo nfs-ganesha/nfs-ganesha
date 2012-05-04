@@ -358,6 +358,17 @@ fsal_status_t LUSTREFSAL_RemoveXAttrByName(fsal_handle_t * p_objecthandle,      
                                            fsal_op_context_t * p_context, /* IN */
                                            const fsal_name_t * xattr_name) /* IN */ ;
 
+fsal_status_t LUSTREFSAL_set_quota(fsal_path_t * pfsal_path,       /* IN */
+                                   int quota_type, /* IN */
+                                   fsal_uid_t fsal_uid,    /* IN */
+                                   fsal_quota_t * pquota,  /* IN */
+                                   fsal_quota_t * presquota);      /* OUT */
+
+fsal_status_t LUSTREFSAL_get_quota(fsal_path_t * pfsal_path,       /* IN */
+                                   int quota_type, /* IN */
+                                   fsal_uid_t fsal_uid,    /* IN */
+                                   fsal_quota_t * pquota); /* OUT */
+
 unsigned int LUSTREFSAL_GetFileno(fsal_file_t * pfile);
 
 fsal_status_t LUSTREFSAL_getextattrs(fsal_handle_t * p_filehandle, /* IN */
