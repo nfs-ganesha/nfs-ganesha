@@ -145,6 +145,7 @@ fsal_status_t PROXYFSAL_open_by_name(fsal_handle_t * dirhandle,    /* IN */
 
   memset(&name, 0, sizeof(component4));
   name.utf8string_val = nameval;
+  name.utf8string_len = sizeof(nameval);
   if(fsal_internal_proxy_fsal_name_2_utf8(filename, &name) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_open_by_name);
 

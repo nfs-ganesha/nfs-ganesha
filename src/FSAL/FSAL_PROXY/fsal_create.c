@@ -146,6 +146,7 @@ fsal_status_t PROXYFSAL_create(fsal_handle_t * parent_directory_handle,    /* IN
 
   memset((char *)&name, 0, sizeof(component4));
   name.utf8string_val = nameval;
+  name.utf8string_len = sizeof(nameval);
   if(fsal_internal_proxy_fsal_name_2_utf8(p_filename, &name) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_create);
 
@@ -393,6 +394,7 @@ fsal_status_t PROXYFSAL_mkdir(fsal_handle_t * parent_directory_handle,     /* IN
 
   memset((char *)&name, 0, sizeof(component4));
   name.utf8string_val = nameval;
+  name.utf8string_len = sizeof(nameval);
   if(fsal_internal_proxy_fsal_name_2_utf8(p_dirname, &name) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_mkdir);
 
@@ -593,6 +595,7 @@ fsal_status_t PROXYFSAL_link(fsal_handle_t * target_handle,        /* IN */
 
   memset((char *)&name, 0, sizeof(component4));
   name.utf8string_val = nameval;
+  name.utf8string_len = sizeof(nameval);
   if(fsal_internal_proxy_fsal_name_2_utf8(p_link_name, &name) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_link);
 

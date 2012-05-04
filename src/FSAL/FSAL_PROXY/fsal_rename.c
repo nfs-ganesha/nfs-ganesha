@@ -145,6 +145,7 @@ fsal_status_t PROXYFSAL_rename(fsal_handle_t * old_parent,       /* IN */
 
   memset((char *)&oldname, 0, sizeof(component4));
   oldname.utf8string_val = oldnameval;
+  oldname.utf8string_len = sizeof(oldnameval);
   if(fsal_internal_proxy_fsal_name_2_utf8(p_old_name, &oldname) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_rename);
 
@@ -157,6 +158,7 @@ fsal_status_t PROXYFSAL_rename(fsal_handle_t * old_parent,       /* IN */
 
   memset((char *)&newname, 0, sizeof(component4));
   newname.utf8string_val = newnameval;
+  newname.utf8string_len = sizeof(newnameval);
   if(fsal_internal_proxy_fsal_name_2_utf8(p_new_name, &newname) == FALSE)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_rename);
 
