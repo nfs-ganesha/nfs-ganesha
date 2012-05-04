@@ -159,29 +159,6 @@ int nfs3_Commit(nfs_arg_t * parg,
       return NFS_REQ_OK;
     }
  
-  /* Check for quota */
-#ifndef _NO_QUOTA_CHECK
-    /* if quota support is active, then we should check is the FSAL allows inode creation or not */
-    fsal_status = LUSTREFSAL_check_quota( pexport->fullpath,
-                                          FSAL_OP_CONTEXT_TO_UID( pcontext ) ) ;
-    if( FSAL_IS_ERROR( fsal_status ) )
-     {
-       switch (preq->rq_vers)
-         {
-           case NFS_V2:
-             pres->res_attr2.status = NFSERR_DQUOT;
-             break;
-
-           case NFS_V3:
-             pres->res_write3.status = NFS3ERR_DQUOT;
-             break;
-         }
-
-       return NFS_REQ_OK ;
-     }
-#endif /* _NO_QUOTA_CHECK */
-
-
   /* Set the pre_attr */
   ppre_attr = &pre_attr;
 

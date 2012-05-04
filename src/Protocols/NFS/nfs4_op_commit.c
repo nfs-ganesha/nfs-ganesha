@@ -156,19 +156,6 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_COMMIT4.status;
     }
 
-/* Check for quota */
-#ifndef _NO_QUOTA_CHECK
-    /* if quota support is active, then we should check is the FSAL allows inode creation or not */
-    fsal_status = LUSTREFSAL_check_quota( data->pexport->fullpath,
-                                    FSAL_OP_CONTEXT_TO_UID( data->pcontext ) ) ;
-    if( FSAL_IS_ERROR( fsal_status ) )
-     {
-      res_COMMIT4.status = NFS4ERR_DQUOT ;
-      return res_COMMIT4.status;
-     }
-#endif /* _USE_QUOTA */
-
-
   memcpy(res_COMMIT4.COMMIT4res_u.resok4.writeverf, (char *)&NFS4_write_verifier,
          NFS4_VERIFIER_SIZE);
 

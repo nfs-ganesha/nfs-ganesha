@@ -561,6 +561,8 @@ case $FSAL in
 		;;
 	LUSTRE)
 		AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
+                AC_CHECK_HEADERS([sys/capability.h], [],
+                                 [AC_MSG_ERROR(missing capability.h, install libcap-devel package)])
 		AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
 		if test "x$have_lustre2_api" != "xyes" ; then
 	            AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])
@@ -573,28 +575,30 @@ case $FSAL in
 			AC_DEFINE([_LUSTRE_HSM], 1, [Lustre version supports HSM binding])
 		fi
 
-        FSAL_CFLAGS=
-        FSAL_LDFLAGS="-llustreapi"
-        FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
-		FS_NAME="lustre"
-		;;
+               FSAL_CFLAGS=
+               FSAL_LDFLAGS="-llustreapi"
+               FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsallustre.la"
+	       FS_NAME="lustre"
+	       ;;
 
     SHOOK)
-        # Lustre FSAL compiled with special compilation directives
-        AC_CHECK_LIB([shooksvr], [shook_restore],, AC_MSG_ERROR([libshooksvr not found]))
-        AC_DEFINE(_SHOOK, 1, [shook is enabled])
+               # Lustre FSAL compiled with special compilation directives
+               AC_CHECK_LIB([shooksvr], [shook_restore],, AC_MSG_ERROR([libshooksvr not found]))
+               AC_DEFINE(_SHOOK, 1, [shook is enabled])
 
-		AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
-		AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
-		if test "x$have_lustre2_api" != "xyes" ; then
-	            AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])
-		fi
-		AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
-        FSAL_CFLAGS=
-        FSAL_LDFLAGS="-lshooksvr -llustreapi"
-        FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsalshook.la"
-		FS_NAME="shook"
-        ;;
+	       AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
+               AC_CHECK_HEADERS([sys/capability.h], [],
+                                [AC_MSG_ERROR(missing capability.h, install libcap-devel package)])
+	       AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
+	       if test "x$have_lustre2_api" != "xyes" ; then
+                   AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])
+	       fi
+	       AC_DEFINE([_USE_LUSTRE], 1, [GANESHA exports Lustre Filesystem])
+               FSAL_CFLAGS=
+               FSAL_LDFLAGS="-lshooksvr -llustreapi"
+               FSAL_LIB="\$(top_builddir)/FSAL/FSAL_LUSTRE/libfsalshook.la"
+	       FS_NAME="shook"
+               ;;
 
 	XFS)
 		AC_DEFINE([_USE_XFS], 1, [GANESHA exports XFS Filesystem])
