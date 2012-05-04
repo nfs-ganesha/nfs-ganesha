@@ -48,7 +48,6 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
-#include <sys/capability.h>     /* For CAP management */
 #include "HashData.h"
 #include "HashTable.h"
 #include "rpc.h"
@@ -364,27 +363,6 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 };
 
 #endif
-
-static int remove_cap_sys_resource()
-{
-  struct __user_cap_data_struct capdata ;
-  struct __user_cap_header_struct caphdr ;
-
-  caphdr.version = _LINUX_CAPABILITY_VERSION_2 ; // kernel is newer than 2.6.25
-  caphdr.pid = getpid() ;
-
-  if( capget( &caphdr, &capdata ) != 0 )
-   return -1 ;
-
-  /* Set the capability bitmask to remove CAP_SYS_RESOURCE */ 
-  capdata.effective &= ~CAP_TO_MASK( CAP_SYS_RESOURCE );
-  capdata.permitted &= ~CAP_TO_MASK( CAP_SYS_RESOURCE );
-
-  if( capset( &caphdr, &capdata ) != 0 )
-   return -1 ;
-  
-  return 0 ;
-} /* remove_cap_sys_resource */
 
 /**
  * nfs_Init_gc_counter: Init the worker's gc counters.
@@ -2346,14 +2324,6 @@ void *worker_thread(void *IndexArg)
   LogFullDebug(COMPONENT_DISPATCH,
                "Starting, nb_entry=%d",
                pmydata->pending_request->nb_entry);
-
-  /* Remove CAP_SYS_RESOURCE capability */
-  if( remove_cap_sys_resource() != 0 )
-   {
-      /* Failed init */
-      LogFatal(COMPONENT_DISPATCH,
-               "Failed to remove CAP_SYS_RESOURCE capability to worker thread") ;
-   }
 
   /* Initialisation of the Buddy Malloc */
 #ifndef _NO_BUDDY_SYSTEM
