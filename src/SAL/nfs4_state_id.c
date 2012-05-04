@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  *
  * nfs_state_id.c : The management of the state id cache.
@@ -186,7 +186,7 @@ int state_id_hash_both(hash_parameter_t * p_hparam,
  * nfs4_Init_state_id: Init the hashtable for Client Id cache.
  *
  * Perform all the required initialization for hashtable State Id cache
- * 
+ *
  * @param param [IN] parameter used to init the duplicate request cache
  *
  * @return 0 if successful, -1 otherwise
@@ -221,7 +221,7 @@ void nfs4_BuildStateId_Other(char * other)
   /* Use only 32 bits of server epoch */
   uint32_t epoch = (uint32_t) ServerEpoch;
   memcpy(other, &epoch, sizeof(uint32_t));
- 
+
   P(StateIdMutex);
   memcpy(other + sizeof(uint32_t), &state_id_counter, sizeof(uint64_t));
   state_id_counter++;
@@ -278,7 +278,7 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t * pstate_data)
  * This routine gets a pointer to a state from the states's hashtable.
  *
  * @param pstate       [IN] pointer to the stateid to be checked.
- * @param ppstate_data [OUT] pointer's state found 
+ * @param ppstate_data [OUT] pointer's state found
  *
  * @return 1 if ok, 0 otherwise.
  *
@@ -453,7 +453,7 @@ int nfs4_Check_Stateid(stateid4        * pstate,
     }
 
   /* Get the related clientid */
-  /* If call from NFSv4.1 request, the clientid is provided through the session's structure, 
+  /* If call from NFSv4.1 request, the clientid is provided through the session's structure,
    * with NFSv4.0, the clientid is related to the stateid itself */
   if(clientid == 0LL)
     {
@@ -522,11 +522,11 @@ int nfs4_Check_Stateid(stateid4        * pstate,
 }                               /* nfs4_Check_Stateid */
 
 /**
- * 
+ *
  *  nfs4_State_PrintAll
- *  
- * This routine displays the content of the hashtable used to store the states. 
- * 
+ *
+ * This routine displays the content of the hashtable used to store the states.
+ *
  * @return nothing (void function)
  */
 
@@ -580,7 +580,7 @@ int nfs4_check_special_stateid(cache_entry_t *pentry,
                                const char    *tag,
                                int access)
 {
-  
+
   struct glist_head * glist;
   state_t           * pstate_iterate;
   int                 rc = NFS4_OK;
