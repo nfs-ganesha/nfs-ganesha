@@ -192,7 +192,10 @@ fsal_status_t GPFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* I
   parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
   status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_symlink);
+    {
+      close(fd);
+      ReturnStatus(status, INDEX_FSAL_symlink);
+    }
 
   if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID)
     setgid_bit = TRUE;
@@ -207,7 +210,10 @@ fsal_status_t GPFSFSAL_symlink(fsal_handle_t * p_parent_directory_handle,   /* I
     status = fsal_internal_access(p_context, p_parent_directory_handle,access_mask,
                                   &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_symlink);
+    {
+      close(fd);
+      ReturnStatus(status, INDEX_FSAL_symlink);
+    }
 
   /* build symlink path */
 

@@ -115,7 +115,10 @@ fsal_status_t GPFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* I
   src_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
   status = GPFSFSAL_getattrs(p_old_parentdir_handle, p_context, &src_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_rename);
+    {
+      close(old_parent_fd);
+      ReturnStatus(status, INDEX_FSAL_rename);
+    }
 
   /* optimisation : don't do the job twice if source dir = dest dir  */
   if(!FSAL_handlecmp(p_old_parentdir_handle, p_new_parentdir_handle, &status))
@@ -142,7 +145,11 @@ fsal_status_t GPFSFSAL_rename(fsal_handle_t * p_old_parentdir_handle,       /* I
       tgt_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
       status = GPFSFSAL_getattrs(p_new_parentdir_handle, p_context, &tgt_dir_attrs);
       if(FSAL_IS_ERROR(status))
-        ReturnStatus(status, INDEX_FSAL_rename);
+        {
+          close(old_parent_fd);
+          close(new_parent_fd);
+          ReturnStatus(status, INDEX_FSAL_rename);
+        }
     }
 
   /* check access rights */

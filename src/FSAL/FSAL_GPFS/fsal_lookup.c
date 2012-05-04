@@ -131,7 +131,10 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
   parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
   status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_lookup);
+    {
+      close(parentfd);
+      ReturnStatus(status, INDEX_FSAL_lookup);
+    }
 
   /* Be careful about junction crossing, symlinks, hardlinks,... */
   switch (parent_dir_attrs.type)
@@ -142,15 +145,18 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
 
     case FSAL_TYPE_JUNCTION:
       // This is a junction
+      close(parentfd);
       Return(ERR_FSAL_XDEV, 0, INDEX_FSAL_lookup);
 
     case FSAL_TYPE_FILE:
     case FSAL_TYPE_LNK:
     case FSAL_TYPE_XATTR:
       // not a directory 
+      close(parentfd);
       Return(ERR_FSAL_NOTDIR, 0, INDEX_FSAL_lookup);
 
     default:
+      close(parentfd);
       Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_lookup);
     }
 
@@ -171,7 +177,10 @@ fsal_status_t GPFSFSAL_lookup(fsal_handle_t * p_parent_directory_handle,    /* I
     status = fsal_internal_access(p_context, p_parent_directory_handle, access_mask,
                                   &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_lookup);
+    {
+      close(parentfd);
+      ReturnStatus(status, INDEX_FSAL_lookup);
+    }
 
   /* get file handle, it it exists */
   /* This might be a race, but it's the best we can currently do */

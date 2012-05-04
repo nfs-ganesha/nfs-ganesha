@@ -94,7 +94,10 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
   parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
   status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_create);
+    {
+      close(fd);
+      ReturnStatus(status, INDEX_FSAL_create);
+    }
 
   /* Check the user can write in the directory, and check the setgid bit on the directory */
 
@@ -111,7 +114,10 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
     status = fsal_internal_access(p_context, p_parent_directory_handle, access_mask,
                                   &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_create);
+    {
+      close(fd);
+      ReturnStatus(status, INDEX_FSAL_create);
+    }
 
   /* call to filesystem */
 
@@ -269,7 +275,10 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
   parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
   status = GPFSFSAL_getattrs(p_parent_directory_handle, p_context, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_create);
+    {
+      close(fd);
+      ReturnStatus(status, INDEX_FSAL_mkdir);
+    }
 
   /* Check the user can write in the directory, and check the setgid bit on the directory */
 
@@ -286,7 +295,10 @@ fsal_status_t GPFSFSAL_mkdir(fsal_handle_t * p_parent_directory_handle,     /* I
     status = fsal_internal_access(p_context, p_parent_directory_handle, access_mask,
                                   &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_mkdir);
+    {
+      close(fd);
+      ReturnStatus(status, INDEX_FSAL_mkdir);
+    }
 
   /* build new entry path */
 
