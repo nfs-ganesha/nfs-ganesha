@@ -561,8 +561,7 @@ case $FSAL in
 		;;
 	LUSTRE)
 		AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
-                AC_CHECK_HEADERS([sys/capability.h], [],
-                                 [AC_MSG_ERROR(missing capability.h, install libcap-devel package)])
+                AC_CHECK_HEADERS([sys/capability.h], [], [AC_MSG_ERROR(install libcap-devel package)])
 		AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
 		if test "x$have_lustre2_api" != "xyes" ; then
 	            AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])
@@ -587,8 +586,7 @@ case $FSAL in
                AC_DEFINE(_SHOOK, 1, [shook is enabled])
 
 	       AC_CHECK_HEADERS([attr/xattr.h], [], [AC_MSG_ERROR(missing xattr header files)])
-               AC_CHECK_HEADERS([sys/capability.h], [],
-                                [AC_MSG_ERROR(missing capability.h, install libcap-devel package)])
+               AC_CHECK_HEADERS([sys/capability.h], [], [AC_MSG_ERROR(install libcap-devel package)])
 	       AC_CHECK_LIB([lustreapi], [llapi_fid2path], [have_lustre2_api="yes"])
 	       if test "x$have_lustre2_api" != "xyes" ; then
                    AC_MSG_ERROR([Lustre 2.x and liblustreapi are required])

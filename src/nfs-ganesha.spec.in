@@ -156,7 +156,7 @@ interface.
 %package lustre
 Summary: The NFS-GANESHA server compiled for using the LUSTRE interface
 Group: Applications/System
-BuildRequires: libattr-devel
+BuildRequires: libattr-devel libcap-devel
 Requires: %{name}-common = %{version}-%{release}
 
 %description lustre
@@ -170,7 +170,7 @@ interface.
 %package shook
 Summary: The NFS-GANESHA server compiled for exporting Lustre filesystem with shook HSM binding system.
 Group: Applications/System
-BuildRequires: libattr-devel
+BuildRequires: libattr-devel libcap-devel
 Requires: %{name}-common = %{version}-%{release}
 
 %description shook
