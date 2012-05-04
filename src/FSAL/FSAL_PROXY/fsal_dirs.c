@@ -209,7 +209,7 @@ fsal_status_t PROXYFSAL_readdir(fsal_dir_t * dir_desc,       /* IN */
 
       pxy_e4[i].e4.nextentry = &pxy_e4[i+1].e4; /* Last one cleared after the loop */
     }
-  pxy_e4[i].e4.nextentry = NULL;
+  pxy_e4[i-1].e4.nextentry = NULL;
   resnfs4.resarray.resarray_val[FSAL_READDIR_IDX_OP_READDIR].nfs_resop4_u.opreaddir.
       READDIR4res_u.resok4.reply.entries = &pxy_e4->e4;
 
