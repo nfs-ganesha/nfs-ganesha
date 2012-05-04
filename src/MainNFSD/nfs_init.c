@@ -526,9 +526,9 @@ void nfs_set_param_default()
   nfs_param.state_id_param.hash_param.index_size = PRIME_STATE_ID;
   nfs_param.state_id_param.hash_param.alphabet_length = 10;  /* ipaddr is a numerical decimal value */
   nfs_param.state_id_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
-  nfs_param.state_id_param.hash_param.hash_func_key = NULL ;
-  nfs_param.state_id_param.hash_param.hash_func_rbt = NULL ;
-  nfs_param.state_id_param.hash_param.hash_func_both = state_id_hash_both ;
+  nfs_param.state_id_param.hash_param.hash_func_key = state_id_value_hash_func;
+  nfs_param.state_id_param.hash_param.hash_func_rbt = state_id_rbt_hash_func;
+  nfs_param.state_id_param.hash_param.hash_func_both = NULL;
   nfs_param.state_id_param.hash_param.compare_key = compare_state_id;
   nfs_param.state_id_param.hash_param.key_to_str = display_state_id_key;
   nfs_param.state_id_param.hash_param.val_to_str = display_state_id_val;
@@ -536,7 +536,7 @@ void nfs_set_param_default()
   nfs_param.state_id_param.hash_param.flags = HT_FLAG_CACHE;
 
 #ifdef _USE_NFS4_1
-  /* NFSv4 State Id hash */
+  /* NFSv4 Session Id hash */
   nfs_param.session_id_param.hash_param.index_size = PRIME_STATE_ID;
   nfs_param.session_id_param.hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
   nfs_param.session_id_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;

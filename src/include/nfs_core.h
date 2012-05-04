@@ -880,14 +880,6 @@ uint64_t client_id_rbt_hash_func(hash_parameter_t * p_hparam,
 uint64_t client_id_rbt_hash_func_reverse(hash_parameter_t * p_hparam,
                                          hash_buffer_t * buffclef);
 
-uint32_t state_id_value_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t * buffclef);
-uint64_t state_id_rbt_hash_func(hash_parameter_t * p_hparam,
-                                     hash_buffer_t * buffclef);
-int state_id_hash_both(hash_parameter_t * p_hparam,
-                       hash_buffer_t    * buffclef,
-                       uint32_t * phashval, uint64_t * prbtval );
-
 uint32_t client_id_value_hash_func(hash_parameter_t * p_hparam,
                                    hash_buffer_t * buffclef);
 uint32_t client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
@@ -905,6 +897,12 @@ uint32_t namemapper_value_hash_func(hash_parameter_t * p_hparam,
                                              hash_buffer_t * buffclef);
 uint32_t idmapper_value_hash_func(hash_parameter_t * p_hparam,
                                   hash_buffer_t * buffclef);
+
+uint32_t state_id_value_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t    * buffclef);
+
+uint64_t state_id_rbt_hash_func(hash_parameter_t * p_hparam,
+                                hash_buffer_t    * buffclef);
 
 int idmap_populate(char *path, idmap_type_t maptype);
 

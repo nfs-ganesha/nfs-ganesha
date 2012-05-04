@@ -71,19 +71,22 @@ hash_table_t *ht_state_id;
 
 char all_zero[OTHERSIZE];
 char all_one[OTHERSIZE];
+#define seqid_all_one 0xFFFFFFFF
 
 pthread_mutex_t StateIdMutex = PTHREAD_MUTEX_INITIALIZER;
 uint64_t state_id_counter;
 
+int display_stateid_other(char * other, char * str)
+{
+  uint32_t epoch = *((uint32_t *)other);
+  uint64_t count = *((uint64_t *)(other + sizeof(uint32_t)));
+  return sprintf(str, "epoch=0x%08x counter=0x%016llx",
+                 (unsigned int) epoch, (unsigned long long) count);
+}
+
 int display_state_id_key(hash_buffer_t * pbuff, char *str)
 {
-  unsigned int i = 0;
-  unsigned int len = 0;
-  unsigned char *s = pbuff->pdata;
-
-  for(i = 0; i < OTHERSIZE; i++)
-    len += sprintf(&(str[i * 2]), "%02x", s[i]);
-  return len;
+  return display_stateid_other(pbuff->pdata, str);
 }                               /* display_state_id_val */
 
 int display_state_id_val(hash_buffer_t * pbuff, char *str)
@@ -102,84 +105,47 @@ int compare_state_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
   if(isFullDebug(COMPONENT_STATE))
     {
-      char str1[OTHERSIZE * 2 + 1], str2[OTHERSIZE * 2 + 1];
+      char str1[OTHERSIZE * 2 + 32], str2[OTHERSIZE * 2 + 32];
 
-      sprint_mem(str1, buff1->pdata, OTHERSIZE);
-      sprint_mem(str2, buff2->pdata, OTHERSIZE);
+      display_stateid_other(buff1->pdata, str1);
+      display_stateid_other(buff2->pdata, str2);
 
       if(isDebug(COMPONENT_HASHTABLE))
         LogFullDebug(COMPONENT_STATE,
-                     "%s vs %s",
+                     "{%s} vs {%s}",
                      str1, str2);
     }
 
   return memcmp(buff1->pdata, buff2->pdata, OTHERSIZE);
 }                               /* compare_state_id */
 
-uint32_t state_id_value_hash_func(hash_parameter_t * p_hparam,
-                                       hash_buffer_t * buffclef)
+inline uint32_t compute_stateid_hash_value(uint32_t * pstate)
 {
-  unsigned int sum = 0;
-  unsigned int i = 0;
-  unsigned char c;
+  return pstate[1] ^ pstate[2];
+}
 
-  /* Compute the sum of all the characters */
-  for(i = 0; i < OTHERSIZE; i++)
-    {
-      c = ((char *)buffclef->pdata)[i];
-      sum += c;
-    }
+uint32_t state_id_value_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t    * buffclef)
+{
+  uint32_t val = compute_stateid_hash_value((uint32_t *) buffclef->pdata) %
+                      p_hparam->index_size;
 
   if(isDebug(COMPONENT_HASHTABLE))
-    LogFullDebug(COMPONENT_STATE, "value = %lu",
-                 (unsigned long)(sum % p_hparam->index_size));
+    LogFullDebug(COMPONENT_STATE, "val = %"PRIu32, val);
 
-  return (unsigned long)(sum % p_hparam->index_size);
-}                               /*  client_id_reverse_value_hash_func */
+  return val;
+}
 
 uint64_t state_id_rbt_hash_func(hash_parameter_t * p_hparam,
-                                hash_buffer_t * buffclef)
+                                hash_buffer_t    * buffclef)
 {
-
-  u_int32_t i1 = 0;
-  u_int32_t i2 = 0;
-  u_int32_t i3 = 0;
-
-  memcpy(&i1, buffclef->pdata, sizeof(u_int32_t));
-  memcpy(&i2, buffclef->pdata + 4, sizeof(u_int32_t));
-  memcpy(&i3, buffclef->pdata + 8, sizeof(u_int32_t));
+  uint64_t val = compute_stateid_hash_value((uint32_t *) buffclef->pdata);
 
   if(isDebug(COMPONENT_HASHTABLE))
-    LogFullDebug(COMPONENT_STATE,
-                 "rbt = %lu",
-                 (unsigned long)(i1 ^ i2 ^ i3));
+    LogFullDebug(COMPONENT_STATE, "rbt = %"PRIu64, val);
 
-  return (unsigned long)(i1 ^ i2 ^ i3);
-}                               /* state_id_rbt_hash_func */
-
-int state_id_hash_both(hash_parameter_t * p_hparam,
-                       hash_buffer_t    * buffclef,
-                       uint32_t * phashval, uint64_t * prbtval )
-{
-   uint32_t h1 = 0 ;
-   uint32_t h2 = 0 ;
-
-   Lookup3_hash_buff_dual((buffclef->pdata), OTHERSIZE, &h1, &h2);
-
-   h1 = h1 % p_hparam->index_size ;
-
-   *phashval = h1;
-   *prbtval = h2;
-
-   if(isDebug(COMPONENT_HASHTABLE))
-        LogFullDebug(COMPONENT_STATE,
-                     "value = %"PRIu32" rbt = %"PRIu32,
-                     h1, h2);
-
-   /* Success */
-   return 1 ;
-} /* state_id_hash_both */
-
+  return val;
+}
 
 /**
  *
@@ -357,7 +323,7 @@ int nfs4_Check_Stateid(stateid4        * pstate,
                        char              flags,
                        const char      * tag)
 {
-  u_int16_t         time_digest = 0;
+  uint32_t          epoch = 0;
   state_t         * pstate2;
   nfs_client_id_t * nfs_clientid;
   char              str[OTHERSIZE * 2 + 1 + 6];
@@ -413,7 +379,7 @@ int nfs4_Check_Stateid(stateid4        * pstate,
   if(memcmp(pstate->other, all_one, OTHERSIZE) == 0)
     {
       /* Test for special all ones stateid */
-      if(pstate->seqid == 0xFFFFFFFF && (flags & STATEID_SPECIAL_ALL_1) != 0)
+      if(pstate->seqid == seqid_all_one && (flags & STATEID_SPECIAL_ALL_1) != 0)
         {
           /* All 1 stateid */
           LogDebug(COMPONENT_STATE,
@@ -431,9 +397,9 @@ int nfs4_Check_Stateid(stateid4        * pstate,
     }
 
   /* Check if stateid was made from this server instance */
-  memcpy((char *)&time_digest, pstate->other, 2);
+  memcpy(&epoch, pstate->other, sizeof(uint32_t));
 
-  if((u_int16_t) (ServerBootTime & 0x0000FFFF) != time_digest)
+  if(epoch != ServerEpoch)
     {
       LogDebug(COMPONENT_STATE,
                "Check %s stateid found stale stateid %s", tag, str);
@@ -489,6 +455,9 @@ int nfs4_Check_Stateid(stateid4        * pstate,
      (pstate->seqid != 0))
     {
       /* Check seqid in stateid */
+      /** @todo fsf: maybe change to simple comparison pstate->seqid < pstate2->state_seqid
+       *             as good enough and maybe makes pynfs happy.
+       */
       diff = pstate->seqid - pstate2->state_seqid;
       if(diff < 0)
         {
