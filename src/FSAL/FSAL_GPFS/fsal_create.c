@@ -20,6 +20,7 @@
 #include "fsal_convert.h"
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/fsuid.h>
 
 /**
  * FSAL_create:
@@ -520,6 +521,8 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
   fsal_status_t status;
   int fd, newfd;
   int flags=(O_RDONLY|O_NOFOLLOW);
+  int saved_uid=-1;
+  int saved_gid=-1;
 
   mode_t unix_mode = 0;
   dev_t unix_dev = 0;
@@ -598,7 +601,32 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
     ReturnStatus(status, INDEX_FSAL_mknode);
 
   /* creates the node, then stats it */
+  if((nodetype == FSAL_TYPE_SOCK) &&
+     (p_context->credential.user != geteuid()))
+    {
+      saved_uid = setfsuid(p_context->credential.user);
+      if (saved_uid == -1)
+        {
+          close(fd);
+          Return(posix2fsal_error(errno), errno, INDEX_FSAL_mknode);
+        }
+      if (setgid_bit == 0)
+        {
+          saved_gid = setfsgid(p_context->credential.group);
+          if (saved_gid == -1)
+            {
+              close(fd);
+              Return(posix2fsal_error(errno), errno, INDEX_FSAL_mknode);
+            }
+        }
+    }
   rc = mknodat(fd, p_node_name->name, unix_mode, unix_dev);
+  if (saved_uid != -1)
+    {
+      setfsuid(saved_uid);
+      if (setgid_bit == 0)
+        setfsgid(saved_gid);
+    }
   errsv = errno;
 
   if(rc)
@@ -620,34 +648,40 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
       ReturnStatus(status, INDEX_FSAL_mknode);
     }
 
-  if(FSAL_IS_ERROR(status = fsal_internal_handle2fd_at(fd,
-                                                       p_object_handle, &newfd,
-                                                       flags)))
-    {
-      close(fd);
-      ReturnStatus(status, INDEX_FSAL_mknode);
-    }
+  /* 1. there is no need to chown for mknod b and mknod c, only root can mknod b and c */
+  /* 2. socket cannot be opened */
+  if ((nodetype != FSAL_TYPE_SOCK) && 
+      (nodetype != FSAL_TYPE_CHR)  &&
+      (nodetype != FSAL_TYPE_BLK)  &&
+      (p_context->credential.user != geteuid()))
+  {
+    if(FSAL_IS_ERROR(status = fsal_internal_handle2fd_at(fd,
+                                                         p_object_handle, &newfd,
+                                                         flags)))
+      {
+        close(fd);
+        ReturnStatus(status, INDEX_FSAL_mknode);
+      }
 
-  /* the node has been created */
-  /* chown the file to the current user/group */
+    /* the node has been created */
+    /* chown the file to the current user/group */
 
-  if(p_context->credential.user != geteuid())
-    {
-      /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
-      rc = fchown(newfd, p_context->credential.user,
-                  setgid_bit ? -1 : (int)p_context->credential.group);
-      errsv = errno;
+    /* if the setgid_bit was set on the parent directory, do not change the group of the created file, because it's already the parentdir's group */
+    rc = fchown(newfd, p_context->credential.user,
+                setgid_bit ? -1 : (int)p_context->credential.group);
+    errsv = errno;
 
-      if(rc)
-        {
-          close(fd);
-          close(newfd);
-          Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mknode);
-        }
-    }
+    if(rc)
+      {
+        close(fd);
+        close(newfd);
+        Return(posix2fsal_error(errsv), errsv, INDEX_FSAL_mknode);
+      }
+
+    close(newfd);
+  }
 
   close(fd);
-  close(newfd);
 
   /* Fills the attributes if needed */
   if(node_attributes)
