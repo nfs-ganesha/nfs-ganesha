@@ -462,6 +462,7 @@ nfs_rpc_callback_seccreate(rpc_call_channel_t *chan)
 {
     nfs_client_cred_t *credential;
     bool_t code = TRUE;
+    AUTH *auth;
 
     switch (chan->type) {
     case RPC_CHAN_V40:
@@ -479,7 +480,10 @@ nfs_rpc_callback_seccreate(rpc_call_channel_t *chan)
         nfs_rpc_callback_setup_gss(chan, credential);
         break;
     case AUTH_SYS:
-        /* XXX implement */
+        auth = authunix_create_default();
+        /* XXX see above */
+        if (auth)
+            chan->clnt->cl_auth = authunix_create_default();
         break;
     case AUTH_NONE:
         break;
