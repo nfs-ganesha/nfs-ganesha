@@ -37,6 +37,8 @@
 #include "nfs_core.h"
 #include "nfs4.h"
 #include "sal_functions.h"
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #define NFS_V4_RECOV_ROOT "/var/lib/nfs/ganesha"
 #define NFS_V4_RECOV_DIR "v4recov"
