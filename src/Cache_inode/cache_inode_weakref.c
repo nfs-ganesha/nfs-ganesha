@@ -122,6 +122,7 @@ cache_entry_t *cache_inode_weakref_get(gweakref_t *ref,
     if (entry) {
         if (cache_inode_lru_ref(entry, client, flags)
             != CACHE_INODE_SUCCESS) {
+            pthread_rwlock_unlock(lock);
             return NULL;
         }
         pthread_rwlock_unlock(lock);
