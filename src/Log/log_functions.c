@@ -1316,35 +1316,33 @@ rpc_warnx(/* const */ char *fmt, ...)
 {
     va_list ap;
     log_components_t comp = COMPONENT_RPC;
-    int rc, level;
+    int level;
 
     level = LogComponents[comp].comp_log_level;
     if (level < NIV_DEBUG)
         goto out;
 
     va_start(ap, fmt);
-    
+
     switch(LogComponents[comp].comp_log_type) {
     case SYSLOG:
-        rc = DisplayLogSyslog_valist(comp, "rpc", level, fmt, ap);
+      DisplayLogSyslog_valist(comp, "rpc", level, fmt, ap);
       break;
     case FILELOG:
-        rc = DisplayLogPath_valist(LogComponents[comp].comp_log_file, "rpc",
-                                   comp, fmt, ap);
+      DisplayLogPath_valist(LogComponents[comp].comp_log_file, "rpc",
+                            comp, fmt, ap);
       break;
     case STDERRLOG:
-        rc = DisplayLogFlux_valist(stderr, "rpc", comp, fmt, ap);
+        DisplayLogFlux_valist(stderr, "rpc", comp, fmt, ap);
       break;
     case STDOUTLOG:
-        rc = DisplayLogFlux_valist(stdout, "rpc", comp, fmt, ap);
+      DisplayLogFlux_valist(stdout, "rpc", comp, fmt, ap);
       break;
     case TESTLOG:
-      rc = DisplayTest_valist(comp, fmt, ap);
+      DisplayTest_valist(comp, fmt, ap);
       break;
     case BUFFLOG:
-      rc = DisplayBuffer_valist(LogComponents[comp].comp_buffer, comp, fmt, ap);
-    default:
-      rc = ERR_FAILURE;
+      DisplayBuffer_valist(LogComponents[comp].comp_buffer, comp, fmt, ap);
     } /* switch */
 
     va_end(ap);

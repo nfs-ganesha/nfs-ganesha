@@ -141,7 +141,8 @@ Key_Locate(struct hash_table *ht,
      if (partition->cache) {
           cursor = partition->cache[cache_offsetof(ht, rbthash)];
           LogFullDebug(COMPONENT_HASHTABLE_CACHE,
-                       "hash %s index %d slot %"PRIu64"\n", (cursor) ? "hit" : "miss",
+                       "hash %s index %"PRIu32" slot %d\n",
+                       (cursor) ? "hit" : "miss",
                        index, cache_offsetof(ht, rbthash));
           if (cursor) {
               data = RBT_OPAQ(cursor);

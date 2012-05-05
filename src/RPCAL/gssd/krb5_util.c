@@ -1317,6 +1317,11 @@ gssd_k5_get_default_realm(char **def_realm)
  *     -1 => there was an error
  */
 
+OM_uint32 gss_set_allowable_enctypes(OM_uint32 *min_stat,
+                                     gss_cred_id_t credh,
+                                     gss_OID_desc *krb5oid,
+                                     int num_enctypes,
+                                     krb5_enctype enctypes[]);
 int
 limit_krb5_enctypes(struct rpc_gss_sec *sec)
 {

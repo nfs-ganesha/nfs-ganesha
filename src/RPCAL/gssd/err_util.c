@@ -47,7 +47,7 @@ void gssd_err_default(int priority, const char *fmt, ...)
     /* XXX do something */
 }
 
-gssd_err_func_t gss_err = gssd_err_default;
+gssd_err_func_t gss_err = (gssd_err_func_t) gssd_err_default;
 
 void initerr(char *progname, int set_verbosity, int set_fg)
 {

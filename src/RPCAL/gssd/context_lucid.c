@@ -256,6 +256,13 @@ out_err:
 	return -1;
 }
 
+extern OM_uint32 gss_export_lucid_sec_context(OM_uint32 *min_stat,
+                                              gss_ctx_id_t *ctx,
+                                              int val, void *rctx);
+
+extern OM_uint32 gss_free_lucid_sec_context(OM_uint32 *min_stat,
+                                            gss_ctx_id_t ctx,
+                                            void *return_ctx);
 
 int
 serialize_krb5_ctx(gss_ctx_id_t ctx, gss_buffer_desc *buf, int32_t *endtime)

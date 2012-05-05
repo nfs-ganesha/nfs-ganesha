@@ -993,5 +993,6 @@ void create_fsal_up_threads();
 void nfs_Init_FSAL_UP();
 
 void stats_collect (ganesha_stats_t                 *ganesha_stats);
-
+void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
+int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);
 #endif                          /* _NFS_CORE_H */

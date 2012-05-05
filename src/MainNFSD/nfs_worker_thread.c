@@ -2007,7 +2007,6 @@ unblock:
 void *worker_thread(void *IndexArg)
 {
   request_data_t *pnfsreq;
-  struct svc_req *preq;
   unsigned int gc_allowed = FALSE;
   unsigned long worker_index = (unsigned long) IndexArg;
   nfs_worker_data_t *pmydata = &(workers_data[worker_index]);
@@ -2175,19 +2174,19 @@ void *worker_thread(void *IndexArg)
 
        case NFS_CALL:
            /* NFSv4 rpc call (callback) */
-           (void) nfs_rpc_dispatch_call(pnfsreq->r_u.call, 0 /* XXX flags */);
+           nfs_rpc_dispatch_call(pnfsreq->r_u.call, 0 /* XXX flags */);
            break ;
 
-	  case _9P_REQUEST:
+       case _9P_REQUEST:
 #ifdef _USE_9P
-	     _9p_execute( &pnfsreq->r_u._9p, pmydata ) ;
+           _9p_execute( &pnfsreq->r_u._9p, pmydata ) ;
 #else
-	     LogCrit(COMPONENT_DISPATCH, "Implementation error, 9P message "
-                     "when 9P support is disabled" ) ; 
+           LogCrit(COMPONENT_DISPATCH, "Implementation error, 9P message "
+                     "when 9P support is disabled" ) ;
 #endif
-	    break ;
+           break ;
          }
-      
+
       /* XXX Signal the request processing has completed, though at
        * present there may be no effect. */
       LogInfo(COMPONENT_DISPATCH, "Signaling completion of request");

@@ -333,7 +333,7 @@ dnl Check for Kerberos V5
 AC_KERBEROS_V5
 
 dnl Invoked after AC_KERBEROS_V5; AC_LIBRPCSECGSS needs to have KRBLIBS set
-AC_LIBRPCSECGSS
+dnl AC_LIBRPCSECGSS
 
 dnl Need krb5_util.h and friends.  This will be out-of-tree Very Soon,
 dnl so don't put pieces into src/include

@@ -78,7 +78,6 @@ void
 avl_dirent_set_deleted(cache_entry_t *entry, cache_inode_dir_entry_t *v)
 {
     struct avltree *t = &entry->object.dir.avl.t;
-    struct avltree *c = &entry->object.dir.avl.c;
     struct avltree_node *node;
 
     assert(! (v->flags & DIR_ENTRY_FLAG_DELETED));

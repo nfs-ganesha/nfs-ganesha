@@ -22,11 +22,11 @@ AC_DEFUN([AC_KERBEROS_V5],[
     dnl This ugly hack brought on by the split installation of
     dnl MIT Kerberos on Fedora Core 1
     K5CONFIG=""
-    if test -f $dir/bin/krb5-config; then
+    if test -x $dir/bin/krb5-config; then
       K5CONFIG=$dir/bin/krb5-config
-    elif test -f "/usr/kerberos/bin/krb5-config"; then
+    elif test -x "/usr/kerberos/bin/krb5-config"; then
       K5CONFIG="/usr/kerberos/bin/krb5-config"
-    elif test -f "/usr/lib/mit/bin/krb5-config"; then
+    elif test -x "/usr/lib/mit/bin/krb5-config"; then
       K5CONFIG="/usr/lib/mit/bin/krb5-config"
     fi
     if test "$K5CONFIG" != ""; then
@@ -34,11 +34,14 @@ AC_DEFUN([AC_KERBEROS_V5],[
       KRBLIBS=`$K5CONFIG --libs gssapi`
       K5VERS=`$K5CONFIG --version | head -n 1 | awk '{split($(4),v,"."); if (v@<:@"3"@:>@ == "") v@<:@"3"@:>@ = "0"; print v@<:@"1"@:>@v@<:@"2"@:>@v@<:@"3"@:>@ }'`
       AC_DEFINE_UNQUOTED(KRB5_VERSION, $K5VERS, [Define this as the Kerberos version number])
-      if test -f $dir/include/gssapi/gssapi_krb5.h -a \
-                \( -f $dir/lib/libgssapi_krb5.a -o \
-                   -f $dir/lib64/libgssapi_krb5.a -o \
-                   -f $dir/lib64/libgssapi_krb5.so -o \
-                   -f $dir/lib/libgssapi_krb5.so \) ; then
+      K5LIBDIR=[`echo $KRBLIBS | head -1 | sed 's/^.*-L\(.[^ ]\+\) .*$/\1/'`]
+      if test -e $dir/include/gssapi/gssapi_krb5.h -a \
+                \( -e $dir/lib/libgssapi_krb5.a -o \
+                   -e $dir/lib64/libgssapi_krb5.a -o \
+                   -e $dir/lib64/libgssapi_krb5.so -o \
+                   -e $dir/lib/libgssapi_krb5.so -o \
+                   -e $K5LIBDIR/libgssapi_krb5.so -o \
+                   -e $K5LIBDIR/libgssapi_krb5.a \) ; then
          AC_DEFINE(HAVE_KRB5, 1, [Define this if you have MIT Kerberos libraries])
          KRBDIR="$dir"
   dnl If we are using MIT K5 1.3.1 and before, we *MUST* use the
@@ -54,9 +57,9 @@ AC_DEFUN([AC_KERBEROS_V5],[
          break
       dnl The following ugly hack brought on by the split installation
       dnl of Heimdal Kerberos on SuSe
-      elif test \( -f $dir/include/heim_err.h -o\
-      		 -f $dir/include/heimdal/heim_err.h \) -a \
-                -f $dir/lib/libroken.a; then
+      elif test \( -e $dir/include/heim_err.h -o\
+      		 -e $dir/include/heimdal/heim_err.h \) -a \
+                -e $dir/lib/libroken.a; then
          AC_DEFINE(HAVE_HEIMDAL, 1, [Define this if you have Heimdal Kerberos libraries])
          KRBDIR="$dir"
          gssapi_lib=gssapi

@@ -226,7 +226,7 @@ display_status_2(char *m, u_int32_t major, u_int32_t minor, const gss_OID mech)
 	char maj_buf[30], min_buf[30];
 	char *maj, *min;
 	u_int32_t msg_ctx = 0;
-	int msg_verbosity = 0;
+        int msg_verbosity __attribute__((unused)) = 0;
 
 	/* Get major status message */
 	maj_stat1 = gss_display_status(&min_stat1, major,
