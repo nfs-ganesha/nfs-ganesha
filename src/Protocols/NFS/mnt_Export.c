@@ -309,7 +309,22 @@ int mnt_Export(nfs_arg_t * parg /* IN     */ ,
 void mnt_Export_Free(nfs_res_t * pres)
 {
 
-  /** @todo: BUGAZOMEU end this function */
+  exports e = pres->res_mntexport;
 
-  return;
+  while (e)
+    {
+      struct groupnode *g = e->ex_groups;
+      exports n = e->ex_next;
+
+      while (g)
+        {
+          Mem_Free(g->gr_name);
+          g = g->gr_next;
+        }
+      Mem_Free(e->ex_groups);
+      Mem_Free(e->ex_dir);
+      Mem_Free(e);
+          
+      e = n;
+  }
 }                               /* mnt_Export_Free */
