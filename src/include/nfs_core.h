@@ -506,17 +506,6 @@ typedef struct nfs_flush_thread_data__
 
 } nfs_flush_thread_data_t;
 
-typedef struct fridge_entry__
-{
-  pthread_t thrid ;
-  pthread_mutex_t condmutex ;
-  pthread_cond_t condvar ;
-  unsigned int frozen ;
-  void * arg ;
-  struct fridge_entry__ * pprev ;
-  struct fridge_entry__ * pnext ;
-} fridge_entry_t  ;
-
 /**
  * group together all of NFS-Ganesha's statistics
  */
@@ -819,7 +808,7 @@ void idmap_get_stats(idmap_type_t maptype, hash_stat_t * phstat,
                      hash_stat_t * phstat_reverse);
 
 int fridgethr_get( pthread_t * pthrid, void *(*thrfunc)(void*), void * thrarg ) ;
-fridge_entry_t * fridgethr_freeze( ) ;
+void * fridgethr_freeze( ) ;
 int fridgethr_init() ;
 
 unsigned int nfs_core_select_worker_queue() ;

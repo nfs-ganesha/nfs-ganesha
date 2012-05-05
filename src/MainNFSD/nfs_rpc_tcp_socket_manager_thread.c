@@ -83,7 +83,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
 #endif
   long int tcp_sock = (long int)Arg;
   static char my_name[MAXNAMLEN];
-  fridge_entry_t * pfe = NULL;
+  void * pfe = NULL;
   process_status_t status;
 
   snprintf(my_name, MAXNAMLEN, "tcp_sock_mgr#fd=%ld", tcp_sock);
@@ -153,7 +153,7 @@ void *rpc_tcp_socket_manager_thread(void *Arg)
                   break;
             }
 
-          tcp_sock = (long int )pfe->arg;
+          tcp_sock = (long int )pfe;
           LogDebug(COMPONENT_DISPATCH,
                    "Now working on sock=%d after going out of the fridge",
                    (int)tcp_sock);
