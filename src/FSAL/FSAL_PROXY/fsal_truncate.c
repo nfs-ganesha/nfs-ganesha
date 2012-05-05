@@ -35,6 +35,7 @@
 #include "fsal_common.h"
 
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "fsal_nfsv4_macros.h"
 
 fsal_status_t FSAL_proxy_truncate_stateless(fsal_handle_t * file_hdl,    /* IN */
