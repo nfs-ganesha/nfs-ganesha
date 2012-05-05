@@ -253,7 +253,8 @@ cache_inode_remove_impl(cache_entry_t *entry,
      }
 
      if (!(flags & CACHE_INODE_FLAG_CONTENT_HAVE)) {
-          pthread_rwlock_unlock(&entry->content_lock);
+          pthread_rwlock_rdlock(&entry->content_lock);
+          flags |= CACHE_INODE_FLAG_CONTENT_HAVE;
      }
 
      /* Factor this somewhat.  In the case where the directory hasn't
