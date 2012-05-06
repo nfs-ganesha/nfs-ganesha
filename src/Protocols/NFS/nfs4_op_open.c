@@ -779,15 +779,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                   res_OPEN4.status = NFS4ERR_ISDIR;
                   goto out;
                 }
-              else if(pentry_newfile->type == SYMBOLIC_LINK)
-                {
-                  res_OPEN4.status = NFS4ERR_SYMLINK;
-                  goto out;
-                }
               else
                 {
-                  res_OPEN4.status = NFS4ERR_INVAL;
-                  cause2 = " (not REGULAR_FILE)";
+                  res_OPEN4.status = NFS4ERR_SYMLINK;
                   goto out;
                 }
             }
