@@ -935,6 +935,13 @@ int fsal_internal_ClientReconnect(proxyfsal_op_context_t * p_thr_context)
     LogMajor( COMPONENT_FSAL,
               "FSAL RECONNECT : got POSIX error %u while closing socket in fsal_internal_ClientReconnect", errno ) ;
   
+  if(p_thr_context->rpc_client)
+    {
+      auth_destroy(p_thr_context->rpc_client->cl_auth);
+      p_thr_context->rpc_client->cl_auth = NULL;
+      clnt_destroy(p_thr_context->rpc_client);
+      p_thr_context->rpc_client = NULL;
+    }
   fsal_status = fsal_proxy_create_rpc_clnt(p_thr_context);
   if(FSAL_IS_ERROR(fsal_status))
     return -1;
