@@ -320,7 +320,6 @@ fsal_status_t PROXYFSAL_open(fsal_handle_t * filehandle,  /* IN */
   bitmap4 bitmap;
   uint32_t bitmap_open[2];
   uint32_t bitmap_getattr_res[2];
-  uint32_t share_access;
   proxyfsal_op_context_t * p_context = (proxyfsal_op_context_t *)context;
   proxyfsal_file_t * file_descriptor = (proxyfsal_file_t *)file_desc;
 
@@ -365,19 +364,6 @@ fsal_status_t PROXYFSAL_open(fsal_handle_t * filehandle,  /* IN */
   bitmap.bitmap4_len = 2;
   fsal_internal_proxy_create_fattr_bitmap(&bitmap);
 
-  share_access = 0;
-  if((openflags & FSAL_O_RDWR) == FSAL_O_RDWR)
-    share_access |= OPEN4_SHARE_ACCESS_BOTH;
-
-  if((openflags & FSAL_O_RDONLY) == FSAL_O_RDONLY)
-    share_access |= OPEN4_SHARE_ACCESS_READ;
-
-  if(((openflags & FSAL_O_WRONLY) == FSAL_O_WRONLY) ||
-     ((openflags & FSAL_O_APPEND) == FSAL_O_APPEND))
-    share_access |= OPEN4_SHARE_ACCESS_WRITE;
-
-  /* >> you can check if this is a file if the information
-   * is stored into the handle << */
 #define FSAL_OPEN_STATELESS_IDX_OP_PUTFH         0
 #define FSAL_OPEN_STATELESS_IDX_OP_GETATTR       1
   COMPOUNDV4_ARG_ADD_OP_PUTFH(argnfs4, nfs4fh);
