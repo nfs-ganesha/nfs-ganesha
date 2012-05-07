@@ -40,6 +40,10 @@
 #include <lustre/lustre_user.h>
 #include <linux/quota.h>
 
+#ifndef QUOTABLOCK_SIZE
+#define QUOTABLOCK_SIZE (1 << 10)
+#endif
+
 /**
  * FSAL_check_quota :
  * checks if quotas allow a user to do an operation
@@ -200,18 +204,34 @@ fsal_status_t LUSTREFSAL_get_quota(fsal_path_t * pfsal_path,       /* IN */
   if(!pfsal_path || !pfsal_path->path ||!pquota)
     ReturnCode(ERR_FSAL_FAULT, 0);
 
+  dataquota.qc_cmd  = LUSTRE_Q_GETQUOTA ;
+  dataquota.qc_type = quota_type ; 
+  dataquota.qc_id = fsal_uid ;
+
   if(llapi_quotactl( pfsal_path->path, &dataquota) < 0 )
     ReturnCode(posix2fsal_error(errno), errno);
 
   /* Convert XFS structure to FSAL one */
-  pquota->bhardlimit = dataquota.qc_dqblk.dqb_bhardlimit;
-  pquota->bsoftlimit = dataquota.qc_dqblk.dqb_bsoftlimit;
-  pquota->curblocks  = dataquota.qc_dqblk.dqb_curspace;
+  pquota->bsize      = 1024; // LUSTRE has block of 1024 bytes
+
+  pquota->bhardlimit = dataquota.qc_dqblk.dqb_bhardlimit ;
+  pquota->bsoftlimit = dataquota.qc_dqblk.dqb_bsoftlimit ;
+  pquota->curblocks  = dataquota.qc_dqblk.dqb_curspace /  pquota->bsize  ;
+
   pquota->fhardlimit = dataquota.qc_dqblk.dqb_ihardlimit;
+  pquota->fsoftlimit = dataquota.qc_dqblk.dqb_isoftlimit;
   pquota->curfiles   = dataquota.qc_dqblk.dqb_curinodes;
-  pquota->btimeleft  = dataquota.qc_dqblk.dqb_btime;
-  pquota->ftimeleft  = dataquota.qc_dqblk.dqb_itime;
-  pquota->bsize      = DEV_BSIZE;
+
+  /* Times left are set only if used resource is in-between soft and hard limits */
+  if( ( pquota->curfiles >  pquota->fsoftlimit ) && ( pquota->curfiles <  pquota->fhardlimit ) )
+     pquota->ftimeleft  = dataquota.qc_dqblk.dqb_itime;
+  else
+     pquota->ftimeleft = 0 ;
+
+  if( ( pquota->curblocks >  pquota->bsoftlimit ) && ( pquota->curblocks <  pquota->bhardlimit ) )
+     pquota->btimeleft  = dataquota.qc_dqblk.dqb_btime;
+  else
+     pquota->btimeleft = 0 ;
 
   ReturnCode(ERR_FSAL_NO_ERROR, 0);
 }                               /*  FSAL_get_quota */
