@@ -886,6 +886,9 @@ typedef enum {
 	homogenous,
 	auth_exportpath_xdev,
 	dirs_have_sticky_bit,
+	accesscheck_support,
+	share_support,
+	share_support_owner,
 	pnfs_supported
 } fsal_fsinfo_options_t;
 	

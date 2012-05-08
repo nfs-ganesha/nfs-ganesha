@@ -28,6 +28,10 @@
 /* Initialize configuration parameters
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/types.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -488,6 +492,10 @@ fsal_boolean_t fsal_supports(struct fsal_staticfsinfo_t *info,
 		return !!info->auth_exportpath_xdev;
 	case dirs_have_sticky_bit:
 		return !!info->dirs_have_sticky_bit;
+	case share_support:
+		return !!info->share_support;
+	case share_support_owner:
+		return !!info->share_support_owner;
 #ifdef _USE_FSALMDS
 	case pnfs_supported:
 		return !!info->pnfs_supported;

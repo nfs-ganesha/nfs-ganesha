@@ -58,6 +58,9 @@ fsal_status_t vfs_lock_op(struct fsal_obj_handle *obj_hdl,
 			  fsal_lock_op_t lock_op,
 			  fsal_lock_param_t   request_lock,
 			  fsal_lock_param_t * conflicting_lock);
+fsal_status_t vfs_share_op(struct fsal_obj_handle *obj_hdl,
+			   void *p_owner,         /* IN (opaque to FSAL) */
+			   fsal_share_param_t  request_share);
 fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl);
 fsal_status_t vfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
 			      lru_actions_t requests);
