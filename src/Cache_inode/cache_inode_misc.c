@@ -402,10 +402,9 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
      value.pdata = entry;
      value.len = sizeof(cache_entry_t);
 
-     if((rc =
-         HashTable_SetLatched(fh_to_cache_entry_ht, &key, &value,
-                              &latch, TRUE, NULL, NULL))
-        != HASHTABLE_SUCCESS) {
+     rc = HashTable_SetLatched(fh_to_cache_entry_ht, &key, &value,
+                               &latch, TRUE, NULL, NULL);
+     if ((rc != HASHTABLE_SUCCESS) && (rc != HASHTABLE_OVERWRITTEN)) {
           LogCrit(COMPONENT_CACHE_INODE,
                   "cache_inode_new_entry: entry could not be added to hash, "
                   "rc=%d", rc);
