@@ -452,21 +452,18 @@ state_status_t state_del(state_t              * pstate,
                          state_status_t       * pstatus);
 
 state_status_t state_share_add(cache_entry_t         * pentry,
-                               fsal_op_context_t     * pcontext,
                                state_owner_t         * powner,
                                state_t               * pstate,  /* state that holds share bits to be added */
                                cache_inode_client_t  * pclient,
                                state_status_t        * pstatus);
 
 state_status_t state_share_remove(cache_entry_t         * pentry,
-                                  fsal_op_context_t     * pcontext,
                                   state_owner_t         * powner,
                                   state_t               * pstate,  /* state that holds share bits to be removed */
                                   cache_inode_client_t  * pclient,
                                   state_status_t        * pstatus);
 
 state_status_t state_share_upgrade(cache_entry_t         * pentry,
-                                   fsal_op_context_t     * pcontext,
                                    state_data_t          * pstate_data, /* new share bits */
                                    state_owner_t         * powner,
                                    state_t               * pstate,      /* state that holds current share bits */
@@ -474,7 +471,6 @@ state_status_t state_share_upgrade(cache_entry_t         * pentry,
                                    state_status_t        * pstatus);
 
 state_status_t state_share_downgrade(cache_entry_t         * pentry,
-                                     fsal_op_context_t     * pcontext,
                                      state_data_t          * pstate_data, /* new share bits */
                                      state_owner_t         * powner,
                                      state_t               * pstate,      /* state that holds current share bits */

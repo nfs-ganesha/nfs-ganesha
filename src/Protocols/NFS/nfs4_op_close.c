@@ -184,7 +184,6 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   if(pstate_found->state_type == STATE_TYPE_SHARE)
     {
       if(state_share_remove(pstate_found->state_pentry,
-                            data->pcontext,
                             popen_owner,
                             pstate_found,
                             data->pclient,

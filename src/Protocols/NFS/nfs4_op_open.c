@@ -1261,7 +1261,7 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
          */
         if(new_state)
           {
-            if(state_share_add(pentry_newfile, data->pcontext, powner, *statep,
+            if(state_share_add(pentry_newfile, powner, *statep,
                                data->pclient, &state_status) != STATE_SUCCESS)
               {
                 if(cache_inode_close(pentry_newfile, data->pclient,
@@ -1282,7 +1282,7 @@ static nfsstat4 nfs4_do_open(struct nfs_argop4  * op,
                ((*statep)->state_type == STATE_TYPE_SHARE))
               {
                 LogFullDebug(COMPONENT_STATE, "Update existing share state");
-                if(state_share_upgrade(pentry_newfile, data->pcontext,
+                if(state_share_upgrade(pentry_newfile,
                                        &candidate_data, powner, *statep,
                                        data->pclient,
                                        &state_status) != STATE_SUCCESS)
