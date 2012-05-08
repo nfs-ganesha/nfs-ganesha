@@ -343,6 +343,20 @@ out:
 	ReturnCode(fsal_error, retval);	
 }
 
+/* vfs_share_op
+ * do a share request.  Not supported here.
+ * at least in GPFS, we get the mount dir from
+ * vfs_get_root_fd and the file's fd from myself->fd.
+ * the rest comes from request_share.
+ */
+
+fsal_status_t vfs_share_op(struct fsal_obj_handle *obj_hdl,
+			   void *p_owner,         /* IN (opaque to FSAL) */
+			   fsal_share_param_t  request_share)
+{
+	ReturnCode(ERR_FSAL_NOTSUPP, 0);
+}
+
 /* vfs_close
  * Close the file if it is still open.
  * Yes, we ignor lock status.  Closing a file in POSIX

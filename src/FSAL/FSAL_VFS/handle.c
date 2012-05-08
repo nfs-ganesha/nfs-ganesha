@@ -29,6 +29,10 @@
  * VFS object (file|dir) handle object
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "fsal.h"
 #include <libgen.h>             /* used for 'dirname' */
 #include <pthread.h>
@@ -1361,6 +1365,7 @@ static struct fsal_obj_ops obj_ops = {
 	.write = vfs_write,
 	.commit = vfs_commit,
 	.lock_op = vfs_lock_op,
+	.share_op = vfs_share_op,
 	.close = vfs_close,
 	.rcp = vfs_rcp,
 	.getextattrs = vfs_getextattrs,
