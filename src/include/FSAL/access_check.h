@@ -7,16 +7,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-/*
- * file/object access checking
- * Deprecated
- */
-
-fsal_status_t fsal_check_access(fsal_op_context_t * p_context,   /* IN */
-				fsal_accessflags_t access_type,  /* IN */
-				struct stat *p_buffstat, /* IN */
-				fsal_attrib_list_t * p_object_attributes /* IN */ );
-
 /* fsal_test_access
  * common (default) access check method for fsal_obj_handle objects.
  */

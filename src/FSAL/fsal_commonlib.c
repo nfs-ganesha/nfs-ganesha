@@ -31,6 +31,9 @@
  * on the public part of the fsal api and are therefore sharable by all fsal
  * implementations.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "fsal.h"
 #include <libgen.h>             /* used for 'dirname' */
