@@ -249,8 +249,7 @@ int nfs_Setattr(nfs_arg_t * parg,
                                               setattr.filesize,
                                               &trunc_attr,
                                               pclient, creds, &cache_status);
-          setattr.asked_attributes &= ~FSAL_ATTR_SPACEUSED;
-          setattr.asked_attributes &= ~FSAL_ATTR_SIZE;
+          setattr.asked_attributes &= ~(FSAL_ATTR_SPACEUSED|FSAL_ATTR_SIZE);
         }
     }
   else

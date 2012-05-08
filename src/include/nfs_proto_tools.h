@@ -106,8 +106,7 @@ int nfs_RetryableError(cache_inode_status_t cache_status);
 
 int nfs3_Sattr_To_FSAL_attr(fsal_attrib_list_t * pFSALattr, sattr3 * psattr);
 
-void nfs_SetFailedStatus(fsal_op_context_t * pcontext,
-                         exportlist_t * pexport,
+void nfs_SetFailedStatus(exportlist_t * pexport,
                          int version,
                          cache_inode_status_t status,
                          nfsstat2 * pstatus2,

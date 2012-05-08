@@ -29,6 +29,10 @@
  * Module core functions
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "fsal.h"
 #include <libgen.h>             /* used for 'dirname' */
 #include <pthread.h>

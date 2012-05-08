@@ -131,7 +131,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op,
                                          &secinfo_fh_name,
                                          &attr_secinfo,
                                          data->pclient,
-                                         data->pcontext, &cache_status)) == NULL)
+                                         &data->user_credentials, &cache_status)) == NULL)
     {
       res_SECINFO4.status = nfs4_Errno(cache_status);
       return res_SECINFO4.status;

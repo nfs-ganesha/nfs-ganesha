@@ -475,9 +475,6 @@ static void release_openstate(state_owner_t *popen_owner)
 
   glist_for_each_safe(glist, glistn, &popen_owner->so_owner.so_nfs4_owner.so_state_list)
     {
-      fsal_op_context_t        fsal_context;
-      fsal_status_t            fsal_status;
-
       state_t * pstate_found = glist_entry(glist,
 					   state_t,
 					   state_owner_list);  
@@ -493,25 +490,9 @@ static void release_openstate(state_owner_t *popen_owner)
                 "Ugliness - cache_inode_lru_ref has returned non-success");
       
       pthread_rwlock_wrlock(&pentry->state_lock);
-      /* Construct the fsal context based on the export and root credential */
-      fsal_status = FSAL_GetClientContext(&fsal_context,
-                                          &pstate_found->state_pexport->FS_export_context,
-                                          0,
-                                          0,
-                                          NULL,
-                                          0);
-
-
-      if(FSAL_IS_ERROR(fsal_status))
-        {
-          /* log error here , and continue? */
-          LogEvent(COMPONENT_STATE,
-                   "FSAL_GetClientConext failed");
-        }
-      else if(pstate_found->state_type == STATE_TYPE_SHARE)
+      if(pstate_found->state_type == STATE_TYPE_SHARE)
         {
           if(state_share_remove(pstate_found->state_pentry,
-                                &fsal_context,
                                 popen_owner,
                                 pstate_found,
                                 popen_owner->so_pclient,
