@@ -151,11 +151,6 @@ cache_inode_avl_insert_impl(cache_entry_t *entry, cache_inode_dir_entry_t *v,
         node = avltree_insert(&v->node_hk, t);
         if (! node)
             code = 0;
-        else {
-            v_exist =
-                avltree_container_of(node, cache_inode_dir_entry_t,
-                                     node_hk);
-        }
     }
 
     switch (code) {
