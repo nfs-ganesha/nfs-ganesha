@@ -1,0 +1,204 @@
+# Copyright IBM Corporation, 2012
+#  Contributor: Frank Filz  <ffilz@us.ibm.com>
+#
+#
+# This software is a server that implements the NFS protocol.
+#
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+
+# Tests from locking design
+CLIENTS c1 c2
+
+OK c1 OPEN 1 rw create design.file
+OK c2 OPEN 1 rw        design.file
+
+#===============================================================================
+# test  1 owner-1 acquires a read lock, owner-2 acquires a read lock
+#         (expect success)
+#===============================================================================
+GRANTED  c1    LOCK           1 read  100 100
+GRANTED  c2    LOCK           1 read  100 100
+GRANTED  c1    UNLOCK         1       100 100
+GRANTED  c2    UNLOCK         1       100 100
+
+#===============================================================================
+# test  2 owner-1 acquires a read lock, owner-2 requests a write lock (expect
+#         2nd lock to block)
+#===============================================================================
+GRANTED  c1    LOCK           1 read   200 100
+DENIED   c2    LOCK           1 write  200 100
+         c2 $L LOCKW          1 write  200 100
+SLEEP 1
+         c1 $U UNLOCK         1        200 100
+{
+  EXPECT c2 $L LOCKW  GRANTED 1 write  200 100
+  EXPECT c1 $U UNLOCK GRANTED 1 unlock 200 100
+}
+SLEEP 1
+GRANTED  c2    UNLOCK         1        200 100
+
+#===============================================================================
+# test  3 owner-1 acquires a write lock, owner-2 requests a read lock (expect
+#         2nd lock to block)
+#===============================================================================
+GRANTED  c1    LOCK           1 write  300 100
+DENIED   c2    LOCK           1 read   300 100
+         c2 $L LOCKW          1 read   300 100
+SLEEP 1
+         c1 $U UNLOCK         1        300 100
+{
+  EXPECT c2 $L LOCKW  GRANTED 1 read   300 100
+  EXPECT c1 $U UNLOCK GRANTED 1 unlock 300 100
+}
+SLEEP 1
+GRANTED  c2    UNLOCK         1        300 100
+
+#===============================================================================
+# test  4 owner-1 acquires a write lock, owner-2 requests a write lock (expect
+#         2nd lock to block)
+#===============================================================================
+GRANTED  c1    LOCK           1 write  300 100
+DENIED   c2    LOCK           1 write  300 100
+         c2 $L LOCKW          1 write  300 100
+SLEEP 1
+         c1 $U UNLOCK         1        300 100
+{
+  EXPECT c2 $L LOCKW  GRANTED 1 write  300 100
+  EXPECT c1 $U UNLOCK GRANTED 1 unlock 300 100
+}
+SLEEP 1
+GRANTED  c2    UNLOCK         1        300 100
+
+#===============================================================================
+# test  5 Test lock splitting: acquire lock on range 0-15, release 0-7 (expect
+#         to see 8-15 still locked), release 10-11 (expect to see 8-9 and 12-15
+#         still locked), release 14-15 (test to see 12-13 still locked) acquire
+#         16-31, acquire 32-63, release 30-33 (test to see 12-13, 16-29, 34-63
+#         still locked), release 0-EOF (represented as offset 0, length 0,
+#         test to see all locks released)
+#===============================================================================
+GRANTED  c1    LOCK           1 read    0  16
+DENIED   c2    LOCK           1 write   0  16
+GRANTED  c1    UNLOCK         1         0   8
+DENIED   c2    LOCK           1 write   8   8
+GRANTED  c2    LOCK           1 write   0   8
+GRANTED  c2    UNLOCK         1         0   8
+GRANTED  c1    UNLOCK         1        10   2
+DENIED   c2    LOCK           1 write   8   2
+DENIED   c2    LOCK           1 write  12   4
+GRANTED  c2    LOCK           1 read    8   2
+GRANTED  c2    UNLOCK         1         8   2
+GRANTED  c1    UNLOCK         1        14   2
+DENIED   c2    LOCK           1 write   8   2
+DENIED   c2    LOCK           1 write  12   2
+GRANTED  c2    LOCK           1 write  14   0
+GRANTED  c2    UNLOCK         1        14   0
+GRANTED  c1    LOCK           1 read   16  16
+DENIED   c2    LOCK           1 write  16  16
+GRANTED  c2    LOCK           1 write  14   2
+GRANTED  c2    LOCK           1 write  32   0
+GRANTED  c2    UNLOCK         1        14   2
+GRANTED  c2    UNLOCK         1        32   0
+GRANTED  c1    LOCK           1 read   32  32
+DENIED   c2    LOCK           1 write  32  32
+GRANTED  c1    UNLOCK         1        30   4
+DENIED   c2    LOCK           1 write  12   2
+DENIED   c2    LOCK           1 write  16  14
+DENIED   c2    LOCK           1 write  34  30
+GRANTED  c2    LOCK           1 write  30   4
+GRANTED  c2    UNLOCK         1        30   4
+GRANTED  c1    UNLOCK         1         0   0
+GRANTED  c2    LOCK           1 write   0   0
+GRANTED  c2    UNLOCK         1         0   0
+
+# test  5a try to combine different types of locks
+GRANTED  c1    LOCK           1 write   0   4
+GRANTED  c1    LOCK           1 write   8   4
+GRANTED  c1    LOCK           1 read    4   4
+DENIED   c2    LOCK           1 write   0   4
+DENIED   c2    LOCK           1 write   4   4
+DENIED   c2    LOCK           1 write   8   4
+DENIED   c2    LOCK           1 write   0  12
+GRANTED  c2    LOCK           1 read    4   4
+GRANTED  c1    UNLOCK         1         0   0
+GRANTED  c2    UNLOCK         1         0   0
+
+#===============================================================================
+# test  6 acquire whole file lock one byte at a time in sequence 0-0, 2-2, 1-1,
+#         4-4, 3-3 (will verify no leaks in lock resources by combining locks -
+#        there should never be more than two locks existing at once). Note that
+#        this test will want to set some reasonable maximum since acquiring a
+#        whole file lock on a 2 GB or larger file one byte at a time might take
+#        forever. If this test passes without crashing Ganesha, Ganesha probably
+#        isn't leaking locks... (we can also enable debug to verify - long term
+#        we will need some objective ways for FVT to determine if Ganesha is
+#        leaking memory)
+#===============================================================================
+GRANTED  c1    HOP            1 read    0 10000
+DENIED   c2    LOCK           1 write   0 10000
+GRANTED  c1    UNHOP          1         0 10000
+GRANTED  c1    HOP            1 write   0 10000
+DENIED   c2    LOCK           1 read    0 10000
+GRANTED  c1    UNHOP          1         0 10000
+
+#===============================================================================
+# test  7 Open and close several files, perform some lock TEST operations on
+#         several files, acquire locks on several files, close files (some with
+#         locks still active).
+#===============================================================================
+# test currently not implemented because TEST operation is unreliable
+# also see split_lock test
+
+#===============================================================================
+# test  8 Test deadlock condition: owner-1 acquires read lock on 0-7, owner-2
+#         acquires read lock on 8-15, owner-1 requests write lock on 8-15
+#         (blocks), owner-2 requests write lock on 0-7 (deadlock (test case
+#         should see EDEADLK return from lock call))
+#===============================================================================
+# test kept separate as deadlock due to possibility test may not work for
+# all possible combinations of how c1 and c2 are run
+
+#===============================================================================
+# test  9 Complex Deadlock: owner-1 acquires read lock on 0-7, owner-2 acquires
+# read lock on 8-15, owner-3 acquires read lock on 16-23, owner-1 requests write
+# lock on 16-23 (blocks), owner-2 requests write-lock on 0-7 (blocks), owner-3
+# requests write lock on 8-15 (deadlock).
+#===============================================================================
+# test kept separate as deadlock due to possibility test may not work for
+# all possible combinations of how c1 and c2 are run, also requires 3rd client.
+
+#===============================================================================
+# test 10 Owner-1 acquires a read lock on 0-3, owner-2 acquires a write lock on
+# 4-7, owner-1 has two threads, owner-1 thread-1 requests a read lock on 4-7
+# (which blocks), owner-1 thread-2 closes the file descriptor (test that all
+# owner-1 locks are released and the blocked lock is cleaned up) (this test is
+# only applicable to NFS v3)
+#===============================================================================
+# Test not implemented, ml_posix_client is single threaded
+
+#===============================================================================
+# test 11 owner-1 acquires a read lock on 0-3, owner-2 acquires a read lock on
+# 0-3, owner-1 does a test for read lock on 0-3 (should succeed), owner-1 does
+# a test for a write lock on 0-3 (should fail)
+#===============================================================================
+# test currently not implemented because TEST operation is unreliable
+
+#===============================================================================
+# test 12 owner-1 acquires a read lock on 0-3, owner-2 acquires a write lock on
+# 4-7, owner-1 does a test for a read lock on 0-3 (should succeed)
+#===============================================================================
+# test currently not implemented because TEST operation is unreliable

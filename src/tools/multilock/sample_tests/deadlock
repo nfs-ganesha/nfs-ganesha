@@ -1,0 +1,85 @@
+# Copyright IBM Corporation, 2012
+#  Contributor: Frank Filz  <ffilz@us.ibm.com>
+#
+#
+# This software is a server that implements the NFS protocol.
+#
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+
+# need three clients for three way deadlock, but it doesn't work, so only
+# two clients
+#CLIENTS c1 c2 c3
+CLIENTS c1 c2
+
+OK c1 OPEN 1 rw create deadlock.file
+OK c2 OPEN 1 rw        deadlock.file
+#OK c3 OPEN 1 rw        deadlock.file
+
+#===============================================================================
+# test  8 Test deadlock condition: owner-1 acquires read lock on 0-7, owner-2
+#         acquires read lock on 8-15, owner-1 requests write lock on 8-15
+#         (blocks), owner-2 requests write lock on 0-7 (deadlock (test case
+#         should see EDEADLK return from lock call))
+#===============================================================================
+# The above description isn't quite right
+
+GRANTED  c1    LOCK             1 read    0 100
+GRANTED  c2    LOCK             1 write 200 100
+         c2 $L LOCKW            1 write   0 100
+DEADLOCK c1    LOCKW            1 read  200 100
+DENIED   c1    LOCK             1 read  200 100
+         c1 $U UNLOCK           1         0 100
+{
+  EXPECT c2 $L LOCKW    GRANTED 1 write   0 100
+  EXPECT c1 $U UNLOCK   GRANTED 1 unlock  0 100
+}
+SLEEP 1
+GRANTED  c2    UNLOCK           1         0 100
+
+#===============================================================================
+# test  9 Complex Deadlock: owner-1 acquires read lock on 0-7, owner-2 acquires
+# read lock on 8-15, owner-3 acquires read lock on 16-23, owner-1 requests write
+# lock on 16-23 (blocks), owner-2 requests write-lock on 0-7 (blocks), owner-3
+# requests write lock on 8-15 (deadlock).
+#===============================================================================
+# Three way deadlock is not detected by kernel on totally local
+QUIT
+
+GRANTED  c1    LOCK             1 read    0   8
+GRANTED  c2    LOCK             1 read    8   8
+GRANTED  c3    LOCK             1 read   16   8
+         c1 $L LOCKW            1 write  16   8
+         c2 $M LOCKW            1 write   0   8
+SLEEP 1
+DEADLOCK c3    LOCKW            1 write   8   8
+         c1 $U UNLOCK           1         0   8
+{
+  EXPECT c2 $M LOCKW    GRANTED 1 write   0   8
+  EXPECT c1 $U UNLOCK   GRANTED 1 unlock  0   8
+}
+SLEEP 1
+GRANTED  c1    UNLOCK           1         0   8
+         c3 $U UNLOCK           1        16   8
+{
+  EXPECT c2 $L LOCKW    GRANTED 1 write  16   8
+  EXPECT c1 $U UNLOCK   GRANTED 1 unlock 16   8
+}
+SLEEP 1
+GRANTED  c2    UNLOCK           1        16   8
+GRANTED  c2    UNLOCK           1         8   8
+
+QUIT
