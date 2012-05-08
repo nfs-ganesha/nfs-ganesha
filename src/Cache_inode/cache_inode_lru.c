@@ -584,8 +584,7 @@ lru_thread_delay_ms(unsigned long ms)
 
      pthread_mutex_lock(&lru_mtx);
      lru_thread_state.flags |= LRU_SLEEPING;
-     woke = (pthread_cond_timedwait(&lru_cv, &lru_mtx, &then)
-             == ETIMEDOUT);
+     woke = (pthread_cond_timedwait(&lru_cv, &lru_mtx, &then) != ETIMEDOUT);
      lru_thread_state.flags &= ~LRU_SLEEPING;
      pthread_mutex_unlock(&lru_mtx);
      return woke;
@@ -901,7 +900,7 @@ lru_thread(void *arg __attribute__((unused)))
                }
           }
 
-          lru_thread_delay_ms(lru_state.threadwait);
+          woke = lru_thread_delay_ms(lru_state.threadwait);
      }
 
      LogEvent(COMPONENT_CACHE_INODE_LRU,
