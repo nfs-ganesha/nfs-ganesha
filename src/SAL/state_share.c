@@ -77,23 +77,20 @@ static unsigned int state_share_get_share_deny(cache_entry_t * pentry);
  * passed to this function.
  */
 static state_status_t do_share_op(cache_entry_t        * pentry,
-                                  fsal_op_context_t    * pcontext,
                                   state_owner_t        * powner,
                                   fsal_share_param_t   * pshare)
 {
   fsal_status_t fsal_status;
   state_status_t status = STATE_SUCCESS;
-  fsal_staticfsinfo_t * pstatic = pcontext->export_context->fe_static_fs_info;
+  struct fsal_obj_handle *obj_hdl = pentry->obj_handle;
 
   /* Quick exit if share reservation is not supported by FSAL */
-  if(!pstatic->share_support)
+  if( !obj_hdl->export->ops->fs_supports(obj_hdl->export, share_support))
     return STATE_SUCCESS;
 
-  fsal_status = FSAL_share_op(cache_inode_fd(pentry),
-                              &pentry->handle,
-                              pcontext,
-                              NULL,
-                              *pshare);
+  fsal_status = pentry->obj_handle->ops->share_op(pentry->obj_handle,
+						  NULL,
+						  *pshare);
 
   status = state_error_convert(fsal_status);
 
@@ -107,7 +104,6 @@ static state_status_t do_share_op(cache_entry_t        * pentry,
 /* This is called when new share state is added. The state lock MUST
    be held. */
 state_status_t state_share_add(cache_entry_t         * pentry,
-                               fsal_op_context_t     * pcontext,
                                state_owner_t         * powner,
                                state_t               * pstate,  /* state that holds share bits to be added */
                                state_status_t        * pstatus)
@@ -163,7 +159,7 @@ state_status_t state_share_add(cache_entry_t         * pentry,
       share_param.share_access = new_pentry_share_access;
       share_param.share_deny = new_pentry_share_deny;
 
-      status = do_share_op(pentry, pcontext, powner, &share_param);
+      status = do_share_op(pentry, powner, &share_param);
       if(status != STATE_SUCCESS)
         {
           /* Revert the ref counted share state of this file. */
@@ -192,7 +188,6 @@ state_status_t state_share_add(cache_entry_t         * pentry,
 /* This is called when a share state is removed.  The state lock MUST
    be held. */
 state_status_t state_share_remove(cache_entry_t         * pentry,
-                                  fsal_op_context_t     * pcontext,
                                   state_owner_t         * powner,
                                   state_t               * pstate,  /* state that holds share bits to be removed */
                                   state_status_t        * pstatus)
@@ -236,7 +231,7 @@ state_status_t state_share_remove(cache_entry_t         * pentry,
       share_param.share_access = new_pentry_share_access;
       share_param.share_deny = new_pentry_share_deny;
 
-      status = do_share_op(pentry, pcontext, powner, &share_param);
+      status = do_share_op(pentry, powner, &share_param);
       if(status != STATE_SUCCESS)
         {
           /* Revert the ref counted share state of this file. */
@@ -264,7 +259,6 @@ state_status_t state_share_remove(cache_entry_t         * pentry,
 /* This is called when share state is upgraded during open.  The
    state ock MUST be held. */
 state_status_t state_share_upgrade(cache_entry_t         * pentry,
-                                   fsal_op_context_t     * pcontext,
                                    state_data_t          * pstate_data, /* new share bits */
                                    state_owner_t         * powner,
                                    state_t               * pstate,      /* state that holds current share bits */
@@ -327,7 +321,7 @@ state_status_t state_share_upgrade(cache_entry_t         * pentry,
       share_param.share_access = new_pentry_share_access;
       share_param.share_deny = new_pentry_share_deny;
 
-      status = do_share_op(pentry, pcontext, powner, &share_param);
+      status = do_share_op(pentry, powner, &share_param);
       if(status != STATE_SUCCESS)
         {
           /* Revert the ref counted share state of this file. */
@@ -360,7 +354,6 @@ state_status_t state_share_upgrade(cache_entry_t         * pentry,
 /* This is called when share is downgraded via open_downgrade op.
    The state lock MUST be held. */
 state_status_t state_share_downgrade(cache_entry_t         * pentry,
-                                     fsal_op_context_t     * pcontext,
                                      state_data_t          * pstate_data, /* new share bits */
                                      state_owner_t         * powner,
                                      state_t               * pstate,      /* state that holds current share bits */
@@ -411,7 +404,7 @@ state_status_t state_share_downgrade(cache_entry_t         * pentry,
       share_param.share_access = new_pentry_share_access;
       share_param.share_deny = new_pentry_share_deny;
 
-      status = do_share_op(pentry, pcontext, powner, &share_param);
+      status = do_share_op(pentry, powner, &share_param);
       if(status != STATE_SUCCESS)
         {
           /* Revert the ref counted share state of this file. */

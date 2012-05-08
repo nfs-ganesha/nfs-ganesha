@@ -606,26 +606,22 @@ void release_openstate(state_owner_t * popen_owner);
 #define OPEN4_SHARE_ACCESS_NONE 0
 
 state_status_t state_share_add(cache_entry_t         * pentry,
-                               fsal_op_context_t     * pcontext,
                                state_owner_t         * powner,
                                state_t               * pstate,  /* state that holds share bits to be added */
                                state_status_t        * pstatus);
 
 state_status_t state_share_remove(cache_entry_t         * pentry,
-                                  fsal_op_context_t     * pcontext,
                                   state_owner_t         * powner,
                                   state_t               * pstate,  /* state that holds share bits to be removed */
                                   state_status_t        * pstatus);
 
 state_status_t state_share_upgrade(cache_entry_t         * pentry,
-                                   fsal_op_context_t     * pcontext,
                                    state_data_t          * pstate_data, /* new share bits */
                                    state_owner_t         * powner,
                                    state_t               * pstate,      /* state that holds current share bits */
                                    state_status_t        * pstatus);
 
 state_status_t state_share_downgrade(cache_entry_t         * pentry,
-                                     fsal_op_context_t     * pcontext,
                                      state_data_t          * pstate_data, /* new share bits */
                                      state_owner_t         * powner,
                                      state_t               * pstate,      /* state that holds current share bits */

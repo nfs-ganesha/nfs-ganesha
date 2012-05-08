@@ -253,7 +253,7 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4  * op,
       return NFS4ERR_INVAL;
     }
 
-  if(state_share_downgrade(pentry_file, data->pcontext, &candidate_data,
+  if(state_share_downgrade(pentry_file, &candidate_data,
                            powner, *statep,
                            &state_status) != STATE_SUCCESS)
     {
