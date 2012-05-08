@@ -2500,17 +2500,17 @@ nfs3_FSALattr_To_PartialFattr(const fsal_attrib_list_t * FSAL_attr,
   if(FSAL_attr->asked_attributes & FSAL_ATTR_ATIME)
     {
       Fattr->atime.seconds = FSAL_attr->atime.seconds;
-      Fattr->atime.nseconds = 0;
+      Fattr->atime.nseconds = FSAL_attr->atime.nseconds;
     }
   if(FSAL_attr->asked_attributes & FSAL_ATTR_MTIME)
     {
       Fattr->mtime.seconds = FSAL_attr->mtime.seconds;
-      Fattr->mtime.nseconds = 0;
+      Fattr->mtime.nseconds = FSAL_attr->mtime.nseconds;
     }
   if(FSAL_attr->asked_attributes & FSAL_ATTR_CTIME)
     {
       Fattr->ctime.seconds = FSAL_attr->ctime.seconds;
-      Fattr->ctime.nseconds = 0;
+      Fattr->ctime.nseconds = FSAL_attr->ctime.nseconds;
     }
 
   return 1;
