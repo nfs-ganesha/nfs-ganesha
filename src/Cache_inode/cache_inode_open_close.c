@@ -317,7 +317,8 @@ cache_inode_close(cache_entry_t *entry,
                        *status, cache_inode_err_str(*status));
                goto unlock;
           }
-          atomic_dec_int(&open_fd_count);
+          if (!FSAL_IS_ERROR(fsal_status))
+              atomic_dec_int(&open_fd_count);
      }
 
      *status = CACHE_INODE_SUCCESS;
