@@ -539,8 +539,8 @@ HashTable_DeleteLatched(struct hash_table *ht,
      struct hash_data *data = NULL;
 
      if (!latch->locator) {
-          HashTable_ReleaseLatched(ht,
-                                   latch);
+          HashTable_ReleaseLatched(ht, latch);
+          return HASHTABLE_SUCCESS;
      }
 
      data = RBT_OPAQ(latch->locator);
@@ -1053,6 +1053,7 @@ HashTable_DelSafe(hash_table_t *ht,
                                             NULL);
           } else {
                rc = HASHTABLE_ERROR_NO_SUCH_KEY;
+               HashTable_ReleaseLatched(ht, &latch);
           }
           break;
 

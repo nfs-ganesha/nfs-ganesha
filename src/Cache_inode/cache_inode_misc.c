@@ -404,6 +404,9 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
 
      rc = HashTable_SetLatched(fh_to_cache_entry_ht, &key, &value,
                                &latch, TRUE, NULL, NULL);
+     /* HashTable_SetLatched release the latch irrespective
+      * of success/failure. */
+     latched = FALSE;
      if ((rc != HASHTABLE_SUCCESS) && (rc != HASHTABLE_OVERWRITTEN)) {
           LogCrit(COMPONENT_CACHE_INODE,
                   "cache_inode_new_entry: entry could not be added to hash, "
@@ -411,8 +414,6 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
           *status = CACHE_INODE_HASH_SET_ERROR;
           goto out;
      }
-     latched = FALSE;
-
 
      LogDebug(COMPONENT_CACHE_INODE,
               "cache_inode_new_entry: New entry %p added", entry);
