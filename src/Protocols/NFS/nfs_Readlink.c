@@ -152,7 +152,7 @@ int nfs_Readlink(nfs_arg_t * parg,
                           &symlink_data,
                           pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
     {
-      if((ptr = Mem_Alloc(FSAL_MAX_NAME_LEN)) == NULL)
+      if((ptr = Mem_Alloc(symlink_data.len+1)) == NULL)
         {
           switch (preq->rq_vers)
             {
