@@ -254,6 +254,7 @@ cache_inode_rdwr(cache_entry_t *entry,
 
                if (fsal_status.major == ERR_FSAL_STALE) {
                     cache_inode_kill_entry(entry, client);
+                    goto out;
                }
 
                if ((fsal_status.major != ERR_FSAL_NOT_OPENED)
