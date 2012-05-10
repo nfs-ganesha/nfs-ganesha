@@ -260,22 +260,24 @@ cache_inode_rdwr(cache_entry_t *entry,
                if ((fsal_status.major != ERR_FSAL_NOT_OPENED)
                    && (entry->object.file.open_fd.openflags
                        != FSAL_O_CLOSED)) {
-                    fsal_status_t cfsal_status = {0, 0};
+                    cache_inode_status_t cstatus;
                     LogFullDebug(COMPONENT_CACHE_INODE,
                                  "cache_inode_rdwr: CLOSING entry %p",
                                  entry);
-
                     pthread_rwlock_unlock(&entry->content_lock);
                     pthread_rwlock_wrlock(&entry->content_lock);
-                    cfsal_status = FSAL_close(&(entry->object.file.open_fd.fd));
-                    if (!FSAL_IS_ERROR(cfsal_status) ||
-                        (cfsal_status.major == ERR_FSAL_NOT_OPENED)) {
-                        entry->object.file.open_fd.openflags = FSAL_O_CLOSED;
+                    cache_inode_close(entry,
+                                      client,
+                                      (CACHE_INODE_FLAG_REALLYCLOSE |
+                                       CACHE_INODE_FLAG_CONTENT_HAVE |
+                                       CACHE_INODE_FLAG_CONTENT_HOLD),
+                                       &cstatus);
+
+                    if (cstatus != CACHE_INODE_SUCCESS) {
+                        LogCrit(COMPONENT_CACHE_INODE_LRU,
+                                "Error closing file in cache_inode_rdwr: %d.",
+                                cstatus); 
                     }
-
-                    if (!FSAL_IS_ERROR(cfsal_status))
-                        atomic_dec_int(&open_fd_count);
-
                     *status = cache_inode_error_convert(fsal_status);
                }
 
