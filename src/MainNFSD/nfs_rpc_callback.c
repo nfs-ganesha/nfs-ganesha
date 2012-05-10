@@ -188,7 +188,7 @@ static inline void
 setup_client_saddr(nfs_client_id_t *clid, const char *uaddr)
 {
     char addr_buf[SOCK_NAME_MAX];
-    uint32_t bytes[10];
+    uint32_t bytes[11];
     int code;
 
     memset(&clid->cb.addr.ss, 0, sizeof(struct sockaddr_storage));
@@ -460,7 +460,7 @@ out:
 static inline bool_t
 nfs_rpc_callback_seccreate(rpc_call_channel_t *chan)
 {
-    nfs_client_cred_t *credential;
+    nfs_client_cred_t *credential = NULL;
     bool_t code = TRUE;
     AUTH *auth;
 
