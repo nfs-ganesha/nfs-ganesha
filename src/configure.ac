@@ -203,6 +203,35 @@ GA_PROG_NETSNMP_CONFIG
 
 # Features options
 
+# Cofigure the allocator
+AC_ARG_WITH([allocator], AS_HELP_STRING([--with-allocator=jemalloc|tcmalloc|libc],
+                                        [specify the memory allocator to use]),
+            [ALLOCATOR="$withval"])
+
+if test "x${with_allocator+set}" == "xset"; then
+        if test "x$ALLOCATOR" = "xjemalloc"; then
+                AC_CHECK_LIB(jemalloc, malloc, ,[AC_MSG_ERROR([libjemalloc cannot be found])])
+        elif test "x$ALLOCATOR" = "xtcmalloc"; then
+                AC_CHECK_LIB(tcmalloc, malloc, ,[AC_MSG_ERROR([libtcmalloc cannot be found])])
+        elif text "x$ALLOCATOR" != "xlibc"; then
+                AC_MSG_ERROR([$ALLOCATOR is not a valid option.])
+        fi
+else
+        AC_CHECK_LIB(jemalloc, malloc, [ALLOCATOR="jemalloc"], [ALLOCATOR=""])
+        if test "x$ALLOCATOR" = "x"; then
+                AC_CHECK_LIB(tcmalloc, malloc, [ALLOCATOR="tcmalloc"], [ALLOCATOR=""])
+        fi
+        if test "x$ALLOCATOR" = "x"; then
+                ALLOCATOR="libc"
+        fi
+fi
+
+if test "x$ALLOCATOR" = "xjemalloc"; then
+        LDFLAGS="$LDFLAGS -ljemalloc"
+elif test "x$ALLOCATOR" = "xtcmalloc"; then
+        LDFLAGS="$LDFLAGS -ltcmalloc"
+fi
+
 
 # NLMv4
 GA_ENABLE_AM_CONDITION([nlm],[enable NLMv4 support (Lock management for NFSv3)],[USE_NLM])
