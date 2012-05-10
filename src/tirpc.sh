@@ -2,11 +2,13 @@
 
 OPWD=`pwd`
 
-TIRPC_REPO='https://github.com/mattbenjamin/libtirpc-lbx.git'
+TIRPC_REPO='git://github.com/mattbenjamin/libtirpc-lbx.git'
 TIRPC_BRANCH='duplex-3'
 
 cd ../contrib
-git clone -b ${TIRPC_BRANCH} ${TIRPC_REPO} libtirpc
+git clone ${TIRPC_REPO} libtirpc
+cd libtirpc
+git checkout -b ${TIRPC_BRANCH} origin/${TIRPC_BRANCH}
 cd ${OPWD}
 
 ./autogen.sh
