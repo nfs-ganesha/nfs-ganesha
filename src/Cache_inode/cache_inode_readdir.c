@@ -664,10 +664,16 @@ cache_inode_readdir(cache_entry_t * dir_entry,
      /* readdir can be done only with a directory */
      if (dir_entry->type != DIRECTORY) {
           *status = CACHE_INODE_BAD_TYPE;
-          goto unlock_attrs;
+          /* no lock acquired so far, just return status */
+          return *status;
      }
 
-     cache_inode_lock_trust_attrs(dir_entry, context, client);
+     /* cache_inode_lock_trust_attrs can return an error, and no lock will be
+        acquired */
+     *status = cache_inode_lock_trust_attrs(dir_entry, context, client);
+     if (*status != CACHE_INODE_SUCCESS)
+       return *status;
+
      /* Check if user (as specified by the credentials) is authorized to read
       * the directory or not */
      if (cache_inode_access_no_mutex(dir_entry,
@@ -785,7 +791,13 @@ cache_inode_readdir(cache_entry_t * dir_entry,
                        dirent, dirent->name.name,
                        dirent->hk.k, dirent->hk.p);
 
-          cache_inode_lock_trust_attrs(entry, context, client);
+          *status = cache_inode_lock_trust_attrs(entry, context, client);
+          if (*status != CACHE_INODE_SUCCESS)
+            {
+              cache_inode_lru_unref(entry, client, 0);
+              goto unlock_dir;
+            }
+
           in_result = cb(cb_opaque,
                          dirent->name.name,
                          &entry->handle,

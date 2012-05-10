@@ -232,16 +232,27 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
                                             context,
                                             client))
          != CACHE_INODE_SUCCESS) {
-          cache_inode_put(entry, client);
-          entry = NULL;
-          return entry;
+       goto out_put;
      }
 
      /* Set the returned attributes */
-     cache_inode_lock_trust_attrs(entry, context, client);
+     *status = cache_inode_lock_trust_attrs(entry, context, client);
+
+     /* cache_inode_lock_trust_attrs may fail, in that case, the
+        attributes are wrong and pthread_rwlock_unlock can't be called
+        again */
+     if(*status != CACHE_INODE_SUCCESS)
+       {
+         goto out_put;
+       }
      *attr = entry->attributes;
      pthread_rwlock_unlock(&entry->attr_lock);
 
+     return entry;
+
+ out_put:
+     cache_inode_put(entry, client);
+     entry = NULL;
      return entry;
 } /* cache_inode_get */
 
