@@ -948,8 +948,6 @@ process_status_t dispatch_rpc_request(SVCXPRT *xprt)
   return (rc);
 }
 
-void svc_xprt_dump_xprts(const char *tag);
-
 static bool_t
 nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
 {
@@ -994,8 +992,6 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
      * the log. */
     int code  __attribute__((unused)) = 0;
     int rpc_fd = xprt->xp_fd;
-
-    svc_xprt_dump_xprts("process_rpc_request");
 
     if(udp_socket[P_NFS] == rpc_fd)
         LogFullDebug(COMPONENT_DISPATCH, "A NFS UDP request fd %d",
@@ -1050,9 +1046,6 @@ nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */)
     (void) svc_rqst_block_events(xprt, SVC_RQST_FLAG_NONE);
 
     code = dispatch_rpc_request(xprt);
-
-    /* XXXX debugging */
-    svc_xprt_dump_xprts("end request");
 
     return (TRUE);
 }
