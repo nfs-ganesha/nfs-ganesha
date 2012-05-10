@@ -355,6 +355,20 @@ fsal_status_t LUSTREFSAL_lock_op( fsal_file_t       * p_file_descriptor,   /* IN
                                   fsal_lock_param_t   request_lock,        /* IN */
                                   fsal_lock_param_t * conflicting_lock)    /* OUT */ ;
 
+fsal_status_t LUSTREFSAL_set_quota(fsal_path_t * pfsal_path,       /* IN */
+                                int quota_type, /* IN */
+                                fsal_uid_t fsal_uid,    /* IN */
+                                fsal_quota_t * pquota,  /* IN */
+                                fsal_quota_t * presquota)  ;     /* OUT */
+
+fsal_status_t LUSTREFSAL_get_quota(fsal_path_t * pfsal_path,       /* IN */
+                                   int quota_type, /* IN */
+                                   fsal_uid_t fsal_uid,    /* IN */
+                                   fsal_quota_t * pquota) ;  /* OUT */
+
+fsal_status_t LUSTREFSAL_check_quota( char              * path,  /* IN */
+                                      fsal_uid_t          fsal_uid) ;     /* IN */
+
 unsigned int LUSTREFSAL_GetFileno(fsal_file_t * pfile);
 #ifdef _PNFS_MDS
 nfsstat4 LUSTREFSAL_MDS_init( ) ;
