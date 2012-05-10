@@ -74,7 +74,7 @@ static gweakref_table_t *cache_inode_wt = NULL;
  */
 void cache_inode_weakref_init()
 {
-    cache_inode_wt = gweakref_init(17);
+    cache_inode_wt = gweakref_init(17, 32767 /* unlike in ht, desire prime */);
 }
 
 /**

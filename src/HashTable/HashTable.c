@@ -606,7 +606,7 @@ HashTable_DeleteLatched(struct hash_table *ht,
 
      /* Clear cache */
      if(partition->cache) {
-         uint64_t offset = cache_offsetof(ht, latch->rbt_hash);
+         uint32_t offset = cache_offsetof(ht, latch->rbt_hash);
          struct rbt_node *cnode = partition->cache[offset];
          if (cnode) {
 #if COMPARE_BEFORE_CLEAR_CACHE
@@ -621,7 +621,7 @@ HashTable_DeleteLatched(struct hash_table *ht,
              }
 #else
              LogFullDebug(COMPONENT_HASHTABLE_CACHE,
-                          "hash clear slot %"PRIu64"\n", offset);
+                          "hash clear slot %d\n", offset);
              partition->cache[offset] = NULL;
 #endif
          }
