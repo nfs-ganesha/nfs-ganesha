@@ -1,10 +1,10 @@
 Draft TI-RPC Instructions
 
-Fetch https://github.com/linuxbox2/nfs-ganesha.git, branch
-new_handle_readdir_tirpc.
+Run src/tirpc.sh to check out the appropriate external libtirpc branch into
+<ganesha-checkout>/contrib.
 
-After fetching the Ganesha source, you would do the following
-from the Ganesha src directory:
+After fetching the Ganesha source, you would do the following from the Ganesha
+src directory:
 
 1. ./tirpc.sh (should fetch a libtirpc tree in to contrib/libtirpc,
 and run autogen.sh
