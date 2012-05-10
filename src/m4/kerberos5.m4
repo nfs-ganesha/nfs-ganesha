@@ -34,7 +34,16 @@ AC_DEFUN([AC_KERBEROS_V5],[
       KRBLIBS=`$K5CONFIG --libs gssapi`
       K5VERS=`$K5CONFIG --version | head -n 1 | awk '{split($(4),v,"."); if (v@<:@"3"@:>@ == "") v@<:@"3"@:>@ = "0"; print v@<:@"1"@:>@v@<:@"2"@:>@v@<:@"3"@:>@ }'`
       AC_DEFINE_UNQUOTED(KRB5_VERSION, $K5VERS, [Define this as the Kerberos version number])
-      K5LIBDIR=[`echo $KRBLIBS | head -1 | sed 's/^.*-L\(.[^ ]\+\) .*$/\1/'`]
+
+      dnl Ok, the baseline test presumably needs review--K5LIBDIR is used
+      dnl incautiously, at best
+      HAVE_K5LIBDIR=`echo $KRBLIBS | grep '\-L'`
+      if test "$HAVE_K5LIBDIR" == ""; then
+	  K5LIBDIR="/usr/lib"
+      else
+	  K5LIBDIR=[`echo $KRBLIBS | head -1 | sed 's/^.*-L\(.[^ ]\+\) .*$/\1/'`]
+      fi
+
       if test -e $dir/include/gssapi/gssapi_krb5.h -a \
                 \( -e $dir/lib/libgssapi_krb5.a -o \
                    -e $dir/lib64/libgssapi_krb5.a -o \
