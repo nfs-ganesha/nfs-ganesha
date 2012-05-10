@@ -365,7 +365,6 @@ lru_remove_entry(cache_inode_lru_t *lru)
      pthread_mutex_unlock(&s->mtx);
      lru->flags &= ~(LRU_ENTRY_L2 | LRU_ENTRY_PINNED);
      /* Anyone interested in this entry should back off immediately. */
-     lru->flags |= LRU_ENTRY_CONDEMNED;
      lru->lane = LRU_NO_LANE;
 }
 
@@ -779,7 +778,7 @@ lru_thread(void *arg __attribute__((unused)))
                         "Starting to reap.");
 
                if (extremis) {
-                    LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+                    LogDebug(COMPONENT_CACHE_INODE_LRU,
                                  "Open FDs over high water mark, "
                                  "reapring aggressively.");
                }
@@ -900,6 +899,10 @@ lru_thread(void *arg __attribute__((unused)))
                     }
                }
           }
+
+          LogDebug(COMPONENT_CACHE_INODE_LRU,
+                  "open_fd_count:%d  t_count:%d\n",
+                  (int)open_fd_count, (int)t_count);
 
           woke = lru_thread_delay_ms(lru_state.threadwait);
      }
@@ -1155,7 +1158,6 @@ cache_inode_lru_get(cache_inode_client_t *client,
                *status = CACHE_INODE_MALLOC_ERROR;
                goto out;
           }
-          entry->lru.flags = 0;
           if (pthread_mutex_init(&entry->lru.mtx, NULL) != 0) {
                ReleaseToPool(entry, &client->pool_entry);
                LogCrit(COMPONENT_CACHE_INODE_LRU,
@@ -1173,6 +1175,7 @@ cache_inode_lru_get(cache_inode_client_t *client,
         nobody can bump the refcount yet. */
      entry->lru.refcount = 2;
      entry->lru.pin_refcnt = 0;
+     entry->lru.flags = 0;
      pthread_mutex_lock(&entry->lru.mtx);
      lru_insert_entry(&entry->lru, 0,
                       lru_lane_of_entry(entry));
