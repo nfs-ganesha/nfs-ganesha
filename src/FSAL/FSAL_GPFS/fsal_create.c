@@ -460,7 +460,9 @@ fsal_status_t GPFSFSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
   status = GPFSFSAL_getattrs(p_dir_handle, p_context, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_link);
+    {
+      goto out_status_fsal_err;
+    }
 
   /* check permission on target directory */
 
@@ -474,7 +476,9 @@ fsal_status_t GPFSFSAL_link(fsal_handle_t * p_target_handle,        /* IN */
     status = fsal_internal_access(p_context, p_dir_handle, access_mask,
                                   &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_link);
+    {
+      goto out_status_fsal_err;
+    }
 
   /* Create the link on the filesystem */
 
@@ -484,9 +488,7 @@ fsal_status_t GPFSFSAL_link(fsal_handle_t * p_target_handle,        /* IN */
 
   if(FSAL_IS_ERROR(status))
     {
-      close(srcfd);
-      close(dstfd);
-      ReturnStatus(status, INDEX_FSAL_link);
+      goto out_status_fsal_err;
     }
 
   /* optionnaly get attributes */
@@ -509,6 +511,10 @@ fsal_status_t GPFSFSAL_link(fsal_handle_t * p_target_handle,        /* IN */
   /* OK */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_link);
 
+ out_status_fsal_err:
+  close(srcfd);
+  close(dstfd);
+  ReturnStatus(status, INDEX_FSAL_link);
 }
 
 /**
@@ -594,7 +600,10 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
   parent_dir_attrs.asked_attributes = GPFS_SUPPORTED_ATTRIBUTES;
   status = GPFSFSAL_getattrs(parentdir_handle, p_context, &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_mknode);
+    {
+      close(fd);
+      ReturnStatus(status, INDEX_FSAL_mknode);
+    }
 
   /* Check the user can write in the directory, and check weither the setgid bit on the directory */
   if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID)
@@ -610,7 +619,10 @@ fsal_status_t GPFSFSAL_mknode(fsal_handle_t * parentdir_handle,     /* IN */
     status = fsal_internal_access(p_context, parentdir_handle, access_mask,
                                   &parent_dir_attrs);
   if(FSAL_IS_ERROR(status))
-    ReturnStatus(status, INDEX_FSAL_mknode);
+    {
+      close(fd);
+      ReturnStatus(status, INDEX_FSAL_mknode);
+    }
 
   /* creates the node, then stats it */
   if((nodetype == FSAL_TYPE_SOCK) &&
