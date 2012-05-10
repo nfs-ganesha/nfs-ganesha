@@ -163,7 +163,36 @@ int _9p_walk( _9p_request_data_t * preq9p,
      /* Build the qid */
      pnewfid->qid.version = 0 ; /* No cache, we want the client to stay synchronous with the server */
      pnewfid->qid.path = (u64)pnewfid->pentry->attributes.fileid ;
-     pnewfid->qid.type = _9P_QTFILE ;
+
+     switch( pfid->pentry->internal_md.type )
+      {
+        case REGULAR_FILE:
+        case CHARACTER_FILE:
+        case BLOCK_FILE:
+        case SOCKET_FILE:
+        case FIFO_FILE:
+          pnewfid->qid.type = _9P_QTFILE ;
+	  break ;
+
+        case SYMBOLIC_LINK:
+          pnewfid->qid.type = _9P_QTSYMLINK ;
+	  break ;
+
+        case DIRECTORY:
+        case FS_JUNCTION:
+          pnewfid->qid.type = _9P_QTDIR ;
+	  break ;
+
+        case UNASSIGNED:
+        case RECYCLED:
+        default:
+          LogMajor( COMPONENT_9P, "implementation error, you should not see this message !!!!!!" ) ;
+          err = EINVAL ;
+          rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
+          return rc ;
+          break ;
+      }
+
    }
 
   /* As much qid as requested fid */

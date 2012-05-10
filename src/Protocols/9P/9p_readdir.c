@@ -93,7 +93,7 @@ int _9p_readdir( _9p_request_data_t * preq9p,
   unsigned int cookie = 0;
   unsigned int end_cookie = 0;
   unsigned int estimated_num_entries = 0 ;
-  unsigned int num_entries = 0 ;
+  long unsigned int num_entries = 0 ;
   unsigned int delta = 0 ;
   int unlock = FALSE ;
   u64 i = 0LL ;
@@ -186,17 +186,18 @@ int _9p_readdir( _9p_request_data_t * preq9p,
       unlock = FALSE ;
    }
   else if(cache_inode_readdir( pfid->pentry,
-                          pfid->pexport->cache_inode_policy,
-                          cookie,
-                          estimated_num_entries - delta,
-                          &num_entries,
-                          (uint64_t *)&end_cookie,
-                          &eod_met,
-                          &dirent_array[delta],
-                          &unlock,
-                          &pwkrdata->cache_inode_client,
-                          &pfid->fsal_op_context, 
-                          &cache_status) != CACHE_INODE_SUCCESS)
+                               pfid->pexport->cache_inode_policy,
+                               cookie,
+                               estimated_num_entries - delta,
+                               &num_entries,
+                               (uint64_t *)&end_cookie,
+                               &eod_met,
+                               &dirent_array[delta],
+                               pwkrdata->ht,
+                               &unlock,
+                               &pwkrdata->cache_inode_client,
+                               &pfid->fsal_op_context, 
+                               &cache_status) != CACHE_INODE_SUCCESS)
     {
       if( unlock ) V_r( &pfid->pentry->lock ) ;
 
