@@ -163,8 +163,8 @@ int _9p_attach( _9p_request_data_t * preq9p,
    }
 
   /* Get the related pentry */
-  memcpy( (char *)&fsdata.handle, (char *)pexport->proot_handle, sizeof( fsal_handle_t ) ) ;
-  fsdata.cookie = 0;
+  memcpy( (char *)&fsdata.fh_desc.start, (char *)pexport->proot_handle, sizeof( fsal_handle_t ) ) ;
+  fsdata.fh_desc.len = sizeof( fsal_handle_t ) ;
 
   /* refcount */
   if (pfid->pentry) {
