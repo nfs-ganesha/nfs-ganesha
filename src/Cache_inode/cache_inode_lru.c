@@ -536,6 +536,7 @@ lru_try_reap_entry(struct lru_q_base *q)
      if (lru->refcount > LRU_SENTINEL_REFCOUNT + 1) {
           /* Someone took a reference while we were waiting for the
              queue.  */
+          --(lru->refcount);
           pthread_mutex_unlock(&lru->mtx);
           pthread_mutex_unlock(&q->mtx);
           return NULL;
@@ -1161,6 +1162,7 @@ cache_inode_lru_get(cache_inode_client_t *client,
                        "pthread_mutex_init of lru.mtx returned %d (%s)",
                        errno,
                        strerror(errno));
+               entry = NULL;
                *status = CACHE_INODE_INIT_ENTRY_FAILED;
                goto out;
           }

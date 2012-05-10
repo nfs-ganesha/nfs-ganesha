@@ -265,6 +265,7 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
           *status = CACHE_INODE_MALLOC_ERROR;
           goto out;
      }
+     assert(entry->lru.refcount > 1);
      /* This should be the sentinel, plus one to use the entry we
         just returned. */
      lrurefed = TRUE;
@@ -444,7 +445,7 @@ out:
           if (latched) {
                HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
           }
-          if (lrurefed) {
+          if (lrurefed && *status != CACHE_INODE_ENTRY_EXISTS) {
                cache_inode_lru_unref(entry, client, LRU_FLAG_NONE);
           }
           if (*status != CACHE_INODE_ENTRY_EXISTS) {
