@@ -77,14 +77,6 @@
 
 int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_locku";
-
-#ifdef _WITH_NO_NFSV4_LOCKS
-  resp->resop = NFS4_OP_LOCKU;
-  res_LOCKU4.status = NFS4ERR_LOCK_NOTSUPP;
-  return res_LOCKU4.status;
-#else
-
   state_status_t      state_status;
   state_t           * pstate_found = NULL;
   state_owner_t     * plock_owner;
@@ -217,7 +209,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   Copy_nfs4_state_req(plock_owner, arg_LOCKU4.seqid, op, data, resp, tag);
 
   return res_LOCKU4.status;
-#endif
+
 }                               /* nfs4_op_locku */
 
 /**

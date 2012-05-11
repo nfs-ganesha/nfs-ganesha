@@ -78,8 +78,6 @@
 
 int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs41_op_lock";
-
   state_status_t            state_status;
   state_data_t              candidate_data;
   state_type_t              candidate_type;
@@ -94,14 +92,8 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   state_blocking_t          blocking = STATE_NON_BLOCKING;
   const char              * tag = "LOCK";
 
-  /* Lock are not supported */
   resp->resop = NFS4_OP_LOCK;
   res_LOCK4.status = NFS4_OK;
-
-#ifdef _WITH_NO_NFSV41_LOCKS
-  res_LOCK4.status = NFS4ERR_LOCK_NOTSUPP;
-  return res_LOCK4.status;
-#else
 
   /*
    * Do basic checks on a filehandle
@@ -430,7 +422,7 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           &lock_desc);
 
   return res_LOCK4.status;
-#endif
+
 }                               /* nfs41_op_lock */
 
 /**

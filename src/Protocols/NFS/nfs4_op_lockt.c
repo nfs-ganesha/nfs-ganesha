@@ -77,14 +77,6 @@
 
 int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-#ifdef _WITH_NO_NFSV4_LOCKS
-  resp->resop = NFS4_OP_LOCKT;
-  res_LOCKT4.status = NFS4ERR_LOCK_NOTSUPP;
-  return res_LOCKT4.status;
-#else
-
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lockt";
-
   state_status_t            state_status;
   nfs_client_id_t         * nfs_client_id;
   state_nfs4_owner_name_t   owner_name;
@@ -236,7 +228,6 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   res_LOCKT4.status = nfs4_Errno_state(state_status);
   return res_LOCKT4.status;
 
-#endif
 }                               /* nfs4_op_lockt */
 
 /**

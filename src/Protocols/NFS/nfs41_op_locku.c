@@ -77,8 +77,6 @@
 
 int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs41_op_locku";
-
   state_status_t      state_status;
   state_t           * pstate_found = NULL;
   state_owner_t     * plock_owner;
@@ -92,12 +90,6 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Initialize to sane default */
   resp->resop = NFS4_OP_LOCKU;
   res_LOCKU4.status = NFS4_OK;
-
-#ifdef _WITH_NO_NFSV4_LOCKS
-  /* Lock are not supported */
-  res_LOCKU4.status = NFS4ERR_LOCK_NOTSUPP;
-  return res_LOCKU4.status;
-#else
 
   /* Do basic checks on a filehandle */
   res_LOCKU4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
@@ -187,7 +179,7 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
                  tag);
 
   return res_LOCKU4.status;
-#endif
+
 }                               /* nfs41_op_locku */
 
 /**

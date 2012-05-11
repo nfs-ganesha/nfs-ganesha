@@ -78,16 +78,6 @@
 
 int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_lock";
-
-#ifdef _WITH_NO_NFSV4_LOCKS
-  /* Lock are not supported */
-  resp->resop = NFS4_OP_LOCK;
-  res_LOCK4.status = NFS4ERR_LOCK_NOTSUPP;
-
-  return res_LOCK4.status;
-#else
-
   state_status_t            state_status;
   state_data_t              candidate_data;
   state_type_t              candidate_type;
@@ -576,7 +566,6 @@ out:
   Copy_nfs4_state_req(presp_owner, seqid, op, data, resp, tag);
 
   return res_LOCK4.status;
-#endif
 }                               /* nfs4_op_lock */
 
 /**
