@@ -1962,13 +1962,20 @@ void nfs_start(nfs_start_info_t * p_start_info)
   /* Print the worker parameters in log */
   Print_param_worker_in_log(&(nfs_param.worker_param));
 
-  /* Set the write verifiers */
-  memset(NFS3_write_verifier, 0, sizeof(writeverf3));
-  memcpy(NFS3_write_verifier, &ServerBootTime, sizeof(time_t));
+  {
+    /* Set the write verifiers */
+    union
+    {
+      verifier4  NFS4_write_verifier;  /* NFS V4 write verifier */
+      writeverf3 NFS3_write_verifier; /* NFS V3 write verifier */
+      uint64_t   epoch;
+    } build_verifier;
 
-  memset(NFS4_write_verifier, 0, sizeof(verifier4));
-  memcpy(NFS4_write_verifier, &ServerBootTime, sizeof(time_t));
+    build_verifier.epoch = (uint64_t) ServerEpoch;
 
+    memcpy(NFS3_write_verifier, build_verifier.NFS3_write_verifier, sizeof(NFS3_write_verifier));
+    memcpy(NFS4_write_verifier, build_verifier.NFS4_write_verifier, sizeof(NFS4_write_verifier));
+  }
   /* Initialize all layers and service threads */
   nfs_Init(p_start_info);
 

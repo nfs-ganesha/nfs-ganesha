@@ -76,8 +76,6 @@ static int op_dswrite(struct nfs_argop4 *op,
  *
  */
 
-extern verifier4 NFS4_write_verifier;   /* NFS V4 write verifier from nfs_Main.c     */
-
 #define arg_WRITE4 op->nfs_argop4_u.opwrite
 #define res_WRITE4 resp->nfs_resop4_u.opwrite
 

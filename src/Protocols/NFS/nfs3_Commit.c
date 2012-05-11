@@ -78,14 +78,12 @@
  *
  */
 
-extern writeverf3 NFS3_write_verifier;  /* NFS V3 write verifier      */
-
 int nfs3_Commit(nfs_arg_t *parg,
                 exportlist_t *pexport,
                 fsal_op_context_t *pcontext,
                 nfs_worker_data_t *pworker,
                 struct svc_req *preq,
-                nfs_res_t * pres)
+                nfs_res_t *pres)
 {
   cache_inode_status_t cache_status;
   cache_entry_t *pentry = NULL;

@@ -87,8 +87,6 @@ static int op_dscommit(struct nfs_argop4 *op,
  *
  */
 
-extern verifier4 NFS4_write_verifier;   /* NFS V4 write verifier */
-
 #define arg_COMMIT4 op->nfs_argop4_u.opcommit
 #define res_COMMIT4 resp->nfs_resop4_u.opcommit
 

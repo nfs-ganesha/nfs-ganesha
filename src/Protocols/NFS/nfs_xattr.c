@@ -1011,8 +1011,6 @@ out:
 
 }
 
-extern writeverf3 NFS3_write_verifier;  /* NFS V3 write verifier      */
-
 int nfs3_Write_Xattr(nfs_arg_t * parg,
                      exportlist_t * pexport,
                      fsal_op_context_t * pcontext,

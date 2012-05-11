@@ -81,7 +81,6 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  *
  */
-extern writeverf3 NFS3_write_verifier;  /* NFS V3 write verifier      */
 
 int nfs_Write(nfs_arg_t *parg,
               exportlist_t *pexport,

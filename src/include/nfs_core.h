@@ -645,6 +645,9 @@ extern nfs_parameter_t nfs_param;
 extern time_t ServerBootTime;
 extern time_t ServerEpoch;
 
+extern verifier4 NFS4_write_verifier;  /* NFS V4 write verifier */
+extern writeverf3 NFS3_write_verifier; /* NFS V3 write verifier */
+
 extern nfs_worker_data_t *workers_data;
 extern char config_path[MAXPATHLEN];
 extern char pidfile_path[MAXPATHLEN] ;
