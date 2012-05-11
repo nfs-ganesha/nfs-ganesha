@@ -885,21 +885,21 @@ cache_inode_status_t cache_inode_commit(cache_entry_t *entry,
                                         fsal_op_context_t *context,
                                         cache_inode_status_t *status);
 
-cache_inode_status_t cache_inode_readdir_populate(
-     cache_entry_t *pentry_dir,
-     cache_inode_client_t *pclient,
-     fsal_op_context_t *pcontext,
-     cache_inode_status_t *pstatus);
-cache_inode_status_t cache_inode_readdir(
-     cache_entry_t * dir_entry,
-     uint64_t cookie,
-     unsigned int *nbfound,
-     bool_t *eod_met,
-     cache_inode_client_t *client,
-     fsal_op_context_t *context,
-     cache_inode_readdir_cb_t cb,
-     void *cb_opaque,
-     cache_inode_status_t *status);
+cache_inode_status_t cache_inode_readdir_populate( cache_entry_t *pentry_dir,
+                                                  cache_inode_client_t *pclient,
+                                                  fsal_op_context_t *pcontext,
+                                                  cache_inode_status_t *pstatus);
+
+cache_inode_status_t cache_inode_readdir( cache_entry_t * dir_entry,
+                                          uint64_t cookie,
+                                          unsigned int *nbfound,
+                                          bool_t *eod_met,
+                                          cache_inode_client_t *client,
+                                          fsal_op_context_t *context,
+                                          cache_inode_readdir_cb_t cb,
+                                          void *cb_opaque,
+                                          cache_inode_status_t *status);
+
 cache_inode_status_t cache_inode_add_cached_dirent(
      cache_entry_t *pdir,
      fsal_name_t *pname,
@@ -908,37 +908,39 @@ cache_inode_status_t cache_inode_add_cached_dirent(
      cache_inode_client_t *pclient,
      fsal_op_context_t *pcontext,
      cache_inode_status_t *pstatus);
-cache_entry_t *cache_inode_make_root(cache_inode_fsal_data_t *pfsdata,
-                                     cache_inode_client_t *pclient,
-                                     fsal_op_context_t *pcontext,
-                                     cache_inode_status_t *pstatus);
 
-cache_inode_status_t cache_inode_check_trust(
-     cache_entry_t *entry,
-     fsal_op_context_t *context,
-     cache_inode_client_t *client);
+cache_entry_t *cache_inode_make_root( cache_inode_fsal_data_t *pfsdata,
+                                      cache_inode_client_t *pclient,
+                                      fsal_op_context_t *pcontext,
+                                      cache_inode_status_t *pstatus);
+
+cache_inode_status_t cache_inode_check_trust( cache_entry_t *entry,
+                                              fsal_op_context_t *context,
+                                              cache_inode_client_t *client);
 
 cache_inode_file_type_t cache_inode_fsal_type_convert(fsal_nodetype_t type);
-int cache_inode_type_are_rename_compatible(cache_entry_t *pentry_src,
-                                           cache_entry_t *pentry2);
+
+int cache_inode_type_are_rename_compatible( cache_entry_t *pentry_src,
+                                            cache_entry_t *pentry2);
+
 void cache_inode_print_dir(cache_entry_t *cache_entry_root);
 
-cache_inode_status_t cache_inode_statfs(cache_entry_t *pentry,
-                                        fsal_dynamicfsinfo_t *dynamicinfo,
-                                        fsal_op_context_t *pcontext,
-                                        cache_inode_status_t *pstatus);
+cache_inode_status_t cache_inode_statfs( cache_entry_t *pentry,
+                                         fsal_dynamicfsinfo_t *dynamicinfo,
+                                         fsal_op_context_t *pcontext,
+                                         cache_inode_status_t *pstatus);
 
-cache_inode_status_t cache_inode_is_dir_empty(cache_entry_t *pentry);
-cache_inode_status_t cache_inode_is_dir_empty_WithLock(cache_entry_t *pentry);
+cache_inode_status_t cache_inode_is_dir_empty( cache_entry_t *pentry );
+cache_inode_status_t cache_inode_is_dir_empty_WithLock( cache_entry_t *pentry );
 
-cache_inode_status_t cache_inode_add_avl(cache_entry_t *pentry,
-                                         fsal_name_t *pname,
-                                         fsal_name_t *newname);
+cache_inode_status_t cache_inode_add_avl( cache_entry_t *pentry,
+                                          fsal_name_t *pname,
+                                          fsal_name_t *newname );
 
-cache_inode_status_t cache_inode_invalidate_all_cached_dirent(
-     cache_entry_t *entry,
-     cache_inode_client_t *client,
-     cache_inode_status_t *status);
+cache_inode_status_t cache_inode_invalidate_all_cached_dirent( cache_entry_t *entry,
+                                                               cache_inode_client_t *client,
+                                                               cache_inode_status_t *status);
+
 void cache_inode_release_dirents(cache_entry_t           * pentry,
                                  cache_inode_client_t    * pclient,
                                  cache_inode_avl_which_t   which);

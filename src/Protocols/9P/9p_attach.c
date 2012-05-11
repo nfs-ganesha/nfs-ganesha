@@ -163,7 +163,7 @@ int _9p_attach( _9p_request_data_t * preq9p,
    }
 
   /* Get the related pentry */
-  fsdata.fh_desc.start = pexport->proot_handle ;
+  fsdata.fh_desc.start = (char *)pexport->proot_handle ;
   fsdata.fh_desc.len = sizeof( fsal_handle_t ) ;
 
   /* refcount */
@@ -173,10 +173,10 @@ int _9p_attach( _9p_request_data_t * preq9p,
 
   /* refcount +1 */
   pfid->pentry = cache_inode_get( &fsdata,
-                                  pexport->cache_inode_policy,
                                   &fsalattr,
                                   &pwkrdata->cache_inode_client,
                                   &pfid->fsal_op_context,
+                                  NULL,
                                   &cache_status ) ;
 
   if( pfid->pentry == NULL )

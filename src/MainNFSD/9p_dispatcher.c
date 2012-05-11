@@ -50,6 +50,7 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
+#include "LRU_List.h"
 #include "stuff_alloc.h"
 #include "nfs_init.h"
 #include "nfs_core.h"
@@ -71,9 +72,6 @@
 
 void DispatchWork9P( request_data_t *preq, unsigned int worker_index)
 {
-  LRU_entry_t *pentry = NULL;
-  LRU_status_t status;
-
   LogDebug(COMPONENT_DISPATCH,
            "Awaking Worker Thread #%u for 9P request %p, tcpsock=%lu",
            worker_index, preq, preq->rcontent._9p.pconn->sockfd);
@@ -81,20 +79,8 @@ void DispatchWork9P( request_data_t *preq, unsigned int worker_index)
   P(workers_data[worker_index].wcb.tcb_mutex);
   P(workers_data[worker_index].request_pool_mutex);
 
-  pentry = LRU_new_entry(workers_data[worker_index].pending_request, &status);
-
-  if(pentry == NULL)
-    {
-      V(workers_data[worker_index].request_pool_mutex);
-      V(workers_data[worker_index].wcb.tcb_mutex);
-      LogMajor(COMPONENT_DISPATCH,
-               "Error while inserting 9P pending request to Worker Thread #%u... Exiting",
-               worker_index);
-      Fatal();
-    }
-
-  pentry->buffdata.pdata = (caddr_t) preq;
-  pentry->buffdata.len = sizeof(*preq);
+  glist_add_tail(&workers_data[worker_index].pending_request, &preq->pending_req_queue);
+  workers_data[worker_index].pending_request_len++;
 
   if(pthread_cond_signal(&(workers_data[worker_index].wcb.tcb_condvar)) == -1)
     {

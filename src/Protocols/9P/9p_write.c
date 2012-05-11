@@ -78,7 +78,7 @@ int _9p_write( _9p_request_data_t * preq9p,
   fsal_attrib_list_t attr;
   fsal_boolean_t eof_met;
   cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-  uint64_t stable_flag = FSAL_SAFE_WRITE_TO_FS;
+  uint64_t stable_flag = CACHE_INODE_SAFE_WRITE_TO_FS;
 
   caddr_t databuffer = NULL ;
 
@@ -110,10 +110,9 @@ int _9p_write( _9p_request_data_t * preq9p,
 
   if(cache_inode_rdwr( pfid->pentry,
                        CACHE_INODE_WRITE,
-                       &seek_descriptor,
+                       *offset,
                        size,
                        &written_size,
-                       &attr,
                        databuffer,
                        &eof_met,
                        &pwkrdata->cache_inode_client,
