@@ -243,9 +243,8 @@ static int fsal_up_thread_exists(exportlist_t *entry)
       if (pcurrent->use_fsal_up == FALSE)
         continue;
 
-      /* Should I check if major as well as minor are different? */
-      if (((pcurrent->filesystem_id.major != entry->filesystem_id.major)
-           || (pcurrent->filesystem_id.minor != entry->filesystem_id.minor)))
+      /* Only check if major is different */
+      if (pcurrent->filesystem_id.major != entry->filesystem_id.major)
         continue;
 
       /* Is this the right wayt to check if a pthread reference is valid? */
