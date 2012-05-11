@@ -303,7 +303,7 @@ if test "$enable_tirpc" == "yes"; then
 	# My auto-foo doesn't extend to this
 	#AC_CONFIG_SUBDIRS([../contrib/libtirpc])
 	CFLAGS="-I${TIRPCDIR}/tirpc/ $CFLAGS"
-	TIRPC_LIB="${TIRPCDIR}/src/libtirpc.la"
+	TIRPC_LIB="${TIRPCDIR}/src/libntirpc.la"
 	TIRPC_LIBS="$TIRPC_LIB"
 fi
 
