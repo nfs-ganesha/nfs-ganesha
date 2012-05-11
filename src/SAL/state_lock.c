@@ -226,22 +226,6 @@ const char *str_blocked(state_blocking_t blocked)
   return "unknown       ";
 }
 
-int display_lock_cookie(const char *cookie, int len, char *str)
-{
-  unsigned int i = 0;
-  char *strtmp = str;
-
-  if(cookie == NULL)
-    return sprintf(str, "<NULL>");
-
-  strtmp += sprintf(strtmp, "%d:", len);
-
-  for(i = 0; i < len; i++)
-    strtmp += sprintf(strtmp, "%02x", (unsigned char)cookie[i]);
-
-  return strtmp - str;
-}
-
 /******************************************************************************
  *
  * Function to compare lock parameters
@@ -993,16 +977,16 @@ static void grant_blocked_locks(cache_entry_t        * pentry,
 
 int display_lock_cookie_key(hash_buffer_t * pbuff, char *str)
 {
-  return display_lock_cookie((char *)pbuff->pdata, pbuff->len, str);
+  return DisplayOpaqueValue((char *)pbuff->pdata, pbuff->len, str);
 }
 
 int display_lock_cookie_entry(state_cookie_entry_t * he, char * str)
 {
   char *tmp = str;
 
-  tmp += sprintf(tmp, "%p: cookie {", he);
-  tmp += display_lock_cookie(he->sce_pcookie, he->sce_cookie_size, tmp);
-  tmp += sprintf(tmp, "} entry {%p fileid=%"PRIu64"} lock {",
+  tmp += sprintf(tmp, "%p: cookie ", he);
+  tmp += DisplayOpaqueValue(he->sce_pcookie, he->sce_cookie_size, tmp);
+  tmp += sprintf(tmp, " entry {%p fileid=%"PRIu64"} lock {",
                  he->sce_pentry,
                  (uint64_t)he->sce_pentry->attributes.fileid);
   if(he->sce_lock_entry != NULL)
@@ -1151,7 +1135,7 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
     }
 
   if(isFullDebug(COMPONENT_STATE))
-    display_lock_cookie(pcookie, cookie_size, str);
+    DisplayOpaqueValue(pcookie, cookie_size, str);
 
   hash_entry = gsh_malloc(sizeof(*hash_entry));
   if(hash_entry == NULL)

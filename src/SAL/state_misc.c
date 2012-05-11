@@ -46,6 +46,8 @@
 #include <time.h>
 #include <pthread.h>
 #include <string.h>
+#include <ctype.h>
+#include <assert.h>
 
 #include "log.h"
 #include "HashData.h"
@@ -941,4 +943,41 @@ void state_wipe_file(cache_entry_t        * pentry)
     {
       pthread_rwlock_unlock(&pentry->state_lock);
     }
+}
+
+int DisplayOpaqueValue(char * value, int len, char * str)
+{
+  unsigned int   i = 0;
+  char         * strtmp = str;
+
+  if(value == NULL || len == 0)
+    return sprintf(str, "(NULL)");
+
+  strtmp += sprintf(strtmp, "(%d:", len);
+
+  assert(len > 0);
+
+  if(len < 0 || len > 1024)
+    len = 1024;
+
+  for(i = 0; i < len; i++)
+    if(!isprint(value[i]))
+      break;
+
+  if(i == len)
+    {
+      memcpy(strtmp, value, len);
+      strtmp += len;
+      *strtmp = '\0';
+    }
+  else
+    {
+      strtmp += sprintf(strtmp, "0x");
+      for(i = 0; i < len; i++)
+        strtmp += sprintf(strtmp, "%02x", (unsigned char)value[i]);
+    }
+
+  strtmp += sprintf(strtmp, ")");
+
+  return strtmp - str;
 }

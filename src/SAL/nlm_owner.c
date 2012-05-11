@@ -304,7 +304,6 @@ uint64_t nlm_client_rbt_hash_func(hash_parameter_t * p_hparam,
  
 int display_nlm_owner(state_owner_t *pkey, char *str)
 {
-  unsigned int i = 0;
   char *strtmp = str;
 
   if(pkey == NULL)
@@ -314,25 +313,11 @@ int display_nlm_owner(state_owner_t *pkey, char *str)
 
   strtmp += display_nlm_client(pkey->so_owner.so_nlm_owner.so_client, strtmp);
 
-  strtmp += sprintf(strtmp, "} oh=(%u:", pkey->so_owner_len);
+  strtmp += sprintf(strtmp, "} oh=");
 
-  for(i = 0; i < pkey->so_owner_len; i++)
-    if(!isprint(pkey->so_owner_val[i]))
-      break;
+  strtmp += DisplayOpaqueValue(pkey->so_owner_val, pkey->so_owner_len, strtmp);
 
-  if(i == pkey->so_owner_len)
-    {
-      memcpy(strtmp, pkey->so_owner_val, pkey->so_owner_len);
-      strtmp[pkey->so_owner_len] = '\0';
-      strtmp += pkey->so_owner_len;
-    }
-  else for(i = 0; i < pkey->so_owner_len; i++)
-    {
-      sprintf(strtmp, "%02x", (unsigned char)pkey->so_owner_val[i]);
-      strtmp += 2;
-    }
-
-  strtmp += sprintf(strtmp, ") svid=%d", pkey->so_owner.so_nlm_owner.so_nlm_svid);
+  strtmp += sprintf(strtmp, " svid=%d", pkey->so_owner.so_nlm_owner.so_nlm_svid);
   strtmp += sprintf(strtmp, " refcount=%d", pkey->so_refcount);
 
   return strtmp - str;

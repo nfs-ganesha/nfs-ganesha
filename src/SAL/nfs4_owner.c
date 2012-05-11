@@ -56,80 +56,42 @@ pthread_mutex_t nfs4_owner_counter_lock = PTHREAD_MUTEX_INITIALIZER;
 
 int display_nfs4_owner_key(hash_buffer_t * pbuff, char *str)
 {
-  unsigned int              i = 0;
   char                    * type;
   char                    * strtmp = str;
   state_nfs4_owner_name_t * pname = (state_nfs4_owner_name_t *) pbuff->pdata;
-  bool_t                    printable = TRUE;
 
   if(pname->son_islock)
     type = "lock";
   else
     type = "open";
 
-  strtmp += sprintf(strtmp, "clientid=%"PRIx64" %s owner=(%u:",
+  strtmp += sprintf(strtmp, "clientid=%"PRIx64" %s owner=",
                     pname->son_clientid,
-                    type,
-                    pname->son_owner_len);
+                    type);
 
-  for(i = 0; i < pname->son_owner_len; i++)
-    if(!isprint(pname->son_owner_val[i]))
-      {
-        printable = FALSE;
-        strtmp += sprintf(strtmp, "0x");
-        break;
-      }
-
-  if(printable && pname->son_owner_len > 0)
-    strtmp += snprintf(strtmp, pname->son_owner_len, "%s", pname->son_owner_val);
-  else
-    for(i = 0; i < pname->son_owner_len; i++)
-      strtmp += sprintf(strtmp, "%02x", (unsigned char)pname->son_owner_val[i]);
-
-  /* In case snprintf counted \0 at end of owner value */
-  if(*(strtmp - 1) == '\0')
-    --strtmp;
-
-  strtmp += sprintf(strtmp, ")");
+  strtmp += DisplayOpaqueValue(pname->son_owner_val,
+                               pname->son_owner_len,
+                               strtmp);
 
   return strtmp - str;
 }
 
 int display_nfs4_owner(state_owner_t *powner, char *str)
 {
-  unsigned int   i = 0;
   char         * strtmp = str;
-  bool_t         printable = TRUE;
 
   strtmp += sprintf(strtmp, "%s %p:",
                     state_owner_type_to_str(powner->so_type),
                     powner);
 
-  strtmp += sprintf(strtmp, " clientid={%"PRIx64"}",
+  strtmp += sprintf(strtmp, " clientid={%"PRIx64"} owner=",
                     powner->so_owner.so_nfs4_owner.so_clientid);
 
-  strtmp += sprintf(strtmp, " owner=(%u:",
-                    powner->so_owner_len);
+  strtmp += DisplayOpaqueValue(powner->so_owner_val,
+                               powner->so_owner_len,
+                               strtmp);
 
-  for(i = 0; i < powner->so_owner_len; i++)
-    if(!isprint(powner->so_owner_val[i]))
-      {
-        printable = FALSE;
-        strtmp += sprintf(strtmp, "0x");
-        break;
-      }
-
-  if(printable)
-    strtmp += snprintf(strtmp, powner->so_owner_len, "%s", powner->so_owner_val);
-  else
-    for(i = 0; i < powner->so_owner_len; i++)
-      strtmp += sprintf(strtmp, "%02x", (unsigned char)powner->so_owner_val[i]);
-
-  /* In case snprintf counted \0 at end of owner value */
-  if(*(strtmp - 1) == '\0')
-    --strtmp;
-
-  strtmp += sprintf(strtmp, ") confirmed=%u counter=%u seqid=%u refcount=%d",
+  strtmp += sprintf(strtmp, " confirmed=%u counter=%u seqid=%u refcount=%d",
                     powner->so_owner.so_nfs4_owner.so_confirmed,
                     powner->so_owner.so_nfs4_owner.so_counter,
                     powner->so_owner.so_nfs4_owner.so_seqid,

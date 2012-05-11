@@ -143,19 +143,11 @@ void netobj_free(netobj * obj)
 
 void netobj_to_string(netobj *obj, char *buffer, int maxlen)
 {
-  int left = maxlen, pos = 0;
-  char *buf = buffer;
-  buffer[0] = '\0';
-  if (left < 10)
-    return;
-  buf += sprintf(buf, "%08x:", obj->n_len);
-  left -= 9;
-  while(left > 2 && pos < obj->n_len)
-    {
-      buf += sprintf(buf, "%02x", (unsigned char) obj->n_bytes[pos]);
-      left -= 2;
-      pos++;
-    }
+  int len = obj->n_len;
+  if((len * 2) + 10 > maxlen)
+    len = (maxlen - 10) / 2;
+
+  DisplayOpaqueValue(obj->n_bytes, len, buffer);
 }
 
 void nlm_init(void)
