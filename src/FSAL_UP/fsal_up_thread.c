@@ -410,8 +410,11 @@ void *fsal_up_thread(void *Arg)
               return NULL;
             }
           else
-            LogDebug(COMPONENT_FSAL_UP, "Error: FSAL_UP_EB_GetEvents() "
-                     "failed");
+            {
+              LogDebug(COMPONENT_FSAL_UP, "Error: FSAL_UP_EB_GetEvents() "
+                       "failed");
+              continue;
+            }
         }
 
       LogDebug(COMPONENT_FSAL_UP, "Received %lu events to process for filesystem"

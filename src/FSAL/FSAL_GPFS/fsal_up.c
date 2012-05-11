@@ -60,13 +60,18 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
   struct glock fl;
   struct callback_arg callback;
   cache_inode_fsal_data_t pfsal_data;
-  fsal_handle_t *tmp_handlep;
+  fsal_handle_t *tmp_handlep = NULL;
   gpfsfsal_handle_t *phandle;
   int reason = 0;
   unsigned int *fhP;
   cache_inode_fsal_data_t *event_fsal_data;
 
   tmp_handlep = malloc(sizeof(fsal_handle_t));
+  if (tmp_handlep == NULL)
+    {
+      LogCrit(COMPONENT_FSAL, "Error: Could not malloc ... ENOMEM");
+      Return(ERR_FSAL_NOMEM, Mem_Errno, INDEX_FSAL_UP_getevents);
+    }
   memset((char *)tmp_handlep, 0, sizeof(fsal_handle_t)) ;
 
   memset((char *)&pfsal_data, 0, sizeof(pfsal_data));
@@ -93,6 +98,14 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
   callback.fl = &fl;
 
   rc = gpfs_ganesha(OPENHANDLE_INODE_UPDATE, &callback);
+  if (rc != 0)
+    {
+      LogCrit(COMPONENT_FSAL,
+        "Error: OPENHANDLE_INODE_UPDATE failed. rc %d, errno %d", rc, errno);
+      free(tmp_handlep);
+      Return(ERR_FSAL_SERVERFAULT, 0, INDEX_FSAL_UP_getevents);
+    }
+
   LogDebug(COMPONENT_FSAL,
            "inode update: rc %d reason %d update ino %ld",
            rc, reason, callback.buf->st_ino);
@@ -121,7 +134,8 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
 
   memset(*pevents, 0, sizeof(fsal_up_event_t));
   event_fsal_data = &(*pevents)->event_data.event_context.fsal_data;
-  memcpy(event_fsal_data, &pfsal_data, sizeof(cache_inode_fsal_data_t));
+  event_fsal_data->fh_desc.start = (caddr_t)tmp_handlep;
+  event_fsal_data->fh_desc.len = sizeof(*tmp_handlep);
   GPFSFSAL_ExpandHandle(NULL, FSAL_DIGEST_SIZEOF, &(event_fsal_data->fh_desc));
   if (reason == INODE_LOCK_GRANTED) /* Lock Event */
     {
