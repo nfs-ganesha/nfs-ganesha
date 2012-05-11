@@ -144,12 +144,10 @@ int _9p_walk( _9p_request_data_t * preq9p,
            /* refcount +1 */
            if( ( pnewfid->pentry = cache_inode_lookup( pentry,
                                                        &name,
-                                                       pfid->pexport->cache_inode_policy,
                                                        &fsalattr,
                                                        &pwkrdata->cache_inode_client,
                                                        &pfid->fsal_op_context,
-                                                       &cache_status,
-                                                       CACHE_INODE_FLAG_NONE) ) == NULL )
+                                                       &cache_status ) ) == NULL )
             {
               err = _9p_tools_errno( cache_status ) ; ;
               rc = _9p_rerror( preq9p, msgtag, &err, plenout, preply ) ;
@@ -164,7 +162,7 @@ int _9p_walk( _9p_request_data_t * preq9p,
      pnewfid->qid.version = 0 ; /* No cache, we want the client to stay synchronous with the server */
      pnewfid->qid.path = (u64)pnewfid->pentry->attributes.fileid ;
 
-     switch( pfid->pentry->internal_md.type )
+     switch( pfid->pentry->type )
       {
         case REGULAR_FILE:
         case CHARACTER_FILE:

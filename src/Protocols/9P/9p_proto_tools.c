@@ -189,7 +189,7 @@ int _9p_tools_errno( cache_inode_status_t cache_status )
 	rc = EACCES ;
 	break ;
 
-     case CACHE_INODE_FSAL_DELAY:
+     case CACHE_INODE_DELAY:
 	rc = EAGAIN ;
         break ;
 
