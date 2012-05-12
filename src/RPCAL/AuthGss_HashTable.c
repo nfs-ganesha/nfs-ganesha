@@ -207,11 +207,12 @@ uint32_t gss_ctx_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buffclef
   hash_func =
       (unsigned long)pgss_ctx->mech_type + (unsigned long)pgss_ctx->internal_ctx_id;
 
-  /* LogFullDebug(COMPONENT_HASHTABLE,
-                  "gss_ctx_hash_func : 0x%lx%lx --> %lx",
-                  (unsigned long)pgss_ctx->internal_ctx_id,
-                  (unsigned long)pgss_ctx->mech_type,
-                  hash_func ) ; */
+  if(isFullDebug(COMPONENT_HASHTABLE) && isFullDebug(COMPONENT_RPCSEC_GSS))
+    LogFullDebug(COMPONENT_RPCSEC_GSS,
+                 "gss_ctx_hash_func : 0x%lx%lx --> %lx",
+                 (unsigned long)pgss_ctx->internal_ctx_id,
+                 (unsigned long)pgss_ctx->mech_type,
+                 hash_func );
 
   return hash_func % p_hparam->index_size;
 }                               /*  gss_ctx_hash_func */
@@ -244,11 +245,12 @@ uint64_t gss_ctx_rbt_hash_func(hash_parameter_t * p_hparam, hash_buffer_t * buff
   hash_func =
       (unsigned long)pgss_ctx->mech_type ^ (unsigned long)pgss_ctx->internal_ctx_id;
 
-  /* LogFullDebug(COMPONENT_HASHTABLE,
-                  "gss_ctx_rbt_hash_func : 0x%lx%lx --> %lx",
-                  (unsigned long)pgss_ctx->internal_ctx_id,
-                  (unsigned long)pgss_ctx->mech_type,
-                  hash_func ); */
+  if(isFullDebug(COMPONENT_HASHTABLE) && isFullDebug(COMPONENT_RPCSEC_GSS))
+    LogFullDebug(COMPONENT_RPCSEC_GSS,
+                 "gss_ctx_rbt_hash_func : 0x%lx%lx --> %lx",
+                 (unsigned long)pgss_ctx->internal_ctx_id,
+                 (unsigned long)pgss_ctx->mech_type,
+                 hash_func );
 
   return hash_func;
 }                               /* gss_ctx_rbt_hash_func */

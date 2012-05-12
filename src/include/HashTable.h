@@ -117,7 +117,9 @@ struct hash_param
                                             to a string. */
      val_display_function_t val_to_str; /*< Function to convert a
                                             value to a string. */
-     char *name; /*< Name of this hash table. */
+     char *ht_name; /*< Name of this hash table. */
+     log_components_t ht_log_component; /*< Log component to use for this
+                                            hash table */
 };
 
 typedef struct hash_stat

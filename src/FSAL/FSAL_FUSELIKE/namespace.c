@@ -154,6 +154,9 @@ static hash_parameter_t lookup_hash_config = {
   .compare_key = cmp_peers,
   .key_to_str = print_lookup_peer,
   .val_to_str = print_fsnode,
+  .ht_name = "FUSE Lookup Cache",
+  .flags = HT_FLAG_CACHE,
+  .ht_log_component = COMPONENT_FSAL
 };
 
 /* configuration for inode->fsnode hashtable
@@ -167,6 +170,9 @@ static hash_parameter_t nodes_hash_config = {
   .compare_key = cmp_inodes,
   .key_to_str = print_inode,
   .val_to_str = print_fsnode,
+  .ht_name = "FUSE fsnode Cache",
+  .flags = HT_FLAG_CACHE,
+  .ht_log_component = COMPONENT_FSAL
 };
 
 /* namespace structures */

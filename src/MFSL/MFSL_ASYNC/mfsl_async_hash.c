@@ -187,6 +187,10 @@ int mfsl_async_hash_init(void)
   mfsl_hparam.compare_key = mfsl_async_compare_key;
   mfsl_hparam.key_to_str = mfsl_async_display_key;
   mfsl_hparam.val_to_str = mfsl_async_display_not_implemented;
+  mfsl_hparam.ht_name = "MFSL Async Cache";
+  mfsl_hparam.flags = HT_FLAG_CACHE;
+  mfsl_hparam.ht_log_component = COMPONENT_MFSL;
+  
 
   /* Init de la table */
   if((mfsl_ht = HashTable_Init(&mfsl_hparam)) == NULL)

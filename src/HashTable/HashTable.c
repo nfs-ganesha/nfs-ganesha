@@ -196,9 +196,11 @@ Key_Locate(struct hash_table *ht,
      RBT_FIND_LEFT(root, cursor, rbthash);
 
      if (cursor == NULL) {
-          LogFullDebug(COMPONENT_HASHTABLE,
-                       "Key not found: rbthash = %"PRIu64,
-                       rbthash);
+          if(isFullDebug(COMPONENT_HASHTABLE) &&
+             isFullDebug(ht->parameter.ht_log_component))
+               LogFullDebug(ht->parameter.ht_log_component,
+                            "Key not found: rbthash = %"PRIu64,
+                            rbthash);
           return HASHTABLE_ERROR_NO_SUCH_KEY;
      }
 
@@ -216,8 +218,10 @@ Key_Locate(struct hash_table *ht,
      }
 
      if (!found) {
-          LogFullDebug(COMPONENT_HASHTABLE,
-                       "Matching hash found, but no matching key.");
+          if(isFullDebug(COMPONENT_HASHTABLE) &&
+             isFullDebug(ht->parameter.ht_log_component))
+               LogFullDebug(ht->parameter.ht_log_component,
+                            "Matching hash found, but no matching key.");
           return HASHTABLE_ERROR_NO_SUCH_KEY;
      }
 
@@ -480,6 +484,22 @@ HashTable_GetLatch(struct hash_table *ht,
           return rc;
      }
 
+     if(isDebug(COMPONENT_HASHTABLE) &&
+        isFullDebug(ht->parameter.ht_log_component)) {
+          char dispkey[HASHTABLE_DISPLAY_STRLEN];
+
+          if(ht->parameter.key_to_str != NULL)
+               ht->parameter.key_to_str(key, dispkey);
+          else
+               dispkey[0] = '\0';
+
+          LogFullDebug(ht->parameter.ht_log_component,
+                       "Get %s Key=%p {%s} index=%"PRIu32" rbt_hash=%"PRIu64" latch=%p",
+                       ht->parameter.ht_name,
+                       key->pdata, dispkey,
+                       index, rbt_hash, latch);
+     }
+
      /* Acquire mutex */
      if (may_write) {
           pthread_rwlock_wrlock(&(ht->partitions[index].lock));
@@ -496,6 +516,22 @@ HashTable_GetLatch(struct hash_table *ht,
                val->pdata = data->buffval.pdata;
                val->len = data->buffval.len;
           }
+
+          if(isDebug(COMPONENT_HASHTABLE) &&
+             isFullDebug(ht->parameter.ht_log_component)) {
+               char dispval[HASHTABLE_DISPLAY_STRLEN];
+
+               if(ht->parameter.val_to_str != NULL)
+                    ht->parameter.val_to_str(&data->buffval, dispval);
+               else
+                    dispval[0] = '\0';
+
+               LogFullDebug(ht->parameter.ht_log_component,
+                            "Get %s returning Value=%p {%s}",
+                            ht->parameter.ht_name,
+                            data->buffval.pdata, dispval);
+          }
+
      }
 
      if (((rc == HASHTABLE_SUCCESS) ||
@@ -507,6 +543,14 @@ HashTable_GetLatch(struct hash_table *ht,
      } else {
           pthread_rwlock_unlock(&ht->partitions[index].lock);
      }
+
+     if(rc != HASHTABLE_SUCCESS &&
+        isDebug(COMPONENT_HASHTABLE) &&
+        isFullDebug(ht->parameter.ht_log_component))
+          LogFullDebug(ht->parameter.ht_log_component,
+                       "Get %s returning failure %s",
+                       ht->parameter.ht_name,
+                       hash_table_err_to_str(rc));
 
      return rc;
 } /* HashTable_GetLatch */
@@ -580,6 +624,29 @@ HashTable_SetLatched(struct hash_table *ht,
      /* New node for the case of non-overwrite */
      struct rbt_node *mutator = NULL;
 
+     if(isDebug(COMPONENT_HASHTABLE) &&
+        isFullDebug(ht->parameter.ht_log_component)) {
+          char dispkey[HASHTABLE_DISPLAY_STRLEN];
+          char dispval[HASHTABLE_DISPLAY_STRLEN];
+
+          if(ht->parameter.key_to_str != NULL)
+               ht->parameter.key_to_str(key, dispkey);
+          else
+               dispkey[0] = '\0';
+
+          if(ht->parameter.val_to_str != NULL)
+               ht->parameter.val_to_str(val, dispval);
+          else
+               dispval[0] = '\0';
+
+          LogFullDebug(ht->parameter.ht_log_component,
+                       "Set %s Key=%p {%s} Value=%p {%s} index=%"PRIu32" rbt_hash=%"PRIu64,
+                       ht->parameter.ht_name,
+                       key->pdata, dispkey,
+                       val->pdata, dispval,
+                       latch->index, latch->rbt_hash);
+     }
+
      /* In the case of collision */
      if (latch->locator) {
           if (!overwrite) {
@@ -588,6 +655,30 @@ HashTable_SetLatched(struct hash_table *ht,
           }
 
           descriptors = RBT_OPAQ(latch->locator);
+
+          if(isDebug(COMPONENT_HASHTABLE) &&
+             isFullDebug(ht->parameter.ht_log_component)) {
+               char dispkey[HASHTABLE_DISPLAY_STRLEN];
+               char dispval[HASHTABLE_DISPLAY_STRLEN];
+
+               if(ht->parameter.key_to_str != NULL)
+                    ht->parameter.key_to_str(&descriptors->buffkey, dispkey);
+               else
+                    dispkey[0] = '\0';
+
+               if(ht->parameter.val_to_str != NULL)
+                    ht->parameter.val_to_str(&descriptors->buffval, dispval);
+               else
+                    dispval[0] = '\0';
+
+               LogFullDebug(ht->parameter.ht_log_component,
+                            "Set %s Key=%p {%s} Value=%p {%s} index=%"PRIu32" rbt_hash=%"PRIu64" was replaced",
+                            ht->parameter.ht_name,
+                            descriptors->buffkey.pdata, dispkey,
+                            descriptors->buffval.pdata, dispval,
+                            latch->index, latch->rbt_hash);
+          }
+
           if (stored_key) {
                *stored_key = descriptors->buffkey;
           }
@@ -636,6 +727,15 @@ HashTable_SetLatched(struct hash_table *ht,
 
 out:
      HashTable_ReleaseLatched(ht, latch);
+
+     if(rc != HASHTABLE_SUCCESS &&
+        isDebug(COMPONENT_HASHTABLE) &&
+        isFullDebug(ht->parameter.ht_log_component))
+          LogFullDebug(ht->parameter.ht_log_component,
+                       "Set %s returning failure %s",
+                       ht->parameter.ht_name,
+                       hash_table_err_to_str(rc));
+
      return rc;
 } /* HashTable_SetLatched */
 
@@ -677,6 +777,30 @@ HashTable_DeleteLatched(struct hash_table *ht,
      }
 
      data = RBT_OPAQ(latch->locator);
+
+     if(isDebug(COMPONENT_HASHTABLE) &&
+        isFullDebug(ht->parameter.ht_log_component)) {
+          char dispkey[HASHTABLE_DISPLAY_STRLEN];
+          char dispval[HASHTABLE_DISPLAY_STRLEN];
+
+          if(ht->parameter.key_to_str != NULL)
+               ht->parameter.key_to_str(&data->buffkey, dispkey);
+          else
+               dispkey[0] = '\0';
+
+          if(ht->parameter.val_to_str != NULL)
+               ht->parameter.val_to_str(&data->buffval, dispval);
+          else
+               dispval[0] = '\0';
+
+          LogFullDebug(ht->parameter.ht_log_component,
+                       "Delete %s Key=%p {%s} Value=%p {%s} index=%"PRIu32" rbt_hash=%"PRIu64" was removed",
+                       ht->parameter.ht_name,
+                       data->buffkey.pdata, dispkey,
+                       data->buffval.pdata, dispval,
+                       latch->index, latch->rbt_hash);
+     }
+
      if (stored_key) {
           *stored_key = data->buffkey;
      }

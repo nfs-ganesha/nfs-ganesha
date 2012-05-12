@@ -568,6 +568,9 @@ int cacheinode_init(char *filename, int flag_v, FILE * output)
   cache_param.hparam.compare_key = cache_inode_compare_key_fsal;
   cache_param.hparam.key_to_str = NULL;
   cache_param.hparam.val_to_str = NULL;
+  cache_param.hparam.ht_name = "Cache Inode";
+  cache_param.hparam.flags = HT_FLAG_CACHE;
+  cache_param.hparam.ht_log_component = COMPONENT_CACHE_INODE;
 
   if(flag_v)
     cache_inode_print_conf_hash_parameter(output, cache_param);

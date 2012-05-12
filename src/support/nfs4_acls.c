@@ -39,7 +39,10 @@ static hash_parameter_t fsal_acl_hash_config = {
   .hash_func_both = fsal_acl_hash_both,
   .compare_key = compare_fsal_acl,
   .key_to_str = display_fsal_acl_key,
-  .val_to_str = display_fsal_acl_val
+  .val_to_str = display_fsal_acl_val,
+  .ht_name = "ACL Table",
+  .flags = HT_FLAG_CACHE,
+  .ht_log_component = COMPONENT_NFS_V4_ACL
 };
 
 static hash_table_t *fsal_acl_hash = NULL;

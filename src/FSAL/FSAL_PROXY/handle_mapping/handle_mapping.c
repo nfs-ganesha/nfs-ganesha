@@ -57,7 +57,10 @@ static hash_parameter_t handle_hash_config = {
   .hash_func_rbt = hash_digest_rbt,
   .compare_key = cmp_digest,
   .key_to_str = print_digest,
-  .val_to_str = print_handle
+  .val_to_str = print_handle,
+  .ht_name = "PROXY Handle Cache",
+  .flags = HT_FLAG_CACHE,
+  .ht_log_component = COMPONENT_FSAL
 };
 
 static hash_table_t *handle_map_hash = NULL;
