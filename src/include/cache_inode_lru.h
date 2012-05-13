@@ -95,6 +95,7 @@ extern struct lru_state lru_state;
  */
 
 static const uint32_t LRU_FLAG_NONE = 0x0000;
+static const uint32_t LRU_FLAG_DELETE = 0x0001;
 
 /**
  * The caller is fetching an initial reference

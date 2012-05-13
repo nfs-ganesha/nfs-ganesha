@@ -1368,6 +1368,11 @@ cache_inode_lru_unref(cache_entry_t *entry,
      pthread_mutex_lock(&entry->lru.mtx);
      assert(entry->lru.refcount >= 1);
 
+     if (flags == LRU_FLAG_DELETE) {
+          assert(entry->lru.refcount == 2);
+          entry->lru.refcount = 1; /*Rest of the clean is done by code below */
+     }
+
      if (entry->lru.refcount == 1) {
           struct lru_q_base *q
                = lru_select_queue(entry->lru.flags,

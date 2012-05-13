@@ -206,6 +206,7 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
                       cache_inode_status_t *status)
 {
      cache_entry_t *entry = NULL;
+     cache_entry_t *new_entry = NULL;
      hash_buffer_t key, value;
      int rc = 0;
      bool_t lrurefed = FALSE;
@@ -252,20 +253,51 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
                *status = CACHE_INODE_SUCCESS;
           }
      }
-     /* We hold the latch from this point, doing all initialization
-        that does not require I/O, inserting the entry and releasing
-        the latch before we continue. */
-     latched = TRUE;
+     /* We did not find the object; we need to get a new one.
+        Let us drop the latch and reacquire before inserting it. */
+
+     HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
 
      /* Pull an entry off the LRU */
-     entry = cache_inode_lru_get(client, status, 0);
-     if (entry == NULL) {
+     new_entry = cache_inode_lru_get(client, status, 0);
+     if (new_entry == NULL) {
           LogCrit(COMPONENT_CACHE_INODE,
                   "cache_inode_new_entry: cache_inode_lru_get failed");
           *status = CACHE_INODE_MALLOC_ERROR;
           goto out;
      }
-     assert(entry->lru.refcount > 1);
+     assert(new_entry->lru.refcount > 1);
+     /* Now we got the entry; get the latch and see if someone raced us. */
+     hrc = HashTable_GetLatch(fh_to_cache_entry_ht, &key, &value,
+                              TRUE, &latch);
+     if ((hrc != HASHTABLE_SUCCESS) && (hrc != HASHTABLE_ERROR_NO_SUCH_KEY)) {
+          *status = CACHE_INODE_HASH_TABLE_ERROR;
+          LogCrit(COMPONENT_CACHE_INODE, "Hash access failed with code %d"
+                  " - this should not have happened", hrc);
+          /* Release the new entry we acquired. */
+          cache_inode_lru_unref(new_entry, client, LRU_FLAG_DELETE);
+          goto out;
+     }
+     if (hrc == HASHTABLE_SUCCESS) {
+          /* Entry is already in the cache, do not add it */
+          entry = value.pdata;
+          *status = CACHE_INODE_ENTRY_EXISTS;
+          LogDebug(COMPONENT_CACHE_INODE,
+                   "cache_inode_new_entry: Trying to add an already existing "
+                   "entry. Found entry %p type: %d, New type: %d",
+                   entry, entry->type, type);
+          if (cache_inode_lru_ref(entry, client, LRU_FLAG_NONE) ==
+              CACHE_INODE_SUCCESS) {
+               /* Release the subtree hash table mutex acquired in
+                  HashTable_GetEx */
+               HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
+               /* Release the new entry we acquired. */
+               cache_inode_lru_unref(new_entry, client, LRU_FLAG_DELETE);
+               goto out;
+          }
+     }
+     entry = new_entry;
+     latched = TRUE;
      /* This should be the sentinel, plus one to use the entry we
         just returned. */
      lrurefed = TRUE;
