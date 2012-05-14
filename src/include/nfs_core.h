@@ -314,6 +314,7 @@ typedef struct nfs_session_id_param__
 typedef struct nfs_fsal_up_param__
 {
   struct prealloc_pool event_pool;
+  pthread_mutex_t event_pool_lock;
   unsigned int nb_event_data_prealloc;
 } nfs_fsal_up_parameter_t;
 

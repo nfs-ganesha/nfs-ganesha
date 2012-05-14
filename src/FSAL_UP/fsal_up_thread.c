@@ -148,6 +148,10 @@ void nfs_Init_FSAL_UP()
       Fatal();
     }
 
+  if(pthread_mutex_init(&nfs_param.fsal_up_param.event_pool_lock, NULL) != 0)
+      LogCrit(COMPONENT_FSAL_UP, "FSAL_UP: Could not initialize event pool"
+              " mutex.");
+
   return;
 }
 
@@ -335,6 +339,7 @@ void *fsal_up_thread(void *Arg)
          sizeof(fsal_export_context_t));
 
   fsal_up_context.event_pool = &nfs_param.fsal_up_param.event_pool;
+  fsal_up_context.event_pool_lock = &nfs_param.fsal_up_param.event_pool_lock;
 
   LogDebug(COMPONENT_FSAL_UP, "Initializing FSAL Callback context.");
   status = FSAL_UP_Init(&fsal_up_bus_param, &fsal_up_context);
@@ -438,7 +443,11 @@ void *fsal_up_thread(void *Arg)
           tmpevent = event;
           event = event->next_event;
           free(tmpevent->event_data.event_context.fsal_data.fh_desc.start);
+
+          pthread_mutex_lock(fsal_up_context.event_pool_lock);
           ReleaseToPool(tmpevent, &nfs_param.fsal_up_param.event_pool);
+          pthread_mutex_unlock(fsal_up_context.event_pool_lock);
+
           event_nb--;
         }
 

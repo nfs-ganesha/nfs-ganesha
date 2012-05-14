@@ -129,8 +129,10 @@ fsal_status_t GPFSFSAL_UP_GetEvents( fsal_up_event_t ** pevents,                
 
   /* Here is where we decide what type of event this is
    * ... open,close,read,...,invalidate? */
+  pthread_mutex_lock(pupebcontext->event_pool_lock);
   if (*pevents == NULL)
     GetFromPool(*pevents, pupebcontext->event_pool, fsal_up_event_t);
+  pthread_mutex_unlock(pupebcontext->event_pool_lock);
 
   memset(*pevents, 0, sizeof(fsal_up_event_t));
   event_fsal_data = &(*pevents)->event_data.event_context.fsal_data;
