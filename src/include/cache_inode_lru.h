@@ -88,23 +88,60 @@ struct lru_state
 
 extern struct lru_state lru_state;
 
-/* Externally valid flags for functions in the LRU package */
+/* Flags for functions in the LRU package */
 
 /**
  * No flag at all.
  */
-
 static const uint32_t LRU_FLAG_NONE = 0x0000;
-static const uint32_t LRU_FLAG_DELETE = 0x0001;
+
+/**
+ * Set on pinned (state-bearing) entries.
+ */
+static const uint32_t LRU_ENTRY_PINNED = 0x0001;
+
+/**
+ * Set on LRU entries in the L2 (scanned and colder) queue.
+ */
+static const uint32_t LRU_ENTRY_L2 = 0x0002;
+
+/**
+ * Set on LRU entries that are being deleted
+ */
+static const uint32_t LRU_ENTRY_CONDEMNED = 0x0004;
+
+/**
+ * Set if no more state may be granted.  Different from CONDEMNED in
+ * that outstanding references may exist on the object, but it is no
+ * longer reachable from the hash or weakref tables.
+ */
+static const uint32_t LRU_ENTRY_UNPINNABLE = 0x0008;
+
+/**
+ * Asserting that we wish to delete an entry
+ */
+static const uint32_t LRU_FLAG_DELETE = 0x0010;
+
+/**
+ * Flag indicating that cache_inode_lru_kill has already been called,
+ * making it idempotent and fixing a possible unref leak.
+ */
+static const uint32_t LRU_ENTRY_KILLED = 0x0020;
 
 /**
  * The caller is fetching an initial reference
  */
 static const uint32_t LRU_REQ_INITIAL = 0x0040;
+
 /**
  * The caller is scanning the entry (READDIR)
  */
 static const uint32_t LRU_REQ_SCAN = 0x0080;
+
+/**
+ * The caller holds the lock on the LRU entry.
+ */
+static const uint32_t LRU_FLAG_LOCKED = 0x0100;
 
 /* The minimum reference count for a cache entry not being recycled. */
 
@@ -136,14 +173,16 @@ extern cache_inode_status_t cache_inode_lru_ref(
      cache_entry_t *entry,
      cache_inode_client_t *pclient,
      uint32_t flags) __attribute__((warn_unused_result));
+extern void cache_inode_lru_kill(cache_entry_t *entry,
+                                 cache_inode_client_t *client);
 extern cache_inode_status_t cache_inode_lru_unref(
-     cache_entry_t * entry,
+     cache_entry_t *entry,
      cache_inode_client_t *pclient,
      uint32_t flags);
-void lru_wake_thread(uint32_t flags);
-cache_inode_status_t cache_inode_inc_pin_ref(cache_entry_t *entry);
-void cache_inode_unpinnable(cache_entry_t *entry);
-cache_inode_status_t cache_inode_dec_pin_ref(cache_entry_t *entry);
+extern void lru_wake_thread(uint32_t flags);
+extern cache_inode_status_t cache_inode_inc_pin_ref(cache_entry_t *entry);
+extern void cache_inode_unpinnable(cache_entry_t *entry);
+extern cache_inode_status_t cache_inode_dec_pin_ref(cache_entry_t *entry);
 
 /**
  * Return TRUE if there are FDs available to serve open requests,

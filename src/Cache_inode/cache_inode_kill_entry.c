@@ -122,6 +122,8 @@ cache_inode_kill_entry(cache_entry_t *entry,
 
      cache_inode_weakref_delete(&entry->weakref);
 
-     /* return HashTable (sentinel) reference */
-     cache_inode_lru_unref(entry, client, LRU_FLAG_NONE);
-}                               /* cache_inode_kill_entry */
+     /* Idempotently return the sentry reference.  (This function
+        will only decrement the refcount once, no matter how many
+        times it's called. */
+     cache_inode_lru_kill(entry, client);
+} /* cache_inode_kill_entry */

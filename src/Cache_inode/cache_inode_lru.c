@@ -214,21 +214,6 @@ static struct lru_thread_state
 
 extern cache_inode_gc_policy_t cache_inode_gc_policy;
 
-/**
- * Private flags and constants.
- */
-
-/* Set on pinned (state-bearing) entries. Do we need both of these? */
-#define LRU_ENTRY_PINNED      0x0001
-/* Set on LRU entries in the L2 (scanned and colder) queue. */
-#define LRU_ENTRY_L2          0x0002
-/* Set on LRU entries that are being deleted */
-#define LRU_ENTRY_CONDEMNED   0x0004
-/* Set if no more state may be granted.  Different from CONDEMNED in
-   that outstanding references may exist on the object, but it is no
-   longer reachable from the hash or weakref tables. */
-#define LRU_ENTRY_UNPINNABLE  0x0008
-
 /* Client for the LRU thread.  Also used in the case of a NULL client
    passed to lru_unref.  This is a gross hack and should be
    eliminated as soon as can be reasonably done. */
@@ -1344,15 +1329,49 @@ cache_inode_lru_ref(cache_entry_t *entry,
 }
 
 /**
+ * @brief Destroy the sentinel refcount safely
+ *
+ * This function decrements the refcount by one unless the
+ * LRU_FLAG_KILLED bit is set in the flags word.  This is intended to
+ * allow a function that needs to remove an extra refcount (the
+ * sentinel) to be called multiple times without causing an
+ * underflow.
+ *
+ * @param[in]     entry  The entry to decrement.
+ * @param[in,out] client Structure for shared resource management
+ */
+
+void cache_inode_lru_kill(cache_entry_t *entry,
+                          cache_inode_client_t *client)
+{
+     pthread_mutex_lock(&entry->lru.mtx);
+     if (entry->lru.flags & LRU_ENTRY_KILLED) {
+          pthread_mutex_unlock(&entry->lru.mtx);
+     } else {
+          entry->lru.flags |= LRU_ENTRY_KILLED;
+          /* cache_inode_lru_unref always either unlocks or destroys
+             the entry. */
+          cache_inode_lru_unref(entry, client, LRU_FLAG_LOCKED);
+     }
+}
+
+/**
  * @brief Relinquish a reference
  *
  * This function relinquishes a reference on the given cache entry.
  * It follows the disposal/recycling lock discipline given at the
  * beginning of the file.
  *
+ * The supplied entry is always either unlocked or destroyed by the
+ * time this function returns.
+ *
  * @param[in] entry  The entry on which to release a reference
  * @param[in] client Structure for per-thread resource management
- * @param[in] flags  Flags indicating the type of reference sought
+ * @param[in] flags  Currently significant are LRU_FLAG_DELETE (which
+ *                   indicates that the caller wishes to delete an
+ *                   entry where it holds the only reference) and
+ *                   LRU_FLAG_LOCKED (indicating that the caller
+ *                   holds the LRU mutex lock for this entry.)
  *
  * @retval CACHE_INODE_SUCCESS if the reference was acquired
  */
@@ -1365,7 +1384,9 @@ cache_inode_lru_unref(cache_entry_t *entry,
      if (!client) {
           client = &lru_client;
      }
-     pthread_mutex_lock(&entry->lru.mtx);
+     if (!(flags & LRU_FLAG_LOCKED)) {
+          pthread_mutex_lock(&entry->lru.mtx);
+     }
      assert(entry->lru.refcount >= 1);
 
      if (flags == LRU_FLAG_DELETE) {
