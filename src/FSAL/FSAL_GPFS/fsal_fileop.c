@@ -38,6 +38,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
+#include <sys/fsuid.h>
 
 /**
  * FSAL_open_byname:
@@ -343,7 +344,7 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
   ssize_t nb_written;
   size_t i_size;
   int rc = 0, errsv = 0;
-  int pcall = FALSE;
+  int pcall = FALSE, fsuid, fsgid;
   gpfsfsal_file_t * p_file_descriptor = (gpfsfsal_file_t *)file_desc;
 
   /* sanity checks. */
@@ -415,12 +416,16 @@ fsal_status_t GPFSFSAL_write(fsal_file_t * file_desc,       /* IN */
 
   TakeTokenFSCall();
 
+  fsuid = setfsuid(p_context->credential.user);
+  fsgid = setfsgid(p_context->credential.group);
   if(pcall)
     nb_written = pwrite(p_file_descriptor->fd, buffer, i_size, p_seek_descriptor->offset);
   else
     nb_written = write(p_file_descriptor->fd, buffer, i_size);
   errsv = errno;
 
+  setfsuid(fsuid);
+  setfsgid(fsgid);
   ReleaseTokenFSCall();
 
   /** @todo: manage ssize_t to fsal_size_t convertion */
