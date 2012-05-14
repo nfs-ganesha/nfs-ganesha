@@ -60,7 +60,7 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
 {
 
   int rc = 0, errsv;
-  int setgid_bit = 0;
+  int fsuid, fsgid;
   fsal_status_t status;
 
   int fd, newfd;
@@ -99,10 +99,7 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
       ReturnStatus(status, INDEX_FSAL_create);
     }
 
-  /* Check the user can write in the directory, and check the setgid bit on the directory */
-
-  if(fsal2unix_mode(parent_dir_attrs.mode) & S_ISGID)
-    setgid_bit = 1;
+  /* Check the user can write in the directory */
 
   /* Set both mode and ace4 mask */
   access_mask = FSAL_MODE_MASK_SET(FSAL_W_OK | FSAL_X_OK) |
@@ -122,10 +119,18 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
   /* call to filesystem */
 
   TakeTokenFSCall();
+  fsuid = setfsuid(p_context->credential.user);
+  fsgid = setfsgid(p_context->credential.group);
+
   /* create the file.
    * O_EXCL=>  error if the file already exists */
-  newfd = openat(fd, p_filename->name, O_CREAT | O_WRONLY | O_TRUNC | O_EXCL, unix_mode);
+  newfd = openat(fd,
+                 p_filename->name,
+                 O_CREAT | O_WRONLY | O_TRUNC | O_EXCL,
+                 unix_mode);
   errsv = errno;
+  setfsuid(fsuid);
+  setfsgid(fsgid);
 
   if(newfd < 0)
     {
@@ -161,26 +166,6 @@ fsal_status_t GPFSFSAL_create(fsal_handle_t * p_parent_directory_handle,    /* I
     {
       close(newfd);
       ReturnStatus(status, INDEX_FSAL_create);
-    }
-
-  /* the file has been created */
-  /* chown the file to the current user */
-
-  if(p_context->credential.user != geteuid())
-    {
-      TakeTokenFSCall();
-      /* if the setgid_bit was set on the parent directory, do not change the group of
-          the created file, because it's already the parentdir's group */
-      status = fsal_set_own_by_handle(p_context, p_object_handle,
-                                      p_context->credential.user,
-                                      setgid_bit ? -1 :
-                                      (int)p_context->credential.group);
-      ReleaseTokenFSCall();
-      if(FSAL_IS_ERROR(status))
-        {
-          close(newfd);
-          ReturnStatus(status, INDEX_FSAL_create);
-        }
     }
 
   /* if we got this far successfully, but the file close fails, we've
