@@ -86,13 +86,16 @@ hash_table_t *ht_dupreq_tcp;
 
 void LogDupReq(const char *label, sockaddr_t *addr, long xid, u_long rq_prog)
 {
-  char namebuf[SOCK_NAME_MAX];
+  if(isFullDebug(COMPONENT_DUPREQ))
+    {
+      char namebuf[SOCK_NAME_MAX];
 
-  sprint_sockaddr(addr, namebuf, sizeof(namebuf));
+      sprint_sockaddr(addr, namebuf, sizeof(namebuf));
 
-  LogFullDebug(COMPONENT_DUPREQ,
-               "%s addr=%s xid=%ld rq_prog=%ld",
-               label, namebuf, xid, rq_prog);
+      LogFullDebug(COMPONENT_DUPREQ,
+                   "%s addr=%s xid=%ld rq_prog=%ld",
+                   label, namebuf, xid, rq_prog);
+    }
 }
 
 static unsigned int get_ipproto_by_xprt( SVCXPRT * xprt )
