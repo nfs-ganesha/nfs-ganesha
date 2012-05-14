@@ -10,6 +10,7 @@ libsal_la_SOURCES = state_async.c                    \
                     state_lock.c                     \
                     state_share.c                    \
                     state_misc.c                     \
+                    nfs4_clientid.c                  \
                     nfs4_state.c                     \
                     nfs4_state_id.c                  \
                     nfs4_owner.c                     \
@@ -45,6 +46,9 @@ if USE_PNFS_MDS
 libsal_la_SOURCES += state_layout.c
 endif
 
+if USE_NFS4_1
+libsal_la_SOURCES += nfs41_session_id.c 
+endif
 
 new: clean all
 

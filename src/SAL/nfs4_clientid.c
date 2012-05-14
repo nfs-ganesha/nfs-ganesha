@@ -22,7 +22,7 @@
  *
  * ---------------------------------------
  *
- * nfs_client_id.c : The management of the client id cache.
+ * nfs4_client_id.c : The management of the client id cache.
  *
  * $Header$
  *

@@ -22,7 +22,7 @@
  *
  * ---------------------------------------
  *
- * nfs_session_id.c : The management of the session id cache.
+ * nfs41_session_id.c : The management of the session id cache.
  *
  * $Header$
  *

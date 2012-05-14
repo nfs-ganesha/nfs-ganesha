@@ -22,7 +22,6 @@ libsupport_la_SOURCES =  nfs_export_list.c                  \
                          nfs_stat_mgmt.c                    \
                          nfs_ip_name.c                      \
                          nfs_ip_stats.c                     \
-                         nfs_client_id.c                    \
                          exports.c                          \
                          fridgethr.c                        \
                          lookup3.c                          \
@@ -64,10 +63,6 @@ endif
 
 if USE_NFS4_ACL
 libsupport_la_SOURCES += nfs4_acls.c
-endif
-
-if USE_NFS4_1
-libsupport_la_SOURCES += nfs_session_id.c 
 endif
 
 if ERROR_INJECTION
