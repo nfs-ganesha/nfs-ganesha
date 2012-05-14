@@ -81,15 +81,6 @@ extern bool_t Svc_register(SVCXPRT * xprt, u_long prog, u_long vers, void (*disp
 #define _authenticate __authenticate
 #endif
 
-#ifdef _USE_GSSRPC
-/* These prototypes are missing in gssrpc/xdr.h */
-#define xdr_uint32_t  xdr_u_int32
-bool_t xdr_uint64_t(XDR * __xdrs, uint64_t * __up);
-bool_t xdr_int64_t(XDR * __xdrs, uint64_t * __up);
-bool_t xdr_longlong_t(XDR * __xdrs, quad_t * __llp);
-bool_t xdr_u_longlong_t(XDR * __xdrs, u_quad_t * __ullp);
-#endif
-
 #ifdef _HAVE_GSSAPI
 struct svc_rpc_gss_data
 {
@@ -153,19 +144,6 @@ extern int sprint_sockaddr(sockaddr_t *addr, char *buf, int len);
 extern int sprint_sockip(sockaddr_t *addr, char *buf, int len);
 extern SVCXPRT *Svcxprt_copy(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig);
 extern SVCXPRT *Svcxprt_copycreate();
-
-/* XXX removing */
-#if 0
-typedef enum xprt_type_t
-{
-  XPRT_UNKNOWN,
-  XPRT_UDP,
-  XPRT_TCP,
-  XPRT_RENDEZVOUS,
-} xprt_type_t;
-
-extern xprt_type_t get_xprt_type(SVCXPRT *xprt);
-#endif
 
 extern const char *xprt_type_to_str(xprt_type_t type);
 
