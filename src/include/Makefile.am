@@ -40,7 +40,6 @@ noinst_HEADERS = abstract_atomic.h               \
                  nfs4.h                          \
                  nfsv40.h                        \
                  nfsv41.h                        \
-                 nfs41_session.h                 \
                  nfs_core.h                      \
                  err_inject.h                    \
                  nfs_creds.h                     \

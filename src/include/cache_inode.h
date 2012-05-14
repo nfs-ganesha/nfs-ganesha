@@ -57,9 +57,6 @@
 #include "nlm4.h"
 #endif
 #include "nlm_list.h"
-#ifdef _USE_NFS4_1
-#include "nfs41_session.h"
-#endif /* _USE_NFS4_1 */
 #ifdef _USE_NFS4_ACL
 #include "nfs4_acls.h"
 #endif /* _USE_NFS4_ACL */

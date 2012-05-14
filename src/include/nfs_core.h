@@ -47,7 +47,6 @@
 #include "LRU_List.h"
 #include "fsal.h"
 #include "cache_inode.h"
-#include "sal_data.h"
 #include "nfs_stat.h"
 #include "external_tools.h"
 
@@ -62,20 +61,12 @@
 #include "cache_inode.h"
 #include "fsal_up.h"
 
-#ifdef _USE_NFS4_1
-#include "nfs41_session.h"
-#endif
-
 #ifdef _USE_9P
 #include "9p.h"
 #endif
 
 #ifdef _ERROR_INJECTION
 #include "err_inject.h"
-#endif
-
-#ifndef NFS4_MAX_DOMAIN_LEN
-#define NFS4_MAX_DOMAIN_LEN 512
 #endif
 
 /* Maximum thread count */
@@ -145,13 +136,6 @@
 #define AUTH_STR_LEN 30
 #define PWENT_MAX_LEN 81       /* MUST be a multiple of 9 */
 
-/* IP/name cache error */
-#define CLIENT_ID_SUCCESS             0
-#define CLIENT_ID_INSERT_MALLOC_ERROR 1
-#define CLIENT_ID_NOT_FOUND           2
-#define CLIENT_ID_INVALID_ARGUMENT    3
-#define CLIENT_ID_STATE_ERROR         4
-
 /* Id Mapper cache error */
 #define ID_MAPPER_SUCCESS             0
 #define ID_MAPPER_INSERT_MALLOC_ERROR 1
@@ -174,14 +158,6 @@
 #define XATTRD_NAME ".xattr.d."
 #define XATTRD_NAME_LEN 9       /* MUST be equal to strlen( XATTRD_NAME ) */
 #define XATTR_BUFFERSIZE 4096
-
-typedef enum nfs_clientid_confirm_state__
-{ CONFIRMED_CLIENT_ID = 1,
-  UNCONFIRMED_CLIENT_ID = 2,
-  REBOOTED_CLIENT_ID = 3,
-  CB_RECONFIGURED_CLIENT_ID = 4,
-  EXPIRED_CLIENT_ID = 5
-} nfs_clientid_confirm_state_t;
 
 typedef char path_str_t[MAXPATHLEN] ;
 
@@ -274,6 +250,16 @@ typedef struct nfs_client_id_param__
   hash_parameter_t hash_param_reverse;
 } nfs_client_id_parameter_t;
 
+typedef struct nfs_state_id_param__
+{
+  hash_parameter_t hash_param;
+} nfs_state_id_parameter_t;
+
+typedef struct nfs4_owner_parameter_t
+{
+  hash_parameter_t hash_param;
+} nfs4_owner_parameter_t;
+
 typedef struct nfs_idmap_cache_param__
 {
   hash_parameter_t hash_param;
@@ -361,9 +347,6 @@ typedef struct nfs_request_data__
   struct timeval time_queued; /* The time at which a request was added
                                * to the worker thread queue. */
 } nfs_request_data_t;
-
-struct nfs_client_id__;
-typedef struct nfs_client_id__ nfs_client_id_t;
 
 typedef struct wait_entry
 {
@@ -515,42 +498,6 @@ typedef struct gsh_addr
     struct sockaddr_storage ss;
     uint32_t port;
 } gsh_addr_t;
-
-struct nfs_client_id__
-{
-  char client_name[NFS4_MAX_DOMAIN_LEN];
-  clientid4 clientid;
-  verifier4 verifier;
-  verifier4 incoming_verifier;
-  time_t last_renew;
-  nfs_clientid_confirm_state_t confirmed;
-  nfs_client_cred_t credential;
-  int allow_reclaim;
-  char *recov_dir;
-  struct glist_head clientid_openowners;
-  struct glist_head clientid_lockowners;
-  pthread_mutex_t clientid_mutex;
-  struct {
-      char client_r_addr[SOCK_NAME_MAX]; /* supplied univ. address */
-      gsh_addr_t addr;
-      uint32_t program;
-      union {
-          struct {
-              uint32_t states;
-              struct rpc_call_channel chan;
-              uint32_t callback_ident;
-          } v40;
-      } cb_u;
-  } cb;
-#ifdef _USE_NFS4_1
-  char server_owner[MAXNAMLEN];
-  char server_scope[MAXNAMLEN];
-  unsigned int nb_session;
-  nfs41_session_slot_t create_session_slot;
-  unsigned create_session_sequence;
-#endif
-  state_owner_t *clientid_owner;
-} /* nfs_client_id_t */;
 
 typedef enum idmap_type__
 { UIDMAP_TYPE = 1,
@@ -815,48 +762,6 @@ int print_pending_request(LRU_data_t data, char *str);
 
 void auth_stat2str(enum auth_stat, char *str);
 
-int nfs_Init_client_id(nfs_client_id_parameter_t param);
-int nfs_Init_client_id_reverse(nfs_client_id_parameter_t param);
-
-int nfs_client_id_remove(clientid4 clientid);
-
-int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res);
-
-int nfs_client_id_get_reverse(char *key, nfs_client_id_t * client_id_res);
-
-int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id_res);
-
-int nfs_client_id_add(clientid4 clientid,
-                      nfs_client_id_t client_record);
-
-int nfs_client_id_set(clientid4 clientid,
-                      nfs_client_id_t client_record);
-
-void nfs_client_id_expire(nfs_client_id_t *client_record);
-
-int nfs_client_id_compute(char *name, clientid4 * pclientid);
-int nfs_client_id_basic_compute(char *name, clientid4 * pclientid);
-
-int display_client_id(hash_buffer_t * pbuff, char *str);
-int display_client_id_reverse(hash_buffer_t * pbuff, char *str);
-int display_client_id_val(hash_buffer_t * pbuff, char *str);
-
-int compare_client_id(hash_buffer_t * buff1, hash_buffer_t * buff2);
-int compare_client_id_reverse(hash_buffer_t * buff1, hash_buffer_t * buff2);
-
-uint64_t client_id_rbt_hash_func(hash_parameter_t * p_hparam,
-                                 hash_buffer_t * buffclef);
-uint64_t client_id_rbt_hash_func_reverse(hash_parameter_t * p_hparam,
-                                         hash_buffer_t * buffclef);
-
-uint32_t client_id_value_hash_func(hash_parameter_t * p_hparam,
-                                   hash_buffer_t * buffclef);
-uint32_t client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
-                                           hash_buffer_t * buffclef);
-int client_id_value_both_reverse(hash_parameter_t * p_hparam,
-                                 hash_buffer_t    * buffclef,
-                                 uint32_t * phashval, uint64_t * prbtval ) ;
-
 uint64_t idmapper_rbt_hash_func(hash_parameter_t * p_hparam,
                                 hash_buffer_t * buffclef);
 uint64_t namemapper_rbt_hash_func(hash_parameter_t * p_hparam,
@@ -866,12 +771,6 @@ uint32_t namemapper_value_hash_func(hash_parameter_t * p_hparam,
                                              hash_buffer_t * buffclef);
 uint32_t idmapper_value_hash_func(hash_parameter_t * p_hparam,
                                   hash_buffer_t * buffclef);
-
-uint32_t state_id_value_hash_func(hash_parameter_t * p_hparam,
-                                  hash_buffer_t    * buffclef);
-
-uint64_t state_id_rbt_hash_func(hash_parameter_t * p_hparam,
-                                hash_buffer_t    * buffclef);
 
 int idmap_populate(char *path, idmap_type_t maptype);
 
@@ -929,28 +828,6 @@ void * fridgethr_freeze( ) ;
 int fridgethr_init() ;
 
 unsigned int nfs_core_select_worker_queue() ;
-
-#ifdef _USE_NFS4_1
-int display_session_id_key(hash_buffer_t * pbuff, char *str);
-int display_session_id_val(hash_buffer_t * pbuff, char *str);
-int compare_session_id(hash_buffer_t * buff1, hash_buffer_t * buff2);
-uint32_t session_id_value_hash_func(hash_parameter_t * p_hparam,
-                                    hash_buffer_t * buffclef);
-uint64_t session_id_rbt_hash_func(hash_parameter_t * p_hparam,
-                                  hash_buffer_t * buffclef);
-int nfs41_Init_session_id(nfs_session_id_parameter_t param);
-int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
-                      nfs41_session_t * psession_data);
-int nfs41_Session_Get(char sessionid[NFS4_SESSIONID_SIZE],
-                      nfs41_session_t * psession_data);
-int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
-                              nfs41_session_t * *psession_data);
-int nfs41_Session_Update(char sessionid[NFS4_SESSIONID_SIZE],
-                         nfs41_session_t * psession_data);
-int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE]);
-int nfs41_Build_sessionid(clientid4 * pclientid, char sessionid[NFS4_SESSIONID_SIZE]);
-void nfs41_Session_PrintAll(void);
-#endif
 
 int nfs_Init_ip_name(nfs_ip_name_parameter_t param);
 hash_table_t *nfs_Init_ip_stats(nfs_ip_stats_parameter_t param);

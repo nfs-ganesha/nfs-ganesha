@@ -53,6 +53,7 @@
 #include "fsal_types.h"
 #include "log.h"
 #include "config_parsing.h"
+#include "nfs_core.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "nfs_proto_functions.h"
@@ -60,9 +61,6 @@
 #include "nlm4.h"
 #endif /* _USE_NLM */
 #include "nlm_list.h"
-#ifdef _USE_NFS4_1
-#include "nfs41_session.h"
-#endif /* _USE_NFS4_1 */
 #ifdef _PNFS_MDS
 #include "fsal_pnfs.h"
 #endif /* _PNFS_MDS */
@@ -95,15 +93,41 @@ typedef struct state_block_data_t   state_block_data_t;
 typedef struct state_layout_segment_t state_layout_segment_t;
 #endif /* _PNFS_MDS */
 
-typedef struct nfs_state_id_param__
-{
-  hash_parameter_t hash_param;
-} nfs_state_id_parameter_t;
+/******************************************************************************
+ *
+ * NFSv4.1 Session data
+ *
+ ******************************************************************************/
 
-typedef struct nfs4_owner_parameter_t
+#define NFS41_SESSION_PER_CLIENT 3
+#define NFS41_NB_SLOTS           3
+#define NFS41_DRC_SIZE          32768
+
+typedef struct nfs41_session_slot__
 {
-  hash_parameter_t hash_param;
-} nfs4_owner_parameter_t;
+  sequenceid4            sequence;
+  pthread_mutex_t        lock;
+  char                   cached_result[NFS41_DRC_SIZE];
+  unsigned int           cache_used;
+} nfs41_session_slot_t;
+
+struct nfs41_session__
+{
+  clientid4              clientid;
+  nfs_client_id_t      * pclientid_record;
+  uint32_t               sequence;
+  uint32_t               session_flags;
+  char                   session_id[NFS4_SESSIONID_SIZE];
+  channel_attrs4         fore_channel_attrs;
+  channel_attrs4         back_channel_attrs;
+  nfs41_session_slot_t   slots[NFS41_NB_SLOTS];
+};
+
+/******************************************************************************
+ *
+ * NFSv4 State data
+ *
+ ******************************************************************************/
 
 typedef enum state_type_t
 {
@@ -280,9 +304,71 @@ struct state_owner_t
 
 extern state_owner_t unknown_owner;
 
-/*
- * Possible errors
- */
+/******************************************************************************
+ *
+ * NFSv4 Clientid data
+ *
+ ******************************************************************************/
+
+typedef enum nfs_clientid_confirm_state__
+{
+  UNCONFIRMED_CLIENT_ID,
+  CONFIRMED_CLIENT_ID,
+  REBOOTED_CLIENT_ID,
+  CB_RECONFIGURED_CLIENT_ID,
+  EXPIRED_CLIENT_ID
+} nfs_clientid_confirm_state_t;
+
+/* client ID errors */
+#define CLIENT_ID_SUCCESS             0
+#define CLIENT_ID_INSERT_MALLOC_ERROR 1
+#define CLIENT_ID_NOT_FOUND           2
+#define CLIENT_ID_INVALID_ARGUMENT    3
+#define CLIENT_ID_STATE_ERROR         4
+
+struct nfs_client_id_t
+{
+  char                           client_name[NFS4_MAX_DOMAIN_LEN];
+  clientid4                      clientid;
+  verifier4                      verifier;
+  verifier4                      incoming_verifier;
+  time_t                         last_renew;
+  nfs_clientid_confirm_state_t   confirmed;
+  nfs_client_cred_t              credential;
+  int                            allow_reclaim;
+  char                         * recov_dir;
+  struct glist_head              clientid_openowners;
+  struct glist_head              clientid_lockowners;
+  pthread_mutex_t                clientid_mutex;
+  struct prealloc_pool         * clientid_pool;
+  struct {
+      char                       client_r_addr[SOCK_NAME_MAX]; /* supplied univ. address */
+      gsh_addr_t                 addr; 
+      uint32_t                   program;
+      union {
+          struct {
+              uint32_t                states;
+              struct rpc_call_channel chan;
+              uint32_t                callback_ident;
+          } v40;
+      } cb_u;
+  } cb;
+#ifdef _USE_NFS4_1
+  char                           server_owner[MAXNAMLEN];
+  char                           server_scope[MAXNAMLEN];
+  unsigned int                   nb_session;
+  nfs41_session_slot_t           create_session_slot;
+  unsigned                       create_session_sequence;
+#endif
+  state_owner_t                * clientid_owner;
+};
+
+/******************************************************************************
+ *
+ * Possible Errors from SAL Code
+ *
+ ******************************************************************************/
+
 typedef enum state_status_t
 {
   STATE_SUCCESS               = 0,
@@ -333,6 +419,12 @@ typedef enum state_status_t
   STATE_KILLED                = 45,
   STATE_FILE_OPEN             = 46,
 } state_status_t;
+
+/******************************************************************************
+ *
+ * Lock Data
+ *
+ ******************************************************************************/
 
 typedef enum state_blocking_t
 {

@@ -68,10 +68,7 @@ void inc_state_owner_ref_locked(state_owner_t *powner);
 void inc_state_owner_ref(state_owner_t *powner);
 
 void dec_state_owner_ref_locked(state_owner_t *powner);
-
-void dec_state_owner_ref(state_owner_t        *powner);
-state_status_t get_clientid_owner(clientid4 clientid,
-                                  state_owner_t **clientid_owner);
+void dec_state_owner_ref(state_owner_t *powner);
 
 void state_wipe_file(cache_entry_t *pentry);
 int DisplayOpaqueValue(char *value, int len, char *str);
@@ -160,6 +157,98 @@ void nlm_owner_PrintAll(void);
 int Init_nlm_hash(void);
 #endif
 
+/******************************************************************************
+ *
+ * NFS4 Client ID functions
+ *
+ ******************************************************************************/
+
+state_status_t get_clientid_owner(clientid4        clientid,
+                                  state_owner_t ** clientid_owner);
+
+int nfs_Init_client_id(nfs_client_id_parameter_t param);
+int nfs_Init_client_id_reverse(nfs_client_id_parameter_t param);
+
+int nfs_client_id_remove(clientid4 clientid, struct prealloc_pool *clientid_pool);
+
+int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res);
+
+int nfs_client_id_get_reverse(char *key, nfs_client_id_t * client_id_res);
+
+int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id_res);
+
+int nfs_client_id_add(clientid4              clientid,
+                      nfs_client_id_t        client_record,
+                      cache_inode_client_t * pclient);
+
+int nfs_client_id_set(clientid4              clientid,
+                      nfs_client_id_t        client_record,
+                      struct prealloc_pool * clientid_pool);
+
+void nfs_client_id_expire(nfs_client_id_t *client_record);
+
+int nfs_client_id_compute(char *name, clientid4 * pclientid);
+int nfs_client_id_basic_compute(char *name, clientid4 * pclientid);
+
+int display_client_id(hash_buffer_t * pbuff, char *str);
+int display_client_id_reverse(hash_buffer_t * pbuff, char *str);
+int display_client_id_val(hash_buffer_t * pbuff, char *str);
+
+int compare_client_id(hash_buffer_t * buff1, hash_buffer_t * buff2);
+int compare_client_id_reverse(hash_buffer_t * buff1, hash_buffer_t * buff2);
+
+uint64_t client_id_rbt_hash_func(hash_parameter_t * p_hparam,
+                                 hash_buffer_t    * buffclef);
+
+uint64_t client_id_rbt_hash_func_reverse(hash_parameter_t * p_hparam,
+                                         hash_buffer_t    * buffclef);
+
+uint32_t client_id_value_hash_func(hash_parameter_t * p_hparam,
+                                   hash_buffer_t    * buffclef);
+
+uint32_t client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
+                                           hash_buffer_t    * buffclef);
+
+int client_id_value_both_reverse(hash_parameter_t * p_hparam,
+                                 hash_buffer_t    * buffclef,
+                                 uint32_t         * phashval,
+                                 uint64_t         * prbtval);
+
+/******************************************************************************
+ *
+ * NFS4.1 Session ID functions
+ *
+ ******************************************************************************/
+
+#ifdef _USE_NFS4_1
+int display_session_id_key(hash_buffer_t * pbuff, char *str);
+int display_session_id_val(hash_buffer_t * pbuff, char *str);
+int compare_session_id(hash_buffer_t * buff1, hash_buffer_t * buff2);
+
+uint32_t session_id_value_hash_func(hash_parameter_t * p_hparam,
+                                    hash_buffer_t    * buffclef);
+
+uint64_t session_id_rbt_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t    * buffclef);
+
+int nfs41_Init_session_id(nfs_session_id_parameter_t param);
+
+int nfs41_Session_Set(char              sessionid[NFS4_SESSIONID_SIZE],
+                      nfs41_session_t * psession_data);
+
+int nfs41_Session_Get(char              sessionid[NFS4_SESSIONID_SIZE],
+                      nfs41_session_t * psession_data);
+
+int nfs41_Session_Get_Pointer(char               sessionid[NFS4_SESSIONID_SIZE],
+                              nfs41_session_t ** psession_data);
+
+int nfs41_Session_Update(char              sessionid[NFS4_SESSIONID_SIZE],
+                         nfs41_session_t * psession_data);
+
+int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE]);
+int nfs41_Build_sessionid(clientid4 * pclientid, char sessionid[NFS4_SESSIONID_SIZE]);
+void nfs41_Session_PrintAll(void);
+#endif
 
 /******************************************************************************
  *
@@ -204,6 +293,12 @@ void nfs4_update_lease(nfs_client_id_t * clientp);
 
 int display_state_id_val(hash_buffer_t * pbuff, char *str);
 int display_state_id_key(hash_buffer_t * pbuff, char *str);
+
+uint32_t state_id_value_hash_func(hash_parameter_t * p_hparam,
+                                  hash_buffer_t    * buffclef);
+
+uint64_t state_id_rbt_hash_func(hash_parameter_t * p_hparam,
+                                hash_buffer_t    * buffclef);
 
 /******************************************************************************
  *
@@ -495,6 +590,7 @@ state_status_t state_lookup_layout_state(cache_entry_t * pentry,
                                          layouttype4     type,
                                          state_t      ** pstate);
 #endif /*  _PNFS_MDS */
+
 /******************************************************************************
  *
  * Async functions
@@ -522,11 +618,13 @@ void available_blocked_lock_upcall(cache_entry_t        * pentry,
 
 void process_blocked_lock_upcall(state_block_data_t   * block_data);
 #endif
-/*
+
+/******************************************************************************
  *
  * NFSv4 Recovery functions
  *
- */
+ ******************************************************************************/
+
 void nfs4_init_grace();
 void nfs4_start_grace(nfs_grace_start_t *gsp);
 int nfs_in_grace();
