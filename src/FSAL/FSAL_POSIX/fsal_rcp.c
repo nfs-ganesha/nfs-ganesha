@@ -261,7 +261,7 @@ fsal_status_t POSIXFSAL_rcp(fsal_handle_t * filehdl,    /* IN */
           if(to_fs)             /* to FSAL filesystem */
             {
 
-              st = POSIXFSAL_write(&fs_fd, NULL, local_size, IObuffer, &fs_size);
+              st = POSIXFSAL_write(&fs_fd, p_context, NULL, local_size, IObuffer, &fs_size);
 
               if(FSAL_IS_ERROR(st))
                 break;          /* exit loop */

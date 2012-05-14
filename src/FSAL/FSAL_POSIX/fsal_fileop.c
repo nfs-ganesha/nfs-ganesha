@@ -425,6 +425,8 @@ fsal_status_t POSIXFSAL_read(fsal_file_t * file_descriptor,      /* IN */
  *
  * \param file_descriptor (input):
  *        The file descriptor returned by FSAL_open.
+ * \param p_context (input):
+ *        Authentication context for the operation (user,...).
  * \param seek_descriptor (optional input):
  *        Specifies the position where data is to be written.
  *        If not specified, data will be written at the current position.
@@ -442,6 +444,7 @@ fsal_status_t POSIXFSAL_read(fsal_file_t * file_descriptor,      /* IN */
  */
 #ifdef _FSAL_POSIX_USE_STREAM
 fsal_status_t POSIXFSAL_write(fsal_file_t * file_descriptor,     /* IN */
+                              fsal_op_context_t * p_context,     /* IN */
                               fsal_seek_t * p_seek_descriptor,  /* IN */
                               fsal_size_t buffer_size,  /* IN */
                               caddr_t buffer,   /* IN */
@@ -555,6 +558,7 @@ fsal_status_t POSIXFSAL_write(fsal_file_t * file_descriptor,     /* IN */
 }
 #else
 fsal_status_t POSIXFSAL_write(fsal_file_t * file_descriptor,     /* IN */
+                              fsal_op_context_t * p_context,     /* IN */
                               fsal_seek_t * p_seek_descriptor,  /* IN */
                               fsal_size_t buffer_size,  /* IN */
                               caddr_t buffer,   /* IN */

@@ -274,7 +274,7 @@ fsal_status_t FUSEFSAL_rcp(fsal_handle_t * filehandle,      /* IN */
           if(to_fs)             /* to FSAL filesystem */
             {
 
-              st = FUSEFSAL_write(&fs_fd, NULL, local_size, IObuffer, &fs_size);
+              st = FUSEFSAL_write(&fs_fd, p_context, NULL, local_size, IObuffer, &fs_size);
 
               if(FSAL_IS_ERROR(st))
                 break;          /* exit loop */

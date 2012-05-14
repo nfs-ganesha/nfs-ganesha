@@ -185,6 +185,7 @@ fsal_status_t CEPHFSAL_read(fsal_file_t * extdescriptor,
                             fsal_boolean_t * end_of_file);
 
 fsal_status_t CEPHFSAL_write(fsal_file_t * extdescriptor,
+                             fsal_op_context_t * p_context,
                              fsal_seek_t * seek_descriptor,
                              fsal_size_t buffer_size,
                              caddr_t buffer,

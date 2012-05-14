@@ -5054,7 +5054,7 @@ int fn_fsal_write(int argc,     /* IN : number of args in argv */
   while(nb_block_written < nb_times)
     {
 
-      st = FSAL_write(&context->current_fd, p_seek_desc,
+      st = FSAL_write(&context->current_fd, &context->context,  p_seek_desc,
                       block_size, (caddr_t) databuff, &size_written_once);
 
       if(FSAL_IS_ERROR(st))

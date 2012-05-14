@@ -258,7 +258,7 @@ fsal_status_t PROXYFSAL_rcp(fsal_handle_t * filehandle,    /* IN */
           if(to_fs)             /* to FSAL filesystem */
             {
 
-              st = FSAL_write((fsal_file_t *) &fs_fd, NULL, local_size, IObuffer, &fs_size);
+              st = FSAL_write((fsal_file_t *) &fs_fd, p_context, NULL, local_size, IObuffer, &fs_size);
 
               if(FSAL_IS_ERROR(st))
                 break;          /* exit loop */
