@@ -450,12 +450,10 @@ AC_ARG_WITH( [nfs4-minorversion], AS_HELP_STRING([--with-nfs4-minorversion=0|1  
 AM_CONDITIONAL(USE_NFS4_1, test "$NFS4_MINOR" = "1")
 AM_CONDITIONAL(USE_NFS4_0, test "$NFS4_MINOR" = "0")
 
-# RPCAL switch argument (default is ONCRPC)
-AC_ARG_WITH( [rpcal], AS_HELP_STRING([--with-rpcal=ONCRPC|TIRPC (default=ONCRPC)], [specify the type of RPCAL to be used] ),
-              RPCAL="$withval", RPCAL="TIRPC")
-AM_CONDITIONAL(USE_TIRPC,  test "$RPCAL" = "TIRPC" )
-AM_CONDITIONAL(HAVE_GSSAPI, test "$RPCAL" = "TIRPC" )
-AM_CONDITIONAL(USE_ONCRPC, test "$RPCAL" = "ONCRPC" )
+# RPCAL now fixed as TIRPC
+RPCAL="TIRPC"
+AM_CONDITIONAL(USE_TIRPC,  true )
+AM_CONDITIONAL(HAVE_GSSAPI, true )
 
 # Enable 9P Support
 GA_ENABLE_AM_CONDITION([9p],[enable 9P support], [USE_9P])
@@ -783,8 +781,6 @@ case $FSAL in
 esac
 
 case $RPCAL in
-	"ONCRPC")
-		;;
 	"TIRPC")
                 KRBLIBS=`krb5-config --libs gssapi`
                 if test "$KRBLIBS" == ""; then
@@ -897,7 +893,6 @@ AC_CONFIG_FILES([include/Makefile
                  FSAL/FSAL_VFS/Makefile
 		 FSAL/FSAL_TEMPLATE/Makefile
                  RPCAL/Makefile
-                 RPCAL/ONCRPC/Makefile
                  RPCAL/TIRPC/Makefile
                  RPCAL/gssd/Makefile
                  MainNFSD/Makefile
