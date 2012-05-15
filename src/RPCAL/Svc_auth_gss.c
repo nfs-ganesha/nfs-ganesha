@@ -648,7 +648,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
                    (long unsigned int)gd->cname.length,
                    gd->established,
                    ctx_str_2,
-                   rqst->rq_xprt->XP_SOCK,
+                   rqst->rq_xprt->xp_fd,
                    gc->gc_proc,
                    gc->gc_svc,
                    ctx_str);
@@ -777,7 +777,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
                        (char *)gd->cname.value,
                        (long unsigned int)gd->cname.length,
                        gd->established,
-                       rqst->rq_xprt->XP_SOCK,
+                       rqst->rq_xprt->xp_fd,
                        gr.gr_major,
                        gr.gr_minor,
                        ctx_str);
@@ -887,14 +887,14 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg,
 
   LogFullDebug(COMPONENT_RPCSEC_GSS,
                "Call to Gssrpc__svcauth_gss - OK ---> (RQ:sock=%u)",
-               rqst->rq_xprt->XP_SOCK);
+               rqst->rq_xprt->xp_fd);
 
   retstat = AUTH_OK;
  freegc:
   if(retstat != AUTH_OK)
     LogCrit(COMPONENT_RPCSEC_GSS,
             "Call to Gssrpc__svcauth_gss - FAILED ---> (RQ:sock=%u)",
-            rqst->rq_xprt->XP_SOCK);
+            rqst->rq_xprt->xp_fd);
 
   xdr_free((xdrproc_t)xdr_rpc_gss_cred, gc);
   return (retstat);

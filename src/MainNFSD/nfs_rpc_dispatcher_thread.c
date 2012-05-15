@@ -30,8 +30,8 @@
  * \version $Revision: 1.96 $
  * \brief   The file that contain the 'rpc_dispatcher_thread' routine for the nfsd.
  *
- * nfs_rpc_dispatcher.c : The file that contain the 'rpc_dispatcher_thread' routine
- * for the nfsd (and all the related stuff).
+ * nfs_rpc_dispatcher.c : The file that contain the 'rpc_dispatcher_thread' routine for the nfsd (and all
+ * the related stuff).
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -99,7 +99,7 @@ static struct rpc_evchan rpc_evchan[N_EVENT_CHAN];
 static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
                           void *u_data);
 static bool_t nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */);
-static bool_t nfs_rpc_free_xprt(SVCXPRT *xprt);
+static void nfs_rpc_free_xprt(SVCXPRT *xprt);
 
 /**
  *
@@ -743,7 +743,7 @@ static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
     return (0);
 }
 
-static bool_t nfs_rpc_free_xprt(SVCXPRT *xprt)
+static void nfs_rpc_free_xprt(SVCXPRT *xprt)
 {
     if (xprt->xp_u1)
         free_gsh_xprt_private(xprt->xp_u1);
@@ -754,7 +754,7 @@ static bool_t nfs_rpc_free_xprt(SVCXPRT *xprt)
  * whome the worker is ready and is not garbagging.
  */
 
-/* PhD: Please note that I renamed this function, added 
+/* PhD: Please note that I renamed this function, added
  * it prototype to include/nfs_core.h and removed its "static" tag.
  * This is done to share this code with the 9P implementation */
 
@@ -875,66 +875,56 @@ nfs_core_select_worker_queue(unsigned int avoid_index)
 request_data_t *
 nfs_rpc_get_nfsreq(nfs_worker_data_t *worker, uint32_t flags)
 {
-    request_data_t *pnfsreq = NULL;
+    request_data_t *nfsreq = NULL;
 
-    pnfsreq = pool_alloc(request_pool, NULL);
+    nfsreq = pool_alloc(request_pool, NULL);
 
-    return (pnfsreq);
+    return (nfsreq);
 }
 
 process_status_t
-dispatch_rpc_subrequest(nfs_worker_data_t *pmydata,
+dispatch_rpc_subrequest(nfs_worker_data_t *mydata,
                         request_data_t *onfsreq)
 {
   char *cred_area;
   struct rpc_msg *msg;
   struct svc_req *req;
-  request_data_t *pnfsreq = NULL;
+  request_data_t *nfsreq = NULL;
   unsigned int worker_index;
   process_status_t rc = PROCESS_DONE;
 
   /* choose a worker who is not us */
-  worker_index = nfs_core_select_worker_queue( pmydata->worker_index );
+  worker_index = nfs_core_select_worker_queue(mydata->worker_index);
 
-  LogFullDebug(COMPONENT_DISPATCH,
-               "Use request from Worker Thread #%u's pool, xprt->xp_fd=%d, "
-               "thread has %d pending requests",
-               worker_index, onfsreq->r_u.nfs->xprt->xp_fd,
-               workers_data[worker_index].pending_request_len);
+  LogDebug(COMPONENT_DISPATCH,
+           "Use request from Worker Thread #%u's pool, xprt->xp_fd=%d, "
+           "thread has %d pending requests",
+           worker_index, onfsreq->r_u.nfs->xprt->xp_fd,
+           workers_data[worker_index].pending_request_len);
 
-  /* Get a pnfsreq from the worker's pool */
-  P(workers_data[worker_index].request_pool_mutex);
+  /* Get a nfsreq from the worker's pool */
+  nfsreq = pool_alloc(request_pool, NULL);
 
-  GetFromPool(pnfsreq, &workers_data[worker_index].request_pool,
-              request_data_t);
-
-  V(workers_data[worker_index].request_pool_mutex);
-
-  if(pnfsreq == NULL)
+  if(nfsreq == NULL)
     {
       LogMajor(COMPONENT_DISPATCH,
-               "Empty request pool for the chosen worker ! Exiting...");
+               "Unable to allocate request. Exiting...");
       Fatal();
     }
 
   /* Set the request as NFS already-read */
-  pnfsreq->rtype = NFS_REQUEST;
+  nfsreq->rtype = NFS_REQUEST;
 
   /* tranfer onfsreq */
-  pnfsreq->r_u.nfs = onfsreq->r_u.nfs;
+  nfsreq->r_u.nfs = onfsreq->r_u.nfs;
 
   /* And fixup onfsreq */
-  P(pmydata->request_pool_mutex);
+  onfsreq->r_u.nfs = pool_alloc(request_data_pool, NULL);
 
-  GetFromPool(onfsreq->r_u.nfs, &pmydata->request_data_pool,
-              nfs_request_data_t);
-
-  V(pmydata->request_pool_mutex);
-
-  if(pnfsreq->r_u.nfs == NULL)
+  if(onfsreq->r_u.nfs == NULL)
     {
       LogMajor(COMPONENT_DISPATCH,
-               "Empty request pool for the chosen worker ! Exiting...");
+               "Empty request data pool! Exiting...");
       Fatal();
     }
 
@@ -948,14 +938,14 @@ dispatch_rpc_subrequest(nfs_worker_data_t *pmydata,
   req->rq_clntcred = &(cred_area[2 * MAX_AUTH_BYTES]);
 
   /* Set up xprt */
-  onfsreq->r_u.nfs->xprt = pnfsreq->r_u.nfs->xprt;
+  onfsreq->r_u.nfs->xprt = nfsreq->r_u.nfs->xprt;
   req->rq_xprt = onfsreq->r_u.nfs->xprt;
 
   /* count as 1 ref */
   gsh_xprt_ref(req->rq_xprt, XPRT_PRIVATE_FLAG_LOCKED);
 
   /* Hand it off */
-  DispatchWorkNFS(pnfsreq, worker_index);
+  DispatchWorkNFS(nfsreq, worker_index);
 
   return (rc);
 }
@@ -1002,20 +992,20 @@ process_status_t dispatch_rpc_request(SVCXPRT *xprt)
   if(nfsreq == NULL)
     {
       LogMajor(COMPONENT_DISPATCH,
-               "Empty request pool for the chosen worker ! Exiting...");
-      Fatal();
-    }
-
-  nfsreq->r_u.nfs = pool_alloc(request_data_pool, NULL);
-  if(nfsreq->r_u.nfs == NULL)
-    {
-      LogMajor(COMPONENT_DISPATCH,
-               "Empty request pool for the chosen worker ! Exiting...");
+               "Unable to allocate request.  Exiting...");
       Fatal();
     }
 
   /* Set the request as NFS with xprt hand-off */
   nfsreq->rtype = NFS_REQUEST_LEADER ;
+
+  nfsreq->r_u.nfs = pool_alloc(request_data_pool, NULL);
+  if(nfsreq->r_u.nfs == NULL)
+    {
+      LogMajor(COMPONENT_DISPATCH,
+               "Unable to allocate request data.  Exiting...");
+      Fatal();
+    }
 
   /* Set up cred area */
   cred_area = nfsreq->r_u.nfs->cred_area;
@@ -1031,7 +1021,7 @@ process_status_t dispatch_rpc_request(SVCXPRT *xprt)
   preq->rq_xprt = xprt;
 
   /* Count as 1 ref */
-  gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_LOCKED);
+  gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_NONE);
 
   /* Hand it off */
   DispatchWorkNFS(nfsreq, worker_index);
