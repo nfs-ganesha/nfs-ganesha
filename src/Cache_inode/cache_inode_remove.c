@@ -106,6 +106,9 @@ cache_inode_clean_internal(cache_entry_t *entry,
      hash_buffer_t key, val;
      hash_error_t rc = 0;
 
+     if (entry->fh_desc.start == 0)
+         return CACHE_INODE_SUCCESS;
+
      key.pdata = entry->fh_desc.start;
      key.len = entry->fh_desc.len;
 
