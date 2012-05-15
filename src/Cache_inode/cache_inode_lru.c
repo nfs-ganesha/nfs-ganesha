@@ -494,12 +494,12 @@ lru_try_reap_entry(struct lru_q_base *q)
           return NULL;
      }
 
-     ++(lru->refcount);
+     atomic_inc_quad(&lru->refcount);
      pthread_mutex_unlock(&q->mtx);
      pthread_mutex_lock(&lru->mtx);
      if ((lru->flags & LRU_ENTRY_CONDEMNED) ||
          (lru->flags & LRU_ENTRY_KILLED)) {
-          --(lru->refcount);
+          atomic_dec_quad(&lru->refcount);
           pthread_mutex_unlock(&lru->mtx);
           return NULL;
      }
@@ -508,7 +508,7 @@ lru_try_reap_entry(struct lru_q_base *q)
           /* Any more than the sentinel and our reference count
              and someone else has a reference.  Plus someone may
              have moved it to the pin queue while we were waiting. */
-          --(lru->refcount);
+          atomic_dec_quad(&lru->refcount);
           pthread_mutex_unlock(&lru->mtx);
           return NULL;
      }
@@ -521,7 +521,7 @@ lru_try_reap_entry(struct lru_q_base *q)
      if (lru->refcount > LRU_SENTINEL_REFCOUNT + 1) {
           /* Someone took a reference while we were waiting for the
              queue.  */
-          --(lru->refcount);
+          atomic_dec_quad(&lru->refcount);
           pthread_mutex_unlock(&lru->mtx);
           pthread_mutex_unlock(&q->mtx);
           return NULL;
@@ -803,7 +803,7 @@ lru_thread(void *arg __attribute__((unused)))
                                  count of the entry and drop the
                                  queue fragment mutex. */
 
-                              ++(lru->refcount);
+                              atomic_inc_quad(&lru->refcount);
                               pthread_mutex_unlock(&LRU_1[lane].lru.mtx);
 
                               /* Acquire the entry mutex.  If the entry
@@ -813,7 +813,7 @@ lru_thread(void *arg __attribute__((unused)))
                                  incremented it.) */
 
                               pthread_mutex_lock(&lru->mtx);
-                              --(lru->refcount);
+                              atomic_dec_quad(&lru->refcount);
                               if ((lru->flags & LRU_ENTRY_CONDEMNED) ||
                                   (lru->flags & LRU_ENTRY_PINNED) ||
                                   (lru->flags & LRU_ENTRY_L2) ||
@@ -888,8 +888,8 @@ lru_thread(void *arg __attribute__((unused)))
           }
 
           LogDebug(COMPONENT_CACHE_INODE_LRU,
-                  "open_fd_count:%d  t_count:%d\n",
-                  (int)open_fd_count, (int)t_count);
+                  "open_fd_count: %"PRIu32"  t_count:%"PRIu64"\n",
+                  open_fd_count, t_count);
 
           woke = lru_thread_delay_ms(lru_state.threadwait);
      }
@@ -1206,7 +1206,7 @@ cache_inode_inc_pin_ref(cache_entry_t *entry)
      entry->lru.pin_refcnt++;
 
      /* Also take an LRU reference */
-     entry->lru.refcount++;
+     atomic_inc_quad(&entry->lru.refcount);
 
      pthread_mutex_unlock(&entry->lru.mtx);
 
@@ -1258,7 +1258,7 @@ cache_inode_dec_pin_ref(cache_entry_t *entry)
      }
 
      /* Also release an LRU reference */
-     entry->lru.refcount--;
+     atomic_dec_quad(&entry->lru.refcount);
 
      pthread_mutex_unlock(&entry->lru.mtx);
 
@@ -1303,7 +1303,7 @@ cache_inode_lru_ref(cache_entry_t *entry,
      assert(!((flags & LRU_REQ_INITIAL) &&
               (flags & LRU_REQ_SCAN)));
 
-     ++(entry->lru.refcount);
+     atomic_inc_quad(&entry->lru.refcount);
 
      /* Move an entry forward if this is an initial reference. */
 
@@ -1369,11 +1369,9 @@ void cache_inode_lru_kill(cache_entry_t *entry,
  *
  * @param[in] entry  The entry on which to release a reference
  * @param[in] client Structure for per-thread resource management
- * @param[in] flags  Currently significant are LRU_FLAG_DELETE (which
- *                   indicates that the caller wishes to delete an
- *                   entry where it holds the only reference) and
- *                   LRU_FLAG_LOCKED (indicating that the caller
- *                   holds the LRU mutex lock for this entry.)
+ * @param[in] flags  Currently significant are and LRU_FLAG_LOCKED
+ *                   (indicating that the caller holds the LRU mutex
+ *                   lock for this entry.)
  */
 
 void
@@ -1389,17 +1387,13 @@ cache_inode_lru_unref(cache_entry_t *entry,
      }
      assert(entry->lru.refcount >= 1);
 
-     if (flags == LRU_FLAG_DELETE) {
-          assert(entry->lru.refcount == 2);
-          entry->lru.refcount = 1; /*Rest of the clean is done by code below */
-     }
-
      if (entry->lru.refcount == 1) {
           struct lru_q_base *q
                = lru_select_queue(entry->lru.flags,
                                   entry->lru.lane);
           pthread_mutex_lock(&q->mtx);
-          if (--(entry->lru.refcount) == 0) {
+          atomic_dec_quad(&entry->lru.refcount);
+          if (entry->lru.refcount == 0) {
                /* Refcount has fallen to zero.  Remove the entry from
                   the queue and mark it as dead. */
                entry->lru.flags = LRU_ENTRY_CONDEMNED;
@@ -1428,7 +1422,7 @@ cache_inode_lru_unref(cache_entry_t *entry,
      } else {
           /* We may decrement the reference count without the queue
              lock, since it cannot go to 0. */
-          --(entry->lru.refcount);
+          atomic_dec_quad(&entry->lru.refcount);
      }
 
      pthread_mutex_unlock(&entry->lru.mtx);

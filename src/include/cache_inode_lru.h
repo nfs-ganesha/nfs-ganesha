@@ -118,30 +118,25 @@ static const uint32_t LRU_ENTRY_CONDEMNED = 0x0004;
 static const uint32_t LRU_ENTRY_UNPINNABLE = 0x0008;
 
 /**
- * Asserting that we wish to delete an entry
- */
-static const uint32_t LRU_FLAG_DELETE = 0x0010;
-
-/**
  * Flag indicating that cache_inode_lru_kill has already been called,
  * making it idempotent and fixing a possible unref leak.
  */
-static const uint32_t LRU_ENTRY_KILLED = 0x0020;
+static const uint32_t LRU_ENTRY_KILLED = 0x0010;
 
 /**
  * The caller is fetching an initial reference
  */
-static const uint32_t LRU_REQ_INITIAL = 0x0040;
+static const uint32_t LRU_REQ_INITIAL = 0x0020;
 
 /**
  * The caller is scanning the entry (READDIR)
  */
-static const uint32_t LRU_REQ_SCAN = 0x0080;
+static const uint32_t LRU_REQ_SCAN = 0x0040;
 
 /**
  * The caller holds the lock on the LRU entry.
  */
-static const uint32_t LRU_FLAG_LOCKED = 0x0100;
+static const uint32_t LRU_FLAG_LOCKED = 0x0080;
 
 /* The minimum reference count for a cache entry not being recycled. */
 

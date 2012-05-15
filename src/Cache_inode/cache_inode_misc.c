@@ -274,8 +274,10 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
           *status = CACHE_INODE_HASH_TABLE_ERROR;
           LogCrit(COMPONENT_CACHE_INODE, "Hash access failed with code %d"
                   " - this should not have happened", hrc);
-          /* Release the new entry we acquired. */
-          cache_inode_lru_unref(new_entry, client, LRU_FLAG_DELETE);
+          /* Release our reference and the sentinel on the entry we
+             acquired. */
+          cache_inode_lru_kill(new_entry, client);
+          cache_inode_lru_unref(new_entry, client, LRU_FLAG_NONE);
           goto out;
      }
      if (hrc == HASHTABLE_SUCCESS) {
@@ -292,7 +294,8 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
                   HashTable_GetEx */
                HashTable_ReleaseLatched(fh_to_cache_entry_ht, &latch);
                /* Release the new entry we acquired. */
-               cache_inode_lru_unref(new_entry, client, LRU_FLAG_DELETE);
+               cache_inode_lru_kill(new_entry, client);
+               cache_inode_lru_unref(new_entry, client, LRU_FLAG_NONE);
                goto out;
           }
      }
