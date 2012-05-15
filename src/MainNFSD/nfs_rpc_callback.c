@@ -248,15 +248,6 @@ setup_client_saddr(nfs_client_id_t *clid, const char *uaddr)
     };
 }
 
-#ifdef _USE_NFS4_1
-void nfs_set_client_location(nfs_client_id_t *clid, const netaddr4 *addr4)
-{
-    clid->cid_cb.cid_addr.nc = nfs_netid_to_nc(addr4->na_r_netid);
-    strlcpy(clid->cid_cb.cid_client_r_addr, addr4->na_r_addr,
-            SOCK_NAME_MAX);
-    setup_client_saddr(clid, clid->cid_cb.cid_client_r_addr);
-}
-#else
 void nfs_set_client_location(nfs_client_id_t *clid, const clientaddr4 *addr4)
 {
     clid->cid_cb.cid_addr.nc = nfs_netid_to_nc(addr4->r_netid);
@@ -264,7 +255,6 @@ void nfs_set_client_location(nfs_client_id_t *clid, const clientaddr4 *addr4)
             SOCK_NAME_MAX);
     setup_client_saddr(clid, clid->cid_cb.cid_client_r_addr);
 }
-#endif
 
 static inline int32_t
 nfs_clid_connected_socket(nfs_client_id_t *clid, int *fd, int *proto)

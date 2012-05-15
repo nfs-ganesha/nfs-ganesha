@@ -101,13 +101,8 @@ static fsal_status_t FSAL_proxy_setclientid_force(proxyfsal_op_context_t * p_con
   cbproxy.cb_program = 0;
   strncpy(cbnetid, "tcp", MAXNAMLEN);
   strncpy(cbaddr, "127.0.0.1", MAXNAMLEN);
-#ifdef _USE_NFS4_1
-  cbproxy.cb_location.na_r_netid = cbnetid;
-  cbproxy.cb_location.na_r_addr = cbaddr;
-#else
   cbproxy.cb_location.r_netid = cbnetid;
   cbproxy.cb_location.r_addr = cbaddr;
-#endif
 
   COMPOUNDV4_ARG_ADD_OP_SETCLIENTID(argnfs4, nfsclientid, cbproxy);
 

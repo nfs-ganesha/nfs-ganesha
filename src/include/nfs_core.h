@@ -481,11 +481,7 @@ static const struct __netid_nc_table
 };
 
 nc_type nfs_netid_to_nc(const char *netid);
-#ifdef _USE_NFS4_1
-void nfs_set_client_location(nfs_client_id_t *clid, const netaddr4 *addr4);
-#else
 void nfs_set_client_location(nfs_client_id_t *clid, const clientaddr4 *addr4);
-#endif
 
 /* end TI-RPC */
 
