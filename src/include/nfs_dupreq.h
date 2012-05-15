@@ -104,12 +104,13 @@ uint32_t dupreq_value_hash_func(hash_parameter_t *p_hparam,
 uint64_t dupreq_rbt_hash_func(hash_parameter_t *p_hparam, hash_buffer_t *buffclef);
 void nfs_dupreq_get_stats(hash_stat_t *phstat_udp, hash_stat_t *phstat_tcp ) ;
 
-
-#define DUPREQ_SUCCESS             0
-#define DUPREQ_INSERT_MALLOC_ERROR 1
-
-#define DUPREQ_NOT_FOUND           2
-#define DUPREQ_BEING_PROCESSED     3
-#define DUPREQ_ALREADY_EXISTS      4
+typedef enum dupreq_status
+{
+    DUPREQ_SUCCESS = 0,
+    DUPREQ_INSERT_MALLOC_ERROR,
+    DUPREQ_NOT_FOUND,
+    DUPREQ_BEING_PROCESSED,
+    DUPREQ_ALREADY_EXISTS,
+} dupreq_status_t;
 
 #endif                          /* _NFS_DUPREQ_H */
