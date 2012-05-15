@@ -43,78 +43,84 @@ unsigned int reaper_delay = 15;
 
 void *reaper_thread(void *UnusedArg)
 {
-        hash_table_t *ht = UnusedArg;
-        struct rbt_head *head_rbt;
-        hash_data_t *pdata = NULL;
-        uint32_t i;
-        int v4;
-        struct rbt_node *pn;
-        nfs_client_id_t *clientp;
-        int old_state_cleaned = 0;
+  hash_table_t        * ht_reap = UnusedArg;
+  struct rbt_head     * head_rbt;
+  hash_data_t         * pdata = NULL;
+  uint32_t              i;
+  int                   v4;
+  struct rbt_node     * pn;
+  nfs_client_id_t     * clientp;
+  int                   old_state_cleaned = 0;
 
-        SetNameFunction("reaper_thr");
+  SetNameFunction("reaper_thr");
 
-        while(1) {
-                /* Initial wait */
-                /* TODO: should this be configurable? */
-                /* sleep(nfs_param.core_param.reaper_delay); */
-                sleep(reaper_delay);
-                LogFullDebug(COMPONENT_MAIN,
-                    "NFS reaper : now checking clients");
+  while(1)
+    {
+      /* Initial wait */
+      /* TODO: should this be configurable? */
+      /* sleep(nfs_param.core_param.reaper_delay); */
+      sleep(reaper_delay);
+      LogFullDebug(COMPONENT_MAIN,
+          "NFS reaper : now checking clients");
 
-                /* For each bucket of the hashtable */
-                for(i = 0; i < ht->parameter.index_size; i++) {
-                        head_rbt = &ht->partitions[i].rbt;
+  /* For each bucket of the hashtable */
+  for(i = 0; i < ht_reap->parameter.index_size; i++)
+    {
+      head_rbt = &ht_reap->partitions[i].rbt;
 
-restart:
-                        /* acquire mutex */
-                        pthread_rwlock_wrlock(&ht->partitions[i].lock);
+ restart:
+      /* acquire mutex */
+      pthread_rwlock_wrlock(&ht_reap->partitions[i].lock);
 
-                        /* go through all entries in the red-black-tree*/
-                        RBT_LOOP(head_rbt, pn) {
-                                pdata = RBT_OPAQ(pn);
+      /* go through all entries in the red-black-tree*/
+      RBT_LOOP(head_rbt, pn)
+        {
+          pdata = RBT_OPAQ(pn);
 
-                                clientp =
-                                    (nfs_client_id_t *)pdata->buffval.pdata;
-                                /*
-                                 * little hack: only want to reap v4 clients
-                                 * 4.1 initializess this field to '1'
-                                 */
+          clientp = (nfs_client_id_t *)pdata->buffval.pdata;
+          /*
+           * little hack: only want to reap v4 clients
+           * 4.1 initializess this field to '1'
+           */
 #ifdef _USE_NFS4_1
-                                v4 = (clientp->create_session_sequence == 0);
+          v4 = (clientp->create_session_sequence == 0);
 #else
-				v4 = 1;
+          v4 = 1;
 #endif
-                                if (clientp->confirmed != EXPIRED_CLIENT_ID &&
-                                    nfs4_is_lease_expired(clientp) && v4) {
-                                        pthread_rwlock_unlock(
-                                             &ht->partitions[i].lock);
-                                        LogDebug(COMPONENT_MAIN,
-                                            "NFS reaper: expire client %s",
-                                            clientp->client_name);
-                                        nfs_client_id_expire(clientp);
-                                        goto restart;
-                                }
+          if(clientp->confirmed != EXPIRED_CLIENT_ID &&
+             nfs4_is_lease_expired(clientp) && v4)
+            {
+              pthread_rwlock_unlock(&ht_reap->partitions[i].lock);
+              LogDebug(COMPONENT_MAIN,
+                  "NFS reaper: expire client %s",
+                  clientp->client_name);
+              nfs_client_id_expire(clientp);
+              goto restart;
+            }
 
-                                if (clientp->confirmed == EXPIRED_CLIENT_ID) {
-                                        LogDebug(COMPONENT_MAIN,
-                                            "reaper: client %s already expired",
-                                            clientp->client_name);
-                                }
+          if(clientp->confirmed == EXPIRED_CLIENT_ID)
+            {
+              LogDebug(COMPONENT_MAIN,
+                       "reaper: client %s already expired",
+                       clientp->client_name);
+            }
 
-                                RBT_INCREMENT(pn);
-                        }
-                        pthread_rwlock_unlock(&ht->partitions[i].lock);
-                }
+          RBT_INCREMENT(pn);
+        }
 
-                if (old_state_cleaned == 0) {
-                        /* if not in grace period, clean up the old state */
-                        if(!nfs_in_grace()) {
-                                nfs4_clean_old_recov_dir();
-                                old_state_cleaned = 1;
-                        }
-                }
-        }                           /* while ( 1 ) */
+      pthread_rwlock_unlock(&ht_reap->partitions[i].lock);
+    }
 
-        return NULL;
+      if (old_state_cleaned == 0)
+        {
+          /* if not in grace period, clean up the old state */
+          if(!nfs_in_grace())
+            {
+              nfs4_clean_old_recov_dir();
+              old_state_cleaned = 1;
+            }
+        }
+    }                           /* while ( 1 ) */
+
+  return NULL;
 }
