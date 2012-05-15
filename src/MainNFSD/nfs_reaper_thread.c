@@ -43,7 +43,7 @@ unsigned int reaper_delay = 15;
 
 void *reaper_thread(void *UnusedArg)
 {
-        hash_table_t *ht = ht_client_id;
+        hash_table_t *ht = UnusedArg;
         struct rbt_head *head_rbt;
         hash_data_t *pdata = NULL;
         uint32_t i;

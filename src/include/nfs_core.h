@@ -161,8 +161,6 @@
 
 typedef char path_str_t[MAXPATHLEN] ;
 
-#define CLIENT_ID_MAX_LEN             72        /* MUST be a multiple of 9 */
-
 /* The default attribute mask for NFSv2/NFSv3 */
 #define FSAL_ATTR_MASK_V2_V3   ( FSAL_ATTRS_MANDATORY | FSAL_ATTR_MODE     | FSAL_ATTR_FILEID | \
                                  FSAL_ATTR_FSID       | FSAL_ATTR_NUMLINKS | FSAL_ATTR_OWNER  | \
@@ -247,7 +245,6 @@ typedef struct nfs_ip_stats_param__
 typedef struct nfs_client_id_param__
 {
   hash_parameter_t hash_param;
-  hash_parameter_t hash_param_reverse;
 } nfs_client_id_parameter_t;
 
 typedef struct nfs_state_id_param__

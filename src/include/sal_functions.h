@@ -167,52 +167,21 @@ state_status_t get_clientid_owner(clientid4        clientid,
                                   state_owner_t ** clientid_owner);
 
 int nfs_Init_client_id(nfs_client_id_parameter_t param);
-int nfs_Init_client_id_reverse(nfs_client_id_parameter_t param);
 
-int nfs_client_id_remove(clientid4 clientid, struct prealloc_pool *clientid_pool);
-
-int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res);
-
-int nfs_client_id_get_reverse(char *key, nfs_client_id_t * client_id_res);
-
-int nfs_client_id_Get_Pointer(clientid4 clientid, nfs_client_id_t ** ppclient_id_res);
-
-int nfs_client_id_add(clientid4              clientid,
-                      nfs_client_id_t        client_record,
-                      cache_inode_client_t * pclient);
-
-int nfs_client_id_set(clientid4              clientid,
-                      nfs_client_id_t        client_record,
-                      struct prealloc_pool * clientid_pool);
+#define nfs_client_id_Get_Pointer(clientid, ppclient_id_res) CLIENT_ID_NOT_FOUND
 
 void nfs_client_id_expire(nfs_client_id_t *client_record);
 
-int nfs_client_id_compute(char *name, clientid4 * pclientid);
-int nfs_client_id_basic_compute(char *name, clientid4 * pclientid);
-
 int display_client_id(hash_buffer_t * pbuff, char *str);
-int display_client_id_reverse(hash_buffer_t * pbuff, char *str);
 int display_client_id_val(hash_buffer_t * pbuff, char *str);
 
 int compare_client_id(hash_buffer_t * buff1, hash_buffer_t * buff2);
-int compare_client_id_reverse(hash_buffer_t * buff1, hash_buffer_t * buff2);
 
 uint64_t client_id_rbt_hash_func(hash_parameter_t * p_hparam,
                                  hash_buffer_t    * buffclef);
 
-uint64_t client_id_rbt_hash_func_reverse(hash_parameter_t * p_hparam,
-                                         hash_buffer_t    * buffclef);
-
 uint32_t client_id_value_hash_func(hash_parameter_t * p_hparam,
                                    hash_buffer_t    * buffclef);
-
-uint32_t client_id_value_hash_func_reverse(hash_parameter_t * p_hparam,
-                                           hash_buffer_t    * buffclef);
-
-int client_id_value_both_reverse(hash_parameter_t * p_hparam,
-                                 hash_buffer_t    * buffclef,
-                                 uint32_t         * phashval,
-                                 uint64_t         * prbtval);
 
 /******************************************************************************
  *
@@ -236,14 +205,8 @@ int nfs41_Init_session_id(nfs_session_id_parameter_t param);
 int nfs41_Session_Set(char              sessionid[NFS4_SESSIONID_SIZE],
                       nfs41_session_t * psession_data);
 
-int nfs41_Session_Get(char              sessionid[NFS4_SESSIONID_SIZE],
-                      nfs41_session_t * psession_data);
-
 int nfs41_Session_Get_Pointer(char               sessionid[NFS4_SESSIONID_SIZE],
                               nfs41_session_t ** psession_data);
-
-int nfs41_Session_Update(char              sessionid[NFS4_SESSIONID_SIZE],
-                         nfs41_session_t * psession_data);
 
 int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE]);
 int nfs41_Build_sessionid(clientid4 * pclientid, char sessionid[NFS4_SESSIONID_SIZE]);
@@ -288,9 +251,6 @@ int nfs4_State_Get_Pointer(char other[OTHERSIZE], state_t * *pstate_data);
 int nfs4_State_Del(char other[OTHERSIZE]);
 void nfs_State_PrintAll(void);
 
-int nfs4_is_lease_expired(nfs_client_id_t * pentry);
-void nfs4_update_lease(nfs_client_id_t * clientp);
-
 int display_state_id_val(hash_buffer_t * pbuff, char *str);
 int display_state_id_key(hash_buffer_t * pbuff, char *str);
 
@@ -306,8 +266,8 @@ uint64_t state_id_rbt_hash_func(hash_parameter_t * p_hparam,
  *
  ******************************************************************************/
 
-int nfs4_is_lease_expired(nfs_client_id_t * pentry);
-void nfs4_update_lease(nfs_client_id_t * clientp);
+#define nfs4_is_lease_expired(pentry) (pentry != NULL)
+#define nfs4_update_lease(clientp)
 
 /******************************************************************************
  *
@@ -340,9 +300,6 @@ void convert_nfs4_open_owner(open_owner4             * pnfsowner,
 void convert_nfs4_lock_owner(lock_owner4             * pnfsowoner,
                              state_nfs4_owner_name_t * pname_owner,
                              clientid4                 clientid);
-
-void convert_nfs4_clientid_owner(clientid4                 clientid,
-                                 state_nfs4_owner_name_t * pname_owner);
 
 void nfs4_owner_PrintAll(void);
 
@@ -387,10 +344,12 @@ bool_t Check_nfs4_seqid(state_owner_t   * powner,
 int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
 int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);
 int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
+
 uint32_t lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
-                                          hash_buffer_t * buffclef);
+                                     hash_buffer_t    * buffclef);
+
 uint64_t lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
-                                   hash_buffer_t * buffclef);
+                                   hash_buffer_t    * buffclef);
 #endif
 
 #ifdef _USE_NLM
@@ -580,8 +539,8 @@ state_status_t state_share_check_conflict(cache_entry_t  * pentry,
                                           state_status_t * pstatus);
 void state_nfs4_state_wipe(cache_entry_t        * pentry);
 
-void release_lockstate(state_owner_t *plock_owner);
-void release_openstate(state_owner_t *popen_owner);
+void release_lockstate(state_owner_t * plock_owner);
+void release_openstate(state_owner_t * popen_owner);
 
 #ifdef _PNFS_MDS
 state_status_t state_add_segment(state_t             * pstate,
@@ -594,7 +553,7 @@ state_status_t state_lookup_layout_state(cache_entry_t * pentry,
                                          state_owner_t * powner,
                                          layouttype4     type,
                                          state_t      ** pstate);
-#endif /*  _PNFS_MDS */
+#endif /* _PNFS_MDS */
 
 /******************************************************************************
  *

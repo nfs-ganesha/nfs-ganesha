@@ -215,50 +215,6 @@ int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
 
 /**
  *
- * nfs41_Session_Get
- *
- * This routine gets a session from the sessions's hashtable.
- *
- * @param psession      [IN] pointer to the sessionid to be checked.
- * @param psession_data [OUT] found session
- *
- * @return 1 if ok, 0 otherwise.
- *
- */
-int nfs41_Session_Get(char sessionid[NFS4_SESSIONID_SIZE],
-                      nfs41_session_t * psession_data)
-{
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
-
-  if(isFullDebug(COMPONENT_SESSIONS))
-    {
-      char str[NFS4_SESSIONID_SIZE *2 + 1];
-
-      sprint_mem(str, (char *)sessionid, NFS4_SESSIONID_SIZE);
-      LogFullDebug(COMPONENT_SESSIONS,
-                   "         -----  GetSessionId : %s", str);
-    }
-
-  buffkey.pdata = (caddr_t) sessionid;
-  buffkey.len = NFS4_SESSIONID_SIZE;
-
-  if(HashTable_Get(ht_session_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
-    {
-      LogFullDebug(COMPONENT_SESSIONS,
-                   "---> nfs41_Session_Get  NOT FOUND !!!!!!");
-      return 0;
-    }
-
-  memcpy(psession_data, buffval.pdata, sizeof(nfs41_session_t));
-  LogFullDebug(COMPONENT_SESSIONS,
-               "---> nfs41_Session_Get Found :-)");
-
-  return 1;
-}                               /* nfs41_Session_Get */
-
-/**
- *
  * nfs41_Session_Get_Pointer
  *
  * This routine gets a pointer to a session from the sessions's hashtable.
@@ -301,51 +257,6 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 
   return 1;
 }                               /* nfs41_Session_Get_Pointer */
-
-/**
- *
- * nfs41_Session_Update
- *
- * This routine updates a session from the sessions's hashtable.
- *
- * @param psession      [IN] pointer to the sessionid to be checked.
- * @param psession_data [IN] new session
- *
- * @return 1 if ok, 0 otherwise.
- *
- */
-int nfs41_Session_Update(char sessionid[NFS4_SESSIONID_SIZE],
-                         nfs41_session_t * psession_data)
-{
-  hash_buffer_t buffkey;
-  hash_buffer_t buffval;
-
-  if(isFullDebug(COMPONENT_SESSIONS))
-    {
-      char str[NFS4_SESSIONID_SIZE *2 + 1];
-
-      sprint_mem(str, (char *)sessionid, NFS4_SESSIONID_SIZE);
-      LogFullDebug(COMPONENT_SESSIONS,
-                   "         -----  UpdateSession : %s", str);
-    }
-
-  buffkey.pdata = (caddr_t) sessionid;
-  buffkey.len = NFS4_SESSIONID_SIZE;
-
-  if(HashTable_Get(ht_session_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
-    {
-      LogFullDebug(COMPONENT_SESSIONS,
-                   "---> nfs41_Session_Update  NOT FOUND !!!!!!");
-      return 0;
-    }
-
-  memcpy(buffval.pdata, psession_data, sizeof(nfs41_session_t));
-
-  LogFullDebug(COMPONENT_SESSIONS,
-               "---> nfs41_Session_Update Found :-)");
-
-  return 1;
-}                               /* nfs41_Session_Update */
 
 /**
  *

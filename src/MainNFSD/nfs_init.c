@@ -481,21 +481,6 @@ void nfs_set_param_default()
   nfs_param.client_id_param.hash_param.flags = HT_FLAG_CACHE;
   nfs_param.client_id_param.hash_param.ht_log_component = COMPONENT_CLIENT_ID_COMPUTE;
 
-  /* NFSv4 Client id reverse table */
-  nfs_param.client_id_param.hash_param_reverse.index_size = PRIME_CLIENT_ID;
-  /* ipaddr is a numerical decimal value */
-  nfs_param.client_id_param.hash_param_reverse.alphabet_length = 10;
-  nfs_param.client_id_param.hash_param_reverse.hash_func_key = NULL ;
-  nfs_param.client_id_param.hash_param_reverse.hash_func_rbt = NULL ;
-  nfs_param.client_id_param.hash_param_reverse.hash_func_both =
-       client_id_value_both_reverse ;
-  nfs_param.client_id_param.hash_param_reverse.compare_key = compare_client_id_reverse;
-  nfs_param.client_id_param.hash_param_reverse.key_to_str = display_client_id_reverse;
-  nfs_param.client_id_param.hash_param_reverse.val_to_str = display_client_id_val;
-  nfs_param.client_id_param.hash_param_reverse.ht_name = "Client ID Reverse";
-  nfs_param.client_id_param.hash_param_reverse.flags = HT_FLAG_NONE;
-  nfs_param.client_id_param.hash_param_reverse.ht_log_component = COMPONENT_CLIENT_ID_COMPUTE;
-
   /* NFSv4 State Id hash */
   nfs_param.state_id_param.hash_param.index_size = PRIME_STATE_ID;
   /* ipaddr is a numerical decimal value */
@@ -1153,7 +1138,6 @@ int nfs_check_param_consistency()
       !is_prime(nfs_param.gnamemap_cache_param.hash_param.index_size) ||
       !is_prime(nfs_param.ip_stats_param.hash_param.index_size) ||
       !is_prime(nfs_param.client_id_param.hash_param.index_size) ||
-      !is_prime(nfs_param.client_id_param.hash_param_reverse.index_size) ||
       !is_prime(nfs_param.state_id_param.hash_param.index_size) ||
 #ifdef _USE_NFS4_1
       !is_prime(nfs_param.session_id_param.hash_param.index_size) ||
@@ -1738,16 +1722,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
     }
   LogInfo(COMPONENT_INIT,
           "NFSv4 clientid cache successfully initialized");
-
-  /* Init the NFSv4 Clientid cache */
-  LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache reverse");
-  if(nfs_Init_client_id_reverse(nfs_param.client_id_param) != CLIENT_ID_SUCCESS)
-    {
-      LogFatal(COMPONENT_INIT,
-               "Error while initializing NFSv4 clientid cache reverse");
-    }
-  LogInfo(COMPONENT_INIT,
-          "NFSv4 clientid cache reverse successfully initialized");
 
   /* Init The NFSv4 State id cache */
   LogDebug(COMPONENT_INIT, "Now building NFSv4 State Id cache");

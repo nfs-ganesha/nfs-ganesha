@@ -498,15 +498,6 @@ void convert_nfs4_lock_owner(lock_owner4             * pnfsowner,
          pnfsowner->owner.owner_len);
 }                               /* convert_nfs4_lock_owner */
 
-void convert_nfs4_clientid_owner(clientid4                 clientid,
-                                 state_nfs4_owner_name_t * pname_owner)
-{
-  pname_owner->son_clientid = clientid;
-  pname_owner->son_owner_len = 0;
-  pname_owner->son_islock = FALSE;
-  pname_owner->son_owner_val[0] = '\0';
-}                               /* convert_nfs4_clientid_owner */
-
 state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t * pname,
                                  state_owner_type_t        type,
                                  state_owner_t           * related_owner,

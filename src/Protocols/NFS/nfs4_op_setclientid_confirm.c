@@ -42,21 +42,7 @@
 #include "solaris_port.h"
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>           /* for having FNDELAY */
-#include "HashData.h"
-#include "HashTable.h"
-#include "log.h"
-#include "ganesha_rpc.h"
-#include "nfs4.h"
-#include "nfs_core.h"
 #include "sal_functions.h"
-#include "nfs_proto_functions.h"
-#include "nfs_tools.h"
-#include "nfs_file_handle.h"
 
 /**
  *
@@ -77,80 +63,7 @@
 int nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
                                 compound_data_t * data, struct nfs_resop4 *resp)
 {
-  nfs_client_id_t * nfs_clientid;
-  clientid4 clientid = 0;
-  nfs_worker_data_t *pworker __attribute__((unused)) = NULL;
-
-#define arg_SETCLIENTID_CONFIRM4 op->nfs_argop4_u.opsetclientid_confirm
-#define res_SETCLIENTID_CONFIRM4 resp->nfs_resop4_u.opsetclientid_confirm
-
-  resp->resop = NFS4_OP_SETCLIENTID_CONFIRM;
-  res_SETCLIENTID_CONFIRM4.status = NFS4_OK;
-  clientid = arg_SETCLIENTID_CONFIRM4.clientid;
-
-  LogDebug(COMPONENT_NFS_V4,
-           "SETCLIENTID_CONFIRM clientid = %"PRIx64, clientid);
-  /* LogDebug(COMPONENT_NFS_V4,
-              "SETCLIENTID_CONFIRM Verifier = #%s#",
-              arg_SETCLIENTID_CONFIRM4.setclientid_confirm ) ; */
-
-  /* Does this id already exists ? */
-  if(nfs_client_id_Get_Pointer(clientid, &nfs_clientid) == CLIENT_ID_SUCCESS)
-    {
-      /* The client id should not be confirmed */
-      P(nfs_clientid->clientid_mutex);
-      if(nfs_clientid->confirmed == CONFIRMED_CLIENT_ID)
-        {
-          LogDebug(COMPONENT_NFS_V4,
-                   "SETCLIENTID_CONFIRM clientid is already confirmed");
-          /* Client id was already confirmed and is then in use, this is NFS4ERR_CLID_INUSE if not same client */
-
-          /* Check the verifier */
-          if(strncmp
-             (nfs_clientid->verifier, arg_SETCLIENTID_CONFIRM4.setclientid_confirm,
-              NFS4_VERIFIER_SIZE))
-            {
-              /* Bad verifier */
-              V(nfs_clientid->clientid_mutex);
-              res_SETCLIENTID_CONFIRM4.status = NFS4ERR_CLID_INUSE;
-              return res_SETCLIENTID_CONFIRM4.status;
-            }
-        }
-      else
-        {
-          if(nfs_clientid->confirmed == REBOOTED_CLIENT_ID)
-            {
-              LogDebug(COMPONENT_NFS_V4,
-                       "SETCLIENTID_CONFIRM clientid = %"PRIx64", client was rebooted, getting ride of old state from previous client instance",
-                       clientid);
-            }
-
-          /* Regular situation, set the client id confirmed and returns */
-          nfs_clientid->confirmed = CONFIRMED_CLIENT_ID;
-
-          /* add this clientID to stable storage */
-          nfs4_create_clid_name(nfs_clientid, data->reqp);
-          nfs4_add_clid(nfs_clientid);
-
-          /* Set the time for the client id */
-          nfs_clientid->last_renew = time(NULL);
-
-          /* check if the client can perform reclaims */
-          nfs4_chk_clid(nfs_clientid);
-
-        }
-      V(nfs_clientid->clientid_mutex);
-    }
-  else
-    {
-      /* The client id does not exist: stale client id */
-      res_SETCLIENTID_CONFIRM4.status = NFS4ERR_STALE_CLIENTID;
-      return res_SETCLIENTID_CONFIRM4.status;
-    }
-
-  /* Successful exit */
-  res_SETCLIENTID_CONFIRM4.status = NFS4_OK;
-  return res_SETCLIENTID_CONFIRM4.status;
+  return NFS4_OK;
 }                               /* nfs4_op_setclientid_confirm */
 
 /**

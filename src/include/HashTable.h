@@ -364,11 +364,4 @@ hash_error_t HashTable_DelSafe(hash_table_t *ht,
                                hash_buffer_t *key,
                                hash_buffer_t *val);
 
-/**
- * @todo ACE: HashTable.h seems a singularly inappropriate place for a
- * reference to the clientid hash table.  Come back later, remove
- * this, see what breaks, and find somewhere more appropriate to put
- * it.
- */
-extern hash_table_t * ht_client_id;
 #endif                          /* _HASHTABLE_H */
