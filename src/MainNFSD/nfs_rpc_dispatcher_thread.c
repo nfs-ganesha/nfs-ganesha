@@ -99,6 +99,7 @@ static struct rpc_evchan rpc_evchan[N_EVENT_CHAN];
 static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
                           void *u_data);
 static bool_t nfs_rpc_getreq_ng(SVCXPRT *xprt /*, int chan_id */);
+static bool_t nfs_rpc_free_xprt(SVCXPRT *xprt);
 
 /**
  *
@@ -235,6 +236,12 @@ void Create_udp(protos prot)
     /* Hook xp_getreq */
     (void) SVC_CONTROL(udp_xprt[prot], SVCSET_XP_GETREQ, nfs_rpc_getreq_ng);
 
+    /* Hook xp_free_xprt (finalize/free private data) */
+    (void) SVC_CONTROL(udp_xprt[prot], SVCSET_XP_FREE_XPRT, nfs_rpc_free_xprt);
+
+    /* Setup private data */
+    (udp_xprt[prot])->xp_u1 = alloc_gsh_xprt_private(XPRT_PRIVATE_FLAG_REF);
+
     /* bind xprt to channel--unregister it from the global event
      * channel (if applicable) */
     (void) svc_rqst_evchan_reg(rpc_evchan[UDP_EVENT_CHAN].chan_id, udp_xprt[prot],
@@ -249,7 +256,6 @@ void Create_udp(protos prot)
 
 void Create_tcp(protos prot)
 {
-
 #if 0
     /* XXXX By itself, non-block mode will currently stall, so, we probably
      * will remove this. */
@@ -267,8 +273,8 @@ void Create_tcp(protos prot)
 
     /* bind xprt to channel--unregister it from the global event
      * channel (if applicable) */
-    (void) svc_rqst_evchan_reg(rpc_evchan[TCP_RDVS_CHAN].chan_id, tcp_xprt[prot],
-                               SVC_RQST_FLAG_XPRT_UREG);
+    (void) svc_rqst_evchan_reg(rpc_evchan[TCP_RDVS_CHAN].chan_id,
+                               tcp_xprt[prot], SVC_RQST_FLAG_XPRT_UREG);
 
     /* Hook xp_getreq */
     (void) SVC_CONTROL(tcp_xprt[prot], SVCSET_XP_GETREQ, nfs_rpc_getreq_ng);
@@ -276,7 +282,14 @@ void Create_tcp(protos prot)
     /* Hook xp_rdvs -- allocate new xprts to event channels */
     (void) SVC_CONTROL(tcp_xprt[prot], SVCSET_XP_RDVS, nfs_rpc_rdvs);
 
-/* XXXX the following code cannot compile (socket, binadaddr_udp6 are gone) (Matt) */
+    /* Hook xp_free_xprt (finalize/free private data) */
+    (void) SVC_CONTROL(tcp_xprt[prot], SVCSET_XP_FREE_XPRT, nfs_rpc_free_xprt);
+
+    /* Setup private data */
+    (tcp_xprt[prot])->xp_u1 = alloc_gsh_xprt_private(XPRT_PRIVATE_FLAG_REF);
+
+/* XXXX the following code cannot compile (socket, binadaddr_udp6 are gone)
+ * (Matt) */
 #ifdef _USE_TIRPC_IPV6
     if(listen(socket, pdata[prot].bindaddr_udp6.qlen) != 0)
         LogFatal(COMPONENT_DISPATCH,
@@ -719,8 +732,8 @@ static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
     if (++next_chan >= N_EVENT_CHAN)
         next_chan = TCP_EVCHAN_0;
 
-    /* this is ours */
-    newxprt->xp_u1 = (void *) 0;
+    /* setup private data (freed when xprt is destroyed) */
+    newxprt->xp_u1 = alloc_gsh_xprt_private(XPRT_PRIVATE_FLAG_REF);
 
     pthread_mutex_unlock(&mtx);
 
@@ -728,6 +741,12 @@ static u_int nfs_rpc_rdvs(SVCXPRT *xprt, SVCXPRT *newxprt, const u_int flags,
                                SVC_RQST_FLAG_NONE);
 
     return (0);
+}
+
+static bool_t nfs_rpc_free_xprt(SVCXPRT *xprt)
+{
+    if (xprt->xp_u1)
+        free_gsh_xprt_private(xprt->xp_u1);
 }
 
 /**
@@ -932,6 +951,9 @@ dispatch_rpc_subrequest(nfs_worker_data_t *pmydata,
   onfsreq->r_u.nfs->xprt = pnfsreq->r_u.nfs->xprt;
   req->rq_xprt = onfsreq->r_u.nfs->xprt;
 
+  /* count as 1 ref */
+  gsh_xprt_ref(req->rq_xprt, XPRT_PRIVATE_FLAG_LOCKED);
+
   /* Hand it off */
   DispatchWorkNFS(pnfsreq, worker_index);
 
@@ -1007,6 +1029,9 @@ process_status_t dispatch_rpc_request(SVCXPRT *xprt)
   /* Set up xprt */
   nfsreq->r_u.nfs->xprt = xprt;
   preq->rq_xprt = xprt;
+
+  /* Count as 1 ref */
+  gsh_xprt_ref(xprt, XPRT_PRIVATE_FLAG_LOCKED);
 
   /* Hand it off */
   DispatchWorkNFS(nfsreq, worker_index);

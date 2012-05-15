@@ -1877,10 +1877,12 @@ cond_multi_dispatch(nfs_worker_data_t *pmydata, request_data_t *pnfsreq)
 
     if (try_multi) {
         process_status_t rc_multi __attribute__((unused));
+        gsh_xprt_private_t *xu;
         pthread_rwlock_wrlock(&xprt->lock);
-        multi_cnt = (unsigned long*) &(pnfsreq->r_u.nfs->xprt->xp_u1);
-        if (*multi_cnt < nfs_param.core_param.dispatch_multi_xprt_max) {
-            ++(*multi_cnt);
+        xu = (gsh_xprt_private_t *) pnfsreq->r_u.nfs->xprt->xp_u1;
+        /* we need an atomic total-outstanding counter, check against hiwat */
+        if (xu->multi_cnt < nfs_param.core_param.dispatch_multi_xprt_max) {
+            ++(xu->multi_cnt);
             /* dispatch it */
             rc_multi = dispatch_rpc_subrequest(pmydata, pnfsreq);
             dispatched = TRUE;
@@ -1967,8 +1969,7 @@ again:
           LogDebug(COMPONENT_DISPATCH,
                    "Client on socket=%d, addr=%s disappeared...",
                    nfsreq->r_u.nfs->xprt->xp_fd, addrbuf);
-          /* XXX someone must do this */
-          SVC_DESTROY(nfsreq->r_u.nfs->xprt);
+          gsh_xprt_destroy(nfsreq->r_u.nfs->xprt);
           rc = PROCESS_LOST_CONN;
         }
       else if(stat == XPRT_MOREREQS)
@@ -2198,8 +2199,10 @@ void *worker_thread(void *IndexArg)
             }
            else
            {
-              /* Process the sequence */
-              (void) nfs_worker_process_rpc_requests(pmydata, nfsreq);
+               /* Process the sequence */
+               (void) nfs_worker_process_rpc_requests(pmydata, nfsreq);
+               gsh_xprt_unref(
+                   nfsreq->r_u.nfs->xprt, XPRT_PRIVATE_FLAG_NONE);
             }
            break ;
 
@@ -2212,12 +2215,18 @@ void *worker_thread(void *IndexArg)
                         (unsigned long) pnfsreq->r_u.nfs->msg.rm_xid);
 
            {
-               unsigned long *multi_cnt = (unsigned long *)
+               gsh_xprt_private_t *xu = (gsh_xprt_private_t *) 
                    &pnfsreq->r_u.nfs->xprt->xp_u1;
-               nfs_rpc_execute(pnfsreq, pmydata);
                pthread_rwlock_wrlock(&pnfsreq->r_u.nfs->xprt->lock);
-               --(*multi_cnt);
-               pthread_rwlock_unlock(&pnfsreq->r_u.nfs->xprt->lock);
+               if (! (xu->flags & XPRT_PRIVATE_FLAG_DESTROYED)) {
+                   pthread_rwlock_unlock(&pnfsreq->r_u.nfs->xprt->lock);
+                   nfs_rpc_execute(pnfsreq, pmydata);
+               } else {
+                   pthread_rwlock_wrlock(&pnfsreq->r_u.nfs->xprt->lock);
+                   --(xu->multi_cnt);
+                   gsh_xprt_unref(
+                       pnfsreq->r_u.nfs->xprt, XPRT_PRIVATE_FLAG_LOCKED);
+               }
            }
            break;
 
