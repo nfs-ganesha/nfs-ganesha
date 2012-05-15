@@ -137,7 +137,6 @@ int nfs41_op_layoutreturn(struct nfs_argop4 *op,
                                          .layoutreturn4_u.lr_layout
                                          .lrf_stateid,
                                          data->current_entry,
-                                         0LL,
                                          &layout_state,
                                          data,
                                          STATEID_SPECIAL_CURRENT,

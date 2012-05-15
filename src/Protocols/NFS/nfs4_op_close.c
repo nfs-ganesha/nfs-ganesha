@@ -102,7 +102,6 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_CLOSE4.open_stateid,
                               data->current_entry,
-                              0LL,
                               &pstate_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,

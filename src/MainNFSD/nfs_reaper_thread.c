@@ -39,31 +39,21 @@
 #include "nfs_core.h"
 #include "log.h"
 
-unsigned int reaper_delay = 15;
+#define REAPER_DELAY 10
 
-void *reaper_thread(void *UnusedArg)
+unsigned int reaper_delay = REAPER_DELAY;
+
+static void reap_hash_table(hash_table_t * ht_reap)
 {
-  hash_table_t        * ht_reap = UnusedArg;
   struct rbt_head     * head_rbt;
   hash_data_t         * pdata = NULL;
   uint32_t              i;
-  int                   v4;
+  int                   v4, rc;
   struct rbt_node     * pn;
-  nfs_client_id_t     * clientp;
-  int                   old_state_cleaned = 0;
+  nfs_client_id_t     * pnfs_client_id;
+  nfs_client_record_t * precord;
 
-  SetNameFunction("reaper_thr");
-
-  while(1)
-    {
-      /* Initial wait */
-      /* TODO: should this be configurable? */
-      /* sleep(nfs_param.core_param.reaper_delay); */
-      sleep(reaper_delay);
-      LogFullDebug(COMPONENT_MAIN,
-          "NFS reaper : now checking clients");
-
-  /* For each bucket of the hashtable */
+  /* For each bucket of the requested hashtable */
   for(i = 0; i < ht_reap->parameter.index_size; i++)
     {
       head_rbt = &ht_reap->partitions[i].rbt;
@@ -77,32 +67,53 @@ void *reaper_thread(void *UnusedArg)
         {
           pdata = RBT_OPAQ(pn);
 
-          clientp = (nfs_client_id_t *)pdata->buffval.pdata;
+          pnfs_client_id = (nfs_client_id_t *)pdata->buffval.pdata;
           /*
            * little hack: only want to reap v4 clients
            * 4.1 initializess this field to '1'
            */
-#ifdef _USE_NFS4_1
-          v4 = (clientp->cid_create_session_sequence == 0);
-#else
-          v4 = 1;
-#endif
-          if(clientp->cid_confirmed != EXPIRED_CLIENT_ID &&
-             nfs4_is_lease_expired(clientp) && v4)
-            {
-              pthread_rwlock_unlock(&ht_reap->partitions[i].lock);
-              LogDebug(COMPONENT_MAIN,
-                  "NFS reaper: expire client %s",
-                  clientp->cid_client_name);
-              nfs_client_id_expire(clientp);
-              goto restart;
-            }
+          v4 = (pnfs_client_id->cid_create_session_sequence == 0);
 
-          if(clientp->cid_confirmed == EXPIRED_CLIENT_ID)
+          P(pnfs_client_id->cid_mutex);
+
+          if(!valid_lease(pnfs_client_id) && v4)
             {
-              LogDebug(COMPONENT_MAIN,
-                       "reaper: client %s already expired",
-                       clientp->cid_client_name);
+              inc_client_id_ref(pnfs_client_id);
+
+              /* Take a reference to the client record */
+              precord = pnfs_client_id->cid_client_record;
+              inc_client_record_ref(precord);
+
+              V(pnfs_client_id->cid_mutex);
+
+              pthread_rwlock_unlock(&ht_reap->partitions[i].lock);
+
+              if(isDebug(COMPONENT_CLIENTID))
+                {
+                  char str[HASHTABLE_DISPLAY_STRLEN];
+
+                  display_client_id_rec(pnfs_client_id, str);
+
+                  LogFullDebug(COMPONENT_CLIENTID,
+                               "Expire index %d %s",
+                               i, str);
+                }
+
+              /* Take cr_mutex and expire clientid */
+              P(precord->cr_mutex);
+
+              rc = nfs_client_id_expire(pnfs_client_id);
+
+              V(precord->cr_mutex);
+
+              dec_client_id_ref(pnfs_client_id);
+              dec_client_record_ref(precord);
+              if(rc)
+                goto restart;
+            }
+          else
+            {
+              V(pnfs_client_id->cid_mutex);
             }
 
           RBT_INCREMENT(pn);
@@ -110,6 +121,34 @@ void *reaper_thread(void *UnusedArg)
 
       pthread_rwlock_unlock(&ht_reap->partitions[i].lock);
     }
+}
+
+void *reaper_thread(void *UnusedArg)
+{
+  int old_state_cleaned = 0;
+
+  SetNameFunction("reaper_thr");
+
+#ifndef _NO_BUDDY_SYSTEM
+  if(BuddyInit(&nfs_param.buddy_param_admin) != BUDDY_SUCCESS)
+    {
+      /* Failed init */
+      LogFatal(COMPONENT_CLIENTID,
+               "Memory manager could not be initialized for reaper thread");
+    }
+  LogInfo(COMPONENT_CLIENTID,
+          "Memory manager successfully initialized for reaper thread");
+#endif
+
+  if(nfs_param.nfsv4_param.lease_lifetime < (2 * REAPER_DELAY))
+    reaper_delay = nfs_param.nfsv4_param.lease_lifetime / 2;
+
+  while(1)
+    {
+      /* Initial wait */
+      /** @todo: should this be configurable? */
+      /* sleep(nfs_param.core_param.reaper_delay); */
+      sleep(reaper_delay);
 
       if (old_state_cleaned == 0)
         {
@@ -120,6 +159,13 @@ void *reaper_thread(void *UnusedArg)
               old_state_cleaned = 1;
             }
         }
+
+      LogFullDebug(COMPONENT_CLIENTID,
+                   "Now checking NFS4 clients for expiration%s",
+                   nfs_in_grace() ? " IN GRACE" : "");
+
+      reap_hash_table(ht_confirmed_client_id);
+      reap_hash_table(ht_unconfirmed_client_id);
     }                           /* while ( 1 ) */
 
   return NULL;

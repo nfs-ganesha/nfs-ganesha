@@ -352,7 +352,6 @@ acquire_layout_state(compound_data_t *data,
 
      if ((nfs_status = nfs4_Check_Stateid(supplied_stateid,
                                           data->current_entry,
-                                          0LL,
                                           &supplied_state,
                                           data,
                                           STATEID_SPECIAL_CURRENT,

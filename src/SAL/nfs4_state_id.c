@@ -224,7 +224,7 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t * pstate_data)
   if(HashTable_Test_And_Set(ht_state_id,
                             &buffkey,
                             &buffval,
-                            HASHTABLE_SET_HOW_SET_OVERWRITE) != HASHTABLE_SUCCESS)
+                            HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS)
     {
       LogDebug(COMPONENT_STATE,
                "HashTable_Test_And_Set failed for key %p",
@@ -316,7 +316,6 @@ int nfs4_State_Del(char other[OTHERSIZE])
  */
 int nfs4_Check_Stateid(stateid4        * pstate,
                        cache_entry_t   * pentry,
-                       clientid4         clientid,
                        state_t        ** ppstate,
                        compound_data_t * data,
                        char              flags,
@@ -324,7 +323,6 @@ int nfs4_Check_Stateid(stateid4        * pstate,
 {
   uint32_t          epoch = 0;
   state_t         * pstate2;
-  nfs_client_id_t * nfs_clientid;
   char              str[OTHERSIZE * 2 + 1 + 6];
   int32_t           diff;
 
@@ -417,27 +415,41 @@ int nfs4_Check_Stateid(stateid4        * pstate,
         return NFS4_OK;
     }
 
-  /* Get the related clientid */
-  /* If call from NFSv4.1 request, the clientid is provided through the session's structure,
-   * with NFSv4.0, the clientid is related to the stateid itself */
-  if(clientid == 0LL)
+  /* Now, if this lease is not already reserved, reserve it */
+  if(data->preserved_clientid != pstate2->state_powner->so_owner.so_nfs4_owner.so_pclientid)
     {
-      if(nfs_client_id_Get_Pointer(pstate2->state_powner->so_owner.so_nfs4_owner.so_clientid,
-                           &nfs_clientid) != CLIENT_ID_SUCCESS)
+      if(data->preserved_clientid != NULL)
         {
-          LogDebug(COMPONENT_STATE,
-                   "Check %s stateid could not find clientid for state %s",
-                   tag, str);
-          if(nfs_param.nfsv4_param.return_bad_stateid == TRUE)  /* Dirty work-around for HPC environment */
-            return NFS4ERR_BAD_STATEID; /* Refers to a non-existing client... */
-          else
-            return NFS4_OK;
+          /* We don't ever expect this to happen, but, just in case...
+           * Update and release already reserved lease.
+           */
+         P(data->preserved_clientid->cid_mutex);
+
+         update_lease(data->preserved_clientid);
+
+         V(data->preserved_clientid->cid_mutex);
+
+         data->preserved_clientid = NULL;
         }
 
-      if (nfs4_is_lease_expired(nfs_clientid))
-        return NFS4ERR_EXPIRED;
+      /* Check if lease is expired and reserve it */
+      P(pstate2->state_powner->so_owner.so_nfs4_owner.so_pclientid->cid_mutex);
 
-      nfs4_update_lease(nfs_clientid);
+      if(!reserve_lease(pstate2->state_powner->so_owner.so_nfs4_owner.so_pclientid))
+        {
+          LogDebug(COMPONENT_STATE,
+                   "Returning NFS4ERR_EXPIRED");
+
+          V(pstate2->state_powner->so_owner.so_nfs4_owner.so_pclientid->cid_mutex);
+
+          dec_client_id_ref(pstate2->state_powner->so_owner.so_nfs4_owner.so_pclientid);
+
+          return NFS4ERR_EXPIRED;
+        }
+
+      data->preserved_clientid = pstate2->state_powner->so_owner.so_nfs4_owner.so_pclientid;
+
+      V(pstate2->state_powner->so_owner.so_nfs4_owner.so_pclientid->cid_mutex);
     }
 
   /* Sanity check : Is this the right file ? */

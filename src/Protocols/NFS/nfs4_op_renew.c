@@ -77,38 +77,40 @@
 
 int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_renew";
-
   nfs_client_id_t *nfs_clientid;
 
   /* Lock are not supported */
   memset(resp, 0, sizeof(struct nfs_resop4));
   resp->resop = NFS4_OP_RENEW;
-  res_RENEW4.status = NFS4_OK;
 
   /* Tell the admin what I am doing... */
-  LogFullDebug(COMPONENT_NFS_V4, "RENEW Client id = %"PRIx64, arg_RENEW4.clientid);
+  LogFullDebug(COMPONENT_CLIENTID, "RENEW Client id = %"PRIx64, arg_RENEW4.clientid);
 
   /* Is this an existing client id ? */
-  if(nfs_client_id_Get_Pointer(arg_RENEW4.clientid, &nfs_clientid) !=
+  if(nfs_client_id_get_confirmed(arg_RENEW4.clientid, &nfs_clientid) !=
       CLIENT_ID_SUCCESS)
     {
       /* Unknown client id */
       res_RENEW4.status = NFS4ERR_STALE_CLIENTID;
-      goto out;
+      return res_RENEW4.status;
     }
 
-  if (nfs4_is_lease_expired(nfs_clientid))
+  P(nfs_clientid->cid_mutex);
+
+  if(!reserve_lease(nfs_clientid))
     {
       res_RENEW4.status = NFS4ERR_EXPIRED;
     }
   else
     {
-      nfs_clientid->cid_last_renew = time(NULL);
+      update_lease(nfs_clientid);
       res_RENEW4.status = NFS4_OK;      /* Regular exit */
     }
 
-out:
+  V(nfs_clientid->cid_mutex);
+
+  dec_client_id_ref(nfs_clientid);
+
   return res_RENEW4.status;
 }                               /* nfs4_op_renew */
 

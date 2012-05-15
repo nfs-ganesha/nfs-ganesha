@@ -83,9 +83,7 @@
 int nfs4_op_setattr(struct nfs_argop4 *op,
                     compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_setattr";
-
-  struct timeval          t;
+  struct timeval         t;
   fsal_attrib_list_t     sattr;
   fsal_attrib_list_t     parent_attr;
   cache_inode_status_t   cache_status = CACHE_INODE_SUCCESS;
@@ -155,7 +153,6 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
       /* Check stateid correctness and get pointer to state */
       res_SETATTR4.status = nfs4_Check_Stateid(&arg_SETATTR4.stateid,
                                                data->current_entry,
-                                               0LL,
                                                &pstate_found,
                                                data,
                                                STATEID_SPECIAL_ANY,

@@ -203,28 +203,30 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   LogDebug(COMPONENT_STATE,
            "OPEN Client id = %llx",
            (unsigned long long)arg_OPEN4.owner.clientid);
-  if(nfs_client_id_Get_Pointer(arg_OPEN4.owner.clientid, &nfs_clientid) !=
+
+  if(nfs_client_id_get_confirmed(arg_OPEN4.owner.clientid, &nfs_clientid) !=
       CLIENT_ID_SUCCESS)
     {
       res_OPEN4.status = NFS4ERR_STALE_CLIENTID;
-      goto out2;
+      cause2 = " (failed to find confirmed clientid)";
+      goto out3;
     }
 
-  /* The client id should be confirmed */
-  if(nfs_clientid->cid_confirmed != CONFIRMED_CLIENT_ID)
-    {
-      res_OPEN4.status = NFS4ERR_STALE_CLIENTID;
-      cause2 = " (not confirmed)";
-      goto out2;
-    }
+  /* Check if lease is expired and reserve it */
+  P(nfs_clientid->cid_mutex);
 
-  if (nfs4_is_lease_expired(nfs_clientid))
+  if(!reserve_lease(nfs_clientid))
     {
-      nfs_client_id_expire(nfs_clientid);
+      V(nfs_clientid->cid_mutex);
+
+      dec_client_id_ref(nfs_clientid);
+
       res_OPEN4.status = NFS4ERR_EXPIRED;
-      goto out2;
+      cause2 = " (clientid expired)";
+      goto out3;
     }
-  nfs4_update_lease(nfs_clientid);
+
+  V(nfs_clientid->cid_mutex);
 
   if (arg_OPEN4.openhow.opentype == OPEN4_CREATE && claim != CLAIM_NULL) {
       res_OPEN4.status = NFS4ERR_INVAL;
@@ -271,8 +273,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
   /* Is this open_owner known ? */
   if(powner == NULL)
     {
-      /* This open owner is not known yet, allocated and set up a new one */
+      /* This open owner is not known yet, allocate and set up a new one */
       powner = create_nfs4_owner(&owner_name,
+                                 nfs_clientid,
                                  STATE_OPEN_OWNER_NFSV4,
                                  NULL,
                                  0);
@@ -282,15 +285,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           res_OPEN4.status = NFS4ERR_RESOURCE;
           LogDebug(COMPONENT_STATE,
                    "NFS4 OPEN returning NFS4ERR_RESOURCE for CLAIM_NULL (could not create NFS4 Owner");
+          dec_client_id_ref(nfs_clientid);
           return res_OPEN4.status;
         }
-      LogDebug(COMPONENT_STATE,
-                       "NFS4 OPEN adding owners to client record ");
-
-
-      P(nfs_clientid->cid_mutex);
-      glist_add_tail(&nfs_clientid->cid_openowners, &powner->so_owner.so_nfs4_owner.so_perclient);
-      V(nfs_clientid->cid_mutex);
     }
 
   if (nfs_in_grace() && claim != CLAIM_PREVIOUS)
@@ -452,6 +449,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           if( FSAL_IS_ERROR( fsal_status ) )
             {
               res_OPEN4.status = NFS4ERR_DQUOT ;
+              dec_client_id_ref(nfs_clientid);
               return res_OPEN4.status;
             }
 #endif /* _USE_QUOTA */
@@ -726,7 +724,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           if(arg_OPEN4.share_access & OPEN4_SHARE_ACCESS_WRITE)
             openflags = FSAL_O_RDWR;
           if(arg_OPEN4.share_access != 0)
-            openflags = FSAL_O_RDWR;
+            openflags = FSAL_O_RDWR;    /** @todo : FSF - I don't think we can just ignore this : Something better later */
 
           pthread_rwlock_wrlock(&pentry_newfile->state_lock);
           status4 = nfs4_do_open(op, data, pentry_newfile, pentry_parent,
@@ -905,6 +903,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           LogDebug(COMPONENT_STATE,
                    "NFS4 OPEN returning NFS4ERR_NAMETOOLONG "
                    "for CLAIM_DELEGATE");
+          dec_client_id_ref(nfs_clientid);
           return res_OPEN4.status;
         }
 
@@ -914,12 +913,14 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
           res_OPEN4.status = NFS4ERR_INVAL;
           LogDebug(COMPONENT_STATE,
                    "NFS4 OPEN returning NFS4ERR_INVAL for CLAIM_DELEGATE");
+          dec_client_id_ref(nfs_clientid);
           return res_OPEN4.status;
         }
 
       res_OPEN4.status = NFS4ERR_NOTSUPP;
       LogDebug(COMPONENT_STATE,
                "NFS4 OPEN returning NFS4ERR_NOTSUPP for CLAIM_DELEGATE");
+      dec_client_id_ref(nfs_clientid);
       return res_OPEN4.status;
 
     default:
@@ -1015,8 +1016,6 @@ out_prev:
                  data,
                  tag);
 
-  nfs4_update_lease(nfs_clientid);
-
   /* If we are re-using stateid, then release extra reference to open owner */
   if(ReuseState)
     dec_state_owner_ref(powner);
@@ -1027,6 +1026,17 @@ out_prev:
   Copy_nfs4_state_req(powner, arg_OPEN4.seqid, op, data, resp, tag);
 
  out2:
+
+  /* Update the lease before exit */
+  P(nfs_clientid->cid_mutex);
+
+  update_lease(nfs_clientid);
+
+  V(nfs_clientid->cid_mutex);
+
+  dec_client_id_ref(nfs_clientid);
+
+ out3:
 
   if(res_OPEN4.status != NFS4_OK)
     {

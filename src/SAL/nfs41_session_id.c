@@ -44,79 +44,90 @@ size_t strnlen(const char *s, size_t maxlen);
 pool_t *nfs41_session_pool;
 
 hash_table_t *ht_session_id;
-uint32_t global_sequence = 0;
+uint64_t global_sequence = 0;
 pthread_mutex_t mutex_sequence = PTHREAD_MUTEX_INITIALIZER;
+
+int display_session_id(char * session_id, char * str)
+{
+  return DisplayOpaqueValue(session_id,
+                            NFS4_SESSIONID_SIZE,
+                            str);
+}
 
 int display_session_id_key(hash_buffer_t * pbuff, char *str)
 {
-  unsigned int i = 0;
-  unsigned int len = 0;
-  unsigned char *s = pbuff->pdata;
+  char * strtmp = str;
 
-  for(i = 0; i < NFS4_SESSIONID_SIZE; i++)
-    len += sprintf(&(str[i * 2]), "%02x", s[i]);
-  return len;
-}                               /* display_session_id_val */
+  strtmp += sprintf(strtmp, "sessionid=");
+
+  strtmp += display_session_id(pbuff->pdata, strtmp);
+
+  return strtmp - str;
+}
+
+int display_session(nfs41_session_t * psession, char * str)
+{
+  char            * strtmp = str;
+
+  strtmp += sprintf(strtmp, "sessionid=");
+
+  strtmp += display_session_id(psession->session_id, strtmp);
+
+  return strtmp - str;
+}
 
 int display_session_id_val(hash_buffer_t * pbuff, char *str)
 {
-  return sprintf(str, "not implemented");
-}                               /* display_session_id_val */
+  return display_session((nfs41_session_t *)pbuff->pdata, str);
+}
 
 int compare_session_id(hash_buffer_t * buff1, hash_buffer_t * buff2)
 {
   return memcmp(buff1->pdata, buff2->pdata, NFS4_SESSIONID_SIZE);
-}                               /* compare_session_id */
+}
 
 uint32_t session_id_value_hash_func(hash_parameter_t * p_hparam,
-                                         hash_buffer_t * buffclef)
+                                    hash_buffer_t    * buffclef)
 {
-  unsigned int sum = 0;
-  unsigned int i = 0;
-  unsigned char c;
+  /* Only need to hash the global counter portion since it is unique */
+  uint64_t sum;
 
-  /* Compute the sum of all the characters */
-  for(i = 0; i < NFS4_SESSIONID_SIZE; i++)
+  memcpy(&sum, ((char *)buffclef->pdata) + sizeof(clientid4), sizeof(sum));
+
+  if(isFullDebug(COMPONENT_SESSIONS) && isDebug(COMPONENT_HASHTABLE))
     {
-      c = ((char *)buffclef->pdata)[i];
-      sum += c;
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      display_session_id_key(buffclef, str);
+      LogFullDebug(COMPONENT_SESSIONS,
+                   "value hash: %s=%"PRIu32,
+                   str,
+                   (uint32_t)(sum % p_hparam->index_size));
     }
 
-  LogFullDebug(COMPONENT_SESSIONS,
-               "---> session_id_value_hash_func=%lu",
-               (unsigned long)(sum % p_hparam->index_size));
-
-  return (unsigned long)(sum % p_hparam->index_size);
+  return (uint32_t)(sum % p_hparam->index_size);
 }                               /*  client_id_reverse_value_hash_func */
 
 uint64_t session_id_rbt_hash_func(hash_parameter_t * p_hparam,
-                                  hash_buffer_t * buffclef)
+                                  hash_buffer_t    * buffclef)
 {
+  /* Only need to hash the global counter portion since it is unique */
+  uint64_t i1 = 0;
 
-  u_int32_t i1 = 0;
-  u_int32_t i2 = 0;
-  u_int32_t i3 = 0;
-  u_int32_t i4 = 0;
+  memcpy(&i1, ((char *)buffclef->pdata) + sizeof(clientid4), sizeof(i1));
 
-  if(isFullDebug(COMPONENT_SESSIONS))
+  if(isFullDebug(COMPONENT_SESSIONS) && isDebug(COMPONENT_HASHTABLE))
     {
-      char str[NFS4_SESSIONID_SIZE *2 + 1];
+      char str[HASHTABLE_DISPLAY_STRLEN];
 
-      sprint_mem(str, (char *)buffclef->pdata, NFS4_SESSIONID_SIZE);
+      display_session_id_key(buffclef, str);
       LogFullDebug(COMPONENT_SESSIONS,
-                   "         ----- session_id_rbt_hash_func : %s", str);
+                   "rbt hash: %s=%"PRIu64,
+                   str,
+                   i1);
     }
 
-  memcpy(&i1, buffclef->pdata, sizeof(u_int32_t));
-  memcpy(&i2, buffclef->pdata + 4, sizeof(u_int32_t));
-  memcpy(&i3, buffclef->pdata + 8, sizeof(u_int32_t));
-  memcpy(&i4, buffclef->pdata + 12, sizeof(u_int32_t));
-
-  LogFullDebug(COMPONENT_SESSIONS,
-               "--->  session_id_rbt_hash_func=%lu",
-               (unsigned long)(i1 ^ i2 ^ i3));
-
-  return (unsigned long)((i1 ^ i2 ^ i3) | i4);
+  return i1;
 }                               /* session_id_rbt_hash_func */
 
 /**
@@ -155,20 +166,17 @@ int nfs41_Init_session_id(nfs_session_id_parameter_t param)
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs41_Build_sessionid(clientid4 * pclientid, char sessionid[NFS4_SESSIONID_SIZE])
+void nfs41_Build_sessionid(clientid4 * pclientid, char * sessionid)
 {
-  uint32_t seq;
+  uint64_t seq;
 
   P(mutex_sequence);
-  global_sequence += 1;
-  seq = global_sequence;
+  seq = ++global_sequence;
   V(mutex_sequence);
 
-  memset((char *)sessionid, 0, NFS4_SESSIONID_SIZE);
-  memcpy((char *)sessionid, (char *)pclientid, sizeof(clientid4));
-  memcpy((char *)(sessionid + sizeof(clientid4)), (char *)&seq, sizeof(seq));
-
-  return 1;
+  memset(sessionid, 0, NFS4_SESSIONID_SIZE);
+  memcpy(sessionid, pclientid, sizeof(clientid4));
+  memcpy(sessionid + sizeof(clientid4), &seq, sizeof(seq));
 }                               /* nfs41_Build_sessionid */
 
 /**
@@ -187,14 +195,13 @@ int nfs41_Session_Set(char sessionid[NFS4_SESSIONID_SIZE],
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
+  char          str[HASHTABLE_DISPLAY_STRLEN];
 
   if(isFullDebug(COMPONENT_SESSIONS))
     {
-      char str[NFS4_SESSIONID_SIZE *2 + 1];
-
-      sprint_mem(str, (char *)sessionid, NFS4_SESSIONID_SIZE);
+      display_session_id(sessionid, str);
       LogFullDebug(COMPONENT_SESSIONS,
-                   "         -----  SetSSession : %s", str);
+                   "Set SSession %s", str);
     }
 
   if((buffkey.pdata = gsh_malloc(NFS4_SESSIONID_SIZE)) == NULL)
@@ -230,14 +237,13 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
+  char          str[HASHTABLE_DISPLAY_STRLEN];
 
   if(isFullDebug(COMPONENT_SESSIONS))
     {
-      char str[NFS4_SESSIONID_SIZE *2 + 1];
-
-      sprint_mem(str, (char *)sessionid, NFS4_SESSIONID_SIZE);
+      display_session_id(sessionid, str);
       LogFullDebug(COMPONENT_SESSIONS,
-                   "         -----  Get_PointerSession : %s", str);
+                   "Get Session %s", str);
     }
 
   buffkey.pdata = (caddr_t) sessionid;
@@ -246,14 +252,14 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
   if(HashTable_Get(ht_session_id, &buffkey, &buffval) != HASHTABLE_SUCCESS)
     {
       LogFullDebug(COMPONENT_SESSIONS,
-                   "---> nfs41_Session_Get_Pointer  NOT FOUND !!!!!!");
+                   "Session %s Not Found", str);
       return 0;
     }
 
   *psession_data = (nfs41_session_t *) buffval.pdata;
 
   LogFullDebug(COMPONENT_SESSIONS,
-               "---> nfs41_Session_Get_Pointer Found :-)");
+               "Session %s Found", str);
 
   return 1;
 }                               /* nfs41_Session_Get_Pointer */
@@ -269,17 +275,16 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
  * @return 1 if ok, 0 otherwise.
  *
  */
-int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
+int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE], struct prealloc_pool * pool_session)
 {
   hash_buffer_t buffkey, old_key, old_value;
+  char          str[HASHTABLE_DISPLAY_STRLEN];
 
   if(isFullDebug(COMPONENT_SESSIONS))
     {
-      char str[NFS4_SESSIONID_SIZE *2 + 1];
-
-      sprint_mem(str, (char *)sessionid, NFS4_SESSIONID_SIZE);
+      display_session_id(sessionid, str);
       LogFullDebug(COMPONENT_SESSIONS,
-                   "         -----  DelSession : %s", str);
+                   "Delete Session %s", str);
     }
 
   buffkey.pdata = (caddr_t) sessionid;
@@ -287,10 +292,16 @@ int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
 
   if(HashTable_Del(ht_session_id, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
     {
+      nfs41_session_t * psession = (nfs41_session_t *) old_value.pdata;
+
       /* free the key that was stored in hash table */
       gsh_free(old_key.pdata);
 
-      /* State is managed in stuff alloc, no fre is needed for old_value.pdata */
+      /* Decrement our reference to the clientid record */
+      dec_client_id_ref(psession->pclientid_record);
+
+      /* Free the memory for the session */
+      ReleaseToPool(psession, pool_session);
 
       return 1;
     }

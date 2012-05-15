@@ -123,7 +123,6 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_LOCKU4.lock_stateid,
                               data->current_entry,
-                              0LL,
                               &pstate_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,

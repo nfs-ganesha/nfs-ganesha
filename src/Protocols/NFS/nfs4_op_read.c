@@ -85,8 +85,6 @@ static int op_dsread(struct nfs_argop4 *op,
 
 int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_read";
-
   size_t                   size = 0;
   size_t                   read_size = 0;
   fsal_off_t               offset = 0;
@@ -144,12 +142,6 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
    */
   res_READ4.status = nfs4_Check_Stateid(&arg_READ4.stateid,
                                         pentry,
-#ifdef _USE_NFS41
-                                        (data->minorversion == 0 ?
-                                         0LL : data->psession->clientid),
-#else
-                                        0LL,
-#endif /* _USE_NFS41 */
                                         &pstate_found,
                                         data,
                                         STATEID_SPECIAL_ANY,

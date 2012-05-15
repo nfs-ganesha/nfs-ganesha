@@ -244,7 +244,9 @@ typedef struct nfs_ip_stats_param__
 
 typedef struct nfs_client_id_param__
 {
-  hash_parameter_t hash_param;
+  hash_parameter_t cid_confirmed_hash_param;
+  hash_parameter_t cid_unconfirmed_hash_param;
+  hash_parameter_t cr_hash_param;
 } nfs_client_id_parameter_t;
 
 typedef struct nfs_state_id_param__

@@ -144,27 +144,27 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* Check clientid */
-  if(nfs_client_id_Get_Pointer(arg_LOCKT4.owner.clientid, &nfs_client_id) != CLIENT_ID_SUCCESS)
-    {
-      res_LOCKT4.status = NFS4ERR_STALE_CLIENTID;
-      return res_LOCKT4.status;
-    }
-
-  /* The client id should be confirmed */
-  if(nfs_client_id->cid_confirmed != CONFIRMED_CLIENT_ID)
+  if(nfs_client_id_get_confirmed(arg_LOCKT4.owner.clientid,
+                                 &nfs_client_id) != CLIENT_ID_SUCCESS)
     {
       res_LOCKT4.status = NFS4ERR_STALE_CLIENTID;
       return res_LOCKT4.status;
     }
 
   /* The protocol doesn't allow for EXPIRED, so return STALE_CLIENTID */
-  if (nfs4_is_lease_expired(nfs_client_id))
+  P(nfs_client_id->cid_mutex);
+
+  if(!reserve_lease(nfs_client_id))
     {
-      nfs_client_id_expire(nfs_client_id);
+      V(nfs_client_id->cid_mutex);
+
+      dec_client_id_ref(nfs_client_id);
+
       res_LOCKT4.status = NFS4ERR_STALE_CLIENTID;
       return res_LOCKT4.status;
     }
-  nfs4_update_lease(nfs_client_id);
+
+  V(nfs_client_id->cid_mutex);
 
   /* Is this lock_owner known ? */
   convert_nfs4_lock_owner(&arg_LOCKT4.owner, &owner_name, 0LL);
@@ -173,7 +173,8 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     {
       /* This lock owner is not known yet, allocated and set up a new one */
       plock_owner = create_nfs4_owner(&owner_name,
-                                      STATE_OPEN_OWNER_NFSV4,
+                                      nfs_client_id,
+                                      STATE_LOCK_OWNER_NFSV4,
                                       NULL,
                                       0);
 
@@ -182,7 +183,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
           LogFullDebug(COMPONENT_NFS_V4_LOCK,
                        "LOCKT unable to create lock owner");
           res_LOCKT4.status = NFS4ERR_SERVERFAULT;
-          return res_LOCKT4.status;
+          goto out;
         }
     }
   else if(isFullDebug(COMPONENT_NFS_V4_LOCK))
@@ -226,6 +227,18 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   /* Return result */
   res_LOCKT4.status = nfs4_Errno_state(state_status);
+
+ out:
+ 
+  /* Update the lease before exit */
+  P(nfs_client_id->cid_mutex);
+
+  update_lease(nfs_client_id);
+
+  V(nfs_client_id->cid_mutex);
+
+  dec_client_id_ref(nfs_client_id);
+
   return res_LOCKT4.status;
 
 }                               /* nfs4_op_lockt */

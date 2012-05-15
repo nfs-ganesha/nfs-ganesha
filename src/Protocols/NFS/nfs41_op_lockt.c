@@ -1,4 +1,3 @@
-
 /*
  * vim:expandtab:shiftwidth=8:tabstop=8:
  *
@@ -53,8 +52,8 @@
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
-#include "nfs_proto_tools.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 
 /**
  *
@@ -106,6 +105,12 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
       return res_LOCKT4.status;
     }
 
+  if (nfs_in_grace())
+    {
+      res_LOCKT4.status = NFS4ERR_GRACE;
+      return res_LOCKT4.status;
+    }
+
   /* Convert lock parameters to internal types */
   switch(arg_LOCKT4.locktype)
     {
@@ -145,7 +150,8 @@ int nfs41_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
     {
       /* This lock owner is not known yet, allocated and set up a new one */
       plock_owner = create_nfs4_owner(&owner_name,
-                                      STATE_OPEN_OWNER_NFSV4,
+                                      data->psession->pclientid_record,
+                                      STATE_LOCK_OWNER_NFSV4,
                                       NULL,
                                       0);
 

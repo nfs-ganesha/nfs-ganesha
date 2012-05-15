@@ -166,13 +166,33 @@ int Init_nlm_hash(void);
 state_status_t get_clientid_owner(clientid4        clientid,
                                   state_owner_t ** clientid_owner);
 
-int nfs_Init_client_id(nfs_client_id_parameter_t param);
+int nfs_Init_client_id(nfs_client_id_parameter_t * param);
 
-#define nfs_client_id_Get_Pointer(clientid, ppclient_id_res) CLIENT_ID_NOT_FOUND
+int nfs_client_id_get_unconfirmed(clientid4          clientid,
+                                  nfs_client_id_t ** ppclient_id_res);
 
-void nfs_client_id_expire(nfs_client_id_t *client_record);
+int nfs_client_id_get_confirmed(clientid4          clientid,
+                                nfs_client_id_t ** ppclient_id_res);
 
-int display_client_id(hash_buffer_t * pbuff, char *str);
+nfs_client_id_t * create_client_id(clientid4              clientid,
+                                   nfs_client_record_t  * pclient_record,
+                                   sockaddr_t           * pclient_addr,
+                                   nfs_client_cred_t    * pcredential,
+                                   cache_inode_client_t * pclient);
+
+int nfs_client_id_insert(nfs_client_id_t * pnfs_client_id);
+
+int remove_unconfirmed_client_id(nfs_client_id_t * pnfs_client_id);
+
+int nfs_client_id_confirm(nfs_client_id_t * pnfs_client_id,
+                          log_components_t  component);
+
+int nfs_client_id_expire(nfs_client_id_t * pnfs_client_id);
+
+clientid4 new_clientid(void);
+void new_clientifd_verifier(char * pverf);
+
+int display_client_id_key(hash_buffer_t * pbuff, char *str);
 int display_client_id_val(hash_buffer_t * pbuff, char *str);
 
 int compare_client_id(hash_buffer_t * buff1, hash_buffer_t * buff2);
@@ -182,6 +202,32 @@ uint64_t client_id_rbt_hash_func(hash_parameter_t * p_hparam,
 
 uint32_t client_id_value_hash_func(hash_parameter_t * p_hparam,
                                    hash_buffer_t    * buffclef);
+
+int display_client_id_rec(nfs_client_id_t * precord, char *str);
+int display_clientid_name(nfs_client_id_t * precord, char * str);
+
+void free_client_id(nfs_client_id_t *pclientid);
+
+void inc_client_id_ref(nfs_client_id_t * pclientid);
+void dec_client_id_ref(nfs_client_id_t * pclientid);
+
+int display_client_record(nfs_client_record_t * precord, char *str);
+
+void inc_client_record_ref(nfs_client_record_t *precord);
+void dec_client_record_ref(nfs_client_record_t *precord);
+
+int display_client_record_key(hash_buffer_t * pbuff, char *str);
+int display_client_record_val(hash_buffer_t * pbuff, char *str);
+
+int compare_client_record(hash_buffer_t * buff1, hash_buffer_t * buff2);
+
+uint64_t client_record_rbt_hash_func(hash_parameter_t * p_hparam,
+                                     hash_buffer_t    * buffclef);
+
+uint32_t client_record_value_hash_func(hash_parameter_t * p_hparam,
+                                       hash_buffer_t    * buffclef);
+
+nfs_client_record_t *get_client_record(char * value, int len);
 
 /******************************************************************************
  *
@@ -208,9 +254,11 @@ int nfs41_Session_Set(char              sessionid[NFS4_SESSIONID_SIZE],
 int nfs41_Session_Get_Pointer(char               sessionid[NFS4_SESSIONID_SIZE],
                               nfs41_session_t ** psession_data);
 
-int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE]);
-int nfs41_Build_sessionid(clientid4 * pclientid, char sessionid[NFS4_SESSIONID_SIZE]);
+int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE], struct prealloc_pool * pool_session);
+void nfs41_Build_sessionid(clientid4 * pclientid, char * sessionid);
 void nfs41_Session_PrintAll(void);
+int display_session(nfs41_session_t * psession, char * str);
+int display_session_id(char * session_id, char * str);
 #endif
 
 /******************************************************************************
@@ -230,7 +278,6 @@ void nfs4_BuildStateId_Other(char * other);
 
 int nfs4_Check_Stateid(stateid4        * pstate,
                        cache_entry_t   * pentry,
-                       clientid4         clientid,
                        state_t        ** ppstate,
                        compound_data_t * data,
                        char              flags,
@@ -266,8 +313,9 @@ uint64_t state_id_rbt_hash_func(hash_parameter_t * p_hparam,
  *
  ******************************************************************************/
 
-#define nfs4_is_lease_expired(pentry) (pentry != NULL)
-#define nfs4_update_lease(clientp)
+int  reserve_lease(nfs_client_id_t * pnfs_client_id);
+void update_lease(nfs_client_id_t * pnfs_client_id);
+int  valid_lease(nfs_client_id_t * pnfs_client_id);
 
 /******************************************************************************
  *
@@ -307,6 +355,7 @@ int nfs4_owner_Get_Pointer(state_nfs4_owner_name_t  * pname,
                            state_owner_t           ** powner);
 
 state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t * pname,
+                                 nfs_client_id_t         * pclientid,
                                  state_owner_type_t        type,
                                  state_owner_t           * related_owner,
                                  unsigned int              init_seqid);
@@ -469,7 +518,7 @@ void state_lock_wipe(cache_entry_t        * pentry);
 
 /******************************************************************************
  *
- * NFS4 state_t functions
+ * NFSv4 State Management functions
  *
  ******************************************************************************/
 

@@ -67,8 +67,6 @@
 int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
                    struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_close";
-
   int                    rc = 0;
   state_t              * pstate_found = NULL;
   cache_inode_status_t   cache_status;
@@ -103,7 +101,6 @@ int nfs41_op_close(struct nfs_argop4 *op, compound_data_t * data,
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_CLOSE4.open_stateid,
                               data->current_entry,
-                              0LL,
                               &pstate_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,

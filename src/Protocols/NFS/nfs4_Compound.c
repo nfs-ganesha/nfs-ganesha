@@ -464,6 +464,17 @@ int nfs4_Compound(nfs_arg_t *parg,
                  (COMPOUND4_ARRAY.argarray_len) * sizeof(struct nfs_resop4));
         }
     }
+
+  /* If we have reserved a lease, update it and release it */
+  if(data.preserved_clientid != NULL)
+    {
+      /* Update and release lease */
+      P(data.preserved_clientid->cid_mutex);
+
+      update_lease(data.preserved_clientid);
+
+      V(data.preserved_clientid->cid_mutex);
+    }
 #endif
 
   if(status != NFS4_OK)

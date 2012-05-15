@@ -468,18 +468,47 @@ void nfs_set_param_default()
   nfs_param.ip_stats_param.hash_param.flags = HT_FLAG_NONE;
   nfs_param.ip_stats_param.hash_param.ht_log_component = COMPONENT_DISPATCH;
 
-  /*  Worker parameters : NFSv4 Client id table */
-  nfs_param.client_id_param.hash_param.index_size = PRIME_CLIENT_ID;
-  nfs_param.client_id_param.hash_param.alphabet_length = 10; /* ipaddr is a numerical decimal value */
-  nfs_param.client_id_param.hash_param.hash_func_key = client_id_value_hash_func;
-  nfs_param.client_id_param.hash_param.hash_func_rbt = client_id_rbt_hash_func;
-  nfs_param.client_id_param.hash_param.hash_func_both = NULL ;
-  nfs_param.client_id_param.hash_param.compare_key = compare_client_id;
-  nfs_param.client_id_param.hash_param.key_to_str = display_client_id;
-  nfs_param.client_id_param.hash_param.val_to_str = display_client_id_val;
-  nfs_param.client_id_param.hash_param.ht_name = "Client ID";
-  nfs_param.client_id_param.hash_param.flags = HT_FLAG_CACHE;
-  nfs_param.client_id_param.hash_param.ht_log_component = COMPONENT_CLIENTID;
+  /*  Worker parameters : NFSv4 Unconfirmed Client id table */
+  nfs_param.client_id_param.cid_unconfirmed_hash_param.index_size = PRIME_CLIENT_ID;
+  nfs_param.client_id_param.cid_unconfirmed_hash_param.alphabet_length = 10; /* ipaddr is a numerical decimal value */
+  nfs_param.client_id_param.cid_unconfirmed_hash_param.nb_node_prealloc = NB_PREALLOC_HASH_CLIENT_ID;
+  nfs_param.client_id_param.cid_unconfirmed_hash_param.hash_func_key = client_id_value_hash_func;
+  nfs_param.client_id_param.cid_unconfirmed_hash_param.hash_func_rbt = client_id_rbt_hash_func;
+  nfs_param.client_id_param.cid_unconfirmed_hash_param.hash_func_both = NULL ;
+  nfs_param.client_id_param.cid_unconfirmed_hash_param.compare_key = compare_client_id;
+  nfs_param.client_id_param.cid_unconfirmed_hash_param.key_to_str = display_client_id_key;
+  nfs_param.client_id_param.cid_unconfirmed_hash_param.val_to_str = display_client_id_val;
+  nfs_param.client_id_param.cid_unconfirmed_hash_param.ht_name = "Unconfirmed Client ID";
+  nfs_param.client_id_param.cid_unconfirmed_hash_param.flags = HT_FLAG_CACHE;
+  nfs_param.client_id_param.cid_unconfirmed_hash_param.ht_log_component = COMPONENT_CLIENTID;
+
+  /*  Worker parameters : NFSv4 Confirmed Client id table */
+  nfs_param.client_id_param.cid_confirmed_hash_param.index_size = PRIME_CLIENT_ID;
+  nfs_param.client_id_param.cid_confirmed_hash_param.alphabet_length = 10; /* ipaddr is a numerical decimal value */
+  nfs_param.client_id_param.cid_confirmed_hash_param.nb_node_prealloc = NB_PREALLOC_HASH_CLIENT_ID;
+  nfs_param.client_id_param.cid_confirmed_hash_param.hash_func_key = client_id_value_hash_func;
+  nfs_param.client_id_param.cid_confirmed_hash_param.hash_func_rbt = client_id_rbt_hash_func;
+  nfs_param.client_id_param.cid_confirmed_hash_param.hash_func_both = NULL ;
+  nfs_param.client_id_param.cid_confirmed_hash_param.compare_key = compare_client_id;
+  nfs_param.client_id_param.cid_confirmed_hash_param.key_to_str = display_client_id_key;
+  nfs_param.client_id_param.cid_confirmed_hash_param.val_to_str = display_client_id_val;
+  nfs_param.client_id_param.cid_confirmed_hash_param.ht_name = "Confirmed Client ID";
+  nfs_param.client_id_param.cid_confirmed_hash_param.flags = HT_FLAG_CACHE;
+  nfs_param.client_id_param.cid_confirmed_hash_param.ht_log_component = COMPONENT_CLIENTID;
+
+  /*  Worker parameters : NFSv4 Client Record table */
+  nfs_param.client_id_param.cr_hash_param.index_size = PRIME_CLIENT_ID;
+  nfs_param.client_id_param.cr_hash_param.alphabet_length = 10; /* ipaddr is a numerical decimal value */
+  nfs_param.client_id_param.cr_hash_param.nb_node_prealloc = NB_PREALLOC_HASH_CLIENT_ID;
+  nfs_param.client_id_param.cr_hash_param.hash_func_key = client_record_value_hash_func;
+  nfs_param.client_id_param.cr_hash_param.hash_func_rbt = client_record_rbt_hash_func;
+  nfs_param.client_id_param.cr_hash_param.hash_func_both = NULL ;
+  nfs_param.client_id_param.cr_hash_param.compare_key = compare_client_record;
+  nfs_param.client_id_param.cr_hash_param.key_to_str = display_client_record_key;
+  nfs_param.client_id_param.cr_hash_param.val_to_str = display_client_record_val;
+  nfs_param.client_id_param.cr_hash_param.ht_name = "Client Record";
+  nfs_param.client_id_param.cr_hash_param.flags = HT_FLAG_CACHE;
+  nfs_param.client_id_param.cr_hash_param.ht_log_component = COMPONENT_CLIENTID;
 
   /* NFSv4 State Id hash */
   nfs_param.state_id_param.hash_param.index_size = PRIME_STATE_ID;
@@ -1055,7 +1084,6 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
   return 0;
 }
 
-
 /**
  * is_prime : check whether a given value is prime or not
  */
@@ -1137,7 +1165,9 @@ int nfs_check_param_consistency()
       !is_prime(nfs_param.uidgidmap_cache_param.hash_param.index_size) ||
       !is_prime(nfs_param.gnamemap_cache_param.hash_param.index_size) ||
       !is_prime(nfs_param.ip_stats_param.hash_param.index_size) ||
-      !is_prime(nfs_param.client_id_param.hash_param.index_size) ||
+      !is_prime(nfs_param.client_id_param.cid_unconfirmed_hash_param.index_size) ||
+      !is_prime(nfs_param.client_id_param.cid_confirmed_hash_param.index_size) ||
+      !is_prime(nfs_param.client_id_param.cr_hash_param.index_size) ||
       !is_prime(nfs_param.state_id_param.hash_param.index_size) ||
 #ifdef _USE_NFS4_1
       !is_prime(nfs_param.session_id_param.hash_param.index_size) ||
@@ -1153,7 +1183,6 @@ int nfs_check_param_consistency()
   {
       LogCrit(COMPONENT_INIT, "BAD PARAMETER(s) : expected primes");
   }
-
 
   return 0;
 }
@@ -1442,7 +1471,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
     }
   LogInfo(COMPONENT_INIT, "FSAL library successfully initialized");
 
-
 #ifdef USE_DBUS
   /* DBUS init */
   gsh_dbus_pkginit();
@@ -1478,11 +1506,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
   /* Cache Inode LRU (call this here, rather than as part of
      cache_inode_init() so the GC policy has been set */
   cache_inode_lru_pkginit();
-
-  nfs_clientid_pool = pool_init("Client ID record pool",
-                                sizeof(nfs_client_id_t),
-                                pool_basic_substrate,
-                                NULL, NULL, NULL);
 
 #ifdef _USE_NFS4_1
   nfs41_session_pool = pool_init("NFSv4.1 session pool",
@@ -1715,7 +1738,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
   /* Init the NFSv4 Clientid cache */
   LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache");
-  if(nfs_Init_client_id(nfs_param.client_id_param) != CLIENT_ID_SUCCESS)
+  if(nfs_Init_client_id(&nfs_param.client_id_param) != CLIENT_ID_SUCCESS)
     {
       LogFatal(COMPONENT_INIT,
                "Error while initializing NFSv4 clientid cache");

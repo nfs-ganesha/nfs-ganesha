@@ -81,8 +81,6 @@ static int op_dswrite(struct nfs_argop4 *op,
 
 int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_write";
-
   fsal_size_t              size;
   fsal_size_t              written_size;
   fsal_off_t               offset;
@@ -163,15 +161,8 @@ int nfs4_op_write(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   /* Check stateid correctness and get pointer to state
    * (also checks for special stateids)
    */
-
   res_WRITE4.status = nfs4_Check_Stateid(&arg_WRITE4.stateid,
                                          pentry,
-#ifdef _USE_NFS41
-                                         (data->minorversion == 0 ?
-                                          0LL : data->psession->clientid),
-#else
-                                         0LL,
-#endif /* _USE_NFS41 */
                                          &pstate_found,
                                          data,
                                          STATEID_SPECIAL_ANY,
@@ -435,4 +426,3 @@ static int op_dswrite(struct nfs_argop4 *op,
   return res_WRITE4.status;
 }
 #endif /* _PNFS_DS */
-

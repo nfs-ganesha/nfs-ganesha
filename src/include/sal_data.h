@@ -45,6 +45,7 @@
 #include <pthread.h>
 
 #include "cache_inode.h"
+#include "abstract_mem.h"
 #include "RW_Lock.h"
 #include "LRU_List.h"
 #include "HashData.h"
@@ -82,6 +83,7 @@ typedef struct state_t              state_t;
 typedef struct nfs_argop4_state     nfs_argop4_state;
 typedef struct state_lock_entry_t   state_lock_entry_t;
 typedef struct state_async_queue_t  state_async_queue_t;
+typedef struct nfs_client_record_t  nfs_client_record_t;
 #ifdef _USE_NLM
 typedef struct state_nlm_client_t   state_nlm_client_t;
 #endif /* _USE_NLM */
@@ -199,6 +201,12 @@ struct state_t
   char                stateid_other[OTHERSIZE];  /**< "Other" part of state id, used as hash key */
 };
 
+/******************************************************************************
+ *
+ * NFS Owner data
+ *
+ ******************************************************************************/
+
 typedef struct state_nfs4_owner_name_t
 {
   clientid4    son_clientid;
@@ -272,6 +280,7 @@ struct nfs_argop4_state
 struct state_nfs4_owner_t
 {
   clientid4           so_clientid;
+  nfs_client_id_t   * so_pclientid;     /** < Pointer to owning client id record        */
   unsigned int        so_confirmed;
   seqid4              so_seqid;
   uint32_t            so_counter;       /** < Counter is used to build unique stateids  */
@@ -279,7 +288,6 @@ struct state_nfs4_owner_t
   cache_entry_t     * so_last_pentry;   /** < Last file operated on by this state owner */
   nfs_resop4          so_resp;          /** < Saved response                            */
   state_owner_t     * so_related_owner;
-  struct glist_head   so_owner_list;    /** < Share and lock owners with the same clientid */
   struct glist_head   so_state_list;    /** < States owned by this owner */
   struct glist_head   so_perclient;     /** open owner entry to be linked to client */
 };
@@ -314,8 +322,6 @@ typedef enum nfs_clientid_confirm_state__
 {
   UNCONFIRMED_CLIENT_ID,
   CONFIRMED_CLIENT_ID,
-  REBOOTED_CLIENT_ID,
-  CB_RECONFIGURED_CLIENT_ID,
   EXPIRED_CLIENT_ID
 } nfs_clientid_confirm_state_t;
 
@@ -328,19 +334,19 @@ typedef enum nfs_clientid_confirm_state__
 
 struct nfs_client_id_t
 {
-  char                           cid_client_name[NFS4_MAX_DOMAIN_LEN];
   clientid4                      cid_clientid;
   verifier4                      cid_verifier;
   verifier4                      cid_incoming_verifier;
   time_t                         cid_last_renew;
   nfs_clientid_confirm_state_t   cid_confirmed;
   nfs_client_cred_t              cid_credential;
+  sockaddr_t                     cid_client_addr;
   int                            cid_allow_reclaim;
   char                         * cid_recov_dir;
+  nfs_client_record_t          * cid_client_record;
   struct glist_head              cid_openowners;
   struct glist_head              cid_lockowners;
   pthread_mutex_t                cid_mutex;
-  struct prealloc_pool         * cid_pool;
   struct {
       char                       cid_client_r_addr[SOCK_NAME_MAX]; /* supplied univ. address */
       gsh_addr_t                 cid_addr; 
@@ -359,8 +365,25 @@ struct nfs_client_id_t
   nfs41_session_slot_t           cid_create_session_slot;
   unsigned                       cid_create_session_sequence;
 #endif
-  state_owner_t                * cid_owner;
+  state_owner_t                  cid_owner;
+  int32_t                        cid_refcount;
+  int                            cid_lease_reservations;
 };
+
+struct nfs_client_record_t
+{
+  /* The cr_mutex should never be acquired while holding a cid_mutex */
+  char                cr_client_val[NFS4_OPAQUE_LIMIT];
+  int                 cr_client_val_len;
+  int32_t             cr_refcount;
+  pthread_mutex_t     cr_mutex;
+  nfs_client_id_t   * cr_pconfirmed_id;
+  nfs_client_id_t   * cr_punconfirmed_id;
+};
+
+extern hash_table_t    * ht_confirmed_client_id;
+extern hash_table_t    * ht_unconfirmed_client_id;
+
 
 /******************************************************************************
  *
@@ -434,7 +457,6 @@ typedef enum state_blocking_t
   STATE_CANCELED
 } state_blocking_t;
 
-#ifdef _USE_BLOCKING_LOCKS
 /* The granted call back is responsible for acquiring a reference to
  * the lock entry if needed.
  *
@@ -443,6 +465,8 @@ typedef enum state_blocking_t
 typedef state_status_t (*granted_callback_t)(cache_entry_t        * pentry,
                                              state_lock_entry_t   * lock_entry,
                                              state_status_t       * pstatus);
+
+#ifdef _USE_BLOCKING_LOCKS
 
 typedef bool_t (*block_data_to_fsal_context_t)(state_block_data_t * block_data,
                                                fsal_op_context_t  * fsal_context);
@@ -525,7 +549,7 @@ struct state_layout_segment_t
 
 #ifdef _USE_NLM
 #define sle_client_locks sle_locks
-#endif
+#endif /* _USE_NLM */
 #define sle_state_locks  sle_locks
 
 #ifdef _USE_BLOCKING_LOCKS
@@ -586,7 +610,7 @@ struct state_async_queue_t
     {
 #ifdef _USE_NLM
       state_nlm_async_data_t     state_nlm_async_data;
-#endif
+#endif /* _USE_NLM */
       void                     * state_no_data;
     } state_async_data;
 };

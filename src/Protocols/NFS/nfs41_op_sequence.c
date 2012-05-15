@@ -64,8 +64,7 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
 #define arg_SEQUENCE4  op->nfs_argop4_u.opsequence
 #define res_SEQUENCE4  resp->nfs_resop4_u.opsequence
 
-  nfs41_session_t *psession = NULL;
-  nfs_client_id_t *nfs_clientid = NULL;
+  nfs41_session_t *psession;
 
   resp->resop = NFS4_OP_SEQUENCE;
   res_SEQUENCE4.sr_status = NFS4_OK;
@@ -83,23 +82,31 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
       return res_SEQUENCE4.sr_status;
     }
 
-  /* Is this an existing client id ? */
-  if(nfs_client_id_Get_Pointer(psession->clientid, &nfs_clientid) !=
-     CLIENT_ID_SUCCESS)
+  /** @todo FSF: there is a tiny window here... should have a ref count on session */
+
+  /* Check if lease is expired and reserve it */
+  P(psession->pclientid_record->cid_mutex);
+
+  if(!reserve_lease(psession->pclientid_record))
     {
-      /* Unknown client id */
-      res_SEQUENCE4.sr_status = NFS4ERR_STALE_CLIENTID;
+      V(psession->pclientid_record->cid_mutex);
+
+      dec_client_id_ref(psession->pclientid_record);
+
+      if(isDebug(COMPONENT_SESSIONS))
+        LogDebug(COMPONENT_SESSIONS,
+                 "SEQUENCE returning NFS4ERR_EXPIRED");
+      else
+        LogDebug(COMPONENT_CLIENTID,
+                 "SEQUENCE returning NFS4ERR_EXPIRED");
+
+      res_SEQUENCE4.sr_status = NFS4ERR_EXPIRED;
       return res_SEQUENCE4.sr_status;
     }
 
-  if (nfs4_is_lease_expired(nfs_clientid))
-    {
-      res_SEQUENCE4.sr_status = NFS4ERR_EXPIRED;
-    }
-  else
-    {
-      nfs_clientid->cid_last_renew = time(NULL);
-    }
+  data->preserved_clientid = psession->pclientid_record;
+
+  V(psession->pclientid_record->cid_mutex);
 
   /* Check is slot is compliant with ca_maxrequests */
   if(arg_SEQUENCE4.sa_slotid >= psession->fore_channel_attrs.ca_maxrequests)

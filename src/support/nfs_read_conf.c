@@ -669,11 +669,15 @@ int nfs_read_client_id_conf(config_file_t in_config, nfs_client_id_parameter_t *
 
       if(!strcasecmp(key_name, "Index_Size"))
         {
-          pparam->hash_param.index_size = atoi(key_value);
+          pparam->cid_unconfirmed_hash_param.index_size = atoi(key_value);
+          pparam->cid_confirmed_hash_param.index_size = atoi(key_value);
+          pparam->cr_hash_param.index_size = atoi(key_value);
         }
       else if(!strcasecmp(key_name, "Alphabet_Length"))
         {
-          pparam->hash_param.alphabet_length = atoi(key_value);
+          pparam->cid_unconfirmed_hash_param.alphabet_length = atoi(key_value);
+          pparam->cid_confirmed_hash_param.alphabet_length = atoi(key_value);
+          pparam->cr_hash_param.alphabet_length = atoi(key_value);
         }
       else
         {

@@ -49,3 +49,121 @@
 #include "nfs_core.h"
 #include "nfs4.h"
 #include "sal_functions.h"
+
+static unsigned int _valid_lease(nfs_client_id_t * pnfs_client_id)
+{
+  time_t t;
+
+  if(pnfs_client_id->cid_confirmed == EXPIRED_CLIENT_ID)
+    return 0;
+
+  if(pnfs_client_id->cid_lease_reservations != 0)
+    return nfs_param.nfsv4_param.lease_lifetime;
+
+  t = time(NULL);
+
+  if(pnfs_client_id->cid_last_renew + nfs_param.nfsv4_param.lease_lifetime > t)
+    return (pnfs_client_id->cid_last_renew + nfs_param.nfsv4_param.lease_lifetime) - t;
+
+  return 0;
+}
+
+/**
+ *
+ *  valid_lease: Check if lease is valid, caller holds cid_mutex.
+ *
+ * Check if lease is valid, caller holds cid_mutex.
+ *
+ * @param pnfs_client_id [IN] clientid record to check lease for.
+ *
+ * @return 1 if lease is valid, 0 if not.
+ *
+ */
+int valid_lease(nfs_client_id_t * pnfs_client_id)
+{
+  unsigned int valid;
+
+  valid = _valid_lease(pnfs_client_id);
+
+  if(isFullDebug(COMPONENT_CLIENTID))
+    {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      display_client_id_rec(pnfs_client_id, str);
+      LogFullDebug(COMPONENT_CLIENTID,
+                   "Check Lease %s (Valid=%s %u seconds left)",
+                   str, valid ? "YES" : "NO", valid);
+    }
+
+  return valid != 0;
+}
+
+/**
+ *
+ *  reserve_lease_lock: Check if lease is valid and reserve it and retain cid_mutex.
+ *
+ * Check if lease is valid and reserve it and retain cid_mutex.
+ *
+ * Lease reservation prevents any other thread from expiring the lease. Caller
+ * must call update lease to release the reservation.
+ *
+ * @param pnfs_client_id [IN] clientid record to check lease for.
+ *
+ * @return 1 if lease is valid, 0 if not.
+ *
+ */
+int reserve_lease(nfs_client_id_t * pnfs_client_id)
+{
+  unsigned int valid;
+
+  valid = _valid_lease(pnfs_client_id);
+
+  if(valid != 0)
+    pnfs_client_id->cid_lease_reservations++;
+
+  if(isFullDebug(COMPONENT_CLIENTID))
+    {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      display_client_id_rec(pnfs_client_id, str);
+      LogFullDebug(COMPONENT_CLIENTID,
+                   "Reserve Lease %s (Valid=%s %u seconds left)",
+                   str, valid ? "YES" : "NO", valid);
+    }
+
+  return valid != 0;
+}
+
+/**
+ *
+ * update_lease: Release a lease reservation, and update lease.
+ *
+ * Release a lease reservation, and update lease. Caller must hold cid_mutex.
+ *
+ * Lease reservation prevents any other thread from expiring the lease. This
+ * function releases the lease reservation. Before releasing the last
+ * reservation, cid_last_renew will be updated.
+ *
+ * @param pnfs_client_id [IN] clientid record to check lease for.
+ *
+ * @return 1 if lease is valid, 0 if not.
+ *
+ */
+void update_lease(nfs_client_id_t * pnfs_client_id)
+{
+  pnfs_client_id->cid_lease_reservations--;
+
+  /* Renew lease when last reservation is released */
+  if(pnfs_client_id->cid_lease_reservations == 0)
+    pnfs_client_id->cid_last_renew = time(NULL);
+
+  if(isFullDebug(COMPONENT_CLIENTID))
+    {
+      char str[HASHTABLE_DISPLAY_STRLEN];
+
+      display_client_id_rec(pnfs_client_id, str);
+      LogFullDebug(COMPONENT_CLIENTID,
+                   "Update Lease %s",
+                   str);
+    }
+}

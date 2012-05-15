@@ -170,7 +170,6 @@ int nfs41_op_layoutcommit(struct nfs_argop4 *op, compound_data_t * data,
      if ((nfs_status
           = nfs4_Check_Stateid(&arg_LAYOUTCOMMIT4.loca_stateid,
                                data->current_entry,
-                               0LL,
                                &layout_state,
                                data,
                                STATEID_SPECIAL_CURRENT,

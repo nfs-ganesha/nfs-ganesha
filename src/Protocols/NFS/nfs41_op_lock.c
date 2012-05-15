@@ -92,6 +92,10 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
   state_blocking_t          blocking = STATE_NON_BLOCKING;
   const char              * tag = "LOCK";
 
+  LogDebug(COMPONENT_NFS_V4_LOCK,
+           "Entering NFS v4.1 LOCK handler -----------------------------------------------------");
+
+  /* Initialize to sane starting values */
   resp->resop = NFS4_OP_LOCK;
   res_LOCK4.status = NFS4_OK;
 
@@ -142,7 +146,6 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       /* Check stateid correctness and get pointer to state */
       if((rc = nfs4_Check_Stateid(&arg_LOCK4.locker.locker4_u.open_owner.open_stateid,
                                   data->current_entry,
-                                  data->psession->clientid,
                                   &pstate_open,
                                   data,
                                   STATEID_SPECIAL_FOR_LOCK,
@@ -195,7 +198,6 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       /* Check stateid correctness and get pointer to state */
       if((rc = nfs4_Check_Stateid(&arg_LOCK4.locker.locker4_u.lock_owner.lock_stateid,
                                   data->current_entry,
-                                  data->psession->clientid,
                                   &plock_state,
                                   data,
                                   STATEID_SPECIAL_FOR_LOCK,
@@ -287,19 +289,76 @@ int nfs41_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
       return res_LOCK4.status;
     }
 
+  /*
+   * do grace period checking
+   */
+  if (nfs_in_grace() && !arg_LOCK4.reclaim)
+    {
+      LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+              "LOCK failed, non-reclaim while in grace",
+              data->current_entry,
+              data->pcontext,
+              plock_owner,
+              &lock_desc);
+      res_LOCK4.status = NFS4ERR_GRACE;
+      return res_LOCK4.status;
+    }
+
+  if (nfs_in_grace() && arg_LOCK4.reclaim &&
+      !data->psession->pclientid_record->cid_allow_reclaim)
+    {
+      LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+              "LOCK failed, invalid reclaim while in grace",
+              data->current_entry,
+              data->pcontext,
+              plock_owner,
+              &lock_desc);
+      res_LOCK4.status = NFS4ERR_NO_GRACE;
+      return res_LOCK4.status;
+    }
+
+  if (!nfs_in_grace() && arg_LOCK4.reclaim)
+    {
+      LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+              "LOCK failed, reclaim while not in grace",
+              data->current_entry,
+              data->pcontext,
+              plock_owner,
+              &lock_desc);
+      res_LOCK4.status = NFS4ERR_NO_GRACE;
+      return res_LOCK4.status;
+    }
+
   if(arg_LOCK4.locker.new_lock_owner)
     {
       /* A lock owner is always associated with a previously made open
        * which has itself a previously made stateid
        */
 
-      /* Get reference to open owner */
-      inc_state_owner_ref(popen_owner);
-
-      if(!nfs4_owner_Get_Pointer(&owner_name, &plock_owner))
+      if(nfs4_owner_Get_Pointer(&owner_name, &plock_owner))
+        {
+          /* Lock owner already exists. */
+          if(plock_owner->so_owner.so_nfs4_owner.so_related_owner == NULL)
+            {
+              /* Attach open owner to lock owner now that we know it. */
+              inc_state_owner_ref(popen_owner);
+              plock_owner->so_owner.so_nfs4_owner.so_related_owner = popen_owner;
+            }
+          else if(plock_owner->so_owner.so_nfs4_owner.so_related_owner != popen_owner)
+            {
+              res_LOCK4.status = NFS4ERR_INVAL;
+              LogDebug(COMPONENT_NFS_V4_LOCK,
+                       "LOCK failed related owner %p doesn't match open owner %p",
+                       plock_owner->so_owner.so_nfs4_owner.so_related_owner,
+                       popen_owner);
+              return res_LOCK4.status;
+            }
+        }
+      else
         {
           /* This lock owner is not known yet, allocated and set up a new one */
           plock_owner = create_nfs4_owner(&owner_name,
+                                          data->psession->pclientid_record,
                                           STATE_LOCK_OWNER_NFSV4,
                                           popen_owner,
                                           0);

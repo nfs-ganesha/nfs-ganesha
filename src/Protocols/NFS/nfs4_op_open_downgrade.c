@@ -80,8 +80,6 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4  * op,
 int nfs4_op_open_downgrade(struct nfs_argop4 *op,
                            compound_data_t * data, struct nfs_resop4 *resp)
 {
-  char __attribute__ ((__unused__)) funcname[] = "nfs4_op_open_downgrade";
-
   state_t    * pstate_found = NULL;
   state_owner_t  * popen_owner;
   int          rc;
@@ -105,11 +103,9 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op,
       return res_OPEN_DOWNGRADE4.status;
     }
 
-
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_OPEN_DOWNGRADE4.open_stateid,
                               data->current_entry,
-                              0LL,
                               &pstate_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,

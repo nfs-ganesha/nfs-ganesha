@@ -91,7 +91,10 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   resp->resop = NFS4_OP_LOCKU;
   res_LOCKU4.status = NFS4_OK;
 
-  /* Do basic checks on a filehandle */
+  /*
+   * Do basic checks on a filehandle
+   * LOCKU is done only on a file
+   */
   res_LOCKU4.status = nfs4_sanity_check_FH(data, REGULAR_FILE);
   if(res_LOCKU4.status != NFS4_OK)
     return res_LOCKU4.status;
@@ -120,7 +123,6 @@ int nfs41_op_locku(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   /* Check stateid correctness and get pointer to state */
   if((rc = nfs4_Check_Stateid(&arg_LOCKU4.lock_stateid,
                               data->current_entry,
-                              data->psession->clientid,
                               &pstate_found,
                               data,
                               STATEID_SPECIAL_FOR_LOCK,
