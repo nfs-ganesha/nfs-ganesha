@@ -1032,7 +1032,7 @@ log_component_info __attribute__ ((__unused__)) LogComponents[COMPONENT_COUNT] =
     SYSLOG,
     "SYSLOG"
   },
-  { COMPONENT_CLIENT_ID_COMPUTE, "COMPONENT_CLIENT_ID_COMPUTE", "CLIENT ID COMPUTE",
+  { COMPONENT_CLIENTID,          "COMPONENT_CLIENTID", "CLIENT ID",
     NIV_EVENT,
     SYSLOG,
     "SYSLOG"

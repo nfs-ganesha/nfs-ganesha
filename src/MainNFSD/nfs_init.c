@@ -479,7 +479,7 @@ void nfs_set_param_default()
   nfs_param.client_id_param.hash_param.val_to_str = display_client_id_val;
   nfs_param.client_id_param.hash_param.ht_name = "Client ID";
   nfs_param.client_id_param.hash_param.flags = HT_FLAG_CACHE;
-  nfs_param.client_id_param.hash_param.ht_log_component = COMPONENT_CLIENT_ID_COMPUTE;
+  nfs_param.client_id_param.hash_param.ht_log_component = COMPONENT_CLIENTID;
 
   /* NFSv4 State Id hash */
   nfs_param.state_id_param.hash_param.index_size = PRIME_STATE_ID;
