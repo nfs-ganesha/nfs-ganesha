@@ -329,8 +329,11 @@ cache_inode_lookup(cache_entry_t *pentry_parent,
           *pstatus = cache_inode_lock_trust_attrs(entry,
                                                   pcontext,
                                                   pclient);
-          *pattr = entry->attributes;
-          pthread_rwlock_unlock(&entry->attr_lock);
+          if(*pstatus == CACHE_INODE_SUCCESS)
+            {
+              *pattr = entry->attributes;
+              pthread_rwlock_unlock(&entry->attr_lock);
+            }
      }
      return entry;
 } /* cache_inode_lookup */

@@ -264,9 +264,9 @@ int rw_lock_init(rw_lock_t * plock)
   pthread_mutexattr_t mutex_attr;
   pthread_condattr_t cond_attr;
 
-  if((rc = pthread_mutexattr_init(&mutex_attr) != 0))
+  if((rc = pthread_mutexattr_init(&mutex_attr)) != 0)
     return 1;
-  if((rc = pthread_condattr_init(&cond_attr) != 0))
+  if((rc = pthread_condattr_init(&cond_attr)) != 0)
     return 1;
 
   if((rc = pthread_mutex_init(&(plock->mutexProtect), &mutex_attr)) != 0)
