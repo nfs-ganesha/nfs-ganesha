@@ -654,8 +654,8 @@ cache_entry_t *cache_inode_get(cache_inode_fsal_data_t * fsdata,
                                fsal_op_context_t *context,
                                cache_entry_t *associated,
                                cache_inode_status_t *status);
-cache_inode_status_t cache_inode_put(cache_entry_t *entry,
-                                     cache_inode_client_t *client);
+void cache_inode_put(cache_entry_t *entry,
+                     cache_inode_client_t *client);
 
 cache_inode_status_t cache_inode_access_sw(cache_entry_t * pentry,
                                            fsal_accessflags_t access_type,

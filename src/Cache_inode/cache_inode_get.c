@@ -274,8 +274,8 @@ cache_inode_get(cache_inode_fsal_data_t *fsdata,
  * @return status.
  *
  */
-cache_inode_status_t cache_inode_put(cache_entry_t *entry,
-                                     cache_inode_client_t *pclient)
+void cache_inode_put(cache_entry_t *entry,
+                     cache_inode_client_t *pclient)
 {
-  return (cache_inode_lru_unref(entry, pclient, LRU_FLAG_NONE));
+  cache_inode_lru_unref(entry, pclient, LRU_FLAG_NONE);
 }

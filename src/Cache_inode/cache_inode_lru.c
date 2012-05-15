@@ -497,7 +497,8 @@ lru_try_reap_entry(struct lru_q_base *q)
      ++(lru->refcount);
      pthread_mutex_unlock(&q->mtx);
      pthread_mutex_lock(&lru->mtx);
-     if (lru->flags & LRU_ENTRY_CONDEMNED) {
+     if ((lru->flags & LRU_ENTRY_CONDEMNED) ||
+         (lru->flags & LRU_ENTRY_KILLED)) {
           --(lru->refcount);
           pthread_mutex_unlock(&lru->mtx);
           return NULL;
@@ -816,6 +817,7 @@ lru_thread(void *arg __attribute__((unused)))
                               if ((lru->flags & LRU_ENTRY_CONDEMNED) ||
                                   (lru->flags & LRU_ENTRY_PINNED) ||
                                   (lru->flags & LRU_ENTRY_L2) ||
+                                  (lru->flags & LRU_ENTRY_KILLED) ||
                                   (lru->lane == LRU_NO_LANE)) {
                                    /* Drop the entry lock, thenr
                                       eacquire the queue lock so we
@@ -1372,11 +1374,9 @@ void cache_inode_lru_kill(cache_entry_t *entry,
  *                   entry where it holds the only reference) and
  *                   LRU_FLAG_LOCKED (indicating that the caller
  *                   holds the LRU mutex lock for this entry.)
- *
- * @retval CACHE_INODE_SUCCESS if the reference was acquired
  */
 
-cache_inode_status_t
+void
 cache_inode_lru_unref(cache_entry_t *entry,
                       cache_inode_client_t *client,
                       uint32_t flags)
@@ -1421,7 +1421,7 @@ cache_inode_lru_unref(cache_entry_t *entry,
 
                pthread_mutex_destroy(&entry->lru.mtx);
                ReleaseToPool(entry, &client->pool_entry);
-               return (CACHE_INODE_SUCCESS);
+               return;
           } else {
                pthread_mutex_unlock(&q->mtx);
           }
@@ -1432,8 +1432,6 @@ cache_inode_lru_unref(cache_entry_t *entry,
      }
 
      pthread_mutex_unlock(&entry->lru.mtx);
-
-     return (CACHE_INODE_SUCCESS);
 }
 
 /**

@@ -18,7 +18,6 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "LRU_List.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -339,13 +338,9 @@ cache_inode_remove_impl(cache_entry_t *entry,
           /* Destroy the entry when everyone's references to it have
              been relinquished.  Most likely now. */
           pthread_rwlock_unlock(&to_remove_entry->attr_lock);
-          /* This unref is for the sentinel */
-          if ((*status =
-               cache_inode_lru_unref(to_remove_entry,
-                                     client,
-                                     0)) != CACHE_INODE_SUCCESS) {
-               goto out;
-          }
+          /* Kill off the sentinel reference (and mark the entry so
+             it doesn't get recycled while a reference exists.) */
+          cache_inode_lru_kill(to_remove_entry, client);
      } else {
      unlock:
 
