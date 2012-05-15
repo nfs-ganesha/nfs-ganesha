@@ -383,6 +383,16 @@ bool_t Check_nfs4_seqid(state_owner_t   * powner,
  *
  ******************************************************************************/
 
+#ifdef _USE_BLOCKING_LOCKS
+int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
+int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);
+int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
+uint32_t lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
+                                          hash_buffer_t * buffclef);
+uint64_t lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
+                                   hash_buffer_t * buffclef);
+#endif
+
 #ifdef _USE_NLM
 state_status_t state_lock_init(state_status_t   * pstatus,
                                hash_parameter_t   cookie_param);
@@ -570,13 +580,8 @@ state_status_t state_share_check_conflict(cache_entry_t  * pentry,
                                           state_status_t * pstatus);
 void state_nfs4_state_wipe(cache_entry_t        * pentry);
 
-int display_lock_cookie_key(hash_buffer_t * pbuff, char *str);
-int display_lock_cookie_val(hash_buffer_t * pbuff, char *str);
-int compare_lock_cookie_key(hash_buffer_t * buff1, hash_buffer_t * buff2);
-uint32_t lock_cookie_value_hash_func(hash_parameter_t * p_hparam,
-                                          hash_buffer_t * buffclef);
-uint64_t lock_cookie_rbt_hash_func(hash_parameter_t * p_hparam,
-                                   hash_buffer_t * buffclef);
+void release_lockstate(state_owner_t *plock_owner);
+void release_openstate(state_owner_t *popen_owner);
 
 #ifdef _PNFS_MDS
 state_status_t state_add_segment(state_t             * pstate,
