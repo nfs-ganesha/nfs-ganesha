@@ -189,9 +189,9 @@ setup_client_saddr(nfs_client_id_t *clid, const char *uaddr)
     uint32_t bytes[11];
     int code;
 
-    memset(&clid->cb.addr.ss, 0, sizeof(struct sockaddr_storage));
+    memset(&clid->cid_cb.cid_addr.ss, 0, sizeof(struct sockaddr_storage));
 
-    switch (clid->cb.addr.nc) {
+    switch (clid->cid_cb.cid_addr.nc) {
     case _NC_TCP:
     case _NC_RDMA:
     case _NC_SCTP:
@@ -201,7 +201,7 @@ setup_client_saddr(nfs_client_id_t *clid, const char *uaddr)
                    &bytes[1], &bytes[2], &bytes[3], &bytes[4],
                    &bytes[5], &bytes[6]) == 6) {
             struct sockaddr_in *sin =
-                (struct sockaddr_in *) &clid->cb.addr.ss;
+                (struct sockaddr_in *) &clid->cid_cb.cid_addr.ss;
             snprintf(addr_buf, SOCK_NAME_MAX, "%u.%u.%u.%u",
                      bytes[1], bytes[2],
                      bytes[3], bytes[4]);
@@ -226,7 +226,7 @@ setup_client_saddr(nfs_client_id_t *clid, const char *uaddr)
                    &bytes[6], &bytes[7], &bytes[8],
                    &bytes[9], &bytes[10]) == 10) {
             struct sockaddr_in6 *sin6 =
-                (struct sockaddr_in6 *) &clid->cb.addr.ss;
+                (struct sockaddr_in6 *) &clid->cid_cb.cid_addr.ss;
             snprintf(addr_buf, SOCK_NAME_MAX,
                      "%2x:%2x:%2x:%2x:%2x:%2x:%2x:%2x",
                      bytes[1], bytes[2], bytes[3], bytes[4], bytes[5],
@@ -251,18 +251,18 @@ setup_client_saddr(nfs_client_id_t *clid, const char *uaddr)
 #ifdef _USE_NFS4_1
 void nfs_set_client_location(nfs_client_id_t *clid, const netaddr4 *addr4)
 {
-    clid->cb.addr.nc = nfs_netid_to_nc(addr4->na_r_netid);
-    strlcpy(clid->cb.client_r_addr, addr4->na_r_addr,
+    clid->cid_cb.cid_addr.nc = nfs_netid_to_nc(addr4->na_r_netid);
+    strlcpy(clid->cid_cb.cid_client_r_addr, addr4->na_r_addr,
             SOCK_NAME_MAX);
-    setup_client_saddr(clid, clid->cb.client_r_addr);
+    setup_client_saddr(clid, clid->cid_cb.cid_client_r_addr);
 }
 #else
 void nfs_set_client_location(nfs_client_id_t *clid, const clientaddr4 *addr4)
 {
-    clid->cb.addr.nc = nfs_netid_to_nc(addr4->r_netid);
-    strlcpy(clid->cb.client_r_addr, addr4->r_addr,
+    clid->cid_cb.cid_addr.nc = nfs_netid_to_nc(addr4->r_netid);
+    strlcpy(clid->cid_cb.cid_client_r_addr, addr4->r_addr,
             SOCK_NAME_MAX);
-    setup_client_saddr(clid, clid->cb.client_r_addr);
+    setup_client_saddr(clid, clid->cid_cb.cid_client_r_addr);
 }
 #endif
 
@@ -276,10 +276,10 @@ nfs_clid_connected_socket(nfs_client_id_t *clid, int *fd, int *proto)
     *fd = 0;
     *proto = -1;
 
-    switch (clid->cb.addr.ss.ss_family) {
+    switch (clid->cid_cb.cid_addr.ss.ss_family) {
     case AF_INET:
-        sin = (struct sockaddr_in *) &clid->cb.addr.ss;
-        switch (clid->cb.addr.nc) {
+        sin = (struct sockaddr_in *) &clid->cid_cb.cid_addr.ss;
+        switch (clid->cid_cb.cid_addr.nc) {
         case _NC_TCP:
             nfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
             *proto = IPPROTO_TCP;
@@ -303,8 +303,8 @@ nfs_clid_connected_socket(nfs_client_id_t *clid, int *fd, int *proto)
         *fd = nfd;
         break;
     case AF_INET6:
-        sin6 = (struct sockaddr_in6 *) &clid->cb.addr.ss;
-        switch (clid->cb.addr.nc) {
+        sin6 = (struct sockaddr_in6 *) &clid->cid_cb.cid_addr.ss;
+        switch (clid->cid_cb.cid_addr.nc) {
         case _NC_TCP6:
             nfd = socket(PF_INET6, SOCK_STREAM, IPPROTO_TCP);
             *proto = IPPROTO_TCP;
@@ -370,17 +370,17 @@ format_host_principal(rpc_call_channel_t *chan, char *buf, size_t len)
     case RPC_CHAN_V40:
     {
         nfs_client_id_t *clid = chan->nvu.v40.nfs_client;
-        switch (chan->nvu.v40.nfs_client->cb.addr.ss.ss_family) {
+        switch (chan->nvu.v40.nfs_client->cid_cb.cid_addr.ss.ss_family) {
         case AF_INET:
         {
-            struct sockaddr_in *sin = (struct sockaddr_in *) &clid->cb.addr.ss;
+            struct sockaddr_in *sin = (struct sockaddr_in *) &clid->cid_cb.cid_addr.ss;
             host = inet_ntop(AF_INET, &sin->sin_addr, addr_buf,
                              INET_ADDRSTRLEN);
             break;
         }
         case AF_INET6:
         {
-            struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) &clid->cb.addr.ss;
+            struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) &clid->cid_cb.cid_addr.ss;
             host = inet_ntop(AF_INET6, &sin6->sin6_addr, addr_buf,
                              INET6_ADDRSTRLEN);
             break;
@@ -465,7 +465,7 @@ nfs_rpc_callback_seccreate(rpc_call_channel_t *chan)
     switch (chan->type) {
     case RPC_CHAN_V40:
         assert(&chan->nvu.v40.nfs_client);
-        credential = &chan->nvu.v40.nfs_client->credential;
+        credential = &chan->nvu.v40.nfs_client->cid_credential;
         break;
     case RPC_CHAN_V41:
         /* XXX implement */
@@ -501,14 +501,14 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clid,
 {
     struct netbuf raddr;
     int fd, proto, code = 0;
-    rpc_call_channel_t *chan = &clid->cb.cb_u.v40.chan;
+    rpc_call_channel_t *chan = &clid->cid_cb.cb_u.v40.cb_chan;
 
 
 
     assert(! chan->clnt);
 
     /* XXX we MUST error RFC 3530bis, sec. 3.3.3 */
-    if (! supported_auth_flavor(clid->credential.flavor)) {
+    if (! supported_auth_flavor(clid->cid_credential.flavor)) {
         code = EINVAL;
         goto out;
     }
@@ -523,14 +523,14 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clid,
         goto out;
     }
 
-    raddr.buf = &clid->cb.addr.ss;
+    raddr.buf = &clid->cid_cb.cid_addr.ss;
 
     switch (proto) {
     case IPPROTO_TCP:
         raddr.maxlen = raddr.len = sizeof(struct sockaddr_in);
         chan->clnt = clnt_vc_create(fd,
                                     &raddr,
-                                    clid->cb.program,
+                                    clid->cid_cb.cid_program,
                                     1 /* Errata ID: 2291 */,
                                     0, 0);
         break;
@@ -538,7 +538,7 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clid,
         raddr.maxlen = raddr.len = sizeof(struct sockaddr_in6);
         chan->clnt = clnt_dg_create(fd,
                                     &raddr,
-                                    clid->cb.program,
+                                    clid->cid_cb.cid_program,
                                     1 /* Errata ID: 2291 */,
                                     0, 0);
         break;
@@ -565,7 +565,7 @@ rpc_call_channel_t *
 nfs_rpc_get_chan(nfs_client_id_t *clid, uint32_t flags)
 {
     /* XXX v41 */
-    rpc_call_channel_t *chan = &clid->cb.cb_u.v40.chan;
+    rpc_call_channel_t *chan = &clid->cid_cb.cb_u.v40.cb_chan;
 
     if (! chan->clnt) {
         nfs_rpc_create_chan_v40(clid, flags);

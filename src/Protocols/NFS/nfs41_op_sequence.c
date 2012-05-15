@@ -98,7 +98,7 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
     }
   else
     {
-      nfs_clientid->last_renew = time(NULL);
+      nfs_clientid->cid_last_renew = time(NULL);
     }
 
   /* Check is slot is compliant with ca_maxrequests */

@@ -151,7 +151,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
 
   /* The client id should be confirmed */
-  if(nfs_client_id->confirmed != CONFIRMED_CLIENT_ID)
+  if(nfs_client_id->cid_confirmed != CONFIRMED_CLIENT_ID)
     {
       res_LOCKT4.status = NFS4ERR_STALE_CLIENTID;
       return res_LOCKT4.status;

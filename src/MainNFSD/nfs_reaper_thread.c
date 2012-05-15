@@ -83,26 +83,26 @@ void *reaper_thread(void *UnusedArg)
            * 4.1 initializess this field to '1'
            */
 #ifdef _USE_NFS4_1
-          v4 = (clientp->create_session_sequence == 0);
+          v4 = (clientp->cid_create_session_sequence == 0);
 #else
           v4 = 1;
 #endif
-          if(clientp->confirmed != EXPIRED_CLIENT_ID &&
+          if(clientp->cid_confirmed != EXPIRED_CLIENT_ID &&
              nfs4_is_lease_expired(clientp) && v4)
             {
               pthread_rwlock_unlock(&ht_reap->partitions[i].lock);
               LogDebug(COMPONENT_MAIN,
                   "NFS reaper: expire client %s",
-                  clientp->client_name);
+                  clientp->cid_client_name);
               nfs_client_id_expire(clientp);
               goto restart;
             }
 
-          if(clientp->confirmed == EXPIRED_CLIENT_ID)
+          if(clientp->cid_confirmed == EXPIRED_CLIENT_ID)
             {
               LogDebug(COMPONENT_MAIN,
                        "reaper: client %s already expired",
-                       clientp->client_name);
+                       clientp->cid_client_name);
             }
 
           RBT_INCREMENT(pn);

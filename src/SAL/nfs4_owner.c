@@ -262,7 +262,7 @@ void remove_nfs4_owner(state_owner_t        * powner,
       if (nfs_client_id_Get_Pointer(powner->so_owner.so_nfs4_owner.so_clientid,
                             &client_id) == CLIENT_ID_SUCCESS)
         {
-          clientid_powner = client_id->clientid_owner;
+          clientid_powner = client_id->cid_owner;
         }
     }
 
@@ -517,7 +517,7 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t * pname,
       if (nfs_client_id_Get_Pointer(pname->son_clientid,
                             &client_id) == CLIENT_ID_SUCCESS)
         {
-          clientid_powner = client_id->clientid_owner;
+          clientid_powner = client_id->cid_owner;
         }
       else
         {
@@ -825,7 +825,7 @@ state_status_t get_clientid_owner(clientid4 clientid,
     }
   else
     {
-      *clientid_owner = client_record->clientid_owner;
+      *clientid_owner = client_record->cid_owner;
       return STATE_SUCCESS;
     }
 }

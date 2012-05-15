@@ -328,39 +328,38 @@ typedef enum nfs_clientid_confirm_state__
 
 struct nfs_client_id_t
 {
-  char                           client_name[NFS4_MAX_DOMAIN_LEN];
-  clientid4                      clientid;
-  verifier4                      verifier;
-  verifier4                      incoming_verifier;
-  time_t                         last_renew;
-  nfs_clientid_confirm_state_t   confirmed;
-  nfs_client_cred_t              credential;
-  int                            allow_reclaim;
-  char                         * recov_dir;
-  struct glist_head              clientid_openowners;
-  struct glist_head              clientid_lockowners;
-  pthread_mutex_t                clientid_mutex;
-  struct prealloc_pool         * clientid_pool;
+  char                           cid_client_name[NFS4_MAX_DOMAIN_LEN];
+  clientid4                      cid_clientid;
+  verifier4                      cid_verifier;
+  verifier4                      cid_incoming_verifier;
+  time_t                         cid_last_renew;
+  nfs_clientid_confirm_state_t   cid_confirmed;
+  nfs_client_cred_t              cid_credential;
+  int                            cid_allow_reclaim;
+  char                         * cid_recov_dir;
+  struct glist_head              cid_openowners;
+  struct glist_head              cid_lockowners;
+  pthread_mutex_t                cid_mutex;
+  struct prealloc_pool         * cid_pool;
   struct {
-      char                       client_r_addr[SOCK_NAME_MAX]; /* supplied univ. address */
-      gsh_addr_t                 addr; 
-      uint32_t                   program;
+      char                       cid_client_r_addr[SOCK_NAME_MAX]; /* supplied univ. address */
+      gsh_addr_t                 cid_addr; 
+      uint32_t                   cid_program;
       union {
           struct {
-              uint32_t                states;
-              struct rpc_call_channel chan;
-              uint32_t                callback_ident;
+              struct rpc_call_channel cb_chan;
+              uint32_t                cb_callback_ident;
           } v40;
       } cb_u;
-  } cb;
+  } cid_cb;
 #ifdef _USE_NFS4_1
-  char                           server_owner[MAXNAMLEN];
-  char                           server_scope[MAXNAMLEN];
-  unsigned int                   nb_session;
-  nfs41_session_slot_t           create_session_slot;
-  unsigned                       create_session_sequence;
+  char                           cid_server_owner[MAXNAMLEN];
+  char                           cid_server_scope[MAXNAMLEN];
+  unsigned int                   cid_nb_session;
+  nfs41_session_slot_t           cid_create_session_slot;
+  unsigned                       cid_create_session_sequence;
 #endif
-  state_owner_t                * clientid_owner;
+  state_owner_t                * cid_owner;
 };
 
 /******************************************************************************

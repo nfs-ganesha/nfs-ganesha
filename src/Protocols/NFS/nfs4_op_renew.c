@@ -104,7 +104,7 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
     }
   else
     {
-      nfs_clientid->last_renew = time(NULL);
+      nfs_clientid->cid_last_renew = time(NULL);
       res_RENEW4.status = NFS4_OK;      /* Regular exit */
     }
 

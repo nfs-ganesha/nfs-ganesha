@@ -372,7 +372,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
       res_LOCK4.status = NFS4ERR_GRACE;
       goto out;
     }
-  if (nfs_in_grace() && arg_LOCK4.reclaim && !nfs_client_id->allow_reclaim)
+  if (nfs_in_grace() && arg_LOCK4.reclaim && !nfs_client_id->cid_allow_reclaim)
     {
       res_LOCK4.status = NFS4ERR_NO_GRACE;
       goto out;
@@ -477,9 +477,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
                      &plock_state->state_data.lock.state_sharelist);
 
       /* Add lock owner to the list of the clientid */
-      P(nfs_client_id->clientid_mutex);
-      glist_add_tail(&nfs_client_id->clientid_lockowners, &plock_owner->so_owner.so_nfs4_owner.so_perclient);
-      V(nfs_client_id->clientid_mutex);
+      P(nfs_client_id->cid_mutex);
+      glist_add_tail(&nfs_client_id->cid_lockowners, &plock_owner->so_owner.so_nfs4_owner.so_perclient);
+      V(nfs_client_id->cid_mutex);
     }                           /* if( arg_LOCK4.locker.new_lock_owner ) */
 
   /* Now we have a lock owner and a stateid.

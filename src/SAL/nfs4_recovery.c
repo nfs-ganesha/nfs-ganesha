@@ -141,16 +141,16 @@ nfs4_create_clid_name(nfs_client_id_t *nfs_clientid, struct svc_req *svcp)
         else
                 strncpy(buf, "Unknown", SOCK_NAME_MAX);
 
-        nfs_clientid->recov_dir = gsh_malloc(256);
-        if (nfs_clientid->recov_dir == NULL) {
+        nfs_clientid->cid_recov_dir = gsh_malloc(256);
+        if (nfs_clientid->cid_recov_dir == NULL) {
                 LogEvent(COMPONENT_NFS_V4, "allocation FAILED");
                 return;
         }
-        (void) snprintf(nfs_clientid->recov_dir, 256, "%s-%llx", buf,
-            (longlong_t)nfs_clientid->clientid);
+        (void) snprintf(nfs_clientid->cid_recov_dir, 256, "%s-%llx", buf,
+            (longlong_t)nfs_clientid->cid_clientid);
 
         LogDebug(COMPONENT_NFS_V4, "Created client name [%s]",
-            nfs_clientid->recov_dir);
+            nfs_clientid->cid_recov_dir);
 }
 
 /*
@@ -163,14 +163,14 @@ nfs4_add_clid(nfs_client_id_t *nfs_clientid)
         int err;
         char path[PATH_MAX];
 
-        if (nfs_clientid->recov_dir == NULL) {
+        if (nfs_clientid->cid_recov_dir == NULL) {
                 LogDebug(COMPONENT_NFS_V4,
                     "Failed to create client in recovery dir, no name");
                 return;
         }
 
         snprintf(path, PATH_MAX, "%s/%s", v4_recov_dir,
-            nfs_clientid->recov_dir);
+            nfs_clientid->cid_recov_dir);
 
         err = mkdir(path, 0700);
         if (err == -1 && errno != EEXIST) {
@@ -235,14 +235,14 @@ nfs4_chk_clid(nfs_client_id_t *nfs_clientid)
         glist_for_each(node, &grace.g_clid_list) {
                 clid_ent = glist_entry(node, clid_entry_t, cl_list);
                 LogDebug(COMPONENT_NFS_V4, "compare %s to %s",
-                    clid_ent->cl_name, nfs_clientid->recov_dir);
-                if (!strncmp(clid_ent->cl_name ,nfs_clientid->recov_dir,
+                    clid_ent->cl_name, nfs_clientid->cid_recov_dir);
+                if (!strncmp(clid_ent->cl_name ,nfs_clientid->cid_recov_dir,
                     256)) {
                         LogDebug(COMPONENT_NFS_V4,
                             "[%s] %llx is allowed to reclaim ",
-                            nfs_clientid->client_name,
-                            (long long)nfs_clientid->clientid);
-                        nfs_clientid->allow_reclaim = 1;
+                            nfs_clientid->cid_client_name,
+                            (long long)nfs_clientid->cid_clientid);
+                        nfs_clientid->cid_allow_reclaim = 1;
                         V(grace.g_mutex);
                         return;
                 }

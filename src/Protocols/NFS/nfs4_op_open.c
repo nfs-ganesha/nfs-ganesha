@@ -211,7 +211,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
     }
 
   /* The client id should be confirmed */
-  if(nfs_clientid->confirmed != CONFIRMED_CLIENT_ID)
+  if(nfs_clientid->cid_confirmed != CONFIRMED_CLIENT_ID)
     {
       res_OPEN4.status = NFS4ERR_STALE_CLIENTID;
       cause2 = " (not confirmed)";
@@ -288,9 +288,9 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
                        "NFS4 OPEN adding owners to client record ");
 
 
-      P(nfs_clientid->clientid_mutex);
-      glist_add_tail(&nfs_clientid->clientid_openowners, &powner->so_owner.so_nfs4_owner.so_perclient);
-      V(nfs_clientid->clientid_mutex);
+      P(nfs_clientid->cid_mutex);
+      glist_add_tail(&nfs_clientid->cid_openowners, &powner->so_owner.so_nfs4_owner.so_perclient);
+      V(nfs_clientid->cid_mutex);
     }
 
   if (nfs_in_grace() && claim != CLAIM_PREVIOUS)
@@ -300,7 +300,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
        goto out;
     }
   if (nfs_in_grace() && claim == CLAIM_PREVIOUS &&
-     nfs_clientid->allow_reclaim != 1)
+     nfs_clientid->cid_allow_reclaim != 1)
     {
        cause2 = " (client cannot reclaim)";
        res_OPEN4.status = NFS4ERR_NO_GRACE;

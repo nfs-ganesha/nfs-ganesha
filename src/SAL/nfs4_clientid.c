@@ -163,11 +163,11 @@ int display_client_id_val(hash_buffer_t * pbuff, char *str)
   precord = (nfs_client_id_t *) (pbuff->pdata);
 
   return sprintf(str, "#%s#=>%llu cb_prog=%u r_addr=%s r_netid=%s",
-                 precord->client_name,
-                 (unsigned long long)precord->clientid,
-                 precord->cb.program,
-                 precord->cb.client_r_addr,
-                 netid_nc_table[precord->cb.addr.nc].netid);
+                 precord->cid_client_name,
+                 (unsigned long long)precord->cid_clientid,
+                 precord->cid_cb.cid_program,
+                 precord->cid_cb.cid_client_r_addr,
+                 netid_nc_table[precord->cid_cb.cid_addr.nc].netid);
 }                               /* display_client_id_val */
 
 /**
@@ -185,17 +185,17 @@ void nfs_client_id_expire(nfs_client_id_t *client_record)
   state_status_t         pstatus;
   int rc;
 
-  P(client_record->clientid_mutex);
-  if (client_record->confirmed == EXPIRED_CLIENT_ID)
+  P(client_record->cid_mutex);
+  if (client_record->cid_confirmed == EXPIRED_CLIENT_ID)
     {
-      V(client_record->clientid_mutex);
+      V(client_record->cid_mutex);
       return;
     }
 
-  client_record->confirmed = EXPIRED_CLIENT_ID;
+  client_record->cid_confirmed = EXPIRED_CLIENT_ID;
 
   /* traverse the client's lock owners, and release all locks */
-  glist_for_each_safe(glist, glistn, &client_record->clientid_lockowners)
+  glist_for_each_safe(glist, glistn, &client_record->cid_lockowners)
     {
       state_owner_t * plock_owner = glist_entry(glist,
                                                 state_owner_t,
@@ -233,7 +233,7 @@ void nfs_client_id_expire(nfs_client_id_t *client_record)
     }
 
   /* traverse the client's lock owners, and release all locks states and owners */
-  glist_for_each_safe(glist, glistn, &client_record->clientid_lockowners)
+  glist_for_each_safe(glist, glistn, &client_record->cid_lockowners)
     {
       state_owner_t * plock_owner = glist_entry(glist,
                                           state_owner_t,
@@ -244,7 +244,7 @@ void nfs_client_id_expire(nfs_client_id_t *client_record)
     }
 
   /* release the corresponding open states , close files*/
-  glist_for_each_safe(glist, glistn, &client_record->clientid_openowners)
+  glist_for_each_safe(glist, glistn, &client_record->cid_openowners)
     {
       state_owner_t * popen_owner
            = glist_entry(glist,
@@ -255,16 +255,16 @@ void nfs_client_id_expire(nfs_client_id_t *client_record)
       dec_state_owner_ref(popen_owner);
     }
 
-  dec_state_owner_ref(client_record->clientid_owner);
+  dec_state_owner_ref(client_record->cid_owner);
 
-  if (client_record->recov_dir != NULL)
+  if (client_record->cid_recov_dir != NULL)
     {
-      nfs4_rm_clid(client_record->recov_dir);
-      gsh_free(client_record->recov_dir);
-      client_record->recov_dir = NULL;
+      nfs4_rm_clid(client_record->cid_recov_dir);
+      gsh_free(client_record->cid_recov_dir);
+      client_record->cid_recov_dir = NULL;
     }
 
-  V(client_record->clientid_mutex);
+  V(client_record->cid_mutex);
 
   /* need to free client record
    * TEMP COMMENT OUT */
