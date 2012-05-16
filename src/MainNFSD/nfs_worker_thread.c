@@ -712,6 +712,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   struct timeval queue_timer_diff;
   nfs_request_latency_stat_t latency_stat;
 
+  memset(&related_client, 0, sizeof(exportlist_client_entry_t));
+
   /* Get the value from the worker data */
   lru_dupreq = pworker_data->duplicate_request;
 

@@ -829,14 +829,6 @@ if test x$PNFS = "xyes"; then
   fi
 fi
 
-# Sanity check for FSAL based DS support
-if test "$enable_fsal_ds" == "yes"; then
-  if [[ x$NFS4_MINOR != "x1" ]] ; then
-     AC_MSG_ERROR("You must activate NFSv4.1 support to enable FSAL data server support" )
-  fi
-        AC_DEFINE(_USE_FSALDS,1,[enable FSAL based pNFS DS support])
-fi
-
 AC_SUBST(CFLAGS)
 AC_SUBST(FSAL_CFLAGS)
 AC_SUBST(FSAL_LDFLAGS)

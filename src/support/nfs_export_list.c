@@ -298,8 +298,8 @@ int get_req_uid_gid(struct svc_req *ptr_req,
 }
 
 int nfs_check_anon(exportlist_client_entry_t * pexport_client,
-		   exportlist_t * pexport,
-		   struct user_cred *user_credentials)
+                   exportlist_t * pexport,
+                   struct user_cred *user_credentials)
 {
   if (user_credentials == NULL)
     return FALSE;

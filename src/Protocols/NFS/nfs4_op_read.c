@@ -494,4 +494,4 @@ static int op_dsread(struct nfs_argop4 *op,
   return res_READ4.status;
 }
 
-#endif /* _USE_FSALDS */
+#endif /* _PNFS_DS */
