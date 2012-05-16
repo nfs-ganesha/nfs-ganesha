@@ -829,6 +829,10 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ROOT))
         {
+          if(*var_value == '\0')
+            {
+              continue;
+            }
 	  parseAccessParam(var_name, var_value, p_entry,
 			   EXPORT_OPTION_ROOT);
 	  /* Notice that as least one of the three options
@@ -839,6 +843,10 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_ACCESS))
         {
+          if(*var_value == '\0')
+            {
+              continue;
+            }
           parseAccessParam(var_name, var_value, p_entry,
                            EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS);
 	  /* Notice that as least one of the three options
@@ -848,6 +856,10 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MD_ACCESS))
         {
+          if(*var_value == '\0')
+            {
+              continue;
+            }
 	  parseAccessParam(var_name, var_value, p_entry,
 			   EXPORT_OPTION_MD_WRITE_ACCESS | EXPORT_OPTION_MD_READ_ACCESS);
 	  /* Notice that as least one of the three options
@@ -857,6 +869,10 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_MD_RO_ACCESS))
         {
+          if(*var_value == '\0')
+            {
+              continue;
+            }
 	  parseAccessParam(var_name, var_value, p_entry,
 			   EXPORT_OPTION_MD_READ_ACCESS);
 	  /* Notice that as least one of the three options
@@ -866,6 +882,10 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_READ_ACCESS))
         {
+          if(*var_value == '\0')
+            {
+              continue;
+            }
 	  parseAccessParam(var_name, var_value, p_entry,
 			   EXPORT_OPTION_READ_ACCESS);
 	  /* Notice that as least one of the three options
@@ -875,6 +895,10 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
         }
       else if(!STRCMP(var_name, CONF_EXPORT_READWRITE_ACCESS))
         {
+          if(*var_value == '\0')
+            {
+              continue;
+            }
 	  parseAccessParam(var_name, var_value, p_entry,
 			   EXPORT_OPTION_READ_ACCESS | EXPORT_OPTION_WRITE_ACCESS);
 	  /* Notice that as least one of the three options
@@ -1002,9 +1026,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                     p_entry->options |= EXPORT_OPTION_NFSV2;
                   else
                     {
-                      LogCrit(COMPONENT_CONFIG,
-                              "NFS READ_EXPORT: ERROR: NFS version 2 is disabled in NFS_Core_Param.");
-                      err_flag = TRUE;
+                      LogInfo(COMPONENT_CONFIG,
+                              "NFS READ_EXPORT:NFS version 2 is disabled in NFS_Core_Param.");
                     }
                 }
               else if(!STRCMP(nfsvers_list[idx], "3"))
@@ -1013,9 +1036,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                     p_entry->options |= EXPORT_OPTION_NFSV3;
                   else
                     {
-                      LogCrit(COMPONENT_CONFIG,
-                              "NFS READ_EXPORT: ERROR: NFS version 3 is disabled in NFS_Core_Param.");
-                      err_flag = TRUE;
+                      LogInfo(COMPONENT_CONFIG,
+                              "NFS READ_EXPORT:NFS version 3 is disabled in NFS_Core_Param.");
                     }
                 }
               else if(!STRCMP(nfsvers_list[idx], "4"))
@@ -1024,9 +1046,8 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
                     p_entry->options |= EXPORT_OPTION_NFSV4;
                   else
                     {
-                      LogCrit(COMPONENT_CONFIG,
-                              "NFS READ_EXPORT: ERROR: NFS version 4 is disabled in NFS_Core_Param.");
-                      err_flag = TRUE;
+                      LogInfo(COMPONENT_CONFIG,
+                              "NFS READ_EXPORT:NFS version 4 is disabled in NFS_Core_Param.");
                     }
                 }
               else
