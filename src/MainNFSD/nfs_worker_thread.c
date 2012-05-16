@@ -49,6 +49,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/file.h>           /* for having FNDELAY */
+#include <sys/signal.h>
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
@@ -688,7 +689,6 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   exportlist_client_entry_t related_client;
   struct user_cred user_credentials;
   int   update_per_share_stats;
-  sigset_t mask;
   fsal_op_context_t * pfsal_op_ctx = NULL ;
 
 #ifdef _DEBUG_MEMLEAKS
@@ -769,7 +769,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                        xprt->xp_fd);
 
           /* XXX P(mutex_cond_xprt[xprt->xp_fd]); */
-          svc_dplx_lock_x(xprt, &mask);
+          svc_dplx_lock_x(xprt, &pworker_data->sigmask);
           if(svc_sendreply
              (xprt, pworker_data->pfuncdesc->xdr_encode_func,
               (caddr_t) & res_nfs) == FALSE)
@@ -780,7 +780,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
               svcerr_systemerr(xprt);
             }
 
-          svc_dplx_unlock_x(xprt, &mask);
+          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
 
           LogFullDebug(COMPONENT_DISPATCH,
                        "After svc_sendreply on socket %d (dup req)",
@@ -1246,7 +1246,8 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
   memset(&queue_timer_diff, 0, sizeof(struct timeval));
 
   /*
-   * It is now time for checking if export list allows the machine to perform the request
+   * It is now time for checking if export list allows the machine to perform
+   * the request
    */
   pworker_data->hostaddr = hostaddr;
 
@@ -1532,7 +1533,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
     }
   else
     {
-      svc_dplx_lock_x(xprt, &mask);
+      svc_dplx_lock_x(xprt, &pworker_data->sigmask);
 
       LogFullDebug(COMPONENT_DISPATCH,
                    "Before svc_sendreply on socket %d",
@@ -1545,7 +1546,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
           LogDebug(COMPONENT_DISPATCH,
                    "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply");
           svcerr_systemerr(xprt);
-          svc_dplx_unlock_x(xprt, &mask);
+          svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
 
           if (nfs_dupreq_delete(rpcxid, ptr_req, preqnfs->xprt,
                                 &pworker_data->dupreq_pool) != DUPREQ_SUCCESS)
@@ -1561,7 +1562,7 @@ static void nfs_rpc_execute(nfs_request_data_t * preqnfs,
                    "After svc_sendreply on socket %d",
                    xprt->xp_fd);
 
-      svc_dplx_unlock_x(xprt, &mask);
+      svc_dplx_unlock_x(xprt, &pworker_data->sigmask);
 
       /* Mark request as finished */
       LogFullDebug(COMPONENT_DUPREQ, "YES?: %d", do_dupreq_cache);
@@ -1860,7 +1861,6 @@ nfs_worker_process_rpc_requests(nfs_worker_data_t *pmydata,
   bool_t no_dispatch = TRUE, recv_status;
   process_status_t rc = PROCESS_DONE;
   SVCXPRT *xprt = pnfsreq->r_u.nfs.xprt;
-  sigset_t mask;
 
   preq = &pnfsreq->r_u.nfs.req;
   pmsg = &pnfsreq->r_u.nfs.msg;
@@ -1874,9 +1874,9 @@ again:
                "Before calling SVC_RECV on socket %d",
                xprt->xp_fd);
 
-  svc_dplx_lock_x(xprt, &mask);
+  svc_dplx_lock_x(xprt, &pmydata->sigmask);
   recv_status = SVC_RECV(pnfsreq->r_u.nfs.xprt, pmsg);
-  svc_dplx_unlock_x(xprt, &mask);
+  svc_dplx_unlock_x(xprt, &pmydata->sigmask);
 
   LogFullDebug(COMPONENT_DISPATCH,
                "Status for SVC_RECV on socket %d is %d, xid=%lu",
@@ -1902,9 +1902,9 @@ again:
       else
         sprintf(addrbuf, "<unresolved>");
 
-      svc_dplx_lock_x(xprt, &mask);
+      svc_dplx_lock_x(xprt, &pmydata->sigmask);
       stat = SVC_STAT(pnfsreq->r_u.nfs.xprt);
-      svc_dplx_unlock_x(xprt, &mask);
+      svc_dplx_unlock_x(xprt, &pmydata->sigmask);
 
       if(stat == XPRT_DIED)
         {
@@ -2020,6 +2020,13 @@ void *worker_thread(void *IndexArg)
 
   snprintf(thr_name, sizeof(thr_name), "Worker Thread #%lu", worker_index);
   SetNameFunction(thr_name);
+
+  /* save current signal mask */
+  rc = pthread_sigmask(SIG_SETMASK, (sigset_t *) 0, &pmydata->sigmask);
+  if (rc) {
+      LogFatal(COMPONENT_DISPATCH,
+               "pthread_sigmask returned %d", rc);
+  }
 
   if(mark_thread_existing(&(pmydata->wcb)) == PAUSE_EXIT)
     {
