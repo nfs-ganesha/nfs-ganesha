@@ -91,8 +91,9 @@ int nfs4_op_setclientid(struct nfs_argop4 *op,
   pworker = (nfs_worker_data_t *) data->pclient->pworker;
 
   strlcpy(str_verifier, arg_SETCLIENTID4.client.verifier, MAXNAMLEN);
-  strlcpy(str_client, arg_SETCLIENTID4.client.id.id_val,
-          arg_SETCLIENTID4.client.id.id_len);
+  memcpy(str_client, arg_SETCLIENTID4.client.id.id_val, 
+         MIN(arg_SETCLIENTID4.client.id.id_len, MAXNAMLEN));
+  str_client[MIN(arg_SETCLIENTID4.client.id.id_len, MAXNAMLEN)] = 0;
 
   LogDebug(COMPONENT_NFS_V4,
            "SETCLIENTID Client id len = %u",
@@ -253,8 +254,8 @@ retry:
       /* Client record did not exist, build the client record */
       nfs_clientid = &new_nfs_clientid;
       memset(nfs_clientid, 0, sizeof(nfs_client_id_t));
-      strlcpy(nfs_clientid->client_name, arg_SETCLIENTID4.client.id.id_val,
-              arg_SETCLIENTID4.client.id.id_len);
+      memcpy(nfs_clientid->client_name, arg_SETCLIENTID4.client.id.id_val,
+             MIN(arg_SETCLIENTID4.client.id.id_len, sizeof(nfs_clientid)));
 
       nfs_set_client_location(nfs_clientid,
                               &arg_SETCLIENTID4.callback.cb_location);
