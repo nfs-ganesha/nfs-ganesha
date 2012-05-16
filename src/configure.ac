@@ -288,24 +288,20 @@ fi
 AM_CONDITIONAL(USE_FSAL_UP, test "$enable_fsal_up" = "yes")
 
 # TI-RPC
-GA_ENABLE_AM_CONDITION([tirpc],[enable TIRPC support],[USE_TIRPC])
-
-if test "$enable_tirpc" == "yes"; then
-	AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
-        TIRPCDIR=`pwd`/../contrib/libtirpc
-        if test ! -f "${TIRPCDIR}/configure"; then
-	   cd ${TIRPCDIR}
-           sh autogen.sh
-	   ./configure CFLAGS="${CFLAGS}" --enable-epoll --enable-gss --prefix="${prefix}"
-	   cd ../../src
-        fi
-
-	# My auto-foo doesn't extend to this
-	#AC_CONFIG_SUBDIRS([../contrib/libtirpc])
-	CFLAGS="-I${TIRPCDIR}/tirpc/ $CFLAGS"
-	TIRPC_LIB="${TIRPCDIR}/src/libntirpc.la"
-	TIRPC_LIBS="$TIRPC_LIB"
+AC_DEFINE(_USE_TIRPC,1,[enable TIRPC support])
+TIRPCDIR=`pwd`/../contrib/libtirpc
+if test ! -f "${TIRPCDIR}/configure"; then
+   cd ${TIRPCDIR}
+   sh autogen.sh
+   ./configure CFLAGS="${CFLAGS}" --enable-epoll --enable-gss --prefix="${prefix}"
+   cd ../../src
 fi
+
+# My auto-foo doesn't extend to this
+#AC_CONFIG_SUBDIRS([../contrib/libtirpc])
+CFLAGS="-I${TIRPCDIR}/tirpc/ $CFLAGS"
+TIRPC_LIB="${TIRPCDIR}/src/libntirpc.la"
+TIRPC_LIBS="$TIRPC_LIB"
 
 # IPv6
 GA_ENABLE_AM_CONDITION([ipv6],[enable IPv6 support (via IPv6)], [USE_TIRPC_IPV6])
