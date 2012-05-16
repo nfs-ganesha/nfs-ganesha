@@ -905,6 +905,15 @@ void state_wipe_file(cache_entry_t        * pentry,
 {
   bool_t had_lock = FALSE;
 
+  /*
+   * currently, only REGULAR files can have state; byte range locks and
+   * stateid (for v4).  In the future, 4.1, directories could have
+   * delegations, which is state.  At that point, we may need to modify
+   * this routine to clear state on directories.
+   */
+  if (pentry->type != REGULAR_FILE)
+    return;
+
   /* The state lock may have been acquired by the caller. */
   if (pthread_rwlock_trywrlock(&pentry->state_lock))
     {
