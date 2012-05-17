@@ -127,7 +127,11 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
             {
               /* Replay operation through the DRC */
               data->use_drc = TRUE;
-              data->pcached_res = psession->slots[arg_SEQUENCE4.sa_slotid].cached_result;
+              data->pcached_res = &psession->slots[arg_SEQUENCE4.sa_slotid].cached_result;
+
+              LogFullDebug(COMPONENT_SESSIONS,
+                           "Use sesson slot %"PRIu32"=%p for DRC",
+                           arg_SEQUENCE4.sa_slotid, data->pcached_res);
 
               res_SEQUENCE4.sr_status = NFS4_OK;
               return res_SEQUENCE4.sr_status;
@@ -161,13 +165,21 @@ int nfs41_op_sequence(struct nfs_argop4 *op,
 
   if(arg_SEQUENCE4.sa_cachethis == TRUE)
     {
-      data->pcached_res = psession->slots[arg_SEQUENCE4.sa_slotid].cached_result;
+      data->pcached_res = &psession->slots[arg_SEQUENCE4.sa_slotid].cached_result;
       psession->slots[arg_SEQUENCE4.sa_slotid].cache_used = TRUE;
+
+      LogFullDebug(COMPONENT_SESSIONS,
+                   "Use sesson slot %"PRIu32"=%p for DRC",
+                   arg_SEQUENCE4.sa_slotid, data->pcached_res);
     }
   else
     {
       data->pcached_res = NULL;
       psession->slots[arg_SEQUENCE4.sa_slotid].cache_used = FALSE;
+
+      LogFullDebug(COMPONENT_SESSIONS,
+                   "Don't use sesson slot %"PRIu32"=NULL for DRC",
+                   arg_SEQUENCE4.sa_slotid);
     }
   V(psession->slots[arg_SEQUENCE4.sa_slotid].lock);
 

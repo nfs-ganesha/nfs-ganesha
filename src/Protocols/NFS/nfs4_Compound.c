@@ -427,26 +427,22 @@ int nfs4_Compound(nfs_arg_t *parg,
       /* Check Req size */
 
       /* NFS_V4.1 specific stuff */
-      if(COMPOUND4_MINOR == 1)
+      if(data.use_drc)
         {
-          if(i == 0)            /* OP_SEQUENCE is always the first operation within the request */
-            {
-              if((optabvers[1][optab4index[COMPOUND4_ARRAY.argarray_val[0].argop]].val ==
-                  NFS4_OP_SEQUENCE)
-                 || (optabvers[1][optab4index[COMPOUND4_ARRAY.argarray_val[0].argop]].val
-                     == NFS4_OP_CREATE_SESSION))
-                {
-                  /* Manage sessions's DRC : replay previously cached request */
-                  if(data.use_drc == TRUE)
-                    {
-                      /* Replay cache */
-                      memcpy((char *)pres, data.pcached_res,
-                             (COMPOUND4_ARRAY.argarray_len) * sizeof(struct nfs_resop4));
-                      status = ((COMPOUND4res *) data.pcached_res)->status;
-                      break;    /* Exit the for loop */
-                    }
-                }
-            }
+          /* Replay cache, only true for SEQUENCE or CREATE_SESSION w/o SEQUENCE.
+           * Since will only be set in those cases, no need to check operation or anything.
+           */
+          LogFullDebug(COMPONENT_SESSIONS,
+                       "Use session replay cache %p",
+                       data.pcached_res);
+
+          /* Free the reply allocated above */
+          gsh_free(pres->res_compound4.resarray.resarray_val);
+
+          /* Copy the reply from the cache */
+          pres->res_compound4_extended = *data.pcached_res;
+          status = ((COMPOUND4res *) data.pcached_res)->status;
+          break;    /* Exit the for loop */
         }
 #endif
     }                           /* for */
@@ -455,14 +451,31 @@ int nfs4_Compound(nfs_arg_t *parg,
   pres->res_compound4.status = status;
 
 #ifdef _USE_NFS4_1
-  /* Manage session's DRC : keep NFS4.1 replay for later use */
-  if(COMPOUND4_MINOR == 1)
+  /* Manage session's DRC: keep NFS4.1 replay for later use, but don't save a
+   * replayed result again.
+   */
+  if(data.pcached_res != NULL && !data.use_drc)
     {
-      if(data.pcached_res != NULL)      /* Pointer has been set by nfs41_op_sequence and points to cached zone */
+      /* Pointer has been set by nfs41_op_sequence and points to slot to cache
+       * result in.
+       */
+      LogFullDebug(COMPONENT_SESSIONS,
+                   "Save result in session replay cache %p sizeof nfs_res_t=%d",
+                   data.pcached_res,
+                   (int) sizeof(nfs_res_t));
+
+      /* Indicate to nfs4_Compound_Free that this reply is cached. */
+      pres->res_compound4_extended.res_cached = TRUE;
+
+      /* If the cache is already in use, free it. */
+      if(data.pcached_res->res_cached)
         {
-          memcpy(data.pcached_res, (char *)pres,
-                 (COMPOUND4_ARRAY.argarray_len) * sizeof(struct nfs_resop4));
+          data.pcached_res->res_cached = FALSE;
+          nfs4_Compound_Free((nfs_res_t *)data.pcached_res);
         }
+
+      /* Save the result in the cache. */
+      *data.pcached_res = pres->res_compound4_extended;
     }
 
   /* If we have reserved a lease, update it and release it */
@@ -716,10 +729,22 @@ void nfs4_Compound_FreeOne(nfs_resop4 * pres)
  */
 void nfs4_Compound_Free(nfs_res_t * pres)
 {
-  unsigned int i = 0;
+  unsigned int     i = 0;
+  log_components_t component = COMPONENT_NFS_V4;
 
-  LogFullDebug(COMPONENT_NFS_V4,
-               "nfs4_Compound_Free de %p (resarraylen : %i)",
+  if(isFullDebug(COMPONENT_SESSIONS))
+    component = COMPONENT_SESSIONS;
+
+  if(pres->res_compound4_extended.res_cached)
+    {
+      LogFullDebug(component,
+                   "Skipping free of NFS4 result %p",
+                   pres);
+      return;
+    }
+
+  LogFullDebug(component,
+               "nfs4_Compound_Free %p (resarraylen=%i)",
                pres,
                pres->res_compound4.resarray.resarray_len);
 
@@ -747,7 +772,6 @@ void nfs4_Compound_Free(nfs_res_t * pres)
  */
 void compound_data_Free(compound_data_t * data)
 {
-
   /* Release refcounted cache entries */
   if (data->current_entry)
       cache_inode_put(data->current_entry);
@@ -957,6 +981,7 @@ int nfs4_op_stat_update(nfs_arg_t * parg /* IN     */ ,
         }
       break;
 
+#ifdef _USE_NFS4_1
     case 1:
       for(i = 0; i < pres->res_compound4.resarray.resarray_len; i++)
         {
@@ -975,6 +1000,7 @@ int nfs4_op_stat_update(nfs_arg_t * parg /* IN     */ ,
         }
 
       break;
+#endif
 
     default:
       /* Bad parameter */

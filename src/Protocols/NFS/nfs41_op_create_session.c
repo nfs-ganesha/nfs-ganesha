@@ -179,7 +179,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
          && (pfound->cid_create_session_slot.cache_used == TRUE))
         {
           data->use_drc = TRUE;
-          data->pcached_res = pfound->cid_create_session_slot.cached_result;
+          data->pcached_res = &pfound->cid_create_session_slot.cached_result;
 
           res_CREATE_SESSION4.csr_status = NFS4_OK;
 
@@ -327,7 +327,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
          NFS4_SESSIONID_SIZE);
 
   /* Create Session replay cache */
-  data->pcached_res = pfound->cid_create_session_slot.cached_result;
+  data->pcached_res = &pfound->cid_create_session_slot.cached_result;
   pfound->cid_create_session_slot.cache_used = TRUE;
 
   LogDebug(component, "CREATE_SESSION replay=%p", data->pcached_res);

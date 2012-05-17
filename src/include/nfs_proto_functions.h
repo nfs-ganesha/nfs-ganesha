@@ -127,6 +127,12 @@ typedef union nfs_arg__
   ext_setquota_args arg_ext_rquota_setactivequota;
 } nfs_arg_t;
 
+struct COMPOUND4res_extended
+{
+  COMPOUND4res res_compound4;
+  bool_t       res_cached;
+};
+
 typedef union nfs_res__
 {
   ATTR2res res_attr2;
@@ -158,6 +164,7 @@ typedef union nfs_res__
   PATHCONF3res res_pathconf3;
   COMMIT3res res_commit3;
   COMPOUND4res res_compound4;
+  COMPOUND4res_extended res_compound4_extended;
 
   /* mount protocol returned values */
   fhstatus2 res_mnt1;
