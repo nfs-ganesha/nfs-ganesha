@@ -72,7 +72,7 @@ typedef unsigned long long int u_int64_t;
 #include "config_parsing.h"
 #include "err_fsal.h"
 #include "RW_Lock.h"
-#include "rpc.h"
+#include "ganesha_rpc.h"
 
 /* Forward declarations */
 typedef struct fsal_staticfsinfo_t fsal_staticfsinfo_t;
