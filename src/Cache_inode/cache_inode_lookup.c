@@ -44,6 +44,7 @@
 #endif                          /* _SOLARIS */
 
 #include "log.h"
+#include "abstract_atomic.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "fsal.h"
@@ -177,8 +178,8 @@ cache_inode_lookup_impl(cache_entry_t *parent,
                        lookup. */
                     cache_inode_release_dirents(parent,
                                                 CACHE_INODE_AVL_BOTH);
-                    atomic_set_int_bits(&parent->flags,
-                                        CACHE_INODE_TRUST_CONTENT);
+                    atomic_set_uint32_t_bits(&parent->flags,
+                                             CACHE_INODE_TRUST_CONTENT);
                } else {
                     /* Get a write ock and do it again. */
                     pthread_rwlock_unlock(&parent->content_lock);

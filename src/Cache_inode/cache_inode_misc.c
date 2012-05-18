@@ -38,6 +38,7 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
+#include "abstract_atomic.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -404,13 +405,13 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
              we know its content, we consider it read. */
           if ((create_arg != NULL) &&
               (create_arg->newly_created_dir)) {
-               atomic_set_int_bits(&entry->flags,
-                                   CACHE_INODE_TRUST_CONTENT |
-                                   CACHE_INODE_DIR_POPULATED);
+               atomic_set_uint32_t_bits(&entry->flags,
+                                        CACHE_INODE_TRUST_CONTENT |
+                                        CACHE_INODE_DIR_POPULATED);
           } else {
-               atomic_clear_int_bits(&entry->flags,
-                                     CACHE_INODE_TRUST_CONTENT |
-                                     CACHE_INODE_DIR_POPULATED);
+               atomic_clear_uint32_t_bits(&entry->flags,
+                                          CACHE_INODE_TRUST_CONTENT |
+                                          CACHE_INODE_DIR_POPULATED);
           }
 
           entry->object.dir.avl.collisions = 0;
@@ -875,9 +876,9 @@ void cache_inode_release_dirents(cache_entry_t *entry,
 
           if (tree == &entry->object.dir.avl.t) {
               entry->object.dir.nbactive = 0;
-              atomic_clear_int_bits(&entry->flags,
-                                    (CACHE_INODE_TRUST_CONTENT |
-                                     CACHE_INODE_DIR_POPULATED));
+              atomic_clear_uint32_t_bits(&entry->flags,
+                                         (CACHE_INODE_TRUST_CONTENT |
+                                          CACHE_INODE_DIR_POPULATED));
           }
     }
 }
@@ -998,8 +999,8 @@ cache_inode_check_trust(cache_entry_t *entry,
           pthread_rwlock_wrlock(&entry->content_lock);
           pthread_rwlock_unlock(&entry->attr_lock);
 
-          atomic_clear_int_bits(&entry->flags, CACHE_INODE_TRUST_CONTENT |
-                                CACHE_INODE_DIR_POPULATED);
+          atomic_clear_uint32_t_bits(&entry->flags, CACHE_INODE_TRUST_CONTENT |
+                                     CACHE_INODE_DIR_POPULATED);
 
           if (cache_inode_invalidate_all_cached_dirent(entry, &status)
               != CACHE_INODE_SUCCESS) {

@@ -581,7 +581,7 @@ extern pool_t *request_pool;
 extern pool_t *dupreq_pool;
 extern pool_t *ip_stats_pool;
 
-typedef struct nfs_worker_data__
+struct nfs_worker_data__
 {
   unsigned int worker_index;
   int  pending_request_len;
@@ -601,7 +601,7 @@ typedef struct nfs_worker_data__
   /* Description of current or most recent function processed and start time (or 0) */
   const nfs_function_desc_t *pfuncdesc;
   struct timeval timer_start;
-} nfs_worker_data_t;
+};
 
 /* flush thread data */
 typedef struct nfs_flush_thread_data__

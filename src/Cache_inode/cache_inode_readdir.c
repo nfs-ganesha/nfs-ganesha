@@ -43,6 +43,7 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
+#include "abstract_atomic.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -88,8 +89,8 @@ cache_inode_invalidate_all_cached_dirent(cache_entry_t *entry,
      cache_inode_release_dirents(entry, CACHE_INODE_AVL_BOTH);
 
      /* Mark directory as not populated */
-     atomic_clear_int_bits(&entry->flags, (CACHE_INODE_DIR_POPULATED |
-                                           CACHE_INODE_TRUST_CONTENT));
+     atomic_clear_uint32_t_bits(&entry->flags, (CACHE_INODE_DIR_POPULATED |
+                                                CACHE_INODE_TRUST_CONTENT));
      *status = CACHE_INODE_SUCCESS;
 
      return *status;
@@ -560,9 +561,9 @@ cache_inode_readdir_populate(cache_entry_t *directory,
     }
 
   /* End of work */
-  atomic_set_int_bits(&directory->flags,
-                      (CACHE_INODE_DIR_POPULATED |
-                       CACHE_INODE_TRUST_CONTENT));
+  atomic_set_uint32_t_bits(&directory->flags,
+                           (CACHE_INODE_DIR_POPULATED |
+                            CACHE_INODE_TRUST_CONTENT));
   *status = CACHE_INODE_SUCCESS;
   return *status;
 
@@ -730,8 +731,8 @@ cache_inode_readdir(cache_entry_t *directory,
                          /* Directory changed out from under us.
                             Invalidate it, skip the name, and keep
                             going. */
-                         atomic_clear_int_bits(&directory->flags,
-                                               CACHE_INODE_TRUST_CONTENT);
+                         atomic_clear_uint32_t_bits(&directory->flags,
+                                                    CACHE_INODE_TRUST_CONTENT);
                          continue;
                     } else {
                          /* Something is more seriously wrong,

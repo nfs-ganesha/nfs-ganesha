@@ -36,6 +36,7 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
+#include "abstract_atomic.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -130,10 +131,10 @@ cache_inode_invalidate(cache_inode_fsal_data_t *fsal_data,
         without invalidating content (since any change in content
         really ought to modify mtime, at least.) */
 
-     atomic_clear_int_bits(&entry->flags,
-                           CACHE_INODE_TRUST_ATTRS |
-                           CACHE_INODE_DIR_POPULATED |
-                           CACHE_INODE_TRUST_CONTENT);
+     atomic_clear_uint32_t_bits(&entry->flags,
+                                CACHE_INODE_TRUST_ATTRS |
+                                CACHE_INODE_DIR_POPULATED |
+                                CACHE_INODE_TRUST_CONTENT);
 
 
      /* The main reason for holding the lock at this point is so we

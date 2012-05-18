@@ -315,8 +315,8 @@ typedef struct cache_inode_dir_entry__
  * considered to be immutable throughout the life of the object.
  *
  * The flags field is unprotected, however it should be modified only
- * through the functions atomic_set_it_bits and
- * atomic_clear_int_bits.
+ * through the functions atomic_set_uint32_t_bits and
+ * atomic_clear_uint32_t_bits.
  *
  * The change_time and attr_time fields are unprotected and must only
  * be used for simple comparisons or servicing requests returning
@@ -1037,134 +1037,6 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
      }
 
      return cache_status;
-}
-
-/**
- * \brief Atomically increment a 64-bit signed integer
- *
- * This function is a wrapper around a GCC atomic primitive and
- * adds 1 thirty-two bit integer.
- *
- * @param var [in,out] Pointer to the integer to modify
- */
-
-static inline void
-atomic_inc_quad(int64_t *var)
-{
-     __sync_fetch_and_add(var, 1);
-}
-
-/**
- * \brief Atomically decrement a 64-bit signed integer
- *
- * This function is a wrapper around a GCC atomic primitive and
- * subtracts 1 thirty-two bit integer.
- *
- * @param var [in,out] Pointer to the integer to modify
- */
-
-static inline void
-atomic_dec_quad(int64_t *var)
-{
-     __sync_fetch_and_sub(var, 1);
-}
-
-/**
- * \brief Atomically increment a 32-bit unsigned integer
- *
- * This function is a wrapper around a GCC atomic primitive and
- * adds 1 thirty-two bit integer.
- *
- * @param[in,out] var Pointer to the integer to modify
- */
-
-static inline void
-atomic_inc_uint(uint32_t *var)
-{
-     __sync_fetch_and_add(var, 1);
-}
-
-/**
- * \brief Atomically decrement a 32-bit unsigned integer
- *
- * This function is a wrapper around a GCC atomic primitive and
- * subtracts 1 thirty-two bit integer.
- *
- * @param[in,out] var Pointer to the integer to modify
- */
-
-static inline void
-atomic_dec_uint(uint32_t *var)
-{
-     __sync_fetch_and_sub(var, 1);
-}
-
-/**
- * \brief Atomically clear bits in a 32-bit integer
- *
- * This function is a wrapper around a GCC atomic primitive and
- * clears bits in a thirty-two bit integer.
- *
- * @param[in,out] var  Pointer to the integer to modify
- * @param[in]     bits Bits to clear, or'd together
- */
-
-static inline void
-atomic_clear_int_bits(uint32_t *var,
-                      uint32_t bits)
-{
-     __sync_fetch_and_and(var, ~bits);
-}
-
-/**
- * \brief Atomically set bits in a 32-bit integer
- *
- * This function is a wrapper around a GCC atomic primitive and
- * sets bits in a thirty-two bit integer.
- *
- * @param[in,out]  var  Pointer to the integer to modify
- * @param[in]      bits Bits to set, or'd together
- */
-
-static inline void
-atomic_set_int_bits(uint32_t *var,
-                    uint32_t bits)
-{
-     __sync_fetch_and_or(var, bits);
-}
-
-/**
- * \brief Atomically clear bits in a 64-bit integer
- *
- * This function is a wrapper around a GCC atomic primitive and
- * clears bits in a sixty-four bit integer.
- *
- * @param[in,out] var  Pointer to the integer to modify
- * @param[in]     bits Bits to clear, or'd together
- */
-
-static inline void
-atomic_clear_hyper_bits(uint64_t *var,
-                        uint64_t bits)
-{
-     __sync_fetch_and_and(var, ~bits);
-}
-
-/**
- * \brief Atomically set bits in a 64-bit integer
- *
- * This function is a wrapper around a GCC atomic primitive and
- * sets bits in a sixty-four bit integer.
- *
- * @param[in,out] var  Pointer to the integer to modify
- * @param[in]     bits Bits to set, or'd together
- */
-
-static inline void
-atomic_set_hyper_bits(uint64_t *var,
-                      uint64_t bits)
-{
-     __sync_fetch_and_or(var, bits);
 }
 
 #endif /*  _CACHE_INODE_H */

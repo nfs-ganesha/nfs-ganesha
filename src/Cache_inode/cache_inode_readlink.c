@@ -42,7 +42,7 @@
 #include "solaris_port.h"
 #endif                          /* _SOLARIS */
 
-#include "LRU_List.h"
+#include "abstract_atomic.h"
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -104,8 +104,8 @@ cache_inode_readlink(cache_entry_t *entry,
                                     &entry->object.symlink->content,
                                     NULL);
                if (!(FSAL_IS_ERROR(fsal_status))) {
-                    atomic_set_int_bits(&entry->flags,
-                                        CACHE_INODE_TRUST_CONTENT);
+                    atomic_set_uint32_t_bits(&entry->flags,
+                                             CACHE_INODE_TRUST_CONTENT);
                }
           }
      }
