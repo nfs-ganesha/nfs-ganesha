@@ -96,22 +96,45 @@ fsal_status_t PTFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
   if(!p_filehandle || !p_context)
     Return(ERR_FSAL_FAULT, 0, INDEX_FSAL_truncate);
 
-  /* get the path of the file and its handle */
-  TakeTokenFSCall();
-  st = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDWR);
-  ReleaseTokenFSCall();
-
-  if(FSAL_IS_ERROR(st))
-    ReturnStatus(st, INDEX_FSAL_truncate);
 
   FSI_TRACE(FSI_DEBUG, "truncate entered handle %d\n", fd);
 
-  rc = ptfsal_ftruncate(p_context, fd, length);
+
+  /* Check to see if we already have fd */
+  if (file_descriptor && file_descriptor->fd != 0)
+    {
+      fd = file_descriptor->fd;
+      TakeTokenFSCall();
+      rc = ptfsal_ftruncate(p_context, fd, length);
+      errsv = errno;
+      ReleaseTokenFSCall();
+    }
+
+  /* either the fd passed in was 0, or invalid */
+  if (rc || fd == -1)
+    {
+      TakeTokenFSCall();
+      /* Get an fd since we dont have one */
+      st = fsal_internal_handle2fd(p_context, p_filehandle, &fd, O_RDWR);
+      ReleaseTokenFSCall();
+
+      if (FSAL_IS_ERROR(st))
+        ReturnStatus(st, INDEX_FSAL_truncate);
+
+      /* Executes the POSIX truncate operation */
+
+      TakeTokenFSCall();
+      rc = ptfsal_ftruncate(p_context, fd, length);
+      errsv = errno;
+      ReleaseTokenFSCall();
+
+      /* Close the fd we opened */
+      close(fd);
+    }
 
   /* convert return code */
   if(rc)
     {
-      errsv = errno;
       if(errsv == ENOENT)
         Return(ERR_FSAL_STALE, errsv, INDEX_FSAL_truncate);
       else
@@ -133,10 +156,7 @@ fsal_status_t PTFSAL_truncate(fsal_handle_t * p_filehandle,       /* IN */
         }
 
     }
-
-  // Comment for now. For some reason we seg fault when call ptfsal_close
-  // ptfsal_close(fd);
-  
+ 
   /* No error occurred */
   Return(ERR_FSAL_NO_ERROR, 0, INDEX_FSAL_truncate);
 
