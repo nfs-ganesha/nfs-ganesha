@@ -134,11 +134,10 @@ fsi_update_cache_name(char * oldname,
       FSI_TRACE(FSI_DEBUG, "FSI - Updating cache old name[%s]-> new name[%s] \n",
                 g_fsi_name_handle_cache.m_entry[index].m_name, newname);
       strncpy(g_fsi_name_handle_cache.m_entry[index].m_name, newname, PATH_MAX);
-      return 0;
     }
   }
 
-  return -1;
+  return 0;
 }
 
 void 
