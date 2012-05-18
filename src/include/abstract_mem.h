@@ -1,9 +1,8 @@
 /*
  *
  *
- * Copyright CEA/DAM/DIF  (2008)
- * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
- *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ * Copyright © Linux box Corporation, 2012
+ * Author: Adam C. Emerson <aemerson@linuxbox.com>
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -88,9 +87,10 @@ gsh_malloc(size_t n)
 static inline void *
 gsh_malloc_aligned(size_t a, size_t n)
 {
-     void *p = NULL;
-     posix_memalign(&p, a, n);
-     return p;
+    void *p;
+    if(posix_memalign(&p, a, n) != 0)
+        p = NULL;
+    return p;
 }
 
 /**
@@ -291,7 +291,6 @@ typedef void(*pool_constructor_t)(void *object,
  */
 
 typedef void(*pool_destructor_t)(void *object);
-
 
 /**
  * @brief Type representing a pool
