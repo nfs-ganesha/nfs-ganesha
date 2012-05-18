@@ -1477,6 +1477,40 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                                  NULL);
 #endif /* _USE_NFS4_1 */
 
+  request_pool = pool_init("Request pool",
+                           sizeof(request_data_t),
+                           constructor_request_data_t,
+                           NULL);
+  if(!(request_pool))
+    {
+      LogCrit(COMPONENT_INIT,
+              "Error while allocating request pool");
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
+      Fatal();
+    }
+
+  dupreq_pool = pool_init("Duplicate Request Pool",
+                          sizeof(dupreq_entry_t), NULL, NULL);
+  if(!(dupreq_pool))
+    {
+      LogCrit(COMPONENT_INIT,
+              "Error while allocating duplicate request pool");
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
+      Fatal();
+    }
+
+  ip_stats_pool = pool_init("IP Stats Cache Pool",
+                            sizeof(nfs_ip_stats_t),
+                            NULL, NULL);
+
+  if(!(ip_stats_pool))
+    {
+      LogCrit(COMPONENT_INIT,
+              "Error while allocating IP stats cache pool");
+      LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
+      Fatal();
+    }
+
 #ifdef _USE_ASYNC_CACHE_INODE
   /* Start the TAD and synclets for writeback cache inode */
   cache_inode_async_init(nfs_param.cache_layers_param.cache_inode_client_param);
@@ -1588,43 +1622,6 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                  "Error while initializing IP/stats cache #%d", i);
 
       workers_data[i].ht_ip_stats = ht_ip_stats[i];
-
-      /* Allocation of the nfs request pool */
-      workers_data[i].request_pool
-           = pool_init("Request Data Pool", sizeof(request_data_t),
-                       constructor_request_data_t, NULL);
-      if(!(workers_data[i].request_pool))
-        {
-          LogCrit(COMPONENT_INIT,
-                  "Error while allocating request data pool #%d", i);
-          LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-          Fatal();
-        }
-
-      workers_data[i].dupreq_pool
-           = pool_init("Duplicate Request Pool",
-                       sizeof(dupreq_entry_t), NULL, NULL);
-      if(!(workers_data[i].dupreq_pool))
-        {
-          LogCrit(COMPONENT_INIT,
-                  "Error while allocating duplicate request pool #%d", i);
-          LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-          Fatal();
-        }
-
-      /* Allocation of the IP/name pool */
-      workers_data[i].ip_stats_pool
-           = pool_init("IP Stats Cache Pool", sizeof(nfs_ip_stats_t),
-                       NULL, NULL);
-
-      if(!(workers_data[i].ip_stats_pool))
-        {
-          LogCrit(COMPONENT_INIT,
-                  "Error while allocating IP stats cache pool #%d", i);
-          LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
-          Fatal();
-        }
-
       LogDebug(COMPONENT_INIT, "worker data #%d successfully initialized", i);
     }                           /* for i */
 

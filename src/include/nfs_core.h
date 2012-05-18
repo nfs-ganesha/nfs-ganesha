@@ -577,15 +577,16 @@ typedef struct nfs_thread_control_block__
   struct glist_head tcb_list;
 } nfs_tcb_t;
 
+extern pool_t *request_pool;
+extern pool_t *dupreq_pool;
+extern pool_t *ip_stats_pool;
+
 typedef struct nfs_worker_data__
 {
   unsigned int worker_index;
   int  pending_request_len;
   struct glist_head pending_request;
   LRU_list_t *duplicate_request;
-  pool_t *request_pool;
-  pool_t *dupreq_pool;
-  pool_t *ip_stats_pool;
   hash_table_t *ht_ip_stats;
   pthread_mutex_t request_pool_mutex;
   nfs_tcb_t wcb; /* Worker control block */

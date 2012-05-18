@@ -804,7 +804,7 @@ nfs_rpc_get_nfsreq(nfs_worker_data_t *worker, uint32_t flags)
 {
     request_data_t *pnfsreq = NULL;
 
-    pnfsreq = pool_alloc(worker->request_pool, NULL);
+    pnfsreq = pool_alloc(request_pool, NULL);
 
     return (pnfsreq);
 }
@@ -846,7 +846,7 @@ process_status_t dispatch_rpc_request(SVCXPRT *xprt)
                workers_data[worker_index].pending_request_len);
 
   /* Get a nfsreq from the worker's pool */
-  nfsreq = pool_alloc(workers_data[worker_index].request_pool, NULL);
+  nfsreq = pool_alloc(request_pool, NULL);
 
   if(nfsreq == NULL)
     {

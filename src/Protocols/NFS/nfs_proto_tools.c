@@ -4272,7 +4272,7 @@ int nfs4_MakeCred(compound_data_t * data)
                              nfs_param.core_param.program[P_NFS],
                              nfs_param.core_param.program[P_MNT],
                              data->pworker->ht_ip_stats,
-                             data->pworker->ip_stats_pool,
+                             ip_stats_pool,
                              &related_client,
                              &user_credentials,
                              FALSE) /* So check_access() doesn't deny based on whether this is a RO export. */
