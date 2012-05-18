@@ -1,4 +1,5 @@
-noinst_HEADERS = BuddyMalloc.h                   \
+noinst_HEADERS = abstract_mem.h                  \
+		 BuddyMalloc.h                   \
                  fsal.h                          \
                  fsal_pnfs.h                     \
                  pnfs_common.h                   \
