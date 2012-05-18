@@ -251,7 +251,7 @@ pool_init(const char* name __attribute__((unused)),
  */
 
 static inline void
-destroy_pool(pool_t *pool)
+pool_destroy(pool_t *pool)
 {
      gsh_free(pool);
 }
