@@ -299,12 +299,12 @@ typedef struct mfsl_parameter__
 
 typedef struct mfsl_context__
 {
-  struct prealloc_pool pool_spec_data;
-  struct prealloc_pool pool_async_op;
+  pool_t *pool_spec_data;
+  pool_t *pool_async_op;
   pthread_mutex_t lock;
   unsigned int synclet_index;
-  struct prealloc_pool pool_dirs;
-  struct prealloc_pool pool_files;
+  pool_t *pool_dirs;
+  pool_t *pool_files;
 } mfsl_context_t;
 
 int mfsl_async_hash_init(void);
@@ -319,10 +319,10 @@ fsal_status_t mfsl_async_post_async_op(mfsl_async_op_desc_t * popdes,
 fsal_status_t MFSL_async_post(mfsl_async_op_desc_t * popdesc);
 
 fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t    *pcontext,
-                                                     struct prealloc_pool *pool_dirs);
+                                                     pool_t *pool_dirs);
 
 fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t    *pcontext,
-                                               struct prealloc_pool *pool_dirs);
+                                               pool_t *pool_dirs);
 
 fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcontext);
 

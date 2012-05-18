@@ -388,14 +388,10 @@ fi
 
 AC_SUBST(EFENCE)
 
-# Debugging options
-#GA_DISABLE_FLAG( [concurrent-memalloc],  [a thread is not allowed to free a block allocated by another thread], [-D_MONOTHREAD_MEMALLOC] )
-GA_DISABLE_FLAG( [prealloc],             [disable memory preallocator, for debug purpose only], [-D_NO_BLOCK_PREALLOC] )
 GA_DISABLE_FLAG( [tcp-register], 	 [disable registration of tcp services on portmapper], 		  [-D_NO_TCP_REGISTER] )
 GA_DISABLE_FLAG( [portmapper], 	         [disable registration on portmapper], 				  [-D_NO_PORTMAPPER] )
 GA_DISABLE_FLAG( [xattr-directory],      [disable ghost xattr directory and files support],               [-D_NO_XATTRD])
 
-GA_ENABLE_FLAG(  [debug-memleaks],       [enable allocator features for tracking memory usage],           [-D_DEBUG_MEMLEAKS] )
 GA_ENABLE_FLAG(  [debug-nfsshell],       [enable extended debug traces for ganeshell utility],            [-D_DEBUG_NFS_SHELL] )
 
 GA_ENABLE_FLAG(  [pl-pgsql],		 [enable PGSQL stored procedures (POSIX FSAL)],		          [-D_WITH_PLPGSQL])
@@ -471,16 +467,6 @@ if test "$enable_ipv6" == "yes"; then
 		AC_MSG_ERROR([IPv6 support is available only when --with-rpcal=TIRPC is used])
 	fi
 fi
-
-# BuddyMalloc
-GA_DISABLE_AM_CONDITION([BuddyMalloc], [disable memory allocator, for debug purpose only], [_NO_BUDDY_SYSTEM])
-
-if test "$enable_BuddyMalloc" == "yes"; then
-        AC_DEFINE(_BUDDY_SYSTEM, 1, [enable memory allocator])
-else
-	AC_DEFINE(_NO_BUDDY_SYSTEM, 1, [disable memory allocator, for debug purpose only])
-fi
-AM_CONDITIONAL(USE_BUDDY_SYSTEM, test "$enable_BuddyMalloc" == "yes")
 
 # explicit Ceph path @todo : add a defaut value
 AC_ARG_WITH([ceph-prefix], AS_HELP_STRING([--with-ceph-prefix=<path>], [Path to Ceph installation] ),
@@ -852,7 +838,6 @@ AC_CONFIG_FILES([include/Makefile
                  include/FSAL/FSAL_VFS/Makefile
                  include/FSAL/FSAL_TEMPLATE/Makefile
                  include/FSAL/FSAL_CEPH/Makefile
-                 BuddyMalloc/Makefile
                  Common/Makefile
                  support/Makefile
                  Log/Makefile

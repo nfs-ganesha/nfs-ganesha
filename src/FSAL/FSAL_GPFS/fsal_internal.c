@@ -41,10 +41,10 @@
 #include <sys/ioctl.h>
 #include  "fsal.h"
 #include "fsal_internal.h"
-#include "stuff_alloc.h"
 #include "SemN.h"
 #include "fsal_convert.h"
 #include <libgen.h>             /* used for 'dirname' */
+#include "abstract_mem.h"
 
 #include <pthread.h>
 #include <string.h>
@@ -133,7 +133,7 @@ static fsal_status_t fsal_internal_testAccess_no_acl(fsal_op_context_t * p_conte
 
 static void free_pthread_specific_stats(void *buff)
 {
-  Mem_Free(buff);
+  gsh_free(buff);
 }
 
 /* init keys */
@@ -188,13 +188,13 @@ void fsal_increment_nbcall(int function_index, fsal_status_t status)
     {
       int i;
 
-      bythread_stat = (fsal_statistics_t *) Mem_Alloc_Label(sizeof(fsal_statistics_t), "fsal_statistics_t");
+      bythread_stat = gsh_malloc(sizeof(fsal_statistics_t));
 
       if(bythread_stat == NULL)
         {
           LogCrit(COMPONENT_FSAL,
                   "Could not allocate memory for FSAL statistics err %d (%s)",
-                  Mem_Errno, strerror(Mem_Errno));
+                  ENOMEM, strerror(ENOMEM));
           /* we don't have real memory, bail */
           return;
         }
@@ -264,12 +264,11 @@ void fsal_internal_getstats(fsal_statistics_t * output_stats)
       int i;
 
       if((bythread_stat =
-          (fsal_statistics_t *) Mem_Alloc_Label(sizeof(fsal_statistics_t), "fsal_statistics_t")) == NULL)
+          gsh_malloc(sizeof(fsal_statistics_t))) == NULL)
       {
         /* we don't have working memory, bail */
         LogCrit(COMPONENT_FSAL,
-                "Could not allocate memory for FSAL statistics err %d (%s)",
-                Mem_Errno, strerror(Mem_Errno));
+                "Could not allocate memory for FSAL statistics");
         return;
       }
 

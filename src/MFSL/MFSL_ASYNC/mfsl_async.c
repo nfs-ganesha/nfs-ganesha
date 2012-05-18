@@ -39,7 +39,6 @@
 
 /* fsal_types contains constants and type definitions for FSAL */
 #include "log.h"
-#include "stuff_alloc.h"
 #include "fsal_types.h"
 #include "fsal.h"
 #include "mfsl_types.h"
@@ -57,7 +56,7 @@ fsal_handle_t dir_handle_precreate;
 unsigned int dir_handle_set = 0;
 unsigned int end_of_mfsl = FALSE;
 
-void constructor_preacreated_entries(void *ptr)
+void constructor_preacreated_entries(void *ptr, void *parameters)
 {
   fsal_status_t fsal_status;
   fsal_path_t fsal_path;
@@ -296,7 +295,7 @@ fsal_status_t mfsl_async_init_clean_precreated_objects(fsal_op_context_t * pcont
  *
  */
 fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t    *pcontext,
-                                                     struct prealloc_pool *pool_dirs)
+                                                     pool_t *pool_dirs)
 {
   unsigned int i = 0;
   char newdirpath[MAXNAMLEN];
@@ -338,44 +337,6 @@ fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t    *pcont
       dir_handle_set = 1;
     }
 
-#ifndef _NO_BLOCK_PREALLOC
-  for(piter = pool_dirs->pa_free; piter != NULL; piter = piter->pa_next)
-    {
-      pprecreated = get_prealloc_entry(piter, mfsl_precreated_object_t);
-
-      if(pprecreated->inited != 0)
-        continue;
-
-      snprintf(newdirpath, MAXNAMLEN, "dir.%u.%lu.%u", pid, me, counter++);
-      fsal_status = FSAL_str2name(newdirpath, MAXNAMLEN, &fsal_name);
-      if(FSAL_IS_ERROR(fsal_status))
-        {
-          LogMajor(COMPONENT_MFSL, "Impossible to convert name %s", newdirpath);
-          exit(1);
-        }
-
-      pprecreated->name = fsal_name;
-      pprecreated->attr.asked_attributes = FSAL_ATTRS_POSIX;
-      pprecreated->attr.supported_attributes = FSAL_ATTRS_POSIX;
-      pthread_mutex_init(&pprecreated->mobject.lock, NULL);
-
-      pprecreated->inited = 1;
-
-      fsal_status = FSAL_mkdir(&dir_handle_precreate,
-                               &fsal_name,
-                               pcontext,
-                               0777,
-                               &(pprecreated->mobject.handle), &(pprecreated->attr));
-      if(FSAL_IS_ERROR(fsal_status))
-        {
-          LogMajor(COMPONENT_MFSL, "Impossible to mkdir %s/%s, status=(%u,%u)",
-                     mfsl_param.pre_create_obj_dir, newdirpath, fsal_status.major,
-                     fsal_status.minor);
-          exit(1);
-        }
-    }
-#endif
-
   return fsal_status;
 }                               /* mfsl_async_init_precreated_directories */
 
@@ -392,7 +353,7 @@ fsal_status_t mfsl_async_init_precreated_directories(fsal_op_context_t    *pcont
  *
  */
 fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t    *pcontext,
-                                               struct prealloc_pool *pool_files)
+                                               pool_t *pool_files)
 {
   unsigned int i = 0;
   char newdirpath[MAXNAMLEN];
@@ -433,44 +394,6 @@ fsal_status_t mfsl_async_init_precreated_files(fsal_op_context_t    *pcontext,
 
       dir_handle_set = 1;
     }
-
-#ifndef _NO_BLOCK_PREALLOC
-  for(piter = pool_files->pa_free; piter != NULL; piter = piter->pa_next)
-    {
-      pprecreated = get_prealloc_entry(piter, mfsl_precreated_object_t);
-
-      if(pprecreated->inited != 0)
-        continue;
-
-      snprintf(newdirpath, MAXNAMLEN, "file.%u.%lu.%u", pid, me, counter++);
-      fsal_status = FSAL_str2name(newdirpath, MAXNAMLEN, &fsal_name);
-      if(FSAL_IS_ERROR(fsal_status))
-        {
-          LogMajor(COMPONENT_MFSL, "Impossible to convert name %s", newdirpath);
-          exit(1);
-        }
-
-      pprecreated->name = fsal_name;
-      pprecreated->attr.asked_attributes = FSAL_ATTRS_POSIX;
-      pprecreated->attr.supported_attributes = FSAL_ATTRS_POSIX;
-      pthread_mutex_init(&pprecreated->mobject.lock, NULL);
-
-      pprecreated->inited = 1;
-
-      fsal_status = FSAL_create(&dir_handle_precreate,
-                                &fsal_name,
-                                pcontext,
-                                0777,
-                                &(pprecreated->mobject.handle), &(pprecreated->attr));
-      if(FSAL_IS_ERROR(fsal_status))
-        {
-          LogMajor(COMPONENT_MFSL, "Impossible to create %s/%s, status=(%u,%u)",
-                     mfsl_param.pre_create_obj_dir, newdirpath, fsal_status.major,
-                     fsal_status.minor);
-          /* exit( 1 ) ;  */
-        }
-    }
-#endif
 
   return fsal_status;
 }                               /* mfsl_async_init_precreated_files */
@@ -516,9 +439,12 @@ fsal_status_t MFSL_GetContext(mfsl_context_t * pcontext,
 
   pcontext->synclet_index = 0;  /* only one synclet for now */
 
-  MakePool(&pcontext->pool_async_op, mfsl_param.nb_pre_async_op_desc, mfsl_async_op_desc_t, NULL, NULL);
+  pcontext->pool_async_op = pool_init(NULL,
+                                      sizeof(mfsl_async_op_desc_t),
+                                      NULL, NULL);
 
-  MakePool(&pcontext->pool_spec_data, mfsl_param.nb_pre_async_op_desc, mfsl_object_specific_data_t, NULL, NULL);
+  pcontext->pool_spec_data =
+    pool_init(NULL, sizeof(mfsl_object_specific_data_t), NULL, NULL);
 
   /* Preallocate files and dirs for this thread */
   P(pcontext->lock);
@@ -576,10 +502,9 @@ fsal_status_t MFSL_ASYNC_RefreshContextDirs(mfsl_context_t * pcontext,
 
   if(pcontext->pool_dirs.pa_constructor == NULL)
     {
-      MakePool(&pcontext->pool_dirs,
-               mfsl_param.nb_pre_create_dirs,
-               mfsl_precreated_object_t,
-               constructor_preacreated_entries, NULL);
+      pcontext->pool_dirs = pool_init(NULL,
+                                      sizeof(mfsl_precreated_object_t),
+                                      constructor_preacreated_entries, NULL);
 
       status = mfsl_async_init_precreated_directories(pfsal_context, &pcontext->pool_dirs);
       if(FSAL_IS_ERROR(status))
@@ -613,10 +538,10 @@ fsal_status_t MFSL_ASYNC_RefreshContextFiles(mfsl_context_t * pcontext,
 
   if(pcontext->pool_files.pa_constructor == NULL)
     {
-      MakePool(&pcontext->pool_files,
-               mfsl_param.nb_pre_create_files,
-               mfsl_precreated_object_t,
-               constructor_preacreated_entries, NULL);
+      pcontext->pool_files
+        = pool_init(NULL
+                    sizeof(mfsl_precreated_object_t),
+                    constructor_preacreated_entries, NULL);
 
       status = mfsl_async_init_precreated_files(pfsal_context, &pcontext->pool_files);
       if(FSAL_IS_ERROR(status))

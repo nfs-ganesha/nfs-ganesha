@@ -52,8 +52,7 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
-#include "nfs23.h" /* XXX */
+#include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
 #include "nfs_core.h"

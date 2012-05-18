@@ -39,7 +39,6 @@
 
 /* fsal_types contains constants and type definitions for FSAL */
 #include "log.h"
-#include "stuff_alloc.h"
 #include "fsal_types.h"
 #include "fsal.h"
 #include "mfsl_types.h"
@@ -48,8 +47,6 @@
 
 #include <pthread.h>
 #include <errno.h>
-
-#ifndef _USE_SWIG
 
 extern fsal_handle_t tmp_symlink_dirhandle;
 extern mfsl_parameter_t mfsl_param;
@@ -184,9 +181,9 @@ fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,     /* IN */
 
   P(p_mfsl_context->lock);
 
-  GetFromPool(pasyncopdesc, &p_mfsl_context->pool_async_op, mfsl_async_op_desc_t);
+  pasyncopdesc = pool_alloc(p_mfsl_context->pool_async_op, NULL);
 
-  GetFromPool(symlink_pasyncdata, &p_mfsl_context->pool_spec_data, mfsl_object_specific_data_t);
+  symlink_pasyncdata = pool_alloc(p_mfsl_context->pool_spec_data, NULL);
 
   V(p_mfsl_context->lock);
 
@@ -274,5 +271,3 @@ fsal_status_t MFSL_symlink(mfsl_object_t * parent_directory_handle,     /* IN */
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
 }                               /* MFSL_symlink */
 #endif
-
-#endif                          /* ! _USE_SWIG */

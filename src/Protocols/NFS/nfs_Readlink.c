@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -150,9 +149,10 @@ int nfs_Readlink(nfs_arg_t * parg,
   /* Perform readlink on the pentry */
   if(cache_inode_readlink(pentry,
                           &symlink_data,
-                          pclient, pcontext, &cache_status) == CACHE_INODE_SUCCESS)
+                          pclient, pcontext, &cache_status)
+     == CACHE_INODE_SUCCESS)
     {
-      if((ptr = Mem_Alloc(symlink_data.len+1)) == NULL)
+      if((ptr = gsh_malloc(symlink_data.len+1)) == NULL)
         {
           switch (preq->rq_vers)
             {
@@ -169,7 +169,7 @@ int nfs_Readlink(nfs_arg_t * parg,
 
       strcpy(ptr, symlink_data.path);
 
-      /* Reply to the client (think about Mem_Free data after use ) */
+      /* Reply to the client (think about free data after use ) */
       switch (preq->rq_vers)
         {
         case NFS_V2:
@@ -227,19 +227,19 @@ out:
 void nfs2_Readlink_Free(nfs_res_t * resp)
 {
   if(resp->res_readlink2.status == NFS_OK)
-    Mem_Free(resp->res_readlink2.READLINK2res_u.data);
+    gsh_free(resp->res_readlink2.READLINK2res_u.data);
 }                               /* nfs2_Readlink_Free */
 
 /**
  * nfs3_Readlink_Free: Frees the result structure allocated for nfs3_Readlink.
- * 
+ *
  * Frees the result structure allocated for nfs3_Readlink.
- * 
+ *
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */
 void nfs3_Readlink_Free(nfs_res_t * resp)
 {
   if(resp->res_readlink3.status == NFS3_OK)
-    Mem_Free(resp->res_readlink3.READLINK3res_u.resok.data);
+    gsh_free(resp->res_readlink3.READLINK3res_u.resok.data);
 }                               /* nfs3_Readlink_Free */

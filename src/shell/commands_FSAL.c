@@ -235,7 +235,7 @@
 #include "cmd_tools.h"
 #include "commands.h"
 #include "Getopt.h"
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
 
 int nfs_get_fsalpathlib_conf(char *configPath, char *PathLib);
 
@@ -309,8 +309,7 @@ cmdfsal_thr_info_t *GetFSALCmdContext()
     {
 
       /* allocates thread structure */
-      p_current_thread_vars =
-          (cmdfsal_thr_info_t *) Mem_Alloc(sizeof(cmdfsal_thr_info_t));
+      p_current_thread_vars = gsh_malloc(sizeof(cmdfsal_thr_info_t));
 
       /* panic !!! */
       if(p_current_thread_vars == NULL)
@@ -4559,7 +4558,7 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
   /* Now all arguments have been parsed, let's act ! */
 
   /* alloc a buffer */
-  p_read_buff = Mem_Alloc(block_size);
+  p_read_buff = gsh_malloc(block_size);
 
   if(p_read_buff == NULL)
     {
@@ -4592,7 +4591,7 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
             }
           else
             {
-              Mem_Free(p_read_buff);
+              gsh_free(p_read_buff);
               return st.major;
             }
         }
@@ -4653,7 +4652,7 @@ int fn_fsal_read(int argc,      /* IN : number of args in argv */
       fprintf(output, "Bandwidth: %f MB/s\n", bandwidth);
 
     }
-  Mem_Free(p_read_buff);
+  gsh_free(p_read_buff);
 
   return 0;
 }
@@ -5005,16 +5004,14 @@ int fn_fsal_write(int argc,     /* IN : number of args in argv */
           return EINVAL;
         }
 
-      databuff = Mem_Alloc(datasize + 1);
+      databuff = gsh_calloc(1, datasize + 1);
 
       if(databuff == NULL)
         {
-          fprintf(output, "write: error: Not enough memory to allocate %llu Bytes.\n",
-                  (unsigned long long)datasize);
+          fprintf(output, "write: error: Not enough memory to allocate %zu Bytes.\n",
+                  datasize);
           return ENOMEM;
         }
-
-      memset(databuff, 0, datasize + 1);
 
       /* try to convert the string to hexa */
       rc = sscanmem(databuff, datasize, str_hexa);
@@ -5024,7 +5021,7 @@ int fn_fsal_write(int argc,     /* IN : number of args in argv */
           /* if it is not odd: error */
           fprintf(output, "write: error: \"%s\" in not a valid hexa format.\n", str_hexa);
 
-          Mem_Free(str_hexa);
+          gsh_free(str_hexa);
 
           return EINVAL;
         }
@@ -5075,7 +5072,7 @@ int fn_fsal_write(int argc,     /* IN : number of args in argv */
           else
             {
               if(flag_X)
-                Mem_Free(databuff);
+                gsh_free(databuff);
               return st.major;
             }
         }
@@ -5124,7 +5121,7 @@ int fn_fsal_write(int argc,     /* IN : number of args in argv */
     }
 
   if(flag_X)
-    Mem_Free(databuff);
+    gsh_free(databuff);
 
   return 0;
 

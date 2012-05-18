@@ -14,7 +14,6 @@ typedef struct snmp_adm_parameter__
   int export_cache_stats;
   int export_requests_stats;
   int export_maps_stats;
-  int export_buddy_stats;
 
   int export_nfs_calls_detail;
   int export_fsal_calls_detail;

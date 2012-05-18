@@ -50,8 +50,7 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
-#include "LRU_List.h"
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
 #include "nfs_init.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
@@ -135,24 +134,9 @@ void * _9p_socket_thread( void * Arg )
 
   /* Init the _9p_conn_t structure */
   _9p_conn.sockfd = tcp_sock ;
- 
+
   if( gettimeofday( &_9p_conn.birth, NULL ) == -1 )
    LogFatal( COMPONENT_9P, "Can get connection's time of birth" ) ;
-
-#ifndef _NO_BUDDY_SYSTEM
-  if((rc = BuddyInit(&nfs_param.buddy_param_tcp_mgr)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      #ifdef _DEBUG_MEMLEAKS
-      {
-        FILE *output = fopen("/tmp/buddymem", "w");
-        if (output != NULL)
-          BuddyDumpAll(output);
-      }
-      #endif
-      LogFatal(COMPONENT_DISPATCH, "Memory manager could not be initialized");
-    }
-#endif
 
   if( ( rc =  getpeername( tcp_sock, (struct sockaddr *)&addrpeer, &addrpeerlen) ) == -1 )
    {
@@ -215,8 +199,8 @@ void * _9p_socket_thread( void * Arg )
         /* Get a preq from the worker's pool */
         P(workers_data[worker_index].request_pool_mutex);
 
-        GetFromPool(preq, &workers_data[worker_index].request_pool,
-                    request_data_t);
+        preq = pool_alloc(workers_data[worker_index].request_pool,
+                          NULL);
 
         V(workers_data[worker_index].request_pool_mutex);
 
@@ -225,29 +209,30 @@ void * _9p_socket_thread( void * Arg )
         _9pmsg = preq->rcontent._9p._9pmsg ;
         preq->rcontent._9p.pconn = &_9p_conn ;
 
-        /* An incoming 9P request: the msg has a 4 bytes header showing the size of the msg including the header */
+        /* An incoming 9P request: the msg has a 4 bytes header
+           showing the size of the msg including the header */
         if( (readlen = recv( fds[0].fd, _9pmsg ,_9P_HDR_SIZE, 0) == _9P_HDR_SIZE ) )
          {
-	    p_9pmsglen = (uint32_t *)_9pmsg ;
+           p_9pmsglen = (uint32_t *)_9pmsg ;
 
             LogFullDebug( COMPONENT_9P,
                           "Received message of size %u from client %s on socket %lu",
-			   *p_9pmsglen, strcaller, tcp_sock ) ;
+                          *p_9pmsglen, strcaller, tcp_sock ) ;
 
-	     if( ( *p_9pmsglen < _9P_HDR_SIZE ) ||
-		 ( readlen = recv( fds[0].fd,
-				   (char *)(_9pmsg + _9P_HDR_SIZE),  
-                                   *p_9pmsglen - _9P_HDR_SIZE, 0 ) ) !=  ( *p_9pmsglen - _9P_HDR_SIZE ) )
-                 
+            if( ( *p_9pmsglen < _9P_HDR_SIZE ) ||
+                ( readlen = recv( fds[0].fd,
+                                  (char *)(_9pmsg + _9P_HDR_SIZE),
+                                  *p_9pmsglen - _9P_HDR_SIZE, 0 ) ) !=  ( *p_9pmsglen - _9P_HDR_SIZE ) )
              {
-		LogEvent( COMPONENT_9P, 
-			  "Badly formed 9P message: Header is too small for client %s on socket %lu: readlen=%u expected=%u", 
+               LogEvent( COMPONENT_9P,
+                         "Badly formed 9P message: Header is too small for client %s on socket %lu: readlen=%u expected=%u",
                           strcaller, tcp_sock, readlen, *p_9pmsglen - _9P_HDR_SIZE ) ;
 
                 /* Release the entry */
                 P(workers_data[worker_index].request_pool_mutex);
-                ReleaseToPool(preq, &workers_data[worker_index].request_pool);
-  		workers_data[worker_index].passcounter += 1;
+                pool_free(&workers_data[worker_index].request_pool,
+                          preq);
+                workers_data[worker_index].passcounter += 1;
                 V(workers_data[worker_index].request_pool_mutex);
 
                 continue ;
@@ -397,10 +382,6 @@ void _9p_dispatcher_svc_run( long int sock )
   pthread_attr_t attr_thr;
   pthread_t tcp_thrid ;
 
-#ifdef _DEBUG_MEMLEAKS
-  static int nb_iter_memleaks = 0;
-#endif
-
   /* Init for thread parameter (mostly for scheduling) */
   if(pthread_attr_init(&attr_thr) != 0)
     LogDebug(COMPONENT_9P_DISPATCH, "can't init pthread's attributes");
@@ -431,19 +412,7 @@ void _9p_dispatcher_svc_run( long int sock )
                   "Could not create 9p socket manager thread, error = %d (%s)",
                   errno, strerror(errno));
        }
-
-#ifdef _DEBUG_MEMLEAKS
-      if(nb_iter_memleaks > 1000)
-        {
-          nb_iter_memleaks = 0;
-          nfs_debug_buddy_info();
-        }
-      else
-        nb_iter_memleaks += 1;
-#endif
-
     }                           /* while */
-
   return;
 }                               /* _9p_dispatcher_svc_run */ 
 
@@ -465,14 +434,6 @@ void * _9p_dispatcher_thread(void *Arg)
 
   SetNameFunction("_9p_dispatch_thr");
 
-#ifndef _NO_BUDDY_SYSTEM
-  /* Initialisation of the Buddy Malloc */
-  LogInfo(COMPONENT_9P_DISPATCH,
-          "Initialization of memory manager");
-  if(BuddyInit(&nfs_param.buddy_param_worker) != BUDDY_SUCCESS)
-    LogFatal(COMPONENT_DISPATCH,
-             "Memory manager could not be initialized");
-#endif
   /* Calling dispatcher main loop */
   LogInfo(COMPONENT_9P_DISPATCH,
           "Entering nfs/rpc dispatcher");

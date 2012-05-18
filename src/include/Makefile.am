@@ -1,5 +1,4 @@
 noinst_HEADERS = abstract_mem.h                  \
-		 BuddyMalloc.h                   \
                  fsal.h                          \
                  fsal_pnfs.h                     \
                  pnfs_common.h                   \
@@ -55,7 +54,6 @@ noinst_HEADERS = abstract_mem.h                  \
                  posixdb_consistency.h           \
                  rbt_node.h                      \
                  rbt_tree.h                      \
-                 stuff_alloc.h                   \
                  nfs_ip_stats.h                  \
                  Connectathon_config_parsing.h   \
 		 ganesha_rpc.h 	\

@@ -148,6 +148,22 @@ gsh_free(void *p)
 }
 
 /**
+ * @brief Free a block of memory with size
+ *
+ * This function exists to be passed to TIRPC when setting
+ * allocators.  It should not be used by anyone else.  New shim layers
+ * should not redefine it.
+ *
+ * @param[in] p  Block of memory to free.
+ * @param[in] n  Size of block (unused)
+ */
+static inline void
+gsh_free_size(void *p, size_t n __attribute__((unused)))
+{
+     free(p);
+}
+
+/**
  * @brief Object constructor
  *
  * Functions of this type are used to initialize objects newly

@@ -44,7 +44,6 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
 #include "config_parsing.h"
@@ -414,11 +413,11 @@ int idmap_add(hash_table_t * ht, char *key, unsigned int val)
   if(ht == NULL || key == NULL)
     return ID_MAPPER_INVALID_ARGUMENT;
 
-  if((buffkey.pdata = (caddr_t) Mem_Alloc(PWENT_MAX_LEN)) == NULL)
+  if((buffkey.pdata = gsh_malloc(PWENT_MAX_LEN)) == NULL)
     return ID_MAPPER_INSERT_MALLOC_ERROR;
 
   /* Build the key */
-  strncpy((char *)(buffkey.pdata), key, PWENT_MAX_LEN);
+  strncpy((buffkey.pdata), key, PWENT_MAX_LEN);
   buffkey.len = PWENT_MAX_LEN;
 
   /* Build the value */
@@ -445,11 +444,11 @@ int namemap_add(hash_table_t * ht, unsigned int key, char *val)
   if(ht == NULL || val == NULL)
     return ID_MAPPER_INVALID_ARGUMENT;
 
-  if((buffdata.pdata = (caddr_t) Mem_Alloc(PWENT_MAX_LEN)) == NULL)
+  if((buffdata.pdata = gsh_malloc(PWENT_MAX_LEN)) == NULL)
     return ID_MAPPER_INSERT_MALLOC_ERROR;
 
   /* Build the data */
-  strncpy((char *)(buffdata.pdata), val, PWENT_MAX_LEN);
+  strncpy((buffdata.pdata), val, PWENT_MAX_LEN);
   buffdata.len = PWENT_MAX_LEN;
 
   /* Build the value */
@@ -512,12 +511,12 @@ int uidgidmap_clear()
 static int idmap_free(hash_buffer_t key, hash_buffer_t val)
 {
   if (val.pdata != NULL)
-    LogFullDebug(COMPONENT_IDMAPPER, "Freeing uid->principal mapping: %lu->%s",
-		 (unsigned long)key.pdata, (char *)val.pdata);
+    LogFullDebug(COMPONENT_IDMAPPER, "Freeing uid->principal mapping: %p->%s",
+                 key.pdata, (char *)val.pdata);
 
   /* key is just an integer caste to charptr */
   if (val.pdata != NULL)
-    Mem_Free(val.pdata);
+    gsh_free(val.pdata);
   return 1;
 }
 
@@ -534,12 +533,12 @@ int idmap_clear()
 static int namemap_free(hash_buffer_t key, hash_buffer_t val)
 {
   if (key.pdata != NULL)
-    LogFullDebug(COMPONENT_IDMAPPER, "Freeing principal->uid mapping: %s->%lu",
-		 (char *)key.pdata, (unsigned long)val.pdata);
+    LogFullDebug(COMPONENT_IDMAPPER, "Freeing principal->uid mapping: %s->%p",
+                 (char *)key.pdata, val.pdata);
 
   /* val is just an integer caste to charptr */
   if (key.pdata != NULL)
-    Mem_Free(key.pdata);  
+    gsh_free(key.pdata);
   return 1;
 }
 
@@ -758,13 +757,13 @@ int idmap_remove(hash_table_t * ht, char *key)
   if(ht == NULL || key == NULL)
     return ID_MAPPER_INVALID_ARGUMENT;
 
-  buffkey.pdata = (caddr_t) key;
+  buffkey.pdata = key;
   buffkey.len = PWENT_MAX_LEN;
 
   if(HashTable_Del(ht, &buffkey, &old_key, NULL) == HASHTABLE_SUCCESS)
     {
       status = ID_MAPPER_SUCCESS;
-      Mem_Free(old_key.pdata);
+      gsh_free(old_key.pdata);
     }
   else
     {
@@ -778,18 +777,18 @@ int namemap_remove(hash_table_t * ht, unsigned int key)
 {
   hash_buffer_t buffkey, old_data;
   int status;
-  unsigned long local_key = (unsigned long)key;
+  unsigned long local_key = key;
 
   if(ht == NULL)
     return ID_MAPPER_INVALID_ARGUMENT;
 
-  buffkey.pdata = (caddr_t) local_key;
+  buffkey.pdata = (void*) local_key;
   buffkey.len = sizeof(unsigned long);
 
   if(HashTable_Del(ht, &buffkey, NULL, &old_data) == HASHTABLE_SUCCESS)
     {
       status = ID_MAPPER_SUCCESS;
-      Mem_Free(old_data.pdata);
+      gsh_free(old_data.pdata);
     }
   else
     {

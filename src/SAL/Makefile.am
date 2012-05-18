@@ -15,7 +15,6 @@ libsal_la_SOURCES = state_async.c                    \
                     nfs4_owner.c                     \
                     nfs4_lease.c                     \
                     nfs4_recovery.c                  \
-                    ../include/BuddyMalloc.h         \
                     ../include/HashData.h            \
                     ../include/HashTable.h           \
                     ../include/LRU_List.h            \
@@ -36,8 +35,7 @@ libsal_la_SOURCES = state_async.c                    \
                     ../include/nsm.h                 \
                     ../include/ganesha_rpc.h         \
                     ../include/sal_data.h            \
-                    ../include/sal_functions.h       \
-                    ../include/stuff_alloc.h
+                    ../include/sal_functions.h
 
 if USE_NLM
 libsal_la_SOURCES += nlm_owner.c

@@ -40,7 +40,6 @@
 #include <time.h>
 #include <pthread.h>
 #include <assert.h>
-#include "stuff_alloc.h"
 #include "nlm_list.h"
 #include "fsal.h"
 #include "nfs_core.h"

@@ -25,7 +25,6 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "cache_inode_weakref.h"
-#include "stuff_alloc.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -134,7 +133,7 @@ cache_inode_clean_internal(cache_entry_t *entry,
 
      if (entry->type == SYMBOLIC_LINK) {
           pthread_rwlock_wrlock(&entry->content_lock);
-          cache_inode_release_symlink(entry, &client->pool_entry_symlink);
+          cache_inode_release_symlink(entry, client->pool_entry_symlink);
           pthread_rwlock_unlock(&entry->content_lock);
      }
 

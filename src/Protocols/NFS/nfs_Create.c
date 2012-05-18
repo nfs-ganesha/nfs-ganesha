@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -445,7 +444,7 @@ int nfs_Create(nfs_arg_t * parg,
                                 .obj.post_op_fh3_u.handle),
                               &file_pentry->handle, pexport) == 0)
                         {
-                          Mem_Free(pres->res_create3.CREATE3res_u.resok.obj.
+                          gsh_free(pres->res_create3.CREATE3res_u.resok.obj.
                                    post_op_fh3_u.handle.data.data_val);
 
                           pres->res_create3.status = NFS3ERR_BADHANDLE;
@@ -580,5 +579,6 @@ void nfs_Create_Free(nfs_res_t * resp)
 {
   if((resp->res_create3.status == NFS3_OK) &&
      (resp->res_create3.CREATE3res_u.resok.obj.handle_follows == TRUE))
-    Mem_Free(resp->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle.data.data_val);
+    gsh_free(resp->res_create3.CREATE3res_u.resok.obj
+             .post_op_fh3_u.handle.data.data_val);
 }

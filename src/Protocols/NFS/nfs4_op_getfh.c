@@ -36,7 +36,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -120,6 +119,6 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 void nfs4_op_getfh_Free(GETFH4res * resp)
 {
   if(resp->status == NFS4_OK)
-    Mem_Free(resp->GETFH4res_u.resok4.object.nfs_fh4_val);
+    gsh_free(resp->GETFH4res_u.resok4.object.nfs_fh4_val);
   return;
 }                               /* nfs4_op_getfh_Free */

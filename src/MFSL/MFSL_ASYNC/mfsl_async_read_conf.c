@@ -42,14 +42,11 @@
 #include "fsal.h"
 #include "mfsl_types.h"
 #include "mfsl.h"
-#include "stuff_alloc.h"
 #include "log.h"
 #include "config_parsing.h"
 
 #include <strings.h>
 #include <string.h>
-
-#ifndef _USE_SWIG
 
 /******************************************************
  *            Attribute mask management.
@@ -73,7 +70,7 @@ int mfsl_async_clean_pending_request(LRU_entry_t * pentry, void *addparam)
   //nfs_request_data_t *  preqnfs     = (nfs_request_data_t *)(pentry->buffdata.pdata) ;
 
   /* Send the entry back to the pool */
-  //ReleaseToPool( preqnfs, preqnfspool ) ;
+  //pool_free(preqnfspool, preqnfs) ;
 
   return 0;
 }                               /* mfsl_async_clean_pending_request */
@@ -217,10 +214,6 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
         {
           pparam->nb_pre_create_files = atoi(key_value);
         }
-      else if(!strcasecmp(key_name, "LRU_Prealloc_PoolSize"))
-        {
-          pparam->lru_param.nb_entry_prealloc = atoi(key_value);
-        }
       else if(!strcasecmp(key_name, "LRU_Nb_Call_Gc_invalid"))
         {
           pparam->lru_param.nb_call_gc_invalid = atoi(key_value);
@@ -260,5 +253,3 @@ fsal_status_t MFSL_load_parameter_from_conf(config_file_t in_config,
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
 }                               /* MFSL_load_parameter_from_conf */
-
-#endif                          /* ! _USE_SWIG */

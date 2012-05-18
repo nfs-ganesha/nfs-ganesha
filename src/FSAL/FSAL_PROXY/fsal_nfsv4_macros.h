@@ -44,7 +44,7 @@
 
 /* Free a compound */
 #define COMPOUNDV4_ARG_FREE \
-do { Mem_Free( argcompound.argarray_val ) ;} while( 0 )
+do {gsh_free(argcompound.argarray_val);} while( 0 )
 
 /* OP specific macros */
 #define COMPOUNDV4_ARG_ADD_OP_PUTROOTFH( argcompound )                                             \

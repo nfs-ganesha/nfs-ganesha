@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -327,7 +326,7 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                  (&pres->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle,
                   pfsal_handle, pexport) == 0)
                 {
-                  Mem_Free((char *)pres->res_symlink3.SYMLINK3res_u.resok.obj.
+                  gsh_free(pres->res_symlink3.SYMLINK3res_u.resok.obj.
                            post_op_fh3_u.handle.data.data_val);
 
                   pres->res_symlink3.status = NFS3ERR_BADHANDLE;
@@ -340,9 +339,10 @@ int nfs_Symlink(nfs_arg_t * parg /* IN  */ ,
                                      &attr_parent_after,
                                      pclient,
                                      pcontext,
-                                     &cache_status_parent) != CACHE_INODE_SUCCESS)
+                                     &cache_status_parent)
+                 != CACHE_INODE_SUCCESS)
                 {
-                  Mem_Free((char *)pres->res_symlink3.SYMLINK3res_u.resok.obj.
+                  gsh_free(pres->res_symlink3.SYMLINK3res_u.resok.obj.
                            post_op_fh3_u.handle.data.data_val);
 
                   pres->res_symlink3.status = NFS3ERR_BADHANDLE;
@@ -418,6 +418,6 @@ void nfs_Symlink_Free(nfs_res_t * resp)
 {
   if((resp->res_symlink3.status == NFS3_OK) &&
      (resp->res_symlink3.SYMLINK3res_u.resok.obj.handle_follows == TRUE))
-    Mem_Free(resp->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle.data.
-             data_val);
+    gsh_free(resp->res_symlink3.SYMLINK3res_u.resok.obj
+             .post_op_fh3_u.handle.data.data_val);
 }                               /* nfs_Symlink_Free */

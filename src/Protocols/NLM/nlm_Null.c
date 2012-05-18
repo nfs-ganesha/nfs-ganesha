@@ -34,7 +34,6 @@
 #include <pthread.h>
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nlm4.h"
 #include "cache_inode.h"
 #include "nlm_util.h"

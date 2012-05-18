@@ -8,10 +8,8 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-/* netinet/in.h is pulled in by libcidr.h */
-
-#include "stuff_alloc.h"
-#include "../include/cidr.h"
+#include "abstract_mem.h"
+#include "cidr.h"
 
 
 /* Create a struct in_addr with the given v4 address */
@@ -40,7 +38,7 @@ cidr_to_inaddr(const CIDR *addr, struct in_addr *uptr)
 	 */
 	toret = uptr;
 	if(toret==NULL)
-	  toret = (struct in_addr*)Mem_Alloc(sizeof(struct in_addr));
+	  toret = gsh_malloc(sizeof(struct in_addr));
 	if(toret==NULL)
 	{
 		errno = ENOMEM;
@@ -145,7 +143,7 @@ cidr_to_in6addr(const CIDR *addr, struct in6_addr *uptr)
 	/* Use their struct if they gave us one */
 	toret = uptr;
 	if(toret==NULL)
-	  toret = (struct in6_addr*)Mem_Alloc(sizeof(struct in6_addr));
+	  toret = gsh_malloc(sizeof(struct in6_addr));
 	if(toret==NULL)
 	{
 		errno = ENOMEM;

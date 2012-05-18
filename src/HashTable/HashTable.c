@@ -45,7 +45,6 @@
 #include <pthread.h>
 #include "RW_Lock.h"
 #include "HashTable.h"
-#include "stuff_alloc.h"
 #include "log.h"
 #include <assert.h>
 
@@ -267,7 +266,6 @@ HashTable_Init(struct hash_param *hparam)
      uint32_t completed = 0;
 
      if (pthread_rwlockattr_init(&rwlockattr) != 0) {
-          Mem_Free(ht);
           return NULL;
      }
 
@@ -283,9 +281,9 @@ HashTable_Init(struct hash_param *hparam)
      }
 #endif /* GLIBC */
 
-     if ((ht = Mem_Alloc(sizeof(struct hash_table) +
-                         sizeof(struct hash_partition) *
-                         hparam->index_size)) == NULL) {
+     if ((ht = gsh_malloc(sizeof(struct hash_table) +
+                          sizeof(struct hash_partition) *
+                          hparam->index_size)) == NULL) {
           goto deconstruct;
      }
 
@@ -303,17 +301,15 @@ HashTable_Init(struct hash_param *hparam)
      ht->parameter = *hparam;
 
      for (index = 0; index < hparam->index_size; ++index) {
-
           partition = (&ht->partitions[index]);
-
-          MakePool(&partition->node_pool, hparam->nb_node_prealloc,
-                   rbt_node_t, NULL, NULL);
-          if (!IsPoolPreallocated(&partition->node_pool)) {
+          partition->node_pool = pool_init(NULL, sizeof(rbt_node_t),
+                                           NULL, NULL);
+          if (!(partition->node_pool)) {
                goto deconstruct;
           }
-          MakePool(&partition->data_pool,
-                   hparam->nb_node_prealloc, hash_data_t, NULL, NULL);
-          if (!IsPoolPreallocated(&partition->data_pool))
+          partition->data_pool = pool_init(NULL, sizeof(hash_data_t),
+                                           NULL, NULL);
+          if (!(partition->data_pool))
                goto deconstruct;
           RBT_HEAD_INIT(&(partition->rbt));
 
@@ -331,7 +327,7 @@ HashTable_Init(struct hash_param *hparam)
 
           /* Allocate a cache if requested */
           if (hparam->flags & HT_FLAG_CACHE) {
-              partition->cache = Mem_Alloc(CACHE_PAGE_SIZE(ht));
+              partition->cache = gsh_malloc(CACHE_PAGE_SIZE(ht));
               memset(partition->cache, 0, CACHE_PAGE_SIZE(ht));
           }
 
@@ -352,14 +348,14 @@ deconstruct:
            * should be added and called here.
            */
           if (hparam->flags & HT_FLAG_CACHE)
-              Mem_Free(ht->partitions[completed - 1].cache);
+              gsh_free(ht->partitions[completed - 1].cache);
 
           pthread_rwlock_destroy(
                &(ht->partitions[completed - 1].lock));
           completed--;
      }
 
-     Mem_Free(ht);
+     gsh_free(ht);
      return (ht = NULL);
 
 } /* HashTable_Init */
@@ -521,18 +517,16 @@ HashTable_SetLatched(struct hash_table *ht,
      RBT_FIND(&ht->partitions[latch->index].rbt,
               locator, latch->rbt_hash);
 
-     GetFromPool(mutator, &ht->partitions[latch->index].node_pool,
-                 rbt_node_t);
+     mutator = pool_alloc(ht->partitions[latch->index].node_pool, NULL);
      if (mutator == NULL) {
           rc = HASHTABLE_INSERT_MALLOC_ERROR;
           goto out;
      }
 
-     GetFromPool(descriptors,
-                 &ht->partitions[latch->index].data_pool, hash_data_t);
+     descriptors = pool_alloc(ht->partitions[latch->index].data_pool,
+                              NULL);
      if (descriptors == NULL) {
-          ReleaseToPool(mutator,
-                        &ht->partitions[latch->index].node_pool);
+          pool_free(ht->partitions[latch->index].node_pool, mutator);
           rc = HASHTABLE_INSERT_MALLOC_ERROR;
           goto out;
      }
@@ -629,8 +623,8 @@ HashTable_DeleteLatched(struct hash_table *ht,
 
      /* Now remove the entry */
      RBT_UNLINK(&partition->rbt, latch->locator);
-     ReleaseToPool(data, &partition->data_pool);
-     ReleaseToPool(latch->locator, &partition->node_pool);
+     pool_free(partition->data_pool, data);
+     pool_free(partition->node_pool, latch->locator);
 
      HashTable_ReleaseLatched(ht, latch);
      return HASHTABLE_SUCCESS;
@@ -689,8 +683,8 @@ HashTable_Delall(struct hash_table *ht,
                key = data->buffkey;
                val = data->buffval;
 
-               ReleaseToPool(data, &ht->partitions[index].data_pool);
-               ReleaseToPool(holder, &ht->partitions[index].node_pool);
+               pool_free(ht->partitions[index].data_pool, data);
+               pool_free(ht->partitions[index].node_pool, holder);
                --ht->partitions[index].count;
                rc = free_func(key, val);
 

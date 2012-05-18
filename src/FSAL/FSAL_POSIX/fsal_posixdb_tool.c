@@ -7,7 +7,7 @@
 
 #include "fsal.h"
 #include "fsal_internal.h"
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
 #include <string.h>
 #include <unistd.h>
 #include <libgen.h>             /* basename */
@@ -202,7 +202,7 @@ void display_directory(fsal_posixdb_conn * p_conn, posixfsal_handle_t * p_handle
           display_directory(p_conn, &(p_children[i].handle), basedir_new);
         }
     }
-  Mem_Free(p_children);
+  gsh_free(p_children);
 }
 
 int main(int argc, char **argv)
@@ -319,9 +319,6 @@ int main(int argc, char **argv)
           exit(-1);
         }
     }
-#ifndef _NO_BUDDY_SYSTEM
-  BuddyInit(NULL);
-#endif
 
   /* Connecting to database */
   if(*(dbparams.passwdfile) != '\0')

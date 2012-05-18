@@ -52,7 +52,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -122,18 +121,6 @@ void *upcall_simulator_thread(void *UnusedArgument)
   SetNameFunction(thr_name);
 
   LogFullDebug(COMPONENT_CACHE_INODE, "Starting" ) ;
-
-  /* Initialisation of the Buddy Malloc */
-#ifndef _NO_BUDDY_SYSTEM
-  if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_CACHE_INODE,
-               "Memory manager could not be initialized");
-    }
-  LogFullDebug(COMPONENT_CACHE_INODE,
-               "Memory manager successfully initialized");
-#endif
 
   LogDebug(COMPONENT_CACHE_INODE, "UPCALL SIMULATOR: my pthread id is %p",(caddr_t) pthread_self() ) ;
 

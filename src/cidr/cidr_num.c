@@ -8,11 +8,8 @@
 #include <errno.h>
 #include <string.h>
 
-#include "stuff_alloc.h"
-#include "../include/cidr.h"
+#include "cidr.h"
 #include "cidr_pow2_p.h"
-
-
 
 /* Number of total addresses in a given prefix length */
 const char *

@@ -53,13 +53,6 @@
 #include "log.h"
 
 extern hash_table_t *ht_ip_stats[NB_MAX_WORKER_THREAD];
-#ifndef _NO_BUDDY_SYSTEM
-extern buddy_stats_t global_tcp_dispatcher_buddy_stat;
-#endif /* !_NO_BUDDY_SYSTEM */
-
-#ifndef _NO_BUDDY_SYSTEM
-extern buddy_stats_t global_tcp_dispatcher_buddy_stat;
-#endif
 
 void set_min_latency(nfs_request_stat_item_t *cur_stat, unsigned int val)
 {
@@ -91,9 +84,6 @@ void stats_collect (ganesha_stats_t                 *ganesha_stats)
     hash_stat_t            *cache_inode_stat = &ganesha_stats->cache_inode_hstat;
     nfs_worker_stat_t      *global_worker_stat = &ganesha_stats->global_worker_stat;
     fsal_statistics_t      *global_fsal_stat = &ganesha_stats->global_fsal;
-#ifndef _NO_BUDDY_SYSTEM
-    buddy_stats_t *global_buddy_stat = &ganesha_stats->global_buddy;
-#endif
     unsigned int           i, j;
 
     /* This is done only on worker[0]: the hashtable is shared and worker 0 always exists */
@@ -387,52 +377,6 @@ void stats_collect (ganesha_stats_t                 *ganesha_stats)
                 workers_data[i].stats.fsal_stats.func_stats.nb_err_unrecover[j];
         }
     }
-
-#ifndef _NO_BUDDY_SYSTEM
-    /* buddy memory */
-    memset(global_buddy_stat, 0, sizeof(buddy_stats_t));
-    for (i = 0; i < nfs_param.core_param.nb_worker; i++) {
-        global_buddy_stat->TotalMemSpace +=
-            workers_data[i].stats.buddy_stats.TotalMemSpace;
-        global_buddy_stat->ExtraMemSpace +=
-            workers_data[i].stats.buddy_stats.ExtraMemSpace;
-
-        global_buddy_stat->StdMemSpace += workers_data[i].stats.buddy_stats.StdMemSpace;
-        global_buddy_stat->StdUsedSpace +=
-            workers_data[i].stats.buddy_stats.StdUsedSpace;
-
-        if(workers_data[i].stats.buddy_stats.StdUsedSpace > global_buddy_stat->WM_StdUsedSpace)
-            global_buddy_stat->WM_StdUsedSpace =
-                workers_data[i].stats.buddy_stats.StdUsedSpace;
-
-        global_buddy_stat->NbStdPages += workers_data[i].stats.buddy_stats.NbStdPages;
-        global_buddy_stat->NbStdUsed += workers_data[i].stats.buddy_stats.NbStdUsed;
-
-        if(workers_data[i].stats.buddy_stats.NbStdUsed > global_buddy_stat->WM_NbStdUsed)
-            global_buddy_stat->WM_NbStdUsed = workers_data[i].stats.buddy_stats.NbStdUsed;
-    }
-
-    /* Add aggregated Tcp Dispatcher buddy malloc */
-    global_buddy_stat->TotalMemSpace +=
-        global_tcp_dispatcher_buddy_stat.TotalMemSpace;
-    global_buddy_stat->ExtraMemSpace +=
-        global_tcp_dispatcher_buddy_stat.ExtraMemSpace;
-
-    global_buddy_stat->StdMemSpace += global_tcp_dispatcher_buddy_stat.StdMemSpace;
-    global_buddy_stat->StdUsedSpace +=
-        global_tcp_dispatcher_buddy_stat.StdUsedSpace;
-
-    if (global_tcp_dispatcher_buddy_stat.StdUsedSpace >
-        global_tcp_dispatcher_buddy_stat.WM_StdUsedSpace)
-        global_buddy_stat->WM_StdUsedSpace =
-            global_tcp_dispatcher_buddy_stat.StdUsedSpace;
-
-    global_buddy_stat->NbStdPages += global_tcp_dispatcher_buddy_stat.NbStdPages;
-    global_buddy_stat->NbStdUsed += global_tcp_dispatcher_buddy_stat.NbStdUsed;
-
-    if (global_tcp_dispatcher_buddy_stat.NbStdUsed > global_buddy_stat->WM_NbStdUsed)
-        global_buddy_stat->WM_NbStdUsed = global_tcp_dispatcher_buddy_stat.NbStdUsed;
-#endif
 }
 
 void *stats_thread(void *UnusedArg)
@@ -461,23 +405,7 @@ void *stats_thread(void *UnusedArg)
   fsal_statistics_t      *global_fsal_stat = &ganesha_stats.global_fsal;
 
 
-#ifndef _NO_BUDDY_SYSTEM
-  int rc = 0;
-  buddy_stats_t *global_buddy_stat = &ganesha_stats.global_buddy;
-#endif
-
   SetNameFunction("stat_thr");
-
-#ifndef _NO_BUDDY_SYSTEM
-  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_MAIN,
-               "NFS STATS : Memory manager could not be initialized");
-    }
-  LogInfo(COMPONENT_MAIN,
-          "NFS STATS : Memory manager successfully initialized");
-#endif
 
   /* Open the stats file, in append mode */
   if((stats_file = fopen(nfs_param.core_param.stats_file_path, "a")) == NULL)
@@ -748,26 +676,6 @@ void *stats_thread(void *UnusedArg)
                 global_fsal_stat->func_stats.nb_err_retryable[j],
                 global_fsal_stat->func_stats.nb_err_unrecover[j]);
       fprintf(stats_file, "\n");
-
-#ifndef _NO_BUDDY_SYSTEM
-
-      /* total memory space preallocated, total space preallocated for pages, total space that overflows pages */
-      /* total memory, used memory, avg used memory/worker, max used memory/worker */
-      /* total pages, used pages, avg used pages/worker, max used pages/worker */
-      fprintf(stats_file, "BUDDY_MEMORY,%s;%lu,%lu,%lu|%lu,%lu,%lu|%u,%u,%u,%u\n",
-              strdate,
-              (unsigned long)global_buddy_stat->TotalMemSpace,
-              (unsigned long)global_buddy_stat->StdMemSpace,
-              (unsigned long)global_buddy_stat->ExtraMemSpace,
-              (unsigned long)global_buddy_stat->StdUsedSpace,
-              (unsigned long)(global_buddy_stat->StdUsedSpace /
-                              nfs_param.core_param.nb_worker),
-              (unsigned long)global_buddy_stat->WM_StdUsedSpace,
-              global_buddy_stat->NbStdPages, global_buddy_stat->NbStdUsed,
-              global_buddy_stat->NbStdUsed / nfs_param.core_param.nb_worker,
-              global_buddy_stat->WM_NbStdUsed);
-
-#endif
 
       /* Flush the data written */
       fprintf(stats_file, "END, ----- NO MORE STATS FOR THIS PASS ----\n");

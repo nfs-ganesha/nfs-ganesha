@@ -50,7 +50,6 @@ t*
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "nfs_proto_functions.h"
@@ -196,10 +195,9 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 
           /* Let set the reply bitmap */
           /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
-          if((supported_attrs.bitmap4_val =
-              (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
+          if((supported_attrs.bitmap4_val
+              = gsh_calloc(2, sizeof(uint32_t))) == NULL)
             return -1;
-          memset(supported_attrs.bitmap4_val, 0, 2 * sizeof(uint32_t));
           nfs4_list_to_bitmap4(&supported_attrs, &c, attrvalslist_supported);
 
 	  LogFullDebug(COMPONENT_NFS_V4_XATTR,
@@ -690,7 +688,7 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
               LastOffset += file_owner.utf8string_len;
 
               /* Free what was allocated by uid2utf8 */
-              Mem_Free((char *)file_owner.utf8string_val);
+              gsh_free(file_owner.utf8string_val);
 
               /* Pad with zero to keep xdr alignement */
               if(deltalen != 0)
@@ -731,11 +729,11 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
               LastOffset += file_owner_group.utf8string_len;
 
               /* Free what was used for utf8 conversion */
-              Mem_Free((char *)file_owner_group.utf8string_val);
+              gsh_free(file_owner_group.utf8string_val);
 
               /* Pad with zero to keep xdr alignement */
               if(deltalen != 0)
-                memset((char *)(attrvalsBuffer + LastOffset), 0, deltalen);
+                memset((attrvalsBuffer + LastOffset), 0, deltalen);
               LastOffset += deltalen;
 
               op_attr_success = 1;
@@ -998,9 +996,8 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
 
   /* Set the bitmap for result */
   /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
-  if((Fattr->attrmask.bitmap4_val = (uint32_t *) Mem_Alloc(2 * sizeof(uint32_t))) == NULL)
+  if((Fattr->attrmask.bitmap4_val = gsh_calloc(3, sizeof(uint32_t))) == NULL)
     return -1;
-  memset(Fattr->attrmask.bitmap4_val, 0, 2 * sizeof(uint32_t));
 
   nfs4_list_to_bitmap4(&(Fattr->attrmask), &j, attrvalslist);
 
@@ -1008,10 +1005,9 @@ int nfs4_XattrToFattr(fattr4 * Fattr,
   Fattr->attr_vals.attrlist4_len = LastOffset;
 
   /** @todo: BUGAZOMEU: Allocation at NULL Adress here.... */
-  if((Fattr->attr_vals.attrlist4_val = Mem_Alloc(Fattr->attr_vals.attrlist4_len)) == NULL)
+  if((Fattr->attr_vals.attrlist4_val
+      = gsh_calloc(1, Fattr->attr_vals.attrlist4_len)) == NULL)
     return -1;
-  memset(Fattr->attr_vals.attrlist4_val, 0, Fattr->attr_vals.attrlist4_len);
-
   memcpy(Fattr->attr_vals.attrlist4_val, attrvalsBuffer, Fattr->attr_vals.attrlist4_len);
 
   LogFullDebug(COMPONENT_NFS_V4_XATTR,
@@ -1364,7 +1360,7 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
           if(memcmp(cookie_verifier, arg_READDIR4.cookieverf, NFS4_VERIFIER_SIZE) != 0)
             {
               res_READDIR4.status = NFS4ERR_BAD_COOKIE;
-              Mem_Free(entry_nfs_array);
+              gsh_free(entry_nfs_array);
               return res_READDIR4.status;
             }
         }
@@ -1410,18 +1406,15 @@ int nfs4_op_readdir_xattr(struct nfs_argop4 *op,
     {
       /* Allocation of reply structures */
       if((entry_name_array =
-          (entry_name_array_item_t *) Mem_Alloc(estimated_num_entries *
-                                                (FSAL_MAX_NAME_LEN + 1))) == NULL)
+          gsh_calloc(estimated_num_entries, (FSAL_MAX_NAME_LEN + 1))) == NULL)
         {
           LogError(COMPONENT_NFS_V4_XATTR, ERR_SYS, ERR_MALLOC, errno);
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
           return res_READDIR4.status;
         }
-      memset((char *)entry_name_array, 0,
-             estimated_num_entries * (FSAL_MAX_NAME_LEN + 1));
 
       if((entry_nfs_array =
-          (entry4 *) Mem_Alloc(estimated_num_entries * sizeof(entry4))) == NULL)
+          gsh_calloc(estimated_num_entries, sizeof(entry4))) == NULL)
         {
           LogError(COMPONENT_NFS_V4_XATTR, ERR_SYS, ERR_MALLOC, errno);
           res_READDIR4.status = NFS4ERR_SERVERFAULT;
@@ -1630,12 +1623,11 @@ int nfs4_op_read_xattr(struct nfs_argop4 *op,
   xattr_id = pfile_handle->xattr_pos - 2;
 
   /* Get the xattr related to this xattr_id */
-  if((buffer = (char *)Mem_Alloc(XATTR_BUFFERSIZE)) == NULL)
+  if((buffer = gsh_calloc(1, XATTR_BUFFERSIZE)) == NULL)
     {
       res_READ4.status = NFS4ERR_SERVERFAULT;
       return res_READ4.status;
     }
-  memset(buffer, 0, XATTR_BUFFERSIZE);
 
   fsal_status = FSAL_GetXAttrValueById(pfsal_handle,
                                        xattr_id,

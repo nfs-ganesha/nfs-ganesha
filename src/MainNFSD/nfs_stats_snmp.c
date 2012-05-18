@@ -27,19 +27,15 @@
 #include "external_tools.h"
 #include "snmp_adm.h"
 
-#include "stuff_alloc.h"
 #include "common_utils.h"
 #include "log.h"
+#include "abstract_mem.h"
 
-#define  CONF_SNMP_ADM_LABEL  "SNMP_ADM"
+#define CONF_SNMP_ADM_LABEL  "SNMP_ADM"
 /* case unsensitivity */
 #define STRCMP   strcasecmp
 
 static int config_ok = 0;
-
-#ifndef _NO_BUDDY_SYSTEM
-buddy_stats_t global_buddy_stat;
-#endif
 
 int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_parameter)
 {
@@ -137,18 +133,6 @@ int get_snmpadm_conf(config_file_t in_config, external_tools_parameter_t * out_p
               return EINVAL;
             }
           out_parameter->snmp_adm.export_maps_stats = bool;
-        }
-      else if(!STRCMP(key_name, "Export_buddy_stats"))
-        {
-          int bool = StrToBoolean(key_value);
-          if(bool == -1)
-            {
-              LogCrit(COMPONENT_CONFIG,
-                      "SNMP_ADM: ERROR: Unexpected value for %s: boolean expected.",
-                      key_name);
-              return EINVAL;
-            }
-          out_parameter->snmp_adm.export_buddy_stats = bool;
         }
       else if(!STRCMP(key_name, "Export_nfs_calls_detail"))
         {
@@ -538,126 +522,6 @@ static int get_fsal(snmp_adm_type_union * param, void *opt_arg)
   return 0;
 }
 
-#ifndef _NO_BUDDY_SYSTEM
-
-static int get_buddy(snmp_adm_type_union * param, void *opt_arg)
-{
-  long cs = (long)opt_arg;
-  unsigned int i;
-
-  param->bigint = 0;
-  switch (cs)
-    {
-    case 0:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        param->bigint += workers_data[i].stats.buddy_stats.TotalMemSpace;
-      break;
-    case 1:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        param->bigint += workers_data[i].stats.buddy_stats.StdMemSpace;
-      break;
-    case 2:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        param->bigint += workers_data[i].stats.buddy_stats.ExtraMemSpace;
-      break;
-    case 3:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        param->bigint += workers_data[i].stats.buddy_stats.StdUsedSpace;
-      break;
-    case 4:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        param->bigint += workers_data[i].stats.buddy_stats.StdUsedSpace;
-
-      param->bigint /= nfs_param.core_param.nb_worker;
-
-      break;
-    case 5:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        if(workers_data[i].stats.buddy_stats.StdUsedSpace > param->bigint)
-          param->bigint = workers_data[i].stats.buddy_stats.StdUsedSpace;
-      break;
-    case 6:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        param->bigint += workers_data[i].stats.buddy_stats.NbStdPages;
-      break;
-    case 7:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        param->bigint += workers_data[i].stats.buddy_stats.NbStdUsed;
-      break;
-    case 8:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        param->bigint += workers_data[i].stats.buddy_stats.NbStdUsed;
-
-      param->bigint /= nfs_param.core_param.nb_worker;
-
-      break;
-    case 9:
-      for(i = 0; i < nfs_param.core_param.nb_worker; i++)
-        if(workers_data[i].stats.buddy_stats.NbStdUsed > param->bigint)
-          param->bigint = workers_data[i].stats.buddy_stats.NbStdUsed;
-      break;
-    case 10:
-    case 11:
-      strcpy(param->string, "filename to dump to");
-      break;
-    default:
-      return 1;
-    }
-  return 0;
-}
-
-#ifdef _DEBUG_MEMLEAKS
-
-static int set_buddy(const snmp_adm_type_union * param, void *opt_arg)
-{
-  long cs = (long)opt_arg;
-
-  switch (cs)
-    {
-    case 10:
-      {
-        int rc;
-        FILE *output = fopen(param->string, "w");
-        if (output == NULL)
-          {
-            LogCrit(COMPONENT_MEMLEAKS,
-                    "Open of %s failed, error=%s(%d)",
-                    param->string, strerror(errno), errno);
-            return 1;
-          }
-        BuddyDumpAll(output);
-        rc = fclose(output);
-        LogEvent(COMPONENT_MEMLEAKS,
-                 "Dumped buddy memory to %s, rc=%d", param->string, rc);
-      }
-      break;
-    case 11:
-      {
-        int rc;
-        FILE *output = fopen(param->string, "w");
-        if (output == NULL)
-          {
-            LogCrit(COMPONENT_MEMLEAKS,
-                    "Open of %s failed, error=%s(%d)",
-                    param->string, strerror(errno), errno);
-            return 1;
-          }
-        BuddyDumpPools(output);
-        rc = fclose(output);
-        LogEvent(COMPONENT_MEMLEAKS,
-                 "Dumped buddy pools to %s, rc=%d", param->string, rc);
-      }
-      break;
-    default:
-      return 1;
-    }
-  return 0;
-}
-
-#endif
-
-#endif
-
 static register_get_set snmp_export_stat_general[] = {
   {"uptime", "Server uptime in sec", SNMP_ADM_TIMETICKS, SNMP_ADM_ACCESS_RO, getuptime,
    NULL, NULL}
@@ -913,55 +777,17 @@ static register_get_set snmp_export_stat_maps[] = {
 
 #define SNMPADM_STAT_MAPS_COUNT 80
 
-#ifndef _NO_BUDDY_SYSTEM
-static register_get_set snmp_export_stat_buddy[] = {
-  {"buddy_total_mem_space", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO,
-   get_buddy, NULL, (void *)0},
-  {"buddy_std_mem_space", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO, get_buddy,
-   NULL, (void *)1},
-  {"buddy_extra_mem_space", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO, get_buddy,
-   NULL, (void *)2},
-  {"buddy_std_used_space", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO, get_buddy,
-   NULL, (void *)3},
-  {"buddy_std_used_space_thr_avg", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO,
-   get_buddy, NULL, (void *)4},
-  {"buddy_std_used_space_thr_max", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO,
-   get_buddy, NULL, (void *)5},
-  {"buddy_std_pages", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO, get_buddy, NULL,
-   (void *)6},
-  {"buddy_std_used_pages", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO, get_buddy,
-   NULL, (void *)7},
-  {"buddy_std_used_pages_thr_avg", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO,
-   get_buddy, NULL, (void *)8},
-  {"buddy_std_used_pages_thr_max", "BUDDY_MEMORY", SNMP_ADM_BIGINT, SNMP_ADM_ACCESS_RO,
-   get_buddy, NULL, (void *)9},
-#ifdef _DEBUG_MEMLEAKS
-  {"buddy_dump_to_file", "BUDDY_MEMORY", SNMP_ADM_STRING, SNMP_ADM_ACCESS_RW,
-   get_buddy, set_buddy, (void *)10},
-  {"buddy_dump_pools_to_file",  "BUDDY_MEMORY", SNMP_ADM_STRING, SNMP_ADM_ACCESS_RW,
-   get_buddy, set_buddy, (void *)11},
-#endif
-};
-
-#ifdef _DEBUG_MEMLEAKS
-#define SNMPADM_STAT_BUDDY_COUNT 12
-#else
-#define SNMPADM_STAT_BUDDY_COUNT 10
-#endif
-
-#endif                          /* _NO_BUDDY_SYSTEM */
-
 static void create_dyn_mntv1_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_count)
 {
   long j;
 
   *p_dyn_gs_count = 3 * MNT_V1_NB_COMMAND;
   *p_dyn_gs =
-      (register_get_set *) Mem_Alloc(3 * MNT_V1_NB_COMMAND * sizeof(register_get_set));
+      gsh_calloc(3 * MNT_V1_NB_COMMAND, sizeof(register_get_set));
 
   for(j = 0; j < 3 * MNT_V1_NB_COMMAND; j += 3)
     {
-      (*p_dyn_gs)[j + 0].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 0].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 0].label, 256, "%sV1_total", mnt_function_names[j / 3]);
       (*p_dyn_gs)[j + 0].desc = "Number of mnt1 commands";
       (*p_dyn_gs)[j + 0].type = SNMP_ADM_INTEGER;
@@ -970,7 +796,7 @@ static void create_dyn_mntv1_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
       (*p_dyn_gs)[j + 0].setter = NULL;
       (*p_dyn_gs)[j + 0].opt_arg = (void *)(j + 0);
 
-      (*p_dyn_gs)[j + 1].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 1].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 1].label, 256, "%sV1_success", mnt_function_names[j / 3]);
       (*p_dyn_gs)[j + 1].desc = "Number of success for this mnt1 command";
       (*p_dyn_gs)[j + 1].type = SNMP_ADM_INTEGER;
@@ -979,7 +805,7 @@ static void create_dyn_mntv1_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
       (*p_dyn_gs)[j + 1].setter = NULL;
       (*p_dyn_gs)[j + 1].opt_arg = (void *)(j + 1);
 
-      (*p_dyn_gs)[j + 2].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 2].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 2].label, 256, "%sV1_dropped", mnt_function_names[j / 3]);
       (*p_dyn_gs)[j + 2].desc = "Number of drop for this mnt1 command";
       (*p_dyn_gs)[j + 2].type = SNMP_ADM_INTEGER;
@@ -995,12 +821,11 @@ static void create_dyn_mntv3_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
   long j;
 
   *p_dyn_gs_count = 3 * MNT_V3_NB_COMMAND;
-  *p_dyn_gs =
-      (register_get_set *) Mem_Alloc(3 * MNT_V3_NB_COMMAND * sizeof(register_get_set));
+  *p_dyn_gs = gsh_calloc(3 * MNT_V3_NB_COMMAND, sizeof(register_get_set));
 
   for(j = 0; j < 3 * MNT_V3_NB_COMMAND; j += 3)
     {
-      (*p_dyn_gs)[j + 0].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 0].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 0].label, 256, "%sV3_total", mnt_function_names[j / 3]);
       (*p_dyn_gs)[j + 0].desc = "Number of mnt3 commands";;
       (*p_dyn_gs)[j + 0].type = SNMP_ADM_INTEGER;
@@ -1009,7 +834,7 @@ static void create_dyn_mntv3_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
       (*p_dyn_gs)[j + 0].setter = NULL;
       (*p_dyn_gs)[j + 0].opt_arg = (void *)(j + 0);
 
-      (*p_dyn_gs)[j + 1].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 1].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 1].label, 256, "%sV3_success", mnt_function_names[j / 3]);
       (*p_dyn_gs)[j + 1].desc = "Number of success for this mnt3 command";
       (*p_dyn_gs)[j + 1].type = SNMP_ADM_INTEGER;
@@ -1018,7 +843,7 @@ static void create_dyn_mntv3_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
       (*p_dyn_gs)[j + 1].setter = NULL;
       (*p_dyn_gs)[j + 1].opt_arg = (void *)(j + 1);
 
-      (*p_dyn_gs)[j + 2].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 2].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 2].label, 256, "%sV3_dropped", mnt_function_names[j / 3]);
       (*p_dyn_gs)[j + 2].desc = "Number of drop for this mnt3 command";
       (*p_dyn_gs)[j + 2].type = SNMP_ADM_INTEGER;
@@ -1034,12 +859,11 @@ static void create_dyn_nfsv2_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
   long j;
 
   *p_dyn_gs_count = 3 * NFS_V2_NB_COMMAND;
-  *p_dyn_gs =
-      (register_get_set *) Mem_Alloc(3 * NFS_V2_NB_COMMAND * sizeof(register_get_set));
+  *p_dyn_gs = gsh_calloc(3 * NFS_V2_NB_COMMAND, sizeof(register_get_set));
 
   for(j = 0; j < 3 * NFS_V2_NB_COMMAND; j += 3)
     {
-      (*p_dyn_gs)[j + 0].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 0].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 0].label, 256, "%s_total", nfsv2_function_names[j / 3]);
       (*p_dyn_gs)[j + 0].desc = "Number of nfs2 commands";
       (*p_dyn_gs)[j + 0].type = SNMP_ADM_INTEGER;
@@ -1048,7 +872,7 @@ static void create_dyn_nfsv2_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
       (*p_dyn_gs)[j + 0].setter = NULL;
       (*p_dyn_gs)[j + 0].opt_arg = (void *)(j + 0);
 
-      (*p_dyn_gs)[j + 1].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 1].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 1].label, 256, "%s_success", nfsv2_function_names[j / 3]);
       (*p_dyn_gs)[j + 1].desc = "Number of success for this nfs2 command";
       (*p_dyn_gs)[j + 1].type = SNMP_ADM_INTEGER;
@@ -1057,7 +881,7 @@ static void create_dyn_nfsv2_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
       (*p_dyn_gs)[j + 1].setter = NULL;
       (*p_dyn_gs)[j + 1].opt_arg = (void *)(j + 1);
 
-      (*p_dyn_gs)[j + 2].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 2].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 2].label, 256, "%s_dropped", nfsv2_function_names[j / 3]);
       (*p_dyn_gs)[j + 2].desc = "Number of drop for this nfsv2 command";
       (*p_dyn_gs)[j + 2].type = SNMP_ADM_INTEGER;
@@ -1073,12 +897,11 @@ static void create_dyn_nfsv3_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
   long j;
 
   *p_dyn_gs_count = 3 * NFS_V3_NB_COMMAND;
-  *p_dyn_gs =
-      (register_get_set *) Mem_Alloc(3 * NFS_V3_NB_COMMAND * sizeof(register_get_set));
+  *p_dyn_gs = gsh_calloc(3 * NFS_V3_NB_COMMAND, sizeof(register_get_set));
 
   for(j = 0; j < 3 * NFS_V3_NB_COMMAND; j += 3)
     {
-      (*p_dyn_gs)[j + 0].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 0].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 0].label, 256, "%s_total", nfsv3_function_names[j / 3]);
       (*p_dyn_gs)[j + 0].desc = "Number of nfs3 commands";
       (*p_dyn_gs)[j + 0].type = SNMP_ADM_INTEGER;
@@ -1087,7 +910,7 @@ static void create_dyn_nfsv3_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
       (*p_dyn_gs)[j + 0].setter = NULL;
       (*p_dyn_gs)[j + 0].opt_arg = (void *)(j + 0);
 
-      (*p_dyn_gs)[j + 1].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 1].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 1].label, 256, "%s_success", nfsv3_function_names[j / 3]);
       (*p_dyn_gs)[j + 1].desc = "Number of success for this nfsv3 command";
       (*p_dyn_gs)[j + 1].type = SNMP_ADM_INTEGER;
@@ -1096,7 +919,7 @@ static void create_dyn_nfsv3_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
       (*p_dyn_gs)[j + 1].setter = NULL;
       (*p_dyn_gs)[j + 1].opt_arg = (void *)(j + 1);
 
-      (*p_dyn_gs)[j + 2].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 2].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 2].label, 256, "%s_dropped", nfsv3_function_names[j / 3]);
       (*p_dyn_gs)[j + 2].desc = "Number of drop for this nfsv3 command";
       (*p_dyn_gs)[j + 2].type = SNMP_ADM_INTEGER;
@@ -1112,12 +935,11 @@ static void create_dyn_nfsv4_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
   long j;
 
   *p_dyn_gs_count = 3 * NFS_V4_NB_COMMAND;
-  *p_dyn_gs =
-      (register_get_set *) Mem_Alloc(3 * NFS_V4_NB_COMMAND * sizeof(register_get_set));
+  *p_dyn_gs = gsh_calloc(3 * NFS_V4_NB_COMMAND, sizeof(register_get_set));
 
   for(j = 0; j < 3 * NFS_V4_NB_COMMAND; j += 3)
     {
-      (*p_dyn_gs)[j + 0].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 0].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 0].label, 256, "%s_total", nfsv4_function_names[j / 3]);
       (*p_dyn_gs)[j + 0].desc = "Number of nfs4 commands";
       (*p_dyn_gs)[j + 0].type = SNMP_ADM_INTEGER;
@@ -1126,7 +948,7 @@ static void create_dyn_nfsv4_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
       (*p_dyn_gs)[j + 0].setter = NULL;
       (*p_dyn_gs)[j + 0].opt_arg = (void *)(j + 0);
 
-      (*p_dyn_gs)[j + 1].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 1].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 1].label, 256, "%s_success", nfsv4_function_names[j / 3]);
       (*p_dyn_gs)[j + 1].desc = "Number of success for this nfsv4 command";
       (*p_dyn_gs)[j + 1].type = SNMP_ADM_INTEGER;
@@ -1135,7 +957,7 @@ static void create_dyn_nfsv4_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_co
       (*p_dyn_gs)[j + 1].setter = NULL;
       (*p_dyn_gs)[j + 1].opt_arg = (void *)(j + 1);
 
-      (*p_dyn_gs)[j + 2].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 2].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 2].label, 256, "%s_dropped", nfsv4_function_names[j / 3]);
       (*p_dyn_gs)[j + 2].desc = "Number of drop for this nfsv4 command";
       (*p_dyn_gs)[j + 2].type = SNMP_ADM_INTEGER;
@@ -1151,11 +973,11 @@ static void create_dyn_fsal_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_cou
   long j;
 
   *p_dyn_gs_count = 4 * FSAL_NB_FUNC;
-  *p_dyn_gs = (register_get_set *) Mem_Alloc(4 * FSAL_NB_FUNC * sizeof(register_get_set));
+  *p_dyn_gs = gsh_calloc(4 * FSAL_NB_FUNC, sizeof(register_get_set));
 
   for(j = 0; j < 4 * FSAL_NB_FUNC; j += 4)
     {
-      (*p_dyn_gs)[j + 0].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 0].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 0].label, 256, "%s_nb_call", fsal_function_names[j / 4]);
       (*p_dyn_gs)[j + 0].desc = "Number of total calls to FSAL for this function";
       (*p_dyn_gs)[j + 0].type = SNMP_ADM_INTEGER;
@@ -1164,7 +986,7 @@ static void create_dyn_fsal_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_cou
       (*p_dyn_gs)[j + 0].setter = NULL;
       (*p_dyn_gs)[j + 0].opt_arg = (void *)(j + 0);
 
-      (*p_dyn_gs)[j + 1].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 1].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 1].label, 256, "%s_nb_success",
                fsal_function_names[j / 4]);
       (*p_dyn_gs)[j + 1].desc = "Number of success calls to FSAL for this function";
@@ -1174,7 +996,7 @@ static void create_dyn_fsal_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_cou
       (*p_dyn_gs)[j + 1].setter = NULL;
       (*p_dyn_gs)[j + 1].opt_arg = (void *)(j + 1);
 
-      (*p_dyn_gs)[j + 2].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 2].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 2].label, 256, "%s_nb_ret", fsal_function_names[j / 4]);
       (*p_dyn_gs)[j + 2].desc = "Number of retryable calls to FSAL for this function";
       (*p_dyn_gs)[j + 2].type = SNMP_ADM_INTEGER;
@@ -1183,7 +1005,7 @@ static void create_dyn_fsal_stat(register_get_set ** p_dyn_gs, int *p_dyn_gs_cou
       (*p_dyn_gs)[j + 2].setter = NULL;
       (*p_dyn_gs)[j + 2].opt_arg = (void *)(j + 2);
 
-      (*p_dyn_gs)[j + 3].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 3].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j + 3].label, 256, "%s_nb_unrec", fsal_function_names[j / 4]);
       (*p_dyn_gs)[j + 3].desc = "Number of unrecover calls to FSAL for this function";
       (*p_dyn_gs)[j + 3].type = SNMP_ADM_INTEGER;
@@ -1199,11 +1021,11 @@ static void create_dyn_log_control(register_get_set ** p_dyn_gs, int *p_dyn_gs_c
   long j;
 
   *p_dyn_gs_count = COMPONENT_COUNT;
-  *p_dyn_gs = (register_get_set *) Mem_Alloc((COMPONENT_COUNT) * sizeof(register_get_set));
+  *p_dyn_gs = gsh_calloc(COMPONENT_COUNT, sizeof(register_get_set));
 
   for(j = 0; j < COMPONENT_COUNT; j ++)
     {
-      (*p_dyn_gs)[j + 0].label = Mem_Alloc(256 * sizeof(char));
+      (*p_dyn_gs)[j + 0].label = gsh_calloc(256, sizeof(char));
       snprintf((*p_dyn_gs)[j].label, 256, "%s", LogComponents[j].comp_name);
       (*p_dyn_gs)[j].desc = "Log level for this component";
       (*p_dyn_gs)[j].type = SNMP_ADM_STRING;
@@ -1218,8 +1040,8 @@ static void free_dyn(register_get_set * dyn, int count)
 {
   int i;
   for(i = 0; i < count; i++)
-    Mem_Free(dyn[i].label);
-  Mem_Free(dyn);
+    gsh_free(dyn[i].label);
+  gsh_free(dyn);
 }
 
 /**
@@ -1297,19 +1119,6 @@ int stats_snmp(void)
           return 2;
         }
     }
-#ifndef _NO_BUDDY_SYSTEM
-  if(nfs_param.extern_param.snmp_adm.export_buddy_stats)
-    {
-      if((rc =
-          snmp_adm_register_get_set_function(STAT_OID, snmp_export_stat_buddy,
-                                             SNMPADM_STAT_BUDDY_COUNT)))
-        {
-          LogCrit(COMPONENT_INIT,
-                  "Error registering statistic variables to SNMP");
-          return 2;
-        }
-    }
-#endif                          /* _NO_BUDDY_SYSTEM */
 
   if(nfs_param.extern_param.snmp_adm.export_nfs_calls_detail)
     {

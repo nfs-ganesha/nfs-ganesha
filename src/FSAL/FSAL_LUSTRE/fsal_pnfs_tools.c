@@ -18,7 +18,6 @@
 #include <ctype.h>
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "config_parsing.h"

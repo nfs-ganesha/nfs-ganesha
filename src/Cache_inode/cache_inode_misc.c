@@ -47,7 +47,6 @@
 #include "cache_inode_avl.h"
 #include "cache_inode_lru.h"
 #include "cache_inode_weakref.h"
-#include "stuff_alloc.h"
 #include "nfs4_acls.h"
 
 #include <unistd.h>
@@ -391,8 +390,8 @@ cache_inode_new_entry(cache_inode_fsal_data_t *fsdata,
           LogDebug(COMPONENT_CACHE_INODE,
                    "cache_inode_new_entry: Adding a SYMBOLIC_LINK pentry=%p ",
                    entry);
-          GetFromPool(entry->object.symlink, &client->pool_entry_symlink,
-                      cache_inode_symlink_t);
+          entry->object.symlink =
+               pool_alloc(client->pool_entry_symlink, NULL);
           if (entry->object.symlink == NULL) {
                LogDebug(COMPONENT_CACHE_INODE,
                         "Can't allocate entry symlink from symlink pool");
@@ -463,7 +462,7 @@ out:
                switch (type) {
                case SYMBOLIC_LINK:
                     cache_inode_release_symlink(entry,
-                                                &client->pool_entry_symlink);
+                                                client->pool_entry_symlink);
                     break;
 
                default:
@@ -782,13 +781,13 @@ void cache_inode_print_dir(cache_entry_t * cache_entry_root)/* release internal 
  *
  */
 void cache_inode_release_symlink(cache_entry_t * pentry,
-                                 struct prealloc_pool *pool)
+                                 pool_t *pool)
 {
     assert(pentry);
     assert(pentry->type == SYMBOLIC_LINK);
     if (pentry->object.symlink)
      {
-        ReleaseToPool(pentry->object.symlink, pool);
+        pool_free(pool, pentry->object.symlink);
         pentry->object.symlink = NULL;
      }
 }
@@ -843,18 +842,18 @@ void cache_inode_release_dirents(cache_entry_t           * pentry,
     }
 
     if (tree) {
-	  dirent_node = avltree_first(tree);
+          dirent_node = avltree_first(tree);
 
-	  while( dirent_node )
+          while( dirent_node )
            {
-	     next_dirent_node = avltree_next(dirent_node);
+             next_dirent_node = avltree_next(dirent_node);
              dirent = avltree_container_of( dirent_node,
                                             cache_inode_dir_entry_t,
                                             node_hk);
              avltree_remove(dirent_node, tree);
-             ReleaseToPool(dirent, &pclient->pool_dir_entry);
-	     dirent_node = next_dirent_node;
-	   }
+             pool_free(pclient->pool_dir_entry, dirent);
+             dirent_node = next_dirent_node;
+           }
 
           if (tree == &pentry->object.dir.avl.t) {
               pentry->object.dir.nbactive = 0;

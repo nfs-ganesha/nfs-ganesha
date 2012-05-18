@@ -49,7 +49,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -339,7 +338,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t * data, struct nfs_resop
     }
 
   /* Some work is to be done */
-  if((bufferdata = Mem_Alloc_Page_Aligned(size)) == NULL)
+  if((bufferdata = gsh_malloc_aligned(4096, size)) == NULL)
     {
       res_READ4.status = NFS4ERR_SERVERFAULT;
       if (anonymous)
@@ -411,7 +410,7 @@ void nfs4_op_read_Free(READ4res * resp)
 {
   if(resp->status == NFS4_OK)
     if(resp->READ4res_u.resok4.data.data_len != 0)
-      Mem_Free_Page_Aligned(resp->READ4res_u.resok4.data.data_val);
+      gsh_free(resp->READ4res_u.resok4.data.data_val);
   return;
 }                               /* nfs4_op_read_Free */
 
@@ -466,7 +465,7 @@ static int op_dsread(struct nfs_argop4 *op,
   memset(&handle, 0, sizeof(handle));
   memcpy(&handle, fh_desc.start, fh_desc.len);
 
-  buffer = Mem_Alloc_Page_Aligned(arg_READ4.count);
+  buffer = gsh_malloc_aligned(4096, arg_READ4.count);
   if (buffer == NULL)
     {
       res_READ4.status = NFS4ERR_SERVERFAULT;
@@ -486,7 +485,7 @@ static int op_dsread(struct nfs_argop4 *op,
                                   &eof))
       != NFS4_OK)
     {
-      Mem_Free_Page_Aligned(buffer);
+      gsh_free(buffer);
       buffer = NULL;
     }
 

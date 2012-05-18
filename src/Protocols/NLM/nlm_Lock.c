@@ -34,7 +34,6 @@
 #include <pthread.h>
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nlm4.h"
 #include "sal_functions.h"
 #include "nlm_util.h"
@@ -154,7 +153,7 @@ int nlm4_Lock(nfs_arg_t            * parg     /* IN     */ ,
 
       /* If we didn't block, release the block data */
       if(state_status != STATE_LOCK_BLOCKED && pblock_data != NULL)
-        Mem_Free(pblock_data);
+        gsh_free(pblock_data);
     }
   else
     {
@@ -190,7 +189,7 @@ static void nlm4_lock_message_resp(state_async_queue_t *arg)
   nlm4_Lock_Free(&nlm_arg->nlm_async_args.nlm_async_res);
   dec_nsm_client_ref(nlm_arg->nlm_async_host->slc_nsm_client);
   dec_nlm_client_ref(nlm_arg->nlm_async_host);
-  Mem_Free(arg);
+  gsh_free(arg);
 }
 
 /**

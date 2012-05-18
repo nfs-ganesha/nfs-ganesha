@@ -50,7 +50,6 @@
 #include "HashTable.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
-#include "stuff_alloc.h"
 #include "nfs_core.h"
 
 #include <unistd.h>
@@ -137,8 +136,7 @@ cache_inode_rdwr(cache_entry_t *entry,
           if ((entry->object.file.unstable_data.buffer == NULL) &&
               (io_size <= CACHE_INODE_UNSTABLE_BUFFERSIZE)) {
                if ((entry->object.file.unstable_data.buffer =
-                    Mem_Alloc_Label(CACHE_INODE_UNSTABLE_BUFFERSIZE,
-                                    "Cache_Inode Unstable Buffer")) == NULL) {
+                    gsh_malloc(CACHE_INODE_UNSTABLE_BUFFERSIZE)) == NULL) {
                     *status = CACHE_INODE_MALLOC_ERROR;
                     goto out;
                }

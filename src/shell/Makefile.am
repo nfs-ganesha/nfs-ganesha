@@ -2,12 +2,6 @@ DLOPEN_FLAGS = -rdynamic
 
 AM_CFLAGS                     =   $(DLOPEN_FLAGS) $(FSAL_CFLAGS) $(SEC_CFLAGS)
 
-if USE_BUDDY_SYSTEM
-BUDDY_LIB_FLAGS = ../BuddyMalloc/libBuddyMalloc.la
-else
-BUDDY_LIB_FLAGS =
-endif
-
 if USE_NFSIDMAP
 NFSIDMAP_LIB_FLAGS = -lnfsidmap
 else
@@ -53,7 +47,6 @@ __FS_NAME__ganeshell_SOURCES    = Getopt.c                            \
                                   shell_types.h                       \
                                   shell_utils.h                       \
                                   shell_vars.h                        \
-                                  ../include/BuddyMalloc.h            \
                                   ../include/avltree.h                \
                                   ../include/LRU_List.h               \
                                   ../include/cache_content.h          \
@@ -73,8 +66,7 @@ __FS_NAME__ganeshell_SOURCES    = Getopt.c                            \
                                   ../include/nfs_file_handle.h        \
                                   ../include/nfs_proto_functions.h    \
                                   ../include/nfs_proto_tools.h        \
-                                  ../include/nfs_tools.h              \
-                                  ../include/stuff_alloc.h
+                                  ../include/nfs_tools.h
 
 
 shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
@@ -88,7 +80,6 @@ shell_libs =      ../Protocols/NFS/libnfsproto.la                    \
                   ../HashTable/libhashtable.la                       \
                   ../LRU/liblru.la                                   \
                   ../avl/libavltree.la                               \
-                  $(BUDDY_LIB_FLAGS)                                 \
                   ../FSAL/libfsalcommon.la                           \
                   $(FSAL_LIB)                                        \
 		  ../FSAL/common_methods.lo			     \

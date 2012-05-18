@@ -41,7 +41,6 @@
 #include <ctype.h>
 #include <pthread.h>
 #include "log.h"
-#include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "nfs_core.h"
@@ -593,10 +592,10 @@ void inc_nsm_client_ref(state_nsm_client_t *pclient)
 void free_nsm_client(state_nsm_client_t *pclient)
 {
   if(pclient->ssc_nlm_caller_name != NULL)
-    Mem_Free(pclient->ssc_nlm_caller_name);
+    gsh_free(pclient->ssc_nlm_caller_name);
   if(isFullDebug(COMPONENT_MEMLEAKS))
     memset(pclient, 0, sizeof(*pclient));
-  Mem_Free(pclient);
+  gsh_free(pclient);
 }
 
 void dec_nsm_client_ref_locked(state_nsm_client_t *pclient)
@@ -732,7 +731,7 @@ state_nsm_client_t *get_nsm_client(care_t       care,
   if(caller_name == NULL)
     return NULL;
 
-  pkey = (state_nsm_client_t *)Mem_Alloc(sizeof(*pkey));
+  pkey = gsh_malloc(sizeof(*pkey));
   if(pkey == NULL)
     return NULL;
 
@@ -750,7 +749,8 @@ state_nsm_client_t *get_nsm_client(care_t       care,
           return NULL;
         }
 
-      pkey->ssc_nlm_caller_name = Mem_Alloc(pkey->ssc_nlm_caller_name_len + 1);
+      pkey->ssc_nlm_caller_name
+           = gsh_malloc(pkey->ssc_nlm_caller_name_len + 1);
       if(pkey->ssc_nlm_caller_name == NULL)
         {
           /* Discard the key we created */
@@ -787,7 +787,8 @@ state_nsm_client_t *get_nsm_client(care_t       care,
           return NULL;
         }
 
-      pkey->ssc_nlm_caller_name = Mem_Alloc(pkey->ssc_nlm_caller_name_len + 1);
+      pkey->ssc_nlm_caller_name
+           = gsh_malloc(pkey->ssc_nlm_caller_name_len + 1);
       if(pkey->ssc_nlm_caller_name == NULL)
         {
           /* Discard the key we created */
@@ -803,7 +804,8 @@ state_nsm_client_t *get_nsm_client(care_t       care,
   else
     {
       pkey->ssc_nlm_caller_name_len = SOCK_NAME_MAX;
-      pkey->ssc_nlm_caller_name     = Mem_Alloc(SOCK_NAME_MAX);
+      pkey->ssc_nlm_caller_name
+           = gsh_malloc(SOCK_NAME_MAX);
       if(pkey->ssc_nlm_caller_name == NULL)
         {
           /* Discard the key we created */
@@ -863,7 +865,7 @@ state_nsm_client_t *get_nsm_client(care_t       care,
       return pclient;
     }
 
-  pclient = (state_nsm_client_t *)Mem_Alloc(sizeof(*pkey));
+  pclient = gsh_malloc(sizeof(*pkey));
   if(pclient == NULL)
     {
       free_nsm_client(pkey);
@@ -873,7 +875,7 @@ state_nsm_client_t *get_nsm_client(care_t       care,
   /* Copy everything over */
   *pclient = *pkey;
 
-  pclient->ssc_nlm_caller_name = Mem_Alloc(pkey->ssc_nlm_caller_name_len + 1);
+  pclient->ssc_nlm_caller_name = gsh_malloc(pkey->ssc_nlm_caller_name_len + 1);
   if(pclient->ssc_nlm_caller_name == NULL)
     {
       /* Discard the key and created client */
@@ -1083,8 +1085,8 @@ void dec_nlm_client_ref_locked(state_nlm_client_t *pclient)
                 memset(old_key.pdata, 0, old_key.len);
                 memset(old_value.pdata, 0, old_value.len);
               }
-            Mem_Free(old_key.pdata);
-            Mem_Free(old_value.pdata);
+            gsh_free(old_key.pdata);
+            gsh_free(old_value.pdata);
             break;
 
           case HASHTABLE_NOT_DELETED:
@@ -1183,7 +1185,7 @@ state_nlm_client_t *get_nlm_client(care_t               care,
   if(caller_name == NULL)
     return NULL;
 
-  pkey = (state_nlm_client_t *)Mem_Alloc(sizeof(*pkey));
+  pkey = gsh_malloc(sizeof(*pkey));
   if(pkey == NULL)
     return NULL;
 
@@ -1196,7 +1198,7 @@ state_nlm_client_t *get_nlm_client(care_t               care,
   if(pkey->slc_nlm_caller_name_len > LM_MAXSTRLEN)
     {
       /* Discard the key we created */
-      Mem_Free(pkey);
+      gsh_free(pkey);
       return NULL;
     }
 
@@ -1218,7 +1220,7 @@ state_nlm_client_t *get_nlm_client(care_t               care,
   if(nlm_client_Get_Pointer(pkey, &pclient) == 1 || care == CARE_NOT)
     {
       /* Discard the key we created and return the found NLM Client */
-      Mem_Free(pkey);
+      gsh_free(pkey);
 
       if(isFullDebug(COMPONENT_STATE))
         {
@@ -1240,10 +1242,10 @@ state_nlm_client_t *get_nlm_client(care_t               care,
       return pclient;
     }
 
-  pclient = (state_nlm_client_t *)Mem_Alloc(sizeof(*pkey));
+  pclient = gsh_malloc(sizeof(*pkey));
   if(pclient == NULL)
     {
-      Mem_Free(pkey);
+      gsh_free(pkey);
       return NULL;
     }
 
@@ -1262,8 +1264,8 @@ state_nlm_client_t *get_nlm_client(care_t               care,
   if(pthread_mutex_init(&pclient->slc_mutex, NULL) == -1)
     {
       /* Mutex initialization failed, free the key and created owner */
-      Mem_Free(pkey);
-      Mem_Free(pclient);
+      gsh_free(pkey);
+      gsh_free(pclient);
       return NULL;
     }
 
@@ -1290,8 +1292,8 @@ state_nlm_client_t *get_nlm_client(care_t               care,
     }
 
   dec_nsm_client_ref(pnsm_client);
-  Mem_Free(pkey);
-  Mem_Free(pclient);
+  gsh_free(pkey);
+  gsh_free(pclient);
   return NULL;
 }
 
@@ -1357,8 +1359,8 @@ void remove_nlm_owner(cache_inode_client_t * pclient,
             memset(old_key.pdata, 0, old_key.len);
             memset(old_value.pdata, 0, old_value.len);
           }
-        Mem_Free(old_key.pdata);
-        Mem_Free(old_value.pdata);
+        gsh_free(old_key.pdata);
+        gsh_free(old_value.pdata);
         break;
 
       case HASHTABLE_NOT_DELETED:
@@ -1450,7 +1452,7 @@ state_owner_t *get_nlm_owner(care_t               care,
   if(pclient == NULL || oh == NULL || oh->n_len > MAX_NETOBJ_SZ)
     return NULL;
 
-  pkey = (state_owner_t *)Mem_Alloc(sizeof(*pkey));
+  pkey = gsh_malloc(sizeof(*pkey));
   if(pkey == NULL)
     return NULL;
 
@@ -1476,7 +1478,7 @@ state_owner_t *get_nlm_owner(care_t               care,
   if(nlm_owner_Get_Pointer(pkey, &powner) == 1 || care == CARE_NOT)
     {
       /* Discard the key we created and return the found NLM Owner */
-      Mem_Free(pkey);
+      gsh_free(pkey);
 
       if(isFullDebug(COMPONENT_STATE))
         {
@@ -1490,11 +1492,11 @@ state_owner_t *get_nlm_owner(care_t               care,
 
       return powner;
     }
-    
-  powner = (state_owner_t *)Mem_Alloc(sizeof(*pkey));
+
+  powner = gsh_malloc(sizeof(*pkey));
   if(powner == NULL)
     {
-      Mem_Free(pkey);
+      gsh_free(pkey);
       return NULL;
     }
 
@@ -1505,8 +1507,8 @@ state_owner_t *get_nlm_owner(care_t               care,
   if(pthread_mutex_init(&powner->so_mutex, NULL) == -1)
     {
       /* Mutex initialization failed, free the key and created owner */
-      Mem_Free(pkey);
-      Mem_Free(powner);
+      gsh_free(pkey);
+      gsh_free(powner);
       return NULL;
     }
 
@@ -1537,7 +1539,7 @@ state_owner_t *get_nlm_owner(care_t               care,
     }
 
   dec_nlm_client_ref(pclient);
-  Mem_Free(pkey);
-  Mem_Free(powner);
+  gsh_free(pkey);
+  gsh_free(powner);
   return NULL;
 }

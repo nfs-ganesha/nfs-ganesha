@@ -56,7 +56,6 @@
 #include "nfs4.h"
 #include "fsal.h"
 #include "sal_functions.h"
-#include "stuff_alloc.h"
 #include "cache_inode_lru.h"
 
 /**
@@ -158,7 +157,7 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
       got_pinned = TRUE;
     }
 
-  GetFromPool(pnew_state, &pclient->pool_state_v4, state_t);
+  pnew_state = pool_alloc(pclient->pool_state_v4, NULL);
 
   if(pnew_state == NULL)
     {
@@ -188,7 +187,7 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
                    pentry);
 
           /* stat */
-          ReleaseToPool(pnew_state, &pclient->pool_state_v4);
+          pool_free(pclient->pool_state_v4, pnew_state);
 
           *pstatus = STATE_STATE_CONFLICT;
 
@@ -222,7 +221,7 @@ state_status_t state_add_impl(cache_entry_t         * pentry,
                "Can't create a new state id %s for the pentry %p (F)",
                debug_str, pentry);
 
-      ReleaseToPool(pnew_state, &pclient->pool_state_v4);
+      pool_free(pclient->pool_state_v4, pnew_state);
 
       /* Return STATE_MALLOC_ERROR since most likely the nfs4_State_Set failed
        * to allocate memory.
@@ -346,7 +345,7 @@ state_status_t state_del_locked(state_t              * pstate,
   glist_del(&pstate->state_export_list);
   V(pstate->state_pexport->exp_state_mutex);
 
-  ReleaseToPool(pstate, &pclient->pool_state_v4);
+  pool_free(pclient->pool_state_v4, pstate);
 
   LogFullDebug(COMPONENT_STATE, "Deleted state %s", debug_str);
 

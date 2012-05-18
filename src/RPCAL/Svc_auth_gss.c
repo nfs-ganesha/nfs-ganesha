@@ -53,7 +53,6 @@
 #include <gssapi/gssapi_generic.h>
 #endif
 
-#include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "log.h"
 
@@ -296,7 +295,7 @@ Svcauth_gss_accept_sec_context(struct svc_req *rqst, struct rpc_gss_init_res *gr
    * ANDROS: krb5 mechglue returns ctx of size 8 - two pointers,
    * one to the mechanism oid, one to the internal_ctx_id
    */
-  if((gr->gr_ctx.value = Mem_Alloc(sizeof(gss_union_ctx_id_desc))) == NULL)
+  if((gr->gr_ctx.value = gsh_malloc(sizeof(gss_union_ctx_id_desc))) == NULL)
     {
       LogCrit(COMPONENT_RPCSEC_GSS,
               "svcauth_gss_accept_context: out of memory");
@@ -537,15 +536,15 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
   /* Allocate and set up server auth handle. */
   if(rqst->rq_xprt->xp_auth == NULL || rqst->rq_xprt->xp_auth == &Svc_auth_none)
     {
-      if((auth = (SVCAUTH *)Mem_Calloc(1, sizeof(*auth))) == NULL)
+      if((auth = gsh_calloc(1, sizeof(*auth))) == NULL)
         {
           LogCrit(COMPONENT_RPCSEC_GSS, "svcauth_gss: out_of_memory");
           return (AUTH_FAILED);
         }
-      if((gd = (struct svc_rpc_gss_data *)Mem_Calloc(1, sizeof(*gd))) == NULL)
+      if((gd = gsh_calloc(1, sizeof(*gd))) == NULL)
         {
           LogCrit(COMPONENT_RPCSEC_GSS, "svcauth_gss: out_of_memory");
-          Mem_Free(auth);
+          gsh_free(auth);
           return (AUTH_FAILED);
         }
       auth->svc_ah_ops = &Svc_auth_gss_ops;
@@ -736,7 +735,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
       if(!Svcauth_gss_nextverf(rqst, htonl(gr.gr_win)))
         {
           gss_release_buffer(&min_stat, &gr.gr_token);
-          Mem_Free(gr.gr_ctx.value);
+          gsh_free(gr.gr_ctx.value);
 	  LogFullDebug(COMPONENT_RPCSEC_GSS, "BAD AUTH: Checksum verification failed");
           ret_freegc(AUTH_FAILED);
         }
@@ -759,7 +758,7 @@ Gssrpc__svcauth_gss(struct svc_req *rqst, struct rpc_msg *msg, bool_t * no_dispa
 
       gss_release_buffer(&min_stat, &gr.gr_token);
       gss_release_buffer(&min_stat, &gd->checksum);
-      Mem_Free(gr.gr_ctx.value);
+      gsh_free(gr.gr_ctx.value);
 
       if(!call_stat)
 	{
@@ -877,8 +876,8 @@ static bool_t Svcauth_gss_destroy(SVCAUTH * auth)
   if(gd->client_name)
     gss_release_name(&min_stat, &gd->client_name);
 
-  Mem_Free(gd);
-  Mem_Free(auth);
+  gsh_free(gd);
+  gsh_free(auth);
 
   return (TRUE);
 }
@@ -889,7 +888,7 @@ static bool_t Svcauth_gss_destroy_copy(SVCAUTH * auth)
    * to free or destroy.
    * Just free the auth structure (pointer to ops and pointer to gd).
    */
-  Mem_Free(auth);
+  gsh_free(auth);
 
   return (TRUE);
 }
@@ -1019,7 +1018,7 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 #if 0
 			gss_release_buffer(&min_stat, &databuf);
 #else
-			Mem_Free(databuf.value);
+			gsh_free(databuf.value);
 #endif
 			LogFullDebug(COMPONENT_RPCSEC_GSS,"xdr decode checksum failed");
 			return (FALSE);
@@ -1030,14 +1029,14 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 #if 0
 		gss_release_buffer(&min_stat, &wrapbuf);
 #else
-			Mem_Free(wrapbuf.value);
+			gsh_free(wrapbuf.value);
 #endif
 
 		if (maj_stat != GSS_S_COMPLETE || qop_state != qop) {
 #if 0
 			gss_release_buffer(&min_stat, &databuf);
 #else
-			Mem_Free(databuf.value);
+			gsh_free(databuf.value);
 #endif
 			LogFullDebug(COMPONENT_RPCSEC_GSS,"gss_verify_mic %d %d", maj_stat, min_stat);
 			return (FALSE);
@@ -1068,11 +1067,10 @@ Xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 	xdr_stat = (xdr_u_int(&tmpxdrs, &seq_num) &&
 		    (*xdr_func)(&tmpxdrs, xdr_ptr));
 	XDR_DESTROY(&tmpxdrs);
-        /* XXX xdr allocated this buffer, not gss (valgrind maps it to Buddy) */
 #if 0
 	gss_release_buffer(&min_stat, &databuf);
 #else
-	Mem_Free(databuf.value);
+	gsh_free(databuf.value);
 #endif
 
 	/* Verify sequence number. */
@@ -1163,13 +1161,13 @@ int copy_svc_authgss(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
           struct svc_rpc_gss_data *gd_o, *gd_c;
 
           gd_o = SVCAUTH_PRIVATE(xprt_orig->xp_auth);
-          xprt_copy->xp_auth = (SVCAUTH *)Mem_Alloc(sizeof(SVCAUTH));
+          xprt_copy->xp_auth = gsh_malloc(sizeof(SVCAUTH));
           if(xprt_copy->xp_auth == NULL)
             return 0;
-          gd_c = (struct svc_rpc_gss_data *)Mem_Alloc(sizeof(*gd_c));
+          gd_c = gsh_malloc(sizeof(*gd_c));
           if(gd_c == NULL)
             {
-              Mem_Free(xprt_copy->xp_auth);
+              gsh_free(xprt_copy->xp_auth);
               xprt_copy->xp_auth = NULL;
               return 0;
             }
@@ -1203,21 +1201,3 @@ int copy_svc_authgss(SVCXPRT *xprt_copy, SVCXPRT *xprt_orig)
   return 1;
 }
 
-#if !defined(_NO_BUDDY_SYSTEM) && defined(_DEBUG_MEMLEAKS)
-int CheckAuth(SVCAUTH *auth)
-{
-  int rc;
-
-  if(auth == NULL)
-    return 1;
-  if(auth->svc_ah_private != &Svc_auth_none || auth->svc_ah_private)
-    return 1;
-  rc = BuddyCheckLabel(auth, 1, "xp_auth");
-  if(!rc)
-    return 0;
-  rc = BuddyCheckLabel(auth->svc_ah_private, 1, "xp_auth->svc_ah_private");
-  if(!rc)
-    return 0;
-  return 1;
-}
-#endif

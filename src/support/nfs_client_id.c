@@ -40,7 +40,6 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
 #include "config_parsing.h"
@@ -278,43 +277,42 @@ int nfs_client_id_add(clientid4 clientid,
   hash_buffer_t buffdata;
   hash_buffer_t buffkey_reverse;
   hash_buffer_t buffdata_reverse;
-  nfs_client_id_t *pnfs_client_id = NULL;
+  nfs_client_id_t *nfs_client_id = NULL;
   clientid4 *pclientid = NULL;
   state_nfs4_owner_name_t owner_name;
   state_owner_t *client_owner = NULL;
-  struct prealloc_pool *clientid_pool =
-    &((nfs_worker_data_t*) pclient->pworker)->clientid_pool;
+  pool_t *clientid_pool =
+    pclient->pworker->clientid_pool;
 
   convert_nfs4_clientid_owner(clientid, &owner_name);
 
   /* Entry to be cached */
-  GetFromPool(pnfs_client_id, clientid_pool, nfs_client_id_t);
+  nfs_client_id = pool_alloc(clientid_pool, NULL);
 
-  if(pnfs_client_id == NULL)
+  if(nfs_client_id == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
-  if((pclientid = (clientid4 *) Mem_Alloc(sizeof(clientid4))) == NULL)
+  if((pclientid = gsh_malloc(sizeof(clientid4))) == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
-  if((buffkey_reverse.pdata = (caddr_t) Mem_Alloc(MAXNAMLEN)) == NULL)
+  if((buffkey_reverse.pdata = gsh_malloc(MAXNAMLEN)) == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
    * this also means that buffkey->len will be 0 */
   *pclientid = clientid;
-  buffkey.pdata = (caddr_t) pclientid;
+  buffkey.pdata = pclientid;
   buffkey.len = sizeof(clientid);
 
-  *pnfs_client_id = client_record;
+  *nfs_client_id = client_record;
   /*  need to init the list_head */
-  init_glist(&pnfs_client_id->clientid_openowners);
-  init_glist(&pnfs_client_id->clientid_lockowners);
-  pnfs_client_id->clientid_pool = clientid_pool;
+  init_glist(&nfs_client_id->clientid_openowners);
+  init_glist(&nfs_client_id->clientid_lockowners);
+  nfs_client_id->clientid_pool = clientid_pool;
 
   /* init call channel mtx */
-  pthread_mutex_init(&pnfs_client_id->cb.cb_u.v40.chan.mtx, NULL);
-
-  buffdata.pdata = (caddr_t) pnfs_client_id;
+  pthread_mutex_init(&nfs_client_id->cb.cb_u.v40.chan.mtx, NULL);
+  buffdata.pdata = nfs_client_id;
   buffdata.len = sizeof(nfs_client_id_t);
 
   if(HashTable_Test_And_Set
@@ -323,10 +321,10 @@ int nfs_client_id_add(clientid4 clientid,
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
   /* Keep information in reverse hash table */
-  strncpy((char *)(buffkey_reverse.pdata), client_record.client_name, MAXNAMLEN);
+  strncpy(buffkey_reverse.pdata, client_record.client_name, MAXNAMLEN);
   buffkey_reverse.len = MAXNAMLEN;
 
-  buffdata_reverse.pdata = (caddr_t) pnfs_client_id;
+  buffdata_reverse.pdata = nfs_client_id;
   buffdata_reverse.len = sizeof(nfs_client_id_t);
 
   if(HashTable_Test_And_Set
@@ -352,8 +350,8 @@ int nfs_client_id_add(clientid4 clientid,
       return CLIENT_ID_STATE_ERROR;
     }
 
-  pnfs_client_id->clientid_owner = client_owner;
-  pnfs_client_id->recov_dir = NULL;
+  nfs_client_id->clientid_owner = client_owner;
+  nfs_client_id->recov_dir = NULL;
 
   return CLIENT_ID_SUCCESS;
 }                               /* nfs_client_id_add */
@@ -375,25 +373,26 @@ int nfs_client_id_add(clientid4 clientid,
  */
 
 int nfs_client_id_set(clientid4 clientid,
-                      nfs_client_id_t client_record, struct prealloc_pool *clientid_pool)
+                      nfs_client_id_t client_record,
+                      pool_t *clientid_pool)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
   hash_buffer_t buffkey_reverse;
   hash_buffer_t buffdata_reverse;
-  nfs_client_id_t *pnfs_client_id = NULL;
+  nfs_client_id_t *nfs_client_id = NULL;
   clientid4 *pclientid = NULL;
 
   /* Entry to be cached */
-  GetFromPool(pnfs_client_id, clientid_pool, nfs_client_id_t);
+  nfs_client_id = pool_alloc(clientid_pool, NULL);
 
-  if(pnfs_client_id == NULL)
+  if(nfs_client_id == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
-  if((pclientid = (clientid4 *) Mem_Alloc(sizeof(clientid4))) == NULL)
+  if((pclientid = gsh_malloc(sizeof(clientid4))) == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
-  if((buffkey_reverse.pdata = (caddr_t) Mem_Alloc(MAXNAMLEN)) == NULL)
+  if((buffkey_reverse.pdata = gsh_malloc(MAXNAMLEN)) == NULL)
     return CLIENT_ID_INSERT_MALLOC_ERROR;
 
   /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
@@ -402,8 +401,8 @@ int nfs_client_id_set(clientid4 clientid,
   buffkey.pdata = (caddr_t) pclientid;
   buffkey.len = sizeof(clientid);
 
-  *pnfs_client_id = client_record;
-  buffdata.pdata = (caddr_t) pnfs_client_id;
+  *nfs_client_id = client_record;
+  buffdata.pdata = (caddr_t) nfs_client_id;
   buffdata.len = sizeof(nfs_client_id_t);
 
   if(HashTable_Test_And_Set
@@ -415,7 +414,7 @@ int nfs_client_id_set(clientid4 clientid,
   strncpy((char *)(buffkey_reverse.pdata), client_record.client_name, MAXNAMLEN);
   buffkey_reverse.len = MAXNAMLEN;
 
-  buffdata_reverse.pdata = (caddr_t) pnfs_client_id;
+  buffdata_reverse.pdata = (caddr_t) nfs_client_id;
   buffdata_reverse.len = sizeof(nfs_client_id_t);
 
   if(HashTable_Test_And_Set
@@ -636,7 +635,7 @@ void nfs_client_id_expire(nfs_client_id_t *client_record)
   if (client_record->recov_dir != NULL)
     {
       nfs4_rm_clid(client_record->recov_dir);
-      Mem_Free(client_record->recov_dir);
+      gsh_free(client_record->recov_dir);
       client_record->recov_dir = NULL;
     }
 
@@ -673,7 +672,7 @@ int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res)
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
   int status;
-  nfs_client_id_t *pnfs_client_id = NULL;
+  nfs_client_id_t *nfs_client_id = NULL;
   clientid4 *pclientid = &clientid;
 
   if(client_id_res == NULL)
@@ -684,9 +683,9 @@ int nfs_client_id_get(clientid4 clientid, nfs_client_id_t * client_id_res)
 
   if(HashTable_Get(ht_client_id, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
-      pnfs_client_id = (nfs_client_id_t *) buffval.pdata;
+      nfs_client_id = (nfs_client_id_t *) buffval.pdata;
 
-      *client_id_res = *pnfs_client_id;
+      *client_id_res = *nfs_client_id;
       status = CLIENT_ID_SUCCESS;
       if(isFullDebug(COMPONENT_CLIENT_ID_COMPUTE))
         {
@@ -747,7 +746,7 @@ int nfs_client_id_get_reverse(char *key, nfs_client_id_t * client_id_res)
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
   int status;
-  nfs_client_id_t *pnfs_client_id = NULL;
+  nfs_client_id_t *nfs_client_id = NULL;
 
   if(client_id_res == NULL)
     return CLIENT_ID_INVALID_ARGUMENT;
@@ -757,9 +756,9 @@ int nfs_client_id_get_reverse(char *key, nfs_client_id_t * client_id_res)
 
   if(HashTable_Get(ht_client_id_reverse, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
-      pnfs_client_id = (nfs_client_id_t *) buffval.pdata;
+      nfs_client_id = (nfs_client_id_t *) buffval.pdata;
 
-      *client_id_res = *pnfs_client_id;
+      *client_id_res = *nfs_client_id;
       status = CLIENT_ID_SUCCESS;
     }
   else
@@ -782,10 +781,10 @@ int nfs_client_id_get_reverse(char *key, nfs_client_id_t * client_id_res)
  * @return the result previously set if *pstatus == CLIENT_ID_SUCCESS
  *
  */
-int nfs_client_id_remove(clientid4 clientid, struct prealloc_pool *clientid_pool)
+int nfs_client_id_remove(clientid4 clientid, pool_t *clientid_pool)
 {
   hash_buffer_t buffkey, old_key, old_key_reverse, old_value;
-  nfs_client_id_t *pnfs_client_id = NULL;
+  nfs_client_id_t *nfs_client_id = NULL;
   rpc_call_channel_t *chan = NULL;
 
   buffkey.pdata = (caddr_t) &clientid;
@@ -799,24 +798,23 @@ int nfs_client_id_remove(clientid4 clientid, struct prealloc_pool *clientid_pool
     }
 
   /* Remove reverse entry */
-  pnfs_client_id = (nfs_client_id_t *) old_value.pdata;
-  chan = &pnfs_client_id->cb.cb_u.v40.chan;
+  nfs_client_id = old_value.pdata;
+  chan = &nfs_client_id->cb.cb_u.v40.chan;
 
-  buffkey.pdata = pnfs_client_id->client_name;
+  buffkey.pdata = nfs_client_id->client_name;
   buffkey.len = MAXNAMLEN;
 
   if(HashTable_Del(ht_client_id_reverse, &buffkey, &old_key_reverse, &old_value) !=
      HASHTABLE_SUCCESS)
     {
-
       /* destroy the callack channel, if present */
       if (chan) {
         nfs_rpc_destroy_chan(chan);
         chan = NULL;
       }
 
-      ReleaseToPool(pnfs_client_id, clientid_pool);
-      Mem_Free(old_key.pdata);
+      pool_free(clientid_pool, nfs_client_id);
+      gsh_free(old_key.pdata);
       return CLIENT_ID_NOT_FOUND;
     }
 
@@ -826,12 +824,10 @@ int nfs_client_id_remove(clientid4 clientid, struct prealloc_pool *clientid_pool
     chan = NULL;
   }
 
-  ReleaseToPool(pnfs_client_id, clientid_pool);
-  Mem_Free(old_key_reverse.pdata);
-  Mem_Free(old_key.pdata);
-
+  pool_free(clientid_pool, nfs_client_id);
+  gsh_free(old_key_reverse.pdata);
+  gsh_free(old_key.pdata);
   return CLIENT_ID_SUCCESS;
-
 }                               /* nfs_client_id_remove */
 
 /**
@@ -839,7 +835,7 @@ int nfs_client_id_remove(clientid4 clientid, struct prealloc_pool *clientid_pool
  * nfs_Init_client_id: Init the hashtable for Client Id cache.
  *
  * Perform all the required initialization for hashtable Client Id cache
- * 
+ *
  * @param param [IN] parameter used to init the duplicate request cache
  *
  * @return 0 if successful, -1 otherwise

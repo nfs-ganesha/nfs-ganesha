@@ -47,7 +47,6 @@
 #include "cidr.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "fsal.h"
 #include "nfs23.h"
 #include "nfs4.h"
@@ -560,7 +559,7 @@ int parseAccessParam(char *var_name, char *var_value,
   /* allocate clients strings  */
   for(idx = 0; idx < count; idx++)
     {
-      client_list[idx] = (char *)Mem_Alloc(EXPORT_MAX_CLIENTLEN);
+      client_list[idx] = gsh_malloc(EXPORT_MAX_CLIENTLEN);
       client_list[idx][0] = '\0';
     }
 
@@ -580,23 +579,23 @@ int parseAccessParam(char *var_name, char *var_value,
 
       /* free client strings */
       for(idx = 0; idx < count; idx++)
-	Mem_Free((caddr_t) client_list[idx]);
+        gsh_free(client_list[idx]);
 
       return rc;
     }
 
   rc = nfs_AddClientsToExportList(p_entry,
-				  rc, (char **)client_list, access_option);
+                                  rc, (char **)client_list, access_option);
 
   if(rc != 0)
     {
       LogCrit(COMPONENT_CONFIG,
               "NFS READ_EXPORT: ERROR: Invalid client found in \"%s\"",
-	      var_value);
+              var_value);
 
       /* free client strings */
       for(idx = 0; idx < count; idx++)
-	Mem_Free((caddr_t) client_list[idx]);
+        gsh_free(client_list[idx]);
 
       return rc;
     }
@@ -605,7 +604,7 @@ int parseAccessParam(char *var_name, char *var_value,
 
   /* free client strings */
   for(idx = 0; idx < count; idx++)
-    Mem_Free((caddr_t) client_list[idx]);
+    gsh_free(client_list[idx]);
 
   return rc;
 }
@@ -659,15 +658,10 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   int err_flag   = FALSE;
 
   /* allocates export entry */
-  p_entry = (exportlist_t *) Mem_Alloc(sizeof(exportlist_t));
+  p_entry = gsh_calloc(1, sizeof(exportlist_t));
 
   if(p_entry == NULL)
-    return Mem_Errno;
-
-  memset(p_entry, 0, sizeof(exportlist_t));
-
-  /** @todo set default values here */
-  memset(p_entry, 0, sizeof(exportlist_t));
+    return ENOMEM;
 
   p_entry->status = EXPORTLIST_OK;
   p_entry->access_type = ACCESSTYPE_RW;
@@ -689,16 +683,14 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
   memset(&p_entry->fsal_up_thr, 0, sizeof(pthread_t));
 #endif /* _USE_FSAL_UP */
 
-  p_entry->worker_stats = (nfs_worker_stat_t *)
-                          Mem_Alloc(sizeof(nfs_worker_stat_t) *
-                                    nfs_param.core_param.nb_worker);
-  memset(p_entry->worker_stats, 0,
-         sizeof(nfs_worker_stat_t) * nfs_param.core_param.nb_worker);
+  p_entry->worker_stats = gsh_calloc(nfs_param.core_param.nb_worker,
+                                     sizeof(nfs_worker_stat_t));
 
   /* by default, we support auth_none and auth_sys */
   p_entry->options |= EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX;
 
-  /* by default, we support all NFS versions supported by the core and both transport protocols */
+  /* by default, we support all NFS versions supported by the core and
+     both transport protocols */
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV2) != 0)
     p_entry->options |= EXPORT_OPTION_NFSV2;
   if((nfs_param.core_param.core_options & CORE_OPTION_NFSV3) != 0)
@@ -723,7 +715,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
   if(pthread_mutex_init(&p_entry->exp_state_mutex, NULL) == -1)
     {
-      Mem_Free(p_entry);
+      gsh_free(p_entry);
       LogCrit(COMPONENT_CONFIG,
               "NFS READ_EXPORT: ERROR: could not initialize exp_state_mutex");
       /* free the entry before exiting */
@@ -751,7 +743,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
       if((rc != 0) || (var_value == NULL))
         {
-          Mem_Free(p_entry);
+          gsh_free(p_entry);
           LogCrit(COMPONENT_CONFIG,
                   "NFS READ_EXPORT: ERROR: internal error %d", rc);
           /* free the entry before exiting */
@@ -994,7 +986,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* allocate nfs vers strings */
           for(idx = 0; idx < MAX_NFSPROTO; idx++)
-            nfsvers_list[idx] = (char *)Mem_Alloc(MAX_NFSPROTO_LEN);
+            nfsvers_list[idx] = gsh_malloc(MAX_NFSPROTO_LEN);
 
           /*
            * Search for coma-separated list of nfsprotos
@@ -1011,7 +1003,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
               /* free sec strings */
               for(idx = 0; idx < MAX_NFSPROTO; idx++)
-                Mem_Free((caddr_t) nfsvers_list[idx]);
+                gsh_free(nfsvers_list[idx]);
 
               continue;
             }
@@ -1061,7 +1053,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* free sec strings */
           for(idx = 0; idx < MAX_NFSPROTO; idx++)
-            Mem_Free((caddr_t) nfsvers_list[idx]);
+            gsh_free(nfsvers_list[idx]);
 
           /* check that at least one nfs protocol has been specified */
           if((p_entry->options & (EXPORT_OPTION_NFSV2
@@ -1096,7 +1088,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* allocate TRANS vers strings */
           for(idx = 0; idx < MAX_TRANSPROTO; idx++)
-            transproto_list[idx] = (char *)Mem_Alloc(MAX_TRANSPROTO_LEN);
+            transproto_list[idx] = gsh_malloc(MAX_TRANSPROTO_LEN);
 
           /*
            * Search for coma-separated list of TRANSprotos
@@ -1113,7 +1105,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
               /* free sec strings */
               for(idx = 0; idx < MAX_TRANSPROTO; idx++)
-                Mem_Free((caddr_t) transproto_list[idx]);
+                gsh_free(transproto_list[idx]);
 
               continue;
             }
@@ -1141,7 +1133,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* free sec strings */
           for(idx = 0; idx < MAX_TRANSPROTO; idx++)
-            Mem_Free((caddr_t) transproto_list[idx]);
+            gsh_free(transproto_list[idx]);
 
           /* check that at least one TRANS protocol has been specified */
           if((p_entry->options & (EXPORT_OPTION_UDP | EXPORT_OPTION_TCP)) == 0)
@@ -1300,7 +1292,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* allocate sec strings */
           for(idx = 0; idx < MAX_SECTYPE; idx++)
-            sec_list[idx] = (char *)Mem_Alloc(MAX_SECTYPE_LEN);
+            sec_list[idx] = gsh_malloc(MAX_SECTYPE_LEN);
 
           /*
            * Search for coma-separated list of sectypes
@@ -1317,7 +1309,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
               /* free sec strings */
               for(idx = 0; idx < MAX_SECTYPE; idx++)
-                Mem_Free((caddr_t) sec_list[idx]);
+                gsh_free(sec_list[idx]);
 
               continue;
             }
@@ -1357,7 +1349,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
 
           /* free sec strings */
           for(idx = 0; idx < MAX_SECTYPE; idx++)
-            Mem_Free((caddr_t) sec_list[idx]);
+            gsh_free(sec_list[idx]);
 
           /* check that at least one sectype has been specified */
           if((p_entry->options & (EXPORT_OPTION_AUTH_NONE
@@ -2113,7 +2105,7 @@ static int BuildExportEntry(config_item_t block, exportlist_t ** pp_export)
    */
   if(err_flag)
     {
-      Mem_Free(p_entry);
+      gsh_free(p_entry);
       return -1;
     }
 
@@ -2148,7 +2140,7 @@ exportlist_t *BuildDefaultExport()
   int rc;
 
   /* allocates new export entry */
-  p_entry = (exportlist_t *) Mem_Alloc(sizeof(exportlist_t));
+  p_entry = gsh_malloc(sizeof(exportlist_t));
 
   if(p_entry == NULL)
     return NULL;
@@ -2542,7 +2534,9 @@ int export_client_matchv6(struct in6_addr *paddrv6,
  * @param ip_stats_pool [INOUT] IP/stats pool
  * @param pclient_found [OUT]   pointer to client entry found in export list, NULL if nothing was found.
  *
- * @return EXPORT_PERMISSION_GRANTED on success and EXPORT_PERMISSION_DENIED, EXPORT_WRITE_ATTEMPT_WHEN_RO, or EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO on failure.
+ * @return EXPORT_PERMISSION_GRANTED on success and
+ * EXPORT_PERMISSION_DENIED, EXPORT_WRITE_ATTEMPT_WHEN_RO, or
+ * EXPORT_WRITE_ATTEMPT_WHEN_MDONLY_RO on failure.
  *
  */
 
@@ -2552,7 +2546,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
                             unsigned int nfs_prog,
                             unsigned int mnt_prog,
                             hash_table_t * ht_ip_stats,
-                            struct prealloc_pool *ip_stats_pool,
+                            pool_t *ip_stats_pool,
                             exportlist_client_entry_t * pclient_found,
                             struct user_cred *user_credentials,
                             bool_t proc_makes_write)
@@ -2929,7 +2923,7 @@ int nfs_export_create_root_entry(exportlist_t * pexportlist)
 
           /* stores handle to the export entry */
 
-          pcurrent->proot_handle = (fsal_handle_t *) Mem_Alloc(sizeof(fsal_handle_t));
+          pcurrent->proot_handle = gsh_malloc(sizeof(fsal_handle_t));
 
           if(FSAL_IS_ERROR(fsal_status))
             {
@@ -3016,12 +3010,12 @@ exportlist_t *RemoveExportEntry(exportlist_t * exportEntry)
   next = exportEntry->next;
 
   if (exportEntry->proot_handle != NULL)
-    Mem_Free(exportEntry->proot_handle);
+    gsh_free(exportEntry->proot_handle);
 
   if (exportEntry->worker_stats != NULL)
-    Mem_Free(exportEntry->worker_stats);
+    gsh_free(exportEntry->worker_stats);
 
-  Mem_Free(exportEntry);
+  gsh_free(exportEntry);
   return next;
 }
 

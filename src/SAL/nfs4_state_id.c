@@ -54,7 +54,6 @@
 #include <pthread.h>
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "nfs_core.h"
@@ -210,7 +209,7 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t * pstate_data)
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
 
-  if((buffkey.pdata = (caddr_t) Mem_Alloc_Label(OTHERSIZE, "nfs4_State_Set")) == NULL)
+  if((buffkey.pdata = gsh_malloc(OTHERSIZE)) == NULL)
     return 0;
 
   LogFullDebug(COMPONENT_STATE,
@@ -230,7 +229,7 @@ int nfs4_State_Set(char other[OTHERSIZE], state_t * pstate_data)
       LogDebug(COMPONENT_STATE,
                "HashTable_Test_And_Set failed for key %p",
                buffkey.pdata);
-      Mem_Free(buffkey.pdata);
+      gsh_free(buffkey.pdata);
       return 0;
     }
 
@@ -294,7 +293,7 @@ int nfs4_State_Del(char other[OTHERSIZE])
       /* free the key that was stored in hash table */
       LogFullDebug(COMPONENT_STATE,
                    "Freeing stateid key %p", old_key.pdata);
-      Mem_Free((void *)old_key.pdata);
+      gsh_free(old_key.pdata);
 
       /* State is managed in stuff alloc, no fre is needed for old_value.pdata */
 

@@ -50,7 +50,7 @@ bool_t nsm_connect()
       return FALSE;
     }
 
-  nodename = Mem_Alloc(strlen(utsname.nodename)+1);
+  nodename = gsh_malloc(strlen(utsname.nodename)+1);
   if(nodename == NULL)
     {
       LogDebug(COMPONENT_NLM,
@@ -73,7 +73,7 @@ void nsm_disconnect()
       Clnt_destroy(nsm_clnt);
       nsm_clnt = NULL;
       if(nodename != NULL)
-        Mem_Free(nodename);
+        gsh_free(nodename);
     }
 }
 

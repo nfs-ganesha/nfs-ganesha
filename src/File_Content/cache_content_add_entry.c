@@ -49,7 +49,6 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_content.h"
-#include "stuff_alloc.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -108,13 +107,13 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
   if(how != RENEW_ENTRY)
     {
       /* Get the entry from the preallocated pool */
-      GetFromPool(pfc_pentry, &pclient->content_pool, cache_content_entry_t);
+      pfc_pentry = pool_alloc(pclient->content_pool, NULL);
 
       if(pfc_pentry == NULL)
         {
           *pstatus = CACHE_CONTENT_MALLOC_ERROR;
 
-          LogDebug(COMPONENT_CACHE_CONTENT, 
+          LogDebug(COMPONENT_CACHE_CONTENT,
                             "cache_content_new_entry: can't allocate a new fc_entry from cache pool");
 
           /* stat */
@@ -130,7 +129,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
                                          pcontext,
                                          pentry_inode, pclient)) != CACHE_CONTENT_SUCCESS)
     {
-      ReleaseToPool(pfc_pentry, &pclient->content_pool);
+      pool_free(pclient->content_pool, pfc_pentry);
 
       *pstatus = CACHE_CONTENT_ENTRY_EXISTS;
 
@@ -149,7 +148,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
                                          pcontext,
                                          pentry_inode, pclient)) != CACHE_CONTENT_SUCCESS)
     {
-      ReleaseToPool(pfc_pentry, &pclient->content_pool);
+      pool_free(pclient->content_pool, pfc_pentry);
 
       *pstatus = CACHE_CONTENT_ENTRY_EXISTS;
 
@@ -188,7 +187,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
     {
       if((tmpfd = creat(pfc_pentry->local_fs_entry.cache_path_data, 0750)) == -1)
         {
-          ReleaseToPool(pfc_pentry, &pclient->content_pool);
+          pool_free(pclient->content_pool, pfc_pentry);
 
           *pstatus = CACHE_CONTENT_LOCAL_CACHE_ERROR;
 
@@ -223,7 +222,7 @@ cache_content_entry_t *cache_content_new_entry(cache_entry_t * pentry_inode,
 
       if(status != CACHE_CONTENT_SUCCESS)
         {
-          ReleaseToPool(pfc_pentry, &pclient->content_pool);
+          pool_free(pclient->content_pool, pfc_pentry);
 
           *pstatus = status;
 

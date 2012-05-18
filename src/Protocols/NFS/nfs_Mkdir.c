@@ -50,7 +50,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -327,10 +326,11 @@ int nfs_Mkdir(nfs_arg_t * parg,
                             }
 
                           if(nfs3_FSALToFhandle
-                             (&pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
-                              handle, pfsal_handle, pexport) == 0)
+                             (&pres->res_mkdir3.MKDIR3res_u.resok.obj
+                              .post_op_fh3_u.handle, pfsal_handle,
+                              pexport) == 0)
                             {
-                              Mem_Free((char *)pres->res_mkdir3.MKDIR3res_u.resok.obj.
+                              gsh_free(pres->res_mkdir3.MKDIR3res_u.resok.obj.
                                        post_op_fh3_u.handle.data.data_val);
                               pres->res_mkdir3.status = NFS3ERR_INVAL;
                               rc = NFS_REQ_OK;
@@ -371,10 +371,10 @@ int nfs_Mkdir(nfs_arg_t * parg,
                         }
 
                       if(nfs3_FSALToFhandle
-                         (&pres->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
-                          handle, pfsal_handle, pexport) == 0)
+                         (&pres->res_mkdir3.MKDIR3res_u.resok.obj
+                          .post_op_fh3_u.handle, pfsal_handle, pexport) == 0)
                         {
-                          Mem_Free((char *)pres->res_mkdir3.MKDIR3res_u.resok.obj.
+                          gsh_free(pres->res_mkdir3.MKDIR3res_u.resok.obj.
                                    post_op_fh3_u.handle.data.data_val);
                           pres->res_mkdir3.status = NFS3ERR_INVAL;
                           rc = NFS_REQ_OK;
@@ -514,5 +514,6 @@ void nfs_Mkdir_Free(nfs_res_t * resp)
 {
   if((resp->res_mkdir3.status == NFS3_OK) &&
      (resp->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows == TRUE))
-    Mem_Free(resp->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.handle.data.data_val);
+    gsh_free(resp->res_mkdir3.MKDIR3res_u.resok.obj
+             .post_op_fh3_u.handle.data.data_val);
 }                               /* nfs_Mkdir_Free */

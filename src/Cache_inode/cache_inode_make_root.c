@@ -48,7 +48,6 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
-#include "stuff_alloc.h"
 
 #include <unistd.h>
 #include <sys/types.h>

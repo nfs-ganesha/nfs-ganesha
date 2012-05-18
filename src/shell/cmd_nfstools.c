@@ -118,7 +118,7 @@ typedef unsigned long u_long;
 #include <string.h>
 #include <sys/stat.h>
 #include "cmd_nfstools.h"
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -174,7 +174,7 @@ int cmdnfs_dirpath(cmdnfs_encodetype_t encodeflag,
         return FALSE;
 
       len = strlen(argv[0]);
-      *p_dirpath = Mem_Alloc(len + 1);
+      *p_dirpath = gsh_malloc(len + 1);
 
       if(*p_dirpath == NULL)
         {
@@ -196,7 +196,7 @@ int cmdnfs_dirpath(cmdnfs_encodetype_t encodeflag,
 
     case CMDNFS_FREE:
 
-      Mem_Free(*p_dirpath);
+      gsh_free(*p_dirpath);
       break;
 
     default:
@@ -542,7 +542,7 @@ int cmdnfs_fhandle3(cmdnfs_encodetype_t encodeflag,
       str_handle++;
 
       /* Allocation of the nfs3 handle */
-      p_fhandle->fhandle3_val = Mem_Alloc(sizeof(struct alloc_file_handle_v3));
+      p_fhandle->fhandle3_val = gsh_malloc(sizeof(struct alloc_file_handle_v3));
 
       if(p_fhandle->fhandle3_val == NULL)
         {
@@ -579,7 +579,7 @@ int cmdnfs_fhandle3(cmdnfs_encodetype_t encodeflag,
 
     case CMDNFS_FREE:
 
-      Mem_Free(p_fhandle->fhandle3_val);
+      gsh_free(p_fhandle->fhandle3_val);
       return TRUE;
 
       break;

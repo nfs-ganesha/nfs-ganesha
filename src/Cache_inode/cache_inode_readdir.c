@@ -46,7 +46,6 @@
 #include "log.h"
 #include "HashData.h"
 #include "HashTable.h"
-#include "stuff_alloc.h"
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
@@ -193,8 +192,7 @@ cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
          } else {
              /* try to rename--no longer in-place */
              avl_dirent_set_deleted(pentry_parent, dirent);
-             GetFromPool(dirent3, &pclient->pool_dir_entry,
-                         cache_inode_dir_entry_t);
+             dirent3 = pool_alloc(pclient->pool_dir_entry, NULL);
              FSAL_namecpy(&dirent3->name, newname);
              dirent3->flags = DIR_ENTRY_FLAG_NONE;
              dirent3->entry = dirent->entry;
@@ -206,7 +204,7 @@ cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
              case 1:
                  /* we reused an existing dirent, dirent has been deep
                   * copied, dispose it */
-                 ReleaseToPool(dirent3, &pclient->pool_dir_entry);
+                  pool_free(pclient->pool_dir_entry, dirent3);
                  /* CACHE_INODE_SUCCESS */
                  break;
              case -1:
@@ -215,7 +213,7 @@ cache_inode_operate_cached_dirent(cache_entry_t * pentry_parent,
                  /* dirent is on persist tree, undelete it */
                  avl_dirent_clear_deleted(pentry_parent, dirent);
                  /* dirent3 was never inserted */
-                 ReleaseToPool(dirent3, &pclient->pool_dir_entry);
+                 pool_free(pclient->pool_dir_entry, dirent3);
              default:
                  LogCrit(COMPONENT_NFS_READDIR,
                          "DIRECTORY: insert error renaming dirent "
@@ -292,8 +290,7 @@ cache_inode_add_cached_dirent(cache_entry_t *pentry_parent,
      }
 
      /* in cache inode avl, we always insert on pentry_parent */
-     GetFromPool(new_dir_entry, &pclient->pool_dir_entry,
-                 cache_inode_dir_entry_t);
+     new_dir_entry = pool_alloc(pclient->pool_dir_entry, NULL);
      if(new_dir_entry == NULL) {
           *pstatus = CACHE_INODE_MALLOC_ERROR;
           return *pstatus;
@@ -313,13 +310,13 @@ cache_inode_add_cached_dirent(cache_entry_t *pentry_parent,
      case 1:
          /* we reused an existing dirent, dirent has been deep
           * copied, dispose it */
-         ReleaseToPool(new_dir_entry, &pclient->pool_dir_entry);
+         pool_free(pclient->pool_dir_entry, new_dir_entry);
          /* CACHE_INODE_SUCCESS */
          break;
      default:
          /* collision, tree not updated--release both pool objects and return
           * err */
-         ReleaseToPool(new_dir_entry, &pclient->pool_dir_entry);
+         pool_free(pclient->pool_dir_entry, new_dir_entry);
          *pstatus = CACHE_INODE_ENTRY_EXISTS;
          return *pstatus;
          break;

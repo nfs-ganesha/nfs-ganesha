@@ -43,10 +43,7 @@
 #include "mfsl_types.h"
 #include "mfsl.h"
 #include "common_utils.h"
-#include "stuff_alloc.h"
 #include "RW_Lock.h"
-
-#ifndef _USE_SWIG
 
 extern mfsl_parameter_t mfsl_param;
 extern fsal_handle_t dir_handle_precreate;
@@ -190,9 +187,9 @@ fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
 
   P(p_mfsl_context->lock);
 
-  GetFromPool(pasyncopdesc, &p_mfsl_context->pool_async_op, mfsl_async_op_desc_t);
+  pasyncopdesc = pool_alloc(p_mfsl_context->pool_async_op, NULL);
 
-  GetFromPool(newfile_pasyncdata, &p_mfsl_context->pool_spec_data, mfsl_object_specific_data_t);
+  newfile_pasyncdata = pool_alloc(p_mfsl_context->pool_spec_data, NULL);
 
   V(p_mfsl_context->lock);
 
@@ -208,7 +205,7 @@ fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
 
   /* Now get a pre-allocated directory from the synclet data */
   P(p_mfsl_context->lock);
-  GetFromPool(pprecreated, &p_mfsl_context->pool_files, mfsl_precreated_object_t);
+  pprecreated = pool_alloc(p_mfsl_context->pool_files, NULL);
   V(p_mfsl_context->lock);
 
   pnewfile_handle = &(pprecreated->mobject);
@@ -271,5 +268,3 @@ fsal_status_t MFSL_create(mfsl_object_t * parent_directory_handle,      /* IN */
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
 }                               /* MFSL_create */
-
-#endif                          /* ! _USE_SWIG */

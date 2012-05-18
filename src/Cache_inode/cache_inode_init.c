@@ -49,7 +49,6 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "sal_data.h"
-#include "stuff_alloc.h"
 #include "cache_inode_lru.h"
 #include "cache_inode_weakref.h"
 
@@ -118,8 +117,6 @@ int cache_inode_client_init(cache_inode_client_t *client,
     sprintf(name, "Cache Inode NLM Async #%d", thread_index - NLM_THREAD_INDEX);
 
   client->attrmask = param->attrmask;
-  client->nb_prealloc = param->nb_prealloc_entry;
-  client->nb_pre_state_v4 = param->nb_pre_state_v4;
   client->expire_type_attr = param->expire_type_attr;
   client->expire_type_link = param->expire_type_link;
   client->expire_type_dirent = param->expire_type_dirent;
@@ -130,56 +127,60 @@ int cache_inode_client_init(cache_inode_client_t *client,
   client->getattr_dir_invalidation = param->getattr_dir_invalidation;
   client->pworker = pworker_data;
 
-  MakePool(&client->pool_entry, client->nb_prealloc, cache_entry_t, NULL, NULL);
-  NamePool(&client->pool_entry, "%s Entry Pool", name);
-  if(!IsPoolPreallocated(&client->pool_entry))
+  client->pool_entry
+       = pool_init("Entry Pool", sizeof(cache_entry_t), NULL, NULL);
+  if(!(client->pool_entry))
     {
       LogCrit(COMPONENT_CACHE_INODE,
               "Can't init %s Entry Pool", name);
       return 1;
     }
 
-  MakePool(&client->pool_entry_symlink, client->nb_prealloc, cache_inode_symlink_t, NULL, NULL);
-  NamePool(&client->pool_entry_symlink, "%s Entry Symlink Pool", name);
-  if(!IsPoolPreallocated(&client->pool_entry_symlink))
+  client->pool_entry_symlink
+       = pool_init(NULL, sizeof(cache_inode_symlink_t), NULL, NULL);
+  if(!(client->pool_entry_symlink))
     {
       LogCrit(COMPONENT_CACHE_INODE,
               "Can't init %s Entry Symlink Pool", name);
       return 1;
     }
 
-  MakePool(&client->pool_dir_entry, client->nb_prealloc, cache_inode_dir_entry_t, NULL, NULL);
-  NamePool(&client->pool_dir_entry, "%s Dir Entry Pool", name);
-  if(!IsPoolPreallocated(&client->pool_dir_entry))
+  client->pool_dir_entry
+       = pool_init(NULL, sizeof(cache_inode_dir_entry_t), NULL, NULL);
+  if(!(client->pool_dir_entry))
     {
       LogCrit(COMPONENT_CACHE_INODE,
               "Can't init %s Dir Entry Pool", name);
       return 1;
     }
 
-  MakePool(&client->pool_state_v4, client->nb_pre_state_v4, state_t, NULL, NULL);
-  NamePool(&client->pool_state_v4, "%s State V4 Pool", name);
-  if(!IsPoolPreallocated(&client->pool_state_v4))
+  client->pool_state_v4 = pool_init(NULL, sizeof(state_t), NULL, NULL);
+  if(!(client->pool_state_v4))
     {
       LogCrit(COMPONENT_CACHE_INODE,
               "Can't init %s State V4 Pool", name);
       return 1;
     }
 
-  /* TODO: warning - entries in this pool are never released! */
-  MakePool(&client->pool_state_owner, client->nb_pre_state_v4, state_owner_t, NULL, NULL);
-  NamePool(&client->pool_state_owner, "%s Open Owner Pool", name);
-  if(!IsPoolPreallocated(&client->pool_state_owner))
+  /**
+   * @TODO: warning - entries in this pool are never released!
+   */
+  client->pool_state_owner
+       = pool_init("Open Owner Pool", sizeof(state_owner_t), NULL, NULL);
+  if(!(client->pool_state_owner))
     {
       LogCrit(COMPONENT_CACHE_INODE,
               "Can't init %s Open Owner Pool", name);
       return 1;
     }
 
-  /* TODO: warning - entries in this pool are never released! */
-  MakePool(&client->pool_nfs4_owner_name, client->nb_pre_state_v4, state_nfs4_owner_name_t, NULL, NULL);
-  NamePool(&client->pool_nfs4_owner_name, "%s Open Owner Name Pool", name);
-  if(!IsPoolPreallocated(&client->pool_nfs4_owner_name))
+  /**
+   * @TODO: warning - entries in this pool are never released!
+   */
+  client->pool_nfs4_owner_name
+       = pool_init("Open Owner Name Pool",
+                   sizeof(state_nfs4_owner_name_t), NULL, NULL);
+  if(!(client->pool_nfs4_owner_name))
     {
       LogCrit(COMPONENT_CACHE_INODE,
               "Can't init %s Open Owner Name Pool", name);
@@ -187,24 +188,15 @@ int cache_inode_client_init(cache_inode_client_t *client,
     }
 #ifdef _USE_NFS4_1
   /* TODO: warning - entries in this pool are never released! */
-  MakePool(&client->pool_session, client->nb_pre_state_v4, nfs41_session_t, NULL, NULL);
-  NamePool(&client->pool_session, "%s Session Pool", name);
-  if(!IsPoolPreallocated(&client->pool_session))
+  client->pool_session
+       = pool_init("Session Pool", sizeof(nfs41_session_t), NULL, NULL);
+  if(!(client->pool_session))
     {
       LogCrit(COMPONENT_CACHE_INODE,
               "Can't init %s Session Pool", name);
       return 1;
     }
 #endif                          /* _USE_NFS4_1 */
-
-  MakePool(&client->pool_key, client->nb_prealloc, cache_inode_fsal_data_t, NULL, NULL);
-  NamePool(&client->pool_key, "%s Key Pool", name);
-  if(!IsPoolPreallocated(&client->pool_key))
-    {
-      LogFatal(COMPONENT_CACHE_INODE,
-              "Can't init %s Key Pool", name);
-      return 1;
-    }
 
   /* Everything was ok, return 0 */
   return 0;

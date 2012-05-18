@@ -49,7 +49,6 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "nfs_core.h"
@@ -304,7 +303,7 @@ int mnt_Mnt(nfs_arg_t * parg /* IN      */ ,
 
 #define RES_MOUNTINFO pres->res_mnt3.mountres3_u.mountinfo
       if((RES_MOUNTINFO.auth_flavors.auth_flavors_val =
-          (int *)Mem_Alloc(index_auth * sizeof(int))) == NULL)
+          gsh_calloc(index_auth, sizeof(int))) == NULL)
         return NFS_REQ_DROP;
 
       RES_MOUNTINFO.auth_flavors.auth_flavors_len = index_auth;
@@ -348,9 +347,9 @@ void mnt3_Mnt_Free(nfs_res_t * pres)
 {
   if(pres->res_mnt3.fhs_status == MNT3_OK)
     {
-      Mem_Free((char *)pres->res_mnt3.mountres3_u.mountinfo.
+      gsh_free(pres->res_mnt3.mountres3_u.mountinfo.
                auth_flavors.auth_flavors_val);
-      Mem_Free((char *)pres->res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val);
+      gsh_free(pres->res_mnt3.mountres3_u.mountinfo.fhandle.fhandle3_val);
     }
   return;
 }                               /* mnt_Mnt_Free */

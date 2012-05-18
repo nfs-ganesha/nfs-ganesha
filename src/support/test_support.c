@@ -51,13 +51,6 @@ int main(int argc, char **argv)
 {
   int rc;
 
-  /* Init the Buddy System allocation */
-  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
-    {
-      LogTest("Error initializing memory allocator");
-      exit(1);
-    }
-
   SetDefaultLogging("TEST");
   SetNamePgm("test_support");
   InitLogging();

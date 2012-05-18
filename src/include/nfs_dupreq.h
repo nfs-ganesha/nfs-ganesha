@@ -98,12 +98,12 @@ int nfs_dupreq_gc_function(LRU_entry_t * pentry, void *addparam);
 
 nfs_res_t nfs_dupreq_get(long xid, struct svc_req *ptr_req, SVCXPRT *xprt, int *pstatus);
 int nfs_dupreq_delete(long xid, struct svc_req *ptr_req, SVCXPRT *xprt,
-                      struct prealloc_pool *dupreq_pool);
+                      pool_t *dupreq_pool);
 int nfs_dupreq_add_not_finished(long xid,
-				struct svc_req *ptr_req,
-				SVCXPRT *xprt,
-				struct prealloc_pool *dupreq_pool,
-				nfs_res_t *res_nfs);
+                                struct svc_req *ptr_req,
+                                SVCXPRT *xprt,
+                                pool_t *dupreq_pool,
+                                nfs_res_t *res_nfs);
 
 int nfs_dupreq_finish(long xid,
 		      struct svc_req *ptr_req,

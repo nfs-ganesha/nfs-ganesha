@@ -50,7 +50,6 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -278,7 +277,7 @@ int nfs3_Mknod(nfs_arg_t * parg,
 
               /* Build file handle */
               if ((pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle.data.
-                   data_val = Mem_Alloc_Label(NFS3_FHSIZE, "Filehandle V3 in nfs3_mknod")) == NULL)
+                   data_val = gsh_malloc(NFS3_FHSIZE)) == NULL)
                 {
                   /* Build file handle */
                   pres->res_mknod3.status =
@@ -290,7 +289,7 @@ int nfs3_Mknod(nfs_arg_t * parg,
                      (&pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle,
                       pfsal_handle, pexport) == 0)
                     {
-                      Mem_Free((char *)pres->res_mknod3.MKNOD3res_u.resok.obj.
+                      gsh_free(pres->res_mknod3.MKNOD3res_u.resok.obj.
                                post_op_fh3_u.handle.data.data_val);
                       pres->res_mknod3.status = NFS3ERR_INVAL;
                       rc = NFS_REQ_OK;
@@ -333,7 +332,7 @@ int nfs3_Mknod(nfs_arg_t * parg,
                   (&pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle,
                    pfsal_handle, pexport) == 0)
                 {
-                  Mem_Free((char *)pres->res_mknod3.MKNOD3res_u.resok.obj.
+                  gsh_free(pres->res_mknod3.MKNOD3res_u.resok.obj.
                            post_op_fh3_u.handle.data.data_val);
                   pres->res_mknod3.status = NFS3ERR_INVAL;
                   rc = NFS_REQ_OK;
@@ -452,6 +451,7 @@ void nfs3_Mknod_Free(nfs_res_t * pres)
 {
   if((pres->res_mknod3.status == NFS3_OK) &&
      (pres->res_mknod3.MKNOD3res_u.resok.obj.handle_follows == TRUE))
-    Mem_Free(pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle.data.data_val);
+    gsh_free(pres->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u
+             .handle.data.data_val);
 
 }                               /* nfs3_Mknod_Free */

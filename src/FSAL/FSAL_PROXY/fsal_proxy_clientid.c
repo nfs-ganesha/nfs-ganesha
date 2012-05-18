@@ -30,8 +30,6 @@
 #include <pthread.h>
 #include "nfs4.h"
 
-#include "BuddyMalloc.h"
-#include "stuff_alloc.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "fsal_common.h"
@@ -293,17 +291,7 @@ void *FSAL_proxy_clientid_renewer_thread(void *Arg)
 
   sleep(6);    /** @todo: use getattr to have an actual value of server's lease duration */
 
-#ifndef _NO_BUDDY_SYSTEM
-  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogCrit(COMPONENT_FSAL,
-          "FSAL_proxy_clientid_renewer_thread: Memory manager could not be initialized, exiting...");
-      exit(1);
-    }
-#endif
-
-  memset((char *)&fsal_context, 0, sizeof(proxyfsal_op_context_t));
+  memset(&fsal_context, 0, sizeof(proxyfsal_op_context_t));
   fsal_status = PROXYFSAL_InitClientContext((fsal_op_context_t *)p_context);
 
   if(FSAL_IS_ERROR(fsal_status))

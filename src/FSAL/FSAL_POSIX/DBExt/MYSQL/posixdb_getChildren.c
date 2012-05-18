@@ -8,7 +8,7 @@
 
 #include "fsal.h"
 #include "posixdb_internal.h"
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
 
 /**
  * fsal_posixdb_getChildren:
@@ -68,7 +68,7 @@ fsal_posixdb_status_t fsal_posixdb_getChildren(fsal_posixdb_conn * p_conn,      
       ReturnCodeDB(ERR_FSAL_POSIXDB_TOOMANYPATHS, 0);
     }
 
-  *p_children = (fsal_posixdb_child *) Mem_Alloc(sizeof(fsal_posixdb_child) * (*p_count));
+  *p_children = gsh_malloc(sizeof(fsal_posixdb_child) * (*p_count));
   if(*p_children == NULL)
     {
       mysql_free_result(res);

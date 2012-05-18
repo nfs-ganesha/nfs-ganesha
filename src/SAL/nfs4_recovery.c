@@ -33,7 +33,6 @@
 #endif
 
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs4.h"
 #include "sal_functions.h"
@@ -142,9 +141,9 @@ nfs4_create_clid_name(nfs_client_id_t *nfs_clientid, struct svc_req *svcp)
         else
                 strncpy(buf, "Unknown", SOCK_NAME_MAX);
 
-        nfs_clientid->recov_dir = Mem_Alloc(256);
+        nfs_clientid->recov_dir = gsh_malloc(256);
         if (nfs_clientid->recov_dir == NULL) {
-                LogEvent(COMPONENT_NFS_V4, "Mem_Alloc FAILED");
+                LogEvent(COMPONENT_NFS_V4, "allocation FAILED");
                 return;
         }
         (void) snprintf(nfs_clientid->recov_dir, 256, "%s-%llx", buf,
@@ -273,10 +272,10 @@ nfs4_read_recov_clids(DIR *dp, char *srcdir, int takeover)
         while (dentp != NULL) {
                 /* don't add '.' and '..', or any '.*' entry */
                 if (dentp->d_name[0] != '.') {
-                        new_ent =
-                            (clid_entry_t *) Mem_Alloc(sizeof(clid_entry_t));
+                        new_ent = gsh_malloc(sizeof(clid_entry_t));
                         if (new_ent == NULL) {
-                                LogEvent(COMPONENT_NFS_V4, "Mem_Alloc FAILED");
+                                LogEvent(COMPONENT_NFS_V4,
+                                         "allocation FAILED");
                                 return -1;
                         }
                         strncpy(new_ent->cl_name, dentp->d_name, 256);
@@ -321,7 +320,7 @@ nfs4_load_recov_clids_nolock(ushort nodeid)
                                 glist_del(node);
                                 clid_entry = glist_entry(node,
                                     clid_entry_t, cl_list);
-                                Mem_Free(clid_entry);
+                                gsh_free(clid_entry);
                         }
                 }
 

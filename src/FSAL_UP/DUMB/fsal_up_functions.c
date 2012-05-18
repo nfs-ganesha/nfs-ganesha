@@ -33,7 +33,6 @@
 #include <pthread.h>
 
 #include "nfs_core.h"
-#include "stuff_alloc.h"
 #include "log.h"
 #include "fsal.h"
 #include "cache_inode.h"

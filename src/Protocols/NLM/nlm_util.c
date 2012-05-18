@@ -34,7 +34,6 @@
 #include <pthread.h>
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nlm4.h"
 #include "sal_functions.h"
 #include "nlm_util.h"
@@ -105,7 +104,7 @@ bool_t fill_netobj(netobj * dst, char *data, int len)
   dst->n_bytes = NULL;
   if(len != 0)
     {
-      dst->n_bytes = (char *)Mem_Alloc(len);
+      dst->n_bytes = gsh_malloc(len);
       if(dst->n_bytes != NULL)
         {
           dst->n_len = len;
@@ -124,7 +123,7 @@ netobj *copy_netobj(netobj * dst, netobj * src)
   dst->n_len = 0;
   if(src->n_len != 0)
     {
-      dst->n_bytes = (char *)Mem_Alloc(src->n_len);
+      dst->n_bytes = gsh_malloc(src->n_len);
       if(!dst->n_bytes)
         return NULL;
       memcpy(dst->n_bytes, src->n_bytes, src->n_len);
@@ -139,7 +138,7 @@ netobj *copy_netobj(netobj * dst, netobj * src)
 void netobj_free(netobj * obj)
 {
   if(obj->n_bytes)
-    Mem_Free(obj->n_bytes);
+    gsh_free(obj->n_bytes);
 }
 
 void netobj_to_string(netobj *obj, char *buffer, int maxlen)
@@ -177,8 +176,8 @@ void free_grant_arg(state_async_queue_t *arg)
   netobj_free(&nlm_arg->nlm_async_args.nlm_async_grant.alock.oh);
   netobj_free(&nlm_arg->nlm_async_args.nlm_async_grant.alock.fh);
   if(nlm_arg->nlm_async_args.nlm_async_grant.alock.caller_name != NULL)
-    Mem_Free(nlm_arg->nlm_async_args.nlm_async_grant.alock.caller_name);
-  Mem_Free(arg);
+    gsh_free(nlm_arg->nlm_async_args.nlm_async_grant.alock.caller_name);
+  gsh_free(arg);
 }
 
 /**
@@ -365,8 +364,7 @@ int nlm_process_parameters(struct svc_req        * preq,
 
   if(ppblock_data != NULL)
     {
-      *ppblock_data = (state_block_data_t *) Mem_Alloc_Label(sizeof(**ppblock_data),
-                                                             "NLM_Block_Data");
+         *ppblock_data = gsh_malloc(sizeof(**ppblock_data));
       /* Fill in the block data, if we don't get one, we will just proceed
        * without (which will mean the lock doesn't block.
        */
@@ -378,7 +376,7 @@ int nlm_process_parameters(struct svc_req        * preq,
               LogFullDebug(COMPONENT_NLM,
                            "copy_xprt_addr failed for Program %d, Version %d, Function %d",
                            (int)preq->rq_prog, (int)preq->rq_vers, (int)preq->rq_proc);
-              Mem_Free(*ppblock_data);
+              gsh_free(*ppblock_data);
               *ppblock_data = NULL;
               return NLM4_FAILED;
             }
@@ -567,7 +565,7 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
       return *pstatus;
     }
 
-  arg = (state_async_queue_t *) Mem_Alloc(sizeof(*arg));
+  arg = gsh_malloc(sizeof(*arg));
   if(arg == NULL)
     {
       /* If we fail allocation the best is to delete the block entry
@@ -620,7 +618,7 @@ state_status_t nlm_granted_callback(cache_entry_t        * pentry,
                   sizeof(nlm_grant_cookie)))
     goto grant_fail_malloc;
 
-  inarg->alock.caller_name = Str_Dup(nlm_grant_client->slc_nlm_caller_name);
+  inarg->alock.caller_name = gsh_strdup(nlm_grant_client->slc_nlm_caller_name);
   if(!inarg->alock.caller_name)
     goto grant_fail_malloc;
 

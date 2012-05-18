@@ -58,7 +58,6 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
 #include "config_parsing.h"
@@ -188,11 +187,11 @@ int display_ip_stats_val(hash_buffer_t * pbuff, char *str)
  */
 
 int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
-                     sockaddr_t * ipaddr, struct prealloc_pool *ip_stats_pool)
+                     sockaddr_t * ipaddr, pool_t *ip_stats_pool)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffdata;
-  nfs_ip_stats_t *pnfs_ip_stats = NULL;
+  nfs_ip_stats_t *g = NULL;
   sockaddr_t *pipaddr = NULL;
 
   /* Do nothing if configuration disables IP_Stats */
@@ -200,38 +199,39 @@ int nfs_ip_stats_add(hash_table_t * ht_ip_stats,
     return IP_STATS_SUCCESS;
 
   /* Entry to be cached */
-  GetFromPool(pnfs_ip_stats, ip_stats_pool, nfs_ip_stats_t);
+  g = pool_alloc(ip_stats_pool, NULL);
 
-  if(pnfs_ip_stats == NULL)
+  if(g == NULL)
     return IP_STATS_INSERT_MALLOC_ERROR;
 
-  if((pipaddr = (sockaddr_t *) Mem_Alloc(sizeof(sockaddr_t))) == NULL) 
+  if((pipaddr = gsh_malloc(sizeof(sockaddr_t))) == NULL)
     {
-      ReleaseToPool(pnfs_ip_stats, ip_stats_pool);
+      pool_free(ip_stats_pool, g);
       return IP_STATS_INSERT_MALLOC_ERROR;
     }
 
-  /* I have to keep an integer as key, I wil use the pointer buffkey->pdata for this, 
-   * this also means that buffkey->len will be 0 */
+  /* I have to keep an integer as key, I wil use the pointer
+   * buffkey->pdata for this, this also means that buffkey->len will
+   * be 0 */
   memcpy(pipaddr, ipaddr, sizeof(sockaddr_t));
- 
-  buffkey.pdata = (caddr_t) pipaddr;
+
+  buffkey.pdata = pipaddr;
   buffkey.len = sizeof(sockaddr_t);
 
   /* I build the data with the request pointer that should be in state 'IN USE' */
-  pnfs_ip_stats->nb_call = 0;
-  pnfs_ip_stats->nb_req_nfs2 = 0;
-  pnfs_ip_stats->nb_req_nfs3 = 0;
-  pnfs_ip_stats->nb_req_nfs4 = 0;
-  pnfs_ip_stats->nb_req_mnt1 = 0;
-  pnfs_ip_stats->nb_req_mnt3 = 0;
+  g->nb_call = 0;
+  g->nb_req_nfs2 = 0;
+  g->nb_req_nfs3 = 0;
+  g->nb_req_nfs4 = 0;
+  g->nb_req_mnt1 = 0;
+  g->nb_req_mnt3 = 0;
 
-  memset(pnfs_ip_stats->req_mnt1, 0, MNT_V1_NB_COMMAND * sizeof(int));
-  memset(pnfs_ip_stats->req_mnt3, 0, MNT_V3_NB_COMMAND * sizeof(int));
-  memset(pnfs_ip_stats->req_nfs2, 0, NFS_V2_NB_COMMAND * sizeof(int));
-  memset(pnfs_ip_stats->req_nfs3, 0, NFS_V3_NB_COMMAND * sizeof(int));
+  memset(g->req_mnt1, 0, MNT_V1_NB_COMMAND * sizeof(int));
+  memset(g->req_mnt3, 0, MNT_V3_NB_COMMAND * sizeof(int));
+  memset(g->req_nfs2, 0, NFS_V2_NB_COMMAND * sizeof(int));
+  memset(g->req_nfs3, 0, NFS_V3_NB_COMMAND * sizeof(int));
 
-  buffdata.pdata = (caddr_t) pnfs_ip_stats;
+  buffdata.pdata = (caddr_t) g;
   buffdata.len = sizeof(nfs_ip_stats_t);
 
   if(HashTable_Set(ht_ip_stats, &buffkey, &buffdata) != HASHTABLE_SUCCESS)
@@ -259,7 +259,7 @@ int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
   int status;
-  nfs_ip_stats_t *pnfs_ip_stats;
+  nfs_ip_stats_t *g;
 
   buffkey.pdata = (caddr_t) ipaddr;
   buffkey.len = sizeof(sockaddr_t);
@@ -270,8 +270,8 @@ int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
 
   if(HashTable_Get(ht_ip_stats, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
-      pnfs_ip_stats = (nfs_ip_stats_t *) buffval.pdata;
-      pnfs_ip_stats->nb_call += 1;
+      g = (nfs_ip_stats_t *) buffval.pdata;
+      g->nb_call += 1;
 
       status = IP_STATS_SUCCESS;
 
@@ -280,17 +280,17 @@ int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
           switch (ptr_req->rq_vers)
             {
             case NFS_V2:
-              pnfs_ip_stats->nb_req_nfs2 += 1;
-              pnfs_ip_stats->req_nfs2[ptr_req->rq_proc] += 1;
+              g->nb_req_nfs2 += 1;
+              g->req_nfs2[ptr_req->rq_proc] += 1;
               break;
 
             case NFS_V3:
-              pnfs_ip_stats->nb_req_nfs3 += 1;
-              pnfs_ip_stats->req_nfs3[ptr_req->rq_proc] += 1;
+              g->nb_req_nfs3 += 1;
+              g->req_nfs3[ptr_req->rq_proc] += 1;
               break;
 
             case NFS_V4:
-              pnfs_ip_stats->nb_req_nfs4 += 1;
+              g->nb_req_nfs4 += 1;
               break;
             }
         }
@@ -299,13 +299,13 @@ int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
           switch (ptr_req->rq_vers)
             {
             case MOUNT_V1:
-              pnfs_ip_stats->nb_req_mnt1 += 1;
-              pnfs_ip_stats->req_mnt1[ptr_req->rq_proc] += 1;
+              g->nb_req_mnt1 += 1;
+              g->req_mnt1[ptr_req->rq_proc] += 1;
               break;
 
             case MOUNT_V3:
-              pnfs_ip_stats->nb_req_mnt3 += 1;
-              pnfs_ip_stats->req_mnt3[ptr_req->rq_proc] += 1;
+              g->nb_req_mnt3 += 1;
+              g->req_mnt3[ptr_req->rq_proc] += 1;
               break;
             }
         }
@@ -330,7 +330,7 @@ int nfs_ip_stats_incr(hash_table_t * ht_ip_stats,
  *
  */
 int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
-                     sockaddr_t * ipaddr, nfs_ip_stats_t ** pnfs_ip_stats)
+                     sockaddr_t * ipaddr, nfs_ip_stats_t ** g)
 {
   hash_buffer_t buffkey;
   hash_buffer_t buffval;
@@ -345,7 +345,7 @@ int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
 
   if(HashTable_Get(ht_ip_stats, &buffkey, &buffval) == HASHTABLE_SUCCESS)
     {
-      *pnfs_ip_stats = (nfs_ip_stats_t *) buffval.pdata;
+      *g = (nfs_ip_stats_t *) buffval.pdata;
 
       status = IP_STATS_SUCCESS;
     }
@@ -369,11 +369,11 @@ int nfs_ip_stats_get(hash_table_t * ht_ip_stats,
  *
  */
 int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
-                        sockaddr_t * ipaddr, struct prealloc_pool *ip_stats_pool)
+                        sockaddr_t * ipaddr, pool_t *ip_stats_pool)
 {
   hash_buffer_t buffkey, old_key, old_value;
   int status = IP_STATS_SUCCESS;
-  nfs_ip_stats_t *pnfs_ip_stats = NULL;
+  nfs_ip_stats_t *g = NULL;
 
   buffkey.pdata = (caddr_t) ipaddr;
   buffkey.len = sizeof(sockaddr_t);
@@ -384,9 +384,9 @@ int nfs_ip_stats_remove(hash_table_t * ht_ip_stats,
 
   if(HashTable_Del(ht_ip_stats, &buffkey, &old_key, &old_value) == HASHTABLE_SUCCESS)
     {
-      Mem_Free((sockaddr_t *) old_key.pdata);
-      pnfs_ip_stats = (nfs_ip_stats_t *) old_value.pdata;
-      ReleaseToPool(pnfs_ip_stats, ip_stats_pool);
+      gsh_free(old_key.pdata);
+      g = old_value.pdata;
+      pool_free(ip_stats_pool, g);
     }
   else
     {
@@ -439,7 +439,7 @@ void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
   unsigned int i = 0;
   unsigned int j = 0;
   unsigned int k = 0;
-  nfs_ip_stats_t *pnfs_ip_stats[NB_MAX_WORKER_THREAD];
+  nfs_ip_stats_t *g[NB_MAX_WORKER_THREAD];
   nfs_ip_stats_t ip_stats_aggreg;
   // enough to hold an IPv4 or IPv6 address as a string
   char ipaddrbuf[40];
@@ -488,30 +488,30 @@ void nfs_ip_stats_dump(hash_table_t ** ht_ip_stats,
         for(j = 0; j < nb_worker; j++)
           {
             if(nfs_ip_stats_get(ht_ip_stats[j],
-                                ipaddr, &pnfs_ip_stats[j]) != IP_STATS_SUCCESS)
+                                ipaddr, &g[j]) != IP_STATS_SUCCESS)
               {
                 fclose(flushipstat);
                 return;
               }
-            ip_stats_aggreg.nb_call += (pnfs_ip_stats[j])->nb_call;
+            ip_stats_aggreg.nb_call += (g[j])->nb_call;
 
-            ip_stats_aggreg.nb_req_nfs2 += (pnfs_ip_stats[j])->nb_req_nfs2;
-            ip_stats_aggreg.nb_req_nfs3 += (pnfs_ip_stats[j])->nb_req_nfs3;
-            ip_stats_aggreg.nb_req_nfs4 += (pnfs_ip_stats[j])->nb_req_nfs4;
-            ip_stats_aggreg.nb_req_mnt1 += (pnfs_ip_stats[j])->nb_req_mnt1;
-            ip_stats_aggreg.nb_req_mnt3 += (pnfs_ip_stats[j])->nb_req_mnt3;
+            ip_stats_aggreg.nb_req_nfs2 += (g[j])->nb_req_nfs2;
+            ip_stats_aggreg.nb_req_nfs3 += (g[j])->nb_req_nfs3;
+            ip_stats_aggreg.nb_req_nfs4 += (g[j])->nb_req_nfs4;
+            ip_stats_aggreg.nb_req_mnt1 += (g[j])->nb_req_mnt1;
+            ip_stats_aggreg.nb_req_mnt3 += (g[j])->nb_req_mnt3;
 
             for(k = 0; k < MNT_V1_NB_COMMAND; k++)
-              ip_stats_aggreg.req_mnt1[k] += (pnfs_ip_stats[j])->req_mnt1[k];
+              ip_stats_aggreg.req_mnt1[k] += (g[j])->req_mnt1[k];
 
             for(k = 0; k < MNT_V3_NB_COMMAND; k++)
-              ip_stats_aggreg.req_mnt3[k] += (pnfs_ip_stats[j])->req_mnt3[k];
+              ip_stats_aggreg.req_mnt3[k] += (g[j])->req_mnt3[k];
 
             for(k = 0; k < NFS_V2_NB_COMMAND; k++)
-              ip_stats_aggreg.req_nfs2[k] += (pnfs_ip_stats[j])->req_nfs2[k];
+              ip_stats_aggreg.req_nfs2[k] += (g[j])->req_nfs2[k];
 
             for(k = 0; k < NFS_V3_NB_COMMAND; k++)
-              ip_stats_aggreg.req_nfs3[k] += (pnfs_ip_stats[j])->req_nfs3[k];
+              ip_stats_aggreg.req_nfs3[k] += (g[j])->req_nfs3[k];
           }
 
         /* Write stats to file */

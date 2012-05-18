@@ -7,7 +7,6 @@
 #include "nfs_exports.h"
 #include "config_parsing.h"
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs_stat.h"
 #include "../MainNFSD/nfs_init.h"
@@ -36,7 +35,7 @@ const char *opnames[] = {"MOUNT", "READ", "WRITE", "MDONLY_READ", "MDONLY_WRITE"
 #define INVALID_UID -9999
 #define INVALID_GID -9999
 
-void init_vars(hash_table_t **ht_ip_stats, struct prealloc_pool *ip_stats_pool)
+void init_vars(hash_table_t **ht_ip_stats, pool_t *ip_stats_pool)
 {
   int rc;
 
@@ -45,14 +44,6 @@ void init_vars(hash_table_t **ht_ip_stats, struct prealloc_pool *ip_stats_pool)
 
   /* Get the FSAL consts */
   FSAL_LoadConsts();
-
-  /* Initialize buddy malloc */
-  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogTest("Memory manager could not be initialized");
-      exit(1);
-    }
 
   nfs_set_param_default(&nfs_param);
 
@@ -71,12 +62,10 @@ void init_vars(hash_table_t **ht_ip_stats, struct prealloc_pool *ip_stats_pool)
     }
 
   /*ip_stats_pool*/
-  MakePool(ip_stats_pool,
-           100,//           nfs_param.worker_param.nb_ip_stats_prealloc,
-           nfs_ip_stats_t, NULL, NULL);
-  NamePool(ip_stats_pool, "IP Stats Cache Pool");
+  ip_stats_pool = pool_init("IP Stats Cache Pool",
+                            sizeof(nfs_ip_stats_t), NULL, NULL);
 
-  if(!IsPoolPreallocated(ip_stats_pool))
+  if(!(ip_stats_pool))
     {
       LogCrit(COMPONENT_INIT, "NFS_INIT: Error while allocating IP stats cache pool");
       LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
@@ -86,9 +75,9 @@ void init_vars(hash_table_t **ht_ip_stats, struct prealloc_pool *ip_stats_pool)
 
 struct user_cred test_access(char *addr, char *hostname,
                              hash_table_t *ht_ip_stats,
-                             struct prealloc_pool *ip_stats_pool,
+                             pool_t *ip_stats_pool,
                              exportlist_t *pexport, int uid,
-			     int gid, int operation)
+                             int gid, int operation)
 {
   struct svc_req ptr_req;
   exportlist_client_entry_t pclient_found;
@@ -155,7 +144,7 @@ struct user_cred test_access(char *addr, char *hostname,
 int main(int argc, char *argv[])
 {
   hash_table_t *ht_ip_stats;
-  struct prealloc_pool ip_stats_pool;
+  pool_t *ip_stats_pool;
   exportlist_t pexport;
   int root, read, write, mdonly_read, mdonly_write,
     root_user, uid, operation,

@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -210,7 +209,7 @@ int nfs_Lookup(nfs_arg_t * parg,
                 case NFS_V3:
                   /* Build FH */
                   if((pres->res_lookup3.LOOKUP3res_u.resok.object.data.data_val =
-                      Mem_Alloc(sizeof(struct alloc_file_handle_v3))) == NULL)
+                      gsh_malloc(sizeof(struct alloc_file_handle_v3))) == NULL)
                     pres->res_lookup3.status = NFS3ERR_INVAL;
                   else
                     {
@@ -306,14 +305,14 @@ out:
 void nfs3_Lookup_Free(nfs_res_t * resp)
 {
   if(resp->res_lookup3.status == NFS3_OK)
-    Mem_Free(resp->res_lookup3.LOOKUP3res_u.resok.object.data.data_val);
+    gsh_free(resp->res_lookup3.LOOKUP3res_u.resok.object.data.data_val);
 }                               /* nfs_Lookup_Free */
 
 /**
  * nfs_Lookup_Free: Frees the result structure allocated for nfs_Lookup.
- * 
+ *
  * Frees the result structure allocated for nfs_Lookup.
- * 
+ *
  * @param pres        [INOUT]   Pointer to the result structure.
  *
  */

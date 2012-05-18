@@ -41,7 +41,15 @@
 #include "HashData.h"
 #include "log.h"
 #include "lookup3.h"
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
 
 /**
  * @defgroup HTStructs Structures used by the hash table code
@@ -85,8 +93,6 @@ struct hash_param
      uint32_t alphabet_length; /*< Size of the input alphabet for
                                    the template (and other polynomial
                                    style) hash functions. */
-     size_t nb_node_prealloc; /*< Number of nodes to allocate when new
-                                  nodes are necessary. */
      index_function_t hash_func_key; /*< Partition function, returns an
                                          integer from 0 to (index_size
                                          - 1).  This should be
@@ -134,16 +140,14 @@ typedef struct hash_stat
 
 struct hash_partition
 {
-    size_t count; /*< Numer of entries in this partition */
-    struct rbt_head rbt; /*< The red-black tree */
-    pthread_rwlock_t lock; /*< Lock for this partition */
-    struct prealloc_pool node_pool; /*< Pre-allocated nodes,
-                                      ready to use for new
-                                      entries */
-    struct prealloc_pool data_pool ; /*< Pre-allocated pdata buffers
-                                       ready to use for new
-                                       entries */
-    struct rbt_node** cache; /*< expected entry cache */
+     size_t count; /*< Numer of entries in this partition */
+     struct rbt_head rbt; /*< The red-black tree */
+     pthread_rwlock_t lock; /*< Lock for this partition */
+     pool_t *node_pool; /*< Pre-allocated nodes, ready to use for new
+                           entries */
+     pool_t *data_pool; /*< Pre-allocated pdata buffers ready to use
+                           for new entries */
+     struct rbt_node** cache; /*< expected entry cache */
 };
 
 typedef struct hash_table

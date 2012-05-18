@@ -50,7 +50,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -82,7 +81,7 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
                             compound_data_t * data, struct nfs_resop4 *resp)
 {
   nfs_client_id_t *pnfs_clientid;
-  nfs41_session_t *pnfs41_session = NULL;
+  nfs41_session_t *nfs41_session = NULL;
   clientid4 clientid = 0;
 
 #define arg_CREATE_SESSION4 op->nfs_argop4_u.opcreate_session
@@ -138,9 +137,9 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
   /** @todo: BUGAZOMEU Gerer les parametres de secu */
 
   /* Record session related information at the right place */
-  GetFromPool(pnfs41_session, &data->pclient->pool_session, nfs41_session_t);
+  nfs41_session = pool_alloc(data->pclient->pool_session, NULL);
 
-  if(pnfs41_session == NULL)
+  if(nfs41_session == NULL)
     {
       res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT;
       return res_CREATE_SESSION4.csr_status;
@@ -153,45 +152,46 @@ int nfs41_op_create_session(struct nfs_argop4 *op,
       return res_CREATE_SESSION4.csr_status;
     }
 
-  memset((char *)pnfs41_session, 0, sizeof(nfs41_session_t));
-  pnfs41_session->clientid = clientid;
+  memset((char *)nfs41_session, 0, sizeof(nfs41_session_t));
+  nfs41_session->clientid = clientid;
 
-  pnfs41_session->sequence = arg_CREATE_SESSION4.csa_sequence;
-  pnfs41_session->session_flags = CREATE_SESSION4_FLAG_CONN_BACK_CHAN;
-  pnfs41_session->fore_channel_attrs = arg_CREATE_SESSION4.csa_fore_chan_attrs;
-  pnfs41_session->back_channel_attrs = arg_CREATE_SESSION4.csa_back_chan_attrs;
+  nfs41_session->sequence = arg_CREATE_SESSION4.csa_sequence;
+  nfs41_session->session_flags = CREATE_SESSION4_FLAG_CONN_BACK_CHAN;
+  nfs41_session->fore_channel_attrs = arg_CREATE_SESSION4.csa_fore_chan_attrs;
+  nfs41_session->back_channel_attrs = arg_CREATE_SESSION4.csa_back_chan_attrs;
 
   /* Set ca_maxrequests */
-  pnfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
-  pnfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
+  nfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
+  nfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
 
-  if(nfs41_Build_sessionid(&clientid, pnfs41_session->session_id) != 1)
+  if(nfs41_Build_sessionid(&clientid, nfs41_session->session_id) != 1)
     {
       res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT;
       return res_CREATE_SESSION4.csr_status;
     }
 
   res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_sequence =
-    pnfs41_session->sequence;
+    nfs41_session->sequence;
   res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_flags =
       CREATE_SESSION4_FLAG_CONN_BACK_CHAN;
 
   /* return the input for wantinf of something better (will change in later versions) */
   res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_fore_chan_attrs =
-      pnfs41_session->fore_channel_attrs;
+      nfs41_session->fore_channel_attrs;
   res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_back_chan_attrs =
-      pnfs41_session->back_channel_attrs;
+      nfs41_session->back_channel_attrs;
 
   memcpy(res_CREATE_SESSION4.CREATE_SESSION4res_u.csr_resok4.csr_sessionid,
-         pnfs41_session->session_id, NFS4_SESSIONID_SIZE);
+         nfs41_session->session_id, NFS4_SESSIONID_SIZE);
 
   /* Create Session replay cache */
   data->pcached_res = pnfs_clientid->create_session_slot.cached_result;
   pnfs_clientid->create_session_slot.cache_used = TRUE;
 
-  if(!nfs41_Session_Set(pnfs41_session->session_id, pnfs41_session))
+  if(!nfs41_Session_Set(nfs41_session->session_id, nfs41_session))
     {
-      res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT;     /* Maybe a more precise status would be better */
+      /* Maybe a more precise status would be better */
+      res_CREATE_SESSION4.csr_status = NFS4ERR_SERVERFAULT;
       return res_CREATE_SESSION4.csr_status;
     }
 

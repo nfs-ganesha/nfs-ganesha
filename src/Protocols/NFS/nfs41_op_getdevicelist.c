@@ -50,7 +50,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -146,7 +145,7 @@ int nfs41_op_getdevicelist(struct nfs_argop4 *op,
      memcpy(&res.cookieverf, arg_GETDEVICELIST4.gdla_cookieverf,
             NFS4_VERIFIER_SIZE);
      res.count = arg_GETDEVICELIST4.gdla_maxdevices;
-     res.devids = (uint64_t*) Mem_Alloc(res.count * sizeof(uint64_t));
+     res.devids = gsh_calloc(res.count, sizeof(uint64_t));
 
      if (res.devids == NULL) {
           nfs_status = NFS4ERR_SERVERFAULT;
@@ -175,7 +174,7 @@ int nfs41_op_getdevicelist(struct nfs_argop4 *op,
 
      if ((res_GETDEVICELIST4.GETDEVICELIST4res_u.gdlr_resok4
           .gdlr_deviceid_list.gdlr_deviceid_list_val
-          = (void*) Mem_Alloc(res.count * sizeof(deviceid4))) == NULL) {
+          = gsh_malloc(res.count * sizeof(deviceid4))) == NULL) {
           nfs_status = NFS4ERR_SERVERFAULT;
           goto out;
      }
@@ -201,7 +200,7 @@ int nfs41_op_getdevicelist(struct nfs_argop4 *op,
 
 out:
 
-     Mem_Free(res.devids);
+     gsh_free(res.devids);
 
      res_GETDEVICELIST4.gdlr_status = nfs_status;
 #else /* !_PNFS_MDS */
@@ -224,7 +223,7 @@ void nfs41_op_getdevicelist_Free(GETDEVICELIST4res * resp)
 {
 #ifdef _PNFS_MDS
      if (resp->gdlr_status == NFS4_OK) {
-          Mem_Free(resp->GETDEVICELIST4res_u.gdlr_resok4
+          gsh_free(resp->GETDEVICELIST4res_u.gdlr_resok4
                    .gdlr_deviceid_list.gdlr_deviceid_list_val);
      }
 #endif /* _PNFS_MDS */

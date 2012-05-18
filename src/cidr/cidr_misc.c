@@ -5,8 +5,7 @@
 #include "config.h"
 #endif
 
-#include "stuff_alloc.h"
-#include "../include/cidr.h"
+#include "cidr.h"
 
 
 static const char *__libcidr_version = CIDR_VERSION_STR;

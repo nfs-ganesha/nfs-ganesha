@@ -23,7 +23,6 @@
 #include <sys/file.h>           /* for having FNDELAY */
 #include "HashData.h"
 #include "HashTable.h"
-#include "stuff_alloc.h"
 #include "log.h"
 #include "ganesha_rpc.h"
 #include "nfs23.h"

@@ -42,7 +42,7 @@
 #include <pthread.h>
 
 
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
 #include "LRU_List.h"
 #include "HashData.h"
 #include "HashTable.h"
@@ -429,22 +429,15 @@ static const int NLM_THREAD_INDEX = 0x40000000; /*< Index at or above which a
 
 struct cache_inode_client_t
 {
-  struct prealloc_pool pool_entry; /*< Worker's preallocad cache
-                                       entries pool */
-  struct prealloc_pool pool_entry_symlink; /*< Pool for SYMLINK data */
-  struct prealloc_pool pool_dir_entry; /*< Worker's preallocated cache
-                                           dir entry pool */
-  struct prealloc_pool pool_key; /*< Pool for building hash's keys */
-  struct prealloc_pool pool_state_v4; /*< Pool for NFSv4 files's states */
-  struct prealloc_pool pool_state_owner;/*< Pool for NFSv4 files's
-                                            open owner */
-  struct prealloc_pool pool_nfs4_owner_name; /*< Pool for NFSv4
-                                                 files's open_owner  */
+  pool_t *pool_entry; /*< Worker's preallocad cache entries pool */
+  pool_t *pool_entry_symlink; /*< Pool for SYMLINK data */
+  pool_t *pool_dir_entry; /*< Worker's preallocated cache dir entry pool */
+  pool_t *pool_state_v4; /*< Pool for NFSv4 files's states */
+  pool_t *pool_state_owner;/*< Pool for NFSv4 files's open owner */
+  pool_t *pool_nfs4_owner_name; /*< Pool for NFSv4 files's open_owner */
 #ifdef _USE_NFS4_1
-  struct prealloc_pool pool_session; /*< Pool for NFSv4.1 session */
+  pool_t *pool_session; /*< Pool for NFSv4.1 session */
 #endif /* _USE_NFS4_1 */
-  uint32_t nb_prealloc; /*< Size of the preallocated cache_entry pool */
-  uint32_t nb_pre_state_v4; /*< Number of preallocated NFSv4 File States */
   fsal_attrib_mask_t attrmask; /*< Mask of the supported attributes
                                    for the underlying FSAL */
   cache_inode_expire_type_t
@@ -639,7 +632,7 @@ const char *cache_inode_err_str(cache_inode_status_t err);
 cache_inode_status_t cache_inode_clean_entry(cache_entry_t *pentry);
 int cache_inode_compare_key_fsal(hash_buffer_t *buff1, hash_buffer_t *buff2);
 void cache_inode_release_symlink(cache_entry_t * pentry,
-                                 struct prealloc_pool *pool);
+                                 pool_t *pool);
 
 hash_table_t *cache_inode_init(cache_inode_parameter_t param,
                                cache_inode_status_t * pstatus);

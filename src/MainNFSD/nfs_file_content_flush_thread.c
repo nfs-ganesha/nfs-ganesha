@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -86,9 +85,6 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
   fsal_status_t fsal_status;
   char cache_sub_dir[MAXPATHLEN];
   cache_content_status_t content_status;
-#ifndef _NO_BUDDY_SYSTEM
-  int rc = 0;
-#endif
   nfs_flush_thread_data_t *p_flush_data = NULL;
   exportlist_t *pexport;
   char function_name[MAXNAMLEN];
@@ -106,19 +102,6 @@ void *nfs_file_content_flush_thread(void *flush_data_arg)
   LogDebug(COMPONENT_MAIN,
            "NFS DATACACHE FLUSHER THREAD #%u : Starting",
            p_flush_data->thread_index);
-
-#ifndef _NO_BUDDY_SYSTEM
-  if((rc = BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_MAIN,
-               "NFS DATACACHE FLUSHER THREAD #%u : Memory manager could not be initialized",
-               p_flush_data->thread_index);
-    }
-  LogInfo(COMPONENT_MAIN,
-          "NFS DATACACHE FLUSHER THREAD #%u : Memory manager successfully initialized",
-          p_flush_data->thread_index);
-#endif
 
   /* Initialisation of credential for current thread */
   LogInfo(COMPONENT_MAIN,

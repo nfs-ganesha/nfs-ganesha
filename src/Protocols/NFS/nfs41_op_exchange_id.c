@@ -50,7 +50,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -206,7 +205,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
                 }
 
               if(nfs_client_id_set(clientid, nfs_clientid,
-                                   &pworker->clientid_pool) !=
+                                   pworker->clientid_pool) !=
                  CLIENT_ID_SUCCESS)
                 {
                   res_EXCHANGE_ID4.eir_status = NFS4ERR_SERVERFAULT;
@@ -295,7 +294,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
       so_major_id_len = strlen(nfs_clientid.server_owner);
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
-      so_major_id_val = Mem_Alloc(strlen(nfs_clientid.server_owner));
+      so_major_id_val = gsh_malloc(strlen(nfs_clientid.server_owner));
   memcpy(res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
          so_major_id_val, nfs_clientid.server_owner, strlen(nfs_clientid.server_owner));
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_minor_id = 0;
@@ -303,7 +302,7 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_len =
       strlen(nfs_clientid.server_scope);
   res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_val =
-      Mem_Alloc(strlen(nfs_clientid.server_scope));
+      gsh_malloc(strlen(nfs_clientid.server_scope));
   memcpy(res_EXCHANGE_ID4.EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.
          eir_server_scope_val, nfs_clientid.server_scope,
          strlen(nfs_clientid.server_scope));
@@ -332,8 +331,8 @@ int nfs41_op_exchange_id(struct nfs_argop4 *op,
  */
 void nfs41_op_exchange_id_Free(EXCHANGE_ID4res * resp)
 {
-  Mem_Free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_val);
-  Mem_Free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
+  gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.eir_server_scope_val);
+  gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.so_major_id.
            so_major_id_val);
   return;
 }                               /* nfs41_op_exchange_id_Free */

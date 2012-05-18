@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -43,9 +43,6 @@
 #include "mfsl_types.h"
 #include "mfsl.h"
 #include "common_utils.h"
-#include "stuff_alloc.h"
-
-#ifndef _USE_SWIG
 
 extern mfsl_parameter_t mfsl_param;
 extern fsal_handle_t dir_handle_precreate;
@@ -185,9 +182,9 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
 
   P(p_mfsl_context->lock);
 
-  GetFromPool(pasyncopdesc, &p_mfsl_context->pool_async_op, mfsl_async_op_desc_t);
+  pasyncopdesc = pool_alloc(p_mfsl_context->pool_async_op, NULL);
 
-  GetFromPool(newdir_pasyncdata, &p_mfsl_context->pool_spec_data, mfsl_object_specific_data_t);
+  newdir_pasyncdata = pool_alloc(p_mfsl_context->pool_spec_data, NULL);
 
   V(p_mfsl_context->lock);
 
@@ -203,7 +200,7 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
 
   /* Now get a pre-allocated directory from the synclet data */
   P(p_mfsl_context->lock);
-  GetFromPool(pprecreated, &p_mfsl_context->pool_dirs, mfsl_precreated_object_t);
+  pprecreated = pool_alloc(p_mfsl_context->pool_dirs, NULL);
   V(p_mfsl_context->lock);
 
   pnewdir_handle = &(pprecreated->mobject);
@@ -265,5 +262,3 @@ fsal_status_t MFSL_mkdir(mfsl_object_t * parent_directory_handle,       /* IN */
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
 }                               /* MFSL_mkdir */
-
-#endif                          /* ! _USE_SWIG */

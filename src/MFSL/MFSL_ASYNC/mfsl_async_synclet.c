@@ -39,9 +39,6 @@
 #include "mfsl.h"
 #include "common_utils.h"
 #include "LRU_List.h"
-#include "stuff_alloc.h"
-
-#ifndef _USE_SWIG
 
 pthread_t mfsl_async_atd_thrid;
 pthread_t *mfsl_async_synclet_thrid;
@@ -123,7 +120,7 @@ fsal_status_t mfsl_async_process_async_op(mfsl_async_op_desc_t * pasyncopdesc)
   pmfsl_context = (mfsl_context_t *) pasyncopdesc->ptr_mfsl_context;
 
   P(pmfsl_context->lock);
-  ReleaseToPool(pasyncopdesc, &pmfsl_context->pool_async_op);
+  pool_free(pmfsl_context->pool_async_op, pasyncopdesc);
   V(pmfsl_context->lock);
 
   /* Regular exit */
@@ -195,16 +192,6 @@ void *mfsl_async_synclet_refresher_thread(void *Arg)
 
   SetNameFunction("MFSL_ASYNC Context refresher");
 
-#ifndef _NO_BUDDY_SYSTEM
-  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogMajor(COMPONENT_MFSL,"Memory manager could not be initialized, exiting...");
-      exit(1);
-    }
-  LogEvent(COMPONENT_MFSL, "Memory manager successfully initialized");
-#endif
-
   /* Init FSAL root fsal_op_context */
   if(FSAL_IS_ERROR(FSAL_BuildExportContext(&fsal_export_context, NULL, NULL)))
     {
@@ -256,16 +243,6 @@ void *mfsl_async_synclet_thread(void *Arg)
   index = (long)Arg;
   sprintf(namestr, "MFSL_ASYNC Synclet #%ld", index);
   SetNameFunction(namestr);
-
-#ifndef _NO_BUDDY_SYSTEM
-  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogMajor(COMPONENT_MFSL,"Memory manager could not be initialized, exiting...");
-      exit(1);
-    }
-  LogEvent(COMPONENT_MFSL, "Memory manager successfully initialized");
-#endif
 
   /* Init FSAL root fsal_op_context */
   if(FSAL_IS_ERROR(FSAL_BuildExportContext(&fsal_export_context, NULL, NULL)))
@@ -419,16 +396,6 @@ void *mfsl_async_asynchronous_dispatcher_thread(void *Arg)
   mfsl_async_op_desc_t *pasyncopdesc = NULL;
   SetNameFunction("MFSL_ASYNC ADT");
 
-#ifndef _NO_BUDDY_SYSTEM
-  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogMajor(COMPONENT_MFSL,"Memory manager could not be initialized, exiting...");
-      exit(1);
-    }
-  LogEvent(COMPONENT_MFSL, "Memory manager successfully initialized");
-#endif
-
   /* Structure initialisation */
   if((async_op_lru = LRU_Init(mfsl_param.lru_param, &lru_status)) == NULL)
     {
@@ -529,5 +496,3 @@ void *mfsl_async_asynchronous_dispatcher_thread(void *Arg)
   /* Should never occur (neverending loop) */
   return NULL;
 }                               /* mfsl_async_asynchronous_dispatcher_thread */
-
-#endif                          /* ! _USE_SWIG */

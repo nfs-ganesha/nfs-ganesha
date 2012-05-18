@@ -19,7 +19,6 @@
 #include "fsal_internal.h"
 #include "FSAL/access_check.h"
 #include "fsal_convert.h"
-#include "stuff_alloc.h"
 #include <string.h>
 
 /**

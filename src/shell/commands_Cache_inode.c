@@ -42,7 +42,7 @@
 #include "LRU_List.h"
 #include "err_fsal.h"
 #include "err_cache_inode.h"
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
 #include "cmd_tools.h"
 #include "commands.h"
 #include "Getopt.h"
@@ -154,8 +154,8 @@ static cmdCacheInode_thr_info_t *GetCacheInodeContext()
     {
 
       /* allocates thread structure */
-      p_current_thread_vars =
-          (cmdCacheInode_thr_info_t *) Mem_Alloc(sizeof(cmdCacheInode_thr_info_t));
+      p_current_thread_vars
+           = gsh_malloc(sizeof(cmdCacheInode_thr_info_t));
 
       /* panic !!! */
       if(p_current_thread_vars == NULL)
@@ -3867,7 +3867,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
   /* Now all arguments have been parsed, let's act ! */
 
   /* alloc a buffer */
-  p_read_buff = Mem_Alloc(block_size);
+  p_read_buff = gsh_malloc(block_size);
 
   if(p_read_buff == NULL)
     {
@@ -3965,7 +3965,7 @@ int fn_Cache_inode_read(int argc,       /* IN : number of args in argv */
       fprintf(output, "Bandwidth: %f MB/s\n", bandwidth);
 
     }
-  Mem_Free(p_read_buff);
+  gsh_free(p_read_buff);
 
   return 0;
 }                               /* fn_Cache_inode_read */
@@ -4291,7 +4291,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
           return EINVAL;
         }
 
-      databuff = Mem_Alloc(datasize + 1);
+      databuff = gsh_malloc(datasize + 1);
 
       if(databuff == NULL)
         {
@@ -4310,7 +4310,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
           /* if it is not odd: error */
           fprintf(output, "write: error: \"%s\" in not a valid hexa format.\n", str_hexa);
 
-          Mem_Free(str_hexa);
+          gsh_malloc(str_hexa);
 
           return EINVAL;
         }
@@ -4403,7 +4403,7 @@ int fn_Cache_inode_write(int argc,      /* IN : number of args in argv */
     }
 
   if(flag_X)
-    Mem_Free(databuff);
+    gsh_free(databuff);
 
   return 0;
 }                               /* fn_Cache_inode_write */

@@ -48,7 +48,6 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "cache_inode.h"
-#include "stuff_alloc.h"
 #include "nfs_core.h"
 
 #include <unistd.h>
@@ -192,7 +191,7 @@ cache_inode_commit(cache_entry_t *entry,
                if (status != CACHE_INODE_SUCCESS) {
                     goto out;
                }
-               Mem_Free(udata->buffer);
+               gsh_free(udata->buffer);
                udata->buffer = NULL;
           } else {
                if (offset < udata->offset) {

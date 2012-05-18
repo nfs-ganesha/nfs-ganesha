@@ -42,7 +42,6 @@
 #include <pthread.h>
 #include <assert.h>
 #include <arpa/inet.h>
-#include "stuff_alloc.h"
 #include "nlm_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
@@ -66,7 +65,7 @@
  *
  */
 
-static struct prealloc_pool rpc_call_pool;
+static pool_t *rpc_call_pool;
 
 /* tried to re-use host_name in nfs_main.c, but linker became confused.
  * this is a quick fix */
@@ -101,12 +100,11 @@ void nfs_rpc_cb_pkginit(void)
     char localmachine[MAXHOSTNAMELEN];
 
     /* Create a pool of rpc_call_t */
-    MakePool(&rpc_call_pool,
-             nfs_param.worker_param.nb_pending_prealloc, /* XXX */
-             rpc_call_t, nfs_rpc_init_call, NULL);
-    NamePool(&rpc_call_pool, "RPC Call Pool");
-               
-    if(!IsPoolPreallocated(&rpc_call_pool)) {
+    rpc_call_pool = pool_init("RPC Call Pool",
+                              sizeof(rpc_call_t),
+                              nfs_rpc_init_call,
+                              NULL);
+    if(!(rpc_call_pool)) {
         LogCrit(COMPONENT_INIT,
                 "Error while allocating rpc call pool");
         LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
@@ -638,19 +636,19 @@ unlock:
 
 static inline void free_argop(nfs_cb_argop4 *op)
 {
-    Mem_Free(op);
+    gsh_free(op);
 }
 
 static inline void free_resop(nfs_cb_resop4 *op)
 {
-    Mem_Free(op);
+    gsh_free(op);
 }
 
 rpc_call_t *alloc_rpc_call()
 {
     rpc_call_t *call;
 
-    GetFromPool(call, &rpc_call_pool, rpc_call_t);
+    call = pool_alloc(rpc_call_pool, NULL);
 
     return (call);
 }
@@ -659,7 +657,7 @@ void free_rpc_call(rpc_call_t *call)
 {
     free_argop(call->cbt.v_u.v4.args.argarray.argarray_val);
     free_resop(call->cbt.v_u.v4.res.resarray.resarray_val);
-    ReleaseToPool(call, &rpc_call_pool);
+    pool_free(rpc_call_pool, call);
 }
 
 static inline void RPC_CALL_HOOK(rpc_call_t *call, rpc_call_hook hook,

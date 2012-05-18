@@ -48,7 +48,6 @@
 #endif
 #include <dirent.h>             /* for having MAXNAMLEN */
 #include <netdb.h>              /* for having MAXHOSTNAMELEN */
-#include "stuff_alloc.h"
 #include "HashData.h"
 #include "HashTable.h"
 #include "nfs23.h"
@@ -379,7 +378,7 @@ int nfs_export_check_access(sockaddr_t *hostaddr,
                             unsigned int nfs_prog,
                             unsigned int mnt_prog,
                             hash_table_t * ht_ip_stats,
-                            struct prealloc_pool *ip_stats_pool,
+                            pool_t *ip_stats_pool,
                             exportlist_client_entry_t * pclient_found,
                             struct user_cred *user_credentials,
                             bool_t proc_makes_write);

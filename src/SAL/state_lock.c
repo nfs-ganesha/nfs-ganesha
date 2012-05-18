@@ -57,7 +57,6 @@
 #include "nfs_core.h"
 #include "nfs4.h"
 #include "sal_functions.h"
-#include "stuff_alloc.h"
 #ifdef _USE_NLM
 #include "nlm_util.h"
 #endif
@@ -77,11 +76,6 @@
  * parallel cancel/unlock won't endup freeing the datastructure. The last
  * release on the data structure ensure that it is freed.
  */
-
-#ifdef _DEBUG_MEMLEAKS
-static struct glist_head state_all_locks;
-pthread_mutex_t all_locks_mutex = PTHREAD_MUTEX_INITIALIZER;
-#endif
 
 #ifdef _USE_BLOCKING_LOCKS
 
@@ -132,9 +126,6 @@ state_status_t state_lock_init(state_status_t * pstatus)
       *pstatus = STATE_INIT_ENTRY_FAILED;
       return *pstatus;
     }
-#endif
-#ifdef _DEBUG_MEMLEAKS
-  init_glist(&state_all_locks);
 #endif
 
 #ifdef _USE_BLOCKING_LOCKS
@@ -398,25 +389,7 @@ void LogLockDesc(log_components_t     component,
 
 void dump_all_locks(const char * label)
 {
-#ifdef _DEBUG_MEMLEAKS
-  struct glist_head *glist;
-
-  P(all_locks_mutex);
-
-  if(glist_empty(&state_all_locks))
-    {
-      LogFullDebug(COMPONENT_STATE, "All Locks are freed");
-      V(all_locks_mutex);
-      return;
-    }
-
-  glist_for_each(glist, &state_all_locks)
-    LogEntry(label, glist_entry(glist, state_lock_entry_t, sle_all_locks));
-
-  V(all_locks_mutex);
-#else
   return;
-#endif
 }
 
 /******************************************************************************
@@ -434,8 +407,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
 {
   state_lock_entry_t *new_entry;
 
-  new_entry = (state_lock_entry_t *) Mem_Alloc_Label(sizeof(*new_entry),
-                                                     "state_lock_entry_t");
+  new_entry = gsh_malloc(sizeof(*new_entry));
   if(!new_entry)
       return NULL;
 
@@ -446,7 +418,7 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
 
   if(pthread_mutex_init(&new_entry->sle_mutex, NULL) == -1)
     {
-      Mem_Free(new_entry);
+      gsh_free(new_entry);
       return NULL;
     }
 
@@ -489,14 +461,6 @@ static state_lock_entry_t *create_state_lock_entry(cache_entry_t      * pentry,
   glist_add_tail(&powner->so_lock_list, &new_entry->sle_owner_locks);
 
   inc_state_owner_ref_locked(powner);
-
-#ifdef _DEBUG_MEMLEAKS
-  P(all_locks_mutex);
-
-  glist_add_tail(&state_all_locks, &new_entry->sle_all_locks);
-
-  V(all_locks_mutex);
-#endif
 
   return new_entry;
 }
@@ -551,18 +515,12 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
       if(lock_entry->sle_block_data != NULL)
         {
           memset(lock_entry->sle_block_data, 0, sizeof(*(lock_entry->sle_block_data)));
-          Mem_Free(lock_entry->sle_block_data);
+          gsh_free(lock_entry->sle_block_data);
         }
 #endif
 
-#ifdef _DEBUG_MEMLEAKS
-      P(all_locks_mutex);
-      glist_del(&lock_entry->sle_all_locks);
-      V(all_locks_mutex);
-#endif
-
       memset(lock_entry, 0, sizeof(*lock_entry));
-      Mem_Free(lock_entry);
+      gsh_free(lock_entry);
     }
 }
 
@@ -1128,8 +1086,8 @@ void free_cookie(state_cookie_entry_t * p_cookie_entry,
   memset(pcookie, 0, p_cookie_entry->sce_cookie_size);
   memset(p_cookie_entry, 0, sizeof(*p_cookie_entry));
 
-  Mem_Free(pcookie);
-  Mem_Free(p_cookie_entry);
+  gsh_free(pcookie);
+  gsh_free(p_cookie_entry);
 }
 
 state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
@@ -1157,7 +1115,7 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
   if(isFullDebug(COMPONENT_STATE))
     display_lock_cookie(pcookie, cookie_size, str);
 
-  hash_entry = (state_cookie_entry_t *) Mem_Alloc(sizeof(*hash_entry));
+  hash_entry = gsh_malloc(sizeof(*hash_entry));
   if(hash_entry == NULL)
     {
       LogFullDebug(COMPONENT_STATE,
@@ -1169,13 +1127,13 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
 
   memset(hash_entry, 0, sizeof(*hash_entry));
 
-  buffkey.pdata = (caddr_t) Mem_Alloc(cookie_size);
+  buffkey.pdata = gsh_malloc(cookie_size);
   if(buffkey.pdata == NULL)
     {
       LogFullDebug(COMPONENT_STATE,
                    "KEY {%s} NO MEMORY",
                    str);
-      Mem_Free(hash_entry);
+      gsh_free(hash_entry);
       *pstatus = STATE_MALLOC_ERROR;
       return *pstatus;
     }
@@ -1198,7 +1156,7 @@ state_status_t state_add_grant_cookie(cache_entry_t         * pentry,
      (ht_lock_cookies, &buffkey, &buffval,
       HASHTABLE_SET_HOW_SET_NO_OVERWRITE) != HASHTABLE_SUCCESS)
     {
-      Mem_Free(hash_entry);
+      gsh_free(hash_entry);
       LogFullDebug(COMPONENT_STATE,
                    "Lock Cookie {%s} HASH TABLE ERROR",
                    str);
@@ -1394,7 +1352,7 @@ void grant_blocked_lock_immediate(cache_entry_t         * pentry,
         {
           /* We have block data but no cookie, so we can just free the block data */
           memset(lock_entry->sle_block_data, 0, sizeof(*lock_entry->sle_block_data));
-          Mem_Free(lock_entry->sle_block_data);
+          gsh_free(lock_entry->sle_block_data);
           lock_entry->sle_block_data = NULL;
         }
     }

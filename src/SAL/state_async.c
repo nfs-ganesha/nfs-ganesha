@@ -64,9 +64,6 @@ nfs_tcb_t                      state_async_tcb;
 /* Execute a func from the async queue */
 void *state_async_thread(void *UnusedArg)
 {
-#ifndef _NO_BUDDY_SYSTEM
-  int rc;
-#endif
   state_async_queue_t * entry;
   struct timeval        now;
   struct timespec       timeout;
@@ -74,16 +71,6 @@ void *state_async_thread(void *UnusedArg)
 
   SetNameFunction("state_async_thread");
 
-#ifndef _NO_BUDDY_SYSTEM
-  if((rc = BuddyInit(NULL)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_STATE,
-               "State Async Thread: Memory manager could not be initialized");
-    }
-  LogInfo(COMPONENT_STATE,
-          "State Async Thread: Memory manager successfully initialized");
-#endif
   if(mark_thread_existing(&state_async_tcb) == PAUSE_EXIT)
     {
       /* Oops, that didn't last long... exit. */

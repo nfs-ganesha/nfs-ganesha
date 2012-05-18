@@ -10,16 +10,16 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * ---------------------------------------
  */
 
@@ -100,10 +100,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "LRU_List.h"
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
 #include "log.h"
 
-#ifndef TRUE /* XXX need base header for such defines (curr. BuddyMalloc.h) */
+#ifndef TRUE
 #define TRUE 1
 #endif
 
@@ -142,7 +142,7 @@ LRU_list_t *LRU_Init(LRU_parameter_t lru_param, LRU_status_t * pstatus)
     name = lru_param.lp_name;
 
   /* Sanity check */
-  if((plru = (LRU_list_t *) Mem_Alloc(sizeof(LRU_list_t))) == NULL)
+  if((plru = gsh_malloc(sizeof(LRU_list_t))) == NULL)
     {
       *pstatus = LRU_LIST_MALLOC_ERROR;
       return NULL;
@@ -155,9 +155,8 @@ LRU_list_t *LRU_Init(LRU_parameter_t lru_param, LRU_status_t * pstatus)
   plru->parameter = lru_param;
 
   /* Pre allocate entries */
-  MakePool(&plru->lru_entry_pool, lru_param.nb_entry_prealloc, LRU_entry_t, NULL, NULL);
-  NamePool(&plru->lru_entry_pool, "%s LRU Entry Pool", name);
-  if(!IsPoolPreallocated(&plru->lru_entry_pool))
+  plru->lru_entry_pool = pool_init("LRU Entry Pool", sizeof(LRU_entry_t), NULL, NULL);
+  if(!(plru->lru_entry_pool))
     {
       *pstatus = LRU_LIST_MALLOC_ERROR;
       return NULL;
@@ -213,7 +212,7 @@ LRU_entry_t *LRU_new_entry(LRU_list_t * plru, LRU_status_t * pstatus)
            "==> LRU_new_entry: nb_entry = %d nb_entry_prealloc = %d",
            plru->nb_entry, plru->parameter.nb_entry_prealloc);
 
-  GetFromPool(new_entry, &plru->lru_entry_pool, LRU_entry_t);
+  new_entry = pool_alloc(plru->lru_entry_pool, NULL);
   if(new_entry == NULL)
     {
       *pstatus = LRU_LIST_MALLOC_ERROR;
@@ -264,7 +263,7 @@ static inline void _LRU_remove_entry(LRU_list_t * plru, LRU_entry_t * const pent
     }
     plru->nb_entry --;
     /* Put it back to pre-allocated pool */
-    ReleaseToPool(pentry, &plru->lru_entry_pool);
+    pool_free(plru->lru_entry_pool, pentry);
 }
 
 /**

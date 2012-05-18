@@ -18,7 +18,7 @@
 #include "fsal.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
-#include "stuff_alloc.h"
+#include "abstract_mem.h"
 #include <string.h>
 #include <fcntl.h>
 
@@ -204,14 +204,14 @@ fsal_status_t XFSFSAL_rcp(fsal_handle_t * filehandle,        /* IN */
 
   /* Allocates buffer */
 
-  IObuffer = (caddr_t) Mem_Alloc(RCP_BUFFER_SIZE);
+  IObuffer = gsh_malloc(RCP_BUFFER_SIZE);
 
   if(IObuffer == NULL)
     {
       /* clean & return */
       close(local_fd);
       XFSFSAL_close(&fs_fd);
-      Return(ERR_FSAL_NOMEM, Mem_Errno, INDEX_FSAL_rcp);
+      Return(ERR_FSAL_NOMEM, ENOMEM, INDEX_FSAL_rcp);
     }
 
   /* read/write loop */
@@ -292,7 +292,7 @@ fsal_status_t XFSFSAL_rcp(fsal_handle_t * filehandle,        /* IN */
 
   /* Clean */
 
-  Mem_Free(IObuffer);
+  gsh_free(IObuffer);
   close(local_fd);
   XFSFSAL_close(&fs_fd);
 

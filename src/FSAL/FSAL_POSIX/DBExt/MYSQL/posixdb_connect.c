@@ -5,10 +5,10 @@
 #include "config.h"
 #endif
 #include "posixdb_internal.h"
-#include "stuff_alloc.h"
 
 #include <ctype.h>
 #include <string.h>
+#include "abstract_mem.h"
 
 /* forward declaration of function */
 fsal_posixdb_status_t fsal_posixdb_initPreparedQueries(fsal_posixdb_conn * p_conn);
@@ -71,7 +71,7 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
   else
     port = 0;
 
-  *p_conn = (fsal_posixdb_conn *) Mem_Alloc(sizeof(fsal_posixdb_conn));
+  *p_conn = gsh_malloc(sizeof(fsal_posixdb_conn));
   if(*p_conn == NULL)
     {
       LogCrit(COMPONENT_FSAL, "ERROR: failed to allocate memory");
@@ -81,7 +81,7 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
   /* Init client structure */
   if(mysql_init(&(*p_conn)->db_conn) == NULL)
     {
-      Mem_Free(*p_conn);
+      gsh_free(*p_conn);
       LogCrit(COMPONENT_FSAL, "ERROR: failed to create MySQL client struct");
       ReturnCodeDB(ERR_FSAL_POSIXDB_BADCONN, errno);
     }
@@ -101,7 +101,7 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
       LogCrit(COMPONENT_FSAL, "Failed to connect to MySQL server: Error: %s",
                  mysql_error(&(*p_conn)->db_conn));
       rc = mysql_errno(&(*p_conn)->db_conn);
-      Mem_Free(*p_conn);
+      gsh_free(*p_conn);
       ReturnCodeDB(ERR_FSAL_POSIXDB_BADCONN, rc);
     }
 
@@ -126,7 +126,7 @@ fsal_posixdb_status_t fsal_posixdb_connect(fsal_posixdb_conn_params_t * dbparams
 fsal_posixdb_status_t fsal_posixdb_disconnect(fsal_posixdb_conn * p_conn)
 {
   mysql_close(&p_conn->db_conn);
-  Mem_Free(p_conn);
+  gsh_free(p_conn);
   ReturnCodeDB(ERR_FSAL_POSIXDB_NOERR, 0);
 }
 

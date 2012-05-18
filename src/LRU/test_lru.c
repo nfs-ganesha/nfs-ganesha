@@ -60,7 +60,6 @@
 #include <stdlib.h>
 #include <strings.h>
 #include <string.h>
-#include "BuddyMalloc.h"
 #include "LRU_List.h"
 #include "log.h"
 
@@ -95,8 +94,6 @@ int main(int argc, char *argv[])
   param.entry_to_str = print_entry;
   param.clean_entry = clean_entry;
   param.lp_name = "Test";
-
-  BuddyInit(NULL);
 
   if((plru = LRU_Init(param, &status)) == NULL)
     {

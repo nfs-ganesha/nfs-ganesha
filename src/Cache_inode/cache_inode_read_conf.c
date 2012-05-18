@@ -48,7 +48,6 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
-#include "stuff_alloc.h"
 #include "config_parsing.h"
 
 #include <unistd.h>
@@ -131,10 +130,6 @@ cache_inode_status_t cache_inode_read_conf_hash_parameter(config_file_t in_confi
       else if(!strcasecmp(key_name, "Alphabet_Length"))
         {
           pparam->hparam.alphabet_length = atoi(key_value);
-        }
-      else if(!strcasecmp(key_name, "Prealloc_Node_Pool_Size"))
-        {
-          pparam->hparam.nb_node_prealloc = atoi(key_value);
         }
       else
         {
@@ -473,8 +468,6 @@ void cache_inode_print_conf_hash_parameter(FILE * output, cache_inode_parameter_
           param.hparam.index_size);
   fprintf(output, "CacheInode Hash: Alphabet_Length         = %d\n",
           param.hparam.alphabet_length);
-  fprintf(output, "CacheInode Hash: Prealloc_Node_Pool_Size = %zd\n",
-          param.hparam.nb_node_prealloc);
 }                               /* cache_inode_print_conf_hash_parameter */
 
 /**

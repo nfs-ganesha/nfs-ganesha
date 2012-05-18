@@ -51,7 +51,6 @@
 #include "HashData.h"
 #include "HashTable.h"
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -253,8 +252,7 @@ nfs3_Readdirplus(nfs_arg_t *arg,
           .resok.reply
 
      /* Allocate space for entries */
-     cb_opaque.entries = (entryplus3 *) Mem_Calloc(estimated_num_entries,
-                                                   sizeof(entryplus3));
+     cb_opaque.entries = gsh_calloc(estimated_num_entries, sizeof(entryplus3));
      if (cb_opaque.entries == NULL) {
           rc = NFS_REQ_DROP;
           goto out;
@@ -464,7 +462,7 @@ nfs3_readdirplus_callback(void* opaque,
                        handle,
                        &id_descriptor);
 
-     ep3->name = Mem_Alloc(namelen + 1);
+     ep3->name = gsh_malloc(namelen + 1);
      if (ep3->name == NULL) {
           tracker->error = NFS3ERR_IO;
           return FALSE;
@@ -476,10 +474,11 @@ nfs3_readdirplus_callback(void* opaque,
      tracker->mem_left -= sizeof(ep3->cookie) + ((namelen + 3) & ~3) + 4;
 
      ep3->name_handle.handle_follows = TRUE;
-     ep3->name_handle.post_op_fh3_u.handle.data.data_val = Mem_Alloc(NFS3_FHSIZE);
+     ep3->name_handle.post_op_fh3_u.handle.data.data_val
+          = gsh_malloc(NFS3_FHSIZE);
      if (ep3->name_handle.post_op_fh3_u .handle.data.data_val == NULL) {
           tracker->error = NFS3ERR_SERVERFAULT;
-          Mem_Free(ep3->name);
+          gsh_free(ep3->name);
           return FALSE;
      }
 
@@ -487,8 +486,8 @@ nfs3_readdirplus_callback(void* opaque,
                             handle,
                             tracker->export) == 0) {
           tracker->error = NFS3ERR_BADHANDLE;
-          Mem_Free(ep3->name);
-          Mem_Free(ep3->name_handle.post_op_fh3_u.handle.data.data_val);
+          gsh_free(ep3->name);
+          gsh_free(ep3->name_handle.post_op_fh3_u.handle.data.data_val);
           return FALSE;
      }
 
@@ -528,10 +527,10 @@ free_entryplus3s(entryplus3 *entryplus3s)
      for (entry = entryplus3s;
           entry != NULL;
           entry = entry->nextentry) {
-          Mem_Free(entry->name);
-          Mem_Free(entry->name_handle.post_op_fh3_u.handle.data.data_val);
+          gsh_free(entry->name);
+          gsh_free(entry->name_handle.post_op_fh3_u.handle.data.data_val);
      }
-     Mem_Free(entryplus3s);
+     gsh_free(entryplus3s);
 
      return;
 } /* free_entryplus3s */

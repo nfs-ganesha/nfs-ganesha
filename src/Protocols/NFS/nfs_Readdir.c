@@ -49,7 +49,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -250,8 +249,8 @@ nfs_Readdir(nfs_arg_t *arg,
                goto out;
           }
 
-          cb2.entries = (entry2 *) Mem_Calloc(estimated_num_entries,
-                                              sizeof(entry2));
+          cb2.entries = gsh_calloc(estimated_num_entries,
+                                   sizeof(entry2));
           if (cb2.entries == NULL) {
                rc = NFS_REQ_DROP;
                goto out;
@@ -306,8 +305,8 @@ nfs_Readdir(nfs_arg_t *arg,
                }
           }
 
-          cb3.entries = (entry3 *) Mem_Calloc(estimated_num_entries,
-                                              sizeof(entry3));
+          cb3.entries = gsh_calloc(estimated_num_entries,
+                                   sizeof(entry3));
           if (cb3.entries == NULL) {
                rc = NFS_REQ_DROP;
                goto out;
@@ -556,7 +555,7 @@ nfs2_readdir_callback(void* opaque,
                        FSAL_DIGEST_FILEID2,
                        handle,
                        &id_descriptor);
-     e2->name = Mem_Alloc(namelen + 1);
+     e2->name = gsh_malloc(namelen + 1);
      if (e2->name == NULL) {
           tracker->error = NFSERR_IO;
           return FALSE;
@@ -619,7 +618,7 @@ nfs3_readdir_callback(void* opaque,
                        handle,
                        &id_descriptor);
 
-     e3->name = Mem_Alloc(namelen + 1);
+     e3->name = gsh_malloc(namelen + 1);
      if (e3->name == NULL) {
           tracker->error = NFS3ERR_IO;
           return FALSE;
@@ -652,9 +651,9 @@ free_entry2s(entry2 *entry2s)
      for (entry = entry2s;
           entry != NULL;
           entry = entry->nextentry) {
-          Mem_Free(entry->name);
+          gsh_free(entry->name);
      }
-     Mem_Free(entry2s);
+     gsh_free(entry2s);
 
      return;
 } /* free_entry2s */
@@ -676,9 +675,9 @@ free_entry3s(entry3 *entry3s)
      for (entry = entry3s;
           entry != NULL;
           entry = entry->nextentry) {
-          Mem_Free(entry->name);
+          gsh_free(entry->name);
      }
-     Mem_Free(entry3s);
+     gsh_free(entry3s);
 
      return;
 } /* free_entry3s */

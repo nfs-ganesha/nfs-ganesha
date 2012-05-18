@@ -50,7 +50,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "nfs_proto_functions.h"
@@ -708,10 +707,9 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
       else
         {
           /* Allocation of the structure for reply */
-          entry_name_array =
-              (entry_name_array_item_t *) Mem_Alloc_Label(estimated_num_entries *
-                                                          (FSAL_MAX_NAME_LEN + 1),
-                                                          "entry_name_array in nfs3_Readdir");
+          entry_name_array
+            = gsh_calloc(estimated_num_entries,
+                         (FSAL_MAX_NAME_LEN + 1));
 
           if(entry_name_array == NULL)
             {
@@ -720,12 +718,11 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
             }
 
           pres->res_readdir3.READDIR3res_u.resok.reply.entries =
-              (entry3 *) Mem_Alloc_Label(estimated_num_entries * sizeof(entry3),
-                                         "READDIR3res_u.resok.reply.entries");
+            gsh_calloc(estimated_num_entries, sizeof(entry3));
 
           if(pres->res_readdir3.READDIR3res_u.resok.reply.entries == NULL)
             {
-              Mem_Free((char *)entry_name_array);
+              gsh_free(entry_name_array);
               rc = NFS_REQ_DROP;
               goto out;
             }
@@ -733,13 +730,12 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
           /* Allocation of the file handles */
 
           fh3_array =
-              (fh3_buffer_item_t *) Mem_Alloc_Label(estimated_num_entries * NFS3_FHSIZE,
-                                                    "Filehandle V3 in nfs3_Readdir");
+            gsh_calloc(estimated_num_entries, NFS3_FHSIZE);
 
           if(fh3_array == NULL)
             {
-              Mem_Free((char *)entry_name_array);
-              Mem_Free(pres->res_readdir3.READDIR3res_u.resok.reply.entries);
+              gsh_free(entry_name_array);
+              gsh_free(pres->res_readdir3.READDIR3res_u.resok.reply.entries);
               pres->res_readdir3.READDIR3res_u.resok.reply.entries = NULL;
               rc = NFS_REQ_DROP;
               goto out;
@@ -804,10 +800,12 @@ int nfs3_Readdir_Xattr(nfs_arg_t * parg,
                       /*
                        * Not enough room to make even a single reply
                        */
-                      Mem_Free((char *)entry_name_array);
-                      Mem_Free((char *)fh3_array);
-                      Mem_Free(pres->res_readdir3.READDIR3res_u.resok.reply.entries);
-                      pres->res_readdir3.READDIR3res_u.resok.reply.entries = NULL;
+                      gsh_free(entry_name_array);
+                      gsh_free(fh3_array);
+                      gsh_free(pres->res_readdir3.READDIR3res_u
+                               .resok.reply.entries);
+                      pres->res_readdir3.READDIR3res_u.resok.reply.entries
+                        = NULL;
 
                       pres->res_readdir3.status = NFS3ERR_TOOSMALL;
 
@@ -974,7 +972,7 @@ int nfs3_Create_Xattr(nfs_arg_t * parg,
   /* Set Post Op Fh3 structure */
   if(nfs3_FSALToFhandle(&resok->obj.post_op_fh3_u.handle, pfsal_handle, pexport) == 0)
     {
-      Mem_Free((char *)(resok->obj.post_op_fh3_u.handle.data.data_val));
+      gsh_free(resok->obj.post_op_fh3_u.handle.data.data_val);
       pres->res_create3.status = NFS3ERR_BADHANDLE;
       rc = NFS_REQ_OK;
       goto out;
@@ -1202,13 +1200,11 @@ int nfs3_Read_Xattr(nfs_arg_t * parg,
   size = parg->arg_read3.count;
 
   /* Get the xattr related to this xattr_id */
-  if((data = (char *)Mem_Alloc(XATTR_BUFFERSIZE)) == NULL)
+  if((data = gsh_calloc(1, XATTR_BUFFERSIZE)) == NULL)
     {
       rc = NFS_REQ_DROP;
       goto out;
     }
-  memset(data, 0, XATTR_BUFFERSIZE);
-
   size_returned = size;
   fsal_status = FSAL_GetXAttrValueById(pfsal_handle,
                                        xattr_id,
@@ -1434,9 +1430,8 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
         {
           /* Allocation of the structure for reply */
           entry_name_array =
-              (entry_name_array_item_t *) Mem_Alloc_Label(estimated_num_entries *
-                                                         (FSAL_MAX_NAME_LEN + 1),
-                                                         "entry_name_array in nfs3_Readdirplus");
+            gsh_calloc(estimated_num_entries,
+                       (FSAL_MAX_NAME_LEN + 1));
 
           if(entry_name_array == NULL)
             {
@@ -1445,26 +1440,26 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
             }
 
           pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries =
-              (entryplus3 *) Mem_Alloc_Label(estimated_num_entries * sizeof(entryplus3),
-                                             "READDIRPLUS3res_u.resok.reply.entries");
+            gsh_calloc(estimated_num_entries, sizeof(entryplus3));
 
-          if(pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries == NULL)
+          if(pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries
+             == NULL)
             {
-              Mem_Free((char *)entry_name_array);
+              gsh_free(entry_name_array);
               rc = NFS_REQ_DROP;
               goto out;
             }
 
           /* Allocation of the file handles */
-          fh3_array =
-              (fh3_buffer_item_t *) Mem_Alloc_Label(estimated_num_entries * NFS3_FHSIZE,
-                                                    "Filehandle V3 in nfs3_Readdirplus");
+          fh3_array = gsh_calloc(estimated_num_entries, NFS3_FHSIZE);
 
           if(fh3_array == NULL)
             {
-              Mem_Free((char *)entry_name_array);
-              Mem_Free(pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries);
-              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries = NULL;
+              gsh_free(entry_name_array);
+              gsh_free(pres->res_readdirplus3.READDIRPLUS3res_u
+                       .resok.reply.entries);
+              pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries
+                = NULL;
 
               rc = NFS_REQ_DROP;
               goto out;
@@ -1569,11 +1564,12 @@ int nfs3_Readdirplus_Xattr(nfs_arg_t * parg,
                       /*
                        * Not enough room to make even a single reply
                        */
-                      Mem_Free((char *)entry_name_array);
-                      Mem_Free((char *)fh3_array);
-                      Mem_Free(pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.
-                               entries);
-                      pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries = NULL;
+                      gsh_free(entry_name_array);
+                      gsh_free(fh3_array);
+                      gsh_free(pres->res_readdirplus3.READDIRPLUS3res_u
+                               .resok.reply.entries);
+                      pres->res_readdirplus3.READDIRPLUS3res_u.resok.reply
+                           .entries = NULL;
 
                       pres->res_readdirplus3.status = NFS3ERR_TOOSMALL;
 

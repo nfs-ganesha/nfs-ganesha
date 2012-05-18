@@ -59,7 +59,7 @@ typedef struct fsal_up_event_bus_parameter_t_
 typedef struct fsal_up_event_bus_context_t_
 {
   fsal_export_context_t FS_export_context;
-  struct prealloc_pool *event_pool;
+  pool_t *event_pool;
   pthread_mutex_t *event_pool_lock;
 } fsal_up_event_bus_context_t;
 

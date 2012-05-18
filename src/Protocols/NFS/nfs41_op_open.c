@@ -49,7 +49,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -521,12 +520,12 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
                   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 3;
                   if((res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val =
-                      (uint32_t *) Mem_Alloc(res_OPEN4.OPEN4res_u.resok4.attrset.
-                                             bitmap4_len * sizeof(uint32_t))) == NULL)
+                      gsh_calloc(res_OPEN4.OPEN4res_u.resok4.attrset.
+                                 bitmap4_len, sizeof(uint32_t))) == NULL)
                     {
                       res_OPEN4.status = NFS4ERR_RESOURCE;
                       res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0;
-                      cause2 = " (Mem_Alloc of bitmap failed)";
+                      cause2 = " (allocation of bitmap failed)";
                       goto out;
                     }
 
@@ -1047,12 +1046,12 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
 
   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 3;
   if((res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val =
-      Mem_Calloc(res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len,
+      gsh_calloc(res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len,
                  sizeof(uint32_t))) == NULL)
     {
       res_OPEN4.status = NFS4ERR_SERVERFAULT;
       res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0;
-      cause2 = " (Mem_Alloc attr failed)";
+      cause2 = " (allocation of attr failed)";
       goto out;
     }
 
@@ -1154,7 +1153,7 @@ int nfs41_op_open(struct nfs_argop4 *op, compound_data_t * data, struct nfs_reso
  */
 void nfs41_op_open_Free(OPEN4res * resp)
 {
-  Mem_Free((char *)resp->OPEN4res_u.resok4.attrset.bitmap4_val);
+  gsh_free(resp->OPEN4res_u.resok4.attrset.bitmap4_val);
   resp->OPEN4res_u.resok4.attrset.bitmap4_len = 0;
 
   return;

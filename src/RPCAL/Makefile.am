@@ -5,16 +5,10 @@ check_PROGRAMS = test_rpctools
 
 EXTRA_DIST = rpcal.h
 
-if USE_BUDDY_SYSTEM
-BUDDY_LIB_FLAGS = ../BuddyMalloc/libBuddyMalloc.la
-else
-BUDDY_LIB_FLAGS =
-endif
-
 TESTS = test_rpctools
 
 test_rpctools_SOURCES = test_rpctools.c
-test_rpctools_LDADD = librpcal.la $(BUDDY_LIB_FLAGS) ../HashTable/libhashtable.la ../RW_Lock/librwlock.la
+test_rpctools_LDADD = librpcal.la ../HashTable/libhashtable.la ../RW_Lock/librwlock.la
 
 SUBDIRS = gssd
 

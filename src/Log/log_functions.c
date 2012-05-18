@@ -1333,7 +1333,7 @@ rpc_warnx(/* const */ char *fmt, ...)
                             comp, fmt, ap);
       break;
     case STDERRLOG:
-        DisplayLogFlux_valist(stderr, "rpc", comp, fmt, ap);
+      DisplayLogFlux_valist(stderr, "rpc", comp, fmt, ap);
       break;
     case STDOUTLOG:
       DisplayLogFlux_valist(stdout, "rpc", comp, fmt, ap);

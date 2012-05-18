@@ -49,7 +49,6 @@
 #include "HashTable.h"
 #include "fsal.h"
 #include "cache_inode.h"
-#include "stuff_alloc.h"
 #include "nfs4_acls.h"
 
 #include <unistd.h>

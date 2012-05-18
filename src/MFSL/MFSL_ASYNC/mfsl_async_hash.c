@@ -47,7 +47,6 @@
 #include "mfsl_types.h"
 #include "mfsl.h"
 #include "common_utils.h"
-#include "stuff_alloc.h"
 
 #include <unistd.h>             /* for using gethostname */
 #include <stdlib.h>             /* for using exit */
@@ -266,8 +265,6 @@ int mfsl_async_remove_specdata(mfsl_object_t * key)
   if(HashTable_Del(mfsl_ht, &buffkey, &old_key, NULL) == HASHTABLE_SUCCESS)
     {
       status = 1;
-        /** @todo release previously allocated specdata */
-      // Mem_Free( old_key.pdata ) ;
     }
   else
     {

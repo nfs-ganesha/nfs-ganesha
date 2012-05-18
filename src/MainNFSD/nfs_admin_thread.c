@@ -47,7 +47,6 @@
 #include <string.h>
 #include <pthread.h>
 #include "nfs_core.h"
-#include "stuff_alloc.h"
 #include "log.h"
 #include "nfs_tcb.h"
 
@@ -151,10 +150,10 @@ static int ChangeoverExports()
 
   /* Allocate memory if needed, could have started with NULL exports */
   if (nfs_param.pexportlist == NULL)
-    nfs_param.pexportlist = (exportlist_t *) Mem_Alloc(sizeof(exportlist_t));
+    nfs_param.pexportlist = gsh_malloc(sizeof(exportlist_t));
 
   if (nfs_param.pexportlist == NULL)
-    return Mem_Errno;
+    return ENOMEM;
 
   /* Changed the old export list head to the new export list head.
    * All references to the exports list should be up-to-date now. */
@@ -162,29 +161,14 @@ static int ChangeoverExports()
 
   /* We no longer need the head that was created for
    * the new list since the export list is built as a linked list. */
-  Mem_Free(temp_pexportlist);
+  gsh_free(temp_pexportlist);
   temp_pexportlist = NULL;
   return 0;
 }
 
 void *admin_thread(void *UnusedArg)
 {
-#ifndef _NO_BUDDY_SYSTEM
-  int rc = 0;
-#endif
-
   SetNameFunction("admin_thr");
-
-#ifndef _NO_BUDDY_SYSTEM
-  if((rc = BuddyInit(&nfs_param.buddy_param_admin)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_MAIN,
-               "Memory manager could not be initialized");
-    }
-  LogInfo(COMPONENT_MAIN,
-          "Memory manager successfully initialized");
-#endif
 
   while(1)
     {

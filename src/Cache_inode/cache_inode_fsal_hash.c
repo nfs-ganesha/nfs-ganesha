@@ -44,7 +44,6 @@
 #include "log.h"
 #include "err_fsal.h"
 #include "err_cache_inode.h"
-#include "stuff_alloc.h"
 #include "nfs_core.h"
 #include <unistd.h>             /* for using gethostname */
 #include <stdlib.h>             /* for using exit */

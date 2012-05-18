@@ -34,7 +34,6 @@
 #include <pthread.h>
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nlm4.h"
 #include "sal_functions.h"
 #include "nlm_util.h"
@@ -164,7 +163,7 @@ static void nlm4_cancel_message_resp(state_async_queue_t *arg)
   nlm4_Cancel_Free(&nlm_arg->nlm_async_args.nlm_async_res);
   dec_nsm_client_ref(nlm_arg->nlm_async_host->slc_nsm_client);
   dec_nlm_client_ref(nlm_arg->nlm_async_host);
-  Mem_Free(arg);
+  gsh_free(arg);
 }
 
 /* Asynchronous Message Entry Point */

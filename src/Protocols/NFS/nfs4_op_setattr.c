@@ -51,7 +51,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -300,13 +299,11 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
   res_SETATTR4.attrsset.bitmap4_len = arg_SETATTR4.obj_attributes.attrmask.bitmap4_len;
 
   if((res_SETATTR4.attrsset.bitmap4_val =
-      (uint32_t *) Mem_Alloc(res_SETATTR4.attrsset.bitmap4_len * sizeof(u_int))) == NULL)
+      gsh_calloc(res_SETATTR4.attrsset.bitmap4_len, sizeof(uint32_t))) == NULL)
     {
       res_SETATTR4.status = NFS4ERR_SERVERFAULT;
       return res_SETATTR4.status;
     }
-  memset((char *)res_SETATTR4.attrsset.bitmap4_val, 0,
-         res_SETATTR4.attrsset.bitmap4_len * sizeof(u_int));
 
   memcpy(res_SETATTR4.attrsset.bitmap4_val,
          arg_SETATTR4.obj_attributes.attrmask.bitmap4_val,
@@ -320,17 +317,17 @@ int nfs4_op_setattr(struct nfs_argop4 *op,
 
 /**
  * nfs4_op_setattr_Free: frees what was allocated to handle nfs4_op_setattr.
- * 
+ *
  * Frees what was allocared to handle nfs4_op_setattr.
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  *
  * @return nothing (void function )
- * 
+ *
  */
 void nfs4_op_setattr_Free(SETATTR4res * resp)
 {
   if(resp->status == NFS4_OK)
-    Mem_Free(resp->attrsset.bitmap4_val);
+    gsh_free(resp->attrsset.bitmap4_val);
   return;
 }                               /* nfs4_op_setattr_Free */

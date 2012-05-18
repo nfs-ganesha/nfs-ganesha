@@ -44,7 +44,6 @@
 #include "HashTable.h"
 #include <pthread.h>
 #include <stdint.h>
-#include "stuff_alloc.h"
 #include "fsal_types.h"
 #include "fsal_pnfs.h"
 #include "pnfs_common.h"

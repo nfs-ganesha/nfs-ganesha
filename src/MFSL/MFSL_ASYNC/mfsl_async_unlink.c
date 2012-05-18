@@ -43,9 +43,6 @@
 #include "mfsl_types.h"
 #include "mfsl.h"
 #include "common_utils.h"
-#include "stuff_alloc.h"
-
-#ifndef _USE_SWIG
 
 extern mfsl_parameter_t mfsl_param;
 
@@ -136,7 +133,7 @@ fsal_status_t MFSL_unlink(mfsl_object_t * dir_handle,   /* IN */
   mfsl_object_specific_data_t *dir_pasyncdata = NULL;
   mfsl_object_specific_data_t *obj_pasyncdata = NULL;
 
-  GetFromPool(pasyncopdesc, &p_mfsl_context->pool_async_op, mfsl_async_op_desc_t);
+  pasyncopdesc = pool_alloc(p_mfsl_context->pool_async_op, NULL);
 
   if(pasyncopdesc == NULL)
     MFSL_return(ERR_FSAL_INVAL, 0);
@@ -152,9 +149,10 @@ fsal_status_t MFSL_unlink(mfsl_object_t * dir_handle,   /* IN */
     {
       /* Target is not yet asynchronous */
 
-      GetFromPool(dir_pasyncdata, &p_mfsl_context->pool_spec_data, mfsl_object_specific_data_t);
+      dir_pasyncdata = pool_alloc(p_mfsl_context->pool_spec_data, NULL);
 
-      /* In this case use object_attributes parameter to initiate asynchronous object */
+      /* In this case use object_attributes parameter to initiate
+         asynchronous object */
       dir_pasyncdata->async_attr = *dir_attributes;
     }
 
@@ -194,9 +192,10 @@ fsal_status_t MFSL_unlink(mfsl_object_t * dir_handle,   /* IN */
 
   if(!mfsl_async_get_specdata(object_handle, &obj_pasyncdata))
     {
-      /* The object to be deleted is not asynchronous, but it has
-       * has to become asynchronous to be correctly managed until the FSAL deletes it */
-      GetFromPool(obj_pasyncdata, &p_mfsl_context->pool_spec_data, mfsl_object_specific_data_t);
+      /* The object to be deleted is not asynchronous, but it has has
+       * to become asynchronous to be correctly managed until the FSAL
+       * deletes it */
+      obj_pasyncdata = pool_alloc(p_mfsl_context->pool_spec_data, NULL);
 
       /* Possible bug here with getattr because it has not data */
     }
@@ -216,5 +215,3 @@ fsal_status_t MFSL_unlink(mfsl_object_t * dir_handle,   /* IN */
 
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
 }                               /* MFSL_unlink */
-
-#endif                          /* ! _USE_SWIG */

@@ -49,7 +49,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -516,19 +515,15 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
                   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 3;
                   if((res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val =
-                      Mem_Alloc(res_OPEN4.OPEN4res_u.resok4.attrset.
-                                bitmap4_len * sizeof(uint32_t))) == NULL)
+                      gsh_calloc(res_OPEN4.OPEN4res_u.resok4.attrset.
+                                 bitmap4_len, sizeof(uint32_t))) == NULL)
                     {
                       res_OPEN4.status = NFS4ERR_RESOURCE;
                       res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0;
-                      cause2 = " (Mem_Alloc of bitmap failed)";
+                      cause2 = " (allocation of bitmap failed)";
                       goto out;
                     }
 
-                  memset(res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val,
-                         0,
-                         res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len
-                         * sizeof(uint32_t));
                   res_OPEN4.OPEN4res_u.resok4.cinfo.after
                        = cache_inode_get_changeid4(pentry_parent);
                   res_OPEN4.OPEN4res_u.resok4.cinfo.atomic = FALSE;
@@ -974,19 +969,15 @@ out_prev:
 
   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 3;
   if((res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val =
-      Mem_Alloc(res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len *
-                sizeof(uint32_t))) == NULL)
+      gsh_calloc(res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len,
+                 sizeof(uint32_t))) == NULL)
     {
       res_OPEN4.status = NFS4ERR_SERVERFAULT;
       res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len = 0;
-      cause2 = " (Mem_Alloc attr failed)";
+      cause2 = " (allocation of attr failed)";
       goto out;
     }
 
-  memset(res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val,
-         0,
-         res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_len
-         * sizeof(uint32_t));
   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[0]
     = 0; /* No Attributes set */
   res_OPEN4.OPEN4res_u.resok4.attrset.bitmap4_val[1]
@@ -1096,7 +1087,7 @@ out_prev:
 void nfs4_op_open_Free(OPEN4res * resp)
 {
   if(resp->OPEN4res_u.resok4.attrset.bitmap4_val != NULL)
-    Mem_Free(resp->OPEN4res_u.resok4.attrset.bitmap4_val);
+    gsh_free(resp->OPEN4res_u.resok4.attrset.bitmap4_val);
   resp->OPEN4res_u.resok4.attrset.bitmap4_len = 0;
 }                               /* nfs4_op_open_Free */
 
@@ -1105,8 +1096,8 @@ void nfs4_op_open_CopyRes(OPEN4res * resp_dst, OPEN4res * resp_src)
   if(resp_src->OPEN4res_u.resok4.attrset.bitmap4_val != NULL)
     {
       if((resp_dst->OPEN4res_u.resok4.attrset.bitmap4_val =
-          (uint32_t *) Mem_Alloc(resp_dst->OPEN4res_u.resok4.attrset.bitmap4_len *
-                                 sizeof(uint32_t))) == NULL)
+          gsh_calloc(resp_dst->OPEN4res_u.resok4.attrset.bitmap4_len,
+                     sizeof(uint32_t))) == NULL)
         {
           resp_dst->OPEN4res_u.resok4.attrset.bitmap4_len = 0;
         }

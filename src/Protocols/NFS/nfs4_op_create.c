@@ -50,7 +50,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -437,7 +436,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
   memcpy(data->currentFH.nfs_fh4_val, newfh4.nfs_fh4_val, newfh4.nfs_fh4_len);
 
   /* No do not need newfh any more */
-  Mem_Free((char *)newfh4.nfs_fh4_val);
+  gsh_free(newfh4.nfs_fh4_val);
 
   /* Set the mode if requested */
   /* Use the same fattr mask for reply, if one attribute was not settable, NFS4ERR_ATTRNOTSUPP was replyied */
@@ -459,20 +458,18 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 
       /* Allocate a new bitmap */
       res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_val =
-          (unsigned int *)Mem_Alloc(res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_len *
-                                    sizeof(u_int));
+        gsh_calloc(res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_len,
+                   sizeof(uint32_t));
 
       if(res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_val == NULL)
         {
           res_CREATE4.status = NFS4ERR_SERVERFAULT;
           return res_CREATE4.status;
         }
-      memset(res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_val, 0,
-             res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_len);
-
       memcpy(res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_val,
              arg_CREATE4.createattrs.attrmask.bitmap4_val,
-             res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_len * sizeof(u_int));
+             res_CREATE4.CREATE4res_u.resok4.attrset.bitmap4_len
+             * sizeof(uint32_t));
     }
 
   /* Get the change info on parent directory after the operation was successfull */
@@ -527,7 +524,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t * data, struct nfs_res
 void nfs4_op_create_Free(CREATE4res * resp)
 {
   if(resp->status == NFS4_OK)
-    Mem_Free(resp->CREATE4res_u.resok4.attrset.bitmap4_val);
+    gsh_free(resp->CREATE4res_u.resok4.attrset.bitmap4_val);
 
   return;
 }                               /* nfs4_op_create_Free */

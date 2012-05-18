@@ -43,9 +43,6 @@
 #include "mfsl_types.h"
 #include "mfsl.h"
 #include "common_utils.h"
-#include "stuff_alloc.h"
-
-#ifndef _USE_SWIG
 
 /**
  *
@@ -89,5 +86,3 @@ fsal_status_t MFSL_lookup(mfsl_object_t * parent_directory_handle,      /* IN */
   /* object was found in FSAL, is not asynchronously deleted, everything is OK */
   MFSL_return(ERR_FSAL_NO_ERROR, 0);
 }                               /* MFSL_lookup */
-
-#endif                          /* ! _USE_SWIG */

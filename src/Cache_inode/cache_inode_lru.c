@@ -44,7 +44,6 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <stdio.h>
-#include "stuff_alloc.h"
 #include "nlm_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
@@ -639,17 +638,6 @@ lru_thread(void *arg __attribute__((unused)))
 
      SetNameFunction("lru_thread");
 
-     /* Initialize BuddyMalloc (otherwise we crash whenever we call
-        into the FSAL and it tries to update its calls tats) */
-#ifndef _NO_BUDDY_SYSTEM
-     if ((BuddyInit(&nfs_param.buddy_param_worker)) != BUDDY_SUCCESS) {
-          /* Failed init */
-          LogFatal(COMPONENT_CACHE_INODE_LRU,
-                   "Memory manager could not be initialized");
-     }
-     LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-                  "Memory manager successfully initialized");
-#endif
      /* Initialize the cache_inode_client_t so we can call into
         cache_inode and not reimplement close. */
      if (cache_inode_client_init(&lru_client,
@@ -1138,7 +1126,7 @@ cache_inode_lru_get(cache_inode_client_t *client,
      }
 
      if (!lru) {
-          GetFromPool(entry, &client->pool_entry, cache_entry_t);
+          entry = pool_alloc(client->pool_entry, NULL);
           if(entry == NULL) {
                LogCrit(COMPONENT_CACHE_INODE_LRU,
                        "can't allocate a new entry from cache pool");
@@ -1146,7 +1134,7 @@ cache_inode_lru_get(cache_inode_client_t *client,
                goto out;
           }
           if (pthread_mutex_init(&entry->lru.mtx, NULL) != 0) {
-               ReleaseToPool(entry, &client->pool_entry);
+               pool_free(client->pool_entry, entry);
                LogCrit(COMPONENT_CACHE_INODE_LRU,
                        "pthread_mutex_init of lru.mtx returned %d (%s)",
                        errno,
@@ -1414,7 +1402,7 @@ cache_inode_lru_unref(cache_entry_t *entry,
                cache_inode_lru_clean(entry, client);
 
                pthread_mutex_destroy(&entry->lru.mtx);
-               ReleaseToPool(entry, &client->pool_entry);
+               pool_free(client->pool_entry, entry);
                return;
           } else {
                pthread_mutex_unlock(&q->mtx);

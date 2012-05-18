@@ -49,7 +49,6 @@
 #include "fsal.h"
 #include "cache_inode.h"
 #include "cache_content.h"
-#include "stuff_alloc.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -94,7 +93,7 @@ cache_content_status_t cache_content_release_entry(cache_content_entry_t * pentr
     }
 
   /* Finally puts the entry back to entry pool for future use */
-  ReleaseToPool(pentry, &pclient->content_pool);
+  pool_free(pclient->content_pool, pentry);
 
   /* Remove the index file */
   if(unlink(pentry->local_fs_entry.cache_path_index) != 0)

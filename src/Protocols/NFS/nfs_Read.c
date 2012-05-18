@@ -50,7 +50,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs23.h"
 #include "nfs4.h"
 #include "mount.h"
@@ -357,7 +356,7 @@ int nfs_Read(nfs_arg_t * parg,
     }
   else
     {
-      data = Mem_Alloc(size);
+      data = gsh_malloc(size);
 
       if(data == NULL)
         {
@@ -426,7 +425,7 @@ void nfs2_Read_Free(nfs_res_t * resp)
 {
   if((resp->res_read2.status == NFS_OK) &&
      (resp->res_read2.READ2res_u.readok.data.nfsdata2_len != 0))
-    Mem_Free(resp->res_read2.READ2res_u.readok.data.nfsdata2_val);
+    gsh_free(resp->res_read2.READ2res_u.readok.data.nfsdata2_val);
 }                               /* nfs2_Read_Free */
 
 /**
@@ -441,5 +440,5 @@ void nfs3_Read_Free(nfs_res_t * resp)
 {
   if((resp->res_read3.status == NFS3_OK) &&
      (resp->res_read3.READ3res_u.resok.data.data_len != 0))
-    Mem_Free(resp->res_read3.READ3res_u.resok.data.data_val);
+    gsh_free(resp->res_read3.READ3res_u.resok.data.data_val);
 }                               /* nfs3_Read_Free */

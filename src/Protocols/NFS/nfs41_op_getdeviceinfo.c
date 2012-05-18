@@ -50,7 +50,6 @@
 #include "HashTable.h"
 #include "log.h"
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "cache_inode.h"
@@ -174,7 +173,7 @@ int nfs41_op_getdeviceinfo(struct nfs_argop4 *op,
           .gdir_device_addr.da_layout_type
           = arg_GETDEVICEINFO4.gdia_layout_type;
 
-     if ((da_buffer = Mem_Alloc(da_addr_size)) == NULL) {
+     if ((da_buffer = gsh_malloc(da_addr_size)) == NULL) {
           nfs_status = NFS4ERR_SERVERFAULT;
           goto out;
      }
@@ -224,7 +223,7 @@ out:
 
      if ((nfs_status != NFS4_OK) &&
          da_buffer) {
-          Mem_Free(da_buffer);
+          gsh_free(da_buffer);
      }
 
      res_GETDEVICEINFO4.gdir_status = nfs_status;
@@ -250,7 +249,7 @@ void nfs41_op_getdeviceinfo_Free(GETDEVICEINFO4res * resp)
      if (resp->gdir_status == NFS4_OK) {
           if (resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr
               .da_addr_body.da_addr_body_val != NULL) {
-               Mem_Free(resp->GETDEVICEINFO4res_u.gdir_resok4
+               gsh_free(resp->GETDEVICEINFO4res_u.gdir_resok4
                         .gdir_device_addr.da_addr_body.da_addr_body_val);
           }
      }

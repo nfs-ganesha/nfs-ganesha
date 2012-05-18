@@ -42,7 +42,6 @@
 #include <pthread.h>
 #include <stdint.h>
 #include "log.h"
-#include "stuff_alloc.h"
 #include "nfs4.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"

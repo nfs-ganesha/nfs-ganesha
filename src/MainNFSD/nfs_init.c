@@ -41,7 +41,6 @@
 
 #include "ganesha_rpc.h"
 #include "nfs_init.h"
-#include "stuff_alloc.h"
 #include "log.h"
 #include "fsal.h"
 #include "nfs23.h"
@@ -53,8 +52,6 @@
 #include "cache_inode.h"
 #include "cache_inode_lru.h"
 #include "err_cache_inode.h"
-#include "cache_content.h"
-#include "err_cache_content.h"
 #include "nfs_file_handle.h"
 #include "nfs_exports.h"
 #include "nfs_tools.h"
@@ -218,20 +215,6 @@ void nfs_prereq_init(char *program_name, char *host_name, int debug_level, char 
   AddFamilyError(ERR_FSAL, "FSAL related Errors", tab_errstatus_FSAL);
   AddFamilyError(ERR_CACHE_INODE, "Cache Inode related Errors",
                  tab_errstatus_cache_inode);
-  AddFamilyError(ERR_CACHE_CONTENT, "Cache Content related Errors",
-                 tab_errstatus_cache_content);
-
-#ifndef _NO_BUDDY_SYSTEM
-
-  /* Initilize memory management for this thread */
-  if(BuddyInit(NULL) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_INIT, "Memory manager could not be initialized");
-    }
-  LogDebug(COMPONENT_INIT, "Memory manager successfully initialized");
-
-#endif
 }
 
 /**
@@ -344,22 +327,13 @@ void nfs_set_param_default()
   nfs_param.core_param.clustered = FALSE;
 
   /* Worker parameters : LRU dupreq */
-  nfs_param.worker_param.lru_dupreq.nb_entry_prealloc = NB_PREALLOC_LRU_DUPREQ;
   nfs_param.worker_param.lru_dupreq.nb_call_gc_invalid = 100;
   nfs_param.worker_param.lru_dupreq.clean_entry = clean_entry_dupreq;
   nfs_param.worker_param.lru_dupreq.entry_to_str = print_entry_dupreq;
   nfs_param.worker_param.lru_dupreq.lp_name = "Worker DupReq LRU";
 
   /* Worker parameters : GC */
-  nfs_param.worker_param.nb_pending_prealloc = NB_MAX_PENDING_REQUEST;
   nfs_param.worker_param.nb_before_gc = NB_REQUEST_BEFORE_GC;
-  nfs_param.worker_param.nb_dupreq_prealloc = NB_PREALLOC_HASH_DUPREQ;
-
-  /* Workers parameters : IP/Name values pool prealloc */
-  nfs_param.worker_param.nb_ip_stats_prealloc = 20;
-
-  /* Workers parameters : Client id pool prealloc */
-  nfs_param.worker_param.nb_client_id_prealloc = 20;
 
 #ifdef _HAVE_GSSAPI
   /* krb5 parameter */
@@ -372,7 +346,6 @@ void nfs_set_param_default()
   nfs_param.krb5_param.active_krb5 = TRUE;
   nfs_param.krb5_param.hash_param.index_size = PRIME_ID_MAPPER;
   nfs_param.krb5_param.hash_param.alphabet_length = 10;      /* Not used for UID_MAPPER */
-  nfs_param.krb5_param.hash_param.nb_node_prealloc = NB_PREALLOC_ID_MAPPER;
   nfs_param.krb5_param.hash_param.hash_func_key = gss_ctx_hash_func;
   nfs_param.krb5_param.hash_param.hash_func_rbt = gss_ctx_rbt_hash_func;
   nfs_param.krb5_param.hash_param.hash_func_both = NULL ; /* BUGAZOMEU */
@@ -394,7 +367,6 @@ void nfs_set_param_default()
   /* Worker parameters : dupreq hash table */
   nfs_param.dupreq_param.hash_param.index_size = PRIME_DUPREQ;
   nfs_param.dupreq_param.hash_param.alphabet_length = 10;    /* Xid is a numerical decimal value */
-  nfs_param.dupreq_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_DUPREQ;
   nfs_param.dupreq_param.hash_param.hash_func_key = dupreq_value_hash_func;
   nfs_param.dupreq_param.hash_param.hash_func_rbt = dupreq_rbt_hash_func;
   nfs_param.dupreq_param.hash_param.compare_key = compare_req;
@@ -406,7 +378,6 @@ void nfs_set_param_default()
   /*  Worker parameters : IP/name hash table */
   nfs_param.ip_name_param.hash_param.index_size = PRIME_IP_NAME;
   nfs_param.ip_name_param.hash_param.alphabet_length = 10;   /* ipaddr is a numerical decimal value */
-  nfs_param.ip_name_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_IP_NAME;
   nfs_param.ip_name_param.hash_param.hash_func_key = ip_name_value_hash_func;
   nfs_param.ip_name_param.hash_param.hash_func_rbt = ip_name_rbt_hash_func;
   nfs_param.ip_name_param.hash_param.compare_key = compare_ip_name;
@@ -420,7 +391,6 @@ void nfs_set_param_default()
   /*  Worker parameters : UID_MAPPER hash table */
   nfs_param.uidmap_cache_param.hash_param.index_size = PRIME_ID_MAPPER;
   nfs_param.uidmap_cache_param.hash_param.alphabet_length = 10;      /* Not used for UID_MAPPER */
-  nfs_param.uidmap_cache_param.hash_param.nb_node_prealloc = NB_PREALLOC_ID_MAPPER;
   nfs_param.uidmap_cache_param.hash_param.hash_func_key = idmapper_value_hash_func;
   nfs_param.uidmap_cache_param.hash_param.hash_func_rbt = idmapper_rbt_hash_func;
   nfs_param.uidmap_cache_param.hash_param.compare_key = compare_idmapper;
@@ -433,7 +403,6 @@ void nfs_set_param_default()
   /*  Worker parameters : UNAME_MAPPER hash table */
   nfs_param.unamemap_cache_param.hash_param.index_size = PRIME_ID_MAPPER;
   nfs_param.unamemap_cache_param.hash_param.alphabet_length = 10;    /* Not used for UID_MAPPER */
-  nfs_param.unamemap_cache_param.hash_param.nb_node_prealloc = NB_PREALLOC_ID_MAPPER;
   nfs_param.unamemap_cache_param.hash_param.hash_func_key = namemapper_value_hash_func;
   nfs_param.unamemap_cache_param.hash_param.hash_func_rbt = namemapper_rbt_hash_func;
   nfs_param.unamemap_cache_param.hash_param.compare_key = compare_namemapper;
@@ -446,7 +415,6 @@ void nfs_set_param_default()
   /*  Worker parameters : GID_MAPPER hash table */
   nfs_param.gidmap_cache_param.hash_param.index_size = PRIME_ID_MAPPER;
   nfs_param.gidmap_cache_param.hash_param.alphabet_length = 10;      /* Not used for UID_MAPPER */
-  nfs_param.gidmap_cache_param.hash_param.nb_node_prealloc = NB_PREALLOC_ID_MAPPER;
   nfs_param.gidmap_cache_param.hash_param.hash_func_key = idmapper_value_hash_func;
   nfs_param.gidmap_cache_param.hash_param.hash_func_rbt = idmapper_rbt_hash_func;
   nfs_param.gidmap_cache_param.hash_param.compare_key = compare_idmapper;
@@ -459,7 +427,6 @@ void nfs_set_param_default()
   /*  Worker parameters : UID->GID  hash table (for RPCSEC_GSS) */
   nfs_param.uidgidmap_cache_param.hash_param.index_size = PRIME_ID_MAPPER;
   nfs_param.uidgidmap_cache_param.hash_param.alphabet_length = 10;   /* Not used for UID_MAPPER */
-  nfs_param.uidgidmap_cache_param.hash_param.nb_node_prealloc = NB_PREALLOC_ID_MAPPER;
   nfs_param.uidgidmap_cache_param.hash_param.hash_func_key =
       namemapper_value_hash_func;
   nfs_param.uidgidmap_cache_param.hash_param.hash_func_rbt = namemapper_rbt_hash_func;
@@ -472,7 +439,6 @@ void nfs_set_param_default()
   /*  Worker parameters : GNAME_MAPPER hash table */
   nfs_param.gnamemap_cache_param.hash_param.index_size = PRIME_ID_MAPPER;
   nfs_param.gnamemap_cache_param.hash_param.alphabet_length = 10;    /* Not used for UID_MAPPER */
-  nfs_param.gnamemap_cache_param.hash_param.nb_node_prealloc = NB_PREALLOC_ID_MAPPER;
   nfs_param.gnamemap_cache_param.hash_param.hash_func_key = namemapper_value_hash_func;
   nfs_param.gnamemap_cache_param.hash_param.hash_func_rbt = namemapper_rbt_hash_func;
   nfs_param.gnamemap_cache_param.hash_param.compare_key = compare_namemapper;
@@ -485,7 +451,6 @@ void nfs_set_param_default()
   /*  Worker parameters : IP/stats hash table */
   nfs_param.ip_stats_param.hash_param.index_size = PRIME_IP_STATS;
   nfs_param.ip_stats_param.hash_param.alphabet_length = 10;  /* ipaddr is a numerical decimal value */
-  nfs_param.ip_stats_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_IP_STATS;
   nfs_param.ip_stats_param.hash_param.hash_func_key = ip_stats_value_hash_func;
   nfs_param.ip_stats_param.hash_param.hash_func_rbt = ip_stats_rbt_hash_func;
   nfs_param.ip_stats_param.hash_param.compare_key = compare_ip_stats;
@@ -497,7 +462,6 @@ void nfs_set_param_default()
   /*  Worker parameters : NFSv4 Client id table */
   nfs_param.client_id_param.hash_param.index_size = PRIME_CLIENT_ID;
   nfs_param.client_id_param.hash_param.alphabet_length = 10; /* ipaddr is a numerical decimal value */
-  nfs_param.client_id_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_CLIENT_ID;
   nfs_param.client_id_param.hash_param.hash_func_key = client_id_value_hash_func;
   nfs_param.client_id_param.hash_param.hash_func_rbt = client_id_rbt_hash_func;
   nfs_param.client_id_param.hash_param.hash_func_both = NULL ;
@@ -509,13 +473,12 @@ void nfs_set_param_default()
 
   /* NFSv4 Client id reverse table */
   nfs_param.client_id_param.hash_param_reverse.index_size = PRIME_CLIENT_ID;
-  nfs_param.client_id_param.hash_param_reverse.alphabet_length = 10; /* ipaddr is a numerical decimal value */
-  nfs_param.client_id_param.hash_param_reverse.nb_node_prealloc =
-      NB_PREALLOC_HASH_CLIENT_ID;
+  /* ipaddr is a numerical decimal value */
+  nfs_param.client_id_param.hash_param_reverse.alphabet_length = 10;
   nfs_param.client_id_param.hash_param_reverse.hash_func_key = NULL ;
   nfs_param.client_id_param.hash_param_reverse.hash_func_rbt = NULL ;
   nfs_param.client_id_param.hash_param_reverse.hash_func_both =
-	client_id_value_both_reverse ;
+       client_id_value_both_reverse ;
   nfs_param.client_id_param.hash_param_reverse.compare_key = compare_client_id_reverse;
   nfs_param.client_id_param.hash_param_reverse.key_to_str = display_client_id_reverse;
   nfs_param.client_id_param.hash_param_reverse.val_to_str = display_client_id_val;
@@ -524,8 +487,8 @@ void nfs_set_param_default()
 
   /* NFSv4 State Id hash */
   nfs_param.state_id_param.hash_param.index_size = PRIME_STATE_ID;
-  nfs_param.state_id_param.hash_param.alphabet_length = 10;  /* ipaddr is a numerical decimal value */
-  nfs_param.state_id_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
+  /* ipaddr is a numerical decimal value */
+  nfs_param.state_id_param.hash_param.alphabet_length = 10;
   nfs_param.state_id_param.hash_param.hash_func_key = state_id_value_hash_func;
   nfs_param.state_id_param.hash_param.hash_func_rbt = state_id_rbt_hash_func;
   nfs_param.state_id_param.hash_param.hash_func_both = NULL;
@@ -538,10 +501,12 @@ void nfs_set_param_default()
 #ifdef _USE_NFS4_1
   /* NFSv4 Session Id hash */
   nfs_param.session_id_param.hash_param.index_size = PRIME_STATE_ID;
-  nfs_param.session_id_param.hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
-  nfs_param.session_id_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
-  nfs_param.session_id_param.hash_param.hash_func_key = session_id_value_hash_func;
-  nfs_param.session_id_param.hash_param.hash_func_rbt = session_id_rbt_hash_func;
+  /* ipaddr is a numerical decimal value */
+  nfs_param.session_id_param.hash_param.alphabet_length = 10;
+  nfs_param.session_id_param.hash_param.hash_func_key
+       = session_id_value_hash_func;
+  nfs_param.session_id_param.hash_param.hash_func_rbt
+       = session_id_rbt_hash_func;
   nfs_param.session_id_param.hash_param.compare_key = compare_session_id;
   nfs_param.session_id_param.hash_param.key_to_str = display_session_id_key;
   nfs_param.session_id_param.hash_param.val_to_str = display_session_id_val;
@@ -553,7 +518,6 @@ void nfs_set_param_default()
   /* NFSv4 Open Owner hash */
   nfs_param.nfs4_owner_param.hash_param.index_size = PRIME_STATE_ID;
   nfs_param.nfs4_owner_param.hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
-  nfs_param.nfs4_owner_param.hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
   nfs_param.nfs4_owner_param.hash_param.hash_func_key = nfs4_owner_value_hash_func;
   nfs_param.nfs4_owner_param.hash_param.hash_func_rbt = nfs4_owner_rbt_hash_func;
   nfs_param.nfs4_owner_param.hash_param.compare_key = compare_nfs4_owner_key;
@@ -566,7 +530,6 @@ void nfs_set_param_default()
   /* NSM Client hash */
   nfs_param.nsm_client_hash_param.index_size = PRIME_STATE_ID;
   nfs_param.nsm_client_hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
-  nfs_param.nsm_client_hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
   nfs_param.nsm_client_hash_param.hash_func_key = nsm_client_value_hash_func;
   nfs_param.nsm_client_hash_param.hash_func_rbt = nsm_client_rbt_hash_func;
   nfs_param.nsm_client_hash_param.compare_key = compare_nsm_client_key;
@@ -578,7 +541,6 @@ void nfs_set_param_default()
   /* NLM Client hash */
   nfs_param.nlm_client_hash_param.index_size = PRIME_STATE_ID;
   nfs_param.nlm_client_hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
-  nfs_param.nlm_client_hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
   nfs_param.nlm_client_hash_param.hash_func_key = nlm_client_value_hash_func;
   nfs_param.nlm_client_hash_param.hash_func_rbt = nlm_client_rbt_hash_func;
   nfs_param.nlm_client_hash_param.compare_key = compare_nlm_client_key;
@@ -590,7 +552,6 @@ void nfs_set_param_default()
   /* NLM Owner hash */
   nfs_param.nlm_owner_hash_param.index_size = PRIME_STATE_ID;
   nfs_param.nlm_owner_hash_param.alphabet_length = 10;        /* ipaddr is a numerical decimal value */
-  nfs_param.nlm_owner_hash_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
   nfs_param.nlm_owner_hash_param.hash_func_key = nlm_owner_value_hash_func;
   nfs_param.nlm_owner_hash_param.hash_func_rbt = nlm_owner_rbt_hash_func;
   nfs_param.nlm_owner_hash_param.compare_key = compare_nlm_owner_key;
@@ -604,8 +565,6 @@ void nfs_set_param_default()
   nfs_param.cache_layers_param.cache_param.hparam.index_size = PRIME_CACHE_INODE;
   nfs_param.cache_layers_param.cache_param.hparam.alphabet_length = 10;      /* Buffer seen as a decimal polynom */
   nfs_param.cache_layers_param.cache_param.hparam.flags = HT_FLAG_CACHE;
-  nfs_param.cache_layers_param.cache_param.hparam.nb_node_prealloc =
-      NB_PREALLOC_HASH_CACHE_INODE;
   nfs_param.cache_layers_param.cache_param.hparam.hash_func_key = NULL ;
   nfs_param.cache_layers_param.cache_param.hparam.hash_func_rbt = NULL ;
   nfs_param.cache_layers_param.cache_param.hparam.hash_func_both =
@@ -619,14 +578,20 @@ void nfs_set_param_default()
 
 #ifdef _USE_NLM
   /* Cache inode parameters : cookie hash table */
-  nfs_param.cache_layers_param.cache_param.cookie_param.index_size = PRIME_STATE_ID;
-  nfs_param.cache_layers_param.cache_param.cookie_param.alphabet_length = 10;      /* Buffer seen as a decimal polynom */
-  nfs_param.cache_layers_param.cache_param.cookie_param.nb_node_prealloc = NB_PREALLOC_HASH_STATE_ID;
-  nfs_param.cache_layers_param.cache_param.cookie_param.hash_func_key = lock_cookie_value_hash_func ;
-  nfs_param.cache_layers_param.cache_param.cookie_param.hash_func_rbt = lock_cookie_rbt_hash_func ;
-  nfs_param.cache_layers_param.cache_param.cookie_param.compare_key = compare_lock_cookie_key;
-  nfs_param.cache_layers_param.cache_param.cookie_param.key_to_str = display_lock_cookie_key;
-  nfs_param.cache_layers_param.cache_param.cookie_param.val_to_str = display_lock_cookie_val;
+  nfs_param.cache_layers_param.cache_param.cookie_param.index_size
+       = PRIME_STATE_ID;
+  /* Buffer seen as a decimal polynom */
+  nfs_param.cache_layers_param.cache_param.cookie_param.alphabet_length = 10;
+  nfs_param.cache_layers_param.cache_param.cookie_param.hash_func_key
+       = lock_cookie_value_hash_func ;
+  nfs_param.cache_layers_param.cache_param.cookie_param.hash_func_rbt
+       = lock_cookie_rbt_hash_func ;
+  nfs_param.cache_layers_param.cache_param.cookie_param.compare_key
+       = compare_lock_cookie_key;
+  nfs_param.cache_layers_param.cache_param.cookie_param.key_to_str
+       = display_lock_cookie_key;
+  nfs_param.cache_layers_param.cache_param.cookie_param.val_to_str
+       = display_lock_cookie_val;
   nfs_param.cache_layers_param.cache_param.cookie_param.name = "Lock Cookie";
   nfs_param.cache_layers_param.cache_param.cookie_param.flags = HT_FLAG_NONE;
 #endif
@@ -668,16 +633,6 @@ void nfs_set_param_default()
   FSAL_SetDefault_FS_common_parameter(&nfs_param.fsal_param);
   FSAL_SetDefault_FS_specific_parameter(&nfs_param.fsal_param);
 
-  /* Buddy parameters */
-#ifndef _NO_BUDDY_SYSTEM
-  Buddy_set_default_parameter(&nfs_param.buddy_param_admin);
-  Buddy_set_default_parameter(&nfs_param.buddy_param_worker);
-  Buddy_set_default_parameter(&nfs_param.buddy_param_tcp_mgr);
-#ifdef _USE_FSAL_UP
-  Buddy_set_default_parameter(&nfs_param.buddy_param_fsal_up);
-#endif /* _USE_FSAL_UP */
-#endif /* _NO_BUDDY_SYSTEM */
-
   nfs_param.pexportlist = NULL;
 
   /* SNMP ADM parameters */
@@ -689,9 +644,6 @@ void nfs_set_param_default()
   nfs_param.extern_param.snmp_adm.export_cache_stats = TRUE;
   nfs_param.extern_param.snmp_adm.export_requests_stats = TRUE;
   nfs_param.extern_param.snmp_adm.export_maps_stats = FALSE;
-#ifndef _NO_BUDDY_SYSTEM
-  nfs_param.extern_param.snmp_adm.export_buddy_stats = TRUE;
-#endif
   nfs_param.extern_param.snmp_adm.export_nfs_calls_detail = FALSE;
   nfs_param.extern_param.snmp_adm.export_fsal_calls_detail = FALSE;
 #endif
@@ -717,48 +669,6 @@ int nfs_set_param_from_conf(nfs_start_info_t * p_start_info)
       LogFatal(COMPONENT_INIT, "Error while parsing %s: %s",
                config_path, config_GetErrorMsg());
     }
-#ifndef _NO_BUDDY_SYSTEM
-
-  /* load buddy parameters from conf */
-
-  rc = Buddy_load_parameter_from_conf(config_struct, &nfs_param.buddy_param_worker);
-
-  if(rc == 0)
-    LogDebug(COMPONENT_INIT,
-             "Worker's Buddy parameters read from config file");
-  else if(rc == BUDDY_ERR_ENOENT)
-    LogDebug(COMPONENT_INIT,
-             "No Buddy parameters found in config file, using default");
-  else
-    {
-      LogCrit(COMPONENT_INIT,
-              "Error while parsing Buddy parameters");
-      return -1;
-    }
-
-  rc = Buddy_load_parameter_from_conf(config_struct, &nfs_param.buddy_param_tcp_mgr);
-  if(rc == 0)
-    LogDebug(COMPONENT_INIT,
-             "Tcp Mgr's Buddy parameters read from config file");
-  else if(rc == BUDDY_ERR_ENOENT)
-    LogDebug(COMPONENT_INIT,
-	     "No Buddy parameters found in config file, using default");
-  else
-    {
-      LogCrit(COMPONENT_INIT,
-              "Error while parsing Buddy parameters");
-      return -1;
-    }
-
-  /* Set TCP MGR specific field, so that it frees pages as fast as possible */
-  nfs_param.buddy_param_tcp_mgr.keep_minimum = 0;
-  nfs_param.buddy_param_tcp_mgr.keep_factor = 0;
-  nfs_param.buddy_param_tcp_mgr.free_areas = TRUE;
-
-  /* Do not use a too big page size for TCP connection manager */
-  nfs_param.buddy_param_tcp_mgr.memory_area_size = 1048576LL ;
-
-#endif
 
   /* Core parameters */
   if((rc = nfs_read_core_conf(config_struct, &nfs_param.core_param)) < 0)
@@ -1207,28 +1117,22 @@ int nfs_check_param_consistency()
     }
 
 #if 0
-/* XXXX this seems somewhat the obvious of what I would have reasoned.  Where
- * we had a thread for every connection (but sharing a single fdset for select),
- * dispatching on a small, fixed worker pool, we now had an arbitrary, fixed
- * work pool, with flexible event channels.
+/* XXXX this seems somewhat the obvious of what I would have reasoned.
+ * Where we had a thread for every connection (but sharing a single
+ * fdset for select), dispatching on a small, fixed worker pool, we
+ * now had an arbitrary, fixed work pool, with flexible event
+ * channels.
  */
-  if( 2*nfs_param.core_param.nb_worker  >  nfs_param.cache_layers_param.cache_param.hparam.index_size )
+  if (2*nfs_param.core_param.nb_worker >
+      nfs_param.cache_layers_param.cache_param.hparam.index_size )
     {
       LogCrit(COMPONENT_INIT,
-              "BAD PARAMETER: number of workers is too large compared to Cache_Inode's index size, it should be smaller than half of it");
+              "BAD PARAMETER: number of workers is too large compared to "
+              "Cache_Inode's index size, it should be smaller than "
+              "half of it");
       return 1;
     }
 #endif
-
-  if(nfs_param.dupreq_param.hash_param.nb_node_prealloc <
-     nfs_param.worker_param.lru_dupreq.nb_entry_prealloc)
-    {
-      LogCrit(COMPONENT_INIT,
-              "BAD PARAMETER(dupreq): nb_node_prealloc = %zd should be greater than nb_entry_prealloc = %d",
-              nfs_param.dupreq_param.hash_param.nb_node_prealloc,
-              nfs_param.worker_param.lru_dupreq.nb_entry_prealloc);
-      return 1;
-    }
 
   // check for parameters which need to be primes
   if (!is_prime(nfs_param.dupreq_param.hash_param.index_size) ||
@@ -1332,10 +1236,6 @@ void nfs_reset_stats(void)
 
       workers_data[i].stats.last_stat_update = 0;
       memset(&workers_data[i].stats.fsal_stats, 0, sizeof(fsal_statistics_t));
-#ifndef _NO_BUDDY_SYSTEM
-      memset(&workers_data[i].stats.buddy_stats, 0, sizeof(buddy_stats_t));
-#endif
-
     }                           /* for( i = 0 ; i < nfs_param.core_param.nb_worker ; i++ ) */
 
 }                               /* void nfs_reset_stats( void ) */
@@ -1657,16 +1557,12 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
 
   /* Worker initialisation */
   if((workers_data =
-      (nfs_worker_data_t *) Mem_Alloc_Label(sizeof(nfs_worker_data_t) *
-                                            nfs_param.core_param.nb_worker,
-                                            "nfs_worker_data_t")) == NULL)
+      gsh_calloc(nfs_param.core_param.nb_worker,
+                 sizeof(nfs_worker_data_t))) == NULL)
     {
       LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
       Fatal();
     }
-  memset((char *)workers_data, 0,
-         sizeof(nfs_worker_data_t) * nfs_param.core_param.nb_worker);
-
   if(nfs_Init_gc_counter() != 0)
     {
       LogFatal(COMPONENT_INIT, "Error while initializing worker gc counter");
@@ -1688,7 +1584,7 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
                  "Error while initializing worker data #%d", i);
 
       sprintf(name, "IP Stats for worker %d", i);
-      nfs_param.ip_stats_param.hash_param.name = Str_Dup(name);
+      nfs_param.ip_stats_param.hash_param.name = gsh_strdup(name);
       ht_ip_stats[i] = nfs_Init_ip_stats(nfs_param.ip_stats_param);
 
       if(ht_ip_stats[i] == NULL)
@@ -1698,13 +1594,10 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
       workers_data[i].ht_ip_stats = ht_ip_stats[i];
 
       /* Allocation of the nfs request pool */
-      MakePool(&workers_data[i].request_pool,
-               nfs_param.worker_param.nb_pending_prealloc,
-               request_data_t,
-               constructor_request_data_t, NULL);
-      NamePool(&workers_data[i].request_pool, "Request Data Pool %d", i);
-
-      if(!IsPoolPreallocated(&workers_data[i].request_pool))
+      workers_data[i].request_pool
+           = pool_init("Request Data Pool", sizeof(request_data_t),
+                       constructor_request_data_t, NULL);
+      if(!(workers_data[i].request_pool))
         {
           LogCrit(COMPONENT_INIT,
                   "Error while allocating request data pool #%d", i);
@@ -1712,13 +1605,10 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
           Fatal();
         }
 
-      /* Allocation of the nfs dupreq pool */
-      MakePool(&workers_data[i].dupreq_pool,
-               nfs_param.worker_param.nb_dupreq_prealloc,
-               dupreq_entry_t, NULL, NULL);
-      NamePool(&workers_data[i].dupreq_pool, "Duplicate Request Pool %d", i);
-
-      if(!IsPoolPreallocated(&workers_data[i].dupreq_pool))
+      workers_data[i].dupreq_pool
+           = pool_init("Duplicate Request Pool",
+                       sizeof(dupreq_entry_t), NULL, NULL);
+      if(!(workers_data[i].dupreq_pool))
         {
           LogCrit(COMPONENT_INIT,
                   "Error while allocating duplicate request pool #%d", i);
@@ -1727,12 +1617,11 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
         }
 
       /* Allocation of the IP/name pool */
-      MakePool(&workers_data[i].ip_stats_pool,
-               nfs_param.worker_param.nb_ip_stats_prealloc,
-               nfs_ip_stats_t, NULL, NULL);
-      NamePool(&workers_data[i].ip_stats_pool, "IP Stats Cache Pool %d", i);
+      workers_data[i].ip_stats_pool
+           = pool_init("IP Stats Cache Pool", sizeof(nfs_ip_stats_t),
+                       NULL, NULL);
 
-      if(!IsPoolPreallocated(&workers_data[i].ip_stats_pool))
+      if(!(workers_data[i].ip_stats_pool))
         {
           LogCrit(COMPONENT_INIT,
                   "Error while allocating IP stats cache pool #%d", i);
@@ -1741,11 +1630,9 @@ static void nfs_Init(const nfs_start_info_t * p_start_info)
         }
 
       /* Initialize, but do not pre-alloc client-id pool */
-      InitPool(&workers_data[i].clientid_pool,
-               nfs_param.worker_param.nb_client_id_prealloc,
-               nfs_client_id_t, NULL, NULL);
-      NamePool(&workers_data[i].clientid_pool, "Client ID Pool %d", i);
-
+      workers_data[i].clientid_pool
+           = pool_init("Client ID Pool", sizeof(nfs_client_id_t),
+                       NULL, NULL);
       LogDebug(COMPONENT_INIT, "worker data #%d successfully initialized", i);
     }                           /* for i */
 

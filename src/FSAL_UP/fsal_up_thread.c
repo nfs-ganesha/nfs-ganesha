@@ -32,7 +32,6 @@
 #include <string.h>
 #include <pthread.h>
 #include "nfs_core.h"
-#include "stuff_alloc.h"
 #include "log.h"
 #include "fsal_up.h"
 
@@ -96,19 +95,18 @@ void create_fsal_up_threads()
                    pcurrent->id);
 
           if((fsal_up_args =
-              (fsal_up_arg_t *) Mem_Alloc(sizeof(fsal_up_arg_t))) == NULL)
+              gsh_calloc(1, sizeof(fsal_up_arg_t))) == NULL)
             {
               LogError(COMPONENT_INIT, ERR_SYS, ERR_MALLOC, errno);
               Fatal();
             }
 
-	  memset(fsal_up_args, 0, sizeof(fsal_up_arg_t));
           fsal_up_args->export_entry = pcurrent;
 
           if( ( rc = pthread_create( &pcurrent->fsal_up_thr, &attr_thr,
                                      fsal_up_thread,(void *)fsal_up_args)) != 0)
             {
-              Mem_Free(fsal_up_args);
+              gsh_free(fsal_up_args);
               LogFatal(COMPONENT_THREAD,
                        "Could not create fsal_up_thread, error = %d (%s)",
                        errno, strerror(errno));
@@ -118,9 +116,10 @@ void create_fsal_up_threads()
     }
 }
 
-/* Given to MakePool() to be used as a constructor of
+/* Given to pool_init() to be used as a constructor of
  * preallocated memory */
-void constructor_fsal_up_event_t(void *ptr)
+void constructor_fsal_up_event_t(void *ptr,
+                                 void *parameter)
 {
   return;
 }
@@ -129,18 +128,15 @@ void constructor_fsal_up_event_t(void *ptr)
 void nfs_Init_FSAL_UP()
 {
   memset(&nfs_param.fsal_up_param, 0, sizeof(nfs_param.fsal_up_param));
-  nfs_param.fsal_up_param.nb_event_data_prealloc = 2;
 
   /* DEBUGGING */
   LogDebug(COMPONENT_INIT,
            "FSAL_UP: Initializing FSAL UP data pool");
   /* Allocation of the FSAL UP pool */
-  MakePool(&nfs_param.fsal_up_param.event_pool,
-           nfs_param.fsal_up_param.nb_event_data_prealloc,
-           fsal_up_event_t,
-           constructor_fsal_up_event_t, NULL);
-  NamePool(&nfs_param.fsal_up_param.event_pool, "FSAL UP Data Pool");
-  if(!IsPoolPreallocated(&nfs_param.fsal_up_param.event_pool))
+  nfs_param.fsal_up_param.event_pool
+       = pool_init("FSAL UP Data Pool", sizeof(fsal_up_event_t),
+                   constructor_fsal_up_event_t, NULL);
+  if(!(nfs_param.fsal_up_param.event_pool))
     {
       LogCrit(COMPONENT_INIT,
               "Error while allocating FSAL UP data pool");
@@ -301,33 +297,13 @@ void *fsal_up_thread(void *Arg)
            fsal_up_args->export_entry->filesystem_id.minor);
   SetNameFunction(thr_name);
 
-#ifndef _NO_BUDDY_SYSTEM
-  {
-    int rc;
-
-  if((rc = BuddyInit(&nfs_param.buddy_param_fsal_up)) != BUDDY_SUCCESS)
-    {
-      /* Failed init */
-      LogFatal(COMPONENT_FSAL_UP,
-               "FSAL_UP: Memory manager could not be initialized");
-      Fatal();
-    }
-  LogInfo(COMPONENT_FSAL_UP,
-          "FSAL_UP: Memory manager for filesystem %llu.%llu export id %d"
-          " successfully initialized",
-          fsal_up_args->export_entry->filesystem_id.major,
-          fsal_up_args->export_entry->filesystem_id.minor,
-          fsal_up_args->export_entry->id);
-  }
-#endif
-
   /* Set the FSAL UP functions that will be used to process events. */
   event_func = get_fsal_up_functions(fsal_up_args->export_entry->fsal_up_type);
   if (event_func == NULL)
     {
       LogCrit(COMPONENT_FSAL_UP, "Error: FSAL UP TYPE: %s does not exist. "
               "Exiting FSAL UP thread.", fsal_up_args->export_entry->fsal_up_type);
-      Mem_Free(Arg);
+      gsh_free(Arg);
       return NULL;
     }
 
@@ -338,7 +314,7 @@ void *fsal_up_thread(void *Arg)
          &fsal_up_args->export_entry->FS_export_context,
          sizeof(fsal_export_context_t));
 
-  fsal_up_context.event_pool = &nfs_param.fsal_up_param.event_pool;
+  fsal_up_context.event_pool = nfs_param.fsal_up_param.event_pool;
   fsal_up_context.event_pool_lock = &nfs_param.fsal_up_param.event_pool_lock;
 
   LogDebug(COMPONENT_FSAL_UP, "Initializing FSAL Callback context.");
@@ -442,12 +418,11 @@ void *fsal_up_thread(void *Arg)
             }
           tmpevent = event;
           event = event->next_event;
-          free(tmpevent->event_data.event_context.fsal_data.fh_desc.start);
 
+          gsh_free(tmpevent->event_data.event_context.fsal_data.fh_desc.start);
           pthread_mutex_lock(fsal_up_context.event_pool_lock);
-          ReleaseToPool(tmpevent, &nfs_param.fsal_up_param.event_pool);
+          pool_free(nfs_param.fsal_up_param.event_pool, tmpevent);
           pthread_mutex_unlock(fsal_up_context.event_pool_lock);
-
           event_nb--;
         }
 
@@ -458,7 +433,7 @@ void *fsal_up_thread(void *Arg)
                fsal_up_args->export_entry->id);
     }
 
-  Mem_Free(Arg);
+  gsh_free(Arg);
   return NULL;
 }                               /* fsal_up_thread */
 

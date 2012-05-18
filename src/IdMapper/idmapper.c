@@ -42,7 +42,6 @@
 #endif
 
 #include "ganesha_rpc.h"
-#include "stuff_alloc.h"
 #include "nfs_core.h"
 #include "nfs_tools.h"
 #include <unistd.h>             /* for using gethostname */
@@ -714,7 +713,7 @@ int uid2utf8(uid_t uid, utf8string * utf8str)
   len = strlen(buff);
 
   /* A matching uid was found, now do the conversion to utf8 */
-  if((utf8str->utf8string_val = (char *)Mem_Alloc_Label(len, "uid2utf8")) == NULL)
+  if((utf8str->utf8string_val = gsh_malloc(len)) == NULL)
     return -1;
   else
     utf8str->utf8string_len = len;
@@ -747,7 +746,7 @@ int gid2utf8(gid_t gid, utf8string * utf8str)
 
   /* A matching gid was found */
   /* Do the conversion to uft8 format */
-  if((utf8str->utf8string_val = (char *)Mem_Alloc_Label(len, "gid2utf8")) == NULL)
+  if((utf8str->utf8string_val = gsh_malloc(len)) == NULL)
     return -1;
   else
     utf8str->utf8string_len = len;
