@@ -162,12 +162,16 @@ void
 fsi_remove_cache_by_fullpath(char * path)
 {
   int index;
-  for (index = 0; index < FSI_MAX_HANDLE_CACHE_ENTRY; index++) {
+  int len = strlen(path);
 
-    if (memcmp(path, &g_fsi_name_handle_cache.m_entry[index].m_name, FSI_HANDLE_SIZE) == 0) {
+  if (len > PATH_MAX)
+     return;
+
+  for (index = 0; index < FSI_MAX_HANDLE_CACHE_ENTRY; index++) {
+    if (memcmp(path, g_fsi_name_handle_cache.m_entry[index].m_name, len) == 0) {
       FSI_TRACE(FSI_DEBUG, "Handle will be removed from cache by path %s:", path);
       /* Mark the both handle and name to 0 */
-      strncpy(g_fsi_name_handle_cache.m_entry[index].m_handle, "0", PATH_MAX);
+      strncpy(g_fsi_name_handle_cache.m_entry[index].m_handle, "0", FSI_HANDLE_SIZE);
       strncpy(g_fsi_name_handle_cache.m_entry[index].m_name, "0", PATH_MAX);
       return;
     }
